@@ -91,7 +91,8 @@
   (bend-width :accessor midi-stream-bend-width
 	      :init-keyword :pitch-bend-width 
 	      :init-thunk (lambda () *midi-pitch-bend-width*))
-  (channel-tuning :init-keyword :channel-tuning 
+  ;; BUG! Goops wont find :microtuning
+  (channel-tuning :init-keyword :channel-tuning  :init-keyword :microtuning
 		  :init-value #f :accessor midi-stream-channel-tuning )
   (tunedata :init-value '() :accessor midi-stream-tunedata
 	    :init-keyword :tuning-channels)
@@ -496,12 +497,14 @@
       (let ((tune #f)
 	    (num1 #f)
 	    (num2 #f)
-	    (data #f))
+	    (data #f)
+            (type #f))
 	(if (pair? tuning)
 	  (set! tune (pop tuning))
 	  (begin (set! tune tuning)
 		 (set! tuning #f)))
-	(cond ((member tune (car %midituningtypes))
+        (set! type (find tune %midituningtypes :test #'member))
+	(cond ((eq? tune (car %midituningtypes))
 	       ;; note by note tuning.
                (if (pair? tuning)
                  (begin (set! num1 (pop tuning))
@@ -514,7 +517,7 @@
                ;; data=(T <num> <max> <off> <width>)
                (set! data (list #t (- num2 num1) (- num2 num1) num1
                                 (midi-stream-bend-width io))))
-	      ((find tune (cdr %midituningtypes) :test #'member)
+	      ((not (null type))
                ;; channel tuning
 	       ;; data=(<chanoffset> <divisions>)
 	       (set! num1 (if (pair? tuning)(pop tuning) 0))
