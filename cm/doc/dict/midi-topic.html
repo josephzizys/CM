@@ -57,9 +57,10 @@ or higher.)</li>
 <h3>Opening and closing the MIDI port</h3>
 
 <p>
-In order to work with Midishare in real time, a connection between CM
+In order to work with Midishare in real time a connection between CM
 and MidiShare must first be established. This connection is made
-using an object called the <em>midi port</em>:
+using an object called the <em>midi port</em>, which must first be
+opened before any MIDI events can be sent or received.
 </p>
 
 <dl>
@@ -653,7 +654,7 @@ use <code>make-proctable</code> to increase the size of the table:
 </li>
 </ul>
 
-<h2 id="midi_high_level">High level (non-real time) MIDI support</h2>
+<h2 id="midi_high_level">High level MIDI support</h2>
 
 <p>
 High level MIDI support consists of class definitions of MIDI scores
@@ -665,16 +666,17 @@ entries in the Common Music dictionary, the following topic list
 provides links to this documentation:
 </p>
 
-<h3>MIDI score classes</h3>
+<h3 id="midi_score_classes">MIDI score classes</h3>
 
 <ul>
 <li><a href="midi-file-stream-cls.html"><code>midi-file-stream</code></a></li>
-<li><a
+<li>
+<a
 href="midishare-stream-cls.html"><code>midishare-stream</code></a></li>
 <li><a href="player-stream-cls.html"><code>player-stream</code></a></li>
 </ul>
 
-<h3>MIDI event classes</h3>
+<h3 id="midi_event_classes">MIDI event classes</h3>
 
 <ul>
 <li><a href="midi-cls.html"><code>midi</code></a></li>
@@ -688,7 +690,7 @@ href="midishare-stream-cls.html"><code>midishare-stream</code></a></li>
 <li><a href="midi-system-event-cls.html"><code>midi-system-event</code></a></li>
 </ul>
 
-<h3>MIDI functions</h3>
+<h3 id="midi_functions">MIDI functions</h3>
 
 <ul>
 <li><a href="events-fn.html"><code>events</code></a></li>

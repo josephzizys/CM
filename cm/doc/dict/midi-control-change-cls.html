@@ -50,17 +50,42 @@ A MIDI control value from 0 to 127.
 <p class "captxt">
 <span class="floatlabel">Example 1.</span> Creating MIDI control and mode changes.
 </p>
-<pre class="code"><span class="comment">;;; A 'Sustain Pedal Down' control event</span>
+<pre class="code"><span class="comment">;;; a 'Sustain Pedal Down' control event</span>
 
 (<span class="special">new</span> midi-control-change <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> 3
      <span class="keyword">:controller</span> 64 <span class="keyword">:value</span> 127)
 
-<span class="comment">;;; A 'Local Control Off' mode event</span>
+<span class="comment">;;; a 'Local Control Off' mode event</span>
 
 (<span class="special">new</span> midi-control-change <span class="keyword">:time</span> 0 <span class="keyword">:controller</span> 122 <span class="keyword">:value</span> 0)
 </pre>
 </div>
 
+
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 2.</span> Process with pedal control.
+</p>
+
+<pre class="code">(<span class="special">define</span> (<span class="defined">sustain</span> at chan val)
+  <span class="comment">;; make sustain control event</span>
+  (<span class="special">new</span> midi-control-change <span class="keyword">:time</span> at <span class="keyword">:channel</span> chan
+       <span class="keyword">:controller</span> 122 <span class="keyword">:value</span> 0)
+
+(<span class="special">define</span> (<span class="defined">playsome</span> num)
+  (<span class="special">process</span> repeat num
+           output (<span class="special">new</span> midi <span class="keyword">:time</span> (now)
+                       <span class="keyword">:keynum</span> (between 60 90)
+                       <span class="keyword">:duraion</span> (pick .2 .4 .6))
+           wait (pick .1 .2 .3)
+           <span class="comment">;; pedal up 5 seconds after end</span>
+           finally (output (sustain (+ (now) 5) 0 0))))
+
+(events (list (sustain 0 0 127)
+              (playsome 32))
+        <span class="string">"test.mid"</span>)
+</pre>
+</div>
 
 <h4>See also: </h4>
 <ul>
