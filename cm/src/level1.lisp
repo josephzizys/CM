@@ -62,61 +62,6 @@
 	    (if (stringp host) host "")
 	    (cdr dirs) name type)))
 
-#+no-scheme
-(progn
-  
-  (defun string->symbol (string)
-    (intern string))
-  
-  (defun symbol->string (symbol)
-    (symbol-name symbol))
-  
-  (defun string-append (&rest strs)
-    (apply #'concatenate 'string strs))
-  
-  (defmacro define (form &rest def)
-    (flet ((expand-scheme-defun (spec body)
-             (let ((args '()))
-               (loop for i from 0
-                     until (null spec)
-                     do
-                     (cond ((consp spec)
-                            (unless (and (car spec)
-                                         (symbolp (car spec)))
-                              (error "Define: bad function ~
-                                      ~:[name~;parameter~]: ~s."
-                                     (> i 0) (car spec)))
-                            (push (car spec) args)
-                            (setf spec (cdr spec)))
-                           ((and spec (symbolp spec))
-                            (push '&rest args)
-                            (push spec args)
-                            (setf spec '()))
-                           (t
-                            (error "Define: bad function ~
-                                    ~:[name~;parameter~]: ~s."
-                                   (> i 0) spec))))
-               (setf args (reverse args))
-               `(progn
-                  (defun ,(pop args) ,args ,@body)
-                  (values)))))
-      (if (symbolp form)
-        (if (null def)
-          (error "Define: missing value." )
-          (if (null (cdr def))
-            `(progn (defparameter ,form ,(car def))
-                    (values ))
-            (error "Define: too many values: ~s" def)))
-        (if (and (consp form)
-                 (symbolp (car form)))
-          (if (null def)
-            (error "Define: missing body of function define.")
-            (expand-scheme-defun form def))
-          (error "Define: ~S not a variable or ~
-                  function specification."
-                 form)))))
-  )
-
 ;;;
 ;;; functionality i had to add to scheme that is not exactly
 ;;; defined in cltl either...
