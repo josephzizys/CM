@@ -1,98 +1,27 @@
-This is the README for Common Music (CM). The system currently
-runs in:
+This is the README for Common Music (CM). Common Music is released
+under the GNU Software License.  See  the file doc/gpl.text for the
+terms of this agreement. 
 
-  Guile 1.6.0 (Linux, OSX, Windows+Cygwin)
-  MCL 4.2, 4.3 (MacOS 9.2)
-  OpenMCL 0.13 (OSX 10.2)
-  ACL 5.0, 6.0 (SGI, Linux, Windows 2000)
-  CLISP 2.28 (Linux, Windows 2000)
-  CMUCL 18d (Linux)
+The project home for Common Music is at:
 
-Documentation for the system is located in the doc/ directory. The 
-Common Music dictionary is in doc/dict/index.html.  The example
-file etc/examples/intro.cm is a fine place to start.
+ o http://www.sourceforge.net/projects/commonmusic
 
-Common Music is released under the GNU Software License.  See
-doc/gpl.text for the terms of this agreement.  
+The system currently runs in:
 
+ o Guile 1.6.0 (Linux, OSX, Windows+Cygwin)
+ o MCL 4.2, 4.3 (MacOS 9.2)
+ o OpenMCL 0.13 (OSX 10.2)
+ o ACL 5.0, 6.0 (SGI, Linux, Windows 2000)
+ o CLISP 2.28 (Linux, Windows 2000)
+ o CMUCL 18d (Linux)
 
-Installation instructions:
+Documentation for the system is located in the doc/ directory: 
 
-  o Restore the latest CM distribution from:
+ o Installation instructions are in doc/install.html
+ o The  Common Music dictionary is in doc/dict/index.html. 
+ o The home page is in doc/cm.html
 
-      ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/sources/
-
-  o Start up Lisp. If you use CLM or CMN in Common Lisp then load
-    these systems first:
-
-    CLM: 
-
-    > (load "/whatever/clm-2/all.lisp")
-
-    CMN: 
-
-    > (load "/whatever/cmn/cmn-all.lisp")
-
-
-  o If you are using Common Lisp and you do NOT want Scheme symbols
-    added to CM then do:
-
-    > (push ':no-scheme *features*)
-  
-    CM will add Scheme's 'define' even if :no-scheme is true.
-
-
-  o Load either cm/src/cm.scm (Guile) or cm/src/cm.lisp (CL).  
-    Specify the full, true pathname to the file, i.e. avoid relative
-    paths or using "~/" unless you are sure your Lisp supports them.  
-    On my Linux box I do:
-
-    GUILE:
-
-    > (load "/usr/local/lisp/cm-2.4.0/src/cm.scm")
-
-    COMMON LISP:
-
-    > (load "/usr/local/lisp/cm-2.4.0/src/cm.lisp")
-
-    On Windows use / rather than the DOS directory character. If you
-    are loading CM in Guile under Windows from a directory that is 
-    not under Cygwin's file system you will have to start the
-    pathname with the drive, i.e. "c:/lisp/whatever".
-
-  o In Guile the sources are loaded. In Common Lisp the sources are 
-    complied and loaded.  Binary files, images and scripts are
-    normally saved in cm's bin/ subdirectory. To save compiled files
-    and images somewhere else or to block an image file from being
-    saved you can set the appropriate build parameter before loading
-    cm.lisp. The names and default settings of these parameters are:
-        cm-src-directory    "CMDIR/src/"
-        cm-bin-directory    "CMDIR/bin/"
-        cm-save             true
-    Directory strings must contain the directory delimiter character
-    at the end, ie "/usr/lisp/bin/" not "/usr/lisp/bin".
-
-  o Instructions on how to save a Common Music image in Common Lisp
-    will be printed at the end of the compilation process.  In Guile
-    no image is saved.
-  
-  o CM saves a script file and a default cminit.lisp file in the
-    bin/ directory along with the Common Music image if one is saved.
-    The script can be used to start up CM from the shell. You may have
-    to set file permissions in order execute the script file:
-        chmod a+x bin/cm
-    Most of these scripts contain absolute paths to the necessary files
-    but the CLISP script assume that there is a 'clisp' shell command
-    that starts up a suitable version of the host Lisp.
-
-  o The file etc/listener.el implements a dedicated Listener window
-    for XEmacs.  You should find it easier to work with than either
-    ILisp or inf-lisp.  See the directions at the top of that file
-    for information on how to install and use it.
-
-  o Look at the file in etc/examples/intro.cm for an idea of
-    how to work with CM. 
-
+The example file etc/examples/intro.cm is a fine place to start.
 
 Please feel free to contact me with bug reports and suggestions.
 There is a mailing list assocated with the CCRMA suite of Lisp
