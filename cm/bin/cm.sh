@@ -1,4 +1,4 @@
-#!/bin/bash -
+#!/bin/sh -
 #
 # File:           cm.sh
 #
@@ -32,7 +32,7 @@ OPTIONS="
     -n           dry run
     -v           be verbose
     -e editor    run under this editor (default: '${CM_EDITOR:-<none>}')
-    -r runtime   run this Lisp/Scheme (default: '${CM_RUNTIME:-<unset>}') 
+    -l lisp      run this Lisp/Scheme (default: '${CM_RUNTIME:-<unset>}') 
     -P prefs	 preferred runtimes (default: '$CM_RUNTIME_PREFS')
     -O OS        OS in case autodetection fails
     -A arch      machine architecture in case autodetection fails
@@ -52,31 +52,34 @@ DESCRIPTION="
     may be overridden via options and the following environment variables.
 
       CM_EDITOR
-        Name or path of an Emacs-compatible editor under which to run cm.
-        Same as -e option.
+        Name or path of an Emacs-compatible editor under which to run cm,
+        e.g. 'xemacs' or '/usr/bin/gnuclient'.  Same as -e option.
 
       CM_RUNTIME
-        Name or path of a Lisp or Scheme system to execute.  Same as -r
-        option.  
+        Name or path of a Lisp or Scheme system to execute, e.g. 'clisp' or
+        '/usr/bin/openmcl'.  Same as -l option.
 
       CM_RUNTIME_PREFS
         List of CM_RUNTIMEs to try during autodetection, in order of
         preference.  Same as -r option.
 
       CM_OS
-        Symbolic name of host OS.  Same as -O option.
+        Symbolic name of host OS, e.g. 'linux' or 'darwin'.  Same as -O
+        option.
 
       CM_ARCH
-        Symbolic name of host architecture.  Same as -A option.
+        Symbolic name of host architecture, e.g. 'i386' or 'powerpc'.  Same
+        as -A option.
 
       CM_RUNTIME_FLAVOR
-        Symbolic name of the Lisp/Scheme flavor to run.  Useful in conjuction
-        with CM_RUNTIME or the -r option if the flavor can't be derived from
-        the command name or path.  Same as -F option.
+        Symbolic name of the Lisp/Scheme flavor to run, e.g. 'clisp' or
+        'cmucl'.  Useful in conjuction with CM_RUNTIME or the -l option if
+        the flavor can't be derived from the command name or path.  Same as
+        -F option.
 
       CM_RUNTIME_VERSION
         Version of the Lisp/Scheme to run.  Useful in conjuction
-        with CM_RUNTIME or the -r option if the version can't be derived from
+        with CM_RUNTIME or the -l option if the version can't be derived from
         the command name or path.  Same as -V option.
 
       CM_ROOT_DIR
@@ -157,7 +160,7 @@ fi
 CMD=`basename $0`
 USAGE="
   Usage: $CMD -h
-         $CMD [-qnv] [-e editor] [-r runtime] [-P prefs] [-O OS] [-A arch]
+         $CMD [-qnv] [-e editor] [-l lisp] [-P prefs] [-O OS] [-A arch]
                [-F lisp-flavor] [-V lisp-version] [-R cmroot]
 "
 
@@ -198,7 +201,7 @@ IMG_SUFFIX=.img
 # Options
 # -------
 
-while getopts hqnve:r:P:O:A:F:V:R: OPT
+while getopts hqnve:l:P:O:A:F:V:R: OPT
 do
   case $OPT in
     h)  print_help | $PAGER
@@ -208,7 +211,7 @@ do
     n)  EXEC=true ;;
     v)  VERBOSE=1 ;;
     e)  EDITOR_OPT=$OPTARG ;;
-    r)  LISP_OPT=$OPTARG ;;
+    l)  LISP_OPT=$OPTARG ;;
     P)  LISP_PREFS=$OPTARG ;;
     O)  OS=$OPTARG ;;
     A)  ARCH=$OPTARG ;;
