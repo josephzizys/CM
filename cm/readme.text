@@ -14,9 +14,9 @@ The system has been tested in the following OS/Lisp configurations:
 
                          core .sco .mid .clm .cmn .aiff midishare
   OS X:
-    ACL 6.2trial           x    x    x    x    x    x
+    ACL 6.2trial           x    x    x
     Clisp 2.31             x    x    x    x    x    x
-    Guile 1.6.0            x    x    x    x    x
+    Guile 1.6.0            x    x    x  
     MCL 5.0                x    x    x    x    x
     OpenMCL 0.13, 0.14     x    x    x    x    x    x    x
   Linux:
