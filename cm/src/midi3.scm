@@ -319,9 +319,9 @@
 	        (begin                  
                  ;; equal microtuning 
 		 (set! num (cadr dat)) 
-		 (let ((int (inexact->exact
-			     (floor (quantize ,keyn (/ num))))))
-		   (set! rem (- ,keyn int))
+		 (let* ((qkey (quantize ,keyn (/ num)))
+			(int (inexact->exact (floor qkey))))
+		   (set! rem (- qkey int))
 		   (set! ,keyn int))
 		 (set! ,chan (+ (car dat)
 			        (inexact->exact
