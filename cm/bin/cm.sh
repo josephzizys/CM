@@ -16,7 +16,7 @@ SUMMARY="         run Common Music"
 
 : ${CM_EDITOR:=}
 : ${CM_RUNTIME:=}
-: ${CM_RUNTIME_PREFS:=openmcl lisp acl clisp guile}
+: ${CM_RUNTIME_PREFS:=openmcl cmucl acl clisp guile}
 
 : ${CM_OS:=}
 : ${CM_ARCH:=}
@@ -43,9 +43,9 @@ OPTIONS="
 DESCRIPTION="
     This script starts Common Music (cm) either by loading it into a fresh
     Lisp session or by launching an existing image that has been built with
-    cm pre-loaded.  The cm process can be run in a terminal or as a
-    subprocess of any Emacs-compatible editor such as xemacs(1), emacs(1),
-    or gnuclient(1).
+    Common Music pre-loaded.  The Common Music process can be run in a
+    terminal or as a subprocess of any Emacs-compatible editor such as
+    xemacs(1), emacs(1), or gnuclient(1).
 
     Since parameters are autodetected at runtime, it should in virtually all
     cases suffice to call it without any arguments.  However, autodetection
@@ -60,7 +60,7 @@ DESCRIPTION="
         '/usr/bin/openmcl'.  Same as -l option.
 
       CM_RUNTIME_PREFS
-        List of CM_RUNTIMEs to try during autodetection, in order of
+        List of CM_RUNTIME_FLAVORs to try during autodetection, in order of
         preference.  Same as -r option.
 
       CM_OS
@@ -87,7 +87,8 @@ DESCRIPTION="
         autodetection fails.  Same as -R option.
 
 
-    Requirements: getopts, ls, sed, sh, tr, uname, which; a working
+    Requirements: bash(1), cat(1), cut(1), echo(1), head(1), sed(1),
+    sort(1), tr(1), uname(1), which(1); getopts and ls; a working
     installation of a Lisp or Scheme runtime; the '-repl' option if clisp is
     used (clisp 2.31 or higher).
 "
@@ -117,7 +118,7 @@ canonicalize_string () {
 }
 
 sanitize_path () {
-  echo "$1" | sed 's: :\ :g;'
+  echo "$1" #| sed 's: :\\ :g;'
 }
 
 CM_PLATFORM=
@@ -125,16 +126,20 @@ OSX_EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs
 
 resolve_bin () {
   # OSX Emacs: check /Applications/Emacs.app first
-  if [ $CM_PLATFORM ] && 
+  if test $CM_PLATFORM && 
      imatch_head_token $CM_PLATFORM darwin &&
      imatch_end_token $1 emacs && 
-     [  -x $OSX_EMACS ] ; then 
+     test -x $OSX_EMACS ; then 
     echo $OSX_EMACS
-  elif which $1 > /dev/null 2>&1 ; then
-    which $1
   else
-    test $2 && msg_w "'$1' not found in PATH ($PATH)."
-    echo ""
+    # can't use return code b/c cygwin 'which' is broken
+    EXE=`which "$1" 2>/dev/null`
+    if test -z "$EXE" ; then
+      test $2 && msg_w "'$1' not found in PATH ($PATH)."
+      echo ""
+    else
+      which "$1"
+    fi
   fi
 }
 
@@ -146,10 +151,10 @@ UNAME=`resolve_bin uname`
 # ------------
 
 # Cygwin MUST use bash
-if [ $RE_EXECING ] ; then
+if test $BASH || test $RE_EXECING ; then
   unset RE_EXECING
 else
-  if [ $UNAME ] && imatch_head_token `$UNAME -s` cygwin ; then
+  if test $UNAME && imatch_head_token `$UNAME -s` cygwin ; then
     BASH_EXE=`resolve_bin bash WARN`
     if [ ! $BASH_EXE ] ; then
       msg_f "Cygwin: 'sh' broken and can't find 'bash'!  Install bash first."
@@ -265,14 +270,14 @@ CWD=`pwd`
 PTU=`echo $ARGV0 | sed 's:[^/]*$::;s:\(.\)/$:\1:;'`
 LOC=`real_path "$PTU"`
 
-if [ ! $LOC ] ; then
+if [ ! "$LOC" ] ; then
   msg_e "No such file or directory: '$1'"
   msg_f "Can't determine CM_ROOT_DIR!"
   msg_x "Aborting.  Re-run with -R option."
 else
   LOC="$LOC/.."			# we are now in cm/bin, so get back out of it
-  export CM_ROOT_DIR=$LOC
-  export CM_ROOT=$LOC		# backwards compat
+  export CM_ROOT_DIR="$LOC"
+  export CM_ROOT="$LOC"		# backwards compat
 fi
 
 
@@ -335,14 +340,18 @@ is_image () {
 }
 
 find_lisp () {
-  resolve_bin $1 $3		# FIXME version ($2) is ignored for now
+  case $1 in
+    cmucl) bin=lisp ;;
+    *)     bin=$1 ;;
+  esac
+  resolve_bin $bin $3		# FIXME version ($2) is ignored for now
 }
 
 get_lisp_info () {
   # This is ugly, wasteful and probably requires future maintenance :(
-  case $1 in
+  case "$1" in
     *clisp*|*CLISP*)
-      vrs=`$1 --version | head -1 | cut -d' ' -f3`
+      vrs=`"$1" --version | head -1 | cut -d' ' -f3`
       min=`echo -e "$vrs\n2.31" | sort -n | head -1`
       if [ $min != 2.31 ] ; then
         msg_f "$1: version '$vrs' unsupported."
@@ -352,17 +361,17 @@ get_lisp_info () {
       echo clisp_$vrs
       ;;
     *acl*|*ACL*)
-      echo acl_`echo '(lisp-implementation-version)' | $1 -batch | sed -n 's/^.*"\([0-9.]*\) .*/\1/p'`
+      echo acl_`echo '(lisp-implementation-version)' | "$1" -batch | sed -n 's/^.*"\([0-9.]*\) .*/\1/p'`
       ;;
     *lisp*|*LISP*|*cmucl*|*CMUCL*)
-      echo cmucl_`echo '(lisp-implementation-version)' | $1 -quiet -batch | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p;'`
+      echo cmucl_`echo '(lisp-implementation-version)' | "$1" -quiet -batch | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p;'`
       ;;
     *openmcl*|*OPENMCL*|*dppccl*)
-      echo openmcl_`echo '(lisp-implementation-version)' | $1 -b | sed -n 's/^".* \([0-9.]*\)"/\1/p'` 
+      echo openmcl_`echo '(lisp-implementation-version)' | "$1" -b | sed -n 's/^".* \([0-9.]*\)"/\1/p'` 
       ;;
     *guile*)
       LISP_DIA=SCHEME
-      echo guile_`$1 --version | head -1 | cut -d' ' -f2`
+      echo guile_`"$1" --version | head -1 | cut -d' ' -f2`
       ;;
     *)
       if [ $LISP_FLV -a $LISP_VRS ] ; then
@@ -378,35 +387,35 @@ get_lisp_info () {
 if [ "$LISP_OPT" ] ; then
   if [[ "$LISP_OPT" == */* ]] ; then
     thing=`real_path "$LISP_OPT"`
-    if [ ! $thing ] ; then
+    if [ ! "$thing" ] ; then
       msg_e "No such file or directory: '$LISP_OPT'"
     fi
   else
     thing=`resolve_bin "$LISP_OPT" WARN`
   fi
-  if [ ! $thing ] ; then
+  if [ ! "$thing" ] ; then
     msg_x "Aborting."
-  elif [ ! -f $thing -a ! -h $thing ] ; then
+  elif [ ! -f "$thing" -a ! -h "$thing" ] ; then
     msg_e "Not a file or link: '$thing'"
     msg_x "Aborting."
   fi
   
-  if is_image $thing ; then
-    LISP_INF=`echo $thing | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
+  if is_image "$thing" ; then
+    LISP_INF=`echo "$thing" | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
     if [ ! $LISP_INF ] ; then
       msg_e "Not in proper location: '$thing'."
       msg_x "Aborting."
     fi
     LISP_FLV=`echo $LISP_INF | sed 's:\([^_]*\)_.*$:\1:;'`
     LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
-    if [ -x $thing ] ; then
-      LISP_EXE=$thing
+    if [ -x "$thing" ] ; then
+      LISP_EXE="$thing"
       LISP_IMG=
       LOAD=
     else
       LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS WARN`
-      if [ $LISP_EXE ] ; then
-        LISP_IMG=$thing
+      if [ "$LISP_EXE" ] ; then
+        LISP_IMG="$thing"
         LOAD=
       else
         msg_e "Can't find a '$LISP_FLV' executable with version '$LISP_VRS'." 
@@ -414,12 +423,12 @@ if [ "$LISP_OPT" ] ; then
       fi
     fi
   else
-    if [ ! -x $thing ] ; then
+    if [ ! -x "$thing" ] ; then
       msg_e "Not an executable: '$thing'"
       msg_x "Aborting."
     fi
-    LISP_EXE=$thing
-    LISP_INF=`get_lisp_info $LISP_EXE`
+    LISP_EXE="$thing"
+    LISP_INF=`get_lisp_info "$LISP_EXE"`
     if [ $? == 1 ] ; then exit 1 ; fi
     LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
     LISP_VRS=`echo $LISP_INF | sed 's:.*_::'`
@@ -440,12 +449,12 @@ else
 	LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
         if [ -x $img ] ; then
           LISP_EXE=$img
-          LISP_IMG=lllllllllllllllll
+          LISP_IMG=
           LOAD=
           break
         else
 	  LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS`
-	  if [ $LISP_EXE ] ; then
+	  if [ "$LISP_EXE" ] ; then
 	    LISP_IMG=$img
 	    LOAD=
 	    break
@@ -454,15 +463,15 @@ else
         LISP_FLV=
         LISP_VRS=
       done
-      if [ $LISP_EXE ] ; then break ; fi
+      if [ "$LISP_EXE" ] ; then break ; fi
     done
   fi
 
-  if [ ! $LISP_EXE ] ; then
+  if [ ! "$LISP_EXE" ] ; then
     for pref in $LISP_PREFS ; do
       LISP_EXE=`find_lisp $pref`
-      if [ $LISP_EXE ] ; then
-	LISP_INF=`get_lisp_info $LISP_EXE`
+      if [ "$LISP_EXE" ] ; then
+	LISP_INF=`get_lisp_info "$LISP_EXE"`
 	if [ $? == 1 ] ; then exit 1 ; fi
 	LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
 	LISP_VRS=`echo $LISP_INF | sed 's:.*_::'`
@@ -473,7 +482,7 @@ else
   fi
 fi
 
-if [ ! $LISP_EXE ] ; then 
+if [ ! "$LISP_EXE" ] ; then 
   msg_e "No executable found."
   msg_x "Aborting."
 fi
@@ -494,7 +503,7 @@ LISP_EVL="(progn (load \"$CM_ROOT/src/cm.lisp\" :verbose nil) (cm))"
 
 case $LISP_FLV in
   clisp)
-    LISP_CMD="$LISP_EXE -I -q -ansi"
+    LISP_CMD="'$LISP_EXE' -I -q -ansi"
     if [ $LOAD ] ; then
       LISP_CMD="$LISP_CMD -x '$LISP_EVL' -x t -repl"
     else
@@ -503,7 +512,7 @@ case $LISP_FLV in
     fi
     ;;
   acl)
-    LISP_CMD="$LISP_EXE"
+    LISP_CMD="'$LISP_EXE'"
     if [ $LOAD ] ; then
       LISP_CMD="$LISP_CMD -e '$LISP_EVL'"
     else
@@ -512,7 +521,7 @@ case $LISP_FLV in
     fi
     ;;
   cmucl)
-    LISP_CMD="$LISP_EXE"
+    LISP_CMD="'$LISP_EXE'"
     if [ $LOAD ] ; then
       LISP_CMD="$LISP_CMD -eval '$LISP_EVL'"
     else
@@ -521,7 +530,7 @@ case $LISP_FLV in
     fi
     ;;
   openmcl)
-    LISP_CMD="$LISP_EXE"
+    LISP_CMD="'$LISP_EXE'"
     if [ $LOAD ] ; then
       LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
     else
@@ -530,7 +539,7 @@ case $LISP_FLV in
     fi
     ;;
   guile)
-    LISP_CMD="$LISP_EXE -l '$CM_ROOT/src/cm.scm' -e cm"
+    LISP_CMD="'$LISP_EXE' -l '$CM_ROOT/src/cm.scm' -e cm"
     ;;
   *)
     msg_e "Don't know how to call '$LISP_FLV' yet... =:("
@@ -550,24 +559,32 @@ under_editor () {
   test $EMACS
 }
 
-if [ $EDITOR_OPT ] ; then
-  if under_editor ; then
-    EDITOR_EXE=
-    EDITOR_CMD=
-  else
-    EDITOR=`resolve_bin $EDITOR_OPT WARN`
-    if [ ! $EDITOR ] ; then
+if [ "$EDITOR_OPT" ] ; then
+  if ! under_editor ; then
+    if [[ "$EDITOR_OPT" == */* ]] ; then
+      thing=`real_path "$EDITOR_OPT"`
+      if [ ! "$thing" ] ; then
+        msg_e "No such file or directory: '$EDITOR_OPT'"
+      fi
+    else
+      thing=`resolve_bin "$EDITOR_OPT" WARN`
+    fi
+    if [ ! "$thing" ] ; then
       msg_w "Command not found: '$EDITOR_OPT'.  Ignoring."
-      EDITOR_EXE=
-      EDITOR_CMD=
+    elif [ ! -f "$thing" -a ! -h "$thing" ] ; then
+      msg_w "Not a file or link: '$thing'.  Ignoring."
     else
       EL1="$LOC/etc/xemacs/listener.el"
       EL2="$LOC/etc/xemacs/cm.el"
-      LCM=`echo $LISP_CMD | sed 's:":\\\":g;' | tr -d "'"`
+      # Emacs accepts paths with spaces only if they are escaped by
+      # backslashes.  LISP_EXE is normally surrounded by quotes (which we
+      # delete) and therefore still needs to be escaped.
+      LEX=`echo "$LISP_EXE" | sed 's: :\\\\\\\ :g'`
+      LCM=`echo "$LISP_CMD" | tr -d "'" | sed "s:$LISP_EXE:$LEX:g;"'s:":\\\":g;'`
       INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
-      EDITOR_EXE=$EDITOR
-      EDITOR_CMD="$EDITOR_EXE -eval '$INI'"
-      if [[ $EDITOR_EXE == *gnuclient ]] ; then
+      EDITOR_EXE="$thing"
+      EDITOR_CMD="'$EDITOR_EXE' -eval '$INI'"
+      if [[ "$EDITOR_EXE" == *client ]] ; then
         EDITOR_CMD="$EDITOR_CMD -batch"
       fi
     fi
@@ -584,20 +601,24 @@ fi
 #     { LISP { LOAD [ DUMP ; RESTART_CM_IMAGE=> ] } | [ LISP ] CM_IMAGE }
 
 if [ $VERBOSE ] ; then
-  echo "LISP_EXE:    '$LISP_EXE'"
-  echo "LISP_FLV:    '$LISP_FLV'"
-  echo "LISP_VRS:    '$LISP_VRS'"
-  echo "LISP_IMG:    '$LISP_IMG'"
-  echo "LOAD:        '$LOAD'"
-  echo "LISP_CMD:    '$LISP_CMD'"
-  echo "EDITOR_CMD:  '$EDITOR_CMD'"
+  echo ""
+  echo "Executable:  ${LISP_EXE:-<missing>}"
+  echo "Image:       ${LISP_IMG:-<none>}"
+  echo "Flavor:      ${LISP_FLV:-<n/a>}"
+  echo "Version:     ${LISP_VRS:-<n/a>}"
+  echo "Load:        $LOAD"
+  echo -n "Command:     "
+  if [ "$EDITOR_CMD" ] ; then
+    echo "$EDITOR_CMD"
+  else
+    echo "$LISP_CMD"
+  fi
+  echo ""
 fi
 
 if [ "$EDITOR_CMD" ] ; then
-  test $VERBOSE && echo "exec $EDITOR_CMD"
   eval $EXEC $EDITOR_CMD
 else
-  test $VERBOSE && echo "exec $LISP_CMD"
   eval $EXEC $LISP_CMD
 fi
 
