@@ -169,6 +169,7 @@
 
 (defparameter toplevel-ignore
   '((defmacro loop when unless push pop function)
+    (define-macro loop when unless push pop function)
     (define scheme-loop read-byte write-byte expand-process
       signum clm:definstrument)
     (define-accessor object-name)
@@ -198,6 +199,7 @@
     (cond                cond 	         case->case) ; handles both
     (define              nil             define->defun/defparameter)
     (defmacro            defmacro        defmacro->defmacro)
+    (define-macro        nil             define-macro->defmacro)
     (display             princ)
     (do                  do              do->do)
     (dolist              dolist          dolist->dolist)
@@ -615,8 +617,22 @@
     `(defparameter ,(car form) 
        ,(scheme->cltl (cadr form) env))))
 
+(defun define-macro->defmacro (form &optional env)
+  (let* ((name (first (second form)))
+         (args (rest (second form)))
+         (body (cddr form))
+         pars rest)
+    (loop while (consp args)
+          do (push (pop args) pars)
+          finally (when args (setf rest args)))
+    (when rest 
+      (push '&body pars)
+      (push rest pars))
+    `(defmacro ,name ,(reverse pars)
+       ,@ (loop for x in body
+                collect (scheme->cltl x env)))))
+
 (defun defmacro->defmacro (form &optional env)
-  env
   (let ((args (third form))
         pars rest)
     (loop while (consp args)
