@@ -253,7 +253,7 @@ LOC=`real_path "$PTU"`
 if [ ! $LOC ] ; then
   msg_e "No such file or directory: '$1'"
   msg_f "Can't determine CM_ROOT_DIR!"
-  msg_x "Aborting.  Re-run with "
+  msg_x "Aborting.  Re-run with -R option."
 else
   LOC="$LOC/.."			# we are now in cm/bin, so get back out of it
   export CM_ROOT_DIR=$LOC
@@ -345,8 +345,12 @@ get_lisp_info () {
       echo openmcl_`echo '(lisp-implementation-version)' | $1 -b | sed -n 's/^".* \([0-9.]*\)"/\1/p'` 
       ;;
     *)
-      msg_e "Unknown implementation '$1'.  Re-run with -F and -V options."
-      msg_x "Exiting."
+      if [ $LISP_FLV -a $LISP_VRS ] ; then
+        echo ${LISP_FLV}_${LISP_VRS}
+      else
+        msg_e "Unknown implementation '$1'.  Re-run with -F and -V options."
+        msg_x "Exiting."
+      fi
       ;;
   esac
 }
@@ -502,6 +506,15 @@ case $LISP_FLV in
       LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
     else
       test $LISP_INI && LISP_INI="--load $LISP_INI"
+      LISP_CMD="$LISP_CMD --image-name $LISP_IMG $LISP_INI"
+    fi
+    ;;
+  guile)
+    LISP_CMD="$LISP_EXE"
+    if [ $LOAD ] ; then
+      LISP_CMD="$LISP_CMD -c '$LISP_EVL'"
+    else
+      test $LISP_INI && LISP_INI="-l $LISP_INI"
       LISP_CMD="$LISP_CMD --image-name $LISP_IMG $LISP_INI"
     fi
     ;;
