@@ -60,7 +60,8 @@
 
 (define-class <mode> (<scale>)
   (steps :init-value '() :accessor scale-steps
-	 :init-keyword :steps :init-keyword :degrees)
+	 :init-keyword :steps :init-keyword :degrees
+         :init-keyword :notes)
   (lowest :accessor scale-lowest :init-value #f :init-keyword :tonic)
   (tuning :init-thunk (lambda () *chromatic-scale*)
           :init-keyword :scale
@@ -385,8 +386,6 @@
   (let* ((spec #f)
          (owner (mode-tuning obj))
          (low (scale-lowest obj))
-         ;(tonic #f)
-	 ;(offset #f)
 	 (steps #f)
          (type #f)
 	 (len #f)
@@ -403,7 +402,7 @@
            (begin
             (set! spec v)
             (set! type a))))
-        ((:degrees )
+        ((:degrees :notes)
          (when spec
            (err "Found duplicate keywords ~s and ~s."
                 type a))
@@ -411,7 +410,7 @@
          (set! type a))
         (else #f)))
 
-    (if (eq? type ':degrees)
+    (if (member type '(:degrees :notes))
       ;; spec is notes or keynums defining one octave
       ;; convert to intervals up from lowest (collected in reverse order)
       ;; and insure entries are in ascending order
@@ -421,16 +420,19 @@
          (set! low (if (symbol? (car spec))
                      (sd-name (octave-equivalent (first spec) 0 owner))
                      (sd-keynum  (octave-equivalent (first spec) 0 owner)))))
-       ;;(set! tonic (octave-equivalent (first spec) 0 owner))
-       ;;(set! offset (sd-class tonic))
-       ;; if note names are passed in then we store typed intervals
-       (if (and (eq? owner *chromatic-scale*)
-                (symbol? (car spec)))
-         (set! steps
+       ;; if :note then we store typed intervals
+       (if (eq? type ':notes)
+         (begin 
+          (unless (symbol? (car spec))
+            (err "mode :notes spec not note names: ~s." spec))
+          (unless (eq? owner *chromatic-scale*)
+            (err "mode :notes but not chromatic scale: ~s."
+                 owner))
+          (set! steps
                (do ((l (list (interval 0 0)))
                     (x (cdr spec) (cdr x)))
                    ((null? x) l)
-                 (push (interval (car spec) (car x)) l)))
+                 (push (interval (car spec) (car x)) l))))
          (begin
           ;; convert note names to keynums if not chromatic scale
           (when (symbol? (car spec))
@@ -445,10 +447,6 @@
        ;; spec is interval distances between steps. the intervals
        ;; may be typed.
        (unless low (set! low 0))
-
-       ;(set! tonic (car (scale-ref (scale-table owner)
-       ; (or low 0))))
-       ; (set! offset (sd-class tonic))
        (when (pair? (car spec))
          (set! spec (map (function interval) spec)))
        (if (%interval-encoded? (car spec)) ; typed interval
