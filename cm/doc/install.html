@@ -161,12 +161,12 @@ install the CM source tree.
 <p>
 Use <a href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_2.html#SEC31">anonymous CVS login</a> to the <a
  href="http://sourceforge.net/cvs/?group_id=9766">Sourceforge CVS
- repository</a>. All CVS commands must remain on a single line of
- input. Press the Return key when prompted for a login password:
+ repository</a>. Press the Return key when prompted for a login password:
 </p>
 
 <pre class="shell">
-$ <span class="input">cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic login</span>
+$ <span class="input">CVSROOT=":pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic"</span> 
+$ <span class="input">cvs login</span>
 CVS password:
 $</pre>
 </li>
@@ -175,14 +175,14 @@ $</pre>
 <p>
 Use the <a
 href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_16.html#SEC136">CVS
-checkout command</a> to restore the desired CM source tree to your computer.
+checkout command</a> to restore the CM source tree to your computer.
 </p>
 
 <p>
 To download the latest (developmental) sources from the head branch:
 </p>
 <pre class="shell">
-$ <span class="input">cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic checkout -P cm</span>
+$ <span class="input">cvs checkout -P cm</span>
 <span class="comment">[cvs printout omitted...]</span></pre>
 
 <p>
@@ -192,7 +192,7 @@ CM 2.4.<em>n</em> release line do:
 </p>
 
 <pre class="shell">
-$ <span class="input">cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic checkout -P -r rel-2_4 cm</span>
+$ <span class="input">cvs checkout -P -r rel-2_4 cm</span>
 <span class="comment">[cvs printout omitted...]</span></pre>
 <p>
 Once the source tree has been restored to your machine you can cd inside it
@@ -203,19 +203,17 @@ script to build CM:
 $ <span class="input">cd cm</span>
 $ <span class="input">bin/cm.sh</span>
 <span class="comment">[build printout omitted...]</span></pre>
-
-
 </li>
 
 <li>
 <p>
-To remain current with a release line you should should periodically
-update your CVS tree with new sources by cd'ing inside your CVS source
-tree and using the
-<a
+Once you have checkout the sources you do not need to use the login or
+checkout command again. To remain current with a release line you
+simply cd to your CVS source tree and use the <a
 href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_16.html#SEC170">CVS
-update command</a>. Then use the <a href="dict/cm-sh.html">cm.sh</a>
-script to rebuild CM with the latest versions of the files:
+update command</a> to update your installation tree with the newest
+versions of the files from the repository. Then use the <a
+href="dict/cm-sh.html">cm.sh</a> script to recompile and reload CM:
 </p>
 
 <pre class="shell">
@@ -506,6 +504,12 @@ runs in the following Lisp environments:
 <li>x86/Linux: CMUCL 19a or higher</li>
 </ul>
 
+<p>The Lisp/GTK interface is provided by <a
+href="http:common-lisp.net:/project/lambda-gtk/lambda-gtk.html">&lambda;gtk</a>,
+a software package developed by the author and made available under
+the LLGPL (Lisp Lesser General Public License).
+</p>
+
 <p>
 CM will automatically include its GUI tools in any correctly configured
 and supported environment. If you use either OpenMCL on Darwin or
@@ -538,7 +542,7 @@ tried it.
 <p>
 Use <a href="http://finkcommander.sourceforge.net">FinkCommander</a>
 to install Fink's <a
-href="http://fink.sourceforge.net/pdb/package.php/gtk+2-shlibs">gtk+2-shlibs</a>
+href="http://fink.sourceforge.net/pdb/package.php/gtk+2">gtk+2</a>
 package. CM assumes that all GTK+ libraries are restored under
 /sw/lib/ directory (the default location for installing Fink
 packages).
@@ -549,7 +553,7 @@ packages).
 <p>
 Once X11 and GTK2 are installed and the X11.app is running you can
 open a GUI window inside cm running in xterm or under XEmacs.  You can
-also run plotter from inside Terminal.app or <a
+also start GTK windows from inside Terminal.app or <a
 href="emacs.html#downloading">Emacs.app</a> (the Cocoa Emacs
 application) if you add the following line to your ~/.bash_profile
 file:
@@ -559,6 +563,18 @@ file:
 <pre>export DISPLAY=:0.0</pre>
 </blockquote>
 
+<p>
+It has been noticed on some networked OSX computers that opening the
+first GTK window inside Lisp takes over a minute to complete. The
+problem is related to font loading but I have not yet been able to
+determine exactly what is going wrong. If you encounter this problem
+the (temporary) fix is to add the following line to your
+~/.bash_profile file:
+</p>
+
+<blockquote>
+<pre>export GDK_USE_XFT=0</pre>
+</blockquote>
 
 <h3 id="gtk_openmcl"> 4.2 Installing GTK2 support in OpenMCL (OS X)</h3>
 
