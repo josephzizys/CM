@@ -14,26 +14,61 @@
 <!-- Entry: "hertz" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">hertz</code> <var>freq</var> [<code class="keyword">:in</code> <var>scale</var>])</span></dd>
+<dd><span class="syntax">(<code class="entry">hertz</code> <var>freq</var> 
+[<code class="keyword">:hz</code> <var>cool</var>]
+[<code class="keyword">:in</code> <var>tuning</var>]
+[<code class="keyword">:through</code> <var>scale</var>]
+)</span></dd>
 </dl>
 
 
 <p>
-Returns the Hertz value of <var>freq</var>, which can be a note, keynum, Hertz value or list of the same. 
-To specify <var>freq</var> in Hertz add the tag <code class="keyword">:hertz</code> or <code class="keyword">:hz</code> immediately after the value.
-
-If <var>in</var> is specified it sets the <var>scale</var> for resolving a note or keynum <var>freq</var>. The value of <var>in</var>
- defaults to the global variable <code>*scale*</code>, which is initially set to the standard chromatic scale.
+Returns the Hertz value of <var>freq</var>, which can be a note,
+keynum, Hertz value or list of the same. 
 </p>
+
+
+<p>
+<code class="entry">hertz</code> supports the following keyword parameters:
+</p>
+
+<dl>
+<dt><code class="keyword">:hz</code> <var>bool</var></dt>
+<dd>
+If <var>true</var> then a numerical <var>freq</var> is interpreted as
+a Hertz value rather than as a key number.
+</dd>
+
+<dt><code class="keyword">:in</code> <var>tuning</var></dt>
+<dd>
+The <a href="tuning-cls.html">tuning</a> to use.  Defaults to the
+global variable <a href="scale-var.html"><code>*scale*</code></a>.
+The parameters
+<code class="keyword">:in</code> and
+<code class="keyword">:through</code>
+are mutually exclusive.
+</dd>
+
+<dt><code class="keyword">:through</code> {<var>tuning</var>
+| <var>mode</var>}</dt>
+<dd>
+Filters <var>freq</var> through <var>tuning</var> or <var>mode</var>
+and returns the hertz value of the closest integer keynum.
+The parameters
+<code class="keyword">:in</code> and
+<code class="keyword">:through</code>
+are mutually exclusive.
+</dd>
+</dl>
 
 <!-- Interaction 1 -->
 <div class="float" id="repl_0-1">
 <pre class="shell">cm&gt; <span class="input">(hertz 'c4)</span>
-261.625
+<span class="output">261.625</span>
 cm&gt; <span class="input">(hertz 0)</span>
-8.175
+<span class="output">8.175</span>
 cm&gt; <span class="input">(hertz '(69 69.5 70))</span>
-(440.0 452.892 466.163)
+<span class="output">(440.0 452.892 466.163)</span>
 cm&gt;</pre>
 </div>
 
