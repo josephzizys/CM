@@ -78,27 +78,27 @@
 
 ;;; install cm scripts in bin directory
 
-(let ((scr1 (string-append cm-bin-directory "cm"))
-      (scr2 (string-append cm-bin-directory "xcm")))
-  (let ((exec
-         (format #f "~a -c '~s'"
-                 (first (command-line))
-                 `(begin
-                   (define cm-bin-directory , cm-bin-directory)
-                   (load , (string-append cm-directory "src/cm.scm"))
-                   (load , (string-append cm-bin-directory
-                                          "cminit.lisp"))
-                   (top-repl)))))
-    (if (not (file-exists? scr1))
-      (begin
-       (format #t "~%; Saving startup script: ~S" scr1)
-       (write-cm-script :linux scr1 exec)))
-    (if (not (file-exists? scr2))
-      (let ((el (string-append cm-directory
-                               "etc/xemacs/listener.el")))
-       (format #t "~%; Saving startup script: ~S" scr2)       
-       (write-xcm-script :linux "guile" scr2 scr1 el)
-       (format #t "~%")))))
+;; (let ((scr1 (string-append cm-bin-directory "cm"))
+;;       (scr2 (string-append cm-bin-directory "xcm")))
+;;   (let ((exec
+;;          (format #f "~a -c '~s'"
+;;                  (first (command-line))
+;;                  `(begin
+;;                    (define cm-bin-directory , cm-bin-directory)
+;;                    (load , (string-append cm-directory "src/cm.scm"))
+;;                    (load , (string-append cm-bin-directory
+;;                                           "cminit.lisp"))
+;;                    (top-repl)))))
+;;     (if (not (file-exists? scr1))
+;;       (begin
+;;        (format #t "~%; Saving startup script: ~S" scr1)
+;;        (write-cm-script :linux scr1 exec)))
+;;     (if (not (file-exists? scr2))
+;;       (let ((el (string-append cm-directory
+;;                                "etc/xemacs/listener.el")))
+;;        (format #t "~%; Saving startup script: ~S" scr2)       
+;;        (write-xcm-script :linux "guile" scr2 scr1 el)
+;;        (format #t "~%")))))
 
 
 
