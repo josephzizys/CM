@@ -10,17 +10,17 @@
 <body>
 <div id="content">
 
-
 <!-- Entry: "interpl" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><code>(<span class="entry">interpl</span></code> <var>x</var> <var>envelope</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
+<dd><code>(</code><code class="entry">interpl</code></code> <var>x</var> <var>envelope</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
 <p>
-Returns the y value of <var>x</var> in <var>envelope</var>, a list of
-x y coordinate values.  The return value can be optionally scaled and
-offset according to the keyword arguments.
+Returns the interpolated y value of <var>x</var>
+in <var>envelope</var>, a list of xy coordinate pairs.  The return
+value can be optionally scaled and offset according to the keyword
+arguments.
 </p>
 
 <p>
@@ -33,9 +33,9 @@ keyword arguments:
 <dd>
 If <var>number</var> is 1 then linear interpolation is performed.
 If <var>number</var> is greater or less than one then the return value
-is interpolated along an exponential exponential curve: values greater
-than 1 produce concave curves, values less than 1 but greater than 0
-produce convex curves. The default value is 1.
+follows an exponential where values greater than 1 produce concave
+curves and values less than 1 but greater than 0 produce convex
+curves. The default value is 1.
 </dd>
 
 <dt><code class="keyword">:scale</code> <var>number</var></dt>
@@ -48,7 +48,9 @@ value is 1.</dd>
 <dd>An alternate name for specifying an offset.</dd>
 
 <dt><code class="keyword">:max</code> <var>number</var></dt>
-<dd>Calculates the scaler as <var>max</var>-<var>min</var>.</dd>
+<dd>Sets the multiplier to <var>max</var>-<var>min</var>
+and the offset to <var>min</var>.
+</dd>
 
 </dl>
 
