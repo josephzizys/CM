@@ -361,19 +361,21 @@
   ;; insure ascending mode order in tuning
   ;; first place all notes in middle octave
   (set! notes (if (symbol? (car notes))
-                (map (function note)
-                     (map (function note-name) notes))
-                (map (function pitch-class) notes)))
+                (mapcar (lambda (n) 
+                          (or (note-name n tuning)
+                              (err "Note '~s' not defined in ~s."
+                                   n tuning)))
+                        notes)
+                (mapcar (lambda (k) (pitch-class k tuning)) notes)))
   (let* ((old (car notes))
          (pc? (number? old))
-         (oct (if pc? 0 (- (octave-number old)
-                           (scale-octave-offset tuning))))
+         (oct 0)
          (oth #f)
-         (res (list old)))
-    (dolist (n (rest notes))
+         (res '()))
+    (dolist (n notes) ;(rest notes)
       (if (scale< n old tuning)
         (set! oct (+ oct 1)))
-      (set! oth (octave-equivalent n oct))
+      (set! oth (octave-equivalent n oct tuning))
       (push (if pc? (cadr oth) (car oth)) res)
       (set! old n))
     (reverse! res)))
@@ -419,8 +421,8 @@
          (set! low (if (symbol? (car spec))
                      (sd-name (octave-equivalent (first spec) 0 owner))
                      (sd-keynum  (octave-equivalent (first spec) 0 owner)))))
-       ;(set! tonic (octave-equivalent (first spec) 0 owner))
-       ;(set! offset (sd-class tonic))
+       ;;(set! tonic (octave-equivalent (first spec) 0 owner))
+       ;;(set! offset (sd-class tonic))
        ;; if note names are passed in then we store typed intervals
        (if (and (eq? owner *chromatic-scale*)
                 (symbol? (car spec)))
@@ -429,12 +431,16 @@
                     (x (cdr spec) (cdr x)))
                    ((null? x) l)
                  (push (interval (car spec) (car x)) l)))
-         (set! steps
-               (do ((x spec (cdr x))
-                    (l '())
-                    (n (car spec)))
-                   ((null? x) l)
-                 (push (- (car x) n) l)))))
+         (begin
+          ;; convert note names to keynums if not chromatic scale
+          (when (symbol? (car spec))
+            (setf spec (keynum spec :in owner)))
+          (set! steps
+                (do ((x spec (cdr x))
+                     (l '())
+                     (n (car spec)))
+                    ((null? x) l)
+                  (push (- (car x) n) l))))))
       (begin
        ;; spec is interval distances between steps. the intervals
        ;; may be typed.
@@ -479,8 +485,8 @@
             do
 	    (list-set! into (interval-semitones step) degree))
       (set! (scale-into obj) into))
-    (print (list :low-> low))
-    (transpose obj low)))
+    ;(print (list :low-> low))
+    (transpose obj low owner)))
 
 ; (define o (new mode :steps '(2 1 2 1 2 1 2 1)))
 ; (define s (new mode :steps '(2 1 2 1 1)))
@@ -825,26 +831,26 @@
     (dopairs (sym val args)
       (case sym
         ((:hz) (set! hz? val))
-        ((:in :in? :from :through :to)
+        ((:in :in? :through :to)
          (when oper
-           (err "Found more than one of :in, :in?, :from or :through in ~s."
+           (err "More than one of: :in, :in? or :through in ~s."
                 (cons 'note args)))
          (if (eq? sym ':in?) (set! test? #t))
          (set! oper sym)
          (set! scale val))
         (else
-         (err "~s not a valid keyword: :hz :in :in? :through :from"  sym))))
+         (err "~s not a valid keyword: :hz :in :in? :through"  sym))))
     (unless scale (set! scale *scale*))
     (if (is-a? scale <mode>)
       (begin
+       ;; :in <mode> converts FROM modal coord to tuning keynum
        (if (eq? oper ':in)
-         (err "Not a tuning: ~s ~s." oper scale))
+         (set! oper ':from))
        (set! tuning (mode-tuning scale))
        (set! mode scale))
       (begin 
-       (if (eq? oper ':from)
-         (err "Not a mode: ~s ~s." oper scale))
        (set! tuning scale)))
+
     (if (pair? freq)
       (with-default-octave tuning
         (loop for f in freq 
@@ -887,26 +893,26 @@
     (dopairs (sym val args)
       (case sym
         ((:hz) (set! hz? val))
-        ((:in :in? :from :through)
+        ((:in :in? :through)
          (when oper
-           (err "Found more than one of :in, :in?, :from or :through in ~s."
+           (err "Found more than one of :in, :in? or :through in ~s."
                 (cons 'note args)))
          (if (eq? sym ':in?) (set! test? #t))
          (set! oper sym)
          (set! scale val))
         (else
-         (err "~s not a valid keyword: :hz :in :in? :through :from"
+         (err "~s not a valid keyword: :hz :in :in? :through"
               sym))))
     (unless scale (set! scale *scale*))
     (if (is-a? scale <mode>)
       (begin
+       ;; :in <mode> converts from modal coord to tuning keynum
        (if (eq? oper ':in)
-         (err "Not a tuning: ~s ~s." oper scale))
+         (set! oper ':from))
        (set! tuning (mode-tuning scale))
        (set! mode scale))
       (begin 
-       (if (or (eq? oper ':from)
-               (eq? oper ':through))
+       (if  (eq? oper ':through)
          (err "Not a mode: ~s ~s." oper scale))
        (set! tuning scale)))
     
