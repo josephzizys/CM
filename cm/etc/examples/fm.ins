@@ -14,9 +14,8 @@
                         &key (amplitude-env '(0 0 25 1 75 1 100 0))
                         (mratio 1) (index 1) (index-env '(0 1 100 1))
                         (degree 0) (distance 0) (reverb 0))
-  (let* ((srate *clm-srate* )
-         (beg (floor (* time srate)))
-         (end (+ beg (floor (* duration srate))) )
+  (let* ((beg (seconds->samples time))
+         (end (seconds->samples (+ time duration)))
          (car (make-oscil :frequency frequency))
          (mod (make-oscil :frequency (* frequency mratio)))
          (ampf (make-env :envelope amplitude-env :scaler amplitude 
