@@ -53,8 +53,9 @@ DESCRIPTION="
     via options and the following environment variables:
 
       CM_EDITOR
-        Name or path of an Emacs-compatible editor under which to run cm,
-        e.g. 'xemacs' or '/usr/bin/gnuclient'.  Same as -e option.
+        Name or path or command of an Emacs-compatible editor under which to
+        run cm, e.g. 'xemacs' or '/usr/bin/gnuclient' or '~/bin/xemacs -nw'.
+        Same as -e option.
 
       CM_RUNTIME
         Name or path of a Lisp or Scheme system to execute, e.g. 'clisp' or
@@ -317,8 +318,7 @@ fi
 export CM_ROOT_DIR="$LOC"
 export CM_ROOT="$LOC"		# backwards compat
 
-echo "$PATH"
-exit 0
+
 #
 # Platform Detection
 # ------------------
@@ -651,7 +651,7 @@ wintendofy () {
 }
 
 if [ "$EDITOR_OPT" ] ; then
-  if under_editor && ! imatch_end_token "$EDITOR_OPT" gnuclient ; then
+  if under_editor && [[ "$EDITOR_OPT" != *gnuclient* ]] ; then
     msg_i "Already running under emacs.  Looking for gnuclient(1)."
     GNUCLIENT=`resolve_bin gnuclient WARN`
     if [ ! "$GNUCLIENT" ] ; then
@@ -664,20 +664,21 @@ if [ "$EDITOR_OPT" ] ; then
   fi
 
   if [ "$EDITOR_OPT" ] ; then
-    if [[ "$EDITOR_OPT" == */* ]] ; then
-      thing=`real_path "$EDITOR_OPT"`
-      if [ ! "$thing" ] ; then
-        msg_e "No such file or directory: '$EDITOR_OPT'"
+    EDITOR_EXE=`echo "$EDITOR_OPT" | sed 's: -.*$::'`
+    EOPTS=`echo "$EDITOR_OPT" | sed 's: \(-.*\)$:¦\1:;s:^.*¦::'`
+    if [[ "$EDITOR_EXE" == */* ]] ; then
+      EDITOR_EXE=`real_path "$EDITOR_EXE"`
+      if [ ! "$EDITOR_EXE" ] ; then
+        msg_e "No such file or directory: '$EDITOR_EXE'"
       fi
     else
-      thing=`resolve_bin "$EDITOR_OPT" WARN`
+      EDITOR_EXE=`resolve_bin "$EDITOR_EXE" WARN`
     fi
-    if [ ! "$thing" ] ; then
-      msg_w "Command not found: '$EDITOR_OPT'.  Ignoring."
-    elif [ ! -f "$thing" -a ! -h "$thing" ] ; then
-      msg_w "Not a file or link: '$thing'.  Ignoring."
+    if [ ! "$EDITOR_EXE" ] ; then
+      msg_w "Command not found: '$EDITOR_EXE'.  Ignoring."
+    elif [ ! -f "$EDITOR_EXE" -a ! -h "$EDITOR_EXE" ] ; then
+      msg_w "Not a file or link: '$EDITOR_EXE'.  Ignoring."
     else
-      EDITOR_EXE="$thing"
       EL1="$LOC/etc/xemacs/listener.el"
       EL2="$LOC/etc/xemacs/cm.el"
       if test $CYGWIN_HACKS ; then
@@ -696,7 +697,7 @@ if [ "$EDITOR_OPT" ] ; then
       make_lisp_cmd
       LCM=`echo "$LISP_CMD" |tr -d "'" |sed 's:":\\\":g;'`
       INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
-      EDITOR_CMD="'$EDITOR_EXE' -eval '$INI'"
+      EDITOR_CMD="'$EDITOR_EXE' $EOPTS -eval '$INI'"
       if [[ "$EDITOR_EXE" == *client ]] ; then
         EDITOR_CMD="$EDITOR_CMD -batch"
       fi
