@@ -682,11 +682,16 @@
            opts file)
     file))
 
+(define *win-midi-player*
+  "C:\\Program Files\\Windows Media Player\\mplayer2.exe")
+
 (define (win-play-midi-file file . args)
   (let ((opts (if (null? args) ""
 		  (string-append  " " (car args)))))
-    (shell "C:\\Program Files\\Windows Media Player\\mplayer2.exe~a ~a"
-           opts file)
+    (if (file-exists? *win-midi-player*)
+      (shell "~a~a ~a" *win-midi-player* opts file)
+      (begin
+       (warn "The MIDI player ~s does not exist. Set the variable *win-midi-player* to the pathname (string) of a MIDI player on your machine and try again.")))  
     file))
 
 (define (osx-play-midi-file file . args)
