@@ -106,12 +106,12 @@
   (set! (clm-args io) args)
   (values))
 
-
 (define-method (initialize-io (io <clm-stream>))
-  (format (io-open io)
-	  ";;; ~a output on ~a~%"
-	  (cm-version)
-	  (date-and-time)))
+  (when (eq? (io-direction io) ':output)
+    (format (io-open io)
+            ";;; ~a output on ~a~%"
+            (cm-version)
+            (date-and-time))))
 
 ;;; a default player for clm files.
 
@@ -273,7 +273,7 @@
   '((let import-let)
     (let* import-let)
     (progn import-progn)
-    (with-sound import-with-sound)))
+    (clm:with-sound import-with-sound)))
 
 
 ;; import-form translates list expressions whose first element
@@ -281,13 +281,13 @@
 ;; with it, or whose first element can be found on the :translations list.
 
 (define (import-form form translate exclude include . args)
-  (with-args (args &optinoal toplevel?)
+  (with-args (args &optional toplevel?)
     (let ((sym (car form)))
       (if (or (not (symbol? sym))
               (and toplevel? (member sym exclude)))
         #f
         (let* ((obj (find-class sym #f))
-               (pars (and obj (object-parameters obj))))
+               (pars (and obj (class-parameters obj))))
           (if pars
             (import-object pars form)
             (let ((trans (assoc sym translate)))
@@ -338,32 +338,27 @@
   ;; a NEW expression that creates the object. expressions in the
   ;;body of form are parsed according to the object's parameters.
   (let ((save forms)
-        (name #f)
+        (name (pop forms))
         (reqs #f)
         (opts #f)
         (rest #f)
         (keys #f))
 
-    ;; dont process INS as slot value
-    (if (eq? (parameter-slot (first pars)) 'ins)
-      (begin (pop pars)
-             (set! name (pop forms)))
-      (err "Expected INS as first parameter in ~s." pars))
     (set! reqs
           (loop with par 
              while (and (not (null? forms))
                         (eq? (parameter-type (car pars))
-                             ':required))
+                             'required))
              do (set! par (pop pars))
              collect (parameter-slot par) collect (pop forms)))
     (set! opts
           (loop with par while (and (not (null? forms))
                                     (eq? (parameter-type (car pars)) 
-                                         ':optional))
+                                         'optional))
              do (set! par (pop pars))
              collect (parameter-slot par) collect (pop forms)))
     (when (and (not (null? forms))
-               (eq? (parameter-type (car pars)) ':rest))
+               (eq? (parameter-type (car pars)) 'rest))
       (set! rest forms)
       (pop pars))
     (set! keys
@@ -371,7 +366,7 @@
              while (not (null? forms))
              do
                (set! par (find (car forms) pars 
-                               :key (function parameter-print)))
+                               :key (function parameter-prefix)))
                (or par
                    (err "No slot for ~s in ~s." (car forms) save))
              collect (parameter-slot par) collect (cadr forms)
@@ -379,8 +374,65 @@
     `(push (new ,name ,@reqs ,@opts ,@rest ,@keys)
            *clm-imports*)))
 
-;(define-method (object-parameters (obj <class>)) ; standard-class
-;  (object-parameters (class-prototype obj)))
-
+(define-method (import-events (io <clm-stream>) . args)
+  (with-args (args &key (output #f)
+                   (translations *clm-import-translations*)
+                   (include ()) (exclude ()) (seq #t))
+    (let* ((clmname (io-filename io))
+           (seqname (format nil "from-~a"
+                            (filename-name clmname)))
+           (*print-case* ':downcase)
+           (fprint (lambda (f s)
+                     (format s "~S~%" f)))
+           (outfil #f))
+      (unless output
+        (set! output
+              (string-append (filename-directory clmname)
+                             (filename-name clmname)
+                             ".cm")))
+      (unless (or (eq? include #t) (list? include))
+        (err ":include value not ~s or list: ~s" #t include))
+      (unless (list? exclude)
+        (err ":exclude value not list: ~s." exclude))
+      (set! outfil (open-file output :output))
+      ;; read each form in clm and and add objects to output file.
+      (with-open-io (infil io :input)
+        (set! infil (io-open io))
+        (format outfil ";;; Imported from ~s on ~a~%" 
+                clmname (date-and-time))
+        (fprint `(set! *clm-imports* (list)) outfil)
+        (loop with trans and flag 
+           for form = (read-form infil)
+           until (eof-marker? form)
+           when (and (pair? form)
+                     (symbol? (car form)))
+           do
+           ;; update include list with interal defmacro or defun 
+           ;; definitions unless the names are specifically exluded.
+           (unless (eq? include #t)     ; doing all anyway
+             (when (member (car form) '(defun defmacro define))
+               (unless (member (cadr form) exclude)
+                 (unless (member (cadr form) include)
+                   (push (cadr form) include)))))
+           (multiple-value-setq (trans flag) 
+             (import-form form translations exclude include #t))
+           (when trans
+             (if flag              ; if T then splice in translations.
+               (dolist (x trans)
+                 (fprint x outfil))
+               (fprint trans outfil))))
+        ;; value of imports is either a seq or a list of objects.
+        (if seq
+          (fprint `(set! *clm-imports* 
+                         (new seq :name ,(if (eq? seq #t)
+                                             seqname `(quote ,seq))
+                              :subobjects (reverse! *clm-imports*)))
+                  outfil)
+          (fprint `(set! *clm-imports* (reverse! *clm-imports*))
+                  outfil)))
+      (close-file outfil ':output)
+      (set! *clm-imports* (list))
+      (load output)
+      *clm-imports*)))
 
 
