@@ -209,6 +209,15 @@ pre.shell {
   background: #f7f7f7;
 }
 
+p.wrapshell {
+  margin: 0px;
+  font-style: normal;
+  font-family: monospace;
+  padding: .5em .5em;
+  border: 1px solid gray;
+  background: #f7f7f7;
+}
+
 /* specific to dictionary */
 
 ul.dictindex { 
