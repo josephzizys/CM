@@ -122,11 +122,11 @@ imatch_end_token () {
   test `echo $1 | tr '[A-Z]' '[a-z]' | sed 's/.*[^a-z]//;'` = $2
 }
 
-msg_i () { echo "[Notice ]  $*" > /dev/stderr ;         }
-msg_w () { echo "[Warning]  $*" > /dev/stderr ;         }
-msg_e () { echo "[Error  ]  $*" > /dev/stderr ;         }
-msg_f () { echo "[Fatal  ]  $*" > /dev/stderr ;         }
-msg_x () { echo "$*"            > /dev/stderr ; exit 1; }
+msg_i () { echo "[Notice ]  $*" >> /dev/stderr ;         }
+msg_w () { echo "[Warning]  $*" >> /dev/stderr ;         }
+msg_e () { echo "[Error  ]  $*" >> /dev/stderr ;         }
+msg_f () { echo "[Fatal  ]  $*" >> /dev/stderr ;         }
+msg_x () { echo "$*"            >> /dev/stderr ; exit 1; }
 
 canonicalize_string () {
   echo $* | tr 'A-Z/ ' 'a-z_'
@@ -370,40 +370,44 @@ find_lisp () {
 }
 
 get_lisp_info () {
-  # This is ugly, wasteful and probably requires future maintenance :(
-  case "$1" in
-    *clisp*|*CLISP*)
-      vrs=`"$1" --version | head -1 | cut -d' ' -f3`
-      min=`echo -e "$vrs\n2.31" | sort -n | head -1`
-      if [ $min != 2.31 ] ; then
-        msg_f "$1: version '$vrs' unsupported."
-        msg_i "Need clisp with -repl option (version 2.31 or higher)."
-        msg_x "Aborting."
-      fi
-      echo clisp_$vrs
-      ;;
-    *acl*|*ACL*)
-      echo acl_`echo '(lisp-implementation-version)' | "$1" -batch | sed -n 's/^.*"\([0-9.]*\) .*/\1/p'`
-      ;;
-    *lisp*|*LISP*|*cmucl*|*CMUCL*)
-      echo cmucl_`echo '(lisp-implementation-version)' | "$1" -quiet -batch | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p;'`
-      ;;
-    *openmcl*|*OPENMCL*|*dppccl*)
-      echo openmcl_`echo '(lisp-implementation-version)' | "$1" -b | sed -n 's/.* \([-0-9.]*\)".*/\1/p'` 
-      ;;
-    *guile*)
-      LISP_DIA=SCHEME
-      echo guile_`"$1" --version | head -1 | cut -d' ' -f2`
-      ;;
-    *)
-      if [ $LISP_FLV -a $LISP_VRS ] ; then
-        echo ${LISP_FLV}_${LISP_VRS}
-      else
-        msg_e "Unknown implementation '$1'.  Re-run with -F and -V options."
-        msg_x "Exiting."
-      fi
-      ;;
-  esac
+  if test $LISP_FLV && test $LISP_VRS ; then
+    echo ${LISP_FLV}_${LISP_VRS}
+  else
+    # This is ugly, wasteful and probably requires future maintenance :(
+    case "$1" in
+      *clisp*|*CLISP*)
+        vrs=`"$1" --version | head -1 | cut -d' ' -f3`
+        min=`echo -e "$vrs\n2.31" | sort -n | head -1`
+        if [ $min != 2.31 ] ; then
+          msg_f "$1: version '$vrs' unsupported."
+          msg_i "Need clisp with -repl option (version 2.31 or higher)."
+          msg_x "Aborting."
+        fi
+        echo clisp_$vrs
+        ;;
+      *acl*|*ACL*)
+        echo acl_`echo '(lisp-implementation-version)' | "$1" -batch | sed -n 's/^.*"\([0-9.]*\) .*/\1/p'`
+        ;;
+      *lisp*|*LISP*|*cmucl*|*CMUCL*)
+        echo cmucl_`echo '(lisp-implementation-version)' | "$1" -quiet -batch | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p;'`
+        ;;
+      *openmcl*|*OPENMCL*|*dppccl*)
+        echo openmcl_`echo '(lisp-implementation-version)' | "$1" -b | sed -n 's/.* \([-0-9.]*\)".*/\1/p'` 
+        ;;
+      *guile*)
+        LISP_DIA=SCHEME
+        echo guile_`"$1" --version | head -1 | cut -d' ' -f2`
+        ;;
+      *)
+        if [ $LISP_FLV -a $LISP_VRS ] ; then
+          echo ${LISP_FLV}_${LISP_VRS}
+        else
+          msg_e "Unknown implementation '$1'.  Re-run with -F and -V options."
+          msg_x "Exiting."
+        fi
+        ;;
+    esac
+  fi
 }
 
 if [ "$LISP_OPT" ] ; then
@@ -460,7 +464,7 @@ if [ "$LISP_OPT" ] ; then
     else
       LISP_IMG=
       LOAD=1
-    fi        
+    fi
   fi
 else
   if ls "$LOC"/bin/*_*_$CM_PLATFORM/$IMG_NAME >/dev/null 2>&1; then
