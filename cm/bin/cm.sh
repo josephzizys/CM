@@ -665,7 +665,7 @@ if [ "$EDITOR_OPT" ] ; then
 
   if [ "$EDITOR_OPT" ] ; then
     EDITOR_EXE=`echo "$EDITOR_OPT" | sed 's: -.*$::'`
-    EOPTS=`echo "$EDITOR_OPT" | sed 's: \(-.*\)$:¦\1:;s:^.*¦::'`
+    EOPTS=`echo "$EDITOR_OPT" | sed 's:\( -.*\)\?$:¦\1:;s:^.*¦ *::'`
     if [[ "$EDITOR_EXE" == */* ]] ; then
       EDITOR_EXE=`real_path "$EDITOR_EXE"`
       if [ ! "$EDITOR_EXE" ] ; then
