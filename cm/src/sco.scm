@@ -83,7 +83,7 @@
 (define *csound* "/usr/local/bin/csound")
 
 (define (play-sco-file file . args)
-  (with-args (args &key orchestra options output play)
+  (with-args (args &key orchestra options output play?)
     (let ((cmd *csound*))
       (when options
         (set! cmd (string-append cmd " " options)))
@@ -93,7 +93,7 @@
       (set! cmd (string-append cmd " " file))
       (shell cmd)
       ;; dont play if output is piped     
-      (when (and play (not (member output 
+      (when (and play? (not (member output 
                                    '("devaudio" "dac" "stdout"))))
         (shell (format #f "/usr/bin/play ~a" output))))))
 
