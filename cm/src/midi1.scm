@@ -859,15 +859,17 @@
                                 (if (< l #x10000000) 4
                                     (err "Illegal length: ~s" l))))))
             (set! d (make-vector (+ v l) 0 ))
-            (loop for i below v
-                  for offs from (* (1- v) 7) by -7
-                  do (vector-set! d i
-                                  (if (= offs 0)
-                                    (ldb (byte 7 offs) l)
-                                    (logior (ldb (byte 7 offs) l) #x80))))
-            (loop for i from v
-                  for b in data-bytes
-                  do (vector-set! d i b))
+            (do ((i 0 (+ 1 i))
+                 (offs (* (- v 1) 7) (- offs 7)))
+                ((not (< i v)) #f)
+              (vector-set! d i
+                           (if (= offs 0)
+                             (ldb (byte 7 offs) l)
+                             (logior (ldb (byte 7 offs) l) #x80))))
+            (do ((i v (+ i 1))
+                 (b data-bytes (cdr data-bytes)))
+                ((null? b) #f)
+              (vector-set! d i (car b)))
             d)))
 
 (define (meta-message-p message)
