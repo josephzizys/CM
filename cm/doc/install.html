@@ -302,49 +302,76 @@ implementations loading cm.lisp first <em>compiles</em> source files
 into an efficient (binary) representation and then loads them into
 Lisp.
 </p>
-
-<p>
-Once the build process completes, a saved Lisp image file containing
-Common Music and supporting runtime files have been saved in CM's
-runtime directory, which (by default) is the bin/ subdirectory under
-the CM installation directory.
-</p>
 </li>
 
 <li>
-Depending on which Lisp implementation you use, your Lisp may or moy
-not automatically exit after an image file has been saved.  Even if
-your Lisp did not exit automatically you should do so and then restart
-Lisp with the freshly saved Common Music application image as
-discussed in <a href="#run_cm">Section 4</a>.
+
+Once the load process completes you can switch to the CM package using
+the <code>cm</code> function. This will allow you to easily access all
+the symbols and functions defined in Common Music. You can then use
+the <code>quit</code> function to quit Common Music and Lisp.
 
 <div class="float">
 <p class="captxt">
-Quitting the build session in Clisp/OSX:
+Switching to the CM package.
 </p>
-<pre class="shell"><em>[...lots of printout deleted...]</em>
-; Loading /Lisp/cm-2.4.0/bin/cmn.fas.
-; Copying application files...
+<pre class="shell">? <span class="input">(cm)</span>
+
+ /\\\          
+---\\\---------
+----\\\--------
+----/\\\------- Common Music 2.4.0
+---/--\\\------
+--/----\\\-----
+ /      \\\/   
+
+? <span class="input">(quit)</span>
+%
+</pre>
+</div>
+
+<h3 id="build_scripts">Saving a Lisp Image and Customized Builds</h3> 
+
+<p>
+A Lisp <em>image file</em> containing Common Music can be saved in
+CM's binary directory. A saved image file starts slightly faster than
+loading CM from its compiled files but is generally less flexible.
+</p>
+
+<ol>
+<li>
+To save a Lisp image file, start Lisp and then load "make.lisp" from
+the src/ subdirectory. Then call the <a
+href="dict/make-cm-fn.html">make-cm</a> function with
+its <code>:save-image</code> parameter specified as <code>t</code>:
+
+<div class="float">
+<p class="captxt">
+Saving a lisp image.
+</p>
+
+<pre class="shell">? <span class="input">(load "/Lisp/cm-2.4.0/src/make.lisp")</span>
+; Loading /Lisp/cm-2.4.0/src/make.fasl
+? (make-cm :save-image t)
+<em>[...lots of printout deleted...]</em>
 ; Removing fasl files.
 ; Garbage collecting...
 ; Saving application image.
-;; Loaded file /Lisp/cm-2.4.0/src/cm.lisp
-T
-[2]&gt; <span class="input">(quit)</span>
-Bye.
-% 
-</pre>
+; Bye!
+%</pre>
 </div>
+</li>
+
+<li>
+Once the system loads and saves an image you will automatically exit
+Lisp.  You can then restart Lisp with your freshly saved Common Music
+image as discussed in <a href="#run_cm">Section 4</a>.
 </li>
 </ol>
 
-<h3 id="build_scripts">Customized Builds</h3> 
 <p>
-The build process documented in this section has saved a Common Music
-application image in the default configuration. To learn about the
-various build options, or about how to customize the build process
-itself, see the documentation on <a
-href="dict/make-cm-fn.html">make-cm</a> for additional information.
+See the documentation on <a href="dict/make-cm-fn.html">make-cm</a>
+for more information about the various build options.
 </p>
 
 <h2 id="run_cm">4. Running the Common Music application</h2>

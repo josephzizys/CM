@@ -16,7 +16,7 @@
 <dt>[Function]</dt>
 <dd><span class="syntax">(<code class="entry">make-cm</code> 
 [<code class="keyword">:prompt</code> <var>bool</var>] 
-[<code class="keyword">:run-directory</code> <var>dir</var>] 
+[<code class="keyword">:bin-directory</code> <var>dir</var>] 
 [<code class="keyword">:scheme</code> <var>bool</var>]
 [<code class="keyword">:save-image</code> <var>bool</var>] 
 [<code class="keyword">:delete-fasls</code> <var>bool</var>] 
@@ -49,16 +49,16 @@ build parameter not specified to the function. If the value is
 default value is <var>false</var>.
 </dd>
 
-<dt><code class="keyword">:run-directory</code> {<var>string</var> |
+<dt><code class="keyword">:bin-directory</code> {<var>string</var> |
 <var>true</var> | <var>false</var>}</dt>
 <dd>
-The full pathname to the directory where the compiled files, the
-Common Music image file, and runtime files will be saved. You must
+The full pathname to the directory where the compiled files and/or
+the Common Music image file will be saved. You must
 have write permission in this directory. If the value is
-<var>false</var> (or if you do not have write permission in the run
+<var>false</var> (or if you do not have write permission in the bin
 directory) then no compilation or image saving will occur but source
 files will still be loaded.  If the value is <var>true</var> or if the
-build parameter is not specified then the run directory is set to the
+build parameter is not specified then the bin directory is set to the
 bin/ subdirectory in the Common Music installation directory.  The
 default value is <var>true</var>.
 </dd>
@@ -144,16 +144,14 @@ returns without doing anything. The default value is <var>false</var>.
 
 <!-- Interaction -->
 <div class="float" >
-<p class="captxt">Build using custom run directory and not deleting compiled files 
+<p class="captxt">Build using custom bin directory and not deleting compiled files 
  after image save.</p>
 <pre class="shell">&gt; <span class="input">(load "/Lisp/cm-2.4.0/src/make.lisp")</span>
 #P"/Lisp/cm-2.4.0/src/make.lisp"
-&gt; <span class="input">(make-cm :run-directory "/Lisp/bin/cm" :delete-fasls nil)</span>
+&gt; <span class="input">(make-cm :bin-directory "/Lisp/bin/cm" :delete-fasls nil)</span>
 ; Compiling /Lisp/cm-2.4.0/src/clm-stubs.lisp.
 ; Loading /Lisp/bin/cm-2.4.0/clm-stubs.pfsl.
 <em>[...build output deleted...]</em>
-; Saving start-up script '/Lisp/bin/cm-2.4.0/cm'.
-; Copying application files...
 ; Garbage collecting...
 </pre>
 </div>
@@ -168,31 +166,28 @@ Making Common Music from '/Lisp/cm-2.4.0/'.
 Type '?' for help, '^' to abort and
 Return to accept defaults shown in [].
 
-Runtime directory: [/Lisp/cm-2.4.0/bin/] <span class="input">?</span>
-Type the full pathname to the directory that you want
-compiled files, the Common Music image file, and runtime
-files to be saved in. You must have write permission in
-this directory.
-Runtime directory: [/Lisp/cm-2.4.0/bin/] 
+Binary directory: [/Lisp/cm-2.4.0/bin/] <span class="input">?</span>
+Type the full pathname to the directory that you want compiled files
+and/or the Common Music image file to be saved in. You must have write
+permission in this directory. 
+Binary directory: [/Lisp/cm-2.4.0/bin/]
 Include Scheme compatibility? (Y/N): [Y] 
-Save CM image file? (Y/N/:if-no-compile): [Y] 
+Save CM image file? (Y/N/:if-no-compile): [Y]
 Delete compiled files after saving image?: [Y] <span class="input">n</span>
-Save shell command to start CM application? (Y/N/file): [Y] 
 Making Common Music with build parameters:
-  :run-directory "/Lisp/cm-2.4.0/bin/"
+  :bin-directory "/Lisp/cm-2.4.0/bin/"
   :scheme t
   :save-image t
   :delete-fasls nil
-  :run-command t
 
 Are these values correct? (Y/N): <span class="input">y</span>
 
 ; Compiling /Lisp/cm-2.4.0/src/clm-stubs.lisp.
 ; Loading /Lisp/cm-2.4.0/bin:/clm-stubs.pfsl.
 <em>[...build output deleted...]</em>
-; Saving start-up script '/Lisp/cm-2.4.0/bin/cm'.
-; Copying application files...
 ; Garbage collecting...
+; Saving application image.
+; Bye!
 </pre>
 </div>
 
