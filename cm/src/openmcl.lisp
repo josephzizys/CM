@@ -26,7 +26,7 @@
           ccl:open-shared-library ; needed if loading clm into cm.
           ;ccl:process-run-function
           ;ccl:process-kill
-          ccl:defcallback
+          ;ccl:defcallback
           #+:openmcl-partial-mop
           ccl:class-slots
           #+:openmcl-partial-mop
@@ -209,6 +209,51 @@
                           ))))
   (ccl:save-application path :application-class (find-class 'cm)))
 
+;;;
+;;; midishare callbacks moved here.
+;;;
 
+(ccl:defcallback run-proc (:unsigned-fullword date :unsigned-halfword refnum
+                                              :unsigned-fullword indx
+                                              :unsigned-fullword arg1
+                                              :unsigned-fullword arg2)
+  (declare (ignore arg1 arg2)
+           (function rem-proc)
+           (special *qstart* *qtime* *qnext* *proctable*))
+  (setf *qstart* 0)                     ; unused here
+  (setf *qtime* date)                   ; current time
+  (setf *qnext* date)                   ; 'wait' sets this ahead.
+  ;; funcall the process fn until its next run time is
+  ;; in the future or the process is dead (returned nil)
+  (do ((proc (elt *proctable* indx))
+       (alive t))
+      ((or (not alive)                 ; stop if process killed itself
+           (> *qnext* *qtime*))        ; or need to reschedule
+       (if alive
+         (ms:MidiTask run-proc *qnext* refnum indx 0 0)
+         (rem-proc indx))
+       (values))
+    (setq alive (funcall proc))))
 
-
+(ccl:defcallback midi-receive-hook (:unsigned-halfword refnum)
+  (declare (special *receive-hook* *mp*))
+  (restart-case
+      (handler-bind ((error
+                      #'(lambda (c)
+                          (declare (ignore c))
+                          (invoke-restart 'callback-error-exit))))
+        ;;; the receive loop...
+        (do ((go t)
+             (ev (ms:MidiGetEv refnum) (ms:MidiGetEv refnum)))
+            ((or (not go) (ms:nullptrp ev))
+             (values))
+          (if *receive-hook*
+            (funcall *receive-hook* ev)
+            (setf go nil))))
+    (callback-error-exit () 
+      (format t "~&Caught error under MIDI callback! Exiting receive.~&")
+      ;;(ms:MidiFreeEv e)
+      (ms:MidiFlushEvs *mp*)
+      (setf *receive-hook* nil)
+      (ms:MidiSetRcvAlarm *mp* (ms:nullptr))
+      (values))))
