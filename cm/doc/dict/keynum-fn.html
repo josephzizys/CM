@@ -13,113 +13,100 @@
 <!-- Entry: "keynum" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">keynum</code> <var>freq</var>
-[<code class="keyword">:hz</code> <var>bool</var>]
-[<code class="keyword">:in</code> <var>tuning</var>]
-[<code class="keyword">:in?</code> <var>scale</var>]
-[<code class="keyword">:to</code> <var>mode</var>]
-[<code class="keyword">:through</code> <var>stale</var>])</span></dd>
+<dd><code>(</code><code class="entry">keynum</code> <var>freq</var> . <var>keywords</var><code>)</code></dd>
 </dl>
 
+<p>
+Returns the key number of <var>freq</var>, which can be a note name,
+key number, Hertz value or list of the same. If <var>freq</var> is in
+Hertz then the return value will be a <em>floating point keynum</em>
+where the fractional portion times 100 represents that may cents above
+the integer keynum. For example, the floating point keynum 60.5 stands
+for the Hertz value 50 cents above Middle C, or 269.291 Hz.
+</p>
 
 <p>
-Returns the key number of <var>freq</var>, which can be a note, key
-number, Hertz value or list of the same.  For equal tempered
-tunings, <code>keynum</code> may return a floating point number with a
-non-zero fractional part. In the standard chromatic scale the
-fractional value multiplied by 100 is equivalent to cents above the
-the integer keynum. To return only integer keynums use the <code
-class="keyword">:through</code> parameter.
-
-<p>
-<code class="entry">keynum</code> supports the following keyword parameters:
+<code class="entry">keynum</code> supports the following keyword arguments:
 </p>
 
 <dl>
-<dt><code class="keyword">:hz</code> <var>bool</var></dt>
+<dt><code class="keyword">:hz</code> <var>boolean</var></dt>
 <dd>
 If <var>true</var> then a numerical <var>freq</var> is interpreted as
 a Hertz value rather than as a key number.
 </dd>
 
-<dt><code class="keyword">:in</code> {<var>tuning</var> | <var>mode</var>}</dt>
+<dt><code class="keyword">:in</code> {<a href="tuning-cls.html"> <var>tuning</var></a> | <a href="mode-cls.html"> <var>mode</var></a>}</dt>
 <dd>
-The <a href="tuning-cls.html">tuning</a> or
-<a href="mode-cls.html">mode</a> to use, defaults to the global
-variable <a href="scale-var.html"><code>*scale*</code></a>.  If a mode
-is specified then <var>freq</var> must be a keynum in modal
-coordinates and the keynum returned by the function will be in tuning
-coordinates.
+The tuning or mode to return the key number from. The value defaults
+to the global variable <a
+href="scale-var.html"><code>*scale*</code></a>.  If <var>mode</var> is
+specified then <var>freq</var> is a modal key number and the value
+returned is the equivalent key number in the mode's tuning.
 </dd>
 
-<dt><code class="keyword">:in?</code>
-{<var>tuning</var> | <var>mode</var>}</dt>
+<dt><code class="keyword">:in?</code>  {<a
+href="tuning-cls.html"> <var>tuning</var></a> | <a
+href="mode-cls.html"> <var>mode</var></a>}</dt>
 <dd>
-Tests if <var>freq</var> references a keynum in the specified tuning
-or mode. Returns that value or <var>false</var>.  
+Tests if <var>freq</var> references a key number in 
+<var>tuning</var> or <var>mode</var>. Returns the key number
+or <var>false</var>.
 </dd>
 
 <dt><code class="keyword">:to</code> <var>mode</var></dt>
 <dd>
-Forces <var>freq</var> to the closer integer keynum in <var>mode</var>
-and returns that value in modal coordinates.  
+Forces <var>freq</var> to the closet key number in <var>mode</var>.
 </dd>
 
-<dt><code class="keyword">:through</code> {<var>tuning</var>
-| <var>mode</var>}</dt>
+<dt><code class="keyword">:through</code> {<a
+href="tuning-cls.html"> <var>tuning</var></a> | <a
+href="mode-cls.html"> <var>mode</var></a>}</dt>
 <dd>
 Filters <var>freq</var> through <var>tuning</var> or <var>mode</var>
-and returns the closest integer keynum in tuning coodinates.  
+and returns the closest integer tuning keynum.
 </dd>
-
-<!-- dt><code class="keyword">:from</code> <var>mode</var></dt>
-<dd>
-Converts a key number <var>freq</var> specified in <var>mode</var>'s
-coordinates into a keynum in the mode's tuning.  
-</dd -->
 
 </dl>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from or to its equivalent position in the specified scales. 
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Converting Hertz and note names to keynums.
+</p>
+<pre class="code">
+(keynum 'c4)
+<span class="result">&rArr;</span> 60
+(keynum 440 <span class="keyword">:hz</span> #t)
+<span class="result">&rArr;</span> 69
+(keynum 446.4 <span class="keyword">:hz</span> #t)
+<span class="result">&rArr;</span> 69.25
+(keynum 446.4 <span class="keyword">:hz</span> #t <span class="keyword">:through</span> *scale*)
+<span class="result">&rArr;</span> 69
+(keynum '(cs5 ds fs gs as cs6))
+<span class="result">&rArr;</span> (73 75 78 80 82 85)
+</pre>
+</div>
 
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(keynum 'c4)</span>
-60
-cm&gt; <span class="input">(keynum 440 :hertz)</span>
-69.0
-cm&gt; <span class="input">(keynum 452.893 :hz)</span>
-69.5
-cm&gt; <span class="input">(keynum '(cs5 ds fs gs as cs6))</span>
-(73 75 78 80 82 85)
-cm&gt;</pre>
-</div>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Modal keynums.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">dorian</span> (<a href="new-mac.html">new</a> <a href="mode-cls.html">mode</a> <span class="keyword">:notes</span> '(c d ef f g a b c)))
 
+(keynum 60 <span class="keyword">:to</span> dorian)
+<span class="result">&rArr;</span> 35
+(keynum 35 <span class="keyword">:in</span> dorian)
+<span class="result">&rArr;</span> 60
+(keynum 61 <span class="keyword">:in?</span> dorian)
+<span class="result">&rArr;</span> #f
+(keynum 61 <span class="keyword">:through</span> dorian)
+<span class="result">&rArr;</span> 60
+</pre>
+</div>
 
 <!-- See also -->
 <h4>See Also:</h4>
