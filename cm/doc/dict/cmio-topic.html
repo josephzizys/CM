@@ -16,23 +16,28 @@
 </dl>
 
 <p>
-The CMIO (Common Music Input/Output) window is a graphical tool for
-generating musical event data to and from sound synthesis and display
-applications. The intial contents of the window's various tabbed pages
-can be preset by passing field values to the <a href="cmio-fn.html">cmio
-function</a> when the window is created. Since the target pages and
-the window's Systems and Files pages allows these systems be
-dynamically configured and loaded into Common Music. 
+The CMIO (Common Music Input/Output) window is a graphical tool
+designed to facilitate the generation of musical event data to and
+from sound synthesis and display applications.  Which applications are
+active in the window at any given time depend on what software systems
+have been loaded into Common Music; the window's Systems and Files
+pages can be used to dynamically configure and load external software
+such as CLM, CMN and Midishare once the window is open.
+<!-- More that one CMIO window may be open at the same time and the state
+--> In addition, the precise characteristics of the various tabbed
+pages of the interface can be customized by passing appropriate
+arguments to the <a href="cmio-fn.html">cmio</a> function when the
+window is created.
 
 <h2>Window Layout</h2>
 
 <p>
-The CMIO window is divided into four main components:
+A CMIO window consists of four GUI components:
 </p>
 
 <ul>
-<li>A <em>Sources</em> frame holds tabbed <em>pages</em> that relate
-to creating and generating event data.</li>
+<li>A <em>Sources</em> frame holds tabbed pages that relate to
+creating and generating event data.</li>
 
 <li>A <em>Targets</em> frame holds tab pages related to sound sysnthesis and
 display configurations.
@@ -42,14 +47,16 @@ An <em>Executive</em> frame manages the system's working directory and current
 input/output file. <!-- The Execute button triggers actions on files
 according to user-defined semantics. -->
 </li>
-<li>A message line displays information related to the ongoing tasks
-executed inside the window.</li>
+<li>A message line displays color coded information related to the
+ongoing work inside the window.</li>
 </ul>
 
 <p>
 Each tabbed page contains a set of <em>fields</em> representing the
-input/output features of a given application. The right-justified
-pages relate to more general features in the window or Lisp environment.
+input/output features of a given application. Left-justified page tabs
+acess pages devoted to specific tasks and applications; the
+right-justified pages relate to more general features of the window or
+the Lisp environment.
 </p>
 
 <div class="float" id="example1">
@@ -65,8 +72,7 @@ the currently selected target.
 </p>
 </div>
 
-<h3>Colorized Fields </h3>
-A few coloration rules provide additional information about how fields on a page work:
+Some simple coloration rules provide information about how fields work:
 <ul>
 <li>Blue labels mark <em>required</em> fields that must contain infomation
 before the page can execute.
@@ -78,32 +84,38 @@ Yellow backgrounds indicate fields that will be
 </li>
 
 <li>
-White backgrounds indicate fields that should contain plain text or
-are <em>read</em> to produce a Lisp value. It is possible to force
-evaluation in a white field by using the special #.<em>expr </em>
-notation, where <em>expr</em> is an expression to be evaluated for
-the contents of the field.
+White backgrounds indicate fields that either contain uninterpreted
+text or are <em>read</em> to produce a Lisp value. It is possible to
+force evaluation in a white field using the #.<em>expr </em> notation,
+where <em>expr</em> is evaluated to produce the contents
+of the field.
 </li>
 
 <li>
-The Message line uses syntax highlighting to classify the type
-of message displayed: green represents a normal message or
-sucessful completion of a command, yellow indicates a warning
-or notification, red signifies an error condition.
+The Message line uses colors to classify the type of message
+displayed: green represents a normal message, yellow indicates a
+warning or notification, red signifies an error condition.
 </li>
 </ul>
 
-<h3>Error handling and notification</h3>
+<h2>Error handling and notification</h2>
 <p>
-A CMIO window simply facilitates tasks that would otherwise be
-accomplished by evaluating expressinos in the Lisp interpreter.  As
-such, its actions and data specification are all accplished using the
-normal Lisp.  However, the windnow itself accomplishes its task via
-GTK <em>callbacks</em> which involves the (foreign) execution of Lisp
-code. Generating Lisp errors under foreign callbacks is generally a
-bad thing because the Lisp process  may become unresponsive or simply terminate
-execution without allowing the user to save current state. For this reason, most function
-calls under CMIO involve a <em>safe evaluation</em>, in which errors are reported but not
+A CMIO window facilitates musical tasks that would otherwise be
+accomplished by evaluating Lisp expressions in the REPL. Under normal
+conditions, evaulation errors in the REPL cause execution to stop and
+the user is allowed to debug or resolve the error from inside
+a <em>break </em> loop.  However, a CMIO window executes its windowing
+operations via foreign function <em>callbacks</em> that do not expect
+their flow of control to ever be interrupted. This means that
+generating Lisp error breaks from inside a CMIO window will likely
+cause the window to freeze and in sever cases may even cause the Lisp
+session to immediately terminate. For this reason a CMIO window
+attempts to evaluate Lisp functions in such a way that error messages
+are reported in its Message line without ever entering Lisp's error
+break loop. If you need to enter the Lisp break loop to debug a
+problem then set <code>*cm-break-on-errors*</code> to true, but
+realize that once the break is entered the CMIO window and possibly the whole GTK session may no longer work.
+</p>
 
 <h2>Display Pages</h2>
 
