@@ -14,51 +14,50 @@
 <!-- Entry: "process" -->
 <dl class="dictsyntax">
 <dt>[Macro]</dt>
-<dd><span class="syntax">(<code class="entry">process</code> {<var>clause</var>}+)</span></dd>
+<dd><code>(</code><code class="entry">process</code> {<var>clause</var>}+<code>)<code></dd>
 </dl>
 
 
 <p>
-The <kbd>process</kbd> macro supports iterative process description
-using the same syntax as Lisp's <kbd>loop</kbd>
-macro. <kbd>process</kbd> iteration is defined as a series of clauses,
-each clause begins with a clause operator.  There are four broad
-categories of clause operators:
+Defines an iterative musical process using the same syntax as
+Lisp's <code>loop</code> macro. <code>process</code> iteration is defined
+as a series of clauses, each clause begins with a clause operator.
+There are four broad categories of clause operators:
 </p>
 
 <ul>
-<li>Initialization and Finalization
+<li>initialization and finalization
     <ul>
-    <li> <a href="#with.clause"><kbd>with</kbd></a> declares and initializes local process variables. </li>
-    <li> <a href="#initially.clause"><kbd>initially</kbd></a> performs an action before iteration starts. </li>
-    <li> <a href="#finally.clause"><kbd>finally</kbd></a> performs a final action immediately after process stops. </li>
+    <li> <a href="#with.clause"><code>with</code></a> declares and initializes local process variables. </li>
+    <li> <a href="#initially.clause"><code>initially</code></a> performs an action before iteration starts. </li>
+    <li> <a href="#finally.clause"><code>finally</code></a> performs a final action immediately after process stops. </li>
     </ul>
 </li>
 
-<li>Iteration
+<li>iterations
 <ul>
-<li> <a href="#repeat.clause"><kbd>repeat</kbd></a> sets the number of times the process runs. </li>
-<li> <a href="#for.clause"><kbd>for</kbd></a> defines a variable over a range of values, stops process when done. </li>
+<li> <a href="#repeat.clause"><code>repeat</code></a> sets the number of times the process runs. </li>
+<li> <a href="#for.clause"><code>for</code></a> defines a variable over a range of values, stops process when done. </li>
 </ul>
 </li>
 
-<li>Actions
+<li>actions
 <ul>
-<li><a href="#do.clause"><kbd>do</kbd></a> evaluates one or more Lisp statements.</li>
-<li><a href="#each.clause"><kbd>each</kbd></a> iterates action clause.</li>
-<li><a href="#output.clause"><kbd>output</kbd></a> outputs an event into the open output stream. </li>
-<li><a href="#sprout.clause"><kbd>sprout</kbd></a> inserts a new object into the scheduling queue. </li>
-<li><a href="#wait.clause"><kbd>wait</kbd></a> process waits a specified amount of time before running again. </li>
+<li><a href="#do.clause"><code>do</code></a> evaluates one or more Lisp statements.</li>
+<li><a href="#each.clause"><code>each</code></a> iterates action clause.</li>
+<li><a href="#output.clause"><code>output</code></a> outputs an event into the open output stream. </li>
+<li><a href="#sprout.clause"><code>sprout</code></a> inserts a new object into the scheduling queue. </li>
+<li><a href="#wait.clause"><code>wait</code></a> process waits a specified amount of time before running again. </li>
 </ul>
 </li>
 
-<li>Conditionalization
+<li>conditionals
 <ul>
-<li><a href="#while.clause"><kbd>while</kbd></a> evaluates an action if a test is true or stops the process if false. </li>
-<li><a href="#until.clause"><kbd>until</kbd></a> evaluates an action if a test is or stops the process if true. </li>
-<li><a href="#when.clause"><kbd>when</kbd></a> evaluates an action if a test is true. </li>
-<li><a href="#unless.clause"><kbd>unless</kbd></a> evaluates an action if a test is false. </li>
-<li><a href="#if.clause"><kbd>if</kbd></a> evaluates one or more "then" or "else" actions based on a test.  </li>
+<li><a href="#while.clause"><code>while</code></a> evaluates an action if a test is true or stops the process if false. </li>
+<li><a href="#until.clause"><code>until</code></a> evaluates an action if a test is or stops the process if true. </li>
+<li><a href="#when.clause"><code>when</code></a> evaluates an action if a test is true. </li>
+<li><a href="#unless.clause"><code>unless</code></a> evaluates an action if a test is false. </li>
+<li><a href="#if.clause"><code>if</code></a> evaluates one or more "then" or "else" actions based on a test.  </li>
 </ul>
 </li>
 </ul>
@@ -70,30 +69,28 @@ specified the process terminates as soon as the earliest clause
 completes its iteration.
 </p>
 
-<p><strong>Initialization and Finalization Clauses</strong>
-</p>
+<h4>Initialization and finalization</h4>
+
 <dl>
-
-
 <dt><code>with</code> <var>var</var> [<code>=</code> <var>form</var>] {<code>and</code> <var>var2</var> [<code>=</code> <var>form2</var>]}*</dt>
 <dd>
 
 <a name="with.clause"></a>
 Declares local process variables and their optional initial values. The
-forms in a <kbd>with</kbd> clause are processed one time only immediately
+forms in a <code>with</code> clause are processed one time only immediately
 before process iteration starts.
 
-Each variable declaration in the <kbd>with</kbd> clause
+Each variable declaration in the <code>with</code> clause
 can be specified as either:
 <ul>
 <li>the name of the variable.</li>
-<li>the name of the variable and an initial value separated by <kbd>=</kbd>. </li>
+<li>the name of the variable and an initial value separated by <code>=</code>. </li>
 </ul>
 
 If an initial value is not specified a variable is initialized to false.
-Use <kbd>and</kbd> to separate variables if more than one variable is declared.
+Use <code>and</code> to separate variables if more than one variable is declared.
 Declarations are processed in left to right order
-so a <kbd>=</kbd> value may reference variables declared to the left.
+so a <code>=</code> value may reference variables declared to the left.
 <br/>Example clause syntax:
   <blockquote>
   <pre>with a and b = 32 and c = (* (random b) 4)
@@ -130,10 +127,9 @@ finally (print 'all-done!)
 
 
 
-<p><strong>Iteration Clauses</strong>
-</p>
-<dl>
+<h4>Iterations</h4>
 
+<dl>
 
 <dt><code>repeat</code> <var>form</var></dt>
 <dd>
@@ -153,7 +149,7 @@ Causes the process to run <var>form</var> number of times and then
 
 <a name="for.clause"></a>
 Sets <var>var</var> to the value of <var>form</var> on each iteration.
-If <kbd>then</kbd> is supplied <var>var</var> is set to <var>form</var> 
+If <code>then</code> is supplied <var>var</var> is set to <var>form</var> 
 on the first iteration and to <var>form2</var> on subsequent iterations.
 <br/>Example clause syntax:
 <blockquote>
@@ -170,12 +166,12 @@ Iterates <var>var</var> over a range of numbers. If the sequence is bounded
 the process <a href="#stop.function">stops</a> once the last number has been reached.
 
 <ul>
-<li><kbd>from</kbd> sets the starting value of<var>var</var>, defaults to 0.</li>
-<li><kbd>to</kbd> establishes an inclusive ceiling on the iteration and stops
+<li><code>from</code> sets the starting value of<var>var</var>, defaults to 0.</li>
+<li><code>to</code> establishes an inclusive ceiling on the iteration and stops
 the process once the value has been reached. </li>
-<li><kbd>below</kbd> sets an exclusive ceiling on the iteration and stops
+<li><code>below</code> sets an exclusive ceiling on the iteration and stops
 the process just before the value has been reached.</li>
-<li><kbd>by</kbd> provides an optional increment for <var>var</var>, defaults to 1.</li>
+<li><code>by</code> provides an optional increment for <var>var</var>, defaults to 1.</li>
 </ul>
 
 <br/>Example clause syntax:
@@ -193,9 +189,9 @@ Sets <var>var</var> to successive elements or tails of <var>list</var> and
 <a href="#stop.function">stops</a> process when iteration is done.
 
 <ul>
-<li><kbd>in</kbd> maps <var>var</var> over successive elements in <var>list</var>.</li> 
-<li><kbd>on</kbd> maps <var>var</var> over successive tails of <var>list</var>.</li>
-<li><kbd>by</kbd> specifies an optional stepping function. Defaults to <kbd>cdr</kbd>.</li>
+<li><code>in</code> maps <var>var</var> over successive elements in <var>list</var>.</li> 
+<li><code>on</code> maps <var>var</var> over successive tails of <var>list</var>.</li>
+<li><code>by</code> specifies an optional stepping function. Defaults to <code>cdr</code>.</li>
 </ul>
 
 <br/>Example clause syntax:
@@ -207,19 +203,17 @@ Sets <var>var</var> to successive elements or tails of <var>list</var> and
 </dl>
 
 
-<p><strong>Action Clauses</strong>
-</p>
+<h4>Actions</h4>
+
 <dl>
-
-
 <dt><code>output</code> <var>object</var> [<code>to</code> <var>io</var>]</dt>
 <dd>
 
 <a name="output.clause"></a>
-Outputs <var>object</var> to an open output stream. If <kbd>to</kbd> is is not specified
+Outputs <var>object</var> to an open output stream. If <code>to</code> is is not specified
 the default open output stream is used.
-The Lisp function <a href="#output.function"><kbd>output</kbd></a> is available
-for use inside a <kbd>do</kbd> clause definition.
+The Lisp function <a href="#output.function"><code>output</code></a> is available
+for use inside a <code>do</code> clause definition.
 </dd>
 
 
@@ -228,8 +222,8 @@ for use inside a <kbd>do</kbd> clause definition.
 
 <a name="wait.clause"></a>
 Causes the process to wait <var>seconds</var> amount of time before running again.
-The Lisp function <a href="#wait.function"><kbd>wait</kbd></a> is available
-for use inside a <kbd>do</kbd> clause definition.
+The Lisp function <a href="#wait.function"><code>wait</code></a> is available
+for use inside a <code>do</code> clause definition.
 </dd>
 
 
@@ -239,10 +233,10 @@ for use inside a <kbd>do</kbd> clause definition.
 
 <a name="wait.clause"></a>
 Inserts <var>object</var> into the currently running scheduling queue
-<kbd>at</kbd> an optional time. If the <kbd>at</kbd> time is not specified
+<code>at</code> an optional time. If the <code>at</code> time is not specified
 the object is inserted at the current time.
-The Lisp function <a href="#sprout.function"><kbd>sprout</kbd></a> is available
-for use inside a <kbd>do</kbd> clause definition.
+The Lisp function <a href="#sprout.function"><code>sprout</code></a> is available
+for use inside a <code>do</code> clause definition.
 </dd>
 
 
@@ -268,9 +262,9 @@ does not actually declare or bind the variable in the process.
 <dd>
 
 <a name="each.clause"></a>
-Defines an iteration over the <var>action</var> clause. <kbd>Each</kbd> supports the same stepping clauses 
-that <kbd>for</kbd> does. The difference between <kbd>for</kbd> and <kbd>each</kbd> is that the
-former defines a process iteration while <kbd>each</kbd> 
+Defines an iteration over the <var>action</var> clause. <code>Each</code> supports the same stepping clauses 
+that <code>for</code> does. The difference between <code>for</code> and <code>each</code> is that the
+former defines a process iteration while <code>each</code> 
 defines an iterative action inside the process.  The following
 two clause descriptions are equivalent:
 
@@ -282,14 +276,9 @@ do (loop for i in lst do (output ...))</pre>
 
 </dl>
 
+<h4>Conditionals</h4>
 
-
-<p><strong>Conditional Clauses</strong>
-</p>
 <dl>
-
-
-
 <dt><code>while</code> <var>test</var> <var>action</var></dt>
 <dd>
 
@@ -338,16 +327,19 @@ Triggers <var>action</var> clause whenever <var>test</var> is false.
 
 <a name="if.clause"></a>
 Triggers one or more <var>action</var> clauses if <var>test</var> is true otherwise triggers
-one or more optional <kbd>else</kbd> action clauses.
+one or more optional <code>else</code> action clauses.
 </dd>
 
 
 </dl>
 
 
-The file <a href="../../etc/examples/intro.cm">intro.cm</a>
-contains many examples of <kbd>process</kbd>.
+<h4>Examples:</h4>
 
+<p>
+The file <a href="../../etc/examples/intro.cm">intro.cm</a>
+contains numerous examples of <code>process</code> descriptions.
+</p>
 
 </div>
 <hr class="inv"/>

@@ -13,7 +13,7 @@
 <!-- Entry: "cmn" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><code class="entry">cmn</code> </span></dd>
+<dd><code class="entry">cmn</code></dd>
 </dl>
 
 <p>
@@ -28,7 +28,7 @@ manuscript with <a href="cmn-stream-cls.html">CMN streams</a>.
 <dt><code class="keyword">:time</code> <var>number</var></dt>
 <dd>The start time of the object in the score.</dd>
 
-<dt><code class="keyword">:staff</> <var>number</var> </dt>
+<dt><code class="keyword">:staff</code> <var>number</var> </dt>
 <dd>
 The identifier of the staff to which the expression is added. Defaults
 to 0.</dd>
@@ -107,14 +107,11 @@ A list of additional expressions to add to the note or staff.
 </pre>
 </div>
 
-
-<div class="float">
-<p class "captxt">
 <span class="floatlabel">Example 3.</span> CMN output to MIDI files includes tempo, key and meter markups.</span>
 </p>
-<pre class="shell">
-<span class="prompt">? <span class="input">(<a href="midi-file-print-fn.html">midi-file-print</a> "sevens.mid")</span>
-<span class="output">File: sevens.mid 
+<pre class="code">
+(<a href="midi-file-print-fn.html">midi-file-print</a> <span class="string">"sevens.mid"</span>)
+File: sevens.mid 
 Format: 0
 Tracks: 1
 Division: 480

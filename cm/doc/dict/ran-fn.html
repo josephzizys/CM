@@ -14,39 +14,32 @@
 <!-- Entry: "ran" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">ran</code> [<code class="keyword">:type</code> <var>keyword</var>] [<code class="keyword">:below</code> <var>num</var>] [<code class="keyword">:from</code> <var>num</var>] [<code class="keyword">:a</code> <var>num</var>] [<code class="keyword">:b</code> <var>num</var>] [<code class="keyword">:state</code> <var>rstate</var>])</span></dd>
+<dd><code>(</code><code class="entry">ran</code> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
 
 <p>
-Generates random numbers in a variety of different distributions.
+Generates random numbers in a variety of different distributions according to its keyword arguments.
 </p>
 
 <p><code class="entry">ran</code> supports the following keyword arguments:
 </p>
 <dl>
 
-
-
 <dt><code class="keyword">:below</code> <var>number</var></dt>
 <dd>
-
 Sets the exclusive upper bounds for random number generation. Defaults to a value
 specific to the type of distribution specified to <kbd>ran</kbd>, usually 1.0.
 </dd>
 
-
 <dt><code class="keyword">:from</code> <var>number</var></dt>
 <dd>
-
 Sets the inclusive upper bounds for random number generation. Defaults to a value
 specific to the type of distribution specified to <kbd>ran</kbd>, usually 0.0.
 </dd>
 
-
 <dt><code class="keyword">:type</code></dt>
 <dd>
-
 Sets the distribution for random number generation to type specified 
 as a symbol or keyword.  Defaults to <code class="keyword">:uniform</code>.
 
@@ -149,15 +142,15 @@ variable <kbd>*random-state*</kbd>.
 
 
 <!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
-<li><a href="between-fn.html"><kbd>between</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="drunk-fn.html"><kbd>drunk</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="odds-fn.html"><kbd>odds</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="pick-fn.html"><kbd>pick</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="pickl-fn.html"><kbd>pickl</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="shuffle-fn.html"><kbd>shuffle</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="vary-fn.html"><kbd>vary</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="between-fn.html"><code>between</code></a> [Function]</li>
+<li><a href="drunk-fn.html"><code>drunk</code></a> [Function]</li>
+<li><a href="odds-fn.html"><code>odds</code></a> [Function]</li>
+<li><a href="pick-fn.html"><code>pick</code></a> [Function]</li>
+<li><a href="pickl-fn.html"><code>pickl</code></a> [Function]</li>
+<li><a href="shuffle-fn.html"><code>shuffle</code></a> [Function]</li>
+<li><a href="vary-fn.html"><code>vary</code></a> [Function]</li>
 </ul>
 
 

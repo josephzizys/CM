@@ -32,7 +32,7 @@ slot in the new object with its <var>value</var>.
 </p>
 <pre class="code">
 (new seq <span class="keyword">:name</span> 'test)
-<span class="result">&rArr;</span> #&lt;seq: "test"&gt;
+<span class="result">&rArr;</span> #&lt;seq: <span class="string">"test"</span>&gt;
 (new <a href="midi-cls.html">midi</a> <span class="keyword">:keynum</span> (<a href="between-fn.html">between</a> 32 89) <span class="keyword">:time</span> 1 <span class="keyword">:duration</span> 3)
 <span class="result">&rArr;</span> #i(midi time 1 duration 3 keynum 53 amplitude 64 channel 0)
 (new <a href="heap-cls.html">heap</a> <span class="keyword">:rhythms</span> '(q w e h e.. ))
@@ -40,16 +40,13 @@ slot in the new object with its <var>value</var>.
 </pre>
 </div>
 
-
-
 <!-- See also -->
 <h4>See also:</h4>
 <ul>
-<li><a href="hshi-mac.html"><kbd>#i</kbd></a><kbd>&nbsp;</kbd>[Macro]</li>
-<li><a href="copy-object-fn.html"><kbd>copy-object</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="defobject-mac.html"><kbd>defobject</kbd></a><kbd>&nbsp;</kbd>[Macro]</li>
+<li><a href="hshi-mac.html"><code>#i</code></a> [Macro]</li>
+<li><a href="copy-object-fn.html"><code>copy-object</code></a> [Function]</li>
+<li><a href="defobject-mac.html"><code>defobject</code></a>[Macro]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>

@@ -14,11 +14,11 @@
 <!-- Entry: "between" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><code>(</code><code class="entry">between</code> <var>lb</var> <var>ub</var> . <var>optionals</var>)</code></dd>
+<dd><code>(</code><code class="entry">between</code> <var>lb</var> <var>ub</var> [<var>exclude</var>] [<var>state</var>])</code></dd>
 </dl>
 
 <p>
-Returns a random number equal to or greater than <var>lb</var> but less than <var>ub</var>. If both arguments are integers then an integer value is returned, otherwise a floating point value is returned.
+Returns a random number equal to or greater than <var>lb</var> but less than <var>ub</var>. If both <var>lb</var> and <var>ub</var> are integers then an integer value is returned, otherwise a floating point value is returned.
 </p>
 
 <p id="args"><code class="entry">between</code> supports the following optional arguments:
@@ -50,7 +50,6 @@ Returns a random number equal to or greater than <var>lb</var> but less than <va
 </pre>
 
 
-<!-- See also -->
 <h4>See also:</h4>
 <ul>
 <li><a href="drunk-fn.html"><code>drunk</code></a> [Function]</li>
@@ -61,7 +60,6 @@ Returns a random number equal to or greater than <var>lb</var> but less than <va
 <li><a href="shuffle-fn.html"><code>shuffle</code></a> [Function]</li>
 <li><a href="vary-fn.html"><code>vary</code></a> [Function]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>

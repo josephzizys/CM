@@ -14,12 +14,11 @@
 <!-- Entry: "seq" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><code class="entry">seq</code></span></dd>
+<dd><code class="entry">seq</code></dd>
 </dl>
 
-
 <p>
-A <kbd>seq</kbd> holds a list of time sorted subobjects.
+Holds a list of time sorted subobjects.
 </p>
 
 <p>
@@ -51,11 +50,10 @@ other seq objects.</dd>
 </p>
 
 <pre class="code">
-(<a href="new-mac.html">new</a> seq <span class="keyword">:name</span> 'mydata</span>
-         <span class="keyword">:subobjects</span> (loop for i below 10 collect (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> i)))
-
-<code><span style="color:red;">&rArr;</span> #&lt;seq "mydata"&gt;</code>
-
+(<a href="new-mac.html">new</a> seq <span class="keyword">:name</span> 'test</span>
+         <span class="keyword">:subobjects</span> (<span class="special">loop</span> for i below 10
+                           collect (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> i)))
+<span class="result">&rArr;</span> #&lt;seq "test"&gt;
 </pre>
 </div>
 

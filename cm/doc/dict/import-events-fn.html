@@ -14,7 +14,7 @@
 <!-- Entry: "import-events" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<span style="font-weight:bold;">import-events</span> <var>file</var> {<var>keyword value</var>}*)</span></dd>
+<dd><code>(</code><code class="entry">import-events</code> <var>file</var> {<var>keyword value</var>}*<code>)</code></dd>
 </dl>
 
 <p>
@@ -57,20 +57,19 @@ returned. Defaults to true.
 <dd>
 Specifies which expressions in <var>file</var> get translated into
 objects and how the translation is made.  Each entry is a
-list: <kbd>(</kbd><var>symbol function</var><kbd>)</kbd>
+list: <code>(</code><var>symbol function</var><code>)</code>
 where <var>symbol</var> is the name of the expression to be translated
 and <var>function</var> is its translation function.  The function is
 passed four arguments: the form to translate and the <span
 class="keyword">:translation</span>, <span
 class="keyword">:exclude</span> and
-<span class="keyword">:include</span> lists specified to <kbd>import-events</kbd>.  The
-translation function can explicitly call <kbd>import-form</kbd> to
+<span class="keyword">:include</span> lists specified to <code>import-events</code>.  The
+translation function can explicitly call <code>import-form</code> to
 recursivly process its subforms if necesary.  <span class="keyword">:translations</span>
-defaults to the value of <kbd>*import-translations*</kbd> which defines
-translations for <kbd>let</kbd>,<kbd>let*</kbd>,<kbd>progn</kbd> and
-<kbd>with-sound</kbd> expressions.
+defaults to the value of <code>*import-translations*</code> which defines
+translations for <code>let</code>, <code>let*</code>, <code>progn</code> and
+<code>with-sound</code> expressions.
 </dd>
-
 
 <dt><span class="keyword">:exclude</span> <var>list</var></dt>
 <dd>
@@ -80,7 +79,7 @@ A list of top-level forms to omit from the translation file.
 <dt><span class="keyword">:include</span> {<code>t</code> | <var>list</var>}</dt>
 <dd>
 A list of undefined top-level forms in <var>file</var> that should 
-be include in the translation file. All <kbd>defun</kbd> or <kbd>defmacro</kbd> forms
+be include in the translation file. All <code>defun</code> or <code>defmacro</code> forms
 encounted while translating <var>file</var> are automatically added to this list.
 </dd>
 </dl>
@@ -89,11 +88,11 @@ encounted while translating <var>file</var> are automatically added to this list
 <h4 id="csound">Csound Importing</h4>
 
 <p>
-If <var>file</var> is a .sco file then <kbd>import-events</kbd>
+If <var>file</var> is a .sco file then <code>import-events</code>
 returns a <a href="seq-cls.html">seq</a> containing the <a
 href="i-cls.html">i</a> objects in <var>file</var>.  Csound score file
 parsing handles the carry parameters
-<kbd>.</kbd> <kbd>+</kbd> and <kbd>^</kbd> but does not support a_statements
+<code>.</code> <code>+</code> and <code>^</code> but does not support a_statements
 or more than one s_statement. All f_statements are automatically added
 to the header of the <var>file</var> io structure.
 </p>
@@ -121,8 +120,8 @@ Defaults to true.
 <h4>Midi Importing</h4>
 
 <p>
-If <var>file</var> is a .mid file then <kbd>import-events</kbd> returns a 
-<kbd>seq</kbd> containing midi objects from one or more tracks of <var>file</var>.
+If <var>file</var> is a .mid file then <code>import-events</code> returns a 
+<code>seq</code> containing midi objects from one or more tracks of <var>file</var>.
 </p>
 
 <p>Midi importing supports the following keywords arguements:
@@ -212,12 +211,10 @@ key number and channel.
 
 
 <!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
-<li><a href="play-fn.html"><kbd>play</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="play-fn.html"><code>play</code></a> [Function]</li>
 </ul>
-
-
 
 </div>
 <hr class="inv"/>

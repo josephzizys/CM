@@ -14,13 +14,13 @@
 <!-- Entry: "io" -->
 <dl class="dictsyntax">
 <dt>[Macro]</dt>
-<dd><span class="syntax">(<code class="entry">io</code> <var>strean</var> {<var>:init</var> <var>value</var>}*)</span></dd>
+<dd><code>(</code><code class="entry">io</code> <var>stream</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
 <p>
-Initializes <var>strean</var> according to the specified
-keyword <var>init</var> and <var>value</var> pairs. <var>Stream</var>
-can be an event stream or a string that names the stream.
+Initializes <var>stream</var> according to its keyword
+arguments. <var>Stream</var> can be an event stream or a string that
+names the stream.
 </p>
 
 <h4>Examples:</h4>
@@ -31,9 +31,8 @@ can be an event stream or a string that names the stream.
 </p>
 <pre class="code">
 <span class="comment">;;; setting the tempo and time signature of a MIDI file.</span>
-
 (io <span class="string">"test.mid"</span> <span class="keyword">:tempo</span> 120
-    <span class="keyword">:time-signature</span> '(3 4) )
+    <span class="keyword">:time-signature</span> '(3 4))
 </pre>
 </div>
 
