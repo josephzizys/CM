@@ -220,9 +220,7 @@ LISP_VRS=$CM_RUNTIME_VERSION
 
 PAGER=`which less 2>/dev/null || which more 2>/dev/null || echo cat`
 
-IMG_NAME=cm
-IMG_SUFFIX=img
-
+IMG_NAME=cm.img
 
 
 #
@@ -456,8 +454,8 @@ if [ "$LISP_OPT" ] ; then
     if [ $? == 1 ] ; then exit 1 ; fi
     LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
     LISP_VRS=`echo $LISP_INF | sed 's:.*_::'`
-    if [ -e "$LOC/bin/${LISP_INF}_$CM_PLATFORM/$IMG_NAME.$IMG_SUFFIX" ] ; then
-      LISP_IMG="$LOC/bin/${LISP_INF}_$CM_PLATFORM/$IMG_NAME.$IMG_SUFFIX"
+    if [ -e "$LOC/bin/${LISP_INF}_$CM_PLATFORM/$IMG_NAME" ] ; then
+      LISP_IMG="$LOC/bin/${LISP_INF}_$CM_PLATFORM/$IMG_NAME"
       LOAD=
     else
       LISP_IMG=
@@ -465,27 +463,29 @@ if [ "$LISP_OPT" ] ; then
     fi        
   fi
 else
-  if ls "$LOC"/bin/*_*_$CM_PLATFORM/$IMG_NAME.$IMG_SUFFIX >/dev/null 2>&1; then
+  if ls "$LOC"/bin/*_*_$CM_PLATFORM/$IMG_NAME >/dev/null 2>&1; then
     for pref in $LISP_PREFS ; do
-      for img in "$LOC"/bin/${pref}_*_$CM_PLATFORM/$IMG_NAME.$IMG_SUFFIX ; do
-        LISP_INF=`echo "$img" | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
-	LISP_FLV=`echo $LISP_INF | sed 's:\([^_]*\)_.*$:\1:;'`
-	LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
-        if [ -x "$img" ] ; then
-          LISP_EXE="$img"
-          LISP_IMG=
-          LOAD=
-          break
-        else
-	  LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS`
-	  if [ "$LISP_EXE" ] ; then
-	    LISP_IMG="$img"
+      for img in "$LOC"/bin/${pref}_*_$CM_PLATFORM/$IMG_NAME ; do
+        if [ "$img" != "$LOC/bin/${pref}_*_$CM_PLATFORM/$IMG_NAME" ] ; then
+	  LISP_INF=`echo "$img" | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
+	  LISP_FLV=`echo $LISP_INF | sed 's:\([^_]*\)_.*$:\1:;'`
+	  LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
+	  if [ -x "$img" ] ; then
+	    LISP_EXE="$img"
+	    LISP_IMG=
 	    LOAD=
 	    break
-          fi
+	  else
+	    LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS`
+	    if [ "$LISP_EXE" ] ; then
+	      LISP_IMG="$img"
+	      LOAD=
+	      break
+	    fi
+	  fi
+	  LISP_FLV=
+	  LISP_VRS=
         fi
-        LISP_FLV=
-        LISP_VRS=
       done
       if [ "$LISP_EXE" ] ; then break ; fi
     done
@@ -532,7 +532,7 @@ case $LISP_FLV in
       LISP_CMD="$LISP_CMD -x '$LISP_EVL' -x t -repl"
     else
       test $LISP_INI && LISP_INI="-i $LISP_INI"
-      LISP_CMD="$LISP_CMD -M $LISP_IMG $LISP_INI"
+      LISP_CMD="$LISP_CMD -M '$LISP_IMG' $LISP_INI"
     fi
     ;;
   acl)
@@ -541,7 +541,7 @@ case $LISP_FLV in
       LISP_CMD="$LISP_CMD -e '$LISP_EVL'"
     else
       test $LISP_INI && LISP_INI="-L $LISP_INI"
-      LISP_CMD="$LISP_CMD -I $LISP_IMG $LISP_INI"
+      LISP_CMD="$LISP_CMD -I '$LISP_IMG' $LISP_INI"
     fi
     ;;
   cmucl)
@@ -550,7 +550,7 @@ case $LISP_FLV in
       LISP_CMD="$LISP_CMD -eval '$LISP_EVL'"
     else
       test $LISP_INI && LISP_INI="-init $LISP_INI"
-      LISP_CMD="$LISP_CMD -core $LISP_IMG $LISP_INI"
+      LISP_CMD="$LISP_CMD -core '$LISP_IMG' $LISP_INI"
     fi
     ;;
   openmcl)
@@ -559,7 +559,7 @@ case $LISP_FLV in
       LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
     else
       test $LISP_INI && LISP_INI="--load $LISP_INI"
-      LISP_CMD="$LISP_CMD --image-name $LISP_IMG $LISP_INI"
+      LISP_CMD="$LISP_CMD --image-name '$LISP_IMG' $LISP_INI"
     fi
     ;;
   guile)
@@ -602,7 +602,7 @@ if [ "$EDITOR_OPT" ] ; then
       EL2="$LOC/etc/xemacs/cm.el"
       LEX="$LISP_EXE"
       #LEX=`echo "$LISP_EXE" | sed 's: :\\\\\\\ :g'`
-      LCM=`echo "$LISP_CMD" | tr -d "'" | sed "s:$LISP_EXE:$LEX:g;"'s:":\\\":g;'`
+      LCM=`echo "$LISP_CMD" |tr -d "'" |sed "s:$LISP_EXE:$LEX:g;"'s:":\\\":g;'`
       INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
       EDITOR_EXE="$thing"
       EDITOR_CMD="'$EDITOR_EXE' -eval '$INI'"
