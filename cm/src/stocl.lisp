@@ -70,7 +70,8 @@
        (here srcdir))
    (when subs
      (setf here (namestring (make-pathname
-                             :directory (cons :relative subs)
+                             :directory (append (pathname-directory here)
+                                                subs)
                              :defaults here))))
    (concatenate 'string here file)))
 
@@ -197,7 +198,6 @@
     (exact?              integerp)
     (file-exists?        probe-file)
     (for-each            nil              for-each->map)
-    (hash-clear!         clrhash)
     (hash-ref            gethash          hash-ref->gethash)
     (hash-remove!        remhash          hash-remove->remhash)
     (hash-set!           nil              hash-set!->setf-gethash)
@@ -281,6 +281,7 @@
     (dopairs              dopairs          dopairs->dopairs)
     (err                  error)
     (function             nil function->function)
+    (hash-clear!          clrhash)
     (clfloor              floor)
     (clround              round)
     (list-prop            getf)
@@ -331,7 +332,6 @@
 (defun stocl (scm &key (trace t) file   ; override scm file name
                   directory             ; override scm directory
                   (package package))
-  (setf scm (translate-logical-pathname scm))
   (let ((*readtable* %readtable)
         (*print-case* ':downcase)
         (*print-right-margin* 70)
@@ -341,12 +341,7 @@
                                 (pathname-name file)
                                 (pathname-name scm))
                         :type "lisp"
-                        :directory
-                        (pathname-directory
-                         (make-pathname 
-                          :directory
-                          (OR directory
-                              (pathname-directory scm)))))))
+                        :defaults (or directory scm))))
     (if (probe-file lisp)
       (delete-file lisp))
     (flet ((tracename (form)
@@ -364,8 +359,7 @@
                        (svref '#("Jan" "Feb" "Mar" "Apr" "May" "Jun" 
                                  "Jul" "Aug" "Sep" "Oct" "Nov" "Dec")
                               (1- mo))
-                       year hour min sec)))
-           )
+                       year hour min sec))))
       (with-open-file (in scm)
         (with-open-file (out lisp :direction :output
                              :if-does-not-exist :create
@@ -391,9 +385,7 @@
                          (when trace
                            (format t "~%rewriting ~A" name ))
                          (pprint expr out)
-                                        ;(format out "~%~W" expr)
-                         (terpri out)
-                         )))))))
+                         (terpri out))))))))
     lisp))
         
 ;;;
