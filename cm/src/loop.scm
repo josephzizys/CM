@@ -20,38 +20,32 @@
 
 ;;;
 ;;; Implementation of the CLTL2 loop macro. The following 
-;;; non Rev 5 definitions or their equivalents are needed:
+;;; non Rev 5 definitions need to be in effect before the file
+;;; is loaded:
 ;;;
-;;;   (defmacro (name args . body)
-;;;       to expand loop, when, unless, push and pop
-;;;   (err msg)
-;;;       signal error with message string.
-;;;   (gensym )
-;;;       create new symbol.
+;;; (define-macro (name . args) ...)
+;;; (error string)
+;;; (gensym string)
 ;;;
 
-(defmacro loop args
+(define-macro (loop . args)
   (scheme-loop args))
 
-(defmacro when (test . forms)
-  `(if ,test (begin ,@forms)))
-
-(defmacro unless (test . forms)
-  `(if (not ,test) (begin ,@forms)))
-
-(defmacro push (val sym)
+(define-macro (push val sym)
   `(begin (set! ,sym (cons ,val ,sym)) ,sym))
 
-(defmacro pop (sym)
+(define-macro (pop sym)
   (let ((v (gensym "v")))
     `(let ((,v (car ,sym)))
        (set! ,sym (cdr ,sym))
        ,v)))
 
-;;; this next one is a no-op in guile but i need it for the 
-;;; automatic cltl2 translation.
+;;; this next one is a no-op but i need it as a marker for my cltl2
+;;; translator.
 
-(defmacro function (sym) sym)     
+(define-macro (function sym) sym)     
+
+;;; getters and setters for the loop-clause "struct"
 
 (define (loop-operator c)          (vector-ref  c 0))
 (define (loop-operator-set! c x)   (vector-set! c 0 x))
@@ -153,7 +147,7 @@
 	  ((null? tail) #f)
 	(display (car tail)))
       (newline)
-      (display "Iteration context: ")
+      (display "clause context: ")
       (if (null? forms) 
 	(display "()")
 	(do ((tail forms (cdr tail)))
@@ -162,7 +156,7 @@
 	  (display (car tail))
 	  (display (if (null? (cdr tail)) "'" " "))))
       (newline)
-      (err ""))))
+      (error "illegal loop syntax"))))
 
 (define (parse-for forms clauses ops)
   ;; forms is (FOR ...)
@@ -202,7 +196,7 @@
     (do ((next #f))
         ((or (null? tail) (loop-op? (car tail) ops)))
       (set! next (pop tail))
-      (when (null? tail)
+      (if (null? tail)
         (loop-error ops forms
 		    "Expected expression but source code ran out."))
       (case next
@@ -237,7 +231,7 @@
         (else
          (loop-error ops forms 
 		     "'" next "' is not valid with 'for'."))))
-    (unless head
+    (if (not head)
       (set! head 'from))
     (if (or (eq? head 'downfrom)
             (eq? last 'downto)
@@ -307,7 +301,7 @@
     (do ((next #f))
         ((or (null? tail) (loop-op? (car tail) ops)))
       (set! next (pop tail))
-      (unless tail
+      (when (null? tail)
         (loop-error ops head
 		    "Expression expected but source code ran out." ))
       (case next
@@ -370,16 +364,16 @@
     (do ((next #f))
         ((or (null? tail) (loop-op? (car tail) ops)))
       (set! next (pop tail))
-      (unless tail
+      (if (null? tail)
         (loop-error ops head 
 		    "Expression expected but source code ran out."))
       (case next
         ((= )
-         (when type (loop-error ops head "Duplicate '='."))
+         (if type (loop-error ops head "Duplicate '='."))
          (set! loop `(set! ,var ,(pop tail)))
          (set! type next))
         ((then )
-         (when init (loop-error ops head "Duplicate 'then'."))
+         (if init (loop-error ops head "Duplicate 'then'."))
          (set! init loop)
          (set! loop #f)
          (set! step `(set! ,var ,(pop tail)))
@@ -409,10 +403,10 @@
         ((or (null? tail) (loop-op? (car tail) ops)))
       (set! next (pop tail))
       (cond ((and (loop-variable? next) need)
-             (when var
+             (if var
                (loop-error ops head
 			   "Found '" next "' where 'and' expected."))
-             (when expr
+             (if expr
                (loop-error ops head
 			   "Found '" next "' where 'and' expected."))
              (set! var next)
@@ -478,7 +472,7 @@
   clauses
   (let ((oper (pop forms))
         (expr #f))
-    (when (null? forms)
+    (if (null? forms)
       (loop-error ops forms "Missing '" oper "' expression."))
     (set! expr (pop forms))
     (values (make-loop-clause 'operator oper 'finally (list expr))
@@ -488,7 +482,7 @@
   clauses
   (let ((oper (pop forms))
         (expr #f))
-    (when (null? forms)
+    (if (null? forms)
       (loop-error ops forms "Missing '" oper "' expression."))
     (set! expr (pop forms))
     (values (make-loop-clause 'operator oper 'initially (list expr))
@@ -541,18 +535,19 @@
         (tests '())
         (return '()))
     
-    (when (null? forms)
+    (if (null? forms)
       (loop-error ops forms "Missing '" oper "' expression."))
     (set! expr (pop forms))
-    (unless (null? forms)
-      (when (eq? (car forms) 'into)
-        (when (null? (cdr forms))
-          (loop-error ops save "Missing 'into' variable."))
-        (if (loop-variable? (cadr forms))
-          (begin (set! into (cadr forms))
-                 (set! forms (cddr forms)))
-          (loop-error ops save "Found '" (car forms)
-		      "' where 'into' variable expected."))))
+    (if (not (null? forms))
+      (if (eq? (car forms) 'into)
+        (progn
+          (if (null? (cdr forms))
+            (loop-error ops save "Missing 'into' variable."))
+          (if (loop-variable? (cadr forms))
+            (begin (set! into (cadr forms))
+                   (set! forms (cddr forms)))
+            (loop-error ops save "Found '" (car forms)
+                 "' where 'into' variable expected.")))))
     
     ;; search for a clause that already binds either the user specified
     ;; accumulator (into) or a system allocated one if no into.
@@ -571,7 +566,7 @@
       (set! new? #t)
       ;; accumulator already established by earlier clause
       ;; check to make sure clauses are compatible.
-      (unless (compatible-accumulation? oper (collector-type coll))
+      (if (not (compatible-accumulation? oper (collector-type coll)))
         (loop-error ops save "'" (collector-type coll)
 		    "' and '" oper "' are incompatible accumulators.")))
     (case oper 
@@ -667,8 +662,8 @@
   (let ((head forms)
         (oper (pop forms))
         (test #f)
-        (stop '(go :done)))
-    (when (null? forms)
+        (stop '(go #t))) ; :done
+    (if (null? forms)
       (loop-error ops head "Missing '" oper "' expression."))
     
     (case oper
@@ -685,7 +680,7 @@
         (expr #f)
         (bool #f)
         (func #f))
-    (when (null? (cdr forms))
+    (if (null? (cdr forms))
       (loop-error ops forms "Missing '" (car forms) "' expression." ))
     (set! expr (cadr forms))
     ;; fourth element of operator definition must be
@@ -717,7 +712,7 @@
   (let ((oper (car forms))
         (expr #f)
         (func #f))
-    (when (null? (cdr forms))
+    (if (null? (cdr forms))
       (loop-error ops forms "Missing '" (car forms) "' expression."))
     (set! expr (cadr forms))
     (set! forms (cddr forms))
@@ -748,7 +743,7 @@
          (remains #f))
         ((or (null? forms) stop?))
       (set! op (legal-in-conditional? (car forms) ops))
-      (unless op
+      (if (not op)
         (loop-error ops previous "'" (car forms)
 		    "' is not conditional operator."))
       ;(multiple-value-setq 
@@ -764,7 +759,7 @@
       (set! previous forms)
       (set! forms remains)
 
-      (unless (null? forms)
+      (if (not (null? forms))
         (if (eq? (car forms) 'and)
           (begin
            (set! forms (cdr forms))
@@ -784,13 +779,13 @@
         (expr (list))
         (then (list))
         (else (list)))
-    (when (null? (cdr forms))
+    (if (null? (cdr forms))
       (loop-error ops save "Missing '" oper "' expression."))
     (set! forms (cdr forms))
     (set! expr (pop forms))
-    (when (null? forms)
+    (if (null? forms)
       (loop-error ops forms "Missing conditional clause."))
-    (when (eq? oper 'unless)
+    (if (eq? oper 'unless)
       (set! expr (list 'not expr)))
     (call-with-values
      (lambda () (parse-then-else-dependents forms clauses ops))
@@ -810,25 +805,26 @@
     (set! loop (list 'if expr 
                      (list-copy `(begin ,@(loop-looping then)))
                      #f))
-    (when (and (not (null? forms))
-               (eq? (car forms) 'else))
-      (set! forms (cdr forms))
-      (when (null? forms)
-        (loop-error ops save "Missing 'else' clause."))
-      (call-with-values 
-       (lambda ()
-	 (parse-then-else-dependents 
-          forms (append clauses (list then))
-          ops))
-       (lambda (a b) (set! else a) (set! forms b)))
-      (if (not (null? (cdr else)))
-        (set! else (gather-clauses '() else))
-        (set! else (car else)))
-      (set-car! (cdddr loop) `(begin ,@(loop-looping else)))
-      ;; flush loop forms so we dont gather actions.
-      (loop-looping-set! then '())
-      (loop-looping-set! else '())
-      (set! then (gather-clauses 'if (list then else))))
+    (if (and (not (null? forms))
+             (eq? (car forms) 'else))
+      (begin
+       (set! forms (cdr forms))
+       (when (null? forms)
+         (loop-error ops save "Missing 'else' clause."))
+       (call-with-values 
+        (lambda ()
+          (parse-then-else-dependents 
+           forms (append clauses (list then))
+           ops))
+        (lambda (a b) (set! else a) (set! forms b)))
+       (if (not (null? (cdr else)))
+         (set! else (gather-clauses '() else))
+         (set! else (car else)))
+       (set-car! (cdddr loop) `(begin ,@(loop-looping else)))
+       ;; flush loop forms so we dont gather actions.
+       (loop-looping-set! then '())
+       (loop-looping-set! else '())
+       (set! then (gather-clauses 'if (list then else)))))
     (loop-looping-set! then (list loop))
     (values then forms)))
 
@@ -849,7 +845,7 @@
           (if (and cond? (eq? (car forms) 'and))
             (pop forms))
           (set! op (loop-op? (car forms) ops))
-          (when (not op)
+          (if (not op)
             (loop-error ops previous "Found '" (car forms)
 			"' where operator expected."))
           ;(multiple-value-setq (clause remains)
@@ -862,7 +858,7 @@
           (if (op-type? op 'task)
             (set! body op)
             (if (op-type? op 'iter)
-              (unless (null? body)
+              (if (not (null? body))
                 (loop-error ops previous "'" (car op)
 			    "' clause cannot follow '"
 			    (car body) "'."))))
@@ -926,7 +922,7 @@
   (let ((name (gensym "v"))
         (parsed (parse-iteration 'loop forms *loop-operators*))
         (end-test '())
-        (done '(go :done))
+        (done '(go #t))  ; :done
         (return #f))
     ;(write (list :parsed-> parsed))
     ;; cltl2's loop needs a way to stop iteration from with the run
@@ -971,7 +967,7 @@
        (call-with-current-continuation 
         (lambda (return)     ; <- (return) returns from this lambda
           (call-with-current-continuation
-           (lambda (go)  ; <- (go :done) returns from this lambda
+           (lambda (go)  ; <- (go #t) returns from this lambda
              ;; a named let provides the actual looping mechanism.
              ;; the various tests and actions may exit via the
              ;; (done) or (return) continuations.
@@ -980,7 +976,7 @@
                   ,@(loop-looping parsed)
                   ,@(loop-stepping parsed)
                   (,name))))
-          ;; this is the lexical point for (go :done) continuation.
+          ;; this is the lexical point for (go #t) continuation.
           ,@(loop-finally parsed)
           ;; invoke the RETURN continuation with loop value or #f
           ,return)))))
@@ -990,7 +986,7 @@
 ;;; translated to the cltl sources.
 ;;;
 
-(defmacro iter args
+(define-macro (iter . args)
   (cltl2-loop args))
 
 (define (cltl2-loop forms)
