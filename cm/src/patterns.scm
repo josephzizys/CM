@@ -1536,8 +1536,9 @@
   (letrec ((getnode
 	    (lambda (id table rule)
 	      (or (hash-ref table id)
-		  (err "No node for id ~s in rule ~s." 
-                       id rule))))
+		  (if (eq? id '*) '*
+                      (err "No node for id ~s in rule ~s." 
+                           id rule)))))
            (getnodes
 	    (lambda (ids table rule)
 	      (loop for id in ids 
@@ -1567,11 +1568,12 @@
                                                 (caar lh) (car lh))
                                               table rule)))
 			  (else
-			   (loop for x in lh 
+			   (loop for tail on lh 
+                                 for x = (car tail)
 				 for i from 0
-				 when (pair? x)
+				 when (pair? x) ; strict pred
 				 do
-				 (set! (elt lh i) (car x)) ; remove ()
+				 (set-car! tail (car x)) ; remove ()
 				 (return 
 				   (make-rewrite-rule
 				    :successors (getnodes rh table rule)
