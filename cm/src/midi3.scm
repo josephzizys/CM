@@ -128,7 +128,7 @@
 
 (defobject midi-smpte-offset (midi-meta-event)
   ((opcode :initform +ml-file-smpte-offset-opcode+ :initarg #f)
-   (offset :initform () :accessor midi-event-data1))
+   (offset :initform '() :accessor midi-event-data1))
   (:parameters time offset)
   (:writers ))
 
