@@ -81,11 +81,13 @@
                   :test #'string=)))
     (and x (cdr x) )))
 
-(defun image-directory ()
+(defun cm-image-dir ()
   (let ((img (member "-core" ext:*command-line-strings*)))
-    (namestring
-     (make-pathname
-      :directory (pathname-directory (cadr img))))))
+    (if img
+	(namestring
+	 (make-pathname
+	  :directory (pathname-directory (cadr img))))
+      nil)))
 
 (defun save-cm (path &rest args)
   (declare (ignore args))
