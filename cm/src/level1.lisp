@@ -437,39 +437,36 @@
   ;; (the image dir cant be determined) then try use the shell
   ;; variable 'cmlibdir' that cm.sh sets. otherwise use the value of
   ;; cl-user::cm-lib-dir set by make.lisp when the image was saved.
-  (let ((dir (cm-image-dir))
-        (fil nil))
+  (let* ((dir (cm-image-dir))
+         (fil (and dir (cminit-from-image-path dir))))
     ;; check image dir first
-    (if dir
-      (progn
-        (setq fil (cminit-from-image-path dir))
-        (when fil
-          (load fil :verbose nil)
-          fil))
-      (progn
-        ;; check for $CM_ROOT environment variable
-        (setq dir (env-var "CM_ROOT"))
-        ;; make sure its terminated by directory char.
-        (if (and dir (not (equal dir "")))
-          (unless (char= (elt dir (1- (length dir)))
-                         directory-delimiter)
-            (setq dir (format nil "~A~C" dir directory-delimiter)))
-          ;; else look at root dir from make-cm.
-          (setq dir (symbol-value (find-symbol (string :*cm-root*)
-                                               :cl-user))))
-        (setq fil (make-pathname
-                   :directory (append (pathname-directory dir)
-                                      (list "lib"))
-                   :name "cminit" :type "lisp" :defaults dir))
-        (when (probe-file fil)
-          (load fil :verbose nil)
-          fil)))))
+    (if fil 
+      (progn (load fil :verbose nil)
+             (return-from load-cminit fil)))
+    ;; check for $CM_ROOT environment variable
+    (setq dir (env-var "CM_ROOT"))
+    ;; make sure its terminated by directory char.
+    (if (and dir (not (equal dir "")))
+      (unless (char= (elt dir (1- (length dir)))
+                     directory-delimiter)
+        (setq dir (format nil "~A~C" dir directory-delimiter)))
+      ;; else look at root dir from make-cm.
+      (setq dir (symbol-value (find-symbol (string :*cm-root*)
+                                           :cl-user))))
+    (setq fil (make-pathname
+               :directory (append (pathname-directory dir)
+                                  (list "etc"))
+               :name "cminit" :type "lisp" :defaults dir))
+    (if (probe-file fil)
+      (load fil :verbose nil)
+      (setq fil nil))
+    fil))
 
 (defun cminit-from-image-path (image)
   (let* ((dir (pathname-directory image))
          (tst dir))
-    ;; look in . then ../lib then  ../../lib
-    (loop repeat 3 until (not dir)
+    ;; look in imagedir REMOVED then ../lib then  ../../lib
+    (loop repeat 1 until (not dir)
        for fil = (make-pathname :directory tst
                                 :name "cminit"
                                 :type "lisp"
