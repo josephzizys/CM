@@ -160,7 +160,7 @@
 ;;;
 
 (define (midi-message->midi-event m . args)
-  (with-args (args &optional data time)
+  (with-args (args &key data time)
     (let ((ch #f))
       (cond ((midi-channel-message-p m)
              (set! ch (channel-message-channel m) )
