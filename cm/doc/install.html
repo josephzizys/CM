@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "css/cm.css";
+</style>
+<title>Installing Common Music</title>
+</head>
+
+<body>
+<h1>Installing Common Music</h1>
+
+<h2>Installation Instructions</h2>
+
+<ul>
+
+<li>Restore the latest CM distribution from:
+<blockquote>
+<p><a href="ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/sources/">
+ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/sources/</a><p>
+</blockquote>
+</li>
+
+<li>
+Start Lisp. If you use CLM or CMN in Common Lisp then load these
+systems first:
+
+<div class="float">
+<p class="captxt">
+Loading CLM.
+</p>
+<pre class="shell">&gt; <span class="input">(load "/whatever/clm-2/all.lisp")</span></pre>
+</div>
+
+<div class="float">
+<p class="captxt">
+Loading CMN.
+</p>
+<pre class="shell">&gt; <span class="input">(load "/whatever/cmn/cmn-all.lisp")</span></pre>
+</div>
+
+</li>
+
+<li>
+If you are using Common Lisp and you do <em>not</em> want Scheme
+symbols added to CM then do:
+
+<blockquote>
+<pre>&gt; (push ':no-scheme *features*)</pre>
+</blockquote>
+  
+Note: CM will add Scheme's 'define' even if <kbd>:no-scheme</kbd> is a
+feature.
+
+</li>
+
+<li>
+Load either cm/src/cm.scm (Guile) or cm/src/cm.lisp (CL).  Specify the
+full, true pathname to the file, i.e. avoid relative paths or using
+"~/" unless you are sure your Lisp supports them.  On my Linux box I
+do:
+
+<dl>
+<dt>GUILE:</dt>
+<dd>
+<blockquote>
+<pre>&gt; (load "/usr/local/lisp/cm-2.4.0/src/cm.scm")</pre>
+</blockquote>
+</dd>
+<dt>COMMON LISP:</dt>
+<dd>
+<blockquote>
+<pre>&gt; (load "/usr/local/lisp/cm-2.4.0/src/cm.lisp")</pre>
+</blockquote>
+</dd>
+</dl>
+
+On Windows use / rather than the DOS directory character. If you are
+loading CM in Guile under Windows from a directory that is not under
+Cygwin's file system you will have to start the pathname with the
+drive, i.e. "c:/lisp/whatever".
+</li>
+
+<li>
+In Guile the sources are loaded. In Common Lisp the sources are
+complied and loaded.  Binary files, images and scripts are normally
+saved in cm's bin/ subdirectory. To save compiled files and images
+somewhere else or to block an image file from being saved you can set
+the appropriate build parameter before loading cm.lisp. The names and
+default settings of these parameters are:
+
+<table>
+  <tr><td>cm-src-directory</td> <td>"CMDIR/src/"</td></tr>
+  <tr><td>cm-bin-directory</td> <td>"CMDIR/bin/"</td></tr>
+  <tr><td>cm-save</td> <td>true</td></tr>
+</table>
+
+Directory strings must contain the directory delimiter character at
+the end, ie "/usr/lisp/bin/" not "/usr/lisp/bin".
+</li>
+
+<li>
+Instructions on how to save a Common Music image in Common Lisp will
+be printed at the end of the compilation process.  In Guile no image
+is saved.  </li>
+
+<li>
+CM saves a script file and a default cminit.lisp file in the bin/
+directory along with the Common Music image if one is saved.  The
+script can be used to start up CM from the shell. You may have to set
+file permissions in order execute the script file: chmod a+x bin/cm
+Most of these scripts contain absolute paths to the necessary files
+but the CLISP script assume that there is a 'clisp' shell command that
+starts up a suitable version of the host Lisp.
+</li>
+
+<li>
+The file etc/listener.el implements a dedicated Listener window for
+XEmacs.  You should find it easier to work with than either ILisp or
+inf-lisp.  See the directions at the top of that file for information
+on how to install and use it.
+</li>
+
+<li>
+Look at the file in etc/examples/intro.cm for an idea of how to work
+with CM.
+</li>
+</ul>
+
+
+<h3>Installing Midishare</h3>
+
+<p>
+A direct connection from Common Music to the MIDI Driver can be established using Midishare, a real-time
+MIDI operating system developed by Grame. Common Music will work with Midishare in the following
+Operating System and Lisps:
+</p>
+
+<ul>
+<li>Linux/CMUCL</li>
+<li>OSX/OpenMCL</li>
+<li>OSX/MCL 5.0</li>
+<li>MacOS 9.2/MCL 4.2, 4.3</li>
+</ul>
+
+<p>
+Directions for Installing Midishare
+</p>
+
+
+<ul>
+<li>OSX/OpenMcl
+</li>
+
+<li>OSX/MCL 5.0
+</li>
+
+<li>MacOS 9.2/MCL 4.2
+</li>
+
+
+
+</ul>
+
+(setf (logical-pathname-translations "CCL")
+      `(("**;*.*" "Macintosh HD:Lisp:MCL 4.2:**:*.*")))
+
+
+
+<h2>Installing from CVS</h2>
+<p>
+Not yet written.
+</p>
+
+<div id="footer">
+<div id="author">H. Taube</address></div>
+<div id="cvs-info">$Name$: $Source$ ($Revision$, $Date$)</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+This is the README for Common Music (CM). The system currently
+runs in:
+
+  Guile 1.6.0 (Linux, OSX, Windows+Cygwin)
+  MCL 4.2, 4.3 (MacOS 9.2)
+  OpenMCL 0.13 (OSX 10.2)
+  ACL 5.0, 6.0 (SGI, Linux, Windows 2000)
+  CLISP 2.28 (Linux, Windows 2000)
+  CMUCL 18d (Linux)
+
+Documentation for the system is located in the doc/ directory. The 
+Common Music dictionary is in doc/dict/index.html.  The example
+file etc/examples/intro.cm is a fine place to start.
+
+Common Music is released under the GNU Software License.  See
+doc/gpl.text for the terms of this agreement.  
+
+
+Installation instructions:
+
+  o Restore the latest CM distribution from:
+
+      ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/sources/
+
+  o Start up Lisp. If you use CLM or CMN in Common Lisp then load
+    these systems first:
+
+    CLM: 
+
+    > (load "/whatever/clm-2/all.lisp")
+
+    CMN: 
+
+    > (load "/whatever/cmn/cmn-all.lisp")
+
+
+  o If you are using Common Lisp and you do NOT want Scheme symbols
+    added to CM then do:
+
+    > (push ':no-scheme *features*)
+  
+    CM will add Scheme's 'define' even if :no-scheme is true.
+
+
+  o Load either cm/src/cm.scm (Guile) or cm/src/cm.lisp (CL).  
+    Specify the full, true pathname to the file, i.e. avoid relative
+    paths or using "~/" unless you are sure your Lisp supports them.  
+    On my Linux box I do:
+
+    GUILE:
+
+    > (load "/usr/local/lisp/cm-2.4.0/src/cm.scm")
+
+    COMMON LISP:
+
+    > (load "/usr/local/lisp/cm-2.4.0/src/cm.lisp")
+
+    On Windows use / rather than the DOS directory character. If you
+    are loading CM in Guile under Windows from a directory that is 
+    not under Cygwin's file system you will have to start the
+    pathname with the drive, i.e. "c:/lisp/whatever".
+
+  o In Guile the sources are loaded. In Common Lisp the sources are 
+    complied and loaded.  Binary files, images and scripts are
+    normally saved in cm's bin/ subdirectory. To save compiled files
+    and images somewhere else or to block an image file from being
+    saved you can set the appropriate build parameter before loading
+    cm.lisp. The names and default settings of these parameters are:
+        cm-src-directory    "CMDIR/src/"
+        cm-bin-directory    "CMDIR/bin/"
+        cm-save             true
+    Directory strings must contain the directory delimiter character
+    at the end, ie "/usr/lisp/bin/" not "/usr/lisp/bin".
+
+  o Instructions on how to save a Common Music image in Common Lisp
+    will be printed at the end of the compilation process.  In Guile
+    no image is saved.
+  
+  o CM saves a script file and a default cminit.lisp file in the
+    bin/ directory along with the Common Music image if one is saved.
+    The script can be used to start up CM from the shell. You may have
+    to set file permissions in order execute the script file:
+        chmod a+x bin/cm
+    Most of these scripts contain absolute paths to the necessary files
+    but the CLISP script assume that there is a 'clisp' shell command
+    that starts up a suitable version of the host Lisp.
+
+  o The file etc/listener.el implements a dedicated Listener window
+    for XEmacs.  You should find it easier to work with than either
+    ILisp or inf-lisp.  See the directions at the top of that file
+    for information on how to install and use it.
+
+  o Look at the file in etc/examples/intro.cm for an idea of
+    how to work with CM. 
+
+
+Please feel free to contact me with bug reports and suggestions.
+There is a mailing list assocated with the CCRMA suite of Lisp
+programs (CLM, CMN, CM and Snd). To join the list send your request to
+cmdist-request@ccrma.stanford.edu
+
+Rick Taube
+Associate Professor Composition/Theory
+School of Music
+University of Illinois
+Urbana IL 61821
+Net: taube@uiuc.edu
+Vox: (217) 244-2684
+Fax: (217) 244-8319
+
