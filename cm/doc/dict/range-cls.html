@@ -49,7 +49,7 @@ An optional inclusive upper bound on the range. If this value is
 <dt>
 <code class="keyword">:below</code> {<var>number</var> | <var>pattern</var>}</dt>
 <dd>
-Like <span class="keyword">:to</span> except that the upper bound is exclusive.
+Like <code class="keyword">:to</code> except that the upper bound is exclusive.
 </dd>
 
 <dt><code class="keyword">:downto</code> {<var>number</var> | <var>pattern</var>}</dt>
@@ -135,7 +135,7 @@ initializations to the pattern.
   (<a href="new-mac.html">new</a> range <span class="keyword">:from</span> 60
        <span class="keyword">:to</span> 72 <span class="keyword">:downto</span> 48
        <span class="keyword">:stepping</span> (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a>
-                      :of '((-2 <span class="keyword">:weight</span> 1.5 <span class="keyword">:max</span> 3)
+                      <span class="keyword">:of</span> '((-2 <span class="keyword">:weight</span> 1.5 <span class="keyword">:max</span> 3)
                             ( 2 <span class="keyword">:weight</span> 1.5 <span class="keyword">:max</span> 3) 
                               1
                              -1
