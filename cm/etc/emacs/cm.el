@@ -28,6 +28,8 @@
 (put 'with-sound 'common-lisp-indent-function 'defun)
 (put 'definstrument 'common-lisp-indent-function 'defun)
 (put 'dopairs 'common-lisp-indent-function  1)
+(put 'define-signal-handler 'common-lisp-indent-function
+     'lisp-indent-defmethod)
 ;; scheme
 (put 'define 'common-lisp-indent-function 1)
 (put 'define-class 'common-lisp-indent-function 2)
