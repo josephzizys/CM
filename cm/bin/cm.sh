@@ -58,12 +58,13 @@ DESCRIPTION="
         Same as -e option.
 
       CM_RUNTIME
-        Name or path of a Lisp or Scheme system to execute, e.g. 'clisp' or
-        '/usr/bin/openmcl'.  Same as -l option.
+        Name or path or command of a Lisp or Scheme system to execute,
+        e.g. 'clisp' or '/usr/bin/openmcl' or '../foo/bin/lisp -cxLf'.  Same
+        as -l option.
 
       CM_RUNTIME_PREFS
-        List of CM_RUNTIME_FLAVORs to try during autodetection, in order of
-        preference.  Same as -r option.
+        List of CM_RUNTIME_FLAVORs (NOT CM_RUNTIMEs!) to try during
+        autodetection, in order of preference.  Same as -r option.
 
       CM_OS
         Symbolic name of host OS, e.g. 'linux' or 'darwin'.  Same as -O
@@ -448,49 +449,48 @@ get_lisp_info () {
 }
 
 if [ "$LISP_OPT" ] ; then
-  if [[ "$LISP_OPT" == */* ]] ; then
-    thing=`real_path "$LISP_OPT"`
-    if [ ! "$thing" ] ; then
-      msg_e "No such file or directory: '$LISP_OPT'"
+  LEXE=`echo "$LISP_OPT" | sed 's: -.*$::'`
+  LOPTS=`echo "$LISP_OPT" | sed 's:\( -.*\)\?$:¦\1:;s:^.*¦ *::'`
+  LISP_EXE=$LEXE
+  if [[ "$LISP_EXE" == */* ]] ; then
+    LISP_EXE=`real_path "$LISP_EXE"`
+    if [ ! "$LISP_EXE" ] ; then
+      msg_e "No such file or directory: '$LEXE'"
     fi
   else
-    thing=`resolve_bin "$LISP_OPT" WARN`
+    LISP_EXE=`resolve_bin "$LISP_EXE" WARN`
   fi
-  if [ ! "$thing" ] ; then
+  if [ ! "$LISP_EXE" ] ; then
     msg_x "Aborting."
-  elif [ ! -f "$thing" -a ! -h "$thing" ] ; then
-    msg_e "Not a file or link: '$thing'"
+  elif [ ! -f "$LISP_EXE" -a ! -h "$LISP_EXE" ] ; then
+    msg_e "Not a file or link: '$LISP_EXE'"
     msg_x "Aborting."
   fi
   
-  if is_image "$thing" ; then
-    LISP_INF=`echo "$thing" | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
+  if is_image "$LISP_EXE" ; then
+    LOAD=
+    LISP_INF=`echo "$LISP_EXE" | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
     if [ ! $LISP_INF ] ; then
-      msg_e "Not in proper location: '$thing'."
+      msg_e "Not in proper location: '$LISP_EXE'."
       msg_x "Aborting."
     fi
     LISP_FLV=`echo $LISP_INF | sed 's:\([^_]*\)_.*$:\1:;'`
     LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
-    if [ -x "$thing" ] ; then
-      LISP_EXE="$thing"
+    if [ -x "$LISP_EXE" ] ; then
       LISP_IMG=
-      LOAD=
     else
+      LISP_IMG="$LISP_EXE"
       LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS WARN`
-      if [ "$LISP_EXE" ] ; then
-        LISP_IMG="$thing"
-        LOAD=
-      else
+      if [ ! "$LISP_EXE" ] ; then
         msg_e "Can't find a '$LISP_FLV' executable with version '$LISP_VRS'." 
         msg_x "Aborting."
       fi
     fi
   else
-    if [ ! -x "$thing" ] ; then
-      msg_e "Not an executable: '$thing'"
+    if [ ! -x "$LISP_EXE" ] ; then
+      msg_e "Not an executable: '$LISP_EXE'"
       msg_x "Aborting."
     fi
-    LISP_EXE="$thing"
     LISP_INF=`get_lisp_info "$LISP_EXE"`
     if [ $? == 1 ] ; then exit 1 ; fi
     LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
@@ -570,7 +570,7 @@ make_lisp_cmd () {
   LISP_EVL="(progn (load \"${LISP_LOA}.lisp\" :verbose nil) (cm))"
   case $LISP_FLV in
     clisp)
-      LISP_CMD="'$LISP_EXE' -I -q -ansi"
+      LISP_CMD="'$LISP_EXE' -I -q -ansi $LOPTS"
       if [ $LOAD ] ; then
 	LISP_CMD="$LISP_CMD -x '$LISP_EVL' -x t -repl"
       else
@@ -579,7 +579,7 @@ make_lisp_cmd () {
       fi
       ;;
     acl)
-      LISP_CMD="'$LISP_EXE'"
+      LISP_CMD="'$LISP_EXE' $LOPTS"
       if [ $LOAD ] ; then
 	LISP_CMD="$LISP_CMD -e '$LISP_EVL'"
       else
@@ -588,7 +588,7 @@ make_lisp_cmd () {
       fi
       ;;
     cmucl)
-      LISP_CMD="'$LISP_EXE'"
+      LISP_CMD="'$LISP_EXE' $LOPTS"
       if [ $LOAD ] ; then
 	LISP_CMD="$LISP_CMD -eval '$LISP_EVL'"
       else
@@ -597,7 +597,7 @@ make_lisp_cmd () {
       fi
       ;;
     openmcl)
-      LISP_CMD="'$LISP_EXE'"
+      LISP_CMD="'$LISP_EXE' $LOPTS"
       if [ $LOAD ] ; then
 	LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
       else
@@ -606,7 +606,7 @@ make_lisp_cmd () {
       fi
       ;;
     guile)
-      LISP_CMD="'$LISP_EXE' -l '${LISP_LOA}.scm' -e cm"
+      LISP_CMD="'$LISP_EXE' $LOPTS -l '${LISP_LOA}.scm' -e cm"
       ;;
     *)
       msg_e "Don't know how to call '$LISP_FLV' yet... =:("
@@ -664,18 +664,19 @@ if [ "$EDITOR_OPT" ] ; then
   fi
 
   if [ "$EDITOR_OPT" ] ; then
-    EDITOR_EXE=`echo "$EDITOR_OPT" | sed 's: -.*$::'`
+    EEXE=`echo "$EDITOR_OPT" | sed 's: -.*$::'`
     EOPTS=`echo "$EDITOR_OPT" | sed 's:\( -.*\)\?$:¦\1:;s:^.*¦ *::'`
+    EDITOR_EXE=$EEXE
     if [[ "$EDITOR_EXE" == */* ]] ; then
       EDITOR_EXE=`real_path "$EDITOR_EXE"`
       if [ ! "$EDITOR_EXE" ] ; then
-        msg_e "No such file or directory: '$EDITOR_EXE'"
+        msg_e "No such file or directory: '$EEXE'"
       fi
     else
       EDITOR_EXE=`resolve_bin "$EDITOR_EXE" WARN`
     fi
     if [ ! "$EDITOR_EXE" ] ; then
-      msg_w "Command not found: '$EDITOR_EXE'.  Ignoring."
+      msg_w "Command not found: '$EEXE'.  Ignoring."
     elif [ ! -f "$EDITOR_EXE" -a ! -h "$EDITOR_EXE" ] ; then
       msg_w "Not a file or link: '$EDITOR_EXE'.  Ignoring."
     else
