@@ -497,9 +497,9 @@ for more information about the various build options.
 <h2 id="configure_gtk">4. Configuring GTK</h2>
 
 <p>
-Graphical support in CM is implemented in <a
-href="http://www.gtk.org">GTK2</a>, a popular graphics library that CM
-can load in the following Lisp environments:
+CM's graphics support is implemented in <a
+href="http://www.gtk.org">GTK2</a>, a popular graphics library that
+runs in the following Lisp environments:
 <ul>
 <li>PPC/Darwin: OpenMCL 0.14.1-p1 or higher</li>
 <li>x86/Linux: SBCL 0.8.17 or higher</li>
@@ -507,7 +507,7 @@ can load in the following Lisp environments:
 </ul>
 
 <p>
-CM will automatically include GUI tools in any correctly configured
+CM will automatically include its GUI tools in any correctly configured
 and supported environment. If you use either OpenMCL on Darwin or
 SBCL on Linux then you may have to configure your environment before
 you build CM.
@@ -516,9 +516,9 @@ you build CM.
 <h3 id="gtk_darwin">4.1 Configuring X11 and GTK2 on Darwin (OS X)</h3>
 
 <p>
-In order to use CM graphics on OS X you must have X11 and GTK2
-installed and configured properly on your machine. Apple's X11
-application must also be running before you can open any windows.
+You must have X11 and GTK2 installed and configured properly on your
+machine. Apple's X11 application must also be running before you can
+open any windows.
 </p>
 
 <ol>
@@ -526,32 +526,33 @@ application must also be running before you can open any windows.
 <li>
 <p>
 X11.app normally resides in /Application/Utilities/. If you do not
-already have it you can download it for free from <a
+have it you can download it from <a
 href="http://www.apple.com/macosx/features/x11/download/">Apple's X11
 page</a>. It should also be possible to use <a
 href="http://www.xdarwin.org/"> XDarwin/XFree86</a> but I have not
-tried this.
+tried it.
 </p>
 </li>
 
 <li>
 <p>
-If you do not have GTK2 installed, use <a
-href="http://finkcommander.sourceforge.net">FinkCommander</a> to
-install Fink's <a
+Use <a href="http://finkcommander.sourceforge.net">FinkCommander</a>
+to install Fink's <a
 href="http://fink.sourceforge.net/pdb/package.php/gtk+2-shlibs">gtk+2-shlibs</a>
-package. Plotter assumes that all the GTK+ libraries are restored
-under Fink's /sw/lib/ directory.
+package. CM assumes that all GTK+ libraries are restored under
+/sw/lib/ directory (the default location for installing Fink
+packages).
 </p>
 </li>
 </ol>
 
 <p>
-Once all the required packages are installed and X11.app is running
-you can open a plotter window inside xterm or under XEmacs.  You can
-also run plotter from inside Terminal.app or <a href="emacs.html#downloading">Emacs.app</a> (the Cocoa
-Emacs application) if you add the following line to your
-~/.bash_profile file:
+Once X11 and GTK2 are installed and the X11.app is running you can
+open a GUI window inside cm running in xterm or under XEmacs.  You can
+also run plotter from inside Terminal.app or <a
+href="emacs.html#downloading">Emacs.app</a> (the Cocoa Emacs
+application) if you add the following line to your ~/.bash_profile
+file:
 </p>
 
 <blockquote>
@@ -559,7 +560,7 @@ Emacs application) if you add the following line to your
 </blockquote>
 
 
-<h3 id="gtk_openmcl"> 4.1 Installing GTK2 support in OpenMCL (OS X)</h3>
+<h3 id="gtk_openmcl"> 4.2 Installing GTK2 support in OpenMCL (OS X)</h3>
 
 <p>
 In order to work with GTK2 in OpenMCL you must first install a foreign
@@ -583,17 +584,11 @@ $ <span class="input">tar -zxf openmcl-gtk-interface.tar.gz</span></pre>
 </li>
 </ol>
 
-<p>
-See section 4.3 below for information about configuring X11 and GTK2
-on OS X.
-</p>
-
-<h3 id="gtk_sbcl"> 4.2 Adding callback support to SBCL (OS X,
+<h3 id="gtk_sbcl"> 4.3 Adding callback support to SBCL (OS X,
 Linux)</h3>
 <p>
-Since the current SBCL release (0.8.17) does not provide a native
-callback facility of its own you must install one developed by Thomas
-Burdick:
+SBCL releases (0.8.17) and earlier do not provide a native callback
+facility so you must install one developed by Thomas Burdick instead:
 </p>
 
 <ol>
