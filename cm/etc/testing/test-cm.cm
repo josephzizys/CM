@@ -4,8 +4,6 @@
 ;;;
 ;;; The tests assume that the following vars exist at load time:
 ;;; *features*      Tests check for :guile :cmu :clm :cmn :midishare
-;;; tmp-directory   Directory to write test output to, include \ at end.
-;;;
 ;;; The following vars must be defined if their *feature* exists:
 ;;; midishare-directory
 ;;; clm-directory
@@ -16,20 +14,27 @@
   (defmacro iter args (scheme-loop args))
   )
 
-(unless (member ':guile *features*)
-  ;; clear out existing tmp files....
-  (do ((typs '("cm" "mid" "midi" "sco" "aiff" "clm" "eps" "cmn" )
-             (cdr typs)))
-      ((null? typs) #f)
-    (dolist (f (directory (format #f "~a*.~a" 
-                                  tmp-directory (car typs))))
-      (delete-file f))))
+
+(define tmp-directory "/tmp/")
+
+(define (clean-tmp)
+  (unless (member ':guile *features*)
+    ;; clear out existing tmp files....
+    (do ((typs '("cm" "mid" "midi" "sco" "aiff" "clm" "eps" "cmn" )
+               (cdr typs)))
+        ((null? typs) #f)
+      (dolist (f (directory (format #f "~a*.~a" 
+                                    tmp-directory (car typs))))
+        (delete-file f)))))
 
 ;;;
 ;;;
 ;;;
 
-(define (test-cm)
+(define (test-cm . testdir)
+  (if (not (null? testdir))
+    (set! tmp-directory (car testdir)))
+  (clean-tmp)
   (test-cm-core)
   (test-cm-output))
 
