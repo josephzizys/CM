@@ -29,7 +29,7 @@
 ;;;
 
 (defpackage :cm
-  (:use :common-lisp )
+  (:use :common-lisp #+:gtk :gtk)
   (:shadow :make-load-form
            ;; have to block these from CLM
            :io :ran :exit :quit )
