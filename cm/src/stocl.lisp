@@ -56,40 +56,49 @@
 ;;; in the file for more info.
 ;;;
 ;;;
-;;; Directions: First edit the logical pathname for your machine.
-;;; Second, load the file. Then either call (gencm) for all the
-;;; sources or just load pkg.lisp and call stocl on the file you want.
+;;; Directions: load this file then either 
+;;;  1. call (gencm) for all the sources.
+;;;  2. load pkg.lisp by hand and call stocl on the file you want.
 
-(setf (logical-pathname-translations "cm")
-      '(
-        #-apple ("**;*.*" "/Lisp/cm-2.4.0/**/*.*")
-        #+apple ("**;*.*" "Macintosh HD:Lisp:cm-2.4.0:**:*.*") ))
+(defparameter srcdir 
+  (namestring (make-pathname :name nil :type nil
+                             :defaults *load-pathname*)))
+
+(defun srcfile (&rest path)
+ (let ((subs (butlast path))
+       (file (first (last path)))
+       (here srcdir))
+   (when subs
+     (setf here (namestring (make-pathname
+                             :directory (cons :relative subs)
+                             :defaults here))))
+   (concatenate 'string here file)))
 
 (defun gencm (&rest args)
-  (load (translate-logical-pathname "cm:src;pkg.lisp"))
+  (load (srcfile "pkg.lisp"))
   (if (not args)
     (progn
-      (stocl "cm:src;loop.scm" :file "iter")
-      (stocl "cm:src;utils.scm" )
-      (stocl "cm:src;mop.scm" )
-      (stocl "cm:src;objects.scm" )
-      (stocl "cm:src;io.scm" )
-      (stocl "cm:src;scheduler.scm" )
-      (stocl "cm:src;sco.scm" )
-      (stocl "cm:src;clm.scm" )
-      (stocl "cm:src;clm2.scm" )
-      (stocl "cm:src;cmn.scm" )
-      (stocl "cm:src;midi1.scm")
-      (stocl "cm:src;midi2.scm")
-      (stocl "cm:src;midi3.scm")
-      (stocl "cm:src;midishare;midishare.scm")
-      (stocl "cm:src;midishare;player.scm")
-      (stocl "cm:src;data.scm")
-      (stocl "cm:src;scales.scm")
-      (stocl "cm:src;spectral.scm")
-      (stocl "cm:src;patterns.scm"))
+      (stocl (srcfile "loop.scm") :file "iter")
+      (stocl (srcfile "utils.scm"))
+      (stocl (srcfile "mop.scm"))
+      (stocl (srcfile "objects.scm"))
+      (stocl (srcfile "io.scm"))
+      (stocl (srcfile "scheduler.scm"))
+      (stocl (srcfile "sco.scm"))
+      (stocl (srcfile "clm.scm"))
+      (stocl (srcfile "clm2.scm"))
+      (stocl (srcfile "cmn.scm"))
+      (stocl (srcfile "midi1.scm"))
+      (stocl (srcfile "midi2.scm"))
+      (stocl (srcfile "midi3.scm"))
+      (stocl (srcfile "midishare" "midishare.scm"))
+      (stocl (srcfile "midishare" "player.scm"))
+      (stocl (srcfile "data.scm"))
+      (stocl (srcfile "scales.scm"))
+      (stocl (srcfile "spectral.scm"))
+      (stocl (srcfile "patterns.scm")))
     (dolist (f args)
-      (stocl (format nil "cm:src;~a.scm" f))))
+      (stocl (srcfile f))))
   (values))
 
 (defvar %false nil)
@@ -1102,7 +1111,7 @@
        (values))))
 
 ;(defmethod initialize :after ((obj container) args))
-;(stocl "cm:src;temp.scm")
+;(stocl (srcfile "temp.scm")
 
 (defun define-method->defmethod (form &optional env)
   (let* ((decl (copy-tree (second form)))
