@@ -1047,6 +1047,9 @@
 	:accessor graph-last)
   (props :init-value '() :init-keyword :props
 	 :accessor graph-props)
+  (starting-node-index :init-value 0 
+                       :init-keyword :starting-node-index
+                       :accessor graph-starting-node-index)
   :name 'graph)
 
 (define-method (pattern-external-inits (obj <graph>))
@@ -1082,7 +1085,8 @@
             (cons (length last) last)
           (cons last (make-list last '*)))))
     (set! (pattern-data obj)
-	  (cons (first nodes) nodes)))
+	  (cons (list-ref nodes (graph-starting-node-index obj))
+                nodes)))
   (values))
 
 (define-method (canonicalize-pattern-data (obj <graph>) 
@@ -1119,8 +1123,9 @@
 			     (unless id
 			       (push datum args)
 			       (push ':id args))
-			     (unless to
-			       (err "Missing :to in ~s." orig))
+                             to
+			     ;(unless to
+			     ;  (err "Missing :to in ~s." orig))
 			     (return 
                               (apply #'make-graph-node
                                      :datum (maybeparse parser datum)
