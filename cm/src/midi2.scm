@@ -66,6 +66,8 @@
     (list-ref map chan)))
 
 (define %midituningtypes
+  ;; WHAT A FREAKING MESS! I should never have added done the
+  ;; "divisions-per-octave"
   '((#t :note note :note-by-note note-by-note) ; order of first two
     (1  :12-note 12-note :12-tone 12-tone )    ; entries is important
     (2 24 :24-note 24-note :24-tone 24-tone )
@@ -485,7 +487,6 @@
 
 (define (channel-tuning-init io)
   (let ((tuning (midi-stream-channel-tuning io))
-	;(old (midi-stream-tunedata io))
         )
     (if (not tuning)
       (begin
@@ -504,7 +505,7 @@
 	  (begin (set! tune tuning)
 		 (set! tuning #f)))
         (set! type (find tune %midituningtypes :test #'member))
-	(cond ((eq? tune (car %midituningtypes))
+	(cond ((eq? type (car %midituningtypes))
 	       ;; note by note tuning.
                (if (pair? tuning)
                  (begin (set! num1 (pop tuning))
@@ -520,14 +521,16 @@
 	      ((not (null type))
                ;; channel tuning
 	       ;; data=(<chanoffset> <divisions>)
-	       (set! num1 (if (pair? tuning)(pop tuning) 0))
-	       (set! num2 (/ tune 12))
+               (setq tune (car type)) ; force divisions per SEMItone
+	       (set! num1 (if (pair? tuning) (pop tuning) 0))
+	       ;;(set! num2 (/ tune 12)) ;; SEMItone divisions.
+               (set! num2 tune)
 	       (when (> (+ num1 num2) 15)
 	         (err "tuning range ~s-~s not in channel range 0-15."
 		      num1 (+ num1 num2)))
-	       (if (member tune (car (cdr %midituningtypes)))
-                 ;; 12 or 12-note means normal
-                 ;; clear existing bends but dont cache
+	       (if (equal tune 1)
+                 ;; 1 is normal tuning, clear existing bends but dont
+                 ;; cache
 	         (begin
 		  (microtune-channels io 1 
 				      (midi-stream-bend-width io) 0)
