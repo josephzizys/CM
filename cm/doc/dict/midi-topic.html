@@ -513,26 +513,26 @@ cm&gt; <span class="input">(receive )</span></pre>
 <h3>Example: receiving and scheduling in tandem</h3> 
 
 <p>
-The following example demonstates real time processes and a receive
+The following example demonstrates real time processes and a receive
 hook used together. The <code>wiggle</code> process adds a "chromatic
 wiggle" to a specified keynum <var>knum</var>.  Each wiggle lasts
 between 10 and 20 notes; each note is produced from a heap pattern
 (random shuffle) of keynums centered around <var>knum</var> not
 exceeding a minor third on either side. The rate (speed) of each
-wiggle is a random choice betwen 100, 150 and 200 milliseconds between
+wiggle is a random choice between 100, 150 and 200 milliseconds between
 notes.  All wiggles make a decrescendo over their lifetime.
 </p>
 
 <p>
 The receive hook <code>dowiggle</code> first outputs the current input
-note and then 30% of the time it adds a wiggle to it.  Half of these
-wiggles are at the input keynumber, otherwise they appear one octave
+note and then 75% of the time it adds a wiggle to it.  Half of these
+wiggles are at the input key number, otherwise they appear one octave
 up or down from the input note.
 </p>
 
 <!-- Interaction 6 -->
 <div class="float">
-<p><span class="floatlabel">Example 6.</span> Receiving, outputing and scheduling used together.</p>
+<p><span class="floatlabel">Example 6.</span> Receiving, outputting and scheduling used together.</p>
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">wiggle</span> knum)
   <span class="comment">;; return a wiggle process centered on specified knum</span>
@@ -551,7 +551,7 @@ up or down from the input note.
   (output ev)
   (<span class="special">if</span> (and (= (ms:evType ev) typeKeyOn)
            (> (ms:vel ev) 0)
-           (odds .3))
+           (odds .75))
       (sprout (wiggle (+ (ms:pitch ev)
                          (pick 0 0 12 -12)))
               0)))</span>
@@ -576,6 +576,57 @@ cm&gt; <span class="input">(receive #'dowiggle)</span>
 
 cm&gt; <span class="input">(receive )</span></pre>
 </div>
+
+<h2 id="real_time_tip">Real time processing issues</h2>
+
+<ul>
+<li>
+  Garbage collection (GC) is not disabled.  You may or may not want
+  to do this on your own.
+</li>
+
+<li>
+  Regardless of GC status you should should keep consing to a minimum
+  during real time work. The most common Lisp activities that cons
+  are:
+  <ul>
+  <li>Creating Lisp instances, structures, vectors, arrays, strings and
+  lists.</li>
+  <li>Performing floating point and fractional arithmetic.</li>
+  </ul>
+</li>
+<li>
+  A rule of thumb: integers are good, everything else is
+  suspect. Analyze your programs to determine when and where you use
+  floats to see if there is an integer alternative.
+</li>
+
+<li>
+  Do your consing ahead of time. For example allocate all your
+   patterns before you call <code>sprout</code>.
+</li>
+
+<li>
+  Real time processes are managed in a "processes table".  
+  By default the size of this table is 64.  When a process function is
+  finished it is automatically removed from the table and that
+  location will be reallocated for the next process.  If 64 concurrent
+  process are not enough you can use <code>make-proctable</code> to
+  increase the size of the table:
+  <blockquote>
+    <pre>(set! *proctable* (make-proctable 200))</pre>
+  </blockquote>
+</li>
+
+<li>
+  If you trigger an error during real time process scheduling you
+  should reset the proctable back to its initial conditions before
+  calling <code>sprout</code> again:
+  <blockquote>
+    <pre>(reset-proctable *proctable*))</pre>
+  </blockquote>
+</li>
+</ul>
 
 <h2 id="midi_high_level">High level (non-real time) MIDI support</h2>
 
