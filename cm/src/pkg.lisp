@@ -32,7 +32,7 @@
   (:use :common-lisp )
   (:shadow :make-load-form
            ;; have to block these from CLM
-           :io :ran :exit :quit )
+           :io :ran :exit :quit :play )
   ;; use keywords instead of strings for case sensitive lisps.
   (:import-from :clm 
                 :mus-next
