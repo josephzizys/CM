@@ -19,9 +19,10 @@
 [<code class="keyword">:delete-fasls</code> <var>bool</var>] 
 [<code class="keyword">:bin-directory</code> <var>dir</var>] 
 [<code class="keyword">:scheme</code> <var>bool</var>]
-[<code class="keyword">:prompt</code> <var>bool</var>] 
 [<code class="keyword">:verbose</code> <var>bool</var>] 
-[<code class="keyword">:force</code> <var>bool</var>])</span></dd>
+[<code class="keyword">:force</code> <var>bool</var>]
+[<code class="keyword">:extensions</code> <var>bool</var>] 
+)</span></dd>
 </dl>
 
 <p>
@@ -89,14 +90,6 @@ If <var>true</var> then Scheme syntax is enabled in Common Lisp, if
 <var>false</var> it is not. The default value is <var>true</var>.
 </dd>
 
-<dt><code class="keyword">:prompt</code> {<var>true</var> |
-<var>false</var>}</dt>
-<dd>
-If <var>true</var> then the user is interactively prompted for any
-build parameter not specified to the function. If the value is
-<var>false</var> then the system is built without any prompting.  The
-default value is <var>false</var>.
-</dd>
 
 <dt><code class="keyword">:verbose</code> {<var>true</var> |
 <var>false</var>}</dt>
@@ -107,7 +100,22 @@ value will not stop compiler warnings or other implementation output
 from occuring. The default value is <var>true</var>.
 </dd>
 
-<!--  
+<dt><code class="keyword">:extensions</code> {<var>list</var> |
+<var>false</var>}</dt>
+<dd>
+A list of user-supplied extensions to process as CM loads up. Each
+entry in the list should be a function to evaluate or a filename
+(string) to load. The extensions list is normally processed inside the
+Common Music package after the system loads itself. To process some
+(or all) of the entries before any CM files are loaded, add the
+keyword <span class="keyword">:before</span> to the front of the list.
+Preprocessing can be turned off for later entries in the extensions
+list by including the keyword <span class="keyword">:after</span> in
+front of those entries that should be be processed in the normal,
+post-loading manner.
+</dd>
+
+<!--
 <dt><code class="keyword">:make-file</code> {<var>string</var> |
 <var>true</var> | <var>false</var>}</dt>
 <dd>
