@@ -1072,6 +1072,8 @@
                        (setf v `(funcall (function ,v)))))
                     ((:init-value )
                      (setf p :initform))
+                    ((:allocation )
+                     (setf p :allocation))
                     (:init-keyword
                      (setf p :initarg))
                     (:accessor )
