@@ -81,10 +81,10 @@
         ((:hertz )
          (set! type spectrum)
          (unless izp (set! ignore-zero #t)))
-        ((:keynum )
+        ((:keynum :keynums)
          (set! type spectrum)
          (unless izp (set! ignore-zero #t)))
-        ((:note )
+        ((:note :notes)
          (set! type spectrum)
          (unless izp (set! ignore-zero #t)))
         (else
@@ -152,13 +152,16 @@
                 (begin (set-car! s k)
                        (push s l))))
             (set! data (reverse! l)))
-          (do ((tail data (cdr tail)))
+          (do ((low (hertz 0))
+               (tail data (cdr tail)))
               ((null? tail) #f)
-            (setf (caar tail)
-                  (if (eq type ':note)
-                    (note (caar tail) :hz #t)
-                    (keynum (caar tail) :hz #t))))))
-
+            ;; ignore partials lower than lowest note
+            ;; in standard scale
+            (unless (< (caar tail) low) 
+              (setf (caar tail)
+                    (if (eq type ':note)
+                      (note (caar tail) :hz #t)
+                      (keynum (caar tail) :hz #t)))))))
       (unless (eq? type ':raw)
         (set! data
               (cond 
