@@ -1,27 +1,35 @@
-CM 2.4.0 (final release)
+CM 2.4.1
 
-o CM's installation process has been completely rewritten in order to
-  make the system more flexible and easier to install. See:
+o CM's installation process has been completely rewritten to make it
+  easier to install. See:
     http:/commonmusic.sf.net/doc/install.html
-    http:/commonmusic.sf.net/doc/dict/make-cm-fn.html 
+    http:/commonmusic.sf.net/doc/dict/make-cm-fn.html
   for more info.
 
-o You can now load CLM, CMN, and MidiShare into CM at any point,
-  i.e. it is no longer necessary (or even desirable) to save "image
-  files" with these systems hardwired together.  In addition, you no
-  longer have to compile CLM insturments in the CM package to work
-  with them in CM -- any compiled instrument loaded will create an
-  object defintion when its loaded into CM even if the ins was
-  compiled without CM around. (You need to install the latest CLM-2
-  tarball for this to work.)
+o a new shell script bin/cm.sh can be use to autoload CM.  It works
+  with every supported Lisp implementation and can start CM running in
+  a terminal or under Emacs/XEmacs.  type 'bin/cm.sh -h' in the
+  terminal for more info.
 
-o The main CM/readme.text has been updated with a new "matrix" of
-  supported Lisps, OS, and features.
+o CM now works more flexibly with CLM, CMN and Midishare.  It is no
+  longer necessary to save image files with these systems hardwired
+  together. Instead, you can compile these systems seperately and then
+  load them when you want to use them. This allows you to work with
+  the most up-to-date versions of the software without have to rebuild
+  images.
 
-o  CM now works in the new OpenMCL 0.14.
+o You no longer have to compile CLM insturments in the CM package to
+  work with them in CM -- compiled instruments will create CM object
+  definitions even if the ins was compiled without CM around. (You
+  need to install the latest CLM-2 tarball for this to work.)
 
 o CM has a new test suite (etc/test.cm) that I use to check the system
   in its various configurations before releasing the software.
+
+o The main CM/readme.text has been updated with a new "matrix" of
+  supported Lisps, OS, and tested features.
+
+o  CM now works in the OpenMCL 0.14.
 
 ----------------------------------------------------------------------
 CM 2.4.0 now supports a direct MIDI driver connection using Grame's

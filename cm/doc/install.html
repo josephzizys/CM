@@ -47,7 +47,7 @@ additional software systems such as <a
   <li>
     <a href="#load_cm">Loading Common Music</a>
     <ol>
-      <li><a href="#load_shell">Quickstart method (Linux, OS X, Cygwin)</a></li>
+      <li><a href="#load_shell">Quickstart (Linux, OS X, Cygwin)</a></li>
       <li><a href="#load_lisp">Lisp loading</a></li>
       <li><A href="#load_custom">Saving images and other custom builds</a></li>
     </ol>
@@ -136,8 +136,7 @@ CVS password: <br>
 % <span class="input">cvs -z3
 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic checkout
 cm</span><br>
-<span style="color: gray; font-style: italic;">[...lots of printout
-deleted...]</span><br>
+<span style="color: gray; font-style: italic;">[...build output deleted...]</span><br>
 % <span class="input">mv cm cm-2.4.1</span><br>
 </p>
 </div>
@@ -262,23 +261,23 @@ load process in several different Lisp implementations; if you use
 some other Lisp or operating system the examples will appear slightly
 differently as you perform each step.
 </p>
-<h3 id="load_shell">3.1 Shell loading (Linux, OS X and Cygwin)</h3>
+<h3 id="load_shell">3.1 Quickstart (Linux, OS X and Cygwin)</h3>
 
 <p>
 The easiest way to load CM on Linux, OS X or Cygwin is using
-the <code>cm</code> script located in the bin/ subdirectory of the CM
+the <code>cm.sh</code> script located in the bin/ subdirectory of the CM
 installation directory. This script will automatically generate and
 compile any files it needs as it loads the system. Once the script
 finishes loading it will leave you in the CM package ready to begin
 work.
 </p>
 <div class="float">
-<p class="captxt">The <code>cm</code> script.
+<p class="captxt">The <code>cm.sh</code> script.
 </p>
 <pre class="shell">% <span class="input">cd /Lisp/cm-2.4.1/bin</span>
 % <span
- class="input">./cm</span>
-<span style="color: gray; font-style: italic;">[...printout deleted...]</span>
+ class="input">./cm.sh</span>
+<span style="color: gray; font-style: italic;">[...build output deleted...]</span>
  /\\\          
 ---\\\---------
 ----\\\--------
@@ -289,16 +288,17 @@ work.
 ? </pre>
 </div>
 <p>
-The <code>cm</code> script can be used to start CM in a Termial or
-under Emacs/Xemacs. For more information type: <code>./cm -h</code>.
+The <code>cm.sh</code> script can be used to start CM in a Termial or
+under Emacs/Xemacs. For more information type: <code>cm.sh -h</code>.
 </p>
+
 <h3 id="load_lisp">3.2 Lisp loading</h3>
 <p>
 To load Common Music into Lisp in the default configuration (highly
 recommended for beginners!) start your Lisp and use
 the <code>load</code> function to load Common Music's build script
 located in the src/ subdirectory of the CM installation directory. For
-Guile Scheme the build script is called cm.scm, for all other Lisp
+Scheme the build script is called cm.scm, for all Common Lisp
 implementations the file to load is called cm.lisp. Be sure to specify
 the full, true pathname to the file, i.e. avoid using links, relative
 paths, or shortcuts like "~/" unless you are sure your Lisp supports
@@ -309,13 +309,13 @@ them.
 Lisp).
 </p>
 <pre class="shell">% openmcl<br>? <span class="input">(load "/Lisp/cm-2.4.1/src/cm.lisp")</span>
-<span style="color: gray; font-style: italic;">[...printout deleted...]</span></pre>
+<span style="color: gray; font-style: italic;">[...build output deleted...]</span></pre>
 </div>
 <div class="float">
 <p class="captxt">Loading the CM build script in Guile/Linux (Scheme).
 </p>
 <pre class="shell">% guile<br>guile&gt; <span class="input">(load "/Lisp/cm-2.4.1/src/cm.scm")</span>
-<span style="color: gray; font-style: italic;">[...printout deleted...]</span></pre>
+<span style="color: gray; font-style: italic;">[...build output deleted...]</span></pre>
 </div>
 <div class="float">
 <p class="captxt">Loading the CM build script in Clisp/Windows (Common
@@ -324,7 +324,7 @@ Lisp).
 <pre class="shell">C:\&gt; <span class="input">clisp</span>
 [1]&gt; <span
  class="input">(load "c:\\lisp\\cm-2.4.1\\src\\cm.lisp")</span>
-<span style="color: gray; font-style: italic;">[...printout deleted...]</span></pre>
+<span style="color: gray; font-style: italic;">[...build output deleted...]</span></pre>
 </div>
 For information about using DOS directory character in Lisp see <a
  href="#dosdir">Troubleshooting tip 4</a>.
@@ -373,7 +373,7 @@ href="dict/make-cm-fn.html">make-cm</a> function with
     <pre class="shell">? <span class="input">(load "/Lisp/cm-2.4.1/src/make.lisp")</span>
 ; Loading /Lisp/cm-2.4.1/src/make.fasl
 ? (make-cm :save-image t)
-<em>[...printout deleted...]</em>
+<em>[...build output deleted...]</em>
 ; Removing fasl files.
 ; Garbage collecting...
 ; Saving application image.
@@ -412,13 +412,13 @@ the commands shown below.
 <p class="captxt">Loading CLM into CM.</p>
 <pre class="shell">? <span class="input">(load
 "/Lisp/clm-2/all")</span>
-<i>[...printout deleted...]</i></pre>
+<i>[...build output deleted...]</i></pre>
 </div>
 <div class="float">
 <p class="captxt">Loading CMN into a running CM image.
 </p>
 <pre class="shell">? <span class="input">(load "/Lisp/cmn/cmn-all")</span>
-<i>[...printout deleted...]</i></pre>
+<i>[...build output deleted...]</i></pre>
 </div>
 <h3 id="install_ms">Installing Midishare</h3>
 <p>
