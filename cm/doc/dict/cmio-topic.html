@@ -17,17 +17,16 @@
 
 <p>
 The CMIO (Common Music Input/Output) window is a graphical tool
-designed to facilitate the generation of musical event data to and
-from sound synthesis and display applications.  Which applications are
-active in the window at any given time depend on what software systems
-have been loaded into Common Music; the window's Systems and Files
-pages can be used to dynamically configure and load external software
-such as CLM, CMN and Midishare once the window is open.
-<!-- More that one CMIO window may be open at the same time and the state
---> In addition, the precise characteristics of the various tabbed
-pages of the interface can be customized by passing appropriate
-arguments to the <a href="cmio-fn.html">cmio</a> function when the
-window is created.
+designed to facilitate the generation of musical data to and from
+sound synthesis and display applications.  Which applications are
+active at any given time depends on what software systems have been
+loaded into Common Music; the Systems and Files pages in the CMIO
+window can be used to dynamically configure and load external software
+such as CLM, CMN and Midishare into the Lisp environment.  In
+addition, the field settings on the various tabbed pages can be
+initialized to a user's preference by passing appropriate arguments to
+the <a href="cmio-fn.html">cmio</a> function when the window is
+created.
 
 <h2>Window Layout</h2>
 
@@ -36,27 +35,27 @@ A CMIO window consists of four GUI components:
 </p>
 
 <ul>
-<li>A <em>Sources</em> frame holds tabbed pages that relate to
+<li>A <em>Sources</em> notebook holds tabbed pages that relate to
 creating and generating event data.</li>
 
-<li>A <em>Targets</em> frame holds tab pages related to sound sysnthesis and
-display configurations.
+<li>A <em>Targets</em> notebook holds tab pages related to sound
+synthesis and display applications.
 </li>
 <li>
-An <em>Executive</em> frame manages the system's working directory and current
-input/output file. <!-- The Execute button triggers actions on files
+An <em>Executive</em> frame manages the system's working directory and
+current target file. <!-- The Execute button triggers actions on files
 according to user-defined semantics. -->
 </li>
-<li>A message line displays color coded information related to the
-ongoing work inside the window.</li>
+<li>A message line displays color coded information related to working
+in the window.</li>
 </ul>
 
 <p>
 Each tabbed page contains a set of <em>fields</em> representing the
-input/output features of a given application. Left-justified page tabs
-acess pages devoted to specific tasks and applications; the
-right-justified pages relate to more general features of the window or
-the Lisp environment.
+input/output features of a given application. 
+
+The right-justified pages (such as Help or Systems) relate to more
+general features of the window or of the surrounding Lisp environment.
 </p>
 
 <div class="float" id="example1">
@@ -72,7 +71,8 @@ the currently selected target.
 </p>
 </div>
 
-Some simple coloration rules provide information about how fields work:
+Color highlighting provides additional information about how the
+information on a page is interpreted by the interface:
 <ul>
 <li>Blue labels mark <em>required</em> fields that must contain infomation
 before the page can execute.
@@ -87,8 +87,8 @@ Yellow backgrounds indicate fields that will be
 White backgrounds indicate fields that either contain uninterpreted
 text or are <em>read</em> to produce a Lisp value. It is possible to
 force evaluation in a white field using the #.<em>expr </em> notation,
-where <em>expr</em> is evaluated to produce the contents
-of the field.
+where <em>expr</em> is a Lisp expression that will be evaluated to
+produce the contents of the field.
 </li>
 
 <li>
@@ -98,31 +98,102 @@ warning or notification, red signifies an error condition.
 </li>
 </ul>
 
-<h2>Error handling and notification</h2>
+<h2>Error Handling and Notification</h2>
 <p>
 A CMIO window facilitates musical tasks that would otherwise be
-accomplished by evaluating Lisp expressions in the REPL. Under normal
-conditions, evaulation errors in the REPL cause execution to stop and
-the user is allowed to debug or resolve the error from inside
-a <em>break </em> loop.  However, a CMIO window executes its windowing
-operations via foreign function <em>callbacks</em> that do not expect
-their flow of control to ever be interrupted. This means that
-generating Lisp error breaks from inside a CMIO window will likely
-cause the window to freeze and in sever cases may even cause the Lisp
+accomplished by evaluating expressions inside the Lisp REPL
+window. Under normal conditions, lisp evaluation errors will cause the
+REPL to stop execution by signalin a <em>error break</em>.  However, a
+CMIO window executes via foreign function <em>callbacks</em> that do
+not expect their flow of control to ever be interrupted. As a result,
+Lisp error breaks inside a CMIO window will likely cause the window to
+freeze and &mdash;in some cases &mdash; may even cause the Lisp
 session to immediately terminate. For this reason a CMIO window
-attempts to evaluate Lisp functions in such a way that error messages
-are reported in its Message line without ever entering Lisp's error
-break loop. If you need to enter the Lisp break loop to debug a
-problem then set <code>*cm-break-on-errors*</code> to true, but
-realize that once the break is entered the CMIO window and possibly the whole GTK session may no longer work.
+attempts to evaluate its REPL calls in such a way that error messages
+are reported in the message line but without ever stopping in a Lisp
+error break. If you need to enter the Lisp break loop in order to
+debug a problem then set the global
+variable <code>*cm-break-on-errors*</code> to true, but realize that
+once the break condition is resolved the CMIO window (and possibly the
+whole GTK session) may no longer work correctly or at all.
 </p>
 
 <h2>Display Pages</h2>
 
-Each source or target choice is represented as a "page" in the
-window.  data fields on each page can be set in the GUI and also
-initialized by passing the appropriate values to the function when the
-window is created.
+<p>
+Each source or target application (task) is represented by a tabbed
+notebook page inside the window. The Sources notebook relates to
+specifing source material in CM: generating musical event data and
+defining aggregate structure with container objects. The Targets
+notebook pages define various destinations that musical data can be
+rendered to. The following sections briefly describe the layout and
+functionality of each page.
+</p>
 
+<h3>Sources Notebook</h3>
+
+<h4 id="containers">Containers</h4>
+<p>
+The Containers page is used to create, rename and delete <a href="seq-cls.html">seq</a> containers.
+</p>
+
+<div class="float">
+<p>
+<img src="cmio2.png" alt="[cmio2.png]"/>
+</p>
+</div>
+
+<ul>
+<li>The Containers menu lists all the exisiting named seqs. Selecting
+a seq from the menu places it in the name buffer for editing.</li>
+<li>The Name buffer can be set to the name of a sequence to edit or create.
+<li>The New button creates a sequence using the name specified in the name buffer.
+<li>The Rename button renames the currently selected seq in the Containers menu to the name in the edit buffer.
+<li>The Delete button deletes the seq listed in the name buffer and
+all of its subobjects.
+<li>The Update button refills the Containers menu with any new seqs
+created ouside the window (ie in the Lisp REPL) since the menu was
+created or last updated.
+</li>
+</ul>
+
+<h4 id="eventio">Event IO</h4>
+<p>
+The <a href="cmio-fn.html#eventio">Event IO page</a> is used to generate musical events to the currently
+selected target page.  Using the Event IO page in conjunction with the
+current target page is equivalent to calling the <a
+href="events-fn.html">events</a> function in the REPL.
+</p>
+
+<div class="float">
+<p>
+<img src="cmio3.png" alt="[cmio3.png]"/>
+</p>
+</div>
+
+<ul>
+<li>The Events buffer must be set to a valid Lisp expression that,
+when evaluated, produces musical events to schedule in the currently
+selected target page. This buffer is equivalent to the first argument
+to the <a href="events-fn.html">events</a> function.</li>
+<li>The Starts buffer contains a number or list of numbers specifying
+the start time offset of the events in the target score. This buffer
+is equivalent to the optional third arguement to the <a
+href="events-fn.html">events</a> function. If no start time offset if
+provided it defaults to zero.  It is sometimes useful to specify a
+negative offset. For example, to render a selection that starts at
+time 10 in a <a href="plotter-topic.html">plotter window</a> at time 0
+in the score, specify a -10 offset in the Starts buffer.
+<li>The Compose button renders the musical events to the currently
+selected target page.</li>
+</ul>
+
+<h4 id="help">Help</h4>
+<p>
+The Help page is not yet implemented.
+</p>
+
+
+<h3>Targets Notebook</h3>
 
 
