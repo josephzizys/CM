@@ -25,8 +25,7 @@
   ;; CLISP's clos.lisp poses the question...
   ;;   Durch alle Symbole durchlaufen, um die Unterklassen abzugrasen.
   ;;   Sollte eleganter gehen??
-  ;; to which I answer SURE. TRY IMPLEMENTING CLASS-DIRECT-SUBCLASSES
-  ;; LIKE EVERY OTHER LISP.
+  ;; to which I answer: SURE. 
   (let ((subclasses (list )))
     (do-symbols (sym :cm)
       (let ((c (get sym 'clos::closclass)))
@@ -35,11 +34,17 @@
 	  (pushnew c subclasses))))
     (nreverse subclasses)))
 
+;(defun slot-definition-initargs (slot)
+;  (clos::slotdef-initargs slot))
+;(defun slod-definition-initform (slot)
+;  (cdr (clos::slotd-initer)))
+
+;; clisp 2.32
 (defun slot-definition-initargs (slot)
   (clos::slotdef-initargs slot))
 
-(defun slod-definition-initform (slot)
-  (cdr (clos::slotd-initer)))
+(defun slot-definition-initform (slot)
+  (cdr (clos::slotdef-initer slot)))
 
 (defun slot-definition-name (slot)
   (clos::slotdef-name slot))
