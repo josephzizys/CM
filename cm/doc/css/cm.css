@@ -237,12 +237,18 @@ code.keyword {
   color: #b22222;
 }
 
+
 code.entry { 
+  font-family: sans-serif; /* stop gap solution until I can replace code with span */
+  font-style: normal;
   font-weight: bold;
 }
 
-
-
+span.entry { 
+  font-family: sans-serif;
+  font-style: normal;
+  font-weight: bold;
+}
 
 ol.toc, ul.toc {
 /*  font: normal 119% sans-serif; */
