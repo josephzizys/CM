@@ -253,9 +253,16 @@ real_path () {
   fi
 }
 
-CWD=`pwd`
-PTU=`echo $0 | sed 's:[^/]*$::;s:\(.\)/$:\1:;'`
 
+# Resolve symbolic links
+if test -L $0 ; then
+  ARGV0=`\ls -l $0 | sed 's/.*-> //;'`
+else
+  ARGV0="$0"
+fi
+
+CWD=`pwd`
+PTU=`echo $ARGV0 | sed 's:[^/]*$::;s:\(.\)/$:\1:;'`
 LOC=`real_path "$PTU"`
 
 if [ ! $LOC ] ; then
