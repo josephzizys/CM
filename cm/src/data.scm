@@ -310,15 +310,19 @@
   (with-args (args &optional (tempo *tempo*) (beat *beat*))
     (loop for v in val collect (rhythm v tempo beat))))
 
+(define %rest-char #\-)
+
 (define-method (rhythm (val <symbol>) . args)
   (with-args (args &optional (tempo *tempo*) (beat *beat*))
     (let ((n (hash-ref *rhythms* val)))
       (if n
 	(rhythm n tempo beat)
-	(begin
-	 (hash-set! *rhythms* val
-		    (parse-rhythm-string (symbol->string val)))
-	 (rhythm (hash-ref *rhythms* val) tempo beat))))))
+	(let* ((str (symbol->string val))
+               (num (if (char-ci=? (string-ref str 0) %rest-char)
+                      (- (parse-rhythm-string (substring str 1)))
+                      (parse-rhythm-string str ))))
+          (hash-set! *rhythms* val num)
+          (rhythm (hash-ref *rhythms* val) tempo beat))))))
 
 ;(loop for r in  '(t q s 
 ;                  tq ts tt t4 t16 t32
