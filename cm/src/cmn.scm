@@ -221,7 +221,99 @@
                  dur
                  (cmn-eval note)
                  args))))))
-        
+
+;;;
+;;; cmn object for note data and general markup
+;;;
+
+(defobject cmn (event)
+  ((staff :initform 0)
+   (expr :initform #f :initarg :note )
+   (duration :initform #f)
+   (data :initform '())))
+
+(define-method (initialize (obj <cmn>) args)
+  (next-method)
+  ;; have to parse :note initarg by hand since goops doesn't
+  ;; recogize more than one initarg per slot...
+  (do ((a args (cddr a)))
+      ((null? a ) #f)
+    (case (car a)
+      ((:note )
+       (set! (cmn-expr obj) (cadr a)))
+      ((:expr )
+       (set! (cmn-expr obj) (cadr a))))))
+
+(define-method (object->cmn (obj <cmn>))
+  (let ((d (cmn-duration obj)))
+    (if d
+      (let ((n (or (note (cmn-expr obj) :in? *chromatic-scale*)
+                   (err "cmn: '~s' is not a note for duration ~s." 
+                        (cmn-expr obj) d))))
+        (list* (cmn-staff obj)
+               d
+               n
+               (let ((x (cmn-data obj)))
+                 (unless (list? x)
+                   (err "cmn data '~s' is not a list." x))
+                 x)))
+      (list (cmn-staff obj)
+            (let ((e (cmn-expr obj))
+                  (x (cmn-data obj)))
+              (if e
+                (if x
+                  (begin
+                   (unless (list? x)
+                     (err "cmn data '~s' is not a list." x))
+                   `(engorge (list ,e ,@x)))
+                  e)
+                (if x `(engorge (list ,@x))
+                    (err "cmn: missing :expr, :note or :data"))))))))
+
+(define-method (object->midi (obj <cmn>))
+  (let ((e (cmn-expr obj))
+        (b (object-time obj))
+        (d (cmn-duration obj))
+        )
+    (if d
+      (make-instance <midi> :time b :duration d 
+                     :channel (cmn-staff obj)
+                     :keynum e)
+      (if (pair? e)
+        (case (car e)
+          ((mm )
+           (make-instance <midi-tempo-change>
+                          :time b
+                          :usecs (inexact->exact
+                                  (floor (* (/ 60 (cadr e)) 1000000)))))
+          ((meter )
+           (make-instance <midi-time-signature>
+                          :time b :numerator (cadr e)
+                          :denominator (caddr e)))
+          (else
+           #f))
+        (let* ((l '((cf-major af-minor)
+                    (gf-major ef-minor )
+                    (df-major bf-minor )
+                    (af-major f-minor)
+                    (ef-major c-minor)
+                    (bf-major g-minor)
+                    (f-major d-minor)
+                    (c-major a-minor )
+                    (g-major e-minor )
+                    (d-major b-minor )
+                    (a-major fs-minor )
+                    (e-major cs-minor )
+                    (b-major gs-minor )
+                    (fs-major ds-minor )
+                    (cs-major as-minor )))
+               (p (position e l :test  (function member))))
+          (if p
+            (make-instance <midi-key-signature>
+                           :time b :key (- p 7)
+                           :mode (position e (elt l p)))
+            #f))))))
+
 ;;;
 ;;;
 ;;;
