@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>cm.sh</title>
+</head>
+<body>
+<div id="content">
+
+<!-- Entry: "cm.sh" -->
+<dl class="dictsyntax">
+<dt>[Bourne script]</dt>
+<dd><span class="syntax"><code class="entry">cm.sh</code> 
+[<code class="keyword">-qnv</code>] 
+[<code class="keyword">-l</code> <var>lisp</var>]
+[<code class="keyword">-e</code> <var>editor</var>] 
+[<code class="keyword">-P</code> <var>prefs</var>] 
+[<code class="keyword">-O</code> <var>os</var>] 
+[<code class="keyword">-A</code> <var>arch</var>] 
+[<code class="keyword">-F</code> <var>lisp-flavor</var>]
+[<code class="keyword">-R</code> <var>cmroot</var>]
+</span></dd>
+</dl>
+
+<p>
+Starts Common Music running either by loading it into a fresh Lisp
+session or by launching an existing image that has been built with CM
+pre-loaded.  The script can run CM a terminal or as a subprocess of
+any Emacs-compatible editor such as xemacs(1), emacs(1), or
+gnuclient(1). Script parameters are autodetected at runtime so
+normally it will suffice to call cm.sh without any arguments.
+Autodetection may be overridden via options and environment variables.
+</p>
+
+<p>
+<code class="entry">cm.sh</code> supports the following options:
+</p>
+
+<dl>
+
+<dt><code class="keyword">-h</code></dt>
+<dd>
+Prints command help.
+</dd>
+
+<dt><code class="keyword">-q</code></dt>
+<dd>
+Echo platform's 'os-arch' string and exit.
+</dd>
+
+<dt><code class="keyword">-n</code></dt>
+<dd>
+Dry run, don't do anything. Used in conjunction with -v for debugging.
+</dd>
+
+<dt><code class="keyword">-v</code></dt>
+<dd>
+Be verbose.
+</dd>
+
+<dt><code class="keyword">-l</code> {<var>lisp</var>}</dt>
+<dd>
+Run CM using this Lisp/Scheme (default: '<unset>').
+</dd>
+
+<dt><code class="keyword">-e</code> {<var>lisp</var>}</dt>
+<dd>
+Run CM under this editor (default: '<none>').
+</dd>
+
+<dt><code class="keyword">-P</code> {<var>lisp</var>}</dt>
+<dd>
+Preferred runtimes (default: 'openmcl lisp acl clisp guile')
+</dd>
+
+<dt><code class="keyword">-O</code> {<var>lisp</var>}</dt>
+<dd>
+Operating System in case autodetection fails.
+</dd>
+
+<dt><code class="keyword">-A</code> {<var>lisp</var>}</dt>
+<dd>
+Machine architecture in case autodetection fails.
+</dd>
+
+<dt><code class="keyword">-F</code> {<var>lisp</var>}</dt>
+<dd>
+Lisp flavor in case autodetection fails.
+</dd>
+
+<dt><code class="keyword">-V</code> {<var>lisp</var>}</dt>
+<dd>
+Lisp version in case autodetection fails.
+</dd>
+
+<dt><code class="keyword">-R</code> {<var>cmroot</var>}</dt>
+<dd>
+Common Music root directory in case autodetection fails.
+</dd>
+</dl>
+
+<p>
+<code class="entry">cm.sh</code> references the following environment
+variables.
+</p>
+
+<dl>
+
+<dt><code class="keyword">CM_RUNTIME</code></dt>
+<dd>
+Name or path of a Lisp or Scheme system to execute, e.g. 'clisp' or
+'/usr/bin/openmcl'.  Same as <code class="keyword">-l</code> option.
+</dd>
+
+<dt><code class="keyword">CM_EDITOR</code></dt>
+<dd>
+Name or path of an Emacs-compatible editor under which to run cm,
+e.g. 'xemacs' or '/usr/bin/gnuclient'.  Same as <code
+class="keyword">-e</code> option.
+</dd>
+
+<dt><code class="keyword">CM_RUNTIME_PREFS</code></dt>
+<dd>
+List of <code class="keyword">CM_RUNTIME</code> commands to try during
+autodetection, in order of preference.  Same as <code
+class="keyword">-r</code> option.
+</dd>
+
+<dt><code class="keyword">CM_OS</code></dt>
+<dd>
+Symbolic name of host OS, e.g. 'linux' or 'darwin'.  Same as <code
+class="keyword">-O</code> option.
+</dd>
+
+<dt><code class="keyword">CM_ARCH</code></dt>
+<dd>
+Symbolic name of host architecture, e.g. 'i386' or 'powerpc'.  Same as
+<code class="keyword">-A</code> option.
+</dd>
+
+<dt><code class="keyword">CM_RUNTIME_FLAVOR</code></dt>
+<dd>
+Symbolic name of the Lisp/Scheme flavor to run, e.g. 'clisp' or
+'cmucl'.  Useful in conjuction with <code
+class="keyword">CM_RUNTIME</code> or the <code
+class="keyword">-l</code> option if the flavor can't be derived from
+the command name or path.  Same as <code class="keyword">-F</code>
+option.
+</dd>
+
+<dt><code class="keyword">CM_RUNTIME_VERSION</code></dt>
+<dd>
+Version of the Lisp/Scheme to run.  Useful in conjuction with <code
+class="keyword">CM_RUNTIME</code> or the <code
+class="keyword">-l</code> option if the version can't be derived from
+the command name or path.  Same as <code class="keyword">-V</code> option.
+</dd>
+
+<dt><code class="keyword">CM_ROOT_DIR</code></dt>
+<dd>
+Absolute path of the Common Music root directory in case autodetection
+fails.  Same as <code class="keyword">-R</code> option.
+</dd>
+
+</dl>
+
+<p>
+Requirements: getopts, ls, sed, sh, tr, uname, which; a working
+installation of a Lisp or Scheme runtime; the '-repl' option if clisp
+is used (clisp 2.31 or higher).:
+</p>
+
+<!-- See also -->
+<h4>See Also:</h4>
+<ul>
+<li><a href="make-cm-fn.html"><kbd>make-cm</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+</ul>
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
