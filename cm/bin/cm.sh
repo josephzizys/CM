@@ -173,7 +173,6 @@ if [ ! "$UNAME" ] ; then
   msg_x "Aborting."
 fi
 
-
 # CYGWIN_HACKS=1
 # cygpath () {
 #   if [ $1 = "-u" ] ; then
@@ -624,6 +623,23 @@ EDITOR_CMD=
 under_editor () {
   test $EMACS
 }
+
+#
+# Cygwin may need some pathnames translated into wintendo form.
+# The various possibilities are
+#
+#   +--------------------+----------+---------------------+----------+
+#   | Editor Type        | Elisp    | Runtime Type        | Load-CM/ |
+#   +---------+----------+ Load     +----------+----------+ Image    |
+#   | Unix    | Wintendo | Paths    | Unix     | Wintendo | Paths    |
+#   +---------+----------+----------+----------+----------+----------+
+#                                     /.../x                /.../x
+#                                                /.../x     x:\...
+#     /.../x               /.../x     /.../x                /.../x
+#     /.../x               /.../x                /.../x     x:\...
+#               /.../x     x:\...     x:\...                /.../x
+#               /.../x     x:\...                x:\...     x:\...
+
 is_wintendo_app () {
   [[ "$1" == $WINPATH_PREFIX/* ]]
 }
