@@ -358,7 +358,7 @@
 	(err "~s is not a note in the standard chromatic scale."
              note)))))
 
-(defun ascending-mode-order (notes tuning)
+(define (ascending-mode-order notes tuning)
   ;; insure ascending mode order in tuning
   ;; place all notes in middle octave
   (set! notes (map (function note)
@@ -471,28 +471,35 @@
 ;;; tuning and mode lookup functions
 ;;;
 
-(define-method (tuning->mode (tuning <tuning>) keynum mode return)
-  ;; convert keynum from tuning to mode on tuning
-  return
-  ;; div is width of mode's octave in tuning coordinates
-  (let ((div (interval-semitones (scale-octave mode)))
+(define-method (tuning->mode (mode <mode>) keynum force?)
+  ;; if force? is true then convert tuning keynum into
+  ;; modal coordinates, othewise return false if keynum is
+  ;; not in mode.
+  (let (;(tuning (mode-owner mode))
+        ;; div is steps per octave
+        (div (interval-semitones (scale-octave mode)))
         (num (- keynum (scale-keynum-offset mode))) ; offset=tonic pc
         (into (scale-into mode))
 	(deg #f))
     ;; round because num may be float keynum
     (multiple-value-bind (oct int)
 	(clfloor (inexact->exact (round num)) div)
-      ;; slam to closest degree if not in mode.
       (set! deg (or (list-ref into int)
-		    (loop for i from int downto 0 
-			  for j = (list-ref into i)
-			  when j return j)))
-      (+ (* oct (scale-divisions mode))
-	 deg))))
+                    (if force?
+                      ;; slam to closest degree if not testing
+                      (loop for i from int downto 0 
+                         for j = (list-ref into i)
+                         when j return j)
+                      #f)))
+      (if deg
+         (+ (* oct (scale-divisions mode))
+            deg)
+         #f))))
 
-(define-method (mode->tuning (mode <mode>) keynum scale return)
-  ;; convert keynum in modal coordinates to owner tuning
-  (let ((div (scale-divisions mode)) ; num steps in mode's own octave
+(define-method (mode->tuning (mode <mode>) keynum return)
+  ;; convert keynum in modal coordinates to tuning coordinates
+  (let ((scale (mode-owner mode))
+        (div (scale-divisions mode)) ; num steps in mode's own octave
         (int #f))
     (multiple-value-bind (oct rem)
 	(clfloor (inexact->exact (round keynum)) div)
@@ -502,7 +509,8 @@
       (if (and (eql return ':note)
                (%interval-encoded? int))
         ;; transpose the mode's lowest note by its typed octave size 
-        ;; for oct octaves,then add in typed interval.
+        ;; then add in typed interval. this could be optimized for 
+        ;; normal octave modes on chromatic scale.
         (do ((low (car (scale-lowest mode)))
              (num 0 (+ num 1)))
             ((= num oct)
@@ -704,55 +712,6 @@
 (define (mode? x) (is-a? x <mode>))
 (define (tuning? x) (is-a? x <tuning>))
 
-(defmacro %scale-usage (sig in from to op)
-  ;; this determines which scales to use and classifies the
-  ;; operation based on the values of :in :from and :to
-  `(begin
-    (if ,in
-      (if ,to 
-	(set! ,from ,in)
-	(if ,from
-	  (set! ,to ,in)
-	  (begin (set! ,to ,in)
-		 (set! ,from ,in))))
-      (if ,from
-	(if ,to
-	  #f
-	  (set! ,to *scale*))
-	(if ,to
-	  (set! ,from *scale*)
-	  (begin (set! ,from *scale*)
-		 (set! ,to *scale*)))))
-    (if (eq? ,to ,from)
-      (if (tuning? ,to)
-	(set! ,op ':tuning)
-	;; TO is mode
-	, (case sig
-	    ((:note )
-	     `(begin
-	       (set! ,to (mode-owner ,from))
-	       (set! ,op ':mode->tuning)))
-	    ((:keynum )
-	     `(begin
-	       (set! ,from (mode-owner ,to)) 
-	       (set! ,op ':tuning->mode)))
-	    ((:hertz )
-	     (err "sig: :hertz not supported."))
-	    (else
-	     (err "sig: not one of :note :keynum or :hertz" sig))))
-      ;; not same object
-      (if (mode? ,from)
-	(if (eq? (mode-owner ,from) ,to)
-	  (set! ,op :mode->tuning)
-	  (err "Only mode->tuning conversion is supported." ))
-	;; FROM is tuning
-	(if (tuning? ,to)
-	  (set! ,op ':tuning->tuning)
-	  ;; TO is mode
-	  (if (eq? (mode-owner ,to) ,from)
-	    (set! ,op ':tuning->mode)
-	    (err "Only mode->tuning conversion is supported." )))))))
-
 (define (modal-lookup mode note type tuning error? return)
   ;; note is note or kenum
   (let ((key (if (eq? type ':note)
@@ -826,144 +785,157 @@
           (if (symbol? freq)
             (modal-lookup in freq ':note (mode-owner in) #t ':hertz)
             (tuning-keynum->hertz (mode-owner in)
-                                  (mode->tuning in freq 
-                                                (mode-owner in)
-                                                ':keynum)))
+                                  (mode->tuning in freq ':keynum)))
 	  ;; otherwise return hertz for note or keynum in tuning
           (if (symbol? freq)
             (tuning-note->hertz in freq #t)
             (tuning-keynum->hertz in freq)))))))
 
 (define (keynum freq . args)
+  ;; return key number of freq in mode or tuning.
   (let ((hz? #f)
-	(in #f)
-	(from #f)
-	(to #f)
-	(flag #f))
+        (scale #f)
+        (mode #f)
+        (tuning #f)
+        (oper #f)
+        (test? #f))
 
-    (when (and (pair? args)
-	       (member (first args) %hertz))
-      (set! hz? #t)
-      (set! args (cdr args)))
+    (unless freq
+      (err "~s is not a note name, key number, Hertz value or list."
+           false))
+    (when (and (pair? args) (member (first args) %hertz)
+               (odd? (length args)))
+      (warn "Found :HZ tag, use the :HZ keyword parameter instead: ~s"
+            (list* 'note ':hz true (rest args)))
+      (set! args (list* ':hz true (rest args))))
     (dopairs (sym val args)
       (case sym
-        ((:in in) (set! in val))
-        ((:from from) (set! from val))
-        ((:to to) (set! to val))
+        ((:hz) (set! hz? val))
+        ((:in :in? :from :through :to)
+         (when oper
+           (err "Found more than one of :in, :in?, :from or :through in ~s."
+                (cons 'note args)))
+         (if (eq? sym ':in?) (set! test? #t))
+         (set! oper sym)
+         (set! scale val))
         (else
-         (err "~s not keynum option: :in :from :to" sym))))
-    (%scale-usage :keynum in from to flag)
-    (cond ((pair? freq)
-           (with-default-octave from
-             (if hz?
-               (loop for f in freq collect (apply (function keynum) f :hertz args))
-               (loop for f in freq collect (apply (function keynum) f args)))))
-          ((eq? flag ':tuning)
-           (if (symbol? freq)
-             (tuning-note->keynum from freq #t)
-             (if hz?
-               (tuning-hertz->keynum from freq)
-               freq)))
-          ((eq? flag ':tuning->mode)
-           ;; IN mode or TO a mode from its tuning
-           (if (symbol? freq)
-             ;; get tuning coordinate of note & convert to mode
-             (tuning->mode from
-                           (tuning-note->keynum from freq #t)
-                           to ':keynum)
-             (if hz? 
-               ;; get tuning coordinate of hz & convert to mode
-               (tuning->mode from
-                             (tuning-hertz->keynum from freq)
-                             to ':keynum)
-               (tuning->mode from freq to ':keynum))))
-          ((eq? flag ':mode->tuning)
-           ;; convert from mode to TUNING of mode.
-           (if (symbol? freq)
-             (modal-lookup from freq :note to #t ':keynum)
-             (if hz?
-               (tuning-hertz->keynum to freq)
-               (mode->tuning from freq to ':keynum))))
-          (else				; :tuning->tuning
-           (tuning-hertz->keynum
-            to
-            (if (symbol? freq)
-              (tuning-note->hertz from freq #t)
-              (if hz?
-                freq
-                (tuning-keynum->hertz from freq))))))))
+         (err "~s not a valid keyword: :hz :in :in? :through :from"  sym))))
+    (unless scale (set! scale *scale*))
+    (if (is-a? scale <mode>)
+      (begin
+       (if (eq? oper ':in)
+         (err "Not a tuning: ~s ~s." oper scale))
+       (set! tuning (mode-owner scale))
+       (set! mode scale))
+      (begin 
+       (if (or (eq? oper ':from) (eq? oper ':through))
+         (err "Not a mode: ~s ~s." oper scale))
+       (set! tuning scale)))
+    (if (pair? freq)
+      (with-default-octave tuning
+        (loop for f in freq 
+           collect (apply (function keynum) f args)))
+      (let ((key (if hz? 
+                   (tuning-hertz->keynum tuning freq)
+                   (if (symbol? freq)
+                     (tuning-note->keynum tuning freq (not test?))
+                     freq))))
+        ;; key is a keynum or false
+        (if mode
+          (let ((in (if (eq? oper ':from) 
+                      key
+                      (tuning->mode mode key (not (eq? oper ':in?))))))
+            (if (not in) 
+              #f
+              (if (eq? oper ':to)
+                in
+                (mode->tuning mode in ':keynum))))
+          key)))))
 
 (define (note freq . args)
-  (let ((acci #f)
-        (argl args)
-        (err? #t)
+  (let ((oper #f)
         (hz? #f)
-        (from #f)
-	(to #f)
-	(in  #f)
-	(flag #f))
-    
-    (when (and (pair? args)
-	       (member (first args) %hertz))
-      (set! hz? t)
-      (set! args (cdr args)))
-    
+        (scale #f)
+        (test? #f)
+        (tuning #f)
+	(mode #f))
+    (unless freq
+      (err "~s is not a note name, key number, Hertz value or list."
+           false))
+    (when (and (pair? args)(member (first args) %hertz)
+               (odd? (length args)))
+      (warn "Found :hz tag, use the :hz keyword parameter instead: ~s"
+            (list* 'note ':hz true (rest args)))
+      (set! args (list* ':hz true (rest args))))
     (dopairs (sym val args)
       (case sym
-        ((:in in) (set! in val))
-        ((:from from) (set! from val))
-        ((:to to) (set! to val))
-        ((:accidental accidental) (set! acci val))
-        ((:error error) (set! err? val))
+        ((:hz) (set! hz? val))
+        ((:in :in? :from :through)
+         (when oper
+           (err "Found more than one of :in, :in?, :from or :through in ~s."
+                (cons 'note args)))
+         (if (eq? sym ':in?) (set! test? #t))
+         (set! oper sym)
+         (set! scale val))
         (else
-         (err "~s not note option: :in :from :to :accidental" sym))))
-    (%scale-usage :note in from to flag)
-    (cond ((pair? freq)
-           (with-default-octave from 
-             (if hz?
-               (loop for f in freq collect (apply (function note) f :hertz args))
-               (loop for f in freq collect (apply (function note)
-                                                  f argl)))))
-          ((eq? flag ':tuning)
-           (if (symbol? freq)
-             (tuning-note->note to freq acci err?)
-             (if hz?
-               (tuning-hertz->note to freq acci err?)
-               (tuning-keynum->note to freq acci err?))))
-          ((eq? flag ':tuning->mode)
-           ;; (note 'c4 :to <mode>)
-           ;; return tuning's note coerced to closest note in mode.
-           ;; TODO: return note if in mode  (modal-lookup ??)
-           (if (symbol? freq)
-             ;(modal-lookup to freq ':note from err? ':note)
-             (mode->tuning to
-                           (tuning->mode from
-                                         (tuning-note->keynum from freq err?)
-                                         to ':keynum)
-                           from ':note)
-             (if hz?
-               (modal-lookup to (tuning-hertz->keynum from freq)
-                             ':keynum from #t ':note)
-               (modal-lookup to freq ':keynum from #t ':note))))
-          ((eq? flag ':mode->tuning)
-           (if (symbol? freq)
-             (if acci			; respell
-               (tuning-note->note to (modal-lookup to freq ':note 
-                                                   from err? ':note)
-                                  acci err?)
-               (modal-lookup from freq ':note to err? ':note))
-             (if hz?
-               (mode->tuning
-                from
-                (tuning->mode to (tuning-hertz->keynum to freq)
-                              from ':keynum)
-                to ':note)
-               (mode->tuning from freq to ':note)
+         (err "~s not a valid keyword: :hz :in :in? :through :from"
+              sym))))
+    (unless scale (set! scale *scale*))
+    (if (is-a? scale <mode>)
+      (begin
+       (if (eq? oper ':in)
+         (err "Not a tuning: ~s ~s." oper scale))
+       (set! tuning (mode-owner scale))
+       (set! mode scale))
+      (begin 
+       (if (or (eq? oper ':from)
+               (eq? oper ':through))
+         (err "Not a mode: ~s ~s." oper scale))
+       (set! tuning scale)))
+    
+    ;; freq must be keynum if :from specified
+    (when (and (eq? oper ':from)
+               (or hz? (symbol? freq)))
+      (err ":from conversion: ~s is not a key number in ~s."
+           freq mode))
 
-               )))
-          (else				; :tuning->tuning
-           (tuning-hertz->note to (tuning-note->hertz from freq err?)
-                               acci err?)))))
+    (when hz?
+      (set! freq (keynum freq :in tuning)))
+    ;; freq are now notes/keynums in tuning
+    (cond ((pair? freq)
+           (with-default-octave tuning
+             (loop for f in freq 
+                   collect (apply (function note) f args))))
+          ((symbol? freq)
+           ;; freq is a symbol so only :in, :through and in?: are possible.
+           ;; first insure freq is a tuning note. this has to be done
+           ;; because freq may be a symbol without an octave.
+           (let ((ref (tuning-note->note tuning freq #f (not test?))))
+             (if (not mode)
+               ref
+               (if (not ref)            ; failed :in? test
+                 #f
+                 ;; :in? or :through for modes. In either case we must
+                 ;; generate a note filtered through the mode.
+                 (let* ((key (tuning-note->keynum tuning ref #t))
+                        (out (mode->tuning mode
+                                           (tuning->mode mode key #t)
+                                           ':note)))
+                   ;; if :in? only return out if same note.
+                   (if test?
+                     (if (eq? out ref) ref #f)
+                     out))))))
+          (else
+           ;; freq must be a keynum
+           (if (not mode)
+             (tuning-keynum->note tuning freq #f (not test?))
+             (let* ((in (if (eq? oper ':from)
+                          freq
+                          (tuning->mode mode freq (not test?))))
+                    (out (and in (mode->tuning mode in ':note))))
+               (if test? out
+                   (or out (err "No note for keynum ~s in mode ~s." 
+                                freq mode)))))))))
 
 ;;;
 ;;; note properties in standard chromatic scale
