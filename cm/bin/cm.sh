@@ -454,8 +454,8 @@ fi
 
 LISP_CMD=
 LISP_INI=
-#LISP_EVL="\"(progn (load \\\\\"$CM_ROOT/src/cm.lisp\\\\\") (cm))\""
-LISP_EVL="'(progn (load \"$CM_ROOT/src/cm.lisp\") (cm))'"
+#LISP_EVL="\"(progn (load \\\\\"$CM_ROOT/src/cm.lisp\\\\\" :verbose nil) (cm))\""
+LISP_EVL="'(progn (load \"$CM_ROOT/src/cm.lisp\" :verbose nil) (cm))'"
 
 case $LISP_FLV in
   clisp)
