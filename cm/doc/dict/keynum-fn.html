@@ -18,8 +18,7 @@
 [<code class="keyword">:in</code> <var>tuning</var>]
 [<code class="keyword">:in?</code> <var>scale</var>]
 [<code class="keyword">:to</code> <var>mode</var>]
-[<code class="keyword">:through</code> <var>stale</var>]
-[<code class="keyword">:from</code> <var>mode</var>])</span></dd>
+[<code class="keyword">:through</code> <var>stale</var>])</span></dd>
 </dl>
 
 
@@ -43,16 +42,14 @@ If <var>true</var> then a numerical <var>freq</var> is interpreted as
 a Hertz value rather than as a key number.
 </dd>
 
-<dt><code class="keyword">:in</code> <var>tuning</var></dt>
+<dt><code class="keyword">:in</code> {<var>tuning</var> | <var>mode</var>}</dt>
 <dd>
-The <a href="tuning-cls.html">tuning</a> to use.  Defaults to the
-global variable <a href="scale-var.html"><code>*scale*</code></a>.
-The parameters
-<code class="keyword">:in</code>,
-<code class="keyword">:in?</code>,
-<code class="keyword">:through</code> and
-<code class="keyword">:from</code>
-are mutually exclusive.
+The <a href="tuning-cls.html">tuning</a> or
+<a href="mode-cls.html">mode</a> to use, defaults to the global
+variable <a href="scale-var.html"><code>*scale*</code></a>.  If a mode
+is specified then <var>freq</var> must be a keynum in modal
+coordinates and the keynum returned by the function will be in tuning
+coordinates.
 </dd>
 
 <dt><code class="keyword">:in?</code>
@@ -60,51 +57,27 @@ are mutually exclusive.
 <dd>
 Tests if <var>freq</var> references a keynum in the specified tuning
 or mode. Returns that value or <var>false</var>.  
-The parameters
-<code class="keyword">:in</code>,
-<code class="keyword">:in?</code>,
-<code class="keyword">:through</code> and
-<code class="keyword">:from</code>
-are mutually exclusive.
 </dd>
 
 <dt><code class="keyword">:to</code> <var>mode</var></dt>
 <dd>
 Forces <var>freq</var> to the closer integer keynum in <var>mode</var>
 and returns that value in modal coordinates.  
-The parameters
-<code class="keyword">:in</code>,
-<code class="keyword">:in?</code>,
-<code class="keyword">:through</code> and
-<code class="keyword">:from</code>
-are mutually exclusive.
 </dd>
-
 
 <dt><code class="keyword">:through</code> {<var>tuning</var>
 | <var>mode</var>}</dt>
 <dd>
 Filters <var>freq</var> through <var>tuning</var> or <var>mode</var>
 and returns the closest integer keynum in tuning coodinates.  
-The parameters
-<code class="keyword">:in</code>,
-<code class="keyword">:in?</code>,
-<code class="keyword">:through</code> and
-<code class="keyword">:from</code>
-are mutually exclusive.
 </dd>
 
-<dt><code class="keyword">:from</code> <var>mode</var></dt>
+<!-- dt><code class="keyword">:from</code> <var>mode</var></dt>
 <dd>
 Converts a key number <var>freq</var> specified in <var>mode</var>'s
 coordinates into a keynum in the mode's tuning.  
-The parameters
-<code class="keyword">:in</code>,
-<code class="keyword">:in?</code>,
-<code class="keyword">:through</code> and
-<code class="keyword">:from</code>
-are mutually exclusive.
-</dd>
+</dd -->
+
 </dl>
 
 
