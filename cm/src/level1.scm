@@ -503,14 +503,17 @@
 
 (defmacro with-args (spec . body) 
   ;; spec is (list . lambda-decl)
-  (let ((args (gensym))
+  (let ((args (gensym ))
         (reqs '())
         (opts '())
         (rest '())
         (keys '())
         (auxs '())
-        (aok? #f))			; allow-other-keys
-
+        (aok? #f)			; allow-other-keys
+        (vars #f)
+        (setk #f)
+        (keyc #f)
+        (seta #f))
     (multiple-value-setq (reqs opts rest keys aok? auxs )
                          (parse-lambda-list (cdr spec)))
     ;; each &key entry is represented by a four element list:
@@ -518,116 +521,131 @@
     ;; default is its default value, passed? is a flag set to
     ;; #t if key is passed and keyword is the keyword. the first
     ;; two values in the list were returned by parse-lambda-list
-    (for-each (lambda (b)
-		(set-cdr! (cdr b)
-			  (list (gensym) (symbol->keyword (car b)))))
-	      keys)
-
-;    (do ((tail keys (cdr tail))
-;         (temp (list)))
-;        ((null? tail)
-;         (set! keys (reverse! temp)))
-;      (let ((b (car tail)))
-;        (set! temp (cons (list (car b) (gensym)
-;                               (symbol->keyword (car b)))
-;                         temp))))
-    ;; let* so params can reference earlier ones
-    ;; in the lambda list.
-    `(let* ((,args ,(car spec))
-	    ;; splice in bindings for required args
-	    ,@ (map (lambda (r)		; r is required par
-		      (let ((v (gensym)))
+    (do ((tail keys (cdr tail))
+         (head (list))
+         (b #f))
+        ((null? tail)
+         (set! keys (reverse! head)))
+      (set! b (car tail))
+      (push (append b (list (gensym ) (symbol->keyword (car b))))
+            head))
+    ;; create required arg bindings
+    (set! reqs (map (lambda (r)		; r is required par
+                      (unless (symbol? r)
+                        (err "Required arg not symbol: ~s" r))
+		      (let ((v (gensym )))
 			`(,r (if (null? ,args)
-			       (err "Missing value for required arg ~s."
+			       (err "Missing value for required arg ~s"
 				    ',r)
 			       (let ((,v (car ,args)))
 				 (set! ,args (cdr ,args))
 				 ,v)))))
-		reqs)
-	    ;; splice in &optional bindings. optimize the common
-	    ;; case of a single optional arg
-	    ,@ (if (and (null? rest) (null? keys)
+		reqs))
+    ;; create optional args bindings. optimize the common case of a
+    ;; single optional arg
+    (set! opts (if (and (null? rest) (null? keys)
 			(= (length opts) 1))
-		 ;; skip the let and cdring of args if only one.
+		 ;; skip the let and cdring if single optional arg
 		 `((, (car (car opts))
-		    (if (null? ,args) ,(cadr (car opts)) (car ,args))))
+                      (if (null? ,args) ,(cadr (car opts)) (car ,args))))
 		 (map (lambda (b)
 			;; b is (<var> <val>)
-			(let ((v (gensym)))
+			(let ((v (gensym )))
 			  `(,(car b)
-			    (if (null? ,args)
-			      ,(cadr b)
-			      (let ((,v (car ,args)))
-				(set! ,args (cdr ,args))
-				,v)))))
-		      opts))
-	    ;; splice in single &rest arg
-	    ,@ (if (null? rest) '() rest)
-	    ;; initially bind all &key vars and flags to #f
-	    ,@ (map (lambda (b) (list (car b) #f)) keys)
-	    ,@ (map (lambda (b) (list (caddr b) #f)) keys)
-	    ;; initially bind all &aux to #f
-	    ,@ (map (lambda (b) (list (car b) #f)) auxs)
-	    )
-      ,@ 
-      (if (pair? keys)
-	(let ((head (gensym)))
-	  ;; generate a do loop to parses keyword args.
-	  ;; the loop signals error for incorrect keys.
-	  `((do ((,head ,args))
-		((null? ,args) 
-		 ;; loop termination clause sets default values
-		 ;; for all keys that were not passed in args
-		 ;; and whose default value is not #f.
-		 ,@
-		 (apply append
-			(map (lambda (b) 
-			       ;; b is (<var> <val> <v?>)
-			       ;; skip if default is #f
-			       (if (eq? (cadr b) #f)
-				 '()
-				 `((if (not ,(caddr b))
-				     (set! ,(car b) ,(cadr b))))))
-			     keys)))
-	      ;; body of do
-	      (if (null? (cdr ,args))
-		(err "Args not keyword format: ~s." ,head))
-	      (case (car ,args)
-		,@
-		(map (lambda (b)
-		       ;; b is (<var> <val> <flag> <keyw>)
-		       `((,(cadddr b) )
-			 (set! ,(car b) (cadr ,args))
-			 (set! ,(caddr b) #t)))
-		     keys)
-		;; splice in error trap unless &allow-other-keys.
-		;; error message includes list of valid keywords.
-		,@
-		(if (not aok?)
-		  `((else
-		     (err 
-		      "Illegal keyword '~s' in: ~s.~%Valid keywords: ~s"
-		      (car ,args) ,head ',(map #'cadddr keys))))
-		  '()))
-	      (set! ,args (cddr ,args)))))
-	'())
-      ;; spice in &aux params if default value not #f.
-      ,@ (apply append (map (lambda (b)
+                             (if (null? ,args)
+                               ,(cadr b)
+                               (let ((,v (car ,args)))
+                                 (set! ,args (cdr ,args))
+                                 ,v)))))
+		      opts)))
+    ;; vars is list of all parameter var bindings.
+    (set! vars
+          (append! reqs
+                   opts
+                   ;; rest arg is already a binding. hmmm is this true?
+                   rest
+                   ;; bind all keyword vars, key-exist flags and aux vars to false
+                   (map (lambda (b) (list (car b) #f)) keys)
+                   (map (lambda (b) (list (caddr b) #f)) keys)
+                   (map (lambda (b) (list (car b) #f)) auxs)))
+    ;; setk is a list of setting forms for setting default keyword
+    ;; values after keyword processing.
+    (set! setk
+          (apply append
+                 (map (lambda (b) 
+                        ;; b is (<var> <val> <v?>) only set <var> to
+                        ;; <val> if <v?> is #f, ie user didnt pass the
+                        ;; arg
+                        (if (eq? (cadr b) #f)
+                          (list)
+                          `((if (not ,(caddr b))
+                              (set! ,(car b) ,(cadr b))))))
+                      keys)))
+    ;; keyc is a list of case clauses for each keyword:
+    ;; ((<keyword>) (set! <var> (cadr <args>) (set! <flag> #t)))
+    (set! keyc (map (lambda (b)
+                      ;; b is (<var> <val> <flag> <keyw>)
+                      `((,(cadddr b) )
+                        (set! ,(car b) (cadr ,args))
+                        (set! ,(caddr b) #t)))
+                    keys))
+    ;; seta is a list of aux var setting forms. spliced in just before
+    ;; body of with-args
+    (set! seta
+          (apply append (map (lambda (b)
 			      (if (eq? (cadr b) #f)
-				'()
+				(list)
 				`((set! ,(car b) ,(cadr b)))))
-			auxs))
-      ,@body)))
+			auxs)))
+    ;; let* so lambda param bindings can reference earlier ones
+    `(let* ((,args ,(car spec))
+	    ;; splice in all var bindings
+	    ,@ vars)
+       ;; splice in keyword processing loop.
+       ,@ 
+       (if (pair? keys)
+         (let ((head (gensym)))
+           ;; this do loop parses keyword args, each keword has its
+           ;; own case clause. signals error for incorrect keys.
+           `((do ((,head ,args))
+		 ((null? ,args) 
+                  ;; loop termination clause sets default values for
+                  ;; all keys that were not passed in args and whose
+                  ;; default value is not #f.
+                  ,@ setk
+                  )
+               ;; do actions. first is make sure a value exists for
+               ;; each keyword
+               (if (null? (cdr ,args))
+                 (err "Args not keyword format: ~s." ,head))
+               ;; current keyword must match a case clause else its bogus
+               (case (car ,args)
+                 ,@ keyc
+                    ;; splice in error trap unless &allow-other-keys.
+                    ;; error message includes list of valid keywords.
+                    ,@
+                    (if (not aok?)
+                      `((else
+                         (err 
+                          "Illegal keyword '~s' in: ~s.~%Valid keywords: ~s"
+                          (car ,args) ,head ',(map #'cadddr keys))))
+                      (list)))
+               (set! ,args (cddr ,args)))))
+         (list))
+       ;; spice in &aux params if default value not #f.
+       ,@seta
+       ;; splice in body of with-args.
+       ,@body)))
 
 ; (define pprint display)
-; (with-args ( '(22 2 3) (a 0) b c) (list a b c))
+; (let ((l '(22 2 3))) (with-args (l a b c) (list a b c)))
 ; (let ((l '()) ) (with-args (l &optional (a 0) b c) (list a b c)))
 ; (let ((l '(100)) ) (with-args (l  &optional a (b 5) c) (list a b c)))
-; (let ((l '(:a 100 :b 200 :c 300))) (with-args (args &key  (a 0) b c) (list a b c)))
+; (let ((l '(:a 100 :b 200 :c 300))) (with-args (l &key  (a 0) b c) (list a b c)))
 ; (pprint (macroexpand '(with-args (l &key (a 0) b c) (list a b c))))
-; (let ((l '()) ) (with-args (l (a 0) b c) (list a b c)))
-; (let ((l '(:c 200 b -9)) ) (with-keys (l a (b 5) c) (list a b c)))
+; (let ((l '()) ) (with-args (l &key (a 0) b c) (list a b c)))
 ;;errors:
+; (let ((l '(:c 200 b -9)) ) (with-args (l a (b 5) c) (list a b c)))
 ; (let ((l '(:c 200 z -9)) ) (with-args (l &key a (b 5) c) (list a b c)))
 ; (let ((l '(1 :c 100)) ) (with-args (l &key a (b 5) c) (list a b c)))
 ; (let ((l '(:c)) ) (with-args (l &key a (b 5) (c b)) (list a b c)))
