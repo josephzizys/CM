@@ -15,7 +15,7 @@
 <img src="img/cmlogosw.png" width="50" height="50" alt="[img/cmlogosw.png]" title=""/>
 </div>
 
-<div class="inv">Navagation:</div>
+<div class="inv">Navigation:</div>
 <ul class="nav">
 <li class="nav1"><a href="cm.html">Home Page</a></li>
 <li class="navn"><a href="dict/">Dictionary</a></li>
@@ -42,7 +42,7 @@
 
 <li><a href="#running">Running Common Music under X/Emacs</a></li>
   <ol>
-  <li><a href="#quick_start">Quickstart (Linux, OS X, Cygwin)</a></li>
+  <li><a href="#quick_start">Quick-start (Linux, OS X, Cygwin)</a></li>
   <li><a href="#win_start">Running CM in X/Emacs under Windows</a></li>
   <li><a href="#emacs_start">Starting Common Music from inside X/Emacs</a></li>
   </ol>
@@ -73,7 +73,7 @@ referred to as X/Emacs in this document) support Lisp editing and
 evaluation within a single, consistent GUI environment.  This tight
 integration between Lisp editing and evaluation lets the composer
 develop Lisp programs inside a powerful programming editor and
-quicksinteractively <em>evaluate</em> the Lisp code inside Common Music
+interactively <em>evaluate</em> the Lisp code inside Common Music
 using simple editor commands. The Common Music application runs in its
 own dedicated Listener window as an <em>inferior process</em>
 (sub-process) of X/Emacs. This Listener window is a full-featured,
@@ -114,7 +114,7 @@ Windows this is XEmacs, on OS X it is probably an <em>Aqua</em> Emacs.
 <p>
 <em>Regardless of which editor you choose, install a recent (21.3.1 or
 later), stable, fully-configured distribution that includes all elisp
-sources</em>. (X)Eamcs distributions typically consist of several
+sources</em>. (X)Emacs distributions typically consist of several
 parts: the core editor, the Emacs Lisp (elisp) source files, and lots
 of add-on packages.  The size of a fully configured distribution is
 very large, between 20 and 30 megabytes for a binary release depending
@@ -149,7 +149,7 @@ following distributions:
 <dd>
 <a href="http://www.xemacs.org/Download/win32/">XEmacs for Windows</a>
 <br/> Download using the <a
-href="http://www.xemacs.org/Download/win32/netinstaller.html#installation">netinstall
+href="http://www.xemacs.org/Download/win32/netinstaller.html#installation">net install
 method</a> with this <a
 href="http://www.xemacs.org/Download/win32/setup.exe">setup.exe</a>.
 (Cygwin install available on the same page.)
@@ -157,7 +157,7 @@ href="http://www.xemacs.org/Download/win32/setup.exe">setup.exe</a>.
 
 <dt>MacOS: </dt>
 <dd>
-MCL's editor (Fred) is an acceptible Emacs substitute. (The name Fred
+MCL's editor (Fred) is an acceptable Emacs substitute. (The name Fred
 stands for Fred Resembles Emacs Deliberately.)
 </dd>
 </dl>
@@ -173,8 +173,8 @@ for working with Common Music and programming in Lisp:
 
 <li>
 Select Syntax Highlighting from the Options menu at the top of the
-Emacs window.  If Syntax Highlighting has a submenu, make sure that
-its Automatic feature is checked in the submenu.
+Emacs window.  If Syntax Highlighting has a sub-menu, make sure that
+its Automatic feature is checked in the sub-menu.
 </li>
 
 <li>
@@ -206,7 +206,7 @@ Emacs and XEmacs name the initialization file differently.  --> XEmacs
 normally saves the init file as ~/.xemacs/init.el, that is, the file
 init.el in the .xemacs/ subdirectory of your home folder. Emacs uses
 ~/.emacs, the file .emacs located in your home directory. On
-Unix-flavored machines (Lunix, OS X, Cygwin, etc) the dotted names
+Unix-flavored machines (Linux, OS X, Cygwin, etc) the dotted names
 (.xemacs/ and .emacs) make the init files "invisible" in normal
 directory listings and file browsing windows.
 
@@ -228,13 +228,13 @@ text editor. However, the real power (and beauty) of X/Emacs lies in
 its <em>keyboard commands</em>, short, simple keystrokes that invoke
 the powerful editing, formatting and cursor moving features of the
 editor. X/Emacs keyboard commands are issued by pressing down the
-Control and/or Meta keys and then typeing a "command key", a key that
+Control and/or Meta keys and then typing a "command key", a key that
 names the command.  The Control key is (usually) the key in the lower
 left-hand corner of the keyboard. The Meta key is usually situated
-just to the left of the Spacebar. Emacs documentation refers to the
+just to the left of the Space bar. Emacs documentation refers to the
 Control and Meta keys using the shorthands <span class="emacscmd">C-</span> and <span class="emacscmd">M-</span>
 respectively. Underlines are sometimes used to
-show <em>combinations</em> of keystrokes typed with the Contol and/or
+show <em>combinations</em> of keystrokes typed with the Control and/or
 Meta keys depressed. For example:
 
 <ul>
@@ -267,7 +267,7 @@ key, then release both keys and type the word 'lisp-mode'.
 <p>
 <em>In order to become an efficient X/Emacs Lisp composer you should
 spend several hours familiarizing yourself with X/Emacs keyboard
-commands and the editing features of the appliction</em>. 
+commands and the editing features of the application</em>. 
 </p>
 
 <p>Here are some places you can start:</p>
@@ -302,13 +302,13 @@ See Lisp Editing and Evaluation for more information.
 <h2 id="running">3. Running Common Music under X/Emacs</h2>
 
 <p>
-The remainng sections of this document assume that you have already
+The remaining sections of this document assume that you have already
 downloaded Common Music and can start a GUI X/Emacs on your
 system. See the document <a href="install.html">Installing Common
 Music</a> for more information about downloading and installing CM.
 </p>
 
-<h3 id="quick_start">Quickstart (Linux, OS X, Cygwin)</h3>
+<h3 id="quick_start">Quick-start (Linux, OS X, Cygwin)</h3>
 
 <p>
 
@@ -343,7 +343,7 @@ for more information about using the script to run Common Music.
 <p>
 You cannot use cm.sh in the Windows command interpreter (CMD).
 However, you can add code to your X/Emacs init file that will
-accomplish bascially the same thing. These instructions are outlined
+accomplish basically the same thing. These instructions are outlined
 in the next section <a href="#emacs_start">Starting Common Music from
 inside X/Emacs</a>.
 </p>
@@ -353,7 +353,7 @@ inside X/Emacs</a>.
 <p>
 You can start Common Music from inside a running X/Emacs session if
 you add the following forms your X/Emacs init file to load the
-necessary support code. The example shown belows is set up for
+necessary support code. The example shown below is set up for
 installing this on a Windows machine.  Use the Unix directory
 delimiter / in the pathname even if you are on Windows.  If you are
 <em>not</em> on Windows then change the name of the
@@ -365,7 +365,7 @@ delimiter / in the pathname even if you are on Windows.  If you are
 </p>
 <pre class="code"><span style="color: blue;">;;; Edit the cm-directory string to point to the
 ;;; CM installation directory on your machine.
-;;; On unix machines change cm.bat to cm.sh
+;;; On Unix machines change cm.bat to cm.sh
 </span>
 (<span class="special">defvar</span> <span class="defined">cm-directory</span> <span class="string">"C:/Lisp/cm-2.4.1"</span>)
 
@@ -398,7 +398,7 @@ Listener menu that appears in the X/Emacs menu bar.
 
 <p>
 The Lisp Listener runs Common Music in a dedicated X/Emacs
-<em>frame</em>, or window, as a subprocess of the editor. THis meas
+<em>frame</em>, or window, as a subprocess of the editor. This meas
 when you quit the editor you will also quit the Common Music session
 running in the Listener. There are two parts to the Listener, the
 Listener window itself and the Listener menu that automatically
@@ -422,7 +422,7 @@ window. The following menu items are defined:
 <dt>Lisp Listener (<span class="emacscmd"><span class="emacskey">C-x</span> l</span>)</dt>
 <dd>
 Starts Common Music running in the Listener window. If the Listener is
-already running then it is reselected as the frontmost window.
+already running then it is reselected as the front-most window.
 </dd>
 
 <dt>Quit Listener</dt>
@@ -439,7 +439,7 @@ the Listener. The edit selection is:
 A Lisp expression that starts at the cursor's position.
 </li>
 <li>
-A Lisp expression that ends just <em>before</em> the cursor's positon.
+A Lisp expression that ends just <em>before</em> the cursor's position.
 </li>
 <li>
 All Lisp expression(s) inside a selected region of the edit window.
@@ -459,7 +459,7 @@ Performs macroexpansion on the current edit selection.
 
 <dt>Abort Error (<span class="emacscmd"><span class="emacskey">C-x</span> <span class="emacskey">C-.</span></span>)</dt>
 <dd>
-Resumres the Listener's normal read-eval-print loop after an error
+Resumes the Listener's normal read-eval-print loop after an error
 occurs.
 </dd>
 
@@ -481,7 +481,7 @@ Undoes the effects of Comment Region.
 
 <dt>Tools</dt>
 <dd>
-The Tools submenu hold Lisp commands specific to the Lisp
+The Tools sub-menu hold Lisp commands specific to the Lisp
 implementation running in the Listener. Consult your Common Lisp or
 Scheme documentation for more information.
 </dd>
@@ -489,7 +489,7 @@ Scheme documentation for more information.
 <h3 id="listener_window">The Listener Window</h3>
 <p>
 The Listener window is a graphic front end to a Lisp read eval print loop.
-THe consists of a menubar and a Listner pane in which intput expression
+It consists of a menubar and a Listener pane in which input expression
 van be entered and their evaluated results observed.
 </p>
 
@@ -528,7 +528,7 @@ The Edit menu is the XEmacs edit menu.
 <p>
 The Buffers menu contains a list of all the Lisp files that are
 currently available for editing in X/Emacs. Selecting a file from the
-Buffers menu makes it the active, frontmost edit window.
+Buffers menu makes it the active, front-most edit window.
 </p>
 
 <h4 id="listener_input">Entering Input in the Listener</h4>
@@ -541,15 +541,15 @@ and finally prints the results back to the Listener window on the next
 line. Any expression visible in the window can be copy/pasted to the
 input point by placing the cursor just to the right of the expression
 and then typing Return. The copied expression can then be edited at
-the input point using normanl X/Emacs editing commands before pressing
+the input point using Norman X/Emacs editing commands before pressing
 Return to enter it.  The Listener records each input expression on a
 <em>input history list</em>.  Previous input expressions can by
 recalled from the list using <span class="emacscmd"><span
 class="emacskey">C-&lt;uparrow&gt;</span></span> to move backward and
 <span class="emacscmd"><span
 class="emacskey">C-&lt;downarrow&gt;</span></span> to move forward
-through the list, and Retun to reenter the desired input once it has
-been selected.  In additon,
+through the list, and Return to reenter the desired input once it has
+been selected.  In addition,
 </p>
 
 <h2 id="tips">5. X/Emacs Tips </h2>
