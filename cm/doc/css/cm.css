@@ -111,6 +111,7 @@ div#date {
   float: right;
 }
 div#cvs-info {
+  font-weight: small;
   float: right;
 }
 div#author, div#date, div#copyright, div#cvs-info {
@@ -141,15 +142,6 @@ div.float, dl.implnote, dl.lisprule {
   margin: 2em 4em;
 }
 
-div.hpsection {
-  margin: 2em 4em;
-  padding: 2em 3em;
-  border: 3px solid #9999bb;
-  background: #e6e6ff;
-  color: #000000;}
-}
-
-
 dl.lisprule { 
   font-weight: bold;
 }
@@ -162,16 +154,6 @@ blockquote.quotation {
   padding-right: 0px;
   }
 
-/*
-blockquote.quotation {
-  float: right;
-  width: 55.55%;
-  margin-left: 44.45%;
-  margin-right: 0px;
-  padding-right: 0px;
-  }
-*/
-
 p.quotetext { 
   margin-left: 0em;
   text-indent: 0em;
@@ -186,28 +168,6 @@ p.quoteinfo {
   font-style: normal;
   text-align: right;
 }
-
-/*
-div.quotation {
-  width: 50%;
-  position: relative;
-  padding-right: .5em;
-  left: 25%;
-  margin: 2em 4em; 
-  }
-
-p.quotetext { 
-  text-align: justify;
-  font-style: italic;
- }
-
-p.quoteinfo { 
-  margin-top: .5em;
-  text-indent: 0em;
-  font-style: normal;
-  text-align: right;
-}
-*/
 
 p.tablenote { 
   margin-top: .5em;
