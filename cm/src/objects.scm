@@ -136,7 +136,7 @@
 (define-method (rename-object (obj <container>) newname . args)
   (let* ((err? (if (null? args) #t (car args)))
 	 (str (if (string? newname) 
-		newname (format #f "~a" obj)))
+		newname (format #f "~a" newname)))
 	 (old (find-object str )))
     (if old 
       (if (eq? obj old)
