@@ -17,9 +17,9 @@
 
 <p>
 Plotter is a graphical tool for displaying, editing and sequencing
-data sets.  Data can be passed to <a
+data.  Data can be passed to <a
 href="plotter-fn.html">plotter</a> in several different formats: lists
-of x y coordinate values, lists of CLOS objects or <a
+of x y coordinate values, lists of CLOS objects, or <a
 href="seq-cls.html">seq</a> objects containing CLOS objects. Once data
 has been loaded it can be manipulated (displayed, edited, searched,
 sequenced) using the GUI or by calling the underlying <a href="#api">
@@ -30,15 +30,15 @@ Plotter functions</a> from the Lisp interpreter.
 
 <p>
 A plotter window provides a two-dimensional view onto one or more sets
-of coordinate data.  Sets can be grouped into <em>displays</em>, each
-display defines a particular mapping of the data in the sets to their
-point representation in the window.  A display's visual presentation
-is controlled by <a href="axis-cls.html">axis</a> objects that
-determine which slots in the data sets are plotted and how the slot
-values are mapped into the display's presentation. Each axis can
-control up to two slots so that a total of four degrees of interest
-can be mapped to the horizontal, vertical, width, and height
-properties of the point display.
+of coordinate data.  Sets are grouped into <em>displays</em> where
+each display defines a particular mapping of the data to their point
+presentation in the display. A display's visual characteristics are
+controlled by <a href="axis-cls.html">axis</a> objects that determine
+which slots in the data sets are plotted and how the slot values are
+mapped into the display's presentation. Each axis can control up to
+two slots so a total of four degrees of interest can be mapped to the
+horizontal, vertical, width, and height properties of points drawn in
+the window.
 
 <!-- Axis objects can be left up to Plotter to determine or they can
 be created and passed into <a href="plotter-fn.html">plotter</a> along
@@ -123,19 +123,21 @@ select them.</p>
 <h3>Converting between point and region selections</h3>
 
 <p>
-To convert an existing selection from one type to the other select
-either "Select Points" or "Select Regions" under the Cursor Mode tab
-in the <a href="#editing_tool">Editing Tool</a>. The existing
-selection in the Plotter window will then switch to the new target
-type.
+To convert an existing selection from one type to the other, select
+the target type (either "Select Points" or "Select Regions") in the
+Cursor Mode tab of the <a href="#editing_tool">Editing Tool</a>. The
+existing selection in the Plotter window will then switch to the
+target type.
 </p>
 
 <h2>Editing</h2>
 
 <p>
-Once point or region selection has been established it can be
-edited. Editing commands only affect the current selection in the
-front-most layer of the display. Region editing is not yet implemented.
+Once point or region selection has been established it can be edited
+using mouse gestures or by selecting commands from the Edit menu or
+Editing Toll. Editing commands only affect the current selection in
+the front-most layer of the display. Region editing is not yet
+implemented.
 </p>
 
 <h3>Point editing with the mouse</h3>
@@ -223,8 +225,8 @@ clause is specified they are AND'ed together.
 <dt>Mouse Controls</dt>
 <dd>
 Allows various aspects of mouse behavior to be controlled. Activate
-"Track mouse motion" to restrict mouse movement to the specified
-dimension (horizontal or vertical) when selections are made, point
+"Connstrain motion" to restrict mouse movement to the specified
+dimension (horizontal or vertical) as selections are made, point
 selections are moved, or new points are added. Activate "Draw mouse
 guide" to display cross-hairs when the mouse moves (not yet
 implemented).  Activate "Set 'Add Points' hook" to specify a function
@@ -498,64 +500,8 @@ example by Michael Klingbeil taken from Chapter 10 of
 <h2>Supported Environments</h2>
 
 <p>
-Plotter currently works in the following Lisp environments:
+See the documentation on <a href="../install.html#configure_plotter">Configuring Plotter</a> for the list of supported Lisp environments and pre-installation instructions.
 </p>
-
-<ul>
-<li>PPC/Darwin: OpenMCL 0.14.1-p1</li>
-<li>x86/Linux: SBCL 0.8.15</li>
-<li>x86/Linux: CMUCL 19e</li>
-</ul>
-
-<h3>GTK2 and X11 on Darwin</h3>
-<p>
-In order to run Plotter on Darwin (OS X) you must have X11, GTK2 and
-OpenMCL installed and configured properly on your machine. Apple's X11
-application must also be running before you can open a Plotter window.
-</p>
-
-<ol>
-<li>
-X11.app normally resides in /Application/Utilities/. If you do not
-have X11.app, download it from <a
-href="http://www.apple.com/macosx/features/x11/download/">Apples X11
-page</a> and install it. It should also be possible to use <a
-href="http://www.xdarwin.org/"> XDarwin/XFree86</a> but I haven't
-tried this.
-</li>
-
-<li>
-If you do not have GTK2 installed, use <a
-href="http://finkcommander.sourceforge.net">FinkCommander</a> to
-install the <a
-href="http://fink.sourceforge.net/pdb/package.php/gtk+2-shlibs">gtk+2-shlibs</a>
-package. Plotter loading assumes that the GTK+ libraries are restored
-under Fink's /sw/lib/ directory.
-</li>
-
-<li>
-Download <a
- href="http://pinhead.music.uiuc.edu/~hkt/openmcl-darwin-gtk.tar.gz">openmcl-darwin-gtk.tar.gz</a>
- and restore it inside the ccl/darwin-headers/ directory of your
- OpenMCl distribution. For example, on my machine I might do:
-<blockquote>
-<pre>$ cd /Lisp/ccl/darwin-headers 
-$ tar -zxf /tnp/openmcl-gtk-interface.tar.gz
-$ rm /tmp/openmcl-gtk-interface.tar.gz
-</pre>
-</blockquote>
-</li>
-</ol>
-
-Once all the required packages are installed and X11.app is running
-you can open a plotter window inside xterm or under XEmacs.  You can
-also run plotter from inside Terminal.app or Emacs.app (the Cocoa
-Emacs application) if you add the following line to your
-~/.bash_profile file:
-
-<blockquote>
-<pre>export DISPLAY=:0.0</pre>
-</blockquote>
 
 
 
