@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>fm-spectrum</title>
+</head>
+<body>
+<div id="content">
+
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">fm-spectrum</code> <var>spec1</var> <var>spec2</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
+</dl>
+
+<p>
+Performs ring modulation on the input spectra <var>spec1</var>
+and <var>spec2</var> and returns the resulting spectrum as a list of
+hertz values, key numbers or note names.  Partials in the output
+spectrum are calculated as the difference and sum tones between
+pairwise combinations of the partials in the input spectra. Values in
+the input spectra can be specified as hertz values, key numbers or note
+names but both lists must be of the same type.  Each input spectrum can be
+list of values or a single value.
+</p>
+
+<p id="args"><code class="entry">fm-spectrum</code> supports the keyword arguments:
+</p>
+
+<dl>
+
+<dt>
+<code class="keyword">:spectrum</code> { <code class="keyword">:note</code> | <code class="keyword">:keynum</code> | <code class="keyword">:hertz</code> | <var>false</var>}
+</dt>
+<dd>Determines what type of values are returned in the output spectrum. The default value is <var>false,</var> which means that values in the output spectrum will be the same type as the input spectra.</dd>
+
+<dt>
+<code class="keyword">:hz</code> <var>boolean</var>
+</dt>
+<dd>If true then values in the input spectra are Hertz values. The default value is false.</dd>
+
+<dt>
+<code class="keyword">:remove-duplicates</code> <var>boolean</var>
+</dt>
+<dd>If true then the output spectrum will not contain any duplicate frequencies.</dd>
+</dl>
+
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Ring modulated spectra.
+</p>
+<pre class="code">
+
+</pre>
+</div>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Ring modulating random scale selections.
+</p>
+<pre class="code">
+
+</pre>
+</div>
+
+<h4>See also:</h4>
+<ul>
+<li><a href="rm-spectrum-fn.html"><code>rm-spectrum</code></a> [Function]</li>
+</ul>
+
+</div>
+
+<hr class="inv"/>
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>

@@ -27,10 +27,14 @@ Holds a list of time sorted subobjects.
 
 <dl>
 
-<dt><span class="keyword">:name</span> {<var>symbol</var> | <var>string</var>}</dt>
+<dt>
+<code class="keyword">:name</code> {<var>symbol</var> | <var>string</var>}
+</dt>
 <dd>
-An optional name for the seq. If specified, the seq can be
-referenced from its name using <a href="find-object-fn.html">find-object</a> or the <a href="hshamp-mac.html">#&amp;</a> macro.
+An optional name for the object. If specified, the object can be
+retrieved from its name using the read macro <a
+href="hshamp-mac.html">#&amp;</a> or the <a
+href="find-object-fn.html">find-object</a> function.
 </dd>
 
 <dt><span class="keyword">:subobjects</span> <var>list</var></dt>
@@ -46,7 +50,7 @@ other seq objects.</dd>
 
 <div class="float">
 <p class "captxt">
-<span class="floatlabel">Example 1.</span> Creating a sequence
+<span class="floatlabel">Example 1.</span> Creating a seq of midi events.
 </p>
 
 <pre class="code">
