@@ -188,7 +188,8 @@
     :window-type :double-edge-box
     :content-color %splash-view-color)) ;#x000000
 
-(defmethod ccl:view-click-event-handler :after ((view cm-about-dialog) where)
+(defmethod ccl:view-click-event-handler :after ((view cm-about-dialog) 
+                                                where)
   (declare (ignore where))
   ;; dont return more than once if user clicks on window before timeout.
   (let ((time (slot-value view 'timeout)))
@@ -263,9 +264,7 @@
              (ccl:make-point  40
                               (- height 40))
              #@(220 38)
-             (format nil "~A~&~A"
-                     "Copyright © 1989-2001 Heinrich Taube"
-                     "Mi_D Copyright © 2001 Tobias Kunze")
+             "Copyright © 1989-2001 Heinrich Taube"
              nil
              :view-font '("Geneva" 9 :plain :srcor)
              :text-justification #$teJustCenter
@@ -299,19 +298,24 @@
     (setf ccl::*inhibit-greeting* t)
     (setf ccl:*lisp-startup-functions*
           (append ccl:*lisp-startup-functions*
-                  (list #'(lambda ()
-                            (declare (special *cm-readtable*))
-                            (setf *package* (find-package :cm))
-                            (setf *readtable* *cm-readtable*)
-                            (let ((init 
-                                   (merge-pathnames 
-                                    "cminit.lisp"
-                                    (ccl::mac-default-directory))))
-                              (if (probe-file init)
-                                (load init :verbose nil)))
-                            ;(when *cm-splashscreen*
-                            ;  (cm-splashscreen))
-                            ))))
+                  (list
+                   #'(lambda ()
+                       (declare (special *cm-readtable*))
+                       (setf *package* (find-package :cm))
+                       (setf *readtable* *cm-readtable*)
+                       (let* ((dir (ccl::mac-default-directory))
+                              (fil (OR 
+                                    (probe-file
+                                     (merge-pathnames "cminit.lisp"
+                                                      dir))
+                                    (probe-file
+                                     (merge-pathnames ":lib:cminit.lisp"
+                                                      dir)))))
+                         (when fil
+                           (load fil :verbose nil)))
+                       ;(when *cm-splashscreen*
+                       ;  (cm-splashscreen))
+                       ))))
     (ccl:save-application path
                           ;:application-class (find-class 'cm)
                           :size '(#-clm #xA00000 
