@@ -14,57 +14,43 @@
 <!-- Entry: "io" -->
 <dl class="dictsyntax">
 <dt>[Macro]</dt>
-<dd><span class="syntax">(<code class="entry">io</code> <var>object</var> {<var>name</var> <var>value</var>}*)</span></dd>
+<dd><span class="syntax">(<code class="entry">io</code> <var>strean</var> {<var>:init</var> <var>value</var>}*)</span></dd>
 </dl>
-
 
 <p>
-Creates or reinitializes an event stream.
+Initializes <var>strean</var> according to the specified
+keyword <var>init</var> and <var>value</var> pairs. <var>Stream</var>
+can be an event stream or a string that names the stream.
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(io "/zap/test.aiff" )</span>
-#&lt;clm-audio-stream: "/zap/test.aiff"&gt;
-cm&gt; <span class="input">(io "/zap/test.aiff" srate 44100 channels 2)</span>
-#&lt;clm-audio-stream: "/zap/test.aiff"&gt;
-cm&gt;</pre>
+<h4>Examples:</h4>
+
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 1.</span> Initializing a MIDI file.
+</p>
+<pre class="code">
+<span class="comment">;;; setting the tempo and time signature of a MIDI file.</span>
+
+(io <span class="string">"test.mid"</span> <span class="keyword">:tempo</span> 120
+    <span class="keyword">:time-signature</span> '(3 4) )
+</pre>
 </div>
 
-
-
-<p>Initializations for all streams:
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 2.</span> Initializing a CLM audio file.
 </p>
-<dl>
+<pre class="code">
+<span class="comment">;;; setting the srate, channel and reverb of an AIFF file</span>
 
-
-<dt><code class="keyword">:name</code> <var>string</var></dt>
-<dd>
-
-The name of the file or port, including any directory information.
-</dd>
-
-</dl>
-
-
-<p>Initializations for all file streams:
-</p>
-<dl>
-
-<dt><code class="keyword">:versions</code> {<var>number</var> | <var>true</var>}</dt>
-<dd>
-
-Causes a new version of the file to be created each time output occurs. The version
-name is based on the name of the file and the version count, which is
-initialized to number and incremented each time output occurs. A
-true value for versions is the same as 1.
-</dd>
-
-</dl>
-
+(io <span class="string">"/tmp/piece.aiff"</span> <span class="keyword">:srate</span> 44100 <span class="keyword">:channels</span> 2
+    <span class="keyword">:reverb</span> 'nrev)
+<pre>
+</div>
 
 <!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
 <li><a href="clm-audio-stream-cls.html"><kbd>clm-audio-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
 <li><a href="clm-stream-cls.html"><kbd>clm-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
@@ -72,7 +58,6 @@ true value for versions is the same as 1.
 <li><a href="midi-stream-cls.html"><kbd>midi-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
 <li><a href="sco-stream-cls.html"><kbd>sco-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>

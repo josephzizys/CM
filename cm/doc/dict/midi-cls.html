@@ -19,59 +19,102 @@
 
 
 <p>
-Creates a MIDI Note On and Note Off pair out of a more general
-representation of frequency, duration and amplitude.
+Generates MIDI note on and off pairs from a more general
+representation of keynum, duration and amplitude.
 </p>
 
 <p><code class="entry">midi</code> supports the following slot initializations:
 </p>
 <dl>
 
-
 <dt><code class="keyword">:time</code> <var>number</var></dt>
-<dd>
-
-Sets the start time of object. <code>time</code> can also be specified
-as <code>start</code>.
-</dd>
-
-
-<dt><code class="keyword">:keynum</code> {<var>keynum</var> | <var>note</var>}</dt>
-<dd>
-
-Frequency expressed as a keynum or note.
-The treatment of floating point keynums
-depends on the value of <code class="keyword">:channel-tuning</code>
-in the <a href="midi-stream-cls.html">MIDI file</a>. 
-</dd>
-
-
-<dt><code class="keyword">:duration</code> <var>number</var></dt>
-<dd>
-
-The duration of the note in seconds.
-</dd>
-
-
-<dt><code class="keyword">:amplitude</code> <var>number</var></dt>
-<dd>
-
-A logical amplitude 0.0 &lt; 1.0 or an integer velocity 0 to 127. Defaults to 64.
-</dd>
-
+<dd>The start time of object in score.</dd>
 
 <dt><code class="keyword">:channel</code> <var>integer</var></dt>
 <dd>
-
-A MIDI channel number. Defaults to 0.
+A MIDI channel number, defaults to 0.
 </dd>
 
+<dt><code class="keyword">:keynum</code> {<var>keynum</var> | <var>note</var>}</dt>
+<dd>
+A MIDI <a href="keynum-fn.html"><code>keynum</code></a> or
+<a href="note-fn.html"><code>note</code></a> name in the
+<a href="chromatic-scale-var.html">standard chromatic scale</a>.  The
+ floating point keynums are rounded to their closest integer keynum
+ unless channel tuning is enabled in the destination <a
+ href="midi-stream-cls.html">midi stream</a>.
+</dd>
+
+<dt><code class="keyword">:duration</code> <var>number</var></dt>
+<dd>
+The duration of the note in seconds.
+</dd>
+
+<dt><code class="keyword">:amplitude</code> <var>number</var></dt>
+<dd>
+A floating-point logical amplitude 0.0 &lt; 1.0,
+or an integer velocity 0 to 127. Defaults to 64.
+</dd>
 </dl>
 
+<h4>Examples:</h4>
+
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 1.</span> Creating a MIDI note.
+</p>
+<pre class="code"><span class="comment">;;; a quiet middle C on channel 3</span>
+
+(<span class="special">new</span> midi <span class="keyword">:time</span> 0 <span class="keyword">:duration</span> .5 <span class="keyword">:channel</span> 3
+     <span class="keyword">:keynum</span> 60 <span class="keyword">:amplitude</span> .1)
+
+<span class="comment">;;; keynum specified as a note name</span>
+
+(<span class="special">new</span> midi <span class="keyword">:time</span> 4 <span class="keyword">:keynum</span> 'cs4 <span class="keyword">:duration</span> 4)
+</pre>
+</div>
+
+
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 2.</span> Generating untempered MIDI notes.
+</p>
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">harms</span> fund low high dur)
+  <span class="comment">;; play harmonics <var>low</var> to <var>high</var> starting on <var>fund</var></span>
+  (<span class="special">let</span> ((f (<a href="hertz-fn.html">hertz</a> fund)))
+    (<a href="process-mac.html">process</a> for i from low to high
+             output
+             (<a href="new-mac.html">new</a> midi <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
+                  <span class="comment">;; convert hertz to floating point keynum</span>
+                  <span class="keyword">:keynum</span> (<a href="keynum-fn.html">keynum</a> (* f (/ i low)) <span class="keyword">:hz</span> true)
+                  <span class="keyword">:duration</span> dur <span class="keyword">:amplitude</span> .5)
+             wait (+ dur .1))))
+
+<span class="comment">;;; set channel tuning of midi file to 48 steps per
+;;; octave, or 25 cents (1/8 tone) per step. this quantization
+;;; size uses the first four channels (0-3) of the synth.</span>
+
+(<a href="insure-io-fn.html">insure-io</a> <span class="string">"test.mid"</span> <span class="keyword">:channel-tuning</span> 48)
+
+<span class="comment">;;; play partials 4-16 staring on c3</span>
+
+(events (harms 'c3 4 16 .5) <span class="string">"test.mid"</span>)
+
+<span class="comment">;;; cancel channel-tuning</span>
+
+(insure-io <span class="string">"test.mid"</span> <span class="keyword">:channel-tuning</span> false)
+</pre>
+</div>
+
+<h4>See also: </h4>
+<ul>
+<li>
+<a href="midi-topic.html#midi_event_classes">MIDI event classes</a> [Topic]</li>
+</ul>
 
 </div>
 <hr class="inv"/>
-
 <!-- Footer -->
 <div id="footer">
 <div id="version">$Name$</div>
