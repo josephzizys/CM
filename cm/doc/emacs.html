@@ -66,6 +66,8 @@
 <ol>
 <li><a href="#tip_version">Determining the version of X/Emacs</a></li>
 <li><a href="#tip_apple">Apple keyboard shortcuts for OSX X/Emacs</a></li>
+<li><a href="#tip_Emacs_error">Avoiding startup error message on OSX X/Emacs</a></li>
+
 </ol>
 </li>
 </ol>
@@ -608,6 +610,27 @@ the following forms to your X/Emacs init file:
 </div>
 </dd>
 
+<dt id="tip_Emacs_error">
+3. Avoiding startup error message on OSX X/Emacs
+</dt>
+<dd>
+When you start OS X Emacs from a shell (via cm.sh, for example), the
+application may complain about missing directories. These directories
+are actually installed under the application. You can stop the error
+message from occuring if you have root privledges by installing
+two links, as shown in this interaction.
+
+<div class="float">
+<p class="captxt">Installing links for Emacs.
+</p>
+<pre class="shell">
+$ su root
+$ mkdir -p /usr/local/share/emacs
+$ cd /usr/local/share/emacs/
+$ ln -s /Applications/Emacs.app/Contents/Resources/site-lisp site-lisp
+$ ln -s /Applications/Emacs.app/Contents/Resources/ 21.3.50
+</pre>
+</div>
 </dl>
 
 <p>
