@@ -606,8 +606,9 @@
 ;;; Scaling and offsetting
 ;;;
 
+;;; floor of n + 1/2 avoids cltl odd/even rounding
 (define (quantize value step)
-  (* (round (/ value step)) step))
+  (* (floor (+ (/ value step) 1/2)) step))
 
 (define (rescale value oldmin oldmax newmin newmax)
   (+ (* (/ (- newmax newmin) (- oldmax oldmin)) (- value oldmin))
