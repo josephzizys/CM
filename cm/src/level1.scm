@@ -825,9 +825,13 @@
              (warning "Ignoring duplicate initarg for ~a." 
                       name))
            ;; remove from spec. 
-           (do ((edit spec (cdr edit)))
-               ((eq? (cdr edit) tail)
-                (set-cdr! edit (cdddr edit)))))
+           ;(format #t "~%spec=~s tail=~s" spec tail)
+           (if (eq? spec tail)
+             (begin (set! spec (cddr spec))
+                    (set! tail spec))
+             (do ((edit spec (cdr edit)))
+                 ((eq? (cdr edit) tail)
+                  (set-cdr! edit (cdddr edit))))))
           (begin (set-car! tail ':init-keyword)
                  (set-car! (cdr tail) key)
                  (push key sofar)))
