@@ -62,7 +62,7 @@
 (defparameter pw
   (plotter :y-axis (axis :unary)
            :x-axis (axis :radians )
-           :x-slot 'gtk::x :y-slot 'gtk::y :point-size 5
+           :x-slot 'x :y-slot 'y :point-size 5
            :view '(:line :bar-and-point)
            (loop for x from 0 to 1 by 1/100
                  for r = (* 2 pi x)
@@ -78,10 +78,10 @@
 (defparameter pw
   (let ((fund 110)
         (harms 16))
-    (plotter :x-axis (axis :hertz :slot 'gtk::x
+    (plotter :x-axis (axis :hertz :slot 'x
                            :minimum fund
                            :maximum (* fund harms))
-             :y-axis (axis :normalized :slot 'gtk::y)
+             :y-axis (axis :normalized :slot 'y)
              :color "dark violet"
              :view ':bar-and-point
              :point-size 5
