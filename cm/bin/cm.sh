@@ -424,7 +424,8 @@ get_lisp_info () {
     fi
   else
     # This is ugly, wasteful, and requires maintenance :(
-    q='echo '"'(lisp-implementation-version)'"' | "$1"'
+    vfd='[[:alpha:]]*[0-9][[:alnum:].]*'
+    vre="s/^[^"]*"[^0-9]*\($vfd\(-$vfd\)*\).*/\1/p"
     case "${LISP_FLV:-$1}" in
       *clisp*|*CLISP*)
         flv=clisp
@@ -439,17 +440,16 @@ get_lisp_info () {
       *acl*|*ACL*)
         flv=acl
         vrs=`echo '(lisp-implementation-version)' | "$1" -batch 2>/dev/null \
-             | sed -n 's/^.*"\([^ ]*\) .*/\1/p'`
+	     | sed -n $vre`
         ;;
       *lisp*|*LISP*|*cmucl*|*CMUCL*)
         flv=cmucl
         vrs=`echo '(lisp-implementation-version)' | "$1" -quiet -batch \
-             | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p'`
+	     | sed -n $vre`
         ;;
       *openmcl*|*OPENMCL*|*dppccl*)
         flv=openmcl
-        vrs=`echo '(lisp-implementation-version)' | "$1" -b \
-             | sed -n 's/.* \([-0-9.]*\)".*/\1/p'`
+        vrs=`echo '(lisp-implementation-version)' | "$1" -b | sed -n $vre`
         ;;
       *guile*)
         LISP_DIA=SCHEME
