@@ -75,37 +75,27 @@
   (:parameters time channel pressure)
   (:writers ))
 
-;;;
-;;; since midi-event-data1 and data2 are always called in order
-;;; midi-pitch-bend stores bend values as +-width and then
-;;; converts to msb lsb on slot reads.  midi-event-data1 returns
-;;; lsb of 14bits and caches msb; midi-event-data2 simply returns
-;;; the cached msb. this will obviously lose if data1 and data2
-;;; accessors are not called in tandem and in order.
-;;;
-
 (defobject midi-pitch-bend (midi-channel-event)
   ((opcode :initform +ml-pitch-bend-opcode+ :initarg #f)
-   (bend :initform 0)
-   (width :initform *midi-pitch-bend-width*) ; midi2.scm
-   (msb :initarg #f :accessor midi-event-data2)) ; cached by data1 read.
-  (:parameters time channel bend width)
+   (bend :initform 0))
+  (:parameters time channel bend )
   (:writers ))
 
 (define-method (midi-event-data1 (obj <midi-pitch-bend>))
-  ;; convert nominal bend value to 14 bits, return lsb
-  ;; and _cache_ msb.
-  (let ((bend (midi-pitch-bend-bend obj))
-        (maxb (midi-pitch-bend-width obj)))
-    (let ((14bits (inexact->exact
-                   (floor (rescale bend (- maxb) maxb 0 16383)))))
-      ;; cache msb
-      (slot-set! obj 'msb (ldb (byte 7 7) 14bits))
-      ;; return lsb
-      (ldb (byte 7 0) 14bits))))
+  ;; return lsb of 2comp bend value
+  (multiple-value-bind (ms7b ls7b)
+      (floor (+ (midi-pitch-bend-bend obj) 8192) 128)
+    ms7b
+    ;; return lsb
+    ls7b))
 
 (define-method (midi-event-data2 (obj <midi-pitch-bend>))
-  (slot-ref obj 'msb))
+  ;; return msb of 2comp bend value
+  (multiple-value-bind (ms7b ls7b)
+      (floor (+ (midi-pitch-bend-bend obj) 8192) 128)
+    ls7b
+    ;; return msb
+    ms7b))
 
 ;;;
 ;;; meta messages
@@ -125,31 +115,6 @@
   (:parameters time type text)
   (:writers ))
 
-;; (defobject midi-copyright-note (midi-meta-text-event)
-;;   ((opcode :initform +ml-file-copyright-note-opcode+ :initarg #f))
-;;   (:parameters time text)
-;;   (:writers ))
-;; (defobject midi-sequence/track-name (midi-meta-text-event)
-;;   ((opcode :initform +ml-file-sequence/track-name-opcode+ :initarg #f))
-;;   (:parameters time text)
-;;   (:writers ))
-;; (defobject midi-instrument-name (midi-meta-text-event)
-;;   ((opcode :initform +ml-file-instrument-name-opcode+ :initarg #f))
-;;   (:parameters time text)
-;;   (:writers ))
-;; (defobject midi-lyric (midi-meta-text-event)
-;;   ((opcode :initform +ml-file-lyric-opcode+ :initarg #f))
-;;   (:parameters time text)
-;;   (:writers ))
-;; (defobject midi-marker (midi-meta-text-event)
-;;   ((opcode :initform +ml-file-marker-opcode+ :initarg #f))
-;;   (:parameters time text)
-;;   (:writers ))
-;; (defobject midi-cue-point (midi-meta-text-event)
-;;   ((opcode :initform +ml-file-cue-point-opcode+ :initarg #f))
-;;   (:parameters time text)
-;;   (:writers ))
-
 (defobject midi-eot (midi-meta-event)
   ((opcode :initform +ml-file-eot-opcode+ :initarg #f))
   (:parameters time )
@@ -163,7 +128,7 @@
 
 (defobject midi-smpte-offset (midi-meta-event)
   ((opcode :initform +ml-file-smpte-offset-opcode+ :initarg #f)
-   (offset :accessor midi-event-data1))
+   (offset :initform () :accessor midi-event-data1))
   (:parameters time offset)
   (:writers ))
 
@@ -178,15 +143,124 @@
 
 (defobject midi-key-signature (midi-meta-event)
   ((opcode :initform +ml-file-key-signature-opcode+ :initarg #f)
-   (key :accessor midi-event-data1))
-  (:parameters time key)
+   (key :initform 0 :accessor midi-event-data1)
+   (mode :initform 0 :accessor midi-event-data2))
+  (:parameters time key mode)
   (:writers ))
 
 (defobject midi-sequencer-event (midi-meta-event)
   ((opcode :initform +ml-file-sequencer-event-opcode+ :initarg #f)
-   (data :accessor midi-event-data1))
-  (:parameters time data)
+   (number :accessor midi-event-data1))
+  (:parameters time number)
   (:writers ))
+
+;;;
+;;; message->event conversion
+;;; remove the message layer from cm at some point...
+;;;
+
+(define (midi-message->midi-event m . args)
+  (with-args (args &optional data time)
+    (let ((ch #f))
+      (cond ((midi-channel-message-p m)
+             (set! ch (channel-message-channel m) )
+             (cond ((note-on-p m)
+                    (make <midi-note-on>
+                          :time time :channel ch
+                          :keynum (note-on-key m)
+                          :velocity (note-on-velocity m)))
+                   ((note-off-p m)
+                    (make <midi-note-off>
+                          :time time :channel ch
+                          :keynum (note-on-key m)
+                          :velocity (note-on-velocity m)))
+                   ((key-pressure-p m)
+                    (make <midi-key-pressure>
+                          :time time :channel ch
+                          :keynum (key-pressure-key m)
+                          :pressure (key-pressure-pressure m)))
+                   ((control-change-p m)
+                    (make <midi-control-change>
+                          :time time :channel ch
+                          :controller (control-change-controller m)
+                          :value (control-change-value m)))
+                   ((program-change-p m)
+                    (make <midi-program-change>
+                          :time time :channel ch
+                          :program (program-change-program m)))
+                   ((pitch-bend-p m)
+                    (make <midi-pitch-bend>
+                          :time time :channel ch
+                          :bend (- (+ (pitch-bend-lsb m)
+                                      (* 128 (pitch-bend-msb m)))
+                                     8192)))
+                   ((channel-pressure-p m)
+                    (make <midi-channel-pressure>
+                          :time time :channel ch
+                          :pressure (channel-pressure-pressure m)))
+                   (else
+                    (err "Message not supported: ~S." m))))
+            ((midi-meta-message-p m)
+             (cond ((time-signature-p m)
+                    (make <midi-time-signature>
+                          :time time
+                          :numerator (elt data 1)
+                          :denominator (expt 2 (elt data 2))
+                          :clocks (elt data 3)
+                          :32nds (elt data 4)))
+                   ((key-signature-p m)
+                    (let ((a (vector-ref data 1)))
+                      (make <midi-key-signature>
+                            :time time
+                            :key (or (and (logbit? a #x80) 
+                                          (- a #x100)) a)
+                            :mode (vector-ref data 2))))
+                   ((tempo-change-p m)
+                    (make <midi-tempo-change>
+                          :time time
+                          :tempo (+ (ash (elt data 1) 16)
+                                    (ash (elt data 2) 8)
+                                    (elt data 3))))
+                   ((sequence-number-p m)
+                    (make <midi-sequencer-event>
+                          :time time
+                          :number (+ (ash (vector-ref data 1) 8)
+                                     (vector-ref data 2))))
+                   ((text-meta-event-p m)
+                    (make <midi-text-event>
+                          :time time 
+                          :type (meta-message-type m)
+                          :text (text-meta-event-data-to-string data)))
+                   ((eot-p m)
+                    (make <midi-eot> :time time))
+                   ((smpte-offset-p m)
+                    (make <midi-smpte-offset>
+                          :time time
+                          :offset (loop for i from 1 to 5
+                                       collect (vector-ref data i))))
+                   ;; FIX! add classes..,
+                   ;;((midi-port-p m) )
+                   ;;((midi-channel-p m) )
+                   (else
+                    (err "Shouldnt: message not implemented: ~S." m))))
+            ((midi-system-message-p m)
+             (let ((type (ldb +enc-lower-status-byte+ m))
+                   (size (midimsg-size m))
+                   (data '()))
+               (cond ((= size 3)
+                      (set! data (list (midimsg-data1 m)
+                                       (midimsg-data2 m))))
+                     ((= size 2)
+                      (set! data (list (midimsg-data1 m))))
+                     ((sysex-p m)
+                      ;; omit markers at beg and end of sysex data.
+                      (set! data (loop for i from 1 
+                                    below (- size 1)
+                                    collect (vector-ref data i)))))
+               (make <midi-system-event>
+                     :time time :type type :data data)))
+            (else
+             (err "message not supported: ~S." m))))))
 
 ;;;
 ;;;

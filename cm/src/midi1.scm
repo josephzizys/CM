@@ -3323,12 +3323,14 @@
   :name 'midi-meta-event)
 
 ;;;
-;;; event->message conversion
+;;; event->message 
+;;; at some point soon i will get rid of messages
+;;; see midi3.scm for message->event conversion
 ;;;
 
 (define-method (midi-event->midi-message (event <midi-channel-event>))
   ;; GOOPS BUG (?) declaring slots for :init-values obliterates
-  ;; the  :accessor and :allocation settings declared by <midi-event>!
+  ;; the :accessor and :allocation settings declared by <midi-event>!
   (values
    (make-channel-message (slot-ref event 'opcode)
                          (midi-event-channel event)
@@ -3378,12 +3380,4 @@
           (else
            (err "Unimplemented meta-event opcode: ~s" op)))))
 
-
-; (define a (new midi-pitch-bend :msb 66 :lsb 2))
-
-; (miditest a)
-
-
-;;; message->event conversion
-;;;
 
