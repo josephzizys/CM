@@ -69,7 +69,7 @@
 ;;; install default cminit.lisp file in bin directory
 
 (let ((init (string-append cm-bin-directory "cminit.lisp"))
-      (orig (string-append cm-directory "src/cminit.lisp")))
+      (orig (string-append cm-directory "etc/cminit.lisp")))
  (if (not (file-exists? init))
    (if (file-exists? orig)
      (copy-file orig init)
