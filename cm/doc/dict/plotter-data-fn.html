@@ -13,23 +13,30 @@
 <!-- Entry: "plotter-data" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">plotter-data</code> <var>plotter</var> [<var>layer</var>] {<var>keyword</var> <var>value</var>}*)
+<dd><span class="syntax">(<code class="entry">plotter-data</code> <var>plotter</var> {<var>keyword</var> <var>value</var>}*)
 </span></dd>
 </dl>
 
 <p>
-Returns data loaded in <var>plotter</var> according
-to <var>layer</var>. If <var>layer</var> is boolean false (the
-default) then all data lists are returned in a list. Otherwise,
-if <var>layer</var> is boolean true then only the front layer's data
-is returned. Following the optional layer comes optional keyword
-arguments that determine the format and precision of the data
-returned.
+Returns the data sets loaded in <var>plotter</var> according
+to keyword arguments. 
 </p>
 
 <p id="args"><code class="entry">plotter-data</code> supports the following keyword arguments:
 </p>
 <dl>
+
+<dt><span class="keyword">:layer</span> {<var>bool</var> <span class="keyword">:front</span> <span class="keyword">:selection</span>} </dt>
+<dd>
+If boolean false (the default) then all the data sets are returned in
+a list of lists.  Otherwise, if <var>layer</var> is boolean true or
+<span class="keyword">:front</span>, then only the front layer's data
+is returned. If <var>layer</var> is <span
+class="keyword">:selection</span> and there is a mouse selection then
+only those points in the front layer are returned otherwise all the
+front layer's data are returned.
+</dd>
+
 <dt><span class="keyword">:xy</span> <var>bool</var></dt>
 <dd>
 Determines if CLOS objects or xy coordinate numbers are returned as
