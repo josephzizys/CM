@@ -587,7 +587,13 @@
         (do ((i 0 (+ i 1))    ; i is position of x
              (x y y))
             (int 
-             (- (+ (* div octnum) int) off))
+             ;;(- (+ (* div octnum) int) off)
+             ;; if x is the last step we also have to
+             ;; check proximity to octave value (1.0)
+             (if (and (= int (- div 1))
+                      (< (- 1 octrem) (- octrem x)))
+               (- (* div (1+ octnum)) off) ; round up to octave
+               (- (+ (* div octnum) int) off)))
           ;; increment y to next degree 
           (set! y (car into))
           (if (<= x octrem y)
