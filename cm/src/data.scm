@@ -847,6 +847,55 @@
         (if from (+ from res) res)))))
 
 ;;;
+;;; ransegs
+;;;
+
+(define (ransegs num . args)
+  (with-args (args &key (type ':uniform)
+                   (min 0.0 mnp) (max 1.0 mxp)  (sum 1.0 smp)
+                   a b)
+    (if smp (set! max sum))
+    (if (not (< min max))
+      (err "Minimum value ~S not less than maximum ~S." 
+           min max))
+    (if (and smp (or mnp mxp))
+      (err "sum ~S: keyword :sum not allowed with :min or :max."))
+    (let ((done (if (not smp) num (+ num 1)))
+          (segs (list))
+          (mini most-positive-fixnum)
+          (sums 0)
+          (maxi most-negative-fixnum))
+      (do ((i 0)
+           (r (ran :type type :a a :b b)
+              (ran :type type :a a :b b)))
+          ((= i done) 
+           (set! segs (sort segs #'<))
+           (set! mini (first segs)))
+        (unless (member r segs)
+          (set! segs (cons r segs))
+          (set! sums (+ sums r))
+          (if (> r maxi) (set! maxi r))
+          (set! i (+ i 1))))
+      (do ((tail (cdr segs) (cdr tail)))
+          ((null? (cdr tail))
+           (set-car! segs min)
+           (set-car! tail max)
+           (if (not smp)
+             segs
+             ;; we have 1 more point than values to return, reuse list
+             ;; by storing deltas 1 pos previous and then setting last
+             ;; cdr to nil
+             (do ((last segs (cdr last))
+                  (tail (cdr segs) (cdr tail))
+                  (prev #f))
+                 ((null? tail)
+                  (set-cdr! prev (list))
+                  segs)
+               (set! prev last)
+               (set-car! last (- (car tail) (car last))))))
+        (set-car! tail (rescale (car tail) mini maxi min max))))))
+
+;;;
 ;;; Exponentiation
 ;;;
 
