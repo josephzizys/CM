@@ -3303,10 +3303,6 @@
 (define-class <midi-channel-event> (<midi-event>)
   (channel :init-value 0 :init-keyword :channel
            :accessor midi-event-channel)
-;  (data1 :init-value #f :init-keyword :data1
-;         :accessor midi-channel-event-data1)
-;  (data2 :init-value #f :init-keyword :data2
-;         :accessor midi-channel-event-data2)
   :name 'midi-channel-event)
 
 ;(define-class <midi-sysex-event> (<midi-event>)
@@ -3319,19 +3315,46 @@
 (define-class <midi-meta-event> (<midi-event>)
   :name 'midi-meta-event)
 
-(define-class <midi-meta-text-event> (<midi-meta-event>)
-  (text :init-keyword :text :accessor midi-message-data1)
-  :name 'midi-meta-text-event)
-
 ;;;
 ;;; event->message conversion
 ;;;
 
 (define-method (midi-event->midi-message (event <midi-channel-event>))
-  (make-channel-message (midi-event-opcode event)
-                        (midi-channel-event-channel event)
-                        (foo)
-                        (bar)))
+  (let ((d1 (midi-event-data1 event))
+        (d2 (midi-event-data2 event)))
+    (make-channel-message (midi-event-opcode event)
+                          (midi-channel-event-channel event)
+                          data1 data2)))
+
+(define-method (midi-event->midi-message (event <midi-meta-event>))
+  (let ((op (midi-event-opcode event)))
+    (cond ((eq? op +ml-file-sequence-number-opcode+)
+           (make-sequence-number (midi-event-data1 event)))
+          ((eq? op +ml-file-text-event-opcode+)
+           ;; pass string as first arg
+           (make-text-event (midi-event-data2 event)
+                            (midi-event-data1 event)))
+          ;;((eq op +ml-file-midi-channel-opcode+) )
+          ;;((eq op +ml-file-midi-port-opcode+) )
+          ((eq? op +ml-file-eot-opcode+)
+           (make-eot ))
+          ((eq? op +ml-file-tempo-change-opcode+)
+           ;; tempo is usecs per midi quarter note.
+           (make-tempo-change (midi-event-data1 event)))
+          ((eq? op +ml-file-smpte-offset-opcode+)
+           (apply (function make-smpte-offset)
+                  (midi-event-data1 event)))
+          ((eq? op +ml-file-time-signature-opcode+)
+           (make-time-signature (midi-event-data1 event)
+                                (midi-event-data2 event)
+                                (midi-event-data2 event)
+                                (midi-event-data4 event)))
+          ((eq? op +ml-file-key-signature-opcode+)
+           (make-key-signature (midi-event-data1 event)))
+          ((eq? op +ml-file-sequencer-event-opcode+)
+           (make-sequencer-event (midi-event-data1 event)))
+          (else
+           (err "Unimplemented meta-event opcode: ~s" op)))))
 
 ;;;
 ;;; message->event conversion
