@@ -62,7 +62,7 @@
 	   (,v #f))
 	  ((null? ,a) ,x)
 	(set! ,s (car ,a))
-	(if (null? ,a)
+	(if (null? (cdr ,a))
 	  (err "Uneven pair list: ~s" ,h)
 	  (set! ,v (cadr ,a)))
 	,@ body))))
