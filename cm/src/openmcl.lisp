@@ -14,6 +14,7 @@
 ;;; $Revision$
 ;;; $Date$
 
+#|
 (export '(ccl::set-mac-file-creator ccl::set-mac-file-type) :ccl)
 
 (defun ccl::set-mac-file-type (file type)
@@ -35,6 +36,7 @@
   (ccl:run-program "/Developer/Tools/SetFile"
 		   (list "-c" creator file))
   (values))
+|#
 
 (in-package :cm)
 
@@ -46,7 +48,24 @@
           ccl:class-direct-superclasses
           ccl:class-direct-subclasses
           ccl:open-shared-library ; needed if loading clm into cm.
+          #+:openmcl-partial-mop
+          ccl:class-slots
+          #+:openmcl-partial-mop
+          ccl:class-direct-slots
+          #+:openmcl-partial-mop
+          ccl:validate-superclass
           ))
+
+#-:openmcl-partial-mop
+(progn
+  (defun class-slots (class) 
+    (ccl::class-instance-slots class))
+  (defun class-direct-slots (class)
+    (ccl:class-direct-instance-slots class))
+  (defmethod validate-class ((class t) (superclass t))
+    ;; this is a no-op except in OpenMCL 014
+    t)
+  )
 
 (defun finalize-class (class) class t)
 
@@ -54,11 +73,6 @@
 
 (defun slot-definition-reader (slot) slot nil)
 
-(defun class-slots (class) 
-  (ccl::class-instance-slots class))
-
-(defun class-direct-slots (class)
-  (ccl:class-direct-instance-slots class))
 
 ;;;
 ;;; misc stuff
@@ -152,8 +166,8 @@
    ;; installed for the SetType command
    ;(ccl:run-program "/Developer/Tools/SetFile"
    ;(list "-t" "Midi" "-c" "TVOD" file))
-   (ccl::set-mac-file-type file "Midi")
-   (ccl::set-mac-file-creator file "TVOD")
+   ;(ccl::set-mac-file-type file "Midi")
+   ;(ccl::set-mac-file-creator file "TVOD")
    (ccl:run-program "/usr/bin/open" (list file)))
 
 ;;;

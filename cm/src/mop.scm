@@ -32,6 +32,11 @@
 	:accessor class-parameters)
   :name 'parameterized-class)
 
+(define-method (validate-superclass (class <parameterized-class>)
+                                    (superclass <class>))
+  ;; yes to any class w/metaclass parmeterized-class
+  #t)
+
 ;;;
 ;;; default method returns nil
 ;;;
@@ -66,6 +71,11 @@
   (versions :init-value #f :init-keyword :versions
 	    :accessor io-class-file-versions)
   :name 'io-class)
+
+(define-method (validate-superclass (class <io-class>)
+                                    (superclass <class>))
+  ;; yes to any class w/metaclass io-class
+  #t)
 
 ;;;
 ;;; default methods returns false. these are overridden in

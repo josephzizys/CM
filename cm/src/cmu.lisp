@@ -44,6 +44,10 @@
   ;(pcl::finalize-inheritance class)
   )
 
+(defmethod validate-class ((class t) (superclass t))
+  ;; this is a no-op except in OpenMCL 014
+  t)
+
 (defun slot-defintion-reader (slot) slot nil)
 
 ;;;

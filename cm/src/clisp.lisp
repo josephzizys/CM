@@ -66,6 +66,10 @@
   
 (defun finalize-class (class) (values))
 
+(defmethod validate-class ((class t) (superclass t))
+  ;; this is a no-op except in OpenMCL 014
+  t)
+
 (defmethod make-load-form (obj)
   (error "no make-load-form method for ~s." obj))
 

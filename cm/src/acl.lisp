@@ -32,6 +32,10 @@
 
 (defun finalize-class (class) (clos:finalize-inheritance class))
 
+(defmethod validate-class ((class t) (superclass t))
+  ;; this is a no-op except in OpenMCL 014
+  t)
+
 (defun slot-definition-reader (x) x nil)
 
 (defmethod make-load-form (obj) (cl:make-load-form obj))
