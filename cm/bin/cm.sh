@@ -186,7 +186,6 @@ set_cygwin () {
       msg_f "Cygwin: 'sh' broken and can't find 'bash'!  Install bash first."
       msg_x "Aborting. "
     fi
-    exec $BASH_EXE -- "$0" "$@"
   fi
 }
 
@@ -194,14 +193,17 @@ if test ! $CYGWIN_HACKS ; then
   if test $CM_OS ; then
     if imatch_head_token "$CM_OS" cygwin ; then
       set_cygwin
+      exec $BASH_EXE -- "$0" "$@"
     fi
   elif which uname >/dev/null 2>&1 ; then
     if imatch_head_token `uname -s` cygwin ; then
       set_cygwin
+      exec $BASH_EXE -- "$0" "$@"
     fi
   elif which cygpath >/dev/null 2>&1 ; then
     # last resort: assume cygwin if no CM_OS and no uname but cygpath
     set_cygwin
+    exec $BASH_EXE -- "$0" "$@"
   fi
 fi
 
