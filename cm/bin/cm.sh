@@ -169,6 +169,8 @@ shift `expr $OPTIND - 1`
 real_path () {
   if [[ "$1" == /* ]] ; then
     CHK="$1"
+  elif [ -z "$1" ] ; then
+    CHK="$CWD"
   else
     CHK="$CWD/$1"
   fi
