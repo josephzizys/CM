@@ -27,19 +27,23 @@ Each element in the pattern is specified as a transition rule list:
 
 <p>
 where <var>past</var> is zero or more identifiers that define the
-"left hand" side of the transition rule and <var>next</var> are the rule's
-outcomes.  The number of past choices in the left hand side determines
-the Markov order of the pattern.  Every transition rule must have the
-same number of identifiers in the left hand side; those closer to the
-rule's transition marker <code>-&gt;</code> are more recent past
-choices.  The special "wildcard" identifier * can appear anywhere in
-the left hand side to match any past value at that position.  By
-default, each outcome in the right side of the rule has the same
-probability. To alter the weight of an outcome relative to the others
-specify it as a list together with its weight (Table 1).
+"left hand" side of the transition rule and <var>next</var> are the
+rule's outcomes.  The number of past choices in the left hand side
+determines the Markov order of the pattern (<a href="table_1">Table
+1</a>).  Every transition rule must have the same number of
+identifiers in the left hand side; those closer to the rule's
+transition marker <code>-&gt;</code> are more recent past choices.
+The special "wildcard" identifier * can appear anywhere in the left
+hand side to match any past value at that position.  By default, each
+outcome in the right side of the rule has the same probability of
+being selected. To alter the probability of an outcome relative to the
+other outcomes in the transtion, specify the outcome together with
+its <var>weight</var> as a list. If <var>weight</var> is a pattern
+then a new probabilty distribution for the transition rule will be
+calculated each time the transition rule is triggered.
 </p>
 
-<div class="float">
+<div class="float" id="table_1">
 <p class="captxt">
 <span class="floatlabel">Table 1.</span> Example transition rules.
 </p>
