@@ -273,7 +273,9 @@
   '((let import-let)
     (let* import-let)
     (progn import-progn)
-    (clm:with-sound import-with-sound)))
+    (clm:with-sound import-with-sound)
+    (defun import-defun)
+    ))
 
 
 ;; import-form translates list expressions whose first element
@@ -332,6 +334,11 @@
                 for r = (import-form f translate exclude include t)
                 when r collect r) 
           #t))
+
+(define (import-defun form trans excl inc)
+  `(defun ,(cadr form) , (caddr form)
+     ., (loop for f in (cdddr form)
+              collect (import-form f trans excl inc))))
 
 (define (import-object pars forms)
   ;; translate form whose car is the name of an event class into 
