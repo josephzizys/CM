@@ -71,9 +71,12 @@ sanitize_path () {
   echo "$1" | sed 's: :\ :g;'
 }
 
+OSX_EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs
 resolve_bin () {
-  # FIXME: for OSX descend into /Applications first
-  if which $1 > /dev/null 2>&1 ; then
+  # OSX Emacs: check /Applications/Emacs.app first
+  if [[ $1 == *macs ]] && [ -x $OSX_EMACS ] ; then 
+    echo $OSX_EMACS
+  elif which $1 > /dev/null 2>&1 ; then
     which $1
   else
     test $2 && msg_w "'$1' not found in PATH ($PATH)."
@@ -92,7 +95,7 @@ UNAME=`resolve_bin uname`
 if [ $RE_EXECING ] ; then
   unset RE_EXECING
 else
-  if test $UNAME && test `$UNAME -o` == Cygwin ; then
+  if test $UNAME && [[ `$UNAME -s` == CYGWIN* ]] ; then
     BASH_EXE=`resolve_bin bash WARN`
     if [ ! $BASH_EXE ] ; then
       msg_f "Cygwin: 'sh' broken and can't find 'bash'!  Install bash first."
