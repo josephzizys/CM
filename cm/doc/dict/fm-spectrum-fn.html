@@ -17,9 +17,9 @@
 </dl>
 
 <p>
-Returns a list containing the frequencies and optional amplitudes of
-sidebands calculated by Frequency Modulation given
-a <var>carrier</var> frequency in Hertz, a
+Returns a list of the frequencies, and optionally the amplitudes, of
+FM (frequency modulation) sidebands calculated from a
+specified <var>carrier</var> frequency in Hertz, a
 carrier/modulator <var>ratio</var> and an FM <var>index</var>.
 
 <!-- Returns a list containing the frequencies and optional amplitudes of
@@ -27,27 +27,29 @@ sidebands calculated by Frequency Modulation. <var>Carrier</var> is
 the carrier frequency in Hertz, <var>ratio</var> is the
 carrier/modulator ratio and <var>index</var> is the FM index. -->
 
-The frequency components returned in the output spectrum can be Hertz
-values, key numbers or note names, as specified by keyword arguments
-to the function.
+The frequency components in the output spectrum can be Hertz values,
+key numbers or note names, as specified by keyword arguments to the
+function.
 </p>
 
 <p id="args">
 <code class="entry">fm-spectrum</code> supports the following keyword arguments:
 </p>
 
+<dl>
+
 <dt>
-<code class="keyword">:spectrum</code> {<span class="keyword">:raw</span> | <code class="keyword">:hertz</code> | <code class="keyword">:keynum</code> | <code class="keyword">:note</code>}
+<code class="keyword">:spectrum</code> {<code class="keyword">:raw</code> | <code class="keyword">:hertz</code> | <code class="keyword">:keynum</code> | <code class="keyword">:note</code>}
 </dt>
 <dd>
 Determines the format of the frequency components returned in the
-output spectrum. If the value is <span class="keyword">:raw</span>
+output spectrum. If the value is <code class="keyword">:raw</code>
 then values in the output spectrum are in Hertz but may contain
-negative numbers.  If the value is <code class="keyword">:hertz</code>
+negative values.  If the value is <code class="keyword">:hertz</code>
 then negative frequency components are reflected into the positive
-frequency domain with their amplitude phases inverted. Otherwise
-floating point key numbers or note names are returned.  The default
-value is <code class="keyword">:raw</code>.
+frequency domain with their amplitudes inverted. Otherwise floating
+point key numbers or note names are returned.  The default value
+is <code class="keyword">:raw</code>.
 </dd>
 
 <dt><code class="keyword">:amplitudes</code> {<var>boolean</var>
@@ -59,12 +61,12 @@ Specifies whether or not sideband amplitudes are included in the
 output spectrum or not. If the value is false then only frequency
 components are returned. If the value is true then each sideband
 component is a list (<var>frequency</var> <var>amplitude</var>). If
-the value is <code class="keyword">:normalized</code> then amplitude
-value of each component is normalized between 0 and 1. If the value
-is <code class="keyword">:weights</code> then amplitude values are
-treated as probability weights and the output spectrum list is
-formatted for passing directly to the <a
-href="random-cls.html">random</a> pattern.  The default value is false.
+the value is <code class="keyword">:normalized</code> then the
+amplitude value of each component is normalized between 0 and 1. If
+the value is <code class="keyword">:weights</code> then the output
+spectrum can be passed directly to a <a
+href="random-cls.html">random</a> pattern with amplitudes converted to
+probability weights.  The default value is false.
 </dd>
 
 <dt><code class="keyword">:ignore-zero</code> <var>boolean</var></dt>

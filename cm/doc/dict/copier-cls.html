@@ -28,7 +28,7 @@ A specialized pattern that copies and repeats periods of a subpattern.
 
 <dt><code class="keyword">:for</code> {<var>number</var> | <var>pattern</var>}</dt>
 <dd>
-Specifies how may repetions of the subpattern will constitute one
+Specifies how may repetitions of the subpattern will constitute one
 period of elements returned by the copier. The total number of
 elements in the copier's period will equal this value times the number
 of elements returned by the subpattern. The default value is 1.
@@ -45,20 +45,21 @@ to remain the same as the subpattern. This initialization causes the <code class
 <span class="keyword">:name</span> {<var>symbol</var> | <var>string</var>}
 </dt>
 <dd>
-Sets the name of the object. A named object is added to the system'
-global dictionary and can be fetched from its name using the <a
-href="hshamp-mac.html">#&amp;</a> read macro or the <a
-href="find-object-fn.html">find-object</a> function.
+Sets the name of the object. An object can be fetched from its name
+using the <a href="hshamp-mac.html">#&amp;</a> read macro or the <a
+href="find-object-fn.html"><code>find-object</code></a> function.
 </dd>
 
 <dt><span class="keyword">:repeat</span> {<var>number</var> | <var>pattern</var>}</dt>
 <dd>
+Specifies how many periods of the pattern should occur before the
+pattern signals <a href="eodqmk-fn.html">end of data</a>.
 </dd>
 <dt><span class="keyword">:returning</span> <var>function</var></dt>
 <dd>
-An optional function to apply to each item as it is generated from the
-pattern. The function is passed one argument, the pattern element, and
-should return the value to generate in its place.
+An optional function to apply to each element as it is generated from
+the pattern. The function is passed one argument, the element, and
+should return the value to substitute in its place.
 </dd>
 
 </dl>
@@ -100,7 +101,7 @@ should return the value to generate in its place.
          (amps (<a href="new-mac.html">new</a> <a href="heap-cls.html">heap</a> <a href=":of-fn.html">:of</a> '(.6 .4 .4 .4 .4))))
     (<span class="special">process</span> for k = (<a href="next-fn.html">next</a> bass)
              for a = (<a href="next-fn.html">next</a> amps)
-             until (<a href="eodqm-fn.html">eod?</a> k)
+             until (<a href="eodqmk-fn.html">eod?</a> k)
              output
              (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
                   <span class="keyword">:keynum</span> k
@@ -113,11 +114,11 @@ should return the value to generate in its place.
 </pre>
 </div>
 
-</div>
 <h4>See also:</h4>
 <ul>
-<li><a href="foo.html"><code>foo</code></a> [Function]</li><!-- end content -->
-</div> 
+<li><a href="copy-object-fn.html"><code>copy-object</code></a> [Function]</li>
+</ul>
+</div> <!-- end content -->
 <hr class="inv"/>
 <!-- Footer -->
 <div id="footer">
