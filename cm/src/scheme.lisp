@@ -164,7 +164,7 @@
 
 (defscheme number->string (n)
   (if (numberp n)
-    (format n "~s" n)
+    (format nil "~s" n)
     (error "Not a number: ~S" n)))
 
 (defscheme string->number (s)

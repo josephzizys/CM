@@ -121,7 +121,7 @@
 	  ((not header)
 	   #f)
 	  (else
-	   (err "Bad .sco file header: " header)))))
+	   (err "Bad .sco file header: ~s" header)))))
 
 ;;;
 ;;; added back i and f for easy subclassing

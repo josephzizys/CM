@@ -2868,7 +2868,7 @@
                             (floor (log2 d)))
 		       collect n
 		       collect (if (not (zero? r))
-				 (err "Not a power of 2." d)
+				 (err "Not a power of 2: ~s" d)
 			         f))))
       (make-sysex-data +Real-Time-ID+
 		       device-ID

@@ -445,7 +445,7 @@
 (define-method (write-event (obj <midi>) (fil <clm-stream>) scoretime)
   (let ((ins (midi-channel->name (midi-channel obj))))
     (if ins
-      (format (io-open fil) "(~a ~s ~s ~s)~%"
+      (format (io-open fil) "(~a ~s ~s ~s ~s)~%"
 	      ins
 	      scoretime
 	      (midi-duration obj)
@@ -455,7 +455,7 @@
 (define-method (write-event (obj <midi>) (fil <sco-stream>) scoretime)
   (let ((ins (midi-channel->name (midi-channel obj))))
     (if ins
-      (format (io-open fil) "~a ~s ~s ~s~%"
+      (format (io-open fil) "~a ~s ~s ~s ~s~%"
 	      ins
 	      scoretime
 	      (midi-duration obj)
