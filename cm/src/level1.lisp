@@ -399,13 +399,14 @@
                           (invoke-restart 'safe-load))))
       (load fil :verbose nil))))
 
-(defun load-cminit ()
+(defun load-cminit ( &optional from)
   ;; 1. Load site-wide cminit.lisp from these runtime locations:
   ;;    {IMAGE_DIR}/cminit.lisp
   ;;    {IMAGE_DIR}/../../etc/cminit.lisp
   ;;    {CM_ROOT_DIR}/etc/cminit.lisp
   ;; 2. Then load user's ~/.cminit
-  (let ((dir (cm-image-dir))
+
+  (let ((dir (or from (cm-image-dir)))
         (loa nil))
     ;; check relative to image directory.
     (when dir
@@ -414,7 +415,8 @@
           (progn (setq loa t)
                  (safe-load fil))
           ;; try ../../etc
-          (let ((etc (append (butlast (butlast (pathname-directory dir)))
+          (unless from
+            (let ((etc (append (butlast (butlast (pathname-directory dir)))
                              (list "etc"))))
             ;; check if still valid dir
             (when (member (car etc) '(:absolute :relative))
@@ -422,8 +424,8 @@
                                        :directory etc))
               (when (probe-file fil)
                 (setq loa t)
-                (safe-load fil)))))))
-    (unless loa
+                (safe-load fil))))))))
+    (unless (or loa from)
       ;; else check cm.sh var
       (setq dir (env-var "CM_ROOT_DIR"))
       (when (and dir (not (equal dir "")))
@@ -435,7 +437,7 @@
             (safe-load fil)))))
 
     ;; load user's .cminit file
-    (let ((fil (make-pathname :name ".cminit" :type nil
+    (let ((fil (make-pathname :name ".cminit" :type "lisp"
                               :defaults (user-homedir-pathname))))
       (when (probe-file fil)
         (setq loa t)
