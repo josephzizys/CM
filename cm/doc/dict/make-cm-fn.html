@@ -15,16 +15,14 @@
 <dl class="dictsyntax">
 <dt>[Function]</dt>
 <dd><span class="syntax">(<code class="entry">make-cm</code> 
-[<code class="keyword">:prompt</code> <var>bool</var>] 
-[<code class="keyword">:bin-directory</code> <var>dir</var>] 
-[<code class="keyword">:scheme</code> <var>bool</var>]
 [<code class="keyword">:save-image</code> <var>bool</var>] 
 [<code class="keyword">:delete-fasls</code> <var>bool</var>] 
+[<code class="keyword">:bin-directory</code> <var>dir</var>] 
+[<code class="keyword">:scheme</code> <var>bool</var>]
+[<code class="keyword">:prompt</code> <var>bool</var>] 
 [<code class="keyword">:verbose</code> <var>bool</var>] 
-<!-- [<code class="keyword">:run-command</code> <var>string</var>] -->
 [<code class="keyword">:force</code> <var>bool</var>])</span></dd>
 </dl>
-
 
 <p>
 Compiles, loads and saves the Common Music application according to 
@@ -36,19 +34,39 @@ build parameter during the make process, load the file
 <a href="../../src/make.lisp">src/make.lisp</a> and
 call <code>make-cm</code> by hand.
 
+Note that the function's name is interned as an internal symbol of the
+CL-USER package.
+
+<!--
+Loading src/make.lisp interns the <code>make-cm</code> function in the
+CL-USER package, not the CM package. -->
+
 </p>
 <p><code class="entry">make-cm</code> supports the following keyword build parameters:
 </p>
 
 <dl>
-<dt><code class="keyword">:prompt</code> {<var>true</var> |
+
+<dt><code class="keyword">:save-image</code> {<var>true</var> |
+<var>false</var> | <code class="keyword">:if-no-compile</code>}</dt>
+<dd>
+If <var>true</var> then <code>make-cm</code> saves Common Music in a
+lisp image file (cm.img) and immediately exits from the current Lisp
+session.  If the value is <code class="keyword">:if-no-compile</code>
+than an image is saved only if no source files are compiled during the
+make pass. If the value is <var>false</var> then no image file is
+saved. The default value is <var>false</var>.
+</dd>
+
+<dt><code class="keyword">:delete-fasls</code> {<var>true</var> |
 <var>false</var>}</dt>
 <dd>
-If <var>true</var> then the user is interactively prompted for any
-build parameter not specified to the function. If the value is
-<var>false</var> then the system is built without any prompting.  The
-default value is <var>false</var>.
+If <var>true</var> then compiled files are deleted after an image has
+been savedm, otherwise they are not deleted.  The default value is
+<var>true</var> if <code class="keyword">:save-image</code> is <var>true</var>
+otherwise the default value is <var>false</var>.
 </dd>
+
 
 <dt><code class="keyword">:bin-directory</code> {<var>true</var>
 | <var>false</var> | <var>string</var> }</dt>
@@ -71,24 +89,13 @@ If <var>true</var> then Scheme syntax is enabled in Common Lisp, if
 <var>false</var> it is not. The default value is <var>true</var>.
 </dd>
 
-<dt><code class="keyword">:save-image</code> {<var>true</var> |
-<var>false</var> | <code class="keyword">:if-no-compile</code>}</dt>
-<dd>
-If <var>true</var> then the Common Music application is saved as a
-lisp image file.  If the value is <code
-class="keyword">:if-no-compile</code> than an image is saved only if
-no source files are compiled during the make pass. If the value
-is <var>false</var> then no image file is saved. The default value
-is <var>false</var>.
-</dd>
-
-<dt><code class="keyword">:delete-fasls</code> {<var>true</var> |
+<dt><code class="keyword">:prompt</code> {<var>true</var> |
 <var>false</var>}</dt>
 <dd>
-If <var>true</var> then compiled files are deleted after an image has
-been savedm, otherwise they are not deleted.  The default value is
-<var>true</var> if <code class="keyword">:save-image</code> is <var>true</var>
-otherwise the default value is <var>false</var>.
+If <var>true</var> then the user is interactively prompted for any
+build parameter not specified to the function. If the value is
+<var>false</var> then the system is built without any prompting.  The
+default value is <var>false</var>.
 </dd>
 
 <dt><code class="keyword">:verbose</code> {<var>true</var> |
@@ -129,10 +136,13 @@ value is <var>false</var> then no script file is saved.
 <var>false</var>}</dt>
 <dd>
 Determines what to do if <code>make-cm</code> is called in a Lisp
-environment that already contains Common Music. If the value is
-<var>true</var> then the function will rebuild CM even though it is
-already loaded. If the value is <var>false</var> then the function
-returns without doing anything. The default value is <var>false</var>.
+environment that already contains Common
+Music. Normally, <code>make-cm</code> should be invoked in a fresh
+Lisp session without CM already loaded. If the CM package is already
+present when <code>make-cm</code> is called then the function will
+immediately return <code>nil</code> without doing anything unless its
+<code class="keyword">:force</code> parameter is explicitly set
+to <code>t</code>. The default value is <var>false</var>.
 </dd>
 
 </dl>
