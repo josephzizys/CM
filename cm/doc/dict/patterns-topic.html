@@ -244,8 +244,9 @@ href="line-cls.html">line</a> pattern that generates four sixteenths
 
 <!-- Use <code>make-instance</code> instead of <a
 href="new-mac.html">new</a> if the pattern's class may vary at run
-time. --> Since, unlike new, <code>make-instance</code> evaluates its
-first argument, the class of the pattern may vary at runtime:
+time. --> Since <code>make-instance</code> evaluates its first
+argument (<a href="new-mac.html">new</a> does not) the class of
+the pattern it creates can vary at runtime:
 </p>
 
 <div class="float" id="example_3">
@@ -299,11 +300,10 @@ types can produce interesting effects.
 </p>
 
 <p>
-In the next example only the cycle patterns are used but the
-sub-patterns vary their period lengths according to different cycles
-of lengths. The overall effect is a bit like a "musical mobile" in
-which the different cycles of elements rotate about each other each in
-their own orbit.
+In the next example only cycle patterns are used but the sub-patterns
+vary their lengths according to different cycles. The overall effect
+is a bit like a "musical mobile" in which the cycles of
+elements rotate about each other in different orbits.
 </p>
 
 <div class="float" id="example_4">
