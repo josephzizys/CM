@@ -372,7 +372,7 @@ are <em>not</em> on Windows then change the name of the
 <div class="float">
 <p class="captxt">Loading CM's listener into X/Emacs on Windows.
 </p>
-<pre class="code"><span style="color: blue;">;;; Edit the cm-directory string to point to the
+<pre class="code"><span class="comment">;;; Edit the cm-directory string to point to the
 ;;; CM installation directory on your machine.
 ;;; On Unix machines change cm.bat to cm.sh
 </span>
@@ -601,9 +601,9 @@ the following forms to your X/Emacs init file:
 <div class="float">
 <p class="captxt">Command definitions for Mac shortcuts.
 </p>
-<pre class="code"><span style="color: blue;">;; move Meta next to Control to free up Apple key.</span>
+<pre class="code"><span class="comment">;; move Meta next to Control to free up Apple key.</span>
 (setq mac-command-key-is-meta nil)
-<span style="color: blue;">;; standard Apple key commands</span>
+<span class="comment">;; standard Apple key commands</span>
 (global-set-key [(alt a)] 'mark-whole-buffer)
 (global-set-key [(alt v)] 'yank)
 (global-set-key [(alt c)] 'kill-ring-save)
