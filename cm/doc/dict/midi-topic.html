@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>Midi</title>
+</head>
+<body>
+<div id="content">
+
+<!-- Entry: "midi-text-evemt" -->
+<dl class="dictsyntax">
+<dt>[Topic]</dt>
+<dd><span class="syntax">MIDI</span></dd>
+</dl>
+
+<p>
+Common Music supports reading and writing all types of MIDI messages
+to MIDI files and to the <a
+href="http:www.grame.fr/MidiShare">Midishare</a> real time operating
+system.  There are two levels of MIDI support.  A <em>high level
+interface</em> defines Goops/CLOS classes and methods for generating
+music to MIDI score files and to MidiShare clients in
+faster-than-real-time mode.  A <em>low level interface</em> defines
+foreign functions and events for working directly with Midishare in an
+"interactive", or real-time mode.
+</p>
+
+<h3>High level (non-real time) MIDI support</h3>
+
+<p>
+High level MIDI support provides class definitions for MIDI input
+and output services and for MIDI event messaging.
+</p>
+
+<h4>MIDI Score Classes</h4>
+<ul>
+<li><a href="midi-file-stream-cls.html"><code>midi-file-stream</code></a></li>
+<li><a
+href="midishare-stream-cls.html"><code>midishare-stream</code></a></li>
+<li><a href="player-stream-cls.html"><code>player-stream</code></a>
+(Midishare sequencer)
+</li>
+</ul>
+
+<h4>MIDI Channel Events</h4>
+<ul>
+<li>
+<a href="midi-cls.html"><code>midi</code></a>
+</li>
+
+<li>
+<a href="midi-note-on-cls.html"><code>midi-note-on</code></a>
+</li>
+
+<li>
+<a href="midi-note-off-cls.html"><code>midi-note-off</code></a>
+</li>
+
+<li>
+<a href="midi-note-off-cls.html"><code>midi-key-pressure</code></a>
+</li>
+
+<li>
+<a href="midi-note-off-cls.html"><code>midi-control-change</code></a>
+</li>
+
+<li>
+<a href="midi-note-off-cls.html"><code>midi-program-change</code></a>
+</li>
+
+<li>
+<a href="midi-channel-pressure-cls.html"><code>midi-channel-pressure</code></a>
+</li>
+
+<li>
+<a href="midi-pitch-bend-cls.html"><code>midi-pitch-bend</code></a>
+</li>
+
+</ul>
+
+<h4>MIDI System Event Classes<h4>
+
+<h4>MIDI Meta Event Classes<h4>
+
+
+
+<h4>Midishare Events</h4>
+
+<p>
+For information about working with "low-level"  Midishare events and
+real time scheduling see ???.
+</p>
+
+
+
+<!-- See also -->
+<h4>See Also:</h4>
+
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
