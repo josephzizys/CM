@@ -10,29 +10,117 @@
 <body>
 <div id="content">
 
-
 <!-- Entry: "keynum" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">keynum</code> <var>freq</var> [<code class="keyword">:in</code> <var>scale</var>] [<code class="keyword">:from</code> <var>scale</var>] [<code class="keyword">:to</code> <var>scale</var>])</span></dd>
+<dd><span class="syntax">(<code class="entry">keynum</code> <var>freq</var>
+[<code class="keyword">:hz</code> <var>bool</var>]
+[<code class="keyword">:in</code> <var>tuning</var>]
+[<code class="keyword">:in?</code> <var>scale</var>]
+[<code class="keyword">:to</code> <var>mode</var>]
+[<code class="keyword">:through</code> <var>stale</var>]
+[<code class="keyword">:from</code> <var>mode</var>])</span></dd>
 </dl>
 
 
 <p>
-Returns the key number of <var>freq</var>, which can be a note,
-key number, Hertz value or list of the same. 
+Returns the key number of <var>freq</var>, which can be a note, key
+number, Hertz value or list of the same.  For equal tempered
+tunings, <code>keynum</code> may return a floating point number with a
+non-zero fractional part. In the standard chromatic scale the
+fractional value multiplied by 100 is equivalent to cents above the
+the integer keynum. To return only integer keynums use the <code
+class="keyword">:through</code> parameter.
 
-If <var>in</var> is specified it sets the scale for resolving a note or key number <var>freq</var>.
-<var>in</var> defaults to the global variable
-<code>*scale*</code>, which is initially set to the standard chromatic scale.
+<p>
+<code class="entry">note</code> supports the following keyword parameters:
+</p>
 
-If <var>from</var> or <var>to</var> is specified then <code>keynum</code> converts <var>freq</var> 
+<dl>
+<dt><code class="keyword">:hz</code> <var>bool</var></dt>
+<dd>
+If <var>true</var> then a numerical <var>freq</var> is interpreted as
+a Hertz value rather than as a key number.
+</dd>
+
+<dt><code class="keyword">:in</code> <var>tuning</var></dt>
+<dd>
+The <a href="tuning-cls.html">tuning</a> to use.  Defaults to the
+global variable <a href="scale-var.html"><code>*scale*</code></a>.
+The keywords <code class="keyword">:in</code>, <code
+class="keyword">:in?</code>, <code class="keyword">:through</code> and <code
+class="keyword">:from</code> are mutually exclusive parameters.
+</dd>
+
+<dt><code class="keyword">:in?</code>
+{<var>tuning</var> <var>mode</var>}</dt>
+<dd>
+Tests if <var>freq</var> references a keynum in the specified tuning
+or mode. Returns that value or <var>false</var>.  The keywords <code
+class="keyword">:in</code>,
+<code class="keyword">:in?</code>,
+<code class="keyword">:through</code> and
+<code class="keyword">:from</code>  are mutually exclusive parameters.
+</dd>
+
+<dt><code class="keyword">:to</code> <var>mode</var></dt>
+<dd>
+Forces <var>freq</var> to the closer integer keynum in <var>mode</var>
+and returns that value in modal coordinates.  The keywords <code
+class="keyword">:in</code>,
+<code class="keyword">:in?</code>,
+<code class="keyword">:through</code> and
+<code class="keyword">:from</code>  are mutually exclusive parameters.
+</dd>
+
+
+<dt><code class="keyword">:through</code> {<var>tuning</var>
+| <var>mode</var>}</dt>
+<dd>
+Filters <var>freq</var> through <var>mode</var> or <var>tuning</var>
+and returns the closest integer keynum in tuning coodinates.  The
+keywords <code class="keyword">:in</code>,
+<code class="keyword">:in?</code>,
+<code class="keyword">:through</code> and
+<code class="keyword">:from</code>  are mutually exclusive parameters.
+</dd>
+
+<dt><code class="keyword">:from</code> <var>mode</var></dt>
+<dd>
+Converts a key number <var>freq</var> specified in <var>mode</var>'s
+coordinates into a keynum in the mode's tuning.  The keywords <code
+class="keyword">:in</code>,
+<code class="keyword">:in?</code>,
+<code class="keyword">:through</code> and
+<code class="keyword">:from</code>  are mutually exclusive parameters.
+</dd>
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 from or to its equivalent position in the specified scales. 
 
-For equal tempered scales <code>keynum</code> may return a floating point number with a non-zero
-fractional part. This fractional value represents a "percentage" distance above the
-integer keynum.  In the standard chromatic scale the fractional value multiplied by 100
-is equivalent to cents above the Hertz value of the integer keynum.
 </p>
 
 <!-- Interaction 1 -->
