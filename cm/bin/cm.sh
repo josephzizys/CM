@@ -600,10 +600,8 @@ if [ "$EDITOR_OPT" ] ; then
     else
       EL1="$LOC/etc/xemacs/listener.el"
       EL2="$LOC/etc/xemacs/cm.el"
-      # Emacs accepts paths with spaces only if they are escaped by
-      # backslashes.  LISP_EXE is normally surrounded by quotes (which we
-      # delete) and therefore still needs to be escaped.
-      LEX=`echo "$LISP_EXE" | sed 's: :\\\\\\\ :g'`
+      LEX="$LISP_EXE"
+      #LEX=`echo "$LISP_EXE" | sed 's: :\\\\\\\ :g'`
       LCM=`echo "$LISP_CMD" | tr -d "'" | sed "s:$LISP_EXE:$LEX:g;"'s:":\\\":g;'`
       INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
       EDITOR_EXE="$thing"
