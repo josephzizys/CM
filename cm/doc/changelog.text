@@ -1,6 +1,9 @@
 ----------------------------------------------------------------------
-CM 2.5.0
+CM 2.5.1
 Development Release
+
+o ASDF loading and installing now supported (Thanks Greg Pfeil)
+  See cm/cm.asd and http://www.cliki.net/asdf for more information.
 
 o New graphical interface tools in GTK2 added for x86/SBCL, x86/CMUCL
   and Darwin/OpenMCL:
@@ -46,17 +49,18 @@ o New chance composition function RANSEGS returns random segments from
   a specfied distibuition type. See:
     doc/doct/ransegs-fn.html
 
-o Major documentation upgrade (still not complete...):
+o Major documentation upgrade (but still not complete...):
   1. Added new Pattern overview topic page:
        doc/dict/pattern-topic.html
   2. Rewrote all pattern class documention with new examples.
   3. Added documentation for undocumented COPIER pattern:
        doc/dict/copier-cls.html
-  4. Added new MIDI topic page:
+  4. Added new main MIDI topic page:
        doc/dict/midi-topic.html
-  5. Added documentation for new "high-level" midi classes, see 
+  5. Added new documentation for all "high-level" midi classes, see 
      links at the top of the main MIDI topic pages.
-  6. Rewrote documentation for all chance functions, new examples.
+  6. Rewrote documentation for all randomness functions with new
+     examples, see dictionary entries on ransegs, pick, pickl, etc.
   7. Added documentation on new chance function RANSEGS:
        doc/dict/ransegs-fn.html
     Added documentation for undocumented function FM-SPECTRUM:
