@@ -80,6 +80,7 @@
 		:typeTimeSign :MidiNewEv :port :chan :field :bend :text :port
 		:ref :date :evtype :MidiCopyEv :MidiFreeEv :MidiAddField
                 :nullptrp :MidiShareSync :MidiOpenSync :MidiCloseSync :MidiGetSyncEv
+                :MidiFlushEvs
 		:OpenPlayer :ClosePlayer :midiNewSeq
 		:StartPlayer :ContPlayer :StopPlayer :PausePlayer
 		:kMuteOn :kMuteOff :kSoloOn :kSoloOff :kMute :kSolo

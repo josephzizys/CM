@@ -25,6 +25,7 @@
           ccl:class-direct-subclasses
           ccl:open-shared-library ; needed if loading clm into cm.
           ccl:process-run-function
+          ccl:process-kill
           #+:openmcl-partial-mop
           ccl:class-slots
           #+:openmcl-partial-mop
