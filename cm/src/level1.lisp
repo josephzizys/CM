@@ -131,16 +131,18 @@
          (loop for x in slots
                for s = (if (consp x) (car x) x)
                collect
-               `(defun ,(intern (string-append (string name)
-                                               "-"
-                                               (string s)
-                                               "-"
-                                               ;; case sensitivity
-                                               (symbol-name 'set!)))
+               `(defun ,(intern (concatenate 'string 
+                                             (string name)
+                                             "-"
+                                             (string s)
+                                             "-"
+                                             ;; case sensitivity
+                                             (symbol-name 'set!)))
                        (,name value)
-                  (setf (,(intern (string-append (string name)
-                                                 "-"
-                                                 (string s)))
+                  (setf (,(intern (concatenate 'string 
+                                               (string name)
+                                               "-"
+                                               (string s)))
                          ,name)
                         value)))))
     `(progn
@@ -394,9 +396,10 @@
 ;;;
 
 (defun make-midi-message-set! (getter bytespec)
-  (let ((setter (string->symbol
-                 (string-append (symbol->string getter)
-                                (string '-set!)))))
+  (let ((setter (intern
+                 (concatenate 'string
+                              (string getter)
+                              (string '-set!)))))
     `(defmacro ,setter (message value)
        (if (symbolp message)
          (let ((val (gensym)))
