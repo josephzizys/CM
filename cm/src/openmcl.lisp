@@ -14,30 +14,6 @@
 ;;; $Revision$
 ;;; $Date$
 
-#|
-(export '(ccl::set-mac-file-creator ccl::set-mac-file-type) :ccl)
-
-(defun ccl::set-mac-file-type (file type)
-  (unless (stringp type)
-    (setf type (string type)))
-  (unless (probe-file "/Developer/Tools/SetFile")
-    (error "Can't set mac file type because~%~
-           /Developer/Tools/SetFile~%does not exist."))
-  (ccl:run-program "/Developer/Tools/SetFile"
-		   (list "-t" type file))
-  (values))
-
-(defun ccl::set-mac-file-creator (file creator)
-  (unless (stringp creator)
-    (setf creator (string creator)))
-  (unless (probe-file "/Developer/Tools/SetFile")
-    (error "Can't set mac file type because~%~
-           /Developer/Tools/SetFile~%does not exist."))
-  (ccl:run-program "/Developer/Tools/SetFile"
-		   (list "-c" creator file))
-  (values))
-|#
-
 (in-package :cm)
 
 (pushnew :metaclasses *features*)
@@ -48,6 +24,7 @@
           ccl:class-direct-superclasses
           ccl:class-direct-subclasses
           ccl:open-shared-library ; needed if loading clm into cm.
+          ccl:process-run-function
           #+:openmcl-partial-mop
           ccl:class-slots
           #+:openmcl-partial-mop
