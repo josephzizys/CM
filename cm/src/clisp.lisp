@@ -110,10 +110,24 @@
 (defun pwd ()
   (namestring (ext:default-directory)))
 
-(defun cm-image-dir () nil)
-
 (defun env-var (var)
   (ext:getenv var))
+
+(defun cm-image-dir ()
+  ;; clisp's ext:argv only appears in 2.32
+  (multiple-value-bind (s f) (find-symbol "ARGV" :EXT)
+    (if (eql f ':external)
+      (let* ((v (funcall s))
+             (l (length v))
+             (i (position "-M" v :test #'string-equal))
+             )
+        (if (and i (< i (- l 1)))
+          (let ((img (elt v (+ i 1)) ))
+            (enough-namestring img
+                               (concatenate 'string (pathname-name img)
+                                            "." (pathname-type img))))
+          nil))
+      nil)))
 
 (defun save-cm (path &rest args)
   (declare (ignore args))
