@@ -65,12 +65,12 @@ or an integer velocity 0 to 127. Defaults to 64.
 </p>
 <pre class="code"><span class="comment">;;; a quiet middle C on channel 3</span>
 
-(<span class="special">new</span> midi <span class="keyword">:time</span> 0 <span class="keyword">:duration</span> .5 <span class="keyword">:channel</span> 3
+(<a href="new-mac.html">new</a> midi <span class="keyword">:time</span> 0 <span class="keyword">:duration</span> .5 <span class="keyword">:channel</span> 3
      <span class="keyword">:keynum</span> 60 <span class="keyword">:amplitude</span> .1)
 
 <span class="comment">;;; keynum specified as a note name</span>
 
-(<span class="special">new</span> midi <span class="keyword">:time</span> 4 <span class="keyword">:keynum</span> 'cs4 <span class="keyword">:duration</span> 4)
+(<a href="new-mac.html">new</a> midi <span class="keyword">:time</span> 4 <span class="keyword">:keynum</span> 'cs4 <span class="keyword">:duration</span> 4)
 </pre>
 </div>
 
@@ -95,15 +95,15 @@ or an integer velocity 0 to 127. Defaults to 64.
 ;;; octave, or 25 cents (1/8 tone) per step. this quantization
 ;;; size uses the first four channels (0-3) of the synth.</span>
 
-(<a href="insure-io-fn.html">insure-io</a> <span class="string">"test.mid"</span> <span class="keyword">:channel-tuning</span> 48)
+(<a href="io-mac.html">io</a> <span class="string">"test.mid"</span> <span class="keyword">:channel-tuning</span> 48)
 
 <span class="comment">;;; play partials 4-16 staring on c3</span>
 
-(events (harms 'c3 4 16 .5) <span class="string">"test.mid"</span>)
+(<a href="events-fn.html">events</a> (harms 'c3 4 16 .5) <span class="string">"test.mid"</span>)
 
 <span class="comment">;;; cancel channel-tuning</span>
 
-(insure-io <span class="string">"test.mid"</span> <span class="keyword">:channel-tuning</span> false)
+(<a href="io-fn.html">io</a> <span class="string">"test.mid"</span> <span class="keyword">:channel-tuning</span> false)
 </pre>
 </div>
 

@@ -19,12 +19,9 @@
 <p>
 A MIDI control change or mode change event.  See 
 
-
-
 <a href="http://www.midi.org/about-midi/gm/gm1sound.shtml">General
 MIDI Level 1 Sound Set</a> for a table listing General MIDI (GM)
 program change messages.
-
 
 </p>
 
@@ -55,14 +52,14 @@ value.  For example, Grand Piano is 0, not 1.
 </p>
 <pre class="code"><span class="comment">;;; A GM 'acoustic-bass' program change.</span>
 
-(<span class="special">new</span> midi-program-change <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> 3 <span class="keyword">:program</span> 32)
+(<a href="new-mac.html">new</a> midi-program-change <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> 3 <span class="keyword">:program</span> 32)
 </pre>
 </div>
 
 
 <div class="float">
 <p class "captxt">
-<span class="floatlabel">Example 1.</span> Creating a 'Multi' setup.
+<span class="floatlabel">Example 2.</span> Creating a 'Multi' setup.
 </p>
 <pre class="code"><span class="comment">;;; bass, trombone, violin, flute</span>
 
@@ -70,29 +67,30 @@ value.  For example, Grand Piano is 0, not 1.
 
 <span class="comment">;;; seq of program changes for our ensemble</span>
 
-(<span class="special">new</span> seq <span class="keyword">:name</span> 'ensemble
+(<a href="new-fn.html">new</a> <a href="seq-cls.html">seq</a> <span class="keyword">:name</span> 'ensemble
      <span class="keyword">:subobjects</span>
      (<span class="special">loop</span> for i in myins
            as c from 0
            collect
-           (<span class="special">new</span> midi-program-change <span class="keyword">:time</span> 0
+           (<a href="new-mac.html">new</a> midi-program-change <span class="keyword">:time</span> 0
                <span class="keyword">:channel</span> c <span class="keyword">:program</span> i)))
 
 <span class="comment">;;; assign random notes to instrument channels</span>
 
 (<span class="special">define</span> (<span class="defined">squeek</span> reps)
-  (<span class="special">process</span> repeat reps
-           for key = (between 40 80)
-           for dur = (pick .5 1 1.5 2)
-           for chan = (<span class="special">if</span> (scale&lt; key 'c4)
-                          (pick 0 1) 
-                          (pick 2 3))
-           output (<span class="special">new</span> midi <span class="keyword">:time</span> (now)
+  (<a href="process-mac.html">process</a> repeat reps
+           for key = (<a href="between-fn.html">between</a> 40 80)
+           for dur = (<a href="pick-fn.html">pick</a> .5 1 1.5 2)
+           for chan = (<span class="special">if</span> (<a href="scalelteql.html">scale&lt;=</a> key 'c4)
+                          (<a href="pick-fn.html">pick</a> 0 1) 
+                          (<a href="pick-fn.html">pick</a> 2 3))
+           output (<a href="new-mac.html">new</a> midi <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
                        <span class="keyword">:duration</span> .2
                        <span class="keyword">:keynum</span> key <span class="keyword">:channel</span> chan)
-           wait (pick 0 .25 .5 .75 1)))
+           wait (<a href="pick-fn.html">pick</a> 0 .25 .5 .75 1)))
 
-(events (list #&ensemble (squeek 30)) "test.mid" )
+(<a href="events-fn.html">events</a> (list <a href="hshamp-mac.html">#&</a>ensemble (squeek 30))
+        <span class="string">"test.mid"</span> )
 </pre>
 </div>
 

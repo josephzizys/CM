@@ -26,18 +26,79 @@ system. Two levels of MIDI support are provided:
 <ul>
 
 <li>
-A <a href="#midi_real_time">low level interface</a> connects directly
-to Midishare via a foreign function interface (FFI) for "interactive",
-real time work (OpenMCL/OS X systems only).
-</li>
-
-<li>
 A <a href="#midi_high_level">high level interface</a> provides Lisp
 classes and methods for generating music to MIDI score files and to
 MidiShare in non-real time mode.
 </li>
 
+<li>
+A <a href="#midi_real_time">low level interface</a> connects directly
+to Midishare via a foreign function interface (FFI) for "interactive",
+real time work (OpenMCL/OS X systems only).
+</li>
+
+
+
 </ul>
+
+<h2 id="midi_high_level">High level MIDI support</h2>
+
+<p>
+High level MIDI support consists of class definitions of MIDI scores
+and events and functions that operate on them in non-real time.  Note
+that <em>non-real</em> does not imply <em>slower</em> than real
+time -- in most cases the high level interface generates output many
+times faster than real time.  High level support is documented by main
+entries in the Common Music dictionary, the following topic list
+provides links to this documentation:
+</p>
+
+<h3 id="midi_event_classes">MIDI event classes</h3>
+
+<ul>
+<li><a href="midi-cls.html"><code>midi</code></a></li>
+<li><a href="midi-note-on-cls.html"><code>midi-note-on</code></a></li>
+<li><a href="midi-note-off-cls.html"><code>midi-note-off</code></a></li>
+<li><a href="midi-key-pressure-cls.html"><code>midi-key-pressure</code></a></li>
+<li><a href="midi-control-change-cls.html"><code>midi-control-change</code></a></li>
+<li><a href="midi-program-change-cls.html"><code>midi-program-change</code></a></li>
+<li><a href="midi-channel-pressure-cls.html"><code>midi-channel-pressure</code></a></li>
+<li><a href="midi-pitch-bend-cls.html"><code>midi-pitch-bend</code></a></li>
+
+<li><a href="midi-system-event-cls.html"><code>midi-system-event</code></a></li>
+
+<li><a href="midi-sequence-number-cls.html"><code>midi-sequence-number</code></a></li>
+<li><a href="midi-text-event-cls.html"><code>midi-text-event</code></a></li>
+<li><a href="midi-eot-cls.html"><code>midi-eot</code></a></li>
+<li><a href="midi-tempo-change-cls.html"><code>midi-tempo-change</code></a></li>
+<li><a href="midi-smpte-offset-cls.html"><code>midi-smpte-offset</code></a></li>
+<li><a href="midi-time-signature-cls.html"><code>midi-time-signature</code></a></li>
+<li><a href="midi-key-signature-cls.html"><code>midi-key-signature</code></a></li>
+<li><a href="midi-sequencer-event-cls.html"><code>midi-sequencer-event</code></a></li>
+</ul>
+
+<h3 id="midi_score_classes">MIDI score classes</h3>
+
+<ul>
+<li><a href="midi-file-stream-cls.html"><code>midi-file-stream</code></a></li>
+<li>
+<a
+href="midishare-stream-cls.html"><code>midishare-stream</code></a></li>
+<li><a href="player-stream-cls.html"><code>player-stream</code></a></li>
+</ul>
+
+
+<h3 id="midi_functions">MIDI functions</h3>
+
+<ul>
+<li><a href="events-fn.html"><code>events</code></a></li>
+<li><a href="import-events-fn.html"><code>import-events</code></a></li>
+<li><a href="midi-file-print.html"><code>midi-file-print</code></a></li>
+<li><a href="osx-play-midi-file.html"><code>osx-play-midi-file</code></a></li>
+<li><a href="win-play-midi-file.html"><code>win-play-midi-file</code></a></li>
+<li><a href="set-midi-output-hook-fn.html"><code>set-midi-output-hook!</code></a></li>
+</ul>
+
 
 <h2 id="midi_real_time">Low level (real time) MIDI support</h2>
 
@@ -123,14 +184,15 @@ deallocate MidiEv structs using Midishare's API.
 </p>
 
 <p>
-Common Music "extends" Midishare's API with the addtion of
-<code>ms:new</code>, a high level MidiEv constructor, and
-<code>ms:MidiPrintEv</code>, a MidiEv printer. These two functions
-allow MidiEvs to be manipulated in a manner consistent with the normal
-objects defined in CM. Note that you must use the package prefix
-<code>midishare:</code> or <code>ms:</code> to reference these two
-functions, and all of the functions defined by MidiShare, from inside
-the CM package.
+Common Music adds two functions to Midishare's API:
+<a href="#ms:new"><code>ms:new</code></a>, a high level MidiEv constructor, and
+<a href="#ms:MidiPrintEv"><code>ms:MidiPrintEv</code></a>, a printer
+for MidiEv objects. Wit the addition of these two functions low-level
+MidiEvs can be manipulated in manner consistent with the high-level
+objects defined in CM. Note that to reference any function in the
+MidiShare API you must include the package
+prefix <code>midishare:</code> or <code>ms:</code> in the function
+name.
 </p>
 
 <dl>
@@ -653,67 +715,6 @@ use <code>make-proctable</code> to increase the size of the table:
   </blockquote>
 </li>
 </ul>
-
-<h2 id="midi_high_level">High level MIDI support</h2>
-
-<p>
-High level MIDI support consists of class definitions of MIDI scores
-and events and functions that operate on them in non-real time.  Note
-that <em>non-real</em> does not imply <em>slower</em> than real
-time -- in most cases the high level interface generates output many
-times faster than real time.  High level support is documented by main
-entries in the Common Music dictionary, the following topic list
-provides links to this documentation:
-</p>
-
-<h3 id="midi_score_classes">MIDI score classes</h3>
-
-<ul>
-<li><a href="midi-file-stream-cls.html"><code>midi-file-stream</code></a></li>
-<li>
-<a
-href="midishare-stream-cls.html"><code>midishare-stream</code></a></li>
-<li><a href="player-stream-cls.html"><code>player-stream</code></a></li>
-</ul>
-
-<h3 id="midi_event_classes">MIDI event classes</h3>
-
-<ul>
-<li><a href="midi-cls.html"><code>midi</code></a></li>
-<li><a href="midi-note-on-cls.html"><code>midi-note-on</code></a></li>
-<li><a href="midi-note-off-cls.html"><code>midi-note-off</code></a></li>
-<li><a href="midi-key-pressure-cls.html"><code>midi-key-pressure</code></a></li>
-<li><a href="midi-control-change-cls.html"><code>midi-control-change</code></a></li>
-<li><a href="midi-program-change-cls.html"><code>midi-program-change</code></a></li>
-<li><a href="midi-channel-pressure-cls.html"><code>midi-channel-pressure</code></a></li>
-<li><a href="midi-pitch-bend-cls.html"><code>midi-pitch-bend</code></a></li>
-
-<li><a href="midi-system-event-cls.html"><code>midi-system-event</code></a></li>
-
-<li><a href="midi-sequence-number-cls.html"><code>midi-sequence-number</code></a></li>
-<li><a href="midi-text-event-cls.html"><code>midi-text-event</code></a></li>
-<li><a href="midi-eot-cls.html"><code>midi-eot</code></a></li>
-<li><a href="midi-tempo-change-cls.html"><code>midi-tempo-change</code></a></li>
-<li><a href="midi-smpte-offset-cls.html"><code>midi-smpte-offset</code></a></li>
-<li><a href="midi-time-signature-cls.html"><code>midi-time-signature</code></a></li>
-<li><a href="midi-key-signature-cls.html"><code>midi-key-signature</code></a></li>
-<li><a href="midi-sequencer-event-cls.html"><code>midi-sequencer-event</code></a></li>
-</ul>
-
-<h3 id="midi_functions">MIDI functions</h3>
-
-<ul>
-<li><a href="events-fn.html"><code>events</code></a></li>
-<li><a href="import-events-fn.html"><code>import-events</code></a></li>
-<li><a href="midi-file-print.html"><code>midi-file-print</code></a></li>
-<li><a href="osx-play-midi-file.html"><code>osx-play-midi-file</code></a></li>
-<li><a href="win-play-midi-file.html"><code>win-play-midi-file</code></a></li>
-<li><a href="set-midi-output-hook-fn.html"><code>set-midi-output-hook!</code></a></li>
-</ul>
-
-
-
-
 
 <!-- Footer -->
 <div id="footer">
