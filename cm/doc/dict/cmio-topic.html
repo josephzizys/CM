@@ -21,33 +21,33 @@ of musical events to and from sound synthesis and display
 applications.  The window presents a "birds eye" overview of CM's IO
 functionality and provides a structured alternative to evaluating
 input and output expressions in the Lisp <em>REPL</em>, or
-read-eval-print loop. As an replacement for REPL evaluation, CMIO
-windows perform their own error handling and, by default, report Lisp
-errors without forcing the user into the Lisp debugger. This means
-that novice users can experiment with algorithmic composition and
-various sound rendering systems in a fairly forgiving environment
-without necessarily knowing much about Lisp evaluation beforehand.
+read-eval-print loop. CMIO windows perform their own error handling
+and, by default, report Lisp errors without forcing the user into the
+Lisp debugger. This means that novice users can experiment with
+algorithmic composition and sound rendering systems in a fairly
+forgiving environment without necessarily knowing much about Lisp
+evaluation beforehand.
 </p>
 
 <p>
-Which sound applications (called <em>targets</em> in the window) are
-actually active at any given time depends both on what programs are
-installed on the host computer and what software systems have been
-loaded into Lisp. These sound system do not need to be loaded ahead of
-musical experimentation; the window's Systems and Files pages permit
-external software such as CLM, CMN and Midishare to be dynamically
-configured and loaded at any appropriate point in the working process.
+Which sound applications (labeled <em>targets</em> in the window) are
+active at any given time depends both on what programs are installed
+on the host computer and what software systems have been loaded into
+Lisp. These sound system do not need to be loaded ahead of musical
+experimentation; the window's Systems and Files pages permit external
+software such as CLM, CMN and Midishare to be dynamically configured
+and loaded at any appropriate point in the working process.
 </p>
 
 <p>
 To render musical events to a sound application, the user first
-selects the target's application page, then enters an event expression
-in the Events buffer and clicks the Compose button. Each target
-application page has numerous fields for customizing IO
-behavior. These fields can be initialized to the user's personal
-preference by passing appropriate arguments to the <a
+selects the target's application page, then enters an <em>event
+expression</em> in the Events buffer and clicks the Compose
+button (<a href="#example1">Example 1</a>). Each target application page has numerous fields for
+customizing its IO behavior. These fields can be initialized to the
+user's personal preference by passing appropriate arguments to the <a
 href="cmio-fn.html">cmio</a> function when the window is created and
-set to different values as part of the ongoing process of
+then set to different values as part of the ongoing process of
 experimentation.
 </p>
 
@@ -63,8 +63,8 @@ information.
 <h2>Window Layout</h2>
 
 <p>
-A CMIO window consists of four GUI components arranged from top to
-bottom in the window:
+The CMIO interface consists of four GUI components arranged from top
+to bottom in the window:
 </p>
 
 <ul>
@@ -254,10 +254,9 @@ to <a href="clm-stream-cls.html">CLM score files</a> and <a href="clm-audio-stre
 output file name so that previous versions of the file will not
 be not overwritten.</li-->
 <li>The Import button will <a
-href="import-events-fn.html#clm">import</a> the .clm score named in
-the Executive's File buffer and the imported seq will automatically be
-placed in the Events buffer on the <a href="#eventio">Event IO</a>
-page.</li>
+href="import-events-fn.html#clm">import</a> a .clm score from the
+Executive's File buffer into the Events buffer on the <a
+href="#eventio">Event IO</a> page.</li>
 <li>If Sound file is checked then output will include writing the audio
 file (.snd, .aiff or .wav) named in the associated buffer.</li>
 <li>If Play is checked then the audio file will be played

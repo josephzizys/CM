@@ -14,24 +14,23 @@
 <!-- Entry: "import-events" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">import-events</code> <var>file</var> {<var>keyword value</var>}*)</span></dd>
+<dd><span class="syntax">(<span style="font-weight:bold;">import-events</span> <var>file</var> {<var>keyword value</var>}*)</span></dd>
 </dl>
 
 <p>
 Imports musical events in <var>file</var> according to the type of
-file specified.  Currently supported score file types are: .clm, .mid
+file specified.  The currently supported score types are .clm, .mid
 and .sco files.
 </p>
 
 <h4 id="clm">CLM Importing</h4>
 
-<p> If <var>file</var> is a .clm file then instrument calls are parsed
-into instrument objects.  The instruments referenced
-in <var>file</var> must already be defined (loaded into Lisp) before
-calling the function.  By default the imported file is loaded after it
-has been created and a <a href="seq-cls.html">seq</a> object
-containing the imported objects is returned
-as the value of the function.
+<p> If <var>file</var> is a .clm file then instrument calls are
+translated into an object definintion file and loaded into Lisp. Note
+that the CLM instruments referenced in <var>file</var> must already be
+loaded before calling the function.  By default a <a
+href="seq-cls.html">seq</a> object containing the imported objects is
+returned as the value of the function.
 </p>
 
 <p>
