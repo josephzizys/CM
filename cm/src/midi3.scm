@@ -286,6 +286,8 @@
 ;;; is in effect.
 ;;;
 
+(define *midi-skip-drum-channel* #f)
+
 (defmacro ensure-microtuning (keyn chan stream)
   `(let ((num #f)
          (rem #f)
@@ -307,6 +309,10 @@
 		 (let ((int (inexact->exact (floor ,keyn))))
 		   (set! rem (- ,keyn int))
 		   (set! ,keyn int))
+                 ;; if next choice is drum channel skip it
+                 (if (and *midi-skip-drum-channel*
+                          (= (+ (cadddr dat) num) 8))
+                   (incf num)))
 		 (if (< num (caddr dat))
 		   (set! num (+ num 1))
 		   (set! num 0))
