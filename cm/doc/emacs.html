@@ -30,17 +30,17 @@
 
 <p>
 The <a href="http://www.gnu.org/software/emacs/emacs.html">Emacs</a>
-and <a href="http://www.xemacs.org">XEmacs</a> editors (collectively
-referred to as X/Emacs in this document) support Lisp editing and
+and <a href="http://www.xemacs.org">XEmacs</a> editors ( referred to
+jointly as X/Emacs in this document) support Lisp editing and
 evaluation within a single, consistent GUI environment.  This tight
-integration between Lisp editing and evaluation lets the composer
-edit Lisp expressions (programs) inside a powerful program
-editor and also <em>evaluate</em> the Lisp expressions inside Common
-Music using simple editor commands. The Common Music application runs
-in its own dedicated Listener window as an <em>inferior process</em>
-(sub-process) of X/Emacs. This Listener window is itself a
-full-featured, interactive Lisp interpreter with its own command
-history and input editing features.
+integration between Lisp editing and evaluation lets the composer edit
+Lisp programs inside a powerful programming editor and interactively
+<em>evaluate</em> the editied Lisp code inside Common Music using
+simple editor commands. The Common Music application runs in its own
+dedicated Listener window as an <em>inferior process</em>
+(sub-process) of X/Emacs. This Listener window is a full-featured,
+interactive Lisp interpreter with its own command history and input
+editing features.
 </p>
 
 <p>
@@ -419,22 +419,161 @@ from the Listener menu that appears in the X/Emacs menu bar.
 
 <h2>The X/Emacs Lisp Listener </h2>
 
-The Lisp Listener runs Common Music in a dedicated
-X/Emacs <em>frame</em> or window, as a subprocess of the editor. THis
-meas when you quit the editor you will also quit the Common Music
-session running in the Listener.
+<p>
+The Lisp Listener runs Common Music in a dedicated X/Emacs
+<em>frame</em>, or window, as a subprocess of the editor. THis meas
+when you quit the editor you will also quit the Common Music session
+running in the Listener. There are two parts to the Listener, the
+Listener window itself and the Listener menu that automatically
+appears in the editing window whenever you editing in
+<em>lisp-mode</em>, the Emacs editing mode that supports Lisp program
+editing commands. This mode is automatically activated whenever you
+edit a .lisp, .cm or .ins text file.
+</p>
 
-There are two aspects to the Listener, the Listener window itself and
-the Listener menu that automatically appears whenever you edit a
-.lisp, .cm or .ins text file.  This menu is actually part of the
-<a href="">Lisp edit mode</a> that supports Lisp programm editing in
-X/Emacs.
-<h3>The Listener menu</h3>
+<h3>The Listener menu</h3> 
+
+<p>
+The Listener menu is available in the main X/Emacs menu bar whenever
+Lisp-Mode is the active mode in the editing window. The menu provides
+commands for starting and stopping the Listener, evaluating
+expressions in the Listener and formatting Lisp code in the edit
+window. The following menu items are defined:
+</p>
+
+<dl>
+<dt>Lisp Listener (<b><u>C-x</u> l</b>)</dt>
+<dd>
+Starts Common Music running in the Listener window. If the Listener is
+already running then it is reselected as the frontmost window.
+</dd>
+
+<dt>Quit Listener</dt>
+<dd>
+Quits and closes the active Listener window.
+</dd>
+
+<dt>Eval Selection (<b><u>C-x</u> <u>C-e</u></b>)</dt>
+<dd>
+Evaluates the current selection in the edit window by "sending" it to
+the Listener. The edit selection is:
+<ul>
+<li>
+A Lisp expression that starts at the cursor's position.
+</li>
+<li>
+A Lisp expression that ends just <em>before</em> the cursor's positon.
+</li>
+<li>
+All Lisp expression(s) inside a selected region of the edit window.
+</li>
+</ul>
+</dd>
+
+<dt>Eval Buffer (<b><u>C-x</u> <u>C-h</u></b>)</dt>
+<dd>
+Evaluates all of the expressions in the edit window.
+</dd>
+
+<dt>Macroexpand  (<b><u>C-x</u> <u>C-m</u></b>)</dt>
+<dd>
+Performs macroexpansion on the current edit selection.
+</dd>
+
+<dt>Abort Error (<b><u>C-x</u> <u>C-.</u></b>)</dt>
+<dd>
+Resumres the Listener's normal read-eval-print loop after an error
+occurs.
+</dd>
+
+<dt>Indent (<b>TAB</b>)</dt>
+<dd>
+</dd>
+
+<dt>Comment Region</dt>
+<dd>
+Prepends the Lisp comment character <code>;</code> to the start of
+each line in the region. A Lisp comment is not evaluated.
+</dd>
+
+<dt>Remove Comments</dt>
+<dd>
+Undoes the effects of Comment Region.
+</dd>
+
+
+<dt>Tools</dt>
+<dd>
+The Tools submenu hold Lisp commands specific to the Lisp
+implementation running in the Listener. Consult your Common Lisp or
+Scheme documentation for more information.
+</dd>
+
+
 
 <h3>The Listener Window</h3>
+<p>
+The Listener window is a graphic front end to a Lisp read eval print loop.
+THe consists of a menubar and a Listner pane in which intput expression
+van be entered and their evaluated results observed.
+</p>
 
-<h3 id="lisp_mode_cmds">Overview of Lisp-mode editing commands.</h3>
+<h4>The Listener Menubar</h4>
+<p>
+The Listener menubar contains three menus: File Edit and Buffers.  The
+File menu defines the following commands:
 
+<dl>
+
+<dt>New...</dt>
+<dd>
+Creates a new Lisp edit window.
+</dd>
+
+<dt>Open...</dt>
+<dd>
+Opens a file for editing in the X/Emacs edit window.
+</dd>
+
+<dt>Load...</dt>
+<dd>
+Load a file into Lisp.
+</dd>
+
+<dt>Quit Listener</dt>
+<dd>
+Quit and close Listener window.
+</dd>
+</dl>
+
+<p>
+The Edit menu is the XEmacs edit menu.
+</p>
+
+<p>
+The Buffers menu contains a list of all the Lisp files that are
+currently available for editing in X/Emacs. Selecting a file from the
+Buffers menu makes it the active, frontmost edit window.
+</p>
+
+<h4>Entering Input in the Listener</h4>
+<p>
+The Listener window itself is a dedicated Lisp read-eval-print loop.
+Lisp expressions are input at the current <em>listening point</em>
+located just to the right of the most recent input prompt. When the
+Return key is pressed, Lisp first reads the input, then evaluates it
+and finally prints the results back to the Listener window on the next
+line. Any expression visible in the window can be copy/pasted to the
+input point by placing the cursor just to the right of the expression
+and then typing Return. The copied expression can then be edited at
+the input point using normanl X/Emacs editing commands before pressing
+Return to enter it.  The Listener records each input expression on a
+<em>input history list</em>.  Previous input expressions can by
+recalled from the list using <b><u>C-&lt;uparrow&gt;</u></b> to move
+backward and <b><u>C-&lt;downarrow&gt;</u></b> to move forward through
+the list, and Retun to reenter the desired input once it has been
+selected.  In additon,
+</p>
 
 <h2>X/Emacs Tips </h2>
 
