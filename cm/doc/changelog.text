@@ -1,3 +1,29 @@
+CM 2.4.0 (final release)
+
+o CM's installation process has been completely rewritten in order to
+  make the system more flexible and easier to install. See:
+    http:/commonmusic.sf.net/doc/install.html
+    http:/commonmusic.sf.net/doc/dict/make-cm-fn.html 
+  for more info.
+
+o You can now load CLM, CMN, and MidiShare into CM at any point,
+  i.e. it is no longer necessary (or even desirable) to save "image
+  files" with these systems hardwired together.  In addition, you no
+  longer have to compile CLM insturments in the CM package to work
+  with them in CM -- any compiled instrument loaded will create an
+  object defintion when its loaded into CM even if the ins was
+  compiled without CM around. (You need to install the latest CLM-2
+  tarball for this to work.)
+
+o The main CM/readme.text has been updated with a new "matrix" of
+  supported Lisps, OS, and features.
+
+o  CM now works in the new OpenMCL 0.14.
+
+o CM has a new test suite (etc/test.cm) that I use to check the system
+  in its various configurations before releasing the software.
+
+----------------------------------------------------------------------
 CM 2.4.0 now supports a direct MIDI driver connection using Grame's
 Midishare real-time MIDI operating system. CM defines two new IO classes 
 for working with Midishare:
