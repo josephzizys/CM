@@ -469,10 +469,13 @@
 (define +se-unreadable+ 1)
 (define +se-multiple+   2)
 (define +se-incorrect+  3)
+(define +se-not-number+ 4)
+(define +se-not-symbol+ 5)
+(define +se-not-cons+   6)
 
 (define (string->expr str . args)
   (with-args (args &key (read #t) (test #f)
-                   (nullok #t) (multiok #f))
+                   (nullok #t) (multiok #f) errval)
     ;; parse input value from a gtk entry or a string
     (let ((text str)
           (trim '(#\space #\newline #\tab))
@@ -519,7 +522,7 @@
                 (values expr err?) 
                 (if test
                   (if ( test expr) (values expr #f)
-                      (values test +se-incorrect+))
+                      (values test (or errval +se-incorrect+)))
                   (values expr err?))))))))))
 
 ; (string->expr "")
