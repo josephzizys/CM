@@ -880,7 +880,8 @@
         (scale #f)
         (test? #f)
         (tuning #f)
-	(mode #f))
+	(mode #f)
+	(acci #f))
     (unless freq
       (err "~s is not a note name, key number, Hertz value or list."
            false))
@@ -899,6 +900,7 @@
          (if (eq? sym ':in?) (set! test? #t))
          (set! oper sym)
          (set! scale val))
+	((:accidental) (setf acci val))
         (else
          (err "~s not a valid keyword: :hz :in :in? :through"
               sym))))
@@ -928,7 +930,7 @@
            ;; freq is a symbol so only :in, :through and in?: are possible.
            ;; first insure freq is a tuning note. this has to be done
            ;; because freq may be a symbol without an octave.
-           (let ((ref (tuning-note->note tuning freq #f (not test?))))
+           (let ((ref (tuning-note->note tuning freq acci (not test?))))
              (if (not mode)
                ref
                (if (not ref)            ; failed :in? test
@@ -948,7 +950,7 @@
            (let ((keyn (if hz? (tuning-hertz->keynum tuning freq)
                            freq)))
              (if (not mode)
-               (tuning-keynum->note tuning keyn #f (not test?))
+               (tuning-keynum->note tuning keyn acci (not test?))
                (let* ((in (if (eq? oper ':from)
                             keyn
                             (tuning->mode mode keyn (not test?))))
