@@ -1,58 +1,18 @@
 CM 2.5.0 (unstable development branch release)
 
-o Real time, interactive MIDI input/output from MidiShare on OSX /
+o If Midishare is properly installed then CM autoloads its FFI interface
+  on OS X when CM loads up. I have not tested this in a saved image
+  and would recommend that you boot cm using 'bin/cm.sh' instead of
+  from an image, at least for the time being.
+
+o Real time, interactive MIDI input/output from MidiShare in OSX /
   OpenMCL 0.41.1-p1 is now supported. See the new documentation for
   information on how this all works:
 
       doc/dict/midi-topic.html
 
-  For real time IO you work directly with Midishare's MidiEv struct as
-  defined in Midishare-Interface.lisp. In addtion, two new functions
-  are defined by CM and exported from the MidiShare package to
-  facilitate working with MidiEvs at a (slightly) higher level than
-  the FFI provides:
-
-     (ms:new evtype {:init value}* )
-     (ms:MidiPrintEv ev &optional stream )
-
-  To work with MidiEvs interactively, call the following CM funcions
-  directly at toplevel lisp, ie ouside the dynamic scope of a call to
-  the 'events' function:
-
-     (sprout process &optional (ahead 0))
-     (output ev &optional (ahead 0)
-     (now)
-     (receive &opional hook)
-
-  For example, this is how you run a CM process in real (millisecond)
-  time starting 2 seconds in the future:
-
-     ? (midi-open)
-     ? (define (rankeys reps rhy dur lb ub)
-         (process repeat reps
-                  output (ms:new typeNote :duration dur
-                                 :keynum (between lb ub))
-                  wait rhy))
-     ? (sprout (rankeys 30 50 100 60 90) 2000)   ; starts 2 secs. later
-
-  This is how you install a MIDI input hook. The example
-  plays a minor 9th above all incoming events.
-
-    ? (define (play9th ev)
-        (output ev)
-        (let ((ev2 (ms:MidiCopyEv ev)))
-          (ms:pitch ev2 (+ 13 (ms:pitch ev2)))
-          (output ev2)))
-
-    ? (receive #'play9th)
-   
-    ...have fun, then stop:        
-
-    ? (receive )
-    ?
-
 o Common Music's "midi.port" is now implemented by a subclass of
-  midishare-stream.  This midi-port represents the CM client
+  midishare-stream.  The midi-port represents the CM client
   appliation in Midishare. The following new functions and vars are
   defined and documented in midi-topic.html
 
@@ -66,6 +26,7 @@ o New highlevel MIDI event classes replace the MIDIMSG class for
   non-realtime:
 
   Channel Messages classes:
+    midi
     midi-note-on
     midi-note-off
     midi-key-pressure
@@ -86,16 +47,16 @@ o New highlevel MIDI event classes replace the MIDIMSG class for
     midi-sequence-event
 
 o The functions 'hertz', 'note' and 'keynum' have been reimplemented
-  with new keywords args to provide additional functionality and to
-  make the functions behave more uniformly. This has resulted in one
-  incompatible change: the :HZ "tag" used by note and keynum is now a
-  true keyword parameter. Use (note 440 :hz t) not (note 440 :hz) The
-  :hz tag will continue to work in the near future with a warning.
+   to provide additional functionality and to make the functions
+   behave more uniformly. This has resulted in one incompatible
+   change: the :HZ "tag" used by note and keynum is now a true keyword
+   parameter. Use (note 440 :hz t) not (note 440 :hz) The :hz tag will
+   continue to work in the near future with a warning.
+   Be sure to read their updated entries in the dictionary.
 
 o Modes can now be defined with more or fewer than 12 semitones per
   octave. This new functionality introduced an incompatible change:
-
-  1. TO specify note names, use the :degrees init, not the :steps init.
+  1. To specify note names, use the :degrees init, not the :steps init.
   2. If a mode's :degrees list contains note names then the last
      note defines its octave: (c d ef f fs g) = 7 semitone octave.
   3. Use the :steps init to provide a list of intervals between modal 
@@ -103,26 +64,22 @@ o Modes can now be defined with more or fewer than 12 semitones per
      the intervals: (2 1 2 1 1) = 7 semitone octave
 
 o rhythmic symbols can now include a minus sign to negate their value,
-  i.e. -q = -1.0. Such values can then be interpreted as "rest"
+  i.e. -q = -1.0. Such values can be interpreted as "rest"
   values by a process.  A minus sign prepended to a rhythmic
   expression negates the entire expression, not just the first symbol:
   -w-q = -(w-q) = -3.0 not -5.0
 
-o 'wait' now performs abs (absolute value) on wait values so that
-   negative (rest) values are handled correctly
-
-o CM now automatically loads the Midishare FFI (Midishare-Interface.lisp)
-  if MidiShares shared libs are installed "correctly" on the machine.
+o 'wait' now performs abs on wait values so that negative (rest)
+   values are handled correctly
 
 o When CM starts up it now looks for an init file in the user's home
- directory (in addition to the "sitewide" cminit.lisp) and loads it if
- it exits. The name of the personal init file is "~/.cminit.lisp"
+ directory in addition to the "sitewide" cminit.lisp and loads it if
+ it exits. The name of this "personal" init file is "~/.cminit.lisp"
 
 o make-cm has new :extensions parameter for loading 
   extensions. see make-cm in dictionary for more info.
 
-o Added support for loading the "sitewide" cminit.lisp files in CLISP
-  2.33
+o Support for loading "sitewide" cminit.lisp files in CLISP 2.33
 
 o CM ported to SBCL, a variant of CMUCL.
 
