@@ -20,13 +20,48 @@
 Common Music supports reading and writing all types of MIDI messages
 to MIDI files and to the <a
 href="http:www.grame.fr/MidiShare">Midishare</a> real time operating
-system.  There are two levels of MIDI support.  A <em>high level
-interface</em> defines Goops/CLOS classes and methods for generating
-music to MIDI score files and to MidiShare clients in
-faster-than-real-time mode.  A <em>low level interface</em> defines
-foreign functions and events for working directly with Midishare in an
-"interactive", or real-time mode.
+system. Two levels of MIDI support are defined;
 </p>
+
+<ul>
+<li>
+A low level, foreign function interface connects directly to Midishare for "interactive", or real-time work.
+</li>
+<li>
+A high level interface provides Lisp classes and methods for
+generating music to MIDI score files and to MidiShare in non-real time
+mode.
+</li>
+</ul>
+
+<p>
+Note that non-real time does not mean <em>slower</em> than real time;
+in most cases the high-level interface generates output many times
+faster than real time.
+</p>
+
+<h3>Low level (real time) MIDI support</h3>
+
+In order to work with Midishare in real time, a connection from CM to
+MidiShare must first be established. This connection is represented by
+an object called the <em>midi port</em>.
+
+<p>
+Functions related to opening and closing the midi port:
+</p>
+
+<dl>
+<dt><code class="entry">(midi-open)</code></dt>
+<dd>Opens connection to MidiShare.</dd>
+<dt><code class="entry">(midi-close)</code></dt>
+<dd>Closes connection to MidiShare.</dd>
+<dt><code class="entry">(midi-open?)</code></dt>
+<dd>Returns true if MidiShare is open.</dd>
+<dt><code class="entry">(midi-reset </code>[<code class="keyword">:port </code><em>integer</em>]<code class="entry">)</code></dt>
+<dd>Sends system reset to a MidiShare output port, which defaults to 0.</dd>
+</dl>
+
+Once the midi port has been open,
 
 <h3>High level (non-real time) MIDI support</h3>
 
