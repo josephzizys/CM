@@ -3305,14 +3305,16 @@
            :accessor midi-event-channel)
   :name 'midi-channel-event)
 
-;(define-class <midi-sysex-event> (<midi-event>)
-;  (route  :init-keyword :route
-;          :accessor midi-channel-event-channel)
-;  (data :init-value #f :init-keyword :data
-;         :accessor midi-sysex-event-data)
-;  :name 'midi-sysex-event)
+(define-class <midi-system-event> (<midi-event>)
+  (opcode :init-value #xf0)
+  (type :init-value 0 :init-keyword :type 
+        :accessor midi-event-data1)
+  (data :init-value #f :init-keyword :data
+        :accessor midi-event-data2)
+  :name 'midi-system-event)
 
 (define-class <midi-meta-event> (<midi-event>)
+  (opcode :init-value #xff)
   :name 'midi-meta-event)
 
 ;;;
@@ -3320,11 +3322,22 @@
 ;;;
 
 (define-method (midi-event->midi-message (event <midi-channel-event>))
-  (let ((d1 (midi-event-data1 event))
-        (d2 (midi-event-data2 event)))
-    (make-channel-message (midi-event-opcode event)
-                          (midi-channel-event-channel event)
-                          data1 data2)))
+  (make-channel-message (midi-event-opcode event)
+                        (midi-event-channel event)
+                        (midi-event-data1 event)
+                        (or (midi-event-data2 event)
+                            0)))
+
+(define-method (midi-event->midi-message (event <midi-system-event>))
+  (let ((type (midi-event-data1 event))
+        (code (logior #xf0 type))
+        (data (midi-event-data2 event)))
+    (cond ((eq? type 0)
+           (make-sysex 0 data))
+          ((<= 1 type 3)                ; qframe, songpos, songsel
+           (make-system-message 0 code (midi-event-data2 event)))
+          (else
+           (make-system-message 0 code)))))
 
 (define-method (midi-event->midi-message (event <midi-meta-event>))
   (let ((op (midi-event-opcode event)))
@@ -3356,7 +3369,12 @@
           (else
            (err "Unimplemented meta-event opcode: ~s" op)))))
 
-;;;
+(define (miditest m)
+  (multiple-value-bind (x y) (midi-event->midi-message m)
+    (midi-print-message x #f :data y)
+    (values x y)))
+
+
 ;;; message->event conversion
 ;;;
 
