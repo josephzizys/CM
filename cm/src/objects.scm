@@ -800,6 +800,9 @@
 ;;;
 
 (define (box-> box . boxes)
+  (dolist (b boxes)
+    (unless (box? b)
+      (err "Outbox: ~s not a box." b)))
   (boxouts box boxes)
   (values))
 
@@ -810,50 +813,50 @@
 ;;; mode as its first value:
 ;;;   1. if the first value is :bang then forward outlets are banged 
 ;;;      with any remaining values:
-;;;        (values :bang)  => bangs outboxes without passing values
-;;;        (values :bang 1 2 3) => bangs outboxes with args 1 2 3.
-;;;   2. if the first value is :stop then propagation halts at the
-;;;      current box and any remaining values are ignored:
-;;;        (values :stop) => halts forward propagation
-;;;        (values :stop 1 2 3) => ditto
-;;;   3. if the first value is :send then any remaining values
+;;;        (values :bang!)  => bangs outboxes without passing values
+;;;        (values :bang! 1 2 3) => bangs outboxes with args 1 2 3.
+;;;   2. if the first value is :stop! then propagation halts at the
+;;;      current box. any remaining return values are ignored:
+;;;        (values :stop!) => halts forward propagation
+;;;        (values :stop! 1 2 3) => ditto
+;;;   3. if the first value is :send! then any remaining values
 ;;;      are sent forward to the outboxes without a bang.
-;;;        (values :send 1 2 3) => sets outbox args to 1 2 3.
-;;;   4. if the marker :argn appears directly after :bang or :send
+;;;        (values :send! 1 2 3) => sets outbox args to 1 2 3.
+;;;   4. if the marker :argn appears directly after :bang! or :send!
 ;;;      the remaining values are handled PAIRWISE, where each
 ;;;      pair of values is interpreted:
 ;;;        {argn argval}* 
 ;;;      where argn is a positional index (zero-based) of an outbox arg
 ;;;      to set and argval becomes its value:
-;;;        (values :bang :argn 2 -99)
+;;;        (values :bang! :argn 2 -99)
 ;;;          ==> bangs outbox with its arg[2] set to -99 
-;;;        (values :send :argn 0 'a 2 'c)
+;;;        (values :send! :argn 0 'a 2 'c)
 ;;;          ==> sets arg[0] to A and C to arg[3] of outbox
-;;;        (values :send :argn)
+;;;        (values :send! :argn)
 ;;;          ==> sets outbox args to ()
 ;;;   5.  Any other values are treated as an implicit :bang
-;;;        (values)    => (values :bang)
-;;;        123         => (values :bang 123)
-;;;        (values 1 2)=> (values :bang 1 2)
+;;;        (values)     => (values :bang!)
+;;;        123          => (values :bang! 123)
+;;;        (values 1 2) => (values :bang! 1 2)
 ;;;
 
 (define (bang! box . args)
   ;; args override box's current args
-  (let ((pmode ':bang))   
+  (let ((pmode ':bang!))   
     ;; parse propagation mode
     (cond ((null? args) #f)
-          ((eq? (car args) :bang)
+          ((eq? (car args) ':bang!)
            (set! args (cdr args)))
-          ((eq? (car args) :send)
-           (set! pmode :send)
+          ((eq? (car args) ':send!)
+           (set! pmode ':send!)
            (set! args (cdr args)))
-          ((eq? (car args) :stop)
-           (set! pmode :stop))
+          ((eq? (car args) ':stop!)
+           (set! pmode ':stop!))
           (else #f))
-    (if (eq? mode ':stop)
+    (if (eq? pmode ':stop!)
       (values)
       (begin
-       ;; :bang or :send, check for :argn in first position
+       ;; :bang! or :send!, check for :argn in first position
        (if (not (null? args))
          (if (eq? (car args) ':argn)
            (if (null? (cdr args))
@@ -864,7 +867,7 @@
                  (list-set! fnargs n v))))
            ;; else set all args
            (vector-set! box 1 args)))
-       (if (eq? mode :bang)
+       (if (eq? pmode ':bang!)
          (let ((res (multiple-value-list
                         (apply (vector-ref box 0)
                                (vector-ref box 1)))))
