@@ -1,7 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+  <meta content="text/html; charset=iso-8859-1"
+ http-equiv="content-type"/>
+
 <style type="text/css" media="all">
 @import "css/cm.css";
 </style>
@@ -31,7 +35,7 @@
 <h2>Contents</h2>
 <ol>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#installing">Installing X/Emacs</a></li>
+<li><a href="#installing">Installing X/Emacs</a>
   <ol>
   <li><a href="#downloading">Downloading distributions</a></li>
   <li><a href="#distributions">Suggested binary distributions for running Common Music</a></li>
@@ -39,13 +43,15 @@
   <li><a href="#initfile">The X/Emacs initialization file</a></li>
   <li><a href="#commands">Learning X/Emacs keyboard commands</a></li>
   </ol>
+</li>
 
-<li><a href="#running">Running Common Music under X/Emacs</a></li>
+<li><a href="#running">Running Common Music under X/Emacs</a>
   <ol>
   <li><a href="#quick_start">Quick-start (Linux, OS X, Cygwin)</a></li>
   <li><a href="#win_start">Running CM in X/Emacs under Windows</a></li>
   <li><a href="#emacs_start">Starting Common Music from inside X/Emacs</a></li>
   </ol>
+</li>
 
 <li><a href="#listener">The X/Emacs Lisp Listener</a>
   <ol>
@@ -57,7 +63,6 @@
 </li>
 
 <li><a href="#tips">X/Emacs Tips</a>
-
 <ol>
 <li><a href="#tip_version">Determining the version of X/Emacs</a></li>
 <li><a href="#tip_apple">Apple keyboard shortcuts for OSX X/Emacs</a></li>
@@ -109,7 +114,7 @@ vs. GNU Emacs</a>), it is probably fair to say that the typical user
 will feel most comfortable in an editor whose "look and feel" matches
 the host operating system's native window manager. On Linux, Cygwin
 and Windows this is XEmacs, on OS X it is an <em>Aqua</em> Emacs.
-<p>
+</p>
 
 <h3 id="downloading">2.1 Downloading distributions</h3>
 
@@ -220,6 +225,7 @@ documentation refers to the Control and Meta keys using the shorthands
 respectively. Underlines are sometimes used to show
 <em>combinations</em> of keystrokes typed with the Control and/or Meta
 keys depressed. For example:
+</p>
 
 <ul>
 <li>
@@ -339,7 +345,7 @@ href="#emacs_start">Starting Common Music from inside X/Emacs</a>.
 You can start Common Music from inside a running X/Emacs session if
 you add the following forms your X/Emacs init file.  The example shown
 below is set up for a Windows installation.  Change the pathname of
-the <code>cm-direcoty</code> to relect your machine and use the Unix
+the <code>cm-direcoty</code> to reflect your machine and use the Unix
 form of the directory delimiter / even if you are on Windows.  If you
 are <em>not</em> on Windows then change the name of the
 <code>cm-startfile</code> from cm.bat to cm.sh.
@@ -472,6 +478,7 @@ The Tools sub-menu holds Lisp commands specific to the Lisp
 implementation running in the Listener. Consult your Common Lisp or
 Scheme documentation for more information.
 </dd>
+</dl>
 
 <h3 id="listener_window">4.2 The Listener window</h3>
 <p>
@@ -484,6 +491,7 @@ expressions may entered and their evaluated results observed.
 <p>
 The Listener menubar contains three menus: File, Edit and Buffers.  The
 File menu defines the following commands:
+</p>
 
 <dl>
 
@@ -528,7 +536,7 @@ prints the results back to the Listener window on the next line. Any
 expression visible in the window can be copy/pasted to the input point
 by placing the cursor just to the right of the expression and then
 typing Return. The copied expression can then be edited at the input
-point using regualr X/Emacs editing commands. Press the Return key to
+point using regular X/Emacs editing commands. Press the Return key to
 enter it into Lisp.  The Listener records each input expression in its
 <em>input history list</em>.  Previous input expressions can by
 recalled from the list using <span class="emacscmd"><span
@@ -602,6 +610,13 @@ the following forms to your X/Emacs init file:
 
 </dl>
 
+<p>
+<a href="http://validator.w3.org:8001/check?uri=referer">
+<img src="http://www.w3.org/Icons/valid-xhtml10" 
+     alt="Valid XHTML 1.0!" height="31" width="88" />
+</a>
+</p>
+
 </div> <!-- end content -->
 <div id="footer">
 <div id="author">H. Taube</div>
@@ -610,7 +625,3 @@ the following forms to your X/Emacs init file:
 </body>
 </html>
 
-
-
-
-</body>

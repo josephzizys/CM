@@ -1,8 +1,10 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
   <meta content="text/html; charset=iso-8859-1"
- http-equiv="content-type">
+ http-equiv="content-type"/>
   <style media="all" type="text/css">
 @import "css/cm.css";
   </style>
@@ -12,7 +14,7 @@
 <!-- Navbar -->
 <div id="header">
 <div id="logo"><img title="" alt="[img/cmlogosw.png]" height="50"
- width="50" src="img/cmlogosw.png">
+ width="50" src="img/cmlogosw.png"/>
 </div>
 <div class="inv">Navigation:</div>
 <ul class="nav">
@@ -21,7 +23,7 @@
   <li class="navn"><a href="../etc/examples/">Examples</a></li>
 </ul>
 </div>
-<hr class="inv">
+<hr class="inv"/>
 <div id="content">
 <h1>Installing Common Music</h1>
 <p>
@@ -49,7 +51,7 @@ href="http://www.grame.fr/MidiShare/">Midishare</a>.
     <ol>
       <li><a href="#load_shell">Quickstart (OS X, Linux or Cygwin)</a></li>
       <li><a href="#load_lisp">Lisp loading</a></li>
-      <li><A href="#load_custom">Saving images and other custom builds</a></li>
+      <li><a href="#load_custom">Saving images and other custom builds</a></li>
     </ol>
   </li>
   <li><a href="#install_sys">Working with CLM, CMN and MidiShare</a>
@@ -129,15 +131,15 @@ rename the top-level <kbd>cm</kbd> directory if you choose.
 repository on OS X, Linux or Cygwin. (Input text must be typed on a
 single line.)
 </p>
-<p class="wrapshell">% <span class="input">cd /Lisp</span><br>
+<p class="wrapshell">% <span class="input">cd /Lisp</span><br/>
 % <span class="input">cvs
--d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic login</span><br>
-CVS password: <br>
+-d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic login</span><br/>
+CVS password: <br/>
 % <span class="input">cvs -z3
 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic checkout
-cm</span><br>
-<span style="color: gray; font-style: italic;">[...build output deleted...]</span><br>
-% <span class="input">mv cm cm-2.4.1</span><br>
+cm</span><br/>
+<span style="color: gray; font-style: italic;">[...build output deleted...]</span><br/>
+% <span class="input">mv cm cm-2.4.1</span><br/>
 </p>
 </div>
 <h2 id="start_lisp">2. Starting a Lisp application</h2>
@@ -203,9 +205,8 @@ implementations.
     <tr>
       <td><a
       href="http://www.gnu.org/software/guile/docs/guile-ref/Obtaining-and-Installing-Guile.html#Obtaining%20and%20Installing%20Guile">Guile</a></td>
-      <td><code><a
-      href="http://www.gnu.org/software/guile/docs/guile-ref/Invoking-Guile.html#Invoking%20Guile">
-      <code>guile</a></code></td> <td>guile</td> <td></td>
+      <td><a
+      href="http://www.gnu.org/software/guile/docs/guile-ref/Invoking-Guile.html#Invoking%20Guile"> <code>guile</code></a></td> <td>guile</td> <td></td>
     </tr>
   </tbody>
 </table>
@@ -311,13 +312,13 @@ them.
 <p class="captxt">Loading CM in OpenMCL/OS X (Common
 Lisp).
 </p>
-<pre class="shell">% openmcl<br>? <span class="input">(load "/Lisp/cm-2.4.1/src/cm.lisp")</span>
+<pre class="shell">% openmcl<br/>? <span class="input">(load "/Lisp/cm-2.4.1/src/cm.lisp")</span>
 <span style="color: gray; font-style: italic;">[...build output deleted...]</span></pre>
 </div>
 <div class="float">
 <p class="captxt">Loading CM in Guile/Linux (Scheme).
 </p>
-<pre class="shell">% guile<br>guile&gt; <span class="input">(load "/Lisp/cm-2.4.1/src/cm.scm")</span>
+<pre class="shell">% guile<br/>guile&gt; <span class="input">(load "/Lisp/cm-2.4.1/src/cm.scm")</span>
 <span style="color: gray; font-style: italic;">[...build output deleted...]</span></pre>
 </div>
 <div class="float">
@@ -330,7 +331,7 @@ Lisp).
 <span style="color: gray; font-style: italic;">[...build output deleted...]</span></pre>
 </div>
 For information about using the DOS directory character in Lisp see <a
- href="#dosdir">Troubleshooting tip 4</a>.
+ href="#trouble_dosdir">Troubleshooting tip 4</a>.
 <p>Loading cm.scm into Guile (Scheme) simply loads CM's source files --
 no compilation or image saving occurs. In in all other Lisp
 implementations loading cm.lisp first <em>compiles</em> source files
@@ -389,8 +390,7 @@ href="dict/make-cm-fn.html">make-cm</a> function with
   <li>
 Once the system loads and saves an image you will automatically exit
 Lisp. You can then start your freshly saved Common Music image using
-the <a href="#cm.sh">cm</a> script or by specfying the image file to
-your Lisp command according to its installation directions.
+the <a href="dict/cm-sh.html">cm.sh</a> script or by specifying the image file to your Lisp command according to its installation directions.
   </li>
 </ol>
 <p>
@@ -405,9 +405,9 @@ You can load other Lisp software systems into Lisp either before or
 after loading Common Music.  If you want to save a Lisp image
 containing all of these systems bundled together, load the other
 software before you call <code>make-cm</code> to save the image.
-<p>
+</p>
 
-<h3 "id=install_clm_cmn">4.1 Loading CLM and CMN</h3>
+<h3 id="install_clm_cmn">4.1 Loading CLM and CMN</h3>
 <p>
 To work with either CLM or CLM you simply load the system using the
 appropriate command shown below:
@@ -434,7 +434,7 @@ symbols before working with the instruments:
 
 <div >
 <p class="captxt">Importing instruments compiled in the cl-user
-package .</p>
+package.</p>
 <pre class="shell">? <span class="input">(load "/Lisp/clm-2/v")</span>
 #P"/Lisp/clm-2/v.dfsl"  
 ? <span class="input">(load "/Lisp/clm-2/grani")</span>
@@ -576,14 +576,14 @@ for
 example to C:\WINNT\System32\clisp.bat.</li>
     </ol>
     <div class="float">
-    <p class="captxt">The clisp.bat script file for Windows 2000.
-    </p>
-    <pre class="code">@echo off<br><br><span style="color: blue;">REM Edit the clispdir pathname inside "" to point to</span>
+    <p class="captxt">The clisp.bat script file for Windows 2000.</p>
+
+    <pre class="code">@echo off<br/><br/><span style="color: blue;">REM Edit the clispdir pathname inside "" to point to</span>
 <span style="color: blue;">REM the clisp installation directory on your machine.</span>
 
 <span style="color: red;">set</span> clispdir="<span
- style="color: green;">\Lisp\clisp-2.31</span>"<br><span
- style="color: red;">pushd</span> %clispdir%<br>.\full\lisp.exe -B . -M .\full\lispinit.mem %1 %2 %3 %4 %5 %6 %7 %8 %9<br><span
+ style="color: green;">\Lisp\clisp-2.31</span>"<br/><span
+ style="color: red;">pushd</span> %clispdir%<br/>.\full\lisp.exe -B . -M .\full\lispinit.mem %1 %2 %3 %4 %5 %6 %7 %8 %9<br/><span
  style="color: red;">popd</span></pre>
     </div>
   </dd>
@@ -602,6 +602,14 @@ Clisp and Guile all support unix-style directory strings under
 Windows.
   </dd>
 </dl>
+
+<p>
+<a href="http://validator.w3.org:8001/check?uri=referer">
+<img src="http://www.w3.org/Icons/valid-xhtml10" 
+     alt="Valid XHTML 1.0!" height="31" width="88" />
+</a>
+</p>
+    
 <!-- end content -->
 </div>
 <div id="footer">
