@@ -1,21 +1,19 @@
 CM 2.5.0 (unstable development branch release)
 
-o If Midishare is properly installed then CM autoloads its FFI interface
-  on OS X when CM loads up. I have not tested this in a saved image
-  and would recommend that you boot cm using 'bin/cm.sh' instead of
-  from an image, at least for the time being.
-
-o Real time, interactive MIDI input/output from MidiShare in OSX /
-  OpenMCL 0.41.1-p1 is now supported. See the new documentation for
-  information on how this all works:
+o Real-time MIDI process scheduling and interactive MIDI
+  input/output is now supported in OSX / OpenMCL 0.41.1-p1. See the
+  new documentation topic for information on how this all works:
 
       doc/dict/midi-topic.html
+
+o If Midishare is properly installed then CM autoloads it at load
+ time.  I have not tested this in a saved image and would recommend
+ that you use bin/cm.sh without saving an image for the time being.
 
 o Common Music's "midi.port" is now implemented by a subclass of
   midishare-stream.  The midi-port represents the CM client
   appliation in Midishare. The following new functions and vars are
   defined and documented in midi-topic.html
-
     midi-open
     midi-open?
     midi-close
@@ -46,35 +44,50 @@ o New highlevel MIDI event classes replace the MIDIMSG class for
     midi-key-signature
     midi-sequence-event
 
+o New 'cmn' object for generating CMN notes and CMN staff expressions
+  (variables and function calls) to cmn-streams and midi files. See
+  dict/cmn-cls.html for more information.
+
 o The functions 'hertz', 'note' and 'keynum' have been reimplemented
-   to provide additional functionality and to make the functions
+   to provide additional functionality and to make these functions
    behave more uniformly. This has resulted in one incompatible
-   change: the :HZ "tag" used by note and keynum is now a true keyword
-   parameter. Use (note 440 :hz t) not (note 440 :hz) The :hz tag will
-   continue to work in the near future with a warning.
-   Be sure to read their updated entries in the dictionary.
+   change: the :HZ tag used by note and keynum is now a true keyword
+   parameter: do (note 440 :hz t) not (note 440 :hz) The :hz tag will
+   continue to work for the time being but with a warning.
+   Be sure to read the updated entries in the dictionary.
 
 o Modes can now be defined with more or fewer than 12 semitones per
-  octave. This new functionality introduced an incompatible change:
-  1. To specify note names, use the :degrees init, not the :steps init.
-  2. If a mode's :degrees list contains note names then the last
-     note defines its octave: (c d ef f fs g) = 7 semitone octave.
-  3. Use the :steps init to provide a list of intervals between modal 
-     degress. the octave size of the mode will be set to the sum of
-     the intervals: (2 1 2 1 1) = 7 semitone octave
+  octave. This new functionality introduced an incompatible change
+  in the syntax of mode definion:
+  1. To specify note names, use  :degrees or :notes, not the
+     :steps init. (Use :notes to create a mode with typed intervals
+     that insure proper spelling when the mode is transposed. Use
+     :degrees for notes or keynums if you do not care about
+     preserving spelling or for any mode that does not use
+     the chromatic scale as its tuning.
+  2. A :degree or :note list uses the last item to mark the octave:
+     ie ':degrees (c d ef f fs g)' defines a 7-semitone octave.
+  3. Use the :steps init to specify the mode as a list of intervals
+     between mode degress. the octave size of the mode will be set
+     to the sum of the intervals: (2 1 2 1 1) = 7 semitone octave
 
-o rhythmic symbols can now include a minus sign to negate their value,
-  i.e. -q = -1.0. Such values can be interpreted as "rest"
-  values by a process.  A minus sign prepended to a rhythmic
-  expression negates the entire expression, not just the first symbol:
-  -w-q = -(w-q) = -3.0 not -5.0
+o Rhythmic symbols can now include a minus sign that negates their
+  value, i.e. -q = -1.0. Such values can be interpreted as "resting"
+  values.  A minus sign prepended to a rhythmic expression negates the
+  entire expression, not just the first symbol: -w-q = -(w-q) = -3.0
+  not -5.0.
+
+o new function linux-play-midi-file for playing .mid files on
+  linux. uses a format string in *linux-midi=file-player*
+  to exec an external player. by default this string is set to:
+       "timidity --quiet=2 ~a &"
 
 o 'wait' now performs abs on wait values so that negative (rest)
    values are handled correctly
 
 o When CM starts up it now looks for an init file in the user's home
- directory in addition to the "sitewide" cminit.lisp and loads it if
- it exits. The name of this "personal" init file is "~/.cminit.lisp"
+  directory in addition to the "sitewide" cminit.lisp and loads it if
+  it exits. The name of this "personal" init file is "~/.cminit.lisp"
 
 o make-cm has new :extensions parameter for loading 
   extensions. see make-cm in dictionary for more info.
