@@ -387,7 +387,7 @@
                    (translations *clm-import-translations*)
                    (include ()) (exclude ()) (seq #t))
     (let* ((clmname (io-filename io))
-           (seqname (format nil "from-~a"
+           (seqname (format #f "from-~a"
                             (filename-name clmname)))
            (*print-case* ':downcase)
            (fprint (lambda (f s)

@@ -325,10 +325,12 @@
                        (set! last #f))
                       (#\e
                        (set! stop #t)
-                       (setf last #f)))
+                       (set! last #f)))
                     ;; end process_statement
-                    (begin (setf statement nil next line)))
-                   (begin (setf statement line next nil)))
+                    (begin (set! statement #f) (set! next line)
+                           ))
+                   (begin (set! statement line) (set! next #f)
+                          ))
                  (begin
                   ;; continuation of statement or unknown line
                   (if statement
@@ -365,7 +367,7 @@
          )
         #f))))
 
-(define (sco-write-and-load . args) args nil)
+(define (sco-write-and-load . args) args #f)
 
 ;; (define (write-sco-and-load io file defs head list)
 ;;   ;; save f_statements in file header
