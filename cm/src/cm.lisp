@@ -124,30 +124,30 @@
     ;; Currently supported in Openmcl, MCL-4, MCL-5 and CMUCL
     
     (if #+(and openmcl darwin)
-      (and (probe-file "ccl:darwin-headers;midishare;")
-           (probe-file
-            "/System/Library/Frameworks/MidiShare.framework/MidiShare"))
-      #+(and digitool ccl-5.0)
-      (probe-file
-       "/System/Library/Frameworks/MidiShare.framework/MidiShare")
-      #+(and digitool ccl-4)
-      (directory (merge-pathnames "Midishare*" 
-                                  (ccl::findfolder -1 :|ctrl|)))
-      #+cmu
-      (probe-file "/usr/lib/libMidiShare.so")
-      (cload "midishare" "MidiShare-Interface")
-      (warn "No MIDI real-time support: Midishare not installed."))
+        (and (probe-file "ccl:darwin-headers;midishare;")
+             (probe-file
+              "/System/Library/Frameworks/MidiShare.framework/MidiShare"))
+        #+(and digitool ccl-5.0)
+        (probe-file
+         "Macintosh HD:System:Library:Frameworks:MidiShare.framework:MidiShare")
+        #+(and digitool ccl-4 (not ccl-5.0))
+        (directory (merge-pathnames "Midishare*" 
+                                    (ccl::findfolder -1 :|ctrl|)))
+        #+cmu
+        (probe-file "/usr/lib/libMidiShare.so")
+        (cload "midishare" "MidiShare-Interface")
+        (warn "No real-time MIDI support: Midishare not installed."))
     
     ;; Load optional Player interface if midishare is installed.
     (when (find ':midishare *features*)
-      (if #+(and digitool ccl-4)
+      (if #+(and digitool ccl-4 (not ccl-5.0))
         (ccl::get-shared-library-descriptor "PlayerSharedPPC")
         #+(and openmcl darwin)
         (probe-file
          "/System/Library/Frameworks/Player.framework/Player")
         #+(and digitool ccl-5.0)
         (probe-file
-         "/System/Library/Frameworks/Player.framework/Player")
+         "Macintosh HD:System:Library:Frameworks:Player.framework:Player")
         #+cmu
         (probe-file "/usr/lib/libPlayer.so"   )
         (cload "midishare" "Player-Interface")
