@@ -963,11 +963,13 @@
   parser
   (let ((parse-markov-spec 
 	 (lambda (spec)
-           (let ((tail (member '-> spec))
+           (let ((tail (or (member '-> spec)
+                           (member ':-> spec)))
                  (range 0) 
                  (inputs '())
 		 (parse '())
-		 (outputs '()))
+		 (outputs '())
+                 )
              (if tail
                (begin (set! inputs (loop until (eq? spec tail)
 				         collect (pop spec)))
@@ -976,13 +978,22 @@
 		      (set! parse spec)))
              (dolist (s parse)
                (let ((val #f)
+                     (pat #f)
 		     (wei #f))
                  (if (pair? s)
                    (begin (set! val (first s))
-			  (set! wei (if (null? (cdr s)) 1 (second s))))
-                   (begin (set! val s) (set! wei 1)))
-                 (incf range wei)
-                 (push (list val range) outputs)))
+			  (set! wei (if (null? (cdr s)) 1 (second s)))
+                          ;; weight may be number or pattern
+                          (set! pat wei)
+                          (unless (number? wei)
+                            (set! wei #f)))
+                   (begin (set! val s) (set! wei 1) (set! pat 1)))
+                 ;; set range to #f if any weight is pattern
+                 ;; else precalc range for the constant weights
+                 (if (and wei range)
+                   (incf range wei)
+                   (set! range #f))
+                 (push (list val range pat) outputs)))
              (cons inputs (cons range (reverse outputs)))))))
     (let ((const #t))
       (dopairs (a v inits)
@@ -1008,15 +1019,34 @@
 (define-method (next-in-pattern (obj <markov>))
   ;; markov data kept as a list of lists. each list is in the form:
   ;; ((<inputs>) range . <output>)
-  (let ((select-output
-	 (lambda (range outputs)
-           (let ((n (random range)))
-             (loop for o in outputs
-                   when (< n (second o) )
-                   return (first o)))))
-	(match-past
-	 (lambda (inputs past)
-           (loop for i in inputs
+  (letrec ((select-output
+            (lambda (range outputs)
+              ;; if range is false then one or more weights in the
+              ;; outputs are patterns. in this case we map all the
+              ;; outputs to update weights of every outcome and then
+              ;; select.  otherwise (range is number) we simply select
+              ;; an outcome from the precalculated distribution.
+              (if (not range)
+                (do ((tail outputs (cdr tail))
+                     (out #f)
+                     (sum 0))
+                    ((null? tail)
+                     (select-output sum outputs))
+                  ;; out is outcome: (val rng <pat/wei>)
+                  (set! out (car tail))
+                  ;; if third element is number use it else read it
+                  (set! sum (+ sum (if (number? (caddr out))
+                                     (caddr out)
+                                     (next-1 (caddr out)))))
+                  ;; always update second element to new value
+                  (set-car! (cdr out) sum))
+                (let ((n (random range)))
+                  (loop for o in outputs
+                     when (< n (second o) )
+                     return (first o))))))
+            (match-past
+            (lambda (inputs past)
+              (loop for i in inputs
                  for j in past
                  unless (or (eq? i '*) (equal? i j) (eq? j '*))
                  return #f
@@ -1518,7 +1548,7 @@
                 while (not (null? form))
                 do 
 		(set! x (pop form))
-                if (eq? x '->)
+                if (or (eq? x '->) (eq? x ':->))
 		do
 		(set! left #f)
                 else if left collect x into lh
@@ -1570,21 +1600,43 @@
     (when (null? (cdr nodes))
       (let ((count (rewrite-generations obj)))
         (if (< (car count) (cdr count))
-	  (let* ((rules (rewrite-rules obj))
-		 (old (car nodes))
-		 (new (if (null? rules )
-			(node-rewrite old (rewrite-table obj))
-			(rule-rewrite old rules))))
-	    (unless new
-	      (err "Empty rewrite for generation ~s." old))
-	    (begin (set-cdr! nodes new)
-		   (set-car! nodes new))
-	    (set-car! count (+ (car count) 1)))
+;; 	  (let* ((rules (rewrite-rules obj))
+;; 		 (old (car nodes))
+;; 		 (new (if (null? rules )
+;; 			(node-rewrite old (rewrite-table obj))
+;; 			(rule-rewrite old rules))))
+;; 	    (unless new
+;; 	      (err "Empty rewrite for generation ~s." old))
+;; 	    (begin (set-cdr! nodes new)
+;; 		   (set-car! nodes new))
+;; 	    (set-car! count (+ (car count) 1)))
+          (rewrite-generation obj #t #f)
 	  (set-cdr! nodes (car nodes)))))
     (rewrite-node-datum (cdr-pop nodes))))
 
 ; (define a (new rewrite of '((a -> (b)) (b -> (b a a)))))
 ; (next a 20)
+
+(define (rewrite-generation obj . args)
+  (with-args (args &optional (new #f) (ids #t))
+    (let ((data (pattern-data obj)))
+      (if (not new)
+        (if (not ids) (car data) (mapcar #'rewrite-node-datum (car data)))
+        (let* ((nodes (pattern-data obj))
+               (rules (rewrite-rules obj))
+               (old (car nodes))
+               (new (if (null? rules)
+                      (node-rewrite old (rewrite-table obj))
+                      (rule-rewrite old rules))))
+          (unless new
+            (err "Rewrite: generation #~D is empty!"
+                 (+ (car (rewrite-generations obj)) 1)))
+          (begin (set-cdr! nodes new)
+                 (set-car! nodes new))
+          (if (not ids) 
+            (car nodes)
+            (mapcar #'rewrite-node-datum (car data))))))))
+
 
 (define (node-rewrite gen table)
   ;; nodes specify their rewrites directly just fetch successors
