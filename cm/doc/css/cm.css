@@ -295,14 +295,26 @@ img {
 span.emacscmd { font-weight: bold; font-size: smaller; }
 span.emacskey { text-decoration: underline }
 span.string  {color: #228b22;} 
-/* span.comment {color: #8a2be2;} */
 span.comment {font-style: italic; color: gray;} /* slate gray3 */
 span.keyword {color: #b22222;}
 span.special {color: #d2691e;}
 span.defined {color: #ff0000;}
-/* span.input   {font-weight: bold;} */
-span.input   {color: #3f7f7f;}
-span.output  { }
+
+span.input  {font-weight: bold;}
+span.prompt, span.output  { }
+
+
+/* span.printout { color: #3f7f7f; font-size: smaller; } */
+div.printout {
+  margin: 0px;
+  color: #3f7f7f;
+  font-size: smaller; 
+  background: #f7f7f7;
+}
+
+
+
+
 
 span.author {font-style: normal;}
 span.book, span.journal {font-style: italic;}
