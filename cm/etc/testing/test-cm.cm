@@ -615,6 +615,7 @@
              wait .25))
   (set! x (events (testms 0) "midi.port"))  ; logical chan 0 -> port 0 chan 0
   (check "sent chromatic scale" (equal? x "midi.port"))
+  (sleep 5)
   (define (dim-test-1 chan dur amp-1 amp-2 steps)
     (process with amp-val 
              with step-time = (/ dur steps 1.0)
@@ -635,8 +636,12 @@
                         (dim-test-1 0 2 90 0 20))
                   "midi.port"))
   (check "sent violin diminuendo" (equal? x "midi.port"))
+  (sleep 5)
   (events (testms 0) "test.mp")
-  (player-save-midifile #&"test.mp" "player.mid")
+  (sleep 5)
+  (player-save-midifile (find-object "test.mp") "player.mid")
   (midi-close)
   )
+
+
 
