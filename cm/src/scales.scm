@@ -436,7 +436,7 @@
          (begin
           ;; convert note names to keynums if not chromatic scale
           (when (symbol? (car spec))
-            (setf spec (keynum spec :in owner)))
+            (set! spec (keynum spec :in owner)))
           (set! steps
                 (do ((x spec (cdr x))
                      (l '())
@@ -900,7 +900,7 @@
          (if (eq? sym ':in?) (set! test? #t))
          (set! oper sym)
          (set! scale val))
-	((:accidental) (setf acci val))
+	((:accidental) (set! acci val))
         (else
          (err "~s not a valid keyword: :hz :in :in? :through"
               sym))))
