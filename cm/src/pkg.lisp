@@ -64,7 +64,7 @@
                 SetSynchroInPlayer MidiNewMidiFileInfos
                 MidiFileLoad MidiFileSave mf-clicks mf-format mf-timedef
                 )
-  (:shadow "MAKE-LOAD-FORM")
+  (:shadow make-load-form)
   )
 
 #+cmn
