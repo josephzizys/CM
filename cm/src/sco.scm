@@ -180,7 +180,7 @@
                  (string=? p "+")
                  (char=? (string-ref p 0) #\^))
            (err "No p~a value to carry in ~s" i pars)
-           (read-from-string p)))
+           (string-read p)))
       (do ()
           ((or (null? data) (null? last))
            (if (and (null? data) (not (null? last)))
@@ -197,11 +197,11 @@
                (unless (= pnum 2)
                  (err "Found p2 carry value ~S in p~d." 
                       (car pars) pnum))
-               (let ((n (read-from-string (substring (car data) 1))))
+               (let ((n (string-read (substring (car data) 1))))
                  (set-car! data (+ (cadr head) n))))
               (else
                ;; update last
-               (set-car! data (read-from-string (car data)))
+               (set-car! data (string-read (car data)))
                (unless (number? (car data))
                  (format #t "; warning: Importing non-numerical p~s value: ~s."
                          pnum (car data))
@@ -214,7 +214,7 @@
 
 (define (parse-i-statement line last)
   (let ((pars (list)))
-    (set! pars (string-forms line :start 1 ))
+    (set! pars (string-substrings line :start 1 ))
     (if (null? pars)
       (set! pars (copy-list
                   (if (null? last)
@@ -227,7 +227,7 @@
           (when (or (char-numeric? (string-ref p 0))      
                     (and (char=? (string-ref p 0) #\-)
                          (char-numeric? (string-ref p 1))))
-            (let ((n (read-from-string p)))
+            (let ((n (string-read p)))
               (unless (= (inexact->exact (floor n))
                          (inexact->exact (floor (first last))))
                 (set! last (list)))))
@@ -314,7 +314,8 @@
                                line)
                        (set! last #f))
                       (#\t
-                       (set! rate (string-forms (substring statement 1)))
+                       ;; WAS STRING-FORMS
+                       (set! rate (string-read (substring statement 1)))
                        (set! last #f))
                       (#\s 
                        (set! secs (+ secs 1))
