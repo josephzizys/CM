@@ -150,8 +150,8 @@
 
 (defobject midi-sequencer-event (midi-meta-event)
   ((opcode :initform +ml-file-sequencer-event-opcode+ :initarg #f)
-   (number :accessor midi-event-data1))
-  (:parameters time number)
+   (data :accessor midi-event-data1))
+  (:parameters time data)
   (:writers ))
 
 ;;;
