@@ -41,7 +41,8 @@
   <li><a href="#distributions">Suggested binary distributions for running Common Music</a></li>
   <li><a href="#customizing">Customizing X/Emacs</a></li> 
   <li><a href="#initfile">The X/Emacs initialization file</a></li>
-  <li><a href="#commands">Learning X/Emacs keyboard commands</a></li>
+  <li><a href="#commands">Emacs keyboard commands</a></li>
+  <li><a href="#command_summary">Emacs command summary</a></li>
   </ol>
 </li>
 
@@ -210,29 +211,44 @@ the init files "invisible" in normal directory listings and file
 browsing windows.
 </p>
 
-<h3 id="commands">2.5 Learning X/Emacs keyboard commands</h3>
+<h3 id="commands">2.5 Emacs keyboard commands</h3>
 
 <p>
-X/Emacs can be used just like any other mouse-driven, point-and-click
-text editor. However, the real power (and beauty) of X/Emacs lies in
-its <em>keyboard commands</em>, short, simple keystrokes that invoke
-the powerful editing, formatting and cursor moving features of the
-editor. X/Emacs keyboard commands are issued by pressing down the
-Control and/or Meta key and then typing a "command key" that
-represents the particular command.  The Control key is (usually) the
-key in the lower left-hand corner of the keyboard. The Meta key is
-usually situated just to the left of the Space bar. Emacs
-documentation refers to the Control and Meta keys using the shorthands
-<span class="emacscmd">C-</span> and <span class="emacscmd">M-</span>
-respectively. Underlines are sometimes used to show
-<em>combinations</em> of keystrokes typed with the Control and/or Meta
-keys depressed. For example:
+X/Emacs supports the mouse-oriented, point-and-click operations used
+in most word processors, but the real power of Emacs lies in
+its <em>keyboard commands</em> &mdash; short, simple keystrokes that
+invoke the editing, formatting and cursor motion capabilities of the
+editor. Emacs keyboard commands are formed by holding down the Control
+and/or Meta keys while typing a keystroke that identified the command.
+The Control key is located in the lower left-hand corner of the
+keyboard.  The location of the Meta key varies; it is usually found
+either to the left of the Spacebar or to the right of the Control key.
+<!-- The Emacs initialization file for this class sets Meta to be the
+key immediately to the right of Control key. This arrangement
+allows Apple's Command key to continue its normal function as the
+generic OS X shortcut key. -->
+</p>
+ 
+<p>
+Most Emacs documentation refer to the Control and Meta keys using
+shorthand names <span class="emacscmd">C-</span> and <span
+class="emacscmd">M-</span> respectively. Underlines are sometimes
+included to indicate <em>combinations</em> of keystrokes that are
+typed with the Control and/or Meta keys depressed. For example:
 </p>
 
 <ul>
 <li>
 <span class="emacscmd"><span class="emacskey">C-h</span></span> means to hold down the Control key while you type
 the <span class="emacscmd">h</span> key.
+</li>
+
+<li>
+<span class="emacscmd"><span class="emacskey">C-x C-s</span></span>
+means to hold down the Control key as you type the <span
+class="emacscmd">x</span> key, then continue to hold Control down
+while you type the <span class="emacscmd">s</span> key.
+
 </li>
 
 <li>
@@ -250,24 +266,378 @@ class="emacscmd">f</span>.
 <li>
 <span class="emacscmd"><span class="emacskey">C-h</span> t</span>
 means to first type <span class="emacscmd"><span
-class="emacskey">C-h</span></span>, then release the keys and type
-just the <span class="emacscmd">t</span> key.
+class="emacskey">C-h</span></span>, then <em>release</em> the control
+key and type just the <span class="emacscmd">t</span> key.
 </li>
 
 <li>
 <span class="emacscmd"><span class="emacskey">M-x</span>
-lisp-mode</span> means to hold down Meta and type the <span
-class="emacscmd">x</span> key, then release both keys and type the
+lisp-mode</span> means to hold down Meta while you type <span
+class="emacscmd">x</span>, then release both keys and type the
 word <span class="emacscmd">lisp-mode</span>.
 </li>
 
 </ul>
 
+
+<h3 id="command_summary">2.6 Emacs Command Summary</h3>
+
+<h4>2.6.1 Cursor Motion Commands</h4>
+
+<table class="float" width="75%">
+<tr><th class="lcol">Command</th> <th class="lcol">Meaning</th></tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-f</span></span></td>
+  <td>forward one character</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-b</span></span></td>
+
+  <td>back one character</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-p</span></span></td>
+  <td>previous line</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-n</span></span></td>
+
+  <td>next line</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-a</span></span></td>
+  <td>beginning of line</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-e</span></span></td>
+
+  <td>end of the line</td>
+</tr>
+
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-f</span></span></td>
+  <td>forward one word</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-b</span></span></td>
+
+  <td>back one word</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-M-f</span></span></td>
+  <td>forward one expression</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-M-b</span></span></td>
+
+  <td>back one expression</td>
+</tr>
+
+</table>
+
+
+<h4>2.6.2 Scrolling Commands</h4>
+
+<table class="float" width="75%">
+
+<tr><th class="lcol">Command</th> <th class="lcol">Meaning</th></tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-v</span></span></td>
+  <td>down one screenfull</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-v</span></span></td>
+  <td>up one screenfull</td>
+
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-&gt;</span></span></td>
+  <td>beginning of file</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-&lt;</span></span></td>
+  <td>end of file</td>
+
+</tr>
+
+</table>
+
+
+<h4>2.6.3 Editing Commands</h4>
+
+<table class="float" width="75%" >
+
+<tr><th class="lcol">Command</th> <th class="lcol">Meaning</th></tr>
+
+<tr>
+  <td >
+
+    <span class="emacscmd"><span class="emacskey">C-g</span></span>
+  </td>
+  <td >abort current command</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-d</span></span></td>
+  <td>delete character</td>
+
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-d</span></span></td>
+  <td>delete word</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-M-d</span></span></td>
+  <td>delete expression</td>
+
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-k</span></span></td>
+  <td>kill (cut) to end of line, keep in pasteboard</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-<em>spacebar</em></span></span></td>
+  <td>set the <em>mark</em>, the starting position of a region.</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-w</span></span></td>
+  <td>cut from mark to here, keep in pasteboard</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-w</span></span></td>
+  <td>copy from mark to here, keep in pasteboard</td>
+
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-y</span></span></td>
+  <td>yank back last thing in pasteboard</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-s</span></span></td>
+  <td>interactive text search</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-%</span></span></td>
+  <td>interactive search and replace</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-]</span></span></td>
+  <td>abort recursive editing mode</td>
+
+</tr>
+
+</table>
+
+
+<h4>2.6.4 File Commands</h4>
+
+<table class="float" width="75%" >
+
+<tr><th class="lcol">Command</th> <th class="lcol">Meaning</th></tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-x C-f</span></span></td>
+
+  <td>open file (new or existing)</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-x C-s</span></span></td>
+  <td>save buffer changes</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-x C-w</span></span></td>
+
+  <td>write buffer to new name</td>
+</tr>
+
+<tr>
+  <td >
+    <span class="emacscmd"><span class="emacskey">M-x</span> revert-buffer</span>
+  </td>
+  <td >throw away buffer changes and reload file</td>
+
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-x C-c</span></span></td>
+  <td>exit emacs</td>
+</tr>
+
+</table>
+
+<h4>2.6.5 Buffer and Window Commands</h4>
+
+<table class="float" width="75%" >
+
+<tr><th class="lcol">Command</th> <th class="lcol">Meaning</th></tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-x k</span></span></td>
+  <td>kill current buffer</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-x b</span></span></td>
+
+  <td>switch to buffer</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-x C-b</span></span></td>
+  <td>list all buffers</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-x</span> 1</span></td>
+
+  <td>only one window</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-x</span> 2</span></td>
+  <td>two windows</td>
+</tr>
+
+<tr>
+
+  <td><span class="emacscmd"><span class="emacskey">C-x</span> o</span></td>
+  <td>other window</td>
+</tr>
+
+</table>
+
+<h4>2.6.6 Help Commands</h4>
+
+<table class="float" width="75%" >
+<tr><th class="lcol">Command</th> <th class="lcol">Meaning</th></tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-h ?</span></span></td>
+  <td>list  help commands</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-h b</span></span></td>
+  <td>list all keyboard commands</td>
+
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-h b</span></span></td>
+  <td>describe a key command</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-h t</span></span></td>
+  <td>online tutorial</td>
+
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">C-h a</span></span></td>
+  <td>apropos word</td>
+</tr>
+
+</table>
+
+<h4>2.6.7 Directory Editor</h4>
+
+<table class="float" width="75%" >
+
+<tr><th class="lcol">Command</th> <th class="lcol">Meaning</th></tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-x</span> dired</span></td>
+  <td>start up directory editor</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd">return</span></td>
+  <td>edit file or enter directory</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd">d</span></td>
+  <td>mark file for deletion</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd">u</span></td>
+  <td>un-mark file for deletion</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd">x</span></td>
+  <td>Really expunge files marked for deletion</td>
+
+</tr>
+
+</table>
+
+<h4>2.6.8 JuSt FoR fUn Commands</h4>
+
+<table class="float" width="75%" >
+<tr><th class="lcol">Command</th> <th class="lcol">Meaning</th></tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-x</span> doctor</span></td>
+
+  <td>find out why nobody likes you</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-x</span> life</span></td>
+  <td>Game Of Life (cellular automaton)</td>
+</tr>
+
+<tr>
+
+  <td><span class="emacscmd"><span class="emacskey">M-x</span> yow</span></td>
+  <td>words of wisdom from Zippy the Pinhead</td>
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-x</span> dunnet</span></td>
+  <td>text-based adventure game</td>
+
+</tr>
+
+<tr>
+  <td><span class="emacscmd"><span class="emacskey">M-x</span> spook</span></td>
+  <td>scary CIA anarchistic somebody shoot me!</td>
+</tr>
+</table>
+
 <p>
-<em>In order to become an efficient X/Emacs Lisp composer you should
-spend several hours familiarizing yourself with X/Emacs keyboard
-commands and the editing features of the application</em>.  Here are
-some places you can start:</p>
+In order to become an efficient X/Emacs Lisp user you should spend
+several hours familiarizing yourself with Emacs and its keyboard
+commands.  Here are some places you can start:</p>
 
 <ul>
 
@@ -631,6 +1001,7 @@ $ ln -s /Applications/Emacs.app/Contents/Resources/site-lisp site-lisp
 $ ln -s /Applications/Emacs.app/Contents/Resources/ 21.3.50
 </pre>
 </div>
+</dd>
 </dl>
 
 <p>
