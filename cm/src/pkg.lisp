@@ -79,8 +79,10 @@
 		:typeTempo :typeSMPTEOffset :typePortPrefix :typeKeySign
 		:typeTimeSign :MidiNewEv :port :chan :field :bend :text :port
 		:ref :date :evtype :MidiCopyEv :MidiFreeEv :MidiAddField
-                :nullptrp :MidiShareSync :MidiOpenSync :MidiCloseSync :MidiGetSyncEv
-                :MidiFlushEvs
+                :midiTask :midiGetEv :MidiSetRcvAlarm
+                :nullptr :nullptrp :MidiFlushEvs 
+                ;;:MidiShareSync :MidiOpenSync :MidiCloseSync :MidiGetSyncEv
+                
 		:OpenPlayer :ClosePlayer :midiNewSeq
 		:StartPlayer :ContPlayer :StopPlayer :PausePlayer
 		:kMuteOn :kMuteOff :kSoloOn :kSoloOff :kMute :kSolo
@@ -118,9 +120,8 @@
 ;;;
 ;;; intern and export ms:output and ms:sprout
 ;;;
-
-(let ((syms '(#:new #:now #:output #:sprout #:receive #:MidiPrintEv)))
-  (map nil (lambda (s) (intern (symbol-name s) :midishare)) syms)
-  (export (mapcar #'(lambda (x) (find-symbol (symbol-name x) :midishare))
-                  syms)
-          :midishare))
+;(let ((syms '(#:new #:now #:output #:sprout #:receive #:MidiPrintEv)))
+;  (map nil (lambda (s) (intern (symbol-name s) :midishare)) syms)
+;  (export (mapcar #'(lambda (x) (find-symbol (symbol-name x) :midishare))
+;                  syms)
+;          :midishare))
