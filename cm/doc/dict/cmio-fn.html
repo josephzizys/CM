@@ -17,10 +17,10 @@
 </dl>
 
 <p>
-Opens and returns a new <a href="cmio-topic.html">CMIO</a> window
-whose characteristics can be customized by specifying optional keyword
+Opens and returns a new <a href="cmio-topic.html">CMIO</a> window.
+Initial window values can be customized by specifying optional keyword
 arguments to the function.  Each <var>keyword</var> is the keyword
-name of a <a href="cmio-topic.html#pages">display page</a> in the
+name of a <a href="cmio-topic.html#pages">notebook page</a> in the
 window and its <var>value</var> is a property list containing zero or
 more page field names and values. The syntax of the property list for
 each page is described below.
@@ -78,12 +78,24 @@ for a description of the <span class="keyword">:staffing</span> list.
 
 </dd>
 
+<dt id="csound"><span class="keyword">:csound</span><var>list</var></dt>
+<dd>
+Initializes data fields on the <a href="cmio-topic.html#csound">Csound
+page</a> according to <var>list</var>, a property list with the
+following keyword field names and values:
+<table>
+<tr><td><span class="keyword">:score-file</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:versions</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:orchestra</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:sound</span></td><td><var>string</var></td></tr>
+</table>
+</dd>
+
 <dt id="eventio"> <span class="keyword">:eventio</span> <var>list</var></dt>
 <dd>
 Initializes data fields on the <a href="cmio-topic.html#eventio">Event
 IO page</a> according to <var>list</var>, a property list with the
 following keyword field names and values:
-
 <table>
 <tr><td><span class="keyword">:events</span></td><td><var>expression</var></td></tr>
 <tr><td><span class="keyword">:starts</span></td><td>{<var>number</var> | <var>list</var>}</td></tr>
