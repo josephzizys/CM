@@ -14,7 +14,6 @@
   (defmacro iter args (scheme-loop args))
   )
 
-
 (define tmp-directory "/tmp/")
 
 (define (clean-tmp)
@@ -393,13 +392,13 @@
   (clear-dictionary)
   (check "note" (and (equal? 'a4 (note 'a4))
                      (equal? 'a4 (note 69))
-                     (equal? 'a4 (note 440 :hz))))
+                     (equal? 'a4 (note 440 :hz t))))
   (check "keynum" (and (equal? 69 (keynum 'a4))
                        (equal? 69 (keynum 69))
-                       (= 69 (keynum 440 :hz))))
+                       (= 69 (keynum 440 :hz t))))
   (check "hertz" (and (@= 440 (hertz 'a4))
                       (@= 440 (hertz 69))
-                      (@= 440  (hertz 440 :hz))))
+                      (@= 440  (hertz 440 :hz t))))
   (check "scale<" (and (scale< 'ef5 'ef6)
                        (not (scale<  'ef6 'ef5))
                        (not (scale< 'ef6 'ef6))
@@ -501,7 +500,7 @@
           x)
   (set! y (import-events x))
   (check "first event midimsg"
-         (is-a? (car (subobjects y)) <midimsg>))
+         (is-a? (car (subobjects y)) <midi-event>))
   (check "import times" 
          (loop for i in (cdr (subobjects y))
                for j in '(0 1 2)
@@ -627,19 +626,22 @@
                          :channel chan
                          :duration dur
                          :amplitude amp-1))
-               (output (new midimsg  
-                         :msg (make-control-change chan 7 amp-val)
-                         :time (now))))
+               (output (new midi-control-change :time (now)
+                            :channel chan
+                            :controller 7
+                            :value amp-val)))
+
            (wait step-time)))
-  (set! x (events (list (new midimsg :time 0
-                             :msg (make-program-change 0 40))
+  (set! x (events (list (new midi-program-change :time 0 
+                             :channel 0 :program 40)
                         (dim-test-1 0 2 90 0 20))
                   "midi.port"))
   (check "sent violin diminuendo" (equal? x "midi.port"))
   (sleep 5)
   (events (testms 0) "test.mp")
   (sleep 5)
-  (player-save-midifile (find-object "test.mp") "player.mid")
+  ;; this isnt working in osx 10.3.8 / OpenMCL 0.14.2
+  ;;  (player-save-midifile (find-object "test.mp") "player.mid")
   (midi-close)
   )
 
