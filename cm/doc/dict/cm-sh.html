@@ -21,25 +21,26 @@
 [<code class="keyword">-O</code> <var>os</var>] 
 [<code class="keyword">-A</code> <var>arch</var>] 
 [<code class="keyword">-F</code> <var>lisp-flavor</var>]
+[<code class="keyword">-V</code> <var>version</var>]
 [<code class="keyword">-R</code> <var>cmroot</var>]
 </span></dd>
 </dl>
 
 <p>
 Starts Common Music running either by loading it into a fresh Lisp
-session or by launching an existing image that has been built with CM
-pre-loaded.  The script can run CM in a terminal or as a subprocess of
-any Emacs-compatible editor such as xemacs(1), emacs(1), or
-gnuclient(1). 
+session or by launching a saved image file (cm.img) that contains CM
+already pre-loaded. The cm.sh script can start Common Music in a
+terminal or as a subprocess of any Emacs-compatible editor such as
+xemacs(1), emacs(1), or gnuclient(1).
 
-The cm.sh script resolves symlinks when it runs so a system-wide
-command can be installed by simply placing a link to the script
-anywhere on the user's path. The script file itself should not be
-moved from the bin/ subdirectory.
+Symlinks are resolved when the script runs so a system-wide command
+can be installed simply by placing a link to the script anywhere on
+the user's path. The ch.sh script file itself should not be moved from
+Common Music's bin/ subdirectory.
 
-Script parameters are autodetected at runtime so
+Script parameters are auto-detected at runtime so
 normally it will suffice to call cm.sh without any arguments.
-Autodetection may be overridden via options and environment variables.
+Auto-detection may be overridden via options and environment variables.
  </p>
 
 <p>
@@ -50,12 +51,12 @@ Autodetection may be overridden via options and environment variables.
 
 <dt><code class="keyword">-h</code></dt>
 <dd>
-Prints command help.
+Print command help and exit.
 </dd>
 
 <dt><code class="keyword">-q</code></dt>
 <dd>
-Echo platform's 'os-arch' string and exit.
+Echo platform's 'operating system/architecture' string and exit.
 </dd>
 
 <dt><code class="keyword">-n</code></dt>
@@ -71,42 +72,49 @@ Be verbose.
 
 <dt><code class="keyword">-l</code> {<var>lisp</var>}</dt>
 <dd>
-Run CM using this Lisp/Scheme (default: '&lt;unset&gt;').
+Run Common Music in this Lisp/Scheme. The value should be a Lisp
+command on your path or an absolute pathname to the executable.
+Default value is '&lt;unset&gt;'.
 </dd>
 
-<dt><code class="keyword">-e</code> {<var>lisp</var>}</dt>
+<dt><code class="keyword">-e</code> {<var>editor</var>}</dt>
 <dd>
-Run CM under this editor (default: '&lt;none&gt;').
+Run Common Music under this editor.  The value should be an
+Emacs-compatible editor (emacs, xemacs, gnuclient) command on your
+path or an absolute pathname to the executable. On OS X you can
+specify 'Emacs' to envoke an Aqua Emacs application installed in
+/Applications/Emacs.app.  Default is '&lt;none&gt;'
 </dd>
 
-<dt><code class="keyword">-P</code> {<var>lisp</var>}</dt>
+<dt><code class="keyword">-P</code> {<var>prefs</var>}</dt>
 <dd>
-Preferred runtimes (default: 'openmcl lisp acl clisp guile')
+Preference order (left-to-right) for auto-detecting Lisp
+commands. (default: 'openmcl lisp acl clisp guile')
 </dd>
 
-<dt><code class="keyword">-O</code> {<var>lisp</var>}</dt>
+<dt><code class="keyword">-O</code> {<var>os</var>}</dt>
 <dd>
-Operating System in case autodetection fails.
+Operating system if auto-detection fails.
 </dd>
 
-<dt><code class="keyword">-A</code> {<var>lisp</var>}</dt>
+<dt><code class="keyword">-A</code> {<var>arch</var>}</dt>
 <dd>
-Machine architecture in case autodetection fails.
+Machine architecture if auto-detection fails.
 </dd>
 
-<dt><code class="keyword">-F</code> {<var>lisp</var>}</dt>
+<dt><code class="keyword">-F</code> {<var>lisp-flavor</var>}</dt>
 <dd>
-Lisp flavor in case autodetection fails.
+Lisp flavor if auto-detection fails.
 </dd>
 
-<dt><code class="keyword">-V</code> {<var>lisp</var>}</dt>
+<dt><code class="keyword">-V</code> {<var>version</var>}</dt>
 <dd>
-Lisp version in case autodetection fails.
+Lisp version if auto-detection fails.
 </dd>
 
 <dt><code class="keyword">-R</code> {<var>cmroot</var>}</dt>
 <dd>
-Common Music root directory in case autodetection fails.
+Common Music root directory if auto-detection fails.
 </dd>
 </dl>
 
@@ -133,7 +141,7 @@ class="keyword">-e</code> option.
 <dt><code class="keyword">CM_RUNTIME_PREFS</code></dt>
 <dd>
 List of <code class="keyword">CM_RUNTIME</code> commands to try during
-autodetection, in order of preference.  Same as <code
+auto-detection, in order of preference.  Same as <code
 class="keyword">-r</code> option.
 </dd>
 
@@ -169,7 +177,7 @@ the command name or path.  Same as <code class="keyword">-V</code> option.
 
 <dt><code class="keyword">CM_ROOT_DIR</code></dt>
 <dd>
-Absolute path of the Common Music root directory in case autodetection
+Absolute path of the Common Music root directory if auto-detection
 fails.  Same as <code class="keyword">-R</code> option.
 </dd>
 
