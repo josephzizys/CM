@@ -78,7 +78,8 @@
 		:typeMarker :typeCuePoint :typeChanPrefix :typeEndTrack
 		:typeTempo :typeSMPTEOffset :typePortPrefix :typeKeySign
 		:typeTimeSign :MidiNewEv :port :chan :field :bend :text :port
-		:ref :date
+		:ref :date :evtype :MidiCopyEv :MidiFreeEv :MidiAddField
+                :MidiOpenSync :MidiCloseSync :MidiGetSyncEv
 		:OpenPlayer :ClosePlayer :midiNewSeq
 		:StartPlayer :ContPlayer :StopPlayer :PausePlayer
 		:kMuteOn :kMuteOff :kSoloOn :kSoloOff :kMute :kSolo
