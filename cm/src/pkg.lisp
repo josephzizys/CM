@@ -32,7 +32,7 @@
   (:use :common-lisp )
   (:shadow :make-load-form
            ;; have to block these from CLM
-           :io :ran :exit :quit :play )
+           :io :ran :exit :quit :play :graph )
   ;; use keywords instead of strings for case sensitive lisps.
   (:import-from :clm 
                 :mus-next
@@ -49,7 +49,7 @@
                 :clm-load
                 :*definstrument-hook*
                 ;; these are also used by CM but defs don't conflict.
-                #+(and clm2 (not clm3)) :graph 
+                ;#+(and clm2 (not clm3)) :graph 
                 :spectrum :env :src 
                 )
   (:import-from :cmn 
