@@ -87,14 +87,18 @@
 (defun object-address (x)
   (sys::address-of x))
 
-(defun shell (format &rest strings) 
-  (ext:shell (apply #'format nil format strings)))
+;;(defun shell (format &rest strings) 
+;;  (ext:shell (apply #'format nil format strings)))
+
+(defun shell (cmd &key (output t) (wait t))
+  (ext:run-shell-command cmd :output (if output :terminal nil)
+                         :wait wait))
 
 (defparameter *browser*
   "/Applications/Networking/Internet\\ Explorer.app"  )
 
 (defun open-url (url &key (browser *browser*))
-  (shell "open -a ~a ~a" browser url)
+  (shell (format nil "open -a ~a ~a" browser url))
   (values))
 
 (defconstant directory-delimiter #\/)

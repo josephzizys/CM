@@ -95,7 +95,7 @@
       ;; dont play if output is piped     
       (when (and play (not (member output 
                                    '("devaudio" "dac" "stdout"))))
-        (shell "/usr/bin/play ~a" output)))))
+        (shell (format #f "/usr/bin/play ~a" output))))))
 
 (define (set-sco-file-versions! val)
   (set! (io-class-file-versions <sco-stream>) val)

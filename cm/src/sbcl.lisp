@@ -63,9 +63,13 @@
 
 (defconstant directory-delimiter #\/)
 
-(defun shell (format &rest strings) 
-  (let ((str (apply #'format nil format strings)))
-    (sb-ext:run-program "/bin/csh" (list "-fc" str) :output t)))
+;;(defun shell (format &rest strings) 
+;;  (let ((str (apply #'format nil format strings)))
+;;    (sb-ext:run-program "/bin/csh" (list "-fc" str) :output t)))
+
+(defun shell (cmd &key (wait t) (output t))
+  (sb-ext:run-program "/bin/csh" (list "-fc" cmd)
+                      :output output :wait wait))
 
 (defun cd (&optional (dir (user-homedir-pathname )))
   (sb-posix:chdir dir)

@@ -14,14 +14,32 @@
 <!-- Entry: "shell" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">shell</code> <var>format</var> <var>...</var>)</span></dd>
+<dd><span class="syntax">(<code class="entry">shell</code> <var>cmd</var> {<var>keyword</var> <var>value</var>})</span></dd>
 </dl>
 
 
 <p>
-Prints a <var>format</var> string together with any additional
-arguments and passes the result to the operating system for execution.
+Passes the <var>cmd</var> string to the operating system for execution.
+Returns whatever the underlying Lisp implementation returns, typically a process object or false.
 </p>
+
+<p id="args"><code class="entry">shell</code> supports the following keyword arguments:
+</p>
+<dl>
+
+<dt><span class="keyword">:output</span> <var>bool</var></dt>
+<dd>
+If boolean true (the default) then any command output will be visible
+on the standard output, otherwise it will not.
+</dd>
+
+<dt><span class="keyword">:wait</span> <var>bool</var></dt>
+<dd>
+If boolean true (the default) then the function will not return until
+the command has completed execution, otherwise the function returns
+immediately after the command process starts.
+</dd>
+</dl>
 
 <!-- See also -->
 <h4>See Also:</h4>

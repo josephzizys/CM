@@ -689,8 +689,8 @@
 (define (oss-play-midi-file file . args)
   (let ((opts (if (null? args) ""
 		  (string-append  " " (car args)))))
-    (shell "/usr/bin/playmidi~a ~a > /dev/null &" 
-           opts file)
+    (shell (format #f "/usr/bin/playmidi~a ~a > /dev/null &" 
+           opts file))
     file))
 
 (define *linux-midi-file-player* 
@@ -698,7 +698,7 @@
 
 (define (linux-play-midi-file file . args)
   args
-  (shell *linux-midi-file-player* file)
+  (shell (format #f *linux-midi-file-player* file))
   file)
 
 (define *win-midi-player*
@@ -708,7 +708,7 @@
   (let ((opts (if (null? args) ""
 		  (string-append  " " (car args)))))
     (if (file-exists? *win-midi-player*)
-      (shell "~a~a ~a" *win-midi-player* opts file)
+      (shell (format #f "~a~a ~a" *win-midi-player* opts file))
       (begin
        (warn "The MIDI player ~s does not exist. Set the variable *win-midi-player* to the pathname (string) of a MIDI player on your machine and try again."
              *win-midi-player*)))  
@@ -716,5 +716,5 @@
 
 (define (osx-play-midi-file file . args)
   args
-  (shell "/usr/bin/open ~a" file)
+  (shell (format #f "/usr/bin/open ~a" file))
   file)

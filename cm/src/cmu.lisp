@@ -84,9 +84,13 @@
 (defun pwd ()
   (namestring (ext:default-directory)))
 
-(defun shell (format &rest strings) 
-  (let ((str (apply #'format nil format strings)))
-    (extensions:run-program "/bin/csh" (list "-fc" str) :output t)))
+;;(defun shell (format &rest strings) 
+;;  (let ((str (apply #'format nil format strings)))
+;;    (extensions:run-program "/bin/csh" (list "-fc" str) :output t)))
+
+(defun shell (cmd &key (wait t) (output t))
+  (extensions:run-program "/bin/csh" (list "-fc" cmd)
+                          :output output :wait wait))
 
 (defun env-var (var)
   (let ((x (assoc var ext:*environment-list*

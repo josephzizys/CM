@@ -110,11 +110,15 @@
 	  (push (subseq str b i) args))
     (nreverse args)))
 
-(defun shell (str &rest args)
-  (let* ((raw (apply #'format nil str args))
-	 (lst (explode-string raw)))
-    (ccl:run-program (car lst) (cdr lst) :output t)
-    (values)))
+(defun shell (str &key (output t) (wait t))
+  (ccl:run-program "/bin/csh" (list "-fc" cmd)
+                   :output output :wait wait))
+
+;;(defun shell (str &rest args)
+;;  (let* ((raw (apply #'format nil str args))
+;;	 (lst (explode-string raw)))
+;;    (ccl:run-program (car lst) (cdr lst) :output t)
+;;    (values)))
 
 #|
 (defun shell (str &rest args)

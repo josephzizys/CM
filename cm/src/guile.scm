@@ -31,7 +31,7 @@
   (getcwd))
 
 (define (shell cmd . args)
-  (system (apply format #f cmd args)))
+  (system cmd))
 
 (define (set-file-position file pos set?)
   (if (= pos 0)
