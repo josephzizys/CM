@@ -161,4 +161,50 @@
 
 ; (defobject f1 (f) ((env :initform '())) (:parameters time size gen &rest env))
 
+;;;
+;;;
+;;;
 
+(define (carry-pars pars last)
+  (let ((data pars)
+        (head last)
+        (pnum 1))
+    (if (null? last)
+      (loop for p in data 
+         for i from 1
+         collect
+         (if (or (string=? p ".")
+                 (string=? p "+")
+                 (char=? (string-ref p 0) #\^))
+           (err "No p~a value to carry in ~s" i pars)
+           (read-from-string p)))
+      (do ()
+          ((or (null? data) (null? last))
+           (if (and (null? data) (not (null? last)))
+             (append pars last)
+             pars))
+        (cond ((string=? (car data) ".")
+               (set-car! data (car last)))
+              ((string=? (car data) "+") 
+               (unless (= pnum 2)
+                 (err "Found p2 carry value ~s in p~d." 
+                      (car pars) pnum))
+               (set-car! data (+ (cadr head) (caddr head))))
+              ((char=? (string-ref (car data) 0) #\^)
+               (unless (= pnum 2)
+                 (err "Found p2 carry value ~S in p~d." 
+                      (car pars) pnum))
+               (let ((n (read-from-string (substring (car data) 1))))
+                 (set-car! data (+ (cadr head) n))))
+              (else
+               ;; update last
+               (set-car! data (read-from-string (car data)))
+               (unless (number? (car data))
+                 (format #t "; warning: Importing non-numerical p~s value: ~s."
+                         pnum (car data))
+                 ;;(SETF (CAR data) `(QUOTE ,(CAR DATA)))
+                 )
+               (set-car! last (car data))))
+        (set! data (cdr data))
+        (set! last (cdr last))
+        (set! pnum (1+ pnum))))))
