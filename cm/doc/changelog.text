@@ -1,45 +1,19 @@
 CM 2.4.0 now supports a direct MIDI driver connection using Grame's
-Midishare real-time MIDI operating system:
-
-http://www.grame.fr/MidiShare/ 
-
-You can also input/output to Grame's Player MIDI sequencer.  Cm's
-midishare interface should currently run in the following Lisp/OS
-combinations:
-
-          Linux/CMU       (untested, someone please help!)
-          OSX/OpenMCL
-          OSX/MCL 5.0
-`         MacOS 9/MCL 4.3
-
-The OpenMCL port, in particuar, represents an exciting possibility for
-doing real-time MIDI work in CM: The upcoming OpenMCL 1.4 release uses
-native threads for Lisp processes and allows async callbacks to Lisp.
-So true, realtime interactive MIDI input and output may finally be
-possible in CM.
-
-I will attempt to get the Midishare connection working in Guile
-however I have not learned how to interface to dynamic libs in Guile
-yet. But I'm pretty sure this will be possible somehow.  It might also
-be possible to also get the interface working in CLISP and on Windows,
-but CLISPs foreign function interface is so horrible I can't really
-tell if its possible or not.  Since Midishare also runs on Windows it
-could also work there as well but I'm not sure what Lisp one would
-use...
-
-CM defines two new IO classes for working with Midishare:
+Midishare real-time MIDI operating system. CM defines two new IO classes 
+for working with Midishare:
 
   midishare-stream:  interface to Grame's real-time MIDI library
 
-    A midshare-stream is very similar to how Mi_D handled things.  You
-    can still define a "logical channel map" for routing MIDI to
-    various ports, and you can have multiple connections active at one
-    time (well, as soon as Grame fixes this in OSX...)
+    A midshare-stream is very similar to the old "midi.port" and how
+    Mi_D handled things.  You can define a "logical channel map" for 
+    routing MIDI to various Driver ports, and you can have multiple 
+    connections active at one time (well, as soon as Grame fixes
+    this in OSX...)
 
   player-stream: interface to Grame's MIDI sequencer library
 
     A player stream lets CM process either "add" or "replace" events
-    to differnt tracks in a Midishare player. Once CM starts playing a
+    in tracks of a Midishare player (sequencer). Once CM outpus to a
     player you can use the following set of function interactively (in
     the lisp inpterpreter) to affect the playback behavior:
 
