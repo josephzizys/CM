@@ -28,7 +28,8 @@
   (:use common-lisp )
   (:shadow make-load-form
            ;; have to block these from CLM
-           io ran definstrument exit quit )
+           io ran ;definstrument
+           exit quit )
   (:import-from :clm 
                 mus-next
                 mus-bshort
@@ -44,6 +45,7 @@
                 clm-load
                 ;; these syms are used by CM but with no conflict.
                 graph spectrum env src 
+                *definstrument-hook*
                 )
   (:import-from :cmn 
                 init-clm-input
