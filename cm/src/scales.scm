@@ -1236,13 +1236,20 @@
 ;;; Invert
 ;;;
 
-(define-method (invert (lst <pair>) . args)
-  (with-args (args &optional point (scale *scale*))
-    (let ((center (keynum (or point (first lst)) :in scale )))
-      (loop for n in lst
-	    for i = (* (- center (keynum n )) 2)
-	    collect (transpose n i scale)))))
+;(define-method (invert (lst <pair>) . args)
+;  (with-args (args &optional point (scale *scale*))
+;    (let ((center (keynum (or point (first lst)) :in scale )))
+;      (loop for n in lst
+;	    for i = (* (- center (keynum n )) 2)
+;	    collect (transpose n i scale)))))
 
+(define-method (invert (lst <pair>) . args)
+  (with-args (args &optional pc?)
+    (let* ((n (car lst))
+           (k (keynum n)))
+      (loop for x in lst 
+           for d = (- k (keynum x)) 
+            collect (transpose n (if pc? (mod d 12) d))))))
 
 ;;;
 ;;; interval
