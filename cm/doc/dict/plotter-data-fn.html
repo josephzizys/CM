@@ -13,8 +13,7 @@
 <!-- Entry: "plotter-data" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">plotter-data</code> <var>plotter</var> {<var>keyword</var> <var>value</var>}*)
-</span></dd>
+<dd><code>(</code><code class="entry">plotter-data</code> <var>plotter</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
 <p>
@@ -26,42 +25,44 @@ to keyword arguments.
 </p>
 <dl>
 
-<dt><span class="keyword">:layer</span> {<span class="keyword">:front</span>  | <span class="keyword">:front-selection</span> | <var>index</var>} </dt>
+<dt><code class="keyword">:layer</code> {<code class="keyword">:front</code>  | <code class="keyword">:front-selection</code> | <var>index</var>} </dt>
 <dd>
-If <span class="keyword">:layer</span> is not specified then data from
-all layers are returned. If only one layer exists, or if <span
-class="keyword">:layer</span> is <span class="keyword">:front</span>
-then only the front layers's data is returned. If <span
-class="keyword">:layer</span> is <span
-class="keyword">:front-selection</span> then only the currently
+If <code class="keyword">:layer</code> is not specified then data from
+all layers are returned. If only one layer exists, or if <code
+class="keyword">:layer</code> is <code class="keyword">:front</code>
+then only the front layers's data is returned. If <code
+class="keyword">:layer</code> is <code
+class="keyword">:front-selection</code> then only the currently
 selected points (if any) in the front layer are returned. Otherwise
 the value should be the zero-based index of the layer to
 return. Layers are stored in the order they were created.
 </dd>
 
-<dt><span class="keyword">:xy</span> <var>bool</var></dt>
+<dt><code class="keyword">:xy</code> <var>boolean</var></dt>
 <dd>
 Determines if CLOS objects or xy coordinate numbers are returned as
-data. If <span class="keyword">:xy</span> is not specified then <a
-href="point-cls.html">point</a> data are converted to xy coordinate
-values but other CLOS instances are not. Otherwise, if <span
-class="keyword">:xy</span> is specfied then its boolean value
-determines if xy coordinates or objects are returned.
-If xy coordinates are returned, the value of <span class="keyword">x-decimals</span> and <span class="keyword">y-decimals</span>
-determines their numerical format.
+data. If <code class="keyword">:xy</code> is not specified then <a
+href="point-cls.html"><code>point</code></a> data are converted to xy
+coordinate values but other CLOS instances are not.  If the value is
+false then layer objects are returned.  If the value is true then
+numerical coordinate values are returned and the value of <code
+class="keyword">:x-decimals</code> and <code
+class="keyword">:y-decimals</code> determines their value
+formatting.
+
 </dd>
-<dt><span class="keyword">:x-decimals</span> {<var>bool</var> | <var>integer</var>}</dt>
+<dt><code class="keyword">:x-decimals</code> {<var>boolean</var> | <var>integer</var>}</dt>
 <dd>
-Specifies the number of decimal places to which x values values
-in <span class="keyword">:xy</span> coordinate lists are rounded to
-(if <a href=":xy-fn.html">:xy</a> is true). If boolean true (the
-default) then x values are unchanged. If false then x values are
-floored to the nearest integer. Otherwise the value should the number
-of decimal places that data values are rounded to. Specifying zero
-causes data to remain floating point but without remainder.
+Specifies the number of decimal places to which x values in <code
+class="keyword">:xy</code> coordinate lists are rounded to (if <a
+href=":xy-fn.html">:xy</a> is true). If boolean true (the default)
+then x values are unchanged. If false then x values are floored to the
+nearest integer. Otherwise the value should the number of decimal
+places that data values are rounded to. Specifying zero causes data to
+remain floating point but without remainder.
 </dd>
-<dt><span class="keyword">:y-decimals</span> {<var>bool</var> | <var>integer</var>}</dt>
-<dd>Exactly like <span class="keyword">:x-decimals</span> except that
+<dt><code class="keyword">:y-decimals</code> {<var>boolean</var> | <var>integer</var>}</dt>
+<dd>Exactly like <code class="keyword">:x-decimals</code> except that
 it applies to y values.</dd>
 </dl>
 
