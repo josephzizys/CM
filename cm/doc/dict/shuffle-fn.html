@@ -10,38 +10,83 @@
 <body>
 <div id="content">
 
-
-<!-- Entry: "shuffle" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">shuffle</code> <var>list</var> [<code class="keyword">:start</code> <var>i</var>] [<code class="keyword">:end</code> <var>i</var>] [<code class="keyword">:state</code> <var>x</var>] [<code class="keyword">:copy</code> <var>b</var>])</span></dd>
-</dl>
-
+<dd><code>(</code><code class="entry">shuffle</code> <var>list</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd></dl>
 
 <p>
-Returns a random reordering of <var>list</var>. Reordering takes place between <var>start</var> and <var>end</var>, which default to the full length of the
-sequence.  If <var>copy</var> is true (the default) then a reordered copy of <var>list</var> is returned, otherwise <var>list</var> is destructively modified and returned.
-<var>state</var> is a random state object and defaults to <code>*random-state*</code>.
+Returns a random ordering of <var>list</var> according to the keyword
+arguments specified to the function.
+</p>
+<p id="args">
+<code class="entry">shuffle</code> supports the following keyword arguments:
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(shuffle '(a b c d e))</span>
-(b a e d c)
-cm&gt;</pre>
+<dl>
+<dt><code class="keyword">:copy</code> <var>boolean</var></dt>
+<dd>If true then <var>list</var> is copied before it is shuffled
+otherwise <var>list</var> is destructively modified.  The default
+value is true.</dd>
+
+<dt><code class="keyword">:start</code> <var>integer</var></dt>
+<dd>An optional lower bound on element reordering.</dd>
+
+<dt><code class="keyword">:end</code> <var>integer</var></dt>
+<dd>An optional exclusive upper bound on element reordering.</dd>
+
+<dt><code class="keyword">:state</code> <var>random-state</var></dt>
+<dd>The random state to use. The default value is <code>*random-state*</code>.</dd>
+</dl>
+
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> The <code>shuffle</code> function.
+</p>
+<pre class="code">
+(shuffle '(a b c d e))
+<span class="result">&rArr;</span> (b a e d c)
+(shuffle '(a b c d e))
+<span class="result">&rArr;</span> (c e b a d)
+(shuffle '(a b c d e) :start 2)
+<span class="result">&rArr;</span> (a b e d c)
+(shuffle '(a b c d e) :start 2)
+<span class="result">&rArr;</span> (a b d e c)
+</pre>
 </div>
 
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Shuffling notes.
+</p>
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">play-shuffle</span> reps notes rate )
+  (<span class="special">let</span> ((len (length notes)))
+    (<a href="process-mac.html">process</a> for i below reps
+             for j = (mod i len)
+             when (= j 0) <span class="comment">; need to reshuffle?</span>
+             do (shuffle notes <span class="keyword">:copy</span> #f)
+             output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
+                         <span class="keyword">:keynum</span> (list-ref notes j)
+                         <span class="keyword">:duration</span> (* rate 1.5)
+                         <span class="keyword">:amplitude</span> (<a href="interp-fn.html">interp</a> j 0 .4 (- len 1) .8))
+             wait rate)))
 
-<!-- See also -->
-<h4>See Also:</h4>
+(<a href="events-fn.html">events</a> (play-shuffle 60 (note '(c d ef f g a bf c5)) .1)
+        <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
+</pre>
+</div>
+
+<h4>See also:</h4>
 <ul>
-<li><a href="between-fn.html"><kbd>between</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="drunk-fn.html"><kbd>drunk</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="odds-fn.html"><kbd>odds</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="pick-fn.html"><kbd>pick</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="pickl-fn.html"><kbd>pickl</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="ran-fn.html"><kbd>ran</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="vary-fn.html"><kbd>vary</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="between-fn.html"><kbd>between</kbd></a> [Function]</li>
+<li><a href="drunk-fn.html"><kbd>drunk</kbd></a> [Function]</li>
+<li><a href="odds-fn.html"><kbd>odds</kbd></a> [Function]</li>
+<li><a href="pick-fn.html"><kbd>pick</kbd></a> [Function]</li>
+<li><a href="pickl-fn.html"><kbd>pickl</kbd></a> [Function]</li>
+<li><a href="ran-fn.html"><kbd>ran</kbd></a> [Function]</li>
+<li><a href="vary-fn.html"><kbd>vary</kbd></a> [Function]</li>
 </ul>
 
 
