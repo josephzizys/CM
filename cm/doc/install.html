@@ -29,7 +29,7 @@ Installing Common Music involves downloading the sources, starting a
 <a href="cm.html#implementations">supported Lisp implementation</a>,
 loading CM's sources and (optionally) saving a Lisp image file
 containing the application. Once the system is installed you can run
-Common Music in <a href="emacs.html">Emacs/Xemacs</a> and load in
+Common Music in <a href="emacs.html">Emacs/XEmacs</a> and load in
 additional software systems such as <a
  href="http://www-ccrma.stanford.edu/software/clm/">CLM</a>, <a
  href="http://www-ccrma.stanford.edu/software/cmn/">CMN</a> and <a
@@ -264,20 +264,23 @@ differently as you perform each step.
 <h3 id="load_shell">3.1 Quickstart (Linux, OS X and Cygwin)</h3>
 
 <p>
-The easiest way to load CM on Linux, OS X or Cygwin is using
-the <code>cm.sh</code> script located in the bin/ subdirectory of the CM
-installation directory. This script will automatically generate and
+The easiest way to load CM on Linux, OS X or Cygwin is with
+the <code>cm.sh</code> script located in the bin/ subdirectory of the
+CM installation directory. This script will automatically generate and
 compile any files it needs as it loads the system. Once the script
 finishes loading it will leave you in the CM package ready to begin
-work.
+work. The <code>cm.sh</code> script can be used to start CM in a
+Terminal or under Emacs/Xemacs.
+
 </p>
 <div class="float">
-<p class="captxt">The <code>cm.sh</code> script.
+<p class="captxt">Running the <code>cm.sh</code> script.
 </p>
 <pre class="shell">% <span class="input">cd /Lisp/cm-2.4.1/bin</span>
 % <span
  class="input">./cm.sh</span>
 <span style="color: gray; font-style: italic;">[...build output deleted...]</span>
+
  /\\\          
 ---\\\---------
 ----\\\--------
@@ -285,11 +288,12 @@ work.
 ---/--\\\------
 --/----\\\-----
  /      \\\/   
+
 ? </pre>
 </div>
 <p>
-The <code>cm.sh</code> script can be used to start CM in a Termial or
-under Emacs/Xemacs. For more information type: <code>cm.sh -h</code>.
+Type <code>cm.sh -h</code> for an overview of the script's command
+options and use.
 </p>
 
 <h3 id="load_lisp">3.2 Lisp loading</h3>
@@ -305,20 +309,20 @@ paths, or shortcuts like "~/" unless you are sure your Lisp supports
 them.
 </p>
 <div class="float">
-<p class="captxt">Loading the CM build script in OpenMCL/OS X (Common
+<p class="captxt">Loading CM in OpenMCL/OS X (Common
 Lisp).
 </p>
 <pre class="shell">% openmcl<br>? <span class="input">(load "/Lisp/cm-2.4.1/src/cm.lisp")</span>
 <span style="color: gray; font-style: italic;">[...build output deleted...]</span></pre>
 </div>
 <div class="float">
-<p class="captxt">Loading the CM build script in Guile/Linux (Scheme).
+<p class="captxt">Loading CM in Guile/Linux (Scheme).
 </p>
 <pre class="shell">% guile<br>guile&gt; <span class="input">(load "/Lisp/cm-2.4.1/src/cm.scm")</span>
 <span style="color: gray; font-style: italic;">[...build output deleted...]</span></pre>
 </div>
 <div class="float">
-<p class="captxt">Loading the CM build script in Clisp/Windows (Common
+<p class="captxt">Loading CM in Clisp/Windows (Common
 Lisp).
 </p>
 <pre class="shell">C:\&gt; <span class="input">clisp</span>
@@ -326,7 +330,7 @@ Lisp).
  class="input">(load "c:\\lisp\\cm-2.4.1\\src\\cm.lisp")</span>
 <span style="color: gray; font-style: italic;">[...build output deleted...]</span></pre>
 </div>
-For information about using DOS directory character in Lisp see <a
+For information about using the DOS directory character in Lisp see <a
  href="#dosdir">Troubleshooting tip 4</a>.
 <p>Loading cm.scm into Guile (Scheme) simply loads CM's source files --
 no compilation or image saving occurs. In in all other Lisp
@@ -344,6 +348,7 @@ the <code>quit</code> function to exit from Common Music and Lisp.
 <p class="captxt">Switching to the CM package.
 </p>
 <pre class="shell">? <span class="input">(cm)</span>
+
  /\\\          
 ---\\\---------
 ----\\\--------
@@ -351,6 +356,7 @@ the <code>quit</code> function to exit from Common Music and Lisp.
 ---/--\\\------
 --/----\\\-----
  /      \\\/   
+
 ? <span class="input">(quit)</span>
 %
 </pre>
@@ -363,16 +369,16 @@ loading CM from compiled files but is generally less flexible.
 </p>
 <ol>
   <li>
-To save a Lisp image file, start Lisp and then load "make.lisp" from
+To save a Lisp image file, start Lisp and then load make.lisp from
 the src/ subdirectory. Then call the <a
 href="dict/make-cm-fn.html">make-cm</a> function with
-<code>:save-image</code> specified:
+<code class="keyword">:save-image</code> specified:
     <div class="float">
     <p class="captxt">Saving a lisp image.
     </p>
     <pre class="shell">? <span class="input">(load "/Lisp/cm-2.4.1/src/make.lisp")</span>
 ; Loading /Lisp/cm-2.4.1/src/make.fasl
-? (make-cm :save-image t)
+? (make-cm <code class="keyword">:save-image</code> t)
 <em>[...build output deleted...]</em>
 ; Removing fasl files.
 ; Garbage collecting...
@@ -404,22 +410,42 @@ software before you call <code>make-cm</code> to save the image.
 
 <h3 "id=install_clm_cmn">4.1 Loading CLM and CMN</h3>
 <p>
-To work with either CLM or CLM you simply load the system using one of
-the commands shown below.
+To work with either CLM or CLM you simply load the system using the
+appropriate command shown below:
+
 </p>
 
 <div class="float">
 <p class="captxt">Loading CLM into CM.</p>
-<pre class="shell">? <span class="input">(load
-"/Lisp/clm-2/all")</span>
+<pre class="shell">? <span class="input">(load "/Lisp/clm-2/all")</span>
 <i>[...build output deleted...]</i></pre>
 </div>
 <div class="float">
-<p class="captxt">Loading CMN into a running CM image.
+<p class="captxt">Loading CMN into CM.
 </p>
 <pre class="shell">? <span class="input">(load "/Lisp/cmn/cmn-all")</span>
 <i>[...build output deleted...]</i></pre>
 </div>
+
+<p>
+Note that if you load CLM instruments that were compiled outside of
+the Common Music package you will have to <code>import</code> their
+symbols before working with the instruments:
+</p>
+
+<div >
+<p class="captxt">Importing instruments compiled in the cl-user
+package .</p>
+<pre class="shell">? <span class="input">(load "/Lisp/clm-2/v")</span>
+#P"/Lisp/clm-2/v.dfsl"  
+? <span class="input">(load "/Lisp/clm-2/grani")</span>
+#P"/Lisp/clm-2/grani.dfsl"
+? (import '(cl-user::fm-violin cl-user::grani))
+T
+? <span class="input">(new fm-violin <code class="keyword">:startime</code> 0 <code class="keyword">:dur</code> 3 <code class="keyword">:frequency</code> 440)</span>
+#i(fm-violin startime 0 dur 3 frequency 440)</pre>
+</div>
+
 <h3 id="install_ms">Installing Midishare</h3>
 <p>
 A direct connection from Common Music to one or more MIDI Drivers can
