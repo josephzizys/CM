@@ -91,11 +91,8 @@
           (hash-set! *cmn-staves* (first c) c))
     (values)))
 
-(define (set-staff-meter staff meter)
-  (if (pair? meter)
-    (unless (eq? (first meter) 'meter)
-      (push 'meter meter))
-    (err "meter should be list like: (meter 3 4)"))
+(define (set-one-staff-meter staff meter)
+  ;; like cmn's set-meter but just for one staff...
   (let ((stfd (find staff staff-descriptors 
                     :key #'stfdat-staff)))
     (set! (staff-data (stfdat-staff stfd))
@@ -103,18 +100,15 @@
                   (list (cmn-eval meter))))))
 
 (define-method (deinitialize-io (io <cmn-stream>))
-  (let ((get-active-staff-stuff
+  (let ((get-active-staff-actions
          (lambda (score) 
-           (let ((ids '())
+           score
+           ;; collect ids in order...
+           (let ((ids (sort! (hash-fold (lambda (k v p) v (cons k p))
+                                        '()
+                                        *cmn-staves*)
+                             #'<))
                  (data '()))
-             score
-             ;; collect ids in order...
-             (set! data 
-                   (hash-fold  
-                    (lambda (k v p) v (cons k p))
-                    '()
-                    *cmn-staves*))
-             (set! ids (sort! ids #'<))
              (dolist (id ids)
                (let* ((desc (hash-ref *cmn-staves*  id))
                       (staff (second desc)) 
@@ -125,7 +119,6 @@
                  ;; dont collect data unless staff really has data
                  ;; because cmn flushes empty staves and those
                  ;; commands will then act on null references.
-                 
                  (when (staff-data staff)
                    (if (not (list? clefs))
                      (set! clefs (list clefs)))
@@ -137,18 +130,23 @@
                      (push (list* 'set-staff-clef label clefs)
                            data))
                    (when meter
-                     (push (list 'set-staff-meter label meter)
-                           data)))))
+                     (if (pair? meter)
+                       (unless (eq? (first meter) 'meter)
+                         (push 'meter meter))
+                       (err "meter should be list like: (meter 3 4)"))
+                     (push (list 'set-one-staff-meter label meter)
+                           data))
+                   )))
              (reverse! data)))))
     (let* ((score (io-open io))
            (path (file-output-filename io))
            (type (if (string=? (filename-type path) "cmn") 
                    :cmn #f))
-           (staves '()))
+           (args '()))
       (unless (eq? type ':cmn)
         (format #t "~%Manuscripting ~a..." path))
-      (set! staves (get-active-staff-stuff score ))
-      (apply #'finish-clm-input score type #f staves))))
+      (set! args (get-active-staff-actions score ))
+      (apply #'finish-clm-input score type #f args))))
 
 ;;;
 ;;; we cant know beforehand which internal CMN symbols a user will use
