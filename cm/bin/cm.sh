@@ -1,4 +1,4 @@
-#!/bin/sh -
+#!/bin/bash -
 #
 # File:           cm.sh
 #
@@ -323,7 +323,14 @@ get_lisp_info () {
   # This is ugly, wasteful and probably requires future maintenance :(
   case $1 in
     *clisp*|*CLISP*)
-      echo clisp_`$1 --version | head -1 | cut -d' ' -f3`
+      vrs=`$1 --version | head -1 | cut -d' ' -f3`
+      min=`echo -e "$vrs\n2.31" | sort -n | head -1`
+      if [ $min != 2.31 ] ; then
+        msg_f "$1: version '$vrs' unsupported."
+        msg_i "Need clisp with -repl option (version 2.31 or higher)."
+        msg_x "Aborting."
+      fi
+      echo clisp_$vrs
       ;;
     *acl*|*ACL*)
       echo acl_`echo '(lisp-implementation-version)' | $1 -batch | sed -n 's/^.*"\([0-9.]*\) .*/\1/p'`
@@ -386,6 +393,7 @@ if [ "$LISP_OPT" ] ; then
     fi
     LISP_EXE=$thing
     LISP_INF=`get_lisp_info $LISP_EXE`
+    if [ $? == 1 ] ; then exit 1 ; fi
     LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
     LISP_VRS=`echo $LISP_INF | sed 's:.*_::'`
     if [ -e $LOC/bin/${LISP_INF}_${CM_PLATFORM}/$IMG_NAME.$IMG_SUFFIX ] ; then
@@ -428,6 +436,7 @@ else
       LISP_EXE=`find_lisp $pref`
       if [ $LISP_EXE ] ; then
 	LISP_INF=`get_lisp_info $LISP_EXE`
+	if [ $? == 1 ] ; then exit 1 ; fi
 	LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
 	LISP_VRS=`echo $LISP_INF | sed 's:.*_::'`
         LOAD=1
