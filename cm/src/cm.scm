@@ -52,7 +52,7 @@
 	      "midi3"
               ;; "midishare/midishare.scm"
               ;; "midishare/player.scm"
-              "cmn"
+              ;; "cmn"
 	      "data"
 	      "scales"
 	      "spectral"
