@@ -387,7 +387,9 @@
   (set! *qstart* qstart)
   (set! *handler* handler)
   (set! *qnext* *qtime*)
-  (funcall *process*))
+  ;; reschedule if process function returns non-nil
+  (if (funcall *process*)
+    (enqueue *process* *qnext* *qtime*)))
 
 ;;;
 ;;; "special forms" inside process referece the special vars.

@@ -293,8 +293,11 @@
 ;;;
 
 (defun process-stop (expr)
+  ;; process not rescheuled if it returns false
   (declare (ignore expr))
-  '(return-from :process ':stop))
+  ; '(return-from :process ':stop)
+  '(return-from :process nil)
+  )
 
 (defun expand-process (forms ops)
   (let ((parsed (parse-iteration 'process forms ops))
@@ -323,14 +326,19 @@
              ,@ tests
                 ,@ (loop-looping parsed)
                    ,@ (loop-stepping parsed)
-                      (enqueue *process* *qnext* *qstart*)))
+                      ;; (enqueue *process* *qnext* *qstart*)
+                      t 
+                      ))
     ;; if there is a finally clause wrap the block
     ;; in a test for :STOP. when true do the 
     ;; finally actions.
     (when (loop-finally parsed)
-      (setf code
-            `(when (eq ':stop ,code)
-               ,@ (loop-finally parsed))))
+      ;(setf code
+      ;      `(when (eq ':stop ,code)
+      ;         ,@ (loop-finally parsed)))
+      (setf code `(if (not ,code)
+                    (progn ,@ (loop-finally parsed) nil)
+                    t)))
     (setf func `(function (lambda () ,code)))
     (if (and (null (loop-bindings parsed))
              (null (loop-initially parsed)))

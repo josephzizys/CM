@@ -868,7 +868,8 @@
 
 (define (process-stop expr)
   ;; stopprocess is lexical var holding continuation 
-  '(stopprocess))
+  ;; return false
+  '(stopprocess #f))
 
 (define (expand-process forms ops)
   (let ((parsed (parse-iteration 'process forms ops))
@@ -895,7 +896,9 @@
 		     ,@ tests
 		        ,@ (loop-looping parsed)
 		           ,@ (loop-stepping parsed)
-		              (enqueue *process* *qnext* *qstart* )))))
+                              ;;(enqueue *process* *qnext* *qstart* )
+		              #t
+                              ))))
     (if (and (null? (loop-bindings parsed))
 	     (null? (loop-initially parsed)))
       func
