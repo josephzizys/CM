@@ -19,20 +19,24 @@
 
 
 <p>
-Holds a Lisp expression to be evaluated each time <kbd>next</kbd> encounters 
-it in a pattern. The name <kbd>pval</kbd> stands for "pattern value".
+Blocks the evaluation of <var>expr</var> until <a href="next-fn.html">next</a> 
+encounters it in a pattern. The name <kbd>pval</kbd> stands for "pattern value".
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(define x (new cycle </span>
-    <span class="input">                   :of (list 'a </span>
-    <span class="input">                             (pval (between 1000 5000))</span>
-    <span class="input">                             'b)))</span>
 
-cm&gt; <span class="input">(next x 12)</span>
-(a 2760 b a 3589 b a 1175 b a 1515 b)
-cm&gt;</pre>
+<h4>Examples:</h4>
+
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 1.</span> Embed a random number selection as the second element of a pattern.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">x</span> (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:of</span> (list 'a 
+                               (pval (<a href="between-fn.html">between</a> 1000 5000))
+                               'b)))
+(<a href="next-fn.html">next</a> x 12)
+<span="output">(a 2760 b a 3589 b a 1175 b a 1515 b)</span>
+</pre>
 </div>
 
 

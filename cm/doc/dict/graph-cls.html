@@ -10,89 +10,113 @@
 <body>
 <div id="content">
 
-
 <!-- Entry: "graph" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
 <dd><span class="syntax"><code class="entry">graph</code></span></dd>
 </dl>
 
-
 <p>
-Enumerates data according to transition rules associated with each element.
+Enumerates data according to transition rules associated with the data
+in the pattern.
 </p>
 
 <p><code class="entry">graph</code> supports the following slot initializations:
 </p>
 <dl>
 
+<dt><code class="keyword">:of</code> <var>list</var></dt>
+<dd>
+The list of <var>graph nodes</var> to traverse in the pattern. Each
+graph node is specified as a list:
+<blockquote>
+<p>(<var>element</var> { <var>property</var> <var>value</var> }+)</p>
+</blockquote>
+<var>Element</var> is the value  the node contains and is
+followed by zero or more optional <em>property value</em> pairs:
+
+<dl>
+<dt>
+<span class="keyword">:id</span> {<var>integer</var> | <var>symbol</var>}</dt>
+<dd>
+Identifies the node with a unique name or number.  If omitted the
+identifier defaults to the node's element, but since a node may
+contain any kind Lisp object it is good practice to provide each
+node with an explicit id independant of its element.
+</dd>
+
+<dt><span class="keyword">:to</span> {<var>id</var>| <var>pattern</var>}</dt>
+<dd>
+Specifies the transition rule for the graph node.  The value may be a
+single node identifier or a pattern of identifiers.  The <span
+class="keyword">:to</span> property can also be specified as a
+"right-arrow" <span class="keyword">-&gt;</span>.
+</dd>
+</dl>
+</dd>
 
 <dt><code class="keyword">:selector</code> <var>function</var></dt>
 <dd>
-
-Sets the node selection function of the graph. The function is passed three values,
-the pattern, the last node and the list of ids representing the past selections.
-Defaults to the system's graph traversal function <kbd>#'default-graph-node-select</kbd>.
+Sets the node selection function of the graph. This function is passed
+three values, the pattern, the last node selected and the list of ids
+representing past selections.  Defaults to the system's graph
+traversal function <kbd>#'default-graph-node-select</kbd>.
 </dd>
 
 <dt><code class="keyword">:props</code> <var>list</var></dt>
 <dd>
+A property list to associate with the graph. This list can be used to
+cache information for a specified <span
+class="keyword">:selector</span> function.
+</dd>
 
-Sets the property list of the graph to <var>list</var>. This list can be used to cache
-information for a specific <kbd>selector</kbd> function.
+<dt><code class="keyword">:starting-node-index</code> <var>integer</var></dt>
+<dd>
+Sets the node at position <var>index</var> in the node list as the
+initial node for the pattern. The default value is 0, which means that
+first node in the node list will produce the first value in the
+pattern.
 </dd>
 
 <dt><code class="keyword">:last</code> ({<var>id</var>}*)</dt>
 <dd>
-
-Initializes the graph to a specific list of ids representing past node choices.
+Initializes the graph to a specific list of ids representing past node
+choices. Can be used in conjunction with implementing Markov selection.
 </dd>
+
 
 </dl>
 
+<h4>Examples:</h4>
 
-
-<p>
-Elements in a <kbd>graph</kbd> are represented as <var>nodes</var>. Each node must be specified
-as a list:
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 1.</span> A cyclic graph that starts on the third node (list index 2).
 </p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">x</span>
+ (<a href="new-mac.html">new</a> graph <span class="keyword">:of</span> '((a <span class="keyword">:id</span> 1 <span class="keyword">:to</span> 2)
+                  (b <span class="keyword">:id</span> 2 <span class="keyword">:to</span> 3)
+                  (c <span class="keyword">:id</span> 3 <span class="keyword">:to</span> 1))
+      <span class="keyword">:starting-node-index</span> 2))
 
-<blockquote>
-<p>
-<kbd>(<var>element</var> {<var>property value</var>}+)</kbd>
+(<a href="next-fn.html">next</a> x 10)
+<span class="output">(c a b c a b c a b c)</span></pre>
+</div>
+
+
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 2.</span> A graph with a subpattern in node 2 and a random transition rule in node 3.
 </p>
-</blockquote>
-
-<p>
-where <var>element</var> is the element to return from the node. 
-</p>
-
-<p>Graph nodes support the following <var>property value</var> pairs:
-</p>
-<dl>
-
-
-<dt><code>-&gt;</code> {<var>id</var> | <var>pattern</var>}</dt>
-<dd>
-
-Sets the transition link for the graph node. This option is required for
-each node. The value may be a single identifier or a pattern of identifiers.
-</dd>
-
-
-<dt><code>id</code> <var>datum</var></dt>
-<dd>
-
-Sets <var>datum</var> to be the unique identifier for the node in the pattern. The
-identifier may be any Lisp datum as long as its uniquely represented in
-the pattern. If omitted, the identifier defaults to the element itself. It is good
-practice to provide each node with an explicit id that is
-independent of the actual element returned by the node.
-
-</dd>
-
-</dl>
-
+<pre class="code">
+(<span class="special">define</span> <span class="defined">x</span>
+ (<a href="new-mac.html">new</a> graph <span class="keyword">:of</span> `((a <span class="keyword">:id</span> 1 <span class="keyword">:to</span> 2)
+                  (,(<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:of</span> '(b1 b2)) <span class="keyword">:id</span> 2 <span class="keyword">:to</span> 3)
+                  (c <span class="keyword">:id</span> 3 <span class="keyword">:to</span> ,(<a href="pval-mac.html">pval</a> (<a href="pick-fn.html">pick</a> 1 2))))))
+(<a href="next-fn.html">next</a> x 10)
+<span class="output"(a b1 b2 c b1 b2 c a b1 b2)</span></pre>
+</div>
 
 <!-- See also -->
 <h4>See Also:</h4>

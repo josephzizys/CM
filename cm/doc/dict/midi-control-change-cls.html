@@ -87,6 +87,28 @@ A MIDI control value from 0 to 127.
 </pre>
 </div>
 
+(define (pbs chan width)
+  ;; seq of control messages that sets pitch bend
+  ;; sensitivity for channel chan. width in half-steps.
+  (new seq :time 0
+       :subobjects
+             ;; Registered Parameter Number (fine)
+       (list (new midi-control-change 
+               :time 0 :channel chan
+               :controller 100
+               :value 0)
+             ;; RPN (coarse)
+             (new midi-control-change 
+               :time 0 :channel chan
+               :controller 101
+                :value 0)
+             ;; Data entry
+             (new midi-control-change 
+               :time 0 :channel chan
+               :controller 6
+               :value width))))
+
+
 <h4>See also: </h4>
 <ul>
 <li>
