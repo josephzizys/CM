@@ -19,7 +19,7 @@
 The CMIO (Common Music Input/Output) window facilitates the generation
 of musical events to and from sound synthesis and display
 applications.  The window is intended to present a "birds eye"
-overveiw of CM's IO functionality and to provide a structured
+overview of CM's IO functionality and to provide a structured
 replacement to evaluating input and output expressions in the
 Lisp <em>REPL</em>, or read-eval-print loop. As an alternative to REPL
 evaluation, CMIO windows perform their own error handling that, by
@@ -302,7 +302,8 @@ more information.</li>
 
 <h4 id="csound">Csound</h4>
 <p>
-The <a href="cmio-fn.html#csound">Csound page</a> manages IO to CSound score files and audio files.
+The <a href="cmio-fn.html#csound">Csound page</a> manages input and
+output to CSound score files and audio files.
 </p>
 
 <div class="float">
@@ -337,7 +338,7 @@ Csound command and audio playback.</li>
 
 <h4 id="midi">MIDI</h4>
 <p>
-The <a href="cmio-fn.html#cmn">MIDI page</a> ...
+The <a href="cmio-fn.html#cmn">MIDI page</a> manages input and output to MIDI files.
 </p>
 <div class="float">
 <p>
@@ -440,10 +441,12 @@ the REPL.</li>
 The <a href="cmio-fn.html#files">Files page</a> associates <em>file
 handlers</em> with the various file types used in the system. Handers
 can be external programs, shell scripts, or Lisp functions.  Programs
-and shell scripts are passed the current target file as
-their <em>last</em> argument. To define a Lisp function handler,
-specify the hander as function call list. The target file will be
-inserted as the <em>first</em> argument to the function.
+and shell scripts are passed the current target file by appending it
+after <em>last</em> user-supplied argument. To define a Lisp function
+handler, specify the hander in a function call list along with any
+arguments to pass to the function.  The target file is passed to the
+function by inserting it before the <em>first</em> user-supplied
+argument to the function.
 </p>
 <div class="float">
 <p>
@@ -452,9 +455,9 @@ inserted as the <em>first</em> argument to the function.
 </div>
 <ul>
 <li>If the Wait box is unchecked then external programs and scripts
-will run in a separate "forked" process, otherwise they will run under
-the Lisp REPL process and the REPL will be unavailable until the
-external program returns.</li>
+will run in a forked process, otherwise they will run under the Lisp
+process and the REPL will be unavailable until the external program
+finished execution and returns.</li>
 <li>If Output is checked then output messages from the external
 program will appear in the Lisp REPL window, otherwise they will not
 appear.</li>
@@ -464,11 +467,11 @@ appear.</li>
 <p>
 The <a href="cmio-fn.html#systems">Systems page</a> allows external
 sound systems to be loaded into Lisp. Systems that are already loaded
-are marked with a green dot and their load button is disabled. Systems
-that are not loaded are marked with a red dot and their load button is
-enabled. Systems that cannot be loaded are marked by a Halt icon. This
-condition may arise if the host computer is missing application
-software or runtime libraries.
+are marked with a green dot and the associated load button is
+disabled. Systems that are not loaded are marked with a red dot and
+their load button is enabled. Systems that cannot be loaded are marked
+by an error icon. This condition may arise if the host environment is
+missing software or runtime libraries.
 </p>
 <div class="float">
 <p>
@@ -494,8 +497,7 @@ The <a href="cmio-fn.html#executive">Executive page</a> manages the interface be
 <li>The Directory field contains the <em>current working
 directory</em>, the default location for writing and importing
 files. File names specified on target pages are merged against the
-contents of this field to provide the fully specified output
-file pathnames.</li>
+contents of this field to provide fully specified pathnames.</li>
 <li>
 The Files buffer contains the name of the current target file. The
 contents of this buffer is automatically updated whenever output files
@@ -523,13 +525,13 @@ window executes via foreign function (GTK) callbacks that do not
 expect the flow of control to be interrupted. As a result, Lisp error
 breaks inside CMIO will likely cause the window to freeze and &mdash;
 in some cases &mdash; may even cause the Lisp session to abruptly
-terminate. For this reason the CMIO window evaluate CM function calls
-calls in such a way that error messages are reported in the message
-line without triggering a Lisp error break. If you need to enter the
-Lisp break loop in order to debug a problem then set the global
+terminate. For this reason the CMIO window evaluates CM function calls
+in such a way that error messages are reported in the message line
+without triggering Lisp error breaks. If you need to enter the Lisp
+break loop in order to debug a problem then set the global
 variable <code>*cm-break-on-errors*</code> to true, but realize that
-once the break condition is resolved the CMIO window (and possibly the
-whole GTK session) may no longer work.
+once the break loop is left the CMIO window (and possibly the whole
+GTK session) may no longer work.
 </p>
 
 </div> <!-- end content -->
