@@ -386,7 +386,7 @@ get_lisp_info () {
         echo clisp_$vrs
         ;;
       *acl*|*ACL*)
-        echo acl_`echo '(lisp-implementation-version)' | "$1" -batch | sed -n 's/^.*"\([0-9.]*\) .*/\1/p'`
+        echo acl_`echo '(lisp-implementation-version)' | "$1" -batch 2>/dev/null | sed -n 's/^.*"\([^ ]*\) .*/\1/p'`
         ;;
       *lisp*|*LISP*|*cmucl*|*CMUCL*)
         echo cmucl_`echo '(lisp-implementation-version)' | "$1" -quiet -batch | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p;'`
