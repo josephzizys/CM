@@ -14,20 +14,21 @@
 <!-- Entry: "octave-number" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">octave-number</code> <var>freq</var> [<var>scale</var>])</span></dd>
+<dd><span class="syntax">(<code class="entry">octave-number</code> <var>freq</var> [<var>scale</var>] [<var>real?</var>)</span></dd>
 </dl>
 
-
 <p>
-Returns the octave number of <var>freq</var>, which can be a note or keynum in <var>scale</var>.
+Returns the octave number of <var>freq</var>, which can be a note or
+keynum in <var>scale</var>.  If <var>real?</var> is true then the
+octave number returned is shifted by the octave offset of the tuning.
 </p>
 
 <!-- Interaction 1 -->
 <div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(octave-number 'df5)</span>
-5
-cm&gt; <span class="input">(octave-number 60)</span>
+cm&gt; <span class="input">(octave-number 'c4)</span>
 4
+cm&gt; <span class="input">(octave-number 'c4 *scale* true)</span>
+5
 cm&gt; <span class="input">(octave-number 59)</span>
 3
 cm&gt; <span class="input">(octave-number 0)</span>
