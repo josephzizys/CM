@@ -1,5 +1,14 @@
 CM 2.5.0 (unstable development branch release)
 
+o CM now supports 
+
+o Plotter reimplemented. Now runs in GTK2 in the following lisps:
+    OpenMCL/Darwin/PPC
+    SBCL/Linux/x86
+    CMUCL/Lunux/x86
+
+o New function (cmio) provides GUI "front end" for CM input/output.
+
 o Real-time MIDI process scheduling and interactive MIDI
   input/output is now supported in OSX / OpenMCL 0.41.1-p1. See the
   new documentation topic for information on how this all works:
@@ -47,6 +56,13 @@ o New highlevel MIDI event classes replace the MIDIMSG class for
 o New 'cmn' object for generating CMN notes and CMN staff expressions
   (variables and function calls) to cmn-streams and midi files. See
   dict/cmn-cls.html for more information.
+
+o The calling syntax of the following functions have changed. (They
+  all formerly mixed &optional and &key args.)
+  (plotter-data plotter &key layer ...)
+  (plotter-front-layer plotter)
+  (plotter-property plotter prop &rest ...)
+  (fm-spectrum car mod rat spectrum &key ...)
 
 o The functions 'hertz', 'note' and 'keynum' have been reimplemented
    to provide additional functionality and to make these functions
