@@ -73,11 +73,11 @@
                  (d5  d5  -> b4)
                  (d5 e5  -> (a4 .3125) (cs5 .6875)))))
         (p2 (new random
-              :of `((,(new cycle h h) weight .375)
-                    (,(new cycle q q q q) weight .125)
-                    (,(new cycle h q q) weight .125)
-                    (,(new cycle q q h) weight .125)
-                    (, (new cycle q h q) weight .25)
+              :of `((,(new cycle :of '(h h)) weight .375)
+                    (,(new cycle :of '(q q q q)) weight .125)
+                    (,(new cycle :of '(h q q)) weight .125)
+                    (,(new cycle :of '(q q h)) weight .125)
+                    (, (new cycle :of '(q h q)) weight .25)
                     (w weight .125)))))
           
           ;; the process simply reads data from the 2 markov patterns
@@ -89,10 +89,13 @@
                         time (now) duration d amplitude .5)
                    wait d)))
 
-; (events (list (foster 90 -12)
-;               (foster 90 0)
-;               (foster 90 12)
-;               (foster 90 24))
-;         0
+;;; Sample call that generates 4 parallel foster processes
+;;; in different octaves. Select "Slow Strings" on the four
+;;; channels to get a pretty good Copeland sound....
+;
+; (events (list (foster 90 -12 0)
+;               (foster 90 0 0)
+;               (foster 90 12 0)
+;               (foster 90 24 0))
 ;        "foster.midi")
 
