@@ -23,7 +23,7 @@ A specialized pattern that copies and repeats periods of a subpattern.
 </p>
 
 <dl>
-<dt><span class="keyword">:of</span> <var>pattern</var></dt>
+<dt><code class="keyword">:of</code> <var>pattern</var></dt>
 <dd>Sets the pattern to be copied or repeated.</dd>
 
 <dt><code class="keyword">:for</code> {<var>number</var> | <var>pattern</var>}</dt>
@@ -42,7 +42,7 @@ to remain the same as the subpattern. This initialization causes the <code class
 </dd>
 
 <dt>
-<span class="keyword">:name</span> {<var>symbol</var> | <var>string</var>}
+<code class="keyword">:name</code> {<var>symbol</var> | <var>string</var>}
 </dt>
 <dd>
 Sets the name of the object. An object can be fetched from its name
@@ -50,12 +50,12 @@ using the <a href="hshamp-mac.html">#&amp;</a> read macro or the <a
 href="find-object-fn.html"><code>find-object</code></a> function.
 </dd>
 
-<dt><span class="keyword">:repeat</span> {<var>number</var> | <var>pattern</var>}</dt>
+<dt><code class="keyword">:repeat</code> {<var>number</var> | <var>pattern</var>}</dt>
 <dd>
 Specifies how many periods of the pattern should occur before the
 pattern signals <a href="eodqmk-fn.html">end of data</a>.
 </dd>
-<dt><span class="keyword">:returning</span> <var>function</var></dt>
+<dt><code class="keyword">:returning</code> <var>function</var></dt>
 <dd>
 An optional function to apply to each element as it is generated from
 the pattern. The function is passed one argument, the element, and
