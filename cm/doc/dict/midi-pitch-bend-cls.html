@@ -25,14 +25,14 @@ A MIDI pitch bend event.
 
 <dl>
 <dt><code class="keyword">:time</code> <var>number</var></dt>
-<dd>Sets the start time of object in score.</dd>
+<dd>Start time in score.</dd>
 <dt><code class="keyword">:channel</code> <var>integer</var></dt>
 <dd>A MIDI channel number. Defaults to 0.</dd>
 
 <dt><code class="keyword">:bend</code> <var>integer</var></dt>
 <dd>
 A pitch bend value from -8192 to 8191. Defaults to 0, or no bend.
-See example below for more information.
+See Example 2 below for more information.
 </dd>
 
 </dl>
@@ -44,24 +44,76 @@ See example below for more information.
 <span class="floatlabel">Example 1.</span> Creating MIDI pitch bends.
 </p>
 <pre class="code">
-(<span class="special">new</span> midi-pitch-bend <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> 3 <span class="keyword">:bend</span> -102) 
+<span class="comment">;;; max bend down</span>
 
-(<span class="special">define</span> (<span class="defined">step-&gt;bend</span> val . width)
-  <span class="comment">;; convert a step value +-width to bend range -8192 to 8191.
-  ;; default width is +-2 (whole step up or down)</span>
+(<span class="special">new</span> midi-pitch-bend <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> 3 <span class="keyword">:bend</span> -8192) 
+
+<span class="comment">;;; cancel bend</span>
+
+(<span class="special">new</span> midi-pitch-bend <span class="keyword">:time</span> 1 <span class="keyword">:channel</span> 3 <span class="keyword">:bend</span> 0) 
+</pre>
+</div>
+
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 2.</span> Determining pitch bend values.
+</p>
+<pre class="code"><span class="comment">;;; convert a <var>value</var> between <var>+-width</var> to a pitch
+;;; bend value ranging from -8192 to 8191.
+;;; default width is +-2 (whole step up or down)</span>
+
+(<span class="special">define</span> (<span class="defined">step-&gt;bend</span> value . width)
   (<span class="special">let</span> ((wid (<span class="special">if</span> (null? width) 2 (car width))))
     (inexact-&gt;exact
-     (floor (rescale val (- wid) wid -8192 8191)))))
+     (floor (rescale value (- wid) wid -8192 8191)))))
 
 <span class="comment">;;; bend one quarter-tone down</span>
 
 (<span class="special">new</span> midi-pitch-bend <span class="keyword">:bend</span> (step-&gt;bend -.5))
 
-<span class="comment">;;; specifying a percentage or 'cent' bend</span>
+<span class="comment">;;; percentage bend</span>
 
 (<span class="special">new</span> midi-pitch-bend <span class="keyword">:bend</span> (step-&gt;bend 75 100))
 </pre>
 </div>
+
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 3.</span> Musical process generating random bends.
+</p>
+
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">ranbends</span> num dur )
+  <span class="comment">;; output <var>num</var> bends <var>dur</var> apart, last bend 0.</span>
+  (<span class="special">process</span> for i from 1 to num
+           for b = (between -2.0 2.0)
+           output (<span class="special">new</span> midi-pitch-bend <span class="keyword">:time</span> (now)
+                      <span class="keyword">:bend</span> (<span class="special">if</span> (= i num)
+                              0
+                              (step->bend b)))
+           wait dur))
+
+(<span class="special">define</span> (<span class="defined">random-bends</span> reps )
+  (<span class="special">process</span> repeat reps
+           for key = (between 30 90)
+           for dur = (pick 1 2 3)
+           for num = (between 2 8)
+           for inc = (/ dur (+ num 1))
+           output (<span class="special">new</span> midi <span class="keyword">:time</span> (now)
+                      <span class="keyword">:duration</span> dur
+                      <span class="keyword">:keynum</span> key)
+           <span class="comment">;; sprout <var>num</var> bends starting <var>inc</var> ahead</span>
+           sprout (ranbends num inc) at (+ (now) inc)
+           wait dur))
+
+(events (random-bends 20) "test.mid")
+</pre>
+</div>
+
+
+
+
+
 
 
 <h4>See also: </h4>

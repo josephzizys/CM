@@ -44,11 +44,11 @@ below for how to convert musical tempo to usecs.
 <span class="floatlabel">Example 1.</span> MIDI tempo events.
 </p>
 
-<pre class="code"><span class="comment">;;; tempo = 120 quarters per minute</span>
+<pre class="code"><span class="comment">;;; tempo 120 quarters per minute</span>
 
 (<span class="special">new</span> midi-tempo-change <span class="keyword">:time</span> 0 <span class="keyword">:usecs</span> 500000)
 
-<span class="comment">;;; tempo = 90 quarters per minute</span>
+<span class="comment">;;; tempo 90 quarters per minute</span>
 
 (<span class="special">new</span> midi-tempo-change <span class="keyword">:time</span> 0 <span class="keyword">:usecs</span> 666667)
 </pre>
@@ -56,15 +56,14 @@ below for how to convert musical tempo to usecs.
 
 <div class="float">
 <p class "captxt">
-<span class="floatlabel">Example 2.</span> Tempo (quarter notes per
-minute) to usecs conversion.
+<span class="floatlabel">Example 2.</span> Quarter notes per minute to usecs conversion.
 </p>
 
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">qpm->usecs</span> bpm )
   (inexact->exact (round (* (/ 60 bpm) 1000000))))
 
-<span class="comment">;;; accelerando process</span>
+<span class="comment">;;; an accelerando process</span>
 
 (<span class="special">define</span> (<span class="defined">accel</span> num tempo1 tempo2)
   <span class="comment">;; accelerate in num quarters from tempo1 to tempo2</span>

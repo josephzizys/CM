@@ -60,6 +60,43 @@ value.  For example, Grand Piano is 0, not 1.
 </div>
 
 
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 1.</span> Creating a 'Multi' setup.
+</p>
+<pre class="code"><span class="comment">;;; bass, trombone, violin, flute</span>
+
+(<span class="special">define</span> <span class="defined">myins</span> '(32 57 40 73))
+
+<span class="comment">;;; seq of program changes for our ensemble</span>
+
+(<span class="special">new</span> seq <span class="keyword">:name</span> 'ensemble
+     <span class="keyword">:subobjects</span>
+     (<span class="special">loop</span> for i in myins
+           as c from 0
+           collect
+           (<span class="special">new</span> midi-program-change <span class="keyword">:time</span> 0
+               <span class="keyword">:channel</span> c <span class="keyword">:program</span> i)))
+
+<span class="comment">;;; assign random notes to instrument channels</span>
+
+(<span class="special">define</span> (<span class="defined">squeek</span> reps)
+  (<span class="special">process</span> repeat reps
+           for key = (between 40 80)
+           for dur = (pick .5 1 1.5 2)
+           for chan = (<span class="special">if</span> (scale&lt; key 'c4)
+                          (pick 0 1) 
+                          (pick 2 3))
+           output (<span class="special">new</span> midi <span class="keyword">:time</span> (now)
+                       <span class="keyword">:duration</span> .2
+                       <span class="keyword">:keynum</span> key <span class="keyword">:channel</span> chan)
+           wait (pick 0 .25 .5 .75 1)))
+
+(events (list #&ensemble (squeek 30)) "test.mid" )
+</pre>
+</div>
+
+
 <h4>See also: </h4>
 <ul>
 <li>
