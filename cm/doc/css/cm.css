@@ -287,6 +287,8 @@ img {
 
 /* Syntax Highlighting */
 
+span.emacscmd { font-weight: bold; font-size: smaller; }
+span.emacskey { text-decoration: underline }
 span.string  {color: #228b22;} 
 span.comment {color: #8a2be2;}
 span.keyword {color: #b22222;}
