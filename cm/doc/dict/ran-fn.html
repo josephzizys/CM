@@ -47,53 +47,57 @@ as a symbol or keyword.  Defaults to <code class="keyword">:uniform</code>.
 
 <dl>
   <dt><code class="keyword">:uniform</code></dt>
-  <dd>Numbers are evenly distributed between <code class="keyword">:from</code> and <code class="keyword">:below</code>.
+  <dd>Equal probability distribution.
   </dd>
 
-  <dt><code class="keyword">:low</code></dt>
-  <dd>Prefers lower numbers between <code class="keyword">:from</code> and <code class="keyword">:below</code>.
-      Density = f(x)=2*(1-x) for {x 0&lt;1}. Mean = .2929.
+  <dt><code class="keyword">:low-pass</code></dt>
+  <dd>Likelihood of lower numbers is greater then higher
+  numbers. Density is f(x)=2*(1-x) for {x 0&lt;1} and mean is .2929.
   </dd>
 
-  <dt><code class="keyword">:high</code></dt>
-  <dd>Prefers higher numbers between <code class="keyword">:from</code> and <code class="keyword">:below</code>. 
-      Density = f(x)=2*(1-x) for {x 0&lt;1}. Mean = .2929. 
+  <dt><code class="keyword">:high-pass</code></dt>
+  <dd>Likelihood if higher numbers is greater than lower numbers. 
+      Density is f(x)=2*(1-x) for {x 0&lt;1} and mean is .2929. 
   </dd>
 
-  <dt><code class="keyword">:triangular</code></dt>
-  <dd>Prefers middle numbers between <code class="keyword">:from</code> and <code class="keyword">:below</code>. Mean = n/2. 
+  <dt><code class="keyword">:mean</code></dt>
+  <dd>Likelihood of mid-range numbers is greater than lower or higher
+  numbers. Mean is n/2.
   </dd>
 
   <dt><code class="keyword">:beta</code></dt>
   <dd>
   The <span class="keyword">:a</span> and <span
-  class="keyword">:b</span> parameters determine density
-  behavior. When a=b=1 uniform distribution results. When a=b, the
+  class="keyword">:b</span> parameters determine the shape of the
+  distribution. When a=b=1 the distribution is uniform. When a=b, the
   distribution is symmetric around .5.  When a&lt;1 and b&lt;1 then
-  density of large and small numbers increases. When a&gt;1 and
+  the density of larger and smaller numbers increases. When a&gt;1 and
   b&gt;1, density is similar to the gaussian distribution.
   </dd>
 
   <dt><code class="keyword">:exponential</code></dt>
-  <dd>Returns a floating point value >0. 
-  The <var>a</var> parameter is a stretching factor (lambda).
-  Increasing <var>a</var> prefers smaller numbers. The value
-  returned is unbounded but when a=1 then %99.9 of the time the value is
-  less than 6.9077554, ie -log(.001). Density = f(x)=(exp -x). Mean = 1.0.
+  <dd>Returns a floating point value greater than zero.  The <code
+  class="keyword">:a</code> parameter is a stretching factor;
+  increasing its value "prefers" smaller numbers. The distribution is
+  unbounded but when a=1 then %99.9 of the time the value returned
+  will be than 6.9077554, i.e. -log(.001). The distribution density is
+  f(x)=(exp -x) with a mean of 1.0.
   </dd>
 
   <dt><code class="keyword">:gaussian</code></dt>
-  <dd>Gaussian (normal) distribution returns an unbounded value. The spread (standard
-  deviation) is 1.0 centered at 0, so 68.26% of the results are -1&lt;=x&lt;=1, and 99.74% of
-  the results are -3&lt;=x&lt;=3.
+  <dd>Gaussian (normal) distribution returns an unbounded value. The
+  spread (standard deviation) is 1.0 centered at 0, so 68.26% of the
+  results are between -1 and 1 inclusive and 99.74% of the results are
+  between -3 and 3 inclusive.
   </dd>
 
   <dt><code class="keyword">:cauchy</code></dt>
-  <dd>Returns an unbounded value. The density function is a bell shaped curve centered
-  at 0 similar to a normal distribution but with more values at the extremes.
-  The mean and standard deviation of the Cauchy distribution are undefined.
-  If parameter <span class="keyword">:a</span> is not false, only positive values are returned.
-  Density = f(x)=1/(pi(1 + x^2))
+  <dd>Returns an unbounded value. The density function is a bell
+  shaped curve centered at 0 similar to a normal distribution but with
+  more values at the extremes.  The mean and standard deviation of the
+  Cauchy distribution are undefined.  If parameter <span
+  class="keyword">:a</span> is true then only positive values are
+  returned.  Density is f(x)=1/(pi(1 + x^2)).
   </dd>
 
   <dt><code class="keyword">:poisson</code></dt>
@@ -105,13 +109,12 @@ as a symbol or keyword.  Defaults to <code class="keyword">:uniform</code>.
   </dd>
 
   <dt><code class="keyword">:gamma</code></dt>
-  <dd>Returns a floating point value >0. Parameter <code
-  class="keyword">:a</code> controls the distribution's shape and must
-  be positive. In this implementation, a can only take
-  integer values. If a non-integer is provided, the value is
-  rounded. When a=1, the distribution is the same as
-  exponential. As <var>a</var> increases, the probability density
-  function becomes a curve with mean = a and standard deviation =
+  <dd>Returns a floating point value greater than 0. Parameter <code
+  class="keyword">:a</code> controls the distribution's shape and
+  should be a positive integer (if a non-integer is provided, the
+  value is rounded.) When a=1, the distribution is the same as
+  exponential. As its value increases, the probability density
+  function becomes a curve with mean=a and standard deviation =
   sqrt(a)
   </dd>
 </dl>
@@ -205,11 +208,10 @@ The random state object. The value defaults to <code>*random-state*</code>.
 <li><a href="odds-fn.html"><code>odds</code></a> [Function]</li>
 <li><a href="pick-fn.html"><code>pick</code></a> [Function]</li>
 <li><a href="pickl-fn.html"><code>pickl</code></a> [Function]</li>
+<li><a href="ranseg-fn.html"><code>ransegs</code></a> [Function]</li>
 <li><a href="shuffle-fn.html"><code>shuffle</code></a> [Function]</li>
 <li><a href="vary-fn.html"><code>vary</code></a> [Function]</li>
 </ul>
-
-
 
 </div>
 <hr class="inv"/>

@@ -10,41 +10,132 @@
 <body>
 <div id="content">
 
-
-<!-- Entry: "drunk" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">drunk</code> <var>n</var> <var>width</var> [<code class="keyword">:low</code> <var>n</var>] [<code class="keyword">:high</code> <var>n</var>] [<code class="keyword">:mode</code> <var>s</var>] [<code class="keyword">:state</code> <var>x</var>])</span></dd>
+<dd><code>(</code><code class="entry">drunk</code> <var>n</var> <var>width</var> {<var>keyword</var> <var>value</var>}* <code>)</code></dd> 
 </dl>
 
-
 <p>
-Returns a random value constrained to lie between <var>n-width</var>and <var>n+width</var>.
-Passing in previous values of <var>n</var> implements a random walk (brown noise).  If <var>low</var> and <var>high</var> are
-specified then the random walk is bounded and values that exceed either value are automatically adjusted to lie within bounds according to <var>:mode</var>. If <var>mode</var> is <code class="keyword">:reflect</code> (the default) then the outlying
-value is reflected back within bounds. If <var>mode</var> is <code class="keyword">:limit</code> then the closest boundary is returned. If <var>mode</var> is <code class="keyword">:reset</code> then the outlier is centered between <var>low</var> and <var>high</var>. If <var>mode</var> is <code class="keyword">:jump</code> the a random value between <var>low</var> and <var>high</var> is selected. If <var>mode</var> is <code class="keyword">:stop</code> then false is retured as the value. <var>state</var> is a random state object and defaults to <code>*random-state*</code>.
+Returns a random value constrained to lie
+between <var>n-width</var>and <var>n+width</var> according to keyword
+arguments specified to the function. Calling the function with
+previous values of <var>n</var> implements random walks (brown noise).
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(loop repeat 10 for i = .5 then (drunk .5 .1) collect i)</span>
-(0.5 0.46 0.482 0.424 0.586 0.424 0.429 0.412 0.452 0.545)
-cm&gt; <span class="input">(loop repeat 10 for i = 60 then (drunk i 3 :low 54 :high 66) collect i)</span>
-(60 62 64 63 60 58 56 54 56 56)
-cm&gt;</pre>
+<p id="args"><code class="entry">drunk</code> supports the following
+keyword arguments:
+</p>
+
+<dl>
+
+<dt>
+<code class="keyword">:mode</code> {<var>keyword</var> | <var>number</var>}
+</dt>
+<dd>
+Determines what to do if the return value exceeds boundary conditions
+specified to the function. The following keyword modes are are
+recognized:
+
+<table>
+<tr><td><code class="keyword">:reflect</code></td> <td>value is reflected back into bounds</td></tr>
+<tr><td><code class="keyword">:limit</code></td> <td>nearest boundary value is returned</td></tr>
+<tr><td><code class="keyword">:reset</code> </td> <td>value is centered between boundaries</td></tr>
+<tr><td><code class="keyword">:jump</code></td> <td>value randomly positioned</td></tr>
+<tr><td><code class="keyword">:stop</code> </td> <td>returns false as value of function</td></tr>
+</table>
+Otherwise, the value should be the <var>number</var> to return as the value of
+the function.  The default value is <span
+class="keyword">:reflect</span>.
+</dd>
+
+<dt>
+<code class="keyword">:low</code> <var>number</var>
+</dt>
+<dd>
+Sets a lower bound on the random walk. If the boundary is exceeded,
+the value returned is determined by <code
+class="keyword">:mode</code>.
+</dd>
+
+<dt>
+<code class="keyword">:high</code> <var>number</var>
+</dt>
+<dd>
+Sets an upper bound on the random walk. If the boundary is exceeded,
+the value returned is determined by <code
+class="keyword">:mode</code>.
+</dd>
+
+<dt>
+<code class="keyword">:avoid</code> <var>number</var>
+</dt>
+<dd>
+If specified, the value returned will not equal <var>number</var>.
+</dd>
+
+<dt><code class="keyword">:state</code> <var>state</var></dt>
+<dd>
+The random state object. The value defaults to <code>*random-state*</code>.
+</dd>
+
+</dl>
+
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> The <code>drunk</code> function.
+</p>
+<pre class="code">
+(<span class="special">loop</span> repeat 10 
+      for r = 60 then (drunk r 3)
+      collect r)
+<span class="result">&rArr;</span> (60 62 61 60 58 60 62 63 65 67)
+(drunk 40 2 :low 60 :high 72)
+<span class="result">&rArr;</span> 63
+(drunk 40 2 :low 60 :high 72 :mode ':stop)
+<span class="result">&rArr;</span> #f
+</pre>
 </div>
 
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Random walk for keynum and amplitude.
+</p>
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">stagger</span> len low high step)
+  (<span class="special">let</span> ((k (/ (- high low) 2))
+        (a (<a href="between-fn.html">between</a> .1 .9)))
+    (<a href="process-mac.html">process</a> repeat len
+             for r = (<a href="pick-fn.html">pick</a> 1/8 1/4) 
+             set k = (drunk k step <span class="keyword">:high</span> high
+                            <span class="keyword">:low</span> low <span class="keyword">:mode</span> '<span class="keyword">:jump</span>)
+             set a = (drunk a .1 <span class="keyword">:low</span> .2 
+                            <span class="keyword">:high</span> .9 <span class="keyword">:mode</span> .5)
+             output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
+                         <span class="keyword">:duration</span> (* r 1.5)
+                         <span class="keyword">:keynum</span> k
+                         <span class="keyword">:amplitude</span> a)
+             wait r)))
 
-<!-- See also -->
-<h4>See Also:</h4>
+(<a href="events-fn.html">events</a> (list (stagger 80 40 80 3) 
+              (stagger 60 20 40 7)
+              (stagger 40 70 90 5))
+       "test.mid" '(0 4 6))
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
+
+</pre>
+</div>
+
+<h4>See also:</h4>
 <ul>
-<li><a href="between-fn.html"><kbd>between</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="odds-fn.html"><kbd>odds</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="pick-fn.html"><kbd>pick</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="pickl-fn.html"><kbd>pickl</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="ran-fn.html"><kbd>ran</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="shuffle-fn.html"><kbd>shuffle</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="vary-fn.html"><kbd>vary</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="between-fn.html"><kbd>between</kbd></a> [Function]</li>
+<li><a href="odds-fn.html"><kbd>odds</kbd></a> [Function]</li>
+<li><a href="pick-fn.html"><kbd>pick</kbd></a> [Function]</li>
+<li><a href="pickl-fn.html"><kbd>pickl</kbd></a> [Function]</li>
+<li><a href="ran-fn.html"><kbd>ran</kbd></a> [Function]</li>
+<li><a href="ransegs-fn.html"><code>ransegs</code></a> [Function]</li>
+<li><a href="shuffle-fn.html"><kbd>shuffle</kbd></a> [Function]</li>
+<li><a href="vary-fn.html"><kbd>vary</kbd></a> [Function]</li>
 </ul>
 
 
