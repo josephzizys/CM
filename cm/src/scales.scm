@@ -763,8 +763,9 @@
            false))
     (when (and (pair? args) (member (first args) %hertz)
                (odd? (length args)))
-      (warn "Found :HZ tag, use the :HZ keyword parameter instead: ~s"
-            (list* 'note ':hz true (rest args)))
+      ;; I hate this warning -- what was wrong with the old way?
+      ;;(warn "Found :HZ tag, use the :HZ keyword parameter instead: ~s"
+      ;;      (list* 'note ':hz true (rest args)))
       (set! args (list* ':hz true (rest args))))
     (dopairs (sym val args)
       (case sym
