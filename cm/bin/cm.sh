@@ -341,7 +341,7 @@ else
 	LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
         if [ -x $img ] ; then
           LISP_EXE=$img
-          LISP_IMG=
+          LISP_IMG=lllllllllllllllll
           LOAD=
           break
         else
@@ -361,7 +361,7 @@ else
 
   if [ ! $LISP_EXE ] ; then
     for pref in $LISP_PREFS ; do
-      LISP_EXE=`find_lisp $LISP_FLV`
+      LISP_EXE=`find_lisp $pref`
       if [ $LISP_EXE ] ; then
 	LISP_INF=`get_lisp_info $LISP_EXE`
 	LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
