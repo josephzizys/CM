@@ -209,6 +209,8 @@ pre.shell {
   background: #f7f7f7;
 }
 
+/* specific to dictionary */
+
 ul.dictindex { 
   margin: 0em;
   padding: .25em;
@@ -217,6 +219,21 @@ ul.dictindex {
 ul.dictindex li {
     list-style: none;
   }
+
+span.syntax {
+  font-style: normal;
+}
+
+code.keyword { 
+  color: #b22222;
+}
+
+code.entry { 
+  font-weight: bold;
+}
+
+
+
 
 ol.toc, ul.toc {
 /*  font: normal 119% sans-serif; */
@@ -266,7 +283,8 @@ span.comment {color: #8a2be2;}
 span.keyword {color: #b22222;}
 span.special {color: #d2691e;}
 span.defined {color: #ff0000;}
-span.input   {font-weight: bold;}
+/* span.input   {font-weight: bold;} */
+span.input   {color: #3f7f7f;}
 
 span.author {font-style: normal;}
 span.book, span.journal {font-style: italic;}
