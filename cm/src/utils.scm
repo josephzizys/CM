@@ -421,6 +421,9 @@
 ; (string-readable? "(\"1)")
 ; (string-readable? " 1 2 () 3   ")
 ; (string-readable? " \"bif buf\"   ")
+; (string-readable? "#.foo")
+; (string-readable? "'foo")
+; (string-readable? "'(foo bar)")
 
 (define (string-readable? string . args)
   ;; do some simple checks on strings before reading for lisp expressions.
@@ -456,8 +459,8 @@
              (if (and tok (= lev 0) (not str))
                (incf num))
              (set! tok #f))
-            ((member chr '(#\' #\, #\#))
-             #f)
+            ((member chr '(#\' #\#))
+             (set! tok #f))
             (else (set! tok #t))))))
 
 ;;;
