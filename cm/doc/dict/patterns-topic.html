@@ -241,11 +241,11 @@ href="line-cls.html">line</a> pattern that generates four sixteenths
 </div>
 
 <p>
-It is also possible to make new patterns using
-the <code>make-instance</code> function rather than <a
-href="new-mac.html">new</a>. This is particularly useful for creating
-patterns inside of functions, i.e. when the pattern class will be
-determined at execution time rather than when the code is written.
+
+<!-- Use <code>make-instance</code> instead of <a
+href="new-mac.html">new</a> if the pattern's class may vary at run
+time. --> Since, unlike new, <code>make-instance</code> evaluates its
+first argument, the class of the pattern may vary at runtime:
 </p>
 
 <div class="float" id="example_3">

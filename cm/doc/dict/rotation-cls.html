@@ -17,29 +17,31 @@
 
 
 <p>
-Permutates its elements according to one or more rotational
-descriptions.  A rotation is a list of (up to) four integers that
-controls an iterative "swapping"  mapped over the enitre data to
-produce the next permutation:
+Permutes elements according to one or more rotational descriptions.  A
+rotation is a list of (up to) four integers that controls an iterative
+"swapping" process that is mapped over all the data to produce the
+next permutation:
 </p>
 
 <blockquote>
-  <code>(</code><var>start</var> <var>step</var> <var>width</var> <var>end</var><code>)</code>
+  <code>(</code><var>start</var> <var>step</var> <var>width</var> [<var>end</var><code>])</code>
 </blockquote>
 <p>
 <var>Start</var> is the starting index (zero based) in the pattern's
 data for swapping to begin, <var>step</var> is the stepping increment
 between swaps, <var>width</var> is the distance between the elements
 to swap, and <var>end</var> is the position (inclusive) in the data to
-stop swapping at.  For example. if there are three elements A B C then
-a rotation (0 1 1 2) will swap two times to produce the next
-permutation (the _ marks the results of each swap in the iteration):
+stop swapping at. The default rotation list is (0 1 1), 
+causes elements in the pattern to rotate leftward, as shown in Table 1.
 </p>
 
 <div class="float">
 <p class="captxt">
-<span class="floatlabel">Table 1.</span> Permutations of A B C using (0 1 1 2) for the rotation:
+<span class="floatlabel">Table 1.</span> Permutations of A B C using
+(0 1 1) as the rotation. Lower case letters indicate an intermediate
+step in the rotation and the _ marks the swap at each step.
 </p>
+
 <table>
 <tr><th class="lcol">Permutation</th><th class="lcol">Swap #1</th><th class="lcol">Swap #2</th></tr>
 <tr><td>A B C</td><td>b_a c</td><td>b c_a</td></tr>
@@ -50,8 +52,6 @@ permutation (the _ marks the results of each swap in the iteration):
 </div>
 
 <p>
-The default rotation list is (0 1 1 *), which
-causes elements in the pattern to rotate leftward, as shown in Table 1.
 </p>
 
 
@@ -102,7 +102,7 @@ initializations to the pattern.
 
 <div class="float">
 <p class="captxt">
-<span class="floatlabel">Example 2.</span> Blah.
+<span class="floatlabel">Example 2.</span> Rotating a descending whole-tone figure with fixed notes.
 </p>
 <pre class="code">
 (<span class="special">define</span> <span class="defined">pat1</span>
