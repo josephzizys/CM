@@ -497,24 +497,25 @@ for more information about the various build options.
 <p>
 CM's graphics support is implemented in <a
 href="http://www.gtk.org">GTK2</a>, a popular graphics library that
-runs in the following Lisp environments:
+can be used with CM in the following Lisp environments:
 <ul>
 <li>PPC/Darwin: OpenMCL 0.14.1-p1 or higher</li>
 <li>x86/Linux: SBCL 0.8.17 or higher</li>
 <li>x86/Linux: CMUCL 19a or higher</li>
 </ul>
 
-<p>The Lisp/GTK interface is provided by <a
+<p>
+CM's Lisp-to-GTK interface is implemented using <a
 href="http:common-lisp.net:/project/lambda-gtk/lambda-gtk.html">&lambda;gtk</a>,
-a software package developed by the author and made available under
-the LLGPL (Lisp Lesser General Public License).
+a seperate software package developed by the author and made available
+under the LLGPL (Lisp Lesser General Public License).
 </p>
 
 <p>
-CM will automatically include its GUI tools in any correctly configured
-and supported environment. If you use either OpenMCL on Darwin or
-SBCL on Linux then you may have to configure your environment before
-you build CM.
+CM will automatically include its GUI tools in any correctly
+configured and supported environment. If you use either OpenMCL on
+Darwin or SBCL on Linux then you may have to configure your
+environment before you attempt to build CM with its GUI.
 </p>
 
 <h3 id="gtk_darwin">4.1 Configuring X11 and GTK2 on Darwin (OS X)</h3>

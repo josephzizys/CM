@@ -18,16 +18,15 @@
 <p>
 The CMIO (Common Music Input/Output) window facilitates the generation
 of musical events to and from sound synthesis and display
-applications.  The window is intended to present a "birds eye"
-overview of CM's IO functionality and to provide a structured
-replacement to evaluating input and output expressions in the
-Lisp <em>REPL</em>, or read-eval-print loop. As an alternative to REPL
-evaluation, CMIO windows perform their own error handling that, by
-default, reports Lisp errors without forcing the user into the Lisp
-debugger. This means that novice users can experiment with generating
-events and working with various sound rendering systems in a fairly
-forgiving environment without knowing much about Lisp evaluation
-beforehand.
+applications.  The window presents a "birds eye" overview of CM's IO
+functionality and provides a structured alternative to evaluating
+input and output expressions in the Lisp <em>REPL</em>, or
+read-eval-print loop. As an replacement for REPL evaluation, CMIO
+windows perform their own error handling and, by default, report Lisp
+errors without forcing the user into the Lisp debugger. This means
+that novice users can experiment with algorithmic composition and
+various sound rendering systems in a fairly forgiving environment
+without necessarily knowing much about Lisp evaluation beforehand.
 </p>
 
 <p>
@@ -41,14 +40,15 @@ configured and loaded at any appropriate point in the working process.
 </p>
 
 <p>
-To render musical events to a sound application, the user first enters
-an event expression, then selects a target application and presses the
-Compose button. Each application page has numerous fields for
-customizing its behavior. These fields can be set to different values
-as part of the experimentation process and can also be initialized to
-the user's personal preference by passing appropriate arguments to
-the <a href="cmio-fn.html">cmio</a> function when the window is
-created.
+To render musical events to a sound application, the user first
+selects the target's application page, then enters an event expression
+in the Events buffer and clicks the Compose button. Each target
+application page has numerous fields for customizing IO
+behavior. These fields can be initialized to the user's personal
+preference by passing appropriate arguments to the <a
+href="cmio-fn.html">cmio</a> function when the window is created and
+set to different values as part of the ongoing process of
+experimentation.
 </p>
 
 <p>
