@@ -421,6 +421,14 @@
 ;;;
 ;;;
 
+(defun cm (&optional (banner t))
+  (unless (and (eql *package* (find-package :cm))
+               (eql *readtable* *cm-readtable*))
+    (in-package :cm)
+    (setq *readtable* *cm-readtable*)
+    (unless (not banner) (cm-logo))
+    (values)))
+
 (defun load-cminit ()
   ;; try to load cminit.lisp as dynamically as possible: if the lisp
   ;; implementation lets us determine the directory that the image

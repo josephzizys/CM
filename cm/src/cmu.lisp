@@ -93,7 +93,8 @@
                         :init-function
                         #'(lambda ()
                             (declare (special *cm-readtable*))
-                            (setf *package* (find-package :cm))
                             (setf *readtable* *cm-readtable*)
-                            (load-cminit)
+                            (setf *package* (find-package :cm))
+                            (load-cminit)                            
+                            (cm-logo)
                             (lisp::%top-level))))

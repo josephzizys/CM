@@ -988,4 +988,10 @@
                 "an" "a")
               str))))
 
+(define (cm . verbose)
+  ;; a no-op for now, 
+  (if (or (null? verbose)
+          (not (eq? (car verbose) #f)))
+    (cm-logo))
+  (values))
 

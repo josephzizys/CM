@@ -227,6 +227,7 @@
                           (setf *package* (find-package :cm))
                           (setf *readtable* *cm-readtable*)
                           (load-cminit)
+                          (cm-logo)
                           ))))
   (ccl:save-application path :application-class (find-class 'cm)))
 

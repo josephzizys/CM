@@ -317,6 +317,7 @@
                                                       dir)))))
                          (when fil
                            (load fil :verbose nil)))
+                       (cm-logo)
                        ;(when *cm-splashscreen*
                        ;  (cm-splashscreen))
                        ))))
