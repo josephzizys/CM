@@ -63,7 +63,8 @@
 ;; clisp on windows, linux and on osx. the
 ;; osx port has no feature, uname idea from tobias.
 #+(and clisp unix)
-(if (find ':pc386 *features*)
+(if (or (find ':pc386 *features*)
+	(find ':cygwin *features*))
   (pushnew ':linux *features*)
   (let ((tok (read (run-shell-command "uname"
                                       :output :stream))))
