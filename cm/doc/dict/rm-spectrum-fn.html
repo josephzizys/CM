@@ -17,10 +17,11 @@
 
 <p>
 Ring modulates <var>spectrum1</var> with <var>spectrum2</var> and
-returns the list of pairwise sum and difference tones. The input lists
-can consist of hertz values, key numbers or note names but both lists
-must contain identical types. For convenience sake, a spectrum
-consisting of a single frequency can be specified as a single value.
+returns the list of pairwise sum and difference tones. Spectral
+components in the input lists can be Hertz values, key numbers or note
+names but both lists must contain identical types. For convenience
+sake, a spectrum consisting of one frequency can be specified as a
+single value.
 </p>
 
 <p id="args">
@@ -30,26 +31,22 @@ consisting of a single frequency can be specified as a single value.
 <dl>
 
 <dt>
-<code class="keyword">:spectrum</code> { <code class="keyword">:note</code> | <code class="keyword">:keynum</code> | <code class="keyword">:hertz</code>}
+<code class="keyword">:spectrum</code> {<code class="keyword">:note</code> | <code class="keyword">:keynum</code> | <code class="keyword">:hertz</code>}
 </dt>
 <dd>
 Determines the frequency format (hertz values, key numbers or note
-names) of the components returned in the output spectrum. If
-unspecified they will be the same type as the input components.
+names) of the components returned in the output spectrum. If the
+argument is not specified then the output components will be the same
+type as the input components.
 </dd>
 
 <dt>
 <code class="keyword">:hz</code> <var>boolean</var>
 </dt>
 <dd>
-Specify true if input components are numerical Hertz values othewise
+Specify true if input components are numerical Hertz values otherwise
 numbers are assumed to be key numbers. The default value is
 false.</dd>
-
-<dt>
-<code class="keyword">:remove-duplicates</code> <var>boolean</var>
-</dt>
-<dd>If true then the output spectrum will not contain any duplicate components.</dd>
 
 <dt><code class="keyword">:minimum</code> <var>freq</var></dt>
 <dd>
@@ -68,13 +65,22 @@ or less than this value.  <var>Freq</var> should be the same
 frequency format as the input components.
 </dd>
 
-
 <dt><code class="keyword">:scale-order</code> {<code class="keyword">:up</code> | <code class="keyword">:down</code> | <code class="keyword">:random</code>}</dt>
 <dd>Determines the ordering of the components in the output
 spectrum: <code class="keyword">:up</code> for low-to-high, <code
 class="keyword">:down</code> for high-to-low and <code
 class="keyword">:random</code> for random (shuffled) order. The
 default value is <code class="keyword">:up</code>.
+</dd>
+
+<dt>
+<code class="keyword">:remove-duplicates</code> <var>boolean</var>
+</dt>
+<dd>
+If true then the output spectrum will not contain any duplicate
+components. The default value is false.
+</dd>
+
 </dl>
 
 <h4>Examples:</h4>

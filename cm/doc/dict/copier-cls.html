@@ -23,6 +23,9 @@ A specialized pattern that copies and repeats periods of a subpattern.
 </p>
 
 <dl>
+<dt><span class="keyword">:of</span> <var>pattern</var></dt>
+<dd>Sets the pattern to be copied or repeated.</dd>
+
 <dt><code class="keyword">:for</code> {<var>number</var> | <var>pattern</var>}</dt>
 <dd>
 Specifies how may repetions of the subpattern will constitute one
@@ -37,6 +40,27 @@ Specifies how many times each period in the subpattern will be
 repeated and forces the period length of the copier
 to remain the same as the subpattern. This initialization causes the <code class="keyword">:for</code> initialization to be ignored.
 </dd>
+
+<dt>
+<span class="keyword">:name</span> {<var>symbol</var> | <var>string</var>}
+</dt>
+<dd>
+Sets the name of the object. A named object is added to the system'
+global dictionary and can be fetched from its name using the <a
+href="hshamp-mac.html">#&amp;</a> read macro or the <a
+href="find-object-fn.html">find-object</a> function.
+</dd>
+
+<dt><span class="keyword">:repeat</span> {<var>number</var> | <var>pattern</var>}</dt>
+<dd>
+</dd>
+<dt><span class="keyword">:returning</span> <var>function</var></dt>
+<dd>
+An optional function to apply to each item as it is generated from the
+pattern. The function is passed one argument, the pattern element, and
+should return the value to generate in its place.
+</dd>
+
 </dl>
 <h4>Examples:</h4>
 <div class="float">
