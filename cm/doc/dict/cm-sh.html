@@ -12,11 +12,11 @@
 
 <!-- Entry: "cm.sh" -->
 <dl class="dictsyntax">
-<dt>[Bourne script]</dt>
+<dt>[Bash script]</dt>
 <dd><span class="syntax"><code class="entry">cm.sh</code> 
 [<code class="keyword">-qnv</code>] 
-[<code class="keyword">-l</code> <var>lisp</var>]
 [<code class="keyword">-e</code> <var>editor</var>] 
+[<code class="keyword">-l</code> <var>lisp</var>]
 [<code class="keyword">-P</code> <var>prefs</var>] 
 [<code class="keyword">-O</code> <var>os</var>] 
 [<code class="keyword">-A</code> <var>arch</var>] 
@@ -27,20 +27,20 @@
 </dl>
 
 <p>
-Starts Common Music running either by loading it into a fresh Lisp
-session or by launching a saved image file (cm.img) that contains CM
-already pre-loaded. The cm.sh script can start Common Music in a
-terminal or as a subprocess of any Emacs-compatible editor such as
-xemacs(1), emacs(1), or gnuclient(1).
+Starts Common Music either by loading it into a fresh Lisp session or
+by launching a saved image file that already contains CM loaded. The
+cm.sh script can run Common Music in a terminal or as a subprocess
+of any Emacs-compatible editor such as xemacs(1), emacs(1), or
+gnuclient(1).
 
 Symlinks are resolved when the script runs so a system-wide command
 can be installed simply by placing a link to the script anywhere on
 the user's path. The ch.sh script file itself should not be moved from
 Common Music's bin/ subdirectory.
 
-Script parameters are auto-detected at runtime so
-normally it will suffice to call cm.sh without any arguments.
-Auto-detection may be overridden via options and environment variables.
+Script parameters are auto-detected at runtime so normally it will
+suffice to call cm.sh without any arguments.  Auto-detection may be
+overridden via options and environment variables.
  </p>
 
 <p>
@@ -70,26 +70,26 @@ class="keyword">-v</code> for debugging.
 Be verbose.
 </dd>
 
-<dt><code class="keyword">-l</code> {<var>lisp</var>}</dt>
-<dd>
-Run Common Music in this Lisp/Scheme. The value should be a Lisp
-command on your path or an absolute pathname to the executable.
-Default value is '&lt;unset&gt;'.
-</dd>
-
 <dt><code class="keyword">-e</code> {<var>editor</var>}</dt>
 <dd>
-Run Common Music under this editor.  The value should be an
-Emacs-compatible editor (emacs, xemacs, gnuclient) command on your
-path or an absolute pathname to the executable. On OS X you can
-specify 'Emacs' to envoke an Aqua Emacs application installed in
+Run Common Music under this editor.  The value should be a command on
+your path that starts an Emacs-compatible editor (emacs, xemacs,
+gnuclient) or a path to the executable. On OS X you can specify
+'Emacs' to invoke an Emacs application installed as
 /Applications/Emacs.app.  Default is '&lt;none&gt;'
+</dd>
+
+<dt><code class="keyword">-l</code> {<var>lisp</var>}</dt>
+<dd>
+Run Common Music in this Lisp/Scheme. The value should be a command on
+your path or a path to the Lisp executable.  Default value is
+'&lt;unset&gt;'.
 </dd>
 
 <dt><code class="keyword">-P</code> {<var>prefs</var>}</dt>
 <dd>
 Preference order (left-to-right) for auto-detecting Lisp
-commands. (default: 'openmcl lisp acl clisp guile')
+commands. (default: 'openmcl cmucl acl clisp guile')
 </dd>
 
 <dt><code class="keyword">-O</code> {<var>os</var>}</dt>
@@ -125,17 +125,17 @@ variables.
 
 <dl>
 
-<dt><code class="keyword">CM_RUNTIME</code></dt>
-<dd>
-Name or path of a Lisp or Scheme system to execute, e.g. 'clisp' or
-'/usr/bin/openmcl'.  Same as <code class="keyword">-l</code> option.
-</dd>
-
 <dt><code class="keyword">CM_EDITOR</code></dt>
 <dd>
 Name or path of an Emacs-compatible editor under which to run cm,
 e.g. 'xemacs' or '/usr/bin/gnuclient'.  Same as <code
 class="keyword">-e</code> option.
+</dd>
+
+<dt><code class="keyword">CM_RUNTIME</code></dt>
+<dd>
+Name or path of a Lisp or Scheme system to execute, e.g. 'clisp' or
+'/usr/bin/openmcl'.  Same as <code class="keyword">-l</code> option.
 </dd>
 
 <dt><code class="keyword">CM_RUNTIME_PREFS</code></dt>
@@ -184,9 +184,10 @@ fails.  Same as <code class="keyword">-R</code> option.
 </dl>
 
 <p>
-Requirements: getopts, ls, sed, sh, tr, uname, which; a working
+Requirements: bash(1), cat(1), cut(1), echo(1), head(1), sed(1),
+sort(1), tr(1), uname(1), which(1); getopts and ls; a working
 installation of a Lisp or Scheme runtime; the '-repl' option if clisp
-is used (clisp 2.31 or higher).:
+is used (clisp 2.31 or higher).
 </p>
 
 <!-- See also -->
