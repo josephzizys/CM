@@ -2,24 +2,32 @@ This is the README for Common Music (CM). Common Music is released
 under the GNU Software License.  See  the file doc/gpl.text for the
 terms of this agreement. 
 
+The system has been tested in the following OS/Lisp configurations:
+  Linux:
+    ACL 5.0 (beta)
+    Clisp 2.31
+    CMUCL 18e
+    Guile 1.6.0
+  OS X:
+    ACL 6.2 (demo)
+    Clisp 2.31
+    Guile 1.6.0
+    MCL 5.0
+    OpenMCL 0.14, 0.13
+  Windows 2000:
+    ACL 5.2
+    Clisp 2.31
+  Windows/Cygwin:
+    Clisp 2.31
+    Guile 1.6.0
+
 The project home for Common Music is at:
-
- o http://www.sourceforge.net/projects/commonmusic
-
-The system currently runs in:
-
- o Guile 1.6.0 (Linux, OSX, Windows+Cygwin)
- o MCL 4.2, 4.3 (MacOS 9.2)
- o OpenMCL 0.13 (OSX 10.2)
- o ACL 5.0, 6.0 (SGI, Linux, Windows 2000)
- o CLISP 2.28 (Linux, Windows 2000)
- o CMUCL 18d (Linux)
+  http://www.sourceforge.net/projects/commonmusic
 
 Documentation for the system is located in the doc/ directory: 
-
- o Installation instructions are in doc/install.html
- o The  Common Music dictionary is in doc/dict/index.html. 
- o The home page is in doc/cm.html
+  o Installation instructions are in doc/install.html
+  o The Common Music dictionary is in doc/dict/index.html. 
+  o The home page is in doc/cm.html
 
 The example file etc/examples/intro.cm is a fine place to start.
 
