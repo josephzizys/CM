@@ -213,7 +213,8 @@
    (make-pathname
     :directory (pathname-directory ccl::*heap-image-name*))))
 
-(defun env-var ()
+(defun env-var (var)
+  var
   nil)
 
 (defun save-cm (path &rest args)

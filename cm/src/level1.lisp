@@ -417,7 +417,6 @@
       (file-position file 
                      (+ (file-position file) pos)))))
 
-
 ;;;
 ;;;
 ;;;
@@ -430,25 +429,45 @@
   ;; (the image dir cant be determined) then try use the shell
   ;; variable 'cmlibdir' that cm.sh sets. otherwise use the value of
   ;; cl-user::cm-lib-dir set by make.lisp when the image was saved.
-  (let* ((dir (cm-image-dir))
-         (init (and dir (merge-pathnames init "cminit.lisp"))))
-    (unless init
-      (if dir
-        (setf init (make-pathname
-                    :directory (append (butlast
-                                        (pathname-directory dir))
-                                       (list "lib"))
-                    :name "cminit" :type "lisp"
-                    :defaults dir))
-        (progn
-          (setf dir (or (env-var 'cmlibdir)
-                        (symbol-value (find-symbol (string :cm-lib-dir)
-                                                   :cl-user))))
-          (setf init (concatenate 'string dir
-                                  #+(or osx linux) "/"
-                                  #+digitool ":"
-                                  #+win32 "\\"
-                                  "cminit.lisp")))))
-    (when (probe-file init)
-      (load init :verbose nil))
-    ))
+  (let ((dir (cm-image-dir))
+        (fil nil))
+    ;; check image dir first
+    (if dir
+      (progn
+        (setq fil (cminit-from-image-path dir))
+        (when fil
+          (load fil :verbose nil)
+          fil))
+      (progn
+        ;; check for $CM_ROOT environment variable
+        (setq dir (env-var "CM_ROOT"))
+        ;; make sure its terminated by directory char.
+        (if (and dir (not (equal dir "")))
+          (unless (char= (elt dir (1- (length dir)))
+                         directory-delimiter)
+            (setq dir (format nil "~A~C" dir directory-delimiter)))
+          ;; else look at root dir from make-cm.
+          (setq dir (symbol-value (find-symbol (string :*cm-root*)
+                                               :cl-user))))
+        (setq fil (make-pathname
+                   :directory (append (pathname-directory dir)
+                                      (list "lib"))
+                   :name "cminit" :type "lisp" :defaults dir))
+        (when (probe-file fil)
+          (load fil :verbose nil)
+          fil)))))
+
+(defun cminit-from-image-path (image)
+  (let* ((dir (pathname-directory image))
+         (tst dir))
+    ;; look in . then ../lib then  ../../lib
+    (loop repeat 3 until (not dir)
+       for fil = (make-pathname :directory tst
+                                :name "cminit"
+                                :type "lisp"
+                                :defaults image)
+         if (probe-file fil) return fil
+         do (setq dir (butlast dir))
+         (setq tst (append dir (list "lib"))))))
+
+;(cminit-in-image-path "/Lisp/bin/cm-2.4.0/openmcl_0.13.2_darwin-powerpc/cm.image")
