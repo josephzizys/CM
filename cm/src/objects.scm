@@ -587,7 +587,7 @@
                  (cadr forms)))
          (set! forms (cddr forms)))))
     (case oper
-      ((output ms:output)
+      ((output )
        (set! loop (if (null? args)
 		    (list `(,oper ,expr))
 		    (list `(,oper ,expr ,(car args))))))
@@ -595,7 +595,7 @@
        (set! loop (list `(wait ,expr))))
       ((wait-until )
        (set! loop (list `(wait-until ,expr))))
-      ((sprout ms:sprout)
+      ((sprout )
        (set! loop (list `(,oper ,expr , (if (null? args)
                                           '(now)
                                           args))))))
