@@ -347,7 +347,7 @@
 ;;;   minor:       backwards-compatible API change, i.e. "feature-add"
 ;;;   maintenance: no API change, bug fix only.
 
-(define %cm-version% #x242)
+(define %cm-version% #x250)
 
 (define (cm-version-number)
   (format #f "~a.~a.~a" 
