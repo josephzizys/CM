@@ -19,36 +19,60 @@
 
 
 <p>
-A <kbd>seq</kbd> holds time sorted subobjects.
+A <kbd>seq</kbd> holds a list of time sorted subobjects.
 </p>
 
-
-<p><code class="entry">seq</code> supports the following slot initializations:
+<p>
+<code class="entry">seq</code> supports the following slot initializations:
 </p>
+
 <dl>
 
-
-<dt><code class="keyword">:subobjects</code> <var>list</var></dt>
+<dt><span class="keyword">:name</span> {<var>symbol</var> | <var>string</var>}</dt>
 <dd>
-
-A list of subobjects.
+An optional name for the seq. If specified, the seq can be
+referenced from its name using <a href="find-object-fn.html">find-object</a> or the <a href="hshamp-mac.html">#&amp;</a> macro.
 </dd>
+
+<dt><span class="keyword">:subobjects</span> <var>list</var></dt>
+<dd>A list of time ordered subobjects, typically muscial events or
+other seq objects.</dd>
+
+<dt><span class="keyword">:time</span> <var>number</var></dt>
+<dd>An optional start time of the seq.</dd>
 
 </dl>
 
+<h4>Examples:</h4>
 
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 1.</span> Creating a sequence
+</p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(new seq :name 'stuff time 32</span>
-    <span class="input">         :subobjects (for i below 10 collect (new midi :time i)))</span>
-#&amp;lt;seq:
-cm&gt; <span class="input">Stuff&amp;gt;</span>
-cm&gt;</pre>
+<pre class="code">
+(<a href="new-mac.html">new</a> seq <span class="keyword">:name</span> 'mydata</span>
+         <span class="keyword">:subobjects</span> (loop for i below 10 collect (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> i)))
+
+<code><span style="color:red;">&rArr;</span> #&lt;seq "mydata"&gt;</code>
+
+</pre>
 </div>
 
+<h4>See also:</h4>
+<ul>
+<li><a href="list-named-objects-fn.html"><kbd>list-named-objects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="list-subobjects-fn.html"><kbd>list-subobjects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="map-subobjects-fn.html"><kbd>map-subobjects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="object-name-fn.html"><kbd>object-name</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="object-time-fn.html"><kbd>object-time</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="remove-subobjects-fn.html"><kbd>remove-subobjects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="subobjects-fn.html"><kbd>subobjects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+</ul>
 
-</div>
+
+
+
 <hr class="inv"/>
 
 <!-- Footer -->
