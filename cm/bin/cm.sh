@@ -221,7 +221,7 @@ LISP_VRS=$CM_RUNTIME_VERSION
 PAGER=`which less 2>/dev/null || which more 2>/dev/null || echo cat`
 
 IMG_NAME=cm
-IMG_SUFFIX=.img
+IMG_SUFFIX=img
 
 
 
@@ -282,18 +282,23 @@ else
 fi
 
 CWD=`pwd`
-PTU=`echo $ARGV0 | sed 's:[^/]*$::;s:\(.\)/$:\1:;'`
-LOC=`real_path "$PTU"`
 
-if [ ! "$LOC" ] ; then
-  msg_e "No such file or directory: '$1'"
-  msg_f "Can't determine CM_ROOT_DIR!"
-  msg_x "Aborting.  Re-run with -R option."
+if [ "$CM_ROOT_DIR" ] ; then
+  LOC="$CM_ROOT_DIR"
 else
-  LOC="$LOC/.."			# we are now in cm/bin, so get back out of it
-  export CM_ROOT_DIR="$LOC"
-  export CM_ROOT="$LOC"		# backwards compat
+  PTU=`echo $ARGV0 | sed 's:[^/]*$::;s:\(.\)/$:\1:;'`
+  LOC=`real_path "$PTU"`
+  if [ ! "$LOC" ] ; then
+    msg_e "No such file or directory: '$1'"
+    msg_f "Can't determine CM_ROOT_DIR!"
+    msg_x "Aborting.  Re-run with -R option."
+  else
+    LOC="$LOC/.."		# we are now in cm/bin, so get back out of it
+  fi
 fi
+
+export CM_ROOT_DIR="$LOC"
+export CM_ROOT="$LOC"		# backwards compat
 
 
 #
@@ -386,7 +391,7 @@ get_lisp_info () {
       echo cmucl_`echo '(lisp-implementation-version)' | "$1" -quiet -batch | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p;'`
       ;;
     *openmcl*|*OPENMCL*|*dppccl*)
-      echo openmcl_`echo '(lisp-implementation-version)' | "$1" -b | sed -n 's/^".* \([0-9.]*\)"/\1/p'` 
+      echo openmcl_`echo '(lisp-implementation-version)' | "$1" -b | sed -n 's/.* \([-0-9.]*\)".*/\1/p'` 
       ;;
     *guile*)
       LISP_DIA=SCHEME
@@ -451,8 +456,8 @@ if [ "$LISP_OPT" ] ; then
     if [ $? == 1 ] ; then exit 1 ; fi
     LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
     LISP_VRS=`echo $LISP_INF | sed 's:.*_::'`
-    if [ -e $LOC/bin/${LISP_INF}_${CM_PLATFORM}/$IMG_NAME.$IMG_SUFFIX ] ; then
-      LISP_IMG=$LOC/bin/${LISP_INF}_${CM_PLATFORM}/$IMG_NAME.$IMG_SUFFIX
+    if [ -e "$LOC/bin/${LISP_INF}_$CM_PLATFORM/$IMG_NAME.$IMG_SUFFIX" ] ; then
+      LISP_IMG="$LOC/bin/${LISP_INF}_$CM_PLATFORM/$IMG_NAME.$IMG_SUFFIX"
       LOAD=
     else
       LISP_IMG=
@@ -460,9 +465,9 @@ if [ "$LISP_OPT" ] ; then
     fi        
   fi
 else
-  if ls $LOC/bin/*_*_$CM_PLATFORM/$IMG_NAME.* > /dev/null 2>&1 ; then
+  if ls "$LOC"/bin/*_*_$CM_PLATFORM/$IMG_NAME.* > /dev/null 2>&1 ; then
     for pref in $LISP_PREFS ; do
-      for img in `ls $LOC/bin/${pref}_*_$CM_PLATFORM/$IMG_NAME.* 2>/dev/null` ; do
+      for img in `ls "$LOC"/bin/${pref}_*_$CM_PLATFORM/$IMG_NAME.* 2>/dev/null` ; do
         LISP_INF=`echo $img | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
 	LISP_FLV=`echo $LISP_INF | sed 's:\([^_]*\)_.*$:\1:;'`
 	LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
