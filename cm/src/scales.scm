@@ -358,6 +358,22 @@
 	(err "~s is not a note in the standard chromatic scale."
              note)))))
 
+(defun ascending-mode-order (notes tuning)
+  ;; insure ascending mode order in tuning
+  ;; place all notes in middle octave
+  (set! notes (map (function note)
+                   (map (function note-name) notes)))
+  (let* ((old (car notes))
+         (oct (- (octave-number old)
+                 (scale-octave-offset tuning)))
+         (res (list old)))
+    (dolist (n (rest notes))
+      (if (scale< n old tuning)
+        (set! oct (+ oct 1)))
+      (push (car (octave-equivalent n oct)) res)
+      (set! old n))
+    (reverse! res)))
+
 (define-method (initialize (obj <mode>) args)
   (next-method)
   (let* ((spec (scale-steps obj))
@@ -369,9 +385,11 @@
 	 (steps #f)
 	 (len #f)
 	 (octave #f))
-
-    ;; spec is notes or interval distances within one octave
+    ;; spec is notes or interval distances defining one octave
     ;; convert to intervals up from lowest (collected in reverse order)
+    ;; insure note classes or notes in ascending order
+    (when (symbol? (first spec))
+      (set! spec (ascending-mode-order spec owner)))
     (cond ((and (symbol? (first spec))
                 (note-in-scale? (first spec) owner))
            (set! tonic (octave-equivalent (first spec) 0))
@@ -383,7 +401,6 @@
                    (loop with l = (list (interval 0 0))
                          for x in (cdr spec)
                          for i = (interval (first spec) x)
-                         until (= (mod (interval-semitones i) div) 0)
                          do (push i l)
                          finally (return l)))
              (set! steps (loop with l = (list 0)
