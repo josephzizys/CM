@@ -296,6 +296,7 @@ span.special {color: #d2691e;}
 span.defined {color: #ff0000;}
 /* span.input   {font-weight: bold;} */
 span.input   {color: #3f7f7f;}
+span.output  { }
 
 span.author {font-style: normal;}
 span.book, span.journal {font-style: italic;}
