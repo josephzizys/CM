@@ -16,7 +16,8 @@
 
 (in-package :cm)
 
-(import '(ext::quit ext::exit))
+(defun exit () (ext::exit))
+(defun quit () (exit))
 
 (setf clos::*allow-mixing-metaclasses* T)
 

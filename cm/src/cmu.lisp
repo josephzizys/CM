@@ -16,8 +16,7 @@
 
 (in-package :cm)
 
-(import '(ext::quit
-          ext::load-foreign
+(import '(ext::load-foreign
           pcl:slot-definition-initargs
           pcl:slot-definition-initform
           pcl:slot-definition-name
@@ -28,6 +27,9 @@
           pcl:generic-function-name
           )
 	:cm)
+
+(defun quit () (ext::quit))
+(defun exit () (quit))
 
 (defun class-subclasses (class)
   (let ((tbl (kernel:class-subclasses class))
@@ -47,10 +49,6 @@
 ;;;
 ;;; misc. stuff
 ;;;
-
-; (defun quit () (ext:quit))
- 
-(defun exit () (quit))
 
 (defun object-address (thing)
   (kernel:get-lisp-obj-address thing))
