@@ -816,9 +816,13 @@
         (if (keyword? (cadr tail))
           (set! key (cadr tail))
           (set! key (symbol->keyword (cadr tail))))
-        (if (memq key sofar)
+        ;; remove duplicate initarg or ':initarg #f'
+        (if (or (memq key sofar)
+                (not (cadr tail)))
           (begin
-           (warning "Ignoring duplicate initarg for ~a." name)
+           (when (cadr tail)
+             (warning "Ignoring duplicate initarg for ~a." 
+                      name))
            ;; remove from spec. 
            (do ((edit spec (cdr edit)))
                ((eq? (cdr edit) tail)
