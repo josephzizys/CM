@@ -312,6 +312,7 @@ fi
 
 LISP_EXE=
 LISP_IMG=
+LISP_DIA=LISP
 LOAD=1
 
 is_image () {
@@ -341,8 +342,12 @@ get_lisp_info () {
     *lisp*|*LISP*|*cmucl*|*CMUCL*)
       echo cmucl_`echo '(lisp-implementation-version)' | $1 -quiet -batch | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p;'`
       ;;
-    *openmcl*|*OPENMCL*)
+    *openmcl*|*OPENMCL*|*dppccl*)
       echo openmcl_`echo '(lisp-implementation-version)' | $1 -b | sed -n 's/^".* \([0-9.]*\)"/\1/p'` 
+      ;;
+    *guile*)
+      LISP_DIA=SCHEME
+      echo guile_`$1 --version | head -1 | cut -d' ' -f2`
       ;;
     *)
       if [ $LISP_FLV -a $LISP_VRS ] ; then
@@ -510,13 +515,7 @@ case $LISP_FLV in
     fi
     ;;
   guile)
-    LISP_CMD="$LISP_EXE"
-    if [ $LOAD ] ; then
-      LISP_CMD="$LISP_CMD -c '$LISP_EVL'"
-    else
-      test $LISP_INI && LISP_INI="-l $LISP_INI"
-      LISP_CMD="$LISP_CMD --image-name $LISP_IMG $LISP_INI"
-    fi
+    LISP_CMD="$LISP_EXE -l '$CM_ROOT/src/cm.scm' -e cm"
     ;;
   *)
     msg_e "Don't know how to call '$LISP_FLV' yet... =:("
