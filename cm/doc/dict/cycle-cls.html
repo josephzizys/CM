@@ -10,32 +10,66 @@
 <body>
 <div id="content">
 
-
-<!-- Entry: "cycle" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><code class="entry">cycle</code></span></dd>
+<dd><code class="entry">cycle</code></dd>
 </dl>
 
-
 <p>
-Enumerates data in sequential order and loops back to the first element after the last 
-element has been reached.
+Enumerates data in sequential order, loops back to the first element
+after the last element has been reached.
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(define x (new cycle :of '(a b c d)))</span>
+<h4>Examples:</h4>
 
-cm&gt; <span class="input">(next x 12)</span>
-(a b c d a b c d a b c d)
-cm&gt; <span class="input">(define x (new cycle :keynums '(c5 d e f g a) :for 12))</span>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> The cycle pattern.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">x</span> (<a href="new-mac.html">new</a> cycle <span class="keyword">:of</span> '(a b c d)))
 
-cm&gt; <span class="input">(next x t)</span>
-(72 74 76 77 79 81 72 74 76 77 79 81)
-cm&gt;</pre>
+(<a href="next-fn.html">next</a> x 12)
+<span class="result">&rArr;</span> (a b c d a b c d a b c d)
+
+(<span class="special">define</span> x (<a href="new-mac.html">new</a> cycle <span class="keyword">:keynums</span> '(c5 d e f g a) <span class="keyword">:for</span> 12))
+
+(<a href="next-fn.html">next</a> x #t)
+<span class="result">&rArr;</span> (72 74 76 77 79 81 72 74 76 77 79 81)
+
+<span class="comment">;; cycle of random selection</span>
+(<span class="special">define</span> <span class="defined">x</span> (<a href="new-mac.html">new</a> cycle 
+               <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(a1 a2 a3) <span class="keyword">:for</span> 1)
+                         (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(b1 b2 b3) <span class="keyword">:for</span> 1)
+                         (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(c1 c2 c3) <span class="keyword">:for</span> 1))))
+
+(<a href="next-fn.html">next</a> x 12)
+<span class="result">&rArr;</span> (a2 b1 c2 a1 b2 c3 a2 b3 c3 a3 b1 c2)   
+</pre>
 </div>
 
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Generate Talea and color cycles.
+</p>
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">playtc</span> talea color)
+  <span class="comment">;; cycle over talea and color until both at end.</span>
+  (<a href="process-mac.html">process</a> with rhys = (<a href="new-mac.html">new</a> cycle <span class="keyword">:rhythms</span> talea)
+           and keys = (<a href="new-mac.html">new</a> cycle <span class="keyword">:keynums</span> color)
+           for r = (<a href="next-fn.html">next</a> rhys)
+           for k = (<a href="next-fn.html">next</a> keys)
+           output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>) <span class="keyword">:keynum</span> k
+                       <span class="keyword">:duration</span> (+ r .1))
+           wait r
+           until (and (<a href="eop?-fn.html">eop?</a> rhys) (<a href="eop?-fn.html">eop?</a> keys))))
+
+(<a href="events-fn.html">events</a> (playtc '(e. s e e s e. s)
+                '(cs4 d6 gs5 b4 g4 fs5))
+        <span class="string">"tc.mid"</span>)
+<span class="result">&rArr;</span><span class="string">"tc.mid"</span>
+</pre>
+</div>
 
 <!-- See also -->
 <h4>See Also:</h4>
