@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>CMIO</title>
+</head>
+<body>
+<div id="content">
+
+<dl class="dictsyntax">
+<dt>[Topic]</dt>
+<dd><span class="syntax">CMIO</span></dd>
+</dl>
+
+<p>
+The CMIO (Common Music Input/Output) window is a graphical tool for
+generating musical event data to and from sound synthesis and display
+applications. The intial contents of the window's various tabbed pages
+can be preset by passing field values to the <a href="cmio-fn.html">cmio
+function</a> when the window is created. Since the target pages and
+the window's Systems and Files pages allows these systems be
+dynamically configured and loaded into Common Music. 
+
+<h2>Window Layout</h2>
+
+<p>
+The CMIO window is divided into four main components:
+</p>
+
+<ul>
+<li>A <em>Sources</em> frame holds tabbed <em>pages</em> that relate
+to creating and generating event data.</li>
+
+<li>A <em>Targets</em> frame holds tab pages related to sound sysnthesis and
+display configurations.
+</li>
+<li>
+An <em>Executive</em> frame manages the system's working directory and current
+input/output file. <!-- The Execute button triggers actions on files
+according to user-defined semantics. -->
+</li>
+<li>A message line displays information related to the ongoing tasks
+executed inside the window.</li>
+</ul>
+
+<p>
+Each tabbed page contains a set of <em>fields</em> representing the
+input/output features of a given application. The right-justified
+pages relate to more general features in the window or Lisp environment.
+</p>
+
+<div class="float" id="example1">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> The four components of a
+CMIO window: Sources, Targets, Executive and the Message
+line. Event IO is the currently active source page and Midi is
+the currently selected target.
+</p>
+
+<p>
+<img src="cmio1.png" alt="[cmio1.png]"/>
+</p>
+</div>
+
+<h3>Colorized Fields </h3>
+A few coloration rules provide additional information about how fields on a page work:
+<ul>
+<li>Blue labels mark <em>required</em> fields that must contain infomation
+before the page can execute.
+</li>
+
+<li>
+Yellow backgrounds indicate fields that will be
+<em>evaluated</em> when the information is accessed.
+</li>
+
+<li>
+White backgrounds indicate fields that should contain plain text or
+are <em>read</em> to produce a Lisp value. It is possible to force
+evaluation in a white field by using the special #.<em>expr </em>
+notation, where <em>expr</em> is an expression to be evaluated for
+the contents of the field.
+</li>
+
+<li>
+The Message line uses syntax highlighting to classify the type
+of message displayed: green represents a normal message or
+sucessful completion of a command, yellow indicates a warning
+or notification, red signifies an error condition.
+</li>
+</ul>
+
+<h3>Error handling and notification</h3>
+<p>
+A CMIO window simply facilitates tasks that would otherwise be
+accomplished by evaluating expressinos in the Lisp interpreter.  As
+such, its actions and data specification are all accplished using the
+normal Lisp.  However, the windnow itself accomplishes its task via
+GTK <em>callbacks</em> which involves the (foreign) execution of Lisp
+code. Generating Lisp errors under foreign callbacks is generally a
+bad thing because the Lisp process  may become unresponsive or simply terminate
+execution without allowing the user to save current state. For this reason, most function
+calls under CMIO involve a <em>safe evaluation</em>, in which errors are reported but not
+
+<h2>Display Pages</h2>
+
+Each source or target choice is represented as a "page" in the
+window.  data fields on each page can be set in the GUI and also
+initialized by passing the appropriate values to the function when the
+window is created.
+
+
+

@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>cmio</title>
+</head>
+<body>
+<div id="content">
+
+<!-- Entry: "cmio" -->
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><span class="syntax">(<code class="entry">cmio</code> {<var>keyword value</var>}* )</span></dd>
+</dl>
+
+<p>
+Opens and returns a new <a href="cmio-topic.html">CMIO</a> window
+whose characteristics can be customized by specifying optional keyword
+arguments to the function.  Each <var>keyword</var> is the keyword
+name of a <a href="cmio-topic.html#pages">display page</a> in the
+window and its <var>value</var> is a property list containing zero or
+more page field names and values. The syntax of the property list for
+each page is described below.
+</p>
+<p id="args"><code class="entry">cmio</code> supports the following
+keyword arguments:
+</p>
+
+<dl>
+
+<dt><span class="keyword">:clm</span> <var>list</var></dt>
+<dd>
+Initializes data fields on the <a href="cmio-topic.html#clm">CLM
+page</a> according to <var>list</var>, a property list with the
+following keyword field names and values:
+<table>
+<!--tr><th class="col">Field</th><th class="col">Value</th></tr-->
+<tr><td><span class="keyword">:score-file</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:versions</span></td><td><var>boolean</var</td></tr>
+<tr><td><span class="keyword">:sound-file</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:play</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:srate</span></td><td><var>number</var></td></tr>
+<tr><td><span class="keyword">:channels</span></td><td><var>number</var></td></tr>
+<tr><td><span class="keyword">:scaled-to</span></td><td><var>number</var></td></tr>
+<tr><td><span class="keyword">:scaled-by</span></td><td><var>number</var></td></tr>
+<tr><td><span class="keyword">:clipped</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:statistics</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:verbose</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:comment</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:reverb</span></td><td><var>symbol</var></td></tr>
+<tr><td><span class="keyword">:decay-time</span></td><td><var>number</var></td></tr>
+<tr><td><span class="keyword">:reverb-data</span></td><td><var>list</var></td></tr>
+</table>
+</dd>
+
+<dt><span class="keyword">:cmn</span><var>list</var></dt>
+<dd>
+Initializes data fields on the <a href="cmio-topic.html#cmn">CMN
+page</a> according to <var>list</var>, a property list with the
+following keyword field names and values:
+<table>
+<tr><td><span class="keyword">:output-file</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:versions</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:view</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:all-output-in-one-file</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:title</span></td><td><var>string</var> </td></tr>
+<tr><td><span class="keyword">:size</span></td><td><var>integer</var></td></tr>
+<tr><td><span class="keyword">:metronome</span></td><td><var>integer</var></td></tr>
+<tr><td><span class="keyword">:exact</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:staffing</span></td><td><var>list</var></td></tr>
+</table>
+
+See the documentation on <a href="cmn-stream-cls.html">clm-stream</a>
+for a description of the <span class="keyword">:staffing</span> list.
+
+</dd>
+
+<dt><span class="keyword">:eventio</span> <var>list</var></dt>
+<dd>
+Initializes data fields on the <a href="cmio-topic.html#eventio">Event
+IO page</a> according to <var>list</var>, a property list with the
+following keyword field names and values:
+
+<table>
+<tr><td><span class="keyword">:events</span></td><td><var>expression</var></td></tr>
+<tr><td><span class="keyword">:starts</span></td><td>{<var>number</var> | <var>list</var>}</td></tr>
+</table>
+</dd>
+
+<dt><span class="keyword">:files</span> <var>list</var></dt>
+<dd>
+Initializes data fields on the <a href="cmio-topic.html#files">Files
+page</a> according to <var>list</var>, a property list with the
+following keyword field names and values:
+<table>
+<tr><td><span class="keyword">:audio</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:midi</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:sco</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:eps</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:html</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:ins</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:clm</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:lisp</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:wait</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:output</span></td><td><var>boolean</var></td></tr>
+</table>
+</dd>
+
+<dt><span class="keyword">:midi</span> <var>list</var></dt>
+<dd>
+Initializes data fields on the <a href="cmio-topic.html#midi">Midi
+page</a> according to <var>list</var>, a property list with
+the following keyword field names and values:
+<table>
+<tr><td><span class="keyword">:midi-file</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:microtuning</span></td><td> {<span class="keyword">:none</span> | <span class="keyword">:divisions</span> | <span class="keyword">:note-by-note</span>}</td></tr>
+<tr><td><span class="keyword">:exclude-tracks</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:meta-exclude</span></td><td><var>boolean</var></td></tr>
+<tr><td><span class="keyword">:keynum-format</span></td><td> {<span class="keyword">:keynum</span> | <span class="keyword">:note</span>  | <span class="keyword">:hertz</span>}</td></tr>
+<tr><td><span class="keyword">:override-tempo</span></td><td><var>number</var></td></tr>
+<tr><td><span class="keyword">:time-format</span></td><td> {<span class="keyword">:beats</span> | <span class="keyword">:ticks</span>}</td></tr>
+</table>
+</dd>
+
+<dt><span class="keyword">:midishare</span> <var>list</var></dt>
+<dd>
+Initializes data fields on the <a
+href="cmio-topic.html#midishare">Midishare page</a> according
+to <var>list</var>, a property list with the following keyword field
+names and values:
+<table>
+<tr><td><span class="keyword">:connection</span></td><td> {<span class="keyword">:midi-port</span> | <span class="keyword">:midi-player</span>}</td></tr>
+<tr><td><span class="keyword">:name</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:track</span></td><td><var>number</var></td></tr>
+<tr><td><span class="keyword">:play</span></td><td><var>boolean</var></td></tr>
+</table>
+</dd>
+
+<dt><span class="keyword">:plotter</span> <var>list</var></dt>
+<dd>
+Initializes data fields on the <a href="cmio-topic.html#plotter">Plotter
+page</a> according to <var>list</var>, a property list with the
+following keyword field names and values:
+<table>
+<tr><td><span class="keyword">:title</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:event-layering</span></td><td> {<span class="keyword">:add</span> | <span class="keyword">:mix</span> | <span class="keyword">:replace</span> | <span class="keyword">:overwrite</span>}</td></tr>
+<tr><td><span class="keyword">:x-axis</span></td><td><var>list</var></td></tr>
+<tr><td><span class="keyword">:y-axis</span></td><td><var>list</var></td></tr>
+</table>
+See the documentation on <a href="axis-cls.html">axis</a>
+for a description of the <span class="keyword">:x-axis</span> 
+and <span class="keyword">:y-axis</span> lists.
+</dd>
+
+<dt><span class="keyword">:seq</span> <var>list</var></dt>
+<dd>
+Initializes data fields on the <a href="cmio-topic.html#seq">Seq
+page</a> according to <var>list</var>, a property list with the
+following keyword field names and values:
+<table>
+<tr><td><span class="keyword">:name</span></td><td><var>string</var></td></tr>
+<tr><td><span class="keyword">:replace</span></td><td><var>boolean</var></td></tr>
+</table>
+</dd>
+
+<dt><span class="keyword">:systems</span> <var>list</var></dt>
+<dd>
+Initializes data fields on the <a href="cmio-topic.html#systems">Systems
+page</a> according to <var>list</var>, a property list with the
+following keyword field names and values:
+<table>
+<tr><td><span class="keyword">:clm-directory</span></td><td><var>string</var> </td></tr>
+<tr><td><span class="keyword">:clm-bin-directory</span></td><td><var>string</var> </td></tr>
+<tr><td><span class="keyword">:cmn-directory</span></td><td><var>string</var> </td></tr>
+<tr><td><span class="keyword">:cmn-bin-directory</span></td><td><var>string</var></td></tr>
+</table>
+
+</dd>
+
+<dt><span class="keyword">:target</span> <var>page</var></dt>
+<dd>
+Selects keyword <var>page</var> as the active target page when the
+window opens. Defaults to <span class="keyword">:midi</span>.
+</dd>
+</dl>
+
+<h4>Examples:</h4>
+
+<div class="float" id="example2">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Customizing a Midi page.
+</p>
+<pre class="code">
+(cmio <span class="keyword">:midi</span> '(<span class="keyword">:midi-file</span> <span class="string">"temp.mid"</span> <span class="keyword">:microtuning</span> <span class="keyword">:divisions</span>))
+</pre>
+</div>
+
+<div class="float" id="example2">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Customizing a CLM configuration.
+</p>
+<pre class="code">
+(cmio <span class="keyword">:clm</span> '(<span class="keyword">:srate</span> 44100 <span class="keyword">:channels</span> 2 <span class="keyword">:reverb</span> nrev <span class="keyword">:statistics</span> t)
+      <span class="keyword">:files</span> '(<span class="keyword">:audio</span> <span class="string">"/usr/bin/sndplay"</span>)
+      <span class="keyword">:systems</span> '(<span class="keyword">:clm-directory</span> <span class="string">"/usr/share/clm-2"</span>)
+      <span class="keyword">:target</span> '<span class="keyword">:clm</span>)
+</pre>
+</div>
+
+<div class="float" id="example3">
+<p class="captxt">
+<span class="floatlabel">Example 3.</span> Customizing a Plotter page.
+</p>
+<pre class="code">
+(cmio <span class="keyword">:plotter</span> '(<span class="keyword">:title</span> <span class="string">"My Data"</span>
+                 <span class="keyword">:event-layering</span> '<span class="keyword">:overwrite</span>
+                 <span class="keyword">:x-axis</span> (<span class="keyword">:maximum</span> 60 <span class="keyword">:slot</span> (time duration)
+                                   <span class="keyword">:ticks-per-increment</span> 1)
+                 <span class="keyword">:y-axis</span> (<span class="keyword">:keynum</span> <span class="keyword">:minimum</span> 60 <span class="keyword">:maximum</span> 80
+                                  <span class="keyword">:slot</span> keynum))
+      <span class="keyword">:target</span> '<span class="keyword">:plotter</span>)
+</pre>
+</div>
+
+
+<h4>See also:</h4>
+<ul>
+<li><a href="cmio-topic.html">CMIO</a> [Topic]</li>
+<li><a href="plotter-topic.html">Plotter</a> [Topic]</li>
+</ul>
+
+<!-- Content -->
+</div>
+
+<hr class="inv"/>
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
