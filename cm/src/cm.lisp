@@ -123,6 +123,7 @@
     ;; Load Midishare Interface if Midishare is installed.
     ;; Currently supported in Openmcl, MCL-4, MCL-5 and CMUCL
     
+    #-clisp
     (if #+(and openmcl darwin)
         (and (probe-file "ccl:darwin-headers;midishare;")
              (probe-file
@@ -139,6 +140,7 @@
         (warn "No real-time MIDI support: Midishare not installed."))
     
     ;; Load optional Player interface if midishare is installed.
+    #-clisp
     (when (find ':midishare *features*)
       (if #+(and digitool ccl-4 (not ccl-5.0))
         (ccl::get-shared-library-descriptor "PlayerSharedPPC")
