@@ -465,3 +465,10 @@
     (load bin :verbose nil)))
 
 
+;;; temporary hack until i can figure out what to do 
+;;; for lisps without callbacks
+
+#-openmcl
+(defmacro defcallback (name args &body body)
+  args body
+  `(defvar ,name "defcallback not implemented"))
