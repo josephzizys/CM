@@ -76,13 +76,12 @@
                  :defaults here)))
    (namestring (merge-pathnames file here))))
 
-
 (unless (find-package :clm)
   (load (srcfile "clm-stubs.lisp")))
 (unless (find-package :cmn)
   (load (srcfile "cmn-stubs.lisp")))
 (unless t ;(find-package :cmn)
-  (load (srcfile "midishare" "cmn-stubs.lisp")))
+  (load (srcfile "midishare" "midishare-stubs.lisp")))
 (load (srcfile "pkg.lisp"))
 
 (defun gencm (&rest args &aux verb)
