@@ -171,7 +171,7 @@
        `(let* ((args (list #f))
                (tail args))   ; <- this var is appended to
 
-          (if (slot-ref io 'output-trace)
+          (if (eq? (slot-ref io 'output-trace) #t)
             (format #t "~a ~s..."
                     (object-name obj) (decimals scoretime 3)))
 
@@ -182,7 +182,7 @@
 
 (define-class <clm-audio-stream> (<event-stream>)
   (clmargs :init-value '() :accessor clm-args)
-  (output-trace :init-value #f
+  (output-trace :init-value :info
 		:init-keyword :trace-output
 		:accessor audio-file-output-trace)
   :name 'clm-audio-stream

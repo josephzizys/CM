@@ -45,9 +45,10 @@
                    ':output
                    (file-output-filename io)
                    inits))
-      (apply #'tell-snd
-             (file-output-filename io)
-             inits)
+      (unless (null? (audio-file-output-trace io))
+        (apply #'tell-snd
+               (file-output-filename io)
+               inits))
       io)
     (next-method)))
 
@@ -55,7 +56,7 @@
   (let ((wsd (io-open io))
         (old *clm-with-sound-depth*))
     (set! *clm-with-sound-depth* 1)
-    (when (slot-ref io 'output-trace)
+    (when (eq? (slot-ref io 'output-trace) #t)
       (format #t "Done!~&"))
     (when (and (pair? mode) (car mode))
       (set! (wsdat-play wsd) #f))
