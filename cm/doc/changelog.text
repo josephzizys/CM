@@ -1,24 +1,30 @@
-CM 2.5.0
-o rhythmic symbols can now include an initial minus sign
-  to negate the value returned by RHYTHM: -q = -1.0
-  a minus sign prepended to a rhythmic expression negates
-  the entire expression, not just the first symbol:
-     -w-q = -(w-q) = -3.0 not -5.0
-o Mode can now be defined with more or fewer than 12 semitones
-  per octave. This added functionality required a change that
-  may break existing mode definitions:
+o The functions 'hertz', 'note' and 'keynum' have been reimplemented
+  with new keywords args to provide additional functionality and to
+  make the functions behave more consistently. This has resulted in
+  one incompatible change: the :HZ "tag" used by note and keynum is
+  now a keyword parameter. Do: (note 440 :hz t) not: (note 440 :hz)
+  The :hz tag will continue to work in the near future with a warning.
+
+o rhythmic symbols can now include a minus sign to negate their value,
+  ie: -q = -1.0. Negative rhythmic values can be interpreted as "rest"
+  values by a process. Note that a minus sign prepended to a rhythmic
+  expression negates the entire expression, not just the first symbol:
+  -w-q = -(w-q) = -3.0 not -5.0
+
+o 'wait' now performs abs (absolute value) on the value passed to it
+  so that negative "rest" values can be processed correctly
+
+o Modes can now be defined with more or fewer than 12 semitones per
+  octave. This new functionality introduced an incompatible change:
+
   1. If a mode's :steps list contains note names then the last
-     note must mark the ocave: (c d e f g a b c)
+     note must mark the octave: (c d e f g a b c)
   2. If a  mode's :steps list contains intervals between modal 
      degress then the octave size is set to the sum of
-     the intervals, so  (2 1 2 1 1) = 7 semitone octave
-o the :HZ tag used by the NOTE and KEYNUM is now a true lisp
-   keyword parameter, ie:
-     (note 440 :hz)
-  is now
-     (note 440 :hz t)
-  This is an incompatible change. The :hz tag will
-  continue to work but you will get a warning.
+     the intervals, ie:
+        :steps  '(2 1 2 1 1) = 7 semitone octave
+
+o New function 'midi-hush' closes an reopens a Midishare connection.
 o cm now looks for ~/.cminit.lisp and loads it if it exists
 o make-cm has new :extensions parameter for loading 
   extensions. see make-cm in dictionary for more info.
