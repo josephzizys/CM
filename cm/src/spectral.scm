@@ -62,9 +62,8 @@
 ; (fm-spectrum 100 1.4 3 '( c4 b4) :amplitudes :weight )
 ; (fm-plot 100 1.4 3 )
 
-(define (fm-spectrum carrier mratio index . args)
-  (with-args (args &optional (spectrum ':hertz)
-                   &key invert (ignore-zero #f izp)
+(define (fm-spectrum carrier mratio index spectrum . args)
+  (with-args (args &key invert (ignore-zero #f izp)
                    (amplitudes (eq? spectrum ':raw))
                    all-sidebands scale-order (unique #t))
 

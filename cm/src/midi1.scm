@@ -1485,8 +1485,8 @@
       (when stream
         (%print-sysex-aux stream data bytes rest #f)))))
 
-(define (midi-print-message msg  . args)
-  (with-args (args &optional time &key data length
+(define (midi-print-message msg time . args)
+  (with-args (args &key data length
                    (stream #t)
                    (time-format #t)
                    (time-string "")
