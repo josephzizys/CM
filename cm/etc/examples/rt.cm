@@ -10,6 +10,10 @@
 ;;; 'bang!' triggers forward chaining, optionally setting box funargs
 ;;; first. See the comments in object.scm for more info.
 
+;;; if you are in Guile eval these before testing the examples:
+;;; (defmacro defparameter (a b) `(define ,a ,b))
+;;; (define evenp even?)
+
 (defparameter plus (box #'+))       ; define an adder
 (defparameter prin (box #'print))   ; define a printer
 (box-> plus prin)                   ; plus sends to prin
@@ -37,7 +41,7 @@
 
 (defparameter data (box (lambda () (values 1 2 (random 1000) 4 5))))
 (defparameter hiho (box (lambda (a b c d e) (list :hiho! a b c d e))))
-(defparameter prin (box 'print))
+(defparameter prin (box #'print))
 (box-> data hiho)
 (box-> hiho prin prin prin)
 (loop repeat 5 do (bang! data))
@@ -49,7 +53,7 @@
 
 (defparameter rani (box (lambda () (random 100))))
 (defparameter even (box (lambda (x) (if (evenp x) x :stop!))))
-(defparameter prin (box 'print))
+(defparameter prin (box #'print))
 (box-> rani even)
 (box-> even prin)
 (loop repeat 10 do (bang! rani))
@@ -81,6 +85,33 @@
 (bang! topb)       ; count upward until topb is reset.
 
 ;;;
+;;; bret's lehmer pattern is another feedback net:
+;;; LEHMER: x(t+1) = [(x(t) * A) + B] wrap (MIN MAX)
+
+(defparameter lehmer
+  ;; could have a box control each arg of course...
+  (box (lambda (x a b lo hi)
+         (fit (+ (* x a) b) lo hi :wrap))))
+
+(defparameter feedbk
+  ;; sets arg[0] in outbox but does not bang it
+  (box (lambda (x) (values :send! :argn 0 x))))
+
+(defparameter showme (box #'print))
+
+(box-> lehmer showme feedbk)
+(box-> feedbk lehmer)
+
+;; init lehmer:  x(t-1)  A    B    min  max
+(boxargs lehmer '(0.9    1.1  0.5  0.0  1.0))
+;; show some
+(dotimes (i 20) (bang! lehmer))
+
+
+
+
+
+;;;
 ;;; both :bang! and :send! allow specific forward args to be set using
 ;;; the :argn flag, which treats successor values as {argn value}
 ;;; pairs.
@@ -107,7 +138,7 @@
                           (dotimes (i n) (bang! box))
                           :stop!)))
 (defparameter rani (box (lambda () (random 1000))))
-(defparameter prin (box 'print))
+(defparameter prin (box #'print))
 (box-> rani prin)
 (bang! iter 10 rani)
 
@@ -289,29 +320,6 @@
 ;;; play some soft/louder notes in middle register, then...
 (bang! mrat pi)  ; set inharmonic ratio and play some more...
 (receive)        ; stop
-
-;;;
-;;; bret's lehmer pattern
-;;; LEHMER: x(t+1) = [(x(t) * A) + B] wrap (MIN MAX)
-
-(defparameter lehmer
-  ;; could have a box control each arg of course...
-  (box (lambda (x a b lo hi)
-         (fit (+ (* x a) b) lo hi :wrap))))
-
-(defparameter feedbk
-  ;; sets arg[0] in outbox but does not bang it
-  (box (lambda (x) (values :send! :argn 0 x))))
-
-(defparameter showme (box #'print))
-
-(box-> lehmer showme feedbk)
-(box-> feedbk lehmer)
-
-;; init lehmer:  x(t-1)  A    B    min  max
-(boxargs lehmer '(0.9    1.1  0.5  0.0  1.0))
-;; show some
-(dotimes (i 20) (bang! lehmer))
 
 ;;;
 ;;; now make keydowns play lehmer
