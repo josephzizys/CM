@@ -591,7 +591,19 @@ under_editor () {
 }
 
 if [ "$EDITOR_OPT" ] ; then
-  if ! under_editor ; then
+  if under_editor && ! imatch_end_token "$EDITOR_OPT" gnuclient ; then
+    msg_i "Already running under emacs.  Looking for gnuclient(1)."
+    GNUCLIENT=`resolve_bin gnuclient WARN`
+    if [ ! "$GNUCLIENT" ] ; then
+      msg_i "Ignoring '$EDITOR_OPT'."
+      EDITOR_OPT=
+    else
+      EDITOR_OPT="$GNUCLIENT"
+      # FIXME: might check for a running gnuserv first
+    fi
+  fi
+
+  if [ "$EDITOR_OPT" ] ; then
     if [[ "$EDITOR_OPT" == */* ]] ; then
       thing=`real_path "$EDITOR_OPT"`
       if [ ! "$thing" ] ; then
