@@ -10,210 +10,246 @@
 <body>
 <div id="content">
 
-
-<!-- Entry: "rewrite" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><code class="entry">rewrite</code></span></dd>
+<dd><code class="entry">rewrite</code></dd>
 </dl>
+
+<p>
+Generates elements according to user specified rewrite rules. Rewrite
+rules are expressed in terms of nodes and node identifiers. Two
+different styles of rule specification are supported:
+</p>
+
+<ol>
+<li><p>Context-free rules</p>
+<p>
+Context-free rules are rules that depend only on the nodes they are
+associated with in the pattern. The element is specified as a <em>node
+list</em> similar to the <a href="graph-cls.html">graph</a> pattern:
+</p>
+
+<blockquote>
+<p><code>(</code><var>element</var> {<var>property value</var>}+<code>)</code></p>
+</blockquote>
+
+<p>
+where <var>element</var> is the element to return from the pattern
+followed by one or more <var>property value</var> pairs:
+</p>
+
+<dl>
+<dt><code class="keyword">:id</code> <var>datum</var></dt>
+<dd>
+Specifies a unique identifier for the node in the pattern.  If
+omitted, the identifier defaults to the element itself. It is good
+practice to provide each node with an explicit id.
+</dd>
+
+<dt>
+<code class="keyword">:-&gt;</code> {<var>id</var>
+| <code>(</code>{<var>id</var>}+<code>)</code> | <var>pattern</var>
+| <var>false</var>}</dt>
+<dd>
+Sets the rewrite expression for the node. The value may be a single
+identifier, a list of identifiers, a pattern or false. If the value is
+false the node is terminal, i.e.. it produces no successor(s) in the
+pattern's next generation. If the value is a pattern then the pattern
+is read to produce a successor term each time the node is
+rewritten. Otherwise the value should be an id or list of ids that
+identify successor node(s) in the next generation.
+</dd>
+</dl>
+</li>
+
+<li><p>Context-sensitive rules</p>
+
+<p>
+Context-sensitive rules are associated with the entire pattern rather
+than with the nodes in the pattern. This means that each rule may
+reference more than one node in its left-hand side and there may be
+more (or fewer) rules than there are nodes.  The list of rules is
+interpreted as an ordered set: to produce a new generation, nodes in
+the current generation are matched against the rules to find the first
+rule whose left-hand side is true (matches). This rule is then
+"triggered" and the id(s) in its right-hand side are added to the next
+generation.
+</p>
+
+<p>
+Node specification in a context sensitive rewrite pattern are simlar to the context-free pattern except that:
+</p>
+
+<ul>
+<li>
+the <code class="keyword">:-&gt;</code> marker appears in rules, not
+in node descriptions
+</li>
+<li>
+if the node's <code class="keyword">:id</code> value is the same as
+the element then it can be specified in place of a node list
+</li>
+</ul>
+
+<p>
+Each rule in a context-sensitive patter is a list of the form:
+</p>
+
+<blockquote>
+<p>({<var>id</var>}+<kbd> <code class="keyword">:-&gt;</code> </kbd>{<var>id</var>}*)</p>
+</blockquote>
+
+<p>
+The <code class="keyword">:-&gt;</code> marker divides each rule into
+two sides (<a href="#table_1">Table 1</a>). The left-hand side of the
+rule defines the "matching target" and the right-hand side defines the
+rewrite succession.  Either or both sides may contain more than one
+id. If the left-hand side of the rule is a single id then the rule
+matches any node with the same id. If the left-hand side has more than
+one id (a context-sensitive rule) then the rule matches if the "strict
+predecessor" in the left-hand side matches the current node and the
+ids around the strict predecessor match match the nodes around the
+current node. The strict predecessor id is marked in the left-hand
+side by making it a single element list. Every context rule must
+contain exactly one strict predecessor in its left hand side.
+</p>
+
+<div class="float" id="table_1">
+<p class="captxt">
+<span class="floatlabel">Table 1.</span>Three examples of context sensitive rules: 
+Note that the right-hand side may be empty and that the left-hand
+side may use the wild card * to matches any single element in the
+current generation.
+</p>
+
+<table>
+<tr><th class="lcol">Rule</th><th class="lcol">Description</th></tr>
+<tr><td><code>(1 (1) 2 <span class="keyword">:-&gt;</span>
+3)</code></td><td> 1 rewrites to 3 wherever it is preceded by itself and followed by 2</td></tr>
+<tr><td><code>(1 * (2) <span class="keyword">:-&gt;</span> 1 2)</code></td><td> 2 rewrites to 1 2 whenever 1 occurs two positions earlier</td></tr>
+<tr><td><code>(5 (3) 3 4 <span class="keyword">:-&gt;</span>)</code></td><td> 3 rewrites to nothing if preceded by 5 and followed by itself and 4</td></tr>
+</table>
+</div>
+
+</li>
+</ol>
 
 
 <p>
-Enumerates elements from successive <var>generations</var> of elements
-according to user specified rewrite rules.  
+<code class="entry">rewrite</code> supports the following slot initializations:
 </p>
 
-<p><code class="entry">rewrite</code> supports the following slot initializations:
-</p>
 <dl>
+<dt><code class="keyword">:of</code> <var>list</var> </dt>
+<dd>
+The list of nodes constituting the pattern data. For context-free
+patterns each element in the list must be proper node list as decribed
+above. For context-sensitive patterns a node list only has to be
+provided for those nodes containing patterns as elements, otherwise
+only the node id needs to be specified.
+</dd>
 
+<dt><code class="keyword">:intially</code> <var>list</var></dt>
+<dd>
+A list of ids that consititute the initial generation to return from
+the pattern. The default generation contains only first node listed in
+the pattern's data.
+</dd>
 
 <dt><code class="keyword">:rules</code> <var>list</var></dt>
 <dd>
-
-Sets the rewrite rules of the pattern to <var>list</var>.
+Sets the rewrite rules of a context-sensitive pattern
+to <var>list</var>.
 </dd>
 
 <dt><code class="keyword">:generations</code> <var>number</var></dt>
 <dd>
-
-Sets the number of generations to actually generate. After <var>number</var> of generations
-the pattern simply reuses elements from the last generation, as if the pattern were a cycle.
+Sets the number of generations to generate. After <var>number</var> of
+generations the pattern simply reuses the final generation's elements
+as if the pattern were a cycle.
 </dd>
 
 </dl>
 
-
-
 <p>
-Rewrite rules are expressed in terms of nodes and node identifiers. Two different
-styles of rule specification are supported.
+See <a href="patterns-topic.html#pattern_inits">generic pattern
+initializations</a> for documentation on additional keyword
+initializations to the pattern.
 </p>
 
-<h4>1. Context-free Rules (rules associated with nodes)</h4>
+<h4>Examples:</h4>
 
-<p>
-The first style of rule specification associates a rewrite rule
-with each node in the pattern. This method is capable of describing many
-sorts of context-free morphologies. The form of each node is similar
-to the graph pattern:
+<div class="float" id="example_1">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Context free melody.
 </p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">pat1</span> (<a href="new-mac.html">new</a> rewrite <span class="keyword">:of</span> '(( 2 <span class="keyword">:-&gt;</span> ( 2 -2 2))
+                                (-2 <span class="keyword">:-&gt;</span> (-2 -2 2)))))
 
-<blockquote>
-<p>(<var>element</var> {<var>property value</var>}+)</p>
-</blockquote>
+(<span class="special">define</span> (<span class="defined">stepper</span> pat end rate from)
+  (<span class="special">let</span> ((pat (<a href="new-mac.html">new</a> <a href="range-fn.html">range</a> <span class="keyword">:initially</span> (<a href="keynum-fn.html">keynum</a> from) 
+                  <span class="keyword">:stepping</span> pat)))
+    (<a href="process-mac.html">process</a> while (&lt; (<a href="now-fn.html">now</a>) end)
+             output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
+                         <span class="keyword">:keynum</span> (<a href="next-fn.html">next</a> pat)
+                         <span class="keyword">:duration</span> rate)
+             wait rate))
 
-
-<p>
-where <var>element</var> is the element to return from the pattern
-followed by one or more <var>property value</var> pairs.
-</p>
-
-<p>Context-free rules support the following <var>property value</var> pairs:
-</p>
-<dl>
-
-
-<dt><code>id</code> <var>datum</var></dt>
-<dd>
-
-Sets <var>datum</var> to be the unique identifier for the node in the pattern. The
-identifier may be any LISP datum as long as its uniquely represented in
-the pattern. If omitted, the identifier defaults to the element itself. It is good
-practice to provide each node with an explicit id that is
-independent of the actual element returned by the node.
-</dd>
-
-
-<dt><code>-&gt;</code> {<var>id</var> | ({<var>id</var>}+) | <var>pattern</var> | <var>false</var>}</dt>
-<dd>
-
-Sets the rewrite expression for the node. The value may be a single identifier,
-a list of identifiers, a pattern or false. If the value is false
-the node is terminal, ie. it  produces no successor(s) in the pattern's
-next generation. If the value
-is a pattern then the pattern is read to produce a successor term each
-time the node is rewritten. Otherwise the value should be an id or list
-of ids that identify successor node(s) in the next generation. 
-</dd>
-
-</dl>
-
-
-
-<h4>2. Context-sensitive Rules (rules applied to nodes)</h4>
-
-<p>
-The second style of rule specification permits
-<var>context-sensitive</var> rules (rules involving more than one node
-in their left hand side) to be defined. In this method a list of rules
-is associated with the entire pattern rather than with the nodes in
-the pattern. This means that there may be more or fewer rules than
-there are nodes. The rule list is interpreted as an ordered set; to
-produce a new generation, each node in the current generation is
-matched against the rule list to find the successor rule to apply to
-the node. The first rule that matches is triggered and the id(s) in
-the right-hand side of the rule produce the successor node(s) in the
-next generation.
-</p>
-
-<p>
-Node specification for the second method is similar to the first except that:
-<p>
-
-<ul>
-<li>the <kbd>-&gt;</kbd> option is not part of the node declaration.</li>
-<li>if the node's <kbd>id</kbd> value is the same as the element itself
-then the element itself can be specified in place of the node.</li>
-</ul>
-
-<p>
-Each rule in the second style of rule specification is a list of the
-form:
-</p>
-
-<blockquote>
-<p>({<var>id</var>}+<kbd> -&gt; </kbd>{<var>id</var>}*)</p>
-</blockquote>
-
-<p>
-The <kbd>-&gt;</kbd> operator divides each rule into two sides. The
-left-hand side of the rule defines the "matching target" and the
-right-hand side defines the rewrite succession.  Either or both sides
-may contain more than one id. If the left-hand side of the rule is a
-single id then the rule matches any node with the same id. If the
-left-hand side has more than one id (a context-sensitive rule) then
-the rule matches if the "strict predecessor" in the left-hand side
-matches the current node and the nodes around the current node in the
-generation match the ids around the strict predecessor in the
-left-hand side. The strict predecessor id is marked as a list. Every
-context rule must contain exactly one strict predecessor in its left
-hand side.
-</p>
-
-<p>Three examples of context sensitive rules: 
-</p>
-<dl>
-
-
-<dt>(<code>1</code> (<code>1</code>) <code>2</code> <code>-&gt;</code> <code>3</code>)</dt>
-<dd>
-
-Means node 1 rewrites to node 3 wherever 1 is preceded by itself and followed by 2
-in the current generation.
-</dd>
-
-
-<dt>(<code>1</code> <code>*</code> (<code>2</code>) <code>-&gt;</code> <code>1</code> <code>2</code>)</dt>
-<dd>
-
-means node 2 rewrites to 1 and 2 whenever 1 occurs two positions
-earlier in the current generation. 
-</dd>
-
-
-<dt>(<code>5</code> (<code>3</code>) <code>3</code> <code>4</code> <code>-&gt;</code>)</dt>
-<dd>
-
-means node 3 rewrites to nothing if preceded by 5 and followed by itself and 4 in the current
-generation. Note that the right-hand side may be empty and that the left-hand
-side may contain the wild card * which matches any single element in the
-current generation.
-</dd>
-
-</dl>
-
-
-
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(define x (new rewrite :of '((a -&gt; (a b a)) </span>
-    <span class="input">                             (b -&gt; (b b a)))</span>
-    <span class="input">                       :initially 'b))</span>
-
-cm&gt; <span class="input">(next x 20)</span>
-(b b b a b b a b b a a b a b b a b b a a)
-cm&gt;</pre>
+(<a href="events-fn.html">events</a> (list (stepper 20 (<a href="rhythm-fn.html">rhythm</a> 's 100) 'c5)
+              (stepper 20 (<a href="rhythm-fn.html">rhythm</a> 'te 100) 'f4)
+              (stepper 20 (<a href="rhythm-fn.html">rhythm</a> 'e 100) 'bf3)
+              (stepper 20 (<a href="rhythm-fn.html">rhythm</a> 'tq 100) 'ef3))
+        <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
+</pre>
 </div>
 
+<div class="float" id="example_2">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Context sensitive harmony.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">pat1</span>
+  (<a href="new-mac.html">new</a> rewrite <span class="keyword">:of</span> '(((0 4 7) <span class="keyword">:id</span> f)
+                     ((0 3 7) <span class="keyword">:id</span> g)
+                     ( 1 <span class="keyword">:id</span> +)
+                     (-1 <span class="keyword">:id</span> -))
+                   <span class="keyword">:initially</span> '(f + f - g - f)
+                   <span class="keyword">:rules</span> '((f <span class="keyword">:-&gt;</span> f f - g - - g - f)
+                            (g <span class="keyword">:-&gt;</span> g f + f)))
 
-<!-- See also -->
-<h4>See Also:</h4>
+(<span class="special">define</span> (<span class="defined">lsystem-harmony</span> lsys len rhy dur)
+  (<span class="special">let</span> ((term #f)
+        (knum 60))
+    (<a href="process-mac.html">process</a> repeat len
+             do
+             (<span class="special">set!</span> term #f)
+             (loop until term
+                   for x = (<a href="next-fn.html">next</a> lsys)
+                   do
+                   (<span class="special">if</span> (list? x)
+                     (<span class="special">set!</span> term x)
+                     (<span class="special">set!</span> knum (<a href="fit-fn.html">fit</a> (+ knum x) 48 72))))
+             each c in (<a href="transpose-fn.html">transpose</a> term knum)
+             output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
+                         <span class="keyword">:keynum</span> c
+                         <span class="keyword">:duration</span> dur
+                         <span class="keyword">:amplitude</span> .7)
+             wait rhy)))
+
+(<a href="events-fn.html">events</a> (lsystem-harmony 200 .2 .35)
+        <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
+</pre>
+</div>
+
+<h4>See also:</h4>
+
 <ul>
-<li><a href="accumulation-cls.html"><kbd>accumulation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="cycle-cls.html"><kbd>cycle</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="funcall-cls.html"><kbd>funcall</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="graph-cls.html"><kbd>graph</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="heap-cls.html"><kbd>heap</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="join-cls.html"><kbd>join</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="line-cls.html"><kbd>line</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="markov-cls.html"><kbd>markov</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="palindrome-cls.html"><kbd>palindrome</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="range-cls.html"><kbd>range</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="rotation-cls.html"><kbd>rotation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="rewrite-generation-fn.html"><code>rewrite-generation</code></a> [Function]</li>
+<li><a href="patterns-topic.html#pattern_classes">Pattern classes</a> [Topic]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>
