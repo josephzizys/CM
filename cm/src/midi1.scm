@@ -3331,16 +3331,16 @@
   ;; the  :accessor and :allocation settings declared by <midi-event>!
   (values
    (make-channel-message (slot-ref event 'opcode)
-                        (midi-event-channel event)
-                        (midi-event-data1 event)
-                        (or (midi-event-data2 event)
-                            0))
+                         (midi-event-channel event)
+                         (midi-event-data1 event)
+                         (or (midi-event-data2 event)
+                             0))
    #f))
 
 (define-method (midi-event->midi-message (event <midi-system-event>))
-  (let ((type (midi-event-data1 event))
-        (code (logior #xf0 type))
-        (data (midi-event-data2 event)))
+  (let* ((type (midi-event-data1 event))
+         (code (logior #xf0 type))
+         (data (midi-event-data2 event)))
     (cond ((eq? type 0)
            (make-sysex 0 data))
           ((<= 1 type 3)                ; qframe, songpos, songsel
@@ -3378,10 +3378,6 @@
           (else
            (err "Unimplemented meta-event opcode: ~s" op)))))
 
-(define (miditest m)
-  (multiple-value-bind (x y) (midi-event->midi-message m)
-    (midi-print-message x #f :data y)
-    (values x y)))
 
 ; (define a (new midi-pitch-bend :msb 66 :lsb 2))
 

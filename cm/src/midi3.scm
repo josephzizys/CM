@@ -76,10 +76,13 @@
   (:writers ))
 
 ;;;
-;;; midi-pitch-bend stores bend values as +-width and then converts
-;;; to msb lsb on slot reads. since midi-event-data1 and data2 are
-;;; always used in tandem data1 returns lsb of 14bits and caches msb.
-;;; this will lose if data1 and data2 are randomly accessed.
+;;; since midi-event-data1 and data2 are always called in order
+;;; midi-pitch-bend stores bend values as +-width and then
+;;; converts to msb lsb on slot reads.  midi-event-data1 returns
+;;; lsb of 14bits and caches msb; midi-event-data2 simply returns
+;;; the cached msb. this will obviously lose if data1 and data2
+;;; accessors are not called in tandem and in order.
+;;;
 
 (defobject midi-pitch-bend (midi-channel-event)
   ((opcode :initform +ml-pitch-bend-opcode+ :initarg #f)
