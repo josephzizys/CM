@@ -20,58 +20,44 @@
 Common Music supports reading and writing all types of MIDI messages
 to MIDI files and to the <a
 href="http:www.grame.fr/MidiShare">Midishare</a> real time operating
-system. Two levels of MIDI support are defined;
+system . Two levels of
+MIDI support are defined:
 </p>
 
 <ul>
-<li>
-A low level, foreign function interface connects directly to Midishare
-for "interactive", or real-time work.
-</li>
 <li>
 A high level interface provides Lisp classes and methods for
 generating music to MIDI score files and to MidiShare in non-real time
 mode.
 </li>
+
+<li>
+A low level, foreign function interface connects directly to Midishare
+for "interactive", or real time work (OpenMCL/OS X and CMUCL/Linux
+systems only).
+</li>
+
 </ul>
 
 <p>
-Note that non-real time does not mean <em>slower</em> than real time;
+Note that in the case of the high level interface, the term
+<em>non-real time</em> does not imply <em>slower</em> than real time;
 in most cases the high-level interface generates output many times
 faster than real time.
 </p>
 
-<h3>Low level (real time) MIDI support</h3>
-
-In order to work with Midishare in real time, a connection from CM to
-MidiShare must first be established. This connection is represented by
-an object called the <em>midi port</em>.
+<h2>High level  MIDI support</h2>
 
 <p>
-Functions related to opening and closing the midi port:
+High level MIDI support consists of class definitions of MIDI scores
+and events and functions that operate on them in non-real time. The
+high level is documented by main entries in the Common Music
+dictionary.  Links to this documentation organized by topic are
+provided below.
 </p>
 
-<dl>
-<dt><code class="entry">(midi-open)</code></dt>
-<dd>Opens connection to MidiShare.</dd>
-<dt><code class="entry">(midi-close)</code></dt>
-<dd>Closes connection to MidiShare.</dd>
-<dt><code class="entry">(midi-open?)</code></dt>
-<dd>Returns true if MidiShare is open.</dd>
-<dt><code class="entry">(midi-reset </code>[<code class="keyword">:port </code><em>integer</em>]<code class="entry">)</code></dt>
-<dd>Sends system reset to a MidiShare output port, which defaults to 0.</dd>
-</dl>
+<h3>MIDI Score Classes</h3>
 
-Once the midi port has been open,
-
-<h3>High level (non-real time) MIDI support</h3>
-
-<p>
-High level MIDI support provides class definitions for MIDI input
-and output services and for MIDI event messaging.
-</p>
-
-<h4>MIDI Score Classes</h4>
 <ul>
 <li><a href="midi-file-stream-cls.html"><code>midi-file-stream</code></a></li>
 <li><a
@@ -81,54 +67,431 @@ href="midishare-stream-cls.html"><code>midishare-stream</code></a></li>
 </li>
 </ul>
 
-<h4>MIDI Channel Events</h4>
+
+<h3>MIDI Event Classes</h3>
+
 <ul>
-<li>
-<a href="midi-cls.html"><code>midi</code></a>
-</li>
+<li><a href="midi-cls.html"><code>midi</code></a></li>
+<li><a href="midi-note-on-cls.html"><code>midi-note-on</code></a></li>
+<li><a href="midi-note-off-cls.html"><code>midi-note-off</code></a></li>
+<li><a href="midi-key-pressure-cls.html"><code>midi-key-pressure</code></a></li>
+<li><a href="midi-control-change-cls.html"><code>midi-control-change</code></a></li>
+<li><a href="midi-program-change-cls.html"><code>midi-program-change</code></a></li>
+<li><a href="midi-channel-pressure-cls.html"><code>midi-channel-pressure</code></a></li>
+<li><a href="midi-pitch-bend-cls.html"><code>midi-pitch-bend</code></a></li>
+<li><a href="midi-system-event-cls.html"><code>midi-pitch-bend</code></a></li>
 
-<li>
-<a href="midi-note-on-cls.html"><code>midi-note-on</code></a>
-</li>
 
-<li>
-<a href="midi-note-off-cls.html"><code>midi-note-off</code></a>
-</li>
-
-<li>
-<a href="midi-note-off-cls.html"><code>midi-key-pressure</code></a>
-</li>
-
-<li>
-<a href="midi-note-off-cls.html"><code>midi-control-change</code></a>
-</li>
-
-<li>
-<a href="midi-note-off-cls.html"><code>midi-program-change</code></a>
-</li>
-
-<li>
-<a href="midi-channel-pressure-cls.html"><code>midi-channel-pressure</code></a>
-</li>
-
-<li>
-<a href="midi-pitch-bend-cls.html"><code>midi-pitch-bend</code></a>
-</li>
 
 </ul>
 
-<h4>MIDI System Event Classes<h4>
+<h3>MIDI Functions</h3>
+<ul>
+<li><a href="events-fn.html"><code>events</code></a></li>
+<li><a href="import-events-fn.html"><code>import-events</code></a></li>
+<li><a href="midi-file-print.html"><code>midi-file-print</code></a></li>
+<li><a href="osx-play-midi-file.html"><code>osx-play-midi-file</code></a></li>
+<li><a href="win-play-midi-file.html"><code>win-play-midi-file</code></a></li>
+</ul>
 
-<h4>MIDI Meta Event Classes<h4>
-
-
-
-<h4>Midishare Events</h4>
+<h2>Low level MIDI support</h2>
 
 <p>
-For information about working with "low-level"  Midishare events and
-real time scheduling see ???.
+In order to work with Midishare in real time, a connection between CM
+and MidiShare must first be established. This connection is
+represented by an object called the <em>midi port</em>.
 </p>
+
+<h3>Opening and closing the MIDI port</h3>
+
+<dl>
+<dt>(<code class="entry">midi-open</code>)</dt>
+<dd>Opens connection to MidiShare.</dd>
+<dt>(<code class="entry">midi-close</code>)</dt>
+<dd>Closes connection to MidiShare.</dd>
+<dt>(<code class="entry">midi-open?</code>)</dt>
+<dd>Returns true if MidiShare is open.</dd>
+<dt>(<code class="entry">midi-reset </code>[<code class="keyword">:port </code><em>integer</em>]<code class="entry"></code>)</dt>
+<dd>Sends system reset to a MidiShare output port, which defaults to 0.</dd>
+</dl>
+
+<!-- Interaction 1 -->
+<div class="float">
+<p><span class="floatlabel">Example 1.</span> Opening the MIDI port.</p>
+<pre class="shell">cm&gt; <span class="input">(midi-open)</span>
+<span class="output">MIDIPORT</span>
+cm&gt; <span class="input">(midi-open?)</span>
+<span class="output">MIDIPORT</span></pre>
+</div>
+
+
+<h3>MidiEv events</h3>
+
+<p>
+Once a connection between CM and MidiShare has been established, MIDI
+messages can be sent to and from MidiShare ports and client
+applications in real time. MidiShare implements MIDI messages using a
+C struct called a MidiEv.  MidiEvs are <em>foreign</em> objects in
+Lisp, that is, they are allocated and deallocated outside of Lisp's
+memory partition, they are not part of the Lisp datatype system, they
+are not managed by Lisp's garbage collection facility nor are they
+trapped by Lisp's error system.  You are completely responsible for
+properly managing the MidiEv's you allocate and use. In some cases
+this includes explicit deallocation of these objects after they have
+been sent or received.  Be sure to consult the Midishare manual and
+the <a href="../../src/midishare/Midishare-Interface.lisp">Midishare
+Lisp interface</a> for information about how to create, read, write
+and deallocate MidiEv structs using Midishare's API.
+</p>
+
+<p>
+Common Music extends the Midishare API with the addition of a high
+level MidiEv constructor and a structure printer so that MidiEvs can
+be manupulated in a manner consistent with the normal Lisp objects
+defined in the system.
+</p>
+
+<dl>
+<dt>
+<span class="syntax">(<code class="entry">ms:new</code> <var>type</var> {<var style="color:#b22222;">:keyword</var> <var>value</var>}*)</span>
+</dt>
+<dd>
+Allocates, initalizes and returns a foreign Midishare
+event. <var>Type</var> is an integer MidiEv type specifier (see below)
+followed by zero or more keyword parameters as approproate for the
+type of MidiEv returned.
+</p>
+
+<p>Keyword arguments applicable to all MidiEvs:</p>
+<dl>
+<dt><code class="keyword">:port</code> <var>integer</var></dt> <dd>The
+reference number of the MidiShare port to send the event to. Defaults
+to 0.</dd> <dt><code class="keyword">:channel</code>
+<var>integer</var></dt> <dd>The channel number to send the event
+to. Defaults to 0.</dd> <dt><code class="keyword">:date</code>
+<var>integer</var></dt> <dd>The time (in milliseconds) of the
+event. Defaults to 0.</dd>
+</dl>
+
+<p>
+Every type of MidiEv is identified by a unique integer <em>type
+id</em>, a Lisp constant (symbol) with an integer value.  The
+following list provides the name, value and <code
+class="entry">ms:new</code> keyword arguments for each type of MidiEv:
+</p>
+
+<dl>
+<!-- begin types -->
+<dt><code>typeNote</code> (0)</dt>
+<dd>
+A midishare key event with an associated millisecond duration.
+<dl>
+<dt><code class="keyword">:keynum</code> <em>integer</em></dt>
+<dd>An integer key number 0-127. Defaults to 60.</dd>
+<dt><code class="keyword">:velocity</code> <em>integer</em></dt>
+<dd>An integer velocity 0-127. Defaults to 60.</dd>
+<dt><code class="keyword">:duration</code> <em>integer</em></dt>
+<dd>Duration in milliseconds, defaults to 500.
+</dl>
+</dd>
+
+<dt><code>typeKeyOn</code> (1), <code>typeKeyOff</code> (2)</dt>
+<dd>
+Like <code>typeNote</code> but with no millisecond <code
+class="keyword">:duration</code>.
+</dd>
+
+<dt><code>typeKeyPress</code> (3)</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:keynum</code> <em>integer</em></dt>
+<dd>An integer key number 0-127. Defaults to 60.</dd>
+<dt><code class="keyword">:pressure</code> <em>integer</em></dt>
+<dd>An integer pressure 0-127. Defaults to 0.</dd>
+</dl>
+</dd>
+
+<dt><code>typeCtrlChange</code> (4)</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:controller</code> <em>integer</em></dt>
+<dd>An integer controller 0-127. Defaults to 0.</dd>
+<dt><code class="keyword">:change</code> <em>integer</em></dt>
+<dd>An integer change 0-127. Defaults to 0.</dd>
+</dl>
+</dd>
+
+<dt><code>typeProgChange</code> (5)</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:program</code> <em>integer</em></dt>
+<dd>An integer program 0-127. Defaults to 0.</dd>
+</dl>
+</dd>
+
+<dt><code>typeChanPress</code> (6)</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:pressure</code> <em>integer</em></dt>
+<dd>An integer pressure 0-127. Defaults to 0.</dd>
+</dl>
+</dd>
+
+<dt><code>typePitchBend</code> (7), <code>typePitchWheel</code> (7)</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:bend</code> <em>integer</em></dt>
+<dd>An integer bend value -8192 to 8191. Defaults to 0 (no bend).</dd>
+</dl>
+</dd>
+
+<dt><code>typeSongPos</code> (8)</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:lsb</code> <em>integer</em></dt>
+<dd>An integer 0-127. Defaults to 0.</dd>
+<dt><code class="keyword">:msb</code> <em>integer</em></dt>
+<dd>An integer 0-127. Defaults to 0.</dd>
+</dl>
+</dd>
+
+<dt><code>typeSongSel</code> (9)</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:song</code> <em>integer</em></dt>
+<dd>An integer song 0-127. Defaults to 0.</dd>
+</dl>
+</dd>
+
+
+<dt>
+<code>typeClock</code> (10),
+<code>typeStart</code> (11),
+<code>typeContinue</code> (12),
+<code>typeStop</code> (13),
+<code>typeTune</code> (14),
+<code>typeActiveSens</code> (15),
+<code>typeReset</code> (16)
+<dd>
+No keyword parameters.
+</dd>
+
+<dt><code>typeSysEx</code> (17)</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:data</code> <em>list</em></dt> <dd>A list
+of data bytes. Do not include a leading #xF0 or tailing #xF7 in the
+list; these markers are added automatically by Midishare.</dd>
+</dl>
+</dd>
+</dl>
+
+
+<p>
+The following MIDI Meta messages <em>cannot</em> be sent to an
+external synth:
+</p>
+
+<dl>
+<dt><code>typeSeqNum</code> (134)</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:number</code> <em>integer</em></dt>
+<dd>A sequence integer 0-127.</dd>
+</dl>
+</dd>
+
+<dt>
+<code>typeTextual</code> (135),
+<code>typeCopyright</code> (136),
+<code>typeSeqName</code> (137),
+<code>typeInstrName</code> (138),
+<code>typeLyric</code> (139),
+<code>typeMarker</code> (140),
+<code>typeCuePoint</code> (141)
+<dd>
+<dl>
+<dt><code class="keyword">:text</code> <em>string</em></dt>
+<dd>A text string, defaults to "".</dd>
+</dl>
+</dd>
+
+<dt>
+<code>typeChannelPrefix</code> (142)
+</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:prefix</code> <em>integer</em></dt>
+<dd>A prefix integer 0-127, defaults to 0.</dd>
+</dl>
+</dd>
+
+<dt>
+<code>typeEndTrack</code> (143)
+</dt>
+<dd>No keyword parameters.</dd>
+
+<dt>
+<code>typeTempo</code> (144)
+</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:tempo</code> <em>integer</em></dt>
+<dd>Tempo in quarter notes per minute, defaults to 120.</dd>
+</dl>
+</dd>
+
+<dt>
+<code>typeSMPTEOffset</code> (145)
+</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:offset</code> <em>list</em></dt> <dd>A list
+of SMPTE integer offsets (<em>hr min sec frame subframe</em>).</dd>
+</dl>
+</dd>
+
+<dt>
+<code>typeTimeSign</code> (146)
+</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:numerator</code> <em>integer</em></dt>
+<dd>The upper number of the time signature, defauts to 4.</dd>
+<dt><code class="keyword">:denominator</code> <em>integer</em></dt>
+<dd>The lower number of the time signature, defaults to 4.</dd>
+<dt><code class="keyword">:clocks</code> <em>integer</em></dt>
+<dd>Clocks per quarter, defaults to 24.</dd>
+<dt><code class="keyword">:32nds</code> <em>integer</em></dt>
+<dd>Thirty-secconds per quarter, defaults to 8.</dd>
+</dl>
+</dd>
+
+<dt>
+<code>typeKeySign</code> (147)
+</dt>
+<dd>
+<dl>
+<dt><code class="keyword">:sign</code> <em>integer</em></dt> 
+<dd>The number of flats or sharps in the key signature -7 to 7,
+defaults to 0.</dd> 
+
+<dt><code class="keyword">:mode</code><em>integer</em></dt> 
+<dd>An integer 0 or 1 where 0 means major and 1
+means minor, defaults to 0.</dd>
+</dl>
+</dd>
+<!-- end types -->
+</dl>
+</dd>
+<!-- end ms:new -->
+<dt>
+<br/>
+<span class="syntax">
+(<code class="entry">ms:MidiPrintEv</code> <var>ev</var> [<var>stream</var>])
+</span>
+</dt>
+<dd>Formats the message contents of <var>ev</var> to <var>stream</var>, which defaults to the standard output.
+</dd>
+
+</dl>
+
+<!-- Interaction 1 -->
+<div class="float">
+<p><span class="floatlabel">Example 2.</span> Creating and printing a MidiEv.</p>
+<pre class="shell">cm&gt; <span class="input">(define ev (ms:new typeNote :channel 3 :duration 2000)</span>
+cm&gt; <span class="input">(ms:MidiPrintEv ev)</span>
+<span class="output">asdasd</span></pre>
+</div>
+
+<p>
+To access and set the fields of a MidiEv struct you should use the
+functions defined in the MidiShare API. The more important set of
+constructors and accessors are listed here. Consult the MidiShare
+documentation for more information.
+</p>
+
+<ul>
+<li>(<code>ms:MidiNewEv </code><var>typenum</var>)</code></li>
+<li>(<code>ms:MidiCopyEv </code><var>ev</var>)</li>
+<li>(<code>ms:MidiFreeEv </code><var>ev</var>)</li>
+<li>(<code>ms:evtype </code><var>ev</var> [<var>val</var>])
+<li>(<code>ms:port </code><var>ev</var> [<var>val</var>])
+<li>(<code>ms:chan </code><var>ev</var> [<var>val</var>])
+<li>(<code>ms:date </code><var>ev</var> [<var>val</var>])
+<li>(<code>ms:pitch </code><var>ev</var> [<var>val</var>])
+<li>(<code>ms:dur </code><var>ev</var> [<var>val</var>])
+<li>(<code>ms:vel </code><var>ev</var> [<var>val</var>])
+<li>(<code>ms:bend </code><var>ev</var> [<var>val</var>])
+<li>(<code>ms:pgm  </code><var>ev</var> [<var>val</var>])
+<li>(<code>ms:ctl </code><var>ev</var> [<var>val</var>])</li>
+<li>(<code>ms:val </code><var>ev</var> [<var>val</var>])</li>
+<li>(<code>ms:field </code><var>ev pos</var> [<var>val</var>])</li>
+</ul>
+
+<!-- Interaction 2 -->
+<div class="float">
+<p><span class="floatlabel">Example 3.</span> Copying and transposing an event by one octave.</p>
+<pre class="shell">cm&gt; <span class="input">(define ev2 (ms:MidiCopyEv ev))</span>
+
+cm&gt; <span class="input">(ms:pitch ev2 (+ (ms:pitch ev2) 12))</span>
+<span class="output">asdasd</span></pre>
+</div>
+
+
+
+<h3>Realtime MIDI Output</h3>
+<p>
+Real time MIDI event output and music process scheduling is initiated
+by calling <a href="output-fn.html"><code>output</code>, <a
+href="sprout-fn.html"><code>sprout</code></a> and <a
+href="now-fn.html"><code>now</code></a> <em>outside</em> the dynamic
+scope of a call to <a href="events-fn.html"><code>events</code></a>.
+When used interactively these functions behave as if they were defined
+slightly differently than during (non-real time) <code>events</code>
+scheduling:
+
+<dl>
+<dt><span class="syntax">(<code class="entry">now</code>)</span></dt>
+<dd>Returns Midishare's current clock time in milliseconds.</dd>
+
+<dt>
+<span class="syntax">(<code class="entry">output</code> <var>ev</var> [<var>ahead</var>])</span>
+</dt>
+<dd>
+Sends <var>ev</var> to Midishare immediately or <var>ahead</var>
+milliseconds later than when the function is called. No value is
+returned.
+</dd>
+
+<dt>
+<span class="syntax">(<code class="entry">sprout</code> <var>fn</var> [<var>ahead</var>])</span>
+</dt>
+<dd>
+Schedules the process function <var>fn</var> to run as a real time
+Midishare task immediately or <var>ahead</var> milliseconds later than
+when the function is called. No value is returned.
+</dd>
+</dl>
+
+
+<!-- Interaction 4 -->
+<div class="float">
+<p><span class="floatlabel">Example 4.</span> Outputting and sprouting.</p>
+<pre class="shell">cm&gt; <span class="input">(now)</span>
+<span class="output">8212</span>
+cm&gt; <span class="input">(output (ms:new typeNote :keynum 80 :duration 1000))</span>
+
+cm&gt; <span class="input">(define (foo reps dur ub lb)
+      (process repeat reps
+               output (ms:new typeNote :duration dur
+                              :keynum (between lb ub))
+               wait 500))</span>
+
+cm&gt; <span class="input">(sprout (foo 100 750 40 90) 2000)</span></pre>
+</div>
+
+<h3>Realtime MIDI Input</h3>
 
 
 
