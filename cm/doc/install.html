@@ -48,8 +48,6 @@ href="http://www.grame.fr/MidiShare/">Midishare</a>.
 </li>
 <li><a href="#make_cm">Loading Common Music</a>
 </li>
-<li><a href="#run_cm">Running the Common Music application</a>
-</li>
 <li><a href="#install_sys">Working with CLM, CMN and MidiShare</a>
 </li>
 <li><a href="#troubleshooting">Troubleshooting</a>
@@ -259,12 +257,11 @@ differently as you perform each step.
 
 <p>
 If you are on Linux, OS X or Cygwin then the easiest way to start CM
-is by using the <code>cm</script> script located in the bin/
-subdirectory of the CM installation directory. The script will
-automatically generate and compile any files it needs as it loads CM,
-and can start CM in Terminal window or under Emacs/XEmacs. Once the
-script finishes loading it will leave you in the CM package ready to
-begin work.
+is by using the <code>cm</code> script located in the bin/
+subdirectory of the CM installation directory. This script will
+automatically generate and compile any files it needs as it loads CM.
+Once the script finishes loading it will leave you in the CM package
+ready to begin work.
 </p>
 
 <div class="float">
@@ -285,7 +282,9 @@ Loading Common Music using the <code>cm</code> script.
 </div>
 
 <p>
-For more information about the <code>cm</code> script type: <code>./cm -h</code> in the Terminal.
+The <code>cm</code> script can be used to start CM in a Termial or
+under Emacs/Xemacs. For more information about script type: <code>./cm
+-h</code>.
 </p>
 
 <h3>3.2 Loading Common Music in Lisp (Windows, MacOS)</h3> 
@@ -408,9 +407,6 @@ See the documentation on <a href="dict/make-cm-fn.html">make-cm</a>
 for more information about the various build options.
 </p>
 
-<h2 id="run_cm">4. Running the Common Music application</h2>
-
-<p>Not yet written.</p>
 
 <!-- 
 <p>
@@ -480,7 +476,7 @@ source files:
 </ul>
 -->
 
-<h2 id="install_sys">5. Working with CLM, CMN and Midishare</h2>
+<h2 id="install_sys">4. Working with CLM, CMN and Midishare</h2>
 <p>
 To work with either CLM or CLM just load the system into Common Music
 using one of the load commands shown below.  If you would like to
@@ -604,7 +600,7 @@ Adding CCL logical host translations to cminit.lisp
 </div>
 -->
 
-<h2 id="troubleshooting">6. Troubleshooting Tips</h2>
+<h2 id="troubleshooting">5. Troubleshooting Tips</h2>
 
 <dl>
 <dt id="trouble-eol">1. Line conversion (MacOS)</dt> 
