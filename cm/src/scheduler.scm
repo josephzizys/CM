@@ -404,42 +404,58 @@
       (if out (set! *out* out))
       (if (pair? event)
         (dolist (e event)
-	  (let ((n (+ *qstart* (object-time e))))
-	    (if (early? n)
-	      (enqueue e n #f)
-	      (funcall *handler* e n))))
+          (let ((n (+ *qstart* (object-time e))))
+            (if (early? n)
+              (enqueue e n #f)
+              (funcall *handler* e n))))
         (let ((n (+ *qstart* (object-time event))))
-	  (if (early? n)
-	    (enqueue event n #f)
-	    (funcall *handler* event n))))
+          (if (early? n)
+            (enqueue event n #f)
+            (funcall *handler* event n))))
       (set! *out* sav) 
       (values))))
 
 (define (now . args)
   (with-args (args &optional abs-time)
     ;; if #t absolute time
-    (if (not abs-time)
-      (- *qtime* *qstart*)
-      *qtime*)))
+    (if *queue*
+      (if (not abs-time)
+        (- *qtime* *qstart*)
+        *qtime*)
+      (err "Calling 'now' outside of scheduler?"))))
 
 (defmacro stop ()
-  (process-stop #f))
+  (if *queue*
+    (process-stop #f)
+    (err "Calling 'stop' outside of scheduler?")))
 
 (define (wait delta)
-  (set! *qnext* (+ *qnext* delta)))
+  (if *queue*
+    (set! *qnext* (+ *qnext* delta))
+    (err "Calling 'wait' outside of scheduler?")))
 
 (define (wait-until time)
-  (set! *qnext* (+ *qstart* time)))
+  (if *queue*
+    (set! *qnext* (+ *qstart* time))
+    (err "Calling 'wait-until' outside of scheduler?")))
 
 (define-method (sprout (obj <object>) time)
-  time ; gag 'unused var' warning from cltl compilers
-  (schedule-object obj *qstart*))
+  time 
+  (if *queue*
+    (schedule-object obj *qstart*)
+    (err "Calling 'sprout' outside of scheduler?")))
 
 (define-method (sprout (obj <procedure>) time)
-  (enqueue obj (+ *qstart* time) (+ *qstart* time)))
+  time 
+  (if *queue*
+    (enqueue obj (+ *qstart* time) (+ *qstart* time))
+    (err "Calling 'sprout' outside of scheduler?")))
 
 (define-method (sprout (obj <pair>) time)
-  (dolist (o obj) (sprout o time)))
+  time 
+  (if *queue*
+    (dolist (o obj) (sprout o time))
+    (err "Calling 'sprout' outside of scheduler?")))
 
 ;(defprocess foo ()
 ;  (process repeat 10
