@@ -182,7 +182,7 @@ checkout command</a> to restore the desired CM source tree to your computer.
 To download the latest (developmental) sources from the head branch:
 </p>
 <pre class="shell">
-$ <span class="input">cvs checkout -P cm</span>
+$ <span class="input">cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic checkout -P cm</span>
 <span class="comment">[cvs printout omitted...]</span></pre>
 
 <p>
@@ -192,7 +192,7 @@ CM 2.4.<em>n</em> release line do:
 </p>
 
 <pre class="shell">
-$ <span class="input">cvs checkout -P -r rel-2_4 cm</span>
+$ <span class="input">cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic checkout -P -r rel-2_4 cm</span>
 <span class="comment">[cvs printout omitted...]</span></pre>
 <p>
 Once the source tree has been restored to your machine you can cd inside it
@@ -570,7 +570,8 @@ function interface (FFI) to the GTK libraries:
 <li>
 <p>
 Download <a
-href="http://pinhead.music.uiuc.edu/~hkt/openmcl-darwin-gtk.tar.gz">openmcl-darwin-gtk.tar.gz</a>
+
+href="http://pinhead.music.uiuc.edu/~hkt/openmcl-darwin-ffi-gtk2.tar.gz">openmcl-darwin-ffi-gtk2.tar.gz</a>
 </p>
 </li>
 
@@ -580,7 +581,7 @@ Untar the archive inside your ccl/darwin-headers/ directory under the
 OpenMCl distribution:
 </p>
 <pre class="shell">$ <span class="input">cd /path/to/ccl/darwin-headers</span>
-$ <span class="input">tar -zxf openmcl-gtk-interface.tar.gz</span></pre>
+$ <span class="input">tar -zxf openmcl-darwin-ffi-gtk2.tar.gz</span></pre>
 </li>
 </ol>
 
