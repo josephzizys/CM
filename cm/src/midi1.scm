@@ -3293,7 +3293,8 @@
 (define-generic midi-event-data2)
 
 (define-class <midi-event> (<event>)
-  (opcode :accessor midi-event-opcode :allocation :class))
+  (opcode :accessor midi-event-opcode :allocation :class)
+  :name 'midi-event)
 
 (define-method (midi-event-data1 (obj <midi-event>))
   #f)
@@ -3305,6 +3306,9 @@
   (channel :init-value 0 :init-keyword :channel
            :accessor midi-event-channel)
   :name 'midi-channel-event)
+
+;;; GOOPS BUG (?) redeclaring opcode for :init-value obliterates
+;;; its :accessor  and :allocation settings declared by <midi-event>!
 
 (define-class <midi-system-event> (<midi-event>)
   (opcode :init-value #xf0)
@@ -3323,11 +3327,15 @@
 ;;;
 
 (define-method (midi-event->midi-message (event <midi-channel-event>))
-  (make-channel-message (midi-event-opcode event)
+  ;; GOOPS BUG (?) declaring slots for :init-values obliterates
+  ;; the  :accessor and :allocation settings declared by <midi-event>!
+  (values
+   (make-channel-message (slot-ref event 'opcode)
                         (midi-event-channel event)
                         (midi-event-data1 event)
                         (or (midi-event-data2 event)
-                            0)))
+                            0))
+   #f))
 
 (define-method (midi-event->midi-message (event <midi-system-event>))
   (let ((type (midi-event-data1 event))
@@ -3341,7 +3349,7 @@
            (make-system-message 0 code)))))
 
 (define-method (midi-event->midi-message (event <midi-meta-event>))
-  (let ((op (midi-event-opcode event)))
+  (let ((op (slot-ref event 'opcode)))
     (cond ((eq? op +ml-file-sequence-number-opcode+)
            (make-sequence-number (midi-event-data1 event)))
           ((eq? op +ml-file-text-event-opcode+)
@@ -3374,6 +3382,10 @@
   (multiple-value-bind (x y) (midi-event->midi-message m)
     (midi-print-message x #f :data y)
     (values x y)))
+
+; (define a (new midi-pitch-bend :msb 66 :lsb 2))
+
+; (miditest a)
 
 
 ;;; message->event conversion

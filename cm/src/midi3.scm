@@ -38,14 +38,14 @@
 (defobject midi-note-on (midi-channel-event)
   ((opcode :initform +ml-note-on-opcode+ :initarg #f)
    (keynum :accessor midi-event-data1)
-   (velocity :accessor midi-event-data2))
+   (velocity :accessor midi-event-data2 :initform 64))
   (:parameters time channel keynum velocity)
   (:writers ))
 
 (defobject midi-note-off (midi-channel-event)
   ((opcode :initform +ml-note-off-opcode+ :initarg #f)
    (keynum :accessor midi-event-data1)
-   (velocity :accessor midi-event-data2))
+   (velocity :accessor midi-event-data2 :initform 64))
   (:parameters time channel keynum velocity)
   (:writers ))
 
@@ -75,23 +75,34 @@
   (:parameters time channel pressure)
   (:writers ))
 
+;;;
+;;; midi-pitch-bend stores bend values as +-width and then converts
+;;; to msb lsb on slot reads. since midi-event-data1 and data2 are
+;;; always used in tandem data1 returns lsb of 14bits and caches msb.
+;;; this will lose if data1 and data2 are randomly accessed.
+
 (defobject midi-pitch-bend (midi-channel-event)
   ((opcode :initform +ml-pitch-bend-opcode+ :initarg #f)
-   (msb :accessor midi-event-data1)
-   (lsb :accessor midi-event-data2))
-  (:parameters time channel msb lsb)
+   (bend :initform 0)
+   (width :initform *midi-pitch-bend-width*) ; midi2.scm
+   (msb :initarg #f :accessor midi-event-data2)) ; cached by data1 read.
+  (:parameters time channel bend width)
   (:writers ))
 
-;;;
-;;; sysex
-;;;
+(define-method (midi-event-data1 (obj <midi-pitch-bend>))
+  ;; convert nominal bend value to 14 bits, return lsb
+  ;; and _cache_ msb.
+  (let ((bend (midi-pitch-bend-bend obj))
+        (maxb (midi-pitch-bend-width obj)))
+    (let ((14bits (inexact->exact
+                   (floor (rescale bend (- maxb) maxb 0 16383)))))
+      ;; cache msb
+      (slot-set! obj 'msb (ldb (byte 7 7) 14bits))
+      ;; return lsb
+      (ldb (byte 7 0) 14bits))))
 
-(defobject midi-sysex (midi-event)
-  ((opcode :initform -99 :initarg #f)
-   (route :accessor midi-event-data1)
-   (data :initform '()  :accessor midi-event-data2))
-  (:parameters time route data)
-  (:writers ))
+(define-method (midi-event-data2 (obj <midi-pitch-bend>))
+  (slot-ref obj 'msb))
 
 ;;;
 ;;; meta messages
