@@ -370,12 +370,29 @@ find_lisp () {
 }
 
 get_lisp_info () {
-  if test $LISP_FLV && test $LISP_VRS ; then
-    echo ${LISP_FLV}_${LISP_VRS}
+  if test $LISP_VRS ; then
+    if test $LISP_FLV ; then
+      echo ${LISP_FLV}_${LISP_VRS}
+    else
+      case "$1" in
+	*clisp*|*CLISP*)		      flv=clisp ;;
+	*acl*|*ACL*)		      flv=acl ;;
+	*lisp*|*LISP*|*cmucl*|*CMUCL*)  flv=cmucl ;;
+	*openmcl*|*OPENMCL*|*dppccl*)   flv=openmcl ;;
+	*guile*)                        flv=guile ;;
+	*)
+	  msg_e "Can't determine flavor of '$1'.  Re-run with -F option."
+	  msg_x "Exiting."
+	  ;;
+      esac
+      echo ${flv}_$LISP_VRS
+    fi
   else
-    # This is ugly, wasteful and probably requires future maintenance :(
-    case "$1" in
+    # This is ugly, wasteful, and requires maintenance :(
+    q='echo '"'(lisp-implementation-version)'"' | "$1"'
+    case "${LISP_FLV:-$1}" in
       *clisp*|*CLISP*)
+        flv=clisp
         vrs=`"$1" --version | head -1 | cut -d' ' -f3`
         min=`echo -e "$vrs\n2.31" | sort -n | head -1`
         if [ $min != 2.31 ] ; then
@@ -383,30 +400,34 @@ get_lisp_info () {
           msg_i "Need clisp with -repl option (version 2.31 or higher)."
           msg_x "Aborting."
         fi
-        echo clisp_$vrs
         ;;
       *acl*|*ACL*)
-        echo acl_`echo '(lisp-implementation-version)' | "$1" -batch 2>/dev/null | sed -n 's/^.*"\([^ ]*\) .*/\1/p'`
+        flv=acl
+        vrs=`echo '(lisp-implementation-version)' | "$1" -batch 2>/dev/null \
+             | sed -n 's/^.*"\([^ ]*\) .*/\1/p'`
         ;;
       *lisp*|*LISP*|*cmucl*|*CMUCL*)
-        echo cmucl_`echo '(lisp-implementation-version)' | "$1" -quiet -batch | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p;'`
+        flv=cmucl
+        vrs=`echo '(lisp-implementation-version)' | "$1" -quiet -batch \
+             | sed -n 's/^.*[^0-9]\([0-9][0-9]*[a-z]\).*/\1/p'`
         ;;
       *openmcl*|*OPENMCL*|*dppccl*)
-        echo openmcl_`echo '(lisp-implementation-version)' | "$1" -b | sed -n 's/.* \([-0-9.]*\)".*/\1/p'` 
+        flv=openmcl
+        vrs=`echo '(lisp-implementation-version)' | "$1" -b \
+             | sed -n 's/.* \([-0-9.]*\)".*/\1/p'`
         ;;
       *guile*)
         LISP_DIA=SCHEME
-        echo guile_`"$1" --version | head -1 | cut -d' ' -f2`
-        ;;
-      *)
-        if [ $LISP_FLV -a $LISP_VRS ] ; then
-          echo ${LISP_FLV}_${LISP_VRS}
-        else
-          msg_e "Unknown implementation '$1'.  Re-run with -F and -V options."
-          msg_x "Exiting."
-        fi
+        flv=guile
+        vrs=`"$1" --version | head -1 | cut -d' ' -f2`
         ;;
     esac
+    if test $vrs ; then
+      echo ${flv}_${vrs}
+    else
+      msg_e "Can't detect version of '$1'.  Re-run with -V option."
+      msg_x "Exiting."
+    fi
   fi
 }
 
@@ -578,7 +599,7 @@ case $LISP_FLV in
     ;;
   *)
     msg_e "Don't know how to call '$LISP_FLV' yet... =:("
-    msg_x "Please tell me."
+    msg_x "Fatal."
     ;;
 esac
 
