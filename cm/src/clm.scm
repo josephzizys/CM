@@ -262,3 +262,125 @@
 ;	       &key amplitude-env mratio index index-env
 ;	       degree distance reverb) )
 
+;;;
+;;; CLM importing
+;;;
+
+(define *clm-imports* (list))
+
+(define *clm-import-translations*
+  ;; Each translation spec is (<form> <function>)
+  '((let import-let)
+    (let* import-let)
+    (progn import-progn)
+    (with-sound import-with-sound)))
+
+
+;; import-form translates list expressions whose first element
+;; is the name of an object class that has event parameters associated
+;; with it, or whose first element can be found on the :translations list.
+
+(define (import-form form translate exclude include . args)
+  (with-args (args &optinoal toplevel?)
+    (let ((sym (car form)))
+      (if (or (not (symbol? sym))
+              (and toplevel? (member sym exclude)))
+        #f
+        (let* ((obj (find-class sym #f))
+               (pars (and obj (object-parameters obj))))
+          (if pars
+            (import-object pars form)
+            (let ((trans (assoc sym translate)))
+              (if trans
+                ( (cadr trans) form translate exclude include)
+                (if (or (FBOUNDP SYM)
+                        (SPECIAL-OPERATOR-P sym))
+                  form
+                  (if (and include
+                           (or (eq? include #t)
+                               (member sym include)))
+                    form
+                    (begin
+                     (format #t "~%Skipping undefined function: ~s."
+                             form sym)
+                     #f)))))))))))
+
+(define (import-let form translate exclude include)
+  ;; walk let body to translate forms
+  (let ((body (loop for f in (cddr form)
+                 for r = (import-form f translate exclude include )
+                 when r collect r)))
+    (if body
+      (list* (car form)           ; let/let*
+             (cadr form)          ; bindings
+             body )               ; forms
+      #f)))
+
+(define (import-progn form translate exclude include)
+  ;; walk progn body to translate forms
+  (let ((body (loop for f in (cdr form)
+                    for r = (import-form f translate exclude include t)
+                    when r collect r)))
+    (if body
+      `(progn ,@ body)
+      #f)))
+
+(define (import-with-sound form translate exclude include)
+  ;; walk with-sound body to translate forms. return T as second
+  ;; value so forms are "spliced" into output file.
+  (values (loop for f in (cddr form)
+                for r = (import-form f translate exclude include t)
+                when r collect r) 
+          #t))
+
+(define (import-object pars forms)
+  ;; translate form whose car is the name of an event class into 
+  ;; a NEW expression that creates the object. expressions in the
+  ;;body of form are parsed according to the object's parameters.
+  (let ((save forms)
+        (name #f)
+        (reqs #f)
+        (opts #f)
+        (rest #f)
+        (keys #f))
+
+    ;; dont process INS as slot value
+    (if (eq? (parameter-slot (first pars)) 'ins)
+      (begin (pop pars)
+             (set! name (pop forms)))
+      (err "Expected INS as first parameter in ~s." pars))
+    (set! reqs
+          (loop with par 
+             while (and (not (null? forms))
+                        (eq? (parameter-type (car pars))
+                             ':required))
+             do (set! par (pop pars))
+             collect (parameter-slot par) collect (pop forms)))
+    (set! opts
+          (loop with par while (and (not (null? forms))
+                                    (eq? (parameter-type (car pars)) 
+                                         ':optional))
+             do (set! par (pop pars))
+             collect (parameter-slot par) collect (pop forms)))
+    (when (and (not (null? forms))
+               (eq? (parameter-type (car pars)) ':rest))
+      (set! rest forms)
+      (pop pars))
+    (set! keys
+          (loop with par
+             while (not (null? forms))
+             do
+               (set! par (find (car forms) pars 
+                               :key (function parameter-print)))
+               (or par
+                   (err "No slot for ~s in ~s." (car forms) save))
+             collect (parameter-slot par) collect (cadr forms)
+             do (set! forms (cddr forms))))
+    `(push (new ,name ,@reqs ,@opts ,@rest ,@keys)
+           *clm-imports*)))
+
+;(define-method (object-parameters (obj <class>)) ; standard-class
+;  (object-parameters (class-prototype obj)))
+
+
+
