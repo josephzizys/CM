@@ -15,15 +15,34 @@
 <dd><span class="syntax">CMIO</span></dd>
 </dl>
 
+The CMIO (Common Music Input/Output) window facilitates the generation
+of musical data to and from sound synthesis and display applications.
+The window is intended to be an efficient, structured replacement to
+entering equivalent input and output expressions inside the Lisp
+REPL. As an alternate evaluation method, CMIO windows perform their
+own error handling and, by default, report Lisp errors without forcing
+the user into the Lisp debugger. This allows a novice user to
+experiment with the various sound rendering systems in a fairly
+forgiving environment. 
+</p>
+
 <p>
-The CMIO (Common Music Input/Output) window is a graphical tool
-designed to facilitate the generation of musical data to and from
-sound synthesis and display applications.  Which applications are
-active at any given time depends on what software systems have been
-loaded into Common Music; the Systems and Files pages in the CMIO
-window can be used to dynamically configure and load external software
-such as CLM, CMN and Midishare into the Lisp environment.  In
-addition, the field settings on the various tabbed pages can be
+Which sound applications (called <em>targets</em> in the window) are
+actually active at any given time depends on what programs are
+installed on the host computer and also what software systems have
+been loaded into Common Music. These system do not have to be loaded
+ahead of musical experimentation; the window's Systems and Files pages
+permit external software such as CLM, CMN and Midishare to be
+dynamically configured and loaded at any appropriate point in the
+working process.  
+</p>
+
+<p>
+To render musical events to a sound application the user provides an
+expression that produces events, selects a target application, and
+presses the Compose button. Each application page has numerous fields
+for customizing behavior. These fields can be set to different values
+in the interface whenever the Compose button is pressed and can be
 initialized to a user's preference by passing appropriate arguments to
 the <a href="cmio-fn.html">cmio</a> function when the window is
 created.
@@ -32,7 +51,8 @@ created.
 <h2>Window Layout</h2>
 
 <p>
-A CMIO window consists of four GUI components:
+A CMIO window consists of four components arranged from top to bottom
+in the window:
 </p>
 
 <ul>
@@ -43,20 +63,21 @@ creating and generating event data.</li>
 synthesis and display applications.
 </li>
 <li>
-An <em>Executive</em> frame manages the system's working directory and
-current target file. <!-- The Execute button triggers actions on files
-according to user-defined semantics. -->
+An <em>Executive</em> frame manages the system's current working
+directory and (possibly) a current target file. <!-- The Execute
+button triggers actions on files according to user-defined
+semantics. -->
 </li>
-<li>A <em>Status</em> line displays color coded information about the
-ongoing window operations.</li>
+<li>A <em>Status</em> line displays color coded information about
+ongoing actions in the window.</li>
 </ul>
 
 <p>
 Each tabbed page contains a set of <em>fields</em> representing the
-input/output features of a given application. 
+input/output features of a given application or task.
 
-The right-justified pages (such as Help or Systems) relate to more
-general features of the window or of the surrounding Lisp environment.
+The right-justified pages (such as Help or Systems) control more
+general features of the window or in the surrounding Lisp environment.
 </p>
 
 <div class="float" id="example1">
@@ -73,18 +94,18 @@ the currently selected target.
 </div>
 
 <p>
-Color highlighting provides additional information about how the
-information on a page is interpreted by the interface:
+Color highlighting provides some visual clues as to how information on
+a page is interpreted by the interface:
 </p>
 
 <ul>
 <li>Blue labels mark <em>required</em> fields that must contain information
-before the page can execute.
+before a page can execute.
 </li>
 
 <li>
 Yellow backgrounds indicate fields that will be
-<em>evaluated</em> when the information is accessed.
+<em>evaluated</em> by Lisp when the information is accessed.
 </li>
 
 <li>
@@ -105,13 +126,14 @@ notification, red signifies an error condition.
 <h2>Notebooks and Pages</h2>
 
 <p>
-Each application (task) is represented by a tabbed notebook page
-inside the window. The Sources notebook relates to the creation of
-source material in CM: generating musical event data and defining
-aggregate structure with seq containers. The Targets notebook pages
-define various destinations that musical data can be rendered to or
-imported froom. The following sections briefly describe the layout and
-functionality of each Notebook's page.
+Each application, or task, is represented by a tabbed notebook page
+inside the window. The pages of the Sources notebook relate to the
+creation of source material in CM: generating musical event data and
+defining aggregate structure with <a href="seq-cls.html">seq</a>
+containers. The Targets notebook pages define various "destinations"
+that musical data can be rendered to or imported from. The following
+sections briefly describe the layout and functionality of each
+Notebook's pages.
 </p>
 
 <h3>Sources Notebook</h3>
@@ -123,12 +145,12 @@ The Containers page is used to create, rename and delete <a href="seq-cls.html">
 
 <div class="float">
 <p>
-<!--img src="cmio2.png" alt="[cmio2.png]"/-->
+<img src="cmio2.png" alt="[cmio2.png]"/>
 </p>
 </div>
 
 <ul>
-<li>The Containers menu lists all the existing named seq
+<li>The Containers menu contains all of the existing named seq
 objects. Selecting a seq from the menu places it in the name buffer
 for editing.</li>
 <li>The Name buffer can be set to the name of a sequence to edit or
@@ -137,26 +159,26 @@ create.</li>
 name buffer.</li>
 <li>The Rename button renames the currently selected seq in the
 Containers menu to the name in the edit buffer.</li>
-<li>The Delete button deletes the seq listed in the name buffer and
-all of its subobjects.</li>
+<li>The Delete button deletes the seq listed in the name buffer as
+well as all of its subobjects.</li>
 <li>The Update button refills the Containers menu with any new seq
-objects created outside the window (i.e. in the Lisp REPL) since the
-menu was created or last updated.
+objects created outside the window, for example in the Lisp REPL or
+another CMIO window.
 </li>
 </ul>
 
 <h4 id="eventio">Event IO</h4>
 <p>
 The <a href="cmio-fn.html#eventio">Event IO</a> page is used to
-generate musical events to the currently selected target page.  Using
-the Event IO page in conjunction with the current target page is
-equivalent to calling the <a href="events-fn.html">events</a> function
-in the REPL.
+generate musical events to and from the currently selected target
+page.  Using the Event IO page in conjunction with the current target
+page is equivalent to calling the <a href="events-fn.html">events</a>
+function in the REPL.
 </p>
 
 <div class="float">
 <p>
-<!--img src="cmio3.png" alt="[cmio3.png]"/-->
+<img src="cmio3.png" alt="[cmio3.png]"/>
 </p>
 </div>
 
@@ -194,7 +216,8 @@ The Help page is not yet implemented.
 
 <h4 id="clm">CLM</h4>
 <p>
-The <a href="cmio-fn.html#clm">CLM page</a> manages IO to CLM score files and audio files.
+The <a href="cmio-fn.html#clm">CLM page</a> manages input and output
+to <a href="clm-stream-cls.html">CLM score files</a> and <a href="clm-audio-stream-cls.html">CLM audio files</a>.
 </p>
 <div class="float">
 <p>
@@ -250,7 +273,7 @@ page for more information.
 hold the entire manuscript otherwise it will generate one eps file per
 page of the manuscript.</li>
 <li>The remaining fields on the page are CMN score options, consult
-the documetation on <a href="cmn-stream-cls.html">CMN streams</a> for
+the documentation on <a href="cmn-stream-cls.html">CMN streams</a> for
 more information.</i>
 
 </ul>
@@ -303,7 +326,7 @@ The <a href="cmio-fn.html#cmn">MIDI page</a> ...
 <ul>
 <li>If Microtuning is enabled then floating point key numbers in event
 data will be interpreted as microtonal adjustments on MIDI keynum
-values.  See the documentatoin on <a
+values.  See the documentation on <a
 href="midi-stream-cls.html">channel tuning</a> for more information.
 
 <li>The MIDI file buffer holds the name of the .mid file to output.</lI>
