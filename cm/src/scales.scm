@@ -318,6 +318,13 @@
       (dolist (d degs)
 	(sd-octave-set! d #f)))))
 
+(define (scale-ref table ref)
+  ;; return hash value else if symbol try symbol in CM package/module
+  (or (hash-ref table ref)
+      (if (symbol? ref)
+        (hash-ref table (string->symbol (symbol->string ref)))
+        #f)))
+
 (define (equal-tuning? tuning)
   (let ((steps (scale-steps tuning)))
     (if (pair? steps) #f steps)))
@@ -340,10 +347,10 @@
 		   (scale *chromatic-scale*))
     ;; return same note in a differnent octave.
     (let* ((table (scale-table scale))
-	   (entries (hash-ref table note))
+	   (entries (scale-ref table note))
 	   (entry (and entries (first entries))))
       (if entry
-	(loop for e in (hash-ref table
+	(loop for e in (scale-ref table
 				 (+ (sd-class entry)
 				    (* octave (scale-divisions scale))))
 	      when (eq? (sd-name e) (sd-name entry))
@@ -403,40 +410,44 @@
 			       do (push s l)
                                (set! s (transpose s (interval k)))
                                finally (return (cons s l)))))))
-
-    (if (> (interval-semitones (first steps)) div)
-      (err "Mode not defined within one octave: ~s." spec)
-      (if (= (interval-semitones (first steps)) div)
-        (pop steps)))
-
+;    (if (> (interval-semitones (first steps)) div)
+;      (err "Mode not defined within one octave: ~s." spec)
+;      (if (= (interval-semitones (first steps)) div)
+;        (pop steps)))
+    ;; first entry in steps is size of octave in tuning
+    (set! octave (pop steps))
+    ;; reorder steps low->high
     (set! steps (reverse steps))
     (set! len (length steps))
-    (set! octave div)
-    
     (set! (scale-steps obj) steps)
     (set! (scale-lowest obj) tonic)
     (set! (scale-keynum-offset obj) offset)
     (set! (scale-divisions obj) len)
+    ;; N.B. octave can be TYPED interval!
     (set! (scale-octave obj) octave)
-    
     ;; into  stores mode degree numbers for each
     ;; semitone in tuning. fill in steps first
-    (let ((into (make-list octave #f)))
+    (let ((into (make-list (interval-semitones octave) #f)))
       (loop for step in steps
             for degree from 0
             do
 	    (list-set! into (interval-semitones step) degree))
       (set! (scale-into obj) into))))
 
+; (define c *scale*)
+; (define o (new mode steps '(2 1 2 1 2 1 2 1)))
+; (define s (new mode steps '(2 1 2 1 1)))
+; (define b (new mode steps '(2 1 2 3 2 3 3 2 1 2 2 1)))
+
 (define-method (print-object (obj <mode>) stream)
   (let ((name (object-name obj)))
     (if name
       (format stream "#<~a: ~s (on ~a)>"
-              (class-name (class-of obj))
+              (string-downcase (symbol->string (class-name (class-of obj))))
               name
 	      (sd-name (scale-lowest obj)))
       (format stream "#<~a (on ~a)>"
-              (class-name (class-of obj))
+              (string-downcase (symbol->string (class-name (class-of obj))))
               (sd-name (scale-lowest obj))))))
 
 ;;;
@@ -446,7 +457,8 @@
 (define-method (tuning->mode (tuning <tuning>) keynum mode return)
   ;; convert keynum from tuning to mode on tuning
   return
-  (let ((div (scale-divisions tuning))
+  ;; div is width of mode's octave in tuning coordinates
+  (let ((div (interval-semitones (scale-octave mode)))
         (num (- keynum (scale-keynum-offset mode))) ; offset=tonic pc
         (into (scale-into mode))
 	(deg #f))
@@ -462,16 +474,33 @@
 	 deg))))
 
 (define-method (mode->tuning (mode <mode>) keynum scale return)
-  ;; convert keynum in mode coordinates to owner tuning
-  return
-  (let ((div1 (scale-divisions mode))
-        (div2 (scale-divisions scale)))
+  ;; convert keynum in modal coordinates to owner tuning
+  (let ((div (scale-divisions mode)) ; num steps in mode's own octave
+        (int #f))
     (multiple-value-bind (oct rem)
-	(clfloor (inexact->exact (round keynum)) div1)
-      (+ (* oct div2) 
-	 (scale-keynum-offset mode)
-	 (interval-semitones
-	  (list-ref (scale-steps mode) rem))))))
+	(clfloor (inexact->exact (round keynum)) div)
+      ;; int may be typed interval
+      (set! int (list-ref (scale-steps mode) rem))
+      ;; user wants note name in typed interval mode
+      (if (and (eql return ':note)
+               (%interval-encoded? int))
+        ;; transpose the mode's lowest note by its typed octave size 
+        ;; for oct octaves,then add in typed interval.
+        (do ((low (car (scale-lowest mode)))
+             (num 0 (+ num 1)))
+            ((= num oct)
+             (transpose low int scale))
+          (set! low (transpose low (scale-octave mode) scale)))
+        ;; mode's octave size is intervals spanned in tuning
+        ;; and may be a typed interval
+        (let ((num (+ (* oct (interval-semitones (scale-octave mode)))
+                      (scale-keynum-offset mode)
+                      (interval-semitones int))))
+          (if (eql return ':note)
+            (tuning-keynum->note scale num #f #t)
+            (if (eql return ':hertz)
+              (tuning-keynum->hertz scale num )
+              num)))))))
 
 (define-method (tuning-hertz->keynum (obj <tuning>) hz)
   ;;  returns a floating point keynum for equal tunings
@@ -543,7 +572,7 @@
   ;; acci can also be an ordered preference list of accidentals.
   (let* ((table (scale-table obj))
          (entries (and table
-		       (hash-ref table
+		       (scale-ref table
 				 (inexact->exact (round knum))))))
     (if entries
       (let ((it
@@ -576,7 +605,7 @@
 
 (define-method (tuning-note->hertz (obj <tuning>) note err?)
   (let* ((table (scale-table obj))
-	 (entries (and table (hash-ref table note)))
+	 (entries (and table (scale-ref table note)))
          (entry (and entries (first entries))))
     (if entry
       (if (sd-octave entry)		; got a note.
@@ -600,7 +629,7 @@
 
 (define-method (tuning-note->keynum (obj <tuning>) note err?)
   (let* ((table (scale-table obj))
-	 (entries (and table (hash-ref table note)))
+	 (entries (and table (scale-ref table note)))
          (entry (and entries (first entries))))
     (if entry
       (if (eq? note 'r)
@@ -625,7 +654,7 @@
     (tuning-keynum->note obj (tuning-note->keynum obj note err?)
                         acci err?)
     (let* ((table (scale-table obj))
-           (entries (and table (hash-ref table note))))
+           (entries (and table (scale-ref table note))))
       (if entries
         (tuning-keynum->note obj
                             (tuning-note->keynum obj note err?)
@@ -708,7 +737,7 @@
 	    (err "Only mode->tuning conversion is supported." )))))))
 
 (define (modal-lookup mode note type tuning error? return)
-  ;; note is note or ken
+  ;; note is note or kenum
   (let ((key (if (eq? type ':note)
                (tuning-note->keynum tuning note error?)
                (inexact->exact (round note))))
@@ -885,9 +914,16 @@
                (tuning-hertz->note to freq acci err?)
                (tuning-keynum->note to freq acci err?))))
           ((eq? flag ':tuning->mode)
-           ;; return note if in mode
+           ;; (note 'c4 :to <mode>)
+           ;; return tuning's note coerced to closest note in mode.
+           ;; TODO: return note if in mode  (modal-lookup ??)
            (if (symbol? freq)
-             (modal-lookup to freq ':note from err? ':note)
+             ;(modal-lookup to freq ':note from err? ':note)
+             (mode->tuning to
+                           (tuning->mode from
+                                         (tuning-note->keynum from freq err?)
+                                         to ':keynum)
+                           from ':note)
              (if hz?
                (modal-lookup to (tuning-hertz->keynum from freq)
                              ':keynum from #t ':note)
@@ -900,10 +936,14 @@
                                   acci err?)
                (modal-lookup from freq ':note to err? ':note))
              (if hz?
-               (modal-lookup from (tuning-hertz->keynum to freq)
-                             ':keynum to err? :note)
-               (modal-lookup from (mode->tuning from freq to ':keynum)
-                             :keynum to err? ':note))))
+               (mode->tuning
+                from
+                (tuning->mode to (tuning-hertz->keynum to freq)
+                              from ':keynum)
+                to ':note)
+               (mode->tuning from freq to ':note)
+
+               )))
           (else				; :tuning->tuning
            (tuning-hertz->note to (tuning-note->hertz from freq err?)
                                acci err?)))))
@@ -916,13 +956,13 @@
 (define (pitch-class note . args)
   (with-args (args &optional (scale *scale*))
     (let* ((table (scale-table scale))
-	   (entry (and table (hash-ref table note))))
+	   (entry (and table (scale-ref table note))))
       (if entry (sd-class (first entry)) #f))))
 
 (define (octave-number note . args)
   (with-args (args &optional (scale *scale*))
     (let* ((table (scale-table scale))
-	   (entry (and table (hash-ref table note))))
+	   (entry (and table (scale-ref table note))))
       (if entry 
 	(if (sd-octave (first entry))
 	  (+ (sd-octave (first entry))
@@ -933,13 +973,13 @@
 (define (note-name note . args)
   (with-args (args &optional (scale *scale*)) 
     (let* ((table (scale-table scale))
-	   (entry (and table (hash-ref table note))))
+	   (entry (and table (scale-ref table note))))
       (if entry (sd-name (first entry)) #f))))
 
 (define (note-accidental note . args)
   (with-args (args &optional (scale *scale*))
     (let* ((table (scale-table scale))
-	   (entry (and table (hash-ref table note))))
+	   (entry (and table (scale-ref table note))))
       (if entry (sd-accidental (first entry)) #f))))
 
 ;;;
@@ -1011,7 +1051,7 @@
 
 (define-method (note-in-scale? note (scale <scale>))
   (let ((table (scale-table scale)))
-    (and table (hash-ref table note) note)))
+    (and table (scale-ref table note) note)))
 
 (define (scale-order lis . args)
   (with-args (args &optional (order ':up) unique?)
@@ -1046,7 +1086,7 @@
       note
       (if (number? int)
 	(let* ((table (scale-table scale))
-	       (entries (and table (hash-ref table note)))
+	       (entries (and table (scale-ref table note)))
 	       (entry (and entries (first entries))))
 	  (if entry
 	    (if (sd-octave entry)	; got a note, update %oct
@@ -1078,7 +1118,7 @@
 			    (interval-semitones int)))
 		   ;; get all entries at the new keynum. if note
 		   ;; is a note class make sure we dont go negative
-		   (entries (hash-ref table
+		   (entries (scale-ref table
 				      (if (sd-octave entry)
 					keyn (mod keyn 12))))
 		   ;; find the entry whise name that corresponds to one
@@ -1242,9 +1282,9 @@
     ;; parse ref as a symbolic interval type.
     (cond ((note-in-scale? ref *chromatic-scale*)
 	   (let* ((table (scale-table *chromatic-scale*))
-		  (entries1 (and table (hash-ref table ref)))
+		  (entries1 (and table (scale-ref table ref)))
 		  (entry1 (and entries1 (first entries1)))
-		  (entries2 (and table (hash-ref table ref2)))
+		  (entries2 (and table (scale-ref table ref2)))
 		  (entry2 (and entries2 (first entries2)))
 		  (names '((cff cf c cn cs css) (dff df d dn ds dss)
 			   (eff ef e en es ess) (fff ff f fn fs fss)
@@ -1415,5 +1455,3 @@
 ;;;
 ;;; eof
 ;;;
-
-
