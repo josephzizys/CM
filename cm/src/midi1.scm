@@ -3288,44 +3288,46 @@
 ;   - MIDI Tuning
 ;   - Master Balance (RPN?)
 
+(define-generic midi-event-data1)
+(define-generic midi-event-data2)
+
 (define-class <midi-event> (<event>)
-  (opcode :init-keyword :opcode :accessor midi-event-opcode))
+  (opcode :accessor midi-event-opcode :allocation :class))
+
+(define-method (midi-event-data1 (obj <midi-event>))
+  #f)
+
+(define-method (midi-event-data2 (obj <midi-event>))
+  #f)
 
 (define-class <midi-channel-event> (<midi-event>)
   (channel :init-value 0 :init-keyword :channel
-           :accessor midi-channel-event-channel)
-  (data1 :init-value #f :init-keyword :data1
-         :accessor midi-channel-event-data1)
-  (data2 :init-value #f :init-keyword :data2
-         :accessor midi-channel-event-data2)
+           :accessor midi-event-channel)
+;  (data1 :init-value #f :init-keyword :data1
+;         :accessor midi-channel-event-data1)
+;  (data2 :init-value #f :init-keyword :data2
+;         :accessor midi-channel-event-data2)
   :name 'midi-channel-event)
 
-(define-class <midi-sysex-event> (<midi-event>)
-  ; (opcode  ...)
-  (route  :init-keyword :route
-          :accessor midi-channel-event-channel)
-  (data1 :init-value #f :init-keyword :data1
-         :accessor midi-channel-event-data1)
-  (data2 :init-value #f :init-keyword :data2
-         :accessor midi-channel-event-data2)
-  :name 'midi-sysex-event)
+;(define-class <midi-sysex-event> (<midi-event>)
+;  (route  :init-keyword :route
+;          :accessor midi-channel-event-channel)
+;  (data :init-value #f :init-keyword :data
+;         :accessor midi-sysex-event-data)
+;  :name 'midi-sysex-event)
 
 (define-class <midi-meta-event> (<midi-event>)
-  ;(opcode :accessor midi-meta-event-opcode)
   :name 'midi-meta-event)
-  )
 
 (define-class <midi-meta-text-event> (<midi-meta-event>)
-  (text :init-keyword :text :accessor midi-text-event-text)
-  :name 'midi-meta-text-event
-  )
-
+  (text :init-keyword :text :accessor midi-message-data1)
+  :name 'midi-meta-text-event)
 
 ;;;
 ;;; event->message conversion
 ;;;
 
-(define-method (midi-event->midi-message (event <midi-channnel-event>))
+(define-method (midi-event->midi-message (event <midi-channel-event>))
   (make-channel-message (midi-event-opcode event)
                         (midi-channel-event-channel event)
                         (foo)
