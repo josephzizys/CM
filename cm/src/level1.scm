@@ -21,6 +21,11 @@
     (lambda () ,form)
     (lambda (,@vars) ,@body)))
 
+(defmacro multiple-value-list (form)
+  `(call-with-values
+    (lambda () , form)
+    (lambda args args)))
+
 (defmacro multiple-value-setq (vars form)
   (let ((lst (map (lambda (x) (gensym (symbol->string x))) 
 		  vars)))
