@@ -590,9 +590,9 @@ cm&gt; <span class="input">(receive )</span></pre>
   during real time work. The most common Lisp activities that cons
   are:
   <ul>
-  <li>Creating Lisp instances, structures, vectors, arrays, strings and
+  <li>Creating instances, structures, vectors, arrays, strings and
   lists.</li>
-  <li>Performing floating point and fractional arithmetic.</li>
+  <li>Doing floating point or fractional arithmetic.</li>
   </ul>
 </li>
 <li>
@@ -607,21 +607,21 @@ cm&gt; <span class="input">(receive )</span></pre>
 </li>
 
 <li>
-  Real time processes are managed in a "processes table".  
-  By default the size of this table is 64.  When a process function is
-  finished it is automatically removed from the table and that
-  location will be reallocated for the next process.  If 64 concurrent
-  process are not enough you can use <code>make-proctable</code> to
-  increase the size of the table:
+  Real time processes are managed in a "processes table".  When a
+  process function is finished it is automatically removed from the
+  table and that location is freed up for the next call
+  to <code>sprout</code>.  By default the size of the process table is
+  64, if 64 concurrent process are not enough you can
+  use <code>make-proctable</code> to increase the size of the table:
   <blockquote>
     <pre>(set! *proctable* (make-proctable 200))</pre>
   </blockquote>
 </li>
 
 <li>
-  If you trigger an error during real time process scheduling you
-  should reset the proctable back to its initial conditions before
-  calling <code>sprout</code> again:
+  If you trigger an error during real time process scheduling and
+  abort to toplevel Lisp you should reset the proctable back to its
+  initial state before calling <code>sprout</code> again:
   <blockquote>
     <pre>(reset-proctable *proctable*))</pre>
   </blockquote>
