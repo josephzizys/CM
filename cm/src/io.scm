@@ -33,7 +33,7 @@
 (define (io-filename io)
   (object-name io))
 
-(define-generic insure-io)
+(define-generic init-io)
 (define-generic open-io)
 (define-generic close-io)
 (define-generic initialize-io)
@@ -113,29 +113,29 @@
   #f)
 
 ;;;
-;;; insure-io called on file/port names or objects to initialize slots.
+;;; init-io called on file/port names or objects to initialize slots.
 ;;;
 
-(defmacro io (name . args)
-  (let* ((inits (list #f))
-         (tail inits))
-    (dopairs (i v args)
-      (unless (keyword? i)
-        (if (symbol? i)
-          (set! i (symbol->keyword i))
-          (err "io: not a symbol or keyword: ~s" i)))
-      (set-cdr! tail (list i v))
-      (set! tail (cddr tail)))
-    `(insure-io ,name ,@ (cdr  inits))))
+;(defmacro io (name . args)
+;  (let* ((inits (list #f))
+;         (tail inits))
+;    (dopairs (i v args)
+;      (unless (keyword? i)
+;        (if (symbol? i)
+;          (set! i (symbol->keyword i))
+;          (err "io: not a symbol or keyword: ~s" i)))
+;      (set-cdr! tail (list i v))
+;      (set! tail (cddr tail)))
+;    `(init-io ,name ,@ (cdr  inits))))
 
-(define-method (insure-io io . inits)
+(define-method (init-io io . inits)
   inits  ; gag 'unused var' warning from cltl compilers
   io)
 
-(define-method (insure-io (string <string>) . inits)
+(define-method (init-io (string <string>) . inits)
   (let ((io (find-object string))) ; no type filter
     (if io
-      (apply (function insure-io) io inits)
+      (apply (function init-io) io inits)
       (let ((class (filename->io-class string)))
         (if class  ; allow class to specify maker
           (multiple-value-bind (init args)
@@ -150,7 +150,7 @@
               n))
           (err "~s is not a valid port or file name." string))))))
 
-(define-method (insure-io (io <event-stream>) . inits)
+(define-method (init-io (io <event-stream>) . inits)
   (unless (null? inits)
     (multiple-value-bind (init args)
                          (expand-inits (class-of io) inits #f #t)
@@ -182,12 +182,12 @@
 ;;;
 ;;; open-io
 ;;; CHECK GUILE
-;;; INSURE-IO
+;;; INIT-IO
 ;;;
 
 (define-method (open-io (obj <string>) dir . args)
   ;; default method assumes obj is string or filename
-  (let ((io (apply (function insure-io) obj args)))
+  (let ((io (apply (function init-io) obj args)))
     (apply (function open-io) io dir args)))
 
 ;(define-method (open-io (obj <event-stream>) dir . args)
@@ -310,7 +310,7 @@
 		    x)
 		  (err "Not an object specification: ~s." x)))))
 	 (when to
-	   (set! *out* (open-io (apply (function insure-io) to args)
+	   (set! *out* (open-io (apply (function init-io) to args)
                                 ':output))
 	   (initialize-io *out*))
 	 (schedule-events (lambda (e s) (write-event e *out* s))
@@ -366,7 +366,7 @@
 ;;;
 
 (define-method (import-events (file <string>) . args )
-  (let ((io (insure-io file)))
+  (let ((io (init-io file)))
     (apply (function import-events) io args)))
 
 ;;;
@@ -374,7 +374,7 @@
 ;;;
 
 ;(define-method (play (file <string>) . args)
-;  (let ((io (apply insure-io file args)))
+;  (let ((io (apply init-io file args)))
 ;    (apply play io args)))
    
 ;(define-method (play file . args)
