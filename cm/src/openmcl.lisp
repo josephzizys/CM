@@ -44,7 +44,9 @@
           ccl:slot-definition-initargs 
           ccl:slot-definition-initform 
           ccl:class-direct-superclasses
-          ccl:class-direct-subclasses ))
+          ccl:class-direct-subclasses
+          ccl:open-shared-library ; needed if loading clm into cm.
+          ))
 
 (defun finalize-class (class) class t)
 
