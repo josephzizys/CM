@@ -602,11 +602,12 @@ $ <span class="input">tar -zxf openmcl-darwin-ffi-gtk2.tar.gz</span></pre>
 </li>
 </ol>
 
-<h3 id="gtk_sbcl"> 4.3 Adding callback support to SBCL (OS X,
-Linux)</h3>
+<h3 id="gtk_sbcl"> 4.3 Adding callback support to SBCL (Linux)</h3>
 <p>
-SBCL releases (0.8.17) and earlier do not provide a native callback
-facility so you must install one developed by Thomas Burdick instead:
+As of this date (Feb '05) SBCL does not provide a native callback
+facility. Unless you are certain that callbacks exist in your version
+of SBCL you will need to install Thomas Burdick's SBCL callback
+package and save a new SBCL core image before you build CM:
 </p>
 
 <ol>
@@ -618,7 +619,6 @@ Burdick's Alien Function package</a> and restore it to a directory on
 your machine.
 </p>
 </li>
-
 <li>
 <p>
 Compile the Alien Function package and save a new sbcl.core image:
@@ -628,10 +628,12 @@ Compile the Alien Function package and save a new sbcl.core image:
 $ <span class="input">sbcl --load "system"</span>
 * <span class="input">(sb-ext:save-lisp-and-die "/tmp/sbcl.core")</span>
 $ <span class="input">cd /usr/local/lib/sbcl</span>
-$ <span class="input">cp sbcl.core sbcl.core.orig</span>
+$ <span class="input">mv sbcl.core sbcl.core.orig</span>
 $ <span class="input">mv /tmp/sbcl.core .</span></pre>
 </li>
+
 </ol>
+
 
 <h2 id="install_sys">5. Working with CLM, CMN and Midishare</h2>
 
