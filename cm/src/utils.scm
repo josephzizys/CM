@@ -412,24 +412,53 @@
 
 ; (string-forms "A B :FOO (BASD     ASD) 123")
 
-(define (balanced-form? string . args)
+; (string-readable? "")
+; (string-readable? "    ")
+; (string-readable? "()")
+; (string-readable? "())")
+; (string-readable? "(()")
+; (string-readable? "(\"1\")")
+; (string-readable? "(\"1)")
+; (string-readable? " 1 2 () 3   ")
+; (string-readable? " \"bif buf\"   ")
+
+(define (string-readable? string . args)
+  ;; do some simple checks on strings before reading for lisp expressions.
+  ;; return nil or the number of forms in string.
   (with-args (args &optional (start 0) (end (string-length string)))
-    ;; true if string contains balanced lisp form.
-    (loop with lev = 0 and chr and flg  
-	  while (< start end)
-	  do
-	  (set! chr (string-ref string start))
-	  (cond ((char=? chr #\()
-		 (incf lev))
-		((char=? chr #\))
-		 (when (= (decf lev) 0) 
-		   (set! flg #t)
-		   (set! start (+ 1 start))))
-		((char=? chr #\space) 
-		 (when (= lev 0) (set! flg #t))))
-	  until flg
-	  do (incf start)
-	  finally (return (and (= lev 0) (= start end))))))
+    (do ((pos start (+ pos 1))
+         (tok #f)
+         (num 0)
+         (lev 0)
+         (str #f)
+         (chr #f))
+        ((not (< pos end))
+         (if (and (= pos end) (= lev 0) (not str))
+           (if tok (+ num 1) num)
+           #f))
+      (set! chr (elt string pos))
+      (cond ((char=? chr #\()
+             (if (= lev 0) (incf num))
+             (incf lev)
+             (set! tok #f))
+            ((char=? chr #\))
+             (decf lev)
+             (if (< lev 0) (set! pos end))
+             (set! tok #f))
+            ((char=? chr #\") 
+             (set! str (not str))
+             (if (and (= lev 0) str) (incf num))
+             (set! tok #f))
+            ((member chr '(#\, #\`))
+             ;; backquote is hopeless...
+             (if (not str) (set! pos end)))
+            ((member chr '(#\space #\return #\tab))
+             (if (and tok (= lev 0) (not str))
+               (incf num))
+             (set! tok #f))
+            ((member chr '(#\' #\, #\#))
+             #f)
+            (else (set! tok #t))))))
 
 ;;; number hacks
 ;;;
