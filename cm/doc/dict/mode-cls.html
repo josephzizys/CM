@@ -105,23 +105,24 @@ the steps.
 | <var>keynums</var>})
 </dt>
 <dd>
-One octave of the mode specified as a list of note classes (note names
-without octaves) or keynums.  Intervals between note entries are
-always interpreted in ascending order. <!-- If the first entry is a
-note with an octave number then that note becomes the lowest note in
-the mode, otherwise the mode is based off that note in the lowest
-octave of the mode's tuning.  --> The last entry in the list
-determines the octave note of the mode, this note does not have to be
-the same as the first note in he list.  If <span
-class="keyword">:degrees</span> is a list of note symbols then the
-first note in the list also defines the initial transposition offset
-(tonic) of the mode and the mode will use <a
-href="interval-fn.html">typed intervals</a> to preserve scale spelling
-when the mode is transposed. Typed intervals are slightly less
-efficient than regular intervals,  specify keynums instead of
-note names to define modal degrees without encoded intervals.
+One octave of the mode specified as a list of notes, note classes
+(note names without octaves) or keynums.  Intervals between note
+entries are always interpreted in ascending order. <!-- If the first
+entry is a note with an octave number then that note becomes the
+lowest note in the mode, otherwise the mode is based off that note in
+the lowest octave of the mode's tuning.  --> The last entry in the
+list determines the octave note of the mode, this note does not have
+to be the same as the first note in he list. </dd> The first note in
+the list defines the initial transposition offset (tonic) of the mode
+<dt>
+<code class="keyword">:notes</code> <var>notes</var>
+</dt>
+<dd>
+Forces the mode to use <a href="interval-fn.html">typed intervals</a>
+to preserve scale spelling in the standard chromatic scale when the
+mode is transposed. Typed intervals are slightly less efficient than
+regular (semitonal) intervals.  
 </dd>
-
 <dt><code class="keyword">:lowest</code> <var>note</var></dt>
 <dd>
 Sets the lowest note of the mode. Defaults to the first note in the
