@@ -31,16 +31,155 @@
 ; (midi-file-print "/usr/local/lisp/scm/poo.midi")
 ; (delete-file  "/usr/local/lisp/scm/poo.midi"))
 
-(defobject midimsg (event)
-  (;(time  :accessor object-time)
-   (msg :initform 0)
+;;;
+;;; channel messages
+;;;
+
+(defobject midi-note-on (midi-channel-event)
+  ((opcode :initform +ml-note-on-opcode+)
+   (data1 :initarg :keynum)
+   (data2 :initarg :velocity))
+  (:parameters time opcode data1 data2)
+  (:writers ))
+
+(defobject midi-note-off (midi-channel-event)
+  ((opcode :initform +ml-note-off-opcode+)
+   (data1 :initarg :keynum)
+   (data2 :initarg :velocity))
+  (:parameters time opcode data1 data2)
+  (:writers ))
+
+(defobject midi-key-pressure (midi-channel-event)
+  ((opcode :initform +ml-key-pressure-opcode+)
+   (data1 :initarg :keynum)
+   (data2 :initarg :pressure))
+  (:parameters time opcode data1 data2)
+  (:writers ))
+
+(defobject midi-control-change (midi-channel-event)
+  ((opcode :initform +ml-control-change-opcode+)
+   (data1 :initarg :controller)
+   (data2 :initarg :value))
+  (:parameters time opcode data1 data2)
+  (:writers ))
+
+(defobject midi-program-change (midi-channel-event)
+  ((opcode :initform +ml-program-change-opcode+)
+   (data1 :initarg :program)  )
+  (:parameters time opcode data1)
+  (:writers ))
+
+(defobject midi-channel-pressure (midi-channel-event)
+  ((opcode :initform +ml-channel-pressure-opcode+)
+   (data1 :initarg :pressure)  )
+  (:parameters time opcode data1)
+  (:writers ))
+
+(defobject midi-pitch-bend (midi-channel-event)
+  ((opcode :initform +ml-pitch-bend-opcode+)
+   (data1 :initarg :msb)
+   (data2 :initarg :lsb))
+  (:parameters time opcode data1 data2)
+  (:writers ))
+
+;;;
+;;; sysex
+;;;
+
+(defobject midi-sysex (midi-event)
+  ((route :initarg :route)
+   (data :initform '() :initarg :data))
+  (:parameters route data)
+  (:writers ))
+
+;;;
+;;; meta messages
+;;;
+
+(defobject midi-sequence-number (midi-meta-event)
+  ((opcode :initform +ml-file-sequence-number-opcode+)
+   (number :initarg :number))
+  (:parameters opcode number)
+  (:writers ))
+
+(defobject midi-copyright-note (midi-meta-text-event)
+  ((opcode :initform +ml-file-copyright-note-opcode+))
+  (:parameters opcode text)
+  (:writers ))
+
+(defobject midi-sequence/track-name (midi-meta-text-event)
+  ((opcode :initform +ml-file-sequence/track-name-opcode+))
+  (:parameters opcode text)
+  (:writers ))
+
+(defobject midi-instrument-name (midi-meta-text-event)
+  ((opcode :initform +ml-file-instrument-name-opcode+))
+  (:parameters opcode text)
+  (:writers ))
+
+(defobject midi-lyric (midi-meta-text-event)
+  ((opcode :initform +ml-file-lyric-opcode+))
+  (:parameters opcode text)
+  (:writers ))
+
+(defobject midi-marker (midi-meta-text-event)
+  ((opcode :initform +ml-file-marker-opcode+))
+  (:parameters opcode text)
+  (:writers ))
+
+(defobject midi-cue-point (midi-meta-text-event)
+  ((opcode :initform +ml-file-cue-point-opcode+))
+  (:parameters opcode text)
+  (:writers ))
+
+(defobject midi-eot (midi-meta-event)
+  ((opcode :initform +ml-file-eot-opcode+))
+  (:parameters opcode)
+  (:writers ))
+
+(defobject midi-tempo-change (midi-meta-event)
+  ((opcode :initform +ml-file-tempo-change-opcode+)
+   (usecs  :initarg :usecs-per-beat))
+  (:parameters opcode usecs)
+  (:writers ))
+
+(defobject midi-smpte-offset (midi-meta-event)
+  ((opcode :initform +ml-file-smpte-offset-opcode+)
+   hours mins secs frames fractional-frames)
+  (:parameters opcode hours mins secs frames fractional-frames)
+  (:writers ))
+
+(defobject midi-time-signature (midi-meta-event)
+  ((opcode :initform +ml-file-time-signature-opcode+)
+   numerator
+   denominator)
+  (:parameters opcode numerator denominator)
+  (:writers ))
+
+(defobject midi-key-signature (midi-meta-event)
+  ((opcode :initform +ml-file-key-signature-opcode+)
+   key)
+  (:parameters opcode key)
+  (:writers ))
+
+(defobject midi-sequencer-event (midi-meta-event)
+  ((opcode :initform +ml-file-sequencer-event-opcode+)
+   data)
+  (:parameters opcode data)
+  (:writers ))
+
+;;;
+;;;
+;;;
+
+(defobject midimsg (event) ; remove at some point.
+  ((msg :initform 0)
    (data :initform #f))
   (:parameters time msg data)
   (:writers ))
 
 (defobject midi (event)
-  (;(time :accessor object-time)
-   (keynum :initform 60)
+  ((keynum :initform 60)
    (duration :initform .5)
    (amplitude :initform 64)
    (channel :initform 0 :accessor midi-channel))

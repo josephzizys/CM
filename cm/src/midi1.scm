@@ -72,7 +72,8 @@
 ;;; AND with this mask to turn an encoded note on message into a note off
 ;;; message with zero velocity. 
 
-(define +enc-note-off-mask+         #xfffe3f80)(define +ml-note-off-opcode+                       #b1000)
+(define +enc-note-off-mask+         #xfffe3f80)
+(define +ml-note-off-opcode+                       #b1000)
 (define +ml-note-on-opcode+                        #b1001)
 (define +ml-key-pressure-opcode+                   #b1010)
 (define +ml-control-change-opcode+                 #b1011)
@@ -3287,9 +3288,50 @@
 ;   - MIDI Tuning
 ;   - Master Balance (RPN?)
 
+(define-class <midi-event> (<event>)
+  (opcode :init-keyword :opcode :accessor midi-event-opcode))
+
+(define-class <midi-channel-event> (<midi-event>)
+  (channel :init-value 0 :init-keyword :channel
+           :accessor midi-channel-event-channel)
+  (data1 :init-value #f :init-keyword :data1
+         :accessor midi-channel-event-data1)
+  (data2 :init-value #f :init-keyword :data2
+         :accessor midi-channel-event-data2)
+  :name 'midi-channel-event)
+
+(define-class <midi-sysex-event> (<midi-event>)
+  ; (opcode  ...)
+  (route  :init-keyword :route
+          :accessor midi-channel-event-channel)
+  (data1 :init-value #f :init-keyword :data1
+         :accessor midi-channel-event-data1)
+  (data2 :init-value #f :init-keyword :data2
+         :accessor midi-channel-event-data2)
+  :name 'midi-sysex-event)
+
+(define-class <midi-meta-event> (<midi-event>)
+  ;(opcode :accessor midi-meta-event-opcode)
+  :name 'midi-meta-event)
+  )
+
+(define-class <midi-meta-text-event> (<midi-meta-event>)
+  (text :init-keyword :text :accessor midi-text-event-text)
+  :name 'midi-meta-text-event
+  )
 
 
+;;;
+;;; event->message conversion
+;;;
 
+(define-method (midi-event->midi-message (event <midi-channnel-event>))
+  (make-channel-message (midi-event-opcode event)
+                        (midi-channel-event-channel event)
+                        (foo)
+                        (bar)))
 
-
+;;;
+;;; message->event conversion
+;;;
 
