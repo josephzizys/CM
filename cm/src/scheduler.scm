@@ -401,30 +401,34 @@
   ;; stream.  checks to see if event's time is in future 
   ;; later than next event in queue. if so it enqueues rather
   ;; than outputs.
-  (with-args (args &optional out)   
-    (let ((sav *out*))
-      (if out (set! *out* out))
-      (if (pair? event)
-        (dolist (e event)
-          (let ((n (+ *qstart* (object-time e))))
+  (with-args (args &optional out)
+    (if *queue*
+      (let ((sav *out*))
+        (if out (set! *out* out))
+        (if (pair? event)
+          (dolist (e event)
+            (let ((n (+ *qstart* (object-time e))))
+              (if (early? n)
+                (enqueue e n #f)
+                (funcall *handler* e n))))
+          (let ((n (+ *qstart* (object-time event))))
             (if (early? n)
-              (enqueue e n #f)
-              (funcall *handler* e n))))
-        (let ((n (+ *qstart* (object-time event))))
-          (if (early? n)
-            (enqueue event n #f)
-            (funcall *handler* event n))))
-      (set! *out* sav) 
-      (values))))
+              (enqueue event n #f)
+              (funcall *handler* event n))))
+        (set! *out* sav) 
+        (values))
+      (rt-output event out)) ; midishare.scm
+    ))
 
 (define (now . args)
   (with-args (args &optional abs-time)
-    ;; if #t absolute time
+    ;; calls MidiGetTime if at top-level
     (if *queue*
       (if (not abs-time)
         (- *qtime* *qstart*)
         *qtime*)
-      (err "Calling 'now' outside of scheduler?"))))
+      (rt-now)) ; midishare.scm
+    ))
 
 (defmacro stop ()
   (if *queue*
@@ -432,14 +436,10 @@
     (err "Calling 'stop' outside of scheduler?")))
 
 (define (wait delta)
-  (if *queue*
-    (set! *qnext* (+ *qnext* (abs delta)))
-    (err "Calling 'wait' outside of scheduler?")))
+  (set! *qnext* (+ *qnext* (abs delta))))
 
 (define (wait-until time)
-  (if *queue*
-    (set! *qnext* (+ *qstart* time))
-    (err "Calling 'wait-until' outside of scheduler?")))
+  (set! *qnext* (+ *qstart* time)))
 
 (define-method (sprout (obj <object>) time)
   time 
@@ -448,10 +448,9 @@
     (err "Calling 'sprout' outside of scheduler?")))
 
 (define-method (sprout (obj <procedure>) time)
-  time 
   (if *queue*
     (enqueue obj (+ *qstart* time) (+ *qstart* time))
-    (err "Calling 'sprout' outside of scheduler?")))
+    (rt-sprout obj time)))
 
 (define-method (sprout (obj <pair>) time)
   time 
