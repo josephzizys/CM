@@ -536,7 +536,7 @@
       ;; int may be typed interval
       (set! int (list-ref (scale-steps mode) rem))
       ;; user wants note name in typed interval mode
-      (if (and (eql return ':note)
+      (if (and (eq? return ':note)
                (%interval-encoded? int))
         ;; transpose the mode's lowest note by its typed octave size 
         ;; then add in typed interval. this could be optimized for 
@@ -551,9 +551,9 @@
         (let ((num (+ (* oct (interval-semitones (scale-octave mode)))
                       (scale-keynum-offset mode)
                       (interval-semitones int))))
-          (if (eql return ':note)
+          (if (eq? return ':note)
             (tuning-keynum->note scale num #f #t)
-            (if (eql return ':hertz)
+            (if (eq? return ':hertz)
               (tuning-keynum->hertz scale num )
               num)))))))
 
