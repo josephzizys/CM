@@ -83,11 +83,7 @@
 (defun save-cm (path &rest args)
   (declare (ignore args))
   ;; what a pain...
-  (dolist (c (class-subclasses (find-class 'io)))
-    (finalize-class c))
   (dolist (c (class-subclasses (find-class 'container)))
-    (finalize-class c))
-  (dolist (c (class-subclasses (find-class 'pattern)))
     (finalize-class c))
   (let ((fn #'(lambda ()
 		(declare (special *cm-readtable*))
