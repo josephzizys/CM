@@ -141,8 +141,8 @@
               (set! k (if (= f 0.0)
                         'r
                         (if (eq? type ':keynum)
-                          (keynum f :hz)
-                          (note f :hz))))
+                          (keynum f :hz #t)
+                          (note f :hz #t))))
               (set! e (find k l :key #'first))
               (if (and e unique)
                 ;; just update amplitude
@@ -156,8 +156,8 @@
               ((null? tail) #f)
             (setf (caar tail)
                   (if (eq type ':note)
-                    (note (caar tail) :hz)
-                    (keynum (caar tail) :hz))))))
+                    (note (caar tail) :hz #t)
+                    (keynum (caar tail) :hz #t))))))
 
       (unless (eq? type ':raw)
         (set! data
