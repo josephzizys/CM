@@ -488,7 +488,37 @@
   (set! x (new cycle :keynums '(c4 cs4 d4)))
   (check "keynums"
          (equal? (next x true)
-                 (keynum '(c4 cs4 d4)))))
+                 (keynum '(c4 cs4 d4))))
+  ;; rewrite
+  (set! x (new rewrite :of '(1 2 3 4)
+               :rules '((1 -> 1 2)
+                        (* (2) 1 -> 4)
+                        (2 -> 3)
+                        (3 -> 2 2 1)
+                        (4 ->))))
+  (check "rewrite wildcard"
+         (equal? (loop repeat 5 collect (rewrite-generation x #t))
+                 '((1 2) (1 2 3) (1 2 3 2 2 1) (1 2 3 2 2 1 3 4 1 2)
+                   (1 2 3 2 2 1 3 4 1 2 2 2 1 1 2 3))))
+  ;; copier 1
+  (set! x (new copier :of (new cycle :of '(a b c) :for 2)
+               :for 3))
+  (check "copier :for"
+         (equal? (loop repeat 3 collect (next x #t))
+                 '((a b a b a b)(c a c a c a)(b c b c b c))))
+  ;; copier 2
+  (set! x (new copier :of (new cycle :of '(a b c) :for 2)
+               :repeat-for 3))
+  (check "copier :repeat-for"
+         (equal? (loop repeat 9 collect (next x #t))
+                 '((a b)(a b) (a b)(c a)(c a)(c a)(b c)(b c)(b c))))
+
+  ;; markov with pval weights
+  (set! x (new markov :of `((a -> (b ,(pval (- 1 0))) (a ,(pval (- 1 1))))
+                            (b -> (b ,(pval (- 1 1))) (a ,(pval (- 1 0)))))))
+  (check "markov with pval weights"
+         (equal? (next x 10) '(b a b a b a b a b a)))
+  )
 
 (deftest test-midifile-output ()
   "midi file output"
