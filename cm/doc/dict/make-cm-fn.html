@@ -77,15 +77,16 @@ If <var>true</var> then the Common Music application is saved as a
 lisp image file.  If the value is <code>:if-no-compile</code> than an
 image is saved only if no source files are compiled during the make
 pass. If the value is <var>false</var> then no image file is
-saved. The default value is <var>true</var>.
+saved. The default value is <var>false</var>.
 </dd>
 
 <dt><code class="keyword">:delete-fasls</code> {<var>true</var> |
 <var>false</var>}</dt>
 <dd>
 If <var>true</var> then compiled files are deleted after an image has
-been saved otherwise they are not.  The default value is
-<var>true</var>.
+been savedm, otherwise they are not deleted.  The default value is
+<var>true</var> if <code>:save-image</code> is <var>true</var>
+otherwise the default value is <var>false</var>.
 </dd>
 
 <!--  
