@@ -35,54 +35,48 @@ An optional name for the mode.
 
 <dt><code class="keyword">:tonic</code> <var>note</var></dt>
 <dd>
-
-Sets the tonic note of the mode. Defaults
-to the first note in the steps specification, or C
-if the steps are described as intervals.
+Sets the tonic note of the mode. Defaults to the first note in the
+steps specification, or C if the steps are described as intervals.
 </dd>
 
 
 <dt><code class="keyword">:scale</code> <var>tuning</var></dt>
 <dd>
-
-Sets the tuning system for the scale.
-Notes in the mode must also be notes in the tuning.
-Defaults to the standard chromatic scale.
+Sets the tuning system for the scale.  Notes in the mode must also be
+notes in the tuning.  Defaults to the standard chromatic scale.
 </dd>
 
 
-<dt><code class="keyword">:steps</code> {<var>notes</var> | <var>intervals</var>}</dt>
+<dt>
+<code class="keyword">:steps</code> {(<var>notes</var>
+| <var>intervals</var>)}</dt>
 <dd>
-
-One octave of the mode specified as a list of notes or list of 
-intervals between notes.
-If <kbd>steps</kbd> is a list of notes the tonic (transposition offset)
-of the mode is automatically set to the note class of the
-first note in the list.
-If the steps are specified as a list of intervals the transposition is
-set to C.  A mode can be transposed to a new tonic using the
+One octave of the mode specified as a list of note classes or list of
+interval steps <em>between</em> mode degrees.  If <kbd>steps</kbd> is a
+list of note class symbols then the last note in the list defines the
+octave of the mode and the tonic (transposition offset) of the mode is
+set to the note class of the first note in the list.  If the steps are
+specified as a list of intervals then the size of the mode's octave is
+set to the sum of the steps and the transposition for the mode is
+initially set to C.  A mode can be transposed to a new tonic using the
 <a href="transpose-fn.html"><kbd>transpose</kbd></a> function.
 </dd>
 
 </dl>
 
 
-<!-- Interaction 1 -->
+<!-- Example -->
 <div class="float" id="repl_0-1">
 <pre class="shell">cm&gt; <span class="input">(new mode name 'major steps '(d e fs g a b c d))</span>
-#&lt;mode: "major" (on d)&gt;
+<span class="output">#&lt;mode: "major" (on d)&gt;</span>
 cm&gt; <span class="input">(note 35 :in #&amp;major)</span>
-d4
+<span class="output">d4
 cm&gt; <span class="input">(note 36 :in #&amp;major)</span>
-e4
+<span class="output">e4
 cm&gt; <span class="input">(transpose #&amp;major 'af)</span>
-&lt;mode:
-cm&gt; <span class="input">"major"</span>
-(on af)
-cm&gt; <span class="input">&gt;</span>
-(note 35 :in #&amp;major)
-cm&gt; <span class="input">af4</span>
-cm&gt;</pre>
+<span class="output">#&lt;mode: "major" (on af)&gt;</span>
+cm&gt; <span class="input">(note 35 :in #&amp;major)</span>
+<span class="output">af4</span></pre>
 </div>
 
 
