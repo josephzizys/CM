@@ -450,7 +450,7 @@ get_lisp_info () {
 
 if [ "$LISP_OPT" ] ; then
   LEXE=`echo "$LISP_OPT" | sed 's: -.*$::'`
-  LOPTS=`echo "$LISP_OPT" | sed 's:\( -.*\)\?$:¦\1:;s:^.*¦ *::'`
+  LOPTS=`echo "$LISP_OPT" | sed 's:\( -.*\)*$:¦\1:;s:^.*¦ *::'`
   LISP_EXE=$LEXE
   if [[ "$LISP_EXE" == */* ]] ; then
     LISP_EXE=`real_path "$LISP_EXE"`
@@ -665,7 +665,7 @@ if [ "$EDITOR_OPT" ] ; then
 
   if [ "$EDITOR_OPT" ] ; then
     EEXE=`echo "$EDITOR_OPT" | sed 's: -.*$::'`
-    EOPTS=`echo "$EDITOR_OPT" | sed 's:\( -.*\)\?$:¦\1:;s:^.*¦ *::'`
+    EOPTS=`echo "$EDITOR_OPT" | sed 's:\( -.*\)*$:¦\1:;s:^.*¦ *::'`
     EDITOR_EXE=$EEXE
     if [[ "$EDITOR_EXE" == */* ]] ; then
       EDITOR_EXE=`real_path "$EDITOR_EXE"`
