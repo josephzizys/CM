@@ -311,7 +311,7 @@
           (if p
             (make-instance <midi-key-signature>
                            :time b :key (- p 7)
-                           :mode (position e (elt l p)))
+                           :mode (position e (list-ref l p)))
             #f))))))
 
 ;;;

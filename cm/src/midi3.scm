@@ -204,10 +204,10 @@
              (cond ((time-signature-p m)
                     (make <midi-time-signature>
                           :time time
-                          :numerator (elt data 1)
-                          :denominator (expt 2 (elt data 2))
-                          :clocks (elt data 3)
-                          :32nds (elt data 4)))
+                          :numerator (vector-ref data 1)
+                          :denominator (expt 2 (vector-ref data 2))
+                          :clocks (vector-ref data 3)
+                          :32nds (vector-ref data 4)))
                    ((key-signature-p m)
                     (let ((a (vector-ref data 1)))
                       (make <midi-key-signature>
@@ -218,9 +218,9 @@
                    ((tempo-change-p m)
                     (make <midi-tempo-change>
                           :time time
-                          :usecs (+ (ash (elt data 1) 16)
-                                    (ash (elt data 2) 8)
-                                    (elt data 3))))
+                          :usecs (+ (ash (vector-ref data 1) 16)
+                                    (ash (vector-ref data 2) 8)
+                                    (vector-ref data 3))))
                    ((sequence-number-p m)
                     (make <midi-sequencer-event>
                           :time time
