@@ -102,10 +102,10 @@ DESCRIPTION="
       EOD
       # chmod 755 /usr/local/bin/cm
 
-    Requirements: bash(1), cat(1), cut(1), echo(1), head(1), sed(1),
-    sort(1), tr(1), uname(1), which(1); getopts and ls; a working
-    installation of a Lisp or Scheme runtime; the '-repl' option if clisp is
-    used (clisp 2.31 or higher).
+    Requirements: bash(1), cat(1), cut(1), cygpath(1) (cygwin only),
+    echo(1), head(1), sed(1), sort(1), tr(1), uname(1), which(1); getopts
+    and ls; a working installation of a Lisp or Scheme runtime; the '-repl'
+    option if clisp is used (clisp 2.31 or higher).
 "
 
 # --------------------------------------------------------------------------
@@ -133,7 +133,11 @@ canonicalize_string () {
 }
 
 sanitize_path () {
-  echo "$1" #| sed 's: :\\ :g;'
+  if test $CYGWIN_HACKS ; then
+    cygpath -u -a "$1"
+  else
+    echo "$1"
+  fi
 }
 
 CM_PLATFORM=
@@ -158,26 +162,40 @@ resolve_bin () {
   fi
 }
 
-UNAME=`resolve_bin uname`
-
 
 #
 # Requirements
 # ------------
 
-# Cygwin MUST use bash
-if test $BASH || test $RE_EXECING ; then
-  unset RE_EXECING
-else
-  if test $UNAME && imatch_head_token `$UNAME -s` cygwin ; then
-    BASH_EXE=`resolve_bin bash WARN`
-    if [ ! $BASH_EXE ] ; then
-      msg_f "Cygwin: 'sh' broken and can't find 'bash'!  Install bash first."
-      msg_x "Aborting. "
-    fi
-    export RE_EXECING=1 
-    exec $BASH_EXE -- "$0" "$@"
+UNAME=`resolve_bin uname WARN`
+if [ ! "$UNAME" ] ; then
+  msg_f "Can't run without uname(1)."
+  msg_x "Aborting."
+fi
+
+
+# CYGWIN_HACKS=1
+# cygpath () {
+#   if [ $1 = "-u" ] ; then
+#     echo "$3" | sed 's|^/c:||'
+#   else
+#     echo "$3" | sed 's|^\(/c:\)\?|/c:|'
+#   fi
+# }
+
+if test ! $CYGWIN_HACKS && imatch_head_token `$UNAME -s` cygwin ; then
+  export CYGWIN_HACKS=1
+  export WINPATH_PREFIX=/cygdrive
+fi
+
+# cygwin sh is not bash
+if test ! $BASH && test $CYGWIN_HACKS ; then
+  BASH_EXE=`resolve_bin bash WARN`
+  if [ ! $BASH_EXE ] ; then
+    msg_f "Cygwin: 'sh' broken and can't find 'bash'!  Install bash first."
+    msg_x "Aborting. "
   fi
+  exec $BASH_EXE -- "$0" "$@"
 fi
 
 
@@ -304,14 +322,12 @@ export CM_ROOT="$LOC"		# backwards compat
 # ------------------
 
 if [ ! "$OS" ] ; then
-  if which uname > /dev/null 2>&1 ; then
-    for flag in s o ; do
-      if uname -$flag >/dev/null 2>&1 ; then
-	OS=`uname -$flag 2>/dev/null`
-	if [[ ! "$OS" || "$OS" == unknown ]] ; then OS= ; else break ; fi
-      fi
-    done
-  fi
+  for flag in s o ; do
+    if "$UNAME" -$flag >/dev/null 2>&1 ; then
+      OS=`"$UNAME" -$flag 2>/dev/null`
+      if [[ ! "$OS" || "$OS" == unknown ]] ; then OS= ; else break ; fi
+    fi
+  done
   if [ ! "$OS" ] ; then
     msg_e "Can't detect OS type."
     msg_i "Pass in -O option or set OS environment variable."
@@ -321,14 +337,12 @@ if [ ! "$OS" ] ; then
 fi
 
 if [ ! "$ARCH" ] ; then
-  if which uname > /dev/null 2>&1 ; then
-    for flag in p m i ; do
-      if uname -$flag >/dev/null 2>&1 ; then
-        ARCH=`uname -$flag 2>/dev/null`
-        if [[ "$ARCH" = unknown ]] ; then ARCH= ; else break ; fi
-      fi
-    done
-  fi
+  for flag in p m i ; do
+    if "$UNAME" -$flag >/dev/null 2>&1 ; then
+      ARCH=`"$UNAME" -$flag 2>/dev/null`
+      if [[ "$ARCH" = unknown ]] ; then ARCH= ; else break ; fi
+    fi
+  done
   if [ ! "$ARCH" ] ; then
     msg_e "Can't detect ARCH type."
     msg_i "Pass in -A option or set ARCH environment variable."
@@ -534,13 +548,6 @@ fi
 if [ ! "$LISP_EXE" ] ; then 
   msg_e "No executable found."
   msg_x "Aborting."
-else
-  # FIXME
-  true
-  # if LISP_EXE is in windows realm
-  #   translate LISP_EXE
-  #   if CM_ROOT is in windows realm
-  #     translate as well
 fi
 
 
@@ -555,53 +562,56 @@ fi
 
 LISP_CMD=
 LISP_INI=
-LISP_EVL="(progn (load \"$CM_ROOT/src/cm.lisp\" :verbose nil) (cm))"
+LISP_LOA="$CM_ROOT/src/cm"
 
-case $LISP_FLV in
-  clisp)
-    LISP_CMD="'$LISP_EXE' -I -q -ansi"
-    if [ $LOAD ] ; then
-      LISP_CMD="$LISP_CMD -x '$LISP_EVL' -x t -repl"
-    else
-      test $LISP_INI && LISP_INI="-i $LISP_INI"
-      LISP_CMD="$LISP_CMD -M '$LISP_IMG' $LISP_INI"
-    fi
-    ;;
-  acl)
-    LISP_CMD="'$LISP_EXE'"
-    if [ $LOAD ] ; then
-      LISP_CMD="$LISP_CMD -e '$LISP_EVL'"
-    else
-      test $LISP_INI && LISP_INI="-L $LISP_INI"
-      LISP_CMD="$LISP_CMD -I '$LISP_IMG' $LISP_INI"
-    fi
-    ;;
-  cmucl)
-    LISP_CMD="'$LISP_EXE'"
-    if [ $LOAD ] ; then
-      LISP_CMD="$LISP_CMD -eval '$LISP_EVL'"
-    else
-      test $LISP_INI && LISP_INI="-init $LISP_INI"
-      LISP_CMD="$LISP_CMD -core '$LISP_IMG' $LISP_INI"
-    fi
-    ;;
-  openmcl)
-    LISP_CMD="'$LISP_EXE'"
-    if [ $LOAD ] ; then
-      LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
-    else
-      test $LISP_INI && LISP_INI="--load $LISP_INI"
-      LISP_CMD="$LISP_CMD --image-name '$LISP_IMG' $LISP_INI"
-    fi
-    ;;
-  guile)
-    LISP_CMD="'$LISP_EXE' -l '$CM_ROOT/src/cm.scm' -e cm"
-    ;;
-  *)
-    msg_e "Don't know how to call '$LISP_FLV' yet... =:("
-    msg_x "Fatal."
-    ;;
-esac
+make_lisp_cmd () {
+  LISP_EVL="(progn (load \"${LISP_LOA}.lisp\" :verbose nil) (cm))"
+  case $LISP_FLV in
+    clisp)
+      LISP_CMD="'$LISP_EXE' -I -q -ansi"
+      if [ $LOAD ] ; then
+	LISP_CMD="$LISP_CMD -x '$LISP_EVL' -x t -repl"
+      else
+	test $LISP_INI && LISP_INI="-i $LISP_INI"
+	LISP_CMD="$LISP_CMD -M '$LISP_IMG' $LISP_INI"
+      fi
+      ;;
+    acl)
+      LISP_CMD="'$LISP_EXE'"
+      if [ $LOAD ] ; then
+	LISP_CMD="$LISP_CMD -e '$LISP_EVL'"
+      else
+	test $LISP_INI && LISP_INI="-L $LISP_INI"
+	LISP_CMD="$LISP_CMD -I '$LISP_IMG' $LISP_INI"
+      fi
+      ;;
+    cmucl)
+      LISP_CMD="'$LISP_EXE'"
+      if [ $LOAD ] ; then
+	LISP_CMD="$LISP_CMD -eval '$LISP_EVL'"
+      else
+	test $LISP_INI && LISP_INI="-init $LISP_INI"
+	LISP_CMD="$LISP_CMD -core '$LISP_IMG' $LISP_INI"
+      fi
+      ;;
+    openmcl)
+      LISP_CMD="'$LISP_EXE'"
+      if [ $LOAD ] ; then
+	LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
+      else
+	test $LISP_INI && LISP_INI="--load $LISP_INI"
+	LISP_CMD="$LISP_CMD --image-name '$LISP_IMG' $LISP_INI"
+      fi
+      ;;
+    guile)
+      LISP_CMD="'$LISP_EXE' -l '${LISP_LOA}.scm' -e cm"
+      ;;
+    *)
+      msg_e "Don't know how to call '$LISP_FLV' yet... =:("
+      msg_x "Fatal."
+      ;;
+  esac
+}
 
 
 #
@@ -614,6 +624,12 @@ EDITOR_CMD=
 under_editor () {
   test $EMACS
 }
+is_wintendo_app () {
+  [[ "$1" == $WINPATH_PREFIX/* ]]
+}
+wintendofy () {
+  cygpath -w -a "$1"
+}
 
 if [ "$EDITOR_OPT" ] ; then
   if under_editor && ! imatch_end_token "$EDITOR_OPT" gnuclient ; then
@@ -623,8 +639,8 @@ if [ "$EDITOR_OPT" ] ; then
       msg_i "Ignoring '$EDITOR_OPT'."
       EDITOR_OPT=
     else
+      # FIXME_RFE: check for a running gnuserv first
       EDITOR_OPT="$GNUCLIENT"
-      # FIXME: might check for a running gnuserv first
     fi
   fi
 
@@ -642,19 +658,41 @@ if [ "$EDITOR_OPT" ] ; then
     elif [ ! -f "$thing" -a ! -h "$thing" ] ; then
       msg_w "Not a file or link: '$thing'.  Ignoring."
     else
+      EDITOR_EXE="$thing"
       EL1="$LOC/etc/xemacs/listener.el"
       EL2="$LOC/etc/xemacs/cm.el"
-      LEX="$LISP_EXE"
-      #LEX=`echo "$LISP_EXE" | sed 's: :\\\\\\\ :g'`
-      LCM=`echo "$LISP_CMD" |tr -d "'" |sed "s:$LISP_EXE:$LEX:g;"'s:":\\\":g;'`
+      if test $CYGWIN_HACKS ; then
+        if is_wintendo_app "$LISP_EXE" ; then
+	  if [ "$LISP_IMG" ] ; then
+	    LISP_IMG=`wintendofy "$LISP_IMG"`
+	  fi
+	  LISP_LOA=`wintendofy "$LISP_LOA"`
+        fi
+        if is_wintendo_app "$EDITOR_EXE" ; then
+          EL1=`wintendofy "$EL1"`
+	  EL2=`wintendofy "$EL2"`
+          LISP_EXE=`wintendofy "$LISP_EXE"`
+        fi
+      fi
+      make_lisp_cmd
+      LCM=`echo "$LISP_CMD" |tr -d "'" |sed 's:":\\\":g;'`
       INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
-      EDITOR_EXE="$thing"
       EDITOR_CMD="'$EDITOR_EXE' -eval '$INI'"
       if [[ "$EDITOR_EXE" == *client ]] ; then
         EDITOR_CMD="$EDITOR_CMD -batch"
       fi
     fi
   fi
+fi
+
+if [ ! "$LISP_CMD" ] ; then
+  if test $CYGWIN_HACKS && is_wintendo_app "$LISP_EXE" ; then
+    if [ "$LISP_IMG" ] ; then
+      LISP_IMG=`wintendofy "$LISP_IMG"`
+    fi
+    LISP_LOA=`wintendofy "$LISP_LOA"`
+  fi
+  make_lisp_cmd
 fi
 
 
