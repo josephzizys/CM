@@ -26,71 +26,72 @@
 <hr class="inv"/>
 <div id="content">
 
-<h1>Running Common Music under (X)Emacs</h1>
+<h1>Running Common Music under X/Emacs</h1>
 
 <p>
 The <a href="http://www.gnu.org/software/emacs/emacs.html">Emacs</a>
 and <a href="http://www.xemacs.org">XEmacs</a> editors (collectively
-referred to as (X)Emacs in this document) support Lisp editing and
+referred to as X/Emacs in this document) support Lisp editing and
 evaluation within a single, consistent GUI environment.  This tight
-integration between Lisp editing and evaluation means that a composer
-can develop music programs inside a powerful program editor and
-also <em>evaluate</em> these Lisp expressions inside Common Music
-using simple editor commands. The Common Music application runs in its
-own dedicated Listener window as an <em>inferior process</em>
-(sub-process) of (X)Emacs. This Listener window is itself a
-full-featured, interactive Lisp interpreter with a command history and
-input editing features.
+integration between Lisp editing and evaluation lets the composer
+develop music programs (Lisp expressions) inside a powerful program
+editor and also <em>evaluate</em> these Lisp expressions inside Common
+Music using simple editor commands. The Common Music application runs
+in its own dedicated Listener window as an <em>inferior process</em>
+(sub-process) of X/Emacs. This Listener window is itself a
+full-featured, interactive Lisp interpreter with its own command
+history and input editing features.
 </p>
 
 <p>
-The whole point of running Common Music inside (X)Emacs is to
-intergrate Lisp editing and evaluation in a single, easy-to-use
-graphical enviornment. If your system alrady has an <code>emacs</code>
-command installed on it, make sure that it actually starts windowed
-GUI version of the editor!  Some installations of Emacs (typically
-older versions) only run in what is called <em>console mode</em>,
-which means that the editor executes directly inside the Terminal
-window from which it was started without any a GUI or mouse support.
-If your installed Emacs is old (prior than the 21.3 branch, or doesn't
-support a GUI) then don't bother using it, simply follow the links
-below to download and install a newver version that does.
+The whole point of running Common Music inside X/Emacs is to integrate
+Lisp editing and evaluation in a single, easy-to-use graphical
+environment. So if your system already has an Emacs editor installed
+on it, make sure that it provides a windowed, GUI version of the
+editor!  Some older installations of Emacs run the editor in what is
+called <em>console mode</em>, directly inside the command shell window
+without a GUI or mouse support.  If your installed Emacs is old (prior
+to the 21.3 branch) or doesn't support a GUI then don't bother using
+it, simply follow the links provided below to download and install a
+newer version for your system.
 </p>
 
-<H2>Installing (X)Emacs</H2>
+<H2>Installing X/Emacs</H2>
 
 <p>
 Which editor you choose to install and work with is really a matter of
 personal taste.  Both editors are free, provide the same basic editing
 services, and run on practically every operating system available
-today. The primary difference betweeen the two lies in their divergent
-GUI designs. Without wanting to comment on which design is "better",
-it is probably fair to say that most users will feel most comfortable
-in an editor whose behavior is consistent with the host operating
-system's native window manager. On Windows, Cygwin and Linux this is
-probably XEmacs, on OS X its probably an <em>Aqua</em> Emacs.
+today. The primary difference between the two applications lies in
+their divergent GUI designs. Without commenting on which design is
+"better", it is probably fair to say that the typical user will feel
+most comfortable in an editor whose behavior is consistent with the
+host operating system's native window manager. On Linux, Cygwin and
+Windows this is XEmacs, on OS X it is probably an <em>Aqua</em> Emacs.
 <p>
 
 <h3>Downloading distributions</h3>
 
 <p>
-<em>Regardless of which editor you choose, install a recent (21.3.1
-and up), stable, fully-configured distribution that inludes all elisp
-sources</em>. (X)Eamcs distrubutions typically consist of several
-parts: the core editor, the emacs lisp (elisp) source files, and lots
+<em>Regardless of which editor you choose, install a recent (21.3.1 or
+later), stable, fully-configured distribution that includes all elisp
+sources</em>. (X)Eamcs distributions typically consist of several
+parts: the core editor, the Emacs Lisp (elisp) source files, and lots
 of add-on packages.  The size of a fully configured distribution is
-very large: between 20-30 megabytes for a binary release, depending on
-the editor and operating system involved.  Even though the
-download-time will require up to several hours (on a 56k modem), you
-should take the time necessary to install a fully configured
-(X)Emacs. You are certain to use more and more features and add-on
-packages as your familiarity with (X)Emacs increases.
+very large, between 20 and 30 megabytes for a binary release depending
+on the editor and operating system involved.  Even if downloading will
+require up to several hours (on a 56k modem, for example), you should
+take whatever time necessary to install a fully configured
+X/Emacs. You are certain to use more and more features and add-on
+packages as you gain familiarity with the editor.
 </p>
 
 <h4>Suggested binary distributions for running Common Music</h4>
 
+<p>
 Common Music has been tested in the most recent stable releases of the
-following distributions:</h4></p>
+following distributions:
+</p>
 
 <dl>
 <dt>Linux:</dt>
@@ -99,8 +100,9 @@ following distributions:</h4></p>
 </dd>
 
 <dt>OS X:</dt>
-<dd><a href="http://www.mindlube.com/products/emacs/">Emacs for OS
-X</a> (Aqua)
+<dd>
+<a href="http://www.mindlube.com/products/emacs/">Emacs for OS X</a>
+(Aqua)
 </dd>
 
 <dt>Windows 2000/XP: </dt>
@@ -110,63 +112,125 @@ X</a> (Aqua)
 </dd>
 
 <dt>MacOS: </dt>
-<dd>MCL's editor (Fred) is an acceptible Emacs substitute. (The name
-Fred stands for Fred Resembles Emacs Deliberately.)
+<dd>
+MCL's editor (Fred) is an acceptible Emacs substitute. (The name Fred
+stands for Fred Resembles Emacs Deliberately.)
 </dd>
 </dl>
 
-<h3>Starting (X)Emacs for the first time</h3>
+<h3>Customizing X/Emacs</h3>
 <p>
-Not yet written.
+Once you have downloaded and installed X/Emacs you can customize it
+for working with Common Music and programming in Lisp:
 </p>
 
-<h3>The (X)Emacs initialization file</h3>
+<ul>
+<li>Start X/Emacs</li>
+
+<li>
+Select Syntax Highlighting from the Options menu at the top of the
+Emacs window.  If Syntax Highlighting has a submenu, make sure that
+its Automatic feature is checked in the submenu.
+</li>
+
+<li>
+Select Save Options from the Options menu. X/Emacs then prompts you to
+confirm saving ~/.emacs or .xemacs/init.el.  Type 'y' to confirm.
+</li>
+
+<!-- li>Once you have saved the options, quit X/Emacs by selecting
+Quit from the File menu, or start learning about the editor using the
+interactive Emacs Tutorial located in the Help menu (or via the
+keyboard command <b><u>C-h</u> t</b>.)
+</li -->
+</ul>
+</p>
+
 <p>
-Not yet written.
+Saving the customized options creates or updates your personal
+<em>emacs initialization file</em> which X/Emacs loads each time it
+starts. You can add your own Emacs commands (elisp expressions) to
+this file to set up the editor exactly the way you want it.  <!-- By
+defualt, X/Emacs saves your initialization file in your <em>home
+directory</em>. On a Unix-flavor machine, your home directory is your
+login directory. On a Windows machine the home directory may be a
+login directory or it may be the root directory of the file system,
+for example C:\. Regardless of what operating system you use, X/Emacs
+lets you specify your home directory using the Unix ~/ convention.
+Emacs and XEmacs name the initialization file differently.  --> XEmacs
+normally saves the init file as ~/.xemacs/init.el, that is, the file
+init.el in the .xemacs subdirectory of your home folder. Emacs uses
+~/.emacs, the file .emacs located in your home directory. (On Unix
+machines the dotted names -- .xemacs/ and .emacs -- make the init file
+"invisible" in normal directory listings and browser windows but you
+can always open it in X/Emacs)
+
+<!-- The dotted names -- .xemacs/ and .emacs -- make the init file
+"invisible" in normal directory listings on Unix machines.  For
+example, if you display the content of your home direcotory using
+<code>ls ~/</code> on Linux neither .emacs or .xemacs/ will appear in
+the listing.  Similarly, OS X these files never appear in the Finder
+window.  On Windows, however, the dotted names will be visible in
+normal Command Shell listings and in Folder windows -->
+
 </p>
 
 <h3>Learning Emacs</h3>
 
 <p>
-A GUI version of (X)Emacs can be used just like any other
-mouse-driven, point-and-click editor. However, the real power (and
-beauty) of (X)Emacs lies in its <em>keyboard commands</em> -- short,
-simple keystrokes that invoke the powerful editing, formatting and
-cursor moving features of the editor.
+X/Emacs can work just like any other mouse-driven, point-and-click
+text editor. However, the real power (and beauty) of X/Emacs lies in
+its <em>keyboard commands</em> -- short, simple keystrokes that invoke
+the powerful editing, formatting and cursor moving features of the
+editor. If you want to become an efficient Lisp composer you should
+spend several hours (or even days!) becomimg familiar with X/Emacs
+keyboard commands and the advanced features of the editor. Here are
 </p>
+
+<ul>
+
+<li>
+Emacs' interactive Tutorial, available from the Emacs Help menu or by  the command
+<b><u>C-h</u> t</b> (type control-h followed by t).
+</li>
+
+<li>
+<a href="http://www.xemacs.org/Documentation/21.5/html/new-users-guide.html">Getting
+started with XEmacs</a>
+</li>
+
+<li>
+<a href="http://www.gnu.org/software/emacs/manual/html_chapter/emacs_toc.html">The Emacs Manual</a>
+</li>
+
+<li>
+<a href="http://www.gnu.org/software/emacs/elisp-manual/html_chapter/elisp.html#SEC_Top">
+The GNU Emacs Lisp Reference Manual
+</li>
+</ul>
 
 <p>
-To learn the basic keyboard commands just start (X)Emacs and select
-Emacs Tutorial from the Help menu.  If you want to become an efficient
-Lisp composer you should spend several hours (or even days!) becomimg
-familiar with (X)Emacs keyboard commands and the advanced features of
-the editor.  And if you become tired, frustrated or just want to
-complain to someone about your Emacs-pinkie be sure to consult the
-Emacs Doctor (<b><u>M-x</u></b> doctor).
+See Lisp Editing and Evaluation for more information.
 </p>
 
-<p>
-See the section Lisp Editing and Evaluation for more information.
-</p>
-
-<h2>Running Common Music under (X)Emacs</h2>
+<h2>Running Common Music under X/Emacs</h2>
 
 <p>
 The remainng sections of this document assume that you have already
-downloaded and installed Common Music and can start (X)Emacs on your
-system with a shell command. See the document <a
-href="install.html">Installing Common Music</a> for more information.
+downloaded Common Music and can start a GUI X/Emacs on your
+system. See the document <a href="install.html">Installing Common
+Music</a> for more information.
 </p>
 
 <h3>Quickstart (Linux, OS X, Cygwin)</h3>
 
 <p>
-If you are on some flavor of Unix (Linux, OS X, Cygwin, FreeBSD etc),
-the easiest way to start CM under (X)Emacs is to simply pass your
-editor to the bin/cm.sh script in a terminal.  Here are several simple
-examples. Each example assumes that you have already used
-the <code>cd</code> command to change to the Common Music installation
-directory:
+
+the easiest way to start CM under X/Emacs on Linux and OSX is to pass
+your editor command to the bin/cm.sh script.  Here are several
+examples on different systems. Each example assumes that you have
+already used the <code>cd</code> command to change to the Common Music
+installation directory:
 </p>
 
 <div class="float">
@@ -185,15 +249,15 @@ directory:
 </div>
 
 <p>
-See the documention on <code>cm.sh</code> for more information about using
-the script to run/install Common Music.
+See the <a href="dict/cm-sh.html"><code>cm.sh</code> documentation</a>
+for more information about using the script to run Common Music.
 </p>
 
-<h3>Running CM in (X)Emacs under Windows</h3>
+<h3>Running CM in X/Emacs under Windows</h3>
 
 <p>
 You cannot start CM using cm.sh in a Windows command interpreter.
-However, you can add code to your personal (X)Emacs init file that
+However, you can add code to your personal X/Emacs init file that
 will accomlish bascially the same thing. The following instructions
 assume that you have a system-wide command/batch file that starts your
 Lisp implementation, and that you have already installed CM using it.
@@ -208,66 +272,81 @@ Music installation directory.
 </li>
 
 <li>
-Verify that you can start cm running with this bat file in the Windows command interpreter:
+Verify that you can start cm running with this bat file in the Windows
+command interpreter:
 
 <ol>
-<li>Select Run COmmand from the Start menu</li>
-<li>Type CMD in the typin box.</li>
-<li> CD to the bin/ subodurecot Common Music installation directory.<li>
-<li>Type 'cm' to start common music.</li>
+<li>
+Select Run Command from the Start menu, or type Windows-R (press the
+Windows key and then type R).
+</li>
+
+<li>Type CMD in thetypin box.</li>
+
+<li>
+Change directories to the bin/ subdirectory under the Common Music
+installation directory.
+</li>
+
+<li>Type <code>cm</code> to start Common Music.</li>
+
 </ol>
 
 </li>
 
 <li>
 Follow the instructions in <a href="#cm-emacs-initfile">Starting
-Common Music from inside (X)Emacs</a>.
+Common Music from inside X/Emacs</a>.
 </li>
+</ol>
 
+<h3 id="cm-emacs-initfile">Starting Common Music from inside X/Emacs</h3>
 
-<h3 id="cm-emacs-initfile">Starting Common Music from inside (X)Emacs</h3>
+Here is how to start Common Music from within a running X/Emacs:
 
-Here is how to start Common Music from within a running (X)Emacs:
-
-<ul>
+<ol>
 
 <li>
-Add the following two forms to your (X)Emacs initialization file and
-to it. Be sure to change the value of <code>cm-pathname<code> to the
-actual directory path to Common Music's installation directory on your
-machine.  Use the / Unix directory delimiter even if you are on Windows.
-If you are <em>not</em> on Windows then change cm.bat to cm.sh as well.
+Add the following two forms to your X/Emacs init file and change the
+value of <code>cm-pathname</code> to the actual directory path to
+Common Music's installation directory on your machine.  Use the / Unix
+directory delimiter even if you are on Windows.  If you are
+<em>not</em> on Windows then change cm.bat to cm.sh as well.
 
 <div class="float">
-<p class="captxt">The clisp.bat script file for Windows 2000.
+<p class="captxt">Loading CM's listener into X/Emacs on Windows.
 </p>
 <pre class="code"><span style="color: blue;">;;; Edit the cm-directory string to point to the
-;;; cm installation directory on your machine.</span>
+;;; CM installation directory on your machine.</span>
 
-(defvar cm-directory "C:/Lisp/cm-2.4.1")
+(<span class="special">defvar</span> <span class="defined">cm-directory</span> <span class="string">"C:/Lisp/cm-2.4.1"</span>)
 
-(let* ((els (concatenate cm-directory "/etc/xemacs"))
-       (bin (concatenate cm-directory "/bin/cm.bat"))
+(<span class="special">let*</span> ((els (concat cm-directory <span class="string">"/etc/xemacs"</span>))
+       (bin (concat cm-directory <span class="string">"/bin/cm.bat"</span>))
        (load-path (list* els load-path)))
-  (require 'listener)
-  (load "cm.el")
+  (load <span class="string">"listener"</span>)
+  (load <span class="string">"cm.el"</span>)
   (setq inferior-lisp-program bin))</pre>
 </div>
 </li>
 
 <li>Save the changes and quit (X)emacs.</li>
 
-<li>Restart (X)Emacs, then type <b><u>C-x</u> l</b> to  start the listener.
-(Press the control key down and type the x key, then release both keys together, then type the l key)
+<li>
+Restart X/Emacs, then type <b><u>C-x</u> l</b> to start the listener.
+(Press the control key down and type the x key, then release both keys
+together, then type the l key).  Alternately, you can set the current
+buffer into Lisp-mode (<b><u>M-x</u> lisp-mode</b>) and select Lisp Listener from
+the Listner menu that appears in the menu bar.
 </li>
-Alternatly,  set the current buffer into Lisp-mode (M-x lisp-mode) and then select Lisp Listener from the
-Listner menu that appears in the menu bar.
+</ol>
+
+<h2>The X/Emacs Lisp Listener </h2>
 
 
-<h2>The (X)Emacs Lisp Listener </h2>
+<h2>X/Emacs Tips </h2>
 
-
-<h2>(X)Emacs Tips </h2>
+<h4>Adding Apple Commands to OS X Emacs</h4>
 
 
 </div> <!-- end content -->
