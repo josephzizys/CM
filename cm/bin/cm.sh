@@ -16,7 +16,7 @@ SUMMARY="         run Common Music"
 
 : ${CM_EDITOR:=}
 : ${CM_RUNTIME:=}
-: ${CM_RUNTIME_PREFS:=clisp cmucl openmcl acl}
+: ${CM_RUNTIME_PREFS:=openmcl lisp acl clisp guile}
 
 : ${CM_OS:=}
 : ${CM_ARCH:=}
@@ -99,6 +99,13 @@ DESCRIPTION="
 # Utils
 # -----
 
+imatch_head_token () {
+  test `echo $1 | tr '[A-Z]' '[a-z]' | sed 's/[^a-z].*//;'` = $2
+}
+imatch_end_token () {
+  test `echo $1 | tr '[A-Z]' '[a-z]' | sed 's/.*[^a-z]//;'` = $2
+}
+
 msg_i () { echo "[Notice ]  $*" > /dev/stderr ;         }
 msg_w () { echo "[Warning]  $*" > /dev/stderr ;         }
 msg_e () { echo "[Error  ]  $*" > /dev/stderr ;         }
@@ -118,8 +125,9 @@ OSX_EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs
 
 resolve_bin () {
   # OSX Emacs: check /Applications/Emacs.app first
-  if [[ $CM_PLATFORM == darwin* ]] &&
-     [[ $1 == *Emacs ]] &&
+  if [ $CM_PLATFORM ] && 
+     imatch_head_token $CM_PLATFORM darwin &&
+     imatch_end_token $1 emacs && 
      [  -x $OSX_EMACS ] ; then 
     echo $OSX_EMACS
   elif which $1 > /dev/null 2>&1 ; then
@@ -141,7 +149,7 @@ UNAME=`resolve_bin uname`
 if [ $RE_EXECING ] ; then
   unset RE_EXECING
 else
-  if test $UNAME && [[ `$UNAME -s` == CYGWIN* ]] ; then
+  if [ $UNAME ] && imatch_head_token `$UNAME -s` cygwin ; then
     BASH_EXE=`resolve_bin bash WARN`
     if [ ! $BASH_EXE ] ; then
       msg_f "Cygwin: 'sh' broken and can't find 'bash'!  Install bash first."
@@ -320,7 +328,7 @@ is_image () {
 }
 
 find_lisp () {
-  resolve_bin $1 WARN		# FIXME version is ignored for now
+  resolve_bin $1 $3		# FIXME version ($2) is ignored for now
 }
 
 get_lisp_info () {
@@ -389,7 +397,7 @@ if [ "$LISP_OPT" ] ; then
       LISP_IMG=
       LOAD=
     else
-      LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS`
+      LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS WARN`
       if [ $LISP_EXE ] ; then
         LISP_IMG=$thing
         LOAD=
