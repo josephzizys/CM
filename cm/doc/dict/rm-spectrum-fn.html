@@ -12,39 +12,69 @@
 
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><code>(</code><code class="entry">rm-spectrum</code> <var>spec1</var> <var>spec2</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
+<dd><code>(</code><code class="entry">rm-spectrum</code> <var>spectrum1</var> <var>spectrum2</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
 <p>
-Performs ring modulation on the input spectra <var>spec1</var>
-and <var>spec2</var> and returns the resulting spectrum as a list of
-hertz values, key numbers or note names.  Partials in the output
-spectrum are calculated as the difference and sum tones between
-pairwise combinations of the partials in the input spectra. Values in
-the input spectra can be specified as hertz values, key numbers or note
-names but both lists must be of the same type.  Each input spectrum can be
-list of values or a single value.
+Ring modulates <var>spectrum1</var> with <var>spectrum2</var> and
+returns the list of pairwise sum and difference tones. The input lists
+can consist of hertz values, key numbers or note names but both lists
+must contain identical types. For convenience sake, a spectrum
+consisting of a single frequency can be specified as a single value.
 </p>
 
-<p id="args"><code class="entry">rm-spectrum</code> supports the keyword arguments:
+<p id="args">
+<code class="entry">rm-spectrum</code> supports the following keyword arguments:
 </p>
 
 <dl>
 
 <dt>
-<code class="keyword">:spectrum</code> { <code class="keyword">:note</code> | <code class="keyword">:keynum</code> | <code class="keyword">:hertz</code> | <var>false</var>}
+<code class="keyword">:spectrum</code> { <code class="keyword">:note</code> | <code class="keyword">:keynum</code> | <code class="keyword">:hertz</code>}
 </dt>
-<dd>Determines what type of values are returned in the output spectrum. The default value is <var>false,</var> which means that values in the output spectrum will be the same type as the input spectra.</dd>
+<dd>
+Determines the frequency format (hertz values, key numbers or note
+names) of the components returned in the output spectrum. If
+unspecified they will be the same type as the input components.
+</dd>
 
 <dt>
 <code class="keyword">:hz</code> <var>boolean</var>
 </dt>
-<dd>If true then values in the input spectra are Hertz values. The default value is false.</dd>
+<dd>
+Specify true if input components are numerical Hertz values othewise
+numbers are assumed to be key numbers. The default value is
+false.</dd>
 
 <dt>
 <code class="keyword">:remove-duplicates</code> <var>boolean</var>
 </dt>
-<dd>If true then the output spectrum will not contain any duplicate frequencies.</dd>
+<dd>If true then the output spectrum will not contain any duplicate components.</dd>
+
+<dt><code class="keyword">:minimum</code> <var>freq</var></dt>
+<dd>
+If specified, then components in the output spectrum that are lower than
+<var>freq</var> will be octave-shifted upwards until they are equal to
+or greater than this value.  <var>Freq</var> should be the same
+frequency format as the input components.
+</dd>
+
+
+<dt><code class="keyword">:maximum</code> <var>freq</var></dt>
+<dd>
+If specified, then components in the output spectrum that are higher than
+<var>freq</var> will be octave-shifted downwards until they are equal to
+or less than this value.  <var>Freq</var> should be the same
+frequency format as the input components.
+</dd>
+
+
+<dt><code class="keyword">:scale-order</code> {<code class="keyword">:up</code> | <code class="keyword">:down</code> | <code class="keyword">:random</code>}</dt>
+<dd>Determines the ordering of the components in the output
+spectrum: <code class="keyword">:up</code> for low-to-high, <code
+class="keyword">:down</code> for high-to-low and <code
+class="keyword">:random</code> for random (shuffled) order. The
+default value is <code class="keyword">:up</code>.
 </dl>
 
 <h4>Examples:</h4>
@@ -55,14 +85,19 @@ list of values or a single value.
 <pre class="code">
 (rm-spectrum 'd5 'e5)
 <span class="result">&rArr;</span> (d2 ef6)
+
 (rm-spectrum 'a4 '(c4 ds5) <span class="keyword">:spectrum</span> '<span class="keyword">:keynum</span>)
 <span class="result">&rArr;</span> (53.36887 53.741356 77.07837 84.25864)
+
 (rm-spectrum '(300 400) 550 <span class="keyword">:hz</span> #t)
 <span class="result">&rArr;</span> (150 250 850 950)
+
 (rm-spectrum '(300 400) 550 <span class="keyword">:hz</span> #t <span class="keyword">:spectrum</span> '<span class="keyword">:note</span>)
 <span class="result">&rArr;</span> (d3 b3 af5 bf5)
-(rm-spectrum '(c4 e4) '(c4 e4 g4))
-<span class="result">&rArr;</span> (b1 cs2 cs2 c3 d5 d5 e5 fs5)
+
+(rm-spectrum '(c4 e4) '(c4 e4 g4) <span class="keyword">:scale-order</span> '<span class="keyword">:down</span>)
+<span class="result">&rArr;</span> (fs5 e5 d5 d5 c3 cs2 cs2 b1)
+
 (rm-spectrum '(c4 e4) '(c4 e4 g4) <span class="keyword">:remove-duplicates</span> #t)
 <span class="result">&rArr;</span> (b1 cs2 c3 d5 e5 fs5)
 </pre>
