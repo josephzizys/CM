@@ -280,6 +280,16 @@
       (set! ,n (+ ,n 1)))))
 
 ;;;
+;;; hash tables
+;;;
+
+(define (hash-clear! tabl)
+  (hash-fold (lambda (k v r)
+               (hash-remove! tabl k)
+               r)
+             #t
+             tabl))
+;;;
 ;;; conditionals...
 ;;;
 
