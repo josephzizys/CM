@@ -764,7 +764,7 @@
 (define (box op . args)
   (vector op args '()))
 
-(defun box? (x)
+(define (box? x)
   ;; any 3+ vector can be a box. chaining only uses the first
   ;; three elements so caching goodies in other locs is safe.
   (and (vector? x) (> (vector-length x) 2)))
