@@ -682,6 +682,13 @@
            opts file)
     file))
 
+(define *linux-midi-file-player* 
+  "timidity --quiet=2 ~a &")
+
+(define (linux-play-midi-file file . args)
+  (shell *linux-midi-file-player* file)
+  file)
+
 (define *win-midi-player*
   "C:\\Program Files\\Windows Media Player\\mplayer2.exe")
 
