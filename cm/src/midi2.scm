@@ -548,12 +548,16 @@
     ;; clears/sets divisions number of pitch bends in file or port
    (if (= divisions 1)
       (loop for c below 16
-	 for m = (make-instance <midi-pitch-bend> :channel c :time 0 :bend 0)
+         ;; midi-pitch-bend is defined in midi3.
+	 for m = (make-instance (find-class 'midi-pitch-bend) :channel c
+                                :time 0 :bend 0)
 	 do (write-event m io 0))
       (loop repeat divisions
 	 for c from channel-offset
-	 for m = (let ((bend (round (rescale (/ c divisions) (- width) width -8192 8191))))
-		   (make-instance <midi-pitch-bend> :channel c :time 0 :bend bend))
+	 for m = (let ((bend (round (rescale (/ c divisions) (- width) 
+                                             width -8192 8191))))
+		   (make-instance (find-class 'midi-pitch-bend)
+                                  :channel c :time 0 :bend bend))
 	 do (write-event m io 0)))))
 
 ;;; system note off resource. initialized to 50 entries.
