@@ -111,10 +111,9 @@ div#date {
   float: right;
 }
 div#cvs-info {
-  font-weight: small;
   float: right;
 }
-div#author, div#date, div#copyright, div#cvs-info {
+div#author, div#date, div#copyright, div#version, div#cvs-info {
   font-size: 84%;
   color: #aaa;
 }
@@ -209,6 +208,15 @@ pre.shell {
   border: 1px solid gray;
   background: #f7f7f7;
 }
+
+ul.dictindex { 
+  margin: 0em;
+  padding: .25em;
+}
+
+ul.dictindex li {
+    list-style: none;
+  }
 
 ol.toc, ul.toc {
 /*  font: normal 119% sans-serif; */
