@@ -1,28 +1,33 @@
+o New highlevel Midi event classes.
+
+o Work on Midishare and "realtime" processing.
+  
+o CM ported to SBCL, a variant of CMUCL.
+
 o The functions 'hertz', 'note' and 'keynum' have been reimplemented
   with new keywords args to provide additional functionality and to
-  make the functions behave more consistently. This has resulted in
+  make the functions work more uniformly. This has resulted in
   one incompatible change: the :HZ "tag" used by note and keynum is
-  now a keyword parameter. Do: (note 440 :hz t) not: (note 440 :hz)
+  now a keyword parameter. Use (note 440 :hz t) not: (note 440 :hz)
   The :hz tag will continue to work in the near future with a warning.
 
 o rhythmic symbols can now include a minus sign to negate their value,
   ie: -q = -1.0. Negative rhythmic values can be interpreted as "rest"
-  values by a process. Note that a minus sign prepended to a rhythmic
+  values by a process.  A minus sign prepended to a rhythmic
   expression negates the entire expression, not just the first symbol:
   -w-q = -(w-q) = -3.0 not -5.0
 
-o 'wait' now performs abs (absolute value) on the value passed to it
-  so that negative "rest" values can be processed correctly
+o 'wait' now performs abs (absolute value) on wait values so that
+   negative (rest) values are handled correctly
 
 o Modes can now be defined with more or fewer than 12 semitones per
   octave. This new functionality introduced an incompatible change:
 
   1. If a mode's :steps list contains note names then the last
-     note must mark the octave: (c d e f g a b c)
+     note marks the octave: (c d e f g a b c)
   2. If a  mode's :steps list contains intervals between modal 
      degress then the octave size is set to the sum of
-     the intervals, ie:
-        :steps  '(2 1 2 1 1) = 7 semitone octave
+     the intervals: (2 1 2 1 1) = 7-semitone octave for mode
 
 o New function 'midi-hush' closes an reopens a Midishare connection.
 o cm now looks for ~/.cminit.lisp and loads it if it exists
