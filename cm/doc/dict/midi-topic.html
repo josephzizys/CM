@@ -60,8 +60,8 @@ or higher.)</li>
 
 <p>
 In order to work with Midishare in real time, a connection between CM
-and MidiShare must first be established. This connection is
-represented by an object called the <em>midi port</em>:
+and MidiShare must first be established. This connection is made
+using an object called the <em>midi port</em>:
 </p>
 
 <dl>
@@ -98,10 +98,9 @@ cm&gt; <span class="input">*mp*</span>
 
 <p>
 Once a connection between CM and MidiShare has been established, MIDI
-messages can be sent to and from MidiShare ports and client
-applications in real time. MidiShare implements MIDI messages using a
-C struct called a MidiEv.  MidiEvs are <em>foreign</em> objects in
-Lisp:
+messages can be sent to and from MidiShare ports in real
+time. MidiShare implements MIDI messages using a C struct called a
+MidiEv.  MidiEvs are <em>foreign</em> objects in Lisp:
 </p>
 
 <ul>
@@ -115,8 +114,8 @@ memory partition</li>
 <p>
 You are completely responsible for properly managing the MidiEv's you
 allocate and use. In some cases this may include
-explicit <em>deallocation</em> after a MidiEv has been sent or received.
-Be sure to consult the 
+explicit <em>deallocation</em> after a MidiEv has been sent or
+received.  Be sure to consult the
 <a href="http://www.grame.fr/MidiShare/Doc/MidiShare_doc.html">
 Midishare manual</a> and the <a
 href="../../src/midishare/Midishare-Interface.lisp">Midishare Lisp
@@ -125,14 +124,14 @@ deallocate MidiEv structs using Midishare's API.
 </p>
 
 <p>
-Common Music "extends" Midishare's API by defining
+Common Music "extends" Midishare's API with the addtion of
 <code>ms:new</code>, a high level MidiEv constructor, and
-<code>ms:MidiPrintEv</code>, a MidiEv printer. These two additions
-allow MidiEvs to be manipulated in a manner consistent with normal
-Lisp objects defined in CM. Note that you must use the package prefix
+<code>ms:MidiPrintEv</code>, a MidiEv printer. These two functions
+allow MidiEvs to be manipulated in a manner consistent with the normal
+objects defined in CM. Note that you must use the package prefix
 <code>midishare:</code> or <code>ms:</code> to reference these two
-functions -- as well as all of the functions defined by MidiShare --
-from inside the CM package.
+functions, and all of the functions defined by MidiShare, from inside
+the CM package.
 </p>
 
 <dl>
@@ -391,10 +390,13 @@ cm&gt; <span class="input">(ms:MidiPrintEv ev)</span>
 <span class="output">#&lt;MidiEv Note [0/3 0ms] 60 64 2000ms&gt;</span></pre>
 </div>
 
+<h3>Getting and setting the contents of a MidiEv</h3>
+
+
 <p>
-To access and set the fields of a MidiEv struct you should use the
-functions defined in the MidiShare API. The more important
-constructors and accessors are listed here. Consult the <a
+To access and set the fields of a MidiEv struct you use the functions
+provided by the MidiShare API. The more important constructors and
+accessors are listed here. Consult the <a
 href="http://www.grame.fr/MidiShare/Doc/MidiShare_doc.html">MidiShare
 documentation</a> for more information.
 </p>
@@ -466,17 +468,20 @@ when the function is called. No value is returned.
 
 <!-- Interaction 4 -->
 <div class="float">
-<p><span class="floatlabel">Example 4.</span> Outputting and sprouting.</p>
+<p><span class="floatlabel">Example 4.</span> A sample process definition.</p>
+<pre class="code">(<span class="special">define</span> (<span class="defined">rankeys</span> reps rhy dur lb ub)
+  (<span class="special">process</span> repeat reps
+           output (ms:new typeNote <span class="keyword">:duration</span> dur
+                          <span class="keyword">:keynum</span> (between lb ub))
+           wait rhy))</pre>
+</div>
+
+
+<div class="float">
+<p>Using now, output and sprout.</p>
 <pre class="shell">cm&gt; <span class="input">(now)</span>
 <span class="output">274601</span>
 cm&gt; <span class="input">(output (ms:new typeNote :keynum 80 :duration 1000))</span>
-
-cm&gt; <span class="input">(define (rankeys reps rhy dur lb ub)
-      (process repeat reps
-               output (ms:new typeNote :duration dur
-                              :keynum (between lb ub))
-               wait rhy))</span>
-
 cm&gt; <span class="input">(sprout (rankeys 30 200 250 60 90) 2000)</span></pre>
 </div>
 
@@ -495,18 +500,25 @@ not return a value.
 </dd>
 </dl>
 
-<!-- Interaction 5 -->
+
 <div class="float">
-<p><span class="floatlabel">Example 5.</span> Establishing and
-clearing a MIDI receive hook.</p>
-<pre class="shell">cm&gt; <span class="input">(define (play9th ev)
-      (output ev)
-      (let ((ev2 (ms:MidiCopyEv ev)))
-         (ms:pitch ev2 (+ 13 (ms:pitch ev2)))
-         (output ev2)))</span>
+<p><span class="floatlabel">Example 5.</span> Defining a MIDI receive hook.
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">play9th</span> ev)
+  <span class="comment">;; if ev is NoteOn or NoteOff then play it
+  ;; as a minor 9th, otherwise deallocate ev.</span>
+  (<span class="special">if</span> (member (ms:evType ev) '(1 2))
+    (<span class="special">let</span> ((ev2 (ms:MidiCopyEv ev)))
+      (ms:pitch ev2 (+ 13 (ms:pitch ev)))
+      (output ev) 
+      (output ev2))
+  (ms:MidiFreeEv ev)))</pre>
+</div>
 
-cm&gt; <span class="input">(receive #'play9th)</span>
-
+<div class="float">
+<p>Setting and clearing the receive hook.</p>
+<pre class="shell">cm&gt; <span class="input">(receive #'play9th)</span>
+    <span class="comment">;; Play some notes on the keyboard, then...</span>
 cm&gt; <span class="input">(receive )</span></pre>
 </div>
 
@@ -561,7 +573,7 @@ up or down from the input note.
 <div class="float">
 <p><span class="floatlabel">Example 7.</span> Interactive wiggling.</p>
 <pre class="shell">
-cm&gt; <span class="input">(midi-open)</span>
+cm&gt; <span class="input">(or (midi-open?) (midi-open))</span>
 <span class="output">#&lt;midi-port "midi.port"&gt;</span>
 
 <span class="comment">;;; listen to a few wiggles on their own</span>
@@ -590,29 +602,27 @@ cm&gt; <span class="input">(receive )</span></pre>
   during real time work. The most common Lisp activities that cons
   are:
   <ul>
-  <li>Creating instances, structures, vectors, arrays, strings and
-  lists.</li>
-  <li>Doing floating point or fractional arithmetic.</li>
+  <li>Creating objects, arrays, strings and lists.</li>
+  <li>Floating point or fractional arithmetic.</li>
   </ul>
 </li>
 <li>
   A rule of thumb: integers are good, everything else is
   suspect. Analyze your programs to determine when and where you use
-  floats to see if there is an integer alternative.
+  floats or ratios and see if there is an integer alternative.
 </li>
 
 <li>
-  Do your consing ahead of time. For example allocate all your
-   patterns before you call <code>sprout</code>.
+  Do your consing ahead of time, for example, allocate all consing
+   structure (patterns, envelopes, etc) before
+   calling <code>sprout</code>.
 </li>
 
 <li>
-  Real time processes are managed in a "processes table".  When a
-  process function is finished it is automatically removed from the
-  table and that location is freed up for the next call
-  to <code>sprout</code>.  By default the size of the process table is
-  64, if 64 concurrent process are not enough you can
-  use <code>make-proctable</code> to increase the size of the table:
+Real time processes are managed in a "process table" and are
+automatically removed from the table when they stop.  By default the
+size of this table is 64, if 64 concurrent processes are not enough
+use <code>make-proctable</code> to increase the size of the table:
   <blockquote>
     <pre>(set! *proctable* (make-proctable 200))</pre>
   </blockquote>
