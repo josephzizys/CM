@@ -815,10 +815,11 @@
           ((not tail)  #f)
         (if (keyword? (cadr tail))
           (set! key (cadr tail))
-          (set! key (symbol->keyword (cadr tail))))
+          (set! key (and (cadr tail) ;; not #f
+                         (symbol->keyword (cadr tail)))))
         ;; remove duplicate initarg or ':initarg #f'
         (if (or (memq key sofar)
-                (not (cadr tail)))
+                (not key))
           (begin
            (when (cadr tail)
              (warning "Ignoring duplicate initarg for ~a." 
