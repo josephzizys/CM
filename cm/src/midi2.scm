@@ -694,27 +694,33 @@
     file))
 
 (define *linux-midi-file-player* 
-  "timidity --quiet=2 ~a &")
+  "timidity -quiet=2")
 
 (define (linux-play-midi-file file . args)
-  args
-  (shell (format #f *linux-midi-file-player* file))
-  file)
+  (with-args (args &optional (fork? #t))
+    (let ((cmd (string-append *linux-midi-file-player* " " file 
+                              (if fork? " &" ""))))
+      (shell cmd)
+      file)))
 
-(define *win-midi-player*
+(define *win-midi-file-player*
   "C:\\Program Files\\Windows Media Player\\mplayer2.exe")
 
 (define (win-play-midi-file file . args)
   (let ((opts (if (null? args) ""
 		  (string-append  " " (car args)))))
-    (if (file-exists? *win-midi-player*)
-      (shell (format #f "~a~a ~a" *win-midi-player* opts file))
+    (if (file-exists? *win-midi-file-player*)
+      (shell (format #f "~a~a ~a" *win-midi-file-player* opts file))
       (begin
-       (warn "The MIDI player ~s does not exist. Set the variable *win-midi-player* to the pathname (string) of a MIDI player on your machine and try again."
-             *win-midi-player*)))  
+       (warn "The MIDI player ~s does not exist. Set the variable *win-midi-file-player* to the pathname (string) of a MIDI player on your machine and try again."
+             *win-midi-file-player*)))  
     file))
 
+(define *osx-midi-file-player* "open")
+
 (define (osx-play-midi-file file . args)
-  args
-  (shell (format #f "/usr/bin/open ~a" file))
-  file)
+  (with-args (args &optional (fork? t))
+    (let ((cmd (string-append *osx-midi-file-player*
+                              " " file (if fork? " &" ""))))
+      (shell cmd)
+      file)))
