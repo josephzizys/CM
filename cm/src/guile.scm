@@ -61,10 +61,12 @@
 
 (define pprint pretty-print)
 
+(define (read-from-string str)
+  (call-with-input-string str read))
+
 (define (err msg . args)
   (let ((str (apply format #f msg args)))
     (error str)))
-
 
 ;;;
 ;;; module/symbol stuff
