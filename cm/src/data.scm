@@ -707,17 +707,18 @@
     (let ((amt (between (- width) width avoid state)))
       (incf n amt)
       (unless (<= low n high)
-	(case mode 
-	  ((:reflect )
+	(cond 
+	  ((eq? mode ':reflect )
 	   (set! n (fit n low high)))
-	  ((:reset )
+	  ((eq? mode ':reset )
 	   (set! n (+ low (/ (- high low) 2))))
-	  ((:jump )
+	  ((eq? mode ':jump )
 	   (set! n (between low high)))
-	  ((:limit )
+	  ((eq? mode ':limit )
 	   (set! n (max low (min n high))))
-          ((:stop )
+          ((eq? mode ':stop )
 	   (set! n #f))
+          ((number? mode) (set! n mode))
           (else 
            (err "~s is not :refect :reset :jump  :limit or :stop."
                 mode))))
@@ -856,10 +857,11 @@
                    a b)
     (if smp (set! max sum))
     (if (not (< min max))
-      (err "Minimum value ~S not less than maximum ~S." 
+      (err "Minimum value ~s not less than maximum ~s." 
            min max))
     (if (and smp (or mnp mxp))
-      (err "sum ~S: keyword :sum not allowed with :min or :max."))
+      (err "sum ~s: keyword :sum not allowed with :min or :max."
+           sum))
     (let ((done (if (not smp) num (+ num 1)))
           (segs (list))
           (mini most-positive-fixnum)
