@@ -271,6 +271,7 @@
           (name #f)
           (stop #f)
           )
+      rate keys path name
       (with-open-io (input io :input)
         (set! in (io-open input))
         (do ()
@@ -334,7 +335,7 @@
                           (string-append statement " " line))
                     (begin
                      (format #t
-                             "Skipping unimplemented statement:~%~ ~S" line)
+                             "Skipping unimplemented statement:~% ~S" line)
                      (set! statement #f)))
                   (set! next #f))))
           )
@@ -353,7 +354,7 @@
       (if (and (file-eof? line) list)
         (begin
          (if sort
-           (begin (format %t "~%Sorting i statements...")
+           (begin (format #t "~%Sorting i statements...")
                   (set! list (sort list
                                    (lambda (a b)
                                      (< (cadr a) (cadr b)))))
@@ -362,6 +363,8 @@
          (sco-write-and-load io output defs list)
          )
         #f))))
+
+(define (sco-write-and-load . args) args nil)
 
 ;; (define (write-sco-and-load io file defs head list)
 ;;   ;; save f_statements in file header
