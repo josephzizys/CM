@@ -465,21 +465,21 @@ if [ "$LISP_OPT" ] ; then
     fi        
   fi
 else
-  if ls "$LOC"/bin/*_*_$CM_PLATFORM/$IMG_NAME.* > /dev/null 2>&1 ; then
+  if ls "$LOC"/bin/*_*_$CM_PLATFORM/$IMG_NAME.$IMG_SUFFIX >/dev/null 2>&1; then
     for pref in $LISP_PREFS ; do
-      for img in `ls "$LOC"/bin/${pref}_*_$CM_PLATFORM/$IMG_NAME.* 2>/dev/null` ; do
-        LISP_INF=`echo $img | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
+      for img in "$LOC"/bin/${pref}_*_$CM_PLATFORM/$IMG_NAME.$IMG_SUFFIX ; do
+        LISP_INF=`echo "$img" | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
 	LISP_FLV=`echo $LISP_INF | sed 's:\([^_]*\)_.*$:\1:;'`
 	LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
-        if [ -x $img ] ; then
-          LISP_EXE=$img
+        if [ -x "$img" ] ; then
+          LISP_EXE="$img"
           LISP_IMG=
           LOAD=
           break
         else
 	  LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS`
 	  if [ "$LISP_EXE" ] ; then
-	    LISP_IMG=$img
+	    LISP_IMG="$img"
 	    LOAD=
 	    break
           fi
