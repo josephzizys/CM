@@ -218,7 +218,7 @@
                    ((tempo-change-p m)
                     (make <midi-tempo-change>
                           :time time
-                          :tempo (+ (ash (elt data 1) 16)
+                          :usecs (+ (ash (elt data 1) 16)
                                     (ash (elt data 2) 8)
                                     (elt data 3))))
                    ((sequence-number-p m)
@@ -545,7 +545,7 @@
             (err ":channel-exclude value '~s' not a channel message opcode."
                  e))))
       
-      (unless (member channel-exclude '(#t #f))
+      (unless (member meta-exclude '(#t #f))
         (unless (pair? meta-exclude)
           (set! meta-exclude (list meta-exclude)))
         (dolist (e meta-exclude)
