@@ -16,7 +16,7 @@ SUMMARY="         run Common Music"
 
 : ${CM_EDITOR:=}
 : ${CM_RUNTIME:=}
-: ${CM_RUNTIME_PREFS:=openmcl cmucl acl clisp guile}
+: ${CM_RUNTIME_PREFS:=openmcl cmucl acl clisp sbcl guile}
 
 : ${CM_OS:=}
 : ${CM_ARCH:=}
@@ -409,10 +409,11 @@ get_lisp_info () {
       echo ${LISP_FLV}_${LISP_VRS}
     else
       case "$1" in
-        *clisp*|*CLISP*)                      flv=clisp ;;
-        *acl*|*ACL*)                  flv=acl ;;
+        *clisp*|*CLISP*)                flv=clisp ;;
+        *acl*|*ACL*)                    flv=acl ;;
         *lisp*|*LISP*|*cmucl*|*CMUCL*)  flv=cmucl ;;
         *openmcl*|*OPENMCL*|*dppccl*)   flv=openmcl ;;
+        *sbcl*|*SBCL*)                  flv=sbcl ;;
         *guile*)                        flv=guile ;;
         *)
           msg_e "Can't determine flavor of '$1'."
@@ -450,6 +451,10 @@ get_lisp_info () {
       *openmcl*|*OPENMCL*|*dppccl*)
         flv=openmcl
         vrs=`echo '(lisp-implementation-version)' | "$1" -b | sed -n $vre`
+        ;;
+      *sbcl*|*SBCL*)
+        flv=sbcl
+        vrs=`"$1" --version | cut -d' ' -f2`
         ;;
       *guile*)
         LISP_DIA=SCHEME
@@ -622,6 +627,15 @@ make_lisp_cmd () {
       else
         test $LISP_INI && LISP_INI="--load $LISP_INI"
         LISP_CMD="$LISP_CMD --image-name '$LISP_IMG' $LISP_INI"
+      fi
+      ;;
+    sbcl)
+      LISP_CMD="'$LISP_EXE' --noinform $LOPTS"
+      if [ $LOAD ] ; then
+        LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
+      else
+        test $LISP_INI && LISP_INI="--userinit $LISP_INI"
+        LISP_CMD="$LISP_CMD --core '$LISP_IMG' $LISP_INI"
       fi
       ;;
     guile)
