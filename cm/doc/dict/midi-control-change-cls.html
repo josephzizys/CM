@@ -13,7 +13,7 @@
 <!-- Entry: "midi-control-change" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><code class="entry">midi-control-change</code></span></dd>
+<dd><code class="entry">midi-control-change</code></dd>
 </dl>
 
 <p>
@@ -23,23 +23,22 @@ Control and Mode Changes</a> for information about MIDI control and mode
 messages.
 </p>
 
-<p><code class="entry">midi-control-change</code> supports the following slot initializations:
+<p>
+<code class="entry">midi-control-change</code> supports the following slot initializations:
 </p>
 
 <dl>
 <dt><code class="keyword">:time</code> <var>number</var></dt>
-<dd>The start time of object in score.</dd>
+<dd>The start time of the object.</dd>
 <dt><code class="keyword">:channel</code> <var>integer</var></dt>
-<dd>A MIDI channel number, defaults to 0.</dd>
-
+<dd>A MIDI channel number. The default value is 0.</dd>
 <dt><code class="keyword">:controller</code> <var>integer</var></dt>
 <dd>
-A MIDI controller number from 0 to 127. 
+A MIDI controller value 0-127. 
 </dd>
-
 <dt><code class="keyword">:value</code> <var>integer</var></dt>
 <dd>
-A MIDI control value from 0 to 127. 
+A MIDI control value  0-127. 
 </dd>
 
 </dl>
@@ -47,23 +46,21 @@ A MIDI control value from 0 to 127.
 <h4>Examples:</h4>
 
 <div class="float">
-<p class "captxt">
+<p class="captxt">
 <span class="floatlabel">Example 1.</span> Creating MIDI control and mode changes.
 </p>
 <pre class="code"><span class="comment">;;; a 'Sustain Pedal Down' control event</span>
-
 (<a href="new-mac.html">new</a> midi-control-change <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> 3
      <span class="keyword">:controller</span> 64 <span class="keyword">:value</span> 127)
 
 <span class="comment">;;; a 'Local Control Off' mode event</span>
-
 (<a href="new-mac.html">new</a> midi-control-change <span class="keyword">:time</span> 0 <span class="keyword">:controller</span> 122 <span class="keyword">:value</span> 0)
 </pre>
 </div>
 
 
 <div class="float">
-<p class "captxt">
+<p class="captxt">
 <span class="floatlabel">Example 2.</span> Process with pedal control.
 </p>
 
@@ -84,37 +81,44 @@ A MIDI control value from 0 to 127.
 (<a href="events-fn.html">events</a> (list (sustain 0 0 127)
               (playsome 32))
         <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
 </pre>
 </div>
 
-(define (pbs chan width)
-  ;; seq of control messages that sets pitch bend
-  ;; sensitivity for channel chan. width in half-steps.
-  (new seq :time 0
-       :subobjects
-             ;; Registered Parameter Number (fine)
-       (list (new midi-control-change 
-               :time 0 :channel chan
-               :controller 100
-               :value 0)
-             ;; RPN (coarse)
-             (new midi-control-change 
-               :time 0 :channel chan
-               :controller 101
-                :value 0)
-             ;; Data entry
-             (new midi-control-change 
-               :time 0 :channel chan
-               :controller 6
-               :value width))))
-
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 3.</span> Setting pitch bend sensitivity.
+</p>
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">pbs</span> time chan width)
+  <span class="comment">;; a seq of control changes to set pitch bend 
+  ;; sensitivity for a chan to a width in half-steps.</span>
+  (<a href="new-mac.html">new</a> <a href="seq-fn.html">seq</a> <span class="keyword">:time</span> time
+       <span class="keyword">:subobjects</span>
+       (list <span class="comment">;; Registered Parameter Number (fine)</span>
+             (<a href="new-mac.html">new</a> midi-control-change 
+                  <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> chan
+                  <span class="keyword">:controller</span> 100
+                  <span class="keyword">:value</span> 0)
+             <span class="comment">;; RPN (coarse)</span>
+             (<a href="new-mac.html">new</a> midi-control-change 
+                  <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> chan
+                  <span class="keyword">:controller</span> 101
+                  <span class="keyword">:value</span> 0)
+             <span class="comment">;; Data entry</span>
+             (<a href="new-mac.html">new</a> midi-control-change 
+               <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> chan
+               <span class="keyword">:controller</span> 6
+               <span class="keyword">:value</span> width))))
+</pre>
+</div>
 
 <h4>See also: </h4>
 <ul>
 <li>
-<a href="midi-topic.html#midi_event_classes">MIDI event classes</a> [Topic]</li>
+<li><a href="midi-topic.html#midi_event_classes">MIDI event classes</a> [Topic]</li>
+<li><a href="midi-topic.html#midi_score_classes">MIDI score classes</a> [Topic]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>

@@ -26,18 +26,16 @@ system. Two levels of MIDI support are provided:
 <ul>
 
 <li>
-A <a href="#midi_high_level">high level interface</a> provides Lisp
+<a href="#midi_high_level">High level support</a> consists of Lisp
 classes and methods for generating music to MIDI score files and to
 MidiShare in non-real time mode.
 </li>
 
 <li>
-A <a href="#midi_real_time">low level interface</a> connects directly
-to Midishare via a foreign function interface (FFI) for "interactive",
-real time work (OpenMCL/OS X systems only).
+<a href="#midi_real_time">Low level support</a> provides an interface
+to the Midishare real time MIDI system for "interactive" work
+(OpenMCL/OS X only).
 </li>
-
-
 
 </ul>
 
@@ -100,7 +98,7 @@ href="midishare-stream-cls.html"><code>midishare-stream</code></a></li>
 </ul>
 
 
-<h2 id="midi_real_time">Low level (real time) MIDI support</h2>
+<h2 id="midi_real_time">Low level MIDI support</h2>
 
 <p>
 The low level MIDI interface provides the ability to read and write
@@ -119,40 +117,53 @@ or higher.)</li>
 
 <p>
 In order to work with Midishare in real time a connection between CM
-and MidiShare must first be established. This connection is made
-using an object called the <em>midi port</em>, which must first be
-opened before any MIDI events can be sent or received.
+and MidiShare must be established. This connection is made using an
+object called the <em>midi port</em>, which must first be opened
+before any MIDI events can be sent or received.
 </p>
 
-<dl>
-<dt>(<code class="entry">midi-open</code>)</dt>
-<dd>Opens connection to MidiShare.</dd>
-<dt>(<code class="entry">midi-close</code>)</dt>
-<dd>Closes connection to MidiShare.</dd>
-<dt>(<code class="entry">midi-open?</code>)</dt>
-<dd>Returns the midi port object if MidiShare is open, otherwise false.</dd>
+
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">midi-open</code><code>)</code></dd></dl>
+<p>Opens connection to MidiShare.<p>
+
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">midi-close</code><code>)</code></dd></dl>
+<p>Closes connection to MidiShare.</p>
+
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">midi-open?</code><code>)</code></dd></dl>
+<p>Returns the midi port object if MidiShare is open, otherwise false.</p>
+
 <!-- dt>(<code class="entry">midi-reset </code>[<code class="keyword">:port </code><em>integer</em>]<code class="entry"></code>)</dt>
 <dd>Sends system reset to a MidiShare output port, which defaults to 0.</dd -->
-<dt><code class="entry">*mp*</code></dt>
-<dd>
+
+<dl class="dictsyntax">
+<dt>[Variable]</dt>
+<dd><code class="entry">*mp*</code></dd></dl>
+<p>
 CM's <em>reference number</em> in MidiShare when the MIDI port is
 open, otherwise false.
-</dd>
-</dl>
+</p>
 
-<!-- Interaction 1 -->
 <div class="float">
-<p><span class="floatlabel">Example 1.</span> Opening the MIDI port.</p>
-<pre class="shell">cm&gt; <span class="input">(midi-open?)</span>
-<span class="output">nil</span>
-cm&gt; <span class="input">(midi-open)</span>
-<span class="output">#&lt;midi-port "midi.port"&gt;</span>
-cm&gt; <span class="input">(midi-open?)</span>
-<span class="output">#&lt;midi-port "midi.port"&gt;</span>
-cm&gt; <span class="input">*mp*</span>
-<span class="output">1</span>
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Opening the MIDI port.
+</p>
+<pre class="code">
+(midi-open?)
+<span class="result">&rArr;</span> nil
+(midi-open)
+<span class="result">&rArr;</span> #&lt;midi-port "midi.port"&gt;
+(midi-open?)</span>
+<span class="result">&rArr;</span> #&lt;midi-port "midi.port"&gt;
+*mp*
+<span class="result">&rArr;</span> 1
+</pre>
 </div>
-
 
 <h3>Midishare's MidiEv struct</h3>
 
@@ -166,7 +177,7 @@ MidiEv.  MidiEvs are <em>foreign</em> objects in Lisp:
 <ul>
 <li>they are allocated and deallocated outside of Lisp's
 memory partition</li>
-<li>they are not part of the Lisp datatype system</li>
+<li>they are not part of the Lisp data type system</li>
 <li>they are not managed by Lisp's garbage collection facility</li>
 <li>they are not trapped and handled by Lisp's error system</li>
 </ul>
@@ -195,18 +206,22 @@ prefix <code>midishare:</code> or <code>ms:</code> in the function
 name.
 </p>
 
-<dl>
-<dt>
-<span class="syntax" id="ms:new">(<code class="entry">ms:new</code> <var>type</var> {<var style="color:#b22222;">:keyword</var> <var>value</var>}*)</span>
-</dt>
-<dd>
+<dl class="dictsyntax" id="ms:new">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">ms:new</code> <var>type</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd></dl>
+
+<p>
 Allocates, initializes and returns a foreign Midishare
-event. <var>Type</var> is an integer MidiEv type specifier (see below)
-followed by zero or more keyword parameters as appropriate for the
-type of MidiEv returned.
+event. Every <var>type</var> of MidiEv is identified by a unique
+integer type id, a Lisp constant (symbol) with an integer value.  This
+value is followed by zero or more keyword parameters as appropriate
+for the <var>type</var> of MidiEv returned:
 </p>
 
-<p>Keyword arguments applicable to all MidiEvs:</p>
+<p>
+Keyword arguments applicable to all types of MidiEvs:
+</p>
+
 <dl>
 <dt><code class="keyword">:port</code> <var>integer</var></dt> <dd>The
 reference number of the MidiShare port to send the event to. Defaults
@@ -217,190 +232,131 @@ to. Defaults to 0.</dd> <dt><code class="keyword">:date</code>
 event. Defaults to 0.</dd>
 </dl>
 
-<p>
-Every type of MidiEv is identified by a unique integer <em>type
-id</em>, a Lisp constant (symbol) with an integer value.  The
-following list provides the name, value and <code
-class="entry">ms:new</code> keyword arguments for each type of MidiEv:
+<p><code class="entry">typeNote</code>
+(0), <code class="entry">typeKeyOn</code> (1), <code
+class="entry">typeKeyOff</code> (2):
 </p>
 
-<dl>
-<!-- begin types -->
-<dt><code>typeNote</code> (0)</dt>
-<dd>
-A MidiShare key event with an associated millisecond duration.
 <dl>
 <dt><code class="keyword">:pitch</code> <em>integer</em></dt>
 <dd>An integer key number 0-127. Defaults to 60.</dd>
 <dt><code class="keyword">:vel</code> <em>integer</em></dt>
 <dd>An integer velocity 0-127. Defaults to 60.</dd>
 <dt><code class="keyword">:dur</code> <em>integer</em></dt>
-<dd>Duration in milliseconds, defaults to 500.
+<dd>Duration in milliseconds, defaults to 500. Only available
+for <code>typeNote</code>.
 </dl>
-</dd>
 
-<dt><code>typeKeyOn</code> (1), <br/>
-    <code>typeKeyOff</code> (2)</dt>
-<dd>
-Like <code>typeNote</code> but with no millisecond <code
-class="keyword">:duration</code>.
-</dd>
+<p><code class="entry">typeKeyPress</code> (3):</p>
 
-<dt><code>typeKeyPress</code> (3)</dt>
-<dd>
 <dl>
 <dt><code class="keyword">:pitch</code> <em>integer</em></dt>
 <dd>An integer key number 0-127. Defaults to 60.</dd>
 <dt><code class="keyword">:pressure</code> <em>integer</em></dt>
 <dd>An integer pressure 0-127. Defaults to 0.</dd>
 </dl>
-</dd>
 
-<dt><code>typeCtrlChange</code> (4)</dt>
-<dd>
+
+<p><code class="entry">typeCtrlChange</code> (4):</p>
 <dl>
 <dt><code class="keyword">:controller</code> <em>integer</em></dt>
 <dd>An integer controller 0-127. Defaults to 0.</dd>
 <dt><code class="keyword">:change</code> <em>integer</em></dt>
 <dd>An integer change 0-127. Defaults to 0.</dd>
 </dl>
-</dd>
 
-<dt><code>typeProgChange</code> (5)</dt>
-<dd>
+<p><code class="entry">typeProgChange</code> (5):</p>
 <dl>
 <dt><code class="keyword">:program</code> <em>integer</em></dt>
 <dd>An integer program 0-127. Defaults to 0.</dd>
 </dl>
-</dd>
 
-<dt><code>typeChanPress</code> (6)</dt>
-<dd>
+<p><code class="entry">typeChanPress</code> (6):</p>
 <dl>
 <dt><code class="keyword">:pressure</code> <em>integer</em></dt>
 <dd>An integer pressure 0-127. Defaults to 0.</dd>
 </dl>
-</dd>
 
-<dt><code>typePitchBend</code> (7),<br/>
-     <code>typePitchWheel</code> (7)</dt>
-<dd>
+<p><code class="entry">typePitchBend</code> (7),
+     <code class="entry">typePitchWheel</code> (7):</p>
 <dl>
 <dt><code class="keyword">:bend</code> <em>integer</em></dt>
 <dd>An integer bend value -8192 to 8191. Defaults to 0 (no bend).</dd>
 </dl>
-</dd>
 
-<dt><code>typeSongPos</code> (8)</dt>
-<dd>
+<p><code class="entry">typeSongPos</code> (8):</p>
 <dl>
 <dt><code class="keyword">:lsb</code> <em>integer</em></dt>
 <dd>An integer 0-127. Defaults to 0.</dd>
 <dt><code class="keyword">:msb</code> <em>integer</em></dt>
 <dd>An integer 0-127. Defaults to 0.</dd>
 </dl>
-</dd>
 
-<dt><code>typeSongSel</code> (9)</dt>
-<dd>
+<p><code class="entry">typeSongSel</code> (9):</p>
 <dl>
 <dt><code class="keyword">:song</code> <em>integer</em></dt>
 <dd>An integer song 0-127. Defaults to 0.</dd>
 </dl>
-</dd>
 
+<p><code class="entry">typeClock</code> (10),
+<code class="entry">typeStart</code> (11),
+<code class="entry">typeContinue</code> (12),
+<code class="entry">typeStop</code> (13),
+<code class="entry">typeTune</code> (14),
+<code class="entry">typeActiveSens</code> (15),
+<code class="entry">typeReset</code> (16):</p>
 
-<dt>
-<code>typeClock</code> (10),<br/>
-<code>typeStart</code> (11),<br/>
-<code>typeContinue</code> (12),<br/>
-<code>typeStop</code> (13),<br/>
-<code>typeTune</code> (14),<br/>
-<code>typeActiveSens</code> (15),<br/>
-<code>typeReset</code> (16)
-<dd>
-No keyword parameters.
-</dd>
+<p>
+None
+</p>
 
-<dt><code>typeSysEx</code> (17)</dt>
-<dd>
+<p><code class="entry">typeSysEx</code> (17):</p>
 <dl>
 <dt><code class="keyword">:data</code> <em>list</em></dt> <dd>A list
 of data bytes. Do not include a leading #xF0 or tailing #xF7 in the
 list; these markers are added automatically by Midishare.</dd>
 </dl>
-</dd>
-</dl>
 
-
-<p>
-The following MIDI Meta messages <em>cannot</em> be sent to an
-external synthesizer:
-</p>
-
-<dl>
-<dt><code>typeSeqNum</code> (134)</dt>
-<dd>
+<p><code class="entry">typeSeqNum</code> (134):</p>
 <dl>
 <dt><code class="keyword">:number</code> <em>integer</em></dt>
 <dd>A sequence integer 0-127.</dd>
 </dl>
-</dd>
 
-<dt>
-<code>typeTextual</code> (135),<br/>
-<code>typeCopyright</code> (136),<br/>
-<code>typeSeqName</code> (137),<br/>
-<code>typeInstrName</code> (138),<br/>
-<code>typeLyric</code> (139),<br/>
-<code>typeMarker</code> (140),<br/>
-<code>typeCuePoint</code> (141)<br/>
-<dd>
+<p><code class="entry">typeTextual</code> (135),
+<code class="entry">typeCopyright</code> (136),
+<code class="entry">typeSeqName</code> (137),
+<code class="entry">typeInstrName</code> (138),
+<code class="entry">typeLyric</code> (139),
+<code class="entry">typeMarker</code> (140),
+<code class="entry">typeCuePoint</code> (141):</p>
 <dl>
 <dt><code class="keyword">:text</code> <em>string</em></dt>
 <dd>A text string, defaults to "".</dd>
 </dl>
-</dd>
 
-<dt>
-<code>typeChannelPrefix</code> (142)
-</dt>
-<dd>
+<p><code class="entry">typeChannelPrefix</code> (142):</p>
 <dl>
 <dt><code class="keyword">:prefix</code> <em>integer</em></dt>
 <dd>A prefix integer 0-127, defaults to 0.</dd>
 </dl>
-</dd>
 
-<dt>
-<code>typeEndTrack</code> (143)
-</dt>
-<dd>No keyword parameters.</dd>
+<p><code class="entry">typeEndTrack</code> (143):</p>
+<p>None</p>
 
-<dt>
-<code>typeTempo</code> (144)
-</dt>
-<dd>
+<p><code class="entry">typeTempo</code> (144):</p>
 <dl>
 <dt><code class="keyword">:tempo</code> <em>integer</em></dt>
 <dd>Tempo in quarter notes per minute, defaults to 120.</dd>
 </dl>
-</dd>
 
-<dt>
-<code>typeSMPTEOffset</code> (145)
-</dt>
-<dd>
+<p><code class="entry">typeSMPTEOffset</code> (145):</p>
 <dl>
 <dt><code class="keyword">:offset</code> <em>list</em></dt> <dd>A list
 of SMPTE integer offsets (<em>hr min sec frame subframe</em>).</dd>
 </dl>
-</dd>
 
-<dt>
-<code>typeTimeSign</code> (146)
-</dt>
-<dd>
+<p><code class="entry">typeTimeSign</code> (146):</p>
 <dl>
 <dt><code class="keyword">:numerator</code> <em>integer</em></dt>
 <dd>The upper number of the time signature, defaults to 4.</dd>
@@ -411,48 +367,50 @@ of SMPTE integer offsets (<em>hr min sec frame subframe</em>).</dd>
 <dt><code class="keyword">:32nds</code> <em>integer</em></dt>
 <dd>Thirty-seconds per quarter, defaults to 8.</dd>
 </dl>
-</dd>
 
-<dt>
-<code>typeKeySign</code> (147)
-</dt>
-<dd>
+<p><code class="entry">typeKeySign</code> (147):</p>
 <dl>
 <dt><code class="keyword">:sign</code> <em>integer</em></dt> 
 <dd>The number of flats or sharps in the key signature -7 to 7,
 defaults to 0.</dd> 
-
 <dt><code class="keyword">:mode</code><em>integer</em></dt> 
 <dd>An integer 0 or 1 where 0 means major and 1
 means minor, defaults to 0.</dd>
 </dl>
-</dd>
+
 <!-- end types -->
 </dl>
 </dd>
+
+<p>
+The MIDI Meta message types 134-147 can appear in MIDI files but
+cannot be sent to an external synthesizer.
+</p>
+
 <!-- end ms:new -->
-<dt>
-<br/>
-<span class="syntax">
-(<code class="entry">ms:MidiPrintEv</code> <var>ev</var> [<var>stream</var>])
-</span>
-</dt>
-<dd>Formats the message contents of <var>ev</var> to <var>stream</var>, which defaults to the standard output.
-</dd>
 
-</dl>
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">ms:MidiPrintEv</code> <var>ev</var> [<var>stream</var>]<code>)</code></dd></dl>
 
-<!-- Interaction 1 -->
+<p>
+Formats the message contents of <var>ev</var> to <var>stream</var>,
+which defaults to the standard output.
+</p>
+
 <div class="float">
-<p><span class="floatlabel">Example 2.</span> Creating and printing a MidiEv.</p>
-<pre class="shell">cm&gt; <span class="input">(define ev (ms:new typeNote :chan 3 :dur 2000))</span>
+<p class="captxt">
+<span class="floatlabel">Example 2.</span>  Creating and printing a MidiEv.</p>
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">ev</span> (ms:new typeNote <span class="keyword">:chan</span> 3 <span class="keyword">:dur</span> 2000))</span>
 
-cm&gt; <span class="input">(ms:MidiPrintEv ev)</span>
-<span class="output">#&lt;MidiEv Note [0/3 0ms] 60 64 2000ms&gt;</span></pre>
+(ms:MidiPrintEv ev)
+#&lt;MidiEv Note [0/3 0ms] 60 64 2000ms&gt;
+</pre>
 </div>
 
 <h3>Accessing and modifying MidiEvs</h3>
-
 
 <p>
 To access values or set the fields of a MidiEv struct you use the
@@ -463,35 +421,40 @@ documentation</a> for more information.
 </p>
 
 <ul>
-<li>(<code>ms:MidiNewEv </code><var>typenum</var>)</code></li>
-<li>(<code>ms:MidiCopyEv </code><var>ev</var>)</li>
-<li>(<code>ms:MidiFreeEv </code><var>ev</var>)</li>
-<li>(<code>ms:evtype </code><var>ev</var> [<var>val</var>])
-<li>(<code>ms:port </code><var>ev</var> [<var>val</var>])
-<li>(<code>ms:chan </code><var>ev</var> [<var>val</var>])
-<li>(<code>ms:date </code><var>ev</var> [<var>val</var>])
-<li>(<code>ms:pitch </code><var>ev</var> [<var>val</var>])
-<li>(<code>ms:dur </code><var>ev</var> [<var>val</var>])
-<li>(<code>ms:vel </code><var>ev</var> [<var>val</var>])
-<li>(<code>ms:bend </code><var>ev</var> [<var>val</var>])
-<li>(<code>ms:pgm  </code><var>ev</var> [<var>val</var>])
-<li>(<code>ms:ctl </code><var>ev</var> [<var>val</var>])</li>
-<li>(<code>ms:val </code><var>ev</var> [<var>val</var>])</li>
-<li>(<code>ms:field </code><var>ev pos</var> [<var>val</var>])</li>
+<li><code>(</code><code>ms:MidiNewEv </code><var>typenum</var>)</code></li>
+<li><code>(</code><code>ms:MidiCopyEv </code><var>ev</var><code>)</code></li>
+<li><code>(</code><code>ms:MidiFreeEv </code><var>ev</var><code>)</code></li>
+<li><code>(</code><code>ms:evtype </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:port </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:chan </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:date </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:pitch </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:dur </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:vel </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:bend </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:pgm  </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:ctl </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:val </code><var>ev</var> [<var>val</var>]<code>)</code></li>
+<li><code>(</code><code>ms:field </code><var>ev pos</var> [<var>val</var>]<code>)</code></li>
 </ul>
 
-<!-- Interaction 3 -->
 <div class="float">
-<p><span class="floatlabel">Example 3.</span> Copying and transposing an event by one octave.</p>
-<pre class="shell">cm&gt; <span class="input">(define ev2 (ms:MidiCopyEv ev))</span>
+<p class="captxt">
+<span class="floatlabel">Example 3.</span> Copying and transposing an event by one octave.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">ev2</span> (ms:MidiCopyEv ev))
 
-cm&gt; <span class="input">(ms:pitch ev2 (+ (ms:pitch ev2) 12))</span>
-<span class="output">72</span>
-cm&gt; <span class="input">(ms:MidiPrintEv ev2)</span>
-<span class="output">#&lt;MidiEv Note [0/3 0ms] 72 64 2000ms&gt;</span></pre>
+(ms:pitch ev2 (+ (ms:pitch ev2) 12))
+<span class="result">&rArr;</span> 72
+(ms:MidiPrintEv ev2)
+#&lt;MidiEv Note [0/3 0ms] 72 64 2000ms&gt;
+</pre>
 </div>
 
+
 <h3>Real time MIDI output</h3>
+
 <p>
 Real time MIDI output and musical process scheduling is initiated by
 calling <a href="output-fn.html"><code>output</code></a>,
@@ -501,47 +464,52 @@ scope of a call to <a href="events-fn.html"><code>events</code></a>.
 When used interactively these functions behave as if they were defined
 slightly differently than during non-real time event scheduling:
 
-<dl>
-<dt><span class="syntax">(<code class="entry">now</code>)</span></dt>
-<dd>Returns Midishare's current clock time in milliseconds.</dd>
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">now</code><code>)</code></dd></dl>
 
-<dt>
-<span class="syntax">(<code class="entry">output</code> <var>ev</var> [<var>ahead</var>])</span>
-</dt>
-<dd>
+<p>
+Returns Midishare's current clock time in milliseconds.
+</p>
+
+
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">output</code> <var>ev</var> [<var>ahead</var>]<code>)</code></dd></dl>
+
+<p>
 Sends <var>ev</var> to Midishare immediately or <var>ahead</var>
 milliseconds later than when the function is called. No value is
 returned.
-</dd>
+</p>
 
-<dt>
-<span class="syntax">(<code class="entry">sprout</code> <var>fn</var> [<var>ahead</var>])</span>
-</dt>
-<dd>
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">sprout</code> <var>fn</var> [<var>ahead</var>]<code>)</code></dd></dl>
+
+<p>
 Schedules the process function <var>fn</var> to run as a real time
 Midishare task immediately or <var>ahead</var> milliseconds later than
 when the function is called. No value is returned.
-</dd>
-</dl>
+</p>
 
-<p>
-
-<!-- Interaction 4 -->
 <div class="float">
-<p><span class="floatlabel">Example 4.</span> A sample process definition.</p>
-<pre class="code">(<span class="special">define</span> (<span class="defined">rankeys</span> reps rhy dur lb ub)
-  (<span class="special">process</span> repeat reps
+<p class="captxt">
+<span class="floatlabel">Example 4.</span> Using now, output and sprout interactively.</p>
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">rankeys</span> reps rhy dur lb ub)
+  (<a href="process-mac.html">process</a> repeat reps
            output (ms:new typeNote <span class="keyword">:dur</span> dur
-                          <span class="keyword">:pitch</span> (between lb ub))
-           wait rhy))</pre>
-</div>
+                          <span class="keyword">:pitch</span> (<a href="between-fn.html">between</a> lb ub))
+           wait rhy))
 
-<div class="float">
-<p>Using now, output and sprout.</p>
-<pre class="shell">cm&gt; <span class="input">(now)</span>
-<span class="output">274601</span>
-cm&gt; <span class="input">(output (ms:new typeNote :pitch 80 :dur 1000))</span>
-cm&gt; <span class="input">(sprout (rankeys 30 200 250 60 90) 2000)</span></pre>
+(<a href="now-fn.html">now</a>)
+<span class="result">&rArr;</span> 274601
+(<a href="output-fn.html">output</a> (ms:new typeNote <span class="keyword">:pitch</span> 80 <span class="keyword">:dur</span> 1000))
+
+(<a href="sprout-fn.html">sprout</a> (rankeys 30 200 250 60 90) 2000)
+
+</pre>
 </div>
 
 
@@ -551,7 +519,7 @@ between real time and non-real time process definitions are:
 </p>
 
 <ul>
-<li>The <code>now</code> function is not needed to establish start
+<li>The <a href="now-fn.html"><code>now</code></a> function is not needed to establish start
 times.</li>
 <li>MidiEv structs are created using <code>ms:new</code> rather than
 <code>new</code>.</li>
@@ -569,18 +537,20 @@ Use the <code>receive</code> function to establish or remove a MIDI
 input hook. 
 
 <dl>
-<dt><span class="syntax">(<code class="entry">receive</code>  [<var>hook</var>])</span>
-<dd> If called with no argument <code>receive</code> removes the
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd>
+<code>(</code><code class="entry">receive</code> [<var>hook</var>]<code>)</code></dd></dl>
+<p>
+If called with no argument <code>receive</code> removes the
 current MIDI input hook. Otherwise, <var>hook</var> is a function of
 one argument that will be funcalled with every MIDI input event as
 soon as MidiShare receives it. The <code>receive</code> function does
 not return a value.
-</dd>
-</dl>
-
+</p
 
 <div class="float">
-<p><span class="floatlabel">Example 5.</span> Defining a MIDI receive hook.
+<p><span class="floatlabel">Example 5.</span> Setting and clearing a MIDI receive hook.
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">play9th</span> ev)
   <span class="comment">;; if ev is NoteOn or NoteOff then play it
@@ -588,16 +558,14 @@ not return a value.
   (<span class="special">if</span> (member (ms:evType ev) '(1 2))
     (<span class="special">let</span> ((ev2 (ms:MidiCopyEv ev)))
       (ms:pitch ev2 (+ 13 (ms:pitch ev)))
-      (output ev) 
-      (output ev2))
-    (ms:MidiFreeEv ev)))</pre>
-</div>
+      (<a href="output-fn.html">output</a> ev) 
+      (<a href="output-fn.html">output</a> ev2))
+    (ms:MidiFreeEv ev)))
 
-<div class="float">
-<p>Setting and clearing the receive hook.</p>
-<pre class="shell">cm&gt; <span class="input">(receive #'play9th)</span>
-    <span class="comment">;; Play some notes on the keyboard, then...</span>
-cm&gt; <span class="input">(receive )</span></pre>
+(receive #'play9th)
+<span class="comment">;; Play some notes on the keyboard, then stop.</span>
+(receive)
+</pre>
 </div>
 
 <h3>Example: receiving and scheduling in tandem</h3> 
@@ -626,14 +594,14 @@ up or down from the input note.
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">wiggle</span> knum)
   <span class="comment">;; return a wiggle process centered on specified knum</span>
-  (<span class="special">let</span> ((n (between 10 20))
-        (r (pick 100 150 200))
-        (h (new heap <span class="keyword">:of</span> '(0 -1 1 -2 2 -3 3))))
+  (<span class="special">let</span> ((n (<a href="between-fn.html">between</a> 10 20))
+        (r (<a href="pick-fn.html">pick</a> 100 150 200))
+        (h (<a href="new-mac.html">new</a> <a href="heap-cls.html">heap</a> <span class="keyword">:of</span> '(0 -1 1 -2 2 -3 3))))
     (<span class="special">process</span> for i below n
              output (<span class="special">ms:new</span> typeNote
                        <span class="keyword">:dur</span> 250
-                       <span class="keyword">:pitch</span> (+ knum (next h))
-                       <span class="keyword">:vel</span> (round (interp i 0 90 (- n 1) 20)))
+                       <span class="keyword">:pitch</span> (+ knum (<a href="next-fn.html">next</a> h))
+                       <span class="keyword">:vel</span> (round (<a href="interp-fn.html">interp</a> i 0 90 (- n 1) 20)))
              wait r)))
 
 (<span class="special">define</span> (<span class="defined">dowiggle</span> ev)
@@ -641,38 +609,31 @@ up or down from the input note.
   (output ev)
   (<span class="special">if</span> (and (= (ms:evType ev) typeKeyOn)
            (> (ms:vel ev) 0)
-           (odds .75))
-      (sprout (wiggle (+ (ms:pitch ev)
-                         (pick 0 0 12 -12)))
-              0)))</span>
-</div>
+           (<a href="odds-fn.html">odds</a> .75))
+      (<a href="sprout-fn.html">sprout</a> (wiggle (+ (ms:pitch ev)
+                         (<a href="pick-fn.html">pick</a> 0 0 12 -12)))
+              0)))
 
-<!-- Interaction 6 -->
-<div class="float">
-<p><span class="floatlabel">Example 7.</span> Interactive wiggling.</p>
-<pre class="shell">
-cm&gt; <span class="input">(or (midi-open?) (midi-open))</span>
-<span class="output">#&lt;midi-port "midi.port"&gt;</span>
+(or (midi-open?) (midi-open))
+<span class="result">&rArr;</span> #&lt;midi-port "midi.port"&gt;
 
-<span class="comment">;;; listen to a few wiggles on their own</span>
+(<a href="sprout-fn.html">sprout</a> (wiggle 60)) <span class="comment">; wiggle once</span>
 
-cm&gt; <span class="input">(sprout (wiggle 60))</span>
-
-cm&gt; <span class="input">(sprout (wiggle 40) 1000)</span>
+(<a href="sprout-fn.html">sprout</a> (wiggle 40) 1000) <span class="comment">; wiggle twice</span>
 
 <span class="comment">;;; wiggle till the cows come home!</span>
 
-cm&gt; <span class="input">(receive #'dowiggle)</span>
+(receive #'dowiggle)
 
-cm&gt; <span class="input">(receive )</span></pre>
+(receive)
+</pre>
 </div>
 
 <h2 id="real_time_tip">Real time processing issues</h2>
 
 <ul>
 <li>
-  Garbage collection (GC) is not disabled.  You may or may not want
-  to do this on your own.
+  Garbage collection (GC) is not disabled. 
 </li>
 
 <li>

@@ -10,73 +10,65 @@
 <body>
 <div id="content">
 
-<!-- Entry: "midi-tempo-change" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><code class="entry">midi-tempo-change</code></span></dd>
+<dd><code class="entry">midi-tempo-change</code></dd>
 </dl>
 
 <p>
 A MIDI tempo change event.
 </p>
 
-<p><code class="entry">midi-tempo-change</code> supports the following slot initializations:
+<p>
+<code class="entry">midi-tempo-change</code> supports the following
+slot initializations:
 </p>
 
 <dl>
 <dt><code class="keyword">:time</code> <var>number</var></dt>
-<dd>Sets the start time of object in score.</dd>
-<dt><code class="keyword">:channel</code> <var>integer</var></dt>
-<dd>A MIDI channel number. Defaults to 0.</dd>
-
+<dd>The start time of the object.</dd>
 <dt><code class="keyword">:usecs</code> <var>integer</var></dt>
 <dd>
-Number of microseconds (usecs) per MIDI quarter note.  See Example 2
-below for how to convert musical tempo to usecs.
+Number of microseconds (usecs) per MIDI quarter note.  See <a href="examples_2">Example 2</a> for how to convert musical tempo to usecs.
 </dd>
-
 </dl>
 
 <h4>Examples:</h4>
 
 <div class="float">
-<p class "captxt">
-<span class="floatlabel">Example 1.</span> MIDI tempo events.
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> The <code>midi-tempo-change</code> event.
 </p>
-
-<pre class="code"><span class="comment">;;; tempo 120 quarters per minute</span>
-
-(<span class="special">new</span> midi-tempo-change <span class="keyword">:time</span> 0 <span class="keyword">:usecs</span> 500000)
+<pre class="code">
+<span class="comment">;;; tempo 120 quarters per minute</span>
+(<a href="new-mac.html">new</a> midi-tempo-change <span class="keyword">:time</span> 0 <span class="keyword">:usecs</span> 500000)
 
 <span class="comment">;;; tempo 90 quarters per minute</span>
-
-(<span class="special">new</span> midi-tempo-change <span class="keyword">:time</span> 0 <span class="keyword">:usecs</span> 666667)
+(<a href="new-mac.html">new</a> midi-tempo-change <span class="keyword">:time</span> 0 <span class="keyword">:usecs</span> 666667)
 </pre>
 </div>
 
 <div class="float">
-<p class "captxt">
-<span class="floatlabel">Example 2.</span> Quarter notes per minute to usecs conversion.
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Converting quarter notes per minute to usecs.
 </p>
-
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">qpm->usecs</span> bpm )
   (inexact->exact (round (* (/ 60 bpm) 1000000))))
 
-<span class="comment">;;; an accelerando process</span>
-
 (<span class="special">define</span> (<span class="defined">accel</span> num tempo1 tempo2)
   <span class="comment">;; accelerate in num quarters from tempo1 to tempo2</span>
-  (<span class="special">process</span> for i below num
-           for r = (interp i 0 tempo1 (- num 1) tempo2)
-           output (<span class="special">new</span> midi-tempo-change <span class="keyword">:time</span> (now)
+  (<a href="process-mac.html">process</a> for i below num
+           for r = (<a href="interp-fn.html">interp</a> i 0 tempo1 (- num 1) tempo2)
+           output (<a href="new-mac.html">new</a> midi-tempo-change <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
                        <span class="keyword">:usecs</span> (qpm->usecs r))
-           output (<span class="special">new</span> midi <span class="keyword">:time</span> (now)
+           output (<a href="new-mac.html">new</a> midi <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
                        <span class="keyword">:duration</span> .5 
-                       <span class="keyword">:keynum</span> (between 60 72))
+                       <span class="keyword">:keynum</span> (<a href="between-fn.html">between</a> 60 72))
            wait 1))
 
-(events (accel 20 60 240) "test.mid")
+(<a href="events-fn.html">events</a> (accel 20 60 240) <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
 </pre>
 </div>
 

@@ -13,108 +13,95 @@
 <!-- Entry: "midi-pitch-bend" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><code class="entry">midi-pitch-bend</code></span></dd>
+<dd><code class="entry">midi-pitch-bend</code></dd>
 </dl>
 
 <p>
 A MIDI pitch bend event.
 </p>
 
-<p><code class="entry">midi-pitch-bend</code> supports the following slot initializations:
+<p>
+<code class="entry">midi-pitch-bend</code> supports the following slot initializations:
 </p>
 
 <dl>
 <dt><code class="keyword">:time</code> <var>number</var></dt>
-<dd>Start time in score.</dd>
+<dd>The start time of the object.</dd>
 <dt><code class="keyword">:channel</code> <var>integer</var></dt>
-<dd>A MIDI channel number. Defaults to 0.</dd>
-
+<dd>A MIDI channel number. The default value is 0.</dd>
 <dt><code class="keyword">:bend</code> <var>integer</var></dt>
 <dd>
 A pitch bend value from -8192 to 8191. Defaults to 0, or no bend.
-See Example 2 below for more information.
 </dd>
-
 </dl>
 
 <h4>Examples:</h4>
 
 <div class="float">
-<p class "captxt">
+<p class="captxt">
 <span class="floatlabel">Example 1.</span> Creating MIDI pitch bends.
 </p>
 <pre class="code">
 <span class="comment">;;; max bend down</span>
-
-(<span class="special">new</span> midi-pitch-bend <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> 3 <span class="keyword">:bend</span> -8192) 
+(<a href="new-mac.html">new</a> midi-pitch-bend <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> 3 <span class="keyword">:bend</span> -8192) 
 
 <span class="comment">;;; cancel bend</span>
-
-(<span class="special">new</span> midi-pitch-bend <span class="keyword">:time</span> 1 <span class="keyword">:channel</span> 3 <span class="keyword">:bend</span> 0) 
+(<a href="new-mac.html">new</a> midi-pitch-bend <span class="keyword">:time</span> 1 <span class="keyword">:channel</span> 3 <span class="keyword">:bend</span> 0) 
 </pre>
 </div>
 
 <div class="float">
-<p class "captxt">
+<p class="captxt">
 <span class="floatlabel">Example 2.</span> Determining pitch bend values.
 </p>
-<pre class="code"><span class="comment">;;; convert a <var>value</var> between <var>+-width</var> to a pitch
-;;; bend value ranging from -8192 to 8191.
-;;; default width is +-2 (whole step up or down)</span>
-
+<pre class="code">
 (<span class="special">define</span> (<span class="defined">step-&gt;bend</span> value . width)
-  (<span class="special">let</span> ((wid (<span class="special">if</span> (null? width) 2 (car width))))
-    (inexact-&gt;exact
-     (floor (rescale value (- wid) wid -8192 8191)))))
+  <span class="comment">;; convert a value between +-width to a pitch
+  ;; bend value ranging from -8192 to 8191</span>
+  (inexact-&gt;exact
+   (floor (<a href="rescale-fn.html">rescale</a> value (- width) width -8192 8191))))
 
-<span class="comment">;;; bend one quarter-tone down</span>
-
-(<span class="special">new</span> midi-pitch-bend <span class="keyword">:bend</span> (step-&gt;bend -.5))
+<span class="comment">;;; bend one quarter-tone down (whole step max)</span>
+(<a href="new-mac.html">new</a> midi-pitch-bend <span class="keyword">:bend</span> (step-&gt;bend -.5 2))
 
 <span class="comment">;;; percentage bend</span>
-
-(<span class="special">new</span> midi-pitch-bend <span class="keyword">:bend</span> (step-&gt;bend 75 100))
+(<a href="new-mac.html">new</a> midi-pitch-bend <span class="keyword">:bend</span> (step-&gt;bend 75 100))
 </pre>
 </div>
 
 <div class="float">
-<p class "captxt">
+<p class="captxt">
 <span class="floatlabel">Example 3.</span> Musical process generating random bends.
 </p>
 
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">ranbends</span> num dur )
-  <span class="comment">;; output <var>num</var> bends <var>dur</var> apart, last bend 0.</span>
-  (<span class="special">process</span> for i from 1 to num
-           for b = (between -2.0 2.0)
-           output (<span class="special">new</span> midi-pitch-bend <span class="keyword">:time</span> (now)
+  <span class="comment">;; output num bends dur apart, last bend 0.</span>
+  (<a href="process-mac.html">process</a> for i from 1 to num
+           for b = (<a href="between-fn.html">between</a> -2.0 2.0)
+           output (<a href="new-mac.html">new</a> midi-pitch-bend <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
                       <span class="keyword">:bend</span> (<span class="special">if</span> (= i num)
                               0
                               (step->bend b)))
            wait dur))
 
 (<span class="special">define</span> (<span class="defined">random-bends</span> reps )
-  (<span class="special">process</span> repeat reps
-           for key = (between 30 90)
-           for dur = (pick 1 2 3)
-           for num = (between 2 8)
+  (<a href="process-mac.html">process</a> repeat reps
+           for key = (<a href="between-fn.html">between</a> 30 90)
+           for dur = (<a href="pick-fn.html">pick</a> 1 2 3)
+           for num = (<a href="between-fn.html">between</a> 2 8)
            for inc = (/ dur (+ num 1))
-           output (<span class="special">new</span> midi <span class="keyword">:time</span> (now)
+           output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
                       <span class="keyword">:duration</span> dur
                       <span class="keyword">:keynum</span> key)
            <span class="comment">;; sprout <var>num</var> bends starting <var>inc</var> ahead</span>
-           sprout (ranbends num inc) at (+ (now) inc)
+           sprout (ranbends num inc) at (+ (<a href="now-fn.html">now</a>) inc)
            wait dur))
 
-(events (random-bends 20) "test.mid")
+(<a href="events-fn.html">events</a> (random-bends 20) <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
 </pre>
 </div>
-
-
-
-
-
-
 
 <h4>See also: </h4>
 <ul>
