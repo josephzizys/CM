@@ -232,9 +232,6 @@
   offset  ; time offset: (ticks/div)*scaler 
   )
 
-(define-method (import-events (file <string>) . args )
-  (apply #'import-events (insure-io file) args))
-
 (define-method (import-events (io <midi-file-stream>) . args)
   (with-args (args &key (tracks #t) seq meta-exclude channel-exclude 
                    (time-format ':beats ) tempo
