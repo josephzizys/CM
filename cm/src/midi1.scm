@@ -3369,7 +3369,7 @@
           ((eq? op +ml-file-time-signature-opcode+)
            (make-time-signature (midi-event-data1 event)
                                 (midi-event-data2 event)
-                                (midi-event-data2 event)
+                                (midi-event-data3 event)
                                 (midi-event-data4 event)))
           ((eq? op +ml-file-key-signature-opcode+)
            (make-key-signature (midi-event-data1 event)))
