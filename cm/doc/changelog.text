@@ -1,3 +1,30 @@
+CM 2.5.0
+o rhythmic symbols can now include an initial minus sign
+  to negate the value returned by RHYTHM: -q = -1.0
+  a minus sign prepended to a rhythmic expression negates
+  the entire expression, not just the first symbol:
+     -w-q = -(w-q) = -3.0 not -5.0
+o Mode can now be defined with more or fewer than 12 semitones
+  per octave. This added functionality required a change that
+  may break existing mode definitions:
+  1. If a mode's :steps list contains note names then the last
+     note must mark the ocave: (c d e f g a b c)
+  2. If a  mode's :steps list contains intervals between modal 
+     degress then the octave size is set to the sum of
+     the intervals, so  (2 1 2 1 1) = 7 semitone octave
+o the :HZ tag used by the NOTE and KEYNUM is now a true lisp
+   keyword parameter, ie:
+     (note 440 :hz)
+  is now
+     (note 440 :hz t)
+  This is an incompatible change. The :hz tag will
+  continue to work but you will get a warning.
+o cm now looks for ~/.cminit.lisp and loads it if it exists
+o make-cm has new :extensions parameter for loading 
+  extensions. see make-cm in dictionary for more info.
+o Added support for loading init files in CLISP 2.33
+
+
 CM 2.4.2
 Maintenance release 
 
