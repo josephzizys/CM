@@ -19,29 +19,50 @@
 
 (in-package :cl-user)
 
+;;;
+;;; The CLM, CMN, and MidiShare packages must exist when this file is
+;;; loaded, either by loading the systems or their stubs files.
+;;;
+
 (defpackage cm 
-  (:use common-lisp #+clm clm #+midishare midishare)
-  #+clm (:shadow "IO" "RAN" "DEFINSTRUMENT")
-  #+clm (:import-from clm 
-                      mus-next
-                      mus-bshort
-                      mus-aifc
-                      mus-riff
-                      mus-lshort
-                      *clm-with-sound-depth*
-                      wsdat-play
-                      init-with-sound
-                      finish-with-sound
-                      *clm-channels*
-                      *clm-srate*
-                      ;definstrument
-                      )
-  #+midishare
-  (:import-from midishare
+  (:use common-lisp )
+  (:shadow make-load-form
+           ;; have to block these from CLM
+           io ran definstrument exit quit )
+  (:import-from :clm 
+                mus-next
+                mus-bshort
+                mus-aifc
+                mus-riff
+                mus-lshort
+                *clm-with-sound-depth*
+                wsdat-play
+                init-with-sound
+                finish-with-sound
+                *clm-channels*
+                *clm-srate*
+                clm-load
+                ;; these syms are used by CM but with no conflict.
+                graph spectrum env src 
+                )
+  (:import-from :cmn 
+                init-clm-input
+                *exact-rhythms*
+                score
+                staff-descriptors
+                stfdat-staff
+                staff-data 
+                set-staff-number
+                set-staff-clef
+                finish-clm-input
+                find-staff add-staff
+                add-data-1
+                add-note-to-staff)
+  (:import-from :midishare
                 midishare midiGetVersion MidiOpen MidiClose MidiCountAppls
                 MidiGetNamedAppl MidiGetIndAppl MidiErrIndex MidiGetName
                 MidiConnect MidiGetTime MidiIsConnected 
-                MidiSendIm MidiSend MidiSendAt
+                MidiSendIm MidiSend MidiSendAt MidiAddSeq
                 typeNote typeKeyOn typeKeyOff typeKeyPress typeCtrlChange 
                 typeProgChange typeChanPress typePitchWheel typePitchBend
                 typeSongPos typeSongSel typeClock typeStart typeContinue
@@ -50,9 +71,8 @@
                 typeCopyright typeSeqName typeInstrName typeLyric
                 typeMarker typeCuePoint typeChanPrefix typeEndTrack
                 typeTempo typeSMPTEOffset typePortPrefix typeKeySign
-                typeTimeSign MidiNewEv port chan field bend text port)
-  #+(and midishare player)
-  (:import-from midishare
+                typeTimeSign MidiNewEv port chan field bend text port
+                ref date
                 OpenPlayer ClosePlayer midiNewSeq
                 StartPlayer ContPlayer StopPlayer PausePlayer
                 kMuteOn kMuteOff kSoloOn kSoloOff kMute kSolo 
@@ -62,15 +82,5 @@
                 SetParamPlayer SetTempoPlayer
                 TicksPerQuarterNote
                 SetSynchroInPlayer MidiNewMidiFileInfos
-                MidiFileLoad MidiFileSave mf-clicks mf-format mf-timedef
-                )
-  (:shadow make-load-form)
+                MidiFileLoad MidiFileSave mf-clicks mf-format mf-timedef)
   )
-
-#+cmn
-(import '(cmn::init-clm-input cmn::*exact-rhythms* cmn::score
-          cmn::staff-descriptors cmn::stfdat-staff cmn::staff-data 
-          cmn::set-staff-number cmn::set-staff-clef cmn::set-staff-meter
-          cmn::finish-clm-input cmn::find-staff cmn::add-staff 
-          cmn::add-data-1 cmn::add-note-to-staff)
-        :cm)
