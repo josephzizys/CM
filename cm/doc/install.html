@@ -47,7 +47,7 @@ additional software systems such as <a
   <li>
     <a href="#load_cm">Loading Common Music</a>
     <ol>
-      <li><a href="#load_shell">Quickstart (Linux, OS X, Cygwin)</a></li>
+      <li><a href="#load_shell">Quickstart (OS X, Linux or Cygwin)</a></li>
       <li><a href="#load_lisp">Lisp loading</a></li>
       <li><A href="#load_custom">Saving images and other custom builds</a></li>
     </ol>
@@ -97,8 +97,8 @@ CM release. For example, the archive file cm-2.4.1.tar.gz will restore
 Common Music in a directory called cm-2.4.1. This document will refer
 to this directory as the <em>CM installation directory</em>.
     <div class="float">
-    <p class="captxt">Restoring the CM source archive on OS X and
-Linux.
+    <p class="captxt">Restoring the CM source archive on OS X,
+                          Linux or Cygwin.
     </p>
     <pre class="shell">% <span class="input">tar -zxf cm-2.4.1.tar.gz</span></pre>
     </div>
@@ -126,8 +126,8 @@ rename the top-level <kbd>cm</kbd> directory if you choose.
 </ol>
 <div class="float">
 <p class="captxt">Installing CM sources from the sourceforge CVS
-repository on OS X and
-Linux. (Input text must be typed on a single line.)
+repository on OS X, Linux or Cygwin. (Input text must be typed on a
+single line.)
 </p>
 <p class="wrapshell">% <span class="input">cd /Lisp</span><br>
 % <span class="input">cvs
@@ -211,12 +211,12 @@ implementations.
 </div>
 
 <p>
-If you are on OS X or Linux you can use the <code>which</code> command
-to see if a Lisp command is installed properly on your path.
+If you are on OS X, Linux or Cygwin you can use the <code>which</code>
+command to see if a Lisp command is installed properly on your path.
 </p>
 
 <div class="float">
-<p class="captxt">Using the which command on OS X and Linux.</p>
+<p class="captxt">Using the which command on OS X, Linux or Cygwin.</p>
 <pre class="shell">% <span class="input">which clisp</span>
 /usr/local/bin/clisp
 % <span
@@ -238,7 +238,7 @@ work for all Lisp implementations and operating systems.
 
 <ul>
 <li>
-On Linux, OS X or Cygwin, either:
+On OS X, Linux or Cygwin, either:
 <ul>
 <li> copy the appropriate Lisp program/script to a directory on your $PATH </li>
 <li> edit your $PATH (in ~/.bashrc or ~/.cshrc) to include the
@@ -261,18 +261,15 @@ load process in several different Lisp implementations; if you use
 some other Lisp or operating system the examples will appear slightly
 differently as you perform each step.
 </p>
-<h3 id="load_shell">3.1 Quickstart (Linux, OS X and Cygwin)</h3>
+<h3 id="load_shell">3.1 Quickstart (OS X, Linux or Cygwin)</h3>
 
 <p>
-The easiest way to load CM on Linux, OS X or Cygwin is with
+The easiest way to load CM on OS X, Linux or Cygwin is with
 the <code>cm.sh</code> script located in the bin/ subdirectory of the
-CM installation directory. This script will automatically generate and
-compile any files it needs as it loads the system. Once the script
-finishes loading it will leave you in the CM package ready to begin
-work. The <code>cm.sh</code> script can be used to start CM in a
-Terminal or under Emacs/Xemacs.
-
+CM installation directory. When the script finishes loading it will
+leave you in the CM package ready to begin work:
 </p>
+
 <div class="float">
 <p class="captxt">Running the <code>cm.sh</code> script.
 </p>
@@ -292,8 +289,9 @@ Terminal or under Emacs/Xemacs.
 ? </pre>
 </div>
 <p>
-Type <code>cm.sh -h</code> for an overview of the script's command
-options and use.
+The <code>cm.sh</code> script can be used to start CM in a Terminal or
+under Emacs/XEmacs.  Type <code>cm.sh -h</code> for an overview of the
+script's command options and usage.
 </p>
 
 <h3 id="load_lisp">3.2 Lisp loading</h3>
