@@ -312,7 +312,7 @@
                  ;; if next choice is drum channel skip it
                  (if (and *midi-skip-drum-channel*
                           (= (+ (cadddr dat) num) 8))
-                   (incf num)))
+                   (incf num))
 		 (if (< num (caddr dat))
 		   (set! num (+ num 1))
 		   (set! num 0))
