@@ -431,7 +431,7 @@
 
 (define (wait delta)
   (if *queue*
-    (set! *qnext* (+ *qnext* delta))
+    (set! *qnext* (+ *qnext* (abs delta)))
     (err "Calling 'wait' outside of scheduler?")))
 
 (define (wait-until time)
