@@ -261,7 +261,7 @@ dt.lispnote     { color: #4b4; }
 dt.platformnote { color: #b44; }
 
 table.float {
-  margin: .5em auto;
+  /* margin: .5em;  auto; */
   border-top: 1px solid gray;
   border-bottom: 1px solid gray; /* try tone darker than tk's */
 }
@@ -276,8 +276,13 @@ th.col {
 }
 
 th.lcol {
-  border-bottom: 1px solid silver; /* dashed #aaa; */
+  border-bottom: 1px solid silver;
   text-align: left; /*left*/
+}
+
+th.rcol {
+  border-bottom: 1px solid silver;
+  text-align: right;
 }
 
 th.row {
@@ -285,6 +290,20 @@ th.row {
   text-align: left;
   padding-right: .5em;
 }
+
+th.rrow {
+  text-align: right;
+  padding-left: .5em;
+}
+
+td.rcell {
+  text-align: right;         
+}
+
+td.lcell {
+  text-align: left;
+}
+
 
 img {
   border: none;
