@@ -112,6 +112,20 @@ more information.</dd>
 <dt><span class="keyword">:zoom</span> <var>number</var></dt>
 <dd>Short-hand for specifying an identical <span class="keyword">:zoom</span> value to both axes.</dd>
 
+<dt><span class="keyword">:event-layering</span> {<span class="keyword">:add</span> | <span class="keyword">:mix</span> | <span class="keyword">:replace</span> | <span class="keyword">:overwrite</span>}</dt>
+<dd>
+Determines how generated musical events are added to the window. If
+the value is <span class="keyword">:add</span> then the new events are
+added as a new layer.  If the value is <span
+class="keyword">:mix</span> then the new events are mixed into the
+contents of the focus layer.  If the value is <span
+class="keyword">:replace</span> then the events replace the contents
+of the current focus layer.  If the value is <span
+class="keyword">:overwrite</span> then the events replace existing
+events that occupy the same time line as the new events. The default
+value is <span class="keyword">:add</span>.
+</dd>
+
 </dl>
 
 <p>
