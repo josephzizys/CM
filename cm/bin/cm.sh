@@ -42,14 +42,15 @@ OPTIONS="
 "
 DESCRIPTION="
     This script starts Common Music (cm) either by loading it into a fresh
-    Lisp session or by launching an existing image that has been built with
-    Common Music pre-loaded.  The Common Music process can be run in a
-    terminal or as a subprocess of any Emacs-compatible editor such as
-    xemacs(1), emacs(1), or gnuclient(1).
+    Lisp or Scheme session or by launching an existing Lisp image that has
+    been built with Common Music pre-loaded.  Additionally, this process can
+    be run stand-alone in a terminal or as a subprocess of an
+    Emacs-compatible editor such as xemacs(1), emacs(1), or gnuclient(1).
 
-    Since parameters are autodetected at runtime, it should in virtually all
-    cases suffice to call it without any arguments.  However, autodetection
-    may be overridden via options and the following environment variables.
+    Since the script is designed to autodetect all required parameters at
+    runtime, it should in virtually all cases suffice to call it without any
+    arguments.  This autodetection however may be customized or overridden
+    via options and the following environment variables:
 
       CM_EDITOR
         Name or path of an Emacs-compatible editor under which to run cm,
@@ -86,6 +87,20 @@ DESCRIPTION="
         Absolute path of the Common Music root directory in case
         autodetection fails.  Same as -R option.
 
+    For autodetection to work, it is important that the script be not moved
+    from its location inside the Common Music directory tree.  A 'cm' (or
+    similar) command in a standard binary location can be easily provided
+    either by creating a symlink or by creating a wrapper shell script, e.g.
+
+      # ln -s '/path/to/Common Music/bin/cm.sh' /usr/local/bin/cm
+
+    or
+
+      # cat <<EOD > /usr/local/bin/cm
+      #!/bin/sh
+      exec /path/to/cm/bin/cm.sh \"$@\"
+      EOD
+      # chmod 755 /usr/local/bin/cm
 
     Requirements: bash(1), cat(1), cut(1), echo(1), head(1), sed(1),
     sort(1), tr(1), uname(1), which(1); getopts and ls; a working
@@ -288,8 +303,10 @@ fi
 if [ ! "$OS" ] ; then
   if which uname > /dev/null 2>&1 ; then
     for flag in s o ; do
-      OS=`uname -$flag 2>/dev/null`
-      if [[ ! "$OS" || "$OS" == unknown ]] ; then OS= ; else break ; fi
+      if uname -$flag >/dev/null 2>&1 ; then
+	OS=`uname -$flag 2>/dev/null`
+	if [[ ! "$OS" || "$OS" == unknown ]] ; then OS= ; else break ; fi
+      fi
     done
   fi
   if [ ! "$OS" ] ; then
@@ -303,8 +320,10 @@ fi
 if [ ! "$ARCH" ] ; then
   if which uname > /dev/null 2>&1 ; then
     for flag in p m i ; do
-      ARCH=`uname -$flag`
-      if [[ "$ARCH" = unknown ]] ; then ARCH= ; else break ; fi
+      if uname -$flag >/dev/null 2>&1 ; then
+        ARCH=`uname -$flag 2>/dev/null`
+        if [[ "$ARCH" = unknown ]] ; then ARCH= ; else break ; fi
+      fi
     done
   fi
   if [ ! "$ARCH" ] ; then
