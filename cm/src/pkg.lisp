@@ -85,4 +85,19 @@
 		:TicksPerQuarterNote
 		:SetSynchroInPlayer :MidiNewMidiFileInfos
 		:MidiFileLoad :MidiFileSave :mf-clicks :mf-format :mf-timedef)
+  (:export
+
+   ;; objects.lisp
+   :copy-object :fill-object :*print-instance* :print-instance :save-object
+   :object-name :object-time :rename-object :list-named-object :find-object
+   :container :seq :subobjects :subcontainers :map-subobjects 
+   :map-subcontainers :insert-object :append-object :remove-object
+   :list-subobjects :new :event :*time-slots* :defobject :process :defprocess
+
+   ;; scales.lisp
+   :tuning :mode :*scale* :*chromatic-scale* :rest?
+   :note :keynum :hertz :transpose :invert :scale=
+   :scale< :scale> :scale<= :scale>= :interval
+
   )
+)
