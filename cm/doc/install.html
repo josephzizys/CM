@@ -9,132 +9,368 @@
 </head>
 
 <body>
+
+<!-- Navbar -->
+<div id="header">
+<div id="logo">
+<img src="img/cmlogosw.png" width="50" height="50" alt="[img/cmlogosw.png]" title=""/>
+</div>
+<div class="inv">Navagation:</div>
+<ul class="nav">
+<li class="nav1"><a href="cm.html">Home Page</a></li>
+<li class="navn"><a href="dict/">Dictionary</a></li>
+<li class="navn"><a href="../etc/examples/">Examples</a></li>
+</ul>
+</div>
+<hr class="inv"/>
+
+<div id="content">
+
+
+
 <h1>Installing Common Music</h1>
 
-<h2>Installation Instructions</h2>
+This document describes how to install and build Common Music in
+several common configurations.
 
+<h2>Contents</h2>
 <ul>
-
-<li>Restore the latest CM distribution from:
-<blockquote>
-<p><a href="ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/sources/">
-ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/sources/</a><p>
-</blockquote>
+<li>
+<a href="#install_src">Installing Common Music from Sources</a>
+  <ul>
+  <li>
+  <a href="#install_ftp">Installing from FTP</a>
+  </li>
+  <li>
+  <a href="#install_cvs">Installing from CVS</a>
+  </li>
+  </ul>
 </li>
 
 <li>
-Start Lisp. If you use CLM or CMN in Common Lisp then load these
-systems first:
+<a href="#build_src">Building Common Music</a>
+  <ul>
+  <li>
+  <a href="#build_scripts">Customized Build Scripts</a>
+  </li>
+  </ul>             
+</li>
+
+<li>
+<a href="#install_ms">Installing Midishare</a>
+</li>
+
+</ul>
+
+<h2><a name="install_src">Installing Common Music from Sources</a></h2>
+
+<p>
+You can install Common Music sources from FTP archive or via anonymous CVS. 
+</p>
+
+<h3><a name="install_ftp">Installing from FTP</a></h3>
+
+<ol>
+<li>
+Download the latest CM source archive (cm-latest.tar.gz) from either:
+  <ul>
+  <li>
+  <a href="http://www.sf.net/projects/commonmusic">Sourceforge Common
+  Music Project</a>
+  </li>
+  <li>
+  <a href="ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/sources/">
+           ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/sources</a>
+  </li>
+</ul>
+</li>
+
+<li>
+Restore (uncompress and untar) the archive in an appropriate directory
+on your machine:
+
+<div class="float">
+<p class="captxt">
+Restoring the CM source archive.
+</p>
+<pre class="shell">% <span class="input">cd /Lisp</span>
+% <span class="input">tar -zxvf cm-2.4.0.tar.gz</span>
+<i>[...lots of printout deleted...]</i></pre>
+</div>
+
+</li>
+</ol>
+
+<h3>
+<a name="install_cvs">Installing</a> from <a
+href="http://www.loria.fr/~molli/cvs/doc/cvs_toc.html">CVS</a>
+</h3>
+
+<ol>
+<li>
+Change directories to the directory in which you want to install the
+CM source tree.
+</li>
+
+<li>
+Use anonymous CVS login and then check out (the <kbd>co</kbd> command)
+to restore the current CM source tree from the <a
+href="http://sourceforge.net/cvs/?group_id=9766">Sourceforge CVS
+repository</a>. Press the return key without any input when prompted
+for a password.
+
+<div class="float">
+<p class="captxt">
+Installing CM sources from the sourceforge CVS repository.
+</p>
+<pre class="shell">% <span class="input">cd /Lisp</span>
+% <span class="input">cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic login</span>
+CVS password: 
+% <span class="input">cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic co cm</span>
+<i>[...lots of printout deleted...]</i></pre>
+</div>
+</li>
+
+<li>
+Once the CVS source tree has been restored you can rename the
+top-level <kbd>cm</kbd> directory if you choose.
+
+<div class="float">
+<p class="captxt">
+Renaming the restored CVS directory.
+</p>
+<pre class="shell">% <span class="input">mv cm cm-2.4.0</span></pre>
+</div>
+</li>
+
+<li>
+If you are building CM in Common Lisp, start your base lisp image
+(your lisp image <em>without</em> CM already loaded), then load the
+file "src/stocl.lisp" and call the <tt>(gencm)</tt> function to
+generate the core Common Lisp source files from the Scheme sources:
+
+<div class="float">
+<p class="captxt">
+Generating CLTL sources from the Scheme sources.
+</p>
+
+<pre class="shell">% <span class="input">openmcl</span>
+Welcome to OpenMCL Version (Beta: Darwin) 0.13.2!
+? <span class="input">(load "/Lisp/cm-2.4.0/src/stocl")</span>
+#P"/Lisp/cm/src/stocl.lisp"
+? <span class="input">(gencm)</span>
+<i>[...lots of printout deleted...]</i>
+? <span class="input">(quit)</span>
+%</pre>
+</div>
+</li>
+
+<li>
+Continue to build Common Music from its sources as discussed in the
+next section of this document.
+</li>
+
+</ol>
+
+<h2><a name="build_src">Building Common Music</a></h2>
+
+<p>
+In the following discussion all Lisp software has been installed under
+a main "/Lisp" directory. Change the directory path in the examples to
+reflect the location of the Lisp software on your filesystem.  The
+examples show what the build process looks like in OpenMCL on OSX; if
+you use some other Lisp or operating system the output will appear
+slightly differently as you perform each step. Note that on Windows
+you should use the Unix directory character "/" rather than the DOS
+directory character "\" when specifying filenames to the
+<kbd>load</kbd> function. If you are loading CM in Guile under Windows
+from a directory that is not under Cygwin's file system you will have
+to start the pathname with the drive,
+i.e. "c:/Lisp/cm-2.4.0/src/cm.scm". If you are building CM on a
+Macintosh using MCL Lisp (4.n or 5.n) then the directory delimiter
+will be ":" instead of "/".
+</p>
+
+<ol>
+
+<li>
+Start Lisp. If you will be using
+<a href="http://www-ccrma.stanford.edu/software/clm/">CLM</a>
+or
+<a href="http://www-ccrma.stanford.edu/software/cmn/">CMN</a>
+then load these systems first. 
 
 <div class="float">
 <p class="captxt">
 Loading CLM.
 </p>
-<pre class="shell">&gt; <span class="input">(load "/whatever/clm-2/all.lisp")</span></pre>
+<pre class="shell">
+% <span class="input">openmcl</span>
+Welcome to OpenMCL Version (Beta: Darwin) 0.13.2!
+<span class="input">(load "/Lisp/clm-2/all.lisp")</span>
+<i>[...lots of printout deleted...]</i></pre>
 </div>
 
 <div class="float">
 <p class="captxt">
 Loading CMN.
 </p>
-<pre class="shell">&gt; <span class="input">(load "/whatever/cmn/cmn-all.lisp")</span></pre>
+<pre class="shell">? <span class="input">(load "/Lisp/cmn/cmn-all.lisp")</span>
+<i>[...lots of printout deleted...]</i></pre>
 </div>
-
 </li>
+
 
 <li>
 If you are using Common Lisp and you do <em>not</em> want Scheme
-symbols added to CM then do:
+symbols then perform the following action. Note that CM will add
+Scheme's <kbd>define</kbd> macro even if <kbd>:no-scheme</kbd> is
+defined as a feature.
 
-<blockquote>
-<pre>&gt; (push ':no-scheme *features*)</pre>
-</blockquote>
-  
-Note: CM will add Scheme's 'define' even if <kbd>:no-scheme</kbd> is a
-feature.
-
+<div class="float">
+<p class="captxt">
+Optionally configure Lisp for no Scheme symbols in Common Music.
+</p>
+<pre class="shell">? <span class="input">(push ':no-scheme *features*)</span></pre>
+</div>
 </li>
 
 <li>
-Load either cm/src/cm.scm (Guile) or cm/src/cm.lisp (CL).  Specify the
-full, true pathname to the file, i.e. avoid relative paths or using
-"~/" unless you are sure your Lisp supports them.  On my Linux box I
-do:
+Load the CM build script, either src/cm.scm (Guile) or
+src/cm.lisp (CL).  Specify the full, true pathname to the file,
+i.e. avoid relative paths or using "~/" unless you are sure your Lisp
+supports them:
 
-<dl>
-<dt>GUILE:</dt>
-<dd>
-<blockquote>
-<pre>&gt; (load "/usr/local/lisp/cm-2.4.0/src/cm.scm")</pre>
-</blockquote>
-</dd>
-<dt>COMMON LISP:</dt>
-<dd>
-<blockquote>
-<pre>&gt; (load "/usr/local/lisp/cm-2.4.0/src/cm.lisp")</pre>
-</blockquote>
-</dd>
-</dl>
+<div class="float">
+<p class="captxt">
+Loading the CM build script in Guile (scheme):
+</p>
+<pre class="shell">% guile
+guile&gt; <span class="input">(load "/Lisp/cm-2.4.0/src/cm.scm")</span>
+<i>[...lots of printout deleted...]</i></pre>
+</div>
 
-On Windows use / rather than the DOS directory character. If you are
-loading CM in Guile under Windows from a directory that is not under
-Cygwin's file system you will have to start the pathname with the
-drive, i.e. "c:/lisp/whatever".
-</li>
+<div class="float">
+<p class="captxt">
+Loading the CM build script in Common Lisp:
+</p>
+<pre class="shell">% openmcl
+Welcome to OpenMCL Version (Beta: Darwin) 0.13.2!
+? <span class="input">(load "/Lisp/cm-2.4.0/src/cm.lisp")</span>
+<i>[...lots of printout deleted...]</i></pre>
+</div>
 
-<li>
-In Guile the sources are loaded. In Common Lisp the sources are
+<p>
+In Guile the sources are simply loaded. In Common Lisp the sources are
 complied and loaded.  Binary files, images and scripts are normally
-saved in cm's bin/ subdirectory. To save compiled files and images
+saved in cm's "bin/" subdirectory. To save compiled files and images
 somewhere else or to block an image file from being saved you can set
 the appropriate build parameter before loading cm.lisp. The names and
 default settings of these parameters are:
+</p>
 
-<table>
-  <tr><td>cm-src-directory</td> <td>"CMDIR/src/"</td></tr>
-  <tr><td>cm-bin-directory</td> <td>"CMDIR/bin/"</td></tr>
-  <tr><td>cm-save</td> <td>true</td></tr>
+<table class="float">
+  <tr><th class="col">build parameter</th>  <th class="col">value</th> <th class="col">meaning</th></tr>
+  <tr><td><kbd>cm-src-directory</kbd></td> <td><kbd>"/Lisp/src/"</kbd></td><td>Location of source files.</td></tr>
+  <tr><td><kbd>cm-bin-directory</kbd></td> <td><kbd>"/Lisp/bin/"</kbd></td><td>Location of binary files.</td></tr>
+  <tr><td><kbd>cm-save</kbd></td> <td><kbd>t</kbd></td><td>Save image after clean load.</td></tr>
+  <tr><td><kbd>delete-fasls</kbd></td> <td><kbd>t</kbd></td><td>Delete binaries after image save.</td></tr>
 </table>
 
-Directory strings must contain the directory delimiter character at
-the end, ie "/usr/lisp/bin/" not "/usr/lisp/bin".
+<p>
+Directory strings in the build parameters must contain the directory
+delimiter character at the end, i.e. "/Lisp/bin/" not "/Lisp/bin".
+</p>
 </li>
 
 <li>
 Instructions on how to save a Common Music image in Common Lisp will
 be printed at the end of the compilation process.  In Guile no image
-is saved.  </li>
-
-<li>
-CM saves a script file and a default cminit.lisp file in the bin/
-directory along with the Common Music image if one is saved.  The
-script can be used to start up CM from the shell. You may have to set
-file permissions in order execute the script file: chmod a+x bin/cm
-Most of these scripts contain absolute paths to the necessary files
-but the CLISP script assume that there is a 'clisp' shell command that
-starts up a suitable version of the host Lisp.
+is saved.  If you are using Common Lisp, quit and restart lisp, then
+perform steps 1-2 again. This will load the compiled files into the
+lisp and save the Common Music lisp image.
 </li>
 
 <li>
-The file etc/listener.el implements a dedicated Listener window for
-XEmacs.  You should find it easier to work with than either ILisp or
-inf-lisp.  See the directions at the top of that file for information
-on how to install and use it.
+At the end of the build process CM will save several script files and
+a default cminit.lisp file in the "bin/" directory.  The "bin/cm"
+script can be used to start up CM from a shell (terminal) window. The
+script "bin/xcm" script will launch <a
+href="http://www.xemacs.org">Xemacs</a> and start up CM in a dedicated
+Lisp Listener window. Note: you must have the <kbd>xemacs</kbd>
+program installed on your machine for this script to work. xcm does
+not work with Gnu Emacs. See the directory "etc/xemacs" for more
+information about working with Common Music inside Xemacs.
 </li>
 
 <li>
-Look at the file in etc/examples/intro.cm for an idea of how to work
-with CM.
+Look at the file in "etc/examples/intro.cm" for an idea of how to work
+with CM. Or better yet, buy the book "Notes from the Metalevel" :)
+
 </li>
-</ul>
+</ol>
 
-
-<h3>Installing Midishare</h3>
+<h3><a name="build_scripts">Customized Build Scripts</a></h3> 
 
 <p>
-A direct connection from Common Music to the MIDI Driver can be established using Midishare, a real-time
-MIDI operating system developed by Grame. Common Music will work with Midishare in the following
-Operating System and Lisps:
+It is very easy to write a build script that your can use to load and
+save Common Music in exactly the configuration you want. Here is what
+a typical build script might look like. This particular scrip loads
+clm, cmn and cm together and will store all the compiled binary files
+in a separate directory tree ("/Lisp/bin") from the software sources.
+</p>
+
+<div class="float">
+<p class="captxt">
+The contents of "/Lisp/adm/loadall.lisp"
+</p>
+<pre class="code"><span class="comment">;;; CLM source and binary locations.</span>
+
+(<span class="special">defparameter</span> <span class="defined">clm-directory</span> <span class="string">"/Lisp/clm-2/"</span>)
+(<span class="special">defparameter</span> <span class="defined">clm-bin-directory</span> <span class="string">"/Lisp/bin/clm-2/"</span>)
+
+<span class="comment">;;; CMN source and binary locations.</span>
+
+(<span class="special">defparameter</span> <span class="defined">cmn-directory</span> <span class="string">"/Lisp/cmn/"</span>)
+(<span class="special">defparameter</span> <span class="defined">cmn-bin-directory</span> <span class="string">"/Lisp/bin/cmn/"</span>)
+
+<span class="comment">;;; CM source and binary locations.</span>
+
+(<span class="special">defparameter</span> <span class="defined">cm-src-directory</span> <span class="string">"/Lisp/cm-2.4.0/src/"</span>)
+(<span class="special">defparameter</span> <span class="defined">cm-bin-directory</span> <span class="string">"/Lisp/bin/cm-2.4.0/"</span>)
+
+(load (concatenate 'string clm-directory <span class="string">"all.lisp"</span>))
+(load (concatenate 'string cmn-directory <span class="string">"cmn-all.lisp"</span>))
+(load (concatenate 'string cm-src-directory <span class="string">"cm.lisp"</span>))</pre>
+</div>
+
+<p>
+Once the script is defined you simply load it rather than "cm/src/cm.lisp":
+</p>
+
+<div class="float">
+<p class="captxt">
+Loading the custom build script.
+</p>
+
+<pre class="shell">% openmcl
+Welcome to OpenMCL Version (Beta: Darwin) 0.13.2!
+? <span class="input">(load "/Lisp/adm/loadall.lisp")</span>
+<i>[...lots of printout deleted...]</i></pre>
+</div>
+
+
+
+
+<h2><a name="install_ms">Installing Midishare</a></h2>
+
+<p>
+A direct connection from Common Music to one or more MIDI Drivers can
+be established using <a
+href="http://www.grame.fr/MidiShare/">Midishare</a>, a real-time MIDI
+operating system developed by <a
+href="http://www.grame.fr">Grame</a>. Common Music currently works
+with Midishare in the following OS/Lisp combinations:
 </p>
 
 <ul>
@@ -145,36 +381,71 @@ Operating System and Lisps:
 </ul>
 
 <p>
-Directions for Installing Midishare
+Directions for Installing Midishare.
 </p>
 
+<ol>
 
-<ul>
-<li>OSX/OpenMcl
+<li>
+Download, install and configure the Midishare and Developer packages
+from the <a href="ftp://ftp.grame.fr/pub/MidiShare/">Midishare FTP
+Server</a>.  Be sure to set up your MidiShare driver ports (msDriver)
+and test your MIDI connection (msController) before attempting to
+build CM with Midishare.
 </li>
 
-<li>OSX/MCL 5.0
-</li>
+<li>
+If you are running OpenMCL, download <a
+href="ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/openmcl-midishare.tar.gz">openmcl-midishare.tar.gz</a>
+from the CCRMA ftp server and untar the archive in
+"ccl/darwin-headers/", i.e. the "darwin-headers/" subdirectory of your
+OpenMCL distribution:
 
-<li>MacOS 9.2/MCL 4.2
-</li>
-
-
-
-</ul>
-
-(setf (logical-pathname-translations "CCL")
-      `(("**;*.*" "Macintosh HD:Lisp:MCL 4.2:**:*.*")))
-
-
-
-<h2>Installing from CVS</h2>
-<p>
-Not yet written.
+<div class="float">
+<p class="captxt">
+Installing the Midishare FFI in OSX/OpenMCL
 </p>
+<pre class="shell">% <span class="input">cd /Lisp/ccl/darwin-headers</span>
+% <span class="input">tar -zxf openmcl-midishare.tar.gz</span></pre>
+</div>
+</li>
+
+<li>
+If you are running MacOS 9.n, move the shared library "PlayerSharedPPC" from the
+developer package into your System Extensions folder.
+</li>
+
+<li>
+Build the Common Music image as discussed in the <a
+href="#build_src">previous section</a> of this document.
+</li>
+
+<li>
+If you are using OpenMCL or MCL, edit your "bin/cminit.lisp" file and
+add the following forms. Be sure to change the absolute pathname
+directory strings to match your filesystem first.
+
+<div class="float">
+<p class="captxt">
+Adding CCL logical host translations to cminit.lisp
+</p>
+<pre class="code">#+(and <span class="keyword">:mcl :digitool</span>)
+(setf (logical-pathname-translations <span class="string">"ccl"</span>)
+      `((<span class="string">"**;*.*"   "Macintosh HD:Lisp:MCL 4.2:**:*.*"</span>)))
+#+<span class="keyword">:openmcl</span>
+(setf (logical-pathname-translations <span class="string">"ccl"</span>)
+      `((<span class="string">"**;*.*"   "/Lisp/ccl/**/*.*"</span>)))
+</pre>
+</div>
+</li>
+</ol>
+
+</div>
+
+<!-- end content -->
 
 <div id="footer">
-<div id="author">H. Taube</address></div>
+<div id="author">H. Taube</div>
 <div id="cvs-info">$Name$: $Source$ ($Revision$, $Date$)</div>
 </div>
 

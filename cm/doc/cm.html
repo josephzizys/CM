@@ -12,13 +12,13 @@
 
 <body style="background: #000000; color: #FFFFFF;">
 
-<div style="background: #000000;" align="center">
+<div style="background: #000000; text-align: center;">
 
 <h1 style="color:#9999bb; font: normal 283% sans-serif; xtext-transform: uppercase;">
 Common Music
 </h1>
 
-<img src="img/cmlogobb.png" border="0" alt="[cmlogobb.png]"/>
+<img src="img/cmlogobb.png" alt="[cmlogobb.png]"/>
 
 </div>
 
@@ -26,7 +26,8 @@ Common Music
 
 <!-- Section -->
 
-<div class="hpsection">
+<div style="margin: 2em 4em; padding: 0; border: 1px solid white;">
+<div class="hpsection" style="margin: 0;">
 <h2>What is Common Music?</h2>
 
 <p>
@@ -59,11 +60,11 @@ Sources, runtime images and patches are available from the internet:
 </li>
 
 </ul>
-</div>
+<!-- /div -->
 
 <!-- Section -->
 
-<div class="hpsection">
+<!-- div class="hpsection" -->
 <h2>History</h2>
 <p>
 Common Music began in 1989 as a response to the proliferation of
@@ -84,11 +85,11 @@ professor of music composition. In 1996 Common Music received First
 Prize in the computer-assisted composition category at the <i>1er
 Concours International de Logiciels Musicaux</i> in Bourges, France
 </p>
-</div>
+<!-- /div -->
 
 <!-- Section -->
+<!-- div class="hpsection" -->
 
-<div class="hpsection">
 <h2>Documentation</h2>
 <ul>
 <li>Reference
@@ -100,7 +101,7 @@ Concours International de Logiciels Musicaux</i> in Bourges, France
 
 <li>Installation
 <ul>
-<li><a href="install.html">Installing CM</a></li>
+<li><a href="install.html">Installing Common Music</a></li>
 <li><a href="changelog.text">Change History</a></li>
 </ul>
 </li>
@@ -143,11 +144,11 @@ Concours International de Logiciels Musicaux</i> in Bourges, France
 
 </li>
 </ul>
-</div>
+<!-- /div -->
 
 <!-- Section -->
 
-<div class="hpsection">
+<!-- div class="hpsection" -->
 
 <h2>Implementation</h2>
 
@@ -156,62 +157,66 @@ Common Music is implemented in Scheme (Guile) and Common Lisp and runs on
 Macintosh and I386 machines in the following configurations:
 </p>
 
-<div align="center">
-<table border="0">
+<div class="float">
+<p class="captxt">
+Lisp implementations for Common Music
+</p>
+
+<table class="float">
 <tr>
 <td>&nbsp;</td>
-<td bgcolor="#aaaaaa" align="center">Linux</td>
-<td bgcolor="#aaaaaa" align="center">MacOS</td>
-<td bgcolor="#aaaaaa" align="center">OSX</td>
-<td bgcolor="#aaaaaa" align="center">Windows</td>
+<th class="col" align="center">Linux</th>
+<th class="col" align="center">MacOS</th>
+<th class="col" align="center">OSX</th>
+<th class="col" align="center">Windows</th>
 </tr>
 
 <tr>
-<td bgcolor="#aaaaaa">Guile 1.6.0</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
+<th class="row"> Guile 1.6.0</th>
+<td align="center">&times;</td>
+<td align="center">&nbsp;</td>
+<td align="center">&times;</td>
+<td align="center">&times;</td>
 </tr>
 
 <tr>
-<td bgcolor="#aaaaaa">ACL 5.0</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
+<th class="row" >ACL 5.0</th>
+<td align="center">&times;</td>
+<td align="center">&nbsp;</td>
+<td align="center">&times;</td>
+<td align="center">&times;</td>
 </tr>
 
 <tr>
-<td bgcolor="#aaaaaa">CLISP 2.28</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
+<th class="row" >CLISP 2.28</th>
+<td align="center">&times;</td>
+<td align="center">&nbsp;</td>
+<td align="center">&times;</td>
+<td align="center">&times;</td>
 </tr>
 
 <tr>
-<td bgcolor="#aaaaaa" >CMUCL 18d</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
+<th class="row" >CMUCL 18d</th>
+<td align="center">&times;</td>
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
+<td align="center">&nbsp;</td>
 </tr>
 
 <tr>
-<td bgcolor="#aaaaaa">MCL 4.3</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
+<th class="row">MCL 4.3</th>
+<td align="center">&nbsp;</td>
+<td align="center">&times;</td>
+<td align="center">&times;</td>
+<td align="center">&nbsp;</td>
 </tr>
 
 <tr>
-<td bgcolor="#aaaaaa">OpenMCL 0.13</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
-<td bgcolor="#cccccc" align="center">&times;</td>
-<td bgcolor="#cccccc" align="center">&nbsp;</td>
+<th class="row">OpenMCL 0.13</th>
+<td align="center">&times;</td>
+<td align="center">&nbsp;</td>
+<td align="center">&times;</td>
+<td align="center">&nbsp;</td>
 </tr>
 </table>
 </div>
@@ -255,11 +260,11 @@ A free version of MCL for OSX and LinuxPPC.  Includes a native CLOS,
 true multi-processing, no graphical interface.
 </dd>
 </dl>
-</div>
+<!-- /div -->
 
 <!-- Section -->
 
-<div class="hpsection">
+<!-- div class="hpsection" -->
 
 <h2>Contact</h2>
 
@@ -267,32 +272,33 @@ true multi-processing, no graphical interface.
 Please feel free to contact me with any questions or comments or to
 tell me of any compositions you create using CM.  To receive email
 information about <a href="http://ccrma-www.stanford.edu/">CCRMA</a>'s
-family of Lisp music programs (CM, <a
-href="http://ccrma-www.stanford.edu/CCRMA/Software/clm/clm.html">CLM</a>
-and <a
-href="http://ccrma-www.stanford.edu/CCRMA/Software/cmn/cmn.html">CMN</a>)
-please join the <tt>cm-dist</tt> mailing list by e-mailing your request to join to: <tt><a
-href="mailto:cmdist-request@ccrma.stanford.edu">cmdist-request@ccrma.stanford.edu</a></tt>.
+family of Lisp music programs (CM, 
+<a href="http://www-ccrma.stanford.edu/software/clm/">CLM</a>
+and
+<a href="http://www-ccrma.stanford.edu/software/cmn/">CMN</a>)
+please join the <tt>cm-dist</tt> mailing list by e-mailing your request to join to: <kbd><a
+href="mailto:cmdist-request@ccrma.stanford.edu">cmdist-request@ccrma.stanford.edu</a></kbd>.
 </p>
 
 <p>
 Rick Taube
-<br>Associate Professor Composition/Theory
-<br>School of Music
-<br>University of Illinois
-<br>Urbana, IL
-<br>Vox: +1 (217) 244 2684
-<br>Fax: +1 (217) 355 5780
-<br>Net: <tt><a href="mailto:taube@uiuc.edu">taube@uiuc.edu</a></tt></td>
+<br/>Associate Professor Composition/Theory
+<br/>School of Music
+<br/>University of Illinois
+<br/>Urbana, IL
+<br/>Vox: +1 (217) 244 2684
+<br/>Fax: +1 (217) 355 5780
+<br/>Net: <tt><a href="mailto:taube@uiuc.edu">taube@uiuc.edu</a></tt>
 </p>
-</div>
 
+</div> <!-- end "hpsection" -->
+</div> <!-- end px border -->
 </div> <!-- end "content" -->
 
 <!-- Footer -->
 
 <div id="footer">
-<div id="author">H. Taube</address></div>
+<div id="author">H. Taube</div>
 <div id="cvs-info">$Name$: $Source$ ($Revision$, $Date$)</div>
 </div>
 
