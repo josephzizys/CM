@@ -14,7 +14,7 @@
 <!-- Entry: "midi-stream" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><span class="entry">midi-stream</span></span></dd>
+<dd>><span class="entry">midi-stream</span></dd>
 </dl>
 
 
@@ -31,7 +31,7 @@ Defines a common set of slots available in subclasses
 <dl>
 
 <dt>
-<span class="keyword">:channel-map</span> <var>list</var></dt>
+<code class="keyword">:channel-map</code> <var>list</var></dt>
 <dd>
  
 A list or vector of logical channel defininitions.  Each entry in the
@@ -42,43 +42,42 @@ global variable <a
 href="midi-channel-map-var.html">*midi-channel-map*</a>.
 </dd>
 
-<dt><span class="keyword">:channel-tuning</span> {<var>boolean</var> | <var>1-15</var> | <var>list</var>}</dt>
+<dt><code class="keyword">:channel-tuning</code> {<var>boolean</var> | <var>1-15</var> | <var>list</var>}</dt>
 <dd>
 Determines the manner in which floating point key numbers
 <var>kkk.cc</var> are tuned, where <var>kkk.cc</var> is interpreted as
 the frequency <var>cc</var> cents above the MIDI integer
-keynum <var>kkk</var>.
-The default value of <span class="keyword">:channel-tuning</span>
-is <var>false,</var> which means that floating point key numbers are
-rounded to the nearest MIDI integer keynum as they are sent to a MIDI
-file or port.
-If the value of <span class="keyword">:channel-tuning</span> is boolean true then a
-floating point key number causes the curent MIDI event to be preceded
-by a pitch bend and both messages are sent to the next available
+keynum <var>kkk</var>.  The default value is false, which means that
+floating point key numbers are rounded to the nearest inteter MIDI
+keynum as they are sent to the MIDI file or port. If the value is true
+then floating point events are preceded by pitch bends to make the
+microtonal adjustment and both messages are sent to the next available
 channel. By default, the entire range of channels 0-15 are cycled
 through in round-robin fashion to minimize the likelihood that a pitch
-bend value will affect a sounding note. To cycle through only a
+bend value will affect a sounding note.  (Set the
+variable <code>*midi-skip-drum-channel*</code> to true if you want to
+omit channel 9 from the channel rotation.)  To cycle through only a
 subrange of channels specify a list: (<var>true start end</var>) where
-<var>start</var> and <var>end</var> specify the starting and ending
-bounds (inclusive) for the channel rotation.
-If the value of <span class="keyword">:channel-tuning</span> is an
-integer 1-15 inclusive then floating point key numbers are quantized
-to that number of divisions per semitone. For example, a <span
-class="keyword">:channel-tuning</span> value of 2 will quantize
-floating point key numbers to to the nearest quarter-tone. The maximum
-octave division provides for a quantization step size of 6.6 cents,
-very close to the minimum perceivable change by humans. When channel
-tuning is expressed as a number then that many channels are allocated
-and pretuned for microtonal quantization. By default this channel
-allocation starts at channel 0. To specify a different starting
-channel use a list: (<var>n start</var>), where <var>n</var> is the
-channel tuning value and <var>start</var> is the starting channel.
-If <span class="keyword">:channel-tuning</span> is false then no microtonal output is
-produced and floating point key numbers are rounded to the closest
-integer key number.
+<var>start</var> and <var>end</var> specify the inclusive starting and
+ending bounds for the channel rotation.  If the value is an integer
+1-15 inclusive then floating point key numbers are quantized to that
+number of divisions per semitone. For example, a value of 2 will
+quantize floating point key numbers to to the nearest quarter-tone
+This method of channel tuning much more efficient than then
+note-by-note method, but quantization means that you will not get the
+precise microtonal values encoded in the key numbers. However, since
+the maximimum of 15 divisions per semitone provides for a quantization
+step size of 6.6 cents (very close to the minimum perceivable change
+by humans), in most cases quantization can provide a sufficiently
+close approximation to the actual microtonal value.  By default
+channel allocation for quanitization starts at channel 0. To specify a
+different starting channel use a list: (<var>n start</var>),
+where <var>n</var> is the channel tuning value and <var>start</var> is
+the starting channel.
 </dd>
 
-<dt><span class="keyword">:pitch-bend-width</span> <var>integer</var></dt>
+<dt><code
+class="keyword">:pitch-bend-width</code> <var>integer</var></dt>
 <dd>
 Declares the pitch bend width in semitones of the synthesizer. This
 value is used to calculate pitch bend values for microtonal frequency
