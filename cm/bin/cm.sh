@@ -394,7 +394,7 @@ LISP_DIA=LISP
 LOAD=1
 
 is_image () {
-  [[ $1 == */${IMG_NAME}.* ]]
+  [[ $1 == */$IMG_NAME ]]
 }
 
 find_lisp () {
