@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>vary</title>
+</head>
+<body>
+<div id="content">
+
+
+<!-- Entry: "vary" -->
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><span class="syntax">(<code class="entry">vary</code> <var>value</var> <var>pct</var> [<var>fit</var>] [<var>state</var>])</span></dd>
+</dl>
+
+
+<p>
+Returns a random number that deviates from <var>value</var> by up to <var>pct</var> percentage. <var>fit</var> determines how the
+variance is to be offset from <var>value</var>; <code class="keyword">:above</code> returns a percentage variance with <var>value</var> at the minimum, 
+<code class="keyword">:below</code> returns a percentage variance with <var>value</var> at the maximum and <code class="keyword">:around</code> returns a percentage variance with <var>value</var> in the middle. 
+The default value is <code class="keyword">:around</code>.
+</p>
+
+<!-- Interaction 1 -->
+<div class="float" id="repl_0-1">
+<pre class="shell">cm&gt; <span class="input">(vary 100 .05 :around)</span>
+98.2
+cm&gt; <span class="input">(vary 100 .05 :above)</span>
+103.237
+cm&gt; <span class="input">(vary 100 .05 :below)</span>
+96.933
+cm&gt;</pre>
+</div>
+
+
+<!-- See also -->
+<h4>See Also:</h4>
+<ul>
+<li><a href="between-fn.html"><kbd>between</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="drunk-fn.html"><kbd>drunk</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="odds-fn.html"><kbd>odds</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="pick-fn.html"><kbd>pick</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="pickl-fn.html"><kbd>pickl</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="ran-fn.html"><kbd>ran</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="shuffle-fn.html"><kbd>shuffle</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+</ul>
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+

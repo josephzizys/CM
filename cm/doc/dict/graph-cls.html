@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>graph</title>
+</head>
+<body>
+<div id="content">
+
+
+<!-- Entry: "graph" -->
+<dl class="dictsyntax">
+<dt>[Class]</dt>
+<dd><span class="syntax"><code class="entry">graph</code></span></dd>
+</dl>
+
+
+<p>
+Enumerates data according to transition rules associated with each element.
+</p>
+
+<p><code class="entry">graph</code> supports the following slot initializations:
+</p>
+<dl>
+
+
+<dt><code class="keyword">:selector</code> <var>function</var></dt>
+<dd>
+
+Sets the node selection function of the graph. The function is passed three values,
+the pattern, the last node and the list of ids representing the past selections.
+Defaults to the system's graph traversal function <kbd>#'default-graph-node-select</kbd>.
+</dd>
+
+<dt><code class="keyword">:props</code> <var>list</var></dt>
+<dd>
+
+Sets the property list of the graph to <var>list</var>. This list can be used to cache
+information for a specific <kbd>selector</kbd> function.
+</dd>
+
+<dt><code class="keyword">:last</code> ({<var>id</var>}*)</dt>
+<dd>
+
+Initializes the graph to a specific list of ids representing past node choices.
+</dd>
+
+</dl>
+
+
+
+<p>
+Elements in a <kbd>graph</kbd> are represented as <var>nodes</var>. Each node must be specified
+as a list:
+</p>
+
+<blockquote>
+<p>
+<kbd>(<var>element</var> {<var>property value</var>}+)</kbd>
+</p>
+</blockquote>
+
+<p>
+where <var>element</var> is the element to return from the node. 
+</p>
+
+<p>Graph nodes support the following <var>property value</var> pairs:
+</p>
+<dl>
+
+
+<dt><code>-&gt;</code> {<var>id</var> | <var>pattern</var>}</dt>
+<dd>
+
+Sets the transition link for the graph node. This option is required for
+each node. The value may be a single identifier or a pattern of identifiers.
+</dd>
+
+
+<dt><code>id</code> <var>datum</var></dt>
+<dd>
+
+Sets <var>datum</var> to be the unique identifier for the node in the pattern. The
+identifier may be any Lisp datum as long as its uniquely represented in
+the pattern. If omitted, the identifier defaults to the element itself. It is good
+practice to provide each node with an explicit id that is
+independent of the actual element returned by the node.
+
+</dd>
+
+</dl>
+
+
+<!-- See also -->
+<h4>See Also:</h4>
+<ul>
+<li><a href="accumulation-cls.html"><kbd>accumulation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="cycle-cls.html"><kbd>cycle</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="funcall-cls.html"><kbd>funcall</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="heap-cls.html"><kbd>heap</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="join-cls.html"><kbd>join</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="line-cls.html"><kbd>line</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="markov-cls.html"><kbd>markov</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="palindrome-cls.html"><kbd>palindrome</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="range-cls.html"><kbd>range</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="rewrite-cls.html"><kbd>rewrite</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="rotation-cls.html"><kbd>rotation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+</ul>
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+

@@ -1,0 +1,229 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>rewrite</title>
+</head>
+<body>
+<div id="content">
+
+
+<!-- Entry: "rewrite" -->
+<dl class="dictsyntax">
+<dt>[Class]</dt>
+<dd><span class="syntax"><code class="entry">rewrite</code></span></dd>
+</dl>
+
+
+<p>
+Enumerates elements from successive <var>generations</var> of elements
+according to user specified rewrite rules.  
+</p>
+
+<p><code class="entry">rewrite</code> supports the following slot initializations:
+</p>
+<dl>
+
+
+<dt><code class="keyword">:rules</code> <var>list</var></dt>
+<dd>
+
+Sets the rewrite rules of the pattern to <var>list</var>.
+</dd>
+
+<dt><code class="keyword">:generations</code> <var>number</var></dt>
+<dd>
+
+Sets the number of generations to actually generate. After <var>number</var> of generations
+the pattern simply reuses elements from the last generation, as if the pattern were a cycle.
+</dd>
+
+</dl>
+
+
+
+<p>
+Rewrite rules are expressed in terms of nodes and node identifiers. Two different
+styles of rule specification are supported.
+</p>
+
+<h4>1. Context-free Rules (rules associated with nodes)</h4>
+
+<p>
+The first style of rule specification associates a rewrite rule
+with each node in the pattern. This method is capable of describing many
+sorts of context-free morphologies. The form of each node is similar
+to the graph pattern:
+</p>
+
+<blockquote>
+<p>(<var>element</var> {<var>property value</var>}+)</p>
+</blockquote>
+
+
+<p>
+where <var>element</var> is the element to return from the pattern
+followed by one or more <var>property value</var> pairs.
+</p>
+
+<p>Context-free rules support the following <var>property value</var> pairs:
+</p>
+<dl>
+
+
+<dt><code>id</code> <var>datum</var></dt>
+<dd>
+
+Sets <var>datum</var> to be the unique identifier for the node in the pattern. The
+identifier may be any LISP datum as long as its uniquely represented in
+the pattern. If omitted, the identifier defaults to the element itself. It is good
+practice to provide each node with an explicit id that is
+independent of the actual element returned by the node.
+</dd>
+
+
+<dt><code>-&gt;</code> {<var>id</var> | ({<var>id</var>}+) | <var>pattern</var> | <var>false</var>}</dt>
+<dd>
+
+Sets the rewrite expression for the node. The value may be a single identifier,
+a list of identifiers, a pattern or false. If the value is false
+the node is terminal, ie. it  produces no successor(s) in the pattern's
+next generation. If the value
+is a pattern then the pattern is read to produce a successor term each
+time the node is rewritten. Otherwise the value should be an id or list
+of ids that identify successor node(s) in the next generation. 
+</dd>
+
+</dl>
+
+
+
+<h4>2. Context-sensitive Rules (rules applied to nodes)</h4>
+
+<p>
+The second style of rule specification permits
+<var>context-sensitive</var> rules (rules involving more than one node
+in their left hand side) to be defined. In this method a list of rules
+is associated with the entire pattern rather than with the nodes in
+the pattern. This means that there may be more or fewer rules than
+there are nodes. The rule list is interpreted as an ordered set; to
+produce a new generation, each node in the current generation is
+matched against the rule list to find the successor rule to apply to
+the node. The first rule that matches is triggered and the id(s) in
+the right-hand side of the rule produce the successor node(s) in the
+next generation.
+</p>
+
+<p>
+Node specification for the second method is similar to the first except that:
+<p>
+
+<ul>
+<li>the <kbd>-&gt;</kbd> option is not part of the node declaration.</li>
+<li>if the node's <kbd>id</kbd> value is the same as the element itself
+then the element itself can be specified in place of the node.</li>
+</ul>
+
+<p>
+Each rule in the second style of rule specification is a list of the
+form:
+</p>
+
+<blockquote>
+<p>({<var>id</var>}+<kbd> -&gt; </kbd>{<var>id</var>}*)</p>
+</blockquote>
+
+<p>
+The <kbd>-&gt;</kbd> operator divides each rule into two sides. The
+left-hand side of the rule defines the "matching target" and the
+right-hand side defines the rewrite succession.  Either or both sides
+may contain more than one id. If the left-hand side of the rule is a
+single id then the rule matches any node with the same id. If the
+left-hand side has more than one id (a context-sensitive rule) then
+the rule matches if the "strict predecessor" in the left-hand side
+matches the current node and the nodes around the current node in the
+generation match the ids around the strict predecessor in the
+left-hand side. The strict predecessor id is marked as a list. Every
+context rule must contain exactly one strict predecessor in its left
+hand side.
+</p>
+
+<p>Three examples of context sensitive rules: 
+</p>
+<dl>
+
+
+<dt>(<code>1</code> (<code>1</code>) <code>2</code> <code>-&gt;</code> <code>3</code>)</dt>
+<dd>
+
+Means node 1 rewrites to node 3 wherever 1 is preceded by itself and followed by 2
+in the current generation.
+</dd>
+
+
+<dt>(<code>1</code> <code>*</code> (<code>2</code>) <code>-&gt;</code> <code>1</code> <code>2</code>)</dt>
+<dd>
+
+means node 2 rewrites to 1 and 2 whenever 1 occurs two positions
+earlier in the current generation. 
+</dd>
+
+
+<dt>(<code>5</code> (<code>3</code>) <code>3</code> <code>4</code> <code>-&gt;</code>)</dt>
+<dd>
+
+means node 3 rewrites to nothing if preceded by 5 and followed by itself and 4 in the current
+generation. Note that the right-hand side may be empty and that the left-hand
+side may contain the wild card * which matches any single element in the
+current generation.
+</dd>
+
+</dl>
+
+
+
+<!-- Interaction 1 -->
+<div class="float" id="repl_0-1">
+<pre class="shell">cm&gt; <span class="input">(define x (new rewrite :of '((a -&gt; (a b a)) </span>
+    <span class="input">                             (b -&gt; (b b a)))</span>
+    <span class="input">                       :initially 'b))</span>
+
+cm&gt; <span class="input">(next x 20)</span>
+(b b b a b b a b b a a b a b b a b b a a)
+cm&gt;</pre>
+</div>
+
+
+<!-- See also -->
+<h4>See Also:</h4>
+<ul>
+<li><a href="accumulation-cls.html"><kbd>accumulation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="cycle-cls.html"><kbd>cycle</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="funcall-cls.html"><kbd>funcall</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="graph-cls.html"><kbd>graph</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="heap-cls.html"><kbd>heap</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="join-cls.html"><kbd>join</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="line-cls.html"><kbd>line</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="markov-cls.html"><kbd>markov</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="palindrome-cls.html"><kbd>palindrome</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="range-cls.html"><kbd>range</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="rotation-cls.html"><kbd>rotation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+</ul>
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+

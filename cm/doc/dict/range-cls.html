@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>range</title>
+</head>
+<body>
+<div id="content">
+
+
+<!-- Entry: "range" -->
+<dl class="dictsyntax">
+<dt>[Class]</dt>
+<dd><span class="syntax"><code class="entry">range</code></span></dd>
+</dl>
+
+
+<p>
+Enumerates numbers in a range. 
+</p>
+
+<p><code class="entry">range</code> supports the following slot initializations:
+</p>
+<dl>
+
+
+
+<dt><code class="keyword">:from</code> {<var>number</var> | <var>pattern</var>}</dt>
+<dd>
+
+The start value to return from the range. Defaults to 0. <kbd>from</kbd>
+is reset each time it exceeds range boundaries or at the end of each period
+if there are no boundaries on the range.
+</dd>
+
+
+<dt><code class="keyword">:initially</code> {<var>number</var>}</dt>
+<dd>
+
+Like <kbd>from</kbd> but specifies that the
+value should not reset at the end of each period.
+<kbd>initially</kbd> can only appesar if the range has no upper
+or lower boundary.  
+</dd>
+
+
+
+<dt><code class="keyword">:to</code> {<var>number</var> | <var>pattern</var>}</dt>
+<dd>
+
+Optional inclusive upper bound on the range. If this bound is exceeded the
+the range is reset to <kbd>from</kbd>.
+</dd>
+
+
+<dt><code class="keyword">:below</code> {<var>number</var> | <var>pattern</var>}</dt>
+<dd>
+
+Like <kbd>to</kbd> except that the upper bound is exnclusive.
+</dd>
+
+
+
+<dt><code class="keyword">:downto</code> {<var>number</var> | <var>pattern</var>}</dt>
+<dd>
+
+Optional inclusive lower bound for the enumeration. If this bound is exceeded the
+range is reset to <kbd>from</kbd>.
+</dd>
+
+
+<dt><code class="keyword">:above</code> {<var>number</var> | <var>pattern</var>}</dt>
+<dd>
+
+Like <kbd>downto</kbd> except that the lower bound is exlusive.
+</dd>
+
+
+
+<dt><code class="keyword">:by</code> {<var>number</var> | <var>pattern</var>}</dt>
+<dd>
+
+The increment between numbers in the range. If <kbd>by</kbd>
+is a pattern its value is reselected each time <kbd>from</kbd> is reset.
+</dd>
+
+
+<dt><code class="keyword">:stepping</code> {<var>pattern</var>}</dt>
+<dd>
+
+Like <kbd>by</kbd> but the increment value changes each selection.
+</dd>
+
+</dl>
+
+
+<p>
+For bounded ranges the default period length is the number of
+values enumerated between the boundaries. For unbounded ranges
+the default period length is 1. Note that a single range may contain
+both an upper and a lower bounds. Combining these with a random 
+<kbd>stepping</kbd> value implements bounded random walks.
+</p>
+
+<!-- Interaction 1 -->
+<div class="float" id="repl_0-1">
+<pre class="shell">cm&gt; <span class="input">(define x (new range :to 10))</span>
+
+cm&gt; <span class="input">(next x true)</span>
+(0 1 2 3 4 5 6 7 8 9 10)
+cm&gt; <span class="input">(define x (new range :from 60 :for 5))</span>
+
+cm&gt; <span class="input">(next x 10)</span>
+(60 61 62 63 64 60 61 62 63 64)
+cm&gt; <span class="input">(define x (new range :initially 60 :for 5))</span>
+
+cm&gt; <span class="input">(next x 10)</span>
+(60 61 62 63 64 65 66 67 68 69)
+cm&gt; <span class="input">(define x (new range :from 10 :downto -10 </span>
+    <span class="input">               :by 2))</span>
+
+cm&gt; <span class="input">(next x 10)</span>
+(10 8 6 4 2 0 -2 -4 -6 -8 -10)
+cm&gt; <span class="input">(define x (new range </span>
+    <span class="input">               :from (new cycle :of '(1 5))</span>
+    <span class="input">               :to 10))</span>
+
+cm&gt; <span class="input">(next x true)</span>
+(1 2 3 4 5 6 7 8 9 10)
+cm&gt; <span class="input">(next x true)</span>
+(5 6 7 8 9 10)
+cm&gt; <span class="input">(define x (new range :from 60 </span>
+    <span class="input">               :stepping (new random</span>
+    <span class="input">                              :of '(-2 -1 1 2))</span>
+    <span class="input">               :to 65 :downto 55))</span>
+
+cm&gt; <span class="input">(next x true)</span>
+(60 59 58 59 60 62 64 62 64 65)
+cm&gt; <span class="input">(next x true)</span>
+(60 61 62 64 62 64)
+cm&gt;</pre>
+</div>
+
+
+<!-- See also -->
+<h4>See Also:</h4>
+<ul>
+<li><a href="accumulation-cls.html"><kbd>accumulation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="cycle-cls.html"><kbd>cycle</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="funcall-cls.html"><kbd>funcall</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="graph-cls.html"><kbd>graph</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="heap-cls.html"><kbd>heap</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="join-cls.html"><kbd>join</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="line-cls.html"><kbd>line</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="markov-cls.html"><kbd>markov</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="palindrome-cls.html"><kbd>palindrome</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="rewrite-cls.html"><kbd>rewrite</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="rotation-cls.html"><kbd>rotation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+</ul>
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+

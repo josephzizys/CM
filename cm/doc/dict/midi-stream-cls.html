@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>midi-stream</title>
+</head>
+<body>
+<div id="content">
+
+
+<!-- Entry: "midi-stream" -->
+<dl class="dictsyntax">
+<dt>[Class]</dt>
+<dd><span class="syntax"><code class="entry">midi-stream</code></span></dd>
+</dl>
+
+
+<p>
+Defines a common set of slots available in subclasses
+<a href="midi-file-stream-cls.html"><kbd>midi-file-stream</kbd></a>,
+<a href="midishare-stream-cls.html"><kbd>midishare-stream</kbd></a> and
+<a href="player-stream-cls.html"><kbd>player-stream</kbd></a>.
+
+</p>
+
+<p><code class="entry">midi-stream</code> supports the following slot initializations:
+</p>
+<dl>
+
+
+<dt><code class="keyword">:channel-map</code> <var>list</var></dt>
+<dd>
+ 
+A list or vector of logical channel defininitions.  Each entry in the
+map is a two-element list: (<var>port channel</var>) that defines the
+integer port id and integer channel number of the logical channel at
+that position.  If no list is specified the value defaults to the
+global variable <a
+href="midi-channel-map-var.html"><kbd>*midi-channel-map*</kbd></a>.
+</dd>
+
+
+<dt><code class="keyword">:channel-tuning</code> {<var>false</var> | <var>true</var> | <var>12...180</var> | <var>list</var>}</dt>
+<dd>
+
+
+Determines the manner in which floating point key numbers
+<var>kkk.cc</var> are performed, where <var>kkk.cc</var> is
+interpreted as the frequency <var>cc</var> cents above the MIDI
+integer keynum <var>kkk</var>.
+
+<p>
+The default value of <code class="keyword">:channel-tuning</code> is false, which means that
+floating point key numbers are rounded to the nearest MIDI integer
+keynum as they are sent to a MIDI file or port.
+</p>
+
+
+
+<p>
+If the value of <code class="keyword">:channel-tuning</code> is boolean true then a
+floating point key number causes the curent MIDI event to be preceded
+by a pitch bend and both messages are sent to the next available
+channel. By default, the entire range of channels 0-15 are cycled
+through in round-robin fashion to minimize the likelihood that a pitch
+bend value will affect a sounding note. To cycle through only a
+subrange of channels specify a list: (<var>true start end</var>) where
+<var>start</var> and <var>end</var> specify the starting and ending
+bounds (inclusive) for the channel rotation.
+</p>
+
+<p>
+If the value of <code class="keyword">:channel-tuning</code> is an integer multiple of
+12: 12, 24, 36...180, then floating point key numbers are quantized to
+that number of equal divisions per octave. For example, a 
+<code class="keyword">:channel-tuning</code> value of 24 will quantize floating point key numbers
+to to the nearest quarter-tone. The maximum octave division is 180,
+which provides for a quantization step size of 6.6 cents, very close
+to the minimum perceivable change by humans. When channel tuning is
+expressed as a multiple of 12 then <var>n/12</var> channels are
+allocated and pretuned for microtonal quantization. By default this
+allocation starts at channel 0. To specify a different starting
+channel use a list: (<var>n start</var>), where <var>n</var> is the
+channel tuning value and <var>start</var> is the starting channel.
+</p>
+
+<p>
+If <code class="keyword">:channel-tuning</code> is false then no microtonal output is
+produced and floating point key numbers are rounded to the closest
+integer key number.
+</p>
+
+</dd>
+
+
+<dt><code class="keyword">:pitch-bend-width</code> <var>integer</var></dt>
+<dd>
+
+Declares the pitch bend width in semitones of the synthesizer. This
+value is used to calculate pitch bend values for microtonal frequency
+resolution. The default value is 2, which means that the synthesizer
+uses a maximum pitch bend range of one whole step up and down.
+</dd>
+
+</dl>
+
+
+<!-- See also -->
+<h4>See Also:</h4>
+<ul>
+<li><a href="clm-audio-stream-cls.html"><kbd>clm-audio-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="clm-stream-cls.html"><kbd>clm-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="cmn-stream-cls.html"><kbd>cmn-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="io-mac.html"><kbd>io</kbd></a><kbd>&nbsp;</kbd>[Macro]</li>
+<li><a href="midi-file-stream-cls.html"><kbd>midi-file-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="midishare-stream-cls.html"><kbd>midishare-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="player-stream-cls.html"><kbd>player-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="sco-stream-cls.html"><kbd>sco-stream</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+</ul>
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+

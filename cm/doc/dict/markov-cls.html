@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>markov</title>
+</head>
+<body>
+<div id="content">
+
+
+<!-- Entry: "markov" -->
+<dl class="dictsyntax">
+<dt>[Class]</dt>
+<dd><span class="syntax"><code class="entry">markov</code></span></dd>
+</dl>
+
+
+<p>
+Implements nth order Markov chains. 
+</p>
+
+<p><code class="entry">markov</code> supports the following slot initializations:
+</p>
+<dl>
+
+<dt><code class="keyword">:produces</code> (<var>id</var> <var>value</var> <var>...</var>)</dt>
+<dd>
+
+A list of pairs that specify what <var>value</var> to return from
+the pattern when an <var>id</var> is selected. Values in this list override the
+default behavior of returning the id itself from the pattern.
+If <var>value</var> is a pattern then that pattern will produce a period of elements
+each time <var>id</var> is selected.
+</dd>
+
+<dt><code class="keyword">:past</code> (<var>id</var> <var>...</var>)</dt>
+<dd>
+
+Initializes the pattern with an explicit list of past choices expressed as node identifiers. 
+</dd>
+
+</dl>
+
+
+<p>
+Each element in a <kbd>markov</kbd> pattern is specified as transition rule:
+</p>
+
+<blockquote>
+<p>({<var>past</var>}* -&gt; {<var>next</var> | (<var>next weight</var>)}+)</p>
+</blockquote>
+
+<p>
+<var>past</var> is zero or more identifiers that define
+the "left side" of the transition rule. Values nearer the -&gt; are
+more recent past choices. The number of past values in the left-hand side
+determines the Markov order of the pattern. Any order is possible but every transition
+rule must have the same number of past values. Values to the right of
+<kbd>-&gt;</kbd>
+define the set of outcomes. By default each outcome has the same probability
+of being selected. To alter the weight of an outcome specify it in a list
+together with its weight. For example the transition rule: 
+</p>
+
+<blockquote>
+<p><code>(c -&gt; a (b 2) c)</code></p>
+</blockquote>
+
+<p>
+defines a 1st order Markov transition whose outcomes <kbd>a</kbd>,
+<kbd>b</kbd> or <kbd>c</kbd> are triggered if <kbd>c</kbd> was the last value generated.
+Outcome <kbd>b</kbd> has twice the probability of being selected as either
+<kbd>a</kbd> or <kbd>c</kbd>. The transition rule:
+</p>
+
+<blockquote>
+<p><code>(q w a -&gt; e r (d 3) g)</code></p>
+</blockquote>
+
+<p>
+describes a third-order transition in which <kbd>a</kbd> is the most recent past outcome.
+The transition rule:
+</p>
+
+<blockquote>
+<p><code>(* x a -&gt; foo bif zuz)</code></p>
+</blockquote>
+
+<p>
+demonstrates the * "wildcard" that matches any
+value in its position.  Finally, the transition rule:
+</p>
+
+<blockquote>
+<p><code>(-&gt; a (b .1) c)</code></p>
+</blockquote>
+
+<p>
+describes a 0th order Markov transition, equivalent to weighted
+random selection. Only a single transition rule should be specified in
+a 0th order Markov pattern.
+</p>
+
+<!-- Interaction 1 -->
+<div class="float" id="repl_0-1">
+<pre class="shell">cm&gt; <span class="input">(define x (new markov</span>
+    <span class="input">               :of '((d4 c4 -&gt; (f4 .5) (g4 .5))</span>
+    <span class="input">                     (d4 bf4 -&gt; bf4)</span>
+    <span class="input">                     (c4 d4 -&gt; c4)</span>
+    <span class="input">                     (c4 c4 -&gt; (d4 .667) (c5 0.333))</span>
+    <span class="input">                     (c4 f4 -&gt; e4)</span>
+    <span class="input">                     (c4 g4 -&gt; f4) </span>
+    <span class="input">                     (c4 c5 -&gt; a4)</span>
+    <span class="input">                     (f4 c4 -&gt; c4) </span>
+    <span class="input">                     (f4 e4 -&gt; (c4 .5) (d4 .5))</span>
+    <span class="input">                     (f4 g4 -&gt; f4)</span>
+    <span class="input">                     (e4 d4 -&gt; bf4)</span>
+    <span class="input">                     (e4 c4 -&gt; c4)</span>
+    <span class="input">                     (g4 f4 -&gt; c4)</span>
+    <span class="input">                     (c5 a4 -&gt; f4)</span>
+    <span class="input">                     (a4 f4 -&gt; (e4 .5) (g4 .5))</span>
+    <span class="input">                     (bf4 a4 -&gt; f4)</span>
+    <span class="input">                     (bf4 bf4 -&gt; a4))))</span>
+
+cm&gt; <span class="input">(next x 20)</span>
+(g4 f4 c4 c4 d4 c4 g4 f4 c4 c4 d4 c4 f4 e4 d4 bf4 bf4 a4 f4 e4)
+cm&gt;</pre>
+</div>
+
+
+<p>
+See <a href="markov-analyze-fn.html"><kbd>markov-analyze</kbd></a>
+for more information about markov patterns.
+</p>
+
+<!-- See also -->
+<h4>See Also:</h4>
+<ul>
+<li><a href="accumulation-cls.html"><kbd>accumulation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="cycle-cls.html"><kbd>cycle</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="funcall-cls.html"><kbd>funcall</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="graph-cls.html"><kbd>graph</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="heap-cls.html"><kbd>heap</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="join-cls.html"><kbd>join</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="line-cls.html"><kbd>line</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="palindrome-cls.html"><kbd>palindrome</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="range-cls.html"><kbd>range</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="rewrite-cls.html"><kbd>rewrite</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="rotation-cls.html"><kbd>rotation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+</ul>
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+

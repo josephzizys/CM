@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>chord</title>
+</head>
+<body>
+<div id="content">
+
+
+<!-- Entry: "chord" -->
+<dl class="dictsyntax">
+<dt>[Class]</dt>
+<dd><span class="syntax"><code class="entry">chord</code></span></dd>
+</dl>
+
+
+<p>
+A specialized pattern that 
+returns a <var>list</var> of chord members each time it is
+read by the <a href="next-fn.html"><kbd>next</kbd></a> function.
+If chord data is a pattern then the next period of elements
+from the pattern will be returned as the chord members.
+</p>
+
+
+<!-- Interaction 1 -->
+<div class="float" id="repl_0-1">
+<pre class="shell">cm&gt; <span class="input">;;</span>
+a
+cm&gt; <span class="input">process</span>
+that
+cm&gt; <span class="input">plays</span>
+mostly
+cm&gt; <span class="input">chords.</span>
+The
+cm&gt; <span class="input">middle</span>
+chord
+cm&gt; <span class="input">selects</span>
+;;
+cm&gt; <span class="input">different</span>
+chord
+cm&gt; <span class="input">members</span>
+each
+cm&gt; <span class="input">time</span>
+it
+cm&gt; <span class="input">is</span>
+picked.
+cm&gt; <span class="input">(define (dochords)</span>
+    <span class="input">  (process with pat = (new heap</span>
+    <span class="input">                           :of (list</span>
+    <span class="input">                                '(c4 e4 g4)</span>
+    <span class="input">                                (new chord :of (new heap :of '(df4 ef4 gf4 af4</span>
+    <span class="input">                                                               bf4 df5 ef5)</span>
+    <span class="input">                                                    :for 3))</span>
+    <span class="input">                                '(e4 a4 cs5)</span>
+    <span class="input">                                (new cycle :of '(bf6 bf2) :for 1)))</span>
+    <span class="input">           repeat 32</span>
+    <span class="input">           do (doeach (k (next pat)) </span>
+    <span class="input">                (output (new midi :keynum k :time (now))))</span>
+    <span class="input">           wait .5))</span>
+
+cm&gt; <span class="input">(events (dochords) "midi.port")</span>
+cm&gt;</pre>
+</div>
+
+<!-- See also -->
+<h4>See Also:</h4>
+<ul>
+<li><a href="pval-cls.html"><kbd>pval</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="range-cls.html"><kbd>range</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="transposer-cls.html"><kbd>transposer</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+</ul>
+
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+

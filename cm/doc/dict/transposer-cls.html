@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>transposer</title>
+</head>
+<body>
+<div id="content">
+
+
+<!-- Entry: "transposer" -->
+<dl class="dictsyntax">
+<dt>[Class]</dt>
+<dd><span class="syntax"><code class="entry">transposer</code></span></dd>
+</dl>
+
+
+<p>
+A pattern that return notes, keynums or lists of the
+same by combining transposition data
+with a transposition offset.
+Transposed data may be optionally retrograded and inverted.
+</p>
+
+<p><code class="entry">transposer</code> supports the following slot initializations:
+</p>
+<dl>
+
+
+
+<dt><code class="keyword">:of</code> {<var>list</var> | <var>pattern</var>}</dt>
+<dd>
+
+The data to transpose. If the data is a pattern then successive
+elements are read from the pattern and transposed. These elements can
+be notes, keynums or lists of the same. List are treated as single
+units by the transposer.
+</dd>
+
+
+<dt><code class="keyword">:by</code> {<var>note</var> | <var>keynum</var> | <var>pattern</var>}</dt>
+<dd>
+
+Sets the transposition offset. If <kbd>by</kbd> is a
+pattern a new offset is selected each period of the
+transposition data.  <kbd>by</kbd> may also be specified as <kbd>on</kbd>. 
+</dd>
+
+
+<dt><code class="keyword">:stepping</code> {<var>pattern</var>}</dt>
+<dd>
+
+Like <kbd>by</kbd> execept that the transposition offset is
+read each time an element is transposed rather than each period.
+</dd>
+
+
+<dt><code class="keyword">:form</code> {<code>p</code> <code>i</code> <code>r</code> <code>ri</code> | <var>pattern</var>}</dt>
+<dd>
+
+A symbol or pattern of symbols that specifies the "row form" for
+list data returned by the transposer. <kbd>p</kbd> stands for prime, 
+<kbd>i</kbd> for inversion, <kbd>r</kbd> for
+retrogade and <kbd>ri</kbd> for retrograde-inversion. Either
+symbols or keywords can be used to specify the row form.
+The row form is read once each period or once each element according
+to <kbd>by</kbd> or <kbd>stepping</kbd>.
+</dd>
+
+
+<dt><code class="keyword">:mod</code> {<var>number</var> | <var>pattern</var>}</dt>
+<dd>
+
+Optional modulus on list data.
+</dd>
+
+
+<dt><code class="keyword">:scale</code> {<var>scale</var>}</dt>
+<dd>
+
+The scale to use to transpose data in. Detaults 
+to <kbd>*scale*</kbd>, the standard chromatic scale.
+</dd>
+
+
+</dl>
+
+
+<!-- See also -->
+<h4>See Also:</h4>
+<ul>
+<li><a href="chord-cls.html"><kbd>chord</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="pval-cls.html"><kbd>pval</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="range-cls.html"><kbd>range</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+</ul>
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+

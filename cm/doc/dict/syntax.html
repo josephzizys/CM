@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>Common Music Dictionary</title>
+</head>
+<body>
+<div id="content">
+
+
+<div style="text-align: center; background: #e6e6ff;">
+<h4>Dictionary Syntax</h4>
+</div>
+
+<p>
+Dictionary entries are documented in a special typographic format:
+</p>
+
+<ul>
+
+<li>
+Defined terms are printed in fixed-width bold face and literals and
+program code are printed in fixed-width face:
+<blockquote>
+<p><code class="entry">cents-&gt;scaler</code></p>
+</blockquote>
+
+</li>
+
+<li>
+Variables and metavariables (names that stand for pieces of code) are
+printed in italic face:
+<blockquote>
+<p><var>number</p>
+</blockquote>
+</li>
+
+<li>
+Terms separated by | are exclusive choices:
+
+<blockquote>
+<p><var>number</var> | <var>boolean</var></p>
+</blockquote>
+</li>
+
+<li>
+Braces { } and brackets [ ] are sometimes used to associate or group
+the enclosed terms but never actually appear in code:
+
+<ul>
+<li>
+Braces simply group the enclosed terms. For example
+<blockquote>
+<p>{<var>number</var> | <var>boolean</var>}</p>
+</blockquote>
+means a single entity, either a number or a boolean value.
+</li>
+
+<li>
+Brackets mean that the enclosed terms are optional. An optional term
+may appear at most one time. For example,
+<blockquote>
+<p>
+<span class="syntax">(<code class="entry">odds</code> <var>prob</var> [<var>true</var>] [<var>false</var>])</span>
+</p>
+</blockquote>
+means that upto two optional values may follow the first:
+<blockquote>
+<p><code>(odds 1)<br/>
+(odds 0 'ouch)<br/>
+(odds .2 "Yup" "Nope")<br/></code></p>
+</blockquote>
+</li>
+
+</ul>
+</li>
+
+<li>
+A star * after a brace means that the enclosed terms may be specified
+zero or more times. For example,
+<blockquote>
+<p>
+<span class="syntax">(<code class="entry">new</code> <var>class</var> {<var>slot value</var>}*)</span>
+</p>
+</blockquote>
+means that any number of <var>slot</var> and <var>value</var> pairs,
+including none, may follow the required <var>class</var> argument:
+<blockquote>
+<p><code>(new midi)<br/>
+(new midi :time 10)<br/>
+(new midi :keynum 22 :duration 3)</code></p>
+</blockquote>
+</li>
+
+<li>
+A plus + after a brace means that the enclosed terms may be specified
+one or more times.
+</li>
+
+<li>
+A sequence of three dots means the rest of the arguments. For example,
+
+<blockquote>
+<p>
+<span class="syntax">(<code class="entry">pick</code> <var>arg</var> ...)</span>
+</p>
+</blockquote>
+means that any number of additional values may follow <var>arg</var>.
+</li>
+
+<li>
+Lisp keyword symbols (symbols that start with a colon) are highlighted
+in red. Keyword symbols may appear as values or may define <em>keyword
+arguments</em> to functions, that is, optional arguments that consist
+of a keyword name followed by its value. For example:
+
+<blockquote>
+<p>
+<span class="syntax">(<code class="entry">hertz</code> <var>x</var> [<code class="keyword">:in</code> <var>scale</var>])</span>
+</p>
+</blockquote>
+defines <code class="keyword">:in</code> to be a keyword argument to the <code>hertz</code> function:
+
+<blockquote>
+<p><code>(hertz 220)<br/>
+(hertz 330 :in myscale)
+</code>
+</p>
+</blockquote>
+</li>
+</ul>
+
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+

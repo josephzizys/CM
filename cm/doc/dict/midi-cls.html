@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>midi</title>
+</head>
+<body>
+<div id="content">
+
+
+<!-- Entry: "midi" -->
+<dl class="dictsyntax">
+<dt>[Class]</dt>
+<dd><span class="syntax"><code class="entry">midi</code></span></dd>
+</dl>
+
+
+<p>
+Creates a MIDI Note On and Note Off pair out of a more general
+representation of frequency, duration and amplitude.
+</p>
+
+<p><code class="entry">midi</code> supports the following slot initializations:
+</p>
+<dl>
+
+
+<dt><code class="keyword">:time</code> <var>number</var></dt>
+<dd>
+
+Sets the start time of object. <code>time</code> can also be specified
+as <code>start</code>.
+</dd>
+
+
+<dt><code class="keyword">:keynum</code> {<var>keynum</var> | <var>note</var>}</dt>
+<dd>
+
+Frequency expressed as a keynum or note.
+The treatment of floating point keynums
+depends on the value of <code class="keyword">:channel-tuning</code>
+in the <a href="midi-stream-cls.html">MIDI file</a>. 
+</dd>
+
+
+<dt><code class="keyword">:duration</code> <var>number</var></dt>
+<dd>
+
+The duration of the note in seconds.
+</dd>
+
+
+<dt><code class="keyword">:amplitude</code> <var>number</var></dt>
+<dd>
+
+A logical amplitude 0.0 &lt; 1.0 or an integer velocity 0 to 127. Defaults to 64.
+</dd>
+
+
+<dt><code class="keyword">:channel</code> <var>integer</var></dt>
+<dd>
+
+A MIDI channel number between 0 and 31. Defaults to 0.
+</dd>
+
+</dl>
+
+
+</div>
+<hr class="inv"/>
+
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
+
+
