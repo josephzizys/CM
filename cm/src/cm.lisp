@@ -38,7 +38,6 @@
                      (push d there))
                    there)))))
 
-;;;
 ;;; Check features before building.
 ;;; CM pushes the following features:  
 ;;;  :metaclasses :loop :osx :linux :win32
@@ -123,38 +122,39 @@
     ;; Load Midishare Interface if Midishare is installed.
     ;; Currently supported in Openmcl, MCL-4, MCL-5 and CMUCL
     
-    #-(or clisp excl)
-    (if #+(and openmcl darwin)
-        (and (probe-file "ccl:darwin-headers;midishare;")
-             (probe-file
-              "/System/Library/Frameworks/MidiShare.framework/MidiShare"))
-        #+(and digitool ccl-5.0)
-        (probe-file
-         "Macintosh HD:System:Library:Frameworks:MidiShare.framework:MidiShare")
-        #+(and digitool ccl-4 (not ccl-5.0))
-        (directory (merge-pathnames "Midishare*" 
-                                    (ccl::findfolder -1 :|ctrl|)))
-        #+cmu
-        (probe-file "/usr/lib/libMidiShare.so")
-        (cload "midishare" "MidiShare-Interface")
-        (warn "No real-time MIDI support: Midishare not installed."))
-    
-    ;; Load optional Player interface if midishare is installed.
-    #-(or clisp excl)
-    (when (find ':midishare *features*)
-      (if #+(and digitool ccl-4 (not ccl-5.0))
-        (ccl::get-shared-library-descriptor "PlayerSharedPPC")
-        #+(and openmcl darwin)
-        (probe-file
-         "/System/Library/Frameworks/Player.framework/Player")
-        #+(and digitool ccl-5.0)
-        (probe-file
-         "Macintosh HD:System:Library:Frameworks:Player.framework:Player")
-        #+cmu
-        (probe-file "/usr/lib/libPlayer.so"   )
-        (cload "midishare" "Player-Interface")
-        (warn "No MIDI sequencer support: Player not installed.")))
-    
+    (when (and (boundp 'load-midishare)
+	       (not (null (symbol-value 'load-midishare))))
+      #-(or clisp excl)
+      (if #+(and openmcl darwin)
+	  (and (probe-file "ccl:darwin-headers;midishare;")
+	       (probe-file
+		"/System/Library/Frameworks/MidiShare.framework/MidiShare"))
+	  #+(and digitool ccl-5.0)
+	  (probe-file
+	   "Macintosh HD:System:Library:Frameworks:MidiShare.framework:MidiShare")
+	  #+(and digitool ccl-4 (not ccl-5.0))
+	  (directory (merge-pathnames "Midishare*" 
+				      (ccl::findfolder -1 :|ctrl|)))
+	  #+cmu
+	  (probe-file "/usr/lib/libMidiShare.so")
+	  (cload "midishare" "MidiShare-Interface")
+	  (warn "No real-time MIDI support: Midishare not installed."))
+      ;; Load optional Player interface if midishare is installed.
+      #-(or clisp excl)
+      (when (find ':midishare *features*)
+	(if #+(and digitool ccl-4 (not ccl-5.0))
+	    (ccl::get-shared-library-descriptor "PlayerSharedPPC")
+	    #+(and openmcl darwin)
+	    (probe-file
+	     "/System/Library/Frameworks/Player.framework/Player")
+	    #+(and digitool ccl-5.0)
+	    (probe-file
+	     "Macintosh HD:System:Library:Frameworks:Player.framework:Player")
+	    #+cmu
+	    (probe-file "/usr/lib/libPlayer.so"   )
+	    (cload "midishare" "Player-Interface")
+	    (warn "No MIDI sequencer support: Player not installed.")))
+      )    
     ;; level 0 loading
     ;;
     
@@ -195,7 +195,7 @@
       ;(excl:set-case-mode :case-insensitive-upper)
       (setf excl:*cltl1-in-package-compatibility-p* t)
       (setf comp:*cltl1-compile-file-toplevel-compatibility-p* t)
-      (setf (excl:package-definition-lock (find-package "COMMON-LISP"))
+      (setf (excl:package-definition-lock (find-package :common-lisp))
             nil)
       (require :loop)
       (cload "acl"))
