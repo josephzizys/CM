@@ -31,7 +31,7 @@ Installing Common Music involves downloading the sources, starting a
 <a href="cm.html#implementations">supported Lisp implementation</a>,
 loading CM's sources and (optionally) saving a Lisp image file
 containing the application. Once the system is installed you can <a
-href="emacs.html">run Common Music in Emacs/XEmacs</a> and load in
+href="emacs.html">run Common Music in X/Emacs</a> and load in
 additional software systems such as <a
 href="http://www-ccrma.stanford.edu/software/clm/">CLM</a>, <a
 href="http://www-ccrma.stanford.edu/software/cmn/">CMN</a> and <a
@@ -56,9 +56,9 @@ href="http://www.grame.fr/MidiShare/">Midishare</a>.
   </li>
   <li><a href="#configure_plotter">Configuring Plotter</a></li>
     <ol>
-<li><a href="#gtk_openmcl">Configuring GTK2 in OpenMCL (OS X)</a></li>      
-<li><a href="#gtk_sbcl">Configuring callbacks in SBCL (OS X, Linux)</a></li>
-<li><a href="gtk_darwin">Configuring X11 and GTK2 on Darwin (OS X)</a></li>
+<li><a href="#gtk_openmcl">Configuring OpenMCL for GTK2 (OS X)</a></li>      
+<li><a href="#gtk_sbcl">Adding callback support to SBCL (OS X, Linux)</a></li>
+<li><a href="#gtk_darwin">Configuring X11 and GTK2 on Darwin (OS X)</a></li>
 </ol>
 
      
@@ -80,9 +80,9 @@ href="http://www.grame.fr/MidiShare/">Midishare</a>.
 <h2 id="restore_src">1. Downloading and restoring the sources</h2>
 <p>
 Common Music's sources can be downloaded from archives or via
-anonymous CVS. Although the CVS tree contains the most up-to-date
+anonymous CVS. <!-- Although the CVS tree contains the most up-to-date
 version of the system, these sources represent the "bleeding edge" of
-development and may include bugs and untested features.
+development and may include bugs and untested features. -->
 </p>
 <h3 id="restore_tar">1.1 Restoring sources from archives</h3>
 <ol>
@@ -123,21 +123,21 @@ The sources to Common Music are maintained in a CVS repository
 organized into different <em>release branches</em> that
 are <em>tagged</em> by symbolic release numbers.  By convention, even
 numbered branches denote stable software release lines and odd
-numbered branches denote unstable, or experimental, releases.  The
-CVS <em>head branch</em> &#8212; the release branch you get if you do
-not specify any release tag &#8212; always points to the latest
-unstable sources.
+numbered branches denote <em>unstable</em>, or developmental,
+releases.  The CVS <em>head branch</em> &#8212; the release branch you
+get if you do not specify any release tag &#8212; always points to the
+latest developmental sources.
 </p>
 
 <p>
 As of this date (November 2004), Common Music's CVS tree has two main
 branches: a <code>rel-2_4</code> branch line contains sources and bug
 fixes to the stable 2.4.<em>n</em> releases; CM's head branch
-points to the (upcoming) 2.5.0 unstable release.
+points to the 2.5.<em>n</em> developmental line.
 </p>
 
 <p>
-To check out sources from Common Music's CVS repository  use
+To check out sources from Common Music's CVS repository use
 the Unix <code>cvs</code> command or a CVS client
 application. Downloading sources for the first time is accomplished in
 two steps: (1) logging in to the Sourceforge CVS server in anonymous
@@ -179,12 +179,11 @@ checkout command</a> to restore the desired CM source tree to your computer.
 </p>
 
 <p>
-To download the latest (unstable) sources from the head branch:
+To download the latest (developmental) sources from the head branch:
 </p>
 <pre class="shell">
 $ <span class="input">cvs checkout -P cm</span>
-[cvs printout omitted...]</em>
-$</pre>
+<span class="comment">[cvs printout omitted...]</span></pre>
 
 <p>
 To check out a stable release, specify the appropriate tag to the
@@ -194,24 +193,29 @@ CM 2.4.<em>n</em> release line do:
 
 <pre class="shell">
 $ <span class="input">cvs checkout -P -r rel-2_4 cm</span>
-<span class="comment">[cvs printout omitted...]</span>
-$</pre>
+<span class="comment">[cvs printout omitted...]</span></pre>
 <p>
-Once the source tree has been restored to your machine you can rename
-its top-level directory if you choose.
+Once the source tree has been restored to your machine you can cd inside it
+and use the <a href="dict/cm-sh.html">cm.sh</a>
+script to build CM:
 </p>
+<pre class="shell">
+$ <span class="input">cd cm</span>
+$ <span class="input">bin/cm.sh</span>
+<span class="comment">[build printout omitted...]</span></pre>
+
+
 </li>
 
 <li>
 <p>
 To remain current with a release line you should should periodically
-update your CVS tree with new sources by cd'ing to the top-level
-directory of your CVS source tree and using the
+update your CVS tree with new sources by cd'ing inside your CVS source
+tree and using the
 <a
 href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_16.html#SEC170">CVS
 update command</a>. Then use the <a href="dict/cm-sh.html">cm.sh</a>
-build script to recompile and reload CM with the latest versions of
-the files:
+script to rebuild CM with the latest versions of the files:
 </p>
 
 <pre class="shell">
@@ -236,7 +240,7 @@ Each Lisp may be represented by (up to) three implementation files:
 <p>
 A <em>shell command</em> or program that starts Lisp running in
 a Terminal (the CMD window on Windows) or under <a
-href="emacs.html">Emacs/XEmacs</a>.
+href="emacs.html">X/Emacs</a>.
 </p>
 </li>
 <li>
@@ -318,7 +322,7 @@ command to see if a Lisp command is installed properly on your path.
 $ <span class="input">which openmcl</span>
 /Lisp/bin/openmcl
 $ <span class="input">which guile</span>
-/sw/bin/guile<br/>
+/sw/bin/guile
 $ <span class="input">which alisp</span>
 alisp: Command not found.</pre>
 </div>
@@ -373,15 +377,15 @@ $ <span class="input">bin/cm.sh</span>
 
 <p>
 The <code>cm.sh</code> script can run CM in a Terminal or under
-Emacs/XEmacs.  Type <code>cm.sh -h</code> for an overview of the
-script's command options and usage.
+<a href="emacs.html">X/Emacs</a>.  Type <code>cm.sh -h</code> for an
+overview of the script's command options and usage.
 </p>
 
 <h3 id="load_lisp">3.2 Lisp loading</h3>
 
 <p>
-The cm.sh script starts CM running from inside the Unix terminal. If
-you are already inside a Lisp application you can load Common Music's
+The cm.sh script is used to start CM running from inside the Unix
+terminal. If you inside a Lisp application you can load Common Music's
 build script from the src/ subdirectory of the CM installation
 directory. For Scheme the build script is called cm.scm, for all
 Common Lisp implementations the file to load is called cm.lisp. Be
@@ -507,11 +511,11 @@ currently runs in the following Lisp environments:
 <p>
 CM will automatically include Plotter in any correctly configured and
 supported environment. If you use OpenMCL on Darwin or SBCL on Linux
-or OS X then you will have to perform a bit of configuration before
-you build CM with Plotter.
+or OS X then you may have to configure your environment for X11 and
+GTK before you build CM with Plotter.
 </p>
 
-<h3 id="gtk_openmcl"> 4.1 Configuring GTK2 in OpenMCL (OS X)</h3>
+<h3 id="gtk_openmcl"> 4.1 Configuring GTK2 for OpenMCL (OS X)</h3>
 
 <p>
 In order to work with GTK2 in OpenMCL you must first install a foreign
@@ -541,7 +545,8 @@ See section 4.3 below for information about configuring X11 and GTK2
 on OS X.
 </p>
 
-<h3 id="gtk_sbcl"> 4.2 Configuring callbacks in SBCL (OS X, Linux)</h3>
+<h3 id="gtk_sbcl"> 4.2 Adding callback support to SBCL (OS X,
+Linux)</h3>
 <p>
 GTK uses a <em>callback</em> mechanism to accomplish all windowing
 tasks.  Since SBCL does not provide a native callback facility of its
