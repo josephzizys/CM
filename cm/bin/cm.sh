@@ -33,7 +33,7 @@ OPTIONS="
     -v           be verbose
     -e editor    run under this editor (default: '${CM_EDITOR:-<none>}')
     -l lisp      run this Lisp/Scheme (default: '${CM_RUNTIME:-<unset>}') 
-    -P prefs	 preferred runtimes (default: '$CM_RUNTIME_PREFS')
+    -P prefs     preferred runtimes (default: '$CM_RUNTIME_PREFS')
     -O OS        OS in case autodetection fails
     -A arch      machine architecture in case autodetection fails
     -F flavor    Lisp flavor in case autodetection fails
@@ -166,38 +166,45 @@ resolve_bin () {
 
 
 #
-# Requirements
+# Cygwin Hacks
 # ------------
+# Catch-33.  Can't check for uname yet since OSX double-clicked apps won't
+# find it, can't shield OSX from the test before options are parsed, and
+# can't postpone CYGWIN_HACKS test until after options are parsed since
+# cygwin's default /bin/sh does not know about getopts.  Hence the following
+# abomination.
 
-UNAME=`resolve_bin uname WARN`
-if [ ! "$UNAME" ] ; then
-  msg_f "Can't run without uname(1)."
-  msg_x "Aborting."
-fi
-
-# CYGWIN_HACKS=1
-# cygpath () {
-#   if [ $1 = "-u" ] ; then
-#     echo "$3" | sed 's|^/c:||'
-#   else
-#     echo "$3" | sed 's|^\(/c:\)\?|/c:|'
-#   fi
-# }
-
-if test ! $CYGWIN_HACKS && imatch_head_token `$UNAME -s` cygwin ; then
+set_cygwin () {
+  : ${WINPATH_PREFIX:=/cygdrive}
   export CYGWIN_HACKS=1
-  export WINPATH_PREFIX=/cygdrive
+  export WINPATH_PREFIX
+
+  # cygwin sh is not bash
+  if test ! $BASH ; then
+    BASH_EXE=`resolve_bin bash WARN`
+    if [ ! $BASH_EXE ] ; then
+      msg_f "Cygwin: 'sh' broken and can't find 'bash'!  Install bash first."
+      msg_x "Aborting. "
+    fi
+    exec $BASH_EXE -- "$0" "$@"
+  fi
+}
+
+if test ! $CYGWIN_HACKS ; then
+  if test $CM_OS ; then
+    if imatch_head_token "$CM_OS" cygwin ; then
+      set_cygwin
+    fi
+  elif which uname >/dev/null 2>&1 ; then
+    if imatch_head_token `uname -s` cygwin ; then
+      set_cygwin
+    fi
+  elif which cygpath >/dev/null 2>&1 ; then
+    # last resort: assume cygwin if no CM_OS and no uname but cygpath
+    set_cygwin
+  fi
 fi
 
-# cygwin sh is not bash
-if test ! $BASH && test $CYGWIN_HACKS ; then
-  BASH_EXE=`resolve_bin bash WARN`
-  if [ ! $BASH_EXE ] ; then
-    msg_f "Cygwin: 'sh' broken and can't find 'bash'!  Install bash first."
-    msg_x "Aborting. "
-  fi
-  exec $BASH_EXE -- "$0" "$@"
-fi
 
 
 #
@@ -309,20 +316,30 @@ else
   if [ ! "$LOC" ] ; then
     msg_e "No such file or directory: '$1'"
     msg_f "Can't determine CM_ROOT_DIR!"
-    msg_x "Aborting.  Re-run with -R option."
+    msg_i "Re-run with -R option."
+    msg_x "Aborting."
   else
     export PATH="$LOC:$PATH"
-    LOC="$LOC/.."		# we are now in cm/bin, so get back out of it
+    LOC="$LOC/.."               # we are now in cm/bin, so get back out of it
   fi
 fi
 
 export CM_ROOT_DIR="$LOC"
-export CM_ROOT="$LOC"		# backwards compat
+export CM_ROOT="$LOC"           # backwards compat
 
 
 #
 # Platform Detection
 # ------------------
+
+if [ ! "$OS" -o ! "ARCH" ] ; then
+  UNAME=`resolve_bin uname WARN`
+  if [ ! "$UNAME" ] ; then
+    msg_f "Can't run without either uname(1) or both of CM_OS and CM_ARCH set!"
+    msg_i "Re-run with environment variables set or pass -O and -A options."
+    msg_x "Aborting."
+  fi
+fi
 
 if [ ! "$OS" ] ; then
   for flag in s o ; do
@@ -383,7 +400,7 @@ find_lisp () {
     cmucl) bin=lisp ;;
     *)     bin=$1 ;;
   esac
-  resolve_bin $bin $3		# FIXME version ($2) is ignored for now
+  resolve_bin $bin $3           # FIXME version ($2) is ignored for now
 }
 
 get_lisp_info () {
@@ -392,15 +409,16 @@ get_lisp_info () {
       echo ${LISP_FLV}_${LISP_VRS}
     else
       case "$1" in
-	*clisp*|*CLISP*)		      flv=clisp ;;
-	*acl*|*ACL*)		      flv=acl ;;
-	*lisp*|*LISP*|*cmucl*|*CMUCL*)  flv=cmucl ;;
-	*openmcl*|*OPENMCL*|*dppccl*)   flv=openmcl ;;
-	*guile*)                        flv=guile ;;
-	*)
-	  msg_e "Can't determine flavor of '$1'.  Re-run with -F option."
-	  msg_x "Exiting."
-	  ;;
+        *clisp*|*CLISP*)                      flv=clisp ;;
+        *acl*|*ACL*)                  flv=acl ;;
+        *lisp*|*LISP*|*cmucl*|*CMUCL*)  flv=cmucl ;;
+        *openmcl*|*OPENMCL*|*dppccl*)   flv=openmcl ;;
+        *guile*)                        flv=guile ;;
+        *)
+          msg_e "Can't determine flavor of '$1'."
+          msg_i "Re-run with -F option."
+          msg_x "Exiting."
+          ;;
       esac
       echo ${flv}_$LISP_VRS
     fi
@@ -442,7 +460,8 @@ get_lisp_info () {
     if test $vrs ; then
       echo ${flv}_${vrs}
     else
-      msg_e "Can't detect version of '$1'.  Re-run with -V option."
+      msg_e "Can't detect version of '$1'."
+      msg_i "Re-run with -V option."
       msg_x "Exiting."
     fi
   fi
@@ -508,24 +527,24 @@ else
     for pref in $LISP_PREFS ; do
       for img in "$LOC"/bin/${pref}_*_$CM_PLATFORM/$IMG_NAME ; do
         if [ "$img" != "$LOC/bin/${pref}_*_$CM_PLATFORM/$IMG_NAME" ] ; then
-	  LISP_INF=`echo "$img" | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
-	  LISP_FLV=`echo $LISP_INF | sed 's:\([^_]*\)_.*$:\1:;'`
-	  LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
-	  if [ -x "$img" ] ; then
-	    LISP_EXE="$img"
-	    LISP_IMG=
-	    LOAD=
-	    break
-	  else
-	    LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS`
-	    if [ "$LISP_EXE" ] ; then
-	      LISP_IMG="$img"
-	      LOAD=
-	      break
-	    fi
-	  fi
-	  LISP_FLV=
-	  LISP_VRS=
+          LISP_INF=`echo "$img" | sed 's:^.*/\([^/]*\)/[^/]*$:\1:;'`
+          LISP_FLV=`echo $LISP_INF | sed 's:\([^_]*\)_.*$:\1:;'`
+          LISP_VRS=`echo $LISP_INF | sed 's:[^_]*_\([^_]*\)_.*:\1:;'`
+          if [ -x "$img" ] ; then
+            LISP_EXE="$img"
+            LISP_IMG=
+            LOAD=
+            break
+          else
+            LISP_EXE=`find_lisp $LISP_FLV $LISP_VRS`
+            if [ "$LISP_EXE" ] ; then
+              LISP_IMG="$img"
+              LOAD=
+              break
+            fi
+          fi
+          LISP_FLV=
+          LISP_VRS=
         fi
       done
       if [ "$LISP_EXE" ] ; then break ; fi
@@ -536,10 +555,10 @@ else
     for pref in $LISP_PREFS ; do
       LISP_EXE=`find_lisp $pref`
       if [ "$LISP_EXE" ] ; then
-	LISP_INF=`get_lisp_info "$LISP_EXE"`
-	if [ $? == 1 ] ; then exit 1 ; fi
-	LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
-	LISP_VRS=`echo $LISP_INF | sed 's:.*_::'`
+        LISP_INF=`get_lisp_info "$LISP_EXE"`
+        if [ $? == 1 ] ; then exit 1 ; fi
+        LISP_FLV=`echo $LISP_INF | sed 's:_.*::'`
+        LISP_VRS=`echo $LISP_INF | sed 's:.*_::'`
         LOAD=1
         break
       fi
@@ -572,37 +591,37 @@ make_lisp_cmd () {
     clisp)
       LISP_CMD="'$LISP_EXE' -I -q -ansi $LOPTS"
       if [ $LOAD ] ; then
-	LISP_CMD="$LISP_CMD -x '$LISP_EVL' -x t -repl"
+        LISP_CMD="$LISP_CMD -x '$LISP_EVL' -x t -repl"
       else
-	test $LISP_INI && LISP_INI="-i $LISP_INI"
-	LISP_CMD="$LISP_CMD -M '$LISP_IMG' $LISP_INI"
+        test $LISP_INI && LISP_INI="-i $LISP_INI"
+        LISP_CMD="$LISP_CMD -M '$LISP_IMG' $LISP_INI"
       fi
       ;;
     acl)
       LISP_CMD="'$LISP_EXE' $LOPTS"
       if [ $LOAD ] ; then
-	LISP_CMD="$LISP_CMD -e '$LISP_EVL'"
+        LISP_CMD="$LISP_CMD -e '$LISP_EVL'"
       else
-	test $LISP_INI && LISP_INI="-L $LISP_INI"
-	LISP_CMD="$LISP_CMD -I '$LISP_IMG' $LISP_INI"
+        test $LISP_INI && LISP_INI="-L $LISP_INI"
+        LISP_CMD="$LISP_CMD -I '$LISP_IMG' $LISP_INI"
       fi
       ;;
     cmucl)
       LISP_CMD="'$LISP_EXE' $LOPTS"
       if [ $LOAD ] ; then
-	LISP_CMD="$LISP_CMD -eval '$LISP_EVL'"
+        LISP_CMD="$LISP_CMD -eval '$LISP_EVL'"
       else
-	test $LISP_INI && LISP_INI="-init $LISP_INI"
-	LISP_CMD="$LISP_CMD -core '$LISP_IMG' $LISP_INI"
+        test $LISP_INI && LISP_INI="-init $LISP_INI"
+        LISP_CMD="$LISP_CMD -core '$LISP_IMG' $LISP_INI"
       fi
       ;;
     openmcl)
       LISP_CMD="'$LISP_EXE' $LOPTS"
       if [ $LOAD ] ; then
-	LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
+        LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
       else
-	test $LISP_INI && LISP_INI="--load $LISP_INI"
-	LISP_CMD="$LISP_CMD --image-name '$LISP_IMG' $LISP_INI"
+        test $LISP_INI && LISP_INI="--load $LISP_INI"
+        LISP_CMD="$LISP_CMD --image-name '$LISP_IMG' $LISP_INI"
       fi
       ;;
     guile)
@@ -647,7 +666,7 @@ is_wintendo_app () {
   [[ "$1" == $WINPATH_PREFIX/* ]]
 }
 wintendofy () {
-  cygpath -m -a "$1"		# use "mixed" format
+  cygpath -m -a "$1"            # use "mixed" format
 }
 
 if [ "$EDITOR_OPT" ] ; then
@@ -684,14 +703,14 @@ if [ "$EDITOR_OPT" ] ; then
       EL2="$LOC/etc/xemacs/cm.el"
       if test $CYGWIN_HACKS ; then
         if is_wintendo_app "$LISP_EXE" ; then
-	  if [ "$LISP_IMG" ] ; then
-	    LISP_IMG=`wintendofy "$LISP_IMG"`
-	  fi
-	  LISP_LOA=`wintendofy "$LISP_LOA"`
+          if [ "$LISP_IMG" ] ; then
+            LISP_IMG=`wintendofy "$LISP_IMG"`
+          fi
+          LISP_LOA=`wintendofy "$LISP_LOA"`
         fi
         if is_wintendo_app "$EDITOR_EXE" ; then
           EL1=`wintendofy "$EL1"`
-	  EL2=`wintendofy "$EL2"`
+          EL2=`wintendofy "$EL2"`
           LISP_EXE=`wintendofy "$LISP_EXE"`
         fi
       fi
