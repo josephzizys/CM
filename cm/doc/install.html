@@ -65,7 +65,7 @@ several common configurations.
 <h2><a name="install_src">Installing Common Music from Sources</a></h2>
 
 <p>
-You can install Common Music sources from FTP archive or via anonymous CVS. 
+Common Music can be installed from FTP archives or via anonymous CVS:
 </p>
 
 <h3><a name="install_ftp">Installing from FTP</a></h3>
@@ -86,8 +86,7 @@ Download the latest CM source archive (cm-latest.tar.gz) from either:
 </li>
 
 <li>
-Restore (uncompress and untar) the archive in an appropriate directory
-on your machine:
+Restore the archive in an appropriate directory on your machine:
 
 <div class="float">
 <p class="captxt">
@@ -113,8 +112,8 @@ CM source tree.
 </li>
 
 <li>
-Use anonymous CVS login and then check out (the <kbd>co</kbd> command)
-to restore the current CM source tree from the <a
+Use anonymous CVS to login and then check out the current CM source
+tree from the <a
 href="http://sourceforge.net/cvs/?group_id=9766">Sourceforge CVS
 repository</a>. Press the return key without any input when prompted
 for a password.
@@ -166,8 +165,8 @@ Welcome to OpenMCL Version (Beta: Darwin) 0.13.2!
 </li>
 
 <li>
-Continue to build Common Music from its sources as discussed in the
-next section of this document.
+Continue to build Common Music as discussed in the next section of
+this document.
 </li>
 
 </ol>
@@ -176,13 +175,13 @@ next section of this document.
 
 <p>
 In the following discussion all Lisp software has been installed under
-a main "/Lisp" directory. Change the directory path in the examples to
-reflect the location of the Lisp software on your filesystem.  The
-examples show what the build process looks like in OpenMCL on OSX; if
-you use some other Lisp or operating system the output will appear
-slightly differently as you perform each step. Note that on Windows
-you should use the Unix directory character "/" rather than the DOS
-directory character "\" when specifying filenames to the
+a main "/Lisp" directory. Change the directory path shown in the
+examples to reflect the location of the Lisp software on your
+filesystem.  The examples show how the build process appears in
+OpenMCL on OSX; if you use some other Lisp or operating system the
+output will appear slightly differently as you perform each step. Note
+that on Windows you should use the Unix directory character "/" rather
+than the DOS directory character "\" when specifying filenames to the
 <kbd>load</kbd> function. If you are loading CM in Guile under Windows
 from a directory that is not under Cygwin's file system you will have
 to start the pathname with the drive,
@@ -236,10 +235,10 @@ Optionally configure Lisp for no Scheme symbols in Common Music.
 </li>
 
 <li>
-Load the CM build script, either src/cm.scm (Guile) or
-src/cm.lisp (CL).  Specify the full, true pathname to the file,
-i.e. avoid relative paths or using "~/" unless you are sure your Lisp
-supports them:
+Load the CM build script, either "src/cm.scm" (Guile) or "src/cm.lisp"
+(CL).  Specify the full, true pathname to the file, i.e. avoid
+relative paths or using "~/" unless you are sure your Lisp supports
+them:
 
 <div class="float">
 <p class="captxt">
@@ -263,10 +262,10 @@ Welcome to OpenMCL Version (Beta: Darwin) 0.13.2!
 <p>
 In Guile the sources are simply loaded. In Common Lisp the sources are
 complied and loaded.  Binary files, images and scripts are normally
-saved in cm's "bin/" subdirectory. To save compiled files and images
+saved in CM's "bin/" subdirectory. To save compiled files and images
 somewhere else or to block an image file from being saved you can set
-the appropriate build parameter before loading cm.lisp. The names and
-default settings of these parameters are:
+the appropriate build parameter before loading "src/cm.lisp?. The
+names and default settings of these parameters are:
 </p>
 
 <table class="float">
@@ -286,43 +285,57 @@ delimiter character at the end, i.e. "/Lisp/bin/" not "/Lisp/bin".
 <li>
 Instructions on how to save a Common Music image in Common Lisp will
 be printed at the end of the compilation process.  In Guile no image
-is saved.  If you are using Common Lisp, quit and restart lisp, then
-perform steps 1-2 again. This will load the compiled files into the
-lisp and save the Common Music lisp image.
+is saved.
 </li>
 
 <li>
-At the end of the build process CM will save several script files and
-a default cminit.lisp file in the "bin/" directory.  The "bin/cm"
-script can be used to start up CM from a shell (terminal) window. The
+If you are using Common Lisp, quit and restart lisp, then load the
+"src/cm.lisp" script again. This pass will load the compiled files
+into lisp and save the Common Music lisp image.
+
+<div class="float">
+<p class="captxt">
+Quitting and reloading the build script in Common Lisp.
+</p>
+<pre class="shell">? <span class="input">(quit)</span>
+% <span class="input">openmcl</span>
+Welcome to OpenMCL Version (Beta: Darwin) 0.13.2!
+? <span class="input">(load "/Lisp/cm-2.4.0/src/cm.scm")</span>
+<i>[...lots of printout deleted...]</i></pre>
+</div>
+</li>
+
+<li>
+At the end of the load process CM will save several script files and a
+default "cminit.lisp" file in the "bin/" directory.  The "bin/cm"
+script can be used to start CM from a shell (terminal) window. The
 script "bin/xcm" script will launch <a
 href="http://www.xemacs.org">Xemacs</a> and start up CM in a dedicated
-Lisp Listener window. Note: you must have the <kbd>xemacs</kbd>
-program installed on your machine for this script to work. xcm does
-not work with Gnu Emacs. See the directory "etc/xemacs" for more
-information about working with Common Music inside Xemacs.
+Lisp Listener window. Note that you must have the <kbd>xemacs</kbd>
+program installed on your machine for this script to work. The xcm
+script does not work with Gnu Emacs. See the directory "etc/xemacs/"
+for more information about working with Common Music inside Xemacs.
 </li>
 
 <li>
 Look at the file in "etc/examples/intro.cm" for an idea of how to work
 with CM. Or better yet, buy the book "Notes from the Metalevel" :)
-
 </li>
 </ol>
 
 <h3><a name="build_scripts">Customized Build Scripts</a></h3> 
 
 <p>
-It is very easy to write a build script that your can use to load and
-save Common Music in exactly the configuration you want. Here is what
-a typical build script might look like. This particular scrip loads
-clm, cmn and cm together and will store all the compiled binary files
-in a separate directory tree ("/Lisp/bin") from the software sources.
+It is very easy to write a build script that will load and save Common
+Music in exactly the configuration you want. Here is what a typical
+build script might look like. This particular scrip loads clm, cmn and
+cm together and stores all the compiled binary files in a separate
+directory tree ("/Lisp/bin") apart from the software sources.
 </p>
 
 <div class="float">
 <p class="captxt">
-The contents of "/Lisp/adm/loadall.lisp"
+The contents of a cusomized build script.
 </p>
 <pre class="code"><span class="comment">;;; CLM source and binary locations.</span>
 
@@ -345,21 +358,20 @@ The contents of "/Lisp/adm/loadall.lisp"
 </div>
 
 <p>
-Once the script is defined you simply load it rather than "cm/src/cm.lisp":
+Once the script is defined save it as a lisp file and then load that
+file rather than the generic "cm/src/cm.lisp":
 </p>
 
 <div class="float">
 <p class="captxt">
-Loading the custom build script.
+Loading a custom build script called "loadall.lisp".
 </p>
 
-<pre class="shell">% openmcl
+<pre class="shell">% <span class="input">openmcl</span>
 Welcome to OpenMCL Version (Beta: Darwin) 0.13.2!
 ? <span class="input">(load "/Lisp/adm/loadall.lisp")</span>
 <i>[...lots of printout deleted...]</i></pre>
 </div>
-
-
 
 
 <h2><a name="install_ms">Installing Midishare</a></h2>
