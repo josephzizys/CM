@@ -454,14 +454,13 @@ fi
 
 LISP_CMD=
 LISP_INI=
-#LISP_EVL="\"(progn (load \\\\\"$CM_ROOT/src/cm.lisp\\\\\" :verbose nil) (cm))\""
-LISP_EVL="'(progn (load \"$CM_ROOT/src/cm.lisp\" :verbose nil) (cm))'"
+LISP_EVL="(progn (load \"$CM_ROOT/src/cm.lisp\" :verbose nil) (cm))"
 
 case $LISP_FLV in
   clisp)
     LISP_CMD="$LISP_EXE -I -q -ansi"
     if [ $LOAD ] ; then
-      LISP_CMD="$LISP_CMD -x $LISP_EVL -x t -repl"
+      LISP_CMD="$LISP_CMD -x '$LISP_EVL' -x t -repl"
     else
       test $LISP_INI && LISP_INI="-i $LISP_INI"
       LISP_CMD="$LISP_CMD -M $LISP_IMG $LISP_INI"
@@ -470,7 +469,7 @@ case $LISP_FLV in
   acl)
     LISP_CMD="$LISP_EXE"
     if [ $LOAD ] ; then
-      LISP_CMD="$LISP_CMD -e $LISP_EVL"
+      LISP_CMD="$LISP_CMD -e '$LISP_EVL'"
     else
       test $LISP_INI && LISP_INI="-L $LISP_INI"
       LISP_CMD="$LISP_CMD -I $LISP_IMG $LISP_INI"
@@ -479,7 +478,7 @@ case $LISP_FLV in
   cmucl)
     LISP_CMD="$LISP_EXE"
     if [ $LOAD ] ; then
-      LISP_CMD="$LISP_CMD -eval $LISP_EVL"
+      LISP_CMD="$LISP_CMD -eval '$LISP_EVL'"
     else
       test $LISP_INI && LISP_INI="-init $LISP_INI"
       LISP_CMD="$LISP_CMD -core $LISP_IMG $LISP_INI"
@@ -488,7 +487,7 @@ case $LISP_FLV in
   openmcl)
     LISP_CMD="$LISP_EXE"
     if [ $LOAD ] ; then
-      LISP_CMD="$LISP_CMD --eval $LISP_EVL"
+      LISP_CMD="$LISP_CMD --eval '$LISP_EVL'"
     else
       test $LISP_INI && LISP_INI="--load $LISP_INI"
       LISP_CMD="$LISP_CMD --image-name $LISP_IMG $LISP_INI"
@@ -507,10 +506,6 @@ esac
 
 EDITOR_EXE=
 EDITOR_CMD=
-EDITOR_INI="-l $LOC/etc/xemacs/listener.el -l $LOC/etc/xemacs/cm.el"
-EDITOR_LCM=`echo $LISP_CMD | sed 's:":\\\\\\\\\\\\\":g;'s:\':\\\\\\\\\":g`
-EDITOR_EVL='(lisp-listener "'$EDITOR_LCM'")'
-#EDITOR_EVL='(lisp-listener "'`echo $LISP_CMD | sed 's/"/\\\"/g;'s/\'/\'\"\'\"\'/g`'")'
 
 under_editor () {
   test $EMACS
@@ -527,8 +522,15 @@ if [ $EDITOR_OPT ] ; then
       EDITOR_EXE=
       EDITOR_CMD=
     else
+      EL1="$LOC/etc/xemacs/listener.el"
+      EL2="$LOC/etc/xemacs/cm.el"
+      LCM=`echo $LISP_CMD | sed 's:":\\\":g;' | tr -d "'"`
+      INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
       EDITOR_EXE=$EDITOR
-      EDITOR_CMD="$EDITOR_EXE $EDITOR_INI -eval '$EDITOR_EVL'"
+      EDITOR_CMD="$EDITOR_EXE -eval '$INI'"
+      if [[ $EDITOR_EXE == *gnuclient ]] ; then
+        EDITOR_CMD="$EDITOR_CMD -batch"
+      fi
     fi
   fi
 fi
