@@ -1449,7 +1449,7 @@
                     ;;(format stream "~2,'0x~:[~; ~]"
                     ;;        (vector-ref data n) (odd? i))
                     (format stream
-                            (format-integer (vectorr-ref data n) 2 #\0))
+                            (format-integer (vector-ref data n) 2 #\0))
                     (if (odd? i) (format stream " "))
                     (incf n))
                 finally (set! blank (- 16 i)))
