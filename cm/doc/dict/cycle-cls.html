@@ -20,6 +20,13 @@ Enumerates data in sequential order, loops back to the first element
 after the last element has been reached.
 </p>
 
+<p>
+See <a href="patterns-topic.html#pattern_inits">generic pattern
+initializations</a> for documentation on keyword initializations to
+the pattern.
+</p>
+
+
 <h4>Examples:</h4>
 
 <div class="float">
@@ -37,7 +44,7 @@ after the last element has been reached.
 (<a href="next-fn.html">next</a> x #t)
 <span class="result">&rArr;</span> (72 74 76 77 79 81 72 74 76 77 79 81)
 
-<span class="comment">;; cycle of random selection</span>
+<span class="comment">;;; cycles of randomness</span>
 (<span class="special">define</span> <span class="defined">x</span> (<a href="new-mac.html">new</a> cycle 
                <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(a1 a2 a3) <span class="keyword">:for</span> 1)
                          (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(b1 b2 b3) <span class="keyword">:for</span> 1)
@@ -50,7 +57,7 @@ after the last element has been reached.
 
 <div class="float">
 <p class="captxt">
-<span class="floatlabel">Example 2.</span> Generate Talea and color cycles.
+<span class="floatlabel">Example 2.</span> Generate talea and color cycles.
 </p>
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">playtc</span> talea color)
@@ -66,28 +73,18 @@ after the last element has been reached.
 
 (<a href="events-fn.html">events</a> (playtc '(e. s e e s e. s)
                 '(cs4 d6 gs5 b4 g4 fs5))
-        <span class="string">"tc.mid"</span>)
-<span class="result">&rArr;</span><span class="string">"tc.mid"</span>
+        <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span><span class="string">"test.mid"</span>
 </pre>
 </div>
 
 <!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
-<li><a href="accumulation-cls.html"><kbd>accumulation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="funcall-cls.html"><kbd>funcall</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="graph-cls.html"><kbd>graph</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="heap-cls.html"><kbd>heap</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="join-cls.html"><kbd>join</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="line-cls.html"><kbd>line</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="markov-cls.html"><kbd>markov</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="palindrome-cls.html"><kbd>palindrome</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="range-cls.html"><kbd>range</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="rewrite-cls.html"><kbd>rewrite</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="rotation-cls.html"><kbd>rotation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-</ul>
+<li><a href="patterns-topic.html#pattern_classes">Pattern classes</a> [Topic]</li>
+<li><a href="patterns-topic.html#example_3">Example 3</a> in Patterns [Topic]</li>
 
+</ul>
 
 </div>
 <hr class="inv"/>

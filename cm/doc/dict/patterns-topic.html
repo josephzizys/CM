@@ -20,10 +20,11 @@ Patterns are objects that generate data according to pattern specific
 ordering rules. Patterns can hold any sort of Lisp data and may
 include nested sub-patterns that define smaller (local) orderings
 within the surrounding pattern. 
-
+</p>
 
 <h4>Pattern Classes</h4>
 
+<p>
 The system provides a number of generic pattern types that can used
 individually or nested together to form composite patterns:
 </p>
@@ -68,7 +69,7 @@ and optionally inverts and reverses pattern data</td></tr>
 </table>
 </div>
 
-<h4 id="pattern_inits">Pattern Initializations</h4>
+<h4 id="pattern_inits">Generic Pattern Initializations</h4>
 
 <p>
 The pattern classes listed in <a href="#table_1">Table 1</a> all support
@@ -275,9 +276,9 @@ like a "musical mobile" in which the different cycles of elements
 rotate about each other each in their own orbit.
 </p>
 
-<div class="float">
+<div class="float" id="example_3">
 <p class="captxt">
-<span class="floatlabel">Example 2.</span> Period length patterns.
+<span class="floatlabel">Example 3.</span> Period length patterns.
 </p>
 <pre class="code">
 (<span class="special">define</span> <span class="defined">pat1</span>
@@ -303,9 +304,9 @@ repeat factor and the period length as markers to control musical
 evolution, without knowing their actual values.
 </p>
 
-<div class="float">
+<div class="float" id="example_4">
 <p class="captxt">
-<span class="floatlabel">Example 3.</span> Checking for end-of-period
+<span class="floatlabel">Example 4.</span> Checking for end-of-period
 and end-of-data conditions.
 </p>
 <pre class="code">
@@ -339,8 +340,8 @@ and end-of-data conditions.
 
 <h4>See also:</h4>
 <ul>
-<li><a href="#table_1">Generic pattern classes</li>
-<li><a href="#table_2">Specialized pattern classes</li>
+<li><a href="#table_1">Generic pattern classes</a></li>
+<li><a href="#table_2">Specialized pattern classes</a></li>
 <li><a href="process.html"><code>process</code></a> [Macro]</li>
 </ul>
 

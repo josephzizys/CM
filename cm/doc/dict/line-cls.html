@@ -14,44 +14,66 @@
 <!-- Entry: "line" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><code class="entry">line</code></span></dd>
+<dd><code class="entry">line</code></dd>
 </dl>
-
 
 <p>
 Enumerates data in sequential order and sticks on the last element once it has been reached.
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(define x (new pattern :of '(a b c d) :in line))</span>
+<p>
+See <a href="patterns-topic.html#pattern_inits">generic pattern
+initializations</a> for documentation on keyword initializations to
+the pattern.
+</p>
 
-cm&gt; <span class="input">(next x 12)</span>
-(a b c d d d d d d d d d)
-cm&gt; <span class="input">(define x (new line :of (list 'a 'b 'c (new random :of '(d e)))))</span>
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> The line pattern.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">pat</span> (<a href="new-mac.html">new</a> line <span class="keyword">:of</span> '(a b c d)))
 
-cm&gt; <span class="input">(next x 12)</span>
-(a b c e e d e d e d d d)
-cm&gt;</pre>
+(<a href="next-fn.html">next</a> pat 12)
+<span class="result">&rArr;</span> (a b c d d d d d d d d d)
+
+(<span class="special">define</span> <span class="defined">pat</span> (<a href="new-mac.html">new</a> line <span class="keyword">:of</span> `(a b c (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(d e)))))
+
+(<a href="next-fn.html">next</a> pat 12)
+<span class="result">&rArr;</span> (a b c e e d e d e d d d)
+</pre>
+</div><div class="float">
+
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Metric figures using line.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">pat1</span>
+  (<a href="new-mac.html">new</a> <a href="heap-cls.html">heap</a> <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> line <span class="keyword">:rhythms</span> 's 
+                           <span class="keyword">:for</span> (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(4 6 8)))
+                      (<a href="new-mac.html">new</a> line <span class="keyword">:rhythms</span> 'e <span class="keyword">:for</span> 
+                           <span class="keyword">:for</span> (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(2 3)))
+                      (<a href="new-mac.html">new</a> line <span class="keyword">:rhythms</span> 'q <span class="keyword">:for</span> 1))))
+
+(<span class="special">define</span> (<span class="defined">play-pat</span> reps pat lb ub)
+  (<a href="process-mac.html">process</a> repeat reps
+           for r = (* (<a href="next-fn.html">next</a> pat) .5)
+           output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>) <span class="keyword">:keynum</span> (<a href="between-fn.html">between</a> lb ub)
+                       <span class="keyword">:duration</span> (* r 2.5))
+           wait r))
+                 
+(<a href="events-fn.html">events</a> (play-pat 40 pat1 40 80) <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
+</pre>
 </div>
-
-
+                                      
 <!-- See also -->
 <h4>See Also:</h4>
 <ul>
-<li><a href="accumulation-cls.html"><kbd>accumulation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="cycle-cls.html"><kbd>cycle</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="funcall-cls.html"><kbd>funcall</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="graph-cls.html"><kbd>graph</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="heap-cls.html"><kbd>heap</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="join-cls.html"><kbd>join</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="markov-cls.html"><kbd>markov</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="palindrome-cls.html"><kbd>palindrome</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="range-cls.html"><kbd>range</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="rewrite-cls.html"><kbd>rewrite</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="rotation-cls.html"><kbd>rotation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="patterns-topic.html#pattern_classes">Pattern classes</a> [Topic]</li>
+<li><a href="patterns-topic.html#example_2">Example 2</a> in Patterns [Topic]</li>
+
 </ul>
 
 
