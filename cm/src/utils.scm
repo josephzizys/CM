@@ -345,7 +345,7 @@
 ;;; cm-version
 ;;;
 
-(define %cm-version% #x240)
+(define %cm-version% #x241)
 
 (define (cm-version-number)
   (format #f "~a.~a.~a" 
@@ -363,24 +363,28 @@
 ;;; the ultimate in algorithmic iconic artware
 ;;;
 
+(define *cm-logo* #t)
+
 (define (cm-logo )
-  (do ((e "~%")
-       (v (make-string 15))
-       (y 0 (+ y 1)))
-      ((= y 7) (values))
-    (format #t
-            (do ((x 0 (+ x 1)))
-                ((= x 15)
-                 (if (= y 3)
-                   (string-append v " " (cm-version) e)
-                   (string-append v e)))
-              (string-set! v x
-                           (if (<= 2 (- x y) 4) #\\
-                               (if (= (- x (- 4 (modulo (+ 13 y) 15))) 1)
-                                 #\/
-                                 (if (<= 1 y 5) #\-
-                                     (if (= (* (- x 6) (- y 3)) 15) #\/
-                                         #\space)))))))))
+  (if *cm-logo*
+    (do ((e "~%")
+         (v (make-string 15))
+         (y 0 (+ y 1)))
+        ((= y 7) (values))
+      (format #t
+              (do ((x 0 (+ x 1)))
+                  ((= x 15)
+                   (if (= y 3)
+                     (string-append v " " (cm-version) e)
+                     (string-append v e)))
+                (string-set! v x
+                             (if (<= 2 (- x y) 4) #\\
+                                 (if (= (- x (- 4 (modulo (+ 13 y) 15))) 1)
+                                   #\/
+                                   (if (<= 1 y 5) #\-
+                                       (if (= (* (- x 6) (- y 3)) 15) #\/
+                                           #\space))))))))
+    (values)))
 
 ;;;
 ;;; string hacks
