@@ -300,6 +300,7 @@ CWD=`pwd`
 
 if [ "$CM_ROOT_DIR" ] ; then
   LOC="$CM_ROOT_DIR"
+  export PATH="$LOC/bin:$PATH"
 else
   PTU=`echo "$ARGV0" | sed 's:[^/]*$::;s:\(.\)/$:\1:;'`
   LOC=`real_path "$PTU"`
@@ -308,6 +309,7 @@ else
     msg_f "Can't determine CM_ROOT_DIR!"
     msg_x "Aborting.  Re-run with -R option."
   else
+    export PATH="$LOC:$PATH"
     LOC="$LOC/.."		# we are now in cm/bin, so get back out of it
   fi
 fi
@@ -315,7 +317,8 @@ fi
 export CM_ROOT_DIR="$LOC"
 export CM_ROOT="$LOC"		# backwards compat
 
-
+echo "$PATH"
+exit 0
 #
 # Platform Detection
 # ------------------
@@ -408,7 +411,7 @@ get_lisp_info () {
         flv=clisp
         vrs=`"$1" --version | head -1 | cut -d' ' -f3`
         min=`echo -e "$vrs\n2.31" | sort -n | head -1`
-        if [ $min != 2.31 ] ; then
+        if [ "$min" != 2.31 ] ; then
           msg_f "$1: version '$vrs' unsupported."
           msg_i "Need clisp with -repl option (version 2.31 or higher)."
           msg_x "Aborting."
@@ -644,7 +647,7 @@ is_wintendo_app () {
   [[ "$1" == $WINPATH_PREFIX/* ]]
 }
 wintendofy () {
-  cygpath -w -a "$1"
+  cygpath -m -a "$1"		# use "mixed" format
 }
 
 if [ "$EDITOR_OPT" ] ; then
