@@ -1,23 +1,53 @@
-CM 2.5.0 (unstable development branch release)
+CM 2.5.0 (development branch release)
 
-o CM now supports 
+o MIDI write-event method for midi-files now treats events with zero
+  amplitude as equivalent to events with keynums less than zero: nothing is
+  written to the file and the file's output time is not updated.
+  
+o Rewrote all pattern documention with new examples and added two new
+  pattern dictionary entries:
+    doc/dict/pattern-topic.html - overview/tutorial for patterns
+    doc/dict/copier-cls.html    - documents copier pattern.
 
-o Plotter reimplemented. Now runs in GTK2 in the following lisps:
+o Changes to pattern implementations:
+
+    1. Random patterns that contain only sub-patterns now have a
+       default period length of 1, which causes the random pattern's
+       period length to track the period lengths of its sub-patterns.
+    2. copier periods can now track sub-pattern periods using the new
+       :repeat-for initialization
+    3. new function rewrite-generation returns the next full generation
+       from a rewrite pattern. specify false to its optional second
+       argument to return the current generation without recalculating
+       it first.
+
+o A new "spectral composition" function rm-spectrum generates a
+  spectrum of notes/keynums using ring modulation. see:
+    doc/dict/rm-spectrum.html
+
+o Added documentation for previously undocumented function fm-spectrum:
+    doc/dict/fm-spectrum.html
+
+o Plotter reimplemented in GTK2 for the following lisps:
     OpenMCL/Darwin/PPC
     SBCL/Linux/x86
     CMUCL/Lunux/x86
+  See:
+    doc/dict/plotter-topic.html
+    etc/examples/plotter.cm
 
-o New function (cmio) provides GUI "front end" for CM input/output.
+o New function (cmio) opens GUI "front end" to CM input/output. See:
+    doc/dict/cmio-topic.html
 
-o Real-time MIDI process scheduling and interactive MIDI
-  input/output is now supported in OSX / OpenMCL 0.41.1-p1. See the
-  new documentation topic for information on how this all works:
+o Importing CLM score files now supported.
 
-      doc/dict/midi-topic.html
+o Real-time MIDI process scheduling and interactive MIDI input/output
+  now supported in OSX/OpenMCL. See the real time section in the new
+  MIDI topic documentation more information: doc/dict/midi-topic.html
 
 o If Midishare is properly installed then CM autoloads it at load
- time.  I have not tested this in a saved image and would recommend
- that you use bin/cm.sh without saving an image for the time being.
+  time.  I have not tested this in a saved image and would recommend
+  that you use bin/cm.sh without saving an image for the time being.
 
 o Common Music's "midi.port" is now implemented by a subclass of
   midishare-stream.  The midi-port represents the CM client
@@ -29,8 +59,7 @@ o Common Music's "midi.port" is now implemented by a subclass of
     *mp*
 
 o New highlevel MIDI event classes replace the MIDIMSG class for
-  generating events to MIDI files and to a MidiShare stream in
-  non-realtime:
+  generating events to MIDI files MidiShare streams
 
   Channel Messages classes:
     midi
@@ -68,7 +97,7 @@ o The functions 'hertz', 'note' and 'keynum' have been reimplemented
    to provide additional functionality and to make these functions
    behave more uniformly. This has resulted in one incompatible
    change: the :HZ tag used by note and keynum is now a true keyword
-   parameter: do (note 440 :hz t) not (note 440 :hz) The :hz tag will
+   parameter: i.e. (note 440 :hz t) not (note 440 :hz) The :hz tag will
    continue to work for the time being but with a warning.
    Be sure to read the updated entries in the dictionary.
 
@@ -101,16 +130,27 @@ o new function linux-play-midi-file for playing .mid files on
 o 'wait' now performs abs on wait values so that negative (rest)
    values are handled correctly
 
-o When CM starts up it now looks for an init file in the user's home
-  directory in addition to the "sitewide" cminit.lisp and loads it if
-  it exits. The name of this "personal" init file is "~/.cminit.lisp"
+o CM now looks for an init file "cminit.lisp" in the user's home
+  directory and, if it exists, loads it after it first loading the
+  "sitewide" cminit.lisp (this allowing the personal init file to
+  override sitewide behavior). The file is loaded without ensuring any
+  particular package is "current" so be sure to put an explicit
+  (use-package ...) at the top of the file if you mean the forms to be
+  evaled in a particular package.
 
-o make-cm has new :extensions parameter for loading 
-  extensions. see make-cm in dictionary for more info.
+o make-cm has new :extensions parameter for loading extensions. see
+  make-cm in dictionary for more info.
 
 o Support for loading "sitewide" cminit.lisp files in CLISP 2.33
 
 o CM ported to SBCL, a variant of CMUCL.
+
+
+BUG FIXES:
+
+1. MIDI events with keynum < 0 no longer side effect the midi file.
+2. Rewrite pattern now parese wildcard * token in rules correctly.
+3. Quantize now rounds up or down the same for even or odd numbers.
 
 ----------------------------------------------------------------------
 CM 2.4.2
