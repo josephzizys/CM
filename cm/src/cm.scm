@@ -67,16 +67,16 @@
 
 ;;; maybe install default cminit.lisp file in bin directory
 
-(let ((init (string-append *cm-root* "lib/cminit.lisp"))
-      (orig (string-append *cm-root* "etc/cminit.lisp")))
- (if (not (file-exists? init))
-   (if (file-exists? orig)
-     (copy-file orig init)
-     (format #t "; Help! Can't copy ~s -> ~s."
-	     orig init))))
+;(let ((init (string-append *cm-root* "lib/cminit.lisp"))
+;      (orig (string-append *cm-root* "etc/cminit.lisp")))
+; (if (not (file-exists? init))
+;   (if (file-exists? orig)
+;     (copy-file orig init)
+;     (format #t "; Help! Can't copy ~s -> ~s."
+;	     orig init))))
 
 ;; load init file
-(let ((init (string-append *cm-root* "lib/cminit.lisp")))
+(let ((init (string-append *cm-root* "etc/cminit.lisp")))
   (if (file-exists? init)
     (load init)))
 
