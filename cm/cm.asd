@@ -21,7 +21,7 @@
 
 (defsystem "cm"
     :description "Common Music"
-    :version "2.5.1"
+    :version "2.6.0"
     :author "Rick Taube <taube@uiuc.edu>"
     :licence "GPL"
     :components ((:module "src" :components ((:file "cm"))

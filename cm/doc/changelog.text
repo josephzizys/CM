@@ -1,6 +1,4 @@
-----------------------------------------------------------------------
-CM 2.5.1
-Development Release
+CM 2.6.0
 
 o ASDF loading and installing now supported (Thanks Greg Pfeil)
   See cm/cm.asd and http://www.cliki.net/asdf for more information.
