@@ -256,7 +256,9 @@
 	 ;; if we got an error flush remaining queue entries.
 	 ;(warning "Flushing queue.")
 	 (%q-flush *queue*)
-	 (unschedule-object object #t))))))
+	 (unschedule-object object #t))
+       ;; toplevel #f for interactive midi.
+       (set! *queue* #f)))))  
 
 (define (enqueue object time start)
   (%q-insert (%qe-alloc *queue* time start object) *queue*))
