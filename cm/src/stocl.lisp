@@ -981,8 +981,8 @@
   ;; (hash-remove tbl index) 
   (let ((table (second form))
         (index (third form)))
-    `(remhash ,(scheme->cltl table env)
-              ,(scheme->cltl index env))))
+    `(remhash ,(scheme->cltl index env)
+              ,(scheme->cltl table env))))
 
 ;;;
 ;;; GOOPS. the only real issues with goops->clos are the
