@@ -21,7 +21,7 @@
 
 (defpackage cm 
   (:use common-lisp #+clm clm #+midishare midishare)
-  #+clm (:shadow "IO" "RAN" ) ;"DEFINSTRUMENT"
+  #+clm (:shadow "IO" "RAN" "DEFINSTRUMENT")
   #+clm (:import-from clm 
                       mus-next
                       mus-bshort
@@ -34,9 +34,8 @@
                       finish-with-sound
                       *clm-channels*
                       *clm-srate*
-                      definstrument
+                      ;definstrument
                       )
-  (:shadow "IO" "RAN" )
   #+midishare
   (:import-from midishare
                 midishare midiGetVersion MidiOpen MidiClose MidiCountAppls

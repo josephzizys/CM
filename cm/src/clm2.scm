@@ -75,22 +75,42 @@
     (if reverb-data (format #t "reverb data: ~s~%"))
     (values)))
 
-(define definstrument-hook 
-  (lambda (name args)
-    (let* ((opts (if (pair? name) (cdr name) (list)))
-           (obj? #t ) ;(list-prop opts ':instrument-only #t)
-           ;(ins? (not (list-prop opts ':object-only)))
-           (tpar (list-prop opts ':time-parameter ))
-           )
-      (if obj?
-        (formals->defobject 
-         (list* (if opts (first name) name) args)
-         tpar)
-        (list)))))
 
-;(formals->defobject '(fm time duration frequency amplitude
+;(define definstrument-hook 
+;  (lambda (name args)
+;    (let* ((opts (if (pair? name) (cdr name) (list)))
+;           (obj? #t ) ;(list-prop opts ':instrument-only #t)
+;           ;(ins? (not (list-prop opts ':object-only)))
+;           (tpar (list-prop opts ':time-parameter ))
+;           )
+;      (if obj?
+;        (formals->defobject 
+;         (list* (if opts (first name) name) args)
+;         tpar)
+;        (list)))))
+
+(define clm:definstrument
+  ;; this gets omitted in the cltl sources.
+  (if (bound? 'definstrument)
+    definstrument #f))
+				      
+(defmacro definstrument (name args . body)
+  (let* ((opts (if (pair? name) (cdr name) (list)))
+         (obj? #t ) ;(list-prop opts ':instrument-only #t)
+         (tpar (list-prop opts ':time-parameter ))
+         )
+    `(begin
+      (clm:definstrument ,name ,args ,@body)
+      ,(if obj?
+           (formals->defobject (list* (if (pair? opts)
+					(first name) 
+					name) 
+				      args)
+			       tpar)
+           (list)))))
+
+;formals->defobject '(fm time duration frequency amplitude
 ;                      &key (amplitude-env '(0 0 25 1 75 1 100 0))
 ;                      (mratio 1) (index 1) (index-env '(0 1 100 1))
 ;                      (degree 0) (distance 0) (reverb 0))
 ;                    )
-
