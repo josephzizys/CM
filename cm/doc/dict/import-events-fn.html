@@ -14,131 +14,104 @@
 <!-- Entry: "import-events" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">import-events</code> <var>file</var> <var>...</var>)</span></dd>
+<dd><span class="syntax">(<code class="entry">import-events</code> <var>file</var> {<var>keyword value</var>}*)</span></dd>
 </dl>
 
-
 <p>
-Imports events from <var>file</var> according to <var>keywords</var>.
-<kbd>import-events</kbd> currently has methods defined for CLM, CSound
-and MIDI files.
+Imports musical events in <var>file</var> according to the type of
+file specified.  Currently supported score file types are: .clm, .mid
+and .sco files.
 </p>
 
-<p> 
-If <var>file</var> is a .clm file then <kbd>import-events</kbd> imports
-every <kbd>ins</kbd> object that could be parsed from instrument calls
-in the file.  The instruments referenced in <var>file</var> must be
-defined (loaded) before <kbd>import-events</kbd> can translate their
-calls into objects.  <kbd>import-events</kbd> creates a .cm translation
-file containing translated instrument calls and other top-level forms
-from <var>file</var> not explicitly excluded by the user.  By default the
-translation file is loaded after it has been written and a seq object
-containing the imported objects is returned by <kbd>import-events</kbd>.
+<h4 id="clm">CLM Importing</h4>
+
+<p> If <var>file</var> is a .clm file then instrument calls are parsed
+into instrument objects.  The instruments referenced
+in <var>file</var> must already be defined (loaded into Lisp) before
+calling the function.  By default the imported file is loaded after it
+has been created and a <a href="seq-cls.html">seq</a> object
+containing the imported objects is returned
+as the value of the function.
 </p>
 
 <p>
-<var>file</var> comes zero or more keyword arguments.
+CLM importing supports the following keyword arguments:
 </p>
 
-<p><code class="entry">Importing .clm files supports the following keywords:</code> supports the following slot initializations:
-</p>
 <dl>
 
-
-<dt><code class="keyword">:output</code> <var>pathname</var></dt>
+<dt><span class="keyword">:output</span> <var>pathname</var></dt>
 <dd>
-
-
-The pathname of the translation file created from <var>file</var>.
-Defaults to the same directory and name as <var>file</var> with a "cm" extension added.
-
+The pathname of the object translation file created
+from <var>file</var>.  Defaults to the same directory and name
+as <var>file</var> but with a "cm" extension added.
 </dd>
 
-
-<dt><code class="keyword">:seq</code> {<var>true</var> | <var>false</var>}</dt>
+<dt><span class="keyword">:seq</span> {<var>boolean</var>}</dt>
 <dd>
-
-If true then <kbd>import-events</kbd> returns a <kbd>seq</kbd> object containing the
-imported objects, otherwise a list of objects is returned. Defaults to true.
-
+If true, then the function returns a <a href="seq-cls.html">seq</a>
+object containing the imported objects, otherwise a list of objects is
+returned. Defaults to true.
 </dd>
 
-
-<dt><code class="keyword">:load</code> {<var>true</var> | <var>false</var>}</dt>
+<dt><span class="keyword">:translations</span> <var>list</var></dt>
 <dd>
-
-
-If true then <kbd>import-events</kbd> loads the translation file after
-it is written, otherwise the file is created but not loaded.  Defaults
-to true.
-
-</dd>
-
-
-<dt><code class="keyword">:translations</code> <var>list</var></dt>
-<dd>
-
-
-Specifies which expressions in <var>file</var> get translated into objects
-and how to translate them.  Each entry is a list: <kbd>(</kbd><var>symbol
-function</var><kbd>)</kbd> where <var>symbol</var> is the name of the
-expression to be translated and <var>function</var> is its translation
-function.  The function is passed four arguments: the form to
-translate and the <code class="keyword">:translation</code>, <code class="keyword">:exclude</code> and
-<code class="keyword">:include</code> lists specified to <kbd>import-events</kbd>.  The
+Specifies which expressions in <var>file</var> get translated into
+objects and how the translation is made.  Each entry is a
+list: <kbd>(</kbd><var>symbol function</var><kbd>)</kbd>
+where <var>symbol</var> is the name of the expression to be translated
+and <var>function</var> is its translation function.  The function is
+passed four arguments: the form to translate and the <span
+class="keyword">:translation</span>, <span
+class="keyword">:exclude</span> and
+<span class="keyword">:include</span> lists specified to <kbd>import-events</kbd>.  The
 translation function can explicitly call <kbd>import-form</kbd> to
-recursivly process its subforms if necesary.  <code class="keyword">:translations</code>
+recursivly process its subforms if necesary.  <span class="keyword">:translations</span>
 defaults to the value of <kbd>*import-translations*</kbd> which defines
 translations for <kbd>let</kbd>,<kbd>let*</kbd>,<kbd>progn</kbd> and
 <kbd>with-sound</kbd> expressions.
-
 </dd>
 
 
-<dt><code class="keyword">:exclude</code> <var>list</var></dt>
+<dt><span class="keyword">:exclude</span> <var>list</var></dt>
 <dd>
-
 A list of top-level forms to omit from the translation file.
 </dd>
 
-
-<dt><code class="keyword">:include</code> {<code>t</code> | <var>list</var>}</dt>
+<dt><span class="keyword">:include</span> {<code>t</code> | <var>list</var>}</dt>
 <dd>
-
 A list of undefined top-level forms in <var>file</var> that should 
 be include in the translation file. All <kbd>defun</kbd> or <kbd>defmacro</kbd> forms
 encounted while translating <var>file</var> are automatically added to this list.
 </dd>
-
-
 </dl>
 
 
+<h4 id="csound">Csound Importing</h4>
+
 <p>
-If <var>file</var> is a .sco file then <kbd>import-events</kbd> returns a 
-<kbd>seq</kbd> containing the <kbd>i</kbd> objects in <var>file</var>.
-.sco file parsing handles the carry parameters
+If <var>file</var> is a .sco file then <kbd>import-events</kbd>
+returns a <a href="seq-cls.html">seq</a> containing the <a
+href="i-cls.html">i</a> objects in <var>file</var>.  Csound score file
+parsing handles the carry parameters
 <kbd>.</kbd> <kbd>+</kbd> and <kbd>^</kbd> but does not support a_statements
 or more than one s_statement. All f_statements are automatically added
 to the header of the <var>file</var> io structure.
 </p>
 
-<p><code class="entry">Importing .sco files supports the following <var>keywords</var>:</code> supports the following slot initializations:
+<p>
+Csound importing supports the following keyword arguments:
 </p>
+
 <dl>
-
-
-<dt><code class="keyword">:output</code> <var>pathname</var></dt>
+<dt><span class="keyword">:output</span> <var>pathname</var></dt>
 <dd>
-
 The pathname of the .cm import file created of out <var>file</var>.
 Defaults to then same directory and name as the score file.
 </dd>
 
-
-<dt><code class="keyword">:load</code> {<var>true</var> | <var>false</var>}</dt>
+<dt><span class="keyword">:load</span> {<var>true</var> | <var>false</var>}</dt>
 <dd>
-
 Determines whether or not the translation file is loaded into CM or not.
 Defaults to true.
 </dd>
@@ -146,85 +119,85 @@ Defaults to true.
 </dl>
 
 
+<h4>Midi Importing</h4>
 
 <p>
-If <var>file</var> is a .midi file then <kbd>import-events</kbd> returns a 
+If <var>file</var> is a .mid file then <kbd>import-events</kbd> returns a 
 <kbd>seq</kbd> containing midi objects from one or more tracks of <var>file</var>.
 </p>
 
-<p><code class="entry">Importing .midi files supports the following keywords:</code> supports the following slot initializations:
+<p>Midi importing supports the following keywords arguements:
 </p>
+
 <dl>
-
-
-<dt><code class="keyword">:tracks</code> {<code>t</code> | <var>number</var> | <var>list</var>}</dt>
+<dt><span class="keyword">:tracks</span> {<var>true</var>
+| <var>number</var> | <var>list</var>}</dt>
 <dd>
-
-Specifies the tracks (zero-based) to import. Defaults to true, which
-imports all the tracks. Otherwise, the value should be a single track number
-or list of tracks specifications. Each track specification in the list
-can be a track number or a list: (<var>track channel-exclude meta-exclude</var>),
-where track is the track number, and channel-exclude and meta-exclude are
-defined below.
+Specifies the track numbers (zero-based) to import. Defaults to true, which
+imports all the tracks. Otherwise, the value should be a single track
+number or list of tracks specifications. Each track specification in
+the list can be a track number or a list: (<var>track channel-exclude
+meta-exclude</var>), where track is the track number, and
+channel-exclude and meta-exclude are defined below.
 </dd>
 
 
-<dt><code class="keyword">:channel-exclude</code> {<var>true</var> | <var>false</var> | <var>opcode</var> | <var>list</var>}</dt>
+<dt><span class="keyword">:channel-exclude</span> {<var>true</var> | <var>false</var> | <var>opspan</var> | <var>list</var>}</dt>
 <dd>
 
 Specifies the type of channel messages to exclude, if any. Defaults to
 false, which means that all channel messages are imported. Specify true
 to exclude all channel messages on all tracks. Otherwise, the value should
-be the status byte opcode or list of opcodes to ignore.
+be the status byte opspan or list of opspans to ignore.
 </dd>
 
 
-<dt><code class="keyword">:meta-exclude</code> {<var>true</var> | <var>false</var> | <var>list</var>}</dt>
+<dt><span class="keyword">:meta-exclude</span> {<var>true</var> | <var>false</var> | <var>list</var>}</dt>
 <dd>
 
 Specifies the type of meta messages to exclude, if any. Defaults to false,
 which means that all meta messages are imported. Specify true to
 exclude all meta messages. Otherwise, the value should be the meta byte
-opcode or list of opcodes to ignore.
+opspan or list of opspans to ignore.
 </dd>
 
 
-<dt><code class="keyword">:time-format</code> {<code class="keyword">:beats</code> | <code class="keyword">:ticks</code>}</dt>
+<dt><span class="keyword">:time-format</span> {<span class="keyword">:beats</span> | <span class="keyword">:ticks</span>}</dt>
 <dd>
  
 
 Determines the format of time values in the imported data.  If
-<var>time-format</var> is <code class="keyword">:beats</code> (the default) then MIDI tempo changes in
+<var>time-format</var> is <span class="keyword">:beats</span> (the default) then MIDI tempo changes in
 track zero are parsed and applied to the data as it is imported. If
-<var>time-format</var> is <code class="keyword">:ticks</code> then the time values are in file ticks
+<var>time-format</var> is <span class="keyword">:ticks</span> then the time values are in file ticks
 and no tempo changes are applied.
 
 </dd>
 
 
-<dt><code class="keyword">:tempo</code> {<var>false</var> | <var>number</var>}</dt>
+<dt><span class="keyword">:tempo</span> {<var>false</var> | <var>number</var>}</dt>
 <dd>
 
 
-If <var>time-format</var> is <code class="keyword">:beats</code> then a <var>tempo</var> value overrides any
+If <var>time-format</var> is <span class="keyword">:beats</span> then a <var>tempo</var> value overrides any
 tempo changes in the file. If the file contains no tempo changes a
 default tempo of 120 is used.  <var>Tempo</var> has no effect if <var>time-format</var>
-is <code class="keyword">:ticks</code>,
+is <span class="keyword">:ticks</span>,
 
 </dd>
 
 
-<dt><code class="keyword">:keynum-format</code> {<code class="keyword">:keynum</code> | <code class="keyword">:note</code> | <code class="keyword">:hertz</code>}</dt>
+<dt><span class="keyword">:keynum-format</span> {<span class="keyword">:keynum</span> | <span class="keyword">:note</span> | <span class="keyword">:hertz</span>}</dt>
 <dd>
 
 
 Determines how MIDI key number values are to be interpreted. Defaults
-to <code class="keyword">:keynum</code>.
+to <span class="keyword">:keynum</span>.
 
 </dd>
 
 
-<dt><code class="keyword">:note-off-stack</code> {<var>true</var> | <var>false</var>}</dt>
+<dt><span class="keyword">:note-off-stack</span> {<var>true</var> | <var>false</var>}</dt>
 <dd>
 
 Determines how multiple note on/off message with identical channels and
