@@ -71,8 +71,10 @@
     (format #t "~%; Channels: ~s" channels)
     (format #t "~%; Srate: ~s" srate)
     (format #t "~%; Reverb: ~a~%" (or reverb "None"))
-    (if decay-time (format #t "decay time: ~s%" decay-time))
-    (if reverb-data (format #t "reverb data: ~s~%"))
+    (if decay-time
+      (format #t "decay time: ~s%" decay-time))
+    (if reverb-data
+      (format #t "reverb data: ~s~%" reverb-data))
     (values)))
 
 ;(define definstrument-hook 

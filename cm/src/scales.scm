@@ -237,7 +237,8 @@
     (set! (scale-octave obj) octave)
     (if (scale-lowest obj)
       (unless (number? (scale-lowest obj))
-        (err "lowest not hertz value: ~s."))
+        (err "lowest not hertz value: ~s."
+             (scale-lowest obj)))
       (set! (scale-lowest obj)
             (* 6.875 (expt 2 3/12)) ;8.175798915643707
             ))))

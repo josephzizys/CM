@@ -349,7 +349,7 @@
                  (set! seq #f))
                 (else
                  (err "track '~s' out of range. Maximum track is ~s."
-                      (- num-tracks 1)))))
+                      track (- num-tracks 1)))))
         
         (set! results (reverse results))
         

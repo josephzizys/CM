@@ -24,65 +24,65 @@
 ;;; loaded, either by loading the systems or their stubs files.
 ;;;
 
-(defpackage cm 
-  (:use common-lisp )
-  (:shadow make-load-form
+(defpackage :cm
+  (:use :common-lisp )
+  (:shadow :make-load-form
            ;; have to block these from CLM
-           io ran ;definstrument
-           exit quit )
+           :io :ran :exit :quit )
+  ;; use keywords instead of strings for case sensitive lisps.
   (:import-from :clm 
-                mus-next
-                mus-bshort
-                mus-aifc
-                mus-riff
-                mus-lshort
-                *clm-with-sound-depth*
-                wsdat-play
-                init-with-sound
-                finish-with-sound
-                *clm-channels*
-                *clm-srate*
-                clm-load
-                ;; these syms are used by CM but with no conflict.
-                graph spectrum env src 
-                *definstrument-hook*
+                :mus-next
+                :mus-bshort
+                :mus-aifc
+                :mus-riff
+                :mus-lshort
+                :*clm-with-sound-depth*
+                :wsdat-play
+                :init-with-sound
+                :finish-with-sound
+                :*clm-channels*
+                :*clm-srate*
+                :clm-load
+                :*definstrument-hook*
+                ;; these are also used by CM but defs don't conflict.
+                :graph :spectrum :env :src 
                 )
   (:import-from :cmn 
-                init-clm-input
-                *exact-rhythms*
-                score
-                staff-descriptors
-                stfdat-staff
-                staff-data 
-                set-staff-number
-                set-staff-clef
-                finish-clm-input
-                find-staff add-staff
-                add-data-1
-                add-note-to-staff)
+                :init-clm-input
+                :*exact-rhythms*
+                :score
+                :staff-descriptors
+                :stfdat-staff
+                :staff-data 
+                :set-staff-number
+                :set-staff-clef
+                :finish-clm-input
+                :find-staff add-staff
+                :add-data-1
+                :add-note-to-staff)
   (:import-from :midishare
-                midishare midiGetVersion MidiOpen MidiClose MidiCountAppls
-                MidiGetNamedAppl MidiGetIndAppl MidiErrIndex MidiGetName
-                MidiConnect MidiGetTime MidiIsConnected 
-                MidiSendIm MidiSend MidiSendAt MidiAddSeq
-                typeNote typeKeyOn typeKeyOff typeKeyPress typeCtrlChange 
-                typeProgChange typeChanPress typePitchWheel typePitchBend
-                typeSongPos typeSongSel typeClock typeStart typeContinue
-                typeStop typeTune typeActiveSens typeReset typeSysEx
-                typeStream typePrivate typeSeqNum typeTextual
-                typeCopyright typeSeqName typeInstrName typeLyric
-                typeMarker typeCuePoint typeChanPrefix typeEndTrack
-                typeTempo typeSMPTEOffset typePortPrefix typeKeySign
-                typeTimeSign MidiNewEv port chan field bend text port
-                ref date
-                OpenPlayer ClosePlayer midiNewSeq
-                StartPlayer ContPlayer StopPlayer PausePlayer
-                kMuteOn kMuteOff kSoloOn kSoloOff kMute kSolo 
-                kExternalSync kInternalSync kClockSync kSMPTESync
-                GetAllTrackPlayer SetAllTrackPlayer
-                GetTrackPlayer SetTrackPlayer 
-                SetParamPlayer SetTempoPlayer
-                TicksPerQuarterNote
-                SetSynchroInPlayer MidiNewMidiFileInfos
-                MidiFileLoad MidiFileSave mf-clicks mf-format mf-timedef)
+		:midishare :midiGetVersion :MidiOpen :MidiClose :MidiCountAppls
+		:MidiGetNamedAppl :MidiGetIndAppl :MidiErrIndex :MidiGetName
+		:MidiConnect :MidiGetTime :MidiIsConnected
+		:MidiSendIm :MidiSend :MidiSendAt :MidiAddSeq
+		:typeNote :typeKeyOn :typeKeyOff :typeKeyPress :typeCtrlChange
+		:typeProgChange :typeChanPress :typePitchWheel :typePitchBend
+		:typeSongPos :typeSongSel :typeClock :typeStart :typeContinue
+		:typeStop :typeTune :typeActiveSens :typeReset :typeSysEx
+		:typeStream :typePrivate :typeSeqNum :typeTextual
+		:typeCopyright :typeSeqName :typeInstrName :typeLyric
+		:typeMarker :typeCuePoint :typeChanPrefix :typeEndTrack
+		:typeTempo :typeSMPTEOffset :typePortPrefix :typeKeySign
+		:typeTimeSign :MidiNewEv :port :chan :field :bend :text :port
+		:ref :date
+		:OpenPlayer :ClosePlayer :midiNewSeq
+		:StartPlayer :ContPlayer :StopPlayer :PausePlayer
+		:kMuteOn :kMuteOff :kSoloOn :kSoloOff :kMute :kSolo
+		:kExternalSync :kInternalSync :kClockSync :kSMPTESync
+		:GetAllTrackPlayer :SetAllTrackPlayer
+		:GetTrackPlayer :SetTrackPlayer
+		:SetParamPlayer :SetTempoPlayer
+		:TicksPerQuarterNote
+		:SetSynchroInPlayer :MidiNewMidiFileInfos
+		:MidiFileLoad :MidiFileSave :mf-clicks :mf-format :mf-timedef)
   )

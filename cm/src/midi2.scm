@@ -691,7 +691,8 @@
     (if (file-exists? *win-midi-player*)
       (shell "~a~a ~a" *win-midi-player* opts file)
       (begin
-       (warn "The MIDI player ~s does not exist. Set the variable *win-midi-player* to the pathname (string) of a MIDI player on your machine and try again.")))  
+       (warn "The MIDI player ~s does not exist. Set the variable *win-midi-player* to the pathname (string) of a MIDI player on your machine and try again."
+             *win-midi-player*)))  
     file))
 
 (define (osx-play-midi-file file . args)

@@ -2017,7 +2017,7 @@
     (when (transposer-mod obj)
       (set! data (scale-mod data (transposer-mod obj)
 			    :offset (first data)
-			    :scale (transposer-scale obj))))
+			    :in (transposer-scale obj))))
     ;; if current data is eop or if stepping
     ;; then force new BY selection next time.
     (if (and (or flag step?) (second by))

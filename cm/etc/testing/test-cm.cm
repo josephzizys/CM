@@ -603,6 +603,8 @@
 
 (deftest test-midishare-output ()
   "midishare and player interface"
+  (check "midishare loaded" (equal? (midishare) 1))
+  (check "midi-open" (equal? (midi-open) (find-object "midi.port")))
   (define (testms chan)
     (process for k from 60 to 72
              output (new midi :time (now)
@@ -611,7 +613,30 @@
                          :amplitude .9
                          :channel chan)
              wait .25))
-  (events (testms 0) "midi.port")  ; logical channel 0 -> port 0 chan 0
+  (set! x (events (testms 0) "midi.port"))  ; logical chan 0 -> port 0 chan 0
+  (check "sent chromatic scale" (equal? x "midi.port"))
+  (define (dim-test-1 chan dur amp-1 amp-2 steps)
+    (process with amp-val 
+             with step-time = (/ dur steps 1.0)
+             for i to steps do
+             (set! amp-val (round (interpl (now) (list 0 amp-1 dur amp-2))))
+             (if (= i 0)
+               (output (new midi 
+                         :time (now)
+                         :channel chan
+                         :duration dur
+                         :amplitude amp-1))
+               (output (new midimsg  
+                         :msg (make-control-change chan 7 amp-val)
+                         :time (now))))
+           (wait step-time)))
+  (set! x (events (list (new midimsg :time 0
+                             :msg (make-program-change 0 40))
+                        (dim-test-1 0 2 90 0 20))
+                  "midi.port"))
+  (check "sent violin diminuendo" (equal? x "midi.port"))
   (events (testms 0) "test.mp")
   (player-save-midifile #&"test.mp" "player.mid")
+  (midi-close)
   )
+

@@ -31,11 +31,18 @@
 (defun quit () (ext::quit))
 (defun exit () (quit))
 
-(defun class-subclasses (class)
-  (let ((tbl (kernel:class-subclasses class))
-        (sub '()))
-    (maphash (lambda (k v) v (push k sub)) tbl)
-    (nreverse sub)))
+(defun class-subclasses (c)
+  (let ((subs (pcl::class-direct-subclasses c)))
+    (if (null subs)
+	'()
+      (loop for s in subs
+	append (cons s (class-subclasses s))))))
+	  
+;(defun class-subclasses (class)
+;  (let ((tbl (kernel:class-subclasses class))
+;        (sub '()))
+;    (maphash (lambda (k v) v (push k sub)) tbl)
+;    (nreverse sub)))
 
 ;(defun make-load-form (obj)
 ;  (pcl::make-load-form obj))

@@ -1,3 +1,20 @@
+CM 2.4.2
+Maintenance release 
+
+o Fixed numerous formatting bugs reported by Nando.
+o Fixed make-cm to only check writability on actual file writes.
+o Fixed cmu.lisp to work with CMUCL 19 and gag their compiler.
+o Fixed pkg.lisp to not intern any symbols in cl-user package.
+o Fixed make.lisp to handle inconsistent implementation version
+  strings provided in cmucl.
+o Fixed cm.sh to handle same cmucl issue, and bug in OX X.
+o Added link to Emacs doc on home page.
+o Added link to first mention of cm.sh in install.html
+o Fixed open-io to check for availability of MidiShare (Nando)
+o Added write-event method for midimsg objects.
+o Added more midishare tests to test.cm
+o Made midishare *dbg* trace a bit more intelligible
+
 CM 2.4.1
 
 o CM's installation process has been completely rewritten to make it
