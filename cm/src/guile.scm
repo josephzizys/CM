@@ -61,8 +61,25 @@
 
 (define pprint pretty-print)
 
-(define (read-from-string str)
-  (call-with-input-string str read))
+(define (string-read str . args)
+  ;; args is: start eoftok
+  (let ((len (string-length str))
+        (beg (if (null? args) 0 (car args)))
+        (eof (if (or (null? args) (null? (cdr args)))
+               ':eof
+               (car (cdr args)))))
+    (call-with-input-string 
+     str
+     (lambda (sp) ; string port
+       ;; advance to starting pos
+       (do ((p 0 (+ p 1)))
+           ((not (< p beg)) #f)
+         (read-char sp))
+       (if (not (< beg len))
+         (values eof 0)
+         (let ((val (read sp)))
+           (values (if (eof-object? val) eof val)
+                   (ftell sp))))))))
 
 (define (err msg . args)
   (let ((str (apply format #f msg args)))

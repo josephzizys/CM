@@ -395,7 +395,7 @@
 ;;; string hacks
 ;;;
 
-(define (string-forms string . args)
+(define (string-substrings string . args)
   (with-args (args &key (delimiters '(#\space #\tab)) 
 		   (start 0) (end (string-length string))
 		   key)
@@ -410,7 +410,7 @@
 	    (key (substring string pos1 pos2))
 	    (substring string pos1 pos2)))))
 
-; (string-forms "A B :FOO (BASD     ASD) 123")
+; (string-substrings "A B :FOO (BASD     ASD) 123")
 
 ; (string-readable? "")
 ; (string-readable? "    ")
@@ -436,7 +436,7 @@
          (if (and (= pos end) (= lev 0) (not str))
            (if tok (+ num 1) num)
            #f))
-      (set! chr (elt string pos))
+      (set! chr (string-ref string pos))
       (cond ((char=? chr #\()
              (if (= lev 0) (incf num))
              (incf lev)
@@ -459,6 +459,76 @@
             ((member chr '(#\' #\, #\#))
              #f)
             (else (set! tok #t))))))
+
+;;;
+;;; string->expr reads one or more exprs from a string.
+;;; returns two values, the expr(s) and an error flag that, if not nil
+;;; is one of the following errorcodes
+
+(define +se-nullstring+ 0)
+(define +se-unreadable+ 1)
+(define +se-multiple+   2)
+(define +se-incorrect+  3)
+
+(define (string->expr str . args)
+  (with-args (args &key (read #t) (test #f)
+                   (nullok #t) (multiok #f))
+    ;; parse input value from a gtk entry or a string
+    (let ((text str)
+          (trim '(#\space #\newline #\tab))
+          (expr #f)
+          (err? #f))
+      (if (string=? text "")
+        (if nullok (values #f #f) (values "" +se-nullstring+))
+        (let ((len (string-length text))
+              (raw text))
+          (if (or (member (string-ref text 0) trim)
+                  (member (string-ref text (1- len)) trim))
+            (set! text (strip-chars text))) ; remove whitespace
+          (if (string=? text "")
+            (if nullok (values #f #f) (values raw +se-nullstring+))
+            (begin
+              (if (not read)
+                (begin (set! expr text) (set! err? #f))
+                (if (not (eq? read #t))
+                  (multiple-value-setq (expr err?) ( read text))
+                  (let ((num (string-readable? text)))
+                    (cond ((not num)
+                           (set! expr text)
+                           (set! err? +se-unreadable+))
+                          ((= num 1)
+                           ;; dont care about num
+                           (multiple-value-setq (expr num)
+                                                (string-read text))
+                           (set! err? #f))
+                          ((not multiok)
+                           (set! expr text)
+                           (set! err? +se-multiple+))
+                          (else
+                           (do ((n 0)
+                                (x #f)
+                                (l (list)))
+                               ((eq? x ':eof)
+                                (set! expr (reverse! l))
+                                (set! err? #f))
+                             (multiple-value-setq (x n)
+                               (string-read text n))
+                             (unless (eq? x ':eof)
+                               (push x l))))))))
+              (if err? 
+                (values expr err?) 
+                (if test
+                  (if ( test expr) (values expr #f)
+                      (values test +se-incorrect+))
+                  (values expr err?))))))))))
+
+; (string->expr "")
+; (string->expr "    ")
+; (string->expr "(")
+; (string->expr "()")
+; (string->expr "1 2 3")
+; (string->expr "(list 1 2 3)")
+; (string->expr "1 2 3" :multiok t)
 
 ;;; number hacks
 ;;;

@@ -141,6 +141,9 @@
 (defun strip-chars (str &optional (chars '(#\space #\tab #\return)))
   (string-trim chars str))
 
+(defun string-read (str &optional (start 0) (eof ':eof))
+  (read-from-string str nil eof :start start))
+
 ;;;
 ;;; filename twiddling. these always return strings.
 ;;;
