@@ -60,7 +60,7 @@
 
 (define-class <mode> (<scale>)
   (steps :init-value '() :accessor scale-steps
-	 :init-keyword :steps)
+	 :init-keyword :steps :init-keyword :notes)
   (lowest :accessor scale-lowest :init-value #f :init-keyword :tonic)
   (scale :init-thunk (lambda () *chromatic-scale*)
 	 :init-keyword :scale
@@ -359,17 +359,22 @@
 
 (define (ascending-mode-order notes tuning)
   ;; insure ascending mode order in tuning
-  ;; place all notes in middle octave
-  (set! notes (map (function note)
-                   (map (function note-name) notes)))
+  ;; first place all notes in middle octave
+  (set! notes (if (symbol? (car notes))
+                (map (function note)
+                     (map (function note-name) notes))
+                (map (function pitch-class) notes)))
   (let* ((old (car notes))
+         (pc? (number? old))
          (oct (- (octave-number old)
                  (scale-octave-offset tuning)))
+         (oth #f)
          (res (list old)))
     (dolist (n (rest notes))
       (if (scale< n old tuning)
         (set! oct (+ oct 1)))
-      (push (car (octave-equivalent n oct)) res)
+      (set! oth (octave-equivalent n oct))
+      (push (if pc? (cadr oth) (car oth)) res)
       (set! old n))
     (reverse! res)))
 
@@ -380,10 +385,39 @@
          (low (scale-lowest obj))
          (div (scale-divisions owner))
          (tonic #f)
+         (steps? #f)
 	 (offset #f)
 	 (steps #f)
+         (type #f)
 	 (len #f)
 	 (octave #f))
+
+    (dopairs (a v args)
+      (case a
+        ((:steps ) 
+         (warn "Converted unsupported :steps initialization to ~s ~s."
+               (if (number? (car v)) ':intervals :degrees)
+               v)
+         (set! spec v)
+         (set! type (if (number? (car v)) ':intervals ':degrees)))
+        ((:intervals )
+         (when spec
+           (err "Found duplicate keywords ~s and ~s."
+                type a))
+         (set! spec v)
+         (set! type a))
+        ((:degrees )
+         (when spec
+           (err "Found duplicate keywords ~s and ~s."
+                type a)))
+        (else
+         #f)))
+    (if steps?
+      (let ()
+        )
+      (let ()
+        ))
+
     ;; spec is notes or interval distances defining one octave
     ;; convert to intervals up from lowest (collected in reverse order)
     ;; insure note classes or notes in ascending order
@@ -446,7 +480,6 @@
 	    (list-set! into (interval-semitones step) degree))
       (set! (scale-into obj) into))))
 
-; (define c *scale*)
 ; (define o (new mode steps '(2 1 2 1 2 1 2 1)))
 ; (define s (new mode steps '(2 1 2 1 1)))
 ; (define b (new mode steps '(2 1 2 3 2 3 3 2 1 2 2 1)))
