@@ -54,8 +54,6 @@ href="http://www.clozure.com/openmcl/">OpenMCL</a> (release 0.14.1-p1
 or higher.)</li>
 </ul>
 
-
-
 <h3>Opening and closing the MIDI port</h3>
 
 <p>
@@ -390,13 +388,13 @@ cm&gt; <span class="input">(ms:MidiPrintEv ev)</span>
 <span class="output">#&lt;MidiEv Note [0/3 0ms] 60 64 2000ms&gt;</span></pre>
 </div>
 
-<h3>Getting and setting the contents of a MidiEv</h3>
+<h3>Accessing and modifying MidiEvs</h3>
 
 
 <p>
-To access and set the fields of a MidiEv struct you use the functions
-provided by the MidiShare API. The more important constructors and
-accessors are listed here. Consult the <a
+To access values or set the fields of a MidiEv struct you use the
+functions provided by the MidiShare API. The more important
+constructors and accessors are listed below. Consult the <a
 href="http://www.grame.fr/MidiShare/Doc/MidiShare_doc.html">MidiShare
 documentation</a> for more information.
 </p>
@@ -428,10 +426,7 @@ cm&gt; <span class="input">(ms:pitch ev2 (+ (ms:pitch ev2) 12))</span>
 <span class="output">72</span>
 cm&gt; <span class="input">(ms:MidiPrintEv ev2)</span>
 <span class="output">#&lt;MidiEv Note [0/3 0ms] 72 64 2000ms&gt;</span></pre>
-
 </div>
-
-
 
 <h3>Real time MIDI output</h3>
 <p>
@@ -466,6 +461,8 @@ when the function is called. No value is returned.
 </dd>
 </dl>
 
+<p>
+
 <!-- Interaction 4 -->
 <div class="float">
 <p><span class="floatlabel">Example 4.</span> A sample process definition.</p>
@@ -476,7 +473,6 @@ when the function is called. No value is returned.
            wait rhy))</pre>
 </div>
 
-
 <div class="float">
 <p>Using now, output and sprout.</p>
 <pre class="shell">cm&gt; <span class="input">(now)</span>
@@ -484,6 +480,25 @@ when the function is called. No value is returned.
 cm&gt; <span class="input">(output (ms:new typeNote :keynum 80 :duration 1000))</span>
 cm&gt; <span class="input">(sprout (rankeys 30 200 250 60 90) 2000)</span></pre>
 </div>
+
+
+<p>
+As can be seen in the preceding example, the principle differences
+between real time and non-real time process definitions are:
+</p>
+
+<ul>
+<li>The <code>now</code> function is not needed to establish start
+times.</li>
+<li>MidiEv structs are created using <code>ms:new</code> rather than
+<code>new</code>.</li>
+<li>MidiEv fields are set to integer values only.</li>
+<li>Time is specified in integer milliseconds.</li> 
+</ul>
+
+
+
+
 
 <h3>Real time MIDI input</h3>
 <p>
@@ -512,7 +527,7 @@ not return a value.
       (ms:pitch ev2 (+ 13 (ms:pitch ev)))
       (output ev) 
       (output ev2))
-  (ms:MidiFreeEv ev)))</pre>
+    (ms:MidiFreeEv ev)))</pre>
 </div>
 
 <div class="float">
