@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>midi-program-change</title>
+</head>
+<body>
+<div id="content">
+
+<!-- Entry: "midi-program-change" -->
+<dl class="dictsyntax">
+<dt>[Class]</dt>
+<dd><span class="syntax"><code class="entry">midi-program-change</code></span></dd>
+</dl>
+
+<p>
+A MIDI control change or mode change event.  See 
+
+
+
+<a href="http://www.midi.org/about-midi/gm/gm1sound.shtml">General
+MIDI Level 1 Sound Set</a> for a table listing General MIDI (GM)
+program change messages.
+
+
+</p>
+
+<p><code class="entry">midi-program-change</code> supports the following slot initializations:
+</p>
+
+<dl>
+<dt><code class="keyword">:time</code> <var>number</var></dt>
+<dd>Sets the start time of object in score.</dd>
+<dt><code class="keyword">:channel</code> <var>integer</var></dt>
+<dd>A MIDI channel number. Defaults to 0.</dd>
+
+<dt><code class="keyword">:program</code> <var>integer</var></dt>
+<dd>
+A MIDI program change number from 0 to 127. Note that if your MIDI
+documentation indexes program changes starting with 1 you must
+subtract 1 when specifying the <span class="keyword">:program</span>
+value.  For example, Grand Piano is 0, not 1.
+</dd>
+
+</dl>
+
+<h4>Examples:</h4>
+
+<div class="float">
+<p class "captxt">
+<span class="floatlabel">Example 1.</span> Creating MIDI program changes.
+</p>
+<pre class="code"><span class="comment">;;; A GM 'acoustic-bass' program change.</span>
+
+(<span class="special">new</span> midi-program-change <span class="keyword">:time</span> 0 <span class="keyword">:channel</span> 3 <span class="keyword">:program</span> 32)
+</pre>
+</div>
+
+
+<h4>See also: </h4>
+<ul>
+<li>
+<a href="midi-topic.html#midi_event_classes">MIDI event classes</a> [Topic]</li>
+</ul>
+
+
+</div>
+<hr class="inv"/>
+<!-- Footer -->
+<div id="footer">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
