@@ -30,10 +30,17 @@ Starts Common Music running either by loading it into a fresh Lisp
 session or by launching an existing image that has been built with CM
 pre-loaded.  The script can run CM in a terminal or as a subprocess of
 any Emacs-compatible editor such as xemacs(1), emacs(1), or
-gnuclient(1). Script parameters are autodetected at runtime so
+gnuclient(1). 
+
+The cm.sh script resolves symlinks when it runs so a system-wide
+command can be installed by simply placing a link to the script
+anywhere on the user's path. The script file itself should not be
+moved from the bin/ subdirectory.
+
+Script parameters are autodetected at runtime so
 normally it will suffice to call cm.sh without any arguments.
 Autodetection may be overridden via options and environment variables.
-</p>
+ </p>
 
 <p>
 <code class="entry">cm.sh</code> supports the following options:
@@ -53,7 +60,8 @@ Echo platform's 'os-arch' string and exit.
 
 <dt><code class="keyword">-n</code></dt>
 <dd>
-Dry run, don't do anything. Used in conjunction with -v for debugging.
+Dry run, don't do anything. Used in conjunction with <code
+class="keyword">-v</code> for debugging.
 </dd>
 
 <dt><code class="keyword">-v</code></dt>
@@ -63,12 +71,12 @@ Be verbose.
 
 <dt><code class="keyword">-l</code> {<var>lisp</var>}</dt>
 <dd>
-Run CM using this Lisp/Scheme (default: '<unset>').
+Run CM using this Lisp/Scheme (default: '&lt;unset&gt;').
 </dd>
 
 <dt><code class="keyword">-e</code> {<var>lisp</var>}</dt>
 <dd>
-Run CM under this editor (default: '<none>').
+Run CM under this editor (default: '&lt;none&gt;').
 </dd>
 
 <dt><code class="keyword">-P</code> {<var>lisp</var>}</dt>
@@ -144,7 +152,7 @@ Symbolic name of host architecture, e.g. 'i386' or 'powerpc'.  Same as
 <dt><code class="keyword">CM_RUNTIME_FLAVOR</code></dt>
 <dd>
 Symbolic name of the Lisp/Scheme flavor to run, e.g. 'clisp' or
-'cmucl'.  Useful in conjuction with <code
+'cmucl'.  Useful in conjunction with <code
 class="keyword">CM_RUNTIME</code> or the <code
 class="keyword">-l</code> option if the flavor can't be derived from
 the command name or path.  Same as <code class="keyword">-F</code>
@@ -153,7 +161,7 @@ option.
 
 <dt><code class="keyword">CM_RUNTIME_VERSION</code></dt>
 <dd>
-Version of the Lisp/Scheme to run.  Useful in conjuction with <code
+Version of the Lisp/Scheme to run.  Useful in conjunction with <code
 class="keyword">CM_RUNTIME</code> or the <code
 class="keyword">-l</code> option if the version can't be derived from
 the command name or path.  Same as <code class="keyword">-V</code> option.
