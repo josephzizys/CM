@@ -17,23 +17,36 @@
 <dd><span class="syntax"><code class="entry">mode</code></span></dd>
 </dl>
 
-
 <p>
 A <kbd>mode</kbd> defines a transposable subset of a
-<a href="tuning-cls.html">tuning</a> in which the sequentially ordered
-keynums in the mode map to non-contiguous notes, keynums and hertz
-values in the mode's tuning.
+<a href="tuning-cls.html">tuning</a> where sequential keynums in the
+mode map to non-contiguous notes, keynums and hertz values in the
+mode's tuning.  Every mode maps to exactly one tuning; if no tuning is
+specified when the mode is created then it defaults to the standard
+chromatic scale.
+The number of steps per octave as well as the octave size of a mode
+are determined from its interval specification when the mode is
+created.  For example, the interval list (2 1 2 1 1) would define a
+5-note per octave mode whose "octave" size is the perfect 5th (7
+semitones).
+</p>
 
-Every mode maps to exactly one tuning; if no tuning is specified when
-the mode is created then it defaults to the standard chromatic scale.
+<p>
+A mode can be moved to any degree in the mode's tuning using
+the <code>transpose</code> function. This means that the same set of
+modal keynums can be shifted in the tuning to reference different
+notes, keynums and hertz values.
+</p>
 
+<p>
 Modes can be used in place of tunings when generating frequency
-information using the 
+information using the
 <a href="note-fn.html"><code>note</code></a>,
 <a href="keynum-fn.html"><code>keynum</code></a> and <a
 href="hertz-fn.html"><code>hertz</code></a> functions.  These
-functions all provide a common set of keyword parameters that
-"convert" between modes and tunings:
+functions share a common set of keyword parameters that allow values
+to be converted between modes and their tunings:
+</p>
 
 <ul>
   <li>
@@ -45,17 +58,16 @@ functions all provide a common set of keyword parameters that
   </li>
   <li>
     The <code class="keyword">:to</code> parameter to
-    <a href="keynum-fn.html"><code>keynum</code></a> converts notes,
-    keynums and hertz values in a tuning into their closest modal
-    keynum.
+    <a href="keynum-fn.html"><code>keynum</code></a> converts tuning
+    notes, keynums and hertz values into their closest modal keynum.
   </li>
   <li>
     The <code class="keyword">:through</code> parameter to
     <a href="note-fn.html"><code>note</code></a>,
-    <a href="keynum-fn.html"><code>keynum</code></a> 
-    and <a href="hertz-fn.html"><code>hertz</code></a>
-    filters tuning notes, keynums and hertz values through a mode to
-    "quantize" to the nearest modal equivalent.
+    <a href="keynum-fn.html"><code>keynum</code></a> and <a
+    href="hertz-fn.html"><code>hertz</code></a> filters tuning notes,
+    keynums and hertz values through a mode and "quantizes" that value
+    to the nearest modal equivalent.
   </li>
   <li>
     The <code class="keyword">:in?</code> parameter to
@@ -66,6 +78,7 @@ functions all provide a common set of keyword parameters that
     current transposition of a mode.
   </li>
 </ul>
+
 
 <p>
 <code class="entry">mode</code> supports the following slot initializations:
@@ -81,10 +94,12 @@ An optional name for the mode.
 <code class="keyword">:steps</code> (<var>intervals</var>)
 </dt>
 <dd>
-One octave of the mode specified as a list of interval
-steps <em>between</em> mode degrees. The size of the mode's octave is
-set to the sum of the steps. Note that this octave size does not have
-to "agree" with the size of the tuning's octave.
+One octave of the mode specified as a list of intervals steps between
+mode degrees. Each entry in the list is an interval measurement (in
+integer semitones or in <a href="interval-fn.html">typed
+intervals</a>) of the distance between ajacent mode degrees in the
+mode's tuning. The size of the mode's octave is set to the sum of all
+the steps.
 </dd>
 
 <dt>
@@ -92,31 +107,39 @@ to "agree" with the size of the tuning's octave.
 | <var>keynums</var>})
 </dt>
 <dd>
-One octave of the mode specified as a list of notes, note classes or
-keynums. The interval between the first entry and last entry in the
-list determines the octave size of the mode.  This size does not have
-to "agree" with the size of the tuning's octave.  If <kbd>steps</kbd>
-is a list of note symbols then the first note in the list also defines
-the initial transposition offset (tonic) of the mode and the mode will
-preserve note spelling using <a href="interval-fn.html">typed
+One octave of the mode specified as a list of note classes (note names
+without octaves) or keynums.  Intervals between note entries are
+always interpreted in ascending order. If the first entry is a note
+with an octave number then that note becomes the lowest note in the
+mode, otherwise the mode is based off that note in the lowest octave
+of the mode's tuning.  The last entry in the list determines the
+octave note of the mode, this note normally the same as first note in
+he list but does not have to be.  If <kbd>steps</kbd> is a list of
+note symbols then the first note in the list also defines the initial
+transposition offset (tonic) of the mode and the mode will preserve
+note spelling using <a href="interval-fn.html">typed
 intervals</a>. Typed intervals preserve spelling even if the mode is
 transposed but they are less efficient than regular step intervals.
 Specify keynums instead of notes to define modal degrees without
 encoded intervals.
 </dd>
 
-<dt><code class="keyword">:tonic</code> <var>note</var></dt>
+<dt><code class="keyword">:lowest</code> <var>note</var></dt>
 <dd>
-Sets the tonic note of the mode. Defaults to the first note in the
-steps specification, or C if the steps are described as intervals.  A
-mode can be transposed to a new tonic using the
+Sets the lowest note of the mode. Defaults to the first note in the
+a <span class="keynum">:degree</span> specification, or to the lowest
+note in the mode's tuning if <span class="keyword">steps</span> are
+provided. If <var>note</var> is a note class (a note name without an
+octave) then the mode is based on the lowest octave in the mode's
+tuning. Otherwise, the octave information of the note is preserved and
+that note becomes keynum 0 in the mode.
 <a href="transpose-fn.html"><kbd>transpose</kbd></a> function.
 </dd>
 
 <dt><code class="keyword">:tuning</code> <var>tuning</var></dt>
 <dd>
-Sets the tuning system for the mode.  Notes in the mode must also be
-notes in the tuning.  Defaults to the standard chromatic scale.
+Specifies the tuning system of the mode. Defaults to the standard
+chromatic scale.
 </dd>
 </dl>
 
@@ -138,8 +161,15 @@ cm&gt; <span class="input">(note 35 :from #&amp;maj)</span>
 <!-- See also -->
 <h4>See Also:</h4>
 <ul>
-<li><a href="tuning-cls.html"><kbd>tuning</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li>
+<a href="tuning-cls.html"><code>tuning </kbd></a>[Class]
+</li>
+<li><a href="note-fn.html"><code>note </code></a>[Function]</li>
+<li><a href="keynum-fn.html"><code>keynum </code></a>[Function]</li>
+<li><a href="hertz-fn.html"><code>hertz </code></a>[Function] </li>
+<li><a href="transpose-fn.html"><code>transpose </code></a>[Function] </li>
 </ul>
+
 
 
 </div>
