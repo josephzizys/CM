@@ -14,30 +14,26 @@ SUMMARY="         run Common Music"
 
 # Defaults
 
-: ${QUERY_PLATFORM:=}
-: ${EXEC:=exec}
-: ${VERBOSE:=}
+: ${CM_EDITOR:=}
+: ${CM_RUNTIME:=}
+: ${CM_RUNTIME_PREFS:=clisp cmucl openmcl acl}
 
-: ${EDITOR_OPT:=}
-: ${LISP_OPT:=}
-: ${LISP_PREFS:=clisp cmucl openmcl acl}
-
-: ${OS:=}
-: ${ARCH:=}
-: ${LISP_FLV:=}
-: ${LISP_VRS:=}
-: ${CM_ROOT:=}
+: ${CM_OS:=}
+: ${CM_ARCH:=}
+: ${CM_RUNTIME_FLAVOR:=}
+: ${CM_RUNTIME_VERSION:=}
+: ${CM_ROOT_DIR:=}
 
 
 # Description --------------------------------------------------------------
 OPTIONS="
     -h           print this help
-    -q           only echo platform as 'os-arch' string
+    -q           don't run cm, only echo platform as 'os-arch' string
     -n           dry run
     -v           be verbose
-    -e editor    run under this editor (default: '${EDITOR_OPT:-<none>}')
-    -l lisp      run this Lisp (default: '${LISP_OPT:-<unset>}') 
-    -L prefs	 preferred implementations (default: '${LISP_PREFS:-<unset>}')
+    -e editor    run under this editor (default: '${CM_EDITOR:-<none>}')
+    -r runtime   run this Lisp/Scheme (default: '${CM_RUNTIME:-<unset>}') 
+    -P prefs	 preferred runtimes (default: '$CM_RUNTIME_PREFS')
     -O OS        OS in case autodetection fails
     -A arch      machine architecture in case autodetection fails
     -F flavor    Lisp flavor in case autodetection fails
@@ -45,9 +41,52 @@ OPTIONS="
     -R cmroot    Common Music root directory in case autodetection fails
 "
 DESCRIPTION="
-    This script starts Common Music (cm). FIXME
+    This script starts Common Music (cm) either by loading it into a fresh
+    Lisp session or by launching an existing image that has been built with
+    cm pre-loaded.  The cm process can be run in a terminal or as a
+    subprocess of any Emacs-compatible editor such as xemacs(1), emacs(1),
+    or gnuclient(1).
 
-    Requirements: shell with getopts; clisp 2.31 or higher b/c or -repl FIXME
+    Since parameters are autodetected at runtime, it should in virtually all
+    cases suffice to call it without any arguments.  However, autodetection
+    may be overridden via options and the following environment variables.
+
+      CM_EDITOR
+        Name or path of an Emacs-compatible editor under which to run cm.
+        Same as -e option.
+
+      CM_RUNTIME
+        Name or path of a Lisp or Scheme system to execute.  Same as -r
+        option.  
+
+      CM_RUNTIME_PREFS
+        List of CM_RUNTIMEs to try during autodetection, in order of
+        preference.  Same as -r option.
+
+      CM_OS
+        Symbolic name of host OS.  Same as -O option.
+
+      CM_ARCH
+        Symbolic name of host architecture.  Same as -A option.
+
+      CM_RUNTIME_FLAVOR
+        Symbolic name of the Lisp/Scheme flavor to run.  Useful in conjuction
+        with CM_RUNTIME or the -r option if the flavor can't be derived from
+        the command name or path.  Same as -F option.
+
+      CM_RUNTIME_VERSION
+        Version of the Lisp/Scheme to run.  Useful in conjuction
+        with CM_RUNTIME or the -r option if the version can't be derived from
+        the command name or path.  Same as -V option.
+
+      CM_ROOT_DIR
+        Absolute path of the Common Music root directory in case
+        autodetection fails.  Same as -R option.
+
+
+    Requirements: getopts, ls, sed, sh, tr, uname, which; a working
+    installation of a Lisp or Scheme runtime; the '-repl' option if clisp is
+    used (clisp 2.31 or higher).
 "
 
 # --------------------------------------------------------------------------
@@ -118,8 +157,8 @@ fi
 CMD=`basename $0`
 USAGE="
   Usage: $CMD -h
-         $CMD [-qnv] [-e editor] [-l lisp] [-L prefs] [-O OS] [-A arch]
-            [-F lisp-flavor] [-V lisp-version] [-R cmroot]
+         $CMD [-qnv] [-e editor] [-r runtime] [-P prefs] [-O OS] [-A arch]
+               [-F lisp-flavor] [-V lisp-version] [-R cmroot]
 "
 
 print_help() {
@@ -133,34 +172,49 @@ print_help() {
 
 
 #
-# Internal Variables
-# ------------------
+# Variables
+# ---------
 
-: ${IMG_NAME:=cm}
-: ${IMG_SUFFIX:=.img}
+QUERY_PLATFORM=
+EXEC=exec
+VERBOSE=
+
+EDITOR_OPT=$CM_EDITOR
+LISP_OPT=$CM_RUNTIME
+LISP_PREFS=$CM_RUNTIME_PREFS
+OS=$CM_OS
+ARCH=$CM_ARCH
+LISP_FLV=$CM_RUNTIME_FLAVOR
+LISP_VRS=$CM_RUNTIME_VERSION
+
+PAGER=`which less 2>/dev/null || which more 2>/dev/null || echo cat`
+
+IMG_NAME=cm
+IMG_SUFFIX=.img
+
 
 
 #
 # Options
 # -------
 
-: ${PAGER:=`which less || which more || echo cat`}
-
-while getopts he:l:F:V:O:A:qnv OPT
+while getopts hqnve:r:P:O:A:F:V:R: OPT
 do
   case $OPT in
     h)  print_help | $PAGER
         exit 2
         ;;
+    q)  QUERY_PLATFORM=1 ;;
+    n)  EXEC=true ;;
+    v)  VERBOSE=1 ;;
     e)  EDITOR_OPT=$OPTARG ;;
-    l)  LISP_OPT=$OPTARG ;;
-    F)  LISP_FLV=$OPTARG ;;
-    V)  LISP_VRS=$OPTARG ;;
+    r)  LISP_OPT=$OPTARG ;;
+    P)  LISP_PREFS=$OPTARG ;;
     O)  OS=$OPTARG ;;
     A)  ARCH=$OPTARG ;;
-    n)  EXEC=true ;;
-    q)  QUERY_PLATFORM=1 ;;
-    v)  VERBOSE=1 ;;
+    F)  LISP_FLV=$OPTARG ;;
+    V)  LISP_VRS=$OPTARG ;;
+    R)  CM_ROOT_DIR=$OPTARG ;;
     \?) echo "$USAGE"
         exit 1 ;;
   esac    
@@ -195,11 +249,12 @@ LOC=`real_path "$PTU"`
 
 if [ ! $LOC ] ; then
   msg_e "No such file or directory: '$1'"
-  msg_f "Can't determine CM_ROOT!"
+  msg_f "Can't determine CM_ROOT_DIR!"
   msg_x "Aborting.  Re-run with "
 else
   LOC="$LOC/.."			# we are now in cm/bin, so get back out of it
-  export CM_ROOT=$LOC
+  export CM_ROOT_DIR=$LOC
+  export CM_ROOT=$LOC		# backwards compat
 fi
 
 
