@@ -123,7 +123,7 @@ very large, between 20 and 30 megabytes for a binary release depending
 on the editor and operating system involved.  Even if downloading will
 require up to several hours (on a 56k modem, for example), you should
 take whatever time is necessary to install a fully configured X/Emacs
-including elisp sources because. You will come to use more and more of
+including elisp sources; you will come to use more and more of
 X/Emacs' features and add-on packages as you gain familiarity with the
 editor.
 </p>
@@ -187,34 +187,20 @@ Set any other options you want and then select Save Options from the
 Options menu. X/Emacs then prompts you to confirm saving your changes
 in ~/.emacs or ~/.xemacs/init.el.  Type 'y' to confirm.
 </li>
-
-<!-- li>Once you have saved the options, quit X/Emacs by selecting
-Quit from the File menu, or start learning about the editor using the
-interactive Emacs Tutorial located in the Help menu (or via the
-keyboard command <span class="emacscmd"><span class="emacskey">C-h</span> t</span>.)
-</li -->
 </ul>
-</p>
 
 <h3 id="initfile">2.4 The X/Emacs initialization file</h3>
 <p>
-Saving the customized options creates or updates your personal
-<em>emacs initialization file</em> which X/Emacs loads each time it
-starts. You can add your own Emacs commands (elisp expressions) to
-this file to set up the editor exactly the way you want.  <!-- By
-defualt, X/Emacs saves your initialization file in your <em>home
-directory</em>. On a Unix-flavor machine, your home directory is your
-login directory. On a Windows machine the home directory may be a
-login directory or it may be the root directory of the file system,
-for example C:\. Regardless of what operating system you use, X/Emacs
-lets you specify your home directory using the Unix ~/ convention.
-Emacs and XEmacs name the initialization file differently.  --> XEmacs
-normally saves the init file as ~/.xemacs/init.el, that is, the file
-init.el in the .xemacs/ subdirectory of your home folder. Emacs uses
-~/.emacs, the file .emacs located in your home directory. On
-Unix-flavored machines (Linux, OS X, Cygwin, etc) the dotted names
-(.xemacs/ and .emacs) make the init files "invisible" in normal
-directory listings and file browsing windows.
+Saving the customized options creates or updates a personal <em>emacs
+initialization file</em> that X/Emacs loads each time it starts. You
+can add your own Emacs commands (elisp expressions) to this file to
+set up the editor exactly the way you want.  XEmacs normally saves the
+init file as ~/.xemacs/init.el, that is, the file init.el in the
+.xemacs/ subdirectory of your home folder. Emacs uses ~/.emacs, the
+file .emacs located in your home directory. On Unix-flavored machines
+(Linux, OS X, Cygwin, etc) the dotted names (.xemacs/ and .emacs) make
+the init files "invisible" in normal directory listings and file
+browsing windows.
 
 <!-- The dotted names -- .xemacs/ and .emacs -- make the init file
 "invisible" in normal directory listings on Unix machines.  For
