@@ -56,7 +56,7 @@
 ;;;
 
 (use-modules (oop goops))
-
+(use-modules (ice-9 rdelim))
 (use-modules (ice-9 pretty-print)) ; remove  at some point...
 
 (define pprint pretty-print)

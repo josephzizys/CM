@@ -752,6 +752,11 @@
     (close-output-port fp)
     (close-input-port fp)))
 
+(define (read-form fil)
+  (read fil))
+
+(define (eof-marker? x) (eof-object? x))
+
 ;(defmacro with-open-output-file (args . body)
 ;  (let ((var (car args)))
 ;    `(let ((,var (open-output-file ,(cadr args))))

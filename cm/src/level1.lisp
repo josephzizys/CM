@@ -176,6 +176,13 @@
   (declare (ignore dir))
   (close fp))
 
+(defvar .eofmarker. (gensym))
+
+(defun eof-marker? (x) (eq x .eofmarker.))
+
+(defun read-form (fil)
+  (read fil nil .eofmarker.))
+
 ;(defun open-output-file (file)
 ;  (open file :direction :output
 ;        :if-does-not-exist :create
