@@ -201,15 +201,6 @@ file .emacs located in your home directory. On Unix-flavored machines
 (Linux, OS X, Cygwin, etc) the dotted names (.xemacs/ and .emacs) make
 the init files "invisible" in normal directory listings and file
 browsing windows.
-
-<!-- The dotted names -- .xemacs/ and .emacs -- make the init file
-"invisible" in normal directory listings on Unix machines.  For
-example, if you display the content of your home direcotory using
-<code>ls ~/</code> on Linux neither .emacs or .xemacs/ will appear in
-the listing.  Similarly, OS X these files never appear in the Finder
-window.  On Windows, however, the dotted names will be visible in
-normal Command Shell listings and in Folder windows -->
-
 </p>
 
 <h3 id="commands">2.5 Learning X/Emacs keyboard commands</h3>
@@ -393,9 +384,9 @@ Listener menu that appears in the X/Emacs menu bar.
 <p>
 The Lisp Listener runs Common Music in a dedicated X/Emacs
 <em>frame</em>, or window, as a subprocess of the editor. This means
-when you quit the editor you will also quit the Common Music session
-running in the Listener. There are two parts to the Listener, the
-Listener window itself and the Listener menu that automatically
+that when you quit the editor you will also quit the Common Music
+session running in the Listener. There are two parts to the Listener,
+the Listener window itself and the Listener menu that automatically
 appears in the editing window whenever you editing in
 <em>lisp-mode</em>, the Emacs editing mode that supports Lisp program
 editing commands. This mode is automatically activated whenever you
@@ -582,11 +573,11 @@ see the file named COPYING.
 2. Apple keyboard shortcuts for OSX X/Emacs
 </dt>
 <dd>
-You can use the standard Apple shortcuts for copy/paste etc by adding
+You can use the standard Apple shortcuts for copy/paste etc. by adding
 the following forms to your X/Emacs init file:
 
 <div class="float">
-<p class="captxt">Command definitions for Mac shortcuts.
+<p class="captxt">Apple command definitions for Mac shortcuts.
 </p>
 <pre class="code"><span class="comment">;; move Meta next to Control to free up Apple key.</span>
 (setq mac-command-key-is-meta nil)
