@@ -128,21 +128,21 @@
                         keynum k duration (pick .5 1))))
 
 ;; Once you've created an object with a name you can reference
-;; it by specifying its name with the #! read macro:
+;; it by specifying its name with the #& read macro:
 
-(object-name #!stuffy)
-(list-subobjects #!stuffy)
+(object-name #&stuffy)
+(list-subobjects #&stuffy)
 
 ;; You can also run a process and output its events to a seq.
 
 (new seq name 'wavy)                  ; create empty seq
 (events (sinus 80 4 20 100 .1 .1 .6)  ; cache output in new seq
-        #!wavy) 
-(list-subobjects #!wavy)              ; list wavy's subobjects.
-(save-object #!wavy "wave.cm")        ; save data to reload later
-(events #!wavy "test.midi")           ; output wavy
+        #&wavy) 
+(list-subobjects #&wavy)              ; list wavy's subobjects.
+(save-object #&wavy "wave.cm")        ; save data to reload later
+(events #&wavy "test.midi")           ; output wavy
 (events (list (sinus 60 5.7 50 80 .1 .1 .6)
-              #!wavy)
+              #&wavy)
 	"test.midi")                  ; mix both to file.
 
 
