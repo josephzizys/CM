@@ -61,7 +61,8 @@
                 :set-staff-number
                 :set-staff-clef
                 :finish-clm-input
-                :find-staff add-staff
+                :find-staff
+                :add-staff
                 :add-data-1
                 :add-note-to-staff)
   (:import-from :midishare
