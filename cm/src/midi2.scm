@@ -679,10 +679,17 @@
   (let ((opts (if (null? args) ""
 		  (string-append  " " (car args)))))
     (shell "/usr/bin/playmidi~a ~a > /dev/null &" 
-           opts file)))
+           opts file)
+    file))
 
 (define (win-play-midi-file file . args)
   (let ((opts (if (null? args) ""
 		  (string-append  " " (car args)))))
     (shell "C:\\Program Files\\Windows Media Player\\mplayer2.exe~a ~a"
-           opts file)))
+           opts file)
+    file))
+
+(define (osx-play-midi-file file . args)
+  args
+  (shell "/usr/bin/open ~a" file)
+  file)
