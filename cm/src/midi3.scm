@@ -266,11 +266,11 @@
 ;;;
 ;;;
 
-(defobject midimsg (event) ; remove at some point.
-  ((msg :initform 0)
-   (data :initform #f))
-  (:parameters time msg data)
-  (:writers ))
+;;(defobject midimsg (event) ; remove at some point.
+;;  ((msg :initform 0)
+;;   (data :initform #f))
+;;  (:parameters time msg data)
+;;  (:writers ))
 
 (defobject midi (event)
   ((keynum :initform 60)
@@ -372,25 +372,47 @@
                    %offs)))
     (values)))
 
-(define-method (write-event (obj <midimsg>) (mf <midi-file-stream>) time)
-  (let ((data (midimsg-data obj))
-        (beats time)
-        (last #f))
-    (set! last
-          (if (null? (%q-head %offs))
-            (object-time mf)
-            (flush-pending-offs mf beats)))
-    (cond ((> beats last)
-           (midi-write-message  
-            (midimsg-msg obj)  
-            mf
-            (inexact->exact
-	     (round (* (- beats last) (midi-file-scaler mf))))
-            data)
-           (set! (object-time mf) beats))
-          (else
-           (midi-write-message (midimsg-msg obj) mf 0 data))) 
-    (values)))
+;;(define-method (write-event (obj <midimsg>) (mf <midi-file-stream>) time)
+;;  (let ((data (midimsg-data obj))
+;;        (beats time)
+;;        (last #f))
+;;    (set! last
+;;          (if (null? (%q-head %offs))
+;;            (object-time mf)
+;;            (flush-pending-offs mf beats)))
+;;    (cond ((> beats last)
+;;           (midi-write-message  
+;;            (midimsg-msg obj)  
+;;            mf
+;;            (inexact->exact
+;;              (round (* (- beats last) (midi-file-scaler mf))))
+;;            data)
+;;           (set! (object-time mf) beats))
+;;          (else
+;;           (midi-write-message (midimsg-msg obj) mf 0 data))) 
+;;    (values)))
+
+(define-method (write-event (obj <midi-event>) (mf <midi-file-stream>)
+                            time)
+  (multiple-value-bind (msg data)
+      (midi-event->midi-message obj)
+    (let ((beats time)
+          (last #f))
+      (set! last
+            (if (null? (%q-head %offs))
+              (object-time mf)
+              (flush-pending-offs mf beats)))
+      (cond ((> beats last)
+             (midi-write-message  
+              msg
+              mf
+              (inexact->exact
+               (round (* (- beats last) (midi-file-scaler mf))))
+              data)
+             (set! (object-time mf) beats))
+            (else
+             (midi-write-message msg mf 0 data))) 
+      (values))))
 
 ;;;
 ;;; if an object has a method defined on object->midi it can output
@@ -627,20 +649,12 @@
         (set! (midi-duration e)
               (* (midi-duration e) mult))))))
 
-;(define-method (print-object (obj <midimsg>) port)
-;  (let ((msg (midimsg-msg obj))
-;        (dat (midimsg-data obj)))
-;    (format port "#i(midimsg time ~s "
-;            (object-time obj))
-;    (midi-print-message msg #f :data dat :stream port)))
-
 (define (tempo-change->scaler msg data)
   msg
   (/ (+ (ash (vector-ref data 1) 16)
         (ash (vector-ref data 2)  8)
         (vector-ref data 3))
      1000000))
-
 
 (define (parse-tempo-map mf)
   (midi-file-set-track mf 0)
@@ -813,11 +827,16 @@
                                   (eot-p m)
                                   (member (ldb +enc-data-1-byte+ m)
                                           meta-exclude)))
-                   (set! n (make-instance <midimsg>
-                             :time b :msg m
-                             :data (midi-file-data mf)))))
+                   ;;(set! n (make-instance <midimsg>
+                   ;;          :time b :msg m
+                   ;;          :data (midi-file-data mf)))
+                   (set! n (midi-message->midi-event
+                            m :time b :data (midi-file-data mf)))
+                   ))
                 (else
-                 (set! n (make-instance <midimsg> :time b :msg m))))
+                 ;;(set! n (make-instance <midimsg> :time b :msg m))
+                 (set! n (midi-message->midi-event m :time b))
+                 ))
                (when n (push n data))))))  ; end #'mapper
       (midi-file-set-track file track)
       (midi-file-map-track #'mapper file ))

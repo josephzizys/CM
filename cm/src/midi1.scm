@@ -1157,7 +1157,6 @@
 
 ;;(define-message-set! time-signature-type +enc-data-1-byte+)
 
-
 ;;;
 ;;; :key-signature
 
@@ -1173,32 +1172,10 @@
          (unless (<= -7 key 7)
            (err "Key signature must be between -7 (b) and 7 (#)."))
          (set! sf key))
-        ((symbol? key)
-         (set! sf (case key
-                    ((cf ) -7) 
-                    ((gf ) -6)
-                    ((df ) -5)
-                    ((af ) -4)
-                    ((ef ) -3)
-                    ((bf ) -2)
-                    ((f )  -1)
-                    ((c )  0)
-                    ((g )  1)
-                    ((d )  2)
-                    ((a )  3)
-                    ((e )  4)
-                    ((b )  5)
-                    ((fs ) 6)
-                    ((cs ) 7)
-                    (else
-                     (err "Key not cf gf df af ef bf f c g d a e b fs cs.")
-                     ))))
         (else
          (err "~s is not a number or symbol." key)))
-      (when (= mode 1) (set! sf (max (- sf 3) -7)))
       (set! sf (if (< sf 0) (+ sf 256) sf))
       (make-meta-message +ml-file-key-signature-opcode+ sf mode))))
-
 
 (define (key-signature-p message)
   (and (midi-meta-message-p message)
@@ -3374,7 +3351,8 @@
                                 (midi-event-data3 event)
                                 (midi-event-data4 event)))
           ((eq? op +ml-file-key-signature-opcode+)
-           (make-key-signature (midi-event-data1 event)))
+           (make-key-signature (midi-event-data1 event)
+                               (midi-event-data2 event)))
           ((eq? op +ml-file-sequencer-event-opcode+)
            (make-sequencer-event (midi-event-data1 event)))
           (else
