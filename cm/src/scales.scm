@@ -909,10 +909,6 @@
                (or hz? (symbol? freq)))
       (err ":from conversion: ~s is not a key number in ~s."
            freq mode))
-
-    (when hz?
-      (set! freq (keynum freq :in tuning)))
-    ;; freq are now notes/keynums in tuning
     (cond ((pair? freq)
            (with-default-octave tuning
              (loop for f in freq 
@@ -937,16 +933,18 @@
                      (if (eq? out ref) ref #f)
                      out))))))
           (else
-           ;; freq must be a keynum
-           (if (not mode)
-             (tuning-keynum->note tuning freq #f (not test?))
-             (let* ((in (if (eq? oper ':from)
-                          freq
-                          (tuning->mode mode freq (not test?))))
-                    (out (and in (mode->tuning mode in ':note))))
-               (if test? out
-                   (or out (err "No note for keynum ~s in mode ~s." 
-                                freq mode)))))))))
+           ;; freq is keynum or hertz. insure keynum
+           (let ((keyn (if hz? (tuning-hertz->keynum tuning freq)
+                           freq)))
+             (if (not mode)
+               (tuning-keynum->note tuning keyn #f (not test?))
+               (let* ((in (if (eq? oper ':from)
+                            keyn
+                            (tuning->mode mode keyn (not test?))))
+                      (out (and in (mode->tuning mode in ':note))))
+                 (if test? out
+                     (or out (err "No note for keynum ~s in mode ~s." 
+                                  keyn mode))))))))))
 
 ;;;
 ;;; note properties in standard chromatic scale
