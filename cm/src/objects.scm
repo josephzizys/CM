@@ -734,15 +734,12 @@
    (list (list 'set (function parse-set-clause) 'task)
          (list 'output (function parse-process-clause) 'task 'to 'into)
          (list 'sprout (function parse-process-clause) 'task 'at 'ahead)
-         ;(list 'ms:output (function parse-process-clause) 'task 'to 'into)
-         ;(list 'ms:sprout (function parse-process-clause) 'task 'at 'ahead)
          (list 'wait (function parse-process-clause) 'task)
          (list 'wait-until (function parse-process-clause) 'task)
          (list 'each (function parse-each) 'task )
          (list 'while (function process-while-until) #f )
          (list 'until (function process-while-until) #f )
          )))
-
 
 ;;;
 ;;; need process expasion for cltl
@@ -755,3 +752,122 @@
 (defmacro defprocess forms
   (expand-defprocess forms))
 
+;;;
+;;; Forward chaining (ala Max) using lightweight 'boxes' as nodes.  A
+;;; box is just a vector that associates a lisp function with optional
+;;; funcall args and zero or more 'outboxes', the boxes to propagate
+;;; values/funcalls in left-to-right, depth-first order.  see the
+;;; 'bang!' function below for more info.  see cm/etc/examples/rt.cm
+;;; for some example networks.
+;;;
+
+(define (box op . args)
+  (vector op args '()))
+
+(defun box? (x)
+  ;; any 3+ vector can be a box. chaining only uses the first
+  ;; three elements so caching goodies in other locs is safe.
+  (and (vector? x) (> (vector-length x) 2)))
+
+(define (boxfunc box . func)
+  ;; get/set box's function
+  (if (null? func)
+    (vector-ref box 0)
+    (begin (vector-set! box 0 (car func))
+           (car func))))
+
+(define (boxargs box . args)
+  ;; get/set box's funargs
+  (if (null? args)
+    (vector-ref box 1)
+    (begin (vector-set! box 1 (car args))
+           (car args))))
+
+(define (boxouts box . outs)
+  ;; get/set box's outboxes
+  (if (null? outs)
+    (vector-ref box 2)
+    (begin (vector-set! box 2 (car outs))
+           (car outs))))
+
+;;;
+;;; box-> sets the outboxes of a box to zero or more specified target
+;;; boxes, for example:
+;;;  (box-> a b c d)
+;;; sets a's outboxes to be the boxes b c d, and
+;;;  (box-> a)
+;;; removes all existing outboxes from a.
+;;;
+
+(define (box-> box . boxes)
+  (boxouts box boxes)
+  (values))
+
+;;; 
+;;; bang! applies a box function to its args and then forward chains to
+;;; all outboxes in depth-first, left-to-right order. the operator
+;;; function can control forward chaining by returning an (optional)
+;;; mode as its first value:
+;;;   1. if the first value is :bang then forward outlets are banged 
+;;;      with any remaining values:
+;;;        (values :bang)  => bangs outboxes without passing values
+;;;        (values :bang 1 2 3) => bangs outboxes with args 1 2 3.
+;;;   2. if the first value is :stop then propagation halts at the
+;;;      current box and any remaining values are ignored:
+;;;        (values :stop) => halts forward propagation
+;;;        (values :stop 1 2 3) => ditto
+;;;   3. if the first value is :send then any remaining values
+;;;      are sent forward to the outboxes without a bang.
+;;;        (values :send 1 2 3) => sets outbox args to 1 2 3.
+;;;   4. if the marker :argn appears directly after :bang or :send
+;;;      the remaining values are handled PAIRWISE, where each
+;;;      pair of values is interpreted:
+;;;        {argn argval}* 
+;;;      where argn is a positional index (zero-based) of an outbox arg
+;;;      to set and argval becomes its value:
+;;;        (values :bang :argn 2 -99)
+;;;          ==> bangs outbox with its arg[2] set to -99 
+;;;        (values :send :argn 0 'a 2 'c)
+;;;          ==> sets arg[0] to A and C to arg[3] of outbox
+;;;        (values :send :argn)
+;;;          ==> sets outbox args to ()
+;;;   5.  Any other values are treated as an implicit :bang
+;;;        (values)    => (values :bang)
+;;;        123         => (values :bang 123)
+;;;        (values 1 2)=> (values :bang 1 2)
+;;;
+
+(define (bang! box . args)
+  ;; args override box's current args
+  (let ((pmode ':bang))   
+    ;; parse propagation mode
+    (cond ((null? args) #f)
+          ((eq? (car args) :bang)
+           (set! args (cdr args)))
+          ((eq? (car args) :send)
+           (set! pmode :send)
+           (set! args (cdr args)))
+          ((eq? (car args) :stop)
+           (set! pmode :stop))
+          (else #f))
+    (if (eq? mode ':stop)
+      (values)
+      (begin
+       ;; :bang or :send, check for :argn in first position
+       (if (not (null? args))
+         (if (eq? (car args) ':argn)
+           (if (null? (cdr args))
+             ;; let empty :argn FLUSH current args.
+             (vector-set! box 1 (list))
+             (let ((fnargs (vector-ref box 1)))
+               (dopairs (n v (cdr args))
+                 (list-set! fnargs n v))))
+           ;; else set all args
+           (vector-set! box 1 args)))
+       (if (eq? mode :bang)
+         (let ((res (multiple-value-list
+                        (apply (vector-ref box 0)
+                               (vector-ref box 1)))))
+           (dolist (o (vector-ref box 2))
+             (apply (function bang!) o res))))
+       (values)))))
