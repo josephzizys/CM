@@ -31,7 +31,7 @@ MidiShare in non-real time mode.
 </li>
 
 <li>
-A <a href="#midi_low_level">low level interface</a> connects directly
+A <a href="#midi_real_time">low level interface</a> connects directly
 to Midishare via a foreign function interface (FFI) for "interactive",
 real time work (OpenMCL/OS X systems only).
 </li>
@@ -83,12 +83,21 @@ href="midishare-stream-cls.html"><code>midishare-stream</code></a></li>
 <li><a href="win-play-midi-file.html"><code>win-play-midi-file</code></a></li>
 </ul>
 
-<h2 id="midi_low_level">Low level MIDI support</h2>
+<h2 id="midi_real_time">Real time MIDI support</h2>
 
 <p>
-Low level MIDI support provides the ability to write and write MIDI messages to the MidiShare real time operating system on OS X using 
-<a href="http://www.clozure.com/openmcl/">OpenMCL</a> (release 0.14.1-p1 or higher.)
+The Low level MIDI interface provides the ability to read and write
+MIDI messages in real time to:
 </p>
+
+<ul>
+<li><a
+href="http://www.grame.fr/MidiShare/Install/Download.html#MacOSX">
+MidiShare on OS X</a> using <a
+href="http://www.clozure.com/openmcl/">OpenMCL</a> (release 0.14.1-p1
+or higher.)</li>
+</ul>
+
 
 
 <h3>Opening and closing the MIDI port</h3>
@@ -160,13 +169,14 @@ deallocate MidiEv structs using Midishare's API.
 </p>
 
 <p>
-Common Music "extends" Midishare's API by defining and exporting a
-high level MidiEv constructor and a printer from the MidiShare
-package. These two additions allow MidiEvs to be manipulated in a
-manner consistent with normal Lisp objects defined in CM. Use the
-package prefix <code>midishare:</code> or <code>ms:</code> to
-reference these functions as well as all of the functions defined by
-MidiShare.
+Common Music "extends" Midishare's API by defining
+<code>ms:new</code>, a high level MidiEv constructor, and
+<code>ms:MidiPrintEv</code>, a MidiEv printer. These two additions
+allow MidiEvs to be manipulated in a manner consistent with normal
+Lisp objects defined in CM. Note that you must use the package prefix
+<code>midishare:</code> or <code>ms:</code> to reference these two
+functions -- as well as all of the functions defined by MidiShare --
+from inside the CM package.
 </p>
 
 <dl>
@@ -427,9 +437,8 @@ cm&gt; <span class="input">(ms:MidiPrintEv ev)</span>
 
 <p>
 To access and set the fields of a MidiEv struct you should use the
-functions defined in the MidiShare API. The more important set of
-constructors and accessors are listed here. Consult the 
-<a
+functions defined in the MidiShare API. The more important
+constructors and accessors are listed here. Consult the <a
 href="http://www.grame.fr/MidiShare/Doc/MidiShare_doc.html">MidiShare
 documentation</a> for more information.
 </p>
@@ -538,7 +547,7 @@ clearing a MIDI receive hook.</p>
       (output ev)
       (let ((ev2 (ms:MidiCopyEv ev)))
          (ms:pitch ev2 (+ 13 (ms:pitch ev2)))
-         (output ev2)))
+         (output ev2)))</span>
 
 cm&gt; <span class="input">(receive #'play9th)</span>
 
@@ -554,8 +563,8 @@ wiggle" to a specified keynum <var>knum</var>.  Each wiggle lasts
 between 10 and 20 notes; each note is produced from a heap pattern
 (random shuffle) of keynums centered around <var>knum</var> not
 exceeding a minor third on either side. The rate (speed) of each
-wiggle is a random choice betwen 100, 150 and 200 milliseconds.  All
-wiggles make a decrescendo over their life.
+wiggle is a random choice betwen 100, 150 and 200 milliseconds between
+notes.  All wiggles make a decrescendo over their lifetime.
 </p>
 
 <p>
@@ -565,24 +574,24 @@ wiggles are at the input keynumber, otherwise they appear one octave
 up or down from the input note.
 </p>
 
-<!-- Interaction 5 -->
+<!-- Interaction 6 -->
 <div class="float">
-<p><span class="floatlabel">Example 5.</span> Receiving, outputing and scheduling used together.</p>
+<p><span class="floatlabel">Example 6.</span> Receiving, outputing and scheduling used together.</p>
 <pre class="code">
 (midi-open)
 
-(define (wiggle keyn)
-  (let ((n (between 10 20))
+(<span class="special">define</span> (<span class="defined">wiggle</span> knum)
+  (<span class="special">let</span> ((n (between 10 20))
         (r (pick 100 150 200))
-        (h (new heap :of '(0 -1 1 -2 2 -3 3))))
-    (process for i below n
-             output (ms:new typeNote
-                       :duration 250
-                       :keynum (+ keyn (next h))
-                       :velocity (round (interp i 0 90 (- n 1) 20)))
+        (h (new heap <span class="keyword">:of</span> '(0 -1 1 -2 2 -3 3))))
+    (<span class="special">process</span> for i below n
+             output (<span class="special">ms:new</span> typeNote
+                       <span class="keyword">:duration</span> 250
+                       <span class="keyword">:keynum</span> (+ knum (next h))
+                       <span class="keyword">:velocity</span> (round (interp i 0 90 (- n 1) 20)))
              wait r)))
 
-;;; listen to a few wiggles on their own
+<span class="comment">;;; listen to a few wiggles on their own</span>
 
 (sprout (wiggle 60))
 
@@ -590,23 +599,22 @@ up or down from the input note.
 
 (sprout (wiggle 40) 1000)
 
-;;; create a receive hook to sprout wiggles interactively
+<span class="comment">;;; create a receive hook to sprout wiggles interactively</span>
 
-(define (dowiggle ev)
+(<span class="special">define</span> (<span class="defined">dowiggle</span> ev)
   (output ev)
-  (if (and (= (ms:evType ev) typeKeyOn)
+  (<span class="special">if</span> (and (= (ms:evType ev) typeKeyOn)
            (> (ms:vel ev) 0)
            (odds .3))
       (sprout (wiggle (+ (ms:pitch ev)
                          (pick 0 0 12 -12)))
               0)))
 
-;;; wiggle till the cows come home!
+<span class="comment">;;; wiggle till the cows come home!</span>
 
 (receive #'dowiggle)
 
-(receive )
-</span>
+(receive )</span>
 </div>
 
 <!-- Footer -->
