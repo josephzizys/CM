@@ -19,63 +19,118 @@
 
 
 <p>
-A <kbd>mode</kbd> defines a transposable subset of a tuning.
-</p>
+A <kbd>mode</kbd> defines a transposable subset of a
+<a href="tuning-cls.html">tuning</a> in which the sequentially ordered
+keynums in the mode map to non-contiguous notes, keynums and hertz
+values in the mode's tuning.
 
-<p><code class="entry">mode</code> supports the following slot initializations:
+Every mode maps to exactly one tuning; if no tuning is specified when
+the mode is created then it defaults to the standard chromatic scale.
+
+Modes can be used in place of tunings when generating frequency
+information using the 
+<a href="note-fn.html"><code>note</code></a>,
+<a href="keynum-fn.html"><code>keynum</code></a> and <a
+href="hertz-fn.html"><code>hertz</code></a> functions.  These
+functions all provide a common set of keyword parameters that
+"convert" between modes and tunings:
+
+<ul>
+  <li>
+    The <code class="keyword">:from</code> parameter to
+    <a href="note-fn.html"><code>note</code></a>,
+    <a href="keynum-fn.html"><code>keynum</code></a> and <a
+    href="hertz-fn.html"><code>hertz</code></a>, converts a modal
+    keynum into a note, keynum or hertz value in the mode's tuning.
+  </li>
+  <li>
+    The <code class="keyword">:to</code> parameter to
+    <a href="keynum-fn.html"><code>keynum</code></a> converts notes,
+    keynums and hertz values in a tuning into their closest modal
+    keynum.
+  </li>
+  <li>
+    The <code class="keyword">:through</code> parameter to
+    <a href="note-fn.html"><code>note</code></a>,
+    <a href="keynum-fn.html"><code>keynum</code></a> 
+    and <a href="hertz-fn.html"><code>hertz</code></a>
+    filters tuning notes, keynums and hertz values through a mode to
+    "quantize" to the nearest modal equivalent.
+  </li>
+  <li>
+    The <code class="keyword">:in?</code> parameter to
+    <a href="note-fn.html"><code>note</code></a>,
+    <a href="keynum-fn.html"><code>keynum</code></a> 
+    and <a href="hertz-fn.html"><code>hertz</code></a>
+    tests if a tuning note, keynum or hertz value exists in the
+    current transposition of a mode.
+  </li>
+</ul>
+
+<p>
+<code class="entry">mode</code> supports the following slot initializations:
 </p>
 <dl>
-
-
 <dt><code class="keyword">:name</code> {<var>string</var> | <var>symbol</var>}</dt>
 <dd>
-
 An optional name for the mode. 
+</dd>
+
+
+<dt>
+<code class="keyword">:steps</code> (<var>intervals</var>)
+</dt>
+<dd>
+One octave of the mode specified as a list of interval
+steps <em>between</em> mode degrees. The size of the mode's octave is
+set to the sum of the steps. Note that this octave size does not have
+to "agree" with the size of the tuning's octave.
+</dd>
+
+<dt>
+<code class="keyword">:degrees</code> ({<var>notes</var>
+| <var>keynums</var>})
+</dt>
+<dd>
+One octave of the mode specified as a list of notes, note classes or
+keynums. The interval between the first entry and last entry in the
+list determines the octave size of the mode.  This size does not have
+to "agree" with the size of the tuning's octave.  If <kbd>steps</kbd>
+is a list of note symbols then the first note in the list also defines
+the initial transposition offset (tonic) of the mode and the mode will
+preserve note spelling using <a href="interval-fn.html">typed
+intervals</a>. Typed intervals preserve spelling even if the mode is
+transposed but they are less efficient than regular step intervals.
+Specify keynums instead of notes to define modal degrees without
+encoded intervals.
 </dd>
 
 <dt><code class="keyword">:tonic</code> <var>note</var></dt>
 <dd>
 Sets the tonic note of the mode. Defaults to the first note in the
-steps specification, or C if the steps are described as intervals.
-</dd>
-
-
-<dt><code class="keyword">:scale</code> <var>tuning</var></dt>
-<dd>
-Sets the tuning system for the scale.  Notes in the mode must also be
-notes in the tuning.  Defaults to the standard chromatic scale.
-</dd>
-
-
-<dt>
-<code class="keyword">:steps</code> {(<var>notes</var>
-| <var>intervals</var>)}</dt>
-<dd>
-One octave of the mode specified as a list of note classes or list of
-interval steps <em>between</em> mode degrees.  If <kbd>steps</kbd> is a
-list of note class symbols then the last note in the list defines the
-octave of the mode and the tonic (transposition offset) of the mode is
-set to the note class of the first note in the list.  If the steps are
-specified as a list of intervals then the size of the mode's octave is
-set to the sum of the steps and the transposition for the mode is
-initially set to C.  A mode can be transposed to a new tonic using the
+steps specification, or C if the steps are described as intervals.  A
+mode can be transposed to a new tonic using the
 <a href="transpose-fn.html"><kbd>transpose</kbd></a> function.
 </dd>
 
+<dt><code class="keyword">:tuning</code> <var>tuning</var></dt>
+<dd>
+Sets the tuning system for the mode.  Notes in the mode must also be
+notes in the tuning.  Defaults to the standard chromatic scale.
+</dd>
 </dl>
-
 
 <!-- Example -->
 <div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(new mode name 'major steps '(d e fs g a b c d))</span>
-<span class="output">#&lt;mode: "major" (on d)&gt;</span>
-cm&gt; <span class="input">(note 35 :in #&amp;major)</span>
+<pre class="shell">cm&gt; <span class="input">(new mode :name 'maj :degrees '(d e fs g a b c d))</span>
+<span class="output">#&lt;mode: "maj" (on d)&gt;</span>
+cm&gt; <span class="input">(note 35 :from #&amp;maj)</span>
 <span class="output">d4
-cm&gt; <span class="input">(note 36 :in #&amp;major)</span>
+cm&gt; <span class="input">(note 36 :from #&amp;maj)</span>
 <span class="output">e4
-cm&gt; <span class="input">(transpose #&amp;major 'af)</span>
-<span class="output">#&lt;mode: "major" (on af)&gt;</span>
-cm&gt; <span class="input">(note 35 :in #&amp;major)</span>
+cm&gt; <span class="input">(transpose #&amp;maj 'af)</span>
+<span class="output">#&lt;mode: "maj" (on af)&gt;</span>
+cm&gt; <span class="input">(note 35 :from #&amp;maj)</span>
 <span class="output">af4</span></pre>
 </div>
 
