@@ -326,6 +326,6 @@
 ;;; needed for testing.cm
 ;;;
 
-(defscheme file-exits? probe-file)
+(defscheme file-exists? probe-file)
 (defscheme hash-clear! clrhash)
 
