@@ -19,8 +19,8 @@
 
 
 <p>
-A <kbd>tuning</kbd> is a scale with frequencies defined for
-each scale degree. Scale degrees may also have note names associated with them.
+A scale definition with Hertz frequencies, key numbers and
+(optionally) note names assigned to each scale degree.
 </p>
 
 <p><code class="entry">tuning</code> supports the following slot initializations:
@@ -103,27 +103,49 @@ A integer offset to add to all keynums values returned by
 
 <dt><code class="keyword">:default-octave</code> <var>integer</var></dt>
 <dd>
-
 The default octave for notes without octave numbers. Defaults to the 4th octave.
 </dd>
-
-
 </dl>
 
+<h4>Examples:</h4>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(new tuning name 'qt cents (loop repeat 24 collect 50))</span>
-#&lt;tuning: "qt"&gt;
-cm&gt; <span class="input">(hertz 138 :in #&amp;qt)</span>
-440.0
-cm&gt;</pre>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> A quarter-tone scale with no note names.
+</p>
+<pre class="code">
+(<a href="new-mac.html">new</a> tuning <span class="keyword">:name</span> 'qt <span class="keyword">:cents</span> (<span class="special">loop</span> repeat 24 collect 50))
+<span class="result">&rArr;</span> #&lt;tuning: "qt"&gt;
+(<a href="hertz-fn.html">hertz</a> 138 <span class="keyword">:in</span> #&amp;qt)
+<span class="result">&rArr;</span> 440.0
+</pre>
 </div>
 
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> A Slendro with note names and no octaves.
+</p>
+<pre class="code">
+(<a href="new-mac.html">new</a> tuning <span class="keyword">:name</span> 'slendro 
+     <span class="keyword">:lowest</span> 220.0
+     <span class="keyword">:octaves</span> #f
+     <span class="keyword">:cents</span> '((0    nem0)
+              (218  barang0)
+              (473  gulu0)
+              (721  dada0)
+              (954  lima0)
+              (1213 nem1)
+              (1458 barang1)
+              (1695 gulu1)
+              (1929 dada1)
+              (2174 lima1)
+              (2441 nem2)))
+</pre>
+</div>
 
 <p>
 See the file
-<a href="../etc/examples/scales.cm">scales.cm</a> for examples of tuning and mode definitions.
+<a href="../../etc/examples/scales.cm">scales.cm</a> for examples of tuning and mode definitions.
 </p>
 
 <!-- See also -->

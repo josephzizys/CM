@@ -10,32 +10,33 @@
 <body>
 <div id="content">
 
-
-<!-- Entry: "cents->scaler" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">cents-&gt;scaler</code> <var>cents</var>)</span></dd>
+<dd><code>(</code><code class="entry">cents-&gt;scaler</code> <var>cents</var><code>)</code></dd>
 </dl>
-
 
 <p>
 Convert <var>cents</var> value to a scaler value.
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(cents-&gt;scaler 100)</span>
-1.0594630943592953
-cm&gt;</pre>
+<h4>Examples:</h4>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Converting cents to multiplier on frequency.
+</p>
+<pre class="code">
+(cents-&gt;scaler 100)
+<span class="result">&rArr;</span> 1.0594630943592953
+(<a href="note-fn.html">note</a> (* 440 (cents->scaler -1100)) <span class="keyword">:hz</span> #t)
+<span class="result">&rArr;</span> bf3
+</pre>
 </div>
 
-
-<!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
-<li><a href="scaler-gtcents-fn.html"><kbd>scaler-&gt;cents</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="scaler-gtcents-fn.html"><code>scaler-&gt;cents</code></a> [Function]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>

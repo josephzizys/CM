@@ -18,19 +18,15 @@
 </dl>
 
 <p>
-A <kbd>mode</kbd> defines a transposable subset of a
-<a href="tuning-cls.html">tuning</a> in which the sequential keynums
-in the mode map to non-sequential keynums, notes or hertz values in
-the tuning.  Every mode maps to exactly one tuning; if no tuning is
-specified when the mode is created then it defaults to the standard
-chromatic scale.  The number of steps per octave as well as the 
-mode's octave size are determined from its interval specification when the
-mode is created.  
-<!-- For example, the interval list (2 1 2 1 1) would
-define a 5-note per octave mode whose "octave" size is the perfect 5th
-(7 semitones) -->
-
-A mode can be moved to any degree in the mode's tuning using the <a
+Defines a transposable subset of a <a
+href="tuning-cls.html">tuning</a> in which the sequential keynums in
+the mode map to non-sequential keynums, notes or hertz values in the
+tuning.  Every mode maps to exactly one tuning; if no tuning is
+specified when the mode is created then it defaults to the <a
+href="chromatic-scale-var.html">standard chromatic scale</a>.  The
+number of steps per octave as well as the mode's octave size are
+determined from its interval specification when the mode is created.
+A mode can be placed on any degree in the mode's tuning using the <a
 href="transpose-fn.html"><code>transpose</code></a> function. <!--
 This means that the same set of modal keynums can be shifted in the
 tuning to reference different notes, keynums and hertz values. -->
@@ -89,7 +85,7 @@ An optional name for the mode.
 
 
 <dt>
-<code class="keyword">:steps</code> (<var>intervals</var>)
+<code class="keyword">:steps</code> <var>intervals</var>
 </dt>
 <dd>
 One octave of the mode specified as a list of intervals steps between
@@ -101,8 +97,7 @@ the steps.
 </dd>
 
 <dt>
-<code class="keyword">:degrees</code> ({<var>notes</var>
-| <var>keynums</var>})
+<code class="keyword">:degrees</code> {<var>notes</var> | <var>keynums</var>}
 </dt>
 <dd>
 One octave of the mode specified as a list of notes, note classes
@@ -112,8 +107,10 @@ entry is a note with an octave number then that note becomes the
 lowest note in the mode, otherwise the mode is based off that note in
 the lowest octave of the mode's tuning.  --> The last entry in the
 list determines the octave note of the mode, this note does not have
-to be the same as the first note in he list. </dd> The first note in
+to be the same as the first note in he list.  The first note in
 the list defines the initial transposition offset (tonic) of the mode
+</dd>
+
 <dt>
 <code class="keyword">:notes</code> <var>notes</var>
 </dt>
@@ -126,13 +123,12 @@ regular (semitonal) intervals.
 <dt><code class="keyword">:lowest</code> <var>note</var></dt>
 <dd>
 Sets the lowest note of the mode. Defaults to the first note in the
-a <span class="keynum">:degree</span> specification, or to the lowest
-note in the mode's tuning if <span class="keyword">steps</span> are
+a <span class="keyword">:degree</span> specification, or to the lowest
+note in the mode's tuning if <span class="keyword">:steps</span> are
 provided. If <var>note</var> is a note class (a note name without an
 octave) then the mode is based on the lowest octave in the mode's
 tuning. Otherwise, the octave information of the note is preserved and
 that note becomes keynum 0 in the mode.
-<a href="transpose-fn.html"><kbd>transpose</kbd></a> function.
 </dd>
 
 <dt><code class="keyword">:tuning</code> <var>tuning</var></dt>
@@ -142,30 +138,52 @@ chromatic scale.
 </dd>
 </dl>
 
-<!-- Example -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(new mode :name 'maj :degrees '(d e fs g a b c d))</span>
-<span class="output">#&lt;mode: "maj" (on d)&gt;</span>
-cm&gt; <span class="input">(note 35 :from #&amp;maj)</span>
-<span class="output">d4
-cm&gt; <span class="input">(note 36 :from #&amp;maj)</span>
-<span class="output">e4
-cm&gt; <span class="input">(transpose #&amp;maj 'af)</span>
-<span class="output">#&lt;mode: "maj" (on af)&gt;</span>
-cm&gt; <span class="input">(note 35 :from #&amp;maj)</span>
-<span class="output">af4</span></pre>
+<h4>Examples:</h4>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Defining and transposing a mode.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">major</span> (<a href="new-mac.html">new</a> <a href="mode-fn.html">mode</a> <span class="keyword">:degrees</span> '(d e fs g a b c d)))
+
+(<a href="note-fn.html">note</a> 35 <span class="keyword">:in</span> major)
+<span class="result">&rArr;</span> d4
+(<a href="note-fn.html">note</a> 36 <a href=":in-fn.html">:in</a> major)
+<span class="result">&rArr;</span> e4
+(<a href="transpose-fn.html">transpose</a> major 'af)
+<span class="result">&rArr;</span> #&lt;mode: (on af)&gt;
+(<span class="keyword">note</span> 35 <span class="keyword">:in</span> major)
+<span class="result">&rArr;</span> af4
+</pre>
 </div>
 
-<!-- See also -->
-<h4>See Also:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Modes smaller and larger than one octave.
+</p>
+<pre class="code">
+<span class="comment">;; a five note mode whose "octave" is a perfect 5th</span>
+(<span class="special">define</span> <span class="defined">mini</span> (<a href="new-mac.html">new</a> <a href="mode-fn.html">mode</a> <span class="keyword">:steps</span> '(2 1 2 1 1)))
+
+(<span class="special">loop</span> for k from 35 repeat 14 collect (<a href="note-fn.html">note</a> k <span class="keyword">:in</span> mini))
+<span class="result">&rArr;</span> (cs3 ef3 e3 fs3 g3 af3 bf3 b3 cs4 d4 ef4 f4 fs4 af4)
+<span class="comment">;; a 12 note mode that spans two octaves</span>
+(<span class="special">define</span> <span class="defined">maxi</span> (<a href="new-mac.html">new</a> <a href="mode-fn.html">mode</a> <span class="keyword">:steps</span> '(2 1 2 3 2 3 3 2 1 2 2 1)))
+
+(<span class="special">loop</span> for k from 24 repeat 12 collect (<a href="note-fn.html">note</a> k <span class="keyword">:in</span> maxi))
+<span class="result">&rArr;</span> (c3 d3 ef3 f3 af3 bf3 cs4 e4 fs4 g4 a4 b4)
+</pre>
+</div>
+
+<h4>See also:</h4>
 <ul>
 <li>
-<a href="tuning-cls.html"><code>tuning </kbd></a>[Class]
-</li>
+<a href="tuning-cls.html"><code>tuning </kbd></a>[Class]</li>
 <li><a href="note-fn.html"><code>note </code></a>[Function]</li>
 <li><a href="keynum-fn.html"><code>keynum </code></a>[Function]</li>
-<li><a href="hertz-fn.html"><code>hertz </code></a>[Function] </li>
-<li><a href="transpose-fn.html"><code>transpose </code></a>[Function] </li>
+<li><a href="hertz-fn.html"><code>hertz </code></a>[Function]</li>
+<li><a href="transpose-fn.html"><code>transpose </code></a>[Function]</li>
 </ul>
 
 </div>

@@ -14,30 +14,36 @@
 <!-- Entry: "new" -->
 <dl class="dictsyntax">
 <dt>[Macro]</dt>
-<dd><span class="syntax">(<code class="entry">new</code> <var>class</var> {<var>init</var> <var>value</var>}*)</span></dd>
+<dd><code>(</code><code class="entry">new</code> <var>class</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
-
 <p>
-Allocates and initalizes a new object. <var>class</var>
-is the unquoted class name (symbol) of the type of object to create. Following <var>class</var> comes zero or more <var>slot initializations</var>
-where each initialization consists of a symbol or keyword slot <var>init</var> name followed by its <var>value</var>.
+Allocates and initalizes a new object of type <var>class</var>, an
+unquoted class name (symbol).  Following <var>class</var> comes zero
+or more keyword arguments where each <var>keyword</var> initializes a
+slot in the new object with its <var>value</var>.
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(new seq :name 'stuff)</span>
-#&lt;seq: Stuff&gt;
-cm&gt; <span class="input">(new midi :keynum (between 32 89) :time 1 :duration 3)</span>
-#i(midi time 1 duration 3 keynum 53 amplitude 64 channel 0)
-cm&gt; <span class="input">(new heap :rhythms '(q w e h e.. ))</span>
-#&lt;heap @ x4C357A6&gt;
-cm&gt;</pre>
+<h4>Examples:</h4>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Creating objects with <code>new</code>.
+</p>
+<pre class="code">
+(new seq <span class="keyword">:name</span> 'test)
+<span class="result">&rArr;</span> #&lt;seq: "test"&gt;
+(new <a href="midi-cls.html">midi</a> <span class="keyword">:keynum</span> (<a href="between-fn.html">between</a> 32 89) <span class="keyword">:time</span> 1 <span class="keyword">:duration</span> 3)
+<span class="result">&rArr;</span> #i(midi time 1 duration 3 keynum 53 amplitude 64 channel 0)
+(new <a href="heap-cls.html">heap</a> <span class="keyword">:rhythms</span> '(q w e h e.. ))
+<span class="result">&rArr;</span> #&lt;heap @ x4C357A6&gt;
+</pre>
 </div>
 
 
+
 <!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
 <li><a href="hshi-mac.html"><kbd>#i</kbd></a><kbd>&nbsp;</kbd>[Macro]</li>
 <li><a href="copy-object-fn.html"><kbd>copy-object</kbd></a><kbd>&nbsp;</kbd>[Function]</li>

@@ -14,9 +14,8 @@
 <!-- Entry: "shell" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">shell</code> <var>cmd</var> {<var>keyword</var> <var>value</var>})</span></dd>
+<dd><code>(</code><code class="entry">shell</code> <var>cmd</var> {<var>keyword</var> <var>value</var>}<code>)</code></dd>
 </dl>
-
 
 <p>
 Passes the <var>cmd</var> string to the operating system for execution.
@@ -27,29 +26,27 @@ Returns whatever the underlying Lisp implementation returns, typically a process
 </p>
 <dl>
 
-<dt><span class="keyword">:output</span> <var>bool</var></dt>
+<dt><span class="keyword">:output</span> <var>boolean</var></dt>
 <dd>
-If boolean true (the default) then any command output will be visible
-on the standard output, otherwise it will not.
+If true then any command output will be visible
+on the standard output, otherwise it will not. The default value is true.
 </dd>
 
-<dt><span class="keyword">:wait</span> <var>bool</var></dt>
+<dt><span class="keyword">:wait</span> <var>boolean</var></dt>
 <dd>
-If boolean true (the default) then the function will not return until
+If true then the function will not return until
 the command has completed execution, otherwise the function returns
-immediately after the command process starts.
+immediately after the command process starts. The default value is true.
 </dd>
 </dl>
 
-<!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
-<li><a href="cd-fn.html"><kbd>cd</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="cm-version-fn.html"><kbd>cm-version</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="date-and-time-fn.html"><kbd>date-and-time</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="pwd-fn.html"><kbd>pwd</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="cd-fn.html"><code>cd</code></a> [Function]</li>
+<li><a href="cm-version-fn.html"><code>cm-version</code></a> [Function]</li>
+<li><a href="date-and-time-fn.html"><code>date-and-time</code></a> [Function]</li>
+<li><a href="pwd-fn.html"><code>pwd</code></a> [Function]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>

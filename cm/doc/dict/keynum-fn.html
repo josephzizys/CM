@@ -13,7 +13,7 @@
 <!-- Entry: "keynum" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><code>(</code><code class="entry">keynum</code> <var>freq</var> . <var>keywords</var><code>)</code></dd>
+<dd><code>(</code><code class="entry">keynum</code> <var>freq</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
 <p>
@@ -38,11 +38,11 @@ a Hertz value rather than as a key number.
 
 <dt><code class="keyword">:in</code> {<a href="tuning-cls.html"> <var>tuning</var></a> | <a href="mode-cls.html"> <var>mode</var></a>}</dt>
 <dd>
-The tuning or mode to return the key number from. The value defaults
-to the global variable <a
-href="scale-var.html"><code>*scale*</code></a>.  If <var>mode</var> is
-specified then <var>freq</var> is a modal key number and the value
-returned is the equivalent key number in the mode's tuning.
+The tuning or mode to return the key number from. The default value
+is <a href="scale-var.html"><code>*scale*</code></a>.
+If <var>mode</var> is specified then <var>freq</var> is a modal key
+number and the value returned is the equivalent key number in the
+mode's tuning.
 </dd>
 
 <dt><code class="keyword">:in?</code>  {<a

@@ -11,35 +11,45 @@
 <div id="content">
 
 
-<!-- Entry: "append-object" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">append-object</code> <var>object</var> <var>container</var>)</span></dd>
+<dd><code>(</code><code class="entry">append-object</code> <var>object</var> <var>container</var><code>)</code></dd>
 </dl>
-
 
 <p>
 Appends <var>object</var> to the subobjects of <var>container</var>.
-<code>append-object</code> does not check time values.
 </p>
 
-<!-- See also -->
-<h4>See Also:</h4>
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Blah.
+</p>
+<pre class="code">
+(<a href="new-mac.html">new</a> <a href="seq-fn.html">seq</a> <span class="keyword">:name</span> 'test <span class="keyword">:subobjects</span> (list (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> )))
+<span class="result">&rArr;</span> #&lt;seq "test"&gt;
+(append-object (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:keynum</span> 90) <a href="hshamp-mac.html">#&amp</a>test)
+<span class="result">&rArr;</span> (<a href="hshi-mac.html">#i</a>(midi keynum 60 duration 0.5 amplitude 64 channel 0)
+    <a href="hshi-mac.html">#i</a>(midi keynum 90 duration 0.5 amplitude 64 channel 0))
+</pre>
+</div>
+
+<h4>See also:</h4>
 <ul>
-<li><a href="hshamp-mac.html"><kbd>#&amp;</kbd></a><kbd>&nbsp;</kbd>[Macro]</li>
-<li><a href="find-object-fn.html"><kbd>find-object</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="insert-object-fn.html"><kbd>insert-object</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="list-named-objects-fn.html"><kbd>list-named-objects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="list-subobjects-fn.html"><kbd>list-subobjects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="map-subcontainers-fn.html"><kbd>map-subcontainers</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="map-subobjects-fn.html"><kbd>map-subobjects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="object-name-fn.html"><kbd>object-name</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="object-time-fn.html"><kbd>object-time</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="remove-object-fn.html"><kbd>remove-object</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="remove-subobjects-fn.html"><kbd>remove-subobjects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="save-object-fn.html"><kbd>save-object</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="subcontainers-fn.html"><kbd>subcontainers</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="subobjects-fn.html"><kbd>subobjects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="hshamp-mac.html"><code>#&amp;</code></a> [Macro]</li>
+<li><a href="find-object-fn.html"><code>find-object</code></a> [Function]</li>
+<li><a href="insert-object-fn.html"><code>insert-object</code></a> [Function]</li>
+<li><a href="list-named-objects-fn.html"><code>list-named-objects</code></a> [Function]</li>
+<li><a href="list-subobjects-fn.html"><code>list-subobjects</code></a> [Function]</li>
+<li><a href="map-subcontainers-fn.html"><code>map-subcontainers</code></a> [Function]</li>
+<li><a href="map-subobjects-fn.html"><code>map-subobjects</code></a> [Function]</li>
+<li><a href="object-name-fn.html"><code>object-name</code></a> [Function]</li>
+<li><a href="object-time-fn.html"><code>object-time</code></a> [Function]</li>
+<li><a href="remove-object-fn.html"><code>remove-object</code></a> [Function]</li>
+<li><a href="remove-subobjects-fn.html"><code>remove-subobjects</code></a> [Function]</li>
+<li><a href="save-object-fn.html"><code>save-object</code></a> [Function]</li>
+<li><a href="subcontainers-fn.html"><code>subcontainers</code></a> [Function]</li>
+<li><a href="subobjects-fn.html"><code>subobjects</code></a> [Function]</li>
 </ul>
 
 

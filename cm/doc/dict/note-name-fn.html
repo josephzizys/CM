@@ -10,51 +10,54 @@
 <body>
 <div id="content">
 
-
-<!-- Entry: "note-name" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">note-name</code> <var>note</var> [<var>scale</var>])</span></dd>
+<dd><code>(</code><code class="entry">note-name</code> <var>note</var> [<var>scale</var>]<code>)</code></dd>
 </dl>
 
-
 <p>
-Returns the name of <var>note</var> with any octave number removed.
+Returns the name of <var>note</var> with octave number removed.
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(note-name 'df5)</span>
-df
-cm&gt; <span class="input">(note-name 'dn5)</span>
-dn
-cm&gt;</pre>
+<h4>Examples:</h4>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Returning the note name of a note.
+</p>
+<pre class="code">
+(note-name 'df5)
+<span class="result">&rArr;</span> df
+(note-name 'dn5)
+<span class="result">&rArr;</span> dn
+(note-name 'd5)
+<span class="result">&rArr;</span> d
+(note-name 'd)
+<span class="result">&rArr;</span> d
+</pre>
 </div>
 
-
-<!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
-<li><a href="hertz-fn.html"><kbd>hertz</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="invert-fn.html"><kbd>invert</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="keynum-fn.html"><kbd>keynum</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="note-fn.html"><kbd>note</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="note-accidental-fn.html"><kbd>note-accidental</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="octave-number-fn.html"><kbd>octave-number</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="pitch-class-fn.html"><kbd>pitch-class</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="prime-form-fn.html"><kbd>prime-form</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="scale-max-fn.html"><kbd>scale-max</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="scale-min-fn.html"><kbd>scale-min</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="scale-mod-fn.html"><kbd>scale-mod</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="scale-order-fn.html"><kbd>scale-order</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="scalelt-fn.html"><kbd>scale&lt;</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="scalelteql-fn.html"><kbd>scale&lt;=</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="scaleeql-fn.html"><kbd>scale=</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="scalegt-fn.html"><kbd>scale&gt;</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="scalegteql-fn.html"><kbd>scale&gt;=</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="transpose-fn.html"><kbd>transpose</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
+<li><a href="hertz-fn.html"><code>hertz</code></a> [Function]</li>
+<li><a href="invert-fn.html"><code>invert</code></a> [Function]</li>
+<li><a href="keynum-fn.html"><code>keynum</code></a> [Function]</li>
+<li><a href="note-fn.html"><code>note</code></a> [Function]</li>
+<li><a href="note-accidental-fn.html"><code>note-accidental</code></a> [Function]</li>
+<li><a href="octave-number-fn.html"><code>octave-number</code></a> [Function]</li>
+<li><a href="pitch-class-fn.html"><code>pitch-class</code></a> [Function]</li>
+<li><a href="prime-form-fn.html"><code>prime-form</code></a> [Function]</li>
+<li><a href="scale-max-fn.html"><code>scale-max</code></a> [Function]</li>
+<li><a href="scale-min-fn.html"><code>scale-min</code></a> [Function]</li>
+<li><a href="scale-mod-fn.html"><code>scale-mod</code></a> [Function]</li>
+<li><a href="scale-order-fn.html"><code>scale-order</code></a> [Function]</li>
+<li><a href="scalelt-fn.html"><code>scale&lt;</code></a> [Function]</li>
+<li><a href="scalelteql-fn.html"><code>scale&lt;=</code></a> [Function]</li>
+<li><a href="scaleeql-fn.html"><code>scale=</code></a> [Function]</li>
+<li><a href="scalegt-fn.html"><code>scale&gt;</code></a> [Function]</li>
+<li><a href="scalegteql-fn.html"><code>scale&gt;=</code></a> [Function]</li>
+<li><a href="transpose-fn.html"><code>transpose</code></a> [Function]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>

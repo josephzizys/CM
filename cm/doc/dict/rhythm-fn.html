@@ -14,15 +14,14 @@
 <!-- Entry: "rhythm" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">rhythm</code> [<var>tempo</var>] [<var>beat</var>])</span></dd>
+<dd><code>(</code><code class="entry">rhythm</code> <var>rhythm</var> [<var>tempo</var>] [<var>beat</var>]</code>)</code></dd>
 </dl>
-
 
 <p>
 Returns the value of <var>rhythm</var> converted to
 seconds. <var>Rhythm</var> can be a proportion (number), a rhythmic
-symbol or list of the same. <var>Tempo</var> is an optional metronome
-speed, and defaults to <kbd>*tempo*</kbd>. The optional
+symbol or a list of the same. The optional <var>tempo</var> is a metronome
+speed, and defaults to <code>*tempo*</code>. The optional
 <var>Beat</var> parameter specifies the metronome's pulse and defaults
 to <code>*beat*</code>.
 </p>
@@ -35,10 +34,10 @@ number of dots. Rhythmic symbols can be combined into simple
 expressions involving addition, subtraction and multiplication.
 </p>
 
+<div class="float">
 <p class="captxt">
-<span class="floatlabel">Table 1. Metric letters.</span>
+<span class="floatlabel">Table 1.</span> Table of metric letter.
 </p>
-
 <table class="float">
 <tr><th class="lcol">letter</th><th class="lcol">value</th><th
 class="lcol">&nbsp;&nbsp;</th><th class="lcol">letter</th><th
@@ -49,14 +48,17 @@ class="lcol">value</th></tr>
 <tr><td><code>w</code></td><td>whole</td><td>&nbsp;&nbsp;</td><td><code>t</code></td><td>thirty-second</td></tr>
 <tr><td><code>h</code></td><td>half</td><td>&nbsp;&nbsp;</td><td><code>x</code></td><td>sixty-fourth</td></tr>
 </table>
+</div>
 
-<p>
-Table 2 contains some representative rhythmic symbols.
-</p>
 
+<p>Table 2 contains some examples of representative rhythmic tokens.</p>
+
+
+<div class="float">
 <p class="captxt">
-<span class="floatlabel">Table 2. Examples of rhythmic symbols and expressions.</span>
+<span class="floatlabel">Table 2.</span>  Examples of rhythmic symbols and expressions.
 </p>
+
 <table class="float">
 <tr> <th class="lcol">type</th> <th class="lcol">symbol</th>     </tr>
 <tr> <td>quarter</td> <td><code>q</code></td>     </tr>
@@ -69,28 +71,31 @@ Table 2 contains some representative rhythmic symbols.
 <tr> <td>whole minus triplet sixteenth</td><td><code>w-ts</code></td> </tr>
 <tr> <td>whole times 4</td><td><code>w*4</code></td>  </tr>
 </table>
-
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(rhythm 'q)</span>
-<span class="output">1.0</span>
-cm&gt; <span class="input">(rhythm 1/4 120.0)</span>
-<span class="output">.5</span>
-cm&gt; <span class="input">(rhythm 'w+q )</span>
-<span class="output">5.0</span>
-cm&gt; <span class="input">(define *tempo* 120.0)</span>
-<span class="output"></span>
-cm&gt; <span class="input">(rhythm '(q th e.. x) )</span>
-<span class="output">(0.5 0.6666666666666666 0.4375 0.03125)</span>
-cm&gt;</pre>
 </div>
 
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Calculating rhythmic values.
+</p>
+<pre class="code">
+(rhythm 'q)
+<span class="result">&rArr;</span> 1.0
+(rhythm 1/4 120.0)
+<span class="result">&rArr;</span> .5
+(rhythm 'w+q )
+<span class="result">&rArr;</span> 5.0
+(<span class="special">define</span> <a href="tempo-var.html">*tempo*</a> 120.0)
 
-<!-- See also -->
-<h4>See Also:</h4>
+(rhythm '(q th e.. x) )
+<span class="result">&rArr;</span> (0.5 0.6666666666666666 0.4375 0.03125)
+</pre>
+</div>
+
+<h4>See also:</h4>
 <ul>
-<li><a href="beat-var.html"><code>*beat*</code></a><code>&nbsp;</code>[Variable]</li>
-<li><a href="tempo-var.html"><code>*tempo*</code></a><code>&nbsp;</code>[Variable]</li>
+<li><a href="beat-var.html"><code>*beat*</code></a> [Variable]</li>
+<li><a href="tempo-var.html"><code>*tempo*</code></a> [Variable]</li>
 </ul>
 
 

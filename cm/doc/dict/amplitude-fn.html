@@ -14,44 +14,68 @@
 <!-- Entry: "amplitude" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">amplitude</code> <var>amp</var> [<var>softest</var>] [<var>loudest</var>] [<var>power</var>])</span></dd>
+<dd><code>(</code><code class="entry">amplitude</code> <var>amp</var> [<var>softest</var>] [<var>loudest</var>] [<var>power</var>]<code>)</code></dd>
 </dl>
 
 
 <p>
-Converts logical amplitude <var>amp</var> to a value between <var>softest</var> and <var>loudest</var> 
-according to the <var>power</var> curve.  A logical amplitude is a number between 0 and 1 
-or an amplitude symbol: <kbd>niente</kbd>,<kbd> pppp</kbd>,<kbd> ppp</kbd>,<kbd> pp</kbd>,
-<kbd> p</kbd>,<kbd> mp</kbd>,<kbd> mf</kbd>,
-<kbd> f</kbd>,<kbd> ff</kbd>,<kbd> fff</kbd>,<kbd> ffff</kbd>.  
-
-The values of <var>softest</var>, <var>loudest</var> and <var>power</var> default
-to the value of the global variables <kbd>*softest*</kbd>, <kbd>*loudest*</kbd>
-and <kbd>*power*</kbd>.
+Converts a logical amplitude <var>amp</var> to an amplitude value
+according to its optional arguments. A logical amplitude is a value
+from 0.0 to 1.0 inclusive, or one of the following symbols:
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(amplitude 'mp)</span>
-.5
-cm&gt; <span class="input">(amplitude 'mp 0 127)</span>
-63.5
-cm&gt; <span class="input">(amplitude 1/2 0 127 1)</span>
-127/2
-cm&gt; <span class="input">(amplitude .5 0 1 4)</span>
-0.0625
-cm&gt;</pre>
+<blockquote>
+<code>niente pppp ppp pp p mp mf f ff fff ffff</code>
+</blockquote>
+
+<p>
+<code class="entry">amplitude</code> supports the following optional arguments:
+</p>
+
+<dl>
+<dt><var>softest</var> </dt>
+<dd>
+The value to return when <var>amp</var> is 0
+or <code>niente</code>. The default value is 
+<a href="softest-var.html"><code>*softest*</code></a>.
+
+<dt><var>loudest</var></dt>
+<dd>
+The value to return when <var>amp</var> is 1 or <code>ffff</code>.
+The default value is <a href="loudest-var.html"><code>*loudest*</code></a>.</dd>
+
+<dt> <var>power</var></dt>
+<dd>If <var>power</var> is 1 then the amplitude returned is calculated
+linearly, otherwise the value lies on an exponential
+curve <var>amp</var><var><span
+style="font-size:smaller;"><sup><var>power</sup></var></sup>.  The
+default value is <a
+href="power-var.html"><code>*power*</code></a>.</dd></dd>
+</dl>
+
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Calculating amplitude values.
+</p>
+<pre class="code">
+(amplitude 'mp)
+<span class="result">&rArr;</span> .5
+(amplitude 'mp 0 127)
+<span class="result">&rArr;</span> 63.5
+(amplitude .5 0 1 4)
+<span class="result">&rArr;</span> 0.0625
+</pre>
 </div>
 
 
 <!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
 <li><a href="loudest-var.html"><kbd>*loudest*</kbd></a><kbd>&nbsp;</kbd>[Variable]</li>
 <li><a href="power-var.html"><kbd>*power*</kbd></a><kbd>&nbsp;</kbd>[Variable]</li>
 <li><a href="softest-var.html"><kbd>*softest*</kbd></a><kbd>&nbsp;</kbd>[Variable]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>

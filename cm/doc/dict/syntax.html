@@ -12,66 +12,70 @@
 
 
 <div style="text-align: center; background: #e6e6ff;">
-<h4>Dictionary Syntax</h4>
+<h2>Typographic Conventions</h2>
 </div>
 
-<p>
-Dictionary entries are documented in a special typographic format:
-</p>
+<!--p>
+Dictionary documentation uses the following typographic conventions:
+</p-->
 
 <ul>
 
 <li>
-Defined terms are printed in fixed-width bold face and literals and
-program code are printed in fixed-width face:
+Definition terms are printed in fixed-width bold face:
 <blockquote>
 <p><code class="entry">cents-&gt;scaler</code></p>
 </blockquote>
-
 </li>
 
 <li>
-Variables and metavariables (names that stand for pieces of code) are
-printed in italic face:
+Literals and programming code are printed in fixed-width face:
+<blockquote>
+<code>(list (note 60) (rhythm 'h.))</code>
+</blockquote>
+</li>
+
+<li>
+Variables and metavariables (names that stand for pieces of code) are printed in italic face:
 <blockquote>
 <p><var>number</var></p>
 </blockquote>
 </li>
 
-<li>
-Terms separated by | are exclusive choices:
-
+<li>Terms separated by | are exclusive choices, that is, exactly one must apply:
 <blockquote>
 <p><var>number</var> | <var>boolean</var></p>
 </blockquote>
 </li>
 
 <li>
-Braces { } and brackets [ ] are sometimes used to associate or group
-the enclosed terms but never actually appear in code:
-
+<p>Braces { } and brackets [ ] are sometimes used to associate or group
+the enclosed terms. They are never written in actual code.
+</p>
 <ul>
 <li>
-Braces simply group the enclosed terms. For example
+Braces group the enclosed terms into a single entity. Thus:
 <blockquote>
 <p>{<var>number</var> | <var>boolean</var>}</p>
 </blockquote>
-means a single entity, either a number or a boolean value.
+<p>describes single value that is either a number or a boolean.</p>
 </li>
 
 <li>
-Brackets mean that the enclosed terms are optional. An optional term
-may appear at most one time. For example,
+Brackets make the enclosed term optional. An optional term may appear
+at most one time. For example, in the following definition:
+
 <blockquote>
 <p>
-<span class="syntax">(<code class="entry">odds</code> <var>prob</var> [<var>true</var>] [<var>false</var>])</span>
+<code>(</code><code class="entry">odds</code> <var>prob</var> [<var>trueval</var>] [<var>falseval</var>]<code>)</code>
 </p>
 </blockquote>
-means that upto two optional values may follow the first:
+<var>prob</var> is a required argument that may be followed by up to
+two optional vales. Thus, each of the following calls is correct: 
 <blockquote>
-<p><code>(odds 1)<br/>
-(odds 0 'ouch)<br/>
-(odds .2 "Yup" "Nope")<br/></code></p>
+<pre>(odds .5)
+(odds 1 'win)
+(odds .2 <span class="string">"Yup"</span> <span class="string">"Nope"</span>)</pre>
 </blockquote>
 </li>
 
@@ -80,58 +84,55 @@ means that upto two optional values may follow the first:
 
 <li>
 A star * after a brace means that the enclosed terms may be specified
-zero or more times. For example,
+zero or more times. For example:
 <blockquote>
 <p>
-<span class="syntax">(<code class="entry">new</code> <var>class</var> {<var>slot value</var>}*)</span>
+<code>(</code><code class="entry">new</code> <var>class</var> {<var>keyword value</var>}*<code>)</code>
 </p>
 </blockquote>
-means that any number of <var>slot</var> and <var>value</var> pairs,
-including none, may follow the required <var>class</var> argument:
+
+means that any number of <var>keyword</var> and <var>value</var> pairs,
+including none, may follow the required <var>class</var> argument. Each of the following calls is correct:
+
 <blockquote>
 <p><code>(new midi)<br/>
-(new midi :time 10)<br/>
-(new midi :keynum 22 :duration 3)</code></p>
+(new midi <span class="keyword">:time</span> 10)<br/>
+(new midi <span class="keyword">:keynum</span> 22 <span class="keyword">:duration</span> 3)</code></p>
 </blockquote>
 </li>
 
 <li>
-A plus + after a brace means that the enclosed terms may be specified
-one or more times.
+<p>A plus + after a brace means that the enclosed terms may be specified one or more times.</p>
 </li>
 
 <li>
-A sequence of three dots means the rest of the arguments. For example,
+A sequence of three dots means the rest of the arguments, no matter how many. For example:
 
 <blockquote>
 <p>
-<span class="syntax">(<code class="entry">pick</code> <var>arg</var> ...)</span>
+<code>(</code><code class="entry">pick</code> <var>arg</var> ...<code>)</code>
 </p>
 </blockquote>
-means that any number of additional values may follow <var>arg</var>.
+means that any number of additional values, including none, may
+follow <var>arg</var>.
 </li>
 
 <li>
-Lisp keyword symbols (symbols that start with a colon) are highlighted
-in red. Keyword symbols may appear as values or may define <em>keyword
-arguments</em> to functions, that is, optional arguments that consist
-of a keyword name followed by its value. For example:
-
-<blockquote>
 <p>
-<span class="syntax">(<code class="entry">hertz</code> <var>x</var> [<code class="keyword">:in</code> <var>scale</var>])</span>
-</p>
-</blockquote>
-defines <code class="keyword">:in</code> to be a keyword argument to the <code>hertz</code> function:
-
+In coding examples evaluation is indicated using the right
+arrow:
 <blockquote>
-<p><code>(hertz 220)<br/>
-(hertz 330 :in myscale)
-</code>
+<p><code><span class="result">&rArr;</span></code></p>
+</blockquote>
+and syntax highlighting distinguishes important syntactic units:
 </p>
+<blockquote>
+<table cellspacing="10">
+<tr><th class="col">keyword</th><th class="col">string</th><th class="col">special</th><th class="col">comment</th></tr>
+<tr><td><code><span class="keyword">:music</span></code></td><td><code><span class="string">"Hello, world"</span></code></td><td><code><span class="special">loop</span></code></td><td><code><span class="comment">;; this is comment</span></code></td></tr>
+</table>
 </blockquote>
 </li>
-</ul>
 
 </div>
 <hr class="inv"/>

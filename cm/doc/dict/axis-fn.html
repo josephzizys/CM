@@ -13,12 +13,13 @@
 <!-- Entry: "axis" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">axis</code> <var>prototype . initializations</var>)</span></dd>
+<dd><code>(</code><code class="entry">axis</code> <var>prototype</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
 <p>
 Returns a new axis for controlling the horizontal or vertical
-dimension of a <a href="plotter-fn.html">plotter</a> display.
+dimension of a <a href="plotter-fn.html">plotter</a> display according
+to its <var>prototype</var> and keyword arguments.
 <var>Prototype</var> is the keyword name of an <var>axis
 prototype</var>: a preallocated instance of <a
 href="axis-cls.html"><code>axis</code></a> or
@@ -38,13 +39,13 @@ and their default characteristics.
 
 <table class="float">
 <tr><th class="rcol">prototype</th><th class="rcol">minimum</th><th class="rcol">maximum</th><th class="rcol">increment</th><th class="rcol">ticks-per-increment</th><th class="rcol">labeler</th></tr>
-<tr><td class="rcell"><span class="keyword">:normalized</span></td><td class="rcell">0</td><td class="rcell">1</td><td class="rcell">1/4</td><td class="rcell">5</td><td class="rcell"> <span class="string">"~,2F"</span> </td></tr>
-<tr><td class="rcell"><span class="keyword">:percentage</span></td><td class="rcell">0</td><td class="rcell">100</td><td class="rcell">25</td><td class="rcell">5</td><td class="rcell"><em>func</em><span style="font-size:smaller;vertical-align:super"> 1</span></td></tr>
-<tr><td class="rcell"><span class="keyword">:seconds</span></td><td class="rcell">0</td><td class="rcell"> </td><td class="rcell">1</td><td class="rcell">4</td><td class="rcell"> <span class="string">"~,2F"</span> </td></tr>
-<tr><td class="rcell"><span class="keyword">:milliseconds</span></td><td class="rcell">0</td><td class="rcell"> </td><td class="rcell">1000</td><td class="rcell">4</td><td class="rcell"><em>func</em></td></tr>
-<tr><td class="rcell"><span class="keyword">:keynum</span></td><td class="rcell">0</td><td class="rcell">132</td><td class="rcell">12</td><td class="rcell">12</td><td class="rcell"><em>func</em></td></tr>
-<tr><td class="rcell"><span class="keyword">:frequency</span></td><td class="rcell">0</td><td class="rcell">22050</td><td class="rcell"></td><td class="rcell">1</td><td class="rcell"> <span class="string">"~,2F"</span> </td></tr>
-<tr><td class="rcell"><span class="keyword">:hertz</span><span style="font-size:smaller;vertical-align:super;">2</span></td><td class="rcell">8.176</td><td class="rcell">16744.035</td><td class="rcell">2</td><td class="rcell">12</td><td class="rcell"> <span class="string">"~,2F"</span> </td></tr>
+<tr><td class="rcell"><code class="keyword">:normalized</code></td><td class="rcell">0</td><td class="rcell">1</td><td class="rcell">1/4</td><td class="rcell">5</td><td class="rcell"> <span class="string">"~,2F"</span> </td></tr>
+<tr><td class="rcell"><code class="keyword">:percentage</code></td><td class="rcell">0</td><td class="rcell">100</td><td class="rcell">25</td><td class="rcell">5</td><td class="rcell"><em>func</em><span style="font-size:smaller;vertical-align:super"> 1</span></td></tr>
+<tr><td class="rcell"><code class="keyword">:seconds</code></td><td class="rcell">0</td><td class="rcell"> </td><td class="rcell">1</td><td class="rcell">4</td><td class="rcell"> <span class="string">"~,2F"</span> </td></tr>
+<tr><td class="rcell"><code class="keyword">:milliseconds</code></td><td class="rcell">0</td><td class="rcell"> </td><td class="rcell">1000</td><td class="rcell">4</td><td class="rcell"><em>func</em></td></tr>
+<tr><td class="rcell"><code class="keyword">:keynum</code></td><td class="rcell">0</td><td class="rcell">132</td><td class="rcell">12</td><td class="rcell">12</td><td class="rcell"><em>func</em></td></tr>
+<tr><td class="rcell"><code class="keyword">:frequency</code></td><td class="rcell">0</td><td class="rcell">22050</td><td class="rcell"></td><td class="rcell">1</td><td class="rcell"> <span class="string">"~,2F"</span> </td></tr>
+<tr><td class="rcell"><code class="keyword">:hertz</code><span style="font-size:smaller;vertical-align:super;">2</span></td><td class="rcell">8.176</td><td class="rcell">16744.035</td><td class="rcell">2</td><td class="rcell">12</td><td class="rcell"> <span class="string">"~,2F"</span> </td></tr>
 <tr><td class="rcell"><code>nil</code><span style="font-size:smaller;vertical-align:super;">3</span></td><td class="rcell">0</td><td class="rcell"> </td><td class="rcell"></td><td class="rcell">1</td><td class="rcell"> <span class="string">"~,1F"</span> </td></tr>
 </table>
 
@@ -53,8 +54,8 @@ and their default characteristics.
 <em>func</em> is (<span class="special">lambda</span> (n)
 (prin1-to-string (floor n))).<br/>
 
-<span style="vertical-align:super;">2</span> The <span
-class="keyword">:hertz</span> prototype is an instance of the <a
+<span style="vertical-align:super;">2</span> The <code
+class="keyword">:hertz</code> prototype is an instance of the <a
 href="log-axis-cls.html">log-axis</a> class and treats its increment
 as the logarithmic <em>base</em> for its display.<br/>
 
@@ -89,7 +90,6 @@ keyword arguments.
 (axis <span class="keyword">:seconds</span> <span class="keyword">:maximum</span> 30 <span class="keyword">:ticks-per-increment</span> 2)
 </pre>
 </div>
-
 
 <div class="float">
 <p class="captxt">

@@ -14,7 +14,7 @@
 <!-- Entry: "#&" -->
 <dl class="dictsyntax">
 <dt>[Macro]</dt>
-<dd><span class="syntax"><code class="entry">#&amp;</code> <var>name</var></span></dd>
+<dd><code class="entry">#&amp;</code><var>name</var></dd>
 </dl>
 
 
@@ -22,22 +22,25 @@
 Returns the object named <var>name</var>.
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(new seq :name 'stuff)</span>
-#&lt;seq: "stuff"&gt;
-cm&gt; <span class="input">#&amp;stuff</span>
-#&lt;seq: "stuff"&gt;
-cm&gt; <span class="input">(io "test.clm")</span>
-#&lt;clm-stream: "test.clm"&gt;
-cm&gt; <span class="input">#&amp;"test.clm"</span>
-#&lt;clm-stream: "test.clm"&gt;
-cm&gt;</pre>
+<h4>Examples:</h4>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Accessing objects from their name.
+</p>
+<pre class="code">
+(<a href="new-mac.html">new</a> <a href="seq-cls.html">seq</a> <span class="keyword">:name</span> 'test)
+<span class="result">&rArr;</span> #&lt;seq: "test"&gt;
+#&amp;test
+<span class="result">&rArr;</span> #&lt;seq: "test"&gt;
+(<a href="io-mac.html">io</a> "test.clm")
+<span class="result">&rArr;</span> #&lt;midi-file-stream: "test.clm"&gt;
+(list #&amp;test #&amp;"test.mid" )
+<span class="result">&rArr;</span> (#&amp;"test" #&lt;midi-file-stream: "test.clm"&gt;)
+</pre>
 </div>
 
-
-<!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
 <li><a href="append-object-fn.html"><kbd>append-object</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
 <li><a href="find-object-fn.html"><kbd>find-object</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
@@ -55,11 +58,9 @@ cm&gt;</pre>
 <li><a href="subobjects-fn.html"><kbd>subobjects</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
 </ul>
 
-
 </div>
 <hr class="inv"/>
 
-<!-- Footer -->
 <div id="footer">
 <div id="version">$Name$</div>
 <div id="cvs-info">($Revision$, $Date$)</div>
