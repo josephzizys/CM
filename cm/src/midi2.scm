@@ -686,6 +686,7 @@
   "timidity --quiet=2 ~a &")
 
 (define (linux-play-midi-file file . args)
+  args
   (shell *linux-midi-file-player* file)
   file)
 
