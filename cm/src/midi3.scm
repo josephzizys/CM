@@ -346,36 +346,42 @@
         (chan (midi-channel obj))
         (ampl (midi-amplitude obj))
 	(last #f))
-
-    (cond ((and (exact? ampl) (<= 0 ampl 127))
-           #f)
-          ((and (inexact? ampl) (<= 0.0 ampl 1.0))
-           (set! ampl (inexact->exact (floor (* ampl 127)))))
-          (else
-           (err "Can't convert amplitude ~s to midi velocity."
+    ;; if amplitude is zero then don't output anything
+    (cond ((exact? ampl)
+           (if (= ampl 0)
+             (set! keyn -1)
+             (if (<= 1 ampl 127) #f
+                 (err "MIDI: integer amplitude ~s not 0-127 inclusive."
+                      ampl))))
+          ((inexact? ampl)
+           (if (= ampl 0.0)
+             (set! keyn -1)
+             (if (<= 0.0 ampl 1.0)
+               (set! ampl (inexact->exact (floor (* ampl 127))))
+               (err "MIDI: float amplitude ~s is not 0.0-1.0 inclusive."
+                    ampl))))
+          (else 
+           (err "MIDI amplitude ~s is not an integer 0-127 or float 0.0-1.0."
                 ampl)))
-
     (ensure-microtuning keyn chan mf)
-
-    (set! last
-          (if (null? (%q-head %offs))
-            (object-time mf)
-            (flush-pending-offs mf beats)))
-    (if (< keyn 0)			; rest
+    ;; if "resting" then dont update anything in the midifile...
+    (unless (< keyn 0) ; rest
+      (set! last
+            (if (null? (%q-head %offs))
+              (object-time mf)
+              (flush-pending-offs mf beats)))
+      (midi-write-message (make-note-on chan keyn ampl)
+                          mf
+                          (if (> beats last)
+                            (inexact->exact (* (- beats last) scaler))
+                            0)
+                          #f)
       (set! (object-time mf) beats)
-      (begin
-	(midi-write-message (make-note-on chan keyn ampl)
-			    mf
-			    (if (> beats last)
-			      (inexact->exact (* (- beats last) scaler))
-			      0)
-			    #f)
-        (set! (object-time mf) beats)
-        (%q-insert (%qe-alloc %offs
-                              (+ beats (midi-duration obj))
-                              #f
-                              (make-note-off chan keyn 127))
-                   %offs)))
+      (%q-insert (%qe-alloc %offs
+                            (+ beats (midi-duration obj))
+                            #f
+                            (make-note-off chan keyn 127))
+                 %offs))
     (values)))
 
 ;;(define-method (write-event (obj <midimsg>) (mf <midi-file-stream>) time)
