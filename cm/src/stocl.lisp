@@ -61,19 +61,20 @@
 ;;;  2. load pkg.lisp by hand and call stocl on the file you want.
 
 (defparameter srcdir 
-  (namestring (make-pathname :name nil :type nil
-                             :defaults *load-pathname*)))
+  (make-pathname :name nil :type nil
+                 ;; truname because load path can be "" if pwd=cm/src !
+                 :defaults (truename *load-pathname*)))
 
 (defun srcfile (&rest path)
  (let ((subs (butlast path))
        (file (first (last path)))
        (here srcdir))
    (when subs
-     (setf here (namestring (make-pathname
-                             :directory (append (pathname-directory here)
-                                                subs)
-                             :defaults here))))
-   (concatenate 'string here file)))
+     (setf here (make-pathname
+                 :directory (append (pathname-directory here)
+                                    subs)
+                 :defaults here)))
+   (namestring (merge-pathnames file here))))
 
 (defun gencm (&rest args)
   (load (srcfile "pkg.lisp"))
