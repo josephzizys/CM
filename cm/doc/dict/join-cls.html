@@ -10,96 +10,129 @@
 <body>
 <div id="content">
 
-
-<!-- Entry: "join" -->
 <dl class="dictsyntax">
 <dt>[Class]</dt>
-<dd><span class="syntax"><code class="entry">join</code></span></dd>
+<dd><code class="entry">join</code></dd>
 </dl>
 
-
 <p>
-Defines a union of two or more patterns. Elements from the joined
-patterns are read in parallel and returned as lists in which
-the elements are in the same order as the patterns specified to
-the join. The behavior of a join is controlled by the value of
-its <code class="keyword">:format</code> initialization.
+Defines a merging of two or more sub-patterns. The joined patterns are
+read in parallel and their elements are returned as list elements with
+the same ordering as the sub-patterns in the join.
 </p>
 
-<p><code class="entry">join</code> supports the following slot initializations:
+<p>
+<code class="entry">join</code> supports the following slot initializations:
 </p>
 <dl>
 
 <dt><code class="keyword">:format</code> <var>list</var></dt>
 <dd>
-
-Specifies the method for joining data from the individial patterns. If
-<code class="keyword">:format</code> is not specified then by default the join is at
-end-of-period when the all subpatterns ares at end-of-period and each
-pattern is read every time the join is read. Otherwise <code class="keyword">:format</code>
-is a list whose elements correspond in left-to-right order with the
-patterns to be joined. Each element in <var>list</var> determines if the
-corresponding pattern controls the period length of the join, or is
-read one per value or once per period or the join.  Possible values
-are <code class="keyword">:eop</code>, boolean true, or boolean false.  A value of
-<code class="keyword">:eop</code> means that the corresponding pattern is read each time
-the join is read and controls when the join is at end-of-period. If
-the value is boolean true then the corresponding pattern is read each
-time the join is read. If the value is boolean false then the
-corresponding pattern is read only once per period of the join. A
-false value "spreads" the elements from that pattern over all the
-elements in each period of the join rather than for each value
-returned.
+<p>
+Specifies the method for merging data from the individual patterns. If
+the initialization is not specified then each sub-pattern will be read
+each time the join is read and the join pattern will be at
+end-of-period when the all of the sub-patterns are concurrently at
+end-of-period. Otherwise <var>list</var> is of the format
+</p>
+<blockquote>
+<p><code>(</code>{<code class="keyword">:eop</code> | <var>true</var> | <var>false</var>}+<code>)</code></p>
+</blockquote>
+<p>
+where there are as many elements in <var>list</var> as their are
+joined patterns and each entry in the list determines how its
+corresponding sub-pattern (in left-to-right-order in the pattern data)
+is treated by the join.  The value <code class="keyword">:eop</code>
+means that the corresponding pattern is read each time the join is
+read and it determines when the join is at end-of-period. If the value
+is true then the corresponding pattern is read each time the join is
+read but it does not contribute to the period length of the join. If
+the value is false then the corresponding pattern is read only once
+per period of the join. A false entry will therefore "spread" one
+element from the corresponding sub-pattern over all the other joined
+elements returned in the period.
+</p>
 </dd>
-
 </dl>
 
+<p>
+See <a href="patterns-topic.html#pattern_inits">generic pattern
+initializations</a> for documentation on additional keyword
+initializations to the pattern.
+</p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(define a (new cycle :of '(c4 d4) :for 3))</span>
+<h4>Examples:</h4>
 
-cm&gt; <span class="input">(define b (new random :of '(e q h) :for 2))</span>
+<div class="float" id="example_1">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Generating random notes with
+consistent rhythmic identities.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">pat1</span>
+  (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> 
+       <a href=":of-fn.html">:of</a> (list (<a href="new-mac.html">new</a> join <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(c4 g4) <span class="keyword">:for</span> 1)
+                                  h))
+                 (<a href="new-mac.html">new</a> join <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(d4 f4) <span class="keyword">:for</span> 1)
+                                  q))
+                 (<a href="new-mac.html">new</a> join <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(cs4 ds4 fs4) <span class="keyword">:for</span> 1)
+                                  e)))))
+(<span class="special">define</span> (<span class="defined">play-pat</span> reps pat tempo)
+  (<a href="process-mac.html">process</a> repeat reps
+           for m = (<a href="next-fn.html">next</a> pat)
+           output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
+                            <span class="keyword">:keynum</span> (first m)
+                            <span class="keyword">:duration</span> (<a href="rhythm-fn.html">rhythm</a> (second m) tempo))
+           wait (<a href="rhythm-fn.html">rhythm</a> (second m) tempo)))
 
-cm&gt; <span class="input">(define c (new join :of (list a b)))</span>
-
-cm&gt; <span class="input">(next c true)</span>
-((c4 h) (d4 q) (c4 h) (d4 e) (c4 q) (d4 e))
-cm&gt; <span class="input">(define a (new cycle :of '(c4 d4 )))</span>
-
-cm&gt; <span class="input">(define b (new random :of '(e q h) ))</span>
-
-cm&gt; <span class="input">(define c (new join :of (list a b) </span>
-    <span class="input">              :format '(:eop #f)))</span>
-
-cm&gt; <span class="input">(next c  true)</span>
-((c4 h) (d4 h))
-cm&gt; <span class="input">(next c true)</span>
-((c4 e) (d4 e))
-cm&gt;</pre>
+(<a href="events-fn.html">events</a> (play-pat 40 pat1 120) <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
+</pre>
 </div>
 
+<div class="float" id="example_2">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Three dimensional motives with random variation.
+</p>
+<pre class="code">
+(<span class="special">define</span> <span class="defined">pat1</span>
+  (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> 
+    <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> join 
+                <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a>
+                               <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(ef5 bf4 bf3)
+                                                 <span class="keyword">:for</span> 1)
+                                     e4 r))
+                          (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:of</span> '(s s q) )
+                          'ff))
+              (<a href="new-mac.html">new</a> join
+                <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> <a href="heap-cls.html">heap</a> <span class="keyword">:of</span> '(g4 fs4 fn5 b5))
+                          (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> 
+                            <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> <a href="heap-cls.html">heap</a> <span class="keyword">:of</span> '(e q e))
+                                      'h))
+                          'p))
+              (<a href="new-mac.html">new</a> join 
+                <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:of</span> '(af5 f5 a4 cs4 c5))
+                          (<a href="new-mac.html">new</a> <a href="heap-cls.html">heap</a> <span class="keyword">:of</span> '(e s q) <span class="keyword">:for</span> 5)
+                          (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:of</span> '(pp p mp mf f)))))))
 
-<!-- See also -->
-<h4>See Also:</h4>
+(<span class="special">define</span> (<span class="defined">play-pat</span> reps pat tempo)
+  (<a href="process-mac.html">process</a> repeat reps
+           for m = (<a href="next-fn.html">next</a> pat)
+           output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
+                            <span class="keyword">:keynum</span> (first m)
+                            <span class="keyword">:amplitude</span> (<a href="amplitude-fn.html">amplitude</a> (third m))
+                            <span class="keyword">:duration</span> (<a href="rhythm-fn.html">rhythm</a> (second m) tempo))
+           wait (<a href="rhythm-fn.html">rhythm</a> (second m) tempo)))
+
+(<a href="events-fn.html">events</a> (play-pat 80 pat1 120) <span class="string">"test.mid"</span>)
+<span class="result">&rArr;</span> <span class="string">"test.mid"</span>
+</pre>
+</div>
+
+<h4>See also:</h4>
 <ul>
-<li><a href="accumulation-cls.html"><kbd>accumulation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="cycle-cls.html"><kbd>cycle</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="eopqmk-fn.html"><kbd>eop?</kbd></a><kbd>&nbsp;</kbd>[Function]</li>
-<li><a href="funcall-cls.html"><kbd>funcall</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="graph-cls.html"><kbd>graph</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="heap-cls.html"><kbd>heap</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="line-cls.html"><kbd>line</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="markov-cls.html"><kbd>markov</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="palindrome-cls.html"><kbd>palindrome</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="random-cls.html"><kbd>random</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="range-cls.html"><kbd>range</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="rewrite-cls.html"><kbd>rewrite</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
-<li><a href="rotation-cls.html"><kbd>rotation</kbd></a><kbd>&nbsp;</kbd>[Class]</li>
+<li><a href="patterns-topic.html#pattern_classes">Pattern classes</a> [Topic]</li>
 </ul>
-
-
 </div>
 <hr class="inv"/>
 
