@@ -44,9 +44,9 @@ href="http://www.grame.fr/MidiShare/">Midishare</a>.
 <ol>
 <li><a href="#install_src">Downloading and restoring the sources</a>
 </li>
-<li><a href="#start_lisp">Starting your Lisp application</a>
+<li><a href="#start_lisp">Starting a Lisp application</a>
 </li>
-<li><a href="#make_cm">Building Common Music from sources</a>
+<li><a href="#make_cm">Loading Common Music</a>
 </li>
 <li><a href="#run_cm">Running the Common Music application</a>
 </li>
@@ -142,12 +142,12 @@ CVS password: <br/>
 </p>
 </div>
 
-<h2 id="start_lisp">2. Starting your Lisp application</h2>
+<h2 id="start_lisp">2. Starting a Lisp application</h2>
 
 <p>
 In order to build Common Music you must be able to start one of the
-supported Lisp applications. This application may be represented by
-up to three implementation files:
+supported Lisp applications, which may be represented by
+(up to) three implementation files:
 </p>
 
 <ol>
@@ -245,19 +245,53 @@ Windows, see <a href="#clisp.bat">Troubleshooting tip 3</a>.
 </p>
 
 
-<h2 id="make_cm">3. Building Common Music from sources</h2>
+<h2 id="make_cm">3. Loading Common Music</h2>
 
 <p>
 The following instructions assume you can start your Lisp by typing
 the appropriate command in a Terminal window. The examples depict the
-build process in several different Lisp implementations; if you use
+load process in several different Lisp implementations; if you use
 some other Lisp or operating system the examples will appear slightly
 differently as you perform each step.
 </p>
 
-<ol>
-<li>
-To build Common Music in its default configuration (highly recommended
+<h3>3.1 Quickstart Method (Linux, OS X and Cygwin)</h3> 
+
+<p>
+If you are on Linux, OS X or Cygwin then the easiest way to start CM
+is by using the <code>cm</script> script located in the bin/
+subdirectory of the CM installation directory. The script will
+automatically generate and compile any files it needs as it loads CM,
+and can start CM in Terminal window or under Emacs/XEmacs. Once the
+script finishes loading it will leave you in the CM package ready to
+begin work.
+</p>
+
+<div class="float">
+<p class="captxt">
+Loading Common Music using the <code>cm</code> script.
+</p>
+<pre class="shell">% <span class="input">cd /Lisp/cm-2.4.0/bin</span>
+<pre class="shell">% <span class="input">./cm</span>
+<span style="color:gray; font-style:italic;">[...lots of printout deleted...]</span>
+ /\\\          
+---\\\---------
+----\\\--------
+----/\\\------- Common Music 2.4.0
+---/--\\\------
+--/----\\\-----
+ /      \\\/   
+? </pre>
+</div>
+
+<p>
+For more information about the <code>cm</code> script type: <code>./cm -h</code> in the Terminal.
+</p>
+
+<h3>3.2 Loading Common Music in Lisp (Windows, MacOS)</h3> 
+
+<p>
+To load Common Music in its default configuration (highly recommended
 for beginners!) start your Lisp and use the <code>load</code> function
 to load Common Music's build script from the src/ subdirectory of the
 CM installation directory. For Guile Scheme the build script is called
@@ -265,6 +299,7 @@ cm.scm, for all other Lisp implementations the file to load is called
 cm.lisp.  Be sure to specify the full, true pathname to the file,
 i.e. avoid using links, relative paths, or shortcuts like "~/" unless
 you are sure your Lisp supports them.
+</p>
 
 <div class="float">
 <p class="captxt">
@@ -302,14 +337,13 @@ implementations loading cm.lisp first <em>compiles</em> source files
 into an efficient (binary) representation and then loads them into
 Lisp.
 </p>
-</li>
 
-<li>
-
+<p>
 Once the load process completes you can switch to the CM package using
 the <code>cm</code> function. This will allow you to easily access all
 the symbols and functions defined in Common Music. You can then use
 the <code>quit</code> function to quit Common Music and Lisp.
+</p>
 
 <div class="float">
 <p class="captxt">
@@ -330,12 +364,12 @@ Switching to the CM package.
 </pre>
 </div>
 
-<h3 id="build_scripts">Saving a Lisp Image and Customized Builds</h3> 
+<h3 id="build_scripts">Customized Builds and Saving a Lisp Image</h3> 
 
 <p>
 A Lisp <em>image file</em> containing Common Music can be saved in
 CM's binary directory. A saved image file starts slightly faster than
-loading CM from its compiled files but is generally less flexible.
+loading CM from compiled files but is generally less flexible.
 </p>
 
 <ol>
