@@ -319,3 +319,13 @@
 
 (defscheme is-a? (x typ) (typep x typ))
 
+(defscheme slot-ref slot-value)
+
+
+;;;
+;;; needed for testing.cm
+;;;
+
+(defscheme file-exits? probe-file)
+(defscheme hash-clear! clrhash)
+
