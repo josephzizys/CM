@@ -1437,37 +1437,49 @@
           ;; print lines
           (when indent (format stream indent))
           ;; offset 
-          (format stream "~6,'0d:  " offs)
+          ;;(format stream "~6,'0d:  " offs)
+          (format stream (format-integer offs 6 #\0))
+          (format stream ":")
+
           ;; bytes
           (set! oldn n)               ; cache n
           (loop for i below 16 
                 while (< n bytes)
                 do (begin
-                    (format stream "~2,'0x~:[~; ~]"
-                            (vector-ref data n) (odd? i))
+                    ;;(format stream "~2,'0x~:[~; ~]"
+                    ;;        (vector-ref data n) (odd? i))
+                    (format stream
+                            (format-integer (vectorr-ref data n) 2 #\0))
+                    (if (odd? i) (format stream " "))
                     (incf n))
                 finally (set! blank (- 16 i)))
           ;; padding 
-          (format stream (format nil "~~~d@t" 
-                                 (- (+ (* blank 3) 2)
-                                    (floor (/ blank 2)))))
+          ;;(format stream (format nil "~~~d@t" 
+          ;;                       (- (+ (* blank 3) 2)
+          ;;                          (floor (/ blank 2)))))
+          (dotimes (i (- (+ (* blank 3) 2)
+                        (floor (/ blank 2))))
+            (format stream " "))
+
           ;; chars
           (set! n oldn)               ; restore n
           (loop for i below 16
                 while (< n  bytes)
                 for b = (vector-ref data n)
                 do (begin
-                    (format stream "~:[.~*~;~c~]"
-                            (< 31 b 127) (integer->char b))
+                    ;;(format stream "~:[.~*~;~c~]"
+                    ;;        (< 31 b 127) (integer->char b))
+                    (if (< 31 b 127)
+                      (format stream (make-string 1 (integer->char b)))
+                      (format stream "."))
                     (incf n))
                 finally (decf toprint i))
           (format stream "~%")
-          
           (incf offs 16))
     
     ;; print remark, if necessary
     (when (> rest 0)
-      (format stream "         [... (~d Bytes remaining)]~%" rest))
+      (format stream "         [... (~s Bytes remaining)]~%" rest))
     (values)))
 
 ;(print-sysex-data #t #f 1 #(0 1 2 3 23 91 92 95 91 66) 10)

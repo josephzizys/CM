@@ -136,7 +136,7 @@
 (define-method (object-name (obj <i>))
   ;; if ins slot is bound use it, otherwise use class name
   (if (slot-bound? obj 'ins)
-    (format nil "i~a" (slot-ref obj 'ins))
+    (format #f "i~a" (slot-ref obj 'ins))
     (let ((n (symbol->string (class-name (class-of obj)))))
       (if (char-lower-case? (string-ref n 0))
         n
@@ -151,7 +151,7 @@
 (define-method (object-name (obj <f>))
   ;; if num slot is bound use it, otherwise use class name
   (if (slot-bound? obj 'num)
-    (format nil "f~a" (slot-ref obj 'num))
+    (format #f "f~a" (slot-ref obj 'num))
     (let ((n (symbol->string (class-name (class-of obj)))))
       (if (char-lower-case? (string-ref n 0))
         n

@@ -120,7 +120,7 @@
 
 (define-method (make-load-form (obj <pattern>))
   (let ((inits (pattern-external-inits obj))
-        (gvar (string->symbol (format nil "<~a>"
+        (gvar (string->symbol (format #f "<~a>"
                                       (class-name (class-of obj))))))
     ;; handle data and period specially
     `(make-instance ,gvar ,@ inits)))
