@@ -391,7 +391,7 @@
   (set! *qnext* *qtime*)
   ;; reschedule if process function returns non-nil
   (if (funcall *process*)
-    (enqueue *process* *qnext* *qtime*)))
+    (enqueue *process* *qnext* *qstart*)))
 
 ;;;
 ;;; "special forms" inside process referece the special vars.
