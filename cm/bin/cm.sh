@@ -425,7 +425,7 @@ get_lisp_info () {
   else
     # This is ugly, wasteful, and requires maintenance :(
     vfd='[[:alpha:]]*[0-9][[:alnum:].]*'
-    vre="s/^[^"]*"[^0-9]*\($vfd\(-$vfd\)*\).*/\1/p"
+    vre="s/^[^\"]*\"[^0-9]*\($vfd\(-$vfd\)*\).*/\1/p"
     case "${LISP_FLV:-$1}" in
       *clisp*|*CLISP*)
         flv=clisp
