@@ -50,9 +50,9 @@
 <li><a href="#listener">The X/Emacs Lisp Listener</a>
   <ol>
   <li><a href="#listener_menu">The Listener menu</a></li> 
-  <li><a href="#listener_window">The Listener Window</a></li>
-  <li><a href="#listener_menubar">The Listener Menubar</a></li>
-  <li><a href="#listener_input">Entering Input in the Listener</a></li>
+  <li><a href="#listener_window">The Listener window</a></li>
+  <li><a href="#listener_menubar">The Listener menubar</a></li>
+  <li><a href="#listener_input">Entering input in the Listener</a></li>
   </ol>
 </li>
 
@@ -86,7 +86,7 @@ The whole point of running Common Music inside X/Emacs is to integrate
 Lisp editing and evaluation in a single, easy-to-use graphical
 environment.  Some older installations of Emacs run the editor in what
 is called <em>console mode</em>, directly inside the command shell
-window without a GUI or mouse support If your system already has an
+window without mouse support or a GUI. If your system already has an
 <code>emacs</code> command installed on it (see <a
 href="#tip_version">Tip 1</a>), make sure that it starts a windowed,
 GUI version of the editor.  If your installed X/Emacs is old (prior to
@@ -106,10 +106,9 @@ their divergent GUI designs. Without commenting on which design is
 "better" (see: <a
 href="http://www.xemacs.org/About/XEmacsVsGNUemacs.html"> XEmacs
 vs. GNU Emacs</a>), it is probably fair to say that the typical user
-will feel most comfortable in an editor whose behavior is consistent
-with the host operating system's native window manager. On Linux,
-Cygwin and Windows this is XEmacs, on OS X it is an <em>Aqua</em>
-Emacs.
+will feel most comfortable in an editor whose "look and feel" matches
+the host operating system's native window manager. On Linux, Cygwin
+and Windows this is XEmacs, on OS X it is an <em>Aqua</em> Emacs.
 <p>
 
 <h3 id="downloading">2.1 Downloading distributions</h3>
@@ -124,8 +123,8 @@ very large, between 20 and 30 megabytes for a binary release depending
 on the editor and operating system involved.  Even if downloading will
 require up to several hours (on a 56k modem, for example), you should
 take whatever time is necessary to install a fully configured X/Emacs
-including elisp sources because you will come to use more and more of
-its features and add-on packages as you gain familiarity with the
+including elisp sources because. You will come to use more and more of
+X/Emacs' features and add-on packages as you gain familiarity with the
 editor.
 </p>
 
@@ -407,7 +406,7 @@ Listener menu that appears in the X/Emacs menu bar.
 
 <p>
 The Lisp Listener runs Common Music in a dedicated X/Emacs
-<em>frame</em>, or window, as a subprocess of the editor. This meas
+<em>frame</em>, or window, as a subprocess of the editor. This means
 when you quit the editor you will also quit the Common Music session
 running in the Listener. There are two parts to the Listener, the
 Listener window itself and the Listener menu that automatically
@@ -495,14 +494,14 @@ implementation running in the Listener. Consult your Common Lisp or
 Scheme documentation for more information.
 </dd>
 
-<h3 id="listener_window">4.2 The Listener Window</h3>
+<h3 id="listener_window">4.2 The Listener window</h3>
 <p>
 The Listener window is a graphic front end to a Lisp read eval print loop.
 It consists of a menubar and a Listener pane in which input expression
 van be entered and their evaluated results observed.
 </p>
 
-<h4 id="listener_menubar">4.2.1 The Listener Menubar</h4>
+<h4 id="listener_menubar">4.2.1 The Listener menubar</h4>
 <p>
 The Listener menubar contains three menus: File Edit and Buffers.  The
 File menu defines the following commands:
@@ -540,7 +539,7 @@ currently available for editing in X/Emacs. Selecting a file from the
 Buffers menu makes it the active, front-most edit window.
 </p>
 
-<h4 id="listener_input">4.2.2 Entering Input in the Listener</h4>
+<h4 id="listener_input">4.2.2 Entering input in the Listener</h4>
 <p>
 The Listener window itself is a dedicated Lisp read-eval-print loop.
 Lisp expressions are input at the current <em>listening point</em>
@@ -558,7 +557,7 @@ class="emacskey">C-&lt;uparrow&gt;</span></span> to move backward and
 <span class="emacscmd"><span
 class="emacskey">C-&lt;downarrow&gt;</span></span> to move forward
 through the list, and Return to reenter the desired input once it has
-been selected.  In addition,
+been selected.
 </p>
 
 <h2 id="tips">5. X/Emacs Tips </h2>
