@@ -76,35 +76,42 @@
                  :defaults here)))
    (namestring (merge-pathnames file here))))
 
-(unless (find-package :clm)
-  (defpackage clm 
-    (:export definstrument)))
 
-(defun gencm (&rest args)
-  (load (srcfile "pkg.lisp"))
+(unless (find-package :clm)
+  (load (srcfile "clm-stubs.lisp")))
+(unless (find-package :cmn)
+  (load (srcfile "cmn-stubs.lisp")))
+(unless t ;(find-package :cmn)
+  (load (srcfile "midishare" "cmn-stubs.lisp")))
+(load (srcfile "pkg.lisp"))
+
+(defun gencm (&rest args &aux verb)
+  (when (eql (car args) :verbose)
+    (pop args)
+    (setq verb (pop args)))
   (if (not args)
     (progn
-      (stocl (srcfile "loop.scm") :file "iter")
-      (stocl (srcfile "utils.scm"))
-      (stocl (srcfile "mop.scm"))
-      (stocl (srcfile "objects.scm"))
-      (stocl (srcfile "io.scm"))
-      (stocl (srcfile "scheduler.scm"))
-      (stocl (srcfile "sco.scm"))
-      (stocl (srcfile "clm.scm"))
-      (stocl (srcfile "clm2.scm"))
-      (stocl (srcfile "cmn.scm"))
-      (stocl (srcfile "midi1.scm"))
-      (stocl (srcfile "midi2.scm"))
-      (stocl (srcfile "midi3.scm"))
-      (stocl (srcfile "midishare" "midishare.scm"))
-      (stocl (srcfile "midishare" "player.scm"))
-      (stocl (srcfile "data.scm"))
-      (stocl (srcfile "scales.scm"))
-      (stocl (srcfile "spectral.scm"))
-      (stocl (srcfile "patterns.scm")))
+      (stocl (srcfile "loop.scm") :file "iter" :verbose verb)
+      (stocl (srcfile "utils.scm") :verbose verb)
+      (stocl (srcfile "mop.scm") :verbose verb)
+      (stocl (srcfile "objects.scm") :verbose verb)
+      (stocl (srcfile "io.scm") :verbose verb)
+      (stocl (srcfile "scheduler.scm") :verbose verb)
+      (stocl (srcfile "sco.scm") :verbose verb)
+      (stocl (srcfile "clm.scm") :verbose verb)
+      (stocl (srcfile "clm2.scm") :verbose verb)
+      (stocl (srcfile "cmn.scm") :verbose verb)
+      (stocl (srcfile "midi1.scm") :verbose verb)
+      (stocl (srcfile "midi2.scm") :verbose verb)
+      (stocl (srcfile "midi3.scm") :verbose verb)
+      (stocl (srcfile "midishare" "midishare.scm") :verbose verb)
+      (stocl (srcfile "midishare" "player.scm") :verbose verb)
+      (stocl (srcfile "data.scm") :verbose verb)
+      (stocl (srcfile "scales.scm") :verbose verb)
+      (stocl (srcfile "spectral.scm") :verbose verb)
+      (stocl (srcfile "patterns.scm") :verbose verb))
     (dolist (f args)
-      (stocl (srcfile f))))
+      (stocl (srcfile f) :verbose verb)))
   (values))
 
 (defvar %false nil)
@@ -334,7 +341,7 @@
 ;;; GNU General Public License for more details.
 ;;; **********************************************************************~%")
 
-(defun stocl (scm &key (trace t) file   ; override scm file name
+(defun stocl (scm &key (verbose t) file   ; override scm file name
                   directory             ; override scm directory
                   (package package))
   (let ((*readtable* %readtable)
@@ -381,13 +388,13 @@
                 until (eql form ':eof)
                 do
                 (setf skip (toplevel-ignore? form))
-                (if trace (setf name (tracename form)))
+                (if verbose (setf name (tracename form)))
                 (cond (skip
-                       (when trace
+                       (when verbose
                          (format t "~%skipping ~A" name)))
                       (t
                        (let ((expr (scheme->cltl form nil)))
-                         (when trace
+                         (when verbose
                            (format t "~%rewriting ~A" name ))
                          (pprint expr out)
                          (terpri out))))))))
