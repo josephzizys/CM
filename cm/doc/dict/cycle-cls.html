@@ -34,17 +34,16 @@ the pattern.
 <span class="floatlabel">Example 1.</span> The cycle pattern.
 </p>
 <pre class="code">
-(<span class="special">define</span> <span class="defined">x</span> (<a href="new-mac.html">new</a> cycle <span class="keyword">:of</span> '(a b c d)))
+(<span class="special">define</span> <span class="defined">pat1</span> (<a href="new-mac.html">new</a> cycle <span class="keyword">:of</span> '(a b c d)))
 
-(<a href="next-fn.html">next</a> x 12)
+(<a href="next-fn.html">next</a> pat1 12)
 <span class="result">&rArr;</span> (a b c d a b c d a b c d)
 
-(<span class="special">define</span> x (<a href="new-mac.html">new</a> cycle <span class="keyword">:keynums</span> '(c5 d e f g a) <span class="keyword">:for</span> 12))
+(<span class="special">define</span> pat1 (<a href="new-mac.html">new</a> cycle <span class="keyword">:keynums</span> '(c5 d e f g a) <span class="keyword">:for</span> 12))
 
-(<a href="next-fn.html">next</a> x #t)
+(<a href="next-fn.html">next</a> pat1 #t)
 <span class="result">&rArr;</span> (72 74 76 77 79 81 72 74 76 77 79 81)
 
-<span class="comment">;;; cycles of randomness</span>
 (<span class="special">define</span> <span class="defined">x</span> (<a href="new-mac.html">new</a> cycle 
                <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(a1 a2 a3) <span class="keyword">:for</span> 1)
                          (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(b1 b2 b3) <span class="keyword">:for</span> 1)
@@ -60,8 +59,8 @@ the pattern.
 <span class="floatlabel">Example 2.</span> Generate talea and color cycles.
 </p>
 <pre class="code">
-(<span class="special">define</span> (<span class="defined">playtc</span> talea color)
-  <span class="comment">;; cycle over talea and color until both at end.</span>
+(<span class="special">define</span> (<span class="defined">play-tc</span> talea color)
+  <span class="comment">;; cycle over talea and color until both at eop.</span>
   (<a href="process-mac.html">process</a> with rhys = (<a href="new-mac.html">new</a> cycle <span class="keyword">:rhythms</span> talea)
            and keys = (<a href="new-mac.html">new</a> cycle <span class="keyword">:keynums</span> color)
            for r = (<a href="next-fn.html">next</a> rhys)
@@ -72,8 +71,8 @@ the pattern.
            wait r
            until (and (<a href="eop?-fn.html">eop?</a> rhys) (<a href="eop?-fn.html">eop?</a> keys))))
 
-(<a href="events-fn.html">events</a> (playtc '(e. s e e s e. s)
-                '(cs4 d6 gs5 b4 g4 fs5))
+(<a href="events-fn.html">events</a> (play-tc '(e. s e e s e. s)
+                 '(cs4 d6 gs5 b4 g4 fs5))
         <span class="string">"test.mid"</span>)
 <span class="result">&rArr;</span><span class="string">"test.mid"</span>
 </pre>
