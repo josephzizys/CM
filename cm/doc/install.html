@@ -274,6 +274,7 @@ names and default settings of these parameters are:
   <tr><td><kbd>cm-bin-directory</kbd></td> <td><kbd>"/Lisp/bin/"</kbd></td><td>Location of binary files.</td></tr>
   <tr><td><kbd>cm-save</kbd></td> <td><kbd>t</kbd></td><td>Save image after clean load.</td></tr>
   <tr><td><kbd>delete-fasls</kbd></td> <td><kbd>t</kbd></td><td>Delete binaries after image save.</td></tr>
+  <tr><td><kbd>load-midishare</kbd></td> <td><kbd>nil</kbd></td><td>Enable real-time MIDI via installed Midishare.</td></tr>
 </table>
 
 <p>
@@ -428,7 +429,8 @@ developer package into your System Extensions folder.
 </li>
 
 <li>
-Build the Common Music image as discussed in the <a
+Set the <code>use-midishare</code> build parameter to true and
+build the Common Music image as discussed in the <a
 href="#build_src">previous section</a> of this document.
 </li>
 
