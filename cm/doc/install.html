@@ -41,8 +41,8 @@ href="http://www.grame.fr/MidiShare/">Midishare</a>.
 <ol>
   <li><a href="#restore_src">Downloading and restoring the sources</a>
     <ol>
-      <li><a href="#restore_tar">Restoring from archives</a></li>
-      <li><a href="#restore_cvs">Restoring from CVS</a></li>
+      <li><a href="#restore_tar">Restoring sources from archives</a></li>
+      <li><a href="#restore_cvs">Restoring sources from CVS</a></li>
     </ol>
   </li>
   <li><a href="#start_lisp">Starting a Lisp application</a></li>
@@ -76,7 +76,7 @@ anonymous CVS. Although the CVS tree contains the most up-to-date
 version of the system, these sources represent the "bleeding edge" of
 development and may include bugs and untested features.
 </p>
-<h3 id="restore_tar">1.1 Restoring from archives</h3>
+<h3 id="restore_tar">1.1 Restoring sources from archives</h3>
 <ol>
   <li>
 Download the latest CM source archive from the <a
@@ -106,43 +106,122 @@ to this directory as the <em>CM installation directory</em>.
     </div>
   </li>
 </ol>
-<h3 id="restore_cvs">1.2 Restoring from <a
- href="http://www.loria.fr/%7Emolli/cvs/doc/cvs_toc.html">CVS</a></h3>
+
+<h3 id="restore_cvs">1.2 Restoring sources from <a
+href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs.html#SEC_Top">CVS</a></h3>
+
+<p>
+The sources to Common Music are maintained in a CVS repository
+organized by different <em>release branches</em> that
+are <em>tagged</em> by symbolic release numbers.  By convention, even
+numbered branches denote stable software release lines and odd
+numbered branches denote unstable, or experimental, releases.  In
+addition, the CVS <em>head branch</em> &#8212; the release branch you
+get if you do not specify any release tag &#8212; always points to the
+latest unstable sources.
+</p>
+
+<p>
+As of this date (November 2004), Common Music's CVS tree has two main
+branches: a <code>rel-2_4</code> branch line contains sources and bug
+fixes to the stable 2.4.<em>n</em> release line; CM's head branch
+points to the (upcoming) 2.5.0 unstable release.
+</p>
+
+<p>
+To check out any source release from Common Music's CVS repository
+require that you to use the Unix <code>cvs</code> command or some sort
+of CVS client application. Checking out sources for the first time is
+accomplished in two steps: (1) logging in to the Sourceforge CVS server
+in anonymous mode and (2) checking out the sources to the desired
+release branch.
+</p>
+
+<p>
+Directions for checking out sources from CM's repository at Sourceforge:
+</p>
+
 <ol>
-  <li>
-Change directories to the directory in which you want to install the
-CM source tree.
-  </li>
-  <li>
-Use anonymous CVS to login to the <a
+
+<li>
+<p>
+Change directories to the parent directory in which you want to
+install the CM source tree.
+</p>
+</li>
+
+<li>
+<p>
+Use <a href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_2.html#SEC31">anonymous CVS login</a> to the <a
  href="http://sourceforge.net/cvs/?group_id=9766">Sourceforge CVS
-repository</a>. Press the return key when prompted for a password.
-  </li>
-  <li>Use the CVS <a
- href="http://www.loria.fr/%7Emolli/cvs/doc/cvs_16.html#SEC115"><code>checkout</code></a>
-command to restore the current CM source tree.
-  </li>
-  <li>Once the source tree has been restored to your machine you can
-rename the top-level <kbd>cm</kbd> directory if you choose.
-  </li>
-</ol>
-<div class="float">
-<p class="captxt">Installing CM sources from the sourceforge CVS
-repository on OS X, Linux or Cygwin. (Input text must be typed on a
-single line.)
+ repository</a>. All CVS commands must remain on a single line of
+ input. Press the Return key when prompted for a login password:
 </p>
-<p class="wrapshell">% <span class="input">cd /Lisp</span><br/>
-% <span class="input">cvs
--d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic login</span><br/>
+
+<p class="wrapshell">
+$ <span class="input">cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic login</span><br/>
 CVS password: <br/>
-% <span class="input">cvs -z3
--d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic checkout
-cm</span><br/>
-<span style="color: gray; font-style: italic;">[...build output deleted...]</span><br/>
-% <span class="input">mv cm cm-2.4.1</span><br/>
+$
 </p>
-</div>
-<h2 id="start_lisp">2. Starting a Lisp application</h2>
+</li>
+
+<li>
+<p>
+Use the <a
+href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_16.html#SEC136">CVS
+checkout command</a> to restore the desired CM source tree to your computer.
+</p>
+
+<p>
+To check out the latest (unstable) sources do:
+</p>
+<p class="wrapshell">
+$ <span class="input">cvs checkout -P cm</span><br/>
+<em style="color:gray">[cvs printout omitted...]</em><br/>
+$
+</p>
+
+<p>
+To check out a stable release, specify the appropriate tag to the
+checkout command. For example, to get the latest stable version on the
+CM 2.4.<em>n</em> release line do:
+</p>
+
+<p class="wrapshell">
+$ <span class="input">cvs checkout -P -r rel-2_4 cm</span><br/>
+<em style="color:gray">[cvs printout omitted...]</em><br/>
+$
+</p>
+<p>
+Once the source tree has been restored to your machine you can rename
+its top-level directory if you choose.
+</p>
+</li>
+
+<li>
+<p>
+To remain current with a release line you should should periodically
+update your CVS tree with new sources by cd'ing to the top-level
+directory of your CVS source tree and using the
+<a
+href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_16.html#SEC170">CVS
+update command</a>. Then use the <a href="dict/cm-sh.html">cm.sh</a>
+build script to recompile and reload CM with the latest versions of
+the files:
+</p>
+
+<p class="wrapshell">
+$ <span class="input">cd /path/to/cm</span><br/>
+$ <span class="input">cvs update</span><br/>
+<em style="color:gray">[cvs printout omitted...]</em><br/>
+$ <span class="input">bin/cm.sh</span><br/>
+<em style="color:gray">[build printout omitted...]</em><br/>
+$<br/>
+</p>
+</li>
+</ol>
+
+<h2 id="start_lisp">2. Starting the Lisp application</h2>
 <p>
 In order to build Common Music you must be able to start one of the
 <a href="cm.html#implementations">supported Lisp implementations</a>.
