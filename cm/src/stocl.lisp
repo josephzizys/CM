@@ -259,7 +259,7 @@
     (string-ci=?         string-equal)
     (string-length       length)
     (string->number      read-from-string)
-    (string->symbol      intern)
+    (string->symbol      nil              string->intern)
     (string-ref          elt)
     (string-set!         nil              element-set!->setf-elt) 
     (substring           subseq)
@@ -946,6 +946,10 @@
   `(concatenate 'string
                 ,@(loop for f in (cdr form)
                         collect (scheme->cltl f env))))
+
+(defun string->intern (form  &optional env)
+  ;; (string->symbol x)
+  `(intern ,(scheme->cltl (second form) env) :cm))
 
 ;;;
 ;;; input/output
