@@ -534,9 +534,8 @@ up or down from the input note.
 <div class="float">
 <p><span class="floatlabel">Example 6.</span> Receiving, outputing and scheduling used together.</p>
 <pre class="code">
-(midi-open)
-
 (<span class="special">define</span> (<span class="defined">wiggle</span> knum)
+  <span class="comment">;; return a wiggle process centered on specified knum</span>
   (<span class="special">let</span> ((n (between 10 20))
         (r (pick 100 150 200))
         (h (new heap <span class="keyword">:of</span> '(0 -1 1 -2 2 -3 3))))
@@ -547,32 +546,36 @@ up or down from the input note.
                        <span class="keyword">:velocity</span> (round (interp i 0 90 (- n 1) 20)))
              wait r)))
 
-<span class="comment">;;; listen to a few wiggles on their own</span>
-
-(sprout (wiggle 60))
-
-(sprout (wiggle 60) 1000)
-
-(sprout (wiggle 40) 1000)
-
-<span class="comment">;;; create a receive hook to sprout wiggles interactively</span>
-
 (<span class="special">define</span> (<span class="defined">dowiggle</span> ev)
+  <span class="comment">;; a receive hook to sprout wiggles</span>
   (output ev)
   (<span class="special">if</span> (and (= (ms:evType ev) typeKeyOn)
            (> (ms:vel ev) 0)
            (odds .3))
       (sprout (wiggle (+ (ms:pitch ev)
                          (pick 0 0 12 -12)))
-              0)))
+              0)))</span>
+</div>
+
+<!-- Interaction 6 -->
+<div class="float">
+<p><span class="floatlabel">Example 7.</span> Interactive wiggling.</p>
+<pre class="shell">
+cm&gt; <span class="input">(midi-open)</span>
+<span class="output">#&lt;midi-port "midi.port"&gt;</span>
+
+<span class="comment">;;; listen to a few wiggles on their own</span>
+
+cm&gt; <span class="input">(sprout (wiggle 60))</span>
+
+cm&gt; <span class="input">(sprout (wiggle 40) 1000)</span>
 
 <span class="comment">;;; wiggle till the cows come home!</span>
 
-(receive #'dowiggle)
+cm&gt; <span class="input">(receive #'dowiggle)</span>
 
-(receive )</span>
+cm&gt; <span class="input">(receive )</span></pre>
 </div>
-
 
 <h2 id="midi_high_level">High level (non-real time) MIDI support</h2>
 
