@@ -54,11 +54,11 @@ href="http://www.grame.fr/MidiShare/">Midishare</a>.
       <li><a href="#load_custom">Saving images and other custom builds</a></li>
     </ol>
   </li>
-  <li><a href="#configure_plotter">Configuring Plotter</a></li>
+  <li><a href="#configure_gtk">Configuring GTK</a></li>
     <ol>
-<li><a href="#gtk_openmcl">Configuring OpenMCL for GTK2 (OS X)</a></li>      
-<li><a href="#gtk_sbcl">Adding callback support to SBCL (OS X, Linux)</a></li>
 <li><a href="#gtk_darwin">Configuring X11 and GTK2 on Darwin (OS X)</a></li>
+<li><a href="#gtk_openmcl">Installing GTK2 support in OpenMCL (OS X)</a></li>      
+<li><a href="#gtk_sbcl">Adding callback support to SBCL (Linux)</a></li>
 </ol>
 
      
@@ -494,100 +494,31 @@ for more information about the various build options.
 </p>
 
 
-<h2 id="configure_plotter">4. Configuring Plotter</h2>
+<h2 id="configure_gtk">4. Configuring GTK</h2>
 
 <p>
-<a href="dict/plotter-topic.html">Plotter</a> is a graphical tool for
-displaying and editing data in Common Music. It uses <a
-href="http://www.gtk.org">GTK2</a> and X11 as its windowing system and
-currently runs in the following Lisp environments:
-
+Graphical support in CM is implemented in <a
+href="http://www.gtk.org">GTK2</a>, a popular graphics library that CM
+can load in the following Lisp environments:
 <ul>
-<li>PPC/Darwin: OpenMCL 0.14.1-p1</li>
-<li>x86/Linux: SBCL 0.8.15</li>
-<li>x86/Linux: CMUCL 19a</li>
+<li>PPC/Darwin: OpenMCL 0.14.1-p1 or higher</li>
+<li>x86/Linux: SBCL 0.8.17 or higher</li>
+<li>x86/Linux: CMUCL 19a or higher</li>
 </ul>
 
 <p>
-CM will automatically include Plotter in any correctly configured and
-supported environment. If you use OpenMCL on Darwin or SBCL on Linux
-or OS X then you may have to configure your environment for X11 and
-GTK before you build CM with Plotter.
+CM will automatically include GUI tools in any correctly configured
+and supported environment. If you use either OpenMCL on Darwin or
+SBCL on Linux then you may have to configure your environment before
+you build CM.
 </p>
 
-<h3 id="gtk_openmcl"> 4.1 Configuring GTK2 for OpenMCL (OS X)</h3>
+<h3 id="gtk_darwin">4.1 Configuring X11 and GTK2 on Darwin (OS X)</h3>
 
 <p>
-In order to work with GTK2 in OpenMCL you must first install a foreign
-function interface (FFI) to the GTK libraries.
-
-<ol>
-
-<li>
-<p>
-Download <a
-href="http://pinhead.music.uiuc.edu/~hkt/openmcl-darwin-gtk.tar.gz">openmcl-darwin-gtk.tar.gz</a>
-</p>
-</li>
-
-<li>
-<p>
-Untar the archive inside your ccl/darwin-headers/ directory under the
-OpenMCl distribution:
-</p>
-<pre class="shell">$ <span class="input">cd /path/to/ccl/darwin-headers</span>
-$ <span class="input">tar -zxf openmcl-gtk-interface.tar.gz</span></pre>
-</li>
-</ol>
-
-<p>
-See section 4.3 below for information about configuring X11 and GTK2
-on OS X.
-</p>
-
-<h3 id="gtk_sbcl"> 4.2 Adding callback support to SBCL (OS X,
-Linux)</h3>
-<p>
-GTK uses a <em>callback</em> mechanism to accomplish all windowing
-tasks.  Since SBCL does not provide a native callback facility of its
-own you will install one developed by Thomas Burdick:
-</p>
-
-<ol>
-<li>
-<p>
-Download <a
-href="http://pinhead.music.uiuc.edu/~hkt/sbcl-af-2004-10-22.tgz">Thomas
-Burdick's Alien Function package</a> and restore it to a directory on
-your machine.
-</p>
-</li>
-
-<li>
-<p>
-Compile the Alien Function package and save a new sbcl.core image:
-</p>
-
-<pre class="shell">$ <span class="input">cd sbcl-af</span>
-$ <span class="input">sbcl --load "system"</span>
-* <span class="input">(sb-ext:save-lisp-and-die "/tmp/sbcl.core")</span>
-$ <span class="input">cd /usr/local/lib/sbcl</span>
-$ <span class="input">cp sbcl.core sbcl.core.orig</span>
-$ <span class="input">mv /tmp/sbcl.core .</span></pre>
-</li>
-</ol>
-
-<p>
-If you are using SBCL on OS X see section 4.3 below for information about configuring X11 and GTK2.
-</p>
-
-<h3 id="gtk_darwin"> 4.3 Configuring X11 and GTK2 on Darwin (OS X)</h3>
-<p>
-On OS X Plotter depends on several software packages that are not part
-of the normal Apple distribution. In order to run Plotter you must
-have X11 and GTK2 installed and configured properly on your
-machine. Apple's X11 application must also be running before you can
-open a Plotter window.
+In order to use CM graphics on OS X you must have X11 and GTK2
+installed and configured properly on your machine. Apple's X11
+application must also be running before you can open any windows.
 </p>
 
 <ol>
@@ -627,6 +558,67 @@ Emacs application) if you add the following line to your
 <pre>export DISPLAY=:0.0</pre>
 </blockquote>
 
+
+<h3 id="gtk_openmcl"> 4.1 Installing GTK2 support in OpenMCL (OS X)</h3>
+
+<p>
+In order to work with GTK2 in OpenMCL you must first install a foreign
+function interface (FFI) to the GTK libraries:
+<ol>
+
+<li>
+<p>
+Download <a
+href="http://pinhead.music.uiuc.edu/~hkt/openmcl-darwin-gtk.tar.gz">openmcl-darwin-gtk.tar.gz</a>
+</p>
+</li>
+
+<li>
+<p>
+Untar the archive inside your ccl/darwin-headers/ directory under the
+OpenMCl distribution:
+</p>
+<pre class="shell">$ <span class="input">cd /path/to/ccl/darwin-headers</span>
+$ <span class="input">tar -zxf openmcl-gtk-interface.tar.gz</span></pre>
+</li>
+</ol>
+
+<p>
+See section 4.3 below for information about configuring X11 and GTK2
+on OS X.
+</p>
+
+<h3 id="gtk_sbcl"> 4.2 Adding callback support to SBCL (OS X,
+Linux)</h3>
+<p>
+Since the current SBCL release (0.8.17) does not provide a native
+callback facility of its own you must install one developed by Thomas
+Burdick:
+</p>
+
+<ol>
+<li>
+<p>
+Download <a
+href="http://pinhead.music.uiuc.edu/~hkt/sbcl-af-2004-10-22.tgz">Thomas
+Burdick's Alien Function package</a> and restore it to a directory on
+your machine.
+</p>
+</li>
+
+<li>
+<p>
+Compile the Alien Function package and save a new sbcl.core image:
+</p>
+
+<pre class="shell">$ <span class="input">cd sbcl-af</span>
+$ <span class="input">sbcl --load "system"</span>
+* <span class="input">(sb-ext:save-lisp-and-die "/tmp/sbcl.core")</span>
+$ <span class="input">cd /usr/local/lib/sbcl</span>
+$ <span class="input">cp sbcl.core sbcl.core.orig</span>
+$ <span class="input">mv /tmp/sbcl.core .</span></pre>
+</li>
+</ol>
 
 <h2 id="install_sys">5. Working with CLM, CMN and Midishare</h2>
 
