@@ -212,7 +212,12 @@
                 (loop for (key val) on (cdr x) by #'cddr
                       do 
                       (cond ((eq key ':initarg) 
-                             (if (eq val keyword) (setf key? t)))
+                             ;; push user's initarg
+                             (if (eq val keyword)
+                               (setf key? t)
+                               (progn (push ':initarg inits)
+                                      (push val inits))
+                               ))
                             ((eq key ':accessor)
                              (setf acc? val))
                             (t (push key inits)
