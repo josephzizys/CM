@@ -441,7 +441,7 @@ Quits and closes the active Listener window.
 <dt>Eval Selection (<span class="emacscmd"><span class="emacskey">C-x</span> <span class="emacskey">C-e</span></span>)</dt>
 <dd>
 Evaluates the current selection in the edit window by "sending" it to
-the Listener. The edit selection is:
+the Listener. The current selection is:
 <ul>
 <li>
 A Lisp expression that starts at the cursor's position.
@@ -473,6 +473,8 @@ occurs.
 
 <dt>Indent (<span class="emacscmd">TAB</span>)</dt>
 <dd>
+Reformats the selected edit region or the current edit line according
+to proper Lisp indentation rules.
 </dd>
 
 <dt>Comment Region</dt>
@@ -489,28 +491,28 @@ Undoes the effects of Comment Region.
 
 <dt>Tools</dt>
 <dd>
-The Tools sub-menu hold Lisp commands specific to the Lisp
+The Tools sub-menu holds Lisp commands specific to the Lisp
 implementation running in the Listener. Consult your Common Lisp or
 Scheme documentation for more information.
 </dd>
 
 <h3 id="listener_window">4.2 The Listener window</h3>
 <p>
-The Listener window is a graphic front end to a Lisp read eval print loop.
-It consists of a menubar and a Listener pane in which input expression
-van be entered and their evaluated results observed.
+The Listener window is a graphic front end to a Lisp read eval print
+loop.  It consists of a menubar and a Listener pane in which input
+expressions may entered and their evaluated results observed.
 </p>
 
 <h4 id="listener_menubar">4.2.1 The Listener menubar</h4>
 <p>
-The Listener menubar contains three menus: File Edit and Buffers.  The
+The Listener menubar contains three menus: File, Edit and Buffers.  The
 File menu defines the following commands:
 
 <dl>
 
 <dt>New...</dt>
 <dd>
-Creates a new Lisp edit window.
+Creates a new X/Emacs edit window ready for Lisp-mode editing.
 </dd>
 
 <dt>Open...</dt>
@@ -520,12 +522,12 @@ Opens a file for editing in the X/Emacs edit window.
 
 <dt>Load...</dt>
 <dd>
-Load a file into Lisp.
+Loads a file into the Lisp Listener.
 </dd>
 
 <dt>Quit Listener</dt>
 <dd>
-Quit and close Listener window.
+Quits and closes the Listener window.
 </dd>
 </dl>
 
@@ -541,16 +543,16 @@ Buffers menu makes it the active, front-most edit window.
 
 <h4 id="listener_input">4.2.2 Entering input in the Listener</h4>
 <p>
-The Listener window itself is a dedicated Lisp read-eval-print loop.
-Lisp expressions are input at the current <em>listening point</em>
-located just to the right of the most recent input prompt. When the
-Return key is pressed, Lisp first reads the input, then evaluates it
-and finally prints the results back to the Listener window on the next
-line. Any expression visible in the window can be copy/pasted to the
-input point by placing the cursor just to the right of the expression
-and then typing Return. The copied expression can then be edited at
-the input point using Norman X/Emacs editing commands before pressing
-Return to enter it.  The Listener records each input expression on a
+The Listener window is a dedicated Lisp read-eval-print loop.  Lisp
+expressions are input at the current <em>listening point</em> located
+just to the right of the most recent input prompt. When the Return key
+is pressed, Lisp first reads the input, then evaluates it and finally
+prints the results back to the Listener window on the next line. Any
+expression visible in the window can be copy/pasted to the input point
+by placing the cursor just to the right of the expression and then
+typing Return. The copied expression can then be edited at the input
+point using regualr X/Emacs editing commands. Press the Return key to
+enter it into Lisp.  The Listener records each input expression in its
 <em>input history list</em>.  Previous input expressions can by
 recalled from the list using <span class="emacscmd"><span
 class="emacskey">C-&lt;uparrow&gt;</span></span> to move backward and
