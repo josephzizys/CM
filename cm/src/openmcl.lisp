@@ -110,7 +110,7 @@
 	  (push (subseq str b i) args))
     (nreverse args)))
 
-(defun shell (str &key (output t) (wait t))
+(defun shell (cmd &key (output t) (wait t))
   (ccl:run-program "/bin/csh" (list "-fc" cmd)
                    :output output :wait wait))
 
