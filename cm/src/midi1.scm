@@ -867,7 +867,7 @@
                              (ldb (byte 7 offs) l)
                              (logior (ldb (byte 7 offs) l) #x80))))
             (do ((i v (+ i 1))
-                 (b data-bytes (cdr data-bytes)))
+                 (b data-bytes (cdr b)))
                 ((null? b) #f)
               (vector-set! d i (car b)))
             d)))
