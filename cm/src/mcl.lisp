@@ -278,10 +278,22 @@
 ;;; save cm
 ;;;
 
-(defun save-cm (dir &key (type :cmdev) rsrc)
+
+(defun cm-image-dir ()
+  (namestring (ccl:mac-default-directory)))
+
+(defun env-var (var)
+  var 
+  nil)
+
+(defmethod ccl:window-show :after ((w ccl:listener))
+  (if (eql *package* (find-package :cm))
+      (cm-logo)))
+
+(defun save-cm (path &key (type :cmdev) rsrc)
   (declare (special *cm-readtable*))
   type rsrc
-  (let ((path (namestring (merge-pathnames (cm-version) dir)))
+  (let (
         #|(reso 
          (namestring (make-pathname
                       :directory
@@ -300,6 +312,7 @@
             (ccl:set-menu-item-title item "About Common Music")))))
     
     (setf ccl::*inhibit-greeting* t)
+    (setf ccl::*listener-window-size* #@(502 150))
     (setf ccl:*lisp-startup-functions*
           (append ccl:*lisp-startup-functions*
                   (list
@@ -312,12 +325,10 @@
                                     (probe-file
                                      (merge-pathnames "cminit.lisp"
                                                       dir))
-                                    (probe-file
-                                     (merge-pathnames ":lib:cminit.lisp"
-                                                      dir)))))
+                                    )))
                          (when fil
                            (load fil :verbose nil)))
-                       (cm-logo)
+                       ;(cm-logo)
                        ;(when *cm-splashscreen*
                        ;  (cm-splashscreen))
                        ))))

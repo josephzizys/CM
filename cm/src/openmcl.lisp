@@ -214,8 +214,7 @@
     :directory (pathname-directory ccl::*heap-image-name*))))
 
 (defun env-var (var)
-  var
-  nil)
+  (ccl::getenv (string var)))
 
 (defun save-cm (path &rest args)
   (declare (ignore args) (special *cm-readtable*))
