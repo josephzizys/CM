@@ -441,22 +441,25 @@
 (define (wait-until time)
   (set! *qnext* (+ *qstart* time)))
 
-(define-method (sprout (obj <object>) time)
-  time 
-  (if *queue*
-    (schedule-object obj *qstart*)
-    (err "Calling 'sprout' outside of scheduler?")))
+(define-method (sprout (obj <object>) . args)
+  (with-args (args &optional time)
+    time
+    (if *queue*
+      (schedule-object obj *qstart*)
+      (err "Calling 'sprout' outside of scheduler?"))))
 
-(define-method (sprout (obj <procedure>) time)
-  (if *queue*
-    (enqueue obj (+ *qstart* time) (+ *qstart* time))
-    (rt-sprout obj time)))
+(define-method (sprout (obj <procedure>) . args)
+  (with-args (args &optional time)
+    (if *queue*
+      (enqueue obj (+ *qstart* time) (+ *qstart* time))
+      (rt-sprout obj time))))
 
-(define-method (sprout (obj <pair>) time)
-  time 
-  (if *queue*
-    (dolist (o obj) (sprout o time))
-    (err "Calling 'sprout' outside of scheduler?")))
+(define-method (sprout (obj <pair>) . args)
+  (with-args (args &optional time)
+    time
+    (if *queue*
+      (dolist (o obj) (sprout o time))
+      (err "Calling 'sprout' outside of scheduler?"))))
 
 ;(defprocess foo ()
 ;  (process repeat 10
