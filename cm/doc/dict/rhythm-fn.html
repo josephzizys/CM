@@ -19,22 +19,69 @@
 
 
 <p>
-Returns the value of <var>rhythm</var> converted to seconds. <var>rhythm</var> can be a proportion (number), a rhythmic symbol or list of the same. <var>tempo</var> provides the metronome speed and defaults to the value of <kbd>*tempo*</kbd>, initially set to 60.0. 
-<var>beat</var> specifies the metronome's pulse and defaults to the value of <code>*beat*</code>, initially set to .25 (quarter note.) 
+Returns the value of <var>rhythm</var> converted to
+seconds. <var>Rhythm</var> can be a proportion (number), a rhythmic
+symbol or list of the same. <var>Tempo</var> is an optional metronome
+speed, and defaults to <kbd>*tempo*</kbd>. The optional
+<var>Beat</var> parameter specifies the metronome's pulse and defaults
+to <code>*beat*</code>.
 </p>
+
+<p>
+A rhythmic symbol consists of a metric letter (Table 1) that may be
+optionally preceded by a division letter: <code>t</code> for triplet
+or <code>q</code> for quintuplet, and optionally followed by any
+number of dots. Rhythmic symbols can be combined into simple
+expressions involving addition, subtraction and multiplication.
+</p>
+
+<p class="captxt">
+<span class="floatlabel">Table 1. Metric letters.</span>
+</p>
+
+<table class="float">
+<tr><th class="lcol">letter</th><th class="lcol">value</th><th
+class="lcol">&nbsp;&nbsp;</th><th class="lcol">letter</th><th
+class="lcol">value</th></tr>
+<tr><td><code>m</code></td><td>maxima</td><td>&nbsp;&nbsp;</td><td><code>q</code></td><td>quarter</td></tr>
+<tr><td><code>l</code></td><td>longa</td><td>&nbsp;&nbsp;</td><td><code>e</code></td><td>eighth</td></tr>
+<tr><td><code>b</code></td><td>brevis</td><td>&nbsp;&nbsp;</td><td><code>s</code></td><td>sixteenth</td></tr>
+<tr><td><code>w</code></td><td>whole</td><td>&nbsp;&nbsp;</td><td><code>t</code></td><td>thirty-second</td></tr>
+<tr><td><code>h</code></td><td>half</td><td>&nbsp;&nbsp;</td><td><code>x</code></td><td>sixty-fourth</td></tr>
+</table>
+
+<p>
+Table 2 contains some representative rhythmic symbols.
+</p>
+
+<p class="captxt">
+<span class="floatlabel">Table 2. Examples of rhythmic symbols and expressions.</span>
+</p>
+<table class="float">
+<tr> <th class="lcol">type</th> <th class="lcol">symbol</th>     </tr>
+<tr> <td>quarter</td> <td><code>q</code></td>     </tr>
+<tr> <td>triplet quarter</td> <td><code>tq</code></td>     </tr>
+<tr> <td>dotted-eight</td> <td><code>e.</code></td>    </tr>
+<tr> <td>triplet dotted sixteenth</td><td><code>ts.</code></td>   </tr>
+<tr> <td>triple dotted half</td><td><code>h...</code></td>  </tr>
+<tr> <td>quintuplet whole</td><td><code>qw</code></td>    </tr>
+<tr> <td>sixteenth plus triplet quarter</td><td><code>s+tq</code></td>  </tr>
+<tr> <td>whole minus triplet sixteenth</td><td><code>w-ts</code></td> </tr>
+<tr> <td>whole times 4</td><td><code>w*4</code></td>  </tr>
+</table>
 
 <!-- Interaction 1 -->
 <div class="float" id="repl_0-1">
 <pre class="shell">cm&gt; <span class="input">(rhythm 'q)</span>
-1.0
+<span class="output">1.0</span>
 cm&gt; <span class="input">(rhythm 1/4 120.0)</span>
-.5
+<span class="output">.5</span>
 cm&gt; <span class="input">(rhythm 'w+q )</span>
-5.0
+<span class="output">5.0</span>
 cm&gt; <span class="input">(define *tempo* 120.0)</span>
-
+<span class="output"></span>
 cm&gt; <span class="input">(rhythm '(q th e.. x) )</span>
-(0.5 0.6666666666666666 0.4375 0.03125)
+<span class="output">(0.5 0.6666666666666666 0.4375 0.03125)</span>
 cm&gt;</pre>
 </div>
 
@@ -42,8 +89,8 @@ cm&gt;</pre>
 <!-- See also -->
 <h4>See Also:</h4>
 <ul>
-<li><a href="beat-var.html"><kbd>*beat*</kbd></a><kbd>&nbsp;</kbd>[Variable]</li>
-<li><a href="tempo-var.html"><kbd>*tempo*</kbd></a><kbd>&nbsp;</kbd>[Variable]</li>
+<li><a href="beat-var.html"><code>*beat*</code></a><code>&nbsp;</code>[Variable]</li>
+<li><a href="tempo-var.html"><code>*tempo*</code></a><code>&nbsp;</code>[Variable]</li>
 </ul>
 
 
