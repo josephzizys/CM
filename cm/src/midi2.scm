@@ -546,14 +546,15 @@
   (with-args (args &optional (width *midi-pitch-bend-width*)
 		   (channel-offset 0))
     ;; clears/sets divisions number of pitch bends in file or port
-    (if (= divisions 1)
+   (if (= divisions 1)
       (loop for c below 16
-	    for m = (make-pitch-bend c 0 width)
-	    do (midi-write-message m io 0 #f))
+	 for m = (make-instance <midi-pitch-bend> :channel c :time 0 :bend 0)
+	 do (write-event m io 0))
       (loop repeat divisions
-	    for c from channel-offset
-	    for m = (make-pitch-bend c (/ c divisions) width)
-	    do (midi-write-message m io 0 #f)))))
+	 for c from channel-offset
+	 for m = (let ((bend (round (rescale (/ c divisions) (- width) width -8192 8191))))
+		   (make-instance <midi-pitch-bend> :channel c :time 0 :bend bend))
+	 do (write-event m io 0)))))
 
 ;;; system note off resource. initialized to 50 entries.
 
