@@ -17,6 +17,88 @@
 ;;; $Revision$
 ;;; $Date$
 
+
+;; rm-spectrum performs ring modulation on two input specta f1 and f2
+;; to return a spectrum (list of frequencies) consisting of the
+;; difference and sum tones between pairwise combinations of the
+;; paritals in each input specta. The partials in the input spects can
+;; be hertz values, key numbers or note names but lists must be the
+;; same type.
+
+(define (rm-spectrum set1 set2 . args)
+  (with-args (args &key (spectrum #f) (minimum #f) (maximum #f)
+                   (hz #f) (remove-duplicates #f))
+    (let* ((sums-and-diffs 
+            (lambda (f1 f2)
+              (if (= f1 f2) (list)
+                  (list (abs (- f1 f2)) (+ f1 f2)))))
+           (type (cond ((not spectrum)
+                        (if hz ':hertz
+                            (if (or (symbol? set1)
+                                    (symbol? (car set1)))
+                              ':note
+                              ':keynum)))
+                       ((member spectrum '(:note :keynum :hertz))
+                        spectrum)
+                       (else
+                        (err "Spectrum ~S not one of: :note :keynum :hertz."
+                             spectrum))))
+           (spec
+            (if (pair? set1)
+              (if (pair? set2)
+                (loop with l2 = (hertz set2 :hz hz)
+                   for f1 in (hertz set1 :hz hz)
+                   append (loop for f2 in l2
+                             append (sums-and-diffs f1 f2)))
+                (loop with f2 = (hertz set2 :hz hz)
+                   for f1 in (hertz set1 :hz hz)
+                   append (sums-and-diffs f1 f2)))
+              (if (pair? set2)
+                (loop with f1 = (hertz set1 :hz hz)
+                   for f2 in (hertz set2 :hz hz)
+                   append (sums-and-diffs f1 f2))
+                (sums-and-diffs (hertz set1 :hz hz)
+                                (hertz set2 :hz hz))))))
+      ;; put hertz spec in order
+      (set! spec (sort! spec #'<))
+      (when minimum
+        (do ((freq (hertz minimum :hz (eq? type ':hertz)))
+             (tail spec (cdr tail)))
+            ((null? tail) #f)
+          (do ()
+              ((not (< (car tail) freq)))
+            (set-car! tail (* (car tail) 2)))))
+      (when maximum
+        (do ((freq (hertz maximum :hz (eq? type ':hertz)))
+             (tail spec (cdr tail)))
+            ((null? tail) #f)
+          (do ()
+              ((not (> (car tail) freq)))
+            (set-car! tail (/ (car tail) 2)))))
+      (cond ((eq? type ':note)
+             (set! spec (note spec :hz #t)))
+            ((eq? type ':keynum)
+             (set! spec (keynum spec :hz #t)))
+            ((eq? type ':hertz)
+             #f)
+            (else ))
+      (if remove-duplicates
+        (do ((tail spec (cdr tail))
+             (resl (list)))
+            ((null? tail) (reverse! resl))
+          (if (member (car tail) resl)
+            #f
+            (set! resl (cons (car tail) resl))))
+        spec))))
+
+; (rm-spectrum 'd5 'e5)
+; (rm-spectrum 'a4 'ds5 :spectrum ':keynum)
+; (rm-spectrum '(300 400) 550 :hz t)
+; (rm-spectrum '(300 400) 550 :hz t :spectrum ':note)
+; (rm-spectrum '(300 400) 550 :hz t :spectrum ':keynum)
+; (rm-spectrum '(c4 e4) '(c4 e4 g4))
+; (rm-spectrum '(c4 e4) '(c4 e4 g4) :remove-duplicates t)
+
 ;;; fm-spectrum returns a spectrum (frequencies and optional amplitudes)
 ;;; of sidebands calculated from a specified carrier, mratio and
 ;;; index. the type of values returned in the spectrum are determined
@@ -52,57 +134,47 @@
 ;;; ignored, othwise their frequency is 0.0 or R (rest) if for notes. 
 ;;;
 
-; (fm-spectrum 100 1.4 3 :raw)
-; (fm-spectrum 100 1.4 3 :raw :amplitudes #f)
-; (fm-spectrum 100 1.4 3 :hertz)
-; (fm-spectrum 100 1.4 3 :hertz :amplitudes #t)
-; (fm-spectrum 100 1.4 3 :note)
-; (fm-spectrum 100 1.4 3 :keynum)
-; (fm-spectrum 100 1.4 3 '( c4 b4))
-; (fm-spectrum 100 1.4 3 '( c4 b4) :amplitudes :weight )
-; (fm-plot 100 1.4 3 )
+; (fm-spectrum 100 1.4 3 )
+; (fm-spectrum 100 1.4 3 :amplitudes #f)
+; (fm-spectrum 100 1.4 3 :spectrum :hertz)
+; (fm-spectrum 100 1.4 3 :spectrum :hertz :amplitudes #t)
+; (fm-spectrum 100 1.4 3 :spectrum :note)
+; (fm-spectrum 100 1.4 3 :spectrum :keynum)
+; (fm-spectrum 100 1.4 3 :spectrum :note :minimum 'c4 :maximum 'b4)
+; (fm-spectrum 100 1.4 3 :spectrum :note :minimum 'c4 :maximum 'b4 :amplitudes :weight )
 
-(define (fm-spectrum carrier mratio index spectrum . args)
-  (with-args (args &key invert (ignore-zero #f izp)
+(define (fm-spectrum carrier mratio index . args)
+  (with-args (args &key (spectrum #f) (minimum #f) (maximum #f)
+                   invert (ignore-zero #f izp)
                    (amplitudes (eq? spectrum ':raw))
                    all-sidebands scale-order (unique #t))
-
     (let ((data #f)
           (type #f)
           (bot #f)
           (top #f))
-
       ;; :ignore-zero defaults to #t if generating
       ;; notes, hertz or keynums.
       (case spectrum
-        ((:raw )
+        ((#f )
          (set! type spectrum))
         ((:hertz )
          (set! type spectrum)
          (unless izp (set! ignore-zero #t)))
-        ((:keynum :keynums)
+        ((:keynum )
          (set! type spectrum)
          (unless izp (set! ignore-zero #t)))
-        ((:note :notes)
+        ((:note)
          (set! type spectrum)
          (unless izp (set! ignore-zero #t)))
         (else
-         (cond ((pair? spectrum)
-                (unless izp (set! ignore-zero #t))
-                (cond ((symbol? (first spectrum))
-                       (set! type ':note))
-                      ((number? (first spectrum))
-                       (set! type ':keynum))
-                      (else
-                       (err "Not a valid spectrum: ~s" spectrum)))
-                (set! bot (hertz (first spectrum)))
-                (set! top (hertz (second spectrum))))
-               (else
-                (err "Not a valid spectrum: ~s" spectrum)))))
-
+         (err "Spectrum ~s not one of: false :note :keynum :hertz."
+              spectrum)))
+      (when spectrum
+        (if minimum (set! bot (hertz minimum :hz (eq? type ':hertz))))
+        (if maximum (set! top (hertz maximum :hz (eq? type ':hertz)))))
       ;(car mrat ind negfreq? posamp? ss)
       (set! data (fm-spectrum1 carrier mratio index 
-                               (eq? spectrum ':raw)
+                               (eq? type #f)
                                #f
                                all-sidebands))
       ;; sidebands at zero Hz can be included or removed
@@ -161,7 +233,7 @@
                     (if (eq type ':note)
                       (note (caar tail) :hz #t)
                       (keynum (caar tail) :hz #t)))))))
-      (unless (eq? type ':raw)
+      (unless (eq? type #f)
         (set! data
               (cond 
                 ((not scale-order)
