@@ -336,9 +336,9 @@
           #t))
 
 (define (import-defun form trans excl inc)
-  `(defun ,(cadr form) , (caddr form)
-     ., (loop for f in (cdddr form)
-              collect (import-form f trans excl inc))))
+  (list* 'defun (cadr form) (caddr form)
+         (loop for f in (cdddr form)
+            collect (import-form f trans excl inc))))
 
 (define (import-object pars forms)
   ;; translate form whose car is the name of an event class into 
