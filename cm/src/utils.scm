@@ -420,42 +420,6 @@
                 (reverse res)))
             (values)))))
 
-;;;
-;;; scripts for starting cm.
-;;; cm is vanilla startup
-;;; xcm starts up cm under xemacs with listener.el
-;;;
-
-(define (write-cm-script os path command)
-  (let ((f (open-file path ':output)))
-    (format f "#!/bin/sh~%~%")
-    (format f command)
-    (close-file f ':output)
-    (unless (eq? os ':win32)
-      (shell (format #f "chmod a+x ~a" path)))
-    path))
-
-(define (write-xcm-script os impl path command listener)
-  ;; os is keyword 
-  ;; path is pathname to script
-  ;; impl is name of lisp implementation
-  ;; command is lisp commad string to exec
-  ;; listner is pathname to listner.el
-
-  (let ((f (open-file path ':output)))
-    (format f "#!/bin/sh~%~%")
-    (format f "if [ ! `which xemacs` ] ; then~%")
-    (format f "	echo \"xcm: can't find xemacs.\"~%")
-    (format f "	exit 1~%")
-    (format f "fi~%~%")
-    (format f "xemacs -l ~s -eval '(lisp-listener ~s ~s)' &~%"
-            listener
-            command
-            impl)
-    (close-file f ':output)
-    (unless (eq? os ':win32)
-      (shell (format #f "chmod a+x ~a" path)))
-    path))
 
 
 
