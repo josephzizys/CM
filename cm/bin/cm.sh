@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -
 #
 # File:           cm.sh
 #
@@ -71,10 +71,14 @@ sanitize_path () {
   echo "$1" | sed 's: :\ :g;'
 }
 
+CM_PLATFORM=
 OSX_EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs
+
 resolve_bin () {
   # OSX Emacs: check /Applications/Emacs.app first
-  if [[ $1 == *macs ]] && [ -x $OSX_EMACS ] ; then 
+  if [[ $CM_PLATFORM == darwin* ]] &&
+     [[ $1 == *Emacs ]] &&
+     [  -x $OSX_EMACS ] ; then 
     echo $OSX_EMACS
   elif which $1 > /dev/null 2>&1 ; then
     which $1
@@ -449,8 +453,8 @@ esac
 EDITOR_EXE=
 EDITOR_CMD=
 EDITOR_INI="-l $LOC/etc/xemacs/listener.el -l $LOC/etc/xemacs/cm.el"
-FOO=`echo $LISP_CMD | sed 's:":\\\\\\\\\\\\\":g;'s:\':\\\\\\\\\":g`
-EDITOR_EVL='(lisp-listener "'$FOO'")'
+EDITOR_LCM=`echo $LISP_CMD | sed 's:":\\\\\\\\\\\\\":g;'s:\':\\\\\\\\\":g`
+EDITOR_EVL='(lisp-listener "'$EDITOR_LCM'")'
 #EDITOR_EVL='(lisp-listener "'`echo $LISP_CMD | sed 's/"/\\\"/g;'s/\'/\'\"\'\"\'/g`'")'
 
 under_editor () {
