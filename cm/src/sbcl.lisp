@@ -158,7 +158,7 @@
 (defgeneric scale-mod (freq modulus &key offset in accidental))
 (defgeneric note-in-scale? (note scale))
 (defgeneric transpose (note int &optional scale))
-(defgeneric invert (ref &optional point scale))
+(defgeneric invert (ref &optional pc?))
 (defgeneric interval (int &optional int2))
 
 (defgeneric canonicalize-pattern-data (obj data parser inits))
