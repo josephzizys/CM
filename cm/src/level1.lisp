@@ -136,6 +136,11 @@
     (or (find-symbol name)
         (intern name))))
 
+;;; strings
+
+(defun strip-chars (str &optional (chars '(#\space #\tab #\return)))
+  (string-trim chars str))
+
 ;;;
 ;;; filename twiddling. these always return strings.
 ;;;
@@ -178,10 +183,13 @@
 
 (defvar .eofmarker. (gensym))
 
-(defun eof-marker? (x) (eq x .eofmarker.))
+(defun file-eof? (x) (eq x .eofmarker.))
 
-(defun read-form (fil)
+(defun file-form (fil)
   (read fil nil .eofmarker.))
+
+(defun file-line (fil)
+  (read-line fil nil .eofmarker.))
 
 ;(defun open-output-file (file)
 ;  (open file :direction :output

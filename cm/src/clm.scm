@@ -409,8 +409,8 @@
                 clmname (date-and-time))
         (fprint `(set! *clm-imports* (list)) outfil)
         (loop with trans and flag 
-           for form = (read-form infil)
-           until (eof-marker? form)
+           for form = (file-form infil)
+           until (file-eof? form)
            when (and (pair? form)
                      (symbol? (car form)))
            do

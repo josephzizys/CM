@@ -158,12 +158,15 @@
         (string-downcase n)))))
 
 ; (defobject i1 (i) (time dur freq amp) (:parameters time dur freq amp))
-
 ; (defobject f1 (f) ((env :initform '())) (:parameters time size gen &rest env))
 
 ;;;
+;;; .sco file importing
 ;;;
-;;;
+
+; (carry-pars (list "." "." "3" "4") (list 1 2 3 4 5 6))
+; (carry-pars (list "." "+" "3" "4") (list 1 2 3 4 5 6))
+; (carry-pars '() (list 1 2 3 4 5 6))
 
 (define (carry-pars pars last)
   (let ((data pars)
@@ -208,3 +211,222 @@
         (set! data (cdr data))
         (set! last (cdr last))
         (set! pnum (1+ pnum))))))
+
+(define (parse-i-statement line last)
+  (let ((pars (list)))
+    (set! pars (string-forms line :start 1 ))
+    (if (null? pars)
+      (set! pars (copy-list
+                  (if (null? last)
+                    (err "Dangling i_statement: ~a" line)
+                    last)))
+      (if (not (null? last))
+        (let ((p (car pars)))
+          ;; see if we have new whole number i_statement 
+          ;; and zap last if so.
+          (when (or (char-numeric? (string-ref p 0))      
+                    (and (char=? (string-ref p 0) #\-)
+                         (char-numeric? (string-ref p 1))))
+            (let ((n (read-from-string p)))
+              (unless (= (inexact->exact (floor n))
+                         (inexact->exact (floor (first last))))
+                (set! last (list)))))
+          (if (not (null? last))
+            (set! pars (carry-pars pars last))
+            (begin (set! pars (carry-pars pars (list)) )
+                   (set! last (copy-list pars)))
+            ))
+        ;; dont have last 
+        (begin (set! pars (carry-pars pars (list)))
+               (set! last (copy-list pars)))))
+    (values pars last)))
+
+(defmacro checkdefs (pars d  )
+  (let ((i (gensym)))
+    `(let ((,i (inexact->exact 
+                (floor (car ,pars)))))
+       (unless (assoc ,i ,d)
+         (push (list ,i 
+                     (length ,pars)
+                     (string->symbol (format #f "i~a" ,i))) 
+               ,d)))))
+
+(define-method (import-events (io <sco-stream>) . args)
+  (with-args (args &key (output))
+    (let ((secs 0)
+          (rate 60)
+          (beat 0)
+          (head (list))
+          (list (list))
+          (defs (list))
+          (line #f)
+          (next #f)
+          (last (list))
+          (pars (list))
+          (sort #f)
+          (keys (list))
+          (statement #f)
+          (in #f)
+          (path #f)
+          (name #f)
+          (stop #f)
+          )
+      (with-open-io (input io :input)
+        (set! in (io-open input))
+        (do ()
+            (stop #f)
+          (if next
+            (set! line next)
+            (let ((raw (file-line in )))
+              (if (file-eof? raw )
+                (set! line raw)
+                (let ((pos (position #\; raw)))
+                  (if pos (set! raw (substring raw 0 pos)))
+                  (set! line (string-trim '(#\space #\tab) raw))))))
+          (cond ((file-eof? line)
+                 (set! stop #t))
+                ((string=? line "")
+                 (set! next #f))
+                ((member (string-ref line 0)
+                         '(#\i #\f #\a #\t #\s #\e))
+                 ;; start of score file statement
+                 (if statement
+                   (begin
+                    ;; begin process_statement
+                    (case (string-ref statement 0)
+                      (#\i
+                       (multiple-value-setq 
+                           (pars last)
+                         (parse-i-statement statement last))
+                       (push pars list)
+                       ;(CHECKSORT pars sort beat)
+                       (if (< (cadr pars) beat)
+                         (set! sort #t)
+                         (set! beat (cadr pars)))
+                       ;; register i number if new
+                       (CHECKDEFS pars defs))
+                      (#\f 
+                       (push statement head)
+                       (set! last #f))
+                      (#\a
+                       (format #t "; Warning: a_statement not implemented: ~s" 
+                               line)
+                       (set! last #f))
+                      (#\t
+                       (set! rate (string-forms (substring statement 1)))
+                       (set! last #f))
+                      (#\s 
+                       (set! secs (+ secs 1))
+                       (when (> secs 1)
+                         (format #t
+                                 "; Warning: Multiple 's' not implemented."))
+                       (set! last #f))
+                      (#\e
+                       (set! stop #t)
+                       (setf last #f)))
+                    ;; end process_statement
+                    (begin (setf statement nil next line)))
+                   (begin (setf statement line next nil)))
+                 (begin
+                  ;; continuation of statement or unknown line
+                  (if statement
+                    (set! statement 
+                          (string-append statement " " line))
+                    (begin
+                     (format #t
+                             "Skipping unimplemented statement:~%~ ~S" line)
+                     (set! statement #f)))
+                  (set! next #f))))
+          )
+        ;;finally
+        (if statement 
+          (if (char=? (string-ref statement 0) #\i)
+            (let ((pars (parse-i-statement statement last)))
+              (push pars list)
+              ;;(CHECKSORT pars sort beat)
+              (if (< (cadr pars) beat)
+                (set! sort #t)
+                (set! beat (cadr pars)))
+              (CHECKDEFS pars defs))))
+        )
+      ;; write output file if objects and no error
+      (if (and (file-eof? line) list)
+        (begin
+         (if sort
+           (begin (format %t "~%Sorting i statements...")
+                  (set! list (sort list
+                                   (lambda (a b)
+                                     (< (cadr a) (cadr b)))))
+                  (format t "done!"))
+           (set! list (reverse! list)))
+         (sco-write-and-load io output defs list)
+         )
+        #f))))
+
+;; (define (write-sco-and-load io file defs head list)
+;;   ;; save f_statements in file header
+;;   (let* ((maxpars 0)
+;;          (infile (io-filename io))
+;;          (seqname (string-append "from-" (pathname-name infile)))
+;;          (outfile (or file
+;;                       (string-append (filename-directory infile)
+;;                                      (filename-file infile)
+;;                                      ".cm")))
+;;          (*print-case* ':downcase))
+;;     ;; get max number of pars
+;;     (dolist (d defs) (set! maxpars (max maxpars (cadr d))))
+;;     (set! (sco-file-header io) head)
+;;     ;; get data in proper order.
+;;     (set! defs (reverse! defs))
+;;     ;; collect :initargs for def with most pars
+;;     (set! keys (loop for i from 1 to maxpars
+;;                   for s = (string->symbol
+;;                            (string-append (symbol->string 'p)
+;;                                           (number->string i)))
+;;                   collect (list s (symbol->keyword s))))
+;;     (set! out (open-file outfile :output))
+;;     (format out ";;; Imported from ~s on ~a~%"
+;;             infile (date-and-time))
+;;     ;; add defobjects for each i found.
+;;     (dolist (d defs)
+;;       (pprint
+;;        (let* ((n (second d))
+;;               (c (third d))
+;;               (s (loop for p from 4 to n
+;;                     for k in (cdddr keys)
+;;                     collect (first k))))
+;;          `(defobject ,c (i)
+;;             ,(loop for p in s for i from 4
+;;                 collect
+;;                 `(,p :initarg ,p 
+;;                      :initarg ,(second (elt keys (1- i)))))
+;;             (:parameters time dur ,@s)))
+;;        :stream out)
+;;       (terpri out))
+;;     (format out "~&(MAKE-INSTANCE 'SEQ :NAME ~S~&  ~
+;;                        :SUBOBJECTS~&  ~
+;;                        (LIST" name)
+;;                                         ;(PRINT LIST)
+;;     (dolist (l list)
+;;       (format out "~&    ")
+;;       (write `(make-instance 
+;;                ',(third (find (floor (first l))
+;;                               defs :key #'first))
+;;                ., (loop for v in l
+;;                      for i from 1 
+;;                      collect
+;;                      (second (elt keys (1- i))) 
+;;                      collect (quote-if-necessary v)))
+;;              :stream out))
+;;     (format out "~&    ))~&(FIND-OBJECT ~S)~&" name))
+;;   (if path
+;;     (progn (load path ) (find-object name))      
+;;     #f)
+;;   )
+;;)
+
+;(defobject i (event) 
+;           (ins dur)
+;  (:parameters time dur)
+;  (:writers )            ; dont define output methods
+;  )

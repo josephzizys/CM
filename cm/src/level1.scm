@@ -406,6 +406,7 @@
 ;;;
 
 (define (parse-lambda-list pars)
+  ;;(format #t "args=~s" pars)
   ;; parse a cltl2 parameter declaration into seperate lists. modified 
   ;; to allow either cltl2 or guile style type decls, ie &key or #:key
   (let ((mode '&required)
@@ -521,6 +522,15 @@
 		(set-cdr! (cdr b)
 			  (list (gensym) (symbol->keyword (car b)))))
 	      keys)
+
+;    (do ((tail keys (cdr tail))
+;         (temp (list)))
+;        ((null? tail)
+;         (set! keys (reverse! temp)))
+;      (let ((b (car tail)))
+;        (set! temp (cons (list (car b) (gensym)
+;                               (symbol->keyword (car b)))
+;                         temp))))
     ;; let* so params can reference earlier ones
     ;; in the lambda list.
     `(let* ((,args ,(car spec))
@@ -688,12 +698,15 @@
 ; (find 1 '())
 ; (position 1 '((a a) (b b) (c c) (1 1) (2 2) (3 3))  ':key car ':from-end #t)
 
+(define (strip-chars str . args)
+  (let ((chars (if (null? args) '(#\space #\tab #\return)
+                   (car args))))
+    (string-trim-both str (lambda (c) (member c chars)))))
 
 ;;;
 ;;; unix filename twiddling. filenames are just strings.
 ;;; the level0 files must set the directory character.
 ;;;
-
 
 (define (namestring p) p)
 
@@ -752,10 +765,13 @@
     (close-output-port fp)
     (close-input-port fp)))
 
-(define (read-form fil)
+(define (file-form fil)
   (read fil))
 
-(define (eof-marker? x) (eof-object? x))
+(define (file-line fil)
+  (read-line fil))
+
+(define (file-eof? x) (eof-object? x))
 
 ;(defmacro with-open-output-file (args . body)
 ;  (let ((var (car args)))
