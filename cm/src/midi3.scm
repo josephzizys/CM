@@ -489,7 +489,7 @@
 
 (define-method (import-events (io <midi-file-stream>) . args)
   (with-args (args &key (tracks #t) seq meta-exclude channel-exclude 
-                   (time-format ':beats ) tempo
+                   (time-format ':beats ) tempo exclude-tracks
                    (keynum-format ':keynum)
                    (note-off-stack #t))
     (let ((results '())
@@ -500,15 +500,23 @@
           (tempo-map #f)
           (num-tracks #f))
       
-      (cond ((eq? tracks #t)  
-             )
-            ((pair? tracks)
-             )
-            ((integer? tracks)
-             (set! tracks (list tracks)))
-            (else
-             (err ":tracks value '~s' not number, list or ~s."
-                  tracks #t)))
+      (if exclude-tracks
+        (if tracks
+          (if (eq? tracks #t) (set! tracks #f)
+              (err ":tracks and :exclude-tracks are exclusive keywords."))
+          (cond ((integer? exclude-tracks)
+                 (set! exclude-tracks (list exclude-tracks)))
+                ((pair? exclude-tracks) )
+                (else 
+                 (err ":exclude-tracks value '~s' not number, list or ~s."
+                      exclude-tracks #t))))
+        (cond ((eq? tracks #t))
+              ((pair? tracks))
+              ((integer? tracks)
+               (set! tracks (list tracks)))
+              (else
+               (err ":tracks value '~s' not number, list or ~s."
+                    tracks #t))))
       
       (case time-format
         ((:ticks ) #t)
@@ -552,8 +560,12 @@
       (with-open-io (file io :input)
         (cond ((= 1 (midi-file-format file))
                (set! num-tracks (midi-file-tracks file))
-               (if (eq? tracks #t)
-                 (set! tracks (loop for i below num-tracks collect i))))
+               (if tracks
+                 (if (eq? tracks #t)
+                   (set! tracks (loop for i below num-tracks collect i)))
+                 (set! tracks (loop for i below num-tracks
+                                 unless (member i exclude-tracks)
+                                 collect i))))
               (else 
                (set! num-tracks 1) 
                (if (eq? tracks #t) (set! tracks (list 0)))))
@@ -594,7 +606,7 @@
                  (unless seq
                    (set! seq 
                          (make-instance class 
-                           :name (format #f "~a-~s" root track))))
+                                        :name (format #f "~a-~s" root track))))
                  (set! result (midi-file-import-track file track seq
                                                       notefn
                                                       note-off-stack 
@@ -617,19 +629,19 @@
                (let ((div (midi-file-divisions file)))
                  (dolist (tr results)
                    (apply-tempo-map div tempo-map tr))))
-               ((not (eq? time-format :ticks))
-                (let ((div (midi-file-divisions file))
-                      (scaler (if tempo
-                                ;; tempo overrides file
-                                (/ 60.0 tempo)
-                                ;; only one tempo-change
-                                (if (pair? tempo-map)
-                                  (* (tc-scaler (car tempo-map))
-                                     1.0)
-                                  ;; MIDI sez default mm=120
-                                  .5))))
-                  (dolist (tr results)
-                    (apply-tempo-scaler div scaler tr)))))
+              ((not (eq? time-format :ticks))
+               (let ((div (midi-file-divisions file))
+                     (scaler (if tempo
+                               ;; tempo overrides file
+                               (/ 60.0 tempo)
+                               ;; only one tempo-change
+                               (if (pair? tempo-map)
+                                 (* (tc-scaler (car tempo-map))
+                                    1.0)
+                                 ;; MIDI sez default mm=120
+                                 .5))))
+                 (dolist (tr results)
+                   (apply-tempo-scaler div scaler tr)))))
         (if (null? results)
           #f
           (if (null? (cdr results))
