@@ -66,7 +66,8 @@ the pattern.
            and keys = (<a href="new-mac.html">new</a> cycle <span class="keyword">:keynums</span> color)
            for r = (<a href="next-fn.html">next</a> rhys)
            for k = (<a href="next-fn.html">next</a> keys)
-           output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>) <span class="keyword">:keynum</span> k
+           output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>)
+                       <span class="keyword">:keynum</span> k
                        <span class="keyword">:duration</span> (+ r .1))
            wait r
            until (and (<a href="eop?-fn.html">eop?</a> rhys) (<a href="eop?-fn.html">eop?</a> keys))))
@@ -78,12 +79,9 @@ the pattern.
 </pre>
 </div>
 
-<!-- See also -->
 <h4>See also:</h4>
 <ul>
 <li><a href="patterns-topic.html#pattern_classes">Pattern classes</a> [Topic]</li>
-<li><a href="patterns-topic.html#example_3">Example 3</a> in Patterns [Topic]</li>
-
 </ul>
 
 </div>
