@@ -60,11 +60,11 @@
 
 (define-class <mode> (<scale>)
   (steps :init-value '() :accessor scale-steps
-	 :init-keyword :steps :init-keyword :notes)
+	 :init-keyword :steps :init-keyword :degrees)
   (lowest :accessor scale-lowest :init-value #f :init-keyword :tonic)
-  (scale :init-thunk (lambda () *chromatic-scale*)
-	 :init-keyword :scale
-	 :accessor mode-owner )
+  (tuning :init-thunk (lambda () *chromatic-scale*)
+          :init-keyword :scale
+          :accessor mode-tuning )
   :name 'mode)
 
 ;;;
@@ -332,14 +332,14 @@
 ;;; Mode methods
 ;;;
 
-(define-method (mode-owner (obj <scale>))
+(define-method (mode-tuning (obj <scale>))
   #f)
 
 (define-method (scale-default-octave (obj <mode>))
-  (scale-default-octave (mode-owner obj)))
+  (scale-default-octave (mode-tuning obj)))
 
 (define-method (scale-table (obj <mode>))
-  (scale-table (mode-owner obj)))
+  (scale-table (mode-tuning obj)))
 
 (define (octave-equivalent note . args)
   (with-args (args &optional (octave 0)
@@ -366,8 +366,8 @@
                 (map (function pitch-class) notes)))
   (let* ((old (car notes))
          (pc? (number? old))
-         (oct (- (octave-number old)
-                 (scale-octave-offset tuning)))
+         (oct (if pc? 0 (- (octave-number old)
+                           (scale-octave-offset tuning))))
          (oth #f)
          (res (list old)))
     (dolist (n (rest notes))
@@ -380,94 +380,94 @@
 
 (define-method (initialize (obj <mode>) args)
   (next-method)
-  (let* ((spec (scale-steps obj))
-         (owner (mode-owner obj))
+  (let* ((spec #f)
+         (owner (mode-tuning obj))
          (low (scale-lowest obj))
-         (div (scale-divisions owner))
-         (tonic #f)
-         (steps? #f)
-	 (offset #f)
+         ;(tonic #f)
+	 ;(offset #f)
 	 (steps #f)
          (type #f)
 	 (len #f)
 	 (octave #f))
-
     (dopairs (a v args)
       (case a
         ((:steps ) 
-         (warn "Converted unsupported :steps initialization to ~s ~s."
-               (if (number? (car v)) ':intervals :degrees)
-               v)
-         (set! spec v)
-         (set! type (if (number? (car v)) ':intervals ':degrees)))
-        ((:intervals )
+         (if (symbol? (car v))
+           (begin
+            (warn "Bad :step value ~s, use :degrees to pass notes to a mode."
+                  v)
+            (set! spec v)
+            (set! type ':degrees))
+           (begin
+            (set! spec v)
+            (set! type a))))
+        ((:degrees )
          (when spec
            (err "Found duplicate keywords ~s and ~s."
                 type a))
          (set! spec v)
          (set! type a))
-        ((:degrees )
-         (when spec
-           (err "Found duplicate keywords ~s and ~s."
-                type a)))
-        (else
-         #f)))
-    (if steps?
-      (let ()
-        )
-      (let ()
-        ))
+        (else #f)))
 
-    ;; spec is notes or interval distances defining one octave
-    ;; convert to intervals up from lowest (collected in reverse order)
-    ;; insure note classes or notes in ascending order
-    (when (symbol? (first spec))
-      (set! spec (ascending-mode-order spec owner)))
-    (cond ((and (symbol? (first spec))
-                (note-in-scale? (first spec) owner))
-           (set! tonic (octave-equivalent (first spec) 0))
-           (set! offset (sd-class tonic))
-           ;; allow keynums or pitch classes to be specified.
-           ;; use typed intervals if in standard scale
-           (if (eq? owner *chromatic-scale*)
-             (set! steps
-                   (loop with l = (list (interval 0 0))
-                         for x in (cdr spec)
-                         for i = (interval (first spec) x)
-                         do (push i l)
-                         finally (return l)))
-             (set! steps (loop with l = (list 0)
-                               for n in (cdr spec)
-                               for k = (- (pitch-class n owner)
-                                          offset)
-                               do (push (if (< k 0) 
-					   (+ k div)
-					   (if (= k 0) div k))
-					 l)
-                               finally (return l)))))
-          (else
-           (set! tonic (octave-equivalent (or low 'c) 0))
-           (set! offset (sd-class tonic))
-           (if (number? (first spec))
-             (set! steps (loop with l = '() and s = 0
-			       for k in spec
-			       do
-			       (push s l)
-			       (incf s k)
-			       finally (return (cons s l))))
-             (set! steps (loop with l = '() and s = (encode-interval 'p 1)
-                               for k in spec
-			       do (push s l)
-                               (set! s (transpose s (interval k)))
-                               finally (return (cons s l)))))))
+    (if (eq? type ':degrees)
+      ;; spec is notes or keynums defining one octave
+      ;; convert to intervals up from lowest (collected in reverse order)
+      ;; and insure entries are in ascending order
+      (begin
+       (set! spec (ascending-mode-order spec owner))
+       (unless low
+         (set! low (if (symbol? (car spec))
+                     (sd-name (octave-equivalent (first spec) 0 owner))
+                     (sd-keynum  (octave-equivalent (first spec) 0 owner)))))
+       ;(set! tonic (octave-equivalent (first spec) 0 owner))
+       ;(set! offset (sd-class tonic))
+       ;; if note names are passed in then we store typed intervals
+       (if (and (eq? owner *chromatic-scale*)
+                (symbol? (car spec)))
+         (set! steps
+               (do ((l (list (interval 0 0)))
+                    (x (cdr spec) (cdr x)))
+                   ((null? x) l)
+                 (push (interval (car spec) (car x)) l)))
+         (set! steps
+               (do ((x spec (cdr x))
+                    (l '())
+                    (n (car spec)))
+                   ((null? x) l)
+                 (push (- (car x) n) l)))))
+      (begin
+       ;; spec is interval distances between steps. the intervals
+       ;; may be typed.
+       (unless low (set! low 0))
+
+       ;(set! tonic (car (scale-ref (scale-table owner)
+       ; (or low 0))))
+       ; (set! offset (sd-class tonic))
+       (when (pair? (car spec))
+         (set! spec (map (function interval) spec)))
+       (if (%interval-encoded? (car spec)) ; typed interval
+         (set! steps
+               (do ((l '())
+                    (s (encode-interval 'p 1))
+                    (k spec (cdr k)))
+                   ((null? k) (cons s l))
+                 (push s l)
+                 (set! s (transpose s (car k)))))
+         (set! steps
+               (do ((l '())
+                    (s 0)
+                    (k spec (cdr k)))
+                   ((null? k) (cons s l))
+                 (push s l)
+                 (incf s (car k)))))))
     ;; first entry in steps is size of octave in tuning
     (set! octave (pop steps))
     ;; reorder steps low->high
     (set! steps (reverse steps))
     (set! len (length steps))
     (set! (scale-steps obj) steps)
-    (set! (scale-lowest obj) tonic)
-    (set! (scale-keynum-offset obj) offset)
+    ;(set! (scale-lowest obj) tonic)
+    ;(set! (scale-keynum-offset obj) offset)
     (set! (scale-divisions obj) len)
     ;; N.B. octave can be TYPED interval!
     (set! (scale-octave obj) octave)
@@ -478,22 +478,24 @@
             for degree from 0
             do
 	    (list-set! into (interval-semitones step) degree))
-      (set! (scale-into obj) into))))
+      (set! (scale-into obj) into))
+    (print (list :low-> low))
+    (transpose obj low)))
 
-; (define o (new mode steps '(2 1 2 1 2 1 2 1)))
-; (define s (new mode steps '(2 1 2 1 1)))
-; (define b (new mode steps '(2 1 2 3 2 3 3 2 1 2 2 1)))
+; (define o (new mode :steps '(2 1 2 1 2 1 2 1)))
+; (define s (new mode :steps '(2 1 2 1 1)))
+; (define b (new mode :steps '(2 1 2 3 2 3 3 2 1 2 2 1)))
 
 (define-method (print-object (obj <mode>) stream)
-  (let ((name (object-name obj)))
+  (let* ((name (object-name obj))
+         (low (scale-lowest obj))
+         (pos (if (= 0 (sd-octave low))
+                (or (sd-name low) (sd-keynum low))
+                (or (sd-note low) (sd-keynum low))))
+         (str (string-downcase (symbol->string (class-name (class-of obj))))))
     (if name
-      (format stream "#<~a: ~s (on ~a)>"
-              (string-downcase (symbol->string (class-name (class-of obj))))
-              name
-	      (sd-name (scale-lowest obj)))
-      (format stream "#<~a (on ~a)>"
-              (string-downcase (symbol->string (class-name (class-of obj))))
-              (sd-name (scale-lowest obj))))))
+      (format stream "#<~a: ~s (on ~a)>" str name pos)
+      (format stream "#<~a (on ~a)>" str pos))))
 
 ;;;
 ;;; tuning and mode lookup functions
@@ -503,7 +505,7 @@
   ;; if force? is true then convert tuning keynum into
   ;; modal coordinates, othewise return false if keynum is
   ;; not in mode.
-  (let (;(tuning (mode-owner mode))
+  (let (;(tuning (mode-tuning mode))
         ;; div is steps per octave
         (div (interval-semitones (scale-octave mode)))
         (num (- keynum (scale-keynum-offset mode))) ; offset=tonic pc
@@ -526,7 +528,7 @@
 
 (define-method (mode->tuning (mode <mode>) keynum return)
   ;; convert keynum in modal coordinates to tuning coordinates
-  (let ((scale (mode-owner mode))
+  (let ((scale (mode-tuning mode))
         (div (scale-divisions mode)) ; num steps in mode's own octave
         (int #f))
     (multiple-value-bind (oct rem)
@@ -770,7 +772,7 @@
       (begin
        (if (eq? oper ':in)
          (err "Not a tuning: ~s ~s." oper scale))
-       (set! tuning (mode-owner scale))
+       (set! tuning (mode-tuning scale))
        (set! mode scale))
       (begin 
        (set! tuning scale)))
@@ -831,7 +833,7 @@
       (begin
        (if (eq? oper ':in)
          (err "Not a tuning: ~s ~s." oper scale))
-       (set! tuning (mode-owner scale))
+       (set! tuning (mode-tuning scale))
        (set! mode scale))
       (begin 
        (if (eq? oper ':from)
@@ -894,7 +896,7 @@
       (begin
        (if (eq? oper ':in)
          (err "Not a tuning: ~s ~s." oper scale))
-       (set! tuning (mode-owner scale))
+       (set! tuning (mode-tuning scale))
        (set! mode scale))
       (begin 
        (if (or (eq? oper ':from)
@@ -958,13 +960,18 @@
       (if entry (sd-class (first entry)) #f))))
 
 (define (octave-number note . args)
-  (with-args (args &optional (scale *scale*))
+  ;; return the octave number of a note in tuning.
+  ;; if real? is true then return actual actual octave
+  ;; else return the note's external number
+  (with-args (args &optional (scale *scale*) real?)
     (let* ((table (scale-table scale))
 	   (entry (and table (scale-ref table note))))
       (if entry 
 	(if (sd-octave (first entry))
-	  (+ (sd-octave (first entry))
-	     (scale-octave-offset scale))
+          (if real?
+            (sd-octave (first entry))
+            (+ (sd-octave (first entry))
+               (scale-octave-offset scale)))
 	  #f)
 	#f))))
 
@@ -1195,16 +1202,24 @@
 	(err "Don't know how to transpose ~s by ~s." 
              note int)))))
 
-(define-method (transpose (note <mode>) int . args)
+(define-method (transpose (obj <mode>) note . args)
   (with-args (args &optional (scale *scale*))
-    ;; in mode transposition note is a mode and int is a note.
-    (unless (note-in-scale? int scale)
-      (err "~s is not in the standard chromatic scale." int))
-    (set! (scale-lowest note)
-	  (octave-equivalent int 0 scale))
-    (set! (scale-keynum-offset note)
-	  (sd-class (scale-lowest note)))
-    note))
+    (set! scale (mode-tuning obj))
+    (unless (note-in-scale? note scale)
+      (err "~s is not defined in mode's tuning" note))
+    ;; is pitch-class
+    (if (eq? (note-name note scale) note)
+      (begin
+       (set! (scale-lowest obj)
+             (octave-equivalent note 0 scale))
+       (set! (scale-keynum-offset obj)
+             (sd-class (scale-lowest obj))))
+      (let* ((oct (octave-number note scale #t))
+             (ref (octave-equivalent note oct scale)))
+        (set! (scale-lowest obj) ref)
+        (set! (scale-keynum-offset obj)
+              (sd-keynum ref))))
+    obj))
 
 ;;;
 ;;; Invert
