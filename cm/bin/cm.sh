@@ -176,7 +176,7 @@ else
       msg_x "Aborting. "
     fi
     export RE_EXECING=1 
-    exec $BASH_EXE -- $0 "$@"
+    exec $BASH_EXE -- "$0" "$@"
   fi
 fi
 
@@ -185,7 +185,7 @@ fi
 # Help
 # ----
 
-CMD=`basename $0`
+CMD=`basename "$0"`
 USAGE="
   Usage: $CMD -h
          $CMD [-qnv] [-e editor] [-l lisp] [-P prefs] [-O OS] [-A arch]
@@ -273,8 +273,8 @@ real_path () {
 
 
 # Resolve symbolic links
-if test -L $0 ; then
-  ARGV0=`\ls -l $0 | sed 's/.*-> //;'`
+if test -L "$0" ; then
+  ARGV0=`\ls -l "$0" | sed 's/.*-> //;'`
 else
   ARGV0="$0"
 fi
@@ -284,7 +284,7 @@ CWD=`pwd`
 if [ "$CM_ROOT_DIR" ] ; then
   LOC="$CM_ROOT_DIR"
 else
-  PTU=`echo $ARGV0 | sed 's:[^/]*$::;s:\(.\)/$:\1:;'`
+  PTU=`echo "$ARGV0" | sed 's:[^/]*$::;s:\(.\)/$:\1:;'`
   LOC=`real_path "$PTU"`
   if [ ! "$LOC" ] ; then
     msg_e "No such file or directory: '$1'"
@@ -509,6 +509,13 @@ fi
 if [ ! "$LISP_EXE" ] ; then 
   msg_e "No executable found."
   msg_x "Aborting."
+else
+  # FIXME
+  true
+  # if LISP_EXE is in windows realm
+  #   translate LISP_EXE
+  #   if CM_ROOT is in windows realm
+  #     translate as well
 fi
 
 
