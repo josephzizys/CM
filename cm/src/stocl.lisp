@@ -76,6 +76,10 @@
                  :defaults here)))
    (namestring (merge-pathnames file here))))
 
+(unless (find-package :clm)
+  (defpackage clm 
+    (:export definstrument)))
+
 (defun gencm (&rest args)
   (load (srcfile "pkg.lisp"))
   (if (not args)
@@ -160,7 +164,7 @@
 (defparameter toplevel-ignore
   '((defmacro loop when unless push pop function)
     (define scheme-loop read-byte write-byte expand-process
-      signum)
+      signum clm:definstrument)
     (define-accessor object-name)
     (define-generic t)
     (define-method describe-object)
