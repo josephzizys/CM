@@ -20,6 +20,10 @@
 (in-package :cl-user)
 
 ;;;
+;;; The CM package definition. Keywords are used so that the names
+;;; will reflect the inplementation's read-case sensitivity but will
+;;; not pollute the current package's name space with any new symbols.
+;;;
 ;;; The CLM, CMN, and MidiShare packages must exist when this file is
 ;;; loaded, either by loading the systems or their stubs files.
 ;;;
@@ -86,6 +90,13 @@
 		:SetSynchroInPlayer :MidiNewMidiFileInfos
 		:MidiFileLoad :MidiFileSave :mf-clicks :mf-format :mf-timedef)
   (:export
+
+   ;; data.lisp
+   :interval :decode-interval :*tempo* :*beat* :rhythm :*softest* :*loudest*
+   :*power* :amplitude :interpl :interp :tendency :rescale-envelope :quantize
+   :rescale :fit :cents->scaler :scaler->cents :between :pick :pickl :vary
+   :drunk :odds :shuffle :ran :expl :explsegs :explseg :geosegs :geoseg
+   :best-normal-form :prime-form :markov-analyze :histogram
 
    ;; objects.lisp
    :copy-object :fill-object :*print-instance* :print-instance :save-object
