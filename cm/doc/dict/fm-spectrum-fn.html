@@ -57,16 +57,16 @@ is <code class="keyword">:raw</code>.
 class="keyword">:weights</code>}</dt>
 
 <dd>
-Specifies whether or not sideband amplitudes are included in the
-output spectrum or not. If the value is false then only frequency
-components are returned. If the value is true then each sideband
-component is a list (<var>frequency</var> <var>amplitude</var>). If
-the value is <code class="keyword">:normalized</code> then the
-amplitude value of each component is normalized between 0 and 1. If
-the value is <code class="keyword">:weights</code> then the output
-spectrum can be passed directly to a <a
-href="random-cls.html">random</a> pattern with amplitudes converted to
-probability weights.  The default value is false.
+Specifies whether sideband amplitudes are included in the output
+spectrum or not. If the value is false then only frequency components
+are returned. If the value is true then each sideband component is a
+list (<var>frequency</var> <var>amplitude</var>). If the value
+is <code class="keyword">:normalized</code> then the amplitude value
+of each component is normalized between 0 and 1. If the value is <code
+class="keyword">:weights</code> then the output spectrum can be passed
+directly to a <a href="random-cls.html">random</a> pattern with
+amplitudes converted to probability weights.  The default value is
+false.
 </dd>
 
 <dt><code class="keyword">:ignore-zero</code> <var>boolean</var></dt>
