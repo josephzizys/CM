@@ -416,3 +416,39 @@
       (file-position file pos)
       (file-position file 
                      (+ (file-position file) pos)))))
+
+
+;;;
+;;;
+;;;
+
+(defun load-cminit ()
+  ;; try to load cminit.lisp as dynamically as possible: if the lisp
+  ;; implementation lets us determine the directory that the image
+  ;; file is in, then look in this dir first for cminit.lisp. if its
+  ;; not there then look for {imgdir}/../lib/cminit.lisp. otherwise
+  ;; (the image dir cant be determined) then try use the shell
+  ;; variable 'cmlibdir' that cm.sh sets. otherwise use the value of
+  ;; cl-user::cm-lib-dir set by make.lisp when the image was saved.
+  (let* ((dir (cm-image-dir))
+         (init (and dir (merge-pathnames init "cminit.lisp"))))
+    (unless init
+      (if dir
+        (setf init (make-pathname
+                    :directory (append (butlast
+                                        (pathname-directory dir))
+                                       (list "lib"))
+                    :name "cminit" :type "lisp"
+                    :defaults dir))
+        (progn
+          (setf dir (or (env-var 'cmlibdir)
+                        (symbol-value (find-symbol (string :cm-lib-dir)
+                                                   :cl-user))))
+          (setf init (concatenate 'string dir
+                                  #+(or osx linux) "/"
+                                  #+digitool ":"
+                                  #+win32 "\\"
+                                  "cminit.lisp")))))
+    (when (probe-file init)
+      (load init :verbose nil))
+    ))

@@ -159,16 +159,16 @@
 
 ;; open midi file in QuickTime on OSX from Michael Klingbeil
 
-(defun osx-play-midi-file (file &rest args)
-   (declare (ignore args))
-   (setf file (namestring (truename file)))
-   ;; set file types need the developer tools
-   ;; installed for the SetType command
-   ;(ccl:run-program "/Developer/Tools/SetFile"
-   ;(list "-t" "Midi" "-c" "TVOD" file))
-   ;(ccl::set-mac-file-type file "Midi")
-   ;(ccl::set-mac-file-creator file "TVOD")
-   (ccl:run-program "/usr/bin/open" (list file)))
+;(defun osx-play-midi-file (file &rest args)
+;   (declare (ignore args))
+;   (setf file (namestring (truename file)))
+;   ;; set file types need the developer tools
+;   ;; installed for the SetType command
+;   ;(ccl:run-program "/Developer/Tools/SetFile"
+;   ;(list "-t" "Midi" "-c" "TVOD" file))
+;   ;(ccl::set-mac-file-type file "Midi")
+;   ;(ccl::set-mac-file-creator file "TVOD")
+;   (ccl:run-program "/usr/bin/open" (list file)))
 
 ;;;
 ;;; cm application class
@@ -180,6 +180,13 @@
   args
   (setf (slot-value obj 'ccl::command-line-arguments)
 	(list ccl::*standard-help-argument*
+	      (ccl::make-command-line-argument
+	       :option-char #\I
+	       :long-name "image-name"
+	       :keyword :image-name
+	       :help-string "image-name <file>"
+	       :may-take-operand t
+	       :allow-multiple nil)
 	      (ccl::make-command-line-argument
 	       :option-char #\l
 	       :long-name "load"
@@ -201,6 +208,14 @@
 ;;; save cm
 ;;;
 
+(defun cm-image-dir ()
+  (namestring
+   (make-pathname
+    :directory (pathname-directory ccl::*heap-image-name*))))
+
+(defun env-var ()
+  nil)
+
 (defun save-cm (path &rest args)
   (declare (ignore args) (special *cm-readtable*))
   (setf ccl::*inhibit-greeting* t)
@@ -209,7 +224,9 @@
                 (list #'(lambda ()
                           (declare (special *cm-readtable*))
                           (setf *package* (find-package :cm))
-                          (setf *readtable* *cm-readtable*)))))
+                          (setf *readtable* *cm-readtable*)
+                          (load-cminit)
+                          ))))
   (ccl:save-application path :application-class (find-class 'cm)))
 
 

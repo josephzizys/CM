@@ -76,6 +76,17 @@
   (let ((str (apply #'format nil format strings)))
     (extensions:run-program "/bin/csh" (list "-fc" str) :output t)))
 
+(defun env-var (var)
+  (let ((x (assoc var ext:*environment-list*
+                  :test #'string=)))
+    (and x (cdr x) )))
+
+(defun image-directory ()
+  (let ((img (member "-core" ext:*command-line-strings*)))
+    (namestring
+     (make-pathname
+      :directory (pathname-directory (cadr img))))))
+
 (defun save-cm (path &rest args)
   (declare (ignore args))
   (extensions:save-lisp path :print-herald NIL
@@ -84,4 +95,5 @@
                             (declare (special *cm-readtable*))
                             (setf *package* (find-package :cm))
                             (setf *readtable* *cm-readtable*)
+                            (load-cminit)
                             (lisp::%top-level))))

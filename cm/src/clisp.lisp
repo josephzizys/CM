@@ -110,6 +110,11 @@
 (defun pwd ()
   (namestring (ext:default-directory)))
 
+(defun cm-image-dir () nil)
+
+(defun env-var (var)
+  (ext:getenv var))
+
 (defun save-cm (path &rest args)
   (declare (ignore args))
   (ext:saveinitmem path :quiet t
@@ -117,13 +122,9 @@
                    #'(lambda ()
                        (declare (special *cm-readtable*))
                        (setf *package* (find-package :cm))
-                       (setf *readtable* *cm-readtable*))))
-
-
-
-
-
-
+                       (setf *readtable* *cm-readtable*)
+                       (load-cminit)
+                       )))
 
 
 
