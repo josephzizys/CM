@@ -28,6 +28,9 @@
           )
         :cm)
 
+(require :sb-posix)
+(import '(sb-posix:chdir) :cm)
+
 (defun quit () (sb-ext:quit))
 (defun exit () (quit))
 
@@ -65,13 +68,22 @@
     (sb-ext:run-program "/bin/csh" (list "-fc" str) :output t)))
 
 (defun cd (&optional (dir (user-homedir-pathname )))
-  ;(setf (ext:default-directory) dir)
-  ;(namestring (ext:default-directory))
-  )
+  (sb-posix:chdir dir)
+  (let ((host (pathname-host dir))
+        (name (pathname-name dir))
+        (path (pathname-directory dir)))
+    ;; allow dirs without ending delim "/tmp"
+    (when name
+      (setq path (append path (list name))))
+    (setq *default-pathname-defaults*
+          (make-pathname :host host :directory path))
+    (namestring *default-pathname-defaults*)))
 
 (defun pwd ()
-  ;(sb-ext:run-program "/bin/pwd" nil :output t)
-  )
+  (namestring
+   (make-pathname :host (pathname-host *default-pathname-defaults*)
+                  :directory (pathname-directory
+                              *default-pathname-defaults*))))
 
 (defun env-var (var)
   ;(let ((x (assoc var ext:*environment-list*
