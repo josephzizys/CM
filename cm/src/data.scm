@@ -685,7 +685,7 @@
 (define (vary value variance . args)
   (with-args (args &optional (where :around)
                    (state *random-state*))
-    (if (<= variance 0)
+    (if (or (<= variance 0) (= value 0))
       value
       (let ((vary (random (abs (* value variance 1.0)) state)))
 	(case where
