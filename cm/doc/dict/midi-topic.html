@@ -210,7 +210,7 @@ type of MidiEv returned.
 <dl>
 <dt><code class="keyword">:port</code> <var>integer</var></dt> <dd>The
 reference number of the MidiShare port to send the event to. Defaults
-to 0.</dd> <dt><code class="keyword">:channel</code>
+to 0.</dd> <dt><code class="keyword">:chan</code>
 <var>integer</var></dt> <dd>The channel number to send the event
 to. Defaults to 0.</dd> <dt><code class="keyword">:date</code>
 <var>integer</var></dt> <dd>The time (in milliseconds) of the
@@ -230,11 +230,11 @@ class="entry">ms:new</code> keyword arguments for each type of MidiEv:
 <dd>
 A MidiShare key event with an associated millisecond duration.
 <dl>
-<dt><code class="keyword">:keynum</code> <em>integer</em></dt>
+<dt><code class="keyword">:pitch</code> <em>integer</em></dt>
 <dd>An integer key number 0-127. Defaults to 60.</dd>
-<dt><code class="keyword">:velocity</code> <em>integer</em></dt>
+<dt><code class="keyword">:vel</code> <em>integer</em></dt>
 <dd>An integer velocity 0-127. Defaults to 60.</dd>
-<dt><code class="keyword">:duration</code> <em>integer</em></dt>
+<dt><code class="keyword">:dur</code> <em>integer</em></dt>
 <dd>Duration in milliseconds, defaults to 500.
 </dl>
 </dd>
@@ -249,7 +249,7 @@ class="keyword">:duration</code>.
 <dt><code>typeKeyPress</code> (3)</dt>
 <dd>
 <dl>
-<dt><code class="keyword">:keynum</code> <em>integer</em></dt>
+<dt><code class="keyword">:pitch</code> <em>integer</em></dt>
 <dd>An integer key number 0-127. Defaults to 60.</dd>
 <dt><code class="keyword">:pressure</code> <em>integer</em></dt>
 <dd>An integer pressure 0-127. Defaults to 0.</dd>
@@ -445,7 +445,7 @@ means minor, defaults to 0.</dd>
 <!-- Interaction 1 -->
 <div class="float">
 <p><span class="floatlabel">Example 2.</span> Creating and printing a MidiEv.</p>
-<pre class="shell">cm&gt; <span class="input">(define ev (ms:new typeNote :channel 3 :duration 2000))</span>
+<pre class="shell">cm&gt; <span class="input">(define ev (ms:new typeNote :chan 3 :dur 2000))</span>
 
 cm&gt; <span class="input">(ms:MidiPrintEv ev)</span>
 <span class="output">#&lt;MidiEv Note [0/3 0ms] 60 64 2000ms&gt;</span></pre>
@@ -531,8 +531,8 @@ when the function is called. No value is returned.
 <p><span class="floatlabel">Example 4.</span> A sample process definition.</p>
 <pre class="code">(<span class="special">define</span> (<span class="defined">rankeys</span> reps rhy dur lb ub)
   (<span class="special">process</span> repeat reps
-           output (ms:new typeNote <span class="keyword">:duration</span> dur
-                          <span class="keyword">:keynum</span> (between lb ub))
+           output (ms:new typeNote <span class="keyword">:dur</span> dur
+                          <span class="keyword">:pitch</span> (between lb ub))
            wait rhy))</pre>
 </div>
 
@@ -540,7 +540,7 @@ when the function is called. No value is returned.
 <p>Using now, output and sprout.</p>
 <pre class="shell">cm&gt; <span class="input">(now)</span>
 <span class="output">274601</span>
-cm&gt; <span class="input">(output (ms:new typeNote :keynum 80 :duration 1000))</span>
+cm&gt; <span class="input">(output (ms:new typeNote :pitch 80 :dur 1000))</span>
 cm&gt; <span class="input">(sprout (rankeys 30 200 250 60 90) 2000)</span></pre>
 </div>
 
@@ -631,9 +631,9 @@ up or down from the input note.
         (h (new heap <span class="keyword">:of</span> '(0 -1 1 -2 2 -3 3))))
     (<span class="special">process</span> for i below n
              output (<span class="special">ms:new</span> typeNote
-                       <span class="keyword">:duration</span> 250
-                       <span class="keyword">:keynum</span> (+ knum (next h))
-                       <span class="keyword">:velocity</span> (round (interp i 0 90 (- n 1) 20)))
+                       <span class="keyword">:dur</span> 250
+                       <span class="keyword">:pitch</span> (+ knum (next h))
+                       <span class="keyword">:vel</span> (round (interp i 0 90 (- n 1) 20)))
              wait r)))
 
 (<span class="special">define</span> (<span class="defined">dowiggle</span> ev)
