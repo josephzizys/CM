@@ -237,16 +237,12 @@ code.keyword {
   color: #b22222;
 }
 
-
 code.entry { 
-  font-family: sans-serif; /* stop gap solution until I can replace code with span */
   font-style: normal;
   font-weight: bold;
 }
 
 span.entry { 
-  font-family: sans-serif;
-  font-style: normal;
   font-weight: bold;
 }
 
@@ -324,7 +320,7 @@ span.comment {font-style: italic; color: gray;} /* slate gray3 */
 span.keyword {color: #b22222;}
 span.special {color: #d2691e;}
 span.defined {color: #ff0000;}
-
+span.results {font-weight: bold; color: gray;}
 span.input  {font-weight: bold;}
 span.prompt, span.output  { }
 
