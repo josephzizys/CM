@@ -10,66 +10,67 @@
 <body>
 <div id="content">
 
-
-<!-- Entry: "process" -->
 <dl class="dictsyntax">
 <dt>[Macro]</dt>
-<dd><code>(</code><code class="entry">process</code> {<var>clause</var>}+<code>)<code></dd>
+<dd><code>(</code><code class="entry">process</code> {<var>clause</var>}+<code>)</code></dd>
 </dl>
 
 
 <p>
-Defines an iterative musical process using the same syntax as
-Lisp's <code>loop</code> macro. <code>process</code> iteration is defined
-as a series of clauses, each clause begins with a clause operator.
-There are four broad categories of clause operators:
+Defines an iterative musical process using the same basic syntax as
+Lisp's <code>loop</code> macro. The body of a process definition
+consists of  a series of clauses, each clause begins with a clausal
+operator.  There are four broad categories of clauses:
 </p>
 
-<ul>
-<li>initialization and finalization
-    <ul>
-    <li> <a href="#with.clause"><code>with</code></a> declares and initializes local process variables. </li>
-    <li> <a href="#initially.clause"><code>initially</code></a> performs an action before iteration starts. </li>
-    <li> <a href="#finally.clause"><code>finally</code></a> performs a final action immediately after process stops. </li>
-    </ul>
+
+<ol>
+<li>Initializations and finalizations:
+<table>
+<tr><td><a href="#with.clause"><code>with</code></a></td> <td>declares and initializes local process variables</td></tr>
+<tr><td><a href="#initially.clause"><code>initially</code></a></td><td>performs an action before iteration starts</td></tr>
+<tr><td><a href="#finally.clause"><code>finally</code></a></td><td>performs a final action immediately after process stops</td></tr>
+</table>
 </li>
 
-<li>iterations
-<ul>
-<li> <a href="#repeat.clause"><code>repeat</code></a> sets the number of times the process runs. </li>
-<li> <a href="#for.clause"><code>for</code></a> defines a variable over a range of values, stops process when done. </li>
-</ul>
+<li>Iterations
+<table>
+<tr><td><a href="#repeat.clause"><code>repeat</code></a></td><td>sets the number of times the process runs</td></tr>
+<tr><td><a href="#for.clause"><code>for</code></a></td><td>defines a variable over a range of values, stops process when done</td></tr>
+</table>
 </li>
 
-<li>actions
-<ul>
-<li><a href="#do.clause"><code>do</code></a> evaluates one or more Lisp statements.</li>
-<li><a href="#each.clause"><code>each</code></a> iterates action clause.</li>
-<li><a href="#output.clause"><code>output</code></a> outputs an event into the open output stream. </li>
-<li><a href="#sprout.clause"><code>sprout</code></a> inserts a new object into the scheduling queue. </li>
-<li><a href="#wait.clause"><code>wait</code></a> process waits a specified amount of time before running again. </li>
-</ul>
+<li>Actions
+<table>
+<tr><td><a href="#do.clause"><code>do</code></a></td><td>evaluates one or more Lisp statements</td></tr>
+<tr><td><a href="#each.clause"><code>each</code></a></td><td>iterates action clause</td></tr>
+<tr><td><a href="#output.clause"><code>output</code></a></td><td>outputs an event into the open output stream</td></tr>
+<tr><td><a href="#sprout.clause"><code>sprout</code></a></td><td>inserts a new object into the scheduling queue</td></tr>
+<tr><td><a href="#wait.clause"><code>wait</code></a></td><td>process waits a specified amount of time before running again</td></tr>
+</table>
 </li>
 
-<li>conditionals
-<ul>
-<li><a href="#while.clause"><code>while</code></a> evaluates an action if a test is true or stops the process if false. </li>
-<li><a href="#until.clause"><code>until</code></a> evaluates an action if a test is or stops the process if true. </li>
-<li><a href="#when.clause"><code>when</code></a> evaluates an action if a test is true. </li>
-<li><a href="#unless.clause"><code>unless</code></a> evaluates an action if a test is false. </li>
-<li><a href="#if.clause"><code>if</code></a> evaluates one or more "then" or "else" actions based on a test.  </li>
-</ul>
+<li>Conditionals
+
+<table>
+<tr><td><a href="#while.clause"><code>while</code></a></td><td>evaluates an action if a test is true or stops the process if false</td></tr>
+<tr><td><a href="#until.clause"><code>until</code></a></td><td>evaluates an action if a test is or stops the process if true</td></tr>
+<tr><td><a href="#when.clause"><code>when</code></a></td><td>evaluates an action if a test is true</td></tr>
+<tr><td><a href="#unless.clause"><code>unless</code></a></td><td>evaluates an action if a test is false</td></tr>
+<tr><td><a href="#if.clause"><code>if</code></a></td><td>evaluates one or more "then" or "else" actions based on a test</td></tr>
+</table>
 </li>
-</ul>
+</ol>
 
 <p>
 Iteration and action clauses are executed in the same order in which
-they appear in the code.  If more than one iteration clause is
-specified the process terminates as soon as the earliest clause
-completes its iteration.
+they appear in the code but the first action clause must appear after
+all initialization and iteration clauses.  If more than one iteration
+clause is specified the process terminates as soon as the earliest
+iteration terminates.
 </p>
 
-<h4>Initialization and finalization</h4>
+<h4>Initializations and finalizations</h4>
 
 <dl>
 <dt><code>with</code> <var>var</var> [<code>=</code> <var>form</var>] {<code>and</code> <var>var2</var> [<code>=</code> <var>form2</var>]}*</dt>
