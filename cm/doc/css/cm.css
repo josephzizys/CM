@@ -275,6 +275,11 @@ th.col {
   text-align: center; /*left*/
 }
 
+th.lcol {
+  border-bottom: 1px solid silver; /* dashed #aaa; */
+  text-align: left; /*left*/
+}
+
 th.row {
  /* border-right: 1px solid silver; */ /* dashed #aaa; */
   text-align: left;
