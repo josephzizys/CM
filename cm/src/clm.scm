@@ -295,6 +295,7 @@
             (let ((trans (assoc sym translate)))
               (if trans
                 ( (cadr trans) form translate exclude include)
+                ;; arrg have to figure this out for Scheme!
                 (if (or (FBOUNDP SYM)
                         (SPECIAL-OPERATOR-P sym))
                   form
@@ -304,7 +305,7 @@
                     form
                     (begin
                      (format #t "~%Skipping undefined function: ~s."
-                             form sym)
+                             sym)
                      #f)))))))))))
 
 (define (import-let form translate exclude include)
