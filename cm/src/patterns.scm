@@ -182,20 +182,23 @@
   ;;(format #t "pattern initialize: ~s data=~s~%" 
   ;;        obj (pattern-data obj))
   (let ((flags (pattern-flags obj))
-        (data (pattern-data obj))
+;        (data (pattern-data obj))
+        (data #f)
         (len #f)
 	(parser (pattern-parser obj))
 	(constant? #f))
     
-    (unless (list? data)
-      (set! data (list data))
-      (set! (pattern-data obj) data))
+;    (unless (list? data)
+;      (set! data (list data))
+;      (set! (pattern-data obj) data))
 
     ;; if a slot has multiple initargs their values must be parsed from
     ;; the args since goops doesn't recogize them as true initargs...
     (do ((a args (cddr a)))
-	((null? a) #f)
+	((or data (null? a)) #f)
       (case (car a)
+        ((:of :data )
+         (set! data (cadr a)))
 	((:notes )
 	 (set! data (cadr a))
 	 (set! parser #'note))
@@ -209,6 +212,7 @@
 	 (set! data (cadr a))
 	 (set! parser #'amplitude))))
     
+    (unless (list? data) (set! data (list data)))
     ;; parse external data into canonical form. oct is bound
     ;; in case note, keynum or hertz are called as parsers.
     (with-default-octave *scale*
@@ -758,6 +762,20 @@
                      (pattern-random-state obj))
               (list)
               (list :state (pattern-random-state obj))))))
+
+
+(define-method (default-period-length (obj <random>))
+  ;; set the default period length of an all-subpattern random pattern
+  ;; to 1 else to the number of elements. since a random pattern
+  ;; establishes no particular order itself, setting the period to 1
+  ;; allows the number of elements in the current period to reflect
+  ;; the sub patterns. A better defaulting would be to check mixed
+  ;; elements at run time and adjust the period length accordingly,
+  (do ((tail (pattern-data obj) (cdr tail))
+       (flag #t))
+      ((or (not flag) (null? tail))
+       (if flag 1 (pattern-length obj)))
+    (set! flag (pattern? (random-item-datum (car tail))))))
 
 (define-method (initialize (obj <random>) args)
   (next-method)
