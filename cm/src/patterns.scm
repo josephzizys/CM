@@ -2236,6 +2236,8 @@
 
 (define-class <copier> (<pattern>)
   (source :accessor copier-source)
+  (repfor :accessor copier-repfor :init-value #f
+          :init-keyword :repeat-for)
   :name 'copier)
 
 (define-method (pattern-external-inits (obj <copier>))
@@ -2256,19 +2258,32 @@
              (res (next (copier-source obj) #t))
              (len (length res))
              (for (period-length per))
-             (tot (* len for)))
+             (rep (copier-repfor obj)))
+        (if rep
+          (begin
+            (set! for (next rep))
+            (period-length-set! per len)
+            (period-count-set! per len))
+          (period-count-set! per (* len for)))
         (let ((sav res))
           (dotimes (i (- for 1))
             (set! res (append res (list-copy sav)))))
         (set! (pattern-data obj) (cdr res))
-        (period-count-set! per tot)
-        ;(period-length-set! per tot)
-        ;(print (list tot res))
         (car res))
       (begin
        (set! (pattern-data obj) (cdr data))
        (car data)))))
 
+;(setq x (new copier :of (new cycle :of '(a b c) :for 2)  :for 3))
+;(next x t)
+;(setq x (new copier :of (new cycle :of '(a b c) :for 2) :repeat-for 3))
+;(next x t)
+;(setq x (new copier :of (new cycle :of '(a b c) :for 2)
+;             :for (new cycle :of '(2 3))))
+;(next x t)
+;(setq x (new copier :of (new cycle :of '(a b c) :for 2)
+;             :repeat-for (new cycle :of '(2 3))))
+;(next x t)
 ; (set! x (new copier :of (list (new cycle :of '(a b))) :for 2))
 ; (set! x (new copier :of (list (new cycle :of '(a b))) :for (new cycle :of '(2 3))))
 ; (describe x)
