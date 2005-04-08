@@ -540,7 +540,7 @@
     (set! expr (pop forms))
     (if (not (null? forms))
       (if (eq? (car forms) 'into)
-        (progn
+        (begin
           (if (null? (cdr forms))
             (loop-error ops save "Missing 'into' variable."))
           (if (loop-variable? (cadr forms))
@@ -613,7 +613,7 @@
            (begin (set! tail (collector-acc coll))
                   (set! head (collector-head coll)))
            (begin
-            (if into (push (make-binding into #f) bind))
+            (if into (push (make-binding into '(list)) bind))
             (set! tail (gensym "v"))
             ;; allocate a pointer to the head of list
             (set! head (gensym "v"))
@@ -1007,12 +1007,12 @@
                         (list `(if ,(if (cdr tests)
                                       (cons 'or tests)
                                       (car tests))
-                                 (go :done)))
+                                 (go t))) ; :done
                         (list)))
                     ,@(loop-looping iter)
                     ,@(loop-stepping iter)
                     (go :loop)
-                    :done
+                    t ; :done
                     ,@(loop-finally iter)
                     ,return)))))
 
@@ -1021,114 +1021,72 @@
 ;;;
 
 ;(loop for i below 10 collect i)
-;=> (0 1 2 3 4 5 6 7 8 9)
-
+; => (0 1 2 3 4 5 6 7 8 9)
 ;(loop for i to 10 sum i)
-;=> 55
-
+; => 55
 ;(loop for i downto -10 count (even? i))
-;=> 6
-
+; => 6
 ;(loop for x in '(0 1 2 3 4 5 6 7 8 9) thereis (= x 4))
-;=> #t
-
+; => #t
 ;(loop for x in '(0 1 2 3 4 5 6 7 8 9) by 'cddr collect x)
-;=> (0 2 4 6 8)
-
+; => (0 2 4 6 8)
 ;(loop for x on '(0 1 2 3 4 5 6 7 8 9) by 'cddr collect x)
-;=> ((0 1 2 ...) (2 3 4 ...) ...)
-
+; => ((0 1 2 ...) (2 3 4 ...) ...)
 ;(loop for x in '(0 1 2 3 4 5 6 7 8 9) thereis (= x 4))
-;=> 4
-
+; => 4
 ;(loop for x in '(0 1 2 3 4 5 6 7 8 9) never (= x 4))
-
+; => #f
 ;(loop for x in '(0 1 2 3 4 5 6 7 8 9) never (= x 40))
-
+; => #t
 ;(loop for x in '(0 2 3 4 5 6 7 8 9) always (< x 40))
-
+; => #t
 ;(loop repeat 10 with x = 0 collect x do (set! x (+ x 1)))
-
+; => (0 1 2 3 4 5 6 7 8 9)
 ;(loop repeat 10 for x = #t then (not x) collect x)
-
+; => (#t #f #t #f #t #f #t #f #t #f)
 ;(loop repeat 10 count #t)
-
+; => 10
 ;(loop repeat 10 count #f)
-
+; => 0
 ;(loop for i to 10 collect i collect (* 2 i))
-
+; => (0 0 1 2 2 4 3 6 4 8 5 10 6 12 7 14 8 16 9 18 10 20)
 ;(loop for i from -10 to 10 by 2 nconc (list i (- i)))
-
-;(loop for i from -10 downto 10 by -1 collect i)  ; -> NIL
-
+; => (-10 10 -8 8 -6 6 -4 4 -2 2 0 0 2 -2 4 -4 6 -6 8 -8 10 -10)
+;(loop for i from -10 downto 10 by -1 collect i)
+; => ()
 ;(loop for i downfrom 10 downto -10 by 2 collect i)
-
-;(loop for i from 10 to -10 by 1 collect i)   ; -> NIL
-
-;(loop for i to 10
-;      for j downfrom 10
-;      collect i collect j)
-
-;(loop with a and b = 'x and c = 2
-;      repeat 10
-;      for x = 1 then 'fred
-;      collect (list x a b c))
-
+; => (10 8 6 4 2 0 -2 -4 -6 -8 -10)
+;(loop for i from 10 to -10 by 1 collect i)
+; => ()
+;(loop for i to 10 for j downfrom 10 collect i collect j)
+; => (0 10 1 9 2 8 3 7 4 6 5 5 6 4 7 3 8 2 9 1 10 0)
+;(loop for i below 0 collect i into foo finally (return foo))
+; => ()
+;(loop for i below 0 sum i into foo finally (return foo))
+; => 0
+;(loop for i below 0 maximize i into foo finally (return foo))
+; => #f
+;(loop with a and b = 'x and c = 2 repeat 10 for x = 1 then 'fred collect (list x a b c))
+; => ((1 #f x 2) (fred #f x 2) (fred #f x 2) (fred #f x 2) (fred #f x 2) (fred #f x 2) (fred #f x 2) (fred #f x 2) (fred #f x 2) (fred #f x 2))
 ;(loop for i across #(0 1 2 3) append (list i (expt 2 i)))
-
-;(loop repeat 10 
-;      for x = (random 100) 
-;      minimize x into a
-;      maximize x into b
-;      finally (return (cons a b)))
-;=> (36 . 98)
-
-;(loop with a = 0 and b = -1
-;      while (< a 10)
-;      sum a into foo
-;      do (set! a (+ a 1))
-;      finally (return (list foo b)))
-;=> (45 -1)
-
-;(loop for i to 10 
-;      for j = (random 10)
-;      if (even? j) collect j
-;      else collect (- j)
-;      and do (format #t "odd: ~s~%" j))
-
-;(loop for i from 0
-;      until (> i 9)
-;      collect i)
+; => (0 1 1 2 2 4 3 8)
+;(loop repeat 10 for x = (random 100) minimize x into a maximize x into b finally (return (cons a b)))
+; => (36 . 98)
+;(loop with a = 0 and b = -1 while (< a 10) sum a into foo do (set! a (+ a 1)) finally (return (list foo b)))
+; => (45 -1)
+;(loop for i to 10 for j = (random 10) if (even? j) collect j else collect (- j) and do (format #t "odd: ~s~%" j))
+; => (-5 -9 8 -9 -7 0 0 4 -7 -1 -1)
+;(loop for i from 0 until (> i 9) collect i)
 ;=> (0 1 2 3 4 5 6 7 8 9)
-
-;(loop for i from 0
-;      while (< i 9)
-;      when (even? i)
-;      collect i)
+;(loop for i from 0 while (< i 9) when (even? i) collect i)
 ;=> (0 2 4 6 8)
-
-;(loop for x = (random 10)
-;      for y = -1 then (- x 10)
-;      when (> x 6)
-;      return (list 'hiho x y))
+;(loop for x = (random 10) for y = -1 then (- x 10) when (> x 6) return (list 'hiho x y))
 ;=> (hiho 7 -4)
-
-;(loop repeat 10 for i = (random 100)
-;      collect i)
-;(loop repeat 10 for i = (random 3)
-;      for j = (list i 1)
-;      collect j)
+;(loop repeat 10 for i = (random 100) collect i)
+; => (31 32 98 7 70 14 73 15 14 44)
+;(loop repeat 10 for i = (random 3) for j = (list i 1) collect j)
+; => ((2 1) (0 1) (2 1) (1 1) (0 1) (2 1) (1 1) (2 1) (0 1) (0 1))
 
 ;; errors:
-;(loop with l = (list 0)
-;      for s in spec
-;      for k = s then (+ k s)
-;      do (push k l)
-;      finally (return l))
-
-;(loop with l = (list (encode-interval 'p 1))
-;      for s in spec
-;      for k = (interval s)
-;      then (transpose k (interval s))
-;      do (push k l)
-;      finally (return l))
+;(loop with l = (list 0) for s in spec for k = s then (+ k s) do (push k l) finally (return l))
+;(loop with l = (list (encode-interval 'p 1)) for s in spec for k = (interval s) then (transpose k (interval s)) do (push k l) finally (return l))
