@@ -1402,7 +1402,7 @@
 (define-list-struct rewrite-rule
   trigger
   (successors '())
-  context)
+  (context '()))
 
 (define-class <rewrite> (<pattern>)
   (table :init-value #f :init-keyword :initially
@@ -1623,22 +1623,24 @@
   (with-args (args &optional (new #f) (ids #t))
     (let ((data (pattern-data obj)))
       (if (not new)
-        (if (not ids) (car data) (mapcar #'rewrite-node-datum (car data)))
+        (if (not ids) 
+          (car data)
+          (map (function rewrite-node-datum) (car data)))
         (let* ((nodes (pattern-data obj))
                (rules (rewrite-rules obj))
                (old (car nodes))
                (new (if (null? rules)
                       (node-rewrite old (rewrite-table obj))
                       (rule-rewrite old rules))))
-          (unless new
-            (err "Rewrite: generation #~D is empty!"
+          (when (null? new)
+            (err "Rewrite generation #~s is empty!"
                  (+ (car (rewrite-generations obj)) 1)))
           (begin (set-cdr! nodes new)
                  (set-car! nodes new))
           (if (not ids) 
             (car nodes)
-            (mapcar #'rewrite-node-datum (car data))))))))
-
+            (map (function rewrite-node-datum)
+                 (car data))))))))
 
 (define (node-rewrite gen table)
   ;; nodes specify their rewrites directly just fetch successors
@@ -1650,8 +1652,30 @@
 			  table)))
         nconc next))
 
+(define (generation-mismatch test seq gen beg end)
+  (let ((start1 0)
+        (end1 (length seq))
+        (start2 beg)
+        (end2 end))
+    (do ((i1 start1 (+ 1 i1))
+         (i2 start2 (+ 1 i2))
+         (x1 #f)
+         (x2 #f)
+         (done #f))
+        ((or done (and (>= i1 end1) (>= i2 end2)))
+         (if done done #f))
+      (if (>= i1 end1)
+        (set! done i1)
+        (if (>= i2 end2)
+          (set! done i1)
+          (begin (set! x1 (list-ref seq i1))
+                 (set! x2 (list-ref gen i2))
+                 (if (funcall test x1 x2)
+                   #f
+                   (set! done i1))))))))
+
 (define (rule-rewrite generation rules)
-  (loop with context and length
+  (loop with context and len
         for index from 0
         for node in generation
         append
@@ -1659,23 +1683,28 @@
 	      do
 	      (when (eq? node (rewrite-rule-trigger rule))
 		(set! context (rewrite-rule-context rule))
-		(if context ;; IS THIS A LIST??
+		(if (not (null? context))
 		  (let* ((seq (cdr context))
 			 (beg (- index (caar context)))
 			 (end (+ beg (cdar context))))
 		    (when (and (<= 0 beg end
-				   (or length
+				   (or len
 				       (begin
-					(set! length
+					(set! len
 					      (length generation))
-					length)
+					len)
 				       ))
-			       (not (mismatch seq generation :start2 beg
-					      :end2 end
-					      :test #'(lambda (a b) 
-							(or (eq a '*)
-							    (eq a b))))))
-
+			       (not (generation-mismatch 
+                                     (lambda (a b) 
+                                       (or (eq? a '*)
+                                           (eq? a b)))
+                                     seq generation beg end))
+;			       (not (mismatch seq generation :start2 beg
+;					      :end2 end
+;					      :test #'(lambda (a b) 
+;							(or (eq a '*)
+;							    (eq a b)))))
+                               )
 		      (return (rewrite-rule-successors rule))))
 		  (return (rewrite-rule-successors rule))))
               finally (return (list))
@@ -1685,15 +1714,15 @@
 ;;; RANGE
 ;;;
 
-(defmacro %range-stepping? (flags)
+(define-macro (%range-stepping? flags)
  `(logtest ,flags +range-stepping+) )
-(defmacro %range-unbounded? (flags)
+(define-macro (%range-unbounded? flags)
   `(logtest ,flags +range-unbounded+))
-(defmacro %range-initially? (flags)
+(define-macro (%range-initially? flags)
   `(logtest ,flags +range-initially+))
-(defmacro %range-dynamic? (flags)
+(define-macro (%range-dynamic? flags)
   `(logtest ,flags +range-dynamic+))
-(defmacro %range-random? (flags)
+(define-macro (%range-random? flags)
   `(logtest ,flags +range-random+))
 
 (define-class <range> (<pattern>)
@@ -2155,7 +2184,7 @@
 
 (define-method (pattern? (obj <pval>)) obj)
 
-(defmacro pval (expr)
+(define-macro (pval expr)
   `(make-instance <pval> :of (lambda () ,expr)))
 
 (define-method (next-1 (obj <pval>))
