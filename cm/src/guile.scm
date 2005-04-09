@@ -18,6 +18,11 @@
 ;;; file system and OS interface.
 ;;;
 
+(use-modules (oop goops))
+(use-modules (ice-9 rdelim))
+(use-modules (ice-9 pretty-print)) ; remove  at some point...
+(use-modules (srfi srfi-1))
+
 (define directory-delimiter #\/)
 
 (define (cd . args)
@@ -46,7 +51,7 @@
                  (+ 1900 (vector-ref vec 5)))
     vec))
 
-;(defmacro time (form)
+;(define-macro (time form)
 ;  `(let ((s (get-internal-real-time)))
 ;    ,form
 ;    (/ (- (get-internal-real-time) s) 100)))
@@ -55,9 +60,6 @@
 ;;;
 ;;;
 
-(use-modules (oop goops))
-(use-modules (ice-9 rdelim))
-(use-modules (ice-9 pretty-print)) ; remove  at some point...
 
 (define pprint pretty-print)
 

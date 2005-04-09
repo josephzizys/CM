@@ -376,7 +376,7 @@
 ;;; new
 ;;;
 
-(defmacro new (class . args)
+(define-macro (new class . args)
   (let* ((type (or (find-class class)
 		   (err "No class named ~s." class)))
 	 (inits (expand-inits type args #t #f)))
@@ -460,10 +460,14 @@
            (do ((tail sups (cdr tail))
                 (isit #f))
                ((or (null? tail) isit) isit)
-             (set! isit (find slot (class-slots (car tail))
-                              :key (function slot-definition-name)))))))
+             ;;(set! isit (find slot (class-slots (car tail)) :key (function slot-definition-name)))
+             (set! isit (find (lambda (x) (eq? slot (slot-definition-name x)))
+                              (class-slots (car tail))))
+             ))))
     (dolist (p pars)
-      (or (find (parameter-slot p) decl :key (function car))
+      (or ;;(find (parameter-slot p) decl :key (function car))
+          (let ((s (parameter-slot p)))
+            (find (lambda (x) (eq? s (car x))) decl))
           (getslotd (parameter-slot p) supers)
           (err "No slot definition for parameter ~s."
                (parameter-slot p))))
@@ -485,8 +489,9 @@
                ((or (null? tail) goal) goal)
              (set! pars (class-parameters (car tail)))
              (if pars
-               (let ((test (find slot pars 
-                                 :key (function parameter-slot))))
+               (let ((test ;;(find slot pars :key (function parameter-slot))
+                       (find (lambda (x) (eq? slot (parameter-slot x))) pars)
+                       ))
                  (if (and test (parameter-time? test))
                    (set! goal #t))))))))
     
@@ -505,7 +510,7 @@
           (if (gettimepar (parameter-slot (car tail)) supers)
             (set! goal (car tail))))))))
 
-(defmacro defobject (name supers slots . options)
+(define-macro (defobject name supers slots . options)
   (let ((sups (map (lambda (x) (or (find-class x) 
 				   (err "No class named ~s." x)))
 		   supers))
@@ -745,11 +750,11 @@
 ;;; need process expasion for cltl
 ;;;
 
-(defmacro process forms
+(define-macro (process . forms)
   (expand-process forms *process-operators*))
 
 
-(defmacro defprocess forms
+(define-macro (defprocess . forms)
   (expand-defprocess forms))
 
 ;;;

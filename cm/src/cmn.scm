@@ -93,8 +93,9 @@
 
 (define (set-one-staff-meter staff meter)
   ;; like cmn's set-meter but just for one staff...
-  (let ((stfd (find staff staff-descriptors 
-                    :key #'stfdat-staff)))
+  (let ((stfd ;(find staff staff-descriptors :key #'stfdat-staff)
+         (find (lambda (x) (eq? staff (stfdat-staff x))) staff-descriptors)
+          ))
     (set! (staff-data (stfdat-staff stfd))
           (append (staff-data (stfdat-staff stfd))
                   (list (cmn-eval meter))))))
@@ -307,11 +308,15 @@
                     (b-major gs-minor )
                     (fs-major ds-minor )
                     (cs-major as-minor )))
-               (p (position e l :test  (function member))))
+               (p ;(position e l :test  (function member))
+                 (list-index (lambda (x) (member e x)) l)
+                 ))
           (if p
             (make-instance <midi-key-signature>
                            :time b :key (- p 7)
-                           :mode (position e (list-ref l p)))
+                           :mode ;(position e (list-ref l p))
+                           (list-index (lambda (x) (eq? e x)) (list-ref l p))
+                           )
             #f))))))
 
 ;;;

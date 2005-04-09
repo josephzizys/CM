@@ -247,9 +247,15 @@
     (#x59 . "Key Signature") (#x7f . "Sequencer Event")))
 
 (define (get-meta-msg-type-string type)
-  (let ((res (find type +ml-meta-msg-type-strings+
-                   :test (function =) :key (function car))))
-  (if res (cdr res) "Unknown Meta Event")))
+  ;;(find type +ml-meta-msg-type-strings+ :test (function =) :key (function car))
+  (let ((res (do ((i 0 (+ i 1))
+                  (l (vector-length +ml-meta-msg-type-strings+))
+                  (x #f)
+                  (f #f))
+                 ((or f (= i l)) f)
+               (set! x (vector-ref +ml-meta-msg-type-strings+ i))
+               (if (= (car x) type) (set! f x)))))
+    (if res (cdr res) "Unknown Meta Event")))
 
 ;;;
 ;;; low-level utilities used by mf.lisp and midi.lisp
@@ -300,7 +306,7 @@
 (define *midi-open* #f)
 (define *midi-time* -1)
 
-(defmacro define-message-set! (accessor bytespec)
+(define-macro (define-message-set! accessor bytespec)
   ;; defined in level1 because bqoute translation hopeless!
   (make-midi-message-set! accessor bytespec))
 
@@ -938,7 +944,9 @@
 
 (define (text-meta-event-p message)
   (and (midi-meta-message-p message)
-       (find (ldb +enc-data-1-byte+ message) +text-meta-event-types+)))
+       ;;(find (ldb +enc-data-1-byte+ message) +text-meta-event-types+)
+       (member (ldb +enc-data-1-byte+ message) +text-meta-event-types+)
+       #t))
 
 (define (text-meta-event-data-to-string data)
   (let ((len (vector-ref data 0)))
@@ -1299,7 +1307,7 @@
 ;            (function make-sequencer-event)))
 ;	 args))
 ;
-;(defmacro midimsg-case (message . body)
+;(define-macro (midimsg-case message . body)
 ;  (let ((msgtst
 ;         (lambda (type msg)
 ;           (unless (string? type)
@@ -1593,7 +1601,7 @@
 
 (define %deflabelvar% (gensym))
 
-(defmacro deflabel (sym val vector str pos)
+(define-macro (deflabel sym val vector str pos)
   `(begin
     (define ,sym ,val)
     ,(if str
@@ -1619,7 +1627,7 @@
 (define +midi-controller-strings+
   (make-vector 128 ""))
 
-(defmacro defcontroller (sym val . str)
+(define-macro (defcontroller sym val . str)
   `(deflabel ,sym ,val +midi-controller-strings+
     ,(if (null? str) #f (car str))
     ,val))
@@ -1834,12 +1842,12 @@
 (define +gm-drum-kit-strings+
   (make-vector 50 '""))
 
-(defmacro defgmpatch (sym val . str)
+(define-macro (defgmpatch sym val . str)
   `(deflabel ,sym ,val +gm-patch-strings+ 
     ,(if (null? str) #f (car str))
     ,val))
 
-(defmacro defgmdrum (sym val . str)
+(define-macro (defgmdrum sym val . str)
   `(deflabel ,sym ,val +gm-drum-kit-strings+
     ,(if (null? str) #f (car str))
     ,(- val 32)))

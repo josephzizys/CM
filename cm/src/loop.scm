@@ -628,7 +628,7 @@
          ;; add loop accumulation forms
          (if (eq? oper 'append)
            (begin
-            (push `(set-cdr! ,tail (copy-list ,expr)) loop)
+            (push `(set-cdr! ,tail (append ,expr (list))) loop)
             (push `(set! ,tail (last-pair ,tail)) loop))
            (if (eq? oper 'collect)
              (begin
@@ -799,11 +799,11 @@
       (set! then (car then)))
     (loop-operator-set! then 'if)
 
-    ;; this if expression is hacked so that it is a newly
+    ;; this (if ...) is hacked so that it is a newly
     ;; allocated list. otherwise acl and clisp have a
     ;; nasty structure sharing problem.
     (set! loop (list 'if expr 
-                     (list-copy `(begin ,@(loop-looping then)))
+                     (append `(begin ,@(loop-looping then)) (list))
                      #f))
     (if (and (not (null? forms))
              (eq? (car forms) 'else))

@@ -373,8 +373,9 @@
           (loop with par
              while (not (null? forms))
              do
-               (set! par (find (car forms) pars 
-                               :key (function parameter-prefix)))
+             ;;(set! par (find (car forms) pars :key (function parameter-prefix)))
+               (set! par (find (lambda (x) (eq? (car forms) (parameter-prefix x)))
+                               pars))
                (or par
                    (err "No slot for ~s in ~s." (car forms) save))
              collect (parameter-slot par) collect (cadr forms)
@@ -418,7 +419,7 @@
            ;; update include list with interal defmacro or defun 
            ;; definitions unless the names are specifically exluded.
            (unless (eq? include #t)     ; doing all anyway
-             (when (member (car form) '(defun defmacro define))
+             (when (member (car form) '(defun define defmacro define-macro))
                (unless (member (cadr form) exclude)
                  (unless (member (cadr form) include)
                    (push (cadr form) include)))))

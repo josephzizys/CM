@@ -48,7 +48,7 @@
 (define (end list)
   (car (last-pair list)))
 
-(defmacro dopairs (decl . body)
+(define-macro (dopairs decl . body)
   (let* ((m "dopairs: (v1 v2 list [return]) . body")
 	 (s (if (pair? decl) (pop decl) (err m)))
 	 (v (if (pair? decl) (pop decl) (err m)))
@@ -67,31 +67,31 @@
 	  (set! ,v (cadr ,a)))
 	,@ body))))
 
-(defmacro make-cycl () 
+(define-macro (make-cycl) 
   `(make-list 2))
 
-(defmacro cycl-data (cycl)
+(define-macro (cycl-data cycl)
   `(car ,cycl))
 
-(defmacro cycl-data-set! (cycl data)
+(define-macro (cycl-data-set! cycl data)
   `(set-car! ,cycl ,data))
 
-(defmacro cycl-last (cycl)
+(define-macro (cycl-last cycl)
   `(cadr ,cycl)) 
 
-(defmacro cycl-last-set! (cycl data)
+(define-macro (cycl-last-set! cycl data)
   `(set-car! (cdr ,cycl) ,data))
 
-(defmacro cycl-tail (cycl)
+(define-macro (cycl-tail cycl)
   `(cddr ,cycl))
 
-(defmacro cycl-tail-set! (cycl tail)
+(define-macro (cycl-tail-set! cycl tail)
   `(set-cdr! (cdr ,cycl) ,tail)) ; set-cddr!
 
-(defmacro pop-cycl (cycl)
+(define-macro (pop-cycl cycl)
   `(cdr-pop (cdr ,cycl)))
 
-(defmacro reset-cycl (cycl)
+(define-macro (reset-cycl cycl)
   (let ((c (gensym)))
     `(let ((,c ,cycl))
        (cycl-tail-set! ,c (car ,c)))))
@@ -123,7 +123,7 @@
 ;(define (reset-cycl cycl)
 ;  (cycl-tail-set! cycl (car cycl)))
 
-;(defmacro cycl-append (x cycl)
+;(define-macro (cycl-append x cycl)
 ;  ;; append new thing to data.
 ;  (let ((var (gensym))
 ;        (new (gensym)))
@@ -138,7 +138,7 @@
 ;	  (cycl-last-set! ,var (cdr (cycl-last ,var)))))
 ;       ,var)))
 ;
-;(defmacro cycl-insert (cycl element . args)
+;(define-macro (cycl-insert cycl element . args)
 ;  ;; accessor is object-time normally, but midifiles enqueue pending
 ;  ;; note offs as cons cells (time . message)
 ;  ;; if earliest is NIL then the object is placed at the last possible
@@ -399,16 +399,21 @@
   (with-args (args &key (delimiters '(#\space #\tab)) 
 		   (start 0) (end (string-length string))
 		   key)
-    (loop for pos1 = start then (1+ pos2) 
-	  until (> pos1 end)
-	  for pos2 = (or (position-if (lambda (c) (member c delimiters))
-				      string ':start pos1)
-			 end)
-	  unless (= pos1 pos2)
-	  collect 
-	  (if key
-	    (key (substring string pos1 pos2))
-	    (substring string pos1 pos2)))))
+    (loop for pos1 = start then (+ pos2 1) 
+       until (> pos1 end)
+       ;;(position-if (lambda (c) (member c delimiters)) string ':start pos1)
+       for pos2 = (or (do ((i pos1 (+ i 1))
+                           (f #f))
+                          ((or f (= i end)) f)
+                        (if (member (string-ref string i) delimiters)
+                          (set! f i)
+                          ))
+                      end)
+       unless (= pos1 pos2)
+       collect 
+       (if key
+         (key (substring string pos1 pos2))
+         (substring string pos1 pos2)))))
 
 ; (string-substrings "A B :FOO (BASD     ASD) 123")
 
@@ -543,7 +548,7 @@
   (let ((n (expt 10.0 places)))
     (/ (round (* value n)) n)))
 
-(defmacro sv (obj slot . args)
+(define-macro (sv obj slot . args)
   (if (null? args)
     (slot-getter-form obj slot)
     (let ((o (gensym)))

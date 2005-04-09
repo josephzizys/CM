@@ -130,8 +130,8 @@
 	    (else
 	     (err "'~s' is not an initialization for ~s: ~s."
 		  sym class save)))
-      (set! slot (find sym slots ':key #'slot-definition-initargs
-		       :test #'member))
+      ;;(set! slot (find sym slots ':key #'slot-definition-initargs :test #'member))
+      (set! slot (find (lambda (x) (member sym (slot-definition-initargs x))) slots))
       (if slot
 	(begin
 	 (set-cdr! tail1 (list (if inits?

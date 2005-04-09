@@ -288,7 +288,7 @@
 
 (define *midi-skip-drum-channel* #f)
 
-(defmacro ensure-microtuning (keyn chan stream)
+(define-macro (ensure-microtuning keyn chan stream)
   `(let ((num #f)
          (rem #f)
          (dat #f)) 

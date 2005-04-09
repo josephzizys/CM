@@ -59,29 +59,29 @@
      (augmented aug a)
      (doubly-augmented aaug aa)))
 
-(defmacro %interval-encoded? (n)
+(define-macro (%interval-encoded? n)
   `(= (ldb interval-meta-byte ,n) interval-meta-flag))
 
-(defmacro %interval-class (n)
+(define-macro (%interval-class n)
   `(ldb interval-class-byte ,n))
 
-(defmacro %interval-type (n)
+(define-macro (%interval-type n)
   `(ldb interval-type-byte ,n))
 
-(defmacro %interval-direction (n) 
+(define-macro (%interval-direction n) 
   `(ldb interval-direction-byte ,n))
 
-(defmacro %interval-sign (n) 
+(define-macro (%interval-sign n) 
   `(if (= (ldb interval-direction-byte ,n) 
           interval-down-flag) -1 1))
 
-(defmacro %interval-letters (n)
+(define-macro (%interval-letters n)
   `(ldb interval-letters-byte ,n))
 
-(defmacro %interval-octaves (n)
+(define-macro (%interval-octaves n)
   `(ldb interval-octaves-byte ,n))
 
-(defmacro %interval-semitones (n)
+(define-macro (%interval-semitones n)
   `(ldb interval-semitones-byte ,n))
 
 (define (interval-quality-type int)
@@ -204,13 +204,21 @@
     
       ;; lookup quality in interval-names
       (set! interval quality)		; save name for error checking
-      (set! quality (position (symbol->string quality) 
-			      interval-names
-			      :test 
-			      (lambda (a b)
-				(find a b :key (function symbol->string)
-				      :test (function string-ci=?)))))
-    
+;      (set! quality (position (symbol->string quality) 
+;			      interval-names
+;			      :test 
+;			      (lambda (a b)
+;				(find a b :key (function symbol->string)
+;				      :test (function string-ci=?)))))
+      (let ((name (symbol->string quality)))
+        (set! quality
+              (do ((i 0 (+ i 1))
+                   (e (vector-length interval-names))
+                   (f #f))
+                  ((or f (= i e)) f)
+                (if (find (lambda (y) (string-ci=? name (symbol->string y)))
+                          (vector-ref interval-names i))
+                  (set! f i)))))
       ;; check quality and make adjustments to semitones accordingly
       (if (member letters '(0 3 4))
 	(begin				; "perfect" intervals
@@ -348,9 +356,11 @@
 		  ;; T and Q are Triplet and Quintuplet markers if they
 		  ;; precede a number or rhythm token.
 		  (if (and (> end 1)
-			   (or (char-numeric? (string-ref str 1))
-			       (find (string-ref str 1) chars
-                                     :test (function char-ci=?)))
+                           (let ((c (string-ref str 1)))
+                             (or (char-numeric? c)
+                                 ;;(find (string-ref str 1) chars :test (function char-ci=?))
+                                 (find (lambda (x) (char-ci=? c x)) chars)
+                                 ))
 			   (begin
 			    (set! trp (char-ci=? (string-ref str 0) #\t))
 			    (set! qup (char-ci=? (string-ref str 0) #\q))
@@ -359,8 +369,8 @@
 		    (set! beg 1)
 		    (set! beg 0))
 		  (set! chr (string-ref str beg))
-		  (set! pos (position chr chars
-                                      :test (function char-ci=?)))
+		  ;(set! pos (position chr chars :test (function char-ci=?)))
+                  (set! pos (list-index (lambda (x) (char-ci=? chr x)) chars))
 		  (cond (pos
 		         (set! beg (+ beg 1))
 		         (set! rhy (expt 2 (- pos 3))))
@@ -406,9 +416,10 @@
              (next-token-position
 	      (lambda (string lb len)
 	        (loop with chr for i from lb below len
-		      do (set! chr (string-ref string i))
-		      until (find chr ops :test (function char-ci=?))
-		      finally (return i)))))
+                   do (set! chr (string-ref string i))
+                   ;;until (find chr ops :test (function char-ci=?))
+                   until (find (lambda (x) (char-ci=? chr x)) ops)
+                   finally (return i)))))
             ;; parse rhythmic expression. operator precedence is not supported.
             (let* ((len (string-length rhythm))
                    (lb 0)
@@ -737,7 +748,7 @@
       seq
       (begin
 	(when copy
-	  (set! seq (copy-list seq)))
+	  (set! seq (list-copy seq)))
 	(loop for i from start to (- end 1)
 	      for j = (+ start (random width state)) 
 	      for v = (list-ref seq i)
@@ -962,7 +973,7 @@
 ;;; doeach iterates evaluates depedning on var being a list
 ;;;
 
-(defmacro doeach (pars . forms)
+(define-macro (doeach pars . forms)
   (unless (pair? pars)
     (err "doeach: ~s not list (var source &optional return)" 
          pars))
@@ -1050,8 +1061,9 @@
 	  (field (+ print-decimals 2)))	; n.nnn 
       (letrec ((add-outcome
 		(lambda (prev next) 
-		  (let ((entry (find prev table :test #'equal?
-                                     :key #'car))) ; was assoc 
+		  (let ((entry ;(find prev table :test #'equal? :key #'car) ; was assoc 
+                         (find (lambda (x) (equal? prev (car x))) table)
+                          ))
 		    (if (not entry) 
 		      (push (list prev
                                   (format #f "~s" prev) 
@@ -1065,8 +1077,12 @@
 	       (before?
 		(lambda (x y l) 
 		  (if (null? x) #t 
-                    (let ((p1 (position (car x) l :test #'equal?)) 
-                          (p2 (position (car y) l :test #'equal?))) 
+                    (let ((p1 ;(position (car x) l :test #'equal?)
+                           (list-index (lambda (z) (equal? (car x) z)) l)
+                            ) 
+                          (p2 ;(position (car y) l :test #'equal?)
+                           (list-index (lambda (z) (equal? (car y) z)) l)
+                            )) 
                       (cond ((< p1 p2) #t) 
                             ((= p1 p2) 
                              (before? (cdr x) (cdr y) l)) 
@@ -1081,33 +1097,33 @@
 				(string-append 
 				 a (format #f " ~s" (car x))))))))))
               
-	      (dotimes (i len) 
-	        (loop with prev = (list)
-		      for j to order 
-		      for x = (let ((raw (list-ref seq (modulo (+ i j) len)))) 
-			        (if key (key raw) raw)) 
-		      ;; gather history in reverse order 
-		      when (< j order) do (push x prev) 
-		      finally 
-		      (begin (add-outcome (reverse prev) x ) 
-		             (or (find x labels)
-			         (push x labels)))))
+        (dotimes (i len) 
+          (loop with prev = (list)
+             for j to order 
+             for x = (let ((raw (list-ref seq (modulo (+ i j) len)))) 
+                       (if key (key raw) raw)) 
+             ;; gather history in reverse order 
+             when (< j order) do (push x prev) 
+             finally 
+             (begin (add-outcome (reverse prev) x ) 
+                    (if (not (member x labels))
+                      (push x labels)))))
 	      
-	      ;; sort the outcomes according to user specification:
-	      ;; a list, a sorting function or nil. 
-	      (cond ((pair? sort?) 
-	             (set! labels sort?)) 
-	            (sort? 
-	             (set! labels (sort labels sort?))) 
-	            ((number? (car labels))
-	             (set! labels (sort labels #'<)))
-	            ((and (car labels) (symbol? (car labels)))
-	             (set! labels (sort labels
-				        (lambda (x y) 
-                                          (string-ci<? (format #f "~a" x)
-                                            (format #f "~a" y))))))
-	            (else 
-	             (set! labels (reverse labels)))) 
+        ;; sort the outcomes according to user specification:
+        ;; a list, a sorting function or nil. 
+        (cond ((pair? sort?) 
+               (set! labels sort?)) 
+              (sort? 
+               (set! labels (sort labels sort?))) 
+              ((number? (car labels))
+               (set! labels (sort labels #'<)))
+              ((and (car labels) (symbol? (car labels)))
+               (set! labels (sort labels
+                                  (lambda (x y) 
+                                    (string-ci<? (format #f "~a" x)
+                                                 (format #f "~a" y))))))
+              (else 
+               (set! labels (reverse labels)))) 
 	      ;; map over data, normalize weights 
 	      (loop for row in table 
 	            for lab = (cadr row)	; label

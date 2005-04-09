@@ -96,7 +96,7 @@
 ;  (if (bound? 'definstrument)
 ;    definstrument #f))
 ;				      
-;(defmacro definstrument (name args . body)
+;(define-macro (definstrument name args . body)
 ;  (let* ((opts (if (pair? name) (cdr name) (list)))
 ;         (obj? #t ) ;(list-prop opts ':instrument-only #t)
 ;         (tpar (list-prop opts ':time-parameter ))

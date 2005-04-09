@@ -191,7 +191,7 @@
                                all-sidebands))
       ;; sidebands at zero Hz can be included or removed
       (when ignore-zero
-        (set! data (list-delete-if! #'zero? data #'first)))
+        (set! data (remove! (lambda (x) (zero? (car x))) data)))
       
       ;; optionally flip spectrum around carrier for undertones
       (when invert
@@ -226,7 +226,8 @@
                         (if (eq? type ':keynum)
                           (keynum f :hz #t)
                           (note f :hz #t))))
-              (set! e (find k l :key #'first))
+              (set! e (find (lambda (x) (equal? k (car x))) l))
+              ;(set! e (find k l :key #'first))
               (if (and e remove-duplicates)
                 ;; just update amplitude
                 (set-car! (cdr e)
@@ -293,7 +294,7 @@
          (c (- high (* ub m))))
     (values c m (/ m c))))
 
-(defmacro bes-jn (unn ux)
+(define-macro (bes-jn unn ux)
   ;;return Jn(x) for any integer n, real x
   `(let ((nn ,unn)
          (x ,ux))
@@ -386,9 +387,13 @@
             (set-car! (cdr side)
                       (+ (cadr side) 
                          (second neg)))
-            (let ((p (position-if #'(lambda (x) (< x pos))
-                                  spectrum :key #'first
-                                  :from-end #t)))
+            ;;(position-if #'(lambda (x) (< x pos)) spectrum :key #'first :from-end #t)
+            (let ((p (do ((i (- (length spectrum) 1) (- i 1))
+                          (f #f)
+                          (x #f))
+                         ((or f (< i 0)) f)
+                       (set! x (car (list-ref spectrum i)))
+                       (if (< x pos) (set! f i)))))
               (if (not p)
                 (push neg spectrum) 
                 (let ((tail (list-tail spectrum p)))

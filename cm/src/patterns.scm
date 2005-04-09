@@ -112,7 +112,7 @@
           count (pattern? d) into num
           collect (maybeparse parser d) into lst
           finally (return (values lst len (= num 0))))
-    (values data (length data) (not (some #'pattern? data)))))
+    (values data (length data) (not (any #'pattern? data)))))
 
 ;;;
 ;;; make-load-form "decompiles" pattern
@@ -858,7 +858,7 @@
     (let ((intern (map #'parse-random-item data))) 
       (values intern
 	      (length intern)
-	      (not (some (lambda (x) (pattern? (random-item-datum x)))
+	      (not (any (lambda (x) (pattern? (random-item-datum x)))
 			 intern))))))
 
 (define-method (reset-period (obj <random>))
@@ -999,7 +999,7 @@
       (dopairs (a v inits)
         (case a
           ((:produce )
-           (set! const (not (some #'pattern? v))))))
+           (set! const (not (any #'pattern? v))))))
       (loop for s in data
             for p = (parse-markov-spec s)
             collect p into lis
@@ -1182,7 +1182,7 @@
     (let ((intern (map #'parse-graph-item data)))
       (values intern
               (length intern)
-	      (not (some (lambda (x) (pattern? (graph-node-datum x)))
+	      (not (any (lambda (x) (pattern? (graph-node-datum x)))
 			 intern))))))
 
 (define (default-graph-node-select obj node lastids)
@@ -1227,7 +1227,9 @@
     (set! next ( (graph-selector obj)	; funcall
 		 obj this (if last (cdr last))))
     (if next
-      (let ((node (find next nodes :key #'graph-node-id)))
+      (let ((node ;;(find next nodes :key #'graph-node-id)
+              (find (lambda (x) (eq? next (graph-node-id x))) nodes)
+              ))
 	(if node 
 	  (begin
 	   ;; next item becomes selected node. car of last is
@@ -1525,7 +1527,7 @@
     (let ((intern (map #'parse-rewrite-node data)))
       (values intern
 	      (length intern)
-              (not (some (lambda (x) (pattern? (rewrite-node-datum x)))
+              (not (any (lambda (x) (pattern? (rewrite-node-datum x)))
 			 intern))))))
 
 (define-method (map-pattern-data fn (obj <rewrite>))
@@ -1646,7 +1648,7 @@
   ;; nodes specify their rewrites directly just fetch successors
   (loop for node in gen
         for next = (let ((to (rewrite-node-to node)))
-		     (if to (copy-list to) 
+		     (if to (list-copy to) 
 			 (lookup-successors 
 			  (next-1 (rewrite-node-props node))
 			  table)))
@@ -2156,7 +2158,7 @@
           count (pattern? datum) into streams
           collect (maybeparse parser datum) into list
           finally (return (values list 1 (= streams 0))))
-    (values data 1 (not (some #'pattern? data)))))
+    (values data 1 (not (any #'pattern? data)))))
 
 (define-method (default-period-length (obj <chord>))
   1)
@@ -2271,7 +2273,7 @@
 
 (define-method (canonicalize-pattern-data (obj <join>) data parser inits)
   inits
-  (let ((subs (not (some #'pattern? data))))
+  (let ((subs (not (any #'pattern? data))))
     (if parser
       (loop for datum in data
             count datum into length

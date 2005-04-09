@@ -16,17 +16,25 @@
 
 ;;; level1 for scheme. most of this is cltl functionality.
 
-(defmacro multiple-value-bind (vars form . body)
+
+(define-macro (when test . forms)
+  `(if ,test (begin ,@forms)))
+
+(define-macro (unless test . forms)
+  `(if (not ,test)
+       (begin ,@forms)))
+
+(define-macro (multiple-value-bind vars form . body)
   `(call-with-values
     (lambda () ,form)
     (lambda (,@vars) ,@body)))
 
-(defmacro multiple-value-list (form)
+(define-macro (multiple-value-list form)
   `(call-with-values
     (lambda () , form)
     (lambda args args)))
 
-(defmacro multiple-value-setq (vars form)
+(define-macro (multiple-value-setq vars form)
   (let ((lst (map (lambda (x) (gensym (symbol->string x))) 
 		  vars)))
     `(call-with-values 
@@ -38,42 +46,68 @@
 ;;; function and funcall are noops in scheme but are used for
 ;;; cltl code translation.
 
-(defmacro function (fn) fn)
+(define-macro (function fn) fn)
 
 (define (funcall fn . args)
   (apply fn args))
 
-;;;
-;;; symbol setters. these are not general setters!
-;;;
-
-(defmacro push (val sym)
+(define-macro (push val sym)
   `(begin (set! ,sym (cons ,val ,sym)) ,sym))
 
-(defmacro pop (sym)
+(define-macro (pop sym)
   (let ((v (gensym)))
     `(let ((,v (car ,sym)))
        (set! ,sym (cdr ,sym))
        ,v)))
 
-(defmacro incf (sym . val)
+(define-macro (incf sym . val)
   `(begin
     (set! ,sym (+ ,sym ,(if (null? val) 1 (car val))))
     ,sym))
 
-(defmacro decf (sym . val)
+(define-macro (decf sym . val)
   `(begin
     (set! ,sym (- ,sym ,(if (null? val) 1 (car val))))
     ,sym))
 
-(defmacro rotatef (sym1 sym2)
+(define-macro (rotatef sym1 sym2)
   (let ((v (gensym)))
     `(let ((,v ,sym1))
       (set! ,sym1 ,sym2)
       (set! ,sym2 ,v))))
 
+(define-macro (cdr-pop x)
+    ;; an equivalent for (pop (cdr ..)) 
+  (let ((h (gensym))
+	(t (gensym))
+	(v (gensym)))
+    `(let* ((,h ,x)
+	    (,t (cdr ,h))
+	    (,v (car ,t)))
+      (set-cdr! ,h (cdr ,t))
+      ,v)))
+
+(define-macro (dolist spec . body)
+  ;; spec = (var list . return)
+  (let ((v (gensym)))
+    `(do ((,v ,(cadr spec) (cdr ,v))
+          (,(car spec) #f))
+         ((null? ,v) ,@ (cddr spec))
+       (set! ,(car spec) (car ,v))
+       ,@body)))
+
+(define-macro (dotimes spec . body)
+  ;; spec = (var end . return)
+  (let ((e (gensym))
+        (n (car spec)))
+    `(do ((,e ,(cadr spec))
+          (,n 0))
+         ((>= ,n ,e) ,@ (cddr spec))
+       ,@body
+      (set! ,n (+ ,n 1)))))
+
 ;;;
-;;; true and false provided so cm examples can be portable.
+;;; true and false provided for example portability
 ;;;
 
 (define true #t)
@@ -83,14 +117,7 @@
 ;;; list operations
 ;;;
 
-(define first car)
-(define second cadr)
-(define third caddr)
-(define fourth cadddr)
 (define rest cdr)
-
-(define (copy-list lis)
-  (append lis '()))
 
 (define (copy-tree lis)
   (if (pair? lis)
@@ -98,6 +125,7 @@
           (copy-tree (cdr lis)))
     lis))
 
+; (remove (lambda (x) (eq? x thing)) list)
 (define (remove val lst)
   (if (null? lst)
     '()
@@ -117,43 +145,6 @@
         (set! l (cdr l))
         (set! lis (cdr lis))))))
 
-(define (remove-duplicates lis)
-  (letrec ((rd (lambda (l r)
-                 (if (null? l)
-                   r
-                   (if (member (car l) r)
-                     (rd (cdr l) r)
-                     (rd (cdr l)
-                         (append! r (list (car l)))))))))
-    (rd lis (list))))
-
-(define (list-delete-if! test data  . args)
-  (let ((tail data)
-        (last #f)
-        (key (if (null? args) #f (car args)))
-        (val #f))
-    (do ()
-        ((null? tail) data)
-      (set! val (if key ( key (car tail))
-                    (car tail)))
-      (if ( test val)
-        (if (eq? tail data)
-          (begin (set! data (cdr data))
-                 (set! tail data)
-                 (set! last #f))
-          (begin (set-cdr! last (cdr tail))
-                 (set! tail (cdr tail))))
-        (begin (set! last tail)
-               (set! tail (cdr tail)))))))
-
-; (list-delete-if! #'zero? (list 0) )
-; (list-delete-if! #'zero? (list 0 1 1 2 2 0 0))
-; (list-delete-if! #'zero? (list 1 2 3))
-; (list-delete-if! #'zero? (list 0 1 2))
-; (list-delete-if! #'zero? (list 0 1 0 1 2))
-; (list-delete-if! #'zero? (list 1 0.0 0 0 2))
-; (list-delete-if! #'zero? (list 1 0.0 0 0 2 0))
-
 ;;;
 ;;; property list getting and setting
 ;;;
@@ -172,39 +163,15 @@
           (set-cdr! (cdr lis) (list prop val))
           (list-prop-set! (cddr lis) prop val))))
   
-(define (some pred lis)
-  (do ((lst lis (cdr lst))
-       (flg #f))
-      ((or (null? lst) flg) flg)
-    (if ( pred (car lst));; funcall
-      (set! flg #t))))
-
-;;; an equivalent for (pop (cdr ..)) 
-
-(defmacro cdr-pop (x)
-  (let ((h (gensym))
-	(t (gensym))
-	(v (gensym)))
-    `(let* ((,h ,x)
-	    (,t (cdr ,h))
-	    (,v (car ,t)))
-      (set-cdr! ,h (cdr ,t))
-      ,v)))
-
 ;;;
-;;; define-list-struct creates a list struct. the struct
-;;; is represented by a constructor and getters/setters
-;;; for each slot:
-;;;   (define-list-struct foo a (b 1))  
-;;; defines:
-;;;     make-foo (&key a b)
-;;;     foo-a(s) 
-;;;     foo-b(s)
-;;;     foo-a-set!(s v)
-;;;     foo-b-set!(s v)
+;;; define-list-struct defines a list struct implemented by a
+;;; constructor and getters/setters for each slot:
+;;; (define-list-struct foo a (b 1)) 
+;;; => (make-foo &key a b)
+;;;    (foo-a s) (foo-b s) (foo-a-set! s v) (foo-b-set! s v)
 ;;;
 
-(defmacro define-list-struct (name . slotspecs)
+(define-macro (define-list-struct name . slotspecs)
   (expand-list-struct name slotspecs))
 
 (define (expand-list-struct name slotspecs)
@@ -262,29 +229,6 @@
 		   l))))))
 
 ;;;
-;;; dolist, dotimes. see loop.scm for the cltl2 macro implementation.
-;;;
-
-(defmacro dolist (spec . body)
-  ;; spec = (var list . return)
-  (let ((v (gensym)))
-    `(do ((,v ,(cadr spec) (cdr ,v))
-          (,(car spec) #f))
-         ((null? ,v) ,@ (cddr spec))
-       (set! ,(car spec) (car ,v))
-       ,@body)))
-
-(defmacro dotimes (spec . body)
-  ;; spec = (var end . return)
-  (let ((e (gensym))
-        (n (car spec)))
-    `(do ((,e ,(cadr spec))
-          (,n 0))
-         ((>= ,n ,e) ,@ (cddr spec))
-       ,@body
-      (set! ,n (+ ,n 1)))))
-
-;;;
 ;;; hash tables
 ;;;
 
@@ -294,18 +238,9 @@
                r)
              #t
              tabl))
-;;;
-;;; conditionals...
-;;;
 
-(defmacro when (test . forms)
-  `(if ,test (begin ,@forms)))
 
-(defmacro unless (test . forms)
-  `(if (not ,test)
-       (begin ,@forms)))
-
-;(defmacro ecase (datum . rest)
+;(define-macro (ecase datum . rest)
 ;  (let ((var (gensym))
 ;        (keys '())
 ;        (case '()))
@@ -438,7 +373,8 @@
       (set! pars (cdr pars))
       ;; recognize cltl2 or guile names
       (if (member this '(&optional &rest &key &aux &allow-other-keys
-			 #:optional #:rest #:key #:aux #:allow-other-keys))
+			 ;#:optional #:rest #:key #:aux #:allow-other-keys
+                         ))
         (cond ((or (eq? this '&optional) 
 		   (eq? this #:optional))
                (unless (eq? mode '&required)
@@ -501,7 +437,7 @@
 ;;; (foo 0 1 2 :d 3 :e 4)
 ;;;
 
-(defmacro with-args (spec . body) 
+(define-macro (with-args spec . body) 
   ;; spec is (list . lambda-decl)
   (let ((args (gensym ))
         (reqs '())
@@ -653,62 +589,50 @@
 ;;;
 ;;; find, position, find-if, position-if, find-if-not, position-if-not
 ;;; for list strings and vectors
-
-(define (find-aux mode obj seq test key start end from-end)
-  (let ((lim (if from-end < >=))
-	(inc (if from-end - +))
-	(get #f))
-    (cond ((vector? seq)
-           (set! get vector-ref)
-           (set! end (or end (vector-length seq))))
-          ((list? seq)
-           (set! get list-ref)
-           (set! end (or end (length seq))))
-          ((string? seq)
-           (set! get string-ref)
-           (set! end (or end (string-length seq))))
-          (else
-           (err "~s is not a vector, pair or string." seq)))
-
-    (do ((i (if from-end (- end 1) start))
-	 (z (if from-end start end))
-         (j #f)
-         (k #f))
-        ((or k (lim i z)) k)
-      (set! j (get seq i))
-      (if (test obj (key j))
-        (if (eq? mode 'find) (set! k j) (set! k i))
-	)
-      (set! i (inc i 1)))))
-
-(define (find obj seq . args)
-  (with-args (args &key (test eq?) (key identity) (start 0) end
-                   from-end )
-    (find-aux 'find obj seq test key start end from-end)))
-
-(define (find-if fn seq . args)
-  (apply find #t seq ':test (lambda (x y) (if (fn y) #t #f)) args))
-
-(define (find-if-not fn seq . args)
-  (apply find #f seq ':test (lambda (x y) (if (fn y) #t #f)) args))
-
-(define (position obj seq . args)
-  (with-args (args &key (test eq?) (key identity) (start 0) end
-                   from-end )
-    (find-aux 'position obj seq test key start end from-end)))
-
-(define (position-if fn seq . args)
-  (apply position #t seq ':test (lambda (x y) (if (fn y) #t #f)) args))
-
-(define (position-if-not fn seq . args)
-  (apply position #f seq ':test (lambda (x y) (if (fn y) #t #f)) args))
-
-
+;
+;(define (find-aux mode obj seq test key start end from-end)
+;  (let ((lim (if from-end < >=))
+;	(inc (if from-end - +))
+;	(get #f))
+;    (cond ((vector? seq)
+;           (set! get vector-ref)
+;           (set! end (or end (vector-length seq))))
+;          ((list? seq)
+;           (set! get list-ref)
+;           (set! end (or end (length seq))))
+;          ((string? seq)
+;           (set! get string-ref)
+;           (set! end (or end (string-length seq))))
+;          (else
+;           (err "~s is not a vector, pair or string." seq)))
+;
+;    (do ((i (if from-end (- end 1) start))
+;	 (z (if from-end start end))
+;         (j #f)
+;         (k #f))
+;        ((or k (lim i z)) k)
+;      (set! j (get seq i))
+;      (if (test obj (key j))
+;        (if (eq? mode 'find) (set! k j) (set! k i))
+;	)
+;      (set! i (inc i 1)))))
+;
+;(define (find obj seq . args)
+;  (with-args (args &key (test eq?) (key identity) (start 0) end
+;                   from-end )
+;    (find-aux 'find obj seq test key start end from-end)))
+;
+;(define (position obj seq . args)
+;  (with-args (args &key (test eq?) (key identity) (start 0) end
+;                   from-end )
+;    (find-aux 'position obj seq test key start end from-end)))
+;(define (find-if fn seq . args) (apply find #t seq ':test (lambda (x y) (if (fn y) #t #f)) args))
+;(define (find-if-not fn seq . args) (apply find #f seq ':test (lambda (x y) (if (fn y) #t #f)) args))
+;(define (position-if fn seq . args) (apply position #t seq ':test (lambda (x y) (if (fn y) #t #f)) args))
 ; (find 1 '(a b c 1 2 3))
 ; (position-if (lambda (x) (eq? x 1)) '(a b v 1 2))
 ; (find 1 #(a b c 1 2 3))
 ; (find #\1 "abc123")
-
 ; (find 1 '((a 1) (b 2) (c 2) (1 a) (2 b) (3 c)) ':key cadr)
 ; (find 9 '((a 1) (b 2) (c 2) (1 a) (2 b) (3 c)) ':key cadr)
 ; (find #\1 "")
@@ -730,17 +654,26 @@
 
 (define (filename p) p)
 
+(define (filename-charpos str char)
+  (do ((i (- (string-length str) 1) (- i 1))
+       (d #f))
+      ((or d (< i 0)) d)
+    (if (char=? (string-ref str i) char)
+      (set! d  i))))
+
 (define (filename-directory file)
-  (let ((dir (position directory-delimiter file ':from-end #t)))
+  (let ((dir (filename-charpos file #\/)))
     (if dir
       (substring file 0 (+ dir 1))
       #f)))
 
 (define (filename-name file)
-  (let ((dir (or (position directory-delimiter
-                           file :from-end #t) -1))
-	(dot (or (position #\. file ':from-end #t)
-		 (string-length file))))
+  (let ((dir (or ;;(position directory-delimiter  file :from-end #t)
+              (filename-charpos file #\/)
+              -1))
+	(dot (or ;;(position #\. file ':from-end #t)
+              (filename-charpos file #\.)
+              (string-length file))))
     ;; name from dir+1 to dot-1
     (if (= dot (+ dir 1))
       (substring file dot (string-length file))
@@ -749,11 +682,13 @@
 	#f))))
 
 (define (filename-type file)
-  (let ((dot (position #\. file :from-end #t)))
+  (let ((dot ;;(position #\. file :from-end #t)
+         (filename-charpos file #\.)
+          ))
     (if dot
-      (let ((dir (or (position directory-delimiter
-                               file ':from-end #t)
-                     -1))
+      (let ((dir (or ;;(position directory-delimiter file ':from-end #t)
+                  (filename-charpos file #\/)
+                  -1))
 	    (len (string-length file)))
 	(if (and dot (< dir (- dot 1) dot (- len 1)))
 	  (substring file (+ dot 1) len)
@@ -791,7 +726,7 @@
 
 (define (file-eof? x) (eof-object? x))
 
-;(defmacro with-open-output-file (args . body)
+;(define-macro (with-open-output-file args . body)
 ;  (let ((var (car args)))
 ;    `(let ((,var (open-output-file ,(cadr args))))
 ;       (dynamic-wind (lambda () #f)
@@ -799,7 +734,7 @@
 ;                             )
 ;                     (lambda () (close-output-port ,var))))))
 ;
-;(defmacro with-open-input-file (args . body)
+;(define-macro (with-open-input-file args . body)
 ;  (let ((var (car args)))
 ;    `(let ((,var (open-input-file ,(cadr args))))
 ;       (dynamic-wind (lambda () #f)
@@ -845,7 +780,7 @@
 	(key (lambda (b) (symbol->keyword b)))
 	(val #f)
 	(name (if (pair? spec) (car spec) spec))
-	(spec (if (pair? spec) (copy-list (cdr spec)) (list))))
+	(spec (if (pair? spec) (list-copy (cdr spec)) (list))))
     
     ;; convert :initarg to :init-keyword. in cltl the slot
     ;; can have any number of initargs and initargs can
@@ -977,22 +912,13 @@
   (let ((setter (string->symbol
                  (string-append (symbol->string getter)
                                 "-set!"))))
-    `(defmacro ,setter (message value)
+    `(define-macro (,setter message value)
        (if (symbol? message)
          (let ((val (gensym)))
            `(let ((,val ,value )) ;
               (set! ,message (dpb ,val ,',bytespec ,message))
               ,val))
          `(dpb ,value ,',bytespec ,message)))))
-
-;;;
-;;;
-;;;
-
-(define (set-file-postion file amt set?)
-  (if set?
-    (seek file amt SEEK_SET)
-    (seek file amt SEEK_CUR)))
 
 ;;;
 ;;;

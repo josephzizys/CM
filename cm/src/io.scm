@@ -116,7 +116,7 @@
 ;;; init-io called on file/port names or objects to initialize slots.
 ;;;
 
-;(defmacro io (name . args)
+;(define-macro (io name . args)
 ;  (let* ((inits (list #f))
 ;         (tail inits))
 ;    (dopairs (i v args)
@@ -257,7 +257,7 @@
 (define (io-open? io)
   (io-open io))
 
-(defmacro with-open-io (args . body)
+(define-macro (with-open-io args . body)
   (let ((io (pop args))
 	(path (pop args))
 	(dir (pop args))
@@ -337,7 +337,7 @@
 	*out*))))
 
 ;Removed for now but may add it back.
-;(defmacro defhandler (class handler)
+;(define-macro (defhandler class handler)
 ;  (let ((var (gensym)))
 ;    `(let ((,var (find-class ',class <event-stream>)))
 ;      (set! (io-class-handler ,var) ,handler))))

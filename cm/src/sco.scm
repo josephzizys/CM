@@ -216,7 +216,7 @@
   (let ((pars (list)))
     (set! pars (string-substrings line :start 1 ))
     (if (null? pars)
-      (set! pars (copy-list
+      (set! pars (list-copy
                   (if (null? last)
                     (err "Dangling i_statement: ~a" line)
                     last)))
@@ -234,14 +234,14 @@
           (if (not (null? last))
             (set! pars (carry-pars pars last))
             (begin (set! pars (carry-pars pars (list)) )
-                   (set! last (copy-list pars)))
+                   (set! last (list-copy pars)))
             ))
         ;; dont have last 
         (begin (set! pars (carry-pars pars (list)))
-               (set! last (copy-list pars)))))
+               (set! last (list-copy pars)))))
     (values pars last)))
 
-(defmacro checkdefs (pars d  )
+(define-macro (checkdefs pars d  )
   (let ((i (gensym)))
     `(let ((,i (inexact->exact 
                 (floor (car ,pars)))))
@@ -281,7 +281,13 @@
             (let ((raw (file-line in )))
               (if (file-eof? raw )
                 (set! line raw)
-                (let ((pos (position #\; raw)))
+                (let ((pos ;;(position #\; raw)
+                       (do ((i 0 (+ i 1))
+                            (e (string-length raw))
+                            (f #f))
+                           ((or f (= i e)) f)
+                         (if (char=? (string-ref raw i) #\;)
+                           (set! f i)))))
                   (if pos (set! raw (substring raw 0 pos)))
                   (set! line (string-trim '(#\space #\tab) raw))))))
           (cond ((file-eof? line)

@@ -26,33 +26,33 @@
 ;;; is nil. this means that a queue entry with a null <start> must be an
 ;;; event and is never reenqueued once it is popped from the queue. 
 
-(defmacro %qe-time (qe)
+(define-macro (%qe-time qe)
   ;; clocktime of entry
   `(car ,qe))
 
-(defmacro %qe-time-set! (qe time)
+(define-macro (%qe-time-set! qe time)
   `(set-car! ,qe ,time))
 
-(defmacro %qe-start (qe)
+(define-macro (%qe-start qe)
   ;; initial time of entry for container, #f for events.
   `(cadr ,qe))
 
-(defmacro %qe-start-set! (qe start)
+(define-macro (%qe-start-set! qe start)
   ;; initial time of entry for container, #f for events.
   `(set-car! (cdr ,qe) ,start))
 
-(defmacro %qe-object (qe)
+(define-macro (%qe-object qe)
   ;; the datum
   `(caddr ,qe))
 
-(defmacro %qe-object-set! (qe obj)
+(define-macro (%qe-object-set! qe obj)
   `(set-car! (cddr ,qe) ,obj))
 
-(defmacro %qe-next (qe)
+(define-macro (%qe-next qe)
   ;; pointer to next entry
   `(cdddr ,qe))
 
-(defmacro %qe-next-set! (qe nxt)
+(define-macro (%qe-next-set! qe nxt)
   `(set-cdr! (cddr ,qe) ,nxt))
 
 ;;;
@@ -60,22 +60,22 @@
 ;;; cycl's tail; queue entries are resourced in the cycl's data.
 ;;;
 
-(defmacro %q-head (q)
+(define-macro (%q-head q)
   `(cycl-tail ,q))
 
-(defmacro %q-head-set! (q e)
+(define-macro (%q-head-set! q e)
   `(cycl-tail-set! ,q ,e))
 
-(defmacro %q-last (q)
+(define-macro (%q-last q)
   `(cycl-last ,q))
 
-(defmacro %q-last-set! (q e)
+(define-macro (%q-last-set! q e)
   `(cycl-last-set! ,q ,e))
 
-(defmacro %q-peek (q)
+(define-macro (%q-peek q)
   `(%q-head ,q))
 
-(defmacro %q-pop (queue)
+(define-macro (%q-pop queue)
   (let ((q (gensym))
 	(e (gensym)))
     `(let* ((,q ,queue)
@@ -89,7 +89,7 @@
 	   (%q-last-set! ,q '()))
 	 ,e)))))
 
-(defmacro %qe-alloc (queue time start object )
+(define-macro (%qe-alloc queue time start object )
   (let ((q (gensym))
 	(e (gensym)))
     `(let* ((,q ,queue)
@@ -104,7 +104,7 @@
 	 (%qe-object-set! ,e ,object)
          ,e)))))
                
-(defmacro %qe-dealloc (queue entry)
+(define-macro (%qe-dealloc queue entry)
   (let ((q (gensym))
 	(e (gensym)))
     `(let ((,q ,queue)
@@ -121,7 +121,7 @@
 ;;; initialize queue with 50 entries
 (dotimes (i 50) (%qe-dealloc %q (list #f #f #f)))
 
-(defmacro %q-insert (entry queue)
+(define-macro (%q-insert entry queue)
   (let ((q (gensym))
 	(e (gensym))
 	(h (gensym))
@@ -432,7 +432,7 @@
       (rt-now)) ; midishare.scm
     ))
 
-(defmacro stop ()
+(define-macro (stop )
   (if *queue*
     (process-stop #f)
     (err "Calling 'stop' outside of scheduler?")))

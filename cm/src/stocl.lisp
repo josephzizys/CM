@@ -185,7 +185,8 @@
 ;;;
 
 (defparameter toplevel-translations
-  '((append!             nconc)
+  '((any                 some)
+    (append!             nconc)
     (begin               progn)
     ;(boolean?            nil             boolean?->typep)
     (bound?              boundp)
@@ -198,8 +199,10 @@
     (char-ci=?           char-equal)
     (cond                cond 	         case->case) ; handles both
     (define              nil             define->defun/defparameter)
-    (defmacro            defmacro        defmacro->defmacro)
+    (defmacro            nil             defmacro->defmacro)
     (define-macro        nil             define-macro->defmacro)
+    (delete              remove)
+    (delete-duplicates   remove-duplicates)
     (display             princ)
     (do                  do              do->do)
     (dolist              dolist          dolist->dolist)
@@ -209,6 +212,7 @@
     (equal?              equal)
     (even?               evenp)
     (exact?              integerp)
+    (find                find-if)
     (file-exists?        probe-file)
     (for-each            nil              for-each->map)
     (hash-ref            gethash          hash-ref->gethash)
@@ -225,6 +229,7 @@
     (last-pair           last)
     (list?               listp)
     (list-copy           copy-list)
+    (list-index          position-if)
     (list-ref            elt   )
     (list-set!           nil              element-set!->setf-elt)
     (list-tail           nil              list-tail->nthcdr)
@@ -246,6 +251,8 @@
     (pair?               consp)
     (positive?           plusp)
     (procedure?          functionp)
+    (remove              remove-if)
+    (remove!             delete-if)
     (reverse!            nreverse)
     (set!                setf             set!->setf)
     (set-car!            rplaca)

@@ -260,7 +260,7 @@
 	  ;; note => (<sd> . others )
 	  ;; sd for note at the front
 	  (hash-set! table (sd-note d)
-		     (cons d (remove d deg)))))))
+		     (cons d (delete d deg)))))))
   ;;; this was main method
   (let ((table (scale-table tuning))
 	(divisions (scale-divisions tuning))
@@ -309,7 +309,7 @@
 	  ;; "real" entry for the note name.
 	  (hash-set! table k l)
 	  (dolist (x l) 
-	    (hash-set! table (sd-note x) (cons x (remove x l))))))))
+	    (hash-set! table (sd-note x) (cons x (delete x l))))))))
   ;; map over raw scale degree and ensure that these
   ;; have null octave fields if octaves were specified.
   ;; this was :after method
@@ -644,10 +644,12 @@
              (if acci
                (if (pair? acci)
                  (loop for a in acci
-                       for x = (find a entries 
-                                     :key (function sd-accidental))
-                       when x return x)
-                 (find acci entries :key (function sd-accidental) ))
+                    ;;for x = (find a entries :key (function sd-accidental))
+                    for x = (find (lambda (x) (eq? a (sd-accidental x))) entries)
+                    when x return x)
+                 ;;(find acci entries :key (function sd-accidental) )
+                 (find (lambda (x) (eq? acci (sd-accidental x))) entries)
+                 )
                (first entries))))
         (if it
           (sd-note it)
@@ -740,7 +742,7 @@
 (define (mode? x) (is-a? x <mode>))
 (define (tuning? x) (is-a? x <tuning>))
 
-(defmacro with-default-octave (scale . body)
+(define-macro (with-default-octave scale . body)
   (let ((v (gensym "v")))
     `(let ((,v #f))
       (dynamic-wind
@@ -1072,8 +1074,8 @@
 (define (scale-order lis . args)
   (with-args (args &optional (order ':up) unique?)
     (if unique?
-      (set! lis (remove-duplicates lis))
-      (set! lis (copy-list lis)))
+      (set! lis (delete-duplicates lis))
+      (set! lis (list-copy lis)))
     (cond ((or (eq? order #t)
                (eq? order ':up))
            (sort! lis #'scale<))
@@ -1123,11 +1125,11 @@
 		   ;; the spelling +- letters in the interval.
 		   (trans
 		    (list-ref names
-			      (modulo (+ (position (sd-name entry)
-						   names 
-                                                   :test (function member))
-					 (* (%interval-letters int)
-					    (%interval-sign int)))
+			      (modulo (+ ;(position (sd-name entry) names :test (function member))
+                                       (let ((n (sd-name entry)))
+                                         (list-index (lambda (x) (member n x)) names))
+                                       (* (%interval-letters int)
+                                          (%interval-sign int)))
 				      7)))
 		   ;; transpose keynum +- size of interval
 		   (keyn (+ (sd-keynum entry)
@@ -1141,9 +1143,9 @@
 		   ;; of the names in the transposed set of names. 
 		   (newnote
 		    (or (loop for n in trans
-			      for e = (find n entries 
-                                            :key (function sd-name))
-			      when e return e)
+                           ;;for e = (find n entries :key (function sd-name))
+                           for e = (find (lambda (x) (eq? n (sd-name x))) entries)
+                           when e return e)
 			(err "Can't transpose ~a by ~a." 
 			     note (decode-interval int)))))
 	      (if (sd-octave entry)
@@ -1328,11 +1330,13 @@
 	     (if (not entry1) 
 	       (error "~s not in standard chromatic scale." ref2))
 	     ;; calculate abs letter difference
-	     (set! letters (modulo (- (position (sd-name entry1) names  
-						:test (function member))
-				      (position (sd-name entry2) names  
-						:test (function member)))
-				   7))
+	     (set! letters 
+                   (modulo (- ;(position (sd-name entry1) names :test (function member))
+                              ;(position (sd-name entry2) names :test (function member))
+                            (list-index (lambda (x) (member (sd-name entry1) x)) names)
+                            (list-index (lambda (x) (member (sd-name entry2) x)) names)
+                            )
+                           7))
 	     (set! semitones (- (sd-keynum entry1)
 				(sd-keynum entry2)))
            

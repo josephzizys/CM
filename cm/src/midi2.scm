@@ -31,7 +31,7 @@
 ;         0 #<End of Track #(0)>
 ;#P"/usr/local/lisp/scm/test.midi"
 ;
-; (defmacro define (x y) `(setf ,x ,y))
+; (define-macro (define x y) `(setf ,x ,y))
 ; (define f (open-io "/usr/local/lisp/scm/foo.midi" :output))
 ; (define f (open-io "macintosh hd:foo2.midi" :output))
 ; (initialize-io f)
@@ -504,7 +504,8 @@
 	  (set! tune (pop tuning))
 	  (begin (set! tune tuning)
 		 (set! tuning #f)))
-        (set! type (find tune %midituningtypes :test #'member))
+        (set! type (find (lambda (x) (member tune x)) %midituningtypes))
+        ;;(set! type (find tune %midituningtypes :test #'member))
 	(cond ((eq? type (car %midituningtypes))
 	       ;; note by note tuning.
                (if (pair? tuning)
