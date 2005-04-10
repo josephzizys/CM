@@ -75,7 +75,7 @@
                   :output-file 
                   (file-output-filename io)
                   (cmn-args io))))
-    (set! *exact-rhythms* (slot-value io 'exact)))
+    (set! *exact-rhythms* (slot-ref io 'exact)))
   io)
 
 (define-method (initialize-io (io <cmn-stream>))
