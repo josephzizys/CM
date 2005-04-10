@@ -3276,37 +3276,37 @@
 ;   - MIDI Tuning
 ;   - Master Balance (RPN?)
 
-(define-generic midi-event-data1)
-(define-generic midi-event-data2)
+(define-generic* midi-event-data1)
+(define-generic* midi-event-data2)
 
-(define-class <midi-event> (<event>)
-  (opcode :accessor midi-event-opcode :allocation :class)
+(define-class* <midi-event> (<event>)
+  ((opcode :accessor midi-event-opcode :allocation :class))
   :name 'midi-event)
 
-(define-method (midi-event-data1 (obj <midi-event>))
+(define-method* (midi-event-data1 (obj <midi-event>))
   #f)
 
-(define-method (midi-event-data2 (obj <midi-event>))
+(define-method* (midi-event-data2 (obj <midi-event>))
   #f)
 
-(define-class <midi-channel-event> (<midi-event>)
-  (channel :init-value 0 :init-keyword :channel
-           :accessor midi-event-channel)
+(define-class* <midi-channel-event> (<midi-event>)
+  ((channel :init-value 0 :init-keyword :channel
+            :accessor midi-event-channel))
   :name 'midi-channel-event)
 
 ;;; GOOPS BUG (?) redeclaring opcode for :init-value obliterates
 ;;; its :accessor  and :allocation settings declared by <midi-event>!
 
-(define-class <midi-system-event> (<midi-event>)
-  (opcode :init-value #xf0)
-  (type :init-value 0 :init-keyword :type 
-        :accessor midi-event-data1)
-  (data :init-value #f :init-keyword :data
-        :accessor midi-event-data2)
+(define-class* <midi-system-event> (<midi-event>)
+  ((opcode :init-value #xf0)
+   (type :init-value 0 :init-keyword :type 
+         :accessor midi-event-data1)
+   (data :init-value #f :init-keyword :data
+         :accessor midi-event-data2))
   :name 'midi-system-event)
 
-(define-class <midi-meta-event> (<midi-event>)
-  (opcode :init-value #xff)
+(define-class* <midi-meta-event> (<midi-event>)
+  ((opcode :init-value #xff))
   :name 'midi-meta-event)
 
 ;;;
@@ -3315,7 +3315,7 @@
 ;;; see midi3.scm for message->event conversion
 ;;;
 
-(define-method (midi-event->midi-message (event <midi-channel-event>))
+(define-method* (midi-event->midi-message (event <midi-channel-event>))
   ;; GOOPS BUG (?) declaring slots for :init-values obliterates
   ;; the :accessor and :allocation settings declared by <midi-event>!
   (values
@@ -3326,7 +3326,7 @@
                              0))
    #f))
 
-(define-method (midi-event->midi-message (event <midi-system-event>))
+(define-method* (midi-event->midi-message (event <midi-system-event>))
   (let* ((type (midi-event-data1 event))
          (code (logior #xf0 type))
          (data (midi-event-data2 event)))
@@ -3337,7 +3337,7 @@
           (else
            (make-system-message 0 code)))))
 
-(define-method (midi-event->midi-message (event <midi-meta-event>))
+(define-method* (midi-event->midi-message (event <midi-meta-event>))
   (let ((op (slot-ref event 'opcode)))
     (cond ((eq? op +ml-file-sequence-number-opcode+)
            (make-sequence-number (midi-event-data1 event)))

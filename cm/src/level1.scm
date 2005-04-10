@@ -747,17 +747,17 @@
                              :parameters (quote ,pars))
                 '())))
     `(begin 
-      (define-class ,gvar ,(map class-name->class-var supers)
-	,@ slts :name ',name ,@ opts )
+      (define-class* ,gvar ,(map class-name->class-var supers)
+	, slts :name ',name ,@ opts )
       
-      (define-method (make-load-form (obj ,gvar))
+      (define-method* (make-load-form (obj ,gvar))
         (cons* 'make-instance ', gvar (slot-init-forms obj :eval #t)))
       
-      ;; define a #i print-object method
-      (define-method (write (obj ,gvar) port)
-        (if *print-instance*
-          (print-instance obj port)
-          (next-method)))
+;      ;; define a #i print-object method
+;      (define-method* (write (obj ,gvar) port)
+;        (if *print-instance*
+;          (print-instance obj port)
+;          (next-method)))
       
       ,@methods
       
@@ -821,7 +821,7 @@
 (define (define-output-method objclassname objclassvar objvar
           fileclassname fileclassvar
           filevar timevar body)
-  `(define-method (write-event (,objvar ,objclassvar)
+  `(define-method* (write-event (,objvar ,objclassvar)
                                (,filevar ,fileclassvar)
                                ,timevar)
      ,@body))

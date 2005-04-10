@@ -270,7 +270,7 @@
 
 (define *tempo* 60.0)
 (define *beat* .25)
-(define *rhythms* (make-hash-table 31))
+(define *rhythms* (make-equal?-hash-table 31))
 
 (let ((entries '((1/64  x    64th)
 		 (1/32  t    32nd)
@@ -306,21 +306,21 @@
 	      (hash-set! *rhythms* (rsym 't s d) 
 			 (+ (* rat 2/3) (* rat 2/3 r))))))))))
 
-(define-generic rhythm)
+(define-generic* rhythm)
               
-(define-method (rhythm (val <number>) . args)
+(define-method* (rhythm (val <number>) . args)
   (with-args (args &optional (tempo *tempo*) (beat *beat*))
     (unless (number? beat)
       (set! beat (parse-rhythm-string (symbol->string beat))))
     (* (/ val beat) (/ 60 tempo))))
 
-(define-method (rhythm (val <pair>) . args)
+(define-method* (rhythm (val <pair>) . args)
   (with-args (args &optional (tempo *tempo*) (beat *beat*))
     (loop for v in val collect (rhythm v tempo beat))))
 
 (define %rest-char #\-)
 
-(define-method (rhythm (val <symbol>) . args)
+(define-method* (rhythm (val <symbol>) . args)
   (with-args (args &optional (tempo *tempo*) (beat *beat*))
     (let ((n (hash-ref *rhythms* val)))
       (if n
@@ -469,9 +469,9 @@
   '(niente 0/10 pppp 1/10 ppp 2/10 pp 3/10 p 4/10
     mp 5/10 mf 6/10 f 7/10 ff 8/10 fff 9/10 ffff 10/10))
 
-(define-generic amplitude)
+(define-generic* amplitude)
 
-(define-method (amplitude (amp <symbol>) . args)
+(define-method* (amplitude (amp <symbol>) . args)
   (with-args (args &optional (softest *softest*) 
 		   (loudest *loudest*) (power *power*))
     (amplitude (or (list-prop *logical-amplitudes* amp)
@@ -479,7 +479,7 @@
 			amp))
 	       softest loudest power)))
 
-(define-method (amplitude (amp <number>) . args)
+(define-method* (amplitude (amp <number>) . args)
   (with-args (args &optional (softest *softest*) 
 		   (loudest *loudest*) (power *power*))
     (+ softest (* (- loudest softest) (expt amp power)))))

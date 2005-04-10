@@ -14,11 +14,11 @@
 ;;; $Revision$
 ;;; $Date$
 
-(define-class <cmn-stream> (<event-stream>)
-  (cmnargs :init-value '() :accessor cmn-args)
-  (exact :init-value #f :init-keyword :exact-rhythms )
-  (staffing :init-value '() :accessor cmn-staffing
-            :init-keyword :staffing)
+(define-class* <cmn-stream> (<event-stream>)
+  ((cmnargs :init-value '() :accessor cmn-args)
+   (exact :init-value #f :init-keyword :exact-rhythms )
+   (staffing :init-value '() :accessor cmn-staffing
+             :init-keyword :staffing))
   :name 'cmn-stream
   :metaclass <io-class>
   :file-types '("*.cmn" "*.eps"))
@@ -40,12 +40,12 @@
 ;;; these are passed on to cmn.
 ;;;
 
-(define-method (io-handler-args? (io <cmn-stream>)) io #t)
+(define-method* (io-handler-args? (io <cmn-stream>)) io #t)
 
-(define-method (io-handler-args (io <cmn-stream>))
+(define-method* (io-handler-args (io <cmn-stream>))
   (cmn-args io))
 
-(define-method (set-io-handler-args! (io <cmn-stream>) args)
+(define-method* (set-io-handler-args! (io <cmn-stream>) args)
   (set! (cmn-args io) args)
   (values))
 
@@ -54,18 +54,18 @@
 ;;; the second element is created each time output happens.
 ;;;
 
-(define *cmn-staves* (make-hash-table 31))
+(define *cmn-staves* (make-equal?-hash-table 31))
 
 (define (make-staffing id . args)
   (with-args (args &key name clef meter)
     (list id #f (or name (format #f "staff-~a" id))
           clef meter)))
 
-(define-method (close-io (io <cmn-stream>) . mode)
+(define-method* (close-io (io <cmn-stream>) . mode)
   mode
   (set! (io-open io) #f))
 
-(define-method (open-io (io <cmn-stream>) dir . args)
+(define-method* (open-io (io <cmn-stream>) dir . args)
   args
   (when (eq? dir ':output)
     (set! (io-open io)
@@ -78,7 +78,7 @@
     (set! *exact-rhythms* (slot-ref io 'exact)))
   io)
 
-(define-method (initialize-io (io <cmn-stream>))
+(define-method* (initialize-io (io <cmn-stream>))
   ;; copy staffing infor each user specifed staff
   ;; and add a cmn staff object to it.
   (let ((score (io-open io)))
@@ -100,7 +100,7 @@
           (append (staff-data (stfdat-staff stfd))
                   (list (cmn-eval meter))))))
 
-(define-method (deinitialize-io (io <cmn-stream>))
+(define-method* (deinitialize-io (io <cmn-stream>))
   (let ((get-active-staff-actions
          (lambda (score) 
            score
@@ -193,7 +193,7 @@
     (set-car! (cdr entry) staff) ; setf second
     entry))
 
-(define-method (write-event (obj <standard-object>) (io <cmn-stream>)
+(define-method* (write-event (obj <standard-object>) (io <cmn-stream>)
                             scoretime)
   (let ((score (io-open io))
         (data (object->cmn obj))
@@ -233,7 +233,7 @@
    (duration :initform #f)
    (data :initform '())))
 
-(define-method (initialize (obj <cmn>) args)
+(define-method* (initialize (obj <cmn>) args)
   (next-method)
   ;; have to parse :note initarg by hand since goops doesn't
   ;; recogize more than one initarg per slot...
@@ -245,7 +245,7 @@
       ((:expr )
        (set! (cmn-expr obj) (cadr a))))))
 
-(define-method (object->cmn (obj <cmn>))
+(define-method* (object->cmn (obj <cmn>))
   (let ((d (cmn-duration obj)))
     (if d
       (let ((n (or (note (cmn-expr obj) :in? *chromatic-scale*)
@@ -271,7 +271,7 @@
                 (if x `(engorge (list ,@x))
                     (err "cmn: missing :expr, :note or :data"))))))))
 
-(define-method (object->midi (obj <cmn>))
+(define-method* (object->midi (obj <cmn>))
   (let ((e (cmn-expr obj))
         (b (object-time obj))
         (d (cmn-duration obj))
@@ -323,7 +323,7 @@
 ;;;
 ;;;
 
-(define-method (object->cmn (obj <midi>))
+(define-method* (object->cmn (obj <midi>))
   (list (midi-channel obj)
         (midi-duration obj)
         (note (midi-keynum obj))))

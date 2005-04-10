@@ -86,53 +86,51 @@
     (15 :180-note 180-note :180-tone 180-tone )
     (16 :180-note 180-note :180-tone 180-tone )))
 
-(define-class <midi-stream> (<event-stream>)
-  (channel-map :init-thunk (lambda () *midi-channel-map*)
-               :init-keyword :channel-map
-               :accessor midi-stream-channel-map)
-  (bend-width :accessor midi-stream-bend-width
-	      :init-keyword :pitch-bend-width 
-	      :init-thunk (lambda () *midi-pitch-bend-width*))
-  ;; BUG! Goops wont find :microtuning
-  (channel-tuning :init-keyword :channel-tuning  :init-keyword :microtuning
-		  :init-value #f :accessor midi-stream-channel-tuning )
-  (tunedata :init-value '() :accessor midi-stream-tunedata
-	    :init-keyword :tuning-channels)
-  :name 'midi-stream
-  )
+(define-class* <midi-stream> (<event-stream>)
+  ((channel-map :init-thunk (lambda () *midi-channel-map*)
+                :init-keyword :channel-map
+                :accessor midi-stream-channel-map)
+   (bend-width :accessor midi-stream-bend-width
+               :init-keyword :pitch-bend-width 
+               :init-thunk (lambda () *midi-pitch-bend-width*))
+   ;; BUG! Goops wont find :microtuning
+   (channel-tuning :init-keyword :channel-tuning  :init-keyword :microtuning
+                   :init-value #f :accessor midi-stream-channel-tuning )
+   (tunedata :init-value '() :accessor midi-stream-tunedata
+             :init-keyword :tuning-channels))
+  :name 'midi-stream)
 
 (define *midi-file-default-tempo* 60)
 
-(define-class <midi-file-stream> (<midi-stream>)
-  (elt-type :init-value :byte :init-keyword :elt-type
-            :accessor file-elt-type)
-  (keysig :init-value #f :init-keyword :keysig
-	      :accessor midi-file-keysig)
-  (timesig :init-value #f  :init-keyword :timesig 
-	       :accessor midi-file-timesig)
-  (tempo :init-thunk (lambda () *midi-file-default-tempo*)
-         :init-keyword :tempo 
-	     :accessor midi-file-tempo)
-  (scaler :init-value 1 :accessor midi-file-scaler)
-  (status :init-value 0 :accessor midi-file-status)
-  (size :init-value 0 :accessor midi-file-size)
-  (tracks :init-value 1 :accessor midi-file-tracks)
-  (track :init-value -1 :init-keyword :track
-	 :accessor midi-file-track)          
-  (tracklen :init-value 0 :accessor midi-file-tracklen)
-  (divisions :init-value 480 :init-keyword :divisions
-	     :accessor midi-file-divisions)
-  (resolution :init-value #f :init-keyword :resolution
-	      :accessor midi-file-resolution)
-  (format :init-value 0 :init-keyword :format
-	  :accessor midi-file-format)
-  (ticks :init-value #f :accessor midi-file-ticks)
-  (delta :init-value #f :accessor midi-file-delta)
-  (message :init-value #f :accessor midi-file-message)
-  (data  :init-value '() :accessor midi-file-data)
+(define-class* <midi-file-stream> (<midi-stream>)
+  ((elt-type :init-value :byte :init-keyword :elt-type
+             :accessor file-elt-type)
+   (keysig :init-value #f :init-keyword :keysig
+           :accessor midi-file-keysig)
+   (timesig :init-value #f  :init-keyword :timesig 
+            :accessor midi-file-timesig)
+   (tempo :init-thunk (lambda () *midi-file-default-tempo*)
+          :init-keyword :tempo 
+          :accessor midi-file-tempo)
+   (scaler :init-value 1 :accessor midi-file-scaler)
+   (status :init-value 0 :accessor midi-file-status)
+   (size :init-value 0 :accessor midi-file-size)
+   (tracks :init-value 1 :accessor midi-file-tracks)
+   (track :init-value -1 :init-keyword :track
+          :accessor midi-file-track)          
+   (tracklen :init-value 0 :accessor midi-file-tracklen)
+   (divisions :init-value 480 :init-keyword :divisions
+              :accessor midi-file-divisions)
+   (resolution :init-value #f :init-keyword :resolution
+               :accessor midi-file-resolution)
+   (format :init-value 0 :init-keyword :format
+           :accessor midi-file-format)
+   (ticks :init-value #f :accessor midi-file-ticks)
+   (delta :init-value #f :accessor midi-file-delta)
+   (message :init-value #f :accessor midi-file-message)
+   (data  :init-value '() :accessor midi-file-data))
   :name 'midi-file-stream
   :metaclass <io-class>
-  :mime-type "audio/midi"
   :file-types '("*.midi" "*.mid"))
 
 (define (set-midi-output-hook! fn)
@@ -360,7 +358,7 @@
 ;;;   is supported read-only, i.e., we always write sysex as a contiguous
 ;;;   message.
 
-(define-method (midi-write-message (msg <number>) (mf <midi-file-stream>)
+(define-method* (midi-write-message (msg <number>) (mf <midi-file-stream>)
 				   time data)
   (let ((fp (io-open mf))
 	(size (midimsg-size msg))
@@ -572,7 +570,7 @@
 (define %offs (make-cycl))
 (dotimes (i 50) (%qe-dealloc %offs (list #f #f #f)))
 
-(define-method (open-io (mf <midi-file-stream>) dir . args)
+(define-method* (open-io (mf <midi-file-stream>) dir . args)
   ;; was an :after method
   args
   (next-method)
@@ -597,7 +595,7 @@
       ))
   mf)
 
-(define-method (initialize-io (mf <midi-file-stream>) )
+(define-method* (initialize-io (mf <midi-file-stream>) )
   (when (eq? (io-direction mf) ':output)
     (let ((msg #f)
 	  (data #f))
@@ -626,11 +624,11 @@
       (channel-tuning-init mf)))
   (values))
 
-(define-method (deinitialize-io (mf <midi-file-stream>) )
+(define-method* (deinitialize-io (mf <midi-file-stream>) )
   (when (eq? (io-direction mf) ':output)
     (flush-pending-offs mf)))
 
-(define-method (close-io (mf <midi-file-stream>) . mode)
+(define-method* (close-io (mf <midi-file-stream>) . mode)
   mode ; gag 'unused variable' message from cltl compilers
   (when (eq? (io-direction mf) ':output)
     (multiple-value-bind (m d) (make-eot)

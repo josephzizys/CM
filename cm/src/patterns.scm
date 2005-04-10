@@ -54,41 +54,41 @@
 ;;;
 ;;;
 
-(define-class <pattern> (<container>) 
-  (flags :init-keyword :flags :init-value 0
-	 :accessor pattern-flags)
-  (data  :init-keyword :of 
-	 :init-keyword :data
-	 :init-keyword :notes
-	 :init-keyword :keynums
-	 :init-keyword :rhythms
-	 :init-keyword :amplitudes
-	 :init-keyword :intervals
-	 :init-value '()
-	 :accessor pattern-data)
-  (length :accessor pattern-length)
-  (datum :init-thunk (lambda () +nad+)
-	 :accessor pattern-datum)
-  (period :init-keyword :for 
-	  :accessor pattern-period)
-  (value :init-keyword :last-value
-	 :init-thunk (lambda () +nad+)
-	 :accessor pattern-value)
-  (state :init-keyword :last-state
-	 :init-thunk (lambda () +nad+)
-	 :accessor pattern-state)
-  (repeat :init-keyword :repeat
-	  :init-value most-positive-fixnum
-	  :accessor pattern-repeat)
-  (parser :init-keyword :parser :init-value #f 
-	  :accessor pattern-parser )
-  (returning :init-value #f :init-keyword :returning
-	     :accessor pattern-returning)
-  (counting :init-keyword :counting :init-value :periods
-	    :accessor pattern-counting)
-  (traversing :init-keyword :traversing
-	      :init-value :depth-first
-	      :accessor pattern-traversing)
+(define-class* <pattern> (<container>) 
+  ((flags :init-keyword :flags :init-value 0
+          :accessor pattern-flags)
+   (data  :init-keyword :of 
+          :init-keyword :data
+          :init-keyword :notes
+          :init-keyword :keynums
+          :init-keyword :rhythms
+          :init-keyword :amplitudes
+          :init-keyword :intervals
+          :init-value '()
+          :accessor pattern-data)
+   (length :accessor pattern-length)
+   (datum :init-thunk (lambda () +nad+)
+          :accessor pattern-datum)
+   (period :init-keyword :for 
+           :accessor pattern-period)
+   (value :init-keyword :last-value
+          :init-thunk (lambda () +nad+)
+          :accessor pattern-value)
+   (state :init-keyword :last-state
+          :init-thunk (lambda () +nad+)
+          :accessor pattern-state)
+   (repeat :init-keyword :repeat
+           :init-value most-positive-fixnum
+           :accessor pattern-repeat)
+   (parser :init-keyword :parser :init-value #f 
+           :accessor pattern-parser )
+   (returning :init-value #f :init-keyword :returning
+              :accessor pattern-returning)
+   (counting :init-keyword :counting :init-value :periods
+             :accessor pattern-counting)
+   (traversing :init-keyword :traversing
+               :init-value :depth-first
+               :accessor pattern-traversing))
   :name 'pattern)
 
 ;;;
@@ -102,7 +102,7 @@
     val
     (fn val)))
 
-(define-method (canonicalize-pattern-data (obj <pattern>)
+(define-method* (canonicalize-pattern-data (obj <pattern>)
 					  data parser inits)
   ;;(format #t "pattern canonicalize: ~s~%" obj)
   inits
@@ -118,7 +118,7 @@
 ;;; make-load-form "decompiles" pattern
 ;;;
 
-(define-method (make-load-form (obj <pattern>))
+(define-method* (make-load-form (obj <pattern>))
   (let ((inits (pattern-external-inits obj))
         (gvar (string->symbol (format #f "<~a>"
                                       (class-name (class-of obj))))))
@@ -132,7 +132,7 @@
 ;;; local inits to that list.
 ;;;
 
-(define-method (pattern-external-inits (obj <pattern>))
+(define-method* (pattern-external-inits (obj <pattern>))
   (let ((inits
          (slot-init-forms obj :eval #t 
                           :ignore-defaults #t 
@@ -164,7 +164,7 @@
 ;;; pattern-period-length returns the current period length
 ;;;
 
-(define-method (pattern-period-length (obj <pattern>))
+(define-method* (pattern-period-length (obj <pattern>))
   (period-length (pattern-period obj)))
 
 ;;;
@@ -173,10 +173,10 @@
 ;;; the pattern contains.
 ;;;
 
-(define-method (default-period-length (obj <pattern>))
+(define-method* (default-period-length (obj <pattern>))
   (pattern-length obj))
 
-(define-method (initialize (obj <pattern>) args)
+(define-method* (initialize (obj <pattern>) args)
   (next-method)				; was after method
 
   ;;(format #t "pattern initialize: ~s data=~s~%" 
@@ -287,27 +287,27 @@
 ;;; type predicate for patterns.
 ;;;
 
-(define-method (pattern? obj) obj #f)
+(define-method* (pattern? obj) obj #f)
 
-(define-method (pattern? (obj <pattern>)) obj)
+(define-method* (pattern? (obj <pattern>)) obj)
 
 ;;;
 ;;; Predicates for testing end-of-period and end-of-data.
 ;;;
 
-(define-method (eop? x)
+(define-method* (eop? x)
   (eq? x +eop+))
 
-(define-method (eop? (x <pattern>)) 
+(define-method* (eop? (x <pattern>)) 
   (eop? (pattern-state x)))
 
-(define-method (eod? x)
+(define-method* (eod? x)
   (eq? x +eod+))
 
-(define-method (eod? (x <pattern>))
+(define-method* (eod? (x <pattern>))
   (eod? (pattern-value x))) 
 
-(define-method (pattern-state obj) obj +eop+)
+(define-method* (pattern-state obj) obj +eop+)
 
 ;;;
 ;;; next returns the next value read from the object.
@@ -352,10 +352,10 @@
           (list obj)))
       (next-1 obj))))
 
-(define-method (next-1 obj)
+(define-method* (next-1 obj)
   obj)
 
-(define-method (next-1 (obj <pattern>))
+(define-method* (next-1 (obj <pattern>))
   (let ((period (pattern-period obj))
 	(nomore #f))
 
@@ -433,7 +433,7 @@
 ;;; encountered by reset-period.
 ;;;
 
-(define-method (skip-datum? (obj <pattern>))
+(define-method* (skip-datum? (obj <pattern>))
   (let ((period (pattern-period obj)))
     (if (> (period-omit period) 0)
         (begin (period-omit-set! period
@@ -441,16 +441,16 @@
 	       +nad+)
         obj)))
 
-(define-method (skip-datum? obj) obj)
+(define-method* (skip-datum? obj) obj)
 
 ;;;
 ;;; reset-period sets and returns the length of the next period.
 ;;; period length of constant datum is always 1.
 ;;;
 
-(define-method (reset-period obj) obj 1)
+(define-method* (reset-period obj) obj 1)
 
-(define-method (reset-period (obj <pattern>))
+(define-method* (reset-period (obj <pattern>))
   (let ((period (pattern-period obj))
         (dyn #f)
 	(len #f))
@@ -499,10 +499,11 @@
 ;;; popped from the cdr, when the cdr is null it's reset to the car.
 ;;;
 
-(define-class <cycle> (<pattern>)
+(define-class* <cycle> (<pattern>)
+  ()
   :name 'cycle)
 
-(define-method (pattern-external-inits (obj <cycle>))
+(define-method* (pattern-external-inits (obj <cycle>))
   (append 
    (list ':of
          (cons 'list
@@ -510,7 +511,7 @@
                      collect (expand-pattern-value x))))
    (next-method)))
 
-(define-method (initialize (obj <cycle>) args)
+(define-method* (initialize (obj <cycle>) args)
   (next-method) ; was after
   ;;(format #t "cycle initialize: ~s data=~s~%" 
   ;;        obj (pattern-data obj))
@@ -519,13 +520,13 @@
     (set! (pattern-data obj) cyc)
     (values)))
 
-(define-method (next-in-pattern (obj <cycle>))
+(define-method* (next-in-pattern (obj <cycle>))
   (let ((cyc (pattern-data obj)))
     (if (null? (cycl-tail cyc))
       (cycl-tail-set! cyc (cycl-data cyc)))
     (pop-cycl cyc)))
 
-(define-method (map-pattern-data fn (obj <cycle>))
+(define-method* (map-pattern-data fn (obj <cycle>))
   (for-each fn (cycl-data (pattern-data obj))))
 
 ; (define a (make <cycle> :of (list 1 2 3)))
@@ -534,12 +535,12 @@
 ;;; palindrome visits the reverse of its data.
 ;;;
 
-(define-class <palindrome> (<pattern>)
-  (elide :init-value #f :init-keyword :elide
-	 :accessor palindrome-elide)
+(define-class* <palindrome> (<pattern>)
+  ((elide :init-value #f :init-keyword :elide
+          :accessor palindrome-elide))
   :name 'palindrome)
 
-(define-method (pattern-external-inits (obj <palindrome>))
+(define-method* (pattern-external-inits (obj <palindrome>))
   (append 
    (list ':of (cons 'list
                     (loop for x in (car (pattern-data obj))
@@ -551,20 +552,20 @@
            (expand-pattern-value 
             (palindrome-elide obj))))))
 
-(define-method (map-pattern-data fn (obj <palindrome>))
+(define-method* (map-pattern-data fn (obj <palindrome>))
   (for-each fn (cycl-data (pattern-data obj))))
 
-(define-method (default-period-length (obj <palindrome>))
+(define-method* (default-period-length (obj <palindrome>))
   (* 2 (pattern-length obj)))
 
-(define-method (initialize (obj <palindrome>) args)
+(define-method* (initialize (obj <palindrome>) args)
   (next-method)
   (let ((cyc (make-cycl)))
     (cycl-data-set! cyc (pattern-data obj))
     (set! (pattern-data obj) cyc)
     (values)))
 
-(define-method (next-in-pattern (obj <palindrome>))
+(define-method* (next-in-pattern (obj <palindrome>))
   (let ((cycl (pattern-data obj)))
     (when (null? (cycl-tail cycl)) 
       (let ((mode (next-1 (palindrome-elide obj)))
@@ -592,7 +593,7 @@
         (cycl-tail-set! cycl next)))
     (pop-cycl cycl)))
 
-;(define-method (canonicalize-pattern-data (obj <palindrome>) b c d)
+;(define-method* (canonicalize-pattern-data (obj <palindrome>) b c d)
 ;  ;; this method rewrites data to comform to a palindrome. the
 ;  ;; data are treated thereafter simply as a cycle.
 ;  ;;(format #t "palindrome canonlicalize: ~s data=~s~%" 
@@ -636,17 +637,18 @@
 ;;; line sticks on the last element.
 ;;;
 
-(define-class <line> (<pattern>) 
+(define-class* <line> (<pattern>) 
+  ()
   :name 'line)
 
-(define-method (pattern-external-inits (obj <line>))
+(define-method* (pattern-external-inits (obj <line>))
   (append 
    (list ':of (cons 'list
                     (loop for x in (car (pattern-data obj))
                           collect (expand-pattern-value x))))
    (next-method)))
 
-(define-method (initialize (obj <line>) args)
+(define-method* (initialize (obj <line>) args)
   (next-method)
   (let ((cyc (make-cycl)))
     (cycl-data-set! cyc (pattern-data obj))
@@ -655,20 +657,20 @@
     (set! (pattern-data obj) cyc)
     (values)))
 
-(define-method (next-in-pattern (obj <line>))
+(define-method* (next-in-pattern (obj <line>))
   (let ((cycl (pattern-data obj)))
     ;; if no cdr then car is last item
     (if (null? (cdr (cycl-tail cycl)))
       (car (cycl-tail cycl))
       (pop-cycl cycl))))
 
-(define-method (reset-period (obj <line>))
+(define-method* (reset-period (obj <line>))
   ;; was :before method
   (if (null? (cdr (cycl-tail (pattern-data obj)) ))
     (set! (pattern-length obj) 1))
   (next-method))
 
-(define-method (map-pattern-data fn (obj <line>))
+(define-method* (map-pattern-data fn (obj <line>))
   (for-each fn (cycl-data (pattern-data obj))))
 
 ;;;
@@ -676,25 +678,25 @@
 ;;; each time through
 ;;;
 
-(define-class <heap> (<cycle>)
-  (random-state :init-thunk (lambda () *random-state*)
-		:init-keyword :state :accessor pattern-random-state)
+(define-class* <heap> (<cycle>)
+  ((random-state :init-thunk (lambda () *random-state*)
+                 :init-keyword :state :accessor pattern-random-state))
   :name 'heap)
 
-(define-method (pattern-external-inits (obj <heap>))
+(define-method* (pattern-external-inits (obj <heap>))
   (let ((inits (next-method)))
     (if (eq? *random-state* (pattern-random-state obj))
       inits
       (append inits
               (list :state (pattern-random-state obj))))))
 
-(define-method (initialize (obj <heap>) args)
+(define-method* (initialize (obj <heap>) args)
   (next-method)
   (let ((cyc (pattern-data obj)))
     (cycl-data-set! cyc (list-copy (cycl-data cyc)))
     (values)))
 
-(define-method (next-in-pattern (obj <heap>))
+(define-method* (next-in-pattern (obj <heap>))
   (let ((cyc (pattern-data obj))
 	(shufl
 	 (lambda (lis len state)
@@ -723,15 +725,15 @@
 (define-list-struct random-item
   datum index (weight 1) (min 1) max (count 0) id minmax)
 
-(define-class <random> (<pattern>)
-  (range :init-thunk (lambda () *random-range*)
-	 :accessor random-pattern-range)
-  (random-state :init-thunk (lambda () *random-state*)
-		:init-keyword :state
-		:accessor pattern-random-state)
+(define-class* <random> (<pattern>)
+  ((range :init-thunk (lambda () *random-range*)
+          :accessor random-pattern-range)
+   (random-state :init-thunk (lambda () *random-state*)
+                 :init-keyword :state
+                 :accessor pattern-random-state))
   :name 'random)
 
-(define-method (pattern-external-inits (obj <random>))
+(define-method* (pattern-external-inits (obj <random>))
   (let ((lst (next-method))
         (fnc
          (lambda (n)
@@ -764,7 +766,7 @@
               (list :state (pattern-random-state obj))))))
 
 
-(define-method (default-period-length (obj <random>))
+(define-method* (default-period-length (obj <random>))
   ;; set the default period length of an all-subpattern random pattern
   ;; to 1 else to the number of elements. since a random pattern
   ;; establishes no particular order itself, setting the period to 1
@@ -777,7 +779,7 @@
        (if flag 1 (pattern-length obj)))
     (set! flag (pattern? (random-item-datum (car tail))))))
 
-(define-method (initialize (obj <random>) args)
+(define-method* (initialize (obj <random>) args)
   (next-method)
   (let ((pool (pattern-data obj))
         (sum (if (integer? *random-range*) 0 0.0))
@@ -822,7 +824,7 @@
     ;; be implemented as a last with min=1
     (set! (pattern-data obj) (list pool))))
 
-(define-method (canonicalize-pattern-data (obj <random>)
+(define-method* (canonicalize-pattern-data (obj <random>)
 					  data parser inits)
   inits
   (let ((parse-random-item
@@ -861,7 +863,7 @@
 	      (not (any (lambda (x) (pattern? (random-item-datum x)))
 			 intern))))))
 
-(define-method (reset-period (obj <random>))
+(define-method* (reset-period (obj <random>))
   (let ((reset (next-method))		; was :after method
 	(flags (pattern-flags obj)))
     (unless (logtest flags +constant-minmax+)
@@ -887,7 +889,7 @@
 	      (set! (random-pattern-range obj) s))))
     reset))
 
-(define-method (next-in-pattern (obj <random>))
+(define-method* (next-in-pattern (obj <random>))
   ;; pool is ((&rest choices) . last-choice)
   (let* ((pool (pattern-data obj))
          (last (cdr pool)))
@@ -917,7 +919,7 @@
         (set-cdr! pool next)
         (random-item-datum next)))))
 
-(define-method (map-pattern-data fn (obj <random>))
+(define-method* (map-pattern-data fn (obj <random>))
   (for-each #'(lambda (x) ( fn (random-item-datum x))) ; funcall
 	    (car (pattern-data obj))))
 
@@ -925,15 +927,15 @@
 ;;; markov 
 ;;;
 
-(define-class <markov> (<pattern>)
-  (past :init-value '() :init-keyword :past
-	:accessor markov-pattern-past)
-  (order :accessor markov-pattern-order)
-  (produce :init-value #f :init-keyword :produce
-           :accessor markov-pattern-produce)
+(define-class* <markov> (<pattern>)
+  ((past :init-value '() :init-keyword :past
+         :accessor markov-pattern-past)
+   (order :accessor markov-pattern-order)
+   (produce :init-value #f :init-keyword :produce
+            :accessor markov-pattern-produce))
   :name 'markov)
 
-(define-method (pattern-external-inits (obj <markov>))
+(define-method* (pattern-external-inits (obj <markov>))
   ;; FIX --  past is not saved...
   (let ((fnc 
          (lambda (n)
@@ -958,7 +960,7 @@
              (expand-pattern-value
               (markov-pattern-produce obj)))))))
 
-(define-method (canonicalize-pattern-data (obj <markov>) data parser
+(define-method* (canonicalize-pattern-data (obj <markov>) data parser
                                           inits)
   parser
   (let ((parse-markov-spec 
@@ -1009,14 +1011,14 @@
                             (values lis (length data)
                                     const)))))))
 
-(define-method (initialize (obj <markov>) args)
+(define-method* (initialize (obj <markov>) args)
   (next-method)				; was an :after method
   (unless (pair? (markov-pattern-past obj))
     (set! (markov-pattern-past obj)
           (make-list (markov-pattern-order obj) '*)))
   (values))
 
-(define-method (next-in-pattern (obj <markov>))
+(define-method* (next-in-pattern (obj <markov>))
   ;; markov data kept as a list of lists. each list is in the form:
   ;; ((<inputs>) range . <output>)
   (letrec ((select-output
@@ -1088,19 +1090,19 @@
 
 (define-list-struct graph-node id datum to props)
 
-(define-class <graph> (<pattern>) 
-  (selector :init-thunk (lambda () #'default-graph-node-select)
-	    :init-keyword :selector :accessor graph-selector)
-  (last :init-value #f :init-keyword :last
-	:accessor graph-last)
-  (props :init-value '() :init-keyword :props
-	 :accessor graph-props)
-  (starting-node-index :init-value 0 
-                       :init-keyword :starting-node-index
-                       :accessor graph-starting-node-index)
+(define-class* <graph> (<pattern>) 
+  ((selector :init-thunk (lambda () #'default-graph-node-select)
+             :init-keyword :selector :accessor graph-selector)
+   (last :init-value #f :init-keyword :last
+         :accessor graph-last)
+   (props :init-value '() :init-keyword :props
+          :accessor graph-props)
+   (starting-node-index :init-value 0 
+                        :init-keyword :starting-node-index
+                        :accessor graph-starting-node-index))
   :name 'graph)
 
-(define-method (pattern-external-inits (obj <graph>))
+(define-method* (pattern-external-inits (obj <graph>))
   (let ((fnc
          (lambda (n)
            (cons 'list
@@ -1123,7 +1125,7 @@
        (list ':selector (graph-selector obj))))))
 
 
-(define-method (initialize (obj <graph>) args)
+(define-method* (initialize (obj <graph>) args)
   (next-method) ; was :after method
   (let ((nodes (pattern-data obj))
         (last (graph-last obj)))
@@ -1137,7 +1139,7 @@
                 nodes)))
   (values))
 
-(define-method (canonicalize-pattern-data (obj <graph>) 
+(define-method* (canonicalize-pattern-data (obj <graph>) 
 					  data parser inits)
   inits
   (let ((parse-graph-item 
@@ -1217,7 +1219,7 @@
         ((eq? last '*) #t)
         (else #f)))
 
-(define-method (next-in-pattern (obj <graph>))
+(define-method* (next-in-pattern (obj <graph>))
   (let* ((last (graph-last obj)) ; #f or (n . pasts)
          (graph (pattern-data obj))
          (nodes (cdr graph))
@@ -1246,7 +1248,7 @@
       (err "No next node from ~s." (graph-node-id this)))
     (graph-node-datum this)))
 
-(define-method (map-pattern-data fn (obj <graph>))
+(define-method* (map-pattern-data fn (obj <graph>))
   (for-each #'(lambda (x) ( fn (graph-node-datum x))) ; funcall
 	    (pattern-data obj)))
 
@@ -1255,12 +1257,12 @@
 ;;; selected so far: A A B A B C | A A B A B C 
 ;;;
 
-(define-class <accumulation> (<pattern>)
-  (indices :init-thunk (lambda () (cons 0 0))
-	   :accessor accumulation-indicies)
+(define-class* <accumulation> (<pattern>)
+  ((indices :init-thunk (lambda () (cons 0 0))
+            :accessor accumulation-indicies))
   :name 'accumulation)
 
-(define-method (next-in-pattern (obj <accumulation>))
+(define-method* (next-in-pattern (obj <accumulation>))
   (let ((indices (accumulation-indicies obj)))
     (let ((val (list-ref (pattern-data obj) (car indices))))
       (if (= (car indices) (cdr indices))
@@ -1271,10 +1273,10 @@
 	(set-car! indices (+ 1 (car indices))))
       val)))
 
-(define-method (map-pattern-data fn (obj <accumulation>))
+(define-method* (map-pattern-data fn (obj <accumulation>))
   (for-each fn (pattern-data obj)))
 
-(define-method (default-period-length (obj <accumulation>))
+(define-method* (default-period-length (obj <accumulation>))
   (let ((len (pattern-length obj)))
     (loop for i from 1 to len sum i)))
 
@@ -1283,17 +1285,18 @@
 ;;; constituting the data for the next period.
 ;;;
 
-(define-class <funcall> (<pattern>)
+(define-class* <funcall> (<pattern>)
+  ()
   :name 'funcall)
 
-(define-method (pattern-external-inits (obj <funcall>))
+(define-method* (pattern-external-inits (obj <funcall>))
   (append (list ':of
                 (expand-pattern-value (car (pattern-data obj))))
           (next-method)))
 
-(define-method (default-period-length (obj <funcall>)) 1)
+(define-method* (default-period-length (obj <funcall>)) 1)
 
-(define-method (initialize (obj <funcall>) args)
+(define-method* (initialize (obj <funcall>) args)
   (next-method) ; was an :after method
   (let ((data (pattern-data obj)))
     (unless (and (pair? data)
@@ -1301,7 +1304,7 @@
       (err "Funcall not function: ~s." data))
     (values)))
 
-(define-method (next-in-pattern (obj <funcall>))
+(define-method* (next-in-pattern (obj <funcall>))
   (let ((data (pattern-data obj)))
     (when (null? (cdr data))
       (let ((vals ( (car data) ))	; funcall
@@ -1326,19 +1329,19 @@
 ;(define x (new funcall :of (lambda () (list 1 2 3)) :for 5))
 ;(next x t)
 
-(define-method (map-pattern-data fn (obj <funcall>))
+(define-method* (map-pattern-data fn (obj <funcall>))
   (for-each fn (cdr (pattern-data obj)))) ; funcall
 
 ;;;
 ;;; rotation
 ;;;
 
-(define-class <rotation> (<cycle>)
-  (change :init-value 0 :init-keyword :rotations
-	  :accessor rotation-change)
+(define-class* <rotation> (<cycle>)
+  ((change :init-value 0 :init-keyword :rotations
+           :accessor rotation-change))
   :name 'rotation)
 
-(define-method (pattern-external-inits (obj <rotation>))
+(define-method* (pattern-external-inits (obj <rotation>))
   (append
    (list ':of (cons 'list (loop for x in (car (pattern-data obj))
                                 collect (expand-pattern-value x))))
@@ -1347,14 +1350,14 @@
      (list ':rotations
            (expand-pattern-value (rotation-change obj))))))
 
-(define-method (initialize (obj <rotation>) args)
+(define-method* (initialize (obj <rotation>) args)
   (next-method) ; was an :after method
   ;; pattern is initialized now so that rotations only happen
   ;; after the first cycle.
   (let ((data (pattern-data obj)))
     (set-cdr! data (car data))))
 
-(define-method (next-in-pattern (obj <rotation>))
+(define-method* (next-in-pattern (obj <rotation>))
   (let ((ring (pattern-data obj)))
     (when (null? (cdr ring))
       (let ((change (next-1 (rotation-change obj)))
@@ -1406,17 +1409,17 @@
   (successors '())
   (context '()))
 
-(define-class <rewrite> (<pattern>)
-  (table :init-value #f :init-keyword :initially
-	 :accessor rewrite-table)
-  (rules :init-value '() :init-keyword :rules
-	 :accessor rewrite-rules)
-  (generations :init-thunk (lambda () most-positive-fixnum)
-	       :init-keyword :generations
-	       :accessor rewrite-generations)
+(define-class* <rewrite> (<pattern>)
+  ((table :init-value #f :init-keyword :initially
+          :accessor rewrite-table)
+   (rules :init-value '() :init-keyword :rules
+          :accessor rewrite-rules)
+   (generations :init-thunk (lambda () most-positive-fixnum)
+                :init-keyword :generations
+                :accessor rewrite-generations))
   :name 'rewrite)
 
-(define-method (pattern-external-inits (obj <rewrite>))
+(define-method* (pattern-external-inits (obj <rewrite>))
   (let ((fnc
          (lambda (n)
            (cons 'list
@@ -1442,9 +1445,9 @@
                                    (rewrite-table obj))))
             (next-method) )))
 
-(define-method (initialize (obj <rewrite>) args)
+(define-method* (initialize (obj <rewrite>) args)
   (next-method)				; was an :after method
-  (let ((table (make-hash-table 103))
+  (let ((table (make-equal?-hash-table 103))
         (nodes (pattern-data obj))
         (rules (rewrite-rules obj))
         (preset #f))
@@ -1488,7 +1491,7 @@
             (parse-rules rules table)))
     (values)))
 
-(define-method (canonicalize-pattern-data (obj <rewrite>) 
+(define-method* (canonicalize-pattern-data (obj <rewrite>) 
 					  data parser inits)
   inits
   (let ((parse-rewrite-node
@@ -1530,7 +1533,7 @@
               (not (any (lambda (x) (pattern? (rewrite-node-datum x)))
 			 intern))))))
 
-(define-method (map-pattern-data fn (obj <rewrite>))
+(define-method* (map-pattern-data fn (obj <rewrite>))
   (for-each #'(lambda (x) ( fn (rewrite-node-datum x))) ; funcall
 	    (car (pattern-data obj))))
 
@@ -1599,7 +1602,7 @@
                 (err "No rewrite node for ~s." successor)))
       #f)))
 
-(define-method (next-in-pattern (obj <rewrite>))
+(define-method* (next-in-pattern (obj <rewrite>))
   (let ((nodes (pattern-data obj)))
     (when (null? (cdr nodes))
       (let ((count (rewrite-generations obj)))
@@ -1727,22 +1730,22 @@
 (define-macro (%range-random? flags)
   `(logtest ,flags +range-random+))
 
-(define-class <range> (<pattern>)
-  (from :init-value #f :init-keyword :from
-        :init-keyword :initially
-	:accessor range-from)
-  (to :init-value #f :init-keyword :to 
-      :init-keyword :below :init-keyword :pickto
-      :accessor range-to)
-  (downto :init-value #f :init-keyword :downto
-	  :init-keyword :above :accessor range-downto)
-  (by :init-value #f :init-keyword :by 
-      :init-keyword :stepping :accessor range-by)
-  (incf :init-value #f :accessor range-incf)
-  (test :init-value #f :accessor range-test)
+(define-class* <range> (<pattern>)
+  ((from :init-value #f :init-keyword :from
+         :init-keyword :initially
+         :accessor range-from)
+   (to :init-value #f :init-keyword :to 
+       :init-keyword :below :init-keyword :pickto
+       :accessor range-to)
+   (downto :init-value #f :init-keyword :downto
+           :init-keyword :above :accessor range-downto)
+   (by :init-value #f :init-keyword :by 
+       :init-keyword :stepping :accessor range-by)
+   (incf :init-value #f :accessor range-incf)
+   (test :init-value #f :accessor range-test))
   :name 'range)
 
-(define-method (pattern-external-inits (obj <range>))
+(define-method* (pattern-external-inits (obj <range>))
   ;; from to downto above below by pickto
   (let ((bits (pattern-flags obj)))
     (append
@@ -1767,7 +1770,7 @@
            (expand-pattern-value (range-by obj)))
      (next-method))))
 
-(define-method (initialize (obj <range>) args)
+(define-method* (initialize (obj <range>) args)
   (next-method) ; was an :after method
   (let* ((raw (pattern-data obj))
 	 (data (car raw))
@@ -1826,7 +1829,7 @@
     (set! (pattern-flags obj) (logior (pattern-flags obj) bits))
     (set! (range-test obj) test)))
 
-(define-method (canonicalize-pattern-data (obj <range>) 
+(define-method* (canonicalize-pattern-data (obj <range>) 
 					  data parser inits)
   ;; this is called BEFORE range's initialize-instance method
   data parser
@@ -1895,7 +1898,7 @@
   (or (not (third data)) ; no current FROM
       (and test (apply test (cddr data)))))
 
-(define-method (next-in-pattern (obj <range>))
+(define-method* (next-in-pattern (obj <range>))
   (let ((bits (pattern-flags obj))
         (data (pattern-data obj))
         (test (range-test obj))
@@ -1944,7 +1947,7 @@
       (period-count-set! (pattern-period obj) 1))
     from))
 
-(define-method (reset-period (obj <range>))
+(define-method* (reset-period (obj <range>))
   (let ((val (next-method))) ; was an :after method
     ;; reset the bounds if not dynamic
     (let ((bits (pattern-flags obj)))
@@ -1997,24 +2000,24 @@
 ;;; transposer methods
 ;;; WHY ISNT THIS A SUBCLASS OF PATTERN??
 
-(define-class <transposer> (<container>)
-  (of :init-keyword :of :accessor transposer-of)
-  (by :accessor transposer-by :init-keyword :by
-      :init-keyword :stepping :init-keyword :on)
-  (form :accessor transposer-form :init-value #f
-	:init-keyword :form)
-  (mod :accessor transposer-mod :init-value #f 
-       :init-keyword :mod)
-  (scale :accessor transposer-scale 
-	 :init-thunk (lambda () *scale*)
-	 :init-keyword :scale)
+(define-class* <transposer> (<container>)
+  ((of :init-keyword :of :accessor transposer-of)
+   (by :accessor transposer-by :init-keyword :by
+       :init-keyword :stepping :init-keyword :on)
+   (form :accessor transposer-form :init-value #f
+         :init-keyword :form)
+   (mod :accessor transposer-mod :init-value #f 
+        :init-keyword :mod)
+   (scale :accessor transposer-scale 
+          :init-thunk (lambda () *scale*)
+          :init-keyword :scale))
   :name 'transposer)
 
 ;; REMOVE at some ppoint..
 
-(define-method (pattern? (obj <transposer>)) obj)
+(define-method* (pattern? (obj <transposer>)) obj)
 
-(define-method (make-load-form (obj <transposer>))
+(define-method* (make-load-form (obj <transposer>))
   `(make-instance <transposer>
      ,@(append
         (list ':of (expand-pattern-value (transposer-of obj)))
@@ -2041,7 +2044,7 @@
                 `(find-object
                   (quote ,(object-name (transposer-scale obj)))))))))
 
-(define-method (initialize (obj <transposer>) args)
+(define-method* (initialize (obj <transposer>) args)
   (next-method) ; was :after method
   (let ((data #f)
 	(stepping? #f))
@@ -2084,11 +2087,11 @@
               (list data #f)
               (list #f data))))))
 
-(define-method (eop? (obj <transposer>))
+(define-method* (eop? (obj <transposer>))
   (eop? (transposer-of obj)))
 
 ;; THis was next-1 !
-(define-method (next-1 (obj <transposer>))
+(define-method* (next-1 (obj <transposer>))
   (let* ((by (transposer-by obj))
 	 (step? (third by))
 	 (scale (transposer-scale obj))
@@ -2136,10 +2139,11 @@
 ;;; chord
 ;;;
 
-(define-class <chord> (<pattern>)
+(define-class* <chord> (<pattern>)
+  ()
   :name 'chord)
 
-(define-method (pattern-external-inits (obj <chord>))
+(define-method* (pattern-external-inits (obj <chord>))
   (append
    (list ':of
          (if (null? (cdr (pattern-data obj)))
@@ -2149,7 +2153,7 @@
                              (expand-pattern-value x)))))
    (next-method)))
 
-(define-method (canonicalize-pattern-data (pat <chord>) 
+(define-method* (canonicalize-pattern-data (pat <chord>) 
 					  data parser inits)
   inits
   (if parser
@@ -2160,10 +2164,10 @@
           finally (return (values list 1 (= streams 0))))
     (values data 1 (not (any #'pattern? data)))))
 
-(define-method (default-period-length (obj <chord>))
+(define-method* (default-period-length (obj <chord>))
   1)
 
-(define-method (next-in-pattern (obj <chord>))
+(define-method* (next-in-pattern (obj <chord>))
   (let ((data (pattern-data obj)))
     (if (logtest (pattern-flags obj) +constant-data+)
       data
@@ -2177,32 +2181,32 @@
 ;;; (pval x)
 ;;;
 
-(define-class <pval> ()
-  (thunk :init-keyword :of :accessor pval-thunk)
+(define-class* <pval> ()
+  ((thunk :init-keyword :of :accessor pval-thunk))
   :name 'pval)
 
-(define-method (make-load-form (obj <pval>))
+(define-method* (make-load-form (obj <pval>))
   `(pval ,(pval-thunk obj)))
 
-(define-method (pattern? (obj <pval>)) obj)
+(define-method* (pattern? (obj <pval>)) obj)
 
 (define-macro (pval expr)
   `(make-instance <pval> :of (lambda () ,expr)))
 
-(define-method (next-1 (obj <pval>))
+(define-method* (next-1 (obj <pval>))
   ( (pval-thunk obj) )) ; funcall
 
 ;;;
 ;;; Join (defmultiple-item)
 ;;;
 
-(define-class <join> (<pattern>)
-  (format :accessor join-format :init-keyword :format
-          :init-value #f)
-  (cache :accessor join-cache :init-value #f)
+(define-class* <join> (<pattern>)
+  ((format :accessor join-format :init-keyword :format
+           :init-value #f)
+   (cache :accessor join-cache :init-value #f))
   :name 'join)
 
-(define-method (pattern-external-inits (obj <join>))
+(define-method* (pattern-external-inits (obj <join>))
   (append (list ':of (cons 'list
                            (loop for x in (pattern-data obj)
                                  collect (expand-pattern-value x))))
@@ -2210,7 +2214,7 @@
                           (join-format obj)))
           (next-method)))
 
-(define-method (initialize (obj <join>) args)
+(define-method* (initialize (obj <join>) args)
   (next-method ) ; was :after
   (let* ((per (pattern-period obj))
          (len (length (pattern-data obj)))
@@ -2271,7 +2275,7 @@
       (set! (join-cache obj) ppat))
     (values)))
 
-(define-method (canonicalize-pattern-data (obj <join>) data parser inits)
+(define-method* (canonicalize-pattern-data (obj <join>) data parser inits)
   inits
   (let ((subs (not (any #'pattern? data))))
     (if parser
@@ -2284,7 +2288,7 @@
                             (not subs))))
       (values data (if subs 1 most-positive-fixnum) (not subs)))))
 
-(define-method (reset-period (obj <join>))
+(define-method* (reset-period (obj <join>))
   ;; update data from patterns that get read once per period.
   (let ((val (next-method)))            ; was an :after method
     (let ((c (join-cache obj)))
@@ -2309,7 +2313,7 @@
     (set! data (cdr data))
     (set! fmat (cdr fmat))))
 
-(define-method (next-in-pattern (obj <join>))
+(define-method* (next-in-pattern (obj <join>))
   (let ((next (list #f))
         (data (pattern-data obj))
         (fmat (join-format obj) ))
@@ -2337,24 +2341,24 @@
 ;;; copier return multiple copies of a pattern's periods
 ;;;
 
-(define-class <copier> (<pattern>)
-  (source :accessor copier-source)
-  (repfor :accessor copier-repfor :init-value #f
-          :init-keyword :repeat-for)
+(define-class* <copier> (<pattern>)
+  ((source :accessor copier-source)
+   (repfor :accessor copier-repfor :init-value #f
+           :init-keyword :repeat-for))
   :name 'copier)
 
-(define-method (pattern-external-inits (obj <copier>))
+(define-method* (pattern-external-inits (obj <copier>))
   (append (list ':of (expand-pattern-value (copier-source obj)))
           (next-method)))
 
-(define-method (initialize (obj <copier>) args)
+(define-method* (initialize (obj <copier>) args)
   (next-method)
   (let ((data (pattern-data obj)))
     (set! (copier-source obj) (car data))
     (set! (pattern-data obj) (list))
     (values)))
 
-(define-method (next-in-pattern (obj <copier>))
+(define-method* (next-in-pattern (obj <copier>))
   (let ((data (pattern-data obj)))
     (if (null? data)
       (let* ((per (pattern-period obj))

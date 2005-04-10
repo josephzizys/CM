@@ -81,7 +81,7 @@
   (:parameters time channel bend )
   (:writers ))
 
-(define-method (midi-event-data1 (obj <midi-pitch-bend>))
+(define-method* (midi-event-data1 (obj <midi-pitch-bend>))
   ;; return lsb of 2comp bend value
   (multiple-value-bind (ms7b ls7b)
       (floor (+ (midi-pitch-bend-bend obj) 8192) 128)
@@ -89,7 +89,7 @@
     ;; return lsb
     ls7b))
 
-(define-method (midi-event-data2 (obj <midi-pitch-bend>))
+(define-method* (midi-event-data2 (obj <midi-pitch-bend>))
   ;; return msb of 2comp bend value
   (multiple-value-bind (ms7b ls7b)
       (floor (+ (midi-pitch-bend-bend obj) 8192) 128)
@@ -339,7 +339,7 @@
 ;;; write-event for midi object and midifiles
 ;;;
 
-(define-method (write-event (obj <midi>) (mf <midi-file-stream>) time)
+(define-method* (write-event (obj <midi>) (mf <midi-file-stream>) time)
   (let ((beats time)
         (scaler (midi-file-scaler mf))
         (keyn (midi-keynum obj))
@@ -384,7 +384,7 @@
                  %offs))
     (values)))
 
-;;(define-method (write-event (obj <midimsg>) (mf <midi-file-stream>) time)
+;;(define-method* (write-event (obj <midimsg>) (mf <midi-file-stream>) time)
 ;;  (let ((data (midimsg-data obj))
 ;;        (beats time)
 ;;        (last #f))
@@ -404,7 +404,7 @@
 ;;           (midi-write-message (midimsg-msg obj) mf 0 data))) 
 ;;    (values)))
 
-(define-method (write-event (obj <midi-event>) (mf <midi-file-stream>)
+(define-method* (write-event (obj <midi-event>) (mf <midi-file-stream>)
                             time)
   (multiple-value-bind (msg data)
       (midi-event->midi-message obj)
@@ -431,7 +431,7 @@
 ;;; to a midifile. The default method signals an error.
 ;;; 
 
-(define-method (object->midi obj) 
+(define-method* (object->midi obj) 
   (err "No object->midi method defined for ~s." obj))
 
 ;;;
@@ -439,7 +439,7 @@
 ;;; convert the object to the midi message(s) to output.
 ;;;
 
-(define-method (write-event (obj <object>) (mf <midi-file-stream>) scoretime)
+(define-method* (write-event (obj <object>) (mf <midi-file-stream>) scoretime)
   (write-event (object->midi obj) mf scoretime))
 
 ;;;
@@ -454,7 +454,7 @@
 (define (midi-channel->name chan)
   (vector-ref midi-channel-names chan))  
 
-(define-method (write-event (obj <midi>) (fil <clm-stream>) scoretime)
+(define-method* (write-event (obj <midi>) (fil <clm-stream>) scoretime)
   (let ((ins (midi-channel->name (midi-channel obj))))
     (if ins
       (format (io-open fil) "(~a ~s ~s ~s ~s)~%"
@@ -464,7 +464,7 @@
 	      (hertz (midi-keynum obj))
 	      (midi-amplitude obj)))))
 
-(define-method (write-event (obj <midi>) (fil <sco-stream>) scoretime)
+(define-method* (write-event (obj <midi>) (fil <sco-stream>) scoretime)
   (let ((ins (midi-channel->name (midi-channel obj))))
     (if ins
       (format (io-open fil) "~a ~s ~s ~s ~s~%"
@@ -474,7 +474,7 @@
 	      (hertz (midi-keynum obj))
 	      (midi-amplitude obj)))))
 
-(define-method (write-event (obj <midi>) (fil <clm-audio-stream>) scoretime)
+(define-method* (write-event (obj <midi>) (fil <clm-audio-stream>) scoretime)
   (let ((ins (midi-channel->name (midi-channel obj))))
     (if ins
       ( (symbol-function ins)		; funcall
@@ -499,7 +499,7 @@
   offset  ; time offset: (ticks/div)*scaler 
   )
 
-(define-method (import-events (io <midi-file-stream>) . args)
+(define-method* (import-events (io <midi-file-stream>) . args)
   (with-args (args &key (tracks #t) seq meta-exclude channel-exclude 
                    (time-format ':beats ) tempo exclude-tracks
                    (keynum-format ':keynum)
@@ -771,7 +771,7 @@
                                 note-off-stack channel-exclude 
                                 meta-exclude)
   (let* ((data '())
-         (tabl (make-hash-table 31)))
+         (tabl (make-equal?-hash-table 31)))
     (let ((mapper
            (lambda (mf)
              (let* ((b (midi-file-ticks mf))

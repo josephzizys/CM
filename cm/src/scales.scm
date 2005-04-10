@@ -33,24 +33,24 @@
 ;;; inherited slot definition
 ;;;
 
-(define-class <scale> (<container>)
-  (octave :accessor scale-octave)
-  (lowest :accessor scale-lowest :init-value #f
-	  :init-keyword :lowest)
-  (divisions :accessor scale-divisions)
-  (into :accessor scale-into)
-  (keynum-offset :init-value 0 :accessor scale-keynum-offset
-		 :init-keyword :keynum-offset)
+(define-class* <scale> (<container>)
+  ((octave :accessor scale-octave)
+   (lowest :accessor scale-lowest :init-value #f
+           :init-keyword :lowest)
+   (divisions :accessor scale-divisions)
+   (into :accessor scale-into)
+   (keynum-offset :init-value 0 :accessor scale-keynum-offset
+                  :init-keyword :keynum-offset))
   :name 'scale)
 
-(define-class <tuning> (<scale>)
-  (steps :init-value '() :accessor scale-steps
-	 :init-keyword :cents :init-keyword :ratios)
-  (table :accessor scale-table :init-value 10 
-	 :init-keyword :octaves)
-  (defoct :init-value 4 :init-keyword :default-octave
-	  :accessor scale-default-octave)
-  (octave-offset :init-value 0 :accessor scale-octave-offset )
+(define-class* <tuning> (<scale>)
+  ((steps :init-value '() :accessor scale-steps
+          :init-keyword :cents :init-keyword :ratios)
+   (table :accessor scale-table :init-value 10 
+          :init-keyword :octaves)
+   (defoct :init-value 4 :init-keyword :default-octave
+           :accessor scale-default-octave)
+   (octave-offset :init-value 0 :accessor scale-octave-offset))
   :name 'tuning)
 
 ;;;
@@ -58,14 +58,14 @@
 ;;; expressed as notes, 1/2 steps or encoded intervals.
 ;;;        
 
-(define-class <mode> (<scale>)
-  (steps :init-value '() :accessor scale-steps
-	 :init-keyword :steps :init-keyword :degrees
-         :init-keyword :notes)
-  (lowest :accessor scale-lowest :init-value #f :init-keyword :tonic)
-  (tuning :init-thunk (lambda () *chromatic-scale*)
-          :init-keyword :scale
-          :accessor mode-tuning )
+(define-class* <mode> (<scale>)
+  ((steps :init-value '() :accessor scale-steps
+          :init-keyword :steps :init-keyword :degrees
+          :init-keyword :notes)
+   (lowest :accessor scale-lowest :init-value #f :init-keyword :tonic)
+   (tuning :init-thunk (lambda () *chromatic-scale*)
+           :init-keyword :scale
+           :accessor mode-tuning))
   :name 'mode)
 
 ;;;
@@ -80,7 +80,7 @@
   name				; note name without octave
   accidental)			; #f or int -2:2 (= ff f n s ss)
 
-(define-method (initialize (obj <tuning>) args)
+(define-method* (initialize (obj <tuning>) args)
   (next-method) ; was an after method
   (let ((extern #f)
         (steps? #t)  ; if t spec is increments between degrees
@@ -214,7 +214,7 @@
       ;; :octaves init sets boundaries for note name
       ;; generation. 
       (let ((octaves (scale-table obj))
-	    (table (make-hash-table 103))
+	    (table (make-equal?-hash-table 103))
 	    (degrees
 	     (loop for deg in syms
 		   for i from 0
@@ -333,13 +333,13 @@
 ;;; Mode methods
 ;;;
 
-(define-method (mode-tuning (obj <scale>))
+(define-method* (mode-tuning (obj <scale>))
   #f)
 
-(define-method (scale-default-octave (obj <mode>))
+(define-method* (scale-default-octave (obj <mode>))
   (scale-default-octave (mode-tuning obj)))
 
-(define-method (scale-table (obj <mode>))
+(define-method* (scale-table (obj <mode>))
   (scale-table (mode-tuning obj)))
 
 (define (octave-equivalent note . args)
@@ -381,7 +381,7 @@
       (set! old n))
     (reverse! res)))
 
-(define-method (initialize (obj <mode>) args)
+(define-method* (initialize (obj <mode>) args)
   (next-method)
   (let* ((spec #f)
          (owner (mode-tuning obj))
@@ -490,7 +490,7 @@
 ; (define s (new mode :steps '(2 1 2 1 1)))
 ; (define b (new mode :steps '(2 1 2 3 2 3 3 2 1 2 2 1)))
 
-(define-method (print-object (obj <mode>) stream)
+(define-method* (print-object (obj <mode>) stream)
   (let* ((name (object-name obj))
          (low (scale-lowest obj))
          (pos (if (= 0 (sd-octave low))
@@ -505,7 +505,7 @@
 ;;; tuning and mode lookup functions
 ;;;
 
-(define-method (tuning->mode (mode <mode>) keynum force?)
+(define-method* (tuning->mode (mode <mode>) keynum force?)
   ;; if force? is true then convert tuning keynum into
   ;; modal coordinates, othewise return false if keynum is
   ;; not in mode.
@@ -530,7 +530,7 @@
             deg)
          #f))))
 
-(define-method (mode->tuning (mode <mode>) keynum return)
+(define-method* (mode->tuning (mode <mode>) keynum return)
   ;; convert keynum in modal coordinates to tuning coordinates
   (let ((scale (mode-tuning mode))
         (div (scale-divisions mode)) ; num steps in mode's own octave
@@ -561,7 +561,7 @@
               (tuning-keynum->hertz scale num )
               num)))))))
 
-(define-method (tuning-hertz->keynum (obj <tuning>) hz)
+(define-method* (tuning-hertz->keynum (obj <tuning>) hz)
   ;; returns a floating point keynum for equal tunings
   ;; or an integer keynum rounded to the nearest degree
   ;; in an unequal tuning.
@@ -609,7 +609,7 @@
               (set! int (+ 1 i))
               (set! into (cdr into)))))))))
 
-(define-method (tuning-hertz->note (scale <tuning>) hz acci err?)
+(define-method* (tuning-hertz->note (scale <tuning>) hz acci err?)
   (tuning-keynum->note scale (tuning-hertz->keynum scale hz)
                        acci err?))
 
@@ -617,7 +617,7 @@
 ;;; keynum conversion to hertz, note and keynum in other scale.
 ;;;
 
-(define-method (tuning-keynum->hertz (obj <tuning>) knum)
+(define-method* (tuning-keynum->hertz (obj <tuning>) knum)
   (let ((low (scale-lowest obj))
 	(off (scale-keynum-offset obj))
 	(div (scale-divisions obj))
@@ -632,7 +632,7 @@
 	   (list-ref (scale-steps obj)
 		     (inexact->exact (floor step))))))))
 
-(define-method (tuning-keynum->note (obj <tuning>) knum acci err?)
+(define-method* (tuning-keynum->note (obj <tuning>) knum acci err?)
   ;; if acci is non-nil the note matching that accidental is returned.
   ;; acci can also be an ordered preference list of accidentals.
   (let* ((table (scale-table obj))
@@ -670,7 +670,7 @@
 
 (define %oct #f)
 
-(define-method (tuning-note->hertz (obj <tuning>) note err?)
+(define-method* (tuning-note->hertz (obj <tuning>) note err?)
   (let* ((table (scale-table obj))
 	 (entries (and table (scale-ref table note)))
          (entry (and entries (first entries))))
@@ -694,7 +694,7 @@
 ;;; tuning-note->keynum converts note to keynum via hashtable
 ;;;
 
-(define-method (tuning-note->keynum (obj <tuning>) note err?)
+(define-method* (tuning-note->keynum (obj <tuning>) note err?)
   (let* ((table (scale-table obj))
 	 (entries (and table (scale-ref table note)))
          (entry (and entries (first entries))))
@@ -715,7 +715,7 @@
           (err "No note table defined in ~s." obj))
         #f))))
 
-(define-method (tuning-note->note (obj <tuning>) note acci err?)
+(define-method* (tuning-note->note (obj <tuning>) note acci err?)
   ;; converts notes witout octave to current octave.
   (if acci
     (tuning-keynum->note obj (tuning-note->keynum obj note err?)
@@ -1041,7 +1041,7 @@
 	   (if (number? a) a (tuning-note->keynum scale a #t)))
       b a)))
 
-(define-method (scale-mod (freq <number>) modulus . args)
+(define-method* (scale-mod (freq <number>) modulus . args)
   (with-args (args &key (offset #t) (in *scale*) accidental)
     accidental
     (let* ((div (scale-divisions in))
@@ -1052,13 +1052,13 @@
 		  offset)))
       (+ val (mod (- freq val) modulus)))))
 
-(define-method (scale-mod (freq <symbol>) modulus . args)
+(define-method* (scale-mod (freq <symbol>) modulus . args)
   (with-args (args &key (offset t) (in *scale*) accidental)
     (tuning-keynum->note in (scale-mod (keynum freq) modulus
 				       :offset offset :in in)
 			 accidental #t)))
 
-(define-method (scale-mod (freq <pair>) modulus  . args)
+(define-method* (scale-mod (freq <pair>) modulus  . args)
   (with-args (args &key (offset #t) (in *scale*) accidental)
     (if (eq? offset #t)
       (set! offset (first freq)))
@@ -1067,7 +1067,7 @@
 			     :offset offset
 			     :accidental accidental))))
 
-(define-method (note-in-scale? note (scale <scale>))
+(define-method* (note-in-scale? note (scale <scale>))
   (let ((table (scale-table scale)))
     (and table (scale-ref table note) note)))
 
@@ -1092,13 +1092,13 @@
 ;;; transpose
 ;;;
 
-(define-method (transpose (note <pair>) int . args)
+(define-method* (transpose (note <pair>) int . args)
   (with-args (args &optional (scale *scale*))
     (with-default-octave scale
       (loop for n in note
 	    collect (transpose n int scale)))))
 
-(define-method (transpose (note <symbol>) int . args)
+(define-method* (transpose (note <symbol>) int . args)
   (with-args (args &optional (scale *scale*))
     (if (eq? note 'r)
       note
@@ -1156,7 +1156,7 @@
 	(err "Don't know how to transpose ~s by ~s." 
 	     note int)))))
 
-(define-method (transpose (note <number>) int . args)
+(define-method* (transpose (note <number>) int . args)
   (with-args (args &optional (scale *scale*))
     (if (number? int)
       (if (and (integer? note)
@@ -1215,7 +1215,7 @@
 	(err "Don't know how to transpose ~s by ~s." 
              note int)))))
 
-(define-method (transpose (obj <mode>) note . args)
+(define-method* (transpose (obj <mode>) note . args)
   (with-args (args &optional (scale *scale*))
     (set! scale (mode-tuning obj))
     (unless (note-in-scale? note scale)
@@ -1238,14 +1238,14 @@
 ;;; Invert
 ;;;
 
-;(define-method (invert (lst <pair>) . args)
+;(define-method* (invert (lst <pair>) . args)
 ;  (with-args (args &optional point (scale *scale*))
 ;    (let ((center (keynum (or point (first lst)) :in scale )))
 ;      (loop for n in lst
 ;	    for i = (* (- center (keynum n )) 2)
 ;	    collect (transpose n i scale)))))
 
-(define-method (invert (lst <pair>) . args)
+(define-method* (invert (lst <pair>) . args)
   (with-args (args &optional pc?)
     (let* ((n (car lst))
            (k (keynum n)))
@@ -1257,12 +1257,12 @@
 ;;; interval
 ;;;
 
-(define-method (interval (ref <pair>) . args)
+(define-method* (interval (ref <pair>) . args)
   (with-args (args &optional ref2)
     ref2
     (interval (first ref) (second ref))))
 
-(define-method (interval (ref <integer>) . args)
+(define-method* (interval (ref <integer>) . args)
   (with-args (args &optional ref2)
     ;; interpret two numbers as steps and letters spanned.
     ;; ref2 is treated as the absolute letter span counting
@@ -1307,7 +1307,7 @@
 	(encode-interval (first (vector-ref interval-names type))
 			 (if (< steps 0) (- int) int))))))
       
-(define-method (interval (ref <symbol>) . args)
+(define-method* (interval (ref <symbol>) . args)
   (with-args (args &optional ref2)
     ;; if ref and ref2 are notes then return interval
     ;; distance between then (if ref is a note class

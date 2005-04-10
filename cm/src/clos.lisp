@@ -77,11 +77,11 @@
   (defmethod (setf io-class-file-types) (value class)
     (set-meta-info class :file-types value))
   
-  (defmethod io-class-mime-type ((class standard-class))
-    (get-meta-info class :mime-type))
-  
-  (defmethod (setf io-class-mime-type) (value class)
-    (set-meta-info class :mime-type value))
+;  (defmethod io-class-mime-type ((class standard-class))
+;    (get-meta-info class :mime-type))
+;  
+;  (defmethod (setf io-class-mime-type) (value class)
+;    (set-meta-info class :mime-type value))
 
   (defmethod io-class-output-hook ((class standard-class))
     (get-meta-info class :output-hook))

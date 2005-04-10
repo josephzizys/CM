@@ -272,13 +272,13 @@
 ;;; schedule-object inserts object into queue
 ;;;
 
-(define-method (schedule-object (obj <object>) start)
+(define-method* (schedule-object (obj <object>) start)
   ;; this was defined for EVENT. now works on any
   ;; object that has an object-time accessor.
   ;; start is the score time of the parent container
   (enqueue obj (+ start (object-time obj)) #f))
 
-;(define-method (schedule-object (obj <process>) start)
+;(define-method* (schedule-object (obj <process>) start)
 ;  (let ((mystart (+ start (object-time obj)))
 ;	;; call closure to produce process funcs
 ;        (procs ( (process-closure obj)
@@ -288,14 +288,14 @@
 ;        (enqueue p mystart mystart))
 ;      (enqueue procs mystart mystart))))
 
-(define-method (schedule-object (obj <procedure>) start)
+(define-method* (schedule-object (obj <procedure>) start)
   (enqueue obj start start))
 
-(define-method (schedule-object (obj <pair>) start)
+(define-method* (schedule-object (obj <pair>) start)
   ;; THIS IS WRONG. IT SHOULD RECURSE
   (dolist (o obj) (enqueue o start start)))
 
-(define-method (schedule-object (obj <seq>) start)
+(define-method* (schedule-object (obj <seq>) start)
   ;; start is the score time of the parent container
   ;; the seq enqueues its list of subobjects thus
   ;; allowing multiple enqueues of the same seq.
@@ -309,7 +309,7 @@
 ;;; unschedule-object, currently a noop.
 ;;;
 
-(define-method (unschedule-object obj . recurse)
+(define-method* (unschedule-object obj . recurse)
   obj recurse ; gag 'unused var' warning from cltl compilers
   #f)
 
@@ -317,12 +317,12 @@
 ;;; process-events
 ;;;
 
-(define-method (process-events obj time start func)
+(define-method* (process-events obj time start func)
   ;; call the function on the time and start
   start ; gag 'unused var' warning from cltl compilers
   (func obj time))
 
-(define-method (process-events (head <pair>) time start func)
+(define-method* (process-events (head <pair>) time start func)
   time   ; gag 'unused var' warning from cltl compilers
   (let ((event #f)
         (next #f))
@@ -349,7 +349,7 @@
 
 ;(set! *print-object-terse* #t)
 ;
-;(define-method (write-event (e <midi>) io time)
+;(define-method* (write-event (e <midi>) io time)
 ;  (write (list 'hiho time  e))
 ;  (newline))
 ;
@@ -382,7 +382,7 @@
 (define *process* #f)
 (define *handler* #f)
 
-(define-method (process-events (func <procedure>)
+(define-method* (process-events (func <procedure>)
 			       qtime qstart handler)
   (set! *process* func)
   (set! *qtime* qtime)
@@ -443,20 +443,20 @@
 (define (wait-until time)
   (set! *qnext* (+ *qstart* time)))
 
-(define-method (sprout (obj <object>) . args)
+(define-method* (sprout (obj <object>) . args)
   (with-args (args &optional time)
     time
     (if *queue*
       (schedule-object obj *qstart*)
       (err "Calling 'sprout' outside of scheduler?"))))
 
-(define-method (sprout (obj <procedure>) . args)
+(define-method* (sprout (obj <procedure>) . args)
   (with-args (args &optional time)
     (if *queue*
       (enqueue obj (+ *qstart* time) (+ *qstart* time))
       (rt-sprout obj time))))
 
-(define-method (sprout (obj <pair>) . args)
+(define-method* (sprout (obj <pair>) . args)
   (with-args (args &optional time)
     time
     (if *queue*

@@ -52,25 +52,24 @@
                 (newline fp)
                 (values)))))
 
-(define-class <sco-stream> (<event-stream>)
-  (header :init-value #f :init-keyword :header
-	  :accessor sco-stream-header)
-  (userargs :accessor sco-userargs
-            :init-value '())
+(define-class* <sco-stream> (<event-stream>)
+  ((header :init-value #f :init-keyword :header
+           :accessor sco-stream-header)
+   (userargs :accessor sco-userargs
+             :init-value '()))
   :name 'sco-stream
   :metaclass <io-class>
-  :mime-type "text/x-csound-score"
   :file-types '("*.sco")
   :definer (function make-sco-writer))
 
-(define-method (io-handler-args? (io <sco-stream>))
+(define-method* (io-handler-args? (io <sco-stream>))
   io
   #t)
 
-(define-method (io-handler-args (io <sco-stream>))
+(define-method* (io-handler-args (io <sco-stream>))
   (sco-userargs io))
 
-(define-method (set-io-handler-args! (io <sco-stream>) args)
+(define-method* (set-io-handler-args! (io <sco-stream>) args)
   (set! (sco-userargs io) args)
   (values))
 
@@ -108,7 +107,7 @@
 ;    amp)
 ;  (:parameters time dur frq amp))
 
-(define-method (initialize-io (io <sco-stream>))
+(define-method* (initialize-io (io <sco-stream>))
   (format (io-open io)
 	  "; ~a output on ~a~%"
 	  (cm-version)
@@ -133,7 +132,7 @@
   (:writers )            ; dont define output methods
   )
 
-(define-method (object-name (obj <i>))
+(define-method* (object-name (obj <i>))
   ;; if ins slot is bound use it, otherwise use class name
   (if (slot-bound? obj 'ins)
     (format #f "i~a" (slot-ref obj 'ins))
@@ -148,7 +147,7 @@
   (:writers )            ; dont define output methods
   )
 
-(define-method (object-name (obj <f>))
+(define-method* (object-name (obj <f>))
   ;; if num slot is bound use it, otherwise use class name
   (if (slot-bound? obj 'num)
     (format #f "f~a" (slot-ref obj 'num))
@@ -251,7 +250,7 @@
                      (string->symbol (format #f "i~a" ,i))) 
                ,d)))))
 
-(define-method (import-events (io <sco-stream>) . args)
+(define-method* (import-events (io <sco-stream>) . args)
   (with-args (args &key (output))
     (let ((secs 0)
           (rate 60)

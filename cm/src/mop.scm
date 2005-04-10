@@ -27,12 +27,12 @@
 ;;; metaclass for events (classes with parameters).
 ;;;
 
-(define-class <parameterized-class> (<class>)
-  (pars :init-value '() :init-keyword :parameters
-	:accessor class-parameters)
+(define-class* <parameterized-class> (<class>)
+  ((pars :init-value '() :init-keyword :parameters
+         :accessor class-parameters))
   :name 'parameterized-class)
 
-(define-method (validate-superclass (class <parameterized-class>)
+(define-method* (validate-superclass (class <parameterized-class>)
                                     (superclass <class>))
   ;; yes to any class w/metaclass parmeterized-class
   #t)
@@ -41,7 +41,7 @@
 ;;; default method returns nil
 ;;;
 
-(define-method (class-parameters (obj <top>))
+(define-method* (class-parameters (obj <top>))
   obj
   #f)
 
@@ -59,20 +59,20 @@
 ;;; write-event method for a class with parameters. see clm.sco for an
 ;;; example of this.
 
-(define-class <io-class> (<class>)
-  (handles :init-value '() :init-keyword :file-types 
-	   :accessor io-class-file-types)
-  (mime-type :init-value #f :accessor io-class-mime-type
-             :init-keyword :mime-type )
-  (output-hook :init-value #f :init-keyword :output-hook
-	       :accessor io-class-output-hook)
-  (definer :init-value #f :init-keyword :definer
-    :accessor io-class-definer)
-  (versions :init-value #f :init-keyword :versions
-	    :accessor io-class-file-versions)
+(define-class* <io-class> (<class>)
+  ((handles :init-value '() :init-keyword :file-types 
+            :accessor io-class-file-types)
+;   (mime-type :init-value #f :accessor io-class-mime-type
+;              :init-keyword :mime-type )
+   (output-hook :init-value #f :init-keyword :output-hook
+                :accessor io-class-output-hook)
+   (definer :init-value #f :init-keyword :definer
+            :accessor io-class-definer)
+   (versions :init-value #f :init-keyword :versions
+             :accessor io-class-file-versions))
   :name 'io-class)
 
-(define-method (validate-superclass (class <io-class>)
+(define-method* (validate-superclass (class <io-class>)
                                     (superclass <class>))
   ;; yes to any class w/metaclass io-class
   #t)
@@ -81,10 +81,10 @@
 ;;; default methods returns false. these are overridden in
 ;;; level2.lisp for the #-no-metaclass
 
-(define-method (io-class-file-types x) x #f)
-(define-method (io-class-output-hook x) x #f)
-(define-method (io-class-definer x) x #f)
-(define-method (io-class-file-versions x) x #f)
+(define-method* (io-class-file-types x) x #f)
+(define-method* (io-class-output-hook x) x #f)
+(define-method* (io-class-definer x) x #f)
+(define-method* (io-class-file-versions x) x #f)
 
 ;;;
 ;;; parses initialization list for class. the list is a list of
@@ -179,13 +179,13 @@
 ;;; this should probably be changed to use find-class.
 ;;;
 
-(define-method (make-load-form (obj <class>))
+(define-method* (make-load-form (obj <class>))
   (let ((inits (slot-init-forms obj :eval #t)))
     `(make-instance ,(string->symbol
 	              (format #f "<~a>" (class-name (class-of obj))))
        ,@inits)))
 
-(define-method (describe-object (x <object>) )
+(define-method* (describe-object (x <object>) )
   (let ((c (class-of x)))
     (format #t "~%Class: ~s" (class-name c))
     (format #t "~%CPL:   ~s" (map #'class-name (compute-cpl c)))

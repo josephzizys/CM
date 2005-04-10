@@ -168,13 +168,11 @@
 ;;;
 
 (defparameter toplevel-ignore
-  '((defmacro loop when unless push pop function)
-    (define-macro loop when unless push pop function)
+  '((define-macro loop when unless push pop function)
     (define scheme-loop read-byte write-byte expand-process
       signum clm:definstrument)
-    (define-accessor object-name)
-    (define-generic t)
-    (define-method describe-object)
+    (define-generic* t)
+    (define-method* describe-object)
     ))
 
 ;;;
@@ -236,7 +234,7 @@
     (list-tail           nil              list-tail->nthcdr)
     (list->string        coerce           list->coerce-string)
     (logbit?             logtest)
-    (make-hash-table     nil              mht->mht)
+    (make-equal?-hash-table     nil              meht->mht)
     (make-list           make-list        make-list->make-list)
     (make-string         make-string      make-string->make-string)
     (make-vector         make-array       make-vector->make-array)
@@ -284,8 +282,8 @@
     
     ;;---- GOOPS:
     
-    (define-method        defmethod        define-method->defmethod)
-    (define-class         defclass         define-class->defclass)
+    (define-method*       defmethod        define-method->defmethod)
+    (define-class*        defclass         define-class->defclass)
     (initialize           initialize-instance )
     (make                 make-instance )
     (is-a?                typep)
@@ -990,7 +988,7 @@
 ;;; HASH TABLES
 ;;; 
 
-(defun mht->mht (form &optional env)
+(defun meht->mht (form &optional env)
   ;; make an hash table using equal test.
   `(make-hash-table :size ,(scheme->cltl (cadr form) env)
                     :test (function equal)))
@@ -1066,14 +1064,14 @@
 (defun define-class->defclass (form &optional env)
   (let ((varname (second form))
         (supvars (third form))
-        (body (cdddr form))
+        (slots (REVERSE (fourth form))) ; reverse slots for later pushes
+        (body (cddddr form))
         name sups
-        (slots '())
         (options '())
         (metaoptions '()))
     
-    (loop while (consp (car body))
-          do (push (pop body) slots))
+    ;(loop while (consp (car body))
+    ;      do (push (pop body) slots))
     ;; slots now in reverse order
     (setf name (class-var->class-name varname))
     (setf sups (loop for v in supvars
@@ -1128,10 +1126,10 @@
              (push `(setf (io-class-file-types ,varname )
                           ,v)
                    metaoptions))
-            (:mime-type
-             (push `(setf (io-class-mime-type ,varname )
-                          ,v)
-                   metaoptions))
+;            (:mime-type
+;             (push `(setf (io-class-mime-type ,varname )
+;                          ,v)
+;                   metaoptions))
             (t 
              (error "Not an defclass option: ~S" p))))
     

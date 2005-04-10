@@ -60,9 +60,6 @@
 ;;;
 ;;;
 
-
-(define pprint pretty-print)
-
 (define (string-read str . args)
   ;; args is: start eoftok
   (let ((len (string-length str))
@@ -118,4 +115,71 @@
   (read-hash-extend char
                     (lambda (arg port)
                       (func (read port)))))
+
+;;;
+
+(define (make-equal?-hash-table  size)
+  (make-hash-table size))
+
+;;;
+;;; printing hacks
+;;;
+
+(define pprint pretty-print)
+
+;;;
+;;; OOP functions
+;;;
+
+(define (find-class name . root)
+  ;; returns a class given its name or #f. optional
+  ;; root class defaults to <top>.
+  (letrec ((fc
+	    (lambda (name class)
+	      (if (null? class)
+		#f
+		(if (pair? class)
+		  (or (fc name (car class))
+		      (fc name (cdr class)))
+		  (if (and (slot-bound? class 'name)
+			   (eq? name (class-name class)))
+		    class
+		    (fc name (class-direct-subclasses class))))))))
+    (fc name (if (null? root) <top> (car root)))))
+
+(define slot-definition-initform slot-definition-init-value)
+
+(define (slot-definition-initargs slotd)
+  (let* ((inits (list #f))
+	 (tail inits))
+    (do ((l (cdr slotd) (cddr l)))
+	((null? l) (cdr inits))
+      (if (eq? (car l) ':init-keyword)
+	(begin (set-cdr! tail (list (cadr l)))
+	       (set! tail (cdr tail)))))))
+
+(define (finalize-class class) #t)
+
+;;;
+;;; CM OOP functions that must be defined:
+
+(define-macro (define-class* name supers slots . options)
+  `(define-class ,name ,supers ,@ (append slots options)))
+
+(define-macro (define-method* formals . body)
+  `(define-method ,formals ,@ body))
+
+(define-macro (define-generic* formals)
+  (if (pair? formals)
+    `(define-generic ,(car formals))
+    `(define-generic ,formals)))
+
+(define (slot-getter-form obj slot)
+  `(slot-ref ,obj ',slot))
+
+(define (slot-setter-form obj slot val)
+  `(slot-set! ,obj ',slot ,val))
+
+
+
 

@@ -15,16 +15,16 @@
 ;;; $Revision$
 ;;; $Date$
 
-(define-class <event-stream> (<container>)
-  (time :accessor object-time)
-  (open :init-value #f :accessor io-open)
-  (stream :init-value #f :init-keyword :stream
-          :accessor event-stream-stream)
-  (direction :init-value #f :accessor io-direction)
-  (version :init-value 0 :accessor file-version
-           :init-keyword :version)
-  (elt-type :init-value :char :accessor file-elt-type
-            :init-keyword :elt-type)
+(define-class* <event-stream> (<container>)
+  ((time :accessor object-time)
+   (open :init-value #f :accessor io-open)
+   (stream :init-value #f :init-keyword :stream
+           :accessor event-stream-stream)
+   (direction :init-value #f :accessor io-direction)
+   (version :init-value 0 :accessor file-version
+            :init-keyword :version)
+   (elt-type :init-value :char :accessor file-elt-type
+             :init-keyword :elt-type))
   :name 'event-stream)
 
 (define (io-classes )
@@ -33,14 +33,14 @@
 (define (io-filename io)
   (object-name io))
 
-(define-generic init-io)
-(define-generic open-io)
-(define-generic close-io)
-(define-generic initialize-io)
-(define-generic deinitialize-io)
-(define-generic play)
-(define-generic write-event)
-(define-generic import-events)
+(define-generic* init-io)
+(define-generic* open-io)
+(define-generic* close-io)
+(define-generic* initialize-io)
+(define-generic* deinitialize-io)
+(define-generic* play)
+(define-generic* write-event)
+(define-generic* import-events)
 
 (define (file-versions? stream)
   (io-class-file-versions (class-of stream)))
@@ -96,19 +96,19 @@
 ;;; classes can specialize this to allow extra args.
 ;;;
 
-(define-generic io-handler-args?)
-(define-generic set-io-handler-args!)
-(define-generic io-handler-args)
+(define-generic* io-handler-args?)
+(define-generic* set-io-handler-args!)
+(define-generic* io-handler-args)
 
-(define-method (io-handler-args? (io <event-stream>))
+(define-method* (io-handler-args? (io <event-stream>))
   io
   #f)
 
-(define-method (set-io-handler-args! (io <event-stream>) args)
+(define-method* (set-io-handler-args! (io <event-stream>) args)
   args
   #f)
 
-(define-method (io-handler-args (io <event-stream>))
+(define-method* (io-handler-args (io <event-stream>))
   io
   #f)
 
@@ -128,11 +128,11 @@
 ;      (set! tail (cddr tail)))
 ;    `(init-io ,name ,@ (cdr  inits))))
 
-(define-method (init-io io . inits)
+(define-method* (init-io io . inits)
   inits  ; gag 'unused var' warning from cltl compilers
   io)
 
-(define-method (init-io (string <string>) . inits)
+(define-method* (init-io (string <string>) . inits)
   (let ((io (find-object string))) ; no type filter
     (if io
       (apply (function init-io) io inits)
@@ -150,7 +150,7 @@
               n))
           (err "~s is not a valid port or file name." string))))))
 
-(define-method (init-io (io <event-stream>) . inits)
+(define-method* (init-io (io <event-stream>) . inits)
   (unless (null? inits)
     (multiple-value-bind (init args)
                          (expand-inits (class-of io) inits #f #t)
@@ -185,17 +185,17 @@
 ;;; INIT-IO
 ;;;
 
-(define-method (open-io (obj <string>) dir . args)
+(define-method* (open-io (obj <string>) dir . args)
   ;; default method assumes obj is string or filename
   (let ((io (apply (function init-io) obj args)))
     (apply (function open-io) io dir args)))
 
-;(define-method (open-io (obj <event-stream>) dir . args)
+;(define-method* (open-io (obj <event-stream>) dir . args)
 ;  (format #t "~%open-io: new main method for event-stream")
 ;  dir args
 ;  obj)
 
-(define-method (open-io (obj <event-stream>) dir . args)
+(define-method* (open-io (obj <event-stream>) dir . args)
   args  ; gag 'unused var' warning from cltl compilers
   (let ((file #f)
 	(name #f))
@@ -223,7 +223,7 @@
     (set! (io-open obj) file)
     obj))
 
-(define-method (open-io (obj <seq>) dir . args)
+(define-method* (open-io (obj <seq>) dir . args)
   dir args  ; gag 'unused var' warnings from cltl compilers
   (remove-subobjects obj)
   obj)
@@ -232,11 +232,11 @@
 ;;; close-io
 ;;;
 
-(define-method (close-io io .  mode)
+(define-method* (close-io io .  mode)
   mode  ; gag 'unused var' warnings from cltl compilers
   io)
 
-(define-method (close-io (io <event-stream>) . mode)
+(define-method* (close-io (io <event-stream>) . mode)
   mode  ; gag 'unused var' warnings from cltl compilers
   (when (io-open io)
     (unless (event-stream-stream io)
@@ -248,10 +248,10 @@
 ;;; initalize-io and deinitialize-io. default methods do nothing.
 ;;;
 
-(define-method (initialize-io obj)
+(define-method* (initialize-io obj)
   obj)
 
-(define-method (deinitialize-io obj)
+(define-method* (deinitialize-io obj)
   obj)
 
 (define (io-open? io)
@@ -353,11 +353,11 @@
 ;;; write-event
 ;;;
 
-(define-method (write-event obj io time)
+(define-method* (write-event obj io time)
   obj io time ; gag 'unused var' warnings from cltl compilers
   )
            
-(define-method (write-event obj (io <seq>) time)
+(define-method* (write-event obj (io <seq>) time)
   (set! (object-time obj) time)
   (insert-object obj io))
 
@@ -365,7 +365,7 @@
 ;;; import-events
 ;;;
 
-(define-method (import-events (file <string>) . args )
+(define-method* (import-events (file <string>) . args )
   (let ((io (init-io file)))
     (apply (function import-events) io args)))
 
@@ -373,10 +373,10 @@
 ;;; play
 ;;;
 
-;(define-method (play (file <string>) . args)
+;(define-method* (play (file <string>) . args)
 ;  (let ((io (apply init-io file args)))
 ;    (apply play io args)))
    
-;(define-method (play file . args)
+;(define-method* (play file . args)
 ;  (format #t "No play method defined for ~s.~%" file))
 

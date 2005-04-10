@@ -14,12 +14,12 @@
 ;;; $Revision$
 ;;; $Date$
 
-(define-method (copy-object (obj <object>))
+(define-method* (copy-object (obj <object>))
   (let ((new (allocate-instance (class-of obj))))
     (fill-object new obj)
     new))
 
-(define-method (fill-object (new <object>) (old <object>))
+(define-method* (fill-object (new <object>) (old <object>))
   (dolist (s (class-slots (class-of old)))
     (let ((n (slot-definition-name s)))
       (when (and (slot-exists? new n) (slot-bound? old n))
@@ -65,8 +65,8 @@
     `(new ,@ form)
     (err "Can't make instance from ~s." form)))
 
-(read-macro-set! #\i #'i-reader)
-(read-macro-set! #\I #'i-reader) ; for cltl.
+(read-macro-set! #\i (function i-reader))
+(read-macro-set! #\I (function i-reader)) ; for cltl.
 
 ;;;
 ;;; cm class definitions. to remain consistent with cltl2 cm class names
@@ -90,16 +90,16 @@
 ;;; containers
 ;;;
 
-(define *dictionary* (make-hash-table 31))
+(define *dictionary* (make-equal?-hash-table 31))
 
-(define-accessor object-name)
+;(define-accessor object-name)
 
-(define-class <container> () 
-  (name :init-value #f :accessor object-name 
-	:init-keyword :name)
+(define-class* <container> () 
+  ((name :init-value #f :accessor object-name 
+         :init-keyword :name))
   :name 'container)
 
-(define-method (print-object (obj <container>) port)
+(define-method* (print-object (obj <container>) port)
   (let ((name (object-name obj)))
     (if name
       (format port "#<~a \"~a\">" 
@@ -109,7 +109,7 @@
 	      (string-downcase (symbol->string (class-name (class-of obj))))
 	      (address->string (object-address obj))))))
 
-(define-method (initialize (obj <container>) args)
+(define-method* (initialize (obj <container>) args)
   (next-method)
   (let ((name (object-name obj)))
     (when name
@@ -123,7 +123,7 @@
 		 obj))
     (values)))
 
-(define-method (make-load-form (obj <container>))
+(define-method* (make-load-form (obj <container>))
   `(make-instance ,(string->symbol
                     (format #f "<~a>" (class-name (class-of obj))))
     ,@ (slot-init-forms obj :eval #t :omit '(subobjects))
@@ -131,9 +131,9 @@
     ,(cons 'list (map (function make-load-form)
                       (subobjects obj)))))
 
-(define-generic rename-object )
+(define-generic* rename-object )
 
-(define-method (rename-object (obj <container>) newname . args)
+(define-method* (rename-object (obj <container>) newname . args)
   (let* ((err? (if (null? args) #t (car args)))
 	 (str (if (string? newname) 
 		newname (format #f "~a" newname)))
@@ -211,26 +211,26 @@
 ;;; seq
 ;;;
 
-(define-class <seq> (<container>) 
-  (time :accessor object-time :init-keyword :time
-	:init-value 0)
-  (subobjects :init-value '() :accessor subobjects ;container-cycl
-	      :init-keyword :subobjects)
+(define-class* <seq> (<container>) 
+  ((time :accessor object-time :init-keyword :time
+         :init-value 0)
+   (subobjects :init-value '() :accessor subobjects ;container-cycl
+               :init-keyword :subobjects))
   :name 'seq)
 
 ;;;
 ;;; default methods for object-name and object-time.
 ;;;
 
-(define-method (object-name (obj <object>))
+(define-method* (object-name (obj <object>))
   (class-name (class-of obj)))
 
-(define-method (object-time (obj <object>)) 0)
+(define-method* (object-time (obj <object>)) 0)
 
-(define-method (subcontainers (obj <object>))
+(define-method* (subcontainers (obj <object>))
   '())
 
-(define-method (subcontainers (obj <seq>))
+(define-method* (subcontainers (obj <seq>))
   (loop for o in (subobjects obj)
         when (is-a? o <container>) collect o))
 
@@ -272,11 +272,11 @@
 	(if recurse (map-subcontainers fn o :key key :recurse recurse))))
     (values)))
 
-(define-generic insert-object)
-(define-generic append-object)
-(define-generic remove-object)
+(define-generic* insert-object)
+(define-generic* append-object)
+(define-generic* remove-object)
 
-(define-method (insert-object (sub <object>) (obj <seq>))
+(define-method* (insert-object (sub <object>) (obj <seq>))
   (let ((earliest? #f)
 	(subs (subobjects obj)))
     (if (null? subs)
@@ -302,7 +302,7 @@
 		top)
 	     (set! subs head))))))))
       
-(define-method (append-object (sub <object>) (obj <seq>))
+(define-method* (append-object (sub <object>) (obj <seq>))
   (let ((subs (subobjects obj)))
     (cond ((null? subs)
 	   (set! subs (list sub))
@@ -311,7 +311,7 @@
 	   (set-cdr! (last-pair subs) (list sub))))
     subs))
 
-(define-method (remove-object sub (obj <seq>))
+(define-method* (remove-object sub (obj <seq>))
   (let ((subs (subobjects obj)))
     (unless (null? subs)
       (if (eq? sub (car subs))
@@ -325,10 +325,10 @@
 	  (set! prev tail))))
     subs))
 
-(define-method (remove-subobjects (obj <seq>))
+(define-method* (remove-subobjects (obj <seq>))
   (set! (subobjects obj) (list)))
 
-(define-method (list-subobjects (obj <seq>) . args)
+(define-method* (list-subobjects (obj <seq>) . args)
   (with-args (args &key start end start-time end-time)
     (let ((subs (subobjects obj)))
       (if (or start-time end-time)
@@ -367,9 +367,9 @@
 ;;;
 ;;;
 
-(define-class <event> () 
-  (time :accessor object-time 
-	:init-keyword :time)
+(define-class* <event> () 
+  ((time :accessor object-time 
+         :init-keyword :time))
   :name 'event)
 
 ;;;

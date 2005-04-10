@@ -77,12 +77,11 @@
                 (newline fp)
                 (values)))))
 
-(define-class <clm-stream> (<event-stream>)
-  (clmargs :init-value '() :accessor clm-args)
+(define-class* <clm-stream> (<event-stream>)
+  ((clmargs :init-value '() :accessor clm-args))
   :metaclass <io-class>           ; moved to the files.
   :name 'clm-stream
   :file-types '("*.clm")
-  :mime-type "text/x-clm-score"
   :definer (function clm-writer))
 
 (define (set-clm-output-hook! fn)
@@ -95,18 +94,18 @@
   (set! (io-class-file-versions <clm-stream>) val)
   (values))
 
-(define-method (io-handler-args? (io <clm-stream>))
+(define-method* (io-handler-args? (io <clm-stream>))
   io
   #t)
 
-(define-method (io-handler-args (io <clm-stream>))
+(define-method* (io-handler-args (io <clm-stream>))
   (clm-args io))
 
-(define-method (set-io-handler-args! (io <clm-stream>) args)
+(define-method* (set-io-handler-args! (io <clm-stream>) args)
   (set! (clm-args io) args)
   (values))
 
-(define-method (initialize-io (io <clm-stream>))
+(define-method* (initialize-io (io <clm-stream>))
   (when (eq? (io-direction io) ':output)
     (format (io-open io)
             ";;; ~a output on ~a~%"
@@ -180,15 +179,14 @@
                     (cdr args))
              (values))))))
 
-(define-class <clm-audio-stream> (<event-stream>)
-  (clmargs :init-value '() :accessor clm-args)
-  (output-trace :init-value :info
-		:init-keyword :trace-output
-		:accessor audio-file-output-trace)
+(define-class* <clm-audio-stream> (<event-stream>)
+  ((clmargs :init-value '() :accessor clm-args)
+   (output-trace :init-value :info
+                 :init-keyword :trace-output
+                 :accessor audio-file-output-trace))
   :name 'clm-audio-stream
-  :metaclass <io-class>           ; moved to the files.
+  :metaclass <io-class>                 ; moved to the files.
   :file-types '("*.snd" "*.aiff" "*.wav")
-  :mime-type "audio/x-clm-audio"
   :definer (function snd-writer))
 
 (define (set-audio-output-hook! fn)
@@ -201,14 +199,14 @@
   (set! (io-class-file-versions <clm-audio-stream>) val)
   (values))
 
-(define-method (io-handler-args? (io <clm-audio-stream>))
+(define-method* (io-handler-args? (io <clm-audio-stream>))
   io
   #t)
 
-(define-method (io-handler-args (io <clm-audio-stream>))
+(define-method* (io-handler-args (io <clm-audio-stream>))
   (clm-args io))
 
-(define-method (set-io-handler-args! (io <clm-audio-stream>) args)
+(define-method* (set-io-handler-args! (io <clm-audio-stream>) args)
   (set! (clm-args io) args)
   (values))
 
@@ -383,7 +381,7 @@
     `(push (new ,name ,@reqs ,@opts ,@rest ,@keys)
            *clm-imports*)))
 
-(define-method (import-events (io <clm-stream>) . args)
+(define-method* (import-events (io <clm-stream>) . args)
   (with-args (args &key (output #f)
                    (translations *clm-import-translations*)
                    (include ()) (exclude ()) (seq #t))
