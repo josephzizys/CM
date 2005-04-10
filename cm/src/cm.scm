@@ -2,76 +2,72 @@
 ;;; $Revision$
 ;;; $Date$
 
-;;;
-;;; load script for cm in guile.
-;;;
+;;; intermediate conversion, trying to support guile gauche stklos and
+;;; (possibly) chicken
 
-(if (< (string->number (minor-version) ) 5)
-  (error "CM runs in guile-1.5.0 or higher."))
+(let ((this-file #f)
+      (file-list '())
+      (load-path ""))
 
-;;; user defined *cm-root* or default to current 
+  (cond-expand
+   (guile
+    (set! this-file (port-filename (current-load-port)))
+    (set! file-list (cons "guile"
+                          '("loop" "level1" "utils" "mop"
+                            "objects" "io" "scheduler" "sco" "clm" "clm2"
+                            "midi1" "midi2" "midi3" "data" "scales" "spectral"
+                            "patterns"))))
+   (gauche
+    (set! this-file (port-name (current-load-port)))
+    (set! file-list (cons "gauche" '("loop" "level1" ))))
+   (chicken
+    (set! this-file 
+          (eval (with-input-from-string "##sys#current-load-file" read)))
+    (set! file-list (list "chicken" "loop"))
+    (load-verbose #f))
+   (stklos
+    #f)
+   )
+  
+  (do ((last-slash #f)
+       (i 0 (+ i 1))
+       (l (string-length this-file)))
+      ((= i l) 
+       (if last-slash
+         (set! load-path (substring this-file 0 (+ last-slash 1)))))
+    (if (char=? (string-ref this-file i) #\/)
+      (set! last-slash i)))
 
-(if (not (module-bound? (current-module) '*cm-root*))
-  (begin
-   (define *cm-root* #f)
+   (cond-expand
+    (guile
+     (set! %load-path (cons load-path %load-path))
+     (set! load-path "")
+     )
+    (gauche 
+     (set! *load-path* (cons load-path *load-path*))
+     (set! load-path "")
+     )
+    (chicken
+     #f))
 
-   ;; courtesy of bil, removed %load-hook
-   (let ((curfile (port-filename (current-load-port)))
-         (last-slash #f)
-         (parent-slash #f))
-     (do ((i 0 (1+ i)))
-         ((= i (string-length curfile)))
-       (if (char=? (string-ref curfile i) #\/)
-         (begin (set! parent-slash last-slash)
-                (set! last-slash i))))
-     (if (not last-slash)
-       (set! *cm-root* "../")
-       (if (not parent-slash)
-         (set! *cm-root* "./")
-         (begin
-          (set! *cm-root* (substring curfile 0 (1+ parent-slash)))
-          (let ((new-path (substring curfile 0 last-slash)))
-            (if (not (member new-path %load-path))
-              (set! %load-path (cons new-path %load-path))))))))))
+   ;; load source files
+   (do ((tail file-list (cdr tail))
+        (file #f))
+       ((null? tail) #f)
 
-;;; user specified cm-bin-directory or default
-;(if (not (module-bound? (current-module) 'cm-bin-directory))
-;  (define cm-bin-directory
-;    (string-append cm-directory "bin/")))
+     (set! file (string-append load-path (car tail) ".scm"))
+     (display (string-append "; loading " file))
+     (newline)
+     (load file)
+     )
 
-(do ((files '("guile"
-	      "goops"
-              "level1"
-	      "loop"
-	      "utils"
-	      "mop"
-	      "objects" 
-	      "io"
-	      "scheduler"
-	      "sco"
-	      "clm"
-	      "clm2"
-	      "midi1"
-	      "midi2"
-	      "midi3"
-              ;; "midishare/midishare.scm"
-              ;; "midishare/player.scm"
-              ;; "cmn"
-	      "data"
-	      "scales"
-	      "spectral"
-	      "patterns"
-              )
-            (cdr files)))
-    ((null? files) #f)
-  (let* ((f (string-append (car files) ".scm")))
-    (display (string-append "; Loading: " *cm-root*
-			    "src/" f))
-    (newline)
-    (load (string-append (car files) ".scm"))))
+   ;; load user init file if it exists
+   (let* ((this (pwd))
+          (home (cd))
+          (init (string-append home "/.cminit.cm")))
+     (if (file-exists? init)
+       (load init))
+     (cd this))
 
-(let ((ini (string-append *cm-root* "etc/cminit.lisp")))
-  (if (file-exists? ini)
-    (basic-load ini)))
-
+   ) ; end let
 
