@@ -87,7 +87,7 @@
 ;           )
 ;      (if obj?
 ;        (formals->defobject 
-;         (list* (if opts (first name) name) args)
+;         (cons* (if opts (first name) name) args)
 ;         tpar)
 ;        (list)))))
 
@@ -104,7 +104,7 @@
 ;    `(begin
 ;      (clm:definstrument ,name ,args ,@body)
 ;      ,(if obj?
-;           (formals->defobject (list* (if (pair? opts)
+;           (formals->defobject (cons* (if (pair? opts)
 ;					(first name) 
 ;					name) 
 ;				      args)
@@ -114,7 +114,7 @@
 (define (definstrument-hook name args)
   (let* ((opts (if (pair? name) (cdr name) (list)))
          (tpar (list-prop opts ':time-parameter )))
-    (formals->defobject (list* (if (pair? opts)
+    (formals->defobject (cons* (if (pair? opts)
                                  (first name) 
                                  name) 
                                args)

@@ -198,6 +198,7 @@
     (char=?              char=)
     (char-ci=?           char-equal)
     (cond                cond 	         case->case) ; handles both
+    (cons*               list*)
     (define              nil             define->defun/defparameter)
     (defmacro            nil             defmacro->defmacro)
     (define-macro        nil             define-macro->defmacro)

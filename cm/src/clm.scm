@@ -314,7 +314,7 @@
                  for r = (import-form f translate exclude include )
                  when r collect r)))
     (if body
-      (list* (car form)           ; let/let*
+      (cons* (car form)           ; let/let*
              (cadr form)          ; bindings
              body )               ; forms
       #f)))
@@ -337,7 +337,7 @@
           #t))
 
 (define (import-defun form trans excl inc)
-  (list* 'defun (cadr form) (caddr form)
+  (cons* 'defun (cadr form) (caddr form)
          (loop for f in (cdddr form)
             collect (import-form f trans excl inc))))
 

@@ -128,7 +128,7 @@
                    (push (list 'set-staff-number label count)
                          data)
                    (when clefs 
-                     (push (list* 'set-staff-clef label clefs)
+                     (push (cons* 'set-staff-clef label clefs)
                            data))
                    (when meter
                      (if (pair? meter)
@@ -251,7 +251,7 @@
       (let ((n (or (note (cmn-expr obj) :in? *chromatic-scale*)
                    (err "cmn: '~s' is not a note for duration ~s." 
                         (cmn-expr obj) d))))
-        (list* (cmn-staff obj)
+        (cons* (cmn-staff obj)
                d
                n
                (let ((x (cmn-data obj)))
