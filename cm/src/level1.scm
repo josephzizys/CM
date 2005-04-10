@@ -30,9 +30,9 @@
     (lambda (,@vars) ,@body)))
 
 (define-macro (multiple-value-list form)
-  `(call-with-values
-    (lambda () , form)
-    (lambda args args)))
+    `(call-with-values
+      (lambda () , form)
+      (lambda args args)))
 
 (define-macro (multiple-value-setq vars form)
   (let ((lst (map (lambda (x) (gensym (symbol->string x))) 
@@ -372,32 +372,25 @@
       (set! this (car pars))
       (set! pars (cdr pars))
       ;; recognize cltl2 or guile names
-      (if (member this '(&optional &rest &key &aux &allow-other-keys
-			 ;#:optional #:rest #:key #:aux #:allow-other-keys
-                         ))
-        (cond ((or (eq? this '&optional) 
-		   (eq? this #:optional))
+      (if (member this '(&optional &rest &key &aux &allow-other-keys))
+        (cond ((eq? this '&optional)
                (unless (eq? mode '&required)
                  (err "Bad lambda list: ~s." head))
                (set! mode '&optional))
-              ((or (eq? this '&rest)
-		   (eq? this #:rest))
+              ((eq? this '&rest)
                (unless (member mode '(&required &optional))
                  (err "Bad lambda list: ~s." head))
                (set! mode '&rest))
-              ((or (eq? this '&key)
-                   (eq? this #:key))
+              ((eq? this '&key)
                (unless (member mode '(&required &optional !rest))
                  (err "Bad lambda list: ~s." head))
                (set! mode '&key))
-              ((or (eq? this '&allow-other-keys)
-		   (eq? this #:allow-other-keys))
+              ((eq? this '&allow-other-keys)
                (unless (eq? mode '&key)
                  (err "Bad lambda list: ~s." head))
                (set! mode '&allow-other-keys)
                (set! aok? #t))
-              ((or (eq? this '&aux) 
-		   (eq? this #:aux))
+              ((eq? this '&aux)
                (set! mode '&aux)))
         (case mode
           ((&required )
@@ -564,7 +557,7 @@
                       `((else
                          (err 
                           "Illegal keyword '~s' in: ~s.~%Valid keywords: ~s"
-                          (car ,args) ,head ',(map #'cadddr keys))))
+                          (car ,args) ,head ',(map cadddr keys))))
                       (list)))
                (set! ,args (cddr ,args)))))
          (list))
@@ -758,7 +751,7 @@
 	,@ slts :name ',name ,@ opts )
       
       (define-method (make-load-form (obj ,gvar))
-        (list* 'make-instance ', gvar (slot-init-forms obj :eval #t)))
+        (cons* 'make-instance ', gvar (slot-init-forms obj :eval #t)))
       
       ;; define a #i print-object method
       (define-method (write (obj ,gvar) port)
@@ -769,10 +762,6 @@
       ,@methods
       
       (values))))
-
-;(define (make-load-form-method classname classvar)
-;  `(define-method (make-load-form (obj ,classvar))
-;     (list* 'make-instance ',classvar (slot-init-forms obj :eval #t))))
 
 (define (parse-slot-spec cname spec)
   (let ((acc (lambda (b)
@@ -824,14 +813,6 @@
     (when val
       (set-car! val ':init-value))
     (cons name spec)))
-
-;;;
-;;; scheme expansion for make-load-form
-;;;
-
-(define (make-load-form-method classvar classname)
-  (define-method make-load-form ((obj ,classvar))
-    `(make-instance ,classvar ,@(slot-init-forms obj :eval #t))))
 
 ;;;
 ;;; scheme expansion for write-event
@@ -901,7 +882,7 @@
         `(define (,(first forms) . ,v)
            (with-args (,v ,@args)
              ,@(cddr forms))))
-      `(define (,(first forms) . ,@args) 
+      `(define (,(first forms) ,@args) 
          ,@(cddr forms)))))
 
 ;;;
@@ -923,52 +904,6 @@
 ;;;
 ;;;
 ;;;
-
-(define (print x . s)
-  (format (if (null? s) #t (car s)) "~S~%" x)
-  x)
-
-(define (describe x)
-  (let ((str #f))
-    (cond ((exact? x)
-           (set! str "exact number"))
-          ((inexact? x)
-           (set! str "inexact number"))
-          ((complex? x)
-           (set! str "complex number"))
-          ((number? x)
-           (set! str "number"))
-          ((char? x)
-           (set! str "character"))
-          ((keyword? x)
-           (set! str "keword"))
-          ((symbol? x)
-           (set! str "symbol"))
-          ((boolean? x)
-           (set! str "boolean"))
-          ((pair? x)
-           (set! str "pair"))
-          ((list? x)
-           (set! str "list"))          
-          ((string? x)
-           (set! str "string"))
-          ((vector? x)
-           (set! str "vector"))
-          ((procedure? x)
-           (set! str "procedure"))
-          ((port? x)
-           (set! str "port"))
-          ((is-a? x <object>)
-           (describe-object x))
-          (else
-           (set! str "scheme object")))
-    (when str
-      (format #t "~s is ~a ~a.~%"
-              x
-              (if (member (string-ref str 0)
-                          '(#\a \e #\i #\o #\u))
-                "an" "a")
-              str))))
 
 (define (cm . verbose)
   ;; a no-op for now, 
