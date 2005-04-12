@@ -45,6 +45,34 @@
 ;;; a few scheme functions i require in the sources
 ;;;
 
+(defmacro cond-expand (&body body)
+  ;; this is from SRFI-0 (scheme feature testing)
+  (labels ((rewrite-expand (test)
+             (cond ((eql test 'else) t)
+                   ((symbolp test)
+                    `(find ,(string test) *features* 
+                           :test #'string-equal))
+                   ((consp test)
+                    (cond ((member (car test) '(or and))
+                           (cons (car test)
+                                 (loop for x in (cdr test)
+                                    collect (rewrite-expand x))))
+                          ((eql (car test) 'not)
+                           (list 'not (rewrite-expand (cadr test))))
+                          (t (error "~s is not a legal cond-expand test."
+                                    test))))
+                   (t (error "~S is not a legal cond-expand test." 
+                             test)))))
+    `(cond ,@ (loop for clause in body
+                 collect (cons (rewrite-expand (car clause))
+                               (cdr clause))))))
+
+; (cond-expand (common-lisp :common-lisp) ((or chicken stklos gauche) :scheme) (else (error "Unknown lisp.")))
+; (cond-expand (guile 1) ((or stklos chicken) 2) (cltl2 3) (else 'huh?))
+; (cond-expand ((or (not common-lisp) (not guile)) 1) (clisp 2) (else 3))
+
+;;; CM functions.
+
 (defun get-current-time ()
   (multiple-value-bind (sec min hour day mo year)
                        (get-decoded-time)
