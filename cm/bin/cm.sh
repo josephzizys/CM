@@ -16,7 +16,7 @@ SUMMARY="         run Common Music"
 
 : ${CM_EDITOR:=}
 : ${CM_RUNTIME:=}
-: ${CM_RUNTIME_PREFS:=openmcl cmucl acl clisp sbcl guile}
+: ${CM_RUNTIME_PREFS:=openmcl cmucl acl clisp sbcl guile gauche}
 
 : ${CM_OS:=}
 : ${CM_ARCH:=}
@@ -417,6 +417,7 @@ get_lisp_info () {
         *openmcl*|*OPENMCL*|*dppccl*)   flv=openmcl ;;
         *sbcl*|*SBCL*)                  flv=sbcl ;;
         *guile*)                        flv=guile ;;
+        *gosh*)                         flv=gauche ;;
         *)
           msg_e "Can't determine flavor of '$1'."
           msg_i "Re-run with -F option."
@@ -462,6 +463,11 @@ get_lisp_info () {
         LISP_DIA=SCHEME
         flv=guile
         vrs=`"$1" --version | head -1 | cut -d' ' -f2`
+        ;;
+      *gosh*)
+        LISP_DIA=SCHEME
+        flv=gauche
+        vrs=`"$1" -V | cut -d' ' -f5`
         ;;
     esac
     if test $vrs ; then
@@ -642,6 +648,9 @@ make_lisp_cmd () {
       ;;
     guile)
       LISP_CMD="'$LISP_EXE' $LOPTS -l '${LISP_LOA}.scm' -e cm"
+      ;;
+    gauche)
+      LISP_CMD="'$LISP_EXE' $LOPTS -i -l '${LISP_LOA}.scm' -e '(cm)'"
       ;;
     *)
       msg_e "Don't know how to call '$LISP_FLV' yet... =:("
