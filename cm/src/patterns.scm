@@ -1176,7 +1176,7 @@
             (lambda (datum . keys)
               (do ((orig keys)
                    (args '())
-                   (id #f) (to #f) (key #f) (val #f))
+                   (id #f) (key #f) (val #f))
                   ((null? keys)
                    (unless id
                      (push datum args)
@@ -1194,7 +1194,6 @@
                    (set! id #t)
                    (push ':id args)) 
                   ((to :to -> :->)
-                   (set! to #t) 
                    (push ':to args))
                   ((props :props)
                    (push ':props args))
