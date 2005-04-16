@@ -6,22 +6,30 @@
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
 <style type="text/css" media="all">
 @import "css/cm.css";
-
+<!--
+h1,h2,h3,h4 { color:#9999cc }
+p { color:#9999bb }
+a:link    { color: #aaaaff; }
+a:visited { color: #aaaaff; }
+a:hover   { color: #aaaaff; }
+a:active  { color: #ddddff; }
+}
+-->
 </style>
 <title>Common Music</title>
 </head>
 
-<body style="background:white;">
+<body style="background:black; color=#9999bb;">
 
 <table>
 
 <tr>
-  <td><img style="" src="img/cmlogobw.png" alt="[cmlogobw.png]"/></td>
-  <td><span style="font: normal 64px sans-serif; color:#444">Common Music</span><td>
+  <td><img src="img/cmlogobb.png" alt="[cmlogobw.png]"/></td>
+  <td><span style="font: normal 64px sans-serif; color:#9999bb">Common Music</span><td>
 </tr>
 </table>
 
-<div id="content">
+<div id="content" style="color:#9999aa">
 
 <!-- background:#D8D5EC -->
 
@@ -38,11 +46,19 @@ modify and extend the system.
 
 <p>
 Sources, runtime images and CVS access are all available from the
-<a href="http://sourceforge.net/projects/commonmusic/">Common Music project at Sourceforge</a>.
+<a href="http://sourceforge.net/projects/commonmusic/">Sourceforge project</a>.
 </p>
 
 <p>
-CM is released under the GNU copyleft software license. 
+CM is released under the <a href="http://www.cliki.net/LLGPL">LLGPL</a> (Lisp Lesser General Public License).
+</p>
+
+<h2>Download</h2>
+<p>
+Stable releases are available from the <a href="http://sourceforge.net/project/showfiles.php?group_id=9766">project release page</a>.
+</p>
+<p>
+Current (unstable) sources are available using <a href="install.html#restore_cvs">CVS access</a>.
 </p>
 
 <h2>History</h2>
@@ -64,13 +80,14 @@ for five years. Common Music continues to evolve today at the
 University of Illinois at Urbana-Champaign, where the author is now a
 professor of music composition. In 1996 Common Music received First
 Prize in the computer-assisted composition category at the <i>1er
-Concours International de Logiciels Musicaux</i> in Bourges, France
+Concours International de Logiciels Musicaux</i> in Bourges, France.
 </p>
 
 
 <h2>Documentation</h2>
 
 <ul>
+<li><a href="http://www.routledge-ny.com/shopping_cart/products/product_detail.asp?sku=&isbn=9026519753&parent_id=&pc=">Notes from the Metalevel, an Introduction to Algorithmic Music Composition</a></li>
 <li><a href="dict/index.html">Common Music Dictionary</a></li>
 <li><a href="install.html">Installing Common Music</a></li>
 <li><a href="emacs.html">Running Common Music under (X)Emacs</a></li>
@@ -78,38 +95,16 @@ Concours International de Logiciels Musicaux</i> in Bourges, France
 <li><a href="changelog.text">Change History</a></li>
 </ul>
 
-
-<h2>Links</h2>
-
-<ul>
-
-<li>
-<a href="http://www-2.cs.cmu.edu/Groups/AI/html/hyperspec/HyperSpec/FrontMatter/">Common Lisp HyperSpec</a>
-</li>
-
-<li>
-<a href="http://www.cs.cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/html/cltl/cltl2.html">Common  Lisp: the Language (2nd Edition)</a>
-</li>
-
-<li>
-<a href="http://common-lisp.net">Common-Lisp.net</a>
-</li>
-
-<li>
-<a href="http://www.apl.jhu.edu/~hall/lisp.html">Common Lisp Resources</a>
-</li>
-</ul>
-
-<h2 id="implementations">Supported Lisp Implementations</h2>
+<h2 id="implementations">Implementations</h2>
 
 <p>
-Common Music is implemented in Scheme (Guile) and Common Lisp and
-runs in the following configurations:
+Common Music has both Scheme and Common Lisp bindings and has been
+tested in in the following configurations:
 </p>
 
-<div class="float">
+<div class="float" >
 <table class="float">
-<tr>
+<tr style="color:#9999bb">
 <td>&nbsp;</td>
 <th class="col" align="center">Linux</th>
 <th class="col" align="center">OS X</th>
@@ -117,39 +112,40 @@ runs in the following configurations:
 <th class="col" align="center">MacOS</th>
 </tr>
 
+<tr style="color:#9999bb">
 <th class="row">ACL</th>
 <td align="center">&times;</td>
 <td align="center">&times;</td>
 <td align="center">&times;</td>
 <td align="center">&nbsp;</td>
 </tr>
-<tr>
+<tr style="color:#9999bb">
 <th class="row" >CLISP</th>
 <td align="center">&times;</td>
 <td align="center">&times;</td>
 <td align="center">&times;</td>
 <td align="center">&nbsp;</td>
 </tr>
-<tr>
+<tr style="color:#9999bb">
 <th class="row" >CMUCL</th>
 <td align="center">&times;</td>
 <td align="center">&nbsp;</td>
 <td align="center">&nbsp;</td>
 <td align="center">&nbsp;</td>
 </tr>
-<tr>
+<tr style="color:#9999bb">
 <th class="row">Guile</th>
 <td align="center">&times;</td>
 <td align="center">&times;</td>
 <td align="center">&nbsp;</td>
 </tr>
-<tr>
+<tr style="color:#9999bb">
 <th class="row">Gauche</th>
 <td align="center">&times;</td>
 <td align="center">&times;</td>
 <td align="center">&nbsp;</td>
 </tr>
-<tr>
+<tr style="color:#9999bb">
 <tr>
 <th class="row">MCL</th>
 <td align="center">&nbsp;</td>
@@ -157,15 +153,14 @@ runs in the following configurations:
 <td align="center">&nbsp;</td>
 <td align="center">&times;</td>
 </tr>
-<tr>
+<tr style="color:#9999bb">
 <th class="row">OpenMCL</th>
 <td align="center">&times;</td>
 <td align="center">&times;</td>
 <td align="center">&nbsp;</td>
 <td align="center">&nbsp;</td>
 </tr>
-
-<tr>
+<tr style="color:#9999bb">
 <th class="row">SBCL</th>
 <td align="center">&times;</td>
 <td align="center">&times;</td>
@@ -200,9 +195,9 @@ An opensource ANSI CL for Linux. Includes a very good compiler.
 <a href="http://www.shiro.dreamhost.com/scheme/gauche/index.html">Gauche Scheme</a>
 </dt>
 <dd>
-An R5RS Scheme with lots of extra features and an object system
-similar to GOOPS.  Quick startup, built-in system interface, native
-multilingual support.
+A full-featured R5RS Scheme with an object system very similar to
+GOOPS.  Quick startup, built-in system interface, native multilingual
+support.
 </dd>
 
 
@@ -239,6 +234,36 @@ X. Includes a very good compiler and is actively supported.
 </dd>
 
 </dl>
+
+
+<h2>Lisp Links</h2>
+
+<h3>Common Lisp</h3>
+<ul>
+
+<li>
+<a href="http://www-2.cs.cmu.edu/Groups/AI/html/hyperspec/HyperSpec/FrontMatter/">Common Lisp HyperSpec</a>
+</li>
+
+<li>
+<a href="http://www.cs.cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/html/cltl/cltl2.html">Common  Lisp: the Language (2nd Edition)</a>
+</li>
+
+<li>
+<a href="http://common-lisp.net">Common-Lisp.net</a>
+</li>
+
+<li>
+<a href="http://www.apl.jhu.edu/~hall/lisp.html">Common Lisp Resources</a>
+</li>
+</ul>
+
+<h3>Scheme</h3>
+<ul>
+<li><a href="http://www.swiss.ai.mit.edu/~jaffer/r5rs_toc.html">Revised Report of the Algorithmic Language Scheme</a></li>
+<li><a href="http://www.schemers.org/">Schemers.org</a></li>
+</ul>
+
 
 <h2>Contact</h2>
 
