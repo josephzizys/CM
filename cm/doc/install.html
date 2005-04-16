@@ -121,19 +121,18 @@ href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs.html#SEC_Top">CVS</a><
 <p>
 The sources to Common Music are maintained in a CVS repository
 organized into different <em>release branches</em> that
-are <em>tagged</em> by symbolic release numbers.  By convention, even
+are tagged by symbolic release numbers.  By convention, even
 numbered branches denote stable software release lines and odd
-numbered branches denote <em>unstable</em>, or developmental,
+numbered branches denote unstable, or developmental,
 releases.  The CVS <em>head branch</em> &#8212; the release branch you
 get if you do not specify any release tag &#8212; always points to the
 latest developmental sources.
 </p>
 
 <p>
-As of this date (November 2004), Common Music's CVS tree has two main
-branches: a <code>rel-2_4</code> branch line contains sources and bug
-fixes to the stable 2.4.<em>n</em> releases; CM's head branch
-points to the 2.5.<em>n</em> developmental line.
+As of this date, Common Music's CVS tree has three main
+branches: the <code>rel-2_4</code>  and <code>rel-2_6</code> branch lines contain sources and bug
+fixes to stable releases; CM's head branch points to the latest developmental line.
 </p>
 
 <p>
@@ -192,7 +191,7 @@ CM 2.4.<em>n</em> release line do:
 </p>
 
 <pre class="shell">
-$ <span class="input">cvs checkout -P -r rel-2_4 cm</span>
+$ <span class="input">cvs checkout -P -r rel-2_6 cm</span>
 <span class="comment">[cvs printout omitted...]</span></pre>
 <p>
 Once the source tree has been restored to your machine you can cd inside it
@@ -297,6 +296,10 @@ implementations.
       <td> </td>
       <td>./alisp(.exe) </td>
       <td>./lisp.dxl</td>
+    </tr>
+    <tr>
+      <td><a href="http://www.shiro.dreamhost.com/scheme/gauche/index.html">Gauche</a></td>
+      <td><a href="http://www.shiro.dreamhost.com/scheme/gauche/man/gauche-refe_13.html#SEC13"> <code>gosh</code></a></td> <td>gosh</td> <td></td>
     </tr>
     <tr>
       <td><a
