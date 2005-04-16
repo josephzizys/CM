@@ -166,8 +166,7 @@
            (set! octaves (+ octaves 1)))
       
       (list (interval-quality int)
-            (* (1+ (+ letters
-                      (* 7 octaves)))
+            (* (+ (+ letters (* 7 octaves)) 1)
                (%interval-sign int))))
     int))
 
@@ -382,9 +381,9 @@
 			       if (or (char-numeric? chr)
 				      (and (char=? chr #\.)
 					   (not flg)
-					   (< beg (1- end))
+					   (< beg (- end 1))
 					   (char-numeric?
-					    (string-ref str (1+ beg)))
+					    (string-ref str (+ beg 1)))
 					   (set! flg #t)))
 			       do (set! beg (+ beg 1))
 			       else do (return))
@@ -574,7 +573,7 @@
 	  (miny #f)
 	  (maxx #f)
 	  (maxy #f))
-      (loop for tail on env by #'cddr
+      (loop for tail on env by (function cddr)
 	    for x = (car tail)
 	    for y = (cadr tail)
 	    do
@@ -590,7 +589,7 @@
 	  (or x-max (set! x-max maxx))
 	  (or y-min (set! y-min miny))
 	  (or y-max (set! y-max maxy))
-	  (loop for tail on env by #'cddr
+	  (loop for tail on env by (function cddr)
 		for x = (car tail)
 		for y = (cadr tail)
 		collect (rescale x minx maxx x-min x-max)
@@ -599,7 +598,7 @@
 	  (begin 
 	    (or x-min (set! x-min minx))
 	    (or x-max (set! x-max maxx))
-	    (loop for tail on env by #'cddr
+	    (loop for tail on env by (function cddr)
 		  for x = (car tail)
 		  for y = (cadr tail)
 		  collect (rescale x minx maxx x-min x-max)
@@ -607,7 +606,7 @@
 	  (begin
 	    (or y-min (set! y-min miny))
 	    (or y-max (set! y-max maxy))
-	    (loop for tail on env by #'cddr
+	    (loop for tail on env by (function cddr)
 		  for x = (car tail)
 		  for y = (cadr tail)
 		  collect x
@@ -882,7 +881,7 @@
            (r (ran :type type :a a :b b)
               (ran :type type :a a :b b)))
           ((= i done) 
-           (set! segs (sort segs #'<))
+           (set! segs (sort segs (function <)))
            (set! mini (first segs)))
         (unless (member r segs)
           (set! segs (cons r segs))
@@ -1116,7 +1115,7 @@
               (sort? 
                (set! labels (sort labels sort?))) 
               ((number? (car labels))
-               (set! labels (sort labels #'<)))
+               (set! labels (sort labels (function <))))
               ((and (car labels) (symbol? (car labels)))
                (set! labels (sort labels
                                   (lambda (x y) 
@@ -1140,8 +1139,8 @@
               
 	      ;; sort table according to value order. 
 	      (set! table 
-	            (sort table #'(lambda (x y)
-			            (before? (car x) (car y) labels)))) 
+	            (sort table (lambda (x y)
+			          (before? (car x) (car y) labels)))) 
               
 	      (when (member print? '(#t table :table))
 	        (let* ((sp " ")

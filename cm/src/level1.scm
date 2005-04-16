@@ -43,14 +43,6 @@
 	,@(map (lambda (x y) `(set! ,x ,y))
 	       vars lst)))))
 
-;;; function and funcall are noops in scheme but are used for
-;;; cltl code translation.
-
-(define-macro (function fn) fn)
-
-(define (funcall fn . args)
-  (apply fn args))
-
 (define-macro (push val sym)
   `(begin (set! ,sym (cons ,val ,sym)) ,sym))
 
@@ -114,7 +106,7 @@
 (define false #f)
 
 ;;;
-;;; list operations
+;;; list operations not in srfi-1
 ;;;
 
 (define rest cdr)
@@ -124,14 +116,6 @@
     (cons (copy-tree (car lis))
           (copy-tree (cdr lis)))
     lis))
-
-; (remove (lambda (x) (eq? x thing)) list)
-(define (remove val lst)
-  (if (null? lst)
-    '()
-    (if (eq? (car lst) val)
-      (remove val (cdr lst))
-      (cons (car lst) (remove val (cdr lst))))))
 
 (define (butlast lis)
   (if (or (null? lis) 
@@ -144,6 +128,16 @@
         (set-cdr! l (list (car lis)))
         (set! l (cdr l))
         (set! lis (cdr lis))))))
+
+;;;
+;;; noops that are needed either for marking code or for file loading
+
+(define-macro (function fn) fn)
+
+(define (funcall fn . args)
+  (apply fn args))
+
+(define (in-package name) #f)
 
 ;;;
 ;;; property list getting and setting
@@ -337,83 +331,8 @@
 	    (ash val (byte-position bytespec)))))
 
 ;;;
-;;; cltl2 lambda paramters
+;;; cltl2 lambda parameters
 ;;;
-
-(define (parse-lambda-list pars)
-  ;;(format #t "args=~s" pars)
-  ;; parse a cltl2 parameter declaration into seperate lists. modified 
-  ;; to allow either cltl2 or guile style type decls, ie &key or #:key
-  (let ((mode '&required)
-        (reqs '())
-        (opts '())
-        (rest '())
-        (keys '())
-        (auxs '())
-        (aok? #f)    ; allow other keys
-        (bind
-	 (lambda (par)
-	   (if (pair? par)
-	     (begin
-	      (unless (symbol? (car par))
-		(err "Not a lambda parameter: ~s" 
-		     (car par)))
-	      (unless (= (length (cdr par)) 1)
-		(err "Not a lambda parameter list: ~s"
-		     par))
-	      par)
-	     (if (symbol? par)
-	       (list par #f)
-	       (err "Not a lambda parameter: ~s" par)))))
-        (this #f)
-        (head pars))
-    (do ()
-        ((null? pars) )
-      (set! this (car pars))
-      (set! pars (cdr pars))
-      ;; recognize cltl2 or guile names
-      (if (member this '(&optional &rest &key &aux &allow-other-keys))
-        (cond ((eq? this '&optional)
-               (unless (eq? mode '&required)
-                 (err "Bad lambda list: ~s." head))
-               (set! mode '&optional))
-              ((eq? this '&rest)
-               (unless (member mode '(&required &optional))
-                 (err "Bad lambda list: ~s." head))
-               (set! mode '&rest))
-              ((eq? this '&key)
-               (unless (member mode '(&required &optional !rest))
-                 (err "Bad lambda list: ~s." head))
-               (set! mode '&key))
-              ((eq? this '&allow-other-keys)
-               (unless (eq? mode '&key)
-                 (err "Bad lambda list: ~s." head))
-               (set! mode '&allow-other-keys)
-               (set! aok? #t))
-              ((eq? this '&aux)
-               (set! mode '&aux)))
-        (case mode
-          ((&required )
-           (push this reqs))
-          ((&optional )
-           (push (bind this) opts))
-          ((&rest )
-           (push this rest)
-           (set! mode '!rest))
-          ((&key )
-           (push (bind this) keys))
-          ((&aux )
-           (push (bind this) auxs))
-          (else
-           (err "Bad lambda list: ~s." head)))))
-
-    (values (reverse reqs)
-            (reverse opts)
-            rest ; only one
-            (reverse keys)
-            aok? 
-            (reverse auxs))))
-
 ;;;       
 ;;; with-args (list . decl) . body)
 ;;; binds variables to values from a list according to cltl2's lambda
@@ -443,21 +362,32 @@
         (setk #f)
         (keyc #f)
         (seta #f))
+
+    ;; parse-lambda-list defined in utils.scm...
     (multiple-value-setq (reqs opts rest keys aok? auxs )
                          (parse-lambda-list (cdr spec)))
     ;; each &key entry is represented by a four element list:
     ;; (var default passed? keyword) where var is the variable,
     ;; default is its default value, passed? is a flag set to
     ;; #t if key is passed and keyword is the keyword. the first
-    ;; two values in the list were returned by parse-lambda-list
+    ;; three values in the list may be returned by parse-lambda-list
     (do ((tail keys (cdr tail))
          (head (list))
-         (b #f))
+         (b #f)
+         (l #f))
         ((null? tail)
          (set! keys (reverse! head)))
       (set! b (car tail))
-      (push (append b (list (gensym ) (symbol->keyword (car b))))
-            head))
+      (set! l (length b)) ; 2 3 or 4
+      (cond ((= l 2)
+             (push (append b (list (gensym ) (symbol->keyword (car b))))
+                   head))
+            ((= l 3)
+             (push (append b (list (symbol->keyword (car b)))) head))
+            ((= l 4)
+             (push b head))
+            (else (err "Malformed &key binding: ~s" b))))
+
     ;; create required arg bindings
     (set! reqs (map (lambda (r)		; r is required par
                       (unless (symbol? r)
@@ -633,6 +563,11 @@
 ; (find 1 '())
 ; (position 1 '((a a) (b b) (c c) (1 1) (2 2) (3 3))  ':key car ':from-end #t)
 
+
+
+
+
+
 (define (strip-chars str . args)
   (let ((chars (if (null? args) '(#\space #\tab #\return)
                    (car args))))
@@ -789,9 +724,10 @@
         (if (or (memq key sofar)
                 (not key))
           (begin
-           (when (cadr tail)
-             (warning "Ignoring duplicate initarg for ~a." 
-                      name))
+           ; remove warning
+           ;(when (cadr tail)
+           ;  (warning "Ignoring duplicate initarg for ~a." 
+           ;           name))
            ;; remove from spec. 
            ;(format #t "~%spec=~s tail=~s" spec tail)
            (if (eq? spec tail)
@@ -853,7 +789,8 @@
        (set! tests `((if ,tests ,done))))
       (unless (process-code-terminates? (loop-looping parsed)
 					(process-stop #f))
-	(warning "A non-terminating process may have been defined. Use 'repeat', 'while' or 'until' to limit iteration.")))
+	(format #t "Warning: A non-terminating process may have been defined.")
+        ))
     (set! func `(lambda ()
 		  (call-with-current-continuation
 		   (lambda (stopprocess)
@@ -875,15 +812,8 @@
   (let ((args (second forms)))
     (if (not (list? args))
       (err "defprocess arguments not list: ~S" args))
-    (if (or (member '&optional args)
-            (member '&key args)
-            (member '&rest args))
-      (let ((v (gensym)))
-        `(define (,(first forms) . ,v)
-           (with-args (,v ,@args)
-             ,@(cddr forms))))
-      `(define (,(first forms) ,@args) 
-         ,@(cddr forms)))))
+    `(define (,(first forms) ,@args) 
+       ,@(cddr forms))))
 
 ;;;
 ;;; scheme expansion for make-midi-message-set!

@@ -42,12 +42,6 @@
 ;;; list utilities
 ;;;
 
-(define (listify x)
-  (if (list? x) x (list x)))
-
-(define (end list)
-  (car (last-pair list)))
-
 (define-macro (dopairs decl . body)
   (let* ((m "dopairs: (v1 v2 list [return]) . body")
 	 (s (if (pair? decl) (pop decl) (err m)))
@@ -95,33 +89,6 @@
   (let ((c (gensym)))
     `(let ((,c ,cycl))
        (cycl-tail-set! ,c (car ,c)))))
-
-;(define (make-cycl) 
-;  (make-list 2))
-;
-;(define (cycl-data cycl)
-;  (car cycl))
-;
-;(define (cycl-data-set! cycl data)
-;  (set-car! cycl data))
-;
-;(define (cycl-last cycl)
-;  (cadr cycl)) 
-;
-;(define (cycl-last-set! cycl data)
-;  (set-car! (cdr cycl) data))
-;
-;(define (cycl-tail cycl)
-;  (cddr cycl))
-;
-;(define (cycl-tail-set! cycl tail)
-;  (set-cdr! (cdr cycl) tail)) ; set-cddr!
-;
-;(define (pop-cycl cycl)
-;  (cdr-pop (cdr cycl)))
-;
-;(define (reset-cycl cycl)
-;  (cycl-tail-set! cycl (car cycl)))
 
 ;(define-macro (cycl-append x cycl)
 ;  ;; append new thing to data.
@@ -180,34 +147,6 @@
 ;;;----------------------------------------------------
 ;;; printing
 
-(define (tell-user . args) 
-  (let ((str (apply (function format) #f args))
-        (pad "; "))
-    (newline)
-    (display pad)
-    (loop for i below (string-length str)
-          for c = (string-ref str i)
-          do
-          (write-char c)
-          (if (char=? c #\newline)
-            (display pad)))
-    (newline)
-    (values)))
-
-(define (warning . args)
-  (let ((str (apply (function format) #f args))
-        (pad ";          "))
-    (newline)
-    (display "; WARNING: ")
-    (loop for i below (string-length str)
-          for c = (string-ref str i)
-          do
-          (write-char c)
-          (if (char=? c #\newline)
-            (display pad)))
-    (newline)
-    (values)))
-
 (define (format-integer int field pad)
   ;; if field is negative then left justify
   (let* ((str (number->string int))
@@ -225,24 +164,14 @@
 	s)
       str)))
 
-(define (address->string w) ; uses 32 bit word
-  (do ((s (make-string 8))
-       (n 28 (- n 4))
-       (i 0 (+ i 1))
-       (c #f))
-      ((< n 0) s)
-    (set! c (ash (logand w (ash #xf n)) (- n)))
-    (string-set! s i (integer->char (if (< c 10) (+ 48 c) (+ 55 c))))))
-
-
 ;(define (address->string w) ; uses 32 bit word
-;  (do ((n 28 (- n 4))
-;       (c 0)
-;       (l '()))
-;      ((< n 0) (list->string (reverse l)))
+;  (do ((s (make-string 8))
+;       (n 28 (- n 4))
+;       (i 0 (+ i 1))
+;       (c #f))
+;      ((< n 0) s)
 ;    (set! c (ash (logand w (ash #xf n)) (- n)))
-;    (push (integer->char (if (< c 10) (+ 48 c) (+ 55 c)))
-;          l)))
+;    (string-set! s i (integer->char (if (< c 10) (+ 48 c) (+ 55 c))))))
 
 (define (quotify token)
   (string-append "\""
@@ -260,12 +189,12 @@
     `(quote ,x)))
 
 ;;;
-;;; this is also in level1.scm because the routines there need it
-;;;
+;;; this is referenced by with-args in level1.scm 
 
 (define (parse-lambda-list pars)
+  ;;(format #t "args=~s" pars)
   ;; parse a cltl2 parameter declaration into seperate lists. modified 
-  ;; to allow either cltl2 or guile style type decls, ie &key or :key
+  ;; to allow either cltl2 or guile style type decls, ie &key or #:key
   (let ((mode '&required)
         (reqs '())
         (opts '())
@@ -274,19 +203,17 @@
         (auxs '())
         (aok? #f)    ; allow other keys
         (bind
-	 (lambda (par)
+	 (lambda (par type maxlen)
 	   (if (pair? par)
 	     (begin
 	      (unless (symbol? (car par))
-		(err "Not a lambda parameter: ~s" 
-		     (car par)))
-	      (unless (= (length (cdr par)) 1)
-		(err "Not a lambda parameter list: ~s"
-		     par))
+		(err "Malformed ~s parameter: ~s." type par))
+	      (unless (<= (length par) maxlen)
+		(err "Malformed ~s parameter: ~s." type par))
 	      par)
 	     (if (symbol? par)
 	       (list par #f)
-	       (err "Not a lambda parameter: ~s" par)))))
+	       (err "Not a lambda parameter: ~s." par)))))
         (this #f)
         (head pars))
     (do ()
@@ -294,46 +221,44 @@
       (set! this (car pars))
       (set! pars (cdr pars))
       ;; recognize cltl2 or guile names
-      (if (member this '(&optional &rest &key &aux &allow-other-keys
-			 :optional :rest :key :aux :allow-other-keys))
-        (cond ((or (eq? this '&optional) 
-		   (eq? this ':optional))
+      (if (member this '(&optional &rest &key &aux &allow-other-keys))
+        (cond ((eq? this '&optional)
                (unless (eq? mode '&required)
-                 (err "Bad lambda list: ~s." head))
+                 (err "Malformed lambda list: ~s." head))
                (set! mode '&optional))
-              ((or (eq? this '&rest)
-		   (eq? this ':rest))
+              ((eq? this '&rest)
                (unless (member mode '(&required &optional))
-                 (err "Bad lambda list: ~s." head))
+                 (err "Malformed lambda list: ~s." head))
                (set! mode '&rest))
               ((eq? this '&key)
                (unless (member mode '(&required &optional !rest))
-                 (err "Bad lambda list: ~s." head))
+                 (err "Malformed lambda list: ~s." head))
                (set! mode '&key))
-              ((or (eq? this '&allow-other-keys)
-		   (eq? this ':allow-other-keys))
+              ((eq? this '&allow-other-keys)
                (unless (eq? mode '&key)
-                 (err "Bad lambda list: ~s." head))
+                 (err "Malformed lambda list: ~s." head))
                (set! mode '&allow-other-keys)
-               (set! aok? t))
-              ((or (eq? this '&aux) 
-		   (eq? this ':aux))
+               (set! aok? #t))
+              ((eq? this '&aux)
                (set! mode '&aux)))
         (case mode
           ((&required )
+           (if (not (symbol? this))
+             (err "Required argument not symbol: ~s" this))
            (push this reqs))
           ((&optional )
-           (push (bind this) opts))
+           (push (bind this mode 3) opts))
           ((&rest )
+           (if (not (symbol? this))
+             (err "&rest argument not symbol: ~s" this))
            (push this rest)
            (set! mode '!rest))
           ((&key )
-           (push (bind this) keys))
+           (push (bind this mode 3) keys))
           ((&aux )
-           (push (bind this) auxs))
+           (push (bind this mode 2) auxs))
           (else
-           (err "Bad lambda list: ~s." head)))))
-
+           (err "Malformed lambda list: ~s." head)))))
     (values (reverse reqs)
             (reverse opts)
             rest ; only one
@@ -494,7 +419,7 @@
         (let ((len (string-length text))
               (raw text))
           (if (or (member (string-ref text 0) trim)
-                  (member (string-ref text (1- len)) trim))
+                  (member (string-ref text (- len 1)) trim))
             (set! text (strip-chars text))) ; remove whitespace
           (if (string=? text "")
             (if nullok (values #f #f) (values raw +se-nullstring+))

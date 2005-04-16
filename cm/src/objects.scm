@@ -15,7 +15,9 @@
 ;;; $Date$
 
 (define-method* (copy-object (obj <object>))
-  (let ((new (allocate-instance (class-of obj))))
+  ;; changed allocate-instance to make-instance for scheme,
+  ;; unfortunately this function is not exactly the same as it was.
+  (let ((new (make-instance (class-of obj))))
     (fill-object new obj)
     new))
 
@@ -36,9 +38,9 @@
 (define *print-instance* #t)
 
 (define (print-instance obj port)
-  (let ((class (class-of obj)))
-    (format port "#i(~a"
-            (string-downcase (symbol->string (class-name class))))
+  (let ((class (class-of obj))
+        (*print-case* ':downcase)) ; yes its gross...
+    (format port "#i(~a" (class-name class))
     (do ((slots (class-slots class) (cdr slots))
 	 (d #f)
 	 (s #f)
@@ -54,11 +56,9 @@
 	 (unless (null? k)
 	   (unless (and (eq? *print-instance* ':terse)
 			(eq? v (slot-definition-initform d)))
-	     (format port " ~a ~s" 
-                     (string-downcase (symbol->string s))
-                     v))))))
+	     (format port " ~a ~s" s v))))))
     (format port ")")
-    obj))
+     obj))
 
 (define (i-reader form)
   (if (pair? form)
@@ -92,8 +92,6 @@
 
 (define *dictionary* (make-equal?-hash-table 31))
 
-;(define-accessor object-name)
-
 (define-class* <container> () 
   ((name :init-value #f :accessor object-name 
          :init-keyword :name))
@@ -103,11 +101,10 @@
   (let ((name (object-name obj)))
     (if name
       (format port "#<~a \"~a\">" 
-	      (string-downcase (symbol->string (class-name (class-of obj))))
-	      name)
-      (format port "#<~a @ x~a>" 
-	      (string-downcase (symbol->string (class-name (class-of obj))))
-	      (address->string (object-address obj))))))
+ 	      (string-downcase (symbol->string (class-name (class-of obj))))
+ 	      name)
+      (next-method)
+      )))
 
 (define-method* (initialize (obj <container>) args)
   (next-method)
@@ -536,8 +533,7 @@
       (insure-parameters pars decl sups)
       ;; signal warning if no time parameter
       (unless (find-time-parameter pars decl sups)
-        (warning "No time parameter for ~s." 
-                 name))
+        (format #t "Warning: no time parameter for ~s." name))
       
       ;; generate methods for each class of output stream
       (dolist (c (if (eq? make #t) (io-classes )

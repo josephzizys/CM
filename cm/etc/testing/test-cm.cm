@@ -1,30 +1,31 @@
 ;;; **********************************************************************
 ;;; CM's test suite, works in both Guile and CLTL (assuming Scheme syntax
 ;;; is enabled.) To test CM, load this file and then call (test-cm)
-;;;
-;;; The tests assume that the following vars exist at load time:
-;;; *features*      Tests check for :guile :cmu :clm :cmn :midishare
 ;;; The following vars must be defined if their *feature* exists:
 ;;; midishare-directory
 ;;; clm-directory
 ;;; cmn-directory
 ;;; **********************************************************************
 
-(when (member ':guile *features*)
-  (defmacro iter args (scheme-loop args))
-  )
-
 (define tmp-directory "/tmp/")
 
-(define (clean-tmp)
-  (unless (member ':guile *features*)
+(cond-expand
+ (common-lisp
+  (define (clean-tmp)
     ;; clear out existing tmp files....
-    (do ((typs '("cm" "mid" "midi" "sco" "aiff" "clm" "eps" "cmn" )
+    (do ((typs '("cm" "mid" "sco" "aiff" "clm" "eps" "cmn" )
+               (cdr typs)))
+        ((null? typs) nil)
+      (dolist (f (directory (format nil "~a*.~a" tmp-directory
+                                    (car typs))))
+        (delete-file f)))))
+ (else
+  (define-macro (iter . args) (scheme-loop args))
+  (define (clean-tmp) 
+    (do ((typs '("cm" "mid" "sco" "aiff" "clm" "eps" "cmn" )
                (cdr typs)))
         ((null? typs) #f)
-      (dolist (f (directory (format #f "~a*.~a" 
-                                    tmp-directory (car typs))))
-        (delete-file f)))))
+      (shell (format #f "rm -f ~a*.~a" tmp-directory (car typs)))))))
 
 ;;;
 ;;;
@@ -50,12 +51,15 @@
 (define (test-cm-output)
   (test-midifile-output)
   (test-csound-output)
-  (when (member :clm *features*)
-    (test-clm-output))
-  (when (member :cmn *features*)
-    (test-cmn-output))
-  (when (member :midishare *features*)
-    (test-midishare-output)))
+  (cond-expand
+   (clm (test-clm-output))
+   (else #f))
+  (cond-expand 
+   (cmn (test-cmn-output))
+   (else #f))
+  (cond-expand 
+   (midishare (test-midishare-output))
+   (else #f)))
 
 (cd tmp-directory) ;; make sure we write to tmp-directory!
 
@@ -63,7 +67,7 @@
 ;;; test implementation
 ;;;
 
-(defmacro deftest (name args str . body)
+(define-macro (deftest name args str . body)
   (let ((vars '((x #f)
                 (y #f)
                 (z #f)
@@ -76,7 +80,7 @@
          ,@body
          (values)))))
 
-(defmacro check (str form )
+(define-macro (check str form )
   `(begin
     (set! %n (+ %n 1))
     (format #t "~%  ~a. Checking ~a ... " %n ,str)
@@ -250,7 +254,7 @@
   "new, initargs, and sv"
   ;; keyword args
   (set! x (new midi :channel 7 :time 0 :duration 1
-               :amplitude .5 keynum 90))
+               :amplitude .5 :keynum 90))
   (check "new keyword inits" 
          (loop for e in '((channel 7) (time 0) 
                           (duration 1) (amplitude .5)
@@ -258,7 +262,7 @@
                always (equal? (slot-ref x (car e)) (cadr e))))
   
   ;; symbol args in reverse order
-  (set! x (new midi  keynum 90 amplitude .5 duration 1
+  (set! x (new midi keynum 90 amplitude .5 duration 1
                time 0 channel 7))
   (check "new symbol inits" 
          (loop for e in '((channel 7) (time 0) 
@@ -279,7 +283,7 @@
                                  collect (new midi time i))))
   ;; test name
   (check "find-object sym" (find-object 'rick))
-  (check "find-object read-macro" #&rick)
+;  (check "find-object read-macro" #&rick)
   (check "find-object string" (find-object "rick"))
   (check "find-object ucase string" (find-object "RICK"))
   (check "list-named-objects" (member x (list-named-objects)))
@@ -318,13 +322,13 @@
   (insert-object z x)
   (check "insert-object with duplicate time"
          (and (= (length (subobjects x)) 5)
-              (equal? (end (subobjects x)) z)))
+              (equal? (car (last-pair (subobjects x))) z)))
   ;; insert after end
   (set! z (new midi :time 22))
   (insert-object z x)  
   (check "insert-object end"
          (and (= (length (subobjects x)) 6)
-              (equal? (end (subobjects x)) z)))
+              (equal? (car (last-pair (subobjects x))) z)))
   ;; removal
   (remove-object z x)
   (check "remove-object" (= (length (subobjects x)) 5))
@@ -467,13 +471,27 @@
                      (new cycle :of '(3 3 3)))))
   (check "subpatterns"
          (equal? (next x true) '(1 1 1 2 2 2 3 3 3)))
+
+  ;; random pattern
+  (set! x (new random :of '(a (b :weight 2) (c :weight 3))))
+  (set! x (next x 100))
+  (do ((tail x (cdr tail))
+       (a 0) (b 0) (c 0))
+      ((null? tail)
+       (check "weighted probability"
+              (< a b c)))
+    (case (car tail)
+      ((a) (set! a (+ a 1)))
+      ((b) (set! b (+ b 1)))
+      ((c) (set! c (+ c 1)))))
+
   ;; motives
-  (set! x (new cycle :of (list (new cycle :of 1 :name 'ff)
-                               2
-                               #&ff
-                               3)))
-  (check "subpattern motives"
-         (equal? (next x #t) '(1 2 1 3)))
+;  (set! x (new cycle :of (list (new cycle :of 1 :name 'ff)
+;                               2
+;                               #&ff
+;                               3)))
+;  (check "subpattern motives"
+;         (equal? (next x #t) '(1 2 1 3)))
   ;; pval
   (set! x (new cycle :of (list (pval (+ 1 1))
                                (pval (+ 2 2 ))
@@ -523,10 +541,10 @@
 (deftest test-midifile-output ()
   "midi file output"
   (clear-dictionary)
-  (set! x (format #f "~a~a" tmp-directory "foo.midi"))
-  (events (list (new midi time 0 duration 1 keynum 33)
-                (new midi time 1 duration 1 keynum 66)
-                (new midi time 2 duration 1 keynum 66 ))
+  (set! x (format #f "~a~a" tmp-directory "foo.mid"))
+  (events (list (new midi :time 0 :duration 1 :keynum 33)
+                (new midi :time 1 :duration 1 :keynum 66)
+                (new midi :time 2 :duration 1 :keynum 66 ))
           x)
   (set! y (import-events x))
   (check "first event midimsg"
@@ -539,7 +557,16 @@
   (check "import with tempo"
          (loop for i in (cdr (subobjects y))
                for j in '(0 .5 1)
-               always (@= (sv i time) j ))))
+               always (@= (sv i time) j )))
+
+  (events (process repeat 10 output (new midi :time (now) :keynum 60 :duration .25)
+                   wait 1)
+          "test.mid")
+  (set! y (import-events "test.mid"))
+  (check "process output"
+         (loop for e in (subobjects y) 
+            for f in '(0.0 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0)
+            always (@= (object-time e) f))))
 
 ;;; for some reason define-class has to be
 ;;; at top-level in scheme.
@@ -583,9 +610,13 @@
 (deftest test-clm-output ()
   "clm output"
   (compile-file (format #f "~av.ins" clm-directory))
-  (load  (if (member :cmu *features*)
-           (format #f "~av.cmucl" clm-directory)
-           (format #f "~av" clm-directory)))
+
+  (cond-expand
+   (cmu 
+    (load (format #f "~av.cmucl" clm-directory)))
+   (else
+    (load (format #f "~av" clm-directory))))
+  
   (check "fm-violin object"
          (and (find-class 'fm-violin #f)
               (object-parameters
@@ -597,20 +628,25 @@
   (check "output .aiff"
          (probe-file  (format #f "~atest.aiff" tmp-directory))))
 
+(define (testcmn stf len nts)
+  (let ((nts (new heap :notes nts)))
+    (process while (< (now) len)
+             for n = (next nts)
+             output (new midi :time (now)
+                         :duration 1
+                         :keynum n
+                         :channel stf)
+             wait 1)))
+
 (deftest test-cmn-output ()
   "cmn output"
   (clear-dictionary)
-  (unless (member ':cmn *features*)
+
+  (cond-expand
+   ((not cmn)
     (load (format #f "~acmn-all" cmn-directory)))
-  (define (testcmn stf len nts)
-    (let ((nts (new heap :notes nts)))
-      (process while (< (now) len)
-               for n = (next nts)
-               output (new midi :time (now)
-                           :duration 1
-                           :keynum n
-                           :channel stf)
-               wait 1)))
+   (else #f))
+ 
   (set! x '((0 :name "Viola" :clef :alto :meter (4 4))
             (1 :name "Flute" :clef :treble :meter (4 4))))
   ;; generate a .eps file
@@ -630,38 +666,42 @@
           :title "Hiho!")
   (check ".cmn output" (probe-file "testcmn2.cmn")))
 
+(define (testms chan)
+  (process for k from 60 to 72
+           output (new midi :time (now)
+                       :keynum k
+                       :duration .5
+                       :amplitude .9
+                       :channel chan)
+           wait .25))
+
+(define (dim-test-1 chan dur amp-1 amp-2 steps)
+  (process with amp-val 
+           with step-time = (/ dur steps 1.0)
+           for i to steps do
+           (set! amp-val (round (interpl (now) (list 0 amp-1 dur amp-2))))
+           (if (= i 0)
+             (output (new midi 
+                       :time (now)
+                       :channel chan
+                       :duration dur
+                       :amplitude amp-1))
+             (output (new midi-control-change :time (now)
+                          :channel chan
+                          :controller 7
+                          :value amp-val)))
+
+           (wait step-time)))
+
 (deftest test-midishare-output ()
   "midishare and player interface"
   (check "midishare loaded" (equal? (midishare) 1))
   (check "midi-open" (equal? (midi-open) (find-object "midi.port")))
-  (define (testms chan)
-    (process for k from 60 to 72
-             output (new midi :time (now)
-                         :keynum k
-                         :duration .5
-                         :amplitude .9
-                         :channel chan)
-             wait .25))
+
   (set! x (events (testms 0) "midi.port"))  ; logical chan 0 -> port 0 chan 0
   (check "sent chromatic scale" (equal? x "midi.port"))
   (sleep 5)
-  (define (dim-test-1 chan dur amp-1 amp-2 steps)
-    (process with amp-val 
-             with step-time = (/ dur steps 1.0)
-             for i to steps do
-             (set! amp-val (round (interpl (now) (list 0 amp-1 dur amp-2))))
-             (if (= i 0)
-               (output (new midi 
-                         :time (now)
-                         :channel chan
-                         :duration dur
-                         :amplitude amp-1))
-               (output (new midi-control-change :time (now)
-                            :channel chan
-                            :controller 7
-                            :value amp-val)))
 
-           (wait step-time)))
   (set! x (events (list (new midi-program-change :time 0 
                              :channel 0 :program 40)
                         (dim-test-1 0 2 90 0 20))

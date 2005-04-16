@@ -72,7 +72,20 @@
           (expand-scheme-defun form def))
         (error "Define: ~S not a variable or ~
                 function specification."
-               form)))));;;
+               form)))))
+
+(defmacro define-macro (formals &body body)
+  (let ((z (last  formals))
+        (a ()))
+    (if (null (cdr z ))
+      (setq a (cdr formals))
+      (setq a (append (butlast (cdr formals))
+                      (list (car z))
+                      (list '&rest)
+                      (list (cdr z)))))
+    `(defmacro ,(car formals) ,a ,@body)))
+
+;;;
 (defmacro set! (a b) 
   `(progn (setf ,a ,b) ; guile has genealized set!
           (values)))

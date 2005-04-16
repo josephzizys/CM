@@ -74,9 +74,9 @@
               ((not (> (car tail) freq)))
             (set-car! tail (/ (car tail) 2)))))
       (cond ((eq? scale-order ':up)
-             (set! spec (sort! spec #'<)))
+             (set! spec (sort! spec (function <))))
             ((eq? scale-order ':down)
-             (set! spec (sort! spec #'>)))
+             (set! spec (sort! spec (function >))))
             ((eq? scale-order ':random)
              (set! spec (shuffle spec))))
       (cond ((eq? type ':note)
@@ -361,7 +361,7 @@
         (nsides (if sideband-scaler
                   (inexact->exact
                    (round (* sideband-scaler index))) ;; Moore p. 325
-                  (1+ (inexact->exact (round index)))))
+                  (+ (inexact->exact (round index)) 1)))
         (spectrum '()))
     
     ;; spectrum is a list of sidebands, each sideband is (freq amp)

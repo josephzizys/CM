@@ -23,7 +23,26 @@
 (use-modules (ice-9 pretty-print)) ; remove  at some point...
 (use-modules (srfi srfi-1))
 
-(define directory-delimiter #\/)
+;;; Lisp environment
+
+(define (lisp-version)
+  (string-append "Guile " (version)))
+
+(define (err msg . args)
+  (let ((str (apply format #f msg args)))
+    (error str)))
+
+(define (read-macro-set! char func)
+  (read-hash-extend char
+                    (lambda (arg port)
+                      (func (read port)))))
+
+(define pprint pretty-print)
+
+;;; File system, files and ports
+
+(define (pwd )
+  (getcwd))
 
 (define (cd . args)
   (let ((dir (if (null? args)
@@ -32,11 +51,11 @@
     (chdir dir)
     (getcwd)))
 
-(define (pwd )
-  (getcwd))
+(define (read-byte fp)
+  (char->integer (read-char fp)))
 
-(define (shell cmd . args)
-  (system cmd))
+(define (write-byte by fp)
+  (write-char (integer->char by) fp))
 
 (define (set-file-position file pos set?)
   (if (= pos 0)
@@ -45,16 +64,21 @@
       (seek file pos SEEK_SET)
       (seek file pos SEEK_CUR))))
 
+;;; System calls
+
+(define (shell cmd . args)
+  (system cmd))
+
 (define (get-current-time)
   (let ((vec (localtime (current-time))))
     (vector-set! vec 5
                  (+ 1900 (vector-ref vec 5)))
     vec))
 
-;(define-macro (time form)
-;  `(let ((s (get-internal-real-time)))
-;    ,form
-;    (/ (- (get-internal-real-time) s) 100)))
+;;; Hashtables. all ok
+
+(define (make-equal?-hash-table  size)
+  (make-hash-table size))
 
 ;;;
 ;;;
@@ -80,52 +104,12 @@
            (values (if (eof-object? val) eof val)
                    (ftell sp))))))))
 
-(define (err msg . args)
-  (let ((str (apply format #f msg args)))
-    (error str)))
-
 ;;;
-;;; module/symbol stuff
-;;;
-
-(define (in-package pkg)
-  ;; at some point this could hook into the module system.
-  #t)
-
-(define (bound? sym)
-  (module-bound? (current-module) sym))
-
-(define (symbol-value sym)
-  (module-symbol-binding (current-module) sym))
-
-(define (symbol-function sym)
-  (let ((val (symbol-value sym)))
-    (if (procedure? val)
-      val
-      (error "not a function:" sym))))
-
-;;;
-;;; reader hackery
-;;; 
-;;;
+;;; Keywords. Guile keywords are #:foo but you can set
+;;; the reader to parse :foo as #:
+;;; guile has keyword?, keyword->symbol and symbol->keyword
 
 (read-set! keywords 'prefix)
-
-(define (read-macro-set! char func)
-  (read-hash-extend char
-                    (lambda (arg port)
-                      (func (read port)))))
-
-;;;
-
-(define (make-equal?-hash-table  size)
-  (make-hash-table size))
-
-;;;
-;;; printing hacks
-;;;
-
-(define pprint pretty-print)
 
 ;;;
 ;;; OOP functions
@@ -146,6 +130,13 @@
 		    class
 		    (fc name (class-direct-subclasses class))))))))
     (fc name (if (null? root) <top> (car root)))))
+
+(define (class-subclasses cls)
+  (let ((subs (class-direct-subclasses cls)))
+    (append subs
+            (loop for s in (class-direct-subclasses cls)
+                  append (class-subclasses s)))))
+
 
 (define slot-definition-initform slot-definition-init-value)
 

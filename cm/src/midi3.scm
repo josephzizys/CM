@@ -372,8 +372,8 @@
               (flush-pending-offs mf beats)))
       (midi-write-message (make-note-on chan keyn ampl)
                           mf
-                          (if (> beats last)
-                            (inexact->exact (* (- beats last) scaler))
+                          (if (> beats last) ; round
+                            (inexact->exact (round (* (- beats last) scaler)))
                             0)
                           #f)
       (set! (object-time mf) beats)
@@ -540,9 +540,9 @@
       (case keynum-format
         ((:keynum #f) #t)
         ((:note )
-         (set! notefn #'note)) 
+         (set! notefn (function note))) 
         ((:hertz ) 
-         (set! notefn #'hertz))
+         (set! notefn (function hertz)))
         (else 
          (err ":keynum-format value '~s' not :keynum, :note or :hertz."
               keynum-format)))
@@ -614,7 +614,7 @@
                                  (list (third track)) 
                                  (third track)))
             (set! track (first track)))
-          (cond ((<= 0 track (1- num-tracks))
+          (cond ((<= 0 track (- num-tracks 1))
                  (unless seq
                    (set! seq 
                          (make-instance class 
@@ -863,7 +863,7 @@
                  ))
                (when n (push n data))))))  ; end #'mapper
       (midi-file-set-track file track)
-      (midi-file-map-track #'mapper file ))
+      (midi-file-map-track (function mapper) file ))
     (set! (subobjects seq)
           (reverse! data))
     seq))

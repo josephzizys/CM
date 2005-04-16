@@ -1606,7 +1606,7 @@
     (define ,sym ,val)
     ,(if str
 	 `(vector-set! ,vector ,pos ,str)
-	 `(begin
+	 `(let ((*print-case* ':downcase)) ; looks gross in scheme code...
 	   (set! %deflabelvar% (format #f "~a" ',sym))
 	   (do ((i 0 (+ i 1))
 		(e (string-length %deflabelvar%)))
@@ -1614,10 +1614,9 @@
 	     (if (char=? (string-ref %deflabelvar% i) #\space)
 	       (string-set! %deflabelvar% i #\-)))
 	   (vector-set! ,vector ,pos
-	    (string-capitalize!
-	     (substring %deflabelvar%
-			1 (- (string-length %deflabelvar%)
-			     1))))))))
+                        (substring %deflabelvar%
+                                   1 (- (string-length %deflabelvar%)
+                                        1)))))))
 
 
 ;;; ======================================================================
@@ -1665,29 +1664,29 @@
 
 ;;; Specific Continuous Controllers 0-16,383 (Coarse, MSB of 14 bits)
 
-(defcontroller +Bank-Select+		  0) ; no-op unless followed by a
+(defcontroller +bank-select+		  0) ; no-op unless followed by a
 					     ; program change
-(defcontroller +Modulation-Wheel+	  1) ; 0 is no modulation effect
-(defcontroller +Breath-Control+		  2) ; 0 is minimum breath pressure
-(defcontroller +Foot-Controller+	  4) ; 0 is minimum effect
-(defcontroller +Portamento-Time+	  5) ; 0 is slowest rate
-(defcontroller +Data-Entry+		  6) ; value of a previously set
+(defcontroller +modulation-wheel+	  1) ; 0 is no modulation effect
+(defcontroller +breath-control+		  2) ; 0 is minimum breath pressure
+(defcontroller +foot-controller+	  4) ; 0 is minimum effect
+(defcontroller +portamento-time+	  5) ; 0 is slowest rate
+(defcontroller +data-entry+		  6) ; value of a previously set
 					     ; registered or non-registered
 					     ; parameter.  0 is minimum effect
-(defcontroller +Channel-Volume+		  7) ; formerly "main volume"
-(define +Volume+			  7) ; (alternative name)
-(defcontroller +Balance+		  8) ; balance before pan. 0 is left
-(defcontroller +Pan+			 10) ; 0 is left
-(defcontroller +Expression-Controller+	 11) ; percentage of volume. 0 is off
-(defcontroller +Effect-Control-1+	 12) ; 0 is minimum effect
-(defcontroller +Effect-Control-2+	 13) ; 0 is minimum effect
-(defcontroller +General-Purpose-Controller-1+	 16
+(defcontroller +channel-volume+		  7) ; formerly "main volume"
+(define +volume+			  7) ; (alternative name)
+(defcontroller +balance+		  8) ; balance before pan. 0 is left
+(defcontroller +pan+			 10) ; 0 is left
+(defcontroller +expression-controller+	 11) ; percentage of volume. 0 is off
+(defcontroller +effect-control-1+	 12) ; 0 is minimum effect
+(defcontroller +effect-control-2+	 13) ; 0 is minimum effect
+(defcontroller +general-purpose-controller-1+	 16
   "General-Purpose Controller 1")
-(defcontroller +General-Purpose-Controller-2+	 17
+(defcontroller +general-purpose-controller-2+	 17
   "General-Purpose Controller 2")
-(defcontroller +General-Purpose-Controller-3+	 18
+(defcontroller +general-purpose-controller-3+	 18
   "General-Purpose Controller 3")
-(defcontroller +General-Purpose-Controller-4+	 19
+(defcontroller +general-purpose-controller-4+	 19
   "General-Purpose Controller 4")
 
 ;;;
@@ -1700,132 +1699,132 @@
 ;;; implement 14-bit resolution are required to deal with either the coarse
 ;;; or fine controller message being sent without its counterpart following.
 
-(defcontroller +Bank-Select-Fine+		 32 "Bank Select (Fine)")
-(defcontroller +Modulation-Wheel-Fine+		 33 "Modulation Wheel (Fine)")
-(defcontroller +Breath-Control-Fine+		 34 "Breath Control (Fine)")
-(defcontroller +Foot-Controller-Fine+		 36 "Foot Controller (Fine)")
-(defcontroller +Portamento-Time-Fine+		 37 "Portamento Time (Fine)")
-(defcontroller +Data-Entry-Fine+		 38 "Data Entry (Fine)")
-(defcontroller +Channel-Volume-Fine+		 39 "Channel Volume (Fine)")
-(define +Volume-Fine+			 39) ; (alternative name)
-(defcontroller +Balance-Fine+			 40 "Balance (Fine)")
-(defcontroller +Pan-Fine+			 42 "Pan (Fine)")
-(defcontroller +Expression-Controller-Fine+	 43
+(defcontroller +bank-select-fine+		 32 "Bank Select (Fine)")
+(defcontroller +modulation-wheel-fine+		 33 "Modulation Wheel (Fine)")
+(defcontroller +breath-control-fine+		 34 "Breath Control (Fine)")
+(defcontroller +foot-controller-fine+		 36 "Foot Controller (Fine)")
+(defcontroller +portamento-time-fine+		 37 "Portamento Time (Fine)")
+(defcontroller +data-entry-fine+		 38 "Data Entry (Fine)")
+(defcontroller +channel-volume-fine+		 39 "Channel Volume (Fine)")
+(define +volume-fine+			 39) ; (alternative name)
+(defcontroller +balance-fine+			 40 "Balance (Fine)")
+(defcontroller +pan-fine+			 42 "Pan (Fine)")
+(defcontroller +expression-controller-fine+	 43
   "Expression Controller (Fine)")
-(defcontroller +Effect-Control-1-Fine+		 44 "Effect Control 1 (Fine)")
-(defcontroller +Effect-Control-2-Fine+		 45 "Effect Control 2 (Fine)")
-(defcontroller +General-Purpose-Controller-1-Fine+ 48 
+(defcontroller +effect-control-1-fine+		 44 "Effect Control 1 (Fine)")
+(defcontroller +effect-control-2-fine+		 45 "Effect Control 2 (Fine)")
+(defcontroller +general-purpose-controller-1-fine+ 48 
   "General-Purpose Controller 1 (Fine)")
-(defcontroller +General-Purpose-Controller-2-Fine+ 49 
+(defcontroller +general-purpose-controller-2-fine+ 49 
   "General-Purpose Controller 1 (Fine)")
-(defcontroller +General-Purpose-Controller-3-Fine+ 50 
+(defcontroller +general-purpose-controller-3-fine+ 50 
   "General-Purpose Controller 1 (Fine)")
-(defcontroller +General-Purpose-Controller-4-Fine+ 51 
+(defcontroller +general-purpose-controller-4-fine+ 51 
   "General-Purpose Controller 1 (Fine)")
 
 ;;; Common Switches 0(-63): on/(64-)127: off
 
-(defcontroller +Hold-1+			 64) ; when on, also postpones any 
+(defcontroller +hold-1+			 64) ; when on, also postpones any 
 					     ; All-Notes-Off controller
 					     ; message on the same channel
-(define +Sustain+			 64) ; (alternative name)
-(define +Damper-Pedal+		 64) ; (alternative name)
-(defcontroller +Portamento+		 65)
-(defcontroller +Sostenuto+		 66) ; only sustain sounding notes
+(define +sustain+			 64) ; (alternative name)
+(define +damper-pedal+		 64) ; (alternative name)
+(defcontroller +portamento+		 65)
+(defcontroller +sostenuto+		 66) ; only sustain sounding notes
 					     ; when on, also postpones any 
 					     ; All-Notes-Off controller
 					     ; message on the same channel
 					     ; for the notes held 
-(defcontroller +Soft-Pedal+		 67) 
-(defcontroller +Legato-Footswitch+	 68)
-(defcontroller +Hold-2+			 69) ; lengthen release times
+(defcontroller +soft-pedal+		 67) 
+(defcontroller +legato-footswitch+	 68)
+(defcontroller +hold-2+			 69) ; lengthen release times
 
 ;;; Sound Controllers 0-127.  0 is always minimum setting
 
-(defcontroller +Sound-Control-1+	 70) ; anything, really
-(define +Sound-Variation+		 70) ; (alternative name)
-(defcontroller +Sound-Control-2+	 71) ; VCF envelope brightness control
-(define +Sound-Timbre+		 71) ; (alternative name)
-(defcontroller +Sound-Control-3+	 72)
-(define +Sound-Release-Time+	 72) ; (alternative name)
-(defcontroller +Sound-Control-4+	 73)
-(define +Sound-Attack-Time+	 73) ; (alternative name)
-(defcontroller +Sound-Control-5+	 74) ; VCF cutoff brightness control
-(define +Sound-Brightness+		 74) ; (alternative name)
-(defcontroller +Sound-Control-6+	 75)
-(defcontroller +Sound-Control-7+	 76)
-(defcontroller +Sound-Control-8+	 77)
-(defcontroller +Sound-Control-9+	 78)
-(defcontroller +Sound-Control-10+	 79)
+(defcontroller +sound-control-1+	 70) ; anything, really
+(define +sound-variation+		 70) ; (alternative name)
+(defcontroller +sound-control-2+	 71) ; VCF envelope brightness control
+(define +sound-timbre+		 71) ; (alternative name)
+(defcontroller +sound-control-3+	 72)
+(define +sound-release-time+	 72) ; (alternative name)
+(defcontroller +sound-control-4+	 73)
+(define +sound-attack-time+	 73) ; (alternative name)
+(defcontroller +sound-control-5+	 74) ; VCF cutoff brightness control
+(define +sound-brightness+		 74) ; (alternative name)
+(defcontroller +sound-control-6+	 75)
+(defcontroller +sound-control-7+	 76)
+(defcontroller +sound-control-8+	 77)
+(defcontroller +sound-control-9+	 78)
+(defcontroller +sound-control-10+	 79)
 
 ;;; Additional (Coarse) Controllers 0-127
-(defcontroller +General-Purpose-Controller-5+	 80
+(defcontroller +general-purpose-controller-5+	 80
   "General-Purpose Controller 5")
-(defcontroller +General-Purpose-Controller-6+	 81
+(defcontroller +general-purpose-controller-6+	 81
   "General-Purpose Controller 6")
-(defcontroller +General-Purpose-Controller-7+	 82
+(defcontroller +general-purpose-controller-7+	 82
   "General-Purpose Controller 7")
-(defcontroller +General-Purpose-Controller-8+	 83
+(defcontroller +general-purpose-controller-8+	 83
   "General-Purpose Controller 8")
 
-(defcontroller +Portamento-Control+	 84) ; uses source note
+(defcontroller +portamento-control+	 84) ; uses source note
 
 ;;; Level Controllers 0-127
-(defcontroller +Effects-1-Depth+	 91)
-(define +Effects-Level+		 91) ; (alternative name)
-(defcontroller +Effects-2-Depth+	 92)
-(define +Tremolo-Level+		 92) ; (alternative name)
-(defcontroller +Effects-3-Depth+	 93)
-(define +Chorus-Level+		 93) ; (alternative name)
-(defcontroller +Effects-4-Depth+	 94)
-(define +Detune-Level+		 94) ; (alternative name)
-(defcontroller +Effects-5-Depth+	 95)
-(define +Phasor-Level+		 95) ; (alternative name)
+(defcontroller +effects-1-depth+	 91)
+(define +effects-level+		 91) ; (alternative name)
+(defcontroller +effects-2-depth+	 92)
+(define +tremolo-level+		 92) ; (alternative name)
+(defcontroller +effects-3-depth+	 93)
+(define +chorus-level+		 93) ; (alternative name)
+(defcontroller +effects-4-depth+	 94)
+(define +detune-level+		 94) ; (alternative name)
+(defcontroller +effects-5-depth+	 95)
+(define +phasor-level+		 95) ; (alternative name)
 
 ;;; Data Entry Step Controllers (without Value Byte)
-(defcontroller +Data-Entry-+1+		 96) ; increment a previously set
+(defcontroller +data-entry-+1+		 96) ; increment a previously set
 					     ; registered or non-registered
 					     ; parameter
-(define +Data-Entry-Increment+	 96) ; (alternative name)
-(defcontroller +Data-Entry--1+		 97 "Data Entry -1") 
+(define +data-entry-increment+	 96) ; (alternative name)
+(defcontroller +data-entry--1+		 97 "Data Entry -1") 
 					     ; decrement a previously set
 					     ; registered or non-registered
 					     ; parameter
-(define +Data-Entry-Decrement+	 97) ; (alternative name)
+(define +data-entry-decrement+	 97) ; (alternative name)
 
 ;;; Parameter Number Selection 0-16,383 (LSB or MSB of 14 bits)
-(defcontroller +Non-Registered-Parameter-Number-Fine+	 98
+(defcontroller +non-registered-parameter-number-fine+	 98
   "Non-Registered Parameter Number (Fine)")
-(defcontroller +Non-Registered-Parameter-Number+	 99
+(defcontroller +non-registered-parameter-number+	 99
   "Non-Registered Parameter Number")
-(defcontroller +Registered-Parameter-Number-Fine+	100
+(defcontroller +registered-parameter-number-fine+	100
   "Registered Parameter Number (Fine)")
-(defcontroller +Registered-Parameter-Number+		101) ; (coarse)
+(defcontroller +registered-parameter-number+		101) ; (coarse)
 
 ;;; Channel Mode Messages (without Value Byte, unless stated otherwise)
 ;;; Note: the 4 omni/poly messages must be received on the device's Base
 ;;; Channel.
-(defcontroller +All-Sound-Off+		 120)
-(defcontroller +Reset-All-Controllers+	 121)
-(defcontroller +Local-Control+		 122) ; 0(-63): on/(64-)127: off
-(defcontroller +All-Notes-Off+		 123)
-(defcontroller +Omni-Mode-Off+		 124) ; + all notes off
-(defcontroller +Omni-Mode-On+		 125) ; + all notes off
-(defcontroller +Poly-Mode-On/Off+	 126) ; value equals the number of
+(defcontroller +all-sound-off+		 120)
+(defcontroller +reset-all-controllers+	 121)
+(defcontroller +local-control+		 122) ; 0(-63): on/(64-)127: off
+(defcontroller +all-notes-off+		 123)
+(defcontroller +omni-mode-off+		 124) ; + all notes off
+(defcontroller +omni-mode-on+		 125) ; + all notes off
+(defcontroller +poly-mode-on/off+	 126) ; value equals the number of
 					      ; channels, or zero if the
 					      ; number of channels equals
 					      ; the number of voices in the
 					      ; receiver. + all notes off if 
 					      ; value > 1 ("Mono Off")
-(defcontroller +Poly-Mode-On+		 127) ; + all notes off
+(defcontroller +poly-mode-on+		 127) ; + all notes off
 
 ;;;
 ;;; Registered Parameter Numbers
 
-(define +RPN-Pitch-Bend-Sensitivity+   '(#x00 #x00))
-(define +RPN-Fine-Tuning+              '(#x00 #x01))
-(define +RPN-Coarse-Tuning+            '(#x00 #x02))
-(define +RPN-Reset+	            '(#x3f #xff)) ; clear current RPN
+(define +rpn-pitch-bend-sensitivity+   '(#x00 #x00))
+(define +rpn-fine-tuning+              '(#x00 #x01))
+(define +rpn-coarse-tuning+            '(#x00 #x02))
+(define +rpn-reset+                    '(#x3f #xff)) ; clear current RPN
 
 
 ;;; ======================================================================
@@ -1869,239 +1868,239 @@
 ;;; General MIDI Instrument Patches
 
 ;;; Piano
-(defgmpatch +Acoustic-Grand-Piano+	  0)
-(defgmpatch +Bright-Acoustic-Piano+	  1)
-(defgmpatch +Electric-Grand-Piano+	  2)
-(defgmpatch +Honky-Tonk-Piano+		  3)
-(defgmpatch +Electric-Piano-1+		  4)
-(defgmpatch +Electric-Piano-2+		  5)
-(defgmpatch +Harpsichord+		  6)
-(defgmpatch +Clavi+			  7)
+(defgmpatch +acoustic-grand-piano+	  0)
+(defgmpatch +bright-acoustic-piano+	  1)
+(defgmpatch +electric-grand-piano+	  2)
+(defgmpatch +honky-tonk-piano+		  3)
+(defgmpatch +electric-piano-1+		  4)
+(defgmpatch +electric-piano-2+		  5)
+(defgmpatch +harpsichord+		  6)
+(defgmpatch +clavi+			  7)
 
 ;;; Chromatic Percussion
-(defgmpatch +Celesta+			  8)
-(defgmpatch +Glockenspiel+		  9)
-(defgmpatch +Music-Box+			 10)
-(defgmpatch +Vibraphone+		 11)
-(defgmpatch +Marimba+			 12)
-(defgmpatch +Xylophone+			 13)
-(defgmpatch +Tubular-Bells+		 14)
-(defgmpatch +Dulcimer+			 15)
+(defgmpatch +celesta+			  8)
+(defgmpatch +glockenspiel+		  9)
+(defgmpatch +music-box+			 10)
+(defgmpatch +vibraphone+		 11)
+(defgmpatch +marimba+			 12)
+(defgmpatch +xylophone+			 13)
+(defgmpatch +tubular-bells+		 14)
+(defgmpatch +dulcimer+			 15)
 
 ;;; Organ
-(defgmpatch +Drawbar-Organ+		 16)
-(defgmpatch +Percussive-Organ+		 17)
-(defgmpatch +Rock-Organ+		 18)
-(defgmpatch +Church-Organ+		 19)
-(defgmpatch +Reed-Organ+		 20)
-(defgmpatch +Accordion+			 21)
-(defgmpatch +Harmonica+			 22)
-(defgmpatch +Tango-Accordion+		 23)
+(defgmpatch +drawbar-organ+		 16)
+(defgmpatch +percussive-organ+		 17)
+(defgmpatch +rock-organ+		 18)
+(defgmpatch +church-organ+		 19)
+(defgmpatch +reed-organ+		 20)
+(defgmpatch +accordion+			 21)
+(defgmpatch +harmonica+			 22)
+(defgmpatch +tango-accordion+		 23)
 
 ;;; Guitar
-(defgmpatch +Acoustic-Guitar-Nylon+	 24)
-(defgmpatch +Acoustic-Guitar-Steel+	 25)
-(defgmpatch +Electric-Guitar-Jazz+	 26)
-(defgmpatch +Electric-Guitar-Clean+	 27)
-(defgmpatch +Electric-Guitar-Muted+	 28)
-(defgmpatch +Overdriven-Guitar+		 29)
-(defgmpatch +Distortion-Guitar+		 30)
-(defgmpatch +Guitar-Harmonics+		 31)
+(defgmpatch +acoustic-guitar-nylon+	 24)
+(defgmpatch +acoustic-guitar-steel+	 25)
+(defgmpatch +electric-guitar-jazz+	 26)
+(defgmpatch +electric-guitar-clean+	 27)
+(defgmpatch +electric-guitar-muted+	 28)
+(defgmpatch +overdriven-guitar+		 29)
+(defgmpatch +distortion-guitar+		 30)
+(defgmpatch +guitar-harmonics+		 31)
 
 ;;; Bass
-(defgmpatch +Acoustic-Bass+		 32)
-(defgmpatch +Electric-Bass-Finger+	 33)
-(defgmpatch +Electric-Bass-Pick+	 34)
-(defgmpatch +Fretless-Bass+		 35)
-(defgmpatch +Slap-Bass-1+		 36)
-(defgmpatch +Slap-Bass-2+		 37)
-(defgmpatch +Synth-Bass-1+		 38)
-(defgmpatch +Synth-Bass-2+		 39)
+(defgmpatch +acoustic-bass+		 32)
+(defgmpatch +electric-bass-finger+	 33)
+(defgmpatch +electric-bass-pick+	 34)
+(defgmpatch +fretless-bass+		 35)
+(defgmpatch +slap-bass-1+		 36)
+(defgmpatch +slap-bass-2+		 37)
+(defgmpatch +synth-bass-1+		 38)
+(defgmpatch +synth-bass-2+		 39)
 
-;;; Solo Strings
-(defgmpatch +Violin+			 40)
-(defgmpatch +Viola+			 41)
-(defgmpatch +Cello+			 42)
-(defgmpatch +Contrabass+		 43)
-(defgmpatch +Tremolo-Strings+		 44)
-(defgmpatch +Pizzicato-Strings+	 45)
-(defgmpatch +Orchestral-Strings+	 46)
-(defgmpatch +Timpani+			 47)
+;;; Solo strings
+(defgmpatch +violin+			 40)
+(defgmpatch +viola+			 41)
+(defgmpatch +cello+			 42)
+(defgmpatch +contrabass+		 43)
+(defgmpatch +tremolo-strings+		 44)
+(defgmpatch +pizzicato-strings+          45)
+(defgmpatch +orchestral-strings+	 46)
+(defgmpatch +timpani+			 47)
 
 ;;; Ensemble
-(defgmpatch +String-Ensemble-1+	 48)
-(defgmpatch +String-Ensemble-2+	 49)
-(defgmpatch +Synthstrings-1+		 50)
-(defgmpatch +Synthstrings-2+		 51)
-(defgmpatch +Choir-Aahs+		 52)
-(defgmpatch +Voice-Oohs+		 53)
-(defgmpatch +Synth-Voice+		 54)
-(defgmpatch +Orchestra-Hit+		 55)
+(defgmpatch +string-ensemble-1+          48)
+(defgmpatch +string-ensemble-2+          49)
+(defgmpatch +synthstrings-1+		 50)
+(defgmpatch +synthstrings-2+		 51)
+(defgmpatch +choir-aahs+		 52)
+(defgmpatch +voice-oohs+		 53)
+(defgmpatch +synth-voice+		 54)
+(defgmpatch +orchestra-hit+		 55)
 
 ;;; Brass
-(defgmpatch +Trumpet+			 56)
-(defgmpatch +Trombone+			 57)
-(defgmpatch +Tuba+			 58)
-(defgmpatch +Muted-Trumpet+		 59)
-(defgmpatch +French-Horn+		 60)
-(defgmpatch +Brass-Section+		 61)
-(defgmpatch +Synthbrass-1+		 62)
-(defgmpatch +Synthbrass-2+		 63)
+(defgmpatch +trumpet+			 56)
+(defgmpatch +trombone+			 57)
+(defgmpatch +tuba+			 58)
+(defgmpatch +muted-trumpet+		 59)
+(defgmpatch +french-horn+		 60)
+(defgmpatch +brass-section+		 61)
+(defgmpatch +synthbrass-1+		 62)
+(defgmpatch +synthbrass-2+		 63)
 
 ;;; Reed
-(defgmpatch +Soprano-Sax+		 64)
-(defgmpatch +Alto-Sax+			 65)
-(defgmpatch +Tenor-Sax+		 66)
-(defgmpatch +Baritone-Sax+		 67)
-(defgmpatch +Oboe+			 68)
-(defgmpatch +English-Horn+		 69)
-(defgmpatch +Bassoon+			 70)
-(defgmpatch +Clarinet+			 71)
+(defgmpatch +soprano-sax+		 64)
+(defgmpatch +alto-sax+	                 65)
+(defgmpatch +tenor-sax+                  66)
+(defgmpatch +baritone-sax+		 67)
+(defgmpatch +oboe+			 68)
+(defgmpatch +english-horn+		 69)
+(defgmpatch +bassoon+			 70)
+(defgmpatch +clarinet+			 71)
 
 ;;; Pipe
-(defgmpatch +Piccolo+			 72)
-(defgmpatch +Flute+			 73)
-(defgmpatch +Recorder+			 74)
-(defgmpatch +Pan-Flute+			 75)
-(defgmpatch +Blown-Bottle+		 76)
-(defgmpatch +Skakuhachi+		 77)
-(defgmpatch +Whistle+			 78)
-(defgmpatch +Ocarina+			 79)
+(defgmpatch +piccolo+			 72)
+(defgmpatch +flute+			 73)
+(defgmpatch +recorder+			 74)
+(defgmpatch +pan-flute+			 75)
+(defgmpatch +blown-bottle+		 76)
+(defgmpatch +skakuhachi+		 77)
+(defgmpatch +whistle+			 78)
+(defgmpatch +ocarina+			 79)
 
 ;;; Synth banks are multiply defined for their nicknames.
 ;;; Only the default name is defgmpatch'ed
 
 ;;; Synth Lead
-(defgmpatch +Lead-1-Square+		 80 "Lead 1 (Square)")
-(define +Lead-1+			 80)
-(define +Square-Lead+		 80)
-(define +Square+			 80)
-(defgmpatch +Lead-2-Sawtooth+		 81 "Lead 2 (Sawtooth)")
-(define +Lead-2+			 81)
-(define +Sawtooth-Lead+		 81)
-(define +Sawtooth+			 81)
-(defgmpatch +Lead-3-Calliope+		 82 "Lead 3 (Calliope)")
-(define +Lead-3+			 82)
-(define +Calliope-Lead+		 82)
-(define +Calliope+			 82)
-(defgmpatch +Lead-4-Chiff+		 83 "Lead 4 (Chiff)")
-(define +Lead-4+			 83)
-(define +Chiff-Lead+		 83)
-(define +Chiff+			 83)
-(defgmpatch +Lead-5-Charang+		 84 "Lead 5 (Charang)")
-(define +Lead-5+			 84)
-(define +Charang-Lead+		 84)
-(define +Charang+			 84)
-(defgmpatch +Lead-6-Voice+		 85 "Lead 6 (Voice)")
-(define +Lead-6+			 85)
-(define +Voice-Lead+		 85)
-(define +Voice+			 85)
-(defgmpatch +Lead-7-Fifths+		 86 "Lead 7 (Fifths)")
-(define +Lead-7+			 86)
-(define +Fifths-Lead+		 86)
-(define +Fifths+			 86)
-(defgmpatch +Lead-8-Bass+Lead+		 87 "Lead 8 (Bass+Lead)")
-(define +Lead-8+			 87)
-(define +Bass+Lead-Lead+		 87)
-(define +Bass+Lead+		 87)
+(defgmpatch +lead-1-square+		 80 "Lead 1 (Square)")
+(define +lead-1+			 80)
+(define +square-lead+		 80)
+(define +square+			 80)
+(defgmpatch +lead-2-sawtooth+		 81 "Lead 2 (Sawtooth)")
+(define +lead-2+			 81)
+(define +sawtooth-lead+		 81)
+(define +sawtooth+			 81)
+(defgmpatch +lead-3-calliope+		 82 "Lead 3 (Calliope)")
+(define +lead-3+			 82)
+(define +calliope-lead+		 82)
+(define +calliope+			 82)
+(defgmpatch +lead-4-chiff+		 83 "Lead 4 (Chiff)")
+(define +lead-4+			 83)
+(define +chiff-lead+		 83)
+(define +chiff+			 83)
+(defgmpatch +lead-5-charang+		 84 "Lead 5 (Charang)")
+(define +lead-5+			 84)
+(define +charang-lead+		 84)
+(define +charang+			 84)
+(defgmpatch +lead-6-voice+		 85 "Lead 6 (Voice)")
+(define +lead-6+			 85)
+(define +voice-lead+		 85)
+(define +voice+			 85)
+(defgmpatch +lead-7-fifths+		 86 "Lead 7 (Fifths)")
+(define +lead-7+			 86)
+(define +fifths-lead+		 86)
+(define +fifths+			 86)
+(defgmpatch +lead-8-bass+lead+		 87 "Lead 8 (Bass+Lead)")
+(define +lead-8+			 87)
+(define +bass+lead-lead+		 87)
+(define +bass+lead+		 87)
 
 ;;; Synth Pad
-(defgmpatch +Pad-1-New-Age+		 88 "Pad 1 (New Age)")
-(define +Pad-1+			 88)
-(define +New-Age-Pad+		 88)
-(define +New-Age+			 88)
-(defgmpatch +Pad-2-Warm+		 89 "Pad 2 (Warm)")
-(define +Pad-2+			 89)
-(define +Warm-Pad+			 89)
-(define +Warm+			 89)
-(defgmpatch +Pad-3-Polysynth+		 90 "Pad 3 (Polysynth)")
-(define +Pad-3+			 90)
-(define +Polysynth-Pad+		 90)
-(define +Polysynth+		 90)
-(defgmpatch +Pad-4-Choir+		 91 "Pad 4 (Choir)")
-(define +Pad-4+			 91)
-(define +Choir-Pad+		 91)
-(define +Choir+			 91)
-(defgmpatch +Pad-5-Bowed+		 92 "Pad 5 (Bowed)")
-(define +Pad-5+			 92)
-(define +Bowed-Pad+		 92)
-(define +Bowed+			 92)
-(defgmpatch +Pad-6-Metallic+		 93 "Pad 6 (Metallic)")
-(define +Pad-6+			 93)
-(define +Metallic-Pad+		 93)
-(define +Metallic+			 93)
-(defgmpatch +Pad-7-Halo+		 94 "Pad 7 (Halo)")
-(define +Pad-7+			 94)
-(define +Halo-Pad+			 94)
-(define +Halo+			 94)
-(defgmpatch +Pad-8-Sweep+		 95 "Pad 8 (Sweep)")
-(define +Pad-8+			 95)
-(define +Sweep-Pad+		 95)
-(define +Sweep+			 95)
+(defgmpatch +pad-1-new-age+		 88 "Pad 1 (New Age)")
+(define +pad-1+			 88)
+(define +new-age-pad+		 88)
+(define +new-age+			 88)
+(defgmpatch +pad-2-warm+		 89 "Pad 2 (Warm)")
+(define +pad-2+			 89)
+(define +warm-pad+			 89)
+(define +warm+			 89)
+(defgmpatch +pad-3-polysynth+		 90 "Pad 3 (Polysynth)")
+(define +pad-3+			 90)
+(define +polysynth-Pad+		 90)
+(define +polysynth+		 90)
+(defgmpatch +pad-4-choir+		 91 "Pad 4 (Choir)")
+(define +pad-4+			 91)
+(define +choir-pad+		 91)
+(define +choir+			 91)
+(defgmpatch +pad-5-bowed+		 92 "Pad 5 (Bowed)")
+(define +pad-5+			 92)
+(define +bowed-pad+		 92)
+(define +bowed+			 92)
+(defgmpatch +pad-6-metallic+		 93 "Pad 6 (Metallic)")
+(define +pad-6+			 93)
+(define +metallic-pad+		 93)
+(define +metallic+			 93)
+(defgmpatch +pad-7-halo+		 94 "Pad 7 (Halo)")
+(define +pad-7+			 94)
+(define +halo-pad+			 94)
+(define +halo+			 94)
+(defgmpatch +pad-8-sweep+		 95 "Pad 8 (Sweep)")
+(define +pad-8+			 95)
+(define +sweep-pad+		 95)
+(define +sweep+			 95)
 
 ;;; Synth Effects
-(defgmpatch +Fx-1-Rain+			 96 "FX 1 (Rain)")
-(define +Fx-1+			 96)
-(define +Rain-Fx+			 96)
-(define +Rain+			 96)
-(defgmpatch +Fx-2-Soundtrack+		 97 "FX 2 (Soundtrack)")
-(define +Fx-2+			 97)
-(define +Soundtrack-Fx+		 97)
-(define +Soundtrack+		 97)
-(defgmpatch +Fx-3-Crystal+		 98 "FX 3 (Crystal)")
-(define +Fx-3+			 98)
-(define +Crystal-Fx+		 98)
-(define +Crystal+			 98)
-(defgmpatch +Fx-4-Atmosphere+		 99 "FX 4 (Atmosphere)")
-(define +Fx-4+			 99)
-(define +Atmosphere-Fx+		 99)
-(define +Atmosphere+		 99)
-(defgmpatch +Fx-5-Brightness+		100 "FX 5 (Brightness)")
-(define +Fx-5+			100)
-(define +Brightness-Fx+		100)
-(define +Brightness+		100)
-(defgmpatch +Fx-6-Goblins+		101 "FX 6 (Goblins)")
-(define +Fx-6+			101)
-(define +Goblins-Fx+		101)
-(define +Goblins+			101)
-(defgmpatch +Fx-7-Echoes+		102 "FX 7 (Echoes)")
-(define +Fx-7+			102)
-(define +Echoes-Fx+		102)
-(define +Echoes+			102)
-(defgmpatch +Fx-8-Sci-Fi+		103 "FX 8 (Sci-Fi)")
-(define +Fx-8+			103)
-(define +Sci-Fi-Fx+		103)
-(define +Sci-Fi+			103)
+(defgmpatch +fx-1-rain+			 96 "FX 1 (Rain)")
+(define +fx-1+			 96)
+(define +rain-fx+			 96)
+(define +rain+			 96)
+(defgmpatch +fx-2-soundtrack+		 97 "FX 2 (Soundtrack)")
+(define +fx-2+			 97)
+(define +soundtrack-fx+		 97)
+(define +soundtrack+		 97)
+(defgmpatch +fx-3-crystal+		 98 "FX 3 (Crystal)")
+(define +fx-3+			 98)
+(define +crystal-fx+		 98)
+(define +crystal+			 98)
+(defgmpatch +fx-4-atmosphere+		 99 "FX 4 (Atmosphere)")
+(define +fx-4+			 99)
+(define +atmosphere-fx+		 99)
+(define +atmosphere+		 99)
+(defgmpatch +fx-5-brightness+		100 "FX 5 (Brightness)")
+(define +fx-5+			100)
+(define +brightness-fx+		100)
+(define +brightness+		100)
+(defgmpatch +fx-6-goblins+		101 "FX 6 (Goblins)")
+(define +fx-6+			101)
+(define +goblins-fx+		101)
+(define +goblins+			101)
+(defgmpatch +fx-7-echoes+		102 "FX 7 (Echoes)")
+(define +fx-7+			102)
+(define +echoes-fx+		102)
+(define +echoes+			102)
+(defgmpatch +fx-8-sci-fi+		103 "FX 8 (Sci-Fi)")
+(define +fx-8+			103)
+(define +sci-fi-fx+		103)
+(define +sci-fi+			103)
 
 ;;; Ethnic
-(defgmpatch +Sitar+			104)
-(defgmpatch +Banjo+			105)
-(defgmpatch +Shamisen+			106)
-(defgmpatch +Koto+			107)
-(defgmpatch +Kalimba+			108)
-(defgmpatch +Bagpipe+			109)
-(defgmpatch +Fiddle+			110)
-(defgmpatch +Shanai+			111)
+(defgmpatch +sitar+			104)
+(defgmpatch +banjo+			105)
+(defgmpatch +shamisen+			106)
+(defgmpatch +koto+			107)
+(defgmpatch +kalimba+			108)
+(defgmpatch +bagpipe+			109)
+(defgmpatch +fiddle+			110)
+(defgmpatch +shanai+			111)
 
 ;;; Percussive
-(defgmpatch +Tinkle-Bell+		112)
-(defgmpatch +Agogo+			113)
-(defgmpatch +Steel-Drums+		114)
-(defgmpatch +Woodblock+			115)
-(defgmpatch +Taiko-Drum+		116)
-(defgmpatch +Melodic-Tom+		117)
-(defgmpatch +Synth-Drum+		118)
-(defgmpatch +Reverse-Cymbal+		119)
+(defgmpatch +tinkle-bell+		112)
+(defgmpatch +agogo+			113)
+(defgmpatch +steel-drums+		114)
+(defgmpatch +woodblock+			115)
+(defgmpatch +taiko-drum+		116)
+(defgmpatch +melodic-tom+		117)
+(defgmpatch +synth-drum+		118)
+(defgmpatch +reverse-cymbal+		119)
 
 ;;; Sound Effects
-(defgmpatch +Guitar-Fret-Noise+		120)
-(defgmpatch +Breath-Noise+		121)
-(defgmpatch +Seashore+			122)
-(defgmpatch +Bird-Tweet+		123)
-(defgmpatch +Telephone-Ring+		124)
-(defgmpatch +Helicopter+		125)
-(defgmpatch +Applause+			126)
-(defgmpatch +Gunshot+			127)
+(defgmpatch +guitar-fret-noise+		120)
+(defgmpatch +breath-noise+		121)
+(defgmpatch +seashore+			122)
+(defgmpatch +bird-tweet+		123)
+(defgmpatch +telephone-ring+		124)
+(defgmpatch +helicopter+		125)
+(defgmpatch +applause+			126)
+(defgmpatch +gunshot+			127)
 
 ;;;
 ;;; General MIDI Drum Kit
@@ -2119,53 +2118,53 @@
     (set! f (= (vector-ref *gm-percussion-channels* i)
 	       chan))))
 
-(defgmdrum +Acoustic-Bass-Drum+		 35)
-(defgmdrum +Bass-Drum-1+		 36)
-(defgmdrum +Side-Stick+			 37)
-(defgmdrum +Acoustic-Snare+		 38)
-(defgmdrum +Hand-Clap+			 39)
-(defgmdrum +Electric-Snare+		 40)
-(defgmdrum +Low-Floor-Tom+		 41)
-(defgmdrum +Closed-Hi-Hat+		 42)
-(defgmdrum +High-Floor-Tom+		 43)
-(defgmdrum +Pedal-Hi-Hat+		 44)
-(defgmdrum +Low-Tom+			 45)
-(defgmdrum +Open-Hi-Hat+		 46)
-(defgmdrum +Low-Mid-Tom+		 47)
-(defgmdrum +Hi-Mid-Tom+			 48)
-(defgmdrum +Crash-Cymbal-1+		 49)
-(defgmdrum +High-Tom+			 50)
-(defgmdrum +Ride-Cymbal-1+		 51)
-(defgmdrum +Chinese-Cymbal+		 52)
-(defgmdrum +Ride-Bell+			 53)
-(defgmdrum +Tambourine+			 54)
-(defgmdrum +Splash-Cymbal+		 55)
-(defgmdrum +Cowbell+			 56)
-(defgmdrum +Crash-Cymbal-2+		 57)
-(defgmdrum +Vibraslap+			 58)
-(defgmdrum +Ride-Cymbal-2+		 59)
-(defgmdrum +Hi-Bongo+			 60)
-(defgmdrum +Low-Bongo+			 61)
-(defgmdrum +Mute-Hi-Conga+		 62)
-(defgmdrum +Open-Hi-Conga+		 63)
-(defgmdrum +Low-Conga+			 64)
-(defgmdrum +High-Timbale+		 65)
-(defgmdrum +Low-Timbale+		 66)
-(defgmdrum +High-Agogo+			 67)
-(defgmdrum +Low-Agogo+			 68)
-(defgmdrum +Cabasa+			 69)
-(defgmdrum +Maracas+			 70)
-(defgmdrum +Short-Whistle+		 71)
-(defgmdrum +Long-Whistle+		 72)
-(defgmdrum +Short-Guiro+		 73)
-(defgmdrum +Long-Guiro+			 74)
-(defgmdrum +Claves+			 75)
-(defgmdrum +Hi-Wood-Block+		 76)
-(defgmdrum +Low-Wood-Block+		 77)
-(defgmdrum +Mute-Cuica+			 78)
-(defgmdrum +Open-Cuica+			 79)
-(defgmdrum +Mute-Triangle+		 80)
-(defgmdrum +Open-Triangle+		 81)
+(defgmdrum +acoustic-bass-drum+		 35)
+(defgmdrum +bass-drum-1+		 36)
+(defgmdrum +side-stick+			 37)
+(defgmdrum +acoustic-snare+		 38)
+(defgmdrum +hand-clap+			 39)
+(defgmdrum +electric-snare+		 40)
+(defgmdrum +low-floor-tom+		 41)
+(defgmdrum +closed-hi-hat+		 42)
+(defgmdrum +high-floor-tom+		 43)
+(defgmdrum +pedal-hi-hat+		 44)
+(defgmdrum +low-tom+			 45)
+(defgmdrum +open-hi-hat+		 46)
+(defgmdrum +low-mid-tom+		 47)
+(defgmdrum +hi-mid-tom+			 48)
+(defgmdrum +crash-cymbal-1+		 49)
+(defgmdrum +high-tom+			 50)
+(defgmdrum +ride-cymbal-1+		 51)
+(defgmdrum +chinese-cymbal+		 52)
+(defgmdrum +ride-bell+			 53)
+(defgmdrum +tambourine+			 54)
+(defgmdrum +splash-cymbal+		 55)
+(defgmdrum +cowbell+			 56)
+(defgmdrum +crash-cymbal-2+		 57)
+(defgmdrum +vibraslap+			 58)
+(defgmdrum +ride-cymbal-2+		 59)
+(defgmdrum +hi-bongo+			 60)
+(defgmdrum +low-bongo+			 61)
+(defgmdrum +mute-hi-conga+		 62)
+(defgmdrum +open-hi-conga+		 63)
+(defgmdrum +low-conga+			 64)
+(defgmdrum +high-timbale+		 65)
+(defgmdrum +low-timbale+		 66)
+(defgmdrum +high-agogo+			 67)
+(defgmdrum +low-agogo+			 68)
+(defgmdrum +cabasa+			 69)
+(defgmdrum +maracas+			 70)
+(defgmdrum +short-whistle+		 71)
+(defgmdrum +long-whistle+		 72)
+(defgmdrum +short-guiro+		 73)
+(defgmdrum +long-guiro+			 74)
+(defgmdrum +claves+			 75)
+(defgmdrum +hi-wood-block+		 76)
+(defgmdrum +low-wood-block+		 77)
+(defgmdrum +mute-cuica+			 78)
+(defgmdrum +open-cuica+			 79)
+(defgmdrum +mute-triangle+		 80)
+(defgmdrum +open-triangle+		 81)
 
 ;;; ======================================================================
 ;;;
@@ -2186,181 +2185,181 @@
 ;;; some company designators omitted where it seemed reasonable.
 
 ;;; USA Manufacturers
-(define +Sequential-Circuits-ID+	      #x01)
-(define +IDP-ID+			      #x02)
-(define +Voyetra-ID+		      #x03) ; Voyetra/Octave Plateau
-(define +Moog-ID+			      #x04) ; Moog Music
-(define +Passport-ID+		      #x05) ; Passport Designs
-(define +Lexicon-ID+		      #x06)
-(define +Kurzweil-ID+		      #x07)
-(define +Fender-ID+		      #x08)
-(define +Gulbransen-ID+		      #x09)
-(define +AKG-ID+			      #x0A) ; AKG Acoustics
-(define +Voyce-ID+			      #x0B) ; Voyce Music
-(define +Waveframe-ID+		      #x0C)
-(define +ADA-ID+			      #x0D)
-(define +Garfield-ID+		      #x0E) ; Garfield Electronics
-(define +Ensoniq-ID+		      #x0F)
-(define +Oberheim-ID+		      #x10)
-(define +Apple-ID+			      #x11) ; Apple Computer
-(define +Grey-Matter-ID+		      #x12)
-(define +Digidesign-ID+		      #x13)
-(define +Palm-Tree-ID+		      #x14) ; Palm Tree Instruments
-(define +JL-Cooper-ID+		      #x15)
-(define +Lowrey-ID+		      #x16)
-(define +Adams-Smith-ID+		      #x17)
-(define +E-mu-ID+			      #x18) ; E-mu Systems
-(define +Harmony-ID+		      #x19) ; Harmony Systems
-(define +ART-ID+			      #x1A)
-(define +Baldwin-ID+		      #x1B)
-(define +Eventide-ID+		      #x1C)
-(define +Inventronics-ID+		      #x1D)
-(define +Key-Concepts-ID+		      #x1E)
-(define +Clarity-ID+		      #x1F)
+(define +sequential-circuits-id+	      #x01)
+(define +idp-id+			      #x02)
+(define +voyetra-id+		      #x03) ; voyetra/octave plateau
+(define +moog-id+			      #x04) ; moog music
+(define +passport-id+		      #x05) ; passport designs
+(define +lexicon-id+		      #x06)
+(define +kurzweil-id+		      #x07)
+(define +fender-id+		      #x08)
+(define +gulbransen-id+		      #x09)
+(define +akg-id+			      #x0a) ; akg acoustics
+(define +voyce-id+			      #x0b) ; voyce music
+(define +waveframe-id+		      #x0c)
+(define +ada-id+			      #x0d)
+(define +garfield-id+		      #x0e) ; garfield electronics
+(define +ensoniq-id+		      #x0f)
+(define +oberheim-id+		      #x10)
+(define +apple-id+			      #x11) ; apple computer
+(define +grey-matter-id+		      #x12)
+(define +digidesign-id+		      #x13)
+(define +palm-tree-id+		      #x14) ; palm tree instruments
+(define +jl-cooper-id+		      #x15)
+(define +lowrey-id+		      #x16)
+(define +adams-smith-id+		      #x17)
+(define +e-mu-id+			      #x18) ; e-mu systems
+(define +harmony-id+		      #x19) ; harmony systems
+(define +art-id+			      #x1a)
+(define +baldwin-id+		      #x1b)
+(define +eventide-id+		      #x1c)
+(define +inventronics-id+		      #x1d)
+(define +key-concepts-id+		      #x1e)
+(define +clarity-id+		      #x1f)
 
-;;; Europe
-(define +Passac-ID+		      #x20)
-(define +SIEL-ID+			      #x21)
-(define +Synthaxe-ID+		      #x22)
-(define +Stepp-ID+			      #x23)
-(define +Hohner-ID+		      #x24)
-(define +Twister-ID+		      #x25)
-(define +Solton-ID+		      #x26)
-(define +Jellinghaus-ID+		      #x27)
-(define +Southworth-ID+		      #x28)
-(define +PPG-ID+			      #x29)
-(define +JEN-ID+			      #x2A)
-(define +Solid-State-ID+		      #x2B) ; Solid Stat Logic
-(define +Audio-Vertrieb-ID+	      #x2C)
-(define +Hinton-ID+		      #x2D) ; Hinton Instruments
-(define +Soundtracs-ID+		      #x2E)
-(define +Elka-ID+			      #x2F)
-(define +Dynachord-ID+		      #x30)
-(define +Clavia-ID+		      #x33) ; Clavia Digital Instr.
-(define +Audio-Architecture-ID+	      #x34)
-(define +Soundcraft-ID+		      #x39) ; Soundcraft Electronics
-(define +Wersi-ID+			      #x3B)
-(define +Avab-ID+			      #x3C) ; Avab Electronik
-(define +Digigram-ID+		      #x3D)
-(define +Waldorf-ID+		      #x3E) ; Waldorf Electronics
-(define +Quasimidi-ID+		      #x3F)
+;;; europe
+(define +passac-id+		      #x20)
+(define +siel-id+			      #x21)
+(define +synthaxe-id+		      #x22)
+(define +stepp-id+			      #x23)
+(define +hohner-id+		      #x24)
+(define +twister-id+		      #x25)
+(define +solton-id+		      #x26)
+(define +jellinghaus-id+		      #x27)
+(define +southworth-id+		      #x28)
+(define +ppg-id+			      #x29)
+(define +jen-id+			      #x2a)
+(define +solid-state-id+		      #x2b) ; solid stat logic
+(define +audio-vertrieb-id+	      #x2c)
+(define +hinton-id+		      #x2d) ; hinton instruments
+(define +soundtracs-id+		      #x2e)
+(define +elka-id+			      #x2f)
+(define +dynachord-id+		      #x30)
+(define +clavia-id+		      #x33) ; clavia digital instr.
+(define +audio-architecture-id+	      #x34)
+(define +soundcraft-id+		      #x39) ; soundcraft electronics
+(define +wersi-id+			      #x3b)
+(define +avab-id+			      #x3c) ; avab electronik
+(define +digigram-id+		      #x3d)
+(define +waldorf-id+		      #x3e) ; waldorf electronics
+(define +quasimidi-id+		      #x3f)
 
-;;; Japan
-(define +Kawai-ID+			      #x40)
-(define +Roland-ID+		      #x41)
-(define +Korg-ID+			      #x42)
-(define +Yamaha-ID+		      #x43)
-(define +Casio-ID+			      #x44)
-(define +Moridaira-ID+		      #x45)
-(define +Kamiya-ID+		      #x46)
-(define +Akai-ID+			      #x47)
-(define +Japan-Victor-ID+		      #x48)
-(define +Meisosha-ID+		      #x49)
-(define +Hoshino-Gakki-ID+		      #x4A)
-(define +Fujitsu-ID+		      #x4B)
-(define +Sony-ID+			      #x4C)
-(define +Nishin-Onpa-ID+		      #x4D)
-(define +TEAC-ID+			      #x4E)
-(define +Matsushita-Electric-ID+	      #x50)
-(define +Fostex-ID+		      #x51)
-(define +Zoom-ID+			      #x52)
-(define +Midori-ID+		      #x53) ; Midori Electronics
-(define +Matsushita-Communication-ID+    #x54)
-(define +Suzuki-ID+		      #x55)
+;;; japan
+(define +kawai-id+			      #x40)
+(define +roland-id+		      #x41)
+(define +korg-id+			      #x42)
+(define +yamaha-id+		      #x43)
+(define +casio-id+			      #x44)
+(define +moridaira-id+		      #x45)
+(define +kamiya-id+		      #x46)
+(define +akai-id+			      #x47)
+(define +japan-victor-id+		      #x48)
+(define +meisosha-id+		      #x49)
+(define +hoshino-gakki-id+		      #x4a)
+(define +fujitsu-id+		      #x4b)
+(define +sony-id+			      #x4c)
+(define +nishin-onpa-id+		      #x4d)
+(define +teac-id+			      #x4e)
+(define +matsushita-electric-id+	      #x50)
+(define +fostex-id+		      #x51)
+(define +zoom-id+			      #x52)
+(define +midori-id+		      #x53) ; midori electronics
+(define +matsushita-communication-id+    #x54)
+(define +suzuki-id+		      #x55)
 
-;;; USA Extended
-(define +Warner-ID+	     '(0 #x00 #x01)) ; Warner New Media
-(define +Digital-Music-ID+ '(0 #x00 #x07)) ; Digital Music Corp.
-(define +IOTA-ID+	     '(0 #x00 #x08)) ; IOTA Systems
-(define +New-England-ID+   '(0 #x00 #x09)) ; New England Digital
-(define +Artisyn-ID+	     '(0 #x00 #x0A))
-(define +IVL-ID+	     '(0 #x00 #x0B)) ; IVL Technologies
-(define +Southern-Music-ID+     '(0 #x00 #x0C)) ; Southern Music Systems
-(define +Lake-Butler-ID+	     '(0 #x00 #x0D)) ; Lake Butler Sound Co.
-(define +Alesis-ID+	     '(0 #x00 #x0E))
-(define +DOD-ID+		     '(0 #x00 #x10)) ; DOD Electronics
-(define +Studer-ID+	     '(0 #x00 #x11)) ; Studer Editech
-(define +Perfect-Fretworks-ID+  '(0 #x00 #x14))
-(define +KAT-ID+		     '(0 #x00 #x15))
-(define +Opcode-ID+	     '(0 #x00 #x16))
-(define +Rane-ID+		     '(0 #x00 #x17)) ; Rane Corporation
-(define +Spatial-Sound-ID+	     '(0 #x00 #x18)) ; Spatial Sound/Anadi Inc.
-(define +KMX-ID+		     '(0 #x00 #x19))
-(define +Allen-&-Heath-ID+	     '(0 #x00 #x1A)) ; Allen & Heath Brenell
-(define +Peavey-ID+	     '(0 #x00 #x1B)) ; Peavey Electronics
-(define +360-ID+		     '(0 #x00 #x1C)) ; 360 Systems
-(define +Spectrum-ID+	     '(0 #x00 #x1D)) ; Spectrum Design & Dev.
-(define +Marquis-Musi-ID+	     '(0 #x00 #x1E))
-(define +Zeta-ID+		     '(0 #x00 #x1F)) ; Zeta Systems
-(define +Axxes-ID+		     '(0 #x00 #x20))
-(define +Orban-ID+		     '(0 #x00 #x21))
-(define +KTI-ID+		     '(0 #x00 #x24))
-(define +Breakaway-ID+	     '(0 #x00 #x25)) ; Breakaway Technologies
-(define +CAE-ID+		     '(0 #x00 #x26))
-(define +Rocktron-ID+	     '(0 #x00 #x29)) ; Rocktron Corp.
-(define +PianoDisc-ID+	     '(0 #x00 #x2A))
-(define +Cannon-ID+	     '(0 #x00 #x2B)) ; Cannon Research Corp.
-(define +Rogers-ID+	     '(0 #x00 #x2D)) ; Rogers Instrument Corp.
-(define +Blue-Sky-ID+	     '(0 #x00 #x2E)) ; Blue Sky Logic
-(define +Encore-ID+	     '(0 #x00 #x2F)) ; Encore Electronics
-(define +Uptown-ID+	     '(0 #x00 #x30))
-(define +Voce-ID+		     '(0 #x00 #x31))
-(define +CTI-ID+		     '(0 #x00 #x32)) ; CTI Audio
-(define +S&S-ID+		     '(0 #x00 #x33)) ; S&S Research
-(define +Broderbund-ID+	     '(0 #x00 #x34)) ; Broderbund Software
-(define +Allen-Organ-ID+	     '(0 #x00 #x35)) ; Allen Organ Co.
-(define +Music-Quest-ID+	     '(0 #x00 #x37))
-(define +Aphex-ID+		     '(0 #x00 #x38))
-(define +Gallien-Krueger-ID+    '(0 #x00 #x39))
-(define +IBM-ID+		     '(0 #x00 #x3A))
-(define +Hotz-ID+		     '(0 #x00 #x3C)) ; Hotz Instruments Techn.
-(define +ETA-ID+		     '(0 #x00 #x3D)) ; ETA Lighting
-(define +NSI-ID+		     '(0 #x00 #x3E)) ; NSI Corporation
-(define +Ad-Lib-ID+	     '(0 #x00 #x3F))
-(define +Richmond-ID+	     '(0 #x00 #x40)) ; Richmond Sound Design
-(define +Microsoft-ID+	     '(0 #x00 #x41))
-(define +Software-Toolworks-ID+ '(0 #x00 #x42)) ; The Software Toolworks
-(define +RJMG/Niche-ID+	     '(0 #x00 #x43))
-(define +Intone-ID+	     '(0 #x00 #x44))
-(define +GT-Electronics-ID+     '(0 #x00 #x47)) ; GT Electr./Groove Tubes
-(define +InterMIDI-ID+	     '(0 #x00 #x48))
-(define +Lone-Wolf-ID+	     '(0 #x00 #x55))
-(define +Musonix-ID+	     '(0 #x00 #x64))
+;;; usa extended
+(define +warner-id+	     '(0 #x00 #x01)) ; warner new media
+(define +digital-music-id+ '(0 #x00 #x07)) ; digital music corp.
+(define +iota-id+	     '(0 #x00 #x08)) ; iota systems
+(define +new-england-id+   '(0 #x00 #x09)) ; new england digital
+(define +artisyn-id+	     '(0 #x00 #x0a))
+(define +ivl-id+	     '(0 #x00 #x0b)) ; ivl technologies
+(define +southern-music-id+     '(0 #x00 #x0c)) ; southern music systems
+(define +lake-butler-id+	     '(0 #x00 #x0d)) ; lake butler sound co.
+(define +alesis-id+	     '(0 #x00 #x0e))
+(define +dod-id+		     '(0 #x00 #x10)) ; dod electronics
+(define +studer-id+	     '(0 #x00 #x11)) ; studer editech
+(define +perfect-fretworks-id+  '(0 #x00 #x14))
+(define +kat-id+		     '(0 #x00 #x15))
+(define +opcode-id+	     '(0 #x00 #x16))
+(define +rane-id+		     '(0 #x00 #x17)) ; rane corporation
+(define +spatial-sound-id+	     '(0 #x00 #x18)) ; spatial sound/anadi inc.
+(define +kmx-id+		     '(0 #x00 #x19))
+(define +allen-&-heath-id+	     '(0 #x00 #x1a)) ; allen & heath brenell
+(define +peavey-id+	     '(0 #x00 #x1b)) ; peavey electronics
+(define +360-id+		     '(0 #x00 #x1c)) ; 360 systems
+(define +spectrum-id+	     '(0 #x00 #x1d)) ; spectrum design & dev.
+(define +marquis-musi-id+	     '(0 #x00 #x1e))
+(define +zeta-id+		     '(0 #x00 #x1f)) ; zeta systems
+(define +axxes-id+		     '(0 #x00 #x20))
+(define +orban-id+		     '(0 #x00 #x21))
+(define +kti-id+		     '(0 #x00 #x24))
+(define +breakaway-id+	     '(0 #x00 #x25)) ; breakaway technologies
+(define +cae-id+		     '(0 #x00 #x26))
+(define +rocktron-id+	     '(0 #x00 #x29)) ; rocktron corp.
+(define +pianodisc-id+	     '(0 #x00 #x2a))
+(define +cannon-id+	     '(0 #x00 #x2b)) ; cannon research corp.
+(define +rogers-id+	     '(0 #x00 #x2d)) ; rogers instrument corp.
+(define +blue-sky-id+	     '(0 #x00 #x2e)) ; blue sky logic
+(define +encore-id+	     '(0 #x00 #x2f)) ; encore electronics
+(define +uptown-id+	     '(0 #x00 #x30))
+(define +voce-id+		     '(0 #x00 #x31))
+(define +cti-id+		     '(0 #x00 #x32)) ; cti audio
+(define +s&s-id+		     '(0 #x00 #x33)) ; s&s research
+(define +broderbund-id+	     '(0 #x00 #x34)) ; broderbund software
+(define +allen-organ-id+	     '(0 #x00 #x35)) ; allen organ co.
+(define +music-quest-id+	     '(0 #x00 #x37))
+(define +aphex-id+		     '(0 #x00 #x38))
+(define +gallien-krueger-id+    '(0 #x00 #x39))
+(define +ibm-id+		     '(0 #x00 #x3a))
+(define +hotz-id+		     '(0 #x00 #x3c)) ; hotz instruments techn.
+(define +eta-id+		     '(0 #x00 #x3d)) ; eta lighting
+(define +nsi-id+		     '(0 #x00 #x3e)) ; nsi corporation
+(define +ad-lib-id+	     '(0 #x00 #x3f))
+(define +richmond-id+	     '(0 #x00 #x40)) ; richmond sound design
+(define +microsoft-id+	     '(0 #x00 #x41))
+(define +software-toolworks-id+ '(0 #x00 #x42)) ; the software toolworks
+(define +rjmg/niche-id+	     '(0 #x00 #x43))
+(define +intone-id+	     '(0 #x00 #x44))
+(define +gt-electronics-id+     '(0 #x00 #x47)) ; gt electr./groove tubes
+(define +intermidi-id+	     '(0 #x00 #x48))
+(define +lone-wolf-id+	     '(0 #x00 #x55))
+(define +musonix-id+	     '(0 #x00 #x64))
 
-(define +SGI-ID+		     '(0 #x01 #x04)) ; Silicon Graphics, Inc.
+(define +sgi-id+		     '(0 #x01 #x04)) ; silicon graphics, inc.
 
-;;; Europe Extended
-(define +Dream-ID+		     '(0 #x20 #x00))
-(define +Strand-ID+	     '(0 #x20 #x00)) ; Strand Lighting
-(define +AMEK-ID+            '(0 #x20 #x00)) ; AMEK Systems & Controls
-(define +Dr.Boehm-ID+	     '(0 #x20 #x00)) ; Dr Boehm/Musician Int'l
-(define +Trident-ID+	     '(0 #x20 #x00))
-(define +Real-World-ID+	     '(0 #x20 #x00)) ; Real World Design
-(define +Yes-ID+		     '(0 #x20 #x00)) ; Yes Technology
-(define +Audiomatica-ID+	     '(0 #x20 #x00))
-(define +Bontempi-ID+	     '(0 #x20 #x00)) ; Bontempi/Farfisa
-(define +FBT-ID+		     '(0 #x20 #x00)) ; F.B.T. Electronica
-(define +Larking-ID+	     '(0 #x20 #x00)) ; Larking Audio
-(define +Zero-88-ID+	     '(0 #x20 #x00)) ; Zero 88 Lighting
-(define +Micon-ID+		     '(0 #x20 #x10)) ; Micon Audio Electronics
-(define +Forefront-ID+	     '(0 #x20 #x10)) ; Forefront Technology
-(define +Kenton-ID+	     '(0 #x20 #x10)) ; Kenton Electronics
-(define +ADB-ID+		     '(0 #x20 #x10))
-(define +Marshall-ID+	     '(0 #x20 #x10)) ; Jim Marshall Products
-(define +DDA-ID+		     '(0 #x20 #x10))
-(define +TC-ID+		     '(0 #x20 #x10)) ; TC Electronic
+;;; europe extended
+(define +dream-id+		     '(0 #x20 #x00))
+(define +strand-id+	     '(0 #x20 #x00)) ; strand lighting
+(define +amek-id+            '(0 #x20 #x00)) ; amek systems & controls
+(define +dr.boehm-id+	     '(0 #x20 #x00)) ; dr boehm/musician int'l
+(define +trident-id+	     '(0 #x20 #x00))
+(define +real-world-id+	     '(0 #x20 #x00)) ; real world design
+(define +yes-id+		     '(0 #x20 #x00)) ; yes technology
+(define +audiomatica-id+	     '(0 #x20 #x00))
+(define +bontempi-id+	     '(0 #x20 #x00)) ; bontempi/farfisa
+(define +fbt-id+		     '(0 #x20 #x00)) ; f.b.t. electronica
+(define +larking-id+	     '(0 #x20 #x00)) ; larking audio
+(define +zero-88-id+	     '(0 #x20 #x00)) ; zero 88 lighting
+(define +micon-id+		     '(0 #x20 #x10)) ; micon audio electronics
+(define +forefront-id+	     '(0 #x20 #x10)) ; forefront technology
+(define +kenton-id+	     '(0 #x20 #x10)) ; kenton electronics
+(define +adb-id+		     '(0 #x20 #x10))
+(define +marshall-id+	     '(0 #x20 #x10)) ; jim marshall products
+(define +dda-id+		     '(0 #x20 #x10))
+(define +tc-id+		     '(0 #x20 #x10)) ; tc electronic
 
-
-;;;
-;;; Universal (Manufacturer-Independent) ID's
 
 ;;;
-;;; Private-use sysex messages may use the Non-Commercial ID at own risk.
-
-(define +Non-Commercial-ID+	      #x7D) ; aka "Eductaional Use"
+;;; universal (manufacturer-independent) id's
 
 ;;;
-;;; Sysex messages of interest for various manufacturer-independent devices
+;;; private-use sysex messages may use the non-commercial id at own risk.
+
+(define +non-commercial-id+	      #x7d) ; aka "eductaional use"
+
+;;;
+;;; sysex messages of interest for various manufacturer-independent devices
 ;;; may make use of the Real-Time and Non-Real-Time ID's.  The general
 ;;; syntax of such messages is 
 ;;;
@@ -2372,36 +2371,35 @@
 ;;; NOTE: The base Device-ID may or may not be independent from the
 ;;; device's (or parts) Base Channel.
 
-(define +Non-Real-Time-ID+		      #x7E)
+(define +non-real-time-id+		      #x7e)
 
-;;; Non-Real-Time Universal Sysex Message Sub-IDs
-(define +Sample-Dump-Header-Sub-ID+		#x01)
-(define +Sample-Dump-Packet-Sub-ID+		#x02)
-(define +Dump-Request-Sub-ID+			#x03)
-(define +MIDI-Time-Code-Setup-Sub-ID+		#x04)
-(define +Sample-Dump-Extensions-Sub-ID+		#x05)
-(define +Inquiry-Message-Sub-ID+			#x06)
-(define +File-Dump-Sub-ID+				#x07)
-(define +MIDI-Tuning-Standard-Sub-ID+		#x08)
-(define +General-MIDI-Message-Sub-ID+		#x09)
-(define +End-of-File-Sub-ID+			#x7B)
-(define +Wait-Sub-ID+				#x7C)
-(define +Cancel-Sub-ID+				#x7D)
-(define +NAK-Sub-ID+				#x7E)
-(define +Ack-Sub-ID+				#x7F)
+;;; non-real-time universal sysex message sub-ids
+(define +sample-dump-header-sub-id+		#x01)
+(define +sample-dump-packet-sub-id+		#x02)
+(define +dump-request-sub-id+			#x03)
+(define +midi-time-code-setup-sub-id+		#x04)
+(define +sample-dump-extensions-sub-id+		#x05)
+(define +inquiry-message-sub-id+			#x06)
+(define +file-dump-sub-id+				#x07)
+(define +midi-tuning-standard-sub-id+		#x08)
+(define +general-midi-message-sub-id+		#x09)
+(define +end-of-file-sub-id+			#x7b)
+(define +wait-sub-id+				#x7c)
+(define +cancel-sub-id+				#x7d)
+(define +nak-sub-id+				#x7e)
+(define +ack-sub-id+				#x7f)
 
-(define +Real-Time-ID+		      #x7F)
+(define +real-time-id+		      #x7f)
 
-;;; Real-Time Universal Sysex Message Sub-IDs
-(define +Long-Form-MTC-Sub-ID+			#x01)
-(define +MIDI-Show-Control-Sub-ID+			#x02)
-(define +Notation-Information-Sub-ID+		#x03)
-(define +Device-Control-Sub-ID+			#x04)
-(define +Real-Time-MTC-Cueing-Sub-ID+		#x05)
-(define +MIDI-Machine-Control-Command-Sub-ID+	#x06)
-(define +MIDI-Machine-Control-Response-Sub-ID+	#x07)
-(define +Single-Note-Retune-Sub-ID+		#x08)
-
+;;; real-time universal sysex message sub-ids
+(define +long-form-mtc-sub-id+			#x01)
+(define +midi-show-control-sub-id+			#x02)
+(define +notation-information-sub-id+		#x03)
+(define +device-control-sub-id+			#x04)
+(define +real-time-mtc-cueing-sub-id+		#x05)
+(define +midi-machine-control-command-sub-id+	#x06)
+(define +midi-machine-control-response-sub-id+	#x07)
+(define +single-note-retune-sub-id+		#x08)
 
 ;;;
 ;;; Conversion Utilities
@@ -2504,7 +2502,6 @@
 ;       --- --- ---  ---
 ;       'a' 'b' 'c' '\0'
 
-
 ;;;
 ;;; For instance, to enable or disable the General MIDI System for all
 ;;; devices on a MIDI bus, one would send the sysex message
@@ -2515,18 +2512,18 @@
 ;;; the <Device-ID> is set to 7F, indicating a "global" message to 
 ;;; be received by all devices.
 
-(define +All-Device-IDs+ #x7F)
+(define +all-device-ids+ #x7F)
 
-(define (make-GM-mode-sysex-data gm-on? . args)
-  (with-args (args &key (device-ID +All-Device-IDs+))
-    (make-sysex-data +Non-Real-Time-ID+
-		     device-ID
-		     +General-MIDI-Message-Sub-ID+
+(define (make-gm-mode-sysex-data gm-on? . args)
+  (with-args (args &key (device-id +all-device-ids+))
+    (make-sysex-data +non-real-time-id+
+		     device-id
+		     +general-midi-message-sub-id+
 		     (if gm-on? 1 0))))
 
-; (make-GM-mode-sysex-data t)
+; (make-gm-mode-sysex-data t)
 ;   => #(240 126 127 9 1 247)
-; (make-GM-mode-sysex-data #f)
+; (make-gm-mode-sysex-data #f)
 ;   => #(240 126 127 9 0 247)
 
 ;;;
@@ -2539,11 +2536,11 @@
 ;;; bits of a 14-bit volume.  Again, <Device-ID> is set to 7F,
 ;;; indicating a "global" message to be received by all devices.
 
-(define +Master-Volume-Sub-ID-2+ #x01)
+(define +master-volume-sub-id-2+ #x01)
 
 (define (make-master-volume-sysex-data . args)
   (with-args (args &key coarse fine
-                   (device-ID +All-Device-IDs+))
+                   (device-id +all-device-ids+))
     (unless (or coarse fine)
       (err "No volume specified."))
     (unless (or (and coarse (n-bit-twoscomp-p coarse 7 #f))
@@ -2553,10 +2550,10 @@
            (if fine "Fine" "Course")
            (or coarse fine)
            (if fine "14" "7")))
-    (make-sysex-data +Real-Time-ID+
-		     device-ID
-		     +Device-Control-Sub-ID+
-		     +Master-Volume-Sub-ID-2+
+    (make-sysex-data +real-time-id+
+		     device-id
+		     +device-control-sub-id+
+		     +master-volume-sub-id-2+
 		     (if fine (logand fine #b1111111) coarse)
 		     (if fine (ash (logand fine #b11111110000000) -7) 
                          coarse))))
@@ -2647,25 +2644,25 @@
 ;;;   2 = 30 fps (Drop-Frame)
 ;;;   3 = 30 fps
 
-(define +SMPTE-Full-Frame-Sub-ID-2+ #x01)
-(define +SMPTE-User-Bits-Sub-ID-2+  #x02)
+(define +smpte-full-frame-sub-id-2+ #x01)
+(define +smpte-user-bits-sub-id-2+  #x02)
 
 
-(define +SMPTE-Format-24fps+	 0)
-(define +SMPTE-Format-25fps+	 1)
-(define +SMPTE-Format-30fps-drop+	 2)
-(define +SMPTE-Format-30fps+	 3)
+(define +smpte-format-24fps+	 0)
+(define +smpte-format-25fps+	 1)
+(define +smpte-format-30fps-drop+	 2)
+(define +smpte-format-30fps+	 3)
 
-(define (encode-SMPTE-data hr mn sc fr . args)
+(define (encode-smpte-data hr mn sc fr . args)
   (with-args (args &key subframes format)
     (unless (and (<= 0 hr 23) 
                  (<= 0 mn 59)
                  (<= 0 sc 59)
 	         (<= 0 fr
-                     (cond ((= format +SMPTE-Format-24fps+) 23)
-                           ((= format +SMPTE-Format-25fps+) 24)
-                           ((or (= format +SMPTE-Format-30fps-drop+)
-                                (= format +SMPTE-Format-30fps+)) 29)
+                     (cond ((= format +smpte-format-24fps+) 23)
+                           ((= format +smpte-format-25fps+) 24)
+                           ((or (= format +smpte-format-30fps-drop+)
+                                (= format +smpte-format-30fps+)) 29)
                            (else (err "Not a valid SMPTE format ID: ~a."
                                       format))))
 	         (or (not subframes)
@@ -2677,19 +2674,19 @@
       (list hr mn sc fr subframes)
       (list hr mn sc fr))))
 
-; (encode-SMPTE-data 4 5 6 7 :format 3)
+; (encode-smpte-data 4 5 6 7 :format 3)
 ;   => (100 5 6 7)			; 100 = #b11 00100 = format 3, hour 4
-; (encode-SMPTE-data 4 5 6 7 :format 0 :subframes 45)
+; (encode-smpte-data 4 5 6 7 :format 0 :subframes 45)
 ;   => (4 5 6 7 45)
-; (encode-SMPTE-data 23 59 59 29 :format +SMPTE-Format-30fps+)
+; (encode-smpte-data 23 59 59 29 :format +smpte-format-30fps+)
 ;   => (119 59 59 29)			; 119 = #b11 10111 = format 3, hour 23
 
-(define (make-SMPTE-full-frame-sysex-data hr mn sc fr . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+)
-                   (device-ID +All-Device-IDs+))
-    (make-sysex-data +Real-Time-ID+ device-ID
-		     +Long-Form-MTC-Sub-ID+ +SMPTE-Full-Frame-Sub-ID-2+
-		     (encode-SMPTE-data hr mn sc fr :format format))))
+(define (make-smpte-full-frame-sysex-data hr mn sc fr . args)
+  (with-args (args &key (format +smpte-format-30fps+)
+                   (device-id +all-device-ids+))
+    (make-sysex-data +real-time-id+ device-id
+		     +long-form-mtc-sub-id+ +smpte-full-frame-sub-id-2+
+		     (encode-smpte-data hr mn sc fr :format format))))
 
 ; (make-SMPTE-full-frame-sysex-data 1 2 3 4)
 ;   => #(240 127 127 1 1 97 2 3 4 247)	; 97 = #b11 00001 = format 3, hour 1
@@ -2711,11 +2708,11 @@
 ;;; through u8 correspond to the SMPTE Binary Groups 1 through 8. u9 are the
 ;;; 2 Binary Group Flag Bits, defined by SMPTE.
 
-(define +SMPTE-User-Bits-Raw+   #b00)
-(define +SMPTE-User-Bits-Chars+ #b10)
+(define +smpte-user-bits-raw+   #b00)
+(define +smpte-user-bits-chars+ #b10)
 
-(define (make-SMPTE-user-bits-sysex-data format data . args)
-  (with-args (args &key (device-ID +All-Device-IDs+))
+(define (make-smpte-user-bits-sysex-data format data . args)
+  (with-args (args &key (device-id +all-device-ids+))
     (let* ((fmt (case format
                   ((:raw ) 0)
                   ((:bytes ) 1)
@@ -2729,13 +2726,13 @@
       
       (cond ((string? data)
              (set! len (string-length data))
-             (set! ref #'string-ref))
+             (set! ref (function string-ref)))
             ((vector? data)
              (set! len (vector-length data))
-             (set! ref #'vector-ref))
+             (set! ref (function vector-ref)))
             ((list? data)
              (set! len (length len))
-             (set! ref #'list-ref)))
+             (set! ref (function list-ref))))
       
       (unless (= len (if (= size 4) 8 4))
         (err "~a format requires ~d data bytes, got: ~s."
@@ -2768,10 +2765,10 @@
                    (if (even? n)
                      (ash (logand d #b11110000) -4)
                      (logand d #b1111)))))))
-        (make-sysex-data +Real-Time-ID+
-		         device-ID
-		         +Long-Form-MTC-Sub-ID+
-		         +SMPTE-User-Bits-Sub-ID-2+
+        (make-sysex-data +real-time-id+
+		         device-id
+		         +long-form-mtc-sub-id+
+		         +smpte-user-bits-sub-id-2+
 		         (data 0)
                          (data 1)
                          (data 2)
@@ -2781,18 +2778,18 @@
                          (data 6)
                          (data 7)
 		         (if (= fmt 2)
-			   +SMPTE-User-Bits-Chars+
-			   +SMPTE-User-Bits-Raw+))))))
+			   +smpte-user-bits-chars+
+			   +smpte-user-bits-raw+))))))
 
 
 
-; (make-SMPTE-user-bits-sysex-data :raw '(1 2 3 4 5 6 7 8))
+; (make-smpte-user-bits-sysex-data :raw '(1 2 3 4 5 6 7 8))
 ;   => #(240 127 127 1 2 1 2 3 4 5 6 7 8 0 247) ; all in nibbles
-; (make-SMPTE-user-bits-sysex-data :bytes '(128 129 130 131))
+; (make-smpte-user-bits-sysex-data :bytes '(128 129 130 131))
 ;   => #(240 127 127 1 2 8 0 8 1 8 2 8 3 0 247) ; #x80 #x81 #x82 #x83, fmt=0
-; (make-SMPTE-user-bits-sysex-data :chars '(#\T #\E #\S #\T))
-;   => #(240 127 127 1 2 5 4 4 5 5 3 5 4 2 247) ; #x54455354 = :|TEST|, fmt=2
-; (make-SMPTE-user-bits-sysex-data :string "TEST")
+; (make-smpte-user-bits-sysex-data :chars '(#\t #\e #\s #\t))
+;   => #(240 127 127 1 2 5 4 4 5 5 3 5 4 2 247) ; #x54455354 = :|test|, fmt=2
+; (make-smpte-user-bits-sysex-data :string "TEST")
 ;   => #(240 127 127 1 2 5 4 4 5 5 3 5 4 2 247) ; as above
 
 ;;; 
@@ -2816,19 +2813,19 @@
 ;;; number. This would be used by a device wishing to mark the passage of
 ;;; measures without keeping track of the actual measure number.
 
-(define +Bar-Marker-Sub-ID-2+ #x01)
+(define +bar-marker-sub-id-2+ #x01)
 
 (define (make-measure-number-sysex-data num . args)
   (with-args (args &key (countoff #f)
-                   (device-ID +All-Device-IDs+))
+                   (device-id +all-device-ids+))
     (when countoff 
       (set! num (- (abs num))))		; ensure num is negative
     ;; convert to 14-bit two's-complement
     (set! num (n-bit-twoscomp num 14 t))
-    (make-sysex-data +Real-Time-ID+
-		     device-ID
-		     +Notation-Information-Sub-ID+
-		     +Bar-Marker-Sub-ID-2+
+    (make-sysex-data +real-time-id+
+		     device-id
+		     +notation-information-sub-id+
+		     +bar-marker-sub-id-2+
 		     (ldb (byte 7 0) num)
 		     (ldb (byte 7 7) num))))
 
@@ -2850,8 +2847,8 @@
 ;;; notes in a MIDI quarter note.  Additional pairs of nn/dd's are for 
 ;;; compound time signatures only.
 
-(define +Time-Signature-Now-Sub-ID-2+          #x02)
-(define +Time-Signature-Next-Measure-Sub-ID-2+ #x42)
+(define +time-signature-now-sub-id-2+          #x02)
+(define +time-signature-next-measure-sub-id-2+ #x42)
 
 ;;; compound meters:
 ;;; 
@@ -2862,7 +2859,7 @@
 (define (make-time-signature-sysex-data numerators denominators . args)
   (with-args (args &key (32nds 8)
                    (defer #f)
-                   (device-ID +All-Device-IDs+))
+                   (device-id +all-device-ids+))
     ;; i should fix this for vectors...
     (unless (list? numerators)
       (set! numerators (list numerators)))
@@ -2880,13 +2877,13 @@
 		       collect (if (not (zero? r))
 				 (err "Not a power of 2: ~s" d)
 			         f))))
-      (make-sysex-data +Real-Time-ID+
-		       device-ID
-		       +Notation-Information-Sub-ID+
+      (make-sysex-data +real-time-id+
+		       device-id
+		       +notation-information-sub-id+
 		       (if defer
-                         +Time-Signature-Next-Measure-Sub-ID-2+
-			 +Time-Signature-Now-Sub-ID-2+)
-		       (1+ (* 2 len))
+                         +time-signature-next-measure-sub-id-2+
+			 +time-signature-now-sub-id-2+)
+		       (+ (* 2 len) 1)
 		       (first args) (second args) 32nds
 		       (cdr (cdr args))))))
 
@@ -2926,29 +2923,29 @@
 ;;; message regardless of who it was intended for.  Device-specific messages
 ;;; should be sent as nibblized MIDI System Exclusive messages.
 
-(define +Setup-Special-Sub-ID-2+                #x00)
-(define +Setup-Punch-In-Point-Sub-ID-2+         #x01)
-(define +Setup-Punch-Out-Point-Sub-ID-2+        #x02)
-(define +Setup-Delete-Punch-In-Point-Sub-ID-2+  #x03)
-(define +Setup-Delete-Punch-Out-Point-Sub-ID-2+	#x04)
-(define +Setup-Event-Start-Point-Sub-ID-2+      #x05)
-(define +Setup-Event-Stop-Point-Sub-ID-2+       #x06)
-(define +Setup-Xtnd-Event-Start-Point-Sub-ID-2+ #x07)
-(define +Setup-Xtnd-Event-Stop-Point-Sub-ID-2+  #x08)
-(define +Setup-Delete-Event-Start-Point-Sub-ID-2+ #x09)
-(define +Setup-Delete-Event-Stop-Point-Sub-ID-2+ #x0A)
-(define +Setup-Cue-Point-Sub-ID-2+              #x0B)
-(define +Setup-Xtnd-Cue-Point-Sub-ID-2+         #x0C)
-(define +Setup-Delete-Cue-Point-Sub-ID-2+       #x0D)
-(define +Setup-Event-Name-Sub-ID-2+		#x0E)
+(define +setup-special-sub-id-2+                #x00)
+(define +setup-punch-in-point-sub-id-2+         #x01)
+(define +setup-punch-out-point-sub-id-2+        #x02)
+(define +setup-delete-punch-in-point-sub-id-2+  #x03)
+(define +setup-delete-punch-out-point-sub-id-2+	#x04)
+(define +setup-event-start-point-sub-id-2+      #x05)
+(define +setup-event-stop-point-sub-id-2+       #x06)
+(define +setup-xtnd-event-start-point-sub-id-2+ #x07)
+(define +setup-xtnd-event-stop-point-sub-id-2+  #x08)
+(define +setup-delete-event-start-point-sub-id-2+ #x09)
+(define +setup-delete-event-stop-point-sub-id-2+ #x0a)
+(define +setup-cue-point-sub-id-2+              #x0b)
+(define +setup-xtnd-cue-point-sub-id-2+         #x0c)
+(define +setup-delete-cue-point-sub-id-2+       #x0d)
+(define +setup-event-name-sub-id-2+		#x0e)
 
 (define (%make-setup-data dev subid2 fmt hr mn sc fr ff num . args)
   (with-args (args &optional xtnd)
-    (make-sysex-data +Non-Real-Time-ID+ 
+    (make-sysex-data +non-real-time-id+ 
                      dev
-                     +MIDI-Time-Code-Setup-Sub-ID+ 
+                     +midi-time-code-setup-sub-id+ 
                      subid2
-		     (encode-SMPTE-data hr mn sc fr :subframes ff :format fmt)
+		     (encode-smpte-data hr mn sc fr :subframes ff :format fmt)
 		     (cond ((and (list? num) (= (length num) 2))
                             (n-bit-twoscomp-p (car num) 7
                                               (< (car num) 0) #t)
@@ -2978,141 +2975,141 @@
 ;;; NOTE: The standard proposal states "Five are defined" and that "types 01 
 ;;;       00 through 04 00 ignore the event time".  I reckon that's wrong.
 
-(define +Setup-Special-Time-Code-Offset-Type+	   '(#x00 #x00))
-(define +Setup-Special-Enable-Event-List-Type+	   '(#x01 #x00))
-(define +Setup-Special-Disable-Event-List-Type+	   '(#x02 #x00))
-(define +Setup-Special-Clear-Event-List-Type+	   '(#x03 #x00))
-(define +Setup-Special-System-Stop-Type+	   '(#x04 #x00))
-(define +Setup-Special-Event-List-Request-Type+	   '(#x05 #x00))
+(define +setup-special-time-code-offset-type+	   '(#x00 #x00))
+(define +setup-special-enable-event-list-type+	   '(#x01 #x00))
+(define +setup-special-disable-event-list-type+	   '(#x02 #x00))
+(define +setup-special-clear-event-list-type+	   '(#x03 #x00))
+(define +setup-special-system-stop-type+	   '(#x04 #x00))
+(define +setup-special-event-list-request-type+	   '(#x05 #x00))
 
 
-;;; Specification of a Time Code Offset is typically needed to synchronize
+;;; specification of a time code offset is typically needed to synchronize
 ;;; different devices/media.
 
-(define (make-Time-Code-Offset-sysex-data hr mn sc fr ff . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+)
-	           (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Special-Sub-ID-2+
+(define (make-time-code-offset-sysex-data hr mn sc fr ff . args)
+  (with-args (args &key (format +smpte-format-30fps+)
+	           (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-special-sub-id-2+
 		      format hr mn sc fr ff
-		      +Setup-Special-Time-Code-Offset-Type+)))
+		      +setup-special-time-code-offset-type+)))
 
-; (make-Time-Code-Offset-sysex-data 1 2 3 4 5 :format +SMPTE-Format-25fps+)
+; (make-time-code-offset-sysex-data 1 2 3 4 5 :format +smpte-format-25fps+)
 ;   => #(240 126 127 4 0 33 2 3 4 5 0 0 247) ; 33 = #b1 00001 = format 1, hour 1
 
-;;; Enable Event List means for a slave to enable execution of events in its
+;;; enable event list means for a slave to enable execution of events in its
 ;;; internal "list of events" when each one's respective SMPTE time
 ;;; occurs. Disable Event List means for a slave to disable execution of
 ;;; events in its internal "list of events", but not to erase the list.
 ;;; Clear Event List means for a slave to erase all events in its internal
 ;;; list.
 
-(define (make-Enable-Event-List-sysex-data . args)
-  (with-args (args &key (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID +Setup-Special-Sub-ID-2+
+(define (make-enable-event-list-sysex-data . args)
+  (with-args (args &key (device-id +all-device-ids+))
+    (%make-setup-data device-id +setup-special-sub-id-2+
 		      0 0 0 0 0 0
-		      +Setup-Special-Enable-Event-List-Type+)))
+		      +setup-special-enable-event-list-type+)))
 
-(define (make-Disable-Event-List-sysex-data . args)
-  (with-args (args &key (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Special-Sub-ID-2+
+(define (make-disable-event-list-sysex-data . args)
+  (with-args (args &key (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-special-sub-id-2+
 		      0 0 0 0 0 0
-		      +Setup-Special-Disable-Event-List-Type+)))
+		      +setup-special-disable-event-list-type+)))
 
-(define (make-Clear-Event-List-sysex-data  . args)
-  (with-args (args &key (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Special-Sub-ID-2+
+(define (make-clear-event-list-sysex-data  . args)
+  (with-args (args &key (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-special-sub-id-2+
 		      0 0 0 0 0 0
-		      +Setup-Special-Clear-Event-List-Type+)))
+		      +setup-special-clear-event-list-type+)))
 
-; (make-Enable-Event-List-sysex-data)
+; (make-enable-event-list-sysex-data)
 ;   => #(240 126 127 4 0 0 0 0 0 0 1 0 247)
-; (make-Disable-Event-List-sysex-data)
+; (make-disable-event-list-sysex-data)
 ;   => #(240 126 127 4 0 0 0 0 0 0 2 0 247)
-; (make-Clear-Event-List-sysex-data)
+; (make-clear-event-list-sysex-data)
 ;   => #(240 126 127 4 0 0 0 0 0 0 3 0 247)
 
-;;; System Stop refers to a time when the slave may shut down. This serves
+;;; system stop refers to a time when the slave may shut down. this serves
 ;;; as a protection against Event Starts without Event Stops, tape machines
 ;;; running past the end of a reel, etc.
 
-(define (make-System-Stop-sysex-data hr mn sc fr ff . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+)
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID
-                      +Setup-Special-Sub-ID-2+
+(define (make-system-stop-sysex-data hr mn sc fr ff . args)
+  (with-args (args &key (format +smpte-format-30fps+)
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id
+                      +setup-special-sub-id-2+
 		      format hr mn sc fr ff
-		      +Setup-Special-System-Stop-Type+)))
+		      +setup-special-system-stop-type+)))
 
-; (make-System-Stop-sysex-data 1 2 3 4 5 :format +SMPTE-Format-25fps+)
+; (make-system-stop-sysex-data 1 2 3 4 5 :format +smpte-format-25fps+)
 ;   => #(240 126 127 4 0 33 2 3 4 5 4 0 247)
 
 
-;;; Event List Request is sent by the master, and requests the slave to send
-;;; all events in its list as a series of Setup messages, starting from the
-;;; SMPTE time in this message. 
+;;; event list request is sent by the master, and requests the slave to send
+;;; all events in its list as a series of setup messages, starting from the
+;;; smpte time in this message. 
 
-(define (make-Event-List-Request-sysex-data hr mn sc fr ff  . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+)
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID +Setup-Special-Sub-ID-2+
+(define (make-event-list-request-sysex-data hr mn sc fr ff  . args)
+  (with-args (args &key (format +smpte-format-30fps+)
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id +setup-special-sub-id-2+
 		      format hr mn sc fr ff
-		      +Setup-Special-Event-List-Request-Type+)))
+		      +setup-special-event-list-request-type+)))
 
 
-; (make-Event-List-Request-sysex-data 1 2 3 4 5 :format +SMPTE-Format-25fps+)
+; (make-event-list-request-sysex-data 1 2 3 4 5 :format +smpte-format-25fps+)
 ;   => #(240 126 127 4 0 33 2 3 4 5 4 0 247)
 
 ;;;
-;;; Punch In and Punch Out refer to the enabling and disabling of record
+;;; punch in and punch out refer to the enabling and disabling of record
 ;;; mode on a unit. The Event Number refers to the track to be recorded.
 ;;; Multiple punch in/punch out points (and any of the other event types
 ;;; below) may be specified by sending multiple Set-Up messages with
 ;;; different times.  Delete Punch In or Out deletes the matching point
 ;;; (time and event number) from the Cue List. 
 
-(define (make-Punch-In-Point-sysex-data track hr mn sc fr ff . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Punch-In-Point-Sub-ID-2+
+(define (make-punch-in-point-sysex-data track hr mn sc fr ff . args)
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-punch-in-point-sub-id-2+
 		      format hr mn sc fr ff
 		      track)))
 
-(define (make-Punch-Out-Point-sysex-data track hr mn sc fr ff . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Punch-Out-Point-Sub-ID-2+
+(define (make-punch-out-point-sysex-data track hr mn sc fr ff . args)
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-punch-out-point-sub-id-2+
 		      format hr mn sc fr ff
 		      track)))
 
-(define (make-Delete-Punch-In-Point-sysex-data track hr mn sc fr ff . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID
-                      +Setup-Delete-Punch-In-Point-Sub-ID-2+
+(define (make-delete-punch-in-point-sysex-data track hr mn sc fr ff . args)
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id
+                      +setup-delete-punch-in-point-sub-id-2+
 		      format hr mn sc fr ff
 		      track)))
 
-(define (make-Delete-Punch-Out-Point-sysex-data track hr mn sc fr ff
+(define (make-delete-punch-out-point-sysex-data track hr mn sc fr ff
                                                 . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Delete-Punch-Out-Point-Sub-ID-2+
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-delete-punch-out-point-sub-id-2+
 		      format hr mn sc fr ff
 		      track)))
 
-; (make-Punch-In-Point-sysex-data 7 23 59 59 29 99)
+; (make-punch-in-point-sysex-data 7 23 59 59 29 99)
 ;   => #(240 126 127 4 1 119 59 59 29 99 7 0 247)	; 33 = #b11.10111 = fmt 3, h 23
-; (make-Punch-Out-Point-sysex-data 7 23 59 59 29 99)
+; (make-punch-out-point-sysex-data 7 23 59 59 29 99)
 ;   => #(240 126 127 4 2 119 59 59 29 99 7 0 247)
-; (make-Delete-Punch-In-Point-sysex-data 7 23 59 59 29 99)
+; (make-delete-punch-in-point-sysex-data 7 23 59 59 29 99)
 ;   => #(240 126 127 4 3 119 59 59 29 99 7 0 247)
-; (make-Delete-Punch-Out-Point-sysex-data 7 23 59 59 29 99)
+; (make-delete-punch-out-point-sysex-data 7 23 59 59 29 99)
 ;   => #(240 126 127 4 4 119 59 59 29 99 7 0 247)
 
 ;;;
@@ -3134,73 +3131,73 @@
 ;;; Delete Event Start/Stop means to delete the matching (event number and
 ;;; time) event (with or without additional information) from the Cue List. 
 
-(define (make-Event-Start-Point-sysex-data event-nr hr mn sc fr ff . arg)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID
-                      +Setup-Event-Start-Point-Sub-ID-2+
+(define (make-event-start-point-sysex-data event-nr hr mn sc fr ff . arg)
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id
+                      +setup-event-start-point-sub-id-2+
 		      format hr mn sc fr ff
 		      event-nr)))
 
-(define (make-Event-Stop-Point-sysex-data event-nr hr mn sc fr ff . arg)
-  (with-args (args &key (format +SMPTE-Format-30fps+)
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Event-Stop-Point-Sub-ID-2+
+(define (make-event-stop-point-sysex-data event-nr hr mn sc fr ff . arg)
+  (with-args (args &key (format +smpte-format-30fps+)
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-event-stop-point-sub-id-2+
 		      format hr mn sc fr ff
 		      event-nr)))
 
-(define (make-Xtnd-Event-Start-Point-sysex-data event-nr hr mn sc fr 
+(define (make-xtnd-event-start-point-sysex-data event-nr hr mn sc fr 
                                                 ff data . arg)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Xtnd-Event-Start-Point-Sub-ID-2+
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-xtnd-event-start-point-sub-id-2+
 		      format hr mn sc fr ff
 		      event-nr data)))
 
-(define (make-Xtnd-Event-Stop-Point-sysex-data event-nr hr mn sc fr
+(define (make-xtnd-event-stop-point-sysex-data event-nr hr mn sc fr
                                                ff data . arg)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID
-                      +Setup-Xtnd-Event-Stop-Point-Sub-ID-2+
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id
+                      +setup-xtnd-event-stop-point-sub-id-2+
 		      format hr mn sc fr ff
 		      event-nr data)))
 
-(define (make-Delete-Event-Start-Point-sysex-data event-nr hr mn sc fr
+(define (make-delete-event-start-point-sysex-data event-nr hr mn sc fr
                                                   ff . arg)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Delete-Event-Start-Point-Sub-ID-2+
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-delete-event-start-point-sub-id-2+
 		      format hr mn sc fr ff
 		      event-nr)))
 
-(define (make-Delete-Event-Stop-Point-sysex-data event-nr hr mn sc fr
+(define (make-delete-event-stop-point-sysex-data event-nr hr mn sc fr
                                                  ff . arg)
-  (with-args (args &key (format +SMPTE-Format-30fps+)
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID 
-                      +Setup-Delete-Event-Stop-Point-Sub-ID-2+
+  (with-args (args &key (format +smpte-format-30fps+)
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id 
+                      +setup-delete-event-stop-point-sub-id-2+
 		      format hr mn sc fr ff
 		      event-nr)))
 
-; (make-Event-Start-Point-sysex-data #x3f80 23 59 59 29 99)
+; (make-event-start-point-sysex-data #x3f80 23 59 59 29 99)
 ;   => #(240 126 127 4 5 119 59 59 29 99 0 127 247)
-; (make-Event-Stop-Point-sysex-data #x3f80 23 59 59 29 99)
+; (make-event-stop-point-sysex-data #x3f80 23 59 59 29 99)
 ;   => #(240 126 127 4 6 119 59 59 29 99 0 127 247)
-; (make-Xtnd-Event-Start-Point-sysex-data #x3f80 23 59 59 29 99 "test")
+; (make-xtnd-event-start-point-sysex-data #x3f80 23 59 59 29 99 "test")
 ;   => #(240 126 127 4 7 119 59 59 29 99 0 127 4 7 5 6 3 7 4 7 247)
-; (make-Xtnd-Event-Stop-Point-sysex-data #x3f80 23 59 59 29 99 "test")
+; (make-xtnd-event-stop-point-sysex-data #x3f80 23 59 59 29 99 "test")
 ;   => #(240 126 127 4 8 119 59 59 29 99 0 127 4 7 5 6 3 7 4 7 247)
-; (make-Delete-Event-Start-Point-sysex-data #x3f80 23 59 59 29 99)
+; (make-delete-event-start-point-sysex-data #x3f80 23 59 59 29 99)
 ;   => #(240 126 127 4 9 119 59 59 29 99 0 127 247)
-; (make-Delete-Event-Stop-Point-sysex-data #x3f80 23 59 59 29 99)
+; (make-delete-event-stop-point-sysex-data #x3f80 23 59 59 29 99)
 ;   => #(240 126 127 4 10 119 59 59 29 99 0 127 247)
 
 ;;;
-;;; Cue Point refers to individual event occurences, such as marking "hit"
+;;; cue point refers to individual event occurences, such as marking "hit"
 ;;; points for sound effects, reference points for editing, and so on.  Each
 ;;; Cue number may be assigned to a specific reaction, such as a specific
 ;;; one-shot sound event (as opposed to a continuous event, which is handled
@@ -3215,50 +3212,50 @@
 ;;; Delete Cue Point means to Delete the matching (event number and time)
 ;;; Cue Event with or without additional information from the Cue List.
 
-(define (make-Cue-Point-sysex-data cue-nr hr mn sc fr ff . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID +Setup-Cue-Point-Sub-ID-2+
+(define (make-cue-point-sysex-data cue-nr hr mn sc fr ff . args)
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id +setup-cue-point-sub-id-2+
 		      format hr mn sc fr ff
 		      cue-nr)))
 
-(define (make-Xtnd-Cue-Point-sysex-data cue-nr hr mn sc fr ff data . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+) 
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID +Setup-Xtnd-Cue-Point-Sub-ID-2+
+(define (make-xtnd-cue-point-sysex-data cue-nr hr mn sc fr ff data . args)
+  (with-args (args &key (format +smpte-format-30fps+) 
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id +setup-xtnd-cue-point-sub-id-2+
 		      format hr mn sc fr ff
 		      cue-nr data)))
 
-(define (make-Delete-Cue-Point-sysex-data cue-nr hr mn sc fr ff . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+)
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID +Setup-Delete-Cue-Point-Sub-ID-2+
+(define (make-delete-cue-point-sysex-data cue-nr hr mn sc fr ff . args)
+  (with-args (args &key (format +smpte-format-30fps+)
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id +setup-delete-cue-point-sub-id-2+
 		      format hr mn sc fr ff
 		      cue-nr)))
 
-; (make-Cue-Point-sysex-data 17 1 2 3 4 5)
+; (make-cue-point-sysex-data 17 1 2 3 4 5)
 ;   => #(240 126 127 4 11 97 2 3 4 5 17 0 247)
-; (make-Xtnd-Cue-Point-sysex-data 17 1 2 3 4 5 '("test" #\a #(-1 -8)))
+; (make-xtnd-cue-point-sysex-data 17 1 2 3 4 5 '("test" #\a #(-1 -8)))
 ;   => #(240 126 127 4 12 97 2 3 4 5 17 0 4 7 5 6 3 7 4 7 0 0 1 6 15 15 8 15 247)
 ;                        ^^         ^^^^ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^ ^^^^^ ^^^^
-;                        #b11.00001 17   74H 65H 73H 74H  \0 61H   FFH  F8H
+;                        #b11.00001 17   74h 65h 73h 74h  \0 61h   ffh  f8h
 
-; (make-Delete-Cue-Point-sysex-data 17 1 2 3 4 5)
+; (make-delete-cue-point-sysex-data 17 1 2 3 4 5)
 ;   => #(240 126 127 4 13 97 2 3 4 5 17 0 247)
 
 
 ;;;
-;;; Event Name in Additional Information merely assigns a name to a given
-;;; event number.  It is for human logging purposes.
+;;; event name in additional information merely assigns a name to a given
+;;; event number.  it is for human logging purposes.
 
-(define (make-Event-Name-sysex-data event-nr hr mn sc fr ff name . args)
-  (with-args (args &key (format +SMPTE-Format-30fps+)
-                   (device-ID +All-Device-IDs+))
-    (%make-setup-data device-ID +Setup-Event-Name-Sub-ID-2+
+(define (make-event-name-sysex-data event-nr hr mn sc fr ff name . args)
+  (with-args (args &key (format +smpte-format-30fps+)
+                   (device-id +all-device-ids+))
+    (%make-setup-data device-id +setup-event-name-sub-id-2+
 		      format hr mn sc fr ff
 		      event-nr name)))
 
-; (make-Event-Name-sysex-data 17 0 0 10 23 0 "test")
+; (make-event-name-sysex-data 17 0 0 10 23 0 "test")
 ;   => #(240 126 127 4 14 96 0 10 23 0 17 0 4 7 5 6 3 7 4 7 0 0 247)
 
 ;;;

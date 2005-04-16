@@ -123,7 +123,7 @@
            ;; increasing order.
            (set! steps? (not (apply (function <) nums)))
            (when (and (not steps?)
-                      (pair? (end extern))
+                      (pair? (car (last-pair extern)))
                       (scale-table obj))
              (err "No ending octave size (cent or ratio): ~s "
 		  extern))
@@ -173,9 +173,9 @@
                       (cents->scaler (second nums))
                       (second nums)))
          (set! octave (if cents? 
-                        (cents->scaler (end nums))
-                        (end nums)))
-         (set! len (1- (length nums)))))
+                        (cents->scaler (car (last-pair nums)))
+                        (car (last-pair nums))))
+         (set! len (- (length nums) 1))))
       (begin
        ;; nums is unequal steps between degrees in
        ;; either cent or ratio format
@@ -271,7 +271,7 @@
 	     (set! endoct (second octaves)))
       (if octaves 
         (begin (set! begoct 0)
-	       (set! endoct (1- octaves)))
+	       (set! endoct (- octaves 1)))
 	(begin (set! begoct 0 )
 	       (set! endoct 0))))
     (set! (scale-octave-offset tuning) begoct)
@@ -596,7 +596,7 @@
              ;; check proximity to octave value (1.0)
              (if (and (= int (- div 1))
                       (< (- 1 octrem) (- octrem x)))
-               (- (* div (1+ octnum)) off) ; round up to octave
+               (- (* div (+ octnum 1)) off) ; round up to octave
                (- (+ (* div octnum) int) off)))
           ;; increment y to next degree 
           (set! y (car into))
@@ -1078,9 +1078,9 @@
       (set! lis (list-copy lis)))
     (cond ((or (eq? order #t)
                (eq? order ':up))
-           (sort! lis #'scale<))
+           (sort! lis (function scale<)))
           ((eq? order ':down )
-           (sort! lis #'scale>))
+           (sort! lis (function scale>)))
           ((eq? order ':random )
            (shuffle lis))
           ((not order)

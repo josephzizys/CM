@@ -54,7 +54,7 @@
          (h l))
     (do ((p 0 (+ p 1)))
         ((= p 4)
-         (apply #'vector (cdr l)))
+         (apply (function vector) (cdr l)))
       (do ((c 0 (+ c 1)))
           ((= c 16) #f)
         (set-cdr! h (list (list p c)))
@@ -149,23 +149,17 @@
 
 (define +midi-file-header-length+ 14)
 (define +miditrack-header-length+ 8)
-(define +MThd+ #x4d546864)		; 'MThd'
-(define +MTrk+ #x4d54726b)		; 'MTrk'
-
-(define (read-byte fp)
-  (char->integer (read-char fp)))
-
-(define (write-byte by fp)
-  (write-char (integer->char by) fp))
+(define +mthd+ #x4d546864)		; 'MThd'
+(define +mtrk+ #x4d54726b)		; 'MTrk'
 
 (define (read-bytes fp n)
   (do ((s 0)
-       (i 0 (1+ i)))
+       (i 0 (+ i 1)))
       ((>= i n) s)
     (set! s (+ (ash s 8) (read-byte fp)))))
 
 (define (write-bytes fp byts n)
-  (do ((pos (* (1- n) 8) (- pos 8)))
+  (do ((pos (* (- n 1) 8) (- pos 8)))
       ((< pos 0) (values))
     (write-byte (ash (logand byts (ash #xff pos))
 		     (- pos))
@@ -199,7 +193,7 @@
 (define (midi-file-read-header mf)
   (let* ((fp (io-open mf))
 	 (bytes (read-bytes fp 4)))
-    (unless (= bytes +MThd+)
+    (unless (= bytes +mthd+)
       (err "Expected midi-file header mark but got ~s instead."
 	   bytes))
     (read-bytes fp 4)			; skip header length bytes
@@ -209,7 +203,7 @@
 
 (define (midi-file-write-header mf fmat tracks division . resolution)
   (let ((fp (io-open mf)))
-    (write-bytes fp +MThd+ 4)
+    (write-bytes fp +mthd+ 4)
     (write-bytes fp 6 4)		; header length stored 00 00 00 06
     (write-bytes fp fmat 2)
     (write-bytes fp tracks 2)
@@ -223,14 +217,14 @@
 (define (midi-file-read-track-header mf)
   (let* ((fp (io-open mf))
 	 (byts (read-bytes fp 4)))
-    (unless (= byts +MTrk+)
+    (unless (= byts +mtrk+)
       (err "Expected midi-file track mark but got ~s instead." 
 	   byts))
     (read-bytes fp 4)))
 
 (define (midi-file-write-track-header mf len)
   (let ((fp (io-open mf)))
-    (write-bytes fp +MTrk+ 4)
+    (write-bytes fp +mtrk+ 4)
     (write-bytes fp len 4)
     (values)))
 
@@ -267,12 +261,12 @@
 	     (begin
 	      (set! raw (logior (ash (midi-file-status mf) 8)
 				byte))
-	      (set! size (1- (midi-file-size mf)))))
+	      (set! size (- (midi-file-size mf) 1))))
 	   ;; raw = status or status+data if running. read
 	   ;; any remaining data bytes. use size-1 because size includes
 	   ;; status byte. 
 	   (when (> size 1)
-	     (dotimes (i (1- size))  
+	     (dotimes (i (- size 1))  
 	       (set! raw (logior (ash raw 8) (read-byte fp)))))
 	   (set! (midi-file-message mf)
 		 (%midi-encode-channel-message raw (midi-file-size mf)))
@@ -386,7 +380,7 @@
 	     (case byt
 	       ((#xf0 )			; sysex
 		;; do not include the already written #xF0 in length!
-		(write-variable-quantity (1- (vector-length data)) fp)
+		(write-variable-quantity (- (vector-length data) 1) fp)
 		;; do not repeat the initial #xF0
 		(loop for i from 1 below (vector-length data)
 		      do (write-byte (vector-ref data i) fp)))
@@ -540,7 +534,7 @@
 		  (set! data (list num1 num2)))))
               (else (err "~s is not a midi tuning. Valid tunings: ~s"
 	                 (midi-stream-channel-tuning io)
-                         (map #'car %midituningtypes))))
+                         (map (function car) %midituningtypes))))
 	(set! (midi-stream-tunedata io) data)
 	data))))
 
@@ -656,8 +650,8 @@
       (midi-write-message (%qe-object qe) 
 			  mf
 			  (inexact->exact ; round
-			   (* (- (%qe-time qe) last)
-			      scaler))
+			   (round (* (- (%qe-time qe) last)
+                                     scaler)))
 			  #f)
       (set! last (%qe-time qe))
       (%qe-dealloc %offs qe)

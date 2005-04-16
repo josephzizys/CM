@@ -107,12 +107,24 @@
   ;;(format #t "pattern canonicalize: ~s~%" obj)
   inits
   (if parser
-    (loop for d in data 
-          count d into len
-          count (pattern? d) into num
-          collect (maybeparse parser d) into lst
-          finally (return (values lst len (= num 0))))
-    (values data (length data) (not (any #'pattern? data)))))
+;    (loop for d in data 
+;          count d into len
+;          count (pattern? d) into num
+;          collect (maybeparse parser d) into lst
+;          finally (return (values lst len (= num 0))))
+    (let ((coll (list #f)))
+      (do ((tail data (cdr tail))
+           (len 0 (+ len 1))
+           (num 0)
+           (lst coll))
+          ((null? tail)
+           (values (cdr coll) len (= num 0)))
+        (if (pattern? (car tail)) (set! num (+ num 1)))
+        (set-cdr! lst (list (maybeparse parser (car tail))))
+        (set! lst (cdr lst))))
+    (values data
+            (length data)
+            (not (any (function pattern?) data)))))
 
 ;;;
 ;;; make-load-form "decompiles" pattern
@@ -138,7 +150,7 @@
                           :ignore-defaults #t 
                           :only '(repeat parser returning counting 
                                   traversing)
-                          :key #'expand-pattern-value)))
+                          :key (function expand-pattern-value))))
     (unless (logtest (pattern-flags obj) +default-period+)
       (let ((per (pattern-period obj)))
         (push 
@@ -201,16 +213,16 @@
          (set! data (cadr a)))
 	((:notes )
 	 (set! data (cadr a))
-	 (set! parser #'note))
+	 (set! parser (function note)))
 	((:keynums )
 	 (set! data (cadr a))
-	 (set! parser #'keynum))
+	 (set! parser (function keynum)))
 	((:rhythms )
 	 (set! data (cadr a))
-	 (set! parser #'rhythm))
+	 (set! parser (function rhythm)))
 	((:amplitudes )
 	 (set! data (cadr a))
-	 (set! parser #'amplitude))))
+	 (set! parser (function amplitude)))))
     
     (unless (list? data) (set! data (list data)))
     ;; parse external data into canonical form. oct is bound
@@ -477,17 +489,16 @@
     (when (and dyn
                (logtest (pattern-flags obj) +count-periods+))
        (let ((zeros 0))
-         (map-pattern-data #'(lambda (x)
-			       (when (= (reset-period x) 0) 
-				 (let ((p (pattern-period x)))
-				   (period-omit-set! p 
-						     (+ (period-omit p)
-							1)))
-				 (incf zeros)))
+         (map-pattern-data (lambda (x)
+                             (when (= (reset-period x) 0) 
+                               (let ((p (pattern-period x)))
+                                 (period-omit-set! p 
+                                                   (+ (period-omit p)
+                                                      1)))
+                               (incf zeros)))
 			   obj)
          (when (> zeros 0)
-	   (set! len (max (- len zeros) 0)))
-         ))
+	   (set! len (max (- len zeros) 0)))))
     (period-count-set! period len)
     len))
 
@@ -830,34 +841,34 @@
   (let ((parse-random-item
 	 (lambda (extern)
            (apply 
-            #'(lambda (datum . keys)
-                (set! datum (maybeparse parser datum))
-                (loop with orig = keys and args = '()
-                      and key and val
-                      while (not (null? keys))
-                      do 
-		      (set! key (pop keys))
-                      (set! val (if keys (pop keys)
-				    (err "Uneven random list: ~s." 
-					 orig)))
-                      (push val args)
-                      (case key
-                        ((weight :weight)
-			 (push ':weight args)) 
-                        ((min :min) 
-			 (push ':min args)) 
-                        ((max :max)
-			 (push ':max args))
-                        (else
-                         (err "~s not one of: :weight, :min, :max."
-                              key)))
-                      finally 
-                      (return
-			(apply #'make-random-item :datum datum args))))
+            (lambda (datum . keys)
+              (set! datum (maybeparse parser datum))
+              (loop with orig = keys and args = '()
+                 and key and val
+                 while (not (null? keys))
+                 do 
+                 (set! key (pop keys))
+                 (set! val (if keys (pop keys)
+                               (err "Uneven random list: ~s." 
+                                    orig)))
+                 (push val args)
+                 (case key
+                   ((weight :weight)
+                    (push ':weight args)) 
+                   ((min :min) 
+                    (push ':min args)) 
+                   ((max :max)
+                    (push ':max args))
+                   (else
+                    (err "~s not one of: :weight, :min, :max."
+                         key)))
+                 finally 
+                 (return
+                   (apply (function make-random-item) :datum datum args))))
             (if (pair? extern)
 	      extern
 	      (list extern))))))
-    (let ((intern (map #'parse-random-item data))) 
+    (let ((intern (map (function parse-random-item) data))) 
       (values intern
 	      (length intern)
 	      (not (any (lambda (x) (pattern? (random-item-datum x)))
@@ -920,7 +931,7 @@
         (random-item-datum next)))))
 
 (define-method* (map-pattern-data fn (obj <random>))
-  (for-each #'(lambda (x) ( fn (random-item-datum x))) ; funcall
+  (for-each (lambda (x) ( fn (random-item-datum x))) ; funcall
 	    (car (pattern-data obj))))
 
 ;;;
@@ -1001,15 +1012,30 @@
       (dopairs (a v inits)
         (case a
           ((:produce )
-           (set! const (not (any #'pattern? v))))))
-      (loop for s in data
-            for p = (parse-markov-spec s)
-            collect p into lis
-            maximize (length (first p)) into order
-            finally (begin (set! (markov-pattern-order obj) order)
-                           (return
-                            (values lis (length data)
-                                    const)))))))
+           (set! const (not (any (function pattern?) v))))))
+;      (loop for s in data
+;            for p = (parse-markov-spec s)
+;            collect p into lis
+;            maximize (length (first p)) into order
+;            finally (begin (set! (markov-pattern-order obj) order)
+;                           (return
+;                            (values lis (length data)
+;                                    const))))
+      (let ((coll (list #f)))
+        (do ((tail data (cdr tail))
+             (len 0 (+ len 1))
+             (order #f)
+             (lis coll)
+             (p #f))
+            ((null? tail)
+             (set! (markov-pattern-order obj) order)             
+             (values (cdr coll) len const))
+          (set! p (parse-markov-spec (car tail)))
+          (if (not order)
+            (set! order (length (first p)))
+            (set! order (max order (length (first p)))))
+          (set-cdr! lis (list p))
+          (set! lis (cdr lis)))))))
 
 (define-method* (initialize (obj <markov>) args)
   (next-method)				; was an :after method
@@ -1091,7 +1117,7 @@
 (define-list-struct graph-node id datum to props)
 
 (define-class* <graph> (<pattern>) 
-  ((selector :init-thunk (lambda () #'default-graph-node-select)
+  ((selector :init-thunk (lambda () (function default-graph-node-select))
              :init-keyword :selector :accessor graph-selector)
    (last :init-value #f :init-keyword :last
          :accessor graph-last)
@@ -1120,7 +1146,7 @@
        (list ':props (expand-pattern-value
                       (graph-props obj))))
      (if (eq? (graph-selector obj)
-              #'default-graph-node-select)
+              (function default-graph-node-select))
        (list)
        (list ':selector (graph-selector obj))))))
 
@@ -1146,42 +1172,37 @@
 	 (lambda (extern)
 	   (unless (pair? extern) 
 	     (err "Graph node ~s not list." extern))
-	   (apply #'(lambda (datum . keys)
-		      (loop with orig = keys and args = '()
-			    and id and to and key and val
-			    until (null? keys )
-			    do
-			    (set! key (pop keys))
-			    (set! val (if (null? keys)
-					(err "Bad graph node: ~s." orig)
-					(pop keys)))
-			    (push val args)
-			    (case key
-			      ((id :id)
-			       (set! id #t)
-			       (push ':id args)) 
-			      ((to :to -> :->)
-			       (set! to #t) 
-			       (push ':to args))
-			      ((props :props)
-			       (push ':props args))
-                              (else
-                               (err "~s not one of: :id, :to, :props."
-                                    key )))
-			    finally 
-			    (begin
-			     (unless id
-			       (push datum args)
-			       (push ':id args))
-                             to
-			     ;(unless to
-			     ;  (err "Missing :to in ~s." orig))
-			     (return 
-                              (apply #'make-graph-node
-                                     :datum (maybeparse parser datum)
-                                     args)))))
-		  extern))))
-    (let ((intern (map #'parse-graph-item data)))
+	   (apply 
+            (lambda (datum . keys)
+              (do ((orig keys)
+                   (args '())
+                   (id #f) (to #f) (key #f) (val #f))
+                  ((null? keys)
+                   (unless id
+                     (push datum args)
+                     (push ':id args))
+                   (apply (function make-graph-node)
+                          :datum (maybeparse parser datum)
+                          args))
+                (set! key (pop keys))
+                (set! val (if (null? keys)
+                            (err "Bad graph node: ~s." orig)
+                            (pop keys)))
+                (push val args)
+                (case key
+                  ((id :id)
+                   (set! id #t)
+                   (push ':id args)) 
+                  ((to :to -> :->)
+                   (set! to #t) 
+                   (push ':to args))
+                  ((props :props)
+                   (push ':props args))
+                  (else
+                   (err "~s not one of: :id, :to, :props."
+                        key )))))
+            extern))))
+    (let ((intern (map (function parse-graph-item) data)))
       (values intern
               (length intern)
 	      (not (any (lambda (x) (pattern? (graph-node-datum x)))
@@ -1198,7 +1219,7 @@
 (define (markov-select obj node table lastids)
   ;;  table is a list (:idsel <id1> <obj1> ...)
   obj
-  (let ((prob (loop for tail on (cdr table) by #'cddr
+  (let ((prob (loop for tail on (cdr table) by (function cddr)
                     when (match-ids (car tail) lastids)
                     return (cadr tail))))
     (unless prob
@@ -1242,14 +1263,14 @@
 	   (set-car! graph node)
 	   (when last
 	     (set-cdr! last (cons (graph-node-id this) (cdr last)))
-	     (set-cdr! (list-tail (cdr last) (1- (car last)))
+	     (set-cdr! (list-tail (cdr last) (- (car last) 1))
 		       '())))
 	  (err "No node for id ~s." next)))
       (err "No next node from ~s." (graph-node-id this)))
     (graph-node-datum this)))
 
 (define-method* (map-pattern-data fn (obj <graph>))
-  (for-each #'(lambda (x) ( fn (graph-node-datum x))) ; funcall
+  (for-each (lambda (x) ( fn (graph-node-datum x))) ; funcall
 	    (pattern-data obj)))
 
 ;;;
@@ -1524,17 +1545,17 @@
 		       (push datum args)
 		       (push ':id args))
                      (return
-                      (apply #'make-rewrite-node 
+                      (apply (function make-rewrite-node )
                              :datum (maybeparse parser datum)
                              args))))))))
-    (let ((intern (map #'parse-rewrite-node data)))
+    (let ((intern (map (function parse-rewrite-node) data)))
       (values intern
 	      (length intern)
               (not (any (lambda (x) (pattern? (rewrite-node-datum x)))
 			 intern))))))
 
 (define-method* (map-pattern-data fn (obj <rewrite>))
-  (for-each #'(lambda (x) ( fn (rewrite-node-datum x))) ; funcall
+  (for-each (lambda (x) ( fn (rewrite-node-datum x))) ; funcall
 	    (car (pattern-data obj))))
 
 (define (parse-rules rules table)
@@ -1792,22 +1813,22 @@
     
     (case flag
       ((#b00001 )			; to 
-       (set! test #'(lambda (x min max) min (> x max)))) 
+       (set! test (lambda (x min max) min (> x max)))) 
       ((#b00010 )			; below
-       (set! test #'(lambda (x min max) min (>= x max))))
+       (set! test (lambda (x min max) min (>= x max))))
       ((#b00100 )			; downto
-       (set! test #'(lambda (x min max) max (< x min))))
+       (set! test (lambda (x min max) max (< x min))))
       ((#b01000 )			; above
-       (set! test #'(lambda (x min max) max (<= x min))))
+       (set! test (lambda (x min max) max (<= x min))))
       ((#b00101 )			; downto & to
-       (set! test #'(lambda (x min max) (or (< x min) (> x max)))))
+       (set! test (lambda (x min max) (or (< x min) (> x max)))))
       ((#b00110 )			; downto & >below
-       (set! test #'(lambda (x min max) (or (< x min) (>= x max)))))
+       (set! test (lambda (x min max) (or (< x min) (>= x max)))))
       ((#b01001 )			; above & to
-       (set! test #'(lambda (x min max) (or (<= x min) (> x max)))))
+       (set! test (lambda (x min max) (or (<= x min) (> x max)))))
 
       ((#b01010 )			; above<->below
-       (set! test #'(lambda (x min max) (or (<= x min) (>= x max)))))
+       (set! test (lambda (x min max) (or (<= x min) (>= x max)))))
       ((#b10000)                        ; within
        #f )
       ((0 ) 
@@ -1837,7 +1858,7 @@
 	(to #f)
 	(downto #f)
 	(by 1)
-	(incf #'+)
+	(incf (function +))
         (flag 0)
         (bits 0)
 	(const? #t))
@@ -1851,24 +1872,24 @@
                ((:to )
 	        (set! to v)
                 (set! flag (logior flag #b00001))
-                (set! incf #'+))
+                (set! incf (function +)))
                ((:below ) 
 	        (set! to v)
                 (set! flag (logior flag #b00010))
-                (set! incf #'+))
+                (set! incf (function +)))
                ((:downto )
 	        (set! downto v)
                 (set! flag (logior flag #b00100))
-                (set! incf #'-))
+                (set! incf (function -)))
                ((:above )
 	        (set! downto v)
                 (set! flag (logior flag #b01000))
-                (set! incf #'-))
+                (set! incf (function -)))
                ((:pickto ) 
 	        (set! to v)
                 (set! bits (logior bits +range-random+))
                 (set! flag (logior flag #b10000))
-                (set! incf #'between))
+                (set! incf (function between)))
                
                ((:by )
                 (set! by v))
@@ -2118,7 +2139,7 @@
       (case (first form)
         ((r :r retrograde :retrograde)
          (set! data (reverse data)))
-        ((p :p prime :prime))
+        ((p :p prime :prime) #f)
         ((i :i inversion :inversion)
          (set! data (invert data)))
         ((ri :ri retrograde-inversion :retrograde-inversion)
@@ -2157,12 +2178,23 @@
 					  data parser inits)
   inits
   (if parser
-    (loop for datum in data 
-          count datum into length
-          count (pattern? datum) into streams
-          collect (maybeparse parser datum) into list
-          finally (return (values list 1 (= streams 0))))
-    (values data 1 (not (any #'pattern? data)))))
+;    (loop for datum in data 
+;          count datum into length
+;          count (pattern? datum) into streams
+;          collect (maybeparse parser datum) into list
+;          finally (return (values list 1 (= streams 0))))
+    (let ((coll (list #f)))
+      (do ((tail data (cdr tail))
+           (len 0 (+ len 1))
+           (num 0)
+           (lst coll))
+          ((null? tail)
+           (values (cdr coll) len (= num 0)))
+        (if (pattern? (car tail)) (set! num (+ num 1)))
+        (set-cdr! lst (list (maybeparse parser (car tail))))
+        (set! lst (cdr lst))))
+
+    (values data 1 (not (any (function pattern?) data)))))
 
 (define-method* (default-period-length (obj <chord>))
   1)
@@ -2173,7 +2205,7 @@
       data
       (if (null? (cdr data))
 	(next (first data) #t)
-	(apply #'append (map #'(lambda (x) (next x #t)) data))
+	(apply (function append) (map (lambda (x) (next x #t)) data))
 	))))
 
 ;;;
@@ -2277,15 +2309,26 @@
 
 (define-method* (canonicalize-pattern-data (obj <join>) data parser inits)
   inits
-  (let ((subs (not (any #'pattern? data))))
+  (let ((subs (not (any (function pattern?) data))))
     (if parser
-      (loop for datum in data
-            count datum into length
-            collect (maybeparse parser datum) into list
-            finally
-            (return (values list 
-                            (if subs 1 most-positive-fixnum)
-                            (not subs))))
+;      (loop for datum in data
+;            count datum into length
+;            collect (maybeparse parser datum) into list
+;            finally
+;            (return (values list 
+;                            (if subs 1 most-positive-fixnum)
+;                            (not subs))))
+    (let ((coll (list #f)))
+      (do ((tail data (cdr tail))
+           (num 0)
+           (lst coll))
+          ((null? tail)
+           (values (cdr coll) 
+                   (if subs 1 most-positive-fixnum)
+                   (not subs)))
+        (if (pattern? (car tail)) (set! num (+ num 1)))
+        (set-cdr! lst (list (maybeparse parser (car tail))))
+        (set! lst (cdr lst))))
       (values data (if subs 1 most-positive-fixnum) (not subs)))))
 
 (define-method* (reset-period (obj <join>))

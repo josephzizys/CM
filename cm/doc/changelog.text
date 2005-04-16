@@ -1,12 +1,13 @@
 CM 2.7.0
-o CM runs in Guile 1.7.1
+o Ported CM to Gauche Scheme, see:
+    http://www.shiro.dreamhost.com/scheme/gauche/index.html
+o CM now runs in Guile 1.7.1
+
+
 Bug Fixes:
 o Fixed rewrite pattern bug that didn't parse * correctly
 o Fixed scheme bugs in test.cm 
 
-Bug Fixes:
-
-o  Fixed rewrite pattern bug that didn't parse * correctly
 
 CM 2.6.0
 

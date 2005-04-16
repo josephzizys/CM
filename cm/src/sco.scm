@@ -209,7 +209,7 @@
                (set-car! last (car data))))
         (set! data (cdr data))
         (set! last (cdr last))
-        (set! pnum (1+ pnum))))))
+        (set! pnum (+ pnum 1))))))
 
 (define (parse-i-statement line last)
   (let ((pars (list)))
@@ -251,7 +251,7 @@
                ,d)))))
 
 (define-method* (import-events (io <sco-stream>) . args)
-  (with-args (args &key (output))
+  (with-args (args &key output)
     (let ((secs 0)
           (rate 60)
           (beat 0)
@@ -300,7 +300,7 @@
                    (begin
                     ;; begin process_statement
                     (case (string-ref statement 0)
-                      (#\i
+                      (( #\i )
                        (multiple-value-setq 
                            (pars last)
                          (parse-i-statement statement last))
@@ -311,24 +311,24 @@
                          (set! beat (cadr pars)))
                        ;; register i number if new
                        (CHECKDEFS pars defs))
-                      (#\f 
+                      (( #\f  )
                        (push statement head)
                        (set! last #f))
-                      (#\a
+                      (( #\a )
                        (format #t "; Warning: a_statement not implemented: ~s" 
                                line)
                        (set! last #f))
-                      (#\t
+                      (( #\t )
                        ;; WAS STRING-FORMS
                        (set! rate (string-read (substring statement 1)))
                        (set! last #f))
-                      (#\s 
+                      (( #\s )
                        (set! secs (+ secs 1))
                        (when (> secs 1)
                          (format #t
                                  "; Warning: Multiple 's' not implemented."))
                        (set! last #f))
-                      (#\e
+                      (( #\e )
                        (set! stop #t)
                        (set! last #f)))
                     ;; end process_statement

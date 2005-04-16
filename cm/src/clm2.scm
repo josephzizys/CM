@@ -41,12 +41,12 @@
         (push fmat inits)
         (push ':data-format inits))
       (set! (io-open io)
-            (apply #'init-with-sound
+            (apply (function init-with-sound)
                    ':output
                    (file-output-filename io)
                    inits))
       (unless (null? (audio-file-output-trace io))
-        (apply #'tell-snd
+        (apply (function tell-snd)
                (file-output-filename io)
                inits))
       io)
@@ -120,7 +120,7 @@
                                args)
                         tpar)))
 
-(define *definstrument-hook* #'definstrument-hook)
+(define *definstrument-hook* (function definstrument-hook))
 
 ;(formals->defobject '(fm time duration frequency amplitude
 ;                      &key (amplitude-env '(0 0 25 1 75 1 100 0))

@@ -19,11 +19,6 @@
 ;;; $Date$
 
 ;;;
-;;; warning: goops has a bug that givs a segmentation error if
-;;; a metaclasses and its dependants are redefined.
-;;;
-
-;;;
 ;;; metaclass for events (classes with parameters).
 ;;;
 
@@ -32,13 +27,15 @@
          :accessor class-parameters))
   :name 'parameterized-class)
 
+;; this is needed by some cltl's otherwise its a no-op.
+
 (define-method* (validate-superclass (class <parameterized-class>)
                                     (superclass <class>))
   ;; yes to any class w/metaclass parmeterized-class
   #t)
 
 ;;;
-;;; default method returns nil
+;;; default method returns nil. at some point it should be changed to () !
 ;;;
 
 (define-method* (class-parameters (obj <top>))
@@ -48,7 +45,7 @@
 (define (object-parameters obj)
   (let ((x (class-parameters (class-of obj))))
     (if (pair? x)
-      (map #'car x)
+      (map (function car) x)
       x)))
 
 ;;;
@@ -62,8 +59,6 @@
 (define-class* <io-class> (<class>)
   ((handles :init-value '() :init-keyword :file-types 
             :accessor io-class-file-types)
-;   (mime-type :init-value #f :accessor io-class-mime-type
-;              :init-keyword :mime-type )
    (output-hook :init-value #f :init-keyword :output-hook
                 :accessor io-class-output-hook)
    (definer :init-value #f :init-keyword :definer
@@ -96,17 +91,15 @@
 ;;; second value from the function, otherwise an error is signaled.
 
 (define (expand-inits class args inits? other?)
-  ;; parse args as possible initargs for class. args is
-  ;; a list of pairs (init val ...) where init can be
-  ;; be symbol or keyword. if inits? is #t then keyword
-  ;; forms of init is returned regardless of how it was
-  ;; specified in args. if inits? is #f then the slot for
-  ;; :init is returned instead of :init. if other? is #f
-  ;; then its an error to specify anything but initargs.
-  ;; if other? is :alias then :init is returned if it 
-  ;; is an alternate initarg for the slot else an error
-  ;; is signaled. if alias? is #t then :init is returned
-  ;; and no error is signaled.
+  ;; parse args as possible initargs for class. args is a list of
+  ;; pairs (init val ...) where init can be be symbol or keyword. if
+  ;; inits? is #t then keyword forms of init is returned regardless of
+  ;; how it was specified in args. if inits? is #f then the slot for
+  ;; :init is returned instead of :init. if other? is #f then its an
+  ;; error to specify anything but initargs.  if other? is :alias then
+  ;; :init is returned if it is an alternate initarg for the slot else
+  ;; an error is signaled. if alias? is #t then :init is returned and
+  ;; no error is signaled.
   (let* ((slots (class-slots class))
 	 (inits (list #f))
 	 (tail1 inits)
@@ -146,10 +139,9 @@
 	       sym class))))))
 
 (define (slot-init-forms o . args)
-  ;; returns an initialization list given an object.
-  ;; if :eval is #t then non-constant values in the list
-  ;; are quoted. if ignore is provide it is a list of
-  ;; slotnames to omit from the list returned.
+  ;; returns an initialization list given an object.  if :eval is #t
+  ;; then non-constant values in the list are quoted. if ignore is
+  ;; provide it is a list of slotnames to omit from the list returned.
   (with-args (args &key eval omit only key 
                    ignore-defaults)
     (loop for s in (class-slots (class-of o))
@@ -185,23 +177,23 @@
 	              (format #f "<~a>" (class-name (class-of obj))))
        ,@inits)))
 
-(define-method* (describe-object (x <object>) )
-  (let ((c (class-of x)))
-    (format #t "~%Class: ~s" (class-name c))
-    (format #t "~%CPL:   ~s" (map #'class-name (compute-cpl c)))
-    (if (not (is-a? x <class>))
-      (begin
-       (format #t "~%Slots:")
-       (dolist (s (class-slots c))
-	 (let* ((n (slot-definition-name s))
-		(l (symbol->string n)))
-	   (newline)
-	   (display "  ")
-	   (display l)
-	   (dotimes (i (- 20 (string-length l)))
-	     (write-char #\space))
-	   (if (slot-bound? x n)
-	     (write (slot-ref x n))
-	     (display "#<unbound>"))))))
-    (newline)
-    (values)))
+;(define-method* (describe-object (x <object>) )
+;  (let ((c (class-of x)))
+;    (format #t "~%Class: ~s" (class-name c))
+;    (format #t "~%CPL:   ~s" (map #'class-name (compute-cpl c)))
+;    (if (not (is-a? x <class>))
+;      (begin
+;       (format #t "~%Slots:")
+;       (dolist (s (class-slots c))
+;	 (let* ((n (slot-definition-name s))
+;		(l (symbol->string n)))
+;	   (newline)
+;	   (display "  ")
+;	   (display l)
+;	   (dotimes (i (- 20 (string-length l)))
+;	     (write-char #\space))
+;	   (if (slot-bound? x n)
+;	     (write (slot-ref x n))
+;	     (display "#<unbound>"))))))
+;    (newline)
+;    (values)))

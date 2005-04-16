@@ -4,22 +4,21 @@
 
 ;;; intermediate conversion, trying to support guile gauche stklos and
 ;;; (possibly) chicken
+;;; (load "/Lisp/scm/src/cm.scm")
 
 (let ((this-file #f)
-      (file-list '())
-      (load-path ""))
-
+      (load-path "")
+      (file-list '("loop" "level1" "utils" "mop" "objects"
+                   "io" "scheduler" "sco" "clm" "clm2"
+                   "midi1" "midi2" "midi3" "data" "scales" "spectral"
+                   "patterns")))
   (cond-expand
    (guile
     (set! this-file (port-filename (current-load-port)))
-    (set! file-list (cons "guile"
-                          '("loop" "level1" "utils" "mop"
-                            "objects" "io" "scheduler" "sco" "clm" "clm2"
-                            "midi1" "midi2" "midi3" "data" "scales" "spectral"
-                            "patterns"))))
+    (set! file-list (cons "guile" file-list)))
    (gauche
     (set! this-file (port-name (current-load-port)))
-    (set! file-list (cons "gauche" '("loop" "level1" ))))
+    (set! file-list (cons "gauche" file-list)))
    (chicken
     (set! this-file 
           (eval (with-input-from-string "##sys#current-load-file" read)))
