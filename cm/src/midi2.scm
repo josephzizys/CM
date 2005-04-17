@@ -511,17 +511,17 @@
                ;; data=(T <num> <max> <off> <width>)
                (set! data (list #t (- num2 num1) (- num2 num1) num1
                                 (midi-stream-bend-width io))))
-	      ((not (null type))
+	      ((not (null? type))
                ;; channel tuning
 	       ;; data=(<chanoffset> <divisions>)
-               (setq tune (car type)) ; force divisions per SEMItone
+               (set! tune (car type)) ; force divisions per SEMItone
 	       (set! num1 (if (pair? tuning) (pop tuning) 0))
 	       ;;(set! num2 (/ tune 12)) ;; SEMItone divisions.
                (set! num2 tune)
 	       (when (> (+ num1 num2) 15)
 	         (err "tuning range ~s-~s not in channel range 0-15."
 		      num1 (+ num1 num2)))
-	       (if (equal tune 1)
+	       (if (equal? tune 1)
                  ;; 1 is normal tuning, clear existing bends but dont
                  ;; cache
 	         (begin
@@ -548,14 +548,15 @@
    (if (= divisions 1)
       (loop for c below 16
          ;; midi-pitch-bend is defined in midi3.
-	 for m = (make-instance (find-class 'midi-pitch-bend) :channel c
+	 for m = (make (find-class* 'midi-pitch-bend) :channel c
                                 :time 0 :bend 0)
 	 do (write-event m io 0))
       (loop repeat divisions
 	 for c from channel-offset
-	 for m = (let ((bend (round (rescale (/ c divisions) (- width) 
-                                             width -8192 8191))))
-		   (make-instance (find-class 'midi-pitch-bend)
+	 for m = (let ((bend (inexact->exact
+                              (round (rescale (/ c divisions) (- width) 
+                                              width -8192 8191)))))
+		   (make (find-class* 'midi-pitch-bend)
                                   :channel c :time 0 :bend bend))
 	 do (write-event m io 0)))))
 
@@ -712,7 +713,7 @@
 (define *osx-midi-file-player* "open")
 
 (define (osx-play-midi-file file . args)
-  (with-args (args &optional (fork? t))
+  (with-args (args &optional (fork? #t))
     (let ((cmd (string-append *osx-midi-file-player*
                               " " file (if fork? " &" ""))))
       (shell cmd)

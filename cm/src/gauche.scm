@@ -15,7 +15,7 @@
 ;;; $Date$
 
 ;;;
-;;; an -- as yet incomplete -- port of CM to Gauche Scheme:
+;;; porting code for Gauche Scheme:
 ;;; http://www.shiro.dreamhost.com/scheme/gauche/index.html
 ;;;
 
@@ -23,7 +23,7 @@
 (use srfi-27)    ; random bits
 (use file.util)  ; current-directory, home-directory
 
-;; Lisp environment
+;; Lisp environment normalization
 
 (define (lisp-version )
   (string-append "Gauche " (gauche-version)))
@@ -32,11 +32,9 @@
 
 (define err errorf)
 
-(define (i-package name) #t)
+(define (use-package sym) #f)
 
 (define (read-macro-set! char fn) #f)
-
-(define pprint write)
 
 ;; Directories, files and ports
 
@@ -71,6 +69,12 @@
             (slot-ref now 'mday)
             (slot-ref now 'mon)
             (+ 1900 (slot-ref now 'year)))))
+
+;;; lists
+
+(define (list-set! lis pos val)
+  (set-car! (list-tail lis pos) val)
+  val)
 
 ;;; Hashtables
 
@@ -121,32 +125,31 @@
       (errorf "random bounds not integer or real: ~s." n))))
 
 ;                                   Chicken Gauche  Guile  Stklos
-;(make class . args)                        y       y       
-;(initialize class inits)                   y       y
+;(make class . args)                        y       y       y
+;(initialize class inits)                   y       y       y
 ;(class-of obj)                             y       y       y
 ;(is-a? obj class)                          y       y       y
 ;(slot-ref obj slot)                        y       y       y
 ;(slot-set obj slot val)                    y       y       y
 ;(class-name class)                         y       y       y
-;(class-slots class)                        y       y
-;(class-direct-subclasses class)            y       y
-;(find-class name)                          n       n       y
-;(slot-definition-name slot)                y       y
+;(class-slots class)                        y       y       x
+;(class-direct-subclasses class)            y       y       y
+;(slot-definition-name slot)                y       y       y
+;(slot-definition-initargs slot)            n       n       n
+;(slot-definition-initform slot)            n       n       n
 
-;ALL SCHEME MUST ALSO IMPLEMENT THESE CLOS METHODS:
-
-;(slot-definition-initargs slot) 
-;(slot-definition-initform slot) 
+; SCHEMES MUST PROVIDE THESE OOP METHODS, starred methods are to
+; avoid overriding an existing implementation and/or normalize syntax
+; issues between schemes
+;
+;(define-class* ...)
+;(define-method* ...)
+;(define-generic* ...)
+;(find-class* name)                
+;(define-object-printer* object port)
 ;(class-subclasses class) 
-
-;AND THESE EXPANSIONS FOR CM:
 ;(slot-getter-form obj slot)
 ;(slot-setter-form obj slot val)
-
-;;; Gauche's write and display function call a generic function
-;;; write-object when they encounter an instance they don't know how
-;;; to print. You can define its method specialized to your class to
-;;; customize how the instance is printed.
 
 (define-macro (define-generic* . args)
   `(define-generic ,(car args)))
@@ -156,19 +159,13 @@
 (define-macro (define-method* formals . body)
   `(define-method ,(car formals) ,(cdr formals) ,@body))
 
-;;; define-class* expansion for Gauche.
-;;; Gauche macroexpands define-class into a really hairy expr.  rather
-;;; than try to figure out how to work with it, the macro expansion of
-;;; define-class* will simply set! the class name after the class has
-;;; been defined, ie  (define-class* <foo> ... :name 'foo) becomes:
-
-;;; (begin (define-class <foo> ...)
-;;;        (slot-set! <foo> 'name 'foo))
-;;; The superclass list for Gauche define-class are variables, not
-;;; names.
-
-(define (make-instance class . inits)
-  (apply make class inits))
+;;; define-class* expansion for Gauche.  Gauche expands define-class
+;;; into a really hairy expr.  rather than try to deal with that, the
+;;; current macro expansion simply re-sets the class name after the
+;;; class has been defined, ie (define-class* <foo> ... :name 'foo)
+;;; becomes: (begin (define-class <foo> ...) (slot-set! <foo> 'name
+;;; 'foo)) Luckily, the superclass list for Gauche's define-class
+;;; expects variables, not names.
 
 (define *named-classes* (make-hash-table 'eq?))
 
@@ -181,14 +178,18 @@
       (case (car tail)
         ((:name) (set! cname (cadr tail)))
         ((:metaclass) (set! metac (cadr tail)))
-        ((:file-types )
-         (set! csets (cons* `(slot-set! ,class 'handles ,(cadr tail)) csets)))
-        ((:output-hook)
-         (set! csets (cons* `(slot-set! ,class 'output-hook ,(cadr tail)) csets)))
-        ((:definer)
-         (set! csets (cons* `(slot-set! ,class 'definer ,(cadr tail)) csets)))
-        ((:versions)
-         (set! csets (cons* `(slot-set! ,class 'versions ,(cadr tail)) csets)))
+        ((:file-types )  ; cm metaclass slot
+         (set! csets (cons* `(slot-set! ,class 'handles
+                                        ,(cadr tail)) csets)))
+        ((:output-hook) ; cm metaclass slot
+         (set! csets (cons* `(slot-set! ,class 'output-hook
+                                        ,(cadr tail)) csets)))
+        ((:definer) ; cm metaclass slot
+         (set! csets (cons* `(slot-set! ,class 'definer
+                                        ,(cadr tail)) csets)))
+        ((:versions) ; cm metaclass slot
+         (set! csets (cons* `(slot-set! ,class 'versions
+                                        ,(cadr tail)) csets)))
         ))
     `(begin
       (define-class ,class ,supers ,slots
@@ -199,14 +200,15 @@
       ;; set slots from metaclass
       ,@csets)))
       
-(define (find-class name . args)
+(define (find-class* name . args)
   (hash-table-get *named-classes* name #f))
 
-;(define (class-subclasses cls)
-;  (let ((subs (class-direct-subclasses cls)))
-;    (append subs
-;            (loop for s in (class-direct-subclasses cls)
-;                  append (class-subclasses s)))))
+;; default method for instances.
+;(define-method write-object ((obj <object>) port)
+;  (format port "~s" obj))
+
+(define-macro (define-object-printer* args . body)
+  `(define-method write-object , args ,@ body))
 
 (define (class-subclasses cls)
   (let ((subs (class-direct-subclasses cls)))
@@ -227,8 +229,16 @@
 (define (slot-definition-initform slot)
   (list-prop (slot-definition-options slot) ':init-value))
 
+;;; CM functions for expanding slot access in write-event methods.
+
+(define (slot-getter-form obj slot)
+  `(slot-ref ,obj ',slot))
+
+(define (slot-setter-form obj slot val)
+  `(slot-set! ,obj ',slot ,val))
+
 ; (define-class* <foo> () ((a :init-value 1)) :name 'foo)
-; (find-class 'foo)
+; (find-class* 'foo)
 ; (make <foo>)
 ; (class-name <foo>)
 ;; test if supers list holds names or variables:
@@ -239,21 +249,12 @@
 
 ; (define-class* <foo> () ((a :init-value 1 :init-keyword :a :accessor foo-a)) :name 'foo)
 ; (define-class* <bar> (<foo>) ((b :init-value 2 :init-keyword :b :accessor bar-b) (c :init-value 3 :accessor bar-c :init-keyword :c :init-keyword :cc)) :name 'bar)
-; (find-class 'foo)
-; (find-class 'bar)
-; (class-direct-subclasses (find-class 'foo))
+; (find-class* 'foo)
+; (find-class* 'bar)
+; (class-direct-subclasses (find-class* 'foo))
 ; (class-slots <bar>)
 ; (define sd (find (lambda (x) (eq? 'c (slot-definition-name x) )) (class-slots <bar>)))
 ; (apropos 'slot-definition)
 ; (slot-definition-initargs sd)
 ; (slot-definition-initform sd)
-
-;;; CM functions for expanding slot access in write-event methods.
-
-(define (slot-getter-form obj slot)
-  `(slot-ref ,obj ',slot))
-
-(define (slot-setter-form obj slot val)
-  `(slot-set! ,obj ',slot ,val))
-
 

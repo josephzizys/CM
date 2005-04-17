@@ -280,13 +280,15 @@
     (write               write            write->write)
     (zero?               zerop)
     
-    ;;---- GOOPS:
+    ;;---- Scheme OOP translations:
     
     (define-method*       defmethod        define-method->defmethod)
     (define-class*        defclass         define-class->defclass)
+    (define-object-printer*  nil           define-print-object)
+    (find-class*          find-class)
     (initialize           initialize-instance )
-    (make                 make-instance )
     (is-a?                typep)
+    (make                 make-instance )
     (next-method          call-next-method)
     (slot-exists?         slot-exists-p)
     (slot-bound?          slot-boundp)
@@ -1144,6 +1146,11 @@
 
 ;(defmethod initialize :after ((obj container) args))
 ;(stocl (srcfile "temp.scm")
+
+(defun define-print-object (form &optional env)
+  (define-method->defmethod 
+    `(define-method (print-object ,@(second form)) ,@ (cddr form))
+      env))
 
 (defun define-method->defmethod (form &optional env)
   (let* ((decl (copy-tree (second form)))

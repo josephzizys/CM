@@ -6,9 +6,9 @@
 ;;;
 ;;; 1. Basic processes definition and file output. 
 ;;;
-;;; Its a good idea to define processes inside functions so that
-;;; different versions of the process can be created simply by
-;;; calling the function with different input values. 
+;;; Its a good idea to define processes inside of functions so that
+;;; different versions of the process can be created by calling the
+;;; function with different input values.
 ;;;
 
 (define (sinus len cycl low hi rhy dur amp)
@@ -32,69 +32,60 @@
 
 (sinus 80 4 20 100 .1 .1 .6)
 
-;; Notice that you didn't actually hear anything. This is because
-;; calling the function only creates a process it doesn't run it.
-;; In order to hear the output from a Sinus process you need to
-;; schedule it to output events to some destination. Most
-;; (but not all) destinations are simply files on the disk. You
-;; can specify full pathnames for files or you can set CM's
-;; current working directory using the 'cd' function and then
-;; specify just the file name and extension without having to
-;; type the full directory path. The cd function both gets and
-;; sets the current working directory:
+;; Notice that you didn't actually hear anything...This is because the
+;; function only creates a process, it doesn't execute it.  In order
+;; to generate output from a process you need to pass it to the
+;; 'events' function along with some destination. Most (but not all)
+;; destinations are simply files on the disk. You can specify full
+;; pathnames for files or you can set CM's working directory and then
+;; provide just the file name and extension without having to type the
+;; full directory path. You use 'pwd' and 'cd' to do this:
 
-(cd)                     ; print the current working directory
+(pwd)                     ; print the current working directory
+(cd)                      ; go to your home directory
+(cd "/tmp")               ; the / will work on Linux, OS X and Windows
 
-;; To set the directory, specify it as a string argument to cd.
-;; The string should end with whatever directory character is
-;; used by your operating system.  For Linux, OSX and Windows 
-;; use "/". For MacOS use the ":" as the directory delimiter. 
+;; Assuming you did a (cd) to some directory where you have write
+;; permission, you can now use events to generate the sinus process to
+;; a midi file in the current working directory:
 
-(cd "/tmp/")             ; Linux/OSX/Windows
-(cd "macintosh hd:")     ; MacOS 9.x
+(events (sinus 80 4 20 100 .1 .1 .6) "test.mid")
 
-;; The function that actually outputs events is called 'events'.
-;; So now we will use it to output a Sinus process to a midi file
-;; in the current working directory:
+;; Each type of output file (.mid, .clm, .sco, and so on) allows you
+;; to set a "hook" that is called after a file of that type is
+;; written.  CM provides several default hooks you can use to play
+;; midi files on Linux, Mac, or Windows. Choose the one for your
+;; OS. If you are in scheme the (function ...) wrapper is a noop:
 
-(events (sinus 80 4 20 100 .1 .1 .6) "test.midi")
-
-;; Each type of output file (.midi, .clm, .sco etc) allows you to
-;; set a "hook" that is called after a file of that type is written.
-;; CM provides several default hooks you can use to play midi files
-;; on Linux, Mac, or Windows. Choose the one for your OS:
-
-(set-midi-output-hook! #'oss-play-midi-file)  ; LINUX: playmidi
-(set-midi-output-hook! #'mac-play-midi-file)  ; MAC: QuickTime
-(set-midi-output-hook! #'win-play-midi-file)  ; WINDOWS: MediaPlayer
+(set-midi-output-hook! (function linux-play-midi-file)) ; quicktime
+(set-midi-output-hook! (function osx-play-midi-file)) ; timidity
+(set-midi-output-hook! (function win-play-midi-file)) ; window's player
 
 ;; After setting the appropriate output hook you can generate a file
 ;; and with a bit of luck you may actually hear something!
 
-(events (sinus 80 4 20 100 .1 .1 .6) "test.midi")
+(events (sinus 80 4 20 100 .1 .1 .6) "test.mid")
 
 ;; Setting the hook to false turns it off.
 
 (set-midi-output-hook! false)  ; turn it off if you want.
 
-;; Setting hooks is a fine thing to put in your cminit.lisp file.
-;; This file is located in the same directory as the CM Lisp image.
-
+;; Setting hooks is a fine thing to do in your ~/.cminit.lisp file.
 
 ;;; **********************************************************************
 ;;;
 ;;; 2. More on events and objects.
 ;;;
-;;; You can "mix" concurrent output from multiple objects
-;;; by specifying them in a list to 'events'.  You can also give
-;;; each object in the list its own start time by passing a
-;;; list of starts after the output file. In this example the 
-;;; first process starts at time 0 and the second starts at time 2.
+;;; You can mix concurrent output from multiple objects by
+;;; specifying them in a list to 'events'.  You can also give each
+;;; object in the list its own start time by passing a list of starts
+;;; after the output file. In this example the first process starts at
+;;; time 0 and the second starts at time 2.
 ;;;
 
 (events (list (sinus 80 4 20 100 .1 .1 .6)  
 	      (sinus 60 5.7 50 80 .1 .1 .6))
-	"test.midi"
+	"test.mid"
 	'(0 2))          ; start time offsets in the scorefile.
 
 ;;; If you dont want to use a process to output events you can
@@ -105,45 +96,46 @@
         ;; increment start randomly 70% of time
         for start = 0 
         then (+ start (odds .7 
-                            (pick .125 .25 .5) 
+                            (pick .25 .5 .75 1.0) 
                             0 ))
         for k = (between 50 90)    ; pick a key, any key
         collect (new midi :time start	
                      :keynum k :duration (pick .5 1))))
 
-(events stuff "test.midi")
+(events stuff "test.mid")
 
 ;; if you want to give a name to your stuff you can use
 ;; a seq object:
 
-(new seq :name 'stuffy
+(new seq :name 'stuff
      :subobjects
      (loop repeat 20
            ;; increment start randomly 70% of time
            for start = 0 
-           then (+ start (odds .7 (pick .125 .25 .5) 
+           then (+ start (odds .7 (pick .25 .5 .75 1.0) 
                                0 ))
            for k = (between 50 90)    ; pick a key, any key
-           collect (new midi time start	
-                        keynum k duration (pick .5 1))))
+           collect (new midi :time start	
+                        :keynum k :duration (pick .5 1))))
 
 ;; Once you've created an object with a name you can reference
-;; it by specifying its name with the #& read macro:
+;; it by specifying its name with the #& read macro. If your Lisp
+;; doesnt allow this then use (find-object 'stuff) instead of #&stuff
 
-(object-name #&stuffy)
-(list-subobjects #&stuffy)
+(object-name #&stuff)
+(list-subobjects #&stuff)
 
 ;; You can also run a process and output its events to a seq.
 
-(new seq name 'wavy)                  ; create empty seq
+(new seq :name 'wavy)                  ; create empty seq
 (events (sinus 80 4 20 100 .1 .1 .6)  ; cache output in new seq
         #&wavy) 
 (list-subobjects #&wavy)              ; list wavy's subobjects.
 (save-object #&wavy "wave.cm")        ; save data to reload later
-(events #&wavy "test.midi")           ; output wavy
+(events #&wavy "test.mid")           ; output wavy
 (events (list (sinus 60 5.7 50 80 .1 .1 .6)
               #&wavy)
-	"test.midi")                  ; mix both to file.
+	"test.mid")                  ; mix both to file.
 
 
 ;;; **********************************************************************
@@ -159,14 +151,14 @@
 ;;; scheme or cltl without modification.)
 ;;;
 
-(io "test.midi" :versions true) 
+(set-midi-file-versions! true)
 
 (events (sinus 60 5.7 50 80 .1 .1 .6)   ; do this several times..
-        "test.midi")
+        "test.mid")
 
-(io "test.midi" :versions false)         ; turn back off.
+(set-midi-file-versions! false)         ; turn back off.
 
-(events (sinus 60 5.7 50 80 .1 .1 .6) "test.midi")
+(events (sinus 60 5.7 50 80 .1 .1 .6) "test.mid")
 
 
 ;;; **********************************************************************
@@ -223,7 +215,7 @@
 ;; 'object->midi' that converts simp data into midi data.
 ;; Choose the version for your Lisp:
 
-;; GUILE:
+;; Scheme:
 (define-method (object->midi (obj <simp>))
   ;; create a midi object and pass it values from a simp.
   ;; convert simp's hertz values to keynums.
@@ -232,7 +224,7 @@
        :keynum (keynum (simp-freq obj) ':hz)
        :amplitude (simp-amp obj)))
 
-;; COMMON LISP:
+;; CL:
 (defmethod object->midi ((obj simp))
   ;; create a midi object and pass it values from a simp.
   ;; convert simp's hertz values to keynums.
@@ -248,7 +240,7 @@
 
 ;; ... and now write some simp events to a midi file.
 
-(events (simp-2 20 false) "test.midi")
+(events (simp-2 20 false) "test.mid")
 
 
 ;;; **********************************************************************
@@ -271,7 +263,7 @@
            
            wait rhy))
 
-(events (ex4) "test.midi")
+(events (ex4) "test.mid")
 
 
 ;;; **********************************************************************
@@ -295,7 +287,7 @@
                        :amplitude (interp (mod i 6) 0 .2 5 .8))
            wait rhy))
 
-(events (simul) "test.midi")
+(events (simul) "test.mid")
 
 
 ;;; **********************************************************************
@@ -316,14 +308,14 @@
 				     :for 3))
 			     (new chord :of '(e4 a4 cs5))
 			     (new random 
-			       :of '(bf3 (ef1 weight .5 max 2))
+			       :of '(bf3 (ef1 :weight .5 :max 2))
 			       :for 1)))))
     (process repeat 32
              do (doeach (k (next pat))
                   (output (new midi :keynum k :time (now))))
              wait .5)))
 
-(events (chordy) "test.midi")
+(events (chordy) "test.mid")
 
 ;; Like the above example but this one strums the chord.
 ;; Strum speed is independant of actual rhythm.
@@ -348,7 +340,7 @@
                   (incf z ss))
              wait .5)))
 
-(events (chordy-2) "test.midi")
+(events (chordy-2) "test.mid")
 
 
 ;;; **********************************************************************
@@ -372,9 +364,9 @@
              
              wait dur)))
 
-(events (sierpinski 'a0 '(0 7 5 ) 3 .5 4) "test.midi")
+(events (sierpinski 'a0 '(0 7 5 ) 3 .5 4) "test.mid")
 
-(events (sierpinski 'a0 '(0 -1 2 13) 6 .5 4) "test.midi")
+(events (sierpinski 'a0 '(0 -1 2 13) 6 .5 4) "test.mid")
 
 
 ;;; **********************************************************************
@@ -397,9 +389,9 @@
 
 ;; try several times to hear random octave selection.
 
-(events (list (octie) (octie)) "test.midi")
-(events (list (octie) (octie)) "test.midi")
-(events (list (octie) (octie)) "test.midi")
+(events (list (octie) (octie)) "test.mid")
+(events (list (octie) (octie)) "test.mid")
+(events (list (octie) (octie)) "test.mid")
 
 ;;; **********************************************************************
 ;;;
@@ -441,7 +433,7 @@
                  (now)))
            wait rhy ))
 
-(events (ghosts) "test.midi")
+(events (ghosts) "test.mid")
 
 
 ;;; **********************************************************************
@@ -491,7 +483,7 @@
 ;;; Four cage processes in different octaves
 
 (events (loop for o in '(-12 0 12 24) collect (cage o))
-	"test.midi")
+	"test.mid")
 
 
 ;;; **********************************************************************
@@ -624,27 +616,31 @@
            for x = (next p)
            if (number? x)
            output (new midi :time (now) :duration .2
-                       :keynum (keynum x :from harms))
+                       ;; convert from tuning keynum to floating point
+                       ;; keynum in the standard scale
+                       :keynum (keynum (hertz x :in harms) :hz #t))
            else
            ;; if a chord (list) of notes is selected fromthe pattern
            ;; then iterate over each element in the chord and output it.
            each n in x 
            output (new midi :time (now) :duration .2
-                       :keynum (keynum n :from harms))
+                       ;; convert from tuning keynum to floating point
+                       ;; keynum in the standard scale
+                       :keynum (keynum (hertz n :in harms) :hz #t))
            wait .25))
 
 ;;; Channel tuning in MIDI for microtonal output. the first example 
-;;; quantizes to a 48 tone octave using 4 channels on the MIDI synth.
+;;; quantizes to 4 steps per semitone using 4 channels on the MIDI synth.
 ;;; the second example performs note-by-note tuning, ie no quantization
 ;;; and all channels are cycled in round robin style to minimize the 
 ;;; likelyhood that a pitch bend will affect a sounding note. the third
 ;;; example turns off channel tuning.
 
-(events (playharms) "test.midi" :channel-tuning 48)
+(events (playharms) "test.mid" :channel-tuning 4)
 
-(events (playharms) "test.midi" :channel-tuning true)
+(events (playharms) "test.mid" :channel-tuning true)
 
-(events (playharms) "test.midi" :channel-tuning false)
+(events (playharms) "test.mid" :channel-tuning false)
 
 
 

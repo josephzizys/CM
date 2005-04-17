@@ -1424,7 +1424,7 @@
 ;;;
 
 (set! *chromatic-scale*
-      (make-instance <tuning>
+      (make <tuning>
 		     :name "chromatic-scale"
 		     :octaves '(-1 10)
 		     :lowest 6.875

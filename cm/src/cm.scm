@@ -17,6 +17,7 @@
     (set! this-file (port-filename (current-load-port)))
     (set! file-list (cons "guile" file-list)))
    (gauche
+    (define (force-output) #f)
     (set! this-file (port-name (current-load-port)))
     (set! file-list (cons "gauche" file-list)))
    (chicken
@@ -49,16 +50,31 @@
     (chicken
      #f))
 
-   ;; load source files
-   (do ((tail file-list (cdr tail))
-        (file #f))
-       ((null? tail) #f)
+   (let loadem ((tail file-list))
+        (cond ((null? tail) #f)
+              (else
+               (let ((file (string-append load-path (car tail) ".scm")))
+                 (display (string-append "; loading " file))
+                 (force-output)
+                 (newline)
+                 ;(display (list 'before list-index))(newline) (force-output)
+                 (load file)
+                 ;(display (list 'after list-index)) (force-output)
+                 (loadem (cdr tail))
+                 ))))
 
-     (set! file (string-append load-path (car tail) ".scm"))
-     (display (string-append "; loading " file))
-     (newline)
-     (load file)
-     )
+   ;; load source files
+;   (do ((tail file-list (cdr tail))
+;        (file #f))
+;       ((null? tail) #f)
+;
+;     (set! file (string-append load-path (car tail) ".scm"))
+;     (display (string-append "; loading " file))
+;     (newline)
+;     (display (list 'before list-index))(newline) (force-output)
+;     (load file)
+;     (display (list 'after list-index)) (force-output)
+;     )
 
    ;; load user init file if it exists
    (let* ((this (pwd))

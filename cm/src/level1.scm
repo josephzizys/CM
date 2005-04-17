@@ -686,16 +686,8 @@
 	, slts :name ',name ,@ opts )
       
       (define-method* (make-load-form (obj ,gvar))
-        (cons* 'make-instance ', gvar (slot-init-forms obj :eval #t)))
-      
-;      ;; define a #i print-object method
-;      (define-method* (write (obj ,gvar) port)
-;        (if *print-instance*
-;          (print-instance obj port)
-;          (next-method)))
-      
+        (cons* 'make ', gvar (slot-init-forms obj :eval #t)))
       ,@methods
-      
       (values))))
 
 (define (parse-slot-spec cname spec)

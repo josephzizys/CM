@@ -15,9 +15,9 @@
 ;;; $Date$
 
 (define-method* (copy-object (obj <object>))
-  ;; changed allocate-instance to make-instance for scheme,
+  ;; changed allocate-instance to make for scheme,
   ;; unfortunately this function is not exactly the same as it was.
-  (let ((new (make-instance (class-of obj))))
+  (let ((new (make (class-of obj))))
     (fill-object new obj)
     new))
 
@@ -26,47 +26,6 @@
     (let ((n (slot-definition-name s)))
       (when (and (slot-exists? new n) (slot-bound? old n))
         (slot-set! new n (slot-ref old n))))))
-
-;;; print-instance and #i
-;;; print-instance prints instances as a list:
-;;;   #i(class slot value ...)
-;;; where #i is a read-macro that creates the object printed.
-;;; If *print-object-terse* is #t then only initializations
-;;; that are not the same as their :init-values are printed.
-;;;
-
-(define *print-instance* #t)
-
-(define (print-instance obj port)
-  (let ((class (class-of obj))
-        (*print-case* ':downcase)) ; yes its gross...
-    (format port "#i(~a" (class-name class))
-    (do ((slots (class-slots class) (cdr slots))
-	 (d #f)
-	 (s #f)
-	 (v #f)
-	 (k #f))
-	((null? slots) #f)
-      (set! d (car slots))
-      (set! s (slot-definition-name d))
-      (if (slot-bound? obj s)
-	(begin
-	 (set! v (slot-ref obj s))
-	 (set! k (slot-definition-initargs d))
-	 (unless (null? k)
-	   (unless (and (eq? *print-instance* ':terse)
-			(eq? v (slot-definition-initform d)))
-	     (format port " ~a ~s" s v))))))
-    (format port ")")
-     obj))
-
-(define (i-reader form)
-  (if (pair? form)
-    `(new ,@ form)
-    (err "Can't make instance from ~s." form)))
-
-(read-macro-set! #\i (function i-reader))
-(read-macro-set! #\I (function i-reader)) ; for cltl.
 
 ;;;
 ;;; cm class definitions. to remain consistent with cltl2 cm class names
@@ -97,14 +56,13 @@
          :init-keyword :name))
   :name 'container)
 
-(define-method* (print-object (obj <container>) port)
-  (let ((name (object-name obj)))
+(define-object-printer* ((obj <container>) port)
+  (let ((name (object-name obj))
+        (*print-case* ':downcase)) ; noop in scheme
     (if name
-      (format port "#<~a \"~a\">" 
- 	      (string-downcase (symbol->string (class-name (class-of obj))))
+      (format port "#<~a \"~a\">" (class-name (class-of obj))
  	      name)
-      (next-method)
-      )))
+      (next-method))))
 
 (define-method* (initialize (obj <container>) args)
   (next-method)
@@ -121,7 +79,7 @@
     (values)))
 
 (define-method* (make-load-form (obj <container>))
-  `(make-instance ,(string->symbol
+  `(make ,(string->symbol
                     (format #f "<~a>" (class-name (class-of obj))))
     ,@ (slot-init-forms obj :eval #t :omit '(subobjects))
     :subobjects
@@ -162,7 +120,7 @@
     (let* ((name (if (string? string) string
                    (format #f "~a"  string)))
            (type (filename-type name))
-           ;(ioc (find-class 'event-stream)) 
+           ;(ioc (find-class* 'event-stream)) 
 	   (find #f))
       (if (not type)
 	(set! find (hash-ref *dictionary* (string-downcase name)))
@@ -369,15 +327,57 @@
          :init-keyword :time))
   :name 'event)
 
+(define *print-event* #t)
+
+(define-object-printer* ((obj <event>) port)
+  ;; prints events as  #i(class slot value ...)
+  ;; where #i is a read-macro that creates the object printed.
+  ;; If *print-event* is #t then only initializations
+  ;; that are not the same as their :init-values are printed.
+  (if *print-event*
+    (let ((class (class-of obj))
+          (*print-case* ':downcase))    ; unused in scheme, keeps
+                                        ; formatting simple
+      (format port "#i(~a" (class-name class))
+      (do ((slots (class-slots class) (cdr slots))
+           (d #f)
+           (s #f)
+           (v #f)
+           (k #f))
+          ((null? slots) #f)
+        (set! d (car slots))
+        (set! s (slot-definition-name d))
+        (if (slot-bound? obj s)
+          (begin
+           (set! v (slot-ref obj s))
+           (set! k (slot-definition-initargs d))
+           (unless (null? k)
+             (unless (and (eq? *print-event* ':terse)
+                          (eq? v (slot-definition-initform d)))
+               (format port " ~a ~s" s v))))))
+      (format port ")")
+      obj)
+    (next-method)))
+
+(define (i-reader form)
+  (if (pair? form)
+    `(new ,@ form)
+    (err "Can't make instance from ~s." form)))
+
+;;; these may be noops in some schemes
+
+(read-macro-set! #\i (function i-reader))
+(read-macro-set! #\I (function i-reader)) ; for cltl.
+
 ;;;
 ;;; new
 ;;;
 
 (define-macro (new class . args)
-  (let* ((type (or (find-class class)
+  (let* ((type (or (find-class* class)
 		   (err "No class named ~s." class)))
 	 (inits (expand-inits type args #t #f)))
-    `(make-instance (find-class ',class) ,@ inits)))
+    `(make (find-class* ',class) ,@ inits)))
 
 ;;;
 ;;; DEFOBJECT and parameter processing
@@ -508,7 +508,7 @@
             (set! goal (car tail))))))))
 
 (define-macro (defobject name supers slots . options)
-  (let ((sups (map (lambda (x) (or (find-class x) 
+  (let ((sups (map (lambda (x) (or (find-class* x) 
 				   (err "No class named ~s." x)))
 		   supers))
         (decl (map (lambda (x) (if (pair? x) x (list x))) slots))
@@ -537,7 +537,7 @@
       
       ;; generate methods for each class of output stream
       (dolist (c (if (eq? make #t) (io-classes )
-                     (map (function find-class) make)))
+                     (map (function find-class*) make)))
         (let ((fn (io-class-definer c)))
           (when fn
             (push (fn name gvar pars sups decl) methods))))

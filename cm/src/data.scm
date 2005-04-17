@@ -357,7 +357,6 @@
 		  (if (and (> end 1)
                            (let ((c (string-ref str 1)))
                              (or (char-numeric? c)
-                                 ;;(find (string-ref str 1) chars :test (function char-ci=?))
                                  (find (lambda (x) (char-ci=? c x)) chars)
                                  ))
 			   (begin
@@ -368,7 +367,6 @@
 		    (set! beg 1)
 		    (set! beg 0))
 		  (set! chr (string-ref str beg))
-		  ;(set! pos (position chr chars :test (function char-ci=?)))
                   (set! pos (list-index (lambda (x) (char-ci=? chr x)) chars))
 		  (cond (pos
 		         (set! beg (+ beg 1))
@@ -376,17 +374,17 @@
 		        (else
 		         (set! pos beg)
 		         (loop with flg = #f
-			       while (< beg end)
-			       do (set! chr (string-ref str beg))
-			       if (or (char-numeric? chr)
-				      (and (char=? chr #\.)
-					   (not flg)
-					   (< beg (- end 1))
-					   (char-numeric?
-					    (string-ref str (+ beg 1)))
-					   (set! flg #t)))
-			       do (set! beg (+ beg 1))
-			       else do (return))
+                            while (< beg end)
+                            do (set! chr (string-ref str beg))
+                            if (or (char-numeric? chr)
+                                   (and (char=? chr #\.)
+                                        (not flg)
+                                        (< beg (- end 1))
+                                        (char-numeric?
+                                         (string-ref str (+ beg 1)))
+                                        (set! flg #t)))
+                            do (set! beg (+ beg 1))
+                            else do (return))
 		         (if (> beg pos)
 			   (set! rhy (string->number 
 				      (substring str pos beg)))
@@ -413,9 +411,9 @@
 		    rhy
 		    (err "Can't parse ~A as a rhythm." str)))))
              (next-token-position
-	      (lambda (string lb len)
+	      (lambda (str lb len)
 	        (loop with chr for i from lb below len
-                   do (set! chr (string-ref string i))
+                   do (set! chr (string-ref str i))
                    ;;until (find chr ops :test (function char-ci=?))
                    until (find (lambda (x) (char-ci=? chr x)) ops)
                    finally (return i)))))
@@ -1180,7 +1178,6 @@
 		            (display s)
 		            )))))
 	          (newline)))
-              
 	      (when (or pattern? (member print? '(#t pattern :pattern)))
 	        (set! pat  
 		      (loop for row in table 
@@ -1189,7 +1186,7 @@
 	        (pprint `(new markov of ', pat)))
 	      (if pattern?
                 ;; patterns not defined yet, cant use new or <markov>
-	        (make-instance (find-class 'markov) :of pat)
+	        (make (find-class* 'markov) :of pat)
 	        (values))))))
 
 (define (histogram numbers lo hi slots)

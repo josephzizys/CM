@@ -84,7 +84,7 @@
 (define-method* (midi-event-data1 (obj <midi-pitch-bend>))
   ;; return lsb of 2comp bend value
   (multiple-value-bind (ms7b ls7b)
-      (floor (+ (midi-pitch-bend-bend obj) 8192) 128)
+      (clfloor (+ (midi-pitch-bend-bend obj) 8192) 128)
     ms7b
     ;; return lsb
     ls7b))
@@ -92,7 +92,7 @@
 (define-method* (midi-event-data2 (obj <midi-pitch-bend>))
   ;; return msb of 2comp bend value
   (multiple-value-bind (ms7b ls7b)
-      (floor (+ (midi-pitch-bend-bend obj) 8192) 128)
+      (clfloor (+ (midi-pitch-bend-bend obj) 8192) 128)
     ls7b
     ;; return msb
     ms7b))
@@ -583,7 +583,7 @@
                (if (eq? tracks #t) (set! tracks (list 0)))))
         ;; seq can be a seq, class name or name
         (cond ((is-a? seq <seq>))
-              ((or (not seq) (find-class seq ))
+              ((or (not seq) (find-class* seq ))
                (set! class (or seq <seq>))
                (set! root (format #f "~a-track"
                                   (filename-name 
@@ -617,7 +617,7 @@
           (cond ((<= 0 track (- num-tracks 1))
                  (unless seq
                    (set! seq 
-                         (make-instance class 
+                         (make class 
                                         :name (format #f "~a-~s" root track))))
                  (set! result (midi-file-import-track file track seq
                                                       notefn
@@ -828,7 +828,7 @@
                                (channel-message-data1 m)))))
                   ((= s +ml-note-on-opcode+)
                    (set! n
-                         (make-instance
+                         (make
                            <midi>
                            :time b
                            :keynum 
@@ -851,14 +851,14 @@
                                   (eot-p m)
                                   (member (ldb +enc-data-1-byte+ m)
                                           meta-exclude)))
-                   ;;(set! n (make-instance <midimsg>
+                   ;;(set! n (make <midimsg>
                    ;;          :time b :msg m
                    ;;          :data (midi-file-data mf)))
                    (set! n (midi-message->midi-event
                             m :time b :data (midi-file-data mf)))
                    ))
                 (else
-                 ;;(set! n (make-instance <midimsg> :time b :msg m))
+                 ;;(set! n (make <midimsg> :time b :msg m))
                  (set! n (midi-message->midi-event m :time b))
                  ))
                (when n (push n data))))))  ; end #'mapper

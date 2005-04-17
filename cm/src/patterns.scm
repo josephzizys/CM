@@ -135,7 +135,7 @@
         (gvar (string->symbol (format #f "<~a>"
                                       (class-name (class-of obj))))))
     ;; handle data and period specially
-    `(make-instance ,gvar ,@ inits)))
+    `(make ,gvar ,@ inits)))
 
 ;;;
 ;;; pattern-external-inits returns the list of slot inits
@@ -2038,7 +2038,7 @@
 (define-method* (pattern? (obj <transposer>)) obj)
 
 (define-method* (make-load-form (obj <transposer>))
-  `(make-instance <transposer>
+  `(make <transposer>
      ,@(append
         (list ':of (expand-pattern-value (transposer-of obj)))
         (let ((by (transposer-by obj)))
@@ -2222,7 +2222,7 @@
 (define-method* (pattern? (obj <pval>)) obj)
 
 (define-macro (pval expr)
-  `(make-instance <pval> :of (lambda () ,expr)))
+  `(make <pval> :of (lambda () ,expr)))
 
 (define-method* (next-1 (obj <pval>))
   ( (pval-thunk obj) )) ; funcall

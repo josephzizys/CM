@@ -414,13 +414,13 @@
 ;;             (:parameters time dur ,@s)))
 ;;        :stream out)
 ;;       (terpri out))
-;;     (format out "~&(MAKE-INSTANCE 'SEQ :NAME ~S~&  ~
+;;     (format out "~&(MAKE 'SEQ :NAME ~S~&  ~
 ;;                        :SUBOBJECTS~&  ~
 ;;                        (LIST" name)
 ;;                                         ;(PRINT LIST)
 ;;     (dolist (l list)
 ;;       (format out "~&    ")
-;;       (write `(make-instance 
+;;       (write `(make 
 ;;                ',(third (find (floor (first l))
 ;;                               defs :key #'first))
 ;;                ., (loop for v in l

@@ -18,10 +18,11 @@
 ;;; file system and OS interface.
 ;;;
 
+(use-modules (srfi srfi-1))
 (use-modules (oop goops))
 (use-modules (ice-9 rdelim))
 (use-modules (ice-9 pretty-print)) ; remove  at some point...
-(use-modules (srfi srfi-1))
+
 
 ;;; Lisp environment
 
@@ -115,28 +116,11 @@
 ;;; OOP functions
 ;;;
 
-(define (find-class name . root)
-  ;; returns a class given its name or #f. optional
-  ;; root class defaults to <top>.
-  (letrec ((fc
-	    (lambda (name class)
-	      (if (null? class)
-		#f
-		(if (pair? class)
-		  (or (fc name (car class))
-		      (fc name (cdr class)))
-		  (if (and (slot-bound? class 'name)
-			   (eq? name (class-name class)))
-		    class
-		    (fc name (class-direct-subclasses class))))))))
-    (fc name (if (null? root) <top> (car root)))))
-
 (define (class-subclasses cls)
   (let ((subs (class-direct-subclasses cls)))
     (append subs
             (loop for s in (class-direct-subclasses cls)
                   append (class-subclasses s)))))
-
 
 (define slot-definition-initform slot-definition-init-value)
 
@@ -164,6 +148,25 @@
   (if (pair? formals)
     `(define-generic ,(car formals))
     `(define-generic ,formals)))
+
+(define (find-class* name . root)
+  ;; returns a class given its name or #f. optional
+  ;; root class defaults to <top>.
+  (letrec ((fc
+	    (lambda (name class)
+	      (if (null? class)
+		#f
+		(if (pair? class)
+		  (or (fc name (car class))
+		      (fc name (cdr class)))
+		  (if (and (slot-bound? class 'name)
+			   (eq? name (class-name class)))
+		    class
+		    (fc name (class-direct-subclasses class))))))))
+    (fc name (if (null? root) <top> (car root)))))
+
+(define-macro (define-object-printer* args . body)
+  `(define-method ,(cons 'write args) ,@ body))
 
 (define (slot-getter-form obj slot)
   `(slot-ref ,obj ',slot))

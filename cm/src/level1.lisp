@@ -296,11 +296,11 @@
      ;; define a load-form method
      ,(make-load-form-method name gvar)
 
-     ;; define a #i print-object method
-     (defmethod print-object ((obj ,name) port)
-       (if *print-instance*
-         (print-instance obj port)
-         (call-next-method)))
+;     ;; define a #i print-object method
+;     (defmethod print-object ((obj ,name) port)
+;       (if *print-instance*
+;         (print-instance obj port)
+;         (call-next-method)))
 
      ;; set class parameters if apropriate.
      ,@(if pars (list `(setf (class-parameters ,gvar)

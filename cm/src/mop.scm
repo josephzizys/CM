@@ -168,12 +168,12 @@
 ;;; make-load-form returns an expression that, if evaluated, creates
 ;;; an object equivalent to the object that produced the form.
 ;;; assumes the object's class is in a variable named <object>.
-;;; this should probably be changed to use find-class.
+;;; this should probably be changed to use find-class*.
 ;;;
 
 (define-method* (make-load-form (obj <class>))
   (let ((inits (slot-init-forms obj :eval #t)))
-    `(make-instance ,(string->symbol
+    `(make ,(string->symbol
 	              (format #f "<~a>" (class-name (class-of obj))))
        ,@inits)))
 

@@ -70,8 +70,8 @@
   (when (eq? dir ':output)
     (set! (io-open io)
           (init-clm-input 
-           ;; FIX: find-class for scheme!
-           (apply #'make-instance (find-class 'score)
+           ;; FIX: find-class* for scheme!
+           (apply (function make) (find-class* 'score)
                   :output-file 
                   (file-output-filename io)
                   (cmn-args io))))
@@ -277,18 +277,18 @@
         (d (cmn-duration obj))
         )
     (if d
-      (make-instance <midi> :time b :duration d 
+      (make <midi> :time b :duration d 
                      :channel (cmn-staff obj)
                      :keynum e)
       (if (pair? e)
         (case (car e)
           ((mm )
-           (make-instance <midi-tempo-change>
+           (make <midi-tempo-change>
                           :time b
                           :usecs (inexact->exact
                                   (floor (* (/ 60 (cadr e)) 1000000)))))
           ((meter )
-           (make-instance <midi-time-signature>
+           (make <midi-time-signature>
                           :time b :numerator (cadr e)
                           :denominator (caddr e)))
           (else
@@ -312,7 +312,7 @@
                  (list-index (lambda (x) (member e x)) l)
                  ))
           (if p
-            (make-instance <midi-key-signature>
+            (make <midi-key-signature>
                            :time b :key (- p 7)
                            :mode ;(position e (list-ref l p))
                            (list-index (lambda (x) (eq? e x)) (list-ref l p))

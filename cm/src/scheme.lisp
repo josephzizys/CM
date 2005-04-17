@@ -334,6 +334,7 @@
 
 (defscheme slot-ref slot-value)
 
+(defscheme make make-instance)
 
 ;;;
 ;;; needed for testing.cm

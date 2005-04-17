@@ -286,7 +286,7 @@
       (if (or (not (symbol? sym))
               (and toplevel? (member sym exclude)))
         #f
-        (let* ((obj (find-class sym #f))
+        (let* ((obj (find-class* sym #f))
                (pars (and obj (class-parameters obj))))
           (if pars
             (import-object pars form)

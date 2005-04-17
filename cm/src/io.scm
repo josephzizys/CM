@@ -140,7 +140,7 @@
         (if class  ; allow class to specify maker
           (multiple-value-bind (init args)
                                (expand-inits class inits #t #t)
-            (let ((n (apply (function make-instance) class 
+            (let ((n (apply (function make) class 
                             ':name string init )))
               (if (not (null? args ))
                 (if (io-handler-args? n)
@@ -339,7 +339,7 @@
 ;Removed for now but may add it back.
 ;(define-macro (defhandler class handler)
 ;  (let ((var (gensym)))
-;    `(let ((,var (find-class ',class <event-stream>)))
+;    `(let ((,var (find-class* ',class <event-stream>)))
 ;      (set! (io-class-handler ,var) ,handler))))
 
 
