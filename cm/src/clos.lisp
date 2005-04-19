@@ -19,7 +19,7 @@
 
 (in-package :cm)
 
-#-(or clisp cmu)
+#-(or cmu)
 (defun class-subclasses (class)
   ;; return a list of all subclases of class
   (let ((subs (class-direct-subclasses class)))

@@ -16,30 +16,33 @@
 
 (in-package :cm)
 
+(import '(clos::class-direct-subclasses
+          clos::class-direct-superclasses
+          clos::class-direct-slots
+          ))
+
 (defun exit () (ext::exit))
 (defun quit () (exit))
+(defun lisp-version ()
+  (let* ((s (lisp-implementation-version))
+         (p (position-if #'digit-char-p s)))
+    (concatenate 'string "CLISP " (subseq s p (position #\space s :start p)))))
 
 (setf clos::*allow-mixing-metaclasses* T)
 
-(defun class-subclasses (class)
-  ;; CLISP's clos.lisp poses the question...
-  ;;   Durch alle Symbole durchlaufen, um die Unterklassen abzugrasen.
-  ;;   Sollte eleganter gehen??
-  ;; to which I answer: SURE. 
-  (let ((subclasses (list )))
-    (do-symbols (sym :cm)
-      (let ((c (get sym 'clos::closclass)))
-	(when (and c (clos::subclassp c class)
-                   (not (eq c class)))
-	  (pushnew c subclasses))))
-    (nreverse subclasses)))
+;(defun class-subclasses (class)
+;  ;; CLISP's clos.lisp poses the question...
+;  ;;   Durch alle Symbole durchlaufen, um die Unterklassen abzugrasen.
+;  ;;   Sollte eleganter gehen??
+;  ;; to which I answer: SURE. 
+;  (let ((subclasses (list )))
+;    (do-symbols (sym :cm)
+;      (let ((c (get sym 'clos::closclass)))
+;	(when (and c (clos::subclassp c class)
+;                   (not (eq c class)))
+;	  (pushnew c subclasses))))
+;    (nreverse subclasses)))
 
-;(defun slot-definition-initargs (slot)
-;  (clos::slotdef-initargs slot))
-;(defun slod-definition-initform (slot)
-;  (cdr (clos::slotd-initer)))
-
-;; clisp 2.32
 (defun slot-definition-initargs (slot)
   (clos::slotdef-initargs slot))
 
@@ -53,18 +56,18 @@
   slot
   nil)
 
-(defun class-direct-superclasses (class)
-  (clos::class-direct-superclasses class))
+;(defun class-direct-superclasses (class)
+;  (clos::class-direct-superclasses class))
 
-(defun class-direct-subclasses (x)
-  (declare (ignore x))
-  (error "class-direct-subclasses not implemented in clisp."))
+;(defun class-direct-subclasses (x)
+;  (declare (ignore x))
+;  (error "class-direct-subclasses not implemented in clisp."))
 
 (defun class-slots (class)
   (clos::class-slots class))
 
-(defun class-direct-slots (class)
-  (clos::class-direct-slots class))
+;(defun class-direct-slots (class)
+;  (clos::class-direct-slots class))
 
 (defun generic-function-name (class)
   (error "generic-function-name not implmented in clisp."))
@@ -85,26 +88,11 @@
 ;;;  misc. stuff
 ;;;
 
-;(defun quit () (ext:quit))
-
-;(defun exit () (quit))
-
-(defun object-address (x)
-  (sys::address-of x))
-
-;;(defun shell (format &rest strings) 
-;;  (ext:shell (apply #'format nil format strings)))
+;(defun object-address (x) (sys::address-of x))
 
 (defun shell (cmd &key (output t) (wait t))
   (ext:run-shell-command cmd :output (if output :terminal nil)
                          :wait wait))
-
-(defparameter *browser*
-  "/Applications/Networking/Internet\\ Explorer.app"  )
-
-(defun open-url (url &key (browser *browser*))
-  (shell (format nil "open -a ~a ~a" browser url))
-  (values))
 
 (defconstant directory-delimiter #\/)
 
