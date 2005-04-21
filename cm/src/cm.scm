@@ -57,29 +57,13 @@
                  (display (string-append "; loading " file))
                  (force-output)
                  (newline)
-                 ;(display (list 'before list-index))(newline) (force-output)
                  (load file)
-                 ;(display (list 'after list-index)) (force-output)
                  (loadem (cdr tail))
                  ))))
-
-   ;; load source files
-;   (do ((tail file-list (cdr tail))
-;        (file #f))
-;       ((null? tail) #f)
-;
-;     (set! file (string-append load-path (car tail) ".scm"))
-;     (display (string-append "; loading " file))
-;     (newline)
-;     (display (list 'before list-index))(newline) (force-output)
-;     (load file)
-;     (display (list 'after list-index)) (force-output)
-;     )
-
    ;; load user init file if it exists
    (let* ((this (pwd))
           (home (cd))
-          (init (string-append home "/.cminit.cm")))
+          (init (string-append home "/.cminit.lisp")))
      (if (file-exists? init)
        (load init))
      (cd this))
