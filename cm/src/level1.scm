@@ -14,8 +14,27 @@
 ;;; $Revision$
 ;;; $Date$
 
-;;; level1 for scheme. most of this is cltl functionality.
+;;; level1 for scheme. most of this is either cltl functionality or
+;;; noop expansions for generated cl code.
 
+;;;
+;;; scheme noops that are either needed to generate cl code or for cl
+;;; compile/loading
+
+(define-macro (function fn) fn)
+
+(define (funcall fn . args)
+  (apply fn args))
+
+(define (in-package name) #f)
+
+(define-macro (eval-when decl . body) ; noop in scheme
+  (if (null? (cdr body))
+    (car body)
+    `(begin ,@ body)))
+
+;;;
+;;; useful cltl features.
 
 (define-macro (when test . forms)
   `(if ,test (begin ,@forms)))
@@ -111,6 +130,14 @@
 
 (define rest cdr)
 
+(define (list-position x lis . arg)
+  (let ((test (if (null? arg) (function eq?) (car arg))))
+    (do ((tail lis (cdr tail))
+         (indx 0 (+ indx 1))
+         (flag #f))
+        ((or (null? tail) flag) flag)
+      (if ( test x (car tail)) (set! flag indx)))))
+
 (define (copy-tree lis)
   (if (pair? lis)
     (cons (copy-tree (car lis))
@@ -129,15 +156,6 @@
         (set! l (cdr l))
         (set! lis (cdr lis))))))
 
-;;;
-;;; noops that are needed either for marking code or for file loading
-
-(define-macro (function fn) fn)
-
-(define (funcall fn . args)
-  (apply fn args))
-
-(define (in-package name) #f)
 
 ;;;
 ;;; property list getting and setting
@@ -833,4 +851,15 @@
           (not (eq? (car verbose) #f)))
     (cm-logo))
   (values))
+
+;;;
+;;; u8
+;;;
+
+(define (u8vector-write vec fd)
+  (do ((i 0 (+ i 1))
+       (e (u8vector-length vec)))
+      ((= i e) vec)
+    (write-byte (u8vector-ref vec i) fd)))
+
 
