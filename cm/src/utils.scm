@@ -487,8 +487,33 @@
                 (reverse res)))
             (values)))))
 
+;;;
+;;; u8vector addition for both scheme and cltl
+;;;
 
+(define (u8vector-copy! vec1 vec2 . args)
+  ;; args is (<vec1start> <vec2length>)
+  (let ((p (if (null? args) 0 (car args)))
+        (l (if (or (null? args) (null? (cdr args)))
+             (u8vector-length vec2) (cadr args))))
+    (do ((i p (+ i 1))
+         (j 0 (+ j 1)))
+        ((= j l) vec1)
+      (u8vector-set! vec1 i (u8vector-ref vec2 j)))))
 
+(define (u8vector-append . vecs)
+  (let ((len 0))
+    (for-each (lambda (x) (set! len (+ len (u8vector-length x)))) 
+              vecs)
+    (do ((tail vecs (cdr tail))
+         (v (make-u8vector len 0))
+         (p 0 (+ p l))
+         (l #f))
+        ((null? tail) v)
+      (set! l (u8vector-length (car tail)))
+      (u8vector-copy! v (car tail) p l))))
+
+; (u8vector-append #() #(0 1) #(2 3) #(4 5 6) #())
 
 
 
