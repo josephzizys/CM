@@ -164,6 +164,9 @@
     (or (find-symbol name)
         (intern name))))
 
+(defun keyword->string (kw)
+  (format nil "~(~A~)" kw))
+
 ;;; strings
 
 (defun strip-chars (str &optional (chars '(#\space #\tab #\return)))
@@ -520,3 +523,38 @@
 (defmacro defcallback (name args &body body)
   args body
   `(defvar ,name "defcallback not implemented"))
+
+;;
+;;; u8vector implementation from srfi-1
+;;;
+
+(defun u8vector? (x)
+  (typep x '(array unsigned-byte)))
+
+(defun make-u8vector (len &optional (u 0))
+  (make-array len :element-type 'unsigned-byte :initial-element u))
+
+(defun u8vector (&rest u)
+  (make-array (length u) :element-type 'unsigned-byte :initial-contents u))
+
+(defun u8vector-length (v)
+  (length v))
+
+(defun u8vector-ref (v i)
+  (aref v i))
+
+(defun u8vector-set! (v i u)
+  (setf (aref v i) (logand u #xff)))
+
+(defun u8vector->list (v)
+  (loop for u across v collect u))
+
+(defun list->u8vector (l) (apply #'u8vector l))
+
+(defun u8vector-write (vec fd)
+  (write-sequence vec fd))
+
+; (make-u8vector 5 1)
+; (setq v (list->u8vector '(15 14 13 12 10 9 8 7 6 5 4 3 2 1 0)))
+; (loop for i below (u8vector-length v) collect (vector-ref v i))    
+; (loop for i from 0 for u in (u8vector->list v) do (u8vector-set! v i (- u 1)))

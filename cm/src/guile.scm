@@ -18,7 +18,8 @@
 ;;; file system and OS interface.
 ;;;
 
-(use-modules (srfi srfi-1))
+(use-modules (srfi srfi-1 ))
+(use-modules (srfi srfi-4 ))
 (use-modules (oop goops))
 (use-modules (ice-9 rdelim))
 (use-modules (ice-9 pretty-print)) ; remove  at some point...
@@ -82,6 +83,29 @@
   (make-hash-table size))
 
 ;;;
+;;; numbers
+
+(define (integer-decode-float num)
+  (if (zero? num) 
+    (values 0 0 1)
+    (let ((base 2)
+          (mant-size 23)
+          (exp-size 8)
+          (sign 1))
+      (if (negative? num) 
+        (begin (set! sign -1) (set! num (- num))))
+      (let* ((bot (expt base mant-size))
+             (top (* base bot)))
+        (let loopy ((n num) (e 0))
+             (cond
+               ((>= n top)
+                (loopy (quotient n base) (+ e 1)))
+               ((< n bot)
+                (loopy (* n base) (- e 1)))
+               (else
+                (values (inexact->exact n) e sign))))))))
+
+;;;
 ;;;
 ;;;
 
@@ -111,6 +135,9 @@
 ;;; guile has keyword?, keyword->symbol and symbol->keyword
 
 (read-set! keywords 'prefix)
+
+(define (keyword->string kw)
+  (symbol->string (keyword->symbol kw)))
 
 ;;;
 ;;; OOP functions

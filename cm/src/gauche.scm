@@ -20,6 +20,7 @@
 ;;;
 
 (use srfi-1)     ; list library
+(use srfi-4)     ; u8vecotr
 (use srfi-27)    ; random bits
 (use file.util)  ; current-directory, home-directory
 
@@ -123,6 +124,11 @@
           (random-real)
           (* (random-real) n))
       (errorf "random bounds not integer or real: ~s." n))))
+
+(define (integer-decode-float n)
+  (let ((v (decode-float n)))
+    (values (vector-ref v 0) (vector-ref v 1) 
+            (vector-ref v 2))))
 
 ;                                   Chicken Gauche  Guile  Stklos
 ;(make class . args)                        y       y       y
