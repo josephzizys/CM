@@ -229,6 +229,7 @@
     (list?               listp)
     (list-copy           copy-list)
     (list-index          position-if)
+    (list-position       position)
     (list-ref            elt   )
     (list-set!           nil              element-set!->setf-elt)
     (list-tail           nil              list-tail->nthcdr)
@@ -1046,6 +1047,7 @@
                           (class standard-class)
                           (object standard-object)
                           (pair cons)
+                          (real float)
                           (procedure function)))
   
 (defun clos-name (var)
