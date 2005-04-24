@@ -97,6 +97,9 @@
                   :test #'string=)))
     (and x (cdr x) )))
 
+(defun set-env-var (var)
+  (format t "set-env-var: fixme to work in cmucl"))
+
 (defun cm-image-dir ()
   (let ((img (member "-core" ext:*command-line-strings*)))
     (if img

@@ -199,6 +199,9 @@
 (defun env-var (var)
   (ccl::getenv (string var)))
 
+(defun set-env-var (var val)
+  (ccl::setenv (string var) val))
+
 (defun save-cm (path &rest args)
   (declare (ignore args) (special *cm-readtable*))
   (setf ccl::*inhibit-greeting* t)

@@ -57,6 +57,9 @@
 (defun env-var (var)
   (hcl:getenv var))
 
+(defun set-env-var (var)
+  (hcl:setenv var))
+
 (defun cm-image-dir ()
   ;; system:*line-arguments-list*
   (pathname-directory (lw:lisp-image-name)))

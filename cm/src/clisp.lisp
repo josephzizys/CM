@@ -110,6 +110,9 @@
 (defun env-var (var)
   (ext:getenv var))
 
+(defun set-env-var (var val)
+  (ext:setenv var val))
+
 (defun cm-image-dir ()
   ;; clisp's ext:argv only appears in 2.32
   (multiple-value-bind (s f) (find-symbol "ARGV" :EXT)

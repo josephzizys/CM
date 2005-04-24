@@ -90,9 +90,15 @@
                               *default-pathname-defaults*))))
 
 (defun env-var (var)
+  var
   ;(let ((x (assoc var ext:*environment-list*
   ;                  :test #'string=)))
   ;  (and x (cdr x) ))
+  )
+
+(defun set-env-var (var val)
+  var val
+  (format t "set-env-var: fixme to work in sbcl")
   )
 
 (defun cm-image-dir ()
