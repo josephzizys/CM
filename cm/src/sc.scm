@@ -15,12 +15,12 @@
 
 (define-method* (close-io (io <sc-file-stream>) . mode)
   mode
-  (next-method)
   (let ((pad (list-prop (sc-file-userargs io) :pad))
         (fp (io-open io)))
     (if pad
       (write-bundle (+ pad (object-time io)) '("c_set" 0 0) fp)
-      (write-bundle (+ 5 (object-time io)) '("c_set" 0 0) fp))))
+      (write-bundle (+ 5 (object-time io)) '("c_set" 0 0) fp)))
+  (next-method))
 
 (define (set-sc-output-hook! fn)
   (unless (or (not fn) (functionp fn))
@@ -119,7 +119,6 @@
 ; initialize function
 
 (define-method* (initialize (obj <scsynth>) initargs)
-  initargs
   (next-method)
   (let ((slots (return-init-args obj))
         (args (list #f))) ; cdr holds arg data
@@ -130,12 +129,8 @@
          (set! (arg-list obj)
                (cdr args)))
       (set! slot (car head))
-      (unless (or (equal? slot "arg-list")
-                  (equal? slot "beg")
-                  (equal? slot "time"))
-        (cond ((or (equal? slot "node")
-                   (equal? slot "add-action")
-                   (equal? slot "target"))
+      (unless (member slot '(arg-list beg time))
+        (cond ((member slot '(node add-action target))
                ;; hand-coded 'collects' is done
                (set-cdr! tail (list (slot-ref obj slot)))
                (set! tail (cdr tail)))
