@@ -102,14 +102,14 @@
     (values arr (u8vector-length arr))))
 
 (define (write-bundle offset message fd)
-  (let ((arr #f))
-    (multiple-value-bind (mess len) (format-osc message)
-      (set! len (+ len 8 8 4))
-      (set! arr (u8vector-append (make-byte-vector len)
-                                 (make-byte-vector "#bundle")
-                                 (make-file-timetag offset)
-                                 (make-byte-vector len)
-                                 mess))
+  (let ((arr #f) 
+        (bundle-len #f))
+    (multiple-value-bind (mess len)
+        (format-osc message)
+      (set! bundle-len (+ len 8 8 4))
+      (set! arr
+            (u8vector-append (make-byte-vector bundle-len)
+			     (make-byte-vector "#bundle")
+			     (make-file-timetag offset)
+			     (make-byte-vector len) mess))
       (u8vector-write arr fd))))
-
-
