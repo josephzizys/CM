@@ -1,20 +1,39 @@
+;;; **********************************************************************
+;;; Copyright (C) 2005 Todd Ingalls, Heinrich Taube
+;;; 
+;;; This program is free software; you can redistribute it and/or
+;;; modify it under the terms of the GNU General Public License
+;;; as published by the Free Software Foundation; either version 2
+;;; of the License, or (at your option) any later version.
+;;; 
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;; 
+;;; **********************************************************************
+
+;;; $Name$
+;;; $Revision$
+;;; $Date$
+
 (define-method* (make-byte-vector (int <integer>))
   (u8vector (ash (logand int #xff000000) -24) 
             (ash (logand int #xff0000) -16) 
             (ash (logand int #xff00) -8)
             (logand int #xff)))
 
+
 ; (make-byte-vector #x4030201)
 ; #(4 3 2 1)
 
 (define-method* (make-byte-vector (flo <real>))
-  (multiple-value-bind (significand exponent sign)
+  (multiple-value-bind (signif expon sign)
       (integer-decode-float flo)
-    (make-byte-vector (dpb (if (< sign 0) 1 0)
-                           (byte 1 31)
-                           (dpb (+ (- exponent 1) 127) 
-                                (byte 8 23)
-                                significand)))))
+    (let ((sign-bit (if (< sign 0) #x80000000 0))
+	  (exponent (+ expon 23 127))
+	  (fraction (logand signif #x7fffff)))
+      (make-byte-vector (logior sign-bit (ash exponent 23) fraction)))))
 
 ; (define foo '(2353.4402 19497.84 1709.3262 1157.6047 786.9287 -8034.8916 -6878.1816 6363.0913 -10773.487 -16749.674))
 ; (loop for x in foo collect (make-byte-vector x))
