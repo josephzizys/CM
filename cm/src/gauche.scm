@@ -37,6 +37,7 @@
 
 (define (read-macro-set! char fn) #f)
 
+
 ;; Directories, files and ports
 
 (define (pwd)
@@ -58,6 +59,15 @@
 (define (delete-file f)  (sys-unlink f))
 
 ;; System calls
+
+(define (os-name )
+  (string->symbol (string-downcase (car (sys-uname )))))
+
+(define (env-var var)
+  (sys-getenv var))
+
+(define (set-env-var var val)
+  (sys-putenv var val))
 
 (define (shell . args)
   (sys-system (car args)))

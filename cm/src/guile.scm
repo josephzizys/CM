@@ -68,6 +68,15 @@
 
 ;;; System calls
 
+(define (os-name )
+  (string->symbol (string-downcase (vector-ref (uname) 0))))
+
+(define (env-var name)
+  (getenv name))
+
+(define (set-env-var name value)
+  (setenv name value))
+
 (define (shell cmd . args)
   (system cmd))
 
