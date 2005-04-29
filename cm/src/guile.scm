@@ -143,6 +143,8 @@
 ;;; OOP functions
 ;;;
 
+(define class-direct-superclasses class-direct-supers)
+
 (define (class-subclasses cls)
   (let ((subs (class-direct-subclasses cls)))
     (append subs

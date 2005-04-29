@@ -513,7 +513,8 @@
 		   supers))
         (decl (map (lambda (x) (if (pair? x) x (list x))) slots))
         (gvar (string->symbol (format #f "<~a>" name)))
-	(make #t)
+	(make #f)
+        (streams '())
 	(pars #f)
         (methods '()))
     
@@ -524,9 +525,12 @@
       (case (car opt)
 	((:parameters)
          (set! pars opt))
-	((:writers) 
-         (set! make (cdr opt)))))
-    
+	(( :event-streams) 
+         (set! make #t)
+         (set! streams (cdr opt)))
+        (else
+         (err "Not a defobject option: ~s." (car opt))
+        )))
     (when pars
       (set! pars (parse-parameters (cdr pars)))
       ;; signal error if no slot for each par
@@ -534,17 +538,20 @@
       ;; signal warning if no time parameter
       (unless (find-time-parameter pars decl sups)
         (format #t "Warning: no time parameter for ~s." name))
-      
+      ;; if user didnt explicitly provide :event-streams look
+      ;; for one in the superclass list
+      (if (not make)
+        (set! make (write-event-streams (map (function find-class*) 
+                                             supers)))
+        (set! make streams))
       ;; generate methods for each class of output stream
-      (dolist (c (if (eq? make #t) (io-classes )
-                     (map (function find-class*) make)))
-        (let ((fn (io-class-definer c)))
+      (dolist (c make)
+        (let ((fn (io-class-definer (find-class* c))))
           (when fn
             (push (fn name gvar pars sups decl) methods))))
       (set! methods (reverse methods)))
-    
     ;; expand-defobject is in level1
-    (expand-defobject name gvar supers decl pars methods)))
+    (expand-defobject name gvar supers decl pars methods streams)))
 
 ;;;
 ;;; defprocess

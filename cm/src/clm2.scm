@@ -18,7 +18,7 @@
 ;;; this file contains glue code to clm2
 ;;;
 
-(define-method* (open-io (io <clm-audio-stream>) dir . args)
+(define-method* (open-io (io <audio-file>) dir . args)
   args
   (if (eq? dir ':output)
     (let ((inits (io-handler-args io))
@@ -52,7 +52,7 @@
       io)
     (next-method)))
 
-(define-method* (close-io (io <clm-audio-stream>) . mode)
+(define-method* (close-io (io <audio-file>) . mode)
   (let ((wsd (io-open io))
         (old *clm-with-sound-depth*))
     (set! *clm-with-sound-depth* 1)

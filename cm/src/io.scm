@@ -20,12 +20,18 @@
    (open :init-value #f :accessor io-open)
    (stream :init-value #f :init-keyword :stream
            :accessor event-stream-stream)
-   (direction :init-value #f :accessor io-direction)
-   (version :init-value 0 :accessor file-version
+   (args :init-value '() :accessor event-stream-args)
+   (direction :init-value #f :accessor io-direction))
+  :name 'event-stream)
+
+(define-class* <event-file> (<event-stream>)
+  ((version :init-value 0 :accessor event-file-version
             :init-keyword :version)
+   (versioning :init-value #f :init-keyword :versioning
+               :accessor event-file-versioning)
    (elt-type :init-value :char :accessor file-elt-type
              :init-keyword :elt-type))
-  :name 'event-stream)
+  :name 'event-file)
 
 (define (io-classes )
   (class-subclasses <event-stream>))
@@ -38,16 +44,37 @@
 (define-generic* close-io)
 (define-generic* initialize-io)
 (define-generic* deinitialize-io)
-(define-generic* play)
+;(define-generic* play)
 (define-generic* write-event)
 (define-generic* import-events)
 
-(define (file-versions? stream)
-  (io-class-file-versions (class-of stream)))
+;(define (event-file-versioning stream)
+;  (io-class-file-versions (class-of stream)))
+
+(define (event-file-versioning stream)
+  (slot-ref stream 'versioning))
 
 ;;;
 ;;;
 ;;;
+
+(define (write-event-streams class)
+  ;; return the event stream classes for class or
+  ;; any of its superclasses.
+  (cond ((null? class)
+         (list))
+        ((pair? class)
+         (let ((strs (write-event-streams (car class))))
+           (if (null? strs)
+             (write-event-streams (cdr class))
+             strs)))
+        ((is-a? class <parameterized-class>)
+         (let ((strs (class-event-streams class)))
+           (if (null? strs)
+             (write-event-streams (class-direct-superclasses class))
+             strs)))
+        (else
+         (write-event-streams (class-direct-superclasses class)))))
 
 (define (io-stream-classes )
   ;; return a list of all classes that handle file/port io.
@@ -57,7 +84,7 @@
     (let ((h (io-class-file-types (car l))))
       (if h (push (car l) r)))))
 
-(define (filename->io-class path)
+(define (filename->event-class path)
   ;; returns an io class given a "name.type" namestring. if
   ;; name  is not "*" an exact match is required. othewise 
   ;; if the types are the same its a match.
@@ -87,30 +114,10 @@
       (err "Missing .ext in file or port specification: ~s"
 	   path))))
       
-; (filename->io-class "test.clm")
-; (filename->io-class "test.sco")
-; (filename->io-class "test.wav")
-; (filename->io-class "test")
-
-;;;
-;;; classes can specialize this to allow extra args.
-;;;
-
-(define-generic* io-handler-args?)
-(define-generic* set-io-handler-args!)
-(define-generic* io-handler-args)
-
-(define-method* (io-handler-args? (io <event-stream>))
-  io
-  #f)
-
-(define-method* (set-io-handler-args! (io <event-stream>) args)
-  args
-  #f)
-
-(define-method* (io-handler-args (io <event-stream>))
-  io
-  #f)
+; (filename->event-class "test.clm")
+; (filename->event-class "test.sco")
+; (filename->event-class "test.wav")
+; (filename->event-class "test")
 
 ;;;
 ;;; init-io called on file/port names or objects to initialize slots.
@@ -136,15 +143,15 @@
   (let ((io (find-object string))) ; no type filter
     (if io
       (apply (function init-io) io inits)
-      (let ((class (filename->io-class string)))
+      (let ((class (filename->event-class string)))
         (if class  ; allow class to specify maker
           (multiple-value-bind (init args)
                                (expand-inits class inits #t #t)
             (let ((n (apply (function make) class 
                             ':name string init )))
               (if (not (null? args ))
-                (if (io-handler-args? n)
-                  (set-io-handler-args! n args)
+                (if #t ;(io-handler-args? n)
+                  (set! (event-stream-args n) args)
                   (err "Not initializations for ~s: ~s."
                        (class-name class) args)))
               n))
@@ -157,17 +164,24 @@
       (dopairs (s v init)
 	(slot-set! io s v))
       (if (not (null? args))
-        (if (io-handler-args? io)
-          (set-io-handler-args! io args)
+        (if #t ;(io-handler-args? io)
+          (set! (event-stream-args io) args)
           (err "Not initializations for ~s: ~s."
                (class-name (class-of io)) args)))))
   io)
 
+(define (bump-version stream)
+  (if (event-file-versioning stream)
+    (let ((vers (+ (event-file-version stream) 1)))
+      (set! (event-file-version stream) vers)
+      vers)
+    #f))
+
 (define (file-output-filename file)
   ;; if versioning return filename with version number
   ;; added otherwise return the file name.
-  (let ((v (if (file-versions? file)
-             (file-version file)
+  (let ((v (if (event-file-versioning file)
+             (event-file-version file)
              #f))
 	(n (object-name file)))
     (if (integer? v)
@@ -179,40 +193,28 @@
 		     (filename-type n))
       n)))
 
-;;;
-;;; open-io
-;;; CHECK GUILE
-;;; INIT-IO
-;;;
 
 (define-method* (open-io (obj <string>) dir . args)
   ;; default method assumes obj is string or filename
   (let ((io (apply (function init-io) obj args)))
     (apply (function open-io) io dir args)))
 
-;(define-method* (open-io (obj <event-stream>) dir . args)
-;  (format #t "~%open-io: new main method for event-stream")
-;  dir args
-;  obj)
-
-(define-method* (open-io (obj <event-stream>) dir . args)
-  args  ; gag 'unused var' warning from cltl compilers
+(define-method* (open-io (obj <event-file>) dir . args)
+    args                ; gag 'unused var' warning from cltl compilers
   (let ((file #f)
 	(name #f))
     (if (eq? dir :output)
-      (if (event-stream-stream obj)
-        (set! file (event-stream-stream obj))
-        (let ((v (if (file-versions? obj)
-                   (file-version obj)
-                   #f)))
-	  ;; if versioning increment by 1.
-	  (if v 
-	    (set! (file-version obj)
-		  (if (integer? v) (+ v 1) 1)))
-	  (set! name (file-output-filename obj))
-	  ;; opening existing file is undefined...
-	  (if (file-exists? name) (delete-file name))
-	  (set! file (open-file name dir (file-elt-type obj)))))
+      (cond ((event-stream-stream obj)
+             (set! file (event-stream-stream obj)))
+            (else 
+             ;; mayby increment file version. done before writeing so
+             ;; output name is constant until next time opened for
+             ;; output
+             (bump-version obj)
+             (set! name (file-output-filename obj))
+             ;; in scheme opening existing file is undefined...
+             (if (file-exists? name) (delete-file name))
+             (set! file (open-file name dir (file-elt-type obj)))))
       (if (eq? dir :input)
 	(if (event-stream-stream obj)
           (set! file (event-stream-stream obj))
@@ -236,7 +238,7 @@
   mode  ; gag 'unused var' warnings from cltl compilers
   io)
 
-(define-method* (close-io (io <event-stream>) . mode)
+(define-method* (close-io (io <event-file>) . mode)
   mode  ; gag 'unused var' warnings from cltl compilers
   (when (io-open io)
     (unless (event-stream-stream io)
@@ -325,10 +327,10 @@
 	 (close-io *out* err?))))
     (if (or err? (not *out*)) 
       #f
-      (if (is-a? *out* <event-stream>)
+      (if (is-a? *out* <event-file>)
 	(let ((path (file-output-filename *out*))
-              (args (if (io-handler-args? *out*)
-                      (io-handler-args *out*)
+              (args (if #t
+                      (event-stream-args *out*)
                       '()))
 	      (hook (io-class-output-hook (class-of *out*))))
 	  (when hook 

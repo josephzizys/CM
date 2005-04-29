@@ -15,7 +15,7 @@
 ;;; $Date$
 
 ;;;
-;;; Definitions for <clm-stream> and <clm-audio-stream>
+;;; Definitions for <clm-file> and <audio-file>
 ;;; See also: clm2
 ;;;
 
@@ -58,16 +58,15 @@
 	      (write (car ,v) ,filv))))))))
 
 (define (clm-writer objclassname objclassvar pars supers sdecl )
-  ;; defines a method on write-event for clm-stream and an event class.
+  ;; defines a method on write-event for clm-file and an event class.
   ;; called by defobject at macro expansion time, ie  before the event
   ;; has actually been defined.  pars is parameter list for the new 
   ;; event class. objclass is the variable name of the new class,
   ;; ie <bell>. supers is a list of event superclasses and sdecl are
   ;; the local slot definitions in the defobject form.
-  
   supers sdecl ; gag 'unused var' message in cltl compilers
   (define-output-method objclassname objclassvar 'obj
-    'clm-stream '<clm-stream> 'io 'scoretime
+    'clm-file '<clm-file> 'io 'scoretime
     (list `(let ((fp (io-open io)))
              (write-char #\( fp)
              (display (object-name obj) fp) ; allow strings or symbols.
@@ -77,35 +76,20 @@
                 (newline fp)
                 (values)))))
 
-(define-class* <clm-stream> (<event-stream>)
-  ((clmargs :init-value '() :accessor clm-args))
+(define-class* <clm-file> (<event-stream>)
+  ()
   :metaclass <io-class>           ; moved to the files.
-  :name 'clm-stream
+  :name 'clm-file
   :file-types '("*.clm")
   :definer (function clm-writer))
 
 (define (set-clm-output-hook! fn)
   (unless (or (not fn) (procedure? fn))
     (err "Not a clm output hook: ~s" fn))
-  (set! (io-class-output-hook <clm-stream>) fn)
+  (set! (io-class-output-hook <clm-file>) fn)
   (values))
 
-(define (set-clm-file-versions! val)
-  (set! (io-class-file-versions <clm-stream>) val)
-  (values))
-
-(define-method* (io-handler-args? (io <clm-stream>))
-  io
-  #t)
-
-(define-method* (io-handler-args (io <clm-stream>))
-  (clm-args io))
-
-(define-method* (set-io-handler-args! (io <clm-stream>) args)
-  (set! (clm-args io) args)
-  (values))
-
-(define-method* (initialize-io (io <clm-stream>))
+(define-method* (initialize-io (io <clm-file>))
   (when (eq? (io-direction io) ':output)
     (format (io-open io)
             ";;; ~a output on ~a~%"
@@ -118,7 +102,7 @@
   (apply (function clm-load) file :play #t args))
 
 ;;;
-;;; <clm-audio-stream>
+;;; <audio-file>
 ;;;
 ;;; snd-writer creates a method on write-event that implements
 ;;; direct-to-soundfile output by funcalling the object's
@@ -126,7 +110,7 @@
 ;;; consed up from the object's data slots. the format of this
 ;;; arglist depends on the format of the instruments lambda
 ;;; parameter list.
-;;; the methods that actually open/close <clm-audio-stream> are
+;;; the methods that actually open/close <audio-file> are
 ;;; in clm2.lisp or clmsnd.scm
 ;;;
 
@@ -165,7 +149,7 @@
 		    (set! ,argsv (cdr ,argsv))))))))))
     
     (define-output-method objclassname objclassvar 'obj
-      'clm-audio-stream '<clm-audio-stream> 'io 'scoretime
+      'audio-file '<audio-file> 'io 'scoretime
       (list 
        `(let* ((args (list #f))
                (tail args))   ; <- this var is appended to
@@ -179,12 +163,11 @@
                     (cdr args))
              (values))))))
 
-(define-class* <clm-audio-stream> (<event-stream>)
-  ((clmargs :init-value '() :accessor clm-args)
-   (output-trace :init-value :info
+(define-class* <audio-file> (<event-file>)
+  ((output-trace :init-value :info
                  :init-keyword :trace-output
                  :accessor audio-file-output-trace))
-  :name 'clm-audio-stream
+  :name 'audio-file
   :metaclass <io-class>                 ; moved to the files.
   :file-types '("*.snd" "*.aiff" "*.wav")
   :definer (function snd-writer))
@@ -192,29 +175,12 @@
 (define (set-audio-output-hook! fn)
   (unless (or (not fn) (procedure? fn))
     (err "Not an audio output hook: ~s" fn))
-  (set! (io-class-output-hook <clm-audio-stream>) fn)
-  (values))
-
-(define (set-audio-file-versions! val)
-  (set! (io-class-file-versions <clm-audio-stream>) val)
-  (values))
-
-(define-method* (io-handler-args? (io <clm-audio-stream>))
-  io
-  #t)
-
-(define-method* (io-handler-args (io <clm-audio-stream>))
-  (clm-args io))
-
-(define-method* (set-io-handler-args! (io <clm-audio-stream>) args)
-  (set! (clm-args io) args)
+  (set! (io-class-output-hook <audio-file>) fn)
   (values))
 
 ;;;
-;;; apparently there is no definstrument i can shadow to autocreate
-;;; objects for instruments. this function can be used to parse a
-;;; instrument declaration like (foo a b &key c d e) into the
-;;; "equivalent" defobject form.
+;;; parse an instrument declaration like (foo a b &key c d e) into
+;;; a defobject expression.
 ;;;
 
 (define (formals->defobject form . args)
@@ -240,7 +206,10 @@
                           *time-slots*))
             (push (list (car tail) :accessor 'object-time) slots)
             (push (car tail) slots))))
-      `(defobject , name () ,slots (:parameters ,@ pars)))))
+      `(defobject , name () ,slots
+                    (:parameters ,@ pars)
+                    (:event-streams clm-file audio-file)
+                    ))))
    
 ; (formals->defobject '(fm beg dur frq amp &optional amp-env ind-env ind))
 
@@ -381,7 +350,7 @@
     `(push (new ,name ,@reqs ,@opts ,@rest ,@keys)
            *clm-imports*)))
 
-(define-method* (import-events (io <clm-stream>) . args)
+(define-method* (import-events (io <clm-file>) . args)
   (with-args (args &key (output #f)
                    (translations *clm-import-translations*)
                    (include ()) (exclude ()) (seq #t))

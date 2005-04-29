@@ -247,7 +247,7 @@
 ;;; defobject expansion for cltl
 ;;;
 
-(defun expand-defobject (name gvar supers slots pars methods)
+(defun expand-defobject (name gvar supers slots pars methods streams)
   `(progn
      (defclass ,name ,supers 
        ,(loop for x in slots
@@ -286,7 +286,8 @@
               collect 
               (list x ':initarg (symbol->keyword x)
                     ':accessor (intern (format nil "~a-~a" name x))))
-       ,@(if (and pars (find ':metaclasses *features*))
+       ,@(if (and (or pars (not (null streams)))
+                  (find ':metaclasses *features*))
            (list '(:metaclass parameterized-class))
            '()))
      
@@ -309,9 +310,10 @@
      ,@(if pars (list `(setf (class-parameters ,gvar)
                              (quote ,pars))))
 
+     ,@(if streams (list `(setf (class-event-streams ,gvar)
+                                (quote ,streams))))
      ;; splice in any output methods.
      ,@methods
-
      ;; expansion returns no values.
      (values)))
 

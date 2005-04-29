@@ -14,12 +14,11 @@
 ;;; $Revision$
 ;;; $Date$
 
-(define-class* <cmn-stream> (<event-stream>)
-  ((cmnargs :init-value '() :accessor cmn-args)
-   (exact :init-value #f :init-keyword :exact-rhythms )
+(define-class* <cmn-file> (<event-file>)
+  ((exact :init-value #f :init-keyword :exact-rhythms )
    (staffing :init-value '() :accessor cmn-staffing
              :init-keyword :staffing))
-  :name 'cmn-stream
+  :name 'cmn-file
   :metaclass <io-class>
   :file-types '("*.cmn" "*.eps"))
 
@@ -27,26 +26,7 @@
 (define (set-cmn-output-hook! fn)
   (unless (or (not fn) (procedure? fn))
     (err "Not a cmn output hook: ~s" fn))
-  (set! (io-class-output-hook <cmn-stream>) fn)
-  (values))
-
-(define (set-cmn-stream-versions! val)
-  (set! (io-class-file-versions <cmn-stream>) val)
-  (values))
-
-;;;
-;;; enabling 'handler args' lets people set cmn score inits in the
-;;; file without actually being slot initializations for the file.
-;;; these are passed on to cmn.
-;;;
-
-(define-method* (io-handler-args? (io <cmn-stream>)) io #t)
-
-(define-method* (io-handler-args (io <cmn-stream>))
-  (cmn-args io))
-
-(define-method* (set-io-handler-args! (io <cmn-stream>) args)
-  (set! (cmn-args io) args)
+  (set! (io-class-output-hook <cmn-file>) fn)
   (values))
 
 ;;;
@@ -61,11 +41,11 @@
     (list id #f (or name (format #f "staff-~a" id))
           clef meter)))
 
-(define-method* (close-io (io <cmn-stream>) . mode)
+(define-method* (close-io (io <cmn-file>) . mode)
   mode
   (set! (io-open io) #f))
 
-(define-method* (open-io (io <cmn-stream>) dir . args)
+(define-method* (open-io (io <cmn-file>) dir . args)
   args
   (when (eq? dir ':output)
     (set! (io-open io)
@@ -74,11 +54,12 @@
            (apply (function make) (find-class* 'score)
                   :output-file 
                   (file-output-filename io)
-                  (cmn-args io))))
+                  (event-stream-args io)
+                  )))
     (set! *exact-rhythms* (slot-ref io 'exact)))
   io)
 
-(define-method* (initialize-io (io <cmn-stream>))
+(define-method* (initialize-io (io <cmn-file>))
   ;; copy staffing infor each user specifed staff
   ;; and add a cmn staff object to it.
   (let ((score (io-open io)))
@@ -100,7 +81,7 @@
           (append (staff-data (stfdat-staff stfd))
                   (list (cmn-eval meter))))))
 
-(define-method* (deinitialize-io (io <cmn-stream>))
+(define-method* (deinitialize-io (io <cmn-file>))
   (let ((get-active-staff-actions
          (lambda (score) 
            score
@@ -193,7 +174,7 @@
     (set-car! (cdr entry) staff) ; setf second
     entry))
 
-(define-method* (write-event (obj <standard-object>) (io <cmn-stream>)
+(define-method* (write-event (obj <standard-object>) (io <cmn-file>)
                             scoretime)
   (let ((score (io-open io))
         (data (object->cmn obj))

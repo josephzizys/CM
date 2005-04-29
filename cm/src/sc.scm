@@ -24,15 +24,17 @@
 ;;; executable to play sound files
 (define *play* "/usr/local/bin/sndplay")
 
-(define-class* <sc-file-stream> (<event-stream>)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+(define-class* <sc-file> (<event-file>)
   ((userargs :accessor sc-file-userargs :init-value '(:pad 5))
    (elt-type :init-value :byte :init-keyword :elt-type :accessor
              file-elt-type))
-  :name 'sc-file-stream
+  :name 'sc-file
   :metaclass <io-class>
   :file-types '("*.osc" ))
+)
 
-(define-method* (close-io (io <sc-file-stream>) . mode)
+(define-method* (close-io (io <sc-file>) . mode)
   mode
   (let ((pad (list-prop (sc-file-userargs io) :pad))
         (fp (io-open io)))
@@ -44,23 +46,23 @@
 (define (set-sc-output-hook! fn)
   (unless (or (not fn) (procedure? fn))
     (error "Not a supercollider file hook: ~s" fn))
-  (set! (io-class-output-hook <sc-file-stream>) fn)
+  (set! (io-class-output-hook <sc-file>) fn)
   (values))
 
-(define-method* (io-handler-args? (io <sc-file-stream>))
+(define-method* (io-handler-args? (io <sc-file>))
   #t)
 
-(define-method* (io-handler-args (io <sc-file-stream>))
+(define-method* (io-handler-args (io <sc-file>))
   (sc-file-userargs io))
 
-(define-method* (set-io-handler-args! (io <sc-file-stream>) args)
+(define-method* (set-io-handler-args! (io <sc-file>) args)
   (set! (sc-file-userargs io) args)
   (values))
 
 (define (set-sc-output-hook! fn)
   (unless (or (not fn) (procedure? fn))
     (error "Not a supercollider file hook: ~s" fn))
-  (set! (io-class-output-hook <sc-file-stream>) fn)
+  (set! (io-class-output-hook <sc-file>) fn)
   (values))
 
 ;;; i use the carbon version of emacs. when launched as
@@ -130,8 +132,9 @@
    (target :initform 0 :accessor target)
 
    (arg-list :initform '() :accessor arg-list))
-  (:parameters node add-action target beg)
-  (:writers ))
+;  (:parameters node add-action target beg)
+  (:event-streams sc-file)
+  )
 
 ; hkt: a sc-writer function could generate all write-event methods for
 ; subclasses of scsynth and remove the runtime consing of this
@@ -158,7 +161,7 @@
                                     (slot-ref obj slot)))
                (set! tail (cddr tail))))))))
 
-(define-method* (write-event (obj <scsynth>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <scsynth>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (let* ((synthname (string-downcase
                        (symbol-name (class-name (class-of obj))))))
@@ -174,7 +177,7 @@
   (defobject sc-cmd () ; no event
     ((beg :initform 0 :accessor object-time))
     (:parameters beg)
-    (:writers )
+    (:event-streams )
     ))
 
 ;;;
@@ -184,13 +187,13 @@
 (defobject load-synthdef (sc-cmd)
   ((path :initform '() :accessor path))
   (:parameters path beg)
-  (:writers )
+  (:event-streams )
   )
 
 (define (load-synthdef path)
   (list "/d_load" path))
 
-(define-method* (write-event (obj <load-synthdef>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <load-synthdef>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (load-synthdef (slot-ref obj 'path))
@@ -202,12 +205,12 @@
 (defobject load-synthdef-dir (sc-cmd)
   ((path :accessor path))
   (:parameters path beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (load-synthdef-dir path)
   (list "d_loadDir" path))
 
-(define-method* (write-event (obj <load-synthdef-dir>) (io <sc-file-stream>)
+(define-method* (write-event (obj <load-synthdef-dir>) (io <sc-file>)
                              time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
@@ -219,7 +222,7 @@
 (defobject node-free (sc-cmd)
   ((node :accessor node))
   (:parameters node beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (node-free nodes)
   (let ((msg #f))
@@ -230,7 +233,7 @@
        (set! msg (append '("n_free") nodes))))
     msg))
 
-(define-method* (write-event (obj <node-free>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <node-free>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (node-free (slot-ref obj 'node))
@@ -243,7 +246,7 @@
    (control-values :accessor control-values)
    (beg :accessor object-time))
   (:parameters beg node control-values)
-  (:writers ))
+  (:event-streams ))
 
 (define (node-set node ctrl-values)
   (let ((msg #f))
@@ -254,7 +257,7 @@
         (set! msg (append! msg (list i)))))
     msg))
 
-(define-method* (write-event (obj <node-set>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <node-set>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (node-set (slot-ref obj 'node)
@@ -267,7 +270,7 @@
   ((node :accessor node )
    (control-buses :accessor control-buses))
   (:parameters node control-buses beg )
-  (:writers ))
+  (:event-streams ))
 
 (define (node-map node ctrl-buses)
   (let ((msg #f))
@@ -278,7 +281,7 @@
         (set! msg (append! msg (list i)))))
     msg))
 
-(define-method* (write-event (obj <node-map>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <node-map>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (node-map (slot-ref obj 'node)
@@ -291,12 +294,12 @@
   ((node :accessor node)
    (before :accessor before))
   (:parameters node before beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (node-before node before-node)
   (list "/n_before" node before-node))
 
-(define-method* (write-event (obj <node-before>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <node-before>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (node-before (slot-ref obj 'node)
@@ -309,12 +312,12 @@
   ((node :accessor node)
    (after :accessor after))
   (:parameters node after beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (node-after node after-node)
   (list "/n_before" node after-node))
 
-(define-method* (write-event (obj <node-after>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <node-after>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (node-after (slot-ref obj 'node) 
@@ -329,12 +332,12 @@
    (add-action :initform 0 :accessor add-action)
    (target :accessor target))
   (:parameters id add-action target beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (group-new new-id action target)
   (list "/g_new" new-id action target))
 
-(define-method* (write-event (obj <group-new>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <group-new>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (group-new (id obj) (add-action obj) (target obj)) fp)))
@@ -345,12 +348,12 @@
   ((node :accessor node)
    (group :accessor group))
   (:parameters node group beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (group-head group node)
   (list "/g_head" group node))
 
-(define-method* (write-event (obj <group-head>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <group-head>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (group-head (group obj) (node obj)) fp)))
@@ -361,12 +364,12 @@
   ((node :accessor node)
    (group :accessor group))
   (:parameters node group beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (group-tail group node)
   (list "/g_tail" group node))
 
-(define-method* (write-event (obj <group-tail>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <group-tail>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (group-tail (group obj) (node obj)) fp)))
@@ -377,12 +380,12 @@
 (defobject group-free-all (sc-cmd)
   ((group :accessor group))
   (:parameters group beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (group-free-all group)
   (list "/g_freeAll" group))
 
-(define-method* (write-event (obj <group-free-all>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <group-free-all>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (group-free-all (group obj)) fp)))
@@ -392,12 +395,12 @@
 (defobject group-deep-free (sc-cmd)
   ((group :accessor group))
   (:parameters group beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (group-deep-free group)
   (list "/g_deepFree" group))
     
-(define-method* (write-event (obj <group-free-all>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <group-free-all>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (group-deep-free (group obj)) fp)))
@@ -411,7 +414,7 @@
    (command-name :accessor command-name)
    (args :accessor args))
   (:parameters node ugen-index command-name args beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (ugen-command node ugen-index command-name rest)
   (let ((msg #f))
@@ -419,7 +422,7 @@
     (set! msg (append msg rest))
     msg))
 
-(define-method* (write-event (obj <ugen-command>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <ugen-command>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (ugen-command (slot-ref obj 'node)
@@ -436,12 +439,12 @@
    (frames :accessor frames)
    (channels :accessor channels :initform 1))
   (:parameters bufnum frames channels beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (buffer-alloc buf-num num-frames num-chans)
   (list "/b_alloc" buf-num num-frames num-chans))
 
-(define-method* (write-event (obj <buffer-alloc>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <buffer-alloc>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (buffer-alloc (slot-ref obj 'bufnum)
@@ -457,7 +460,7 @@
    (start-frame :initform 0 :accessor start-frame)
    (frames :initform 0 :accessor frames))
   (:parameters bufnum frames start-frame file beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (buffer-alloc-read buf-num file start-frame num-frames)
   (let ((msg #f))
@@ -465,7 +468,7 @@
     msg))
 
 (define-method* (write-event (obj <buffer-alloc-read>)
-                             (io <sc-file-stream>) time)
+                             (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (buffer-alloc-read (slot-ref obj 'bufnum)
@@ -485,14 +488,14 @@
    (leave-open? :initform '() :accessor leave-open?))
   (:parameters bufnum file start-frame frames
                buffer-start-frame leave-open? beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (buffer-read buf-num file start-frame num-frames buf-start-frame leave-open?)
   (let ((msg #f))
     (set! msg (list "/b_read" buf-num file start-frame num-frames buf-start-frame (if leave-open? 1 0)))
     msg))
 
-(define-method* (write-event (obj <buffer-read>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <buffer-read>) (io <sc-file>) time)
     (let ((fp (io-open io)))
       (set! (object-time io) time)
       (write-bundle time (buffer-read (slot-ref obj 'bufnum)
@@ -514,7 +517,7 @@
    (start-frame :accessor start-frame)
    (leave-open? :accessor leave-open?))
   (:parameters bufnum file start-frame frames start-frame leave-open? beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (buffer-write buf-num file header-format sample-format num-frames
                       start-frame leave-open?)
@@ -523,7 +526,7 @@
 		    num-frames start-frame leave-open?))
     msg))
 
-(define-method* (write-event (obj <buffer-write>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <buffer-write>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (buffer-write (slot-ref obj 'bufnum)
@@ -539,12 +542,12 @@
 (defobject buffer-free (sc-cmd)
   ((bufnum :accessor bufnum))
   (:parameters bufnum beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (buffer-free buf-num)
   (list "/b_free" buf-num))
 
-(define-method* (write-event (obj <buffer-free>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <buffer-free>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (buffer-free (bufnum obj)) fp)))
@@ -555,12 +558,12 @@
 (defobject buffer-zero (sc-cmd)
   ((bufnum :accessor bufnum))
   (:parameters bufnum beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (buffer-zero buf-num)
   (list "/b_zero" buf-num))
 
-(define-method* (write-event (obj <buffer-zero>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <buffer-zero>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (buffer-zero (bufnum obj)) fp)))
@@ -572,7 +575,7 @@
   ((bufnum :accessor bufnum)
    (sample-values :accessor sample-values))
   (:parameters bufnum sample-values beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (buffer-set buf-num sample-values)
   (let ((msg #f))
@@ -581,7 +584,7 @@
       (set! msg (append! msg i)))
     msg))
 
-(define-method* (write-event (obj <buffer-set>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <buffer-set>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (buffer-set (bufnum obj) (sample-values obj)) fp)))
@@ -594,12 +597,12 @@
    (num-samples :accessor num-samples)
    (value :accessor value))
   (:parameters bufnum start-sample num-samples value beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (buffer-fill buf-num start-sample num-samples val)
   (list "/b_fill" buf-num start-sample num-samples val))
 
-(define-method* (write-event (obj <buffer-fill>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <buffer-fill>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (buffer-fill (slot-ref obj 'bufnum) 
@@ -613,12 +616,12 @@
 (defobject buffer-close (sc-cmd)
   ((bufnum :accessor bufnum))
   (:parameters bufnum beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (buffer-close buf-num)
   (list "b_close" buf-num))
 
-(define-method* (write-event (obj <buffer-close>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <buffer-close>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (buffer-close (slot-ref obj 'bufnum)) 
@@ -635,7 +638,7 @@
    (flags :accessor flags)
    (args :accessor args))
   (:parameters bufnum command flags args beg)
-  (:writers ))
+  (:event-streams ))
    
 (define (buffer-gen bufnum command flags args)
   (append (list "/b_gen" bufnum command 
@@ -648,7 +651,7 @@
                   (list-prop *buffer-gen-flags* flags)))
           args))
 
-(define-method* (write-event (obj <buffer-gen>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <buffer-gen>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (buffer-gen (slot-ref obj 'bufnum)
@@ -663,12 +666,12 @@
   ((bus :accessor bus)
    (value :accessor value))
   (:parameters bus value beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (control-set bus-index control-value)
   (list "/c_set" bus-index control-value))
 
-(define-method* (write-event (obj <control-set>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <control-set>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (control-set (slot-ref obj 'bus)
@@ -682,12 +685,12 @@
    (num-buses :accessor num-buses)
    (value :accessor value))
   (:parameters bus num-buses value beg)
-  (:writers ))
+  (:event-streams ))
 
 (define (control-fill bus-index num-buses val)
   (list "/c_fill" bus-index num-buses val))
 
-(define-method* (write-event (obj <control-fill>) (io <sc-file-stream>) time)
+(define-method* (write-event (obj <control-fill>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time (control-fill (slot-ref obj 'bus) 

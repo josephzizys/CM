@@ -44,7 +44,7 @@
   ;; define-output-method in level1.
   sdecl supers   ; gag 'unused var' message from cltl compilers
   (define-output-method objclassname objclassvar 'obj
-    'sco-stream '<sco-stream> 'io 'scoretime
+    'sco-file '<sco-file> 'io 'scoretime
     (list `(let ((fp (io-open io)))
              (display (object-name obj) fp)
              ,@ (map (lambda (p) (sco-par-print p 'obj 'fp 'scoretime))
@@ -52,31 +52,18 @@
                 (newline fp)
                 (values)))))
 
-(define-class* <sco-stream> (<event-stream>)
+(define-class* <sco-file> (<event-file>)
   ((header :init-value #f :init-keyword :header
-           :accessor sco-stream-header)
-   (userargs :accessor sco-userargs
-             :init-value '()))
-  :name 'sco-stream
+           :accessor sco-file-header))
+  :name 'sco-file
   :metaclass <io-class>
   :file-types '("*.sco")
   :definer (function make-sco-writer))
 
-(define-method* (io-handler-args? (io <sco-stream>))
-  io
-  #t)
-
-(define-method* (io-handler-args (io <sco-stream>))
-  (sco-userargs io))
-
-(define-method* (set-io-handler-args! (io <sco-stream>) args)
-  (set! (sco-userargs io) args)
-  (values))
-
 (define (set-sco-output-hook! fn)
   (unless (or (not fn) (procedure? fn))
     (err "Not a sco hook: ~s" fn))
-  (set! (io-class-output-hook <sco-stream>) fn)
+  (set! (io-class-output-hook <sco-file>) fn)
   (values))
 
 (define *csound* "/usr/local/bin/csound")
@@ -96,10 +83,6 @@
                                    '("devaudio" "dac" "stdout"))))
         (shell (format #f "/usr/bin/play ~a" output))))))
 
-(define (set-sco-file-versions! val)
-  (set! (io-class-file-versions <sco-stream>) val)
-  (values))
-
 ;(defobject i1 ()
 ;  ((time :accessor object-time)
 ;    dur
@@ -107,12 +90,12 @@
 ;    amp)
 ;  (:parameters time dur frq amp))
 
-(define-method* (initialize-io (io <sco-stream>))
+(define-method* (initialize-io (io <sco-file>))
   (format (io-open io)
 	  "; ~a output on ~a~%"
 	  (cm-version)
 	  (date-and-time))
-  (let ((header (sco-stream-header io)))
+  (let ((header (sco-file-header io)))
     (cond ((pair? header)
 	   (dolist (h header) (format (io-open io) "~a~%" h)))
 	  ((string? header)
@@ -128,8 +111,8 @@
 
 (defobject i (event) 
            (ins dur)
-  (:parameters time dur)
-  (:writers )            ; dont define output methods
+  ;(:parameters time dur)            ; dont geneate output methods
+  (:event-streams sco-file ) ; generate event methods for subclasses
   )
 
 (define-method* (object-name (obj <i>))
@@ -143,8 +126,8 @@
 
 (defobject f (event) 
            (num size gen)
-  (:parameters time size gen)
-  (:writers )            ; dont define output methods
+;  (:parameters time size gen)            ; dont generat output methods
+  (:event-streams sco-file)
   )
 
 (define-method* (object-name (obj <f>))
@@ -250,7 +233,7 @@
                      (string->symbol (format #f "i~a" ,i))) 
                ,d)))))
 
-(define-method* (import-events (io <sco-stream>) . args)
+(define-method* (import-events (io <sco-file>) . args)
   (with-args (args &key output)
     (let ((secs 0)
           (rate 60)
@@ -439,5 +422,5 @@
 ;(defobject i (event) 
 ;           (ins dur)
 ;  (:parameters time dur)
-;  (:writers )            ; dont define output methods
+;  (:event-streams )            ; dont define output methods
 ;  )

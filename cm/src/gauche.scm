@@ -140,6 +140,7 @@
 ;(class-name class)                         y       y       y
 ;(class-slots class)                        y       y       x
 ;(class-direct-subclasses class)            y       y       y
+;(class-direct-superclasses class)          *       y       *
 ;(slot-definition-name slot)                y       y       y
 ;(slot-definition-initargs slot)            n       n       n
 ;(slot-definition-initform slot)            n       n       n
@@ -231,6 +232,8 @@
        (reverse! args))
     (if (eq? (car opts) ':init-keyword)
       (set! args (cons (cadr opts) args)))))
+
+(define class-direct-superclasses class-direct-supers)
 
 (define (slot-definition-initform slot)
   (list-prop (slot-definition-options slot) ':init-value))

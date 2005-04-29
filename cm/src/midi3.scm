@@ -40,46 +40,46 @@
    (keynum :accessor midi-event-data1)
    (velocity :accessor midi-event-data2 :initform 64))
   (:parameters time channel keynum velocity)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-note-off (midi-channel-event)
   ((opcode :initform +ml-note-off-opcode+ :initarg #f)
    (keynum :accessor midi-event-data1)
    (velocity :accessor midi-event-data2 :initform 64))
   (:parameters time channel keynum velocity)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-key-pressure (midi-channel-event)
   ((opcode :initform +ml-key-pressure-opcode+ :initarg #f)
    (keynum :accessor midi-event-data1)
    (pressure :accessor midi-event-data2))
   (:parameters time channel keynum pressure)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-control-change (midi-channel-event)
   ((opcode :initform +ml-control-change-opcode+ :initarg #f)
    (controller :accessor midi-event-data1)
    (value :accessor midi-event-data2))
   (:parameters time channel controller value)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-program-change (midi-channel-event)
   ((opcode :initform +ml-program-change-opcode+ :initarg #f)
    (program :accessor midi-event-data1))
   (:parameters time channel program)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-channel-pressure (midi-channel-event)
   ((opcode :initform +ml-channel-pressure-opcode+ :initarg #f)
    (pressure :accessor midi-event-data1))
   (:parameters time channel pressure)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-pitch-bend (midi-channel-event)
   ((opcode :initform +ml-pitch-bend-opcode+ :initarg #f)
    (bend :initform 0))
   (:parameters time channel bend )
-  (:writers ))
+  (:event-streams ))
 
 (define-method* (midi-event-data1 (obj <midi-pitch-bend>))
   ;; return lsb of 2comp bend value
@@ -105,7 +105,7 @@
   ((opcode :initform +ml-file-sequence-number-opcode+ :initarg #f)
    (number :accessor midi-event-data1))
   (:parameters time number)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-text-event (midi-meta-event)
   ((opcode :initform +ml-file-text-event-opcode+ :initarg #f)
@@ -113,24 +113,24 @@
          :accessor midi-event-data1)
    (text :accessor midi-event-data2))
   (:parameters time type text)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-eot (midi-meta-event)
   ((opcode :initform +ml-file-eot-opcode+ :initarg #f))
   (:parameters time )
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-tempo-change (midi-meta-event)
   ((opcode :initform +ml-file-tempo-change-opcode+ :initarg #f)
    (usecs :accessor midi-event-data1))
   (:parameters time usecs)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-smpte-offset (midi-meta-event)
   ((opcode :initform +ml-file-smpte-offset-opcode+ :initarg #f)
    (offset :initform '() :accessor midi-event-data1))
   (:parameters time offset)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-time-signature (midi-meta-event)
   ((opcode :initform +ml-file-time-signature-opcode+ :initarg #f)
@@ -139,20 +139,20 @@
    (clocks :initform 24 :accessor midi-event-data3)
    (32nds :initform 8 :accessor midi-event-data4))
   (:parameters opcode numerator denominator clocks 32nds)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-key-signature (midi-meta-event)
   ((opcode :initform +ml-file-key-signature-opcode+ :initarg #f)
    (key :initform 0 :accessor midi-event-data1)
    (mode :initform 0 :accessor midi-event-data2))
   (:parameters time key mode)
-  (:writers ))
+  (:event-streams ))
 
 (defobject midi-sequencer-event (midi-meta-event)
   ((opcode :initform +ml-file-sequencer-event-opcode+ :initarg #f)
    (data :accessor midi-event-data1))
   (:parameters time data)
-  (:writers ))
+  (:event-streams ))
 
 ;;;
 ;;; message->event conversion
@@ -270,7 +270,7 @@
 ;;  ((msg :initform 0)
 ;;   (data :initform #f))
 ;;  (:parameters time msg data)
-;;  (:writers ))
+;;  (:event-streams ))
 
 (defobject midi (event)
   ((keynum :initform 60)
@@ -278,7 +278,7 @@
    (amplitude :initform 64)
    (channel :initform 0 :accessor midi-channel))
   (:parameters time duration keynum amplitude channel)
-  (:writers ))
+  (:event-streams ))
 
 ;;;
 ;;; this macro is used by several write-event methods to
@@ -339,7 +339,7 @@
 ;;; write-event for midi object and midifiles
 ;;;
 
-(define-method* (write-event (obj <midi>) (mf <midi-file-stream>) time)
+(define-method* (write-event (obj <midi>) (mf <midi-file>) time)
   (let ((beats time)
         (scaler (midi-file-scaler mf))
         (keyn (midi-keynum obj))
@@ -384,7 +384,7 @@
                  %offs))
     (values)))
 
-;;(define-method* (write-event (obj <midimsg>) (mf <midi-file-stream>) time)
+;;(define-method* (write-event (obj <midimsg>) (mf <midi-file>) time)
 ;;  (let ((data (midimsg-data obj))
 ;;        (beats time)
 ;;        (last #f))
@@ -404,7 +404,7 @@
 ;;           (midi-write-message (midimsg-msg obj) mf 0 data))) 
 ;;    (values)))
 
-(define-method* (write-event (obj <midi-event>) (mf <midi-file-stream>)
+(define-method* (write-event (obj <midi-event>) (mf <midi-file>)
                             time)
   (multiple-value-bind (msg data)
       (midi-event->midi-message obj)
@@ -439,7 +439,7 @@
 ;;; convert the object to the midi message(s) to output.
 ;;;
 
-(define-method* (write-event (obj <object>) (mf <midi-file-stream>) scoretime)
+(define-method* (write-event (obj <object>) (mf <midi-file>) scoretime)
   (write-event (object->midi obj) mf scoretime))
 
 ;;;
@@ -454,7 +454,7 @@
 (define (midi-channel->name chan)
   (vector-ref midi-channel-names chan))  
 
-(define-method* (write-event (obj <midi>) (fil <clm-stream>) scoretime)
+(define-method* (write-event (obj <midi>) (fil <clm-file>) scoretime)
   (let ((ins (midi-channel->name (midi-channel obj))))
     (if ins
       (format (io-open fil) "(~a ~s ~s ~s ~s)~%"
@@ -464,7 +464,7 @@
 	      (hertz (midi-keynum obj))
 	      (midi-amplitude obj)))))
 
-(define-method* (write-event (obj <midi>) (fil <sco-stream>) scoretime)
+(define-method* (write-event (obj <midi>) (fil <sco-file>) scoretime)
   (let ((ins (midi-channel->name (midi-channel obj))))
     (if ins
       (format (io-open fil) "~a ~s ~s ~s ~s~%"
@@ -474,7 +474,7 @@
 	      (hertz (midi-keynum obj))
 	      (midi-amplitude obj)))))
 
-(define-method* (write-event (obj <midi>) (fil <clm-audio-stream>) scoretime)
+(define-method* (write-event (obj <midi>) (fil <audio-file>) scoretime)
   (let ((ins (midi-channel->name (midi-channel obj))))
     (if ins
       ( (symbol-function ins)		; funcall
@@ -499,7 +499,7 @@
   offset  ; time offset: (ticks/div)*scaler 
   )
 
-(define-method* (import-events (io <midi-file-stream>) . args)
+(define-method* (import-events (io <midi-file>) . args)
   (with-args (args &key (tracks #t) seq meta-exclude channel-exclude 
                    (time-format ':beats ) tempo exclude-tracks
                    (keynum-format ':keynum)

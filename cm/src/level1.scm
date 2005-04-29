@@ -692,16 +692,23 @@
 ;;; Scheme expansion for defobject
 ;;;
 
-(define (expand-defobject name gvar supers decl pars methods)
+(define (expand-defobject name gvar supers decl pars methods streams)
   ;; slots must be parsed into goops format.
   (let ((slts (map (lambda (s) (parse-slot-spec name s)) decl))
-        (opts (if pars
+        (opts (if (or pars (not (null? streams)))
                 `(:metaclass <parameterized-class>
-                             :parameters (quote ,pars))
+;                             :event-streams (quote ,streams)
+;                             :parameters (quote ,pars)
+                             )
                 '())))
     `(begin 
       (define-class* ,gvar ,(map class-name->class-var supers)
 	, slts :name ',name ,@ opts )
+      
+      ,@(if (null? pars) (list)
+            `((set! (class-parameters ,gvar) (quote ,pars))))
+      ,@(if (null? streams) (list)
+            `((set! (class-event-streams ,gvar) (quote ,streams))))
       
       (define-method* (make-load-form (obj ,gvar))
         (cons* 'make ', gvar (slot-init-forms obj :eval #t)))

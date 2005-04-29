@@ -24,7 +24,10 @@
 
 (define-class* <parameterized-class> (<class>)
   ((pars :init-value '() :init-keyword :parameters
-         :accessor class-parameters))
+         :accessor class-parameters)
+   (event-streams :init-value '()
+                  :init-keyword :event-streams
+                  :accessor class-event-streams))
   :name 'parameterized-class)
 
 ;; this is needed by some cltl's otherwise its a no-op.
@@ -38,6 +41,9 @@
 ;;; default method returns nil. at some point it should be changed to () !
 ;;;
 
+(define-method* (class-event-streams (obj <top>))
+  '())
+
 (define-method* (class-parameters (obj <top>))
   obj
   #f)
@@ -50,8 +56,8 @@
 
 ;;;
 ;;; metaclass for io classes. :file-types is a list of file types that
-;;; the io class recognizes. :mime-type is the MIME type (currently
-;;; unused) :output-hook is #f or a function to call after a file of
+;;; the io class recognizes. 
+;;; :output-hook is #f or a function to call after a file of
 ;;; that type is written. definer is a function that computes a 
 ;;; write-event method for a class with parameters. see clm.sco for an
 ;;; example of this.
@@ -62,9 +68,7 @@
    (output-hook :init-value #f :init-keyword :output-hook
                 :accessor io-class-output-hook)
    (definer :init-value #f :init-keyword :definer
-            :accessor io-class-definer)
-   (versions :init-value #f :init-keyword :versions
-             :accessor io-class-file-versions))
+            :accessor io-class-definer))
   :name 'io-class)
 
 (define-method* (validate-superclass (class <io-class>)
@@ -79,7 +83,6 @@
 (define-method* (io-class-file-types x) x #f)
 (define-method* (io-class-output-hook x) x #f)
 (define-method* (io-class-definer x) x #f)
-(define-method* (io-class-file-versions x) x #f)
 
 ;;;
 ;;; parses initialization list for class. the list is a list of

@@ -86,7 +86,7 @@
     (15 :180-note 180-note :180-tone 180-tone )
     (16 :180-note 180-note :180-tone 180-tone )))
 
-(define-class* <midi-stream> (<event-stream>)
+(define-class* <midi-stream-mixin> ( )
   ((channel-map :init-thunk (lambda () *midi-channel-map*)
                 :init-keyword :channel-map
                 :accessor midi-stream-channel-map)
@@ -98,11 +98,11 @@
                    :init-value #f :accessor midi-stream-channel-tuning )
    (tunedata :init-value '() :accessor midi-stream-tunedata
              :init-keyword :tuning-channels))
-  :name 'midi-stream)
+  :name 'midi-stream-mixin)
 
 (define *midi-file-default-tempo* 60)
 
-(define-class* <midi-file-stream> (<midi-stream>)
+(define-class* <midi-file> (<event-file> <midi-stream-mixin>)
   ((elt-type :init-value :byte :init-keyword :elt-type
              :accessor file-elt-type)
    (keysig :init-value #f :init-keyword :keysig
@@ -129,18 +129,14 @@
    (delta :init-value #f :accessor midi-file-delta)
    (message :init-value #f :accessor midi-file-message)
    (data  :init-value '() :accessor midi-file-data))
-  :name 'midi-file-stream
+  :name 'midi-file
   :metaclass <io-class>
   :file-types '("*.midi" "*.mid"))
 
 (define (set-midi-output-hook! fn)
   (unless (or (not fn) (procedure? fn))
     (err "Not a midi hook: ~s" fn))
-  (set! (io-class-output-hook <midi-file-stream>) fn)
-  (values))
-
-(define (set-midi-file-versions! val)
-  (set! (io-class-file-versions <midi-file-stream>) val)
+  (set! (io-class-output-hook <midi-file>) fn)
   (values))
 
 ;;;
@@ -352,7 +348,7 @@
 ;;;   is supported read-only, i.e., we always write sysex as a contiguous
 ;;;   message.
 
-(define-method* (midi-write-message (msg <number>) (mf <midi-file-stream>)
+(define-method* (midi-write-message (msg <number>) (mf <midi-file>)
 				   time data)
   (let ((fp (io-open mf))
 	(size (midimsg-size msg))
@@ -565,7 +561,7 @@
 (define %offs (make-cycl))
 (dotimes (i 50) (%qe-dealloc %offs (list #f #f #f)))
 
-(define-method* (open-io (mf <midi-file-stream>) dir . args)
+(define-method* (open-io (mf <midi-file>) dir . args)
   ;; was an :after method
   args
   (next-method)
@@ -590,7 +586,7 @@
       ))
   mf)
 
-(define-method* (initialize-io (mf <midi-file-stream>) )
+(define-method* (initialize-io (mf <midi-file>) )
   (when (eq? (io-direction mf) ':output)
     (let ((msg #f)
 	  (data #f))
@@ -619,11 +615,11 @@
       (channel-tuning-init mf)))
   (values))
 
-(define-method* (deinitialize-io (mf <midi-file-stream>) )
+(define-method* (deinitialize-io (mf <midi-file>) )
   (when (eq? (io-direction mf) ':output)
     (flush-pending-offs mf)))
 
-(define-method* (close-io (mf <midi-file-stream>) . mode)
+(define-method* (close-io (mf <midi-file>) . mode)
   mode ; gag 'unused variable' message from cltl compilers
   (when (eq? (io-direction mf) ':output)
     (multiple-value-bind (m d) (make-eot)
