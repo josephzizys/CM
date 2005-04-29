@@ -19,6 +19,18 @@
 
 (in-package :cm)
 
+#-openmcl
+(progn
+  (defvar run-proc)
+  (defvar midi-receive-hook))
+
+(defun os-name ()
+  #+unix 'unix
+  #+linux 'linux
+  #+(or win32 windows microsoft-32) 'win32
+  #+cygwin 'cygwin
+  #+(or darwin osx macosx) 'darwin)
+
 ;;;
 ;;; cm-directory is parent directory of src/
 ;;;
@@ -549,7 +561,7 @@
   (setf (aref v i) (logand u #xff)))
 
 (defun u8vector->list (v)
-  (loop for u across v collect u))
+  (loop for i below (length v) collect (elt v i)))
 
 (defun list->u8vector (l) (apply #'u8vector l))
 
