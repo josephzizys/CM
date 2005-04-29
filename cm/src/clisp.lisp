@@ -16,6 +16,8 @@
 
 (in-package :cm)
 
+;(pushnew :metaclasses *features*)
+
 (import '(clos::class-direct-subclasses
           clos::class-direct-superclasses
           clos::class-direct-slots
@@ -26,22 +28,10 @@
 (defun lisp-version ()
   (let* ((s (lisp-implementation-version))
          (p (position-if #'digit-char-p s)))
-    (concatenate 'string "CLISP " (subseq s p (position #\space s :start p)))))
+    (concatenate 'string "CLISP "
+                 (subseq s p (position #\space s :start p)))))
 
 (setf clos::*allow-mixing-metaclasses* T)
-
-;(defun class-subclasses (class)
-;  ;; CLISP's clos.lisp poses the question...
-;  ;;   Durch alle Symbole durchlaufen, um die Unterklassen abzugrasen.
-;  ;;   Sollte eleganter gehen??
-;  ;; to which I answer: SURE. 
-;  (let ((subclasses (list )))
-;    (do-symbols (sym :cm)
-;      (let ((c (get sym 'clos::closclass)))
-;	(when (and c (clos::subclassp c class)
-;                   (not (eq c class)))
-;	  (pushnew c subclasses))))
-;    (nreverse subclasses)))
 
 (defun slot-definition-initargs (slot)
   (clos::slotdef-initargs slot))
@@ -56,18 +46,8 @@
   slot
   nil)
 
-;(defun class-direct-superclasses (class)
-;  (clos::class-direct-superclasses class))
-
-;(defun class-direct-subclasses (x)
-;  (declare (ignore x))
-;  (error "class-direct-subclasses not implemented in clisp."))
-
 (defun class-slots (class)
   (clos::class-slots class))
-
-;(defun class-direct-slots (class)
-;  (clos::class-direct-slots class))
 
 (defun generic-function-name (class)
   (error "generic-function-name not implmented in clisp."))
@@ -108,10 +88,10 @@
   (namestring (ext:default-directory)))
 
 (defun env-var (var)
-  (ext:getenv var))
+  (ext::getenv var))
 
 (defun set-env-var (var val)
-  (ext:setenv var val))
+  (system::setenv var val))
 
 (defun cm-image-dir ()
   ;; clisp's ext:argv only appears in 2.32
