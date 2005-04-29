@@ -71,18 +71,18 @@
   (defmethod (setf class-parameters) (value class)
     (set-meta-info class :parameters value))
   
+  (defmethod class-event-streams ((class standard-class))
+    (get-meta-info class :event-streams))
+
+  (defmethod (setf class-event-streams) (value class)
+    (set-meta-info class :event-streams value))
+
   (defmethod io-class-file-types ((class standard-class))
     (get-meta-info class :file-types))
   
   (defmethod (setf io-class-file-types) (value class)
     (set-meta-info class :file-types value))
   
-;  (defmethod io-class-mime-type ((class standard-class))
-;    (get-meta-info class :mime-type))
-;  
-;  (defmethod (setf io-class-mime-type) (value class)
-;    (set-meta-info class :mime-type value))
-
   (defmethod io-class-output-hook ((class standard-class))
     (get-meta-info class :output-hook))
   
@@ -94,12 +94,6 @@
   
   (defmethod (setf io-class-definer) (value class)
     (set-meta-info class :definer value))
-  
-  (defmethod io-class-file-versions ((class standard-class))
-    (get-meta-info class :versions))
-  
-  (defmethod (setf io-class-file-versions) (value class)
-    (set-meta-info class :versions value))
   
   )
 
