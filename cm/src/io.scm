@@ -48,12 +48,6 @@
 (define-generic* write-event)
 (define-generic* import-events)
 
-;(define (event-file-versioning stream)
-;  (io-class-file-versions (class-of stream)))
-
-(define (event-file-versioning stream)
-  (slot-ref stream 'versioning))
-
 ;;;
 ;;;
 ;;;
