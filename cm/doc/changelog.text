@@ -1,5 +1,25 @@
 CM 2.7.0
-o Supercollider/OSC support by Todd Ingalls.
+
+o New PLAY function plays files (aiff, .wav, .snd) .mid, .sco, .osc
+  etc.  By default EVENTS now uses PLAY to automatically play files
+  after they are written. To stop a file from being played specify
+  :play #f to EVENTS or to INIT-IO.  To print a trace of the playback
+  command as it is being exuicuted specify :verbose #t.  To force PLAY
+  to wait until the player process returns specify :WAIT #t.
+
+o Variables *midi-player*, *audio-player* can be reset to external
+  command strings for playing midi and audio files; both default to
+  something reasonable on all platforms:
+
+  *midi-player*
+    osx:  qtplay, else open
+    linux: timidity
+    win32: windows media player
+  *audio-player*
+    osx: dac if clm is loaded, else qtplay, else open
+    linux: dac if clm, else sndplay or nothing
+    win32: windows media player
+o Supercollider/OSC support by Todd Ingalls. See documentation
 o Ported CM to Gauche Scheme, see:
     http://www.shiro.dreamhost.com/scheme/gauche/index.html
 o Ported CM to Lispworks (free Personal Edition)
