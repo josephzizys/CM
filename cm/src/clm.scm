@@ -99,7 +99,9 @@
 ;;; a default player for clm files.
 
 (define (play-clm-file file . args)
-  (apply (function clm-load) file :play #t args))
+  (apply (function clm-load) file args))
+
+(set-clm-output-hook! (function play-clm-file))
 
 ;;;
 ;;; <audio-file>
@@ -177,6 +179,60 @@
     (err "Not an audio output hook: ~s" fn))
   (set! (io-class-output-hook <audio-file>) fn)
   (values))
+
+(define *audio-player*
+  (cond-expand
+   (common-lisp
+     (let ((os (os-name)))
+       (cond ((member os '(unix cygwin linux darwin))
+              (cond ((file-exists? "/usr/local/bin/sndplay")
+                     "/usr/local/bin/sndplay")
+                    ((file-exists? "/usr/bin/sndplay")
+                     "/usr/bin/sndplay")
+                    ((file-exists? "/usr/local/bin/qtplay")
+                     "/usr/local/bin/qtplay")
+                    ((file-exists? "/usr/bin/qtplay")
+                     "/usr/bin/qtplay")
+                    ((member os '(darwin osx maxosx))
+                     "open")
+                    (else #f)))
+             ((member os '(win32))
+              (if (file-exists?
+                   "/Program Files/Windows Media Player/mplayer2.exe")
+                "\\Program Files\\Windows Media Player\\mplayer2.exe"))
+             (else #f))))
+   (else ;; scheme
+    (let ((os (os-name)))
+      (if (member (os-name) '(unix cygwin linux darwin))
+        (cond ((file-exists? "/usr/local/bin/sndplay")
+               "/usr/local/bin/sndplay")
+              ((file-exists? "/usr/bin/sndplay")
+               "/usr/bin/sndplay")
+              ((file-exists? "/usr/local/bin/qtplay")
+               "/usr/local/bin/qtplay")
+              ((file-exists? "/usr/bin/qtplay")
+               "/usr/bin/qtplay")
+              ((member os '(darwin osx maxosx))
+               "open")
+              (else #f))
+        #f)))))
+
+(define (play-audio-file file . args)
+  (cond-expand 
+   (clm
+    (apply (function dac) file args))
+   (else
+    (if (list-prop args ':play #t)
+      (let ((cmd *audio-player*)
+            (tyo (list-prop args ':verbose))
+            (wai (list-prop args ':wait)))
+        (set! cmd (string-append cmd " " file))
+        (if tyo  (format #t "~%; ~a" cmd))
+        (shell cmd :wait wai :output #f)
+        file)
+      #f))))
+
+(set-audio-output-hook! (function play-audio-file))
 
 ;;;
 ;;; parse an instrument declaration like (foo a b &key c d e) into

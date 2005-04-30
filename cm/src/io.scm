@@ -369,10 +369,17 @@
 ;;; play
 ;;;
 
-;(define-method* (play (file <string>) . args)
-;  (let ((io (apply init-io file args)))
-;    (apply play io args)))
-   
-;(define-method* (play file . args)
-;  (format #t "No play method defined for ~s.~%" file))
+(define (play file . args)
+  (let* ((meta (filename->event-class file))
+         (hook (io-class-output-hook meta)))
+    (if hook
+      (if (file-exists? file)
+        (let* ((obj (find-object file #f))
+               (old (if obj (event-stream-args obj) (list))))
+          ;; let local args shadow any older args
+          (apply hook file (append args old))
+          file)
+        #f)
+      #f)))
+
 

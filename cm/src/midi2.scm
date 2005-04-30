@@ -139,6 +139,36 @@
   (set! (io-class-output-hook <midi-file>) fn)
   (values))
 
+(define *midi-player*
+  (let ((os  (os-name )))
+    (cond ((member os '(unix linux cygwin))
+           "timidity -quiet=2")
+          ((member os '(darwin osx macosx))
+           (cond ((file-exists? "/usr/local/bin/qtplay")
+                  "/usr/local/bin/qtplay")
+                 ((file-exists? "/usr/bin/qtplay")
+                  "/usr/bin/qtplay")
+                 (else "open")))
+          ((member os '(win32 windows))
+           (if (file-exists?
+                "/Program Files/Windows Media Player/mplayer2.exe")
+             "\\Program Files\\Windows Media Player\\mplayer2.exe"
+             #f)))))
+
+(define (play-midi-file file . args)
+  (if (list-prop args ':play #t)
+    (let* ((cmd *midi-player*)
+           (tyo (list-prop args ':verbose))
+           (wai (list-prop args ':wait))
+           )
+      (set! cmd (string-append *midi-player* " " file))
+      (if tyo (format #t "~%; ~a" cmd))
+      (shell cmd :wait wai :output #f)
+      file)
+    #f))
+
+(set-midi-output-hook! (function play-midi-file))
+
 ;;;
 ;;; midi-file lowest level byte functions operate on file pointer.
 ;;;
@@ -676,41 +706,4 @@
        io)
       (io-filename io))))
 
-(define (oss-play-midi-file file . args)
-  (let ((opts (if (null? args) ""
-		  (string-append  " " (car args)))))
-    (shell (format #f "/usr/bin/playmidi~a ~a > /dev/null &" 
-           opts file))
-    file))
 
-(define *linux-midi-file-player* 
-  "timidity -quiet=2")
-
-(define (linux-play-midi-file file . args)
-  (with-args (args &optional (fork? #t))
-    (let ((cmd (string-append *linux-midi-file-player* " " file 
-                              (if fork? " &" ""))))
-      (shell cmd)
-      file)))
-
-(define *win-midi-file-player*
-  "C:\\Program Files\\Windows Media Player\\mplayer2.exe")
-
-(define (win-play-midi-file file . args)
-  (let ((opts (if (null? args) ""
-		  (string-append  " " (car args)))))
-    (if (file-exists? *win-midi-file-player*)
-      (shell (format #f "~a~a ~a" *win-midi-file-player* opts file))
-      (begin
-       (warn "The MIDI player ~s does not exist. Set the variable *win-midi-file-player* to the pathname (string) of a MIDI player on your machine and try again."
-             *win-midi-file-player*)))  
-    file))
-
-(define *osx-midi-file-player* "open")
-
-(define (osx-play-midi-file file . args)
-  (with-args (args &optional (fork? #t))
-    (let ((cmd (string-append *osx-midi-file-player*
-                              " " file (if fork? " &" ""))))
-      (shell cmd)
-      file)))

@@ -47,6 +47,7 @@
                 :*clm-channels*
                 :*clm-srate*
                 :clm-load
+                :dac
                 :*definstrument-hook*
                 ;; these are also used by CM but defs don't conflict.
                 ;#+(and clm2 (not clm3)) :graph 

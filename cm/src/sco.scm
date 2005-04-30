@@ -66,22 +66,32 @@
   (set! (io-class-output-hook <sco-file>) fn)
   (values))
 
-(define *csound* "/usr/local/bin/csound")
+(define *csound* "csound -d -m 0")
 
 (define (play-sco-file file . args)
-  (with-args (args &key orchestra options output play?)
-    (let ((cmd *csound*))
-      (when options
-        (set! cmd (string-append cmd " " options)))
-      (when output
-        (set! cmd (string-append cmd " -o" output)))
-      (set! cmd (string-append cmd " " orchestra))
-      (set! cmd (string-append cmd " " file))
-      (shell cmd)
-      ;; dont play if output is piped     
-      (when (and play? (not (member output 
-                                   '("devaudio" "dac" "stdout"))))
-        (shell (format #f "/usr/bin/play ~a" output))))))
+  (let* ((cmd *csound*)
+         (dir (or (filename-directory file) ""))
+         (orc (list-prop args ':orchestra))
+         (snd (list-prop args ':output))
+         (tyo (list-prop args ':verbose))
+         (wai (list-prop args ':wait (if snd #t #f)))
+         (pla (list-prop args ':play (if snd #t #f))))
+    (cond ((not orc) #f)
+          (else
+           (unless (filename-directory orc)
+             (set! orc (string-append dir orc)))
+           (when snd
+             (unless (filename-directory snd)
+               (set! snd (string-append dir snd)))
+             (set! wai #t)
+             (set! cmd (string-append cmd " -o " snd)))
+           (set! cmd (string-append cmd " " orc " " file))
+           (if tyo (format #t "~%; ~a" cmd))
+           (shell cmd :wait wai)
+           (if pla (play snd :wait #f))
+           file))))
+
+(set-sco-output-hook! (function play-sco-file))
 
 ;(defobject i1 ()
 ;  ((time :accessor object-time)

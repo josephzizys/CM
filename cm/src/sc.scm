@@ -75,13 +75,18 @@
 ;;; (ccl::getenv "SC_SYNTHDEF_PATH") and/or (ccl::getenv
 ;;; "SC_PLUGIN_PATH") return #f
 
-(define (play-sc-file file . arg)
-  (with-args (args &key output (channels 2) play? &allow-other-keys)
-    (let* ((synthdef-path (string-append *sc-directory* "synthdefs"))
-           (plugin-path (string-append *sc-directory* "plugins"))
-           (scsynth (string-append *sc-directory* "scsynth"))
-           (osc-file file )   ; no truename in scheme
-           (output-file #f))
+(define (play-sc-file file . args)
+  (let* ((output (list-prop args ':output))
+         (channels (list-prop args ':channels 2))
+         (playit (list-prop args ':play #t))
+         (verbose (list-prop args ':verbose ))
+         (wait (list-prop args ':wait playit))
+         (synthdef-path (string-append *sc-directory* "synthdefs"))
+         (plugin-path (string-append *sc-directory* "plugins"))
+         (scsynth (string-append *sc-directory* "scsynth"))
+         (osc-file file )   ; no truename in scheme
+         (output-file #f)
+         (command #f))
       ;; if output is specified with a path, output to that location
       ;; if output is specified and is just file name with no path,
       ;; output to same directory as *.osc file if output is not
@@ -102,12 +107,12 @@
 	(set-env-var "SC_PLUGIN_PATH" plugin-path))
 
       ;;run command
-      (shell (format #f "~S -N ~S _ ~S 44100 AIFF int16 -o ~S" 
-                     scsynth osc-file
-                     output-file channels) :output #t)
-      ;;play sound file?
-      (when play?
-        (shell (format #f "~a ~a" *play* output-file))))))
+      (set! command (format #f "~S -N ~S _ ~S 44100 AIFF int16 -o ~S" 
+                            scsynth osc-file output-file channels))
+      (if verbose (format #t "~%; ~a" command))
+      (shell command :wait wait :output #f)
+      (if playit (play output-file :wait #f))
+      file))
 
 (set-sc-output-hook! (function play-sc-file))
 
