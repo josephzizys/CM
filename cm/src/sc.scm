@@ -26,8 +26,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
 (define-class* <sc-file> (<event-file>)
-  ((userargs :accessor sc-file-userargs :init-value '(:pad 5))
-   (elt-type :init-value :byte :init-keyword :elt-type :accessor
+  ((elt-type :init-value :byte :init-keyword :elt-type :accessor
              file-elt-type))
   :name 'sc-file
   :metaclass <io-class>
@@ -36,28 +35,12 @@
 
 (define-method* (close-io (io <sc-file>) . mode)
   mode
-  (let ((pad (list-prop (sc-file-userargs io) :pad))
+  (let ((pad (list-prop (event-stream-args io) :pad))
         (fp (io-open io)))
     (if pad
       (write-bundle (+ pad (object-time io)) '("c_set" 0 0) fp)
       (write-bundle (+ 5 (object-time io)) '("c_set" 0 0) fp)))
   (next-method))
-
-(define (set-sc-output-hook! fn)
-  (unless (or (not fn) (procedure? fn))
-    (error "Not a supercollider file hook: ~s" fn))
-  (set! (io-class-output-hook <sc-file>) fn)
-  (values))
-
-(define-method* (io-handler-args? (io <sc-file>))
-  #t)
-
-(define-method* (io-handler-args (io <sc-file>))
-  (sc-file-userargs io))
-
-(define-method* (set-io-handler-args! (io <sc-file>) args)
-  (set! (sc-file-userargs io) args)
-  (values))
 
 (define (set-sc-output-hook! fn)
   (unless (or (not fn) (procedure? fn))

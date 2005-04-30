@@ -21,7 +21,7 @@
 (define-method* (open-io (io <audio-file>) dir . args)
   args
   (if (eq? dir ':output)
-    (let ((inits (io-handler-args io))
+    (let ((inits (event-stream-args io))
           (ftype (filename-type (object-name io)))
           (autype #f)
           (fmat #f))
@@ -44,6 +44,7 @@
             (apply (function init-with-sound)
                    ':output
                    (file-output-filename io)
+                   :play #f
                    inits))
       (unless (null? (audio-file-output-trace io))
         (apply (function tell-snd)

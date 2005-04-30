@@ -46,6 +46,7 @@
                 :finish-with-sound
                 :*clm-channels*
                 :*clm-srate*
+                :*clm-file-name*
                 :clm-load
                 :dac
                 :*definstrument-hook*

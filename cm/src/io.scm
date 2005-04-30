@@ -117,17 +117,8 @@
 ;;; init-io called on file/port names or objects to initialize slots.
 ;;;
 
-;(define-macro (io name . args)
-;  (let* ((inits (list #f))
-;         (tail inits))
-;    (dopairs (i v args)
-;      (unless (keyword? i)
-;        (if (symbol? i)
-;          (set! i (symbol->keyword i))
-;          (err "io: not a symbol or keyword: ~s" i)))
-;      (set-cdr! tail (list i v))
-;      (set! tail (cddr tail)))
-;    `(init-io ,name ,@ (cdr  inits))))
+(define-macro (io str . args)
+  `(init-io ,str ,@ args))
 
 (define-method* (init-io io . inits)
   inits  ; gag 'unused var' warning from cltl compilers
@@ -376,8 +367,9 @@
       (if (file-exists? file)
         (let* ((obj (find-object file #f))
                (old (if obj (event-stream-args obj) (list))))
-          ;; let local args shadow any older args
-          (apply hook file (append args old))
+          ;; let local args shadow any older args but force play
+          ;; even if args in file say not too.
+          (apply hook file :play #t (append args old))
           file)
         #f)
       #f)))

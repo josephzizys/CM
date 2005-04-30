@@ -76,7 +76,7 @@
                 (newline fp)
                 (values)))))
 
-(define-class* <clm-file> (<event-stream>)
+(define-class* <clm-file> (<event-file>)
   ()
   :metaclass <io-class>           ; moved to the files.
   :name 'clm-file
@@ -99,7 +99,12 @@
 ;;; a default player for clm files.
 
 (define (play-clm-file file . args)
-  (apply (function clm-load) file args))
+  (let ((verbose (list-prop args :verbose #t))
+        (output (list-prop args ':output)))
+    (if (not output)
+      (set! output *clm-file-name*))
+    (if verbose (apply (function tell-snd) output args))
+    (apply (function clm-load) file args)))
 
 (set-clm-output-hook! (function play-clm-file))
 
@@ -218,19 +223,22 @@
         #f)))))
 
 (define (play-audio-file file . args)
-  (cond-expand 
-   (clm
-    (apply (function dac) file args))
-   (else
-    (if (list-prop args ':play #t)
+  (if (list-prop args ':play #t)
+    (cond-expand 
+     (clm
+      (funcall (function dac) file
+               :start (list-prop args ':start)
+               :end (list-prop args ':end)
+               :wait (list-prop args ':wait)))
+     (else
       (let ((cmd *audio-player*)
             (tyo (list-prop args ':verbose))
             (wai (list-prop args ':wait)))
         (set! cmd (string-append cmd " " file))
-        (if tyo  (format #t "~%; ~a" cmd))
+        (if tyo (format #t "~%; ~a" cmd))
         (shell cmd :wait wai :output #f)
-        file)
-      #f))))
+        file)))
+    #f))
 
 (set-audio-output-hook! (function play-audio-file))
 
