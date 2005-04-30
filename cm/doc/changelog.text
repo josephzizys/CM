@@ -1,38 +1,50 @@
-CM 2.7.0
+CM 2.7.0 
 
-o New PLAY function plays files (aiff, .wav, .snd) .mid, .sco, .osc
-  etc.  By default EVENTS now uses PLAY to automatically play files
-  after they are written. To stop a file from being played specify
-  :play #f to EVENTS or to INIT-IO.  To print a trace of the playback
-  command as it is being exuicuted specify :verbose #t.  To force PLAY
-  to wait until the player process returns specify :WAIT #t.
-
-o Variables *midi-player*, *audio-player* can be reset to external
-  command strings for playing midi and audio files; both default to
+New Features:
+o Supercollider and Open Sound Control support by Todd Ingalls (work
+  still in progress)
+o All file streams now support the folloowing new options, which can
+  be set using the IO macro or passed directly to EVENTS:
+    :versioning {bool}  if true file versioning is on
+    :play {bool} if true the file is played after it is written
+    :verbose {bool} if true then play prints command as it happens.
+    :wait {bool} if true play waits till end before returning
+o New PLAY function plays files .aiff, .wav, .snd, .mid, .sco, .osc
+  etc.  EVENTS now calls PLAY on files  after they are written.
+o Variables *midi-player*, *audio-player* can be (re)set to external
+  command strings to play midi and audio files; both default to
   something reasonable on all platforms:
-
   *midi-player*
     osx:  qtplay, else open
     linux: timidity
     win32: windows media player
   *audio-player*
-    osx: dac if clm is loaded, else qtplay, else open
+    osx: dac if clm is loaded, else sndplay, else  qtplay, else open
     linux: dac if clm, else sndplay or nothing
     win32: windows media player
-o Supercollider/OSC support by Todd Ingalls. See documentation
+o CM now sets file ouput hooks automatically. The default hooks are
+  play-sco-file play-audio-file play-clm-file play-midi-file
+  play-sc-fil
+o Added IO macro back.
 o Ported CM to Gauche Scheme, see:
     http://www.shiro.dreamhost.com/scheme/gauche/index.html
 o Ported CM to Lispworks (free Personal Edition)
 o Ported CM to Guile 1.7.1
 
-CHanges: 
+Changes: 
+o Removed osx-play-midi-file, linux-play-midi-file, win-play-midi-file
+o Removed the set-xxx-versions! functions
 o Event streams renamed: event-stream midi-port midi-file
 sco-file audio-file clm-file cmn-file osc-file
 o Removed set-{file}-versions!, use :versioning init to all files instead.
 
+Bugs:
+o THe cmio window doens interact welll with playback yet (it clears the hooks.._
+
 Bug Fixes:
 o Fixed rewrite pattern bug that didn't parse * correctly
 o Fixed scheme bugs in test.cm 
+
 
 
 CM 2.6.0
