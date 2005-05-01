@@ -36,13 +36,15 @@ If <var>true</var> then a numerical <var>freq</var> is interpreted as
 a Hertz value rather than as a key number.
 </dd>
 
-<dt><code class="keyword">:in</code> {<a href="tuning-cls.html"> <var>tuning</var></a> | <a href="mode-cls.html"> <var>mode</var></a>}</dt>
+<dt><code class="keyword">:from</code> {<a href="tuning-cls.html"> <var>tuning</var></a> | <a href="mode-cls.html"> <var>mode</var></a>}</dt>
 <dd>
 The tuning or mode to return the key number from. The default value
 is <a href="scale-var.html"><code>*scale*</code></a>.
 If <var>mode</var> is specified then <var>freq</var> is a modal key
 number and the value returned is the equivalent key number in the
-mode's tuning.
+mode's tuning. if <var>tuning</var> is specified then <var>freq</var>
+is an integer key number and the value returned is the corresponding,
+possibly floating point, key number in the standard chromatic scale.
 </dd>
 
 <dt><code class="keyword">:in?</code>  {<a
@@ -99,7 +101,7 @@ and returns the closest integer tuning keynum.
 
 (keynum 60 <span class="keyword">:to</span> dorian)
 <span class="result">&rArr;</span> 35
-(keynum 35 <span class="keyword">:in</span> dorian)
+(keynum 35 <span class="keyword">:from</span> dorian)
 <span class="result">&rArr;</span> 60
 (keynum 61 <span class="keyword">:in?</span> dorian)
 <span class="result">&rArr;</span> #f
