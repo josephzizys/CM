@@ -154,6 +154,18 @@
   (:parameters time data)
   (:event-streams ))
 
+(defobject midi-port-event (midi-meta-event)
+  ((opcode :initform  +ml-file-midi-port-opcode+ :initarg #f)
+   (port :accessor midi-event-data1))
+  (:parameters time port)
+  (:event-streams ))
+
+(defobject midi-chan-event (midi-meta-event)
+  ((opcode :initform  +ml-file-midi-channel-opcode+ :initarg #f)
+   (chan :accessor midi-event-data1))
+  (:parameters time chan)
+  (:event-streams ))
+
 ;;;
 ;;; message->event conversion
 ;;; remove the message layer from cm at some point...
@@ -231,6 +243,10 @@
                           :time time 
                           :type (meta-message-type m)
                           :text (text-meta-event-data-to-string data)))
+                   ((midi-port-p m )
+                    (make <midi-port-event> :time time :port (vector-ref data 1)))
+                   ((midi-channel-p m)
+                    (make <midi-chan-event> :time time :chan (vector ref data 1)))
                    ((eot-p m)
                     (make <midi-eot> :time time))
                    ((smpte-offset-p m)
@@ -239,7 +255,6 @@
                           :offset (loop for i from 1 to 5
                                        collect (vector-ref data i))))
                    ;; FIX! add classes..,
-                   ;;((midi-port-p m) )
                    ;;((midi-channel-p m) )
                    (else
                     (err "Shouldnt: message not implemented: ~S." m))))
@@ -292,21 +307,30 @@
   `(let ((num #f)
          (rem #f)
          (dat #f)) 
-     (cond ((exact? ,keyn) ; ratios are inexact in Guile
-	    #f)
+     (cond ((integer? ,keyn)
+            ;; keyn is 10 or 10.0
+            (if (not (exact? ,keyn))
+              (set! ,keyn (inexact->exact ,keyn))))
            ((symbol? ,keyn)
 	    (set! ,keyn (keynum ,keyn)))
-	   ((inexact? ,keyn)
+	   ((number? ,keyn) ;;(inexact? ,keyn)
+            ;; handle rationals as well as floats.
             ;; dat = (#t <num> <lim> <off> <wid>)
             (set! dat (midi-stream-tunedata ,stream))
+
 	    (if (null? dat)
-	      (set! ,keyn (inexact->exact (round ,keyn)))
+	      (set! ,keyn (if (inexact? ,keyn) 
+                            (inexact->exact (round ,keyn))
+                            (round ,keyn)))
+
 	      (if (eq? (car dat) #t)
                 ;; note-by-note tuning
 	        (begin               
 		 ;; SIDE EFFECT: rotate data to next channel
 		 (set! num (cadr dat))
-		 (let ((int (inexact->exact (floor ,keyn))))
+		 (let ((int (if (inexact? ,keyn)
+                              (inexact->exact (floor ,keyn))
+                              (floor ,keyn))))
 		   (set! rem (- ,keyn int))
 		   (set! ,keyn int))
                  ;; if next choice is drum channel skip it
