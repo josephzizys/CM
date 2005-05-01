@@ -16,6 +16,8 @@
 
 (in-package :cm)
 
+(pushnew ':metaclasses *features*)
+
 (import '(sb-ext::load-foreign
           sb-pcl:slot-definition-initargs
           sb-pcl:slot-definition-initform
@@ -25,6 +27,7 @@
           sb-pcl:class-direct-superclasses
           sb-pcl:generic-function-name
           sb-mop:class-direct-subclasses
+          sb-mop:validate-superclass
           )
         :cm)
 
@@ -44,10 +47,10 @@
 (defun finalize-class (class) 
   (sb-pcl:finalize-inheritance class))
 
-(defgeneric validate-class (obj1 obj2))
-(defmethod validate-class ((class t) (superclass t))
-  ;; this is a no-op except in OpenMCL 014
-  t)
+;(defgeneric validate-class (obj1 obj2))
+;(defmethod validate-class ((class t) (superclass t))
+;  ;; this is a no-op except in OpenMCL 014
+;  t)
 
 (defun slot-defintion-reader (slot) slot nil)
 
@@ -90,15 +93,11 @@
                               *default-pathname-defaults*))))
 
 (defun env-var (var)
-  var
-  ;(let ((x (assoc var ext:*environment-list*
-  ;                  :test #'string=)))
-  ;  (and x (cdr x) ))
-  )
+  (sb-ext:posix-getenv var))
 
 (defun set-env-var (var val)
   var val
-  (format t "set-env-var: fixme to work in sbcl")
+  (format t "~&set-env-var: fixme to work in sbcl")
   )
 
 (defun cm-image-dir ()
@@ -125,7 +124,9 @@
 ;;
 ;;; arrrrg a pox on frigging style warnings!!
 
-
+(defgeneric make-byte-vector (obj))
+(defgeneric return-type-code (obj))
+(defgeneric get-first-obj (obj))
 (defgeneric class-parameters (obj))
 (defgeneric (setf class-parameters) (val obj))
 (defgeneric io-class-file-types (obj))
@@ -138,7 +139,7 @@
 (defgeneric (setf io-class-definer) (val obj))
 (defgeneric io-class-file-versions (obj))
 (defgeneric (setf io-class-file-versions) (val obj))
-(defgeneric validate-superclass (obj1 obj2))
+;(defgeneric validate-superclass (obj1 obj2))
 (defgeneric make-load-form (obj))
 (defgeneric fill-object (obj1 obj2))
 (defgeneric rename-object (obj1 name &rest args))
