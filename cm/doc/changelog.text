@@ -1,6 +1,7 @@
 CM 2.7.0 
 
 New Features:
+o Updated documentation on PLAY and event stream classes.
 o Supercollider and Open Sound Control support by Todd Ingalls (work
   still in progress)
 o All file streams now support the folloowing new options, which can
@@ -32,6 +33,12 @@ o Ported CM to Lispworks (free Personal Edition)
 o Ported CM to Guile 1.7.1
 
 Changes: 
+o renamed event stream classes:
+  midi-file-stream     ->    midi-file
+  sco-file-stream      ->    sco-file
+  clm-stream           ->    clm-file
+  clm-audio-stream     ->    audio-file
+  cmn-stream           ->    cmn-file
 o Removed osx-play-midi-file, linux-play-midi-file, win-play-midi-file
 o Removed the set-xxx-versions! functions
 o Event streams renamed: event-stream midi-port midi-file
