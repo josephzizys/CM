@@ -62,7 +62,7 @@
            (if (null? strs)
              (write-event-streams (cdr class))
              strs)))
-        ((is-a? class <parameterized-class>)
+        (else ;(is-a? class <parameterized-class>)
          (let ((strs (class-event-streams class)))
            (if (null? strs)
              (write-event-streams (class-direct-superclasses class))
