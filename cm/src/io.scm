@@ -66,9 +66,7 @@
          (let ((strs (class-event-streams class)))
            (if (null? strs)
              (write-event-streams (class-direct-superclasses class))
-             strs)))
-        (else
-         (write-event-streams (class-direct-superclasses class)))))
+             strs)))))
 
 (define (io-stream-classes )
   ;; return a list of all classes that handle file/port io.
