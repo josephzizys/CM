@@ -832,11 +832,12 @@
     (dopairs (sym val args)
       (case sym
         ((:hz) (set! hz? val))
-        ((:in :in? :through :to)
+        ((:in :in? :through :to :from)
          (when oper
            (err "More than one of: :in, :in? or :through in ~s."
                 (cons 'note args)))
          (if (eq? sym ':in?) (set! test? #t))
+         (if (eq? oper ':in) (set! oper ':from))
          (set! oper sym)
          (set! scale val))
         (else
@@ -844,9 +845,8 @@
     (unless scale (set! scale *scale*))
     (if (is-a? scale <mode>)
       (begin
-       ;; :in <mode> converts FROM modal coord to tuning keynum
-       (if (eq? oper ':in)
-         (set! oper ':from))
+       ;; :from <mode> converts FROM modal coord to tuning keynum
+       ;(if (eq? oper ':in) (set! oper ':from))
        (set! tuning (mode-tuning scale))
        (set! mode scale))
       (begin 
@@ -861,20 +861,26 @@
                    (if (symbol? freq)
                      (tuning-note->keynum tuning freq (not test?))
                      freq))))
-        ;; key is a keynum or false. If :from then key is
-        ;; already in modal coords, otherwise convert.
+        ;; key is now a keynum or false. If :from then key must be
+        ;; integer, otherwise convert.
         (if mode
           (let ((in (if (eq? oper ':from) 
-                      key
+                      (if (integer? key) key
+                          (err "keynum:  :from value ~s not integer." key))
                       (tuning->mode mode key (not (eq? oper ':in?))))))
             (if (not in) 
               #f
               (if (eq? oper ':to)
                 in
                 (mode->tuning mode in ':keynum))))
-          (if (eq? oper ':through) 
-            (values (inexact->exact (round key)))
-            key))))))
+          (if (eq? oper ':from)
+            (if (integer? key) 
+              (tuning-hertz->keynum *chromatic-scale*
+                                    (tuning-keynum->hertz scale key))
+              (err "keynum:  :from value ~s not integer." key))
+            (if (eq? oper ':through) 
+              (values (inexact->exact (round key)))
+              key)))))))
 
 (define (note freq . args)
   (let ((oper #f)
