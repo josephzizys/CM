@@ -2,6 +2,7 @@ CM 2.7.0
 
 New Features:
 
+o AMPLITUDE now handles lists of amplitudes. (Anders Vinjar)
 o New ':from' arg to KEYNUM converts an integer keynum from <tuning>
 to its (possibly) floating point equivalent key number in the standard
 chromatic scale. In addition, :from <mode> converts from an integer
