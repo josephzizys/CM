@@ -481,6 +481,11 @@
 		   (loudest *loudest*) (power *power*))
     (+ softest (* (- loudest softest) (expt amp power)))))
 
+(define-method* (amplitude (amp <pair>) . args)
+  (with-args (args &optional (softest *softest*)
+                   (loudest *loudest*) (power *power*))
+    (map (lambda (x) (amplitude x softest loudest power))
+         amp)))
 
 ;;;
 ;;; Envelope Lists 
