@@ -246,7 +246,7 @@
                    ((midi-port-p m )
                     (make <midi-port-event> :time time :port (vector-ref data 1)))
                    ((midi-channel-p m)
-                    (make <midi-chan-event> :time time :chan (vector ref data 1)))
+                    (make <midi-chan-event> :time time :chan (vector-ref data 1)))
                    ((eot-p m)
                     (make <midi-eot> :time time))
                    ((smpte-offset-p m)
