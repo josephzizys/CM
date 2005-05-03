@@ -1,0 +1,710 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+    <style type="text/css" media="all">
+      @import "../css/cm.css";
+    </style>
+    <title>SuperCollider</title>
+  </head>
+  
+  <body>
+    <div id="content">
+      <dl class="dictsyntax">
+	<dt>[Topic]</dt>
+	  <dd><span class="syntax">SuperCollider</span></dd>
+
+      </dl>
+      <p>
+        Common Music supports the writing and rendering of non-realtime <a href="http://www.audiosynth.com/">SuperCollider</a> files.
+      </p>
+
+      <h3 id="sc_synths">SuperCollider synths</h3>
+
+      <p>SuperCollider synth objects are defined similarly to clm or csound instruments.</p>
+
+      <p>To begin, let's look at a fairly simple synthdef in SuperCollider.</p>
+<div class="float" id="example_1">
+<pre class="code">
+(
+  <span class="special">SynthDef</span>(<span class="string">"simple"</span>, { 
+arg dur=1.0,freq=440.0,amp=0.2,pan=0.0;
+       <span class="special">var</span> osc;
+       osc = <span class="special">EnvGen</span>.kr(<span class="special">Env</span>.triangle(dur,amp), doneAction: 2) * <span class="special">SinOsc</span>.ar(freq);
+       <span class="special">Out</span>.ar(0,<span class="special">Pan2</span>.ar(osc,pan));
+  }).writeDefFile.load(s);
+)
+</pre>
+</div>
+
+
+      <p>Converting this to a CM <code>scsynth</code> object is straightforward.</p>
+
+<div class="float" id="example_2">
+<pre class="code">
+(<a href="defobject-mac.html">defobject</a> simple (scsynth)
+ ((freq <span class="keyword">:initform</span> 440)
+  (dur <span class="keyword">:initform</span> 1)
+  (amp <span class="keyword">:initform</span> .2)
+  (pan <span class="keyword">:initform</span> 0))
+ (<span class="keyword">:parameters</span> freq dur amp pan))
+</pre>
+</div>
+      <p>The object is a subclass of the abstract class scsynth which contains additional slots that 
+	will be introduced below.</p>
+      <p>All arguments to the synthdef are used in the object definition of <i>simple</i>. 
+	The name of the slots are always treated as lowercase strings when written to an .osc file. 
+	This is important because if you have defined arguments to your synthdef which are mixed case 
+	or uppercase (e.g. "Dur" "DUR") things will not work properly.</p>
+      <p>In addition to user defined slots, all scsynth objects inherit the following slot initargs:</p>
+
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">node </code><var>number</var></dt>
+	<dd>The node created on the sc server. This defaults to -1, which allows the server to 
+	  generate its own id for the instrument. This does mean in most cases that you will not 
+	  be able to send commands to this specific instance of the synth since you will not know 
+	  what the node id is. In cases where this is needed this value should be set.</dd>
+	<dt><code class="keyword">:add-action </code><var>number</var></dt>
+	<dd>How to add the new node according to following from SuperCollider Server 
+	  Command Reference (Default is 1):
+      <ul>
+	<li>0 - add the new node to the the head of the group specified by the add target ID.</li>
+	<li>1 - add the new node to the the tail of the group specified by the add target ID</li>
+	<li>2 - add the new node just before the node specified by the add target ID.</li>
+	<li>3 - add the new node just after the node specified by the add target ID.</li>
+	<li>4 - the new node replaces the node specified by the add target ID. </li>
+      </ul>
+      </dd>
+	<dt><code class="keyword">:target</code> <var>number</var></dt>
+	<dd>The group or node referenced by the :add-action slot.</dd>
+	<dt><code class="keyword">:</code><code class="keyword">time </code><var>number</var></dt>
+	<dd>The time to begin the synth.</dd>
+      </dl>
+
+
+      <h3 id="sc_event_classes">SuperCollider Command Events</h3>
+
+      <ul>
+	<li><code><a href="#load-synthdef">load-synthdef</a></code></li>
+	<li><code><a href="#load-synthdef-dir">load-synthdef-dir</a></code></li>
+	<li><code><a href="#node-free">node-free</a></code></li>
+	<li><code><a href="#node-run">node-run</a></code></li>
+	<li><code><a href="#node-set">node-set</a></code></li>
+	<li><code><a href="#node-setn">node-setn</a></code></li>
+	<li><code><a href="#node-fil">node-fill</a></code></li>
+	<li><code><a href="#node-map">node-map</a></code></li>
+	<li><code><a href="#node-mapn">node-mapn</a></code></li>
+	<li><code><a href="#node-before">node-before</a></code></li>
+	<li><code><a href="#node-after">node-after</a></code></li>
+	<li><code><a href="#group-new">group-new</a></code></li>
+	<li><code><a href="#group-head">group-head</a></code></li>
+	<li><code><a href="#group-tail">group-tail</a></code></li>
+	<li><code><a href="#group-free-all">group-free-all</a></code></li>
+	<li><code><a href="#group-deep-free">group-deep-free</a></code></li>
+	<li><code><a href="#ugen-command">ugen-command</a></code></li>
+	<li><code><a href="#buffer-alloc">buffer-alloc</a></code></li>
+	<li><code><a href="#buffer-alloc-read">buffer-alloc-read</a></code></li>
+	<li><code><a href="#buffer-read">buffer-read</a></code></li>
+	<li><code><a href="#buffer-write">buffer-write</a></code></li>
+	<li><code><a href="#buffer-free">buffer-free</a></code></li>
+	<li><code><a href="#buffer-zero">buffer-zero</a></code></li>
+	<li><code><a href="#buffer-set">buffer-set</a></code></li>
+	<li><code><a href="#buffer-setn">buffer-setn</a></code></li>
+	<li><code><a href="#buffer-fill">buffer-fill</a></code></li>
+	<li><code><a href="#buffer-close">buffer-close</a></code></li>
+	<li><code><a href="#buffer-gen">buffer-gen</a></code></li>
+	<li><code><a href="#control-set">control-set</a></code></li>
+	<li><code><a href="#control-setn">control-setn</a></code></li>
+	<li><code><a href="#control-fill">control-fill</a></code></li>
+      </ul>
+      <p>All SuperCollider command events contain the <code class="keyword">:time</code> slot inherited 
+	from <code>event</code>.</p>
+      <p></p>
+      <p>For a description of the following commands, refer to Help/Server-Command-Reference.rtf in the SuperCollider distribution</p>
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="load-synthdef"></a><code class="entry">load-synthdef</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:path</code> <var>string</var></dt>
+	<dd>Synthdef file to load.</dd>
+      </dl>
+
+<div class="float">        
+<pre class="code">
+(<a href="new-mac.html">new</a> load-synthdef <span class="keyword">:path</span> <span class="string">"/path/to/synthdef.scsyndef"</span> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="load-synthdef-dir"></a><code class="entry">
+	      load-synthdef-dir</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:path</code> <var>string</var></dt>
+	<dd>Synthdef directory to load.</dd>
+      </dl>
+
+        <div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> load-synthdef-dir <span class="keyword">:path</span> <span class="string">"/path/to/"</span> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="node-free"></a><code class="entry">node-free</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:node</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Node or list of nodes to free.</dd>	
+      </dl>
+        <div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> node-free <span class="keyword">:node</span> 1000 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> node-free <span class="keyword">:node</span> '(1000 1001 1002) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="node-run"></a><code class="entry">node-run</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:node</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Node(s) to set.</dd>
+	<dt><code class="keyword">:flag</code> {<var>boolean</var> | <var>list</var>}</dt>
+	<dd>True or false referring to node(s).</dd>
+        </dl>
+
+        <div class="float">
+        <pre class="code">
+(<a href="new-mac.html">new</a> node-run <span class="keyword">:node</span> 1000 <span class="keyword">:flag</span> #t <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> node-run <span class="keyword">:node</span> '(1000 1001 1003) <span class="keyword">:flag</span> '(#t #f #t) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="node-set"></a><code class="entry">node-set</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:node</code> <var>number</var></dt>
+	<dd>Node to set.</dd>
+	<dt><code class="keyword">:controls-values</code> <var>list</var></dt>
+	<dd>List of keyword/number pairs indicating what control to set and what value to set it to.</dd>
+      </dl>
+	  <div class="float">
+	  <pre class="code">
+(<a href="new-mac.html">new</a> node-set <span class="keyword">:node</span> 1000 <span class="keyword">:controls-values</span> '(<span class="keyword">:freq</span> 400.1 <span class="keyword">:amp</span> .2) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="node-setn"></a><code class="entry">node-setn</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:node</code> <var>number</var></dt>
+	<dd>Node to set.</dd>
+	<dt><code class="keyword">:controls-values</code> <var>list</var></dt>
+	<dd>List of keyword/list pairs indicating what control to start with and values indicating the setting of contiguous controls.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> node-setn <span class="keyword">:node</span> 1000 <span class="keyword">:controls-values</span> '(<span class="keyword">:freq</span> (440 .1 3) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="node-fill"></a><code class="entry">node-fill</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:node</code> <var>number</var></dt>
+	<dd>Node to set.</dd>
+	<dt><code class="keyword">:control</code> {<var>keyword</var> | <var>list</var>}</dt>
+	<dd>Control or controls to set.</dd>
+	<dt><code class="keyword">:num-controls</code> <var>number</var></dt>
+	<dd>Number of values to fill.</dd>
+	<dt><code class="keyword">:value</code> <var>number</var></dt>
+	<dd>Value to set control(s) to.</dd>
+      </dl>
+      <div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> node-fill <span class="keyword">:node</span> 1000 <span class="keyword">:control</span> <span class="keyword">:freq</span> <span class="keyword">:num-controls</span> 2 <span class="keyword">:value</span> 100.1 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> node-fill <span class="keyword">:node</span> 1000 <span class="keyword">:control</span> '(<span class="keyword">:freq01</span> <span class="keyword">:freq20</span>)  
+     <span class="keyword">:num-controls</span> '(2 4) <span class="keyword">:value</span> '(100.1 20.22) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="node-map"></a><code class="entry">node-map</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:node</code> <var>number</var></dt>
+	<dd>Node to set.</dd>
+	<dt><code class="keyword">:controls-buses</code> <var>list</var></dt>
+	<dd>List of keyword/number pairs indicating what control to map to what bus..</dd>
+      </dl>
+      <div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> node-map <span class="keyword">:node</span> 1000 <span class="keyword">:controls-buses</span> '(<span class="keyword">:amp</span> 1 <span class="keyword">:pan</span> 4) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="node-mapn"></a><code class="entry">node-mapn</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:node</code> <var>number</var></dt>
+	<dd>Node to set.</dd>
+	<dt><code class="keyword">:control</code> {<var>keyword</var> | <var>list</var>}</dt>
+	<dd>Keyword or list of keywords indicating the control names.</dd>
+	<dt><code class="keyword">:bus</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Control buses index or indices.</dd>
+	<dt><code class="keyword">:bus</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Number of controls to map.</dd>
+      </dl>
+      <div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> node-mapn <span class="keyword">:node</span> 1000 <span class="keyword">:control</span> <span class="keyword">:freq</span> <span class="keyword">:bus</span> 100 <span class="keyword">:num-controls</span> 2 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> node-mapn <span class="keyword">:node</span> 1000 <span class="keyword">:control</span> '(<span class="keyword">:freq1</span> <span class="keyword">:freq100</span>) <span class="keyword">:bus</span> '(100 200) 
+     <span class="keyword">:num-controls</span> '(12 24) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="node-before"></a><code class="entry">node-before</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:node</code> <var>number</var></dt>
+	<dd>Node to set.</dd>
+	<dt><code class="keyword">:</code><code class="keyword">before </code><var>number</var></dt>
+	<dd>the node to place <span class="keyword">:node</span> before.</dd>
+      </dl>
+      <div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> node-before <span class="keyword">:node</span> 1001 <span class="keyword">:before</span> 1000 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> node-before <span class="keyword">:node</span> '(1001 200) <span class="keyword">:before</span> '(1000 500) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="node-after"></a><code class="entry">node-after</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:node</code> <var>number</var></dt>
+	<dd>Node to set.</dd>
+	<dt><code class="keyword">:after </code><var>number</var></dt>
+	<dd>The node to place <code class="keyword">:node</code> after.</dd>
+      </dl>
+      <div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> node-after <span class="keyword">:node</span> 1000 <span class="keyword">:after</span> 1001 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> node-after <span class="keyword">:node</span> '(1001 200) <span class="keyword">:before</span> '(1000 500) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="group-new"></a><code class="entry">group-new</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:id </code><var>number or list</var></dt>
+	<dd>Id of new group.</dd>
+	<dt><code class="keyword">:add-action</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>How to add the new group according to following from SuperCollider Server Command Reference:
+      <ul>
+	<li>0 - add the new group to the the head of the group specified by the add target ID.</li>
+	<li>1 - add the new group to the the tail of the group specified by the add target ID.</li>
+	<li>2 - add the new group just before the node specified by the add target ID.</li>
+	<li>3 - add the new group just after the node specified by the add target ID.</li>
+	<li>4 - the new node replaces the node specified by the add target ID. The target node is freed.</li>
+      </ul>
+        </dd>
+	<dt><code class="keyword">:target</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>The group or node referenced by the <code class="keyword">:add-action</code> slot.</dd>
+      </dl>
+
+	<div class="float">
+	<pre class="code">
+<span class="comment">; adds a new group with id 2 just before node 1000</span>
+(<a href="new-mac.html">new</a> group-new <span class="keyword">:id</span> 2 <span class="keyword">:add-action</span> 2 <span class="keyword">:target</span> 1000) 
+(<a href="new-mac.html">new</a> group-new <span class="keyword">:id</span> '(2 3) <span class="keyword">:add-action</span> '(2 1) <span class="keyword">:target</span> '(1000 900))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="group-head"></a><code class="entry">group-head</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:group</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>The group to add <code class="keyword">:node</code> to the head of.</dd>
+	<dt><code class="keyword">:node</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>The node to add to the head of :group.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> group-head <span class="keyword">:group</span> 2 <span class="keyword">:node</span> 2000 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> group-head <span class="keyword">:group</span> '(2 10) <span class="keyword">:node</span> '(2000 3000) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="group-tail"></a><code class="entry">group-tail</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:group</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>The group to add <code class="keyword">:node</code> to the tail of.</dd>
+	<dt><code class="keyword">:node</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>The node to add to the tail of <code class="keyword">:group</code>.</dd>
+      </dl>
+
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> group-tail <span class="keyword">:group</span> 2 <span class="keyword">:node</span> 2000 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> group-tail <span class="keyword">:group</span> '(2 10) <span class="keyword">:node</span> '(2000 3000) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="group-free-all"></a><code class="entry">group-free-all</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:group</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Frees all nodes in the specified group.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> group-free-all <span class="keyword">:group</span> 2 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> group-free-all <span class="keyword">:group</span> '(2 4) <a href=":time-fn.html">:time</a> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="group-deep-free"></a><code class="entry">group-deep-free</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">group</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Frees all nodes in the specified group(s) and groups below it.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> group-deep-free <span class="keyword">:group</span> 10 <a href=":time-fn.html">:time</a> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> group-deep-free <span class="keyword">:group</span> '(10 20) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="ugen-command"></a><code class="entry">ugen-command</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">node </code><var>number</var></dt>
+	<dd>Node ugen is in.</dd>
+	<dt><code class="keyword">:ugen-index</code> <var>number</var></dt>
+	<dd>Index of unit generator.</dd>
+	<dt><code class="keyword">:command-name</code> <var>string</var></dt>
+	<dd>Command for unit generator.</dd>
+	<dt><code class="keyword">:args</code> <var>list</var></dt>
+	<dd>Any additional arguments.</dd>
+      </dl>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-alloc"></a><code class="entry">buffer-alloc</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+	<dt><code class="keyword">:frames</code> <var>number</var></dt>
+	<dd>Number of frames to allocate.</dd>
+	<dt><code class="keyword">:channels</code> <var>number</var></dt>
+	<dd>Number of channels. Default is 1.</dd>
+      </dl>
+
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> buffer-alloc <span class="keyword">:bufnum</span> 10 <span class="keyword">:frame</span> 512 <span class="keyword">:channels</span> 1 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-alloc-read"></a><code class="entry">buffer-alloc-read</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+	<dt><code class="keyword">:file</code> <var>string</var></dt>
+	<dd>Path of sound file.</dd>
+	<dt><code class="keyword">:start-frame</code> <var>number</var></dt>
+	<dd>The starting frame to read from.</dd>
+	<dt><code class="keyword">:frames</code> <var>number</var></dt>
+	<dd>Number of frames to read from file. If this is 0 (the default) the entire file will be read.</dd>
+        </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> buffer-alloc-read <span class="keyword">:bufnum</span> 10 <span class="keyword">:file</span> <span class="string">"/Applications/SuperCollider3/sounds/a11wlk01.wav"</span> 
+     <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-read"></a><code class="entry">buffer-read</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+	<dt><code class="keyword">:file</code> <var>string</var></dt>
+	<dd>Path of sound file.</dd>
+	<dt><code class="keyword">:start-frame</code> <var>number</var></dt>
+	<dd>The starting frame to write from. Defaults to 0.</dd>
+	<dt><code class="keyword">:frames</code> <var>number</var></dt>
+	<dd>Number of frames to read from file. If this is -1 (the default) the entire file will be read.</dd>
+	<dt><code class="keyword">:buffer-start-frame</code> <var>number</var></dt>
+	<dd>Frame in buffer to start reading file into. Defaults to 0.</dd>
+	<dt><code class="keyword">:leave-open?</code> <var>{true | false}</var></dt>
+	<dd>Leave file open. Only should be true when using DiskIn.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> buffer-read <span class="keyword">:bufnum</span> 10 <span class="keyword">:file</span> <span class="string">"/Applications/SuperCollider3/sounds/a11wlk01.wav"</span>
+     <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-write"></a><code class="entry">buffer-write</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+	<dt><code class="keyword">:file</code> <var>string</var></dt>
+	<dd>Path of sound file.</dd>
+	<dt><code class="keyword">:header</code> {<span class="keyword">:aiff</span> | <span class="keyword">:next</span> | <span class="keyword">:wav</span> | <span class="keyword">:ircam</span> | <span class="keyword">:raw</span>}</dt>
+	<dd>Specifies header format of the file to write. Default is :aiff.</dd>
+	<dt><code class="keyword">:format</code> {<span class="keyword">:int8</span> | <span class="keyword">:int16</span> | <span class="keyword">:int24</span> | <span class="keyword">:int32</span> | <span class="keyword">:float</span> | <span class="keyword">:double</span> | <span class="keyword">:mulaw</span> | <span class="keyword">:alaw</span>}</dt>
+	<dd>Specifies the sample format of the file to write. Default is :int16.</dd>
+	<dt><code class="keyword">:frames</code> <var>number</var></dt>
+	<dd>Number of frames to write. Default is -1 which writes entire buffer to file.</dd>
+	<dt><code class="keyword">:start-frame</code> <var>number</var></dt>
+	<dd>The starting frame to write from.</dd>
+	<dt><code class="keyword">:leave-open?</code> <var>boolean</var></dt>
+	<dd>Leave file open. Only should be true when using DiskOut.</dd>
+      </dl>	
+        <div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> buffer-write <span class="keyword">:bufnum</span> 10 <span class="keyword">:file</span> <span class="string">"/path/to/file.aiff"</span> <span class="keyword">:header</span> <span class="keyword">:aiff</span>
+     <span class="keyword">:format</span> <span class="keyword">:float</span>)
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-free"></a><code class="entry">buffer-free</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+      </dl>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-zero"></a><code class="entry">buffer-zero</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+      </dl>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-set"></a><code class="entry">buffer-set</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:samples-values</code> <var>list</var></dt>
+	<dd>Pairs of sample indices and values to set.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> buffer-set <span class="keyword">:bufnum</span> 10 <span class="keyword">:samples-values</span> '(0 .1 1 .2 3 .1 4 .3)
+     <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+       <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-setn"></a><code class="entry">buffer-setn</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+	<dt><code class="keyword">:samples-values</code> <var>list</var></dt>
+	<dd>Pairs of starting sample index and list of values.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> buffer-setn <span class="keyword">:bufnum</span> 10 <span class="keyword">:samples-values</span> '(0 (0 .1 1 .2 3 .1 4 .3))
+     <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-fill"></a><code class="entry">buffer-fill</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+	<dt><code class="keyword">:start-sample</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Starting sample position to fill</dd>
+	<dt><code class="keyword">:num-samples</code> <var>number or list </var></dt>
+	<dd>Number of samples to fill.</dd>
+	<dt><code class="keyword">:</code><code class="keyword">value</code>{<var>number</var> | <var>list</var>}</dt>
+	<dd>Value to use as fill.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> buffer-fill <span class="keyword">:bufnum</span> 10 <span class="keyword">:start-sample</span> 0 <span class="keyword">:num-samples</span> 10 <span class="keyword">:value</span> .8
+     <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> buffer-fill <span class="keyword">:bufnum</span> 10 <span class="keyword">:start-sample</span> '(0 256) <span class="keyword">:num-samples</span> '(10 20)
+     <span class="keyword">:value</span> '(.8 .2) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-close"></a><code class="entry">buffer-close</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+      </dl>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="buffer-gen"></a><code class="entry">buffer-gen</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
+	<dd>Buffer number.</dd>
+	<dt><code class="keyword">:command</code> { <span class="keyword">:sine1</span> | <span class="keyword">:sine2</span> | <span class="keyword">:sine3</span> | <span class="keyword">:cheby</span> }</dt>
+	<dd>Command to fill the buffer.</dd>
+	<dt><code class="keyword">:flags</code> <var>keyword or list. possible values :normalize :wavetable :clear</var></dt>
+	<dd>Flags for command.</dd>
+	<dt><code class="keyword">:</code><code class="keyword">args </code><var>list</var></dt>
+	<dd>Additional arguments to command.</dd>
+      </dl>
+      <div class="float">
+      <pre class="code">
+(<a href="new-mac.html">new</a> buffer-gen <span class="keyword">:bufnum</span> 10 <span class="keyword">:command</span> <span class="keyword">:sine2</span> <span class="keyword">:flags</span> <span class="keyword">:wavetable</span>
+     <span class="keyword">:args</span> '(1 1.0 2 .7 4 .3) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="control-set"></a><code class="entry">control-set</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:bus</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Bus number.</dd>
+	<dt><code class="keyword">:value</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Control value.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> control-set <span class="keyword">:bus</span> 2 <span class="keyword">:value</span> 2.0 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> control-set <span class="keyword">:bus</span> '(2 3 4) <span class="keyword">:value</span> '(.4 .9 1.2) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="control-setn"></a><code class="entry">control-setn</code></dd>
+      </dl>
+
+      <dl>
+	<dt><code class="keyword">:bus</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Bus number.</dd>
+	<dt><code class="keyword">:value</code> {<var>number</var> | <var>list</var>}</dt>
+	<dd>Control value.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> control-setn <span class="keyword">:bus</span> 2 <span class="keyword">:value</span> '(2.0 3.0 .2) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> control-setn <span class="keyword">:bus</span> '(2 9) <span class="keyword">:value</span> '((.1 .2 .3) (1.7 1.9 1.01))
+     <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+</pre>
+</div>
+
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	  <dd><a name="control-fill"></a><code class="entry">control-fill</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:bus</code> <var>number</var></dt>
+	<dd>The control bus to start at.</dd>
+	<dt><code class="keyword">:num-buses</code> <var>number</var></dt>
+	<dd>Number of control buses to fill.</dd>
+	<dt><code class="keyword">:value</code> <var>number</var></dt>
+	<dd>Value to set control buses to.</dd>
+      </dl>
+	<div class="float">
+	<pre class="code">
+(<a href="new-mac.html">new</a> control-fill <span class="keyword">:num-buses</span> 2)
+</pre>
+</div>
+      
+      <div id="footer">
+	<div id="version">
+	  $Name$</div>
+	<div id="cvs-info">
+	  ($Revision$, $Date$)</div>
+      </div>
+    </div>
+  </body>
+  
+</html>
