@@ -118,6 +118,9 @@
 (define (symbol->keyword sym)
   (make-keyword (symbol->string sym)))
 
+(define (string->keyword s)
+  (make-keyword s))
+
 ;; numbers
 
 (define most-positive-fixnum (- (expt 2 29) 1))

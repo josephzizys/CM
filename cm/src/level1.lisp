@@ -179,6 +179,9 @@
 (defun keyword->string (kw)
   (format nil "~(~A~)" kw))
 
+(defun string->keyword (s)
+  (intern s :keyword))
+
 ;;; strings
 
 (defun strip-chars (str &optional (chars '(#\space #\tab #\return)))

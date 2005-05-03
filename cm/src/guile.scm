@@ -148,6 +148,9 @@
 (define (keyword->string kw)
   (symbol->string (keyword->symbol kw)))
 
+(define (string->keyword s)
+  (symbol->keyword (string->symbol s)))
+
 ;;;
 ;;; OOP functions
 ;;;
