@@ -510,9 +510,9 @@ arg dur=1.0,freq=440.0,amp=0.2,pan=0.0;
 	<dd>Buffer number.</dd>
 	<dt><code class="keyword">:file</code> <var>string</var></dt>
 	<dd>Path of sound file.</dd>
-	<dt><code class="keyword">:header</code> {<span class="keyword">:aiff</span> | <span class="keyword">:next</span> | <span class="keyword">:wav</span> | <span class="keyword">:ircam</span> | <span class="keyword">:raw</span>}</dt>
+	<dt><code class="keyword">:header</code> {<code class="keyword">:aiff</code> | <code class="keyword">:next</code> | <code class="keyword">:wav</code> | <code class="keyword">:ircam</code> | <code class="keyword">:raw</code>}</dt>
 	<dd>Specifies header format of the file to write. Default is :aiff.</dd>
-	<dt><code class="keyword">:format</code> {<span class="keyword">:int8</span> | <span class="keyword">:int16</span> | <span class="keyword">:int24</span> | <span class="keyword">:int32</span> | <span class="keyword">:float</span> | <span class="keyword">:double</span> | <span class="keyword">:mulaw</span> | <span class="keyword">:alaw</span>}</dt>
+	<dt><code class="keyword">:format</code> {<code class="keyword">:int8</code> | <code class="keyword">:int16</code> | <code class="keyword">:int24</code> | <code class="keyword">:int32</code> | <code class="keyword">:float</code> | <code class="keyword">:double</code> | <code class="keyword">:mulaw</code> | <code class="keyword">:alaw</code>}</dt>
 	<dd>Specifies the sample format of the file to write. Default is :int16.</dd>
 	<dt><code class="keyword">:frames</code> <var>number</var></dt>
 	<dd>Number of frames to write. Default is -1 which writes entire buffer to file.</dd>
@@ -628,7 +628,7 @@ arg dur=1.0,freq=440.0,amp=0.2,pan=0.0;
       <dl>
 	<dt><code class="keyword">:</code><code class="keyword">bufnum </code><var>number</var></dt>
 	<dd>Buffer number.</dd>
-	<dt><code class="keyword">:command</code> { <span class="keyword">:sine1</span> | <span class="keyword">:sine2</span> | <span class="keyword">:sine3</span> | <span class="keyword">:cheby</span> }</dt>
+	<dt><code class="keyword">:command</code> { <code class="keyword">:sine1</code> | <code class="keyword">:sine2</code> | <code class="keyword">:sine3</code> | <code class="keyword">:cheby</code> }</dt>
 	<dd>Command to fill the buffer.</dd>
 	<dt><code class="keyword">:flags</code> <var>keyword or list. possible values :normalize :wavetable :clear</var></dt>
 	<dd>Flags for command.</dd>
@@ -698,13 +698,22 @@ arg dur=1.0,freq=440.0,amp=0.2,pan=0.0;
 </pre>
 </div>
       
-      <div id="footer">
-	<div id="version">
-	  $Name$</div>
-	<div id="cvs-info">
-	  ($Revision$, $Date$)</div>
-      </div>
-    </div>
+
+<h4>See also:</h4>
+
+<ul>
+  <li><a href="sc-file-cls.html"><code>sc-file</code></a> [Class]</li>
+</ul>
+
+
+<!-- End content -->
+</div>
+<!-- Footer -->
+<div id="footer">
+  <div id="version">
+    $Name$</div>
+  <div id="cvs-info">
+    ($Revision$, $Date$)</div>
+</div>
   </body>
-  
 </html>
