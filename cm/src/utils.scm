@@ -515,5 +515,37 @@
 
 ; (u8vector-append #() #(0 1) #(2 3) #(4 5 6) #())
 
+(define (u8vector->uint vec)
+  (logior (ash (u8vector-ref vec 0) 24)
+          (ash (u8vector-ref vec 1) 16)
+          (ash (u8vector-ref vec 2) 8)
+          (u8vector-ref vec 3)))
+
+(define (u8vector->int vec)
+  (let ((int (u8vector->uint vec)))
+    (if (> int (ash #xffffffff -1))
+	(- int #xffffffff 1 )
+      int)))
+    
+(define (u8vector->float vec)
+  (let* ((flo (u8vector->int vec))
+         (sign (if (= 1 (ldb (byte 1 31 ) flo)) -1 1))
+         (exponent (- (ldb (byte 8 23) flo) 150))
+         (fraction  (ldb (byte 24 0) flo)))
+    (exact->inexact (* fraction (expt 2 exponent) sign))))
+    
+(define (u8vector->string vec)
+  (list->string (loop for i below (u8vector-length vec)
+                   until (= i 0)
+                   collect (integer->char i))))
+
+(define (u8vector-subseq vec beg . arg)
+  (let* ((end (if (null? arg) (u8vector-length vec)
+                  (car arg)))
+         (sub (make-u8vector (- end beg))))
+    (do ((i 0 (+ i 1))
+         (j beg (+ j 1)))
+        ((= j end) sub)
+      (u8vector-set! sub i (u8vector-ref vec j)))))
 
 
