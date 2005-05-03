@@ -225,3 +225,4 @@
 
 (defgeneric object->cmn (obj))
 
+(defgeneric import-set-slots (obj list))  ; sc.scm
