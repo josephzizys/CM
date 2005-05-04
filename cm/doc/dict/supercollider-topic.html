@@ -27,8 +27,7 @@
 <div class="float" id="example_1">
 <pre class="code">
 (
-  <span class="special">SynthDef</span>(<span class="string">"simple"</span>, { 
-arg dur=1.0,freq=440.0,amp=0.2,pan=0.0;
+  <span class="special">SynthDef</span>(<span class="string">"simple"</span>, {<span class="special">arg</span> dur=1.0,freq=440.0,amp=0.2,pan=0.0;
        <span class="special">var</span> osc;
        osc = <span class="special">EnvGen</span>.kr(<span class="special">Env</span>.triangle(dur,amp), doneAction: 2) * <span class="special">SinOsc</span>.ar(freq);
        <span class="special">Out</span>.ar(0,<span class="special">Pan2</span>.ar(osc,pan));
@@ -37,8 +36,8 @@ arg dur=1.0,freq=440.0,amp=0.2,pan=0.0;
 </pre>
 </div>
 
-
-      <p>Converting this to a CM <code>scsynth</code> object is straightforward.</p>
+<p>Defining a CM <code>scsynth</code> object to generate data for
+  this instrument is straightforward:</p>
 
 <div class="float" id="example_2">
 <pre class="code">
@@ -698,13 +697,58 @@ arg dur=1.0,freq=440.0,amp=0.2,pan=0.0;
 </pre>
 </div>
       
+<h4>Examples:</h4>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Using node-set to produce continuous changes in panning.
+</p>
+<pre class="code">
+<span class="comment">;;; define a scsynth object</span>
+
+(<a href="defobject-fn.html">defobject</a> simple (scsynth)
+  ((freq <span class="keyword">:initform</span> 440)
+   (dur <span class="keyword">:initform</span> 1)
+   (amp <span class="keyword">:initform</span> .2)
+   (pan <span class="keyword">:initform</span> 0))
+  (<span class="keyword">:parameters</span> freq dur amp pan time))
+
+<span class="comment">;;; define a process to generate simples.</span>
+
+(<span class="special">define</span> (<span class="defined">sc-simple-3</span> num)
+  (<a href="process-mac.html">process</a> repeat num for i from 0
+	   output (<a href="new-mac.html">new</a> simple <span class="keyword">:time</span> (<span class="keyword">now</span>) 
+		       <span class="keyword">:freq</span> (<a href="between-fn.html">between</a> 300 700) 
+		       <span class="keyword">:dur</span> (<a href="between-fn.html">between</a> 10 20)
+		       <span class="keyword">:node</span> (+ i 1000)
+		       <span class="keyword">:amp</span> .1
+		       <span class="keyword">:pan</span> 1.0)
+	   sprout
+	   (<a href="process-mac.html">process</a> repeat 100 for j from 0
+		    with node = (+ i 1000)
+		    with pan-env = '(0 1.0 50 .4 100 -1.0)
+		    output (<a href="new-mac.html">new</a> node-set <span class="keyword">:node</span> node
+				<span class="keyword">:controls-values</span>
+				(list <span class="keyword">:pan</span> (<a href="interpl-fn.html">interpl</a> j pan-env)) 
+				<span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+			   wait .1)
+	   wait (<a href="between-fn.html">between</a> 2 3)))
+
+(<a href="events-fn.html">events</a> (sc-simple-3 10) <span class="string">"sc-simple-3.osc"</span> <span class="keyword">:pad</span> 20)
+<span class="result">&rArr;</span> <span class="string">"sc-simple-3.osc"</span>
+</pre>
+</div>
+
+<p>
+The file <a href="../../etc/examples/sc.cm">sc.cm</a> contains
+numerous examples of Supercollider score generation.
+</p>
 
 <h4>See also:</h4>
 
 <ul>
   <li><a href="sc-file-cls.html"><code>sc-file</code></a> [Class]</li>
 </ul>
-
 
 <!-- End content -->
 </div>
