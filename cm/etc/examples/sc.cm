@@ -5,8 +5,9 @@
 ;;;
 ;;; Supercollider examples, by Todd Ingalls. Load the file and then
 ;;; execute the (events ...) calls. If you are running under slime you
-;;; may need to add :wait #t to the events call, or alternately init
-;;; the stream using io, i.e.: (io "test.osc" :wait #t :verbose #t)
+;;; may need to add :wait #t to the events calls, or alternately init
+;;; the files using io, i.e.: (io "test.osc" :wait #t :verbose #t).
+;;; See "./sc-synths.sc" for the SC3 synthdefs used by these examples.
 
 (in-package :cm)
 
