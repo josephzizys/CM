@@ -275,6 +275,8 @@
 
 (defscheme reverse! nreverse)
 
+(defscheme append! nconc)
+
 ;;;
 ;;; vectors
 ;;;
