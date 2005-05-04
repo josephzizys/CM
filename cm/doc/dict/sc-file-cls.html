@@ -27,6 +27,14 @@
     </p>
 
     <dl>
+      <dt><code class="keyword">:versioning</code> <var>boolean</var></dt>
+      <dd>If true then each time the file is written its output file
+name will include a version number -<var>n</var> appended to its name,
+i.e. test-1.osc, test-2.osc and so on. The version number is
+automatically incremented each time the file is written and insures
+that multiple "takes" of the same file can be generated without
+overwriting the contents of earlier versions.</li>
+
       <dt><code class="keyword">:play</code> <var>boolean</var></dt>
       <dd>If true the .osc score file is rendered by calling the
 	external scsynth process.  The resulting sound file is played
@@ -60,15 +68,18 @@
       <dd>Sets the sample format type of output audio file. The default value is <code class="keyword">:int16</code>.</dd>
     </dl>
 
+<p>
+Any additional keyword initializations are passed to <a
+href="play-fn.html">play</a> after the file is written.
+</p>
+
+
+
     <h4>See also:</h4>
 
     <ul>
-      <li><a href="clm-audio-file-cls.html"><code>audio-file</code></a> [Class]</li>
-      <li><a href="clm-file-cls.html"><code>clm-file</code></a> [Class]</li>
-      <li><a href="cmn-file-cls.html"><code>cmn-file</code></a> [Class]</li>
       <li><a href="io-mac.html"><code>io</code></a> [Macro]</li>
-      <li><a href="midi-file-cls.html"><code>midi-file</code></a> [Class]</li>
-      <li><a href="sco-file-cls.html"><code>sco-file</code></a> [Class]</li>
+      <li><a href="play-fn.html"><code>play</code></a> [Function]</li>
       <li><a href="supercollider-topic.html">SuperCollider</a> [Topic]</li>
     </ul>
 
@@ -79,3 +90,7 @@
     </div>
   </body>
 </html>
+
+
+
+
