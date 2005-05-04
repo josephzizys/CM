@@ -40,7 +40,7 @@
          (playit (list-prop args ':play #t))
          (fmat (list-prop args ':format ':int16))
          (header #f)
-         (srate (list-prop args ':srate))
+         (srate (list-prop args ':srate 44100))
          (verbose (list-prop args ':verbose ))
          (wait (list-prop args ':wait playit))
          (synthdef-path (string-append *sc-directory* "synthdefs"))
@@ -90,7 +90,7 @@
                             (list-prop *sc-audio-format-types* fmat)
                             channels))
       (if verbose (format #t "~%; ~a" command))
-      (shell command :wait wait :output #f)
+      (shell command :wait wait :output verbose)
       (if playit (play output-file :wait #f))
       file))
 
@@ -109,7 +109,7 @@
 	  (slots (return-init-args obj)))
       (set! (object-time io) time)
       (write-bundle time (append!
-			  (list "/s_new" synthname
+			  (list "/s_new" (string-downcase synthname)
                                 (slot-ref obj 'node)
                                 (slot-ref obj 'add-action)
                                 (slot-ref obj 'target))
@@ -177,9 +177,9 @@
 (define (node-free nodes)
   (let ((msg #f))
     (cond ((number? nodes)
-           (set! msg (list "n_free" nodes)))
+           (set! msg (list "/n_free" nodes)))
           ((pair? nodes)
-           (set! msg (append '("n_free") nodes)))
+           (set! msg (append '("/n_free") nodes)))
           (else
            (err "node-free: expect number or list but got ~s instead."
                 nodes)))
@@ -276,7 +276,7 @@
 
 (define (node-setn node ctrl-values)
   (let ((msg #f))
-    (set! msg (list "/n_set" node))
+    (set! msg (list "/n_setn" node))
     (dolist (i ctrl-values)
       (if (keyword? i)
           (set! msg (append! msg (list (keyword->string i))))
@@ -292,7 +292,7 @@
   (let ((fp (io-open io)))
     (set! (object-time io) time)
     (write-bundle time
-     (node-set (slot-ref obj 'node)
+     (node-setn (slot-ref obj 'node)
 	       (slot-ref obj 'controls-values))
      fp)))
 
@@ -411,7 +411,7 @@
 	    (set! msg (append! msg (list (keyword->string (list-ref control i))
 				       (list-ref bus i) 
 				       (list-ref num-controls i))))))
-      (set! msg (list "/n_fill" node (keyword->string control)
+      (set! msg (list "/n_mapn" node (keyword->string control)
                       bus num-controls)))))
 
 (define-method* (write-event (obj <node-mapn>) (io <sc-file>) time)
@@ -936,7 +936,7 @@ time)
 
 (define (buffer-setn buf-num samples-values)
   (let ((msg #f))
-    (set! msg (list "/b_set" buf-num))
+    (set! msg (list "/b_setn" buf-num))
     (dolist (i samples-values)
       (if (pair? i)
 	  (begin
@@ -1022,7 +1022,7 @@ time)
  (:event-streams))
 
 (define (buffer-close buf-num) 
-  (list "b_close" buf-num))
+  (list "/b_close" buf-num))
 
 (define-method* (write-event (obj <buffer-close>) (io <sc-file>) time)
   (let ((fp (io-open io)))
