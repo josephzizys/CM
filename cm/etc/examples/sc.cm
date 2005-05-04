@@ -1,7 +1,12 @@
+;;; **********************************************************************
+;;; $Name$
+;;; $Revision$
+;;; $Date$
 ;;;
 ;;; Supercollider examples, by Todd Ingalls. Load the file and then
-;;; execute the commented out (events ...) calls
-;;;
+;;; execute the (events ...) calls. If you are running under slime you
+;;; may need to add :wait #t to the events call, or alternately init
+;;; the stream using io, i.e.: (io "test.osc" :wait #t :verbose #t)
 
 (in-package :cm)
 
@@ -221,8 +226,8 @@
 	(prev-time 0))
     (do ((i 0 (+ i 2)))
         ((= i len))
-      (set! times (append! times (list (- (nth i env) prev-time))))
-      (set! levels (append! levels (list (nth (+ 1 i) env))))
+      (set! times (append! times (list (- (list-ref env i) prev-time))))
+      (set! levels (append! levels (list (list-ref env (+ 1 i)))))
       (set! prev-time (list-ref env i)))
     (pop times)
     (set! sc-env (list (pop levels) (length times) -99 -99))
