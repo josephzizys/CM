@@ -528,12 +528,14 @@
       int)))
     
 (define (u8vector->float vec)
-  (let* ((flo (u8vector->int vec))
-         (sign (if (= 1 (ldb (byte 1 31 ) flo)) -1 1))
-         (exponent (- (ldb (byte 8 23) flo) 150))
-         (fraction  (ldb (byte 24 0) flo)))
-    (exact->inexact (* fraction (expt 2 exponent) sign))))
-    
+  (let ((i (u8vector->uint vec)))
+    (if (zerop i)
+	0.0
+      (* (if (zerop (ash i -31)) 1.0 -1.0) 
+	 (expt 2 (- (logand (ash i -23) #xff) 127)) 
+	 (logior #x800000 (logand i #x7fffff)) 
+	 (expt 2 -23)))))
+
 (define (u8vector->string vec)
   (list->string (loop for i below (u8vector-length vec)
                    until (= i 0)
