@@ -529,12 +529,15 @@
     
 (define (u8vector->float vec)
   (let ((i (u8vector->uint vec)))
-    (if (zerop i)
-	0.0
-      (* (if (zerop (ash i -31)) 1.0 -1.0) 
-	 (expt 2 (- (logand (ash i -23) #xff) 127)) 
-	 (logior #x800000 (logand i #x7fffff)) 
-	 (expt 2 -23)))))
+    (if (zero? i)
+      0.0
+      (let ((val (* (if (zero? (ash i -31)) 1.0 -1.0) 
+                    (expt 2 (- (logand (ash i -23) #xff) 127)) 
+                    (logior #x800000 (logand i #x7fffff)) 
+                    (expt 2 -23))))
+        ;; scheme is not required to coerce 1*1.0 to a float if
+        ;; it can prove the result is exact.
+        (if (exact? val) (exact->inexact val) val)))))
 
 (define (u8vector->string vec)
   (list->string (loop for i below (u8vector-length vec)
