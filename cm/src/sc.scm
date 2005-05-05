@@ -1,9 +1,71 @@
-(define (return-init-args class)
-  (map (function slot-definition-name) (class-slots (class-of class))))
+;;; **********************************************************************
+;;; Copyright (C) 2005 Todd Ingalls, Heinrich Taube
+;;; 
+;;; This program is free software; you can redistribute it and/or
+;;; modify it under the terms of the GNU General Public License
+;;; as published by the Free Software Foundation; either version 2
+;;; of the License, or (at your option) any later version.
+;;; 
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;; 
+;;; **********************************************************************
 
-(define *sc-directory* "/Applications/SuperCollider3/")
+;;; $Name$
+;;; $Revision$
+;;; $Date$
 
-(define *play* "/usr/local/bin/sndplay")
+;; replaced by 'instance-slots' in mop.scm
+;(define (return-init-args class)
+;  (map (function slot-definition-name) (class-slots (class-of class))))
+
+(define *scsynth* #f)
+(define *sc-plugin-path* #f)
+(define *sc-synthdef-path* #f)
+
+;;;
+;;; attempt to find and set supercollider dirs...
+;;;;
+
+(let ((os (os-name )))
+  (cond ((member os '(darwin osx))
+         (set! *scsynth*
+               (if (file-exists? "/Applications/SuperCollider3/scsynth")
+                 "/Applications/SuperCollider3/scsynth"
+                 (if (file-exists? "/Applications/SuperCollider_f/scsynth")
+                   "/Applications/SuperCollider_f/scsynth"
+                   #f)))
+         (when *scsynth*
+           (set! *sc-plugin-path*
+                 (string-append (filename-directory *scsynth*)
+                                "plugins"))
+                 
+           (set! *sc-synthdef-path*
+                 (string-append (filename-directory *scsynth*)
+                                "synthdefs"))))
+        ((member os '(linux unix))
+         (set! *scsynth*
+               (if (file-exists? "/usr/local/bin/scsynth")
+                 "/usr/local/bin/scsynth"
+                 (if (file-exists? "/usr/bin/scsynth") 
+                   "/usr/bin/scsynth"
+                   #f)))
+         ;; it seems that plugins and synthdefs can be located anywhere
+         ;; on linux so dont even try to default these vars
+         )
+        ((member os '(win32))
+         (when (file-exists? "/Program Files/SuperCollider3/scsynth.exe")
+           (let ((dir "/Program Files/SuperCollider3/"))
+             ;; convert dir char to DOS \ for shell execution
+             (set! *scsynth* (namestring (truename dir)))
+             (set! *sc-plugin-path*
+                   (namestring
+                    (truename (string-append dir "plugins/"))))
+             (set! *sc-synthdef-path*
+                   (namestring
+                    (truename (string-append dir "synthdefs/")))))))))
 
 (define-class* <sc-file> (<event-file>)
   ((elt-type :init-value :byte :init-keyword :elt-type
@@ -35,64 +97,72 @@
   (list :aiff "AIFF" :wav "WAV" :sun "SUN" :ircam "IRCAM" :raw "RAW"))
 
 (define (play-sc-file file . args)
-  (let* ((output (list-prop args ':output))
-         (channels (list-prop args ':channels 2))
-         (playit (list-prop args ':play #t))
-         (fmat (list-prop args ':format ':int16))
-         (header #f)
-         (srate (list-prop args ':srate 44100))
-         (verbose (list-prop args ':verbose ))
-         (wait (list-prop args ':wait playit))
-         (synthdef-path (string-append *sc-directory* "synthdefs"))
-         (plugin-path (string-append *sc-directory* "plugins"))
-         (scsynth (string-append *sc-directory* "scsynth"))
-         (osc-file file )   ; no truename in scheme
-         (output-file #f)
-         (command #f))
-      ;; if output is specified with a path, output to that location
-      ;; if output is specified and is just file name with no path,
-      ;; output to same directory as *.osc file if output is not
-      ;; specified, output to "test.aiff" in same directory as *.osc
-      ;; file
-      (if output
-	(if (filename-directory output)
-          (set! output-file output)
-	  (set! output-file
-                (string-append (or (filename-directory osc-file) "")
-                               output)))
-        (set! output-file (string-append (or (filename-directory osc-file) "")
-                                         "test.aiff")))
-      ;; set :header the same as output file-type
-      (do ((l (length *sc-audio-header-types*))
-           (f (filename-type output-file))
-           (i 1 (+ i 2))
-           (x #f))
-          ((or header (not (< i l)))
-           (unless header
-             (err "Output file type ~s not one of ~s."
-                  f  *sc-audio-header-types*)))
-        (set! x (list-ref *sc-audio-header-types* i))
-        (if (string-ci=? f x) (set! header x)))
+  (let ((playit (list-prop args ':play #t)))
+    (if (and *scsynth* playit)
+      (let* ((output (list-prop args ':output))
+             (channels (list-prop args ':channels 2))
 
-      ;;if can't find sc environment variable set them
-      (if (not (env-var  "SC_SYNTHDEF_PATH"))
-	(set-env-var "SC_SYNTHDEF_PATH" synthdef-path))
-      (if (not (env-var  "SC_PLUGIN_PATH"))
-	(set-env-var "SC_PLUGIN_PATH" plugin-path))
-      ;; cobble up command to print/exec
-      (set! command (format #f
-                            "~S -N ~S _ ~S ~S ~A ~A -o ~S"
-                            scsynth
-                            osc-file
-                            output-file
-                            srate
-                            header
-                            (list-prop *sc-audio-format-types* fmat)
-                            channels))
-      (if verbose (format #t "~%; ~a" command))
-      (shell command :wait wait :output verbose)
-      (if playit (play output-file :wait #f))
-      file))
+             (fmat (list-prop args ':format ':int16))
+             (header #f)
+             (srate (list-prop args ':srate 44100))
+             (verbose (list-prop args ':verbose ))
+             (wait (list-prop args ':wait playit))
+             ;(synthdef-path (string-append *sc-directory* "synthdefs"))
+             ;(plugin-path (string-append *sc-directory* "plugins"))
+             ;(scsynth (string-append *sc-directory* "scsynth"))
+             (osc-file file )           ; no truename in scheme
+             (output-file #f)
+             (command #f))
+        ;; if output is specified with a path, output to that location
+        ;; if output is specified and is just file name with no path,
+        ;; output to same directory as *.osc file if output is not
+        ;; specified, output to "test.aiff" in same directory as *.osc
+        ;; file
+        (if output
+          (if (filename-directory output)
+            (set! output-file output)
+            (set! output-file
+                  (string-append (or (filename-directory osc-file) "")
+                                 output)))
+          (set! output-file (string-append
+                             (or (filename-directory osc-file) "")
+                             "test.aiff")))
+        ;; set :header the same as output file-type
+        (do ((l (length *sc-audio-header-types*))
+             (f (filename-type output-file))
+             (i 1 (+ i 2))
+             (x #f))
+            ((or header (not (< i l)))
+             (unless header
+               (err "Output file type ~s not one of ~s."
+                    f  *sc-audio-header-types*)))
+          (set! x (list-ref *sc-audio-header-types* i))
+          (if (string-ci=? f x) (set! header x)))
+
+        ;; if can't find sc environment variables set them on OSX,
+        ;; but these can be anywhere on linux so dont try unless
+        ;; user set them.
+        (if (and (not (env-var  "SC_SYNTHDEF_PATH"))
+                 *sc-synthdef-path*)
+          (set-env-var "SC_SYNTHDEF_PATH" *sc-synthdef-path*))
+        (if (and (not (env-var  "SC_PLUGIN_PATH"))
+                 *sc-plugin-path*)
+          (set-env-var "SC_PLUGIN_PATH" *sc-plugin-path*))
+        ;; cobble up command to print/exec
+        (set! command (format #f
+                              "~S -N ~S _ ~S ~S ~A ~A -o ~S"
+                              *scsynth*
+                              osc-file
+                              output-file
+                              srate
+                              header
+                              (list-prop *sc-audio-format-types* fmat)
+                              channels))
+        (if verbose (format #t "~%; ~a" command))
+        (shell command :wait wait :output verbose)
+        (if playit (play output-file :wait #f))
+        file)
+      #f)))
 
 (set-sc-output-hook! (function play-sc-file))
 
@@ -104,20 +174,31 @@
   )
 
 (define-method* (write-event (obj <scsynth>) (io <sc-file>) time)
-  (let ((fp (io-open io)))
-    (let ((synthname (symbol->string (class-name (class-of obj))))
-	  (slots (return-init-args obj)))
-      (set! (object-time io) time)
-      (write-bundle time (append!
-			  (list "/s_new" (string-downcase synthname)
-                                (slot-ref obj 'node)
-                                (slot-ref obj 'add-action)
-                                (slot-ref obj 'target))
-			  (loop for i in slots
-				unless (member i '(node add-action target time))
-				collect (keyword->string i)
-				and collect (slot-ref obj i)))
-                    fp))))
+  (let* ((fp (io-open io))
+         (synthname (symbol->string (class-name (class-of obj))))
+         (slots (instance-slots obj))
+         (inits (list #F)))
+    (set! (object-time io) time)
+    (write-bundle time 
+                  (cons* "/s_new"
+                         (string-downcase synthname)
+                         (slot-ref obj 'node)
+                         (slot-ref obj 'add-action)
+                         (slot-ref obj 'target)
+                         (do ((tail slots (cdr tail))
+                              (args inits))
+                             ((null? tail)
+                              (cdr inits))
+                           (unless (member (car tail)
+                                           '(node add-action 
+                                             target time))
+                             (set-cdr! args 
+                                       (list
+                                        (string-downcase
+                                         (symbol->string (car tail)))
+                                        (slot-ref obj (car tail))))
+                             (set! args (cddr args)))))
+                  fp)))
 
 (define-method* (import-set-slots (obj <scsynth>) lst)
   (slot-set! obj 'node (pop lst))
@@ -264,7 +345,8 @@
     (set! len (length lst))
     (do ((i 0 (+ i 2)))
 	((= i len))
-      (set! cv (append! cv (list (string->keyword (list-ref lst i)) (list-ref lst (+ 1 i ))))))
+      (set! cv (append! cv (list (string->keyword (list-ref lst i))
+				 (list-ref lst (+ 1 i ))))))
     (slot-set! obj 'controls-values cv)))
 
 
@@ -954,7 +1036,10 @@ time)
      fp)))
 
 (define-method* (import-set-slots (obj <buffer-setn>) lst)
-  (let ((bv #f) (len 0) (num-vals 0) (s-vals))
+  (let ((bv #f)
+        (len 0)
+        (num-vals 0)
+        (s-vals #f))
     (slot-set! obj 'bufnum (pop lst))
     (set! len (length lst))
     (do ((i 0))
@@ -1138,7 +1223,9 @@ time)
 		  fp)))
 
 (define-method* (import-set-slots (obj <control-setn>) lst)
-  (let ((len (length lst)) (num-vals 0) (s-vals))
+  (let ((len (length lst))
+        (num-vals 0)
+        (s-vals #f))
     (if (= len 3)
 	(begin
          (slot-set! obj 'bus (pop lst))
@@ -1243,15 +1330,25 @@ time)
 	"/c_fill" 'control-fill))
 
 (define (return-sc-class-symbol strg)
-  (let ((pos (position strg *sc-command-object-mappings* :test #'equalp)))
-    (if pos
-	(list-ref *sc-command-object-mappings* (+ 1 pos))
-      #f)))
+  (do ((tail *sc-command-object-mappings* (cddr tail))
+       (clas #f))
+      ((or (null? tail) clas) clas)
+    (if (string=? strg (car tail))
+      (set! clas (cadr tail)))))
 
 (define (collect-type-list vec)
-  (loop for i across vec
-	until (= i 0)
-	collect (code-char i)))
+  (let ((l (u8vector-length vec))
+        (h (list #f)))
+    (do ((i 0 (+ i 1))
+         (x h)
+         (v #f))
+        ((not (< i l)) (cdr x))
+      (set! v (u8vector-ref vec i))
+      (cond ((= v 0)
+             (set! i l))
+            (else
+             (set-cdr! x (list (integer->char v)))
+             (set! x (cdr x)))))))
 
 (define (parse-osc-vec vec)
   (let ((cmd #f)
@@ -1260,51 +1357,51 @@ time)
         (typelist #f)
         (obj #f)
         (cmd-args #f))
-
-    (if (not (equal (u8vector->string (u8vector-subseq vec 0 7)) "#bundle"))
-	(err "bad file")
+    (if (not (string=? (u8vector->string (u8vector-subseq vec 0 7))
+                       "#bundle"))
+      (err "bad file")
       (begin
-	(set! timestamp (u8vector->uint (u8vector-subseq vec 8 12)))
-	(set! timestamp
-              (+ timestamp (exact->inexact (/ (u8vector->uint
-                                               (u8vector-subseq vec 12 16))
-                                              16777215))))
-	(set! cmd (u8vector->string (u8vector-subseq vec 20)))
-	(set! pos (+ 20 (length cmd)))
+       (set! timestamp (u8vector->uint (u8vector-subseq vec 8 12)))
+       (set! timestamp
+             (+ timestamp (exact->inexact (/ (u8vector->uint
+                                              (u8vector-subseq vec 12 16))
+                                             16777215))))
+       (set! cmd (u8vector->string (u8vector-subseq vec 20)))
+       (set! pos (+ 20 (length cmd)))
 	
-	(set! pos (+ pos (- 4 (mod pos 4))))
-	(set! typelist (collect-type-list (u8vector-subseq vec pos)))
-	(set! pos (+ (length typelist) pos))
-	(set! pos (+ pos (- 4 (mod pos 4))))
-	(set! cmd-args
-              (loop for i in (rest typelist) with x = 0
-                   do
-                   (cond ((char= i #\s)
-                          (set! x (u8vector->string (u8vector-subseq vec pos)))
-                          (incf pos (+ (length x) (- 4 (mod (length x) 4)))))
-                         ((char= i #\i)
-                          (set! x (u8vector->int
-                                   (u8vector-subseq vec pos (incf pos 4)))))
-                         ((char= i #\f)
-                          (set! x (u8vector->float 
-                                   (u8vector-subseq vec pos (incf pos 4))))))
-                 collect x))
-	(if (equal cmd "/s_new")
-          (begin
-           (set! obj (make (find-class* (string->expr (first cmd-args)))
-                           :time timestamp))
-           (import-set-slots obj (rest cmd-args)))
-	  (begin
-	    (let ((class-symbol (return-sc-class-symbol cmd)))
-	      (if class-symbol
-		  (begin
-		    (set! obj (make (find-class* class-symbol)
-                                    :time timestamp))
-		    (import-set-slots obj  cmd-args))))))
-	obj))))
+       (set! pos (+ pos (- 4 (modulo pos 4))))
+       (set! typelist (collect-type-list (u8vector-subseq vec pos)))
+       (set! pos (+ (length typelist) pos))
+       (set! pos (+ pos (- 4 (modulo pos 4))))
+       (set! cmd-args
+             (loop for i in (rest typelist) with x = 0
+                do
+                (cond ((char= i #\s)
+                       (set! x (u8vector->string (u8vector-subseq vec pos)))
+                       (incf pos (+ (length x) (- 4 (modulo (length x) 4)))))
+                      ((char= i #\i)
+                       (set! x (u8vector->int
+                                (u8vector-subseq vec pos (incf pos 4)))))
+                      ((char= i #\f)
+                       (set! x (u8vector->float 
+                                (u8vector-subseq vec pos (incf pos 4))))))
+                collect x))
+       (if (equal cmd "/s_new")
+         (begin
+          (set! obj (make (find-class* (string->expr (first cmd-args)))
+                          :time timestamp))
+          (import-set-slots obj (rest cmd-args)))
+         (begin
+          (let ((class-symbol (return-sc-class-symbol cmd)))
+            (if class-symbol
+              (begin
+               (set! obj (make (find-class* class-symbol)
+                               :time timestamp))
+               (import-set-slots obj  cmd-args))))))
+       obj))))
 
 (define (read-osc-file fd)
-  (let ((seq))
+  (let ((seq #f))
     (with-open-file (str fd :direction :input :element-type '(unsigned-byte 8))
       (set! seq (loop for i from 0 
 		      with len = 0
