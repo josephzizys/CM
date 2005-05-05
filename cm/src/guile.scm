@@ -112,7 +112,8 @@
                ((< n bot)
                 (loopy (* n base) (- e 1)))
                (else
-                (values (inexact->exact n) e sign))))))))
+                (values (round (inexact->exact n))
+                        e sign))))))))
 
 ;;;
 ;;;
