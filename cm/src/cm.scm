@@ -1,9 +1,7 @@
 ;;; $Name$
 ;;; $Revision$
 ;;; $Date$
-
-;;; intermediate conversion, trying to support guile gauche stklos and
-;;; (possibly) chicken
+;;;
 ;;; (load "/Lisp/scm/src/cm.scm")
 
 (let ((this-file #f)
@@ -11,7 +9,7 @@
       (file-list '("loop" "level1" "utils" "mop" "objects"
                    "io" "scheduler" "sco" "clm" "clm2"
                    "midi1" "midi2" "midi3" "data" "scales" "spectral"
-                   "patterns")))
+                   "patterns" "osc" "sc")))
   (cond-expand
    (guile
     (set! this-file (port-filename (current-load-port)))
@@ -20,11 +18,11 @@
     (define (force-output) #f)
     (set! this-file (port-name (current-load-port)))
     (set! file-list (cons "gauche" file-list)))
-   (chicken
-    (set! this-file 
-          (eval (with-input-from-string "##sys#current-load-file" read)))
-    (set! file-list (list "chicken" "loop"))
-    (load-verbose #f))
+;   (chicken
+;    (set! this-file 
+;          (eval (with-input-from-string "##sys#current-load-file" read)))
+;    (set! file-list (list "chicken" "loop"))
+;    (load-verbose #f))
    (stklos
     #f)
    )
@@ -47,8 +45,7 @@
      (set! *load-path* (cons load-path *load-path*))
      (set! load-path "")
      )
-    (chicken
-     #f))
+    )
 
    (let loadem ((tail file-list))
         (cond ((null? tail) #f)
