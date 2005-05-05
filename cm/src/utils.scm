@@ -540,7 +540,7 @@
         (if (exact? val) (exact->inexact val) val)))))
 
 (define (u8vector->string vec)
-  (list->string (loop for i across (u8vector-length vec)
+  (list->string (loop for i across vec
                    until (= i 0)
                    collect (integer->char i))))
 
