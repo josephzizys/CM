@@ -75,7 +75,7 @@
 		       :dur (between 10 20)
 		       :amp .1
 		       :pan (pickl '(-1.0 0 1.0)))
-	   wait (between 2 3)))
+	   wait (between 2.0 3.0)))
 
 ; (events (sc-simple-1 10) "sc-simple-1.osc" )
 
@@ -110,7 +110,7 @@
 	   sprout (new node-set :node (+ i 1000)
 		       :controls-values '(:pan -1.0)
 		       :time (+ (now) 2))
-	   wait (between 2 3)))
+	   wait (between 2.0 3.0)))
 
 ; (events (sc-simple-2 10) "sc-simple-2.osc" :pad 20 )
 
@@ -136,7 +136,7 @@
 				(list :pan (interpl j pan-env)) 
 				:time (now))
 			   wait .1)
-	   wait (between 2 3)))
+	   wait (between 2.0 3.0)))
 
 ; (events (sc-simple-3 10) "sc-simple-3.osc" :pad 20)
 
