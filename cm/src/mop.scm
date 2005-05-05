@@ -18,6 +18,10 @@
 ;;; $Revision$
 ;;; $Date$
 
+(define (instance-slots inst)
+  (map (function slot-definition-name)
+       (class-slots (class-of inst))))
+
 ;;;
 ;;; metaclass for events (classes with parameters).
 ;;;
