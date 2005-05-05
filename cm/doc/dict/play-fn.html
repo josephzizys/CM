@@ -64,7 +64,7 @@ If CLM is loaded then <code>play</code> passes <var>file</var> directly to <code
 <p>
 If CLM is not loaded then <code>play</code> executes the shell command
 string <code>*audio-player*</code> to play <var>file</var>. CM
-attempts to provide a default audio player command for each operating
+attempts to provide a valid audio player command for each operating
 system:
 </p>
 <ul>
@@ -95,7 +95,7 @@ arguments specfied to <code>play</code>.
 <dd>
 <p>
 Executes the shell command string <code>*midi-player*</code> to
-play <var>file</var>. CM attempts to provide a default MIDI player
+play <var>file</var>. CM attempts to provide a valid MIDI player
 command for each operating system:
 </p>
 
@@ -113,14 +113,41 @@ player in a ~/.cminit.lisp initialization file.</p>
 
 <dt><a href="sc-file-cls.html">sc-file</a> (.osc)</dt>
 <dd>
+<p>
+Executes the shell command string <code>*scsynth*</code> and passes
+it <var>file</var> and any keyword value supported by <a
+href="sc-file-cls.html">sc-file</a>. 
+
+<p>
+CM attempts to find a valid <code>*scsynth*</code> command for each
+operating system:
+</p>
+
+<ul>
+<li>OS X: /Applications/SuperCollider3 or
+/Applications/SuperCollider_f tested for <code>scsynth</code>.
+<li>Unix, Linux, Cygwin: /usr/local/bin and /usr/bin tested for <code>scsynth</code></li>
+<li>Windows: \Program Files\SuperCollider3\scsynth.exe</li>
+</ul>
+
+<p>
+If the SC environment variables SC_PLUGIN_PATH and SC_SYNTHDEF_PATH
+are not set then CM attempts to set them using the values of
+of <code>*sc-synthdef-path*</code>
+and <code>*sc-plugin-path*</code>. The <code>*scsynth*</code>, <code>*sc-plugin-path*</code>
+and <code>*sc-synthdef-path*</code> variables can be reset in a
+~/.cminit.lisp initialization file.
+</p>
+
 </dd>
 
 <dt><a href="sco-file-cls.html">sco-file</a> (.sco)</dt>
 <dd>
 <p>
-Executes the Csound shell command string <code>*csound*</code> and
+Executes the shell command string <code>*csound*</code> and
 passes it <var>file</var> and any of the following keyword values:
 </p>
+
 <dl>
 <dt> <code class="keyword">:orchestra</code> <var>orcfile</var> </dt>
 <dd>
