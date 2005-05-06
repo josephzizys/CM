@@ -97,8 +97,13 @@
                   :test #'string=)))
     (and x (cdr x) )))
 
-(defun set-env-var (var)
-  (format t "set-env-var: fixme to work in cmucl"))
+(defun set-env-var (name value)
+  (let ((cell (assoc (string name) ext:*environment-list* :test #'equalp
+                     :key #'string)))
+    (if cell
+        (setf (cdr cell) (string value))
+      (push (cons (intern (string name) "KEYWORD") (string value))
+	    ext:*environment-list*))))
 
 (defun cm-image-dir ()
   (let ((img (member "-core" ext:*command-line-strings*)))
