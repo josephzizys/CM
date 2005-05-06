@@ -1286,17 +1286,9 @@ time)
         (slot-set! obj 'value (append! (slot-ref obj 'value)
                                        (list (list-ref lst (+ 2 i)))))))))
 
-;;;import events stuff
-
-(define (sc-read-bytes str num)
-  (let ((vec (make-u8vector num))
-	(b #f))
-    (dotimes (j num)
-      (set! b (read-byte str #f #f))
-      (if b 
-	  (set! (aref vec j) b)
-	(set! vec #f)))
-    vec))
+;;;
+;;; import events 
+;;;
 
 (define *sc-command-object-mappings* 
   (list "/d_load" 'load-synthdef 
@@ -1400,20 +1392,34 @@ time)
                (import-set-slots obj  cmd-args))))))
        obj))))
 
-(define (read-osc-file fd)
-  (let ((seq #f))
-    (with-open-file (str fd :direction :input :element-type '(unsigned-byte 8))
-      (set! seq (loop for i from 0 
-		      with len = 0
-		      with mess = #f
-		      until (not len)
-		      do
-		      (set! len (sc-read-bytes str 4))
-		      (if len
-			  (begin
-			    (set! len (u8vector->int len))
-			    (set! mess (sc-read-bytes str len))))
-		      collect (parse-osc-vec mess)))
-      (set! seq (butlast seq 2)) ;kludge
-      (make <seq> :subobjects seq))))
+(define (sc-read-bytes str num)
+  (do ((v (make-u8vector num))
+       (j 0 (+ j 1))
+       (b #f))
+      ((or (not v) (= j num)) v)
+    (set! b (file-byte str))
+    (if (file-eof? b)
+      (set! v #f)
+      (u8vector-set! v j b))))
+
+(define-method* (import-events (file <sc-file>) . args)
+  args
+  (with-open-io (obj file :input)
+    (do ((str (io-open obj))
+         (seq (list ))
+         (len 0)
+         (mess #f))
+        ((not len)
+         (make <seq> :subobjects (reverse! (cddr seq)))) ;kludge
+      (set! len (sc-read-bytes str 4))
+      (when len
+        (set! len (u8vector->int len))
+        (set! mess (sc-read-bytes str len)))
+      (push (parse-osc-vec mess) seq))))
+
+
+
+
+
+
 
