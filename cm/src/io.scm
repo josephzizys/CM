@@ -255,13 +255,17 @@
        (lambda ()
 	 (let ((,val #f)) 
            (set! ,io (open-io ,path ,dir ,@args))
-           (initialize-io ,io)
+           ,@ (if (eq? dir ':output)
+                `((initialize-io ,io))
+                (list))
            (set! ,val (begin ,@body))
            (set! ,err? #f)
            (if ,err? #f ,val)))
        (lambda ()
          (when ,io
-           (deinitialize-io ,io)
+           ,@ (if (eq? dir ':output)
+                `((deinitialize-io ,io))
+                (list))
            (close-io ,io ,err?)))))))
 
 ;;;
