@@ -76,11 +76,12 @@
 
 (define-method* (close-io (io <sc-file>) . mode)
   mode
-  (let ((pad (list-prop (event-stream-args io) ':pad))
-        (fp (io-open io)))
-    (if pad
-      (write-bundle (+ pad (object-time io)) '("/c_set" 0 0) fp)
-      (write-bundle (+ 5 (object-time io)) '("/c_set" 0 0) fp)))
+  (when (eq? (io-direction io) ':output)
+    (let ((pad (list-prop (event-stream-args io) ':pad))
+          (fp (io-open io)))
+      (if pad
+        (write-bundle (+ pad (object-time io)) '("/c_set" 0 0) fp)
+        (write-bundle (+ 5 (object-time io)) '("/c_set" 0 0) fp))))
   (next-method))
 
 (define (set-sc-output-hook! fn)
@@ -1334,7 +1335,7 @@ time)
     (do ((i 0 (+ i 1))
          (x h)
          (v #f))
-        ((not (< i l)) (cdr x))
+        ((not (< i l)) (cdr h))
       (set! v (u8vector-ref vec i))
       (cond ((= v 0)
              (set! i l))
