@@ -240,6 +240,9 @@
 (defun file-line (fil)
   (read-line fil nil .eofmarker.))
 
+(defun file-byte (fil)
+  (read-byte fil nil .eofmarker.))
+
 ;(defun open-output-file (file)
 ;  (open file :direction :output
 ;        :if-does-not-exist :create

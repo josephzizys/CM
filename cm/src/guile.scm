@@ -56,6 +56,12 @@
 (define (read-byte fp)
   (char->integer (read-char fp)))
 
+(define (file-byte fp)
+  ;; gad what a crock! ill have to look at srfi56
+  (let ((c (read-char fp)))
+    (if (eof-object? c) c
+        (integer->char c))))
+
 (define (write-byte by fp)
   (write-char (integer->char by) fp))
 

@@ -58,6 +58,8 @@
 
 (define (delete-file f)  (sys-unlink f))
 
+(define file-byte read-byte)
+
 ;; System calls
 
 (define (os-name )
