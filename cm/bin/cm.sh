@@ -311,6 +311,7 @@ CWD=`pwd`
 
 if [ "$CM_ROOT_DIR" ] ; then
   LOC="$CM_ROOT_DIR"
+  BIN="$LOC/bin"
   export PATH="$LOC/bin:$PATH"
 else
   PTU=`echo "$ARGV0" | sed 's:[^/]*$::;s:\(.\)/$:\1:;'`
@@ -322,6 +323,7 @@ else
     msg_x "Aborting."
   else
     export PATH="$LOC:$PATH"
+    BIN="$LOC"
     LOC="$LOC/.."               # we are now in cm/bin, so get back out of it
   fi
 fi
@@ -739,9 +741,11 @@ if [ "$EDITOR_OPT" ] ; then
           LISP_EXE=`wintendofy "$LISP_EXE"`
         fi
       fi
-      make_lisp_cmd
-      LCM=`echo "$LISP_CMD" |tr -d "'" |sed 's:":\\\":g;'`
-      INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
+#      make_lisp_cmd
+#      LCM=`echo "$LISP_CMD" |tr -d "'" |sed 's:":\\\":g;'`
+#      INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
+      LCM="$BIN/cm.sh -l $LISP_EXE"
+      INI="(let ((load-path (cons \"$LOC/etc/xemacs\" load-path))) (load \"$EL2\") (lisp-listener \"$LCM\"))"
       EDITOR_CMD="'$EDITOR_EXE' $EOPTS -eval '$INI'"
       if [[ "$EDITOR_EXE" == *client ]] ; then
         EDITOR_CMD="$EDITOR_CMD -batch"
