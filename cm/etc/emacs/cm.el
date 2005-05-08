@@ -59,7 +59,8 @@
 (cond ((member 'slime features)
        (add-hook 'slime-connected-hook
                  (lambda () (slime-repl-send-string "(cm)")))
-       (define-key slime-mode-map "\C-x\C-e" 'slime-eval-at-mouse))
+       (if (equal system-type 'darwin)
+           (define-key slime-mode-map [(alt e)] 'slime-eval-at-mouse)))
       (t
        (load "listener.el")))
 
@@ -71,46 +72,66 @@
   ;; expr it sends its contents to repl so its printed there instead
   ;; of the minibuffer.
   (interactive)
-  (cond ((and mark-active (not (null (mark))))
-         (slime-eval-region (region-beginning) (region-end)))
-        ((or (looking-at "\\s\)")
-             (save-excursion
-               (backward-char 1)
-               (looking-at "\\s\)")))
-         (if (looking-at "\\s\)")
-             (forward-char 1)) 
-         (slime-eval-last-expression))
-        ((or (looking-at "\\s\(")
-             (save-excursion (forward-char 1) (looking-at "\\s\(")))
-         (let ((b (bounds-of-thing-at-point 'sexp)))
-           (if b
+  (save-excursion
+    (let ((bag '(?\   ?\t ?\r ?\n))
+          beg end pos)
+      (cond ((and mark-active (not (null (mark))))
+             ;; region active, parse each sexp and send
+             ;(slime-eval-region (region-beginning) (region-end))
+             (setq beg (region-beginning))
+             (setq end (region-end))
+             (goto-char beg)
+             (while (< beg end)
+               (while (and (< beg end)
+                           (member (char-after) bag))
+                 (setq beg (+ beg 1))
+                 (forward-char 1))
+               (goto-char beg)
+               (when (< beg end)
+                 (setq pos (bounds-of-thing-at-point 'sexp))
+                 (cond ((not pos)
+                        (setq beg end))
+                       (t
+                        (slime-repl-send-string
+                         (buffer-substring-no-properties (car pos)
+                                                         (cdr pos)))
+                        (setq beg (+ (cdr pos) 1))
+                        (goto-char beg))))))
+            ((or (looking-at "\\s\)")
+                 (save-excursion (backward-char 1)
+                                 (looking-at "\\s\)")))
+             (if (not (looking-at "\\s\)")) (backward-char 1))
+             (setq pos (bounds-of-thing-at-point 'sexp))
+             (when pos
                (slime-repl-send-string
-                (buffer-substring-no-properties (car b) (cdr b))))))
-        ;; if on eol, space or tab find nominal end of expr and if it
-        ;; closes a list then eval it
-        ((looking-at "[$ 	]")
-         (save-excursion
-           (let (beg end)
-             (end-of-defun)
-             (backward-char 1)
-             (if (looking-at "\\s\)")
-                 (progn 
-                   (forward-char 1)
-                   (setq end (point))
-                   (beginning-of-defun)
-                   (setq beg (point))
-                   (slime-repl-send-string
-                    (buffer-substring-no-properties beg end)))))))
-        (t
-         ;; else we are not on whitespace, get surrounding sexp and send
-         (save-excursion
-           (let ((b (bounds-of-thing-at-point 'sexp)))
-             (if b
+                (buffer-substring-no-properties (car pos) 
+                                                (cdr pos)))))
+            ((or (looking-at "\\s\(")
+                 (save-excursion (forward-char 1)
+                                 (looking-at "\\s\(")))
+             (if (not (looking-at "\\s\(")) (forward-char 1))
+             (if pos (forward-char 1))
+             (setq pos (bounds-of-thing-at-point 'sexp))
+             (when pos
+               (slime-repl-send-string
+                (buffer-substring-no-properties (car pos)
+                                                (cdr pos)))))
+            ;; if on whitespace, find nominal end of expr and if it
+            ;; closes a list then eval it
+            ((member (char-after) bag) ;(looking-at "[$ 	]")
+             (beginning-of-defun)
+             (when (looking-at "\\s\(")
+               (setq pos (bounds-of-thing-at-point 'sexp))
+               (when pos
                  (slime-repl-send-string
-                  (buffer-substring-no-properties (car b) (cdr b)))))))
-        ))
-
-
+                  (buffer-substring-no-properties (car pos) (cdr pos))))))
+            (t
+             ;; else we are not on whitespace, get surrounding sexp and send
+             (setq pos (bounds-of-thing-at-point 'sexp))
+             (when pos
+               (slime-repl-send-string
+                (buffer-substring-no-properties (car pos)
+                                                (cdr pos)))))))))
 
 ;;;
 ;;; Claim scratch buffer for Lisp mode if its empty.
