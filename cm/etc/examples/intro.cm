@@ -11,6 +11,8 @@
 ;;; function with different input values.
 ;;;
 
+(in-package :cm)
+
 (define (sinus len cycl low hi rhy dur amp)
   ;; sinus is a function that creates a process. the process
   ;; will play midi notes in a "sine wave" of cycl periods over
@@ -51,26 +53,31 @@
 
 (events (sinus 80 4 20 100 .1 .1 .6) "test.mid")
 
-;; Each type of output file (.mid, .clm, .sco, and so on) allows you
-;; to set a "hook" that is called after a file of that type is
-;; written.  CM provides several default hooks you can use to play
-;; midi files on Linux, Mac, or Windows. Choose the one for your
-;; OS. If you are in scheme the (function ...) wrapper is a noop:
+;; Each type of output file (.mid, .clm, .sco, and so on) has a shell
+;; command is called after a file of that type is written to play it
+;; CM attempts to define a valid player for your machine when it first
+;; starts up.  Before attempting to make sound first check the value
+;; of *midi-player* to see if it is valid for your machine, if it is
+;; not then set it to the proper command string:
 
-(set-midi-output-hook! (function linux-play-midi-file)) ; quicktime
-(set-midi-output-hook! (function osx-play-midi-file)) ; timidity
-(set-midi-output-hook! (function win-play-midi-file)) ; window's player
+*midi-player*
 
-;; After setting the appropriate output hook you can generate a file
-;; and with a bit of luck you may actually hear something!
+;; Now lets generate a midi file and play it!
 
 (events (sinus 80 4 20 100 .1 .1 .6) "test.mid")
 
-;; Setting the hook to false turns it off.
+;; If you dont want to hear anything, pass :play nil to events. THe
+;; setting is "sticky", ie you only need to set it each time you want
+;; to change the value.
 
-(set-midi-output-hook! false)  ; turn it off if you want.
+(events (sinus 80 4 20 100 .1 .1 .6) "test.mid" :play #f)
 
-;; Setting hooks is a fine thing to do in your ~/.cminit.lisp file.
+;; now turn it back on
+
+(events (sinus 80 4 20 100 .1 .1 .6) "test.mid" :play #t)
+
+;; Setting *midi-player* and *audio-player* is a fine thing to do in
+;; your ~/.cminit.lisp file.
 
 ;;; **********************************************************************
 ;;;
@@ -121,6 +128,7 @@
 ;; Once you've created an object with a name you can reference
 ;; it by specifying its name with the #& read macro. If your Lisp
 ;; doesnt allow this then use (find-object 'stuff) instead of #&stuff
+;; This may not work in some schemes....
 
 (object-name #&stuff)
 (list-subobjects #&stuff)
@@ -140,25 +148,20 @@
 
 ;;; **********************************************************************
 ;;;
-;;; 3. Initializing IO objects. 
-;;; the 'io' macro lets you initialize various options in files and ports.
-;;; For example, you can set "file versions" to true or false using the
-;;; io macro. Versioning creates file names with numbers append to the
-;;; basename so that sucessive outputs don't overwrite the same file.
-;;; (Tip: whenever you need to specify a boolean value you can use
-;;; CM's 'true' and 'false" variables instead of hardwiring t/nil or
-;;; #f/#t into your code. This will allow your programs run in either 
-;;; scheme or cltl without modification.)
+;;; 3. Initializing IO objects.  the 'io' macro lets you initialize
+;;; various options in files and ports.  For example, you can set
+;;; "file versioning" to true or false using the io macro instead of
+;;; passing it to events.. Versioning creates file names with numbers
+;;; append to the basename so that sucessive outputs don't overwrite
+;;; the same file.
 ;;;
 
-(set-midi-file-versions! true)
+(io "test.mid" :versioning #t)
 
 (events (sinus 60 5.7 50 80 .1 .1 .6)   ; do this several times..
         "test.mid")
 
-(set-midi-file-versions! false)         ; turn back off.
-
-(events (sinus 60 5.7 50 80 .1 .1 .6) "test.mid")
+(events (sinus 60 5.7 50 80 .1 .1 .6) "test.mid" :versioning #f)
 
 
 ;;; **********************************************************************
@@ -240,7 +243,7 @@
 
 ;; ... and now write some simp events to a midi file.
 
-(events (simp-2 20 false) "test.mid")
+(events (simp-2 20 #f) "test.mid")
 
 
 ;;; **********************************************************************
@@ -454,15 +457,15 @@
   (let* ((w 0)				; weight of C, A, G and E is 0
          (prob (pval w))		; pval evals W as pattern runs
          (pat1 (new random
-		 :of `((g3 weight ,prob) ; delay G's weight using pval
-		       (a3 weight ,prob) ; delay A's weight using pval
+		 :of `((g3 :weight ,prob) ; delay G's weight using pval
+		       (a3 :weight ,prob) ; delay A's weight using pval
 		       bf3
-		       (c4 weight ,prob) ; delay C's weight using pval
+		       (c4 :weight ,prob) ; delay C's weight using pval
 		       d4
-		       (e4 weight ,prob)	; delay E's weight using pval
+		       (e4 :weight ,prob)	; delay E's weight using pval
 		       f4
-		       (g4 weight ,prob)	; delay G's weight using pval
-		       (r max 1 weight .25)) ; allow rests
+		       (g4 :weight ,prob)	; delay G's weight using pval
+		       (r :max 1 :weight .25)) ; allow rests
 		 :for 1))
          (pat2 (new random of (list 1/16
 				    1/8
@@ -638,9 +641,9 @@
 
 (events (playharms) "test.mid" :channel-tuning 4)
 
-(events (playharms) "test.mid" :channel-tuning true)
+(events (playharms) "test.mid" :channel-tuning #t)
 
-(events (playharms) "test.mid" :channel-tuning false)
+(events (playharms) "test.mid" :channel-tuning #f)
 
 
 
