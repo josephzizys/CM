@@ -144,14 +144,20 @@ sanitize_path () {
 
 CM_PLATFORM=
 OSX_EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs
+OSX_XEMACS=/Applications/XEmacs.app/Contents/MacOS/XEmacs
 
 resolve_bin () {
-  # OSX Emacs: check /Applications/Emacs.app first
+  # OSX (X)Emacs: check /Applications/(X)Emacs.app first
   if test $CM_PLATFORM && 
      imatch_head_token $CM_PLATFORM darwin &&
      imatch_end_token $1 emacs && 
      test -x $OSX_EMACS ; then 
     echo $OSX_EMACS
+  elif test $CM_PLATFORM && 
+     imatch_head_token $CM_PLATFORM darwin &&
+     imatch_end_token $1 xemacs && 
+     test -x $OSX_XEMACS ; then 
+    echo $OSX_XEMACS
   else
     # can't use return code b/c cygwin 'which' is broken
     EXE=`which "$1" 2>/dev/null`
@@ -163,7 +169,6 @@ resolve_bin () {
     fi
   fi
 }
-
 
 #
 # Cygwin Hacks
