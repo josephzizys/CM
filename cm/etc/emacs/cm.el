@@ -1,5 +1,5 @@
 ;; load this file into Emacs or Xemacs to load customizations
-;; for Common Music running
+;; for running CLM, CM, CMN
 ;;;
 ;;; Add CM/CLM/CMN extensions to automode.
 
@@ -24,7 +24,8 @@
 (put 'new 'common-lisp-indent-function 1)
 (put 'io 'common-lisp-indent-function 1)
 (put 'defobject 'common-lisp-indent-function 'defun)
-(put 'process 'common-lisp-indent-function 0)
+(put 'process 'common-lisp-indent-function 'defun)
+(put 'defprocess 'common-lisp-indent-function 0)
 (put 'with-sound 'common-lisp-indent-function 'defun)
 (put 'definstrument 'common-lisp-indent-function 'defun)
 (put 'dopairs 'common-lisp-indent-function  1)
@@ -45,14 +46,26 @@
 
 (pending-delete-mode 1)
 
+;;;
+;;; Slime-aware Lisp listener.
+;;;
+
+;;; if listener-own-frame is true then slime starts in a new frame
+;;; otherwise it starts in the current frame.
+
+(defvar listener-own-frame (if (member 'slime features) nil t))
+
 (defun lisp-listener (cmd)
   (interactive (list (or inferior-lisp-program
 			 (read-string "Shell command to start Lisp: "))))
-  (cond ((not (slime-connected-p))
-         (switch-to-buffer-other-frame (current-buffer))
-         (slime cmd))
-        (t
-         (switch-to-buffer-other-frame (slime-repl-buffer nil)))))
+  (if (not listener-own-frame)
+      (if (not (slime-connected-p))
+          (slime cmd)
+        (switch-to-buffer (slime-repl-buffer nil)))
+    (if (not (slime-connected-p))
+        (progn (switch-to-buffer-other-frame (current-buffer))
+               (slime cmd))
+      (switch-to-buffer-other-frame (slime-repl-buffer nil)))))
 
 (global-set-key "\C-x\l" 'lisp-listener) 
 
@@ -65,12 +78,11 @@
        (load "listener.el")))
 
 (defun slime-eval-at-mouse ()
-  ;; a better c-x c-e function for slime. is completely transparent,
-  ;; ie if evaling at end of expr it behaves like slime's
-  ;; eval-last-expression, otherwise it evals at point, whole region,
-  ;; inside symbols and in whitespace (whole defun). if not at end of
-  ;; expr it sends its contents to repl so its printed there instead
-  ;; of the minibuffer.
+  ;; a slime eval function that prints to the repl instead of the mini
+  ;; buffer and handles all types of evaluation: (point) after expr,
+  ;; (point) on expr start or end, (point) to (mark) region, (point)
+  ;; inside/on symbols. if called on on white space it does an eval
+  ;; toplevel form.
   (interactive)
   (save-excursion
     (let ((bag '(?\   ?\t ?\r ?\n))
@@ -134,7 +146,7 @@
                                                 (cdr pos)))))))))
 
 ;;;
-;;; Claim scratch buffer for Lisp mode if its empty.
+;;; Claim virgin scratch buffer for Lisp mode if its empty.
 
 (let ((scratch (get-buffer "*scratch*")))
   (if scratch
