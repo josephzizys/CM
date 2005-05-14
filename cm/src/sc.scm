@@ -76,7 +76,7 @@
 
 (define-method* (close-io (io <sc-file>) . mode)
   mode
-  (when (eq? (io-direction io) ':output)
+  (if (equal? (io-direction io) :output)
     (let ((pad (list-prop (event-stream-args io) ':pad))
           (fp (io-open io)))
       (if pad
@@ -167,49 +167,7 @@
 
 (set-sc-output-hook! (function play-sc-file))
 
-(define-class* <scsynth> (<event>)
-  ((node :init-value -1 :init-keyword :node)
-   (add-action :init-value 1 :init-keyword :add-action)
-   (target :init-value 0 :init-keyword :target))
-  :name 'scsynth
-  )
 
-(define-method* (write-event (obj <scsynth>) (io <sc-file>) time)
-  (let* ((fp (io-open io))
-         (synthname (symbol->string (class-name (class-of obj))))
-         (slots (instance-slots obj))
-         (inits (list #F)))
-    (set! (object-time io) time)
-    (write-bundle time 
-                  (cons* "/s_new"
-                         (string-downcase synthname)
-                         (slot-ref obj 'node)
-                         (slot-ref obj 'add-action)
-                         (slot-ref obj 'target)
-                         (do ((tail slots (cdr tail))
-                              (args inits))
-                             ((null? tail)
-                              (cdr inits))
-                           (unless (member (car tail)
-                                           '(node add-action 
-                                             target time))
-                             (set-cdr! args 
-                                       (list
-                                        (string-downcase
-                                         (symbol->string (car tail)))
-                                        (slot-ref obj (car tail))))
-                             (set! args (cddr args)))))
-                  fp)))
-
-(define-method* (import-set-slots (obj <scsynth>) lst)
-  (slot-set! obj 'node (pop lst))
-  (slot-set! obj 'add-action (pop lst))
-  (slot-set! obj 'target (pop lst))
-  (let ((len (length lst)))
-    (do ((i 0 (+ i 2)))
-	((= i len))
-      (slot-set! obj (string->expr (list-ref lst i)) 
-                 (list-ref lst (+ 1 i))))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (define-class* <sc-cmd> (<event>) 
@@ -341,7 +299,7 @@
      fp)))
 
 (define-method* (import-set-slots (obj <node-set>) lst)
-  (let ((cv #f) (len 0))
+  (let ((cv '()) (len 0))
     (slot-set! obj 'node (pop lst))
     (set! len (length lst))
     (do ((i 0 (+ i 2)))
@@ -362,13 +320,13 @@
     (set! msg (list "/n_setn" node))
     (dolist (i ctrl-values)
       (if (keyword? i)
-          (set! msg (append! msg (list (keyword->string i))))
-	(if (pair? i)
-	    (begin
-	      (set! msg (append! msg (list (length i))))
-	      (dolist (j i)
-		(set! msg (append! msg (list (exact->inexact j))))))
-	  (set! msg (append! msg (list (exact->inexact i)))))))
+        (set! msg (append! msg (list (keyword->string i))))
+        (if (pair? i)
+          (begin
+            (set! msg (append! msg (list (length i))))
+            (dolist (j i)
+              (set! msg (append! msg (list (exact->inexact j))))))
+          (set! msg (append! msg (list (exact->inexact i)))))))
     msg))
 
 (define-method* (write-event (obj <node-setn>) (io <sc-file>) time)
@@ -376,11 +334,12 @@
     (set! (object-time io) time)
     (write-bundle time
      (node-setn (slot-ref obj 'node)
-	       (slot-ref obj 'controls-values))
+                (slot-ref obj 'controls-values))
      fp)))
 
+
 (define-method* (import-set-slots (obj <node-setn>) lst)
-  (let ((cv #f) (len 0) (num-vals 0))
+  (let ((cv '()) (len 0) (num-vals 0))
     (slot-set! obj 'node (pop lst))
     (set! len (length lst))
     (do ((i 0))
@@ -1287,6 +1246,126 @@ time)
         (slot-set! obj 'value (append! (slot-ref obj 'value)
                                        (list (list-ref lst (+ 2 i)))))))))
 
+(define *sc-env-curves* (list 'step 0 'linear 1 'lin 1 'exp 2 'exponential 2 'sine 3 'welch 4
+			      :step 0 :linear 1 :lin 1 :exp 2 :exponential 2 :sine 3 :welch 4))
+
+(defobject sc-env ()
+  ((envelope :initform #f)
+   (curve :initform 1)
+   (duration :initform #f)
+   (scale :initform 1.0)
+   (offset :initform 0)
+   (release-node :initform #f)
+   (loop-node :initform #f))
+  (:parameters envelope duration scale offset release-node loop-node))
+
+;(expand-sc-env (new sc-env :envelope '(0 0 10 1 100 0) :duration 10 :curve :welch))
+
+(define-method* (sc-env->list (obj <sc-env>))
+  (let* ((env (slot-ref obj 'envelope))
+	 (curves (slot-ref obj 'curve))
+	 (len (length env))
+	 (sc-env-list (list))
+	 (levels (list))
+	 (times (list))
+	 (full-time #f)
+	 (time-scale #f)
+	 (prev-time 0)
+	 (curve-list (list)))
+    (if (null (slot-ref obj 'release-node))
+	(slot-set! obj 'release-node -99))
+    (if (null (slot-ref obj 'loop-node))
+	(slot-set! obj 'loop-node -99)) 
+    (do ((i 0 (+ i 2)))
+	((= i len))
+      (set! times (append! times (list (- (list-ref env i) prev-time))))
+      (set! levels (append! levels (list (list-ref env (+ 1 i)))))
+      (set! prev-time (list-ref env i)))
+    (pop times)
+    (set! full-time (apply (function +) times))
+    (set! time-scale (exact->inexact (/ (slot-ref obj 'duration) full-time)))
+    (dotimes (i (length times))
+	     (list-set! times i (* (list-ref times i) time-scale)))
+    (dotimes (i (length levels))
+	     (list-set! levels i (+ (slot-ref obj 'offset) (* (list-ref levels i) (slot-ref obj 'scale)))))
+    (cond ((number? curves)
+	   (dotimes (i (length times))
+		    (set! curve-list (append! curve-list (list curves)))))
+	  ((symbol? curves)
+	   (dotimes (i (length times))
+		    (set! curve-list (append! curve-list (list (list-prop *sc-env-curves* curves))))))
+	  ((keyword? curves)
+	   (dotimes (i (length times))
+		    (set! curve-list (append! curve-list (list (list-prop *sc-env-curves* curves))))))
+	  ((list? curves)
+	   (dotimes (i (length times))
+		    (set! curve-list (append! curve-list (list (if (symbol? (list-ref curves i))
+								   (list-prop *sc-env-curves* (list-ref curves i))
+								   (list-ref curves i))))))))
+    (set! sc-env-list (list (pop levels) (length times) (slot-ref obj 'release-node) (slot-ref obj 'loop-node)))
+    (dotimes (i (length times))
+	     (set! sc-env-list (append! sc-env-list (list (pop levels) (pop times) (pop curve-list) 0))))
+    sc-env-list))
+	   
+		   
+
+(define-class* <scsynth> (<event>)
+  ((node :init-value -1 :init-keyword :node)
+   (add-action :init-value 1 :init-keyword :add-action)
+   (target :init-value 0 :init-keyword :target))
+  :name 'scsynth )
+
+
+
+(define-method* (write-event (obj <scsynth>) (io <sc-file>) time)
+  (let* ((fp (io-open io))
+         (node-set-list '())
+         (synthname (symbol->string (class-name (class-of obj))))
+         (slots (instance-slots obj))
+         (inits (list #F)))
+    (set! (object-time io) time)
+    (write-bundle time 
+                  (cons* "/s_new"
+                         (string-downcase synthname)
+                         (slot-ref obj 'node)
+                         (slot-ref obj 'add-action)
+                         (slot-ref obj 'target)
+                         (do ((tail slots (cdr tail))
+                              (args inits))
+                             ((null? tail)
+                              (cdr inits))
+                           (unless (member (car tail)
+                                           '(node add-action 
+                                                  target time))
+                                       ;(null (slot-ref obj (car tail))))
+                             (cond ((list? (slot-ref obj (car tail)))
+                                    (progn
+                                     (set! node-set-list (append! node-set-list (list (symbol->keyword (car tail)))))
+                                     (set! node-set-list (append! node-set-list (list (slot-ref obj (car tail)))))))
+                                   ((equal? (find-class* 'sc-env) (class-of (slot-ref obj (car tail))))
+                                    (set! node-set-list (append! node-set-list (list (symbol->keyword (car tail)))))
+                                    (set! node-set-list (append! node-set-list (list (sc-env->list (slot-ref obj (car tail)))))))
+                                   (t
+                                    (set-cdr! args 
+                                              (list
+                                               (string-downcase
+                                                (symbol->string (car tail)))
+                                               (slot-ref obj (car tail))))
+                                    (set! args (cddr args)))))))
+                  fp)))
+
+
+
+(define-method* (import-set-slots (obj <scsynth>) lst)
+  (slot-set! obj 'node (pop lst))
+  (slot-set! obj 'add-action (pop lst))
+  (slot-set! obj 'target (pop lst))
+  (let ((len (length lst)))
+    (do ((i 0 (+ i 2)))
+	((= i len))
+      (slot-set! obj  (string->symbol (list-ref lst i))
+                 (list-ref lst (+ 1 i))))))
+
 ;;;
 ;;; import events 
 ;;;
@@ -1331,18 +1410,15 @@ time)
 
 (define (collect-type-list vec)
   (let ((l (u8vector-length vec))
-        (h (list #f)))
+        (h '()))
     (do ((i 0 (+ i 1))
-         (x h)
-         (v #f))
-        ((not (< i l)) (cdr h))
-      (set! v (u8vector-ref vec i))
-      (cond ((= v 0)
-             (set! i l))
-            (else
-             (set-cdr! x (list (integer->char v)))
-             (set! x (cdr x)))))))
-
+         (j #f))
+        ((or (= i l) (equal? j 0)))
+      (set! j (u8vector-ref vec i))
+      (unless (= j 0)
+        (set! h (append! h (list (integer->char j))))))
+    h))
+      
 (define (parse-osc-vec vec)
   (let ((cmd #f)
         (pos 0)
@@ -1358,10 +1434,9 @@ time)
        (set! timestamp
              (+ timestamp (exact->inexact (/ (u8vector->uint
                                               (u8vector-subseq vec 12 16))
-                                             16777215))))
+                                             2147483647))))
        (set! cmd (u8vector->string (u8vector-subseq vec 20)))
-       (set! pos (+ 20 (length cmd)))
-	
+       (set! pos (+ 20 (string-length cmd)))
        (set! pos (+ pos (- 4 (modulo pos 4))))
        (set! typelist (collect-type-list (u8vector-subseq vec pos)))
        (set! pos (+ (length typelist) pos))
@@ -1369,29 +1444,32 @@ time)
        (set! cmd-args
              (loop for i in (rest typelist) with x = 0
                 do
-                (cond ((char= i #\s)
+                (cond ((char=? i #\s)
                        (set! x (u8vector->string (u8vector-subseq vec pos)))
-                       (incf pos (+ (length x) (- 4 (modulo (length x) 4)))))
-                      ((char= i #\i)
+                       (incf pos (+ (string-length x) (- 4 (modulo (string-length x) 4)))))
+                      ((char=? i #\i)
                        (set! x (u8vector->int
                                 (u8vector-subseq vec pos (incf pos 4)))))
-                      ((char= i #\f)
+                      ((char=? i #\f)
                        (set! x (u8vector->float 
                                 (u8vector-subseq vec pos (incf pos 4))))))
                 collect x))
-       (if (equal cmd "/s_new")
+       (if (equal? cmd "/s_new")
          (begin
-          (set! obj (make (find-class* (string->expr (first cmd-args)))
-                          :time timestamp))
-          (import-set-slots obj (rest cmd-args)))
+           (set! obj (make (find-class* (string->symbol (first cmd-args)))
+                       :time timestamp))
+           (import-set-slots obj (rest cmd-args)))
          (begin
-          (let ((class-symbol (return-sc-class-symbol cmd)))
-            (if class-symbol
-              (begin
-               (set! obj (make (find-class* class-symbol)
-                               :time timestamp))
-               (import-set-slots obj  cmd-args))))))
+           (let ((class-symbol (return-sc-class-symbol cmd)))
+             (if class-symbol
+               (begin
+                 (set! obj (make (find-class* class-symbol)
+                             :time timestamp))
+                 (import-set-slots obj cmd-args))))))
        obj))))
+
+;(import-events "sc-simple-1.osc")
+
 
 (define (sc-read-bytes str num)
   (do ((v (make-u8vector num))
@@ -1402,6 +1480,8 @@ time)
     (if (file-eof? b)
       (set! v #f)
       (u8vector-set! v j b))))
+
+
 
 (define-method* (import-events (file <sc-file>) . args)
   args
@@ -1417,8 +1497,6 @@ time)
         (set! len (u8vector->int len))
         (set! mess (sc-read-bytes str len)))
       (push (parse-osc-vec mess) seq))))
-
-
 
 
 
