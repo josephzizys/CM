@@ -973,7 +973,8 @@
 
 (defun string->intern (form  &optional env)
   ;; (string->symbol x)
-  `(intern ,(scheme->cltl (second form) env) :cm))
+  ;;  `(intern ,(scheme->cltl (second form) env) :cm)
+  `(intern (string-upcase ,(scheme->cltl (second form) env)) :cm))
 
 ;;;
 ;;; input/output
