@@ -33,10 +33,7 @@
 
 (define err errorf)
 
-(define (use-package sym) #f)
-
 (define (read-macro-set! char fn) #f)
-
 
 ;; Directories, files and ports
 
