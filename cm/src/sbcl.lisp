@@ -93,10 +93,10 @@
                               *default-pathname-defaults*))))
 
 (defun env-var (var)
-  (sb-posix:getenv var))
+  (sb-posix::getenv var))
 
 (defun set-env-var (var val)
-  (sb-posix:putenv (format nil "~a=~a" var val)))
+  (sb-posix::putenv (format nil "~a=~a" var val)))
 
 (defun cm-image-dir ()
   (let ((img (second (member "--core" sb-ext:*posix-argv*
