@@ -47,6 +47,16 @@
 (pending-delete-mode 1)
 
 ;;;
+;;;
+;;;
+
+(defvar inferior-lisp-init nil)
+
+(defun cm ()
+  (interactive )
+  (lisp-listener inferior-lisp-program "(cm)"))
+
+;;;
 ;;; Slime-aware Lisp listener.
 ;;;
 
@@ -55,23 +65,31 @@
 
 (defvar listener-own-frame (if (member 'slime features) nil t))
 
-(defun lisp-listener (cmd)
+(defun lisp-listener (cmd &optional expr)
   (interactive (list (or inferior-lisp-program
 			 (read-string "Shell command to start Lisp: "))))
   (if (not listener-own-frame)
       (if (not (slime-connected-p))
-          (slime cmd)
+          (progn 
+            (when expr
+              (add-hook 'slime-connected-hook
+                        (lambda () (slime-repl-send-string expr))))
+            (slime cmd)
+            )
         (switch-to-buffer (slime-repl-buffer nil)))
     (if (not (slime-connected-p))
-        (progn (switch-to-buffer-other-frame (current-buffer))
-               (slime cmd))
+        (progn
+          (when expr
+            (add-hook 'slime-connected-hook
+                      (lambda () (slime-repl-send-string expr))))
+          (switch-to-buffer-other-frame (current-buffer))
+          (slime cmd)
+          )
       (switch-to-buffer-other-frame (slime-repl-buffer nil)))))
 
-(global-set-key "\C-x\l" 'lisp-listener) 
+;(global-set-key "\C-x\l" 'lisp-listener) 
 
 (cond ((member 'slime features)
-       (add-hook 'slime-connected-hook
-                 (lambda () (slime-repl-send-string "(cm)")))
        (if (equal system-type 'darwin)
            (define-key slime-mode-map [(alt e)] 'slime-eval-at-mouse)))
       (t
