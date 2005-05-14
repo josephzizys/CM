@@ -538,7 +538,8 @@
         val))))
 
 (define (u8vector->string vec)
-  (list->string (loop for i across vec
+  (list->string (loop for j below (u8vector-length vec)
+                   for i = (u8vector-ref vec j)
                    until (= i 0)
                    collect (integer->char i))))
 
