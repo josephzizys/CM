@@ -538,10 +538,27 @@
         val))))
 
 (define (u8vector->string vec)
-  (list->string (loop for j below (u8vector-length vec)
-                   for i = (u8vector-ref vec j)
-                   until (= i 0)
-                   collect (integer->char i))))
+  (let* ((vec-len (u8vector-length vec))
+         (str-list '()))
+    (do ((i 0 (+ i 1))
+         (j #f))
+        ((or (= i vec-len) (equal? j 0)))
+      (set! j (u8vector-ref vec i))
+      (unless (= j 0)
+        (set! str-list (append! str-list (list (integer->char j))))))
+    (list->string str-list)))
+
+;;; changed 5/13/05 tmi
+;;;in guile at least the loop was not working properly
+;;;because vector-length was being called and
+;;;getting wrong-type-arg error with a u8vector
+;;;
+;; (define (u8vector->string vec)
+;;   (list->string (loop for i across vec
+;;                    until (= i 0)
+;;                    collect (integer->char i))))
+
+
 
 (define (u8vector-subseq vec beg . arg)
   (let* ((end (if (null? arg) (u8vector-length vec)
