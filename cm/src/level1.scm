@@ -321,6 +321,11 @@
 
 (define (logn num base) (/ (log num) (log base)))
 
+(define (signum n)
+  (cond ((= n 0) 0)
+        ((< n 0) -1)
+        (else +1)))
+
 ;;;
 ;;; byte spec
 ;;;
@@ -581,15 +586,30 @@
 ; (find 1 '())
 ; (position 1 '((a a) (b b) (c c) (1 1) (2 2) (3 3))  ':key car ':from-end #t)
 
-
-
-
-
-
 (define (strip-chars str . args)
   (let ((chars (if (null? args) '(#\space #\tab #\return)
                    (car args))))
     (string-trim-both str (lambda (c) (member c chars)))))
+
+(define (string-read str . args)
+  ;; args is: start eoftok
+  (let ((len (string-length str))
+        (beg (if (null? args) 0 (car args)))
+        (eof (if (or (null? args) (null? (cdr args)))
+               ':eof
+               (car (cdr args)))))
+    (call-with-input-string 
+     str
+     (lambda (sp) ; string port
+       ;; advance to starting pos
+       (do ((p 0 (+ p 1)))
+           ((not (< p beg)) #f)
+         (read-char sp))
+       (if (not (< beg len))
+         (values eof 0)
+         (let ((val (read sp)))
+           (values (if (eof-object? val) eof val)
+                   (port-position sp))))))))
 
 ;;;
 ;;; unix filename twiddling. filenames are just strings.

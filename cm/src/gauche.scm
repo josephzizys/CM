@@ -57,6 +57,10 @@
 
 (define file-byte read-byte)
 
+(define (port-position prt)
+  (port-tell prt))
+
+
 ;; System calls
 
 (define (os-name )
@@ -111,6 +115,34 @@
     (do ((i 0 (+ i 1)))
         ((= i len) new)
       (string-set! new i (char-downcase (string-ref str i))))))
+
+(define (string-read str . args)
+  (if (null? args)
+      (read-from-string str)
+      (read-from-string str (car args))))
+
+(define (string-trim-both str fn)
+  (let ((len (string-length str))
+        (beg #f)
+        (end #f))
+    (do ((i 0 (+ i 1)))
+        ((not (< i len)) #f)
+      (if ( fn (string-ref str i))
+          (set! beg (+ i 1))
+          (set! i len)))
+    (do ((i (- len 1) (- i 1)))
+        ((< i 0) #f)
+      (if ( fn (string-ref str i))
+          (set! end i)
+          (set! i -1)))
+    (if beg
+        (if (= beg len)
+            ""
+            (if end (substring str beg end)
+                (substring str beg len)))
+        (if end (substring str 0 end)
+            str))))
+
 
 ;;; Keywords. Gauche keywords are cltl keywords, Yay! 
 
