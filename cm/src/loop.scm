@@ -990,13 +990,11 @@
   (cltl2-loop args))
 
 (define (cltl2-loop forms)
-  (let ((iter nil)
-        (return nil))
-    (setf iter (parse-iteration 'iter forms *loop-operators*))
-    ;; the cadddr of RETURN operator is a function that
-    ;; returns the form for returning from iteration.
-    (setf return (funcall (cadddr (assoc 'return *loop-operators*))
-                          (car (loop-returning iter))))
+  (let* ((iter (parse-iteration 'iter forms *loop-operators*))
+         ;; the cadddr of RETURN operator is a function that
+         ;; returns the form for returning from iteration.
+         (retn (apply (cadddr (assoc 'return *loop-operators*))
+                      (list (car (loop-returning iter))))))
     `(, 'let ,(loop-bindings iter)
              ,@(loop-initially iter)
              (block nil
@@ -1014,7 +1012,7 @@
                     (go :loop)
                     t ; :done
                     ,@(loop-finally iter)
-                    ,return)))))
+                    ,retn)))))
 
 ;;;
 ;;; loop tests.
