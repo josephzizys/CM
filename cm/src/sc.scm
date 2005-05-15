@@ -1419,57 +1419,61 @@ time)
         (set! h (append! h (list (integer->char j))))))
     h))
       
-(define (parse-osc-vec vec)
+(define (parse-osc-vec vec func)
+  ;; parse next bundle from vec, apply func to timestamp, command and
+  ;; command args
   (let ((cmd #f)
         (pos 0)
         (timestamp #f)
         (typelist #f)
-        (obj #f)
         (cmd-args #f))
-    (if (not (string=? (u8vector->string (u8vector-subseq vec 0 7))
-                       "#bundle"))
-      (err "bad file")
-      (begin
-       (set! timestamp (u8vector->uint (u8vector-subseq vec 8 12)))
-       (set! timestamp
-             (+ timestamp (exact->inexact (/ (u8vector->uint
-                                              (u8vector-subseq vec 12 16))
-                                             2147483647))))
-       (set! cmd (u8vector->string (u8vector-subseq vec 20)))
-       (set! pos (+ 20 (string-length cmd)))
-       (set! pos (+ pos (- 4 (modulo pos 4))))
-       (set! typelist (collect-type-list (u8vector-subseq vec pos)))
-       (set! pos (+ (length typelist) pos))
-       (set! pos (+ pos (- 4 (modulo pos 4))))
-       (set! cmd-args
-             (loop for i in (rest typelist) with x = 0
-                do
-                (cond ((char=? i #\s)
-                       (set! x (u8vector->string (u8vector-subseq vec pos)))
-                       (incf pos (+ (string-length x) (- 4 (modulo (string-length x) 4)))))
-                      ((char=? i #\i)
-                       (set! x (u8vector->int
-                                (u8vector-subseq vec pos (incf pos 4)))))
-                      ((char=? i #\f)
-                       (set! x (u8vector->float 
-                                (u8vector-subseq vec pos (incf pos 4))))))
-                collect x))
-       (if (equal? cmd "/s_new")
-         (begin
+    (unless (string=? (u8vector->string (u8vector-subseq vec 0 7))
+                      "#bundle")
+      (err "bad file"))
+
+    (set! timestamp (u8vector->uint (u8vector-subseq vec 8 12)))
+    (set! timestamp
+          (+ timestamp (exact->inexact (/ (u8vector->uint
+                                           (u8vector-subseq vec 12 16))
+                                          2147483647))))
+    (set! cmd (u8vector->string (u8vector-subseq vec 20)))
+    (set! pos (+ 20 (string-length cmd)))
+    (set! pos (+ pos (- 4 (modulo pos 4))))
+    (set! typelist (collect-type-list (u8vector-subseq vec pos)))
+    (set! pos (+ (length typelist) pos))
+    (set! pos (+ pos (- 4 (modulo pos 4))))
+    (set! cmd-args
+          (loop for i in (rest typelist) with x = 0
+             do
+             (cond ((char=? i #\s)
+                    (set! x (u8vector->string (u8vector-subseq vec pos)))
+                    (incf pos (+ (string-length x)
+                                 (- 4 (modulo (string-length x) 4)))))
+                   ((char=? i #\i)
+                    (set! x (u8vector->int
+                             (u8vector-subseq vec pos (incf pos 4)))))
+                   ((char=? i #\f)
+                    (set! x (u8vector->float 
+                             (u8vector-subseq vec pos (incf pos 4))))))
+             collect x))
+    ;; return whatever func does
+    ( func timestamp cmd cmd-args)))
+
+(define (bundle->object timestamp cmd cmd-args)
+  ;; create an object from bundle data
+  (let ((obj #f))
+    (cond ((equal? cmd "/s_new")
            (set! obj (make (find-class* (string->symbol (first cmd-args)))
-                       :time timestamp))
+                           :time timestamp))
            (import-set-slots obj (rest cmd-args)))
-         (begin
+          (else
            (let ((class-symbol (return-sc-class-symbol cmd)))
              (if class-symbol
-               (begin
-                 (set! obj (make (find-class* class-symbol)
-                             :time timestamp))
-                 (import-set-slots obj cmd-args))))))
-       obj))))
-
-;(import-events "sc-simple-1.osc")
-
+                 (begin
+                  (set! obj (make (find-class* class-symbol)
+                                  :time timestamp))
+                  (import-set-slots obj cmd-args))))))
+    obj))
 
 (define (sc-read-bytes str num)
   (do ((v (make-u8vector num))
@@ -1480,8 +1484,6 @@ time)
     (if (file-eof? b)
       (set! v #f)
       (u8vector-set! v j b))))
-
-
 
 (define-method* (import-events (file <sc-file>) . args)
   args
@@ -1496,9 +1498,35 @@ time)
       (when len
         (set! len (u8vector->int len))
         (set! mess (sc-read-bytes str len)))
-      (push (parse-osc-vec mess) seq))))
+      (push (parse-osc-vec mess (function bundle->object))
+            seq))))
 
-
-
-
-
+(define (dumposc file . args)
+  (let ((out (if (null? args) #t (car args)))
+        (fil #f))
+    (dynamic-wind
+     (lambda () #f)
+     (lambda () 
+       (set! fil (open-file file ':input ':byte))
+       (when fil
+         (format out "~%[")
+         (do ((len 0)
+              (one #f)
+              (vec #f))
+             ((not len) #f)
+           (set! len (sc-read-bytes fil 4))
+           (when len
+             (set! len (u8vector->int len))
+             (set! vec (sc-read-bytes fil len)))
+           (parse-osc-vec vec (lambda (time cmd args)
+                                (format out (if one ",~%" "~%"))
+                                (format out "[~s" time)
+                                (format out ", [~a" cmd)
+                                (dolist (c args)
+                                  (format out ", ~a" c))
+                                (format out "]]")
+                                (set! one #t))))
+         (format out "~%]~%")))
+     (lambda ()
+       (when fil (close-file fil ':input))))
+    (if fil out #f)))
