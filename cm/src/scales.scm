@@ -362,12 +362,12 @@
   ;; insure ascending mode order in tuning
   ;; first place all notes in middle octave
   (set! notes (if (symbol? (car notes))
-                (mapcar (lambda (n) 
-                          (or (note-name n tuning)
-                              (err "Note '~s' not defined in ~s."
-                                   n tuning)))
-                        notes)
-                (mapcar (lambda (k) (pitch-class k tuning)) notes)))
+                (map (lambda (n) 
+                       (or (note-name n tuning)
+                           (err "Note '~s' not defined in ~s."
+                                n tuning)))
+                     notes)
+                (map (lambda (k) (pitch-class k tuning)) notes)))
   (let* ((old (car notes))
          (pc? (number? old))
          (oct 0)
@@ -395,8 +395,8 @@
         ((:steps ) 
          (if (symbol? (car v))
            (begin
-            (warn "Bad :step value ~s, use :degrees to pass notes to a mode."
-                  v)
+            (err "Bad :step value ~s, use :degrees to pass notes to a mode."
+                 v)
             (set! spec v)
             (set! type ':degrees))
            (begin
@@ -765,8 +765,9 @@
            false))
     (when (and (pair? args) (member (first args) %hertz)
                (odd? (length args)))
-      (warn "Found :HZ tag, use the :HZ keyword parameter instead: ~s"
-            (list* 'note ':hz true (rest args)))
+;;    seems michael hates the warning :)
+;;      (warn "Found :HZ tag, use the :HZ keyword parameter instead: ~s"
+;;            (list* 'note ':hz true (rest args)))
       (set! args (list* ':hz true (rest args))))
     (dopairs (sym val args)
       (case sym
@@ -895,8 +896,9 @@
            false))
     (when (and (pair? args)(member (first args) %hertz)
                (odd? (length args)))
-      (warn "Found :hz tag, use the :hz keyword parameter instead: ~s"
-            (list* 'note ':hz true (rest args)))
+;;      seems michael hates this warning :)      
+;;      (warn "Found :hz tag, use the :hz keyword parameter instead: ~s"
+;;            (list* 'note ':hz true (rest args)))
       (set! args (list* ':hz true (rest args))))
     (dopairs (sym val args)
       (case sym

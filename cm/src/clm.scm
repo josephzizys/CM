@@ -353,17 +353,17 @@
 (define (import-progn form translate exclude include)
   ;; walk progn body to translate forms
   (let ((body (loop for f in (cdr form)
-                    for r = (import-form f translate exclude include t)
+                    for r = (import-form f translate exclude include #t)
                     when r collect r)))
     (if body
-      `(progn ,@ body)
+      `(begin ,@ body)
       #f)))
 
 (define (import-with-sound form translate exclude include)
   ;; walk with-sound body to translate forms. return T as second
   ;; value so forms are "spliced" into output file.
   (values (loop for f in (cddr form)
-                for r = (import-form f translate exclude include t)
+                for r = (import-form f translate exclude include #t)
                 when r collect r) 
           #t))
 

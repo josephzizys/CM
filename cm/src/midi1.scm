@@ -2821,7 +2821,7 @@
     (when countoff 
       (set! num (- (abs num))))		; ensure num is negative
     ;; convert to 14-bit two's-complement
-    (set! num (n-bit-twoscomp num 14 t))
+    (set! num (n-bit-twoscomp num 14 #t))
     (make-sysex-data +real-time-id+
 		     device-id
 		     +notation-information-sub-id+
@@ -2962,7 +2962,7 @@
                             num)
                            (else
                             (n-bit-bytes num 2 7 #t)))
-		     (nibblize t xtnd))))
+		     (nibblize #t xtnd))))
 
 ;;; Special Setup messages
 ;;; 
@@ -3131,7 +3131,7 @@
 ;;; Delete Event Start/Stop means to delete the matching (event number and
 ;;; time) event (with or without additional information) from the Cue List. 
 
-(define (make-event-start-point-sysex-data event-nr hr mn sc fr ff . arg)
+(define (make-event-start-point-sysex-data event-nr hr mn sc fr ff . args)
   (with-args (args &key (format +smpte-format-30fps+) 
                    (device-id +all-device-ids+))
     (%make-setup-data device-id
@@ -3139,7 +3139,7 @@
 		      format hr mn sc fr ff
 		      event-nr)))
 
-(define (make-event-stop-point-sysex-data event-nr hr mn sc fr ff . arg)
+(define (make-event-stop-point-sysex-data event-nr hr mn sc fr ff . args)
   (with-args (args &key (format +smpte-format-30fps+)
                    (device-id +all-device-ids+))
     (%make-setup-data device-id 
@@ -3148,7 +3148,7 @@
 		      event-nr)))
 
 (define (make-xtnd-event-start-point-sysex-data event-nr hr mn sc fr 
-                                                ff data . arg)
+                                                ff data . args)
   (with-args (args &key (format +smpte-format-30fps+) 
                    (device-id +all-device-ids+))
     (%make-setup-data device-id 
@@ -3157,7 +3157,7 @@
 		      event-nr data)))
 
 (define (make-xtnd-event-stop-point-sysex-data event-nr hr mn sc fr
-                                               ff data . arg)
+                                               ff data . args)
   (with-args (args &key (format +smpte-format-30fps+) 
                    (device-id +all-device-ids+))
     (%make-setup-data device-id
@@ -3166,7 +3166,7 @@
 		      event-nr data)))
 
 (define (make-delete-event-start-point-sysex-data event-nr hr mn sc fr
-                                                  ff . arg)
+                                                  ff . args)
   (with-args (args &key (format +smpte-format-30fps+) 
                    (device-id +all-device-ids+))
     (%make-setup-data device-id 
@@ -3175,7 +3175,7 @@
 		      event-nr)))
 
 (define (make-delete-event-stop-point-sysex-data event-nr hr mn sc fr
-                                                 ff . arg)
+                                                 ff . args)
   (with-args (args &key (format +smpte-format-30fps+)
                    (device-id +all-device-ids+))
     (%make-setup-data device-id 

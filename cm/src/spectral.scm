@@ -242,8 +242,8 @@
             ;; ignore partials lower than lowest note
             ;; in standard scale
             (unless (< (caar tail) low) 
-              (setf (caar tail)
-                    (if (eq type ':note)
+              (set! (caar tail)
+                    (if (eq? type ':note)
                       (note (caar tail) :hz #t)
                       (keynum (caar tail) :hz #t)))))))
       (unless (eq? type #f)

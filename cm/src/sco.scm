@@ -281,7 +281,7 @@
                          (if (char=? (string-ref raw i) #\;)
                            (set! f i)))))
                   (if pos (set! raw (substring raw 0 pos)))
-                  (set! line (string-trim '(#\space #\tab) raw))))))
+                  (set! line (strip-chars raw))))))
           (cond ((file-eof? line)
                  (set! stop #t))
                 ((string=? line "")
@@ -359,7 +359,7 @@
                   (set! list (sort list
                                    (lambda (a b)
                                      (< (cadr a) (cadr b)))))
-                  (format t "done!"))
+                  (format #t "done!"))
            (set! list (reverse! list)))
          (sco-write-and-load io output defs list)
          )

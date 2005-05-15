@@ -838,7 +838,7 @@
                                             (obj (cadr tail)))
                                        (set! (cdr tail) (list))
                                        obj)
-                                     (progn
+                                     (begin
                                        (hash-set! tabl 
                                                   (channel-note-hash m)
                                                   (list))

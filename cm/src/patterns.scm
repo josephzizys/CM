@@ -752,20 +752,20 @@
                        (random-item-datum n)))
                  (lst (list)))
              ;; push in reverse order.
-             (unless (null (random-item-max n))
+             (unless (null? (random-item-max n))
                (push (expand-pattern-value (random-item-max n)) lst)
                (push ':max lst))
-             (unless (or (not (numberp (random-item-min n)))
+             (unless (or (not (number? (random-item-min n)))
                          (= (random-item-min n) 1))
                (push (expand-pattern-value (random-item-min n)) lst)
                (push ':min lst))
-             (unless (and (numberp (random-item-weight n))
+             (unless (and (number? (random-item-weight n))
                           (= (random-item-weight n) 1))
                (push (expand-pattern-value (random-item-weight n))
                      lst)
                
                (push ':weight lst))
-             (if (null lst)
+             (if (null? lst)
                dat (cons 'list (cons dat lst)))))))
     (append (list :of (cons 'list
                             (loop for x in (car (pattern-data obj))
@@ -1365,7 +1365,7 @@
   (append
    (list ':of (cons 'list (loop for x in (car (pattern-data obj))
                                 collect (expand-pattern-value x))))
-   (if (equal (rotation-change obj) 0)
+   (if (equal? (rotation-change obj) 0)
      (list)
      (list ':rotations
            (expand-pattern-value (rotation-change obj))))))
