@@ -1061,7 +1061,7 @@
       (+ val (mod (- freq val) modulus)))))
 
 (define-method* (scale-mod (freq <symbol>) modulus . args)
-  (with-args (args &key (offset t) (in *scale*) accidental)
+  (with-args (args &key (offset #t) (in *scale*) accidental)
     (tuning-keynum->note in (scale-mod (keynum freq) modulus
 				       :offset offset :in in)
 			 accidental #t)))

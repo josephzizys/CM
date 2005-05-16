@@ -1524,12 +1524,12 @@
                             (midimsg-data2 msg)))
                    ((= size 2)
                     (format stream " ~s" (midimsg-data1 msg)))
-                   (t (when delimit 
-                        (format stream ">")
-                        (set! delimit #f))
-                      (when (sysex-p msg)
-                        (format stream "~%")
-                        (print-sysex-data #t #f 0 data length))))))
+                   (else (when delimit 
+                           (format stream ">")
+                           (set! delimit #f))
+                         (when (sysex-p msg)
+                           (format stream "~%")
+                           (print-sysex-data #t #f 0 data length))))))
           ((midi-meta-message-p msg)
            (cond ((or (midi-channel-p msg)
                       (midi-port-p msg))
