@@ -761,6 +761,7 @@
   (slot-set! obj 'args (pop lst)))
 
 
+
 (defobject buffer-alloc (sc-cmd)
  ((bufnum :initform #f)
   (frames :initform #f)
@@ -1260,7 +1261,6 @@ time)
    (loop-node :initform #f))
   (:parameters envelope duration scale offset release-node loop-node))
 
-
 (define-method* (sc-env->list (obj <sc-env>))
   (let* ((env (slot-ref obj 'envelope))
 	 (curves (slot-ref obj 'curve))
@@ -1273,9 +1273,9 @@ time)
 	 (time-scale #f)
 	 (prev-time 0)
 	 (curve-list (list)))
-    (if (null (slot-ref obj 'release-node))
+    (if (not (slot-ref obj 'release-node))
 	(slot-set! obj 'release-node -99))
-    (if (null (slot-ref obj 'loop-node))
+    (if (not (slot-ref obj 'loop-node))
 	(slot-set! obj 'loop-node -99)) 
     (do ((i 0 (+ i 2)))
 	((= i len))
@@ -1286,9 +1286,9 @@ time)
     (set! full-time (apply (function +) times))
     (set! time-scale (exact->inexact (/ (slot-ref obj 'duration) full-time)))
     (dotimes (i (length times))
-	     (list-set! times i (* (list-ref times i) time-scale)))
+      (list-set! times i (* (list-ref times i) time-scale)))
     (dotimes (i (length levels))
-	     (list-set! levels i (+ (slot-ref obj 'offset) (* (list-ref levels i) (slot-ref obj 'scale)))))
+      (list-set! levels i (+ (slot-ref obj 'offset) (* (list-ref levels i) (slot-ref obj 'scale)))))
     (cond ((number? curves)
 	   (dotimes (i (length times))
              (set! curve-num-list (append! curve-num-list (list curves)))
@@ -1346,6 +1346,7 @@ time)
          (write-event (make <buffer-gen> :bufnum (slot-ref obj 'bufnum) :flags :wavetable :command (car (slot-ref obj 'with-gen))
                             :args (car (cdr (slot-ref obj 'with-gen)))) io time))))
 
+
 (define-class* <scsynth> (<event>)
   ((node :init-value -1 :init-keyword :node)
    (add-action :init-value 1 :init-keyword :add-action)
@@ -1379,7 +1380,7 @@ time)
                                    ((equal? (find-class* 'sc-env) (class-of (slot-ref obj (car tail))))
                                     (set! node-set-list (append! node-set-list (list (symbol->keyword (car tail)))))
                                     (set! node-set-list (append! node-set-list (list (sc-env->list (slot-ref obj (car tail)))))))
-                                   (t
+                                   (else
                                     (set-cdr! args 
                                               (list
                                                (string-downcase
