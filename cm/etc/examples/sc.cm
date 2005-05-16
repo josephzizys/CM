@@ -212,40 +212,17 @@
 ;;; values. However, there is a way to pass arrays of values to a
 ;;; synth once it is running (e.g. for an envelope). To see how this
 ;;; is implemented in SC please look at the fm-env instrument in
-;;; sc-synths.rtf and also the Help file on Env.
+;;; sc-synths.sc and also the Help file on Env.
 ;;; 
-;;; Below is a hack to convert the typical cm/clm style envelopes into
-;;; the format that SC expects for an envelop with linear
-;;; segments. The fm-env synth will scale the envelops accordingly.
-;;;
-
-(define (cm->sc-env env)
-  (let ((len (length env)) 
-	(sc-env #f)
-	(levels (list ))
-	(times (list ))
-	(prev-time 0))
-    (do ((i 0 (+ i 2)))
-        ((= i len))
-      (set! times (append! times (list (- (list-ref env i) prev-time))))
-      (set! levels (append! levels (list (list-ref env (+ 1 i)))))
-      (set! prev-time (list-ref env i)))
-    (pop times)
-    (set! sc-env (list (pop levels) (length times) -99 -99))
-    (dotimes (i (length times))
-      (set! sc-env (append! sc-env (list (list-ref levels i)
-					 (list-ref times i)
-					 1 0))))
-    sc-env))
-
-
-;;;
-;;;  More sophisticated support for envelop conversion will be
-;;;  forthcoming.  In this example of fm, there is a heap pattern
+;;;  In this example of fm, there is a heap pattern
 ;;;  created with 4 differently shaped envelops that will be used as
-;;;  amplitude and modulation index envelopes. These envelops will
+;;;  amplitude and modulation index envelopes. These envelopes will
 ;;;  scale whatever is in the :amp and :index args to fm-env
-;;; 
+;;;
+;;; To create these envelopes one can can make instances of sc-env
+;;; and use the function sc-env->list to convert this to a list
+;;;
+;;;
 
 (define (sc-fm-1 num)
   (process repeat num for i from 0
@@ -268,12 +245,62 @@
 		       :add-action 0 )
 	   output (new node-setn :node (+ i 1000)
 		       :controls-values 
-		       (list :ampenv (cm->sc-env (next envs))
-			     :indexenv (cm->sc-env (next envs)))
+		       (list :ampenv (sc-env->list (new sc-env :envelope (next envs) :duration 4))
+			     :indexenv (sc-env->list (new sc-env :envelope (next envs) :duration 4)))
 		       :time (now))
 	   wait 3))
 
-; (events (sc-fm-1 10) "sc-fm-1.osc" :play t  :verbose t :pad 10)
+;;;
+;;; An even easier way to use envelopes is by creating slots in the synth definition
+;;; that will take sc-env instance.
+;;;
+;;; Here is a redefinition of fm-env that includes to new slots for ampenv and indexenv
+;;;
+
+(defobject fm-env (scsynth)
+  ((freq :initform 440)
+   (mratio :initform 1.0)
+   (index :initform 1.0)
+   (amp :initform 1.0)
+   (dur :initform 1)
+   (ampenv :initform nil)
+   (indexenv :initform nil))
+  (:parameters freq mratio index amp dur time ampenv indexenv))
+
+(define (sc-fm-2 num)
+  (process repeat num for i from 0
+	   with envs = (new heap :of '((0 0.0 50 1.0 100 0.0)
+				       (0 0 1 1.0 20 .3 70 .2 100 0.0)
+				       (0 0 20 1.0 40 .2 60 1.0 100 0.0)
+				       (0 0 5 1.0 20 0.0 100 0.0)))
+	   when (= i 0)
+	   output (new reverb2 :time (now) 
+		       :node 500
+		       :decaytime 0.8
+		       :mix .05)
+	   output (new fm-env :freq (between 300 700) 
+		       :mratio (between .4 3.2) 
+		       :dur 4
+		       :index 1.0
+		       :amp .7
+		       :node (+ i 1000)
+                       :ampenv (new sc-env :envelope (next envs) :duration 4)
+                       :indexenv (new sc-env :envelope (next envs) :duration 4)
+		       :time (now)
+		       :add-action 0)
+	   wait 3))
+
+; (events (sc-fm-2 10) "sc-fm-2.osc" :play t  :verbose t :pad 10)
+
+;;;
+;;; It is important to note that when importing events with sc-env used this way
+;;; that the scsynth objects being returned will have these slots set to nil 
+;;; and the a corresponding node-setn object is present
+;;; For example:
+
+; (list-subobjects (import-events "sc-fm-2.osc"))
+
+
 
 ;;;
 ;;; This is an example of a granular synthesis where each grain is
@@ -307,7 +334,7 @@
 ; (events (grain-sonorities 10) "gsonor.osc" :pad 15)
 
 ;;; 
-;;; The next 2 examples are show how to load a soundfile into a buffer.
+;;; The next 3 examples are show how to load a soundfile into a buffer.
 ;;;
 
 ;;;
@@ -361,6 +388,7 @@
 
 ; (events (random-play-no-loop  10) "rplay.osc" :pad 30)
 
+
 ;;;
 ;;; one more example. this is granulating a sound file
 ;;;
@@ -390,6 +418,7 @@
 	   wait 7))
 
 ; (events (granure 5) "grplay.osc" :play t :pad 30 :verbose t)
+
 
 ;;;
 ;;; this shows how to make and use wavetable buffers.  first a buffer
@@ -426,3 +455,25 @@
 
 ; (events (wt 10) "wt.osc" )
 
+;;;
+;;; there is also an sc-buffer class that is defined which can reduce the steps
+;;; required to allocate and fill a buffer
+;;;
+
+(define (wt2 num)
+  (process repeat num for i from 0 
+	   when (= i 0)
+	   sprout
+	   (process repeat 1
+                    output (new sc-buffer :bufnum 10 :frames 512 :with-gen '(:sine1 (1)) :time (now)) ; a simple sine wave
+                    output (new sc-buffer :bufnum 11 :frames 512 :with-gen '(:sine1 (1 0 1 0 1 0)) :time (now)) ; some odd harmonics
+                    output (new sc-buffer :bufnum 12 :frames 512 :with-values (lambda () (ran :from -1.0 :below 1.0)) :time (now))) ;fill with random values
+           
+           output (new simple-osc :bufnum (+ 10 (random 3))
+		       :freq (between 300 500)
+		       :time (now)
+		       :amp .1
+		       :dur 3)
+	   wait 2))
+
+; (events (wt2 10) "wt2.osc" )
