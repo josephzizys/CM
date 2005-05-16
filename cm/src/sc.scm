@@ -991,20 +991,19 @@ time)
 (define-method* (write-event (obj <buffer-setn>) (io <sc-file>) time)
   (let ((fp (io-open io)))
     (set! (object-time io) time)
-    (write-bundle time (buffer-set (slot-ref obj 'bufnum)
-                                   (slot-ref obj 'sample-values))
+    (write-bundle time (buffer-setn (slot-ref obj 'bufnum)
+                                    (slot-ref obj 'samples-values))
      fp)))
 
 (define-method* (import-set-slots (obj <buffer-setn>) lst)
-  (let ((bv #f)
+  (let ((bv '())
         (len 0)
         (num-vals 0)
-        (s-vals #f))
+        (s-vals '()))
     (slot-set! obj 'bufnum (pop lst))
     (set! len (length lst))
     (do ((i 0))
 	((= i len))
-      (set! s-vals #f)
       (set! bv (append! bv (list (list-ref lst i))))
       (set! num-vals (list-ref lst (incf i)))
       (dotimes (j num-vals)
@@ -1098,7 +1097,7 @@ time)
 		(list-prop *buffer-gen-commands* command)
                 (if (pair? flags)
                     (do ((tail flags (cdr tail)) (bits 0))
-                        ((null tail) bits)
+                        ((null? tail) bits)
                       (set! bits
                             (logior bits
                                     (list-prop
@@ -1246,12 +1245,14 @@ time)
         (slot-set! obj 'value (append! (slot-ref obj 'value)
                                        (list (list-ref lst (+ 2 i)))))))))
 
-(define *sc-env-curves* (list 'step 0 'linear 1 'lin 1 'exp 2 'exponential 2 'sine 3 'welch 4
-			      :step 0 :linear 1 :lin 1 :exp 2 :exponential 2 :sine 3 :welch 4))
+
+;; sc-env
+
+(define *sc-env-curves* (list :step 0 :linear 1 :lin 1 :exp 2 :exponential 2 :sine 3 :welch 4))
 
 (defobject sc-env ()
   ((envelope :initform #f)
-   (curve :initform 1)
+   (curve :initform :linear)
    (duration :initform #f)
    (scale :initform 1.0)
    (offset :initform 0)
@@ -1259,7 +1260,6 @@ time)
    (loop-node :initform #f))
   (:parameters envelope duration scale offset release-node loop-node))
 
-;(expand-sc-env (new sc-env :envelope '(0 0 10 1 100 0) :duration 10 :curve :welch))
 
 (define-method* (sc-env->list (obj <sc-env>))
   (let* ((env (slot-ref obj 'envelope))
@@ -1269,6 +1269,7 @@ time)
 	 (levels (list))
 	 (times (list))
 	 (full-time #f)
+         (curve-num-list (list))
 	 (time-scale #f)
 	 (prev-time 0)
 	 (curve-list (list)))
@@ -1290,32 +1291,66 @@ time)
 	     (list-set! levels i (+ (slot-ref obj 'offset) (* (list-ref levels i) (slot-ref obj 'scale)))))
     (cond ((number? curves)
 	   (dotimes (i (length times))
-		    (set! curve-list (append! curve-list (list curves)))))
-	  ((symbol? curves)
-	   (dotimes (i (length times))
-		    (set! curve-list (append! curve-list (list (list-prop *sc-env-curves* curves))))))
+             (set! curve-num-list (append! curve-num-list (list curves)))
+             (set! curve-list (append! curve-list (list 5)))))
 	  ((keyword? curves)
 	   (dotimes (i (length times))
-		    (set! curve-list (append! curve-list (list (list-prop *sc-env-curves* curves))))))
+             (set! curve-list (append! curve-list (list (list-prop *sc-env-curves* curves))))
+             (set! curve-num-list (append! curve-num-list (list 0)))))
 	  ((list? curves)
 	   (dotimes (i (length times))
-		    (set! curve-list (append! curve-list (list (if (symbol? (list-ref curves i))
-								   (list-prop *sc-env-curves* (list-ref curves i))
-								   (list-ref curves i))))))))
+             (if (keyword? (list-ref curves i))
+               (begin
+                (set! curve-list (append! curve-list (list (list-prop *sc-env-curves* (list-ref curves i)))))
+                (set! curve-num-list (append! curve-num-list (list 0))))
+               (begin
+                (set! curve-num-list (append! curve-num-list (list (list-ref curves i))))
+                (set! curve-list (append! curve-list (list 5))))))))
     (set! sc-env-list (list (pop levels) (length times) (slot-ref obj 'release-node) (slot-ref obj 'loop-node)))
     (dotimes (i (length times))
-	     (set! sc-env-list (append! sc-env-list (list (pop levels) (pop times) (pop curve-list) 0))))
+      (set! sc-env-list (append! sc-env-list (list (pop levels) (pop times) (pop curve-list) (pop curve-num-list)))))
     sc-env-list))
-	   
-		   
+
+;;sc-buffer
+
+(defobject sc-buffer (sc-cmd)
+  ((bufnum :initform #f)
+   (with-file :initform #f)
+   (with-values :initform #f)
+   (with-gen :initform #f)
+   (starting-at :initform 0)
+   (frames :initform -1)
+   (channels :initform 1))
+  (:parameters bufnum with-file with-values with-gen starting-at frames channels time))
+
+(define-method* (write-event (obj <sc-buffer>) (io <sc-file>) time)
+  (cond ((slot-ref obj 'with-file)
+         (write-event (make <buffer-alloc-read> :bufnum (slot-ref obj 'bufnum) :file (slot-ref obj 'with-file) :frames (slot-ref obj 'frames)
+                            :start-frame (slot-ref obj 'starting-at)) io time))
+        ((list? (slot-ref obj 'with-values))
+         (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
+         (write-event (make <buffer-setn> :bufnum (slot-ref obj 'bufnum)
+                            :samples-values (list (slot-ref obj 'starting-at) (slot-ref obj 'with-values))) io time))
+        ((number? (slot-ref obj 'with-values))
+         (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
+         (write-event (make <buffer-fill> :bufnum (slot-ref obj 'bufnum) :num-samples (- (slot-ref obj 'frames) (slot-ref obj 'starting-at))
+                            :value (slot-ref obj 'with-values)) io time))
+        ((procedure? (slot-ref obj 'with-values))
+         (let ((vals '()))
+           (dotimes (i (- (slot-ref obj 'frames) (slot-ref obj 'starting-at)))
+             (set! vals (append! vals (list (apply (slot-ref obj 'with-values) '())))))
+           (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
+           (write-event (make <buffer-setn> :bufnum (slot-ref obj 'bufnum) :samples-values (list (slot-ref obj 'starting-at) vals)) io time)))
+        ((slot-ref obj 'with-gen)
+         (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
+         (write-event (make <buffer-gen> :bufnum (slot-ref obj 'bufnum) :flags :wavetable :command (car (slot-ref obj 'with-gen))
+                            :args (car (cdr (slot-ref obj 'with-gen)))) io time))))
 
 (define-class* <scsynth> (<event>)
   ((node :init-value -1 :init-keyword :node)
    (add-action :init-value 1 :init-keyword :add-action)
    (target :init-value 0 :init-keyword :target))
   :name 'scsynth )
-
-
 
 (define-method* (write-event (obj <scsynth>) (io <sc-file>) time)
   (let* ((fp (io-open io))
@@ -1337,9 +1372,8 @@ time)
                            (unless (member (car tail)
                                            '(node add-action 
                                                   target time))
-                                       ;(null (slot-ref obj (car tail))))
                              (cond ((list? (slot-ref obj (car tail)))
-                                    (progn
+                                    (begin
                                      (set! node-set-list (append! node-set-list (list (symbol->keyword (car tail)))))
                                      (set! node-set-list (append! node-set-list (list (slot-ref obj (car tail)))))))
                                    ((equal? (find-class* 'sc-env) (class-of (slot-ref obj (car tail))))
@@ -1352,9 +1386,9 @@ time)
                                                 (symbol->string (car tail)))
                                                (slot-ref obj (car tail))))
                                     (set! args (cddr args)))))))
-                  fp)))
-
-
+                  fp)
+    (when node-set-list
+      (write-event (make <node-setn> :node (slot-ref obj 'node) :controls-values node-set-list) io time))))
 
 (define-method* (import-set-slots (obj <scsynth>) lst)
   (slot-set! obj 'node (pop lst))
@@ -1392,6 +1426,7 @@ time)
 	"/b_free" 'buffer-free
 	"/b_zero" 'buffer-zero
 	"/b_set" 'buffer-set
+        "/b_setn" 'buffer-setn
 	"/b_fill" 'buffer-fill
 	"/b_close" 'buffer-close
 	"/b_gen" 'buffer-gen
@@ -1429,7 +1464,7 @@ time)
         (cmd-args #f))
     (unless (string=? (u8vector->string (u8vector-subseq vec 0 7))
                       "#bundle")
-      (err "bad file"))
+      (err "this does not appear to be a properly formatted .osc file"))
 
     (set! timestamp (u8vector->uint (u8vector-subseq vec 8 12)))
     (set! timestamp
@@ -1521,9 +1556,9 @@ time)
            (parse-osc-vec vec (lambda (time cmd args)
                                 (format out (if one ",~%" "~%"))
                                 (format out "[~s" time)
-                                (format out ", [~a" cmd)
+                                (format out ", [~s" cmd)
                                 (dolist (c args)
-                                  (format out ", ~a" c))
+                                  (format out ", ~s" c))
                                 (format out "]]")
                                 (set! one #t))))
          (format out "~%]~%")))
