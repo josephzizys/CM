@@ -12,43 +12,42 @@
     <div id="content">
       <dl class="dictsyntax">
 	<dt>[Topic]</dt>
-	  <dd><span class="syntax">SuperCollider</span></dd>
-
+	<dd><span class="syntax">SuperCollider</span></dd>
       </dl>
       <p>
         Common Music supports the writing and rendering of non-realtime <a href="http://www.audiosynth.com/">SuperCollider</a> files. Support for running in real-time is currently in progress.
       </p>
-
+      
       <h3 id="sc_synths">SuperCollider synths</h3>
-
+      
       <p>SuperCollider synth objects are defined similarly to clm or csound instruments.</p>
-
+      
       <p>To begin, let's look at a fairly simple synthdef in SuperCollider.</p>
-<div class="float" id="example_1">
-<pre class="code">
-(
-  <span class="special">SynthDef</span>(<span class="string">"simple"</span>, {<span class="special">arg</span> dur=1.0,freq=440.0,amp=0.2,pan=0.0;
-       <span class="special">var</span> osc;
-       osc = <span class="special">EnvGen</span>.kr(<span class="special">Env</span>.triangle(dur,amp), doneAction: 2) * <span class="special">SinOsc</span>.ar(freq);
-       <span class="special">Out</span>.ar(0,<span class="special">Pan2</span>.ar(osc,pan));
-  }).writeDefFile.load(s);
-)
-</pre>
-</div>
-
-<p>Defining a CM <code>scsynth</code> object to generate data for
-  this instrument is straightforward:</p>
-
-<div class="float" id="example_2">
-<pre class="code">
-(<a href="defobject-mac.html">defobject</a> simple (scsynth)
- ((freq <span class="keyword">:initform</span> 440)
-  (dur <span class="keyword">:initform</span> 1)
-  (amp <span class="keyword">:initform</span> .2)
-  (pan <span class="keyword">:initform</span> 0))
- (<span class="keyword">:parameters</span> freq dur amp pan))
-</pre>
-</div>
+      <div class="float" id="example_1">
+	<pre class="code">
+	  (
+	  <Span class="special">SynthDef</span>(<span class="string">"simple"</span>, {<span class="special">arg</span> dur=1.0,freq=440.0,amp=0.2,pan=0.0;
+	  <span class="special">var</span> osc;
+	  osc = <span class="special">EnvGen</span>.kr(<span class="special">Env</span>.triangle(dur,amp), doneAction: 2) * <span class="special">SinOsc</span>.ar(freq);
+	  <span class="special">Out</span>.ar(0,<span class="special">Pan2</span>.ar(osc,pan));
+	  }).writeDefFile.load(s);
+	  )
+	</pre>
+      </div>
+      
+      <p>Defining a CM <code>scsynth</code> object to generate data for
+	this instrument is straightforward:</p>
+      
+      <div class="float" id="example_2">
+	<pre class="code">
+	  (<a href="defobject-mac.html">defobject</a> simple (scsynth)
+	    ((freq <span class="keyword">:initform</span> 440)
+	     (dur <span class="keyword">:initform</span> 1)
+	     (amp <span class="keyword">:initform</span> .2)
+	     (pan <span class="keyword">:initform</span> 0))
+	   (<span class="keyword">:parameters</span> freq dur amp pan))
+	</pre>
+      </div>
       <p>The object is a subclass of the abstract class scsynth which contains additional slots that 
 	will be introduced below.</p>
       <p>All arguments to the synthdef are used in the object definition of <i>simple</i>. 
@@ -56,7 +55,7 @@
 	This is important because if you have defined arguments to your synthdef which are mixed case 
 	or uppercase (e.g. "Dur" "DUR") things will not work properly.</p>
       <p>In addition to user defined slots, all scsynth objects inherit the following slot initargs:</p>
-
+      
       <dl>
 	<dt><code class="keyword">:</code><code class="keyword">node </code><var>number</var></dt>
 	<dd>The node created on the sc server. This defaults to -1, which allows the server to 
@@ -66,23 +65,166 @@
 	<dt><code class="keyword">:add-action </code><var>number</var></dt>
 	<dd>How to add the new node according to following from SuperCollider Server 
 	  Command Reference (Default is 1):
-      <ul>
-	<li>0 - add the new node to the the head of the group specified by the add target ID.</li>
-	<li>1 - add the new node to the the tail of the group specified by the add target ID</li>
-	<li>2 - add the new node just before the node specified by the add target ID.</li>
-	<li>3 - add the new node just after the node specified by the add target ID.</li>
-	<li>4 - the new node replaces the node specified by the add target ID. </li>
-      </ul>
-      </dd>
+	  <ul>
+	    <li>0 - add the new node to the the head of the group specified by the add target ID.</li>
+	    <li>1 - add the new node to the the tail of the group specified by the add target ID</li>
+	    <li>2 - add the new node just before the node specified by the add target ID.</li>
+	    <li>3 - add the new node just after the node specified by the add target ID.</li>
+	    <li>4 - the new node replaces the node specified by the add target ID. </li>
+	  </ul>
+	</dd>
 	<dt><code class="keyword">:target</code> <var>number</var></dt>
 	<dd>The group or node referenced by the :add-action slot.</dd>
 	<dt><code class="keyword">:</code><code class="keyword">time </code><var>number</var></dt>
 	<dd>The time to begin the synth.</dd>
       </dl>
+      <h3 id="sc_envelopes">Envelopes in SuperCollider</h3>
+      <p>To send an envelope to a scsynth, one must typically use <code><a href="#node-setn">node-setn</a></code>. Instead it is also possible to 
+	use an <code>sc-env</code> when creating a new instance of s scsynth. Here is a simple example in SC:</p>
+      <div class="float" id="example_3">
+	<pre class="code">
+	  (
+	  <span class="special">SynthDef</span>(<span class="string">"simple-env"</span>, {<span class="special">arg</span> dur=1.0,freq=440.0,amp=0.2,pan=0.0;
+	  <span class="special">var</span> osc,ampenv;
+	  ampenv = <span class="special">Env</span>.newClear(8);
+	  ampf =  <span class="special">Control</span>.names([\ampenv]).kr( ampenv.asArray );
+	  osc = <span class="special">EnvGen</span>.kr(ampf, levelScale: amp, doneAction: 2) * <span class="special">SinOsc</span>.ar(freq);
+	  <span class="special">Out</span>.ar(0,<span class="special">Pan2</span>.ar(osc,pan));
+	  }).writeDefFile.load(s);
+	  )
+	  </pre>
+      </div>
+      <p>This is the corresponding <code>defobject</code> in cm.</p>
+      <div class="float" id="example_3">
+	<pre class="code">
+	  (<a href="defobject-mac.html">defobject</a> simple-env (scsynth)
+	   ((freq <span class="keyword">:initform</span> 440)
+	    (dur <span class="keyword">:initform</span> 1)
+	    (amp <span class="keyword">:initform</span> .2)
+	    (ampenv <span class="keyword">:initform</span> <code>#f</code>)
+	    (pan <span class="keyword">:initform</span> 0))
+	   (<span class="keyword">:parameters</span> freq dur amp ampenv pan))
+	</pre>
+      </div>
+      <p>Now a sc-env can be used in the creation of a new instance of <code>simple-env</code>.</p>
+      <div class="float" id="example_4">
+	<pre class="code">
+	  (<a href="new-mac.html">new</a> simple-env <span class="keyword">:time</span> (<span class="keyword">now</span>) 
+		          <span class="keyword">:freq</span> (<a href="between-fn.html">between</a> 300 700) 
+		          <span class="keyword">:dur</span> (<a href="between-fn.html">between</a> 10 20)
+		          <span class="keyword">:node</span> (+ i 1000)
+		          <span class="keyword">:amp</span> .1
+		          <span class="keyword">:ampenv</span> (<a href="new-mac.html">new</a> sc-env <span class="keyword">:envelope</span> '(0 0.0 10 1.0 80 .5 100 0.0) <span class="keyword">:duration</span> 10)
+		          <span class="keyword">:pan</span> 1.0)
+	</pre>
+      </div>
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	<dd><a name="sc-env"></a><code class="entry">
+	    sc-env</code></dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:envelope</code> <var>list</var></dt>
+	<dd>Envelope used. Required.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:duration</code> <var>number</var></dt>
+	<dd>Envelope duration. Required.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:curve</code> <var>{keyword | list | number}</var></dt>
+	<dd>Curve segments. Defaults to :linear</dd>
+	<dd>Valid curve descriptors are <code class="keyword">:linear :lin :exp :exponential :step :sine :welch</code>.</dd>
+	<dd>Curve descriptors may also be numbers which indicate a curvature value.</dd>
+	
+      </dl>
+      <dl>
+	<dt><code class="keyword">:scale</code> <var>number</var></dt>
+	<dd>Scale values.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:offset</code> <var>number</var></dt>
+	<dd>Offset values.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:release-node</code> <var>number</var></dt>
+	<dd>Release segment of envelope.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:loop-node</code> <var>number</var></dt>
+	<dd>Loop segment of envelope.</dd>
+      </dl>
+      
+      <div class="float">        
+	<pre class="code">
+(<a href="new-mac.html">new</a> sc-env <span class="keyword">:envelope</span>'(0 0.0 10 1.0 80 .5 100 0.0) <span class="keyword">:duration</span> 10)
+(<a href="new-mac.html">new</a> sc-env <span class="keyword">:envelope</span>'(0 0.0 10 1.0 80 .5 100 0.0)<span class="keyword">:duration</span> 10 <span class="keyword">:curve</span> :exp)
+(<a href="new-mac.html">new</a> sc-env <span class="keyword">:envelope</span>'(0 0.0 10 1.0 80 .5 100 0.0)<span class="keyword">:duration</span> 10 <span class="keyword">:curve</span> '(:exp -1.4 :welch))
+	</pre>
+      </div>
 
+      <h3 id="sc_buffers">Buffers in SuperCollider</h3>
+      <p></p>
+      <div class="float" id="example_3"></div>
+
+      <dl class="dictsyntax">
+	<dt>[Class]</dt>
+	<dd><a name="sc-buffer"></a><code class="entry">
+	    sc-buffer</code></dd>
+      </dl>
+      
+      <p>Instead of using different commands for creating buffers, <code>sc-buffer</code> attempts to encapsulate some of the most commonly
+	used buffer creation/filling methods into one cm event.</p>
+      
+      <dl>
+	<dt><code class="keyword">:bufnum</code> <var>number</var></dt>
+	<dd>Buffer number.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:with-file</code> <var>string</var></dt>
+	<dd>Path to a file to load into the buffer</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:with-values</code> <var>{function | list | number}</var></dt>
+	<dd>Fills buffer with <code class="keyword">:with-values</code>. If a number, fills buffer with that value. If a list, will set buffer to those values.
+	If a function will call this function for as many frames as are in the buffer minus <code class="keyword">:starting-at</code>.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:with-gen</code> <var>list</var></dt>
+	<dd>Uses a buffer-gen to fill the buffer.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:starting-at</code> <var>number</var></dt>
+	<dd>Offset into buffer. Defaults to 0</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:frames</code> <var>number</var></dt>
+	<dd>Number of frames in buffer. If used with <code class="keyword">:with-file</code> defaults to reading in the entire file</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:channels</code> <var>number</var></dt>
+	<dd>Number of channels in buffer.</dd>
+      </dl>
+      <dl>
+	<dt><code class="keyword">:time</code> <var>number</var></dt>
+	<dd>When to create buffer.</dd>
+      </dl>
+       <div class="float">        
+	<pre class="code">
+(<a href="new-mac.html">new</a> sc-buffer <span class="keyword">:with-gen</span>'(:sine1 (1.0 .2 .1 .01)) <span class="keyword">:frames</span> 512 <span class="keyword">:time</span>  (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> sc-buffer <span class="keyword">:with-file</span> <span class="string">"/Applications/SuperCollider3/sounds/a11wlk01.wav"</span><span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> sc-buffer <span class="keyword">:with-values</span> .2<span class="keyword"> :time</span> (<a href="now-fn.html">now</a>))
+(<a href="new-mac.html">new</a> sc-buffer <span class="keyword">:with-values</span> (lambda () (<a href="ran-fn.html">ran</a> <span class="keyword">:from</span> -1.0  <span class="keyword">:below</span> 1.0))<span class="keyword"> :time</span> (<a href="now-fn.html">now</a>))
+	</pre>
+      </div>
+
+
+      
+      
+    
 
       <h3 id="sc_event_classes">SuperCollider Command Events</h3>
-
+      
       <ul>
 	<li><code><a href="#load-synthdef">load-synthdef</a></code></li>
 	<li><code><a href="#load-synthdef-dir">load-synthdef-dir</a></code></li>
@@ -122,69 +264,69 @@
       <p>For a description of the following commands, refer to Help/Server-Command-Reference.rtf in the SuperCollider distribution</p>
       <dl class="dictsyntax">
 	<dt>[Class]</dt>
-	  <dd><a name="load-synthdef"></a><code class="entry">load-synthdef</code></dd>
+	<dd><a name="load-synthdef"></a><code class="entry">load-synthdef</code></dd>
       </dl>
       <dl>
 	<dt><code class="keyword">:path</code> <var>string</var></dt>
 	<dd>Synthdef file to load.</dd>
       </dl>
-
-<div class="float">        
-<pre class="code">
-(<a href="new-mac.html">new</a> load-synthdef <span class="keyword">:path</span> <span class="string">"/path/to/synthdef.scsyndef"</span> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
-</pre>
-</div>
-
+      
+      <div class="float">        
+	<pre class="code">
+	  (<a href="new-mac.html">new</a> load-synthdef <span class="keyword">:path</span> <span class="string">"/path/to/synthdef.scsyndef"</span> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+	</pre>
+      </div>
+      
       <dl class="dictsyntax">
 	<dt>[Class]</dt>
-	  <dd><a name="load-synthdef-dir"></a><code class="entry">
-	      load-synthdef-dir</code></dd>
+	<dd><a name="load-synthdef-dir"></a><code class="entry">
+	    load-synthdef-dir</code></dd>
       </dl>
       <dl>
 	<dt><code class="keyword">:path</code> <var>string</var></dt>
 	<dd>Synthdef directory to load.</dd>
       </dl>
-
-        <div class="float">
+      
+      <div class="float">
 	<pre class="code">
-(<a href="new-mac.html">new</a> load-synthdef-dir <span class="keyword">:path</span> <span class="string">"/path/to/"</span> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
-</pre>
-</div>
-
+	  (<a href="new-mac.html">new</a> load-synthdef-dir <span class="keyword">:path</span> <span class="string">"/path/to/"</span> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+	</pre>
+      </div>
+      
       <dl class="dictsyntax">
 	<dt>[Class]</dt>
-	  <dd><a name="node-free"></a><code class="entry">node-free</code></dd>
+	<dd><a name="node-free"></a><code class="entry">node-free</code></dd>
       </dl>
       <dl>
 	<dt><code class="keyword">:node</code> {<var>number</var> | <var>list</var>}</dt>
 	<dd>Node or list of nodes to free.</dd>	
       </dl>
-        <div class="float">
+      <div class="float">
 	<pre class="code">
-(<a href="new-mac.html">new</a> node-free <span class="keyword">:node</span> 1000 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
-(<a href="new-mac.html">new</a> node-free <span class="keyword">:node</span> '(1000 1001 1002) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
-</pre>
-</div>
-
+	  (<a href="new-mac.html">new</a> node-free <span class="keyword">:node</span> 1000 <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+	  (<a href="new-mac.html">new</a> node-free <span class="keyword">:node</span> '(1000 1001 1002) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+	</pre>
+      </div>
+      
       
       <dl class="dictsyntax">
 	<dt>[Class]</dt>
-	  <dd><a name="node-run"></a><code class="entry">node-run</code></dd>
+	<dd><a name="node-run"></a><code class="entry">node-run</code></dd>
       </dl>
       <dl>
 	<dt><code class="keyword">:node</code> {<var>number</var> | <var>list</var>}</dt>
 	<dd>Node(s) to set.</dd>
 	<dt><code class="keyword">:flag</code> {<var>boolean</var> | <var>list</var>}</dt>
 	<dd>True or false referring to node(s).</dd>
-        </dl>
-
-        <div class="float">
+      </dl>
+      
+      <div class="float">
         <pre class="code">
-(<a href="new-mac.html">new</a> node-run <span class="keyword">:node</span> 1000 <span class="keyword">:flag</span> #t <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
-(<a href="new-mac.html">new</a> node-run <span class="keyword">:node</span> '(1000 1001 1003) <span class="keyword">:flag</span> '(#t #f #t) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
-</pre>
-</div>
-
+	  (<a href="new-mac.html">new</a> node-run <span class="keyword">:node</span> 1000 <span class="keyword">:flag</span> #t <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+	  (<a href="new-mac.html">new</a> node-run <span class="keyword">:node</span> '(1000 1001 1003) <span class="keyword">:flag</span> '(#t #f #t) <span class="keyword">:time</span> (<a href="now-fn.html">now</a>))
+	</pre>
+      </div>
+      
       <dl class="dictsyntax">
 	<dt>[Class]</dt>
 	  <dd><a name="node-set"></a><code class="entry">node-set</code></dd>
@@ -747,6 +889,7 @@ numerous examples of Supercollider score generation.
 <h4>See also:</h4>
 
 <ul>
+  <li><a href="dumposc-fn.html"><code>dumposc</code></a> [Function]</li>
   <li><a href="sc-file-cls.html"><code>sc-file</code></a> [Class]</li>
 </ul>
 
