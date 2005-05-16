@@ -23,9 +23,9 @@
   (getcwd))
 
 (define (cd . dir)
-  (if dir
-    (chdir (car dir))
-    (chdir "~/"))
+  (if (null? dir)
+      (chdir "~/")
+      (chdir (car dir)))
   (pwd))
 
 (define (set-file-position fil pos set?)
