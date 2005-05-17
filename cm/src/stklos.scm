@@ -1,3 +1,17 @@
+;;; **********************************************************************
+;;; Copyright (C) 2005 Heinrich Taube (taube@uiuc.edu) This program is
+;;; free software; you can redistribute it and/or modify it under the
+;;; terms of the LLGPL (Lisp Lesser General Public License) as described
+;;; at http://www.cliki.net/LLGPL. This program is distributed in the
+;;; hope that it will be useful, but WITHOUT ANY WARRANTY; without
+;;; even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+;;; PARTICULAR PURPOSE.
+;;; **********************************************************************
+
+;;; $Name$
+;;; $Revision$
+;;; $Date$
+
 (require "srfi-1")
 (require "srfi-4")
 
@@ -105,10 +119,12 @@
 
 (define hash-remove! hash-table-remove!)
 
-(define (hash-fold fn x table)
-  (hash-table-map (lambda (k v)
-                    (set! x (funcall fn k v x)))
-                  table)
+(define (hash-clear! tbl)
+  (hash-table-map tbl (lambda (k v) (hash-table-remove! tbl k)))
+  tbl)
+
+(define (hash-fold fn x tbl)
+  (hash-table-map tbl (lambda (k v) (set! x (fn k v x))))
   x)
 
 ;;; Strings
@@ -183,13 +199,21 @@
 (define *random-state* #f)
 
 (define (random n . args)
-  (if (integer? n)
+  ;; dont check for rationals etc
+  (if (exact? n)
     (random-integer n)
-    (if (inexact? n)
-      (if (= n 1.0)
+    (if (= n 1.0)
         (random-real )
-        (* (random-real) n))
-      (error "random bounds not integer or real: ~s." n))))
+        (* (random-real) n))))
+
+;(define (random n . args)
+;  (if (integer? n)
+;    (random-integer n)
+;    (if (inexact? n)
+;      (if (= n 1.0)
+;        (random-real )
+;        (* (random-real) n))
+;      (error "random bounds not integer or real: ~s." n))))
 
 (define (integer-decode-float num)
   ;; see srfi 56...
@@ -248,16 +272,16 @@
         ((:name) (set! cname (cadr tail)))
         ((:metaclass) (set! metac (cadr tail)))
         ((:file-types )  ; cm metaclass slot
-         (set! csets (cons* `(slot-set! ,class 'handles
+         (set! csets (list* `(slot-set! ,class 'handles
                                         ,(cadr tail)) csets)))
         ((:output-hook) ; cm metaclass slot
-         (set! csets (cons* `(slot-set! ,class 'output-hook
+         (set! csets (list* `(slot-set! ,class 'output-hook
                                         ,(cadr tail)) csets)))
         ((:definer) ; cm metaclass slot
-         (set! csets (cons* `(slot-set! ,class 'definer
+         (set! csets (list* `(slot-set! ,class 'definer
                                         ,(cadr tail)) csets)))
         ((:versions) ; cm metaclass slot
-         (set! csets (cons* `(slot-set! ,class 'versions
+         (set! csets (list* `(slot-set! ,class 'versions
                                         ,(cadr tail)) csets)))
         ))
     `(begin
