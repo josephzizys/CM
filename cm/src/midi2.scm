@@ -87,12 +87,12 @@
     (16 :180-note 180-note :180-tone 180-tone )))
 
 (define-class* <midi-stream-mixin> ( )
-  ((channel-map :init-thunk (lambda () *midi-channel-map*)
+  ((channel-map :init-value *midi-channel-map*
                 :init-keyword :channel-map
                 :accessor midi-stream-channel-map)
    (bend-width :accessor midi-stream-bend-width
                :init-keyword :pitch-bend-width 
-               :init-thunk (lambda () *midi-pitch-bend-width*))
+               :init-value *midi-pitch-bend-width*)
    ;; BUG! Goops wont find :microtuning
    (channel-tuning :init-keyword :channel-tuning  :init-keyword :microtuning
                    :init-value #f :accessor midi-stream-channel-tuning )
@@ -109,7 +109,7 @@
            :accessor midi-file-keysig)
    (timesig :init-value #f  :init-keyword :timesig 
             :accessor midi-file-timesig)
-   (tempo :init-thunk (lambda () *midi-file-default-tempo*)
+   (tempo :init-value *midi-file-default-tempo*
           :init-keyword :tempo 
           :accessor midi-file-tempo)
    (scaler :init-value 1 :accessor midi-file-scaler)

@@ -67,15 +67,15 @@
           :init-value '()
           :accessor pattern-data)
    (length :accessor pattern-length)
-   (datum :init-thunk (lambda () +nad+)
+   (datum :init-value +nad+
           :accessor pattern-datum)
    (period :init-keyword :for 
            :accessor pattern-period)
    (value :init-keyword :last-value
-          :init-thunk (lambda () +nad+)
+          :init-value +nad+
           :accessor pattern-value)
    (state :init-keyword :last-state
-          :init-thunk (lambda () +nad+)
+          :init-value +nad+
           :accessor pattern-state)
    (repeat :init-keyword :repeat
            :init-value most-positive-fixnum
@@ -690,7 +690,7 @@
 ;;;
 
 (define-class* <heap> (<cycle>)
-  ((random-state :init-thunk (lambda () *random-state*)
+  ((random-state :init-value *random-state*
                  :init-keyword :state :accessor pattern-random-state))
   :name 'heap)
 
@@ -737,9 +737,9 @@
   datum index (weight 1) (min 1) max (count 0) id minmax)
 
 (define-class* <random> (<pattern>)
-  ((range :init-thunk (lambda () *random-range*)
+  ((range :init-value *random-range*
           :accessor random-pattern-range)
-   (random-state :init-thunk (lambda () *random-state*)
+   (random-state :init-value *random-state*
                  :init-keyword :state
                  :accessor pattern-random-state))
   :name 'random)
@@ -1116,8 +1116,16 @@
 
 (define-list-struct graph-node id datum to props)
 
+(define (default-graph-node-select obj node lastids)
+  (let ((to (graph-node-to node)))
+    (if (pair? to)
+      (if (eq? (car to) ':idsel)
+        (markov-select obj node to lastids)
+	(err ":to not id, :idsel or pattern: ~s." to ))
+      (next-1 to))))
+
 (define-class* <graph> (<pattern>) 
-  ((selector :init-thunk (lambda () (function default-graph-node-select))
+  ((selector :init-value (function default-graph-node-select)
              :init-keyword :selector :accessor graph-selector)
    (last :init-value #f :init-keyword :last
          :accessor graph-last)
@@ -1207,13 +1215,7 @@
 	      (not (any (lambda (x) (pattern? (graph-node-datum x)))
 			 intern))))))
 
-(define (default-graph-node-select obj node lastids)
-  (let ((to (graph-node-to node)))
-    (if (pair? to)
-      (if (eq? (car to) ':idsel)
-        (markov-select obj node to lastids)
-	(err ":to not id, :idsel or pattern: ~s." to ))
-      (next-1 to))))
+
 
 (define (markov-select obj node table lastids)
   ;;  table is a list (:idsel <id1> <obj1> ...)
@@ -1278,7 +1280,7 @@
 ;;;
 
 (define-class* <accumulation> (<pattern>)
-  ((indices :init-thunk (lambda () (cons 0 0))
+  ((indices :init-value (cons 0 0)
             :accessor accumulation-indicies))
   :name 'accumulation)
 
@@ -1434,7 +1436,7 @@
           :accessor rewrite-table)
    (rules :init-value '() :init-keyword :rules
           :accessor rewrite-rules)
-   (generations :init-thunk (lambda () most-positive-fixnum)
+   (generations :init-value most-positive-fixnum
                 :init-keyword :generations
                 :accessor rewrite-generations))
   :name 'rewrite)
@@ -2029,7 +2031,7 @@
    (mod :accessor transposer-mod :init-value #f 
         :init-keyword :mod)
    (scale :accessor transposer-scale 
-          :init-thunk (lambda () *scale*)
+          :init-value *scale*
           :init-keyword :scale))
   :name 'transposer)
 
