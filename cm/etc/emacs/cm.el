@@ -70,18 +70,20 @@
 			 (read-string "Shell command to start Lisp: "))))
   (if (not listener-own-frame)
       (if (not (slime-connected-p))
-          (progn 
+          (let (hook)
             (when expr
-              (add-hook 'slime-connected-hook
-                        (lambda () (slime-repl-send-string expr))))
+              (setq hook `(lambda () (slime-repl-send-string ,expr)))
+              (add-hook 'slime-connected-hook hook))
             (slime cmd)
             )
         (switch-to-buffer (slime-repl-buffer nil)))
     (if (not (slime-connected-p))
-        (progn
+        (let (hook)
+          ;; this crock is needed because slime's repl
+          ;; forces the user into the cl-user package
           (when expr
-            (add-hook 'slime-connected-hook
-                      (lambda () (slime-repl-send-string expr))))
+            (setq hook `(lambda () (slime-repl-send-string ,expr)))
+            (add-hook 'slime-connected-hook hook))
           (switch-to-buffer-other-frame (current-buffer))
           (slime cmd)
           )
