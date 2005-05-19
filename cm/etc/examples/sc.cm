@@ -215,7 +215,7 @@
 ;;; sc-synths.sc and also the Help file on Env.
 ;;; 
 ;;;  In this example of fm, there is a heap pattern
-;;;  created with 4 differently shaped envelops that will be used as
+;;;  created with 4 differently shaped envelopes that will be used as
 ;;;  amplitude and modulation index envelopes. These envelopes will
 ;;;  scale whatever is in the :amp and :index args to fm-env
 ;;;
@@ -245,16 +245,21 @@
 		       :add-action 0 )
 	   output (new node-setn :node (+ i 1000)
 		       :controls-values 
-		       (list :ampenv (sc-env->list (new sc-env :envelope (next envs) :duration 4))
-			     :indexenv (sc-env->list (new sc-env :envelope (next envs) :duration 4)))
+		       (list :ampenv (sc-env->list
+                                      (new sc-env :envelope (next envs)
+                                           :duration 4))
+			     :indexenv (sc-env->list
+                                        (new sc-env :envelope (next envs)
+                                             :duration 4)))
 		       :time (now))
 	   wait 3))
 
 ;;;
-;;; An even easier way to use envelopes is by creating slots in the synth definition
-;;; that will take sc-env instance.
+;;; An even easier way to use envelopes is by creating slots in the
+;;; synth definition that will take sc-env instance.
 ;;;
-;;; Here is a redefinition of fm-env that includes to new slots for ampenv and indexenv
+;;; Here is a redefinition of fm-env that includes two new slots for
+;;; ampenv and indexenv
 ;;;
 
 (defobject fm-env (scsynth)
@@ -263,8 +268,8 @@
    (index :initform 1.0)
    (amp :initform 1.0)
    (dur :initform 1)
-   (ampenv :initform nil)
-   (indexenv :initform nil))
+   (ampenv :initform #f)
+   (indexenv :initform #f))
   (:parameters freq mratio index amp dur time ampenv indexenv))
 
 (define (sc-fm-2 num)
@@ -284,8 +289,10 @@
 		       :index 1.0
 		       :amp .7
 		       :node (+ i 1000)
-                       :ampenv (new sc-env :envelope (next envs) :duration 4)
-                       :indexenv (new sc-env :envelope (next envs) :duration 4)
+                       :ampenv (new sc-env :envelope (next envs)
+                                    :duration 4)
+                       :indexenv (new sc-env :envelope (next envs)
+                                      :duration 4)
 		       :time (now)
 		       :add-action 0)
 	   wait 3))
@@ -293,10 +300,10 @@
 ; (events (sc-fm-2 10) "sc-fm-2.osc" :play t  :verbose t :pad 10)
 
 ;;;
-;;; It is important to note that when importing events with sc-env used this way
-;;; that the scsynth objects being returned will have these slots set to nil 
-;;; and the a corresponding node-setn object is present
-;;; For example:
+;;; It is important to note that when importing events with sc-env
+;;; used this way that the scsynth objects being returned will have
+;;; these slots set to nil and the a corresponding node-setn object is
+;;; present For example:
 
 ; (list-subobjects (import-events "sc-fm-2.osc"))
 
@@ -320,13 +327,14 @@
 	   (process repeat 100
 		    with sonor = (next pat)
 		    output
-		    (new simple :freq (hertz (+ (pickl '(0 12 24))
-						       (+ base (pickl sonor)))) 
-			 :dur (exact->inexact (/ dur 10))
-			 :pan (between -1.0 1.0)
-			 :amp .03
-			 :time (now)
-			 :add-action 0)
+		    (new simple 
+                      :freq (hertz (+ (pickl '(0 12 24))
+                                      (+ base (pickl sonor)))) 
+                      :dur (exact->inexact (/ dur 10))
+                      :pan (between -1.0 1.0)
+                      :amp .03
+                      :time (now)
+                      :add-action 0)
 		    wait (exact->inexact (/ dur 100)))
 	   wait (- dur 1)
 	   set dur = (between 3 7)))
@@ -456,8 +464,8 @@
 ; (events (wt 10) "wt.osc" )
 
 ;;;
-;;; there is also an sc-buffer class that is defined which can reduce the steps
-;;; required to allocate and fill a buffer
+;;; there is also an sc-buffer class that is defined which can reduce
+;;; the steps required to allocate and fill a buffer
 ;;;
 
 (define (wt2 num)
@@ -465,9 +473,17 @@
 	   when (= i 0)
 	   sprout
 	   (process repeat 1
-                    output (new sc-buffer :bufnum 10 :frames 512 :with-gen '(:sine1 (1)) :time (now)) ; a simple sine wave
-                    output (new sc-buffer :bufnum 11 :frames 512 :with-gen '(:sine1 (1 0 1 0 1 0)) :time (now)) ; some odd harmonics
-                    output (new sc-buffer :bufnum 12 :frames 512 :with-values (lambda () (ran :from -1.0 :below 1.0)) :time (now))) ;fill with random values
+                    output (new sc-buffer :bufnum 10 :frames 512
+                                ;; a simple sine wave
+                                :with-gen '(:sine1 (1)) :time (now)) 
+                    output (new sc-buffer :bufnum 11 :frames 512 
+                                :with-gen '(:sine1 (1 0 1 0 1 0))
+                                :time (now)) ; some odd harmonics
+                    output (new sc-buffer :bufnum 12 :frames 512
+                                ;; fill with random values
+                                :with-values
+                                (lambda () (ran :from -1.0 :below 1.0))
+                                :time (now)))
            
            output (new simple-osc :bufnum (+ 10 (random 3))
 		       :freq (between 300 500)
