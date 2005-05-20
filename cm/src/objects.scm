@@ -84,7 +84,7 @@
     ,@ (slot-init-forms obj :eval #t :omit '(subobjects))
     :subobjects
     ,(cons 'list (map (function make-load-form)
-                      (subobjects obj)))))
+                      (container-subobjects obj)))))
 
 (define-generic* rename-object )
 
@@ -169,7 +169,7 @@
 (define-class* <seq> (<container>) 
   ((time :accessor object-time :init-keyword :time
          :init-value 0)
-   (subobjects :init-value '() :accessor subobjects ;container-cycl
+   (subobjects :init-value '() :accessor container-subobjects
                :init-keyword :subobjects))
   :name 'seq)
 
@@ -186,7 +186,7 @@
   '())
 
 (define-method* (subcontainers (obj <seq>))
-  (loop for o in (subobjects obj)
+  (loop for o in (container-subobjects obj)
         when (is-a? o <container>) collect o))
 
 (define (map-subobjects fn container . args)
@@ -196,20 +196,20 @@
 		  test)))
       (if key
 	(if test
-	  (dolist (o (subobjects container))
+	  (dolist (o (container-subobjects container))
 	    (if (and recurse (is-a? o <container>))
 	      (map-subobjects fn o :key key :recurse recurse :test test)
 	      (when (test o) (fn (key o)))))
-	  (dolist (o (subobjects container)) 
+	  (dolist (o (container-subobjects container)) 
 	    (if (and recurse (is-a? o <container>))
 	      (map-subobjects fn o :key key :recurse recurse :test test)
 	      (fn (key o)))))
 	(if test
-	  (dolist (o (subobjects container))
+	  (dolist (o (container-subobjects container))
 	    (if (and recurse (is-a? o <container>))
 	      (map-subobjects fn o :key key :recurse recurse :test test)
 	      (when (test o) (fn o ))))
-	  (dolist (o (subobjects container))
+	  (dolist (o (container-subobjects container))
 	    (if (and recurse (is-a? o <container>))
 	      (map-subobjects fn o :key key :recurse recurse :test test)
 	      (fn o)))))
@@ -218,11 +218,11 @@
 (define (map-subcontainers fn container . args)
   (with-args (args &key key recurse)
     (if key
-      (dolist (o (subobjects container))
+      (dolist (o (container-subobjects container))
 	(when (is-a? o <container>)
 	  (fn (key o)))
 	(if recurse (map-subcontainers fn o :key key :recurse recurse)))
-      (dolist (o (subobjects container))
+      (dolist (o (container-subobjects container))
 	(when (is-a? o <container>) (fn o))
 	(if recurse (map-subcontainers fn o :key key :recurse recurse))))
     (values)))
@@ -233,10 +233,10 @@
 
 (define-method* (insert-object (sub <object>) (obj <seq>))
   (let ((earliest? #f)
-	(subs (subobjects obj)))
+	(subs (container-subobjects obj)))
     (if (null? subs)
       (let ((l (list sub)))
-	(set! (subobjects obj) l)
+	(set! (container-subobjects obj) l)
 	l)
       (let ((time (object-time sub)))
 	(cond 
@@ -244,7 +244,7 @@
 	     time 
 	     (object-time (car subs)))
 	   (let ((l (cons sub subs)))
-	     (set! (subobjects obj) l)
+	     (set! (container-subobjects obj) l)
 	     l))
 	  (else
 	   (do ((top subs)
@@ -258,20 +258,20 @@
 	     (set! subs head))))))))
       
 (define-method* (append-object (sub <object>) (obj <seq>))
-  (let ((subs (subobjects obj)))
+  (let ((subs (container-subobjects obj)))
     (cond ((null? subs)
 	   (set! subs (list sub))
-	   (set! (subobjects obj) subs))
+	   (set! (container-subobjects obj) subs))
 	  (else
 	   (set-cdr! (last-pair subs) (list sub))))
     subs))
 
 (define-method* (remove-object sub (obj <seq>))
-  (let ((subs (subobjects obj)))
+  (let ((subs (container-subobjects obj)))
     (unless (null? subs)
       (if (eq? sub (car subs))
 	(begin (set! subs (cdr subs))
-	       (set! (subobjects obj) subs))
+	       (set! (container-subobjects obj) subs))
 	(do ((prev subs)
 	     (tail (cdr subs) (cdr tail)))
 	    ((or (null? tail)
@@ -281,11 +281,11 @@
     subs))
 
 (define-method* (remove-subobjects (obj <seq>))
-  (set! (subobjects obj) (list)))
+  (set! (container-subobjects obj) (list)))
 
 (define-method* (list-subobjects (obj <seq>) . args)
   (with-args (args &key start end start-time end-time)
-    (let ((subs (subobjects obj)))
+    (let ((subs (container-subobjects obj)))
       (if (or start-time end-time)
 	(begin
 	 (when (or start end)
@@ -882,3 +882,75 @@
            (dolist (o (vector-ref box 2))
              (apply (function bang!) o res))))
        (values)))))
+
+;;;
+;;; object sequencing
+;;;
+
+(define (map-objects fn objs . args)
+  (with-args (args &key (start 0) end (step 1) (width 1)
+                   test class key slot slot!)
+    ;; allow a seq to be passed in
+    (if (not (list? objs))
+        (set! objs (container-subobjects objs)))
+    (if (and slot slot!)
+        (err ":slot and slot! are exclusive keywords."))
+    (when (or slot slot!)
+      (if key (err ":slot[!] and :key are exclusive keywords.")
+          (set! key (if slot! (lambda (x) (slot-ref x slot!))
+                        (lambda (x) (slot-ref x slot))))))
+    (do ((tail (list-tail objs start) (list-tail tail step))
+         (indx start (+ indx step))
+         (data #f)
+         (this #f))
+        ((or (null? tail)
+             (and end (not (< indx end))))
+         (values))
+      (cond ((> width 1)
+             ;; map subsequences of adjacent objects
+             (set! this (loop for i below width
+                           for x = (list-tail tail i)
+                           until (null? x)
+                           collect (car x)))
+             (when (or (not class)
+                       (loop for x in this
+                          always (is-a? x class)))
+               (if key (set! data (map key this))
+                   (set! data this))
+               (if (or (not test)
+                       (loop for x in data always ( test x)))
+                   (if slot!
+                       (loop for x in ( fn data)
+                          for y in this
+                          do (slot-set! y slot! x))
+                       ( fn data)))))
+            (else
+             (set! this (car tail))
+             (when (or (not class) (is-a? this class))
+               (if key (set! data ( key this))
+                   (set! data this))
+               (if (or (not test)
+                       ( test data))
+                   (if slot!
+                       (slot-set! this slot! ( fn data))
+                       ( fn data)))))))))
+
+(define (fold-objects fn objects acc . args)
+  ;; fn takes two values, the current object and acc, which receives
+  ;; its starting value from the user and is updated by applying fn to
+  ;; each object. return the final value of acc as the value of
+  (apply (function map-objects)
+         (lambda (x) (set! acc ( fn x acc)))
+         objects args)
+  acc)
+
+(define (subobjects object . args)
+  (with-args (args &optional (start 0) end (step 1) (width 1))
+    (if (and (eq? start 0) (eq? end #f) (eq? step 1) (eq? width 1))
+        (container-subobjects object)
+        (reverse! (fold-objects (function cons)
+                                object
+                                (list)
+                                :start start :end end
+                                :step step :width width)))))
+
