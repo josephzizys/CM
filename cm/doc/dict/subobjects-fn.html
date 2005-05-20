@@ -10,47 +10,29 @@
 <body>
 <div id="content">
 
-
 <!-- Entry: "subobjects" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">subobjects</code> <var>seq</var>)</span></dd>
+<dd><code>(</code><code class="entry">subobjects</code> <var>seq</var>
+[<var>start</var>] [<var>end</var>] [<var>step</var>] [<var>width</var>])</code></span></dd>
 </dl>
 
-
 <p>
-Returns the subobjects of <var>seq.</var> Use <kbd>(set! subobjects)</kbd> 
-to set the subobjects of <var>seq.</var>
+Returns the subobjects of <a href="seq-cls.html"><var>seq</var></a>. The optional arguments have the
+same meaning as their keyword equivalents in <a href="map-objects-fn.html">map-objects</a>.
+If <var>end</var> is boolean false then it defaults to the length of <a href="seq-cls.html"><var>seq</var></a>.
 </p>
 
-<!-- Interaction 1 -->
-<div class="float" id="repl_0-1">
-<pre class="shell">cm&gt; <span class="input">(new seq :name 'stuff)</span>
-#&amp;lt;seq:
-cm&gt; <span class="input">Stuff&amp;gt;</span>
-(set! (subobjects #&amp;stuff) 
-          (loop for i below 10 collect (new midi :time i)))
-cm&gt;</pre>
-</div>
-
-
 <!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
-<li><a href="hshamp-mac.html"><kbd>#&amp;</kbd></a> [Macro]</li>
 <li><a href="append-object-fn.html"><kbd>append-object</kbd></a> [Function]</li>
 <li><a href="find-object-fn.html"><kbd>find-object</kbd></a> [Function]</li>
+<li><a href="fold-objects-fn.html"><kbd>fold-objects</kbd></a> [Function]</li>
 <li><a href="insert-object-fn.html"><kbd>insert-object</kbd></a> [Function]</li>
-<li><a href="list-named-objects-fn.html"><kbd>list-named-objects</kbd></a> [Function]</li>
-<li><a href="list-subobjects-fn.html"><kbd>list-subobjects</kbd></a> [Function]</li>
-<li><a href="map-subcontainers-fn.html"><kbd>map-subcontainers</kbd></a> [Function]</li>
-<li><a href="map-subobjects-fn.html"><kbd>map-subobjects</kbd></a> [Function]</li>
-<li><a href="object-name-fn.html"><kbd>object-name</kbd></a> [Function]</li>
-<li><a href="object-time-fn.html"><kbd>object-time</kbd></a> [Function]</li>
+<li><a href="map-objects-fn.html"><kbd>map-objects</kbd></a> [Function]</li>
 <li><a href="remove-object-fn.html"><kbd>remove-object</kbd></a> [Function]</li>
 <li><a href="remove-subobjects-fn.html"><kbd>remove-subobjects</kbd></a> [Function]</li>
-<li><a href="save-object-fn.html"><kbd>save-object</kbd></a> [Function]</li>
-<li><a href="subcontainers-fn.html"><kbd>subcontainers</kbd></a> [Function]</li>
 </ul>
 
 
