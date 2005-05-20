@@ -146,6 +146,9 @@
 
 ;;; Keywords. Gauche keywords are cltl keywords, Yay! 
 
+(define (keyword->symbol kw)
+  (string->symbol (keyword->string kw)))
+
 (define (symbol->keyword sym)
   (make-keyword (symbol->string sym)))
 

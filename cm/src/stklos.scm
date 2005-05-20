@@ -50,7 +50,7 @@
           (error "Fix set-file-position in STklos"))))
 
 (define (delete-file fil)
-  (system (format #f "rm " fil)))
+  (system (string-append "rm " fil)))
 
 (define (read-byte fp)
   ;; gad what a crock! ill have to look at srfi56
@@ -88,7 +88,7 @@
 (define (set-env-var var val)
   (setenv! var val))
 
-(define (shell cmd)
+(define (shell cmd . args)
   (system cmd))
 
 (define (get-current-time)
@@ -113,7 +113,8 @@
 (define (make-equal?-hash-table size)
   (make-hash-table equal?))
 
-(define hash-ref hash-table-get)
+(define (hash-ref tbl key)
+  (hash-table-get tbl key #f))
 
 (define hash-set! hash-table-put!)
 
@@ -162,6 +163,8 @@
 (define (symbol->keyword sym) 
   (string->keyword (symbol->string sym)))
 
+(define (keyword->symbol kw)
+  (string->symbol (keyword->string kw)))
 
 ;;; Numbers
 
@@ -189,9 +192,6 @@
     (if (= (expt 2 (+ -1 leng)) (+ n 1))
 	(+ -1 leng)  ;; correction needed - a little fudging to fix the round-off error
 	leng)))
-
-;; SIGNUM
-;; INTEGER-LENGTH
 
 (define most-positive-fixnum (- (expt 2 29) 1))
 (define most-negative-fixnum (- (expt 2 29)))
@@ -236,7 +236,6 @@
                (else
                 (values (round (inexact->exact n))
                         e sign))))))))
-
 
 ;;; Object system, interface is almost exactly the same as Gauche
 
