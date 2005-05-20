@@ -627,6 +627,10 @@
   (+ (* (/ (- newmax newmin) (- oldmax oldmin)) (- value oldmin))
      newmin))
 
+(define (decimals value places)
+  (let ((n (expt 10.0 places)))
+    (/ (round (* value n)) n)))
+
 (define (mymod num div)
   (if (and (exact? num)
            (exact? div))
