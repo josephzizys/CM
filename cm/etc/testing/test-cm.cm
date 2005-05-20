@@ -296,7 +296,7 @@
   ;; test subobjects
   (check "subobjects" (= (length (subobjects x)) 10))
   (set! y (new midi :time 1))
-  (set! (subobjects x) (list y))
+  (set! (container-subobjects x) (list y))
   (check "subobjects setting" (= (length (subobjects x)) 1))
   
   ;; test subobject editing
