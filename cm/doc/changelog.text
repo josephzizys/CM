@@ -2,6 +2,20 @@ CM 2.7.0
 
 New Features:
 
+o New functions MAP-OBJECTS and FOLD-OBJECTS support object sequencing
+  and editing. See dictionary entries for more information.
+
+o New macros sv+, sv* see documentation for more information.
+
+o Previously undocumented macro sv now documented. See changes section
+  for more information.
+
+o New function SUBOBJECTS returns all or just some subobjects of a
+  seq. (The former function with this name is now called
+  CONTAINER-SUBOBJECTS, the renaming should be backwards compatible
+  since calling SUBOBJECTS with none of its optional arguments calls
+  CONTAINER-SUBOBJECTS.
+
 o cm.sh now Slime aware: if Slime is loaded then /etc/xemacs/cm.el
   uses Slime to implement lisp-listener, otherwise listener.el is
   used.  cm.el also provides SLIME-EVAL-AT-MOUSE, a more powerful eval
@@ -73,6 +87,12 @@ o Ported CM to Lispworks (free Personal Edition)
 o Ported CM to Guile 1.7.1
 
 Changes: 
+
+o SUBOBJECTS accessor has been renamed CONTAINER-SUBOBJECTS. The
+  old name is now a mapping function.
+
+o the SV macro now supports the keyword form for slot times, ie
+  time or :time can be used.
 
 o renamed :in <mode> argument to KEYNUM to :from <mode>. :in will
   continue to work but has been removed from the documentation and
