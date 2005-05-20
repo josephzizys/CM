@@ -300,7 +300,7 @@
   ;; the seq enqueues its list of subobjects thus
   ;; allowing multiple enqueues of the same seq.
   (let ((mystart (+ start (object-time obj))))
-    (enqueue (subobjects obj)
+    (enqueue (container-subobjects obj)
 	     mystart mystart)
     ;; schedule all subcontainers of seq
     (dolist (sub (subcontainers obj))

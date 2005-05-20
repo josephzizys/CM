@@ -690,7 +690,7 @@
   ;; we combine div and scaler in a single operation:
   ;; (ticks/div)*scaler = ticks*(scaler/div) = ticks*mult
   (let ((mult (/ scaler divs)))
-    (dolist (e (subobjects track))
+    (dolist (e (container-subobjects track))
       (set! (object-time e)
             (* (object-time e) mult))
       (when (is-a? e <midi>)
@@ -747,7 +747,7 @@
     res))
 
 (define (apply-tempo-map divs tmap track)
-  (let ((data (subobjects track))
+  (let ((data (container-subobjects track))
         (this (pop tmap))
         (flag #t))
 
@@ -888,7 +888,7 @@
                (when n (push n data))))))  ; end #'mapper
       (midi-file-set-track file track)
       (midi-file-map-track (function mapper) file ))
-    (set! (subobjects seq)
+    (set! (container-subobjects seq)
           (reverse! data))
     seq))
 
