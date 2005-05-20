@@ -466,12 +466,7 @@
 ; (string->expr "(list 1 2 3)")
 ; (string->expr "1 2 3" :multiok t)
 
-;;; number hacks
-;;;
-
-(define (decimals value places)
-  (let ((n (expt 10.0 places)))
-    (/ (round (* value n)) n)))
+;;; accessing slot values
 
 (define-macro (sv obj slot . args)
   (if (null? args)
@@ -486,6 +481,19 @@
                   (push (slot-setter-form o x y) res))
                 (reverse res)))
             (values)))))
+
+(define (svaux obj slot val op)
+  (let ((ob (gensym ))
+        (v2 (gensym)))
+    `(let* ((,ob ,obj)
+            (,v2 (,op (sv ,ob ,slot) ,val)))
+       (sv ,ob ,slot ,v2))))
+
+(define-macro (sv+ obj slot val)
+  (svaux obj slot val '+))
+
+(define-macro (sv* obj slot val)
+  (svaux obj slot val '*))
 
 ;;;
 ;;; u8vector addition for both scheme and cltl
