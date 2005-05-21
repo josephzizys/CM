@@ -889,7 +889,7 @@
 
 (define (map-objects fn objs . args)
   (with-args (args &key (start 0) end (step 1) (width 1)
-                   test class key slot slot!)
+                   at test class key slot slot! &aux doat)
     ;; allow a seq to be passed in
     (if (not (list? objs))
         (set! objs (container-subobjects objs)))
@@ -899,11 +899,21 @@
       (if key (err ":slot[!] and :key are exclusive keywords.")
           (set! key (if slot! (lambda (x) (slot-ref x slot!))
                         (lambda (x) (slot-ref x slot))))))
+    (when at
+      (unless (and (eq? start 0) (not end) (eq? step 1))
+        (err ":at excludes use of :start step and :end"))
+      (unless (apply (function <) at)
+        (err ":at values not in increasing order."))
+      (set! doat #t)
+      (set! start (pop at)))
+          
     (do ((tail (list-tail objs start) (list-tail tail step))
          (indx start (+ indx step))
          (data #f)
+         (done #f)
          (this #f))
         ((or (null? tail)
+             done
              (and end (not (< indx end))))
          (values))
       (cond ((> width 1)
@@ -933,7 +943,11 @@
                        ( test data))
                    (if slot!
                        (slot-set! this slot! ( fn data))
-                       ( fn data)))))))))
+                       ( fn data))))))
+      (when doat
+        (if (null? at)
+            (begin (set! done #t) (set! step 0))
+            (begin (set! step (- (pop at) indx))))))))
 
 (define (fold-objects fn objects acc . args)
   ;; fn takes two values, the current object and acc, which receives
