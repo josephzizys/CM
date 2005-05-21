@@ -69,6 +69,13 @@ final <var>value</var> is returned as the value of
                     (+ v (<a href="sv-mac.html">sv</a> x <span class="keyword">:duration</span>))
                     v))
               midis 0)
+
+<span class="comment">;;; return the positions of all f-sharp keynums.</span>
+(fold-objects (<span class="special">let</span> ((p -1))
+                (<span class="special">lambda</span> (x l)
+                  (incf p)
+                  (<span class="special">if</span> (= (mod x 6) 0) (append! l (list p)) l)))
+              midis '() <span class="keyword">:slot</span> 'keynum)
 </pre>
 </div>
 <h4>See also:</h4>
