@@ -13,28 +13,48 @@
 <!-- Entry: "subobjects" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><code>(</code><code class="entry">subobjects</code> <var>seq</var>
-[<var>start</var>] [<var>end</var>] [<var>step</var>] [<var>width</var>])</code></span></dd>
+<dd><code>(</code><code class="entry">subobjects</code> <var>objects</var>
+{<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
 <p>
-Returns the subobjects of <a href="seq-cls.html"><var>seq</var></a>. The optional arguments have the
-same meaning as their keyword equivalents in <a href="map-objects-fn.html">map-objects</a>.
-If <var>end</var> is boolean false then it defaults to the length of <a href="seq-cls.html"><var>seq</var></a>.
+Returns a list of subobjects from a list
+or <a href="seq-cls.html"><code>seq</code></a>
+of <var>objects</var>. Supports all the keyword parameters
+of <a href="map-objects-fn.html">map-objects</a>
+except <span class="keyword">:slot</span>
+and <code class="keyword">:slot!</code>.
 </p>
+
+
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Using <code>subobjects</code>.
+</p>
+<pre class="code">
+<span class="comment">;;; define some random midi events to demonstrate mapping</span>
+(<span class="special">define</span> <span class="defined">midis</span>
+  (<span class="special">loop</span> for i below 100
+        collect (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> i <span class="keyword">:keynum</span> (<a href="between-fn.html">between</a> 20 100)
+                     <span class="keyword">:amplitude</span> (<a href="between-fn.html">between</a> .1 .9)
+                     <span class="keyword">:duration</span> (<a href="pick-fn.html">pick</a> .2 .4 .6 .8))))
+
+<span class="comment">;;; return every other event between the 10th and 20th</span>
+(subobjects midis <span class="keyword">:start</span> 10 <span class="keyword">:end</span> 20 <span class="keyword">:step</span> 2)
+
+<span class="comment">;;; return only events with even keynumbers</span>
+(subobjects midis <span class="keyword">:test</span> (<span class="special">lambda</span> (x) (even? (<a href="sv-mac.html">sv</a> x <span class="keyword">:keynum</span>))))
+</pre>
+</div>
 
 <!-- See also -->
 <h4>See also:</h4>
 <ul>
-<li><a href="append-object-fn.html"><kbd>append-object</kbd></a> [Function]</li>
-<li><a href="find-object-fn.html"><kbd>find-object</kbd></a> [Function]</li>
-<li><a href="fold-objects-fn.html"><kbd>fold-objects</kbd></a> [Function]</li>
-<li><a href="insert-object-fn.html"><kbd>insert-object</kbd></a> [Function]</li>
-<li><a href="map-objects-fn.html"><kbd>map-objects</kbd></a> [Function]</li>
-<li><a href="remove-object-fn.html"><kbd>remove-object</kbd></a> [Function]</li>
-<li><a href="remove-subobjects-fn.html"><kbd>remove-subobjects</kbd></a> [Function]</li>
+<li><a href="fold-objects-fn.html"><code>fold-objects</code></a> [Function]</li>
+<li><a href="map-objects-fn.html"><code>map-objects</code></a> [Function]</li>
+<li><a href="sv-mac.html"><code>sv</code></a> [Macro]</li>
 </ul>
-
 
 </div>
 <hr class="inv"/>

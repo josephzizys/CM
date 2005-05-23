@@ -1,17 +1,19 @@
 CM 2.7.0 
 
-New Features:
+--New Features:
 
 o New functions MAP-OBJECTS and FOLD-OBJECTS support object sequencing
-  and editing. See dictionary entries for more information.
+  and editing. Args to existing functions SUBOBJECTS and
+  LIST-SUBOBJECTS have changed to match MAP-OBJECTS.  See dictionary
+  entries for more information.
 
-o New macros sv+, sv* see documentation for more information.
+o New slot macros SV+, SV* see dictionary for more information.
 
-o Previously undocumented macro sv now documented. See changes section
+o Previously undocumented macro SV now documented. See changes section
   for more information.
 
 o New function SUBOBJECTS returns all or just some subobjects of a
-  seq. (The former function with this name is now called
+  seq. The former function with this name is now called
   CONTAINER-SUBOBJECTS, the renaming should be backwards compatible
   since calling SUBOBJECTS with none of its optional arguments calls
   CONTAINER-SUBOBJECTS.
@@ -30,14 +32,14 @@ o cm.sh now Slime aware: if Slime is loaded then /etc/xemacs/cm.el
 o AMPLITUDE now handles lists of amplitudes. (Anders Vinjar)
 
 o New ':from' arg to KEYNUM converts an integer keynum from <tuning>
-to its (possibly) floating point equivalent key number in the standard
-chromatic scale. In addition, :from <mode> converts from an integer
-modal keynum to the equivalent integer keynum in the mode's
-tuning. (this last option was, confusingly enough, called ':in'
-previously...)
+  to its (possibly) floating point equivalent key number in the
+  standard chromatic scale. In addition, :from <mode> converts from an
+  integer modal keynum to the equivalent integer keynum in the mode's
+  tuning. (this last option was, confusingly enough, called ':in'
+  previously...)
 
 o MIDI events now treat rational keynums like floating point keynums
-instead of signaling an error.
+  instead of signaling an error.
 
 o Implemented missing meta events: midi-port-event, midi-chan-event
 
@@ -86,10 +88,17 @@ o Ported CM to Lispworks (free Personal Edition)
 
 o Ported CM to Guile 1.7.1
 
-Changes: 
+--Changes: 
 
-o SUBOBJECTS accessor has been renamed CONTAINER-SUBOBJECTS. The
-  old name is now a mapping function.
+o (SETF SUBOBJECTS) accessor has been renamed 
+  (SETF CONTAINER-SUBOBJECTS). 
+
+o SUBOBJECTS arguments have changed to match MAP-OBJECTS.
+
+o LIST-SUBOBJECTS arguments have changed to match MAP-OBJECTS.
+
+o Removed MAP-SUBOBJECTS and MAP-SUBCONTAINERS. Use FOLD-OBJECTS
+  instead.
 
 o the SV macro now supports the keyword form for slot times, ie
   time or :time can be used.

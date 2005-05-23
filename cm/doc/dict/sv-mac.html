@@ -37,8 +37,6 @@ underlying Lisp implementation's slot setting mechanism.
 <pre class="code">
 (<span class="special">define</span> <span class="defined">m</span> (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> 0 <span class="keyword">:keynum</span> 60))
 
-m
-<span class="result">&rArr;</span> #i(midi time 0 keynum 60 duration 0.5 amplitude 64 channel 0)
 <span class="comment">;;; getting slot values</span>
 (sv m <span class="keyword">:keynum</span>)
 <span class="result">&rArr;</span> 60
