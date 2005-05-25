@@ -1471,7 +1471,7 @@ time)
     (set! timestamp
           (+ timestamp (exact->inexact (/ (u8vector->uint
                                            (u8vector-subseq vec 12 16))
-                                          2147483647))))
+                                          #xffffffff))))
     (set! cmd (u8vector->string (u8vector-subseq vec 20)))
     (set! pos (+ 20 (string-length cmd)))
     (set! pos (+ pos (- 4 (modulo pos 4))))
