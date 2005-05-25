@@ -65,7 +65,7 @@
   (multiple-value-bind (int rem) (clfloor offset)
     (u8vector-append (make-byte-vector int)
                      (make-byte-vector
-                      (inexact->exact (floor (* rem #xffffff)))))))
+                      (inexact->exact (floor (* rem #xffffffff)))))))
 
 ;;as part of an OSC message the types of each token are sent
 
