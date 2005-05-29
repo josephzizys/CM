@@ -2,6 +2,7 @@ CM 2.7.0
 
 --New Features:
 
+o Ported CM to STklos 0.72.
 o New functions MAP-OBJECTS and FOLD-OBJECTS support object sequencing
   and editing. Args to existing functions SUBOBJECTS and
   LIST-SUBOBJECTS have changed to match MAP-OBJECTS.  See dictionary
