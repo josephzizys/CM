@@ -12,6 +12,8 @@
 ;;; $Revision$
 ;;; $Date$
 
+#,(pragma :undefined-symbol-warning #f)
+
 (require "srfi-1")
 (require "srfi-4")
 
@@ -42,12 +44,19 @@
       (chdir (car dir)))
   (pwd))
 
+;(define (set-file-position fil pos set?)
+;  (if (not set?)
+;      (port-current-position fil)
+;      (if (= pos 0)
+;          (port-seek fil pos ':start)
+;          (port-seek fil pos ':current))))
+
 (define (set-file-position fil pos set?)
-  (if (not set?)
-      (port-current-position fil)
-      (if (= pos 0)
-          (rewind-file-port fil)
-          (error "Fix set-file-position in STklos"))))
+  (if (= pos 0)
+    (port-seek fil 0 :current) ; return the current position
+    (if set?
+      (port-seek fil pos :start)
+      (port-seek fil pos :current))))
 
 (define (delete-file fil)
   (system (string-append "rm " fil)))
@@ -215,27 +224,28 @@
 ;        (* (random-real) n))
 ;      (error "random bounds not integer or real: ~s." n))))
 
-(define (integer-decode-float num)
-  ;; see srfi 56...
-  (if (zero? num) 
-    (values 0 0 1)
-    (let ((base 2)
-          (mant-size 23)
-          (exp-size 8)
-          (sign 1))
-      (if (negative? num) 
-        (begin (set! sign -1) (set! num (- num))))
-      (let* ((bot (expt base mant-size))
-             (top (* base bot)))
-        (let loopy ((n num) (e 0))
-             (cond
-               ((>= n top)
-                (loopy (quotient n base) (+ e 1)))
-               ((< n bot)
-                (loopy (* n base) (- e 1)))
-               (else
-                (values (round (inexact->exact n))
-                        e sign))))))))
+(define integer-decode-float decode-float)
+;; (define (integer-decode-float num)
+;;   ;; see srfi 56...
+;;   (if (zero? num) 
+;;     (values 0 0 1)
+;;     (let ((base 2)
+;;           (mant-size 23)
+;;           (exp-size 8)
+;;           (sign 1))
+;;       (if (negative? num) 
+;;         (begin (set! sign -1) (set! num (- num))))
+;;       (let* ((bot (expt base mant-size))
+;;              (top (* base bot)))
+;;         (let loopy ((n num) (e 0))
+;;              (cond
+;;                ((>= n top)
+;;                 (loopy (quotient n base) (+ e 1)))
+;;                ((< n bot)
+;;                 (loopy (* n base) (- e 1)))
+;;                (else
+;;                 (values (round (inexact->exact n))
+;;                         e sign))))))))
 
 ;;; Object system, interface is almost exactly the same as Gauche
 

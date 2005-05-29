@@ -2,7 +2,19 @@
 ;;; $Revision$
 ;;; $Date$
 ;;;
-;;; (load "/Lisp/scm/src/cm.scm")
+;;; (load "/Lisp/cm/src/cm.scm")
+
+(cond-expand
+ ;; gag stklos read warnings about symbols used by other schemes.
+ (stklos
+  (define cd #f)
+  (define pwd #f)
+  (define force-output #f)
+  (define port-name #f)
+  (define port-filename #f)
+  (define %load-path #f)
+  (define current-load-port #f))
+ (else #f))
 
 (let ((this-file #f)
       (load-path "")
@@ -13,6 +25,10 @@
                    "sc"
                    )))
   (cond-expand
+   (stklos
+    (set! this-file (current-loading-file))
+    (set! file-list (cons "stklos" file-list))
+    )
    (guile
     (set! this-file (port-filename (current-load-port)))
     (set! file-list (cons "guile" file-list)))
@@ -24,9 +40,7 @@
 ;;   (eval (with-input-from-string "##sys#current-load-file" read)))
 ;;   (set! file-list (list "chicken" "loop"))
 ;;   (load-verbose #f))
-   (stklos
-    (set! this-file "cm.scm")
-    (set! file-list (cons "stklos" file-list))))
+)
   
   (do ((last-slash #f)
        (i 0 (+ i 1))
@@ -45,12 +59,10 @@
     (set! *load-path* (cons load-path *load-path*))
     (set! load-path ""))
    (stklos
-    ;;(set! *load-path* (cons load-path *load-path*))
-    ;;(set! load-path "")
-    )
-   )
+    (set! *load-path* (cons load-path *load-path*))
+    (set! load-path "")))
 
-  (let loadem ((tail file-list))
+  (let loadcm ((tail file-list))
        (if (null? tail) 
            #f
            (let ((file (string-append load-path (car tail) ".scm")))
@@ -60,8 +72,7 @@
               (else #f))
              (newline)
              (load file)
-             (loadem (cdr tail))
-             )))
+             (loadcm (cdr tail)))))
 
   ;; load user init file if it exists
   (let* ((this (pwd))
