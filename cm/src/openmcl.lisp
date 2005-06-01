@@ -264,3 +264,102 @@
       (setf *receive-hook* nil)
       (ms:MidiSetRcvAlarm *mp* (ms:nullptr))
       (values))))
+
+
+
+;;; beginning thread support a la SRFI-18
+;;; 
+
+
+
+;;; hope to make these go away and not have ffi calls, but i am 
+;;; not sure the level of time accuracy which will be required
+;;; although this seems overkill 
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ccl::use-interface-dir :LIBC))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ccl::open-shared-library "libc.dylib"))
+
+
+(defun get-internal-realtime-microsec ()
+  (ccl::rlet ((tv :timeval))
+    (#_gettimeofday tv (ccl::%null-ptr))
+    (values
+     (+ (ccl::pref tv :timeval.tv_sec) )
+     (ccl::pref tv :timeval.tv_usec))))
+
+(defun current-thread ()
+  ccl::*current-process*)
+
+(defun thread? (obj)
+  (equal (find-class 'ccl::process)
+	 (class-of obj)))
+
+(defun make-thread (thunk &optional name)
+  (let ((proc-name)
+	(proc))
+    (if name 
+	(setf proc-name name)
+      (setf proc-name (format nil "rt-thread-~S" (gensym))))
+    (setf proc (ccl::make-process proc-name))
+    (ccl::process-preset proc thunk)))
+
+(defun thread-name (obj)
+  (slot-value obj 'ccl::name))
+
+
+;;;time object from srfi-18
+;;;
+
+(defclass time ()
+  ((type :initform 'native :accessor time-type)
+   (second :accessor time-second)
+   (nanosecond  :accessor time-nanosecond)))
+
+
+(defun current-time ()
+  (let ((obj (make-instance 'time)))
+    (multiple-value-bind (utime ms) 
+	(get-internal-realtime-microsec)
+      (setf (slot-value obj 'second) utime)
+      (setf (slot-value obj 'nanosecond) (* 1000 ms)))
+    obj))
+
+
+(defun time? (obj)
+  (equal (find-class 'time) (class-of obj)))
+    
+(defun time->seconds (obj)
+  (if (time? obj)
+      (+ (slot-value obj 'second)
+	 (* (slot-value obj 'nanosecond) 1.D-9))
+    nil))
+
+(defun seconds->time (sec)
+  (let ((obj (make-instance 'time)))
+    (multiple-value-bind (utime ns)
+	(floor sec)
+      (setf (slot-value obj 'second) utime)
+      (setf (slot-value obj 'nanosecond) (floor (* 1e9 (float ns)))))
+    obj))
+
+
+;;if thread-sleep! is passed a time object this is absolute time
+
+;;if a number it is time to wait
+
+(defmethod thread-sleep! ((abs-time time))
+  (let ((target-time (time->seconds abs-time)))
+    (ccl::process-wait "waiting"
+		       #'(lambda (x) (> (time->seconds (current-time))  x))
+			   target-time)))
+
+
+(defmethod thread-sleep! ((wait-time number))
+  (let ((start-time (time->seconds (current-time))))
+    (ccl::process-wait "waiting"
+		       #'(lambda (x) (> (- (time->seconds (current-time)) start-time) x))
+			   wait-time)))
+
