@@ -23,6 +23,9 @@
 (use srfi-4)     ; u8vecotr
 (use srfi-27)    ; random bits
 (use file.util)  ; current-directory, home-directory
+;(use gauche.threads) not needed until rt processes supported
+(use gauche.net) ; needed for socket communication
+
 
 ;; Lisp environment normalization
 
@@ -172,10 +175,26 @@
           (* (random-real) n))
       (errorf "random bounds not integer or real: ~s." n))))
 
-(define (integer-decode-float n)
-  (let ((v (decode-float n)))
-    (values (vector-ref v 0) (vector-ref v 1) 
-            (vector-ref v 2))))
+(define (integer-decode-float num)
+  (if (zero? num) 
+    (values 0 0 1)
+    (let ((base 2)
+          (mant-size 23)
+          (exp-size 8)
+          (sign 1))
+      (if (negative? num) 
+        (begin (set! sign -1) (set! num (- num))))
+      (let* ((bot (expt base mant-size))
+             (top (* base bot)))
+        (let loopy ((n num) (e 0))
+             (cond
+               ((>= n top)
+                (loopy (quotient n base) (+ e 1)))
+               ((< n bot)
+                (loopy (* n base) (- e 1)))
+               (else
+                (values (inexact->exact (round n)) 
+                        e sign))))))))
 
 ;                                   Chicken Gauche  Guile  Stklos
 ;(make class . args)                        y       y       y
@@ -314,3 +333,35 @@
 ; (slot-definition-initargs sd)
 ; (slot-definition-initform sd)
 
+
+;;gauche specific stuff for sending osc messages over udp sockets.
+
+(define (u8vector->byte-string vec)
+  (let* ((vec-len (u8vector-length vec))
+         (byte-string (make-byte-string vec-len)))
+    (do ((i 0 (+ i 1)))
+        ((= i vec-len))
+      (string-byte-set! byte-string i (u8vector-ref vec i)))
+    byte-string))
+
+(define (make-udp-socket host port)
+  (let ((sock (make-socket PF_INET SOCK_DGRAM)))
+    (socket-bind sock (make <sockaddr-in> :host "127.0.0.1" :port 0))
+    (socket-connect sock (make <sockaddr-in> :host host :port port))))
+
+(define (send-msg message sock)
+  (socket-send sock (u8vector->byte-string (format-osc message))))
+
+
+(define (send-bundle offset message sock)
+  (let ((arr #f) (mess-len 0))
+    (multiple-value-bind (mess len)
+        (format-osc message)
+      (set! arr
+            (u8vector-append (make-byte-vector "#bundle")
+                             (make-osc-timetag offset)
+                             (make-byte-vector len)
+                             mess))
+      (set! mess-len (+ len 8 8 4))
+      (socket-send sock (u8vector->byte-string arr)))))
+                             
