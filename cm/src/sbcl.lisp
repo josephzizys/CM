@@ -148,7 +148,7 @@
 (defgeneric append-object (obj1 obj2))
 (defgeneric remove-object (obj1 obj2))
 (defgeneric remove-subobjects (obj))
-(defgeneric list-subobjects (obj  &key start end start-time end-time))
+;(defgeneric list-subobjects (obj  &key start end start-time end-time))
 (defgeneric amplitude (amp &optional softest loudest power))
 (defgeneric rhythm (rhy &optional tempo beat))
 (defgeneric tuning->mode (mode keynum force?))
@@ -224,3 +224,5 @@
 (defgeneric object->cmn (obj))
 
 (defgeneric import-set-slots (obj list))  ; sc.scm
+(defgeneric sc-env->list (obj))
+
