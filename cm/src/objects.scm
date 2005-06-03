@@ -182,11 +182,12 @@
 
 (define-method* (object-time (obj <object>)) 0)
 
-;; (define-method* (subcontainers (obj <object>))
-;;   '())
-;; (define-method* (subcontainers (obj <seq>))
-;;   (loop for o in (container-subobjects obj)
-;;         when (is-a? o <container>) collect o))
+(define-method* (subcontainers (obj <object>))
+  '())
+(define-method* (subcontainers (obj <seq>))
+  (loop for o in (container-subobjects obj)
+        when (is-a? o <container>) collect o))
+
 ;; (define (map-subobjects fn container . args)
 ;;   (with-args (args &key key recurse test type)
 ;;     (let ((test (if type
