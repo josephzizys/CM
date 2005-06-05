@@ -79,12 +79,11 @@
                     ((or (null? tail) flag) flag)
                   (if (eq? theid (part-id (car tail)))
                       (set! flag (car tail))))))
-    (cond ((not part?)
-           (set! part? (fomus-newpart theid))
-           (set! (fomus-stream-parts fil)
-                 (cons part? parts)))
-          (else
-           (set! part? (car part?))))
+    (when (not part?)
+      (set! part? (fomus-newpart theid))
+      (set! (fomus-stream-parts fil)
+            (cons part? parts)))
+
     ;; use score time not local time.
     (set! (event-off obj) scoretime)
     (set! (part-events part?)
