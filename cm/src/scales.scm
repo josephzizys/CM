@@ -63,7 +63,7 @@
           :init-keyword :steps :init-keyword :degrees
           :init-keyword :notes)
    (lowest :accessor scale-lowest :init-value #f :init-keyword :tonic)
-   (tuning :init-value *chromatic-scale*
+   (tuning :init-form *chromatic-scale*
            :init-keyword :scale
            :accessor mode-tuning))
   :name 'mode)

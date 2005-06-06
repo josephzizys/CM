@@ -67,18 +67,18 @@
           :init-value '()
           :accessor pattern-data)
    (length :accessor pattern-length)
-   (datum :init-value +nad+
+   (datum :init-form +nad+
           :accessor pattern-datum)
    (period :init-keyword :for 
            :accessor pattern-period)
    (value :init-keyword :last-value
-          :init-value +nad+
+          :init-form +nad+
           :accessor pattern-value)
    (state :init-keyword :last-state
-          :init-value +nad+
+          :init-form +nad+
           :accessor pattern-state)
    (repeat :init-keyword :repeat
-           :init-value most-positive-fixnum
+           :init-form most-positive-fixnum
            :accessor pattern-repeat)
    (parser :init-keyword :parser :init-value #f 
            :accessor pattern-parser )
@@ -690,7 +690,7 @@
 ;;;
 
 (define-class* <heap> (<cycle>)
-  ((random-state :init-value *random-state*
+  ((random-state :init-form *random-state*
                  :init-keyword :state :accessor pattern-random-state))
   :name 'heap)
 
@@ -737,9 +737,9 @@
   datum index (weight 1) (min 1) max (count 0) id minmax)
 
 (define-class* <random> (<pattern>)
-  ((range :init-value *random-range*
+  ((range :init-form *random-range*
           :accessor random-pattern-range)
-   (random-state :init-value *random-state*
+   (random-state :init-form *random-state*
                  :init-keyword :state
                  :accessor pattern-random-state))
   :name 'random)
@@ -1125,7 +1125,7 @@
       (next-1 to))))
 
 (define-class* <graph> (<pattern>) 
-  ((selector :init-value (function default-graph-node-select)
+  ((selector :init-form (function default-graph-node-select)
              :init-keyword :selector :accessor graph-selector)
    (last :init-value #f :init-keyword :last
          :accessor graph-last)
@@ -1280,7 +1280,7 @@
 ;;;
 
 (define-class* <accumulation> (<pattern>)
-  ((indices :init-value (cons 0 0)
+  ((indices :init-form (cons 0 0)
             :accessor accumulation-indicies))
   :name 'accumulation)
 
@@ -1436,7 +1436,7 @@
           :accessor rewrite-table)
    (rules :init-value '() :init-keyword :rules
           :accessor rewrite-rules)
-   (generations :init-value most-positive-fixnum
+   (generations :init-form most-positive-fixnum
                 :init-keyword :generations
                 :accessor rewrite-generations))
   :name 'rewrite)
@@ -2031,7 +2031,7 @@
    (mod :accessor transposer-mod :init-value #f 
         :init-keyword :mod)
    (scale :accessor transposer-scale 
-          :init-value *scale*
+          :init-form *scale*
           :init-keyword :scale))
   :name 'transposer)
 

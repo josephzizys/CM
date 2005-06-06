@@ -261,18 +261,18 @@
   (let ((cname #f)
         (metac #f)
         (csets (list)))
-    ;; substitute :init-form for :init-value
-    (do ((tail slots (cdr tail))
-         (head (list )))
-        ((null? tail) 
-         (set! slots (reverse! head)))
-      (set! head 
-            (cons (if (member ':init-value (cdr (car tail)))
-                      (map (lambda (x) (if (eq? x ':init-value)
-                                           ':init-form x))
-                          (car tail))
-                      (car tail))
-                  head)))
+;    ;; substitute :init-form for :init-value
+;    (do ((tail slots (cdr tail))
+;         (head (list )))
+;        ((null? tail) 
+;         (set! slots (reverse! head)))
+;      (set! head 
+;            (cons (if (member ':init-value (cdr (car tail)))
+;                      (map (lambda (x) (if (eq? x ':init-value)
+;                                           ':init-form x))
+;                          (car tail))
+;                      (car tail))
+;                  head)))
     (do ((tail options (cddr tail)))
         ((null? tail) #f)
       ;; parse the various metaclass options we use (in guile these
