@@ -97,10 +97,8 @@
 		:TicksPerQuarterNote
 		:SetSynchroInPlayer :MidiNewMidiFileInfos
 		:MidiFileLoad :MidiFileSave :mf-clicks :mf-format :mf-timedef)
-  (:import-from :fomus
-                :fomus :part-id :part-events
-                :base-event :event-off :event-id :timesig :keysig
-                :fomus-newpart)
+  (:import-from :fomus :fomus :obj-partid :part-events
+                :event-base* :event-off :fomus-newpart :fomus-newnote)
   (:export :accumulation :amplitude :append-object :audio-file :axis
            :*beat* :best-normal-form :between :cd :cents->scaler
            :chord :*chromatic-scale* :clm-file :cm :cm-version :cmio

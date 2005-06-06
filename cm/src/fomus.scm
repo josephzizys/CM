@@ -34,7 +34,7 @@
   :metaclass <io-class>
   :file-types '("*.fms" "*.ly")) ;; add Enigma and MusicXML...
          
-(define-method* (object-time (obj <base-event>))
+(define-method* (object-time (obj <event-base*>))
   (event-off obj))
 
 (define-method* (open-io (io <fomus-stream>) dir . args)
@@ -63,48 +63,65 @@
                    (eq? (car mode) ':error))))
     (set! (io-open io) #f)
     (unless err?
+      (let* ((args (event-stream-args io))
+             (bend (list-prop args ':backend)))
+        (unless bend
+          (let* ((file (io-filename io))
+                 (type (filename-type io)))
+            (cond ((equal? type "ly")
+                   (set! bend ':lilypond))
+                  ((equal? type "etf")
+                   (set! bend ':etf))
+                  ((equal? type "xml")
+                   (set! bend ':xml))
+                  (else
+                   (set! bend ':fms)))
+            (set! args (cons* ':backend bend :filename file 
+                              args))))
       (apply (function fomus)
-             ;; IS THIS HOW TO SPECIFY the OUTPUT FILE??
-             :base-filename (io-filename io)
              :parts (fomus-stream-parts io)
              :timesigs (fomus-stream-timesigs io)
              :keysigs (fomus-stream-keysigs io)
-             (event-stream-args io)))))
+             args)))))
 
-(define-method* (write-event (obj <base-event>) (fil <fomus-stream>) scoretime)
+(define-method* (write-event (obj <event-base*>) (fil <fomus-stream>) scoretime)
   (let* ((parts (fomus-stream-parts fil))
-         (theid (event-id obj))
+         (theid (obj-partid obj))
          (part? (do ((tail parts (cdr tail))
                      (flag #f))
                     ((or (null? tail) flag) flag)
-                  (if (eq? theid (part-id (car tail)))
+                  (if (eq? theid (obj-partid (car tail)))
                       (set! flag (car tail))))))
     (when (not part?)
       (set! part? (fomus-newpart theid))
       (set! (fomus-stream-parts fil)
             (cons part? parts)))
-
     ;; use score time not local time.
     (set! (event-off obj) scoretime)
     (set! (part-events part?)
           (cons obj (part-events part?)))
     obj))
 
-(define-method* (write-event (obj <timesig>) (fil <fomus-stream>) scoretime)
-  ;; use score time not local time.
-  (set! (event-off obj) scoretime)
-  (set! (fomus-stream-timesigs fil)
-        (cons obj (fomus-stream-timesigs fil)))
-  )
 
-(define-method* (write-event (obj <keysig>) (fil <fomus-stream>) scoretime)
-  ;; use score time not local time.
-  (set! (event-off obj) scoretime)
-  (set! (fomus-stream-keysigs fil)
-        (cons obj (fomus-stream-keysigs fil)))
-  )
+(define-method* (write-event (obj <midi>) (file <fomus-stream>) scoretime)
+  (write-event (fomus-newnote :partid (midi-channel obj)
+                              :note (midi-keynum obj)
+                              :dur (midi-duration obj)
+                              :marks
+                              (let ((amp (midi-amplitude obj)))
+                                (if (<= 0 amp 1)
+                                    (list-ref '(:pppp :ppp :pp :p :mp 
+                                                :mf :f :ff :fff :ffff)
+                                              (inexact->exact
+                                               (floor (/ amp .1))))
+                                    #f)))
+               file scoretime))
 
-;;; Todo: add write-event method for <midi> as well...
+
+;0    1   2  3  4 5  6 7  8   9
+;pppp ppp pp p mp mf f ff fff ffff
+;(floor 1 .1)
+
 
 
 
