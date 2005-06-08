@@ -1592,6 +1592,7 @@
 
 (define-method* (open-io (obj <sc-stream>) dir . args)
   dir
+  args
   (unless (io-open obj)
       (set! (slot-ref obj 'socket)
             (make-udp-socket
@@ -1922,5 +1923,5 @@
 
 (define (sc-flush)
   (clear-sched (sc-open?))
-  (write-event (new group-free-all :group 0) (sc-open?) 0))
+  (write-event (make <group-free-all> :group 0) (sc-open?) 0))
 
