@@ -17,13 +17,13 @@
 ;;;
 ;;; porting code for Gauche Scheme:
 ;;; http://www.shiro.dreamhost.com/scheme/gauche/index.html
-;;;
+;;; 
 
 (use srfi-1)     ; list library
 (use srfi-4)     ; u8vecotr
 (use srfi-27)    ; random bits
 (use file.util)  ; current-directory, home-directory
-;(use gauche.threads) not needed until rt processes supported
+(use gauche.threads) ; for rt threads
 (use gauche.net) ; needed for socket communication
 
 
@@ -344,24 +344,19 @@
       (string-byte-set! byte-string i (u8vector-ref vec i)))
     byte-string))
 
-(define (make-udp-socket host port)
+(define (make-udp-socket host port local-port)
   (let ((sock (make-socket PF_INET SOCK_DGRAM)))
-    (socket-bind sock (make <sockaddr-in> :host "127.0.0.1" :port 0))
+    (socket-bind sock (make <sockaddr-in> :host "127.0.0.1" :port local-port))
     (socket-connect sock (make <sockaddr-in> :host host :port port))))
 
-(define (send-msg message sock)
-  (socket-send sock (u8vector->byte-string (format-osc message))))
+(define (make-osc-timetag offset out)
+  (let* ((now (current-time))
+         (offset-time (seconds->time offset))
+         (target-time (seconds->time (+ (time->seconds now) (time->seconds offset-time) (slot-ref out 'latency))))
+         (vec #f))
+    (set! vec (make-byte-vector (+ 2208988800 (slot-ref target-time 'second))))
+    (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
 
-
-(define (send-bundle offset message sock)
-  (let ((arr #f) (mess-len 0))
-    (multiple-value-bind (mess len)
-        (format-osc message)
-      (set! arr
-            (u8vector-append (make-byte-vector "#bundle")
-                             (make-osc-timetag offset)
-                             (make-byte-vector len)
-                             mess))
-      (set! mess-len (+ len 8 8 4))
-      (socket-send sock (u8vector->byte-string arr)))))
-                             
+(define (send-osc mess sc-stream len)
+  len
+  (socket-send (slot-ref sc-stream 'socket) (u8vector->byte-string mess)))
