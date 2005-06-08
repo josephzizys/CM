@@ -1564,16 +1564,31 @@
   (send-osc mess io len)))
 
 (define-method* (send-bundle offset message (io <sc-stream>))
-  (let ((arr #f) (mess-len 0))
-    (multiple-value-bind (mess len)
-      (format-osc message)
-      (set! arr
-            (u8vector-append (make-byte-vector "#bundle")
-                             (make-osc-timetag offset io)
-                             (make-byte-vector len)
-                             mess))
-      (set! mess-len (+ len 8 8 4))
-      (send-osc arr io mess-len))))
+  (let ((arr (make-byte-vector "#bundle"))
+        (mess-len 0))
+    (set! arr (u8vector-append arr (make-osc-timetag offset io)))
+    ;;this should be smarter
+    (if (list? (list-ref message 0))
+        (begin
+          (dolist (bundle-mess message)
+            (multiple-value-bind (mess len)
+              (format-osc bundle-mess)
+              (set! arr
+                    (u8vector-append arr
+                                     (make-byte-vector len)
+                                     mess))
+              (set! mess-len (+ mess-len len))))
+          (set! mess-len (+ mess-len 20))
+          (send-osc arr io mess-len))
+      (multiple-value-bind (mess len)
+        (format-osc message)
+        (set! arr
+              (u8vector-append arr
+                               (make-byte-vector len)
+                               mess))
+        (set! mess-len (+ len 8 8 4))
+        (send-osc arr io mess-len)))))
+
 
 (define-method* (open-io (obj <sc-stream>) dir . args)
   dir
@@ -1613,11 +1628,15 @@
                                               target time))
                          (cond ((list? (slot-ref obj (car tail)))
                                 (begin
-                                  (set! node-set-list (append! node-set-list (list (symbol->keyword (car tail)))))
-                                  (set! node-set-list (append! node-set-list (list (slot-ref obj (car tail)))))))
+                                  (set! node-set-list (append! node-set-list (list (symbol->string (car tail)))))
+                                  (let ((mess-list (sc-env->list (slot-ref obj (car tail)))))
+                                    (set! node-set-list (append! node-set-list (list (length mess-list))))
+                                    (set! node-set-list (append! node-set-list mess-list)))))
                                ((equal? (find-class* 'sc-env) (class-of (slot-ref obj (car tail))))
-                                (set! node-set-list (append! node-set-list (list (symbol->keyword (car tail)))))
-                                (set! node-set-list (append! node-set-list (list (sc-env->list (slot-ref obj (car tail)))))))
+                                (set! node-set-list (append! node-set-list (list (symbol->string (car tail)))))
+                                (let ((mess-list (sc-env->list (slot-ref obj (car tail)))))
+                                  (set! node-set-list (append! node-set-list (list (length mess-list))))
+                                  (set! node-set-list (append! node-set-list mess-list))))
                                (else
                                 (set-cdr! args 
                                           (list
@@ -1625,11 +1644,12 @@
                                             (symbol->string (car tail)))
                                            (slot-ref obj (car tail))))
                                 (set! args (cddr args)))))))))
-    (if (= time 0)
-        (send-msg msg io)
-      (send-bundle time msg io))
-    (when node-set-list
-      (write-event (make <node-setn> :node (slot-ref obj 'node) :controls-values node-set-list) io time))))
+    (if node-set-list
+        (send-bundle time (list msg (append! (list "/n_setn" (slot-ref obj 'node)) node-set-list)) io)
+      (if (= time 0)
+          (send-msg msg io)
+        (send-bundle time msg io)))))
+
 
 
 (define-method* (write-event (obj <load-synthdef>) (io <sc-stream>) time)
@@ -1838,6 +1858,30 @@
         (send-bundle time msg io)
       (send-msg msg io))))
 
+
+(define-method* (write-event (obj <sc-buffer>) (io <sc-stream>) time)
+  (cond ((slot-ref obj 'with-file)
+         (write-event (make <buffer-alloc-read> :bufnum (slot-ref obj 'bufnum) :file (slot-ref obj 'with-file) :frames (slot-ref obj 'frames)
+                            :start-frame (slot-ref obj 'starting-at)) io time))
+        ((list? (slot-ref obj 'with-values))
+         (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
+         (write-event (make <buffer-setn> :bufnum (slot-ref obj 'bufnum)
+                            :samples-values (list (slot-ref obj 'starting-at) (slot-ref obj 'with-values))) io time))
+        ((number? (slot-ref obj 'with-values))
+         (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
+         (write-event (make <buffer-fill> :bufnum (slot-ref obj 'bufnum) :num-samples (- (slot-ref obj 'frames) (slot-ref obj 'starting-at))
+                            :value (slot-ref obj 'with-values)) io time))
+        ((procedure? (slot-ref obj 'with-values))
+         (let ((vals '()))
+           (dotimes (i (- (slot-ref obj 'frames) (slot-ref obj 'starting-at)))
+             (set! vals (append! vals (list (apply (slot-ref obj 'with-values) '())))))
+           (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
+           (write-event (make <buffer-setn> :bufnum (slot-ref obj 'bufnum) :samples-values (list (slot-ref obj 'starting-at) vals)) io time)))
+        ((slot-ref obj 'with-gen)
+         (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
+         (write-event (make <buffer-gen> :bufnum (slot-ref obj 'bufnum) :flags :wavetable :command (car (slot-ref obj 'with-gen))
+                            :args (car (cdr (slot-ref obj 'with-gen)))) io time))))
+
 (define (sc-quit . args)
   (with-args (args &optional out)
     (let ((msg '("/quit")))
@@ -1875,4 +1919,8 @@
         (clear-sched)
         (close-io (find-object "sc.udp")))
     #f))
+
+(define (sc-flush)
+  (clear-sched (sc-open?))
+  (write-event (new group-free-all :group 0) (sc-open?) 0))
 
