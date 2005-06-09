@@ -552,7 +552,7 @@
   (typep x '(array unsigned-byte)))
 
 (defun make-u8vector (len &optional (u 0))
-  (make-array len :element-type 'unsigned-byte :initial-element u))
+  (make-array len :element-type '(unsigned-byte 8) :initial-element u))
 
 (defun u8vector (&rest u)
   (make-array (length u) :element-type 'unsigned-byte :initial-contents u))
