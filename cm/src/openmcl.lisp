@@ -370,8 +370,12 @@
          (vec nil))
     (set! vec (make-byte-vector (+ 2208988800 (slot-value target-time 'second))))
     (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
+
+#|
 (sc-open)
 (dump-osc nil)
 (clear-sched)
 (defun make-u8vector (len &optional (u 0))
   (make-array len :element-type '(unsigned-byte 8) :initial-element u))
+
+|#
