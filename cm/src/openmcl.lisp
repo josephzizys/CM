@@ -271,25 +271,6 @@
 ;;; 
 
 
-
-;;; hope to make these go away and not have ffi calls, but i am 
-;;; not sure the level of time accuracy which will be required
-;;; although this seems overkill 
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (ccl::use-interface-dir :LIBC))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (ccl::open-shared-library "libc.dylib"))
-
-
-(defun get-internal-realtime-microsec ()
-  (ccl::rlet ((tv :timeval))
-    (#_gettimeofday tv (ccl::%null-ptr))
-    (values
-     (+ (ccl::pref tv :timeval.tv_sec) )
-     (ccl::pref tv :timeval.tv_usec))))
-
 (defun current-thread ()
   ccl::*current-process*)
 
@@ -309,6 +290,8 @@
 (defun thread-name (obj)
   (slot-value obj 'ccl::name))
 
+(defun thread-start! (obj)
+  (ccl::process-enable obj))
 
 ;;;time object from srfi-18
 ;;;
@@ -316,17 +299,15 @@
 (defclass time ()
   ((type :initform 'native :accessor time-type)
    (second :accessor time-second)
-   (nanosecond  :accessor time-nanosecond)))
-
+   (millisecond :accessor time-millisecond)))
 
 (defun current-time ()
   (let ((obj (make-instance 'time)))
-    (multiple-value-bind (utime ms) 
-	(get-internal-realtime-microsec)
+    (multiple-value-bind (utime ms)
+	(truncate (get-internal-real-time) 1000)
       (setf (slot-value obj 'second) utime)
-      (setf (slot-value obj 'nanosecond) (* 1000 ms)))
+      (setf (slot-value obj 'millisecond) ms))
     obj))
-
 
 (defun time? (obj)
   (equal (find-class 'time) (class-of obj)))
@@ -334,17 +315,16 @@
 (defun time->seconds (obj)
   (if (time? obj)
       (+ (slot-value obj 'second)
-	 (* (slot-value obj 'nanosecond) 1.D-9))
+	 (* (slot-value obj 'millisecond) .001D0))
     nil))
 
 (defun seconds->time (sec)
   (let ((obj (make-instance 'time)))
-    (multiple-value-bind (utime ns)
+    (multiple-value-bind (utime ms)
 	(floor sec)
       (setf (slot-value obj 'second) utime)
-      (setf (slot-value obj 'nanosecond) (floor (* 1e9 (float ns)))))
+      (setf (slot-value obj 'millisecond) (floor (* 1000 (float ms)))))
     obj))
-
 
 ;;if thread-sleep! is passed a time object this is absolute time
 
@@ -356,10 +336,42 @@
 		       #'(lambda (x) (> (time->seconds (current-time))  x))
 			   target-time)))
 
-
 (defmethod thread-sleep! ((wait-time number))
   (let ((start-time (time->seconds (current-time))))
     (ccl::process-wait "waiting"
 		       #'(lambda (x) (> (- (time->seconds (current-time)) start-time) x))
 			   wait-time)))
 
+
+(defun make-udp-socket (host port local-port)
+  (ccl:make-socket :type :datagram :remote-port port :remote-host host
+			 :local-port local-port
+			 :format :binary))
+
+(defun socket-close (sock)
+  (ccl::close sock))
+
+(defun shutdown (sock)
+  (ccl::shutdown sock))
+
+(defun send-osc (mess sc-stream len)
+  (ccl::send-to (slot-value sc-stream 'socket) mess len))
+
+(defun modf (num)
+  (multiple-value-bind (int rem)
+      (floor num)
+    int
+    rem))
+
+(defun make-osc-timetag (offset out)
+  (let* ((now (current-time))
+         (offset-time (seconds->time offset))
+         (target-time (seconds->time (+ (time->seconds now) (time->seconds offset-time) (slot-value out 'latency))))
+         (vec nil))
+    (set! vec (make-byte-vector (+ 2208988800 (slot-value target-time 'second))))
+    (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
+(sc-open)
+(dump-osc nil)
+(clear-sched)
+(defun make-u8vector (len &optional (u 0))
+  (make-array len :element-type '(unsigned-byte 8) :initial-element u))
