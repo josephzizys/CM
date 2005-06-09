@@ -26,35 +26,32 @@
 (define-class* <fomus-stream> (<event-stream>)
   ((parts :init-keyword :parts :init-value '()
           :accessor fomus-stream-parts)
-   (timesigs :init-keyword :timesigs :init-value '()
-            :accessor fomus-stream-timesigs)
-   (keysigs :init-keyword :keysigs :init-value '()
-            :accessor fomus-stream-keysigs))
+   (global :init-keyword :global :init-value '()
+           :accessor fomus-stream-global)
+   )
   :name 'fomus-stream
   :metaclass <io-class>
   :file-types '("*.fms" "*.ly")) ;; add Enigma and MusicXML...
          
-(define-method* (object-time (obj <event-base*>))
+(define-method* (object-time (obj <event-base>))
   (event-off obj))
 
 (define-method* (open-io (io <fomus-stream>) dir . args)
   args
   (when (eq? dir ':output)
     (let ((parts (fomus-stream-parts io))
-          (tsigs (fomus-stream-timesigs io))
-          (ksigs (fomus-stream-keysigs io)))
+          (globs (fomus-stream-global io)))
       ;; check for singles
       (unless (list? parts)
         (set! (fomus-stream-parts io) 
               (if parts (list parts) (list))))
-      (unless (list? tsigs)
-        (set! (fomus-stream-timesigs io) 
-              (if tsigs (list tsigs) (list))))
-      (unless (list? ksigs)
-        (set! (fomus-stream-keysigs io) 
-              (if ksigs (list ksigs) (list))))
-      ;; flush any existing events
-      (for-each (lambda (p) (set! (part-events p) (list)))
+      (unless (list? globs)
+        (set! (fomus-stream-global io) 
+              (if globs (list globs) (list))))
+      ;; flush existing data from parts
+      (for-each (lambda (p)
+                  (set! (obj-id p) #f)
+                  (set! (part-events p) (list)))
                 (fomus-stream-parts io))
       (set! (io-open io) #t))))
     
@@ -80,49 +77,49 @@
                               args))))
       (apply (function fomus)
              :parts (fomus-stream-parts io)
-             :timesigs (fomus-stream-timesigs io)
-             :keysigs (fomus-stream-keysigs io)
+             :timesigs (fomus-stream-global io)
              args)))))
 
-(define-method* (write-event (obj <event-base*>) (fil <fomus-stream>) scoretime)
-  (let* ((parts (fomus-stream-parts fil))
-         (theid (obj-partid obj))
-         (part? (do ((tail parts (cdr tail))
-                     (flag #f))
-                    ((or (null? tail) flag) flag)
-                  (if (eq? theid (obj-partid (car tail)))
-                      (set! flag (car tail))))))
-    (when (not part?)
-      (set! part? (fomus-newpart theid))
-      (set! (fomus-stream-parts fil)
-            (cons part? parts)))
+(define (fomus-stream-part stream id)
+  (do ((tail (fomus-stream-parts stream) (cdr tail))
+       (part #f))
+      ((or (null? tail) part) 
+       (when (not part)
+         (set! part (make-part :partid id))
+         (set! (fomus-stream-parts stream)
+               (cons part (fomus-stream-parts stream))))
+       part)
+    (if (eq? id (obj-partid (car tail)))
+        (set! part (car tail)))))
+
+(define-method* (write-event (obj <event-base>) (fil <fomus-stream>) scoretime)
+  (let ((part (fomus-stream-part fil (obj-partid obj))))
     ;; use score time not local time.
     (set! (event-off obj) scoretime)
-    (set! (part-events part?)
-          (cons obj (part-events part?)))
+    (set! (part-events part)
+          (cons obj (part-events part)))
     obj))
 
+(define-method* (write-event (obj <midi>) (fil <fomus-stream>) scoretime)
+  (let* ((myid (midi-channel obj))
+         (part (fomus-stream-part fil myid))
+         (ampl (midi-amplitude obj))
+         (marks '()))
+    ;; add dynamic if not same as last note.
+    (when (<= 0 ampl 1)
+      (let ((this (list-ref '(:pppp :ppp :pp :p :mp 
+                              :mf :f :ff :fff :ffff :fffff)
+                            (inexact->exact
+                             (floor (/ ampl .1))))))
+          (unless (eq? this (obj-id part))
+            (set! marks (list this))
+            (set! (obj-id part) this))))
+    (set! (part-events part)
+          (cons (make-note :partid myid
+                           :off scoretime
+                           :note (midi-keynum obj)
+                           :dur (midi-duration obj)
+                           :marks marks)
+                (part-events part)))))
 
-(define-method* (write-event (obj <midi>) (file <fomus-stream>) scoretime)
-  (write-event (fomus-newnote :partid (midi-channel obj)
-                              :note (midi-keynum obj)
-                              :dur (midi-duration obj)
-                              :marks
-                              (let ((amp (midi-amplitude obj)))
-                                (if (<= 0 amp 1)
-                                    (list-ref '(:pppp :ppp :pp :p :mp 
-                                                :mf :f :ff :fff :ffff)
-                                              (inexact->exact
-                                               (floor (/ amp .1))))
-                                    #f)))
-               file scoretime))
 
-
-;0    1   2  3  4 5  6 7  8   9
-;pppp ppp pp p mp mf f ff fff ffff
-;(floor 1 .1)
-
-
-
-
-    
