@@ -36,7 +36,7 @@
   (if *queue*
       (set! *qnext* (+ *qstart* time))
     (if *out*
-        (rt-wait delta *out*))))
+        (rt-wait time *out*))))
 
 
 (define-method* (rt-output event (out <sc-stream>) . args)
@@ -80,7 +80,7 @@
   (let ((thread (make-thread
                  (lambda ()
                    (begin
-                     (thread-sleep! thunk)
+                     (thread-sleep! ahead)
                      (funcall thunk))))))
     (thread-start! thread)))
 
@@ -161,145 +161,145 @@
 ;;;;;
 
 
-;; first fire up SuperCollider.app and boot the localhost server
+;; ;; first fire up SuperCollider.app and boot the localhost server
 
-;;;next use (sc-open) to open connection. it defaults to connecting to "127.0.0.1" and port 57110 which is the
-;;;default SC connection
+;; ;;;next use (sc-open) to open connection. it defaults to connecting to "127.0.0.1" and port 57110 which is the
+;; ;;;default SC connection
 
-(sc-open)
+;; (sc-open)
 
-;;is sc open
-(sc-open?)
+;; ;;is sc open
+;; (sc-open?)
 
-;;; (dump-osc #t) will turn on printing in the SC window showing what events have been received. (dump-osc #f) turns this off
+;; ;;; (dump-osc #t) will turn on printing in the SC window showing what events have been received. (dump-osc #f) turns this off
 
-(dump-osc #t)
+;; (dump-osc #f)
 
-;;;this is a simple example
+;; ;;;this is a simple example
 
-(defobject simple (scsynth)
-  ((freq :initform 440)
-   (dur :initform 1)
-   (amp :initform .2)
-   (pan :initform 0))
-  (:parameters freq dur amp pan time))
-
-
-(define (sc-simple-6 num)
-  (process repeat num
-	   output (new simple :time (now)
-		       :freq (between 200 700)
-		       :dur (between 7 10)
-		       :amp .1
-		       :pan (pickl '(-1.0 0 1.0)))
-           wait 3))
+;; (defobject simple (scsynth)
+;;   ((freq :initform 440)
+;;    (dur :initform 1)
+;;    (amp :initform .2)
+;;    (pan :initform 0))
+;;   (:parameters freq dur amp pan time))
 
 
-;;;
-;;; it is possible to use sprout to run the cm process. the default out is the sc connection created by (sc-open)
-;;;
-
-(sprout (sc-simple-6 3))
-
-;;;
-;;; (rt-events) can also be used. similar to (events...)
-;;;
-
-(rt-events (sc-simple-6 10) "sc.udp")
-
-;;;
-;;; rt-events can also be used to schedule cm processes for a future time.
-;;;
-
-(rt-events (list (sc-simple-6 3) (sc-simple-6 3)) "sc.udp" '(1 20) )
+;; (define (sc-simple-6 num)
+;;   (process repeat num
+;; 	   output (new simple :time (now)
+;; 		       :freq (between 200 700)
+;; 		       :dur (between 7 10)
+;; 		       :amp .1
+;; 		       :pan (pickl '(-1.0 0 1.0)))
+;;            wait 3))
 
 
-;;;
-;;; there are two ways to think about scheduling events. one way uses cm
-;;; the other uses sc to schedule events by making the time of the 
-;;; event something other that (now)
+;; ;;;
+;; ;;; it is possible to use sprout to run the cm process. the default out is the sc connection created by (sc-open)
+;; ;;;
 
-;;;here is an example using cm to schedule some grains
+;; (sprout (sc-simple-6 3))
 
-(define (grain-notes1 center num)
-  (process repeat num for i from 0
-           output (new simple :time (now)
-                       :freq (between (- (hertz center)  50) (+ (hertz center)  50))
-                       :dur 1
-                       :amp .03)
-           wait .01))
+;; ;;;
+;; ;;; (rt-events) can also be used. similar to (events...)
+;; ;;;
 
-(rt-events (list (grain-notes1 70 30)
-                 (grain-notes1 65 30)
-                 (grain-notes1 72 30)) "sc.udp" '(0 4 8))
+;; (rt-events (sc-simple-6 10) "sc.udp")
 
-;;;here is a second way based on the sc server scheduling events
-;;; this could be particularly important if many events are happening
-;;; in a small time span.
+;; ;;;
+;; ;;; rt-events can also be used to schedule cm processes for a future time.
+;; ;;;
 
-(define (grain-notes2 center num)
-  (process repeat num for i from 0
-           output (new simple :time (+ (now) (* .01 (/ i num)))
-                       :freq (between (- (hertz center)  50) (+ (hertz center)  50))
-                       :dur 1
-                       :amp .03)))
+;; (rt-events (list (sc-simple-6 3) (sc-simple-6 3)) "sc.udp" '(1 20) )
 
-(rt-events (list (grain-notes2 70 30)
-                 (grain-notes2 65 30)
-                 (grain-notes2 72 30)) "sc.udp" '(0 4 8))
 
-;;;here is another example
+;; ;;;
+;; ;;; there are two ways to think about scheduling events. one way uses cm
+;; ;;; the other uses sc to schedule events by making the time of the 
+;; ;;; event something other that (now)
 
-(define (arps1 num)
-  (process repeat num
-           with base = 60
-           sprout (process repeat 7
-                           with arp = (new cycle :of '(0 4 7 12 7 4 0))
-                           output (new simple :freq (hertz (+ base (next arp)))
-                                       :dur .25
-                                       :amp .4
-                                       :time (now))
-                           wait .15)
-           set base = (between 50 70)
-           wait 1))
+;; ;;;here is an example using cm to schedule some grains
+
+;; (define (grain-notes1 center num)
+;;   (process repeat num for i from 0
+;;            output (new simple :time (now)
+;;                        :freq (between (- (hertz center)  50) (+ (hertz center)  50))
+;;                        :dur 1
+;;                        :amp .03)
+;;            wait .01))
+
+;; (rt-events (list (grain-notes1 70 30)
+;;                  (grain-notes1 65 30)
+;;                  (grain-notes1 72 30)) "sc.udp" '(0 4 8))
+
+;; ;;;here is a second way based on the sc server scheduling events
+;; ;;; this could be particularly important if many events are happening
+;; ;;; in a small time span.
+
+;; (define (grain-notes2 center num)
+;;   (process repeat num for i from 0
+;;            output (new simple :time (+ (now) (* .01 (/ i num)))
+;;                        :freq (between (- (hertz center)  50) (+ (hertz center)  50))
+;;                        :dur 1
+;;                        :amp .03)))
+
+;; (rt-events (list (grain-notes2 70 30)
+;;                  (grain-notes2 65 30)
+;;                  (grain-notes2 72 30)) "sc.udp" '(0 4 8))
+
+;; ;;;here is another example
+
+;; (define (arps1 num)
+;;   (process repeat num
+;;            with base = 60
+;;            sprout (process repeat 7
+;;                            with arp = (new cycle :of '(0 4 7 12 7 4 0))
+;;                            output (new simple :freq (hertz (+ base (next arp)))
+;;                                        :dur .25
+;;                                        :amp .4
+;;                                        :time (now))
+;;                            wait .15)
+;;            set base = (between 50 70)
+;;            wait 1))
            
-(rt-events (arps1 10) "sc.udp")
+;; (rt-events (arps1 10) "sc.udp")
 
-(define (arps2 num)
-  (process repeat num
-           with base = 60
-           sprout (process repeat 7 for j from 0
-                           with arp = (new cycle :of '(0 4 7 12 7 4 0))
-                           output (new simple :freq (hertz (+ base (next arp)))
-                                       :dur .25
-                                       :amp .4
-                                       :time (+ (now) (* 1.05 (/ j 7)))))
-           set base = (between 50 70)
-           wait 1))
+;; (define (arps2 num)
+;;   (process repeat num
+;;            with base = 60
+;;            sprout (process repeat 7 for j from 0
+;;                            with arp = (new cycle :of '(0 4 7 12 7 4 0))
+;;                            output (new simple :freq (hertz (+ base (next arp)))
+;;                                        :dur .25
+;;                                        :amp .4
+;;                                        :time (+ (now) (* 1.05 (/ j 7)))))
+;;            set base = (between 50 70)
+;;            wait 1))
 
-(rt-events (arps2 10) "sc.udp")
-
-
-;;; (sc-flush) can be used to clear the sc server scheduler and also free all nodes
-
-(sc-flush)
+;; (rt-events (arps2 10) "sc.udp")
 
 
-;;; all the examples in sc.cm seem to be running properly in realtime.
-;;; just use rt-events instead of events
+;; ;;; (sc-flush) can be used to clear the sc server scheduler and also free all nodes
 
-(rt-events (sc-simple-1 10) "sc.udp")
+;; (sc-flush)
 
-(rt-events (sc-fm-2 10) "sc.udp")
 
-(rt-events (random-play-no-loop  10) "sc.udp")
+;; ;;; all the examples in sc.cm seem to be running properly in realtime.
+;; ;;; just use rt-events instead of events
 
-(rt-events (granure 5) "sc.udp")
+;; (rt-events (sc-simple-1 10) "sc.udp")
 
-(rt-events (wt2 10) "sc.udp")
+;; (rt-events (sc-fm-2 10) "sc.udp")
 
-;;; turn of printing of messages in SC
-(dump-sc #f)
+;; (rt-events (random-play-no-loop  10) "sc.udp")
 
-;;; close sc.udp
-(sc-close)
+;; (rt-events (granure 5) "sc.udp")
+
+;; (rt-events (wt2 10) "sc.udp")
+
+;; ;;; turn of printing of messages in SC
+;; (dump-sc #f)
+
+;; ;;; close sc.udp
+;; (sc-close)
