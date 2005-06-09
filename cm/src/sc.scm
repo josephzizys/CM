@@ -1594,12 +1594,12 @@
   dir
   args
   (unless (io-open obj)
-      (set! (slot-ref obj 'socket)
-            (make-udp-socket
-             (slot-ref obj 'host)
-             (slot-ref obj 'port)
-             (slot-ref obj 'local-port)))
-      (set! (slot-ref obj 'open) #t))
+    (slot-set! obj 'socket
+               (make-udp-socket
+                (slot-ref obj 'host)
+                (slot-ref obj 'port)
+                (slot-ref obj 'local-port)))
+    (slot-set! obj 'open #t))
   (set! *out* obj))
 
 (define-method* (close-io (obj <sc-stream>) . mode)
@@ -1607,7 +1607,7 @@
   (when (io-open obj)
     (socket-close (slot-ref obj 'socket))
     (socket-shutdown (slot-ref obj 'socket) 2)
-    (set! (slot-ref obj 'open) #f))
+    (slot-set! obj 'open #f))
   (set! *out* #f))
 
 (define-method* (write-event (obj <scsynth>) (io <sc-stream>) time)
