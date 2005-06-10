@@ -53,7 +53,8 @@
                   (set! (obj-id p) #f)
                   (set! (part-events p) (list)))
                 (fomus-stream-parts io))
-      (set! (io-open io) #t))))
+      (set! (io-open io) #t)))
+  io)
     
 (define-method* (close-io (io <fomus-stream>) . mode)
   (let ((err? (and (not (null? mode))
@@ -64,7 +65,7 @@
              (bend (list-prop args ':backend)))
         (unless bend
           (let* ((file (io-filename io))
-                 (type (filename-type io)))
+                 (type (filename-type file)))
             (cond ((equal? type "ly")
                    (set! bend ':lilypond))
                   ((equal? type "etf")
@@ -73,11 +74,12 @@
                    (set! bend ':xml))
                   (else
                    (set! bend ':fms)))
-            (set! args (cons* ':backend bend :filename file 
+            (set! args (cons* ':backend
+                              (list bend :filename file )
                               args))))
       (apply (function fomus)
              :parts (fomus-stream-parts io)
-             :timesigs (fomus-stream-global io)
+             :global (fomus-stream-global io)
              args)))))
 
 (define (fomus-stream-part stream id)
