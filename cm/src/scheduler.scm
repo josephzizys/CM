@@ -398,8 +398,9 @@
 ;;; these vars are bound by PROCESS-EVENTS
 ;;;
 
+
 (define (output event . args)
-  ;; used in processes to write events to the current output
+   ;; used in processes to write events to the current output
   ;; stream.  checks to see if event's time is in future 
   ;; later than next event in queue. if so it enqueues rather
   ;; than outputs.
@@ -419,18 +420,21 @@
               (funcall *handler* event n))))
         (set! *out* sav) 
         (values))
-      (rt-output event out)) ; midishare.scm
-    ))
+      (if out
+          (rt-output event out)
+        (if *out*
+            (rt-output event *out*))))
+    (values)))
+
 
 (define (now . args)
   (with-args (args &optional abs-time)
-    ;; calls MidiGetTime if at top-level
     (if *queue*
       (if (not abs-time)
         (- *qtime* *qstart*)
         *qtime*)
-      (rt-now)) ; midishare.scm
-    ))
+      (if *out*
+          (rt-now *out*)))))
 
 (define-macro (stop )
   (if *queue*
@@ -438,30 +442,50 @@
     (err "Calling 'stop' outside of scheduler?")))
 
 (define (wait delta)
-  (set! *qnext* (+ *qnext* (abs delta))))
+  (if *queue*
+      (set! *qnext* (+ *qnext* (abs delta)))
+    (if *out*
+        (rt-wait delta *out*))))
 
 (define (wait-until time)
-  (set! *qnext* (+ *qstart* time)))
+  (if *queue*
+      (set! *qnext* (+ *qstart* time))
+    (if *out*
+        (rt-wait time *out*))))
 
 (define-method* (sprout (obj <object>) . args)
-  (with-args (args &optional time)
+  (with-args (args &optional time out)
     time
     (if *queue*
-      (schedule-object obj *qstart*)
-      (err "Calling 'sprout' outside of scheduler?"))))
+        (schedule-object obj *qstart*)
+      (if out
+          (if (> time 0)
+              (rt-sprout obj time out)
+            (output obj out))
+        (if *out*
+            (if (> time 0)
+                (rt-sprout obj time *out*)
+              (output obj *out*)))))))
 
 (define-method* (sprout (obj <procedure>) . args)
-  (with-args (args &optional time)
+  (with-args (args &optional time out)
     (if *queue*
-      (enqueue obj (+ *qstart* time) (+ *qstart* time))
-      (rt-sprout obj time))))
+        (enqueue obj (+ *qstart* time) (+ *qstart* time))
+      (if out
+          (rt-sprout obj time out)
+        (if *out*
+            (rt-sprout obj time *out*))))))
 
 (define-method* (sprout (obj <pair>) . args)
-  (with-args (args &optional time)
+  (with-args (args &optional time out)
     time
     (if *queue*
       (dolist (o obj) (sprout o time))
-      (err "Calling 'sprout' outside of scheduler?"))))
+      (if out
+          (dolist (o obj) (sprout o time out))
+        (if *out*
+            (dolist (o obj) (sprout o time *out*)))))))
+
 
 ;(defprocess foo ()
 ;  (process repeat 10
