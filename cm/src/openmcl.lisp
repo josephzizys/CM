@@ -351,7 +351,8 @@
 (defun socket-close (sock)
   (ccl::close sock))
 
-(defun shutdown (sock)
+(defun socket-shutdown (sock &rest args)
+  args
   (ccl::shutdown sock))
 
 (defun send-osc (mess sc-stream len)
@@ -368,14 +369,6 @@
          (offset-time (seconds->time offset))
          (target-time (seconds->time (+ (time->seconds now) (time->seconds offset-time) (slot-value out 'latency))))
          (vec nil))
-    (set! vec (make-byte-vector (+ 2208988800 (slot-value target-time 'second))))
+    (setf vec (make-byte-vector (+ 2208988800 (slot-value target-time 'second))))
     (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
 
-#|
-(sc-open)
-(dump-osc nil)
-(clear-sched)
-(defun make-u8vector (len &optional (u 0))
-  (make-array len :element-type '(unsigned-byte 8) :initial-element u))
-
-|#
