@@ -193,7 +193,8 @@
 (defgeneric schedule-object (obj start))
 (defgeneric unschedule-object (obj &rest recurse))
 (defgeneric process-events (obj time start func))
-(defgeneric sprout (obj &optional time))
+(defgeneric sprout (obj &optional time dest))
+
 
 (defgeneric midi-event-data1 (obj))
 (defgeneric midi-event-data2 (obj))
@@ -225,4 +226,8 @@
 
 (defgeneric import-set-slots (obj list))  ; sc.scm
 (defgeneric sc-env->list (obj))
-
+(defgeneric rt-output (obj dest &optional time))
+(defgeneric write-bundle (offset message io))
+;; bug??: sprout has 2 optionals but rt-sprout has them required
+(defgeneric rt-sprout (obj time dest))
+(defgeneric rt-now (io))
