@@ -236,8 +236,8 @@
 
 (define (map-objects fn objs . args)
   (with-args (args &key (start 0) end (step 1) (width 1)
-                   at test class key slot slot! pass-positions
-                   &aux doat indx)
+                   at test class key slot slot! arg2
+                   &aux doat indx this)
     ;; allow a seq to be passed in
     (if (not (list? objs))
         (set! objs (container-subobjects objs)))
@@ -259,10 +259,16 @@
 ;         (indx start (+ indx step))
          (data #f)
          (done #f)
-         (func (if pass-positions
-                   (lambda (x) (fn x indx))
-                   fn))
-         (this #f))
+         (func (cond ((not arg2)
+                      fn)
+                     ((eq? arg2 ':object)
+                      (lambda (x) ( fn x this)))
+                     ((eq? arg2 ':position)
+                      (lambda (x) ( fn x indx)))
+                     (else
+                      (err ":arg2 not :object or :position"))))
+;         (this #f)
+         )
         ((or (null? tail)
              done
              (and end (not (< indx end))))
@@ -317,17 +323,20 @@
              (tail head))
         (if (member ':slot! args)
             (err "Illegal keyword argument :slot!"))
+        ;; use :arg2 so that even if user maps a slot value we still
+        ;; collect objects!
         (apply (function map-objects)
-               (lambda (x) 
+               (lambda (a x) 
+                 a
                  (set-cdr! tail (list x))
                  (set! tail (cdr tail)))
-               object args)
+               object :arg2 ':object args)
         (cdr head))))
 
-(define (list-subobjects object . args)
+(define (list-objects object . args)
   (apply (function map-objects)
          (lambda (x i) (format #t "~d. ~s~%" i x))
-         object :pass-positions #t args))
+         object :arg2 ':position args))
 
 ;;;
 ;;; Editing
