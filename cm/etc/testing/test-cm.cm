@@ -284,7 +284,7 @@
                                    (equal? (sv x duration) 7)))
   (sv* x :time 3 :duration 4)
   (check "sv* keyword setting" (and (equal? (sv x :time) 9)
-                                    (equal? (sv x :duration) 14)))
+                                    (equal? (sv x :duration) 28)))
   )
 
 (deftest test-object-editing ()
