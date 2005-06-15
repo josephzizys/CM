@@ -271,9 +271,21 @@
                always (equal? (slot-ref x (car e)) (cadr e))))
   
   (check "sv accessing" (equal? (sv x channel) 7))
+  (check "sv keyword accessing" (equal? (sv x :channel) 7))  
   (sv x channel 1 time 4)
   (check "sv setting" (and (equal? (sv x channel) 1)
-                           (equal? (sv x time) 4))))
+                           (equal? (sv x time) 4)))
+  (sv x :time 2 :duration 5)
+  (check "sv keyword setting" (and (equal? (sv x :time) 2)
+                                   (equal? (sv x :duration) 5)))
+
+  (sv+ x time 1 duration 2)
+  (check "sv+ setting" (and (equal? (sv x time) 3)
+                                   (equal? (sv x duration) 7)))
+  (sv* x :time 3 :duration 4)
+  (check "sv* keyword setting" (and (equal? (sv x :time) 9)
+                                    (equal? (sv x :duration) 14)))
+  )
 
 (deftest test-object-editing ()
   "sequences, naming and subobject editing"
