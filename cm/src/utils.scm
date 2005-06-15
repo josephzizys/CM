@@ -490,18 +490,27 @@
             ;(values)
             ))))
 
-(define (svaux obj slot val op)
-  (let ((ob (gensym ))
-        (v2 (gensym)))
-    `(let* ((,ob ,obj)
-            (,v2 (,op (sv ,ob ,slot) ,val)))
-       (sv ,ob ,slot ,v2))))
+(define (svaux obj op slot val others)
+  ;; args={slot val}+
+  (let* ((ob (gensym))
+         (args (list ob))
+         (done #f))
+    (do ()
+        (done 
+         `(let ((,ob ,obj))
+            (sv ,@ args)))
+      (append! args (list slot `(, op (sv ,ob ,slot) ,val)))
+      (if (null? others)
+          (set! done #t)
+          (begin (set! slot (car others))
+                 (set! val (cadr others))
+                 (set! others (cddr others)))))))
 
-(define-macro (sv+ obj slot val)
-  (svaux obj slot val '+))
+(define-macro (sv+ obj slot val . more)
+  (svaux obj '+ slot val more))
 
-(define-macro (sv* obj slot val)
-  (svaux obj slot val '*))
+(define-macro (sv* obj slot val . more)
+  (svaux obj '* slot val more))
 
 ;;;
 ;;; u8vector addition for both scheme and cltl
