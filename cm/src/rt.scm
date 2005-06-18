@@ -28,7 +28,8 @@
 
 
 (define (rt-events object to . args)
-  (let ((ahead (if (and (pair? args)
+  (let ((proc-list '())
+        (ahead (if (and (pair? args)
 			(or (pair? (car args))
 			    (number? (car args))))
                  (pop args)
@@ -43,5 +44,7 @@
         (if (list? ahead)
             (dolist (obj object)
               (sprout obj (pop ahead) *out*))
-          (sprout object ahead)))
-    *out*))
+          (push (sprout object ahead) proc-list)))
+    proc-list))
+
+

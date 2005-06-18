@@ -101,7 +101,7 @@
                          (cond ((list? (slot-ref obj (car tail)))
                                 (begin
                                   (set! node-set-list (append! node-set-list (list (string-downcase (symbol->string (car tail))))))
-                                  (let ((mess-list (sc-env->list (slot-ref obj (car tail)))))
+                                  (let ((mess-list (slot-ref obj (car tail))))
                                     (set! node-set-list (append! node-set-list (list (length mess-list))))
                                     (set! node-set-list (append! node-set-list mess-list)))))
                                ((equal? (find-class* 'sc-env) (class-of (slot-ref obj (car tail))))
