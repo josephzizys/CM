@@ -96,7 +96,8 @@ o (SETF SUBOBJECTS) accessor has been renamed
 
 o SUBOBJECTS arguments have changed to match MAP-OBJECTS.
 
-o LIST-SUBOBJECTS arguments have changed to match MAP-OBJECTS.
+o LIST-SUBOBJECTS renamed LIST-OBJECTS and arguments have changed to
+  match MAP-OBJECTS.
 
 o Removed MAP-SUBOBJECTS and MAP-SUBCONTAINERS. Use FOLD-OBJECTS
   instead.
