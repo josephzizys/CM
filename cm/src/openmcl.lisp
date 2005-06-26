@@ -355,6 +355,18 @@
   args
   (ccl::shutdown sock))
 
+(defun socket-recv (sock bytes &optional flags)
+  flags
+  (ccl::receive-from sock bytes))
+
+(defun socket-recvfrom (sock bytes &optional flags)
+  flags
+  (multiple-value-bind (buf num-bytes ip port)
+      (ccl::receive-from sock bytes)
+    num-bytes
+    port
+    (values buf ip)))
+
 (defun send-osc (mess sc-stream len)
   (ccl::send-to (slot-value sc-stream 'socket) mess len))
 
@@ -371,4 +383,8 @@
          (vec nil))
     (setf vec (make-byte-vector (+ 2208988800 (slot-value target-time 'second))))
     (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
+
+
+
+
 
