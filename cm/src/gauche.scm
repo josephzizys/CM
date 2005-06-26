@@ -20,7 +20,8 @@
 ;;; 
 
 (use srfi-1)     ; list library
-(use srfi-4)     ; u8vecotr
+(use srfi-4)     ; u8vector
+(use srfi-13)     ; extra string support
 (use srfi-27)    ; random bits
 (use file.util)  ; current-directory, home-directory
 (use gauche.threads) ; for rt threads
@@ -360,3 +361,59 @@
 (define (send-osc mess sc-stream len)
   len
   (socket-send (slot-ref sc-stream 'socket) (u8vector->byte-string mess)))
+
+(define thread-alive?
+  (let ((unique (list 'unique)))
+    (lambda (thread)
+      (eq? (thread-join! thread 0 unique) unique))))
+
+
+
+;;;
+;;; not in utils.scm because i think this
+;;; will wind up being implementation
+;;; dependent. - tmi
+
+(define (u8vector->double vec)
+  (let ((dv (uvector-alias <f64vector> vec)))
+    (f64vector-ref dv 0)))
+
+(define (parse-osc str)
+  (let ((lst (list))
+	(pos #f)
+        (first-token-len #f)
+        (sym-vector #f)
+        (sym #f)
+        (sym-len 0)
+	(type-list (list))
+        (type-list-len 0))
+    (set! first-token-len (string-scan str "\0"))
+    (if first-token-len
+        (let ((mess #f))
+          (set! lst (append! lst (list (string->symbol (string-trim (substring str 0 first-token-len) #\/)))))
+          (set! mess (string-drop str (string-scan str ",")))
+          (set! type-list (string->list (string-incomplete->complete (substring mess 0 (string-scan mess "\0")))))
+          (set! type-list-len (length type-list))
+          (set! pos (+ type-list-len (- 4 (mod type-list-len 4))))
+          (set! mess (string->u8vector mess))
+          (dolist (j type-list)
+            (cond ((eq? j #\i)
+                   (set! lst (append! lst (list (u8vector->int (u8vector-subseq mess pos (+ pos 4))))))
+                   (set! pos (+ pos 4)))
+                  ((eq? j #\f)
+                   (set! lst (append! lst (list (u8vector->float (u8vector-subseq mess pos (+ pos 4))))))
+                   (set! pos (+ pos 4)))
+                  ((eq? j #\d)
+                   (set! lst (append! lst (list (u8vector->double (u8vector-subseq mess pos (+ pos 8))))))
+                   (set! pos (+ pos 8)))
+                  ((eq? j #\s)
+                   (set! sym-vector (u8vector-subseq mess pos))
+                   (set! sym (u8vector->string sym-vector))
+                   (set! lst (append! lst (list (string-trim (string-trim-right sym #\newline) #\/))))
+                   (set! sym-len (string-length sym))
+                   (if (= 0 (mod sym-len 4))
+                       (set! pos (+ pos sym-len))
+                     (set! pos (+ (+ sym-len (- 4 (mod sym-len 4))) pos)))))))
+      (set! lst (list (string->symbol str))))
+    lst))
+
