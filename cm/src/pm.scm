@@ -20,7 +20,9 @@
    (latency :init-value 1000 :init-keyword :latency
             :accessor portmidi-latency)
    (bufsize :init-value 256 :init-keyword :bufsize
-            :accessor portmidi-bufsize))
+            :accessor portmidi-bufsize)
+   (receiver :init-value #f :init-keyword :receiver
+             :accessor portmidi-receiver))
   :name 'portmidi-stream
   :metaclass <io-class>
   :file-types '("*.pm"))
@@ -62,6 +64,7 @@
           (if (and o (not odev))
               (set! odev ( getd i ':output (car tail)))))
         (pm:TimerStart)
+        (set! (object-time obj) 0)
         (when idev
           (set-car! data 
                     (pm:OpenInput idev 
@@ -92,15 +95,57 @@
   (set! (object-time obj) (pm:TimerTime))
   (channel-tuning-init obj))
 
+(define-method* (deinitialize-io (obj <portmidi-stream>))
+  ;; uncache current time offset
+  (set! (object-time obj) 0))
+
 (define (portmidi-open . args)
   (apply #'open-io "midiport.pm" #t args))
 
 (define (portmidi-open? io)
-  (io-open io))
+  (if (io-open io) #t #f))
 
-;(define-method* (write-object (obj <number> ) (str <portmidi-stream>)
-;                             scoretime)
-;  )
+(define-method* (write-event (obj <integer> ) (str <portmidi-stream>)
+                             scoretime)
+  (cond ((sysex-p obj)
+         ;; add in later..
+         )
+        ((or (channel-message-p obj)
+             (system-message-p obj))
+         (pm:WriteShort 
+          (second (io-open str))        ; output stream
+          (+ (inexact->exact (round (* scoretime 1000)))
+             (object-time str))
+          (pm:Message (logior (ash (midimsg-upper-status obj) 4)
+                              (midimsg-lower-status obj))
+                      (channel-message-data1 obj)
+                      (channel-message-data2 obj))))
+        (else #f)))
+
+;;;
+;;; portmidi behaves almost like a midi-file in that it (1) handles
+;;; only true midi data (ie no durations); (2) data must be sent in
+;;; time-increasing order; (3) messages are really just bytes. so it
+;;; would be nice if there were a single stream that handled this. the
+;;; essential difference between portmidi and midi-files is that times
+;;; in midi-files are deltas but are absolute in portmidi.
+
+(define-method* (write-event (obj <midi> ) (str <portmidi-stream>)
+                             scoretime)
+  obj str scoretime
+  )
+
+(define-method* (write-event (obj <midi-event>) (str <portmidi-stream>)
+                             scoretime)
+  (write-event (midi-event->midi-message obj) str scoretime))
 
 
+
+
+
+
+; (setq foo (portmidi-open ))
+; (describe foo)
+; (write-event (make-note-on 0 60 100) foo 0)
+; (write-event (make-note-off 0 60 100) foo 0)
 
