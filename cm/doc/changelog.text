@@ -2,6 +2,12 @@ CM 2.7.0
 
 --New Features:
 
+o Added PortMidi (http://www-2.cs.cmu.edu/~music/portmusic/) as a
+  light-weight alternative to Midishare. Works in OpenMCL, SBCL and
+  CMUCL, but this first pass has only been tested on darwin. Will add
+  linux in the next few days. Will also try to get it going in Gauche
+  and STklos too.  Since portmidi doesnt have callback support any
+  realtime use will depend on the host lisp providing native threads.
 o Ported CM to STklos 0.72.
 o New functions MAP-OBJECTS and FOLD-OBJECTS support object sequencing
   and editing. Args to existing functions SUBOBJECTS and
