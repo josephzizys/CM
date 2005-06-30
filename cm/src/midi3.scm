@@ -359,6 +359,24 @@
 	   (else (err "midi keynum ~s not key number or note."
 		      ,keyn)))))
 
+(define-macro (ensure-velocity ampl keyn)
+  `(cond ((exact? ,ampl)
+          (if (= ,ampl 0)
+              (set! ,keyn -1)
+              (if (<= 1 ,ampl 127) #f
+                  (err "MIDI: integer amplitude ~s not 0-127 inclusive."
+                       ,ampl))))
+         ((inexact? ,ampl)
+          (if (= ,ampl 0.0)
+              (set! ,keyn -1)
+              (if (<= 0.0 ,ampl 1.0)
+                  (set! ,ampl (inexact->exact (floor (* ,ampl 127))))
+                  (err "MIDI: float amplitude ~s is not 0.0-1.0 inclusive."
+                       ,ampl))))
+         (else 
+          (err "MIDI amplitude ~s not integer 0-127 or float 0.0-1.0."
+               ,ampl))))
+
 ;;;
 ;;; write-event for midi object and midifiles
 ;;;
@@ -371,22 +389,7 @@
         (ampl (midi-amplitude obj))
 	(last #f))
     ;; if amplitude is zero then don't output anything
-    (cond ((exact? ampl)
-           (if (= ampl 0)
-             (set! keyn -1)
-             (if (<= 1 ampl 127) #f
-                 (err "MIDI: integer amplitude ~s not 0-127 inclusive."
-                      ampl))))
-          ((inexact? ampl)
-           (if (= ampl 0.0)
-             (set! keyn -1)
-             (if (<= 0.0 ampl 1.0)
-               (set! ampl (inexact->exact (floor (* ampl 127))))
-               (err "MIDI: float amplitude ~s is not 0.0-1.0 inclusive."
-                    ampl))))
-          (else 
-           (err "MIDI amplitude ~s is not an integer 0-127 or float 0.0-1.0."
-                ampl)))
+    (ensure-velocity ampl keyn)
     (ensure-microtuning keyn chan mf)
     ;; if "resting" then dont update anything in the midifile...
     (unless (< keyn 0) ; rest
@@ -397,7 +400,8 @@
       (midi-write-message (make-note-on chan keyn ampl)
                           mf
                           (if (> beats last) ; round
-                            (inexact->exact (round (* (- beats last) scaler)))
+                            (inexact->exact (round (* (- beats last)
+                                                      scaler)))
                             0)
                           #f)
       (set! (object-time mf) beats)
@@ -407,26 +411,6 @@
                             (make-note-off chan keyn 127))
                  %offs))
     (values)))
-
-;;(define-method* (write-event (obj <midimsg>) (mf <midi-file>) time)
-;;  (let ((data (midimsg-data obj))
-;;        (beats time)
-;;        (last #f))
-;;    (set! last
-;;          (if (null? (%q-head %offs))
-;;            (object-time mf)
-;;            (flush-pending-offs mf beats)))
-;;    (cond ((> beats last)
-;;           (midi-write-message  
-;;            (midimsg-msg obj)  
-;;            mf
-;;            (inexact->exact
-;;              (round (* (- beats last) (midi-file-scaler mf))))
-;;            data)
-;;           (set! (object-time mf) beats))
-;;          (else
-;;           (midi-write-message (midimsg-msg obj) mf 0 data))) 
-;;    (values)))
 
 (define-method* (write-event (obj <midi-event>) (mf <midi-file>)
                             time)
