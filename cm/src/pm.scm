@@ -12,6 +12,11 @@
 
 (in-package :cm)
 
+;;; each midiport stream can handle 1 input and/or 1 output
+;;; connection.  open streams are held as a list: (<input><output>)
+;;; where either value can be a pointer to an open PortMidiStream or
+;;; #f
+
 (define-class* <portmidi-stream> (<event-stream> <midi-stream-mixin>)
   ((input :init-value #t :init-keyword :input
          :accessor portmidi-input)
@@ -23,8 +28,10 @@
             :accessor portmidi-bufsize)
    (receiver :init-value #f :init-keyword :receiver
              :accessor portmidi-receiver)
-   (filter :init-value #f :init-keyword :filter
+   (filter :init-value 0 :init-keyword :filter
            :accessor portmidi-filter)
+   (mask :init-value 0 :init-keyword :channel-mask
+         :accessor portmidi-channel-mask)
    (offset :init-value 0 :init-keyword :offset 
            :accessor portmidi-offset))
   :name 'portmidi-stream
@@ -71,13 +78,13 @@
         (set! (object-time obj) 0)
         (when idev
           (set-car! data 
-                    (pm:OpenInput idev 
-                                  (if (pair? bsiz) (car bsiz) bsiz))))
+                    (pm:OpenInputStream
+                     idev (if (pair? bsiz) (car bsiz) bsiz))))
         (when odev
           (set-car! (cdr data) 
-                    (pm:OpenOutput odev
-                                   (if (pair? bsiz) (cadr bsiz) bsiz)
-                                   (portmidi-latency obj))))
+                    (pm:OpenOutputStream
+                     odev (if (pair? bsiz) (cadr bsiz) bsiz)
+                     (portmidi-latency obj))))
         (set! (event-stream-stream obj) data)
         (set! (io-open obj) data))))
   obj)
@@ -87,9 +94,9 @@
              (io-open obj))
     (let ((data (io-open obj)))
       (if (car data)
-          (pm:close (car data)))
+          (pm:StreamClose (car data)))
       (if (cadr data)
-          (pm:close (cadr data)))
+          (pm:StreamClose (cadr data)))
       (set! (event-stream-stream obj) #f)
       (set! (io-open obj) #f)))
   (values))
@@ -97,24 +104,27 @@
 (define-method* (initialize-io (obj <portmidi-stream>))
   ;; this method will have to distinguish between rt and non-rt
   ;; scheduling and also input vs output.
+  (let ((io (car (io-open obj)))
+        (fn (lambda (o s)
+              (let ((f (portmidi-filter o))
+                    (m (portmidi-channel-mask o)))
+                (if (pair? f)
+                    (apply (function pm:StreamSetFilter) s f)
+                    (pm:StreamSetFilter s f))
+                (pm:StreamSetChannelMask s m)))))
+    ;; input stream
+    (if (car io) ( fn obj (car io)))
+    ;; output stream
+    (if (cadr io) ( fn obj (cadr io)))
+    ;;cache current MILLISECOND time offset
+    (set! (portmidi-offset obj) (pm:TimerTime))
+    ;; stream's time is kept in seconds. maybe stream should have a
+    ;; scaler like midi-file so user could work with whatever quanta
+    ;; they wanted...
+    (set! (object-time obj) 0)
+    (channel-tuning-init obj)))
 
-  (let ((in (car (io-open obj))))
-    (when in
-      (let ((filt (or (portmidi-filter obj)
-                      0)))
-        (if (pair? filt)
-            (apply (function pm:SetFilter) in filt)
-            (pm:SetFilter in filt)))))
-
-  ;;cache current MILLISECOND time offset
-  (set! (portmidi-offset obj) (pm:TimerTime))
-  ;; stream's time is kept in seconds. maybe stream should have a
-  ;; scaler like midi-file so user could work with whatever quanta
-  ;; they wanted...
-  (set! (object-time obj) 0)
-  (channel-tuning-init obj))
-
-;; THIS SHOULD BE MERGED WITH 
+;; THIS SHOULD BE MERGED WITH original in midi3.scm
 (define (flush-pending-offs2 mf at)
   (let ((time (or at most-positive-fixnum)))
     (do ((qe (%q-peek %offs) (%q-peek %offs)))
@@ -161,7 +171,7 @@
 ;         (terpri)
 ;         (midi-print-message 
 ;          obj (inexact->exact (round (* scoretime 1000))))
-         (pm:WriteShort 
+         (pm:StreamWriteShort 
           (second (io-open str))        ; output stream
           ;; add in time offset in stream
           (+ (inexact->exact (round (* scoretime 1000)))
@@ -216,27 +226,13 @@
     (flush-pending-offs2 str scoretime))
   (midi-write-message obj str scoretime #f) )
 
-
-;;; real-time support. have to think about this...
-
-(define-method* (rt-output ev (out <portmidi-stream>) . args)
-  ;; output ev to Midishare
-  (with-args (args &optional ahead)
-    (if ahead
-      (write-event ev out (+ ahead (pm:TimerTime)))
-      (write-event ev out 0))
-    (values)))
-
-(define-method* (rt-now (io <portmidi-stream>))
-  (pm:TimerTime))
-
-;;; (pm:GetDeviceDescriptions)
-;;; (setq foo (portmidi-open :input nil :output 3))
-;;; (events (loop for d from 0 to 8 by .5
-;;;             for k from 60
-;;;             collect (new midi :time d :duration 1 
-;;;                          :keynum k
-;;;                          :amplitude .9))
-;;;        foo)
-
+;
+; (pm:GetDeviceDescriptions)
+; (setq foo (portmidi-open :input nil :output 3))
+; (events (loop for d from 0 to 6 by .5
+;             for k from 60
+;             collect (new midi :time d :duration .1 
+;                          :keynum k :amplitude .9))
+;        foo)
+;
 
