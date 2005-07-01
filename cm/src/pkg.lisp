@@ -31,7 +31,7 @@
 (defpackage :cm
   (:shadow :make-load-form #+lispworks :random #+lispworks :funcall
            ;; have to block these from CLM
-           :io :ran :exit :quit :play :graph )
+           :io :ran :exit :quit :play :graph :control)
   (:use :common-lisp )
   ;; use keywords instead of strings for case sensitive lisps.
   (:import-from :clm 
