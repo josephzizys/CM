@@ -23,6 +23,8 @@
             :accessor portmidi-bufsize)
    (receiver :init-value #f :init-keyword :receiver
              :accessor portmidi-receiver)
+   (filter :init-value #f :init-keyword :filter
+           :accessor portmidi-filter)
    (offset :init-value 0 :init-keyword :offset 
            :accessor portmidi-offset))
   :name 'portmidi-stream
@@ -95,6 +97,14 @@
 (define-method* (initialize-io (obj <portmidi-stream>))
   ;; this method will have to distinguish between rt and non-rt
   ;; scheduling and also input vs output.
+
+  (let ((in (car (io-open obj))))
+    (when in
+      (let ((filt (or (portmidi-filter obj)
+                      0)))
+        (if (pair? filt)
+            (apply (function pm:SetFilter) in filt)
+            (pm:SetFilter in filt)))))
 
   ;;cache current MILLISECOND time offset
   (set! (portmidi-offset obj) (pm:TimerTime))
