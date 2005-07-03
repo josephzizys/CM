@@ -55,14 +55,14 @@
                            (if (eq? d ':input)
                                (pm:GetDefaultInputDeviceID)
                                (pm:GetDefaultOutputDeviceID)))
-                          ((not (eq? d (second l))) #f)
+                          ((not (eq? d (list-prop l :type))) #f)
                           ((string? i)
-                           (if (string-ci=? i (first l))
-                               (third l)
+                           (if (string-ci=? i (list-prop l :name))
+                               (list-prop l :id)
                                #f))
                           ((integer? i)
-                           (if (eq? (third l) i)
-                               (third l)
+                           (if (eq? (list-prop l :id) i)
+                               i
                                #f))
                           (else #f))))
             (bsiz (portmidi-outbuf-size obj))
@@ -153,7 +153,7 @@
 (define (portmidi-open? . args)
   (with-args (args &optional (port (find-object "midi.pm" )))
     (if port 
-        (let ((io (io-open)))
+        (let ((io (io-open port)))
           (if io
               (if (car io)
                   (if (cadr io) :inout :in)
@@ -168,7 +168,7 @@
         #f)))
 
 ;;;
-;;; message sending receiving
+;;; message format conversion
 ;;;
 
 (define (pm-message->midi-message pmm)
@@ -219,18 +219,22 @@
           ;; add in time offset in stream. this should check latency...
           (+ (inexact->exact (round (* scoretime 1000)))
              (portmidi-offset str))
-          (pm:Message (logior (ash (midimsg-upper-status obj) 4)
-                              (midimsg-lower-status obj))
-                      (channel-message-data1 obj)
-                      (channel-message-data2 obj))))
+          (midi-message->pm-message obj)
+;          (pm:Message (logior (ash (midimsg-upper-status obj) 4)
+;                              (midimsg-lower-status obj))
+;                      (channel-message-data1 obj)
+;                      (channel-message-data2 obj))
+          ))
         (else #f)))
 
-
+;;;
+;;; message writing
 ;;; portmidi behaves almost like a midi-file: (1) handles only true
 ;;; midi messages (ie no durations); (2) data must always be sent in
 ;;; time-increasing order; (3) messages are just bytes. the only real
 ;;; difference between writing to portmidi vs midi-files is that
 ;;; midi-file time is delta but portmidi time is absolute.
+;;;
 
 (define-method* (write-event (obj <midi> ) (str <portmidi-stream>)
                              scoretime)
@@ -271,12 +275,22 @@
     (flush-pending-offs2 str scoretime))
   (midi-write-message obj str scoretime #f) )
 
+;
+; (pm:GetDeviceDescriptions)
+; (setq foo (portmidi-open :input nil :output 3))
+; (events (loop for d from 0 to 6 by .5
+;             for k from 60
+;             collect (new midi :time d :duration .1 
+;                          :keynum k :amplitude .9))
+;        foo)
+
+
 ;;;
-;;; receive!
+;;; message receiving
 ;;;
 
-(define-method* (receive?? (str <portmidi-stream>))
-  (if (portmidi-receive str) #t #f))
+;(define-method* (receive? (str <portmidi-stream>))
+;  (if (portmidi-receive str) #t #f))
 
 (define-method* (receive! (str <portmidi-stream>) hook)
   (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
@@ -298,7 +312,7 @@
           ((not (member (portmidi-open? str) '(:in :inout)))
            (err "Stream not open for input: ~S." str))
           ((first data)
-           (err "Can't set input hook: another hook is running!"))           
+           (err "Can't set input hook: another hook is running!"))
           (else
            ;; ready to go
            (let* ((in (first (io-open str))) ; pm stream
@@ -307,6 +321,7 @@
                   (so (fourth data)) ; old bufsiz
                   (th #f) ; thread
                   (st #f) ; thread stopper
+                  (fn #f) ; mapper
                   )
              ;; see if we have to free old buffer
              (when (and bf (not (eq? sz so)))
@@ -314,6 +329,8 @@
                (set! bf #f))
              (unless bf
                (set! bf (pm:EventBufferNew sz)))
+             (set! fn (lambda (mm ms)
+                        ( hook (pm-message->midi-message mm) ms)))
              (set! th
                    (make-thread
                     (lambda ()
@@ -322,23 +339,21 @@
                            #f)
                         (when (pm:StreamPoll in)
                           (set! n (pm:StreamRead in bf sz))
-                          (print (list :events-> n)))))))
+                          (when (> n 0)
+                            (pm:EventBufferMap fn bf n)))))))
              (set! st (lambda () (set! stop #t)))
              (list-set! data 0 th)
              (list-set! data 1 st)
              (list-set! data 2 bf)
              (list-set! data 3 sz)
-             ;; los!
              (thread-start! th)
              #t)))))
-;
-; (pm:GetDeviceDescriptions)
-; (setq foo (portmidi-open :input nil :output 3))
-; (events (loop for d from 0 to 6 by .5
-;             for k from 60
-;             collect (new midi :time d :duration .1 
-;                          :keynum k :amplitude .9))
-;        foo)
-;
 
-
+;
+; input test:
+; (pprint (pm:GetDeviceDescriptions))
+; (setq a (portmidi-open :input 1 :output nil))
+; (defun prinm (mm mt) (midi-print-message mm mt) (terpri))
+; (receive! a #'prinm)
+; ...play keyboard...
+; (receive! a #f)
