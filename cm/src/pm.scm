@@ -262,9 +262,9 @@
 
 (define-method* (write-event (obj <midi-event>) (str <portmidi-stream>)
                              scoretime)
-  ;; flush here too?
-  (unless (null? (%q-head %offs))
-    (flush-pending-offs2 str scoretime))
+;  ;; flush here too?
+;  (unless (null? (%q-head %offs))
+;    (flush-pending-offs2 str scoretime))
   (midi-write-message (midi-event->midi-message obj) str scoretime #f))
 
 
