@@ -211,20 +211,12 @@
          )
         ((or (channel-message-p obj)
              (system-message-p obj))
-;         (terpri)
-;         (midi-print-message 
-;          obj (inexact->exact (round (* scoretime 1000))))
          (pm:StreamWriteShort 
           (second (io-open str))        ; output stream
           ;; add in time offset in stream. this should check latency...
           (+ (inexact->exact (round (* scoretime 1000)))
              (portmidi-offset str))
-          (midi-message->pm-message obj)
-;          (pm:Message (logior (ash (midimsg-upper-status obj) 4)
-;                              (midimsg-lower-status obj))
-;                      (channel-message-data1 obj)
-;                      (channel-message-data2 obj))
-          ))
+          (midi-message->pm-message obj)))
         (else #f)))
 
 ;;;
@@ -246,33 +238,23 @@
     (ensure-microtuning keyn chan str)
     ;; if "resting" then dont update anything
     (unless (< keyn 0)                  ; rest
-      (unless (null? (%q-head %offs))
-        (flush-pending-offs2 str scoretime))
       (midi-write-message (make-note-on chan keyn ampl)
                           str
                           scoretime
                           #f)
-      (%q-insert (%qe-alloc %offs
-                            (+ scoretime (midi-duration obj))
-                            #f
-                            (make-note-off chan keyn 127))
-                 %offs))
+      ;; enqueue a note off in scheduler's queue
+      (enqueue (make-note-off chan keyn 127)
+               (+ scoretime (midi-duration obj))
+               #f))
     (values)))
-
 
 (define-method* (write-event (obj <midi-event>) (str <portmidi-stream>)
                              scoretime)
-;  ;; flush here too?
-;  (unless (null? (%q-head %offs))
-;    (flush-pending-offs2 str scoretime))
   (midi-write-message (midi-event->midi-message obj) str scoretime #f))
 
 
 (define-method* (write-event (obj <integer>) (str <portmidi-stream>)
                              scoretime)
-  ;; flush here too?
-  (unless (null? (%q-head %offs))
-    (flush-pending-offs2 str scoretime))
   (midi-write-message obj str scoretime #f) )
 
 ;
