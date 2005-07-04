@@ -436,10 +436,10 @@
       (if *out*
           (rt-now *out*)))))
 
-(define-macro (stop )
-  (if *queue*
-    (process-stop #f)
-    (err "Calling 'stop' outside of scheduler?")))
+;(define-macro (stop )
+;  (if *queue*
+;    (process-stop #f)
+;    (err "Calling 'stop' outside of scheduler?")))
 
 (define (wait delta)
   (if *queue*
