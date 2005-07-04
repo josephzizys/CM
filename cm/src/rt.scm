@@ -17,15 +17,23 @@
 ;;; $Revision$
 ;;; $Date$
 
+;;;
+;;; this file contains experimental code for attempting "realtime"
+;;; processes and scheduling based on the srfi-18 multithreading
+;;; api: http://srfi.schemers.org/srfi-18/
+;;;
+;;;
+;;; model 1: processes as threads
+;;;
 
-(define (schedule-ahead thunk ahead)
-  (let ((thread (make-thread
-                 (lambda ()
-                   (begin
-                     (thread-sleep! ahead)
-                     (funcall thunk))))))
-    (thread-start! thread)))
+(define *threads* '())
 
+(define (thread-alloc . args)
+  (apply (function make-thread) args))
+
+(define (thread-dealloc th)
+  th
+  (values))
 
 (define (rt-events object to . args)
   (let ((proc-list '())
@@ -46,5 +54,173 @@
               (sprout obj (pop ahead) *out*))
           (push (sprout object ahead) proc-list)))
     proc-list))
+
+(define-method* (rt-now io)
+  io
+  0)
+
+(define-method* (rt-wait delta io)
+  io
+  (let ((start (time->seconds (current-time))))
+    (thread-sleep! (seconds->time (+ delta start)))))
+
+(define-method* (rt-output event out  . args)
+  (with-args (args &optional ahead)
+    ahead
+    (write-event event out (object-time event))
+    (values)))
+
+(define-method* (rt-sprout (obj <object>) ahead out)
+  (set! *out* out)
+  (if (and ahead (not (= ahead 0)))
+      (schedule-ahead (output obj out) ahead)
+    (output obj out)))
+
+(define-method* (rt-sprout (obj <thread>) ahead out)
+  ahead out
+  (thread-start! obj))
+
+(define-method* (rt-sprout (obj <procedure>) ahead out)
+  (set! *out* out)
+  (let ((proc (thread-alloc
+               (lambda ()
+                 (loop until
+                       (not (funcall obj)))))))
+    (thread-start! proc)
+    proc))
+
+(define (schedule-ahead thunk ahead)
+  (let ((thread (thread-alloc
+                 (lambda ()
+                   (begin
+                     (thread-sleep! ahead)
+                     (funcall thunk))))))
+    (thread-start! thread)))
+
+(define-macro (thread . body)
+  (let ((fn (gensym))
+        (th (gensym))
+        (ok (gensym)))
+    `(let* ((,fn ,(cons 'process body))
+            (,th (thread-alloc
+                  (lambda ()
+                    (do ((,ok (funcall , fn ))) 
+                        ((not ,ok)
+                         (thread-dealloc ,th))
+                      (set! ,ok (funcall , fn )))))))
+       ,th)))
+
+;;;
+;;; model 2: scheduler as thread
+;;;
+
+(define *stop* #f)
+
+(define (stop) (setq *stop* #t))
+
+(define (rts object to . at)
+  (let* ((ahead (if (pair? at) (car at) 0))
+         (mapfn #f)
+         (entry #f)
+         (qtime #f)
+         (start #f)
+         (thing #f))
+    (set! *out* to)
+    (set! *stop* #f)
+    (set! *queue* %q)
+    (if (consp object)
+        (dolist (o object)
+          (schedule-object o
+                           (if (consp ahead)
+                               (if (consp (cdr ahead))
+                                   (pop ahead)
+                                   (car ahead))
+                               ahead)))
+        (if (consp ahead)
+            (schedule-object object (car ahead))
+            (schedule-object object ahead)))
+    ;; not sure about this
+    (if (pair? ahead) (set! ahead (apply (function min) ahead)))
+    (thread-start!
+     (thread-alloc
+      (lambda ()
+        (if (> ahead 0) (thread-sleep! ahead))
+        (do ()
+            ((or (null (%q-head *queue*))
+                 *stop*)
+             (unless (null (%q-head *queue*))
+               (%q-flush *queue*))
+             (unschedule-object object #t)
+             (set! *stop* #f)
+             (set! *queue* #f))
+          (without-interrupts
+              (do ()
+                  ((or (null (%q-head *queue*))
+                       (> (%qe-time (%q-peek *queue*)) ahead))
+                   #f)
+                (set! entry (%q-pop *queue*))
+                (set! qtime (%qe-time entry))
+                (set! start (%qe-start entry))
+                (set! thing (%qe-object entry))
+                (%qe-dealloc *queue* entry)
+                (process-events thing qtime start mapfn)))
+          (unless (null (%q-head *queue*))
+            (let* ((next (%qe-time (%q-peek *queue*)))
+                   (wait (- next ahead)))
+              (set! ahead next)
+              (thread-nanosleep! wait)))))))))
+
+;; 
+
+(define-method* (rts-sprout obj ahead out)
+  obj ahead out)
+
+;;;
+;;; tests
+
+#|
+
+(pprint
+ (macroexpand '(thread for i below 10 do (print i) wait .1)))
+
+(define rtstimes (list))
+
+(defun gettim (&optional pm)
+  pm
+  #+portmidi (if pm (pm:TimerTime) (get-internal-real-time))
+  #-portmidi (get-internal-real-time))
+
+#+portmidi
+(progn (pm:portmidi) (pm:TimerStart))
+
+(define (rtstim len wai pm?)
+  (process with tim and inc
+    for i below len
+    do (if (not tim)
+           (begin (set! tim (gettim pm?))
+                  (set! inc 0))
+           (let ((irt (gettim pm?)))
+            (set! inc (- irt tim))
+            (set! tim irt)))
+    (push inc rtstimes)
+    wait wai
+    finally
+    (begin (print :done!)
+           (print (reverse! rtstimes)))))
+
+(begin (set! rtstimes (list))
+       (rts (rtstim 100 .1 nil) nil 0)
+       )
+
+|#
+
+
+
+
+
+
+
+
+
 
 

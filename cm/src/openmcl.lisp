@@ -24,6 +24,7 @@
           ccl:class-direct-superclasses
           ccl:class-direct-subclasses
           ccl:open-shared-library ; needed if loading clm into cm.
+          ccl:without-interrupts ; for testing realtime
           ;ccl:process-run-function
           ;ccl:process-kill
           ;ccl:defcallback
@@ -270,6 +271,7 @@
 ;;; beginning thread support a la SRFI-18
 ;;; 
 
+(defclass thread (ccl::process) ())
 
 (defun current-thread ()
   ccl::*current-process*)
@@ -326,8 +328,13 @@
       (setf (slot-value obj 'millisecond) (floor (* 1000 (float ms)))))
     obj))
 
-;;if thread-sleep! is passed a time object this is absolute time
+;;; sleeping...
 
+(defun thread-nanosleep! (wait-time)
+  (multiple-value-bind (q r) (floor wait-time)
+    (ccl::%nanosleep q (floor (* r 1000000000)))))
+
+;;if thread-sleep! is passed a time object this is absolute time
 ;;if a number it is time to wait
 
 (defmethod thread-sleep! ((abs-time time))

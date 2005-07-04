@@ -398,35 +398,6 @@
 
 
 
-(define-method* (rt-now (io <sc-stream>))
-  0)
-
-
-(define-method* (rt-wait delta (io <sc-stream>))
-  (let ((start (time->seconds (current-time))))
-    (thread-sleep! (seconds->time (+ delta start)))))
-
-(define-method* (rt-output event (out <sc-stream>) . args)
-  (with-args (args &optional ahead)
-    ahead
-    (write-event event out (slot-ref event 'time))
-    (values)))
-
-(define-method* (rt-sprout (obj <object>) ahead (out <sc-stream>))
-  (set! *out* out)
-  (if (and ahead (not (= ahead 0)))
-      (schedule-ahead (output obj out) ahead)
-    (output obj out)))
-
-(define-method* (rt-sprout (obj <procedure>) ahead (out <sc-stream>))
-  (set! *out* out)
-  (let ((proc (make-thread
-               (lambda ()
-                 (if (and ahead (not (= ahead 0)))
-                     (thread-sleep! ahead))
-                 (loop until
-                       (not (funcall obj)))))))
-    (thread-start! proc)
-    proc))
 ;
 ;(values))
+
