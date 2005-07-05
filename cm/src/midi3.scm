@@ -852,7 +852,9 @@
                        (hash-set! tabl (channel-note-hash m)
                                   (list n ))
                        (hash-set! tabl (channel-note-hash m)
-                                  (cons n v)))))))
+                                  (cons n v)))))
+                  (else
+                   (set! n (midi-message->midi-event m :time b)))))
                 ((meta-message-p m)
                  (unless (and meta-exclude
                               (or (eq? meta-exclude #t) 
