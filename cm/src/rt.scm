@@ -81,6 +81,7 @@
   (thread-start! obj))
 
 (define-method* (rt-sprout (obj <procedure>) ahead out)
+  ahead
   (set! *out* out)
   (let ((proc (thread-alloc
                (lambda ()
@@ -115,17 +116,25 @@
 ;;;
 
 ;(define *rts-lock* (make-mutex "*rts-lock"))
-(define *rts-stop* #f)
-(define *rts-time* #f)
 
-(define (rts-stop) (setq *rts-stop* #t))
+(define *rts-run* #f)
+(define *rts-now* #f)
 
-(define (rts-time ) *rts-time*)
+(define (rts-reset) 
+  (when (and *queue* (not (null? (%q-head *queue*))))
+    (%q-flush *queue*))
+  (set! *queue* #f)
+  (set! *rts-run* #f)
+  (set! *rts-now* #f))
+(define (rts-running? ) *rts-run*)
+(define (rts-now ) *rts-now*)
+(define (rts-stop) (set! *rts-run* #f))
+(define (rts-pause ) (err "rts-pause: not implemented."))
+(define (rts-continue ) (err "rts-continue: not implemented."))
 
 (define (rts object to . at)
-  (let* ((ahead (if (pair? at) (car at) 0)))
-    (set! *out* to)
-    (set! *rts-stop* #f)
+  (if (rts-running?) (err "rts: already running."))
+  (let ((ahead (if (pair? at) (car at) 0)))
     (set! *queue* %q)
     (if (consp object)
         (dolist (o object)
@@ -138,13 +147,15 @@
         (if (consp ahead)
             (schedule-object object (car ahead))
             (schedule-object object ahead)))
+    (set! *out* to)
+    (set! *rts-run* #t)
     ;; not sure about this
     (if (pair? ahead) (set! ahead (apply (function min) ahead)))
-    (set! *rts-time* ahead)
+    (set! *rts-now* ahead)
     (thread-start!
      (thread-alloc
       (lambda ()
-        (if (> ahead 0) (thread-sleep! ahead))
+        (if (> *rts-now* 0) (thread-sleep! *rts-now*))
         (do ((mapfn (lambda (e s) (write-event e *out* s)))
              (entry #f)
              (qtime #f)
@@ -152,22 +163,20 @@
              (thing #f)
              (wait? #f)
              (none? (null? (%q-head *queue*))))
-            ((or none? *rts-stop*)
+            ((or none? (not *rts-run*))
              (unless none? (%q-flush *queue*))
              (unschedule-object object #t)
-             (set! *rts-stop* #f)
+             (set! *rts-run* #f)
              (set! *queue* #f)
-             (set! *rts-time* #f))
+             (set! *rts-now* #f))
           (without-interrupts
               (do ()
-                  ((or none? (> (%qe-time (%q-peek *queue*)) ahead))
+                  ((or none? (> (%qe-time (%q-peek *queue*)) *rts-now*))
                    (if none?
                        (set! wait? #f)
                        (let* ((next (%qe-time (%q-peek *queue*))))
-                         (set! wait? (- next ahead))
-                         (set! ahead next)
-                         (set! *rts-time* ahead)
-                         )))
+                         (set! wait? (- next *rts-now*))
+                         (set! *rts-now* next))))
                 (set! entry (%q-pop *queue*))
                 (set! qtime (%qe-time entry))
                 (set! start (%qe-start entry))
@@ -181,46 +190,41 @@
 
 ;; 
 
-;(define-method* (rts-sprout obj &key at ahead out)
-;  )
-  
+(define-method* (rts-sprout obj &key to at ahead)
+  ;; im not sure if i need a locking mechanism here or not. rts wraps
+  ;; a without-interrupts around the points where its thread accesses
+  ;; the queue, presumably that will keep this code -- which is called
+  ;; from the repl process -- from side-effecting the queue during as
+  ;; the scheduler uses it.
+  to
+  (unless (rts-running?) 
+    (err "rts-sprout: rts not running."))
+  (if at
+      (schedule-object obj at)
+      (if ahead
+          (schedule-object obj (+ ahead (rts-now)))
+          (schedule-object obj (object-time obj)) ; ???
+          ))
+  (values))
 
 ;;;
 ;;; tests
 
 #|
 
-(pprint
- (macroexpand '(thread for i below 10 do (print i) wait .1)))
+(defparameter *pm*
+  (portmidi-open :input nil :output 3 :latency 0))
 
-(define rtstimes (list))
+(define (zz2 len lb ub wai)
+  (process repeat len
+    output (new midi :time 0
+            :duration .1
+            :keynum (between lb ub))
+    wait wai))
 
-(defun gettim (&optional pm)
-  pm
-  #+portmidi (if pm (pm:TimerTime) (get-internal-real-time))
-  #-portmidi (get-internal-real-time))
-
-#+portmidi
-(progn (pm:portmidi) (pm:TimerStart))
-
-(define (rtstim len wai pm?)
-  (process with tim and inc
-    for i below len
-    do (if (not tim)
-           (begin (set! tim (gettim pm?))
-                  (set! inc 0))
-           (let ((irt (gettim pm?)))
-            (set! inc (- irt tim))
-            (set! tim irt)))
-    (push inc rtstimes)
-    wait wai
-    finally
-    (begin (print :done!)
-           (print (reverse! rtstimes)))))
-
-(begin (set! rtstimes (list))
-       (rts (rtstim 100 .1 nil) nil 0)
-       )
+(rts (list (zz2 100 60 90 .25)
+           (zz2 50 20 50 .5))
+     *pm* 0)
 
 |#
 
