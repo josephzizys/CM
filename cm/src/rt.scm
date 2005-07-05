@@ -102,23 +102,22 @@
   (let ((fn (gensym))
         (th (gensym))
         (ok (gensym)))
-    `(let* ((,fn ,(cons 'process body))
-            (,th (thread-alloc
-                  (lambda ()
-                    (do ((,ok (funcall , fn ))) 
-                        ((not ,ok)
-                         (thread-dealloc ,th))
-                      (set! ,ok (funcall , fn )))))))
+    `(let ((,th (thread-alloc
+                 (lambda ()
+                   (let ((fn , (expand-process body *process-operators*)))
+                     (do ((,ok (funcall , fn ))) 
+                         ((not ,ok)
+                          (thread-dealloc ,th))
+                       (set! ,ok (funcall , fn ))))))))
        ,th)))
 
 ;;;
 ;;; model 2: scheduler as thread
 ;;;
 
-;(define *rts-lock* (make-mutex "*rts-lock"))
-
 (define *rts-run* #f)
 (define *rts-now* #f)
+(define *rts-lock* (make-mutex))
 
 (define (rts-reset) 
   (when (and *queue* (not (null? (%q-head *queue*))))
@@ -169,6 +168,7 @@
              (set! *rts-run* #f)
              (set! *queue* #f)
              (set! *rts-now* #f))
+          (mutex-lock! *rts-lock*) ; is this necessary? i think with
           (without-interrupts
               (do ()
                   ((or none? (> (%qe-time (%q-peek *queue*)) *rts-now*))
@@ -185,6 +185,7 @@
                 (process-events thing qtime start mapfn)
                 (set! none? (null? (%q-head *queue*)))
                 ))
+          (mutex-unlock! *rts-lock*) ; is this necessary?
           (if wait? (thread-nanosleep! wait?))
           ))))))
 
@@ -199,32 +200,38 @@
   to
   (unless (rts-running?) 
     (err "rts-sprout: rts not running."))
+  (mutex-lock! *rts-lock*)
   (if at
       (schedule-object obj at)
       (if ahead
           (schedule-object obj (+ ahead (rts-now)))
           (schedule-object obj (object-time obj)) ; ???
           ))
+  (mutex-unlock! *rts-lock*)
   (values))
 
 ;;;
 ;;; tests
 
 #|
-
 (defparameter *pm*
   (portmidi-open :input nil :output 3 :latency 0))
 
-(define (zz2 len lb ub wai)
+(define (zzz len lb ub wai amp)
   (process repeat len
     output (new midi :time 0
-            :duration .1
+            :duration .1 :amplitude amp
             :keynum (between lb ub))
     wait wai))
 
-(rts (list (zz2 100 60 90 .25)
-           (zz2 50 20 50 .5))
+;; fire it up
+(rts (list (zzz 100 60 90 .25 .5)
+           (zzz 50 20 50 .5 .5))
      *pm* 0)
+
+;; now eval this whenever...
+(let ((k (between 20 100)))
+  (rts-sprout (zzz 15 k (+ k 7) 1/5 .75) :ahead 0))
 
 |#
 
