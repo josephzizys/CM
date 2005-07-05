@@ -22,9 +22,9 @@
          :accessor portmidi-input)
    (output :init-value #t :init-keyword :output
            :accessor portmidi-output)
-   (latency :init-value 1000 :init-keyword :latency
+   (latency :init-value 100 :init-keyword :latency
             :accessor portmidi-latency)
-   (inbufsize :init-value 2566 :init-keyword :inbuf-size
+   (inbufsize :init-value 64 :init-keyword :inbuf-size
               :accessor portmidi-inbuf-size)
    (outbufsize :init-value 256 :init-keyword :outbuf-size
                :accessor portmidi-outbuf-size)
