@@ -114,19 +114,18 @@
 ;;; model 2: scheduler as thread
 ;;;
 
-(define *stop* #f)
+;(define *rts-lock* (make-mutex "*rts-lock"))
+(define *rts-stop* #f)
+(define *rts-time* #f)
 
-(define (stop) (setq *stop* #t))
+(define (rts-stop) (setq *rts-stop* #t))
+
+(define (rts-time ) *rts-time*)
 
 (define (rts object to . at)
-  (let* ((ahead (if (pair? at) (car at) 0))
-         (mapfn #f)
-         (entry #f)
-         (qtime #f)
-         (start #f)
-         (thing #f))
+  (let* ((ahead (if (pair? at) (car at) 0)))
     (set! *out* to)
-    (set! *stop* #f)
+    (set! *rts-stop* #f)
     (set! *queue* %q)
     (if (consp object)
         (dolist (o object)
@@ -141,39 +140,50 @@
             (schedule-object object ahead)))
     ;; not sure about this
     (if (pair? ahead) (set! ahead (apply (function min) ahead)))
+    (set! *rts-time* ahead)
     (thread-start!
      (thread-alloc
       (lambda ()
         (if (> ahead 0) (thread-sleep! ahead))
-        (do ()
-            ((or (null (%q-head *queue*))
-                 *stop*)
-             (unless (null (%q-head *queue*))
-               (%q-flush *queue*))
+        (do ((mapfn (lambda (e s) (write-event e *out* s)))
+             (entry #f)
+             (qtime #f)
+             (start #f)
+             (thing #f)
+             (wait? #f)
+             (none? (null? (%q-head *queue*))))
+            ((or none? *rts-stop*)
+             (unless none? (%q-flush *queue*))
              (unschedule-object object #t)
-             (set! *stop* #f)
-             (set! *queue* #f))
+             (set! *rts-stop* #f)
+             (set! *queue* #f)
+             (set! *rts-time* #f))
           (without-interrupts
               (do ()
-                  ((or (null (%q-head *queue*))
-                       (> (%qe-time (%q-peek *queue*)) ahead))
-                   #f)
+                  ((or none? (> (%qe-time (%q-peek *queue*)) ahead))
+                   (if none?
+                       (set! wait? #f)
+                       (let* ((next (%qe-time (%q-peek *queue*))))
+                         (set! wait? (- next ahead))
+                         (set! ahead next)
+                         (set! *rts-time* ahead)
+                         )))
                 (set! entry (%q-pop *queue*))
                 (set! qtime (%qe-time entry))
                 (set! start (%qe-start entry))
                 (set! thing (%qe-object entry))
                 (%qe-dealloc *queue* entry)
-                (process-events thing qtime start mapfn)))
-          (unless (null (%q-head *queue*))
-            (let* ((next (%qe-time (%q-peek *queue*)))
-                   (wait (- next ahead)))
-              (set! ahead next)
-              (thread-nanosleep! wait)))))))))
+                (process-events thing qtime start mapfn)
+                (set! none? (null? (%q-head *queue*)))
+                ))
+          (if wait? (thread-nanosleep! wait?))
+          ))))))
 
 ;; 
 
-(define-method* (rts-sprout obj ahead out)
-  obj ahead out)
+;(define-method* (rts-sprout obj &key at ahead out)
+;  )
+  
 
 ;;;
 ;;; tests
