@@ -295,6 +295,21 @@
 (defun thread-start! (obj)
   (ccl::process-enable obj))
 
+(defun mutex? (obj)
+  (typep obj 'ccl::recursive-lock))
+
+(defun make-mutex (&optional name)
+  (ccl::make-lock name))
+
+(defun mutex-name (obj)
+  (error "Dont know how to access name of ~s." obj))
+
+(defun mutex-lock! (obj)
+  (ccl::grab-lock obj))
+
+(defun mutex-unlock! (obj)
+  (ccl::release-lock obj))
+
 ;;;time object from srfi-18
 ;;;
 
