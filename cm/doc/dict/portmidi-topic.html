@@ -67,7 +67,7 @@ following slot initializations:
 <!-- Omit if only an <code class="keyword">:output</code> device is
 required. --> If the value is true then Portmidi's default input
 device is opened, as determined
-by <a href="#GetDefaultInputDeviceID">pm:GetDefaultInputDeviceID</a> .
+by <a href="#GetDefaultInputDeviceID">pm:GetDefaultInputDeviceID</a>.
 If the value is false then no input device is opened. Otherwise the
 value should be the name or identifier of a Portmidi input device to
 open. The
@@ -80,11 +80,17 @@ devices. The default value is true.
 <code class="keyword">:output</code> {<var>string</var> | <var>integer</var> | <var>boolean</var>}
 </dt>
 <dd>The optional name or identifier of a Portmidi output device to
-open. Omit if only an <code class="keyword">:input</code> device is
-required.  The
+open.  If the value is true then Portmidi's default output
+device is opened, as determined
+by <a href="#GetDefaultOutputDeviceID">pm:GetDefaultOutputDeviceID</a>.
+If the value is false then no input device is opened. Otherwise the
+value should be the name
+ or identifier of a Portmidi input device to
+open. The
 function <a href="#GetDeviceDescriptions">pm:GetDeviceDescriptions</a>
 can be used to determine the names and ids of available Portmidi
-devices.</dd>
+devices. The default value is true.
+</dd>
 
 <dt>
 <code class="keyword">:latency</code> <var>integer</var>
@@ -195,6 +201,18 @@ devices added after the library has been loaded will not be reflected
 in the list of descriptions. Calling this function initializes the
 Portmidi library if it has not already been initialized.
 </p>
+
+<dl class="dictsyntax" id="GetDefaultInputDeviceID">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">pm:GetDefaultInputDeviceID</code><code>)</code></dd>
+</dl>
+<p>Returns the id (integer) of Portmidi's default input device.</p>
+
+<dl class="dictsyntax" id="GetDefaultOutputDeviceID">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">pm:GetDefaultOutputDeviceID</code><code>)</code></dd>
+</dl>
+<p>Returns the id (integer) of Portmidi's default output device.</p>
 
 
 <dl class="dictsyntax" id="Time">
