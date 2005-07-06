@@ -77,7 +77,7 @@
               (set! idev ( getd i ':input (car tail))))
           (if (and o (not odev))
               (set! odev ( getd o ':output (car tail)))))
-        (pm:TimerStart)
+        (pm:TimeStart)
         (set! (object-time obj) 0)
         (when idev
           (set-car! data 
@@ -120,38 +120,20 @@
     ;; output stream
     (if (cadr io) ( fn obj (cadr io)))
     ;;cache current MILLISECOND time offset
-    (set! (portmidi-offset obj) (pm:TimerTime))
+    (set! (portmidi-offset obj) (pm:Time))
     ;; stream's time is kept in seconds. maybe stream should have a
     ;; scaler like midi-file so user could work with whatever quanta
     ;; they wanted...
     (set! (object-time obj) 0)
     (channel-tuning-init obj)))
 
-;; THIS SHOULD BE MERGED WITH original in midi3.scm
-(define (flush-pending-offs2 mf at)
-  (let ((time (or at most-positive-fixnum)))
-    (do ((qe (%q-peek %offs) (%q-peek %offs)))
-	((or (null? qe) (> (%qe-time qe) time))
-	 #f)
-      (%q-pop %offs)      
-;      (format t "~%flushing ~S" (%qe-time qe))
-      (midi-write-message (%qe-object qe) 
-			  mf
-                          (%qe-time qe)
-			  #f)
-      (%qe-dealloc %offs qe))))
-
-(define-method* (deinitialize-io (obj <portmidi-stream>))
-  ;; uncache current time offset
-  (flush-pending-offs2 obj #f))
-
 ;; a "midi.port" convenience for working with just one stream...
 
 (define (portmidi-open . args)
-  (apply #'open-io "midi.pm" #t args))
+  (apply #'open-io "midi-port.pm" #t args))
 
 (define (portmidi-open? . args)
-  (with-args (args &optional (port (find-object "midi.pm" )))
+  (with-args (args &optional (port (find-object "midi-port.pm" )))
     (if port 
         (let ((io (io-open port)))
           (if io
@@ -162,7 +144,7 @@
         #f)))
 
 (define (portmidi-close . args)
-  (with-args (args &optional (port (find-object "midi.pm" )))
+  (with-args (args &optional (port (find-object "midi-port.pm" )))
     (if (portmidi-open? port)
         (begin (close-io port ':force) #t)
         #f)))
