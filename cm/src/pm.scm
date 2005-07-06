@@ -131,7 +131,7 @@
 (define-method* (initialize-io (obj <portmidi-stream>))
   ;; this method will have to distinguish between rt and non-rt
   ;; scheduling and also input vs output.
-  (let ((io (car (io-open obj)))
+  (let ((io (io-open obj))
         (fn (lambda (o s)
               (let ((f (portmidi-filter o))
                     (m (portmidi-channel-mask o)))
