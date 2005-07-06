@@ -41,6 +41,27 @@
   :metaclass <io-class>
   :file-types '("*.pm"))
 
+(define-object-printer* ((obj <portmidi-stream>) port)
+  (let ((name (object-name obj))
+        (pids (event-stream-stream obj))
+        (*print-case* ':downcase)) ; noop in scheme
+    (set! name
+          (if name 
+              (format nil "~a \"~a\"" (class-name (class-of obj)) name)
+              (format nil "~a" (class-name (class-of obj)))))
+    (if pids
+        (if (car pids)
+            (if (cadr pids)
+                (format port "#<~a (in:~d out:~d)>"
+                        name (car pids) (cadr pids))
+                (format port "#<~a (in:~d)>"
+                        name (car pids)))
+            (if (cadr pids)
+                (format port "#<~a (out:~d)>" 
+                        name (cadr pids))
+                (format port "#<~a>" name)))
+        (format port "#<~a>" name))))
+            
 (define-method* (open-io (obj <portmidi-stream>) dir . args)
   dir args
   (when (not (io-open obj)) ; already open...
@@ -68,6 +89,7 @@
             (bsiz (portmidi-outbuf-size obj))
             (idev #f)
             (odev #f)
+            (pids (list #f #f))
             (data (list #f #f)))
         (do ((tail (pm:GetDeviceDescriptions) (cdr tail))
              (i (portmidi-input obj))
@@ -80,15 +102,17 @@
         (pm:TimeStart)
         (set! (object-time obj) 0)
         (when idev
+          (set-car! pids idev)
           (set-car! data 
                     (pm:OpenInputStream
                      idev (if (pair? bsiz) (car bsiz) bsiz))))
         (when odev
+          (set-car! (cdr pids) odev)
           (set-car! (cdr data) 
                     (pm:OpenOutputStream
                      odev (if (pair? bsiz) (cadr bsiz) bsiz)
                      (portmidi-latency obj))))
-        (set! (event-stream-stream obj) data)
+        (set! (event-stream-stream obj) pids)
         (set! (io-open obj) data))))
   obj)
 
