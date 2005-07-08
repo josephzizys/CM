@@ -232,3 +232,104 @@
 (defgeneric rt-sprout (obj time dest))
 (defgeneric rt-now (io))
 (defgeneric receive! (stream hook))
+
+;;;
+;;; thread support
+;;;
+
+(defun nothreads ()
+  (error "threads are not supported in this sbcl."))
+(defun current-thread ()
+  (nothreads))
+(defun thread? (obj)
+  obj
+  (nothreads))
+(defun make-thread (thunk &optional name)
+ (nothreads))
+(defun thread-name (thread) 
+  thread
+  (nothreads))
+;(thread-specific thread)
+;(thread-specific-set! thread obj)
+(defun thread-start! (thread)
+  thread
+  (nothreads))
+(defun thread-yield! ()
+  (nothreads))
+(defun thread-sleep! (timeout)
+  timeout
+  (nothreads))
+(defun thread-terminate! (thread)
+  thread
+  (nothreads))
+;(thread-join! thread [timeout [timeout-val]])
+(defun mutex? (obj)
+  obj
+  (nothreads))
+(defun make-mutex (&optional name)
+  name
+  (nothreads))
+(defun mutex-name (mutex)
+  mutex
+  (nothreads))
+;(mutex-specific mutex)
+;(mutex-specific-set! mutex obj)
+;(mutex-state mutex)
+;(mutex-lock! mutex [timeout [thread]])
+;(mutex-unlock! mutex [condition-variable [timeout]])
+;(condition-variable? obj)
+;(make-condition-variable [name])
+;(condition-variable-name condition-variable)
+;(condition-variable-specific condition-variable)
+;(condition-variable-specific-set! condition-variable obj)
+;(condition-variable-signal! condition-variable)
+;(condition-variable-broadcast! condition-variable)
+(defun current-time ()
+  (nothreads))
+(defun time? (obj)
+  obj
+  (nothreads))
+(defun time->seconds (time) 
+  time
+  (nothreads))
+(defun seconds->time (sec)
+  sec
+  (nothreads))
+;(current-exception-handler)
+;(with-exception-handler handler thunk)
+;(raise obj)
+;(join-timeout-exception? obj)
+;(abandoned-mutex-exception? obj)
+;(terminated-thread-exception? obj)
+;(uncaught-exception? obj)
+;(uncaught-exception-reason exc)
+
+;;;
+;;; period task support
+;;;
+
+(defun set-periodic-task! (thunk &key (period 1) (mode ':set))
+  ;; period is in milliseconds
+  (declare (ignore mode))
+  (cond ((not thunk)
+         (setf sb-impl::*max-event-to-sec* 1)
+         (setf sb-impl::*max-event-to-usec* 0)
+         (setf sb-impl::*periodic-polling-function* nil))
+        ((not (null sb-impl::*periodic-polling-function*))
+         (error "set-periodic-task!: Periodic task already running!"))
+        (t
+         (let (sec mil)
+           (if (< period 1000)
+               (setf sec 0 mil period)
+               (multiple-value-setq (sec mil) (floor period 1000)))
+           (setf sb-impl::*max-event-to-sec* sec)
+           (setf sb-impl::*max-event-to-usec* (* mil 1000))
+           (setf sb-impl::*periodic-polling-function* thunk))))
+  (values))
+
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 2000)
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 1000)
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 500)
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 999)
+; (set-periodic-task! nil)
+

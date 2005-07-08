@@ -26,6 +26,7 @@
           hcl:class-slots
           hcl:class-direct-slots
           hcl:validate-superclass
+          mp:without-interrupts
           ))
 
 ;; pkg.lisp blocked these symbols so CM does not inherit Lispworks
@@ -80,5 +81,97 @@
                       (setf *readtable* *cm-readtable*)
                       (load-cminit)
                       (cm-logo))))
+
+;;;
+;;; thread support
+;;;
+
+(defun current-thread () mp:*current-process*)
+(defun thread? (obj) (mp:process-p obj))
+(defun make-thread (thunk &optional name)
+  ;; this has to return a function that thead-start! calls
+  (let ((nam (or name (format nil "cm-~a" (gentemp 'thread)))))
+    (lambda () (mp:process-run-function name '() thunk))))
+(defun thread-start! (thread)
+  (funcall thread))
+(defun thread-name (thread) 
+  (mp:process-name thread))
+;(thread-specific thread)
+;(thread-specific-set! thread obj)
+(defun thread-yield! ()
+  (mp:process-allow-scheduling))
+(defun thread-sleep! (timeout)
+  (mp:sleep-for-time timeout))
+(defun thread-terminate! (thread)
+  (mp:process-kill thread))
+;(thread-join! thread [timeout [timeout-val]])
+(defun mutex? (obj)
+  (typep obj 'mp:lock))
+(defun make-mutex (&optional name)
+  (mp:make-lock :name name))
+(defun mutex-name (mutex)
+  (mp:lock-name mutex))
+;(mutex-specific mutex)
+;(mutex-specific-set! mutex obj)
+;(mutex-state mutex)
+;(mutex-lock! mutex [timeout [thread]])
+;(mutex-unlock! mutex [condition-variable [timeout]])
+;(condition-variable? obj)
+;(make-condition-variable [name])
+;(condition-variable-name condition-variable)
+;(condition-variable-specific condition-variable)
+;(condition-variable-specific-set! condition-variable obj)
+;(condition-variable-signal! condition-variable)
+;(condition-variable-broadcast! condition-variable)
+(defun current-time () (get-internal-real-time))
+(defun time? (obj) (and (integerp obj) (> obj 0)))
+(defun time->seconds (time) 
+  (/ time #.(coerce internal-time-units-per-second 'float)))
+(defun seconds->time (sec)
+  (truncate (* sec internal-time-units-per-second)))
+;(current-exception-handler)
+;(with-exception-handler handler thunk)
+;(raise obj)
+;(join-timeout-exception? obj)
+;(abandoned-mutex-exception? obj)
+;(terminated-thread-exception? obj)
+;(uncaught-exception? obj)
+;(uncaught-exception-reason exc)
+
+;;;
+;;; periodic task support
+;;;
+
+(defun set-periodic-task! (thunk &key (period 1) (mode ':set))
+  ;; period is in  milliseconds
+  (declare (ignore mode))
+  (cond ((not thunk)
+         (setq lisp::*max-event-to-sec* 1)
+         (setq lisp::*max-event-to-usec* 0)
+         (setq lisp::*periodic-polling-function* nil))
+        ((not (null lisp::*periodic-polling-function*))
+         (error "set-periodic-task!: Periodic task already running!"))
+        (t
+         (let (sec mil)
+           (if (< period 1000)
+               (setf sec 0 mil period)
+               (multiple-value-setq (sec mil) (floor period 1000)))
+           (setq lisp::*max-event-to-sec* sec)
+           (setq lisp::*max-event-to-usec* (* mil 1000))
+           (setq lisp::*periodic-polling-function* thunk))))
+  (values))
+
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 2000)
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 1000)
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 500)
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 999)
+; (set-periodic-task! nil)
+
+     
+
+
+
+
+
 
 

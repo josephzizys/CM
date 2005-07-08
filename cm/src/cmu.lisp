@@ -172,8 +172,8 @@
 (defun time? (obj) (and (integerp obj) (> obj 0)))
 (defun time->seconds (time) 
   (/ time #.(coerce internal-time-units-per-second 'float)))
-(defun seconds->time (x)
-  (truncate (* time internal-time-units-per-second)))
+(defun seconds->time (sec)
+  (truncate (* sec internal-time-units-per-second)))
 ;(current-exception-handler)
 ;(with-exception-handler handler thunk)
 ;(raise obj)
@@ -183,3 +183,32 @@
 ;(uncaught-exception? obj)
 ;(uncaught-exception-reason exc)
 )
+
+;;;
+;;; period task support
+;;;
+
+(defun set-periodic-task! (thunk &key (period 1) (mode ':set))
+  ;; period is in milliseconds
+  (declare (ignore mode))
+  (cond ((not thunk)
+         (setf lisp::*max-event-to-sec* 1)
+         (setf lisp::*max-event-to-usec* 0)
+         (setf lisp::*periodic-polling-function* nil))
+        ((not (null lisp::*periodic-polling-function*))
+         (error "set-periodic-task!: Periodic task already running!"))
+        (t
+         (let (sec mil)
+           (if (< period 1000)
+               (setf sec 0 mil period)
+               (multiple-value-setq (sec mil) (floor period 1000)))
+           (setf lisp::*max-event-to-sec* sec)
+           (setf lisp::*max-event-to-usec* (* mil 1000))
+           (setf lisp::*periodic-polling-function* thunk))))
+  (values))
+
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 2000)
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 1000)
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 500)
+; (set-periodic-task! (lambda () (print ':hiho!)) :period 999)
+; (set-periodic-task! nil)
