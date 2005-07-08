@@ -407,6 +407,104 @@
     (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
 
 
+;;; new periodic-task support
+
+(defparameter *periodic-polling-function* nil)
+(defparameter *periodic-polling-timer* nil)
+(defparameter *periodic-polling-thread* nil)
+(defparameter *periodic-polling-callback* nil)
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ccl::use-interface-dir :CARBON))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ccl::open-shared-library "Carbon.framework/Carbon"))
+
+(defun %string->cfstringref (string)
+  (ccl::with-cstrs ((str string))
+    (#_CFStringCreateWithCString (ccl::%null-ptr)  str #$kCFStringEncodingMacRoman)))
+
+(defun %release-cfstring (string)
+  (#_CFRelease string))
+
+(defmacro run-polling-function (func time-period)
+  (let ((timer-callback (string->symbol (format nil "timer-callback-~s" (gensym))))
+	(thread-name (format nil "thread-test-~s" (gensym)))
+	(run-time (coerce time-period 'double-float)))
+    `(let ((pname ,func))
+       (setf *stop* nil)
+       (ccl::defcallback ,timer-callback (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
+	 timer info
+	 (if *stop*
+	     (progn
+	       (#_CFRunLoopStop (#_CFRunLoopGetCurrent))
+	       (ccl::process-kill ccl::*current-process*))
+	   (funcall pname)))
+       (ccl::process-run-function ,thread-name
+	 (lambda ()
+	   (progn
+	     (let ((my-timer
+		    (#_CFRunLoopTimerCreate (ccl::%null-ptr) (#_CFAbsoluteTimeGetCurrent)
+					    1000000000.D0 0 0 ,timer-callback (ccl::%null-ptr))))
+	       (setf *global-timer* my-timer)
+	       (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) my-timer (string->cfstringref "cm"))
+	       (#_CFRunLoopRunInMode (string->cfstringref "cm") ,run-time #$false)
+	       (#_CFRunLoopTimerInvalidate my-timer)
+	       (#_CFRelease my-timer))))))))
+
+(defun run-periodic-task (period)
+  (let ((timer-context (%string->cfstringref "cm-periodic")))
+    (ccl::defcallback *periodic-polling-callback* (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
+      (declare (ignore timer info))
+      (if *periodic-polling-function*
+	  (funcall *periodic-polling-function*)
+	(progn
+	  (when *periodic-polling-timer*
+	    (#_CFRunLoopStop (#_CFRunLoopGetCurrent)))
+	  (when *periodic-polling-thread*
+	    (ccl::process-kill *periodic-polling-thread*)))))
+    (setf *periodic-polling-thread*
+	  (ccl::process-run-function "periodic-polling-thread"
+	    (lambda ()
+	      (setf *periodic-polling-timer*
+		    (#_CFRunLoopTimerCreate (ccl::%null-ptr) (#_CFAbsoluteTimeGetCurrent)
+					    (* .001D0 period)  0 0 *periodic-polling-callback* (ccl::%null-ptr)))
+	      (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) *periodic-polling-timer* timer-context)
+	      (#_CFRunLoopRunInMode timer-context 10000000.D0 #$false)
+	      (#_CFRunLoopTimerInvalidate *periodic-polling-timer*)
+	      (#_CFRelease *periodic-polling-timer*)
+	      (%release-cfstring timer-context))))))
 
 
+(defun set-periodic-task! (thunk &key (period 1) (mode ':set))
+  ;;period is in milliseconds
+  (declare (ignore mode))
+  (cond ((not thunk) 
+	 (setf *periodic-polling-function* nil))
+	((not (null *periodic-polling-function*))
+	 (error "set-periodic-task!: Periodic task already running!"))
+	(t
+	 (setf *periodic-polling-function* thunk)
+	 (run-periodic-task period)))
+  (values))
+#|
+(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 1000)
+(set-periodic-task! nil)
+(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 100)
+(set-periodic-task! nil)
+(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 10)
+;generate error
+(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 1)
+(set-periodic-task! nil)
+(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 1)
+
+|#
+
+
+
+
+    
+	     
+	
+  
 
