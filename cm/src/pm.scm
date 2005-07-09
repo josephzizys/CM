@@ -280,8 +280,9 @@
 ;(define-method* (receive? (str <portmidi-stream>))
 ;  (if (portmidi-receive str) #t #f))
 
-(define-method* (receive! (str <portmidi-stream>) hook)
+(define-method* (receive! hook (str <portmidi-stream>) . args)
   (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
+         (reso (list-get args ':resolution))
          (stop #f)) 
     ;; the receiving thread's do loop terminates as soon as the stop
     ;; flag is #t. to stop we call the cached "stopper" closure that
@@ -319,22 +320,40 @@
                (set! bf (pm:EventBufferNew sz)))
              (set! fn (lambda (mm ms)
                         ( hook (pm-message->midi-message mm) ms)))
-             (set! th
-                   (make-thread
-                    (lambda ()
-                      (do ((n #f))
-                          (stop  
-                           #f)
-                        (when (pm:StreamPoll in)
-                          (set! n (pm:StreamRead in bf sz))
-                          (when (> n 0)
-                            (pm:EventBufferMap fn bf n)))))))
-             (set! st (lambda () (set! stop #t)))
+             (case *receive-mode*
+               ((:threaded )
+                (set! th
+                      (make-thread
+                       (lambda ()
+                         (do ((n #f))
+                             (stop  
+                              #f)
+                           (when (pm:StreamPoll in)
+                             (set! n (pm:StreamRead in bf sz))
+                             (when (> n 0)
+                               (pm:EventBufferMap fn bf n)))))))
+                (set! st (lambda () (set! stop #t))))
+               ((:periodic )
+                (set! th
+                      (lambda () 
+                        (let ((n 0))
+                          (when (pm:StreamPoll in)
+                            (set! n (pm:StreamRead in bf sz))
+                            (when (> n 0)
+                              (pm:EventBufferMap fn bf n))))))
+                (set! st (lambda ()
+                           (set-periodic-task! #f))))
+               (else
+                (err "portmidi: receive mode ~s not :threaded or :periodic."
+                     *receive-mode*)))
+             ;; cache the stuff
              (list-set! data 0 th)
              (list-set! data 1 st)
              (list-set! data 2 bf)
              (list-set! data 3 sz)
-             (thread-start! th)
+             (if (eq? *receive-mode* ':threaded)
+                 (thread-start! th)
+                 (set-periodic-task! th :period (or reso 2)))
              #t)))))
 
 ;
