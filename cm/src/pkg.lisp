@@ -146,10 +146,11 @@
   )
 
 ;;;
-;;; intern and export ms:new and ms:MidiPrintEv
+;;; intern and export ms:new, ms:MidiPrintEv, ms:output ms:sprout
 ;;;
 
-(let ((syms '(#:new  #:MidiPrintEv)))
+(let ((syms '(#:new  #:MidiPrintEv #:sprout #:output #:now
+              #:receive #:receive?)))
   (map nil (lambda (s) (intern (symbol-name s) :midishare)) syms)
   (export (mapcar #'(lambda (x) (find-symbol (symbol-name x) :midishare))
                   syms)
