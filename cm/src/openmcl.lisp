@@ -427,31 +427,6 @@
 (defun %release-cfstring (string)
   (#_CFRelease string))
 
-(defmacro run-polling-function (func time-period)
-  (let ((timer-callback (string->symbol (format nil "timer-callback-~s" (gensym))))
-	(thread-name (format nil "thread-test-~s" (gensym)))
-	(run-time (coerce time-period 'double-float)))
-    `(let ((pname ,func))
-       (setf *stop* nil)
-       (ccl::defcallback ,timer-callback (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
-	 timer info
-	 (if *stop*
-	     (progn
-	       (#_CFRunLoopStop (#_CFRunLoopGetCurrent))
-	       (ccl::process-kill ccl::*current-process*))
-	   (funcall pname)))
-       (ccl::process-run-function ,thread-name
-	 (lambda ()
-	   (progn
-	     (let ((my-timer
-		    (#_CFRunLoopTimerCreate (ccl::%null-ptr) (#_CFAbsoluteTimeGetCurrent)
-					    1000000000.D0 0 0 ,timer-callback (ccl::%null-ptr))))
-	       (setf *global-timer* my-timer)
-	       (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) my-timer (string->cfstringref "cm"))
-	       (#_CFRunLoopRunInMode (string->cfstringref "cm") ,run-time #$false)
-	       (#_CFRunLoopTimerInvalidate my-timer)
-	       (#_CFRelease my-timer))))))))
-
 (defun run-periodic-task (period)
   (let ((timer-context (%string->cfstringref "cm-periodic")))
     (ccl::defcallback *periodic-polling-callback* (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
