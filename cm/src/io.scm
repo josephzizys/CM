@@ -269,23 +269,54 @@
            (close-io ,io ,err?)))))))
 
 ;;;
-;;; events
+;;; current input and output streams
 ;;;
 
 (define *in* #f)
 (define *out* #f)
 (define *last-output-file* #f)
 
-(define (events object to . args)
+(define (current-input-stream)
+  *in*)
+
+(define (current-output-stream)
+  *out*)
+
+(define (set-current-input-stream! stream)
+  ;; dont insist that stream be an event-stream
+  (unless (or (null? stream) 
+              (is-a? <object> stream))
+    (err "set-current-input-stream: ~s not a stream." stream))
+  (set! *in* stream)
+  stream)
+
+(define (set-current-output-stream stream)
+  ;; dont insist that stream be an event-stream
+  (unless (or (null? stream) 
+              (is-a? <object> stream))
+    (err "set-current-output-stream: ~s not a stream." stream))
+  (set! *out* stream)
+  stream)
+
+;;;
+;;; events
+;;;
+
+(define (events object . args)
   ;; args are &key pairs or an optional time offset
   ;; followed by &key pairs.
-  (let ((ahead (if (and (pair? args)
-			(or (pair? (car args))
-			    (number? (car args))))
+  (let* ((to (if (and (pair? args)
+                      (or (string? (car args))
+                          (eq? (car args) #f)
+                          (is-a? <object> (car args))))
                  (pop args)
-                 0))
+                 (current-output-stream)))
+         (ahead (if (and (pair? args)
+                         (or (pair? (car args))
+                             (number? (car args))))
+                    (pop args)
+                    0))
         (err? ':error))
-    (set! *out* #f)
     (when (odd? (length args))
       (err "Uneven initialization list: ~s." args))
     (dynamic-wind
@@ -298,11 +329,13 @@
 		    (find-object x)
 		    x)
 		  (err "Not an object specification: ~s." x)))))
-	 (when to
-	   (set! *out* (open-io (apply (function init-io) to args)
-                                ':output))
-	   (initialize-io *out*))
-	 (schedule-events (lambda (e s) (write-event e *out* s))
+	 (if (not to)
+             (set! *out* #f)
+             (begin
+              (set! *out* (open-io (apply (function init-io) to args)
+                                   ':output))
+              (initialize-io *out*)))
+	 (schedule-events *out* ;(lambda (e s) (write-event e *out* s))
 			  (if (pair? object) 
 			    (map (function getobj) object)
 			    (getobj object))
@@ -325,17 +358,6 @@
 	  path)
 	*out*))))
 
-;Removed for now but may add it back.
-;(define-macro (defhandler class handler)
-;  (let ((var (gensym)))
-;    `(let ((,var (find-class* ',class <event-stream>)))
-;      (set! (io-class-handler ,var) ,handler))))
-
-
-; (load "/usr/local/lisp/scm/load.scm")
-; (define a (new seq name 'foo))
-; (io "test.clm" version #t)
-; (events a "test.clm")
 
 
 ;;;
@@ -375,5 +397,41 @@
           file)
         #f)
       #f)))
+
+;;;
+;;; receive
+;;;
+
+(define *receive-mode* #f)
+
+(cond-expand
+ (openmcl (set! *receive-mode* ':threaded))
+ (gauche (set! *receive-mode* ':threaded))
+ (cmu (set! *receive-mode* ':periodic))
+ (sbcl (set! *receive-mode* ':periodic))
+ (else (set! *receive-mode* #f)))
+
+;(define-method* receive (hook stream . args)                )
+
+
+
+
+;(define-method* (threaded-receive hook stream . args)
+;  (with-args (args &key resolution)
+;    hook resolution
+;    (err "threaded-receive: no method defined in ~a for ~s."
+;         (lisp-implementation-type) stream)))
+;
+;(define-method* (periodic-receive hook stream . args)
+;  (with-args (args &key resolution)
+;    hook resolution
+;    (err "threaded-receive: no method defined in ~a for ~s."
+;         (lisp-implementation-type) stream)))
+;
+;(define-method* (callback-receive hook stream . args)
+;  (with-args (args &key resolution)
+;    hook resolution
+;    (err "threaded-receive: no method defined in ~a for ~s."
+;         (lisp-implementation-type) stream)))
 
 
