@@ -19,6 +19,10 @@
 
 (in-package :cm)
 
+(defvar <top> t)
+(defvar <class> (find-class 'standard-class))
+(defvar <object> (find-class 'standard-object))
+
 #-(or cmu)
 (defun class-subclasses (class)
   ;; return a list of all subclases of class
