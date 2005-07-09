@@ -123,6 +123,7 @@
   (when (and *queue* (not (null? (%q-head *queue*))))
     (%q-flush *queue*))
   (set! *queue* #f)
+  (set! *scheduler* #f)
   (set! *rts-run* #f)
   (set! *rts-now* #f))
 (define (rts-running? ) *rts-run*)
@@ -135,6 +136,7 @@
   (if (rts-running?) (err "rts: already running."))
   (let ((ahead (if (pair? at) (car at) 0)))
     (set! *queue* %q)
+    (set! *scheduler* #t)
     (if (consp object)
         (dolist (o object)
           (schedule-object o
@@ -155,8 +157,7 @@
      (thread-alloc
       (lambda ()
         (if (> *rts-now* 0) (thread-sleep! *rts-now*))
-        (do ((mapfn (lambda (e s) (write-event e *out* s)))
-             (entry #f)
+        (do ((entry #f)
              (qtime #f)
              (start #f)
              (thing #f)
@@ -167,6 +168,7 @@
              (unschedule-object object #t)
              (set! *rts-run* #f)
              (set! *queue* #f)
+             (set! *scheduler* #f)
              (set! *rts-now* #f))
           (mutex-lock! *rts-lock*) ; is this necessary? i think with
           (without-interrupts
@@ -182,7 +184,7 @@
                 (set! start (%qe-start entry))
                 (set! thing (%qe-object entry))
                 (%qe-dealloc *queue* entry)
-                (process-events thing qtime start mapfn)
+                (process-events thing qtime start *out*)
                 (set! none? (null? (%q-head *queue*)))
                 ))
           (mutex-unlock! *rts-lock*) ; is this necessary?
