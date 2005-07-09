@@ -1,5 +1,7 @@
 CM 2.7.0 
 
+IMPORTANT! MIDISHARE FUNCTION NAME CHANGES, see Changes section below
+
 --New Features:
 
 o New functions for getting and setting default input and output
@@ -102,6 +104,29 @@ o Ported CM to Lispworks (free Personal Edition)
 o Ported CM to Guile 1.7.1
 
 --Changes: 
+
+o INCOMPATABLE MIDISHARE CHANGES: In order to host both Portmidi and
+  Midishare some name changes have been made in the Midishare API
+
+  Old Name     New Name
+  ---------------------
+  sprout       ms:sprout
+  now          ms:now
+  output       ms:output
+  receive      ms:receive
+  receive?     ms:receive?
+  midi-open    midishare-open
+  midi-open?   midishare-open?
+  midi-close   midishare-close
+  *mp*         *ms*
+ 
+Rationale: Midishare has its own way of implementing realtime
+processes, timing service, outtputing ev structs and receiving input
+that don't integrate well into the "regular" cm function names. The
+solution is to export the midishare implementations from the ms:
+pacakge so its clear to the caller what is being used. THe midi-port
+names no longer make sense since two independant MIDI systems
+are supported, each with its own idea of what a midi-port is.
 
 o (SETF SUBOBJECTS) accessor has been renamed 
   (SETF CONTAINER-SUBOBJECTS). 
