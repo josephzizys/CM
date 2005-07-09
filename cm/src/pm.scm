@@ -280,9 +280,9 @@
 ;(define-method* (receive? (str <portmidi-stream>))
 ;  (if (portmidi-receive str) #t #f))
 
-(define-method* (receive! hook (str <portmidi-stream>) . args)
+(define-method* (receive hook (str <portmidi-stream>) . args)
   (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
-         (reso (list-get args ':resolution))
+         (reso (list-prop args ':resolution))
          (stop #f)) 
     ;; the receiving thread's do loop terminates as soon as the stop
     ;; flag is #t. to stop we call the cached "stopper" closure that

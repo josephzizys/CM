@@ -231,7 +231,7 @@
 ;; bug??: sprout has 2 optionals but rt-sprout has them required
 (defgeneric rt-sprout (obj time dest))
 (defgeneric rt-now (io))
-(defgeneric receive! (stream hook))
+(defgeneric receive (hook stream &rest args))
 
 ;;;
 ;;; thread support
