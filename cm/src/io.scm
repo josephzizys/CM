@@ -285,15 +285,15 @@
 (define (set-current-input-stream! stream)
   ;; dont insist that stream be an event-stream
   (unless (or (null? stream) 
-              (is-a? <object> stream))
+              (is-a? stream <object>))
     (err "set-current-input-stream: ~s not a stream." stream))
   (set! *in* stream)
   stream)
 
-(define (set-current-output-stream stream)
+(define (set-current-output-stream! stream)
   ;; dont insist that stream be an event-stream
   (unless (or (null? stream) 
-              (is-a? <object> stream))
+              (is-a? stream <object>))
     (err "set-current-output-stream: ~s not a stream." stream))
   (set! *out* stream)
   stream)
@@ -308,7 +308,7 @@
   (let* ((to (if (and (pair? args)
                       (or (string? (car args))
                           (eq? (car args) #f)
-                          (is-a? <object> (car args))))
+                          (is-a? (car args) <object>)))
                  (pop args)
                  (current-output-stream)))
          (ahead (if (and (pair? args)
