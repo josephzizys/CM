@@ -117,7 +117,7 @@
 
 (define *rts-run* #f)
 (define *rts-now* #f)
-(define *rts-lock* (make-mutex))
+(define *rts-lock* #f)
 
 (define (rts-reset) 
   (when (and *queue* (not (null? (%q-head *queue*))))
@@ -134,6 +134,7 @@
 
 (define (rts object to . at)
   (if (rts-running?) (err "rts: already running."))
+  (if (not *rts-lock*) (set! *rts-lock* (make-mutex)))
   (let ((ahead (if (pair? at) (car at) 0)))
     (set! *queue* %q)
     (set! *scheduler* #t)
@@ -215,27 +216,25 @@
 ;;;
 ;;; tests
 
-#|
-(defparameter *pm*
-  (portmidi-open :input nil :output 3 :latency 0))
-
-(define (zzz len lb ub wai amp)
-  (process repeat len
-    output (new midi :time 0
-            :duration .1 :amplitude amp
-            :keynum (between lb ub))
-    wait wai))
-
+;(defparameter *pm*
+;  (portmidi-open :input nil :output 3 :latency 0))
+;
+;(define (zzz len lb ub wai amp)
+;  (process repeat len
+;    output (new midi :time 0
+;            :duration .1 :amplitude amp
+;            :keynum (between lb ub))
+;    wait wai))
+;
 ;; fire it up
-(rts (list (zzz 100 60 90 .25 .5)
-           (zzz 50 20 50 .5 .5))
-     *pm* 0)
-
+;(rts (list (zzz 100 60 90 .25 .5)
+;           (zzz 50 20 50 .5 .5))
+;     *pm* 0)
+;
 ;; now eval this whenever...
-(let ((k (between 20 100)))
-  (rts-sprout (zzz 15 k (+ k 7) 1/5 .75) :ahead 0))
-
-|#
+;(let ((k (between 20 100))
+;      (n (pick 3 5 7 11)))
+;  (rts-sprout (zzz (* n (pick 2 3 4)) (+ k 7) (/ 1 n) .75) :ahead 0))
 
 
 

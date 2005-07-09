@@ -121,7 +121,101 @@
                        (cm-logo)
                        )))
 
+;;;
+;;; thread support
+;;;
 
+(defun nothreads ()
+  (error "Threads are not supported in CLISP."))
 
+(defun current-thread ()
+  (nothreads))
 
+(defun thread? (obj)
+  obj
+  (nothreads))
+
+(defun make-thread (thunk &optional name)
+ (nothreads))
+
+(defun thread-name (thread) 
+  thread
+  (nothreads))
+
+;(thread-specific thread)
+;(thread-specific-set! thread obj)
+
+(defun thread-start! (thread)
+  thread
+  (nothreads))
+
+(defun thread-yield! ()
+  (nothreads))
+
+(defun thread-sleep! (timeout)
+  timeout
+  (nothreads))
+
+(defun thread-terminate! (thread)
+  thread
+  (nothreads))
+
+;(thread-join! thread [timeout [timeout-val]])
+
+(defun mutex? (obj)
+  obj
+  (nothreads))
+
+(defun make-mutex (&optional name)
+  name
+  (nothreads))
+
+(defun mutex-name (mutex)
+  mutex
+  (nothreads))
+
+;(mutex-specific mutex)
+;(mutex-specific-set! mutex obj)
+;(mutex-state mutex)
+;(mutex-lock! mutex [timeout [thread]])
+;(mutex-unlock! mutex [condition-variable [timeout]])
+;(condition-variable? obj)
+;(make-condition-variable [name])
+;(condition-variable-name condition-variable)
+;(condition-variable-specific condition-variable)
+;(condition-variable-specific-set! condition-variable obj)
+;(condition-variable-signal! condition-variable)
+;(condition-variable-broadcast! condition-variable)
+
+(defun current-time ()
+  (nothreads))
+
+(defun time? (obj)
+  obj
+  (nothreads))
+
+(defun time->seconds (time) 
+  time
+  (nothreads))
+
+(defun seconds->time (sec)
+  sec
+  (nothreads))
+
+;(current-exception-handler)
+;(with-exception-handler handler thunk)
+;(raise obj)
+;(join-timeout-exception? obj)
+;(abandoned-mutex-exception? obj)
+;(terminated-thread-exception? obj)
+;(uncaught-exception? obj)
+;(uncaught-exception-reason exc)
+
+;;;
+;;; periodic task support
+;;;
+
+(defun set-periodic-task! (&rest args)
+  args
+  (error "set-periodic-task!: no periodic tasks in CLISP."))
 

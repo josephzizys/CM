@@ -335,3 +335,104 @@
 ; (slot-set! <foo> 'name 'freddy)  ; can change class name
 ; (find-class 'freddy)
 ; (describe <foo>)
+
+;;;
+;;; stub out thread support [srfi-18]
+;;;
+
+(define (nothreads )
+  (error "Threads are not supported in STklos."))
+
+(define <thread> <object>)
+
+(define (current-thread )
+  (nothreads))
+
+(define (thread? obj)
+  obj
+  (nothreads))
+
+(define (make-thread thunk . name)
+ (nothreads))
+
+(define (thread-name thread) 
+  thread
+  (nothreads))
+
+;(thread-specific thread)
+;(thread-specific-set! thread obj)
+
+(define (thread-start! thread)
+  thread
+  (nothreads))
+
+(define (thread-yield! )
+  (nothreads))
+
+(define (thread-sleep! timeout)
+  timeout
+  (nothreads))
+
+(define (thread-terminate! thread)
+  thread
+  (nothreads))
+
+;(thread-join! thread [timeout [timeout-val]])
+
+(define (mutex? obj)
+  obj
+  (nothreads))
+
+(define (make-mutex . name)
+  name
+  (nothreads))
+
+(define (mutex-name mutex)
+  mutex
+  (nothreads))
+
+;(mutex-specific mutex)
+;(mutex-specific-set! mutex obj)
+;(mutex-state mutex)
+;(mutex-lock! mutex [timeout [thread]])
+;(mutex-unlock! mutex [condition-variable [timeout]])
+;(condition-variable? obj)
+;(make-condition-variable [name])
+;(condition-variable-name condition-variable)
+;(condition-variable-specific condition-variable)
+;(condition-variable-specific-set! condition-variable obj)
+;(condition-variable-signal! condition-variable)
+;(condition-variable-broadcast! condition-variable)
+
+;(define (current-time )
+;  (nothreads))
+
+(define (time? obj)
+  obj
+  (nothreads))
+
+(define (time->seconds time) 
+  time
+  (nothreads))
+
+(define (seconds->time sec)
+  sec
+  (nothreads))
+
+;(current-exception-handler)
+;(with-exception-handler handler thunk)
+;(raise obj)
+;(join-timeout-exception? obj)
+;(abandoned-mutex-exception? obj)
+;(terminated-thread-exception? obj)
+;(uncaught-exception? obj)
+;(uncaught-exception-reason exc)
+
+;;;
+;;; periodic task support
+;;;
+
+(define (set-periodic-task! . args)
+  args
+  (err "set-periodic-task!: no periodic tasks in STklos."))
+

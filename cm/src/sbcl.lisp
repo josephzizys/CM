@@ -238,40 +238,54 @@
 ;;;
 
 (defun nothreads ()
-  (error "threads are not supported in this sbcl."))
+  (error "SBCL threads are not supported in this OS."))
+
 (defun current-thread ()
   (nothreads))
+
 (defun thread? (obj)
   obj
   (nothreads))
+
 (defun make-thread (thunk &optional name)
  (nothreads))
+
 (defun thread-name (thread) 
   thread
   (nothreads))
+
 ;(thread-specific thread)
 ;(thread-specific-set! thread obj)
+
 (defun thread-start! (thread)
   thread
   (nothreads))
+
 (defun thread-yield! ()
   (nothreads))
+
 (defun thread-sleep! (timeout)
   timeout
   (nothreads))
+
 (defun thread-terminate! (thread)
   thread
   (nothreads))
+
 ;(thread-join! thread [timeout [timeout-val]])
+
 (defun mutex? (obj)
   obj
   (nothreads))
+
 (defun make-mutex (&optional name)
   name
   (nothreads))
+
 (defun mutex-name (mutex)
   mutex
   (nothreads))
+
 ;(mutex-specific mutex)
 ;(mutex-specific-set! mutex obj)
 ;(mutex-state mutex)
@@ -284,17 +298,22 @@
 ;(condition-variable-specific-set! condition-variable obj)
 ;(condition-variable-signal! condition-variable)
 ;(condition-variable-broadcast! condition-variable)
+
 (defun current-time ()
   (nothreads))
+
 (defun time? (obj)
   obj
   (nothreads))
+
 (defun time->seconds (time) 
   time
   (nothreads))
+
 (defun seconds->time (sec)
   sec
   (nothreads))
+
 ;(current-exception-handler)
 ;(with-exception-handler handler thunk)
 ;(raise obj)

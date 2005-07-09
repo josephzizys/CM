@@ -129,33 +129,62 @@
 ;;; package. mp is NOT based on native threads so this is unlikely to
 ;;; work well. decisecond time precision is really bad too.
 
-#+x86
-(progn
-(defun current-thread () mp:*current-process*)
-(defun thread? (obj) (mp:processp obj))
+(defun nothreads ()
+  (error "CMUCL user threads are not support in this OS."))
+
+(defun current-thread ()
+  #+x86 mp:*current-process*
+  #-x86 (nothreads))
+
+(defun thread? (obj)
+  #+x86 (mp:processp obj)
+  #-x86 (nothreads))
+
 (defun make-thread (thunk &optional name)
-  (if name 
-      (mp:make-process thunk :name (format nil "~a" name))
-      (mp:make-process thunk)))
+  #+x86
+  (let* ((n (or name (format nil "CM-~A" (gentemp "THREAD"))))
+         (p (mp:make-process thunk :name n)))
+    (mp:disable-process p)
+    p)
+  #-x86 (nothreads))
+
 (defun thread-name (thread) 
-  (mp:process-name thread))
+  #+x86 (mp:process-name thread)
+  #-x86 (nothreads))
+
 ;(thread-specific thread)
 ;(thread-specific-set! thread obj)
+
 (defun thread-start! (thread)
-  (mp:enable-process thread) )
+  #+x86 (mp:enable-process thread)
+  #-x86 (nothreads))
+
 (defun thread-yield! ()
-  (mp:process-yield))
+  #+x86 (mp:process-yield)
+  #-x86 (nothreads))
+
 (defun thread-sleep! (timeout)
-  (sleep timeout))
+  #+x86 (sleep timeout)
+  #-x86 (nothreads))
+
 (defun thread-terminate! (thread)
-  (mp:destroy-process thread))
+  #+x86 (mp:destroy-process thread)
+  #-x86 (nothreads))
+
 ;(thread-join! thread [timeout [timeout-val]])
+
 (defun mutex? (obj)
-  (typep obj 'mp:lock))
+  #+x86 (typep obj 'mp:lock)
+  #-x86 (nothreads))
+
 (defun make-mutex (&optional name)
-  (mp:make-lock name))
+  #+x86 (mp:make-lock name)
+  #-x86 (nothreads))
+
 (defun mutex-name (mutex)
-  (slot-value mutex 'mp::name))
+  #+x86 (slot-value mutex 'mp::name)
+  #-x86 (nothreads))
+
 ;(mutex-specific mutex)
 ;(mutex-specific-set! mutex obj)
 ;(mutex-state mutex)
@@ -168,12 +197,19 @@
 ;(condition-variable-specific-set! condition-variable obj)
 ;(condition-variable-signal! condition-variable)
 ;(condition-variable-broadcast! condition-variable)
-(defun current-time () (get-internal-real-time))
-(defun time? (obj) (and (integerp obj) (> obj 0)))
+
+(defun current-time ()
+  (get-internal-real-time))
+
+(defun time? (obj)
+  (and (integerp obj) (> obj 0)))
+
 (defun time->seconds (time) 
   (/ time #.(coerce internal-time-units-per-second 'float)))
+
 (defun seconds->time (sec)
   (truncate (* sec internal-time-units-per-second)))
+
 ;(current-exception-handler)
 ;(with-exception-handler handler thunk)
 ;(raise obj)
@@ -182,7 +218,6 @@
 ;(terminated-thread-exception? obj)
 ;(uncaught-exception? obj)
 ;(uncaught-exception-reason exc)
-)
 
 ;;;
 ;;; period task support
