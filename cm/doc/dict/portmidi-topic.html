@@ -167,7 +167,7 @@ devices.
 <dd><code>(</code><code class="entry">portmidi-open?</code><code>)</code></dd>
 </dl>
 <p>
-Tests to see if <span class="string">"midi-port.pm"</span> has already been opened, returns one of four possible values:  <code class="keyword">:input</code>, <code class="keyword">:output</code>, <code class="keyword">:inout</code> or false.
+Tests to see if <span class="string">"midi-port.pm"</span> has already been opened, returns one of four possible values:  <code class="keyword">:in</code>, <code class="keyword">:out</code>, <code class="keyword">:inout</code> or false.
 </p>
 
 <dl class="dictsyntax" id="portmidi-close">
@@ -243,14 +243,52 @@ initialize Porttime first.
 <span class="result">&rArr;</span> 0
 (pm:GetDefaultOutputDeviceID)
 <span class="result">&rArr;</span> 2
-(portmidi-open :output 3 :input #f)
+(portmidi-open <span class="keyword">:output</span> 3 <span class="keyword">:input</span> #f)
 <span class="result">&rArr;</span> #&lt;portmidi-stream <span class="string">"midi-port.pm"</span> (out:3)&gt;
 (portmidi-open?)
 <span class="result">&rArr;</span> <span class="keyword">:out</span>
 (pm:Time)
 <span class="result">&rArr;</span> 36993
+(portmidi-close)
+<span class="result">&rArr;</span> #t
 </pre>
 </div> 
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Writing MIDI events.
+</p>
+<pre class="code">
+<span class="comment">;; midi output should be open with latency>0</span>
+(portmidi-open <span class="keyword">:output</span> 3 <span class="keyword">:input</span> #f <span class="keyword">:latency</span> 500)
+<span class="result">&rArr;</span> #&lt;portmidi-stream <span class="string">"midi-port.pm"</span> (out:3)&gt;
+(<span class="special">define</span> (<span class="defined">playsome</span> len lb ub)
+  (<a href="process-mac.html">process</a> repeat len
+           for d = (<a href="pick-fn.html">pick</a> .4 .2 .2)
+           output (<a href="new-mac.html">new</a> <a href="midi-cls.html">midi</a> <span class="keyword">:time</span> (<a href="now-fn.html">now</a>) 
+                       <span class="keyword">:duration</span> (* d 1.5)
+                       <span class="keyword">:keynum</span> (<a href="between-fn.html">between</a> lb ub)
+                       <span class="keyword">:amplitude</span> (<a href="odds-fn.html">odds</a> .25 .8 .4))
+           wait d))
+
+(<a href="events-fn.html">events</a> (playsome 20 60 90) <span class="string">"midi-port.pm"</span>)
+<span class="result">&rArr;</span> #&lt;portmidi-stream <span class="string">"midi-port.pm"</span> (out:3)&gt;
+(portmidi-close)
+<span class="result">&rArr;</span> #t
+</pre>
+</div>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 3.</span> Receiving messages.
+</p>
+<pre class="code">
+;; midin input and output should be open and latency=0
+(<span class="special">define</span> <span class="defined">pm</span>
+  (portmidi-open <span class="keyword">:output</span> 3 <span class="keyword">:input</span> 1 <span class="keyword">:latency</span> 0))
+
+</pre>
+</div>
 
 <h4>See also:</h4>
 <ul>
