@@ -214,8 +214,9 @@
 ;;;
 
 (define *queue* #f) ; system queue
+(define *scheduler* #f)
 
-(define (schedule-events function object . args)
+(define (schedule-events stream object . args)
   ;; removed rt
   (let* ((ahead (if (pair? args) (car args) 0))
 	 (noerr #f)
@@ -225,6 +226,7 @@
 	 (start #f)
 	 (thing #f))
     (set! *queue* %q)
+    (set! *scheduler* #t)
     ;; enque all objects at their score times
     ;; object and ahead can be a single values or lists
     (if (pair? object)
@@ -249,12 +251,13 @@
 	 (set! thing (%qe-object entry))
 	 (%qe-dealloc *queue* entry)
 	 ;(write-event thing *out* qtime)
-	 (process-events thing qtime start function)
+	 (process-events thing qtime start stream)
 	 ))
      (lambda ()
        (unless noerr
 	 ;; if we got an error flush remaining queue entries.
 	 ;(warning "Flushing queue.")
+         (set! *scheduler* #f)
 	 (%q-flush *queue*)
 	 (unschedule-object object #t))
        ;; toplevel #f for interactive midi.
@@ -317,12 +320,12 @@
 ;;; process-events
 ;;;
 
-(define-method* (process-events obj time start func)
+(define-method* (process-events obj time start stream)
   ;; call the function on the time and start
   start ; gag 'unused var' warning from cltl compilers
-  (func obj time))
+  (write-event obj stream time))
 
-(define-method* (process-events (head <pair>) time start func)
+(define-method* (process-events (head <pair>) time start stream)
   time   ; gag 'unused var' warning from cltl compilers
   (let ((event #f)
         (next #f))
@@ -340,7 +343,7 @@
        (set! next (+ start (object-time event)))
        (if (early? next) 
 	 (enqueue event next start)
-	 (func event next))	;<- func is wrapper for write-event
+	 (write-event event stream next))
        (if (null? head)
 	 #f
 	 (enqueue head next start)))
@@ -379,112 +382,73 @@
 (define *qstart* #f)
 (define *qtime* #f)
 (define *qnext* #f)
-(define *process* #f)
-(define *handler* #f)
 
-(define-method* (process-events (func <procedure>)
-			       qtime qstart handler)
-  (set! *process* func)
+(define-method* (process-events (func <procedure>) qtime qstart stream)
+  stream
   (set! *qtime* qtime)
   (set! *qstart* qstart)
-  (set! *handler* handler)
   (set! *qnext* *qtime*)
   ;; reschedule if process function returns non-nil
-  (if (funcall *process*)
-    (enqueue *process* *qnext* *qstart*)))
-
-;;;
-;;; "special forms" inside process referece the special vars.
-;;; these vars are bound by PROCESS-EVENTS
-;;;
-
+  (if (funcall func)
+    (enqueue func *qnext* *qstart*)))
 
 (define (output event . args)
-   ;; used in processes to write events to the current output
+  ;; used in processes to write events to the current output
   ;; stream.  checks to see if event's time is in future 
   ;; later than next event in queue. if so it enqueues rather
   ;; than outputs.
-  (with-args (args &optional out)
-    (if *queue*
-      (let ((sav *out*))
-        (if out (set! *out* out))
-        (if (pair? event)
-          (dolist (e event)
-            (let ((n (+ *qstart* (object-time e))))
-              (if (early? n)
-                (enqueue e n #f)
-                (funcall *handler* e n))))
-          (let ((n (+ *qstart* (object-time event))))
-            (if (early? n)
-              (enqueue event n #f)
-              (funcall *handler* event n))))
-        (set! *out* sav) 
-        (values))
-      (if out
-          (rt-output event out)
-        (if *out*
-            (rt-output event *out*))))
+  (with-args (args &optional (out *out*) at)
+    (if *scheduler*
+        (begin
+         (if (pair? event)
+             (dolist (e event)
+               (let ((n (+ *qstart* (or at (object-time e)))))
+                 (if (early? n)
+                     (enqueue e n #f)
+                     (write-event e out n)
+                     )))
+             (let ((n (+ *qstart* (or at (object-time event)))))
+               (if (early? n)
+                   (enqueue event n #f)
+                   (write-event event out n)))))
+        (rt-output event out))
     (values)))
-
 
 (define (now . args)
   (with-args (args &optional abs-time)
-    (if *queue*
+    (if *scheduler*
       (if (not abs-time)
         (- *qtime* *qstart*)
         *qtime*)
-      (if *out*
-          (rt-now *out*)))))
-
-;(define-macro (stop )
-;  (if *queue*
-;    (process-stop #f)
-;    (err "Calling 'stop' outside of scheduler?")))
+      (rt-now *out*))))
 
 (define (wait delta)
-  (if *queue*
+  (if *scheduler*
       (set! *qnext* (+ *qnext* (abs delta)))
-    (if *out*
-        (rt-wait delta *out*))))
-
-(define (wait-until time)
-  (if *queue*
-      (set! *qnext* (+ *qstart* time))
-    (if *out*
-        (rt-wait time *out*))))
+      (rt-wait delta *out*)))
 
 (define-method* (sprout (obj <object>) . args)
-  (with-args (args &optional time out)
-    time
-    (if *queue*
+  (with-args (args &optional time ahead)
+    ahead
+    (if *scheduler*
         (schedule-object obj *qstart*)
-      (if out
-          (if (> time 0)
-              (rt-sprout obj time out)
-            (output obj out))
-        (if *out*
-            (if (> time 0)
-                (rt-sprout obj time *out*)
-              (output obj *out*)))))))
+        (if (> time 0)
+            (rt-sprout obj time *out*)
+            (output obj *out*)))))
 
 (define-method* (sprout (obj <procedure>) . args)
-  (with-args (args &optional time out)
-    (if *queue*
+  (with-args (args &optional time ahead)
+    ahead
+    (if *scheduler*
         (enqueue obj (+ *qstart* time) (+ *qstart* time))
-      (if out
-          (rt-sprout obj time out)
-        (if *out*
-            (rt-sprout obj time *out*))))))
+        (rt-sprout obj time *out*))))
 
 (define-method* (sprout (obj <pair>) . args)
-  (with-args (args &optional time out)
-    time
-    (if *queue*
+  (with-args (args &optional time ahead)
+    ahead
+    (if *scheduler*
       (dolist (o obj) (sprout o time))
-      (if out
-          (dolist (o obj) (sprout o time out))
-        (if *out*
-            (dolist (o obj) (sprout o time *out*)))))))
+      (dolist (o obj) (rt-sprout o time *out*)))))
 
 
 ;(defprocess foo ()
