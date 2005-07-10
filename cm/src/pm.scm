@@ -170,8 +170,8 @@
 (define (portmidi-close . args)
   (with-args (args &optional (port (find-object "midi-port.pm" )))
     (if (portmidi-open? port)
-        (begin (close-io port ':force) #t)
-        #f)))
+        (begin (close-io port ':force) port)
+        port)))
 
 ;;;
 ;;; message format conversion
@@ -219,9 +219,13 @@
              (system-message-p obj))
          (pm:StreamWriteShort 
           (second (io-open str))        ; output stream
-          ;; add in time offset in stream. this should check latency...
-          (+ (inexact->exact (round (* scoretime 1000)))
-             (portmidi-offset str))
+          ;; if we are running under a scheudler, add in time offset of stream
+          ;; this should check latency...
+          ;; else user is keeping track of it
+          (if *scheduler*
+              (+ (inexact->exact (round (* scoretime 1000)))
+                 (portmidi-offset str))
+              scoretime)
           (midi-message->pm-message obj)))
         (else #f)))
 
@@ -277,8 +281,8 @@
 ;;; message receiving
 ;;;
 
-;(define-method* (receive? (str <portmidi-stream>))
-;  (if (portmidi-receive str) #t #f))
+(define-method* (receive? (str <portmidi-stream>))
+  (if (not (car (portmidi-receive str))) #f #t))
 
 (define-method* (receive hook (str <portmidi-stream>) . args)
   (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
@@ -295,7 +299,7 @@
                ( stopper ))
              (list-set! data 0 #f)
              (list-set! data 1 #f))
-           #f)
+           (values))
           ((not (procedure? hook))
            (err "Receive: hook is not a function: ~s" hook))
           ((not (member (portmidi-open? str) '(:in :inout)))
@@ -354,13 +358,5 @@
              (if (eq? *receive-mode* ':threaded)
                  (thread-start! th)
                  (set-periodic-task! th :period (or reso 2)))
-             #t)))))
+             (values))))))
 
-;
-; input test:
-; (pprint (pm:GetDeviceDescriptions))
-; (setq a (portmidi-open :input 1 :output nil))
-; (defun prinm (mm mt) (midi-print-message mm mt) (terpri))
-; (receive! a #'prinm)
-; ...play keyboard...
-; (receive! a #f)
