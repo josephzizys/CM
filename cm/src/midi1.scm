@@ -310,6 +310,22 @@
   ;; defined in level1 because bqoute translation hopeless!
   (make-midi-message-set! accessor bytespec))
 
+;;;
+;;; midi-copy-message
+;;;
+
+(define (midi-copy-message msg . args)
+  ;; return new msg with byte alteration
+  (with-args (args &key opcode channel data1 data2)
+    (when opcode
+      (set! msg (dpb opcode +enc-opcode-byte+ msg)))
+    (when channel
+      (set! msg (dpb channel +enc-logical-channel-byte+ msg)))
+    (when data1
+      (set! msg (dpb data1 +enc-data-1-byte+ msg)))
+    (when data2
+      (set! msg (dpb data2 +enc-data-2-byte+ msg)))
+    msg))
 
 ;;; ==========================================================================
 ;;;
@@ -1493,12 +1509,14 @@
       (when stream
         (%print-sysex-aux stream data bytes rest #f)))))
 
-(define (midi-print-message msg time . args)
-  (with-args (args &key data length
+(define (midi-print-message msg . args)
+  (with-args (args &optional time
+                   &key data length
                    (stream #t)
                    (time-format #t)
                    (time-string "")
                    (gm *midi-gm-mode*)
+                   (eol #t)
                    (delimit #t))
     (when (and time time-format)
       (format stream "~a " (format-integer time 8 #\space)))
@@ -1589,6 +1607,7 @@
           (else
            (format stream "Bogus Midi Message~a]" time-string)))
     (when delimit (format stream ">"))
+    (when eol (newline stream))
     msg))
 
 ;;;
