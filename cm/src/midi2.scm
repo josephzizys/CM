@@ -702,7 +702,8 @@
                (m (midi-file-message mf))
                (d (midi-file-data mf)))
            (midi-print-message m q :stream stream :data d)
-           (newline)))
+           ;(newline)
+           ))
        io)
       (io-filename io))))
 
