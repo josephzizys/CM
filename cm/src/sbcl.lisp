@@ -194,6 +194,8 @@
 (defgeneric unschedule-object (obj &rest recurse))
 (defgeneric process-events (obj time start func))
 (defgeneric sprout (obj &optional time dest))
+(defgeneric receive (hook stream &rest args))
+(defgeneric receive? (stream))
 
 
 (defgeneric midi-event-data1 (obj))
@@ -231,7 +233,6 @@
 ;; bug??: sprout has 2 optionals but rt-sprout has them required
 (defgeneric rt-sprout (obj time dest))
 (defgeneric rt-now (io))
-(defgeneric receive (hook stream &rest args))
 
 ;;;
 ;;; thread support
