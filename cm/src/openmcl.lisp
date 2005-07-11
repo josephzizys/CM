@@ -365,6 +365,7 @@
 			   wait-time)))
 
 
+
 (defun make-udp-socket (host port local-port)
   (ccl:make-socket :type :datagram :remote-port port :remote-host host
 			 :local-port local-port
@@ -462,6 +463,9 @@
 	 (setf *periodic-polling-function* thunk)
 	 (run-periodic-task period)))
   (values))
+
+
+
 #|
 (set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 1000)
 (set-periodic-task! nil)
@@ -472,14 +476,366 @@
 (set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 1)
 (set-periodic-task! nil)
 (set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 1)
-
 |#
 
 
 
 
+
+;;;
+;;;RTS
+;;;
+
+
+#|
+;;;scheduler 1 : using wait? for sleep time
+;;;
+;;;
+
+(defun rts1 (object to &optional at &key end-time)
+  (if (rts-running?) 
+      (error "rts: already running."))
+  (if (not *rts-lock*) (setf *rts-lock* (make-mutex)))
+  (let ((ahead (if (consp at) (car at) at)))
+    (setf *queue* %q)
+    (setf *scheduler* t)
+    (if (consp object)
+        (dolist (o object)
+          (schedule-object o
+			   (if (consp ahead)
+               (if (consp (cdr ahead)) (pop ahead) (car ahead))
+	     ahead)))
+      (if (consp ahead)
+            (schedule-object object (car ahead))
+	  (schedule-object object ahead)))
+    (setf *out* to)
+    (setf *rts-run* t)
+    (if (consp ahead) (setf ahead (apply #'min ahead)))
+    (setf *rts-now* ahead)
+    (thread-start!
+     (thread-alloc
+      (lambda nil
+        (if (> *rts-now* 0) 
+	    (thread-sleep! *rts-now*))
+        (do ((entry nil)
+             (qtime nil)
+             (start nil)
+             (thing nil)
+             (wait? nil)
+             (none? (null (%q-head *queue*))))
+            ((or none? (not *rts-run*) (if end-time
+					   (> (%qe-time (%q-peek *queue*)) end-time)
+					 nil))
+             (unless none? (%q-flush *queue*))
+             (unschedule-object object t)
+             (setf *rts-run* nil)
+             (setf *queue* nil)
+             (setf *scheduler* nil)
+             (setf *rts-now* nil))
+          (mutex-lock! *rts-lock*)
+          (without-interrupts
+            (do ()
+                ((or none? 
+		     (> (%qe-time (%q-peek *queue*)) *rts-now*))
+                 (if none?
+                     (setf wait? nil)
+		   (let* ((next (%qe-time (%q-peek *queue*))))
+		     (setf wait? (- next *rts-now*))
+		     (setf *rts-now* next))))
+              (setf entry (%q-pop *queue*))
+              (setf qtime (%qe-time entry))
+              (setf start (%qe-start entry))
+              (setf thing (%qe-object entry))
+              (%qe-dealloc *queue* entry)
+              (process-events thing qtime start *out*)
+              (setf none? (null (%q-head *queue*)))))
+          (mutex-unlock! *rts-lock*)
+          (if wait? (thread-nanosleep! wait?))))))))
+
+
+;;; scheduler 2 :using a target time - current time
+;;; to find sleep time. attempt at being adaptive
+;;; to fluctuations
+
+(defun rts2 (object to &optional (at 0) &key end-time)
+  (if (rts-running?) 
+      (error "rts: already running."))
+  (if (not *rts-lock*) 
+      (setf *rts-lock* (make-mutex)))
+  (let ((ahead (if (consp at) (car at) at))
+	(target-time nil))
+    (setf *queue* %q)
+    (setf *scheduler* t)
+    (if (consp object)
+        (dolist (o object)
+          (schedule-object o
+			   (if (consp ahead)
+               (if (consp (cdr ahead)) (pop ahead) (car ahead))
+	     ahead)))
+      (if (consp ahead)
+	  (schedule-object object (car ahead))
+	(schedule-object object ahead)))
+    (setf *out* to)
+    (setf *rts-run* t)
+    (if (consp ahead) 
+	(setf ahead (apply #'min ahead)))
+    (setf *rts-now* ahead)
+    (setf target-time (+ *rts-now* (#_CFAbsoluteTimeGetCurrent)))
+    (thread-start!
+     (thread-alloc
+      (lambda ()
+        (if (> *rts-now* 0) 
+	    (thread-nanosleep! *rts-now*))
+        (do ((entry nil)
+             (qtime nil)
+             (start nil)
+             (thing nil)
+             (wait? nil)
+             (none? (null (%q-head *queue*))))
+            ((or none? (not *rts-run*) (if end-time
+					   (> (%qe-time (%q-peek *queue*)) end-time)
+					 nil))
+             (unless none? (%q-flush *queue*))
+             (unschedule-object object t)
+             (setf *rts-run* nil)
+             (setf *queue* nil)
+             (setf *scheduler* nil)
+             (setf *rts-now* nil))
+          (mutex-lock! *rts-lock*)
+          (without-interrupts
+            (do ()
+                ((or none? 
+		     (> (%qe-time (%q-peek *queue*)) *rts-now*))
+                 (if none?
+                     (setf wait? nil)
+		   (let* ((next (%qe-time (%q-peek *queue*))))
+		     (setf wait? (- next *rts-now*))
+		     (setf *rts-now* next))))
+              (setf entry (%q-pop *queue*))
+              (setf qtime (%qe-time entry))
+              (setf start (%qe-start entry))
+              (setf thing (%qe-object entry))
+              (%qe-dealloc *queue* entry)
+              (process-events thing qtime start *out*)
+              (setf none? (null (%q-head *queue*)))))
+          (mutex-unlock! *rts-lock*)
+          (if wait? 
+	      (progn
+		(setf target-time (+ target-time wait?))
+		(thread-nanosleep! (- target-time (#_CFAbsoluteTimeGetCurrent)))))))))))
+
+
+;;; scheduler 3 : CFRunLoop
+;;;
+;;;
+
+(defun cf-runloop-now ()
+  (#_CFAbsoluteTimeGetCurrent))
+
+(defun cf-runloop-wait (abs-time timer)
+  (#_CFRunLoopTimerSetNextFireDate timer abs-time))
+
+
+(defun rts3 (object to &optional (at 0) &key end-time)
+  (declare (special rts-callback))
+  (if (rts-running?)
+      (error "rts: already running."))
+  (let ((ahead (if (consp at) 
+		   (car at) at)))
+    (setf *queue* %q)
+    (setf *scheduler* t)
+    (if (consp object)
+        (dolist (o object)
+          (schedule-object o 
+			   (if (consp ahead)
+			       (if (consp (cdr ahead)) (pop ahead) (car ahead))
+			     ahead)))
+      (if (consp ahead)
+	  (schedule-object object (car ahead))
+	(schedule-object object ahead)))
+    (setf *out* to)
+    (setf *rts-run* t)
+    (if (consp ahead) 
+	(setf ahead (apply #'min ahead)))
+    (setf *rts-now* ahead)
     
-	     
-	
-  
+    (let ((target-time nil)
+	  (entry nil)
+	  (qtime nil)
+	  (start nil)
+	  (thing nil)
+	  (wait? nil)
+	  (none? (null (%q-head *queue*))))
+      (ccl::defcallback rts-callback (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
+	(declare (ignore info))
+	(if (not target-time)
+	    (setf target-time (+ *rts-now* (#_CFAbsoluteTimeGetCurrent))))
+	(if (and (not none?) *rts-run*)
+	    (progn
+	      (do ()
+		  ((or none? (> (%qe-time (%q-peek *queue*)) *rts-now*))
+		   (if none?
+		       (setf wait? nil)
+		     (let* ((next (%qe-time (%q-peek *queue*))))
+		       (setf wait? (- next *rts-now*))
+		       (setf *rts-now* next))))
+		(setf entry (%q-pop *queue*))
+		(setf qtime (%qe-time entry))
+		(setf start (%qe-start entry))
+		(setf thing (%qe-object entry))
+		(%qe-dealloc *queue* entry)
+		(process-events thing qtime start *out*)
+		(setf none? (null (%q-head *queue*))))
+	      (if  wait?
+		  (cf-runloop-wait (setf target-time (+ target-time wait?)) timer)
+		(cf-runloop-wait target-time timer)))
+	  (progn
+	    (unless none? 
+	      (%q-flush *queue*))
+	    (unschedule-object object t)
+	    (#_CFRunLoopStop (#_CFRunLoopGetCurrent)))))
+      (ccl::process-run-function "rts-thread"
+	(lambda ()
+	  (without-interrupts 
+	   (let ((rts-timer (#_CFRunLoopTimerCreate (ccl::%null-ptr) 
+						    (+ (#_CFAbsoluteTimeGetCurrent) *rts-now*) 10000000.D0
+						    0 0 rts-callback 
+						    (ccl::%null-ptr)))
+		 (timer-context (%string->cfstringref "cm-rts")))
+	     (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) rts-timer timer-context)
+	     (#_CFRunLoopRunInMode timer-context (if end-time (coerce end-time 'double-float) 10000000.D0) #$false)
+	     (#_CFRunLoopTimerInvalidate rts-timer)
+	     (#_CFRelease rts-timer)
+	     (%q-flush *queue*)
+	     (setf *rts-run* nil)
+	     (setf *queue* nil)
+	     (setf *scheduler* nil)
+	     (setf *rts-now* nil)
+	     (%release-cfstring timer-context)
+	     (ccl::process-kill ccl::*current-process*))))))))
+
+
+
+
+;;;
+
+(defun foo (num dur)
+  (process repeat num for i from 0
+	   output (new midi :time (now) :duration 1 :amplitude .5 :keynum 60)
+		       ;(pickl '(60 64 67 72 65 69 48 50)))
+	   wait dur))
+
+(rts1 (foo 100 .1) *pm*) 
+(rts2 (foo 100 .1) *pm*) 
+(rts3 (foo 100 .1) *pm*)
+
+;;using at time
+(rts1 (foo 100 .1) *pm* 3)
+(rts2 (foo 100 .1) *pm* 3) 
+(rts3 (foo 100 .1) *pm* 3)
+
+;;using keyword end-time
+(rts1 (foo 100 .1) *pm* 0 :end-time 2)
+(rts2 (foo 100 .1) *pm* 0 :end-time 2)
+(rts3 (foo 100 .1) *pm* 0 :end-time 2)
+
+
+
+
+
+(defun fluff1 (num dur)
+  (process repeat num for i from 0 
+	   output (new midi :time (now) :duration (* 2 dur) :amplitude .5 :keynum 
+		       (pickl '(60 62 64 67 72 65 69 48 50)))
+	   wait (pickl (list dur (/ dur 2) (/ dur 4)))
+	   when (= i (1- num))
+	   sprout (process repeat 4
+			   output (new midi :time (now) :duration 5 :amplitude .5 :keynum 
+				       (pickl '(62 64 67 72 65 69  50))))
+	   and
+	   sprout (process repeat 4
+			   output (new midi :time (now) :duration 5 :amplitude .5 :keynum 
+				       (pickl '(60 64 67 72 69 48 50))))
+	   at (+ (now) 2)))
+
+
+(rts1 (fluff1 30 1) *pm*) 
+(rts2 (fluff1 30 1) *pm*)
+(rts3 (fluff1 30 1) *pm*)
+
+
+;; having time of midi > (now)
+;; also seems to work (see last sprout)
+;;
+
+(defun fluff2 (num dur)
+  (process repeat num for i from 0 
+	   output (new midi :time (now) :duration (* 2 dur) :amplitude .5 :keynum 
+		       (pickl '(60 62 64 67 72 65 69 48 50)))
+	   wait (pickl (list dur (/ dur 2) (/ dur 4)))
+	   when (= i (1- num))
+	   sprout (process repeat 4
+			   output (new midi :time (now) :duration 5 :amplitude .5 :keynum 
+				       (pickl '(62 64 67 72 65 69  50))))
+	   and
+	   sprout (process repeat 4
+			   output (new midi :time (+ (now) 2) :duration 5 :amplitude .5 :keynum 
+				       (pickl '(60 64 67 72 69 48 50))))))
+(rts1 (fluff2 30 1) *pm*)
+(rts2 (fluff2 30 1) *pm*)
+(rts3 (fluff2 30 1) *pm*)
+
+
+(defun endless-fluff (num dur)
+  (process repeat num for i from 0 
+	   output (new midi :time (now) :duration (* 2 dur) :amplitude .5 :keynum 
+		       (pickl '(60 62 64 67 72 65 69 48 50)))
+	   wait (pickl (list dur (/ dur 2) (/ dur 4)))
+	   when (= i (1- num))
+	   sprout (process repeat 4
+			   output (new midi :time (now) :duration 5 :amplitude .5 :keynum 
+				       (pickl '(62 64 67 72 65 69  50))))
+	   and
+	   sprout (endless-fluff 30 1)))
+
+(rts1 (endless-fluff 30 1) *pm* 2)
+(rts-stop)
+(rts2 (endless-fluff 30 1) *pm* 2)
+(rts-stop)
+(rts3 (endless-fluff 30 1) *pm* 2)
+(rts-stop)
+
+(rts1 (endless-fluff 100 1) *pm* 2 :end-time 20)
+(rts2 (endless-fluff 100 1) *pm* 2 :end-time 20)
+(rts2 (endless-fluff 100 1) *pm* 2 :end-time 20)
+|#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
