@@ -222,6 +222,70 @@
 ;;;
 ;;; period task support
 ;;;
+(defvar *periodic-tasks* (list ))
+
+(defun set-periodic-task-rate (milli)
+  ;; set periodic time but only if tasks are not running
+  (if *periodic-tasks*
+      (error "set-periodic-time: Periodic tasks currently running.")
+      (let (sec mil)
+        (if (< milli 1000)
+            (setf sec 0 mil milli)
+            (multiple-value-setq (sec mil)
+              (floor milli 1000)))
+        (setf lisp::*max-event-to-sec* sec)
+        (setf lisp::*max-event-to-usec* (* mil 1000))
+        milli)))
+
+(defun run-periodic-tasks ()
+  ;; this is the polling function, it just funcalls thunks on the list
+  (dolist (e *periodic-tasks*) (funcall (cdr e)))
+  (values))
+
+(defun periodic-task-running? (&optional owner)
+  (if *periodic-tasks*
+      (if owner 
+          (and (assoc owner *periodic-tasks* :test #'eq) t)
+          t)
+      nil))
+
+(defun add-periodic-task (owner task)
+  (cond ((null *periodic-tasks*)
+         (push (cons owner task) *periodic-tasks*)
+         (setf lisp::*periodic-polling-function* #'run-periodic-tasks))
+        ((assoc owner *periodic-tasks* :test #'eq)
+         (error "add-periodic-task: task already running for ~s."
+                owner))
+        (t
+         (push (cons owner task) *periodic-tasks*)))
+  (values))
+
+(defun remove-periodic-task (owner)
+  (if (eq owner t)
+      (setf lisp::*periodic-polling-function* nil
+            *periodic-tasks* (list))
+      (let ((e (assoc owner *periodic-tasks* :test #'eq)))
+        (cond ((null e)
+               (error "rem-periodic-task: No task for owner ~s."
+                      owner))
+              (t
+               (setf *periodic-tasks* (delete e *periodic-tasks*))
+               (if (null *periodic-tasks*)
+                   (setf lisp::*periodic-polling-function* nil))))))
+  (values))
+
+#|
+(periodic-task-running?)
+(set-periodic-task-rate 1000) ; milliseconds
+(defun t1 () (print :why-you-moron))
+(defun t2 () (print :ow-ow-ow))
+(defun t3 () (print :nyuk-nyuk))
+(periodic-task-running? :moe)
+(add-periodic-task :moe #'t1)
+(add-periodic-task :larry #'t2)
+(remove-periodic-task :moe)
+(remove-periodic-task t)
+|#
 
 (defun set-periodic-task! (thunk &key (period 1) (mode ':set))
   ;; period is in milliseconds
