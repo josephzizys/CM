@@ -20,59 +20,54 @@
 Installs <var>hook</var> to continuously receive data
 from <var>stream</var> as soon as data arrives from an external source
 or application. Returns no values. Both the calling syntax
-of <var>hook</var> and the availability of keyword arguments depend on the type
-of <var>stream</var>.  The receive hook remains in effect until
-cancelled by calling <code>receive</code> again with a null hook.
+of <var>hook</var> and the availability of keyword arguments depend on
+the type of <var>stream</var>.  Receiving remains in effect
+until cancelled by calling the function again with a null hook.
 </p>
 
 <p>
-From the callers perspective <var>hook</var> seems to receive data
-asyncronouosly since the Lisp REPL is not blocked during a receiving
-session. From Lisp's perspective, receive is almost always polling in
-some manner: how this polling is implemeneted (or if it is implemented
-at all) depends on the host Lisp and operating system.
+From the caller's perspective <var>hook</var> seems to receive data
+asyncronouosly since the Lisp REPL is not blocked during
+receiving. From Lisp's perspective receive is almost always polling
+in some manner: how this polling is implemeneted (or if it is
+implemented at all) depends on the host Lisp and operating system.
 
 CM utilizes three possible strategies for implementing non-blocking
-receiving. Which strategies are available depends on the Lisp/OS
-combination:
-
-<!-- CM utilizes one or more strategies for non-blocking receiving depending on the Lisp/OS combination. -->
-<!-- Depending on the Lisp/OS combination there are three possible strategies for implementing non-blocking receiving: -->
+receivingl which strategies are available depends on the Lisp/OS
+combination.
 </p>
 
 
 <ul>
 <li>
 Threaded polling: the host Lisp either provides native threads (true
-OS threads) or threads implemented inside Lisp. Both version allow
-multiple receive sessions to occur simultaneously but native threads
-are much faster and much more responsive than Lisp based threads.
+OS threads) or threads implemented in Lisp. Both allow multiple
+receive sessions to run simultaneously but native threads are much
+faster and responsive than Lisp threads.
 </li>
 
 <li>
 Periodic polling: the host Lisp provides the ability to periodically
-call a function. This periodic evaluation runs in the main Lisp
-process but does not block the REPL. Only one polling function can be
-set at a time.
+call a function in the main Lisp process but without blocking the
+REPL. Only one polling function can be in effect at a time.  The
+length of time between task execution can be less than a millisecond
+and is configurable by the user at receive time.
 </li>
 
 <li>
 Callbacks: the host lisp provides the ability for an external
-application (such as GTK or Midishare) to call Lisp functions
-asynchronously from another process.
+application such as GTK or Midishare to call Lisp functions
+asynchronously from a different OS process.
 </li>
-
 </ul>
 
+<p>
 Because multiprocessing is not part of the Common Lisp standard and is
 only optional in Scheme
-(<a href="http://srfi.schemers.org/srfi-18/">SRFI-18</a>), there are
-important differences in how receive is implemeted across the
-supported Lisp and operating systems. These implementation details are
-important to be aware of because they affect how well receive will
-work as an interactive tool, or if it will work at all.  Here is a
-summary of the receiving strategies that are available as of this
-writing (July '05):
+(see <a href="http://srfi.schemers.org/srfi-18/">SRFI-18</a>), there
+are differences in how -- and how well -- receiving works in the
+various Lisp/OS combinations. Here is a summary of the various
+strategies that are available as of this writing (July '05):
 </p>
 
 <div class="float" >
