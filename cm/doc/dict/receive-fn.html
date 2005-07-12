@@ -142,7 +142,12 @@ examples.
 ;;; a midi trace. you may need a (force-output) after the print
 ;;; statement to see the results in some Lisps
 
-(receive (lambda (mm ms) (midi-print-message mm ms)) pm)
+(define (miditrace mm ms)
+  (write-event mm pm ms)
+  (midi-print-message mm ms)
+  (force-output))
+
+(receive #'miditrace pm)
 
 ;;; play your keyboard for awhile...then
 
@@ -166,8 +171,9 @@ examples.
 
 (portmidi-close)
 
-;;; sending random bursts by scheduling into the future with short
-;;; latency
+;;; sending random bursts using future scheduling for noteOffs. future
+;;; scheduling is enabled in Portmidi by specifing :latency>0.  This
+;;; uses a latency of only 10ms so it sounds like realtime.
 
 (defparameter pm 
   (portmidi-open :input 1 :output 3 :latency 10))
