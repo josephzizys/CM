@@ -222,9 +222,10 @@
 ;;;
 ;;; period task support
 ;;;
+
 (defvar *periodic-tasks* (list ))
 
-(defun set-periodic-task-rate (milli)
+(defun set-periodic-task-rate! (milli)
   ;; set periodic time but only if tasks are not running
   (if *periodic-tasks*
       (error "set-periodic-time: Periodic tasks currently running.")
@@ -249,7 +250,7 @@
           t)
       nil))
 
-(defun add-periodic-task (owner task)
+(defun add-periodic-task! (owner task)
   (cond ((null *periodic-tasks*)
          (push (cons owner task) *periodic-tasks*)
          (setf lisp::*periodic-polling-function* #'run-periodic-tasks))
@@ -260,7 +261,7 @@
          (push (cons owner task) *periodic-tasks*)))
   (values))
 
-(defun remove-periodic-task (owner)
+(defun remove-periodic-task! (owner)
   (if (eq owner t)
       (setf lisp::*periodic-polling-function* nil
             *periodic-tasks* (list))
@@ -277,16 +278,21 @@
 #|
 (periodic-task-running?)
 (set-periodic-task-rate 1000) ; milliseconds
-(defun t1 () (print :why-you-moron))
+(defun t1 () (print :you-moron))
 (defun t2 () (print :ow-ow-ow))
 (defun t3 () (print :nyuk-nyuk))
 (periodic-task-running? :moe)
 (add-periodic-task :moe #'t1)
 (add-periodic-task :larry #'t2)
 (remove-periodic-task :moe)
+(add-periodic-task :curly #'t3)
+(add-periodic-task :moe #'t1)
+(remove-periodic-task :larry)
+*periodic-tasks*
 (remove-periodic-task t)
 |#
 
+#|
 (defun set-periodic-task! (thunk &key (period 1) (mode ':set))
   ;; period is in milliseconds
   (declare (ignore mode))
@@ -305,6 +311,7 @@
            (setf lisp::*max-event-to-usec* (* mil 1000))
            (setf lisp::*periodic-polling-function* thunk))))
   (values))
+|#
 
 ; (set-periodic-task! (lambda () (print ':hiho!)) :period 2000)
 ; (set-periodic-task! (lambda () (print ':hiho!)) :period 1000)

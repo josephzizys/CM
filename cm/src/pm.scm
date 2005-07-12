@@ -346,7 +346,7 @@
                             (when (> n 0)
                               (pm:EventBufferMap fn bf n))))))
                 (set! st (lambda ()
-                           (set-periodic-task! #f))))
+                           (remove-periodic-task! str))))
                (else
                 (err "portmidi: receive mode ~s not :threaded or :periodic."
                      *receive-mode*)))
@@ -355,8 +355,12 @@
              (list-set! data 1 st)
              (list-set! data 2 bf)
              (list-set! data 3 sz)
-             (if (eq? *receive-mode* ':threaded)
-                 (thread-start! th)
-                 (set-periodic-task! th :period (or reso 2)))
+             (cond ((eq? *receive-mode* ':threaded)
+                    (thread-start! th))
+                   (t
+                    (unless (periodic-task-running?)
+                      (set-periodic-task-rate! (or reso 2)))
+                    (add-periodic-task! str th)))
              (values))))))
+
 

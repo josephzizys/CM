@@ -328,6 +328,59 @@
 ;;; period task support
 ;;;
 
+(defvar *periodic-tasks* (list ))
+
+(defun set-periodic-task-rate! (milli)
+  ;; set periodic time but only if tasks are not running
+  (if *periodic-tasks*
+      (error "set-periodic-time: Periodic tasks currently running.")
+      (let (sec mil)
+        (if (< milli 1000)
+            (setf sec 0 mil milli)
+            (multiple-value-setq (sec mil)
+              (floor milli 1000)))
+        (setf sb-impl::*max-event-to-sec* sec)
+        (setf sb-impl::*max-event-to-usec* (* mil 1000))
+        milli)))
+
+(defun run-periodic-tasks ()
+  ;; this is the polling function, it just funcalls thunks on the list
+  (dolist (e *periodic-tasks*) (funcall (cdr e)))
+  (values))
+
+(defun periodic-task-running? (&optional owner)
+  (if *periodic-tasks*
+      (if owner 
+          (and (assoc owner *periodic-tasks* :test #'eq) t)
+          t)
+      nil))
+
+(defun add-periodic-task! (owner task)
+  (cond ((null *periodic-tasks*)
+         (push (cons owner task) *periodic-tasks*)
+         (setf sb-impl::*periodic-polling-function* #'run-periodic-tasks))
+        ((assoc owner *periodic-tasks* :test #'eq)
+         (error "add-periodic-task: task already running for ~s."
+                owner))
+        (t
+         (push (cons owner task) *periodic-tasks*)))
+  (values))
+
+(defun remove-periodic-task! (owner)
+  (if (eq owner t)
+      (setf sb-impl::*periodic-polling-function* nil
+            *periodic-tasks* (list))
+      (let ((e (assoc owner *periodic-tasks* :test #'eq)))
+        (cond ((null e)
+               (error "rem-periodic-task: No task for owner ~s."
+                      owner))
+              (t
+               (setf *periodic-tasks* (delete e *periodic-tasks*))
+               (if (null *periodic-tasks*)
+                   (setf sb-impl::*periodic-polling-function* nil))))))
+  (values))
+
+#|
 (defun set-periodic-task! (thunk &key (period 1) (mode ':set))
   ;; period is in milliseconds
   (declare (ignore mode))
@@ -346,6 +399,7 @@
            (setf sb-impl::*max-event-to-usec* (* mil 1000))
            (setf sb-impl::*periodic-polling-function* thunk))))
   (values))
+|#
 
 ; (set-periodic-task! (lambda () (print ':hiho!)) :period 2000)
 ; (set-periodic-task! (lambda () (print ':hiho!)) :period 1000)
