@@ -496,7 +496,7 @@
   (if (rts-running?) 
       (error "rts: already running."))
   (if (not *rts-lock*) (setf *rts-lock* (make-mutex)))
-  (let ((ahead (if (consp at) (car at) at)))
+  (let ((ahead (or at 0)))
     (setf *queue* %q)
     (setf *scheduler* t)
     (if (consp object)
@@ -635,7 +635,6 @@
 (defun cf-runloop-wait (abs-time timer)
   (#_CFRunLoopTimerSetNextFireDate timer abs-time))
 
-
 (defun rts3 (object to &optional (at 0) &key end-time)
   (declare (special rts-callback))
   (if (rts-running?)
@@ -717,13 +716,16 @@
 
 
 
-;;;
+;;; fix :output for your machine, call (pm:GetDeviceDescriptions)
+
+(defparameter *pm* (portmidi-open :output 3 :latency 0))
 
 (defun foo (num dur)
-  (process repeat num for i from 0
-	   output (new midi :time (now) :duration 1 :amplitude .5 :keynum 60)
-		       ;(pickl '(60 64 67 72 65 69 48 50)))
-	   wait dur))
+  (let ((ev (new midi :duration 1 :amplitude .5 :keynum 60)))
+    (process repeat num for i from 0
+             do (sv ev :time (now))
+             output ev
+             wait dur)))
 
 (rts1 (foo 100 .1) *pm*) 
 (rts2 (foo 100 .1) *pm*) 
