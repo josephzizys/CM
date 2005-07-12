@@ -17,23 +17,33 @@
 ;;; where either value can be a pointer to an open PortMidiStream or
 ;;; #f
 
+(define *portmidi-default-input* #t)
+(define *portmidi-default-output* #t)
+(define *portmidi-default-latency* 100)
+(define *portmidi-default-inbuf-size* 64)
+(define *portmidi-default-outbuf-size* 256)
+(define *portmidi-default-filter* 0)
+(define *portmidi-default-mask* 0)
+
 (define-class* <portmidi-stream> (<event-stream> <midi-stream-mixin>)
-  ((input :init-value #t :init-keyword :input
+  ((input :init-value *portmidi-default-input* :init-keyword :input
          :accessor portmidi-input)
-   (output :init-value #t :init-keyword :output
+   (output :init-value *portmidi-default-output* :init-keyword :output
            :accessor portmidi-output)
-   (latency :init-value 100 :init-keyword :latency
+   (latency :init-value *portmidi-default-latency* :init-keyword :latency
             :accessor portmidi-latency)
-   (inbufsize :init-value 64 :init-keyword :inbuf-size
+   (inbufsize :init-value *portmidi-default-inbuf-size*
+              :init-keyword :inbuf-size
               :accessor portmidi-inbuf-size)
-   (outbufsize :init-value 256 :init-keyword :outbuf-size
+   (outbufsize :init-value *portmidi-default-outbuf-size* 
+               :init-keyword :outbuf-size
                :accessor portmidi-outbuf-size)
    ;; data list: (<thread> #'stopper <evbuf> <len>)
    (receive :init-value (list #f #f #f #f)
             :accessor portmidi-receive)
-   (filter :init-value 0 :init-keyword :filter
+   (filter :init-value *portmidi-default-filter* :init-keyword :filter
            :accessor portmidi-filter)
-   (mask :init-value 0 :init-keyword :channel-mask
+   (mask :init-value *portmidi-default-mask* :init-keyword :channel-mask
          :accessor portmidi-channel-mask)
    (offset :init-value 0 :init-keyword :offset 
            :accessor portmidi-offset))
@@ -170,7 +180,19 @@
 (define (portmidi-close . args)
   (with-args (args &optional (port (find-object "midi-port.pm" )))
     (if (portmidi-open? port)
-        (begin (close-io port ':force) port)
+        (begin (close-io port ':force)
+               ;; this really isnt right -- what happens if the user
+               ;; sets these AFTER the port is closed? then open-io
+               ;; won't use the new default value. maybe the io
+               ;; macro should be reused.
+;               (slot-set! port 'input *portmidi-default-input*)
+;               (slot-set! port 'output *portmidi-default-output*)
+;               (slot-set! port 'latency *portmidi-default-latency*)
+;               (slot-set! port 'inbufsize *portmidi-default-inbuf-size*)
+;               (slot-set! port 'outbufsize *portmidi-default-outbuf-size*)
+;               (slot-set! port 'filter *portmidi-default-filter*)
+;               (slot-set! port 'mask *portmidi-default-mask*)
+               port)
         port)))
 
 ;;;
