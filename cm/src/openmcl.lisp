@@ -16,6 +16,12 @@
 
 (in-package :cm)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ccl::open-shared-library "Carbon.framework/Carbon")
+  (ccl::use-interface-dir :carbon)
+  (require :pascal-strings)
+  )
+
 (pushnew :metaclasses *features*)
 
 (import '(ccl:slot-definition-name 
@@ -52,7 +58,6 @@
 (defmethod make-load-form (obj) (cl:make-load-form obj))
 
 (defun slot-definition-reader (slot) slot nil)
-
 
 ;;;
 ;;; misc stuff
@@ -115,25 +120,7 @@
   (ccl:run-program "/bin/csh" (list "-fc" cmd)
                    :output output :wait wait))
 
-;;(defun shell (str &rest args)
-;;  (let* ((raw (apply #'format nil str args))
-;;	 (lst (explode-string raw)))
-;;    (ccl:run-program (car lst) (cdr lst) :output t)
-;;    (values)))
-
-#|
-(defun shell (str &rest args)
-  (let* ((raw (apply #'format nil str args))
-	 (lst (explode-string raw)))
-    (ccl:run-program "/bin/sh"
-		     (cons "-c" lst)
-		     :output t)
-    (values)))
-|#
-
-(defparameter *browser*
-  "/Applications/Networking/Internet\\ Explorer.app"  )
-
+(defparameter *browser* nil)
 
 (defun open-url (url &key (browser *browser*))
   (ccl:run-program "open" (list "-a" browser url))
@@ -141,26 +128,15 @@
 
 (defconstant directory-delimiter #\/)
 
-;; open midi file in QuickTime on OSX from Michael Klingbeil
-
-;(defun osx-play-midi-file (file &rest args)
-;   (declare (ignore args))
-;   (setf file (namestring (truename file)))
-;   ;; set file types need the developer tools
-;   ;; installed for the SetType command
-;   ;(ccl:run-program "/Developer/Tools/SetFile"
-;   ;(list "-t" "Midi" "-c" "TVOD" file))
-;   ;(ccl::set-mac-file-type file "Midi")
-;   ;(ccl::set-mac-file-creator file "TVOD")
-;   (ccl:run-program "/usr/bin/open" (list file)))
-
 ;;;
 ;;; cm application class
 ;;; 
 
-(defclass cm (ccl::lisp-development-system) ())
+(defclass cm-application (ccl::lisp-development-system) ())
 
-(defmethod initialize-instance :after ((obj cm) &rest args)
+(defparameter *cm-application-class* (find-class 'cm-application))
+
+(defmethod initialize-instance :after ((obj cm-application) &rest args)
   args
   (setf (slot-value obj 'ccl::command-line-arguments)
 	(list ccl::*standard-help-argument*
@@ -186,7 +162,27 @@
 	       :may-take-operand t
 	       :allow-multiple t))))
 
-(defmethod ccl:application-name ((app cm)) "Common Music")
+(defmethod ccl:application-name ((app cm-application)) "Common Music")
+
+(defmethod ccl::run-application ((app cm-application) &key &allow-other-keys)
+  ;; Start the main event loop
+
+  ;;(when *bosco-swank-port*
+  ;;  (swank:create-server :port *bosco-swank-port*))
+
+  (ccl::with-pstrs ((msg "Hello from CM!"))
+    (#_StandardAlert #$kAlertNoteAlert msg
+                     (ccl:%null-ptr) (ccl:%null-ptr) (ccl:%null-ptr)))
+  (#_RunApplicationEventLoop)
+  (ccl:quit))
+
+(defmethod ccl:toplevel-function ((app cm-application) init-file)
+  (declare (ignore init-file) (special *cm-readtable*))
+  (setf *package* (find-package :cm))
+  (setf *readtable* *cm-readtable*)
+  (load-cminit)
+  (cm-logo)
+  (ccl::run-application app))
 
 ;;;
 ;;; save cm
@@ -203,19 +199,67 @@
 (defun set-env-var (var val)
   (ccl::setenv (string var) val))
 
-(defun save-cm (path &rest args)
+(defun save-cm (&optional path &rest args)
+  ;; if user calls this function, path is path directory to save app in.
+  ;; else (called by make-cm) path is  cm/bin/openmcl*/cm.image
   (declare (ignore args) (special *cm-readtable*))
-  (setf ccl::*inhibit-greeting* t)
-  (setf ccl:*lisp-startup-functions*
-        (append ccl:*lisp-startup-functions*
-                (list #'(lambda ()
-                          (declare (special *cm-readtable*))
-                          (setf *package* (find-package :cm))
-                          (setf *readtable* *cm-readtable*)
-                          (load-cminit)
-                          (cm-logo)
-                          ))))
-  (ccl:save-application path :application-class (find-class 'cm)))
+  (let* ((appdir (cond ((and (not path)
+                             (boundp 'cl-user::binary-dir))
+                        (symbol-value 'cl-user::binary-dir))
+                       ((ccl:directoryp path)
+                        (probe-file path))
+                       ((equal (pathname-type path) "image")
+                        (make-pathname :name nil :type nil
+                                       :defaults path))
+                       (t
+                        (error "save-cm: ~s is not a directory." 
+                               path))))
+         (bundle (merge-pathnames "CM.app/" appdir))
+         (resdir (merge-pathnames "Contents/Resources/" bundle))
+         (exedir (merge-pathnames "Contents/MacOS/" bundle)))
+    ;;(print (list :appdir appdir :bundle bundle :resdir resdir
+    ;;             :exedir exedir
+    ;;             :program (merge-pathnames "cm" exedir)
+    ;;             :image (merge-pathnames "cm.image" exedir)
+    ;;             ))
+    (unless (probe-file bundle)
+      (ccl:create-directory bundle)
+      (ccl:create-directory resdir)
+      (ccl:create-directory exedir)
+      (create-info-plist (make-pathname :name "info" :type "plist"
+                                        :defaults bundle)))
+    (ccl::copy-file (car ccl::*command-line-argument-list*)
+                    (merge-pathnames "cm" exedir)
+                    :if-exists :supersede)
+    (setf ccl::*inhibit-greeting* t)
+    (ccl:save-application (merge-pathnames "cm.image" exedir)
+                          :application-class *cm-application-class*)))
+
+(defun create-info-plist (path)
+  (with-open-file (fil path :direction :output :if-does-not-exist :create
+                       :if-exists :supersede)
+    (format fil
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
+<plist version=\"1.0\">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>cm</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>0.2</string>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
+</dict>
+</plist>
+")))
 
 ;;;
 ;;; midishare callbacks moved here.
@@ -425,12 +469,6 @@
 (defparameter *periodic-polling-thread* nil)
 (defparameter *periodic-polling-callback* nil)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (ccl::use-interface-dir :CARBON))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (ccl::open-shared-library "Carbon.framework/Carbon"))
-
 (defun %string->cfstringref (string)
   (ccl::with-cstrs ((str string))
     (#_CFStringCreateWithCString (ccl::%null-ptr) str
@@ -547,7 +585,103 @@
 (defun cf-runloop-wait (abs-time timer)
   (#_CFRunLoopTimerSetNextFireDate timer abs-time))
 
+
 (defun rts3 (object to &optional (at 0) &key end-time)
+  (declare (special rts-callback))
+  (if (rts-running?)
+      (error "rts: already running."))
+  (let ((ahead (if (consp at)
+		   (car at) at)))
+    (setf *queue* %q)
+    (setf *scheduler* t)
+    (if (consp object)
+        (dolist (o object)
+          (schedule-object o
+			   (if (consp ahead)
+			       (if (consp (cdr ahead)) (pop ahead) (car ahead))
+			     ahead)))
+      (if (consp ahead)
+	  (schedule-object object (car ahead))
+	(schedule-object object ahead)))
+    (setf *out* to)
+    (setf *rts-run* t)
+    (if (consp ahead)
+	(setf ahead (apply #'min ahead)))
+    (setf *rts-now* ahead)
+
+    (let ((target-time nil)
+	  (entry nil)
+	  (qtime nil)
+	  (start nil)
+	  (thing nil)
+	  (wait? nil)
+	  (none? (null (%q-head *queue*))))
+      (ccl::defcallback rts-callback (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
+	(declare (ignore info))
+	(if (not target-time)
+	    (setf target-time (+ *rts-now* (#_CFAbsoluteTimeGetCurrent))))
+	(if (and (not none?) *rts-run*)
+	    (progn
+	      (do ()
+		  ((or none? (> (%qe-time (%q-peek *queue*)) *rts-now*))
+		   (if none?
+		       (setf wait? nil)
+		     (let* ((next (%qe-time (%q-peek *queue*))))
+		       (setf wait? (- next *rts-now*))
+		       (setf *rts-now* next))))
+		(setf entry (%q-pop *queue*))
+		(setf qtime (%qe-time entry))
+		(setf start (%qe-start entry))
+		(setf thing (%qe-object entry))
+		(%qe-dealloc *queue* entry)
+		(process-events thing qtime start *out*)
+		(setf none? (null (%q-head *queue*))))
+	      (if  wait?
+		  (cf-runloop-wait (setf target-time (+ target-time wait?)) timer)
+		(cf-runloop-wait target-time timer)))
+	  (progn
+	    (unless none?
+	      (%q-flush *queue*))
+	    (unschedule-object object t)
+	    (#_CFRunLoopStop (#_CFRunLoopGetCurrent)))))
+      (ccl::process-run-function "rts-thread"
+	(lambda ()
+	  (without-interrupts
+	   (ccl::external-call "_CFRunLoopGetCurrent" :address)
+	   (ccl::external-call
+	    "__CFRunLoopSetCurrent"
+	    :address (ccl::external-call "_CFRunLoopGetMain" :Address))
+	   (ccl::%stack-block ((psn 8))
+	      (ccl::external-call "_GetCurrentProcess" :address psn)
+	      (ccl::with-cstrs ((name "cm rt"))
+		(ccl::external-call "_CPSSetProcessName" :address psn :address name))))
+	  (let ((rts-timer (#_CFRunLoopTimerCreate (ccl::%null-ptr)
+						   (+ (#_CFAbsoluteTimeGetCurrent) *rts-now*) 10000000.D0
+						   0 0 rts-callback
+						   (ccl::%null-ptr)))
+		(timer-context (%string->cfstringref "cm-rts")))
+	    (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) rts-timer timer-context)
+	     (#_CFRunLoopRunInMode timer-context (if end-time (coerce end-time 'double-float) 10000000.D0) #$false)
+	     (#_CFRunLoopTimerInvalidate rts-timer)
+	     (#_CFRelease rts-timer)
+	     (%q-flush *queue*)
+	     (setf *rts-run* nil)
+	     (setf *queue* nil)
+	     (setf *scheduler* nil)
+	     (setf *rts-now* nil)
+	     (%release-cfstring timer-context)
+	     (ccl::process-kill ccl::*current-process*)))))))
+
+(defun foo (num dur)
+  (process repeat num for i from 0
+	   output (new midi :time (now) :duration 100 :amplitude .5 :keynum 60)
+	   wait dur))
+
+(rts3 (foo 1000 .1) *pm*)
+
+
+
+(defun rts30old (object to &optional (at 0) &key end-time)
   (declare (special rts-callback))
   (if (rts-running?)
       (error "rts: already running."))
