@@ -241,6 +241,9 @@
 (defun nothreads ()
   (error "SBCL threads are not supported in this OS."))
 
+(defun thread-current-time ()
+  (get-internal-real-time))
+
 (defun current-thread ()
   (nothreads))
 
@@ -333,7 +336,7 @@
 (defun set-periodic-task-rate! (milli)
   ;; set periodic time but only if tasks are not running
   (if *periodic-tasks*
-      (error "set-periodic-time: Periodic tasks currently running.")
+      (error "set-periodic-task-rate!: Periodic tasks currently running.")
       (let (sec mil)
         (if (< milli 1000)
             (setf sec 0 mil milli)
@@ -360,7 +363,7 @@
          (push (cons owner task) *periodic-tasks*)
          (setf sb-impl::*periodic-polling-function* #'run-periodic-tasks))
         ((assoc owner *periodic-tasks* :test #'eq)
-         (error "add-periodic-task: task already running for ~s."
+         (error "add-periodic-task!: task already running for ~s."
                 owner))
         (t
          (push (cons owner task) *periodic-tasks*)))
@@ -372,7 +375,7 @@
             *periodic-tasks* (list))
       (let ((e (assoc owner *periodic-tasks* :test #'eq)))
         (cond ((null e)
-               (error "rem-periodic-task: No task for owner ~s."
+               (error "remove-periodic-task!: No task for owner ~s."
                       owner))
               (t
                (setf *periodic-tasks* (delete e *periodic-tasks*))
@@ -381,29 +384,22 @@
   (values))
 
 #|
-(defun set-periodic-task! (thunk &key (period 1) (mode ':set))
-  ;; period is in milliseconds
-  (declare (ignore mode))
-  (cond ((not thunk)
-         (setf sb-impl::*max-event-to-sec* 1)
-         (setf sb-impl::*max-event-to-usec* 0)
-         (setf sb-impl::*periodic-polling-function* nil))
-        ((not (null sb-impl::*periodic-polling-function*))
-         (error "set-periodic-task!: Periodic task already running!"))
-        (t
-         (let (sec mil)
-           (if (< period 1000)
-               (setf sec 0 mil period)
-               (multiple-value-setq (sec mil) (floor period 1000)))
-           (setf sb-impl::*max-event-to-sec* sec)
-           (setf sb-impl::*max-event-to-usec* (* mil 1000))
-           (setf sb-impl::*periodic-polling-function* thunk))))
-  (values))
+(periodic-task-running?)
+(set-periodic-task-rate! 1000) ; milliseconds
+(defun moe () (print :you-moron))
+(defun larry () (print :ow-ow-ow))
+(defun curly () (print :nyuk-nyuk))
+(periodic-task-running? :moe)
+(add-periodic-task! :moe #'moe)
+(add-periodic-task! :larry #'larry)
+(remove-periodic-task! :moe)
+(add-periodic-task! :curly #'curly)
+(add-periodic-task! :moe #'moe)
+(remove-periodic-task! :larry)
+*periodic-tasks*
+(remove-periodic-task! t)
 |#
 
-; (set-periodic-task! (lambda () (print ':hiho!)) :period 2000)
-; (set-periodic-task! (lambda () (print ':hiho!)) :period 1000)
-; (set-periodic-task! (lambda () (print ':hiho!)) :period 500)
-; (set-periodic-task! (lambda () (print ':hiho!)) :period 999)
-; (set-periodic-task! nil)
+
+
 
