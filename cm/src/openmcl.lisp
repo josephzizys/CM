@@ -266,7 +266,8 @@
       (ms:MidiSetRcvAlarm *mp* (ms:nullptr))
       (values))))
 
-
+(defun thread-current-time ()
+  (#_CFAbsoluteTimeGetCurrent))
 
 ;;; beginning thread support a la SRFI-18
 ;;; 
@@ -295,6 +296,10 @@
 (defun thread-start! (obj)
   (ccl::process-enable obj))
 
+(defun thread-sleep! (wait-time)
+  (multiple-value-bind (q r) (floor wait-time)
+    (ccl::%nanosleep q (floor (* r 1000000000)))))
+
 (defun mutex? (obj)
   (typep obj 'ccl::recursive-lock))
 
@@ -318,10 +323,11 @@
    (second :accessor time-second)
    (millisecond :accessor time-millisecond)))
 
+
 (defun current-time ()
   (let ((obj (make-instance 'time)))
     (multiple-value-bind (utime ms)
-	(truncate (get-internal-real-time) 1000)
+ 	(truncate (get-internal-real-time) 1000)
       (setf (slot-value obj 'second) utime)
       (setf (slot-value obj 'millisecond) ms))
     obj))
@@ -345,26 +351,21 @@
 
 ;;; sleeping...
 
-(defun thread-nanosleep! (wait-time)
-  (multiple-value-bind (q r) (floor wait-time)
-    (ccl::%nanosleep q (floor (* r 1000000000)))))
+;;(defmethod thread-sleep! ((abs-time time))
+;;  (let ((target-time (time->seconds abs-time)))
+;;    (ccl::process-wait "waiting"
+;;		       #'(lambda (x) (> (time->seconds (current-time))  x))
+;;			   target-time)))
 
-;;if thread-sleep! is passed a time object this is absolute time
-;;if a number it is time to wait
+;;(defmethod thread-sleep! ((wait-time number))
+;;  (let ((start-time (time->seconds (current-time))))
+;;    (ccl::process-wait "waiting"
+;;		       #'(lambda (x) (> (- (time->seconds (current-time)) start-time) x))
+;;			   wait-time)))
 
-(defmethod thread-sleep! ((abs-time time))
-  (let ((target-time (time->seconds abs-time)))
-    (ccl::process-wait "waiting"
-		       #'(lambda (x) (> (time->seconds (current-time))  x))
-			   target-time)))
-
-(defmethod thread-sleep! ((wait-time number))
-  (let ((start-time (time->seconds (current-time))))
-    (ccl::process-wait "waiting"
-		       #'(lambda (x) (> (- (time->seconds (current-time)) start-time) x))
-			   wait-time)))
-
-
+;;;
+;;; socket/udp support
+;;;
 
 (defun make-udp-socket (host port local-port)
   (ccl:make-socket :type :datagram :remote-port port :remote-host host
@@ -402,15 +403,24 @@
 (defun make-osc-timetag (offset out)
   (let* ((now (current-time))
          (offset-time (seconds->time offset))
-         (target-time (seconds->time (+ (time->seconds now) (time->seconds offset-time) (slot-value out 'latency))))
+         (target-time (seconds->time (+ (time->seconds now)
+                                        (time->seconds offset-time) 
+                                        (slot-value out 'latency))))
          (vec nil))
-    (setf vec (make-byte-vector (+ 2208988800 (slot-value target-time 'second))))
-    (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
-
+    (setf vec (make-byte-vector (+ 2208988800
+                                   (slot-value target-time 'second))))
+    (u8vector-append
+     vec (make-byte-vector (inexact->exact
+                            (* (modf (time->seconds target-time))
+                               #xffffffff))))))
 
 ;;; new periodic-task support
 
-(defparameter *periodic-polling-function* nil)
+(defvar *periodic-tasks*
+  ;; a list ((<owner> . <task-thunk>) ...) where <owner> is whatever
+  ;; the <task-thunk> is associated with.
+  (list ))
+(defparameter *periodic-task-rate* 1)
 (defparameter *periodic-polling-timer* nil)
 (defparameter *periodic-polling-thread* nil)
 (defparameter *periodic-polling-callback* nil)
@@ -423,17 +433,19 @@
 
 (defun %string->cfstringref (string)
   (ccl::with-cstrs ((str string))
-    (#_CFStringCreateWithCString (ccl::%null-ptr)  str #$kCFStringEncodingMacRoman)))
+    (#_CFStringCreateWithCString (ccl::%null-ptr) str
+                                 #$kCFStringEncodingMacRoman)))
 
 (defun %release-cfstring (string)
   (#_CFRelease string))
 
-(defun run-periodic-task (period)
+(defun run-periodic-task ()
   (let ((timer-context (%string->cfstringref "cm-periodic")))
-    (ccl::defcallback *periodic-polling-callback* (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
+    (ccl::defcallback *periodic-polling-callback*
+        (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
       (declare (ignore timer info))
-      (if *periodic-polling-function*
-	  (funcall *periodic-polling-function*)
+      (if *periodic-tasks*
+          (run-periodic-tasks)
 	(progn
 	  (when *periodic-polling-timer*
 	    (#_CFRunLoopStop (#_CFRunLoopGetCurrent)))
@@ -443,192 +455,92 @@
 	  (ccl::process-run-function "periodic-polling-thread"
 	    (lambda ()
 	      (setf *periodic-polling-timer*
-		    (#_CFRunLoopTimerCreate (ccl::%null-ptr) (#_CFAbsoluteTimeGetCurrent)
-					    (* .001D0 period)  0 0 *periodic-polling-callback* (ccl::%null-ptr)))
-	      (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) *periodic-polling-timer* timer-context)
+		    (#_CFRunLoopTimerCreate (ccl::%null-ptr)
+                                            (#_CFAbsoluteTimeGetCurrent)
+					    (* .001D0 *periodic-task-rate*)
+                                            0
+                                            0
+                                            *periodic-polling-callback*
+                                            (ccl::%null-ptr)))
+	      (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent)
+                                   *periodic-polling-timer* timer-context)
 	      (#_CFRunLoopRunInMode timer-context 10000000.D0 #$false)
 	      (#_CFRunLoopTimerInvalidate *periodic-polling-timer*)
 	      (#_CFRelease *periodic-polling-timer*)
 	      (%release-cfstring timer-context))))))
 
+(defun set-periodic-task-rate! (ms)
+  ;; set periodic time but only if tasks are not running
+  (if *periodic-tasks*
+      (error "set-periodic-task-rate!: Periodic tasks currently running.")
+      (setf *periodic-task-rate* ms)))
 
-(defun set-periodic-task! (thunk &key (period 1) (mode ':set))
-  ;;period is in milliseconds
-  (declare (ignore mode))
-  (cond ((not thunk) 
-	 (setf *periodic-polling-function* nil))
-	((not (null *periodic-polling-function*))
-	 (error "set-periodic-task!: Periodic task already running!"))
-	(t
-	 (setf *periodic-polling-function* thunk)
-	 (run-periodic-task period)))
+(defun run-periodic-tasks ()
+  ;; this is the polling function, it just funcalls thunks on the list
+  (dolist (e *periodic-tasks*) (funcall (cdr e)))
   (values))
 
+(defun periodic-task-running? (&optional owner)
+  (if *periodic-tasks*
+      (if owner 
+          (and (assoc owner *periodic-tasks* :test #'eq) t)
+          t)
+      nil))
 
+(defun add-periodic-task! (owner task)
+  (cond ((null *periodic-tasks*)
+         (push (cons owner task) *periodic-tasks*)
+	 (run-periodic-task ))
+        ((assoc owner *periodic-tasks* :test #'eq)
+         (error "add-periodic-task!: task already running for ~s."
+                owner))
+        (t
+         (push (cons owner task) *periodic-tasks*)))
+  (values))
+
+(defun remove-periodic-task! (owner)
+  (if (eq owner t)
+      (setf *periodic-tasks* (list))
+      (let ((e (assoc owner *periodic-tasks* :test #'eq)))
+        (cond ((null e)
+               (error "remove-periodic-task!: No task for owner ~s."
+                      owner))
+              (t
+               (setf *periodic-tasks* (delete e *periodic-tasks*))))))
+  (values))
 
 #|
-(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 1000)
-(set-periodic-task! nil)
-(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 100)
-(set-periodic-task! nil)
-(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 10)
-;generate error
-(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 1)
-(set-periodic-task! nil)
-(set-periodic-task! #'(lambda () (print (get-internal-real-time))) :period 1)
+(periodic-task-running?)
+(set-periodic-task-rate! 1000) ; milliseconds
+(defun moe () (print :you-moron))
+(defun larry () (print :ow-ow-ow))
+(defun curly () (print :nyuk-nyuk))
+(periodic-task-running? :moe)
+(add-periodic-task! :moe #'moe)
+(add-periodic-task! :larry #'larry)
+(remove-periodic-task! :moe)
+(add-periodic-task! :curly #'curly)
+(add-periodic-task! :moe #'moe)
+(remove-periodic-task! :larry)
+*periodic-tasks*
+(remove-periodic-task! t)
 |#
 
 
-
-
-
-;;;
-;;;RTS
-;;;
+;(defun set-periodic-task! (thunk &key (period 1) (mode ':set))
+;  ;;period is in milliseconds
+;  (declare (ignore mode))
+;  (cond ((not thunk) 
+;	 (setf *periodic-polling-function* nil))
+;	((not (null *periodic-polling-function*))
+;	 (error "set-periodic-task!: Periodic task already running!"))
+;	(t
+;	 (setf *periodic-polling-function* thunk)
+;	 (run-periodic-task period)))
+;  (values))
 
 
 #|
-;;;scheduler 1 : using wait? for sleep time
-;;;
-;;;
-
-(defun rts1 (object to &optional at &key end-time)
-  (if (rts-running?) 
-      (error "rts: already running."))
-  (if (not *rts-lock*) (setf *rts-lock* (make-mutex)))
-  (let ((ahead (or at 0)))
-    (setf *queue* %q)
-    (setf *scheduler* t)
-    (if (consp object)
-        (dolist (o object)
-          (schedule-object o
-			   (if (consp ahead)
-               (if (consp (cdr ahead)) (pop ahead) (car ahead))
-	     ahead)))
-      (if (consp ahead)
-            (schedule-object object (car ahead))
-	  (schedule-object object ahead)))
-    (setf *out* to)
-    (setf *rts-run* t)
-    (if (consp ahead) (setf ahead (apply #'min ahead)))
-    (setf *rts-now* ahead)
-    (thread-start!
-     (thread-alloc
-      (lambda nil
-        (if (> *rts-now* 0) 
-	    (thread-sleep! *rts-now*))
-        (do ((entry nil)
-             (qtime nil)
-             (start nil)
-             (thing nil)
-             (wait? nil)
-             (none? (null (%q-head *queue*))))
-            ((or none? (not *rts-run*) (if end-time
-					   (> (%qe-time (%q-peek *queue*)) end-time)
-					 nil))
-             (unless none? (%q-flush *queue*))
-             (unschedule-object object t)
-             (setf *rts-run* nil)
-             (setf *queue* nil)
-             (setf *scheduler* nil)
-             (setf *rts-now* nil))
-          (mutex-lock! *rts-lock*)
-          (without-interrupts
-            (do ()
-                ((or none? 
-		     (> (%qe-time (%q-peek *queue*)) *rts-now*))
-                 (if none?
-                     (setf wait? nil)
-		   (let* ((next (%qe-time (%q-peek *queue*))))
-		     (setf wait? (- next *rts-now*))
-		     (setf *rts-now* next))))
-              (setf entry (%q-pop *queue*))
-              (setf qtime (%qe-time entry))
-              (setf start (%qe-start entry))
-              (setf thing (%qe-object entry))
-              (%qe-dealloc *queue* entry)
-              (process-events thing qtime start *out*)
-              (setf none? (null (%q-head *queue*)))))
-          (mutex-unlock! *rts-lock*)
-          (if wait? (thread-nanosleep! wait?))))))))
-
-
-;;; scheduler 2 :using a target time - current time
-;;; to find sleep time. attempt at being adaptive
-;;; to fluctuations
-
-(defun rts2 (object to &optional (at 0) &key end-time)
-  (if (rts-running?) 
-      (error "rts: already running."))
-  (if (not *rts-lock*) 
-      (setf *rts-lock* (make-mutex)))
-  (let ((ahead (if (consp at) (car at) at))
-	(target-time nil))
-    (setf *queue* %q)
-    (setf *scheduler* t)
-    (if (consp object)
-        (dolist (o object)
-          (schedule-object o
-			   (if (consp ahead)
-               (if (consp (cdr ahead)) (pop ahead) (car ahead))
-	     ahead)))
-      (if (consp ahead)
-	  (schedule-object object (car ahead))
-	(schedule-object object ahead)))
-    (setf *out* to)
-    (setf *rts-run* t)
-    (if (consp ahead) 
-	(setf ahead (apply #'min ahead)))
-    (setf *rts-now* ahead)
-    (setf target-time (+ *rts-now* (#_CFAbsoluteTimeGetCurrent)))
-    (thread-start!
-     (thread-alloc
-      (lambda ()
-        (if (> *rts-now* 0) 
-	    (thread-nanosleep! *rts-now*))
-        (do ((entry nil)
-             (qtime nil)
-             (start nil)
-             (thing nil)
-             (wait? nil)
-             (none? (null (%q-head *queue*))))
-            ((or none? (not *rts-run*) (if end-time
-					   (> (%qe-time (%q-peek *queue*)) end-time)
-					 nil))
-             (unless none? (%q-flush *queue*))
-             (unschedule-object object t)
-             (setf *rts-run* nil)
-             (setf *queue* nil)
-             (setf *scheduler* nil)
-             (setf *rts-now* nil))
-          (mutex-lock! *rts-lock*)
-          (without-interrupts
-            (do ()
-                ((or none? 
-		     (> (%qe-time (%q-peek *queue*)) *rts-now*))
-                 (if none?
-                     (setf wait? nil)
-		   (let* ((next (%qe-time (%q-peek *queue*))))
-		     (setf wait? (- next *rts-now*))
-		     (setf *rts-now* next))))
-              (setf entry (%q-pop *queue*))
-              (setf qtime (%qe-time entry))
-              (setf start (%qe-start entry))
-              (setf thing (%qe-object entry))
-              (%qe-dealloc *queue* entry)
-              (process-events thing qtime start *out*)
-              (setf none? (null (%q-head *queue*)))))
-          (mutex-unlock! *rts-lock*)
-          (if wait? 
-	      (progn
-		(setf target-time (+ target-time wait?))
-		(thread-nanosleep! (- target-time (#_CFAbsoluteTimeGetCurrent)))))))))))
-
-
-;;; scheduler 3 : CFRunLoop
-;;;
-;;;
-
 (defun cf-runloop-now ()
   (#_CFAbsoluteTimeGetCurrent))
 
@@ -639,13 +551,13 @@
   (declare (special rts-callback))
   (if (rts-running?)
       (error "rts: already running."))
-  (let ((ahead (if (consp at) 
+  (let ((ahead (if (consp at)
 		   (car at) at)))
     (setf *queue* %q)
     (setf *scheduler* t)
     (if (consp object)
         (dolist (o object)
-          (schedule-object o 
+          (schedule-object o
 			   (if (consp ahead)
 			       (if (consp (cdr ahead)) (pop ahead) (car ahead))
 			     ahead)))
@@ -654,10 +566,10 @@
 	(schedule-object object ahead)))
     (setf *out* to)
     (setf *rts-run* t)
-    (if (consp ahead) 
+    (if (consp ahead)
 	(setf ahead (apply #'min ahead)))
     (setf *rts-now* ahead)
-    
+
     (let ((target-time nil)
 	  (entry nil)
 	  (qtime nil)
@@ -689,20 +601,31 @@
 		  (cf-runloop-wait (setf target-time (+ target-time wait?)) timer)
 		(cf-runloop-wait target-time timer)))
 	  (progn
-	    (unless none? 
+	    (unless none?
 	      (%q-flush *queue*))
 	    (unschedule-object object t)
 	    (#_CFRunLoopStop (#_CFRunLoopGetCurrent)))))
       (ccl::process-run-function "rts-thread"
 	(lambda ()
-	  (without-interrupts 
-	   (let ((rts-timer (#_CFRunLoopTimerCreate (ccl::%null-ptr) 
-						    (+ (#_CFAbsoluteTimeGetCurrent) *rts-now*) 10000000.D0
-						    0 0 rts-callback 
-						    (ccl::%null-ptr)))
-		 (timer-context (%string->cfstringref "cm-rts")))
-	     (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) rts-timer timer-context)
-	     (#_CFRunLoopRunInMode timer-context (if end-time (coerce end-time 'double-float) 10000000.D0) #$false)
+	  (without-interrupts
+	   (ccl::external-call "_CFRunLoopGetCurrent" :address)
+	   (ccl::external-call
+	    "__CFRunLoopSetCurrent"
+	    :address (ccl::external-call "_CFRunLoopGetMain" :Address))
+	   (ccl::%stack-block ((psn 8))
+	      (ccl::external-call "_GetCurrentProcess" :address psn)
+	      (ccl::with-cstrs ((name "cm rt"))
+		(ccl::external-call "_CPSSetProcessName" :address psn :address name))))
+	  (let ((rts-timer (#_CFRunLoopTimerCreate (ccl::%null-ptr)
+						   (+ (#_CFAbsoluteTimeGetCurrent)
+                                                      *rts-now*) 10000000.D0
+						   0 0 rts-callback
+						   (ccl::%null-ptr)))
+		(timer-context (%string->cfstringref "cm-rts")))
+	    (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) rts-timer timer-context)
+	     (#_CFRunLoopRunInMode 
+              timer-context (if end-time (coerce end-time 'double-float)
+                                10000000.D0) #$false)
 	     (#_CFRunLoopTimerInvalidate rts-timer)
 	     (#_CFRelease rts-timer)
 	     (%q-flush *queue*)
@@ -711,9 +634,14 @@
 	     (setf *scheduler* nil)
 	     (setf *rts-now* nil)
 	     (%release-cfstring timer-context)
-	     (ccl::process-kill ccl::*current-process*))))))))
+	     (ccl::process-kill ccl::*current-process*)))))))
 
+(defun foo (num dur)
+  (process repeat num for i from 0
+	   output (new midi :time (now) :duration 100 :amplitude .5 :keynum 60)
+	   wait dur))
 
+(rts3 (foo 1000 .1) *pm*)
 
 
 ;;; fix :output for your machine, call (pm:GetDeviceDescriptions)
@@ -727,18 +655,21 @@
              output ev
              wait dur)))
 
-(rts1 (foo 100 .1) *pm*) 
-(rts2 (foo 100 .1) *pm*) 
+;(rts1 (foo 100 .1) *pm*) 
+;(rts2 (foo 100 .1) *pm*) 
+(rts (foo 100 .1) *pm*) 
 (rts3 (foo 100 .1) *pm*)
 
 ;;using at time
-(rts1 (foo 100 .1) *pm* 3)
-(rts2 (foo 100 .1) *pm* 3) 
+;(rts1 (foo 100 .1) *pm* 3)
+;(rts2 (foo 100 .1) *pm* 3) 
+(rts (foo 100 .1) *pm* 3) 
 (rts3 (foo 100 .1) *pm* 3)
 
 ;;using keyword end-time
-(rts1 (foo 100 .1) *pm* 0 :end-time 2)
-(rts2 (foo 100 .1) *pm* 0 :end-time 2)
+;(rts1 (foo 100 .1) *pm* 0 :end-time 2)
+;(rts2 (foo 100 .1) *pm* 0 :end-time 2)
+(rts (foo 100 .1) *pm* 0)
 (rts3 (foo 100 .1) *pm* 0 :end-time 2)
 
 
@@ -811,33 +742,3 @@
 (rts2 (endless-fluff 100 1) *pm* 2 :end-time 20)
 (rts2 (endless-fluff 100 1) *pm* 2 :end-time 20)
 |#
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
