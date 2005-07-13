@@ -164,12 +164,12 @@
 
 (defmethod ccl:application-name ((app cm-application)) "Common Music")
 
+(defparameter *cm-swank-port* nil)
+
 (defmethod ccl::run-application ((app cm-application) &key &allow-other-keys)
-  ;; Start the main event loop
-
-  ;;(when *bosco-swank-port*
-  ;;  (swank:create-server :port *bosco-swank-port*))
-
+  (when (and *cm-swank-port* (find-package ':swank))
+    (funcall (find-symbol "CREATE-SERVER" ':swank)
+             :port *cm-swank-port*))
   (ccl::with-pstrs ((msg "Hello from CM!"))
     (#_StandardAlert #$kAlertNoteAlert msg
                      (ccl:%null-ptr) (ccl:%null-ptr) (ccl:%null-ptr)))
@@ -199,7 +199,7 @@
 (defun set-env-var (var val)
   (ccl::setenv (string var) val))
 
-(defun save-cm (&optional path &rest args)
+(defun save-cm (&optional path &rest args &key swank-port)
   ;; if user calls this function, path is path directory to save app in.
   ;; else (called by make-cm) path is  cm/bin/openmcl*/cm.image
   (declare (ignore args) (special *cm-readtable*))
@@ -217,11 +217,6 @@
          (bundle (merge-pathnames "CM.app/" appdir))
          (resdir (merge-pathnames "Contents/Resources/" bundle))
          (exedir (merge-pathnames "Contents/MacOS/" bundle)))
-    ;;(print (list :appdir appdir :bundle bundle :resdir resdir
-    ;;             :exedir exedir
-    ;;             :program (merge-pathnames "cm" exedir)
-    ;;             :image (merge-pathnames "cm.image" exedir)
-    ;;             ))
     (unless (probe-file bundle)
       (ccl:create-directory bundle)
       (ccl:create-directory resdir)
@@ -232,6 +227,7 @@
                     (merge-pathnames "cm" exedir)
                     :if-exists :supersede)
     (setf ccl::*inhibit-greeting* t)
+    (when swank-port (setf *cm-swank-port* swank-port))
     (ccl:save-application (merge-pathnames "cm.image" exedir)
                           :application-class *cm-application-class*)))
 
@@ -672,110 +668,8 @@
 	     (%release-cfstring timer-context)
 	     (ccl::process-kill ccl::*current-process*)))))))
 
-(defun foo (num dur)
-  (process repeat num for i from 0
-	   output (new midi :time (now) :duration 100 :amplitude .5 :keynum 60)
-	   wait dur))
-
-(rts3 (foo 1000 .1) *pm*)
 
 
-
-(defun rts30old (object to &optional (at 0) &key end-time)
-  (declare (special rts-callback))
-  (if (rts-running?)
-      (error "rts: already running."))
-  (let ((ahead (if (consp at)
-		   (car at) at)))
-    (setf *queue* %q)
-    (setf *scheduler* t)
-    (if (consp object)
-        (dolist (o object)
-          (schedule-object o
-			   (if (consp ahead)
-			       (if (consp (cdr ahead)) (pop ahead) (car ahead))
-			     ahead)))
-      (if (consp ahead)
-	  (schedule-object object (car ahead))
-	(schedule-object object ahead)))
-    (setf *out* to)
-    (setf *rts-run* t)
-    (if (consp ahead)
-	(setf ahead (apply #'min ahead)))
-    (setf *rts-now* ahead)
-
-    (let ((target-time nil)
-	  (entry nil)
-	  (qtime nil)
-	  (start nil)
-	  (thing nil)
-	  (wait? nil)
-	  (none? (null (%q-head *queue*))))
-      (ccl::defcallback rts-callback (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
-	(declare (ignore info))
-	(if (not target-time)
-	    (setf target-time (+ *rts-now* (#_CFAbsoluteTimeGetCurrent))))
-	(if (and (not none?) *rts-run*)
-	    (progn
-	      (do ()
-		  ((or none? (> (%qe-time (%q-peek *queue*)) *rts-now*))
-		   (if none?
-		       (setf wait? nil)
-		     (let* ((next (%qe-time (%q-peek *queue*))))
-		       (setf wait? (- next *rts-now*))
-		       (setf *rts-now* next))))
-		(setf entry (%q-pop *queue*))
-		(setf qtime (%qe-time entry))
-		(setf start (%qe-start entry))
-		(setf thing (%qe-object entry))
-		(%qe-dealloc *queue* entry)
-		(process-events thing qtime start *out*)
-		(setf none? (null (%q-head *queue*))))
-	      (if  wait?
-		  (cf-runloop-wait (setf target-time (+ target-time wait?)) timer)
-		(cf-runloop-wait target-time timer)))
-	  (progn
-	    (unless none?
-	      (%q-flush *queue*))
-	    (unschedule-object object t)
-	    (#_CFRunLoopStop (#_CFRunLoopGetCurrent)))))
-      (ccl::process-run-function "rts-thread"
-	(lambda ()
-	  (without-interrupts
-	   (ccl::external-call "_CFRunLoopGetCurrent" :address)
-	   (ccl::external-call
-	    "__CFRunLoopSetCurrent"
-	    :address (ccl::external-call "_CFRunLoopGetMain" :Address))
-	   (ccl::%stack-block ((psn 8))
-	      (ccl::external-call "_GetCurrentProcess" :address psn)
-	      (ccl::with-cstrs ((name "cm rt"))
-		(ccl::external-call "_CPSSetProcessName" :address psn :address name))))
-	  (let ((rts-timer (#_CFRunLoopTimerCreate (ccl::%null-ptr)
-						   (+ (#_CFAbsoluteTimeGetCurrent)
-                                                      *rts-now*) 10000000.D0
-						   0 0 rts-callback
-						   (ccl::%null-ptr)))
-		(timer-context (%string->cfstringref "cm-rts")))
-	    (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) rts-timer timer-context)
-	     (#_CFRunLoopRunInMode 
-              timer-context (if end-time (coerce end-time 'double-float)
-                                10000000.D0) #$false)
-	     (#_CFRunLoopTimerInvalidate rts-timer)
-	     (#_CFRelease rts-timer)
-	     (%q-flush *queue*)
-	     (setf *rts-run* nil)
-	     (setf *queue* nil)
-	     (setf *scheduler* nil)
-	     (setf *rts-now* nil)
-	     (%release-cfstring timer-context)
-	     (ccl::process-kill ccl::*current-process*)))))))
-
-(defun foo (num dur)
-  (process repeat num for i from 0
-	   output (new midi :time (now) :duration 100 :amplitude .5 :keynum 60)
-	   wait dur))
-
-(rts3 (foo 1000 .1) *pm*)
 
 
 ;;; fix :output for your machine, call (pm:GetDeviceDescriptions)
@@ -789,26 +683,16 @@
              output ev
              wait dur)))
 
-;(rts1 (foo 100 .1) *pm*) 
-;(rts2 (foo 100 .1) *pm*) 
 (rts (foo 100 .1) *pm*) 
 (rts3 (foo 100 .1) *pm*)
 
-;;using at time
-;(rts1 (foo 100 .1) *pm* 3)
-;(rts2 (foo 100 .1) *pm* 3) 
 (rts (foo 100 .1) *pm* 3) 
 (rts3 (foo 100 .1) *pm* 3)
 
-;;using keyword end-time
-;(rts1 (foo 100 .1) *pm* 0 :end-time 2)
-;(rts2 (foo 100 .1) *pm* 0 :end-time 2)
-(rts (foo 100 .1) *pm* 0)
+(rts (foo 100 .1) *pm* 0 2)
 (rts3 (foo 100 .1) *pm* 0 :end-time 2)
 
-
-
-
+(rts3 (foo 1000 .1) *pm*)
 
 (defun fluff1 (num dur)
   (process repeat num for i from 0 
@@ -826,8 +710,6 @@
 	   at (+ (now) 2)))
 
 
-(rts1 (fluff1 30 1) *pm*) 
-(rts2 (fluff1 30 1) *pm*)
 (rts3 (fluff1 30 1) *pm*)
 
 
@@ -848,8 +730,6 @@
 	   sprout (process repeat 4
 			   output (new midi :time (+ (now) 2) :duration 5 :amplitude .5 :keynum 
 				       (pickl '(60 64 67 72 69 48 50))))))
-(rts1 (fluff2 30 1) *pm*)
-(rts2 (fluff2 30 1) *pm*)
 (rts3 (fluff2 30 1) *pm*)
 
 
@@ -865,14 +745,7 @@
 	   and
 	   sprout (endless-fluff 30 1)))
 
-(rts1 (endless-fluff 30 1) *pm* 2)
-(rts-stop)
-(rts2 (endless-fluff 30 1) *pm* 2)
-(rts-stop)
 (rts3 (endless-fluff 30 1) *pm* 2)
 (rts-stop)
 
-(rts1 (endless-fluff 100 1) *pm* 2 :end-time 20)
-(rts2 (endless-fluff 100 1) *pm* 2 :end-time 20)
-(rts2 (endless-fluff 100 1) *pm* 2 :end-time 20)
 |#
