@@ -199,7 +199,8 @@
 (defun set-env-var (var val)
   (ccl::setenv (string var) val))
 
-(defun save-cm (&optional path &rest args &key swank-port)
+(defun save-cm (&optional path &rest args &key slime-directory 
+			  swank-port)
   ;; if user calls this function, path is path directory to save app in.
   ;; else (called by make-cm) path is  cm/bin/openmcl*/cm.image
   (declare (ignore args) (special *cm-readtable*))
@@ -226,8 +227,20 @@
     (ccl::copy-file (car ccl::*command-line-argument-list*)
                     (merge-pathnames "cm" exedir)
                     :if-exists :supersede)
+    (when slime-directory
+      (if (ccl:directoryp slime-directory) ; ensure / at end
+	  (setf slime-directory (probe-file slime-directory))
+	(error "save-cm: :slime-directory ~s is not a directory."
+	       slime-directory))
+      (let ((files '("swank-backend" "nregex" "metering" "swank-openmcl" "swank-gray"
+		     "swank")))
+	(dolist (f files)
+	  (load (merge-pathnames f slime-directory)))))
+    (when swank-port
+      (unless (find-package :swank)
+	(error "save-cm: :swank-port specified but swank is not loaded. Specify :slime-directory to load it.")
+	(setf *cm-swank-port* swank-port)))
     (setf ccl::*inhibit-greeting* t)
-    (when swank-port (setf *cm-swank-port* swank-port))
     (ccl:save-application (merge-pathnames "cm.image" exedir)
                           :application-class *cm-application-class*)))
 
