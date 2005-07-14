@@ -238,8 +238,8 @@
 	  (load (merge-pathnames f slime-directory)))))
     (when swank-port
       (unless (find-package :swank)
-	(error "save-cm: :swank-port specified but swank is not loaded. Specify :slime-directory to load it.")
-	(setf *cm-swank-port* swank-port)))
+	(error "save-cm: :swank-port specified but swank is not loaded. Specify :slime-directory to load it."))
+      (setf *cm-swank-port* swank-port))
     (setf ccl::*inhibit-greeting* t)
     (ccl:save-application (merge-pathnames "cm.image" exedir)
                           :application-class *cm-application-class*)))
