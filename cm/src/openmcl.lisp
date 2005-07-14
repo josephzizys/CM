@@ -128,11 +128,18 @@
 
 (defconstant directory-delimiter #\/)
 
+(defun env-var (var)
+  (ccl::getenv (string var)))
+
+(defun set-env-var (var val)
+  (ccl::setenv (string var) val))
+
 ;;;
-;;; cm application class
+;;; cm application classes
 ;;; 
 
 (defclass cm-application (ccl::lisp-development-system) ())
+(defclass cm-carbon-application (cm-application) ())
 
 (defparameter *cm-application-class* (find-class 'cm-application))
 
@@ -164,9 +171,21 @@
 
 (defmethod ccl:application-name ((app cm-application)) "Common Music")
 
+(defmethod ccl::application-version-string ((a cm-application))
+  (cm-version))
+
+(defmethod ccl:toplevel-function ((app cm-application) init-file)
+  (declare (ignore init-file))
+  (call-next-method))
+
 (defparameter *cm-swank-port* nil)
 
-(defmethod ccl::run-application ((app cm-application) &key &allow-other-keys)
+(defmethod ccl:toplevel-function ((app cm-carbon-application) init-file)
+  (declare (ignore init-file) (special *cm-readtable*))
+;;  (setf *package* (find-package :cm))
+;;  (setf *readtable* *cm-readtable*)
+;;  (load-cminit)
+;;  (cm-logo)
   (when (and *cm-swank-port* (find-package ':swank))
     (funcall (find-symbol "CREATE-SERVER" ':swank)
              :port *cm-swank-port*))
@@ -176,35 +195,18 @@
   (#_RunApplicationEventLoop)
   (ccl:quit))
 
-(defmethod ccl:toplevel-function ((app cm-application) init-file)
-  (declare (ignore init-file) (special *cm-readtable*))
-  (setf *package* (find-package :cm))
-  (setf *readtable* *cm-readtable*)
-  (load-cminit)
-  (cm-logo)
-  (ccl::run-application app))
-
-;;;
-;;; save cm
-;;;
-
 (defun cm-image-dir ()
   (namestring
    (make-pathname
     :directory (pathname-directory ccl::*heap-image-name*))))
 
-(defun env-var (var)
-  (ccl::getenv (string var)))
-
-(defun set-env-var (var val)
-  (ccl::setenv (string var) val))
-
-(defun save-cm (&optional path &rest args &key slime-directory 
+(defun save-cm (&optional path &rest args &key carbon slime-directory 
 			  swank-port)
   ;; if user calls this function, path is path directory to save app in.
   ;; else (called by make-cm) path is  cm/bin/openmcl*/cm.image
   (declare (ignore args) (special *cm-readtable*))
-  (let* ((appdir (cond ((and (not path)
+  (let* ((cmroot (symbol-value 'cl-user::*cm-root*))
+         (appdir (cond ((and (not path)
                              (boundp 'cl-user::binary-dir))
                         (symbol-value 'cl-user::binary-dir))
                        ((ccl:directoryp path)
@@ -217,34 +219,64 @@
                                path))))
          (bundle (merge-pathnames "CM.app/" appdir))
          (resdir (merge-pathnames "Contents/Resources/" bundle))
+         (etcdir (merge-pathnames "Contents/Resources/etc/" bundle))
+         (libdir (merge-pathnames "Contents/Resources/lib/" bundle))
          (exedir (merge-pathnames "Contents/MacOS/" bundle)))
     (unless (probe-file bundle)
       (ccl:create-directory bundle)
       (ccl:create-directory resdir)
       (ccl:create-directory exedir)
-      (create-info-plist (make-pathname :name "info" :type "plist"
-                                        :defaults bundle)))
-    (ccl::copy-file (car ccl::*command-line-argument-list*)
-                    (merge-pathnames "cm" exedir)
-                    :if-exists :supersede)
-    (when slime-directory
-      (if (ccl:directoryp slime-directory) ; ensure / at end
-	  (setf slime-directory (probe-file slime-directory))
-	(error "save-cm: :slime-directory ~s is not a directory."
-	       slime-directory))
-      (let ((files '("swank-backend" "nregex" "metering" "swank-openmcl" "swank-gray"
-		     "swank")))
-	(dolist (f files)
-	  (load (merge-pathnames f slime-directory)))))
-    (when swank-port
-      (unless (find-package :swank)
-	(error "save-cm: :swank-port specified but swank is not loaded. Specify :slime-directory to load it."))
-      (setf *cm-swank-port* swank-port))
-    (setf ccl::*inhibit-greeting* t)
+      (ccl:create-directory libdir)
+      (ccl:create-directory etcdir))
+    ;; CM.app/info.plist
+    (create-info.plist (merge-pathnames "Contents/Info.plist" bundle)
+                       carbon)
+    ;; cm/etc/xemacs -> Contents/Resources/etc/*.el
+    (ccl:copy-file (merge-pathnames "etc/xemacs/listener.el" cmroot)
+                   (merge-pathnames "listener.el" etcdir)
+                   :if-exists :supersede)
+    (ccl:copy-file (merge-pathnames "etc/xemacs/cm.el" cmroot)
+                   (merge-pathnames "cm.el" etcdir)
+                   :if-exists :supersede)
+    ;; dppccl->MacOS/cm
+    (ccl:copy-file (car ccl::*command-line-argument-list*)
+                   (merge-pathnames "cm" exedir)
+                   :if-exists :supersede)
+    (create-cm.sh (merge-pathnames "cm.sh" exedir))
+    (if carbon
+      (carbon-setup slime-directory swank-port)
+      (normal-setup))
     (ccl:save-application (merge-pathnames "cm.image" exedir)
                           :application-class *cm-application-class*)))
 
-(defun create-info-plist (path)
+(defun normal-setup ()
+  (setf ccl::*inhibit-greeting* t)
+    (setf ccl:*lisp-startup-functions*
+        (append ccl:*lisp-startup-functions*
+                (list #'(lambda ()
+                          (declare (special *cm-readtable*))
+                          (setf *package* (find-package :cm))
+                          (setf *readtable* *cm-readtable*)
+                          (load-cminit)
+                          (cm-logo) )))))
+
+(defun carbon-setup (slime-directory swank-port)
+  (setf *cm-application-class* (find-class 'cm-carbon-application))
+  (when slime-directory
+    (if (ccl:directoryp slime-directory) ; ensure / at end
+        (setf slime-directory (probe-file slime-directory))
+	(error "save-cm: :slime-directory ~s is not a directory."
+	       slime-directory))
+    (let ((files '("swank-backend" "nregex" "metering" "swank-openmcl" "swank-gray"
+                   "swank")))
+      (dolist (f files)
+        (load (merge-pathnames f slime-directory)))))
+  (when swank-port
+    (unless (find-package :swank)
+      (error "save-cm: :swank-port specified but swank is not loaded. Specify :slime-directory to load it."))
+    (setf *cm-swank-port* swank-port)))
+
+(defun create-info.plist (path carbon?)
   (with-open-file (fil path :direction :output :if-does-not-exist :create
                        :if-exists :supersede)
     (format fil
@@ -255,7 +287,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>cm</string>
+	<string>~A</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
@@ -268,7 +300,31 @@
 	<string>MainMenu</string>
 </dict>
 </plist>
-")))
+" (if carbon? "cm" "cm.sh"))))
+
+(defun create-cm.sh (path)
+  (with-open-file (fil path :direction :output :if-does-not-exist :create
+                       :if-exists :supersede)
+    (format fil
+"#!/bin/sh 
+CWD=\"`(cd \\\"\\`dirname \\\\\\\"$0\\\\\\\"\\`\\\"; echo $PWD)`\"
+RES=\"`dirname \\\"$CWD\\\"`/Resources\"
+EDITOR=`defaults read -app CM editor 2>/dev/null`
+export \"DISPLAY=:0.0\"
+if [[ ! $EDITOR || $EDITOR == Emacs ]] ; then
+    EDITOR=\"/Applications/Emacs.app/Contents/MacOS/Emacs\"
+fi
+
+if [ -f \"$EDITOR\" ] ; then
+    \"$EDITOR\" -l \"${RES}/etc/listener.el\" -l \"${RES}/etc/cm.el\" --eval \"(lisp-listener \\\"${CWD}/cm --image-name ${CWD}/cm.image\\\" )\"
+else
+    open -a Terminal \"${CWD}/cm\"
+fi
+
+#EOF
+"))
+  (shell (format nil "chmod a+x ~A" (namestring path)))
+  )
 
 ;;;
 ;;; midishare callbacks moved here.
