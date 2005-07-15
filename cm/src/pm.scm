@@ -24,7 +24,7 @@
 (define *portmidi-default-outbuf-size* 256)
 (define *portmidi-default-filter* 0)
 (define *portmidi-default-mask* 0)
-(define *portmidi-receive-rate 1000) ; in usecs!
+(define *portmidi-receive-rate* 1000) ; in usecs for periodic...
 
 (define-class* <portmidi-stream> (<event-stream> <midi-stream-mixin>)
   ((input :init-value *portmidi-default-input* :init-keyword :input
@@ -308,8 +308,8 @@
   (if (not (car (portmidi-receive str))) #f #t))
 
 (define-method* (receive hook (str <portmidi-stream>) . args)
+  args
   (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
-         (reso (list-prop args ':resolution))
          (stop #f)) 
     ;; the receiving thread's do loop terminates as soon as the stop
     ;; flag is #t. to stop we call the cached "stopper" closure that
