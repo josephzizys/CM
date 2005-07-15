@@ -572,11 +572,33 @@ fi
 	      (#_CFRelease *periodic-polling-timer*)
 	      (%release-cfstring timer-context))))))
 
-(defun set-periodic-task-rate! (ms)
+(defun set-periodic-task-rate! (rate meas)
   ;; set periodic time but only if tasks are not running
   (if *periodic-tasks*
       (error "set-periodic-task-rate!: Periodic tasks currently running.")
-      (setf *periodic-task-rate* ms)))
+      (let (divs)
+        divs
+        (ecase meas
+          ((:second :seconds :sec :s)
+           (setf meas :second divs 1))
+          ((:millisecond :milliseconds :ms :m)
+           (setf meas :millisecond divs 1000))
+          (( :nanosecond  :nanoseconds :usec :usecs :u)
+           (setf meas :nanosecond divs 1000000)))
+        (if (eq meas :millisecond)
+            (setq *periodic-task-rate* rate)
+            (error "set-periodic-task-rate!: fix for ~s." meas))
+        ;;(multiple-value-bind (sec rem)
+        ;;    (floor rate divs)
+        ;;  ;;(print (list sec (* rem (/ 1000000 divs))))
+        ;;  (setf sb-impl::*max-event-to-sec* sec)
+        ;;  (setf sb-impl::*max-event-to-usec*
+        ;;        (* rem (/ 1000000 divs))))
+        (values))))
+
+(defun periodic-task-rate ()
+  ;; always return in usec
+  (* *periodic-task-rate* 1000))
 
 (defun run-periodic-tasks ()
   ;; this is the polling function, it just funcalls thunks on the list

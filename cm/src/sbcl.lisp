@@ -333,18 +333,43 @@
 
 (defvar *periodic-tasks* (list ))
 
-(defun set-periodic-task-rate! (milli)
+(defun set-periodic-task-rate! (rate meas)
   ;; set periodic time but only if tasks are not running
   (if *periodic-tasks*
       (error "set-periodic-task-rate!: Periodic tasks currently running.")
-      (let (sec mil)
-        (if (< milli 1000)
-            (setf sec 0 mil milli)
-            (multiple-value-setq (sec mil)
-              (floor milli 1000)))
-        (setf sb-impl::*max-event-to-sec* sec)
-        (setf sb-impl::*max-event-to-usec* (* mil 1000))
-        milli)))
+      (let (divs)
+        (ecase meas
+          ((:second :seconds :sec :s)
+           (setf divs 1))
+          ((:millisecond :milliseconds :ms :m)
+           (setf divs 1000))
+          ((:nanosecond :nanoseconds :usec :usecs :u)
+           (setf divs 1000000)))
+        (multiple-value-bind (sec rem)
+            (floor rate divs)
+          ;;(print (list sec (* rem (/ 1000000 divs))))
+          (setf sb-impl::*max-event-to-sec* sec)
+          (setf sb-impl::*max-event-to-usec*
+                (* rem (/ 1000000 divs))))
+        (values))))
+
+(defun periodic-task-rate ()
+  ;; always return in usec
+  (+ (* sb-impl::*max-event-to-sec* 1000000)
+     sb-impl::*max-event-to-usec*))
+
+;; (defun set-periodic-task-rate! (milli)
+;;   ;; set periodic time but only if tasks are not running
+;;   (if *periodic-tasks*
+;;       (error "set-periodic-task-rate!: Periodic tasks currently running.")
+;;       (let (sec mil)
+;;         (if (< milli 1000)
+;;             (setf sec 0 mil milli)
+;;             (multiple-value-setq (sec mil)
+;;               (floor milli 1000)))
+;;         (setf sb-impl::*max-event-to-sec* sec)
+;;         (setf sb-impl::*max-event-to-usec* (* mil 1000))
+;;         milli)))
 
 (defun run-periodic-tasks ()
   ;; this is the polling function, it just funcalls thunks on the list

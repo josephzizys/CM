@@ -24,6 +24,7 @@
 (define *portmidi-default-outbuf-size* 256)
 (define *portmidi-default-filter* 0)
 (define *portmidi-default-mask* 0)
+(define *portmidi-receive-rate 1000) ; in usecs!
 
 (define-class* <portmidi-stream> (<event-stream> <midi-stream-mixin>)
   ((input :init-value *portmidi-default-input* :init-keyword :input
@@ -381,7 +382,8 @@
                     (thread-start! th))
                    (t
                     (unless (periodic-task-running?)
-                      (set-periodic-task-rate! (or reso 2)))
+                      (set-periodic-task-rate! *portmidi-receive-rate*
+                                               ':usec))
                     (add-periodic-task! str th)))
              (values))))))
 
