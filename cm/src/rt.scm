@@ -18,9 +18,29 @@
 ;;; $Date$
 
 ;;;
-;;; rts real time scheduler. attempts to be adaptive to fluctuations
-;;; using a targettime to calculate sleep time
 ;;;
+
+(define *rts-scheduling* #f)
+
+(cond-expand
+ (cmu (set! *rts-scheduling* ':periodic))
+ (sbcl (set! *rts-scheduling* ':periodic))
+ (gauche (set! *rts-scheduling* ':threaded))
+ (openmcl (set! *rts-scheduling* ':threaded))
+ (else #f))
+
+(define (rts-scheduling )
+  *rts-scheduling*)
+
+(define (set-rts-scheduling! type)
+  (case type
+    (( :periodic ) (set! *rts-scheduling* type))
+    (( :threaded ) (set! *rts-scheduling* type))
+    (else
+     (if (not type)
+         (set! *rts-scheduling* type)
+         (err "set-rts-scheduling!: Not a scheduling type ~s."
+              type)))))
 
 (define *rts-run* #f)
 (define *rts-now* #f)
@@ -50,6 +70,8 @@
   (err "rts-continue: not implemented."))
 
 (define (rts object to . args)
+  ;; rts real time scheduler. attempts to be adaptive to fluctuations
+  ;; using a targettime to calculate sleep time
   (if (rts-running?) (err "rts: already running."))
   (if (not *rts-lock*)
       (set! *rts-lock* (make-mutex)))
@@ -137,5 +159,85 @@
   (mutex-unlock! *rts-lock*)
   (values))
 
+(define (newrts object to . args)
+  (if (rts-running?) (err "rts: already running."))
+  (let* ((ahead (if (pair? args) (pop args) 0))   ; optional start time
+         (rtimp (rts-scheduling ))
+         (endat (if (pair? args) (pop args) #f)))  ; optional end time
+    (set! *queue* %q)
+    (set! *scheduler* #t)
+    (if (pair? object)
+        (dolist (o object)
+          (schedule-object o
+                           (if (pair? ahead)
+                               (if (pair? (cdr ahead))
+                                   (pop ahead)
+                                   (car ahead))
+                               ahead)))
+        (if (pair? ahead)
+            (schedule-object object (car ahead))
+            (schedule-object object ahead)))
+    (set! *out* to)
+    (set! *rts-run* #t)
+    ;; not sure about this
+    (if (pair? ahead) (set! ahead (apply (function min) ahead)))
+    (set! *rts-now* ahead)
+    (case rtimp
+      (( :threaded )
+       )
+      (( :periodic )
+       (set-periodic-task-rate! 1 :ms)
+       (add-periodic-task! :rts (rts-periodic-thunk object ahead endat)))
+      (else (err "rts: not an rts method type: ~s" rtimp)))))
+
+(define (rts-periodic-thunk object ahead endat)
+  ;; the only hope for this method is if periodic polling at 1ms rate
+  ;; is rock-solid
+  (let ((wait? (if (> ahead 0)
+                   (inexact->exact
+                    (round (* ahead 1000.0)))
+                   0)))
+    (lambda ()
+      (if (> wait? 0)
+          (set! wait? (- wait? 10))  ;FUCK! this should be 1. where am
+                                     ;i getting off???
+          (let ((entry #f)
+                (qtime #f)
+                (start #f)
+                (thing #f)
+                (none? (null (%q-head *queue*))))
+            (cond ((or none?
+                       (not *rts-run*)
+                       (and endat (> (%qe-time (%q-peek *queue*)) endat)))
+                   (unless none? (%q-flush *queue*))
+                   (unschedule-object object #t)
+                   (set! *rts-run* #f)
+                   (set! *queue* #f)
+                   (set! *scheduler* #f)
+                   (set! *rts-now* #f)
+                   (remove-periodic-task! :rts))
+                  (t
+                   (do ()
+                       ((or none?
+                            (> (%qe-time (%q-peek *queue*)) *rts-now*))
+                        (if none?
+                            (set! wait? 0)
+                            (let* ((next (%qe-time (%q-peek *queue*))))
+                              (set! wait? (- next *rts-now*))
+                              (set! *rts-now* next))))
+                     (set! entry (%q-pop *queue*))
+                     (set! qtime (%qe-time entry))
+                     (set! start (%qe-start entry))
+                     (set! thing (%qe-object entry))
+                     (%qe-dealloc *queue* entry)
+                     (process-events thing qtime start *out*)
+                     (set! none? (null (%q-head *queue*))))
+                   (or (eq? wait? 0)
+                       (set! wait? (inexact->exact
+                                   (round (* wait? 1000.0))))))))))))
+
+; (set-rts-scheduling! :periodic)
+; (defun foo (len wai) (process repeat len do (print (now)) wait wai))
+; (newrts (foo 10 .5) nil)
 
 
