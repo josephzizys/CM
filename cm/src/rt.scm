@@ -17,9 +17,6 @@
 ;;; $Revision$
 ;;; $Date$
 
-;;;
-;;;
-
 (define *rts-scheduling* #f)
 
 (cond-expand
@@ -33,6 +30,7 @@
   *rts-scheduling*)
 
 (define (set-rts-scheduling! type)
+  ;; lets you switch between with whatever methods are available
   (case type
     (( :periodic ) (set! *rts-scheduling* type))
     (( :threaded ) (set! *rts-scheduling* type))
@@ -47,6 +45,7 @@
 (define *rts-lock* #f)
 
 (define (rts-reset) 
+  ;; call this after an error
   (when (and *queue* (not (null? (%q-head *queue*))))
     (%q-flush *queue*))
   (set! *queue* #f)
@@ -69,77 +68,6 @@
 (define (rts-continue )
   (err "rts-continue: not implemented."))
 
-(define (rts object to . args)
-  ;; rts real time scheduler. attempts to be adaptive to fluctuations
-  ;; using a targettime to calculate sleep time
-  (if (rts-running?) (err "rts: already running."))
-  (if (not *rts-lock*)
-      (set! *rts-lock* (make-mutex)))
-  (let* ((ahead (if (pair? args) (pop args) 0))   ; optional start time
-         (endat (if (pair? args) (pop args) #f))  ; optional end time
-         (ttime #f))  ; target time tries to control time disturbances
-    (set! *queue* %q)
-    (set! *scheduler* #t)
-    (if (pair? object)
-        (dolist (o object)
-          (schedule-object o
-                           (if (pair? ahead)
-                               (if (pair? (cdr ahead))
-                                   (pop ahead)
-                                   (car ahead))
-                               ahead)))
-        (if (pair? ahead)
-            (schedule-object object (car ahead))
-            (schedule-object object ahead)))
-    (set! *out* to)
-    (set! *rts-run* #t)
-    ;; not sure about this
-    (if (pair? ahead) (set! ahead (apply (function min) ahead)))
-    (set! *rts-now* ahead)
-    (setf ttime (+ *rts-now* (thread-current-time)))
-    (thread-start!
-     (make-thread
-      (lambda ()
-        (if (> *rts-now* 0) 
-            (thread-sleep! *rts-now*))
-        (do ((entry #f)
-             (qtime #f)
-             (start #f)
-             (thing #f)
-             (wait? #f)
-             (none? (null? (%q-head *queue*))))
-            ((or none? (not *rts-run*)
-                 (and endat (> (%qe-time (%q-peek *queue*)) endat)))
-             (unless none? (%q-flush *queue*))
-             (unschedule-object object #t)
-             (set! *rts-run* #f)
-             (set! *queue* #f)
-             (set! *scheduler* #f)
-             (set! *rts-now* #f))
-          (mutex-lock! *rts-lock*)   ; is this necessary? i think with
-          (without-interrupts
-              (do ()
-                  ((or none? 
-                       (> (%qe-time (%q-peek *queue*)) *rts-now*))
-                   (if none?
-                       (set! wait? #f)
-                       (let* ((next (%qe-time (%q-peek *queue*))))
-                         (set! wait? (- next *rts-now*))
-                         (set! *rts-now* next))))
-                (set! entry (%q-pop *queue*))
-                (set! qtime (%qe-time entry))
-                (set! start (%qe-start entry))
-                (set! thing (%qe-object entry))
-                (%qe-dealloc *queue* entry)
-                (process-events thing qtime start *out*)
-                (set! none? (null? (%q-head *queue*)))))
-          (mutex-unlock! *rts-lock*)    ; is this necessary?
-          (if wait? 
-              (begin 
-               (setf ttime (+ ttime wait?))
-               (thread-sleep!
-                (- ttime (thread-current-time)))))))))))
-
 (define-method* (rts-sprout obj &key to at ahead)
   ;; im not sure if i need a locking mechanism here or not. rts wraps
   ;; a without-interrupts around the points where its thread accesses
@@ -159,7 +87,11 @@
   (mutex-unlock! *rts-lock*)
   (values))
 
-(define (newrts object to . args)
+;;;
+;;; real time scheduler
+;;;
+
+(define (rts object to . args)
   (if (rts-running?) (err "rts: already running."))
   (let* ((ahead (if (pair? args) (pop args) 0))   ; optional start time
          (rtimp (rts-scheduling ))
@@ -184,23 +116,73 @@
     (set! *rts-now* ahead)
     (case rtimp
       (( :threaded )
-       )
+       (if (not *rts-lock*) (set! *rts-lock* (make-mutex)))
+       (thread-start!
+        (make-thread (rts-run-threaded object ahead endat))))
       (( :periodic )
        (set-periodic-task-rate! 1 :ms)
-       (add-periodic-task! :rts (rts-periodic-thunk object ahead endat)))
+       (add-periodic-task! :rts (rts-run-periodic object ahead endat)))
       (else (err "rts: not an rts method type: ~s" rtimp)))))
 
-(define (rts-periodic-thunk object ahead endat)
-  ;; the only hope for this method is if periodic polling at 1ms rate
-  ;; is rock-solid
+(define (rts-run-threaded object ahead endat)
+  ;; rts threaded run function. attempts to be adaptive to
+  ;; fluctuations using a target time (ttime) to calculate sleep time
+  (let ((ttime #f)) 
+    (set! ttime (+ ahead (thread-current-time)))
+    (lambda ()
+      (if (> *rts-now* 0) 
+          (thread-sleep! *rts-now*))
+      (do ((entry #f)
+           (qtime #f)
+           (start #f)
+           (thing #f)
+           (wait? #f)
+           (none? (null? (%q-head *queue*))))
+          ((or none? (not *rts-run*)
+               (and endat (> (%qe-time (%q-peek *queue*)) endat)))
+           (unless none? (%q-flush *queue*))
+           (unschedule-object object #t)
+           (set! *rts-run* #f)
+           (set! *queue* #f)
+           (set! *scheduler* #f)
+           (set! *rts-now* #f))
+        (mutex-lock! *rts-lock*)
+        ;; is the lock necessary? maybe without-interrupts is enough
+        ;; to stop repl process from side-effecting queue during the
+        ;; event processing loop. but what about schemes..
+        (without-interrupts
+            (do ()
+                ((or none? 
+                     (> (%qe-time (%q-peek *queue*)) *rts-now*))
+                 (if none?
+                     (set! wait? #f)
+                     (let* ((next (%qe-time (%q-peek *queue*))))
+                       (set! wait? (- next *rts-now*))
+                       (set! *rts-now* next))))
+              (set! entry (%q-pop *queue*))
+              (set! qtime (%qe-time entry))
+              (set! start (%qe-start entry))
+              (set! thing (%qe-object entry))
+              (%qe-dealloc *queue* entry)
+              (process-events thing qtime start *out*)
+              (set! none? (null? (%q-head *queue*)))))
+        (mutex-unlock! *rts-lock*)    ; is this necessary?
+        (if wait? 
+            (begin 
+             (setf ttime (+ ttime wait?))
+             (thread-sleep!
+              (- ttime (thread-current-time)))))))))
+
+(define (rts-run-periodic object ahead endat)
+  ;; rts periodic run function.  the only hope for this method is if
+  ;; the host's periodic polling at 1ms rate is rock-solid
   (let ((wait? (if (> ahead 0)
                    (inexact->exact
                     (round (* ahead 1000.0)))
                    0)))
     (lambda ()
       (if (> wait? 0)
-          (set! wait? (- wait? 10))  ;FUCK! this should be 1. where am
-                                     ;i getting off???
+          (set! wait? (- wait? 1)) ; periodic "sleep"...
           (let ((entry #f)
                 (qtime #f)
                 (start #f)
