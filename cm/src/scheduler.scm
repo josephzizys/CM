@@ -215,18 +215,20 @@
 
 (define *queue* #f) ; system queue
 (define *scheduler* #f)
+(define *pstart* #f) ; start time of process in score or 0
+(define *qtime* #f)  ; current run time (score time)
+(define *qnext* #f)  ; next runttime
+(define *qlock* #f)  ; lock for threaded scheduler
 
 (define (schedule-events stream object . args)
   ;; removed rt
   (let* ((ahead (if (pair? args) (car args) 0))
 	 (noerr #f)
-	 ;(onset #f)
 	 (entry #f)
-	 (qtime #f)
-	 (start #f)
+         (start #f)
 	 (thing #f))
     (set! *queue* %q)
-    (set! *scheduler* #t)
+    (set! *scheduler* ':asap)
     ;; enque all objects at their score times
     ;; object and ahead can be a single values or lists
     (if (pair? object)
@@ -246,24 +248,27 @@
 	   ((null? (%q-head *queue*))
 	    (set! noerr #t))
 	 (set! entry (%q-pop *queue*))
-	 (set! qtime (%qe-time entry))
+	 (set! *qtime* (%qe-time entry))
 	 (set! start (%qe-start entry))
 	 (set! thing (%qe-object entry))
 	 (%qe-dealloc *queue* entry)
-	 ;(write-event thing *out* qtime)
-	 (process-events thing qtime start stream)
+	 (process-events thing *qtime* start stream)
 	 ))
      (lambda ()
        (unless noerr
 	 ;; if we got an error flush remaining queue entries.
 	 ;(warning "Flushing queue.")
-         (set! *scheduler* #f)
 	 (%q-flush *queue*)
 	 (unschedule-object object #t))
        ;; toplevel #f for interactive midi.
-       (set! *queue* #f)))))  
+       (set! *scheduler* #f)
+       (set! *pstart* #f)
+       (set! *qtime* #f)
+       (set! *qlock* #f)
+       (set! *queue* #f)))))
 
 (define (enqueue object time start)
+  ;; start is #f if object is not a container
   (%q-insert (%qe-alloc *queue* time start object) *queue*))
 
 (define (early? tim)
@@ -292,6 +297,9 @@
 ;      (enqueue procs mystart mystart))))
 
 (define-method* (schedule-object (obj <procedure>) start)
+  (enqueue obj start start))
+
+(define-method* (schedule-object (obj <integer>) start)
   (enqueue obj start start))
 
 (define-method* (schedule-object (obj <pair>) start)
@@ -379,18 +387,15 @@
 ;;; an implementation of MACROEXPAND-ALL (walk.lisp). 
 ;;;
 
-(define *qstart* #f)
-(define *qtime* #f)
-(define *qnext* #f)
-
-(define-method* (process-events (func <procedure>) qtime qstart stream)
+(define-method* (process-events (func <procedure>) qtime pstart stream)
   stream
-  (set! *qtime* qtime)
-  (set! *qstart* qstart)
-  (set! *qnext* *qtime*)
+  ;; scoretime process originally started at only valid during funcall
+  (set! *pstart* pstart)
+  ;; *qnext* is advanced by (wait ...)
+  (set! *qnext* qtime)
   ;; reschedule if process function returns non-nil
-  (if (funcall func)
-    (enqueue func *qnext* *qstart*)))
+  (if (funcall func) (enqueue func *qnext* *pstart*))
+  (set! *pstart* #f))
 
 (define (output event . args)
   ;; used in processes to write events to the current output
@@ -402,64 +407,264 @@
         (begin
          (if (pair? event)
              (dolist (e event)
-               (let ((n (+ *qstart* (or at (object-time e)))))
+               ;; if called from process at relative to process start
+               ;; time
+               (let ((n (+ (or *pstart* 0) (or at (object-time e)))))
                  (if (early? n)
                      (enqueue e n #f)
-                     (write-event e out n)
-                     )))
-             (let ((n (+ *qstart* (or at (object-time event)))))
+                     (write-event e out n))))
+             (let ((n (+ (or *pstart* 0) (or at (object-time event)))))
                (if (early? n)
                    (enqueue event n #f)
                    (write-event event out n)))))
-        (rt-output event out))
+        (write-event event out at))
     (values)))
 
 (define (now . args)
+  ;; now can only be called from (process ) or from the repl
   (with-args (args &optional abs-time)
+    ;; *pstart* will be #f if called outside process
     (if *scheduler*
       (if (not abs-time)
-        (- *qtime* *qstart*)
+        (- *qtime* (or *pstart* 0))
         *qtime*)
-      (rt-now *out*))))
+      (err "now: scheduler not running."))))
 
 (define (wait delta)
+  ;; should this check *pstart* ??
   (if *scheduler*
       (set! *qnext* (+ *qnext* (abs delta)))
-      (rt-wait delta *out*)))
+      (err "wait: scheduler not running.")))
 
-(define-method* (sprout (obj <object>) . args)
+;; (define-method* (sprout (obj <object>) . args)
+;;   (with-args (args &optional time ahead)
+;;     ahead
+;;     (if *scheduler*
+;;         (schedule-object obj *qstart*)
+;;         (err "sprout: scheduler not running."))))
+;; (define-method* (sprout (obj <procedure>) . args)
+;;   (with-args (args &optional time ahead)
+;;     ahead
+;;     (if *scheduler*
+;;         (enqueue obj (+ *qstart* time) (+ *qstart* time))
+;;         (err "sprout: scheduler not running."))))
+;; (define-method* (sprout (obj <pair>) . args)
+;;   (with-args (args &optional time ahead)
+;;     (if *scheduler*
+;;       (dolist (o obj) (sprout o time ahead))
+;;       (err "sprout: scheduler not running."))))
+
+(define (sprout obj . args)
   (with-args (args &optional time ahead)
-    ahead
     (if *scheduler*
-        (schedule-object obj *qstart*)
-        (if (> time 0)
-            (rt-sprout obj time *out*)
-            (output obj *out*)))))
+        (let ((at (if time
+                      (if *pstart*
+                          (+ time *pstart*)
+                          time)
+                      (now))))
+          ;; at is true time to insert in queue. if sprouting from a
+          ;; process then time is relative to process start time
+          ;; *pstart*. else sprout is being called from the repl, time
+          ;; is relative to 0.
+          (if ahead (set! at (+ at ahead)))
+          ;; im not sure if i need a locking mechanism here or not. rts
+          ;; wraps a without-interrupts around the points where its
+          ;; thread accesses the queue, maybe that would keep this code
+          ;; from simultaneous side-effecting the queue from another
+          ;; process
+          (if (eq? *scheduler* ':threaded) (mutex-lock! *qlock*))
+          (cond ((pair? obj)
+                 (dolist (o obj) (sprout o time ahead)))
+                ((procedure? obj)       ; process
+                 ;; add sprouted process at time relative to start of
+                 ;; sprouter
+                 (enqueue obj at at) )
+                ((integer? obj)         ; midi message
+                 ;; add midi message relatice to true scoretime
+                 (enqueue obj at #f) )
+                (else                   ; object
+                 ;; else the object has a method on object-time and
+                 ;; schedule-object will enqueue at object-time PLUS
+                 ;; start time of process that sprouted it
+                 (schedule-object obj (or *pstart* 0))))
+          (if (eq? *scheduler* ':threaded) (mutex-unlock! *qlock*)))
+        (err "sprout: scheduler not running."))
+    (values)))
 
-(define-method* (sprout (obj <procedure>) . args)
-  (with-args (args &optional time ahead)
-    ahead
-    (if *scheduler*
-        (enqueue obj (+ *qstart* time) (+ *qstart* time))
-        (rt-sprout obj time *out*))))
-
-(define-method* (sprout (obj <pair>) . args)
-  (with-args (args &optional time ahead)
-    ahead
-    (if *scheduler*
-      (dolist (o obj) (sprout o time))
-      (dolist (o obj) (rt-sprout o time *out*)))))
+;;;
+;;; real time scheduling (rts)
+;;;
 
 
-;(defprocess foo ()
-;  (process repeat 10
-;	   for k = (random 100)
-;	   output (new midi time (now)
-;				 keynum k)
-;	   wait 1))
-;
-;(events (foo) "test.clm" 0)
+(define *rts-type* #f)
 
+(cond-expand
+ (cmu (set! *rts-type* ':periodic))
+ (sbcl (set! *rts-type* ':periodic))
+ (gauche (set! *rts-type* ':threaded))
+ (openmcl (set! *rts-type* ':threaded))
+ (else #f))
 
+(define (rts-type )
+  *rts-type*)
 
+(define (set-rts-type! type)
+  ;; lets you switch between with whatever methods are available
+  (case type
+    (( :periodic ) (set! *rts-type* type))
+    (( :threaded ) (set! *rts-type* type))
+    (else
+     (if (not type)
+         (set! *rts-type* type)
+         (err "set-rts-type!: Not a scheduling type ~s."
+              type)))))
 
+(define *rts-run* #f)
+
+(define (rts-reset) 
+  ;; call this after an error
+  (when (and *queue* (not (null? (%q-head *queue*))))
+    (%q-flush *queue*))
+  (set! *queue* #f)
+  (set! *scheduler* #f)
+  (set! *rts-run* #f)
+  (set! *pstart* #f)
+  (set! *qnext* #f)
+  (set! *qtime* #f))
+
+(define (rts-running? )
+  *rts-run*)
+
+(define (rts-stop) 
+  (set! *rts-run* #f))
+
+(define (rts-pause )
+  (err "rts-pause: not implemented."))
+
+(define (rts-continue )
+  (err "rts-continue: not implemented."))
+
+(define (rts object to . args)
+  (if (rts-running?) (err "rts: already running."))
+  (let* ((ahead (if (pair? args) (pop args) 0))   ; optional start time
+         (rtype (rts-type ))
+         (endat (if (pair? args) (pop args) #f)))  ; optional end time
+    (set! *queue* %q)
+    (if (pair? object)
+        (dolist (o object)
+          (schedule-object o
+                           (if (pair? ahead)
+                               (if (pair? (cdr ahead))
+                                   (pop ahead)
+                                   (car ahead))
+                               ahead)))
+        (if (pair? ahead)
+            (schedule-object object (car ahead))
+            (schedule-object object ahead)))
+    ;; not sure about this
+    (if (pair? ahead) (set! ahead (apply (function min) ahead)))
+    (set! *out* to)
+    (set! *rts-run* #t)
+    (set! *qtime* ahead)
+    (case rtype
+      (( :threaded )
+       (if (not *qlock*) (set! *qlock* (make-mutex)))
+       (set! *scheduler* ':threaded)
+       (thread-start!
+        (make-thread (rts-run-threaded object ahead endat))))
+      (( :periodic )
+       (set! *scheduler* ':periodic)
+       (set-periodic-task-rate! 1 :ms)
+       (add-periodic-task! :rts (rts-run-periodic object ahead endat)))
+      (else (err "rts: not an rts scheduling type: ~s" rtype)))))
+
+(define (rts-run-threaded object ahead endat)
+  ;; rts threaded run function. attempts to be adaptive to
+  ;; fluctuations using a target time (ttime) to calculate sleep time
+  (let ((ttime #f)) 
+    (set! ttime (+ ahead (thread-current-time)))
+    (lambda ()
+      (if (> *qtime* 0) 
+          (thread-sleep! *qtime*))
+      (do ((entry #f)
+           (thing #f)
+           (start #f)
+           (wait? #f)
+           (none? (null? (%q-head *queue*))))
+          ((or none? (not *rts-run*)
+               (and endat (> (%qe-time (%q-peek *queue*)) endat)))
+           (unschedule-object object #t)
+           (rts-reset))
+        (mutex-lock! *qlock*)
+        ;; is the lock necessary? maybe without-interrupts is enough
+        ;; to stop repl process from side-effecting queue during the
+        ;; event processing loop. but what about schemes..
+        (without-interrupts
+            (do ()
+                ((or none? 
+                     (> (%qe-time (%q-peek *queue*)) *qtime*))
+                 (if none?
+                     (set! wait? #f)
+                     (let* ((next (%qe-time (%q-peek *queue*))))
+                       (set! wait? (- next *qtime*))
+                       ;; not sure if this should really be
+                       ;; incremented here. maybe the time shouldnt be
+                       ;; advanced until after the sleep??
+                       (set! *qtime* next)
+                       )))
+              (set! entry (%q-pop *queue*))
+              (set! *qtime* (%qe-time entry))
+              (set! start (%qe-start entry))
+              (set! thing (%qe-object entry))
+              (%qe-dealloc *queue* entry)
+              (process-events thing *qtime* start *out*)
+              (set! none? (null? (%q-head *queue*)))))
+        (mutex-unlock! *qlock*)    ; is this necessary?
+        (if wait? 
+            (begin 
+             (setf ttime (+ ttime wait?))
+             (thread-sleep!
+              (- ttime (thread-current-time)))))))))
+
+(define (rts-run-periodic object ahead endat)
+  ;; rts periodic run function.  the only hope for this method is if
+  ;; the host's periodic polling at 1ms rate is rock-solid
+  (let ((wait? (if (> ahead 0)
+                   (inexact->exact
+                    (round (* ahead 1000.0)))
+                   0)))
+    (lambda ()
+      (if (> wait? 0)
+          (set! wait? (- wait? 1)) ; periodic "sleep"...
+          (let ((entry #f)
+                (thing #f)
+                (start #f)
+                (none? (null (%q-head *queue*))))
+            (cond ((or none?
+                       (not *rts-run*)
+                       (and endat (> (%qe-time (%q-peek *queue*)) endat)))
+                   (unschedule-object object #t)
+                   (rts-reset)
+                   (remove-periodic-task! :rts))
+                  (t
+                   (do ()
+                       ((or none?
+                            (> (%qe-time (%q-peek *queue*)) *qtime*))
+                        (if none?
+                            (set! wait? 0)
+                            (let* ((next (%qe-time (%q-peek *queue*))))
+                              (set! wait? (- next *qtime*))
+                              ;; not sure if this should really be
+                              ;; incremented here. maybe the time shouldnt be
+                              ;; advanced until after the sleep??
+                              (set! *qtime* next))))
+                     (set! entry (%q-pop *queue*))
+                     (set! *qtime* (%qe-time entry))
+                     (set! start (%qe-start entry))
+                     (set! thing (%qe-object entry))
+                     (%qe-dealloc *queue* entry)
+                     (process-events thing *qtime* start *out*)
+                     (set! none? (null (%q-head *queue*))))
+                   (or (eq? wait? 0)
+                       (set! wait? (inexact->exact
+                                   (round (* wait? 1000.0))))))))))))
