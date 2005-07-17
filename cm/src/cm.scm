@@ -22,7 +22,7 @@
                    "io" "scheduler" "sco" "clm" "clm2"
                    "midi1" "midi2" "midi3" "data" "scales" "spectral"
                    "patterns" "osc"
-                   "sc" "rt" "rt-sc"
+                   "sc" "rt-sc"
                    )))
   (cond-expand
    (stklos
