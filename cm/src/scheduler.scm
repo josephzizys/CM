@@ -75,6 +75,9 @@
 (define-macro (%q-peek q)
   `(%q-head ,q))
 
+(define-macro (%q-empty? q)
+  `(null? (%q-head ,q)))
+
 (define-macro (%q-pop queue)
   (let ((q (gensym))
 	(e (gensym)))
@@ -496,28 +499,14 @@
 ;;;
 
 
-(define *rts-type* #f)
+(define *rts* #f)
 
 (cond-expand
- (cmu (set! *rts-type* ':periodic))
- (sbcl (set! *rts-type* ':periodic))
- (gauche (set! *rts-type* ':threaded))
- (openmcl (set! *rts-type* ':threaded))
+ (cmu (set! *rts* ':periodic))
+ (sbcl (set! *rts* ':periodic))
+ (gauche (set! *rts* ':threaded))
+ (openmcl (set! *rts* ':threaded))
  (else #f))
-
-(define (rts-type )
-  *rts-type*)
-
-(define (set-rts-type! type)
-  ;; lets you switch between with whatever methods are available
-  (case type
-    (( :periodic ) (set! *rts-type* type))
-    (( :threaded ) (set! *rts-type* type))
-    (else
-     (if (not type)
-         (set! *rts-type* type)
-         (err "set-rts-type!: Not a scheduling type ~s."
-              type)))))
 
 (define *rts-run* #f)
 
@@ -544,11 +533,15 @@
 (define (rts-continue )
   (err "rts-continue: not implemented."))
 
-(define (rts object to . args)
-  (if (rts-running?) (err "rts: already running."))
-  (let* ((ahead (if (pair? args) (pop args) 0))   ; optional start time
-         (rtype (rts-type ))
-         (endat (if (pair? args) (pop args) #f)))  ; optional end time
+(define (rts . args)
+  (if (rts-running?) 
+      (err "rts: already running. Forgot (rts-reset) after an error?"))
+  (let* ((object (if (pair? args) (pop args) #f)) ; object(s) to run
+         (to (if (pair? args) (pop args)          ; output stream
+                 (current-output-stream)))   
+         (ahead (if (pair? args) (pop args) 0)) ; start time offset
+         (end (if (pair? args) (pop args) 
+                  (if object #t #f))))
     (set! *queue* %q)
     (if (pair? object)
         (dolist (o object)
@@ -560,25 +553,26 @@
                                ahead)))
         (if (pair? ahead)
             (schedule-object object (car ahead))
-            (schedule-object object ahead)))
+            (if object
+                (schedule-object object ahead))))
     ;; not sure about this
     (if (pair? ahead) (set! ahead (apply (function min) ahead)))
     (set! *out* to)
     (set! *rts-run* #t)
     (set! *qtime* ahead)
-    (case rtype
+    (case *rts*
       (( :threaded )
        (if (not *qlock*) (set! *qlock* (make-mutex)))
        (set! *scheduler* ':threaded)
        (thread-start!
-        (make-thread (rts-run-threaded object ahead endat))))
+        (make-thread (rts-run-threaded object ahead end))))
       (( :periodic )
        (set! *scheduler* ':periodic)
        (set-periodic-task-rate! 1 :ms)
-       (add-periodic-task! :rts (rts-run-periodic object ahead endat)))
-      (else (err "rts: not an rts scheduling type: ~s" rtype)))))
+       (add-periodic-task! :rts (rts-run-periodic object ahead end)))
+      (else (err "rts: not an rts scheduling type: ~s" *rts*)))))
 
-(define (rts-run-threaded object ahead endat)
+(define (rts-run-threaded object ahead end)
   ;; rts threaded run function. attempts to be adaptive to
   ;; fluctuations using a target time (ttime) to calculate sleep time
   (let ((ttime #f)) 
@@ -589,11 +583,14 @@
       (do ((entry #f)
            (thing #f)
            (start #f)
-           (wait? #f)
-           (none? (null? (%q-head *queue*))))
-          ((or none? (not *rts-run*)
-               (and endat (> (%qe-time (%q-peek *queue*)) endat)))
-           (unschedule-object object #t)
+           (wait? #f))
+          ((or (not *rts-run*)
+               (if (eq? end #t) (%q-empty? *queue*)
+                   (if (eq? end #f) #f
+                       (or (%q-empty? *queue*) 
+                           (> (%qe-time (%q-peek *queue*)) 
+                              end)))))
+           (if object (unschedule-object object #t))
            (rts-reset))
         (mutex-lock! *qlock*)
         ;; is the lock necessary? maybe without-interrupts is enough
@@ -601,32 +598,32 @@
         ;; event processing loop. but what about schemes..
         (without-interrupts
             (do ()
-                ((or none? 
+                ((or (%q-empty? *queue*)
                      (> (%qe-time (%q-peek *queue*)) *qtime*))
-                 (if none?
+                 (if (%q-empty? *queue*)
                      (set! wait? #f)
                      (let* ((next (%qe-time (%q-peek *queue*))))
                        (set! wait? (- next *qtime*))
                        ;; not sure if this should really be
                        ;; incremented here. maybe the time shouldnt be
                        ;; advanced until after the sleep??
-                       (set! *qtime* next)
-                       )))
+                       (set! *qtime* next))))
               (set! entry (%q-pop *queue*))
               (set! *qtime* (%qe-time entry))
               (set! start (%qe-start entry))
               (set! thing (%qe-object entry))
               (%qe-dealloc *queue* entry)
-              (process-events thing *qtime* start *out*)
-              (set! none? (null? (%q-head *queue*)))))
+              (process-events thing *qtime* start *out*)))
         (mutex-unlock! *qlock*)    ; is this necessary?
         (if wait? 
             (begin 
              (setf ttime (+ ttime wait?))
              (thread-sleep!
-              (- ttime (thread-current-time)))))))))
+              (- ttime (thread-current-time))))
+            (if (not end) (set! ttime (+ ahead (thread-current-time))))
+            )))))
 
-(define (rts-run-periodic object ahead endat)
+(define (rts-run-periodic object ahead end)
   ;; rts periodic run function.  the only hope for this method is if
   ;; the host's periodic polling at 1ms rate is rock-solid
   (let ((wait? (if (> ahead 0)
@@ -640,10 +637,13 @@
                 (thing #f)
                 (start #f)
                 (none? (null (%q-head *queue*))))
-            (cond ((or none?
-                       (not *rts-run*)
-                       (and endat (> (%qe-time (%q-peek *queue*)) endat)))
-                   (unschedule-object object #t)
+            (cond ((or (not *rts-run*)
+                       (if (eq? end #t) none?
+                           (if (eq? end #f) #f
+                               (if none? #t
+                                   (> (%qe-time (%q-peek *queue*)) 
+                                      end)))))
+                   (if object (unschedule-object object #t))
                    (rts-reset)
                    (remove-periodic-task! :rts))
                   (t
@@ -668,3 +668,7 @@
                    (or (eq? wait? 0)
                        (set! wait? (inexact->exact
                                    (round (* wait? 1000.0))))))))))))
+
+
+
+
