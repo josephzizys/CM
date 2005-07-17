@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>rts</title>
+</head>
+
+<body>
+<div id="content"> <!-- begin content -->
+<dl class="dictsyntax">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">rts</code> [<var>objects</var>] [<var>to</var>] [<var>start</var>] [<var>end</var>] <code>)</code></dd>
+</dl>
+
+<p>
+Runs <var>objects</var> in the "real time" scheduler according to optional arguments.
+</p>
+
+<p id="args"><code class="entry">rts</code> supports the following optional arguments:
+</p>
+
+<dl>
+
+<dt>
+<var>objects</var> {<var>objects</var> | <var>false</var>}
+</dt>
+<dd>
+The object or list of objects to initially place in the scheduling
+queue. If the value is false then <code>rts</code> starts running
+but with no pending objects.
+</dd>
+<dt>
+<var>to</var> {<var>stream</var> | <var>false</var>}
+</dt>
+<dd>An optional destination output stream, defaults
+to <a
+href="current-output-stream-fn.html">current-output-stream</a>. If <var>stream</var>
+is provided it must either be false or a stream object that is already
+open and initialized.
+</dd>
+<dt><var>ahead</var> <var>number</var>
+<dd>An optional start time offset, defaults to 0.<dd>
+<dt><var>end</var> {<var>number</var> | <var>boolean</var>}
+<dd>
+If <var>end</var> is a number then <code>rts</code> stops running when
+that time has been reached in the score or when no objects remain
+pending in the scheduler, which ever comes first.  If <var>end</var>
+is boolean true then <code>rts</code> stops running when no more
+objects are pending in the scheduler. If <var>end</var> is false then
+rts does not stop running
+until <a href="rts-stop-fn.html">rts-stop</a> is explicitly called to
+stop the scheduler. The default value is boolean true if <var>objects</var> are specified else boolean false.
+</dd>
+</dl>
+
+<p>
+<code>rts</code> is intended as a substitute
+for <a href="events-fn.html">events</a>: processes definitions do
+not have to be altered to run in real time and underlying support
+functions
+<a href="now-fn.html">now</a>, <a href="output-fn.html">output</a>
+and <a href="sprout-fn.html">sprout</a> work the same in both
+scheduling environments.  The most important differences between the
+two schedulers are:<!-- <code>rts</code>
+and <a href="events-fn.html">events</a> (aside from the obvious real
+time scheduling aspect) are: -->
+
+<ul>
+<li>after starting the scheduler <code>rts</code> returns immediately and the REPL is not blocked while the scheduler is running.
+<li>if <var>end</var> is false then the scheduler continues to run
+even if its queue is empty.
+<li> <a href="sprout-fn.html">sprout</a> can be called from the
+REPL to add objects to the scheduler "interactively" as long as it is running.
+</ul>
+
+<h4>Implementation and Limitations:</h4>
+
+<p>
+CM uses either native threads or a 1 millisecond periodic task to
+implement <code>rts</code>. The availability of either method depends
+on the underlying Lisp implementation:
+</p>
+
+<div class="float" >
+<p class="captxt">
+<span class="floatlabel">Table 1.</span> Implementation of real time
+scheduling in supported Lisp implementations:  NT
+(native threads) PP (periodic polling).
+</p>
+
+<table class="float">
+<tr >
+<td>&nbsp;</td>
+<th class="col" align="center" style="padding-left:2em;padding-right:2em;">Linux</th>
+<th class="col" align="center" style="padding-left:2empadding-right:2em;">OS X</th>
+<th class="col" align="center" style="padding-left:2em;padding-right:2em;">Windows</th>
+</tr>
+<tr><td style="font-weight:bold;">CMUCL</td>    <td align="center">PP</td><td > </td><td></td></tr>
+<tr><td style="font-weight:bold;">OpenMCL</td>  <td align="center"></td><td align="center">NT, PP</td><td></td></tr>
+<tr><td style="font-weight:bold;">SBCL<span style="font-size:smaller;vertical-align:super">1</span></td>     <td align="center">PP</td><td align="center"></td><td></td></tr>
+</table>
+
+<p style="font-style:normal;font-size:smaller;">
+<span style="vertical-align:super;">1</span>  Native threads in SBCL/Linux are in alpha release.<br/>
+</p>
+
+</div>
+
+How close <code>rts</code> actually gets to accurate real time
+rendering depends on a number of factors, including how accurate the
+Lisp implementation's thread sleeping/periodic tasks are, how
+short the time deltas between musical events are, whether process code
+is compiled or interpreted, how much garbage is generated, and so on.
+<p>
+
+
+
+<h4>Examples:</h4>
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 1.</span> Calling <code>rts</code> and sprouting from the REPL.
+</p>
+<pre class="code">
+(defparameter *pm*
+  (portmidi-open :input 1 :output 3 :latency 0))
+
+(define (zzz len lb ub wai amp)
+  (process repeat len
+           output (new midi :time (now)
+                       :duration .1 :amplitude amp
+                       :keynum (between lb ub))
+    wait wai))
+
+;; fire it up for 25 seconds..
+(rts (list (zzz 100 60 90 .25 .5)
+           (zzz 50 20 50 .5 .5))
+     *pm*)
+
+;;...eval this in the repl while zzz plays:
+(let ((k (between 20 100))
+      (n (pick 3 5 7 11)))
+  (sprout (zzz (* n (pick 2 3 4))
+               k
+               (+ k 7)
+               (/ 1 n)
+               .75)))
+</pre>
+</div>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 2.</span> Endless fluff (Todd Ingalls)
+</p>
+<pre class="code">
+(define fluff '(60 62 64 67 72 65 69 48 50))
+
+(define (endless-fluff num dur knums)
+  (process repeat num for i from 0 
+	   output
+           (new midi :time (now) 
+                :duration (* 2 dur)
+                :amplitude .5
+                :keynum (pickl fluff))
+	   wait (pick dur (/ dur 2) (/ dur 4))
+	   when (= i (1- num))
+	   sprout (process repeat 4
+                           output (new midi :time (now) 
+                                       :duration 5
+                                       :amplitude .5 
+                                       :keynum (pickl knums)))
+	   and
+	   sprout (endless-fluff 30 1 knums)))
+
+(rts (endless-fluff 30 1 fluff) *pm* 0 #f)
+
+;; stop the scheduler
+(rts-stop)
+</pre>
+</div>
+
+<div class="float">
+<p class="captxt">
+<span class="floatlabel">Example 3.</span>  Receiving and scheduling.
+</p>
+<pre class="code">
+(define (ranecho len knum )
+  ;; wander starting at knum for len
+  (process with mina = (vary .2 .5) 
+           and maxa = (vary .8 .5)
+           and sum = (between 2.0 6.0)
+           and pow = (/ 1 (between 2 8))
+           for i below len
+           for d = (explseg i len sum pow)
+           for a = (interp i 0 maxa (- len 1) mina)
+           for k = knum then (drunk k 2)
+           output (new midi :time (now)
+                       :keynum k :duration 1
+                       :amplitude a)
+           wait d))
+
+(define (echo mm mt)
+  mt
+  (if (note-on-p mm)
+      (sprout (ranecho (pick 6 7 8 9 10) 
+                       (note-on-key mm)))))
+(define *pm* 
+  (portmidi-open :input 1 :output 3 :latency 0))
+
+(rts (ranecho 10 60) *pm*) ; test it out frst
+
+(receive #'echo *pm*)
+
+(rts #f *pm* 0 #f)
+
+(rts-stop)
+
+(receive #f *pm*)
+</pre>
+</div>
+
+
+
+
+
+
+<h4>See also:</h4>
+<ul>
+<li><a href="receive-fn.html"><code>receive</code></a> [Function]</li>
+<li><a href="rts-running-fn.html"><code>rts-running?</code></a> [Function]</li>
+<li><a href="rts-stop-fn.html"><code>rts-stop</code></a> [Function]</li>
+
+
+</ul>
+
+</div> <!-- end content -->
+<hr class="inv"/>
+<!-- Rtster -->
+<div id="rtster">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
