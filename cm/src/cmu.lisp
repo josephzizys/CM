@@ -115,6 +115,8 @@
 
 (defun save-cm (path &rest args)
   (declare (ignore args))
+  #+:linkage-table
+  (pushnew 'sys::reinitialize-global-table ext:*after-save-initializations*)       
   (extensions:save-lisp path :print-herald NIL
                         :init-function
                         #'(lambda ()
