@@ -539,9 +539,11 @@
   (let* ((object (if (pair? args) (pop args) #f)) ; object(s) to run
          (to (if (pair? args) (pop args)          ; output stream
                  (current-output-stream)))   
-         (ahead (if (pair? args) (pop args) 0)) ; start time offset
+         (ahead (if (pair? args) (or (pop args) 0) 0)) ; start time offset
          (end (if (pair? args) (pop args) 
                   (if object #t #f))))
+    (if (and (not object) (or (pair? ahead ) (> ahead 0)))
+        (err "rts: ahead must be 0 when starting rts without objects."))
     (set! *queue* %q)
     (if (pair? object)
         (dolist (o object)
@@ -570,58 +572,59 @@
        (set! *scheduler* ':periodic)
        (set-periodic-task-rate! 1 :ms)
        (add-periodic-task! :rts (rts-run-periodic object ahead end)))
-      (else (err "rts: not an rts scheduling type: ~s" *rts*)))))
+      (else (err "rts: not an rts scheduling type: ~s" *rts*)))
+    (values)))
 
 (define (rts-run-threaded object ahead end)
   ;; rts threaded run function. attempts to be adaptive to
   ;; fluctuations using a target time (ttime) to calculate sleep time
-  (let ((ttime #f)) 
-    (set! ttime (+ ahead (thread-current-time)))
-    (lambda ()
-      (if (> *qtime* 0) 
-          (thread-sleep! *qtime*))
-      (do ((entry #f)
-           (thing #f)
-           (start #f)
-           (wait? #f))
-          ((or (not *rts-run*)
-               (if (eq? end #t) (%q-empty? *queue*)
-                   (if (eq? end #f) #f
-                       (or (%q-empty? *queue*) 
-                           (> (%qe-time (%q-peek *queue*)) 
-                              end)))))
-           (if object (unschedule-object object #t))
-           (rts-reset))
-        (mutex-lock! *qlock*)
-        ;; is the lock necessary? maybe without-interrupts is enough
-        ;; to stop repl process from side-effecting queue during the
-        ;; event processing loop. but what about schemes..
-        (without-interrupts
-            (do ()
-                ((or (%q-empty? *queue*)
-                     (> (%qe-time (%q-peek *queue*)) *qtime*))
-                 (if (%q-empty? *queue*)
-                     (set! wait? #f)
-                     (let* ((next (%qe-time (%q-peek *queue*))))
-                       (set! wait? (- next *qtime*))
-                       ;; not sure if this should really be
-                       ;; incremented here. maybe the time shouldnt be
-                       ;; advanced until after the sleep??
-                       (set! *qtime* next))))
-              (set! entry (%q-pop *queue*))
-              (set! *qtime* (%qe-time entry))
-              (set! start (%qe-start entry))
-              (set! thing (%qe-object entry))
-              (%qe-dealloc *queue* entry)
-              (process-events thing *qtime* start *out*)))
-        (mutex-unlock! *qlock*)    ; is this necessary?
-        (if wait? 
-            (begin 
-             (setf ttime (+ ttime wait?))
-             (thread-sleep!
-              (- ttime (thread-current-time))))
-            (if (not end) (set! ttime (+ ahead (thread-current-time))))
-            )))))
+  ahead ; same as *qtime* 
+  (lambda ()
+    (if (> *qtime* 0) 
+        (thread-sleep! *qtime*))
+    (do ((ttime (thread-current-time))
+         (entry #f)
+         (thing #f)
+         (start #f)
+         (wait? #f))
+        ((or (not *rts-run*)
+             (if (eq? end #t) (%q-empty? *queue*)
+                 (if (eq? end #f) #f
+                     (or (%q-empty? *queue*) 
+                         (> (%qe-time (%q-peek *queue*)) 
+                            end)))))
+         (if object (unschedule-object object #t))
+         (rts-reset))
+      (mutex-lock! *qlock*)
+      ;; is the lock necessary? maybe without-interrupts is enough
+      ;; to stop repl process from side-effecting queue during the
+      ;; event processing loop. but what about schemes..
+      (without-interrupts
+          (do ()
+              ((or (%q-empty? *queue*)
+                   (> (%qe-time (%q-peek *queue*)) *qtime*))
+               (if (%q-empty? *queue*)
+                   (set! wait? #f)
+                   (let* ((next (%qe-time (%q-peek *queue*))))
+                     (set! wait? (- next *qtime*))
+                     ;; not sure if this should really be
+                     ;; incremented here. maybe the time shouldnt be
+                     ;; advanced until after the sleep??
+                     (set! *qtime* next))))
+            (set! entry (%q-pop *queue*))
+            (set! *qtime* (%qe-time entry))
+            (set! start (%qe-start entry))
+            (set! thing (%qe-object entry))
+            (%qe-dealloc *queue* entry)
+            (process-events thing *qtime* start *out*)))
+      (mutex-unlock! *qlock*)           ; is this necessary?
+      (if wait? 
+          (begin 
+           (setf ttime (+ ttime wait?))
+           (thread-sleep!
+            (- ttime (thread-current-time))))
+          (if (not end) (set! ttime (thread-current-time)))
+          ))))
 
 (define (rts-run-periodic object ahead end)
   ;; rts periodic run function.  the only hope for this method is if
