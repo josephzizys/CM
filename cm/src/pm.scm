@@ -42,6 +42,8 @@
    ;; data list: (<thread> #'stopper <evbuf> <len>)
    (receive :init-value (list #f #f #f #f)
             :accessor portmidi-receive)
+   (recmode :init-value :message :init-keyword :receive-mode
+            :accessor portmidi-receive-mode)
    (filter :init-value *portmidi-default-filter* :init-keyword :filter
            :accessor portmidi-filter)
    (mask :init-value *portmidi-default-mask* :init-keyword :channel-mask
@@ -310,7 +312,11 @@
 (define-method* (receive hook (str <portmidi-stream>) . args)
   args
   (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
+         (mode (portmidi-receive-mode str))
          (stop #f)) 
+    ;; can receive either message/times or raw buffer/count
+    (unless (member mode '(:message :raw))
+      (err "receive: ~s is not a portmidi receive mode." mode))
     ;; the receiving thread's do loop terminates as soon as the stop
     ;; flag is #t. to stop we call the cached "stopper" closure that
     ;; sets the var to #t.
@@ -335,6 +341,7 @@
                   (sz (portmidi-inbuf-size str)) ; bufsiz
                   (bf (third data))  ; old buffer
                   (so (fourth data)) ; old bufsiz
+                  (rm (eq? mode ':message))
                   (th #f) ; thread
                   (st #f) ; thread stopper
                   (fn #f) ; mapper
@@ -358,7 +365,9 @@
                            (when (pm:StreamPoll in)
                              (set! n (pm:StreamRead in bf sz))
                              (when (> n 0)
-                               (pm:EventBufferMap fn bf n)))))))
+                               (if rm (pm:EventBufferMap fn bf n)
+                                   ( hook bf n))
+                               ))))))
                 (set! st (lambda () (set! stop #t))))
                ((:periodic )
                 (set! th
@@ -367,7 +376,8 @@
                           (when (pm:StreamPoll in)
                             (set! n (pm:StreamRead in bf sz))
                             (when (> n 0)
-                              (pm:EventBufferMap fn bf n))))))
+                              (if rm (pm:EventBufferMap fn bf n)
+                                  ( hook bf n)))))))
                 (set! st (lambda ()
                            (remove-periodic-task! str))))
                (else
