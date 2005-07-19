@@ -509,6 +509,7 @@
  (else #f))
 
 (define *rts-run* #f)
+(define *rts-idle-rate* .0001) ; hack to stop gobbling cpu
 
 (define (rts-reset) 
   ;; call this after an error
@@ -596,9 +597,6 @@
          (if object (unschedule-object object #t))
          (rts-reset))
       (mutex-lock! *qlock*)
-      ;; is the lock necessary? maybe without-interrupts is enough
-      ;; to stop repl process from side-effecting queue during the
-      ;; event processing loop. but what about schemes..
       (without-interrupts
           (do ()
               ((or (%q-empty? *queue*)
@@ -617,14 +615,25 @@
             (set! thing (%qe-object entry))
             (%qe-dealloc *queue* entry)
             (process-events thing *qtime* start *out*)))
-      (mutex-unlock! *qlock*)           ; is this necessary?
+      (mutex-unlock! *qlock*)
       (if wait? 
           (begin 
            (setf ttime (+ ttime wait?))
            (thread-sleep!
             (- ttime (thread-current-time))))
-          (if (not end) (set! ttime (thread-current-time)))
-          ))))
+          ;; we only get here if queue is currently empty but user
+          ;; wants scheduler to keepp running even though it has
+          ;; nothing to do.  in this case the do loop will spin
+          ;; without sleeping and cpu% goes through the roof. so the
+          ;; scheduler either needs to block until queue has something
+          ;; in it or else "yeild" somehow. I think blocking is the
+          ;; right way to do this but i dont understand how to
+          ;; implement this using mcl's locking mechanism.  similarly
+          ;; openmcl's process-allow-scheduling doesnt seem to work
+          ;; for yielding so we just sleep a tiny amount.
+          (if (not end)
+              (begin (thread-sleep! *rts-idle-rate*)
+                     (set! ttime (thread-current-time))))))))
 
 (define (rts-run-periodic object ahead end)
   ;; rts periodic run function.  the only hope for this method is if
