@@ -17,14 +17,14 @@
 ;;; where either value can be a pointer to an open PortMidiStream or
 ;;; #f
 
-(define *portmidi-default-input* #t)
-(define *portmidi-default-output* #t)
+(define *portmidi-default-input* #f)
+(define *portmidi-default-output* #f)
 (define *portmidi-default-latency* 100)
 (define *portmidi-default-inbuf-size* 64)
 (define *portmidi-default-outbuf-size* 256)
 (define *portmidi-default-filter* 0)
 (define *portmidi-default-mask* 0)
-(define *portmidi-receive-rate* 1000) ; in usecs for periodic...
+(define *portmidi-receive-rate* .015) 
 
 (define-class* <portmidi-stream> (<event-stream> <midi-stream-mixin>)
   ((input :init-value *portmidi-default-input* :init-keyword :input
@@ -82,29 +82,32 @@
       (err "Can't open MidiShare connection: MidiShare not loaded."))
     (unless (event-stream-stream obj)
       (let ((getd (lambda (i d l)
-                    ;; return device ID of user spec (string or int)
+                    ;; return device description of user spec (string or int)
                     (cond ((not i) #f)
                           ((eq? i #t)
                            ;; default
-                           (if (eq? d ':input)
-                               (pm:GetDefaultInputDeviceID)
-                               (pm:GetDefaultOutputDeviceID)))
-                          ((not (eq? d (list-prop l :type))) #f)
+                           (pm:GetDeviceDescription
+                            (if (eq? d ':input)
+                                (pm:GetDefaultInputDeviceID)
+                                (pm:GetDefaultOutputDeviceID)))
+                           )
+                          ((not (eq? d (list-prop l ':type))) #f)
                           ((string? i)
-                           (if (string-ci=? i (list-prop l :name))
-                               (list-prop l :id)
+                           (if (string-ci=? i (list-prop l ':name))
+                               l ;(list-prop l :id)
                                #f))
                           ((integer? i)
-                           (if (eq? (list-prop l :id) i)
-                               i
+                           (if (eq? (list-prop l ':id) i)
+                               l ;i
                                #f))
                           (else #f))))
+            (devs (pm:GetDeviceDescriptions) )
             (bsiz (portmidi-outbuf-size obj))
             (idev #f)
             (odev #f)
             (pids (list #f #f))
             (data (list #f #f)))
-        (do ((tail (pm:GetDeviceDescriptions) (cdr tail))
+        (do ((tail devs (cdr tail))
              (i (portmidi-input obj))
              (o (portmidi-output obj)))
             ((null? tail) #f)
@@ -112,14 +115,28 @@
               (set! idev ( getd i ':input (car tail))))
           (if (and o (not odev))
               (set! odev ( getd o ':output (car tail)))))
+        ;; error checks: no devices, device already open, missing
+        ;; devices
+        (cond ((null? devs)
+               (err "open-io: no portmidi devices available."))
+              ((and idev (list-prop idev ':open))
+               (err "open-io: portmidi input device ~D (~S) is already open."
+                    (list-prop idev ':id) (list-prop idev ':name)))
+              ((and odev (list-prop odev ':open))
+               (err "open-io: portmidi output device ~D (~S) is already open."
+                    (list-prop odev ':id) (list-prop odev ':name)))
+              ((and (not idev) (not odev))
+               (err "open-io: no portmidi :input or :output device was specified.")))
         (pm:TimeStart)
         (set! (object-time obj) 0)
         (when idev
+          (set! idev (list-prop idev ':id))
           (set-car! pids idev)
           (set-car! data 
                     (pm:OpenInputStream
                      idev (if (pair? bsiz) (car bsiz) bsiz))))
         (when odev
+          (set! odev (list-prop odev ':id))
           (set-car! (cdr pids) odev)
           (set-car! (cdr data) 
                     (pm:OpenOutputStream
@@ -362,12 +379,14 @@
                          (do ((n #f))
                              (stop  
                               #f)
-                           (when (pm:StreamPoll in)
-                             (set! n (pm:StreamRead in bf sz))
-                             (when (> n 0)
-                               (if rm (pm:EventBufferMap fn bf n)
-                                   ( hook bf n))
-                               ))))))
+                           (cond ((pm:StreamPoll in)
+                                  (set! n (pm:StreamRead in bf sz))
+                                  (when (> n 0)
+                                    (if rm (pm:EventBufferMap fn bf n)
+                                        ( hook bf n))))
+                                 (else
+                                  ;; only sleep if no message??
+                                  (thread-sleep! *portmidi-receive-rate*)))))))
                 (set! st (lambda () (set! stop #t))))
                ((:periodic )
                 (set! th
@@ -390,11 +409,13 @@
              (list-set! data 3 sz)
              (cond ((eq? *receive-mode* ':threaded)
                     (thread-start! th))
-                   (t
+                   (else
                     (unless (periodic-task-running?)
-                      (set-periodic-task-rate! *portmidi-receive-rate*
-                                               ':usec))
+                      (set-periodic-task-rate!
+                       (inexact->exact (floor (* *portmidi-receive-rate* 1000)))
+                       ':ms))
                     (add-periodic-task! str th)))
              (values))))))
+
 
 
