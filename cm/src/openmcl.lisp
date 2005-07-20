@@ -19,7 +19,7 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (ccl::open-shared-library "Carbon.framework/Carbon")
   (ccl::use-interface-dir :carbon)
-  (require :pascal-strings)
+  (require "pascal-strings")
   )
 
 (pushnew :metaclasses *features*)
@@ -523,13 +523,16 @@ fi
                             (* (modf (time->seconds target-time))
                                #xffffffff))))))
 
+
+
+
+
 ;;; new periodic-task support
 
-(defvar *periodic-tasks*
-  ;; a list ((<owner> . <task-thunk>) ...) where <owner> is whatever
-  ;; the <task-thunk> is associated with.
-  (list ))
-(defparameter *periodic-task-rate* 1)
+(defvar *periodic-tasks* (list ))
+(defparameter *max-event-to-sec*  0)
+(defparameter *max-event-to-usec* 1000)
+(defparameter *periodic-polling-function* nil)
 (defparameter *periodic-polling-timer* nil)
 (defparameter *periodic-polling-thread* nil)
 (defparameter *periodic-polling-callback* nil)
@@ -542,29 +545,56 @@ fi
 (defun %release-cfstring (string)
   (#_CFRelease string))
 
-(defun run-periodic-task ()
+(defun set-periodic-task-rate! (rate meas)
+  (if *periodic-tasks*
+      (error "set-periodic-task-rate!: Periodic tasks currently running.")
+    (let (divs)
+      (ecase meas
+	((:second :seconds :sec :s)
+	 (setf divs 1))
+	((:millisecond :milliseconds :ms :m)
+	 (setf divs 1000))
+	((:nanosecond :nanoseconds :usec :usecs :u)
+	 (setf divs 1000000)))
+      (multiple-value-bind (sec rem)
+	  (floor rate divs)
+	(setf *max-event-to-sec* sec)
+	(setf *max-event-to-usec* (* rem (/ 1000000 divs))))
+      (values))))
+
+(defun periodic-task-rate ()
+  (+ (* *max-event-to-sec* 1000000)
+     *max-event-to-usec*))
+
+(defun run-periodic-tasks ()
+  (dolist (e *periodic-tasks*) (funcall (cdr e)))
+  (values))
+
+
+(defun run-periodic-tasks ()
   (let ((timer-context (%string->cfstringref "cm-periodic")))
     (ccl::defcallback *periodic-polling-callback*
         (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
       (declare (ignore timer info))
       (if *periodic-tasks*
-          (run-periodic-tasks)
+          (dolist (e *periodic-tasks*) (funcall (cdr e)))
 	(progn
-	  (when *periodic-polling-timer*
-	    (#_CFRunLoopStop (#_CFRunLoopGetCurrent)))
-	  (when *periodic-polling-thread*
-	    (ccl::process-kill *periodic-polling-thread*)))))
+	  (#_CFRunLoopStop (#_CFRunLoopGetCurrent))
+	  (ccl::process-kill *periodic-polling-thread*))))
     (setf *periodic-polling-thread*
 	  (ccl::process-run-function "periodic-polling-thread"
 	    (lambda ()
+	      (ccl::external-call "_CFRunLoopGetCurrent" :address)
+	      (ccl::external-call "__CFRunLoopSetCurrent" :address (ccl::external-call "_CFRunLoopGetMain" :Address)) 
+	      (ccl::%stack-block ((psn 8))
+				 (ccl::external-call "_GetCurrentProcess" :address psn)
+				 (ccl::with-cstrs ((name "cm rt"))
+				   (ccl::external-call "_CPSSetProcessName" :address psn :address name)))
+	      
 	      (setf *periodic-polling-timer*
-		    (#_CFRunLoopTimerCreate (ccl::%null-ptr)
-                                            (#_CFAbsoluteTimeGetCurrent)
-					    (* .001D0 *periodic-task-rate*)
-                                            0
-                                            0
-                                            *periodic-polling-callback*
-                                            (ccl::%null-ptr)))
+		    (#_CFRunLoopTimerCreate (ccl::%null-ptr) (#_CFAbsoluteTimeGetCurrent) 
+					    (coerce (+ *max-event-to-sec* (/ *max-event-to-usec* 1000000)) 'double-float)
+                                            0 0 *periodic-polling-callback* (ccl::%null-ptr)))
 	      (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent)
                                    *periodic-polling-timer* timer-context)
 	      (#_CFRunLoopRunInMode timer-context 10000000.D0 #$false)
@@ -572,50 +602,18 @@ fi
 	      (#_CFRelease *periodic-polling-timer*)
 	      (%release-cfstring timer-context))))))
 
-(defun set-periodic-task-rate! (rate meas)
-  ;; set periodic time but only if tasks are not running
-  (if *periodic-tasks*
-      (error "set-periodic-task-rate!: Periodic tasks currently running.")
-      (let (divs)
-        divs
-        (ecase meas
-          ((:second :seconds :sec :s)
-           (setf meas :second divs 1))
-          ((:millisecond :milliseconds :ms :m)
-           (setf meas :millisecond divs 1000))
-          (( :nanosecond  :nanoseconds :usec :usecs :u)
-           (setf meas :nanosecond divs 1000000)))
-        (if (eq meas :millisecond)
-            (setq *periodic-task-rate* rate)
-            (error "set-periodic-task-rate!: fix for ~s." meas))
-        ;;(multiple-value-bind (sec rem)
-        ;;    (floor rate divs)
-        ;;  ;;(print (list sec (* rem (/ 1000000 divs))))
-        ;;  (setf sb-impl::*max-event-to-sec* sec)
-        ;;  (setf sb-impl::*max-event-to-usec*
-        ;;        (* rem (/ 1000000 divs))))
-        (values))))
-
-(defun periodic-task-rate ()
-  ;; always return in usec
-  (* *periodic-task-rate* 1000))
-
-(defun run-periodic-tasks ()
-  ;; this is the polling function, it just funcalls thunks on the list
-  (dolist (e *periodic-tasks*) (funcall (cdr e)))
-  (values))
-
 (defun periodic-task-running? (&optional owner)
   (if *periodic-tasks*
       (if owner 
           (and (assoc owner *periodic-tasks* :test #'eq) t)
-          t)
-      nil))
+	t)
+    nil))
 
 (defun add-periodic-task! (owner task)
   (cond ((null *periodic-tasks*)
          (push (cons owner task) *periodic-tasks*)
-	 (run-periodic-task ))
+         (setf *periodic-polling-function* #'run-periodic-tasks)
+	 (funcall *periodic-polling-function* ))
         ((assoc owner *periodic-tasks* :test #'eq)
          (error "add-periodic-task!: task already running for ~s."
                 owner))
@@ -625,18 +623,22 @@ fi
 
 (defun remove-periodic-task! (owner)
   (if (eq owner t)
-      (setf *periodic-tasks* (list))
+      (setf *periodic-polling-function* nil
+            *periodic-tasks* (list))
       (let ((e (assoc owner *periodic-tasks* :test #'eq)))
         (cond ((null e)
                (error "remove-periodic-task!: No task for owner ~s."
                       owner))
               (t
-               (setf *periodic-tasks* (delete e *periodic-tasks*))))))
+               (setf *periodic-tasks* (delete e *periodic-tasks*))
+               (if (null *periodic-tasks*)
+                   (setf *periodic-polling-function* nil))))))
   (values))
+  
 
 #|
 (periodic-task-running?)
-(set-periodic-task-rate! 1000) ; milliseconds
+(set-periodic-task-rate! 1000 :ms) ; milliseconds
 (defun moe () (print :you-moron))
 (defun larry () (print :ow-ow-ow))
 (defun curly () (print :nyuk-nyuk))
