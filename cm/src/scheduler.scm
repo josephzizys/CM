@@ -509,7 +509,7 @@
  (else #f))
 
 (define *rts-run* #f)
-(define *rts-idle-rate* .0001) ; hack to stop gobbling cpu
+(define *rts-idle-rate* .001) ; time out slice if no pending events
 
 (define (rts-reset) 
   ;; call this after an error
