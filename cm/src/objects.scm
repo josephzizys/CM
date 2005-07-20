@@ -700,20 +700,24 @@
 ;         (set! args (cadr forms))
 ;         (set! forms (cddr forms)))
         ((at )				
-         (unless (eq? oper 'sprout)
+         (unless (member oper '(sprout output))
            (loop-error ops head "'" (car forms) 
                        "' is an unknown '"
 		       oper "' modifier."))
          (set! args
-               (if (eq? (car forms) 'ahead)
-                 `(+ (now) ,(cadr forms))
-                 (cadr forms)))
+               (cond ((eq? oper 'sprout)
+                      (if (eq? (car forms) 'ahead)
+                          `(+ (now) ,(cadr forms))
+                          (cadr forms)))
+                     (else
+                      (list '*out* (cadr forms))
+                      )))
          (set! forms (cddr forms)))))
     (case oper
       ((output )
        (set! loop (if (null? args)
 		    (list `(,oper ,expr))
-		    (list `(,oper ,expr ,(car args))))))
+		    (list `(,oper ,expr ,@ args)))))
       ((wait )
        (set! loop (list `(wait ,expr))))
       ((wait-until )
@@ -780,7 +784,7 @@
               (list 'on (function parse-numerical-for))
               (list 'across (function parse-sequence-iteration))
               (list '= (function parse-general-iteration)))
-        (list 'output (function parse-process-clause) 'task 'to 'into)
+        (list 'output (function parse-process-clause) 'task 'to 'at)
         (list 'sprout (function parse-process-clause) 'task 'at 'ahead)
         (assoc 'do *loop-operators*)))
 
