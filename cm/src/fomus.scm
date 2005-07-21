@@ -28,10 +28,11 @@
           :accessor fomus-stream-parts)
    (global :init-keyword :global :init-value '()
            :accessor fomus-stream-global)
+   (view :init-keyword :view :init-value #f :accessor fomus-stream-view)
    )
   :name 'fomus-stream
   :metaclass <io-class>
-  :file-types '("*.fms" "*.ly")) ;; add Enigma and MusicXML...
+  :file-types '("*.fms" "*.xml" "*.ly")) 
          
 (define-method* (object-time (obj <event-base>))
   (event-off obj))
@@ -68,19 +69,18 @@
                  (type (filename-type file)))
             (cond ((equal? type "ly")
                    (set! bend ':lilypond))
-                  ((equal? type "etf")
-                   (set! bend ':etf))
                   ((equal? type "xml")
                    (set! bend ':xml))
                   (else
                    (set! bend ':fms)))
             (set! args (cons* ':backend
-                              (list bend :filename file )
+                              (list bend :filename file
+                                    :view (fomus-stream-view io))
                               args))))
-      (apply (function fomus)
-             :parts (fomus-stream-parts io)
-             :global (fomus-stream-global io)
-             args)))))
+        (apply (function fomus)
+               :parts (fomus-stream-parts io)
+               :global (fomus-stream-global io)
+               args)))))
 
 (define (fomus-stream-part stream id)
   (do ((tail (fomus-stream-parts stream) (cdr tail))
