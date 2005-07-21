@@ -103,7 +103,7 @@ href="midishare-stream-cls.html"><code>midishare-stream</code></a></li>
 <li><a href="set-midi-output-hook-fn.html"><code>set-midi-output-hook!</code></a></li> -->
 </ul>
 
-<h2 id="midi_real_time">Low level MIDI support</h2>
+<h2 id="midi_low_level">Low level MIDI support</h2>
 
 <p>
 Low level MIDI support provides functions for working with specially
@@ -113,7 +113,7 @@ described in the MIDI Time Code and Cueing supplement.
 </p>
 
 
-<h3>MIDI Messages</h3>
+<h3 id="midi_messages">MIDI Messages</h3>
 <p>
 A MIDI message is a specially formatted fixnum (28-30 bits) containing
 up to three 7-bit bytes of information.  Each MIDI message is
@@ -135,7 +135,7 @@ Some message types, such as System Exclusive and Meta messages, are
 implemented as composite data. Constructors for these types return two
 values: a message and a vector of message data bytes.
 
-<h3 id="message-utilities">Message Utility Functions</h3>
+<h3 id="message_utilities">Message Utility Functions</h3>
 
 <p>
 </p>
