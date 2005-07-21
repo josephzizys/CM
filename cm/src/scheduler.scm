@@ -682,5 +682,32 @@
                                    (round (* wait? 1000.0))))))))))))
 
 
+(define *receive-mode* #f)
+
+(cond-expand
+ (cmu (set! *receive-mode* ':periodic))
+ (sbcl (set! *receive-mode* ':periodic))
+ (gauche (set! *receive-mode* ':threaded))
+ (openmcl (set! *receive-mode* ':periodic))
+ (else #f))
 
 
+(define (receive . args)
+  (cond ((not *receive-mode*)
+         (err "receive: receiving is not implemented in this Lisp/OS.")
+         ((not (member *receive-mode* '(:threaded :periodic)))
+          (err "receive: ~s is not a receive mode."
+               *receive-mode*))))
+  (let ((userfn (if (pair? args) (pop args) #f))
+        (stream (if (pair? args) (pop args) #f)))
+
+    (if stream
+        (if userfn
+            (let ((wrapper (stream-receive userfn stream *receive-mode*)))
+              (case *receive-mode*
+                (:threaded (thread-start! wrapper))
+                (:periodic (add-periodic-task! :receive wrapper))))
+            (stream-receive #f stream *receive-mode*))
+        (err "receive: only stream receiving is supported for now."))
+    (values)))
+    

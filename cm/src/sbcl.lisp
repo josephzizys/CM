@@ -194,7 +194,7 @@
 (defgeneric unschedule-object (obj &rest recurse))
 (defgeneric process-events (obj time start func))
 (defgeneric sprout (obj &optional time dest))
-(defgeneric receive (hook stream &rest args))
+(defgeneric stream-receive (hook stream type))
 (defgeneric receive? (stream))
 
 

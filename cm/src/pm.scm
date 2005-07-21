@@ -323,11 +323,11 @@
 ;;; message receiving
 ;;;
 
-(define-method* (receive? (str <portmidi-stream>))
-  (if (not (car (portmidi-receive str))) #f #t))
+;(define-method* (receive? (str <portmidi-stream>))
+;  (if (not (car (portmidi-receive str))) #f #t))
 
-(define-method* (receive hook (str <portmidi-stream>) . args)
-  args
+(define-method* (stream-receive hook (str <portmidi-stream>) type)
+  ;; hook is 2arg lambda or nil, type is :threaded or :periodic
   (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
          (mode (portmidi-receive-mode str))
          (stop #f)) 
@@ -371,7 +371,7 @@
                (set! bf (pm:EventBufferNew sz)))
              (set! fn (lambda (mm ms)
                         ( hook (pm-message->midi-message mm) ms)))
-             (case *receive-mode*
+             (case type
                ((:threaded )
                 (set! th
                       (make-thread
@@ -399,23 +399,24 @@
                                   ( hook bf n)))))))
                 (set! st (lambda ()
                            (remove-periodic-task! str))))
-               (else
-                (err "portmidi: receive mode ~s not :threaded or :periodic."
-                     *receive-mode*)))
+               )
              ;; cache the stuff
              (list-set! data 0 th)
              (list-set! data 1 st)
              (list-set! data 2 bf)
              (list-set! data 3 sz)
-             (cond ((eq? *receive-mode* ':threaded)
-                    (thread-start! th))
-                   (else
-                    (unless (periodic-task-running?)
-                      (set-periodic-task-rate!
-                       (inexact->exact (floor (* *portmidi-receive-rate* 1000)))
-                       ':ms))
-                    (add-periodic-task! str th)))
+;             (cond ((eq? type ':threaded)
+;                    (thread-start! th))
+;                   (else
+;                    (unless (periodic-task-running?)
+;                      (set-periodic-task-rate!
+;                       (inexact->exact (floor (* *portmidi-receive-rate* 1000)))
+;                       ':ms))
+;                    (add-periodic-task! str th)))
+             th
              (values))))))
+
+
 
 
 
