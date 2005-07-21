@@ -398,7 +398,7 @@
                               (if rm (pm:EventBufferMap fn bf n)
                                   ( hook bf n)))))))
                 (set! st (lambda ()
-                           (remove-periodic-task! str))))
+                           (remove-periodic-task! :receive))))
                )
              ;; cache the stuff
              (list-set! data 0 th)
@@ -414,7 +414,7 @@
 ;                       ':ms))
 ;                    (add-periodic-task! str th)))
              th
-             (values))))))
+             )))))
 
 
 
