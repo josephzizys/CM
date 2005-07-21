@@ -14,26 +14,24 @@
 <!-- Entry: "sprout" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">sprout</code> <var>object</var> <var>time</var>)</span></dd>
+<dd><span class="syntax">(<code class="entry">sprout</code> <var>object</var> [<var>time</var>])</span></dd>
 </dl>
 
 
 <p>
-Schedules <var>object</var> to start running at <var>time</var>.
-<code>sprout</code> signals an error if it is called when the
-scheduler is not running.
+Schedules <var>object</var> to start running
+at <var>time</var>. Returns no values. If <var>time</var> is not
+specified it defaults to <a href="now-fn.html">now</a>.  It is an
+error to call <code>sprout</code> when the scheduler is not running.
 </p>
 
 <!-- See also -->
 <h4>See Also:</h4>
 <ul>
-<li><a href="input-fn.html"><kbd>input</kbd></a> [Function]</li>
 <li><a href="now-fn.html"><kbd>now</kbd></a> [Function]</li>
 <li><a href="output-fn.html"><kbd>output</kbd></a> [Function]</li>
 <li><a href="process-mac.html"><kbd>process</kbd></a> [Macro]</li>
-<li><a href="stop-fn.html"><kbd>stop</kbd></a> [Function]</li>
 <li><a href="wait-fn.html"><kbd>wait</kbd></a> [Function]</li>
-<li><a href="wait-until-fn.html"><kbd>wait-until</kbd></a> [Function]</li>
 </ul>
 
 

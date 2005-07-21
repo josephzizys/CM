@@ -14,25 +14,28 @@
 <!-- Entry: "output" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">output</code> <var>object</var> [<var>ahead</var>])</span></dd>
+<dd><span class="syntax">(<code class="entry">output</code> <var>object</var> [<var>stream</var>] [<var>time</var>])</span></dd>
 </dl>
 
 
 <p>
-Outputs <var>object</var> to the open output stream (file, port,
-display, etc).
+Outputs <var>object</var> to the open <var>stream</var>, which
+defaults to the value of <code>*out*</code>. Use <var>time</var> to
+supply score time values for objects
+like <a href="midi-topic.html#midi_messages">midi messages</a> that do
+not have methods defined for the scheduling
+function <code>object-time</code>.
+
+
 </p>
 
 <!-- See also -->
 <h4>See Also:</h4>
 <ul>
-<li><a href="input-fn.html"><kbd>input</kbd></a> [Function]</li>
 <li><a href="now-fn.html"><kbd>now</kbd></a> [Function]</li>
 <li><a href="process-mac.html"><kbd>process</kbd></a> [Macro]</li>
 <li><a href="sprout-fn.html"><kbd>sprout</kbd></a> [Function]</li>
-<li><a href="stop-fn.html"><kbd>stop</kbd></a> [Function]</li>
 <li><a href="wait-fn.html"><kbd>wait</kbd></a> [Function]</li>
-<li><a href="wait-until-fn.html"><kbd>wait-until</kbd></a> [Function]</li>
 </ul>
 
 
