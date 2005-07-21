@@ -67,34 +67,33 @@ are specified else boolean false.
 <code>rts</code> and <a href="events-fn.html">events</a> are "source
 compatible" scheduling environments, meaning
 <a href="process-mac.html">process</a> definitions do not have to be
-modified to run in one environment or the other, and scheduling
-functions such
+modified to run in either environment, and scheduling functions such
 as <a href="now-fn.html">now</a>, <a href="output-fn.html">output</a>
 and <a href="sprout-fn.html">sprout</a> behave identically in both
-scheduling environments.  The most important differences between the
-two schedulers are:<!-- <code>rts</code>
-and <a href="events-fn.html">events</a> (aside from the obvious real
-time scheduling aspect) are: -->
+schedulers.  The most important differences between the two schedulers
+are:<!-- <code>rts</code> and <a href="events-fn.html">events</a>
+(aside from the obvious real time scheduling aspect) are: -->
 
 <ul>
 <li>the REPL is not blocked by <code>rts</code> while the scheduler is
 running.
-<li>rts can be started without specifying any objects and,
+<li><code>rts</code> can be started without objects and,
 if <var>end</var> is false, <code>rts</code> will continue to run
 until it is explicitly stopped, even if its queue is empty.
 <li> <a href="sprout-fn.html">sprout</a> can be called from the REPL
-or a receive hook to add objects to <code>rts</code> "interactively",
-as long as <code>rts</code> is running.
+or a <a href="receive-fn.html">receive</a> hook to add objects
+to <code>rts</code> "interactively", as long as <code>rts</code> is
+running.
 </ul>
 
 <p>
 Although process definitions do not have to be changed to run under
-<code>rts</code>, real time scheduling places timing demands on the
+<code>rts</code>, real time scheduling does place timing demands on
 software that non-real time scheduling does not. Process definitions
 should avoid consing and creating lots of temporary structure or being
 otherwise wasteful and inefficient.  Consider reusing events rather
-than creating new one for each output statement.  If you are doing
-MIDI output, consider using low-level,
+than creating new one for each output statement.  If you are working
+with MIDI, consider using low-level,
 consless <a href="midi-topic.html#midi_messages">MIDI messages</a> in
 place of <a href="midi-cls.html">midi</a> objects.
 </p>
@@ -139,10 +138,10 @@ running at any one time. This has  several consequences:
 
 <ul>
 <li>Using the GUI at the same time as <code>rts</code>
-or <code>receive</code> will currently not work.</li>
+or <a href="receive-fn.html"><code>receive</code></a> will currently not work.</li>
 <li>Periodic tasks are pushed onto a task list; be sure to start rts
-running before setting the receive hook, otherwise rts will not be
-able to process whatever receive places into the queue until the next
+running before setting a receive hook, otherwise rts will not be able
+to process what receive places into the queue until the next
 tick.</li>
 <li>All receive and rts processing must happen within 1 millisecond or
 things will drift.
@@ -231,7 +230,7 @@ is compiled or interpreted, how much garbage is generated, and so on.
 <span class="floatlabel">Example 3. </span>Sprouting into the scheduler from a receive hook.
 </p>
 <pre class="code">
-(<span class="special">define</span> <span class="defined">*pm*</span> (<a href="portmidi-topic.html#pormidi-open">portmidi-open</a> <span class="keyword">:output</span> 3 <span class="keyword">:latency</span> 0))
+(<span class="special">define</span> <span class="defined">*pm*</span> (<a href="portmidi-topic.html#pormidi-open">portmidi-open</a> <span class="keyword">:input</span> 1 <span class="keyword">:output</span> 3 <span class="keyword">:latency</span> 0))
 
 (<span class="special">define</span> (<span class="defined">major-thirds</span> len knum)
   (<a href="process-mac.html">process</a> with d = .1
