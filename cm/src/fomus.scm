@@ -23,41 +23,41 @@
 
 (in-package :cm)
 
-(define-class* <fomus-stream> (<event-stream>)
+(define-class* <fomus-file> (<event-stream>)
   ((parts :init-keyword :parts :init-value '()
-          :accessor fomus-stream-parts)
+          :accessor fomus-file-parts)
    (global :init-keyword :global :init-value '()
-           :accessor fomus-stream-global)
-   (view :init-keyword :view :init-value #f :accessor fomus-stream-view)
+           :accessor fomus-file-global)
+   (view :init-keyword :view :init-value #f :accessor fomus-file-view)
    )
-  :name 'fomus-stream
+  :name 'fomus-file
   :metaclass <io-class>
   :file-types '("*.fms" "*.xml" "*.ly")) 
          
 (define-method* (object-time (obj <event-base>))
   (event-off obj))
 
-(define-method* (open-io (io <fomus-stream>) dir . args)
+(define-method* (open-io (io <fomus-file>) dir . args)
   args
   (when (eq? dir ':output)
-    (let ((parts (fomus-stream-parts io))
-          (globs (fomus-stream-global io)))
+    (let ((parts (fomus-file-parts io))
+          (globs (fomus-file-global io)))
       ;; check for singles
       (unless (list? parts)
-        (set! (fomus-stream-parts io) 
+        (set! (fomus-file-parts io) 
               (if parts (list parts) (list))))
       (unless (list? globs)
-        (set! (fomus-stream-global io) 
+        (set! (fomus-file-global io) 
               (if globs (list globs) (list))))
       ;; flush existing data from parts
       (for-each (lambda (p)
                   (set! (obj-id p) #f)
                   (set! (part-events p) (list)))
-                (fomus-stream-parts io))
+                (fomus-file-parts io))
       (set! (io-open io) #t)))
   io)
     
-(define-method* (close-io (io <fomus-stream>) . mode)
+(define-method* (close-io (io <fomus-file>) . mode)
   (let ((err? (and (not (null? mode))
                    (eq? (car mode) ':error))))
     (set! (io-open io) #f)
@@ -75,36 +75,36 @@
                    (set! bend ':fms)))
             (set! args (cons* ':backend
                               (list bend :filename file
-                                    :view (fomus-stream-view io))
+                                    :view (fomus-file-view io))
                               args))))
         (apply (function fomus)
-               :parts (fomus-stream-parts io)
-               :global (fomus-stream-global io)
+               :parts (fomus-file-parts io)
+               :global (fomus-file-global io)
                args)))))
 
-(define (fomus-stream-part stream id)
-  (do ((tail (fomus-stream-parts stream) (cdr tail))
+(define (fomus-file-part stream id)
+  (do ((tail (fomus-file-parts stream) (cdr tail))
        (part #f))
       ((or (null? tail) part) 
        (when (not part)
          (set! part (make-part :partid id))
-         (set! (fomus-stream-parts stream)
-               (cons part (fomus-stream-parts stream))))
+         (set! (fomus-file-parts stream)
+               (cons part (fomus-file-parts stream))))
        part)
     (if (eq? id (obj-partid (car tail)))
         (set! part (car tail)))))
 
-(define-method* (write-event (obj <event-base>) (fil <fomus-stream>) scoretime)
-  (let ((part (fomus-stream-part fil (obj-partid obj))))
+(define-method* (write-event (obj <event-base>) (fil <fomus-file>) scoretime)
+  (let ((part (fomus-file-part fil (obj-partid obj))))
     ;; use score time not local time.
     (set! (event-off obj) scoretime)
     (set! (part-events part)
           (cons obj (part-events part)))
     obj))
 
-(define-method* (write-event (obj <midi>) (fil <fomus-stream>) scoretime)
+(define-method* (write-event (obj <midi>) (fil <fomus-file>) scoretime)
   (let* ((myid (midi-channel obj))
-         (part (fomus-stream-part fil myid))
+         (part (fomus-file-part fil myid))
          (ampl (midi-amplitude obj))
          (marks '()))
     ;; add dynamic if not same as last note.
