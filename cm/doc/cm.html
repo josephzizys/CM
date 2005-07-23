@@ -90,37 +90,24 @@ The most current (unstable) sources are available via <a href="install.html#rest
 
 <p>
 Common Music works in conjunction with the following
-synthesis and display applications:
+synthesis and display options:
 </p>
 
-<ol>
-<li>
-<a href="http://www-ccrma.stanford.edu/software/clm/">Common Lisp Music</a> 
-(sound synthesis)
-</li>
-
-<li>
-<a href="http://www-ccrma.stanford.edu/software/cmn/">Common Music Notation</a>
-(music notation)
-
-<li><a href="http://www.csounds.com/">Csound</a> (sound synthesis)</li>
-
-<li><a href="http://zzz">Fomus</a> (music notation)</li>
-<li><a href="http://www.midi.org">MIDI</li>
-<li>
-<a href="http://www.grame.fr/MidiShare/">Midishare</a>
-(realtime MIDI)
-</li>
-
-<li>
-<a href="dict/plotter-topic.html">Plotter</a> (visualization)
-</li>
-
-<li> <a href="http://www.audiosynth.com/">Supercollider</a> (sound synthesis)</li>
-
-<li> <a href="http://www.audiosynth.com/">Supercollider realtime</a> (sound synthesis)</li>
-
-</ol>
+<blockquote>
+<table>
+<tr><td>A.</td> <td> <a href="http://www.csounds.com/">Csound</a> (sound synthesis)</td></tr>
+<tr><td>B.</td> <td> <a href="http://common-lisp.net/project/fomus/">Fomus</a> (music notation)</td></tr>
+<tr><td>C.</td> <td> <a href="http://www-ccrma.stanford.edu/software/clm/">Common Lisp Music</a> (sound synthesis)</td></tr>
+<tr><td>D.</td> <td> <a href="http://www-ccrma.stanford.edu/software/cmn/">Common Music Notation</a> (music notation)</td></tr>
+<tr><td>E.</td> <td> <a href="http://www.midi.org">MIDI</a> (synthesis control)</td></tr>
+<tr><td>F.</td> <td> <a href="http://midishare.sourceforge.net/">Midishare</a> (MIDI I/O)</td></tr>
+<tr><td>G.</td> <td> <a href="dict/plotter-topic.html">Plotter</a> (data visualization)</td></tr>
+<tr><td>H.</td> <td> <a href="http://www.cnmat.berkeley.edu/OpenSoundControl/">Open Sound Control</a> (synthesis control)</td></tr>
+<tr><td>I.</td> <td> <a href="http://www.audiosynth.com/">Supercollider</a> (sound synthesis)</td></tr>
+<tr><td>J.</td> <td> <a href="http://www-2.cs.cmu.edu/~music/portmusic/">Portmidi</a> (MIDI I/O)</td></tr>
+<tr><td>K.</td> <td> <a href="dict/rts-fn.html">RTS</a> and <a href="dict/receive-fn.html">Receive</a> (real time extensions)</td></tr>
+</table>
+</blockquote>
 
 <h2 id="implementations">Implementations</h2>
 
@@ -140,62 +127,64 @@ applications</a> in the following configurations:
 </tr>
 <!-- 1   2   3      4     5    6         7       8  9 -->
 <!-- clm cmn csound fomus midi midishare plotter sc sc-rt -->
+<!-- tr><th class="row">&nbsp;</th><td>ABCDEFGHI</td><td>ABCDEFGHI</td><td>ABCDEFGHI</td></tr -->
 
 <tr style="color:#9999bb">
 <th class="row">ACL</th>
-<td align="center">1,2,3,5,8</td>
-<td align="center">1,2,3,5,8</td>
-<td align="center">1,2,3,5,8</td>
+<td align="left">A&ndash;CDE&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;CDE&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;DE&ndash;&ndash;HI&ndash;&ndash;</td>
 </tr>
 <tr style="color:#9999bb">
 <th class="row" >CLISP</th>
-<td align="center">2,3,4,5,8</td>
-<td align="center">2,3,4,5,8</td>
-<td align="center">2,3,5,8</td>
+<td align="left">A&ndash;&ndash;DE&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;DE&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;DE&ndash;&ndash;HI&ndash;&ndash;</td>
 </tr>
 <tr style="color:#9999bb">
 <th class="row" >CMUCL</th>
-<td align="center">1,2,3,4,5,6,7,8</td>
-<td align="center">&nbsp;</td>
-<td align="center">&nbsp;</td>
+<td align="left">ABCDEFGHIJK</td>
+<td align="left">ABCDEF&ndash;HIJ&ndash;</td>
+<td align="left">&nbsp;</td>
 </tr>
 <tr style="color:#9999bb">
 <th class="row">LispWorks</th>
-<td align="center">2,3,4,5,8</td>
-<td align="center">2,3,4,5,8</td>
-<td align="center">2,3,5,8</td>
+<td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
 <tr style="color:#9999bb">
 <th class="row">OpenMCL</th>
-<td align="center"></td>
-<td align="center">1,2,3,4,5,6,7,8,9</td>
-<td align="center"></td>
+<td align="left"></td>
+<td align="left">ABCDEFGHIJK</td>
+<td align="left"></td>
 </tr>
 <tr style="color:#9999bb">
 <th class="row">SBCL</th>
-<td align="center">1,2,3,4,5,7,8</td>
-<td align="center">1,2,3,4,5,8</td>
-<td align="center"></td>
+<td align="left">ABCDE&ndash;GHIJK</td>
+<td align="left">ABCDE&ndash;&ndash;HIJK</td>
+<td align="left"></td>
 </tr>
 
 <tr><td colspan="4">&nbsp;</td></tr>
 
 <tr style="color:#9999bb">
 <th class="row">Gauche</th>
-<td align="center">3,5,8,9</td>
-<td align="center">3,5,8,9</td>
-<td align="center"></td>
+<td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left"></td>
 </tr>
 <tr style="color:#9999bb">
 <th class="row">Guile</th>
-<td align="center">3,5,8</td>
-<td align="center">3,5,8</td>
-<td align="center"></td>
+<td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left"></td>
 </tr>
 
 <tr style="color:#9999bb">
 <th class="row">STklos</th>
-<td align="center">3,5,8</td>
-<td align="center">3,5,8</td>
+<td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left"></td>
 </tr>
 
 </table>
@@ -364,12 +353,43 @@ Rick Taube
 
 <!-- Footer -->
 
-<div id="footer" style="margin-top: 1em; border:none;">
+<hr/>
+<div id="footer" style=" border:none;">
 
-<div id="author" style="color:#9999bb;">H. Taube</div>
-<div id="cvs-info" style="color:#9999bb;">
-$Source$ $Name$
+<div id="author" style="color:#9999bb;">
+    <a href="http://sourceforge.net">
+      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=1355&amp;type=2&amp;page=index"
+           width="125" height="37" alt="SourceForge Logo"/>
+    </a>
 </div>
+
+
+<div id="cvs-info" style="color:#9999bb; margin-bottom: 1em;">
+<table>
+<tr>
+  <td>
+    <a href="http://validator.w3.org/check/referer">
+      <img src="http://www.w3.org/Icons/valid-xhtml10"
+           alt="Valid XHTML" height="31" width="88"/>
+    </a>
+  </td>
+  <td>
+    <a href="http://www.w3.org/Style/CSS/Buttons/">
+      <img src="http://www.w3.org/Style/CSS/Buttons/mwcts"
+           alt="Use CSS" height="31" width="88"/>
+    </a>
+  </td>
+  <td>
+    <a href="http://jigsaw.w3.org/css-validator/check/referer">
+      <img src="http://jigsaw.w3.org/css-validator/images/vcss"
+           alt="Valid CSS" height="31" width="88"/>
+  </a>
+  </td>
+</tr>
+</table>
+
+</div>
+
 </div>
 </body>
 </html>
