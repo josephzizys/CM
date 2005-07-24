@@ -692,22 +692,67 @@
  (else #f))
 
 
-(define (receive . args)
+
+;;;; 
+(define-generic* receive)
+(define-generic* stream-receive)
+
+
+(defparameter *generic-receive* (list #f #f))
+(defparameter *generic-receive-rate .001)
+
+(define (generic-receive hook type)
+  (let ((data *generic-receive*)
+        (stop #f))
+    (cond ((not hook)
+           (when (first data)
+             (list-set! *generic-receive* 0 #f)
+             (remove-periodic-task! :receive))
+           (values))
+          ((not (procedure? hook))
+           (err "Receive: hook is not a function: ~s" hook))
+          ((first data)
+           (err "Can't set input hook: another hook is running!"))
+          (else
+           (let ((th #f)
+                 (st #f))
+             (case type
+               ((:threaded)
+                (set! th (make-thread (lambda ()
+                                        (do ()
+                                            (stop #f)
+                                          (hook)
+                                          (thread-sleep! *generic-receive-rate)))))
+                (set! st (lambda () (set! stop #t))))
+               ((:periodic)
+                (set! th (lambda ()
+                           (hook)))
+                (set! st (lambda ()
+                           (remove-periodic-task! :receive)))))
+           (list-set! *generic-receive* 0 th)
+           (list-set! *generic-receive* 1 st)
+           th)))))
+
+(define (set-receive! . args)
   (cond ((not *receive-mode*)
-         (err "receive: receiving is not implemented in this Lisp/OS.")
-         ((not (member *receive-mode* '(:threaded :periodic)))
-          (err "receive: ~s is not a receive mode."
-               *receive-mode*))))
+         (err "set-receive!: receiving is not implemented in this Lisp/OS."))
+        ((not (member *receive-mode* '(:threaded :periodic)))
+         (err "set-receive!: ~s is not a receive mode."
+              *receive-mode*)))
   (let ((userfn (if (pair? args) (pop args) #f))
         (stream (if (pair? args) (pop args) #f)))
-
     (if stream
         (if userfn
             (let ((wrapper (stream-receive userfn stream *receive-mode*)))
               (case *receive-mode*
                 (:threaded (thread-start! wrapper))
                 (:periodic (add-periodic-task! :receive wrapper))))
-            (stream-receive #f stream *receive-mode*))
-        (err "receive: only stream receiving is supported for now."))
+          (stream-receive #f stream *receive-mode*))
+      (if userfn
+          (let ((wrapper (generic-receive userfn *receive-mode*)))
+            (case *receive-mode*
+              (:threaded (thread-start! wrapper))
+              (:periodic (add-periodic-task! :receive wrapper))))
+        (generic-receive #f *receive-mode*)))
     (values)))
-    
+
