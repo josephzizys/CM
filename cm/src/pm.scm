@@ -24,7 +24,7 @@
 (define *portmidi-default-outbuf-size* 256)
 (define *portmidi-default-filter* 0)
 (define *portmidi-default-mask* 0)
-(define *portmidi-receive-rate* .015) 
+(define *portmidi-receive-rate* .001) 
 
 (define-class* <portmidi-stream> (<event-stream> <midi-stream-mixin>)
   ((input :init-value *portmidi-default-input* :init-keyword :input
@@ -325,6 +325,47 @@
 
 ;(define-method* (receive? (str <portmidi-stream>))
 ;  (if (not (car (portmidi-receive str))) #f #t))
+
+(define-method* (receive (str <portmidi-stream>) . args)
+  (let* ((n 0)
+        (in (first (io-open str)))
+        (bf (third (portmidi-receive str)))
+        (sz (portmidi-inbuf-size str))
+        (hook (if (pair? args) (pop args) #f))
+        (mode (if (pair? args) (pop args) #f))
+        (rm (if (not mode) #t (eq? mode ':message)))
+        (fn #f)
+        (res #f))
+    (cond ((pm:StreamPoll in)
+           (if hook
+               (begin
+                 (set! fn (lambda (mm ms)
+                            (hook (pm-message->midi-message mm) ms)))
+                 (set! n (pm:StreamRead in bf sz))
+                 (when (> n 0)
+                   (if rm (pm:EventBufferMap fn bf n)
+                     (hook bf n))
+                   (set! res #t)))
+             
+             (begin
+               (set! res '())
+               (if rm
+                   (set! fn (lambda (mm ms)
+                              ms
+                              (set! res (append! res (list (pm-message->midi-message mm))))))
+                 (set! fn (lambda (mm ms)
+                            ms
+                            (set! res (append! res (list mm))))))
+               (set! n (pm:StreamRead in bf sz))
+               (when (> n 0)
+                 (pm:EventBufferMap fn bf n))))))
+    res))
+               
+           
+
+                                         
+    
+  
 
 (define-method* (stream-receive hook (str <portmidi-stream>) type)
   ;; hook is 2arg lambda or nil, type is :threaded or :periodic
