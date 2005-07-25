@@ -527,7 +527,8 @@
   *rts-run*)
 
 (define (rts-stop) 
-  (set! *rts-run* #f))
+  (set! *rts-run* #f)
+  (values))
 
 (define (rts-pause )
   (err "rts-pause: not implemented."))
@@ -696,64 +697,66 @@
  (openmcl (set! *receive-type* ':periodic))
  (else #f))
 
+(define *generic-receive* (list #f #f))
+(define *generic-receive-rate .001)
+
 (define (map-receivers fn )
   (do ((tail *periodic-tasks* (cdr tail)))
       ((null? tail)
        #f)
-    (if (or (eq? (car (car tail)) ':generic-receive)
+    (if (or (eq? (car (car tail)) ':receive)
             (is-a? (car (car tail)) <event-stream>))
         ( fn (car (car tail))))))
 
 (define (remove-receiver! . stream)
-  (map-receivers (lambda (r) 
-                   (cond ((or (null? stream)
-                              (eq? r (car stream)))
-                          (remove-periodic-task! r)))))
+  (map-receivers (lambda (r)
+                   (cond ((and (eq? r :receive)
+                               (or (null? stream)
+                                   (eq? (car stream) #t)))
+                          (remove-periodic-task! ':receive)
+                          (list-set! *generic-receive* 0 #f))
+                         ((and (or (null? stream)
+                                   (eq? r (car stream)))
+                               (is-a? r <event-stream>))
+                          (remove-periodic-task! r)
+                          (stream-stop-receiver r))
+                         ((not (null? stream))
+                          (err "remove-receiver!: no receiver for stream ~s."
+                               (car stream))))))
   (values))
 
 (define (receiver? . stream)
   (let ((flag #f))
     (map-receivers (lambda (r)
                      (if (or (null? stream)
-                             (eq? r (car stream)))
+                             (eq? r (car stream))
+                             (and (eq? r ':receive)
+                                  (eq? (car stream) #t)))
                          (set! flag #t))))
     flag))
 
-(define (set-receiver! . args)
+(define (set-receiver! hook stream)
   (cond ((not *receive-type*)
          (err "set-receive!: receiving is not implemented in this Lisp/OS."))
         ((not (member *receive-type* '(:threaded :periodic)))
          (err "set-receive!: ~s is not a receive type."
-              *receive-type*)))
-  (let ((userfn (if (pair? args) (pop args) #f))
-        (stream (if (pair? args) (pop args) #f)))
-    (if stream
-        (if userfn
-            (let ((wrapper (stream-receive userfn stream *receive-type*)))
-              (case *receive-type*
-                (:threaded (thread-start! wrapper))
-                (:periodic (add-periodic-task! stream wrapper))))
-          (stream-receive #f stream *receive-type*))
-      (if userfn
-          (let ((wrapper (generic-receive userfn *receive-type*)))
-            (case *receive-type*
-              (:threaded (thread-start! wrapper))
-              (:periodic (add-periodic-task! :generic wrapper))))
-        (generic-receive #f *receive-type*)))
-    (values)))
-
-(defparameter *generic-receive* (list #f #f))
-(defparameter *generic-receive-rate .001)
+              *receive-type*))
+        ((eq? stream #t) ; generic receive
+         (let ((wrapper (generic-receive hook *receive-type*)))
+           (case *receive-type*
+             (:threaded (thread-start! wrapper))
+             (:periodic (add-periodic-task! :receive wrapper)))))
+        (else
+         (let ((wrapper (stream-receiver hook stream *receive-type*)))
+           (case *receive-type*
+             (:threaded (thread-start! wrapper))
+             (:periodic (add-periodic-task! stream wrapper))))))
+  (values))
 
 (define (generic-receive hook type)
   (let ((data *generic-receive*)
         (stop #f))
-    (cond ((not hook)
-           (when (first data)
-             (list-set! *generic-receive* 0 #f)
-             (remove-periodic-task! :receive))
-           (values))
-          ((not (procedure? hook))
+    (cond ((not (procedure? hook))
            (err "Receive: hook is not a function: ~s" hook))
           ((first data)
            (err "Can't set input hook: another hook is running!"))
@@ -778,10 +781,12 @@
            th)))))
 
 (define-generic* receive)
-(define-generic* stream-receive)
+(define-generic* stream-receiver) 
+(define-generic* stream-stop-receiver) ; cleanup
 
-(define-method* (stream-receive hook stream type)
+(define-method* (stream-receiver hook stream type)
   hook stream type
   (err "stream-receive: ~s does not support receiving." stream))
+
 
 
