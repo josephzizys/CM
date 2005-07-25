@@ -60,7 +60,6 @@
         (set! mess-len (+ len 8 8 4))
         (send-osc arr io mess-len)))))
 
-
 (define-method* (open-io (obj <sc-stream>) dir . args)
   dir
   args
@@ -82,6 +81,7 @@
   (set! *out* #f))
 
 (define-method* (write-event (obj <scsynth>) (io <sc-stream>) time)
+  time
   (let* ((node-set-list #f)
          (synthname (symbol->string (class-name (class-of obj))))
          (slots (instance-slots obj))
@@ -117,218 +117,186 @@
                                            (slot-ref obj (car tail))))
                                 (set! args (cddr args)))))))))
     (if node-set-list
-        (send-bundle time (list msg (append! (list "/n_setn" (slot-ref obj 'node)) node-set-list)) io)
-      (if (= time 0)
-          (send-msg msg io)
-        (send-bundle time msg io)))))
-
-
+        (send-bundle 0 (list msg (append! (list "/n_setn" (slot-ref obj 'node)) node-set-list)) io)
+      (send-msg msg io))))
 
 (define-method* (write-event (obj <load-synthdef>) (io <sc-stream>) time)
+  time
   (let ((msg (load-synthdef (slot-ref obj 'path))))
-    (if (> time 0)
-        (send-bundle time  msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <load-synthdef-dir>) (io <sc-stream>) time)
+  time
   (let ((msg (load-synthdef-dir (slot-ref obj 'path))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg time msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <node-free>) (io <sc-stream>) time)
+  time
   (let ((msg (node-free (slot-ref obj 'node))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <node-run>) (io <sc-stream>) time)
+  time
   (let ((msg (node-run (slot-ref obj 'node) (slot-ref obj 'flag))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <node-set>) (io <sc-stream>) time)
+  time
   (let ((msg (node-set (slot-ref obj 'node) (slot-ref obj 'controls-values))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <node-setn>) (io <sc-stream>) time)
+  time
   (let ((msg (node-setn (slot-ref obj 'node) (slot-ref obj 'controls-values))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <node-fill>) (io <sc-stream>) time)
+  time
   (let ((msg (node-fill (slot-ref obj 'node) 
                         (slot-ref obj 'control) 
                         (slot-ref obj 'num-controls)
                         (slot-ref obj 'value))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <node-map>) (io <sc-stream>) time)
+  time
   (let ((msg (node-map (slot-ref obj 'node) (slot-ref obj 'controls-buses))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <node-mapn>) (io <sc-stream>) time)
+  time
   (let ((msg (node-mapn (slot-ref obj 'node)
                         (slot-ref obj 'control)
                         (slot-ref obj 'value)
                         (slot-ref obj 'num-controls))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <node-before>) (io <sc-stream>) time)
+  time
   (let ((msg (node-before (slot-ref obj 'node) (slot-ref obj 'before))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <node-after>) (io <sc-stream>) time)
+  time
   (let ((msg (node-after (slot-ref obj 'node) (slot-ref obj 'after))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <group-new>) (io <sc-stream>) time)
+  time
   (let ((msg (group-new (slot-ref obj 'id) (slot-ref obj 'add-action) (slot-ref obj 'target))))
     (if (> time 0)
         (send-bundle time msg io)
       (send-msg msg io))))
 
 (define-method* (write-event (obj <group-head>) (io <sc-stream>) time)
+  time
   (let ((msg (group-head (slot-ref obj 'group) (slot-ref obj 'node))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <group-tail>) (io <sc-stream>) time)
+  time
   (let ((msg (group-tail (slot-ref obj 'group) (slot-ref obj 'node))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <group-free-all>) (io <sc-stream>) time)
+  time
   (let ((msg (group-free-all (slot-ref obj 'group))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <group-deep-free>) (io <sc-stream>) time)
+  time
   (let ((msg (group-deep-free (slot-ref obj 'group))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <ugen-command>) (io <sc-stream>) time)
+  time
   (let ((msg (ugen-command (slot-ref obj 'node)
                            (slot-ref obj 'ugen-index) 
                            (slot-ref obj 'command-name)
                            (slot-ref obj 'args))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+      (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-alloc>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-alloc (slot-ref obj 'bufnum) 
                            (slot-ref obj 'frames)
                            (slot-ref obj 'channels))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-alloc-read>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-alloc-read (slot-ref obj 'bufnum)
                                 (slot-ref obj 'file) (slot-ref obj 'start-frame)
                                 (slot-ref obj 'frames))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-read>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-read (slot-ref obj 'bufnum) (slot-ref obj 'file)
                           (slot-ref obj 'start-frame) (slot-ref obj 'frames)
                           (slot-ref obj 'buffer-start-frame)
                           (slot-ref obj 'leave-open?))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-write>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-write (slot-ref obj 'bufnum) (slot-ref obj 'file)
                            (slot-ref obj 'header) (slot-ref obj 'sample-format)
                            (slot-ref obj 'frames) (slot-ref obj 'start-frame)
                            (slot-ref obj 'leave-open?))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-free>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-free (slot-ref obj 'bufnum))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-set>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-set (slot-ref obj 'bufnum)
                          (slot-ref obj 'sample-values))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-setn>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-setn (slot-ref obj 'bufnum)
                           (slot-ref obj 'samples-values))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-fill>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-fill (slot-ref obj 'bufnum)
                           (slot-ref obj 'start-sample) (slot-ref obj 'num-samples)
                           (slot-ref obj 'value))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-close>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-close (slot-ref obj 'bufnum))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-gen>) (io <sc-stream>) time)
+  time
   (let ((msg (buffer-gen (slot-ref obj 'bufnum) (slot-ref obj 'command)
                          (slot-ref obj 'flags) (slot-ref obj 'args))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <control-set>) (io <sc-stream>) time)
+  time
   (let ((msg (control-set (slot-ref obj 'bus) (slot-ref obj 'value))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <control-setn>) (io <sc-stream>) time)
+  time
   (let ((msg (control-setn (slot-ref obj 'bus)
                            (slot-ref obj 'value))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <control-fill>) (io <sc-file>) time)
+  time
   (let ((msg (control-fill (slot-ref obj 'bus) (slot-ref obj 'num-buses)
                            (slot-ref obj 'value))))
-    (if (> time 0)
-        (send-bundle time msg io)
-      (send-msg msg io))))
+    (send-msg msg io)))
 
 
 (define-method* (write-event (obj <sc-buffer>) (io <sc-stream>) time)
