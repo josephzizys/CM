@@ -402,19 +402,8 @@
 ;;; receive
 ;;;
 
-(define *receive-mode* #f)
-
-(cond-expand
- (openmcl (set! *receive-mode* ':threaded))
- (gauche (set! *receive-mode* ':threaded))
- (cmu (set! *receive-mode* ':periodic))
- (sbcl (set! *receive-mode* ':periodic))
- (else (set! *receive-mode* #f)))
 
 ;(define-method* receive (hook stream . args)                )
-
-
-
 
 ;(define-method* (threaded-receive hook stream . args)
 ;  (with-args (args &key resolution)
