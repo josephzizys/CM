@@ -361,13 +361,17 @@
                  (pm:EventBufferMap fn bf n))))))
     res))
                
-           
+(define-method* (stream-stop-receiver str)
+  ;; this is called by remove-receiver after the periodic task has been withdrawn
+  (let ((data (portmidi-receive str))) ; (<thread> <stop> <buf> <len>)
+    (when (first data)
+      ;(let ((stopper (second data)))
+      ;  ;; call cached stopper to set the stop flag. 
+      ;  ( stopper ))
+      (list-set! data 0 #f)
+      (list-set! data 1 #f))))
 
-                                         
-    
-  
-
-(define-method* (stream-receive hook (str <portmidi-stream>) type)
+(define-method* (stream-receiver hook (str <portmidi-stream>) type)
   ;; hook is 2arg lambda or nil, type is :threaded or :periodic
   (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
          (mode (portmidi-receive-mode str))
@@ -378,16 +382,7 @@
     ;; the receiving thread's do loop terminates as soon as the stop
     ;; flag is #t. to stop we call the cached "stopper" closure that
     ;; sets the var to #t.
-    (cond ((not hook) 
-           ;; stop receiving if thread active
-           (when (first data)
-             (let ((stopper (second data)))
-               ;; call cached stopper to set the stop flag. 
-               ( stopper ))
-             (list-set! data 0 #f)
-             (list-set! data 1 #f))
-           (values))
-          ((not (procedure? hook))
+    (cond ((not (procedure? hook))
            (err "Receive: hook is not a function: ~s" hook))
           ((not (member (portmidi-open? str) '(:in :inout)))
            (err "Stream not open for input: ~S." str))
@@ -446,18 +441,5 @@
              (list-set! data 1 st)
              (list-set! data 2 bf)
              (list-set! data 3 sz)
-;             (cond ((eq? type ':threaded)
-;                    (thread-start! th))
-;                   (else
-;                    (unless (periodic-task-running?)
-;                      (set-periodic-task-rate!
-;                       (inexact->exact (floor (* *portmidi-receive-rate* 1000)))
-;                       ':ms))
-;                    (add-periodic-task! str th)))
-             th
-             )))))
-
-
-
-
+             th)))))
 
