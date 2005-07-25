@@ -401,11 +401,12 @@
   (set! *pstart* #f))
 
 (define (output event . args)
-  ;; used in processes to write events to the current output
-  ;; stream.  checks to see if event's time is in future 
-  ;; later than next event in queue. if so it enqueues rather
-  ;; than outputs.
-  (with-args (args &optional (out *out*) at)
+  ;; used in processes to write events to the current output stream.
+  ;; checks to see if event's time is in future later than next event
+  ;; in queue. if so it enqueues rather than outputs. if event is
+  ;; written to file, ahead is added to scoretime stream's destination
+  ;; can manage future scheduling
+  (with-args (args &key (to *out*) at (ahead 0))
     (if *scheduler*
         (begin
          (if (pair? event)
@@ -415,12 +416,12 @@
                (let ((n (+ (or *pstart* 0) (or at (object-time e)))))
                  (if (early? n)
                      (enqueue e n #f)
-                     (write-event e out n))))
+                     (write-event e to (+ n ahead)))))
              (let ((n (+ (or *pstart* 0) (or at (object-time event)))))
                (if (early? n)
                    (enqueue event n #f)
-                   (write-event event out n)))))
-        (write-event event out at))
+                   (write-event event to (+ n ahead))))))
+        (write-event event to (+ at ahead)))
     (values)))
 
 (define (now . args)
@@ -458,18 +459,19 @@
 ;;       (err "sprout: scheduler not running."))))
 
 (define (sprout obj . args)
-  (with-args (args &optional time ahead)
+  (with-args (args &key to at ahead)
+    to
     (if *scheduler*
-        (let ((at (if time
+        (let ((tt (if at
                       (if *pstart*
-                          (+ time *pstart*)
-                          time)
+                          (+ at *pstart*)
+                          at)
                       (now))))
-          ;; at is true time to insert in queue. if sprouting from a
-          ;; process then time is relative to process start time
+          ;; tt is true time to insert in queue. if sprouting from a
+          ;; process then at value is relative to process start time
           ;; *pstart*. else sprout is being called from the repl, time
           ;; is relative to 0.
-          (if ahead (set! at (+ at ahead)))
+          (if ahead (set! tt (+ tt ahead)))
           ;; im not sure if i need a locking mechanism here or not. rts
           ;; wraps a without-interrupts around the points where its
           ;; thread accesses the queue, maybe that would keep this code
@@ -477,14 +479,14 @@
           ;; process
           (if (eq? *scheduler* ':threaded) (mutex-lock! *qlock*))
           (cond ((pair? obj)
-                 (dolist (o obj) (sprout o time ahead)))
+                 (dolist (o obj) (sprout o at ahead)))
                 ((procedure? obj)       ; process
                  ;; add sprouted process at time relative to start of
                  ;; sprouter
-                 (enqueue obj at at) )
+                 (enqueue obj tt tt) )
                 ((integer? obj)         ; midi message
                  ;; add midi message relatice to true scoretime
-                 (enqueue obj at #f) )
+                 (enqueue obj tt #f) )
                 (else                   ; object
                  ;; else the object has a method on object-time and
                  ;; schedule-object will enqueue at object-time PLUS
@@ -498,14 +500,13 @@
 ;;; real time scheduling (rts)
 ;;;
 
-
-(define *rts* #f)
+(define *rts-type* #f) ; see also *receive-type*
 
 (cond-expand
- (cmu (set! *rts* ':periodic))
- (sbcl (set! *rts* ':periodic))
- (gauche (set! *rts* ':threaded))
- (openmcl (set! *rts* ':threaded))
+ (cmu (set! *rts-type* ':periodic))
+ (sbcl (set! *rts-type* ':periodic))
+ (gauche (set! *rts-type* ':threaded))
+ (openmcl (set! *rts-type* ':threaded))
  (else #f))
 
 (define *rts-run* #f)
@@ -522,7 +523,7 @@
   (set! *qnext* #f)
   (set! *qtime* #f))
 
-(define (rts-running? )
+(define (rts? )
   *rts-run*)
 
 (define (rts-stop) 
@@ -535,8 +536,8 @@
   (err "rts-continue: not implemented."))
 
 (define (rts . args)
-  (if (rts-running?) 
-      (err "rts: already running. Forgot (rts-reset) after an error?"))
+  (if (rts?) 
+      (err "rts: scheduler already running or (rts-reset) was not called after error."))
   (let* ((object (if (pair? args) (pop args) #f)) ; object(s) to run
          (to (if (pair? args) (pop args)          ; output stream
                  (current-output-stream)))   
@@ -563,7 +564,7 @@
     (set! *out* to)
     (set! *rts-run* #t)
     (set! *qtime* ahead)
-    (case *rts*
+    (case *rts-type*
       (( :threaded )
        (if (not *qlock*) (set! *qlock* (make-mutex)))
        (set! *scheduler* ':threaded)
@@ -573,7 +574,7 @@
        (set! *scheduler* ':periodic)
        (set-periodic-task-rate! 1 :ms)
        (add-periodic-task! :rts (rts-run-periodic object ahead end)))
-      (else (err "rts: not an rts scheduling type: ~s" *rts*)))
+      (else (err "rts: not an rts scheduling type: ~s" *rts-type*)))
     (values)))
 
 (define (rts-run-threaded object ahead end)
@@ -637,7 +638,8 @@
 
 (define (rts-run-periodic object ahead end)
   ;; rts periodic run function.  the only hope for this method is if
-  ;; the host's periodic polling at 1ms rate is rock-solid
+  ;; the host's periodic polling at 1ms rate is rock-solid and all
+  ;; tasks (including any receives) complete in under 1ms...
   (let ((wait? (if (> ahead 0)
                    (inexact->exact
                     (round (* ahead 1000.0)))
@@ -681,22 +683,64 @@
                        (set! wait? (inexact->exact
                                    (round (* wait? 1000.0))))))))))))
 
+;;;
+;;; receive
+;;;
 
-(define *receive-mode* #f)
+(define *receive-type* #f)
 
 (cond-expand
- (cmu (set! *receive-mode* ':periodic))
- (sbcl (set! *receive-mode* ':periodic))
- (gauche (set! *receive-mode* ':threaded))
- (openmcl (set! *receive-mode* ':periodic))
+ (cmu (set! *receive-type* ':periodic))
+ (sbcl (set! *receive-type* ':periodic))
+ (gauche (set! *receive-type* ':threaded))
+ (openmcl (set! *receive-type* ':periodic))
  (else #f))
 
+(define (map-receivers fn )
+  (do ((tail *periodic-tasks* (cdr tail)))
+      ((null? tail)
+       #f)
+    (if (or (eq? (car (car tail)) ':generic-receive)
+            (is-a? (car (car tail)) <event-stream>))
+        ( fn (car (car tail))))))
 
+(define (remove-receiver! . stream)
+  (map-receivers (lambda (r) 
+                   (cond ((or (null? stream)
+                              (eq? r (car stream)))
+                          (remove-periodic-task! r)))))
+  (values))
 
-;;;; 
-(define-generic* receive)
-(define-generic* stream-receive)
+(define (receiver? . stream)
+  (let ((flag #f))
+    (map-receivers (lambda (r)
+                     (if (or (null? stream)
+                             (eq? r (car stream)))
+                         (set! flag #t))))
+    flag))
 
+(define (set-receiver! . args)
+  (cond ((not *receive-type*)
+         (err "set-receive!: receiving is not implemented in this Lisp/OS."))
+        ((not (member *receive-type* '(:threaded :periodic)))
+         (err "set-receive!: ~s is not a receive type."
+              *receive-type*)))
+  (let ((userfn (if (pair? args) (pop args) #f))
+        (stream (if (pair? args) (pop args) #f)))
+    (if stream
+        (if userfn
+            (let ((wrapper (stream-receive userfn stream *receive-type*)))
+              (case *receive-type*
+                (:threaded (thread-start! wrapper))
+                (:periodic (add-periodic-task! stream wrapper))))
+          (stream-receive #f stream *receive-type*))
+      (if userfn
+          (let ((wrapper (generic-receive userfn *receive-type*)))
+            (case *receive-type*
+              (:threaded (thread-start! wrapper))
+              (:periodic (add-periodic-task! :generic wrapper))))
+        (generic-receive #f *receive-type*)))
+    (values)))
 
 (defparameter *generic-receive* (list #f #f))
 (defparameter *generic-receive-rate .001)
@@ -733,26 +777,11 @@
            (list-set! *generic-receive* 1 st)
            th)))))
 
-(define (set-receive! . args)
-  (cond ((not *receive-mode*)
-         (err "set-receive!: receiving is not implemented in this Lisp/OS."))
-        ((not (member *receive-mode* '(:threaded :periodic)))
-         (err "set-receive!: ~s is not a receive mode."
-              *receive-mode*)))
-  (let ((userfn (if (pair? args) (pop args) #f))
-        (stream (if (pair? args) (pop args) #f)))
-    (if stream
-        (if userfn
-            (let ((wrapper (stream-receive userfn stream *receive-mode*)))
-              (case *receive-mode*
-                (:threaded (thread-start! wrapper))
-                (:periodic (add-periodic-task! :receive wrapper))))
-          (stream-receive #f stream *receive-mode*))
-      (if userfn
-          (let ((wrapper (generic-receive userfn *receive-mode*)))
-            (case *receive-mode*
-              (:threaded (thread-start! wrapper))
-              (:periodic (add-periodic-task! :receive wrapper))))
-        (generic-receive #f *receive-mode*)))
-    (values)))
+(define-generic* receive)
+(define-generic* stream-receive)
+
+(define-method* (stream-receive hook stream type)
+  hook stream type
+  (err "stream-receive: ~s does not support receiving." stream))
+
 
