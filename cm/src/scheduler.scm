@@ -421,7 +421,7 @@
                (if (early? n)
                    (enqueue event n #f)
                    (write-event event to (+ n ahead))))))
-        (write-event event to (+ at ahead)))
+        (write-event event to (+ (or at 0) ahead)))
     (values)))
 
 (define (now . args)
