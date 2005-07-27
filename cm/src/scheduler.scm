@@ -486,24 +486,38 @@
           ;; thread accesses the queue, maybe that would keep this code
           ;; from simultaneous side-effecting the queue from another
           ;; process
-          (if (eq? *scheduler* ':threaded) (mutex-lock! *qlock*))
-          (cond ((pair? obj)
-                 (dolist (o obj) (sprout o at ahead)))
-                ((procedure? obj)       ; process
-                 ;; add sprouted process at time relative to start of
-                 ;; sprouter
-                 (enqueue obj tt tt) )
-                ((integer? obj)         ; midi message
-                 ;; add midi message relatice to true scoretime
-                 (enqueue obj tt #f) )
-                (else                   ; object
-                 ;; else the object has a method on object-time and
-                 ;; schedule-object will enqueue at object-time PLUS
-                 ;; start time of process that sprouted it
-                 (schedule-object obj (or *pstart* 0))))
-          (if (eq? *scheduler* ':threaded) (mutex-unlock! *qlock*)))
-        (err "sprout: scheduler not running."))
-    (values)))
+          (if (eq? *scheduler* ':threaded)
+              (with-mutex-grabbed (*qlock*)
+                 (cond ((pair? obj)
+                        (dolist (o obj) (sprout o at ahead)))
+                       ((procedure? obj)       ; process
+                        ;; add sprouted process at time relative to start of
+                        ;; sprouter
+                        (enqueue obj tt tt) )
+                       ((integer? obj)         ; midi message
+                        ;; add midi message relatice to true scoretime
+                        (enqueue obj tt #f) )
+                       (else                   ; object
+                        ;; else the object has a method on object-time and
+                        ;; schedule-object will enqueue at object-time PLUS
+                        ;; start time of process that sprouted it
+                        (schedule-object obj (or *pstart* 0)))))
+             (cond ((pair? obj)
+                    (dolist (o obj) (sprout o at ahead)))
+                   ((procedure? obj)       ; process
+                    ;; add sprouted process at time relative to start of
+                    ;; sprouter
+                    (enqueue obj tt tt) )
+                   ((integer? obj)         ; midi message
+                    ;; add midi message relatice to true scoretime
+                    (enqueue obj tt #f) )
+                   (else                   ; object
+                    ;; else the object has a method on object-time and
+                    ;; schedule-object will enqueue at object-time PLUS
+                    ;; start time of process that sprouted it
+                    (schedule-object obj (or *pstart* 0))))))
+          (err "sprout: scheduler not running."))
+      (values)))
 
 ;;;
 ;;; real time scheduling (rts)
@@ -753,13 +767,13 @@
         ((eq? stream #t) ; generic receive
          (let ((wrapper (generic-receive hook *receive-type*)))
            (case *receive-type*
-             (:threaded (thread-start! wrapper))
-             (:periodic (add-periodic-task! :receive wrapper)))))
+             ((:threaded) (thread-start! wrapper))
+             ((:periodic) (add-periodic-task! :receive wrapper)))))
         (else
          (let ((wrapper (stream-receiver hook stream *receive-type*)))
            (case *receive-type*
-             (:threaded (thread-start! wrapper))
-             (:periodic (add-periodic-task! stream wrapper))))))
+             ((:threaded) (thread-start! wrapper))
+             ((:periodic) (add-periodic-task! stream wrapper))))))
   (values))
 
 (define (generic-receive hook type)
@@ -790,8 +804,6 @@
            th)))))
 
 (define-generic* receive)
-(define-generic* stream-receiver) 
-(define-generic* stream-stop-receiver) ; cleanup
 
 (define-method* (stream-receiver hook stream type)
   hook stream type
