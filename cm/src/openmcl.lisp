@@ -31,7 +31,8 @@
           ccl:class-direct-subclasses
           ccl:open-shared-library ; needed if loading clm into cm.
           ccl:without-interrupts ; for testing realtime
-          ;ccl:process-run-function
+	  ;ccl::pref ;for openmcl ffi
+	  ;ccl:process-run-function
           ;ccl:process-kill
           ;ccl:defcallback
           #+:openmcl-partial-mop
@@ -488,14 +489,58 @@ fi
   args
   (ccl::shutdown sock))
 
+
+;; current receive-from in openmcl will block until 
+;; it receives data. this method will return nil
+;; if no data ready.
+(defmethod receive-from-no-block ((socket ccl::udp-socket) size &key buffer extract offset)
+  (let ((fd (ccl::socket-device socket))
+	(vec-offset offset)
+	(vec buffer)
+	(ret-size -1))
+    (when vec
+      (multiple-value-setq (vec vec-offset)
+	(ccl::verify-socket-buffer vec vec-offset size)))
+    (ccl::rlet ((sockaddr :sockaddr_in)
+	   (namelen :signed))
+      (setf (ccl::pref sockaddr :sockaddr_in.sin_family) #$AF_INET)
+      (setf (ccl::pref sockaddr :sockaddr_in.sin_addr.s_addr) #$INADDR_ANY)
+      (setf (ccl::pref sockaddr :sockaddr_in.sin_port) 0)
+      (setf (ccl::pref namelen :signed) (ccl::record-length :sockaddr_in))
+      (ccl::%stack-block ((bufptr size))
+	(setq ret-size (#_recvfrom fd bufptr size 0 sockaddr namelen))
+	(print ret-size)
+	(when (> ret-size 0)
+	  (unless vec
+	    (setq vec (make-array ret-size
+				  :element-type
+				  (ecase (ccl::socket-format socket)
+				    ((:text) 'base-character)
+				    ((:binary :bivalent) '(unsigned-byte 8))))
+		  vec-offset 0))
+	  (ccl::%copy-ptr-to-ivector bufptr 0 vec vec-offset ret-size)))
+      (if (> ret-size 0)
+	  (values (cond ((null buffer)
+			 vec)
+			((or (not extract)
+			     (and (eql 0 (or offset 0))
+				  (eql ret-size (length buffer))))
+			 buffer)
+			(t 
+			 (subseq vec vec-offset (+ vec-offset ret-size))))
+		  ret-size
+		  (#_ntohl (ccl::pref sockaddr :sockaddr_in.sin_addr.s_addr))
+		  (#_ntohs (ccl::pref sockaddr :sockaddr_in.sin_port)))
+	(values nil nil nil nil)))))
+
 (defun socket-recv (sock bytes &optional flags)
   flags
-  (ccl::receive-from sock bytes))
+  (receive-from-no-block sock bytes))
 
 (defun socket-recvfrom (sock bytes &optional flags)
   flags
   (multiple-value-bind (buf num-bytes ip port)
-      (ccl::receive-from sock bytes)
+      (receive-from-no-block sock bytes)
     num-bytes
     port
     (values buf ip)))
@@ -522,9 +567,6 @@ fi
      vec (make-byte-vector (inexact->exact
                             (* (modf (time->seconds target-time))
                                #xffffffff))))))
-
-
-
 
 
 ;;; new periodic-task support
@@ -574,7 +616,7 @@ fi
 (defun run-periodic-tasks ()
   (let ((timer-context (%string->cfstringref "cm-periodic")))
     (ccl::defcallback *periodic-polling-callback*
-        (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
+      (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
       (declare (ignore timer info))
       (if *periodic-tasks*
           (dolist (e *periodic-tasks*) (funcall (cdr e)))
@@ -605,7 +647,7 @@ fi
 (defun periodic-task-running? (&optional owner)
   (if *periodic-tasks*
       (if owner 
-          (and (assoc owner *periodic-tasks* :test #'eq) t)
+	  (and (assoc owner *periodic-tasks* :test #'eq) t)
 	t)
     nil))
 
@@ -653,192 +695,64 @@ fi
 (remove-periodic-task! t)
 |#
 
-
-;(defun set-periodic-task! (thunk &key (period 1) (mode ':set))
-;  ;;period is in milliseconds
-;  (declare (ignore mode))
-;  (cond ((not thunk) 
-;	 (setf *periodic-polling-function* nil))
-;	((not (null *periodic-polling-function*))
-;	 (error "set-periodic-task!: Periodic task already running!"))
-;	(t
-;	 (setf *periodic-polling-function* thunk)
-;	 (run-periodic-task period)))
-;  (values))
+(defun u8vector->double (vec)
+  (ccl::%stack-block ((d 8))
+     (dotimes (i 8)
+      (ccl::%put-byte d (aref vec i) i))
+    (ccl::%get-double-float d)))
 
 
-#|
-(defun cf-runloop-now ()
-  (#_CFAbsoluteTimeGetCurrent))
-
-(defun cf-runloop-wait (abs-time timer)
-  (#_CFRunLoopTimerSetNextFireDate timer abs-time))
-
-
-(defun rts3 (object to &optional (at 0) &key end-time)
-  (declare (special rts-callback))
-  (if (rts-running?)
-      (error "rts: already running."))
-  (let ((ahead (if (consp at)
-		   (car at) at)))
-    (setf *queue* %q)
-    (setf *scheduler* t)
-    (if (consp object)
-        (dolist (o object)
-          (schedule-object o
-			   (if (consp ahead)
-			       (if (consp (cdr ahead)) (pop ahead) (car ahead))
-			     ahead)))
-      (if (consp ahead)
-	  (schedule-object object (car ahead))
-	(schedule-object object ahead)))
-    (setf *out* to)
-    (setf *rts-run* t)
-    (if (consp ahead)
-	(setf ahead (apply #'min ahead)))
-    (setf *rts-now* ahead)
-
-    (let ((target-time nil)
-	  (entry nil)
-	  (qtime nil)
-	  (start nil)
-	  (thing nil)
-	  (wait? nil)
-	  (none? (null (%q-head *queue*))))
-      (ccl::defcallback rts-callback (:<CFR>un<L>oop<T>imer<R>ef timer (:* t) info)
-	(declare (ignore info))
-	(if (not target-time)
-	    (setf target-time (+ *rts-now* (#_CFAbsoluteTimeGetCurrent))))
-	(if (and (not none?) *rts-run*)
-	    (progn
-	      (do ()
-		  ((or none? (> (%qe-time (%q-peek *queue*)) *rts-now*))
-		   (if none?
-		       (setf wait? nil)
-		     (let* ((next (%qe-time (%q-peek *queue*))))
-		       (setf wait? (- next *rts-now*))
-		       (setf *rts-now* next))))
-		(setf entry (%q-pop *queue*))
-		(setf qtime (%qe-time entry))
-		(setf start (%qe-start entry))
-		(setf thing (%qe-object entry))
-		(%qe-dealloc *queue* entry)
-		(process-events thing qtime start *out*)
-		(setf none? (null (%q-head *queue*))))
-	      (if  wait?
-		  (cf-runloop-wait (setf target-time (+ target-time wait?)) timer)
-		(cf-runloop-wait target-time timer)))
-	  (progn
-	    (unless none?
-	      (%q-flush *queue*))
-	    (unschedule-object object t)
-	    (#_CFRunLoopStop (#_CFRunLoopGetCurrent)))))
-      (ccl::process-run-function "rts-thread"
-	(lambda ()
-	  (without-interrupts
-	   (ccl::external-call "_CFRunLoopGetCurrent" :address)
-	   (ccl::external-call
-	    "__CFRunLoopSetCurrent"
-	    :address (ccl::external-call "_CFRunLoopGetMain" :Address))
-	   (ccl::%stack-block ((psn 8))
-	      (ccl::external-call "_GetCurrentProcess" :address psn)
-	      (ccl::with-cstrs ((name "cm rt"))
-		(ccl::external-call "_CPSSetProcessName" :address psn :address name))))
-	  (let ((rts-timer (#_CFRunLoopTimerCreate (ccl::%null-ptr)
-						   (+ (#_CFAbsoluteTimeGetCurrent) *rts-now*) 10000000.D0
-						   0 0 rts-callback
-						   (ccl::%null-ptr)))
-		(timer-context (%string->cfstringref "cm-rts")))
-	    (#_CFRunLoopAddTimer (#_CFRunLoopGetCurrent) rts-timer timer-context)
-	     (#_CFRunLoopRunInMode timer-context (if end-time (coerce end-time 'double-float) 10000000.D0) #$false)
-	     (#_CFRunLoopTimerInvalidate rts-timer)
-	     (#_CFRelease rts-timer)
-	     (%q-flush *queue*)
-	     (setf *rts-run* nil)
-	     (setf *queue* nil)
-	     (setf *scheduler* nil)
-	     (setf *rts-now* nil)
-	     (%release-cfstring timer-context)
-	     (ccl::process-kill ccl::*current-process*)))))))
+(defun parse-osc (arr)
+  (let ((lst (list))
+	(pos nil)
+	(first-token-len nil)
+	(type-list-len nil)
+	(sym-vector nil)
+	(sym nil)
+	(sym-len 0)
+	(type-list (list)))
+    (setf first-token-len (position 0 arr))
+    (if first-token-len
+	(let ((mess (list)))
+	  (setf lst (append lst (list 
+				 (intern 
+				       (string-upcase 
+					       (string-trim "/" (coerce (loop for i across (subseq arr 0 first-token-len)
+							       collect (code-char i)) 'string))) :cm))))
+	  (setf mess (subseq arr (position 44 arr)))
+	  (setf type-list (mapcar #'code-char (coerce (subseq mess 0 (position 0 mess)) 'list)))
+	  (setf type-list-len (length type-list))
+	  (setf mess (subseq mess (+ type-list-len (- 4 (mod type-list-len 4)))))
+	  (setf pos 0)
+	  (dolist (j type-list)
+	    (cond ((eq j #\i)
+		   (setf lst (append lst (list (subseq mess pos (+ pos 4)))))
+		   (setf pos (+ pos 4)))
+		  ((eq j #\f)
+		   (setf lst (append lst (list (subseq mess pos (+ pos 4)))))
+		   (setf pos (+ pos 4)))
+		  ((eq j #\d)
+		   (setf lst (append lst (list (subseq mess pos (+ pos 8)))))
+		   (setf pos (+ pos 8)))
+		  ((eq j #\s)
+		   (setf sym-vector (subseq mess pos))
+		   (setf sym-vector (subseq sym-vector pos (position 0 sym-vector)))
+		   (print (list sym-vector (subseq mess pos)))
+                   (setf sym (coerce (loop for i across sym-vector collect (code-char i)) 'string))
+                   (setf lst (append lst (list (string-trim "/" (string-right-trim '(#\newline) sym)))))
+                   (setf sym-len (length sym))
+                   (if (= 0 (mod sym-len 4))
+                       (setf pos (+ pos sym-len))
+                     (setf pos (+ (+ sym-len (- 4 (mod sym-len 4))) pos)))))))
+      (setf lst (append lst (list 
+				 (intern 
+				       (string-upcase 
+					       (string-trim "/" (coerce (loop for i across (subseq arr 0 first-token-len)
+									      collect (code-char i)) 'string))) :cm)))))
+    lst))
 
 
+(defmacro with-mutex-grabbed ((mutex) &body body)
+  `(ccl::with-lock-grabbed (,mutex)
+			   ,@body))
 
-
-
-;;; fix :output for your machine, call (pm:GetDeviceDescriptions)
-
-(defparameter *pm* (portmidi-open :output 3 :latency 0))
-
-(defun foo (num dur)
-  (let ((ev (new midi :duration 1 :amplitude .5 :keynum 60)))
-    (process repeat num for i from 0
-             do (sv ev :time (now))
-             output ev
-             wait dur)))
-
-(rts (foo 100 .1) *pm*) 
-(rts3 (foo 100 .1) *pm*)
-
-(rts (foo 100 .1) *pm* 3) 
-(rts3 (foo 100 .1) *pm* 3)
-
-(rts (foo 100 .1) *pm* 0 2)
-(rts3 (foo 100 .1) *pm* 0 :end-time 2)
-
-(rts3 (foo 1000 .1) *pm*)
-
-(defun fluff1 (num dur)
-  (process repeat num for i from 0 
-	   output (new midi :time (now) :duration (* 2 dur) :amplitude .5 :keynum 
-		       (pickl '(60 62 64 67 72 65 69 48 50)))
-	   wait (pickl (list dur (/ dur 2) (/ dur 4)))
-	   when (= i (1- num))
-	   sprout (process repeat 4
-			   output (new midi :time (now) :duration 5 :amplitude .5 :keynum 
-				       (pickl '(62 64 67 72 65 69  50))))
-	   and
-	   sprout (process repeat 4
-			   output (new midi :time (now) :duration 5 :amplitude .5 :keynum 
-				       (pickl '(60 64 67 72 69 48 50))))
-	   at (+ (now) 2)))
-
-
-(rts3 (fluff1 30 1) *pm*)
-
-
-;; having time of midi > (now)
-;; also seems to work (see last sprout)
-;;
-
-(defun fluff2 (num dur)
-  (process repeat num for i from 0 
-	   output (new midi :time (now) :duration (* 2 dur) :amplitude .5 :keynum 
-		       (pickl '(60 62 64 67 72 65 69 48 50)))
-	   wait (pickl (list dur (/ dur 2) (/ dur 4)))
-	   when (= i (1- num))
-	   sprout (process repeat 4
-			   output (new midi :time (now) :duration 5 :amplitude .5 :keynum 
-				       (pickl '(62 64 67 72 65 69  50))))
-	   and
-	   sprout (process repeat 4
-			   output (new midi :time (+ (now) 2) :duration 5 :amplitude .5 :keynum 
-				       (pickl '(60 64 67 72 69 48 50))))))
-(rts3 (fluff2 30 1) *pm*)
-
-
-(defun endless-fluff (num dur)
-  (process repeat num for i from 0 
-	   output (new midi :time (now) :duration (* 2 dur) :amplitude .5 :keynum 
-		       (pickl '(60 62 64 67 72 65 69 48 50)))
-	   wait (pickl (list dur (/ dur 2) (/ dur 4)))
-	   when (= i (1- num))
-	   sprout (process repeat 4
-			   output (new midi :time (now) :duration 5 :amplitude .5 :keynum 
-				       (pickl '(62 64 67 72 65 69  50))))
-	   and
-	   sprout (endless-fluff 30 1)))
-
-(rts3 (endless-fluff 30 1) *pm* 2)
-(rts-stop)
-
-|#
