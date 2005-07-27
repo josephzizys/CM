@@ -610,6 +610,7 @@
         (thread-sleep! *qtime*))
     (do ((ttime (thread-current-time))
          (entry #f)
+         (stime 0)
          (thing #f)
          (start #f)
          (wait? #f))
@@ -621,31 +622,31 @@
                             end)))))
          (if object (unschedule-object object #t))
          (rts-reset))
-      (mutex-lock! *qlock*)
-      (without-interrupts
-          (do ()
-              ((or (%q-empty? *queue*)
-                   (> (%qe-time (%q-peek *queue*)) *qtime*))
-               (if (%q-empty? *queue*)
-                   (set! wait? #f)
-                   (let* ((next (%qe-time (%q-peek *queue*))))
-                     (set! wait? (- next *qtime*))
-                     ;; not sure if this should really be
-                     ;; incremented here. maybe the time shouldnt be
-                     ;; advanced until after the sleep??
-                     (set! *qtime* next))))
-            (set! entry (%q-pop *queue*))
-            (set! *qtime* (%qe-time entry))
-            (set! start (%qe-start entry))
-            (set! thing (%qe-object entry))
-            (%qe-dealloc *queue* entry)
-            (process-events thing *qtime* start *out*)))
-      (mutex-unlock! *qlock*)
-      (if wait? 
+      (with-mutex-grabbed (*qlock*)
+        (without-interrupts
+         (do ()
+             ((or (%q-empty? *queue*)
+                  (> (%qe-time (%q-peek *queue*)) *qtime*))
+              (if (%q-empty? *queue*)
+                  (set! wait? #f)
+                (let* ((next (%qe-time (%q-peek *queue*))))
+                  (set! wait? (- next *qtime*))
+                  ;; not sure if this should really be
+                  ;; incremented here. maybe the time shouldnt be
+                  ;; advanced until after the sleep??
+                  (set! *qtime* next))))
+           (set! entry (%q-pop *queue*))
+           (set! *qtime* (%qe-time entry))
+           (set! start (%qe-start entry))
+           (set! thing (%qe-object entry))
+           (%qe-dealloc *queue* entry)
+           (process-events thing *qtime* start *out*))))
+        (if wait? 
           (begin 
-           (setf ttime (+ ttime wait?))
-           (thread-sleep!
-            (- ttime (thread-current-time))))
+           (set! ttime (+ ttime wait?))
+           (set! stime (- ttime (thread-current-time)))
+           (if (> stime 0)
+               (thread-sleep! stime)))
           ;; we only get here if queue is currently empty but user
           ;; wants scheduler to keepp running even though it has
           ;; nothing to do.  in this case the do loop will spin
