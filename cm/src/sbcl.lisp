@@ -28,6 +28,7 @@
           sb-pcl:generic-function-name
           sb-mop:class-direct-subclasses
           sb-mop:validate-superclass
+	  sb-sys:without-interrupts
           )
         :cm)
 
@@ -193,8 +194,10 @@
 (defgeneric schedule-object (obj start))
 (defgeneric unschedule-object (obj &rest recurse))
 (defgeneric process-events (obj time start func))
-(defgeneric sprout (obj &optional time dest))
-(defgeneric stream-receive (hook stream type))
+;(defgeneric sprout (obj &optional time dest))
+(defgeneric stream-receiver (hook stream type))
+(defgeneric stream-stop-receiver (stream))
+(defgeneric receive (stream &rest args))
 (defgeneric receive? (stream))
 
 
@@ -230,42 +233,66 @@
 (defgeneric sc-env->list (obj))
 (defgeneric rt-output (obj dest &optional time))
 (defgeneric write-bundle (offset message io))
+
+
+
 ;; bug??: sprout has 2 optionals but rt-sprout has them required
-(defgeneric rt-sprout (obj time dest))
-(defgeneric rt-now (io))
+;(defgeneric rt-sprout (obj time dest))
+;(defgeneric rt-now (io))
 
 ;;;
 ;;; thread support
 ;;;
 
+#+sb-thread
+(progn
+
+(defun thread-current-time ()
+  (/ (get-internal-real-time)
+     #.(coerce internal-time-units-per-second 'float)))
+
+(defun make-thread (thunk)
+  (let ((id (sb-thread:make-thread thunk)))
+    (sb-thread::suspend-thread id)
+    id))
+
+(defun thread-start! (id)
+  (sb-thread::resume-thread id))
+
+(defun thread-sleep! (sec)
+  (sleep sec))
+
+(defun make-mutex (&key name)
+  (if name (sb-thread:make-mutex :name (string name))
+    (sb-thread:make-mutex )))
+
+(defmacro with-mutex-grabbed ((var) &body body)
+  `(sb-thread:with-mutex (,var :wait-p t) ,@body))
+
+(defun mutex-lock! (mutex)
+  (sb-thread:get-mutex mutex :wait-p t))
+
+(defun mutex-unlock! (mutex)
+  (sb-thread:release-mutex mutex))
+
+)
+
+
+#-sb-thread
+(progn
+
 (defun nothreads ()
   (error "SBCL threads are not supported in this OS."))
 
 (defun thread-current-time ()
-  (get-internal-real-time))
-
-(defun current-thread ()
-  (nothreads))
-
-(defun thread? (obj)
-  obj
   (nothreads))
 
 (defun make-thread (thunk &optional name)
- (nothreads))
-
-(defun thread-name (thread) 
-  thread
+  thunk name
   (nothreads))
-
-;(thread-specific thread)
-;(thread-specific-set! thread obj)
 
 (defun thread-start! (thread)
   thread
-  (nothreads))
-
-(defun thread-yield! ()
   (nothreads))
 
 (defun thread-sleep! (timeout)
@@ -276,8 +303,6 @@
   thread
   (nothreads))
 
-;(thread-join! thread [timeout [timeout-val]])
-
 (defun mutex? (obj)
   obj
   (nothreads))
@@ -286,46 +311,8 @@
   name
   (nothreads))
 
-(defun mutex-name (mutex)
-  mutex
-  (nothreads))
+)
 
-;(mutex-specific mutex)
-;(mutex-specific-set! mutex obj)
-;(mutex-state mutex)
-;(mutex-lock! mutex [timeout [thread]])
-;(mutex-unlock! mutex [condition-variable [timeout]])
-;(condition-variable? obj)
-;(make-condition-variable [name])
-;(condition-variable-name condition-variable)
-;(condition-variable-specific condition-variable)
-;(condition-variable-specific-set! condition-variable obj)
-;(condition-variable-signal! condition-variable)
-;(condition-variable-broadcast! condition-variable)
-
-(defun current-time ()
-  (nothreads))
-
-(defun time? (obj)
-  obj
-  (nothreads))
-
-(defun time->seconds (time) 
-  time
-  (nothreads))
-
-(defun seconds->time (sec)
-  sec
-  (nothreads))
-
-;(current-exception-handler)
-;(with-exception-handler handler thunk)
-;(raise obj)
-;(join-timeout-exception? obj)
-;(abandoned-mutex-exception? obj)
-;(terminated-thread-exception? obj)
-;(uncaught-exception? obj)
-;(uncaught-exception-reason exc)
 
 ;;;
 ;;; period task support
