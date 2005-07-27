@@ -99,11 +99,11 @@ href="#portmidi-default-output"><code>*portmidi-default-output*</code></a>.
 <code class="keyword">:latency</code> <var>integer</var>
 </dt>
 <dd>A millisecond value that determines how Portmidi treats MIDI
-message timestamps in data sent to it from CM. If the value is zero
-then Portmidi operates in "realtime" mode and MIDI messages are sent
-to the destination device as soon as Portmidi receives them,
-regardless of message timestamps. If the latency value is greater than
-zero then Portmidi delays future messages until
+message timestamps. If the value is 0 then Portmidi operates in
+"realtime" mode and MIDI messages are sent to the destination device
+as soon as Portmidi receives them, regardless of message
+timestamps. If the latency value is greater than zero then Portmidi
+delays future messages until
 <var>timestamp</var>+<var>latency</var>. The default value is 100
 milliseconds.  If no value is specified the latency defaults to the
 global
@@ -111,6 +111,22 @@ variable <a
 href="#portmidi-default-latency"><code>*portmidi-default-latency*</code></a>.
 </dd>
 
+<dt>
+<code class="keyword" id="receive-mode">:receive-mode</code> {<code class="keyword">:message</code> | <code class="keyword">:raw</code>}
+</dt>
+<dd>
+Determines what values are passed to a Pormidi receiver hook
+established by <a href="set-receiver-fn.html">set-receiver!</a>. If
+the value is <code class="keyword">:message</code> then the receiver
+hook is passed two values: the
+incoming <a href="midi-topic.html#midi_messages">MIDI</a> message its
+a millisecond timestamp. If the value
+is <code class="keyword">:raw</code> then the hook is passed the
+Portmidi event buffer (a pointer to a foreign array) and the number of
+events read. See the EventBuffer functions
+in <a href="../../src/portmidi.lisp">portmidi.lisp</a> for more
+information about reading raw events from Portmidi.
+</dd>
 <dt>
 <code class="keyword">:inbuf-size</code> <var>integer</var>
 </dt>

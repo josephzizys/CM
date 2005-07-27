@@ -116,7 +116,7 @@ Evaluates <var>form</var> when the process is created and before the process sta
 <dd>
 
 <a name="finally.clause"></a>
-Evaluates <var>form</var> immediately after the process stops.
+Evaluates <var>form</var> immediately after the process terminates.
 <br/>Example clause syntax:
 <blockquote>
 <pre>do ...
@@ -136,8 +136,7 @@ finally (print 'all-done!)
 <dd>
 
 <a name="repeat.clause"></a>
-Causes the process to run <var>form</var> number of times and then
-<a href="#stop.function">stop</a>. 
+Causes the process to run <var>form</var> number of times and then terminate.
 <br/>Example clause syntax:
 <blockquote>
 <pre>repeat 23
@@ -164,7 +163,7 @@ for p = 60 then (+ p (random 10))
 <dd>
 
 Iterates <var>var</var> over a range of numbers. If the sequence is bounded
-the process <a href="#stop.function">stops</a> once the last number has been reached.
+the process terminates once the last number has been reached.
 
 <ul>
 <li><code>from</code> sets the starting value of<var>var</var>, defaults to 0.</li>
@@ -187,7 +186,7 @@ for p from 10 to 100 by 5
 <dd>
 
 Sets <var>var</var> to successive elements or tails of <var>list</var> and
-<a href="#stop.function">stops</a> process when iteration is done.
+then terminates then process when the iteration is complete.
 
 <ul>
 <li><code>in</code> maps <var>var</var> over successive elements in <var>list</var>.</li> 
@@ -207,14 +206,17 @@ Sets <var>var</var> to successive elements or tails of <var>list</var> and
 <h4>Actions</h4>
 
 <dl>
-<dt><code>output</code> <var>object</var> [<code>to</code> <var>io</var>]</dt>
+<dt><code>output</code> <var>object</var> [<code>to</code> <var>io</var>] [<code>at</code> <var>time</var>]</dt>
 <dd>
 
-<a name="output.clause"></a>
-Outputs <var>object</var> to an open output stream. If <code>to</code> is is not specified
-the default open output stream is used.
-The Lisp function <a href="#output.function"><code>output</code></a> is available
-for use inside a <code>do</code> clause definition.
+<a name="output.clause"></a> Outputs <var>object</var> to an open
+output stream. If <code>to</code> is not specified the default open
+output stream is used. Use <code>at</code> to output the current value of
+<a href="now-fn.html">now</a> for objects such
+as <a href="midi-topic.html#midi_messages">midi messages</a> that do
+not have a method defined for <code>object-time</code>. The Lisp
+function <a href="output-fn.html"><code>output</code></a> is
+available for use inside a <code>do</code> clause definition.
 </dd>
 
 
@@ -223,7 +225,7 @@ for use inside a <code>do</code> clause definition.
 
 <a name="wait.clause"></a>
 Causes the process to wait <var>seconds</var> amount of time before running again.
-The Lisp function <a href="#wait.function"><code>wait</code></a> is available
+The Lisp function <a href="wait-fn.html"><code>wait</code></a> is available
 for use inside a <code>do</code> clause definition.
 </dd>
 
@@ -236,7 +238,7 @@ for use inside a <code>do</code> clause definition.
 Inserts <var>object</var> into the currently running scheduling queue
 <code>at</code> an optional time. If the <code>at</code> time is not specified
 the object is inserted at the current time.
-The Lisp function <a href="#sprout.function"><code>sprout</code></a> is available
+The Lisp function <a href="sprout-fn.html"><code>sprout</code></a> is available
 for use inside a <code>do</code> clause definition.
 </dd>
 
@@ -284,7 +286,7 @@ do (loop for i in lst do (output ...))</pre>
 <dd>
 
 <a name="while.clause"></a>
-Triggers <var>action</var> clause as long as <var>test</var> is true otherwise <a href="#stop.function">stops</a> process.
+Triggers <var>action</var> clause as long as <var>test</var> is true then terminates process.
 <br/>Example clause syntax:
 
 <blockquote>
@@ -298,7 +300,7 @@ do ...
 <dd>
 
 <a name="until.clause"></a>
-Triggers <var>action</var> clause as long as <var>test</var> is false otherwise <a href="#stop.function">stops</a> process.
+Triggers <var>action</var> clause as long as <var>test</var> is false then terminates process.
 <br/>Example clause syntax:
 <blockquote>
 <pre>until (= freq 440)
