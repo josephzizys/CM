@@ -264,10 +264,19 @@
           ;; if we are running under a scheudler, add in time offset of stream
           ;; this should check latency...
           ;; else user is keeping track of it
-          (if *scheduler*
-              (+ (inexact->exact (round (* scoretime 1000)))
-                 (portmidi-offset str))
-              scoretime)
+          ;;          (if *scheduler*
+          ;;              (+ (inexact->exact (round (* scoretime 1000)))
+          ;;                 (portmidi-offset str))
+          ;;              scoretime)
+          (cond ((eq? *scheduler* ':asap)
+                 (+ (inexact->exact (round (* scoretime 1000)))
+                    (portmidi-offset str)))
+                ((eq? *scheduler* ':threaded)
+                 0)
+                ((eq? *scheduler* ':periodic)
+                 0)
+                (else
+                 scoretime))
           (midi-message->pm-message obj)))
         (else #f)))
 
