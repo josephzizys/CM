@@ -20,8 +20,12 @@
 <p>
 Inserts <var>object</var> into the scheduler according to keyword
 arguments.  Returns no values. It is an error to
-call <code>sprout</code> if <a href="events-fn.html">events</a> or <a href="rts-fn.html">rts</a> is not running.
-
+call <code>sprout</code> if <a href="events-fn.html">events</a>
+or <a href="rts-fn.html">rts</a> is not running.
+If <a href="rts-fn.html">rts</a> is running then <code>sprout</code>
+can be called from the REPL or from inside
+a <a href="set-receiver!-fn.html">receiver hook</a> to add objects to
+the scheduler interactively.
 <p id="args"><code class="entry">sprout</code> supports the following keyword arguments:
 </p>
 
@@ -39,6 +43,7 @@ of <var>object,</var> or to
 <p><code>sprout</code> is also available as a <a href="process-mac.html">process</a> clause.
 </p>
 
+<h4>Examples</h4>
 
 <div class="float">
 <p class="captxt">
@@ -64,8 +69,12 @@ of <var>object,</var> or to
 </div>
 
 
+<p>See <a href="rts-fn.html">rts</a> documentation for examples of
+using <code>sprout</code> interactively.</p>
+
+
 <!-- See also -->
-<h4>See Also:</h4>
+<h4>See also:</h4>
 <ul>
 <li><a href="events-fn.html"><code>events</code></a> [Function]</li>
 <li><a href="now-fn.html"><code>now</code></a> [Function]</li>

@@ -246,17 +246,22 @@ is compiled or interpreted, how much garbage is generated, and so on.
 
 (rts #f *pm*)
 
-(<a href="receive-fn.html">receive</a> (<span class="special">lambda</span> (mm ms) 
-           ms
-           (<span class="special">if</span> (<a href="midi-topic.html#note-on-p">note-on-p</a> mm)
-               (<a href="sprout-fn.html">sprout</a> (major-thirds 20 (<a href="midi-topic.html#note-on-key">note-on-key</a> mm))))
-           *pm*)
+(<a href="receive-fn.html">set-receiver!</a> (<span class="special">lambda</span> (mm ms) ms
+                 (<span class="special">if</span> (<a href="midi-topic.html#note-on-p">note-on-p</a> mm)
+                   (<a href="sprout-fn.html">sprout</a> (major-thirds 20 (<a href="midi-topic.html#note-on-key">note-on-key</a> mm))))
+               *pm*)
 
 <span class="comment">;;; stop receiving and scheduling.</span>
 
-(<a href="receive-fn.html">receive</a> #f *pm*)
+(<a href="receive-fn.html">remove-receiver!</a> *pm*)
+
+(<a href="rtsqmk-fn.html">rts?</a>)
+<span class="result">&rArr;</span> #t
 
 (<a href="rts-stop-fn.html">rts-stop</a>)
+
+(<a href="rtsqmk-fn.html">rts?</a>)
+<span class="result">&rArr;</span> #f
 </pre>
 </div>
 
@@ -267,10 +272,10 @@ is compiled or interpreted, how much garbage is generated, and so on.
 
 <h4>See also:</h4>
 <ul>
-<li><a href="receive-fn.html"><code>receive</code></a> [Function]</li>
-<li><a href="rts-running-fn.html"><code>rts-running?</code></a> [Function]</li>
+<li><a href="rtsqmk-fn.html"><code>rts?</code></a> [Function]</li>
 <li><a href="rts-stop-fn.html"><code>rts-stop</code></a> [Function]</li>
-
+<li><a href="set-receiver-fn.html"><code>set-receiver!</code></a> [Function]</li>
+<li><a href="sprout-fn.html"><code>sprout</code></a> [Function]</li>
 
 </ul>
 
