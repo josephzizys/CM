@@ -1,8 +1,19 @@
 CM 2.7.0 
 
-IMPORTANT! MIDISHARE FUNCTION NAME CHANGES, see Changes section below
+IMPORTANT! ARG SYNTAX for OUTPUT and SPROUT HAVE CHANGED; MIDISHARE
+FUNCTION NAMES HAVE CHANGED, see Changes section below
 
---New Features:
+o CM home page http://commonmusic.sf.net now reflects the CVS HEAD
+  version and is updated every four hours. A nightly CVS snapshot is
+  now available on the home page.
+
+o New class fomus-file supports generating output for notation
+  packages such as lilypond, Sibelius and Finale using Fomus. See
+  fomus-file dictionary entry and fomus project site:
+  http://common-lisp.net/project/fomus/
+
+o CM's Low level MIDI messages now documeted in main Midi topic page
+  in dictonary.
 
 o New functions for getting and setting default input and output
   streams: current-input-stream, current-output-stream,
@@ -104,6 +115,10 @@ o Ported CM to Lispworks (free Personal Edition)
 o Ported CM to Guile 1.7.1
 
 --Changes: 
+
+o Optional args to OUTPUT and SPROUT have been converted to keyword
+  arguments.  This is backwards compatible if you have been using
+  the "clausal form" in process macro.
 
 o INCOMPATABLE MIDISHARE CHANGES: In order to host both Portmidi and
   Midishare some name changes have been made in the Midishare API
