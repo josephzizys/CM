@@ -8,16 +8,18 @@
 <title>Common Music Dictionary</title>
 </head>
 <body>
-<div id="content">
-
-
-<div style="text-align: center; background: #e6e6ff;">
-<h2>Typographic Conventions</h2>
+<div style="text-align: center;"> <!--" background: #e6e6ff;"-->
+<h1>Common Music Dictionary</h1>
 </div>
+<hr/>
+
+<!-- div id="content" -->
 
 <!--p>
 Dictionary documentation uses the following typographic conventions:
 </p-->
+
+<!-- h2>Typographic Rules</h2 -->
 
 <ul>
 
@@ -42,7 +44,7 @@ Variables and metavariables (names that stand for pieces of code) are printed in
 </blockquote>
 </li>
 
-<li>Terms separated by | are exclusive choices, that is, exactly one must apply:
+<li>Terms separated by | are exclusive choices where exactly one must apply:
 <blockquote>
 <p><var>number</var> | <var>boolean</var></p>
 </blockquote>
@@ -50,7 +52,7 @@ Variables and metavariables (names that stand for pieces of code) are printed in
 
 <li>
 <p>Braces { } and brackets [ ] are sometimes used to associate or group
-the enclosed terms. They are never written in actual code.
+the enclosed terms and are not part of actual code.
 </p>
 <ul>
 <li>
@@ -118,23 +120,24 @@ follow <var>arg</var>.
 </li>
 
 <li>
-<p>
-In coding examples evaluation is indicated using the right
-arrow:
+<p>Evaluation is indicated using the right arrow:</p>
 <blockquote>
 <p><code><span class="result">&rArr;</span></code></p>
 </blockquote>
-and syntax highlighting distinguishes important syntactic units:
-</p>
+</li>
+
+<li>Syntax highlighting distinguishes important syntactic units:
+
 <blockquote>
 <table cellspacing="10">
 <tr><th class="col">keyword</th><th class="col">string</th><th class="col">special</th><th class="col">comment</th></tr>
-<tr><td><code><span class="keyword">:music</span></code></td><td><code><span class="string">"Hello, world"</span></code></td><td><code><span class="special">loop</span></code></td><td><code><span class="comment">;; buggy!</span></code></td></tr>
+<tr><td><code><span class="keyword">:music</span></code></td><td><code><span class="string">"Hello, world"</span></code></td><td><code><span class="special">loop</span></code></td><td><code><span class="comment">;; bug!</span></code></td></tr>
 </table>
 </blockquote>
 </li>
 
-</div>
+<!-- /div -->
+
 <hr class="inv"/>
 
 <!-- Footer -->
