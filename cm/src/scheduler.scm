@@ -527,7 +527,9 @@
 
 (cond-expand
  (cmu (set! *rts-type* ':periodic))
- (sbcl (set! *rts-type* ':periodic))
+ (sbcl (set! *rts-type* ':periodic)
+       (if (eq? (os-name ) 'linux) ':threaded
+           :periodic))
  (gauche (set! *rts-type* ':threaded))
  (openmcl (set! *rts-type* ':threaded))
  (else #f))
@@ -804,11 +806,9 @@
            (list-set! *generic-receive* 1 st)
            th)))))
 
-(define-generic* receive)
-
 (define-method* (stream-receiver hook stream type)
   hook stream type
-  (err "stream-receive: ~s does not support receiving." stream))
+  (err "stream-receiver: ~s does not support receiving." stream))
 
 
 
