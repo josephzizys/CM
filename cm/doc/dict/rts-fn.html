@@ -98,7 +98,7 @@ consless <a href="midi-topic.html#midi_messages">MIDI messages</a> in
 place of <a href="midi-cls.html">midi</a> objects.
 </p>
 
-<h4>Implementation and Limitations:</h4>
+<h4>Implementation:</h4>
 
 <p>
 CM uses either native threads or a 1 millisecond periodic task to
@@ -108,9 +108,9 @@ on the underlying Lisp implementation:
 
 <div class="float" >
 <p class="captxt">
-<span class="floatlabel">Table 1.</span> Implementation of real time
-scheduling in supported Lisp implementations:  NT
-(native threads) PP (periodic polling).
+<span class="floatlabel">Table 1.</span> Implementation
+of <code>rts</code> scheduling in the supported Lisp implementations
+(most current release).  NT=native threads, PP=periodic polling.
 </p>
 
 <table class="float">
@@ -122,41 +122,45 @@ scheduling in supported Lisp implementations:  NT
 </tr>
 <tr><td style="font-weight:bold;">CMUCL</td>    <td align="center">PP</td><td > </td><td></td></tr>
 <tr><td style="font-weight:bold;">OpenMCL</td>  <td align="center"></td><td align="center">NT, PP</td><td></td></tr>
-<tr><td style="font-weight:bold;">SBCL<span style="font-size:smaller;vertical-align:super">1</span></td>     <td align="center">PP</td><td align="center"></td><td></td></tr>
+<tr><td style="font-weight:bold;">SBCL</td>     <td align="center">NT, PP</td><td align="center"></td><td></td></tr>
 </table>
 
-<p style="font-style:normal;font-size:smaller;">
-<span style="vertical-align:super;">1</span>  Native threads in SBCL/Linux are in alpha release.<br/>
-</p>
 
 </div>
 
-<p>
-In CMUCL and and SBCL  there can be only 1 periodic polling function
-running at any one time. This has  several consequences:
-</p>
+<h5>Notes:</h5>
 
+<ol>
+<li>Both threaded and periodic versions of <code>rts</code> are
+supported in OpenMCL and SBCL.  The default implementation is
+threaded. To try out the periodic version set <code>*rts-type*</code>
+to <code class="keyword">:periodic</code>.
+</lu>
+
+<li>Periodic polling has several consequences:
+</p>  
 <ul>
-<li>Using the GUI at the same time as <code>rts</code>
-or <a href="receive-fn.html"><code>receive</code></a> will currently not work.</li>
-<li>Periodic tasks are pushed onto a task list; be sure to start rts
-running before setting a receive hook, otherwise rts will not be able
-to process what receive places into the queue until the next
-tick.</li>
-<li>All receive and rts processing must happen within 1 millisecond or
-things will drift.
+<li>Using the GUI at the same time as periodic rts or periodic
+receiving will currently not work.</li>
+<li>Periodic tasks are pushed onto a task list; if <code>rts</code> is
+periodic be sure to start it running before
+calling <a href="set-receiver-fn.html">set-receiver!</a>
+otherwise <code>rts</code> will not be able to process what the
+receiver places into its queue until the next tick.</li>
+<li>All receiving and process tasks must happen within the 1
+millisecond tick or things will drift.
 </li>
 </ul>
-  
+</li>
 
-<p>
+<li>
 How close <code>rts</code> actually gets to accurate real time
 rendering depends on a number of factors, including how accurate the
 Lisp implementation's thread sleeping/periodic tasks are, how
 short the time deltas between musical events are, whether process code
 is compiled or interpreted, how much garbage is generated, and so on.
-</p>
-
+</li>
+</ol>
 
 
 <h4>Examples:</h4>

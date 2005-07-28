@@ -14,28 +14,46 @@
 <!-- Entry: "output" -->
 <dl class="dictsyntax">
 <dt>[Function]</dt>
-<dd><span class="syntax">(<code class="entry">output</code> <var>object</var> [<var>stream</var>] [<var>time</var>])</span></dd>
+<dd><code>(</code><code class="entry">output</code> <var>object</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd>
 </dl>
 
 
 <p>
-Outputs <var>object</var> to the open <var>stream</var>, which
-defaults to the value of <code>*out*</code>. Use <var>time</var> to
-supply score time values for objects
-like <a href="midi-topic.html#midi_messages">midi messages</a> that do
-not have methods defined for the scheduling
-function <code>object-time</code>.
+Outputs <var>object</var> according to keyword arguments. Returns no values.
 
-
+<p id="args"><code class="entry">output</code> supports the following keyword arguments:
 </p>
+
+<dl>
+<dt><code class="keyword">:to</code> <var>stream</var></dt>
+<dd>
+The open output stream to write object to. The default value
+is <code>*out*</code>, the stream specified
+to <a href="events-fn.html">events</a>
+or <a href="rts-fn.html">rts</a>.
+</dd>
+
+<dt><code class="keyword">:at</code> <var>number</var></dt>
+<dd>The output time of <var>object</var>.
+Use this argument to supply a score time for objects
+like <a href="midi-topic.html#midi_messages">midi messages</a> that do
+not have methods defined on <code>object-time</code>.
+</dd>
+</dl>
+
+<p><code>output</code> is also available as a <a href="process-mac.html">process</a> clause.
+</p>
+
 
 <!-- See also -->
 <h4>See Also:</h4>
 <ul>
-<li><a href="now-fn.html"><kbd>now</kbd></a> [Function]</li>
-<li><a href="process-mac.html"><kbd>process</kbd></a> [Macro]</li>
-<li><a href="sprout-fn.html"><kbd>sprout</kbd></a> [Function]</li>
-<li><a href="wait-fn.html"><kbd>wait</kbd></a> [Function]</li>
+<li><a href="events-fn.html"><code>events</code></a> [Function]</li>
+<li><a href="now-fn.html"><code>now</code></a> [Function]</li>
+<li><a href="process-mac.html"><code>process</code></a> [Macro]</li>
+<li><a href="rts-fn.html"><code>rts</code></a> [Function]</li>
+<li><a href="sprout-fn.html"><code>sprout</code></a> [Function]</li>
+<li><a href="wait-fn.html"><code>wait</code></a> [Function]</li>
 </ul>
 
 
