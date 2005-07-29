@@ -481,12 +481,11 @@
           ;; *pstart*. else sprout is being called from the repl, time
           ;; is relative to 0.
           (if ahead (set! tt (+ tt ahead)))
-          ;; im not sure if i need a locking mechanism here or not. rts
-          ;; wraps a without-interrupts around the points where its
-          ;; thread accesses the queue, maybe that would keep this code
-          ;; from simultaneous side-effecting the queue from another
-          ;; process
-          (if (eq? *scheduler* ':threaded)
+          ;; if threaded rts is running and we are sprouting from
+          ;; outside the rts process then block until the queue is
+          ;; available. *pstart* is false except in the body of a
+          ;; process defintion (which is evaluated in the rts thread).
+          (if (and (not *pstart*) (eq? *scheduler* ':threaded))
               (with-mutex-grabbed (*qlock*)
                  (cond ((pair? obj)
                         (dolist (o obj) (sprout o at ahead)))
@@ -527,9 +526,9 @@
 
 (cond-expand
  (cmu (set! *rts-type* ':periodic))
- (sbcl (set! *rts-type* ':periodic)
-       (if (eq? (os-name ) 'linux) ':threaded
-           :periodic))
+ (sbcl (set! *rts-type* 
+             (if (eq? (os-name ) 'linux) ':threaded
+                 :periodic)))
  (gauche (set! *rts-type* ':threaded))
  (openmcl (set! *rts-type* ':threaded))
  (else #f))
@@ -744,7 +743,7 @@
                                    (eq? r (car stream)))
                                (is-a? r <event-stream>))
                           (remove-periodic-task! r)
-                          (deinit-receiver r))
+                          (deinit-receiver r *receive-type*))
                          ((not (null? stream))
                           (err "remove-receiver!: no receiver for stream ~s."
                                (car stream))))))
@@ -762,18 +761,18 @@
 
 (define (set-receiver! hook stream)
   (cond ((not *receive-type*)
-         (err "set-receive!: receiving is not implemented in this Lisp/OS."))
+         (err "set-receiver!: receiving is not implemented in this Lisp/OS."))
         ((not (member *receive-type* '(:threaded :periodic)))
-         (err "set-receive!: ~s is not a receive type."
+         (err "set-receiver!: ~s is not a receive type."
               *receive-type*))
-        ((eq? stream #t) ; generic receive
+        ((eq? stream #t)                ; generic receive
          (let ((wrapper (generic-receive hook *receive-type*)))
            (case *receive-type*
              ((:threaded) (thread-start! wrapper))
              ((:periodic) (add-periodic-task! :receive wrapper)))))
         (else
          (let ((wrapper (stream-receiver hook stream *receive-type*)))
-           (init-receiver stream)
+           (init-receiver stream *receive-type*)
            (case *receive-type*
              ((:threaded) (thread-start! wrapper))
              ((:periodic) (add-periodic-task! stream wrapper))))))
