@@ -17,14 +17,13 @@
 </dl>
 
 <p>
-Reads non-blocking <var>stream</var> and returns any input data. The
-format of this data as well as the avaliability of any <var>args</var>
-depends on the type of <var>stream</var>. This function is normally
-not needed but is useful when reading input from multiple ports at the
-same time, for example, when reading input from a
-<a href="portmidi-topic.html#pm-stream">pm-stream</a> and
-an <a href="supercollider-topic.html">sc-stream</a> inside a
-<a href="set-receiver-fn.html#genic-receiver">generic receiver</a>.
+Performs a non-blocking read of <var>stream</var> and returns any
+input data. The format of this data as well as the availability of
+any <var>args</var> depends on the type of <var>stream</var>.  It is
+normally not necessary to call this function since establishing a hook
+using <a href="set-receiver-fn.html">set-receiver!</a> has the same
+effect. Use <code>receive</code> to read input from multiple ports, or
+to read data from a stream outside the context of a receiver hook.
 </p>
 
 <h4>See also:</h4>

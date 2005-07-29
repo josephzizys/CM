@@ -17,8 +17,8 @@
 </dl>
 
 <p>
-Installs <var>hook</var> to receive <var>stream</var> data as it
-arrives from an external application. No values are returned
+Installs <var>hook</var> to receive <var>stream</var> data as soon as
+it arrives from an external application. No values are returned
 by <code>set-receiver!</code> or
 by <var>hook</var>. <!--code>set-receiver!</code>  returns no
 values. --> Receiving remains in effect until canceled by
@@ -29,30 +29,26 @@ values. --> Receiving remains in effect until canceled by
  The calling syntax of <var>hook</var> depends on <var>stream</var>:
 
 <ul>
-<li id="generic-receiver">
-If <var>stream</var> is boolean true then "generic receiving" occurs.
-In this case <var>hook</var> is a thunk (a function of no arguments)
-that will be called every millisecond. The <var>hook</var> is
-responsible for reading whatever ports are
-necessary. See <a href="receive-fn.html">receive</a> for more
-information about reading input from streams.
-</li>
-
 <li>
 If <var>stream</var> is
 a <a href="portmidi-topic.html#portmidi-stream">portmidi-stream</a>
-then <var>hook</var> is passed two arguments whose precise
-interpretation depends on
-<var>stream's</var> <a href="portmidi-topic.html#receive-mode">receive
-mode</a>.
+then <var>hook</var> is passed two arguments, the values of which
+depend on the <a href="portmidi-topic.html#receive-mode">receive
+mode</a> of <var>stream</var>.
 </li>
 
 <li>
 If <var>stream</var> is an <a href="sc-stream.html#">sc-stream</a> then blah blah blah.
 </li>
 
+<li id="generic-receiver">
+If <var>stream</var> is boolean true then <var>hook</var> is a thunk
+(a function of no arguments) that will be called every
+millisecond. The <var>hook</var> is responsible for reading whatever
+ports are necessary. See <a href="receive-fn.html">receive</a> for
+information about explicitly reading input from streams.
+</li>
 </ul>
-
 
 <h4>Implementation and Limitations:</h4>
 <p>Receiving is  implemented in the following Lisp/OS combinations:
@@ -69,10 +65,10 @@ If <var>stream</var> is an <a href="sc-stream.html#">sc-stream</a> then blah bla
 <p>
 From the caller's perspective <var>hook</var> appears to receive data
 asynchronously<!-- and the Lisp REPL is not blocked during
-receiving. --> but actually the non-blocking receiving is always
-polling in some manner: how this polling is implemented depends on
-what facilities the host Lisp provides.  CM utilizes two different
-strategies for implementing non-blocking receiving:
+receiving. --> but actually receiving is always polling in some
+manner; how this polling is implemented depends on what facilities the
+host Lisp provides.  CM utilizes two different strategies for
+implementing non-blocking receiving:
 </p>
 
 

@@ -33,7 +33,7 @@ An optional object or list of objects to place in the scheduling
 queue. If the value is false then the scheduler starts running with no
 pending objects. While the scheduler is running objects can always be
 added "interactively" by calling <a href="sprout-fn.html">sprout</a>
-from the REPL or from a
+from the REPL or from an active
 <a href="set-receiver-fn.html">receiver hook</a>.
 </dd>
 <dt>
@@ -52,7 +52,7 @@ expected to manage stream IO themselves.
 <dd>
 If <var>end</var> is a number then <code>rts</code> stops running when
 that time has been reached in the score or when no objects remain
-pending in the scheduler, which ever comes first.  If <var>end</var>
+pending in the scheduler, whichever comes first.  If <var>end</var>
 is boolean true then <code>rts</code> stops running when no more
 objects are pending. If <var>end</var> is false then rts will run
 (even if the queue is empty)
@@ -77,13 +77,18 @@ are:<!-- <code>rts</code> and <a href="events-fn.html">events</a>
 <ul>
 <li>the REPL is not blocked by <code>rts</code> while the scheduler is
 running.
+</li>
 <li><code>rts</code> can be started without objects and,
 if <var>end</var> is false, <code>rts</code> will continue to run
 until it is explicitly stopped, even if its queue is empty.
+</li>
 <li> <a href="sprout-fn.html">sprout</a> can be called from the REPL
 or a <a href="receive-fn.html">receive</a> hook to add objects
 to <code>rts</code> "interactively", as long as <code>rts</code> is
 running.
+</li>
+<li>The values returned by <a href="now-fn.html">now</a> reflect the
+current real time in seconds.</li>
 </ul>
 
 <p>
