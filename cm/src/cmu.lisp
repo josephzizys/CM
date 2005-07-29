@@ -247,7 +247,7 @@
           ;;(print (list sec (* rem (/ 1000000 divs))))
           (setf lisp::*max-event-to-sec* sec)
           (setf lisp::*max-event-to-usec*
-                (* rem (/ 1000000 divs))))
+                (floor (* rem (/ 1000000 divs)))))
         (values))))
 
 (defun periodic-task-rate ()

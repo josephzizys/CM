@@ -196,8 +196,8 @@
 (defgeneric process-events (obj time start func))
 ;(defgeneric sprout (obj &optional time dest))
 (defgeneric stream-receiver (hook stream type))
-(defgeneric deinit-receiver (stream))
-(defgeneric init-receiver (stream))
+(defgeneric deinit-receiver (stream type))
+(defgeneric init-receiver (stream type))
 (defgeneric receive (stream &rest args))
 (defgeneric receive? (stream))
 
@@ -338,7 +338,7 @@
           ;;(print (list sec (* rem (/ 1000000 divs))))
           (setf sb-impl::*max-event-to-sec* sec)
           (setf sb-impl::*max-event-to-usec*
-                (* rem (/ 1000000 divs))))
+                (floor (* rem (/ 1000000 divs)))))
         (values))))
 
 (defun periodic-task-rate ()

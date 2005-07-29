@@ -601,7 +601,7 @@ fi
       (multiple-value-bind (sec rem)
 	  (floor rate divs)
 	(setf *max-event-to-sec* sec)
-	(setf *max-event-to-usec* (* rem (/ 1000000 divs))))
+        (setf *max-event-to-usec* (floor (* rem (/ 1000000 divs)))))
       (values))))
 
 (defun periodic-task-rate ()
