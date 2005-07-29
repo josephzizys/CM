@@ -322,15 +322,18 @@
 ;;; message receiving
 ;;;
 
-(define-method* (init-receiver str)
+(define-method* (init-receiver str type)
   ;; called by set-receiver before hook is activated.
   ;; flush any messages already in input buffer
+  (when (eq? type ':periodic)
+    (unless (periodic-task-running? )
+      (set-periodic-task-rate! *portmidi-receive-rate* :seconds)))
   (let ((idev (first (io-open str)))
         (data (portmidi-receive str)))
     (when (pm:StreamPoll idev)
       (pm:StreamRead idev (third data) (fourth data)))))
 
-(define-method* (deinit-receiver str)
+(define-method* (deinit-receiver str type)
   ;;  called by remove-receiver after the periodic task has been withdrawn
   (let ((data (portmidi-receive str))) ; (<thread> <stop> <buf> <len>)
     (when (first data)
