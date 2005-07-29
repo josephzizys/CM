@@ -1,7 +1,12 @@
 CM 2.7.0 
 
-IMPORTANT! ARG SYNTAX for OUTPUT and SPROUT HAVE CHANGED; MIDISHARE
-FUNCTION NAMES HAVE CHANGED, see Changes section below
+o CM now supports "real time" scheduling and receiving in the following
+  implementations:
+    OpenMCL/OSX
+    SBCL/Linux
+    CMUCL/Linux
+  See the documentation on RTS, SET-RECEIVER! and PORTMIDI for more
+  information.
 
 o CM home page http://commonmusic.sf.net now reflects the CVS HEAD
   version and is updated every four hours. A nightly CVS snapshot is
