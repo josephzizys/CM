@@ -204,7 +204,7 @@ is compiled or interpreted, how much garbage is generated, and so on.
 
 <div class="float">
 <p class="captxt">
-<span class="floatlabel">Example 2. </span>Endless Fluff. Stops only when (rts-stop) is called. (Todd Ingalls)
+<span class="floatlabel">Example 2. </span>Endless Fluff. Stops only when <a href="rts-stop-fn.html">rts-stop</a> is called. (Todd Ingalls)
 </p>
 <pre class="code">
 (<span class="special">define</span> <span class="defined">fluff</span> '(60 62 64 67 72 65 69 48 50))
@@ -224,9 +224,9 @@ is compiled or interpreted, how much garbage is generated, and so on.
                                        <span class="keyword">:amplitude</span> .5 
                                        <span class="keyword">:keynum</span> (<a href="pickl-fn.html">pickl</a> knums)))
 	   and
-	   sprout (endless-fluff 30 1 knums)))
+	   sprout (endless-fluff 20 1 knums)))
 
-(rts (endless-fluff 30 1 fluff) *pm* 0 #f)
+(rts (endless-fluff 20 1 fluff) *pm* 0 #f)
 
 <span class="comment">;;; stop when you are done.</span>
 
@@ -239,7 +239,7 @@ is compiled or interpreted, how much garbage is generated, and so on.
 <span class="floatlabel">Example 3. </span>Sprouting into the scheduler from a receive hook.
 </p>
 <pre class="code">
-(<span class="special">define</span> <span class="defined">*pm*</span> (<a href="portmidi-topic.html#pormidi-open">portmidi-open</a> <span class="keyword">:input</span> 1 <span class="keyword">:output</span> 3 <span class="keyword">:latency</span> 0))
+(<span class="special">define</span> <span class="defined">*pm*</span> (<a href="portmidi-topic.html#portmidi-open">portmidi-open</a> <span class="keyword">:input</span> 1 <span class="keyword">:output</span> 3 <span class="keyword">:latency</span> 0))
 
 (<span class="special">define</span> (<span class="defined">major-thirds</span> len knum)
   (<a href="process-mac.html">process</a> with d = .1
@@ -251,14 +251,14 @@ is compiled or interpreted, how much garbage is generated, and so on.
 
 (rts #f *pm*)
 
-(<a href="receive-fn.html">set-receiver!</a> (<span class="special">lambda</span> (mm ms) ms
+(<a href="set-receiver-fn.html">set-receiver!</a> (<span class="special">lambda</span> (mm ms) ms
                  (<span class="special">if</span> (<a href="midi-topic.html#note-on-p">note-on-p</a> mm)
-                   (<a href="sprout-fn.html">sprout</a> (major-thirds 20 (<a href="midi-topic.html#note-on-key">note-on-key</a> mm))))
+                   (<a href="sprout-fn.html">sprout</a> (major-thirds 20 (<a href="midi-topic.html#note-on-key">note-on-key</a> mm)))))
                *pm*)
 
 <span class="comment">;;; stop receiving and scheduling.</span>
 
-(<a href="receive-fn.html">remove-receiver!</a> *pm*)
+(<a href="remove-receiver-fn.html">remove-receiver!</a> *pm*)
 
 (<a href="rtsqmk-fn.html">rts?</a>)
 <span class="result">&rArr;</span> #t
