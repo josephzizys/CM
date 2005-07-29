@@ -196,7 +196,8 @@
 (defgeneric process-events (obj time start func))
 ;(defgeneric sprout (obj &optional time dest))
 (defgeneric stream-receiver (hook stream type))
-(defgeneric stream-stop-receiver (stream))
+(defgeneric deinit-receiver (stream))
+(defgeneric init-receiver (stream))
 (defgeneric receive (stream &rest args))
 (defgeneric receive? (stream))
 

@@ -20,8 +20,8 @@
 (define *portmidi-default-input* #f)
 (define *portmidi-default-output* #f)
 (define *portmidi-default-latency* 100)
-(define *portmidi-default-inbuf-size* 64)
-(define *portmidi-default-outbuf-size* 256)
+(define *portmidi-default-inbuf-size* 512)
+(define *portmidi-default-outbuf-size* 2048)
 (define *portmidi-default-filter* 0)
 (define *portmidi-default-mask* 0)
 (define *portmidi-receive-rate* .001) 
@@ -318,70 +318,27 @@
                              scoretime)
   (midi-write-message obj str scoretime #f) )
 
-;
-; (pm:GetDeviceDescriptions)
-; (setq foo (portmidi-open :input nil :output 3))
-; (events (loop for d from 0 to 6 by .5
-;             for k from 60
-;             collect (new midi :time d :duration .1 
-;                          :keynum k :amplitude .9))
-;        foo)
-
-
 ;;;
 ;;; message receiving
 ;;;
 
-;(define-method* (receive? (str <portmidi-stream>))
-;  (if (not (car (portmidi-receive str))) #f #t))
+(define-method* (init-receiver str)
+  ;; called by set-receiver before hook is activated.
+  ;; flush any messages already in input buffer
+  (let ((idev (first (io-open str)))
+        (data (portmidi-receive str)))
+    (when (pm:StreamPoll idev)
+      (pm:StreamRead idev (third data) (fourth data)))))
 
-(define-method* (receive (str <portmidi-stream>) . args)
-  (let* ((n 0)
-        (in (first (io-open str)))
-        (bf (third (portmidi-receive str)))
-        (sz (portmidi-inbuf-size str))
-        (hook (if (pair? args) (pop args) #f))
-        (mode (if (pair? args) (pop args) #f))
-        (rm (if (not mode) #t (eq? mode ':message)))
-        (fn #f)
-        (res #f))
-    (cond ((pm:StreamPoll in)
-           (if hook
-               (begin
-                 (set! fn (lambda (mm ms)
-                            (hook (pm-message->midi-message mm) ms)))
-                 (set! n (pm:StreamRead in bf sz))
-                 (when (> n 0)
-                   (if rm (pm:EventBufferMap fn bf n)
-                     (hook bf n))
-                   (set! res #t)))
-             
-             (begin
-               (set! res '())
-               (if rm
-                   (set! fn (lambda (mm ms)
-                              ms
-                              (set! res (append! res (list (pm-message->midi-message mm))))))
-                 (set! fn (lambda (mm ms)
-                            ms
-                            (set! res (append! res (list mm))))))
-               (set! n (pm:StreamRead in bf sz))
-               (when (> n 0)
-                 (pm:EventBufferMap fn bf n))))))
-    res))
-               
-(define-method* (stream-stop-receiver str)
-  ;; this is called by remove-receiver after the periodic task has been withdrawn
+(define-method* (deinit-receiver str)
+  ;;  called by remove-receiver after the periodic task has been withdrawn
   (let ((data (portmidi-receive str))) ; (<thread> <stop> <buf> <len>)
     (when (first data)
-      ;(let ((stopper (second data)))
-      ;  ;; call cached stopper to set the stop flag. 
-      ;  ( stopper ))
       (list-set! data 0 #f)
       (list-set! data 1 #f))))
 
 (define-method* (stream-receiver hook (str <portmidi-stream>) type)
-  ;; hook is 2arg lambda or nil, type is :threaded or :periodic
+  ;; hook is 2 arg lambda or nil, type is :threaded or :periodic
   (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
          (mode (portmidi-receive-mode str))
          (stop #f)) 
@@ -451,4 +408,40 @@
              (list-set! data 2 bf)
              (list-set! data 3 sz)
              th)))))
+
+(define-method* (receive (str <portmidi-stream>) . args)
+  (let* ((n 0)
+        (in (first (io-open str)))
+        (bf (third (portmidi-receive str)))
+        (sz (portmidi-inbuf-size str))
+        (hook (if (pair? args) (pop args) #f))
+        (mode (if (pair? args) (pop args) #f))
+        (rm (if (not mode) #t (eq? mode ':message)))
+        (fn #f)
+        (res #f))
+    (cond ((pm:StreamPoll in)
+           (if hook
+               (begin
+                 (set! fn (lambda (mm ms)
+                            (hook (pm-message->midi-message mm) ms)))
+                 (set! n (pm:StreamRead in bf sz))
+                 (when (> n 0)
+                   (if rm (pm:EventBufferMap fn bf n)
+                     (hook bf n))
+                   (set! res #t)))
+             
+             (begin
+               (set! res '())
+               (if rm
+                   (set! fn (lambda (mm ms)
+                              ms
+                              (set! res (append! res (list (pm-message->midi-message mm))))))
+                 (set! fn (lambda (mm ms)
+                            ms
+                            (set! res (append! res (list mm))))))
+               (set! n (pm:StreamRead in bf sz))
+               (when (> n 0)
+                 (pm:EventBufferMap fn bf n))))))
+    res))
+
 

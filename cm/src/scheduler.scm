@@ -744,7 +744,7 @@
                                    (eq? r (car stream)))
                                (is-a? r <event-stream>))
                           (remove-periodic-task! r)
-                          (stream-stop-receiver r))
+                          (deinit-receiver r))
                          ((not (null? stream))
                           (err "remove-receiver!: no receiver for stream ~s."
                                (car stream))))))
@@ -773,6 +773,7 @@
              ((:periodic) (add-periodic-task! :receive wrapper)))))
         (else
          (let ((wrapper (stream-receiver hook stream *receive-type*)))
+           (init-receiver stream)
            (case *receive-type*
              ((:threaded) (thread-start! wrapper))
              ((:periodic) (add-periodic-task! stream wrapper))))))
