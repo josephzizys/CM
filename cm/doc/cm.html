@@ -20,8 +20,23 @@ a:active  { color: #ddddff; }
 
 <body style="background:black; color=#9999bb;">
 
-<table>
+<div  style="text-align: center; border-bottom: 1px solid #aaa;">
+<div class="inv">Navigation:</div>
+<ul class="nav">
+<li class="nav1"><a href="#news">News</a></li>
+<li class="navn"><a href="#about">About</a></li>
+<li class="navn"><a href="#download">Download</a></li>
+<li class="navn"><a href="#documentation">Documentation</a></li>
+<li class="navn"><a href="#applications">Applications</a></li>
+<li class="navn"><a href="#implementations">Implementations</a></li>
+<li class="navn"><a href="#cm_links">Links</a></li>
+<li class="navn"><a href="#contact">Contact</a></li>
+</ul>
+</div>
 
+<hr class="inv"/>
+
+<table>
 <tr>
   <td><img src="img/cmlogobb.png" alt="[cmlogobw.png]"/></td>
   <td><span style="font: normal 64px sans-serif; color:#9999bb">Common Music</span></td>
@@ -36,12 +51,12 @@ a:active  { color: #ddddff; }
 <p>New features in CM 2.7.0 (CVS HEAD):</p>
 
 <ul>
-<li> <a href="../etc/tutorials/index.html">Tutorials</a> from ILU conference</a> added.</li>
+<li> <a href="../etc/tutorials/index.html">Tutorials</a> from ILU conference</a>.</li>
 <li><a href="dict/rts-fn.html">Realtime scheduling</a>
-and <a href="dict/set-receiver-fn.html">interactive receiveing</a>
+and <a href="dict/set-receiver-fn.html">interactive receiving</a>
 supported in OpenMCl/OSX, SBCL 0.9.0/Linux, CMUCL/Linux</li>
-<li><a href="dict/portmidi-topic.html">Portmidi</a> supported.</li>
-<li><a href="dict/fomus-file-cls.html">Fomus</a> supported.</li>
+<li><a href="dict/portmidi-topic.html">Portmidi</a> API.</li>
+<li><a href="dict/fomus-file-cls.html">Fomus</a> manuscripting.</li>
 </ul>
 
 <h2 id="about">About</h2>
@@ -342,7 +357,7 @@ object system based on CLOS and an easy connection to GTK+ toolkit.
 </ul>
 
 
-<h2>Contact</h2>
+<h2 id="contact">Contact</h2>
 
 <p>
 Please contact me with questions or comments or to tell me of any
