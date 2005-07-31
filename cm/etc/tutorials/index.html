@@ -78,10 +78,10 @@ Macro definitions for Scheme.
 <pre class="code">
 <span class="comment">;;; evaluate these before attempting examples in Scheme</span>
 
-(<span class="special">define-macro</span> <span class="defined">defun</span> (name formals . body)
+(<span class="special">define-macro</span> (<span class="defined">defun</span> name formals . body)
   `(<span class="special">define</span> (,name ,@formals) ,@body))
 
-(<span class="special">define-macro</span> <span class="defined">defparmeter</span> (name value)
+(<span class="special">define-macro</span> (<span class="defined">defparmeter</span> name value)
   `(<span class="special">define</span> ,name ,value))
 </pre>
 </div>
