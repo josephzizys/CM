@@ -32,7 +32,19 @@ a:active  { color: #ddddff; }
 
 <!-- background:#D8D5EC -->
 
-<h2>About</h2>
+<h2 id="news">News</h2>
+<p>New features in CM 2.7.0 (CVS HEAD):</p>
+
+<ul>
+<li> <a href="../etc/tutorials/index.html">Tutorials</a> from ILU conference</a> added.</li>
+<li><a href="dict/rts-fn.html">Realtime scheduling</a>
+and <a href="dict/set-receiver-fn.html">interactive receiveing</a>
+supported in OpenMCl/OSX, SBCL 0.9.0/Linux, CMUCL/Linux</li>
+<li><a href="dict/portmidi-topic.html">Portmidi</a> supported.</li>
+<li><a href="dict/fomus-file-cls.html">Fomus</a> supported.</li>
+</ul>
+
+<h2 id="about">About</h2>
 
 <p>
 Common Music (CM) is an object-oriented music composition environment.
@@ -67,8 +79,7 @@ Bourges, France.
 CM is released under the <a href="http://www.cliki.net/LLGPL">LLGPL</a> (Lisp Lesser General Public License).
 </p>
 
-<h2>Downloads</h2>
-
+<h2 id="download">Download</h2>
 
 <p>
 Sources, runtime images and CVS access are all available from the
@@ -77,7 +88,7 @@ Sources, runtime images and CVS access are all available from the
 
 <ul>
 <li>
-Releases are available from the <a href="http://sourceforge.net/project/showfiles.php?group_id=9766">project release page</a>.
+Stable releases are available from the <a href="http://sourceforge.net/project/showfiles.php?group_id=9766">project release page</a>.
 </li>
 <li>
 The most current (unstable) sources are available via <a href="install.html#restore_cvs">CVS access</a>.
@@ -88,11 +99,20 @@ A nightly (1:33AM PST) snapshot of CVS HEAD is available
 at <a
 href="http://commonmusic.sourceforge.net/cm.tgz">http://commonmusic.sourceforge.net/cm.tgz</a>
 </li>
-
 </ul>
 
+<h2 id="documentation">Documentation</h2>
+<ul>
+<li><a href="http://www.routledge-ny.com/shopping_cart/products/product_detail.asp?sku=&amp;isbn=9026519753&amp;parent_id=&amp;pc=">Notes from the Metalevel, an Introduction to Algorithmic Music Composition</a></li>
+<li><a href="dict/index.html">Common Music Dictionary</a></li>
+<li><a href="install.html">Installing Common Music</a></li>
+<li><a href="emacs.html">Running Common Music under (X)Emacs</a></li>
+<li><a href="../etc/tutorials/index.html">Tutorials</a></li>
+<li><a href="../etc/examples">Source Examples</a></li>
+<li><a href="changelog.text">Change History</a></li>
+</ul>
 
-<h2 id="applications">Synthesis and Display</h2>
+<h2 id="applications">Synthesis and Display Applications</h2>
 
 <p>
 Common Music works in conjunction with the following
@@ -284,20 +304,16 @@ object system based on CLOS and an easy connection to GTK+ toolkit.
 <!-- h2>History</h2 -->
 
 
-
-<h2 id="documentation">Documentation</h2>
-
+<h2 id="cm_links">CM Links</h2>
 <ul>
-<li><a href="http://www.routledge-ny.com/shopping_cart/products/product_detail.asp?sku=&amp;isbn=9026519753&amp;parent_id=&amp;pc=">Notes from the Metalevel, an Introduction to Algorithmic Music Composition</a></li>
-<li><a href="dict/index.html">Common Music Dictionary</a></li>
-<li><a href="install.html">Installing Common Music</a></li>
-<li><a href="emacs.html">Running Common Music under (X)Emacs</a></li>
-<li><a href="../etc/examples">Source Examples</a></li>
-<li><a href="changelog.text">Change History</a></li>
+<li><a href="http:/common-lisp.net/project/lambda-gtk">&lambda;gtk</a></li>
+<li><a href="http://www.wordecho.org/code/cmcode/cmusic.html">Drew Krause's CM code archive</a></li>
+<li><a href="http://pinhead.music.uiuc.edu/~hkt/osx-portmidi.tar.gz">Portmidi installation for OS X</a></li>
+<li><a href="http://pinhead.music.uiuc.edu/~hkt/portmidi.tar.gz">Linux Portmidi installation</a></li>
+<li><a href="http://pinhead.music.uiuc.edu/~hkt/sbcl-af-2004-10-22.tgz">Thomas Burdick's SBCL callback support for SBCL 0.8.n</a></li>
 </ul>
 
-
-<h2>Lisp Links</h2>
+<h2>Common Lisp Links</h2>
 
 <ul>
 
@@ -317,6 +333,8 @@ object system based on CLOS and an easy connection to GTK+ toolkit.
 <a href="http://www.apl.jhu.edu/~hall/lisp.html">Common Lisp Resources</a>
 </li>
 </ul>
+
+<h2>Scheme Links</h2>
 
 <ul>
 <li><a href="http://www.swiss.ai.mit.edu/~jaffer/r5rs_toc.html">Revised Report of the Algorithmic Language Scheme</a></li>
