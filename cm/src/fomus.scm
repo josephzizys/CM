@@ -108,14 +108,14 @@
          (ampl (midi-amplitude obj))
          (marks '()))
     ;; add dynamic if not same as last note.
-    (when (<= 0 ampl 1)
-      (let ((this (list-ref '(:pppp :ppp :pp :p :mp 
-                              :mf :f :ff :fff :ffff :fffff)
-                            (inexact->exact
-                             (floor (/ ampl .1))))))
-          (unless (eq? this (obj-id part))
-            (set! marks (list this))
-            (set! (obj-id part) this))))
+;;     (when (<= 0 ampl 1)
+;;       (let ((this (list-ref '(:pppp :ppp :pp :p :mp 
+;;                               :mf :f :ff :fff :ffff :fffff)
+;;                             (inexact->exact
+;;                              (floor (/ ampl .1))))))
+;;           (unless (eq? this (obj-id part))
+;;             (set! marks (list this))
+;;             (set! (obj-id part) this))))
     (set! (part-events part)
           (cons (make-note :partid myid
                            :off scoretime
