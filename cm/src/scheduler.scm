@@ -712,6 +712,9 @@
 ;;; receive
 ;;;
 
+(define-generic* (set-receive-mode! str mode))
+
+
 (define *receive-type* #f)
 
 (cond-expand
@@ -808,6 +811,7 @@
 (define-method* (stream-receiver hook stream type)
   hook stream type
   (err "stream-receiver: ~s does not support receiving." stream))
+
 
 
 
