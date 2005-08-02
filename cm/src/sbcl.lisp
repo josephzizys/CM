@@ -33,7 +33,17 @@
         :cm)
 
 (require :sb-posix)
-(import '(sb-posix:chdir) :cm)
+
+(cond ((string-equal (lisp-implementation-version) "0.8" :end1 3)
+       (defun env-var (var)
+         (sb-ext::posix-getenv var))
+       (defun set-env-var (var val)
+         (error "putenv not implemented in this sbcl.")))
+       (t
+        (defun env-var (var)
+          (sb-posix::getenv var))
+        (defun set-env-var (var val)
+          (sb-posix::putenv (format nil "~a=~a" var val)))))
 
 (defun quit () (sb-ext:quit))
 (defun exit () (quit))
@@ -93,11 +103,7 @@
                   :directory (pathname-directory
                               *default-pathname-defaults*))))
 
-(defun env-var (var)
-  (sb-posix::getenv var))
 
-(defun set-env-var (var val)
-  (sb-posix::putenv (format nil "~a=~a" var val)))
 
 (defun cm-image-dir ()
   (let ((img (second (member "--core" sb-ext:*posix-argv*
