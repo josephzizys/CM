@@ -459,19 +459,6 @@ fi
       (setf (slot-value obj 'millisecond) (floor (* 1000 (float ms)))))
     obj))
 
-;;; sleeping...
-
-;;(defmethod thread-sleep! ((abs-time time))
-;;  (let ((target-time (time->seconds abs-time)))
-;;    (ccl::process-wait "waiting"
-;;		       #'(lambda (x) (> (time->seconds (current-time))  x))
-;;			   target-time)))
-
-;;(defmethod thread-sleep! ((wait-time number))
-;;  (let ((start-time (time->seconds (current-time))))
-;;    (ccl::process-wait "waiting"
-;;		       #'(lambda (x) (> (- (time->seconds (current-time)) start-time) x))
-;;			   wait-time)))
 
 ;;;
 ;;; socket/udp support
@@ -482,13 +469,12 @@ fi
 			 :local-port local-port
 			 :format :binary))
 
-(defun socket-close (sock)
+(defun udp-socket-close (sock)
   (ccl::close sock))
 
-(defun socket-shutdown (sock &rest args)
-  args
-  (ccl::shutdown sock))
-
+(defun udp-socket-shutdown (sock &optional how)
+  how sock ;;;shoudl have socket-shutdown here
+  (values))
 
 ;; current receive-from in openmcl will block until 
 ;; it receives data. this method will return nil
@@ -509,7 +495,6 @@ fi
       (setf (ccl::pref namelen :signed) (ccl::record-length :sockaddr_in))
       (ccl::%stack-block ((bufptr size))
 	(setq ret-size (#_recvfrom fd bufptr size 0 sockaddr namelen))
-	(print ret-size)
 	(when (> ret-size 0)
 	  (unless vec
 	    (setq vec (make-array ret-size
@@ -533,21 +518,21 @@ fi
 		  (#_ntohs (ccl::pref sockaddr :sockaddr_in.sin_port)))
 	(values nil nil nil nil)))))
 
-(defun socket-recv (sock bytes &optional flags)
+
+(defun udp-socket-recv (sock bytes &optional flags)
   flags
   (receive-from-no-block sock bytes))
+  
 
-(defun socket-recvfrom (sock bytes &optional flags)
-  flags
-  (multiple-value-bind (buf num-bytes ip port)
-      (receive-from-no-block sock bytes)
-    num-bytes
-    port
-    (values buf ip)))
+(defun udp-socket-send (sock mess len)
+  (ccl::send-to sock mess len))
 
-(defun send-osc (mess sc-stream len)
-  (ccl::send-to (slot-value sc-stream 'socket) mess len))
+(defun send-osc (mess osc-stream len)
+  (udp-socket-send (slot-value osc-stream 'socket) mess len))
 
+
+
+;;; 
 (defun modf (num)
   (multiple-value-bind (int rem)
       (floor num)
@@ -568,6 +553,104 @@ fi
                             (* (modf (time->seconds target-time))
                                #xffffffff))))))
 
+;;; 
+(defun u8vector->double (vec)
+  (ccl::%stack-block ((d 8))
+     (dotimes (i 8)
+      (ccl::%put-byte d (aref vec i) i))
+    (ccl::%get-double-float d)))
+  
+;;;
+;;; osc parsing
+;;;
+(defparameter *bundle-header-bytes* #(35 98 117 110 100 108 101 0))
+
+
+(defun osc-bundle? (vec)
+  (let ((res t))
+    (if (arrayp vec)
+	(dotimes (i 8)
+	  (when (not (= (aref vec i) (aref *bundle-header-bytes* i)))
+	    (setf res nil)
+	    (return nil)))
+      (setf res nil))
+    res))
+
+(defun osc-parse-timestamp (arr)
+  (let ((ts nil))
+    (setf ts (u8vector->uint (u8vector-subseq arr 0 4)))
+    (setf ts (+ ts
+             (exact->inexact
+              (/ (u8vector->uint (u8vector-subseq arr 4 8))
+                 4294967295))))))
+
+(defun osc-parse-contents (arr)
+  (let ((lst '())
+	(mess nil)
+	(pos nil)
+	(sym-vector nil)
+	(sym nil)
+	(sym-len 0)
+	(first-token-len nil)
+	(type-list nil)
+	(type-list-len nil))
+    (setf first-token-len (position 0 arr))
+    (if first-token-len
+	(progn
+	  (setf lst (append lst (list (intern (string-upcase (u8vector->string (subseq arr 0 first-token-len))) :cm))))
+	  (setf mess (subseq arr (position 44 arr)))
+	  (setf type-list (loop for i across (subseq mess 0 (position 0 mess))
+				collect (code-char i)))
+	  (setf type-list-len (length type-list))
+	  (setf mess (subseq mess (+ type-list-len (- 4 (mod type-list-len 4)))))
+	  (setf pos 0)
+	  (dolist (j type-list)
+	    (cond ((eq j #\i)
+		   (setf lst (append lst (list (u8vector->int (subseq mess pos (+ pos 4))))))
+		   (incf pos 4))
+		  ((eq j #\f)
+		   (setf lst (append lst (list (u8vector->float (subseq mess pos (+ pos 4))))))
+		   (incf pos 4))
+		  ((eq j #\d)
+		   (setf lst (append lst (list (u8vector->double (subseq mess pos (+ pos 8))))))
+		   (incf pos 8))
+		  ((eq j #\s)
+		   (setf sym-vector (subseq mess pos))
+		   (setf sym-vector (subseq sym-vector pos (position 0 sym-vector)))
+		   (setf sym (coerce (loop for i across sym-vector collect (code-char i)) 'string))
+		   (setf sym-len (length sym))
+		   (setf lst (append lst (list sym)))
+		   (if (= 0 (mod sym-len 4))
+		       (setf pos (+ pos sym-len))
+		     (setf pos (+ (+ sym-len (- 4 (mod sym-len 4))) pos)))))))
+      (setf lst (append lst (list (string->symbol (u8vector->string arr))))))
+    lst))
+
+(defun osc-parse-message (arr)
+  (osc-parse-contents arr))
+
+(defun osc-parse-bundle (arr)
+  (let ((msg-len nil)
+	(pos 0)
+	(arr-len (length arr))
+	(bundle '()))
+    (do ()
+	((>= pos arr-len))
+      (setf msg-len (u8vector->int (subseq arr pos (incf pos 4))))
+      (setf bundle (append bundle (osc-parse-contents (subseq arr pos (+ pos msg-len)))))
+      (incf pos msg-len))
+    bundle))
+
+(defun osc-vector->osc-message (arr)
+  (let ((timestamp nil)
+	(msg nil))
+    (if (osc-bundle? arr)
+	(progn 
+	  (setf timestamp (osc-parse-timestamp (subseq arr 8 16)))
+	  (setf msg (osc-parse-bundle (subseq arr 16))))
+      (setf msg (osc-parse-contents arr)))
+    (list msg timestamp)))
+ 
 
 ;;; new periodic-task support
 
@@ -612,7 +695,7 @@ fi
   (dolist (e *periodic-tasks*) (funcall (cdr e)))
   (values))
 
-
+(cdr *periodic-tasks*)
 (defun run-periodic-tasks ()
   (let ((timer-context (%string->cfstringref "cm-periodic")))
     (ccl::defcallback *periodic-polling-callback*
@@ -676,83 +759,9 @@ fi
                (if (null *periodic-tasks*)
                    (setf *periodic-polling-function* nil))))))
   (values))
-  
 
-#|
-(periodic-task-running?)
-(set-periodic-task-rate! 1000 :ms) ; milliseconds
-(defun moe () (print :you-moron))
-(defun larry () (print :ow-ow-ow))
-(defun curly () (print :nyuk-nyuk))
-(periodic-task-running? :moe)
-(add-periodic-task! :moe #'moe)
-(add-periodic-task! :larry #'larry)
-(remove-periodic-task! :moe)
-(add-periodic-task! :curly #'curly)
-(add-periodic-task! :moe #'moe)
-(remove-periodic-task! :larry)
-*periodic-tasks*
-(remove-periodic-task! t)
-|#
-
-(defun u8vector->double (vec)
-  (ccl::%stack-block ((d 8))
-     (dotimes (i 8)
-      (ccl::%put-byte d (aref vec i) i))
-    (ccl::%get-double-float d)))
-
-
-(defun parse-osc (arr)
-  (let ((lst (list))
-	(pos nil)
-	(first-token-len nil)
-	(type-list-len nil)
-	(sym-vector nil)
-	(sym nil)
-	(sym-len 0)
-	(type-list (list)))
-    (setf first-token-len (position 0 arr))
-    (if first-token-len
-	(let ((mess (list)))
-	  (setf lst (append lst (list 
-				 (intern 
-				       (string-upcase 
-					       (string-trim "/" (coerce (loop for i across (subseq arr 0 first-token-len)
-							       collect (code-char i)) 'string))) :cm))))
-	  (setf mess (subseq arr (position 44 arr)))
-	  (setf type-list (mapcar #'code-char (coerce (subseq mess 0 (position 0 mess)) 'list)))
-	  (setf type-list-len (length type-list))
-	  (setf mess (subseq mess (+ type-list-len (- 4 (mod type-list-len 4)))))
-	  (setf pos 0)
-	  (dolist (j type-list)
-	    (cond ((eq j #\i)
-		   (setf lst (append lst (list (subseq mess pos (+ pos 4)))))
-		   (setf pos (+ pos 4)))
-		  ((eq j #\f)
-		   (setf lst (append lst (list (subseq mess pos (+ pos 4)))))
-		   (setf pos (+ pos 4)))
-		  ((eq j #\d)
-		   (setf lst (append lst (list (subseq mess pos (+ pos 8)))))
-		   (setf pos (+ pos 8)))
-		  ((eq j #\s)
-		   (setf sym-vector (subseq mess pos))
-		   (setf sym-vector (subseq sym-vector pos (position 0 sym-vector)))
-		   (print (list sym-vector (subseq mess pos)))
-                   (setf sym (coerce (loop for i across sym-vector collect (code-char i)) 'string))
-                   (setf lst (append lst (list (string-trim "/" (string-right-trim '(#\newline) sym)))))
-                   (setf sym-len (length sym))
-                   (if (= 0 (mod sym-len 4))
-                       (setf pos (+ pos sym-len))
-                     (setf pos (+ (+ sym-len (- 4 (mod sym-len 4))) pos)))))))
-      (setf lst (append lst (list 
-				 (intern 
-				       (string-upcase 
-					       (string-trim "/" (coerce (loop for i across (subseq arr 0 first-token-len)
-									      collect (code-char i)) 'string))) :cm)))))
-    lst))
-
+;;;
 
 (defmacro with-mutex-grabbed ((mutex) &body body)
   `(ccl::with-lock-grabbed (,mutex)
 			   ,@body))
-
