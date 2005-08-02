@@ -334,6 +334,7 @@
       (pm:StreamRead idev (third data) (fourth data)))))
 
 (define-method* (deinit-receiver str type)
+  type
   ;;  called by remove-receiver after the periodic task has been withdrawn
   (let ((data (portmidi-receive str))) ; (<thread> <stop> <buf> <len>)
     (when (first data)
@@ -447,4 +448,74 @@
                  (pm:EventBufferMap fn bf n))))))
     res))
 
+;;;
+;;; midi recording
+;;;
 
+(define (portmidi-record! seq . mp)
+  (let* ((str (if (pair? mp) (car mp)
+                  (find-object "midi-port.pm" )))
+         (opn (if (null? str) #f
+                  (portmidi-open? str))))
+    (cond ((not opn)
+           (err "portmidi-record!: requires portmidi stream open for input."))
+          ((eq? opn ':out)
+           (err "portmidi-record!: ~s is only open for output." str))
+          (else
+           ;; otherwise set true if we also perform midi thru
+           (set! opn (if (eq? opn :inout) #t #f))))
+    (if (not seq)
+        (remove-receiver! str)
+        (let ((ins (if (subobjects seq) #t #f)) ; insert into existing seq
+              (off #f)                          ; time offset
+              (map (make-list 16 (list)))) ; channel map for on/off pairing
+          (if (receiver? str)
+              (err "portmidi-record!: a portmidi receiver is already active."))
+          (set-receiver!
+           (lambda (mm ms)
+             (if opn (write-event mm str ms)) ; midi thru 
+             (if (not off) (set! off ms)) ; cache time of first recorded message
+             (cond ((or (note-off-p mm)
+                        (and (note-on-p mm) (= 0 (note-on-velocity mm))))
+                    (let* ((chn (note-off-channel mm))
+                           (key (note-off-key mm))
+                           (ons (list-ref map chn)))
+                      ;; ons is time ordered list ((<on> . <ms>) ...)
+                      (when (pair? ons) ; have on to pair with
+                        (let ((aon #f)  ; pair with earliest on
+                              (obj #f))
+                          (cond ((= (note-on-key (car (car ons))) key)
+                                 (set! aon (car ons))
+                                 (list-set! map chn (cdr ons)))
+                                (else
+                                 ;; search for corresponding on and splice out
+                                 (do ()
+                                     ((or (null? (cdr ons)) aon)
+                                      #f)
+                                   (if (= key (note-on-key (car (car (cdr ons)))))
+                                       (begin (set! aon (car (cdr ons)))
+                                              (set-cdr! ons (cddr ons)))
+                                       (set! ons (cdr ons))))))
+                          ;; aon is (<msg> . <ms>)
+                          (when aon
+                            (set! obj (make-instance <midi> 
+                                                     :time (/ (- (cdr aon) off) 1000.0)
+                                                     :duration (/ (- ms (cdr aon)) 1000.0)
+                                                     :keynum (note-on-key (car aon))
+                                                     :amplitude (/ (note-on-velocity
+                                                                    (car aon))
+                                                                   127.0)
+                                                     :channel (note-on-channel (car aon))))
+                            ;; insert if seq contained objects else append
+                            (if ins (insert-object seq obj)
+                                (append-object obj seq)))))))
+                   ((note-on-p mm)
+                    (let* ((chn (note-on-channel mm))
+                           (ons (list-ref map chn)))
+                      ;; append mm to time ordered ons ((<on> . <ms>) ...)
+                      (if (null? ons)
+                          (list-set! map chn (list (cons mm ms)))
+                          (append! ons (list (cons mm ms))))))
+                   ((channel-message-p mm)
+                    (midi-message->midi-event mm :time (/ (- ms off) 1000.0)))))
+           str)))))

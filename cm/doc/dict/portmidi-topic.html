@@ -115,7 +115,7 @@ href="#portmidi-default-latency"><code>*portmidi-default-latency*</code></a>.
 <code class="keyword" id="receive-mode">:receive-mode</code> {<code class="keyword">:message</code> | <code class="keyword">:raw</code>}
 </dt>
 <dd>
-Determines what values are passed to a Pormidi receiver hook
+Determines what values are passed to a Portmidi receiver hook
 established by <a href="set-receiver-fn.html">set-receiver!</a>. If
 the value is <code class="keyword">:message</code> then the receiver
 hook is passed two values: the
@@ -210,7 +210,6 @@ class="keyword">:out</code>, <code class="keyword">:inout</code> or
 false.
 </p>
 
-
 <dl class="dictsyntax" id="portmidi-close">
 <dt>[Function]</dt>
 <dd><code>(</code><code class="entry">portmidi-close</code><code>)</code></dd>
@@ -219,6 +218,21 @@ false.
 Closes the <a href="portmidi-stream">portmidi-stream</a> called <span class="string">"midi-port.pm"</span> if it is open, otherwise has no effect.
 </p>
 
+
+<dl class="dictsyntax" id="portmidi-record!">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">portmidi-record!</code> <var>seq</var> [<var>stream</var>]<code>)</code></dd>
+</dl>
+<p>
+Records MIDI data from the open input <var>stream</var>
+into <a href="seq-cls.html"><var>seq</var></a>. Returns no
+values. If <var>stream</var> is not supplied it defaults
+to <span class="string">"midi-port.pm"</span>.  If <var>seq</var>
+already contains objects when the recording starts the new objects
+will be inserted into the existing list.  The first recorded object is
+always placed at time 0.0 in <var>seq</var>. To stop recording
+call <code>portmidi-record!</code> with false for <var>seq</var>.
+</p>
 
 <dl class="dictsyntax" id="pm:CountDevices">
 <dt>[Function]</dt>
@@ -341,7 +355,7 @@ The channel mask specification if none specified to
 <h4>Examples:</h4>
 <div class="float">
 <p class="captxt">
-<span class="floatlabel">Example 1.</span>Accessing Portmidi information and opening a Portmidi stream.
+<span class="floatlabel">Example 1.</span> Accessing Portmidi information and opening a Portmidi stream.
 </p>
 <pre class="code">
 (pm:CountDevices)
@@ -392,15 +406,33 @@ The channel mask specification if none specified to
 
 <div class="float">
 <p class="captxt">
-<span class="floatlabel">Example 3.</span> Receiving messages.
+<span class="floatlabel">Example 3.</span> Recording messages.
 </p>
 <pre class="code">
-;; midin input and output should be open and latency=0
-(<span class="special">define</span> <span class="defined">pm</span>
-  (portmidi-open <span class="keyword">:output</span> 3 <span class="keyword">:input</span> 1 <span class="keyword">:latency</span> 0))
+(<span class="special">define</span> <span class="defined">*pm*</span> (portmidi-open <span class="keyword">:latency</span> 0 <span class="keyword">:input</span> 1 <span class="keyword">:output</span> 3))
 
+(<span class="special">define</span> <span class="defined">myseq</span> (<a href="new-mac.html">new</a> <a href="seq-fn.html">seq</a>))
+
+(portmidi-record! myseq)
+
+<span class="comment">;; stop recording</span>
+
+(portmidi-record! #f)
+
+(<a href="list-objects-fn.html">list-objects</a> myseq)
+
+0. #i(midi time 0.0 keynum 60 duration 0.159 amplitude 0.46456692 channel 0)
+1. #i(midi time 0.495 keynum 64 duration 0.147 amplitude 0.6771653 channel 0)
+2. #i(midi time 0.834 keynum 67 duration 0.181 amplitude 0.61417323 channel 0)
+3. #i(midi time 1.108 keynum 65 duration 0.144 amplitude 0.6062992 channel 0)
+4. #i(midi time 1.47 keynum 62 duration 0.214 amplitude 0.61417323 channel 0)
+5. #i(midi time 2.848 keynum 60 duration 0.155 amplitude 0.62204725 channel 0)
+6. #i(midi time 2.837 keynum 64 duration 0.179 amplitude 0.72440946 channel 0)
+7. #i(midi time 2.847 keynum 67 duration 0.191 amplitude 0.56692916 channel 0)
 </pre>
 </div>
+
+
 
 <h4>See also:</h4>
 <ul>
