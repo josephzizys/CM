@@ -1,3 +1,4 @@
+
 ;;; **********************************************************************
 ;;; Copyright (C) 2005 Todd Ingalls, Heinrich Taube
 ;;; 
@@ -18,67 +19,18 @@
 ;;; $Date$
 
 
-(define-class* <sc-stream> (<event-stream>)
-  ((port :init-value 57110 :init-keyword :port)
-   (host :init-value "127.0.0.1" :init-keyword :host)
-   (local-port :init-value 57100 :init-keyword :local-port)
-   (socket :init-value #f)
+(define-class* <sc-stream> (<osc-stream>)
+  ((remote-port :init-value 57110)
+   (remote-host :init-value "127.0.0.1")
+   (local-port :init-value 57100)
    (latency :init-value 0.05 :init-keyword :latency)
    (notify :init-value #f))
   :name 'sc-stream
   :metaclass <io-class>
   :file-types '("sc.udp" ))
 
-(define-method* (send-msg message (io <sc-stream>))
-  (multiple-value-bind (mess len)
-    (format-osc message)
-  (send-osc mess io len)))
-
-(define-method* (send-bundle offset message (io <sc-stream>))
-  (let ((arr (make-byte-vector "#bundle"))
-        (mess-len 0))
-    (set! arr (u8vector-append arr (make-osc-timetag offset io)))
-    ;;this should be smarter
-    (if (list? (list-ref message 0))
-        (begin
-          (dolist (bundle-mess message)
-            (multiple-value-bind (mess len)
-              (format-osc bundle-mess)
-              (set! arr
-                    (u8vector-append arr
-                                     (make-byte-vector len)
-                                     mess))
-              (set! mess-len (+ mess-len len))))
-          (set! mess-len (+ mess-len 20))
-          (send-osc arr io mess-len))
-      (multiple-value-bind (mess len)
-        (format-osc message)
-        (set! arr
-              (u8vector-append arr
-                               (make-byte-vector len)
-                               mess))
-        (set! mess-len (+ len 8 8 4))
-        (send-osc arr io mess-len)))))
-
-(define-method* (open-io (obj <sc-stream>) dir . args)
-  dir
-  args
-  (unless (io-open obj)
-    (slot-set! obj 'socket
-               (make-udp-socket
-                (slot-ref obj 'host)
-                (slot-ref obj 'port)
-                (slot-ref obj 'local-port)))
-    (slot-set! obj 'open #t))
-  (set! *out* obj))
-
-(define-method* (close-io (obj <sc-stream>) . mode)
-  mode
-  (when (io-open obj)
-    (socket-close (slot-ref obj 'socket))
-    (socket-shutdown (slot-ref obj 'socket) 2)
-    (slot-set! obj 'open #f))
-  (set! *out* #f))
+;; open-io and close-io inherited
+;; from osc-stream
 
 (define-method* (write-event (obj <scsynth>) (io <sc-stream>) time)
   time
@@ -181,6 +133,56 @@
   (let ((msg (node-after (slot-ref obj 'node) (slot-ref obj 'after))))
     (send-msg msg io)))
 
+
+(defobject node-query (sc-cmd) 
+  ((nodes :initform #f))
+  (:parameters nodes)
+  (:event-streams))
+
+(define-method* (write-event (obj <node-query>) (io <sc-stream>) time)
+  time
+  (let ((nodes (slot-value obj 'nodes))
+        (msg (list "/n_query")))
+    (if (pair? nodes)
+        (set! msg (append! msg nodes))
+      (set! msg (append! msg (list nodes))))
+    (send-msg msg io)))
+
+(defobject synth-get (sc-cmd) 
+  ((node :initform #f)
+   (controls :initform #f))
+  (:parameters node controls)
+  (:event-streams))
+
+(define-method* (write-event (obj <synth-get>) (io <sc-stream>) time)
+  time
+  (let ((controls (slot-value obj 'controls))
+        (msg (list "/s_get" (slot-value obj 'node))))
+    (if (pair? controls)
+        (set! msg (append! msg controls))
+      (set! msg (append! msg (list controls))))
+    (send-msg msg io)))
+
+(defobject synth-getn (sc-cmd) 
+  ((node :initform #f)
+   (controls :initform #f)
+   (num-controls :initform #f))
+  (:parameters node controls num-controls)
+  (:event-streams))
+
+(define-method* (write-event (obj <synth-getn>) (io <sc-stream>) time)
+  time
+  (let* ((controls (slot-value obj 'controls))
+         (controls-len (length controls))
+         (num-controls (slot-value obj 'num-controls))
+         (msg (list "/s_getn" (slot-value obj 'node))))
+    (if (pair? controls)
+        (do ((i 0 (+ i 1)))
+            ((> i controls-len))
+          (set! msg (append! msg (list (list-ref controls i) (list-ref num-controls i)))))
+      (set! msg (append! msg (list controls num-controls))))
+    (send-msg msg io)))
+
 (define-method* (write-event (obj <group-new>) (io <sc-stream>) time)
   time
   (let ((msg (group-new (slot-ref obj 'id) (slot-ref obj 'add-action) (slot-ref obj 'target))))
@@ -254,7 +256,7 @@
 (define-method* (write-event (obj <buffer-set>) (io <sc-stream>) time)
   time
   (let ((msg (buffer-set (slot-ref obj 'bufnum)
-                         (slot-ref obj 'sample-values))))
+                         (slot-ref obj 'samples-values))))
     (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-setn>) (io <sc-stream>) time)
@@ -274,6 +276,59 @@
   time
   (let ((msg (buffer-close (slot-ref obj 'bufnum))))
     (send-msg msg io)))
+
+(defobject buffer-query (sc-cmd) 
+  ((bufnums :initform #f))
+  (:parameters bufnums)
+  (:event-streams))
+
+(define-method* (write-event (obj <buffer-query>) (io <sc-stream>) time)
+  time
+  (let ((bufnums (slot-value obj 'bufnums))
+        (msg (list "/b_query")))
+    (if (pair? bufnums)
+        (set! msg (append! msg bufnums))
+      (set! msg (append! msg (list bufnums))))
+    (send-msg msg io)))
+
+(defobject buffer-get (sc-cmd) 
+  ((bufnum :initform #f)
+   (samples :initform #f))
+  (:parameters bufnum samples)
+  (:event-streams))
+
+(define-method* (write-event (obj <buffer-get>) (io <sc-stream>) time)
+  time
+  (let ((samples (slot-value obj 'samples))
+        (msg (list "/b_get" (slot-value obj 'bufnum))))
+    (if (pair? samples)
+        (set! msg (append! msg (list samples)))
+      (set! msg (append! msg (list samples))))
+    (send-msg msg io)))
+
+(defobject buffer-getn (sc-cmd) 
+  ((bufnum :initform #f)
+   (samples :initform #f)
+   (num-samples :initform #f))
+  (:parameters bufnum samples num-samples)
+  (:event-streams))
+
+(define-method* (write-event (obj <buffer-getn>) (io <sc-stream>) time)
+  time
+  (let* ((bufnum (slot-value obj 'bufnum))
+         (samples (slot-value obj 'samples))
+         (samples-len #f)
+         (num-samples (slot-value obj 'num-samples))
+         (msg (list "/b_getn" bufnum)))
+    (if (pair? samples)
+        (begin
+          (set! samples-len (length samples))
+          (do ((i 0 (+ i 1)))
+              ((> i samples-len))
+            (set! msg (append! msg (list (list-ref samples i) (list-ref num-samples i))))))
+      (set! msg (append! msg (list samples num-samples))))
+    (send-msg msg io)))
+
 
 (define-method* (write-event (obj <buffer-gen>) (io <sc-stream>) time)
   time
@@ -298,6 +353,38 @@
                            (slot-ref obj 'value))))
     (send-msg msg io)))
 
+(defobject control-get (sc-cmd) 
+  ((bus :initform #f))
+  (:parameters bus)
+  (:event-streams))
+
+(define-method* (write-event (obj <control-get>) (io <sc-stream>) time)
+  time
+  (let ((controls (slot-value obj 'bus))
+        (msg (list "/c_get")))
+    (if (pair? controls)
+        (set! msg (append! msg controls))
+      (set! msg (append! msg (list controls))))
+    (send-msg msg io)))
+
+(defobject control-getn (sc-cmd) 
+  ((buses :initform #f)
+   (num-buses :initform #f))
+  (:parameters buses num-buses)
+  (:event-streams))
+
+(define-method* (write-event (obj <control-getn>) (io <sc-stream>) time)
+  time
+  (let* ((buses (slot-value obj 'buses))
+         (buses-len (length buses))
+         (num-buses (slot-value obj 'num-buses))
+         (msg (list "/c_getn")))
+    (if (pair? buses)
+        (do ((i 0 (+ i 1)))
+            ((> i buses-len))
+          (set! msg (append! msg (list (list-ref buses i) (list-ref num-buses i)))))
+      (set! msg (append! msg (list buses num-buses))))
+    (send-msg msg io)))
 
 (define-method* (write-event (obj <sc-buffer>) (io <sc-stream>) time)
   (cond ((slot-ref obj 'with-file)
@@ -364,8 +451,489 @@
   (clear-sched (sc-open?))
   (write-event (make <group-free-all> :group 0) (sc-open?) 0))
 
+(define (sc-notify bool . args)
+  (with-args (args &optional out)
+    (let ((msg (list "/notify" (if bool 1 0))))
+      (if out (send-msg msg out) (if *out* (send-msg msg *out*))))))
+
+(define-method* (reply-set-slots (obj <top>) lst)
+  lst
+  obj
+  #f)
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+           (define-class* <sc-reply> () 
+             ()
+             :name 'sc-reply))
+
+(define *reply-objects* '(/done done-reply  /fail fail-reply /status.reply status-reply
+                             /synced synced-reply /s_set synth-get-reply
+                             /s_setn synth-getn-reply /b_set buffer-get-reply
+                             /b_setn buffer-getn-reply /b_info buffer-info-reply
+                             /c_set control-get-reply /c_setn control-getn-reply
+                             /n_go node-go-reply /n_end node-end-reply
+                             /n_off node-off-reply /n_on node-on-reply
+                             /n_move node-move-reply /n_info node-info-reply
+                             /tr trigger-reply))
 
 
-;
-;(values))
+(define-class* <done-reply> (<sc-reply>)
+  ((cmd-name :init-value #f))
+  :name 'done-reply)
+
+(define-method* (reply-set-slots (obj <done-reply>) lst)
+  (slot-set! obj 'cmd-name (pop lst)))
+
+
+
+(define-class* <fail-reply> (<sc-reply>)
+  ((cmd-name :init-value #f)
+   (error :init-value #f))
+  :name 'fail-reply)
+
+(define-method* (reply-set-slots (obj <fail-reply>) lst)
+  (slot-set! obj 'cmd-name (pop lst))
+  (slot-set! obj 'error (pop lst)))
+
+(define-class* <status-reply> (<sc-reply>)
+  ((num-ugens :init-value #f)
+   (num-synths :init-value #f)
+   (num-groups :init-value #f)
+   (num-loaded-synths :init-value #f)
+   (avg-cpu :init-value #f)
+   (peak-cpu :init-value #f)
+   (sample-rate :init-value #f)
+   (actual-sample-rate :init-value #f))
+  :name 'status-reply)
+
+(define-method* (reply-set-slots (obj <status-reply>) lst)
+  (pop lst)
+  (slot-set! obj 'num-ugens (pop lst))
+  (slot-set! obj 'num-synths (pop lst))
+  (slot-set! obj 'num-groups (pop lst))
+  (slot-set! obj 'num-loaded-synths (pop lst))
+  (slot-set! obj 'avg-cpu (pop lst))
+  (slot-set! obj 'peak-cpu (pop lst))
+  (slot-set! obj 'sample-rate (pop lst))
+  (slot-set! obj 'actual-sample-rate (pop lst)))
+
+(define-class* <synced-reply> (<sc-reply>)
+  ((id :init-value #f))
+  :name 'synced-reply)
+
+(define-method* (reply-set-slots (obj <synced-reply>) lst)
+  (slot-set! obj 'id (pop lst)))
+
+
+(define-class* <synth-get-reply> (<sc-reply>)
+  ((node :init-value #f)
+   (controls-values :init-value #f))
+  :name 'synth-get-reply)
+
+(define-method* (reply-set-slots (obj <synth-get-reply>) lst)
+  (let ((cv (list)))
+    (slot-set! obj 'node (pop lst))
+    (dolist (i lst)
+      (cond ((string? i)
+             (set! cv (append! cv (list (string->keyword i)))))
+            ((symbol? i)
+             (set! cv (append! cv (list (symbol->keyword i)))))
+            (#t
+             (set! cv (append! cv (list i))))))
+    (slot-set! obj 'controls-values cv)))
+
+
+(define-class* <synth-getn-reply> (<sc-reply>)
+  ((node :init-value #f)
+   (controls-values :init-value #f))
+  :name 'synth-getn-reply)
+
+(define-method* (reply-set-slots (obj <synth-getn-reply>) lst)
+  (let ((cv (list)))
+    (slot-set! obj 'node (pop lst))
+    (do ((c #f) (n 0) (v #f))
+        ((not (pair? lst)))
+      (set! v (list))
+      (set! c (pop lst))
+      (cond ((string? c)
+             (set! cv (append! cv (list (string->keyword c)))))
+            ((symbol? c)
+             (set! cv (append! cv (list (symbol->keyword c)))))
+            (#t
+             (set! cv (append! cv (list c)))))
+      (set! n (pop lst))
+      (dotimes (j n)
+        (set! v (append! v (list (pop lst)))))
+      (set! cv (append! cv (list v))))
+    (slot-set! obj 'controls-values cv)))
+
+
+(define-class* <buffer-get-reply> (<sc-reply>)
+  ((bufnum :init-value #f)
+   (samples-values :init-value #f))
+  :name 'buffer-get-reply)
+
+(define-method* (reply-set-slots (obj <buffer-get-reply>) lst)
+  (slot-set! obj 'bufnum (pop lst))
+  (slot-set! obj 'samples-values lst))
+
+
+(define-class* <buffer-getn-reply> (<sc-reply>)
+  ((bufnum :init-value '())
+   (samples-values :init-value '()))
+  :name 'buffer-getn-reply)
+
+(define-method* (reply-set-slots (obj <buffer-getn-reply>) lst)
+  (let ((cv (list)))
+    (slot-set! obj 'bufnum (pop lst))
+    (do ((n 0) (v #f))
+        ((not (pair? lst)))
+      (set! v (list))
+      (set! cv (append! cv (list (pop lst))))
+      (set! n (pop lst))
+      (dotimes (j n)
+        (set! v (append! v (list (pop lst)))))
+      (set! cv (append cv (list v))))
+    (slot-set! obj 'samples-values cv)))
+
+
+(define-class* <buffer-query-reply> (<sc-reply>)
+  ((bufnum :init-value '())
+   (num-frames :init-value '())
+   (num-chans :init-value '())
+   (sample-rate :init-value '()))
+  :name 'buffer-query-reply)
+
+(define-method* (reply-set-slots (obj <buffer-query-reply>) lst)
+  (let ((len (length lst)))
+    (if (= len 4)
+        (begin
+          (slot-set! obj 'bufnum (pop lst))
+          (slot-set! obj 'num-frames (pop lst))
+          (slot-set! obj 'num-chans (pop lst))
+          (slot-set! obj 'sample-rate (pop lst)))
+      (do () ((not (pair? lst)))
+        (slot-set! obj 'bufnum (append! (slot-ref obj 'bufnum) (list (pop lst))))
+        (slot-set! obj 'num-frames (append! (slot-ref obj 'num-frames) (list (pop lst))))
+        (slot-set! obj 'num-chans (append! (slot-ref obj 'num-chans) (list (pop lst))))
+        (slot-set! obj 'sample-rate (append! (slot-ref obj 'sample-rate) (list (pop lst))))))))
+
+
+(define-class* <control-get-reply> (<sc-reply>)
+  ((bus :init-value '())
+   (value :init-value '()))
+  :name 'control-get-reply)
+
+(define-method* (reply-set-slots (obj <control-get-reply>) lst)
+  (if (= (length lst) 2)
+      (begin
+        (slot-set! obj 'bus (pop lst))
+        (slot-set! obj 'value (pop lst)))
+    (do () ((not (pair? lst)))
+      (slot-set! obj 'bus (append! (slot-ref obj 'bus) (list (pop lst))))
+      (slot-set! obj 'value (append! (slot-ref obj 'value) (list (pop lst)))))))
+
+
+(define-class* <control-getn-reply> (<sc-reply>)
+  ((bus :init-value '())
+   (value :init-value '()))
+  :name 'control-getn-reply)
+
+(define-method* (reply-set-slots (obj <control-getn-reply>) lst)
+  (let ((b #f) (n #f)
+        (v (list)))
+    (set! b (pop lst))
+    (set! n (pop lst))
+    (dotimes (i n)
+      (set! v (append! v (list (pop lst)))))
+    (if (> (length lst) n)
+        (begin
+          (slot-set! obj 'bus (append! (slot-ref obj 'bus) (list b)))
+          (slot-set! obj 'value (append! (slot-ref obj 'value) (list v)))
+          (do () ((not (pair? lst)))
+            (slot-set! obj 'bus (append! (slot-ref obj 'bus) (pop lst)))
+            (set! v (list))
+            (set! n (pop lst))
+            (dotimes (i n)
+              (set! v (append! v (list (pop lst)))))
+            (slot-set! obj 'value (append! (slot-ref obj 'value) (list v)))))
+      (begin
+        (slot-set! obj 'bus b)
+        (slot-set! obj 'value v)))))
+
+(define-class* <node-go-reply> (<sc-reply>)
+  ((node :init-value #f)
+   (parent-group :init-value #f)
+   (previous-node :init-value #f)
+   (next-node :init-value #f)
+   (type :init-value #f)
+   (head-node :init-value #f)
+   (tail-node :init-value #f))
+  :name 'node-go-reply)
+
+(define-method* (reply-set-slots (obj <node-go-reply>) lst)
+  (let ((n #f))
+    (slot-set! obj 'node (pop lst))
+    (slot-set! obj 'parent-group (pop lst))
+    (slot-set! obj 'previous-node (pop lst))
+    (slot-set! obj 'next-node (pop lst))
+    (set! n (pop lst))
+    (slot-set! obj 'type (if (= n 1) 'group 'synth))
+    (if (= n 1)
+        (begin
+          (slot-set! obj 'head-node (pop lst))
+          (slot-set! obj 'tail-node (pop lst))))))
+
+
+(define-class* <node-end-reply> (<sc-reply>)
+  ((node :init-value #f)
+   (parent-group :init-value #f)
+   (previous-node :init-value #f)
+   (next-node :init-value #f)
+   (type :init-value #f)
+   (head-node :init-value #f)
+   (tail-node :init-value #f))
+  :name 'node-end-reply)
+
+(define-method* (reply-set-slots (obj <node-end-reply>) lst)
+  (let ((n #f))
+    (slot-set! obj 'node (pop lst))
+    (slot-set! obj 'parent-group (pop lst))
+    (slot-set! obj 'previous-node (pop lst))
+    (slot-set! obj 'next-node (pop lst))
+    (set! n (pop lst))
+    (slot-set! obj 'type (if (= n 1) 'group 'synth))
+    (if (= n 1)
+        (begin
+          (slot-set! obj 'head-node (pop lst))
+          (slot-set! obj 'tail-node (pop lst))))))
+
+
+(define-class* <node-off-reply> (<sc-reply>)
+  ((node :init-value #f)
+   (parent-group :init-value #f)
+   (previous-node :init-value #f)
+   (next-node :init-value #f)
+   (type :init-value #f)
+   (head-node :init-value #f)
+   (tail-node :init-value #f))
+  :name 'node-off-reply)
+
+(define-method* (reply-set-slots (obj <node-off-reply>) lst)
+  (let ((n #f))
+    (slot-set! obj 'node (pop lst))
+    (slot-set! obj 'parent-group (pop lst))
+    (slot-set! obj 'previous-node (pop lst))
+    (slot-set! obj 'next-node (pop lst))
+    (set! n (pop lst))
+    (slot-set! obj 'type (if (= n 1) 'group 'synth))
+    (if (= n 1)
+        (begin
+          (slot-set! obj 'head-node (pop lst))
+          (slot-set! obj 'tail-node (pop lst))))))
+
+
+(define-class* <node-on-reply> (<sc-reply>)
+  ((node :init-value #f)
+   (parent-group :init-value #f)
+   (previous-node :init-value #f)
+   (next-node :init-value #f)
+   (type :init-value #f)
+   (head-node :init-value #f)
+   (tail-node :init-value #f))
+  :name 'node-on-reply)
+
+(define-method* (reply-set-slots (obj <node-on-reply>) lst)
+  (let ((n #f))
+    (slot-set! obj 'node (pop lst))
+    (slot-set! obj 'parent-group (pop lst))
+    (slot-set! obj 'previous-node (pop lst))
+    (slot-set! obj 'next-node (pop lst))
+    (set! n (pop lst))
+    (slot-set! obj 'type (if (= n 1) 'group 'synth))
+    (if (= n 1)
+        (begin
+          (slot-set! obj 'head-node (pop lst))
+          (slot-set! obj 'tail-node (pop lst))))))
+
+
+(define-class* <node-move-reply> (<sc-reply>)
+  ((node :init-value #f)
+   (parent-group :init-value #f)
+   (previous-node :init-value #f)
+   (next-node :init-value #f)
+   (type :init-value #f)
+   (head-node :init-value #f)
+   (tail-node :init-value #f))
+  :name 'node-move-reply)
+
+(define-method* (reply-set-slots (obj <node-move-reply>) lst)
+  (let ((n #f))
+    (slot-set! obj 'node (pop lst))
+    (slot-set! obj 'parent-group (pop lst))
+    (slot-set! obj 'previous-node (pop lst))
+    (slot-set! obj 'next-node (pop lst))
+    (set! n (pop lst))
+    (slot-set! obj 'type (if (= n 1) 'group 'synth))
+    (if (= n 1)
+        (begin
+          (slot-set! obj 'head-node (pop lst))
+          (slot-set! obj 'tail-node (pop lst))))))
+
+
+
+(define-class* <node-info-reply> (<sc-reply>)
+  ((node :init-value #f)
+   (parent-group :init-value #f)
+   (previous-node :init-value #f)
+   (next-node :init-value #f)
+   (type :init-value #f)
+   (head-node :init-value #f)
+   (tail-node :init-value #f))
+  :name 'node-info-reply)
+
+(define-method* (reply-set-slots (obj <node-info-reply>) lst)
+  (let ((n #f))
+    (slot-set! obj 'node (pop lst))
+    (slot-set! obj 'parent-group (pop lst))
+    (slot-set! obj 'previous-node (pop lst))
+    (slot-set! obj 'next-node (pop lst))
+    (set! n (pop lst))
+    (slot-set! obj 'type (if (= n 1) 'group 'synth))
+    (if (= n 1)
+        (begin
+          (slot-set! obj 'head-node (pop lst))
+          (slot-set! obj 'tail-node (pop lst))))))
+
+
+(define-class* <trigger-reply> (<sc-reply>)
+  ((node :init-value #f)
+   (trigger :init-value #f)
+   (value :init-value #f))
+  :name 'trigger-reply)
+
+(define-method* (reply-set-slots (obj <trigger-reply>) lst)
+  (slot-set! obj 'node (pop lst))
+  (slot-set! obj 'trigger (pop lst))
+  (slot-set! obj 'value (pop lst)))
+
+
+  
+(define-method* (receive (str <sc-stream>) . args)
+  (let* ((n 0)
+        (in #f)
+        (hook (if (pair? args) (pop args) #f))
+        (mode (if (pair? args) (pop args) #f))
+        (rm (if (not mode) #t (eq? mode ':message)))
+        (fn #f)
+        (res #f))
+    (if (io-open str)
+        (set! in str))
+    (if in
+        (begin
+          (set! n (udp-socket-recv (slot-ref in 'socket) (slot-ref str 'buffer-size)))
+          (if n
+              (begin
+                (if hook
+                    (begin
+                      (set! fn (lambda (mm)
+                                 (hook (osc-vector->osc-message mm))))
+                      (if rm (funcall fn n)
+                        (hook n))
+                      (set! res #t))
+                  (begin
+                    (if rm
+                        (set! res (osc-vector->osc-message n))
+                      (set! res n))))))
+          res)
+      (err "osc stream ~s not open" str))))
+
+(define-method* (init-receiver (str <sc-stream>) type)
+  type
+  (unless (io-open str)
+    (open-io str nil)))
+
+(define-method* (deinit-receiver (str <sc-stream>) type)
+  type
+  (let ((data (osc-receive str)))
+    (when (io-open str)
+      (close-io str))
+    (list-set! data 0 #f)
+    (list-set! data 1 #f)))
+
+(define-method* (set-receive-mode! (str <sc-stream>) mode)
+  (unless (member mode '(:message :raw :object))
+    (err "receive: ~s is not a sc receive mode." mode))
+  (slot-set! str 'recmode mode))
+
+(define (osc-message->sc-object lst)
+  (let* ((obj? (list-prop *reply-objects* (pop (car lst))))
+	 (obj (if obj? (make obj?) nil)))
+    (if obj
+	(reply-set-slots obj (car lst)))
+    obj))
+
+(define-method* (stream-receiver hook (str <sc-stream>) type)
+  ;; hook is 2arg lambda or nil, type is :threaded or :periodic
+  (let* ((data (osc-receive str)) ; (<thread> <stop> )
+         (mode (osc-receive-mode str))
+         (stop #f)) 
+    ;; can receive either message or raw buffer
+    (unless (member mode '(:message :raw :object))
+      (err "receive: ~s is not a osc receive mode." mode))
+    ;; the receiving thread's do loop terminates as soon as the stop
+    ;; flag is #t. to stop we call the cached "stopper" closure that
+    ;; sets the var to #t.
+    (cond ((not (procedure? hook))
+           (err "Receive: hook is not a function: ~s" hook))
+          ((first data)
+           (err "Can't set input hook: another hook is running!"))
+          (else
+           ;; ready to go
+           (let* ((in str)
+                  (rm (or (eq? mode ':message) (eq? mode ':object)))
+                  (th #f) ; thread
+                  (st #f) ; thread stopper
+                  (fn #f) ; mapper
+                  )
+             (case mode
+               ((:message)
+                (set! fn (lambda (mm)
+                        ( hook (osc-vector->osc-message mm)))))
+               ((:object)
+                (set! fn (lambda (mm)
+                           ( hook (osc-message->sc-object (osc-vector->osc-message mm) ))))))
+             (case type
+               ((:threaded )
+                (set! th
+                      (make-thread
+                       (lambda ()
+                         (do ((n #f))
+                             (stop  
+                              #f)
+                           (set! n (udp-socket-recv (slot-ref in 'socket) (slot-ref str 'buffer-size)))
+                           (if n
+                               (if rm
+                                   (funcall fn n)
+                                 ( hook n))
+                             ;; only sleep if no message??
+                             (thread-sleep! *osc-receive-rate*))))))
+                (set! st (lambda () (set! stop #t))))
+               ((:periodic )
+                (set! th
+                      (lambda () 
+                        (let ((n 0))
+                          (set! n (udp-socket-recv (slot-ref in 'socket) (slot-ref str 'buffer-size)))
+                          (if n
+                              (if rm
+                                  (funcall fn n)
+                                ( hook n))))))
+                (set! st (lambda ()
+                           (remove-periodic-task! :receive))))
+               )
+             ;; cache the stuff
+             (list-set! data 0 th)
+             (list-set! data 1 st)
+             th)))))
+
 
