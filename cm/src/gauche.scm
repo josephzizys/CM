@@ -26,6 +26,7 @@
 (use file.util)  ; current-directory, home-directory
 (use gauche.threads) ; for rt threads
 (use gauche.net) ; needed for socket communication
+(use gauche.fcntl) ;need to set socket to non-blocking
 
 
 ;; Lisp environment normalization
@@ -345,10 +346,48 @@
       (string-byte-set! byte-string i (u8vector-ref vec i)))
     byte-string))
 
+;;;
+;;; threads
+;;;
+(define thread-alive?
+  (let ((unique (list 'unique)))
+    (lambda (thread)
+      (eq? (thread-join! thread 0 unique) unique))))
+
+
+;;;
+;;; socket/udp support
+;;;
+
+
 (define (make-udp-socket host port local-port)
   (let ((sock (make-socket PF_INET SOCK_DGRAM)))
+    (sys-fcntl (socket-fd sock) F_SETFL O_NONBLOCK)
     (socket-bind sock (make <sockaddr-in> :host "127.0.0.1" :port local-port))
     (socket-connect sock (make <sockaddr-in> :host host :port port))))
+    
+
+(Define (udp-socket-close sock)
+  (socket-close sock))
+                          
+(define (udp-socket-shutdown sock . args)
+  (with-args (args &optional how)
+    (unless how
+      (set! how 2))
+    (socketwith-shutdown sock how)))
+
+(define (udp-socket-recvfrom (sock bytes . args))
+  (with-args (args &optional flags)
+
+(define (send-osc mess sc-stream len)
+  len
+  (socket-send (slot-ref sc-stream 'socket) (u8vector->byte-string mess)))
+
+
+
+
+
+
 
 (define (make-osc-timetag offset out)
   (let* ((now (current-time))
@@ -357,17 +396,6 @@
          (vec #f))
     (set! vec (make-byte-vector (+ 2208988800 (slot-ref target-time 'second))))
     (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
-
-(define (send-osc mess sc-stream len)
-  len
-  (socket-send (slot-ref sc-stream 'socket) (u8vector->byte-string mess)))
-
-(define thread-alive?
-  (let ((unique (list 'unique)))
-    (lambda (thread)
-      (eq? (thread-join! thread 0 unique) unique))))
-
-
 
 ;;;
 ;;; not in utils.scm because i think this
