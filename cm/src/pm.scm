@@ -322,7 +322,13 @@
 ;;; message receiving
 ;;;
 
-(define-method* (init-receiver str type)
+(define-method* (set-receive-mode! (str <portmidi-stream>) mode)
+  (unless (member mode '(:message :raw))
+    (err "receive: ~s is not a portmidi receive mode." mode))
+  (slot-set! str 'recmode mode))
+
+
+(define-method* (init-receiver (str <portmidi-stream>) type)
   ;; called by set-receiver before hook is activated.
   ;; flush any messages already in input buffer
   (when (eq? type ':periodic)
@@ -333,7 +339,7 @@
     (when (pm:StreamPoll idev)
       (pm:StreamRead idev (third data) (fourth data)))))
 
-(define-method* (deinit-receiver str type)
+(define-method* (deinit-receiver (str <portmidi-stream>) type)
   type
   ;;  called by remove-receiver after the periodic task has been withdrawn
   (let ((data (portmidi-receive str))) ; (<thread> <stop> <buf> <len>)
