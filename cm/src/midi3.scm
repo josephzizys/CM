@@ -254,6 +254,10 @@
                           :time time
                           :offset (loop for i from 1 to 5
                                        collect (vector-ref data i))))
+                   ((sequencer-event-p m)
+                    (make <midi-sequencer-event>
+                          :time time
+                          :data data))
                    ;; FIX! add classes..,
                    ;;((midi-channel-p m) )
                    (else
