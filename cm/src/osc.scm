@@ -132,12 +132,14 @@
 ;;; also need osc-vector->osc-message parse-osc function and 
 ;;; u8vector->double
 
-(defparameter *osc-receive-rate* .001)
+(define *osc-receive-rate* .001)
+;(defparameter *osc-receive-rate* .001)
+;(set! *osc-receive-rate* .001)
 
 (define-class* <osc-stream> (<event-stream>)
-  ((remote-port :init-value nil :init-keyword :remote-port)
-   (remote-host :init-value nil :init-keyword :remote-host)
-   (local-port :init-value nil :init-keyword :local-port)
+  ((remote-port :init-value #f :init-keyword :remote-port)
+   (remote-host :init-value #f :init-keyword :remote-host)
+   (local-port :init-value #f :init-keyword :local-port)
    ;; data list: (<thread> #'stopper )
    (receive :init-value (list #f #f)
      :accessor osc-receive)
