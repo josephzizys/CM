@@ -359,29 +359,71 @@
 ;;; socket/udp support
 ;;;
 
+;; because i want to use sendto on a unconnected socket
+;; i want to encapsulate the remote host and port
+;; information along with the socket.
+;; udp-socket class does this .
 
-(define (make-udp-socket host port local-port)
-  (let ((sock (make-socket PF_INET SOCK_DGRAM)))
-    (sys-fcntl (socket-fd sock) F_SETFL O_NONBLOCK)
-    (socket-bind sock (make <sockaddr-in> :host "127.0.0.1" :port local-port))
-    (socket-connect sock (make <sockaddr-in> :host host :port port))))
-    
+(define-class* <udp-socket> ()
+  ((socket :init-value #f)
+   (remote-port :init-value #f :init-keyword :remote-port)
+   (remote-host :init-value #f :init-keyword :remote-host)
+   (local-port :init-value #f :init-keyword :local-port))
+  :name 'udp-socket)
 
-(Define (udp-socket-close sock)
-  (socket-close sock))
+ (define (make-udp-socket host port local-port)
+   (let ((usock (make <udp-socket> :remote-host host :remote-port port :local-port local-port)))
+     (slot-set! usock 'socket (make-socket PF_INET SOCK_DGRAM))
+     (sys-fcntl (socket-fd (slot-ref usock 'socket)) F_SETFL O_NONBLOCK)
+     (socket-bind (slot-ref usock 'socket) (make <sockaddr-in> :host "127.0.0.1" :port local-port))
+     usock))
+
+
+
+(define (udp-socket-close sock)
+  (socket-close (slot-ref sock 'socket)))
                           
+
+;; is this even needed?? since
+;; socket is not connection orientated
 (define (udp-socket-shutdown sock . args)
   (with-args (args &optional how)
     (unless how
       (set! how 2))
-    (socketwith-shutdown sock how)))
+    (socket-shutdown (slot-ref sock 'socket) how)))
 
-(define (udp-socket-recvfrom (sock bytes . args))
-  (with-args (args &optional flags)
+;; this does a recvfrom on socket, however must
+;; handle EAGAIN error since this indicates
+;; the socket is non-blocking and no data
+;; is waiting. in this case, return #f
 
-(define (send-osc mess sc-stream len)
-  len
-  (socket-send (slot-ref sc-stream 'socket) (u8vector->byte-string mess)))
+(define (udp-socket-recv sock bytes . args)
+   (with-args (args &optional flags)
+     (unless flags
+       (set! flags 0))
+     (guard (exc ((<system-error> exc) (if (= 35 (slot-ref exc 'errno)) #f (err exc))))
+            (string->u8vector (socket-recvfrom (slot-ref sock 'socket) bytes flags)))))
+
+(define (udp-socket-send sock mess bytes)
+  bytes
+  (socket-sendto (slot-ref sock 'socket) (u8vector->byte-string mess)
+                 (make <sockaddr-in> :host (slot-ref sock 'remote-host)
+                       :port (slot-ref sock 'remote-port))))
+
+;;test
+;; (define *send-socket* (make-udp-socket "127.0.0.1" 9000 22011))
+;; (define *recv-socket* (make-udp-socket "127.0.0.1" 22011 9000))
+;; (let ((mess (make-u8vector 64 2)))
+;;   (udp-socket-send *send-socket* mess 64))
+
+;; (udp-socket-recv *recv-socket* 128)
+;; (udp-socket-close *send-socket*)
+;; (udp-socket-close *recv-socket*)
+
+
+(define (send-osc mess osc-stream len)
+   len
+   (udp-socket-send (slot-ref osc-stream 'socket) mess len))
 
 
 
@@ -389,13 +431,13 @@
 
 
 
-(define (make-osc-timetag offset out)
-  (let* ((now (current-time))
-         (offset-time (seconds->time offset))
-         (target-time (seconds->time (+ (time->seconds now) (time->seconds offset-time) (slot-ref out 'latency))))
-         (vec #f))
-    (set! vec (make-byte-vector (+ 2208988800 (slot-ref target-time 'second))))
-    (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
+;; (define (make-osc-timetag offset out)
+;;   (let* ((now (current-time))
+;;          (offset-time (seconds->time offset))
+;;          (target-time (seconds->time (+ (time->seconds now) (time->seconds offset-time) (slot-ref out 'latency))))
+;;          (vec #f))
+;;     (set! vec (make-byte-vector (+ 2208988800 (slot-ref target-time 'second))))
+;;     (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
 
 ;;;
 ;;; not in utils.scm because i think this
@@ -406,6 +448,8 @@
   (let ((dv (uvector-alias <f64vector> vec)))
     (f64vector-ref dv 0)))
 
+
+;;this is broken now
 (define (parse-osc str)
   (let ((lst (list))
 	(pos #f)
