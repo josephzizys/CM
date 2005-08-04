@@ -712,7 +712,7 @@
 ;;; receive
 ;;;
 
-(define-generic* (set-receive-mode! str mode))
+;(define-generic* (set-receive-mode! str mode))
 
 
 (define *receive-type* #f)
