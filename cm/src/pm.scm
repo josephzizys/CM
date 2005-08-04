@@ -200,19 +200,27 @@
 (define (portmidi-close . args)
   (with-args (args &optional (port (find-object "midi-port.pm" )))
     (if (portmidi-open? port)
-        (begin (close-io port ':force)
-               ;; this really isnt right -- what happens if the user
-               ;; sets these AFTER the port is closed? then open-io
-               ;; won't use the new default value. maybe the io
-               ;; macro should be reused.
-;               (slot-set! port 'input *portmidi-default-input*)
-;               (slot-set! port 'output *portmidi-default-output*)
-;               (slot-set! port 'latency *portmidi-default-latency*)
-;               (slot-set! port 'inbufsize *portmidi-default-inbuf-size*)
-;               (slot-set! port 'outbufsize *portmidi-default-outbuf-size*)
-;               (slot-set! port 'filter *portmidi-default-filter*)
-;               (slot-set! port 'mask *portmidi-default-mask*)
-               port)
+        (let* ((a (rts?))
+               (b (receiver?))
+               (c (and a b)))
+          (cond ((or a b)
+                 (err "portmidi-close: Can't close port because ~a running."
+                      (if c "rts and a receiver are"
+                          (if b "a receiver is" "rts is"))))
+                (else
+                 (close-io port ':force)
+                 ;; this really isnt right -- what happens if the user
+                 ;; sets these AFTER the port is closed? then open-io
+                 ;; won't use the new default value. maybe the io
+                 ;; macro should be reused.
+                 ;;(slot-set! port 'input *portmidi-default-input*)
+                 ;;(slot-set! port 'output *portmidi-default-output*)
+                 ;;(slot-set! port 'latency *portmidi-default-latency*)
+                 ;;(slot-set! port 'inbufsize *portmidi-default-inbuf-size*)
+                 ;;(slot-set! port 'outbufsize *portmidi-default-outbuf-size*)
+                 ;;(slot-set! port 'filter *portmidi-default-filter*)
+                 ;;(slot-set! port 'mask *portmidi-default-mask*)
+                 port)))
         port)))
 
 ;;;
