@@ -640,13 +640,13 @@
             (process-events thing *qtime* start *out*))))
       (if wait? 
           ;; wait? is true if something is in the queue with a time > *qtime*
-          ;; in this case sleep
+          ;; in this case sleep MIN next run time and idle rate
           (let ((delta (- (%qe-time (%q-peek *queue*)) 
                           (thread-current-time))))
             ;; delta can be < 0 if the process evaluation took more time
             ;; than the wait increment. [is this true?]
-            (if (> delta 0) (thread-sleep! delta)))
-      
+            (if (> delta 0) 
+                (thread-sleep! (MIN delta *rts-idle-rate*))))
           ;; we only get here if queue is currently empty but user
           ;; wants scheduler to keepp running even though it has
           ;; nothing to do.  in this case the do loop will spin
@@ -658,8 +658,7 @@
           ;; openmcl's process-allow-scheduling doesnt seem to work
           ;; for yielding so we just sleep a tiny amount.
           (if (not end)
-              (begin (thread-sleep! *rts-idle-rate*)
-                     ))))))
+              (begin (thread-sleep! *rts-idle-rate*)))))))
 
 (define (rts-run-periodic object ahead end)
   ;; rts periodic run function.  the only hope for this method is if
