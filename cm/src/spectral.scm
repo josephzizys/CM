@@ -564,3 +564,144 @@
 ; (fm-spectrum 400 1 3 :spectrum :note :invert t )
 ; (fm-spectrum 400 1 3 :spectrum '(c4 b4) :invert t )
 
+
+;;;
+;;; loading spear data
+;;;
+
+; (import-spear-data "/Users/hkt/Desktop/spear data/va4-frames.txt")
+; (import-spear-data "/Users/hkt/Desktop/spear data/va4-frames.txt" :format ':keynum)
+; (import-spear-data "/Users/hkt/Desktop/spear data/va4-frames.txt" :format ':note)
+; (import-spear-data "/Users/hkt/Desktop/spear data/va4-partials.txt")
+; (import-spear-data "/Users/hkt/Desktop/spear data/va4-partials.txt" :format ':keynum)
+; (import-spear-data "/Users/hkt/Desktop/spear data/va4-partials.txt" :format ':note)
+; (import-spear-data "/Users/hkt/Desktop/spear data/va4-partials.txt" :format '(:time :note))
+
+;;;
+;;; :hertz-amp
+
+(define (import-spear-data path . args)
+  ;; format is one of
+  ;; :raw :hertz :keynum (:hertz :amplitude) (:keynum :amplitude)
+  (with-args (args &key (start 0) end format)
+    (let ((ftype #f)
+          (count #f)
+          (file #f)
+          (data (list))
+          (err? #t)
+          (para #f)
+          (parb #f))
+      (set! file (open-file path ':input))
+      (dynamic-wind
+       (lambda () )
+       (lambda () 
+         (loop 
+            for s = (file-line file)
+            until (or (file-eof? s)
+                      (equal? s "frame-data")
+                      (equal? s "partials-data"))
+            do
+            (cond ((equal? s "par-text-frame-format")
+                   (set! ftype ':frames))
+                  ((equal? s "par-text-partials-format")
+                   (set! ftype ':partials))
+                  ((equal? s "point-type time frequency amplitude")
+                   #f)
+                  ((equal? s "point-type index frequency amplitude")
+                   #f)
+                  (else
+                   (let ((x (string-substrings s)))
+                     (cond ((null? x) #f)
+                           ((or (equal? (car x) "partials-count")
+                                (equal? (car x) "frame-count"))
+                            (set! count (string->number (cadr x)))))))))
+         (cond ((eq? ftype ':frames)
+                (unless format (set! format '(:hertz :amplitude)))
+                (cond ((pair? format)
+                       (if (member (car format) '(:hertz :keynum :note))
+                           (set! para (car format))
+                           (err "import-spear-data: illegal format: ~s." format))
+                       (if (and (pair? (cdr format))
+                                (eq? (car (cdr format)) ':amplitude))
+                           (set! parb #t)
+                           (err "import-spear-data: illegal format: ~s." format)))
+                      ((member format '(:hertz :keynum :note :raw))
+                       (set! para format))
+                      (else
+                       (err "import-spear-data: ~s is not a valid format."
+                            format))))
+               ((eq? ftype ':partials)
+                (unless format (set! format '(:time :hertz)))
+                (cond ((pair? format)
+                       (if (eq? (car format) ':time)
+                           (set! para ':time)
+                           (err "import-spear-data: illegal format ~s." format))
+                       (if (and (pair? (cdr format))
+                                (member (car (cdr format)) '(:hertz :keynum :note)))
+                           (set! parb (car (cdr format)))
+                           (err "import-spear-data: illegal format ~s." format)))
+                      ((member format '(:hertz :keynum :note :raw))
+                       (set! parb format))
+                      (else
+                       (err "import-spear-data: ~s is not a valid format."
+                            format))))
+               (else
+                (err "parse-spear-data: file does not contain frames or partials.")))
+         (unless count
+           (err "parse-spear-data: file does not contain frame/partial count."))
+         ;; collect of data
+         (loop
+            for s = (file-line file)
+            for i from 0
+            until (file-eof? s)
+            do
+            (when (or (and (>= i start) (or (not end) (<= i end))))
+              (if (eq? ftype ':partials)
+                  (let ((hdr s))
+                    (set! s (file-line file))
+                    (push (read-spear-partial hdr s para parb) data))
+                  (push (read-spear-frame s para parb) data))))
+         (set! err? #f))
+       (lambda () (if file (close-file file ':input)))
+       )
+      (if (not err?) (set! data (reverse! data))
+          (set! data '()))
+      data)))
+       
+(define (read-spear-frame str ftyp amp?)
+  (let ((data (string->expr str :multiok #t)))
+    (if (eq? ftyp ':raw)
+        data
+        (do ((tail (cdddr data) (cdddr tail))
+             (head (list)))
+            ((null? tail)
+             (reverse! head))
+          (push (cond ((eq? ftyp ':hertz) (car tail))
+                      ((eq? ftyp ':note)
+                       (note (car tail) :hz #t))
+                      ((eq? ftyp ':keynum)
+                       (keynum (car tail) :hz #t)))
+                head)
+          (if amp? (push (car (cdr tail)) head))))))
+
+(define (read-spear-partial hdr str tim? ftyp)
+  hdr
+  (let ((data (string->expr str :multiok #t)))
+    (if (eq? ftyp ':raw)
+        data
+        (do ((tail data (cdddr tail))
+             (head (list)))
+            ((null? tail)
+             (reverse! head))
+          (if tim? (push (car tail) head))
+          (push (cond ((eq? ftyp ':hertz) (car (cdr tail)))
+                      ((eq? ftyp ':note)
+                       (note (car (cdr tail)) :hz #t))
+                      ((eq? ftyp ':keynum)
+                       (keynum (car (cdr tail)) :hz #t)))
+                head)
+          ))))
+
+
+
+
