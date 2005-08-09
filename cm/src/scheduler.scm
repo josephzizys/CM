@@ -600,6 +600,9 @@
        (set! *scheduler* ':periodic)
        (set-periodic-task-rate! 1 :ms)
        (add-periodic-task! :rts (rts-run-periodic object ahead end)))
+      (( :specific )
+       (set! *scheduler* :specific)
+       (rts-run-specific object ahead end))
       (else (err "rts: not an rts scheduling type: ~s" *rts-type*)))
     (values)))
 
