@@ -505,23 +505,21 @@ fi
 		  vec-offset 0))
 	  (ccl::%copy-ptr-to-ivector bufptr 0 vec vec-offset ret-size)))
       (if (> ret-size 0)
-	  (values (cond ((null buffer)
-			 vec)
-			((or (not extract)
-			     (and (eql 0 (or offset 0))
-				  (eql ret-size (length buffer))))
-			 buffer)
-			(t 
-			 (subseq vec vec-offset (+ vec-offset ret-size))))
-		  ret-size
-		  (#_ntohl (ccl::pref sockaddr :sockaddr_in.sin_addr.s_addr))
-		  (#_ntohs (ccl::pref sockaddr :sockaddr_in.sin_port)))
-	(values nil nil nil nil)))))
+	  (cond ((null buffer)
+		 vec)
+		((or (not extract)
+		     (and (eql 0 (or offset 0))
+			  (eql ret-size (length buffer))))
+		 buffer)
+		(t 
+		 (subseq vec vec-offset (+ vec-offset ret-size))))
+	nil))))
 
 
 (defun udp-socket-recv (sock bytes &optional flags)
   flags
   (receive-from-no-block sock bytes))
+  
   
 
 (defun udp-socket-send (sock mess len)
@@ -695,7 +693,7 @@ fi
   (dolist (e *periodic-tasks*) (funcall (cdr e)))
   (values))
 
-(cdr *periodic-tasks*)
+
 (defun run-periodic-tasks ()
   (let ((timer-context (%string->cfstringref "cm-periodic")))
     (ccl::defcallback *periodic-polling-callback*
@@ -765,3 +763,173 @@ fi
 (defmacro with-mutex-grabbed ((mutex) &body body)
   `(ccl::with-lock-grabbed (,mutex)
 			   ,@body))
+
+;;;
+;;; high resolution scheduler
+;;;
+
+#|
+(defparameter *tmtask* nil)
+(defparameter *rts-specific-callback* nil)
+(defparameter *rts-specific-fn* nil)
+
+
+(defun rts-return-fn (object ahead end)
+  (let ((wait? (if (> ahead 0) (round (* ahead 1000.0)) 0)))
+    (lambda nil
+      (if (> wait? 0)
+          (setf wait? (- wait? 1))
+          (let ((entry nil)
+                (thing nil)
+                (start nil)
+                (none? (null (%q-head *queue*))))
+            (cond ((or (not *rts-run*)
+                       (if (eq end t)
+                           none?
+			 (if (eq end nil)
+			     nil
+			   (if none?
+			       t
+			     (> (%qe-time (%q-peek *queue*)) end)))))
+                   (if object 
+		       (unschedule-object object t))
+		   (rts-reset))
+                  (t
+                   (do ()
+                       ((or none?
+                            (> (%qe-time (%q-peek *queue*)) *qtime*))
+                        (if none?
+                            (setf wait? 0)
+			  (let* ((next
+				  (%qe-time (%q-peek *queue*))))
+			    (setf wait? (- next *qtime*)))))
+                     (setf entry (%q-pop *queue*))
+                     (setf start (%qe-start entry))
+                     (setf thing (%qe-object entry))
+                     (%qe-dealloc *queue* entry)
+                     (process-events thing *qtime* start *out*)
+                     (setf none? (null (%q-head *queue*)))))))))))
+
+
+(defun rts-run-specific (object ahead end)
+  (if (not *qlock*) 
+      (setf *qlock* (make-mutex)))
+  (setf *rts-specific-fn* (rts-return-fn object ahead end))
+  
+  (if *tmtask*
+      (progn
+	(#_RemoveTimeTask *tmtask*)
+	(#_DisposeTimerUPP (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr))))
+  (setf *tmtask* (ccl::make-record :<TMT>ask))  
+  (setf (ccl::pref *tmtask* :<TMT>ask.tm<W>ake<U>p) 0)
+  (setf (ccl::pref *tmtask* :<TMT>ask.tm<R>eserved) 0)
+  (setf *rts-run* t)
+
+  (ccl::defcallback *rts-specific-callback* (:<TMT>ask<P>tr tmTaskPtr)
+    tmTaskPtr
+    (if (and *rts-specific-fn* *rts-run*)
+	(let ((res 0))
+	  (#_PrimeTimeTask *tmtask* 1)
+	  (setf *qtime* (#_CFAbsoluteTimeGetCurrent)) ;;update *qtime*
+	  (with-mutex-grabbed (*qlock*)
+	      (unwind-protect 
+		  (progn
+		    (funcall *rts-specific-fn*)
+		    (incf res))
+		(progn
+		  (incf res)
+		  (if (= res 1)
+		      (progn
+			(#_RemoveTimeTask *tmtask*)
+			(#_DisposeTimerUPP (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr))))))))
+      (progn
+	(#_RemoveTimeTask *tmtask*)
+	(#_DisposeTimerUPP (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr)))))
+  (setf (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr)
+	(#_NewTimerUPP *rts-specific-callback*))
+  (ccl::process-run-function "rts specific" ;;i am not sure if this
+    (lambda ()                              ;;is necessary
+      (#_InstallXTimeTask *tmtask* )
+      (#_PrimeTimeTask *tmtask* 1) )))
+
+;;;this needs to be integrated into regular rts-stop, but 
+;;; use this for now
+
+
+;
+(setf *rts-type* :specific)
+
+(defparameter *ms* (midishare-open))
+
+(rts nil *ms*)
+
+
+(define (chroma len knum wt)
+  (process repeat len
+	   sprout (process for i from 0 below 12
+			   output (ms:new typeNote
+					  :port 1
+					  :chan 0
+					  :dur 100
+					  :pitch (+ knum i)
+					  :vel 100)
+			   at (now)
+			   wait wt)
+	   wait (* wt 12)))
+
+(define (rep num knum rhy)
+  (process repeat num
+	   sprout (process repeat 5 for i from 0
+			   output (ms:new typeNote
+					  :port 1
+					  :chan 0
+					  :dur 100
+					  :pitch (+ knum (* i 3))
+					  :vel 100)
+			   at (now))
+	   wait rhy))
+
+(progn
+  (sprout (chroma 20 48 .1))
+  (sprout (chroma 20 60 .1) :ahead 1.1)
+  (sprout (chroma 20 36 .1) :ahead 2.2)
+  (sprout (chroma 20 67 .1) :ahead 3.3)
+  (sprout (chroma 20 54 .1) :ahead 4.4)
+  (sprout (chroma 20 72 .05) :ahead 10.)
+  (sprout (chroma 20 58 .05) :ahead 12.2)
+  (sprout (rep 200 48 .1) :ahead 18.0)
+  (sprout (rep 200 61 .1) :ahead 18.55))
+
+
+
+(rts-stop)
+;;give it a try?
+(progn
+  (sprout (rep 200 48 .01))
+  (sprout (rep 200 64 .01))
+  (sprout (rep 200 72 .01))
+  (sprout (rep 200 38 .01)))
+
+
+(defun trigger (ev)
+  ;; max doesn't send proper "note-offs" just keynum with vel 0
+  ;; also i was getting midi on port 5
+  (if (and (= (ms:evType ev) 1) (= (ms:port ev) 5) (> (ms:vel ev) 0))
+      (sprout (rep 1 (ms:pitch ev) .01))
+    (ms:MidiFreeEv ev)))
+
+(set-receiver! #'trigger *ms*)
+(remove-receiver! *ms*)
+
+%q-insert: (e) %qe-time is nil!
+   [Condition of type SIMPLE-ERROR]
+
+
+%q-insert: (e) %qe-time is nil!
+   [Condition of type SIMPLE-ERROR]
+
+(rts-reset)
+
+
+
+|#
