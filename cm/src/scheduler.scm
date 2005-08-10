@@ -485,7 +485,8 @@
           ;; outside the rts process then block until the queue is
           ;; available. *pstart* is false except in the body of a
           ;; process defintion (which is evaluated in the rts thread).
-          (if (and (not *pstart*) (eq? *scheduler* ':threaded))
+          (if (and (not *pstart*) (or (eq? *scheduler* ':threaded)
+                                      (eq? *scheduler* ':specific)))
               (with-mutex-grabbed (*qlock*)
                  (cond ((pair? obj)
                         (dolist (o obj) (sprout o at ahead)))
