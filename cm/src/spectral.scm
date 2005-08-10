@@ -557,45 +557,43 @@
 ; (fm-spectrum 400 1 3 :spectrum '(c4 b4) :invert t )
 
 
-;;;
-;;; spear data
-;;;
-
+;;
+;; spear data
+;;
 ;; (import-spear-data file &key start end point-format freq-scaler
 ;;                              amp-scaler time-scaler)
-;;   imports spear frame or partial data from file
+;;   Imports spear frame or partial data from file
 ;;   :point-format   {:raw | :hertz | :keynum | :note
 ;;                   ({:hertz|:keynum|:note} :amplitude)
 ;;                   (:time {:hertz|:keynum|:note})
 ;;   :start          starting frame/partial to import, default 0
 ;;   :end            ending frame/partial to import, default all
-;;   :freq-scaler    scaler for :hertz points, semitone shift for :keynum :notes
+;;   :freq-scaler    scaler for :hertz points, semitone shift for :keynum :note
 ;;   :amp-scaler     scaler on amp values
 ;;   :time-scaler    scaler on time values
 
-;; (spectrum-maxfreq spec . fmat)
-;;   return max freq of spec optionally converted to {:hertz|:keynum|:note}
-;; (spectrum-minfreq spec . fmat)
-;;   return min freq of spec optionally converted to {:hertz|:keynum|:note}
-;; (spectrum-maxamp spec)
-;;   return max amp of spec
-;; (spectrum-minamp spec)
-;;   return min amp of spec
-;; (spectrum-freqs spec . fmat)
-;;   return list of all freqs optionally converted to {:hertz|:keynum|:note}
-;; (spectrum-amps spec)
-;;   return list of all amps
 ;; (convert-spectrum spec fmat)
-;;   convert specturm to fmat {:hertz|:keynum|:note}
+;;   Convert spectrum freqs to new fmat {:hertz|:keynum|:note}
 ;; (rescale-spectrum spec . minf maxf mina maxa)
-;;   rescale specturm to lie within optional new boundaries minf maxf mina maxa
+;;   Rescale specturm to lie within optional new boundaries minf maxf mina maxa
 ;;   if a boundary is false that boundary remains unchanged. minf and maxf
 ;;   should agree with actual frequency format of spec
 ;; (invert-spectrum spec . amps?)
-;;   inverts spectral components and optionally amps
+;;   Inverts spectral components and optionally amps
 ;; (plot-spectrum spec)
-;;  draws a pretty picture of spec in plotter. spec can be list of spectra.
-
+;;  Draws spec in plotter. spec can be list of spectra.
+;; (spectrum-maxfreq spec . fmat)
+;;   Return max freq of spec optionally converted to {:hertz|:keynum|:note}
+;; (spectrum-minfreq spec . fmat)
+;;   Return min freq of spec optionally converted to {:hertz|:keynum|:note}
+;; (spectrum-maxamp spec)
+;;   Return max amp of spec
+;; (spectrum-minamp spec)
+;;   Return min amp of spec
+;; (spectrum-freqs spec . fmat)
+;;   Return list of all freqs optionally converted to {:hertz|:keynum|:note}
+;; (spectrum-amps spec)
+;;   Return list of all amps
 
 (define (import-spear-data path . args)
   (with-args (args &key (start 0) end point-format
