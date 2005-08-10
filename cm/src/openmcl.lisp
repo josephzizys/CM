@@ -770,53 +770,54 @@ fi
 
 #|
 
-
-
 (defparameter *tmtask* nil)
 (defparameter *rts-specific-callback* nil)
 (defparameter *rts-specific-fn* nil)
 
-
 (defun rts-return-fn (object ahead end)
   (let ((wait? (if (> ahead 0) (round (* ahead 1000.0)) 0)))
-    (lambda nil
-
+    (lambda ()
       ;;what needs to happen here is if there is in error anywhere below
       ;; needs to set *rts-run* to nil and remove/dispose timer
-      (handler-bind ((t #'(lambda (x) 
-			    (progn
-			      (setf *rts-run* nil)
-			      (#_RemoveTimeTask *tmtask*)
-			      (#_DisposeTimerUPP (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr))
-			      (error "rts stopped due to ~s" x)))))
-	 (if (> wait? 0)
-	     (setf wait? (- wait? 1))
-	   (let ((entry nil)
-		 (thing nil)
-		 (start nil)
-		 (none? (null (%q-head *queue*))))
-	     (cond ((or (not *rts-run*)
-			(if (eq end t)
-			    none?
-			  (if (eq end nil)
-			      nil
-			    (if none?
-				t
-			      (> (%qe-time (%q-peek *queue*)) end)))))
-		    (if object 
-		       (unschedule-object object t))
-		    (rts-reset))
-		   (t
-		    (do ()
-			((or none?
-			     (> (%qe-time (%q-peek *queue*)) *qtime*)))
-		      (with-mutex-grabbed (*qlock*)
-					  (setf entry (%q-pop *queue*))
-					  (setf start (%qe-start entry))
-					  (setf thing (%qe-object entry))
-					  (%qe-dealloc *queue* entry))
-		      (process-events thing *qtime* start *out*)
-		      (setf none? (null (%q-head *queue*))))))))))))
+      (restart-case
+          (handler-bind ((error #'(lambda (c)
+                          (invoke-restart 'callback-error-exit c))))
+            (if (> wait? 0)
+                (setf wait? (- wait? 1))
+                (let ((entry nil)
+                      (thing nil)
+                      (start nil)
+                      (none? (null (%q-head *queue*))))
+                  (cond ((or (not *rts-run*)
+                             (if (eq end t)
+                                 none?
+                                 (if (eq end nil)
+                                     nil
+                                     (if none?
+                                         t
+                                         (> (%qe-time (%q-peek *queue*)) end)))))
+                         (if object 
+                             (unschedule-object object t))
+                         (rts-reset))
+                        (t
+                         (do ()
+                             ((or none?
+                                  (> (%qe-time (%q-peek *queue*)) *qtime*)))
+                           (with-mutex-grabbed (*qlock*)
+                             (setf entry (%q-pop *queue*))
+                             (setf start (%qe-start entry))
+                             (setf thing (%qe-object entry))
+                             (%qe-dealloc *queue* entry))
+                           (process-events thing *qtime* start *out*)
+                           (setf none? (null (%q-head *queue*)))))))))
+        (callback-error-exit (c)
+          (setf *rts-run* nil)
+          (#_RemoveTimeTask *tmtask*)
+          (#_DisposeTimerUPP
+           (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr))
+          (format t "PANIC! RTS ABORTING due to condition ~S under callback!"
+                  c))
+        ))))
 
 
 (defun rts-run-specific (object ahead end)
@@ -848,41 +849,20 @@ fi
     (#_PrimeTimeTask *tmtask* 1))
 
 
-(defun sprout (obj &key to at ahead)
-  to
-  (if *scheduler*
-      (let ((tt (if at (if *pstart* (+ at *pstart*) at) (now))))
-        (if ahead (setf tt (+ tt ahead)))
-        (if (and (not *pstart*) (or (eq *scheduler* ':threaded) (eq *scheduler* ':specific)))
-            (with-mutex-grabbed (*qlock*)
-             (Cond ((consp obj) (dolist (o obj) (sprout o at ahead)))
-                   ((functionp obj) (enqueue obj tt tt))
-                   ((integerp obj) (enqueue obj tt nil))
-                   (t (schedule-object obj (or *pstart* 0)))))
-            (cond ((consp obj) (dolist (o obj) (sprout o at ahead)))
-                  ((functionp obj) (enqueue obj tt tt))
-                  ((integerp obj) (enqueue obj tt nil))
-                  (t (schedule-object obj (or *pstart* 0))))))
-      (error "sprout: scheduler not running."))
-  (values))
-
-
-
-
 ;;;;;;;;;;;tests
-
-
 
 ;;first test new specific rts with midishare
 
 (setf *rts-type* :specific)
-
+(defparameter *test-port* 1)
+(defparameter *test-chan* 0)
 (define (chroma len knum wt)
   (process repeat len
 	   sprout (process for i from 0 below 12
 			   output (ms:new typeNote
-					  :port 1
-					  :chan 0
+                                          :date 0
+					  :port *test-port*
+					  :chan *test-chan*
 					  :dur 100
 					  :pitch (fit (+ knum (* i 12) i) 0 127 :wrap)
 					  :vel 100)
@@ -894,8 +874,9 @@ fi
   (process repeat num
 	   sprout (process repeat 5 for i from 0
 			   output (ms:new typeNote
-					  :port 1
-					  :chan 0
+                                          :date 0
+					  :port *test-port*
+					  :chan *test-chan*
 					  :dur 100
 					  :pitch (+ knum (* i 3))
 					  :vel 100)
@@ -918,7 +899,12 @@ Write operation to unmapped address 0x00000004
 
 |#
 
+; (defparameter *ms* (midishare-open))
+
 (rts nil *ms*)
+
+;notes with .1 second delta
+(sprout (chroma 10 3 .1))
 
 ;notes with .01 second delta
 (sprout (chroma 100 3 .01))
@@ -931,12 +917,8 @@ Write operation to unmapped address 0x00000004
   (sprout (rep 3000 48 .01))
   (sprout (rep 3000 73 .01)))
 
-
 (rts-stop)
 (rts-reset)
-
-
-
 
 ;; compare with :threaded
 
@@ -1032,7 +1014,7 @@ Write operation to unmapped address 0x00000004
 (defun trigger-ms (ev)
   ;; max doesn't send proper "note-offs" just keynum with vel 0
   ;; also i was getting midi on port 5
-  (if (and (= (ms:evType ev) 1) (= (ms:port ev) 5) (> (ms:vel ev) 0))
+  (if (= (ms:evType ev) 1) ; (and (= (ms:evType ev) 1) (= (ms:port ev) 5) (> (ms:vel ev) 0))
       (sprout (chroma 20 (ms:pitch ev) .01))
     (ms:MidiFreeEv ev)))
 
@@ -1059,10 +1041,8 @@ Write operation to unmapped address 0x00000004
 (rts-stop)
 (rts-reset)
 
-
 ;;;and finally create error loop 
 ;;; i can't break out of in :specific
-
 
 (rts nil *ms*)
 
