@@ -769,6 +769,9 @@ fi
 ;;;
 
 #|
+
+
+
 (defparameter *tmtask* nil)
 (defparameter *rts-specific-callback* nil)
 (defparameter *rts-specific-fn* nil)
@@ -777,45 +780,49 @@ fi
 (defun rts-return-fn (object ahead end)
   (let ((wait? (if (> ahead 0) (round (* ahead 1000.0)) 0)))
     (lambda nil
-      (if (> wait? 0)
-          (setf wait? (- wait? 1))
-          (let ((entry nil)
-                (thing nil)
-                (start nil)
-                (none? (null (%q-head *queue*))))
-            (cond ((or (not *rts-run*)
-                       (if (eq end t)
-                           none?
-			 (if (eq end nil)
-			     nil
-			   (if none?
-			       t
-			     (> (%qe-time (%q-peek *queue*)) end)))))
-                   (if object 
+
+      ;;what needs to happen here is if there is in error anywhere below
+      ;; needs to set *rts-run* to nil and remove/dispose timer
+      (handler-bind ((t #'(lambda (x) 
+			    (progn
+			      (setf *rts-run* nil)
+			      (#_RemoveTimeTask *tmtask*)
+			      (#_DisposeTimerUPP (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr))
+			      (error "rts stopped due to ~s" x)))))
+	 (if (> wait? 0)
+	     (setf wait? (- wait? 1))
+	   (let ((entry nil)
+		 (thing nil)
+		 (start nil)
+		 (none? (null (%q-head *queue*))))
+	     (cond ((or (not *rts-run*)
+			(if (eq end t)
+			    none?
+			  (if (eq end nil)
+			      nil
+			    (if none?
+				t
+			      (> (%qe-time (%q-peek *queue*)) end)))))
+		    (if object 
 		       (unschedule-object object t))
-		   (rts-reset))
-                  (t
-                   (do ()
-                       ((or none?
-                            (> (%qe-time (%q-peek *queue*)) *qtime*))
-                        (if none?
-                            (setf wait? 0)
-			  (let* ((next
-				  (%qe-time (%q-peek *queue*))))
-			    (setf wait? (- next *qtime*)))))
-                     (setf entry (%q-pop *queue*))
-                     (setf start (%qe-start entry))
-                     (setf thing (%qe-object entry))
-                     (%qe-dealloc *queue* entry)
-                     (process-events thing *qtime* start *out*)
-                     (setf none? (null (%q-head *queue*)))))))))))
+		    (rts-reset))
+		   (t
+		    (do ()
+			((or none?
+			     (> (%qe-time (%q-peek *queue*)) *qtime*)))
+		      (with-mutex-grabbed (*qlock*)
+					  (setf entry (%q-pop *queue*))
+					  (setf start (%qe-start entry))
+					  (setf thing (%qe-object entry))
+					  (%qe-dealloc *queue* entry))
+		      (process-events thing *qtime* start *out*)
+		      (setf none? (null (%q-head *queue*))))))))))))
 
 
 (defun rts-run-specific (object ahead end)
   (if (not *qlock*) 
       (setf *qlock* (make-mutex)))
   (setf *rts-specific-fn* (rts-return-fn object ahead end))
-  
   (if *tmtask*
       (progn
 	(#_RemoveTimeTask *tmtask*)
@@ -824,45 +831,51 @@ fi
   (setf (ccl::pref *tmtask* :<TMT>ask.tm<W>ake<U>p) 0)
   (setf (ccl::pref *tmtask* :<TMT>ask.tm<R>eserved) 0)
   (setf *rts-run* t)
-
+    
   (ccl::defcallback *rts-specific-callback* (:<TMT>ask<P>tr tmTaskPtr)
     tmTaskPtr
-    (if (and *rts-specific-fn* *rts-run*)
-	(let ((res 0))
+    (if (and *rts-run*)
+	(progn
 	  (#_PrimeTimeTask *tmtask* 1)
 	  (setf *qtime* (#_CFAbsoluteTimeGetCurrent)) ;;update *qtime*
-	  (with-mutex-grabbed (*qlock*)
-	      (unwind-protect 
-		  (progn
-		    (funcall *rts-specific-fn*)
-		    (incf res))
-		(progn
-		  (incf res)
-		  (if (= res 1)
-		      (progn
-			(#_RemoveTimeTask *tmtask*)
-			(#_DisposeTimerUPP (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr))))))))
+	  (funcall *rts-specific-fn*))
       (progn
 	(#_RemoveTimeTask *tmtask*)
 	(#_DisposeTimerUPP (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr)))))
-  (setf (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr)
-	(#_NewTimerUPP *rts-specific-callback*))
-  (ccl::process-run-function "rts specific" ;;i am not sure if this
-    (lambda ()                              ;;is necessary
-      (#_InstallXTimeTask *tmtask* )
-      (#_PrimeTimeTask *tmtask* 1) )))
-
-;;;this needs to be integrated into regular rts-stop, but 
-;;; use this for now
+    (setf (ccl::pref *tmtask* :<TMT>ask.tm<A>ddr)
+	  (#_NewTimerUPP *rts-specific-callback*))
+    (#_InstallXTimeTask *tmtask* )
+    (#_PrimeTimeTask *tmtask* 1))
 
 
-;
+(defun sprout (obj &key to at ahead)
+  to
+  (if *scheduler*
+      (let ((tt (if at (if *pstart* (+ at *pstart*) at) (now))))
+        (if ahead (setf tt (+ tt ahead)))
+        (if (and (not *pstart*) (or (eq *scheduler* ':threaded) (eq *scheduler* ':specific)))
+            (with-mutex-grabbed (*qlock*)
+             (Cond ((consp obj) (dolist (o obj) (sprout o at ahead)))
+                   ((functionp obj) (enqueue obj tt tt))
+                   ((integerp obj) (enqueue obj tt nil))
+                   (t (schedule-object obj (or *pstart* 0)))))
+            (cond ((consp obj) (dolist (o obj) (sprout o at ahead)))
+                  ((functionp obj) (enqueue obj tt tt))
+                  ((integerp obj) (enqueue obj tt nil))
+                  (t (schedule-object obj (or *pstart* 0))))))
+      (error "sprout: scheduler not running."))
+  (values))
+
+
+
+
+;;;;;;;;;;;tests
+
+
+
+;;first test new specific rts with midishare
+
 (setf *rts-type* :specific)
-
-(defparameter *ms* (midishare-open))
-
-(rts nil *ms*)
-
 
 (define (chroma len knum wt)
   (process repeat len
@@ -871,7 +884,7 @@ fi
 					  :port 1
 					  :chan 0
 					  :dur 100
-					  :pitch (+ knum i)
+					  :pitch (fit (+ knum (* i 12) i) 0 127 :wrap)
 					  :vel 100)
 			   at (now)
 			   wait wt)
@@ -889,46 +902,171 @@ fi
 			   at (now))
 	   wait rhy))
 
-(progn
-  (sprout (chroma 20 48 .1))
-  (sprout (chroma 20 60 .1) :ahead 1.1)
-  (sprout (chroma 20 36 .1) :ahead 2.2)
-  (sprout (chroma 20 67 .1) :ahead 3.3)
-  (sprout (chroma 20 54 .1) :ahead 4.4)
-  (sprout (chroma 20 72 .05) :ahead 10.)
-  (sprout (chroma 20 58 .05) :ahead 12.2)
-  (sprout (rep 200 48 .1) :ahead 18.0)
-  (sprout (rep 200 61 .1) :ahead 18.55))
 
+;;
+
+#| *****************
+
+it is possible some of this may crash you openmcl
+with
+
+
+ Unhandled exception 11 at 0x06503a70, context->regs at #xf08b7878
+Write operation to unmapped address 0x00000004
+ While executing: #<Function DATE #x06503aa6>
+
+
+|#
+
+(rts nil *ms*)
+
+;notes with .01 second delta
+(sprout (chroma 100 3 .01))
+
+;notes with .001 second delta
+(sprout (chroma 1000 3 .001))
+
+;;; two 5 note chords at 10 ms intervals
+(progn
+  (sprout (rep 3000 48 .01))
+  (sprout (rep 3000 73 .01)))
 
 
 (rts-stop)
-;;give it a try?
+(rts-reset)
+
+
+
+
+;; compare with :threaded
+
+(setf *rts-type* :threaded)
+
+(rts nil *ms*)
+
+;notes with .01 second delta
+(sprout (chroma 100 3 .01))
+
+;notes with .001 second delta
+(sprout (chroma 1000 3 .001))
+
+;;; two 5 note chords at 10 ms intervals
 (progn
-  (sprout (rep 200 48 .01))
-  (sprout (rep 200 64 .01))
-  (sprout (rep 200 72 .01))
-  (sprout (rep 200 38 .01)))
+  (sprout (rep 3000 48 .01))
+  (sprout (rep 3000 73 .01)))
+
+(rts-stop)
+(rts-reset)
 
 
-(defun trigger (ev)
+
+
+;;switch to portmidi with correct in outs
+(defparameter *pm*
+  (portmidi-open :input 1 :output 3 :latency 0))
+
+
+;same as above except for pm
+(define (chroma-pm len knum wt)
+  (process repeat len
+	   sprout (process for i from 0 below 12
+			   output (new midi :duration .1 :keynum (fit (+ knum (* i 12) i) 0 127 :wrap) 
+				       :time (now))
+			   wait wt)
+	   wait (* wt 12)))
+
+(define (rep-pm num knum rhy)
+  (process repeat num
+	   sprout (process repeat 5 for i from 0
+			   output (new midi :duration .1 :keynum (+ knum (* i 3)) :time (now)))
+	   wait rhy))
+
+;;testing :specific and pm
+(setf *rts-type* :specific)
+
+(rts nil *pm*)
+
+;notes with .01 second delta
+(sprout (chroma-pm 100 3 .01))
+
+;notes with .001 second delta
+(sprout (chroma-pm 1000 3 .001))
+
+;;; two 5 note chords at 10 ms intervals
+(progn
+  (sprout (rep-pm 3000 48 .01))
+  (sprout (rep-pm 3000 73 .01)))
+
+
+(rts-stop)
+(rts-reset)
+
+;;testing :threaded and pm
+
+(setf *rts-type* :threaded)
+
+(rts nil *pm*)
+
+;notes with .01 second delta
+(sprout (chroma-pm 100 3 .01))
+
+;notes with .001 second delta
+(sprout (chroma-pm 1000 3 .001))
+
+;;; two 5 note chords at 10 ms intervals
+(progn
+  (sprout (rep-pm 3000 48 .01))
+  (sprout (rep-pm 3000 73 .01)))
+
+(rts-stop)
+(rts-reset)
+
+
+
+;;switch back to :specific to try some triggering
+
+(setf *rts-type* :specific)
+
+(rts nil *ms*)
+
+(defun trigger-ms (ev)
   ;; max doesn't send proper "note-offs" just keynum with vel 0
   ;; also i was getting midi on port 5
   (if (and (= (ms:evType ev) 1) (= (ms:port ev) 5) (> (ms:vel ev) 0))
-      (sprout (rep 1 (ms:pitch ev) .01))
+      (sprout (chroma 20 (ms:pitch ev) .01))
     (ms:MidiFreeEv ev)))
 
-(set-receiver! #'trigger *ms*)
+(set-receiver! #'trigger-ms *ms*)
+
+
 (remove-receiver! *ms*)
 
-%q-insert: (e) %qe-time is nil!
-   [Condition of type SIMPLE-ERROR]
-
-
-%q-insert: (e) %qe-time is nil!
-   [Condition of type SIMPLE-ERROR]
-
+(rts-stop)
 (rts-reset)
+
+;same on pm
+
+(rts nil *pm*)
+
+(defun trigger-pm (mm ms)
+  ms 
+  (if (note-on-p mm) 
+      (sprout (chroma-pm 20 (note-on-key mm) .01))))
+
+(set-receiver! #'trigger-pm *pm*)
+(remove-receiver! *pm*)
+
+(rts-stop)
+(rts-reset)
+
+
+;;;and finally create error loop 
+;;; i can't break out of in :specific
+
+
+(rts nil *ms*)
+
+(sprout (chroma 100 3 'A))
 
 
 
