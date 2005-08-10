@@ -598,10 +598,6 @@
 (define (import-spear-data path . args)
   (with-args (args &key (start 0) end point-format
                    freq-scaler amp-scaler time-scaler)
-    ;; :format currently is one of: 
-    ;;    :raw :hertz :keynum :note
-    ;; :freq-scaler is
-    ;; :time and :amp-scaler are scalers
     (let ((ftype #f)
           (count #f)
           (file (open-file path ':input))
