@@ -543,65 +543,78 @@
 ; (fm-plot 400 1 3 :spectrum nil )
 ; (fm-spectrum 400 1 3 :spectrum :hertz )
 ; (fm-spectrum 400 1 3 :spectrum nil)
-
 ; (fm-plot 400 1 3 :spectrum :hertz )
 ; (fm-plot 400 1 3 :spectrum :hertz :amps :normalize)
 ; (fm-plot 400 1 3    :amps :normalize  :ignore-zero t)
-
-
 ; (fm-plot 400 1 3 :spectrum '(keynum g4 g5)
 ;          :amps :normalize :ignore-Zero t)
-
-
 ; (fm-plot 400 1 3 :spectrum '(g4 g5) :amps :normalize  :ignore-zero t)
-
-
 ; (fm-spectrum 400 1 3 :spectrum :note )
 ; (fm-spectrum 400 1 3 :spectrum :note :amps :normalize)
 ; (fm-spectrum 400 1 3 :spectrum :note :amps :weight)
 ; (fm-spectrum 400 1 3 :spectrum :note :amps :weight :ignore-zero t)
-
 ; (fm-spectrum 400 1 3 :spectrum :note :invert t )
 ; (fm-spectrum 400 1 3 :spectrum '(c4 b4) :invert t )
 
 
 ;;;
-;;; loading spear data
+;;; spear data
 ;;;
 
-; (cd "/Users/hkt/spear")
-; (import-spear-data "test-frames.txt")
-; (pprint (import-spear-data "test-frames.txt" :format ':keynum))
-; (pprint (import-spear-data "test-frames.txt" :format ':note))
-; (import-spear-data "test-frames.txt" :format ':keynum :freq-scaler -12)
-; (import-spear-data "test-frames.txt" :format ':note)
-; (import-spear-data "va4-partials.txt")
-; (import-spear-data "va4-partials.txt" :format ':keynum)
-; (import-spear-data "va4-partials.txt" :format ':note)
-; (import-spear-data "va4-partials.txt" :format '(:time :note))
+;; (import-spear-data file &key start end point-format freq-scaler
+;;                              amp-scaler time-scaler)
+;;   imports spear frame or partial data from file
+;;   :point-format   {:raw | :hertz | :keynum | :note
+;;                   ({:hertz|:keynum|:note} :amplitude)
+;;                   (:time {:hertz|:keynum|:note})
+;;   :start          starting frame/partial to import, default 0
+;;   :end            ending frame/partial to import, default all
+;;   :freq-scaler    scaler for :hertz points, semitone shift for :keynum :notes
+;;   :amp-scaler     scaler on amp values
+;;   :time-scaler    scaler on time values
 
-;;;
-;;; :hertz-amp
+;; (spectrum-maxfreq spec . fmat)
+;;   return max freq of spec optionally converted to {:hertz|:keynum|:note}
+;; (spectrum-minfreq spec . fmat)
+;;   return min freq of spec optionally converted to {:hertz|:keynum|:note}
+;; (spectrum-maxamp spec)
+;;   return max amp of spec
+;; (spectrum-minamp spec)
+;;   return min amp of spec
+;; (spectrum-freqs spec . fmat)
+;;   return list of all freqs optionally converted to {:hertz|:keynum|:note}
+;; (spectrum-amps spec)
+;;   return list of all amps
+;; (convert-spectrum spec fmat)
+;;   convert specturm to fmat {:hertz|:keynum|:note}
+;; (rescale-spectrum spec . minf maxf mina maxa)
+;;   rescale specturm to lie within optional new boundaries minf maxf mina maxa
+;;   if a boundary is false that boundary remains unchanged. minf and maxf
+;;   should agree with actual frequency format of spec
+;; (invert-spectrum spec . amps?)
+;;   inverts spectral components and optionally amps
+;; (plot-spectrum spec)
+;;  draws a pretty picture of spec in plotter. spec can be list of spectra.
+
 
 (define (import-spear-data path . args)
-  ;; format is one of:  :raw :hertz :keynum :note
-  ;;                    ({:hertz|:keynum|:note} :amplitude)
-  ;;                    (:time {:hertz|:keynum|:note})
-  ;; freq-scaler is multiplier for hz else transposer
-  ;; time and amp-scaler are multipliers
-  (with-args (args &key (start 0) end format
+  (with-args (args &key (start 0) end point-format
                    freq-scaler amp-scaler time-scaler)
+    ;; :format currently is one of: 
+    ;;    :raw :hertz :keynum :note
+    ;; :freq-scaler is
+    ;; :time and :amp-scaler are scalers
     (let ((ftype #f)
           (count #f)
-          (file #f)
+          (file (open-file path ':input))
           (data (list))
           (err? #t)
           (para #f)
           (parb #f))
-      (set! file (open-file path ':input))
       (dynamic-wind
        (lambda () )
        (lambda () 
+         ;; parse "header" lines scheme string parsing is dreadful!
          (loop 
             for s = (file-line file)
             until (or (file-eof? s)
@@ -613,8 +626,10 @@
                   ((equal? s "par-text-partials-format")
                    (set! ftype ':partials))
                   ((equal? s "point-type time frequency amplitude")
+                   ;; fix when i see what other points are available
                    #f)
                   ((equal? s "point-type index frequency amplitude")
+                   ;; fix when i see what other points are available
                    #f)
                   (else
                    (let ((x (string-substrings s)))
@@ -622,45 +637,46 @@
                            ((or (equal? (car x) "partials-count")
                                 (equal? (car x) "frame-count"))
                             (set! count (string->number (cadr x)))))))))
+         ;; see if headers has stuff
          (cond ((eq? ftype ':frames)
-                (unless format (set! format '(:hertz :amplitude)))
-                (cond ((pair? format)
-                       (if (member (car format) '(:hertz :keynum :note))
-                           (set! para (car format))
-                           (err "import-spear-data: illegal format: ~s."
-                                format))
-                       (if (and (pair? (cdr format))
-                                (eq? (car (cdr format)) ':amplitude))
+                (unless point-format (set! point-format '(:hertz :amplitude)))
+                (cond ((pair? point-format)
+                       (if (member (car point-format) '(:hertz :keynum :note))
+                           (set! para (car point-format))
+                           (err "import-spear-data: illegal point-format: ~s."
+                                point-format))
+                       (if (and (pair? (cdr point-format))
+                                (eq? (car (cdr point-format)) ':amplitude))
                            (set! parb #t)
-                           (err "import-spear-data: illegal format: ~s."
-                                format)))
-                      ((member format '(:hertz :keynum :note :raw))
-                       (set! para format))
+                           (err "import-spear-data: illegal point-format: ~s."
+                                point-format)))
+                      ((member point-format '(:hertz :keynum :note :raw))
+                       (set! para point-format))
                       (else
-                       (err "import-spear-data: ~s is not a valid format."
-                            format))))
+                       (err "import-spear-data: ~s is not a valid point-format."
+                            point-format))))
                ((eq? ftype ':partials)
-                (unless format (set! format '(:time :hertz)))
-                (cond ((pair? format)
-                       (if (eq? (car format) ':time)
+                (unless point-format (set! point-format '(:time :hertz)))
+                (cond ((pair? point-format)
+                       (if (eq? (car point-format) ':time)
                            (set! para ':time)
-                           (err "import-spear-data: illegal format ~s."
-                                format))
-                       (if (and (pair? (cdr format))
-                                (member (car (cdr format)) 
+                           (err "import-spear-data: illegal point-format ~s."
+                                point-format))
+                       (if (and (pair? (cdr point-format))
+                                (member (car (cdr point-format)) 
                                         '(:hertz :keynum :note)))
-                           (set! parb (car (cdr format)))
-                           (err "import-spear-data: illegal format ~s."
-                                format)))
-                      ((member format '(:hertz :keynum :note :raw))
-                       (set! parb format))
+                           (set! parb (car (cdr point-format)))
+                           (err "import-spear-data: illegal point-format ~s."
+                                point-format)))
+                      ((member point-format '(:hertz :keynum :note :raw))
+                       (set! parb point-format))
                       (else
-                       (err "import-spear-data: ~s is not a valid format."
-                            format))))
+                       (err "import-spear-data: ~s is not a valid point-format."
+                            point-format))))
                (else
-                (err "parse-spear-data: no frames or partials.")))
+                (err "import-spear-data: no frames or partials.")))
          (unless count
-           (err "parse-spear-data: file does not contain frame/partial count."))
+           (err "import-spear-data: file does not contain frame/partial count."))
          ;; collect of data
          (loop with d
             for s = (file-line file)
@@ -735,7 +751,222 @@
                      (set! freq (note freq)))))
           (push freq head)))))
 
+(define (spectrum-maxfreq spec . args)
+  (with-args (args &optional fmat)
+    (let ((freq (list-ref spec (- (length spec) 2))))
+      (if (not fmat) freq
+          (let ((type (spectrum-guess-type spec)) )
+            (case fmat
+              ((:hertz :hz) 
+               (if (eq? type ':hertz) freq
+                   (hertz freq)))
+              ((:keynum)
+               (if (eq? fmat type) freq
+                   (keynum freq :hz (eq? type ':hertz))))
+              ((:note )
+               (if (eq? fmat type) freq 
+                   (note freq :hz (eq? type ':hertz))))
+              (else (err "spectrum-maxfreq: ~s is not a frequency format."
+                         fmat))))))))
+
+(define (spectrum-minfreq spec . args)
+  (with-args (args &optional fmat)
+    (let ((freq (car spec)))
+      (if (not fmat) freq
+          (let ((type (spectrum-guess-type spec)))
+            (case fmat
+              ((:hertz :hz) 
+               (if (eq? type ':hertz) freq
+                   (hertz freq)))
+              ((:keynum)
+               (if (eq? fmat type) freq
+                   (keynum freq :hz (eq? type ':hertz))))
+              ((:note )
+               (if (eq? fmat type) freq 
+                   (note freq :hz (eq? type ':hertz))))
+              (else (err "spectrum-minfreq: ~s is not a frequency format."
+                         fmat))))))))
+
+(define (spectrum-minamp spec)
+  (do ((tail (cdr spec) (cddr tail))
+       (mina most-positive-fixnum))
+      ((null? tail)
+       (if (eq? mina most-positive-fixnum) #f mina))
+    (set! mina (min mina (car tail)))))
+
+(define (spectrum-maxamp spec)
+  (do ((tail (cdr spec) (cddr tail))
+       (maxa most-negative-fixnum))
+      ((null? tail)
+       (if (eq? maxa most-negative-fixnum) #f maxa))
+    (set! maxa (min maxa (car tail)))))
+
+(define (spectrum-freqs spec . args)
+  (with-args (args &optional fmat)
+    (let* ((frqs (list #f))
+           (type (spectrum-guess-type spec)))
+      (if (not fmat)
+          (set! fmat type)
+          (case fmat
+            ((:note :notes) (set! fmat ':note))
+            ((:keynum :keynums) (set! fmat ':keynum))
+            ((:hertz :hz) (set! fmat ':hertz))
+            (else (err "spectrum-freqs: ~s is not a frequency format." fmat))))
+      (do ((next spec (cddr next))
+           (tail frqs))
+          ((null? next)
+           (cdr frqs))
+        (set! (cdr tail)
+              (list (cond ((eq? type fmat) (car next))
+                          ((eq? fmat ':hertz) (hertz (car next)))
+                          ((eq? fmat ':keynum)
+                           (keynum (car next) :hz (eq? type ':hertz)))
+                          (else (note (car next) :hz (eq? type ':hertz))))))
+        (set! tail (cdr tail))))))
+
+(define (spectrum-amps spec)
+  (let ((amps (list #f)))
+    (do ((next (cdr spec) (cddr next))
+         (tail amps))
+        ((null? next)
+         (cdr amps))
+      (set! (cdr tail) (list (car next)))
+      (set! tail (cdr tail)))))
+
+;;; convert spectrum from one point-format to another. want to keep
+;;; specta just simple env lists so we have to distinuish between
+;;; keynum and hertz values.
+
+(define (spectrum-guess-type spec)
+  ;; if maxfreq is less then 138 assume keynum
+  (if (symbol? (car spec)) ':note
+      (let ((max (spectrum-maxfreq spec)))
+        (if (< max 138) ':keynum ':hertz)))) ; 138=22050
+
+(define (convert-spectrum spec fmat)
+  (let ((head (list #f))
+        (mode 0)
+        (type (spectrum-guess-type spec))
+        )
+    ;; 0 hk 1 hn 2 kh 3 kn 4 nh 5 nk
+    ;; mode 0000=h->h 0100=h->k, 1000=h->n,
+    ;;      0101=k->k 0001=k->h, 1001=k->n
+    ;;      1010=n->n 0010=n->h, 0110=n->k
+    (case type
+      ((:keynum) (set! mode 1))
+      ((:note) (set! mode 2)))
+    (case fmat
+      ((:keynum :keynums) (set! mode (logior mode #b0100)))
+      ((:note :notes) (set! mode (logior mode #b1000)))
+      ((:hertz :hz) #f)
+      (else
+       (err "convert-spectrum: ~s is not :note :keynum or :hertz" fmat)))
+    (if (member mode '(#b0000 #b0101 #b1010))
+        spec
+    (do ((next spec (cdr next))
+         (tail head (cdr tail))
+         (amp? #f (not amp?)))
+        ((null? next)
+         (cdr head))
+      (set! (cdr tail)
+            (list (if amp? (car next)
+                      (case mode
+                        ((#b0100) (keynum (car next) :hz #t))
+                        ((#b1000) (note (car next) :hz #t))
+                        ((#b0001 #b0010) (hertz (car next)))
+                        ((#b1001) (note (car next)))
+                        ((#b0110) (keynum (car next)))
+                        (else
+                         (err "convert-spectrum: Shouldn't: mode is ~s"
+                              mode))))))))))
+
+(define (rescale-spectrum  spec . args)
+  (with-args (args &optional f1 f2 a1 a2)
+    (let* ((fmat (spectrum-guess-type spec))
+           (amp? (or a1 a2))
+           (next (if (eq? fmat ':hertz)
+                     (append spec (list)) ; new copy
+                     (convert-spectrum spec ':hertz))))
+      ;; next is now copy of spec in hertz
+      (when amp?
+        (let ((mina (spectrum-minamp next))
+              (maxa (spectrum-maxamp next)))
+          (if (not a1) (set! a1 mina))
+          (if (not a2) (set! a2 maxa))
+          (do ((tail (cdr next) (cddr tail)))
+              ((null? tail) #f)
+            (set! (car tail) (rescale (car tail) mina maxa a1 a2)))))
+      (when fmat
+        (let ((oldmin (spectrum-minfreq next))
+              (oldmax (spectrum-maxfreq next))
+              (newmin #f)
+              (newmax #f))
+          (cond ((eq? fmat ':hertz)
+                 (set! newmin (or f1 oldmin))
+                 (set! newmax (or f2 oldmax)))
+                (else
+                 (set! newmin (if f1 (hertz f1) oldmin))
+                 (set! newmax (if f2 (hertz f2) oldmax))))
+          (do ((tail next (cddr tail)))
+              ((null? tail) #f)
+            (set! (car tail)
+                  (rescale (car tail) oldmin oldmax newmin newmax))
+            (if (eq? fmat ':keynum)
+                (set! (car tail) (keynum (car tail) :hz #t))
+                (if (eq? fmat ':note)
+                    (set! (car tail) (note (car tail) :hz #t)))))))
+      next)))
+
+(define (invert-spectrum spec . args)
+  (with-args (args &optional amps?)
+    (let* ((isa (spectrum-guess-type spec))
+           (new (if (eq? isa ':note)
+                    (convert-spectrum spec ':keynum)
+                    (append spec (list))))
+           (bot (spectrum-minfreq new))
+           (top (spectrum-maxfreq new))
+           (len (length new))
+           )
+      (do ((tail new (cddr tail))
+           (soft (if amps? (spectrum-minamp new) #f))
+           (loud (if amps? (spectrum-maxamp new) #f)))
+          ((null? tail) #f)
+        (set-car! tail (rescale (car tail) bot top top bot))
+        (if soft
+            (set-car! (cdr tail) (rescale (cadr tail) soft loud loud soft)))
+        (if (eq? isa ':note) (set-car! tail (note (car tail)))))
+      ;; freqs are now high to low
+      (do ((head 0 (+ head 2))
+           (tail (- len 2) (- tail 2))
+           (temp #f))
+          ((not (< head tail)) #f)
+        (set! temp (list-ref new head))
+        (list-set! new head (list-ref new tail))
+        (list-set! new tail temp))
+      new)))
+
+; (setq h (loop for h from 1 to 10 collect (* h 100) collect (* h .1)))
+; (setq n (spectrum-hertz->note h))
+; (setq k (spectrum-hertz->keynum h))
+; (setq h2 (rescale-spectrum h :h1 50))
+; (setq n2 (rescale-spectrum n :n1 'c2))
+; (setq foo (import-spear-data "/Users/hkt/spear/log-drum-1+9db.txt"))
+; (plot-spectrum (car foo) :keynum)
+; (plot-spectrum foo)
 
 
+
+
+
+; (cd "/Users/hkt/spear")
+; (import-spear-data "test-frames.txt")
+; (pprint (import-spear-data "test-frames.txt" :point-format ':keynum))
+; (pprint (import-spear-data "test-frames.txt" :point-format ':note))
+; (import-spear-data "test-frames.txt" :point-format ':keynum :freq-scaler -12)
+; (import-spear-data "test-frames.txt" :point-format ':note)
+; (import-spear-data "va4-partials.txt")
+; (import-spear-data "va4-partials.txt" :point-format ':keynum)
+; (import-spear-data "va4-partials.txt" :point-format ':note)
+; (import-spear-data "va4-partials.txt" :point-format '(:time :note))
 
 
