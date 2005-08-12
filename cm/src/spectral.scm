@@ -606,7 +606,7 @@
           (para #f)
           (parb #f))
       (dynamic-wind
-       (lambda () )
+       (lambda () #f)
        (lambda () 
          ;; parse "header" lines scheme string parsing is dreadful!
          (loop 
