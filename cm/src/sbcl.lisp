@@ -250,13 +250,12 @@
 ;;;
 ;;; thread support
 ;;;
-
-#+sb-thread
-(progn
-
 (defun thread-current-time ()
   (/ (get-internal-real-time)
      #.(coerce internal-time-units-per-second 'float)))
+
+#+sb-thread
+(progn
 
 (defun make-thread (thunk)
   (let ((id (sb-thread:make-thread thunk)))
@@ -290,9 +289,6 @@
 
 (defun nothreads ()
   (error "SBCL threads are not supported in this OS."))
-
-(defun thread-current-time ()
-  (nothreads))
 
 (defun make-thread (thunk &optional name)
   thunk name
@@ -404,7 +400,7 @@
 
 #|
 (periodic-task-running?)
-(set-periodic-task-rate! 1000) ; milliseconds
+(set-periodic-task-rate! 1000 :ms) ; milliseconds
 (defun moe () (print :you-moron))
 (defun larry () (print :ow-ow-ow))
 (defun curly () (print :nyuk-nyuk))
@@ -420,11 +416,23 @@
 |#
 
 
-
-#|
-
 ;;;
 ;;; socket implementation
+;; functions/methods needed
+;; (make-udp-socket host port local-port) x
+;; (udp-socket-close sock) x
+;; (udp-socket-shutdown sock &optional) x
+;; (udp-socket-recv sock bytes &optional flags) x
+;; (udp-socket-send sock mess len) x
+;; (send-osc mess osc-stream len) x
+;; (make-osc-timetag offset out) x
+;; (u8vector->double vec) x
+;; (osc-bundle? vec) x
+;; (osc-parse-timestamp vec) x
+;; (osc-parse-contents vec) x
+;; (osc-parse-message vec) x
+;; (osc-parse-bundle vec) x
+;; (osc-vector->osc-message vec) x
 ;;;
 ;;; sbcl alien stuff for sendto 
 
@@ -468,9 +476,6 @@
   socket how
   (values))
 
-(defun udp-socket-recv (sock bytes &optional flags)
-  flags
-  (sb-bsd-sockets:socket-receive sock nil bytes))
 
 (defun udp-socket-send (sock mess len)
   (let ((fd (sb-bsd-sockets::socket-file-descriptor sock)))
@@ -481,7 +486,7 @@
       (sb-bsd-sockets::with-sockaddr-for 
           (sock sockaddr (list (sb-bsd-sockets:make-inet-address (slot-value sock 'remote-host))
 			       (slot-value sock 'remote-port)))
-	(let ((bufptr (sb-alien:make-alien (array (unsigned 8) 1) len)))
+	(let ((bufptr (sb-alien:make-alien (array (sb-alien::unsigned 8) 1) len)))
 	  (unwind-protect 
 	      (let ((addr-len (sb-bsd-sockets::size-of-sockaddr sock))
 		    (slen nil))
@@ -495,10 +500,14 @@
 		  slen))
 	    (sb-alien:free-alien bufptr)))))))
 
+
+(defun send-osc (mess osc-stream len)
+  (udp-socket-send (slot-value osc-stream 'socket) mess len))
+
 (defun udp-socket-recv (sock bytes &optional flags)
   flags
   (sb-bsd-sockets::with-sockaddr-for (sock sockaddr)
-    (let ((bufptr (sb-alien:make-alien (array (sb-alien:unsigned 8) 1) bytes)))
+    (let ((bufptr (sb-alien:make-alien (array (sb-alien::unsigned 8) 1) bytes)))
       (unwind-protect
 	  (sb-alien:with-alien ((sa-len sockint::socklen-t (sb-bsd-sockets::size-of-sockaddr sock)))
 	     (let ((len (sockint::recvfrom (sb-bsd-sockets::socket-file-descriptor sock)
@@ -517,11 +526,127 @@
 		       buffer)))))
 	  (sb-alien:free-alien bufptr)))))
 
+(defun modf (num)
+  (multiple-value-bind (int rem)
+      (floor num)
+    int
+    rem))
 
+(defun make-osc-timetag (offset out)
+  (let* ((now (current-time))
+         (offset-time (seconds->time offset))
+         (target-time (seconds->time (+ (time->seconds now)
+                                        (time->seconds offset-time) 
+                                        (slot-value out 'latency))))
+         (vec nil))
+    (setf vec (make-byte-vector (+ 2208988800
+                                   (slot-value target-time 'second))))
+    (u8vector-append
+     vec (make-byte-vector (inexact->exact
+                            (* (modf (time->seconds target-time))
+                               #xffffffff))))))
+
+(defun u8vector->double (vec)
+  (let ((hb (u8vector->int (u8vector-subseq vec 0 4)))
+	(lb (u8vector->int (u8vector-subseq vec 4 8))))
+    (SB-KERNEL:MAKE-DOUBLE-FLOAT hb lb)))
+
+
+
+;;;
+;;; osc parsing
+;;;
+(defparameter *bundle-header-bytes* #(35 98 117 110 100 108 101 0))
+
+
+(defun osc-bundle? (vec)
+  (let ((res t))
+    (if (arrayp vec)
+	(dotimes (i 8)
+	  (when (not (= (aref vec i) (aref *bundle-header-bytes* i)))
+	    (setf res nil)
+	    (return nil)))
+      (setf res nil))
+    res))
+
+(defun osc-parse-timestamp (arr)
+  (let ((ts nil))
+    (setf ts (u8vector->uint (u8vector-subseq arr 0 4)))
+    (setf ts (+ ts
+             (exact->inexact
+              (/ (u8vector->uint (u8vector-subseq arr 4 8))
+                 4294967295))))))
+
+(defun osc-parse-contents (arr)
+  (let ((lst '())
+	(mess nil)
+	(pos nil)
+	(sym-vector nil)
+	(sym nil)
+	(sym-len 0)
+	(first-token-len nil)
+	(type-list nil)
+	(type-list-len nil))
+    (setf first-token-len (position 0 arr))
+    (if first-token-len
+	(progn
+	  (setf lst (append lst (list (intern (string-upcase (u8vector->string (subseq arr 0 first-token-len))) :cm))))
+	  (setf mess (subseq arr (position 44 arr)))
+	  (setf type-list (loop for i across (subseq mess 0 (position 0 mess))
+				collect (code-char i)))
+	  (setf type-list-len (length type-list))
+	  (setf mess (subseq mess (+ type-list-len (- 4 (mod type-list-len 4)))))
+	  (setf pos 0)
+	  (dolist (j type-list)
+	    (cond ((eq j #\i)
+		   (setf lst (append lst (list (u8vector->int (subseq mess pos (+ pos 4))))))
+		   (incf pos 4))
+		  ((eq j #\f)
+		   (setf lst (append lst (list (u8vector->float (subseq mess pos (+ pos 4))))))
+		   (incf pos 4))
+		  ((eq j #\d)
+		   (setf lst (append lst (list (u8vector->double (subseq mess pos (+ pos 8))))))
+		   (incf pos 8))
+		  ((eq j #\s)
+		   (setf sym-vector (subseq mess pos))
+		   (setf sym-vector (subseq sym-vector pos (position 0 sym-vector)))
+		   (setf sym (coerce (loop for i across sym-vector collect (code-char i)) 'string))
+		   (setf sym-len (length sym))
+		   (setf lst (append lst (list sym)))
+		   (if (= 0 (mod sym-len 4))
+		       (setf pos (+ pos sym-len))
+		     (setf pos (+ (+ sym-len (- 4 (mod sym-len 4))) pos)))))))
+      (setf lst (append lst (list (string->symbol (u8vector->string arr))))))
+    lst))
+
+(defun osc-parse-message (arr)
+  (osc-parse-contents arr))
+
+(defun osc-parse-bundle (arr)
+  (let ((msg-len nil)
+	(pos 0)
+	(arr-len (length arr))
+	(bundle '()))
+    (do ()
+	((>= pos arr-len))
+      (setf msg-len (u8vector->int (subseq arr pos (incf pos 4))))
+      (setf bundle (append bundle (osc-parse-contents (subseq arr pos (+ pos msg-len)))))
+      (incf pos msg-len))
+    bundle))
+
+(defun osc-vector->osc-message (arr)
+  (let ((timestamp nil)
+	(msg nil))
+    (if (osc-bundle? arr)
+	(progn 
+	  (setf timestamp (osc-parse-timestamp (subseq arr 8 16)))
+	  (setf msg (osc-parse-bundle (subseq arr 16))))
+      (setf msg (osc-parse-contents arr)))
+    (list msg timestamp)))
 
 
 ;;test
-
+#|
 ;;setup sockets
 (defparameter *send-socket* (make-udp-socket "127.0.0.1" 9000 22011))
 (defparameter *recv-socket* (make-udp-socket "127.0.0.1" 22011 9000))
