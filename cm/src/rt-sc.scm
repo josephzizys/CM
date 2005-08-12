@@ -347,7 +347,7 @@
                            (slot-ref obj 'value))))
     (send-msg msg io)))
 
-(define-method* (write-event (obj <control-fill>) (io <sc-file>) time)
+(define-method* (write-event (obj <control-fill>) (io <sc-stream>) time)
   time
   (let ((msg (control-fill (slot-ref obj 'bus) (slot-ref obj 'num-buses)
                            (slot-ref obj 'value))))
@@ -455,6 +455,7 @@
   (with-args (args &optional out)
     (let ((msg (list "/notify" (if bool 1 0))))
       (if out (send-msg msg out) (if *out* (send-msg msg *out*))))))
+
 
 (define-method* (reply-set-slots (obj <top>) lst)
   lst
