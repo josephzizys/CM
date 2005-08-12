@@ -175,13 +175,14 @@
   mode
   (when (io-open obj)
     (udp-socket-close (slot-ref obj 'socket))
-    (udp-socket-shutdown (slot-ref obj 'socket) 2)
+    ;(udp-socket-shutdown (slot-ref obj 'socket) 2)
     (slot-set! obj 'open #f))
   (set! *out* #f))
 
 ;;; send-msg
 ;;; (send-msg <list> <osc-stream>)
 ;;; (send-msg '("foo" 1 2 3 4 5) *osc*)
+
 
 (define-method* (send-msg message (io <osc-stream>))
   (multiple-value-bind (mess len)
@@ -193,6 +194,7 @@
 ;;; (send-bundle 1.5 '("foo" 1 2 3 4 'a) *osc*)
 ;;; can also nest messages
 ;;; (send-bundle 1.5 '(("foo" 1 2 3 4) ("baz" 1 2 3 4 5 'b)))
+
 
 (define-method* (send-bundle offset message (io <osc-stream>))
   (let ((arr (make-byte-vector "#bundle"))
@@ -219,6 +221,7 @@
                                mess))
         (set! mess-len (+ len 8 8 4))
         (send-osc arr io mess-len)))))
+
 
 
 (define-method* (set-receive-mode! (str <osc-stream>) mode)
