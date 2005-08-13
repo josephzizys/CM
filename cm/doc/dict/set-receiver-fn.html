@@ -156,7 +156,7 @@ Portmidi.
 <span class="comment">;;; open with no latency for interactive work. the input and
 ;;; output device ids to open will depend on your MIDI setup.</span>
 
-(<span class="special">defparameter</span> <span class="defined">*pm*</span>
+(<span class="special">define</span> <span class="defined">*pm*</span>
   (<a href="portmidi-topic.html#portmidi-open">portmidi-open</a> <span class="keyword">:input</span> 1 <span class="keyword">:output</span> 3 <span class="keyword">:latency</span> 0))
 
 <span class="comment">;;; a midi through</span>
@@ -208,7 +208,7 @@ Portmidi.
       (<a href="sprout-fn.html">sprout</a> (tonto 10 (<a href="midi-topic.html#note-on-key">note-on-key</a> mm) .1 
                      (/ (<a href="midi-topic.html#note-on-velocity">note-on-velocity</a> mm) 127.0)))))
 
-(<span class="special">defparameter</span> <span class="defined">*pm*</span>
+(<span class="special">define</span> <span class="defined">*pm*</span>
   (<a href="portmidi-open-fn.html">portmidi-open</a> <span class="keyword">:input</span> 1 <span class="keyword">:output</span> 3 <span class="keyword">:latency</span> 0))
 
 (<a href="rts-fn.html">rts</a> #f *pm*)
