@@ -262,7 +262,7 @@
 (define-method* (init-receiver (str <osc-stream>) type)
   type
   (unless (io-open str)
-    (open-io str)))
+    (open-io str :input)))
 
 (define-method* (deinit-receiver (str <osc-stream>) type)
   type
