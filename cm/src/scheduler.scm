@@ -534,6 +534,12 @@
  (openmcl (set! *rts-type* ':threaded))
  (else #f))
 
+(define (set-rts-method! type)
+  (if (member type '(:periodic :threaded :specific))
+      (set! *rts-type* type)
+      (err "set-rts-method!: ~s is not :periodic, :threaded or :specific."
+           type)))
+      
 (define *rts-run* #f)
 (define *rts-idle-rate* .001) ; time out slice if no pending events
 
