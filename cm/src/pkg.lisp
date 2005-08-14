@@ -98,7 +98,7 @@
 		:SetSynchroInPlayer :MidiNewMidiFileInfos
 		:MidiFileLoad :MidiFileSave :mf-clicks :mf-format :mf-timedef)
   (:import-from :fomus :fomus :obj-partid :obj-id :part-events
-                :event-base :event-off :make-part :make-note)
+                :event-base :event-off :event-note :event-dur :make-part :make-note)
   (:export :accumulation :amplitude :append-object :audio-file :axis
            :*beat* :best-normal-form :between :cd :cents->scaler
            :chord :*chromatic-scale* :clm-file :cm :cm-version :cmio

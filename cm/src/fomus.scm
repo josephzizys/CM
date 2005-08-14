@@ -105,7 +105,7 @@
 (define-method* (write-event (obj <midi>) (fil <fomus-file>) scoretime)
   (let* ((myid (midi-channel obj))
          (part (fomus-file-part fil myid))
-         (ampl (midi-amplitude obj))
+         ;(ampl (midi-amplitude obj))
          (marks '()))
     ;; add dynamic if not same as last note.
 ;;     (when (<= 0 ampl 1)
@@ -123,5 +123,19 @@
                            :dur (midi-duration obj)
                            :marks marks)
                 (part-events part)))))
+
+(define-method* (write-event (obj <event-base>) (fil <midi-file>) scoretime)
+  (let ((myid (obj-partid obj)))
+    ;; add dynamic if not same as last note.
+    (write-event (make <midi> :time (event-off obj)
+                       :keynum (event-note obj)
+                       :duration (event-dur obj)
+                       :channel (if (integer? myid)
+                                    myid
+                                    (let ((p (fomus-file-part fil myid)))
+                                      (if (integer? (obj-id p))
+                                          (obj-id p)
+                                          0))))
+      fil scoretime)))
 
 
