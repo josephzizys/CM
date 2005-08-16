@@ -87,7 +87,7 @@
        (part #f))
       ((or (null? tail) part) 
        (when (not part)
-         (set! part (make-part :partid id))
+         (set! part (make-part :partid id :instr (if (keyword? id) id #f)))
          (set! (fomus-file-parts stream)
                (cons part (fomus-file-parts stream))))
        part)
