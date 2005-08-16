@@ -545,3 +545,18 @@
 	  (set! msg (osc-parse-bundle (u8vector-subseq arr 16))))
       (set! msg (osc-parse-contents arr)))
     (list msg timestamp)))
+
+
+(define-macro (with-mutex-grabbed args . body)
+  (let ((mutex (car args)))
+    `(with-locking-mutex ,mutex (lambda () ,@body))))
+
+(define *aa* 0)
+
+(define-macro (without-interrupts . body)
+  `(begin
+     ,@body))
+
+
+
+
