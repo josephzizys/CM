@@ -793,7 +793,7 @@
        (maxa most-negative-fixnum))
       ((null? tail)
        (if (eq? maxa most-negative-fixnum) #f maxa))
-    (set! maxa (min maxa (car tail)))))
+    (set! maxa (max maxa (car tail)))))
 
 (define (spectrum-freqs spec . args)
   (with-args (args &optional fmat)
@@ -890,7 +890,7 @@
           (do ((tail (cdr next) (cddr tail)))
               ((null? tail) #f)
             (set! (car tail) (rescale (car tail) mina maxa a1 a2)))))
-      (when fmat
+      (unless (and (eq? fmat ':hertz) (not f1) (not f2))
         (let ((oldmin (spectrum-minfreq next))
               (oldmax (spectrum-maxfreq next))
               (newmin #f)
