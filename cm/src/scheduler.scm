@@ -608,7 +608,7 @@
        (set-periodic-task-rate! 1 :ms)
        (add-periodic-task! :rts (rts-run-periodic object ahead end)))
       (( :specific )
-       (set! *scheduler* :specific)
+       (set! *scheduler* ':specific)
        (rts-run-specific object ahead end))
       (else (err "rts: not an rts scheduling type: ~s" *rts-type*)))
     (values)))
@@ -627,8 +627,8 @@
         ((or (not *rts-run*)
              (if (eq? end #t) (%q-empty? *queue*)
                  (if (eq? end #f) #f
-                     (or (%q-empty? *queue*) 
-                         (> (%qe-time (%q-peek *queue*)) 
+                     (or (%q-empty? *queue*)
+                         (> (%qe-time (%q-peek *queue*))
                             end)))))
          (if object (unschedule-object object #t))
          (rts-reset))
@@ -641,7 +641,7 @@
                    (> (%qe-time (%q-peek *queue*)) *qtime*))
                (if (%q-empty? *queue*)
                    (set! wait? #f)
-                   (set! wait? #t)))
+                 (set! wait? #t)))
             (set! entry (%q-pop *queue*))
             ;;(set! *qtime* (%qe-time entry))
             (set! start (%qe-start entry))
@@ -655,8 +655,9 @@
                           (thread-current-time))))
             ;; delta can be < 0 if the process evaluation took more time
             ;; than the wait increment. [is this true?]
+            ;(print delta)
             (if (> delta 0) 
-                (thread-sleep! (MIN delta *rts-idle-rate*))))
+                (thread-sleep! (min delta *rts-idle-rate*))))
           ;; we only get here if queue is currently empty but user
           ;; wants scheduler to keepp running even though it has
           ;; nothing to do.  in this case the do loop will spin
