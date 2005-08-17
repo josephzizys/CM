@@ -594,6 +594,8 @@
 ;;   Return list of all freqs optionally converted to {:hertz|:keynum|:note}
 ;; (spectrum-amps spec)
 ;;   Return list of all amps
+;; (spectrum->midi spec . slotinits)
+;;   Return list of midis whose keynums & optionally amps are from spec.
 
 (define (import-spear-data path . args)
   (with-args (args &key (start 0) end point-format
@@ -938,6 +940,38 @@
         (list-set! new head (list-ref new tail))
         (list-set! new tail temp))
       new)))
+
+(define (spectrum->midi spec . args)
+  (let* ((type (spectrum-guess-type spec))
+         (amps (if (eq? (list-prop args ':amplitude) #t)
+                   (spectrum-amps spec)
+                   #f))
+         (keys (spectrum-freqs spec (if (eq? type ':hertz) ':keynum #f)))
+         (head (list #f)))
+    (if (not amps)
+        (do ((klis keys (cdr klis))
+             (tail head))
+            ((null? klis)
+             (cdr head))
+          (set! (cdr tail) (list (apply (function make)
+                                        (find-class* 'midi)
+                                        :keynum (car klis)
+                                        args)))
+          (set! tail (cdr tail)))
+        (do ((ampl (member ':amplitude args) ) ; get pos in args to set
+             (klis keys (cdr klis))
+             (alis amps (cdr alis))
+             (tail head))
+            ((null? klis) (cdr head))
+          (set! (car (cdr ampl)) (car alis)) ; set amp in args
+          (set! (cdr tail)
+                (list (apply (function make) 
+                             (find-class* 'midi)
+                             :keynum (car klis) 
+                             args)))
+          (set! tail (cdr tail))))))
+               
+
 
 ; (setq h (loop for h from 1 to 10 collect (* h 100) collect (* h .1)))
 ; (setq n (spectrum-hertz->note h))
