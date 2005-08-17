@@ -99,7 +99,7 @@
 		:MidiFileLoad :MidiFileSave :mf-clicks :mf-format :mf-timedef)
   (:import-from :fomus :fomus :obj-partid :obj-id :part-events
                 :event-base :event-off :event-note :event-dur :make-part
-                :make-note
+                :make-note :*parts* :part-opts
                 :part :note :meas :timesig :keysig)
   (:export :accumulation :amplitude :append-object :audio-file :axis
            :*beat* :best-normal-form :between :cd :cents->scaler
