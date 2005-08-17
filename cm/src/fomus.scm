@@ -124,18 +124,46 @@
                            :marks marks)
                 (part-events part)))))
 
+(define (partid->part pid)
+  (loop for p in *parts* thereis (eq? pid (obj-partid p))))
+
 (define-method* (write-event (obj <event-base>) (fil <midi-file>) scoretime)
-  (let ((myid (obj-partid obj)))
+  (let* ((myid (obj-partid obj))
+         (part (partid->part myid))
+         (opts (if (not part) (list) (part-opts part)))
+         (chan #f)
+         (ampl 64))
+    (do ((tail opts (cddr tail)))
+        ((null? tail) #f)
+      (case (car tail)
+        ;; figure this out later
+        (( :midi-chan ) (set! chan (cadr tail)))
+        (( :midi-vel ) (set! ampl (cadr tail)))
+        (( :midi-min-stacatto-dur ) #f)
+        (( :midi-stacatto-durratio ) #f)
+        (( :midi-trill-dur ) #f)
+        (( :midi-trill-vel ) #f)
+        (( :midi-min-grace-dur ) #f)
+        (( :midi-max-grace-dur ) #f)
+        (( :midi-grace-durratio ) #f)        
+        (( :midi-accent-velratio ) #f)
+        (( :midi-marcato-vel ) #f)
+        (( :midi-slur-overlap-dur ) #f)
+        (( :midi-tenuto-dur ) #f)
+        (( :midi-fermata-durratio ) #f)
+        (( :midi-breath-dur ) #f)
+        (( :midi-harmonic-prog ) #f)
+        (( :midi-pizz-prog ) #f)
+        (else #f)))
+    ;; use id as default chan if its an integer 
+    (unless chan (set! chan (if (integer? myid) myid 0)))
     ;; add dynamic if not same as last note.
     (write-event (make <midi> :time (event-off obj)
+                       :amplitude ampl
                        :keynum (event-note obj)
                        :duration (event-dur obj)
-                       :channel (if (integer? myid)
-                                    myid
-                                    (let ((p (fomus-file-part fil myid)))
-                                      (if (integer? (obj-id p))
-                                          (obj-id p)
-                                          0))))
-      fil scoretime)))
+                       :channel chan)
+                 fil scoretime)))
+
 
 
