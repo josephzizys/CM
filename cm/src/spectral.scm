@@ -34,10 +34,9 @@
                   (list (abs (- f1 f2)) (+ f1 f2)))))
            (type (cond ((not spectrum)
                         (if hz ':hertz
-                            (if (or (symbol? set1)
-                                    (symbol? (car set1)))
-                              ':note
-                              ':keynum)))
+                            (if (pair? set1)
+                                (if (symbol? (car set1)) ':note ':keynum)
+                                (if (symbol? set1) ':note ':keynum))))
                        ((member spectrum '(:note :keynum :hertz))
                         spectrum)
                        (else
