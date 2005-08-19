@@ -239,9 +239,10 @@
 (defgeneric import-set-slots (obj list))  ; sc.scm
 (defgeneric sc-env->list (obj))
 (defgeneric rt-output (obj dest &optional time))
+(defgeneric send-msg (msg io))
 (defgeneric write-bundle (offset message io))
-
-
+(defgeneric send-bundle (offset message io))
+(defgeneric set-receive-mode! (stream mode))
 
 ;; bug??: sprout has 2 optionals but rt-sprout has them required
 ;(defgeneric rt-sprout (obj time dest))
