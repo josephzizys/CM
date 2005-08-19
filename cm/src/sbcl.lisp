@@ -33,6 +33,7 @@
         :cm)
 
 (require :sb-posix)
+(require :sb-bsd-sockets)
 
 (cond ((string-equal (lisp-implementation-version) "0.8" :end1 3)
        (defun env-var (var)
@@ -443,6 +444,8 @@
 ;;;
 ;;; sbcl alien stuff for sendto 
 
+#|
+
 (in-package :sb-alien)
 
 ;seems this is already loaded in darwin version
@@ -532,6 +535,8 @@
 				      (sb-alien:deref (sb-alien:deref bufptr) i)))
 		       buffer)))))
 	  (sb-alien:free-alien bufptr)))))
+
+|#
 
 (defun modf (num)
   (multiple-value-bind (int rem)
