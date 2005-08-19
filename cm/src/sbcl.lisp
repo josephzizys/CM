@@ -257,13 +257,19 @@
 #+sb-thread
 (progn
 
-(defun make-thread (thunk)
-  (let ((id (sb-thread:make-thread thunk)))
-    (sb-thread::suspend-thread id)
-    id))
+;(defun make-thread (thunk)
+;  (let ((id (sb-thread:make-thread thunk)))
+;    (sb-thread::suspend-thread id)
+;    id))
+;
+;(defun thread-start! (id)
+;  (sb-thread::resume-thread id))
 
-(defun thread-start! (id)
-  (sb-thread::resume-thread id))
+(defun make-thread (thunk)
+  (lambda () (sb-thread:make-thread thunk)))
+
+(defun thread-start! (delay)
+  (funcall delay))
 
 (defun thread-sleep! (sec)
   (sleep sec))
