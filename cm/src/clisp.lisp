@@ -16,11 +16,16 @@
 
 (in-package :cm)
 
-;(pushnew :metaclasses *features*)
+(pushnew :metaclasses *features*)
 
 (import '(clos::class-direct-subclasses
           clos::class-direct-superclasses
           clos::class-direct-slots
+          clos:slot-definition-initargs
+          clos:slot-definition-initform
+          clos:slot-definition-name
+          clos:class-slots
+          clos:generic-function-name
           ))
 
 (defun exit () (ext::exit))
@@ -33,24 +38,24 @@
 
 (setf clos::*allow-mixing-metaclasses* T)
 
-(defun slot-definition-initargs (slot)
-  (clos::slotdef-initargs slot))
-
-(defun slot-definition-initform (slot)
-  (cdr (clos::slotdef-initer slot)))
-
-(defun slot-definition-name (slot)
-  (clos::slotdef-name slot))
-
-(defun slod-definition-reader (slot)
-  slot
-  nil)
-
-(defun class-slots (class)
-  (clos::class-slots class))
-
-(defun generic-function-name (class)
-  (error "generic-function-name not implmented in clisp."))
+;(defun slot-definition-initargs (slot)
+;  (clos::slotdef-initargs slot))
+;
+;(defun slot-definition-initform (slot)
+;  (cdr (clos::slotdef-initer slot)))
+;
+;(defun slot-definition-name (slot)
+;  (clos::slotdef-name slot))
+;
+;(defun slod-definition-reader (slot)
+;  slot
+;  nil)
+;
+;(defun class-slots (class)
+;  (clos::class-slots class))
+;
+;(defun generic-function-name (class)
+;  (error "generic-function-name not implmented in clisp."))
   
 (defun finalize-class (class) (values))
 
@@ -95,18 +100,15 @@
 
 (defun cm-image-dir ()
   ;; clisp's ext:argv only appears in 2.32
-  (multiple-value-bind (s f) (find-symbol "ARGV" :EXT)
-    (if (eql f ':external)
-      (let* ((v (funcall s))
-             (l (length v))
-             (i (position "-M" v :test #'string-equal))
-             )
-        (if (and i (< i (- l 1)))
-          (let ((img (elt v (+ i 1)) ))
-            (enough-namestring img
-                               (concatenate 'string (pathname-name img)
-                                            "." (pathname-type img))))
-          nil))
+  (let* ((v (ext:argv))
+         (l (length v))
+         (i (position "-M" v :test #'string-equal))
+         )
+    (if (and i (< i (- l 1)))
+      (let ((img (elt v (+ i 1)) ))
+        (enough-namestring img
+                           (concatenate 'string (pathname-name img)
+                                        "." (pathname-type img))))
       nil)))
 
 (defun save-cm (path &rest args)

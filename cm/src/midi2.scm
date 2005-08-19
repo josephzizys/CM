@@ -144,16 +144,17 @@
     (cond ((member os '(unix linux cygwin))
            "timidity -quiet=2")
           ((member os '(darwin osx macosx))
-           (cond ((file-exists? "/usr/local/bin/qtplay")
+           (cond ((file-exists? "/usr/local/bin/timidity")
+                  "/usr/local/bin/timidity")
+                 ((file-exists? "/usr/local/bin/qtplay")
                   "/usr/local/bin/qtplay")
-                 ((file-exists? "/usr/bin/qtplay")
-                  "/usr/bin/qtplay")
                  (else "open")))
           ((member os '(win32 windows))
            (if (file-exists?
                 "/Program Files/Windows Media Player/mplayer2.exe")
-             "\\Program Files\\Windows Media Player\\mplayer2.exe"
-             #f)))))
+                "\\\"Program Files\\Windows Media Player\"\\mplayer2.exe"
+                #f))
+          )))
 
 (define (play-midi-file file . args)
   (if (list-prop args ':play #t)
