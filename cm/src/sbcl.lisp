@@ -32,6 +32,9 @@
           )
         :cm)
 
+;; The require statements here are for documentation purposes only,
+;; the functional ones are in sbcl's insure-sys-features (make.lisp)
+
 (require :sb-posix)
 (require :sb-bsd-sockets)
 
@@ -406,23 +409,20 @@
                    (setf sb-impl::*periodic-polling-function* nil))))))
   (values))
 
-#|
-(periodic-task-running?)
-(set-periodic-task-rate! 1000 :ms) ; milliseconds
-(defun moe () (print :you-moron))
-(defun larry () (print :ow-ow-ow))
-(defun curly () (print :nyuk-nyuk))
-(periodic-task-running? :moe)
-(add-periodic-task! :moe #'moe)
-(add-periodic-task! :larry #'larry)
-(remove-periodic-task! :moe)
-(add-periodic-task! :curly #'curly)
-(add-periodic-task! :moe #'moe)
-(remove-periodic-task! :larry)
-*periodic-tasks*
-(remove-periodic-task! t)
-|#
-
+;; (periodic-task-running?)
+;; (set-periodic-task-rate! 1000 :ms) ; milliseconds
+;; (defun moe () (print :you-moron))
+;; (defun larry () (print :ow-ow-ow))
+;; (defun curly () (print :nyuk-nyuk))
+;; (periodic-task-running? :moe)
+;; (add-periodic-task! :moe #'moe)
+;; (add-periodic-task! :larry #'larry)
+;; (remove-periodic-task! :moe)
+;; (add-periodic-task! :curly #'curly)
+;; (add-periodic-task! :moe #'moe)
+;; (remove-periodic-task! :larry)
+;; *periodic-tasks*
+;; (remove-periodic-task! t)
 
 ;;;
 ;;; socket implementation
@@ -441,10 +441,9 @@
 ;; (osc-parse-message vec) x
 ;; (osc-parse-bundle vec) x
 ;; (osc-vector->osc-message vec) x
+
 ;;;
 ;;; sbcl alien stuff for sendto 
-
-#|
 
 (in-package :sb-alien)
 
@@ -475,7 +474,9 @@
   (let ((sock (make-instance 'udp-socket :type :datagram :protocol :udp
 			     :remote-host host :remote-port port)))
     (setf (sb-bsd-sockets:non-blocking-mode sock) t)
-    (sb-bsd-sockets:socket-bind sock (sb-bsd-sockets:make-inet-address "127.0.0.1") local-port)
+    (sb-bsd-sockets:socket-bind sock 
+                                (sb-bsd-sockets:make-inet-address "127.0.0.1")
+                                local-port)
     sock))
 
 (defun udp-socket-close (sock)
@@ -486,7 +487,6 @@
   socket how
   (values))
 
-
 (defun udp-socket-send (sock mess len)
   (let ((fd (sb-bsd-sockets::socket-file-descriptor sock)))
     (if (< (length mess) len)
@@ -494,9 +494,11 @@
     (if (= fd -1)
 	(error "udp-socket-send: ~s does not have a valid file descriptor" sock)
       (sb-bsd-sockets::with-sockaddr-for 
-          (sock sockaddr (list (sb-bsd-sockets:make-inet-address (slot-value sock 'remote-host))
+          (sock sockaddr (list (sb-bsd-sockets:make-inet-address 
+                                (slot-value sock 'remote-host))
 			       (slot-value sock 'remote-port)))
-	(let ((bufptr (sb-alien:make-alien (array (sb-alien::unsigned 8) 1) len)))
+	(let ((bufptr (sb-alien:make-alien (array (sb-alien::unsigned 8) 1)
+                                           len)))
 	  (unwind-protect 
 	      (let ((addr-len (sb-bsd-sockets::size-of-sockaddr sock))
 		    (slen nil))
@@ -519,24 +521,26 @@
   (sb-bsd-sockets::with-sockaddr-for (sock sockaddr)
     (let ((bufptr (sb-alien:make-alien (array (sb-alien::unsigned 8) 1) bytes)))
       (unwind-protect
-	  (sb-alien:with-alien ((sa-len sockint::socklen-t (sb-bsd-sockets::size-of-sockaddr sock)))
-	     (let ((len (sockint::recvfrom (sb-bsd-sockets::socket-file-descriptor sock)
-					   bufptr
-					   bytes
-					   0
-					   sockaddr
-					   (sb-alien:addr sa-len))))
-		 (cond
-		  ((and (= len -1) (= sockint::EAGAIN (sb-unix::get-errno))) nil)
-		  ((= len -1) (sb-bsd-sockets::socket-error "recvfrom"))
-		  (t (let ((buffer (make-array len :element-type '(unsigned-byte 8))))
-		       (loop for i from 0 below (if (> bytes len) len bytes)
-			     do (setf (aref buffer i)
-				      (sb-alien:deref (sb-alien:deref bufptr) i)))
-		       buffer)))))
-	  (sb-alien:free-alien bufptr)))))
-
-|#
+	  (sb-alien:with-alien 
+              ((sa-len sockint::socklen-t
+                       (sb-bsd-sockets::size-of-sockaddr sock)))
+            (let ((len (sockint::recvfrom 
+                        (sb-bsd-sockets::socket-file-descriptor sock)
+                        bufptr
+                        bytes
+                        0
+                        sockaddr
+                        (sb-alien:addr sa-len))))
+              (cond
+                ((and (= len -1) (= sockint::EAGAIN (sb-unix::get-errno))) nil)
+                ((= len -1) (sb-bsd-sockets::socket-error "recvfrom"))
+                (t (let ((buffer (make-array len :element-type
+                                             '(unsigned-byte 8))))
+                     (loop for i from 0 below (if (> bytes len) len bytes)
+                        do (setf (aref buffer i)
+                                 (sb-alien:deref (sb-alien:deref bufptr) i)))
+                     buffer)))))
+        (sb-alien:free-alien bufptr)))))
 
 (defun modf (num)
   (multiple-value-bind (int rem)
