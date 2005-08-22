@@ -135,17 +135,17 @@
 
 
 (defobject node-query (sc-cmd) 
-  ((nodes :initform #f))
-  (:parameters nodes)
+  ((node :initform #f))
+  (:parameters node)
   (:event-streams))
 
 (define-method* (write-event (obj <node-query>) (io <sc-stream>) time)
   time
-  (let ((nodes (slot-value obj 'nodes))
+  (let ((nodes (slot-value obj 'node))
         (msg (list "/n_query")))
-    (if (pair? nodes)
-        (set! msg (append! msg nodes))
-      (set! msg (append! msg (list nodes))))
+    (if (pair? node)
+        (set! msg (append! msg node))
+      (set! msg (append! msg (list node))))
     (send-msg msg io)))
 
 (defobject synth-get (sc-cmd) 
@@ -251,6 +251,11 @@
 (define-method* (write-event (obj <buffer-free>) (io <sc-stream>) time)
   time
   (let ((msg (buffer-free (slot-ref obj 'bufnum))))
+    (send-msg msg io)))
+
+(define-method* (write-event (obj <buffer-zero>) (io <sc-stream>) time)
+  time
+  (let ((msg (buffer-zero (slot-ref obj 'bufnum))))
     (send-msg msg io)))
 
 (define-method* (write-event (obj <buffer-set>) (io <sc-stream>) time)
@@ -368,14 +373,14 @@
     (send-msg msg io)))
 
 (defobject control-getn (sc-cmd) 
-  ((buses :initform #f)
+  ((bus :initform #f)
    (num-buses :initform #f))
-  (:parameters buses num-buses)
+  (:parameters bus num-buses)
   (:event-streams))
 
 (define-method* (write-event (obj <control-getn>) (io <sc-stream>) time)
   time
-  (let* ((buses (slot-value obj 'buses))
+  (let* ((buses (slot-value obj 'bus))
          (buses-len (length buses))
          (num-buses (slot-value obj 'num-buses))
          (msg (list "/c_getn")))
@@ -479,7 +484,7 @@
 
 
 (define-class* <done-reply> (<sc-reply>)
-  ((cmd-name :init-value #f))
+  ((cmd-name :init-value #f :accessor done-cmd-name))
   :name 'done-reply)
 
 (define-method* (reply-set-slots (obj <done-reply>) lst)
@@ -488,8 +493,8 @@
 
 
 (define-class* <fail-reply> (<sc-reply>)
-  ((cmd-name :init-value #f)
-   (error :init-value #f))
+  ((cmd-name :init-value #f :accessor fail-cmd-name)
+   (error :init-value #f :accessor fail-error))
   :name 'fail-reply)
 
 (define-method* (reply-set-slots (obj <fail-reply>) lst)
@@ -497,14 +502,14 @@
   (slot-set! obj 'error (pop lst)))
 
 (define-class* <status-reply> (<sc-reply>)
-  ((num-ugens :init-value #f)
-   (num-synths :init-value #f)
-   (num-groups :init-value #f)
-   (num-loaded-synths :init-value #f)
-   (avg-cpu :init-value #f)
-   (peak-cpu :init-value #f)
-   (sample-rate :init-value #f)
-   (actual-sample-rate :init-value #f))
+  ((num-ugens :init-value #f :accessor status-num-ugens)
+   (num-synths :init-value #f :accessor status-num-synths)
+   (num-groups :init-value #f :accessor status-num-groups)
+   (num-loaded-synths :init-value #f :accessor status-num-loaded-synths)
+   (avg-cpu :init-value #f :accessor status-avg-cpu)
+   (peak-cpu :init-value #f :accessor status-peak-cpu)
+   (sample-rate :init-value #f :accessor status-sample-reate)
+   (actual-sample-rate :init-value #f :accessor status-actual-sample-rate))
   :name 'status-reply)
 
 (define-method* (reply-set-slots (obj <status-reply>) lst)
@@ -519,7 +524,7 @@
   (slot-set! obj 'actual-sample-rate (pop lst)))
 
 (define-class* <synced-reply> (<sc-reply>)
-  ((id :init-value #f))
+  ((id :init-value #f :accessor synced-id))
   :name 'synced-reply)
 
 (define-method* (reply-set-slots (obj <synced-reply>) lst)
@@ -527,8 +532,8 @@
 
 
 (define-class* <synth-get-reply> (<sc-reply>)
-  ((node :init-value #f)
-   (controls-values :init-value #f))
+  ((node :init-value #f :accessor synth-get-node)
+   (controls-values :init-value #f :accessor synth-get-controls-values))
   :name 'synth-get-reply)
 
 (define-method* (reply-set-slots (obj <synth-get-reply>) lst)
@@ -545,8 +550,8 @@
 
 
 (define-class* <synth-getn-reply> (<sc-reply>)
-  ((node :init-value #f)
-   (controls-values :init-value #f))
+  ((node :init-value #f :accessor synth-getn-node)
+   (controls-values :init-value #f :accessor synth-getn-controls-values))
   :name 'synth-getn-reply)
 
 (define-method* (reply-set-slots (obj <synth-getn-reply>) lst)
@@ -570,8 +575,8 @@
 
 
 (define-class* <buffer-get-reply> (<sc-reply>)
-  ((bufnum :init-value #f)
-   (samples-values :init-value #f))
+  ((bufnum :init-value #f :accessor buffer-get-bufnum)
+   (samples-values :init-value #f :accessor buffer-get-samples-values))
   :name 'buffer-get-reply)
 
 (define-method* (reply-set-slots (obj <buffer-get-reply>) lst)
@@ -580,8 +585,8 @@
 
 
 (define-class* <buffer-getn-reply> (<sc-reply>)
-  ((bufnum :init-value '())
-   (samples-values :init-value '()))
+  ((bufnum :init-value '() :accessor buffer-getn-bufnum)
+   (samples-values :init-value '() :accessor buffer-getn-samples-values))
   :name 'buffer-getn-reply)
 
 (define-method* (reply-set-slots (obj <buffer-getn-reply>) lst)
@@ -599,10 +604,10 @@
 
 
 (define-class* <buffer-query-reply> (<sc-reply>)
-  ((bufnum :init-value '())
-   (num-frames :init-value '())
-   (num-chans :init-value '())
-   (sample-rate :init-value '()))
+  ((bufnum :init-value '() :accessor buffer-query-bufnum)
+   (num-frames :init-value '() :accessor buffer-query-num-frames)
+   (num-chans :init-value '() :accessor buffer-query-num-chanes)
+   (sample-rate :init-value '()) :accessor buffer-query-sample-rate)
   :name 'buffer-query-reply)
 
 (define-method* (reply-set-slots (obj <buffer-query-reply>) lst)
@@ -621,8 +626,8 @@
 
 
 (define-class* <control-get-reply> (<sc-reply>)
-  ((bus :init-value '())
-   (value :init-value '()))
+  ((bus :init-value '() :accessor control-get-bus)
+   (value :init-value '() :accessor control-get-value))
   :name 'control-get-reply)
 
 (define-method* (reply-set-slots (obj <control-get-reply>) lst)
@@ -636,8 +641,8 @@
 
 
 (define-class* <control-getn-reply> (<sc-reply>)
-  ((bus :init-value '())
-   (value :init-value '()))
+  ((bus :init-value '() :accessor control-getn-reply)
+   (value :init-value '() :accessor control-getn-value))
   :name 'control-getn-reply)
 
 (define-method* (reply-set-slots (obj <control-getn-reply>) lst)
@@ -663,13 +668,13 @@
         (slot-set! obj 'value v)))))
 
 (define-class* <node-go-reply> (<sc-reply>)
-  ((node :init-value #f)
-   (parent-group :init-value #f)
-   (previous-node :init-value #f)
-   (next-node :init-value #f)
-   (type :init-value #f)
-   (head-node :init-value #f)
-   (tail-node :init-value #f))
+  ((node :init-value #f :accessor node-go-node)
+   (parent-group :init-value #f :accessor node-go-parent-node)
+   (previous-node :init-value #f :accessor node-go-previous-node)
+   (next-node :init-value #f :accessor node-go-next-node)
+   (type :init-value #f :accessor node-go-type)
+   (head-node :init-value #f :accessor node-go-head-node)
+   (tail-node :init-value #f :accessor node-go-tail-node))
   :name 'node-go-reply)
 
 (define-method* (reply-set-slots (obj <node-go-reply>) lst)
@@ -687,13 +692,13 @@
 
 
 (define-class* <node-end-reply> (<sc-reply>)
-  ((node :init-value #f)
-   (parent-group :init-value #f)
-   (previous-node :init-value #f)
-   (next-node :init-value #f)
-   (type :init-value #f)
-   (head-node :init-value #f)
-   (tail-node :init-value #f))
+  ((node :init-value #f :accessor node-end-node)
+   (parent-group :init-value #f :accessor node-end-parent-group)
+   (previous-node :init-value #f :accessor node-end-previous-node)
+   (next-node :init-value #f :accessor node-end-next-node)
+   (type :init-value #f :accessor node-end-type) 
+   (head-node :init-value #f :accessor node-end-head-node)
+   (tail-node :init-value #f :accessor node-end-tail-node))
   :name 'node-end-reply)
 
 (define-method* (reply-set-slots (obj <node-end-reply>) lst)
@@ -711,13 +716,13 @@
 
 
 (define-class* <node-off-reply> (<sc-reply>)
-  ((node :init-value #f)
-   (parent-group :init-value #f)
-   (previous-node :init-value #f)
-   (next-node :init-value #f)
-   (type :init-value #f)
-   (head-node :init-value #f)
-   (tail-node :init-value #f))
+  ((node :init-value #f :accessor node-off-node)
+   (parent-group :init-value #f :accessor node-off-parent-group)
+   (previous-node :init-value #f :accessor node-off-previous-node)
+   (next-node :init-value #f :accessor node-off-next-node)
+   (type :init-value #f :accessor node-off-type)
+   (head-node :init-value #f :accessor node-off-head-node) 
+   (tail-node :init-value #f :accessor node-off-tail-node))
   :name 'node-off-reply)
 
 (define-method* (reply-set-slots (obj <node-off-reply>) lst)
@@ -735,13 +740,13 @@
 
 
 (define-class* <node-on-reply> (<sc-reply>)
-  ((node :init-value #f)
-   (parent-group :init-value #f)
-   (previous-node :init-value #f)
-   (next-node :init-value #f)
-   (type :init-value #f)
-   (head-node :init-value #f)
-   (tail-node :init-value #f))
+  ((node :init-value #f :accessor node-on-node)
+   (parent-group :init-value #f :accessor node-on-parent-group)
+   (previous-node :init-value #f :accessor node-on-previous-node)
+   (next-node :init-value #f :accessor node-on-next-node)
+   (type :init-value #f :accessor node-on-type)
+   (head-node :init-value #f :accessor node-on-head-node)
+   (tail-node :init-value #f :accessor node-on-tail-node))
   :name 'node-on-reply)
 
 (define-method* (reply-set-slots (obj <node-on-reply>) lst)
@@ -759,13 +764,13 @@
 
 
 (define-class* <node-move-reply> (<sc-reply>)
-  ((node :init-value #f)
-   (parent-group :init-value #f)
-   (previous-node :init-value #f)
-   (next-node :init-value #f)
-   (type :init-value #f)
-   (head-node :init-value #f)
-   (tail-node :init-value #f))
+  ((node :init-value #f :accessor node-move-node)
+   (parent-group :init-value #f :accessor node-move-parent-group)
+   (previous-node :init-value #f :accessor node-move-previous-node)
+   (next-node :init-value #f :accessor node-move-next-node)
+   (type :init-value #f :accessor node-move-type)
+   (head-node :init-value #f :accessor node-head-node)
+   (tail-node :init-value #f :accessor node-tail-node))
   :name 'node-move-reply)
 
 (define-method* (reply-set-slots (obj <node-move-reply>) lst)
@@ -781,16 +786,14 @@
           (slot-set! obj 'head-node (pop lst))
           (slot-set! obj 'tail-node (pop lst))))))
 
-
-
 (define-class* <node-info-reply> (<sc-reply>)
-  ((node :init-value #f)
-   (parent-group :init-value #f)
-   (previous-node :init-value #f)
-   (next-node :init-value #f)
-   (type :init-value #f)
-   (head-node :init-value #f)
-   (tail-node :init-value #f))
+  ((node :init-value #f :accessor node-info-node)
+   (parent-group :init-value #f :accessor node-info-parent-group)
+   (previous-node :init-value #f :accessor node-info-previous-node)
+   (next-node :init-value #f :accessor node-info-next-node)
+   (type :init-value #f :accessor node-info-type)
+   (head-node :init-value #f :accessor node-info-head-node)
+   (tail-node :init-value #f :accessor node-info-tail-node))
   :name 'node-info-reply)
 
 (define-method* (reply-set-slots (obj <node-info-reply>) lst)
@@ -808,14 +811,14 @@
 
 
 (define-class* <trigger-reply> (<sc-reply>)
-  ((node :init-value #f)
-   (trigger :init-value #f)
-   (value :init-value #f))
+  ((node :init-value #f :accessor trigger-node)
+   (id :init-value #f :accessor trigger-id)
+   (value :init-value #f :accessor trigger-value))
   :name 'trigger-reply)
 
 (define-method* (reply-set-slots (obj <trigger-reply>) lst)
   (slot-set! obj 'node (pop lst))
-  (slot-set! obj 'trigger (pop lst))
+  (slot-set! obj 'id (pop lst))
   (slot-set! obj 'value (pop lst)))
 
 
