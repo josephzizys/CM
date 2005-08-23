@@ -105,17 +105,7 @@
 (define-method* (write-event (obj <midi>) (fil <fomus-file>) scoretime)
   (let* ((myid (midi-channel obj))
          (part (fomus-file-part fil myid))
-         ;(ampl (midi-amplitude obj))
          (marks '()))
-    ;; add dynamic if not same as last note.
-;;     (when (<= 0 ampl 1)
-;;       (let ((this (list-ref '(:pppp :ppp :pp :p :mp 
-;;                               :mf :f :ff :fff :ffff :fffff)
-;;                             (inexact->exact
-;;                              (floor (/ ampl .1))))))
-;;           (unless (eq? this (obj-id part))
-;;             (set! marks (list this))
-;;             (set! (obj-id part) this))))
     (set! (part-events part)
           (cons (make-note :partid myid
                            :off scoretime
@@ -127,43 +117,54 @@
 (define (partid->part pid)
   (loop for p in *parts* thereis (eq? pid (obj-partid p))))
 
-(define-method* (write-event (obj <event-base>) (fil <midi-file>) scoretime)
+;; allow fomus parts to schedule their notes.
+(define-method* (schedule-object (obj <part>) start)
+  (let ((mystart (+ start 0)))
+    (enqueue (part-events obj) mystart mystart)))
+
+(define-method* (write-event (obj <note>) (fil <midi-file>) scoretime)
   (let* ((myid (obj-partid obj))
          (part (partid->part myid))
          (opts (if (not part) (list) (part-opts part)))
          (chan #f)
          (ampl 64))
-    (do ((tail opts (cddr tail)))
-        ((null? tail) #f)
-      (case (car tail)
-        ;; figure this out later
-        (( :midi-chan ) (set! chan (cadr tail)))
-        (( :midi-vel ) (set! ampl (cadr tail)))
-        (( :midi-min-stacatto-dur ) #f)
-        (( :midi-stacatto-durratio ) #f)
-        (( :midi-trill-dur ) #f)
-        (( :midi-trill-vel ) #f)
-        (( :midi-min-grace-dur ) #f)
-        (( :midi-max-grace-dur ) #f)
-        (( :midi-grace-durratio ) #f)        
-        (( :midi-accent-velratio ) #f)
-        (( :midi-marcato-vel ) #f)
-        (( :midi-slur-overlap-dur ) #f)
-        (( :midi-tenuto-dur ) #f)
-        (( :midi-fermata-durratio ) #f)
-        (( :midi-breath-dur ) #f)
-        (( :midi-harmonic-prog ) #f)
-        (( :midi-pizz-prog ) #f)
-        (else #f)))
+    opts
+;    ;; figure this out later...
+;    (do ((tail opts (cddr tail)))
+;        ((null? tail) #f)
+;      (case (car tail)
+;        (( :midi-chan ) (set! chan (cadr tail)))
+;        (( :midi-vel ) (set! ampl (cadr tail)))
+;        (( :midi-min-stacatto-dur ) #f)
+;        (( :midi-stacatto-durratio ) #f)
+;        (( :midi-trill-dur ) #f)
+;        (( :midi-trill-vel ) #f)
+;        (( :midi-min-grace-dur ) #f)
+;        (( :midi-max-grace-dur ) #f)
+;        (( :midi-grace-durratio ) #f)        
+;        (( :midi-accent-velratio ) #f)
+;        (( :midi-marcato-vel ) #f)
+;        (( :midi-slur-overlap-dur ) #f)
+;        (( :midi-tenuto-dur ) #f)
+;        (( :midi-fermata-durratio ) #f)
+;        (( :midi-breath-dur ) #f)
+;        (( :midi-harmonic-prog ) #f)
+;        (( :midi-pizz-prog ) #f)
+;        (else #f)))
     ;; use id as default chan if its an integer 
     (unless chan (set! chan (if (integer? myid) myid 0)))
     ;; add dynamic if not same as last note.
+
+    ;; at some point this should write the message rather
+    ;; that call write-event with a midi note...
+    ;; do the output
     (write-event (make <midi> :time (event-off obj)
                        :amplitude ampl
                        :keynum (event-note obj)
                        :duration (event-dur obj)
                        :channel chan)
                  fil scoretime)))
+
 
 
 
