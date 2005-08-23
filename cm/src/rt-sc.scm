@@ -141,7 +141,7 @@
 
 (define-method* (write-event (obj <node-query>) (io <sc-stream>) time)
   time
-  (let ((nodes (slot-value obj 'node))
+  (let ((node (slot-value obj 'node))
         (msg (list "/n_query")))
     (if (pair? node)
         (set! msg (append! msg node))
@@ -607,7 +607,7 @@
   ((bufnum :init-value '() :accessor buffer-query-bufnum)
    (num-frames :init-value '() :accessor buffer-query-num-frames)
    (num-chans :init-value '() :accessor buffer-query-num-chanes)
-   (sample-rate :init-value '()) :accessor buffer-query-sample-rate)
+   (sample-rate :init-value '() :accessor buffer-query-sample-rate))
   :name 'buffer-query-reply)
 
 (define-method* (reply-set-slots (obj <buffer-query-reply>) lst)
