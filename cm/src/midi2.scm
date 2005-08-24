@@ -53,7 +53,7 @@
   (let* ((l (list #f))
          (h l))
     (do ((p 0 (+ p 1)))
-        ((= p 4)
+        ((= p 8)
          (apply (function vector) (cdr l)))
       (do ((c 0 (+ c 1)))
           ((= c 16) #f)
