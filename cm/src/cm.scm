@@ -22,8 +22,7 @@
                    "io" "scheduler" "sco" "clm" "clm2"
                    "midi1" "midi2" "midi3" "data" "scales" "spectral"
                    "patterns" "osc"
-                   "sc" "rt-sc"
-                   )))
+                   "sc")))
   (cond-expand
    (stklos
     (set! this-file (current-loading-file))
@@ -34,7 +33,8 @@
     (set! file-list (cons "guile" file-list)))
    (gauche
     (set! this-file (port-name (current-load-port)))
-    (set! file-list (cons "gauche" file-list)))
+    (set! file-list (cons "gauche" file-list))
+    (set! file-list (append! file-list (list "gauche-rt" "rt-sc"))))
 ;;  (chicken
 ;;   (set! this-file 
 ;;   (eval (with-input-from-string "##sys#current-load-file" read)))
