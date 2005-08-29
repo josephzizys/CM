@@ -489,7 +489,7 @@
                                       (eq? *scheduler* ':specific)))
               (with-mutex-grabbed (*qlock*)
                  (cond ((pair? obj)
-                        (dolist (o obj) (sprout o at ahead)))
+                        (dolist (o obj) (sprout o :at at :ahead ahead)))
                        ((procedure? obj)       ; process
                         ;; add sprouted process at time relative to start of
                         ;; sprouter
@@ -503,7 +503,7 @@
                         ;; start time of process that sprouted it
                         (schedule-object obj (or *pstart* 0)))))
              (cond ((pair? obj)
-                    (dolist (o obj) (sprout o at ahead)))
+                    (dolist (o obj) (sprout o :at at :ahead ahead)))
                    ((procedure? obj)       ; process
                     ;; add sprouted process at time relative to start of
                     ;; sprouter
