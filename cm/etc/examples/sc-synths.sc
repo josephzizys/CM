@@ -98,3 +98,10 @@ SynthDef("fm-env", { arg freq,mratio=1,index=1.0,amp=1.0,dur;
 	Out.ar(0, [car*af,car*af]);
 }).writeDefFile.load(s);
 )
+
+(
+SynthDef("randomness1", {arg density, id;
+		SendTrig.kr(Dust.kr(density),id,PinkNoise.ar(1000.0));
+}).send(s);
+)	
+	
