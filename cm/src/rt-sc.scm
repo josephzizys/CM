@@ -422,7 +422,7 @@
         (if *out*
             (send-msg msg *out*))))))
 
-(define (dump-osc bool . args)
+(define (sc-dumposc bool . args)
   (with-args (args &optional out)
     (let ((msg (list "/dumpOSC" (if bool 1 0))))
       (if out
@@ -430,7 +430,7 @@
         (if *out*
             (send-msg msg *out*))))))
 
-(define (clear-sched . args)
+(define (sc-clearsched . args)
   (with-args (args &optional out)
     (let ((msg '("/clearSched")))
       (if out
@@ -452,10 +452,17 @@
         (close-io (find-object "sc.udp")))
     #f))
 
-(define (sc-flush)
-  (clear-sched (sc-open?))
-  (write-event (make <group-free-all> :group 0) (sc-open?) 0))
+(define (sc-flush . args)
+  (with-args (args &optional out)
+    (if out
+        (begin
+          (sc-clearsched out)
+          (write-event (make <group-free-all> :group 0) out 0))
+      (begin
+        (sc-clearsched (sc-open?))
+        (write-event (make <group-free-all> :group 0) (sc-open?) 0)))))
 
+  
 (define (sc-notify bool . args)
   (with-args (args &optional out)
     (let ((msg (list "/notify" (if bool 1 0))))
