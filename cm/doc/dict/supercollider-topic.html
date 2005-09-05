@@ -1012,6 +1012,92 @@
 
 	  </pre>
 	</div>
+    
+    
+    <h4>Auxiliary Functions</h4>
+    CM provides some a few functions and variables to facilitate working
+    with SuperCollider. 
+    
+    <dl class="dictsyntax" id="sc-open">
+      <dt>[Function]</dt>
+      <dd><code>(</code><code class="entry">sc-open</code> <var>[args]</var> <code>)</code></dd>
+    </dl>
+    <p>
+      Opens a <a href="#portmidi-stream">sc-stream</a>
+      called <span class="string">"sc.udp"</span> according to the
+      keyword initialization <var>args</var> passed to the stream. 
+    </p>
+
+    
+    <dl class="dictsyntax" id="sc-open?">
+      <dt>[Function]</dt>
+      <dd><code>(</code><code class="entry">sc-open?</code><code>)</code></dd>
+    </dl>
+    <p>
+      Tests to see if <span class="string">"sc.udp"</span> has already
+      been opened.
+    </p>
+
+    <dl class="dictsyntax" id="sc-close">
+      <dt>[Function]</dt>
+      <dd><code>(</code><code class="entry">sc-close</code> <var>[args]</var> <code>)</code></dd>
+    </dl>
+      <p>
+	Closes the <a href="sc-stream">sc-stream</a> called 
+	<span class="string">"sc.udp"</span> if it is open, otherwise has no effect.
+      </p>
+
+    <dl class="dictsyntax" id="sc-quit">
+      <dt>[Function]</dt>
+      <dd><code>(</code><code class="entry">sc-quit</code> <var>[sc-stream]</var> <code>)</code></dd>
+    </dl>
+     <p>
+       Sends a quit message to scsynth listening on <span class="string">"sc.udp"</span> if opened or
+       optional <var>sc-stream</var>.
+     </p>
+
+     <dl class="dictsyntax" id="sc-dumposc">
+      <dt>[Function]</dt>
+      <dd><code>(</code><code class="entry">sc-dumposc</code> <var>boolean</var>
+	<var>[sc-stream]</var> <code>)</code></dd>
+    </dl>
+     <p>
+       Sends a dumpOSC message to scsynth listening on <span class="string">"sc.udp"</span> if opened or
+       optional <var>sc-stream</var>. If boolean is true turns on osc dumping. If false turns it off.
+     </p>
+
+     <dl class="dictsyntax" id="sc-clearsched">
+      <dt>[Function]</dt>
+      <dd><code>(</code><code class="entry">sc-clearsched</code> <var>[sc-stream]</var> <code>)</code></dd>
+    </dl>
+     <p>
+       Sends a clearSched message to scsynth listening on <span class="string">"sc.udp"</span> if opened or
+       optional <var>sc-stream</var>.
+     </p>
+
+     <dl class="dictsyntax" id="sc-notify">
+       <dt>[Function]</dt>
+       <dd><code>(</code><code class="entry">sc-notify</code> 
+	 <var>boolean</var> <var>[sc-stream]</var> <code>)</code></dd>
+       Sends a notify message to scsynth listening on <span class="string">"sc.udp"</span> if opened or
+       optional <var>sc-stream</var>. If boolean is true turns on status. If false turns it off.
+    </dl>
+     <p>
+
+     </p>
+      
+     <dl class="dictsyntax" id="sc-flush">
+       <dt>[Function]</dt>
+       <dd><code>(</code><code class="entry">sc-flush</code> <var>[sc-stream]</var> <code>)</code></dd>
+    </dl>
+     <p>
+       Sends a clearSched and a group-free-all message to scsynth listening on <span class="string">"sc.udp"</span> if opened or
+       optional <var>sc-stream</var>.
+     </p>
+     
+
+
+
 
       <p>
 	The file <a href="../../etc/examples/sc.cm">sc.cm</a> contains
