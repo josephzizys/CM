@@ -23,7 +23,7 @@
 
 (in-package :cm)
 
-(define-class* <fomus-file> (<event-stream>)
+(define-class* <fomus-file> (<event-file>)
   ((parts :init-keyword :parts :init-value '()
           :accessor fomus-file-parts)
    (global :init-keyword :global :init-value '()
