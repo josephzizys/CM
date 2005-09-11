@@ -448,7 +448,7 @@
 (define (sc-close)
   (if (sc-open?)
       (begin
-        (clear-sched)
+        (sc-clearsched)
         (close-io (find-object "sc.udp")))
     #f))
 
