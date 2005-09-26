@@ -24,6 +24,18 @@
    (direction :init-value #f :accessor io-direction))
   :name 'event-stream)
 
+(define-class* <rt-stream> (<event-stream>)
+  ((receive-mode :accessor rt-stream-receive-mode 
+                 :init-keyword :receive-mode)
+   (receive-rate :accessor rt-stream-receive-rate
+                 :init-value .001 :init-keyword :receive-rate)
+   (receive-data :accessor rt-stream-receive-data
+                 :init-value '())
+   (latency :accessor rt-stream-latency 
+            :init-keyword :latency :init-value 0)
+   )
+  :name 'rt-stream)
+
 (define-class* <event-file> (<event-stream>)
   ((version :init-value 0 :accessor event-file-version
             :init-keyword :version)

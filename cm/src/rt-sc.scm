@@ -1,4 +1,3 @@
-
 ;;; **********************************************************************
 ;;; Copyright (C) 2005 Todd Ingalls, Heinrich Taube
 ;;; 
@@ -23,7 +22,8 @@
   ((remote-port :init-value 57110)
    (remote-host :init-value "127.0.0.1")
    (local-port :init-value 57100)
-   (latency :init-value 0.05 :init-keyword :latency)
+   (latency :init-value 0.05 :init-keyword :latency
+            :accessor rt-stream-latency)
    (notify :init-value #f))
   :name 'sc-stream
   :metaclass <io-class>
@@ -866,7 +866,7 @@
 
 (define-method* (deinit-receiver (str <sc-stream>) type)
   type
-  (let ((data (osc-receive str)))
+  (let ((data (rt-stream-receive-data str)))
     (when (io-open str)
       (close-io str))
     (list-set! data 0 #f)
@@ -875,7 +875,7 @@
 (define-method* (set-receive-mode! (str <sc-stream>) mode)
   (unless (member mode '(:message :raw :object))
     (err "receive: ~s is not a sc receive mode." mode))
-  (slot-set! str 'recmode mode))
+  (slot-set! str 'receive-mode mode))
 
 (define (osc-message->sc-object lst)
   (let* ((obj? (list-prop *reply-objects* (pop (car lst))))
@@ -886,8 +886,8 @@
 
 (define-method* (stream-receiver hook (str <sc-stream>) type)
   ;; hook is 2arg lambda or nil, type is :threaded or :periodic
-  (let* ((data (osc-receive str)) ; (<thread> <stop> )
-         (mode (osc-receive-mode str))
+  (let* ((data (rt-stream-receive-data str)) ; (<thread> <stop> )
+         (mode (rt-stream-receive-mode str))
          (stop #f)) 
     ;; can receive either message or raw buffer
     (unless (member mode '(:message :raw :object))
@@ -906,6 +906,7 @@
                   (th #f) ; thread
                   (st #f) ; thread stopper
                   (fn #f) ; mapper
+                  (ra (rt-stream-receive-rate str))
                   )
              (case mode
                ((:message)
@@ -928,7 +929,7 @@
                                    (funcall fn n)
                                  ( hook n))
                              ;; only sleep if no message??
-                             (thread-sleep! *osc-receive-rate*))))))
+                             (thread-sleep! ra))))))
                 (set! st (lambda () (set! stop #t))))
                ((:periodic )
                 (set! th

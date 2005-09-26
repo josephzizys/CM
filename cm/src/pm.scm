@@ -24,15 +24,14 @@
 (define *portmidi-default-outbuf-size* 2048)
 (define *portmidi-default-filter* 0)
 (define *portmidi-default-mask* 0)
-(define *portmidi-receive-rate* .001) 
 
-(define-class* <portmidi-stream> (<event-stream> <midi-stream-mixin>)
+(define-class* <portmidi-stream> (<rt-stream> <midi-stream-mixin>)
   ((input :init-value *portmidi-default-input* :init-keyword :input
          :accessor portmidi-input)
    (output :init-value *portmidi-default-output* :init-keyword :output
            :accessor portmidi-output)
    (latency :init-value *portmidi-default-latency* :init-keyword :latency
-            :accessor portmidi-latency)
+            :accessor rt-stream-latency)
    (inbufsize :init-value *portmidi-default-inbuf-size*
               :init-keyword :inbuf-size
               :accessor portmidi-inbuf-size)
@@ -40,10 +39,10 @@
                :init-keyword :outbuf-size
                :accessor portmidi-outbuf-size)
    ;; data list: (<thread> #'stopper <evbuf> <len>)
-   (receive :init-value (list #f #f #f #f)
-            :accessor portmidi-receive)
-   (recmode :init-value :message :init-keyword :receive-mode
-            :accessor portmidi-receive-mode)
+   (receive-data :init-value (list #f #f #f #f)
+            :accessor rt-stream-receive-data)
+   (receive-mode :init-value :message :init-keyword :receive-mode
+            :accessor rt-stream-receive-mode)
    (filter :init-value *portmidi-default-filter* :init-keyword :filter
            :accessor portmidi-filter)
    (mask :init-value *portmidi-default-mask* :init-keyword :channel-mask
@@ -141,7 +140,7 @@
           (set-car! (cdr data) 
                     (pm:OpenOutputStream
                      odev (if (pair? bsiz) (cadr bsiz) bsiz)
-                     (portmidi-latency obj))))
+                     (rt-stream-latency obj))))
         (set! (event-stream-stream obj) pids)
         (set! (io-open obj) data))))
   obj)
@@ -209,17 +208,6 @@
                           (if b "a receiver is" "rts is"))))
                 (else
                  (close-io port ':force)
-                 ;; this really isnt right -- what happens if the user
-                 ;; sets these AFTER the port is closed? then open-io
-                 ;; won't use the new default value. maybe the io
-                 ;; macro should be reused.
-                 ;;(slot-set! port 'input *portmidi-default-input*)
-                 ;;(slot-set! port 'output *portmidi-default-output*)
-                 ;;(slot-set! port 'latency *portmidi-default-latency*)
-                 ;;(slot-set! port 'inbufsize *portmidi-default-inbuf-size*)
-                 ;;(slot-set! port 'outbufsize *portmidi-default-outbuf-size*)
-                 ;;(slot-set! port 'filter *portmidi-default-filter*)
-                 ;;(slot-set! port 'mask *portmidi-default-mask*)
                  port)))
         port)))
 
@@ -333,32 +321,31 @@
 (define-method* (set-receive-mode! (str <portmidi-stream>) mode)
   (unless (member mode '(:message :raw))
     (err "receive: ~s is not a portmidi receive mode." mode))
-  (slot-set! str 'recmode mode))
-
+  (slot-set! str 'receive-mode mode))
 
 (define-method* (init-receiver (str <portmidi-stream>) type)
   ;; called by set-receiver before hook is activated.
   ;; flush any messages already in input buffer
   (when (eq? type ':periodic)
     (unless (periodic-task-running? )
-      (set-periodic-task-rate! *portmidi-receive-rate* :seconds)))
+      (set-periodic-task-rate! (rt-stream-receive-rate str) :seconds)))
   (let ((idev (first (io-open str)))
-        (data (portmidi-receive str)))
+        (data (rt-stream-receive-data str)))
     (when (pm:StreamPoll idev)
       (pm:StreamRead idev (third data) (fourth data)))))
 
 (define-method* (deinit-receiver (str <portmidi-stream>) type)
   type
   ;;  called by remove-receiver after the periodic task has been withdrawn
-  (let ((data (portmidi-receive str))) ; (<thread> <stop> <buf> <len>)
+  (let ((data (rt-stream-receive-data str))) ; (<thread> <stop> <buf> <len>)
     (when (first data)
       (list-set! data 0 #f)
       (list-set! data 1 #f))))
 
 (define-method* (stream-receiver hook (str <portmidi-stream>) type)
   ;; hook is 2 arg lambda or nil, type is :threaded or :periodic
-  (let* ((data (portmidi-receive str)) ; (<thread> <stop> <buf> <len>)
-         (mode (portmidi-receive-mode str))
+  (let* ((data (rt-stream-receive-data str)) ; (<thread> <stop> <buf> <len>)
+         (mode (rt-stream-receive-mode str))
          (stop #f)) 
     ;; can receive either message/times or raw buffer/count
     (unless (member mode '(:message :raw))
@@ -382,6 +369,7 @@
                   (th #f) ; thread
                   (st #f) ; thread stopper
                   (fn #f) ; mapper
+                  (ra (rt-stream-receive-rate str))
                   )
              ;; see if we have to free old buffer
              (when (and bf (not (eq? sz so)))
@@ -406,7 +394,7 @@
                                         ( hook bf n))))
                                  (else
                                   ;; only sleep if no message??
-                                  (thread-sleep! *portmidi-receive-rate*)))))))
+                                  (thread-sleep! ra)))))))
                 (set! st (lambda () (set! stop #t))))
                ((:periodic )
                 (set! th
@@ -430,7 +418,7 @@
 (define-method* (receive (str <portmidi-stream>) . args)
   (let* ((n 0)
         (in (first (io-open str)))
-        (bf (third (portmidi-receive str)))
+        (bf (third (rt-stream-receive-data str)))
         (sz (portmidi-inbuf-size str))
         (hook (if (pair? args) (pop args) #f))
         (mode (if (pair? args) (pop args) #f))

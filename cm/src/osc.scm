@@ -2,15 +2,8 @@
 ;;; Copyright (C) 2005 Todd Ingalls, Heinrich Taube
 ;;; 
 ;;; This program is free software; you can redistribute it and/or
-;;; modify it under the terms of the GNU General Public License
-;;; as published by the Free Software Foundation; either version 2
-;;; of the License, or (at your option) any later version.
-;;; 
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;; 
+;;; modify it under the terms of the Lisp Lesser Gnu Public License.
+;;; See http://www.cliki.net/LLGPL for the terms of this agreement.
 ;;; **********************************************************************
 
 ;;; $Name$
@@ -131,20 +124,15 @@
 ;;; need a send-osc function
 ;;; also need osc-vector->osc-message parse-osc function and 
 ;;; u8vector->double
-
-(define *osc-receive-rate* .001)
-;(defparameter *osc-receive-rate* .001)
-;(set! *osc-receive-rate* .001)
-
-(define-class* <osc-stream> (<event-stream>)
+(define-class* <osc-stream> (<rt-stream>)
   ((remote-port :init-value #f :init-keyword :remote-port)
    (remote-host :init-value #f :init-keyword :remote-host)
    (local-port :init-value #f :init-keyword :local-port)
    ;; data list: (<thread> #'stopper )
-   (receive :init-value (list #f #f)
-     :accessor osc-receive)
-   (recmode :init-value :message :init-keyword :receive-mode
-            :accessor osc-receive-mode)
+   (receive-data :init-value (list #f #f) 
+                 :accessor rt-stream-receive-data)
+   (receive-mode :init-value :message :init-keyword :receive-mode
+                 :accessor rt-stream-receive-mode)
    (latency :init-value 0.0 :init-keyword :latency)
    (buffer-size :init-value 512 :init-keyword :buffer-size)
    (socket :init-value #f))
@@ -227,7 +215,7 @@
 (define-method* (set-receive-mode! (str <osc-stream>) mode)
   (unless (member mode '(:message :raw))
     (err "receive: ~s is not a osc receive mode." mode))
-  (slot-set! str 'recmode mode))
+  (slot-set! str 'receive-mode mode))
 
 
 (define-method* (receive (str <osc-stream>) . args)
@@ -266,7 +254,7 @@
 
 (define-method* (deinit-receiver (str <osc-stream>) type)
   type
-  (let ((data (osc-receive str)))
+  (let ((data (rt-stream-receive-data str)))
     (when (io-open str)
       (close-io str))
     (list-set! data 0 #f)
@@ -275,8 +263,8 @@
 
 (define-method* (stream-receiver hook (str <osc-stream>) type)
   ;; hook is 2arg lambda or nil, type is :threaded or :periodic
-  (let* ((data (osc-receive str)) ; (<thread> <stop> )
-         (mode (osc-receive-mode str))
+  (let* ((data (rt-stream-receive-data str)) ; (<thread> <stop> )
+         (mode (rt-stream-receive-mode str))
          (stop #f)) 
     ;; can receive either message or raw buffer
     (unless (member mode '(:message :raw))
@@ -295,6 +283,7 @@
                   (th #f) ; thread
                   (st #f) ; thread stopper
                   (fn #f) ; mapper
+                  (ra (rt-stream-receive-rate str))
                   )
              (set! fn (lambda (mm)
                         ( hook (osc-vector->osc-message mm))))
@@ -306,19 +295,21 @@
                          (do ((n #f))
                              (stop  
                               #f)
-                           (set! n (udp-socket-recv (slot-ref in 'socket) (slot-ref str 'buffer-size)))
+                           (set! n (udp-socket-recv (slot-ref in 'socket)
+                                                    (slot-ref str 'buffer-size)))
                            (if n
                                (if rm
                                    (funcall fn n)
                                  ( hook n))
                              ;; only sleep if no message??
-                             (thread-sleep! *osc-receive-rate*))))))
+                             (thread-sleep! ra))))))
                 (set! st (lambda () (set! stop #t))))
                ((:periodic )
                 (set! th
                       (lambda () 
                         (let ((n 0))
-                          (set! n (udp-socket-recv (slot-ref in 'socket) (slot-ref str 'buffer-size)))
+                          (set! n (udp-socket-recv (slot-ref in 'socket)
+                                                   (slot-ref str 'buffer-size)))
                           (if n
                               (if rm
                                   (funcall fn n)
