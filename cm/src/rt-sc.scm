@@ -24,6 +24,8 @@
    (local-port :init-value 57100)
    (latency :init-value 0.05 :init-keyword :latency
             :accessor rt-stream-latency)
+   (recmode :init-value :message :init-keyword :receive-mode
+            :accessor sc-receive-mode)
    (notify :init-value #f))
   :name 'sc-stream
   :metaclass <io-class>
@@ -425,6 +427,14 @@
 (define (sc-dumposc bool . args)
   (with-args (args &optional out)
     (let ((msg (list "/dumpOSC" (if bool 1 0))))
+      (if out
+          (send-msg msg out)
+        (if *out*
+            (send-msg msg *out*))))))
+
+(define (sc-status . args)
+  (with-args (args &optional out)
+    (let ((msg (list "/status")))
       (if out
           (send-msg msg out)
         (if *out*
