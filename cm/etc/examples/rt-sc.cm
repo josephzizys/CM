@@ -86,7 +86,7 @@
 
 ;;; (define *sc* (sc-open))
 ;;; 
-;;; (dump-osc t)
+;;; (sc-dumposc t)
 ;;;
 ;;; (rts nil *sc*)
 ;;;
@@ -191,3 +191,26 @@
 ;;; (remove-receiver! *sc*)
 
 
+#|
+
+(sc-notify t)
+(sc-status)
+
+
+(set-receiver! #'(lambda (x)
+		   (if (is-a? x 'status-reply)
+		       (print (round (slot-value x 'sample-rate)))))
+	       ;(status-sample-rate x)))
+	       *sc*)
+
+		   (if (is-a? x 'status-reply)
+		       (print x)))
+	       *sc*)
+
+(remove-receiver! *sc*)
+
+(setf (slot-value *sc* 'recmode) :object)
+
+(/ 44100.0 256)
+
+|#

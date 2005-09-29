@@ -104,4 +104,5 @@ SynthDef("randomness1", {arg density, id;
 		SendTrig.kr(Dust.kr(density),id,PinkNoise.ar(1000.0));
 }).send(s);
 )	
+
 	
