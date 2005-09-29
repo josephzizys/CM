@@ -319,6 +319,10 @@
   hook stream type
   (err "stream-receiver: ~s does not support receiving." stream))
 
+;;; add an :rts feature for forward code.
 
-
-
+(cond-expand
+ (common-lisp
+  (pushnew ':rts *features*))
+ (else
+  #f))
