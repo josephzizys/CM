@@ -3,7 +3,8 @@
 ;;; $Revision$
 ;;; $Date$
 ;;;
-;;; Supercollider examples, by Todd Ingalls. Load the file and then
+;;; Supercollider examples, by Todd Ingalls. 
+
 
 (in-package :cm)
 
@@ -69,9 +70,16 @@
    (id :initform 1))
   (:parameters density id time))
 
+(defobject pitch-track (scsynth)
+  ((minfreq :initform 60)
+   (maxfreq :initform 2000.0)
+   (ampthresh :initform .02)
+   (id :initform 1))
+  (:parameters minfreq maxfreq ampthresh id))
+
 
 ;;;
-;;;
+;;; same as the nrt example
 ;;;
 
 
@@ -84,11 +92,20 @@
 		       :pan (pickl '(-1.0 0 1.0)))
 	   wait (between 2.0 3.0)))
 
-;;; (define *sc* (sc-open))
-;;; 
-;;; (sc-dumposc t)
 ;;;
-;;; (rts nil *sc*)
+;;; open up an sc-stream
+;;;
+;;; (define *sc* (sc-open))
+;;;
+;;; turn on printing out of messages on sc server
+;;;
+;;; (sc-dumposc #t)
+;;;
+;;; start rts
+;;;
+;;; (rts #f *sc*)
+;;;
+;;; sprout example
 ;;;
 ;;; (sprout (sc-simple-1 10))
 
@@ -101,8 +118,8 @@
 	   when (= i 0)
 	   output (new reverb2 :time (now) 
 		       :node 500
-		       :decaytime 0.8
-		       :mix .05)
+		       :decaytime 1.8
+		       :mix .1)
 	   output (new fm-env :freq (between 300 700) 
 		       :mratio (between .4 3.2) 
 		       :dur 4
@@ -117,43 +134,65 @@
 		       :add-action 0)
 	   wait 3))
 ;;;
+;;; clear scheduler on sc server and free all nodes
+;;;
+;;; (sc-flush)
+;;;
+;;;
 ;;; (sprout (sc-fm-2 10))
 ;;;
 
-;;; 
-;;;
-;;; 
-;;; 
-;;; (rts nil *sc*)
 
+
+(define (simple-tendency1 num wai lo hi)
+  (process repeat num for i from 0
+	   when (= i 0)
+	   output (new reverb2 :node 300 :time (now))
+
+	   output (new simple :node (+ 1000 i) 
+		       :freq (tendency (/ i num) lo hi)
+				       
+		       :amp .1
+		       :time (now))
+				      
+	   wait wai))
+
+;;;
+;;; clear scheduler on sc server and free all nodes
+;;;
+;;; (sc-flush)
+;;;
 ;;; (sprout (simple-tendency1 100 .05 '(0 0 .10 200 .4  800 .6 900 1.00 1000.0) '(0 0 .20 300 .4  900 1.00 2000.0)))
+;;;
 ;;; (sprout (simple-tendency1 100 .01 '(0 400 .10 200 .4  400 .6 100 1.00 400.0) '(0 400 .10 1600 .4  400 .6 1700 1.00 400.0)))
 
-;;; (rts-stop) 
+
+;;;
+;;; the following is an example of receiving data back from the server.
+;;; in this case a buffer is filled with a waveform and then 
+;;; repeated requests are sent to get a value from the buffer.
+;;; these are then used to scale a freq slot for a simple synth.
+;;;
+;;;
+;;;
 
 
-(defun sim (num)
+(define (sim num wai)
   (process repeat num for i from 0
 	   when (= i 0)
 	   output (new sc-buffer :bufnum 11
 		       :time 0
 		       :frames 512
 		       :flags :normalize
-		       :with-gen '(:sine1 '(1 .1 .1 .1 .9 .01 .3 .1 1 1)))
-
+		       :with-gen '(:sine1 (1 .1 .1 .1 .9 .01 .3 .1 1 1)))
 	   output (new buffer-get :time (now) :bufnum 11 :samples (mod i 512))
-	   wait .05))
-
-;;; (rts nil *sc*)
-;;; (sprout (sim 10))
-;;; (rts-stop)
-;;; (rts-reset)
-
-
+	   wait wai))
 
 
 ;;;
-;;; (set-receive-mode! *sc* :object)
+;;; this is the receiver function that will be used.
+;;; notice that it is looking for replies to a buffer-get
+;;; message.
 
 (define (sim-reply m)
   (let ((freq-scale 1.0))
@@ -163,11 +202,26 @@
 	 (output (new simple :time (now) :amp .1 :dur .5 :freq (+ 400 (abs (* 440 freq-scale))))
 	       :to *sc*)))))
 
+
 ;;; (set-receiver! #'sim-reply *sc*)
-;;; (remove-receiver! *sc*)
+;;;
+;;; (sprout (sim 512 .02))
+;;; 
+;;; (sprout (sim 64 .4))
+;;;
 
-;;;; (sc-notify t)
 
+
+;;; 
+;;; this example uses an scsynth to generate random values
+;;; these values are sent back to cm and in this case trigger
+;;; a simple since with the random value as the freq.
+;;;
+;;;
+;;; in order for the sc server to send trigger messages back to cm
+;;; one must turn on notification:
+;;; 
+;;; (sc-notify #t)
 
 
 (define (start-randomness1a)
@@ -175,42 +229,54 @@
 	   output (new randomness1 :time (now) :density 2 :id 100 :node 2000)))
 
 
-;;; (rts nil *sc*)
-;;; (sprout (start-randomness1a))
-;; (set-receiver! #'trig-rep *sc*)
-
+;;; remove previous receiver
+;;;
+;;; (remove-receiver! *sc*)
+;;;
+;;; 
+;;;
+;;;
 
 (define (trig-rep m)
   (if (is-a? m 'trigger-reply)
       (if (= (trigger-id m) 100)
-	  (output (new simple :amp .1 :dur 1 :freq (+ 100 (abs (slot-value m 'value)))
-		       :time (now)))))
-  
-;;; (rts-stop)
+	  (output (new simple :amp .1 :dur 1 :freq (+ 100 (abs (trigger-value m)))
+		       :time (now))))))
+
+
+;;; (set-receiver! #'trig-rep *sc*)
+;;;
+;;; (sprout (start-randomness1a))
+;;;
+;;; (sc-flush)
+
+
+;;;
+;;; this is a simple pitch tracking example.
+;;; 
+;;;
+
+;;;
+;;; start the pitch tracker on the server.
+;;;
+
+(output (new pitch-track :node 1000 :time 0 :ampthresh .2) :to *sc*)
+
+;;;
+;;; this is the reply function. it tries to double the detected pitch.
+;;;
+
+(define (pitch-track-rep m)
+  (if (is-a? m 'trigger-reply)
+      (if (= (trigger-id m) 1)
+	  (output (new simple :freq (hertz (floor (trigger-value m))) :time (now)) :to *sc*))))
 
 ;;; (remove-receiver! *sc*)
-
-
-#|
-
-(sc-notify t)
-(sc-status)
-
-
-(set-receiver! #'(lambda (x)
-		   (if (is-a? x 'status-reply)
-		       (print (round (slot-value x 'sample-rate)))))
-	       ;(status-sample-rate x)))
-	       *sc*)
-
-		   (if (is-a? x 'status-reply)
-		       (print x)))
-	       *sc*)
-
-(remove-receiver! *sc*)
-
-(setf (slot-value *sc* 'recmode) :object)
-
-(/ 44100.0 256)
-
-|#
+;;;
+;;; (set-receiver! #'pitch-track-rep *sc*)
+;;; 
+;;; now whistle a tune! probably a good idea to monitor through
+;;; headphones
+;;; 
+;;; this frees up the node that the pitch-tracker is running on
+;;; (output (new node-free :node 1000 :time 0) :to *sc*)

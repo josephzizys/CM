@@ -102,7 +102,19 @@ SynthDef("fm-env", { arg freq,mratio=1,index=1.0,amp=1.0,dur;
 (
 SynthDef("randomness1", {arg density, id;
 		SendTrig.kr(Dust.kr(density),id,PinkNoise.ar(1000.0));
-}).send(s);
-)	
+}).writeDefFile.load(s);
+)
+
+(
+SynthDef("pitch-track",{arg minfreq=60, maxfreq=2000.0, ampthresh=0.02, id=1;
+	var in, amp, freq, hasFreq, out;
+	in = Mix.new(AudioIn.ar([1,2]));
+	# freq, hasFreq = Pitch.kr(in, maxFreq: maxfreq, ampThreshold: ampthresh, median: 2);
+	SendTrig.kr(hasFreq, id, freq.cpsmidi.floor.asFloat);
+}).writeDefFile.load(s);
+)
+
+
+	
 
 	
