@@ -24,8 +24,8 @@
    (local-port :init-value 57100)
    (latency :init-value 0.05 :init-keyword :latency
             :accessor rt-stream-latency)
-   (recmode :init-value :message :init-keyword :receive-mode
-            :accessor sc-receive-mode)
+   (receive-mode :accessor rt-stream-receive-mode :init-value :object
+                 :init-keyword :receive-mode)
    (notify :init-value #f))
   :name 'sc-stream
   :metaclass <io-class>
@@ -397,7 +397,7 @@
   (cond ((slot-ref obj 'with-file)
          (write-event (make <buffer-alloc-read> :bufnum (slot-ref obj 'bufnum) :file (slot-ref obj 'with-file) :frames (slot-ref obj 'frames)
                             :start-frame (slot-ref obj 'starting-at)) io time))
-        ((list? (slot-ref obj 'with-values))
+        ((pair? (slot-ref obj 'with-values))
          (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
          (write-event (make <buffer-setn> :bufnum (slot-ref obj 'bufnum)
                             :samples-values (list (slot-ref obj 'starting-at) (slot-ref obj 'with-values))) io time))
@@ -413,7 +413,11 @@
            (write-event (make <buffer-setn> :bufnum (slot-ref obj 'bufnum) :samples-values (list (slot-ref obj 'starting-at) vals)) io time)))
         ((slot-ref obj 'with-gen)
          (write-event (make <buffer-alloc> :bufnum (slot-ref obj 'bufnum) :frames (slot-ref obj 'frames) :channels 1) io time)
-         (write-event (make <buffer-gen> :bufnum (slot-ref obj 'bufnum) :flags :wavetable :command (car (slot-ref obj 'with-gen))
+         (write-event (make <buffer-gen> :bufnum (slot-ref obj 'bufnum)
+                            :flags (if (slot-ref obj 'flags)
+                                       (slot-ref obj 'flags)
+                                     :wavetable)
+                            :command (car (slot-ref obj 'with-gen))
                             :args (car (cdr (slot-ref obj 'with-gen)))) io time))))
 
 (define (sc-quit . args)
@@ -490,6 +494,7 @@
              :name 'sc-reply))
 
 (define *reply-objects* '(/done done-reply  /fail fail-reply /status.reply status-reply
+                                status.reply status-reply
                              /synced synced-reply /s_set synth-get-reply
                              /s_setn synth-getn-reply /b_set buffer-get-reply
                              /b_setn buffer-getn-reply /b_info buffer-info-reply
