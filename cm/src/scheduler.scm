@@ -136,28 +136,21 @@
            (begin
             (%q-head-set! ,q ,e)
             (%q-last-set! ,q ,e))
-           (if (< (OR (%qe-time ,e) (err "%q-insert: (a) %qe-time is nil!"
-
-                                         ))
-                  (OR (%qe-time (%q-head ,q)) (err "%q-insert: (b) %qe-time is nil!"))
+           (if (< (%qe-time ,e) 
+                  (%qe-time (%q-head ,q))
                   )
                (begin 
                 ;; prepend to queue
                 (%qe-next-set! ,e (%q-head ,q))
                 (%q-head-set! ,q ,e))
-               (if (< (OR (%qe-time ,e) (err "%q-insert: (c) %qe-time is nil!"))
-                      (OR (%qe-time (%q-last ,q))
-                          (err "%q-insert: (d) %qe-time is nil!"))
-                      )
+               (if (< (%qe-time ,e) 
+                      (%qe-time (%q-last ,q)))
                    ;; insert in queue
                    (do ((,h (%q-head ,q)) ; could be next one
                         (,l '()))
                        ((or (null? ,h)
-                            (> (OR (%qe-time ,h)
-                                   (err "%q-insert: (e) %qe-time is nil!"))
-                               (OR (%qe-time ,e)
-                                   (err "%q-insert: (f) %qe-time is nil!"))
-                               ))
+                            (> (%qe-time ,h) 
+                               (%qe-time ,e)))
                         (%qe-next-set! ,e (%qe-next ,l))
                         (%qe-next-set! ,l ,e))
                      (set! ,l ,h)
@@ -165,8 +158,7 @@
                    (begin
                     ;; append to queue
                     (%qe-next-set! (%q-last ,q) ,e)
-                    (%q-last-set! ,q ,e)
-                    )))))))
+                    (%q-last-set! ,q ,e))))))))
 
 (define (pq . args)
   (let* ((q (if (null? args) %q (car args)))
