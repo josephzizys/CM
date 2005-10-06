@@ -698,14 +698,14 @@
   (let ((data (string->expr str :multiok #t)))
     (if (eq? ftyp ':raw)
         data
-        (do ((tail (cdddr data) (cdddr tail))
+        (do ((tail (cddr data) (cdddr tail))
              (head (list))
              (freq #f)
              (ampl #f))
             ((null? tail)
              (reverse! head))
-          (set! freq (car tail))
-          (set! ampl (car (cdr tail)))
+          (set! freq (car (cdr tail)))
+          (set! ampl (car (cddr tail)))
           (cond ((eq? ftyp ':hertz) 
                  (if freq-scaler
                      (set! freq (* freq freq-scaler))))
