@@ -25,6 +25,7 @@
           ;pcl::class-direct-subclasses
           pcl::class-direct-superclasses
           pcl:generic-function-name
+          system:without-interrupts
           )
 	:cm)
 
@@ -147,10 +148,14 @@
 
 (defun make-thread (thunk &optional name)
   #+x86
-  (let* ((n (or name (format nil "CM-~A" (gentemp "THREAD"))))
-         (p (mp:make-process thunk :name n)))
-    (mp:disable-process p)
-    p)
+  (progn
+    (mp::init-multi-processing)
+    (unless mp::*idle-process*
+      (setq mp::*idle-process* mp::*initial-process*))
+    (let* ((n (or name (format nil "CM-~A" (gentemp "THREAD"))))
+           (p (mp:make-process thunk :name n)))
+      (mp:disable-process p)
+      p))
   #-x86 (nothreads))
 
 (defun thread-name (thread) 
@@ -183,12 +188,15 @@
   #-x86 (nothreads))
 
 (defun make-mutex (&optional name)
-  #+x86 (mp:make-lock name)
+  #+x86 (if name (mp:make-lock name) (mp:make-lock))
   #-x86 (nothreads))
 
 (defun mutex-name (mutex)
   #+x86 (slot-value mutex 'mp::name)
   #-x86 (nothreads))
+
+(defmacro with-mutex-grabbed ((var) &body body)
+  `(mp:with-lock-held (,var "rts lock wait" :wait t) ,@body))
 
 ;(mutex-specific mutex)
 ;(mutex-specific-set! mutex obj)
