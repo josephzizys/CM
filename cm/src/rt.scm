@@ -102,7 +102,13 @@
         (make-thread (rts-run-threaded object ahead end))))
       (( :periodic )
        (set! *scheduler* ':periodic)
-       (set-periodic-task-rate! 1 :ms)
+       (cond ((not (periodic-task-running? ))
+              (set-periodic-task-rate! *rts-idle-rate* :seconds))
+             (t
+              (unless (= (periodic-task-rate)
+                         (floor (* *rts-idle-rate* 1000000)))
+                (warn "Periodic task(s) already running, RTS rate set to ~s sec."
+                      (/ (periodic-task-rate) 1000000.0) ))))
        (add-periodic-task! :rts (rts-run-periodic object ahead end)))
       (( :specific )
        (set! *scheduler* ':specific)
