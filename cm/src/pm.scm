@@ -267,12 +267,9 @@
           (cond ((eq? *scheduler* ':asap)
                  (+ (inexact->exact (round (* scoretime 1000)))
                     (portmidi-offset str)))
-                ((eq? *scheduler* ':threaded)
-                 0)
-                ((eq? *scheduler* ':periodic)
-                 0)
-                (else
-                 scoretime))
+                ((not *scheduler*) scoretime)
+                (t ;; :threaded :periodic :specific
+                 0))
           (midi-message->pm-message obj)))
         (else #f)))
 
