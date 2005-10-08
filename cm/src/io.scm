@@ -317,58 +317,62 @@
 (define (events object . args)
   ;; args are &key pairs or an optional time offset
   ;; followed by &key pairs.
-  (let* ((to (if (and (pair? args)
-                      (or (string? (car args))
-                          (eq? (car args) #f)
-                          (is-a? (car args) <object>)))
-                 (pop args)
-                 (current-output-stream)))
-         (ahead (if (and (pair? args)
-                         (or (pair? (car args))
-                             (number? (car args))))
-                    (pop args)
-                    0))
-        (err? ':error))
-    (when (odd? (length args))
-      (err "Uneven initialization list: ~s." args))
-    (dynamic-wind
-     (lambda () #f)
-     (lambda ()
-       (let ((getobj
-	      (lambda (x)
-		(if (not (null? x))
-		  (if (or (string? x) (symbol? x))
-		    (find-object x)
-		    x)
-		  (err "Not an object specification: ~s." x)))))
-	 (if (not to)
-             (set! *out* #f)
-             (begin
-              (set! *out* (open-io (apply (function init-io) to args)
-                                   ':output))
-              (initialize-io *out*)))
-	 (schedule-events *out* ;(lambda (e s) (write-event e *out* s))
-			  (if (pair? object) 
-			    (map (function getobj) object)
-			    (getobj object))
-			  ahead)
-	 (set! err? #f)))
-     (lambda ()
-       (when *out*
-	 (deinitialize-io *out*)
-	 (close-io *out* err?))))
-    (if (or err? (not *out*)) 
-      #f
-      (if (is-a? *out* <event-file>)
-	(let ((path (file-output-filename *out*))
-              (args (if #t
-                      (event-stream-args *out*)
-                      '()))
-	      (hook (io-class-output-hook (class-of *out*))))
-	  (when hook 
-	    (apply hook path args))		; funcall
-	  path)
-	*out*))))
+  (if *scheduler*
+      (begin
+       (format #t "Can't schedule events in non-real time while RTS is running.")
+       nil)
+      (let* ((to (if (and (pair? args)
+                          (or (string? (car args))
+                              (eq? (car args) #f)
+                              (is-a? (car args) <object>)))
+                     (pop args)
+                     (current-output-stream)))
+             (ahead (if (and (pair? args)
+                             (or (pair? (car args))
+                                 (number? (car args))))
+                        (pop args)
+                        0))
+             (err? ':error))
+        (when (odd? (length args))
+          (err "Uneven initialization list: ~s." args))
+        (dynamic-wind
+         (lambda () #f)
+         (lambda ()
+           (let ((getobj
+                  (lambda (x)
+                    (if (not (null? x))
+                        (if (or (string? x) (symbol? x))
+                            (find-object x)
+                            x)
+                        (err "Not an object specification: ~s." x)))))
+             (if (not to)
+                 (set! *out* #f)
+                 (begin
+                  (set! *out* (open-io (apply (function init-io) to args)
+                                       ':output))
+                  (initialize-io *out*)))
+             (schedule-events *out* ;(lambda (e s) (write-event e *out* s))
+                              (if (pair? object) 
+                                  (map (function getobj) object)
+                                  (getobj object))
+                              ahead)
+             (set! err? #f)))
+         (lambda ()
+           (when *out*
+             (deinitialize-io *out*)
+             (close-io *out* err?))))
+        (if (or err? (not *out*)) 
+            #f
+            (if (is-a? *out* <event-file>)
+                (let ((path (file-output-filename *out*))
+                      (args (if #t
+                                (event-stream-args *out*)
+                                '()))
+                      (hook (io-class-output-hook (class-of *out*))))
+                  (when hook 
+                    (apply hook path args)) ; funcall
+                  path)
+                *out*)))))
 
 
 
