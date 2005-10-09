@@ -687,25 +687,34 @@
 
 (define (midi-file-print . args)
   (with-args (args file &key (stream #t) (track 0) )
-    (with-open-io (io file :input )
-      (format stream "File: ~a ~%Format: ~s~%Tracks: ~s~%Division: ~s"
-	      file
-              (midi-file-format io) 
-              (midi-file-tracks io)
-              (midi-file-divisions io))
-      (midi-file-set-track io track)
-      (format stream "~%Track ~s, length ~s~%"
-              (midi-file-track io) 
-              (midi-file-tracklen io))
-      (midi-file-map-track 
-       (lambda (mf)
-         (let ((q (midi-file-delta mf))
-               (m (midi-file-message mf))
-               (d (midi-file-data mf)))
-           (midi-print-message m q :stream stream :data d)
-           ;(newline)
-           ))
-       io)
-      (io-filename io))))
+    (let ((old (find-object file #f))
+          (res #f))
+      (if (file-exists? file)
+          (begin
+            (with-open-io (io file :input )
+              (format stream "File: ~a ~%Format: ~s~%Tracks: ~s~%Division: ~s"
+                      file
+                      (midi-file-format io) 
+                      (midi-file-tracks io)
+                      (midi-file-divisions io))
+              (midi-file-set-track io track)
+              (format stream "~%Track ~s, length ~s~%"
+                      (midi-file-track io) 
+                      (midi-file-tracklen io))
+              (midi-file-map-track 
+               (lambda (mf)
+                 (let ((q (midi-file-delta mf))
+                       (m (midi-file-message mf))
+                       (d (midi-file-data mf)))
+                   (midi-print-message m q :stream stream :data d)
+                                        ;(newline)
+                   ))
+               io)
+              (set! res io))
+            ;; flush input stream object if created here
+            (if (not old) (hash-remove! *dictionary*
+                                        (string-downcase (object-name res))))
+            file)
+          #f))))
 
 
