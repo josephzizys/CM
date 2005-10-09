@@ -224,6 +224,8 @@
 (define *qnext* #f)  ; next runttime
 (define *qlock* #f)  ; lock for threaded scheduler
 
+(define (scheduling? ) *scheduler*)
+
 (define (schedule-events stream object . args)
   ;; removed rt
   (let* ((ahead (if (pair? args) (car args) 0))
