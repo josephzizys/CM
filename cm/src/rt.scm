@@ -58,6 +58,24 @@
   (set! *rts-run* #f)
   (values))
 
+(define (rts-flush )
+  ;; at some point this will have to clear note ons
+  (with-mutex-grabbed (*qlock*)
+    (%q-flush *queue*))
+  (values))
+
+(define (rts-hush . args)
+  ;; flush queue and stop any sounding note ons if its a midi
+  ;; stream. i guess there should really be an io-hush generic for
+  ;; this.
+  (with-args (args &optional (out *out*))
+    (rts-flush)
+    (when (and out (is-a? out <midi-stream-mixin>))
+      (write-event (make <midi-control-change> :time 0
+                         :controller 123 :value 0)
+                   out 0))
+    (values)))
+
 (define (rts-pause )
   (err "rts-pause: not implemented."))
 
