@@ -256,16 +256,16 @@
 
 (define-macro (with-open-io args . body)
   (let ((io (pop args))
-	(path (pop args))
-	(dir (pop args))
-	(err? (gensym))
+        (path (pop args))
+        (dir (pop args))
+        (err? (gensym))
         (val (gensym)))
     `(let ((,io #f)
-	   (,err? ':error))
+           (,err? ':error))
       (dynamic-wind
        (lambda () #f)
        (lambda ()
-	 (let ((,val #f)) 
+         (let ((,val #f))
            (set! ,io (open-io ,path ,dir ,@args))
            ,@ (if (eq? dir ':output)
                 `((initialize-io ,io))
@@ -317,7 +317,7 @@
 (define (events object . args)
   ;; args are &key pairs or an optional time offset
   ;; followed by &key pairs.
-  (if *scheduler*
+  (if (scheduling?)
       (begin
        (format #t "Can't schedule events in non-real time while RTS is running.")
        nil)
@@ -393,8 +393,16 @@
 ;;;
 
 (define-method* (import-events (file <string>) . args )
-  (let ((io (init-io file)))
-    (apply (function import-events) io args)))
+  (if (file-exists? file)
+      (let ((old (find-object file #f))
+            (io (init-io file))
+            (res #f))
+        (setq res (apply (function import-events) io args))
+        ;; garbage-collect input stream object if created here
+        (if (not old) (hash-remove! *dictionary*
+                                    (string-downcase (object-name io))))
+        res)
+      #f))
 
 ;;;
 ;;; play
