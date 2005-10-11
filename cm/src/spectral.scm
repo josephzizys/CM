@@ -293,10 +293,12 @@
          (c (- high (* ub m))))
     (values c m (/ m c))))
 
-(define-macro (bes-jn unn ux)
+;; macro version has compile problem in sbcl 0.9.4 and up
+
+(define (bes-jn unn ux)
   ;;return Jn(x) for any integer n, real x
-  `(let ((nn ,unn)
-         (x ,ux))
+  (let ((nn unn) ;macro version was `(let ((nn ,unn) (x ,ux)) ...
+        (x ux)) 
     (let* ((n (inexact->exact (floor (abs nn))))
            (besn (if (= n 0) 
                    (bes-j0 x)
