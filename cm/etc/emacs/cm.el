@@ -20,13 +20,13 @@
 ;;;
 ;;; Indent CM/CLM/CMN forms properly
 
-(put 'if 'common-lisp-indent-function 1)
+;(put 'if 'common-lisp-indent-function 1)
 (put 'new 'common-lisp-indent-function 1)
 (put 'io 'common-lisp-indent-function 1)
 (put 'defobject 'common-lisp-indent-function 'defun)
-(put 'process 'common-lisp-indent-function 'defun)
-(put 'defprocess 'common-lisp-indent-function 0)
-(put 'with-sound 'common-lisp-indent-function 'defun)
+(put 'process 'common-lisp-indent-function 0)
+(put 'defprocess 'common-lisp-indent-function 'defun)
+(put 'with-sound 'common-lisp-indent-function 1)
 (put 'definstrument 'common-lisp-indent-function 'defun)
 (put 'dopairs 'common-lisp-indent-function  1)
 
