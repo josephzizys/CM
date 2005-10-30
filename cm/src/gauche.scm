@@ -24,7 +24,7 @@
 (use srfi-13)     ; extra string support
 (use srfi-27)    ; random bits
 (use file.util)  ; current-directory, home-directory
-
+(use gauche.threads) ; for rt threads
 
 ;; Lisp environment normalization
 
@@ -332,4 +332,12 @@
 ; (slot-definition-initargs sd)
 ; (slot-definition-initform sd)
 
+;;; thread support
 
+(define-macro (with-mutex-grabbed args . body)
+  (let ((mutex (car args)))
+    `(with-locking-mutex ,mutex (lambda () ,@body))))
+
+(define-macro (without-interrupts . body)
+  `(begin
+     ,@body))

@@ -19,13 +19,9 @@
 ;;; http://www.shiro.dreamhost.com/scheme/gauche/index.html
 ;;;
 
-
-(use gauche.threads) ; for rt threads
 (use gauche.net) ; needed for socket communication
 (use gauche.fcntl) ;need to set socket to non-blocking
 (use gauche.sequence)
-
-
 
 ;;gauche specific stuff for sending osc messages over udp sockets.
 
@@ -47,6 +43,7 @@
 
 (define (thread-current-time )
   (time->seconds (current-time)))
+
 ;;;
 ;;; socket/udp support
 ;;;
@@ -87,11 +84,8 @@
      (socket-bind (slot-ref usock 'socket) (make <sockaddr-in> :host "127.0.0.1" :port local-port))
      usock))
 
-
-
 (define (udp-socket-close sock)
-  (socket-close (slot-ref sock 'socket)))
-                          
+  (socket-close (slot-ref sock 'socket)))                          
 
 ;; is this even needed?? since
 ;; socket is not connection orientated
@@ -143,7 +137,6 @@
     (set! vec (make-byte-vector (+ 2208988800 (slot-ref target-time 'second))))
     (u8vector-append vec (make-byte-vector (inexact->exact (* (modf (time->seconds target-time)) #xffffffff))))))
 
-
 (define (u8vector->double vec)
   (let ((dv (uvector-alias <f64vector> vec)))
     (f64vector-ref dv 0)))
@@ -167,7 +160,7 @@
               (/ (u8vector->uint (u8vector-subseq arr 4 8))
                  4294967295))))))
 
-(find-index (lambda (x) (= x 0)) *bundle-header-bytes*)
+;(find-index (lambda (x) (= x 0)) *bundle-header-bytes*)
 
 (define (osc-parse-contents arr)
   (let ((lst (list))
@@ -237,15 +230,6 @@
       (set! msg (osc-parse-contents arr)))
     (list msg timestamp)))
 
-
-(define-macro (with-mutex-grabbed args . body)
-  (let ((mutex (car args)))
-    `(with-locking-mutex ,mutex (lambda () ,@body))))
-
-
-(define-macro (without-interrupts . body)
-  `(begin
-     ,@body))
 
 
 
