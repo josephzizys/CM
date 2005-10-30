@@ -5,7 +5,6 @@
 ;;;
 ;;; Supercollider examples, by Todd Ingalls. 
 
-
 (in-package :cm)
 
 (defobject simple (scsynth)
@@ -53,7 +52,6 @@
    (pan :initform 0))
   (:parameters freq dur amp pan bufnum time))
 
-
 (defobject fm-env (scsynth)
   ((freq :initform 440)
    (mratio :initform 1.0)
@@ -63,7 +61,6 @@
    (ampenv :initform #f)
    (indexenv :initform #f))
   (:parameters freq mratio index amp dur time ampenv indexenv))
-
 
 (defobject randomness1 (scsynth)
   ((density :initform 1)
@@ -77,11 +74,9 @@
    (id :initform 1))
   (:parameters minfreq maxfreq ampthresh id))
 
-
 ;;;
 ;;; same as the nrt example
 ;;;
-
 
 (define (sc-simple-1 num)
   (process repeat num 
@@ -108,6 +103,9 @@
 ;;; sprout example
 ;;;
 ;;; (sprout (sc-simple-1 10))
+;;;
+;;; (rts-stop)
+;;; (sc-close)
 
 (define (sc-fm-2 num)
   (process repeat num for i from 0
@@ -133,6 +131,7 @@
 		       :time (now)
 		       :add-action 0)
 	   wait 3))
+
 ;;;
 ;;; clear scheduler on sc server and free all nodes
 ;;;
@@ -142,19 +141,15 @@
 ;;; (sprout (sc-fm-2 10))
 ;;;
 
-
-
 (define (simple-tendency1 num wai lo hi)
   (process repeat num for i from 0
 	   when (= i 0)
 	   output (new reverb2 :node 300 :time (now))
-
 	   output (new simple :node (+ 1000 i) 
 		       :freq (tendency (/ i num) lo hi)
 				       
 		       :amp .1
 		       :time (now))
-				      
 	   wait wai))
 
 ;;;
@@ -183,7 +178,7 @@
 	   output (new sc-buffer :bufnum 11
 		       :time 0
 		       :frames 512
-		       :flags :normalize
+;		       :flags :normalize
 		       :with-gen '(:sine1 (1 .1 .1 .1 .9 .01 .3 .1 1 1)))
 	   output (new buffer-get :time (now) :bufnum 11 :samples (mod i 512))
 	   wait wai))
@@ -260,7 +255,7 @@
 ;;; start the pitch tracker on the server.
 ;;;
 
-(output (new pitch-track :node 1000 :time 0 :ampthresh .2) :to *sc*)
+; (output (new pitch-track :node 1000 :time 0 :ampthresh .2) :to *sc*)
 
 ;;;
 ;;; this is the reply function. it tries to double the detected pitch.
