@@ -199,7 +199,7 @@
                                      (make-byte-vector len)
                                      mess))
               (set! mess-len (+ mess-len len))))
-          (set! mess-len (+ mess-len 20))
+          (set! mess-len (+ mess-len 24))
           (send-osc arr io mess-len))
       (multiple-value-bind (mess len)
         (format-osc message)
