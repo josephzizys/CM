@@ -918,7 +918,7 @@
         ,(scheme->cltl (third form) env)))
 
 (defun make-vector->make-array (form &optional env)
-  (if (third form)
+  (if (cddr form) ;(third form) ; 3rd form might be #f!
     `(make-array ,(scheme->cltl (second form) env)
                  :initial-element
                  ,(scheme->cltl (third form) env))
