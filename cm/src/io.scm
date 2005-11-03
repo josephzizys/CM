@@ -397,7 +397,7 @@
       (let ((old (find-object file #f))
             (io (init-io file))
             (res #f))
-        (setq res (apply (function import-events) io args))
+        (set! res (apply (function import-events) io args))
         ;; garbage-collect input stream object if created here
         (if (not old) (hash-remove! *dictionary*
                                     (string-downcase (object-name io))))
