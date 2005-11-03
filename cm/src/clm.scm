@@ -160,14 +160,14 @@
       (list 
        `(let* ((args (list #f))
                (tail args))   ; <- this var is appended to
-
           (if (eq? (slot-ref io 'output-trace) #t)
             (format #t "~a ~s..."
                     (object-name obj) (decimals scoretime 3)))
 
           ,@ (map (lambda (p) (parf p 'obj 'tail 'scoretime)) pars)
-             (apply (symbol-function (object-name obj))
-                    (cdr args))
+             (apply
+              (function ,objclassname) ;(symbol-function (object-name obj))
+              (cdr args))
              (values))))))
 
 (define-class* <audio-file> (<event-file>)
