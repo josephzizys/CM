@@ -426,6 +426,7 @@ get_lisp_info () {
         *guile*)                        flv=guile ;;
         *gosh*)                         flv=gauche ;;
         *stklos*)                       flv=stklos ;;
+        *snd*)                          flv=snd ;;
         *)
           msg_e "Can't determine flavor of '$1'."
           msg_i "Re-run with -F option."
@@ -476,6 +477,11 @@ get_lisp_info () {
         LISP_DIA=SCHEME
         flv=gauche
         vrs=`"$1" -V | cut -d' ' -f5`
+        ;;
+      *snd*)
+        LISP_DIA=SCHEME
+        flv=snd
+        vrs=`"$1" --version | head -1 | cut -d' ' -f5`
         ;;
       *stklos*)
         LISP_DIA=SCHEME
@@ -664,6 +670,9 @@ make_lisp_cmd () {
       ;;
     guile)
       LISP_CMD="'$LISP_EXE' $LOPTS -l '${LISP_LOA}.scm' -e cm"
+      ;;
+    snd)
+      LISP_CMD="'$LISP_EXE' $LOPTS -l '${LISP_LOA}.scm' -e '(cm)'"
       ;;
     gauche)
       LISP_CMD="'$LISP_EXE' $LOPTS -i -l '${LISP_LOA}.scm' -e '(cm)'"
