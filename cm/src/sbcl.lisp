@@ -35,8 +35,8 @@
 ;; The require statements here are for documentation purposes only,
 ;; the functional ones are in sbcl's insure-sys-features (make.lisp)
 
-(require :sb-posix)
-(require :sb-bsd-sockets)
+;(require :sb-posix)
+;(require :sb-bsd-sockets)
 
 (cond ((string-equal (lisp-implementation-version) "0.8" :end1 3)
        (defun env-var (var)
