@@ -19,30 +19,26 @@
     #+clisp
     (read-line (ext:run-shell-command cm.sh :output :stream :wait t) nil)
     #-clisp
-    (let ((str (with-output-to-string (s)
-                 (let ((asdf::*verbose-out* s) )
-                   (asdf:run-shell-command cm.sh))
-                 s))
-          (pos 0))
-      ;; asdf:run-shell-command adds comment line
-;      (when (char= (elt str pos) #\;)
-;        (setq pos (position #\Newline str)))
-;      (delete #\Newline (subseq str pos))
-     str )))
-
-
-(setq foo "; $ /Lisp/cm/bin/cm.sh -q
-; /Lisp/cm/bin/cm.sh -q
-; darwin-powerpc
-"
-)
-
-
-(position-if #'alpha-char-p
-             foo
-             :start
-             (or  0))
-(subseq foo (position #\Newline foo :from-end t))
+    (let* ((str (with-output-to-string (s)
+                  (let ((asdf::*verbose-out* s) )
+                    (asdf:run-shell-command cm.sh))
+                  s))
+           (len (length str))
+           (end (1- len))
+           (pos 0))
+      ;; a mess because asdf:run-shell-command adds comment line
+      ;; and lisps may add comment lines too....
+      ;; find end of last non-empty line...
+      (loop until (or (< end 0)
+                      (alphanumericp (elt str end)))
+         do (decf end))
+      ;; read bacwards until next white space
+      (setq pos (position-if (lambda (c)
+                           (member c '(#\Return #\Tab #\Space #\Newline)
+                                   ))
+                             str :end (- end 1) :from-end t))
+      (subseq str (+ pos 1) (+ end 1)))))
+           
 ; (setq foo (os-arch))
 ;; (lisp-implementation-version)
 ;; "2.35 (2005-08-29) (built on pomajxego.local [192.168.1.40])"
@@ -78,8 +74,33 @@
   (cm-directory "bin" (concatenate 'string (lisp-vers) "_" 
                                    (os-arch))))
 
+(defun isdir (dir)
+  ;; From: Sam Steingold via Bill Schelter
+  #+allegro (excl::probe-directory dir)
+  #+clisp (values
+           (ignore-errors
+             (#+lisp=cl ext:probe-directory #-lisp=cl lisp:probe-directory
+                        dir)))
+  #+cmu (eq :directory (unix:unix-file-kind (namestring dir)))
+  #+lispworks (lw:file-directory-p dir)
+  #+sbcl (eq :directory (sb-unix:unix-file-kind (namestring dir)))
+  #-(or allegro clisp cmu lispworks sbcl)
+  (probe-file (make-pathname :directory dir)))
+
+(defun mkdir (dir)
+  ;; From: Sam Steingold
+  #+allegro (excl:make-directory dir)
+  #+clisp (#+lisp=cl ext:make-dir #-lisp=cl lisp:make-dir dir)
+  #+cmu (unix:unix-mkdir (namestring dir) #o777)
+  #+lispworks (system:make-directory dir)
+  #+sbcl (sb-unix:unix-mkdir (namestring dir) #o777)
+  #+openmcl (ccl:create-directory dir)
+  #-(or allegro clisp cmu lispworks sbcl openmcl)
+  (error 'not-implemented :proc (list 'mkdir dir)))
+
 (defun ensure-bin-directory ()
-  (asdf:run-shell-command "mkdir ~A" *cm-bin-directory*))
+  (unless (isdir *cm-bin-directory*)
+    (mkdir *cm-bin-directory*))   )
 
 (defun fasl-pathname (file)
   (make-pathname :directory (pathname-directory *cm-bin-directory*)
@@ -136,16 +157,20 @@
 (defclass finalize-op (asdf:operation) ())
 
 (defmethod asdf:perform  ((op initialize-op) x)
+  (declare (ignore x))
   (print :initialize!)
   (ensure-sys-features)
   (ensure-bin-directory )
   )
 
 (defmethod asdf:perform  ((op finalize-op) x)
+  (declare (ignore x))
   (print :finalize!)
   )
 
-(defmethod asdf::traverse :around ((op asdf:load-op) (sys cm-application))
+(defmethod asdf::traverse :around ((op asdf:load-op) 
+                                   (sys cm-application))
+  ;; add initialize and finalize ops to list of operations
   (let ((init (make-instance 'initialize-op))
         (last (make-instance 'finalize-op)))
     (nconc (list (cons init sys))
@@ -170,13 +195,14 @@
                            #-midishare (:file "midishare-stubs")
                            #-player (:file "player-stubs")
                            #-portmidi (:file "portmidi-stubs")
-                           (:file "pkg" :depends-on (
-                                                     #-clm "clm-stubs"
-                                                     #-cmn "cmn-stubs"
-                                                     #-fomus "fomus-stubs"
-                                                     #-midishare "midishare-stubs"
-                                                     #-player "player-stubs"
-                                                     #-portmidi "portmidi-stubs"))
+                           (:file "pkg"
+                                  :depends-on (
+                                               #-clm "clm-stubs"
+                                               #-cmn "cmn-stubs"
+                                               #-fomus "fomus-stubs"
+                                               #-midishare "midishare-stubs"
+                                               #-player "player-stubs"
+                                               #-portmidi "portmidi-stubs"))
                            #+allegro (:file "acl")
                            #+clisp (:file "clisp")
                            #+cmu (:file "cmu")
