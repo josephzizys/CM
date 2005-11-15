@@ -29,9 +29,13 @@
 ;;;
 
 (defpackage :cm
-  (:shadow :make-load-form #+lispworks :random #+lispworks :funcall
+  (:shadow :make-load-form 
+           ;; have to block these from cl because the are used as
+           ;; pattern class names. funcions are installed in
+           ;; level1.lisp
+           :random :funcall
            ;; have to block these from CLM
-           :io :ran :exit :quit :play :graph :control :filter)
+           :io :ran :exit :quit :play :graph :control)
   (:use :common-lisp )
   ;; use keywords instead of strings for case sensitive lisps.
   (:import-from :clm 
@@ -150,6 +154,14 @@
 ;;;
 ;;; intern and export ms:new, ms:MidiPrintEv, ms:output ms:sprout
 ;;;
+
+(in-package :cm)
+
+;; we had to block importing these symbols from CL because we use them
+;; as pattern names so we install their function definitios here.
+
+(setf (symbol-function 'random) #'cl:random)
+(setf (symbol-function 'funcall) #'cl:funcall)
 
 (let ((syms '(#:new  #:MidiPrintEv #:sprout #:output #:now
               #:receive #:receive?)))
