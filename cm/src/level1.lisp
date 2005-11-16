@@ -525,8 +525,7 @@
                      when (probe-file p)
                      return p)
                   (error "Source file ~S does not exist." file)))
-         (bin (make-pathname :defaults src
-                             :type (cl-user::syscmd :fasl))))
+         (bin (compile-file-pathname src )))
     (when (or (not (probe-file bin))
               (< (file-write-date bin)
                  (file-write-date src)))
