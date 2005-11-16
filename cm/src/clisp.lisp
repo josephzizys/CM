@@ -36,7 +36,7 @@
     (concatenate 'string "CLISP "
                  (subseq s p (position #\space s :start p)))))
 
-(setf clos::*allow-mixing-metaclasses* T)
+;;;(setf clos::*allow-mixing-metaclasses* T)
 
 ;(defun slot-definition-initargs (slot)
 ;  (clos::slotdef-initargs slot))
@@ -57,7 +57,7 @@
 ;(defun generic-function-name (class)
 ;  (error "generic-function-name not implmented in clisp."))
   
-(defun finalize-class (class) (values))
+(defun finalize-class (class) class (values))
 
 (defmethod validate-class ((class t) (superclass t))
   ;; this is a no-op except in OpenMCL 014
@@ -66,8 +66,8 @@
 (defmethod make-load-form (obj)
   (error "no make-load-form method for ~s." obj))
 
-(setf clos::*warn-if-gf-already-called* NIL)
-(setf custom:*warn-on-floating-point-contagion* nil)
+;;(setf clos::*warn-if-gf-already-called* NIL)
+;;(setf custom:*warn-on-floating-point-contagion* nil)
 
 ;;;
 ;;;  misc. stuff
@@ -124,7 +124,7 @@
                        )))
 
 ;;;
-;;; thread support
+;;; thread and osc stubs
 ;;;
 
 (defun nothreads ()
@@ -138,6 +138,7 @@
   (nothreads))
 
 (defun make-thread (thunk &optional name)
+  thunk name
  (nothreads))
 
 (defun thread-name (thread) 
@@ -204,6 +205,16 @@
   sec
   (nothreads))
 
+(defun thread-current-time ()
+  (nothreads))
+
+(defmacro without-interrupts (&body body)
+  `(progn ,@body))
+
+(defmacro with-mutex-grabbed ((mutex) &body body)
+  mutex
+  `(progn ,@body))
+
 ;(current-exception-handler)
 ;(with-exception-handler handler thunk)
 ;(raise obj)
@@ -217,7 +228,36 @@
 ;;; periodic task support
 ;;;
 
-(defun set-periodic-task! (&rest args)
+(defparameter *periodic-tasks* nil)
+
+(defun add-periodic-task! (&rest args)
   args
   (error "set-periodic-task!: no periodic tasks in CLISP."))
 
+(defun remove-periodic-task! (&rest args)
+  args
+  (error "remove-periodic-task!: no periodic tasks in CLISP."))
+
+(defun set-periodic-task-rate! (&rest args)
+  args
+  (error "set-periodic-task-rate!: no periodic tasks in CLISP."))
+
+(defun periodic-task-rate (&rest args)
+  args
+  (error "periodic-task-rate: no periodic tasks in CLISP."))
+
+
+
+(defun periodic-task-running? (&rest args)
+  args
+  (error "periodic-task-running?: no periodic tasks in CLISP."))
+
+
+;CM::MAKE-UDP-SOCKET CM::UDP-SOCKET-CLOSE CM::MAKE-OSC-TIMETAG
+; CM::SEND-OSC CM::PERIODIC-TASK-RUNNING? CM::SET-PERIODIC-TASK-RATE!
+; CM::PERIODIC-TASK-RATE CM::RTS-RUN-SPECIFIC CM::WITH-MUTEX-GRABBED
+; CM::*QLOCK* CM::WITHOUT-INTERRUPTS CM::THREAD-CURRENT-TIME
+; CM::ADD-PERIODIC-TASK! CM::OSC-VECTOR->OSC-MESSAGE CM::UDP-SOCKET-RECV
+; CM::REMOVE-PERIODIC-TASK!
+;The following special variables were not defined:
+; CM::*PERIODIC-TASKS*
