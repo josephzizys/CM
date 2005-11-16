@@ -462,7 +462,8 @@ get_lisp_info () {
         ;;
       *openmcl*|*OPENMCL*|*dppccl*)
         flv=openmcl
-        vrs=`echo '(lisp-implementation-version)' | "$1" -b | sed -n $vre`
+#        vrs=`echo '(lisp-implementation-version)' | "$1" -b | sed -n $vre`
+        vrs=`"$1" --version`
         ;;
       *sbcl*|*SBCL*)
         flv=sbcl
