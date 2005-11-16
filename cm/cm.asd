@@ -15,29 +15,46 @@
                   :defaults *cm-directory*)))
 
 (defun os-arch ()
-  (let ((cm.sh (concatenate 'string (cm-directory "bin") "cm.sh -q")))
-    #+clisp
-    (read-line (ext:run-shell-command cm.sh :output :stream :wait t) nil)
-    #-clisp
-    (let* ((str (with-output-to-string (s)
-                  (let ((asdf::*verbose-out* s) )
-                    (asdf:run-shell-command cm.sh))
-                  s))
-           (len (length str))
-           (end (1- len))
-           (pos 0))
-      ;; a mess because asdf:run-shell-command adds comment line
-      ;; and lisps may add comment lines too....
-      ;; find end of last non-empty line...
-      (loop until (or (< end 0)
-                      (alphanumericp (elt str end)))
-         do (decf end))
-      ;; read bacwards until next white space
-      (setq pos (position-if (lambda (c)
-                           (member c '(#\Return #\Tab #\Space #\Newline)
-                                   ))
-                             str :end (- end 1) :from-end t))
-      (subseq str (+ pos 1) (+ end 1)))))
+  ;; exec "cm.sh -q" to keep cm.sh and lisp's bin dir names in sync
+  (flet ((stdout (stream)
+           ;; read a line from shell stream
+           (let ((res (read-line stream nil)))
+             (if (or (null res) (equal res "")) nil
+                 res)))
+         (cm.sh (&optional args)
+           (format nil "~acm.sh~@[ ~a~]" (cm-directory "bin")
+                   args)))
+    #+(and clisp win32)
+    "windows-i686"
+    #+(and clisp (not win32))
+    (or (ext:getenv "CM_PLATFORM")
+        (stdout
+         (run-shell-command (cm.sh "-q") :output :stream :wait t)))
+    #+cmu
+    (or (cdr (assoc ':cm_platform ext:*environment-list*))
+        (stdout
+         (ext:process-output
+          (ext:run-program (cm.sh) '("-q") :output :stream))
+         nil))
+    #+sbcl
+    (stdout
+     (sb-ext:process-output
+      (sb-ext:run-program (cm.sh) '("-q") :output :stream)))
+    #+(and allegro microsoft-32)
+    "windows-i686"
+    #+(and allegro (not microsoft-32))
+    (or (sys:getenv "CM_PLATFORM")
+        (stdout
+         (excl:run-shell-command (cm.sh "-q") :output :stream :wait nil)))
+    #+lispworks
+    (stdout
+     (sys:run-shell-command (cm.sh "-q") :wait nil :output :stream))
+    #+openmcl
+    (or (ccl::getenv "CM_PLATFORM")
+        (stdout
+         (ccl:external-process-output-stream
+          (ccl:run-program (cm.sh) '("-q" ) :wait nil :output :stream))))))
+
            
 ; (setq foo (os-arch))
 ;; (lisp-implementation-version)
@@ -243,7 +260,7 @@
                            )))
      )
 
-;; (progn #+sbcl (require :asdf) #-sbcl (load "/Lisp/cm/src/asdf"))
+;; (progn #+(or sbcl openmcl) (require :asdf) #-(or sbcl openmcl) (load "/Lisp/cm/src/asdf"))
 ;; (load "/Lisp/cm/cm.asd")
-;; (setq asdf::*verbose-out* nil)
+;; (setq asdf::*verbose-out* t)
 ;; (asdf:operate 'asdf:load-op :cm)
