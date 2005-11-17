@@ -34,8 +34,7 @@
     (or (cdr (assoc ':cm_platform ext:*environment-list*))
         (stdout
          (ext:process-output
-          (ext:run-program (cm.sh) '("-q") :output :stream))
-         nil))
+          (ext:run-program (cm.sh) '("-q") :output :stream))))
     #+sbcl
     (stdout
      (sb-ext:process-output
@@ -206,20 +205,8 @@
               :default-component-class cm-source-file
               :components (
                            ;; stub unloaded system
-                           #-clm (:file "clm-stubs")
-                           #-cmn (:file "cmn-stubs")
-                           #-fomus (:file "fomus-stubs")
-                           #-midishare (:file "midishare-stubs")
-                           #-player (:file "player-stubs")
-                           #-portmidi (:file "portmidi-stubs")
-                           (:file "pkg"
-                                  :depends-on (
-                                               #-clm "clm-stubs"
-                                               #-cmn "cmn-stubs"
-                                               #-fomus "fomus-stubs"
-                                               #-midishare "midishare-stubs"
-                                               #-player "player-stubs"
-                                               #-portmidi "portmidi-stubs"))
+                           (:file "stubs" )
+                           (:file "pkg" :depends-on ("stubs"))
                            #+allegro (:file "acl")
                            #+clisp (:file "clisp")
                            #+cmu (:file "cmu")
