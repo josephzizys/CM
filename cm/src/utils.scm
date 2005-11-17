@@ -324,21 +324,26 @@
   (with-args (args &key (delimiters '(#\space #\tab)) 
 		   (start 0) (end (string-length string))
 		   key)
-    (loop for pos1 = start then (+ pos2 1) 
-       until (> pos1 end)
-       ;;(position-if (lambda (c) (member c delimiters)) string ':start pos1)
-       for pos2 = (or (do ((i pos1 (+ i 1))
-                           (f #f))
-                          ((or f (= i end)) f)
-                        (if (member (string-ref string i) delimiters)
-                          (set! f i)
-                          ))
-                      end)
-       unless (= pos1 pos2)
-       collect 
-       (if key
-         (key (substring string pos1 pos2))
-         (substring string pos1 pos2)))))
+    (let* ((pos1 start)
+           (pos2 #f)
+           (head (list #f))
+           (tail head))
+      (do ()
+          ((> pos1 end) (cdr head))
+        (set! pos2 (or (do ((i pos1 (+ i 1))
+                            (f #f))
+                           ((or f (= i end)) f)
+                         (if (member (string-ref string i) delimiters)
+                             (set! f i)))
+                       end))
+        (unless (= pos1 pos2)
+          (set-cdr! tail 
+                    (list (if key
+                              (key (substring string pos1 pos2))
+                              (substring string pos1 pos2))))
+          (set! tail (cdr tail)))
+        (set! pos1 (+ pos2 1))))))
+
 
 ; (string-substrings "A B :FOO (BASD     ASD) 123")
 

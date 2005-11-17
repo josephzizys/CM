@@ -1438,49 +1438,46 @@
         (oldn #f)
         (blank #f))
     (loop while (> toprint 0)
-          do 
-          ;; print lines
-          (when indent (format stream indent))
-          ;; offset 
-          ;;(format stream "~6,'0d:  " offs)
-          (format stream (format-integer offs 6 #\0))
-          (format stream ":")
+       do 
+       ;; print lines
+       (when indent (format stream indent))
+       ;; offset 
+       ;;(format stream "~6,'0d:  " offs)
+       (format stream (format-integer offs 6 #\0))
+       (format stream ":")
+       ;; bytes
+       (set! oldn n)                    ; cache n
+       (do ((i 0 (+ i 1)))
+           ((or (= i 16)
+                (>= n bytes))
+            (set! blank (- 16 i)))
+         (format stream
+                 (format-integer (vector-ref data n) 2 #\0))
+         (if (odd? i) (format stream " "))
+         (incf n))
+       ;; padding 
+       ;;(format stream (format nil "~~~d@t" 
+       ;;                       (- (+ (* blank 3) 2)
+       ;;                          (floor (/ blank 2)))))
+       (dotimes (i (- (+ (* blank 3) 2)
+                      (floor (/ blank 2))))
+         (format stream " "))
 
-          ;; bytes
-          (set! oldn n)               ; cache n
-          (loop for i below 16 
-                while (< n bytes)
-                do (begin
-                    ;;(format stream "~2,'0x~:[~; ~]"
-                    ;;        (vector-ref data n) (odd? i))
-                    (format stream
-                            (format-integer (vector-ref data n) 2 #\0))
-                    (if (odd? i) (format stream " "))
-                    (incf n))
-                finally (set! blank (- 16 i)))
-          ;; padding 
-          ;;(format stream (format nil "~~~d@t" 
-          ;;                       (- (+ (* blank 3) 2)
-          ;;                          (floor (/ blank 2)))))
-          (dotimes (i (- (+ (* blank 3) 2)
-                        (floor (/ blank 2))))
-            (format stream " "))
-
-          ;; chars
-          (set! n oldn)               ; restore n
-          (loop for i below 16
-                while (< n  bytes)
-                for b = (vector-ref data n)
-                do (begin
-                    ;;(format stream "~:[.~*~;~c~]"
-                    ;;        (< 31 b 127) (integer->char b))
-                    (if (< 31 b 127)
-                      (format stream (make-string 1 (integer->char b)))
-                      (format stream "."))
-                    (incf n))
-                finally (decf toprint i))
-          (format stream "~%")
-          (incf offs 16))
+       ;; chars
+       (set! n oldn)                    ; restore n
+       (loop for i below 16
+          while (< n  bytes)
+          for b = (vector-ref data n)
+          do (begin
+              ;;(format stream "~:[.~*~;~c~]"
+              ;;        (< 31 b 127) (integer->char b))
+              (if (< 31 b 127)
+                  (format stream (make-string 1 (integer->char b)))
+                  (format stream "."))
+              (incf n))
+          finally (decf toprint i))
+       (format stream "~%")
+       (incf offs 16))
     
     ;; print remark, if necessary
     (when (> rest 0)
