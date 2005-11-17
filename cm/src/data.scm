@@ -285,8 +285,7 @@
 		(string->symbol
 		 (string-append 
                   (if (not pre) ""
-                      (if (string? pre) pre
-                          (symbol->string pre)))
+                      (symbol->string pre))
                   (if (string? raw) raw
                       (symbol->string raw))
                   (if (not post) ""

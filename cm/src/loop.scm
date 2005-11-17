@@ -521,7 +521,8 @@
         (oper (pop forms))
 	(make-collector (lambda (var type acc head)
 			  (list var type acc head)))
-	(collector-var (lambda (col) (car col)))
+        ;; removed because noop
+	;;(collector-var (lambda (col) (car col)))
 	(collector-type (lambda (col) (cadr col)))
 	(collector-acc (lambda (col) (caddr col)))
 	(collector-head (lambda (col) (cadddr col)))

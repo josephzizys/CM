@@ -100,14 +100,14 @@
         ((:ratios )
          (set! cents? #f)
          (set! extern v))))
-    (unless extern
+    (unless (pair? extern)
       (err "Tuning needs :ratios or :cents initialization."))
-    
-    (when (null? extern)
-      (set! extern (list-prop args ':ratios))
-      (if (not extern)
-	(err "Tuning needs :ratios or :cents initialization.")
-	(set! cents? #f)))
+    ;; removed because noop
+    ;;(when (null? extern)
+    ;;  (set! extern (list-prop args ':ratios))
+    ;;  (if (not extern)
+    ;;      (err "Tuning needs :ratios or :cents initialization.")
+    ;;      (set! cents? #f)))
     
     (cond ((pair? (car extern))
            (set! nums
@@ -397,8 +397,10 @@
            (begin
             (err "Bad :step value ~s, use :degrees to pass notes to a mode."
                  v)
-            (set! spec v)
-            (set! type ':degrees))
+            ;; removed because noop
+            ;;(set! spec v)
+            ;;(set! type ':degrees)
+            )
            (begin
             (set! spec v)
             (set! type a))))
@@ -838,7 +840,8 @@
            (err "More than one of: :in, :in? or :through in ~s."
                 (cons 'note args)))
          (if (eq? sym ':in?) (set! test? #t))
-         (if (eq? oper ':in) (set! oper ':from))
+         ;; removed because noop
+         ;;(if (eq? oper ':in) (set! oper ':from)) 
          (set! oper sym)
          (set! scale val))
         (else

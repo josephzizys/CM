@@ -347,17 +347,14 @@
 (define-generic* remove-object)
 
 (define-method* (insert-object (sub <object>) (obj <seq>))
-  (let ((earliest? #f)
-	(subs (container-subobjects obj)))
+  (let ((subs (container-subobjects obj)))
     (if (null? subs)
       (let ((l (list sub)))
 	(set! (container-subobjects obj) l)
 	l)
       (let ((time (object-time sub)))
 	(cond 
-	  (( (if earliest? (function <=) (function <) )
-	     time 
-	     (object-time (car subs)))
+	  ((< time (object-time (car subs)))
 	   (let ((l (cons sub subs)))
 	     (set! (container-subobjects obj) l)
 	     l))
@@ -365,9 +362,7 @@
 	   (do ((top subs)
 		(head (cdr subs) (cdr subs)))
 	       ((or (null? head)
-		    (not ( (if earliest? (function <) (function <=))
-			   (object-time (car head))
-			   time)))
+		    (not (<= (object-time (car head)) time)))
 		(set-cdr! subs (cons sub head))
 		top)
 	     (set! subs head))))))))
@@ -651,8 +646,11 @@
       ;; signal error if no slot for each par
       (insure-parameters pars decl sups)
       ;; signal warning if no time parameter
-      (unless (find-time-parameter pars decl sups)
-        (format #t "Warning: no time parameter for ~s." name))
+      ;; this no longer does that!
+      (find-time-parameter pars decl sups)
+      ;;(unless (find-time-parameter pars decl sups)
+      ;;  (format #t "Warning: no time parameter for ~s." name))
+
       ;; if user didnt explicitly provide :event-streams look
       ;; for one in the superclass list
       (if (not make)
