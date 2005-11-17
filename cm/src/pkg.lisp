@@ -20,19 +20,326 @@
 (in-package :cl-user)
 
 ;;;
-;;; The CM package definition. Keywords are used so that the names
-;;; will reflect the inplementation's read-case sensitivity but will
-;;; not pollute the current package's name space with any new symbols.
+;;; defstub: define entry points of unloaded systems
 ;;;
-;;; The CLM, CMN, and MidiShare packages must exist when this file is
-;;; loaded, either by loading the systems or their stubs files.
+
+(defmacro defstub (name &optional args type)
+  ;; stub out defuns, defmethods and global vars of systems that are
+  ;; not currently loaded. If stub is called then signal consistent
+  ;; error message:
+  ;; "Attempt to call ($FN ...) without $SYS loaded."
+  (cond ((consp name)
+         (ecase (car name)
+           (setf 
+            (unless type (setq type :defun))
+            (unless args (setq args '(a b))))
+           (special
+            (setq args nil)
+            (setq type ':proclaim))))
+        (t
+         (unless type (setq type :defun))
+         (unless args (setq args '(&rest args)))))
+  (let* ((vars (loop for x in args
+                  for n = (if (consp x) (car x) x)
+                  unless (member n lambda-list-keywords)
+                  collect n))
+         (str (if (eql (car args) '&rest)
+                  (format nil
+                          "Attempt to call (~A~~{ ~~S~~}) without ~A loaded."
+                          name (package-name *package*))
+                  (format nil "Attempt to call (~A~{~A~}) without ~A loaded."
+                          name
+                          (loop repeat (length vars) collect " ~S")
+                          (package-name *package*)))))
+    vars str
+    (ecase type 
+      (:method `(progn (defgeneric ,name ,args)
+                       (defmethod ,name ,args 
+                         (error ,str ,@vars))))
+      (:defun `(defun ,name ,args
+                 (error ,str ,@vars)))      
+      (:proclaim `(proclaim (quote ,name))))))
+
+(export '(defstub) :cl-user)
+
+;;;
+;;; CLM package stubs
+;;;
+
+#-clm
+(defpackage :clm
+  (:use :common-lisp)
+  #+openmcl (:import-from :ccl #:open-shared-library)
+  (:import-from :cl-user #:defstub)
+  (:export #:mus-next #:mus-bshort #:mus-aifc #:mus-riff
+           #:mus-lshort #:*clm-with-sound-depth* #:wsdat-play
+           #:init-with-sound #:finish-with-sound #:*clm-file-name*          
+           #:*clm-channels* #:*clm-srate*
+           ;; these symbols are  used by cm but not redefined
+           #:spectrum #:env #:src #:clm-load #:dac #:definstrument
+           #:*definstrument-hook* #:with-sound #:filter))
+
+(in-package :clm)
+
+#-clm
+(progn
+(defstub clm-load)
+(defstub dac)
+(defstub init-with-sound)
+(defstub finish-with-sound)
+(defstub wsdat-play)
+(defstub (setf wsdat-play))
+(defmacro with-sound ((&rest args) &body body)
+  args body
+  (error "Attempt to call with-sound without CLM loaded."))
+(defstub (special mus-next mus-aifc mus-bshort mus-riff
+                           mus-lshort *clm-with-sound-depth*
+                           *clm-file-name* *clm-channels*
+                           *clm-srate* *definstrument-hook*))
+)
+
+;;;
+;;; CMN package stubs
+;;;
+
+#-cmn
+(defpackage :cmn
+  (:use :common-lisp)
+  (:import-from :cl-user #:defstub)
+  (:export #:*exact-rhythms* #:staff-descriptors #:init-clm-input
+           #:score #:stfdat-staff #:staff-data #:set-staff-number
+           #:set-staff-clef #:finish-clm-input #:find-staff #:add-staff
+           #:add-data-1 #:add-note-to-staff))
+
+(in-package :cmn)
+
+#-cmn
+(progn
+(defstub stfdat-staff )
+(defstub staff-data (x) :method )
+(defstub (setf staff-data) (a b) :method)
+(defstub set-staff-number)
+(defstub set-staff-clef)
+(defstub finish-clm-input)
+(defstub find-staff)
+(defstub add-staff )
+(defstub add-data-1)
+(defstub add-note-to-staff)
+(defstub (special *exact-rhythms* staff-descriptors))
+)
+
+;;;
+;;; Fomus stubs
+;;;
+
+#-fomus
+(defpackage :fomus
+  (:use :common-lisp)
+  #+(or lispworks clisp sbcl) (:shadow #:rest)
+  (:import-from :cl-user #:defstub)
+  (:export #:fomus #:event-base #:part #:note #:rest #:timesig
+           #:keysig #:meas #:event-off #:obj-id #:obj-partid
+           #:part-opts #:*parts* #:event-note #:event-dur
+           #:part-events #:make-part #:make-note #:get-instr-syms))
+
+(in-package :fomus)
+
+#-fomus
+(progn
+(defclass event-base () ((partid :initarg :partid)))
+(defclass note (event-base) ())
+(defclass rest (event-base) ())
+(defclass timesig (event-base) ())
+(defclass keysig (event-base) ())
+(defclass part (event-base) ())
+
+(defstub obj-id (a) :method)
+(defstub (setf obj-id) (a b) :method)
+(defstub obj-partid (a) :method)
+(defstub (setf obj-partid) (a b) :method)
+(defstub event-off (a) :method)
+(defstub (setf event-off) (a b) :method)
+(defstub event-note (a) :method)
+(defstub event-dur (a) :method)
+(defstub part-events (a) :method)
+(defstub (setf part-events) (a b) :method)
+(defstub fomus)
+(defstub make-part)
+(defstub make-note)
+(defstub get-instr-syms)
+(defstub part-opts (p) :method)
+(defstub (special *parts*))
+)
+
+;;;
+;;; Portmidi
+;;;
+
+#-portmidi
+(defpackage :portmidi
+  (:use :common-lisp) 
+  (:nicknames :pm :pt)
+  #+openmcl (:import-from :ccl #:open-shared-library)
+  (:import-from :cl-user #:defstub)
+  (:export #:portmidi #:*portmidi* #:GetDefaultInputDeviceID
+           #:GetDefaultOutputDeviceID #:GetDeviceDescriptions
+           #:TimeStart #:OpenInputStream #:OpenOutputStream
+           #:StreamClose #:StreamSetFilter #:StreamSetChannelMask
+           #:StreamPoll #:StreamRead #:Message.status #:Message.data1
+           #:Message.data2 #:Message #:StreamWriteShort #:EventBufferFree
+           #:EventBufferNew #:EventBufferMap))
+
+(in-package :portmidi)
+
+#-portmidi
+(progn
+(defstub portmidi)
+(defstub GetDefaultInputDeviceID)
+(defstub GetDefaultOutputDeviceID)
+(defstub GetDeviceDescriptions)
+(defstub TimeStart)
+(defstub OpenInputStream)
+(defstub OpenOutputStream)
+(defstub StreamClose)
+(defstub StreamSetFilter)
+(defstub StreamSetChannelMask)
+(defstub StreamPoll)
+(defstub StreamRead)
+(defstub Message.status)
+(defstub Message.data1)
+(defstub Message.data2)
+(defstub Message)
+(defstub StreamWriteShort)
+(defstub EventBufferFree)
+(defstub EventBufferNew)
+(defstub EventBufferMap)
+(defstub (special *portmidi*))
+)
+
+#-midishare
+(defpackage :midishare
+  (:use :common-lisp)
+  (:nicknames :ms)
+  (:import-from :cl-user #:defstub)
+  (:export #:midishare #:midiGetVersion #:MidiOpen #:MidiClose
+           #:MidiCountAppls #:MidiGetNamedAppl #:MidiGetIndAppl
+           #:MidiErrIndex #:MidiGetName #:MidiConnect #:MidiGetTime
+           #:MidiIsConnected #:MidiSendIm #:MidiSend #:MidiSendAt
+           #:MidiCountEvs #:typeNote #:typeKeyOn #:typeKeyOff
+           #:typeKeyPress #:typeCtrlChange #:typeProgChange
+           #:typeChanPress #:typePitchWheel #:typePitchBendtypeSongPos
+           #:typeSongSel #:typeClock #:typeStart #:typeContinue #:typeStop
+           #:typeTune #:typeActiveSens #:typeReset #:typeSysEx
+           #:typeStream #:typePrivate #:typeSeqNum #:typeTextual
+           #:typeCopyright #:typeSeqName #:typeInstrName #:typeLyric
+           #:typeMarker #:typeCuePoint #:typeChanPrefix #:typeEndTrack
+           #:typeTempo #:typeSMPTEOffset #:typePortPrefix #:typeKeySign
+           #:typeTimeSign #:MidiNewEv #:port #:chan #:field #:bend #:text
+           #:ref #:date #:evtype #:MidiCopyEv #:MidiFreeEv #:MidiAddField
+           #:MidiTask #:MidiSetRcvAlarm #:MidiGetEv #:nullptrp #:nullptr
+           #:MidiFlushEvs
+           ;; player
+           #:OpenPlayer #:ClosePlayer #:midiNewSeq #:MidiAddSeq
+           #:StartPlayer #:ContPlayer #:StopPlayer #:PausePlayer
+           #:kMuteOn #:kMuteOff #:kSoloOn #:kSoloOff #:kMute
+           #:kSolo #:kExternalSync #:kInternalSync #:kClockSync
+           #:kSMPTESync #:GetAllTrackPlayer #:SetAllTrackPlayer
+           #:GetTrackPlayer #:SetTrackPlayer #:SetParamPlayer
+           #:SetTempoPlayer #:TicksPerQuarterNote
+           #:SetSynchroInPlayer #:MidiNewMidiFileInfos
+           #:MidiFileLoad #:MidiFileSave #:mf-clicks #:mf-format
+           #:mf-timedef #:MidiFreeMidiFileInfos #:MidiFreeSeq ))
+
+(in-package :midishare)
+
+#-midishare
+(progn
+(defparameter %no-midishare 0) ;; stop CMU compiler optimization
+(defun midishare ()
+  ;; return false since MidiShare is not around
+  %no-midishare)
+(defstub midiGetVersion)
+(defstub MidiOpen)
+(defstub MidiClose)
+(defstub MidiCountAppls)
+(defstub MidiCountEvs)
+(defstub MidiGetNamedAppl)
+(defstub MidiGetIndAppl)
+(defstub MidiErrIndex)
+(defstub MidiGetName)
+(defstub MidiConnect)
+(defstub MidiGetTime)
+(defstub MidiIsConnected)
+(defstub MidiSendIm)
+(defstub MidiSend)
+(defstub MidiSendAt)
+(defstub MidiNewEv)
+(defstub port)
+(defstub chan)
+(defstub field)
+(defstub bend)
+(defstub text)
+(defstub ref)
+(defstub date)
+(defstub evtype)
+(defstub MidiCopyEv)
+(defstub MidiFreeEv)
+(defstub MidiAddField)
+(defstub nullptrp)
+(defstub nullptr)
+(defstub MidiFlushEvs)
+(defstub MidiTask)
+(defstub MidiSetRcvAlarm)
+(defstub MidiGetEv)
+(defstub (special typeNote typeKeyOn typeKeyOff typeKeyPress
+                  typeCtrlChange typeProgChange typeChanPress
+                  typePitchWheel typePitchBend typeSongPos typeSongSel
+                  typeClock typeStart typeContinue typeStop typeTune
+                  typeActiveSens typeReset typeSysEx typeStream
+                  typePrivate typeSeqNum typeTextual typeCopyright
+                  typeSeqName typeInstrName typeLyric typeMarker
+                  typeCuePoint typeChanPrefix typeEndTrack typeTempo
+                  typeSMPTEOffset typePortPrefix typeKeySign
+                  typeTimeSign))
+;; player
+(defstub OpenPlayer)
+(defstub ClosePlayer)
+(defstub MidiNewSeq)
+(defstub MidiAddSeq)
+(defstub StartPlayer)
+(defstub ContPlayer)
+(defstub StopPlayer)
+(defstub PausePlayer)
+(defstub GetAllTrackPlayer)
+(defstub SetAllTrackPlayer)
+(defstub GetTrackPlayer)
+(defstub SetTrackPlayer)
+(defstub SetParamPlayer)
+(defstub SetTempoPlayer)
+(defstub SetSynchroInPlayer)
+(defstub MidiNewMidiFileInfos)
+(defstub MidiFileLoad)
+(defstub MidiFileSave)
+(defstub mf-clicks)
+(defstub mf-format)
+(defstub mf-timedef)
+(defstub MidiFreeMidiFileInfos)
+(defstub MidiFreeSeq)
+(defstub (special kMuteOn kMuteOff kSoloOn kSoloOff kMute kSolo
+                           kExternalSync kInternalSync kClockSync
+                           kSMPTESync TicksPerQuarterNote ))
+)
+
+;;;
+;;; The CM package definition.
 ;;;
 
 (defpackage :cm
   (:shadow :make-load-form 
-           ;; have to block these from cl because the are used as
-           ;; pattern class names. funcions are installed in
-           ;; level1.lisp
+           ;; have to shadow these from cl package because they are
+           ;; used as pattern class names which is "illegal" in
+           ;; cltl2. their functions on the local symbol versions are
+           ;; installed at the end of this file.
            :random :funcall
            ;; have to block these from CLM
            :io :ran :exit :quit :play :graph :control)

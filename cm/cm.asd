@@ -91,7 +91,8 @@
                                    (os-arch))))
 
 (defun isdir (dir)
-  ;; From: Sam Steingold via Bill Schelter
+  ;; return true if dir exists.
+  ;; cribbed from file utils by sam steingold
   #+allegro (excl::probe-directory dir)
   #+clisp (values
            (ignore-errors
@@ -104,19 +105,18 @@
   (probe-file (make-pathname :directory dir)))
 
 (defun mkdir (dir)
-  ;; From: Sam Steingold
+  ;; create dir
+  ;; cribbed from file utils by sam steingold
   #+allegro (excl:make-directory dir)
   #+clisp (#+lisp=cl ext:make-dir #-lisp=cl lisp:make-dir dir)
   #+cmu (unix:unix-mkdir (namestring dir) #o777)
   #+lispworks (system:make-directory dir)
   #+sbcl (sb-unix:unix-mkdir (namestring dir) #o777)
-  #+openmcl (ccl:create-directory dir)
-  #-(or allegro clisp cmu lispworks sbcl openmcl)
-  (error 'not-implemented :proc (list 'mkdir dir)))
+  #+openmcl (ccl:create-directory dir))
 
 (defun ensure-bin-directory ()
   (unless (isdir *cm-bin-directory*)
-    (mkdir *cm-bin-directory*))   )
+    (mkdir *cm-bin-directory*)))
 
 (defun fasl-pathname (file)
   (make-pathname :directory (pathname-directory *cm-bin-directory*)
@@ -124,7 +124,7 @@
                  :defaults file))
 
 ;;;
-;;;
+;;; CM system definition. 
 ;;;
 
 (defclass cm-application (asdf:system) ())
@@ -132,57 +132,60 @@
 (defclass cm-source-file (asdf:cl-source-file) 
   ((scm :initform nil :initarg :scheme :accessor scm-source-file)))
 
+;; classes for pre and and post loading operations.
+(defclass initialize-op (asdf:operation) ())
+(defclass finalize-op (asdf:operation) ())
+
 (defmethod asdf:output-files ((operation asdf:compile-op) (f cm-source-file))
+  ;; make compile pathnames include the bin directory
    (list (fasl-pathname (asdf:component-pathname f))))
   
 (defmethod asdf:perform :before ((operation asdf:compile-op) (f cm-source-file))
+  ;; generate scheme sources if necessary
   (let ((scheme (scm-source-file f)))
     (if scheme
         (let* ((lsp (asdf:component-pathname f))
                (scm (make-pathname :name (if (stringp scheme) scheme
                                              (pathname-name lsp))
                                    :type "scm" :defaults lsp)))
+          (print (list :checking :scheme= scm :lisp= lsp))
+          (print (list :probe (probe-file scm)))
           (if (probe-file scm)
               (when (or (not (probe-file lsp))
                         (> (file-write-date (truename scm))
                            (file-write-date (truename lsp))))
+                (print (list :scheme-newer!))
                 (unless (boundp 'toplevel-translations)
                   (load (merge-pathnames "stocl" lsp) :verbose nil))
                 (funcall 'stocl scm :file lsp :verbose nil))
-              (error "Scheme source file ~A not found!" scm))))))
+              (error "Scheme source file ~A not found." scm))))))
 
 #-(or sbcl lispworks)
 (defun ensure-sys-features () )
 
 #+sbcl
 (defun ensure-sys-features ()
-  ;;(print :requiring-posix...)
+  ;; these should be in sbcl.lisp but sbcl give an error if the
+  ;; require is part of the file.
   (require :sb-posix)
-  ;;(print :requiring-sockets...)
   (require :sb-bsd-sockets))
 
 #+lispworks
 (defun ensure-sys-features ()
+  ;; this is necessary to set at read time or lispworks stack is too
+  ;; small to load this file!
   #.(setq system:*stack-overflow-behaviour* :warn))
 
-;;(eval-when (:load-toplevel :execute)
-;;  (ensure-sys-features)
-;;  (ensure-bin-directory ))
-
-(defclass initialize-op (asdf:operation) ())
-(defclass finalize-op (asdf:operation) ())
 
 (defmethod asdf:perform  ((op initialize-op) x)
   (declare (ignore x))
   (print :initialize!)
   (ensure-sys-features)
-  (ensure-bin-directory )
-  )
+  (ensure-bin-directory ))
 
 (defmethod asdf:perform  ((op finalize-op) x)
   (declare (ignore x))
-  (print :finalize!)
-  )
+  (print :finalize!))
 
 (defmethod asdf::traverse :around ((op asdf:load-op) 
                                    (sys cm-application))
@@ -204,9 +207,7 @@
               :serial t
               :default-component-class cm-source-file
               :components (
-                           ;; stub unloaded system
-                           (:file "stubs" )
-                           (:file "pkg" :depends-on ("stubs"))
+                           (:file "pkg")
                            #+allegro (:file "acl")
                            #+clisp (:file "clisp")
                            #+cmu (:file "cmu")
@@ -214,7 +215,6 @@
                            #+(and mcl (not openmcl)) (:file "mcl")
                            #+openmcl (:file "openmcl")
                            #+sbcl (:file "sbcl")
-
                            (:file "clos")
                            (:file "iter" :scheme "loop")
                            (:file "level1")
@@ -234,8 +234,6 @@
                            (:file "midi1" :scheme t)
                            (:file "midi2" :scheme t)
                            (:file "midi3" :scheme t)
-                           ;;(:file "midishare" :scheme t")
-                           ;;(:file "player" :scheme t)
                            (:file "cmn" :scheme t)
                            (:file "fomus" :scheme t)
                            (:file "osc" :scheme t)
@@ -245,7 +243,7 @@
                            (:file "rt" :scheme t)
                            (:file "rt-sc" :scheme t)
                            )))
-     )
+    )
 
 ;; (progn #+(or sbcl openmcl) (require :asdf) #-(or sbcl openmcl) (load "/Lisp/cm/src/asdf"))
 ;; (load "/Lisp/cm/cm.asd")
