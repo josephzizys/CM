@@ -54,7 +54,7 @@
 ;  (pcl::make-load-form obj))
 
 (defun finalize-class (class) 
-  ;(pcl::finalize-inheritance class)
+  class
   )
 
 (defmethod validate-class ((class t) (superclass t))
@@ -143,10 +143,12 @@
   #-x86 (nothreads))
 
 (defun thread? (obj)
+  obj
   #+x86 (mp:processp obj)
   #-x86 (nothreads))
 
 (defun make-thread (thunk &optional name)
+  thunk name
   #+x86
   (progn
     (mp::init-multi-processing)
@@ -159,6 +161,7 @@
   #-x86 (nothreads))
 
 (defun thread-name (thread) 
+  thread
   #+x86 (mp:process-name thread)
   #-x86 (nothreads))
 
@@ -166,6 +169,7 @@
 ;(thread-specific-set! thread obj)
 
 (defun thread-start! (thread)
+  thread
   #+x86 (mp:enable-process thread)
   #-x86 (nothreads))
 
@@ -174,24 +178,29 @@
   #-x86 (nothreads))
 
 (defun thread-sleep! (timeout)
+  timeout
   #+x86 (sleep timeout)
   #-x86 (nothreads))
 
 (defun thread-terminate! (thread)
+  thread
   #+x86 (mp:destroy-process thread)
   #-x86 (nothreads))
 
 ;(thread-join! thread [timeout [timeout-val]])
 
 (defun mutex? (obj)
+  obj
   #+x86 (typep obj 'mp:lock)
   #-x86 (nothreads))
 
 (defun make-mutex (&optional name)
+  name
   #+x86 (if name (mp:make-lock name) (mp:make-lock))
   #-x86 (nothreads))
 
 (defun mutex-name (mutex)
+  mutex
   #+x86 (slot-value mutex 'mp::name)
   #-x86 (nothreads))
 
