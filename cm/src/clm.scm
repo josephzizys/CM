@@ -16,7 +16,6 @@
 
 ;;;
 ;;; Definitions for <clm-file> and <audio-file>
-;;; See also: clm2
 ;;;
 
 (define (clm-print-par-value v s)
@@ -475,4 +474,101 @@
       (load output)
       *clm-imports*)))
 
+(define-method* (open-io (io <audio-file>) dir . args)
+  args
+  (if (eq? dir ':output)
+    (let ((inits (event-stream-args io))
+          (ftype (filename-type (object-name io)))
+          (autype #f)
+          (fmat #f))
+      (cond ((string-ci=? ftype "snd")
+             (set! autype mus-next)
+             (set! fmat mus-bshort))
+            ((string-ci=? ftype "aiff")
+             (set! autype mus-aifc)
+             (set! fmat mus-bshort))
+            ((string-ci=? ftype "wav")
+             (set! autype mus-riff)
+             (set! fmat mus-lshort)))
+      (unless (list-prop inits ':header-type)
+        (push autype inits)
+        (push ':header-type inits))
+      (unless (list-prop inits ':data-format)
+        (push fmat inits)
+        (push ':data-format inits))
+      (set! (io-open io)
+            (apply (function init-with-sound)
+                   ':output
+                   (file-output-filename io)
+                   :play #f
+                   inits))
+      (unless (null? (audio-file-output-trace io))
+        (apply (function tell-snd)
+               (file-output-filename io)
+               inits))
+      io)
+    (next-method)))
 
+(define-method* (close-io (io <audio-file>) . mode)
+  (let ((wsd (io-open io))
+        (old *clm-with-sound-depth*))
+    (set! *clm-with-sound-depth* 1)
+    (when (eq? (slot-ref io 'output-trace) #t)
+      (format #t "Done!~&"))
+    (when (and (pair? mode) (car mode))
+      (set! (wsdat-play wsd) #f))
+    (finish-with-sound wsd)
+    (set! (io-open io) #f)
+    (set! *clm-with-sound-depth* old)))
+
+(define (tell-snd file . args)
+  (with-args (args &key reverb decay-time reverb-data
+                   (channels *clm-channels*) (srate *clm-srate*)
+                   &allow-other-keys)
+    (format #t "~%; File: ~s" file)
+    (format #t "~%; Channels: ~s" channels)
+    (format #t "~%; Srate: ~s" srate)
+    (format #t "~%; Reverb: ~a~%" (or reverb "None"))
+    (if decay-time
+      (format #t "decay time: ~s%" decay-time))
+    (if reverb-data
+      (format #t "reverb data: ~s~%" reverb-data))
+    (values)))
+
+(define (definstrument-hook name args)
+  (let* ((opts (if (pair? name) (cdr name) (list)))
+         (tpar (list-prop opts ':time-parameter )))
+    (formals->defobject (cons* (if (pair? opts)
+                                 (first name) 
+                                 name) 
+                               args)
+                        tpar)))
+
+(define *definstrument-hook* (function definstrument-hook))
+
+;(formals->defobject '(fm time duration frequency amplitude
+;                      &key (amplitude-env '(0 0 25 1 75 1 100 0))
+;                      (mratio 1) (index 1) (index-env '(0 1 100 1))
+;                      (degree 0) (distance 0) (reverb 0))
+;                    )
+
+;;; hkt: i dont think anyone uses these
+
+;; (define-method* (write-event (obj <midi>) (fil <clm-file>) scoretime)
+;;   (let ((ins (midi-channel->name (midi-channel obj))))
+;;     (if ins
+;;       (format (io-open fil) "(~a ~s ~s ~s ~s)~%"
+;; 	      ins
+;; 	      scoretime
+;; 	      (midi-duration obj)
+;; 	      (hertz (midi-keynum obj))
+;; 	      (midi-amplitude obj)))))
+
+;; (define-method* (write-event (obj <midi>) (fil <audio-file>) scoretime)
+;;   (let ((ins (midi-channel->name (midi-channel obj))))
+;;     (if ins
+;;       ( (symbol-function ins)		; funcall
+;; 	scoretime
+;; 	(midi-duration obj)
+;; 	(hertz (midi-keynum obj))
+;; 	(midi-amplitude obj)))))

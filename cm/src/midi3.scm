@@ -466,35 +466,6 @@
 (define (midi-channel->name chan)
   (vector-ref midi-channel-names chan))  
 
-(define-method* (write-event (obj <midi>) (fil <clm-file>) scoretime)
-  (let ((ins (midi-channel->name (midi-channel obj))))
-    (if ins
-      (format (io-open fil) "(~a ~s ~s ~s ~s)~%"
-	      ins
-	      scoretime
-	      (midi-duration obj)
-	      (hertz (midi-keynum obj))
-	      (midi-amplitude obj)))))
-
-(define-method* (write-event (obj <midi>) (fil <sco-file>) scoretime)
-  (let ((ins (midi-channel->name (midi-channel obj))))
-    (if ins
-      (format (io-open fil) "~a ~s ~s ~s ~s~%"
-	      ins
-	      scoretime
-	      (midi-duration obj)
-	      (hertz (midi-keynum obj))
-	      (midi-amplitude obj)))))
-
-(define-method* (write-event (obj <midi>) (fil <audio-file>) scoretime)
-  (let ((ins (midi-channel->name (midi-channel obj))))
-    (if ins
-      ( (symbol-function ins)		; funcall
-	scoretime
-	(midi-duration obj)
-	(hertz (midi-keynum obj))
-	(midi-amplitude obj)))))
-
 ;;;
 ;;; import-events
 ;;;

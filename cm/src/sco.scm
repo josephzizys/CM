@@ -152,6 +152,17 @@
 ; (defobject i1 (i) (time dur freq amp) (:parameters time dur freq amp))
 ; (defobject f1 (f) ((env :initform '())) (:parameters time size gen &rest env))
 
+;;;dont think anyone uses this
+;; (define-method* (write-event (obj <midi>) (fil <sco-file>) scoretime)
+;;   (let ((ins (midi-channel->name (midi-channel obj))))
+;;     (if ins
+;;       (format (io-open fil) "~a ~s ~s ~s ~s~%"
+;; 	      ins
+;; 	      scoretime
+;; 	      (midi-duration obj)
+;; 	      (hertz (midi-keynum obj))
+;; 	      (midi-amplitude obj)))))
+
 ;;;
 ;;; .sco file importing
 ;;;
