@@ -124,6 +124,7 @@
 (defstub find-staff)
 (defstub add-staff )
 (defstub add-data-1)
+(defstub init-clm-input)
 (defstub add-note-to-staff)
 (defstub (special *exact-rhythms* staff-descriptors))
 )
