@@ -179,12 +179,16 @@
               (error "Scheme source file ~A not found." scm))))))
 
 #-(or sbcl lispworks)
-(defun ensure-sys-features () )
+(defun ensure-sys-features ()
+  (print (list :compile-print *compile-print*
+               :compile-verbose *compile-verbose*)))
 
 #+sbcl
 (defun ensure-sys-features ()
   ;; these should be in sbcl.lisp but sbcl give an error if the
   ;; require is part of the file.
+  (print (list :compile-print *compile-print*
+               :compile-verbose *compile-verbose*))
   (require :sb-posix)
   (require :sb-bsd-sockets))
 
@@ -256,22 +260,23 @@
                            (:file "scheduler" :scheme t :depends-on ("io"))
                            (:file "sco" :scheme t :depends-on ("io"))
                            (:file "clm" :scheme t :depends-on ("io"))
-                           (:file "clm2" :scheme t :depends-on ("clm"))
+                           ;;(:file "clm2" :scheme t :depends-on ("clm"))
                            (:file "midi1" :scheme t :depends-on ("objects"))
-                           (:file "midi2" :scheme t :depends-on ("midi1" "io"))
-                           (:file "midi3" :scheme t :depends-on ("midi2"))
-                           (:file "cmn" :scheme t :depends-on ("io"))
-                           (:file "fomus" :scheme t :depends-on ("io"))
+                           (:file "midi2" :scheme t :depends-on ("midi1" "io" "scheduler"))
+                           (:file "midi3" :scheme t :depends-on ("midi2" ))
+                           (:file "cmn" :scheme t :depends-on ("io" "midi3"))
+                           (:file "fomus" :scheme t :depends-on ("io" "midi3"))
                            (:file "osc" :scheme t :depends-on ("io"))
                            (:file "sc" :scheme t :depends-on ("osc"))
-                           #+openmcl (:file "openmcl-rt" :depends-on ("pkg"))
-                           #+sbcl (:file "sbcl-rt" :depends-on ("pkg"))
-                           (:file "rt" :scheme t :depends-on ("scheduler"))
+                           #+openmcl (:file "openmcl-rt" :depends-on ("pkg" "scheduler"))
+                           #+sbcl (:file "sbcl-rt" :depends-on ("pkg" "scheduler"))
+                           (:file "rt" :scheme t :depends-on ("scheduler" "midi3"))
                            (:file "rt-sc" :scheme t :depends-on ("rt" "sc"))
                            )))
     )
 
 ;; (load "/Lisp/cm/cm.asd")
 ;; (setq asdf::*verbose-out* t)
+;; (trace compile-file )
 ;; (trace asdf:input-files asdf:output-files)
 ;; (asdf:operate 'asdf:load-op :cm)
