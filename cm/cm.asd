@@ -31,27 +31,21 @@
          (cm.sh (&optional args)
            (format nil "~acm.sh~@[ ~a~]" (cm-directory "bin")
                    args)))
-    #+(and clisp win32)
-    "windows-i686"
+    #+(and allegro (not microsoft-32))
+    (or (sys:getenv "CM_PLATFORM")
+        (stdout
+         (excl:run-shell-command (cm.sh "-q") :output :stream :wait nil)))
     #+(and clisp (not win32))
     (or (ext:getenv "CM_PLATFORM")
         (stdout
          (run-shell-command (cm.sh "-q") :output :stream :wait t)))
+    #+(or (and allegro microsoft-32) (and clisp win32))
+    "windows-i686"
     #+cmu
     (or (cdr (assoc ':cm_platform ext:*environment-list*))
         (stdout
          (ext:process-output
           (ext:run-program (cm.sh) '("-q") :output :stream))))
-    #+sbcl
-    (stdout
-     (sb-ext:process-output
-      (sb-ext:run-program (cm.sh) '("-q") :output :stream)))
-    #+(and allegro microsoft-32)
-    "windows-i686"
-    #+(and allegro (not microsoft-32))
-    (or (sys:getenv "CM_PLATFORM")
-        (stdout
-         (excl:run-shell-command (cm.sh "-q") :output :stream :wait nil)))
     #+lispworks
     (stdout
      (sys:run-shell-command (cm.sh "-q") :wait nil :output :stream))
@@ -59,8 +53,11 @@
     (or (ccl::getenv "CM_PLATFORM")
         (stdout
          (ccl:external-process-output-stream
-          (ccl:run-program (cm.sh) '("-q" ) :wait nil :output :stream))))))
-
+          (ccl:run-program (cm.sh) '("-q" ) :wait nil :output :stream))))
+    #+sbcl
+    (stdout
+     (sb-ext:process-output
+      (sb-ext:run-program (cm.sh) '("-q") :output :stream)))))
            
 ; (setq foo (os-arch))
 ;; (lisp-implementation-version)
@@ -130,25 +127,80 @@
                  :type (pathname-type (compile-file-pathname file))
                  :defaults file))
 
+#-(or sbcl lispworks)
+(defun ensure-sys-features () )
+
+#+sbcl
+(defun ensure-sys-features ()
+  ;; these should be part of sbcl.lisp but sbcl signals error if the
+  ;; requires are in the file...
+  (require :sb-posix)
+  (require :sb-bsd-sockets))
+
+#+lispworks
+(defun ensure-sys-features ()
+  ;; this is necessary to set at read time or lispworks stack is too
+  ;; small to load this file!
+  #.(setq system:*stack-overflow-behaviour* :warn))
+
 ;;;
-;;; CM system definition. 
+;;; CM system definition with pre and post-loading ops
 ;;;
 
 (defclass cm-application (asdf:system) ())
+(defclass initialize-op (asdf:operation) ())
+(defclass finalize-op (asdf:operation) ())
+
+(defun savevars (cm &rest vars)
+  ;; save global var bindings so they can be restored after load
+  (dolist (v vars)
+    (push (cons v (symbol-value v))
+          (asdf:component-property cm 'vars))))
+
+(defun restorevars (cm)
+  (dolist (b (asdf:component-property cm 'vars))
+    (set (car b) (cdr b))))
+
+(defmethod asdf:perform  ((op initialize-op) cm)
+  (ensure-sys-features)
+  (ensure-bin-directory)
+  (savevars cm '*compile-print* '*compile-verbose* 
+            '*load-verbose* '*load-print*)
+  (setq *compile-print* nil *compile-verbose* nil
+        *load-verbose* nil *load-print* nil)
+  (format t "~%; Common Music directory: ~S" *cm-directory*))
+
+(defmethod asdf:perform  ((op finalize-op) cm)
+  (let ((init (merge-pathnames ".cminit.lisp"
+                               (user-homedir-pathname))))
+    (if (probe-file init) (load init )))
+  (restorevars cm)
+  ;(terpri)
+  ;(funcall (find-symbol (string :cm) :cm))
+  )
+
+(defmethod asdf::traverse :around ((op asdf:load-op) 
+                                   (sys cm-application))
+  ;; add the initialize and finalize ops to list of operations
+  (let ((init (make-instance 'initialize-op))
+        (last (make-instance 'finalize-op)))
+    (nconc (list (cons init sys))
+           (call-next-method)
+           (list (cons last sys)))))
+
+;;;
+;;; CM source file has potential dependancy on scheme file
+;;;
 
 (defclass cm-source-file (asdf:cl-source-file) 
   ((scm :initform nil :initarg :scheme :accessor scm-source-file)))
 
-;; classes for pre and and post loading operations.
-(defclass initialize-op (asdf:operation) ())
-(defclass finalize-op (asdf:operation) ())
-
 (defmethod asdf:output-files ((operation asdf:compile-op) (f cm-source-file))
   ;; make compile pathnames include the bin directory
-   (list (fasl-pathname (asdf:component-pathname f))))
+  (list (fasl-pathname (asdf:component-pathname f))))
   
-
 (defmethod asdf:input-files ((operation asdf:compile-op) (f cm-source-file))
+  ;; include scheme dependancies
   (let ((lsp (asdf:component-pathname f))
         (scm (scm-source-file f)))
     (if scm
@@ -166,61 +218,31 @@
                (scm (make-pathname :name (if (stringp scheme) scheme
                                              (pathname-name lsp))
                                    :type "scm" :defaults lsp)))
-;          (print (list :checking :scheme= scm :lisp= lsp))
-;          (print (list :probe (probe-file scm)))
           (if (probe-file scm)
               (when (or (not (probe-file lsp))
                         (> (file-write-date (truename scm))
                            (file-write-date (truename lsp))))
-;                (print (list :scheme-newer!))
                 (unless (boundp 'toplevel-translations)
                   (load (merge-pathnames "stocl" lsp) :verbose nil))
+                (format t "~%; Generating ~S"
+                        (enough-namestring lsp *cm-directory*))
                 (funcall 'stocl scm :file lsp :verbose nil))
-              (error "Scheme source file ~A not found." scm))))))
+              (error "Scheme source ~S not found."
+                     (namestring scm)))))
+    (format t "~%; Compiling ~S"
+            (enough-namestring (asdf:component-pathname f)
+                               *cm-directory*))))
 
-#-(or sbcl lispworks)
-(defun ensure-sys-features ()
-  (print (list :compile-print *compile-print*
-               :compile-verbose *compile-verbose*)))
+(defmethod asdf:perform :before ((op asdf:load-op) (f cm-source-file))
+  (format t "~%; Loading ~S"
+          (enough-namestring (asdf:component-pathname f)
+                             *cm-directory*)))
 
-#+sbcl
-(defun ensure-sys-features ()
-  ;; these should be in sbcl.lisp but sbcl give an error if the
-  ;; require is part of the file.
-  (print (list :compile-print *compile-print*
-               :compile-verbose *compile-verbose*))
-  (require :sb-posix)
-  (require :sb-bsd-sockets))
+;;;
+;;; system definition
+;;;
 
-#+lispworks
-(defun ensure-sys-features ()
-  ;; this is necessary to set at read time or lispworks stack is too
-  ;; small to load this file!
-  #.(setq system:*stack-overflow-behaviour* :warn))
-
-
-(defmethod asdf:perform  ((op initialize-op) x)
-  (declare (ignore x))
-  ;;(print :initialize!)
-  (ensure-sys-features)
-  (ensure-bin-directory ))
-
-(defmethod asdf:perform  ((op finalize-op) x)
-  (declare (ignore x))
-  ;;(print :finalize!)
-  ;; load init file!
-  (funcall (find-symbol (string :cm) :cm)))
-
-(defmethod asdf::traverse :around ((op asdf:load-op) 
-                                   (sys cm-application))
-  ;; add initialize and finalize ops to list of operations
-  (let ((init (make-instance 'initialize-op))
-        (last (make-instance 'finalize-op)))
-    (nconc (list (cons init sys))
-           (call-next-method)
-           (list (cons last sys)))))
-
-(asdf:defsystem "cm"
+(asdf:defsystem :cm
     :description "Common Music"
     :class cm-application
     :version "2.7.0"
@@ -240,43 +262,78 @@
                            #+openmcl (:file "openmcl" :depends-on ("pkg"))
                            #+sbcl (:file "sbcl" :depends-on ("pkg"))
                            (:file "iter" :scheme "loop" :depends-on ("pkg"))
-                           (:file "level1" :depends-on ("pkg" #+allegro "acl"
-                                                              #+clisp "clisp"
-                                                              #+cmu "cmu"
-                                                              #+lispworks "lispworks"
-                                                              #+(and mcl (not openmcl)) "mcl"
-                                                              #+openmcl "openmcl"
-                                                              #+sbcl "sbcl"))
+                           (:file "level1" 
+                                  :depends-on ("pkg" #+allegro "acl"
+                                                     #+clisp "clisp"
+                                                     #+cmu "cmu"
+                                                     #+lispworks "lispworks"
+                                                     #+(and mcl (not openmcl)) "mcl"
+                                                     #+openmcl "openmcl"
+                                                     #+sbcl "sbcl"))
                            (:file "clos" :depends-on ("level1"))
                            #-no-scheme (:file "scheme" :depends-on ("pkg"))
-                           (:file "utils" :scheme t :depends-on ("level1"))
-                           (:file "mop" :scheme t :depends-on ("clos" "utils"))
-                           (:file "objects" :scheme t :depends-on ("mop" "iter" "utils"))
-                           (:file "data" :scheme t :depends-on ("utils"))
-                           (:file "scales" :scheme t :depends-on ("data" "objects"))
-                           (:file "spectral" :scheme t :depends-on ("data"))
-                           (:file "patterns" :scheme t :depends-on ("scales"))
-                           (:file "io" :scheme t :depends-on ("objects"))
-                           (:file "scheduler" :scheme t :depends-on ("io"))
-                           (:file "sco" :scheme t :depends-on ("io"))
-                           (:file "clm" :scheme t :depends-on ("io"))
-                           ;;(:file "clm2" :scheme t :depends-on ("clm"))
-                           (:file "midi1" :scheme t :depends-on ("objects"))
-                           (:file "midi2" :scheme t :depends-on ("midi1" "io" "scheduler"))
-                           (:file "midi3" :scheme t :depends-on ("midi2" ))
-                           (:file "cmn" :scheme t :depends-on ("io" "midi3"))
-                           (:file "fomus" :scheme t :depends-on ("io" "midi3"))
+                           (:file "utils" :scheme t
+                                  :depends-on ("level1"))
+                           (:file "mop" :scheme t
+                                  :depends-on ("clos" "utils"))
+                           (:file "objects" :scheme t 
+                                  :depends-on ("mop" "iter" "utils"))
+                           (:file "data" :scheme t 
+                                  :depends-on ("utils"))
+                           (:file "scales" :scheme t
+                                  :depends-on ("data" "objects"))
+                           (:file "spectral" :scheme t
+                                  :depends-on ("data"))
+                           (:file "patterns" :scheme t
+                                  :depends-on ("scales"))
+                           (:file "io" :scheme t
+                                  :depends-on ("objects"))
+                           (:file "scheduler" :scheme t 
+                                  :depends-on ("io"))
+                           (:file "sco" :scheme t
+                                  :depends-on ("io"))
+                           (:file "clm" :scheme t
+                                  :depends-on ("io"))
+                           (:file "midi1" :scheme t
+                                  :depends-on ("objects" "data"))
+                           (:file "midi2" :scheme t 
+                                  :depends-on ("midi1" "io" "scheduler"))
+                           (:file "midi3" :scheme t
+                                  :depends-on ("midi2" "scales"))
+                           (:file "cmn" :scheme t
+                                  :depends-on ("io" "midi3" "scales"))
+                           (:file "fomus" :scheme t 
+                                  :depends-on ("io" "midi3" "scales"))
                            (:file "osc" :scheme t :depends-on ("io"))
                            (:file "sc" :scheme t :depends-on ("osc"))
-                           #+openmcl (:file "openmcl-rt" :depends-on ("pkg" "scheduler"))
-                           #+sbcl (:file "sbcl-rt" :depends-on ("pkg" "scheduler"))
-                           (:file "rt" :scheme t :depends-on ("scheduler" "midi3"))
-                           (:file "rt-sc" :scheme t :depends-on ("rt" "sc"))
+                           #+openmcl (:file "openmcl-rt"
+                                            :depends-on ("pkg" "scheduler"))
+                           #+sbcl (:file "sbcl-rt"
+                                         :depends-on ("pkg" "scheduler"))
+                           (:file "rt" :scheme t 
+                                  :depends-on ("scheduler" "midi3"))
+                           (:file "rt-sc" :scheme t 
+                                  :depends-on ("rt" "sc"))
                            )))
     )
 
+;;;
+
+(defun cm ()
+  (flet ((cmcall (fn &rest args)
+           (apply (find-symbol (string fn) :cm) args))
+         (cmvar (var)
+           (symbol-value (find-symbol (string var) :cm))))
+    ;; add slime readtable mapping...
+    (setf *package* (find-package :cm))
+    (setf *readtable* (cmvar :*cm-readtable*))
+    (let ((swank-pkg (find-package :swank)))
+      (when swank-pkg
+        (let ((sym (intern (symbol-name :*readtable-alist*) swank-pkg)))
+          (setf (symbol-value sym)
+                (cons (cons (symbol-name :cm) (cmvar :*cm-readtable*))
+                      (symbol-value sym))))))
+    (cmcall :cm-logo)))
+
 ;; (load "/Lisp/cm/cm.asd")
-;; (setq asdf::*verbose-out* t)
-;; (trace compile-file )
-;; (trace asdf:input-files asdf:output-files)
 ;; (asdf:operate 'asdf:load-op :cm)
