@@ -46,7 +46,7 @@
   (define-output-method objclassname objclassvar 'obj
     'sco-file '<sco-file> 'io 'scoretime
     (list `(let ((fp (io-open io)))
-             (display (object-name obj) fp)
+             (display (sco-name obj) fp)
              ,@ (map (lambda (p) (sco-par-print p 'obj 'fp 'scoretime))
                      pars) 
                 (newline fp)
@@ -119,13 +119,21 @@
 ;;; added back i and f for easy subclassing
 ;;;
 
+(define-generic* (sco-name obj))
+
 (defobject i (event) 
            (ins dur)
   ;(:parameters time dur)            ; dont geneate output methods
   (:event-streams sco-file ) ; generate event methods for subclasses
   )
 
-(define-method* (object-name (obj <i>))
+(defobject f (event) 
+           (num size gen)
+;  (:parameters time size gen)            ; dont generat output methods
+  (:event-streams sco-file)
+  )
+
+(define-method* (sco-name (obj <i>))
   ;; if ins slot is bound use it, otherwise use class name
   (if (slot-bound? obj 'ins)
     (format #f "i~a" (slot-ref obj 'ins))
@@ -134,13 +142,7 @@
         n
         (string-downcase n)))))
 
-(defobject f (event) 
-           (num size gen)
-;  (:parameters time size gen)            ; dont generat output methods
-  (:event-streams sco-file)
-  )
-
-(define-method* (object-name (obj <f>))
+(define-method* (sco-name (obj <f>))
   ;; if num slot is bound use it, otherwise use class name
   (if (slot-bound? obj 'num)
     (format #f "f~a" (slot-ref obj 'num))

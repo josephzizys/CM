@@ -85,7 +85,8 @@
 (progn
 (defstub clm-load)
 (defstub dac)
-(defstub init-with-sound)
+#-cmu(defstub init-with-sound)
+#+cmu(defun init-with-sound (&rest args) (second args))
 (defstub finish-with-sound)
 (defstub wsdat-play)
 (defstub (setf wsdat-play))

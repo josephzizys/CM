@@ -92,14 +92,12 @@
 
 (defun filename->url (file)
   (let* ((norm (truename file))
-	 (host (pathname-host norm))
 	 (dirs (pathname-directory norm))
 	 (name (pathname-name norm))
 	 (type (pathname-type norm)))
     (unless (eql (first dirs) :absolute)
       (error "Filename ~a not absolute." file))
-    (format nil "file://~a~{/~a~}/~a.~a"
-	    (if (stringp host) host "")
+    (format nil "file://~{/~a~}/~a.~a"
 	    (cdr dirs) name type)))
 
 ;;;

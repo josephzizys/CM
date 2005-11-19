@@ -692,8 +692,7 @@
          (set! err? #f))
        (lambda () (if file (close-file file ':input)))
        )
-      (if (not err?) (set! data (reverse! data))
-          (set! data '()))
+      (if (not err?) (set! data (reverse! data)))
       data)))
        
 (define (read-spear-frame str ftyp amp? freq-scaler amp-scaler )

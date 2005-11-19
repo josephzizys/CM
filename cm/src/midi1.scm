@@ -1465,17 +1465,16 @@
 
        ;; chars
        (set! n oldn)                    ; restore n
-       (loop for i below 16
-          while (< n  bytes)
-          for b = (vector-ref data n)
-          do (begin
-              ;;(format stream "~:[.~*~;~c~]"
-              ;;        (< 31 b 127) (integer->char b))
-              (if (< 31 b 127)
-                  (format stream (make-string 1 (integer->char b)))
-                  (format stream "."))
-              (incf n))
-          finally (decf toprint i))
+       (do ((i 0 (+ i 1))
+            (b #f))
+           ((or (not (< i 16))
+                (not (< n  bytes)))
+            (decf toprint i))
+          (set! b (vector-ref data n))
+         (if (< 31 b 127)
+             (format stream (make-string 1 (integer->char b)))
+             (format stream "."))
+         (incf n))
        (format stream "~%")
        (incf offs 16))
     
@@ -1507,7 +1506,7 @@
         (%print-sysex-aux stream data bytes rest #f)))))
 
 (define (midi-print-message msg . args)
-  (with-args (args &optional time
+  (with-args (args time
                    &key data length
                    (stream #t)
                    (time-format #t)
@@ -2464,36 +2463,34 @@
 	(o1 (if lsb-first? 0 4))
 	(o2 (if lsb-first? 4 0)))
     (letrec ((nblize
-	      (lambda (x)
-		(cond ((not x) #f)
-		      ((null? x) #f)
-		      ((vector? x)
-		       (do ((i 0 (+ i 1))
-			    (e (vector-length x)))
-			   ((not (< i e)) #f)
-			 (nblize (vector-ref x i))))
-		      ((string? x)
-		       (do ((i 0 (+ i 1))
-			    (e (string-length x)))
-			   ((not (< i e)) #f)
-			 (nblize (string-ref x i)))
-		       (nblize 0))
-		      ((pair? x)
-		       (do ((i 0 (+ i 1))
-			    (e (length x)))
-			   ((not (< i e)) #f)
-			 (nblize (list-ref x i))))
-		      ((char? x)
-		       (set! x (char->integer x))
-		       (push (ldb (byte 4 o1) x) res)
-		       (push (ldb (byte 4 o2) x) res))
-		      ((exact? x)
-		       (push (ldb (byte 4 o1) x) res)
-		       (push (ldb (byte 4 o2) x) res))
-		      (else
-		       (err "Can't nibbilize ~s." x))))))
-      (nblize data)
-      (reverse res))))
+              (lambda (x)
+                (cond ((vector? x)
+                       (do ((i 0 (+ i 1))
+                            (e (vector-length x)))
+                           ((not (< i e)) #f)
+                         (nblize (vector-ref x i))))
+                      ((string? x)
+                       (do ((i 0 (+ i 1))
+                            (e (string-length x)))
+                           ((not (< i e)) #f)
+                         (nblize (string-ref x i)))
+                       (nblize 0))
+                      ((pair? x)
+                       (do ((i 0 (+ i 1))
+                            (e (length x)))
+                           ((not (< i e)) #f)
+                         (nblize (list-ref x i))))
+                      ((char? x)
+                       (set! x (char->integer x))
+                       (push (ldb (byte 4 o1) x) res)
+                       (push (ldb (byte 4 o2) x) res))
+                      ((exact? x)
+                       (push (ldb (byte 4 o1) x) res)
+                       (push (ldb (byte 4 o2) x) res))
+                      (else
+                       #f)))))
+      (loop for d in data do (nblize d))
+      (reverse! res))))
 
 ; (use-modules (ice-9 format))
 ; (format t "#x~x" (n-bit-twoscomp #x3fff 14 #f))	=> #x3fff
@@ -2771,7 +2768,7 @@
                 ((3 )
                  (string? data)))
         (err "Not valid ~d-bit data: ~s" size data))
-      (let ((data 
+      (let ((datafn
              (lambda (n)
                (if (= fmt 0)
                  ( ref data n)
@@ -2785,14 +2782,14 @@
 		         device-id
 		         +long-form-mtc-sub-id+
 		         +smpte-user-bits-sub-id-2+
-		         (data 0)
-                         (data 1)
-                         (data 2)
-                         (data 3)
-		         (data 4)
-                         (data 5)
-                         (data 6)
-                         (data 7)
+		         (datafn 0)
+                         (datafn 1)
+                         (datafn 2)
+                         (datafn 3)
+		         (datafn 4)
+                         (datafn 5)
+                         (datafn 6)
+                         (datafn 7)
 		         (if (= fmt 2)
 			   +smpte-user-bits-chars+
 			   +smpte-user-bits-raw+))))))

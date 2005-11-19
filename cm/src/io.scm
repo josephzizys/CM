@@ -145,10 +145,7 @@
             (let ((n (apply (function make) class 
                             ':name string init )))
               (if (not (null? args ))
-                (if #t ;(io-handler-args? n)
-                  (set! (event-stream-args n) args)
-                  (err "Not initializations for ~s: ~s."
-                       (class-name class) args)))
+                (set! (event-stream-args n) args) )
               n))
           (err "~s is not a valid port or file name." string))))))
 
@@ -159,10 +156,7 @@
       (dopairs (s v init)
 	(slot-set! io s v))
       (if (not (null? args))
-        (if #t ;(io-handler-args? io)
-          (set! (event-stream-args io) args)
-          (err "Not initializations for ~s: ~s."
-               (class-name (class-of io)) args)))))
+        (set! (event-stream-args io) args) )))
   io)
 
 (define (bump-version stream)
@@ -365,9 +359,7 @@
             #f
             (if (is-a? *out* <event-file>)
                 (let ((path (file-output-filename *out*))
-                      (args (if #t
-                                (event-stream-args *out*)
-                                '()))
+                      (args (event-stream-args *out*))
                       (hook (io-class-output-hook (class-of *out*))))
                   (when hook 
                     (apply hook path args)) ; funcall

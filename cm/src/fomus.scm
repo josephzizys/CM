@@ -43,12 +43,12 @@
     (let ((parts (fomus-file-parts io))
           (globs (fomus-file-global io)))
       ;; check for singles
-      (unless (list? parts)
-        (set! (fomus-file-parts io) 
-              (if parts (list parts) (list))))
-      (unless (list? globs)
-        (set! (fomus-file-global io) 
-              (if globs (list globs) (list))))
+      (if (not (pair? parts))
+          (set! (fomus-file-parts io) 
+                (if (null? parts) (list) (list parts))))
+      (if (not (pair? globs))
+          (set! (fomus-file-global io) 
+                (if (null? globs) (list) (list globs))))
       ;; flush existing data from parts
       (for-each (lambda (p)
                   (set! (obj-id p) #f)

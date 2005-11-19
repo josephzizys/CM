@@ -474,6 +474,20 @@
       (load output)
       *clm-imports*)))
 
+(define (tell-snd file . args)
+  (with-args (args &key reverb decay-time reverb-data
+                   (channels *clm-channels*) (srate *clm-srate*)
+                   &allow-other-keys)
+    (format #t "~%; File: ~s" file)
+    (format #t "~%; Channels: ~s" channels)
+    (format #t "~%; Srate: ~s" srate)
+    (format #t "~%; Reverb: ~a~%" (or reverb "None"))
+    (if decay-time
+      (format #t "decay time: ~s%" decay-time))
+    (if reverb-data
+      (format #t "reverb data: ~s~%" reverb-data))
+    (values)))
+
 (define-method* (open-io (io <audio-file>) dir . args)
   args
   (if (eq? dir ':output)
@@ -502,7 +516,7 @@
                    (file-output-filename io)
                    :play #f
                    inits))
-      (unless (null? (audio-file-output-trace io))
+      (when (audio-file-output-trace io)
         (apply (function tell-snd)
                (file-output-filename io)
                inits))
@@ -511,29 +525,14 @@
 
 (define-method* (close-io (io <audio-file>) . mode)
   (let ((wsd (io-open io))
-        (old *clm-with-sound-depth*))
-    (set! *clm-with-sound-depth* 1)
+        (*clm-with-sound-depth* 1))
+    *clm-with-sound-depth*
     (when (eq? (slot-ref io 'output-trace) #t)
       (format #t "Done!~&"))
     (when (and (pair? mode) (car mode))
       (set! (wsdat-play wsd) #f))
     (finish-with-sound wsd)
-    (set! (io-open io) #f)
-    (set! *clm-with-sound-depth* old)))
-
-(define (tell-snd file . args)
-  (with-args (args &key reverb decay-time reverb-data
-                   (channels *clm-channels*) (srate *clm-srate*)
-                   &allow-other-keys)
-    (format #t "~%; File: ~s" file)
-    (format #t "~%; Channels: ~s" channels)
-    (format #t "~%; Srate: ~s" srate)
-    (format #t "~%; Reverb: ~a~%" (or reverb "None"))
-    (if decay-time
-      (format #t "decay time: ~s%" decay-time))
-    (if reverb-data
-      (format #t "reverb data: ~s~%" reverb-data))
-    (values)))
+    (set! (io-open io) #f)))
 
 (define (definstrument-hook name args)
   (let* ((opts (if (pair? name) (cdr name) (list)))

@@ -232,32 +232,51 @@
 
 (defun add-periodic-task! (&rest args)
   args
-  (error "set-periodic-task!: no periodic tasks in CLISP."))
+  (error "set-periodic-task! not implemented in this lisp/os"))
 
 (defun remove-periodic-task! (&rest args)
   args
-  (error "remove-periodic-task!: no periodic tasks in CLISP."))
+  (error "remove-periodic-task! not implemented in this lisp/os"))
 
 (defun set-periodic-task-rate! (&rest args)
   args
-  (error "set-periodic-task-rate!: no periodic tasks in CLISP."))
+  (error "set-periodic-task-rate! not implemented in this lisp/os"))
 
 (defun periodic-task-rate (&rest args)
   args
-  (error "periodic-task-rate: no periodic tasks in CLISP."))
-
-
+  (error "periodic-task-rate not implemented in this lisp/os"))
 
 (defun periodic-task-running? (&rest args)
   args
-  (error "periodic-task-running?: no periodic tasks in CLISP."))
+  (error "periodic-task-running? not implemented in this lisp/os"))
 
+;;; stub out other rt stuff
 
-;CM::MAKE-UDP-SOCKET CM::UDP-SOCKET-CLOSE CM::MAKE-OSC-TIMETAG
-; CM::SEND-OSC CM::PERIODIC-TASK-RUNNING? CM::SET-PERIODIC-TASK-RATE!
-; CM::PERIODIC-TASK-RATE CM::RTS-RUN-SPECIFIC CM::WITH-MUTEX-GRABBED
-; CM::*QLOCK* CM::WITHOUT-INTERRUPTS CM::THREAD-CURRENT-TIME
-; CM::ADD-PERIODIC-TASK! CM::OSC-VECTOR->OSC-MESSAGE CM::UDP-SOCKET-RECV
-; CM::REMOVE-PERIODIC-TASK!
-;The following special variables were not defined:
-; CM::*PERIODIC-TASKS*
+(defun rts-run-specific (object ahead end)
+  object ahead end 
+  (error "rts-run-specific not implemented in this lisp"))
+
+(defun osc-vector->osc-message (arr) 
+  arr
+  (error "osc-vector->osc-message not implemented in this lisp/os"))
+
+(defun udp-socket-recv (sock bytes &optional flags)
+  sock bytes flags
+  (error "udp-socket-recv not implemented in this lisp/os"))
+
+(defun make-udp-socket (host port local-port)
+  host port local-port
+  (error "make-udp-socket not implemented in this lisp/os"))
+
+(defun udp-socket-close (sock)
+  sock
+  (error "udp-socket-close not implemented in this lisp/os"))
+
+(defun make-osc-timetag (offset out)
+  offset out
+  (error "make-osc-timetag not implemented in this lisp/os"))
+
+(defun send-osc (mess oscstr len)
+  mess oscstr len
+  (error "send-osc not implemented in this lisp/os"))
+

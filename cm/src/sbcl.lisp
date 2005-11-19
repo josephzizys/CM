@@ -42,6 +42,7 @@
        (defun env-var (var)
          (sb-ext::posix-getenv var))
        (defun set-env-var (var val)
+         var val
          (error "putenv not implemented in this sbcl.")))
        (t
         (defun env-var (var)
@@ -709,6 +710,7 @@
                          nil)))))
              (if (consp x) (list res) res)))))
       nil))
+
 
 
 
