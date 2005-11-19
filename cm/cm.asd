@@ -168,7 +168,7 @@
             '*load-verbose* '*load-print*)
   (setq *compile-print* nil *compile-verbose* nil
         *load-verbose* nil *load-print* nil)
-  (format t "~%; Common Music directory: ~S" *cm-directory*))
+  (format t "~%; Common Music install directory: ~S" *cm-directory*))
 
 (defmethod asdf:perform  ((op finalize-op) cm)
   (let ((init (merge-pathnames ".cminit.lisp"
@@ -235,7 +235,8 @@
 
 (defmethod asdf:perform :before ((op asdf:load-op) (f cm-source-file))
   (format t "~%; Loading ~S"
-          (enough-namestring (asdf:component-pathname f)
+          (enough-namestring (fasl-pathname
+                              (asdf:component-pathname f))
                              *cm-directory*)))
 
 ;;;
