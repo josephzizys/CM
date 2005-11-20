@@ -11,8 +11,12 @@
                         :defaults *load-pathname*))
 
 (defvar *cm-directory* 
-  (namestring (make-pathname :name nil :type nil
-                             :defaults *load-pathname*)))
+  (namestring
+   (truename (make-pathname :name nil :type nil
+                            :defaults *load-pathname*))))
+
+(eval-when (:load-toplevel :execute)
+  (pushnew *cm-directory* asdf:*central-registry* :test #'equal))
 
 (defun cm-directory (&rest subs)
   (namestring
@@ -335,6 +339,50 @@
                 (cons (cons (symbol-name :cm) (cmvar :*cm-readtable*))
                       (symbol-value sym))))))
     (cmcall :cm-logo)))
+
+(defun load-system (sys &key directory)
+  ;; load system from either:
+  ;;  (1) user supplied dir
+  ;;  (2) entry in asdf:*central-registry*
+  ;;  (3) search under parent directory of CM.
+  (let* ((name (string-downcase (string sys)))
+         (root *cm-directory*)
+         (reg? nil)
+         (file nil))
+    (when directory
+      (setq file (make-pathname :name name :type "asd"
+                                :defaults directory))
+      (unless (probe-file file)
+        (format t "Can't locate system file: ~S."
+                (namestring file))
+        (return-from load-system nil))
+      (setq reg? t))
+    (unless (or file (setq file (asdf:system-definition-pathname sys)))
+      ;; probe for file under parent dir of cm
+      (let* ((path (make-pathname
+                    :directory (append (butlast
+                                        (pathname-directory root))
+                                       '(:wild))
+                    :name name :type "asd" :defaults root))
+             (test (first (directory path))))
+        (unless test
+          (format t "Can't locate system file \"~a.asd\" in asdf:*central-registry* or under ~s. Specify location using :directory arg to load-system." 
+                  name (namestring path))
+          (return-from load-system nil))
+        (setq reg? t)
+        (setq file test)))
+    (when reg?
+      (pushnew (make-pathname :name nil :type nil :defaults file)
+               asdf:*central-registry* :test #'equal))
+    ;; have to handle clm and cmn specially since load-op will not
+    ;; work with them
+    (cond ((member name '("clm" "cmn") :test #'equal)
+           (asdf:operate 'asdf:load-source-op sys))
+          (t
+           (asdf:operate 'asdf:load-op sys)))
+    (asdf:find-system sys)))
+
+(export '(cm load-system) :cl-user)
 
 ;; (load "/Lisp/cm/cm.asd")
 ;; (asdf:operate 'asdf:load-op :cm)
