@@ -382,7 +382,7 @@
                 :*definstrument-hook*
                 ;; these are also used by CM but defs don't conflict.
                 ;#+(and clm2 (not clm3)) :graph 
-                :spectrum :env :src 
+                :spectrum :env :src :filter
                 )
   (:import-from :cmn 
                 :init-clm-input
