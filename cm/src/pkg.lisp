@@ -347,6 +347,7 @@
            :io :ran :exit :quit :play :graph :control)
   (:use :common-lisp )
   ;; use keywords instead of strings for case sensitive lisps.
+  (:import-from :cl-user #:cm #:load-system)
   (:import-from :clm 
                 :mus-next
                 :mus-bshort

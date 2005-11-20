@@ -5,8 +5,8 @@
 ;(load (merge-pathnames "make.lisp" *load-pathname*) :verbose nil)
 ;(make-cm)
 
-(let ((*load-verbose* nil)
-      (*load-print* nil)
+(let (;(*load-verbose* nil)
+      ;(*load-print* nil)
       (file (make-pathname :name "cm" :type "asd"
                            :directory
                            (butlast

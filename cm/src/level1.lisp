@@ -448,13 +448,14 @@
 ;;;
 ;;;
 
-(defun cm (&optional (banner t))
-  (unless (and (eql *package* (find-package :cm))
-               (eql *readtable* *cm-readtable*))
-    (in-package :cm)
-    (setq *readtable* *cm-readtable*)
-    (unless (not banner) (cm-logo))
-    (values)))
+;; defined by cm.asd in cl-user and imported
+;;(defun cm (&optional (banner t))
+;;  (unless (and (eql *package* (find-package :cm))
+;;               (eql *readtable* *cm-readtable*))
+;;    (in-package :cm)
+;;    (setq *readtable* *cm-readtable*)
+;;    (unless (not banner) (cm-logo))
+;;    (values)))
 
 ; (pathname-directory "/Lisp/cm/bin/../bin/clisp_2.32_darwin-powerpc/cm.img")
 
