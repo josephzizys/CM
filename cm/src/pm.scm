@@ -85,7 +85,7 @@
                     (cond ((not i) #f)
                           ((eq? i #t)
                            ;; default
-                           (pm:GetDeviceDescription
+                           (pm:GetDeviceInfo
                             (if (eq? d ':input)
                                 (pm:GetDefaultInputDeviceID)
                                 (pm:GetDefaultOutputDeviceID)))
@@ -100,7 +100,7 @@
                                l ;i
                                #f))
                           (else #f))))
-            (devs (pm:GetDeviceDescriptions) )
+            (devs (pm:GetDeviceInfo) )
             (bsiz (portmidi-outbuf-size obj))
             (idev #f)
             (odev #f)
@@ -126,19 +126,19 @@
                     (list-prop odev ':id) (list-prop odev ':name)))
               ((and (not idev) (not odev))
                (err "open-io: no portmidi :input or :output device was specified.")))
-        (pm:TimeStart)
+        (pt:Start)
         (set! (object-time obj) 0)
         (when idev
           (set! idev (list-prop idev ':id))
           (set-car! pids idev)
           (set-car! data 
-                    (pm:OpenInputStream
+                    (pm:OpenInput
                      idev (if (pair? bsiz) (car bsiz) bsiz))))
         (when odev
           (set! odev (list-prop odev ':id))
           (set-car! (cdr pids) odev)
           (set-car! (cdr data) 
-                    (pm:OpenOutputStream
+                    (pm:OpenOutput
                      odev (if (pair? bsiz) (cadr bsiz) bsiz)
                      (rt-stream-latency obj))))
         (set! (event-stream-stream obj) pids)
@@ -150,9 +150,9 @@
              (io-open obj))
     (let ((data (io-open obj)))
       (if (car data)
-          (pm:StreamClose (car data)))
+          (pm:Close (car data)))
       (if (cadr data)
-          (pm:StreamClose (cadr data)))
+          (pm:Close (cadr data)))
       (set! (event-stream-stream obj) #f)
       (set! (io-open obj) #f)))
   (values))
@@ -165,15 +165,15 @@
               (let ((f (portmidi-filter o))
                     (m (portmidi-channel-mask o)))
                 (if (pair? f)
-                    (apply (function pm:StreamSetFilter) s f)
-                    (pm:StreamSetFilter s f))
-                (pm:StreamSetChannelMask s m)))))
+                    (apply (function pm:SetFilter) s f)
+                    (pm:SetFilter s f))
+                (pm:SetChannelMask s m)))))
     ;; input stream
     (if (car io) ( fn obj (car io)))
     ;; output stream
     (if (cadr io) ( fn obj (cadr io)))
     ;;cache current MILLISECOND time offset
-    (set! (portmidi-offset obj) (pm:Time))
+    (set! (portmidi-offset obj) (pt:Time))
     ;; stream's time is kept in seconds. maybe stream should have a
     ;; scaler like midi-file so user could work with whatever quanta
     ;; they wanted...
@@ -255,7 +255,7 @@
          )
         ((or (channel-message-p obj)
              (system-message-p obj))
-         (pm:StreamWriteShort 
+         (pm:WriteShort 
           (second (io-open str))        ; output stream
           ;; if we are running under a scheudler, add in time offset of stream
           ;; this should check latency...
@@ -328,8 +328,8 @@
       (set-periodic-task-rate! (rt-stream-receive-rate str) :seconds)))
   (let ((idev (first (io-open str)))
         (data (rt-stream-receive-data str)))
-    (when (pm:StreamPoll idev)
-      (pm:StreamRead idev (third data) (fourth data)))))
+    (when (pm:Poll idev)
+      (pm:Read idev (third data) (fourth data)))))
 
 (define-method* (deinit-receiver (str <portmidi-stream>) type)
   type
@@ -384,8 +384,8 @@
                          (do ((n #f))
                              (stop  
                               #f)
-                           (cond ((pm:StreamPoll in)
-                                  (set! n (pm:StreamRead in bf sz))
+                           (cond ((pm:Poll in)
+                                  (set! n (pm:Read in bf sz))
                                   (when (> n 0)
                                     (if rm (pm:EventBufferMap fn bf n)
                                         ( hook bf n))))
@@ -397,8 +397,8 @@
                 (set! th
                       (lambda () 
                         (let ((n 0))
-                          (when (pm:StreamPoll in)
-                            (set! n (pm:StreamRead in bf sz))
+                          (when (pm:Poll in)
+                            (set! n (pm:Read in bf sz))
                             (when (> n 0)
                               (if rm (pm:EventBufferMap fn bf n)
                                   ( hook bf n)))))))
@@ -422,12 +422,12 @@
         (rm (if (not mode) #t (eq? mode ':message)))
         (fn #f)
         (res #f))
-    (cond ((pm:StreamPoll in)
+    (cond ((pm:Poll in)
            (if hook
                (begin
                  (set! fn (lambda (mm ms)
                             (hook (pm-message->midi-message mm) ms)))
-                 (set! n (pm:StreamRead in bf sz))
+                 (set! n (pm:Read in bf sz))
                  (when (> n 0)
                    (if rm (pm:EventBufferMap fn bf n)
                      (hook bf n))
@@ -442,7 +442,7 @@
                  (set! fn (lambda (mm ms)
                             ms
                             (set! res (append! res (list mm))))))
-               (set! n (pm:StreamRead in bf sz))
+               (set! n (pm:Read in bf sz))
                (when (> n 0)
                  (pm:EventBufferMap fn bf n))))))
     res))

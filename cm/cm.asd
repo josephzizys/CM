@@ -311,6 +311,7 @@
                                   :depends-on ("io" "midi3" "scales"))
                            (:file "osc" :scheme t :depends-on ("io"))
                            (:file "sc" :scheme t :depends-on ("osc"))
+                           (:file "pm" :scheme t :depends-on ("io" "midi3"))
                            #+openmcl (:file "openmcl-rt"
                                             :depends-on ("pkg" "scheduler"))
                            #+sbcl (:file "sbcl-rt"

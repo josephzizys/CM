@@ -55,9 +55,16 @@
     (ecase type 
       (:method `(progn (defgeneric ,name ,args)
                        (defmethod ,name ,args 
-                         (error ,str ,@vars))))
+                         ;; try to stop cmu from optimizing out stub
+                         ;; calls based on analysis of error condition
+                         ;; negating any return values
+                         #+cmu (if *package* (error ,str ,@vars))
+                         #-cmu (error ,str ,@vars)
+                         )))
       (:defun `(defun ,name ,args
-                 (error ,str ,@vars)))      
+                 #+cmu (if *package (error ,str ,@vars))
+                 #-cmu (error ,str ,@vars)
+                 ))      
       (:proclaim `(proclaim (quote ,name))))))
 
 (export '(defstub) :cl-user)
@@ -85,8 +92,7 @@
 (progn
 (defstub clm-load)
 (defstub dac)
-#-cmu(defstub init-with-sound)
-#+cmu(defun init-with-sound (&rest args) (second args))
+(defstub init-with-sound)
 (defstub finish-with-sound)
 (defstub wsdat-play)
 (defstub (setf wsdat-play))
@@ -181,41 +187,51 @@
 (defpackage :portmidi
   (:use :common-lisp) 
   (:nicknames :pm :pt)
+  (:shadow :initialize :terminate :time :start :stop :abort 
+           :close :read :write :poll)
   #+openmcl (:import-from :ccl #:open-shared-library)
   (:import-from :cl-user #:defstub)
+  ;; changed names:
+  ;; GetDeviceDescriptions -> GetDeviceInfo
+  ;; TimeStart -> Start, TimeStop -> Stop
+  ;; OpenInputStream -> OpenInput, OpenOutputStream -> OpenOutput
+  ;; StreamClose -> Close, StreamSetFilter -> SetFilter
+  ;; StreamSetChannelMask -> SetChannelMask, StreamPoll -> Poll
+  ;; StreamRead -> Read, StreamWriteShort -> WriteShort
   (:export #:portmidi #:*portmidi* #:GetDefaultInputDeviceID
-           #:GetDefaultOutputDeviceID #:GetDeviceDescriptions
-           #:TimeStart #:OpenInputStream #:OpenOutputStream
-           #:StreamClose #:StreamSetFilter #:StreamSetChannelMask
-           #:StreamPoll #:StreamRead #:Message.status #:Message.data1
-           #:Message.data2 #:Message #:StreamWriteShort #:EventBufferFree
+           #:GetDefaultOutputDeviceID #:GetDeviceInfo
+           #:Start #:Time #:OpenInput #:OpenOutput
+           #:Close #:SetFilter #:SetChannelMask
+           #:Poll #:Read #:Message.status #:Message.data1
+           #:Message.data2 #:Message #:WriteShort #:EventBufferFree
            #:EventBufferNew #:EventBufferMap))
 
 (in-package :portmidi)
 
 #-portmidi
 (progn
+(defstub (special *portmidi*))
 (defstub portmidi)
 (defstub GetDefaultInputDeviceID)
 (defstub GetDefaultOutputDeviceID)
-(defstub GetDeviceDescriptions)
-(defstub TimeStart)
-(defstub OpenInputStream)
-(defstub OpenOutputStream)
-(defstub StreamClose)
-(defstub StreamSetFilter)
-(defstub StreamSetChannelMask)
-(defstub StreamPoll)
-(defstub StreamRead)
+(defstub GetDeviceInfo)
+(defstub Start)
+(defstub Time)
+(defstub OpenInput)
+(defstub OpenOutput)
+(defstub Close)
+(defstub SetFilter)
+(defstub SetChannelMask)
+(defstub Poll)
+(defstub Read)
 (defstub Message.status)
 (defstub Message.data1)
 (defstub Message.data2)
 (defstub Message)
-(defstub StreamWriteShort)
+(defstub WriteShort)
 (defstub EventBufferFree)
 (defstub EventBufferNew)
 (defstub EventBufferMap)
-(defstub (special *portmidi*))
 )
 
 #-midishare
