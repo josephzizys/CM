@@ -210,6 +210,7 @@
     (dolist              dolist          dolist->dolist)
     (dotimes             dotimes         dolist->dolist) ; does both
     (dynamic-wind        nil             dynamic-wind->unwind-protect)
+    (exact->inexact      nil             exact->float)
     (eq?                 eq)
     (equal?              equal)
     (even?               evenp)
@@ -827,50 +828,45 @@
       (make-instance 'bquote :form (diveout done))
       )))
 
-#|
-;;; BACKQUOTE TESTS.
-(defun bq (s)
-  (let ((*readtable* %readtable))
-    (let ((l (read-from-string s)))
-     ; (pprint l)
-      l)))
-(setf *print-pretty* T)
 
-(setf s "`(list 1 ,pi 3 ,@ (set! 1 , 2))")
+;;;;; BACKQUOTE TESTS.
+;; (defun bq (s)
+;;   (let ((*readtable* %readtable))
+;;     (let ((l (read-from-string s)))
+;;      ; (pprint l)
+;;       l)))
+;; (setf *print-pretty* T)
+;; (setf s "`(list 1 ,pi 3 ,@ (set! 1 , 2))")
+;; (pprint (setf x (bq s)))
+;; (rewrite-backquote x)
+;; (setf s "`(, 'let ,(loop-bindings iter)
+;;              ,@(loop-initially iter)
+;;              (block nil
+;;                (tagbody 
+;;                  :loop
+;;                  ,@ (let ((tests (loop-end-tests iter)))
+;;                       (if tests
+;;                         (list `(if ,(if (cdr tests)
+;;                                       (cons 'or tests)
+;;                                       (car tests))
+;;                                  (go :done)))
+;;                         (list)))
+;;                     ,@(loop-looping iter)
+;;                     ,@(loop-stepping iter)
+;;                     (go :loop)
+;;                     :done
+;;                     ,@(loop-finally iter)
+;;                     ,return)))")
 
-(pprint (setf x (bq s)))
-
-(rewrite-backquote x)
-
-(setf s "`(, 'let ,(loop-bindings iter)
-             ,@(loop-initially iter)
-             (block nil
-               (tagbody 
-                 :loop
-                 ,@ (let ((tests (loop-end-tests iter)))
-                      (if tests
-                        (list `(if ,(if (cdr tests)
-                                      (cons 'or tests)
-                                      (car tests))
-                                 (go :done)))
-                        (list)))
-                    ,@(loop-looping iter)
-                    ,@(loop-stepping iter)
-                    (go :loop)
-                    :done
-                    ,@(loop-finally iter)
-                    ,return)))")
-|#
 
 ;;;
 ;;;
 ;;;
 
-#|
-(defun boolean?->typep (form &optional env)
-  ;; form = (boolean? x)
-  `(typep ,(scheme->cltl (cadr form) env) 'boolean))
-|#
+(defun exact->float (form &optional env)
+  ;; check for inexact->exact wrapping round or floor
+  (let ((check (second form)))
+    `(coerce ,(scheme->cltl check env) 'single-float)))
 
 (defun inexact->round (form &optional env)
   ;; check for inexact->exact wrapping round or floor
