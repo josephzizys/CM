@@ -23,6 +23,7 @@
 ;;; defstub: define entry points of unloaded systems
 ;;;
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
 (defmacro defstub (name &optional args type)
   ;; stub out defuns, defmethods and global vars of systems that are
   ;; not currently loaded. If stub is called then signal consistent
@@ -65,7 +66,7 @@
                  #+cmu (if *package* (error ,str ,@vars) ,(car vars))
                  #-cmu (error ,str ,@vars)
                  ))      
-      (:proclaim `(proclaim (quote ,name))))))
+      (:proclaim `(proclaim (quote ,name)))))))
 
 (export '(defstub) :cl-user)
 
@@ -143,7 +144,7 @@
 #-fomus
 (defpackage :fomus
   (:use :common-lisp)
-  #+(or lispworks clisp sbcl) (:shadow #:rest)
+  #+(or allegro lispworks clisp sbcl) (:shadow #:rest)
   (:import-from :cl-user #:defstub)
   (:export #:fomus #:event-base #:part #:note #:rest #:timesig
            #:keysig #:meas #:event-off #:obj-id #:obj-partid
@@ -363,7 +364,7 @@
            :io :ran :exit :quit :play :graph :control)
   (:use :common-lisp )
   ;; use keywords instead of strings for case sensitive lisps.
-  (:import-from :cl-user #:cm #:load-system)
+  (:import-from :cl-user #:cm #:use-system)
   (:import-from :clm 
                 :mus-next
                 :mus-bshort

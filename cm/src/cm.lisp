@@ -9,6 +9,6 @@
                 :defaults *load-pathname*))
 
 
-(load-system :cm)
+(use-system :cm)
 
 

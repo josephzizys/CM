@@ -131,20 +131,27 @@
                  :type (pathname-type (compile-file-pathname file))
                  :defaults file))
 
-#-(or sbcl lispworks)
-(defun ensure-sys-features () )
+#-(or sbcl lispworks allegro)
+(defun ensure-sys-features (sys) sys)
+
+#+allegro
+(defun ensure-sys-features (sys) 
+  (savevars sys 'comp:*cltl1-compile-file-toplevel-compatibility-p*)
+  (setq comp:*cltl1-compile-file-toplevel-compatibility-p* t))
 
 #+sbcl
-(defun ensure-sys-features ()
-  ;; these should be part of sbcl.lisp but sbcl signals error if the
-  ;; requires are in the file...
+(defun ensure-sys-features (sys)
+  sys
+  ;; these should actually be part of sbcl.lisp but sbcl signals error
+  ;; if the requires are in the file...
   (require :sb-posix)
   (require :sb-bsd-sockets))
 
 #+lispworks
-(defun ensure-sys-features ()
-  ;; this is necessary to set at read time or lispworks stack is too
-  ;; small to load this file!
+(defun ensure-sys-features (sys)
+  sys
+  ;; unfortunately it is necessary to set this variable at READ time
+  ;; or else lispwork's stack is too small to load this file!
   #.(setq system:*stack-overflow-behaviour* :warn))
 
 ;;;
@@ -166,7 +173,7 @@
     (set (car b) (cdr b))))
 
 (defmethod asdf:perform  ((op initialize-op) cm)
-  (ensure-sys-features)
+  (ensure-sys-features cm)
   (ensure-bin-directory)
   (savevars cm '*compile-print* '*compile-verbose* 
             '*load-verbose* '*load-print*)
@@ -342,7 +349,7 @@
                       (symbol-value sym))))))
     (cmcall :cm-logo)))
 
-(defun load-system (sys &key directory)
+(defun use-system (sys &key directory)
   ;; load system from either:
   ;;  (1) user supplied dir
   ;;  (2) entry in asdf:*central-registry*
@@ -357,7 +364,7 @@
       (unless (probe-file file)
         (format t "Can't locate system file: ~S."
                 (namestring file))
-        (return-from load-system nil))
+        (return-from use-system nil))
       (setq reg? t))
     (unless (or file (setq file (asdf:system-definition-pathname sys)))
       ;; probe for file under parent dir of cm
@@ -368,9 +375,9 @@
                     :name name :type "asd" :defaults root))
              (test (first (directory path))))
         (unless test
-          (format t "Can't locate system file \"~a.asd\" in asdf:*central-registry* or under ~s. Specify location using :directory arg to load-system." 
+          (format t "Can't locate system file \"~a.asd\" in asdf:*central-registry* or under ~s. Specify location using :directory arg to use-system." 
                   name (namestring path))
-          (return-from load-system nil))
+          (return-from use-system nil))
         (setq reg? t)
         (setq file test)))
     (when reg?
@@ -384,7 +391,7 @@
            (asdf:operate 'asdf:load-op sys)))
     (asdf:find-system sys)))
 
-(export '(cm load-system) :cl-user)
+(export '(cm use-system) :cl-user)
 
 ;; (load "/Lisp/cm/cm.asd")
 ;; (asdf:operate 'asdf:load-op :cm)
