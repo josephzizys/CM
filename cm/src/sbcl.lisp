@@ -221,6 +221,8 @@
 
 (defgeneric object->midi (obj))
 
+(defgeneric sco-name (obj))
+
 (defgeneric midishare-stream-refnum (obj))
 (defgeneric open-midishare-client (obj name))
 (defgeneric close-midishare-client (obj))
@@ -248,6 +250,8 @@
 (defgeneric write-bundle (offset message io))
 (defgeneric send-bundle (offset message io))
 (defgeneric set-receive-mode! (stream mode))
+(defgeneric reply-set-slots (obj lst))
+
 
 ;; bug??: sprout has 2 optionals but rt-sprout has them required
 ;(defgeneric rt-sprout (obj time dest))
