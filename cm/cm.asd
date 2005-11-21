@@ -172,7 +172,7 @@
             '*load-verbose* '*load-print*)
   (setq *compile-print* nil *compile-verbose* nil
         *load-verbose* nil *load-print* nil)
-  (format t "~%; Common Music install directory: ~S" *cm-directory*))
+  (format t "~%; CM install directory: ~S" *cm-directory*))
 
 (defmethod asdf:perform  ((op finalize-op) cm)
   (let ((init (merge-pathnames ".cminit.lisp"
@@ -274,7 +274,8 @@
                                                      #+lispworks "lispworks"
                                                      #+(and mcl (not openmcl)) "mcl"
                                                      #+openmcl "openmcl"
-                                                     #+sbcl "sbcl"))
+                                                     #+sbcl "sbcl"
+                                                     "iter"))
                            (:file "clos" :depends-on ("level1"))
                            #-no-scheme (:file "scheme" :depends-on ("pkg"))
                            (:file "utils" :scheme t
