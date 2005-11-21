@@ -82,58 +82,6 @@
 (define (rts-continue )
   (err "rts-continue: not implemented."))
 
-(define (rts . args)
-  (if (rts?) 
-      (err "rts: scheduler already running or (rts-reset) was not called after error."))
-  (let* ((object (if (pair? args) (pop args) #f)) ; object(s) to run
-         (to (if (pair? args) (pop args)          ; output stream
-                 (current-output-stream)))   
-         (ahead (if (pair? args) (or (pop args) 0) 0)) ; start time offset
-         (end (if (pair? args) (pop args) 
-                  (if object #t #f))))
-    (if (and (not object) (or (pair? ahead ) (> ahead 0)))
-        (err "rts: ahead must be 0 when starting rts without objects."))
-    (set! *queue* %q)
-    (set! *qtime* (thread-current-time))
-    (if (pair? object)
-        (dolist (o object)
-          (schedule-object o
-                           (+ *qtime* (if (pair? ahead)
-                                          (if (pair? (cdr ahead))
-                                              (pop ahead)
-                                              (car ahead))
-                                          ahead))))
-        (if (pair? ahead)
-            (schedule-object object (+ *qtime* (car ahead)))
-            (if object
-                (schedule-object object (+ *qtime* ahead)))))
-    ;; not sure about this
-    (if (pair? ahead) (set! ahead (apply (function min) ahead)))
-    (set! *out* to)
-    (set! *rts-run* #t)
-    (set! *qtime* (+ *qtime* ahead))
-    (case *rts-type*
-      (( :threaded )
-       (if (not *qlock*) (set! *qlock* (make-mutex)))
-       (set! *scheduler* ':threaded)
-       (thread-start!
-        (make-thread (rts-run-threaded object ahead end))))
-      (( :periodic )
-       (set! *scheduler* ':periodic)
-       (cond ((not (periodic-task-running? ))
-              (set-periodic-task-rate! *rts-idle-rate* :seconds))
-             (t
-              (unless (= (periodic-task-rate)
-                         (floor (* *rts-idle-rate* 1000000)))
-                (warn "Periodic task(s) already running, RTS rate set to ~s sec."
-                      (/ (periodic-task-rate) 1000000.0) ))))
-       (add-periodic-task! :rts (rts-run-periodic object ahead end)))
-      (( :specific )
-       (set! *scheduler* ':specific)
-       (rts-run-specific object ahead end))
-      (else (err "rts: not an rts scheduling type: ~s" *rts-type*)))
-    (values)))
-
 (define (rts-run-threaded object ahead end)
   ;; rts threaded run function. attempts to be adaptive to
   ;; fluctuations using a target time (ttime) to calculate sleep time
@@ -238,6 +186,59 @@
                    (or (eq? wait? 0)
                        (set! wait? (inexact->exact
                                    (round (* wait? 1000.0))))))))))))
+
+(define (rts . args)
+  (if (rts?) 
+      (err "rts: scheduler already running or (rts-reset) was not called after error."))
+  (let* ((object (if (pair? args) (pop args) #f)) ; object(s) to run
+         (to (if (pair? args) (pop args)          ; output stream
+                 (current-output-stream)))   
+         (ahead (if (pair? args) (or (pop args) 0) 0)) ; start time offset
+         (end (if (pair? args) (pop args) 
+                  (if object #t #f))))
+    (if (and (not object) (or (pair? ahead ) (> ahead 0)))
+        (err "rts: ahead must be 0 when starting rts without objects."))
+    (set! *queue* %q)
+    (set! *qtime* (thread-current-time))
+    (if (pair? object)
+        (dolist (o object)
+          (schedule-object o
+                           (+ *qtime* (if (pair? ahead)
+                                          (if (pair? (cdr ahead))
+                                              (pop ahead)
+                                              (car ahead))
+                                          ahead))))
+        (if (pair? ahead)
+            (schedule-object object (+ *qtime* (car ahead)))
+            (if object
+                (schedule-object object (+ *qtime* ahead)))))
+    ;; not sure about this
+    (if (pair? ahead) (set! ahead (apply (function min) ahead)))
+    (set! *out* to)
+    (set! *rts-run* #t)
+    (set! *qtime* (+ *qtime* ahead))
+    (case *rts-type*
+      (( :threaded )
+       (if (not *qlock*) (set! *qlock* (make-mutex)))
+       (set! *scheduler* ':threaded)
+       (thread-start!
+        (make-thread (rts-run-threaded object ahead end))))
+      (( :periodic )
+       (set! *scheduler* ':periodic)
+       (cond ((not (periodic-task-running? ))
+              (set-periodic-task-rate! *rts-idle-rate* :seconds))
+             (t
+              (unless (= (periodic-task-rate)
+                         (floor (* *rts-idle-rate* 1000000)))
+                (warn "Periodic task(s) already running, RTS rate set to ~s sec."
+                      (/ (periodic-task-rate) 1000000.0) ))))
+       (add-periodic-task! :rts (rts-run-periodic object ahead end)))
+      (( :specific )
+       (set! *scheduler* ':specific)
+       (rts-run-specific object ahead end))
+      (else (err "rts: not an rts scheduling type: ~s" *rts-type*)))
+    (values)))
+
 
 ;;;
 ;;; receive
