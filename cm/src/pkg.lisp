@@ -58,11 +58,11 @@
                          ;; try to stop cmu from optimizing out stub
                          ;; calls based on analysis of error condition
                          ;; negating any return values
-                         #+cmu (if *package* (error ,str ,@vars))
+                         #+cmu (if *package* (error ,str ,@vars) , (car vars))
                          #-cmu (error ,str ,@vars)
                          )))
       (:defun `(defun ,name ,args
-                 #+cmu (if *package (error ,str ,@vars))
+                 #+cmu (if *package* (error ,str ,@vars) ,(car vars))
                  #-cmu (error ,str ,@vars)
                  ))      
       (:proclaim `(proclaim (quote ,name))))))
