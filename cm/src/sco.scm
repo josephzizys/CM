@@ -119,8 +119,6 @@
 ;;; added back i and f for easy subclassing
 ;;;
 
-(define-generic* (sco-name obj))
-
 (defobject i (event) 
            (ins dur)
   ;(:parameters time dur)            ; dont geneate output methods
