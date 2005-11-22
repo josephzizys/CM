@@ -188,26 +188,70 @@ $ <span class="input">cvs update</span>
 <h2 id="start_lisp">Starting Common Music</h2>
 
 <p>
-Once the sources have been restored you can start Common Music several
-different ways. Here are some different strategies for starting CM:
+Once the sources have been restored you can start Common Music in
+several different ways. Here are some typical strategies:
 </p>
 
 <ol>
 
 <li>
 <p>
-To start Common Music from inside Common Lisp load "cm.lisp"
-from CM's source directory:
+To start up Common Music from the Shell prompt run
+the <a href="dict/cm-sh.html"><code>cm.sh</code></a> script located in
+CM's binary directory. You must have a valid Lisp command installed on
+your path for this to work.
+</p>
+
+<pre class="shell">
+$ <span class="input">/usr/local/lisp/cm/bin/cm.sh</span>
+</pre>
+
+<p>
+Consider installing a global command to run
+the <a href="dict/cm-sh.html">cm.sh</a> script without having to type
+its pathname.  For example, this installs a command in
+/usr/bin that starts the installed script simply by typing <code>cm</code> to the shell:
+</p>
+
+
+<!-- p>
+Consider installing a site-wide command for
+the <a href="dict/cm-sh.html">cm.sh</a> script. For example, this
+installs a <code>cm</code> command in /usr/bin that start CM running
+without having to type the pathname to cm.sh:
+</p -->
+
+<pre class="shell">
+$ <span class="input">sudo ln -s /usr/bin/cm /usr/local/lisp/cm/bin/cm.sh<span>
+</pre>
+
+<p>By specifying -l and -e options you can launch CM under Emacs in
+any supported Lisp. For example:
+</p>
+
+<pre class="shell">
+$ <span class="input">cm -l openmcl -e Emacs<span>
+$ <span class="input">cm -l gosh -e xemacs<span>
+$ <span class="input">cm -l clisp -e emacs<span>
+</pre>
+</li>
+
+
+<li>
+<p>
+To start Common Music from the Common Lisp REPL first load "cm.lisp"
+from CM's source directory and then use the <code>(cm)</code> function to swithch to the CM package and readtable:
 </p>
 
 <pre class="shell">
 &gt; <span class="input">(load "/usr/local/lisp/cm/src/cm.lisp")</span>
+&gt; <span class="input">(cm)</span>
 </pre>
 </li>
 
 <li>
 <p>
-To start Common Music from inside Scheme load "cm.scm" from CM's
+To start Common Music from the Scheme REPL load "cm.scm" from CM's
 source directory:
 </p>
 
@@ -216,34 +260,12 @@ source directory:
 </pre>
 </li>
 
-<li>
-<p>
-To start Common Music from the Shell prompt execute
-the <a href="dict/cm-sh.html"><code>cm.sh</code></a> script located in
-CM's binary directory. You must have a valid Lisp command installed on
-your path for this to work.
-</p>
-
-<pre class="shell">
-$ <span class="input">bin/cm.sh</span>
-</pre>
-
-<p>
-Consider installing <a href="dict/cm-sh.html">cm.sh</a> as a site-wide
-command somewhere on your path. For example, this installs
-<code>cm</code> as a command in /usr/bin to run the cm.sh script:
-</p>
-
-<pre class="shell">
-$ <span class="input">sudo ln -s /usr/bin/cm /usr/local/lisp/cm/bin/cm.sh<span>
-</pre>
-</li>
 
 <li>
 <p>
-To start Common Music from inside Emacs or Xemacs add the following
-code to your ~/.emacs file. The code shown here assumes you have
-installed the <code>cm</code> shell command described in the previous example:
+To start Common Music from inside Emacs add the following code to your
+~/.emacs file. The code shown here assumes you have installed
+the <code>cm</code> shell command described in the first example:
 </p>
 
 <pre class="code">
