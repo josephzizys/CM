@@ -31,24 +31,13 @@
 
 <h2>Contents</h2>
 <ol>
-  <li><a href="#introduction">Preinstallation</a></li>
-  <li><a href="#restore_src">Downloading sources</a></li>
-    <ol>
-      <li><a href="#restore_tar">Installing from archives</a></li>
-      <li><a href="#restore_cvs">Installing from CVS</a></li>
-    </ol>
+  <li><a href="#preinstallation">Preinstallation</a></li>
+  <li><a href="#downloading">Downloading CM Sources</a></li>
   </li>
   <li>
-    <a href="#load_cm">Starting Common Music</a>
-    <ol>
-      <li><a href="#run_shell">From the shell</a></li>
-      <li><a href="#run_lisp">From Lisp</a></li>
-      <li><a href="#run_emacs">Under Emacs</a></li>
-      <li><a href="#custom">Customized builds</a></li>
-    </ol>
+    <a href="#starting">Starting CM</a>
   </li>
-  <li><a href="#install_sys">Loading external Lisp programs and
-  interfaces</a>
+  <li><a href="#loading">Loading Lisp programs and interfaces</a>
     <ol>
       <li><a href="#cffi">CFFI</a></li>
       <li><a href="#clm">CLM</a></li>
@@ -59,7 +48,7 @@
       <li><a href="#portmidi">Portmidi</a></li>
     </ol>
   </li>
-  <li><a href="#troubleshooting">Appendices</a>
+  <li><a href="#appendic">Appendix</a>
   <ol>
   <li><a href="#start_lisp">Starting a Lisp application</a></li>
   <li><a href="#clisp.bat">Installing a CLISP command on Windows</a></li>
@@ -68,8 +57,7 @@
   </li>
 </ol>
 
-
-<h3>Preinstallation</h3>
+<h2 id="preinstallation">Preinstallation</h2>
 
 <p>
 To build Common Music from its sources you must have write permission
@@ -78,39 +66,38 @@ path and some familiary with the shell, or terminal, application.  If
 you are going to use CM in conjunction with other lisp programs like
 CLM or Fomus, or with Lisp interfaces to external programs such as
 Portmidi and Midishare, you should create a common "parent" directory
-to hold the different Lisp systems so you can load them easily and
-automatically via <a href="dict/use-system-fn.html">use-system</a>. It
-does not matter where on the file system this parent directory is
-located; for sake of illustration this document assumes that the lisp
-systems are all installed under "/usr/local/lisp".
+to contain the different Lisp systems so that you can load them easily
+via <a href="dict/use-system-fn.html">use-system</a>. It does not
+matter where on the file system this Lisp installation directory is located; for
+sake of illustration this document assumes that the lisp systems are
+all installed under "/usr/local/lisp".
 </p>
 
 <div class="float">
-<p class="captxt">Install lisp music software under a common parent
-directory so you can load the seperate systems easily using
-use-system. This listing shows the various lisp systems and interfaces
-mentioned in this document.
+<p class="captxt">Installing Lisp music packages under a common parent
+directory will allow you to load the seperate systems transparently
+with use-system. This listing shows the various lisp systems and
+interfaces mentioned in this document.</p>
 <pre class="shell">
-$ ls /usr/local/lisp
-drwxr-xr-x   15 hkt  admin      510 14 Nov 13:56 cffi/
-drwxr-xr-x  188 hkt  admin     6392 14 Nov 09:57 clm-3/
-drwxr-xr-x    9 hkt  admin      306 21 Nov 09:59 cm/
-drwxr-xr-x   64 hkt  admin     2176 25 Oct 12:46 cmn/
-drwxr-xr-x   64 hkt  admin     2176 11 Nov 08:10 fomus/
-drwxr-xr-x    7 hkt  admin      238 26 Oct 18:04 midishare/
-drwxr-xr-x    5 hkt  admin      170 25 Oct 06:44 player/
-drwxr-xr-x    5 hkt  admin      170 21 Nov 17:44 portmidi/
-
+$ ls -l /usr/local/lisp
+drwxr-xr-x   15 hkt  admin   510 14 Nov 13:56 cffi/
+drwxr-xr-x  188 hkt  admin  6392 14 Nov 09:57 clm-3/
+drwxr-xr-x    9 hkt  admin   306 21 Nov 09:59 cm/
+drwxr-xr-x   64 hkt  admin  2176 25 Oct 12:46 cmn/
+drwxr-xr-x   64 hkt  admin  2176 11 Nov 08:10 fomus/
+drwxr-xr-x    7 hkt  admin   238 26 Oct 18:04 midishare/
+drwxr-xr-x    5 hkt  admin   170 25 Oct 06:44 player/
+drwxr-xr-x    5 hkt  admin   170 21 Nov 17:44 portmidi/
 </pre>
 </div>
 
-<h2 id="restore_src">Downloading sources</h2>
+<h2 id="downloading">Downloading CM sources</h2>
 <p>
 Sources for stable and developmental releases can be downloaded
 as tarball archives (cm.tar.gz) or via anonymous CVS.
 </p>
 
-<h3>Tarballs</h3>
+<h3 id="tarballs">Tarballs</h3>
 <ul>
 <li>
 Stable release archives are available from
@@ -119,51 +106,35 @@ Stable release archives are available from
 </li>
 
 <li>
-Current development sources is available as a nightly snapshot.
+Current development sources are available as a  <a
+href="http://commonmusic.sourceforge.net/cm.tgz">nightly snapshot</a>.
 </li>
 </ul>
 
 <p>
-After downloading an archive, change directories to your Lisp installation directory an install
+To install CM from a tarball simply download the archive and restore
+it under your Lisp installation directory:
 
 <pre class="shell">
-$ tar -zxf ~/cm.tar.gz
+$ <span class="input">cd /usr/local/lisp</span>
+$ <span class="input">tar -zxf cm.tar.gz</span>
 </pre>
 
-<h3 id="restore_cvs"> <a
-href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs.html#SEC_Top">CVS</a> repository</h3>
+<h3 id="cvs">CVS Repository</h3>
 
 <p>
-The sources to Common Music are maintained in a CVS repository
-organized organized by <em>release branches</em> that are tagged by
-symbolic release numbers.  By convention, even numbered branches
-denote stable software release lines and odd numbered branches denote
-unstable, or developmental, releases.  The CVS <em>head branch</em>
-&#8212; the release branch you get if you do not specify any release
-tag &#8212; always points to the latest developmental sources.
+Sources to Common Music are maintained in a CVS repository 
+organized in <em>release branches</em> and tagged by release
+numbers.  By convention, even numbered branches denote stable software
+release lines and odd numbered branches denote unstable, or
+developmental, branches.  The CVS <em>head branch</em> &#8212; the
+branch you get if you do not specify any release tag &#8212; points to
+the very latest developmental sources.
 </p>
 
 <p>
-As of this date, Common Music's CVS tree has three main branches:
-the <code>rel-2_4</code> and <code>rel-2_6</code> branch lines contain
-sources and bug fixes to stable releases; CM's head branch points to
-the latest developmental line.
+To install the latest developmental souces via CVS:
 </p>
-
-<!-- p>
-To check out sources from Common Music's CVS repository use
-the Unix <code>cvs</code> command or a CVS client
-application. <p -->
-
-<p>
-Installing CVS sources for the first time is accomplished in two
-steps: logging in to the Sourceforge CVS server in anonymous mode and
-then checking out the sources to the desired release branch.
-</p>
-
-<!--p>
-Directions for checking out sources from CM's repository at Sourceforge:
-</p -->
 
 <ol>
 
@@ -173,7 +144,7 @@ Change directories to your Lisp installation directory.
 </p>
 </li>
 
-<li><p>Set the shell variable CVSROOT to CM's cvs repository:</p></li>
+<li><p>Set the shell variable CVSROOT to point to the CVS repository:</p></li>
 
 <pre class="shell">
 $ <span class="input">export CVSROOT=":pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic"</span> 
@@ -181,89 +152,255 @@ $ <span class="input">export CVSROOT=":pserver:anonymous@cvs.sourceforge.net:/cv
 
 <li>
 <p>
-Use the <code>cvs login</code> command to connect to the Sourceforge CVS server:
-
-<!-- Use <a href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_2.html#SEC31">anonymous CVS login</a> to the <a
- href="http://sourceforge.net/cvs/?group_id=9766">Sourceforge CVS
- repository</a>. --> Press the Return key when prompted for a login password:
+Use <code>cvs login</code> to connect to the Sourceforge CVS
+server, press Enter when prompted for a password:
 </p>
 
 <pre class="shell">
 $ <span class="input">cvs login</span>
-CVS password:
-$</pre>
+CVS password:</pre>
 </li>
 
 <li>
 <p>
-Use the <a
-href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_16.html#SEC136">CVS
-checkout command</a> to restore the CM source tree to your computer.
+Use <code>cvs checkout</code> to restore CM's source tree to your Lisp installation directory:
 </p>
 
-<p>
-To download the latest (developmental) sources from the head branch:
-</p>
 <pre class="shell">
 $ <span class="input">cvs checkout -P cm</span>
-<span class="comment">[cvs printout omitted...]</span></pre>
-
-<p>
-To check out a stable release, specify the appropriate tag to the
-checkout command. For example, to get the latest stable version on the
-CM 2.4.<em>n</em> release line do:
-</p>
-
-<pre class="shell">
-$ <span class="input">cvs checkout -P -r rel-2_6 cm</span>
-<span class="comment">[cvs printout omitted...]</span></pre>
-<p>
-Once the source tree has been restored to your machine you can cd inside it
-and use the <a href="dict/cm-sh.html">cm.sh</a>
-script to build CM:
-</p>
-<pre class="shell">
-$ <span class="input">cd cm</span>
-$ <span class="input">bin/cm.sh</span>
-<span class="comment">[build printout omitted...]</span></pre>
-</li>
-
-<li>
-<p>
-Once you have checkout the sources you do not need to use the login or
-checkout command again. To remain current with a release line you
-simply cd to your CVS source tree and use the <a
-href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_16.html#SEC170">CVS
-update command</a> to update your installation tree with the newest
-versions of the files from the repository. Then use the <a
-href="dict/cm-sh.html">cm.sh</a> script to recompile and reload CM:
-</p>
-
-<pre class="shell">
-$ <span class="input">cd /path/to/cm</span>
-$ <span class="input">cvs update</span>
-<span class="comment">[cvs printout omitted...]</span>
-$ <span class="input">bin/cm.sh</span>
-<span class="comment">[build printout omitted...]</span></pre>
+</pre>
 </li>
 </ol>
 
-<h2 id="start_lisp">2. Starting Common Music</h2>
 <p>
-In order run Common Music from the shell or under Emacs you must be
-able to start one of the
-<a href="cm.html#implementations">supported Lisp implementations</a>
-from the terminal.  The command that starts your Lisp can then be
-passed to cm.sh using the <code>-l option, e.g.
+Once the source tree has been restored you do not need to
+use <code>login</code> or <code>checkout</code> again.  You can
+periodically update your CM installation tree with the most recent
+versions from the sourceforge repository by executing <code>cvs
+update</code> from inside the toplevel CM directory:
+
+<pre class="shell">
+$ <span class="input">cd /usr/local/lisp/cm</span>
+$ <span class="input">cvs update</span>
+</pre>
+
+
+<h2 id="start_lisp">Starting Common Music</h2>
+
+<p>
+Once the souces have been restored you can start Common Music several
+different ways. Here are some different strategies for starting CM:
 </p>
 
-cm.sh -l openmcl
+<ol>
 
-If you are on OS X, Linux or Cygwin you can use the <code>which</code>
-command to see if a Lisp command is installed properly on your path.
+<li>
+<p>
+To start Common Music from inside Common Lisp load "cm.lisp"
+from CM's source directory:
+</p>
+
+<pre class="shell">
+&gt; <span class="input">(load "/usr/local/lisp/cm/src/cm.lisp")</span>
+</pre>
+</li>
+
+<li>
+<p>
+To start Common Music from inside Scheme load "cm.scm" from CM's
+source directory:
+</p>
+
+<pre class="shell">
+&gt; <span class="input">(load "/usr/local/lisp/cm/src/cm.scm")</span>
+</pre>
+</li>
+
+<li>
+<p>
+To start Common Music from the Shell prompt execute
+the <a href="dict/cm-sh.html"><code>cm.sh</code></a> script located in
+CM's binary directory. You must have a valid Lisp command installed on
+your path for this to work.
+</p>
+
+<pre class="shell">
+$ <span class="input">bin/cm.sh</span>
+</pre>
+
+<p>
+Consider installing <a href="dict/cm-sh.html">cm.sh</a> as a site-wide
+command somewhere on your path. For example, this installs
+<code>cm</code> as a command in /usr/bin to run the cm.sh script:
+</p>
+
+<pre class="shell">
+$ <span class="input">sudo ln -s /usr/bin/cm /usr/local/lisp/cm/bin/cm.sh<span>
+</pre>
+</li>
+
+<li>
+<p>
+To start Common Music from inside Emacs or Xemacs add the following
+code to your ~/.emacs file. The code shown here assumes you have
+installed the <code>cm</code> shell command described in the previous example:
+</p>
+
+<pre class="code">
+(add-to-list 'load-path <span class="string">"/usr/local/lisp/cm/etc/xemacs"</span>)
+(load <span class="string">"cm.el"</span>)
+(setq inferior-lisp-program <span class="string">"cm"</span>)
+</pre>
+
+<p>
+Restart Emacs and type <span class="input">C-x l</span> to start CM in a dedicated Emacs buffer. See <a href="emacs.html">Running Common Music under Emacs</a> for more information.
+</p>
+</li>
+</ol>
+
+<p>
+Regardless of which method you use to start CM the system will
+automatically generate, compile and load files as needed as part of
+the startup process. Once the files have been loaded CM will look for
+your customization file "~/.cminit.lisp" and automatically load it if
+it exists.
+</p>
+
+<h2>Loading Lisp Programs and Interfaces</h2>
+
+<p>
+Once CM is running you can load in other Lisp programs and interfaces
+using the <a href="dict/use-system-fn.html">use-system</a>
+function. This facility works transparently if the other Lisp software
+packages all share the same parent directory as your CM installation
+directory. To automatically include systems as part of CM's normal
+start up process add the
+appropriate <a href="dict/use-package-fn.html">use-package</a> forms
+to either
+<a href="../src/cm.lisp">cm.lisp</a> or to your personal ~/.cminit.lisp
+file.
+</p>
+
+<p>
+The following Lisp software can work in conjunction with CM:
+</p>
+
+<h3 id="cffi">CFFI</h3>
+
+<p><code>(use-system :cffi)</code></li></p>
+
+The Common Foreign Function interface for Common Lisp, by James Bielman and Luís Oliveira.  (Required by the <a href="#portmidi">Portmidi</a> and <a href="#midishare">Midishare</a> interfaces).
+
+<ul>
+<li>Homepage: <a href="http://common-lisp.net/project/cffi/">
+http://common-lisp.net/project/cffi</a></li>
+<li>Downloads: <a href="http://common-lisp.net/project/cffi/tarballs/">http://common-lisp.net/project/cffi/tarballs/</a></li>
+<li>Supporting: Allegro, CLISP, CMUCL, Lispworks, OpenMCL, SBCL</li>
+<li>Installation: Download and restore sources under Lisp installation directory.</li>
+</ul>
+
+<h3 id="clm">CLM</h3>
+
+<p><code>(use-system :clm)</code></li></p>
+
+<p>
+Common Lisp Music, by William Schottstaetd. A sound synthesis package
+for Common Lisp and Scheme (Guile/Snd).
+</p>
+
+<ul>
+<li>Homepage: <a href="http://www-ccrma.stanford.edu/software/clm/">
+http://www-ccrma.stanford.edu/software/clm/
+</a></li>
+
+li>
+
+
+<li>Downloads: <a href="ftp://ftp-ccrma.stanford.edu/pub/Lisp/clm-3.tar.gz">
+ftp://ftp-ccrma.stanford.edu/pub/Lisp/clm-3.tar.gz
+</a></li>
+<li>Requirements: GCC, X Windows (OSX: XCode developer)
+<li>Supporting: Linux, OS X: Allegro, CMUCL, OpenMCL, SBCL</li>
+<li>Installation: Download and restore sources under Lisp installation directory.</li>
+</ul>
+
+<p>
+Note that CLM instrument files must be compiled from the CM package in
+order to work with the <a href="dict/process-mac.html">process</a>
+macro.
+</p>
+
+<h3 id="cmn">CMN</h3>
+<p><code>(use-system :clm)</code></li></p>
+<p>
+Common Music Notation, by William Schottstaetd. A music notation package for Common Lisp.
+</p>
+<ul>
+<li>Homepage: <a href="http://www-ccrma.stanford.edu/software/cmn/">
+http://www-ccrma.stanford.edu/software/cmn/
+</a></li>
+<li>Downloads: <a href="ftp://ftp-ccrma.stanford.edu/pub/Lisp/cmn.tar.gz">
+ftp://ftp-ccrma.stanford.edu/pub/Lisp/cmn.tar.gz
+</a></li>
+<li>Supporting: Allegro, Clisp, CMUCL, OpenMCL, SBCL</li>
+<li>Installation: Download and restore sources under Lisp installation
+directory.</li>
+</ul>
+
+<h3 id="fomus">Fomus</h3>
+<p><code>(use-system :fomus)</code></li></p>
+<p>
+Fomus, by David Psenicka. A music notation package for Common Lisp.
+</p>
+<ul>
+<li>Homepage: <a href="http://common-lisp.net/project/fomus/">
+http://common-lisp.net/project/fomus</a></li>
+<li>Supporting: Linux, OS X; CMUCL, OpenMCL, SBCL</li>
+<li>Installation: Restore sources under Lisp installation directory using this CVS command:
+<pre>cvs -z3 -d :pserver:anonymous:anonymous@common-lisp.net:/project/fomus/cvsroot co fomus</pre>
+</li>
+</ul>
+
+<h3 id="cmn">Midishare Interface</h3>
+<p><code>(use-system :midishare)</code></li></p>
+<p>
+A Lisp interface
+to <a href="http://midishare.sourceforge.net/">Midishare</a>, 
+ a real-time MIDI operating system by Grame.
+</p>
+
+<ul>
+<li>Downloads:  not available
+</li>
+<li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
+<li>Installation: 
+<ol>
+<li>
+Download and restore the most recent <a href="http://sourceforge.net/projects/midishare/">Midishare distribution</a></li>
+<li>Configure MidiShare driver ports with msDriver and test MIDI
+connections with msController before attempting to load the
+interface.
+</li>
+<li>
+Download and install the midishare interface sources under the Lisp
+installation directory.
+</li>
+</ol>
+</li>
+</ul>
+<p>
+See the <a href="dict/midishare-topic.html">midishare</a> topic help for more information about working with Midishare in CM.
+</p>
 
 
 
+
+
+
+
+
+
+<h2 id="troubleshooting">6. Aopedicew</h2>
 
 
 <p>
@@ -297,423 +434,9 @@ to do this. On MacOS, double-click the MCL Common Lisp application to
 start Lisp.
 </p>
 
-<h2 id="load_cm">3. Loading Common Music</h2>
-<p>
-The following instructions assume you can start Lisp by typing
-the appropriate command in a Terminal window. The examples depict the
-load process in several different Lisp implementations; if you use
-some other Lisp or operating system the examples will appear slightly
-differently as you perform each step.
-</p>
-<h3 id="load_shell">3.1 Quickstart (OS X, Linux or Cygwin)</h3>
 
-<p>
-The easiest way to load CM on OS X, Linux or Cygwin is with
-the <a href="dict/cm-sh.html"><code>cm.sh</code></a> script located in the bin/ subdirectory of the
-CM installation directory. When the script finishes loading it will
-leave you in the CM package ready to begin work:
-</p>
 
-<div class="float">
-<p class="captxt">Running the <code>cm.sh</code> script.
-</p>
-<pre class="shell">$ <span class="input">cd /path/to/cm</span>
-$ <span class="input">bin/cm.sh</span>
-<span style="color: gray; font-style: italic;">[...build output omitted...]</span>
 
- /\\\          
----\\\---------
-----\\\--------
-----/\\\------- Common Music 2.5.0
----/--\\\------
---/----\\\-----
- /      \\\/   
-?</pre>
-</div>
-
-<p>
-The <code>cm.sh</code> script can run CM in a Terminal or under
-<a href="emacs.html">X/Emacs</a>.  Type <code>cm.sh -h</code> for an
-overview of the script's command options and usage.
-</p>
-
-<h3 id="load_lisp">3.2 Lisp loading</h3>
-
-<p>
-The cm.sh script is used to start CM running from inside the Unix
-terminal. If you inside a Lisp application you can load Common Music's
-build script from the src/ subdirectory of the CM installation
-directory. For Scheme the build script is called cm.scm, for all
-Common Lisp implementations the file to load is called cm.lisp. Be
-sure to specify the full, true pathname to the file, i.e. avoid using
-links, relative paths, or shortcuts like "~/" unless you are sure your
-Lisp supports them.
-</p>
-
-<div class="float">
-<p class="captxt">Loading CM in Common Lisp.</p>
-<pre class="shell">? <span class="input">(load "/path/to/cm/src/cm.lisp")</span>
-<span style="color: gray; font-style: italic;">[...build output omitted...]</span></pre>
-</div>
-<div class="float">
-
-<p class="captxt">Loading CM in Scheme.</p>
-<pre class="shell">guile&gt; <span class="input">(load "/path/to/cm/src/cm.scm")</span>
-<span style="color: gray; font-style: italic;">[...build output omitted...]</span>
-</pre>
-
-</div>
-<div class="float">
-<p class="captxt">Loading CM in Clisp/Windows (Common Lisp).
-</p>
-<pre class="shell">[1]&gt; <span class="input">(load "c:\\path\\to\\cm\\src\\cm.lisp")</span>
-<span style="color: gray; font-style: italic;">[...build output omitted...]</span></pre>
-</div>
-
-<p>
-For information about using the DOS directory character in Lisp see <a
-href="#trouble_dosdir">Troubleshooting Tip 4</a>.
-</p>
-
-<p>
-Loading cm.scm into Guile (Scheme) loads CM's source files &#8212; no
-compilation or image saving occurs. In in all other Lisp
-implementations loading cm.lisp first <em>compiles</em> source files
-into an efficient (binary) representation and then loads them into
-Lisp.
-</p>
-
-<p>
-Once the load process completes you can switch to the CM package using
-the <code>cm</code> function. This will allow you to easily access all
-the symbols and functions defined in Common Music. Use
-the <code>quit</code> function to exit from Common Music and Lisp.
-</p>
-
-<div class="float">
-<p class="captxt">Switching to the CM package.</p>
-<pre class="shell">? <span class="input">(cm)</span>
-
- /\\\          
----\\\---------
-----\\\--------
-----/\\\------- Common Music 2.5.0
----/--\\\------
---/----\\\-----
- /      \\\/   
-
-? <span class="input">(quit)</span></pre>
-</div>
-
-
-<h3>CFFI</h3>
-Common Foreign Function interface for Common Lisp.Portmidi, Midishare.
-
-<ul>
-<li><a href="http://common-lisp.net/project/cffi/tarballs/">Home page</a></li>
-<li><a href="http://common-lisp.net/project/cffi/tarballs/">Downloads</a></li>
-<li>Implementations: Allegro, CLISP, CMUCL, Lispworks, OpenMCL, SBCL
-</li>
-</ul>
-
-
-
-
-
-<!-- h3 id="load_custom">3.3 Saving Lisp images and other custom builds</h3>
-<p>
-A Lisp <em>image file</em> containing Common Music can be saved in
-CM's binary directory. Despite the fact that a saved image file may
-boot a few seconds faster than loading CM from compiled files, fasl
-loading is the preferred method for starting CM because it provides
-more flexibility for working with different Lisp systems together.
-</p>
-
-<ol>
-  <li>
-<p>
-To save a Lisp image file, start Lisp and then load make.lisp from the
-src/ subdirectory. Then call the <a
-href="dict/make-cm-fn.html">make-cm</a> function with :save-image specified:
-</p>
-
-<pre class="shell">? <span class="input">(load "/path/to/cm/src/make.lisp")</span>
-; Loading /path/to/cm/src/make.fasl
-? <span class="input">(make-cm :save-image t)</span>
-<span class="comment">[...build output omitted...]</span>
-; Removing fasl files.
-; Garbage collecting...
-; Saving application image.
-; Bye!
-$</pre>
-</li>
-
-<li>
-<p>
-Once the system loads and saves an image you will automatically exit
-Lisp. You can then start your freshly saved Common Music image using
-the <a href="dict/cm-sh.html">cm.sh</a> script or by specifying the
-image file to your Lisp command according to its installation
-directions.
-</p>
-</li>
-</ol>
-
-
-<p>
-See the documentation on <a href="dict/make-cm-fn.html">make-cm</a>
-for more information about the various build options.
-</p -->
-
-
-<!-- h2 id="configure_gtk">4. Configuring GTK</h2>
-
-<p>
-CM's graphics support is implemented in <a
-href="http://www.gtk.org">GTK2</a>, a popular graphics library that
-can be used with CM in the following Lisp environments:
-<ul>
-<li>PPC/Darwin: OpenMCL 0.14.1-p1 or higher</li>
-<li>x86/Linux: SBCL 0.8.17 or higher</li>
-<li>x86/Linux: CMUCL 19a or higher</li>
-</ul>
-
-<p>
-CM's Lisp-to-GTK interface is implemented using <a
-href="http://common-lisp.net:/project/lambda-gtk/lambda-gtk.html">&lambda;gtk</a>,
-a separate software package developed by the author and made available
-under the LLGPL (Lisp Lesser General Public License).
-</p>
-
-<p>
-CM will automatically include its GUI tools in any correctly
-configured and supported environment. If you use either OpenMCL on
-Darwin or SBCL on Linux then you may have to configure your
-environment before you attempt to build CM with its GUI.
-</p>
-
-<h3 id="gtk_darwin">4.1 Configuring X11 and GTK2 on Darwin (OS X)</h3>
-
-<p>
-You must have X11 and GTK2 installed and configured properly on your
-machine. Apple's X11 application must also be running before you can
-open any windows.
-</p>
-
-<ol>
-
-<li>
-<p>
-X11.app normally resides in /Application/Utilities/. If you do not
-have it you can download it from <a
-href="http://www.apple.com/macosx/features/x11/download/">Apple's X11
-page</a>. It should also be possible to use <a
-href="http://www.xdarwin.org/"> XDarwin/XFree86</a> but I have not
-tried it.
-</p>
-</li>
-
-<li>
-<p>
-Use <a href="http://finkcommander.sourceforge.net">FinkCommander</a>
-to install Fink's <a
-href="http://fink.sourceforge.net/pdb/package.php/gtk+2">gtk+2</a>
-package. CM assumes that all GTK+ libraries are restored under
-/sw/lib/ directory (the default location for installing Fink
-packages).
-</p>
-</li>
-</ol>
-
-<p>
-Once X11 and GTK2 are installed and the X11.app is running you can
-open a GUI window inside cm running in xterm or under XEmacs.  You can
-also start GTK windows from inside Terminal.app or <a
-href="emacs.html#downloading">Emacs.app</a> (the Cocoa Emacs
-application) if you add the following line to your ~/.bash_profile
-file:
-</p>
-
-<blockquote>
-<pre>export DISPLAY=:0.0</pre>
-</blockquote>
-
-<p>
-It has been noticed on some networked OSX computers that opening the
-first GTK window inside Lisp takes over a minute to complete. The
-problem is related to font loading but I have not yet been able to
-determine exactly what is going wrong. If you encounter this problem
-the (temporary) fix is to add the following line to your
-~/.bash_profile file:
-</p>
-
-<blockquote>
-<pre>export GDK_USE_XFT=0</pre>
-</blockquote>
-
-<h3 id="gtk_openmcl"> 4.2 Installing GTK2 support in OpenMCL (OS X)</h3>
-
-<p>
-In order to work with GTK2 in OpenMCL you must first install a foreign
-function interface (FFI) to the GTK libraries:
-<ol>
-
-<li>
-<p>
-Download <a
-
-href="http://pinhead.music.uiuc.edu/~hkt/openmcl-darwin-ffi-gtk2.tar.gz">openmcl-darwin-ffi-gtk2.tar.gz</a>
-</p>
-</li>
-
-<li>
-<p>
-Untar the archive inside your ccl/darwin-headers/ directory under the
-OpenMCl distribution:
-</p>
-<pre class="shell">$ <span class="input">cd /path/to/ccl/darwin-headers</span>
-$ <span class="input">tar -zxf openmcl-darwin-ffi-gtk2.tar.gz</span></pre>
-</li>
-</ol>
-
-<h3 id="gtk_sbcl"> 4.3 Adding callback support to SBCL (Linux)</h3>
-<p>
-As of this date (Feb '05) SBCL does not provide a native callback
-facility. Unless you are certain that callbacks exist in your version
-of SBCL you will need to install Thomas Burdick's SBCL callback
-package and save a new SBCL core image before you build CM:
-</p>
-
-<ol>
-<li>
-<p>
-Download <a
-href="http://pinhead.music.uiuc.edu/~hkt/sbcl-af-2004-10-22.tgz">Thomas
-Burdick's Alien Function package</a> and restore it to a directory on
-your machine.
-</p>
-</li>
-<li>
-<p>
-Compile the Alien Function package and save a new sbcl.core image:
-</p>
-
-</ol-->
-
-
-<h2 id="install_sys">5. Working with CLM, CMN and Midishare</h2>
-
-<p>
-You can load other Lisp software systems into Lisp either before or
-after loading Common Music.  If you want to save a Lisp image
-containing all of these systems bundled together, load the other
-software before you call <code>make-cm</code> to save the image.
-</p>
-
-<h3 id="install_clm_cmn">5.1 Loading CLM and CMN</h3>
-<p>
-To work with either CLM or CLM you simply load the system using the 
-appropriate command shown below:
-</p>
-
-<div class="float">
-<p class="captxt">Loading CLM and CMN into the CM package.</p>
-<pre class="shell">? <span class="input">(load "/path/to/clm-2/all")</span>
-<span class="comment">[build output omitted...]</span>
-? <span class="input">(load "/path/to/cmn/cmn-all")</span>
-<span class="comment">[build output omitted...]</span></pre>
-</div>
-
-<p>
-Note that if you load CLM instruments that were compiled outside of
-the Common Music package you will have to <code>import</code> their
-symbols before working with the instruments:
-</p>
-
-<div class="float">
-<p class="captxt">
-Importing instruments compiled in the cl-user package.
-</p>
-
-<pre class="shell">? <span class="input">(load "/path/to/clm-2/v")</span>
-#P"/path/to/clm-2/v.dfsl"  
-? <span class="input">(load "/path/to/clm-2/grani")</span>
-#P"/path/to/clm-2/grani.dfsl"
-? <span class="input">(import '(cl-user::fm-violin cl-user::grani))</span>
-T
-? <span class="input">(new fm-violin :startime 0 :dur 3 :frequency 440)</span>
-#i(fm-violin startime 0 dur 3 frequency 440)</pre>
-</div>
-
-<h3 id="install_ms">5.2 Installing Midishare</h3>
-<p>
-A direct connection from Common Music to one or more MIDI Drivers can
-be established using <a
-href="http://www.grame.fr/MidiShare/">Midishare</a>, a real-time MIDI
-operating system developed by <a href="http://www.grame.fr">Grame</a>.
-Common Music currently works with Midishare in the following OS/Lisp
-combinations:
-</p>
-<ul>
-  <li>Linux/CMUCL</li>
-  <li>OS X/OpenMCL</li>
-  <li>OS X/MCL 5.0</li>
-  <li>MacOS 9.2/MCL 4.2, 4.3</li>
-</ul>
-
-<p>
-Directions for installing MidiShare:
-</p>
-
-<ol>
-<li>
-<p>
-Download, install and configure the Midishare and Developer packages
-from the <a href="ftp://ftp.grame.fr/pub/MidiShare/">Midishare FTP
-Server</a>. Be sure to set up your MidiShare driver ports (msDriver)
-and test your MIDI connection (msController) before attempting to
-build CM with Midishare.
-</p>
-</li>
-
-<li>
-<p>
-If you are running OpenMCL, download <a
- href="ftp://ftp-ccrma.stanford.edu/pub/Lisp/cm/openmcl-midishare.tar.gz">openmcl-midishare.tar.gz</a>
- from the CCRMA ftp server and untar the archive in
- "ccl/darwin-headers/", i.e. the "darwin-headers/" subdirectory of
- your OpenMCL distribution:
-</p>
-
-<pre class="shell">$ <span class="input">cd /path/to/ccl/darwin-headers</span>
-$ <span class="input">tar -zxf openmcl-midishare.tar.gz</span></pre>
-</li>
-
-<li>
-<p>
-Load the Midishare-Interface.lisp file located in the
-src/MidiShare/ sub-folder
-of the Common Music installation directory:
-</p>
-<pre class="shell">? <span class="input">(load "/path/to/cm/src/midishare/Midishare-Interface")</span></pre>
-</li>
-
-<li>
-<p>
-Once the file is load you can output MIDI events to the "midi.port"
-destination.
-<pre class="shell">? <span class="input">(events (new midi :time 0 :duration 2 :keynum 60) "midi.port")</span>
-"midi.port"</pre>
-</li>
-</ol>
-
-<p>
-See the main <a href="dict/midi-topic.html">MIDI documentation</a> in
-the dictionary for more information about MIDI and working with
-MidiShare in real time.
-</p>
-
-<h2 id="troubleshooting">6. Aopedicew</h2>
 <dl>
 
 The following table lists the commands, programs and image names for
