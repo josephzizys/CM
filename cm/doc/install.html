@@ -25,146 +25,170 @@
 </div>
 <hr class="inv"/>
 <div id="content">
+
 <h1>Installing Common Music</h1>
-<p>
-Installing Common Music involves downloading the sources, starting a
-<a href="cm.html#implementations">supported Lisp implementation</a>,
-loading CM's sources and (optionally) saving a Lisp image file
-containing the application. Once the system is installed you can <a
-href="emacs.html">run Common Music in X/Emacs</a> and load in
-additional software systems such as <a
-href="http://www-ccrma.stanford.edu/software/clm/">CLM</a>, <a
-href="http://www-ccrma.stanford.edu/software/cmn/">CMN</a> and <a
-href="http://www.grame.fr/MidiShare/">Midishare</a>.
-</p>
+
+
 <h2>Contents</h2>
 <ol>
-  <li><a href="#restore_src">Downloading and restoring the sources</a>
+  <li><a href="#introduction">Preinstallation</a></li>
+  <li><a href="#restore_src">Downloading sources</a></li>
     <ol>
-      <li><a href="#restore_tar">Restoring sources from archives</a></li>
-      <li><a href="#restore_cvs">Restoring sources from CVS</a></li>
+      <li><a href="#restore_tar">Installing from archives</a></li>
+      <li><a href="#restore_cvs">Installing from CVS</a></li>
     </ol>
   </li>
-  <li><a href="#start_lisp">Starting a Lisp application</a></li>
   <li>
-    <a href="#load_cm">Loading Common Music</a>
+    <a href="#load_cm">Starting Common Music</a>
     <ol>
-      <li><a href="#load_shell">Quickstart (OS X, Linux or Cygwin)</a></li>
-      <li><a href="#load_lisp">Lisp loading</a></li>
-      <li><a href="#load_custom">Saving images and other custom builds</a></li>
+      <li><a href="#run_shell">From the shell</a></li>
+      <li><a href="#run_lisp">From Lisp</a></li>
+      <li><a href="#run_emacs">Under Emacs</a></li>
+      <li><a href="#custom">Customized builds</a></li>
     </ol>
   </li>
-  <li><a href="#configure_gtk">Configuring GTK</a></li>
+  <li><a href="#install_sys">Loading external Lisp programs and
+  interfaces</a>
     <ol>
-<li><a href="#gtk_darwin">Configuring X11 and GTK2 on Darwin (OS X)</a></li>
-<li><a href="#gtk_openmcl">Installing GTK2 support in OpenMCL (OS X)</a></li>      
-<li><a href="#gtk_sbcl">Adding callback support to SBCL (Linux)</a></li>
+      <li><a href="#cffi">CFFI</a></li>
+      <li><a href="#clm">CLM</a></li>
+      <li><a href="#cmn">CMN</a></li>
+      <li><a href="#fomus">Fomus</a></li>
+      <li><a href="#midishare">Midishare</a></li>
+      <li><a href="#player">Player</a></li>
+      <li><a href="#portmidi">Portmidi</a></li>
+    </ol>
+  </li>
+  <li><a href="#troubleshooting">Appendices</a>
+  <ol>
+  <li><a href="#start_lisp">Starting a Lisp application</a></li>
+  <li><a href="#clisp.bat">Installing a CLISP command on Windows</a></li>
+  <li><a href="#trouble_dosdir">The DOS directory character in Lisp</a></li>
+  </ol>
+  </li>
 </ol>
 
-     
-  <li><a href="#install_sys">Working with CLM, CMN and MidiShare</a>
-    <ol>
-      <li><a href="#install_clm_cmn">Loading CLM and CMN</a></li>
-      <li><a href="#install_ms">Installing Midishare</a></li>
-    </ol>
-  </li>
-  <li><a href="#troubleshooting">Troubleshooting</a>
-    <ol>
-      <li><a href="#trouble_eol">End-of-line conversion (MacOS)</a></li>
-      <li><a href="#trouble_unpack">Installation directory not restored (Windows)</a></li>
-      <li><a href="#clisp.bat">Installing a CLISP command on Windows</a></li>
-      <li><a href="#trouble_dosdir">The DOS directory character in Lisp</a></li>
-    </ol>
-  </li>
-</ol>
-<h2 id="restore_src">1. Downloading and restoring the sources</h2>
+
+<h3>Preinstallation</h3>
+
 <p>
-Common Music's sources can be downloaded from archives or via
-anonymous CVS. <!-- Although the CVS tree contains the most up-to-date
-version of the system, these sources represent the "bleeding edge" of
-development and may include bugs and untested features. -->
+To build Common Music from its sources you must have write permission
+in an installation directory, a working lisp command on your execution
+path and some familiary with the shell, or terminal, application.  If
+you are going to use CM in conjunction with other lisp programs like
+CLM or Fomus, or with Lisp interfaces to external programs such as
+Portmidi and Midishare, you should create a common "parent" directory
+to hold the different Lisp systems so you can load them easily and
+automatically via <a href="dict/use-system-fn.html">use-system</a>. It
+does not matter where on the file system this parent directory is
+located; for sake of illustration this document assumes that the lisp
+systems are all installed under "/usr/local/lisp".
 </p>
-<h3 id="restore_tar">1.1 Restoring sources from archives</h3>
-<ol>
+
+<div class="float">
+<p class="captxt">Install lisp music software under a common parent
+directory so you can load the seperate systems easily using
+use-system. This listing shows the various lisp systems and interfaces
+mentioned in this document.
+<pre class="shell">
+$ ls /usr/local/lisp
+drwxr-xr-x   15 hkt  admin      510 14 Nov 13:56 cffi/
+drwxr-xr-x  188 hkt  admin     6392 14 Nov 09:57 clm-3/
+drwxr-xr-x    9 hkt  admin      306 21 Nov 09:59 cm/
+drwxr-xr-x   64 hkt  admin     2176 25 Oct 12:46 cmn/
+drwxr-xr-x   64 hkt  admin     2176 11 Nov 08:10 fomus/
+drwxr-xr-x    7 hkt  admin      238 26 Oct 18:04 midishare/
+drwxr-xr-x    5 hkt  admin      170 25 Oct 06:44 player/
+drwxr-xr-x    5 hkt  admin      170 21 Nov 17:44 portmidi/
+
+</pre>
+</div>
+
+<h2 id="restore_src">Downloading sources</h2>
+<p>
+Sources for stable and developmental releases can be downloaded
+as tarball archives (cm.tar.gz) or via anonymous CVS.
+</p>
+
+<h3>Tarballs</h3>
+<ul>
 <li>
-<p>
-Download the latest CM source archive from the <a
- href="http://www.sf.net/projects/commonmusic">Sourceforge Common
- Music Project</a>.
-</p>
+Stable release archives are available from
+ CM's <a href="http://www.sf.net/projects/commonmusic">Sourceforge
+ Project</a> page.
 </li>
 
 <li>
-<p>
-Place the downloaded archive in an appropriate directory on your
-machine. If you are going to work with other Lisp packages such as <a
-href="http://www-ccrma.stanford.edu/software/clm/">CLM</a> or <a
-href="http://www-ccrma.stanford.edu/software/cmn/">CMN</a> you might
-consider creating a parent Lisp directory to restore these different
-Lisp systems in.
-</p>
+Current development sources is available as a nightly snapshot.
 </li>
-<li>
-<p>
-Restore the CM source archive with whatever software you use. This
-should unpack the contents of the archive in a directory named
-cm-<em>n.n.n</em>, where <em>n.n.n</em> is the version number of the
-CM release. This document will refer to this directory as the <em>CM
-installation directory</em>.
-</p>
-</li>
-</ol>
+</ul>
 
-<h3 id="restore_cvs">1.2 Restoring sources from <a
-href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs.html#SEC_Top">CVS</a></h3>
+<p>
+After downloading an archive, change directories to your Lisp installation directory an install
+
+<pre class="shell">
+$ tar -zxf ~/cm.tar.gz
+</pre>
+
+<h3 id="restore_cvs"> <a
+href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs.html#SEC_Top">CVS</a> repository</h3>
 
 <p>
 The sources to Common Music are maintained in a CVS repository
-organized into different <em>release branches</em> that
-are tagged by symbolic release numbers.  By convention, even
-numbered branches denote stable software release lines and odd
-numbered branches denote unstable, or developmental,
-releases.  The CVS <em>head branch</em> &#8212; the release branch you
-get if you do not specify any release tag &#8212; always points to the
-latest developmental sources.
+organized organized by <em>release branches</em> that are tagged by
+symbolic release numbers.  By convention, even numbered branches
+denote stable software release lines and odd numbered branches denote
+unstable, or developmental, releases.  The CVS <em>head branch</em>
+&#8212; the release branch you get if you do not specify any release
+tag &#8212; always points to the latest developmental sources.
 </p>
 
 <p>
-As of this date, Common Music's CVS tree has three main
-branches: the <code>rel-2_4</code>  and <code>rel-2_6</code> branch lines contain sources and bug
-fixes to stable releases; CM's head branch points to the latest developmental line.
+As of this date, Common Music's CVS tree has three main branches:
+the <code>rel-2_4</code> and <code>rel-2_6</code> branch lines contain
+sources and bug fixes to stable releases; CM's head branch points to
+the latest developmental line.
 </p>
 
-<p>
+<!-- p>
 To check out sources from Common Music's CVS repository use
 the Unix <code>cvs</code> command or a CVS client
-application. Downloading sources for the first time is accomplished in
-two steps: (1) logging in to the Sourceforge CVS server in anonymous
-mode and (2) checking out the sources to the desired release branch.
-</p>
+application. <p -->
 
 <p>
-Directions for checking out sources from CM's repository at Sourceforge:
+Installing CVS sources for the first time is accomplished in two
+steps: logging in to the Sourceforge CVS server in anonymous mode and
+then checking out the sources to the desired release branch.
 </p>
+
+<!--p>
+Directions for checking out sources from CM's repository at Sourceforge:
+</p -->
 
 <ol>
 
 <li>
 <p>
-Change directories to the parent directory in which you want to
-install the CM source tree.
+Change directories to your Lisp installation directory.
 </p>
 </li>
 
+<li><p>Set the shell variable CVSROOT to CM's cvs repository:</p></li>
+
+<pre class="shell">
+$ <span class="input">export CVSROOT=":pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic"</span> 
+</pre>
+
 <li>
 <p>
-Use <a href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_2.html#SEC31">anonymous CVS login</a> to the <a
+Use the <code>cvs login</code> command to connect to the Sourceforge CVS server:
+
+<!-- Use <a href="https://www.cvshome.org/docs/manual/cvs-1.12.10/cvs_2.html#SEC31">anonymous CVS login</a> to the <a
  href="http://sourceforge.net/cvs/?group_id=9766">Sourceforge CVS
- repository</a>. Press the Return key when prompted for a login password:
+ repository</a>. --> Press the Return key when prompted for a login password:
 </p>
 
 <pre class="shell">
-$ <span class="input">CVSROOT=":pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic"</span> 
 $ <span class="input">cvs login</span>
 CVS password:
 $</pre>
@@ -224,100 +248,23 @@ $ <span class="input">bin/cm.sh</span>
 </li>
 </ol>
 
-<h2 id="start_lisp">2. Starting the Lisp application</h2>
+<h2 id="start_lisp">2. Starting Common Music</h2>
 <p>
-In order to build Common Music from its sources you must be able to
-start one of the
-<a href="cm.html#implementations">supported Lisp implementations</a>.
-Each Lisp may be represented by (up to) three implementation files:
+In order run Common Music from the shell or under Emacs you must be
+able to start one of the
+<a href="cm.html#implementations">supported Lisp implementations</a>
+from the terminal.  The command that starts your Lisp can then be
+passed to cm.sh using the <code>-l option, e.g.
 </p>
 
-<ol>
-<li>
-<p>
-A <em>shell command</em> or program that starts Lisp running in
-a Terminal (the CMD window on Windows) or under <a
-href="emacs.html">X/Emacs</a>.
-</p>
-</li>
-<li>
-<p>
-An installed executable that runs when the command is
-invoked.
-<p>
-</li>
-<li>
-<p>
-An <em>image file</em> that contains the Lisp runtime
-environment.
-<p>
-</li>
-</ol>
+cm.sh -l openmcl
 
-<p>
-The following table lists the commands, programs and image names for
-each Lisp implementation. Follow the links for additional information.
-</p>
-
-<div class="float">
-<p class="captxt">Application files for supported Lisp
-implementations.
-</p>
-<table class="float">
-  <tbody>
-    <tr>
-      <th style="padding-right: 1em; text-align: left;" class="col">Lisp</th>
-      <th style="padding-right: 1em; text-align: left;" class="col">Command</th>
-      <th style="text-align: left;" class="col">Executable</th>
-      <th style="text-align: left;" class="col">Image</th>
- </tr>
-    <tr>
-      <td><a href="http://cvs.sourceforge.net/viewcvs.py/clisp/clisp/INSTALL?view=markup">CLISP</a></td>
-      <td><a href="http://clisp.cons.org/clisp.html"><code>clisp</code></a></td>
-      <td>./full/lisp(.exe) </td>
-      <td>./full/lispinit.mem</td>
-    </tr>
-    <tr>
-      <td><a href="http://www.cons.org/cmucl/install.html">CMU</a></td>
-      <td><a href="http://www.pmsf.de/pub/cmucl/doc/cmu-user/introduction.html#toc2"><code>lisp</code></a></td>        
-      <td>./bin/lisp </td>
-      <td>./lib/cmucl/lib/lisp.core</td>
-    </tr>
-    <tr>
-      <td><a href="http://openmcl.clozure.com/Doc/installation.html">OpenMCL</a></td>
-      <td>
-        <a href="http://openmcl.clozure.com/Doc/shell-script.html"><code>openmcl</code></a>
-      </td>
-      <td>./dppccl </td>
-      <td>./dppccl.image</td>
-    </tr>
-    <tr>
-      <td><a href="http://www.franz.com/support/documentation/6.1/doc/startup.htm">ACL</a></td>
-      <td> </td>
-      <td>./alisp(.exe) </td>
-      <td>./lisp.dxl</td>
-    </tr>
-    <tr>
-      <td><a href="http://www.shiro.dreamhost.com/scheme/gauche/index.html">Gauche</a></td>
-      <td><a href="http://www.shiro.dreamhost.com/scheme/gauche/man/gauche-refe_13.html#SEC13"> <code>gosh</code></a></td> <td>gosh</td> <td></td>
-    </tr>
-    <tr>
-      <td><a
-      href="http://www.gnu.org/software/guile/docs/guile-ref/Obtaining-and-Installing-Guile.html#Obtaining%20and%20Installing%20Guile">Guile</a></td>
-      <td><a
-      href="http://www.gnu.org/software/guile/docs/guile-ref/Invoking-Guile.html#Invoking%20Guile"> <code>guile</code></a></td> <td>guile</td> <td></td>
-    </tr>
-
-    <tr>
-      <td><a href="http://www.stklos.org">STklos</a></td>
-      <td><code>stklos</code></td> <td>stklos</td> <td></td>
-    </tr>
+If you are on OS X, Linux or Cygwin you can use the <code>which</code>
+command to see if a Lisp command is installed properly on your path.
 
 
 
-  </tbody>
-</table>
-</div>
+
 
 <p>
 If you are on OS X, Linux or Cygwin you can use the <code>which</code>
@@ -457,7 +404,23 @@ the <code>quit</code> function to exit from Common Music and Lisp.
 
 ? <span class="input">(quit)</span></pre>
 </div>
-<h3 id="load_custom">3.3 Saving Lisp images and other custom builds</h3>
+
+
+<h3>CFFI</h3>
+Common Foreign Function interface for Common Lisp.Portmidi, Midishare.
+
+<ul>
+<li><a href="http://common-lisp.net/project/cffi/tarballs/">Home page</a></li>
+<li><a href="http://common-lisp.net/project/cffi/tarballs/">Downloads</a></li>
+<li>Implementations: Allegro, CLISP, CMUCL, Lispworks, OpenMCL, SBCL
+</li>
+</ul>
+
+
+
+
+
+<!-- h3 id="load_custom">3.3 Saving Lisp images and other custom builds</h3>
 <p>
 A Lisp <em>image file</em> containing Common Music can be saved in
 CM's binary directory. Despite the fact that a saved image file may
@@ -500,10 +463,10 @@ directions.
 <p>
 See the documentation on <a href="dict/make-cm-fn.html">make-cm</a>
 for more information about the various build options.
-</p>
+</p -->
 
 
-<h2 id="configure_gtk">4. Configuring GTK</h2>
+<!-- h2 id="configure_gtk">4. Configuring GTK</h2>
 
 <p>
 CM's graphics support is implemented in <a
@@ -635,15 +598,7 @@ your machine.
 Compile the Alien Function package and save a new sbcl.core image:
 </p>
 
-<pre class="shell">$ <span class="input">cd sbcl-af</span>
-$ <span class="input">sbcl --load "system"</span>
-* <span class="input">(sb-ext:save-lisp-and-die "/tmp/sbcl.core")</span>
-$ <span class="input">cd /usr/local/lib/sbcl</span>
-$ <span class="input">mv sbcl.core sbcl.core.orig</span>
-$ <span class="input">mv /tmp/sbcl.core .</span></pre>
-</li>
-
-</ol>
+</ol-->
 
 
 <h2 id="install_sys">5. Working with CLM, CMN and Midishare</h2>
@@ -758,30 +713,71 @@ the dictionary for more information about MIDI and working with
 MidiShare in real time.
 </p>
 
-<h2 id="troubleshooting">6. Troubleshooting</h2>
+<h2 id="troubleshooting">6. Aopedicew</h2>
 <dl>
-  <dt id="trouble_eol">1. Line conversion (MacOS)</dt>
-  <dd>Some installers on MacOS may not restore gzipped Unix tar files
-(*.tar.gz), correctly. Make sure that your installer performs
-end-of-line conversion on text files when it unpacks the sources. You
-can determine if this was done correctly by editing CM's <a
- href="../readme.text">readme.text</a> using SimpleText. If the file is
-legible then your installer performed the conversion correctly.
-  </dd>
-  <dt id="trouble_unpack">2. Installation directory not restored
-(Windows)</dt>
-  <dd>Some installers on Windows may choose to ignore the archive's
-top-level directory if you unpack by double-clicking the file. These
-steps work for me using WinZip:
-    <ol>
-      <li>Place the archive in the parent directory that will hold the
-CM
-distribution.</li>
-      <li>Right-button the archive file and choose "Install Here" from
-the
-pop-up menu.</li>
-    </ol>
-  </dd>
+
+The following table lists the commands, programs and image names for
+each Lisp implementation. Follow the links for additional information.
+</p>
+
+<div class="float">
+<p class="captxt">Application files for supported Lisp
+implementations.
+</p>
+<table class="float">
+  <tbody>
+    <tr>
+      <th style="padding-right: 1em; text-align: left;" class="col">Lisp</th>
+      <th style="padding-right: 1em; text-align: left;" class="col">Command</th>
+      <th style="text-align: left;" class="col">Executable</th>
+      <th style="text-align: left;" class="col">Image</th>
+ </tr>
+    <tr>
+      <td><a href="http://cvs.sourceforge.net/viewcvs.py/clisp/clisp/INSTALL?view=markup">CLISP</a></td>
+      <td><a href="http://clisp.cons.org/clisp.html"><code>clisp</code></a></td>
+      <td>./full/lisp(.exe) </td>
+      <td>./full/lispinit.mem</td>
+    </tr>
+    <tr>
+      <td><a href="http://www.cons.org/cmucl/install.html">CMU</a></td>
+      <td><a href="http://www.pmsf.de/pub/cmucl/doc/cmu-user/introduction.html#toc2"><code>lisp</code></a></td>        
+      <td>./bin/lisp </td>
+      <td>./lib/cmucl/lib/lisp.core</td>
+    </tr>
+    <tr>
+      <td><a href="http://openmcl.clozure.com/Doc/installation.html">OpenMCL</a></td>
+      <td>
+        <a href="http://openmcl.clozure.com/Doc/shell-script.html"><code>openmcl</code></a>
+      </td>
+      <td>./dppccl </td>
+      <td>./dppccl.image</td>
+    </tr>
+    <tr>
+      <td><a href="http://www.franz.com/support/documentation/6.1/doc/startup.htm">ACL</a></td>
+      <td> </td>
+      <td>./alisp(.exe) </td>
+      <td>./lisp.dxl</td>
+    </tr>
+    <tr>
+      <td><a href="http://www.shiro.dreamhost.com/scheme/gauche/index.html">Gauche</a></td>
+      <td><a href="http://www.shiro.dreamhost.com/scheme/gauche/man/gauche-refe_13.html#SEC13"> <code>gosh</code></a></td> <td>gosh</td> <td></td>
+    </tr>
+    <tr>
+      <td><a
+      href="http://www.gnu.org/software/guile/docs/guile-ref/Obtaining-and-Installing-Guile.html#Obtaining%20and%20Installing%20Guile">Guile</a></td>
+      <td><a
+      href="http://www.gnu.org/software/guile/docs/guile-ref/Invoking-Guile.html#Invoking%20Guile"> <code>guile</code></a></td> <td>guile</td> <td></td>
+    </tr>
+
+    <tr>
+      <td><a href="http://www.stklos.org">STklos</a></td>
+      <td><code>stklos</code></td> <td>stklos</td> <td></td>
+    </tr>
+</tbody>
+</table>
+</div>
+
+
   <dt id="clisp.bat">3. Installing a CLISP command (Windows)</dt>
   <dd>When Clisp is installed on Windows it places a <em>shortcut</em>
 to the program on your desktop. Unfortunately, this shortcut is not
