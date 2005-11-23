@@ -31,7 +31,7 @@
 <h2>Contents</h2>
 <ol>
   <li><a href="#preinstallation">Pre-installation</a></li>
-  <li><a href="#downloading">Downloading CM Sources</a></li>
+  <li><a href="#installing">Installing Sources</a></li>
   </li>
   <li>
     <a href="#starting">Starting CM</a>
@@ -41,7 +41,9 @@
       <li><a href="#cffi">CFFI</a></li>
       <li><a href="#clm">CLM</a></li>
       <li><a href="#cmn">CMN</a></li>
+      <li><a href="#cm-gui">CM-GUI</a></li>
       <li><a href="#fomus">Fomus</a></li>
+      <li><a href="#lambda-gtk">Lambda GTK</a></li>
       <li><a href="#midishare">Midishare</a></li>
       <li><a href="#player">Player</a></li>
       <li><a href="#portmidi">Portmidi</a></li>
@@ -93,16 +95,16 @@ drwxr-xr-x    5 hkt  admin   170 21 Nov 17:44 portmidi/
 </pre>
 </div>
 
-<h2 id="downloading">Downloading CM sources</h2>
+<h2 id="installing">Installing Sources</h2>
 <p>
 Sources for stable and developmental releases can be downloaded
-as tarball archives (cm.tar.gz) or via anonymous CVS.
+in tarball archives (cm.tar.gz) or via anonymous CVS.
 </p>
 
-<h3 id="tarballs">Tarball Installs</h3>
+<h3 id="tarball-install">Tarball Installation</h3>
 <ul>
 <li>
-Stable release archives are available from
+Archives of stable releases are available from
  CM's <a href="http://www.sf.net/projects/commonmusic">Sourceforge
  Project</a> page.
 </li>
@@ -122,11 +124,11 @@ $ <span class="input">cd /usr/local/lisp</span>
 $ <span class="input">tar -zxf cm.tar.gz</span>
 </pre>
 
-<h3 id="cvs">CVS Installation</h3>
+<h3 id="cvs-install">CVS Installation</h3>
 
 <p>
 Sources to Common Music are maintained in a CVS repository organized
-in <em>release branches</em> and tagged by release numbers.  By
+into <em>release branches</em> and tagged by release numbers.  By
 convention, even numbered branches denote stable software releases and
 odd numbered branches denote unstable, or developmental, branches.
 The CVS <em>head branch</em> &#8212; the branch you get if you do not
@@ -177,8 +179,8 @@ $ <span class="input">cvs checkout -P cm</span>
 <p>
 After the source tree has been restored you do not need to
 use <code>login</code> or <code>checkout</code> again.  You can
-periodically update your CM installation tree with the most recent
-file versions from the Sourceforge repository by executing <code>cvs
+periodically update your CM installation tree to the most recent file
+versions from the Sourceforge repository by executing <code>cvs
 update</code> from inside the top-level CM directory:
 
 <pre class="shell">
@@ -190,16 +192,17 @@ $ <span class="input">cvs update</span>
 <h2 id="start_lisp">Starting Common Music</h2>
 
 <p>
-Once the sources have been installed on your local machine there are a
-number of different ways to start Common Music. Here are some typical
-strategies:
+Once the sources have been installed on your local machine and you
+have a shell command that starts a supported lisp implementation, you
+can start Common Music. There are a number of different ways to do
+this, here are some typical strategies:
 </p>
 
 <ol>
 
 <li>
 <p>
-To start up Common Music from the Shell run
+To start Common Music from the Shell use
 the <a href="dict/cm-sh.html"><code>cm.sh</code></a> script located in
 CM's binary directory. You must have a valid Lisp command installed on
 your path for this to work.
@@ -210,18 +213,19 @@ $ <span class="input">/usr/local/lisp/cm/bin/cm.sh</span>
 </pre>
 
 <p>
-It is easier to use the <a href="dict/cm-sh.html">cm.sh</a> script if
-you install a global command that runs it without having to type its
-pathname.  This example installs a command in /usr/bin that starts the
-script simply by typing <code>cm</code> to the shell prompt:
+Consider installing a global command that
+runs <a href="dict/cm-sh.html">cm.sh</a> without having to type its
+pathname. This example adds a <code>cm</code> command to /usr/bin that
+starts the script simply by typing <code>cm</code> to the shell
+prompt:
 </p>
 
 <pre class="shell">
 $ <span class="input">sudo ln -s /usr/bin/cm /usr/local/lisp/cm/bin/cm.sh<span>
 </pre>
 
-<p>By specifying -l and -e options you can launch CM under Emacs in
-any supported Lisp. Examples:
+<p>By specifying the <code>-l</code> and <code>-e</code> options you
+can launch CM under Emacs in any supported Lisp. Examples:
 </p>
 
 <pre class="shell">
@@ -297,31 +301,28 @@ load programs and interfaces as part of CM's normal start up process
 add the appropriate <a href="dict/use-package-fn.html">use-package</a>
 forms to either
 <a href="../src/cm.lisp">cm.lisp</a> or to your personal
-~/.cminit.lisp file. The <code>use-system</code> facility will autmatically
-compile source code as necessary as it loads.
+~/.cminit.lisp file. The <code>use-system</code> facility will automatically
+compile source code as necessary during the loading process.
 </p>
 
 <p>
-The following Lisp software can be loaded using
+The following Common Lisp packages can be loaded with
 <a href="dict/use-system-fn.html">use-system</a>:
 </p>
 
 <h3 id="cffi">CFFI</h3>
-
 <p><code>(use-system :cffi)</code></li></p>
-
-The Common Foreign Function interface for Common Lisp, by James Bielman and Luís Oliveira.  (Required by the <a href="#portmidi">Portmidi</a> and <a href="#midishare">Midishare</a> interfaces).
+The Common Foreign Function interface for Common Lisp, by James Bielman and Luís Oliveira.  Required by the <a href="#portmidi">Portmidi</a> and <a href="#midishare">Midishare</a> interfaces.
 
 <ul>
 <li>Homepage: <a href="http://common-lisp.net/project/cffi/">
-http://common-lisp.net/project/cffi/</a></li>
+http://common-lisp.net/project/lambda-gtk/</a></li>
 <li>Downloads: <a href="http://common-lisp.net/project/cffi/tarballs/">http://common-lisp.net/project/cffi/tarballs/</a></li>
 <li>Supporting: Allegro, CLISP, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under Lisp installation directory.</li>
+<li>Installation: Restore sources under the Lisp installation directory.</li>
 </ul>
 
 <h3 id="clm">CLM</h3>
-
 <p><code>(use-system :clm)</code></li></p>
 <p>
 Common Lisp Music, by William Schottstaedt. A sound synthesis package
@@ -336,16 +337,15 @@ ftp://ftp-ccrma.stanford.edu/pub/Lisp/clm-3.tar.gz
 </a></li>
 <li>Requirements: GCC, X Windows (OSX: XCode developer)
 <li>Supporting: Linux, OS X: Allegro, CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under Lisp installation directory.</li>
+<li>Installation: Restore sources under the Lisp installation directory.</li>
 </ul>
 <p>
-Note that CLM instrument files must be compiled from the CM package in
-order to work with the <a href="dict/process-mac.html">process</a>
-macro.
+CLM instrument files must be compiled inside the CM package in order
+to work with the <a href="dict/process-mac.html">process</a> macro.
 </p>
 
 <h3 id="cmn">CMN</h3>
-<p><code>(use-system :clm)</code></li></p>
+<p><code>(use-system :cmn)</code></li></p>
 <p>
 Common Music Notation, by William Schottstaedt. A music notation
 package for Common Lisp.
@@ -358,9 +358,30 @@ http://www-ccrma.stanford.edu/software/cmn/
 ftp://ftp-ccrma.stanford.edu/pub/Lisp/cmn.tar.gz
 </a></li>
 <li>Supporting: Allegro, Clisp, CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under Lisp installation
+<li>Installation: Restore sources under the Lisp installation
 directory.</li>
 </ul>
+
+<h3 id="cm-gui">CM-GUI</h3>
+<p><code>(use-system :cm-gui)</code></li></p>
+<p>
+Graphical User Interface for CM, by Rick Taube.
+</p>
+<ul>
+<li>Homepage: <a href="http://common-lisp.net/project/lambda-gtk/">
+http://common-lisp.net/project/cffi/</a></li>
+<li>Downloads: not available yet.
+<li>Requirements: <a href="#lambda-gtk">lambda-gtk</a>
+<li>Supporting: Linux, OSX: CMUCL, OpenMCL, SBCL</li>
+<li>Installation: Restore sources under the Lisp installation directory.</li>
+</ul>
+
+
+
+
+
+
+
 
 <h3 id="fomus">Fomus</h3>
 <p><code>(use-system :fomus)</code></li></p>
@@ -372,8 +393,24 @@ Fomus, by David Psenicka. A music notation package for Common Lisp.
 http://common-lisp.net/project/fomus</a></li>
 <li>Downloads:  CVS only</li>
 <li>Supporting: Linux, OS X: CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under Lisp installation directory using this CVS command:
+<li>Installation: Restore sources under the Lisp installation directory using this CVS command:
 <pre>cvs -z3 -d :pserver:anonymous:anonymous@common-lisp.net:/project/fomus/cvsroot co fomus</pre>
+</li>
+</ul>
+
+<h3 id="lambda-gtk">lambda-gtk</h3>
+<p><code>(use-system :lambda-gtk)</code></li></p>
+<p>
+Lambda GTK, by Rick Taube. A Common Lisp interface to GTK+ 2.0.
+</p>
+<ul>
+<li>Homepage: <a href="http://common-lisp.net/project/lambda-gtk/">
+http://common-lisp.net/project/cffi/</a></li>
+<li>Downloads: not available yet.
+<li>Requirements:, X Windows, GTK+ 2.0 (OSX: XCode developer, Fink)
+<li>Supporting: Linux, OSX: CMUCL, OpenMCL, SBCL</li>
+<li>Installation: Restore sources under the Lisp installation directory using this CVS command:
+<pre>cvs -z3 -d :pserver:anonymous:anonymous@common-lisp.net:/project/lambda-gtk/cvsroot co lambda-gtk</pre>
 </li>
 </ul>
 
@@ -387,7 +424,7 @@ real-time MIDI operating system by <a href="www.grame.fr">Grame</a>.
 <ul>
 <li>Downloads:  not available yet</li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Requirements: <a href="#CFFI">CFFI</a>
+<li>Requirements: <a href="#cffi">CFFI</a>
 <li>Installation: 
 <ol>
 <li>
@@ -446,7 +483,7 @@ See the <a href="dict/portmidi-topic.html">portmidi</a> topic help for more info
 <h3>Installing Lisp Commands</h3>
 
 <p>
-In order to run Common Music you must install one of the supported lisp implementations. Most installation proceedures also install a command to start Lisp from the shell.
+In order to run Common Music you must install one of the supported lisp implementations. Most installation procedures also install a command to start Lisp from the shell.
 </p>
 
 If you are on OS X, Linux or Cygwin you can use the <code>which</code>
