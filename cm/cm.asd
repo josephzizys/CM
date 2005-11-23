@@ -349,7 +349,7 @@
                       (symbol-value sym))))))
     (cmcall :cm-logo)))
 
-(defun use-system (sys &key directory)
+(defun use-system (sys &key directory (verbose t))
   ;; load system from either:
   ;;  (1) user supplied dir
   ;;  (2) entry in asdf:*central-registry*
@@ -383,12 +383,27 @@
     (when reg?
       (pushnew (make-pathname :name nil :type nil :defaults file)
                asdf:*central-registry* :test #'equal))
-    ;; have to handle clm and cmn specially since load-op will not
-    ;; work with them
-    (cond ((member name '("clm" "cmn") :test #'equal)
-           (asdf:operate 'asdf:load-source-op sys))
-          (t
-           (asdf:operate 'asdf:load-op sys)))
+    (let ((*compile-print* *compile-print*)
+          (*compile-verbose* *compile-verbose* )
+          (*load-print* *load-print* )
+          (*load-verbose* *load-verbose*))
+
+      (cond ((eql verbose nil)
+             (setq *compile-print* nil *compile-verbose* nil
+                   *load-print* nil *load-verbose* nil))
+            ((eql verbose t)
+             (setq *compile-print* t *compile-verbose* nil
+                   *load-print* t *load-verbose* nil))
+            ((eql verbose ':trace)
+             (setq *compile-print* t *compile-verbose* t
+                   *load-print* t *load-verbose* t)))
+
+      ;; have to handle clm and cmn specially since load-op will not
+      ;; work with them. Ill fix this later...
+      (cond ((member name '("clm" "cmn") :test #'equal)
+             (asdf:operate 'asdf:load-source-op sys))
+            (t
+             (asdf:operate 'asdf:load-op sys))))
     (asdf:find-system sys)))
 
 (export '(cm use-system) :cl-user)
