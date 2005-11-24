@@ -392,12 +392,11 @@
              (setq *compile-print* nil *compile-verbose* nil
                    *load-print* nil *load-verbose* nil))
             ((eql verbose t)
-             (setq *compile-print* t *compile-verbose* nil
-                   *load-print* t *load-verbose* nil))
+             (setq *compile-print* nil *compile-verbose* t
+                   *load-print* nil *load-verbose* t))
             ((eql verbose ':trace)
              (setq *compile-print* t *compile-verbose* t
                    *load-print* t *load-verbose* t)))
-
       ;; have to handle clm and cmn specially since load-op will not
       ;; work with them. Ill fix this later...
       (cond ((member name '("clm" "cmn") :test #'equal)
