@@ -397,12 +397,20 @@
             ((eql verbose ':trace)
              (setq *compile-print* t *compile-verbose* t
                    *load-print* t *load-verbose* t)))
-      ;; have to handle clm and cmn specially since load-op will not
-      ;; work with them. Ill fix this later...
-      (cond ((member name '("clm" "cmn") :test #'equal)
-             (asdf:operate 'asdf:load-source-op sys))
-            (t
-             (asdf:operate 'asdf:load-op sys))))
+      (handler-bind ((style-warning #'muffle-warning)
+                     (warning  #'muffle-warning)
+                     #+sbcl (sb-ext:compiler-note #'muffle-warning)
+                     #+sbcl (sb-ext:code-deletion-note #'muffle-warning)
+                     )
+        ;; have to handle clm and cmn specially since load-op will not
+        ;; work with them. Ill fix this later by adding a property to
+        ;; their system defintions that tells use-system what class to
+        ;; pass to asdf:operate
+        (cond ((member name '("clm" "cmn") :test #'equal)
+               (asdf:operate 'asdf:load-source-op sys))
+              (t
+               (asdf:operate 'asdf:load-op sys))))
+      )
     (asdf:find-system sys)))
 
 (export '(cm use-system) :cl-user)
