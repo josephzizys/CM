@@ -349,7 +349,7 @@
                       (symbol-value sym))))))
     (cmcall :cm-logo)))
 
-(defun use-system (sys &key directory (verbose t))
+(defun use-system (sys &key directory (verbose t) warnings )
   ;; load system from either:
   ;;  (1) user supplied dir
   ;;  (2) entry in asdf:*central-registry*
@@ -386,8 +386,8 @@
     (let ((*compile-print* *compile-print*)
           (*compile-verbose* *compile-verbose* )
           (*load-print* *load-print* )
-          (*load-verbose* *load-verbose*))
-
+          (*load-verbose* *load-verbose*)
+          (loading-op 'asdf:load-op))
       (cond ((eql verbose nil)
              (setq *compile-print* nil *compile-verbose* nil
                    *load-print* nil *load-verbose* nil))
@@ -397,20 +397,19 @@
             ((eql verbose ':trace)
              (setq *compile-print* t *compile-verbose* t
                    *load-print* t *load-verbose* t)))
-      (handler-bind ((style-warning #'muffle-warning)
-                     (warning  #'muffle-warning)
-                     #+sbcl (sb-ext:compiler-note #'muffle-warning)
-                     #+sbcl (sb-ext:code-deletion-note #'muffle-warning)
-                     )
-        ;; have to handle clm and cmn specially since load-op will not
-        ;; work with them. Ill fix this later by adding a property to
-        ;; their system defintions that tells use-system what class to
-        ;; pass to asdf:operate
-        (cond ((member name '("clm" "cmn") :test #'equal)
-               (asdf:operate 'asdf:load-source-op sys))
-              (t
-               (asdf:operate 'asdf:load-op sys))))
-      )
+      ;; have to handle clm and cmn specially since asdf:load-op will
+      ;; not work with them. Ill fix this later by adding a property
+      ;; to their system defintions that tells use-system what class
+      ;; to pass to asdf:operate
+      (when (member name '("clm" "cmn") :test #'equal)
+        (setq loading-op 'asdf:load-source-op))
+      (if warnings
+          (asdf:operate loading-op sys)
+          (handler-bind ((style-warning  #'muffle-warning)
+                         (warning #'muffle-warning)
+                         #+sbcl (sb-ext:compiler-note #'muffle-warning)
+                         #+sbcl (sb-ext:code-deletion-note #'muffle-warning))
+            (asdf:operate loading-op sys))))
     (asdf:find-system sys)))
 
 (export '(cm use-system) :cl-user)
