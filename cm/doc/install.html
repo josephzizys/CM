@@ -138,6 +138,11 @@ To install the latest developmental sources via CVS:
 <p>
 Change directories to your Lisp installation directory.
 </p>
+<pre class="shell">
+$ <span class="input">cd /usr/local/lisp</span> 
+</pre>
+
+
 </li>
 
 <li><p>Set the shell variable CVSROOT to point to the CVS repository:</p></li>
@@ -185,7 +190,7 @@ $ <span class="input">cvs update</span>
 
 <p>
 Once the sources have been installed on your local machine and you
-have a shell command that starts a supported lisp implementation, you
+have a <a href="#commands">Lisp command</a> that starts a supported lisp implementation, you
 can start Common Music. There are a number of different ways to do
 this, here are some typical strategies:
 </p>
@@ -214,6 +219,7 @@ prompt:
 
 <pre class="shell">
 $ <span class="input">sudo ln -s /usr/bin/cm /usr/local/lisp/cm/bin/cm.sh<span>
+$ <span class="input">cm</span>
 </pre>
 
 <p>By specifying the <code>-l</code> and <code>-e</code> options you
@@ -311,7 +317,7 @@ The Common Foreign Function interface for Common Lisp, by James Bielman and Luís
 http://common-lisp.net/project/cffi/</a></li>
 <li>Downloads: <a href="http://common-lisp.net/project/cffi/tarballs/">http://common-lisp.net/project/cffi/tarballs/</a></li>
 <li>Supporting: Allegro, CLISP, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Installation: Restore CFFI sources under the Lisp installation
+<li>Installation: Restore CFFI sources under your Lisp installation
 directory.</li>
 </ul>
 
@@ -330,7 +336,7 @@ ftp://ftp-ccrma.stanford.edu/pub/Lisp/clm-3.tar.gz
 </a></li>
 <li>Requirements: GCC, X Windows (OSX: XCode developer)
 <li>Supporting: Linux, OS X: Allegro, CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore CLM sources under the Lisp installation
+<li>Installation: Restore CLM sources under your Lisp installation
 directory.</li>
 </ul>
 <p>
@@ -352,7 +358,7 @@ http://www-ccrma.stanford.edu/software/cmn/
 ftp://ftp-ccrma.stanford.edu/pub/Lisp/cmn.tar.gz
 </a></li>
 <li>Supporting: Allegro, Clisp, CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore CMN sources under the Lisp installation
+<li>Installation: Restore CMN sources under your Lisp installation
 directory.</li>
 </ul>
 
@@ -367,7 +373,7 @@ http://common-lisp.net/project/cffi/</a></li>
 <li>Downloads: not available yet.
 <li>Requirements: <a href="#lambda-gtk">lambda-gtk</a>
 <li>Supporting: Linux, OSX: CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore GUI sources under the Lisp installation
+<li>Installation: Restore GUI sources under your Lisp installation
 directory.</li>
 </ul>
 
@@ -381,7 +387,7 @@ Fomus, by David Psenicka. A music notation package for Common Lisp.
 http://common-lisp.net/project/fomus</a></li>
 <li>Downloads:  CVS only</li>
 <li>Supporting: Linux, OS X: CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under the Lisp installation directory using this CVS command:
+<li>Installation: Restore sources under your Lisp installation directory using this CVS command:
 <pre>cvs -z3 -d :pserver:anonymous:anonymous@common-lisp.net:/project/fomus/cvsroot co fomus</pre>
 </li>
 </ul>
@@ -397,7 +403,7 @@ http://common-lisp.net/project/cffi/</a></li>
 <li>Downloads: not available yet.
 <li>Requirements:, X Windows, GTK+ 2.0 (OSX: XCode developer, Fink)
 <li>Supporting: Linux, OSX: CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore Lambda-GTK sources under the Lisp
+<li>Installation: Restore Lambda-GTK sources under your Lisp
 installation directory using this CVS command:
 <pre>cvs -z3 -d :pserver:anonymous:anonymous@common-lisp.net:/project/lambda-gtk/cvsroot co lambda-gtk</pre>
 </li>
@@ -424,7 +430,7 @@ connections with msController before attempting to load the
 interface.
 </li>
 <li>
-Restore the Midishare Interface sources under the Lisp installation directory.
+Restore the Midishare Interface sources under your Lisp installation directory.
 </li>
 </ol>
 </li>
@@ -458,9 +464,10 @@ library.
 <ul>
 <li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/portmidi.tar.gz">portmidi.tar.gz</a>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Installation: Restore the Portmidi sources under Lisp installation
-directory.</li>
-<li>Requirements: <a href="#cffi">CFFI</a>, on Linux: /usr/local/libportmidi.so, usr/local/libporttime.so. Libs for OS X and Windows are included in tarball.
+<li>Requirements: <a href="#cffi">CFFI</a>, on Linux
+/usr/local/libportmidi.so and usr/local/libporttime.so. Libs for OS X
+and Windows are included in tarball.
+<li>Installation: Restore the Portmidi Interface sources under your Lisp installation directory.</li>
 </ul>
 
 <p>
@@ -476,7 +483,7 @@ See the <a href="dict/portmidi-topic.html">portmidi</a> topic help for more info
 In order to run Common Music you must be able to start one of the
 <a href="cm.html#implementations">supported lisp
 implementations</a>. Most implementations provide a <em>shell
-command</em> that allows you to start Lisp simply by typing the
+command</em> that lets you to start Lisp simply by typing the
 command name to the shell prompt.
 If you are on OS X, Linux or Cygwin you can use the <code>which</code>
 command to see if a Lisp command is installed on your path:
@@ -496,22 +503,23 @@ Here are the command names of the supported Lisp implementations. Note
 that several implementations require you install the command yourself:
 </p>
 
-<table>
+<table class="float">
 <tr><th class="col">Implementation</th> <th class="col">Command </th></tr>
 <tr><td>Allegro:</td> <td> <var>none</var> </td></tr>
-<tr><td>CLISP:</td> <td> <code>clisp</code> (<a href="#clisp.bat">1</a>)</td></tr>
+<tr><td>CLISP:</td> <td> <code>clisp</code> <a href="#clisp.bat"><span style="vertical-align:super;">1<span></a></td></tr>
 <tr><td>CMUCL:</td> <td> <code>lisp</code>  </td></tr>
 <tr><td>Gauche:</td> <td><code>gosh</code>  </td></tr>
 <tr><td>Guile:</td> <td><code>guile</code>  </td></tr>
 <tr><td>Lispworks:</td> <td><var>none</var> </td></tr>
-<tr><td>OpenMCL:</td> <td><code>openmcl</code> (<a href="#openmcl">2</a>) </td></tr>
+<tr><td>OpenMCL:</td> <td><code>openmcl</code> <a href="#openmcl"><span style="vertical-align:super;">2</span></a> </td></tr>
 <tr><td>SBCL:</td> <td><code>sbcl</code>  </td></tr>
 <tr><td>STklos:</td> <td><code>stklos</code> </td></tr>
 </table>
 
-<ol>
-<li id="clisp.bat">
-Installing a CLISP.BAT file on Windows 2000/XP:
+<p id="clisp.bat">
+<span style="vertical-align:super;">1</span>  Installing a CLISP.BAT file on Windows 2000/XP:
+</p>
+
 <ol>
   <li><p>Copy this batch file contents and paste it into a new
     window in Note Pad.</p>
@@ -531,11 +539,9 @@ Installing a CLISP.BAT file on Windows 2000/XP:
 example C:\WINNT\System32\</p></li>
 </ol>
 
-
-</li>
-
-<li id="openmcl">
-Installing the <code>openmcl</code> script from the ccl distribution.
+<p id="openmcl">
+<span style="vertical-align:super;">2</span> Installing the <code>openmcl</code> script from the ccl distribution:
+</p>
 <ol>
 <li>
 <p>
@@ -549,14 +555,12 @@ example:
 <p>Copy the file to a directory on your path, for example:
 </p>
 <pre class="shell">$ <span class="input">sudo cp /usr/local/lisp/ccl/scripts/openmcl /usr/bin</span>
+$ <span class="input">which openmcl</span>
+/usr/bin/openmcl
 </pre>
 
 </li>
 </ol>
-
-</li>
-</ol>    
-
     
 <!-- end content -->
 </div>
