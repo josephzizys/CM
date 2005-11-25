@@ -49,28 +49,20 @@
       <li><a href="#portmidi">Portmidi</a></li>
     </ol>
   </li>
-  <!--
-  <li><a href="#appendic">Appendix</a>
-  <ol>
-  <li><a href="#start_lisp">Starting a Lisp application</a></li>
-  <li><a href="#clisp.bat">Installing a CLISP command on Windows</a></li>
-  <li><a href="#trouble_dosdir">The DOS directory character in Lisp</a></li>
-  </ol>
-  </li>
-  -->
+  <li><a href="#appendix">Appendix</a> </li>
 </ol>
 
 <h2 id="preinstallation">Pre-installation</h2>
 
 <p>
 To build Common Music from its sources you must have write permission
-in an installation directory, a working lisp command on your execution
-path and some familiarity with the shell, or terminal, application.
-If you are going to use CM in conjunction with other lisp programs
-like CLM or Fomus, or with Lisp interfaces to external programs such
-as Portmidi and Midishare, you should create a common "parent"
-directory to contain the different Lisp systems so that you can load
-them transparently
+in an installation directory, a working <a href="#commands">Lisp
+command</a> on your execution path and some familiarity with the
+shell, or terminal, application.  If you are going to use CM in
+conjunction with other lisp programs like CLM or Fomus, or with Lisp
+interfaces to external programs such as Portmidi and Midishare, you
+should create a common "parent" directory to contain the different
+Lisp systems so that you can load them transparently
 using <a href="dict/use-system-fn.html">use-system</a>. It does not
 matter where on the file system this Lisp installation directory is
 located; for sake of illustration this document assumes that the lisp
@@ -316,10 +308,11 @@ The Common Foreign Function interface for Common Lisp, by James Bielman and Luís
 
 <ul>
 <li>Homepage: <a href="http://common-lisp.net/project/cffi/">
-http://common-lisp.net/project/lambda-gtk/</a></li>
+http://common-lisp.net/project/cffi/</a></li>
 <li>Downloads: <a href="http://common-lisp.net/project/cffi/tarballs/">http://common-lisp.net/project/cffi/tarballs/</a></li>
 <li>Supporting: Allegro, CLISP, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under the Lisp installation directory.</li>
+<li>Installation: Restore CFFI sources under the Lisp installation
+directory.</li>
 </ul>
 
 <h3 id="clm">CLM</h3>
@@ -337,7 +330,8 @@ ftp://ftp-ccrma.stanford.edu/pub/Lisp/clm-3.tar.gz
 </a></li>
 <li>Requirements: GCC, X Windows (OSX: XCode developer)
 <li>Supporting: Linux, OS X: Allegro, CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under the Lisp installation directory.</li>
+<li>Installation: Restore CLM sources under the Lisp installation
+directory.</li>
 </ul>
 <p>
 CLM instrument files must be compiled inside the CM package in order
@@ -358,7 +352,7 @@ http://www-ccrma.stanford.edu/software/cmn/
 ftp://ftp-ccrma.stanford.edu/pub/Lisp/cmn.tar.gz
 </a></li>
 <li>Supporting: Allegro, Clisp, CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under the Lisp installation
+<li>Installation: Restore CMN sources under the Lisp installation
 directory.</li>
 </ul>
 
@@ -373,7 +367,8 @@ http://common-lisp.net/project/cffi/</a></li>
 <li>Downloads: not available yet.
 <li>Requirements: <a href="#lambda-gtk">lambda-gtk</a>
 <li>Supporting: Linux, OSX: CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under the Lisp installation directory.</li>
+<li>Installation: Restore GUI sources under the Lisp installation
+directory.</li>
 </ul>
 
 <h3 id="fomus">Fomus</h3>
@@ -402,7 +397,8 @@ http://common-lisp.net/project/cffi/</a></li>
 <li>Downloads: not available yet.
 <li>Requirements:, X Windows, GTK+ 2.0 (OSX: XCode developer, Fink)
 <li>Supporting: Linux, OSX: CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under the Lisp installation directory using this CVS command:
+<li>Installation: Restore Lambda-GTK sources under the Lisp
+installation directory using this CVS command:
 <pre>cvs -z3 -d :pserver:anonymous:anonymous@common-lisp.net:/project/lambda-gtk/cvsroot co lambda-gtk</pre>
 </li>
 </ul>
@@ -428,7 +424,7 @@ connections with msController before attempting to load the
 interface.
 </li>
 <li>
-Restore the sources under the Lisp installation directory.
+Restore the Midishare Interface sources under the Lisp installation directory.
 </li>
 </ol>
 </li>
@@ -462,7 +458,8 @@ library.
 <ul>
 <li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/portmidi.tar.gz">portmidi.tar.gz</a>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Installation: Restore sources under Lisp installation directory.</li>
+<li>Installation: Restore the Portmidi sources under Lisp installation
+directory.</li>
 <li>Requirements: <a href="#cffi">CFFI</a>, on Linux: /usr/local/libportmidi.so, usr/local/libporttime.so. Libs for OS X and Windows are included in tarball.
 </ul>
 
@@ -471,156 +468,95 @@ See the <a href="dict/portmidi-topic.html">portmidi</a> topic help for more info
 </p>
 
 
-<!--
-<h2 id="appendix">6. Appendix</h2>
+<h2 id="appendix">Appendix</h2>
 
-<h3>Installing Lisp Commands</h3>
+<h3 id="commands">A. Lisp Commands</h3>
 
 <p>
-In order to run Common Music you must install one of the supported lisp implementations. Most installation procedures also install a command to start Lisp from the shell.
-</p>
-
+In order to run Common Music you must be able to start one of the
+<a href="cm.html#implementations">supported lisp
+implementations</a>. Most implementations provide a <em>shell
+command</em> that allows you to start Lisp simply by typing the
+command name to the shell prompt.
 If you are on OS X, Linux or Cygwin you can use the <code>which</code>
-command to see if a Lisp command is installed properly on your path.
+command to see if a Lisp command is installed on your path:
 </p>
 
 <div class="float">
-<p class="captxt">Using 'which' to locate a lisp command (Linux, OS X, Cygwin).</p>
 <pre class="shell">$ <span class="input">which clisp</span>
 /usr/local/bin/clisp
 $ <span class="input">which openmcl</span>
 /Lisp/bin/openmcl
 $ <span class="input">which guile</span>
 /sw/bin/guile
-$ <span class="input">which alisp</span>
-alisp: Command not found.</pre>
 </div>
 
 <p>
-<em>Even if your Lisp implementation does NOT come with an installed
-command you should create and install one to simplify working with
-Common Music</em>. There is not one single way to do this that will
-work for all Lisp implementations and operating systems.  On OS X,
-Linux or Cygwin, either copy the appropriate Lisp program/script to a
-directory on your $PATH or edit your $PATH definition in
-~/.bash_profile or ~/.cshrc to include the directory that contains the
-Lisp program/script. On Windows 2000/XP install a batch file to start
-CLISP, see <a href="#clisp.bat">clisp.bat</a> for information on how
-to do this. On MacOS, double-click the MCL Common Lisp application to
-start Lisp.
+Here are the command names of the supported Lisp implementations. Note
+that several implememtations require you install the command yourself:
 </p>
 
-
-
-
-<dl>
-
-The following table lists the commands, programs and image names for
-each Lisp implementation. Follow the links for additional information.
-</p>
-
-<div class="float">
-<p class="captxt">Application files for supported Lisp
-implementations.
-</p>
-<table class="float">
-  <tbody>
-    <tr>
-      <th style="padding-right: 1em; text-align: left;" class="col">Lisp</th>
-      <th style="padding-right: 1em; text-align: left;" class="col">Command</th>
-      <th style="text-align: left;" class="col">Executable</th>
-      <th style="text-align: left;" class="col">Image</th>
- </tr>
-    <tr>
-      <td><a href="http://cvs.sourceforge.net/viewcvs.py/clisp/clisp/INSTALL?view=markup">CLISP</a></td>
-      <td><a href="http://clisp.cons.org/clisp.html"><code>clisp</code></a></td>
-      <td>./full/lisp(.exe) </td>
-      <td>./full/lispinit.mem</td>
-    </tr>
-    <tr>
-      <td><a href="http://www.cons.org/cmucl/install.html">CMU</a></td>
-      <td><a href="http://www.pmsf.de/pub/cmucl/doc/cmu-user/introduction.html#toc2"><code>lisp</code></a></td>        
-      <td>./bin/lisp </td>
-      <td>./lib/cmucl/lib/lisp.core</td>
-    </tr>
-    <tr>
-      <td><a href="http://openmcl.clozure.com/Doc/installation.html">OpenMCL</a></td>
-      <td>
-        <a href="http://openmcl.clozure.com/Doc/shell-script.html"><code>openmcl</code></a>
-      </td>
-      <td>./dppccl </td>
-      <td>./dppccl.image</td>
-    </tr>
-    <tr>
-      <td><a href="http://www.franz.com/support/documentation/6.1/doc/startup.htm">ACL</a></td>
-      <td> </td>
-      <td>./alisp(.exe) </td>
-      <td>./lisp.dxl</td>
-    </tr>
-    <tr>
-      <td><a href="http://www.shiro.dreamhost.com/scheme/gauche/index.html">Gauche</a></td>
-      <td><a href="http://www.shiro.dreamhost.com/scheme/gauche/man/gauche-refe_13.html#SEC13"> <code>gosh</code></a></td> <td>gosh</td> <td></td>
-    </tr>
-    <tr>
-      <td><a
-      href="http://www.gnu.org/software/guile/docs/guile-ref/Obtaining-and-Installing-Guile.html#Obtaining%20and%20Installing%20Guile">Guile</a></td>
-      <td><a
-      href="http://www.gnu.org/software/guile/docs/guile-ref/Invoking-Guile.html#Invoking%20Guile"> <code>guile</code></a></td> <td>guile</td> <td></td>
-    </tr>
-
-    <tr>
-      <td><a href="http://www.stklos.org">STklos</a></td>
-      <td><code>stklos</code></td> <td>stklos</td> <td></td>
-    </tr>
-</tbody>
+<table>
+<tr><th class="col">Implementation</th> <th class="col">Command </th></tr>
+<tr><td>Allegro:</td> <td> <var>none</var> </td></tr>
+<tr><td>CLISP:</td> <td> <code>clisp</code> (<a href="#clisp.bat">1</a>)</td></tr>
+<tr><td>CMUCL:</td> <td> <code>lisp</code>  </td></tr>
+<tr><td>Gauche:</td> <td><code>gosh</code>  </td></tr>
+<tr><td>Guile:</td> <td><code>guile</code>  </td></tr>
+<tr><td>Lispworks:</td> <td><var>none</var> </td></tr>
+<tr><td>OpenMCL:</td> <td><code>openmcl</code> (<a href="#openmcl">2</a>) </td></tr>
+<tr><td>SBCL:</td> <td><code>sbcl</code>  </td></tr>
+<tr><td>STklos:</td> <td><code>stklos</code> </td></tr>
 </table>
-</div>
 
+<ol>
+<li id="clisp.bat">
+Installing a CLISP.BAT file on Windows 2000/XP:
+<ol>
+  <li><p>Copy this batch file contents and paste it into a new
+    window in Note Pad.</p>
 
-  <dt id="clisp.bat">3. Installing a CLISP command (Windows)</dt>
-  <dd>When Clisp is installed on Windows it places a <em>shortcut</em>
-to the program on your desktop. Unfortunately, this shortcut is not
-very useful for working with Common Music or for running Clisp under
-Emacs. Here is how to install a CLISP command on Windows 2000:
-    <ol>
-      <li>Copy the contents of the script file shown below and paste
-it into a new window in Note Pad.</li>
-      <li>Change the pathname in green to the actual path to CLISP on
-your machine.</li>
-      <li>Save the text in a file called "clisp.bat".</li>
-      <li>Move the new clisp.bat file to some directory on your path,
-for
-example to C:\WINNT\System32\clisp.bat.</li>
-    </ol>
-    <div class="float">
-    <p class="captxt">The clisp.bat script file for Windows 2000.</p>
-
-    <pre class="code">@echo off<br/><br/><span style="color: blue;">REM Edit the clispdir pathname inside "" to point to</span>
+<pre class="code">@echo off<br/><br/><span style="color: blue;">REM Edit the clispdir pathname inside "" to point to</span>
 <span style="color: blue;">REM the clisp installation directory on your machine.</span>
-
 <span style="color: red;">set</span> clispdir="<span
- style="color: green;">\Lisp\clisp-2.31</span>"<br/><span
+ style="color: green;">\Lisp\clisp-2.35</span>"<br/><span
  style="color: red;">pushd</span> %clispdir%<br/>.\full\lisp.exe -B . -M .\full\lispinit.mem %1 %2 %3 %4 %5 %6 %7 %8 %9<br/><span
  style="color: red;">popd</span></pre>
-    </div>
-  </dd>
-  <dt id="trouble_dosdir">4. The DOS directory character in Lisp (Windows)
-  </dt>
-  <dd>You must double each DOS directory delimiter when you specify
-Window's
-directories in Lisp strings, i.e.
-"c:\\lisp\\cm-2.5.0\\readme.text" <em>not</em>
-"c:\lisp\cm-2.5.0\readme.text". This is because \ is a special
-quoting character inside Lisp strings; specifying two together
-actually produces one \ in the string. If this is too confusing then
-you should simply switch to using the Unix-style directory delimiter /
-on Windows, for example "c:/path/to/cm/readme.text". Allegro,
-Clisp and Guile all support Unix-style directory strings under
-Windows.
-  </dd>
-</dl>
 
--->
+</li>
+  <li><p>Set the pathname in green to the true CLISP installation
+    directory on your machine.</p></li>
+  <li><p>Save the text in a file called "clisp.bat".</p></li>
+  <li><p>Move clisp.bat to a directory on your path, for
+example C:\WINNT\System32\</p></li>
+</ol>
+
+
+</li>
+
+<li id="openmcl">
+Installing the <code>openmcl</code> script from the ccl distribution.
+<ol>
+<li>
+<p>
+Edit the file ccl/scripts/openmcl and set the CCL_DEFAULT_DIRECTORY
+variable to the OpenMCL installation directory on your machine, for
+example:
+</p>
+<blockquote><code>CCL_DEFAULT_DIRECTORY=/usr/local/lisp/ccl</code></blockquote>
+</li>
+<li>
+<p>Copy the file to a directory on your path, for example:
+</p>
+<pre class="shell">$ <span class="input">sudo cp /usr/local/lisp/ccl/scripts/openmcl /usr/bin</span>
+</pre>
+
+</li>
+</ol>
+
+</li>
+</ol>    
+
     
 <!-- end content -->
 </div>
