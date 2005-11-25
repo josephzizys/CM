@@ -262,7 +262,6 @@
     :licence "LLGPL"
     :components
     ((:module "src"
-              ;;:serial t
               :default-component-class cm-source-file
               :components (
                            (:file "pkg")
@@ -270,7 +269,8 @@
                            #+clisp (:file "clisp" :depends-on ("pkg"))
                            #+cmu (:file "cmu" :depends-on ("pkg"))
                            #+lispworks (:file "lispworks" :depends-on ("pkg"))
-                           #+(and mcl (not openmcl)) (:file "mcl" :depends-on ("pkg"))
+                           #+(and mcl (not openmcl)) (:file "mcl" 
+                                                            :depends-on ("pkg"))
                            #+openmcl (:file "openmcl" :depends-on ("pkg"))
                            #+sbcl (:file "sbcl" :depends-on ("pkg"))
                            (:file "iter" :scheme "loop" :depends-on ("pkg"))
@@ -279,7 +279,8 @@
                                                      #+clisp "clisp"
                                                      #+cmu "cmu"
                                                      #+lispworks "lispworks"
-                                                     #+(and mcl (not openmcl)) "mcl"
+                                                     #+(and mcl (not openmcl)) 
+                                                     "mcl"
                                                      #+openmcl "openmcl"
                                                      #+sbcl "sbcl"
                                                      "iter"))
@@ -318,6 +319,10 @@
                            (:file "fomus" :scheme t 
                                   :depends-on ("io" "midi3" "scales"))
                            (:file "osc" :scheme t :depends-on ("io"))
+                           (:file "midishare" :scheme t 
+                                  :depends-on ("io" "midi3" "scales"))
+                           (:file "player" :scheme t 
+                                  :depends-on ("midishare"))
                            (:file "sc" :scheme t :depends-on ("osc"))
                            (:file "pm" :scheme t :depends-on ("io" "midi3"))
                            #+openmcl (:file "openmcl-rt"
