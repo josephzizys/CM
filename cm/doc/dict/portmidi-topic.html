@@ -243,16 +243,16 @@ call <code>portmidi-record!</code> with false for <var>seq</var>.
 
 <dl class="dictsyntax" id="GetDeviceInfo">
 <dt>[Function]</dt>
-<dd><code>(</code><code class="entry">pm:GetDeviceInfo</code> <var>id</var><code>)</code></dd>
+<dd><code>(</code><code class="entry">pm:GetDeviceInfo</code> . <var>id</var><code>)</code></dd>
 </dl>
 <p>
 If <var>id</var> is not specified, returns a list of the device ids
 (integer), names (string) device types (keyword) and open status
 (boolean) of each available Portmidi device. If <var>id</var> is
-specifed only the information for that device is returned. Note that
-devices added after the library has been loaded will not be reflected
-in the list of descriptions. Calling this function initializes the
-Portmidi library if it has not already been initialized.
+specifed only information for that device is returned.  Calling this
+function initializes the Portmidi library if it has not already been
+initialized.  Note that MIDI devices added after the Portmidi library
+has been initializd will not be reflected in the list of descriptions.
 </p>
 
 <dl class="dictsyntax" id="GetDefaultInputDeviceID">
