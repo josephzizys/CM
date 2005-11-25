@@ -66,7 +66,7 @@ following slot initializations:
 <dd>
 The name or integer identifier of a Portmidi input device to open or
 boolean true or false.  The
-function <a href="#GetDeviceDescriptions">pm:GetDeviceDescriptions</a>
+function <a href="#GetDeviceInfo">pm:GetDeviceInfo</a>
 can be used to determine the names and ids of available Portmidi
 devices.  If the value is boolean true then Portmidi's default input
 device is opened, as determined
@@ -83,7 +83,7 @@ href="#portmidi-default-input"><code>*portmidi-default-input*</code></a>.
 </dt>
 <dd>The name or integer identifier of a Portmidi output device to open
 or boolean true or false. The
-function <a href="#GetDeviceDescriptions">pm:GetDeviceDescriptions</a>
+function <a href="#GetDeviceInfo">pm:GetDeviceInfo</a>
 can be used to determine the names and ids of available Portmidi
 devices.  If the value is boolean true then Portmidi's default output
 device is opened, as determined
@@ -149,16 +149,16 @@ href="#portmidi-default-outbuf-size"><code>*portmidi-default-outbuf-size*</code>
 </dd>
 
 <dt>
-<code class="keyword">:filter</code> {<var>keyword</var> | <var>list</var>}
+<code class="keyword">:filter</code> <var>integer</var>
 </dt>
-<dd>An optional filter keyword or list of filter keywords. Filtering
-means that the specified types of messages will be ignored by the open
-Portmidi devices. The value can be one or more keywords from the
-following set of choices:
+<dd>An optional filter value. Filtered messages will be ignored by the
+open Portmidi devices. The value can be a logical OR (logior) of the
+following constants:
 
 <blockquote>
-<p><code class="keyword">:pm-filt-active :pm-filt-sysex :pm-filt-clock :pm-filt-play :pm-filt-f9 :pm-filt-fd :pm-filt-reset :pm-filt-note :pm-filt-channel-aftertouch :pm-filt-poly-aftertouch :pm-filt-program :pm-filt-control :pm-filt-pitchbend :pm-filt-mtc :pm-filt-song-position :pm-filt-song-select :pm-filt-tune
-:pm-filt-tick :pm-filt-undefined :pm-filt-realtime :pm-filt-aftertouch :pm-filt-systemcommon</code>.
+<p>
+<code>pm:filt-active pm:filt-sysex pm:filt-clock pm:filt-play pm:filt-f9 pm:filt-fd pm:filt-reset pm:filt-note pm:filt-channel-aftertouch pm:filt-poly-aftertouch pm:filt-program pm:filt-control pm:filt-pitchbend pm:filt-mtc filt-song-position pm:filt-song-select pm:filt-tune
+pm:filt-tick pm:filt-undefined pm:filt-realtime pm:filt-aftertouch pm:filt-systemcommon</code>.
 </p>
 </blockquote>
 If no value is specified the filter defaults to the global
@@ -192,7 +192,7 @@ package and should be referenced using the pm: package prefix.
 Opens a <a href="#portmidi-stream">portmidi-stream</a>
 called <span class="string">"midi-port.pm"</span> according to the
 keyword initialization <var>args</var> passed to the stream. The
-function <a href="#GetDeviceDescriptions">pm:GetDeviceDescriptions</a>
+function <a href="#GetDeviceInfo">pm:GetDeviceInfo</a>
 can be used to determine the names and ids of available Portmidi
 devices.
 </p>
@@ -241,17 +241,15 @@ call <code>portmidi-record!</code> with false for <var>seq</var>.
 <p>Returns the number of available Portmidi devices.</p>
 
 
-<dl class="dictsyntax" id="GetDeviceDescriptions">
+<dl class="dictsyntax" id="GetDeviceInfo">
 <dt>[Function]</dt>
-<dd><code>(</code><code class="entry">pm:GetDeviceDescriptions</code><code>)</code></dd>
+<dd><code>(</code><code class="entry">pm:GetDeviceInfo</code> <var>id</var><code>)</code></dd>
 </dl>
 <p>
-Returns a list of the device id (integer), name (string) device type
-(keyword) and open status (boolean) of each available Portmidi
-device. <!-- To open a device pass its name or id as
-the <code class="keyword">:input</code> or
-<code class="keyword">:output</code> initialization to
-a <a href="#portmidi-stream">portmidi-stream</a>. --> Note that
+If <var>id</var> is not specified, returns a list of the device ids
+(integer), names (string) device types (keyword) and open status
+(boolean) of each available Portmidi device. If <var>id</var> is
+specifed only the information for that device is returned. Note that
 devices added after the library has been loaded will not be reflected
 in the list of descriptions. Calling this function initializes the
 Portmidi library if it has not already been initialized.
@@ -360,7 +358,7 @@ The channel mask specification if none specified to
 <pre class="code">
 (pm:CountDevices)
 <span class="result">&rArr;</span> 4
-(pm:GetDeviceDescriptions)
+(pm:GetDeviceInfo)
 <span class="result">&rArr;</span> ((<span class="keyword">:id</span> 0 <span class="keyword">:name</span> <span class="string">"IAC Driver: IAC Bus 1"</span> <span class="keyword">:type</span> <span class="keyword">:input</span> <span class="keyword">:open</span> #f)
     (<span class="keyword">:id</span> 1 <span class="keyword">:name</span> <span class="string">"1x1: Port 1"</span> <span class="keyword">:type</span> <span class="keyword">:input</span> <span class="keyword">:open</span> #f)
     (<span class="keyword">:id</span> 2 <span class="keyword">:name</span> <span class="string">"IAC Driver: IAC Bus 1"</span> <span class="keyword">:type</span> <span class="keyword">:output</span> <span class="keyword">:open</span> #f)
