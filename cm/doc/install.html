@@ -33,9 +33,9 @@
   <li><a href="#preinstallation">Pre-installation</a></li>
   <li><a href="#installing">Installing Sources</a></li>
   <li>
-    <a href="#starting">Starting CM</a>
+    <a href="#starting">Starting Common Music</a>
   </li>
-  <li><a href="#loading">Programs and Interfaces</a>
+  <li><a href="#programs">Programs and Interfaces</a>
     <ol>
       <li><a href="#cffi">CFFI</a></li>
       <li><a href="#clm">CLM</a></li>
@@ -88,21 +88,21 @@ drwxr-xr-x    5 hkt  admin   170 21 Nov 17:44 portmidi/
 
 <h2 id="installing">Installing Sources</h2>
 <p>
-Sources for stable and developmental releases can be downloaded
-in tarball archives (cm.tar.gz) or via anonymous CVS.
+Sources for stable and developmental releases can be downloaded as
+tarball archives (cm.tar.gz) or via anonymous CVS.
 </p>
 
-<h3 id="tarball-install">Tarball Installation</h3>
+<h3 id="tarball">Tarball Installation</h3>
 <ul>
 <li>
-Archives of stable releases are available from
+Stable release tarballs are available from
  CM's <a href="http://www.sf.net/projects/commonmusic">Sourceforge
  Project</a> page.
 </li>
 
 <li>
-Current development sources are available as a  <a
-href="http://commonmusic.sourceforge.net/cm.tgz">nightly snapshot</a>.
+A tarball of the most current development sources is available as a  <a
+href="http://commonmusic.sourceforge.net/cm.tgz">nightly CVS snapshot</a>.
 </li>
 </ul>
 
@@ -116,7 +116,7 @@ $ <span class="input">cd /usr/local/lisp</span>
 $ <span class="input">tar -zxf cm.tar.gz</span>
 </pre>
 
-<h3 id="cvs-install">CVS Installation</h3>
+<h3 id="cvs">CVS Installation</h3>
 
 <p>
 Sources to Common Music are maintained in a CVS repository organized
@@ -185,7 +185,7 @@ $ <span class="input">cvs update</span>
 </pre>
 
 
-<h2 id="start_lisp">Starting Common Music</h2>
+<h2 id="starting">Starting Common Music</h2>
 
 <p>
 Once the sources have been installed on your local machine and you
@@ -284,17 +284,17 @@ startup process. Once the files have been loaded CM will look for your
 exists.
 </p>
 
-<h2>Loading Lisp Programs and Interfaces</h2>
+<h2 id="programs">Programs and Interfaces</h2>
 
 <p>
-Once CM is running you can load other Lisp programs and interfaces
-into the same Lisp image using
-the <a href="dict/use-system-fn.html">use-system</a> function. This
-facility works transparently if the other Lisp software packages all
-share the same parent directory as your CM installation directory. To
-load programs and interfaces as part of CM's normal start up process
-add the appropriate <a href="dict/use-package-fn.html">use-package</a>
-forms to either
+Once CM is running you can load in other Lisp programs and interfaces
+using the <a href="dict/use-system-fn.html">use-system</a>
+function. This facility works transparently if the other Lisp software
+packages all share the same parent directory as your CM installation
+directory. To load programs and interfaces as part of CM's normal
+start up process add the
+appropriate <a href="dict/use-package-fn.html">use-package</a> forms
+to either
 <a href="../src/cm.lisp">cm.lisp</a> or to your personal
 ~/.cminit.lisp file. The <code>use-system</code> facility will automatically
 compile source code as necessary during the loading process.
