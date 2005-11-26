@@ -19,7 +19,7 @@
 <div class="inv">Navigation:</div>
 <ul class="nav">
   <li class="nav1"><a href="cm.html">Home Page</a></li>
-  <li class="navn"><a href="dict/">Dictionary</a></li>
+  <li class="navn"><a href="dict/index.html">Dictionary</a></li>
   <li class="navn"><a href="../etc/examples/">Examples</a></li>
 </ul>
 </div>
@@ -32,7 +32,6 @@
 <ol>
   <li><a href="#preinstallation">Pre-installation</a></li>
   <li><a href="#installing">Installing Sources</a></li>
-  </li>
   <li>
     <a href="#starting">Starting CM</a>
   </li>
@@ -44,9 +43,9 @@
       <li><a href="#cm-gui">CM-GUI</a></li>
       <li><a href="#fomus">Fomus</a></li>
       <li><a href="#lambda-gtk">Lambda GTK</a></li>
-      <li><a href="#midishare">Midishare</a></li>
-      <li><a href="#player">Player</a></li>
-      <li><a href="#portmidi">Portmidi</a></li>
+      <li><a href="#midishare">Midishare Interface</a></li>
+      <li><a href="#player">Player Interface</a></li>
+      <li><a href="#portmidi">Portmidi Interface</a></li>
     </ol>
   </li>
   <li><a href="#appendix">Appendix</a> </li>
@@ -60,8 +59,8 @@ in an installation directory, a working <a href="#commands">Lisp
 command</a> on your execution path and some familiarity with the
 shell, or terminal, application.  If you are going to use CM in
 conjunction with other lisp programs like CLM or Fomus, or with Lisp
-interfaces to external programs such as Portmidi and Midishare, you
-should create a common "parent" directory to contain the different
+interfaces to external programs such as Portmidi and Midishare,
+consider creating a common "parent" directory to contain the different
 Lisp systems so that you can load them transparently
 using <a href="dict/use-system-fn.html">use-system</a>. It does not
 matter where on the file system this Lisp installation directory is
@@ -110,6 +109,7 @@ href="http://commonmusic.sourceforge.net/cm.tgz">nightly snapshot</a>.
 <p>
 To install CM from a tarball simply download the archive and restore
 it under your Lisp installation directory:
+</p>
 
 <pre class="shell">
 $ <span class="input">cd /usr/local/lisp</span>
@@ -141,22 +141,21 @@ Change directories to your Lisp installation directory.
 <pre class="shell">
 $ <span class="input">cd /usr/local/lisp</span> 
 </pre>
-
-
 </li>
 
-<li><p>Set the shell variable CVSROOT to point to the CVS repository:</p></li>
-
+<li>
+<p>Set the shell variable CVSROOT to point to the CVS repository:
+</p>
 <pre class="shell">
 $ <span class="input">export CVSROOT=":pserver:anonymous@cvs.sourceforge.net:/cvsroot/commonmusic"</span> 
 </pre>
+</li>
 
 <li>
 <p>
 Use <code>cvs login</code> to connect to the Sourceforge CVS
 server, press Enter when prompted for a password:
 </p>
-
 <pre class="shell">
 $ <span class="input">cvs login</span>
 CVS password:</pre>
@@ -166,7 +165,6 @@ CVS password:</pre>
 <p>
 Use <code>cvs checkout</code> to restore CM's source tree to your Lisp installation directory:
 </p>
-
 <pre class="shell">
 $ <span class="input">cvs checkout -P cm</span>
 </pre>
@@ -179,6 +177,7 @@ use <code>login</code> or <code>checkout</code> again.  You can
 periodically update your CM installation tree to the most recent file
 versions from the Sourceforge repository by executing <code>cvs
 update</code> from inside the top-level CM directory:
+</p>
 
 <pre class="shell">
 $ <span class="input">cd /usr/local/lisp/cm</span>
@@ -218,7 +217,7 @@ prompt:
 </p>
 
 <pre class="shell">
-$ <span class="input">sudo ln -s /usr/bin/cm /usr/local/lisp/cm/bin/cm.sh<span>
+$ <span class="input">sudo ln -s /usr/bin/cm /usr/local/lisp/cm/bin/cm.sh</span>
 $ <span class="input">cm</span>
 </pre>
 
@@ -239,7 +238,6 @@ To start Common Music from the Common Lisp REPL load "cm.lisp" from
 CM's source directory and then use the <code>(cm)</code> function to
 make the CM symbol package and readtable current:
 </p>
-
 <pre class="shell">
 &gt; <span class="input">(load "/usr/local/lisp/cm/src/cm.lisp")</span>
 &gt; <span class="input">(cm)</span>
@@ -256,7 +254,6 @@ source directory:
 &gt; <span class="input">(load "/usr/local/lisp/cm/src/cm.scm")</span>
 </pre>
 </li>
-
 
 <li>
 <p>
@@ -309,7 +306,7 @@ The following Common Lisp packages can be loaded with
 </p>
 
 <h3 id="cffi">CFFI</h3>
-<p><code>(use-system :cffi)</code></li></p>
+<p><code>(use-system :cffi)</code></p>
 The Common Foreign Function interface for Common Lisp, by James Bielman and Luís Oliveira.  Required by the <a href="#portmidi">Portmidi</a> and <a href="#midishare">Midishare</a> interfaces.
 
 <ul>
@@ -322,7 +319,7 @@ directory.</li>
 </ul>
 
 <h3 id="clm">CLM</h3>
-<p><code>(use-system :clm)</code></li></p>
+<p><code>(use-system :clm)</code></p>
 <p>
 Common Lisp Music, by William Schottstaedt. A sound synthesis package
 for Common Lisp and Scheme (Guile/Snd).
@@ -334,7 +331,7 @@ http://www-ccrma.stanford.edu/software/clm/
 <li>Downloads: <a href="ftp://ftp-ccrma.stanford.edu/pub/Lisp/clm-3.tar.gz">
 ftp://ftp-ccrma.stanford.edu/pub/Lisp/clm-3.tar.gz
 </a></li>
-<li>Requirements: GCC, X Windows (OSX: XCode developer)
+<li>Requirements: GCC, X Windows (OSX: XCode developer)</li>
 <li>Supporting: Linux, OS X: Allegro, CMUCL, OpenMCL, SBCL</li>
 <li>Installation: Restore CLM sources under your Lisp installation
 directory.</li>
@@ -345,7 +342,7 @@ to work with the <a href="dict/process-mac.html">process</a> macro.
 </p>
 
 <h3 id="cmn">CMN</h3>
-<p><code>(use-system :cmn)</code></li></p>
+<p><code>(use-system :cmn)</code></p>
 <p>
 Common Music Notation, by William Schottstaedt. A music notation
 package for Common Lisp.
@@ -363,22 +360,22 @@ directory.</li>
 </ul>
 
 <h3 id="cm-gui">CM-GUI</h3>
-<p><code>(use-system :cm-gui)</code></li></p>
+<p><code>(use-system :cm-gui)</code></p>
 <p>
 Graphical User Interface for CM, by Rick Taube.
 </p>
 <ul>
 <li>Homepage: <a href="http://common-lisp.net/project/lambda-gtk/">
 http://common-lisp.net/project/cffi/</a></li>
-<li>Downloads: not available yet.
-<li>Requirements: <a href="#lambda-gtk">lambda-gtk</a>
+<li>Downloads: not available yet.</li>
+<li>Requirements: <a href="#lambda-gtk">lambda-gtk</a></li>
 <li>Supporting: Linux, OSX: CMUCL, OpenMCL, SBCL</li>
 <li>Installation: Restore GUI sources under your Lisp installation
 directory.</li>
 </ul>
 
 <h3 id="fomus">Fomus</h3>
-<p><code>(use-system :fomus)</code></li></p>
+<p><code>(use-system :fomus)</code></p>
 <p>
 Fomus, by David Psenicka. A music notation package for Common Lisp.
 </p>
@@ -393,15 +390,15 @@ http://common-lisp.net/project/fomus</a></li>
 </ul>
 
 <h3 id="lambda-gtk">Lambda-GTK</h3>
-<p><code>(use-system :lambda-gtk)</code></li></p>
+<p><code>(use-system :lambda-gtk)</code></p>
 <p>
 Lambda GTK, by Rick Taube. A Common Lisp interface to GTK+ 2.0.
 </p>
 <ul>
 <li>Homepage: <a href="http://common-lisp.net/project/lambda-gtk/">
 http://common-lisp.net/project/cffi/</a></li>
-<li>Downloads: not available yet.
-<li>Requirements:, X Windows, GTK+ 2.0 (OSX: XCode developer, Fink)
+<li>Downloads: not available yet.</li>
+<li>Requirements:, X Windows, GTK+ 2.0 (OSX: XCode developer, Fink)</li>
 <li>Supporting: Linux, OSX: CMUCL, OpenMCL, SBCL</li>
 <li>Installation: Restore Lambda-GTK sources under your Lisp
 installation directory using this CVS command:
@@ -410,17 +407,17 @@ installation directory using this CVS command:
 </ul>
 
 <h3 id="midishare">Midishare Interface</h3>
-<p><code>(use-system :midishare)</code></li></p>
+<p><code>(use-system :midishare)</code></p>
 <p>
 A Common Lisp interface
 to <a href="http://midishare.sourceforge.net/">Midishare</a>, a
-real-time MIDI operating system by <a href="www.grame.fr">Grame</a>.
+real-time MIDI operating system by <a href="http://www.grame.fr">Grame</a>.
 </p>
 <ul>
 <li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/midishare.tar.gz">midishare.tar.gz</a>
 </li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Requirements:  <a href="http://midishare.sourceforge.net/">Midishare</a>, <a href="#cffi">CFFI</a>
+<li>Requirements:  <a href="http://midishare.sourceforge.net/">Midishare</a>, <a href="#cffi">CFFI</a></li>
 <li>Installation: 
 <ol>
 <li>
@@ -440,21 +437,19 @@ See the <a href="dict/midishare-topic.html">midishare</a> topic help for more in
 </p>
 
 <h3 id="player">Player Interface</h3>
-<p><code>(use-system :player)</code></li></p>
+<p><code>(use-system :player)</code></p>
 <p>
-A Common Lisp interface to
-the <a href="http://midishare.sourceforge.net/">Midishare</a> Player
-sequencer.
+A Common Lisp interface to Midishare's Player sequencer.
 </p>
 <ul>
-<li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/midishare.tar.gz">midishare.tar.gz</a>
+<li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/midishare.tar.gz">midishare.tar.gz</a></li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Requirements:  <a href="http://midishare.sourceforge.net/">Midishare</a>, <a href="#cffi">CFFI</a>
+<li>Requirements:  <a href="http://midishare.sourceforge.net/">Midishare</a>, <a href="#cffi">CFFI</a></li>
 <li>Installation: See <a href="#midishare">Midishare Interface</a></li>
 </ul>
 
 <h3 id="portmidi">Portmidi Interface</h3>
-<p><code>(use-system :portmidi)</code></li></p>
+<p><code>(use-system :portmidi)</code></p>
 <p>
 A Common Lisp interface to
 the <a href="http://www.cs.cmu.edu/~music/portmusic/">Portmidi</a> MIDI
@@ -462,18 +457,17 @@ library.
 </p>
 
 <ul>
-<li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/portmidi.tar.gz">portmidi.tar.gz</a>
+<li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/portmidi.tar.gz">portmidi.tar.gz</a></li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
 <li>Requirements: <a href="#cffi">CFFI</a>, on Linux
-/usr/local/libportmidi.so and usr/local/libporttime.so. Libs for OS X
-and Windows are included in tarball.
+/usr/local/libportmidi.so and usr/local/libporttime.so. (OS X
+and Windows libraries are included in tarball).</li>
 <li>Installation: Restore the Portmidi Interface sources under your Lisp installation directory.</li>
 </ul>
 
 <p>
 See the <a href="dict/portmidi-topic.html">portmidi</a> topic help for more information about working with Portmidi in CM.
 </p>
-
 
 <h2 id="appendix">Appendix</h2>
 
@@ -496,6 +490,7 @@ $ <span class="input">which openmcl</span>
 /Lisp/bin/openmcl
 $ <span class="input">which guile</span>
 /sw/bin/guile
+</pre>
 </div>
 
 <p>
@@ -503,10 +498,11 @@ Here are the command names of the supported Lisp implementations. Note
 that several implementations require you install the command yourself:
 </p>
 
+<blockquote>
 <table class="float">
 <tr><th class="col">Implementation</th> <th class="col">Command </th></tr>
 <tr><td>Allegro:</td> <td> <var>none</var> </td></tr>
-<tr><td>CLISP:</td> <td> <code>clisp</code> <a href="#clisp.bat"><span style="vertical-align:super;">1<span></a></td></tr>
+<tr><td>CLISP:</td> <td> <code>clisp</code> <a href="#clisp.bat"><span style="vertical-align:super;">1</span></a></td></tr>
 <tr><td>CMUCL:</td> <td> <code>lisp</code>  </td></tr>
 <tr><td>Gauche:</td> <td><code>gosh</code>  </td></tr>
 <tr><td>Guile:</td> <td><code>guile</code>  </td></tr>
@@ -515,9 +511,10 @@ that several implementations require you install the command yourself:
 <tr><td>SBCL:</td> <td><code>sbcl</code>  </td></tr>
 <tr><td>STklos:</td> <td><code>stklos</code> </td></tr>
 </table>
+</blockquote>
 
 <p id="clisp.bat">
-<span style="vertical-align:super;">1</span>  Installing a CLISP.BAT file on Windows 2000/XP:
+1.  Installing a CLISP.BAT file on Windows 2000/XP:
 </p>
 
 <ol>
@@ -540,7 +537,7 @@ example C:\WINNT\System32\</p></li>
 </ol>
 
 <p id="openmcl">
-<span style="vertical-align:super;">2</span> Installing the <code>openmcl</code> script from the ccl distribution:
+2. Installing the <code>openmcl</code> script from the ccl distribution:
 </p>
 <ol>
 <li>
@@ -549,14 +546,12 @@ Edit the file ccl/scripts/openmcl and set the CCL_DEFAULT_DIRECTORY
 variable to the OpenMCL installation directory on your machine, for
 example:
 </p>
-<blockquote><code>CCL_DEFAULT_DIRECTORY=/usr/local/lisp/ccl</code></blockquote>
+<blockquote><p><code>CCL_DEFAULT_DIRECTORY=/usr/local/lisp/ccl</code></p></blockquote>
 </li>
 <li>
 <p>Copy the file to a directory on your path, for example:
 </p>
 <pre class="shell">$ <span class="input">sudo cp /usr/local/lisp/ccl/scripts/openmcl /usr/bin</span>
-$ <span class="input">which openmcl</span>
-/usr/bin/openmcl
 </pre>
 
 </li>
