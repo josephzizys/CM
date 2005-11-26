@@ -43,14 +43,12 @@
     (or (ext:getenv "CM_PLATFORM")
         (stdout
          (run-shell-command (cm.sh "-q") :output :stream :wait t)))
-    #+(or (and allegro microsoft-32) (and clisp win32))
-    "windows-i686"
     #+cmu
     (or (cdr (assoc ':cm_platform ext:*environment-list*))
         (stdout
          (ext:process-output
           (ext:run-program (cm.sh) '("-q") :output :stream))))
-    #+lispworks
+    #+(and lispworks (not win32))
     (stdout
      (sys:run-shell-command (cm.sh "-q") :wait nil :output :stream))
     #+openmcl
@@ -61,21 +59,11 @@
     #+sbcl
     (stdout
      (sb-ext:process-output
-      (sb-ext:run-program (cm.sh) '("-q") :output :stream)))))
+      (sb-ext:run-program (cm.sh) '("-q") :output :stream)))
+    #+(or microsoft-32 win32)
+    "windows-i686"
+    ))
            
-; (setq foo (os-arch))
-;; (lisp-implementation-version)
-;; "2.35 (2005-08-29) (built on pomajxego.local [192.168.1.40])"
-;; "Version 1.0 (DarwinPPC32)"
-;; "19b-pre1 (19B)"
-;; "0.9.4"
-;; "4.4.5"
-;; "6.2 [Mac OS X] (Jun 26, 2002 11:22)"
-;; "Snapshot 2004-11"
-;; "2.33.2 (2004-06-02) (built on build.ccrma.stanford.edu [127.0.0.1])"
-;; "5.0.beta [Linux/X86] (6/11/98 14:45)"
-;; "Version (Beta: Darwin) 0.14.3"
-
 (defun lisp-vers (&optional str)
   (let* ((str (or str (lisp-implementation-version)))
          (beg (position-if #'digit-char-p str)))
@@ -186,8 +174,6 @@
                                (user-homedir-pathname))))
     (if (probe-file init) (load init )))
   (restorevars cm)
-  ;(terpri)
-  ;(funcall (find-symbol (string :cm) :cm))
   )
 
 (defmethod asdf::traverse :around ((op asdf:load-op) 
