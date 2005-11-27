@@ -110,10 +110,6 @@
   #+sbcl (sb-unix:unix-mkdir (namestring dir) #o777)
   #+openmcl (ccl:create-directory dir))
 
-(defun ensure-bin-directory ()
-  (unless (isdir *cm-bin-directory*)
-    (mkdir *cm-bin-directory*)))
-
 (defun fasl-pathname (file)
   (make-pathname :directory (pathname-directory *cm-bin-directory*)
                  :type (pathname-type (compile-file-pathname file))
@@ -162,11 +158,13 @@
 
 (defmethod asdf:perform  ((op initialize-op) cm)
   (ensure-sys-features cm)
-  (ensure-bin-directory)
-  (savevars cm '*compile-print* '*compile-verbose* 
-            '*load-verbose* '*load-print*)
-  (setq *compile-print* nil *compile-verbose* nil
-        *load-verbose* nil *load-print* nil)
+  (unless (isdir *cm-bin-directory*)
+    (mkdir *cm-bin-directory*))
+  ;; moved to use-system
+  ;(savevars cm '*compile-print* '*compile-verbose* 
+  ;          '*load-verbose* '*load-print*)
+  ;(setq *compile-print* nil *compile-verbose* nil
+  ;      *load-verbose* nil *load-print* nil)
   (format t "~%; CM install directory: ~S" *cm-directory*))
 
 (defmethod asdf:perform  ((op finalize-op) cm)
@@ -323,15 +321,17 @@
     )
 
 ;;;
+;;; main functions
+;;;
 
 (defun cm ()
   (flet ((cmcall (fn &rest args)
            (apply (find-symbol (string fn) :cm) args))
          (cmvar (var)
            (symbol-value (find-symbol (string var) :cm))))
-    ;; add slime readtable mapping...
     (setf *package* (find-package :cm))
     (setf *readtable* (cmvar :*cm-readtable*))
+    ;; add slime readtable mapping...
     (let ((swank-pkg (find-package :swank)))
       (when swank-pkg
         (let ((sym (intern (symbol-name :*readtable-alist*) swank-pkg)))
