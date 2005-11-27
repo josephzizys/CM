@@ -160,11 +160,10 @@
   (ensure-sys-features cm)
   (unless (isdir *cm-bin-directory*)
     (mkdir *cm-bin-directory*))
-  ;; moved to use-system
-  ;(savevars cm '*compile-print* '*compile-verbose* 
-  ;          '*load-verbose* '*load-print*)
-  ;(setq *compile-print* nil *compile-verbose* nil
-  ;      *load-verbose* nil *load-print* nil)
+  (savevars cm '*compile-print* '*compile-verbose* 
+            '*load-verbose* '*load-print*)
+  (setq *compile-print* nil *compile-verbose* nil
+        *load-verbose* nil *load-print* nil)
   (format t "~%; CM install directory: ~S" *cm-directory*))
 
 (defmethod asdf:perform  ((op finalize-op) cm)
