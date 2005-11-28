@@ -393,6 +393,9 @@
       ;; to pass to asdf:operate
       (when (member name '("clm" "cmn") :test #'equal)
         (setq loading-op 'asdf:load-source-op))
+      ;; stop cmu and sbcl package nonsense
+      #+(or sbcl cmu)
+      (if (find-package sys) (delete-package sys))
       (if warnings
           (asdf:operate loading-op sys)
           (handler-bind ((style-warning  #'muffle-warning)
