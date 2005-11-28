@@ -13,7 +13,7 @@
 (defvar *cm-directory* 
   (namestring
    (truename (make-pathname :name nil :type nil
-                            :defaults *load-pathname*))))
+                            :defaults *load-truename*))))
 
 (eval-when (:load-toplevel :execute)
   (pushnew *cm-directory* asdf:*central-registry* :test #'equal))
