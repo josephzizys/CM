@@ -51,7 +51,6 @@
                 (if (null? globs) (list) (list globs))))
       ;; flush existing data from parts
       (for-each (lambda (p)
-                  (set! (obj-id p) #f)
                   (set! (part-events p) (list)))
                 (fomus-file-parts io))
       (set! (io-open io) #t)))
