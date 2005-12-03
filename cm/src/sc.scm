@@ -71,6 +71,9 @@
   :metaclass <io-class>
   :file-types '("*.osc" ))
 
+
+      
+
 (define-method* (close-io (io <sc-file>) . mode)
   mode
   (if (equal? (io-direction io) :output)
@@ -79,6 +82,8 @@
             (write-bundle (+ pad (object-time io)) '("/none") io)
           (write-bundle (+ 5 (object-time io)) '("/none") io))))
   (next-method))
+
+
 
 (define (set-sc-output-hook! fn)
   (unless (or (not fn) (procedure? fn))
@@ -176,6 +181,14 @@
 			     (make-file-timetag offset)
 			     (make-byte-vector len) mess))
       (u8vector-write arr fd))))
+
+
+(define-method* (open-io (obj <sc-file>) dir . args)
+  (next-method)
+  args
+  (if (and (eq? (io-direction obj) :output) (io-open obj))
+      (write-bundle 0 (list "/g_new" 1 0 0) obj)))
+
 
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -562,7 +575,7 @@
 (defobject group-new (sc-cmd)
   ((id :initform #f)
    (add-action :initform 0)
-   (target))
+   (target :initform 0))
   (:parameters id add-action target)
   (:event-streams))
 
@@ -1324,8 +1337,8 @@
 
 (define-class* <scsynth> (<event>)
   ((node :init-value -1 :init-keyword :node)
-   (add-action :init-value 1 :init-keyword :add-action)
-   (target :init-value 0 :init-keyword :target))
+   (add-action :init-value 0 :init-keyword :add-action)
+   (target :init-value 1 :init-keyword :target))
   :name 'scsynth )
 
 (define-method* (write-event (obj <scsynth>) (io <sc-file>) time)
@@ -1365,6 +1378,7 @@
     (when node-set-list
       (write-event (make <node-setn> :node (slot-ref obj 'node) :controls-values node-set-list) io time))))
 
+
 (define-method* (import-set-slots (obj <scsynth>) lst)
   (slot-set! obj 'node (pop lst))
   (slot-set! obj 'add-action (pop lst))
@@ -1374,6 +1388,7 @@
 	((= i len))
       (slot-set! obj  (string->symbol (list-ref lst i))
                  (list-ref lst (+ 1 i))))))
+
 
 ;;;
 ;;; import events 
