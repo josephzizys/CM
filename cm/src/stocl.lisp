@@ -592,7 +592,8 @@
                          unless (find p lambda-list-keywords)
                          collect 
                          (if (consp p)
-                           (car p)
+                             ;; keyword binding can be ((key var) val var2)
+                           (if (consp (car p)) (cadar p) (car p))
                            p)))
         ;; remove the with-args wrapper
         (if (cdddr form)
