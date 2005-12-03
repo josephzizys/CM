@@ -27,6 +27,7 @@
 (define (harmonics h1 h2 . args)
   (with-args (args &key ((:hertz hz) 1) invert 
                    undertones ((:keynum knum) #f)
+                   ((:rescale scaler) #f)
                    scale-order harmonic)
     ;; calculate overtones from h1 to h2. if fundamental is 1 (the
     ;; default) then freq ratios are returned.
@@ -58,9 +59,16 @@
                         (* freq (/ harmonic h1))
                         (loop for h from h1 to h2
                            collect (* freq (/ h h1))))))))
+      (when scaler
+        (if knum (set! scaler (hertz scaler :hz #t)))
+        (do ((root (car spec))
+             (term (list-ref spec (- h2 h1)))
+             (tail (cdr spec) (cdr tail)))
+            ((null? tail) #f)
+          (set-car! tail (rescale (car tail) root term root scaler))))
       (when scale-order
         (when harmonic
-          (error "harmonics: :scale-order and :harmonic are exclusive keywords"))
+          (error "harmonics: :scale-order and :harmonic are exclusive."))
         (case scale-order
           ((:reverse reverse) (set! spec (reverse! spec)))
           ((:up up)

@@ -17,9 +17,9 @@
 </dl>
 
 <p>
-Returns the harmonic series between a <var>low</var>
-and <var>high</var> harmonic number as a list of ratios, hertz values
-or floating point keynums, according to keyword arguments.
+Returns the harmonic series between harmonic numbers <var>low</var>
+and <var>high</var> (inclusive) as a list of ratios, hertz values or floating
+point keynums according to keyword arguments.
 </p>
 
 <p id="args"><code class="entry">harmonics</code> supports the following keyword arguments:
@@ -31,15 +31,15 @@ or floating point keynums, according to keyword arguments.
 <code class="keyword">:hertz</code> <var>number</var>
 </dt>
 <dd>The frequency base of the returned series. The default value of 1
-Hz produces a series of rational frequency ratios.
+Hz returns rational frequency ratios.
 </dd>
 
 <dt>
 <code class="keyword">:keynum</code> {<var>keynum</var> | <var>note</var>}
 </dt>
 <dd>
-Key number specification of the base frequency returns the series as
-floating point key numbers.
+A keynum specification of the base frequency returns floating point
+key numbers.
 </dd>
 
 <dt>
@@ -59,16 +59,26 @@ is inverted, or flipped. The default value is false.
 </dd>
 
 <dt>
+<code class="keyword">:rescale</code> <var>number</var>
+</dt>
+<dd>
+If provided the entire series is rescaled to lie between the
+values <span class="keyword">:hertz</span>
+and <span class="keyword">:rescale</span> (inclusive). If
+<span class="keyword">:keynum</span> is specified then the value of <span class="keyword">:rescale</span> must be a key number as well.
+</dd>
+
+<dt>
 <code class="keyword">:scale-order</code> {<var>false</var> | <span class="keyword">:reverse</span> | <span class="keyword">:up</span> | <span class="keyword">:down</span> | <span class="keyword">:random</span>}
 </dt>
 <dd>
-An optional ordering of the series. If <var>false</var> then overtones
-are returned in ascending order and undertones in decending order. The
+Optionally reorders the series. If <var>false</var> then overtones are
+returned in ascending order and undertones in decending order. The
 value <span class="keyword">:reverse</span> reverses this. The
 value <span class="keyword">:up</span> reverses undertones without
 affecting overtones and <span class="keyword">:down</span> does the
 opposite.  The value <span class="keyword">:random</span> returns a
-random permutation of the list. The dedefault value is false.
+random permutation of the list. The default value is false.
 </dd>
 
 <dt>
