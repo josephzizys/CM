@@ -392,25 +392,29 @@
     ;; each &key entry is represented by a four element list:
     ;; (var default passed? keyword) where var is the variable,
     ;; default is its default value, passed? is a flag set to
-    ;; #t if key is passed and keyword is the keyword. the first
-    ;; three values in the list may be returned by parse-lambda-list
+    ;; #t if key is passed and keyword is the keyword.
     (do ((tail keys (cdr tail))
          (head (list))
          (b #f)
+         (v #f)
+         (k #f)
          (l #f))
         ((null? tail)
          (set! keys (reverse! head)))
       (set! b (car tail))
-      (set! l (length b)) ; 2 3 or 4
+      ;; binding b is ( {var | (key var)} val [var2])
+      (cond ((pair? (car b))
+             (set! k (caar b))
+             (set! v (cadar b)))
+            (else
+             (set! v (car b))
+             (set! k (symbol->keyword v))))
+      (set! l (length b)) ;; 2 or 3
       (cond ((= l 2)
-             (push (append b (list (gensym ) (symbol->keyword (car b))))
-                   head))
+             (push (list v (cadr b) (gensym ) k) head))
             ((= l 3)
-             (push (append b (list (symbol->keyword (car b)))) head))
-            ((= l 4)
-             (push b head))
+             (push (list v (cadr b) (caddr b) k) head))
             (else (err "Malformed &key binding: ~s" b))))
-
     ;; create required arg bindings
     (set! reqs (map (lambda (r)		; r is required par
                       (unless (symbol? r)
