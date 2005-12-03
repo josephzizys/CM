@@ -17,6 +17,63 @@
 ;;; $Revision$
 ;;; $Date$
 
+;;;
+;;; harmonics
+;;;
+
+; (harmonics 1 8)
+; (harmonics 8 16 :hertz 100)
+
+(define (harmonics h1 h2 . args)
+  (with-args (args &key ((:hertz hz) 1) invert 
+                   undertones ((:keynum knum) #f)
+                   scale-order harmonic)
+    ;; calculate overtones from h1 to h2. if fundamental is 1 (the
+    ;; default) then freq ratios are returned.
+    (unless (< h1 h2)
+      (err "harmonics: ~s not less than ~s."
+           h1 h2))
+    (when harmonic
+      (unless (<= h1 harmonic h2)
+        (err "harmonics: :harmonic ~s not between ~s and ~s."
+             harmonic h1 h2)))
+    (let* ((freq (if knum (hertz knum) hz))
+           (spec
+            (if invert
+                (if undertones
+                    (if harmonic
+                        (/ freq (/ h2 harmonic))
+                        (loop for h from h2 downto h1
+                           collect (/ freq (/ h2 h ))))
+                    (if harmonic
+                        (* freq (/ h2 harmonic))
+                        (loop for h from h2 downto h1
+                           collect (* freq (/ h2 h)))))
+                (if undertones
+                    (if harmonic
+                        (/ freq (/ harmonic h1))
+                        (loop for h from h1 to h2
+                           collect (/ freq (/ h h1))))
+                    (if harmonic
+                        (* freq (/ harmonic h1))
+                        (loop for h from h1 to h2
+                           collect (* freq (/ h h1))))))))
+      (when scale-order
+        (when harmonic
+          (error "harmonics: :scale-order and :harmonic are exclusive keywords"))
+        (case scale-order
+          ((:reverse reverse) (set! spec (reverse! spec)))
+          ((:up up)
+           (if undertones (set! spec (reverse! spec))))
+          ((:down down)
+           (if (not undertones) (set! spec (reverse! spec))))
+          ((:random random) (set! spec (shuffle spec)))
+          (else
+           (err "harmonics: not a :scale-order value: ~S"
+                scale-order))))
+      (if knum
+          (keynum spec :hz #t)
+          spec))))
 
 ;; rm-spectrum performs ring modulation on two input specta f1 and f2
 ;; to return a spectrum (list of frequencies) consisting of the
