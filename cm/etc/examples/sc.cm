@@ -262,7 +262,7 @@
 ;;; ampenv and indexenv
 ;;;
 
-(defobject fm-env (scsynth)
+(defobject fm-env2 (scsynth)
   ((freq :initform 440)
    (mratio :initform 1.0)
    (index :initform 1.0)
@@ -283,7 +283,7 @@
 		       :node 500
 		       :decaytime 0.8
 		       :mix .05)
-	   output (new fm-env :freq (between 300 700) 
+	   output (new fm-env2 :freq (between 300 700) 
 		       :mratio (between .4 3.2) 
 		       :dur 4
 		       :index 1.0
@@ -493,3 +493,5 @@
 	   wait 2))
 
 ; (events (wt2 10) "wt2.osc" )
+
+
