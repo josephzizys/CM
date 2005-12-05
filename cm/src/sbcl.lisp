@@ -262,9 +262,9 @@
 (defmacro with-mutex-grabbed ((var) &body body)
   `(sb-thread:with-mutex (,var :wait-p t) ,@body))
 
-
-
 (in-package "SB-KERNEL")
+
+#+darwin ; remove when the darwin version release contains it
 (defun round-numeric-bound (x class format up-p)
   (if x
       (let ((cx (if (consp x) (car x) x)))
@@ -278,18 +278,19 @@
            (let ((res
                   (cond
                     ((and format (subtypep format 'double-float))
-                     (if (<= most-negative-double-float cx
-                             most-positive-double-float)
-                         (coerce cx format)
-                         nil))
-                    (t
-                     (if (<= most-negative-single-float cx
-                             most-positive-single-float)
-                         ;; FIXME
-                         (coerce cx (or format 'single-float))
-                         nil)))))
-             (if (consp x) (list res) res)))))
-      nil))
+                      (if (<= most-negative-double-float cx
+                              most-positive-double-float)
+                          (coerce cx format)
+                          nil))
+                     (t
+                      (if (<= most-negative-single-float cx
+                              most-positive-single-float)
+                          ;; FIXME
+                          (coerce cx (or format 'single-float))
+                          nil)))))
+              (if (consp x) (list res) res)))))
+       nil))
+
 
 
 
