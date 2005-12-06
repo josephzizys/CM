@@ -40,9 +40,9 @@
       <li><a href="#cffi">CFFI</a></li>
       <li><a href="#clm">CLM</a></li>
       <li><a href="#cmn">CMN</a></li>
-      <li><a href="#cm-gui">CM-GUI</a></li>
+      <li><a href="#cm-gtk">CM-GTK</a></li>
       <li><a href="#fomus">Fomus</a></li>
-      <li><a href="#lambda-gtk">Lambda GTK</a></li>
+      <!-- <li><a href="#lambda-gtk">Lambda GTK</a></li>  -->
       <li><a href="#midishare">Midishare Interface</a></li>
       <li><a href="#player">Player Interface</a></li>
       <li><a href="#portmidi">Portmidi Interface</a></li>
@@ -359,18 +359,16 @@ ftp://ftp-ccrma.stanford.edu/pub/Lisp/cmn.tar.gz
 directory.</li>
 </ul>
 
-<h3 id="cm-gui">CM-GUI</h3>
-<p><code>(use-system :cm-gui)</code></p>
+<h3 id="cm-gtk">CM-GTK</h3>
+<p><code>(use-system :cm-gtk)</code></p>
 <p>
-Graphical User Interface for CM, by Rick Taube.
+Graphical User Interface for CM implemented in GTK+2, by Rick Taube.
 </p>
 <ul>
-<li>Homepage: <a href="http://common-lisp.net/project/lambda-gtk/">
-http://common-lisp.net/project/cffi/</a></li>
-<li>Downloads: not available yet.</li>
-<li>Requirements: <a href="#lambda-gtk">lambda-gtk</a></li>
-<li>Supporting: Linux, OSX: CMUCL, OpenMCL, SBCL</li>
-<li>Installation: Restore GUI sources under your Lisp installation
+<li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/cm-gtk.tar.gz">cm-gtk.tar.gz</a></li>
+<li>Requirements: X Windows, GTK+ 2.0 (OSX: XCode developer, Fink)</li>
+<li>Supporting: Linux: SBCL 0.7.9 or higher, CMUCL 19b or higher; OSX: OpenMCL 1.0 or higher</li>
+<li>Installation: Restore CM-GTK sources under your Lisp installation
 directory.</li>
 </ul>
 
@@ -389,6 +387,7 @@ http://common-lisp.net/project/fomus</a></li>
 </li>
 </ul>
 
+<!--
 <h3 id="lambda-gtk">Lambda-GTK</h3>
 <p><code>(use-system :lambda-gtk)</code></p>
 <p>
@@ -405,6 +404,7 @@ installation directory using this CVS command:
 <pre>cvs -z3 -d :pserver:anonymous:anonymous@common-lisp.net:/project/lambda-gtk/cvsroot co lambda-gtk</pre>
 </li>
 </ul>
+-->
 
 <h3 id="midishare">Midishare Interface</h3>
 <p><code>(use-system :midishare)</code></p>
