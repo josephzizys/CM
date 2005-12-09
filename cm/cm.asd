@@ -1,3 +1,15 @@
+;;; **********************************************************************
+;;; Copyright (C) 2005 Heinrich Taube, <taube (at) uiuc (dot) edu>
+;;;
+;;; This program is free software; you can redistribute it and/or
+;;; modify it under the terms of the Lisp Lesser Gnu Public License.
+;;; See http://www.cliki.net/LLGPL for the text of this agreement.
+;;; **********************************************************************
+
+;;; $Name$
+;;; $Revision$
+;;; $Date$
+
 (in-package :cl-user)
 
 #-(or allegro clisp cmu lispworks openmcl sbcl)
@@ -167,6 +179,8 @@
   (format t "~%; CM install directory: ~S" *cm-directory*))
 
 (defmethod asdf:perform  ((op finalize-op) cm)
+  ;; add cm feature before loading other systems...
+  (pushnew ':cm *features*)
   (let ((init (merge-pathnames ".cminit.lisp"
                                (user-homedir-pathname))))
     (if (probe-file init) (load init )))
