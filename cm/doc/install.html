@@ -78,9 +78,9 @@ $ ls -l /usr/local/lisp
 drwxr-xr-x   15 hkt  admin   510 14 Nov 13:56 cffi/
 drwxr-xr-x  188 hkt  admin  6392 14 Nov 09:57 clm-3/
 drwxr-xr-x    9 hkt  admin   306 21 Nov 09:59 cm/
+drwxr-xr-x   11 hkt  admin   374  5 Oct 17:28 cm-gtk/
 drwxr-xr-x   64 hkt  admin  2176 25 Oct 12:46 cmn/
 drwxr-xr-x   64 hkt  admin  2176 11 Nov 08:10 fomus/
-drwxr-xr-x   11 hkt  admin   374  5 Oct 17:28 lambda-gtk/
 drwxr-xr-x    7 hkt  admin   238 26 Oct 18:04 midishare/
 drwxr-xr-x    5 hkt  admin   170 21 Nov 17:44 portmidi/
 </pre>
@@ -183,6 +183,22 @@ update</code> from inside the top-level CM directory:
 $ <span class="input">cd /usr/local/lisp/cm</span>
 $ <span class="input">cvs update</span>
 </pre>
+
+
+<p>
+You can also checkout several optional packages from the same Sourceforge
+repository: a GTK <a href="#cm-gtk">GUI</a>, an interface
+to <a href="#midishare">Midishare</a> and an interface
+to <a href="#portmidi">Portmidi</a>:
+</p>
+<pre class="shell">
+$ <span class="input">cvs checkout -P cm-gtk</span>
+$ <span class="input">cvs checkout -P portmidi</span>
+$ <span class="input">cvs checkout -P midishare</span>
+</pre>
+</li>
+
+
 
 
 <h2 id="starting">Starting Common Music</h2>
@@ -365,7 +381,7 @@ directory.</li>
 Graphical User Interface for CM implemented in GTK+2, by Rick Taube.
 </p>
 <ul>
-<li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/cm-gtk.tar.gz">cm-gtk.tar.gz</a></li>
+<li>Downloads:   <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172119">cm-gtk</a></li>
 <li>Requirements: X Windows, GTK+ 2.0 (OSX: XCode developer, Fink)</li>
 <li>Supporting: Linux: SBCL 0.7.9 or higher, CMUCL 19b or higher; OSX: OpenMCL 1.0 or higher</li>
 <li>Installation: Restore CM-GTK sources under your Lisp installation
@@ -414,7 +430,7 @@ to <a href="http://midishare.sourceforge.net/">Midishare</a>, a
 real-time MIDI operating system by <a href="http://www.grame.fr">Grame</a>.
 </p>
 <ul>
-<li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/midishare.tar.gz">midishare.tar.gz</a>
+<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172112">Midishare interface</a>
 </li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
 <li>Requirements:  <a href="http://midishare.sourceforge.net/">Midishare</a>, <a href="#cffi">CFFI</a></li>
@@ -440,7 +456,7 @@ See the <a href="dict/midishare-topic.html">midishare</a> topic help for more in
 A Common Lisp interface to Midishare's Player sequencer.
 </p>
 <ul>
-<li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/midishare.tar.gz">midishare.tar.gz</a></li>
+<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172112">Midishare interface</a></li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
 <li>Requirements:  <a href="http://midishare.sourceforge.net/">Midishare</a>, <a href="#cffi">CFFI</a></li>
 <li>Installation: See <a href="#midishare">Midishare Interface</a></li>
@@ -455,7 +471,7 @@ library.
 </p>
 
 <ul>
-<li>Downloads: <a href="http://pinhead.music.uiuc.edu/~hkt/portmidi.tar.gz">portmidi.tar.gz</a></li>
+<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">Portmidi interface</a></li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
 <li>Requirements: <a href="#cffi">CFFI</a>, on Linux
 /usr/local/libportmidi.so and usr/local/libporttime.so. (OS X
@@ -464,7 +480,7 @@ and Windows libraries are included in tarball).</li>
 </ul>
 
 <p>
-See the <a href="dict/portmidi-topic.html">portmidi</a> topic help for more information about working with Portmidi in CM.
+See the <a href="dict/portmidi-topic.html">Portmidi</a> topic help for more information about working with Portmidi in CM.
 </p>
 
 <h2 id="appendix">Appendix</h2>
