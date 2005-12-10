@@ -586,6 +586,44 @@
         (warn "Can't sprout, no room left in process table!")))
   (values))
 
+(define (parse-ms-output forms clauses ops)
+  clauses ops  ; gag 'unused var' message from cltl compilers
+  (let ((head forms)
+        (oper (pop forms))
+        (expr #f)
+        (to #f)
+        (ahead #f)
+        (loop '()))
+    (when (null? forms)
+      (loop-error ops head "Missing '" oper "' expression."))
+    (set! expr (pop forms))
+    (do ((stop #f))
+        ((or stop (null? forms)))
+      (case (car forms)
+        (( to )
+         (when (null? (cdr forms))
+           (loop-error ops head "Missing '" oper " to' expression."))
+         (set! to (cadr forms))
+         (set! forms (cddr forms)))
+        (( ahead )
+         (when (null? (cdr forms))
+           (loop-error ops head "Missing '" oper " ahead' expression."))
+         (set! ahead (cadr forms))
+         (set! forms (cddr forms)))
+        (else
+         (set! stop #t))))
+    (set! loop
+          (if ahead
+              (list `(,oper ,expr ,(or to '*out*) ,ahead))
+              (list `(,oper ,expr ,(or to '*out*)))))
+    (values (make-loop-clause 'operator oper 'looping loop)
+            forms)))
+
+(define *process-operators*
+  (append *process-operators*
+          (list (list 'ms:output (function parse-ms-output)
+                      'task 'to))))
+
 (define (ms:output ev out . args)
   ;; output ev to Midishare
   (with-args (args &optional ahead)
