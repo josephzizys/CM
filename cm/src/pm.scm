@@ -114,8 +114,8 @@
               (set! idev ( getd i ':input (car tail))))
           (if (and o (not odev))
               (set! odev ( getd o ':output (car tail)))))
-        ;; error checks: no devices, device already open, missing
-        ;; devices
+        ;; error checks: no devices, bad devices, device already open,
+        ;; missing devices
         (cond ((null? devs)
                (err "open-io: no portmidi devices available."))
               ((and idev (list-prop idev ':open))
@@ -124,8 +124,17 @@
               ((and odev (list-prop odev ':open))
                (err "open-io: portmidi output device ~D (~S) is already open."
                     (list-prop odev ':id) (list-prop odev ':name)))
+              ((and (not idev)  (portmidi-input obj))
+               (err "open-io: '~S' is not a valid :input id. Available devices are: ~S."
+                    (portmidi-input obj)
+                    devs))
+              ((and (not odev)  (portmidi-output obj))
+               (err "open-io: '~S' is not a valid :output id. Available devices are: ~S."
+                    (portmidi-output obj)
+                    devs))
               ((and (not idev) (not odev))
-               (err "open-io: no portmidi :input or :output device was specified.")))
+               (err "open-io: Missing :input and/or :output id. Valid devices: ~S."
+                    devs)))
         (pt:Start)
         (set! (object-time obj) 0)
         (when idev
@@ -273,14 +282,9 @@
           (midi-message->pm-message obj)))
         (else #f)))
 
-;;;
-;;; message writing
 ;;; portmidi behaves almost like a midi-file: (1) handles only true
 ;;; midi messages (ie no durations); (2) data must always be sent in
-;;; time-increasing order; (3) messages are just bytes. the only real
-;;; difference between writing to portmidi vs midi-files is that
-;;; midi-file time is delta but portmidi time is absolute.
-;;;
+;;; time-increasing order; (3) messages are just bytes.
 
 (define-method* (write-event (obj <midi> ) (str <portmidi-stream>)
                              scoretime)
@@ -292,10 +296,18 @@
     (ensure-microtuning keyn chan str)
     ;; if "resting" then dont update anything
     (unless (< keyn 0)                  ; rest
-      (midi-write-message (make-note-on chan keyn ampl)
-                          str
-                          scoretime
-                          #f)
+      ;; Optimize sending <midi> by calling WriteShort directly
+      ;;(midi-write-message(make-note-on chan keyn ampl)str scoretime #f) 
+      (pm:WriteShort
+       (second (io-open str))
+       (cond ((eq? *scheduler* ':asap)
+              (+ (inexact->exact (round (* scoretime 1000)))
+                 (portmidi-offset str)))
+             ((not *scheduler*) scoretime)
+             (t 0)) ;; :threaded :periodic :specific
+       (pm:Message (logior #x90 (logand chan #xf) )
+                   (logand keyn #x7f)
+                   (logand ampl #x7f)))
       ;; enqueue a note off in scheduler's queue
       (enqueue (make-note-off chan keyn 127)
                (+ scoretime (midi-duration obj))
