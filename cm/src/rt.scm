@@ -239,9 +239,9 @@
        (when receiver
          (when stream (init-receiver stream :threaded))
          ;; we just want the hook to call, NOT a thread.
-         (set! hook (stream-receiver receiver stream :periodic)))
+         (set! receiver (stream-receiver receiver stream :periodic)))
        (thread-start!
-        (make-thread (rts-run-threaded2 stream hook))))
+        (make-thread (rts-run-threaded2 stream receiver))))
       (else (err "not yet implemented.")))))
 
 (define (rts . args)
