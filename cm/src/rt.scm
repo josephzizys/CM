@@ -82,6 +82,43 @@
 (define (rts-continue )
   (err "rts-continue: not implemented."))
 
+(define (rts-run-threaded2 stream hook)
+  ;; rts threaded run function. attempts to be adaptive to
+  ;; fluctuations using a target time (ttime) to calculate sleep time
+  (lambda ()
+    (do ((entry #f)
+         (thing #f)
+         (start #f)
+         (wait? #f))
+        ((not *rts-run*)
+         (when stream (deinit-receiver stream ':threaded))
+         (rts-reset))
+      ;; update current time
+      (set! *qtime* (thread-current-time))
+      (with-mutex-grabbed (*qlock*)
+        ;; HACK -- let sprout not lock mutex.
+        (let ((*pstart* *qtime*))
+          (if hook (funcall hook)))
+        (without-interrupts
+           (do ()
+               ((or (%q-empty? *queue*)
+                    (> (%qe-time (%q-peek *queue*)) *qtime*)))
+             (set! entry (%q-pop *queue*))
+             (set! start (%qe-start entry))
+             (set! thing (%qe-object entry))
+             (%qe-dealloc *queue* entry)
+             (process-events thing *qtime* start *out*))))
+      (if wait? 
+          ;; wait? is true if something is in the queue with a time > *qtime*
+          ;; in this case sleep MIN next run time and idle rate
+          (let ((delta (- (%qe-time (%q-peek *queue*)) 
+                          (thread-current-time))))
+            ;; delta can be < 0 if the process evaluation took more time
+            ;; than the wait increment. [is this true?]
+            (if (> delta 0) 
+                (thread-sleep! (min delta *rts-idle-rate*))))
+          (thread-sleep! *rts-idle-rate*)))))
+
 (define (rts-run-threaded object ahead end)
   ;; rts threaded run function. attempts to be adaptive to
   ;; fluctuations using a target time (ttime) to calculate sleep time
@@ -186,6 +223,26 @@
                    (or (eq? wait? 0)
                        (set! wait? (inexact->exact
                                    (round (* wait? 1000.0))))))))))))
+
+(define (rts2 . args)
+  (with-args (args &optional (stream (current-output-stream))
+                   &key receiver tick)
+    (if (rts?) 
+      (err "rts: already running."))
+    (set! *queue* %q)
+    (set! *out* stream)
+    (set! *rts-run* #t)
+    (case *rts-type*
+      (( :threaded )
+       (if (not *qlock*) (set! *qlock* (make-mutex)))
+       (set! *scheduler* ':threaded)
+       (when receiver
+         (when stream (init-receiver stream :threaded))
+         ;; we just want the hook to call, NOT a thread.
+         (set! hook (stream-receiver receiver stream :periodic)))
+       (thread-start!
+        (make-thread (rts-run-threaded2 stream hook))))
+      (else (err "not yet implemented.")))))
 
 (define (rts . args)
   (if (rts?) 
