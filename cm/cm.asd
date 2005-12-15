@@ -353,7 +353,8 @@
                       (symbol-value sym))))))
     (cmcall :cm-logo)))
 
-(defun use-system (sys &key directory (verbose t) warnings )
+(defun use-system (sys &key directory bin-directory
+                   (verbose t) warnings )
   ;; load system from either:
   ;;  (1) user supplied dir
   ;;  (2) entry in asdf:*central-registry*
@@ -361,7 +362,8 @@
   (let* ((name (string-downcase (string sys)))
          (root *cm-directory*)
          (reg? nil)
-         (file nil))
+         (file nil)
+         (meth nil))
     (when directory
       (setq file (make-pathname :name name :type "asd"
                                 :defaults directory))
@@ -387,6 +389,22 @@
     (when reg?
       (pushnew (make-pathname :name nil :type nil :defaults file)
                asdf:*central-registry* :test #'equal))
+    (when bin-directory 
+      (unless (isdir bin-directory)
+        (mkdir bin-directory))
+      (let ((bindir (pathname-directory bin-directory))
+            (system (asdf:find-system sys)))
+        (setq meth
+              (defmethod asdf:output-files :around
+                  ((o asdf:compile-op) (f asdf:source-file))
+                (labels ((mysys (c &aux (p (asdf:component-parent c)))
+                           (if (null p) c (mysys p))))
+                  (if (eql system (mysys f))
+                      (loop for f in (call-next-method)
+                         collect
+                         (make-pathname :directory bindir
+                                        :defaults f))
+                      (call-next-method)))))))
     (let ((*compile-print* *compile-print*)
           (*compile-verbose* *compile-verbose* )
           (*load-print* *load-print* )
@@ -414,6 +432,8 @@
                          #+sbcl (sb-ext:compiler-note #'muffle-warning)
                          #+sbcl (sb-ext:code-deletion-note #'muffle-warning))
             (asdf:operate loading-op sys))))
+    (when bin-directory
+      (remove-method #'asdf:output-files meth))
     (asdf:find-system sys)))
 
 (export '(cm use-system) :cl-user)
