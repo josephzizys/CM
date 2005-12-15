@@ -85,7 +85,7 @@
            #:*clm-channels* #:*clm-srate*
            ;; these symbols are  used by cm but not redefined
            #:spectrum #:env #:src #:clm-load #:dac #:definstrument
-           #:*definstrument-hook* #:with-sound #:filter))
+           #:*definstrument-hook* #:with-sound #:filter #:delay))
 
 (in-package :clm)
 
@@ -379,7 +379,7 @@
                 :*definstrument-hook*
                 ;; these are also used by CM but defs don't conflict.
                 ;#+(and clm2 (not clm3)) :graph 
-                :spectrum :env :src :filter
+                :spectrum :env :src :filter :delay
                 )
   (:import-from :cmn 
                 :init-clm-input
