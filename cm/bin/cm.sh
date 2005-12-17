@@ -627,7 +627,7 @@ make_lisp_cmd () {
     clisp)
       LISP_CMD="'$LISP_EXE' -I -q -ansi $LOPTS"
       if [ $LOAD ] ; then
-        LISP_CMD="$LISP_CMD -x '$LISP_EVL' -x t -repl"
+        LISP_CMD="$LISP_CMD -x '$LISP_EVL' -repl"
       else
         test $LISP_INI && LISP_INI="-i $LISP_INI"
         LISP_CMD="$LISP_CMD -M '$LISP_IMG' $LISP_INI"
