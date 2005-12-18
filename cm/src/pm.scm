@@ -78,7 +78,7 @@
   dir args
   (when (not (io-open obj)) ; already open...
     (unless (pm:portmidi)
-      (err "Can't open MidiShare connection: MidiShare not loaded."))
+      (err "Can't open PortMidi connection: PortMidi not loaded."))
     (unless (event-stream-stream obj)
       (let ((getd (lambda (i d l)
                     ;; return device description of user spec (string or int)
