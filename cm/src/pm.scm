@@ -273,7 +273,10 @@
           ;;              (+ (inexact->exact (round (* scoretime 1000)))
           ;;                 (portmidi-offset str))
           ;;              scoretime)
-          (cond ((eq? *scheduler* ':asap)
+
+          (cond ((or (eq? *scheduler* ':asap)
+                     (eq? *scheduler* ':specific)
+                     )
                  (+ (inexact->exact (round (* scoretime 1000)))
                     (portmidi-offset str)))
                 ((not *scheduler*) scoretime)
@@ -300,7 +303,8 @@
       ;;(midi-write-message(make-note-on chan keyn ampl)str scoretime #f) 
       (pm:WriteShort
        (second (io-open str))
-       (cond ((eq? *scheduler* ':asap)
+       (cond ((or (eq? *scheduler* ':asap)
+                  (eq? *scheduler* ':specific))
               (+ (inexact->exact (round (* scoretime 1000)))
                  (portmidi-offset str)))
              ((not *scheduler*) scoretime)
