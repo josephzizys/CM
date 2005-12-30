@@ -161,39 +161,37 @@
   (progn (format t "cm.bat: Sorry, only CLISP and ACL are supported.")
          nil)
   #+(or clisp allegro)
-  (if (probe-file bat)
-      (progn (format t "cm.bat: file already exists: ~S." bat)
-             nil)
-      (let* ((loadup (format nil "(progn (load \"~Acm.lisp\" :verbose nil) (cm))"
-                             (cm-directory "src")))
-             (arglist
-              #+clisp (append (loop for s across (ext:argv) 
-                                 until (member s '("-x" "-repl")
-                                               :test #'equal)
-                                 unless (equal s "") collect s)
-                              (list "-x" loadup "-repl"))
-              #+acl (append (loop for s in sys::*command-line-arguments*
-                               collect
-                               (if (char= (elt s 0) #\.)
-                                   (translate-logical-pathname
-                                    (merge-pathnames s "sys:"))
-                                   s))
-                            (list "-e" loadup)))
-             (*print-escape* nil))
-        (when (find #\Space (first arglist))
-          (warn "cm.bat: Lisp command path ~S contains spaces."
-                (first arglist)))
-        (when (find #\Space *cm-directory*)
-          (warn "cm.bat: Directory path ~S contains spaces."
-                *cm-directory*))
-        (with-open-file (out bat :direction :output :if-does-not-exist :create)
-          (format out ":: Windows startup script for Common Music")
-          (format out "~%@echo off" )
-          ;; add string around cmd if it has spaces.
-          (format out "~%~{~A ~}" arglist)
-          ;; pass any shell args on to the cmd.
-          (format out "%1 %2 %3 %4 %5 %6 %7 %8 %9")
-          (namestring out)))))
+  (let* ((loadup (format nil "\"(progn (load \\\"~Acm.lisp\\\" :verbose nil) (cm))\""
+                         (substitute #\/ #\\ (cm-directory "src"))
+                         ))
+         (arglist
+          #+clisp (append (loop for s across (ext:argv) 
+                             until (member s '("-x" "-repl")
+                                           :test #'equal)
+                             unless (equal s "") collect s)
+                          (list "-x" loadup "-repl"))
+          #+acl (append (loop for s in sys::*command-line-arguments*
+                           collect
+                           (if (char= (elt s 0) #\.)
+                               (translate-logical-pathname
+                                (merge-pathnames s "sys:"))
+                               s))
+                        (list "-e" loadup)))
+         (*print-escape* nil))
+    (when (find #\Space (first arglist))
+      (warn "cm.bat: Lisp command path ~S contains spaces."
+            (first arglist)))
+    (when (find #\Space *cm-directory*)
+      (warn "cm.bat: Directory path ~S contains spaces."
+            *cm-directory*))
+    (with-open-file (out bat :direction :output :if-does-not-exist :create)
+      (format out ":: Windows startup script for Common Music")
+      (format out "~%@echo off" )
+      ;; add string around cmd if it has spaces.
+      (format out "~%~{~A ~}" arglist)
+      ;; pass any shell args on to the cmd.
+      (format out "%1 %2 %3 %4 %5 %6 %7 %8 %9")
+      (namestring out))))
 
 ;;;
 ;;; CM system definition with pre and post-loading ops
@@ -221,7 +219,8 @@
             '*load-verbose* '*load-print*)
   (setq *compile-print* nil *compile-verbose* nil
         *load-verbose* nil *load-print* nil)
-  (format t "~%; CM install directory: ~S" *cm-directory*))
+  (format t "~%; CM install directory: \"~A\""
+          *cm-directory*))
 
 (defmethod asdf:perform  ((op finalize-op) cm)
   ;; add cm feature before loading other systems...
@@ -234,7 +233,8 @@
   #+(and (or win32 microsoft-32) (or clisp allegro))
   (let ((bat (merge-pathnames "cm.bat" (cm-directory "bin"))))
     (unless (probe-file bat)
-      (format t "~%; Saving startup script: ~S." bat)
+      (format t "~%; Saving startup script in \"~A\""
+              (namestring bat))
       (cm.bat bat)))
   )
 
