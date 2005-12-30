@@ -311,7 +311,7 @@
 (define (events object . args)
   ;; args are &key pairs or an optional time offset
   ;; followed by &key pairs.
-  (if (scheduling?)
+  (if (not (member (scheduling?) '(#f :asap)))
       (begin
        (format #t "Can't schedule events in non-real time while RTS is running.")
        nil)
