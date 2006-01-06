@@ -208,16 +208,11 @@
 (define (portmidi-close . args)
   (with-args (args &optional (port (find-object "midi-port.pm" )))
     (if (portmidi-open? port)
-        (let* ((a (rts?))
-               (b (receiver?))
-               (c (and a b)))
-          (cond ((or a b)
-                 (err "portmidi-close: Can't close port because ~a running."
-                      (if c "rts and a receiver are"
-                          (if b "a receiver is" "rts is"))))
-                (else
-                 (close-io port ':force)
-                 port)))
+        (cond ((receiver? port)
+               (err "portmidi-close: Can't close portmidi because a receiver is currently running."))
+              (else
+               (close-io port ':force)
+               port))
         port)))
 
 ;;;
@@ -266,20 +261,14 @@
              (system-message-p obj))
          (pm:WriteShort 
           (second (io-open str))        ; output stream
-          ;; if we are running under a scheudler, add in time offset of stream
-          ;; this should check latency...
-          ;; else user is keeping track of it
-          ;;          (if *scheduler*
-          ;;              (+ (inexact->exact (round (* scoretime 1000)))
-          ;;                 (portmidi-offset str))
-          ;;              scoretime)
-
-          (cond ((or (eq? *scheduler* ':asap)
-                     (eq? *scheduler* ':specific)
-                     )
+          ;; if we are running under a scheudler, add in time offset
+          ;; of stream this should check latency...  else user is
+          ;; keeping track of it (if *scheduler* (+ (inexact->exact
+          ;; (round (* scoretime 1000))) (portmidi-offset str))
+          ;; scoretime)
+          (cond (*scheduler*
                  (+ (inexact->exact (round (* scoretime 1000)))
                     (portmidi-offset str)))
-                ((not *scheduler*) scoretime)
                 (t ;; :threaded :periodic :specific
                  0))
           (midi-message->pm-message obj)))
@@ -300,15 +289,13 @@
     ;; if "resting" then dont update anything
     (unless (< keyn 0)                  ; rest
       ;; Optimize sending <midi> by calling WriteShort directly
-      ;;(midi-write-message(make-note-on chan keyn ampl)str scoretime #f) 
+      ;; pass time value if scheduling.
       (pm:WriteShort
        (second (io-open str))
-       (cond ((or (eq? *scheduler* ':asap)
-                  (eq? *scheduler* ':specific))
+       (cond (*scheduler*
               (+ (inexact->exact (round (* scoretime 1000)))
                  (portmidi-offset str)))
-             ((not *scheduler*) scoretime)
-             (t 0)) ;; :threaded :periodic :specific
+             (t 0))
        (pm:Message (logior #x90 (logand chan #xf) )
                    (logand keyn #x7f)
                    (logand ampl #x7f)))
@@ -333,135 +320,100 @@
 
 (define-method* (set-receive-mode! (str <portmidi-stream>) mode)
   (unless (member mode '(:message :raw))
-    (err "receive: ~s is not a portmidi receive mode." mode))
+    (err "set-receive-mode: ~s is not a portmidi receive mode." mode))
   (slot-set! str 'receive-mode mode))
 
-(define-method* (init-receiver (str <portmidi-stream>) type)
+(define-method* (stream-receive-init (str <portmidi-stream>) func args)
+  args
   ;; called by set-receiver before hook is activated.
-  ;; flush any messages already in input buffer
-  (when (eq? type ':periodic)
-    (unless (periodic-task-running? )
-      (set-periodic-task-rate! (rt-stream-receive-rate str) :seconds)))
-  (let ((idev (first (io-open str)))
-        (data (rt-stream-receive-data str)))
-    (when (pm:Poll idev)
-      (pm:Read idev (third data) (fourth data)))))
+  (let* ((data (rt-stream-receive-data str))
+         (mode (rt-stream-receive-mode str))
+         (type (rt-stream-receive-type str))) 
+    ;; can receive either message/times or raw buffer/count
+    (cond ((not (member mode '(:message :raw)))
+           (err "receive: ~s is not a portmidi receive mode."
+                mode))
+          ((not (procedure? func))
+           (err "Receive: hook is not a function: ~s" func))
+          ((not (member (portmidi-open? str) '(:in :inout)))
+           (err "Stream not open for input: ~S." str))
+          ((first data)
+           (err "Can't set input hook: another hook is running!")))
+    ;; ready to go
+    (let* ((in (first (io-open str)))         ; pm stream
+           (sz (portmidi-inbuf-size str))     ; bufsiz
+           (bf (third data))                  ; old buffer
+           (so (fourth data))                 ; old bufsiz
+           (fn #f)                            ; mapper
+           )
+      ;; see if we have to free old buffer
+      (when (and bf (not (eq? sz so)))
+        (pm:EventBufferFree bf)
+        (set! bf #f))
+      (unless bf
+        (set! bf (pm:EventBufferNew sz)))
 
-(define-method* (deinit-receiver (str <portmidi-stream>) type)
+      (if (eq? mode ':raw)
+          (set! fn func)
+          (set! fn 
+                (lambda (buff have)
+                  (pm:EventBufferMap
+                   (lambda (mm ms)
+                     ( func (pm-message->midi-message mm) ms))
+                   buff have))))
+
+      ;; cache the stuff
+      (list-set! data 0 fn)
+      (list-set! data 1 in)
+      (list-set! data 2 bf)
+      (list-set! data 3 sz)
+      ;; flush any pending messages...
+      (when (pm:Poll in) (pm:Read in bf sz))
+      )))
+
+(define-method* (stream-receive-deinit (str <portmidi-stream>) )
   type
-  ;;  called by remove-receiver after the periodic task has been withdrawn
-  (let ((data (rt-stream-receive-data str))) ; (<thread> <stop> <buf> <len>)
+  ;; called by remove-receiver after the receiver has been withdrawn
+  (let ((data (rt-stream-receive-data str))) 
+    ;; data= (<hook> <port> <buff> <size>)
     (when (first data)
       (list-set! data 0 #f)
       (list-set! data 1 #f))))
 
-(define-method* (stream-receiver hook (str <portmidi-stream>) type)
-  ;; hook is 2 arg lambda or nil, type is :threaded or :periodic
-  (let* ((data (rt-stream-receive-data str)) ; (<thread> <stop> <buf> <len>)
-         (mode (rt-stream-receive-mode str))
-         (stop #f)) 
-    ;; can receive either message/times or raw buffer/count
-    (unless (member mode '(:message :raw))
-      (err "receive: ~s is not a portmidi receive mode." mode))
-    ;; the receiving thread's do loop terminates as soon as the stop
-    ;; flag is #t. to stop we call the cached "stopper" closure that
-    ;; sets the var to #t.
-    (cond ((not (procedure? hook))
-           (err "Receive: hook is not a function: ~s" hook))
-          ((not (member (portmidi-open? str) '(:in :inout)))
-           (err "Stream not open for input: ~S." str))
-          ((first data)
-           (err "Can't set input hook: another hook is running!"))
-          (else
-           ;; ready to go
-           (let* ((in (first (io-open str))) ; pm stream
-                  (sz (portmidi-inbuf-size str)) ; bufsiz
-                  (bf (third data))  ; old buffer
-                  (so (fourth data)) ; old bufsiz
-                  (rm (eq? mode ':message))
-                  (th #f) ; thread
-                  (st #f) ; thread stopper
-                  (fn #f) ; mapper
-                  (ra (rt-stream-receive-rate str))
-                  )
-             ;; see if we have to free old buffer
-             (when (and bf (not (eq? sz so)))
-               (pm:EventBufferFree bf)
-               (set! bf #f))
-             (unless bf
-               (set! bf (pm:EventBufferNew sz)))
-             (set! fn (lambda (mm ms)
-                        ( hook (pm-message->midi-message mm) ms)))
-             (case type
-               ((:threaded )
-                (set! th
-                      (make-thread
-                       (lambda ()
-                         (do ((n #f))
-                             (stop  
-                              #f)
-                           (cond ((pm:Poll in)
-                                  (set! n (pm:Read in bf sz))
-                                  (when (> n 0)
-                                    (if rm (pm:EventBufferMap fn bf n)
-                                        ( hook bf n))))
-                                 (else
-                                  ;; only sleep if no message??
-                                  (thread-sleep! ra)))))))
-                (set! st (lambda () (set! stop #t))))
-               ((:periodic )
-                (set! th
-                      (lambda () 
-                        (let ((n 0))
-                          (when (pm:Poll in)
-                            (set! n (pm:Read in bf sz))
-                            (when (> n 0)
-                              (if rm (pm:EventBufferMap fn bf n)
-                                  ( hook bf n)))))))
-                (set! st (lambda ()
-                           (remove-periodic-task! :receive))))
-               )
-             ;; cache the stuff
-             (list-set! data 0 th)
-             (list-set! data 1 st)
-             (list-set! data 2 bf)
-             (list-set! data 3 sz)
-             th)))))
-
-(define-method* (receive (str <portmidi-stream>) . args)
-  (let* ((n 0)
-        (in (first (io-open str)))
-        (bf (third (rt-stream-receive-data str)))
-        (sz (portmidi-inbuf-size str))
-        (hook (if (pair? args) (pop args) #f))
-        (mode (if (pair? args) (pop args) #f))
-        (rm (if (not mode) #t (eq? mode ':message)))
-        (fn #f)
-        (res #f))
-    (cond ((pm:Poll in)
-           (if hook
-               (begin
-                 (set! fn (lambda (mm ms)
-                            (hook (pm-message->midi-message mm) ms)))
-                 (set! n (pm:Read in bf sz))
-                 (when (> n 0)
-                   (if rm (pm:EventBufferMap fn bf n)
-                     (hook bf n))
-                   (set! res #t)))
+;; (define-method* (receive (str <portmidi-stream>) . args)
+;;   (let* ((n 0)
+;;         (in (first (io-open str)))
+;;         (bf (third (rt-stream-receive-data str)))
+;;         (sz (portmidi-inbuf-size str))
+;;         (hook (if (pair? args) (pop args) #f))
+;;         (mode (if (pair? args) (pop args) #f))
+;;         (rm (if (not mode) #t (eq? mode ':message)))
+;;         (fn #f)
+;;         (res #f))
+;;     (cond ((pm:Poll in)
+;;            (if hook
+;;                (begin
+;;                  (set! fn (lambda (mm ms)
+;;                             (hook (pm-message->midi-message mm) ms)))
+;;                  (set! n (pm:Read in bf sz))
+;;                  (when (> n 0)
+;;                    (if rm (pm:EventBufferMap fn bf n)
+;;                      (hook bf n))
+;;                    (set! res #t)))
              
-             (begin
-               (set! res '())
-               (if rm
-                   (set! fn (lambda (mm ms)
-                              ms
-                              (set! res (append! res (list (pm-message->midi-message mm))))))
-                 (set! fn (lambda (mm ms)
-                            ms
-                            (set! res (append! res (list mm))))))
-               (set! n (pm:Read in bf sz))
-               (when (> n 0)
-                 (pm:EventBufferMap fn bf n))))))
-    res))
+;;              (begin
+;;                (set! res '())
+;;                (if rm
+;;                    (set! fn (lambda (mm ms)
+;;                               ms
+;;                               (set! res (append! res (list (pm-message->midi-message mm))))))
+;;                  (set! fn (lambda (mm ms)
+;;                             ms
+;;                             (set! res (append! res (list mm))))))
+;;                (set! n (pm:Read in bf sz))
+;;                (when (> n 0)
+;;                  (pm:EventBufferMap fn bf n))))))
+;;     res))
 
 ;;;
 ;;; midi recording
@@ -473,9 +425,9 @@
          (opn (if (null? str) #f
                   (portmidi-open? str))))
     (cond ((not opn)
-           (err "portmidi-record!: requires portmidi stream open for input."))
+           (err "portmidi-record!: portmidi stream not open for input."))
           ((eq? opn ':out)
-           (err "portmidi-record!: ~s is only open for output." str))
+           (err "portmidi-record!: ~s only open for output." str))
           (else
            ;; otherwise set true if we also perform midi thru
            (set! opn (if (eq? opn :inout) #t #f))))
@@ -485,11 +437,11 @@
               (off #f)                          ; time offset
               (map (make-list 16 (list)))) ; channel map for on/off pairing
           (if (receiver? str)
-              (err "portmidi-record!: a portmidi receiver is already active."))
+              (err "portmidi-record!: receiver already active."))
           (set-receiver!
            (lambda (mm ms)
              (if opn (write-event mm str ms)) ; midi thru 
-             (if (not off) (set! off ms)) ; cache time of first recorded message
+             (if (not off) (set! off ms)) ; cache time of first message
              (cond ((or (note-off-p mm)
                         (and (note-on-p mm) (= 0 (note-on-velocity mm))))
                     (let* ((chn (note-off-channel mm))
@@ -503,24 +455,28 @@
                                  (set! aon (car ons))
                                  (list-set! map chn (cdr ons)))
                                 (else
-                                 ;; search for corresponding on and splice out
+                                 ;; search for corresponding on, splice out
                                  (do ()
                                      ((or (null? (cdr ons)) aon)
                                       #f)
-                                   (if (= key (note-on-key (car (car (cdr ons)))))
+                                   (if (= key (note-on-key
+                                               (car (car (cdr ons)))))
                                        (begin (set! aon (car (cdr ons)))
                                               (set-cdr! ons (cddr ons)))
                                        (set! ons (cdr ons))))))
                           ;; aon is (<msg> . <ms>)
                           (when aon
-                            (set! obj (make-instance <midi> 
-                                                     :time (/ (- (cdr aon) off) 1000.0)
-                                                     :duration (/ (- ms (cdr aon)) 1000.0)
-                                                     :keynum (note-on-key (car aon))
-                                                     :amplitude (/ (note-on-velocity
-                                                                    (car aon))
-                                                                   127.0)
-                                                     :channel (note-on-channel (car aon))))
+                            (set! obj (make <midi> 
+                                            :time (/ (- (cdr aon) off)
+                                                     1000.0)
+                                            :duration (/ (- ms (cdr aon))
+                                                         1000.0)
+                                            :keynum (note-on-key (car aon))
+                                            :amplitude (/ (note-on-velocity
+                                                           (car aon))
+                                                          127.0)
+                                            :channel (note-on-channel
+                                                      (car aon))))
                             ;; insert if seq contained objects else append
                             (if ins (insert-object seq obj)
                                 (append-object obj seq)))))))
@@ -532,5 +488,6 @@
                           (list-set! map chn (list (cons mm ms)))
                           (append! ons (list (cons mm ms))))))
                    ((channel-message-p mm)
-                    (midi-message->midi-event mm :time (/ (- ms off) 1000.0)))))
+                    (midi-message->midi-event mm :time (/ (- ms off)
+                                                          1000.0)))))
            str)))))
