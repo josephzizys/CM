@@ -427,15 +427,24 @@
         (write-event event to (+ (or at 0) ahead)))
     (values)))
 
+(define (rts-time )
+  ;; redefined in rts.lisp
+  ;; if nonsense to keep sbcl analyzer at bay...
+  (if *scheduler* (err "rts-time: RTS not loaded.")))
+
 (define (now . args)
   ;; now can only be called from (process ) or from the repl
   (with-args (args &optional abs-time)
     ;; *pstart* will be #f if called outside process
-    (if *scheduler*
-      (if (not abs-time)
+    (cond ((not *scheduler*)
+           (err "now: scheduler not running."))
+          ((eq? *scheduler* ':asap)
+           )
+          (else
+           (set! *qtime* (rts-time))))
+    (if (not abs-time)
         (- *qtime* (or *pstart* 0))
-        *qtime*)
-      (err "now: scheduler not running."))))
+        *qtime*)))
 
 (define (wait delta)
   ;; should this check *pstart* ??
@@ -461,56 +470,39 @@
 ;;       (dolist (o obj) (sprout o time ahead))
 ;;       (err "sprout: scheduler not running."))))
 
+(define (rts-sprout . args)
+  ;; this stub is redefined if rts is loaded.
+  args
+  ;; this nonsense keeps sbcl's  type analysis at bay
+  (if (car args) (err "rts-sprout: RTS not loaded.")))
+
+(define (sprout-aux obj at)
+  (cond ((procedure? obj)
+         (enqueue obj at at))
+        ((integer? obj)
+         (enqueue obj at #f))
+        (else
+         (schedule-object obj (or *pstart* 0)))))
+
 (define (sprout obj . args)
   (with-args (args &key to at ahead)
     to
-    (if *scheduler*
-        (let ((tt (if at
-                      (if *pstart*
-                          (+ at *pstart*)
-                          at)
-                      (now))))
-          ;; tt is true time to insert in queue. if sprouting from a
-          ;; process then at value is relative to process start time
-          ;; *pstart*. else sprout is being called from the repl, time
-          ;; is relative to 0.
-          (if ahead (set! tt (+ tt ahead)))
-          ;; if threaded rts is running and we are sprouting from
-          ;; outside the rts process then block until the queue is
-          ;; available. *pstart* is false except in the body of a
-          ;; process defintion (which is evaluated in the rts thread).
-          (if (and (not *pstart*) (or (eq? *scheduler* ':threaded)
-                                      (eq? *scheduler* ':specific)))
-              (with-mutex-grabbed (*qlock*)
-                 (cond ((pair? obj)
-                        (dolist (o obj) (sprout o :at at :ahead ahead)))
-                       ((procedure? obj)       ; process
-                        ;; add sprouted process at time relative to start of
-                        ;; sprouter
-                        (enqueue obj tt tt) )
-                       ((integer? obj)         ; midi message
-                        ;; add midi message relatice to true scoretime
-                        (enqueue obj tt #f) )
-                       (else                   ; object
-                        ;; else the object has a method on object-time and
-                        ;; schedule-object will enqueue at object-time PLUS
-                        ;; start time of process that sprouted it
-                        (schedule-object obj (or *pstart* 0)))))
-             (cond ((pair? obj)
-                    (dolist (o obj) (sprout o :at at :ahead ahead)))
-                   ((procedure? obj)       ; process
-                    ;; add sprouted process at time relative to start of
-                    ;; sprouter
-                    (enqueue obj tt tt) )
-                   ((integer? obj)         ; midi message
-                    ;; add midi message relatice to true scoretime
-                    (enqueue obj tt #f) )
-                   (else                   ; object
-                    ;; else the object has a method on object-time and
-                    ;; schedule-object will enqueue at object-time PLUS
-                    ;; start time of process that sprouted it
-                    (schedule-object obj (or *pstart* 0))))))
-          (err "sprout: scheduler not running."))
-      (values)))
-
-;;;
+    (cond ((not *scheduler*)
+           (err "sprout: scheduler not running."))
+          ((pair? obj)
+           (dolist (o obj) (sprout o :at at :ahead ahead :to to)))
+          (else
+           (let ((tt (if at
+                         (if *pstart*
+                             (+ at *pstart*)
+                             at)
+                         (now))))
+             ;; 'tt' is true time to insert in queue. if sprouting from a
+             ;; process then 'at' was relative to process start time
+             ;; *pstart*. else sprout is being called from the repl, time
+             ;; is relative to 0.
+             (if ahead (set! tt (+ tt ahead)))
+             (if (eq? *scheduler* ':asap)
+                 (sprout-aux obj tt)
+                 (rts-sprout obj tt)))))
+    (values)))
