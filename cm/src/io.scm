@@ -446,22 +446,42 @@
 
 (cond-expand
  (cmu (set! *receive-type* ':periodic))
- (sbcl (set! *receive-type* ':periodic))
- (gauche (set! *receive-type* ':threaded))
- (openmcl (set! *receive-type* ':pthread))
+ (sbcl (set! *receive-type*   ':periodic))
+ (gauche (set! *receive-type* ':srfi-18))
+ (openmcl (set! *receive-type* ':pthreads))
  (else #f))
+
+;;;
+;;; *receive-methods* is an assoication list linking keyword receive
+;;; types to methods: ((<type1> <start-meth> <stop-meth>) ...)
+;;;
+
+(define *receive-methods* (list))
 
 (define-method* (stream-receive-init (stream <rt-stream>) hook args)
   stream hook args
   (values))
 
 (define-method* (stream-receive-start (stream <rt-stream>) args)
-  stream args
-  (values))
+  (let* ((type (rt-stream-receive-type stream))
+         (meth (assoc type *receive-methods* )))
+    (if (not meth)
+        (err "stream-receive-stop: no receive method for receive type ~s."
+             type)
+        (let ((start (cadr meth)))
+          ( start stream args)))
+    (values)))
 
 (define-method* (stream-receive-stop (stream <rt-stream>))
-  stream
-  (values))
+  (let* ((type (rt-stream-receive-type stream))
+         (meth (assoc type *receive-methods* )))
+    (if (not meth)
+        (err "stream-receive-start: no receive method for receive type ~s."
+             type)
+        (let ((stop (caddr meth)))
+          ( stop stream)
+          ))
+    (values)))
 
 (define-method* (stream-receive-deinit (stream <rt-stream>))
   stream
@@ -487,10 +507,17 @@
              (first data))
         (err "set-receiver!: stream ~S already receiving."
              stream)
-        (let ((type (list-prop args ':receive-type *receive-type*)))
-          (set! (rt-stream-receive-type stream) type)
-          (stream-receive-init stream hook args)
-          (stream-receive-start stream args)
+        (let ((type (list-prop args ':receive-type))
+              (meth #f))
+          (if type
+              (set! (rt-stream-receive-type stream) type)
+              (if (not (rt-stream-receive-type stream))
+                  (set! (rt-stream-receive-type stream) *receive-type*)))
+          (set! meth (assoc (rt-stream-receive-type stream)
+                            *receive-methods*))
+          (when meth
+            (stream-receive-init stream hook args)
+            (stream-receive-start stream args))
           (values)))))
 
 (define (remove-receiver! stream)
