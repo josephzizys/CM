@@ -373,14 +373,14 @@
                                   :depends-on ("midishare"))
                            (:file "sc" :scheme t :depends-on ("osc"))
                            (:file "pm" :scheme t :depends-on ("io" "midi3"))
-                           #+openmcl (:file "openmcl-rt"
-                                            :depends-on ("pkg" "scheduler"))
-                           #+sbcl (:file "sbcl-rt"
-                                         :depends-on ("pkg" "scheduler"))
-                           (:file "rt" :scheme t 
-                                  :depends-on ("scheduler" "midi3"))
-                           (:file "rt-sc" :scheme t 
-                                  :depends-on ("rt" "sc"))
+;                           #+openmcl (:file "openmcl-rt"
+;                                            :depends-on ("pkg" "scheduler"))
+;                           #+sbcl (:file "sbcl-rt"
+;                                         :depends-on ("pkg" "scheduler"))
+;                           (:file "rt" :scheme t 
+;                                  :depends-on ("scheduler" "midi3"))
+;                           (:file "rt-sc" :scheme t 
+;                                  :depends-on ("rt" "sc"))
                            )))
     )
 
