@@ -31,6 +31,9 @@
                  :init-value .001 :init-keyword :receive-rate)
    (receive-data :accessor rt-stream-receive-data
                  :init-value '())
+   (receive-type :accessor rt-stream-receive-type
+                 :init-keyword :receive-type
+                 :init-value #f)
    (latency :accessor rt-stream-latency 
             :init-keyword :latency :init-value 0)
    )
@@ -438,5 +441,71 @@
 ;    hook resolution
 ;    (err "threaded-receive: no method defined in ~a for ~s."
 ;         (lisp-implementation-type) stream)))
+
+(define *receive-type* #f)
+
+(cond-expand
+ (cmu (set! *receive-type* ':periodic))
+ (sbcl (set! *receive-type* ':periodic))
+ (gauche (set! *receive-type* ':threaded))
+ (openmcl (set! *receive-type* ':pthread))
+ (else #f))
+
+(define-method* (stream-receive-init (stream <rt-stream>) hook args)
+  stream hook args
+  (values))
+
+(define-method* (stream-receive-start (stream <rt-stream>) args)
+  stream args
+  (values))
+
+(define-method* (stream-receive-stop (stream <rt-stream>))
+  stream
+  (values))
+
+(define-method* (stream-receive-deinit (stream <rt-stream>))
+  stream
+  (values))
+
+(define-method* (stream-receive? (stream <rt-stream>))
+  ;; stream's receive data can be anything but the first element is
+  ;; used to determine if the stream is currently receiving or not...
+  (let ((data (rt-stream-receive-data stream)))
+    (if (and (not (null? data)) (first data))
+        #t #f)))
+
+;;;
+;;; user api for receiving:
+;;;
+
+(define-method* (set-receive-mode! (str <rt-stream>) mode)
+  (set! (rt-stream-receive-mode str) mode))
+
+(define (set-receiver! hook stream . args)
+  (let ((data (rt-stream-receive-data stream)))
+    (if (and (not (null? data))
+             (first data))
+        (err "set-receiver!: stream ~S already receiving."
+             stream)
+        (let ((type (list-prop args ':receive-type *receive-type*)))
+          (set! (rt-stream-receive-type stream) type)
+          (stream-receive-init stream hook args)
+          (stream-receive-start stream args)
+          (values)))))
+
+(define (remove-receiver! stream)
+  (stream-receive-stop stream)
+  (stream-receive-deinit stream)
+  ;; make sure that first element in data is #f
+  (let ((data (rt-stream-receive-data stream)))
+    (when (and (not (null? data))
+               (list-ref data 0))
+      (list-set! data 0 #f)))
+  (values))
+
+(define (receiver? stream)
+  (stream-receive? stream))
+
+
 
 
