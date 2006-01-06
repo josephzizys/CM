@@ -263,7 +263,8 @@
            #:SetTempoPlayer #:TicksPerQuarterNote
            #:SetSynchroInPlayer #:MidiNewMidiFileInfos
            #:MidiFileLoad #:MidiFileSave #:mf-clicks #:mf-format
-           #:mf-timedef #:MidiFreeMidiFileInfos #:MidiFreeSeq ))
+           #:mf-timedef #:MidiFreeMidiFileInfos #:MidiFreeSeq
+           #:midishare-receive #:midishare-receive-stop))
 
 (in-package :midishare)
 
@@ -306,6 +307,8 @@
 (defstub MidiTask)
 (defstub MidiSetRcvAlarm)
 (defstub MidiGetEv)
+(defstub midishare-receive)
+(defstub midishare-receive-stop)
 (defstub (special typeNote typeKeyOn typeKeyOff typeKeyPress
                   typeCtrlChange typeProgChange typeChanPress
                   typePitchWheel typePitchBend typeSongPos typeSongSel
@@ -487,7 +490,7 @@
 (setf (symbol-function 'funcall) #'cl:funcall)
 
 (let ((syms '(#:new  #:MidiPrintEv #:sprout #:output #:now
-              #:receive #:receive?)))
+              #:midishare-receive #:midishare-receive-stop)))
   (map nil (lambda (s) (intern (symbol-name s) :midishare)) syms)
   (export (mapcar #'(lambda (x) (find-symbol (symbol-name x) :midishare))
                   syms)
