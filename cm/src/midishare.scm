@@ -24,6 +24,8 @@
                  :accessor rt-stream-receive-data)
    (receive-mode :init-value :raw :init-keyword :receive-mode
                  :accessor rt-stream-receive-mode)
+   (latency :init-value 0 :init-keyword :latency
+            :accessor midishare-stream-latency)
    )
   :name 'midishare-stream
   :metaclass <io-class>
@@ -122,7 +124,8 @@
                  (ms:MidiConnect client outref -1)
                  (unless (conn? client outref)
                    (err "Output connection from ~S to ~S failed."
-                        (ms:MidiGetName client) (ms:MidiGetName outref)))))))
+                        (ms:MidiGetName client)
+                        (ms:MidiGetName outref)))))))
           (else
            (set! outref (getref conn))
            (when outref
@@ -131,7 +134,8 @@
                (ms:MidiConnect client outref -1)
                (unless (conn? client outref)
                  (err "Output connection from ~S to ~S failed."
-                      (ms:MidiGetName client) (ms:MidiGetName outref)))))))
+                      (ms:MidiGetName client)
+                      (ms:MidiGetName outref)))))))
     ;; value is:
     ;; <clientref> <inref> <outref> <tracknum>
     ;; the tracknum is only used by player streams.
@@ -226,7 +230,8 @@
 (define-method* (initialize-io (obj <midishare-stream>))
   ;; cache current time offset
   (set! (object-time obj)
-        (ms:MidiGetTime))
+        (+ (ms:MidiGetTime)
+           (midishare-stream-latency obj)))
   (channel-tuning-init obj))
 
 (define-method* (deinitialize-io (obj <midishare-stream>))
@@ -303,7 +308,7 @@
                           (floor (/ 60000000 tempo)))))
             ((= type typeSMPTEOffset)
              (unless (= (length offset) 5)
-               (err ":offset value ~s not list (hr min sec frame subframe)"
+               (err ":offset value ~s not (hr min sec frame subframe)"
                     offset))
              (ms:field ev 0 (+ (* (list-ref offset 0) 3600)
                             (* (list-ref offset 1) 60)
@@ -331,11 +336,11 @@
 ;;;
 
 (define MidiEvNames
-  #("Note" "KeyOn" "KeyOff" "KeyPress" "CtrlChange" "ProgChange" "ChanPress"
-    "PitchBend" "SongPos" "SongSel" "Clock" "Start" "Continue" "Stop" "Tune"
-    "ActiveSens" "Reset" "SysEx" "SeqNum" "Text" "Copyright" "SeqName"
-    "InstrName" "Lyric" "Marker" "CuePoint" "ChanPrefix" "EndTrack" "Tempo"
-    "SMPTEOffset" "TimeSign" "KeySign"))
+  #("Note" "KeyOn" "KeyOff" "KeyPress" "CtrlChange" "ProgChange"
+    "ChanPress" "PitchBend" "SongPos" "SongSel" "Clock" "Start"
+    "Continue" "Stop" "Tune" "ActiveSens" "Reset" "SysEx" "SeqNum" 
+    "Text" "Copyright" "SeqName" "InstrName" "Lyric" "Marker" "CuePoint"
+    "ChanPrefix" "EndTrack" "Tempo" "SMPTEOffset" "TimeSign" "KeySign"))
 
 (define (ms:MidiPrintEv ev . stream)
   (let ((to (if (null? stream) #t (car stream)))
@@ -401,6 +406,7 @@
                             scoretime)
   (let* (;(beg (+ (object-time stream) 
          ;        (inexact->exact (floor (* scoretime 1000)))))
+         (sec (object-time obj))
          (dur (inexact->exact (floor (* (midi-duration obj) 1000))))
          (key (midi-keynum obj))
          (amp (midi-amplitude obj))
@@ -423,14 +429,17 @@
     (ensure-microtuning key chn stream)
     (set! evt (ms:new typeNote :port prt :chan chn
                       :pitch key :vel amp :dur dur))
-    (cond ((eq? *scheduler* ':asap)
-           (ms:MidiSendAt (midishare-stream-refnum stream)
-                          evt
-                          (+ (object-time stream) 
-                             (inexact->exact (floor (* scoretime 1000))))))
-          ((not *scheduler*) ; top-level
-           (ms:MidiSendAt (midishare-stream-refnum stream) obj
-                          (+ (ms:now) scoretime)))
+    (cond (*scheduler* ;(eq? *scheduler* ':asap)
+           (if (> sec 0)
+               (ms:MidiSendAt (midishare-stream-refnum stream)
+                              evt
+                              (+ (object-time stream) 
+                                 (inexact->exact
+                                  (floor (* scoretime 1000)))))
+               (ms:MidiSendIm (midishare-stream-refnum stream) evt)))
+;          ((not *scheduler*) ; top-level
+;           (ms:MidiSendAt (midishare-stream-refnum stream) obj
+;                          (+ (ms:now) scoretime)))
           (else ; rts running
            (ms:MidiSendIm (midishare-stream-refnum stream) evt)
            ))
@@ -627,11 +636,13 @@
 (define (ms:output ev out . args)
   ;; output ev to Midishare
   (with-args (args &optional ahead)
-    (if ahead
-      (ms:MidiSendAt (midishare-stream-refnum out) ev
-                     (+ ahead (ms:MidiGetTime)))
-      (ms:MidiSendIm (midishare-stream-refnum out) ev))
-    (values)))
+    (let ((time (+ (ms:date ev)
+                   (or ahead 0))))
+      (if (> time 0)
+          (ms:MidiSendAt (midishare-stream-refnum out) ev
+                         time)
+          (ms:MidiSendIm (midishare-stream-refnum out) ev))
+      (values))))
 
 (define (ms:now . args)
   args
@@ -641,7 +652,7 @@
 ;;; real time input
 ;;;
 
-(define *receive-hook* #f)
+;;(define *receive-hook* #f)
 
 ;; (defcallback midi-receive-hook (:unsigned-halfword refnum)
 ;;   (do ((go #t)
@@ -652,24 +663,24 @@
 ;;       (funcall *receive-hook* ev)
 ;;       (set! go #f))))
 
-(define (ms:receive? )
-  (and *receive-hook* #t))
+;;(define (ms:receive? )
+;;  (and *receive-hook* #t))
 
-(define (ms:receive . args)
-  ;; MIDI-RECEIVE-HOOK is a callback defined in openmcl.lisp
-  (with-args (args &optional hook)
-    (if (midishare-open?)
-      (if hook
-        (if *receive-hook*
-          (format #t "Already receiving MIDI, type (ms:receive) to stop.~%")
-          (begin (set! *receive-hook* hook)
-                 (ms:MidiSetRcvAlarm *ms* midi-receive-hook)))
-        (if (not *receive-hook*)
-          (format #t "Not currently receiving MIDI.~%")
-          (begin (set! *receive-hook* #f)
-                 (ms:MidiSetRcvAlarm *ms* (ms:nullptr)))))
-      (format #t "MIDI not open!"))
-    (values)))
+;;(define (ms:receive . args)
+;;  ;; MIDI-RECEIVE-HOOK is a callback defined in openmcl.lisp
+;;  (with-args (args &optional hook)
+;;    (if (midishare-open?)
+;;      (if hook
+;;        (if *receive-hook*
+;;          (format #t "Already receiving MIDI, type (ms:receive) to stop.~%")
+;;          (begin (set! *receive-hook* hook)
+;;                 (ms:MidiSetRcvAlarm *ms* midi-receive-hook)))
+;;        (if (not *receive-hook*)
+;;          (format #t "Not currently receiving MIDI.~%")
+;;          (begin (set! *receive-hook* #f)
+;;                 (ms:MidiSetRcvAlarm *ms* (ms:nullptr)))))
+;;      (format #t "MIDI not open!"))
+;;    (values)))
 
 ;;;
 ;;; stream receiving for midishare
@@ -687,11 +698,16 @@
 
 (define-method* (deinit-receiver (str <midishare-stream>) type)
   type
-  ;;  called by remove-receiver after the periodic task has been withdrawn
+  ;; called by remove-receiver after the periodic task has been withdrawn
   (let ((data (rt-stream-receive-data str))) ; (<thread> <stop> )
     (when (first data)
       (list-set! data 0 #f)
-      (list-set! data 1 #f))))
+      (list-set! data 1 #f)))
+  (case type 
+    ( (:callback) 
+     (ms:midishare-receive-stop (first (io-open str))))
+    )
+  )
 
 (define-method* (stream-receiver hook (str <midishare-stream>) type)
   ;; hook is 2 arg lambda or nil, type is :threaded or :periodic
@@ -724,7 +740,8 @@
                          (do ()
                              (stop #f)
                            (if (> (ms:MidiCountEvs in) 0)
-                             (do ((ev (ms:MidiGetEv in) (ms:MidiGetEv in)))
+                             (do ((ev (ms:MidiGetEv in)
+                                      (ms:MidiGetEv in)))
                                  ((ms:nullptrp ev) #f)
                                ( hook ev))
                              (thread-sleep! ra))))))
@@ -738,7 +755,11 @@
                               ((ms:nullptrp ev) #f)
                             ( hook ev)))))
                 (set! st (lambda () (set! stop #t)))
-                ))
+                )
+               ((:callback)
+                (ms:midishare-receive in hook)
+                )
+               )
              ;; cache the stuff
              (list-set! data 0 th)
              (list-set! data 1 st)
