@@ -327,7 +327,7 @@
 ;;;
 
 (define-method* (unschedule-object obj . recurse)
-  obj recurse ; gag 'unused var' warning from cltl compilers
+  obj recurse
   #f)
 
 ;;;
@@ -336,7 +336,7 @@
 
 (define-method* (process-events obj time start stream)
   ;; call the function on the time and start
-  start ; gag 'unused var' warning from cltl compilers
+  start
   (write-event obj stream time))
 
 (define-method* (process-events (head <pair>) time start stream)
@@ -424,12 +424,14 @@
                (if (early? n)
                    (enqueue event n #f)
                    (write-event event to (+ n ahead))))))
-        (write-event event to (+ (or at 0) ahead)))
+        ;(write-event event to (+ (or at 0) ahead))
+        (err "output: scheduler not running.")
+        )
     (values)))
 
 (define (rts-time )
   ;; redefined in rts.lisp
-  ;; if nonsense to keep sbcl analyzer at bay...
+  ;; this 'if' nonsense to keep sbcl code optimizer at bay...
   (if *scheduler* (err "rts-time: RTS not loaded.")))
 
 (define (now . args)
@@ -473,8 +475,8 @@
 (define (rts-sprout . args)
   ;; this stub is redefined if rts is loaded.
   args
-  ;; this nonsense keeps sbcl's  type analysis at bay
-  (if (car args) (err "rts-sprout: RTS not loaded.")))
+  ;; this 'if' nonsense to keep sbcl code optimizer at bay...
+  (if (car args) (err "rts-sprout: rts not loaded.")))
 
 (define (sprout-aux obj at)
   (cond ((procedure? obj)
