@@ -1,14 +1,54 @@
 CM 2.7.0 
 
-o CM now supports "real time" scheduling and receiving in the following
+o scheduler changes:
+  * calling (now) or (output) outside of scheduler signals error.
+  * set-receiver! has new calling syntax: 
+      (set-receiver! hook stream . keywords)
+    keywords depend on the :receiving-type and the class of receiving
+    stream.
+  * rts has new calling syntax:
+      (rts [stream] . keywords)
+  * rts now blocks if its queue is empty rather than iterating in a
+    millisecond idle loop (Michael Klingbeil). as a result new
+    scheduler is less cpu intensive and should be steadier.  accepts a
+    user specified :priority value * pthread versions of rts now
+    accept :priority keyword (20-100)
+
+o midishare changes:
+  * new :latency initarg to midishare-streams, defaults to 0. values
+    larger than zero provide "headroom" for (possibly) more exact
+    midishare timing.
+  * write-event for <midi> objects now passes :time values thru to
+    midishare
+  * new function and process clause (ms:output ...) function sends
+    foreign midiEv objects directly to Midishare.
+  * new function (ms:now) returns Midishare's millisecond time.
+  * midiEv :date values are now sent thru to Midishare. Use
+    (ms:now) to set the :date attribute of a midiEv:
+       ms:output (ms:new noteType :date (ms:now) :dur 500 :pitch 60)
+  * Incompatible change: output no longer works with MidiEvs, use
+    ms:output instead.
+  * New receive-type :midishare-callback implements receiving via an
+    asynchronous midishare callback
+  * midiPrintEv now takes keyword args:
+     (ms:midiPrintEv ev [:stream  t] [:eol t})
+
+o portmidi changes:
+  * write-event for <midi> objects now passes :time values to portmidi
+  * new function (pm:now) returns Portmidi's millisecond time.
+  * new function and process clause (pm:output ..) send foreign
+    Portmidi events and integer midi-messages to Portmidi using
+    millisecond time. Only works with rts running.
+
+o CM supports "real time" scheduling and receiving in the following
   implementations:
     OpenMCL/OSX
     SBCL/Linux
-    CMUCL/Linux
   See the documentation on RTS, SET-RECEIVER! and PORTMIDI for more
   information.
 
-o CM home page http://commonmusic.sf.net now reflects the CVS HEAD
+o SPEAR data can be imported into m
+O CM home page http://commonmusic.sf.net now reflects the CVS HEAD
   version and is updated every four hours. A nightly CVS snapshot is
   now available on the home page.
 
