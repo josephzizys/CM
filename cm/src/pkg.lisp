@@ -188,20 +188,13 @@
            :close :read :write :poll)
   #+openmcl (:import-from :ccl #:open-shared-library)
   (:import-from :cl-user #:defstub)
-  ;; changed names:
-  ;; GetDeviceDescriptions -> GetDeviceInfo
-  ;; TimeStart -> Start, TimeStop -> Stop
-  ;; OpenInputStream -> OpenInput, OpenOutputStream -> OpenOutput
-  ;; StreamClose -> Close, StreamSetFilter -> SetFilter
-  ;; StreamSetChannelMask -> SetChannelMask, StreamPoll -> Poll
-  ;; StreamRead -> Read, StreamWriteShort -> WriteShort
   (:export #:portmidi #:*portmidi* #:GetDefaultInputDeviceID
            #:GetDefaultOutputDeviceID #:GetDeviceInfo
            #:Start #:Time #:OpenInput #:OpenOutput
-           #:Close #:SetFilter #:SetChannelMask
-           #:Poll #:Read #:Message.status #:Message.data1
-           #:Message.data2 #:Message #:WriteShort #:EventBufferFree
-           #:EventBufferNew #:EventBufferMap))
+           #:Close #:SetFilter #:SetChannelMask #:Poll #:Read
+           #:Message.status #:Message.data1 #:Message.data2 #:Message
+           #:WriteShort #:Write #:WriteSysEx #:EventBufferFree
+           #:EventBufferNew #:EventBufferMap #:EventBufferSet))
 
 (in-package :portmidi)
 
@@ -225,9 +218,12 @@
 (defstub Message.data1)
 (defstub Message.data2)
 (defstub Message)
+(defstub Write)
 (defstub WriteShort)
+(defstub WriteSysEx)
 (defstub EventBufferFree)
 (defstub EventBufferNew)
+(defstub EventBufferSet)
 (defstub EventBufferMap)
 )
 
@@ -489,9 +485,14 @@
 (setf (symbol-function 'random) #'cl:random)
 (setf (symbol-function 'funcall) #'cl:funcall)
 
-(let ((syms '(#:new  #:MidiPrintEv #:sprout #:output #:now
-              #:midishare-receive #:midishare-receive-stop)))
-  (map nil (lambda (s) (intern (symbol-name s) :midishare)) syms)
-  (export (mapcar #'(lambda (x) (find-symbol (symbol-name x) :midishare))
-                  syms)
-          :midishare))
+;; add a few symbols dynamically to non-cm packages...
+(flet ((addsyms (syms pkg)
+         (map nil (lambda (s) (intern (symbol-name s) pkg)) syms)
+         (export (mapcar #'(lambda (x) (find-symbol (symbol-name x) pkg))
+                         syms)
+                 pkg)))
+  (addsyms '(#:output #:now) :portmidi)
+  (addsyms '(#:new #:MidiPrintEv #:sprout #:output #:now
+             #:midishare-receive #:midishare-receive-stop)
+           :midishare)
+  )
