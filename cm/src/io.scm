@@ -34,6 +34,11 @@
    (receive-type :accessor rt-stream-receive-type
                  :init-keyword :receive-type
                  :init-value #f)
+   (receive-hook :accessor rt-stream-receive-hook
+                 :init-keyword :receive-hook
+                 :init-value #f)
+   (receive-stop :accessor rt-stream-receive-stop
+                 :init-value #f)
    (latency :accessor rt-stream-latency 
             :init-keyword :latency :init-value 0)
    )
