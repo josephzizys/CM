@@ -342,72 +342,73 @@
     "Text" "Copyright" "SeqName" "InstrName" "Lyric" "Marker" "CuePoint"
     "ChanPrefix" "EndTrack" "Tempo" "SMPTEOffset" "TimeSign" "KeySign"))
 
-(define (ms:MidiPrintEv ev . stream)
-  (let ((to (if (null? stream) #t (car stream)))
-        (ty (ms:evtype ev))
-        (cl #f))
-
-    (cond ((<= typeNote ty typeSysEx)
-           (set! cl (vector-ref MidiEvNames ty)))
-          ((<= typeSeqNum ty typeKeysign)
-           (set! cl (vector-ref MidiEvNames
-                                (+ (- ty typeSeqNum) typeSysEx 1))))
-          (else #f))
-    (if (not cl)
-      (format to "~s" ev)
-      (let ((ch (ms:chan ev))
-            (po (ms:port ev))
-            (da (ms:date ev)))
-        (format to "#<MidiEv ~a [~s/~s ~sms]" cl po ch da)
-        ;; value printing is really primitive for now
-        (cond ((<= typeNote ty typeKeyOn)
-               (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1))
-               (if (= ty typeNote)
-                 (format to " ~sms" (ms:field ev 3))))
-              ((= ty typePitchBend)
-               ;; could print bend value
-               (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
-              ((= ty typeProgChange)
-               ;; could print GM Program name
-               (format to " ~s" (ms:field ev 0)))
-              ((= ty typeCtrlChange)
-               ;; could print controller type
-               (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
-              ((= ty typeSongPos)
-               (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
-              ((= ty typeSongSel)
-               (format to " ~s" (ms:field ev 0)))
-              ((= ty typeSysEx)
-               ;; could print ID and length
-               #f)
-              ((= ty typeSeqNum)
-               (format to " ~s" (ms:field ev 0)))
-              ((<= typeTextual ty typeCuePoint)
-               ;; could print lisp text string
-               #f)
-              ((= ty typeChanPrefix)
-               (format to " ~s" (ms:field ev 0)))
-              ((= ty typeEndTrack)
-               #f)
-              ((= ty typeTempo)
-               (format to " ~susec" (ms:field ev 0)))
-              ((= ty typeSMPTEOffset)
-               (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
-              ((= ty typeTimeSign)
-               (format to " ~s ~s ~s ~s" (ms:field ev 0) (ms:field ev 1)
-                       (ms:field ev 2) (ms:field ev 3)))
-              ((= ty typeKeySign)
-               (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
-              (else
-               #f))
-        (format to ">")))))
+(define (ms:MidiPrintEv ev . args)
+  (with-args (args &key (stream #t) (eol t))
+    (let ((to stream)
+          (ty (ms:evtype ev))
+          (cl #f))
+      (cond ((<= typeNote ty typeSysEx)
+             (set! cl (vector-ref MidiEvNames ty)))
+            ((<= typeSeqNum ty typeKeysign)
+             (set! cl (vector-ref MidiEvNames
+                                  (+ (- ty typeSeqNum) typeSysEx 1))))
+            (else #f))
+      (when (eq? eol ':before) (terpri stream))
+      (if (not cl)
+          (format to "~s" ev)
+          (let ((ch (ms:chan ev))
+                (po (ms:port ev))
+                (da (ms:date ev)))
+            (format to "#<MidiEv ~a port=~s chan=~s date=~s" cl po ch da)
+            ;; value printing is really primitive for now
+            (cond ((<= typeNote ty typeKeyOff)
+                   (if (= ty typeNote)
+                       (format to " dur=~s" (ms:field ev 3)))
+                   (format to " pitch=~s vel=~s" (ms:field ev 0)
+                           (ms:field ev 1)))
+                  ((= ty typePitchBend)
+                   ;; could print bend value
+                   (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
+                  ((= ty typeProgChange)
+                   ;; could print GM Program name
+                   (format to " ~s" (ms:field ev 0)))
+                  ((= ty typeCtrlChange)
+                   ;; could print controller type
+                   (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
+                  ((= ty typeSongPos)
+                   (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
+                  ((= ty typeSongSel)
+                   (format to " ~s" (ms:field ev 0)))
+                  ((= ty typeSysEx)
+                   ;; could print ID and length
+                   #f)
+                  ((= ty typeSeqNum)
+                   (format to " ~s" (ms:field ev 0)))
+                  ((<= typeTextual ty typeCuePoint)
+                   ;; could print lisp text string
+                   #f)
+                  ((= ty typeChanPrefix)
+                   (format to " ~s" (ms:field ev 0)))
+                  ((= ty typeEndTrack)
+                   #f)
+                  ((= ty typeTempo)
+                   (format to " ~susec" (ms:field ev 0)))
+                  ((= ty typeSMPTEOffset)
+                   (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
+                  ((= ty typeTimeSign)
+                   (format to " ~s ~s ~s ~s" (ms:field ev 0) (ms:field ev 1)
+                           (ms:field ev 2) (ms:field ev 3)))
+                  ((= ty typeKeySign)
+                   (format to " ~s ~s" (ms:field ev 0) (ms:field ev 1)))
+                  (else
+                   #f))
+            (format to ">")))
+      (when (eq? eol #t) (terpri stream))
+      )))
 
 (define-method* (write-event (obj <midi>) (stream <midishare-stream>)
-                            scoretime)
-  (let* (;(beg (+ (object-time stream) 
-         ;        (inexact->exact (floor (* scoretime 1000)))))
-         (sec (object-time obj))
-         (dur (inexact->exact (floor (* (midi-duration obj) 1000))))
+                             scoretime)
+  (let* ((dur (inexact->exact (floor (* (midi-duration obj) 1000))))
          (key (midi-keynum obj))
          (amp (midi-amplitude obj))
          (loc (logical-channel (midi-channel obj)
@@ -429,21 +430,11 @@
     (ensure-microtuning key chn stream)
     (set! evt (ms:new typeNote :port prt :chan chn
                       :pitch key :vel amp :dur dur))
-    (cond (*scheduler* ;(eq? *scheduler* ':asap)
-           (if (> sec 0)
-               (ms:MidiSendAt (midishare-stream-refnum stream)
-                              evt
-                              (+ (object-time stream) 
-                                 (inexact->exact
-                                  (floor (* scoretime 1000)))))
-               (ms:MidiSendIm (midishare-stream-refnum stream) evt)))
-;          ((not *scheduler*) ; top-level
-;           (ms:MidiSendAt (midishare-stream-refnum stream) obj
-;                          (+ (ms:now) scoretime)))
-          (else ; rts running
-           (ms:MidiSendIm (midishare-stream-refnum stream) evt)
-           ))
-    ;(when *msdbg* (ms:PrintMidiEv evt) (format #t "~%"))
+    (ms:MidiSendAt (midishare-stream-refnum stream)
+                   evt
+                   (+ (object-time stream) 
+                      (inexact->exact
+                       (floor (* scoretime 1000)))))
     (values)))
 
 ;;; translate mi_d opcodes to midishare opcodes, only supports channel
@@ -506,42 +497,43 @@
            op))))
          
 (define-method* (write-event (obj <midi-channel-event>)
-                            (stream <midishare-stream>) 
-                            scoretime)
+                             (stream <midishare-stream>) 
+                             scoretime)
   (let* ((opr (slot-ref obj 'opcode))
          (typ (midi-op->evType opr 0))
-         (beg (+ (object-time stream) 
-                 (inexact->exact (floor (* scoretime 1000)))))
          (loc (logical-channel (midi-event-channel obj)
                                (midi-stream-channel-map stream)))
          (dat (midi-event-data2 obj))
          (evt (ms:MidiNewEv typ)))
     (ms:port evt (car loc))
     (ms:chan evt (cadr loc))
-    (ms:date evt beg)
+    ;;(ms:date evt beg)
     (ms:field evt 0 (midi-event-data1 obj))
     (if (= typ typePitchBend)
-      (bend evt (midi-pitch-bend-bend obj))
-      (if dat (ms:field evt 1 dat)))
-    (ms:MidiSendAt (midishare-stream-refnum stream) evt beg)
-    evt))
+        (bend evt (midi-pitch-bend-bend obj))
+        (if dat (ms:field evt 1 dat)))
+    (ms:MidiSendAt (midishare-stream-refnum stream) evt
+                   (+ (object-time stream) 
+                      (inexact->exact (floor (* scoretime 1000)))))))
 
-(define-method* (write-event (obj <top>)
-                             (stream <midishare-stream>) 
-                             scoretime)
-  ;; obj had  better be a midiEv !!
-  (cond ((eq? *scheduler* ':asap)
-         (ms:MidiSendAt (midishare-stream-refnum stream) obj
-                        (+ (object-time stream) 
-                           (inexact->exact (floor (* scoretime 1000))))))
-        ((not *scheduler*)
-         (ms:MidiSendAt (midishare-stream-refnum stream) obj
-                        (+ (ms:now) scoretime)))
-        (else
-         ;; rts running
-         (ms:MidiSendIm (midishare-stream-refnum stream) obj)
-         ))
-  (values))
+
+;; REMOVED, use ms:output instead.
+;;(define-method* (write-event (obj <top>)
+;;                             (stream <midishare-stream>) 
+;;                             scoretime)
+;;  ;; obj had  better be a midiEv !!
+;;  (cond ((eq? *scheduler* ':asap)
+;;         (ms:MidiSendAt (midishare-stream-refnum stream) obj
+;;                        (+ (object-time stream) 
+;;                           (inexact->exact (floor (* scoretime 1000))))))
+;;        ((not *scheduler*)
+;;         (ms:MidiSendAt (midishare-stream-refnum stream) obj
+;;                        (+ (ms:now) scoretime)))
+;;        (else
+;;         ;; rts running
+;;         (ms:MidiSendIm (midishare-stream-refnum stream) obj)
+;;         ))
+;;  (values))
 
 ;;;
 ;;; reading and writing MidiEvs.  the proctable stuff is take from
@@ -601,7 +593,7 @@
         (oper (pop forms))
         (expr #f)
         (to #f)
-        (ahead #f)
+        (args (list))
         (loop '()))
     (when (null? forms)
       (loop-error ops head "Missing '" oper "' expression."))
@@ -609,22 +601,21 @@
     (do ((stop #f))
         ((or stop (null? forms)))
       (case (car forms)
-        (( to )
+        (( to :to )
          (when (null? (cdr forms))
            (loop-error ops head "Missing '" oper " to' expression."))
-         (set! to (cadr forms))
+         (set! to #t)
+         (set! args (append! args (list :to (cadr forms))))
          (set! forms (cddr forms)))
-        (( ahead )
-         (when (null? (cdr forms))
-           (loop-error ops head "Missing '" oper " ahead' expression."))
-         (set! ahead (cadr forms))
-         (set! forms (cddr forms)))
+         (( at :at )
+          (when (null? (cdr forms))
+            (loop-error ops head "Missing '" oper " ahead' expression."))
+          (set! args (append! args (list :at (cadr forms))))
+          (set! forms (cddr forms)))
         (else
          (set! stop #t))))
-    (set! loop
-          (if ahead
-              (list `(,oper ,expr ,(or to '*out*) ,ahead))
-              (list `(,oper ,expr ,(or to '*out*)))))
+    (unless to (set! args (append! args (list ':to '*now*))))
+    (set! loop (list `(,oper ,expr ,@args)))
     (values (make-loop-clause 'operator oper 'looping loop)
             forms)))
 
@@ -633,19 +624,12 @@
           (list (list 'ms:output (function parse-ms-output)
                       'task 'to))))
 
-(define (ms:output ev out . args)
+(define (ms:output ev &key (to *out*) at)
   ;; output ev to Midishare
-  (with-args (args &optional ahead)
-    (let ((time (+ (ms:date ev)
-                   (or ahead 0))))
-      (if (> time 0)
-          (ms:MidiSendAt (midishare-stream-refnum out) ev
-                         time)
-          (ms:MidiSendIm (midishare-stream-refnum out) ev))
-      (values))))
+  (when at (ms:date ev at))
+  (ms:MidiSend (midishare-stream-refnum to) ev))
 
-(define (ms:now . args)
-  args
+(define (ms:now)
   (ms:MidiGetTime))
 
 ;;;
@@ -683,84 +667,41 @@
 ;;    (values)))
 
 ;;;
-;;; stream receiving for midishare
+;;; message receiving
+;;;
 
-(define-method* (init-receiver (str <midishare-stream>) type)
-  ;; called by set-receiver before hook is activated.
-  ;; flush any messages already in input buffer
-  (when (eq? type ':periodic)
-    (unless (periodic-task-running? )
-      (set-periodic-task-rate! (rt-stream-receive-rate str) :seconds)))
-  (let ((refn (first (io-open str))))
-    (when (> (ms:midicountevs refn) 0)
-      (ms:midiFlushEvs refn)
-      )))
+;(push (list :midishare-callback midishare-start-recevive 
+;            midishare-stop-receve))
 
-(define-method* (deinit-receiver (str <midishare-stream>) type)
+(define-method* (stream-receive-init (str <midishare-stream>) hook args)
+  ;; hook is 2 arg lambda or nil, type is :threaded or :periodic
+  (let* ((data (rt-stream-receive-data str)) ; (<thread> <stop> <buf> <len>)
+         (mode (rt-stream-receive-mode str))
+         (type (rt-stream-receive-type str)))
+    (cond ((not (procedure? hook))
+           (err "Receive: hook is not a function: ~s" hook))
+          ((not (member mode '( :raw )))
+           (err "receive: ~s is not a midishare receive mode." mode))
+          ((not (member (midishare-open? str) '(:in :inout)))
+           (err "Stream not open for input: ~S." str))
+          ((first data)
+           (err "Can't set input hook: another hook is running!")))
+    ;; ready to go
+    (let ((refn (first (io-open str))))
+      (when (> (ms:midicountevs refn) 0) 
+        (ms:midiFlushEvs refn))
+      (list-set! data 0 hook)
+      (list-set! data 1 refn))))
+
+(define-method* (stream-receive-deinit (str <midishare-stream>))
   type
   ;; called by remove-receiver after the periodic task has been withdrawn
   (let ((data (rt-stream-receive-data str))) ; (<thread> <stop> )
     (when (first data)
       (list-set! data 0 #f)
-      (list-set! data 1 #f)))
-  (case type 
-    ( (:callback) 
-     (ms:midishare-receive-stop (first (io-open str))))
-    )
-  )
+      (list-set! data 1 #f))))
 
-(define-method* (stream-receiver hook (str <midishare-stream>) type)
-  ;; hook is 2 arg lambda or nil, type is :threaded or :periodic
-  (let* ((data (rt-stream-receive-data str)) ; (<thread> <stop> <buf> <len>)
-         (mode (rt-stream-receive-mode str))
-         (stop #f)) 
-    ;; for now only recive MidiEvs
-    (unless (member mode '( :raw ))
-      (err "receive: ~s is not a midishare receive mode." mode))
-    ;; the receiving thread's do loop terminates as soon as the stop
-    ;; flag is #t. to stop we call the cached "stopper" closure that
-    ;; sets the var to #t.
-    (cond ((not (procedure? hook))
-           (err "Receive: hook is not a function: ~s" hook))
-          ((not (member (midishare-open? str) '(:in :inout)))
-           (err "Stream not open for input: ~S." str))
-          ((first data)
-           (err "Can't set input hook: another hook is running!"))
-          (else
-           ;; ready to go
-           (let* ((in (first (io-open str))) ; cm refnum
-                  (th #f)                    ; thread
-                  (st #f)
-                  (ra (rt-stream-receive-rate str)))
-             (case type
-               ((:threaded )
-                (set! th
-                      (make-thread
-                       (lambda ()
-                         (do ()
-                             (stop #f)
-                           (if (> (ms:MidiCountEvs in) 0)
-                             (do ((ev (ms:MidiGetEv in)
-                                      (ms:MidiGetEv in)))
-                                 ((ms:nullptrp ev) #f)
-                               ( hook ev))
-                             (thread-sleep! ra))))))
-                (set! st (lambda () (set! stop #t)))
-                )
-               ((:periodic )
-                (set! th
-                      (lambda () 
-                        (when (> (ms:MidiCountEvs in) 0)
-                          (do ((ev (ms:MidiGetEv in) (ms:MidiGetEv in)))
-                              ((ms:nullptrp ev) #f)
-                            ( hook ev)))))
-                (set! st (lambda () (set! stop #t)))
-                )
-               ((:callback)
-                (ms:midishare-receive in hook)
-                )
-               )
-             ;; cache the stuff
-             (list-set! data 0 th)
-             (list-set! data 1 st)
-             th)))))
+
+
+
+      
