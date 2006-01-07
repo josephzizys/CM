@@ -260,19 +260,10 @@
         ((or (channel-message-p obj)
              (system-message-p obj))
          (pm:WriteShort 
-          (second (io-open str))        ; output stream
-          ;; if we are running under a scheudler, add in time offset
-          ;; of stream this should check latency...  else user is
-          ;; keeping track of it (if *scheduler* (+ (inexact->exact
-          ;; (round (* scoretime 1000))) (portmidi-offset str))
-          ;; scoretime)
-          (cond (*scheduler*
-                 (+ (inexact->exact (round (* scoretime 1000)))
-                    (portmidi-offset str)))
-                (t ;; :threaded :periodic :specific
-                 0))
-          (midi-message->pm-message obj)))
-        (else #f)))
+          (second (io-open str))  ; output stream
+          (+ (inexact->exact (round (* scoretime 1000)))
+             (portmidi-offset str))
+          (midi-message->pm-message obj)))))
 
 ;;; portmidi behaves almost like a midi-file: (1) handles only true
 ;;; midi messages (ie no durations); (2) data must always be sent in
@@ -292,10 +283,8 @@
       ;; pass time value if scheduling.
       (pm:WriteShort
        (second (io-open str))
-       (cond (*scheduler*
-              (+ (inexact->exact (round (* scoretime 1000)))
-                 (portmidi-offset str)))
-             (t 0))
+       (+ (inexact->exact (round (* scoretime 1000)))
+          (portmidi-offset str))
        (pm:Message (logior #x90 (logand chan #xf) )
                    (logand keyn #x7f)
                    (logand ampl #x7f)))
@@ -313,6 +302,71 @@
 (define-method* (write-event (obj <integer>) (str <portmidi-stream>)
                              scoretime)
   (midi-write-message obj str scoretime #f) )
+
+;;;
+;;; pm:output function and clause for  output portmidi events, buffers,
+;;; messages and CM midi messages in realtime
+
+(define (pm:now )
+  (pm:Time))
+
+(define (pm:output msg . args)
+  (with-args (args &key at (to *out*) raw)
+    (cond ((number? msg)
+           (pm:WriteShort (second (io-open to))
+                          (or at (pm:Time))
+                          (if raw msg (midi-message->pm-message msg))))
+          ((string? msg)
+           (pm:WriteSysEx (second (io-open to))
+                          (or at (pm:time))
+                          msg))
+          (else
+           (pm:Write (second (io-open to))
+                     msg
+                     raw)))
+    (values)))
+
+(define (parse-pm-output forms clauses ops)
+  clauses ops
+  (let ((head forms)
+        (oper (pop forms))
+        (expr #f)
+        (args (list))
+        (to #f)
+        (loop '()))
+    (when (null? forms)
+      (loop-error ops head "Missing '" oper "' expression."))
+    (set! expr (pop forms))
+    (do ((stop #f))
+        ((or stop (null? forms)))
+      (case (car forms)
+        (( to :to)
+         (when (null? (cdr forms))
+           (loop-error ops head "Missing '" oper " to' expression."))
+         (set! args (append! args (list ':to (cadr forms))))
+         (set! to #t)
+         (set! forms (cddr forms)))
+        (( at :at )
+         (when (null? (cdr forms))
+           (loop-error ops head "Missing '" oper " at' expression."))
+         (set! args (append! args (list ':at (cadr forms))))
+         (set! forms (cddr forms)))
+        (( raw :raw )
+         (when (null? (cdr forms))
+           (loop-error ops head "Missing '" oper " raw' expression."))
+         (set! args (append! args (list ':raw (cadr forms))))
+         (set! forms (cddr forms)))        
+        (else
+         (set! stop #t))))
+    (unless to (set! args (append! args (list ':to '*out*))))
+    (set! loop (list `(,oper ,expr ,@args)))
+    (values (make-loop-clause 'operator oper 'looping loop)
+            forms)))
+
+(define *process-operators*
+  (append *process-operators*
+          (list (list 'pm:output (function parse-pm-output)
+                      'task 'to 'at 'raw))))
 
 ;;;
 ;;; message receiving
