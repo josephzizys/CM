@@ -47,6 +47,10 @@ operator.  There are four broad categories of clauses:
 <tr><td><a href="#output.clause"><code>output</code></a></td><td>outputs an event into the open output stream</td></tr>
 <tr><td><a href="#sprout.clause"><code>sprout</code></a></td><td>inserts a new object into the scheduling queue</td></tr>
 <tr><td><a href="#wait.clause"><code>wait</code></a></td><td>process waits a specified amount of time before running again</td></tr>
+<tr><td><a href="#ms:output.clause"><code>ms:output</code></a></td><td>outputs a foreign entity to a Midishare stream</td></tr>
+<tr><td><a href="#pm:output.clause"><code>pm:output</code></a></td><td>outputs a foreign entity to a Portmidi stream</td></tr>
+
+
 </table>
 </li>
 
@@ -219,7 +223,6 @@ function <a href="output-fn.html"><code>output</code></a> is
 available for use inside a <code>do</code> clause definition.
 </dd>
 
-
 <dt><code>wait</code> <var>seconds</var></dt>
 <dd>
 
@@ -276,6 +279,18 @@ two clause descriptions are equivalent:
 do (loop for i in lst do (output ...))</pre>
 </blockquote>
 </dd>
+
+<dt><code>ms:output <var>object</var> [<code>to</code> <var>stream</var>]</dt>
+<dd>
+<a name="ms:output.clause"></a>Outputs a foreign Midishare object directly to Midishare. See <a href="midishare-topic.html#ms:output">ms:output</a> for more information.
+</dd>
+
+<dt><code>pm:output <var>object</var> [<code>to</code> <var>stream</var>] [<code>at</code> <var>msec</var>] [<code>raw</code> {<var>boolean</var> | <var>length</var>}]</dt>
+<dd>
+<a name="pm:output.clause"></a>Outputs a foreign Portmidi object directly to Portmidi. See <a href="portmidi-topic.html#pm:output">pm:output</a> for more information.
+</dd>
+
+
 
 </dl>
 
