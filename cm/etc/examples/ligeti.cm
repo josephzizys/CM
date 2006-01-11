@@ -249,7 +249,7 @@
      ;; foreground note.
      (process with pat = (new range
                            :from (pval mode-deg)
-                           :stepping (new random
+                           :stepping (new weighting
                                        :of '((1 weight 3)
                                              2 
                                              (3 weight .5 max 1)))
@@ -334,9 +334,9 @@
                              :from (pval (- mode-deg 
                                             mode-octave))
                              :stepping
-                             (new random :of '((1 :weight 3)
-                                               2 
-                                               (3 :weight .5 :max 1)))
+                             (new weighting :of '((1 :weight 3)
+						  2 
+						  (3 :weight .5 :max 1)))
                              :for (pval fg-8ths))
               for i below 1064
               for k = (keynum (next notes) :from mode)

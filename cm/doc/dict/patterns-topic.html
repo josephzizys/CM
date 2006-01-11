@@ -40,10 +40,10 @@ individually or nested together to form composite patterns:
 <tr><td><a href="palindrome-cls.html"><code>palindrome</code></a></td><td>generates elements forwards and backwards</td></tr>
 <tr><td><a href="heap-cls.html"><code>heap</code></a></td><td>randomly
 permutes elements</td></tr>
-<tr><td><a href="random-cls.html"><code>random</code></a></td><td>selects elements from a weighted distribution</td></tr>
+<tr><td><a href="weighting-cls.html"><code>weighting</code></a></td><td>selects elements from a weighted distribution</td></tr>
 <tr><td><a href="markov-cls.html"><code>markov</code></a></td><td>returns nth order Markov chains of its elements</td></tr>
 <tr><td><a href="graph-cls.html"><code>graph</code></a></td><td>generates elements from a directed graph</td></tr>
-<tr><td><a href="funcall-cls.html"><code>funcall</code></a></td><td>computes elements by function call</td></tr>
+<tr><td><a href="thunk-cls.html"><code>thunk</code></a></td><td>computes elements by function call</td></tr>
 <tr><td><a href="rotation-cls.html"><code>rotation</code></a></td><td>returns systematic permutations of its elements</td></tr>
 <tr><td><a href="rewrite-cls.html"><code>rewrite</code></a></td><td>generates elements by rewrite rules</td></tr>
 </table>
@@ -232,11 +232,11 @@ href="line-cls.html">line</a> pattern that generates four sixteenths
 </p>
 <pre class="code">
 (<span class="special">define</span> <span class="defined">pat1</span> 
-  (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <a href=":of-fn.html">:of</a> (list (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:keynums</span> '(a4 b c5 d))
+  (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <a href=":of-fn.html">:of</a> (list (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:keynums</span> '(a4 b c5 d))
                         (<a href="new-mac.html">new</a> <a href="cycle-cls.html">heap</a> <span class="keyword">:keynums</span> '(gs4 as cs5 ds)))))
 
 (<span class="special">define</span> <span class="defined">pat2</span>
-  (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:rhythms</span> `(e ,(<a href="new-mac.html">new</a> <a href="line-fn.html">line</a> <span class="keyword">:rhythms</span> 's <span class="keyword">:for</span> 4))))
+  (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:rhythms</span> `(e ,(<a href="new-mac.html">new</a> <a href="line-fn.html">line</a> <span class="keyword">:rhythms</span> 's <span class="keyword">:for</span> 4))))
 
 (<a href="events-fn.html">events</a> (play-pat 60 pat1 pat2 .1 .5) <span class="string">"test.mid"</span>)
 <span class="result">&rArr;</span> <span class="string">"test.mid"</span>
@@ -272,7 +272,7 @@ the pattern it creates can vary at runtime:
            
 <span class="comment">;;; a pattern of pattern class names</span>
 (<span class="special">define</span> <span class="defined">pcns</span>
-  (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '((heap <span class="keyword">:weight</span> 2) line cycle
+  (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:of</span> '((heap <span class="keyword">:weight</span> 2) line cycle
                     palindrome rotation))
 
 (<a href="events-fn.html">events</a> (play-pats pcns '(a4 b c5 d) 12 .1) <span class="string">"test.mid"</span>)
@@ -322,7 +322,7 @@ elements rotate about each other in different orbits.
                        (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:of</span> '(f5 ef4) <span class="keyword">:for</span> 1))))
 
 (<span class="special">define</span> <span class="defined">pat2</span>
-  (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:rhythms</span> `(e ,(<a href="new-mac.html">new</a> <a href="line-fn.html">line</a> <span class="keyword">:rhythms</span> 's <span class="keyword">:for</span> 4))))
+  (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:rhythms</span> `(e ,(<a href="new-mac.html">new</a> <a href="line-fn.html">line</a> <span class="keyword">:rhythms</span> 's <span class="keyword">:for</span> 4))))
 
 (<a href="events-fn.html">events</a> (play-pat 80 pat1 pat2 .4 .75) <span class="string">"test.mid"</span>)
 <span class="result">&rArr;</span> <span class="string">"test.mid"</span>
@@ -350,7 +350,7 @@ and end-of-data conditions.
   <span class="comment">;; play trope for reps number of periods and make the first
   ;; note in each period louder than the others.</span>
   (<span class="special">let</span> ((p (make-instance pat <span class="keyword">:notes</span> trope
-                          <span class="keyword">:for</span> (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(1 2 3 4 5))
+                          <span class="keyword">:for</span> (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:of</span> '(1 2 3 4 5))
                           <span class="keyword">:repeat</span> reps)))
     (<a href="process-fn.html">process</a> with a = amp
              for n = (<a href="next-fn.html">next</a> p)

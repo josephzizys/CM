@@ -69,7 +69,7 @@
         ;; p2 is rhythmic pattern that randomly selects
         ;; between several rhythmic motives that are
         ;; characterisitic of Foster's sytle
-        (p2 (new random
+        (p2 (new weighting
               :of `((,(new cycle :of '(h h)) :weight .375)
                     (,(new cycle :of '(q q q q)) :weight .125)
                     (,(new cycle :of '(h q q)) :weight .125)

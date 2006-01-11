@@ -52,7 +52,7 @@ initializations to the pattern.
   <span class="comment">;; notes CAGE emerge out of a background of G dorian.</span>
   (<span class="special">let*</span> ((w 0)                      <span class="comment">; weight of CAGE</span>
          (d (<a href="pval-fn.html">pval</a> w))               <span class="comment">; eval in pattern</span>
-         (p (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a>
+         (p (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a>
               <span class="keyword">:of</span> `((g3 <span class="keyword">:weight</span> ,d) <span class="comment">; weight of G</span>
                     (a3 <span class="keyword">:weight</span> ,d) <span class="comment">; weight of A</span>
                     bf3
@@ -63,7 +63,7 @@ initializations to the pattern.
                     (g4 <span class="keyword">:weight</span> ,d) <span class="special"></span><span class="comment">; weight of G</span>
                     (r <span class="keyword">:max</span> 1 <span class="keyword">:weight</span> .25)) <span class="comment">; add rests</span>
               <span class="keyword">:for</span> 1))
-         (q (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> 
+         (q (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> 
               <span class="keyword">:of</span> (list 1/16 1/8
                         (<a href="new-mac.html">new</a> <a href="line-fn.html">line</a> <span class="keyword">:of</span> 1/32 <span class="keyword">:for</span> 2 )))))
     (<a href="process-mac.html">process</a> repeat 100

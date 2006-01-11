@@ -70,12 +70,12 @@ consistent rhythmic identities.
 </p>
 <pre class="code">
 (<span class="special">define</span> <span class="defined">pat1</span>
-  (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> 
-       <a href=":of-fn.html">:of</a> (list (<a href="new-mac.html">new</a> join <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(c4 g4) <span class="keyword">:for</span> 1)
+  (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> 
+       <a href=":of-fn.html">:of</a> (list (<a href="new-mac.html">new</a> join <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:of</span> '(c4 g4) <span class="keyword">:for</span> 1)
                                   h))
-                 (<a href="new-mac.html">new</a> join <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(d4 f4) <span class="keyword">:for</span> 1)
+                 (<a href="new-mac.html">new</a> join <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:of</span> '(d4 f4) <span class="keyword">:for</span> 1)
                                   q))
-                 (<a href="new-mac.html">new</a> join <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(cs4 ds4 fs4) <span class="keyword">:for</span> 1)
+                 (<a href="new-mac.html">new</a> join <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:of</span> '(cs4 ds4 fs4) <span class="keyword">:for</span> 1)
                                   e)))))
 (<span class="special">define</span> (<span class="defined">play-pat</span> reps pat tempo)
   (<a href="process-mac.html">process</a> repeat reps
@@ -99,7 +99,7 @@ consistent rhythmic identities.
   (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> 
     <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> join 
                 <span class="keyword">:of</span> (list (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a>
-                               <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(ef5 bf4 bf3)
+                               <span class="keyword">:of</span> `(,(<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:of</span> '(ef5 bf4 bf3)
                                                  <span class="keyword">:for</span> 1)
                                      e4 r))
                           (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:of</span> '(s s q) )

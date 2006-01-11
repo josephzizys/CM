@@ -92,13 +92,13 @@ initializations to the pattern.
 <pre class="code">
 (<span class="special">define</span> <span class="defined">pat1</span>
   (<a href="new-mac.html">new</a> transposer
-       <a href=":of-fn.html">:of</a> (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '(((0 2 6 11) <span class="keyword">:weight</span> 1)
+       <a href=":of-fn.html">:of</a> (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:of</span> '(((0 2 6 11) <span class="keyword">:weight</span> 1)
                              ((0 3 5 10) <span class="keyword">:weight</span> .25)
                              ((0 4 9 15) <span class="keyword">:weight</span> .5)
                              ((0 3 11) <span class="keyword">:weight</span> .5)
                              ((0 8 11) <span class="keyword">:weight</span> .5)))
        <span class="keyword">:stepping</span> (<a href="new-mac.html">new</a> <a href="range-fn.html">range</a> <span class="keyword">:from</span> 60 <span class="keyword">:to</span> 70 <span class="keyword">:downto</span> 50
-                      <span class="keyword">:stepping</span> (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a>
+                      <span class="keyword">:stepping</span> (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a>
                                      <span class="keyword">:of</span> '(-1 1 -2 2 -3 3)))))
 
 (<span class="special">define</span> (<span class="defined">play-pat</span> reps pat rate)
@@ -122,14 +122,14 @@ initializations to the pattern.
 (<span class="special">define</span> (<span class="defined">ran-row</span> end)
   (<span class="special">let</span> ((rows (<a href="new-mac.html">new</a> transposer
                 <span class="keyword">:of</span> (<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:of</span> '(0 1 6 -5 10 11 5 16 15 21 26 20))
-                <span class="keyword">:on</span> (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:keynums</span> '(c4 cs3 b3 fs4 fs3))))
-        (rhys (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> 
+                <span class="keyword">:on</span> (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:keynums</span> '(c4 cs3 b3 fs4 fs3))))
+        (rhys (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> 
                 <span class="keyword">:of</span> `((t <span class="keyword">:min</span> 4) (s <span class="keyword">:min</span> 2) 
                       (q <span class="keyword">:weight</span> 3)
                       (te <span class="keyword">:min</span> 3) (tq <span class="keyword">:min</span> 3) 
                       ,(<a href="new-mac.html">new</a> <a href="cycle-cls.html">cycle</a> <span class="keyword">:of</span> '(e. s))
                       (e <span class="keyword">:weight</span> 2))))
-        (amps (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a> <span class="keyword">:of</span> '((mf <span class="keyword">:weight</span> 7)
+        (amps (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a> <span class="keyword">:of</span> '((mf <span class="keyword">:weight</span> 7)
                                 (mp <span class="keyword">:weight</span> 3)
                                 p))))
     (<a href="process-mac.html">process</a> while (&lt; (<a href="now-fn.html">now</a> #t) end)

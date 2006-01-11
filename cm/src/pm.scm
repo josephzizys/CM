@@ -380,9 +380,9 @@
 (define-method* (stream-receive-init (str <portmidi-stream>) func args)
   args
   ;; called by set-receiver before hook is activated.
-  (let* ((data (rt-stream-receive-data str))
-         (mode (rt-stream-receive-mode str))
-         (type (rt-stream-receive-type str))) 
+  (let ((data (rt-stream-receive-data str))
+        (mode (rt-stream-receive-mode str)))
+
     ;; can receive either message/times or raw buffer/count
     (cond ((not (member mode '(:message :raw)))
            (err "receive: ~s is not a portmidi receive mode."
@@ -426,7 +426,6 @@
       )))
 
 (define-method* (stream-receive-deinit (str <portmidi-stream>) )
-  type
   ;; called by remove-receiver after the receiver has been withdrawn
   (let ((data (rt-stream-receive-data str))) 
     ;; data= (<hook> <port> <buff> <size>)

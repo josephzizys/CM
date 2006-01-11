@@ -1,5 +1,9 @@
 CM 2.7.0 
 
+o Incompatible change: the RANDOM pattern has been renamed WEIGHTING to avoid conflicting with Common Lisp's reserved class name.
+
+o Incompatible change: the FUNCALL pattern has been renamed THUNK to avoid conflicting with Common Lisp's reserved class name.
+
 o scheduler changes:
   * calling (now) or (output) outside of scheduler signals error.
   * set-receiver! has new calling syntax: 

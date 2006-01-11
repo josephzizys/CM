@@ -108,12 +108,12 @@ the process produces a very loud tone.
 |#
 
 (defun jazz-drums (tmpo ampl)
-  (let ((knums (new random 
+  (let ((knums (new weighting 
                  :of `((r :weight .25)
                        , +electric-snare+
                        , +acoustic-bass-drum+)))
         (rhys (new cycle :of '(t4 t8)))
-        (amps (new random :of '(f (ffff :weight .1)))))
+        (amps (new weighting :of '(f (ffff :weight .1)))))
     (process repeat 8
              for k = (next knums)
              for a = (amplitude (next amps))
@@ -154,16 +154,16 @@ The random elements marked x are created by this helper function.
 
 (defun or12r (wt)
   ;; wt is weight of resting relative to playing
-  ;; return random pattern that slightly prefers playing a ride 1
+  ;; return weighting pattern that slightly prefers playing a ride 1
   ;; pattern over a ride 2 pattern
-  (new random
+  (new weighting
     :of (list
-         `(,(new random
+         `(,(new weighting
                  ;; play ride cymbal 1 or rest
                  :of `(, +ride-cymbal-1+ (r :weight ,wt) )
                  :for 1)
             :weight 1.5)
-         (new random 
+         (new weighting 
            ;; play ride cymbal 2 or rest
            :of `(,+ride-cymbal-2+ (r :weight ,wt) )
            :for 1))
@@ -222,17 +222,17 @@ a given measure.
                  (new cycle :of '(t4 t8))
                  (new cycle :of 't8)))
          (amps (if (= reps 8)
-                 (new random 
+                 (new weighting 
                    :of (list (new cycle :of '(mp f)) 
                              (new cycle :of '(mf ff))))
-                 (new random
+                 (new weighting
                    :of (list (new cycle :of '(mp p f))
                              (new cycle :of '(mf mp ff))))))
-         (knms (new random
+         (knms (new weighting
                  :of `((,(new heap :of scale
-                              :for (new random 
+                              :for (new weighting 
                                      :of '(1 2 3 4))) 
-                        :weight ,(new random 
+                        :weight ,(new weighting 
                                    :of '(1.15 1.65)))
                        r))))
     (process repeat reps
@@ -287,15 +287,15 @@ possible. On all but the first triplet a rest is also possible.
   (loop for i in ints collect (elt scale i)))
 
 (defun rancyc (data prob)
-  ;; create an element for a random patter, elements datum
+  ;; create an element for a weighting patter, elements datum
   ;; is a cyclic pattern. element has :weight prob
   (list (new cycle :of data) :weight prob))
 
 (defun jazz-bass (scale on tmpo ampl)
   (let ((rhy (rhythm 'te tmpo))
-        (tonics (new random 
+        (tonics (new weighting 
                   :of (getset scale '(0 2 4 6 7))))
-        (colors (new random 
+        (colors (new weighting 
                   :of (getset scale '(1 3 5 6 8))))
         (amps (new cycle 
                 :of '(mp p ffff fff p fff
@@ -307,32 +307,32 @@ possible. On all but the first triplet a rest is also possible.
            :of
            (list
             ;; 5 possible patterns for triplets 1-4
-            (new random :for 1
+            (new weighting :for 1
                  :of (list (rancyc '(t r r c) 1.0)
                            (rancyc '(t r r r) .25)
                            (rancyc '(t r t c) .22)
                            (rancyc '(t c t c) .065)
                            (rancyc '(t c t r) .014)))
             ;; 5 possible patterns for 5-7
-            (new random :for 1
+            (new weighting :for 1
                  :of (list (rancyc '(r r t) 1.0)
                            (rancyc '(r r r) .25)
                            (rancyc '(r c t) .22)
                            (rancyc '(t c t) .038)
                            (rancyc '(t c r) .007)))
             ;; 5 possible patterns for 8-10
-            (new random :for 1
+            (new weighting :for 1
                  :of (list (rancyc '(r r c) 1.0)
                            (rancyc '(r t c) .415)
                            (rancyc '(r r r) .25)
                            (rancyc '(c t c) .11)
                            (rancyc '(c t r) .018)))
             ;; two possible values for 11
-            (new random :for 1 
+            (new weighting :for 1 
                  :of '((r :weight 1)
                        (t :weight .25)))
             ;; two possible values for 12
-            (new random :for 1
+            (new weighting :for 1
                  :of '((r :weight 1)
                        (c :weight .25)))))))
     (process repeat 12

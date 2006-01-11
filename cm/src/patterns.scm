@@ -432,7 +432,7 @@
 	  (set! state state))
 
 	(if retfn
-	  (set! value ( retfn value)));; funcall
+	  (set! value ( retfn value)));; thunk
 
 	(set! (pattern-state obj) state)
 	(set! (pattern-value obj) value)
@@ -727,7 +727,7 @@
 
 
 ;;;
-;;; random chooses using weighted selection. its data are
+;;; weighting chooses using weighted selection. its data are
 ;;; kept in a list of the form: ((&rest choices) . last-choice).
 ;;;
 
@@ -736,15 +736,15 @@
 (define-list-struct random-item
   datum index (weight 1) (min 1) max (count 0) id minmax)
 
-(define-class* <random> (<pattern>)
+(define-class* <weighting> (<pattern>)
   ((range :init-form *random-range*
           :accessor random-pattern-range)
    (random-state :init-form *random-state*
                  :init-keyword :state
                  :accessor pattern-random-state))
-  :name 'random)
+  :name 'weighting)
 
-(define-method* (pattern-external-inits (obj <random>))
+(define-method* (pattern-external-inits (obj <weighting>))
   (let ((lst (next-method))
         (fnc
          (lambda (n)
@@ -777,9 +777,9 @@
               (list :state (pattern-random-state obj))))))
 
 
-(define-method* (default-period-length (obj <random>))
-  ;; set the default period length of an all-subpattern random pattern
-  ;; to 1 else to the number of elements. since a random pattern
+(define-method* (default-period-length (obj <weighting>))
+  ;; set the default period length of an all-subpattern weighting pattern
+  ;; to 1 else to the number of elements. since a weighting pattern
   ;; establishes no particular order itself, setting the period to 1
   ;; allows the number of elements in the current period to reflect
   ;; the sub patterns. A better defaulting would be to check mixed
@@ -790,7 +790,7 @@
        (if flag 1 (pattern-length obj)))
     (set! flag (pattern? (random-item-datum (car tail))))))
 
-(define-method* (initialize (obj <random>) args)
+(define-method* (initialize (obj <weighting>) args)
   (next-method)
   (let ((pool (pattern-data obj))
         (sum (if (integer? *random-range*) 0 0.0))
@@ -835,7 +835,7 @@
     ;; be implemented as a last with min=1
     (set! (pattern-data obj) (list pool))))
 
-(define-method* (canonicalize-pattern-data (obj <random>)
+(define-method* (canonicalize-pattern-data (obj <weighting>)
 					  data parser inits)
   inits
   (let ((parse-random-item
@@ -849,7 +849,7 @@
                  do 
                  (set! key (pop keys))
                  (set! val (if keys (pop keys)
-                               (err "Uneven random list: ~s." 
+                               (err "Uneven weighting list: ~s." 
                                     orig)))
                  (push val args)
                  (case key
@@ -874,7 +874,7 @@
 	      (not (any (lambda (x) (pattern? (random-item-datum x)))
 			 intern))))))
 
-(define-method* (reset-period (obj <random>))
+(define-method* (reset-period (obj <weighting>))
   (let ((reset (next-method))		; was :after method
 	(flags (pattern-flags obj)))
     (unless (logtest flags +constant-minmax+)
@@ -900,7 +900,7 @@
 	      (set! (random-pattern-range obj) s))))
     reset))
 
-(define-method* (next-in-pattern (obj <random>))
+(define-method* (next-in-pattern (obj <weighting>))
   ;; pool is ((&rest choices) . last-choice)
   (let* ((pool (pattern-data obj))
          (last (cdr pool)))
@@ -930,7 +930,7 @@
         (set-cdr! pool next)
         (random-item-datum next)))))
 
-(define-method* (map-pattern-data fn (obj <random>))
+(define-method* (map-pattern-data fn (obj <weighting>))
   (for-each (lambda (x) ( fn (random-item-datum x))) ; funcall
 	    (car (pattern-data obj))))
 
@@ -1303,30 +1303,30 @@
     (loop for i from 1 to len sum i)))
 
 ;;;
-;;; funcall calls a function to return the items
+;;; thunk calls a function to return the items
 ;;; constituting the data for the next period.
 ;;;
 
-(define-class* <funcall> (<pattern>)
+(define-class* <thunk> (<pattern>)
   ()
-  :name 'funcall)
+  :name 'thunk)
 
-(define-method* (pattern-external-inits (obj <funcall>))
+(define-method* (pattern-external-inits (obj <thunk>))
   (append (list ':of
                 (expand-pattern-value (car (pattern-data obj))))
           (next-method)))
 
-(define-method* (default-period-length (obj <funcall>)) 1)
+(define-method* (default-period-length (obj <thunk>)) 1)
 
-(define-method* (initialize (obj <funcall>) args)
+(define-method* (initialize (obj <thunk>) args)
   (next-method) ; was an :after method
   (let ((data (pattern-data obj)))
     (unless (and (pair? data)
                  (procedure? (car data)))
-      (err "Funcall not function: ~s." data))
+      (err "Thunk not function: ~s." data))
     (values)))
 
-(define-method* (next-in-pattern (obj <funcall>))
+(define-method* (next-in-pattern (obj <thunk>))
   (let ((data (pattern-data obj)))
     (when (null? (cdr data))
       (let ((vals ( (car data) ))	; funcall
@@ -1346,12 +1346,12 @@
 	    (period-length-set! p len)))))
     (cdr-pop data)))
 
-;(define x (new funcall :of (lambda () (list 1 2 3))))
+;(define x (new thunk :of (lambda () (list 1 2 3))))
 ;(next x t)
-;(define x (new funcall :of (lambda () (list 1 2 3)) :for 5))
+;(define x (new thunk :of (lambda () (list 1 2 3)) :for 5))
 ;(next x t)
 
-(define-method* (map-pattern-data fn (obj <funcall>))
+(define-method* (map-pattern-data fn (obj <thunk>))
   (for-each fn (cdr (pattern-data obj)))) ; funcall
 
 ;;;
@@ -2004,7 +2004,7 @@
 
 ; (define x (new range from 20 
 ;              to 30 downto 10
-;              stepping (new random -1 1 -2 2)))
+;              stepping (new weighting -1 1 -2 2)))
 ; (describe-object x)
 ; (next x)
 

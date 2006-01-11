@@ -310,7 +310,7 @@
 				     :of '(df4 ef4 gf4 af4 bf4 df5 ef5)
 				     :for 3))
 			     (new chord :of '(e4 a4 cs5))
-			     (new random 
+			     (new weighting 
 			       :of '(bf3 (ef1 :weight .5 :max 2))
 			       :for 1)))))
     (process repeat 32
@@ -331,7 +331,7 @@
 				     :of '(df4 ef4 gf4 af4 bf4 df5 ef5)
 				     :for 3))
 			     (new chord :of '(e4 a4 cs5))
-			     (new random 
+			     (new weighting 
 			       :of '(bf3 (ef1 weight .5 max 2))
 			       :for 1)))))
     (process with ss = .05
@@ -456,7 +456,7 @@
 (define (cage offset)
   (let* ((w 0)				; weight of C, A, G and E is 0
          (prob (pval w))		; pval evals W as pattern runs
-         (pat1 (new random
+         (pat1 (new weighting
 		 :of `((g3 :weight ,prob) ; delay G's weight using pval
 		       (a3 :weight ,prob) ; delay A's weight using pval
 		       bf3
@@ -467,7 +467,7 @@
 		       (g4 :weight ,prob)	; delay G's weight using pval
 		       (r :max 1 :weight .25)) ; allow rests
 		 :for 1))
-         (pat2 (new random of (list 1/16
+         (pat2 (new weighting of (list 1/16
 				    1/8
 				    (new cycle :of 1/32 :for 2 )))))
     (process repeat 100
@@ -564,7 +564,7 @@
 (define (testit stf len nts)
   (let ((nts (new heap :notes nts))
         ;; choose quater or two eighths
-        (rhy (new random
+        (rhy (new weighting
                :of (list 1 
                          (new cycle :of '(1/2 1/2))))))
     (process while (< (now) len)
@@ -611,7 +611,7 @@
 
 (define (playharms )
   (process with p = (new cycle 
-                      of (list (new random :of (list 0 8 16) :for 1)
+                      of (list (new weighting :of (list 0 8 16) :for 1)
                                (new chord :of
                                     (new heap :of '(1 2 3 4 5 6 7)
                                          :for 3))) )

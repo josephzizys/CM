@@ -354,7 +354,6 @@
            ;; used as pattern class names which is "illegal" in
            ;; cltl2. their functions on the local symbol versions are
            ;; installed at the end of this file.
-           :random :funcall
            ;; have to block these from CLM
            :io :ran :exit :quit :play :graph :control)
   (:use :common-lisp )
@@ -460,7 +459,7 @@
            :plotter-data :plotter :plotter-front-styling
            :plotter-property :plotter-redraw :plotter-scroll
            :plotter-zoom :point :power :prime-form :process :pval
-           :pval :pwd :quantize :ran :random :range :ransegs
+           :pval :pwd :quantize :ran :range :ransegs
            :remove-object :remove-subobjects :rescale-envelope
            :rescale :rewrite :rewrite-generation :rhythm :rm-spectrum
            :rotation :save-object :sc-file :scale-max :scale-min
@@ -469,8 +468,8 @@
            :set-clm-output-hook! :set-midi-output-hook!
            :set-sco-output-hook! :shell :shuffle :*softest* :sprout
            :stop :subcontainers :subobjects :sv :sv+ :sv* :*tempo*
-           :tendency :*time-slots* :transpose :transposer :true
-           :tuning :vary :wait :wait-until)
+           :tendency :thunk :*time-slots* :transpose :transposer :true
+           :tuning :vary :wait :wait-until :weighting)
   )
 
 ;;;
@@ -479,13 +478,7 @@
 
 (in-package :cm)
 
-;; we had to block importing these symbols from CL because we use them
-;; as pattern names so we install their function definitios here.
-
-(setf (symbol-function 'random) #'cl:random)
-(setf (symbol-function 'funcall) #'cl:funcall)
-
-;; add a few symbols dynamically to non-cm packages...
+;; dyntmically add a few symbols to breakout packages...
 (flet ((addsyms (syms pkg)
          (map nil (lambda (s) (intern (symbol-name s) pkg)) syms)
          (export (mapcar #'(lambda (x) (find-symbol (symbol-name x) pkg))

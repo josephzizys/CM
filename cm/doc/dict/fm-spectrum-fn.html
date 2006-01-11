@@ -64,7 +64,7 @@ list (<var>frequency</var> <var>amplitude</var>). If the value
 is <code class="keyword">:normalized</code> then the amplitude value
 of each component is normalized between 0 and 1. If the value is <code
 class="keyword">:weights</code> then the output spectrum can be passed
-directly to a <a href="random-cls.html">random</a> pattern with
+directly to a <a href="weighting-cls.html">weighting</a> pattern with
 amplitudes converted to probability weights.  The default value is
 false.
 </dd>
@@ -164,7 +164,7 @@ The default value is false.
                  <span class="keyword">:maximum</span> (<a href="transpose-fn.html">transpose</a> tone 12))))
 
 (<span class="special">define</span> (<span class="defined">ring-bells</span> reps rate)
-  (<span class="special">let</span> ((tones (<a href="new-mac.html">new</a> <a href="random-cls.html">random</a>
+  (<span class="special">let</span> ((tones (<a href="new-mac.html">new</a> <a href="weighting-cls.html">weighting</a>
                  <span class="keyword">:of</span> '((a4 <span class="keyword">:weight</span> 3)
                        (a3 <span class="keyword">:max</span> 1)))))
     (<a href="process-mac.html">process</a> repeat reps
