@@ -1,10 +1,18 @@
 CM 2.7.0 
 
-o Incompatible change: the RANDOM pattern has been renamed WEIGHTING to avoid conflicting with Common Lisp's reserved class name.
+o Incompatible change: RANDOM pattern renamed WEIGHTING to avoid
+  conflict with inherited common lisp symbol.
 
-o Incompatible change: the FUNCALL pattern has been renamed THUNK to avoid conflicting with Common Lisp's reserved class name.
+o Added :adjustable feature to weighting pattern. If set, its a scaler
+  on the weight of the elements each time they are selected from the
+  pattern. For example, :adjustable .95 causes the just-selected item
+  to become less likely to be picked the next time becuase its weight
+  becomes .95 its previous weight.
 
-o scheduler changes:
+o Incompatable change: FUNCALL pattern renamed to THUNK to avoid
+  conflict with common lisp symbol.
+
+o Scheduler changes:
   * calling (now) or (output) outside of scheduler signals error.
   * set-receiver! has new calling syntax: 
       (set-receiver! hook stream . keywords)
