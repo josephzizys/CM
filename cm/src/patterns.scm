@@ -31,6 +31,7 @@
 (define +constant-minmax+  (ash 1 14))  ; avoid minmax recalc
 (define +default-period+   (ash 1 15))  ; no period specified
 (define +range-random+     (ash 1 16))  ; no period specified
+(define +range-random+     (ash 1 17))  ; weight adjustment
 
 (define +nad+ ':not-a-datum)           ; "not a datum" marker
 (define +eop+ ':end-of-period)         ; "end of period" marker
@@ -741,7 +742,10 @@
           :accessor random-pattern-range)
    (random-state :init-form *random-state*
                  :init-keyword :state
-                 :accessor pattern-random-state))
+                 :accessor pattern-random-state)
+   (adjustable :init-form #f :init-keyword :adjustable
+	       :accessor weighting-adjustable)
+   )
   :name 'weighting)
 
 (define-method* (pattern-external-inits (obj <weighting>))
@@ -778,22 +782,25 @@
 
 
 (define-method* (default-period-length (obj <weighting>))
-  ;; set the default period length of an all-subpattern weighting pattern
-  ;; to 1 else to the number of elements. since a weighting pattern
-  ;; establishes no particular order itself, setting the period to 1
-  ;; allows the number of elements in the current period to reflect
-  ;; the sub patterns. A better defaulting would be to check mixed
-  ;; elements at run time and adjust the period length accordingly,
-  (do ((tail (pattern-data obj) (cdr tail))
-       (flag #t))
-      ((or (not flag) (null? tail))
-       (if flag 1 (pattern-length obj)))
-    (set! flag (pattern? (random-item-datum (car tail))))))
+  ;; set the default period length of an adjustable or all-subpattern
+  ;; weighting to 1 else to the number of elements. since a
+  ;; weighting pattern establishes no particular order itself, setting
+  ;; the period to 1 allows the number of elements in the current
+  ;; period to reflect the sub patterns. A better defaulting would be
+  ;; to check mixed elements at run time and adjust the period length
+  ;; accordingly,
+  (if (weighting-adjustable obj) 1
+      (do ((tail (pattern-data obj) (cdr tail))
+	   (flag #t))
+	  ((or (not flag) (null? tail))
+	   (if flag 1 (pattern-length obj)))
+	(set! flag (pattern? (random-item-datum (car tail)))))))
 
 (define-method* (initialize (obj <weighting>) args)
   (next-method)
   (let ((pool (pattern-data obj))
         (sum (if (integer? *random-range*) 0 0.0))
+	(adj (weighting-adjustable obj))
         (const #t))
     (loop for item in pool
           for min = (random-item-min item)
@@ -825,11 +832,18 @@
 	       item
 	       (* (/ (random-item-index item) sum)
 		  *random-range*)))))
-    (when sum
-      (unless *random-range*
-        (set! (random-pattern-range obj) sum))
-      (set! (pattern-flags obj)
-            (logior +constant-weights+ (pattern-flags obj))))
+    (cond ((not sum)
+	   (when adj
+	     (err "Found non-numeric weight in adjustable weighting.")))
+	  (else
+	   (unless *random-range*
+	     (set! (random-pattern-range obj) sum))
+	   ;; dont mark weights as constant so they are recalculated
+	   ;; at eop
+	   (unless adj
+	     (set! (pattern-flags obj)
+		   (logior +constant-weights+ (pattern-flags obj))))
+	   ))
     ;; all routines treat pool as: ((&rest choices) . last-choice)
     ;; no initial last choice. a first choice for the stream could
     ;; be implemented as a last with min=1
@@ -874,6 +888,25 @@
 	      (not (any (lambda (x) (pattern? (random-item-datum x)))
 			 intern))))))
 
+; (reset-random-range obj *random-range*  adj?)
+
+(define (reset-random-range obj range adj?)
+  (let ((data (car (pattern-data obj))))
+    (loop with s = (if (integer? range) 0 0.0) 
+       for item in data
+       do
+       (incf s (if adj? (random-item-weight item)
+		   (next-1 (random-item-weight item))))
+       (random-item-index-set! item s)
+       finally
+       (if range
+	   (dolist (i data)
+	     (random-item-index-set! i
+				     (* (/ (random-item-index i)
+					   s)
+					range)))
+	   (set! (random-pattern-range obj) s)))))
+
 (define-method* (reset-period (obj <weighting>))
   (let ((reset (next-method))		; was :after method
 	(flags (pattern-flags obj)))
@@ -914,6 +947,7 @@
       (let ((range (random-pattern-range obj))
             (state (pattern-random-state obj))
             (choices (car pool))
+	    (adjust (weighting-adjustable obj))
             (next #f))
         (set! next
 	      (loop for item = (loop with index = (random range state)
@@ -928,6 +962,10 @@
           (dolist (i choices)
 	    (random-item-count-set! i 0)))
         (set-cdr! pool next)
+	;; adjust the weight of the newly selected item
+	(when adjust
+	  (random-item-weight-set! next (* (random-item-weight next)
+					   adjust)))
         (random-item-datum next)))))
 
 (define-method* (map-pattern-data fn (obj <weighting>))
