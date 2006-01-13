@@ -317,64 +317,83 @@
 ;;;
 
 (define (events object . args)
-  ;; args are &key pairs or an optional time offset
-  ;; followed by &key pairs.
-  (if (not (member (scheduling?) '(#f :asap)))
-      (begin
-       (format #t "Can't schedule events in non-real time while RTS is running.")
-       nil)
-      (let* ((to (if (and (pair? args)
-                          (or (string? (car args))
-                              (eq? (car args) #f)
-                              (is-a? (car args) <object>)))
-                     (pop args)
-                     (current-output-stream)))
-             (ahead (if (and (pair? args)
-                             (or (pair? (car args))
-                                 (number? (car args))))
-                        (pop args)
-                        0))
-             (err? ':error))
-        (when (odd? (length args))
-          (err "Uneven initialization list: ~s." args))
-        (dynamic-wind
-         (lambda () #f)
-         (lambda ()
-           (let ((getobj
-                  (lambda (x)
-                    (if (not (null? x))
-                        (if (or (string? x) (symbol? x))
-                            (find-object x)
-                            x)
-                        (err "Not an object specification: ~s." x)))))
-             (if (not to)
-                 (set! *out* #f)
-                 (begin
-                  (set! *out* (open-io (apply (function init-io) to args)
-                                       ':output))
-                  (initialize-io *out*)))
-             (schedule-events *out* ;(lambda (e s) (write-event e *out* s))
-                              (if (pair? object) 
-                                  (map (function getobj) object)
-                                  (getobj object))
-                              ahead)
-             (set! err? #f)))
-         (lambda ()
-           (when *out*
-             (deinitialize-io *out*)
-             (close-io *out* err?))))
-        (if (or err? (not *out*)) 
-            #f
-            (if (is-a? *out* <event-file>)
-                (let ((path (file-output-filename *out*))
-                      (args (event-stream-args *out*))
-                      (hook (io-class-output-hook (class-of *out*))))
-                  (when hook 
-                    (apply hook path args)) ; funcall
-                  path)
-                *out*)))))
-
-
+    ;; args are &key pairs or an optional time offset
+    ;; followed by &key pairs.
+    (let* ((to (if (and (pair? args)
+			(or (string? (car args))
+			    (eq? (car args) #f)
+			    (is-a? (car args) <object>)))
+		   (pop args)
+		   (current-output-stream)))
+	   (ahead (if (and (pair? args)
+			   (or (pair? (car args))
+			       (number? (car args))))
+		      (pop args)
+		      0))
+	   (err? ':error))
+      (when (odd? (length args))
+	(err "events: uneven initialization list: ~s." args))
+      (let ((getobj
+	     (lambda (x)
+	       (if (not (null? x))
+		   (if (or (string? x) (symbol? x))
+		       (find-object x)
+		       x)
+		   (err "events: not a sproutable object: ~s." x)))))
+	;; rts not running....
+	(if (member (scheduling?) '(#f :asap))
+	    (dynamic-wind
+	     (lambda () #f)
+	     (lambda ()
+	       (if (not to)
+		   (set! *out* #f)
+		   (begin
+		    (set! *out* (open-io (apply (function init-io)
+						to args)
+					 ':output))
+		    (initialize-io *out*)))
+	       (schedule-events *out* 
+				(if (pair? object) 
+				    (map (function getobj) object)
+				    (getobj object))
+				ahead)
+	       (set! err? #f))
+	     (lambda ()
+	       (when *out*
+		 (deinitialize-io *out*)
+		 (close-io *out* err?))))
+	    ;; else rts running, only allow sprouting to rt streams.
+	    (begin
+	     (when to
+	       (when (string? to)
+		 (set! to (apply (function open-io) to #t args)))
+	       (unless (is-a? to <rt-stream>)
+		 (err "events: non-realtime stream ~s while rts running."
+		      to))
+	       (unless (io-open to)
+		 (err "events: stream ~s is not open while rts running."
+		      to))
+	       (set! *out* to))
+	     (if (pair? object)
+		 (dolist (o object)
+		   (sprout (getobj o) :to to
+			   :ahead (if (pair? ahead)
+				      (if (pair? (cdr ahead))
+					  (pop ahead) (car ahead))
+				      ahead)))
+		 (sprout (getobj object) :to to
+			 :ahead (if (pair? ahead) (car ahead)
+				    ahead))))))
+      (if (or err? (not *out*)) 
+	  #f
+	  (if (is-a? *out* <event-file>)
+	      (let ((path (file-output-filename *out*))
+		    (args (event-stream-args *out*))
+		    (hook (io-class-output-hook (class-of *out*))))
+		(when hook 
+		  (apply hook path args)) ; funcall
+		path)
+	      *out*))))
 
 ;;;
 ;;; write-event
