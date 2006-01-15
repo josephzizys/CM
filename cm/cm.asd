@@ -366,12 +366,13 @@
                                   :depends-on ("io" "midi3" "scales"))
                            (:file "fomus" :scheme t 
                                   :depends-on ("io" "midi3" "scales"))
-                           (:file "osc" :scheme t :depends-on ("io"))
+;                           (:file "osc" :scheme t :depends-on ("io"))
                            (:file "midishare" :scheme t 
                                   :depends-on ("io" "midi3" "scales"))
                            (:file "player" :scheme t 
                                   :depends-on ("midishare"))
-                           (:file "sc" :scheme t :depends-on ("osc"))
+                           (:file "sc" :scheme t :depends-on ("io"))
+;                           (:file "sc" :scheme t :depends-on ("osc"))
                            (:file "pm" :scheme t :depends-on ("io" "midi3"))
 ;                           #+openmcl (:file "openmcl-rt"
 ;                                            :depends-on ("pkg" "scheduler"))
