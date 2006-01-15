@@ -22,6 +22,93 @@
 (define *sc-plugin-path* #f)
 (define *sc-synthdef-path* #f)
 
+
+(define-method* (make-byte-vector (int <integer>))
+  (u8vector (ash (logand int #xff000000) -24) 
+            (ash (logand int #xff0000) -16) 
+            (ash (logand int #xff00) -8)
+            (logand int #xff)))
+
+(define-method* (make-byte-vector (flo <real>))
+  (if (zero? flo)
+    (make-u8vector 4 0)
+    (multiple-value-bind (signif expon sign)
+                         (integer-decode-float flo)
+                         (let ((sign-bit (if (< sign 0) #x80000000 0))
+                               (exponent (+ expon 23 127))
+                               (fraction (logand (inexact->exact signif) #x7fffff)))
+                           (make-byte-vector (logior sign-bit (ash exponent 23) fraction))))))
+
+(define-method* (make-byte-vector (str <string>))
+  (let* ((len (string-length str))
+	 (pad (- 4 (modulo len 4)))
+	 (vec (make-u8vector (+ len pad) 0)))
+    (do ((i 0 (+ i 1)))
+        ((= i len) vec)
+      (u8vector-set! vec i (char->integer (string-ref str i))))))
+
+(define-method* (make-byte-vector (sym <symbol>))
+  (let ((str (string-downcase (symbol->string sym))))
+    (make-byte-vector str)))
+
+;;; for osc files. don't care about universal time
+
+(define (make-file-timetag offset)
+  (multiple-value-bind (int rem) (clfloor offset)
+    (u8vector-append (make-byte-vector int)
+                     (make-byte-vector
+                      (inexact->exact (floor (* rem #xffffffff)))))))
+
+;;as part of an OSC message the types of each token are sent
+
+(define-method* (return-type-code (int <integer>))
+  (char->integer #\i))
+
+(define-method* (return-type-code (flo <real>))
+  (char->integer #\f))
+
+(define-method* (return-type-code (str <string>))
+  (char->integer #\s))
+
+(define-method* (return-type-code (sym <symbol>))
+  (char->integer #\s))
+
+(define (make-type-array message)
+  (let* ((mes (cdr message))
+         (len (length mes))
+         (pad (- 4 (mod len 4)))
+         (vec (make-u8vector (+ len (if (= pad 1) (+ pad 4) pad)))))
+    (u8vector-set! vec 0 (char->integer #\,))
+    (do ((i 0 (+ i 1)))
+        ((= i len) vec)
+      (u8vector-set! vec (+ i 1)
+                     (return-type-code (list-ref mes i))))))
+
+;;;;the first token in an osc message is always a string. the following
+;;;;methods convert tokens to a string and then to a byte vector
+
+(define-method* (get-first-obj (num <number>))
+  (make-byte-vector (format #f "~s" num)))
+
+(define-method* (get-first-obj (str <string>))
+  (make-byte-vector str))
+
+(define-method* (get-first-obj (sym <symbol>))
+  (make-byte-vector (string-downcase (symbol->string sym))))
+
+;;; formatting for standard OSC message. concatenates each separate
+;;; byte vector for each token and returns array and array length as
+;;; values
+
+(define (format-osc message)
+  (let ((arr (apply (function u8vector-append)
+                    (get-first-obj (car message))
+                    (make-type-array message)
+                    (loop for m in (cdr message) 
+                       collect (make-byte-vector m)))))
+    (values arr (u8vector-length arr))))
+
+
 ;;;
 ;;; attempt to find and set supercollider dirs...
 ;;;;
