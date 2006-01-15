@@ -374,8 +374,3 @@ fi
 
 ;;;
 
-(defmacro with-mutex-grabbed ((mutex) &body body)
-  `(ccl::with-lock-grabbed (,mutex)
-			   ,@body))
-
-(defparameter *periodic-tasks* (list ))

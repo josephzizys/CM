@@ -257,11 +257,6 @@
 ;(defgeneric rt-sprout (obj time dest))
 ;(defgeneric rt-now (io))
 
-
-;;this needs to be loaded in this file.
-(defmacro with-mutex-grabbed ((var) &body body)
-  `(sb-thread:with-mutex (,var :wait-p t) ,@body))
-
 (in-package "SB-KERNEL")
 
 #+darwin ; remove when the darwin version release contains it
