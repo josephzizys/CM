@@ -490,22 +490,19 @@
   (let* ((type (rt-stream-receive-type stream))
          (meth (assoc type *receive-methods* )))
     (if (not meth)
-        (err "stream-receive-stop: no receive method for receive type ~s."
-             type)
+        #f
         (let ((start (cadr meth)))
-          ( start stream args)))
-    (values)))
+	  ;; starting method returns #t if started
+          ( start stream args)))))
 
 (define-method* (stream-receive-stop (stream <rt-stream>))
   (let* ((type (rt-stream-receive-type stream))
          (meth (assoc type *receive-methods* )))
     (if (not meth)
-        (err "stream-receive-start: no receive method for receive type ~s."
-             type)
+        #f
         (let ((stop (caddr meth)))
           ( stop stream)
-          ))
-    (values)))
+          ))))
 
 (define-method* (stream-receive-deinit (stream <rt-stream>))
   stream
@@ -528,21 +525,24 @@
 (define (set-receiver! hook stream . args)
   (let ((data (rt-stream-receive-data stream)))
     (if (and (not (null? data))
-             (first data))
-        (err "set-receiver!: stream ~S already receiving."
-             stream)
-        (let ((type (list-prop args ':receive-type))
-              (meth #f))
-          (if type
-              (set! (rt-stream-receive-type stream) type)
-              (if (not (rt-stream-receive-type stream))
-                  (set! (rt-stream-receive-type stream) *receive-type*)))
-          (set! meth (assoc (rt-stream-receive-type stream)
-                            *receive-methods*))
-          (when meth
-            (stream-receive-init stream hook args)
-            (stream-receive-start stream args))
-          (values)))))
+	     (first data))
+	(err "set-receiver!: ~s already receiving."
+	     stream)
+	(let ((type (list-prop args ':receive-type)))
+	  (if type
+	      (set! (rt-stream-receive-type stream) type)
+	      (if (not (rt-stream-receive-type stream))
+		  (set! (rt-stream-receive-type stream) *receive-type*)))
+	  (stream-receive-init stream hook args)
+	  (cond ((stream-receive-start stream args)
+		 (format #t "~%; ~a receiving!"
+			 (object-name stream)))
+		(else
+		 (stream-receive-deinit stream)
+		 (err "set-receiver!: ~s does not support :receive-type ~s."
+		      stream
+		      (rt-stream-receive-type stream))))
+	  (values)))))
 
 (define (remove-receiver! stream)
   (stream-receive-stop stream)
