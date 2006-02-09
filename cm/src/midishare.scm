@@ -614,7 +614,7 @@
           (set! forms (cddr forms)))
         (else
          (set! stop #t))))
-    (unless to (set! args (append! args (list ':to '*now*))))
+    (unless to (set! args (append! args (list ':to '*out*))))
     (set! loop (list `(,oper ,expr ,@args)))
     (values (make-loop-clause 'operator oper 'looping loop)
             forms)))
