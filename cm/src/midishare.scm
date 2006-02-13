@@ -625,9 +625,18 @@
                       'task 'to))))
 
 (define (ms:output ev &key (to *out*) at)
-  ;; output ev to Midishare
-  (when at (ms:date ev at))
-  (ms:MidiSend (midishare-stream-refnum to) ev))
+    ;; output ev to Midishare
+  (cond ((eq? *scheduler* ':asap)
+	 (ms:MidiSendAt (midishare-stream-refnum stream)
+			evt
+			(+ (object-time to) 
+			   (ms:date obj)
+			   (inexact->exact
+			    (floor (* *pstart* 1000))))))
+	(else
+	 (when (= (ms:date ev) 0)
+	   (ms:date ev (or at (ms:MidiGetTime))))
+	 (ms:MidiSend (midishare-stream-refnum to) ev))))
 
 (define (ms:now)
   (ms:MidiGetTime))
