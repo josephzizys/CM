@@ -287,7 +287,7 @@ with the <a href="#player-stream"><code>player-stream</code></a>
 </p>
 
 
-<h3 id="MidiEv">The MidiEv foreign object</h3>
+<h3 id="midiev">The MidiEv foreign object</h3>
 
 <p>
 Once a connection between CM and Midishare has been established, MIDI
@@ -323,7 +323,7 @@ that to reference functions in the Midishare API you must include
 the package prefix <code>ms:</code> in the function name.
 </p>
 
-<dl class="dictsyntax" id="ms:new">
+<dl class="dictsyntax" id="new">
 <dt>[Function]</dt>
 <dd><code>(</code><code class="entry">ms:new</code> <var>type</var> {<var>keyword</var> <var>value</var>}*<code>)</code></dd></dl>
 
@@ -504,7 +504,7 @@ cannot be sent to an external synthesizer.
 </p>
 
 
-<dl class="dictsyntax" id="ms:midiprintev">
+<dl class="dictsyntax" id="midiprintev">
 <dt>[Function]</dt>
 <dd><code>(</code><code class="entry">ms:MidiPrintEv</code> <var>ev</var> [<var>stream</var>]<code>)</code></dd></dl>
 
@@ -525,7 +525,7 @@ which defaults to the standard output.
 </pre>
 </div>
 
-<h4>Accessing and modifying MidiEvs</h4>
+<h4 id="accessors">Accessing and modifying MidiEvs</h4>
 
 <p>
 To access values or set the fields of a MidiEv struct you use the
@@ -533,59 +533,59 @@ functions provided by the MidiShare API. The more important
 constructors and accessors are listed here.
 </p>
 
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="midinewev">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:MidiNewEv </code><var>typenum</var>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="midicopyev">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:MidiCopyEv </code><var>ev</var><code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="midifreeev">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:MidiFreeEv </code><var>ev</var><code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="midifreeev">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:evtype </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="port">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:port </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="chan">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:chan </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="date">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:date </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="pitch">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:pitch </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="dur">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:dur </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="vel">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:vel </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="bend">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:bend </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="pgm">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:pgm  </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="ctl">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:ctl </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
-<dl class="dictsyntax">
+<dl class="dictsyntax" id="val">
 <dt>[Function]</dt>
 <dd><code>(</code><code>ms:val </code><var>ev</var> [<var>val</var>]<code>)</code>
 </dd></dl>
