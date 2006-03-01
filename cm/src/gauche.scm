@@ -332,12 +332,3 @@
 ; (slot-definition-initargs sd)
 ; (slot-definition-initform sd)
 
-;;; thread support
-
-(define-macro (with-mutex-grabbed args . body)
-  (let ((mutex (car args)))
-    `(with-locking-mutex ,mutex (lambda () ,@body))))
-
-(define-macro (without-interrupts . body)
-  `(begin
-     ,@body))
