@@ -149,7 +149,8 @@
   (:export #:fomus #:event-base #:part #:note #:rest #:timesig
            #:keysig #:meas #:event-off #:obj-id #:obj-partid
            #:part-opts #:*parts* #:event-note #:event-dur
-           #:part-events #:make-part #:make-note #:get-instr-syms))
+           #:part-events #:make-part #:make-note #:get-instr-syms
+	   #:fomus-file))
 
 (in-package :fomus)
 
@@ -173,6 +174,7 @@
 (defstub make-part)
 (defstub make-note)
 (defstub get-instr-syms)
+(defstub fomus-file)
 (defstub (special *parts*))
 )
 
@@ -425,7 +427,7 @@
   (:import-from :fomus :fomus :obj-partid :obj-id :part-events
                 :event-base :event-off :event-note :event-dur :make-part
                 :make-note :*parts* :part-opts
-                :part :note :meas :timesig :keysig)
+                :part :note :meas :timesig :keysig :fomus-file)
   (:export :accumulation :amplitude :append-object :audio-file :axis
            :*beat* :best-normal-form :between :cd :cents->scaler
            :chord :*chromatic-scale* :clm-file :cm :cm-version :cmio

@@ -62,20 +62,20 @@
     (set! (io-open io) #f)
     (unless err?
       (let* ((args (event-stream-args io))
-             (bend (list-prop args ':backend)))
+             (bend (list-prop args ':output)))
         (unless bend
           (let* ((file (io-filename io))
                  (type (filename-type file)))
             (cond ((equal? type "ly")
-                   (set! bend ':lilypond))
+                   (set! bend (list ':lilypond :filename file
+				    :view (fomus-file-view io))))
                   ((equal? type "xml")
-                   (set! bend ':xml))
+		   (set! bend (list ':musicxml :filename file
+				    :view (fomus-file-view io))))
                   (else
-                   (set! bend ':fms)))
-            (set! args (cons* ':backend
-                              (list bend :filename file
-                                    :view (fomus-file-view io))
-                              args))))
+		   (set! bend (list ':fomus :filename file))
+                   ))
+            (set! args (cons* ':output bend args))))
         (apply (function fomus)
                :parts (fomus-file-parts io)
                :global (fomus-file-global io)
@@ -164,6 +164,24 @@
                        :channel chan)
                  fil scoretime)))
 
-
-
+(define-method* (import-events (file <fomus-file>) . args)
+  (with-args (args &key (seq #t))
+    (let ((fil (file-output-filename file)))
+      (cond ((or (not seq)
+		 (is-a? seq <seq>))
+	     #f)
+	    ((eq? seq #t)
+	     (set! seq (make <seq>
+			     :name (format #f "~a-notes" (filename-name fil)))))
+	    (else
+	     (err "import-events: ~S is not a boolean or seq." seq)))
+      (multiple-value-bind (parts notes globs sets)
+	  (fomus-file fil)
+	(set! (fomus-file-parts file) parts)
+	(set! (fomus-file-global file) globs)
+	(set! (event-stream-args file) sets)
+	(if seq
+	    (begin (set! (container-subobjects seq) notes)
+		   seq)
+	    notes)))))
 
