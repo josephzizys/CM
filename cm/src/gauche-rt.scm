@@ -74,14 +74,19 @@
   ((socket :init-value #f)
    (remote-port :init-value #f :init-keyword :remote-port)
    (remote-host :init-value #f :init-keyword :remote-host)
-   (local-port :init-value #f :init-keyword :local-port))
+   (local-port :init-value #f :init-keyword :local-port)
+   (local-addr-in :init-value #f)
+   (host-addr-in :init-value #f))
   :name 'udp-socket)
 
  (define (make-udp-socket host port local-port)
    (let ((usock (make <udp-socket> :remote-host host :remote-port port :local-port local-port)))
      (slot-set! usock 'socket (make-socket PF_INET SOCK_DGRAM))
      (sys-fcntl (socket-fd (slot-ref usock 'socket)) F_SETFL O_NONBLOCK)
-     (socket-bind (slot-ref usock 'socket) (make <sockaddr-in> :host "127.0.0.1" :port local-port))
+     (slot-set! usock 'local-addr-in (make <sockaddr-in> :host "127.0.0.1" :port local-port))
+     (socket-bind (slot-ref usock 'socket) (slot-ref usock 'local-addr-in))
+     (slot-set! usock 'host-addr-in (make <sockaddr-in> :host (slot-ref usock 'remote-host)
+                                          :port (slot-ref usock 'remote-port)))
      usock))
 
 (define (udp-socket-close sock)
@@ -116,8 +121,7 @@
 (define (udp-socket-send sock mess bytes)
   bytes
   (socket-sendto (slot-ref sock 'socket) (u8vector->byte-string mess)
-                 (make <sockaddr-in> :host (slot-ref sock 'remote-host)
-                       :port (slot-ref sock 'remote-port))))
+                 (slot-ref sock 'host-addr-in )))
 
 
 
@@ -285,7 +289,8 @@
                   (if rp rp (slot-ref obj 'remote-port))
                   (if lp lp (slot-ref obj 'local-port))))
       (slot-set! obj 'open #t))
-    (set! *out* obj)))
+    (set! *out* obj)
+    obj))
 
 (define (osc-open . args)
   (apply open-io "osc.udp" #t args))
@@ -313,7 +318,8 @@
 (define-method* (send-msg message (io <osc-stream>))
   (multiple-value-bind (mess len)
     (format-osc message)
-  (send-osc mess io len)))
+    (send-osc mess io len)))
+
 
 ;;;send-bundle
 ;;; (send-bundle <time> <list> <osc-stream>)
@@ -473,15 +479,16 @@
 
 (define (rts-sprout obj at)
   (let ((wakeup #f))
-    (format #t "sprout!~%")
     (if (not *pstart*)
         (begin
           (mutex-lock! *qlock*)
-          (format #t "locked~%")
+          ;(format #t "locked~%")
           (set! wakeup (or (null? (%q-head *queue*))
                            (< at (%qe-time (%q-head *queue*)))))
           (sprout-aux obj at)
-          (mutex-unlock! *qlock*) (format #t "unlocked~%"))
+          (mutex-unlock! *qlock*)
+          ;(format #t "unlocked~%")
+          )
       (begin
         (set! wakeup (or (null? (%q-head *queue*))
                          (< at (%qe-time (%q-head *queue*)))))
@@ -497,7 +504,7 @@
 
 (define (rts-wakeup)
   (when *rts-wakeup-cond*
-    (condition-variable-signal! *rts-wakeup-cond*))
+    (condition-variable-broadcast! *rts-wakeup-cond*))
   (values))
 
 (define (rts-pause)
@@ -662,34 +669,23 @@
 
 
 
-;; (define (foo)
-;;   (format #t "~s~%" 1000))
+;; (define *sc* (sc-open))
+;; (sc-dumposc #t)
+;; (rts #f *sc*)
+;; (define *foo* '(0))
 
-;; (rts #f foo) 
-
-;; (define (tt1 n w)
-;;   (process repeat n
+;; (define (sc-simple-1 num wai)
+;;   (process repeat num with delta = (now)
 ;;            do
-;;            (format #t "foo!~%")
-;;            wait w))
-
-;; (rts #f )
-
-;; (sprout (tt1 20 1))
-;; (newline)
-;; (rts?)
-;; (rts-stop)
-;; (rts-reset)
-;; (rts-flush)
-;; *queue*
-;; (begin
-;;   (set! *qlock* #f)
-;;   (set! *rts-thread-lock* #f)
-;;   (set! *rts-wakeup-cond* #f)
-;;   (set! *rts-time-offset* #f))
-
-
-;; (slot-ref *qlock* 'state))
-;;   (mutex-unlock! *qlock*))
-
-;; (cdr *queue*)
+;; 	   (output (new simple :time (now) 
+;; 		       :freq (between 300 700)
+;; 		       :dur (between 10 20)
+;; 		       :amp .1
+;; 		       :pan (pickl '(-1.0 0 1.0))) :to *sc*)
+;;            do (begin
+;;                 (push (- (now) delta) *foo*)
+;;                 (set! delta (now)))
+;; 	   wait wai))
+;;
+;; (sprout (sc-simple-1 30 .1))
+;; (sprout (sc-simple-1 30 .01))
