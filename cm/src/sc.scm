@@ -270,13 +270,15 @@
       (u8vector-write arr fd))))
 
 
-(define-method* (open-io (obj <sc-file>) dir . args)
-  (next-method)
-  args
-  (if (and (eq? (io-direction obj) :output) (io-open obj))
-      (write-bundle 0 (list "/g_new" 1 0 0) obj)))
+;;(define-method* (open-io (obj <sc-file>) dir . args)
+;;  (next-method)
+;;  args
+;;  (if (and (eq? (io-direction obj) :output) (io-open obj))
+;;      (write-bundle 0 (list "/g_new" 1 0 0) obj)))
 
-
+(define-method* (initialize-io (io <sc-file>))
+  (when (eq? (io-direction io) ':output)
+    (write-bundle 0 (list "/g_new" 1 0 0) io)))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
            (define-class* <sc-cmd> (<event>) 
