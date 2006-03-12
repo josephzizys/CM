@@ -34,7 +34,10 @@
    (gauche
     (set! this-file (port-name (current-load-port)))
     (set! file-list (cons "gauche" file-list))
-    (set! file-list (append! file-list (list "gauche-rt" "rt-sc" ))))
+    (set! file-list (append! file-list (list "pm"
+					     "midishare"
+					     "gauche-rt"
+					     "rt-sc" ))))
 ;;    (set! file-list (append! file-list (list "gauche-rt" "rt" "rt-sc"))))
 ;;  (chicken
 ;;   (set! this-file 
