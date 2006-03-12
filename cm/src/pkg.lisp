@@ -240,7 +240,7 @@
            #:MidiIsConnected #:MidiSendIm #:MidiSend #:MidiSendAt
            #:MidiCountEvs #:typeNote #:typeKeyOn #:typeKeyOff
            #:typeKeyPress #:typeCtrlChange #:typeProgChange
-           #:typeChanPress #:typePitchWheel #:typePitchBendtypeSongPos
+           #:typeChanPress #:typePitchWheel #:typePitchBend #:typeSongPos
            #:typeSongSel #:typeClock #:typeStart #:typeContinue #:typeStop
            #:typeTune #:typeActiveSens #:typeReset #:typeSysEx
            #:typeStream #:typePrivate #:typeSeqNum #:typeTextual
