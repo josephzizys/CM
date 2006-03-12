@@ -59,8 +59,8 @@
         (*print-case* ':downcase)) ; noop in scheme
     (set! name
           (if name 
-              (format nil "~a \"~a\"" (class-name (class-of obj)) name)
-              (format nil "~a" (class-name (class-of obj)))))
+              (format #f "~a \"~a\"" (class-name (class-of obj)) name)
+              (format #f "~a" (class-name (class-of obj)))))
     (if pids
         (if (car pids)
             (if (cadr pids)
@@ -77,7 +77,7 @@
 (define-method* (open-io (obj <portmidi-stream>) dir . args)
   dir args
   (when (not (io-open obj)) ; already open...
-    (unless (pm:portmidi)
+    (unless (pm:PortMidi)
       (err "Can't open PortMidi connection: PortMidi not loaded."))
     (unless (event-stream-stream obj)
       (let ((getd (lambda (i d l)
@@ -117,12 +117,12 @@
         ;; error checks: no devices, bad devices, device already open,
         ;; missing devices
         (cond ((null? devs)
-               (err "open-io: no portmidi devices available."))
+               (err "open-io: no PortMidi devices available."))
               ((and idev (list-prop idev ':open))
-               (err "open-io: portmidi input device ~D (~S) is already open."
+               (err "open-io: PortMidi input device ~D (~S) is already open."
                     (list-prop idev ':id) (list-prop idev ':name)))
               ((and odev (list-prop odev ':open))
-               (err "open-io: portmidi output device ~D (~S) is already open."
+               (err "open-io: PortMidi output device ~D (~S) is already open."
                     (list-prop odev ':id) (list-prop odev ':name)))
               ((and (not idev)  (portmidi-input obj))
                (err "open-io: '~S' is not a valid :input id. Available devices are: ~S."
@@ -192,7 +192,7 @@
 ;; a "midi.port" convenience for working with just one stream...
 
 (define (portmidi-open . args)
-  (apply #'open-io "midi-port.pm" #t args))
+  (apply (function open-io) "midi-port.pm" #t args))
 
 (define (portmidi-open? . args)
   (with-args (args &optional (port (find-object "midi-port.pm" )))
@@ -209,7 +209,7 @@
   (with-args (args &optional (port (find-object "midi-port.pm" )))
     (if (portmidi-open? port)
         (cond ((receiver? port)
-               (err "portmidi-close: Can't close portmidi because a receiver is currently running."))
+               (err "portmidi-close: Can't close PortMidi because a receiver is currently running."))
               (else
                (close-io port ':force)
                port))
@@ -308,17 +308,17 @@
 ;;; messages and CM midi messages in realtime
 
 (define (pm:now )
-  (pm:Time))
+  (pt:Time))
 
 (define (pm:output msg . args)
   (with-args (args &key at (to *out*) raw)
     (cond ((number? msg)
            (pm:WriteShort (second (io-open to))
-                          (or at (pm:Time))
+                          (or at (pt:Time))
                           (if raw msg (midi-message->pm-message msg))))
           ((string? msg)
            (pm:WriteSysEx (second (io-open to))
-                          (or at (pm:time))
+                          (or at (pt:Time))
                           msg))
           (else
            (pm:Write (second (io-open to))
