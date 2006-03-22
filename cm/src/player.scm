@@ -44,55 +44,7 @@
 (define (player-stream-current-track-set! obj track)
   (list-set! (event-stream-stream obj) 3 track))
 
-(define-method* (initialize-io (obj <player-stream>))
-  (channel-tuning-init obj)
-  (let ((trk (or (player-stream-track obj)
-                 1)))
-    ;; :replace mode sets tracknum to a user specified num or 1
-    ;; :add mode initializes tracknum if it is not already set and
-    ;; increments the track number after each pass.
-    (case (player-stream-mode obj)
-      ((:replace replace)
-       (player-stream-current-track-set! obj trk))
-      ((:add add)
-       (unless (player-stream-current-track obj)
-         (player-stream-current-track-set!
-          obj trk)))
-      (else
-       (err "Player mode ~s not ~S, :replace, or :add."
-            false (player-stream-mode obj))))
-    ;; allocate new seq to store events this pass.
-    (set! (player-stream-seq obj) (MidiNewSeq))
-    obj))
 
-(define-method* (deinitialize-io (obj <player-stream>))
-  (next-method)
-  ;; pass completed seq to player
-  ;; If play is #t then the seq is played.
-  ;; 
-  (let ((refn (midishare-stream-refnum obj))
-        (mode (player-stream-mode obj))
-        (trkn (player-stream-current-track obj))
-        (data (player-stream-seq obj))
-        (play (player-stream-play obj) ))
-    ;; :replace mode resets player with  new seq
-    ;; :add mode adds seq as next track and then
-    ;; increments the tracknum for the next run.
-    (case mode
-      ((:replace replace)
-       (ms:SetAllTrackPlayer refn data 500))
-      ((:add add)
-       (ms:SetTrackPlayer refn trkn data)
-       ;; increment track number
-       (player-stream-current-track-set! obj (+ trkn 1)))
-      ((#f )
-       (set! play #f))
-      (else
-       (err "Player mode ~s not :replace or :add." mode)))
-
-    ;; call player if :play is t
-    (when play (player-play obj))
-    obj))
 
 ;;;
 ;;; write-midi-message and write-event
@@ -129,8 +81,12 @@
            (error "Can't convert amplitude ~s to midi velocity."
                   amp)))
     (ensure-microtuning key chn stream)
-    (set! evt (ms:new typeNote :port prt :chan chn 
-                      :pitch key :vel amp :dur dur))
+    (set! evt (ms:MidiNewEv ms:typeNote))
+    (ms:port evt prt)
+    (ms:chan evt chn)
+    (ms:pitch evt key)
+    (ms:vel evt amp)
+    (ms:dur evt dur)
     (ms:ref evt trk)
     (ms:date evt beg)
     (ms:MidiAddSeq seq evt)
@@ -140,12 +96,7 @@
 ;;; Top-level control over player and sequences
 ;;;
               
-(define-method* (player-play (obj <player-stream>))
-  (player-set-sync obj kExternalSync)
-  ;; MS per Quarter
-  (player-set-tempo obj (player-stream-tempo obj))
-  (player-start obj)
-  obj)
+
   
 ;(define-method* (player-clear obj <player-stream>)
 ;  ;; free seq and reset internal track number
@@ -204,6 +155,13 @@
     (ms:SetTempoPlayer ref (bpm->usec (player-stream-tempo obj)))
     obj))
 
+(define-method* (player-play (obj <player-stream>))
+  (player-set-sync obj kExternalSync)
+  ;; MS per Quarter
+  (player-set-tempo obj (player-stream-tempo obj))
+  (player-start obj)
+  obj)
+
 ;;;
 ;;; soloing/muting
 ;;;
@@ -230,6 +188,55 @@
   (let ((ref (midishare-stream-refnum obj)))
     (unless ref (err "~s not open." obj))
     (ms:SetParamPlayer ref track kSolo kSoloOff)
+    obj))
+
+(define-method* (initialize-io (obj <player-stream>))
+  (channel-tuning-init obj)
+  (let ((trk (or (player-stream-track obj)
+                 1)))
+    ;; :replace mode sets tracknum to a user specified num or 1
+    ;; :add mode initializes tracknum if it is not already set and
+    ;; increments the track number after each pass.
+    (case (player-stream-mode obj)
+      ((:replace replace)
+       (player-stream-current-track-set! obj trk))
+      ((:add add)
+       (unless (player-stream-current-track obj)
+         (player-stream-current-track-set!
+          obj trk)))
+      (else
+       (err "Player mode ~s not ~S, :replace, or :add."
+            false (player-stream-mode obj))))
+    ;; allocate new seq to store events this pass.
+    (set! (player-stream-seq obj) (MidiNewSeq))
+    obj))
+
+(define-method* (deinitialize-io (obj <player-stream>))
+  (next-method)
+  ;; pass completed seq to player
+  ;; If play is #t then the seq is played.
+  ;; 
+  (let ((refn (midishare-stream-refnum obj))
+        (mode (player-stream-mode obj))
+        (trkn (player-stream-current-track obj))
+        (data (player-stream-seq obj))
+        (play (player-stream-play obj) ))
+    ;; :replace mode resets player with  new seq
+    ;; :add mode adds seq as next track and then
+    ;; increments the tracknum for the next run.
+    (case mode
+      ((:replace replace)
+       (ms:SetAllTrackPlayer refn data 500))
+      ((:add add)
+       (ms:SetTrackPlayer refn trkn data)
+       ;; increment track number
+       (player-stream-current-track-set! obj (+ trkn 1)))
+      ((#f )
+       (set! play #f))
+      (else
+       (err "Player mode ~s not :replace or :add." mode)))
+    ;; call player if :play is t
+    (when play (player-play obj))
     obj))
 
 ;;;

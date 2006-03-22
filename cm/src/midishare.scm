@@ -510,7 +510,7 @@
     ;;(ms:date evt beg)
     (ms:field evt 0 (midi-event-data1 obj))
     (if (= typ ms:typePitchBend)
-        (bend evt (midi-pitch-bend-bend obj))
+        (ms:bend evt (midi-pitch-bend-bend obj))
         (if dat (ms:field evt 1 dat)))
     (ms:MidiSendAt (midishare-stream-refnum stream) evt
                    (+ (object-time stream) 

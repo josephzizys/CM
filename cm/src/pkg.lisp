@@ -248,9 +248,9 @@
            #:typeMarker #:typeCuePoint #:typeChanPrefix #:typeEndTrack
            #:typeTempo #:typeSMPTEOffset #:typePortPrefix #:typeKeySign
            #:typeTimeSign #:MidiNewEv #:port #:chan #:field #:bend #:text
-           #:ref #:date #:evtype #:MidiCopyEv #:MidiFreeEv #:MidiAddField
-           #:MidiTask #:MidiSetRcvAlarm #:MidiGetEv #:nullptrp #:nullptr
-           #:MidiFlushEvs
+           #:pitch #:vel #:dur #:ref #:date #:evtype #:MidiCopyEv
+	   #:MidiFreeEv #:MidiAddField #:MidiTask #:MidiSetRcvAlarm
+	   #:MidiGetEv #:nullptrp #:nullptr #:MidiFlushEvs
            ;; player
            #:OpenPlayer #:ClosePlayer #:midiNewSeq #:MidiAddSeq
            #:StartPlayer #:ContPlayer #:StopPlayer #:PausePlayer
@@ -290,6 +290,9 @@
 (defstub MidiNewEv)
 (defstub port)
 (defstub chan)
+(defstub pitch)
+(defstub vel)
+(defstub dur)
 (defstub field)
 (defstub bend)
 (defstub text)
@@ -491,3 +494,4 @@
              #:midishare-receive #:midishare-receive-stop)
            :midishare)
   )
+
