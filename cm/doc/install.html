@@ -37,15 +37,16 @@
   </li>
   <li><a href="#programs">Programs and Interfaces</a>
     <ol>
-      <li><a href="#cffi">CFFI</a></li>
-      <li><a href="#clm">CLM</a></li>
-      <li><a href="#cmn">CMN</a></li>
+      <li><a href="#cffi">Common Lisp Foreign Function Interface</a> (CFFI)</li>
+      <li><a href="#clm">Common Lisp Music</a> (CLM)</li>
+      <li><a href="#cmn">Common Music Notation</a> (CMN)</li>
       <li><a href="#cm-gtk">CM-GTK</a></li>
       <li><a href="#fomus">Fomus</a></li>
       <!-- <li><a href="#lambda-gtk">Lambda GTK</a></li>  -->
       <li><a href="#midishare">Midishare Interface</a></li>
       <li><a href="#player">Player Interface</a></li>
       <li><a href="#portmidi">Portmidi Interface</a></li>
+      <li><a href="#rts">Real Time Scheduler</a> (RTS)</li>
     </ol>
   </li>
   <li><a href="#appendix">Appendix</a> </li>
@@ -83,6 +84,7 @@ drwxr-xr-x   64 hkt  admin  2176 25 Oct 12:46 cmn/
 drwxr-xr-x   64 hkt  admin  2176 11 Nov 08:10 fomus/
 drwxr-xr-x    7 hkt  admin   238 26 Oct 18:04 midishare/
 drwxr-xr-x    5 hkt  admin   170 21 Nov 17:44 portmidi/
+drwxr-xr-x   23 hkt  wheel   782 16 Mar 13:29 rts/
 </pre>
 </div>
 
@@ -460,12 +462,12 @@ See the <a href="dict/midishare-topic.html">midishare</a> topic help for more in
 <h3 id="player">Player Interface</h3>
 <p><code>(use-system :player)</code></p>
 <p>
-A Common Lisp interface to Midishare's Player sequencer.
+A Common Lisp interface to Midishare's Player sequencer for Common Lisp and Gauche Scheme.
 </p>
 <ul>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172112">Midishare interface</a></li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Requirements:  <a href="http://midishare.sourceforge.net/">Midishare</a>, <a href="#cffi">CFFI</a></li>
+<li>Requirements: <a href="http://midishare.sourceforge.net/">Midishare</a>, for Common Lisp: <a href="#cffi">CFFI</a>, for Gauche Scheme: <a href="http://homepage.mac.com/naoki.koguro/prog/c-wrapper/index.html">c-wrapper</a></li>
 <li>Installation: See <a href="#midishare">Midishare Interface</a></li>
 </ul>
 
@@ -489,6 +491,27 @@ and Windows libraries are included in tarball).</li>
 <p>
 See the <a href="dict/portmidi-topic.html">Portmidi</a> topic help for more information about working with Portmidi in CM.
 </p>
+
+
+
+<h3 id="rts">Real Time Scheduler</h3>
+<p><code>(use-system :rts)</code></p>
+<p>
+Real time scheduling services for supported Lisp/OS systems. Includes socket support for sending <a href="http://www.cnmat.berkeley.edu/OpenSoundControl/">Open Sound Control<a/> (OSC) messages to applications like SuperCollider, MAX/MSP and Pd.
+</p>
+
+<ul>
+<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">RTS</a></li>
+<li>Supporting: Gauche, OpenMCL, SBCL</li>
+<li>Requirements:  <a href="http://common-lisp.net/project/cffi/">CFFI</a> </li>
+</li>
+<li>Installation: Restore the RTS sources under your Lisp installation directory.</li>
+</ul>
+
+<p>
+See the <a href="dict/rts-topic.html">RTS</a> topic help for more information about working with RTS.
+</p>
+
 
 <h2 id="appendix">Appendix</h2>
 
