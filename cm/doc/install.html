@@ -30,44 +30,45 @@
 
 <h2>Contents</h2>
 <ol>
-  <li><a href="#preinstallation">Pre-installation</a></li>
-  <li><a href="#installing">Installing Sources</a></li>
+  <li><a href="#preinstallation">Before Installing</a></li>
+  <li><a href="#tarball">Tarball Installation</a></li>
+  <li><a href="#cvs">CVS Installation</a></li>
   <li>
     <a href="#starting">Starting Common Music</a>
   </li>
   <li><a href="#programs">Programs and Interfaces</a>
     <ol>
-      <li><a href="#cffi">Common Lisp Foreign Function Interface</a> (CFFI)</li>
+      <li><a href="#cffi">Common Foreign Function Interface</a> (CFFI)</li>
       <li><a href="#clm">Common Lisp Music</a> (CLM)</li>
       <li><a href="#cmn">Common Music Notation</a> (CMN)</li>
       <li><a href="#cm-gtk">CM-GTK</a></li>
       <li><a href="#fomus">Fomus</a></li>
       <!-- <li><a href="#lambda-gtk">Lambda GTK</a></li>  -->
       <li><a href="#midishare">Midishare Interface</a></li>
+      <li><a href="#osc">Open Sound Control</a> (OSC)</li>
       <li><a href="#player">Player Interface</a></li>
       <li><a href="#portmidi">Portmidi Interface</a></li>
-      <li><a href="#rts">Real Time Scheduler</a> (RTS)</li>
+      <li><a href="#rts">Real Time Scheduling</a> (RTS)</li>
     </ol>
   </li>
   <li><a href="#appendix">Appendix</a> </li>
 </ol>
 
-<h2 id="preinstallation">Pre-installation</h2>
+<h2 id="preinstallation">Before Installing</h2>
 
-<p>
-To build Common Music from its sources you must have write permission
-in an installation directory, a working <a href="#commands">Lisp
-command</a> on your execution path and some familiarity with the
-shell, or terminal, application.  If you are going to use CM in
-conjunction with other lisp programs like CLM or Fomus, or with Lisp
-interfaces to external programs such as Portmidi and Midishare,
-consider creating a common "parent" directory to contain the different
-Lisp systems so that you can load them transparently
-using <a href="dict/use-system-fn.html">use-system</a>. It does not
-matter where on the file system this Lisp installation directory is
-located; for sake of illustration this document assumes that the lisp
-software systems are all installed under "/usr/local/lisp".
-</p>
+<p> In order to build Common Music from its sources you must have
+write permission in an installation directory, a working <a
+href="#commands">Lisp command</a> on your execution path and some
+familiarity with the shell, or terminal, application.  If you are
+going to use CM in conjunction with other lisp programs like CLM or
+Fomus, or with Lisp interfaces to external programs such as Portmidi
+and Midishare, consider creating a common "parent" directory to
+contain the different Lisp systems so that you can load them
+transparently using <a
+href="dict/use-system-fn.html">use-system</a>. It does not matter
+where on the file system this Lisp installation directory is located;
+for sake of illustration this document assumes that the lisp software
+systems are all installed under "/usr/local/lisp".  </p>
 
 <div class="float">
 <p class="captxt">Installing Lisp music packages under a common parent
@@ -88,16 +89,12 @@ drwxr-xr-x   23 hkt  wheel   782 16 Mar 13:29 rts/
 </pre>
 </div>
 
-<h2 id="installing">Installing Sources</h2>
+<h2 id="tarball">Tarball Installation</h2>
 <p>
-Sources for stable and developmental releases can be downloaded as
-tarball archives (cm.tar.gz) or via anonymous CVS.
-</p>
-
-<h3 id="tarball">Tarball Installation</h3>
+Sources for stable and developmental releases can be downloaded as tarball archives (*.tar.gz or *.tgz).
+</o>
 <ul>
-<li>
-Stable release tarballs are available from
+<li> Stable release tarballs are available from
  CM's <a href="http://www.sf.net/projects/commonmusic">Sourceforge
  Project</a> page.
 </li>
@@ -118,7 +115,7 @@ $ <span class="input">cd /usr/local/lisp</span>
 $ <span class="input">tar -zxf cm.tar.gz</span>
 </pre>
 
-<h3 id="cvs">CVS Installation</h3>
+<h2 id="cvs">CVS Installation</h2>
 
 <p>
 Sources to Common Music are maintained in a CVS repository organized
@@ -325,9 +322,11 @@ The following Common Lisp packages can be loaded with
 
 <h3 id="cffi">CFFI</h3>
 <p><code>(use-system :cffi)</code></p>
-The Common Foreign Function interface for Common Lisp, by James Bielman and Luís Oliveira.  Required by the <a href="#portmidi">Portmidi</a> and <a href="#midishare">Midishare</a> interfaces.
+
+The Common Foreign Function interface for Common Lisp. Required by the <a href="#portmidi">Portmidi</a>, <a href="#midishare">Midishare</a> and <a href="#rts">RTS</a> interfaces.
 
 <ul>
+<li>Authors: James Bielman, Luís Oliveira</li>
 <li>Homepage: <a href="http://common-lisp.net/project/cffi/">
 http://common-lisp.net/project/cffi/</a></li>
 <li>Downloads: <a href="http://common-lisp.net/project/cffi/tarballs/">http://common-lisp.net/project/cffi/tarballs/</a></li>
@@ -339,10 +338,10 @@ directory.</li>
 <h3 id="clm">CLM</h3>
 <p><code>(use-system :clm)</code></p>
 <p>
-Common Lisp Music, by William Schottstaedt. A sound synthesis package
-for Common Lisp and Scheme (Guile/Snd).
+A sound synthesis package for Common Lisp and Scheme (Guile/Snd).
 </p>
 <ul>
+<li>Author: William Schottstaedt</li>
 <li>Homepage: <a href="http://www-ccrma.stanford.edu/software/clm/">
 http://www-ccrma.stanford.edu/software/clm/
 </a></li>
@@ -362,10 +361,10 @@ to work with the <a href="dict/process-mac.html">process</a> macro.
 <h3 id="cmn">CMN</h3>
 <p><code>(use-system :cmn)</code></p>
 <p>
-Common Music Notation, by William Schottstaedt. A music notation
-package for Common Lisp.
+A music notation package for Common Lisp that outputs to EPS.
 </p>
 <ul>
+<li>Author: William Schottstaedt</li>
 <li>Homepage: <a href="http://www-ccrma.stanford.edu/software/cmn/">
 http://www-ccrma.stanford.edu/software/cmn/
 </a></li>
@@ -380,9 +379,10 @@ directory.</li>
 <h3 id="cm-gtk">CM-GTK</h3>
 <p><code>(use-system :cm-gtk)</code></p>
 <p>
-Graphical User Interface for CM implemented in GTK+2, by Rick Taube.
+Graphical User Interface for CM implemented in GTK+2.
 </p>
 <ul>
+<li>Author: Rick Taube</li>
 <li>Downloads:   <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172119">cm-gtk</a></li>
 <li>Requirements: X Windows, GTK+ 2.0 (OSX: XCode developer, Fink)</li>
 <li>Supporting: Linux: SBCL 0.7.9 or higher, CMUCL 19b or higher; OSX: OpenMCL 1.0 or higher</li>
@@ -395,14 +395,13 @@ See the <a href="dict/plotter-topic.html">Plotter</a> and <a href="dict/cmio-top
 </p>
 
 
-
-
 <h3 id="fomus">Fomus</h3>
 <p><code>(use-system :fomus)</code></p>
 <p>
-Fomus, by David Psenicka. A music notation package for Common Lisp.
+A music notation package for Common Lisp that outputs to Lilypond, CMN and MusicXML.
 </p>
 <ul>
+<li>Author: David Psenicka</li>
 <li>Homepage: <a href="http://common-lisp.net/project/fomus/">
 http://common-lisp.net/project/fomus</a></li>
 <li>Downloads:  CVS only</li>
@@ -416,9 +415,10 @@ http://common-lisp.net/project/fomus</a></li>
 <h3 id="lambda-gtk">Lambda-GTK</h3>
 <p><code>(use-system :lambda-gtk)</code></p>
 <p>
-Lambda GTK, by Rick Taube. A Common Lisp interface to GTK+ 2.0.
+A Common Lisp interface to GTK+ 2.0.
 </p>
 <ul>
+<li>Author: Rick Taube</li>
 <li>Homepage: <a href="http://common-lisp.net/project/lambda-gtk/">
 http://common-lisp.net/project/cffi/</a></li>
 <li>Downloads: not available yet.</li>
@@ -439,6 +439,7 @@ to <a href="http://midishare.sourceforge.net/">Midishare</a>, a
 real-time MIDI operating system by <a href="http://www.grame.fr">Grame</a>.
 </p>
 <ul>
+<li>Author: Rick Taube</li>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172112">Midishare interface</a>
 </li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
@@ -465,10 +466,27 @@ See the <a href="dict/midishare-topic.html">midishare</a> topic help for more in
 A Common Lisp interface to Midishare's Player sequencer for Common Lisp and Gauche Scheme.
 </p>
 <ul>
+<li>Author: Rick Taube</li>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172112">Midishare interface</a></li>
 <li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
 <li>Requirements: <a href="http://midishare.sourceforge.net/">Midishare</a>, for Common Lisp: <a href="#cffi">CFFI</a>, for Gauche Scheme: <a href="http://homepage.mac.com/naoki.koguro/prog/c-wrapper/index.html">c-wrapper</a></li>
 <li>Installation: See <a href="#midishare">Midishare Interface</a></li>
+</ul>
+
+
+<h3 id="osc">Open Sound Control</h3>
+<p><code>(use-system :osc)</code></p>
+<p>
+Support for real time  <a href="http://www.cnmat.berkeley.edu/OpenSoundControl/">OSC</a> communication with external applications like SuperCollider, PD and Max/MSP. 
+</p>
+
+<ul>
+<li>Author: Todd Ingalls</li>
+<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">OSC</a></li>
+<li>Supporting: Gauche, OpenMCL, SBCL</li>
+<li>Requirements:  <a href="http://common-lisp.net/project/cffi/">CFFI</a> </li>
+</li>
+<li>Installation: Restore the OSC sources under your Lisp installation directory.</li>
 </ul>
 
 <h3 id="portmidi">Portmidi Interface</h3>
@@ -492,15 +510,14 @@ and Windows libraries are included in tarball).</li>
 See the <a href="dict/portmidi-topic.html">Portmidi</a> topic help for more information about working with Portmidi in CM.
 </p>
 
-
-
-<h3 id="rts">Real Time Scheduler</h3>
+<h3 id="rts">Real Time Scheduling</h3>
 <p><code>(use-system :rts)</code></p>
 <p>
-Real time scheduling services for supported Lisp/OS systems. Includes socket support for sending <a href="http://www.cnmat.berkeley.edu/OpenSoundControl/">Open Sound Control<a/> (OSC) messages to applications like SuperCollider, MAX/MSP and Pd.
+Real time scheduling services for supported Lisp/OS systems. 
 </p>
 
 <ul>
+<li>Authors: Todd Ingalls, Michael Klingbeil, Rick Taube</li>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">RTS</a></li>
 <li>Supporting: Gauche, OpenMCL, SBCL</li>
 <li>Requirements:  <a href="http://common-lisp.net/project/cffi/">CFFI</a> </li>
@@ -512,6 +529,7 @@ Real time scheduling services for supported Lisp/OS systems. Includes socket sup
 See the <a href="dict/rts-topic.html">RTS</a> topic help for more information about working with RTS.
 </p>
 
+<hr />
 
 <h2 id="appendix">Appendix</h2>
 
