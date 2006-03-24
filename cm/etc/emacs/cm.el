@@ -61,7 +61,7 @@
     (setq inferior-lisp-program "cm"))
 
 (defvar inferior-lisp-display
-  (if (member 'aquamacs features) 'frame 'buffer)
+  (if (member 'aquamacs features) 'frame 'window)
   "The display mode for the inferior lisp buffer. If the value is
 FRAME then inferior lisp starts in a separate frame; if the value
 is WINDOW then a new window in the current frame is used,
@@ -105,9 +105,9 @@ given both the shell command and display mode are prompted."
   (interactive (list (if prefix-arg
 			 (read-string "Command to start CM: " "cm") 
 		       nil)
-		     (if prefix-arg (slime-repl-choose-display))))
-  (unless program (setq program inferior-lisp-program))
-  (unless display (setq display inferior-lisp-display))
+		     (if prefix-arg (slime-repl-choose-display) nil)))
+  (when program (setq inferior-lisp-program program))
+  (when display (setq inferior-lisp-display display))
   (let* ((conn (slime-connected-p))
 	 (buff (if conn (slime-repl-buffer)))
 	 (repl (or buff "*inferior lisp*")))
