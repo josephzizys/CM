@@ -20,7 +20,6 @@
 <ul class="nav">
   <li class="nav1"><a href="cm.html">Home Page</a></li>
   <li class="navn"><a href="dict/index.html">Dictionary</a></li>
-  <li class="navn"><a href="../etc/examples/">Examples</a></li>
 </ul>
 </div>
 <hr class="inv"/>
@@ -186,14 +185,18 @@ $ <span class="input">cvs update</span>
 
 <p>
 You can also checkout several optional packages from the same Sourceforge
-repository: a GTK <a href="#cm-gtk">GUI</a>, an interface
-to <a href="#midishare">Midishare</a> and an interface
-to <a href="#portmidi">Portmidi</a>:
+repository: a GTK <a href="#cm-gtk">GUI</a>, and interfaces
+to <a href="#midishare">Midishare</a>,
+ <a href="#osc">OSC</a> messaging,
+<a href="#portmidi">Portmidi</a> and
+ <a href="#osc">RTS</a>:
+
 </p>
 <pre class="shell">
 $ <span class="input">cvs checkout -P cm-gtk</span>
 $ <span class="input">cvs checkout -P midishare</span>
 $ <span class="input">cvs checkout -P portmidi</span>
+$ <span class="input">cvs checkout -P rts</span>
 </pre>
 </li>
 

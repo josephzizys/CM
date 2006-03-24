@@ -1,9 +1,19 @@
-CM 2.7.0 
+CM 2.8.0 
+
+o CM loading modularized. External software is now loaded using
+  use-system. external systems loadable via use-system:
+    :cffi, :clm, :cmn, :fomus, :cm-gtk, :midishare, :portmidi, 
+    :player, :osc, :rts
+  See doc/install.html for more information.
+
+o cm.el converted to use Slime and doc/emacs.html completely rewritten.
+
+o Tutorials added: see etc/tutorials/tutorials.html
 
 o Incompatible change: RANDOM pattern renamed WEIGHTING to avoid
   conflict with inherited common lisp symbol.
 
-o Added :adjustable feature to weighting pattern. If set, its a scaler
+o Added :adjustable option to weighting pattern. If set, its a scaler
   on the weight of the elements each time they are selected from the
   pattern. For example, :adjustable .95 causes the just-selected item
   to become less likely to be picked the next time becuase its weight
@@ -56,11 +66,14 @@ o CM supports "real time" scheduling and receiving in the following
   implementations:
     OpenMCL/OSX
     SBCL/Linux
+    Gauche/Scheme
   See the documentation on RTS, SET-RECEIVER! and PORTMIDI for more
   information.
 
-o SPEAR data can be imported into m
-O CM home page http://commonmusic.sf.net now reflects the CVS HEAD
+o SPEAR data can be imported into CM (spear support is currently 
+  undocumented, look in src/spectral.scm)
+
+o CM home page http://commonmusic.sf.net now reflects the CVS HEAD
   version and is updated every four hours. A nightly CVS snapshot is
   now available on the home page.
 
