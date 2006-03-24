@@ -197,12 +197,28 @@
    (make-pathname
     :directory (pathname-directory ccl::*heap-image-name*))))
 
+(defun save-cm (path &rest args)
+  (declare (ignore args) (special *cm-readtable*))
+  (setf ccl::*inhibit-greeting* t)
+  (setf ccl:*lisp-startup-functions*
+        (append ccl:*lisp-startup-functions*
+                (list #'(lambda ()
+                          (declare (special *cm-readtable*))
+                          (setf *package* (find-package :cm))
+                          (setf *readtable* *cm-readtable*)
+                          (load-cminit)
+                          (cm-logo)
+                          ))))
+  (ccl:save-application path :application-class *cm-application-class*))
+
+
+#||
 (defun save-cm (&optional path &rest args &key carbon slime-directory 
 			  swank-port)
   ;; if user calls this function, path is path directory to save app in.
   ;; else (called by make-cm) path is  cm/bin/openmcl*/cm.image
   (declare (ignore args) (special *cm-readtable*))
-  (let* ((cmroot (symbol-value 'cl-user::*cm-root*))
+  (let* ((cmroot (symbol-value 'cl-user::*cm-directory*))
          (appdir (cond ((and (not path)
                              (boundp 'cl-user::binary-dir))
                         (symbol-value 'cl-user::binary-dir))
@@ -245,6 +261,7 @@
       (normal-setup))
     (ccl:save-application (merge-pathnames "cm.image" exedir)
                           :application-class *cm-application-class*)))
+||#
 
 (defun normal-setup ()
   (setf ccl::*inhibit-greeting* t)
