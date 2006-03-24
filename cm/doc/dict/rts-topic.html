@@ -15,7 +15,8 @@
 <span class="syntax">RTS</span></dd>
 </dl>
 
-<p>Real time scheduling (RTS) support is provided in the following Lisp implementations:
+<p>Support for Real time Scheduling (RTS) is available for the following
+Lisp implementations:
 </p>
 
 <ul>
@@ -24,95 +25,76 @@
 <li>OpenMCL/OS X</li>
 </ul>
 
-<p>Support consists of the following set of features:
+<p> To enable RTS in Common Lisp do:</p>
+
+<blockquote>
+<pre>(<a href="use-system-fn.html">use-system</a> <span class="keyword">:rts</span>)</pre>
+</blockquote>
+
+<p>Support is automatically loaded in Gauche Scheme.</p>
+
+<h4>Implementation</h4>
+
+
+<p>Loading the RTS system adds the following set of features to Common Music:
 </p>
 <ul>
-<li>Real time scheduling using <a href="rts-fn.html"><code>rts</code></a> and top-level calls to <a href="sprout-fn.html"><code>sprout</code></a></li>
+<li>Real time scheduling.</li>
 <li>Setting receive hooks in real time streams.</li>
 <li>Socket support for reading and writing OSC messages.</li>
 <li>The osc-stream and sc-stream classes.</li>
 </ul>
 
-<p>
-<code>rts</code> and <a href="events-fn.html">events</a> are "source
-compatible" scheduling environments, meaning
-<a href="process-mac.html">process</a> definitions do not have to be
-modified to run in either environment, and scheduling functions such
-as <a href="now-fn.html">now</a>, <a href="output-fn.html">output</a>
-and <a href="sprout-fn.html">sprout</a> behave identically in both
-schedulers.  The most important differences between the two schedulers
-are:<!-- <code>rts</code> and <a href="events-fn.html">events</a>
-(aside from the obvious real time scheduling aspect) are: -->
 
-<ul>
-<li>the REPL is not blocked by <code>rts</code> while the scheduler is
-running.
-</li>
-<li><code>rts</code> can be started without objects and,
-if <var>end</var> is false, <code>rts</code> will continue to run
-until it is explicitly stopped, even if its queue is empty.
-</li>
-<li> <a href="sprout-fn.html">sprout</a> can be called from the REPL
-or a <a href="receive-fn.html">receive</a> hook to add objects
-to <code>rts</code> "interactively", as long as <code>rts</code> is
-running.
-</li>
-<li>The values returned by <a href="now-fn.html">now</a> reflect the
-current real time in seconds.</li>
-</ul>
 
-<p>
-Although process definitions do not have to be changed to run under
-<code>rts</code>, real time scheduling does place timing demands on
-software that non-real time scheduling does not. Process definitions
-should avoid consing and creating lots of temporary structure or being
-otherwise wasteful and inefficient.  Consider reusing events rather
-than creating new one for each output statement.  If you are working
-with MIDI, consider using low-level,
+
+<p> The <a href="rts-fn.html"><code>rts</code></a> scheduler is source
+compatible with <a href="events-fn.html"><code>events</code></a>,
+which means that the same <a
+href="process-mac.html"><code>process</code></a> definition can run in
+both environments.  The most visible differences between the two
+schedulers are:<!-- <code>rts</code> and <a
+href="events-fn.html">events</a> (aside from the obvious real time
+scheduling aspect) are: -->
+
+<ul> <li>the REPL is not blocked by <a
+href="rts-fn.html"><code>rts</code></a> while the scheduler is
+running.  </li>
+
+<li> <a href="rts-fn.html"><code>rts</code></a> continues to run until it is
+explicitly stopped, even if its queue is empty.  </li>
+
+<li> <a
+href="sprout-fn.html">sprout</a> is called interactively from the REPL
+or from a <a href="receive-fn.html">receive hook</a> to add objects to
+<code>rts</code>.  </li> <li>Values returned by <a
+href="now-fn.html">now</a> under RTS reflect the current real time in
+seconds.</li> </ul>
+
+<p> Although process definitions do not have to be changed to run
+under <code>rts</code>, real time scheduling does place timing demands
+on software that non-real time scheduling does not. For example,
+process definitions should avoid consing and creating lots of
+temporary structure or being otherwise wasteful and inefficient.
+Consider reusing events rather than creating new one for each output
+statement.  If you are working with MIDI, consider using low-level,
 consless <a href="midi-topic.html#midi_messages">MIDI messages</a> in
-place of <a href="midi-cls.html">midi</a> objects.
-</p>
+place of <a href="midi-cls.html">midi</a> objects.  </p>
 
-<h4>Implementation:</h4>
+<p> CM uses posix threads or an implementation specific
+mechanism to implement <code>rts</code>. The availability of either
+method depends on the underlying Lisp implementation. </p>
 
-<p>
-CM uses either native threads or a 1 millisecond periodic task to
-implement <code>rts</code>. The availability of either method depends
-on the underlying Lisp implementation:
-</p>
-
-<div class="float" >
-<p class="captxt">
-<span class="floatlabel">Table 1.</span> Implementation
-of <code>rts</code> scheduling in the supported Lisp implementations
-(most current release).  NT=native threads, PP=periodic polling.
-</p>
-
-<table class="float">
-<tr >
-<td>&nbsp;</td>
-<th class="col" align="center" style="padding-left:2em;padding-right:2em;">Linux</th>
-<th class="col" align="center" style="padding-left:2empadding-right:2em;">OS X</th>
-<th class="col" align="center" style="padding-left:2em;padding-right:2em;">Windows</th>
-</tr>
-<tr><td style="font-weight:bold;">CMUCL</td>    <td align="center">PP</td><td > </td><td></td></tr>
-<tr><td style="font-weight:bold;">OpenMCL</td>  <td align="center"></td><td align="center">NT, PP</td><td></td></tr>
-<tr><td style="font-weight:bold;">SBCL</td>     <td align="center">NT, PP</td><td align="center"></td><td></td></tr>
-</table>
-
-
-</div>
-
-<h5>Notes:</h5>
+<h4>Limitations</h4>
 
 <ol>
-<li>Both threaded and periodic versions of <code>rts</code> are
+<!-- li>Both threaded and periodic versions of <code>rts</code> are
 supported in OpenMCL and SBCL.  The default implementation is
 threaded. To try out the periodic version set <code>*rts-type*</code>
 to <code class="keyword">:periodic</code>.
-</lu>
+</li -->
 
-<li>Periodic polling has several consequences:
+<!-- li>Periodic polling has several consequences:
 </p>  
 <ul>
 <li>Using the GUI at the same time as periodic rts or periodic
@@ -126,14 +108,39 @@ receiver places into its queue until the next tick.</li>
 millisecond tick or things will drift.
 </li>
 </ul>
-</li>
+
+</li -->
+
+<li>SBCL/Linux: If you use RTS with Portmidi, do not load the RTS
+system until after you have opened a Portmidi connection. If you load
+RTS before you open Portmidi then SBCL segfaults. I don't know why
+this happens.</li>
 
 <li>
-How close <code>rts</code> actually gets to accurate real time
-rendering depends on a number of factors, including how accurate the
-Lisp implementation's thread sleeping/periodic tasks are, how
-short the time deltas between musical events are, whether process code
-is compiled or interpreted, how much garbage is generated, and so on.
+How accurate RTS timing is depends on a number of factors, including
+how accurate the Lisp implementation's thread sleeping/periodic tasks
+are, how short the time deltas between musical events are, whether
+process code is compiled or interpreted, how much garbage is
+generated, and so on.
 </li>
 </ol>
 
+
+<h4>See also:</h4>
+<ul>
+
+<li><a href="rts-fn.html"><code>rts</code></a> [Function]</li>
+
+<li><a href="set-receiver-fn.html"><code>set-receiver!</code></a> [Function]</li>
+
+</ul>
+
+</div> <!-- end content -->
+<hr class="inv"/>
+<!-- Rtster -->
+<div id="rtster">
+<div id="version">$Name$</div>
+<div id="cvs-info">($Revision$, $Date$)</div>
+</div>
+</body>
+</html>
