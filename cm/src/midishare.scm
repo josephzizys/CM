@@ -432,9 +432,13 @@
                       :pitch key :vel amp :dur dur))
     (ms:MidiSendAt (midishare-stream-refnum stream)
                    evt
-                   (+ (object-time stream) 
-                      (inexact->exact
-                       (floor (* scoretime 1000)))))
+		   (if (eq? *scheduler* ':asap)
+		       (+ (object-time stream) 
+			  (inexact->exact
+			   (floor (* scoretime 1000))))
+		       (+ (midishare-stream-latency stream)
+			  (ms:MidiGetTime)))
+		   )
     (values)))
 
 ;;; translate mi_d opcodes to midishare opcodes, only supports channel
@@ -512,10 +516,13 @@
     (if (= typ ms:typePitchBend)
         (ms:bend evt (midi-pitch-bend-bend obj))
         (if dat (ms:field evt 1 dat)))
-    (ms:MidiSendAt (midishare-stream-refnum stream) evt
-                   (+ (object-time stream) 
-                      (inexact->exact (floor (* scoretime 1000)))))))
-
+    (ms:MidiSendAt (midishare-stream-refnum stream)
+		   evt
+		   (if (eq? *scheduler* ':asap)
+		       (+ (object-time stream) 
+			  (inexact->exact (floor (* scoretime 1000))))
+		       (+ (midishare-stream-latency stream)
+			  (ms:MidiGetTime))))))
 
 ;; REMOVED, use ms:output instead.
 ;;(define-method* (write-event (obj <top>)
