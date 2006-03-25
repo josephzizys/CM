@@ -432,7 +432,7 @@ installation directory using this CVS command:
 <pre>cvs -z3 -d :pserver:anonymous:anonymous@common-lisp.net:/project/lambda-gtk/cvsroot co lambda-gtk</pre>
 </li>
 </ul>
--->
+-->v
 
 <h3 id="midishare">Midishare Interface</h3>
 <p><code>(use-system :midishare)</code></p>
@@ -463,20 +463,6 @@ Restore the Midishare Interface sources under your Lisp installation directory.
 See the <a href="dict/midishare-topic.html">midishare</a> topic help for more information about working with Midishare in CM.
 </p>
 
-<h3 id="player">Player Interface</h3>
-<p><code>(use-system :player)</code></p>
-<p>
-A Common Lisp interface to Midishare's Player sequencer for Common Lisp and Gauche Scheme.
-</p>
-<ul>
-<li>Author: Rick Taube</li>
-<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172112">Midishare interface</a></li>
-<li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
-<li>Requirements: <a href="http://midishare.sourceforge.net/">Midishare</a>, for Common Lisp: <a href="#cffi">CFFI</a>, for Gauche Scheme: <a href="http://homepage.mac.com/naoki.koguro/prog/c-wrapper/index.html">c-wrapper</a></li>
-<li>Installation: See <a href="#midishare">Midishare Interface</a></li>
-</ul>
-
-
 <h3 id="osc">Open Sound Control</h3>
 <p><code>(use-system :osc)</code></p>
 <p>
@@ -492,17 +478,33 @@ Support for real time  <a href="http://www.cnmat.berkeley.edu/OpenSoundControl/"
 <li>Installation: Restore the OSC sources under your Lisp installation directory.</li>
 </ul>
 
+<h3 id="player">Player Interface</h3>
+<p><code>(use-system :player)</code></p>
+<p>
+A Common Lisp interface to Midishare's Player sequencer for Common Lisp and Gauche Scheme.
+</p>
+<ul>
+<li>Author: Rick Taube</li>
+<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172112">Midishare interface</a></li>
+<li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
+<li>Requirements: <a href="http://midishare.sourceforge.net/">Midishare</a>, for Common Lisp: <a href="#cffi">CFFI</a>, for Gauche Scheme: <a href="http://homepage.mac.com/naoki.koguro/prog/c-wrapper/index.html">c-wrapper</a></li>
+<li>Installation: See <a href="#midishare">Midishare Interface</a></li>
+</ul>
+
+
+
 <h3 id="portmidi">Portmidi Interface</h3>
 <p><code>(use-system :portmidi)</code></p>
 <p>
-A Common Lisp interface to
+An interface to
 the <a href="http://www.cs.cmu.edu/~music/portmusic/">Portmidi</a> MIDI
-library.
+library for Common Lisp and Gauche Scheme.
 </p>
 
 <ul>
+<li>Author: Rick Taube</li>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">Portmidi interface</a></li>
-<li>Supporting: Clisp, CMUCL, Lispworks, OpenMCL, SBCL</li>
+<li>Supporting: Clisp, CMUCL, Gauche Scheme Lispworks, OpenMCL, SBCL</li>
 <li>Requirements: <a href="#cffi">CFFI</a>, on Linux
 /usr/local/libportmidi.so and usr/local/libporttime.so. (OS X
 and Windows libraries are included in tarball).</li>

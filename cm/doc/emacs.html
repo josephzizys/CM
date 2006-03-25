@@ -9,7 +9,7 @@
 <style type="text/css" media="all">
 @import "css/cm.css";
 </style>
-<title>Running Common Music under (X)Emacs</title>
+<title>Running Common Music in Emacs</title>
 </head>
 
 <body>
@@ -29,45 +29,50 @@
 <hr class="inv"/>
 <div id="content">
 
-<h1>Running Common Music under Emacs</h1>
+<h1>Running Common Music in Emacs</h1>
 
 <h2>Contents</h2>
 <ol>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#install">Installing Emacs and SLIME</a></li>
-<li><a href="#initfile">The Emacs initialization file</a></li>
-<li><a href="#running">Running Common Music under Emacs</a></li>
+<li><a href="#distributions">Recommended Emacs Distributions</a></li>
+<li><a href="#slime">Installing and Configuring SLIME</a></li>
+<li><a href="#running">Running Common Music</a></li>
 <li><a href="#commands">Emacs Command Summary</a></li>
 <li><a href="#info">More Emacs Information</a></li>
 </ol>
 
 <h2 id="introduction">Introduction</h2>
 
-<p> The <a
-href="http://www.gnu.org/software/emacs/emacs.html">Emacs</a> and <a
-href="http://www.xemacs.org">XEmacs</a> program editors (jointly
-referred to as Emacs in this document) can connect to a running Common
-Music image using an add-on package called <a
-href="http://common-lisp.net/project/slime/">SLIME</a>, which stands
-for <em>Superior Lisp Interaction Mode for Emacs</em>. SLIME provides
-a full-featured, Lisp REPL (interpreter) with its own command history,
-remote evaluation from inside Emacs Lisp-mode buffers, and a host of
-useful Lisp development tools. <!-- The Lisp side of Slime, called Swank,
-provides the actual connection between Emacs and the Common Music
-image is started as an <em>inferior process</em>, or sub-process,
-of Emacs using the <span class="emacscmd">M-x</span> cm command. -->
-
+<p>
+The <a href="http://www.gnu.org/software/emacs/emacs.html">Emacs</a>
+and <a href="http://www.xemacs.org">XEmacs</a> program editors
+(jointly referred to as Emacs in this document) can connect to a
+running Common Music image using an add-on package
+called <a href="http://common-lisp.net/project/slime/">SLIME</a>,
+which stands for <em>Superior Lisp Interaction Mode for
+Emacs</em>. SLIME provides a full-featured, Lisp REPL (interpreter)
+with its own command history, remote evaluation services from Emacs
+Lisp-mode buffers, and a host of useful Lisp development
+tools. <!-- The Lisp side of Slime, called Swank, provides the actual
+connection between Emacs and the Common Music image is started as
+an <em>inferior process</em>, or sub-process, of Emacs using
+the <span class="emacscmd">M-x</span> cm command. -->
 </p>
 
+<p>Note that if you are on OS X and have Aquamacs Emacs or Carbon
+Emacs installed (see below), you can simply download the latest CM
+application bundle and double-click it to start using CM with all
+the <a href="install.html#programs">bundled Lisp systems</a> without
+having to perform any of the installation steps described here or in
+the document <a href="install.html">Installing Common Music</a>.</p>
 
-<h2 id="install">Installing Emacs and SLIME</h2>
+<h2 id="distributions">Recommended Emacs Distributions</h2>
 
-<!-- p>In order to work with Common Music in Emacs you must install Emacs and SLIME.</p -->
 <p> For best results install one of these Emacs distributions: </p>
 
 <ul>
-<li>Linux: <a href="http://www.xemacs.org/Download/index.html">XEmacs</a>
-</li>
+
+<li>Linux: <a href="http://www.xemacs.org/Download/index.html">XEmacs</a></li>
 
 <li>OS X: <a href="http://aquamacs.org/">Aquamacs Emacs</a> (a very Mac-like Emacs) or <a href="http://homepage.mac.com/zenitani/emacs-e.html">Carbon Emacs</a></li>
 
@@ -76,43 +81,44 @@ for Windows</a>. Download using their <a
 href="http://www.xemacs.org/Download/win32/netinstaller.html#installation">net
 install method</a> with this <a
 href="http://www.xemacs.org/Download/win32/setup.exe">setup.exe</a>.
-(Cygwin install available on the same page.)  </dd>
+(Cygwin install available on the same page.)  </li>
 
 </ul>
 
-<p> <a href="http://common-lisp.net/project/slime/" > Download SLIME </a>
-according to the instuctions on the download page. SLIME is under
-active development so it would be best to use their CVS installation
-method.  </p>
+<h2 id="slime">Installing and Configuring SLIME</h2>
 
-<h2 id="initfile">Customizing the Emacs initialization file</h2>
+<p> Follow the download directions on the <a
+href="http://common-lisp.net/project/slime/">SLIME homepage</a> to
+install the sources on your machine. SLIME is under active development
+so it would be best to use their CVS installation method.  </p>
 
-<p>In order to work with Common Music from inside Emacs you must first
- add a few customizations to your personal <em>emacs initialization
- file</em>. Every time Emacs starts it reads your initialization file
- to customize the editing environment exactly the way you want. Emacs
- calls this init file ~/.emacs, that is, the file named .emacs in your home
- directory.  XEmacs uses ~/.xemacs/init.el, that is, the file named
- init.el in the .xemacs/ subdirectory of your home folder. Note that
- on OS X and Linux, pathnames that start with a dot (like .emacs and
- .xemacs/) are <em>invisible</em> so you cannot see them in the Finder
- window or in a normal directory listing.</p>
+<p>In order to work with Common Music using SLIME you must first add a
+few customizations to your personal <em>emacs initialization
+file</em>. Every time Emacs starts it reads your initialization file
+to set up the editing environment exactly the way you want it to
+be. Emacs names this init file ~/.emacs, that is, the file named
+.emacs in your home directory.  XEmacs uses ~/.xemacs/init.el, that
+is, the file named init.el in the .xemacs/ subdirectory of your home
+folder. Note that pathnames that start with a dot (like .emacs and
+.xemacs/) are <em>invisible</em> files on OS X and Linux so you cannot
+see them in the Finder window or in a normal directory listing.</p>
+
+<p>How to configure Emacs for SLIME and CM:</p>
 
 <ol>
   <li><p>Start Emacs and use the keyboard command <span
 class="emacscmd"><span class="emacskey">C-x</span> <span
 class="emacskey">C-f</span> ~/.emacs</span> to create or edit your
-initialization file. See the section <a href="#commands">Emacs Command
-Summary</a> for more information about Emacs keyboard commands.</p></li>
+initialization file. (See the section <a href="#commands">Emacs Command
+Summary</a> for more information about Emacs keyboard commands.)</p></li>
 
 <li><p>Add the following code to your init file, replacing the
 pathname strings <span class="string">"/path/to/slime"</span>,
 <span class="string">"/path/to/cm/bin/cm.sh"</span> and <span class="string">"/path/to/cm/etc/xemacs/"</span> with the correct
 paths to your slime/ installation directory, the Common Music startup script
-cm/bin/cm.sh and emacs file cm/etc/xemacs/cm.el on your
+cm/bin/cm.sh and the emacs file cm/etc/xemacs/cm.el on your
 machine.</p>
 
-<div class="float">
 <pre class="code">
 (add-to-list 'load-path <span class="string">"/path/to/slime/"</span>)
 (require 'slime)
@@ -124,16 +130,16 @@ machine.</p>
 (define-key slime-mode-map (kbd "TAB") 'slime-indent-anything)
 (define-key slime-mode-map (kbd "\C-c\C-dc") 'cm-lookup)
 </pre>
-</div>
+
 </li>
 
 <li><p>Save the file (<span class="emacscmd"><span class="emacskey">C-x</span> <span class="emacskey">C-s</span></span>) and  quit Emacs (<span class="emacscmd"><span class="emacskey">C-x</span> <span class="emacskey">C-c</span></span>). Your changes will take effect the next time you start Emacs.</p></li>
 
 </ol>
 
-<h2>SLIME</h2>
+<h2>Running Common Music</h2>
 
-<p> To start Common Music using SLIME, type the command:
+<p> To run Common Music in SLIME start Emacs and type the keyboard command:
 <blockquote>
 <p><span class="emacscmd"><span class="emacskey">M-x</span> cm</span> </p>
 </blockquote>
@@ -159,12 +165,12 @@ Music logo in the REPL:</p>
 </pre>
 </div>
 
-<p> To kill the Common Music session, type the command:
+<p> To kill the current Common Music session type the command:
 <blockquote>
 <p><span class="emacscmd"><span class="emacskey">M-x</span> kill-cm</span> </p>
 </blockquote>
 
-<h3>Basic REPL Iteraction</h3>
+<h3>Basic REPL Interaction</h3>
 
 <p> The term REPL stands for <em>Read Eval Print loop</em>.  Lisp
 expressions are typed at the <em>insertion point</em> located just to
@@ -205,14 +211,14 @@ class="emacscmd">&lt;return&gt;</span> to reenter the desired input.
   <li>To abort from an error break type  <span class="emacscmd">q</span> in the error window.
 
   <li>You can type <span class="emacscmd"><span class="emacskey">M-&lt;return&gt;</span></span> to
-automatically close all open parent hesis and evaluate a function call
+automatically close all open parenthesis and evaluate a function call
 expression.</li>
 
   <li>To kill the Common Music session, type <span class="emacscmd"><span class="emacskey">M-x</span> kill-cm</span></li>
 
 </ul>
 
-<h3>Lisp Editing and Remote Evaulation</h3>
+<h3>Lisp Editing and Remote Evaluation</h3>
 
 <p> Slime has many fancy features; here are a few of the most commonly
 used:</p>
@@ -230,7 +236,7 @@ used:</p>
   <a href="dict/rhythm-fn.html">rhythm</a> function.</li>
 
   <li>The <span class="emacscmd">&lt;tab&gt;</span> key indents lines
-  and regions acccording to Lisp syntax. It also performs <em>symbol
+  and regions according to Lisp syntax. It also performs <em>symbol
   completion</em>. For example, type <code>(ampl</code><span
   class="emacscmd"></code>&lt;tab&gt;</span> to autocomplete the symbol:
   <code>(amplitude</code>. </li>
