@@ -424,8 +424,9 @@
                (if (early? n)
                    (enqueue event n #f)
                    (write-event event to (+ n ahead))))))
-        ;(write-event event to (+ (or at 0) ahead))
-        (err "output: scheduler not running.")
+        ;(err "output: scheduler not running.")
+	;; allow toplevel output
+        (write-event event to (+ (or at 0) ahead))
         )
     (values)))
 
