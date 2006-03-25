@@ -625,12 +625,12 @@
                       'task 'to))))
 
 (define (ms:output ev &key (to *out*) at)
-    ;; output ev to Midishare
+  ;; output ev to Midishare
   (cond ((eq? *scheduler* ':asap)
-	 (ms:MidiSendAt (midishare-stream-refnum stream)
-			evt
+	 (ms:MidiSendAt (midishare-stream-refnum to)
+			ev
 			(+ (object-time to) 
-			   (ms:date obj)
+			   (ms:date ev)
 			   (inexact->exact
 			    (floor (* *pstart* 1000))))))
 	(else
@@ -684,9 +684,9 @@
 
 (define-method* (stream-receive-init (str <midishare-stream>) hook args)
   ;; hook is 2 arg lambda or nil, type is :threaded or :periodic
-  (let* ((data (rt-stream-receive-data str)) ; (<thread> <stop> <buf> <len>)
-         (mode (rt-stream-receive-mode str))
-         (type (rt-stream-receive-type str)))
+  args
+  (let ((data (rt-stream-receive-data str)) ; (<thread> <stop> <buf> <len>)
+        (mode (rt-stream-receive-mode str)))
     (cond ((not (procedure? hook))
            (err "Receive: hook is not a function: ~s" hook))
           ((not (member mode '( :raw )))
@@ -703,7 +703,6 @@
       (list-set! data 1 refn))))
 
 (define-method* (stream-receive-deinit (str <midishare-stream>))
-  type
   ;; called by remove-receiver after the periodic task has been withdrawn
   (let ((data (rt-stream-receive-data str))) ; (<thread> <stop> )
     (when (first data)
