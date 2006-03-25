@@ -486,8 +486,8 @@
   (check "subpatterns"
          (equal? (next x true) '(1 1 1 2 2 2 3 3 3)))
 
-  ;; random pattern
-  (set! x (new random :of '(a (b :weight 2) (c :weight 3))))
+  ;; weighting pattern
+  (set! x (new weighting :of '(a (b :weight 2) (c :weight 3))))
   (set! x (next x 100))
   (do ((tail x (cdr tail))
        (a 0) (b 0) (c 0))
