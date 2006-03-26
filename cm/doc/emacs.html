@@ -113,25 +113,21 @@ initialization file. (See the section <a href="#commands">Emacs Command
 Summary</a> for more information about Emacs keyboard commands.)</p></li>
 
 <li><p>Add the following code to your init file, replacing the
-pathname strings <span class="string">"/path/to/slime"</span>,
-<span class="string">"/path/to/cm/bin/cm.sh"</span> and <span class="string">"/path/to/cm/etc/xemacs/"</span> with the correct
-paths to your slime/ installation directory, the Common Music startup script
-cm/bin/cm.sh and the emacs file cm/etc/xemacs/cm.el on your
-machine.</p>
+pathname strings <span class="string">"/path/to/slime"</span>, <span
+class="string">"/path/to/cm/</span> with the correct paths to the
+slime/ and cm/ installation directories on your machine.</p>
 
 <pre class="code">
 (add-to-list 'load-path <span class="string">"/path/to/slime/"</span>)
-(require 'slime)
-(slime-setup)
-(setq inferior-lisp-command <span class="string">"/path/to/cm/bin/cm.sh"</span>)
-(load <span class="string">"/path/to/cm/etc/xemacs/cm.el"</span>)
-(global-set-key (kbd "&lt;f8&gt;") 'slime-toggle-repl)
-(define-key slime-mode-map (kbd "\C-x\C-e") 'slime-eval-anything)
-(define-key slime-mode-map (kbd "TAB") 'slime-indent-anything)
-(define-key slime-mode-map (kbd "\C-c\C-dc") 'cm-lookup)
+(add-to-list 'load-path <span class="string">"/path/to/cm/"</span>)
+(load "etc/xemacs/cm.el")
+(enable-cm-commands)
 </pre>
 
-</li>
+<p>See <a href="#editing">Lisp Editing and Remote Evaluation</a> to
+learn more about the effects of <code>enable-cm-commands</code>.  If
+you do not want to use the extra features that CM provides simply
+comment the line out.</p> </li>
 
 <li><p>Save the file (<span class="emacscmd"><span class="emacskey">C-x</span> <span class="emacskey">C-s</span></span>) and  quit Emacs (<span class="emacscmd"><span class="emacskey">C-x</span> <span class="emacskey">C-c</span></span>). Your changes will take effect the next time you start Emacs.</p></li>
 
@@ -218,53 +214,62 @@ expression.</li>
 
 </ul>
 
-<h3>Lisp Editing and Remote Evaluation</h3>
+<h3 id="editing">Lisp Editing and Remote Evaluation</h3>
 
 <p> Slime has many fancy features; here are a few of the most commonly
 used:</p>
 
 <ul>
-
-  <li> Use <span class="emacscmd">&lt;f8&gt;</span> (Function key 8) to quickly switch
-  back and forth between the REPL window and the last Lisp buffer you
-  were editing. </li>
   
+  <li> <span class="emacscmd"><span
+class="emacskey">C-x</span> <span class="emacskey">C-e</span></span> evaluates the expression before point. The results of the evaluation appear in the mini-buffer, not in the REPL.</li>
+
+  <li>The <span class="emacscmd">&lt;tab&gt;</span> key indents lines
+ according to Lisp syntax. It also performs <em>symbol
+  completion</em>. For example, type <code>(ampl</code><span
+  class="emacscmd"></code>&lt;tab&gt;</span> to autocomplete the symbol:
+  <code>(amplitude</code> </li>
+
   <li> The first space typed after a function name in a function call
   will display the arguments to the function in the minibuffer. For
   example, type <code>(rhythm</code><span
   class="emacscmd">&lt;space&gt;</span> to see the arguments to Common Music's
   <a href="dict/rhythm-fn.html">rhythm</a> function.</li>
 
-  <li>The <span class="emacscmd">&lt;tab&gt;</span> key indents lines
-  and regions according to Lisp syntax. It also performs <em>symbol
-  completion</em>. For example, type <code>(ampl</code><span
-  class="emacscmd"></code>&lt;tab&gt;</span> to autocomplete the symbol:
-  <code>(amplitude</code>. </li>
-
   <li>The command <span class="emacscmd"><span class="emacskey">M-.</span></span> edits the
   definition of the lisp function or variable at point (under the
   cursor) if Slime can find the file. </li>
+</ul>
 
-  <li> The command <span class="emacscmd"><span class="emacskey">C-c</span> <span class="emacskey">C-d</span> c</span> will display
-  the Common Music documentation of the symbol at point. </li>
+<p> If you add <code>(enable-cm-commands)</code> to your .emacs file
+then the following commands are added or augmented: </p>
 
-  <li> The command <span class="emacscmd"><span
+<ul>
+
+<li> <span class="emacscmd"><span
 class="emacskey">C-x</span> <span class="emacskey">C-e</span></span>
-or <span class="emacscmd"><span class="emacskey">Apple-e</span></span> (OS X) will evaluate the expression at point,
-before point or in the selected region. If the command is issued when
+(and <span class="emacscmd"><span class="emacskey">Apple-e</span></span> on OSX) evaluates expression(s) at point, before point or in the selected region. If the command is issued when
 the cursor is on a whitespace inside a function definition then the
-whole defun will be evaluated. </li>
+whole defun is evaluated. </li>
+
+<li> <span class="emacscmd">&lt;f8&gt;</span> (function key 8) toggles between the REPL and the last Lisp buffer you were editing.</li>
+
+<li> <span class="emacscmd">&lt;tab&gt;</span> indents lines and whole regions according Lisp rules.</li>
+
+<li> <span class="emacscmd"><span class="emacskey">C-c</span> <span class="emacskey">C-d</span> c</span> displays CM dictionary documentation about the CM symbol at point. </li>
 
 </ul>
 
-<p> There are several points regarding remote evaluation from a Lisp
-editing buffer (file) that may cause confusion for beginning Slime
-users: </p>
+
+
+
+<p> Finally, there are several issues that may cause cause confusion for beginning SLIME users:
+</p>
 
 <ul>
-  <li> The very first form in your edit buffer should be <code>(in-package <span class="keyword">:cm</span>)</code> or else Slime will evaluate expressions from the buffer in the wrong Lisp package. It is good Lisp practice to put an <code>in-package</code> declaration at the top of each source file.</li>
+  <li> The very first form in your Lisp file or buffer should be <code>(in-package <span class="keyword">:cm</span>)</code> or else Slime will not evaluate expressions in the CM package, even if the REPL package shows CM. It is good Lisp practice to put an <code>in-package</code> declaration at the top of each source file.</li>
 
-  <li> When you evaluate an expression in a Lisp edit buffer the return value is printed in the minibuffer at the bottom of the edit window, not in the REPL window. </li>
+  <li> When you evaluate an expression in a Lisp edit buffer the return value is printed in the mini-buffer at the bottom of the edit window, not in the REPL window. </li>
 
   <li> In order to eval CM expressions, the status line at the bottom of the edit window should say (Slime:cm) and there should be a <b>SLIME</b> menu visible in the menubar.
 
