@@ -144,7 +144,7 @@ sanitize_path () {
 
 CM_PLATFORM=
 OSX_EMACS=/Applications/Emacs.app/Contents/MacOS/Emacs
-OSX_XEMACS=/Applications/XEmacs.app/Contents/MacOS/XEmacs
+OSX_XEMACS="/Applications/Aquamacs Emacs.app/Contents/MacOS/Aquamacs Emacs"
 
 resolve_bin () {
   # OSX (X)Emacs: check /Applications/(X)Emacs.app first
@@ -155,8 +155,8 @@ resolve_bin () {
     echo $OSX_EMACS
   elif test $CM_PLATFORM && 
      imatch_head_token $CM_PLATFORM darwin &&
-     imatch_end_token $1 xemacs && 
-     test -x $OSX_XEMACS ; then 
+     imatch_end_token $1 aquamacs &&
+     test -x ${OSX_EMACS} ; then 
     echo $OSX_XEMACS
   else
     # can't use return code b/c cygwin 'which' is broken
@@ -773,7 +773,7 @@ if [ "$EDITOR_OPT" ] ; then
 #      LCM=`echo "$LISP_CMD" |tr -d "'" |sed 's:":\\\":g;'`
 #      INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
       LCM="$BIN/cm.sh -l $LISP_EXE"
-      INI="(let ((load-path (cons \"$LOC/etc/xemacs\" load-path))) (load \"$EL2\") (lisp-listener \"$LCM\" \"(cm)\"))"
+      INI="(progn (load \"$EL2\") (enable-cm-commands) (cm \"$LCM\" \"nil\"))"
       EDITOR_CMD="'$EDITOR_EXE' $EOPTS -eval '$INI'"
       if [[ "$EDITOR_EXE" == *client ]] ; then
         EDITOR_CMD="$EDITOR_CMD -batch"
