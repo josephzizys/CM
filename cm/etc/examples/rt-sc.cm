@@ -5,6 +5,11 @@
 ;;;
 ;;; Supercollider examples, by Todd Ingalls. 
 
+(use-system :rts)
+
+(use-system :osc)
+
+
 (in-package :cm)
 
 (defobject simple (scsynth)
@@ -58,8 +63,8 @@
    (index :initform 1.0)
    (amp :initform 1.0)
    (dur :initform 1)
-   (ampenv :initform #f)
-   (indexenv :initform #f))
+   (ampenv :initform nil)
+   (indexenv :initform nil))
   (:parameters freq mratio index amp dur time ampenv indexenv))
 
 (defobject randomness1 (scsynth)
@@ -94,11 +99,11 @@
 ;;;
 ;;; turn on printing out of messages on sc server
 ;;;
-;;; (sc-dumposc #t)
+;;; (sc-dumposc t)
 ;;;
 ;;; start rts
 ;;;
-;;; (rts #f *sc*)
+;;; (rts *sc*)
 ;;;
 ;;; sprout example
 ;;;
@@ -178,7 +183,6 @@
 	   output (new sc-buffer :bufnum 11
 		       :time 0
 		       :frames 512
-;		       :flags :normalize
 		       :with-gen '(:sine1 (1 .1 .1 .1 .9 .01 .3 .1 1 1)))
 	   output (new buffer-get :time (now) :bufnum 11 :samples (mod i 512))
 	   wait wai))
@@ -199,7 +203,7 @@
 
 
 ;;; (set-receiver! #'sim-reply *sc*)
-;;;
+;;; 
 ;;; (sprout (sim 512 .02))
 ;;; 
 ;;; (sprout (sim 64 .4))
@@ -216,7 +220,7 @@
 ;;; in order for the sc server to send trigger messages back to cm
 ;;; one must turn on notification:
 ;;; 
-;;; (sc-notify #t)
+;;; (sc-notify t)
 
 
 (define (start-randomness1a)
