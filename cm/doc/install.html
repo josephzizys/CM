@@ -83,6 +83,7 @@ drwxr-xr-x   11 hkt  admin   374  5 Oct 17:28 cm-gtk/
 drwxr-xr-x   64 hkt  admin  2176 25 Oct 12:46 cmn/
 drwxr-xr-x   64 hkt  admin  2176 11 Nov 08:10 fomus/
 drwxr-xr-x    7 hkt  admin   238 26 Oct 18:04 midishare/
+drwxr-xr-x   10 hkt  admin   340 24 Mar 11:30 osc/
 drwxr-xr-x    5 hkt  admin   170 21 Nov 17:44 portmidi/
 drwxr-xr-x   23 hkt  wheel   782 16 Mar 13:29 rts/
 </pre>
@@ -240,7 +241,7 @@ $ <span class="input">cm</span>
 </pre>
 
 <p>By specifying the <code>-l</code> and <code>-e</code> options you
-can launch CM under Emacs in any supported Lisp. Examples:
+can launch CM under Emacs in any supported Lisp, assuming you have configured your Emacs with SSLIME. Examples:
 </p>
 
 <pre class="shell">
@@ -248,6 +249,7 @@ $ <span class="input">cm -l openmcl -e Emacs</span>
 $ <span class="input">cm -l gosh -e xemacs</span>
 $ <span class="input">cm -l clisp -e emacs</span>
 </pre>
+<p>See the document <a href="emacs.html">Running Common Music in Emacs</a> for more information about using CM with Emacs.</p>
 </li>
 
 <li>
@@ -273,34 +275,14 @@ source directory:
 </pre>
 </li>
 
-<li>
-<p>
-To start Common Music from inside Emacs add the following code to your
-~/.emacs file. The example code assumes you have installed
-the <code>cm</code> shell command described in the first example:
-</p>
 
-<pre class="code">
-(add-to-list 'load-path <span class="string">"/usr/local/lisp/cm/etc/xemacs"</span>)
-(load <span class="string">"cm.el"</span>)
-(setq inferior-lisp-program <span class="string">"cm"</span>)
-</pre>
-
-<p>
-Restart Emacs and type <span class="input">C-x l</span> to start CM in
-a dedicated Emacs buffer. See <a href="emacs.html">Running Common
-Music under Emacs</a> for more information.
-</p>
-</li>
 </ol>
 
-<p>
-Regardless of which method you use to start CM the system will
+<p> Regardless of which method you use to start CM the system will
 automatically generate, compile and load files as needed during the
 startup process. Once the files have been loaded CM will look for your
 "~/.cminit.lisp" customization file and automatically load it if it
-exists.
-</p>
+exists.  </p>
 
 <h2 id="programs">Programs and Interfaces</h2>
 
@@ -324,7 +306,7 @@ The following Common Lisp packages can be loaded with
 </p>
 
 <h3 id="cffi">CFFI</h3>
-<p><code>(use-system :cffi)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:cffi</span>)</code></p>
 
 The Common Foreign Function interface for Common Lisp. Required by the <a href="#portmidi">Portmidi</a>, <a href="#midishare">Midishare</a> and <a href="#rts">RTS</a> interfaces.
 
@@ -339,7 +321,7 @@ directory.</li>
 </ul>
 
 <h3 id="clm">CLM</h3>
-<p><code>(use-system :clm)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:clm</span>)</code></p>
 <p>
 A sound synthesis package for Common Lisp and Scheme (Guile/Snd).
 </p>
@@ -362,7 +344,7 @@ to work with the <a href="dict/process-mac.html">process</a> macro.
 </p>
 
 <h3 id="cmn">CMN</h3>
-<p><code>(use-system :cmn)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:cmn</span>)</code></p>
 <p>
 A music notation package for Common Lisp that outputs to EPS.
 </p>
@@ -380,7 +362,7 @@ directory.</li>
 </ul>
 
 <h3 id="cm-gtk">CM-GTK</h3>
-<p><code>(use-system :cm-gtk)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:cm-gtk</span>)</code></p>
 <p>
 Graphical User Interface for CM implemented in GTK+2.
 </p>
@@ -397,9 +379,8 @@ directory.</li>
 See the <a href="dict/plotter-topic.html">Plotter</a> and <a href="dict/cmio-topic.html">CMIO</a> topic help for more information about working with the GUI tools.
 </p>
 
-
 <h3 id="fomus">Fomus</h3>
-<p><code>(use-system :fomus)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:fomus</span>)</code></p>
 <p>
 A music notation package for Common Lisp that outputs to Lilypond, CMN and MusicXML.
 </p>
@@ -432,10 +413,10 @@ installation directory using this CVS command:
 <pre>cvs -z3 -d :pserver:anonymous:anonymous@common-lisp.net:/project/lambda-gtk/cvsroot co lambda-gtk</pre>
 </li>
 </ul>
--->v
+-->
 
 <h3 id="midishare">Midishare Interface</h3>
-<p><code>(use-system :midishare)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:midishare</span>)</code></p>
 <p>
 A Common Lisp interface
 to <a href="http://midishare.sourceforge.net/">Midishare</a>, a
@@ -464,24 +445,24 @@ See the <a href="dict/midishare-topic.html">midishare</a> topic help for more in
 </p>
 
 <h3 id="osc">Open Sound Control</h3>
-<p><code>(use-system :osc)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:osc</span>)</code></p>
 <p>
 Support for real time  <a href="http://www.cnmat.berkeley.edu/OpenSoundControl/">OSC</a> communication with external applications like SuperCollider, PD and Max/MSP. 
 </p>
 
 <ul>
 <li>Author: Todd Ingalls</li>
-<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">OSC</a></li>
+<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=185113">OSC</a></li>
 <li>Supporting: Gauche, OpenMCL, SBCL</li>
-<li>Requirements:  <a href="http://common-lisp.net/project/cffi/">CFFI</a> </li>
+<li>Requirements:  <a href="#rts">RTS</a> </li>
 </li>
 <li>Installation: Restore the OSC sources under your Lisp installation directory.</li>
 </ul>
 
 <h3 id="player">Player Interface</h3>
-<p><code>(use-system :player)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:player</span>)</code></p>
 <p>
-A Common Lisp interface to Midishare's Player sequencer for Common Lisp and Gauche Scheme.
+An interface to Midishare's Player sequencer for Common Lisp and Gauche Scheme.
 </p>
 <ul>
 <li>Author: Rick Taube</li>
@@ -494,7 +475,7 @@ A Common Lisp interface to Midishare's Player sequencer for Common Lisp and Gauc
 
 
 <h3 id="portmidi">Portmidi Interface</h3>
-<p><code>(use-system :portmidi)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:portmidi</span>)</code></p>
 <p>
 An interface to
 the <a href="http://www.cs.cmu.edu/~music/portmusic/">Portmidi</a> MIDI
@@ -516,14 +497,14 @@ See the <a href="dict/portmidi-topic.html">Portmidi</a> topic help for more info
 </p>
 
 <h3 id="rts">Real Time Scheduling</h3>
-<p><code>(use-system :rts)</code></p>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:rts</span>)</code></p>
 <p>
 Real time scheduling services for supported Lisp/OS systems. 
 </p>
 
 <ul>
 <li>Authors: Todd Ingalls, Michael Klingbeil, Rick Taube</li>
-<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">RTS</a></li>
+<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=185112">RTS</a></li>
 <li>Supporting: Gauche, OpenMCL, SBCL</li>
 <li>Requirements:  <a href="http://common-lisp.net/project/cffi/">CFFI</a> </li>
 </li>
