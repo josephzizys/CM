@@ -1,12 +1,30 @@
 CM 2.8.0 
 
-o CM loading modularized. External software is now loaded using
-  use-system. external systems loadable via use-system:
-    :cffi, :clm, :cmn, :fomus, :cm-gtk, :midishare, :portmidi, 
-    :player, :osc, :rts
+o New modular loading system based on ASDF and 'use-system'.
+  External systems loadable via use-system:
+    :cffi
+    :clm
+    :cmn
+    :cm-gtk
+    :fomus
+    :midishare
+    :portmidi
+    :player
+    :osc
+    :rts
   See doc/install.html for more information.
 
-o cm.el converted to use Slime and doc/emacs.html completely rewritten.
+o Midishare, Portmidi and RTS modules now work in Gauche Scheme
+
+o New example file rt-sc.cm by Todd Ingalls.
+
+o Beautiful new CM logo and icon set designed by Tobias Kunze.
+
+o cm/etc/xemacs/cm.el converted to SLIME
+
+o doc/emacs.html completely rewritten.
+
+o cm.sh -l aquamacs now starts CM under Aquamacs Emacs.app (OS X)
 
 o Tutorials added: see etc/tutorials/tutorials.html
 
@@ -36,7 +54,7 @@ o Scheduler changes:
     user specified :priority value * pthread versions of rts now
     accept :priority keyword (20-100)
 
-o midishare changes:
+o Midishare changes:
   * new :latency initarg to midishare-streams, defaults to 0. values
     larger than zero provide "headroom" for (possibly) more exact
     midishare timing.
@@ -54,6 +72,7 @@ o midishare changes:
     asynchronous midishare callback
   * midiPrintEv now takes keyword args:
      (ms:midiPrintEv ev [:stream  t] [:eol t})
+  * Now runs in Gauche Scheme (load midishare/midishare.scm)
 
 o portmidi changes:
   * write-event for <midi> objects now passes :time values to portmidi
@@ -61,6 +80,7 @@ o portmidi changes:
   * new function and process clause (pm:output ..) send foreign
     Portmidi events and integer midi-messages to Portmidi using
     millisecond time. Only works with rts running.
+  * Now runs in Gauche Scheme (load portmidi/midishare.scm)
 
 o CM supports "real time" scheduling and receiving in the following
   implementations:
