@@ -18,27 +18,18 @@
 ;;; M-x cm                                                       [Command]
 ;;;   Start up cm in a new frame, window, or buffer (see
 ;;;   inferior-lisp-program and inferior-lisp-display below).
-;;; M-x kill-cm   
+;;; M-x kill-cm                                                  [Command]
 ;;;   Kill existing *slime-repl* session.
-;;; M-x slime-toggle-repl                                        [Command]
-;;;   Switch back and forth between repl and lisp buffer.
-;;;   Bind to function key for super-fast swapping, for example:
-;;;   (global-set-key (kbd "<f13>") 'slime-toggle-repl)
-;;; M-x cm-lookup                                      
-;;;   Find symbol at point in Common Music dictionary.           [Command]
-;;;   Installed in SLIME -> Documentation -> Common Music
-;;;   Bind to keys for faster access, for example:
-;;;   (define-key slime-mode-map (kbd "\C-c\C-dc") 'cm-lookup)
-;;; M-x slime-eval-anything                                      [Command]
-;;;   Eval expr at point, before point, in region or
-;;;   whole defun (if on whitespace). On darwin this is
-;;;   installed on COMMAND-E. To install as Slime's keyboard
-;;;   eval do:
-;;;   (define-key slime-mode-map "\C-x\C-e" 'slime-eval-anything)
-;;; M-x slime-indent-anything                                    [Command]
-;;;   Indent line, region or defun (if prefixed). To install
-;;;   as Slime's indentation command do:
-;;;   (define-key slime-mode-map (kbd "TAB") 'slime-indent-anything)
+;;; M-x enable-cm-commands                                       [Command]
+;;;   Adds the following keyboard comands:
+;;;   <f8>      One-stroke switching between repl and lisp buffer.
+;;;   C-cC-dc   Find symbol at point in Common Music dictionary. 
+;;;             (also in menu SLIME->Documentation->Common Music)
+;;;   C-xC-e    Evals at, before, or after point, in region or
+;;;             whole defun (if on whitespace). On darwin this is
+;;;             also installed on COMMAND-E.
+;;;   TAB       Indent line, region or defun (if prefixed).
+;;;
 ;;; *common-music-doc-root*                                     [Variable]
 ;;;   The root URL for browsing CM documentation. Defaults
 ;;;   to "http://commonmusic.sf.net/doc/"
@@ -48,17 +39,18 @@
 ;;; inferior-lisp-program                                       [Variable]
 ;;;   The shell program to start CM. Defaults to "cm".
 
-;;; $Name$
-;;; $Revision$
-;;; $Date$
 
-(require 'slime)
+(unless (member 'slime features)
+  (require 'slime)
+  (slime-setup))
 
-;; update default value of inferior-lisp-program to "cm"
+;; update default value of inferior-lisp-program to "cm.sh"
 (if (or (not (boundp 'inferior-lisp-program))
 	(not inferior-lisp-program)
 	(equal inferior-lisp-program "lisp"))
-    (setq inferior-lisp-program "cm"))
+    (setq inferior-lisp-program 
+	  (or (locate-library "bin/cm.sh" t)
+	      "cm")))
 
 (defvar inferior-lisp-display
   (if (member 'aquamacs features) 'frame 'window)
@@ -121,8 +113,9 @@ given both the shell command and display mode are prompted."
 	     (bury-buffer "*inferior lisp*")
 	     (claim-scratch-buffer)
 	     ;; update defaults
-	     (setq inferior-lisp-program program)
-	     (setq inferior-lisp-display display))) ))
+	     ;(setq inferior-lisp-program program)
+	     ;(setq inferior-lisp-display display)
+	     )) ))
 
 (defun slime-repl-choose-display ()
   (let* ((default (or inferior-lisp-display 'buffer))
@@ -137,6 +130,18 @@ given both the shell command and display mode are prompted."
   "Kill *slime-repl* and all associated buffers."
   (interactive)
   (slime-repl-sayoonara))
+
+(defun enable-cm-commands ()
+  (interactive )
+  ;; 1 stroke switching between repl and last editing buffer
+  (global-set-key (kbd "<f8>") 'slime-toggle-repl)
+  ;; eval before at or after point, region, or whole defun on whitespae
+  (define-key slime-mode-map (kbd "\C-x\C-e") 'slime-eval-anything)
+  ;; indent line or region
+  (define-key slime-mode-map (kbd "TAB") 'slime-indent-anything)
+  ;; lookup cm function at point
+  (define-key slime-mode-map (kbd "\C-c\C-dc") 'cm-lookup)
+  )
 
 (defun slime-toggle-repl ()
   "Switch to *slime-repl* or back to last lisp buffer."
