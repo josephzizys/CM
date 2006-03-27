@@ -225,6 +225,11 @@
 (defmethod asdf:perform  ((op finalize-op) cm)
   ;; add cm feature before loading other systems...
   (pushnew ':cm *features*)
+  ;; load site init file if it exists
+  (let ((init (merge-pathnames "cminit.lisp"
+                               (cm-directory "etc"))))
+    (if (probe-file init) (load init )))
+  ;; load user init file if it exists
   (let ((init (merge-pathnames ".cminit.lisp"
                                (user-homedir-pathname))))
     (if (probe-file init) (load init )))
