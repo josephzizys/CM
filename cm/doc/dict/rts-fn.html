@@ -81,13 +81,9 @@ are specified else boolean false.
                        <span class="keyword">:keynum</span> (<a href="between-fn.html">between</a> lb ub))
            wait wai))
 
-<span class="comment">;;; fire it up for 25 seconds</span>
-
-(rts (list (zzz 100 60 90 .25 .5)
-           (zzz 50 20 50 .5 .5))
-     *pm*)
-
-<span class="comment">;;; add stuff while zzz plays</span>
+(rts *pm*)
+  
+<span class="comment">;;; eval to add stuff</span>
 
 (<span class="special">let</span> ((k (<a href="between-fn.html">between</a> 20 100))
       (n (<a href="pick-fn.html">pick</a> 3 5 7 11)))
@@ -96,6 +92,10 @@ are specified else boolean false.
                (+ k 7)
                (/ 1 n)
                .75)))
+
+<span class="comment">;;; stop when you are done.</span>
+
+(<a href="rts-stop-fn.html">rts-stop</a>)
 </pre>
 </div>
 
@@ -123,7 +123,9 @@ are specified else boolean false.
 	   and
 	   sprout (endless-fluff 20 1 knums)))
 
-(rts (endless-fluff 20 1 fluff) *pm* 0 #f)
+(rts *pm*)
+
+(sprout (endless-fluff 20 1 fluff))
 
 <span class="comment">;;; stop when you are done.</span>
 
@@ -146,7 +148,7 @@ are specified else boolean false.
            sprout (<a href="midi-topic.html#make-note-off">make-note-off</a> 0 k 125) at (+ (<a href="now-fn.html">now</a>) .5)
            wait d))
 
-(rts #f *pm*)
+(rts *pm*)
 
 (<a href="set-receiver-fn.html">set-receiver!</a> (<span class="special">lambda</span> (mm ms) ms
                  (<span class="special">if</span> (<a href="midi-topic.html#note-on-p">note-on-p</a> mm)
@@ -158,7 +160,7 @@ are specified else boolean false.
 (<a href="remove-receiver-fn.html">remove-receiver!</a> *pm*)
 
 (<a href="rtsqmk-fn.html">rts?</a>)
-<span class="result">&rArr;</span> #t
+<span class="result">&rArr;</span> :running
 
 (<a href="rts-stop-fn.html">rts-stop</a>)
 
@@ -168,13 +170,11 @@ are specified else boolean false.
 </div>
 
 
-
-
-
-
 <h4>See also:</h4>
 <ul>
 <li><a href="rtsqmk-fn.html"><code>rts?</code></a> [Function]</li>
+<li><a href="rts-pause-fn.html"><code>rts-pause</code></a> [Function]</li>
+<li><a href="rts-continue-fn.html"><code>rts-continue</code></a> [Function]</li>
 <li><a href="rts-stop-fn.html"><code>rts-stop</code></a> [Function]</li>
 <li><a href="set-receiver-fn.html"><code>set-receiver!</code></a> [Function]</li>
 <li><a href="sprout-fn.html"><code>sprout</code></a> [Function]</li>
