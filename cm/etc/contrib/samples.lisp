@@ -1,4 +1,9 @@
 ;;; ********************************************************************
+
+;;; $Name$
+;;; $Revision$
+;;; $Date$
+
 ;;; sample parsing utilities for clm-3. see end of file for example.
 ;;; Some public domain samples are available from UIOWA's sample
 ;;; database at http://theremin.music.uiowa.edu/MIS.html
@@ -28,6 +33,7 @@
 ;;;
 ;;; (CUT-SAMPLES file samps outdit &KEY from to offset sample-steps
 ;;;              env prefix dbeg dend names)
+;;; REQUIRES: clm-3/fullmix.ins
 ;;; Generates a population of sample files given an audio input file,
 ;;; a list of samples positions returned by parse-samples and an
 ;;; output directory. Files are named as notes generated from a
@@ -47,18 +53,6 @@
 ;;;   :names         force sample file names to list of names.
 ;;;
 
-
-
-
-
-
-
-
-
-;;; $Name$
-;;; $Revision$
-;;; $Date$
-
 (in-package :cm)
 
 #-clm
@@ -66,88 +60,99 @@
   (error "Attempt to compile or load samples.lisp without CLM loaded."))
 
 (defun parse-samples (file start window on off 
-                      &key (channel 0)
-                      dur (min-duration most-negative-fixnum)
-                      (min-steady 0)
-                      (trace t)
-                      &aux (fil (open-input* file))
-                      (max (and fil (sound-duration fil)))
-                      times (bad '()))
-  (when fil
+		      &key (channel 0)
+		      dur
+		      (min-duration most-negative-fixnum)
+		      (min-steady 0)
+		      (trace t)
+		      &aux (file? (probe-file file))
+		      (max (and file? (sound-duration file)))
+		      times (bad '())
+		      )
+  (when file?
     (unless dur (setf dur max))
-    (unwind-protect
-      (let* ((*srate* (sound-srate file))
-             (beg (seconds->samples start))
-             (len (seconds->samples window))
-             (end (seconds->samples (min (+ beg dur) max)))
-             (std (seconds->samples min-steady))
-             (buf (make-array len)) ; window for amp averaging
-             (sum 0.0)
-             (val 0.0)
-             (avr 0.0)
-             (j 0)
-	     (k 0) ; was -1
-             (on? nil)
-             (middle 0)
-	     (ontime 0.0)
-	     (offtime 0.0))
+    (let* ((*srate* (sound-srate file))
+	   (beg (seconds->samples start))
+	   (len (seconds->samples window))
+	   (end (seconds->samples (min (+ beg dur) max)))
+	   (file-array (make-array end))
+	   (std (seconds->samples min-steady))
+	   (buf (make-array len))	; window for amp averaging
+	   (sum 0.0)
+	   (val 0.0)
+	   (avr 0.0)
+	   (j 0)
+	   (k 0)			; was -1
+	   (on? nil)
+	   (middle 0)
+	   (ontime 0.0)
+	   (offtime 0.0))
 
-        ;; fill buf with first window
-        (loop while (< beg end)
-              repeat len
-              do
-              (if (= channel 0)
-                (setf val (abs (ina beg fil)))
-                (setf val (abs (inb beg fil))))
-              (incf sum val)
-              (setf (elt buf j) val)
-              (incf j)
-              (incf beg))
+      ;; fills file-array according to the specified channel
+      (if (= channel 0)
+	  (file->array file 0 0 end file-array)
+	  (file->array file 1 0 end file-array)
+	  )
+  
+      ;; fill buf with first window
+      (loop while (< beg end)
+	 repeat len
+	 do
+	 (setf val (abs (elt file-array j)))
+	 (incf sum val)
+	 (setf (elt buf j) val)
+	 (incf j)
+	 (incf beg))
         
-        (setf j 0)
-        (loop while (< beg end)
-           do
-           (setf avr (/ sum len))       ; test average
-           (if (not on?)
-             (if (>= avr on)
-               (progn
-                 (setf ontime (samples->seconds (1+ (- beg len))))
-                 (setf middle (+ beg std))
-                 (when trace
-                   (format t "~%~3d ~F" (incf k)
-                           ontime))
-                 (setf on? t))
-               nil)
-             (if (and (>= beg middle) (<= avr off))
-               (let (sdur)
-                 (setf offtime (samples->seconds (- beg len)))
-                 (setf sdur (- offtime ontime))
-                 (when trace
-                   (format t " : ~F (~F" offtime sdur))
-                 (when (< sdur min-duration)
-                   (when trace
-                     (format t "    too short!"  ))
-                   (push k bad))
-                 (when trace
-                   (format t ")"))
-                 (push (list ontime offtime sdur) times)
-                 (setf on? nil))
-               nil))
-           (decf sum (elt buf j))            ; subract earliest 
-           (if (= channel 0)                 ; get new value
-             (setf val (abs (ina beg fil)))
-             (setf val (abs (inb beg fil))))
-           (setf (elt buf j) val)            ; store it
-           (incf sum val)                    ; add in new value
-           (incf j)
-           (if (= j len) (setf j 0))
-           (incf beg)))
-      (close-input fil))
-  (if (or times bad)
-    (if bad
-      (values (nreverse times) (nreverse bad))
-      (values (nreverse times)))
-    nil)))
+      (setf j 0)
+
+      (loop while (< beg end)
+	 do
+	 (setf avr (/ sum len))		; test average
+	 (if (not on?)
+	     (if (>= avr on)
+		 (progn
+		   (setf ontime (samples->seconds (1+ (- beg len))))
+		   (setf middle (+ beg std))
+		   (when trace
+		     (format t "~%~3d ~F" (incf k)
+			     ontime))
+		   (setf on? t))
+		 nil)
+	     (if (and (>= beg middle) (<= avr off))
+		 (let (sdur)
+		   (setf offtime (samples->seconds (- beg len)))
+		   (setf sdur (- offtime ontime))
+		   (when trace
+		     (format t " : ~F (~F" offtime sdur))
+		   (when (< sdur min-duration)
+		     (when trace
+		       (format t "    too short!"  ))
+		     (push k bad))
+		   (when trace
+		     (format t ")"))
+		   (push (list (* 1.0 ontime) (* 1.0 offtime) 
+			       (* 1.0 sdur)) times)
+		   (setf on? nil))
+		 nil)
+	     )
+	 (decf sum (elt buf j))		       ; subract earliest 
+	 (setf val (abs (elt file-array beg))) ;; get new value
+	 (setf (elt buf j) val)		; store it
+		
+	 (incf sum val)			; add in new value
+	 (incf j)
+	 (if (= j len) (setf j 0))
+	 (incf beg)
+	 )
+      )
+    (if (or times bad)
+	(if bad
+	    (values (nreverse times) (nreverse bad))
+	    (values (nreverse times)))
+	nil)
+    )
+  )
 
 (defun samples->seconds (s)
   (/ s (coerce *srate* 'float)))
@@ -223,7 +228,7 @@
 
 (defun cut-samples (file samps outdir &key
                     from to (offset 21) (sample-steps 1)
-                     env (prefix "")
+                    (prefix "")
                     (dbeg 0) (dend 0) ;; add/remove constant amount
                     names)
   (unless (probe-file file)
@@ -233,31 +238,29 @@
   (when names
     (unless (= (length names) (length samps))
       (error "Samps length and names disagree.")))
-  (unless from (setf from 1)) ; 1 based
+  (unless from (setf from 1))		; 1 based
   (unless to (setf to (length samps)))
   (format t "~%Cutting ~S samples from ~A:" (length samps) file)
-  (loop ;with infile = (namestring (make-pathname
-        ;                           :name (pathname-name file)
-        ;                           :type (pathname-type file)))
-        for i from from to to by sample-steps
-        for note = (elt samps (1- i))
-        for outfile = (format nil "~a~(~a~a~).aiff" 
-                              outdir
-                              prefix
-                              (if names
-                                (elt names (1- i))
-                                (note (+ offset (1- i)))))
-        do
-        (let ((beg (+ (sampbeg note) dbeg))
-	      (end (+ (sampend note) dend)))
-          (unless (> end beg) 
-            (error "End value ~S less than start ~S." end beg))
-          (format t "~%~3D (~7f ~7f) -> ~S"
-	          i beg end outfile)
-          (cut-sample file beg end outfile :env env ))))
+  (loop	for i from from to to by sample-steps
+     for note = (elt samps (1- i))
+     for outfile = (format nil "~a~(~a~a~).aiff" 
+			   outdir
+			   prefix
+			   (if names
+			       (elt names (1- i))
+			       (note (+ offset (1- i)))))
+     do
+     (let ((beg (+ (sampbeg note) dbeg))
+	   (end (+ (sampend note) dend)))
+       (unless (> end beg) 
+	 (error "End value ~S less than start ~S." end beg))
+       (format t "~%~3D (~7f ~7f) -> ~S"
+	       i beg end outfile)
+       (cut-sample file beg end outfile))))
 
-(defun cut-sample (file beg end outfile &key env play (amp 1))
-  env
+(defun cut-sample (file beg end outfile &key play)
+  (unless (find "FULLMIX" clm:*clm-instruments* :test #'equal :key #'string)
+    (error "cut-samples: clm-3/fullmix.ins is not loaded, can't cut anything."))
   (let* ((afile (namestring file))
          (srate (clm:sound-srate afile))
          (chans (clm:sound-chans afile)))
@@ -266,9 +269,9 @@
         (let* ((*srate* srate)
                (frame1 (seconds->samples beg))
                (frame2 (seconds->samples end)))
-          (mix afile :frames (- frame2 frame1) 
-               :input-frame frame1 :amplitude amp)))))
-
+          (mix afile :input-frame frame1 :output-frame 0 
+	       :frames (- frame2 frame1))))))
+ 
 (defun remsamps (samps bad)
   (loop for n in samps
         for i from 1 ; 1 based
@@ -353,4 +356,43 @@
 ;; keynum 59 (b3)
 
 (cut-samples file raw dest :offset 59)
-|#
+||#
+
+
+#|
+(cd "/Lisp/dump/")
+(make-file->sample "test.aiff")
+(sound-chans "test.aiff")
+(file->sample "test.aiff" 0)  this doesn't work outside of 'run'
+
+(defparameter test-array-1 (make-array 101))
+(defparameter test-array-2 (make-array 101))
+
+;; (file->array file chan start samples arr)
+;; 1. if you try to fill less than the whole array, you get garbage
+;; 2. if you try to fill the array with stuff beyond the end of the file, you
+;;    get garbage and/or zeros (as you should)
+;; 3. if you try to fill the array with more than can fit, you get hosed bad
+(file->array "test-1.aiff" 0 0 101 test-array-1)
+(file->array "test-2.aiff" 0 0 101 test-array-2)
+(pprint test-array-1)
+(pprint test-array-2)
+
+(sound-srate "test-1.aiff")
+(sound-srate "test-2.aiff")
+
+(sound-frames "test-1.aiff")
+(sound-frames "test-2.aiff")
+
+(sound-length "test-1.aiff")
+(sound-length "test-2.aiff")
+
+(* 44100 (sound-duration "test-1.aiff"))
+(* 44100 (sound-duration "test-2.aiff"))
+
+(sound-samples "test-1.aiff")
+(sound-samples "test-2.aiff")
+
+(length test-array-1)
+(length test-array-2)
+||#
