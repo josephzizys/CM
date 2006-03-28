@@ -33,16 +33,34 @@
 ;;; *common-music-doc-root*                                     [Variable]
 ;;;   The root URL for browsing CM documentation. Defaults
 ;;;   to "http://commonmusic.sf.net/doc/"
-;;; inferior-lisp-display                                       [Variable]
-;;;   Run Slime repl in own frame, window or buffer. 
-;;;   Defaults to buffer normally, or frame if Aquamacs Emacs.
 ;;; inferior-lisp-program                                       [Variable]
 ;;;   The shell program to start CM. Defaults to "cm".
-
 
 (unless (member 'slime features)
   (require 'slime)
   (slime-setup))
+
+(when (member 'aquamacs features)
+  (add-to-list 'obof-other-frame-regexps "\\*inferior-lisp\\*")
+  (add-to-list 'obof-other-frame-regexps "\\*slime-repl\\\\*")
+  (defun slime-hide-inferior-lisp-buffer ()
+    "Display the REPL buffer instead of the *inferior-lisp* buffer."
+    (let ((buffer (if (slime-process)
+		      (process-buffer (slime-process)))))
+      (when buffer
+	(bury-buffer buffer))
+      (let* ((window (if buffer (get-buffer-window buffer)))
+	     (repl-buffer (slime-output-buffer t))
+	     (repl-window (get-buffer-window repl-buffer)))
+	(cond (repl-window
+	       (when window
+		 (delete-window window)))
+	      (window
+	       (set-window-buffer window repl-buffer))
+	      (t
+	       (pop-to-buffer repl-buffer)
+	       (goto-char (point-max)))))))
+  )
 
 ;; update default value of inferior-lisp-program to "cm.sh"
 (if (or (not (boundp 'inferior-lisp-program))
@@ -52,20 +70,11 @@
 	  (or (locate-library "bin/cm.sh" t)
 	      "cm")))
 
-(defvar inferior-lisp-display
-  (if (member 'aquamacs features) 'frame 'window)
-  "The display mode for the inferior lisp buffer. If the value is
-FRAME then inferior lisp starts in a separate frame; if the value
-is WINDOW then a new window in the current frame is used,
-otherwise BUFFER just switches to a new buffer.  The default
-value is BUFFER.")
-
 ;; add music extensions if not already present...
 (loop for mode in '(("\\.clm$" . lisp-mode)
 		    ("\\.cm$"  . lisp-mode)
 		    ("\\.cmn$" . lisp-mode)
 		    ("\\.ins$" . lisp-mode)
-		    ;;("\\.scm$" . lisp-mode)
 		    ("\\.fms$" . lisp-mode)
 		    ("\\.asd$" . lisp-mode))
       do (add-to-list 'auto-mode-alist mode))
@@ -91,40 +100,18 @@ value is BUFFER.")
 (if (equal system-type 'darwin)
     (global-set-key [(alt e)] 'slime-eval-anything))
 
-(defun cm (program display)
-  "Start Common Music running in *slime repl*. If a prefix is
-given both the shell command and display mode are prompted."
+(defun cm (program )
+  "Start CM"
   (interactive (list (if prefix-arg
 			 (read-string "Command to start CM: " "cm") 
-		       nil)
-		     (if prefix-arg (slime-repl-choose-display) nil)))
-  (when program (setq inferior-lisp-program program))
-  (when display (setq inferior-lisp-display display))
-  (let* ((conn (slime-connected-p))
-	 (buff (if conn (slime-repl-buffer)))
-	 (repl (or buff "*inferior lisp*")))
-  (cond ((eq inferior-lisp-display 'frame)
-	 (switch-to-buffer-other-frame repl))
-	((eq inferior-lisp-display 'window)
-	 (switch-to-buffer-other-window repl))
-	(t (switch-to-buffer repl )))
-  (if (not buff)
-      (progn (with-current-buffer repl (slime))
-	     (bury-buffer "*inferior lisp*")
-	     (claim-scratch-buffer)
-	     ;; update defaults
-	     ;(setq inferior-lisp-program program)
-	     ;(setq inferior-lisp-display display)
-	     )) ))
-
-(defun slime-repl-choose-display ()
-  (let* ((default (or inferior-lisp-display 'buffer))
-	 (answer (completing-read (format "Display mode (default %s): "
-					  'frame)
-				  '(("frame" . frame) ("window" . window) 
-				    ("buffer" . buffer) )
-				  nil t nil nil default)))
-    (if (stringp answer) (read answer) answer)))
+		       nil)))
+  (if (slime-connected-p)
+      (switch-to-buffer (slime-repl-buffer))
+    (let ()
+      (when program (setq inferior-lisp-program program))
+      (slime)
+      (claim-scratch-buffer)
+      )))
 
 (defun kill-cm ()
   "Kill *slime-repl* and all associated buffers."
@@ -144,7 +131,7 @@ given both the shell command and display mode are prompted."
   )
 
 (defun slime-toggle-repl ()
-  "Switch to *slime-repl* or back to last lisp buffer."
+  "Toggle between *slime-repl* and last lisp buffer."
   (interactive)
   (if (slime-connected-p)
       (let ((repl (slime-repl-buffer)))
@@ -157,20 +144,10 @@ given both the shell command and display mode are prompted."
 					  (eq major-mode 'lisp-mode))
 				   return b))
 		(setq next (slime-repl-buffer)))
-	      (if next
-		  (cond ;((get-buffer-window next 'visible)
-			; (switch-to-buffer next))
-			((eq inferior-lisp-display 'frame)
-			 (switch-to-buffer-other-frame next))
-			((eq inferior-lisp-display 'window)
-			 (switch-to-buffer-other-window next))
-			(t
-			 ;; otherwise if its visible in another window
-			 ;; jump there else go to buffer in current
-			 ;; window.
-			 (if (get-buffer-window next 'visible)
-			     (switch-to-buffer-other-window next)	    
-			   (switch-to-buffer next))))))))))
+	      (when next
+		;;(switch-buffer next)
+		;;(pop-to-buffer next)
+		(switch-to-buffer-other-frame next)))))))
 
 (defun claim-scratch-buffer ()
   ;; if scratch buffer is empty set to slime mode with cm package.
@@ -178,11 +155,10 @@ given both the shell command and display mode are prompted."
     (if scratch
 	(if (not (buffer-modified-p scratch))
 	    (with-current-buffer scratch
-	      ;;(insert (format "(in-package :cm)\n"))
 	      (lisp-mode)
 	      (setq slime-buffer-package "cm")
-	      ;;(goto-char (point-max))
-	      )))))
+	      (insert (format "(in-package :cm)\n\n"))
+	      (goto-char (point-max)))))))
 
 (defun slime-eval-anything ()
   "Evals at point, before point, in region, on symbol or whole
@@ -546,7 +522,7 @@ selected; indent whole defun if prefixed."
    ("portmidi-close" "dict/portmidi-topic.html#portmidi-close")
    ("portmidi-open" "dict/portmidi-topic.html#portmidi-open")
    ("portmidi-open?" "dict/portmidi-topic.html#portmidi-open?")
-   ("portmidi-record" "dict/portmidi-topic.html#portmidi-record")
+   ("portmidi-record!" "dict/portmidi-topic.html#portmidi-record")
    ("portmidi-stream" "dict/portmidi-topic.html#portmidi-stream")
    ("prime-form" "dict/prime-form-fn.html")
    ("process" "dict/process-mac.html")
@@ -573,6 +549,8 @@ selected; indent whole defun if prefixed."
    ("rm-spectrum" "dict/rm-spectrum-fn.html")
    ("rotation" "dict/rotation-cls.html")
    ("rts" "dict/rts-fn.html")
+   ("rts-continue" "dict/rts-continue-fn.html")
+   ("rts-pause" "dict/rts-pause-fn.html")
    ("rts-stop" "dict/rts-stop-fn.html")
    ("rts?" "dict/rtsqmk-fn.html")
    ("save-object" "dict/save-object-fn.html")
