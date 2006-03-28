@@ -773,7 +773,7 @@ if [ "$EDITOR_OPT" ] ; then
 #      LCM=`echo "$LISP_CMD" |tr -d "'" |sed 's:":\\\":g;'`
 #      INI="(progn (load \"$EL1\") (load \"$EL2\") (lisp-listener \"$LCM\"))"
       LCM="$BIN/cm.sh -l $LISP_EXE"
-      INI="(progn (load \"$EL2\") (enable-cm-commands) (cm \"$LCM\" \"nil\"))"
+      INI="(progn (load \"$EL2\") (enable-cm-commands) (cm \"$LCM\" ))"
       EDITOR_CMD="'$EDITOR_EXE' $EOPTS -eval '$INI'"
       if [[ "$EDITOR_EXE" == *client ]] ; then
         EDITOR_CMD="$EDITOR_CMD -batch"
