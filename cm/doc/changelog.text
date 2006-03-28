@@ -18,6 +18,9 @@ o Midishare, Portmidi and RTS modules now work in Gauche Scheme
 
 o New example file rt-sc.cm by Todd Ingalls.
 
+o New clm-3 version of etc/contrib/samples.lisp for sample cuttin
+   (Jake Rundall)
+
 o Beautiful new CM logo and icon set designed by Tobias Kunze.
 
 o cm/etc/xemacs/cm.el converted to SLIME
