@@ -144,7 +144,7 @@
 #-fomus
 (defpackage :fomus
   (:use :common-lisp)
-  #+(or allegro lispworks clisp sbcl) (:shadow #:rest)
+;  #+(or allegro lispworks clisp sbcl) (:shadow #:rest)
   (:import-from :cl-user #:defstub)
   (:export #:fomus #:event-base #:part #:note #:rest #:timesig
            #:keysig #:meas #:event-off #:obj-id #:obj-partid
