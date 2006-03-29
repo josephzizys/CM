@@ -25,9 +25,8 @@
 ;;;   <f8>      One-stroke switching between repl and lisp buffer.
 ;;;   C-cC-dc   Find symbol at point in Common Music dictionary. 
 ;;;             (also in menu SLIME->Documentation->Common Music)
-;;;   C-xC-e    Evals at, before, or after point, in region or
-;;;             whole defun (if on whitespace). On darwin this is
-;;;             also installed on COMMAND-E.
+;;;   C-xC-e    Eval expr before, after, around or whole region.
+;;;             On OS X this is also installed on APPLE-E.
 ;;;   TAB       Indent line, region or defun (if prefixed).
 ;;;
 ;;; *common-music-doc-root*                                     [Variable]
@@ -98,7 +97,7 @@
 
 ;; Darwin: define COMMAND-E to evaluate expr a la MCL.
 (if (equal system-type 'darwin)
-    (global-set-key [(alt e)] 'slime-eval-anything))
+    (global-set-key [(alt e)] 'slime-eval-expr))
 
 (defun cm (program )
   "Start CM"
@@ -123,7 +122,7 @@
   ;; 1 stroke switching between repl and last editing buffer
   (global-set-key (kbd "<f8>") 'slime-toggle-repl)
   ;; eval before at or after point, region, or whole defun on whitespae
-  (define-key slime-mode-map (kbd "\C-x\C-e") 'slime-eval-anything)
+  (define-key slime-mode-map (kbd "\C-x\C-e") 'slime-eval-expr)
   ;; indent line or region
   (define-key slime-mode-map (kbd "TAB") 'slime-indent-anything)
   ;; lookup cm function at point
@@ -145,9 +144,9 @@
 				   return b))
 		(setq next (slime-repl-buffer)))
 	      (when next
-		;;(switch-buffer next)
 		;;(pop-to-buffer next)
-		(switch-to-buffer-other-frame next)))))))
+		;;(switch-to-buffer-other-frame next)
+		(switch-to-buffer next)))))))
 
 (defun claim-scratch-buffer ()
   ;; if scratch buffer is empty set to slime mode with cm package.
@@ -160,54 +159,38 @@
 	      (insert (format "(in-package :cm)\n\n"))
 	      (goto-char (point-max)))))))
 
-(defun slime-eval-anything ()
-  "Evals at point, before point, in region, on symbol or whole
-defun (if on white-space)."
+(defun slime-eval-expr ()
+  "Evals expr before point, at point, around point, whole region."
   (interactive)
-  (save-excursion
-    (let ((bag '(?\   ?\t ?\r ?\n))
-          beg end pos)
-      (cond ((and mark-active (not (null (mark))))
-             ;; region active, parse each sexp and send
-             (slime-eval-region (region-beginning) (region-end)))
-            ((or (looking-at "\\s\)")
-                 (save-excursion (and (> (point) (point-min))
-				      (progn (backward-char 1)
-					     (looking-at "\\s\)")))))
-             (if (not (looking-at "\\s\)")) (backward-char 1))
-             (setq pos (bounds-of-thing-at-point 'sexp))
-             (when pos
-               (slime-interactive-eval
-                (buffer-substring-no-properties (car pos) 
-                                                (cdr pos)))))
-            ((or (looking-at "\\s\(")
-                 (save-excursion (forward-char 1)
-                                 (looking-at "\\s\(")))
-             (if (not (looking-at "\\s\(")) (forward-char 1))
-             ;;(if pos (forward-char 1))
-             (setq pos (bounds-of-thing-at-point 'sexp))
-             (when pos
-               (slime-interactive-eval
-                (buffer-substring-no-properties (car pos)
-                                                (cdr pos)))))
-            ;; if on whitespace, find nominal end of expr and if it
-            ;; closes a list then eval it
-            ((member (char-after) bag)
-	     (slime-eval-defun )
-             ;(beginning-of-defun)
-             ;(when (looking-at "\\s\(")
-             ;  (setq pos (bounds-of-thing-at-point 'sexp))
-             ;  (when pos
-             ;    (slime-interactive-eval
-             ;     (buffer-substring-no-properties (car pos) (cdr pos)))))
-	     )
-            (t
-             ;; else not on whitespace, get surrounding sexp and send
-             (setq pos (bounds-of-thing-at-point 'sexp))
-             (when pos
-               (slime-interactive-eval
-                (buffer-substring-no-properties (car pos)
-                                                (cdr pos)))))))))
+  (if (and mark-active (not (null (mark))))
+      (slime-eval-region (region-beginning) (region-end))
+    (let ((wspace '(?\  ?\t ?\r ?\n))
+	  (left-char (char-before))
+	  (right-char (char-after))
+	  left-side right-side)
+      (setq left-side
+	    (if (or (not left-char)
+		    (member left-char wspace)
+		    (member left-char '(?\( )))
+		(point)
+	      (save-excursion
+		(backward-sexp)
+		(point))))
+      (setq right-side
+	    (if (or (not right-char)
+		    (member right-char wspace)
+		    (member right-char '(?\) ))
+		    ;; dont look ahead if different sexp leftward
+		    (and (< left-side (point))
+			 (char-equal left-char ?\))))
+		(point)
+	      (save-excursion
+		(forward-sexp)
+		(point))))
+      (if (equal left-side right-side)   
+	  nil
+	(slime-interactive-eval
+	 (buffer-substring-no-properties left-side right-side))))))
 
 (defun slime-indent-anything ()
   "Do line indentation/symbol completion; indent region if
