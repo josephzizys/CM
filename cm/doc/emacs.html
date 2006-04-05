@@ -216,18 +216,21 @@ expression.</li>
 
 <h3 id="editing">Lisp Editing and Remote Evaluation</h3>
 
-<p> Slime has many fancy features; here are a few of the most commonly
-used:</p>
+<p> The real power of SLIME only become apparent when you start
+editing Lisp code inside an Emacs editing buffer. SLIME's Lisp editing
+commands are installed in the SLIME menu visible in the Emacs menubar
+whenever you select a Lisp buffer. The SLIME menu has many fancy
+commands that help you edit Lisp code and develop programs; here are a
+few of the most commonly used items:</p>
 
 <ul>
-  
   <li> <span class="emacscmd"><span
-class="emacskey">C-x</span> <span class="emacskey">C-e</span></span> evaluates the expression before point. The results of the evaluation appear in the mini-buffer, not in the REPL.</li>
+class="emacskey">C-x</span> <span class="emacskey">C-e</span></span> evaluates the Lisp expression before point. Results of the evaluation appear in the mini-buffer, not in the REPL.</li>
 
   <li>The <span class="emacscmd">&lt;tab&gt;</span> key indents lines
  according to Lisp syntax. It also performs <em>symbol
-  completion</em>. For example, type <code>(ampl</code><span
-  class="emacscmd"></code>&lt;tab&gt;</span> to autocomplete the symbol:
+  completion</em>. For example, type <code>(ampli</code><span
+  class="emacscmd"></code>&lt;tab&gt;</span> to autocomplete:
   <code>(amplitude</code> </li>
 
   <li> The first space typed after a function name in a function call
@@ -238,11 +241,17 @@ class="emacskey">C-x</span> <span class="emacskey">C-e</span></span> evaluates t
 
   <li>The command <span class="emacscmd"><span class="emacskey">M-.</span></span> edits the
   definition of the lisp function or variable at point (under the
-  cursor) if Slime can find the file. </li>
+  cursor) if SLIME can find it. </li>
 </ul>
 
+
+<p>Common Music documentation is installed in the SLIME menu under
+SLIME>Documentation>Common Music. The Lookup... menu item will display
+the dictionary entry of the CM function or variable at point in your
+web browser's window.</p>
+
 <p> If you add <code>(enable-cm-commands)</code> to your .emacs file
-then the following commands are added or augmented: </p>
+then the following commands are activated: </p>
 
 <ul>
 
@@ -258,68 +267,72 @@ class="emacskey">C-x</span> <span class="emacskey">C-e</span></span>
 
 </ul>
 
+<h4>SLIME Editing Tips</h4>
 
-
-
-<p> Finally, there are several issues that may cause cause confusion for beginning SLIME users:
+<p> Finally, here are a few tips for beginning SLIME users:
 </p>
 
 <ul>
-  <li> The very first form in your Lisp file or buffer should be <code>(in-package <span class="keyword">:cm</span>)</code> or else Slime will not evaluate expressions in the CM package, even if the REPL package shows CM. It is good Lisp practice to put an <code>in-package</code> declaration at the top of each source file.</li>
+  <li> The very first form in your Lisp file or buffer should be <code>(in-package <span class="keyword">:cm</span>)</code> or else SLIME will not evaluate expressions in the CM package, even if the REPL package is set to CM. It is good Lisp practice to put an <code>in-package</code> declaration at the top of every source file.</li>
 
-  <li> When you evaluate an expression in a Lisp edit buffer the return value is printed in the mini-buffer at the bottom of the edit window, not in the REPL window. </li>
+  <li> When you evaluate an expression in a Lisp editing buffer the return value is printed in the mini-buffer at the bottom of the edit window, <em>not</em> in the REPL. </li>
 
-  <li> In order to eval CM expressions, the status line at the bottom of the edit window should say (Slime:cm) and there should be a <b>SLIME</b> menu visible in the menubar.
+  <li> In order to eval CM expressions the status line at the bottom of the edit window should say (Slime:cm) and the SLIME menu should be visible in the menubar.
+
+<li>The command <span class="emacscmd"><span
+class="emacskey">M-x</span> lisp-mode</span> will force any Emacs
+buffer into a Lisp editing buffer, even if the buffer does not
+contain Lisp code. </li>
 
 </ul>
   
 <h2 id="commands">Emacs Command Summary</h2>
 
-<p> Emacs supports all the mouse-oriented, point-and-click operations
-of most word processors, but the real power of Emacs lies in its
-<em>keyboard commands</em> &mdash; short, simple keystrokes that
-invoke the editing, formatting and cursor motion capabilities of the
-editor. Emacs keyboard commands are formed by holding down the Control
-and/or Meta keys while typing a keystroke that identified the command.
-The Control key is located in the lower left-hand corner of the
-keyboard.  The location of the Meta key varies; it is usually found
-either to the left of the Spacebar or to the right of the Control key.
+<p> Although Emacs supports point-and-click editing operations just
+like any word processor, its real power lies in its <em>keyboard
+commands</em> &mdash; short keystroke combinations that invoke the
+powerful editing, formatting and cursor motion capabilities of the
+editor. Emacs keyboard commands are formed by holding down the
+<em>control</em> and/or <em>meta</em> keys while typing a keystroke
+that identified the command.  The control key is located in the lower
+left-hand corner of the keyboard.  The location of the meta key varies
+with computers; it is usually found either to the left of the spacebar
+(Windows) or just to the right of the control key (Aquamacs).
 <!-- The Emacs initialization file for this class sets Meta to be the
 key immediately to the right of Control key. This arrangement
 allows Apple's Command key to continue its normal function as the
 generic OS X shortcut key. -->
 </p>
  
-<p>
-Most Emacs documentation refer to the Control and Meta keys using
+<p> Emacs documentation refer to the control and meta keys using
 shorthand names <span class="emacscmd">C-</span> and <span
-class="emacscmd">M-</span> respectively. Underlines indicate keystrokes that are
-typed with the Control and/or Meta keys depressed. For example:
-</p>
+class="emacscmd">M-</span> respectively. In this documentation,
+underlines indicate keystrokes that are typed with the control and/or
+meta keys depressed. For example: </p>
 
 <ul>
 <li>
-<span class="emacscmd"><span class="emacskey">C-h</span></span> means to hold down the Control key while you type
+<span class="emacscmd"><span class="emacskey">C-h</span></span> means to hold down the control key while you type
 the <span class="emacscmd">h</span> key.
 </li>
 
 <li>
 <span class="emacscmd"><span class="emacskey">C-x</span> <span class="emacskey">C-s</span></span>
-means to hold down the Control key as you type the <span
-class="emacscmd">x</span> key, hold Control down
+means to hold down the control key as you type the <span
+class="emacscmd">x</span> key, hold control down
 while you type the <span class="emacscmd">s</span> key.
 
 </li>
 
 <li>
 <span class="emacscmd"><span class="emacskey">M-x</span></span> means
-to hold down the Meta key while you type <span
+to hold down the meta key while you type <span
 class="emacscmd">x</span>.
 </li>
 
 <li>
 <span class="emacscmd"><span class="emacskey">C-M-f</span></span>
-means to hold down both Control and Meta while you type <span
+means to hold down both control and meta while you type <span
 class="emacscmd">f</span>.
 </li>
 
@@ -332,7 +345,7 @@ key and type just the <span class="emacscmd">t</span> key.
 
 <li>
 <span class="emacscmd"><span class="emacskey">M-x</span>
-lisp-mode</span> means to hold down Meta while you type <span
+lisp-mode</span> means to hold down meta while you type <span
 class="emacscmd">x</span>, then release both keys and type the
 word <span class="emacscmd">lisp-mode</span>.
 </li>
