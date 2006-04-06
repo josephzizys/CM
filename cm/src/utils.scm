@@ -284,9 +284,11 @@
 ;;;   minor:       backwards-compatible API change, i.e. "feature-add"
 ;;;   maintenance: no API change, bug fix only.
 
-(define %cm-version% #x280)
+(define %cm-version% #x290)
 
-(define (cm-version-number)
+(define (cm-version-number) %cm-version%)
+
+(define (cm-version-name)
   (format #f "~a.~a.~a" 
           (ldb (byte 4 8) %cm-version%)
           (ldb (byte 4 4) %cm-version%)
@@ -296,7 +298,7 @@
   ;; ensure filenames pushed on %patches% by the 1.3 version of 
   ;; load-cmpatches will be filename-names only.  This should be 
   ;; removed in future versions.
-  (format #f "Common Music ~a" (cm-version-number)))
+  (format #f "Common Music ~a" (cm-version-name)))
 
 ;;;
 ;;; the ultimate in algorithmic iconic artware
