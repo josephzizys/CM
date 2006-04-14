@@ -48,7 +48,7 @@
 
 (define (cd . args)
   (let ((dir (if (null? args)
-               (passwd:dir (getpw (getlogin)))
+               (passwd:dir (getpw (getuid)))
                (car args))))
     (chdir dir)
     (getcwd)))
