@@ -1,3 +1,38 @@
+----------------------------------------------------------------------
+CM 2.9.1
+
+o RTS version 2.0 moved to C:
+  - requires gcc, configure and make to install
+  - pthread scheduling priorities and policies are settable
+  - the (rts)  and (events) schedulers can run in parallel
+  - rts scheduler supports three time formats: :sec :msec and
+    :usec. the :msec and :usec formats are strictly integer. Use them
+    to avoid float consing. IMPORTANT: wait values and MIDI durations
+    must agree with time format!  To set the time format (sticky) use
+    the :time-format arg to rts function. see doc/dict/rts-fn.html
+  - events do not requre (now) time stamps under rts because the
+    scheduler triggers them at the correct time. any latency value set
+    in the output stream will be included in the output time.
+  - see new documentatino in dict/rts-fn.html
+
+o  New time conversion functions sec, msec and usec that convert
+    between three time formats ie:
+    (sec 1000 :msec )
+    (usec 1.0 :sec)
+
+o cm-version takes optional formatting arg that returns version as
+  :string :list or :number
+
+Changes:
+
+o Durations and wait values must agree with time format under RTS
+
+Bug Fixes:
+
+o guile: the (cd) function now uses (getuid) to determine home dir
+o portmidi: time is now passed correctly from rts
+
+----------------------------------------------------------------------
 CM 2.8.0 
 
 o New modular loading system based on ASDF and 'use-system'.
