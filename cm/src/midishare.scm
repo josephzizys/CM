@@ -459,13 +459,13 @@
            (err "Can't convert amplitude ~s to midi velocity."
                 amp)))
     (ensure-microtuning key chn stream)
-    ;;(set! evt (ms:new ms:typeNote :port prt :chan chn
-    ;;                  :pitch key :vel amp :dur dur))
-    (ms:port evt prt)
-    (ms:chan evt chn)
-    (ms:pitch evt key)
-    (ms:dur evt dur)
-    (ms:vel evt amp)
+    (set! evt (ms:new ms:typeNote :port prt :chan chn
+                      :pitch key :vel amp :dur dur))
+    ;;(ms:port evt prt)
+    ;;(ms:chan evt chn)
+    ;;(ms:pitch evt key)
+    ;;(ms:dur evt dur)
+    ;;(ms:vel evt amp)
     
     (ms:MidiSendAt (midishare-stream-refnum stream)
                    evt
