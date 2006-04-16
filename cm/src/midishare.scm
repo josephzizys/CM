@@ -408,15 +408,46 @@
 
 (define-method* (write-event (obj <midi>) (stream <midishare-stream>)
                              scoretime)
-  (let* ((dur (inexact->exact (floor (* (midi-duration obj) 1000))))
-         (key (midi-keynum obj))
+  (let* ((key (midi-keynum obj))
          (amp (midi-amplitude obj))
          (loc (logical-channel (midi-channel obj)
                                (midi-stream-channel-map stream)))
          (prt (car loc))
          (chn (cadr loc))
+	 (dur #f) 
+	 (at #f)
+	 (evt (ms:MidiNewEv ms:typeNote))
          (evt #f))
-
+    (cond ((eq? *scheduler* ':asap)
+	   ;; events: add stream offset (includes latency)
+	   (set! dur (inexact->exact
+		      (floor (* (midi-duration obj) 1000))))  
+	   (set! at
+		 (+ (object-time stream) 
+		    (inexact->exact (floor (* scoretime 1000))))))
+	  ((eq? *scheduler* ':rts)
+	   ;; rts: add latency to ms:now.
+	   (set! dur
+		 (cond ((eq? rts:*time-format* ':msec)
+			(midi-duration obj))
+		       ((eq? rts:*time-format* ':sec)
+			(inexact->exact
+			 (floor (* (midi-duration obj) 1000))))
+		       (else
+			(inexact->exact
+			 (floor (midi-duration obj) 1000)))))
+	   (set! at 
+		 (+ (midishare-stream-latency stream)
+		    (ms:MidiGetTime))))
+	  (else
+	   ;; repl: 0=ms:now, <int>=msec <float>=ahead in sec
+	   (set! dur (inexact->exact
+		      (floor (* (midi-duration obj) 1000))))
+	   (set! at (let ((tim (object-time obj)))
+		      (if (= tim 0) (ms:MidiGetTime)
+			  (if (integer? tim) tim
+			      (+ (inexact->exact (floor (* tim 1000)))
+				 (ms:MidiGetTime))))))))
     (cond ((and (exact? amp)
                 (<= 0 amp 127))
            #f)
@@ -428,25 +459,17 @@
            (err "Can't convert amplitude ~s to midi velocity."
                 amp)))
     (ensure-microtuning key chn stream)
-    (set! evt (ms:new ms:typeNote :port prt :chan chn
-                      :pitch key :vel amp :dur dur))
+    ;;(set! evt (ms:new ms:typeNote :port prt :chan chn
+    ;;                  :pitch key :vel amp :dur dur))
+    (ms:port evt prt)
+    (ms:chan evt chn)
+    (ms:pitch evt key)
+    (ms:dur evt dur)
+    (ms:vel evt amp)
+    
     (ms:MidiSendAt (midishare-stream-refnum stream)
                    evt
-		   (cond ((eq? *scheduler* ':asap)
-			  ;; events: add stream offset (includes latency)
-			  (+ (object-time stream) 
-			     (inexact->exact (floor (* scoretime 1000)))))
-			 ((not *scheduler*)
-			  ;; repl: 0=ms:now, <int>=msec <float>=ahead in sec
-			  (let ((tim (object-time obj)))
-			    (if (= tim 0) (ms:MidiGetTime)
-				(if (integer? tim) tim
-				    (+ (inexact->exact (floor (* tim 1000)))
-				       (ms:MidiGetTime))))))
-			 (else
-			  ;; rts: add latency to ms:now.
-			  (+ (midishare-stream-latency stream)
-			     (ms:MidiGetTime)))))
+		   at)
     (values)))
 
 ;;; translate mi_d opcodes to midishare opcodes, only supports channel
@@ -530,17 +553,17 @@
 			  ;; events: add stream offset (includes latency)
 			  (+ (object-time stream) 
 			     (inexact->exact (floor (* scoretime 1000)))))
+			 ((eq? *scheduler* ':rts)
+			  ;; rts: add latency to ms:now.
+			  (+ (midishare-stream-latency stream)
+			     (ms:MidiGetTime)))
 			 ((not *scheduler*)
 			  ;; repl: 0=ms:now, <int>=msec <float>=ahead in sec
 			  (let ((tim (object-time obj)))
 			    (if (= tim 0) (ms:MidiGetTime)
 				(if (integer? tim) tim
 				    (+ (inexact->exact (floor (* tim 1000)))
-				       (ms:MidiGetTime))))))
-			 (else
-			  ;; rts: add latency to ms:now.
-			  (+ (midishare-stream-latency stream)
-			     (ms:MidiGetTime)))))))
+				       (ms:MidiGetTime))))))))))
 
 ;; REMOVED, use ms:output instead.
 ;;(define-method* (write-event (obj <top>)

@@ -412,7 +412,8 @@
       (%q-insert (%qe-alloc %offs
                             (+ beats (midi-duration obj))
                             #f
-                            (make-note-off chan keyn 127))
+                            (make-note-off chan keyn 127)
+			    *qentry-message*)
                  %offs))
     (values)))
 

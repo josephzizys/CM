@@ -1,12 +1,11 @@
 ;;; **********************************************************************
-;;; Copyright (C) 2005 Heinrich Taube
+;;; Copyright (C) 2005, 2006 Heinrich Taube
 ;;; 
 ;;; This program is free software; you can redistribute it and/or
 ;;; modify it under the terms of the Lisp Lesser Gnu Public License.
 ;;; See http://www.cliki.net/LLGPL for the terms of this agreement.
 ;;; **********************************************************************
 
-;;; $Name$
 ;;; $Revision$
 ;;; $Date$
 
@@ -261,8 +260,10 @@
              (system-message-p obj))
          (pm:WriteShort 
           (second (io-open str))  ; output stream
-          (+ (inexact->exact (round (* scoretime 1000)))
-             (portmidi-offset str))
+          (if (eq? *scheduler* ':asap)
+	      (+ (inexact->exact (round (* scoretime 1000)))
+		 (portmidi-offset str))
+	      (+ (pt:Time) (rt-stream-latency str)))
           (midi-message->pm-message obj)))))
 
 ;;; portmidi behaves almost like a midi-file: (1) handles only true
@@ -283,13 +284,18 @@
       ;; pass time value if scheduling.
       (pm:WriteShort
        (second (io-open str))
-       (+ (inexact->exact (round (* scoretime 1000)))
-          (portmidi-offset str))
+       (if (eq? *scheduler* ':asap)
+	   (+ (inexact->exact (round (* scoretime 1000)))
+	      (portmidi-offset str))
+	   ;; write at current time + any latency
+	   (+ (pt:Time) (rt-stream-latency str)))
        (pm:Message (logior #x90 (logand chan #xf) )
                    (logand keyn #x7f)
                    (logand ampl #x7f)))
-      ;; enqueue a note off in scheduler's queue
-      (enqueue (make-note-off chan keyn 127)
+      ;; enqueue a note off in scheduler's queue. time formats
+      ;; MUST be the same
+      (enqueue *qentry-message*
+	       (make-note-off chan keyn 127)
                (+ scoretime (midi-duration obj))
                #f))
     (values)))

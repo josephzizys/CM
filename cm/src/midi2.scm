@@ -590,7 +590,7 @@
 ;;; system note off resource. initialized to 50 entries.
 
 (define %offs (make-cycl))
-(dotimes (i 50) (%qe-dealloc %offs (list #f #f #f)))
+(dotimes (i 50) (%qe-dealloc %offs (list #f #f #f #f)))
 
 (define-method* (open-io (mf <midi-file>) dir . args)
   ;; was an :after method

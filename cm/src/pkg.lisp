@@ -46,10 +46,13 @@
                   collect n))
          (str (if (eql (car args) '&rest)
                   (format nil
-                          "Attempt to call (~A~~{ ~~S~~}) without ~A loaded."
-                          name (package-name *package*))
-                  (format nil "Attempt to call (~A~{~A~}) without ~A loaded."
-                          name
+                          "Attempt to call (~A:~A~~{ ~~S~~}) without ~A loaded."
+                          (package-name *package*) 
+			  name
+			  (package-name *package*))
+                  (format nil "Attempt to call (~A:~A~{~A~}) without ~A loaded."
+                          (package-name *package*)
+			  name
                           (loop repeat (length vars) collect " ~S")
                           (package-name *package*)))))
     vars str
@@ -176,6 +179,38 @@
 (defstub get-instr-syms)
 (defstub fomus-file)
 (defstub (special *parts*))
+)
+
+;;; rts
+
+#-rts
+(defpackage :rts
+  (:use :common-lisp)
+  (:import-from :cl-user #:defstub)
+  (:export #:enqueue #:scheduler-enqueue #:lock-lisp #:unlock-lisp 
+	   #:*scheduler-callback* #:scheduler-state? #:version
+	   #:scheduler-start #:scheduler-stop #:scheduler-pause
+	   #:scheduler-continue #:scheduler-time #:*time-format*)
+  )
+
+(in-package :rts)
+
+#-rts
+(progn
+(defstub version)
+(defstub scheduler-start)
+(defstub scheduler-stop)
+(defstub scheduler-pause)
+(defstub scheduler-continue)
+(defstub scheduler-flush)
+(defstub scheduler-state?)
+(defstub scheduler-enqueue)
+(defstub enqueue)
+(defstub lock-lisp)
+(defstub unlock-lisp)
+(defstub enqueue)
+(defstub scheduler-time)
+(defstub (special *scheduler-callback* *time-format*))
 )
 
 ;;;
@@ -433,7 +468,8 @@
                 :part :note :meas :timesig :keysig :fomus-file)
   (:export :accumulation :amplitude :append-object :audio-file :axis
            :*beat* :best-normal-form :between :cd :cents->scaler
-           :chord :*chromatic-scale* :clm-file :cm :cm-version :cmio
+           :chord :*chromatic-scale* :clm-file :cm :cm-version 
+	   :cm-version-number :cmio
            :cmn :cmn-file :copier :copy-object :cycle :date-and-time
            :decimals :decode-interval :defaxis :defobject :defprocess
            :doeach :drunk :dumposc :eod? :eop? :events :expl :explseg
@@ -476,6 +512,7 @@
            :tendency :thunk :*time-slots* :transpose :transposer :true
            :tuning :vary :wait :wait-until :weighting)
   )
+
 
 ;;;
 ;;; intern and export ms:new, ms:MidiPrintEv, ms:output ms:sprout
