@@ -43,11 +43,11 @@ expected to manage stream IO directly using the <code class="keyword">:to</code>
 <dd>The format of time values returned by <a href="now-fn.html">now</a> . If the value is <code class="keyword">:sec</code> then floating point seconds are returned, <code class="keyword">:msec</code> returns integer milliseconds (1000 msec equals 1 sec) and <code class="keyword">:usec</code> returns microseconds (1000000 usec equals 1 sec). The default value is <code class="keyword">:sec</code>.  Use <code class="keyword">:msec</code> or <code class="keyword">:usec</code> to avoid float consing in some Lisps. Note that event durations and wait values must agree with the time format.</dd>
 
   <dt><code class="keyword">:queue-size</code> {<var>number</var>}</dt>
-  <dd>The maximum allowed number of pending entries in the scheduler. The default value is 512. This value is currently ignored, set <code>QSIZE</code> in scheduler.h instead.
+  <dd>The maximum allowed number of pending entries in the scheduler. The default value is 1024. This value is currently ignored, set <code>QSIZE</code> in scheduler.h instead.
   <dt><code class="keyword">:priority</code> {<var>number</var>}</dt>
-  <dd>The pthread priorty that the scheduler runs under. The value should be an integer between 0 and 100. The default value is 20.</dd>
+  <dd>The pthread priorty that the scheduler runs under. The value should be an integer between 1 and 100. The default value is 20.</dd>
   <dt><code class="keyword">:policy</code> {<var>number</var>}</dt>
-  <dd>The pthread policy that the scheduler runs under. Use 2 for <code>SCHED_RR</code> and 4 is <code>SCHED_FIFO</code>. This value is currently ignored.
+  <dd>The pthread policy that the scheduler runs under. The value 2 is <code>SCHED_RR</code> and 4 is <code>SCHED_FIFO</code>. This value is currently ignored.
 </dl>
 
 </dl>

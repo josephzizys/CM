@@ -506,9 +506,14 @@ Real time scheduling services for supported Lisp/OS systems.
 <li>Authors: Todd Ingalls, Michael Klingbeil, Rick Taube</li>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=185112">RTS</a></li>
 <li>Supporting: Gauche, OpenMCL, SBCL</li>
-<li>Requirements:  <a href="http://common-lisp.net/project/cffi/">CFFI</a> </li>
+<li>Requirements:  GCC, configure, make, <a href="http://common-lisp.net/project/cffi/">CFFI</a> </li>
 </li>
-<li>Installation: Restore the RTS sources under your Lisp installation directory.</li>
+<li>Installation: Restore the RTS sources under your Lisp installation directory, then configure and make the librts library:
+<pre>$ cd /path/to/rts
+$ ./configure
+$ make
+</pre>
+</li>
 </ul>
 
 <p>
