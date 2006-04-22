@@ -188,7 +188,8 @@
   (:use :common-lisp)
   (:import-from :cl-user #:defstub)
   (:export #:enqueue #:scheduler-enqueue #:lock-lisp #:unlock-lisp 
-	   #:*scheduler-callback* #:scheduler-state? #:version
+	   #:add-hook #:error-mode-set! #:*scheduler-callback*
+	   #:scheduler-state? #:version
 	   #:scheduler-start #:scheduler-stop #:scheduler-pause
 	   #:scheduler-continue #:scheduler-time #:*time-format*)
   )
@@ -208,7 +209,8 @@
 (defstub enqueue)
 (defstub lock-lisp)
 (defstub unlock-lisp)
-(defstub enqueue)
+(defstub error-mode)
+(defstub error-mode-set!)
 (defstub scheduler-time)
 (defstub (special *scheduler-callback* *time-format*))
 )
