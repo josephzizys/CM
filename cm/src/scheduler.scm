@@ -1,17 +1,8 @@
 ;;; **********************************************************************
-;;; 
-;;; Copyright (C) 2002 Heinrich Taube (taube@uiuc.edu) 
-;;; 
-;;; This program is free software; you can redistribute it and/or
-;;; modify it under the terms of the GNU General Public License
-;;; as published by the Free Software Foundation; either version 2
-;;; of the License, or (at your option) any later version.
-;;; 
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;; 
+;;; Copyright (C) 2005-2006 Rick Taube
+;;; This program is free software; you can redistribute it and/or   
+;;; modify it under the terms of the Lisp Lesser Gnu Public License.
+;;; See http://www.cliki.net/LLGPL for the text of this agreement.
 ;;; **********************************************************************
 
 ;;; $Name$
@@ -422,15 +413,17 @@
 ;;; an implementation of MACROEXPAND-ALL (walk.lisp). 
 ;;;
 
-(define-method* (scheduler-do-process (func <procedure>) qtime pstart stream type)
+(define (scheduler-do-process func qtime pstart stream type)
   ;; type has *qentry-process* in the lower nibble
   stream
-  ;; *pstarts* is the scoretime that the process originally started at.
-  ;; it is not null only during process funcall. for this reason some
-  ;; code tests it to see if code is being called in the process.
+  ;; *pstart* is the process start time in score, ie the time it
+  ;; was initially sprouted. it has a non-null value ONLY during the
+  ;; process funcall. for this reason some code tests *pstart*  to see
+  ;; if it is being called inside a process.
   (set! *pstart* pstart)
   ;; *qnext* is advanced by (wait ...)
   (set! *qnext* qtime)
+  ;; call user's process thunk,
   ;; reschedule if process function returns non-nil
   (if (funcall func)
       (enqueue type func *qnext* *pstart*))
