@@ -19,10 +19,10 @@
 (let ((this-file #f)
       (load-path "")
       (file-list '("loop" "level1" "utils" "mop" "objects"
+		   "data" "scales" "spectral" "patterns"
                    "io" "scheduler" "sco" "clm" "clm2"
-                   "midi1" "midi2" "midi3" "data" "scales" "spectral"
-                   "patterns" "osc"
-                   "sc")))
+                   "midi1" "midi2" "midi3"
+		   "osc" "sc")))
   (cond-expand
    (stklos
     (set! this-file (current-loading-file))
@@ -36,8 +36,9 @@
     (set! file-list (cons "gauche" file-list))
     (set! file-list (append! file-list (list "pm"
 					     "midishare"
-					     "gauche-rt"
-					     "rt-sc" ))))
+					     ;"gauche-rt"
+					     ;"rt-sc" 
+					     ))))
 ;;    (set! file-list (append! file-list (list "gauche-rt" "rt" "rt-sc"))))
 ;;  (chicken
 ;;   (set! this-file 
