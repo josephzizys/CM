@@ -263,7 +263,7 @@
           (if (eq? *scheduler* ':asap)
 	      (+ (inexact->exact (round (* scoretime 1000)))
 		 (portmidi-offset str))
-	      (+ (pt:Time) (rt-stream-latency str)))
+	      (pt:Time))
           (midi-message->pm-message obj)))))
 
 ;;; portmidi behaves almost like a midi-file: (1) handles only true
@@ -287,8 +287,7 @@
        (if (eq? *scheduler* ':asap)
 	   (+ (inexact->exact (round (* scoretime 1000)))
 	      (portmidi-offset str))
-	   ;; write at current time + any latency
-	   (+ (pt:Time) (rt-stream-latency str)))
+	   (pt:Time))
        (pm:Message (logior #x90 (logand chan #xf) )
                    (logand keyn #x7f)
                    (logand ampl #x7f)))
