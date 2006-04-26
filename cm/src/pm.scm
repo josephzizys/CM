@@ -141,7 +141,11 @@
           (set-car! pids idev)
           (set-car! data 
                     (pm:OpenInput
-                     idev (if (pair? bsiz) (car bsiz) bsiz))))
+                     idev (if (pair? bsiz) (car bsiz) bsiz)))
+         
+          (list-set! (rt-stream-receive-data obj) 0 (car data)) ;pointer to input
+          (list-set! (rt-stream-receive-data obj) 1 idev) ;input device number
+          (list-set! (rt-stream-receive-data obj) 2 (if (pair? bsiz) (car bsiz) bsiz)))
         (when odev
           (set! odev (list-prop odev ':id))
           (set-car! (cdr pids) odev)
@@ -373,179 +377,80 @@
           (list (list 'pm:output (function parse-pm-output)
                       'task 'to 'at 'raw))))
 
-;;;
-;;; message receiving
-;;;
-
-(define-method* (set-receive-mode! (str <portmidi-stream>) mode)
-  (unless (member mode '(:message :raw))
-    (err "set-receive-mode: ~s is not a portmidi receive mode." mode))
-  (slot-set! str 'receive-mode mode))
-
-(define-method* (stream-receive-init (str <portmidi-stream>) func args)
-  args
-  ;; called by set-receiver before hook is activated.
-  (let ((data (rt-stream-receive-data str))
-        (mode (rt-stream-receive-mode str)))
-
-    ;; can receive either message/times or raw buffer/count
-    (cond ((not (member mode '(:message :raw)))
-           (err "receive: ~s is not a portmidi receive mode."
-                mode))
-          ((not (procedure? func))
-           (err "Receive: hook is not a function: ~s" func))
-          ((not (member (portmidi-open? str) '(:in :inout)))
-           (err "Stream not open for input: ~S." str))
-          ((first data)
-           (err "Can't set input hook: another hook is running!")))
-    ;; ready to go
-    (let* ((in (first (io-open str)))         ; pm stream
-           (sz (portmidi-inbuf-size str))     ; bufsiz
-           (bf (third data))                  ; old buffer
-           (so (fourth data))                 ; old bufsiz
-           (fn #f)                            ; mapper
-           )
-      ;; see if we have to free old buffer
-      (when (and bf (not (eq? sz so)))
-        (pm:EventBufferFree bf)
-        (set! bf #f))
-      (unless bf
-        (set! bf (pm:EventBufferNew sz)))
-
-      (if (eq? mode ':raw)
-          (set! fn func)
-          (set! fn 
-                (lambda (buff have)
-                  (pm:EventBufferMap
-                   (lambda (mm ms)
-                     ( func (pm-message->midi-message mm) ms))
-                   buff have))))
-
-      ;; cache the stuff
-      (list-set! data 0 fn)
-      (list-set! data 1 in)
-      (list-set! data 2 bf)
-      (list-set! data 3 sz)
-      ;; flush any pending messages...
-      (when (pm:Poll in) (pm:Read in bf sz))
-      )))
-
-(define-method* (stream-receive-deinit (str <portmidi-stream>) )
-  ;; called by remove-receiver after the receiver has been withdrawn
-  (let ((data (rt-stream-receive-data str))) 
-    ;; data= (<hook> <port> <buff> <size>)
-    (when (first data)
-      (list-set! data 0 #f)
-      (list-set! data 1 #f))))
-
-;; (define-method* (receive (str <portmidi-stream>) . args)
-;;   (let* ((n 0)
-;;         (in (first (io-open str)))
-;;         (bf (third (rt-stream-receive-data str)))
-;;         (sz (portmidi-inbuf-size str))
-;;         (hook (if (pair? args) (pop args) #f))
-;;         (mode (if (pair? args) (pop args) #f))
-;;         (rm (if (not mode) #t (eq? mode ':message)))
-;;         (fn #f)
-;;         (res #f))
-;;     (cond ((pm:Poll in)
-;;            (if hook
-;;                (begin
-;;                  (set! fn (lambda (mm ms)
-;;                             (hook (pm-message->midi-message mm) ms)))
-;;                  (set! n (pm:Read in bf sz))
-;;                  (when (> n 0)
-;;                    (if rm (pm:EventBufferMap fn bf n)
-;;                      (hook bf n))
-;;                    (set! res #t)))
-             
-;;              (begin
-;;                (set! res '())
-;;                (if rm
-;;                    (set! fn (lambda (mm ms)
-;;                               ms
-;;                               (set! res (append! res (list (pm-message->midi-message mm))))))
-;;                  (set! fn (lambda (mm ms)
-;;                             ms
-;;                             (set! res (append! res (list mm))))))
-;;                (set! n (pm:Read in bf sz))
-;;                (when (> n 0)
-;;                  (pm:EventBufferMap fn bf n))))))
-;;     res))
 
 ;;;
 ;;; midi recording
 ;;;
 
-(define (portmidi-record! seq . mp)
-  (let* ((str (if (pair? mp) (car mp)
-                  (find-object "midi-port.pm" )))
-         (opn (if (null? str) #f
-                  (portmidi-open? str))))
-    (cond ((not opn)
-           (err "portmidi-record!: portmidi stream not open for input."))
-          ((eq? opn ':out)
-           (err "portmidi-record!: ~s only open for output." str))
-          (else
-           ;; otherwise set true if we also perform midi thru
-           (set! opn (if (eq? opn :inout) #t #f))))
-    (if (not seq)
-        (remove-receiver! str)
-        (let ((ins (if (subobjects seq) #t #f)) ; insert into existing seq
-              (off #f)                          ; time offset
-              (map (make-list 16 (list)))) ; channel map for on/off pairing
-          (if (receiver? str)
-              (err "portmidi-record!: receiver already active."))
-          (set-receiver!
-           (lambda (mm ms)
-             (if opn (write-event mm str ms)) ; midi thru 
-             (if (not off) (set! off ms)) ; cache time of first message
-             (cond ((or (note-off-p mm)
-                        (and (note-on-p mm) (= 0 (note-on-velocity mm))))
-                    (let* ((chn (note-off-channel mm))
-                           (key (note-off-key mm))
-                           (ons (list-ref map chn)))
-                      ;; ons is time ordered list ((<on> . <ms>) ...)
-                      (when (pair? ons) ; have on to pair with
-                        (let ((aon #f)  ; pair with earliest on
-                              (obj #f))
-                          (cond ((= (note-on-key (car (car ons))) key)
-                                 (set! aon (car ons))
-                                 (list-set! map chn (cdr ons)))
-                                (else
-                                 ;; search for corresponding on, splice out
-                                 (do ()
-                                     ((or (null? (cdr ons)) aon)
-                                      #f)
-                                   (if (= key (note-on-key
-                                               (car (car (cdr ons)))))
-                                       (begin (set! aon (car (cdr ons)))
-                                              (set-cdr! ons (cddr ons)))
-                                       (set! ons (cdr ons))))))
-                          ;; aon is (<msg> . <ms>)
-                          (when aon
-                            (set! obj (make <midi> 
-                                            :time (/ (- (cdr aon) off)
-                                                     1000.0)
-                                            :duration (/ (- ms (cdr aon))
-                                                         1000.0)
-                                            :keynum (note-on-key (car aon))
-                                            :amplitude (/ (note-on-velocity
-                                                           (car aon))
-                                                          127.0)
-                                            :channel (note-on-channel
-                                                      (car aon))))
-                            ;; insert if seq contained objects else append
-                            (if ins (insert-object seq obj)
-                                (append-object obj seq)))))))
-                   ((note-on-p mm)
-                    (let* ((chn (note-on-channel mm))
-                           (ons (list-ref map chn)))
-                      ;; append mm to time ordered ons ((<on> . <ms>) ...)
-                      (if (null? ons)
-                          (list-set! map chn (list (cons mm ms)))
-                          (append! ons (list (cons mm ms))))))
-                   ((channel-message-p mm)
-                    (midi-message->midi-event mm :time (/ (- ms off)
-                                                          1000.0)))))
-           str)))))
+;; (define (portmidi-record! seq . mp)
+;;   (let* ((str (if (pair? mp) (car mp)
+;;                   (find-object "midi-port.pm" )))
+;;          (opn (if (null? str) #f
+;;                   (portmidi-open? str))))
+;;     (cond ((not opn)
+;;            (err "portmidi-record!: portmidi stream not open for input."))
+;;           ((eq? opn ':out)
+;;            (err "portmidi-record!: ~s only open for output." str))
+;;           (else
+;;            ;; otherwise set true if we also perform midi thru
+;;            (set! opn (if (eq? opn :inout) #t #f))))
+;;     (if (not seq)
+;;         (remove-receiver! str)
+;;         (let ((ins (if (subobjects seq) #t #f)) ; insert into existing seq
+;;               (off #f)                          ; time offset
+;;               (map (make-list 16 (list)))) ; channel map for on/off pairing
+;;           (if (receiver? str)
+;;               (err "portmidi-record!: receiver already active."))
+;;           (set-receiver!
+;;            (lambda (mm ms)
+;;              (if opn (write-event mm str ms)) ; midi thru 
+;;              (if (not off) (set! off ms)) ; cache time of first message
+;;              (cond ((or (note-off-p mm)
+;;                         (and (note-on-p mm) (= 0 (note-on-velocity mm))))
+;;                     (let* ((chn (note-off-channel mm))
+;;                            (key (note-off-key mm))
+;;                            (ons (list-ref map chn)))
+;;                       ;; ons is time ordered list ((<on> . <ms>) ...)
+;;                       (when (pair? ons) ; have on to pair with
+;;                         (let ((aon #f)  ; pair with earliest on
+;;                               (obj #f))
+;;                           (cond ((= (note-on-key (car (car ons))) key)
+;;                                  (set! aon (car ons))
+;;                                  (list-set! map chn (cdr ons)))
+;;                                 (else
+;;                                  ;; search for corresponding on, splice out
+;;                                  (do ()
+;;                                      ((or (null? (cdr ons)) aon)
+;;                                       #f)
+;;                                    (if (= key (note-on-key
+;;                                                (car (car (cdr ons)))))
+;;                                        (begin (set! aon (car (cdr ons)))
+;;                                               (set-cdr! ons (cddr ons)))
+;;                                        (set! ons (cdr ons))))))
+;;                           ;; aon is (<msg> . <ms>)
+;;                           (when aon
+;;                             (set! obj (make <midi> 
+;;                                             :time (/ (- (cdr aon) off)
+;;                                                      1000.0)
+;;                                             :duration (/ (- ms (cdr aon))
+;;                                                          1000.0)
+;;                                             :keynum (note-on-key (car aon))
+;;                                             :amplitude (/ (note-on-velocity
+;;                                                            (car aon))
+;;                                                           127.0)
+;;                                             :channel (note-on-channel
+;;                                                       (car aon))))
+;;                             ;; insert if seq contained objects else append
+;;                             (if ins (insert-object seq obj)
+;;                                 (append-object obj seq)))))))
+;;                    ((note-on-p mm)
+;;                     (let* ((chn (note-on-channel mm))
+;;                            (ons (list-ref map chn)))
+;;                       ;; append mm to time ordered ons ((<on> . <ms>) ...)
+;;                       (if (null? ons)
+;;                           (list-set! map chn (list (cons mm ms)))
+;;                           (append! ons (list (cons mm ms))))))
+;;                    ((channel-message-p mm)
+;;                     (midi-message->midi-event mm :time (/ (- ms off)
+;;                                                           1000.0)))))
+;;            str)))))
