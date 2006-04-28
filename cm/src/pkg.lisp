@@ -187,21 +187,18 @@
 (defpackage :rts
   (:use :common-lisp)
   (:import-from :cl-user #:defstub)
-  (:export #:enqueue #:scheduler-time #:add-hook #:error-mode
-	   #:error-mode-set! #:scheduler-start #:scheduler-stop
+  (:export #:scheduler-start #:scheduler-stop
 	   #:scheduler-pause #:scheduler-continue #:scheduler-flush
-	   #:scheduler-state? #:scheduler-enqueue #:lock-lisp 
-	   #:unlock-lisp #:*scheduler-callback* #:*time-format*))
+	   #:scheduler-state? #:scheduler-enqueue
+	   #:scheduler-lock-lisp #:scheduler-unlock-lisp
+	   #:scheduler-add-hook! #:scheduler-remove-hook!
+	   #:scheduler-hook-set! #:enqueue
+	   #:scheduler-time #:*time-format*))
 
 (in-package :rts)
 
 #-rts
 (progn
-(defstub enqueue)
-(defstub scheduler-time)
-(defstub add-hook)
-(defstub error-mode)
-(defstub error-mode-set!)
 (defstub scheduler-start)
 (defstub scheduler-stop)
 (defstub scheduler-pause)
@@ -209,9 +206,14 @@
 (defstub scheduler-flush)
 (defstub scheduler-state?)
 (defstub scheduler-enqueue)
-(defstub lock-lisp)
-(defstub unlock-lisp)
-(defstub (special *scheduler-callback* *time-format*))
+(defstub scheduler-lock-lisp)
+(defstub scheduler-unlock-lisp)
+(defstub scheduler-add-hook!)
+(defstub scheduler-remove-hook!)
+(defstub scheduler-hook-set!)
+(defstub enqueue)
+(defstub scheduler-time)
+(defstub (special *time-format*))
 )
 
 ;;;
