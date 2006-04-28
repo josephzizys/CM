@@ -332,3 +332,33 @@
 ; (slot-definition-initargs sd)
 ; (slot-definition-initform sd)
 
+;;;
+;;;
+;;;
+
+(define (use-system sys . args)
+  (let ((dir (get-keyword ':directory args #f))
+	(fil (format #f "~a.scm" sys))
+	(tst #f))
+    (if (not dir)
+	(set! dir (format #f "~a/~a/" (sys-dirname *cm-directory*)
+			  sys)))
+    (set! tst (string-append dir fil))
+    (cond ((file-exists? tst)
+	   (let ((old *load-path*))
+	     (dynamic-wind
+		 (lambda () #f)
+		 (lambda ()
+		   (set! *load-path* (cons dir *load-path*))
+		   (load tst))
+		 (lambda () (set! *load-path* old)))
+	     sys))
+	  (else
+	   (format #t "Can't locate system file \"~a.scm\" in ~s. Use :directory arg to use-system." fil dir)
+	   #f))))
+
+;;;
+;;; eof
+;;;
+
+
