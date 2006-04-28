@@ -4,6 +4,8 @@
 ;;;
 ;;; (load "/Lisp/cm/src/cm.scm")
 
+(define *cm-directory* #f)
+
 (cond-expand
  ;; gag stklos read warnings about symbols used by other schemes.
  (stklos
@@ -32,14 +34,12 @@
     (set! this-file (port-filename (current-load-port)))
     (set! file-list (cons "guile" file-list)))
    (gauche
-    (set! this-file (port-name (current-load-port)))
+    (set! this-file (sys-realpath (port-name (current-load-port))))
+    (set! *cm-directory*
+	  (string-append (sys-dirname (sys-dirname this-file)) "/"))
     (set! file-list (cons "gauche" file-list))
     (set! file-list (append! file-list (list "pm"
-					     "midishare"
-					     ;"gauche-rt"
-					     ;"rt-sc" 
-					     ))))
-;;    (set! file-list (append! file-list (list "gauche-rt" "rt" "rt-sc"))))
+					     "midishare"))))
 ;;  (chicken
 ;;   (set! this-file 
 ;;   (eval (with-input-from-string "##sys#current-load-file" read)))
@@ -67,7 +67,7 @@
     (set! *load-path* (cons load-path *load-path*))
     (set! load-path "")))
 
-  (let loadcm ((tail file-list))
+  (let load-cm ((tail file-list))
        (if (null? tail) 
            #f
            (let ((file (string-append load-path (car tail) ".scm")))
@@ -77,7 +77,7 @@
               (else #f))
              (newline)
              (load file)
-             (loadcm (cdr tail)))))
+             (load-cm (cdr tail)))))
 
   ;; load user init file if it exists
   (let* ((this (pwd))
