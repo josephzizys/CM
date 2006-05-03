@@ -338,6 +338,7 @@
 
 (define (use-system sys . args)
   (let ((dir (get-keyword ':directory args #f))
+	(ver (get-keyword ':verbose args #t))
 	(fil (format #f "~a.scm" sys))
 	(tst #f))
     (if (not dir)
@@ -350,6 +351,7 @@
 		 (lambda () #f)
 		 (lambda ()
 		   (set! *load-path* (cons dir *load-path*))
+		   (if ver (format #t "; loading ~a~%" tst))
 		   (load tst))
 		 (lambda () (set! *load-path* old)))
 	     sys))

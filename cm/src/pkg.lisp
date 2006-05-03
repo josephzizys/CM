@@ -218,8 +218,7 @@
 	   #:scheduler-state? #:scheduler-enqueue
 	   #:scheduler-lock-lisp #:scheduler-unlock-lisp
 	   #:scheduler-add-hook! #:scheduler-remove-hook!
-	   #:scheduler-hook-set! #:enqueue
-	   #:scheduler-time #:*time-format*))
+	   #:scheduler-hook-set! #:scheduler-time #:*time-format*))
 
 (in-package :rts)
 

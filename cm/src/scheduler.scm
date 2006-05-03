@@ -306,7 +306,7 @@
   ;; start is #f if object is not a container
   (if (eq? *scheduler* ':asap)
       (%q-insert (%qe-alloc *queue* time start object type) *queue*)
-      (rts:enqueue type object time start)
+      (rts-enqueue type object time start)
       ))
 
 (define (early? tim)
@@ -470,7 +470,7 @@
     ;; *pstart* will be #f if ;; called outside process
     (if *pstart*
       (if abs-time *qtime* (- *qtime* *pstart*))
-      (rts:scheduler-time))))
+      (rts-now))))
 
 (define (wait time)
   ;; CHANGE: allow optional time unit for RTS scheduling
