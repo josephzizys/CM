@@ -49,7 +49,9 @@
 
 
 ;;; 
-;;; Byte specifications and offsets (Encoded MIDI Messages)
+;;; Byte specifications and offsets (Encoded MIDI Messages) WARNING:
+;;; if these bytespecs are changed the edit make-channel-message --
+;;; its hand coded without bytespecs to avoid consing.
 
 (define +enc-route-byte+		(byte 10 22))
 (define +enc-lower-status-byte+	(byte  4 18))
@@ -300,7 +302,8 @@
     (if (= size 2)
       (make-channel-message (ash (logand bytes #xf000) -12)
                             (ash (logand bytes #x0f00) -8)       
-                            (logand bytes #x7f))
+                            (logand bytes #x7f)
+			    0)
       (err "Size ~s cannot be a channel message." size))))
 
 (define *midi-open* #f)
@@ -332,12 +335,16 @@
 ;;; Channel (and Channel Mode) Messages
 ;;;
 
-(define (make-channel-message opcode channel data1 . args)
-  (let ((data2 (if (null? args) 0 (car args))))
-    (dpb channel +enc-logical-channel-byte+
-         (dpb opcode +enc-opcode-byte+
-              (dpb data1 +enc-data-1-byte+
-                   (dpb data2 +enc-data-2-byte+ 0))))))
+(define (make-channel-message opcode channel data1 data2)
+  ;; rewrote because DPB conses in most lisps!
+;;  (dpb channel +enc-logical-channel-byte+
+;;       (dpb opcode +enc-opcode-byte+
+;;            (dpb data1 +enc-data-1-byte+
+;;                 (dpb data2 +enc-data-2-byte+ 0))))
+  (logior (ash (logand channel #b11111111111111) 18)
+	  (ash (logand opcode #b1111) 14)
+	  (ash (logand data1 #b1111111) 7) 
+	  (logand data2 #b1111111)))
 
 (define (channel-message-p message)
   (midi-channel-message-p message))
@@ -462,7 +469,7 @@
 ;;;
 
 (define (make-program-change channel program)
-  (make-channel-message +ml-program-change-opcode+ channel program))
+  (make-channel-message +ml-program-change-opcode+ channel program 0))
 
 (define (program-change-p message)
   (= (ldb +enc-opcode-byte+ message) +ml-program-change-opcode+))
@@ -482,7 +489,7 @@
 ;;; :channel-pressure
 
 (define (make-channel-pressure channel pressure)
-  (make-channel-message +ml-channel-pressure-opcode+ channel pressure))
+  (make-channel-message +ml-channel-pressure-opcode+ channel pressure 0))
 
 (define (channel-pressure-p message)
   (= (ldb +enc-opcode-byte+ message) +ml-channel-pressure-opcode+))
