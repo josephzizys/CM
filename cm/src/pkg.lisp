@@ -502,11 +502,11 @@
            :decimals :decode-interval :defaxis :defobject :defprocess
            :doeach :drunk :dumposc :eod? :eop? :events :expl :explseg
            :explsegs :f :false :find-object :fit :fm-spectrum
-           :fold-objects :funcall :graph :heap :hertz :histogram :i
-           :import-events :input :insert-object :interp :interpl
-           :interval :invert :io :join :keynum :line
-           :list-named-objects :list-subobjects :log-axis :lookup
-           :*loudest* :make-cm :map-objects :map-pattern-data
+           :fold-objects :funcall :graph :harmonics :heap :hertz
+	   :histogram :i :import-events :input :insert-object
+	   :interp :interpl :interval :invert :io :join :keynum
+	   :line :list-named-objects :list-subobjects :log-axis 
+	   :lookup :*loudest* :make-cm :map-objects :map-pattern-data
            :map-subcontainers :map-subobjects :markov-analyze :markov
            :midi-chan-event :midi-channel-map :midi-channel-pressure
            :midi :midi-connections :midi-control-change :midi-eot
@@ -528,10 +528,12 @@
            :plotter-data :plotter :plotter-front-styling
            :plotter-property :plotter-redraw :plotter-scroll
            :plotter-zoom :point :power :prime-form :process :pval
-           :pval :pwd :quantize :ran :range :ransegs
-           :remove-object :remove-subobjects :rescale-envelope
-           :rescale :rewrite :rewrite-generation :rhythm :rm-spectrum
-           :rotation :save-object :sc-file :scale-max :scale-min
+           :pval :pwd :quantize :ran :range :ransegs :remove-object
+	   :remove-subobjects :rescale-envelope :rescale :rewrite
+	   :rewrite-generation :rhythm :rm-spectrum :rotation
+	   :rts :rts-stop :rts-continue :rts? 
+	   :recv :recv-set! :recv?
+	   :save-object :sc-file :scale-max :scale-min
            :scale-mod :scale-order :*scale* :scale= :scale> :scale>=
            :scale< :scale<= :scaler->cents :sco-file :seq
            :set-clm-output-hook! :set-midi-output-hook!
