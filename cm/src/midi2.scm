@@ -648,7 +648,7 @@
 
 (define-method* (deinitialize-io (mf <midi-file>) )
   (when (eq? (io-direction mf) ':output)
-    (flush-pending-offs mf)))
+    (flush-pending-offs mf most-positive-fixnum)))
 
 (define-method* (close-io (mf <midi-file>) . mode)
   mode ; gag 'unused variable' message from cltl compilers
@@ -666,10 +666,8 @@
       (%q-flush %offs)))
   (next-method))
 
-(define (flush-pending-offs mf . args)
-  (let ((time (if (null? args) most-positive-fixnum
-		  (car args)))
-	(last (object-time mf))
+(define (flush-pending-offs mf time)
+  (let ((last (object-time mf))
 	(scaler (midi-file-scaler mf)))
     (do ((qe (%q-peek %offs) (%q-peek %offs)))
 	((or (null? qe) (> (%qe-time qe) time))
