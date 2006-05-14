@@ -486,7 +486,7 @@ library for Common Lisp and Gauche Scheme.
 <li>Author: Rick Taube, Todd Ingalls</li>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">Portmidi interface</a></li>
 <li>Supporting: Clisp, CMUCL, Gauche Scheme Lispworks, OpenMCL, SBCL</li>
-<li>Requirements: <a href="#cffi">CFFI</a>, Portmidi libraries and header files must be installed under /usr/local/lib and /usr/local/include, respectively.</li>
+<li>Requirements: GCC, configure, make, <a href="#cffi">CFFI</a> for Common Lisp and <a href="http://homepage.mac.com/naoki.koguro/prog/c-wrapper/index.html">c-wrapper</a> for Gauche Scheme; Portmidi libraries and header files must be installed under /usr/local/lib and /usr/local/include, respectively.</li>
 
 <li>Installation: Restore the Portmidi Interface sources under your Lisp installation directory and make the library.
 <pre>$ cd /path/to/portmidi
@@ -510,7 +510,7 @@ Real time scheduling services for supported Lisp/OS systems.
 <li>Authors: Todd Ingalls, Michael Klingbeil, Rick Taube</li>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=185112">RTS</a></li>
 <li>Supporting: Gauche, OpenMCL, SBCL</li>
-<li>Requirements:  GCC, configure, make, <a href="http://common-lisp.net/project/cffi/">CFFI</a> </li>
+<li>Requirements:  GCC, configure, make, <a href="http://common-lisp.net/project/cffi/">CFFI</a> for Common Lisp and <a href="http://homepage.mac.com/naoki.koguro/prog/c-wrapper/index.html">c-wrapper</a> for Gauche Scheme.</li>
 </li>
 <li>Installation: Restore the RTS sources under your Lisp installation directory, then configure and make the librts library:
 <pre>$ cd /path/to/rts
