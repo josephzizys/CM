@@ -483,13 +483,17 @@ library for Common Lisp and Gauche Scheme.
 </p>
 
 <ul>
-<li>Author: Rick Taube</li>
+<li>Author: Rick Taube, Todd Ingalls</li>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">Portmidi interface</a></li>
 <li>Supporting: Clisp, CMUCL, Gauche Scheme Lispworks, OpenMCL, SBCL</li>
-<li>Requirements: <a href="#cffi">CFFI</a>, on Linux
-/usr/local/libportmidi.so and usr/local/libporttime.so. (OS X
-and Windows libraries are included in tarball).</li>
-<li>Installation: Restore the Portmidi Interface sources under your Lisp installation directory.</li>
+<li>Requirements: <a href="#cffi">CFFI</a>, Portmidi libraries and header files must be installed under /usr/local/lib and /usr/local/include, respectively.</li>
+
+<li>Installation: Restore the Portmidi Interface sources under your Lisp installation directory and make the library.
+<pre>$ cd /path/to/portmidi
+$ ./configure
+$ make
+</pre>
+</li>
 </ul>
 
 <p>
