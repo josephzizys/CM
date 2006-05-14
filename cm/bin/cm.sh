@@ -16,7 +16,7 @@ SUMMARY="         run Common Music"
 
 : ${CM_EDITOR:=}
 : ${CM_RUNTIME:=}
-: ${CM_RUNTIME_PREFS:=openmcl cmucl acl clisp sbcl guile gauche}
+: ${CM_RUNTIME_PREFS:=openmcl sbcl cmucl acl clisp guile gauche}
 
 : ${CM_OS:=}
 : ${CM_ARCH:=}
