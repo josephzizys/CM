@@ -218,7 +218,9 @@
 	   #:scheduler-state? #:scheduler-enqueue
 	   #:scheduler-lock-lisp #:scheduler-unlock-lisp
 	   #:scheduler-add-hook! #:scheduler-remove-hook!
-	   #:scheduler-hook-set! #:scheduler-time #:*time-format*))
+	   #:scheduler-hook-set! #:scheduler-time #:*time-format*
+	   #:random-seed #:between #:rescale #:odds #:pickl #:drunk 
+	   #:wander #:shuffle #:interpl #:rhythm))
 
 (in-package :rts)
 
@@ -239,6 +241,17 @@
 (defstub enqueue)
 (defstub scheduler-time)
 (defstub (special *time-format*))
+(defstub random-seed)
+(defstub between)
+(defstub random-seed)
+(defstub rescale)
+(defstub odds)
+(defstub pickl)
+(defstub drunk)
+(defstub wander)
+(defstub shuffle)
+(defstub interpl)
+(defstub rhythm)
 )
 
 ;;;
