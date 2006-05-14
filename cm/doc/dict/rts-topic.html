@@ -15,47 +15,40 @@
 <span class="syntax">RTS</span></dd>
 </dl>
 
-<p>Support for Real time Scheduling (RTS) is available for the following
+<p>Support for real-time scheduling (RTS) is currently available for the following
 Lisp implementations:
 </p>
 
 <ul>
 <li>Gauche Scheme</li>
-<li>SBCL/Linux</li>
-<li>OpenMCL/OS X</li>
+<li>OpenMCL</li>
+<li>SBCL</li>
 </ul>
 
-<p> To enable RTS in Common Lisp do:</p>
+<p>To load RTS do:</p>
 
 <blockquote>
 <pre>(<a href="use-system-fn.html">use-system</a> <span class="keyword">:rts</span>)</pre>
 </blockquote>
 
-<p>Support is automatically loaded in Gauche Scheme.</p>
+<p>Loading RTS enables the following set of functions:<p>
+<ul>
+  <li> <a href="rts-fn.html"><code>rts</code></a> </li>
+  <li> <a href="rts-pause-fn.html"><code>rts-pause</code></a> </li>
+  <li> <a href="rts-continue-fn.html"><code>rts-continue</code></a> </li>
+  <li> <a href="rts-hush-fn.html"><code>rts-hush</code></a> </li>
+  <li> <a href="rts-stop-fn.html"><code>rts-stop</code></a> </li>
+  <li> A set of <a href="#tools">non-consing replacements</a> for some CM runtime tools.</li>
+</ul>
 
 <h4>Implementation</h4>
 
-
-<p>Loading the RTS system adds the following set of features to Common Music:
-</p>
-<ul>
-<li>Real time scheduling.</li>
-<li>Setting receive hooks in real time streams.</li>
-<li>Socket support for reading and writing OSC messages.</li>
-<li>The osc-stream and sc-stream classes.</li>
-</ul>
-
-
-
-
-<p> The <a href="rts-fn.html"><code>rts</code></a> scheduler is source
-compatible with <a href="events-fn.html"><code>events</code></a>,
-which means that the same <a
+<p> <a href="rts-fn.html"><code>rts</code></a> is a real-time musical process scheduler based on <A href="http://www.llnl.gov/computing/tutorials/pthreads/">POSIX threads</a> that is source
+compatible with CM's non-real time <a href="events-fn.html"><code>events</code></a> scheduler.
+Source compatible means that the exact same <a
 href="process-mac.html"><code>process</code></a> definition can run in
 both environments.  The most visible differences between the two
-schedulers are:<!-- <code>rts</code> and <a
-href="events-fn.html">events</a> (aside from the obvious real time
-scheduling aspect) are: -->
+schedulers are:</p>
 
 <ul> <li>the REPL is not blocked by <a
 href="rts-fn.html"><code>rts</code></a> while the scheduler is
@@ -65,68 +58,92 @@ running.  </li>
 explicitly stopped, even if its queue is empty.  </li>
 
 <li> <a
-href="sprout-fn.html">sprout</a> is called interactively from the REPL
+href="sprout-fn.html">sprout</a> can be called interactively from the REPL
 or from a <a href="receive-fn.html">receive hook</a> to add objects to
-<code>rts</code>.  </li> <li>Values returned by <a
+<code>rts</code>.  </li>
+
+<li>Object time stamps are ignored during output. That is, setting the time of an object to a  <code>(now)</code> value has no effect on the time that the object is actually output: it is always output at the current time plus any latency in the output stream.</li>
+
+<li>Values returned by <a
 href="now-fn.html">now</a> under RTS reflect the current real time in
-seconds.</li> </ul>
+seconds, milliseconds or microseconds, depending on the time format specified to <a href="rts-fn.html"><code>rts</code></a>.</li>
+</ul>
+
+<h4>To Cons or Not To Cons</h4>
 
 <p> Although process definitions do not have to be changed to run
 under <code>rts</code>, real time scheduling does place timing demands
-on software that non-real time scheduling does not. For example,
-process definitions should avoid consing and creating lots of
-temporary structure or being otherwise wasteful and inefficient.
-Consider reusing events rather than creating new one for each output
-statement.  If you are working with MIDI, consider using low-level,
-consless <a href="midi-topic.html#midi_messages">MIDI messages</a> in
-place of <a href="midi-cls.html">midi</a> objects.  </p>
+on software that non-real time scheduling does not. 
+To get maximum accuracy process definitions should avoid unnecessary <em>consing</em> -- creating lots of
+temporary data stuctures (lists, objects, vectors, strings etc), performing floating point arithmetic, or being otherwise wasteful and inefficient. As an alternative, consider running the scheduler in millisecond time format, reusing one event rather than creating new events for each output statement and using integer math.  If you are working with MIDI, consider using low-level,
+consless <a href="midi-topic.html#midi_messages">MIDI messages</a> in place of <a href="midi-cls.html">midi</a> objects. 
 
-<p> CM uses posix threads or an implementation specific
-mechanism to implement <code>rts</code>. The availability of either
-method depends on the underlying Lisp implementation. </p>
+</p>
 
-<h4>Limitations</h4>
+<h4 id="tools">Non-consing Tools</h4>
 
-<ol>
-<!-- li>Both threaded and periodic versions of <code>rts</code> are
-supported in OpenMCL and SBCL.  The default implementation is
-threaded. To try out the periodic version set <code>*rts-type*</code>
-to <code class="keyword">:periodic</code>.
-</li -->
+<p>Some operations in Lisp are inherently "consy", for example
+non-destructive operations on lists or performing math or random
+selection with floating point values. In order to facilite non-consing
+process definition, the RTS system provides non-consing replacements
+for a subset of CM's runtime functions. Obviously, these replacements
+provide only limited functionalty, for example they only return
+integer values.</p>
 
-<!-- li>Periodic polling has several consequences:
-</p>  
-<ul>
-<li>Using the GUI at the same time as periodic rts or periodic
-receiving will currently not work.</li>
-<li>Periodic tasks are pushed onto a task list; if <code>rts</code> is
-periodic be sure to start it running before
-calling <a href="set-receiver-fn.html">set-receiver!</a>
-otherwise <code>rts</code> will not be able to process what the
-receiver places into its queue until the next tick.</li>
-<li>All receiving and process tasks must happen within the 1
-millisecond tick or things will drift.
-</li>
-</ul>
+<dl class="dictsyntax" id="rhythm">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">rts:rhythm</code> <var>ticks</var> [<var>tempo</var>]) </code></dd>
+</dl>
+<p>Returns rhythmic value of <var>ticks</var> and <var>tempo</var> as integer milliseconds. The value of <var>ticks</var> can be an integer or symbol. Integer ticks are interpreted relative to a quarter-note worth 480 ticks, so 240 is one eighth, 960 one half, 320 one triplet quarter, 900 is a quarter tied to a doubly-dotted eighth and so on. If <var>ticks</var> is a symbol it can be one of: <code>w h q e s t x</code> (whole, half, quarter, eighth, sixteenth, thirty-second, sixty-fourth), the triplet variants: <code>tw th tq te ts tt tx</code>, the dotted variants: <code>w. h. q. e. s. t. x.</code> and the doubly-dotted variants.
+</p>
 
-</li -->
+<dl class="dictsyntax" id="rescale">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">rts:rescale</code> <var>x</var> <var>x1</var> <var>x2</var>  <var>y1</var> <var>y2</var><code>)</code></dd>
+</dl>
+<p>Rescales an integer <var>x</var> that lies between integers <var>x1</var> and <var>x2</var> to lie proportionally between integers <var>y1</var> and <var>y2</var>. Rescaling is essentially linear interpolation along a single line segment.</p>
 
-<li>SBCL/Linux: If you use RTS with Portmidi, do not load the RTS
-system until after you have opened a Portmidi connection. If you load
-RTS before you open Portmidi then SBCL segfaults. I don't know why
-this happens.</li>
 
-<li>
-How accurate RTS timing is depends on a number of factors, including
-how accurate the Lisp implementation's thread sleeping/periodic tasks
-are, how short the time deltas between musical events are, whether
-process code is compiled or interpreted, how much garbage is
-generated, and so on.
-</li>
-</ol>
+<dl class="dictsyntax" id="interpl">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">rts:interpl</code> <var>x</var> <var>list</var>) </code></dd>
+</dl>
+<p>Performs integer linear interpolation of <var>x</var> in a <var>list</var> of integer coordinates (<var>x1 y1 x2 y2 ... xn yn</var>) where <var>x1 ... xn</var> must be in monotonically increasing order and <var>y</var> integers are unordered.</p>
 
+
+<dl class="dictsyntax" id="random-seed">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">rts:random-seed</code> <var>seed</var>)</code></dd>
+</dl>
+<p>Seeds random selection with integer <var>seed</var>. The Common Lisp function <code>(get-universal-time)</code> can be used to provide continuously new <var>seed</var> values. </p>
+
+<dl class="dictsyntax" id="between">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">rts:beween</code> <var>lb</var> <var>ub</var> [<var>avoid</var>]<code>)</code></dd>
+</dl>
+<p>Returns an integer value equal to or greater than the integer <var>lb</var> but less than integer <var>ub</var>. If <var>avoid</var> is provided the value returned by the function will not be equal to it.</p>
+
+<dl class="dictsyntax" id="odds">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">rts:odds</code> <var>pct</var> [<var>true</var>] [<var>false</var>]<code>)</code></dd>
+</dl>
+<p>Returns the <var>true</var> value if a random choice between 0 and 100 is less than <var>pct</var>, which must also lie between 0 and 100 and where 0 means impossiblity and 100 is complete certainty, otherwise returns <val>false</var>. If <var>true</var> or <var>false</var> are not specfied they default to boolean true and false, respectively.</p>
+
+<dl class="dictsyntax" id="drunk">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">rts:drunk</code> <var>num</var> <var>width</var>)</code></dd>
+</dl>
+<p>Returns integer <var>num+width</var> or <var>num-width</var> based on a random choice.</p>
+
+<dl class="dictsyntax" id="shuffle">
+<dt>[Function]</dt>
+<dd><code>(</code><code class="entry">rts:shuffle</code> <var>list</var> [<var>start</var>] [<var>end</var>])</code></dd>
+</dl>
+
+<p>Destructively modifies <var>list</var> by scrambling the order of elements between the <var>start</var> and <var>end</var> positions, which default to 0 and length of <var>list</var>, respectively.</p>
 
 <h4>See also:</h4>
+
 <ul>
 
 <li><a href="rts-fn.html"><code>rts</code></a> [Function]</li>
