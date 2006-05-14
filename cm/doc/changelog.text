@@ -3,6 +3,7 @@ CM 2.9.1
 
 o RTS version 2.0 moved to C:
   - requires gcc, configure and make to install
+  - works in Gauche Scheme, OpenMCL and SBCL
   - pthread scheduling priorities and policies are settable
   - the (rts)  and (events) schedulers can run in parallel
   - rts scheduler supports three time formats: :sec :msec and
@@ -13,7 +14,12 @@ o RTS version 2.0 moved to C:
   - events do not requre (now) time stamps under rts because the
     scheduler triggers them at the correct time. any latency value set
     in the output stream will be included in the output time.
-  - see new documentatino in dict/rts-fn.html
+  - see new documentation in dict/rts-fn.html
+
+o PORTMIDI moved to C:
+  - requires gcc, configure and make to install
+  - works in Gauche Scheme, OpenMCL and SBCL
+  - Receiving API has changed and is undocumented see its test files.
 
 o  New time conversion functions sec, msec and usec that convert
     between three time formats ie:
@@ -30,6 +36,7 @@ o Durations and wait values must agree with time format under RTS
 Bug Fixes:
 
 o guile: the (cd) function now uses (getuid) to determine home dir
+o consing leak in make-channel-message fixed
 o portmidi: time is now passed correctly from rts
 
 ----------------------------------------------------------------------
