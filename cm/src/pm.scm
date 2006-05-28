@@ -166,6 +166,8 @@
       (if (cadr data)
           (pm:Close (cadr data)))
       (set! (event-stream-stream obj) #f)
+      (list-set! (rt-stream-receive-data obj) 0 #f)
+      (list-set! (rt-stream-receive-data obj) 1 #f)
       (set! (io-open obj) #f)))
   (values))
 
@@ -211,12 +213,12 @@
 (define (portmidi-close . args)
   (with-args (args &optional (port (find-object "midi-port.pm" )))
     (if (portmidi-open? port)
-        (cond ((receiver? port)
-               (err "portmidi-close: Can't close PortMidi because a receiver is currently running."))
-              (else
-               (close-io port ':force)
-               port))
-        port)))
+        (begin
+          (if (equal? ':running (recv? port))
+              (recv-stop port))
+          (close-io port ':force))
+      port)
+    port))
 
 ;;;
 ;;; message format conversion
