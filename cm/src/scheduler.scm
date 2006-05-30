@@ -231,13 +231,23 @@
 ;;;
 
 (define *queue* #f) ; system queue
-(define *scheduler* #f)
+(define *events* #f)
 (define *pstart* #f) ; start time of process in score or 0
 (define *qtime* #f)  ; current run time (score time)
 (define *qnext* #f)  ; next runttime
 (define *qlock* #f)  ; lock for threaded scheduler
+;; this is GROSS
+(define *rts-pstart* #f) ; start time of process in score or 0
+(define *rts-qtime* #f)  ; current run time (score time)
+(define *rts-qnext* #f)  ; next runttime
 
-(define (scheduling? ) *scheduler*)
+(defun scheduling-mode ()
+  (if (rts-thread?) 
+      ':rts
+      (if *events* ':events nil)))
+
+(defun scheduling-mode? (x)
+  (eq? (scheduling-mode) x))
 
 (define (schedule-events stream object . args)
   ;; removed rt
@@ -248,21 +258,22 @@
 	 (datum #f)
 	 (etype #f)
 	 (thing #f)
+	 (qtime #f)
 	 )
     (set! *queue* %q)
-    (set! *scheduler* ':asap)
+    (set! *events* #t)
     ;; enque all objects at their score times
     ;; object and ahead can be a single values or lists
     (if (pair? object)
-      (dolist (o object)
-	;; allow fewer aheads than objects. last one is sticky.
-	(schedule-object o (if (pair? ahead)
-			     (if (pair? (cdr ahead))
-			       (pop ahead) (car ahead))
-			     ahead)))
-      (if (pair? ahead)
-        (schedule-object object (car ahead))
-        (schedule-object object ahead)))
+	(dolist (o object)
+	  ;; allow fewer aheads than objects. last one is sticky.
+	  (schedule-object o (if (pair? ahead)
+				 (if (pair? (cdr ahead))
+				     (pop ahead) (car ahead))
+				 ahead) ':events))
+	(if (pair? ahead)
+	    (schedule-object object (car ahead) ':events)
+	    (schedule-object object ahead ':events)))
     (dynamic-wind
      (lambda () #f)
      (lambda ()
@@ -270,49 +281,47 @@
 	   ((null? (%q-head *queue*))
 	    (set! noerr #t))
 	 (set! entry (%q-pop *queue*))
-	 (set! *qtime* (%qe-time entry))
+	 (set! qtime (%qe-time entry))
 	 (set! start (%qe-start entry))
 	 (set! thing (%qe-object entry))
 	 (set! datum (%qe-datum entry) ) ; holds type info
 	 (%qe-dealloc *queue* entry)
-	 ;(process-events thing *qtime* start stream)
 	 (set! etype (logand datum #xF))
 	 (cond ((eq? etype *qentry-process*)
-		(scheduler-do-process thing *qtime* start
-				      stream datum))
+		(scheduler-do-process thing qtime start
+				      stream datum ':events))
 	       ((eq? etype *qentry-seq*)
-		(scheduler-do-seq thing *qtime* start
-				  stream datum))
+		(scheduler-do-seq thing qtime start
+				  stream datum ':events))
 	       (else
-		(write-event thing stream *qtime*)))
+		(write-event thing stream qtime)))
 	 ))
      (lambda ()
        (unless noerr
 	 ;; if we got an error flush remaining queue entries.
 	 ;(warning "Flushing queue.")
 	 (%q-flush *queue*)
-	 (unschedule-object object #t))
+	 (unschedule-object object #t ':events))
        ;; toplevel #f for interactive midi.
-       (set! *scheduler* #f)
+       (set! *events* #f)
        (set! *pstart* #f)
        (set! *qtime* #f)
-       (set! *qlock* #f)
        (set! *queue* #f)))))
 
-(define (enqueue type object time start)
+(define (enqueue type object time start sched)
   ;; CHANGE: enqueue now take a qentry type that is passed to rts and
   ;; ignored by events
   ;; CHANGE: enqueue now calls rts:enqueue if not running under events
   ;; start is #f if object is not a container
-  (if (eq? *scheduler* ':asap)
+  (if (eq? sched ':events)
       (%q-insert (%qe-alloc *queue* time start object type) *queue*)
-      (rts-enqueue type object time start)
+      (rts-enqueue type object time start sched)
       ))
 
-(define (early? tim)
+(define (early? tim sched)
   ;; #t if time is later than next entry in queue.
   ;; CHANGE: rts has no check for early
-  (if (eq? *scheduler* ':asap)
+  (if (eq? sched ':events)
       (if (null? (%q-head *queue*)) #f
 	  (> tim (%qe-time (%q-head *queue*))))
       #f))
@@ -321,11 +330,11 @@
 ;;; schedule-object inserts object into queue
 ;;;
 
-(define-method* (schedule-object (obj <object>) start)
+(define-method* (schedule-object (obj <object>) start sched)
   ;; this was defined for EVENT. now works on any
   ;; object that has an object-time accessor.
   ;; start is the score time of the parent container
-  (enqueue *qentry-object* obj (+ start (object-time obj)) #f))
+  (enqueue *qentry-object* obj (+ start (object-time obj)) #f sched))
 
 ;(define-method* (schedule-object (obj <process>) start)
 ;  (let ((mystart (+ start (object-time obj)))
@@ -337,17 +346,17 @@
 ;        (enqueue p mystart mystart))
 ;      (enqueue procs mystart mystart))))
 
-(define-method* (schedule-object (obj <procedure>) start)
-  (enqueue *qentry-process* obj start start))
+(define-method* (schedule-object (obj <procedure>) start sched)
+  (enqueue *qentry-process* obj start start sched))
 
-(define-method* (schedule-object (obj <integer>) start)
-  (enqueue *qentry-message* obj start start))
+(define-method* (schedule-object (obj <integer>) start sched)
+  (enqueue *qentry-message* obj start start sched))
 
-(define-method* (schedule-object (obj <pair>) start)
+(define-method* (schedule-object (obj <pair>) start sched)
   ;; CHANGE: this now calls its self recursivly as it should
-  (dolist (o obj) (schedule-object o start start)))
+  (dolist (o obj) (schedule-object o start start sched)))
 
-(define-method* (schedule-object (obj <seq>) start)
+(define-method* (schedule-object (obj <seq>) start sched)
   ;; CHANGE: this conses seq onto head of subobjects
   ;; so list can maintain identity during scheduling
   ;; start is the score time of the parent container
@@ -358,10 +367,12 @@
 	     ;; we add the seq onto the subobjects so that
 	     ;; the entries maintain their identity during scheduling
 	     (cons obj (container-subobjects obj))
-	     mystart mystart)
+	     mystart
+	     mystart
+	     sched)
     ;; schedule all subcontainers of seq
     (dolist (sub (subcontainers obj))
-      (schedule-object sub mystart))))
+      (schedule-object sub mystart sched))))
 ;;;
 ;;; unschedule-object, currently a noop.
 ;;;
@@ -374,7 +385,7 @@
 ;;; processing queue entries
 ;;;
 
-(define (scheduler-do-seq entry time start stream type)
+(define (scheduler-do-seq entry time start stream type sched)
   ;; the entry is (<seq> . subs).
   ;;type has *qentry-seq* in the nibble
   time
@@ -395,12 +406,12 @@
       (begin
        ;; event's score time = seq_start + event_time
        (set! next (+ start (object-time event)))
-       (if (early? next) 
-	 (enqueue *qentry-object* event next start)
+       (if (early? next sched) 
+	 (enqueue *qentry-object* event next start sched)
 	 (write-event event stream next))
        (if (null? head)
 	 #f
-	 (enqueue type entry next start)))
+	 (enqueue type entry next start sched)))
       #f)))
 
 ;;;
@@ -413,21 +424,34 @@
 ;;; an implementation of MACROEXPAND-ALL (walk.lisp). 
 ;;;
 
-(define (scheduler-do-process func qtime pstart stream type)
-  ;; type has *qentry-process* in the lower nibble
+(define (scheduler-do-process func qtime pstart stream type sched)
   stream
+  ;; type has *qentry-process* in the lower nibble
   ;; *pstart* is the process start time in score, ie the time it
   ;; was initially sprouted. it has a non-null value ONLY during the
   ;; process funcall. for this reason some code tests *pstart*  to see
   ;; if it is being called inside a process.
-  (set! *pstart* pstart)
-  ;; *qnext* is advanced by (wait ...)
-  (set! *qnext* qtime)
   ;; call user's process thunk,
   ;; reschedule if process function returns non-nil
-  (if (funcall func)
-      (enqueue type func *qnext* *pstart*))
-  (set! *pstart* #f))
+  (case sched 
+    ((:events )
+     (set! *pstart* pstart)
+     (set! *qtime* qtime)
+     (set! *qnext* qtime)	   ; *qnext* is advanced by (wait ...)
+     (if (funcall func)
+	 (enqueue type func *qnext* *pstart* sched))
+     (set! *pstart* #f)
+     (set! *qtime* #f)
+     (set! *qnext* #f))
+    ((:rts )
+     (set! *rts-pstart* pstart)
+     (set! *rts-qtime* qtime)
+     (set! *rts-qnext* qtime)	   ; *qnext* is advanced by (wait ...)
+     (if (funcall func)
+	 (enqueue type func *rts-qnext* *rts-pstart* sched))
+     (set! *rts-pstart* #f)
+     (set! *rts-qtime* #f)
+     (set! *rts-qnext* #f))))
 
 (define (output event . args)
   ;; used in processes to write events to the current output stream.
@@ -435,29 +459,34 @@
   ;; in queue. if so it enqueues rather than outputs. if event is
   ;; written to file, ahead is added to scoretime stream's destination
   ;; can manage future scheduling
-  (with-args (args &key (to *out*) at (ahead 0))
-    (cond ((eq? *scheduler* ':asap)
-	   (if (pair? event)
-	       (dolist (e event)
-	         ;; if called from process at relative to process start
-                 ;; time
-                 (let ((n (+ (or *pstart* 0) (or at (object-time e)))))
-                   (if (early? n)
-                     (enqueue (if (integer? e) *qentry-message*
-                                  *qentry-object*)
-                               e n #f)
-                   (write-event e to (+ n ahead)))))
-               (let ((n (+ (or *pstart* 0) (or at (object-time event)))))
-                 (if (early? n)
-                   (enqueue (if (integer? event) *qentry-message*
-                                *qentry-object*) 
-                            event n #f)
-                   (write-event event to (+ n ahead))))))
-          ((eq? *scheduler* ':rts)
-           (write-event event to (+ (or at *qtime* 0) ahead)))
-          (else
-           (write-event event to (+ (or at 0) ahead))))
-    (values)))
+  (with-args (args &key to at (ahead 0))
+    (let ((sched (scheduling-mode)))
+      (case sched
+	((:events )
+	 (unless to (set! to *out*))
+	 (if (pair? event)
+	     (dolist (e event)
+	       ;; if called from process at relative to process start
+	       ;; time
+	       (let ((n (+ (or *pstart* 0) (or at (object-time e)))))
+		 (if (early? n sched)
+		     (enqueue (if (integer? e) *qentry-message*
+				  *qentry-object*)
+			      e n #f sched)
+		     (write-event e to (+ n ahead)))))
+	     (let ((n (+ (or *pstart* 0) (or at (object-time event)))))
+	       (if (early? n sched)
+		   (enqueue (if (integer? event) *qentry-message*
+				*qentry-object*) 
+			    event n #f sched)
+		   (write-event event to (+ n ahead))))))
+	((:rts )
+	 (unless to (set! to *rts-out*))
+	 (write-event event to (+ (or at *rts-qtime* 0) ahead)))
+	(else
+	 (unless to (set! to *rts-out*))
+	 (write-event event to (+ (or at 0) ahead))))
+      (values))))
 
 (define (now . args)
   ;; now can only be called from (process ) or from the repl
@@ -466,38 +495,25 @@
     ;; the datum stored in scheduling queue, NOT the scheduler's
     ;; current clock time. im not sure this is correct or not -- it
     ;; will be off by some microseconds.  
-
-    ;; *pstart* will be #f if ;; called outside process
-    (if *pstart*
-      (if abs-time *qtime* (- *qtime* *pstart*))
-      (rts-now))))
+    ;; *pstart* will be #f if called outside process
+    (case (scheduling-mode)
+      ((:events ) 
+       (if abs-time *qtime* (- *qtime* *pstart*)))
+      ((:rts )
+       (if abs-time *rts-qtime* (- *rts-qtime* *rts-pstart*)))
+      (else
+       (rts-now)))))
 
 (define (wait time)
-  ;; CHANGE: allow optional time unit for RTS scheduling
   ;; wait can only be called under scheduler
-  (let ((delta (if *scheduler* (abs time)
-		   (err "wait: scheduler not running."))))
-    (set! *qnext* (+ *qnext* delta))))
-
-;;
-;; (define-method* (sprout (obj <object>) . args)
-;;   (with-args (args &optional time ahead)
-;;     ahead
-;;     (if *scheduler*
-;;         (schedule-object obj *qstart*)
-;;         (err "sprout: scheduler not running."))))
-;; (define-method* (sprout (obj <procedure>) . args)
-;;   (with-args (args &optional time ahead)
-;;     ahead
-;;     (if *scheduler*
-;;         (enqueue obj (+ *qstart* time) (+ *qstart* time))
-;;         (err "sprout: scheduler not running."))))
-;; (define-method* (sprout (obj <pair>) . args)
-;;   (with-args (args &optional time ahead)
-;;     (if *scheduler*
-;;       (dolist (o obj) (sprout o time ahead))
-;;       (err "sprout: scheduler not running."))))
-
+  (case (scheduling-mode)
+    ((:events )
+     (set! *qnext* (+ *qnext* (abs time))))
+    ((:rts )
+     (set! *rts-qnext* (+ *rts-qnext* (abs time))))
+    (else
+     (err "wait: scheduler not running."))))
+       
 (define (sprout obj . args)
   (with-args (args &key to at)
     to 
@@ -507,27 +523,24 @@
     ;; at or at-msec is relative to process start time
     (if (pair? obj)
 	(dolist (o obj) (sprout o :at at :to to))
-	(begin
-	  (if *pstart*
+	(let ((sched (scheduling-mode)))
+	  (if (not sched) ;  called from REPL to insert in rts
+	      (if (not at) (set! at (now)))
 	      (if at 
-		  (if (eq? *scheduler* ':asap)
+		  (if (eq? sched ':events)
 		      (set! at (+ at *pstart*))
-		      (set! at (+ at *pstart*)))
+		      (set! at (+ at *rts-pstart*)))
 		  ;; else get current time
-		  (set! at (now)))
-	      ;; else sprout was called from REPL to insert in rts
-	      (if at
-		  #f
-		  (set! at 0)))
+		  (set! at (now))))
 	  (cond ((procedure? obj)
-		 (enqueue *qentry-process* obj at at))
+		 (enqueue *qentry-process* obj at at sched))
 		((integer? obj)
-		 (enqueue *qentry-message* obj at #f))
+		 (enqueue *qentry-message* obj at #f sched))
 		((is-a? obj <object>)
 		 ;; schedule-object will add in object's time value
-		 (schedule-object obj (or *pstart* at)))
+		 (schedule-object obj (or *pstart* at) sched))
 		(else
-		 (enqueue *qentry-unknown* obj at #f)
+		 (enqueue *qentry-unknown* obj at #f sched)
 		))))
     (values)))
 
