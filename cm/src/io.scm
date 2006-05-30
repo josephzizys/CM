@@ -288,6 +288,8 @@
 
 (define *in* #f)
 (define *out* #f)
+(define *rts-out* #f)
+(define *rts-in* #f)
 (define *last-output-file* #f)
 
 (define (current-input-stream)
@@ -341,8 +343,7 @@
 		       x)
 		   (err "events: not a sproutable object: ~s." x)))))
 	;; rts not running....
-	(if (member (scheduling?) '(#f :asap))
-	    (dynamic-wind
+	(dynamic-wind
 	     (lambda () #f)
 	     (lambda ()
 	       (if (not to)
@@ -361,29 +362,7 @@
 	     (lambda ()
 	       (when *out*
 		 (deinitialize-io *out*)
-		 (close-io *out* err?))))
-	    ;; else rts running, only allow sprouting to rt streams.
-	    (begin
-	     (when to
-	       (when (string? to)
-		 (set! to (apply (function open-io) to #t args)))
-	       (unless (is-a? to <rt-stream>)
-		 (err "events: non-realtime stream ~s while rts running."
-		      to))
-	       (unless (io-open to)
-		 (err "events: stream ~s is not open while rts running."
-		      to))
-	       (set! *out* to))
-	     (if (pair? object)
-		 (dolist (o object)
-		   (sprout (getobj o) :to to
-			   :ahead (if (pair? ahead)
-				      (if (pair? (cdr ahead))
-					  (pop ahead) (car ahead))
-				      ahead)))
-		 (sprout (getobj object) :to to
-			 :ahead (if (pair? ahead) (car ahead)
-				    ahead))))))
+		 (close-io *out* err?)))))
       (if (or err? (not *out*)) 
 	  #f
 	  (if (is-a? *out* <event-file>)

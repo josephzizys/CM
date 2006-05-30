@@ -194,10 +194,6 @@
   (props :accessor part-props :initform nil :initarg :props)
   (partid :accessor part-partid :initform nil :initarg :partid)))
 
-
-
-
-
 (defstub obj-partid (x) :method)
 (defstub fomus)
 (defstub make-part)
@@ -219,6 +215,8 @@
 	   #:scheduler-lock-lisp #:scheduler-unlock-lisp
 	   #:scheduler-add-hook! #:scheduler-remove-hook!
 	   #:scheduler-hook-set! #:scheduler-time #:*time-format*
+	   #:*priority* #:*policy* #:*resolution* #:*error-format*
+	   #:current-thread #:rts-thread?
 	   #:random-seed #:between #:rescale #:odds #:pickl #:drunk 
 	   #:wander #:shuffle #:interpl #:rhythm))
 
@@ -240,7 +238,10 @@
 (defstub scheduler-hook-set!)
 (defstub enqueue)
 (defstub scheduler-time)
-(defstub (special *time-format*))
+(defstub (special *time-format* *priority* *policy* 
+		  *resolution* *error-format*))
+(defstub current-thread)
+(defstub rts-thread)
 (defstub random-seed)
 (defstub between)
 (defstub random-seed)

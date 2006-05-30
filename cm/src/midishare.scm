@@ -417,15 +417,16 @@
 	 (dur #f) 
 	 (at #f)
 	 (evt (ms:MidiNewEv ms:typeNote))
+	 (sched (scheduling-mode))
          (evt #f))
-    (cond ((eq? *scheduler* ':asap)
+    (cond ((eq? sched ':events)
 	   ;; events: add stream offset (includes latency)
 	   (set! dur (inexact->exact
 		      (floor (* (midi-duration obj) 1000))))  
 	   (set! at
 		 (+ (object-time stream) 
 		    (inexact->exact (floor (* scoretime 1000))))))
-	  ((eq? *scheduler* ':rts)
+	  ((eq? sched ':rts)
 	   ;; rts: add latency to ms:now.
 	   (set! dur
 		 (cond ((eq? rts:*time-format* ':msec)
@@ -539,6 +540,7 @@
          (loc (logical-channel (midi-event-channel obj)
                                (midi-stream-channel-map stream)))
          (dat (midi-event-data2 obj))
+	 (sched (scheduling-mode))
          (evt (ms:MidiNewEv typ)))
     (ms:port evt (car loc))
     (ms:chan evt (cadr loc))
@@ -549,15 +551,15 @@
         (if dat (ms:field evt 1 dat)))
     (ms:MidiSendAt (midishare-stream-refnum stream)
 		   evt
-		   (cond ((eq? *scheduler* ':asap)
+		   (cond ((eq? sched ':events)
 			  ;; events: add stream offset (includes latency)
 			  (+ (object-time stream) 
 			     (inexact->exact (floor (* scoretime 1000)))))
-			 ((eq? *scheduler* ':rts)
+			 ((eq? sched ':rts)
 			  ;; rts: add latency to ms:now.
 			  (+ (midishare-stream-latency stream)
 			     (ms:MidiGetTime)))
-			 ((not *scheduler*)
+			 ((not sched)
 			  ;; repl: 0=ms:now, <int>=msec <float>=ahead in sec
 			  (let ((tim (object-time obj)))
 			    (if (= tim 0) (ms:MidiGetTime)
@@ -674,7 +676,7 @@
 
 (define (ms:output ev &key (to *out*) at)
   ;; output ev to Midishare
-  (cond ((eq? *scheduler* ':asap)
+  (cond ((scheduling-mode? ':events)
 	 (ms:MidiSendAt (midishare-stream-refnum to)
 			ev
 			(+ (object-time to) 

@@ -117,10 +117,12 @@
   (loop for p in *parts* thereis (eq? pid (obj-partid p))))
 
 ;; allow fomus parts to schedule their notes.
-(define-method* (schedule-object (obj <part>) start)
+(define-method* (schedule-object (obj <part>) start sched)
   (let ((mystart (+ start 0)))
     (enqueue *qentry-seq* (cons obj (part-events obj))
-	     mystart mystart)))
+	     mystart
+	     mystart
+	     sched)))
 
 (define-method* (write-event (obj <note>) (fil <midi-file>) scoretime)
   (let* ((myid (obj-partid obj))

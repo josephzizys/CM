@@ -43,5 +43,6 @@
 (define (rts-continue . args) (rtserr 'rts-continue args))
 (define (rts-enqueue . args) (rtserr 'rts-enqueue args))
 (define (rts-now . args) (rtserr 'rts-now args))
+(define (rts-thread?) #f)
 
 ;;; eof

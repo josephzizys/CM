@@ -18,7 +18,7 @@
 
 (define *portmidi-default-input* #f)
 (define *portmidi-default-output* #f)
-(define *portmidi-default-latency* 100)
+(define *portmidi-default-latency* 5)
 (define *portmidi-default-inbuf-size* 512)
 (define *portmidi-default-outbuf-size* 2048)
 (define *portmidi-default-filter* 0)
@@ -266,7 +266,7 @@
              (system-message-p obj))
          (pm:WriteShort 
           (second (io-open str))  ; output stream
-          (if (eq? *scheduler* ':asap)
+          (if (scheduling-mode? ':events)
 	      (+ (inexact->exact (round (* scoretime 1000)))
 		 (portmidi-offset str))
 	      (pt:Time))
@@ -280,7 +280,8 @@
                              scoretime)
   (let ((keyn (midi-keynum obj))
         (chan (midi-channel obj))
-        (ampl (midi-amplitude obj)))
+        (ampl (midi-amplitude obj))
+	(sched (scheduling-mode)))
     ;; if amplitude is zero then don't output anything
     (ensure-velocity ampl keyn)
     (ensure-microtuning keyn chan str)
@@ -290,7 +291,7 @@
       ;; pass time value if scheduling.
       (pm:WriteShort
        (second (io-open str))
-       (if (eq? *scheduler* ':asap)
+       (if (eq? sched ':events)
 	   (+ (inexact->exact (round (* scoretime 1000)))
 	      (portmidi-offset str))
 	   (pt:Time))
@@ -302,7 +303,7 @@
       (enqueue *qentry-message*
 	       (make-note-off chan keyn 127)
                (+ scoretime (midi-duration obj))
-               #f))
+               #f sched))
     (values)))
 
 (define-method* (write-event (obj <midi-event>) (str <portmidi-stream>)
