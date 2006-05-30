@@ -109,7 +109,7 @@
     `(let* ((,q ,queue)
 	    (,e (cycl-data ,q)))
       (if (null? ,e)
-	(list ,time ,start ,object)
+	(list ,time ,start ,object ,type)
 	(begin
 	 (cycl-data-set! ,q (%qe-next (cycl-data ,q)))
 	 (%qe-next-set! ,e '())
