@@ -411,7 +411,12 @@
 	 (write-event event stream next))
        (if (null? head)
 	 #f
-	 (enqueue type entry next start sched)))
+	 ;; mkk - the enqueue must begin at the start of the object at the head
+	 ;; not at the current object time!
+	 ;; I think the call to early? above fixed this in the events case
+	 ;; but it didn't work under rts
+	 ;; do we need to do something special if the next object is a container?
+	 (enqueue type entry (+ start (object-time (car head))) start sched)))
       #f)))
 
 ;;;
