@@ -31,13 +31,13 @@
 (define-method* (recv? (io <portmidi-stream>) . args)
   (with-args (args &optional state)
     state
-    (err *pm-not-loaded-error*)))
+    #f))
 
 (define (rtserr fn args)
   (err "Attempt to call ~s without RTS loaded."  (cons fn args)))
 
 (define (rts . args) (rtserr 'rts args))
-(define (rts? . args) (rtserr 'rts? args))
+(define (rts? . args) args #f)
 (define (rts-stop . args) (rtserr 'rts-stop args))
 (define (rts-pause . args) (rtserr 'rts-pause args))
 (define (rts-continue . args) (rtserr 'rts-continue args))
