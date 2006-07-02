@@ -241,12 +241,12 @@
 (define *rts-qtime* #f)  ; current run time (score time)
 (define *rts-qnext* #f)  ; next runttime
 
-(defun scheduling-mode ()
+(define (scheduling-mode )
   (if (rts-thread?) 
       ':rts
-      (if *events* ':events nil)))
+      (if *events* ':events #f)))
 
-(defun scheduling-mode? (x)
+(define (scheduling-mode? x)
   (eq? (scheduling-mode) x))
 
 (define (schedule-events stream object . args)
