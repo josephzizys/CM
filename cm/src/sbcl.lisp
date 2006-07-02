@@ -202,7 +202,7 @@
 (defgeneric write-event (obj io time))
 (defgeneric import-events (obj &rest args))
 
-(defgeneric schedule-object (obj start))
+(defgeneric schedule-object (obj start sched))
 (defgeneric unschedule-object (obj &rest recurse))
 (defgeneric process-events (obj time start func))
 ;(defgeneric sprout (obj &optional time dest))
