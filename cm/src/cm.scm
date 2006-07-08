@@ -24,7 +24,7 @@
 		   "data" "scales" "spectral" "patterns"
                    "io" "scheduler" "sco" "clm" "clm2"
                    "midi1" "midi2" "midi3"
-		   "osc" "sc")))
+		   "osc" "sc" "pm" "rt")))
   (cond-expand
    (stklos
     (set! this-file (current-loading-file))
@@ -38,8 +38,7 @@
     (set! *cm-directory*
 	  (string-append (sys-dirname (sys-dirname this-file)) "/"))
     (set! file-list (cons "gauche" file-list))
-    (set! file-list (append! file-list (list "pm"
-					     "midishare"))))
+    (set! file-list (append! file-list (list "midishare"))))
 ;;  (chicken
 ;;   (set! this-file 
 ;;   (eval (with-input-from-string "##sys#current-load-file" read)))
