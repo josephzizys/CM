@@ -49,7 +49,7 @@
 ;;; returns +exhausted+
 
 (define-list-struct period
-  (count 0) length stream default (omit 0) (reps 0))
+  (count 0) length stream default (omit 0) (reps 0) (hook #f))
 
 ;;;
 ;;;
@@ -59,10 +59,10 @@
   ((flags :init-keyword :flags :init-value 0
           :accessor pattern-flags)
    (data  :init-keyword :of 
-          :init-keyword :data
           :init-keyword :notes
           :init-keyword :keynums
           :init-keyword :rhythms
+	  :init-keyword :hertz
           :init-keyword :amplitudes
           :init-keyword :intervals
           :init-value '()
@@ -81,8 +81,16 @@
    (repeat :init-keyword :repeat
            :init-form most-positive-fixnum
            :accessor pattern-repeat)
-   (parser :init-keyword :parser :init-value #f 
+   (parser :init-keyword :parser
+	   :init-keyword :tempo
+	   :init-keyword :through
+	   :init-keyword :from
+	   :init-keyword :in
+	   :init-value #f 
            :accessor pattern-parser )
+   (hooks :init-keyword :eop-hook
+	  :init-value #f
+	  :accessor pattern-hooks)
    (returning :init-value #f :init-keyword :returning
               :accessor pattern-returning)
    (counting :init-keyword :counting :init-value :periods
@@ -105,14 +113,8 @@
 
 (define-method* (canonicalize-pattern-data (obj <pattern>)
 					  data parser inits)
-  ;;(format #t "pattern canonicalize: ~s~%" obj)
   inits
   (if parser
-;    (loop for d in data 
-;          count d into len
-;          count (pattern? d) into num
-;          collect (maybeparse parser d) into lst
-;          finally (return (values lst len (= num 0))))
     (let ((coll (list #f)))
       (do ((tail data (cdr tail))
            (len 0 (+ len 1))
@@ -173,6 +175,61 @@
         ((symbol? val) `(quote ,val))
         (else val)))
 
+;;; pattern value parsing. value parsing can happen at creation time
+;;; and/or at return time. we try to do this when pattern is created
+;;; because its more efficient; the cases when we cant are:
+;;; (1) modes, because they can be transposed at any point during
+;;; event processing (2) non-numeric tempo factors.
+
+(define (pattern-value-function etyp opt val parse?)
+  ;; this function is called two times with identical etype opt and
+  ;; val values. if parse? is T this function returns the pattern's
+  ;; parser otherwise it returns a 'returning' function for the
+  ;; pattern
+  (case etyp
+    (( :notes notes ) 
+     ;; opt is :in or throguh and val is more or tuning
+     (if parse?
+	 ;; if we have a mode parser converts to kenums
+	 (if opt (function keynum) (function note))
+	 (case opt
+	   ( ( :in in )
+	     (lambda (x) (note x :in val)))
+	   ( ( :through through )
+	     (lambda (x) (note x :through val)))
+	   ;; no mode or tuning specified, p
+	   (else #f))))
+    (( :keynums keynums )
+     (if parse? (function keynum)
+	 (case opt
+	   ( ( :from from )
+	     (lambda (x) (keynum x :from val)))
+	   ( ( :through through )
+	     (lambda (x) (keynum x :through val)))
+	   ( ( :to to )
+	     (lambda (x) (keynum x :to val)))
+	   (else #f))))
+
+    (( :rhythms rhythms )
+     (if parse? 
+	 (if (number? val)
+	     (lambda (x) (rhythm x val))
+	     #f)
+	 (if (number? val) #f
+	     (lambda (x) (rhythm x (next-1 val))))))
+    (( :hertz hertz )
+     (if parse? 
+	 (if opt (function keynum) (function hertz))
+	 (case opt
+	   ( ( :in in )
+	     (lambda (x) (hertz x :in val)))
+	   ( ( :through through )
+	     (lambda (x) (hertz x :through val))))))
+    (( :amplitudes amplitudes )
+     (if parse? (function amplitude)
+	 #f))
+    (else #f)))
+
 ;;;
 ;;; pattern-period-length returns the current period length
 ;;;
@@ -191,40 +248,56 @@
 
 (define-method* (initialize (obj <pattern>) args)
   (next-method)				; was after method
-
-  ;;(format #t "pattern initialize: ~s data=~s~%" 
-  ;;        obj (pattern-data obj))
   (let ((flags (pattern-flags obj))
-;        (data (pattern-data obj))
         (data #f)
+	(hook (pattern-hooks obj)) ; just eop-hook now...
         (len #f)
 	(parser (pattern-parser obj))
+	(returner #f)
+	(type #f)
+	(optn #f)
+	(valu #f)
+	(retn #f)
 	(constant? #f))
-    
-;    (unless (list? data)
-;      (set! data (list data))
-;      (set! (pattern-data obj) data))
-
-    ;; if a slot has multiple initargs their values must be parsed from
-    ;; the args since goops doesn't recogize them as true initargs...
+    ;; pattern slots with multiple initargs must be parsed from the
+    ;; args since goops doesn't recogize them as true initargs...
     (do ((a args (cddr a)))
-	((or data (null? a)) #f)
+	((null? a) #f)
       (case (car a)
-        ((:of :data )
+        ((:of )
          (set! data (cadr a)))
-	((:notes )
-	 (set! data (cadr a))
-	 (set! parser (function note)))
-	((:keynums )
-	 (set! data (cadr a))
-	 (set! parser (function keynum)))
-	((:rhythms )
-	 (set! data (cadr a))
-	 (set! parser (function rhythm)))
-	((:amplitudes )
-	 (set! data (cadr a))
-	 (set! parser (function amplitude)))))
-    
+	((:notes :keynums :rhythms :amplitudes :hertz)
+	 (set! type (car a))
+	 (set! data (cadr a)))
+	((:tempo :in :from :to :through)
+	 (cond ((null? type)
+		(err "Option ~S without a data type ~S." (car a)
+		     (if (eq? (car a) ':tempo) ':rhythms
+			 '(:notes :keynums :hertz))))
+	       ((eq? type :rhythms)
+		(or (eq? (car a) ':tempo)
+		    (err "Option ~S does not match data type ~S."
+			 (car a) type)))
+	       ((member type '(:notes :hertz))
+		(or (member (car a) '(:in :through))
+		    (err "Option ~S does not match data type ~S."
+			 (car a) type)))
+	       ((eq? type ':keynums)
+		(or (member (car a) '(:from :to :through))
+		    (err "Option ~S does not match data type ~S."
+			 (car a) type)))
+	       (else
+		 (err "Option ~S does not match data type ~S."
+		      (car a) type)))
+	 (set! optn (car a))
+	 (set! valu (cadr a)))
+	))
+
+    (set! parser (pattern-value-function type optn valu #t))
+    (unless (pattern-returning obj)
+      (let ((ret (pattern-value-function type optn valu #f)))
+	(if ret (set! (pattern-returning obj) ret))))
+
     (unless (list? data) (set! data (list data)))
     ;; parse external data into canonical form. oct is bound
     ;; in case note, keynum or hertz are called as parsers.
@@ -291,8 +364,10 @@
       (set! (pattern-period obj)
             (if (or (number? period)
 		    (eq? period #t))
-              (make-period :length period :default default)
-              (make-period :stream period :default default))))
+              (make-period :length period :default default
+			   :hook hook)
+              (make-period :stream period :default default
+			   :hook hook))))
     (set! (pattern-flags obj) flags)
     (values)))
 
@@ -367,6 +442,9 @@
 
 (define-method* (next-1 obj)
   obj)
+
+(define-method* (next-1 (obj <procedure>))
+  ( obj ))
 
 (define-method* (next-1 (obj <pattern>))
   (let ((period (pattern-period obj))
@@ -501,6 +579,8 @@
          (when (> zeros 0)
 	   (set! len (max (- len zeros) 0)))))
     (period-count-set! period len)
+    (let ((hook (period-hook period)))
+      (if hook (funcall hook)))
     len))
 
 ;;;
@@ -546,6 +626,7 @@
 ;;;
 ;;; palindrome visits the reverse of its data.
 ;;;
+
 
 (define-class* <palindrome> (<pattern>)
   ((elide :init-value #f :init-keyword :elide
@@ -2252,20 +2333,22 @@
 ;;; (pval x)
 ;;;
 
-(define-class* <pval> ()
-  ((thunk :init-keyword :of :accessor pval-thunk))
-  :name 'pval)
+;(define-class* <pval> ()
+;  ((thunk :init-keyword :of :accessor pval-thunk))
+;  :name 'pval)
 
-(define-method* (make-load-form (obj <pval>))
-  `(pval ,(pval-thunk obj)))
+;(define-method* (make-load-form (obj <pval>))
+;  `(pval ,(pval-thunk obj)))
 
-(define-method* (pattern? (obj <pval>)) obj)
+;(define-method* (pattern? (obj <pval>)) obj)
 
 (define-macro (pval expr)
-  `(make <pval> :of (lambda () ,expr)))
+  `(lambda () ,expr)
+  ;;`(make <pval> :of (lambda () ,expr))
+  )
 
-(define-method* (next-1 (obj <pval>))
-  ( (pval-thunk obj) )) ; funcall
+;(define-method* (next-1 (obj <pval>))
+;  ( (pval-thunk obj) )) ; funcall
 
 ;;;
 ;;; Join (defmultiple-item)
@@ -2478,4 +2561,228 @@
 ; (describe x)
 ; (next x #t)
 
+;;;
+;;; the pattern macro
+;;;
 
+(define pattern-types
+  '(cycle heap weighting line palindrome graph markov rewrite))
+
+(define pattern-item-types
+  '(notes keynums rhythms amplitudes hertz))
+
+(define pattern-options
+  '((pattern alias with)
+    (palindrome elide)
+    (of notes keynums hertz rhythms amplitudes)
+    (notes in through )
+    (keynums in through from)
+    (hertz in through)
+    (rhythms tempo)
+    (amplitudes loudest softest)
+    (heap state)
+    (weighting state adjustable)
+    (markov past produce)
+    (graph last selector props starting-node-index)
+    (rotation rotations)
+    (rewrite initially rules generations )
+    repeat
+    eop-hook
+    for
+    name))
+
+(define (gather-substs forms)
+  ;; gather with|alias clauses until no more
+  (let ((subst (list))
+	(subst-clause?
+	 (lambda (form last)
+	   (and (or (member (car form) '(alias with))
+		    (and last (eq? (car form) 'and)))))))
+	   ;; tail is (subst <var> = <form> ...)
+    ;; or (with <var> = <form> ...)
+    (do ((tail forms (cddddr tail))
+	 (last #f))
+	((or (null? tail)
+	     (not (subst-clause? tail last)))
+	 (values (reverse subst) tail))
+      (set! subst (cons (make-pattern-binding
+			 (if (eq? (first tail) 'and)
+			     last
+			     (first tail))
+			 tail)
+			subst))
+      (if (not (eq? (car tail) 'and))
+	  (set! last (car tail))))))
+
+(define (make-pattern-binding typ args)
+  (if (not typ)
+      (err "Extraneous 'and' found: ~s" args)
+      (if (not (and (cdr args) (cddr args) (cdddr args)))
+	  (err "Pattern ended without expected token.")
+	  (if (symbol? (second args ))
+	      (if (eq? (third args) '=)
+		  (let ((var (second args))
+			(val (fourth args)))
+		    (if (number? val) (list var val)
+			(if (eq? typ 'with) (list var val)
+			    (list var `(lambda () ,val)))))
+		  (err "Expected '=' but got '~s' instead: ~s"
+		       (third args) args))
+	      (err "Expected variable name (symbol) but got '~s' instead: ~s"
+		   (second args) args)))))
+			      
+; (gather-substs '(and a = 2 ))
+; (gather-substs '(alias a = 2 alias b = 3 4 5 6))
+; (gather-substs '(alias a = 2 and x = 4  alias b = ziz 4 5 6))
+; (gather-substs '(alias a = fof and b = q2 with c = 3 alias x = 4 p q r))
+; (gather-substs '(alias a and b cycle of  2 3))
+; (gather-substs '(alias 1 = 2 alias b = 3 4 5 6))
+
+(define (check-pattern-option form option err?)
+  (cond ((null? form)
+	 (if err?
+	     (err "Pattern ended without expected token.")
+	     #f))
+	((pair? option)
+	 (if (member (car form) option)
+	      #t
+	      (if err?
+		  (err "Expected pattern option from ~S but got ~S instead."
+		       option form)
+		  #f)))
+	(else
+	   (if (eq? (car form) option)
+	       #t
+	       (if err?
+		   (err "Expected pattern option ~S but got ~S instead."
+			option form)
+		   #f)))))
+
+(define (get-pattern-options ptyp etyp)
+  (do ((tail pattern-options (cdr tail))
+       (opts (list)))
+      ((null? tail) opts)
+    (if (pair? (car tail))
+	(if (or (eq? (caar tail) ptyp)
+		(eq? (caar tail) etyp))
+	    (set! opts (append opts (cdr (car tail)))))
+	(set! opts (cons (car tail) opts)))))
+
+; (get-pattern-options 'palindrome 'keynums)
+; (get-pattern-options 'palindrome 'notes)
+
+(define (expand-pattern-item item ptyp etyp vars)
+  (cond ((null? item) '(list))
+	((pair? item)
+	 (if (not (member ptyp '(weighting markov graph rewrite)))
+	     `(quote ,item)
+	     `(cons ,(expand-pattern-item (car item) #f etyp vars )
+		    ,(expand-pattern-item (cdr item) ptyp etyp vars ))))
+	((keyword? item) item)
+	((symbol? item)
+	 (if (assoc item vars) item `(quote ,item)))
+	((number? item) item)
+	(else `(quote ,item))))
+
+(define (gather-pattern-data args num stop ptyp etyp vars)
+  ptyp etyp vars
+    (do ((tail args )
+	 (gets (list))
+	 (done #f)
+	 (nget 0))
+	((or (null? tail) done)
+	 (cond ((null? args)
+		(err "Pattern ended without pattern data."))
+	       ((or (and (number? num) (< nget num))
+		    (and (eq? num #t) (null? gets)))
+		(err "Expected pattern data but got ~S instead."
+		     args))
+	       (else
+		(values
+		 ;;(reverse! gets)
+		 (cons 'list (reverse! gets))
+		 tail))))
+      (if (or (member (car tail) stop)
+	      (and (number? num) (= nget num)))
+	  (set! done #t)
+	  (let ((x ;;(car tail)
+		   (expand-pattern-item (car tail) ptyp etyp vars)
+		   ))
+	    (set! gets (cons x gets))
+	    (set! nget (+ nget 1))
+	    (set! tail (cdr tail))))))
+
+; (expand-pattern-item 'abc 'cycle #f '())
+; (expand-pattern-item 'abc 'weighting #f '((abc 1) (xyz 2)))
+; (expand-pattern-item 'foo 'weighting #f '((abc 1) (xyz 2)))
+; (expand-pattern-item '(foo :weight 33) 'weighting #f '((abc 1) (xyz 2)))
+; (expand-pattern-item 'abc 'cycle #f '())
+; (expand-pattern-item 'abc 'cycle #f '()) 
+
+; (gather-pattern-data '(1 2 3 4 for 4) #t '(for) 'cycle #f ())
+; (gather-pattern-data '(a b c d e for 4) #t '(for) 'cycle #f '((c 11)))
+; (gather-pattern-data '() #t '(for))
+; (gather-pattern-data '(for 2) #t '(for))
+
+(define (expand-pattern-macro form)
+  (let ((vars (list))
+        (args (list))
+	(init (list))
+	(ptyp #f)  ; pattern type
+	(etyp #f)  ; element type
+	(elts #f)
+	(opts #f)
+	(retn #f)  ; true if return value func
+	)
+    (multiple-value-setq (vars args) (gather-substs form))
+    (check-pattern-option args pattern-types #t)
+    (set! ptyp (pop args))
+    ;; parse optional element type
+    (if (check-pattern-option args 'of #f)
+	(begin
+	  (pop args)
+	  (check-pattern-option args pattern-item-types
+				#t)
+	  (set! etyp (pop args))))
+    (set! opts (get-pattern-options ptyp etyp))
+    (multiple-value-setq (elts args)
+			 (gather-pattern-data args #t opts ptyp etyp vars))
+    ;;(print (list :elts-> elts :args-> args))
+    (set! etyp (if (not etyp) ':of
+		   (symbol->keyword etyp)))
+    (set! init (list etyp elts))
+    ;; process remaining pairwise args
+    (do ((tail args)
+	 (optn #f)
+	 (valu #f)
+	 (seen (list)))
+	((null? tail) #f)
+      (check-pattern-option tail opts #t)
+      (set! optn (pop tail))
+      (if (member optn seen)
+	  (err "Found duplicate option ~A in ~S."
+	       optn args)
+	  (push optn seen))
+      (set! valu (pop tail))
+      (set! init (append! init (list (symbol->keyword optn) valu))))
+    (set! form `(make (find-class* ',ptyp) ,@init))
+    (if (null? vars) form
+	(list 'let* vars form))))
+
+(define-macro (pattern . args)
+  (expand-pattern-macro args))
+
+;(defmacro defpattern ((name &rest args) &body)
+;  (let ((user (loop for x in args nconc (list (gentemp) a))))
+;    `(defmacro ,name ,(loop for a in user collect (car a))
+;       (pattern ,@ (loop for a in user nconc (list (second a) '= (first a)))
+;	   ,@body))))
+;(defmacro foo (v11 v232 v333)
+;  `(pattern subst a = ,v11
+;	    subst b = ,v232
+;(pattern alias foo = (pattern cycle 1 2 3 4 5)
+;	 alias bar = (pattern heap 1 2 3 4 5)
+;	 cycle 1 2 3 4 (@ foo) (@ bar)
+;	 )
+
+;;; eof
