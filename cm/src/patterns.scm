@@ -212,10 +212,11 @@
 
     (( :rhythms rhythms )
      (if parse? 
-	 (if (number? val)
-	     (lambda (x) (rhythm x val))
-	     #f)
-	 (if (number? val) #f
+	 (if (not opt) (function rhythm)
+	     (if (number? val)
+		 (lambda (x) (rhythm x val))
+		 #f))
+	 (if (or (not opt) (number? val)) #f
 	     (lambda (x) (rhythm x (next-1 val))))))
     (( :hertz hertz )
      (if parse? 
