@@ -204,6 +204,17 @@ then terminates then process when the iteration is complete.
 </pre></blockquote>
 </dd>
 
+
+<dt><code>for</code> <var>var</var> <code>over</code> <var>pattern</var> [<code>by</code> <var>length</var>]</dt>
+<dd>
+Sets <var>var</var> to successive elements read from <var>pattern</var>, the process terminates if the pattern ever reaches <a href="eodqmk-fn.html">end of data</a>. If <var>by</var> a number that many elements are read at a time and returned to <var>var</var> as a list. If the length is or boolean true a whole period's worth of items are read when var is incremented.
+
+<br/>Example clause syntax:
+<blockquote>
+<pre>for k over (pattern heap of keynums c4 d e f g repeat 3)
+</pre></blockquote>
+</dd>
+
 </dl>
 
 

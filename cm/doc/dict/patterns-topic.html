@@ -92,24 +92,44 @@ the following slot initializations:
   <dl>
     <dt><code class="keyword">:notes</code> <var>data</var></dt> 
     <dd>
-      Parses <var>data</var> into <a href="note-fn.html">note
-      names</a>. If <var>data</var> contains notes then octave numbers
-      only need to be added when they change from the previous note.
+      Returns <a href="note-fn.html">note</a> names
+      from <var>data</var>. If <var>data</var> contains notes then
+      octave numbers only need to be added when they change from the
+      previous note. 
+
+An optional <a href="mode-cls.html">mode</a>
+or <a href="tuning-cls.html">tuning</a> may be specified using
+the <span class="keyword">:through</span>
+or <span class="keyword">:in</span> pattern initializations as
+appropriate to the <a href="note-fn.html">note</a> function.
+
     </dd>
     <dt><code class="keyword">:keynums</code> <var>data</var></dt> 
     <dd>
-      Like <code class="keyword">:notes</code> but parses data into <a
-      href="keynum-fn.html">key numbers</a>.
+     Returns <a href="keynum-fn.html">key numbers</a> from data.
+
+An optional <a href="mode-cls.html">mode</a>
+or <a href="tuning-cls.html">tuning</a> may be specified using
+the <span class="keyword">:from</span>, <span class="keyword">:through</span>
+or <span class="keyword">:in</span> pattern initializations as
+appropriate to the <a href="keynum-fn.html">keynum</a> function.
+
     </dd>
     <dt><code class="keyword">:hertz</code> <var>data</var></dt> 
     <dd>
-      Like <code class="keyword">:notes</code> but parses data into <a
-      href="hertz-fn.html">hertz values</a>.
+      Like <code class="keyword">:notes</code> but returns
+      <a href="hertz-fn.html">hertz values</a> from <var>data</var>.
     </dd>
     <dt><code class="keyword">:rhythms</code> <var>data</var></dt> 
     <dd>
       Parses logical rhythms into <a href="rhythm-fn.html">rhythmic
       values</a>.
+
+An optional tempo factor may be specified
+using the <span class="keyword">:tempo</span> pattern initialization,
+as appropriate for <a href="rhythm-fn.html">rhythm</a> function.
+
+
     </dd>
     <dt><code class="keyword">:amplitudes</code> <var>data</var></dt> 
     <dd>
@@ -117,6 +137,7 @@ the following slot initializations:
 href="amplitude-fn.html">amplitude values</a>.
     </dd>
 </dl>
+
 </dd>
 
 <dt>
@@ -146,6 +167,8 @@ Sets the name of the pattern to <var>string</var> or to the print name
 of <var>symbol</var>.  A named pattern can be recalled  as a "motive" inside a surrounding pattern by fetching the object from its name using the <a href="hshamp-mac.html">#&amp;</a> read macro or the <a href="find-object-fn.html">find-object</a> function.
 </dd>
 
+
+
 <dt>
 <code class="keyword">:returning</code> <var>function</var>
 </dt>
@@ -156,6 +179,17 @@ should return the value to substitute in its place as the value
 returned from the pattern.
 </dd>
 
+
+<dt>
+<code class="keyword">:eop-hook</code> <var>function</var>
+</dt>
+<dd>
+An optional function (thunk) to call each time the period is reset.
+ The function is passed no arguments and any return values are
+ ignored.
+</dd>
+
+<!--
 <dt>
 <code class="keyword">:parsing</code> <var>function</var>
 </dt>
@@ -165,6 +199,7 @@ class="keyword">:of</code> initialization when the pattern is created.
 The function is passed one argument, the element to parse, and should
 return the value to substitute in its place in the pattern.
 </dd>
+ -->
 
 </dl>
 
@@ -378,6 +413,7 @@ and end-of-data conditions.
 
 <h4>See also:</h4>
 <ul>
+<li><a href="pattern-mac.html"><code>pattern</code></a> [Macro]</li>
 <li><a href="#table_1">Generic pattern classes</a></li>
 <li><a href="#table_2">Specialized pattern classes</a></li>
 <li><a href="process-mac.html"><code>process</code></a> [Macro]</li>
