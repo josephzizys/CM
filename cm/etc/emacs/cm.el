@@ -42,23 +42,23 @@
 (when (member 'aquamacs features)
   (add-to-list 'obof-other-frame-regexps "\\*inferior-lisp\\*")
   (add-to-list 'obof-other-frame-regexps "\\*slime-repl\\\\*")
-  (defun slime-hide-inferior-lisp-buffer ()
-    "Display the REPL buffer instead of the *inferior-lisp* buffer."
-    (let ((buffer (if (slime-process)
-		      (process-buffer (slime-process)))))
-      (when buffer
-	(bury-buffer buffer))
-      (let* ((window (if buffer (get-buffer-window buffer)))
-	     (repl-buffer (slime-output-buffer t))
-	     (repl-window (get-buffer-window repl-buffer)))
-	(cond (repl-window
-	       (when window
-		 (delete-window window)))
-	      (window
-	       (set-window-buffer window repl-buffer))
-	      (t
-	       (pop-to-buffer repl-buffer)
-	       (goto-char (point-max)))))))
+;  (defun slime-hide-inferior-lisp-buffer ()
+;    "Display the REPL buffer instead of the *inferior-lisp* buffer."
+;    (let ((buffer (if (slime-process)
+;		      (process-buffer (slime-process)))))
+;      (when buffer
+;	(bury-buffer buffer))
+;      (let* ((window (if buffer (get-buffer-window buffer)))
+;	     (repl-buffer (slime-output-buffer t))
+;	     (repl-window (get-buffer-window repl-buffer)))
+;	(cond (repl-window
+;	       (when window
+;		 (delete-window window)))
+;	      (window
+;	       (set-window-buffer window repl-buffer))
+;	      (t
+;	       (pop-to-buffer repl-buffer)
+;	       (goto-char (point-max)))))))
   )
 
 ;; update default value of inferior-lisp-program to "cm.sh"
