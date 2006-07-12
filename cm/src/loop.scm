@@ -283,7 +283,7 @@
 
 (define (parse-sequence-iteration forms clauses ops)
   ;; tail is (FOR <var> <OP> ...)
-  ;; <OP> is guaranteed to be one of: IN ON ACROSS
+  ;; <OP> is guaranteed to be one of: IN ON ACROSS OVER
   clauses
   (let ((head forms)
         (var (cadr forms))
@@ -305,7 +305,7 @@
         (loop-error ops head
 		    "Expression expected but source code ran out." ))
       (case next
-        ((in on across)
+        ((in on across over)
          (if type (loop-error ops head 
 			      "Extraneous '" next "' when '"
 			      type "' in effect."))
@@ -322,27 +322,34 @@
     ; add bindings for stepping var and source
     (push (make-binding var #f) bind)
     (push (make-binding seq data) bind)
-    (if (eq? type 'across)
-      (let ((pos (gensym "v"))
-            (max (gensym "v")))
-        (push (make-binding pos 0) bind)
-        (push (make-binding max #f) bind)
-        (push `(set! ,max (vector-length ,seq)) init)
-        (push `(set! ,pos (+ 1 ,pos)) step)
-        (push `(set! ,var (vector-ref ,seq ,pos)) loop)
-        (push `(>= ,pos ,max) stop))
-      (begin
-       (if incr
-         (if (and (list? incr) (eq? (car incr) 'quote))
-           (push `(set! ,seq (,(cadr incr) ,seq)) step)
-           (push `(set! ,seq (,incr ,seq)) step))
-         (push `(set! ,seq (cdr ,seq)) step))
-       (push (if (eq? type 'in)
-                `(set! ,var (car ,seq))
-                `(set! ,var ,seq))
-              loop)
-       (push `(null? ,seq) stop)))
-    
+    (cond ((eq? type 'across)
+	   (let ((pos (gensym "v"))
+		 (max (gensym "v")))
+	     (push (make-binding pos 0) bind)
+	     (push (make-binding max #f) bind)
+	     (push `(set! ,max (vector-length ,seq)) init)
+	     (push `(set! ,pos (+ 1 ,pos)) step)
+	     (push `(set! ,var (vector-ref ,seq ,pos)) loop)))
+	  ((eq? type 'over)
+;	   (push (if incr `(set! ,var (next ,seq ,incr))
+;		     `(set! ,var (next , seq)))
+;		 loop)
+;	   (push `(eod? ,seq) stop)
+	   (let ((getit (if incr `(set! ,var (next ,seq ,incr))
+			    `(set! ,var (next , seq)))))
+	     (push `(begin ,getit (eod? ,seq)) stop)
+	   ))
+	  (else
+	   (if incr
+	       (if (and (list? incr) (eq? (car incr) 'quote))
+		   (push `(set! ,seq (,(cadr incr) ,seq)) step)
+		   (push `(set! ,seq (,incr ,seq)) step))
+	       (push `(set! ,seq (cdr ,seq)) step))
+	   (push (if (eq? type 'in)
+		     `(set! ,var (car ,seq))
+		     `(set! ,var ,seq))
+		 loop)
+	   (push `(null? ,seq) stop)))
     (values (make-loop-clause 'operator 'for
 			      'bindings (reverse bind)
 			      'end-tests stop
@@ -890,7 +897,10 @@
               (list 'in (function parse-sequence-iteration))
               (list 'on (function parse-sequence-iteration))
               (list 'across (function parse-sequence-iteration))
-              (list '= (function parse-general-iteration)))
+              (list '= (function parse-general-iteration))
+	      ;; CM uses 'over' in process definition
+	      (list 'over (function parse-sequence-iteration))
+	      )
         (list 'as (function parse-for) 'iter)
         (list 'do (function parse-do) 'task)
         (list 'collect (function parse-accumulation) 'task)
