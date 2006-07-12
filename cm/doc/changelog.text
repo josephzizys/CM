@@ -1,6 +1,31 @@
 ----------------------------------------------------------------------
 CM 2.9.1
 
+o New 'pattern' macro defines patterns more easily.
+
+o new pattern iteration clause in process macro
+    for x over <pattern> ]...
+  see process help in dictionary
+
+o new :eop-hook pattern initarg sets an end of period hook.
+  see pattern topic help in dictinoary
+
+o patterns support new initargs accroding to the type of data
+  specified to the pattern:
+    data init      allowed additional inits
+    :rhythms       :tempo <num>
+    :keynum        :in|:from|:through  <mode>|<tuning>
+    :notes         :in|:through  <mode>|<tuning>
+    :hertz         :in|:through  <mode>|<tuning>
+  see pattern topic help in dictinoary
+
+o lambda expressions can now be items in patterns and are funcalled
+  by next.
+
+o Introducing SAL, an alternate syntax for CM with infix expressions
+  and an Emacs mode with syntax highlighting. 
+  do  'cvs checkout sal' and see the readme.text for more information
+
 o RTS version 2.0 moved to C:
   - requires gcc, configure and make to install
   - works in Gauche Scheme, OpenMCL and SBCL
