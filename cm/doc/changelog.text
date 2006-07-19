@@ -54,12 +54,16 @@ o  New time conversion functions sec, msec and usec that convert
 o cm-version takes optional formatting arg that returns version as
   :string :list or :number
 
+
 Changes:
 
 o Durations and wait values must agree with time format under RTS
 
 Bug Fixes:
 
+o tunings now look at intitial :cent or :scaler values, if 0 or 1
+  then the values are taken to be (absolute) degrees otherwise
+  they are taken to be relative steps between degrees (Per Bloland)
 o guile: the (cd) function now uses (getuid) to determine home dir
 o consing leak in make-channel-message fixed
 o portmidi: time is now passed correctly from rts
