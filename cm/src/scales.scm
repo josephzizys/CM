@@ -121,7 +121,10 @@
            ;; nums can be steps (increments) or degrees.
            ;; if the latter, nums will be in strictly monotonically
            ;; increasing order.
-           (set! steps? (not (apply (function <) nums)))
+	   ; bug: < check treats (100 200) as degrees.
+           ;(set! steps? (not (apply (function <) nums)))
+	   (set! steps? (not (if cents? (= (car nums) 0) 
+				 (= (car nums) 1))))
            (when (and (not steps?)
                       (pair? (car (last-pair extern)))
                       (scale-table obj))
@@ -138,7 +141,10 @@
            ;; nums can be steps (increments) or degrees.
            ;; if the latter, nums will be in strictly monotonically
            ;; increasing order.
-           (set! steps? (not (apply (function <) nums)))
+	   ; bug: < still treats (100 200) as degrees.
+           ;(set! steps? (not (apply (function <) nums)))
+	   (set! steps? (not (if cents? (= (car nums) 0)
+				 (= (car nums) 1))))
            (set! syms #f))
           (else
            (err "Bad degree spec ~s." extern)))
@@ -1435,66 +1441,65 @@
 ;;;
 
 (set! *chromatic-scale*
-      (make <tuning>
-		     :name "chromatic-scale"
-		     :octaves '(-1 10)
-		     :lowest 6.875
-		     :keynum-offset 3
-		     :default-octave 5
-		     :cents '((100 
-			       (c  ) 
-			       (cn  :accidental  n)
-			       (bs  :accidental  s :octave -1)
-			       (dff :accidental ff))
-			      (100 
-			       (cs  :accidental  s)
-			       (df  :accidental  f)
-			       (bss :accidental ss :octave -1))
-			      (100 
-			       (d   )
-			       (dn  :accidental  n)
-			       (css :accidental ss)
-			       (eff :accidental ff))
-			      (100 
-			       (ef  :accidental  f)
-			       (ds  :letter d :accidental  s)
-			       (fff :letter f :accidental ff))
-			      (100 
-			       (e   )
-			       (en  :accidental  n)
-			       (ff  :accidental  f)
-			       (dss :accidental ss))
-			      (100 
-			       (f   ) 
-			       (fn  :accidental  n)
-			       (es  :accidental  s)
-			       (gff :accidental ff))
-			      (100 
-			       (fs  :accidental  s)
-			       (gf  :accidental  f)
-			       (ess :accidental ss))
-			      (100 
-			       (g   )
-			       (gn  :accidental  n)
-			       (fss :accidental ss)
-			       (aff :accidental ff))
-			      (100 
-			       (af  :accidental  f)
-			       (gs  :accidental  s))
-			      (100 
-			       (a   )
-			       (an  :accidental  n)
-			       (gss :accidental ss)
-			       (bff :accidental ff))
-			      (100 
-			       (bf  :accidental  f)
-			       (as  :accidental  s)
-			       (cff :accidental ff :octave +1))
-			      (100 
-			       (b   )
-			       (bn  :accidental  n)
-			       (cf  :accidental  f  :octave +1)
-			       (ass :accidental ss)))))
+      (make <tuning> :name "chromatic-scale"
+	    :octaves '(-1 10)
+	    :lowest 6.875
+	    :keynum-offset 3
+	    :default-octave 5
+	    :cents '((100 
+		      (c  ) 
+		      (cn  :accidental  n)
+		      (bs  :accidental  s :octave -1)
+		      (dff :accidental ff))
+		     (100 
+		      (cs  :accidental  s)
+		      (df  :accidental  f)
+		      (bss :accidental ss :octave -1))
+		     (100 
+		      (d   )
+		      (dn  :accidental  n)
+		      (css :accidental ss)
+		      (eff :accidental ff))
+		     (100 
+		      (ef  :accidental  f)
+		      (ds  :letter d :accidental  s)
+		      (fff :letter f :accidental ff))
+		     (100 
+		      (e   )
+		      (en  :accidental  n)
+		      (ff  :accidental  f)
+		      (dss :accidental ss))
+		     (100 
+		      (f   ) 
+		      (fn  :accidental  n)
+		      (es  :accidental  s)
+		      (gff :accidental ff))
+		     (100 
+		      (fs  :accidental  s)
+		      (gf  :accidental  f)
+		      (ess :accidental ss))
+		     (100 
+		      (g   )
+		      (gn  :accidental  n)
+		      (fss :accidental ss)
+		      (aff :accidental ff))
+		     (100 
+		      (af  :accidental  f)
+		      (gs  :accidental  s))
+		     (100 
+		      (a   )
+		      (an  :accidental  n)
+		      (gss :accidental ss)
+		      (bff :accidental ff))
+		     (100 
+		      (bf  :accidental  f)
+		      (as  :accidental  s)
+		      (cff :accidental ff :octave +1))
+		     (100 
+		      (b   )
+		      (bn  :accidental  n)
+		      (cf  :accidental  f :octave +1)
+		      (ass :accidental ss)))))
 
 (set! *scale* *chromatic-scale*)
 
