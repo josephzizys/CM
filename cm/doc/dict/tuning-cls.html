@@ -46,16 +46,16 @@ The lowest Hertz value defined in the scale. Defaults to
 <dt><code class="keyword">:cents</code> <var>list</var></dt>
 <dd>
 
-One octave of the tuning specified as a list of cent values.
-Fewer or more than 12 degrees may be specified and an "octave" does
-not have to equal 1200 cents.
-If the cent values in <var>list</var> start with 0 and are in
-increasing order they specify the cent difference from the lowest
-degree to each degree above it. In this case the last value
-in <var>list</var> determines the octave width of the scale.
-If <var>list</var> does not begin with 0 then the cents values describe
-the distances between adjacent steps. In this case the octave width is set
-to the sum of the cent steps.
+One octave of the tuning specified as a list of cent values.  Fewer or
+more than 12 degrees may be specified and an "octave" does not have to
+equal 1200 cents.  If the first value in <var>list</var> is
+0 <!-- and are in increasing order --> then the list is assumed to be
+specifing degrees, i.e. the cent distance from the lowest degree to
+each degree above it. In this case the last value in <var>list</var>
+determines the octave width of the scale.  If the first value is
+not 0 then <var>list</var> is assumed to specify steps, i.e. the cent distances
+between adjacent degrees. In this case the octave width is set to the
+sum of the cent steps.
 <p>
 To define a tuning with note names specify each step as a list:
 <kbd>(</kbd><var>cent</var><kbd> {</kbd><var>note</var><kbd>}*)</kbd>
@@ -79,6 +79,7 @@ definition of the standard chromatic scale is:
 
 Exactly like <kbd>cents</kbd> except that the tuning values are
 specified as ratios (direct frequency scalers) rather than as cent values.
+A list whose first ratio is 1 defines degrees, otherwise the list is taken to be ratio step differences between degrees.
 </dd>
 
 
