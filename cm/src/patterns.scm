@@ -667,16 +667,16 @@
             (next '())
             (long (pattern-length obj))
             (bits (pattern-flags obj)))
-        (cond ((eq? mode #t)
+        (cond ((memq mode '(#t 2))
                (set! long (- (* long 2) 2))
                (set! next (append half (cdr (reverse (cdr half))))))
-              ((not mode)
+              ((memq mode '(#f 0))
                (set! long (* long 2))
                (set! next (append half (reverse half))))
-              ((memq mode '(:first first :start start :left left))
+              ((memq mode '(-1 :first first :start start :left left))
                (set! long (- (* long 2) 1))
                (set! next (append half (reverse (cdr half)))))
-              ((memq mode '(:last last :end end :right right))
+              ((memq mode '(1 :last last :end end :right right))
                (set! long (- (* long 2) 1))
                (set! next (append half (cdr (reverse half)))))
               (else
@@ -2567,7 +2567,8 @@
 ;;;
 
 (define pattern-types
-  '(cycle heap weighting line palindrome graph markov rewrite))
+  '(cycle heap weighting line palindrome graph markov rewrite
+	  rotation))
 
 (define pattern-item-types
   '(notes keynums rhythms amplitudes hertz))
@@ -2587,6 +2588,7 @@
     (graph last selector props starting-node-index)
     (rotation rotations)
     (rewrite initially rules generations )
+    (rotation rotations )
     repeat
     eop-hook
     for
