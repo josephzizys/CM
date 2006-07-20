@@ -230,7 +230,8 @@ selected; indent whole defun if prefixed."
 	    (cm-doc (car (symbol-value sym)))))))
 
 (defvar *common-music-doc-menu*
-  `([ "Home Page" (cm-doc "cm.html")]
+  `("Common Music"
+    [ "Home Page" (cm-doc "cm.html")]
     [ "Installing" (cm-doc "install.html")]
     [ "Working in Emacs" (cm-doc "emacs.html")]
     "--"
@@ -242,10 +243,14 @@ selected; indent whole defun if prefixed."
     ))
 
 ;; add Common Music documentation menu to Slime...
+;; last argument changed to make it workable under xemacs 21.4.19
+;; Robert Matovinovic, 20.07.2006, robert.matovinovic@web.de
+
 (easy-menu-add-item menubar-slime
 		    '("Documentation")
-		    (easy-menu-create-menu "Common Music"
-					   *common-music-doc-menu*))
+		    *common-music-doc-menu*
+		    ;(easy-menu-create-menu "Common Music" )
+		    )
 
 (defvar *common-music-symbols* (make-vector 66 0))
 
