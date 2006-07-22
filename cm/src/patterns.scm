@@ -272,9 +272,11 @@
 	 (set! data (cadr a)))
 	((:tempo :in :from :to :through)
 	 (cond ((null? type)
-		(err "Option ~S without a data type ~S." (car a)
-		     (if (eq? (car a) ':tempo) ':rhythms
-			 '(:notes :keynums :hertz))))
+		;; RANGE uses :from :to
+		;(err "Option ~S without a data type ~S." (car a)
+		;     (if (eq? (car a) ':tempo) ':rhythms
+		;	 '(:notes :keynums :hertz)))
+		)
 	       ((eq? type :rhythms)
 		(or (eq? (car a) ':tempo)
 		    (err "Option ~S does not match data type ~S."
@@ -2568,7 +2570,7 @@
 
 (define pattern-types
   '(cycle heap weighting line palindrome graph markov rewrite
-	  rotation))
+	  range rotation))
 
 (define pattern-item-types
   '(notes keynums rhythms amplitudes hertz))
@@ -2589,10 +2591,13 @@
     (rotation rotations)
     (rewrite initially rules generations )
     (rotation rotations )
+    (range from initially to below pickto downto above by stepping)
     repeat
     eop-hook
     for
     name))
+
+(define pattern-no-items '(range transposer))
 
 (define (gather-substs forms)
   ;; gather with|alias clauses until no more
@@ -2740,20 +2745,25 @@
     (multiple-value-setq (vars args) (gather-substs form))
     (check-pattern-option args pattern-types #t)
     (set! ptyp (pop args))
-    ;; parse optional element type
-    (if (check-pattern-option args 'of #f)
-	(begin
-	  (pop args)
-	  (check-pattern-option args pattern-item-types
-				#t)
-	  (set! etyp (pop args))))
-    (set! opts (get-pattern-options ptyp etyp))
-    (multiple-value-setq (elts args)
-			 (gather-pattern-data args #t opts ptyp etyp vars))
-    ;;(print (list :elts-> elts :args-> args))
-    (set! etyp (if (not etyp) ':of
-		   (symbol->keyword etyp)))
-    (set! init (list etyp elts))
+    ;; parse items if pattern takes them
+    (cond ((member ptyp pattern-no-items)
+	   (set! opts (get-pattern-options ptyp #f)))
+	  (t
+	   ;; parse optional element type
+	   (if (check-pattern-option args 'of #f)
+	       (begin
+		(pop args)
+		(check-pattern-option args pattern-item-types
+				      #t)
+		(set! etyp (pop args))))
+	   (set! opts (get-pattern-options ptyp etyp))
+	   (multiple-value-setq (elts args)
+	     (gather-pattern-data args #t opts ptyp etyp vars))
+	   ;;(print (list :elts-> elts :args-> args))
+	   (set! etyp (if (not etyp) ':of
+			  (symbol->keyword etyp)))
+	   (set! init (list etyp elts))))
+
     ;; process remaining pairwise args
     (do ((tail args)
 	 (optn #f)
