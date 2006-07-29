@@ -201,11 +201,10 @@ containing a directory string.</p>
 <dd><code class="entry">open</code> [<var>stream</var>] {<var>keyword</var> :  <var>sexpr</var>}* </dd>
 </dl>
 
-<p> Opens an output stream to a file, port, seq or plot. You can pass
+<p> Opens a stream (connection) to a file, port, seq or plot. You can pass
 a series of keyword args to the output stream as appropriate to its
 type when you open it. If <code>open</code> is called without any args
-it prints the current output stream, if any. Specifying <code>#f</code> as the value
-of <var>stream</var> closes the currently open stream. </p>
+it prints the currently open stream object, if any. Specifying <code><span class="special">#f</span></code> as the value closes any open stream. </p>
 
 <dl class="dictsyntax" id="print">
 <dt>[Command]</dt>
@@ -239,6 +238,8 @@ of <var>stream</var> closes the currently open stream. </p>
 <dt>[Command]</dt>
 <dd><code class="entry">sprout</code> <var>object</var> [<code class="entry">at</code> <var>offset</var>]</dd>
 </dl>
+<p>Triggers algorithmic output to the <a href="#open">open output
+stream</a>. If a file is open each sprout results in a new instance of that file being written.</p>
 
 
 <!-- STATEMENTS -->
@@ -247,7 +248,7 @@ of <var>stream</var> closes the currently open stream. </p>
 
 <!-- BEGIN -->
 <dl class="dictsyntax" id="begin">
-<dt>[Command]</dt>
+<dt>[Statement]</dt>
 <dd><code class="entry">begin</code> [<var>var-decl</var>] {<var>statement</var>}+ <code class="entry">end</code></dd>
 </dl>
 
@@ -265,7 +266,7 @@ of <var>stream</var> closes the currently open stream. </p>
 <!-- IF -->
 <dl class="dictsyntax" id="if">
 <dt>[Statement]</dt>
-<dd><code class="entry">if</code> <var>sexpr</var> [<code class="entry">then</code> <var>true-statement</var>] [<code class="entry">else</code> <var>false-statement</var>]
+<dd><code class="entry">if</code> <var>sexpr</var> <code class="entry">then</code> [<var>true-statement</var>] [<code class="entry">else</code> <var>false-statement</var>]
 </dd>
 </dl>
 
@@ -274,7 +275,7 @@ of <var>stream</var> closes the currently open stream. </p>
 
 <!-- LOOP -->
 <dl class="dictsyntax" id="loop">
-<dt>[Command]</dt>
+<dt>[Statement]</dt>
 <dd><code class="entry">loop</code> [<var>var-decl</var>] {<var>stepping</var>}* {<var>stopping</var>}* {<var>action</var>}+ [<var>finally</var>]
  <code class="entry">end</code></dd>
 </dl>
@@ -327,12 +328,12 @@ zero or more <var>stopping</var> statements, one or more <var>action</var> state
 
 <!-- RUN -->
 <dl class="dictsyntax" id="run">
-<dt>[Command]</dt>
+<dt>[Statement]</dt>
 <dd><code class="entry">run</code> [<var>var-decl</var>] {<var>stepping</var>}* {<var>stopping</var>}* {<var>statement</var>}+ [<var>finally</var>]
  <code class="entry">end</code></dd>
 </dl>
 
-<p> Almost identical in format to <a href="#loop">loop</a> but iteration is defined over time by a musical process. The <code>run</code> block supports the following additional statements:</p>
+<p> Almost identical in format to <a href="#loop">loop</a> but the iteration is defined over time, by a musical process. The <code>run</code> block supports the following additional statements:</p>
 
 
 <blockquote>
