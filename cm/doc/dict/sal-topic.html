@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "../css/cm.css";
+</style>
+<title>SAL</title>
+</head>
+<body>
+<div id="content">
+
+<dl class="dictsyntax">
+<dt>[Topic]</dt>
+<dd>SAL</dd>
+</dl>
+
+<!-- h4>Introduction</h4 -->
+
+<p> SAL is an alternate (non-Lisp) syntax for working with Common
+Music. It implements an easy-to-learn command language for algorithmic
+music composition that does not require any familiarity with Lisp
+notation or Lisp evaluation rules. (The name SAL stands for Simple
+Algorithmic Language, or Secretly Another Lisp, as you wish<!-- and is
+also reminiscent of <a href="http://ems.music.uiuc.edu/~martiran/">Sal
+Martirano</a>, a brilliant composer who was a professor at the UIUC
+for many years -->.)</p>
+
+<p>
+Sal consists of two software components: a lexer and parser loaded
+into Common
+Music <!--(using <a href="use-system-fn.html">use-system</a>) --> and
+an Emacs editing mode (<code>sal-mode</code>) that supports developing
+SAL programs and executing SAL commands. (See the
+the <a href="../install.html#sal">SAL installation instructions</a>
+for information on how use SAL in Emacs)
+</p>
+
+<p>
+As a way of introducing SAL, here are some equivalent statements using
+SAL and Lisp notation:
+</p>
+
+<p><var>Expressions:</var></p>
+
+<blockquote>
+<table>
+<tr><td style="padding-right: 1em; vertical-align: top;">SAL:</td> <td><pre><span class="salcmd">print</span> 2 + 3 * 4 - 1</pre></td></tr>
+<tr><td style="padding-right: 1em; vertical-align: top;">Lisp:</td> <td><pre>(print (- (+ 2 (* 3 4)) 1))</pre></td></tr>
+</table>
+</blockquote>
+
+<p><var>Variable Assignment:<var></p>
+
+<blockquote>
+<table>
+<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td>
+<pre><span class="salcmd">set</span> a = random(10), b += a, c &= b</pre></td></tr>
+<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td><td>
+<pre>(setf a (random 10) b (+ b a) c (append c (list b)))</pre></td></tr>
+</table>
+</blockquote>
+
+
+<p><var>Global variable definition:</var></p>
+
+<blockquote>
+<table>
+<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td ><pre><span class="salcmd">define</span> <span class="saltyp">variable</span> 2pi = 2 * pi</pre></td></tr>
+<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td> <td><pre>(defparameter 2pi (* 2 pi))</pre></td></tr>
+</table>
+</blockquote>
+
+<p><var>Function definition:</var></p>
+
+<blockquote>
+<table>
+<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td>
+<pre><span class="salcmd">define</span> <span class="saltyp">function</span> rankey (low, high)
+  <span class="salres">begin</span>
+    <span class="salres">with</span> range = high - low
+    <span class="salres">return</span> low + random(range)
+  <span class="salres">end</span></pre></td></tr>
+<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td><td>
+<pre>(defun rankey (low high)
+  (let ((range (- high low)))
+    (+ low (random range))))</pre></td></tr>
+</table>
+</blockquote>
+
+<p><var>Musical process definition:</var></p>
+
+<blockquote>
+<table>
+<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td>
+<pre><span class="salcmd">define</span> <span class="saltyp">process</span> foo (n, r)
+  <span class="salres">run</span> <span class="salres">repeat</span> n
+    <span class="salres">for</span> k = rankey(60, 80)
+    <span class="salres">output</span> #a[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k]
+    <span class="salres">wait</span> r
+  <span class="salres">end</span></pre></td></tr>
+
+  <tr><td style="padding-right: 1em; vertical-align: top;">Lisp:</td>
+    <td > <pre>(defun foo (n r)
+  (process repeat n
+           for k = (rankey 60 80)
+           output (new midi :time (now) :keynum k)
+           wait r))</pre></td></tr>
+</table>
+</blockquote>
+
+<p>
+A SAL program consists of top-level commands, language statements and
+symbolic expressions (sexprs). A sexpr evaluates to a value. A
+statement is a language construct. A command is a statement available
+at the "top-level" that accomplishes interactive tasks such as
+computing scores, defining functions and processes, loading files, and
+so on.
+</p>
+
+<h4 id="commands">Commands</h4>
+
+<dl class="dictsyntax" id="chdir">
+<dt>[Command]</dt>
+<dd><code class="entry">chdir</code> [<var>dir</var>]</dd>
+</dl>
+
+<p> Blah blah. </p>
+
+<dl class="dictsyntax" id="define_variable">
+<dt>[Command]</dt>
+<dd><code class="entry">define variable</code> <var>name</var> [<code>=</code> <var>expr</var>] {<code>,</code> <var>name</var> [<code>=</code> <var>expr</var>]}*</dd>
+</dl>
+
+<p> Blah blah. </p>
+
+<dl class="dictsyntax" id="define_function">
+<dt>[Command]</dt>
+<dd><code class="entry">define function</code> <var>name</var> <code>(</code>[<var>param</var>] {<code>,</code> <var>param</var>}*<code>)</code> {<var>statement<var>}
+</dl>
+
+<p> Blah blah. </p>
+
+<dl class="dictsyntax" id="define_process">
+<dt>[Command]</dt>
+<dd><code class="entry">define process</code> <var>name</var> <code>(</code>[<var>param</var>] {<code>,</code> <var>param</var>}*<code>)</code> {<var>statement<var>}
+</dl>
+
+<p> Blah blah. </p>
+
+<dl class="dictsyntax" id="load">
+<dt>[Command]</dt>
+<dd><code class="entry">load</code> {<var>filespec</var>}*</dd>
+</dl>
+
+<p> Blah blah. </p>
+
+<dl class="dictsyntax" id="lsdir">
+<dt>[Command]</dt>
+<dd><code class="entry">lsdir</code> [<var>dirspec</var>]</dd>
+</dl>
+
+<p> Blah blah. </p>
+
+<dl class="dictsyntax" id="open">
+<dt>[Command]</dt>
+<dd><code class="entry">open</code> [<var>stream</var>] {<var>keyword</var> :  <var>value</var>}* </dd>
+</dl>
+
+<p> Blah blah. </p>
+
+<dl class="dictsyntax" id="print">
+<dt>[Command]</dt>
+<dd><code class="entry">print</code> <var>expr</var> {<code>,</code> <var>expr</var>}*</dd>
+</dl>
+
+<p> Blah blah. </p>
+
+
+
+<dl class="dictsyntax" id="rts">
+<dt>[Command]</dt>
+<dd><code class="entry">rts</code> [<var>flag</var>] </dd>
+</dl>
+
+<p> Blah blah. </p>
+
+<dl class="dictsyntax" id="sprout">
+<dt>[Command]</dt>
+<dd><code class="entry">sprout</code> <var>object</var> [<code class="entry">at</code> <var>offset</var>]</dd>
+</dl>
+
+
+<h4 id="statements">Statements</h4>
+
+
+<dl class="dictsyntax" id="set">
+<dt>[Command]</dt>
+<dd><code class="entry">set</code> <var>var</var> <var>op<var> <var>expr</var> {<code>, <var>var</var> <var>op</var> <var>expr</var>}*</dd>
+</dl>
+
+<p> Assigns values to one or more comma delimited variables. Each <var>var</var> is set to the value of <var>expr</var> according to the assignment operator <var>op</var>:</p>
+<blockquote>
+<table class= "float">
+<tr><th class="lcol" style="padding-right: 1em";>operator</th><th class="lcol">meaning</th></tr>
+<tr><td><code>=</code></td> <td> sets <var>var</var> to the value of <var>expr</var> </td> </tr>
+<tr><td><code>+=</code></td> <td> increments <var>var</var> by the value of <var>expr</var> </td> </tr>
+<tr><td><code>*=</code></td> <td> scales <var>var</var> by the value of <var>expr</var> </td> </tr>
+<tr><td><code>&=</code></td> <td> appends value of <var>expr</var> to the list in <var>var</var> </td> </tr>
+<tr><td><code>@=</code></td> <td> prepends value of <var>expr</var> to the list in <var>var</var> </td> </tr>
+</table>
+</blockquote>
+
+<h4 id="sexprs">Symbolic expressions</h4>
+
+
