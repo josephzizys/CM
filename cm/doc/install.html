@@ -542,7 +542,21 @@ features of Lisp, Dylan, PLA and Stella. </p>
 <li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=197060">SAL</a></li>
 <li>Supporting: Clisp, CMUCL, OpenMCL, SBCL</li>
 <li>Requirements: None</li>
-<li>Installation: Restore the SAL sources under your Lisp installation directory.</li>
+<li>Installation:
+
+<ul>
+  <li>Restore the SAL sources under your Lisp installation directory.</li>
+  <li>Add the following lines to your .emacs file, replacing <span class="string">"/path/to/sal/"</span> with the correct path on your machine:
+<pre>
+(add-to-list 'load-path <span class="string">"/path/to/sal/"</span>)
+(require 'sal-mode)
+</pre>
+<code>sal-mode</code> requires SLIME, see <a href="emacs.html#slime">Installing and Confguring SLIME</a> for more information.
+</li>
+
+</ul>
+
+</li>
 </ul>
 
 <hr />
