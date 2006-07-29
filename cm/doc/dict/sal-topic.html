@@ -15,7 +15,7 @@
 <dd>SAL</dd>
 </dl>
 
-<!-- h4>Introduction</h4 -->
+<!-- h3>Introduction</h4 -->
 
 <p> SAL is an alternate (non-Lisp) syntax for working with Common
 Music. It defines an easy-to-learn, command-based algorithmic
@@ -46,11 +46,10 @@ language construct. A command is a "top-level" statement that can be
 <var>executed</var> to accomplish an interactive task such as
 computing a score, defining a musical process, loading a file, and so
 on. Sal commands are parsed and compiled into Lisp before they execute
-so Sal's runtime performance is identical to the host Lisp. Sal's
-lexer and parser often do a better job explaining syntax errors than
-the Lisp error system does and (by default) runtime errors are reported
-without entering the Lisp error break.</p>
-
+so Sal's runtime performance is identical to the host Lisp's performance. Sal's
+lexer and parser often do a better job explaining syntax errors than does
+the Lisp error system and (by default) runtime errors are reported
+without entering the Lisp error break.  You can also use sal-mode's trace facility (<span class="emacscmd"><span class="emacskey">M-x</span> toggle-trace</span>) to learn Lisp as you go.</p>
 
 <p>
 By way of introduction, here are some equivalent statements in SAL
@@ -130,7 +129,7 @@ and Lisp syntax:
 <!-- COMMANDS -->
 
 
-<h4 id="commands">Commands</h4>
+<h3 id="commands">Commands</h3>
 
 <p>Commands are "top-level" statements that can be directly executed from an Emacs buffer in <code>sal-mode</code>. To execute a Sal command use the SAL menu to start Sal, then place the cursor after the command expression and press the keypad Enter key.</p>
 
@@ -152,6 +151,19 @@ containing a directory string.</p>
 
 <p> Defines a global variable <var>name</var> with optional value <var>sexpr</var>. If <var>sexpr</var> is not provided the value of the variable defaults to false. Use commas to define more than one variable at time. </p>
 
+<h4>Example</h4>
+
+<div class="float">
+<pre class="code">
+<span class="salcmd">define</span> <span class="saltyp">variable</span> myrow = {0 1 11 2 10 3 9 4 8 5 7 6}
+</pre>
+</div>
+
+
+
+
+
+
 <dl class="dictsyntax" id="define_function">
 <dt>[Command]</dt>
 <dd><code class="entry">define function</code> <var>name</var> <code>(</code>[<var>parameter</var>] {<code class="entry">,</code> <var>parameter</var>}*<code>)</code> {<var>statement</var>}</dd>
@@ -159,6 +171,40 @@ containing a directory string.</p>
 
 <p>A function definition consists of the <var>name</var> of the function, a series of zero or more <var>parameters</var>, or input variables, enclosed within <code>()</code> and followed by a single statement which will be executed when the function is called. Values passed to the function will be available in the corresponding <var>parameter</var>. Use a <a href="#begin"><code>begin</code></a> block to declare local variables or to include more than one statement in the body of the function. Use the <a href="#return"><code>return</code></a> statement to return one or more values from a function. A function without a <a href="#return"><code>return</code></a> statement returns nothing as its value.</p>
 
+<h4>Example</h4>
+<div class="float">
+<pre class="code">
+<span class="comment">; pitch class transposition of a row </span>
+
+<span class="salcmd">define</span> <span class="saltyp">function</span> pctransp(row, pc)
+  <span class="salres">loop</span> <span class="salres">with</span> l = list()
+    <span class="salres">for</span> i <span class="salres">in</span> row
+    <span class="salres">set</span> l &= mod( i + pc, 12)
+    <span class="salres">finally</span> <span class="salres">return</span> l
+  <span class="salres">end</span>
+
+<span class="comment">; pc inversion of a row </span>
+
+<span class="salcmd">define</span> <span class="saltyp">function</span> pcinvert(row)
+  <span class="salres">loop</span> <span class="salres">with</span> l = list()
+    <span class="salres">for</span> i <span class="salres">in</span> row
+    <span class="salres">set</span> l &= mod( - i, 12)
+    <span class="salres">finally</span> <span class="salres">return</span> l
+  <span class="salres">end</span>
+
+<span class="comment">; compute the matrix of a row</span>
+
+<span class="salcmd">define</span> <span class="saltyp">function</span> matrix(row)
+  <span class="salres">loop</span> <span class="salres">with</span> mat = list(), inv = pcinvert(row)
+    <span class="salres">for</span> i <span class="salres">in</span> inv
+    <span class="salres">for</span> new = pctransp(row, i)
+    <span class="salres">set</span> mat &= new
+    <span class="salres">finally</span> <span class="salres">return</span> mat
+  <span class="salres">end</span>
+
+<span class="salcmd">print</span> matrix(myrow)
+</pre>
+</div>
 
 <dl class="dictsyntax" id="define_process">
 <dt>[Command]</dt>
@@ -168,6 +214,30 @@ containing a directory string.</p>
 <p> Musical process definitions are very similar to functions except that they do not have
 <a href="#return"><code>return</code></a> statements and they must contain a <a href="#run"><code>run</code></a> block as their final statement. The <code>run</code> block is syntactically identical to the  <a href="#run"><code>loop</code></a> statement except that it supports several additional statements that are specific to musical process definitions.
  Use <a href="#output"><code>output</code></a> statements inside the <code>run</code> block to send musical object to an <a href="#open">open output stream</a> on each iteration.</p>
+
+<h4>Example</h4>
+<div class="float">
+<pre class="code">
+<span class="salcmd">define</span> <span class="saltyp">process</span> foo(n, r)
+  <span class="salres">run</span> <span class="salres">repeat</span> n
+    <span class="salres">for</span> k = between(40, 70)
+    <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k]
+    <span class="salres">if</span> evenp(k) <span class="salres">then</span>
+      <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k + 12]
+      <span class="salres">else</span>
+	<span class="salres">begin</span>
+	  <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k - 12]
+	  <span class="salres">if</span> odds(.4) <span class="salres">then</span>
+	    <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k - random(12)]
+	<span class="salres">end</span>
+    <span class="salres">wait</span> random(r)
+  <span class="salres">end</span>
+
+<span class="salcmd">open</span> <span class="string">"test.mid"</span>
+
+<span class="salcmd">sprout</span> foo(20, .4)
+</pre>
+</div>
 
 <dl class="dictsyntax" id="load">
 <dt>[Command]</dt>
@@ -238,13 +308,18 @@ it prints the currently open stream object, if any. Specifying <code><span class
 <dt>[Command]</dt>
 <dd><code class="entry">sprout</code> <var>object</var> [<code class="entry">at</code> <var>offset</var>]</dd>
 </dl>
-<p>Triggers algorithmic output to the <a href="#open">open output
-stream</a>. If a file is open each sprout results in a new instance of that file being written.</p>
+<p>Triggers algorithmic output from <var>object</var> to
+the <a href="#open">open output stream</a>. If a file is open each
+sprout results in a new instance of that file being computed.
+The <var>object</var> can be a single object (process, seq, etc) or a
+list of the same. If <code>at</code> is provided its value is a start time
+offset or list of the same.
+</p>
 
 
 <!-- STATEMENTS -->
 
-<h4 id="statements">Statements</h4>
+<h3 id="statements">Statements</h3>
 
 <!-- BEGIN -->
 <dl class="dictsyntax" id="begin">
@@ -328,7 +403,7 @@ zero or more <var>stopping</var> statements, one or more <var>action</var> state
 
 <!-- RUN -->
 <dl class="dictsyntax" id="run">
-<dt>[Statement]</dt>
+<dt>[Process Statement]</dt>
 <dd><code class="entry">run</code> [<var>var-decl</var>] {<var>stepping</var>}* {<var>stopping</var>}* {<var>statement</var>}+ [<var>finally</var>]
  <code class="entry">end</code></dd>
 </dl>
@@ -398,7 +473,7 @@ according to the assignment operator <var>op</var>:</p>
 
 
 
-<h4 id="sexprs">Symbolic expressions</h4>
+<h3 id="sexprs">Symbolic expressions</h3>
 
 <dl>
 
@@ -499,7 +574,7 @@ construction.</p>
 </li>
 <li><p>List and vector constructors use a simplified loop syntax with a special <code>collect</code> statement:</p>
 <pre><span class="special">#a</span>[<span class="saltyp">list</span> for i below 10 collect i]
-<span class="special">#a</span>[<span class="saltyp">list</span> for x to 100 by 10 for y = between(60, 80) collect x,y]
+<span class="special">#a</span>[<span class="saltyp">list</span> for x to 100 by 10 for y = between(60, 80) collect x, y]
 <span class="special">#a</span>[<span class="saltyp">vector</span> repeat 10 collect random(32)]
 </pre>
 </li>
@@ -515,10 +590,12 @@ construction.</p>
 </dl>
 
 
-<h4>Lacun&aelig;</h4>
+<h3>Lacun&aelig;</h3>
 
 <ul>
   <li>Exact syntax of some commands is not settled yet. In particular the (inconsistent) use of comma delimiting needs to be settled.
+  </li>
+  <li>Perhaps the <code>print</code> command should automatically print spaces between comma-delimited arguments?
   </li>
 </ul>
 
