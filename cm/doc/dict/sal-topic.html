@@ -18,7 +18,7 @@
 <!-- h4>Introduction</h4 -->
 
 <p> SAL is an alternate (non-Lisp) syntax for working with Common
-Music. It implements an easy-to-learn command language for algorithmic
+Music. It implements an easy-to-learn language for algorithmic
 music composition that does not require any familiarity with Lisp
 notation or Lisp evaluation rules. (The name SAL stands for Simple
 Algorithmic Language, or Secretly Another Lisp, as you wish<!-- and is
@@ -27,18 +27,18 @@ Martirano</a>, a brilliant composer who was a professor at the UIUC
 for many years -->.)</p>
 
 <p>
-Sal consists of two software components: a lexer and parser loaded
-into Common
+The SAL system consists of two software components: a lexer/parser loaded into
+Common
 Music <!--(using <a href="use-system-fn.html">use-system</a>) --> and
 an Emacs editing mode (<code>sal-mode</code>) that supports developing
 SAL programs and executing SAL commands. (See the
 the <a href="../install.html#sal">SAL installation instructions</a>
-for information on how use SAL in Emacs)
+for information on SAL and Emacs)
 </p>
 
 <p>
-As a way of introducing SAL, here are some equivalent statements using
-SAL and Lisp notation:
+By way of introduction, here are some equivalent statements in SAL
+and Lisp syntax:
 </p>
 
 <p><var>Expressions:</var></p>
@@ -110,12 +110,12 @@ SAL and Lisp notation:
 </blockquote>
 
 <p>
-A SAL program consists of top-level commands, language statements and
-symbolic expressions (sexprs). A sexpr evaluates to a value. A
-statement is a language construct. A command is a statement available
-at the "top-level" that accomplishes interactive tasks such as
-computing scores, defining functions and processes, loading files, and
-so on.
+A SAL program consists of <var>commands</var>, <var>statements</var> and
+<var>symbolic expressions</var>, or <var>sexpr</var>. A sexpr
+evaluates to a value. A statement is a language construct. A command
+is a "top-level" statement that can be <var>executed</var> to
+accomplish an interactive task such as computing a score, defining a
+function or processes, loading files, and so on.
 </p>
 
 <h4 id="commands">Commands</h4>
@@ -125,14 +125,17 @@ so on.
 <dd><code class="entry">chdir</code> [<var>dir</var>]</dd>
 </dl>
 
-<p> Blah blah. </p>
+<p> Change the working directory to <var>dir</var>. If <var>dir</var>
+is not provided it defaults to the user's home directory. Otherwise
+the value of <var>dir</var> should be a directory string or variable
+containing a directory string.</p>
 
 <dl class="dictsyntax" id="define_variable">
 <dt>[Command]</dt>
 <dd><code class="entry">define variable</code> <var>name</var> [<code>=</code> <var>expr</var>] {<code>,</code> <var>name</var> [<code>=</code> <var>expr</var>]}*</dd>
 </dl>
 
-<p> Blah blah. </p>
+<p> Defines a global variable <var>name</var> with optional value <var>expr</var>. If <var>expr</var> is not provided the value of the variable defaults to false. Use commas to define more than one varible at time. </p>
 
 <dl class="dictsyntax" id="define_function">
 <dt>[Command]</dt>
@@ -153,7 +156,19 @@ so on.
 <dd><code class="entry">load</code> {<var>filespec</var>}*</dd>
 </dl>
 
-<p> Blah blah. </p>
+<p> Loads one or more files according to each <var>filespec</var>, which should be a pathname string. Certain file types implement customized loading behavior:
+
+<blockquote>
+<table class= "float">
+<tr><th class="lcol" style="padding-right: 1em;">file type</th><th class="lcol">behavior</th></tr>
+
+<tr><td>.sal</td><td>loads a sal source file</td></tr>
+<tr><td>.sys</td><td>loads an external system via <a href="use-system-fn.html">use-system</a></td></tr>
+<tr><td>.ins</td><td>loads a clm instrument, compiling if necessary</td></tr>
+<tr><td>.lisp</td><td>loads a lisp source file</td></tr>
+<tr><td>.lisp!</td><td>load a lisp file, compiling if necessary</td></tr>
+</table>
+</blockquote>
 
 <dl class="dictsyntax" id="lsdir">
 <dt>[Command]</dt>
@@ -193,13 +208,31 @@ so on.
 
 <h4 id="statements">Statements</h4>
 
+<dl class="dictsyntax" id="begin">
+<dt>[Command]</dt>
+<dd><code class="entry">begin</code> [<var>var-decl</var>] {<var>statement</var>}* <code class="entry">end</code></dd>
+</dl>
+
+<p> Defines a block of statments.  Optional local variables can be declared using the <a href="#with"><code>with</code></a> statement followed by a sequence of one or more statements and terminated with a required <code>end</code> tag.</p>
+
+
+
+<dl class="dictsyntax" id="output">
+<dt>[Statement]</dt>
+<dd><code class="entry">output</code> <var>object</var> {<code>,</code><var>object</var>}*</dd>
+</dl>
+
+<p> Blah blah. </p>
+
 
 <dl class="dictsyntax" id="set">
 <dt>[Command]</dt>
 <dd><code class="entry">set</code> <var>var</var> <var>op<var> <var>expr</var> {<code>, <var>var</var> <var>op</var> <var>expr</var>}*</dd>
 </dl>
 
-<p> Assigns values to one or more comma delimited variables. Each <var>var</var> is set to the value of <var>expr</var> according to the assignment operator <var>op</var>:</p>
+<p> Assigns a value to one or more comma delimited
+variables. Each variable <var>var</var> is set to the value of <var>expr</var>
+according to the assignment operator <var>op</var>:</p>
 <blockquote>
 <table class= "float">
 <tr><th class="lcol" style="padding-right: 1em";>operator</th><th class="lcol">meaning</th></tr>
@@ -210,6 +243,16 @@ so on.
 <tr><td><code>@=</code></td> <td> prepends value of <var>expr</var> to the list in <var>var</var> </td> </tr>
 </table>
 </blockquote>
+
+
+<dl class="dictsyntax" id="with">
+<dt>[Command]</dt>
+<dd><code class="entry">with</code> <var>var</var> [<code>=</code> <var>sexpr</var>] {<code>,</code> <var>var</var> [<code>=</code> <var>sexpr</var>]}*</dd>
+</dl>
+<p>Declares one or more comma-delimited variables with an optional initial value, which defaults to false if not specified. With declarations can appear at the start of block statements like <a href="#being"><code>begin</code></a>, <a href="#loop"><code>loop</code></a> and <a href="#run"><code>run</code></a> 
+
+
+
 
 <h4 id="sexprs">Symbolic expressions</h4>
 
