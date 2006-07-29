@@ -17,7 +17,7 @@
 ;;;
 ;;; M-x cm                                                       [Command]
 ;;;   Start up cm in a new frame, window, or buffer (see
-;;;   inferior-lisp-program and inferior-lisp-display below).
+;;;   cm-command and inferior-lisp-display below).
 ;;; M-x kill-cm                                                  [Command]
 ;;;   Kill existing *slime-repl* session.
 ;;; M-x enable-cm-commands                                       [Command]
@@ -32,7 +32,7 @@
 ;;; *common-music-doc-root*                                     [Variable]
 ;;;   The root URL for browsing CM documentation. Defaults
 ;;;   to "http://commonmusic.sf.net/doc/"
-;;; inferior-lisp-program                                       [Variable]
+;;; cm-program
 ;;;   The shell program to start CM. Defaults to "cm".
 
 (unless (member 'slime features)
@@ -41,33 +41,16 @@
 
 (when (member 'aquamacs features)
   (add-to-list 'obof-other-frame-regexps "\\*inferior-lisp\\*")
-  (add-to-list 'obof-other-frame-regexps "\\*slime-repl\\\\*")
-;  (defun slime-hide-inferior-lisp-buffer ()
-;    "Display the REPL buffer instead of the *inferior-lisp* buffer."
-;    (let ((buffer (if (slime-process)
-;		      (process-buffer (slime-process)))))
-;      (when buffer
-;	(bury-buffer buffer))
-;      (let* ((window (if buffer (get-buffer-window buffer)))
-;	     (repl-buffer (slime-output-buffer t))
-;	     (repl-window (get-buffer-window repl-buffer)))
-;	(cond (repl-window
-;	       (when window
-;		 (delete-window window)))
-;	      (window
-;	       (set-window-buffer window repl-buffer))
-;	      (t
-;	       (pop-to-buffer repl-buffer)
-;	       (goto-char (point-max)))))))
-  )
+  (add-to-list 'obof-other-frame-regexps "\\*slime-repl\\\\*"))
 
 ;; update default value of inferior-lisp-program to "cm.sh"
-(if (or (not (boundp 'inferior-lisp-program))
-	(not inferior-lisp-program)
-	(equal inferior-lisp-program "lisp"))
-    (setq inferior-lisp-program 
-	  (or (locate-library "bin/cm.sh" t)
-	      "cm")))
+
+(defvar cm-program
+  (if (or (not (boundp 'inferior-lisp-program))
+	  (not inferior-lisp-program)
+	  (equal inferior-lisp-program "lisp"))
+      (or (locate-library "bin/cm.sh" t)
+	  "cm")))
 
 ;; add music extensions if not already present...
 (loop for mode in '(("\\.clm$" . lisp-mode)
@@ -91,9 +74,12 @@
 	      (setq indent-tabs-mode nil)
 	      ))
 
-;; Important! send (cm) command to Swank after cm starts up...
-(add-hook 'slime-connected-hook
-	  (lambda () (slime-repl-send-string "(cm)")))
+;; connect hook executes (cm) to set readtable etc and then removes
+;; itself so that it doesnt interfere with other slime sessions.
+
+(defun cm-start-hook ()
+  (slime-repl-send-string "(cm)")
+  (remove-hook 'slime-connected-hook 'cm-start-hook))
 
 ;; Darwin: define COMMAND-E to evaluate expr a la MCL.
 (if (equal system-type 'darwin)
@@ -104,13 +90,13 @@
   (interactive (list (if prefix-arg
 			 (read-string "Command to start CM: " "cm") 
 		       nil)))
-  (if (slime-connected-p)
-      (switch-to-buffer (slime-repl-buffer))
-    (let ()
-      (when program (setq inferior-lisp-program program))
-      (slime)
-      (claim-scratch-buffer)
-      )))
+  (cond ((slime-connected-p)
+	 (switch-to-buffer (slime-repl-buffer)))
+	(t
+	 (when program (setq cm-program program))
+	 (add-hook 'slime-connected-hook 'cm-start-hook)
+	 (slime-start :program cm-program)
+	 (claim-scratch-buffer))))
 
 (defun kill-cm ()
   "Kill *slime-repl* and all associated buffers."
@@ -130,7 +116,7 @@
   )
 
 (defun slime-toggle-repl ()
-  "Toggle between *slime-repl* and last lisp buffer."
+  "Toggle between *slime-repl* and last lisp or SAL buffer."
   (interactive)
   (if (slime-connected-p)
       (let ((repl (slime-repl-buffer)))
@@ -140,7 +126,9 @@
               (if (eq repl this)
                   (setq next (loop for b in (buffer-list)
 				   when (with-current-buffer b
-					  (eq major-mode 'lisp-mode))
+					  (or (eq major-mode 'lisp-mode)
+					      (eq major-mode 'sal-mode)
+					      ))
 				   return b))
 		(setq next (slime-repl-buffer)))
 	      (when next
