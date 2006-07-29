@@ -320,6 +320,9 @@ span.comment {font-style: italic; color: gray;} /* slate gray3 */
 span.keyword {color: #b22222;}
 span.special {color: #d2691e;}
 span.defined {color: #ff0000;}
+span.salcmd {color: #0000ff;}
+span.salres {color: #a020f0;}
+span.saltyp {color: #228b22;}
 span.result {font-weight: bold; color: silver;}
 span.input  {font-weight: bold;}
 span.prompt, span.output  { }
