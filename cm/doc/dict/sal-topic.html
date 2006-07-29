@@ -20,7 +20,7 @@
 <p> SAL is an alternate (non-Lisp) syntax for working with Common
 Music. It defines an easy-to-learn, command-based algorithmic
 composition language that does not require any familiarity with Lisp
-notation or Lisp evaluation rules to use. (The name SAL stands for Simple
+notation or Lisp evaluation rules in order to start composing with it. (The name SAL stands for Simple
 Algorithmic Language, or Secretly Another Lisp, as you wish. Its name
 is also an <em>hommage</em>
 to <a href="http://ems.music.uiuc.edu/~martiran/">Sal Martirano</a>, a
@@ -45,11 +45,14 @@ more information.
 language construct. A command is a "top-level" statement that can be
 <var>executed</var> to accomplish an interactive task such as
 computing a score, defining a musical process, loading a file, and so
-on. Sal commands are parsed and compiled into Lisp before they execute
-so Sal's runtime performance is identical to the host Lisp's performance. Sal's
-lexer and parser often do a better job explaining syntax errors than does
-the Lisp error system and (by default) runtime errors are reported
-without entering the Lisp error break.  You can also use sal-mode's trace facility (<span class="emacscmd"><span class="emacskey">M-x</span> toggle-trace</span>) to learn Lisp as you go.</p>
+on. Sal commands are parsed and compiled before they execute so Sal's
+runtime performance is identical to the host Lisp's performance. Sal's
+lexer and parser often do a better job explaining syntax errors than
+does the Lisp error system and (by default) runtime errors are
+reported without entering the Lisp error break.  You can also use
+sal-mode's trace facility to learn Lisp as you
+go (<span class="emacscmd"><span
+class="emacskey">M-x</span> toggle-trace</span>).</p>
 
 <p>
 By way of introduction, here are some equivalent statements in SAL
@@ -111,7 +114,7 @@ and Lisp syntax:
 <pre><span class="salcmd">define</span> <span class="saltyp">process</span> foo (n, r)
   <span class="salres">run</span> <span class="salres">repeat</span> n
     <span class="salres">for</span> k = rankey(60, 80)
-    <span class="salres">output</span> #a[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k]
+    <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k]
     <span class="salres">wait</span> r
   <span class="salres">end</span></pre></td></tr>
 
