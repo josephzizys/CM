@@ -28,10 +28,9 @@
       [ "Start" start-sal :visible (not (slime-connected-p)) ]
       [ "Stop" stop-sal :visible , C ]
       "--"
+      [ "Execute Command" sal-enter , C]
       [ "Trace Input" toggle-trace :active , C  :style toggle
 	:selected *sal-trace*]
-      "--"
-      [ "Execute Selection" sal-enter , C]
       "---"
       ("Documentation"
        [ "SAL Manual"
@@ -95,13 +94,13 @@
   (concat "^" (regexp-opt sal-commands t) "\\b"))
 
 (defvar sal-reserved
-  '("at" "begin" "below" "by" "collect" "define" "else" "end" "exec" 
+  '( "begin" "below" "by" "collect" "define" "else" "end" "exec" 
     "finally" "for" "from" "if" "in" 
     "loop" "output"  "over" "print" "repeat" "return" "run" 
     "set" "sprout" "then" "to" "unless" "until" "wait" "when" "while" "with"))
 
 (defvar sal-statements
-  (append sal-commands '("begin" "if" "loop" "run" "exec" "set" "output" "return" "unless" "wait" "when")))
+  (append sal-commands '("begin" "if" "loop" "run" "exec" "set" "output" "return" "unless" "wait" "when" "with")))
 
 (defvar sal-statement-start-regexp
   ;; matches a line starting with any sort of sal statement
