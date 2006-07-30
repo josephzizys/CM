@@ -32,6 +32,13 @@
 	:selected *sal-trace*]
       "--"
       [ "Execute Selection" sal-enter , C]
+      "---"
+      ("Documentation"
+       [ "SAL Manual"
+	 (browse-url "http://commonmusic.sf.net/doc/dict/sal-topic.html")]
+       [ "CM Dictionary"
+	 (browse-url "http://commonmusic.sf.net/doc/dict/index.html")]
+       [ "Lookup symbol at point" sal-lookup-doc-at-point])
       )))
 
 (defun start-sal ()
@@ -65,6 +72,9 @@
 
 (define-key sal-mode-map (kbd "<kp-enter>")
   'sal-enter)
+
+(define-key sal-mode-map (kbd "<help>")
+  'sal-lookup-doc-at-point)
 
 (defvar sal-mode-syntax-table (make-syntax-table))
 
@@ -192,6 +202,34 @@
 		(slime-eval-async
 		 `(cm::sal ,cmd :pattern :command-sequence) nil "CM")
 	      (slime-eval-async `(cm::sal ,cmd ) nil "CM")))))))
+
+(defun sal-lookup-doc-at-point ()
+  ;; help for symbol at point
+  (interactive)
+  (let ((cell (bounds-of-thing-at-point 'symbol)))
+    (if cell
+	(let ((word (buffer-substring-no-properties (car cell) (cdr cell))))
+	  (if (member word sal-statements)
+	      (progn
+		(when (equal word "define")
+		  (save-excursion
+		    (forward-word)
+		    (skip-syntax-forward " ")
+		    (cond ((looking-at "variable")
+			   (setq word "define_variable"))
+			  ((looking-at "function")
+			   (setq word "define_function"))
+			  ((looking-at "process")
+			   (setq word "define_process"))
+			  )))
+	      (let ((url (concat
+			  "http://commonmusic.sf.net/doc/dict/sal-topic.html#"
+			  word)))
+		(browse-url url)))
+	    (message "No help for thing at point.")
+	    ))
+      (message "No help for thing at point.")
+      )))
 
 (defun backwards-sal-statement (&optional cmdp)
   ;; find the start of the last statement/command
@@ -364,6 +402,8 @@
   (setq mode-name "SAL")
   (run-hooks 'sal-mode-hook))
 
+
+	    
 (provide 'sal-mode)
 
 
