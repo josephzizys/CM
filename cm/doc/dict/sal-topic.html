@@ -15,7 +15,19 @@
 <dd>SAL</dd>
 </dl>
 
-<!-- h3>Introduction</h4 -->
+<!-- h2>Introduction</h4 -->
+
+<h2>Contents</h2>
+<ol>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#commands">Commands</a></li>
+  <li><a href="#statements">Statements</a></li>
+  <li><a href="#sexprs">Symbolic expressions</a></li>
+  <li><a href="#reserved">Reserved words</a></li>
+  <li><a href="#lacunae">Lacun&aelig;</a></li>
+</ol>
+
+<h2 id="introduction">Introduction</h2>
 
 <p> SAL is an alternate (non-Lisp) syntax for working with Common
 Music. It provides an easy-to-learn, command-based algorithmic
@@ -132,7 +144,7 @@ and Lisp syntax:
 <!-- COMMANDS -->
 
 
-<h3 id="commands">Commands</h3>
+<h2 id="commands">Commands</h2>
 
 <p>Commands are "top-level" statements that can be directly executed
 from an Emacs buffer in <code>sal-mode</code>. To execute a Sal
@@ -166,10 +178,6 @@ containing a directory string.</p>
 <span class="salcmd">define</span> <span class="saltyp">variable</span> myrow = {0 1 11 2 10 3 9 4 8 5 7 6}
 </pre>
 </div>
-
-
-
-
 
 
 <dl class="dictsyntax" id="define_function">
@@ -220,8 +228,8 @@ containing a directory string.</p>
 </dl>
 
 <p> Musical process definitions are very similar to functions except that they do not have
-<a href="#return"><code>return</code></a> statements and they must contain a <a href="#run"><code>run</code></a> block as their final statement. The <code>run</code> block is syntactically identical to the  <a href="#run"><code>loop</code></a> statement except that it supports several additional statements that are specific to musical process definitions.
- Use <a href="#output"><code>output</code></a> statements inside the <code>run</code> block to send musical object to an <a href="#open">open output stream</a> on each iteration.</p>
+<a href="#return"><code>return</code></a> statements and they must contain a <a href="#run"><code>run</code></a> block as their final statement. The <code>run</code> block is syntactically identical to the  <a href="#run"><code>loop</code></a> statement except that it supports several additional statements that are specific to musical process definitions, for example <a href="#output"><code>output</code></a> and <a href="#wait"><code>wait</code></a>.
+<!-- Use <a href="#output"><code>output</code></a> statements inside the <code>run</code> block to send musical object to an <a href="#open">open output stream</a> on each iteration.</p> -->
 
 <h4>Example</h4>
 <div class="float">
@@ -314,20 +322,20 @@ it prints the currently open stream object, if any. Specifying <code><span class
 
 <dl class="dictsyntax" id="sprout">
 <dt>[Command]</dt>
-<dd><code class="entry">sprout</code> <var>object</var> [<code class="entry">at</code> <var>offset</var>]</dd>
+<dd><code class="entry">sprout</code> <var>object</var> [<code class="entry">,</code> <var>offset</var>]</dd>
 </dl>
 <p>Triggers algorithmic output from <var>object</var> to
 the <a href="#open">open output stream</a>. If a file is open each
 sprout results in a new instance of that file being computed.
 The <var>object</var> can be a single object (process, seq, etc) or a
-list of the same. If <code>at</code> is provided its value is a start time
+list of the same. If <var>offset</var> is provided its value is a start time
 offset or list of the same.
 </p>
 
 
 <!-- STATEMENTS -->
 
-<h3 id="statements">Statements</h3>
+<h2 id="statements">Statements</h2>
 
 <!-- BEGIN -->
 <dl class="dictsyntax" id="begin">
@@ -394,10 +402,10 @@ zero or more <var>stopping</var> statements, one or more <var>action</var> state
 <!-- OUTPUT -->
 <dl class="dictsyntax" id="output">
 <dt>[Statement]</dt>
-<dd><code class="entry">output</code> <var>object</var> {<code class="entry">,</code> <var>object</var>}*</dd>
+<dd><code class="entry">output</code> <var>event</var> </dd>
 </dl>
 
-<p> Send one or more comma-delimited objects to an <a href="#open">open output stream</a>. </p>
+<p> Sends a musical <var>event</var> or list of the same to the <a href="#open">open output stream</a>. </p>
 
 <!-- RETURN -->
 <dl class="dictsyntax" id="return">
@@ -463,6 +471,9 @@ according to the assignment operator <var>op</var>:</p>
 <dd><code class="entry">wait</code> <var>sexpr</var></dd>
 </dl>
 
+<p>Sets the next run time of the <a href="#define_process">musical process</a> to <var>sexpr</var>, typically a value in seconds.</p>
+
+
 <!-- WHEN -->
 <dl class="dictsyntax" id="when">
 <dt>[Statement]</dt>
@@ -480,8 +491,7 @@ according to the assignment operator <var>op</var>:</p>
 <p>Declares one or more comma-delimited variables with optional initial values, which default to false if unspecified.  Declarations can appear at the start of block statements like <a href="#begin"><code>begin</code></a>, <a href="#loop"><code>loop</code></a> and <a href="#run"><code>run</code></a> </p>
 
 
-
-<h3 id="sexprs">Symbolic expressions</h3>
+<h2 id="sexprs">Symbolic expressions</h2>
 
 <dl>
 
@@ -567,28 +577,29 @@ parentheses are provided.</p>
 </dd>
 
 
-<dt>Constructor notation</dt>
-<dd><p>
-A constructor expression creates an object from its
+<dt id="constructor">Constructor notation</dt>
+
+<dd>
+  <p> A constructor expression creates an object from its
 description. Constructor expressions are introduced by <code>#a</code>
-and the expression is enclosed within square
-brackets: <code>[</code><var>type</var> {<var>form</var>}*<code>]</code>
-where <var>type</var> is the type name of the object to construct
-and <var>form</var> changes according to the type of object under
+and the expression is enclosed within square brackets:
+<code>[</code><var>type</var> {<var>form</var>}*<code>]</code> where
+<var>type</var> is the type name of the object to construct and
+<var>form</var> changes according to the type of object under
 construction.</p>
 
-  <ul><li><p>Object constructors are comprised of the class of the object followed by zero or more keyword slot initializations:</p>
+  <ul><li id="object_constructor"><p>Object constructors are comprised of the class of the object followed by zero or more keyword slot initializations:</p>
 
 <pre><span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> 0 <span class="keyword">keynum:</span> random(127)]</pre>
 </li>
-<li><p>List and vector constructors use a simplified loop syntax with a special <code>collect</code> statement:</p>
+<li id="list_constructor"><p>List and vector constructors use a simplified loop syntax with a special <code>collect</code> statement:</p>
 <pre><span class="special">#a</span>[<span class="saltyp">list</span> for i below 10 collect i]
 <span class="special">#a</span>[<span class="saltyp">list</span> for x to 100 by 10 for y = between(60, 80) collect x, y]
 <span class="special">#a</span>[<span class="saltyp">vector</span> repeat 10 collect random(32)]
 </pre>
 </li>
 
-<li><p>Pattern constructors are similar to CM's <a href="pattern-mac.html">pattern</a> macro:</p>
+<li id="pattern_constructor"><p>Pattern constructors are similar to CM's <a href="pattern-mac.html">pattern</a> macro:</p>
 <pre><span class="special">#a</span>[<span class="saltyp">cycle</span> 1 2 3 4 5]
 <span class="special">#a</span>[<span class="saltyp">heap</span> of notes c4 d e f g a c5 for 5]
 <span class="special">#a</span>[<span class="saltyp">weighting</span> a b {c weight 3} d e ]
@@ -599,13 +610,64 @@ construction.</p>
 </dl>
 
 
-<h3>Lacun&aelig;</h3>
+<h2 id="reserved">Reserved Symbols</h2>
+
+<p>
+<a href="#begin"><code>begin</code></a>
+<a href="#loop"><code>below</code></a>
+<a href="#loop"><code>by</code></a>
+<a href="#list_constructor"><code>collect</code></a>
+<a href="#define"><code>define</code></a>
+<a href="#if"><code>else</code></a>
+<a href="#begin"><code>end</code></a>
+<a href="#exec"><code>exec</code></a>
+<a href="#loop"><code>finally</code></a>
+<a href="#loop"><code>for</code></a>
+<a href="#loop"><code>from</code></a>
+<a href="#if"><code>if</code></a>
+<a href="#loop"><code>in</code></a>
+<a href="#loop"><code>loop</code></a>
+<a href="#output"><code>output</code></a>
+<a href="#run"><code>over</code></a>
+<a href="#print"><code>print</code></a>
+<a href="#loop"><code>repeat</code></a>
+<a href="#return"><code>return</code></a>
+<a href="#run"><code>run</code></a>
+<a href="#set"><code>set</code></a>
+<a href="#sprout"><code>sprout</code></a>
+<a href="#if"><code>then</code></a>
+<a href="#loop"><code>to</code></a>
+<a href="#unless"><code>unless</code></a>
+<a href="#loop"><code>until</code></a>
+<a href="#wait"><code>wait</code></a>
+<a href="#when"><code>when</code></a>
+<a href="#loop"><code>while</code></a>
+<a href="#until"><code>with</code></a>
+</p>
+
+<h2 id="lacunae">Lacun&aelig;</h2>
 
 <ul>
-  <li>Exact syntax of some commands is not settled yet. In particular the (inconsistent) use of comma delimiting needs to be settled.
-  </li>
-  <li>Perhaps the <code>print</code> command should automatically print spaces between comma-delimited arguments?
-  </li>
+
+  <li>Exact syntax of some commands is not settled yet. In particular
+  the (inconsistent) use of comma delimiting in commands to be
+  settled. </li>
+
+  <li>Perhaps the <code>print</code> command should automatically
+  print spaces between comma-delimited arguments?  </li>
+
+  <li>Some reserved words in SAL necessarily shadow Lisp function
+  symbols with the same name, most notably: <code>+ - * /
+  if</code>. To get at these Lisp functions you can use the Sal
+  replacements: <code>plus minus times divide if?</code>. </li>
+
+  <li>Unlike Lisp keywords, Sal keyword names are not symbolic
+  expressions. You can still pass Lisp keywords as values, ie
+  <code>:foo</code> is a legal identifier in Sal and since it is a
+  self-evaluating form in Lisp it can be passed as a value.</li>
+
+  <li>The distinction between commands and statements is a bit arbitrary, pehaps all statements should be commands, i.e. capable of being executed.</li>
+
 </ul>
 
 </div>
