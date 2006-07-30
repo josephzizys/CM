@@ -18,7 +18,7 @@
 <!-- h3>Introduction</h4 -->
 
 <p> SAL is an alternate (non-Lisp) syntax for working with Common
-Music. It defines an easy-to-learn, command-based algorithmic
+Music. It provides an easy-to-learn, command-based algorithmic
 composition language that does not require any familiarity with Lisp
 notation or Lisp evaluation rules in order to start composing with it. (The name SAL stands for Simple
 Algorithmic Language, or Secretly Another Lisp, as you wish. Its name
@@ -35,7 +35,7 @@ Music <!--(using <a href="use-system-fn.html">use-system</a>) --> and
 an Emacs editing mode (<code>sal-mode</code>) that supports the
 incremental development of SAL programs and executing SAL commands. See
 the <a href="../install.html#sal">installation instructions</a> for
-more information.
+ information on how to install <code>sal-mode</code> in Emacs.
 </p>
 
 
@@ -68,7 +68,16 @@ and Lisp syntax:
 </table>
 </blockquote>
 
-<p><var>Variable Assignment:</var></p>
+<p><var>Global variable definition:</var></p>
+
+<blockquote>
+<table>
+<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td ><code><span class="salcmd">define</span> <span class="saltyp">variable</span> 2pi = 2 * pi</code></td></tr>
+<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td> <td><code>(defparameter 2pi (* 2 pi))</code></td></tr>
+</table>
+</blockquote>
+
+<p><var>Variable assignment:</var></p>
 
 <blockquote>
 <table>
@@ -79,15 +88,6 @@ and Lisp syntax:
 </table>
 </blockquote>
 
-
-<p><var>Global variable definition:</var></p>
-
-<blockquote>
-<table>
-<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td ><code><span class="salcmd">define</span> <span class="saltyp">variable</span> 2pi = 2 * pi</code></td></tr>
-<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td> <td><code>(defparameter 2pi (* 2 pi))</code></td></tr>
-</table>
-</blockquote>
 
 <p><var>Function definition:</var></p>
 
@@ -134,7 +134,10 @@ and Lisp syntax:
 
 <h3 id="commands">Commands</h3>
 
-<p>Commands are "top-level" statements that can be directly executed from an Emacs buffer in <code>sal-mode</code>. To execute a Sal command use the SAL menu to start Sal, then place the cursor after the command expression and press the keypad Enter key.</p>
+<p>Commands are "top-level" statements that can be directly executed
+from an Emacs buffer in <code>sal-mode</code>. To execute a Sal
+command use the SAL menu to start a Sal session, then place the cursor
+after the command expression and press the keypad Enter key.</p>
 
 
 <dl class="dictsyntax" id="chdir">
@@ -147,12 +150,14 @@ is not provided it defaults to the user's home directory. Otherwise
 the value of <var>dir</var> should be a directory string or variable
 containing a directory string.</p>
 
-<dl class="dictsyntax" id="define_variable">
+<span id="define"></span>
+
+<dl class="dictsyntax"  id="define_variable">
 <dt>[Command]</dt>
 <dd><code class="entry">define variable</code> <var>name</var> [<code class="entry">=</code> <var>sexpr</var>] {<code class="entry">,</code> <var>name</var> [<code class="entry">=</code> <var>sexpr</var>]}*</dd>
 </dl>
 
-<p> Defines a global variable <var>name</var> with optional value <var>sexpr</var>. If <var>sexpr</var> is not provided the value of the variable defaults to false. Use commas to define more than one variable at time. </p>
+<p> Defines a global variable <var>name</var> with optional value <var>sexpr</var>. If <var>sexpr</var> is not provided the value of the variable defaults to false. Use commas to define more than one variable at a time. </p>
 
 <h4>Example</h4>
 
@@ -182,7 +187,7 @@ containing a directory string.</p>
 <span class="salcmd">define</span> <span class="saltyp">function</span> pctransp(row, pc)
   <span class="salres">loop</span> <span class="salres">with</span> l = list()
     <span class="salres">for</span> i <span class="salres">in</span> row
-    <span class="salres">set</span> l &= mod( i + pc, 12)
+    <span class="salres">set</span> l &amp;= mod( i + pc, 12)
     <span class="salres">finally</span> <span class="salres">return</span> l
   <span class="salres">end</span>
 
@@ -191,7 +196,7 @@ containing a directory string.</p>
 <span class="salcmd">define</span> <span class="saltyp">function</span> pcinvert(row)
   <span class="salres">loop</span> <span class="salres">with</span> l = list()
     <span class="salres">for</span> i <span class="salres">in</span> row
-    <span class="salres">set</span> l &= mod( - i, 12)
+    <span class="salres">set</span> l &amp;= mod( - i, 12)
     <span class="salres">finally</span> <span class="salres">return</span> l
   <span class="salres">end</span>
 
@@ -201,7 +206,7 @@ containing a directory string.</p>
   <span class="salres">loop</span> <span class="salres">with</span> mat = list(), inv = pcinvert(row)
     <span class="salres">for</span> i <span class="salres">in</span> inv
     <span class="salres">for</span> new = pctransp(row, i)
-    <span class="salres">set</span> mat &= new
+    <span class="salres">set</span> mat &amp;= new
     <span class="salres">finally</span> <span class="salres">return</span> mat
   <span class="salres">end</span>
 
@@ -225,7 +230,7 @@ containing a directory string.</p>
   <span class="salres">run</span> <span class="salres">repeat</span> n
     <span class="salres">for</span> k = between(40, 70)
     <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k]
-    <span class="salres">if</span> evenp(k) <span class="salres">then</span>
+    <span class="salres">if</span> even?(k) <span class="salres">then</span>
       <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k + 12]
       <span class="salres">else</span>
 	<span class="salres">begin</span>
@@ -258,7 +263,7 @@ containing a directory string.</p>
 <tr><td>.sys</td><td>loads an external system via <a href="use-system-fn.html">use-system</a></td></tr>
 <tr><td>.ins</td><td>loads a clm instrument, compiling if necessary</td></tr>
 <tr><td>.lisp</td><td>loads a lisp source file</td></tr>
-<tr><td>.lisp!</td><td>load a lisp file, compiling if necessary</td></tr>
+<!-- tr><td>.lisp!</td><td>load a lisp file, compiling if necessary</td></tr -->
 </table>
 </blockquote>
 
@@ -284,7 +289,7 @@ it prints the currently open stream object, if any. Specifying <code><span class
 <dd><code class="entry">print</code> <var>sexpr</var> {<code class="entry">,</code> <var>sexpr</var>}*</dd>
 </dl>
 
-<p> Prints the value of one or more comma-delimited <var>sexprs</var>. The printout appears in the Common Music REPL window.</p>
+<p> Prints the value of one or more comma-delimited <var>sexprs</var>. The printout appears in Common Music's REPL window.</p>
 
 
 
@@ -299,7 +304,7 @@ it prints the currently open stream object, if any. Specifying <code><span class
 <blockquote>
 <table class="float">
 <tr><th class="lcol" style="padding-right: 1em;">status</th>  <th class="lcol">meaning</th></tr>
-<tr><td>1</td> <td> start rts running using seconds as the time format</td></tr>
+<tr><td>1</td> <td> start rts running using seconds as the scheduling time format</td></tr>
 <tr><td>1000</td> <td>start rts running using milliseconds as the scheduling time format</td></tr>
 <tr><td>-1</td><td> pause rts</td></tr>
 <tr><td>0</td><td> stop rts</td></tr>
@@ -519,7 +524,7 @@ according to the assignment operator <var>op</var>:</p>
 <dd><p>A variable reference with a period delimited slot name appended to it. Slot value references can appear in expressions and values can be assigned to slots by the <a href="#set">set</a> statement. Example:</p>
 
 <blockquote>
-<pre><span class="salcmd">set</span> x = make(<span class="saltyp">&lt;midi&gt</span>), x.keynum = random(100)
+<pre><span class="salcmd">set</span> x = make(<span class="saltyp">&lt;midi&gt;</span>), x.keynum = random(100)
 <span class="salcmd">print</span> x.keynum / 2</pre>
 </blockquote>
 </dd>
@@ -531,6 +536,7 @@ according to the assignment operator <var>op</var>:</p>
 <blockquote>
 <pre><span class="salcmd">set</span> x = list(100, 200, 300)
 <span class="salcmd">print</span> x[1], " ", x[random(3)]
+</pre>
 </blockquote>
 
 
