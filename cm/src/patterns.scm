@@ -355,7 +355,11 @@
     (let* ((default (default-period-length obj))
            (period (if (slot-bound? obj 'period)
                      (or (pattern-period obj) default)
-                     default)))
+                     default))
+	   (repeat (pattern-repeat obj)))
+      ;; allow #t value to mean maximum repeat factor
+      (when (eq? repeat #t)
+        (set! (pattern-repeat obj) most-positive-fixnum))
       ;; if no period was specfied patterns can 
       ;; do what they want with it.
       (if (and (slot-bound? obj 'period)
