@@ -94,9 +94,10 @@
 	 (switch-to-buffer (slime-repl-buffer)))
 	(t
 	 (when program (setq cm-program program))
-	 (add-hook 'slime-connected-hook 'cm-start-hook)
-	 (slime-start :program cm-program)
-	 (claim-scratch-buffer))))
+	 (let ((parsed (split-string cm-program)))
+	   (add-hook 'slime-connected-hook 'cm-start-hook)
+	   (slime-start :program (first parsed) :program-args (rest parsed))
+	   (claim-scratch-buffer)))))
 
 (defun kill-cm ()
   "Kill *slime-repl* and all associated buffers."
