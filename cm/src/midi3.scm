@@ -486,7 +486,7 @@
 (define-method* (import-events (io <midi-file>) . args)
   (with-args (args &key (tracks #t) seq meta-exclude channel-exclude 
                    (time-format ':beats ) tempo exclude-tracks
-                   (keynum-format ':keynum)
+                   (keynum-format ':keynum) channel-tuning
                    (note-off-stack #t))
     (let ((results '())
           (notefn #f)
@@ -607,7 +607,9 @@
                                                       notefn
                                                       note-off-stack 
                                                       channel-exclude
-                                                      meta-exclude))
+                                                      meta-exclude
+						      (if (eq? channel-tuning #t) 0
+							  channel-tuning)))
                  (push result results)
                  (set! seq #f))
                 (else
@@ -753,8 +755,9 @@
 
 (define (midi-file-import-track file track seq notefn 
                                 note-off-stack channel-exclude 
-                                meta-exclude)
+                                meta-exclude channel-tuning)
   (let* ((data '())
+	 (tune (if channel-tuning (make-vector 16 0) #f))
          (tabl (make-equal?-hash-table 31)))
     (let ((mapper
            (lambda (mf)
@@ -812,23 +815,29 @@
                                (channel-message-data1 m)))))
                   ((= s +ml-note-on-opcode+)
                    (set! n
-                         (make
+                       (make
                            <midi>
                            :time b
                            :keynum 
                            (if notefn
-                             ( notefn
-                                      (channel-message-data1 m))
-                             (channel-message-data1 m))
-                           :channel (channel-message-channel m)
-                           :amplitude (/ (channel-message-data2 m) 
-                                         127.0)))
+                             ( notefn (channel-message-data1 m))
+                             (if channel-tuning
+				 (+ (channel-message-data1 m)
+				    (vector-ref tune (channel-message-channel m)))
+				 (channel-message-data1 m)))
+			 :channel (channel-message-channel m)
+			 :amplitude (/ (channel-message-data2 m) 
+				       127.0)))
                    (let ((v (hash-ref tabl (channel-note-hash m))))
                      (if (not v)
                        (hash-set! tabl (channel-note-hash m)
                                   (list n ))
                        (hash-set! tabl (channel-note-hash m)
                                   (cons n v)))))
+		  ((and channel-tuning (= s +ml-pitch-bend-opcode+))
+		   (vector-set! tune (channel-message-channel m)
+				(decimals (rescale b -8192 8191 (- 2.0) 2.0) 2)
+				))
                   (else
                    (set! n (midi-message->midi-event m :time b)))))
                 ((meta-message-p m)
