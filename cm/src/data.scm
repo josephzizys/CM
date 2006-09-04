@@ -718,7 +718,9 @@
   (with-args (args &key (low most-negative-fixnum) 
 		   (high most-positive-fixnum) (mode :reflect)
                    (avoid #f) (state *random-state*))
-    (let ((amt (between (- width) width avoid state)))
+    (let ((amt (between (- width) (+ width 1) avoid state)
+	       ;(between (- width) width avoid state)
+	       ))
       (incf n amt)
       (unless (<= low n high)
 	(cond 
