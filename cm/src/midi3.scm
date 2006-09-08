@@ -486,7 +486,8 @@
 (define-method* (import-events (io <midi-file>) . args)
   (with-args (args &key (tracks #t) seq meta-exclude channel-exclude 
                    (time-format ':beats ) tempo exclude-tracks
-                   (keynum-format ':keynum) channel-tuning
+                   (keynum-format ':keynum) channel-tuning 
+		   (pitch-bend-width *midi-pitch-bend-width*)
                    (note-off-stack #t))
     (let ((results '())
           (notefn #f)
@@ -609,7 +610,8 @@
                                                       channel-exclude
                                                       meta-exclude
 						      (if (eq? channel-tuning #t) 0
-							  channel-tuning)))
+							  channel-tuning)
+						      pitch-bend-width))
                  (push result results)
                  (set! seq #f))
                 (else
@@ -755,7 +757,7 @@
 
 (define (midi-file-import-track file track seq notefn 
                                 note-off-stack channel-exclude 
-                                meta-exclude channel-tuning)
+                                meta-exclude channel-tuning pb-width)
   (let* ((data '())
 	 (tune (if channel-tuning (make-vector 16 0) #f))
          (tabl (make-equal?-hash-table 31)))
@@ -836,7 +838,12 @@
                                   (cons n v)))))
 		  ((and channel-tuning (= s +ml-pitch-bend-opcode+))
 		   (vector-set! tune (channel-message-channel m)
-				(decimals (rescale b -8192 8191 (- 2.0) 2.0) 2)
+				(decimals (rescale (- (+ (pitch-bend-lsb m)
+							 (* 128 (pitch-bend-msb m)))
+						      8192)
+						   -8192 8191
+						   (- pb-width) pb-width)
+					  2)
 				))
                   (else
                    (set! n (midi-message->midi-event m :time b)))))
