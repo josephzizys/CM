@@ -79,7 +79,17 @@
 
 (defun cm-start-hook ()
   (slime-repl-send-string "(cm)")
-  (remove-hook 'slime-connected-hook 'cm-start-hook))
+  (remove-hook 'slime-connected-hook 'cm-start-hook)
+  ;; aquamacs: hide inferior lisp buffer if visible after slime buffer
+  ;; starts. This happens if user re-mouses original frame after doing
+  ;; M-x cm before slime repl has been activated. if user then closes
+  ;; the visible inferior-lisp frame the lisp session is hosed.
+  ;; (when (member 'aquamacs features)
+  ;;    (replace-buffer-in-windows (get-buffer "*inferior-lisp*")))
+  (when (member 'aquamacs features)
+    (let ((ilw (get-buffer-window "*inferior-lisp*" t)))
+      (if ilw (delete-frame (window-frame ilw))))
+    ))
 
 ;; Darwin: define COMMAND-E to evaluate expr a la MCL.
 (if (equal system-type 'darwin)
