@@ -32,6 +32,7 @@
 
 (define-method* (open-midishare-client (obj <player-stream>)
                                       name)
+  obj
   (ms:OpenPlayer name))
 
 (define-method* (close-midishare-client (obj <player-stream>))

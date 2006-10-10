@@ -39,6 +39,7 @@
 (define-method* (validate-superclass (class <parameterized-class>)
                                     (superclass <class>))
   ;; yes to any class w/metaclass parmeterized-class
+  class superclass
   #t)
 
 ;;;
@@ -46,6 +47,7 @@
 ;;;
 
 (define-method* (class-event-streams (obj <top>))
+  obj 
   '())
 
 (define-method* (class-parameters (obj <top>))
@@ -78,6 +80,7 @@
 (define-method* (validate-superclass (class <io-class>)
                                     (superclass <class>))
   ;; yes to any class w/metaclass io-class
+  class superclass
   #t)
 
 ;;;

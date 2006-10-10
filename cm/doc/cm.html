@@ -55,7 +55,10 @@ Read the recent <a href="http://mitpress2.mit.edu/e-journals/Computer-Music-Jour
 
 <p>New features in CM 2.9.1 (CVS HEAD):</p>
 
-<ul> <li>Introducing <a href="dict/sal-topic.html">SAL</a>, an
+<ul>
+  <li>CM ported to <a href="http://ecls.sourceforge.net/">Embeddable Common Lisp (ECL)</a>. This allows a CM runtime to be embedded in C/C++ apps.</li>
+
+  <li>Introducing <a href="dict/sal-topic.html">SAL</a>, an
 alternate syntax for working with Common Music.  Sal provides
 commands, statements and infix expressions. It lets you start working
 with Common Music immediately, without learning any Lisp notation
@@ -200,6 +203,12 @@ following configurations:
 <td align="left">&nbsp;</td>
 </tr>
 <tr style="color:#9999bb">
+<th class="row" >ECL</th>
+<td align="left">A&ndash;&ndash;DE&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;DE&ndash;&ndash;HI&ndash;&ndash;</td>
+<td align="left">A&ndash;&ndash;DE&ndash;&ndash;HI&ndash;&ndash;</td>
+</tr>
+<tr style="color:#9999bb">
 <th class="row">LispWorks</th>
 <td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
 <td align="left">A&ndash;&ndash;&ndash;E&ndash;&ndash;HI&ndash;&ndash;</td>
@@ -261,6 +270,11 @@ native CLOS, is actively supported.
 <dt><a href="http://www.cons.org/cmucl/">CMUCL</a></dt>
 <dd>
 An opensource ANSI CL for Linux. Includes a very good compiler.
+</dd>
+
+<dt><a href="http://ecls.sourceforge.net/">ECL</a></dt>
+<dd>
+Embeddable Common Lisp. An opensource ASCI CL that can be embedded in C++ applications. Includes a native CLOS.
 </dd>
 
 <dt>

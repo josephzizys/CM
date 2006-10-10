@@ -1,6 +1,8 @@
 ----------------------------------------------------------------------
 CM 2.9.1
 
+o Ported to ECL 0.9i (requires CVS version)
+
 o New 'pattern' macro defines patterns more easily.
 
 o new pattern iteration clause in process macro

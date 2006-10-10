@@ -113,7 +113,7 @@
 
 (define-method* (canonicalize-pattern-data (obj <pattern>)
 					  data parser inits)
-  inits
+  obj inits
   (if parser
     (let ((coll (list #f)))
       (do ((tail data (cdr tail))
@@ -939,7 +939,7 @@
 
 (define-method* (canonicalize-pattern-data (obj <weighting>)
 					  data parser inits)
-  inits
+  obj inits
   (let ((parse-random-item
 	 (lambda (extern)
            (apply 
@@ -1099,7 +1099,7 @@
 
 (define-method* (canonicalize-pattern-data (obj <markov>) data parser
                                           inits)
-  parser
+  obj parser
   (let ((parse-markov-spec 
 	 (lambda (spec)
            (let ((tail (or (member '-> spec)
@@ -1301,7 +1301,7 @@
 
 (define-method* (canonicalize-pattern-data (obj <graph>) 
 					  data parser inits)
-  inits
+  obj inits
   (let ((parse-graph-item 
 	 (lambda (extern)
 	   (unless (pair? extern) 
@@ -1442,7 +1442,7 @@
                 (expand-pattern-value (car (pattern-data obj))))
           (next-method)))
 
-(define-method* (default-period-length (obj <thunk>)) 1)
+(define-method* (default-period-length (obj <thunk>)) obj 1)
 
 (define-method* (initialize (obj <thunk>) args)
   (next-method) ; was an :after method
@@ -1641,7 +1641,7 @@
 
 (define-method* (canonicalize-pattern-data (obj <rewrite>) 
 					  data parser inits)
-  inits
+  obj inits
   (let ((parse-rewrite-node
 	 (lambda (extern)
            (let ((datum #f)
@@ -1980,7 +1980,7 @@
 (define-method* (canonicalize-pattern-data (obj <range>) 
 					  data parser inits)
   ;; this is called BEFORE range's initialize-instance method
-  data parser
+  obj data parser
   (let ((from 0)
 	(to #f)
 	(downto #f)
@@ -2303,7 +2303,7 @@
 
 (define-method* (canonicalize-pattern-data (pat <chord>) 
 					  data parser inits)
-  inits
+  pat inits
   (if parser
 ;    (loop for datum in data 
 ;          count datum into length
@@ -2324,6 +2324,7 @@
     (values data 1 (not (any (function pattern?) data)))))
 
 (define-method* (default-period-length (obj <chord>))
+  obj
   1)
 
 (define-method* (next-in-pattern (obj <chord>))
@@ -2437,7 +2438,7 @@
     (values)))
 
 (define-method* (canonicalize-pattern-data (obj <join>) data parser inits)
-  inits
+  obj inits
   (let ((subs (not (any (function pattern?) data))))
     (if parser
 ;      (loop for datum in data

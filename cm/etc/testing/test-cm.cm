@@ -7,10 +7,12 @@
 ;;; cmn-directory
 ;;; **********************************************************************
 
+(in-package :cm)
+
 (define tmp-directory "/tmp/")
 
 (cond-expand
- (common-lisp
+ (common-lisp 
   (define (clean-tmp)
     ;; clear out existing tmp files....
     (do ((typs '("cm" "mid" "sco" "aiff" "clm" "eps" "cmn" )

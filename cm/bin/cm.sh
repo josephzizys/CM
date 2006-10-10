@@ -16,7 +16,7 @@ SUMMARY="         run Common Music"
 
 : ${CM_EDITOR:=}
 : ${CM_RUNTIME:=}
-: ${CM_RUNTIME_PREFS:=openmcl sbcl cmucl acl clisp guile gauche}
+: ${CM_RUNTIME_PREFS:=openmcl sbcl cmucl acl clisp ecl guile gauche}
 
 : ${CM_OS:=}
 : ${CM_ARCH:=}
@@ -423,6 +423,7 @@ get_lisp_info () {
         *lisp*|*LISP*|*cmucl*|*CMUCL*)  flv=cmucl ;;
         *openmcl*|*OPENMCL*|*dppccl*)   flv=openmcl ;;
         *sbcl*|*SBCL*)                  flv=sbcl ;;
+        *ecl*)                          flv=ecl ;;
         *guile*)                        flv=guile ;;
         *gosh*)                         flv=gauche ;;
         *stklos*)                       flv=stklos ;;
@@ -462,12 +463,15 @@ get_lisp_info () {
         ;;
       *openmcl*|*OPENMCL*|*dppccl*)
         flv=openmcl
-#        vrs=`echo '(lisp-implementation-version)' | "$1" -b | sed -n $vre`
         vrs=`"$1" --version`
         ;;
       *sbcl*|*SBCL*)
         flv=sbcl
         vrs=`"$1" --version | cut -d' ' -f2`
+        ;;
+      *ecl*|*ECL*)
+        flv=ecl
+	vrs=`echo '(progn (format t "~a" (lisp-implementation-version)) (quit))' | "$1" | head -1 | cut -d' ' -f4`
         ;;
       *guile*)
         LISP_DIA=SCHEME
@@ -667,6 +671,15 @@ make_lisp_cmd () {
       else
         test $LISP_INI && LISP_INI="--userinit $LISP_INI"
         LISP_CMD="$LISP_CMD --core '$LISP_IMG' $LISP_INI"
+      fi
+      ;;
+    ecl)
+      LISP_CMD="'$LISP_EXE' $LOPTS"
+      if [ $LOAD ] ; then
+        LISP_CMD="$LISP_CMD -eval '$LISP_EVL'"
+      else
+	  echo "ECL does not support image loading"
+	  exit 1
       fi
       ;;
     guile)

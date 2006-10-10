@@ -17,20 +17,21 @@
 
 (define-method* (recv (io <portmidi-stream>) . args)
   (with-args (args &key resolution priority)
-    resolution priority
+    io resolution priority
     (err *pm-not-loaded-error* )))
 
 (define-method* (recv-stop (io <portmidi-stream>))
+  io
   (err *pm-not-loaded-error*))
 
 (define-method* (recv-set! (io <portmidi-stream>) hook . args)
   (with-args (args &key recv-mode)
-    recv-mode
+    recv-mode io hook
     (err *pm-not-loaded-error*)))
 
 (define-method* (recv? (io <portmidi-stream>) . args)
   (with-args (args &optional state)
-    state
+    io state
     #f))
 
 (define (rtserr fn args)

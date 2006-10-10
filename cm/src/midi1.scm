@@ -3301,9 +3301,11 @@
   :name 'midi-event)
 
 (define-method* (midi-event-data1 (obj <midi-event>))
+  obj
   #f)
 
 (define-method* (midi-event-data2 (obj <midi-event>))
+  obj
   #f)
 
 (define-class* <midi-channel-event> (<midi-event>)

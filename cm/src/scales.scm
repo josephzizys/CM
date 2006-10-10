@@ -339,8 +339,7 @@
 ;;; Mode methods
 ;;;
 
-(define-method* (mode-tuning (obj <scale>))
-  #f)
+(define-method* (mode-tuning (obj <scale>)) obj #f)
 
 (define-method* (scale-default-octave (obj <mode>))
   (scale-default-octave (mode-tuning obj)))

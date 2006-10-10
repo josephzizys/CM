@@ -12,11 +12,11 @@
 
 (in-package :cl-user)
 
-#-(or allegro clisp cmu lispworks openmcl sbcl)
+#-(or allegro clisp cmu lispworks openmcl sbcl ecl)
 (error "Sorry, Common Music does not run in this Lisp.")
 
 (require :asdf
-         #-(or sbcl openmcl)
+         #-(or sbcl openmcl ecl)
          (make-pathname :name "asdf" :type "lisp"
                         :directory (append (pathname-directory *load-pathname*)
                                            '("src"))
@@ -72,6 +72,8 @@
     (stdout
      (sb-ext:process-output
       (sb-ext:run-program (cm.sh) '("-q") :output :stream)))
+    #+ecl
+    (stdout (si:open-pipe (cm.sh "-q")))
     #+(or microsoft-32 win32)
     "windows-i686"
     ))
@@ -91,6 +93,7 @@
                        #+lispworks "lispworks"
                        #+openmcl "openmcl"
                        #+sbcl "sbcl"
+		       #+ecl "ecl"
                        "_"
                        (subseq str beg end))))))
 
@@ -107,27 +110,29 @@
              (#+lisp=cl ext:probe-directory #-lisp=cl lisp:probe-directory
                         dir)))
   #+cmu (eq :directory (unix:unix-file-kind (namestring dir)))
+  #+ecl (eq ':directory (si::file-kind (pathname dir) nil))
   #+lispworks (lw:file-directory-p dir)
   #+sbcl (eq :directory (sb-unix:unix-file-kind (namestring dir)))
-  #-(or allegro clisp cmu lispworks sbcl)
+  #-(or allegro clisp cmu lispworks sbcl ecl)
   (probe-file (make-pathname :directory dir)))
 
 (defun mkdir (dir)
-  ;; create dir
-  ;; cribbed from file utils by sam steingold
+  ;;create dir cribbed from file utils by sam steingold
   #+allegro (excl:make-directory dir)
   #+clisp (#+lisp=cl ext:make-dir #-lisp=cl lisp:make-dir dir)
   #+cmu (unix:unix-mkdir (namestring dir) #o777)
+  #+ecl (si::ensure-directories-exist dir)
   #+lispworks (system:make-directory dir)
   #+sbcl (sb-unix:unix-mkdir (namestring dir) #o777)
-  #+openmcl (ccl:create-directory dir))
+  #+openmcl (ccl:create-directory dir)
+  )
 
 (defun fasl-pathname (file)
   (make-pathname :directory (pathname-directory *cm-bin-directory*)
                  :type (pathname-type (compile-file-pathname file))
                  :defaults file))
 
-#-(or sbcl lispworks allegro)
+#-(or sbcl lispworks allegro ecl)
 (defun ensure-sys-features (sys) sys)
 
 #+allegro
@@ -150,6 +155,12 @@
   ;; or else lispwork's stack is too small to load this file!
   #.(setq system:*stack-overflow-behaviour* :warn))
 
+#+ecl
+(defun ensure-sys-features (sys)
+  sys 
+  (require 'cmp)
+  (setq *compile-verbose* nil *compile-print* nil))
+
 (defun cm.bat (&optional (bat (merge-pathnames "cm.bat" (cm-directory "bin"))))
   ;; #+cmu ext:*command-line-strings*
   ;; #+sbcl sb-ext:*posix-argv*
@@ -161,9 +172,9 @@
   (progn (format t "cm.bat: Sorry, only CLISP and ACL are supported.")
          nil)
   #+(or clisp allegro)
-  (let* ((loadup (format nil "\"(progn (load \\\"~Acm.lisp\\\" :verbose nil) (cm))\""
-                         (substitute #\/ #\\ (cm-directory "src"))
-                         ))
+  (let* ((loadup 
+	  (format nil "\"(progn (load \\\"~Acm.lisp\\\" :verbose nil) (cm))\""
+		  (substitute #\/ #\\ (cm-directory "src"))))
          (arglist
           #+clisp (append (loop for s across (ext:argv) 
                              until (member s '("-x" "-repl")
@@ -204,7 +215,7 @@
 (defun savevars (cm &rest vars)
   ;; save global var bindings so they can be restored after load
   (dolist (v vars)
-    (push (cons v (symbol-value v))
+    (push (cons v (if (boundp v) (symbol-value v) nil))
           (asdf:component-property cm 'vars))))
 
 (defun restorevars (cm)
@@ -321,6 +332,7 @@
                            #+allegro (:file "acl" :depends-on ("pkg"))
                            #+clisp (:file "clisp" :depends-on ("pkg"))
                            #+cmu (:file "cmu" :depends-on ("pkg"))
+			   #+ecl (:file "ecl" :depends-on ("pkg"))
                            #+lispworks (:file "lispworks" :depends-on ("pkg"))
                            #+(and mcl (not openmcl)) (:file "mcl" 
                                                             :depends-on ("pkg"))
@@ -331,6 +343,7 @@
                                   :depends-on ("pkg" #+allegro "acl"
                                                      #+clisp "clisp"
                                                      #+cmu "cmu"
+						     #+ecl "ecl"
                                                      #+lispworks "lispworks"
                                                      #+(and mcl (not openmcl)) 
                                                      "mcl"
@@ -453,8 +466,8 @@
                          (make-pathname :directory bindir
                                         :defaults f))
                       (call-next-method)))))))
-    (let ((*compile-print* *compile-print*)
-          (*compile-verbose* *compile-verbose* )
+    (let (#-ecl (*compile-print*  *compile-print*)
+	  #-ecl (*compile-verbose* *compile-print* )
           (*load-print* *load-print* )
           (*load-verbose* *load-verbose*)
           (loading-op 'asdf:load-op))

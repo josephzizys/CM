@@ -62,15 +62,19 @@
 ;;as part of an OSC message the types of each token are sent
 
 (define-method* (return-type-code (int <integer>))
+  int
   (char->integer #\i))
 
 (define-method* (return-type-code (flo <real>))
+  flo
   (char->integer #\f))
 
 (define-method* (return-type-code (str <string>))
+  str
   (char->integer #\s))
 
 (define-method* (return-type-code (sym <symbol>))
+  sym
   (char->integer #\s))
 
 (define (make-type-array message)

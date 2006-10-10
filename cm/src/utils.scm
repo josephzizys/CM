@@ -288,6 +288,7 @@
 
 (define (cm-version-number . arg)
   ;; return raw 3 byte version number or version list
+  arg
   %cm-version%)
 
 (define (cm-version-name)

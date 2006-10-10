@@ -180,10 +180,10 @@
 (define-method* (object-name (obj <object>))
   (class-name (class-of obj)))
 
-(define-method* (object-time (obj <object>)) 0)
+(define-method* (object-time (obj <object>)) obj 0)
 
-(define-method* (subcontainers (obj <object>))
-  '())
+(define-method* (subcontainers (obj <object>)) obj '())
+
 (define-method* (subcontainers (obj <seq>))
   (loop for o in (container-subobjects obj)
         when (is-a? o <container>) collect o))
