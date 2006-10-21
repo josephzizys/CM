@@ -35,11 +35,11 @@
 ;;; cm-directory is parent directory of src/
 ;;;
 
-(defparameter cm-directory
-  (namestring (make-pathname 
-               :directory 
-               (butlast
-                (pathname-directory *load-pathname*)))))
+;(defparameter cm-directory
+;  (namestring (make-pathname 
+;               :directory 
+;               (butlast
+;                (pathname-directory *load-pathname*)))))
 
 ;;;
 ;;; level1 provodes support routines that are common to
