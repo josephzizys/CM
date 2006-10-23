@@ -94,8 +94,8 @@
   (concat "^" (regexp-opt sal-commands t) "\\b"))
 
 (defvar sal-reserved
-  '( "begin" "below" "by" "collect" "define" "else" "end" "exec" 
-    "finally" "for" "from" "if" "in" 
+  '("above" "begin" "below" "by" "collect" "define" "downto" "else"
+    "end" "exec" "finally" "for" "from" "if" "in" 
     "loop" "output"  "over" "print" "repeat" "return" "run" 
     "set" "sprout" "then" "to" "unless" "until" "wait" "when" "while" "with"))
 
