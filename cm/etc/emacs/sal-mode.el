@@ -12,6 +12,11 @@
 (require 'font-lock)
 ;(require 'slime)
 
+(when (member 'aquamacs features)
+  (setq aquamacs-known-major-modes
+	(add-to-list 'aquamacs-known-major-modes '(sal-mode . "SAL")
+		     )))
+
 (unless (boundp 'cm-program)
   (defvar cm-program "cm"))
 
@@ -25,8 +30,8 @@
 (defvar sal-easy-menu
   (let ((C '(slime-connected-p)))
     `("SAL"
-      [ "Start" start-sal :visible (not (slime-connected-p)) ]
-      [ "Stop" stop-sal :visible , C ]
+      [ "Start SAL" start-sal :visible (not (slime-connected-p)) ]
+      [ "Stop SAL" stop-sal :visible , C ]
       "--"
       [ "Execute Command" sal-enter , C]
       [ "Trace Input" toggle-trace :active , C  :style toggle
@@ -84,8 +89,10 @@
 ;; new commands to be added during the editing session
 
 (defvar sal-commands 
-  '("chdir" "define" "load" "lsdir" "open" "output" "play" 
-    "print" "rts" "sprout" ))
+  '("chdir" "define" "load" ;"lsdir"
+    "open" "output" "play" 
+    "print" "rts" "sprout" 
+    "begin" "loop" "if" "set" "output"))
 
 ;; for sanity's sake we insist that commands start in the zero'th
 ;; column, otherwise command parsing will be a nightmare.
@@ -100,7 +107,8 @@
     "set" "sprout" "then" "to" "unless" "until" "wait" "when" "while" "with"))
 
 (defvar sal-statements
-  (append sal-commands '("begin" "if" "loop" "run" "exec" "set" "output" "return" "unless" "wait" "when" "with")))
+  (append sal-commands '(;"begin" "if" "loop"  "set" "output" 
+			 "run" "exec"  "return" "unless" "wait" "when" "with")))
 
 (defvar sal-statement-start-regexp
   ;; matches a line starting with any sort of sal statement
@@ -111,7 +119,6 @@
   (concat "^[ \t]*" (regexp-opt '("define" "begin"  "loop" "run") t) "\\b"))
 
 ;;; syntax coloring
-
 
 (defvar sal-font-lock-keywords-0
   (list (cons sal-command-start-regexp font-lock-function-name-face)))
@@ -397,6 +404,13 @@
   (set (make-local-variable 'font-lock-defaults)
        '(sal-font-lock-keywords nil))
   (set (make-local-variable 'indent-line-function) 'sal-indent-line)  
+  (set (make-local-variable 'fill-paragraph-function) 'lisp-fill-paragraph)  
+  (set (make-local-variable 'comment-start) ";")
+;  (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
+
+  ;(set (make-local-variable 'adaptive-fill-function)
+  ;     (lambda () (if (looking-at "\\s-+\"[^\n\"]+\"\\s-*$") "")))
+
   (setq major-mode 'sal-mode)
   (setq mode-name "SAL")
   (run-hooks 'sal-mode-hook))
