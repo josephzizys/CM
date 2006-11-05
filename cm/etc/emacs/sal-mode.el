@@ -60,19 +60,12 @@
   (slime-repl-sayoonara))
 
 (defun load-sal-hook ()
-;  (slime-eval-async `(cm::cm) nil "CM")
-;  (slime-eval-async `(cm::use-system :sal :verbose nil) nil "CM")
   (slime-repl-send-string "(cm::use-system :sal)")
   (slime-repl-send-string "(cm)")
-;  (slime-eval-async `(cm::use-system :sal :verbose nil) nil "CM")
   (remove-hook 'slime-connected-hook 'load-sal-hook)
   )
 
 (easy-menu-define menubar-sal sal-mode-map "SAL" sal-easy-menu)
-
-;(add-hook 'sal-mode-hook
-;          (defun sal-add-easy-menu ()
-;            (easy-menu-add slime-easy-menu 'slime-mode-map)))
 
 (define-key sal-mode-map (kbd "<kp-enter>")
   'sal-enter)
@@ -83,7 +76,6 @@
 (defvar sal-mode-syntax-table (make-syntax-table))
 
 (add-to-list 'auto-mode-alist '("\\.sal$" . sal-mode))
-
 
 ;; top level SAL commands. at some point this list will have to allow
 ;; new commands to be added during the editing session
