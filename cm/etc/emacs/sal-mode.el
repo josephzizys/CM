@@ -30,8 +30,8 @@
 (defvar sal-easy-menu
   (let ((C '(slime-connected-p)))
     `("SAL"
-      [ "Start SAL" start-sal :visible (not (slime-connected-p)) ]
-      [ "Stop SAL" stop-sal :visible , C ]
+      [ "CM REPL" start-sal :visible (not (slime-connected-p)) ]
+      [ "Kill CM" stop-sal :visible , C ]
       "--"
       [ "Execute Command" sal-enter , C]
       [ "Trace Input" toggle-trace :active , C  :style toggle
@@ -54,13 +54,15 @@
 	 (slime-start :program cm-program)))
   )
 
+;(if (find :sal *features*) (values) (use-system :sal))
+
 (defun stop-sal ()
   "Kill *slime-repl* and all associated buffers."
   (interactive)
   (slime-repl-sayoonara))
 
 (defun load-sal-hook ()
-  (slime-repl-send-string "(cm::use-system :sal)")
+  (slime-repl-send-string "(progn (cm::use-system :sal :verbose nil) (values))")
   (slime-repl-send-string "(cm)")
   (remove-hook 'slime-connected-hook 'load-sal-hook)
   )
