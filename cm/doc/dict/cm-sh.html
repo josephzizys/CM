@@ -17,6 +17,7 @@
 [<code class="keyword">-qnv</code>] 
 [<code class="keyword">-e</code> <var>editor</var>] 
 [<code class="keyword">-l</code> <var>lisp</var>]
+[<code class="keyword">-s</code> <var>sys</var>]
 [<code class="keyword">-P</code> <var>prefs</var>] 
 [<code class="keyword">-O</code> <var>os</var>] 
 [<code class="keyword">-A</code> <var>arch</var>] 
@@ -77,6 +78,11 @@ Emacs application installed as /Applications/Emacs.app.  Default is
 <dd>
 Run this Lisp/Scheme. The value should be a command on your path or a
 path to the Lisp executable.  Default value is '&lt;unset&gt;'.
+</dd>
+
+<dt><code class="keyword">-s</code> {<var>system</var>}</dt>
+<dd>
+Load <var>system</var> using <a href="use-system-fn.html">use-system</a>.  The value of <var>system</var> should be a non-keyword symbol. This option can be specified multiple times, systems will be loaded in left-to-right order.
 </dd>
 
 <dt><code class="keyword">-P</code> {<var>prefs</var>}</dt>

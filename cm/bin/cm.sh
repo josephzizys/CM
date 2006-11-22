@@ -23,7 +23,7 @@ SUMMARY="         run Common Music"
 : ${CM_RUNTIME_FLAVOR:=}
 : ${CM_RUNTIME_VERSION:=}
 : ${CM_ROOT_DIR:=}
-
+: ${CM_SYSTEMS:=}
 
 # Description --------------------------------------------------------------
 OPTIONS="
@@ -33,6 +33,7 @@ OPTIONS="
     -v           be verbose
     -e editor    run under this editor (default: '${CM_EDITOR:-<none>}')
     -l lisp      run this Lisp/Scheme (default: '${CM_RUNTIME:-<unset>}') 
+    -s sys       load this system, can be repeated (default: $CM_SYSTEMS)
     -P prefs     preferred runtimes (default: '$CM_RUNTIME_PREFS')
     -O OS        OS in case autodetection fails
     -A arch      machine architecture in case autodetection fails
@@ -255,12 +256,11 @@ PAGER=`which less 2>/dev/null || which more 2>/dev/null || echo cat`
 
 IMG_NAME=cm.img
 
-
 #
 # Options
 # -------
 
-while getopts hqnve:l:P:O:A:F:V:R: OPT
+while getopts hqnve:l:s:P:O:A:F:V:R: OPT
 do
   case $OPT in
     h)  print_help | $PAGER
@@ -271,6 +271,8 @@ do
     v)  VERBOSE=1 ;;
     e)  EDITOR_OPT=$OPTARG ;;
     l)  LISP_OPT=$OPTARG ;;
+#    s)  LOAD_SYS="$LOAD_SYS (use-system :$OPTARG)" ;;
+    s)  CM_SYSTEMS="${CM_SYSTEMS} $OPTARG" ;;
     P)  LISP_PREFS=$OPTARG ;;
     O)  OS=$OPTARG ;;
     A)  ARCH=$OPTARG ;;
@@ -282,8 +284,14 @@ do
   esac    
 done
 
-shift `expr $OPTIND - 1`
+LOAD_SYS=
 
+for sys in ${CM_SYSTEMS} ; do
+    LOAD_SYS="${LOAD_SYS} (use-system :$sys)"
+done
+
+
+shift `expr $OPTIND - 1`
 
 #
 # Path Detection
@@ -626,7 +634,7 @@ LISP_INI=
 LISP_LOA="$CM_ROOT/src/cm"
 
 make_lisp_cmd () {
-  LISP_EVL="(progn (load \"${LISP_LOA}.lisp\" :verbose nil) (cm))"
+  LISP_EVL="(progn (load \"${LISP_LOA}.lisp\" :verbose nil)${LOAD_SYS} (cm))"
   case $LISP_FLV in
     clisp)
       LISP_CMD="'$LISP_EXE' -I -q -ansi $LOPTS"
