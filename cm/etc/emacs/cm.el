@@ -34,6 +34,10 @@
 ;;;   to "http://commonmusic.sf.net/doc/"
 ;;; cm-program
 ;;;   The shell program to start CM. Defaults to "cm".
+;;; cm-systems
+;;;   A list of systems to load when CM starts.
+;;; cm-scratch-mode
+;;;   Emacs edit mode for *scratch* buffer, one of: lisp, sal or nil.
 
 (unless (member 'slime features)
   (require 'slime)
@@ -51,6 +55,10 @@
 	  (equal inferior-lisp-program "lisp"))
       (or (locate-library "bin/cm.sh" t)
 	  "cm")))
+
+(defvar cm-systems (list))
+
+(defvar cm-scratch-mode 'lisp)
 
 ;; add music extensions if not already present...
 (loop for mode in '(("\\.clm$" . lisp-mode)
@@ -95,6 +103,20 @@
 (if (equal system-type 'darwin)
     (global-set-key [(alt e)] 'slime-eval-expr))
 
+;; add cm startup actions to inferior-lisp startup BEFORE repl has
+;; been established
+
+(defun cm-init-command (port coding)
+  ;; get slime's inits 
+  (let ((init (slime-init-command port coding)))
+    ;; append system loading before repl bufer starts
+    (dolist (s cm-systems)
+      (setq init
+	    (concat init (if (keywordp s)
+			     (format "(use-system %s)\n" s)
+			   (format "(use-system :%s)\n" s)))))
+    init))
+
 (defun cm (program )
   "Start CM"
   (interactive (list (if prefix-arg
@@ -106,8 +128,11 @@
 	 (when program (setq cm-program program))
 	 (let ((parsed (split-string cm-program)))
 	   (add-hook 'slime-connected-hook 'cm-start-hook)
-	   (slime-start :program (first parsed) :program-args (rest parsed))
+	   (slime-start :program (first parsed) :program-args (rest parsed)
+			:init 'cm-init-command)
 	   (claim-scratch-buffer)))))
+
+
 
 (defun kill-cm ()
   "Kill *slime-repl* and all associated buffers."
@@ -148,15 +173,21 @@
 		(switch-to-buffer next)))))))
 
 (defun claim-scratch-buffer ()
-  ;; if scratch buffer is empty set to slime mode with cm package.
+  ;; if scratch buffer is empty set to slime or SAL mode
   (let ((scratch (get-buffer "*scratch*")))
     (if scratch
 	(if (not (buffer-modified-p scratch))
 	    (with-current-buffer scratch
-	      (lisp-mode)
-	      (setq slime-buffer-package "cm")
-	      (insert (format "(in-package :cm)\n\n"))
-	      (goto-char (point-max)))))))
+	      (cond ((equal cm-scratch-mode 'lisp)
+		     (lisp-mode)
+		     (setq slime-buffer-package "cm")
+		     (insert (format "(in-package :cm)\n\n"))
+		     (goto-char (point-max)))
+		    ((equal cm-scratch-mode 'sal)
+		     (sal-mode)
+		     (insert (format "; Use this buffer for SAL commands.\n\n"))
+		     (goto-char (point-max)))
+		    (t )))))))
 
 (defun slime-eval-expr ()
   "Evals expr before point, at point, around point, whole region."
