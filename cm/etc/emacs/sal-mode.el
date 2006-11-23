@@ -18,7 +18,7 @@
 		     )))
 
 (unless (boundp 'cm-program)
-  (defvar cm-program "cm"))
+  (defvar cm-program "cm -s sal"))
 
 (defvar sal-mode-hook nil)
 
@@ -28,44 +28,36 @@
   "Keymap for SAL major mode")
 
 (defvar sal-easy-menu
-  (let ((C '(slime-connected-p)))
+  (let ((con '(slime-connected-p)))
     `("SAL"
-      [ "CM REPL" start-sal :visible (not (slime-connected-p)) ]
-      [ "Kill CM" stop-sal :visible , C ]
+      [ "Start CM" start-sal :visible (not ,con) ]
+      [ "Kill CM" stop-sal :visible ,con ]
+      [ "Show REPL" slime-switch-to-output-buffer :active ,con]
       "--"
-      [ "Execute Command" sal-enter , C]
-      [ "Trace Input" toggle-trace :active , C  :style toggle
+      [ "Execute" sal-enter ,con]
+      [ "Trace" toggle-trace :active ,con  :style toggle
 	:selected *sal-trace*]
       "---"
-      ("Documentation"
+      ("Help"
        [ "SAL Manual"
 	 (browse-url "http://commonmusic.sf.net/doc/dict/sal-topic.html")]
        [ "CM Dictionary"
 	 (browse-url "http://commonmusic.sf.net/doc/dict/index.html")]
-       [ "Lookup symbol at point" sal-lookup-doc-at-point])
+       [ "Lookup symbol" sal-lookup-doc-at-point])
       )))
 
 (defun start-sal ()
   (interactive)
-  (cond ((slime-connected-p)
-	 (switch-to-buffer (slime-repl-buffer)))
+  (cond ((boundp 'cm-systems) ; cm.el loaded...
+	 (let ((cm-systems (add-to-list 'cm-systems 'sal)))
+	   (cm cm-program)))
 	(t
-	 (add-hook 'slime-connected-hook 'load-sal-hook)
-	 (slime-start :program cm-program)))
-  )
-
-;(if (find :sal *features*) (values) (use-system :sal))
+	 (slime-start :program cm-program))))
 
 (defun stop-sal ()
   "Kill *slime-repl* and all associated buffers."
   (interactive)
   (slime-repl-sayoonara))
-
-(defun load-sal-hook ()
-  (slime-repl-send-string "(progn (cm::use-system :sal :verbose nil) (values))")
-  (slime-repl-send-string "(cm)")
-  (remove-hook 'slime-connected-hook 'load-sal-hook)
-  )
 
 (easy-menu-define menubar-sal sal-mode-map "SAL" sal-easy-menu)
 
@@ -79,30 +71,33 @@
 
 (add-to-list 'auto-mode-alist '("\\.sal$" . sal-mode))
 
-;; top level SAL commands. at some point this list will have to allow
-;; new commands to be added during the editing session
+;; commands are SAL statements allowed at top-level, i.e. starting in
+;; column 0.  at some point this list will have to allow new commands
+;; to be added during the editing session
 
 (defvar sal-commands 
-  '("chdir" "define" "load" ;"lsdir"
-    "open" "output" "play" 
-    "print" "rts" "sprout" 
-    "begin" "loop" "if" "set" "output"))
+  '("chdir" "define" "load" "open" "play" "print" "rts" "sprout"
+    "begin" "loop" "if" "set" "system"))
+
+;; add non-top-level statements
+
+(defvar sal-statements
+  (append sal-commands 
+	  '("run" "exec"  "return" "unless" "wait" "when" "with")))
+
+;; add literals that are not statments.
+
+(defvar sal-reserved
+  (append sal-statements
+	  '("above" "below" "by" "collect" "downto" "else"
+	    "end"  "finally" "for" "from"  "in" "over" "repeat" "return" 
+	    "then" "to" "unless" "until" "wait" "when" "while" "with")))
 
 ;; for sanity's sake we insist that commands start in the zero'th
-;; column, otherwise command parsing will be a nightmare.
+;; column otherwise command parsing will be a nightmare.
 
 (defvar sal-command-start-regexp
   (concat "^" (regexp-opt sal-commands t) "\\b"))
-
-(defvar sal-reserved
-  '("above" "begin" "below" "by" "collect" "define" "downto" "else"
-    "end" "exec" "finally" "for" "from" "if" "in" 
-    "loop" "output"  "over" "print" "repeat" "return" "run" 
-    "set" "sprout" "then" "to" "unless" "until" "wait" "when" "while" "with"))
-
-(defvar sal-statements
-  (append sal-commands '(;"begin" "if" "loop"  "set" "output" 
-			 "run" "exec"  "return" "unless" "wait" "when" "with")))
 
 (defvar sal-statement-start-regexp
   ;; matches a line starting with any sort of sal statement
@@ -110,7 +105,9 @@
 
 (defvar sal-indenting-substatements-regexp
   ;; matchs a line that indents its sub statmenets
-  (concat "^[ \t]*" (regexp-opt '("define" "begin"  "loop" "run") t) "\\b"))
+  (concat "^[ \t]*"
+	  (regexp-opt '("define" "begin"  "loop" "run" "if" "else") t)
+	  "\\b"))
 
 ;;; syntax coloring
 
@@ -192,7 +189,7 @@
 	  ((or (= (point) (point-max))
 	       (looking-at "[ \t]*$"))
 	   ;(setq left (save-excursion (beginning-of-line) (point)))
-	   (setq left (backwards-sal-statement t))
+	   (setq left (backwards-sal-statement sal-command-start-regexp ))
 	   (setq right (point))))
     (if (and left right (< left right))
 	(let ((cmd (buffer-substring-no-properties left right)))
@@ -231,17 +228,21 @@
       (message "No help for thing at point.")
       )))
 
-(defun backwards-sal-statement (&optional cmdp)
-  ;; find the start of the last statement/command
+(defun backwards-sal-statement (match)
+  ;; find the start of the match statement/command
   (save-excursion
     (beginning-of-line)
-    (let ((regexp (if cmdp sal-command-start-regexp sal-statement-start-regexp))
+    (let ((regexp match)
 	  (cmdline nil)
 	  (search t))
       (while (and (not cmdline) search )
 	(cond ((looking-at regexp)
 	       (setq search nil)
 	       (setq cmdline (point)))
+	      ((and (not (eq regexp sal-command-start-regexp))
+		    (looking-at sal-command-start-regexp))
+	       (setq search nil)
+	       (setq cmdline nil))
 	      (t
 	       (if (= -1 (forward-line -1)) (setq search nil))
 	       )))
@@ -261,19 +262,25 @@
 (defun sal-indent-line ()
   (interactive)
   (beginning-of-line)
-  (if (bobp)  ; Check for rule 1
+  (if (bobp)
       (indent-line-to 0)
    (let ((not-indented t)
 	 (indent-width 2)
 	 (extent (point))
 	 (statementp nil)
 	 cur-indent)
-      (cond ((looking-at "^[ \t]*end") ; Check for rule 2
+      (cond ((looking-at "^[ \t]*end")
 	     (save-excursion
 	       (forward-line -1)
 	       (setq cur-indent (- (current-indentation) indent-width)))
 	     (if (< cur-indent 0)
 		 (setq cur-indent 0)))
+	    ((looking-at "^[ \t]*else")
+	     (let ((pos (backwards-sal-statement "^[ t]*if")))
+	       (when pos
+		 (save-excursion
+		   (goto-char pos) ; start of line
+		   (setq cur-indent (forward-to-indentation 0))))))
 	    ((looking-at sal-command-start-regexp)
 	     (setq cur-indent 0))
 	    (t
