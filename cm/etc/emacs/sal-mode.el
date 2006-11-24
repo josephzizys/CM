@@ -176,29 +176,46 @@
   (+ (count-lines (point-min) (point))
      (if (= (current-column) 0) 1 0)))
 
+(defvar sal-loaded-p nil)
+
+(defun sal-loaded-p ()
+  ;; true if sal is loaded in running cm.
+  (if (not sal-loaded-p)
+      (if (slime-eval '(cl:find :sal cl:*features*) "CL-USER")
+	  (progn (setq sal-loaded-p t)
+		 t)
+	nil)
+    t))
+
 (defun sal-enter ()
   (interactive)
-  (let ((left 0) 
-	(right 0)
-	(cmd nil)
-	(multi nil))
-    (cond ((and mark-active (not (null (mark))))
-	   (setq left (region-beginning))
-	   (setq right (region-end))
-	   (setq multi t))
-	  ((or (= (point) (point-max))
-	       (looking-at "[ \t]*$"))
-	   ;(setq left (save-excursion (beginning-of-line) (point)))
-	   (setq left (backwards-sal-statement sal-command-start-regexp ))
-	   (setq right (point))))
-    (if (and left right (< left right))
-	(let ((cmd (buffer-substring-no-properties left right)))
-	  (when cmd
-	    ;; (message cmd)
-	    (if multi
-		(slime-eval-async
-		 `(cm::sal ,cmd :pattern :command-sequence) nil "CM")
-	      (slime-eval-async `(cm::sal ,cmd ) nil "CM")))))))
+  (if (not (slime-connected-p ))
+      (message "CM not running. Select 'Start CM' from the SAL menu.")
+    ;; THIS HAS TO BE CLEARED WHEN CM IS KILLED
+    (if (not (sal-loaded-p))
+	(if (y-or-n-p "SAL system not loaded. Attempt to load SAL? ")
+	    (slime-eval-async '(cl:progn (cl-user:use-system :sal) t) nil "CM"))
+      (let ((left 0) 
+	    (right 0)
+	    (cmd nil)
+	    (multi nil))
+	(cond ((and mark-active (not (null (mark))))
+	       (setq left (region-beginning))
+	       (setq right (region-end))
+	       (setq multi t))
+	      ((or (= (point) (point-max))
+		   (looking-at "[ \t]*$"))
+	       ;;(setq left (save-excursion (beginning-of-line) (point)))
+	       (setq left (backwards-sal-statement sal-command-start-regexp ))
+	       (setq right (point))))
+	(if (and left right (< left right))
+	    (let ((cmd (buffer-substring-no-properties left right)))
+	      (when cmd
+		;; (message cmd)
+		(if multi
+		    (slime-eval-async
+		     `(cm::sal ,cmd :pattern :command-sequence) nil "CM")
+		  (slime-eval-async `(cm::sal ,cmd ) nil "CM")))))))))
 
 (defun sal-lookup-doc-at-point ()
   ;; help for symbol at point
