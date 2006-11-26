@@ -76,21 +76,21 @@
 ;; to be added during the editing session
 
 (defvar sal-commands 
-  '("chdir" "define" "load" "open" "play" "print" "rts" "sprout"
-    "begin" "loop" "if" "set" "system"))
+  '("begin" "chdir" "define" "if" "load" "loop" "open" "play" "print" 
+    "rts" "set"  "sprout" "system"))
 
 ;; add non-top-level statements
 
 (defvar sal-statements
   (append sal-commands 
-	  '("run" "exec"  "return" "unless" "wait" "when" "with")))
+	  '("run" "exec" "output" "return" "unless" "wait" "when" "with")))
 
 ;; add literals that are not statments.
 
 (defvar sal-reserved
   (append sal-statements
 	  '("above" "below" "by" "collect" "downto" "else"
-	    "end"  "finally" "for" "from"  "in" "over" "repeat" "return" 
+	    "end"  "finally" "for" "from" "in" "over" "repeat" "return" 
 	    "then" "to" "unless" "until" "wait" "when" "while" "with")))
 
 ;; for sanity's sake we insist that commands start in the zero'th
@@ -125,10 +125,9 @@
   (append
    sal-font-lock-keywords-1
    (list
-    (cons"<[A-Za-z\-]*>" font-lock-type-face)
-    (cons
-     (concat "\\<" (regexp-opt '("variable" "function" "process") t) "\\>")
-     font-lock-type-face))))
+    (cons "<[A-Za-z0-9\-]+\\(:[A-Za-z0-9\-]+\\)?>" font-lock-type-face)
+    (cons (regexp-opt '("variable" "function" "process") 'words)
+	  font-lock-type-face))))
 
 (defvar sal-font-lock-keywords-3
   (append
@@ -137,7 +136,7 @@
     ;; boolean
     (cons (regexp-opt '("#t" "#f" "#a") t) font-lock-constant-face)
     ;; keywords
-    (cons "[A-Za-z0-9\-]*:" font-lock-builtin-face))))
+    (cons "[A-Za-z0-9\-]+:" font-lock-builtin-face))))
 
 (defvar sal-font-lock-keywords sal-font-lock-keywords-3)
 
@@ -433,7 +432,7 @@
   (setq mode-name "SAL")
   (run-hooks 'sal-mode-hook))
 
-
+;(with-syntax-table sal-mode-syntax-table (string (char-syntax ?-)))
 	    
 (provide 'sal-mode)
 
