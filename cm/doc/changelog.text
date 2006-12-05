@@ -1,6 +1,10 @@
 ----------------------------------------------------------------------
 CM 2.9.1
 
+o tunings now support :stepsand :octave inits for equal tempered tunings
+  (new tuning :steps 24)
+  (new tuning :steps 13 :octave 3)
+
 o Ported to ECL 0.9i (requires CVS version)
 
 o New 'pattern' macro defines patterns more easily.
