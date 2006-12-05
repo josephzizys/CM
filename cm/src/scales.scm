@@ -34,7 +34,8 @@
 ;;;
 
 (define-class* <scale> (<container>)
-  ((octave :accessor scale-octave)
+  ((octave :accessor scale-octave :init-keyword :octave
+	   :init-value #f)
    (lowest :accessor scale-lowest :init-value #f
            :init-keyword :lowest)
    (divisions :accessor scale-divisions)
@@ -44,7 +45,7 @@
   :name 'scale)
 
 (define-class* <tuning> (<scale>)
-  ((steps :init-value '() :accessor scale-steps
+  ((steps :init-value '() :accessor scale-steps :init-keyword :steps
           :init-keyword :cents :init-keyword :ratios)
    (table :accessor scale-table :init-value 10 
           :init-keyword :octaves)
@@ -91,15 +92,24 @@
 	(data #f)
 	(len #f)
 	(octave #f))
-    
     (dopairs (a v args)
+      (if (not (null? extern))
+	(err "only one :cents, :ratios or :steps allowed."))
       (case a
         ((:cents ) 
          (set! cents? #t)
          (set! extern v))
         ((:ratios )
          (set! cents? #f)
-         (set! extern v))))
+         (set! extern v))
+	((:steps )
+	 (set! cents? #f)
+	 (set! octave (or (scale-octave obj) 2.0))
+	 (unless (and (number? v) (integer? v))
+           (err "tuning: :steps value ~s is not an integer." v))
+	 (set! extern (loop for i to v
+			    collect (expt octave (/ i v))))
+	 (print extern))))
     (unless (pair? extern)
       (err "Tuning needs :ratios or :cents initialization."))
     ;; removed because noop
@@ -108,7 +118,6 @@
     ;;  (if (not extern)
     ;;      (err "Tuning needs :ratios or :cents initialization.")
     ;;      (set! cents? #f)))
-    
     (cond ((pair? (car extern))
            (set! nums
                  (loop for e in extern 
