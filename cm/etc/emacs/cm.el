@@ -44,7 +44,7 @@
   (slime-setup))
 
 (when (member 'aquamacs features)
-  (add-to-list 'obof-other-frame-regexps "\\*inferior-lisp\\*")
+  (add-to-list 'obof-other-frame-regexps " \\*inferior-lisp\\*")
   (add-to-list 'obof-other-frame-regexps "\\*slime-repl\\\\*"))
 
 ;; update default value of inferior-lisp-program to "cm.sh"
@@ -95,7 +95,7 @@
   ;; (when (member 'aquamacs features)
   ;;    (replace-buffer-in-windows (get-buffer "*inferior-lisp*")))
   (when (member 'aquamacs features)
-    (let ((ilw (get-buffer-window "*inferior-lisp*" t)))
+    (let ((ilw (get-buffer-window " *inferior-lisp*" t)))
       (if ilw (delete-frame (window-frame ilw))))
     ))
 
@@ -129,7 +129,8 @@
 	 (let ((parsed (split-string cm-program)))
 	   (add-hook 'slime-connected-hook 'cm-start-hook)
 	   (slime-start :program (first parsed) :program-args (rest parsed)
-			:init 'cm-init-command)
+			:init 'cm-init-command
+			:buffer " *inferior-lisp*")
 	   (claim-scratch-buffer)))))
 
 
