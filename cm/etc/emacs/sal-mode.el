@@ -35,8 +35,14 @@
       [ "Show REPL" slime-switch-to-output-buffer :active ,con]
       "--"
       [ "Execute" sal-enter ,con]
-      [ "Trace" toggle-trace :active ,con  :style toggle
+      [ "Trace" toggle-trace :active NIL :style toggle
 	:selected *sal-trace*]
+      "---"
+      ["Set Directory..." sal-set-directory ,con]
+      ["Load File..." sal-load-file ,con]
+      ["Compile File..." sal-compile-file nil]
+      ["Import File..." sal-import-file nil]
+      ["Play File..." sal-play-file ,con]
       "---"
       ("Help"
        [ "SAL Manual"
@@ -66,6 +72,38 @@
 
 (define-key sal-mode-map (kbd "<help>")
   'sal-lookup-doc-at-point)
+
+(defun sal-set-directory ()
+  (interactive )
+  (let ((cur (slime-eval '(cm::pwd) "CM")))
+    (if (stringp cur)
+	(let ((dir (read-directory-name "Set Output Directory"
+					nil cur nil)))
+	  (progn 
+	    (message (format "Directory set to %S" dir))
+	    (slime-eval-async `(progn (cm::cd ,dir) (value)) nil "CM"))))))
+
+(defun sal-play-file ()
+  (interactive )
+  (let ((cur (slime-eval '(cm::pwd) "CM")))
+    (if (stringp cur)
+	(let ((fil (read-file-name "Play file" cur nil t)))
+	  (if (string-match "\\.\\(aiff\\|wav\\|mid\\)\\'"
+			    fil)
+	      (progn (message (format "Playing %S" fil))
+		     (slime-eval-async `(cm::play ,fil) nil "CM"))
+	    (message (format "Don't know how to play %s" fil)))))))
+
+(defun sal-load-file ()
+  (interactive )
+  (let ((cur (slime-eval '(cm::pwd) "CM")))
+    (if (stringp cur)
+	(let ((fil (read-file-name "Load file" cur nil t)))
+	  (if (string-match "\\.\\(lisp\\|sal\\|cm\\)\\'"
+			    fil)
+	      (progn (message (format "Loading %S" fil))
+		     (slime-eval-async `(cm::sal-load, fil) nil "CM"))
+	    (message (format "Don't know how to load %s" fil)))))))
 
 (defvar sal-mode-syntax-table (make-syntax-table))
 
