@@ -28,7 +28,9 @@
           :accessor fomus-file-parts)
    (global :init-keyword :global :init-value '()
            :accessor fomus-file-global)
-   (view :init-keyword :view :init-value #f :accessor fomus-file-view)
+   (view :init-keyword :view :init-value #t :accessor fomus-file-view)
+   (play :init-keyword :play :init-value #f :accessor fomus-file-play)
+   (tempo :init-keyword :tempo :init-value 60 :accessor fomus-file-tempo)
    )
   :name 'fomus-file
   :metaclass <io-class>
@@ -73,8 +75,14 @@
 		   (set! bend (list ':musicxml :filename file
 				    :view (fomus-file-view io))))
                   (else
-		   (set! bend (list ':fomus :filename file))
-                   ))
+		   (set! bend (list ':fomus :filename file))))
+	    (when (fomus-file-play io)
+              (set! bend (list bend
+			       (list ':midi :play #t
+				     :filename 
+				     (make-pathname :type "mid" :defaults file)
+					  :tempo (fomus-file-tempo io)
+					  ))))
             (set! args (cons* ':output bend args))))
         (apply (function fomus)
                :parts (fomus-file-parts io)

@@ -1,6 +1,10 @@
 ----------------------------------------------------------------------
 CM 2.9.1
 
+o New FOMUS inits: :play #t causes midi file to be written, 
+  :tempo <num> is midi playback tempo, defaults to 60.
+  Default value of :view init is now T.
+
 o tunings now support :stepsand :octave inits for equal tempered tunings
   (new tuning :steps 24)
   (new tuning :steps 13 :octave 3)
