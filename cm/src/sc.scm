@@ -1641,13 +1641,17 @@
                                    (format out "[~s" time)
                                    (format out ", [~s" cmd)
                                    (dolist (c args)
-                                     (format out ", ~s" c))
+                                     (if (inexact? c)
+					 (format out ", ~F" c)
+					 (format out ", ~s" c)))
                                    (format out "]]")
                                    (set! one #t))))
             (format out "~%]~%")))
         (lambda ()
           (when fil (close-file fil ':input))))
     (if fil out #f)))
+
+
 
 
 
