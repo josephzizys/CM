@@ -93,16 +93,21 @@
 	(len #f)
 	(octave #f))
     (dopairs (a v args)
-      (if (not (null? extern))
-	(err "only one :cents, :ratios or :steps allowed."))
+
       (case a
         ((:cents ) 
+         (if extern
+           (err "only one of :cents, :ratios or :steps allowed."))
          (set! cents? #t)
          (set! extern v))
         ((:ratios )
+         (if extern
+           (err "only one of :cents, :ratios or :steps allowed."))
          (set! cents? #f)
          (set! extern v))
 	((:steps )
+         (if extern
+           (err "only one of :cents, :ratios or :steps allowed."))
 	 (set! cents? #f)
 	 (set! octave (or (scale-octave obj) 2.0))
 	 (unless (and (number? v) (integer? v))
