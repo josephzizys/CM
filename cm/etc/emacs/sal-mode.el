@@ -38,6 +38,16 @@
       [ "Trace" toggle-trace :active NIL :style toggle
 	:selected *sal-trace*]
       "---"
+      ("Systems"
+       ["CLM" (load-system :clm) (and ,con (system-unloaded-p :clm))]
+       ["Fomus" (load-system :fomus)
+	(and ,con (system-unloaded-p :fomus))]
+       ["Portmidi" (load-system :portmidi)
+	(and ,con (system-unloaded-p :portmidi))]
+       ["RTS" (load-system :rts)
+	(and ,con (system-unloaded-p :rts))]
+       )
+      ["Current Directory" sal-get-directory ,con]
       ["Set Directory..." sal-set-directory ,con]
       ["Load File..." sal-load-file ,con]
       ["Compile File..." sal-compile-file nil]
@@ -51,6 +61,12 @@
 	 (browse-url "http://commonmusic.sf.net/doc/dict/index.html")]
        [ "Lookup symbol" sal-lookup-doc-at-point])
       )))
+
+
+  
+
+(defun sal-load-system ()
+  )
 
 (defun start-sal ()
   (interactive)
@@ -72,6 +88,11 @@
 
 (define-key sal-mode-map (kbd "<help>")
   'sal-lookup-doc-at-point)
+
+(defun sal-get-directory ()
+  (interactive )
+  (let ((cur (slime-eval '(cm::pwd) "CM")))
+    (message (format "Current directory: %s" cur))))
 
 (defun sal-set-directory ()
   (interactive )
@@ -213,12 +234,29 @@
   (+ (count-lines (point-min) (point))
      (if (= (current-column) 0) 1 0)))
 
+;; system loading
+
+(defun system-loaded-p (sys)
+  ;; true if system is already loaded in running cm. this fast method
+  ;; only works if the system pushes its name onto features, but this
+  ;; is true in all cases so far...
+  (slime-eval `(cl:find ,sys cl:*features*) "CL-USER"))
+
+(defun system-unloaded-p (sys)
+  (not (system-loaded-p sys)))
+
+(defun load-system (sys)
+  ;; the progn is to stop slime attempting to return the actual asdf
+  ;; struct returned by use-system back to emacs, which causes weird
+  ;; things to happen :)
+  (slime-eval-async `(cl:progn (cl-user:use-system ,sys) t) nil "CM"))
+
 (defvar sal-loaded-p nil)
 
 (defun sal-loaded-p ()
   ;; true if sal is loaded in running cm.
   (if (not sal-loaded-p)
-      (if (slime-eval '(cl:find :sal cl:*features*) "CL-USER")
+      (if (system-loaded-p :sal)
 	  (progn (setq sal-loaded-p t)
 		 t)
 	nil)
