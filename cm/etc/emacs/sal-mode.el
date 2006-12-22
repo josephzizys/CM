@@ -102,7 +102,8 @@
 					nil cur nil)))
 	  (progn 
 	    (message (format "Directory set to %S" dir))
-	    (slime-eval-async `(progn (cm::cd ,dir) (value)) nil "CM"))))))
+	    (slime-eval-async `(cl::progn (cm::cd ,dir) (cl::values))
+			      nil "CM"))))))
 
 (defun sal-play-file ()
   (interactive )
