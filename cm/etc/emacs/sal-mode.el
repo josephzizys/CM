@@ -172,7 +172,9 @@
 ;;; syntax coloring
 
 (defvar sal-font-lock-keywords-0
-  (list (cons sal-command-start-regexp font-lock-function-name-face)))
+  (list (cons sal-command-start-regexp font-lock-function-name-face)
+	(cons "^end\\b" font-lock-function-name-face)
+	))
 
 (defvar sal-font-lock-keywords-1
   (append
@@ -492,6 +494,10 @@
   (kill-all-local-variables)
   (modify-syntax-entry ?\; "<" sal-mode-syntax-table)
   (modify-syntax-entry ?\n ">" sal-mode-syntax-table)
+  ;; make hyphen and ops word constituents
+  (dolist (c '(?- ?+ ?* ?/ ?^ ?%))
+    (modify-syntax-entry c "w   " sal-mode-syntax-table))
+
   (set-syntax-table sal-mode-syntax-table)
   (setq indent-tabs-mode nil)
   (use-local-map sal-mode-map)
