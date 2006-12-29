@@ -244,7 +244,6 @@
 (defstub rts-thread)
 (defstub random-seed)
 (defstub between)
-(defstub random-seed)
 (defstub rescale)
 (defstub odds)
 (defstub pickl)
