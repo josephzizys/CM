@@ -27,6 +27,8 @@
     map)
   "Keymap for SAL major mode")
 
+(defvar sal-systems '(("CLM" :clm) ("Fomus" :fomus) ("Portmidi" :portmidi) ("RTS" :rts)))
+
 (defvar sal-easy-menu
   (let ((con '(slime-connected-p)))
     `("SAL"
@@ -38,15 +40,23 @@
       [ "Trace" toggle-trace :active NIL :style toggle
 	:selected *sal-trace*]
       "---"
-      ("Systems"
-       ["CLM" (load-system :clm) (and ,con (system-unloaded-p :clm))]
-       ["Fomus" (load-system :fomus)
-	(and ,con (system-unloaded-p :fomus))]
-       ["Portmidi" (load-system :portmidi)
-	(and ,con (system-unloaded-p :portmidi))]
-       ["RTS" (load-system :rts)
-	(and ,con (system-unloaded-p :rts))]
-       )
+      ,(cons "Use System"
+	    (loop for s in sal-systems 
+		  collect
+		  (vector (if (consp s) (car s) (format "%s" s))
+			  `(load-system , (if (consp s) (cadr s) s))
+			  `(and (slime-connected-p)
+			       (system-unloaded-p
+				,(if (consp s) (cadr s) s))))))
+;      ("Use System"
+;       ["CLM" (load-system :clm) (and ,con (system-unloaded-p :clm))]
+;       ["Fomus" (load-system :fomus)
+;	(and ,con (system-unloaded-p :fomus))]
+;       ["Portmidi" (load-system :portmidi)
+;	(and ,con (system-unloaded-p :portmidi))]
+;       ["RTS" (load-system :rts)
+;	(and ,con (system-unloaded-p :rts))]
+;       )
       ["Current Directory" sal-get-directory ,con]
       ["Set Directory..." sal-set-directory ,con]
       ["Load File..." sal-load-file ,con]
@@ -61,9 +71,6 @@
 	 (browse-url "http://commonmusic.sf.net/doc/dict/index.html")]
        [ "Lookup symbol" sal-lookup-doc-at-point])
       )))
-
-
-  
 
 (defun sal-load-system ()
   )
@@ -196,7 +203,10 @@
    sal-font-lock-keywords-2
    (list
     ;; boolean
-    (cons (regexp-opt '("#t" "#f" "#a") t) font-lock-constant-face)
+    (cons (regexp-opt '("#t" "#f" "#?") t) font-lock-constant-face)
+    ;; if expr. why doesnt this work?
+    ;;(cons "\\W\\?\\W" font-lock-constant-face)
+;    (cons "[\\s-,]\\?[\\s-]*" font-lock-constant-face)
     ;; keywords
     (cons "[A-Za-z0-9\-]+:" font-lock-builtin-face))))
 
