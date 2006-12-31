@@ -320,13 +320,28 @@ span.comment {font-style: italic; color: gray;} /* slate gray3 */
 span.keyword {color: #b22222;}
 span.special {color: #d2691e;}
 span.defined {color: #ff0000;}
-span.salcmd {color: #0000ff;}
-span.salres {color: #a020f0;}
-span.saltyp {color: #228b22;}
 span.result {font-weight: bold; color: silver;}
 span.input  {font-weight: bold;}
 span.prompt, span.output  { }
 
+span.salstr {color: #bc8f8f;} 
+span.salout {color: #bc8f8f;} 
+span.salcom {color: #b22222;}  
+span.salkey {color: #da70d6;} 
+span.salres {color: #a020f0;}
+span.saltyp {color: #228b22;}
+span.salcmd {color: #0000ff;}
+span.salcon {color: #5f9ea0;}
+
+/* code.salstr {color: #bc8f8f;} 
+code.salout {color: #bc8f8f;} 
+code.salcom {color: #b22222;}  
+code.salkey {color: #da70d6;} 
+code.salres {color: #a020f0;}
+code.saltyp {color: #228b22;}
+code.salcmd {color: #0000ff;}
+code.salcon {color: #5f9ea0;}
+*/
 
 /* span.printout { color: #3f7f7f; font-size: smaller; } */
 div.printout {

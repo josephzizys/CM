@@ -4,6 +4,15 @@
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
 <style type="text/css" media="all">
 @import "../css/cm.css";
+span.string  {color: #bc8f8f;} 
+span.output  {color: #bc8f8f;} 
+span.comment {color: #b22222;}  
+span.keyword {color: #da70d6;} 
+span.special {color: #a020f0;}
+span.classof {color: #228b22;}
+span.command {color: #0000ff;}
+span.constant {color: #5f9ea0;}
+code.keyword {color: #da70d6;}
 </style>
 <title>SAL</title>
 </head>
@@ -29,56 +38,78 @@
 
 <h2 id="introduction">Introduction</h2>
 
-<p> SAL is an <a href="http://en.wikipedia.org/wiki/Infix_notation">infix</a> syntax for working with Common
-Music. It implements an easy-to-learn, command-based algorithmic
-composition language that does not require any familiarity with Lisp
-notation or Lisp evaluation rules to compose with. Despite its
-relative simplicity, SAL can express complex algorithmic processes and
-accesses almost all of the underlying features of Common
-Music. (The name SAL stands for Simple Algorithmic Language, or
-Secretly Another Lisp, as you wish. Its name is also an
-<em>hommage</em> to <a href="http://ems.music.uiuc.edu/~martiran/">Sal
-Martirano</a>, a brilliant and influential composer who was a
-professor at the UIUC School of Music for many years.)  </p>
+<p> SAL is an <a
+href="http://en.wikipedia.org/wiki/Infix_notation">infix</a> syntax
+for working with Common Music. It provides an easy-to-learn,
+command-based language that does not require any familiarity with Lisp
+to work with.  The name SAL stands for Simple Algorithmic Language (or
+Secretly Another Lisp, as you wish) and is a <em>hommage</em> to <a
+href="http://ems.music.uiuc.edu/~martiran/">Sal Martirano</a>, a
+brilliant and influential composer who was a professor at the UIUC
+School of Music for many years. </p>
 
-<p>
-The SAL system consists of two software components: a lexer/parser
-that is loaded into Common
-Music <!--(using <a href="use-system-fn.html">use-system</a>) --> and
-an Emacs editing mode (<code>sal-mode</code>) that supports the
-incremental development of SAL programs and the execution of SAL commands. See
-the <a href="../install.html#sal">installation instructions</a> for
- information on  <code>sal-mode</code> an Emacs.
-</p>
-
+<p> The SAL system consists of two software components: a lexer/parser
+that is loaded into Common Music <!--(using <a
+href="use-system-fn.html">use-system</a>) --> and an Emacs mode
+(<code>sal-mode</code>) that supports editing and executing SAL
+programs. <!-- Sal's lexer and parser often do a better job explaining
+syntax errors than the underlying Lisp error system and (by default)
+runtime errors are reported without entering the Lisp error break. -->
 
 <p> A SAL program consists of <var>commands</var>,
-<var>statements</var> and <var>symbolic expressions</var>, or
-<var>sexprs</var>. A sexpr evaluates to a value. A statement is a
-language construct. A command is a "top-level" statement that can be
-<var>executed</var> to accomplish an interactive task such as
-computing a score, defining a musical process, loading a file, and so
-on. Sal commands are parsed and compiled before they execute so Sal's
-runtime performance is identical to the host Lisp's performance. Sal's
-lexer and parser often do a better job explaining syntax errors than
-does the Lisp error system and (by default) runtime errors are
-reported without entering the Lisp error break.  You can also use
-sal-mode's trace facility to learn Lisp as you
-go (<span class="emacscmd"><span
-class="emacskey">M-x</span> toggle-trace</span>).</p>
+<var>statements</var> and <var>symbolic expressions</var>.  A command
+is a "top-level" statement that is <var>executed</var> to accomplish a
+task such as triggering output, defining functions and musical
+processes, loading files, and so on. A statement is a construct in the
+SAL language, such as <code>set</code>, <code>loop</code>,
+<code>define</code>, etc.  A symbolic expression , or <var>sexpr</var>
+is something that evaluates to a value.
+</p>
 
+<!--
 <p>
 By way of introduction, here are some equivalent statements in SAL
 and Lisp syntax:
 </p>
 
+<blockquote>
+<table>
+
+<tr><td style="padding-right: 1em; vertical-align: top;">SAL:</td> <td><pre><span class="salcmd">print</span> 1 + 2</code></td></tr>
+<tr><td style="padding-right: 1em; vertical-align: top;">Lisp:</td> <td><pre>(print (+ 1 2))</pre></td></tr>
+  
+
+
+<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td><pre>
+<span class="salcmd">set</span> a = {1 2 3}, b += 2</pre></td></tr>
+
+<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td><td>
+<pre>(progn (setf a '(1 2 3)) (incf b 2))</pre></td></tr>
+
+
+<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td style="vertical-align: top;"><pre><span class="salcmd">loop</span> <span class="salres">for</span> i <span class="salres">to</span> 12
+  <span class="salres">print</span> 2 ^ (i / 12)
+<span class="salcmd">end</pre></pre></td><tr>
+
+<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td><td>
+<pre>(loop for i below 12
+  do (print (expt 2 (/ i 12))))</pre></td><tr>
+
+</table>
+</blockquote>
+
 <p><var>Statements:</var></p>
 
 <blockquote>
 <table>
-<tr><td style="padding-right: 1em; vertical-align: top;">SAL:</td> <td><code><span class="salcmd">print</span> 2 + 3 * 4 - 1</code></td></tr>
-<tr><td style="padding-right: 1em; vertical-align: top;">Lisp:</td> <td><code>(print (- (+ 2 (* 3 4)) 1))</code></td></tr>
+
+
 </table>
+
+  <tr><td style="padding-right: 1em; vertical-align: top;">SAL:</td> <td><pre><span class="salcmd">print</span> list(1, 2 + 3, random(4))</pre></td></tr>
+
+<tr><td style="padding-right: 1em; vertical-align: top;">SAL:</td> <td><pre>(print (list (+ 1 2) 3 (random 4))</pre></td></tr>
+
 </blockquote>
 
 <p><var>Global variable definition:</var></p>
@@ -139,6 +170,65 @@ and Lisp syntax:
            wait r))</pre></td></tr>
 </table>
 </blockquote>
+
+-->
+
+<h2 id="commands">SAL Mode</h2>
+
+<p>SAL mode is an Emacs editing mode that provides a SAL edit menu, syntax highlighting and evaluation services for SAL programs.
+
+<h3>The SAL menu</h3>
+
+
+<table style="background: #eeeeee; border: 1px solid darkgray">
+  <tr><td><a href="#start_cm">Start CM</a></td></tr>
+  <tr><td style="border-bottom: 1px solid darkgray;"><a href="#show_repl">Show REPL</a></td></tr>
+  <tr><td ><a href="#execute">Execute</td></tr>
+  <tr><td style="border-bottom: 1px solid darkgray;"> <a href="#trace">&radic;  Trace</a></td></tr>
+  <tr><td><a href="#use_system">Use System</a> </td></tr>
+  <tr><td><a href="#show_directory">Show Directory</a></td></tr>
+  <tr><td><a href="#set_directory">Set Directory...</a></td></tr>
+  <tr><td><a href="#load_file">Load File...</a></td></tr>
+  <tr><td style="color:silver;"><a href="#comile_file">Compile File...</a></td></tr>
+  <tr><td style="color:silver;"><a href="#import_file">Import File...</a></td></tr>
+  <tr><td style="border-bottom: 1px solid darkgray;"><a href="#import_file">Play File...</a></td></tr>
+ <tr><td><a href="#help">Help</a></td></tr>
+</table>
+</blockquote>
+
+<dl>
+  <dt id="start_cm">Start CM</dt>  <dd>Start/Kill a Common Music session.</dd>
+  <dt id="show_repl">Show REPL</dt>  <dd>Makes REPL window visible on screen.</dd>
+  <dt id="execute">Execute</dt>  <dd>Execute SAL command before point.</dd>
+  <dt id="trace">Trace</dt>  <dd>Toggle tracing (debugging).</dd>
+  <dt id="use_system">Use System</dt> <dd>Submenu for loading software systems.</dd>
+  <dt id="show_directory">Show Directory</dt>  <dd>Shows current working directory.</dd>
+  <dt id="set_directory">Set Directory...</dt>  <dd>Pop-up dialog sets working directory.</dd>
+  <dt id="load_file">Load File...</dt>  <dd>Pop-up dialog loads SAL or Lisp file.</dd>
+  <dt id="compile_file">Compile File...</dt>  <dd>Not yet implemented.</dd>
+  <dt id="import_file">Import File...</dt>  <dd>Not yet implemented.</dd>
+  <dt id="play_file">Play File...</dt>  <dd>Pop-up dialog plays MIDI or audio files.</dd>
+  <dt id="help">Help</dt>  <dd>Submenu of Help commands</dd>
+</dl>
+
+<h3>Syntax Highlighting</h3>
+<p>Sal mode colorizes program text in the following way:</p>
+
+<ul>
+  <li>Comments are <span class="salcom">red</span>
+  <li>Strings are <span class="salstr">tan</span></li>
+  <li>Commands are  <span class="salcmd">blue</span> </li>
+  <li>Reserved words are <span class="salres">purple</span></li>
+  <li>Class names are <span class="saltyp">green</span></li>
+  <li>Named parameters are  <span class="salkey">pink</span></li>
+  <li>Special notations are  <span class="salcon">aqua</span></li>
+</ul>
+
+
+<h3>Evaluation Services</h3>
+
+
+<p>To evaluate a SAL command, place the cursor at the end of the statement and press Enter on the keypad. Any print out associated with the command will appear in the Lisp REPL window.</p>
 
 
 
@@ -258,49 +348,28 @@ containing a directory string.</p>
 
 <dl class="dictsyntax" id="load">
 <dt>[Command]</dt>
-<dd><code class="entry">load</code> {<var>filespec</var>}*</dd>
+<dd><code class="entry">load</code> <var>file</var></dd>
 </dl>
 
-<p> Loads one or more files according to each <var>filespec</var>, a pathname string. Some file extensions implement customized loading behavior:
+<p> Loads <var>file</var> into Lisp.
 </p>
 
-<blockquote>
-<table class= "float">
-<tr><th class="lcol" style="padding-right: 1em;">file type</th><th class="lcol">behavior</th></tr>
-
-<tr><td>.sal</td><td>loads a sal source file</td></tr>
-<tr><td>.sys</td><td>loads an external system via <a href="use-system-fn.html">use-system</a></td></tr>
-<tr><td>.ins</td><td>loads a clm instrument, compiling if necessary</td></tr>
-<tr><td>.lisp</td><td>loads a lisp source file</td></tr>
-<!-- tr><td>.lisp!</td><td>load a lisp file, compiling if necessary</td></tr -->
-</table>
-</blockquote>
-
-<dl class="dictsyntax" id="lsdir">
-<dt>[Command]</dt>
-<dd><code class="entry">lsdir</code> [<var>dirspec</var>]</dd>
-</dl>
-
-<p> Blah blah. </p>
 
 <dl class="dictsyntax" id="open">
 <dt>[Command]</dt>
 <dd><code class="entry">open</code> [<var>stream</var>] {<var>keyword</var> :  <var>sexpr</var>}* </dd>
 </dl>
 
-<p> Opens a stream (connection) to a file, port, seq or plot. You can pass
-a series of keyword args to the output stream as appropriate to its
-type when you open it. If <code>open</code> is called without any args
-it prints the currently open stream object, if any. Specifying <code><span class="special">#f</span></code> as the value closes any open stream. </p>
+<p> Opens a stream (connection) to a file, port, seq or plot. You can
+pass a series of initializations to the output stream as appropriate
+to its type when you open it.</p>
 
 <dl class="dictsyntax" id="print">
 <dt>[Command]</dt>
 <dd><code class="entry">print</code> <var>sexpr</var> {<code class="entry">,</code> <var>sexpr</var>}*</dd>
 </dl>
 
-<p> Prints the value of one or more comma-delimited <var>sexprs</var>. The printout appears in Common Music's REPL window.</p>
-
-
+<p> Prints one or more comma-delimited <var>sexprs</var>. The printout appears in Common Music's REPL window.</p>
 
 <dl class="dictsyntax" id="rts">
 <dt>[Command]</dt>
@@ -347,13 +416,13 @@ offset or list of the same.
 <p> Combines one or more statements into a single statement.  Optional local variables can be declared using the <a href="#with"><code>with</code></a> statement followed by a sequence of one or more statements and terminated with the required <code>end</code> tag.</p>
 
 <!-- EXEC -->
+<!-- 
 <dl class="dictsyntax" id="exec">
 <dt>[Statement]</dt>
 <dd><code class="entry">exec</code> <var>sexpr</var> {<code class="entry">,</code> <var>sexpr</var>}*</dd>
 </dl>
-
 <p>Executes one or more comma-delimited sexprs.</p>
-
+-->
 
 <!-- IF -->
 <dl class="dictsyntax" id="if">
@@ -363,7 +432,6 @@ offset or list of the same.
 </dl>
 
 <p>Executes an optional <var>true-statement</var> if <var>sexpr</var> is true. Otherwise (<var>sexpr</var> is false) an optional <var>false-statement</var> is executed.</p>
-
 
 <!-- LOOP -->
 <dl class="dictsyntax" id="loop">
@@ -455,6 +523,9 @@ according to the assignment operator <var>op</var>:</p>
 <tr><td><code>*=</code></td> <td> scales <var>var</var> by the value of <var>sexpr</var> </td> </tr>
 <tr><td><code>&amp;=</code></td> <td> appends value of <var>sexpr</var> to the list in <var>var</var> </td> </tr>
 <tr><td><code>@=</code></td> <td> prepends value of <var>sexpr</var> to the list in <var>var</var> </td> </tr>
+<tr><td><code>&lt;=</code></td> <td> minimizes <var>var</var> with the value <var>sexpr</var> </td> </tr>
+<tr><td><code>&gt;=</code></td> <td> maximizes <var>var</var> with the value <var>sexpr</var> </td> </tr>
+
 </table>
 </blockquote>
 
@@ -577,6 +648,7 @@ parentheses are provided.</p>
 
 </dd>
 
+<!-- 
 
 <dt id="constructor">Constructor notation</dt>
 
@@ -610,6 +682,7 @@ construction.</p>
 </dd>
 </dl>
 
+-->
 
 <h2 id="reserved">Reserved Symbols</h2>
 
