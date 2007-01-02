@@ -59,7 +59,7 @@ pre.salcode{ background: #f7f7f7; }
 <body>
 " (namestring file))
   (format out "<span style=\"font-size: large;\">Download source: ")
-  (format out "<a href=\"file:~a.~a\">
+  (format out "<a href=\"~a.~a\">
 <img src=\"textfile.png\" border=\"none\"/> ~A.~A</a>"
 	  (pathname-name file)
 	  (pathname-type file)
@@ -158,17 +158,21 @@ pre.salcode{ background: #f7f7f7; }
 		      (t
 		       ;; gobble token to next delim, which may be chr
 		       (setq len 0)
+		       
 		       (loop until (member chr +delims+ :test #'char=)
 			    do
 			    (setf (elt str len) chr)
 			    (getchar chr sal)
 			    (incf len))
+		       
 		       (if (> len 0)
 			   (colorizetok out (subseq str 0 len)
 					len bol))
 		       ;; write delimiter
 		       (htmlwritechar chr out)
-		       (setq bol nil)))))
+		       (if (member chr '(#\Return #\Newline))
+			 (setq bol t)
+			 (setq bol nil))))))
 	(format out "</pre>~%")
 	(salhtmlfooter out file)
 	))
