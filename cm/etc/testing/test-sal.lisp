@@ -28,9 +28,9 @@
 	     (t (setq x nil)))
        (if (not x)
 	   (let ((*print-case* ':downcase))
-	     (format t "~&Test ~S ~S failed!~%fail result: ~S" 
-		     ,pat ,str b)
-	     ;;(format t "~&(saltest ~S ~S ~W)" ,pat ,str b)
+	     ;(format t "~&Test ~S ~S failed!~%fail result: ~S" 
+	;	     ,pat ,str b)
+	     (format t "~&(saltest ~S ~S ~W)" ,pat ,str b)
 	     )
 	   t)))
   )
@@ -158,3 +158,35 @@
 ; (saltest-pattern-constructor "weighting {1 weight 3} 2 for x")
 ; (saltest-pattern-constructor "markov {1 2 -> 3 4}")
 ; (saltest-pattern-constructor "markov {1 2 -> {3 .1} 4}")
+
+
+(saltest :procdecl
+"process foo ()
+  run repeat 10
+    print now()
+  end"
+1)
+
+"process foo ()
+  begin 
+    run repeat 10
+      print now()
+    end
+  end"
+
+"process foo ()
+  begin with x, y
+    set x = 2
+    run repeat 10
+      print now()
+    end
+  end"
+
+
+(parse  *sal-grammer* :fundecl "function foo () begin print 123 end")
+
+(parse *sal-grammer* :vardecl "variable foo = 1")
+
+(parse  *sal-grammer* :procdecl "process foo () run repeat 10 print 123 end")  
+
+(parse  *sal-grammer*  :command "define process foo () run repeat 10 print 123 end")
