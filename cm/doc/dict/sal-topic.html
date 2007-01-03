@@ -4,15 +4,6 @@
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
 <style type="text/css" media="all">
 @import "../css/cm.css";
-span.string  {color: #bc8f8f;} 
-span.output  {color: #bc8f8f;} 
-span.comment {color: #b22222;}  
-span.keyword {color: #da70d6;} 
-span.special {color: #a020f0;}
-span.classof {color: #228b22;}
-span.command {color: #0000ff;}
-span.constant {color: #5f9ea0;}
-code.keyword {color: #da70d6;}
 </style>
 <title>SAL</title>
 </head>
@@ -29,9 +20,9 @@ code.keyword {color: #da70d6;}
 <h2>Contents</h2>
 <ol>
   <li><a href="#introduction">Introduction</a></li>
-  <li><a href="#commands">Commands</a></li>
-  <li><a href="#statements">Statements</a></li>
-  <li><a href="#sexprs">Symbolic expressions</a></li>
+  <li><a href="#sal-mode">SAL Mode</a></li>
+  <li><a href="#statements">Language</a></li>
+  <li><a href="#sexprs">Symbolic Expressions</a></li>
   <li><a href="#reserved">Reserved words</a></li>
   <li><a href="#lacunae">Lacun&aelig;</a></li>
 </ol>
@@ -66,133 +57,27 @@ SAL language, such as <code>set</code>, <code>loop</code>,
 is something that evaluates to a value.
 </p>
 
-<!--
-<p>
-By way of introduction, here are some equivalent statements in SAL
-and Lisp syntax:
-</p>
 
-<blockquote>
-<table>
+<h2 id="sal-mode">SAL Mode</h2>
 
-<tr><td style="padding-right: 1em; vertical-align: top;">SAL:</td> <td><pre><span class="salcmd">print</span> 1 + 2</code></td></tr>
-<tr><td style="padding-right: 1em; vertical-align: top;">Lisp:</td> <td><pre>(print (+ 1 2))</pre></td></tr>
-  
-
-
-<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td><pre>
-<span class="salcmd">set</span> a = {1 2 3}, b += 2</pre></td></tr>
-
-<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td><td>
-<pre>(progn (setf a '(1 2 3)) (incf b 2))</pre></td></tr>
-
-
-<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td style="vertical-align: top;"><pre><span class="salcmd">loop</span> <span class="salres">for</span> i <span class="salres">to</span> 12
-  <span class="salres">print</span> 2 ^ (i / 12)
-<span class="salcmd">end</pre></pre></td><tr>
-
-<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td><td>
-<pre>(loop for i below 12
-  do (print (expt 2 (/ i 12))))</pre></td><tr>
-
-</table>
-</blockquote>
-
-<p><var>Statements:</var></p>
-
-<blockquote>
-<table>
-
-
-</table>
-
-  <tr><td style="padding-right: 1em; vertical-align: top;">SAL:</td> <td><pre><span class="salcmd">print</span> list(1, 2 + 3, random(4))</pre></td></tr>
-
-<tr><td style="padding-right: 1em; vertical-align: top;">SAL:</td> <td><pre>(print (list (+ 1 2) 3 (random 4))</pre></td></tr>
-
-</blockquote>
-
-<p><var>Global variable definition:</var></p>
-
-<blockquote>
-<table>
-<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td ><code><span class="salcmd">define</span> <span class="saltyp">variable</span> 2pi = 2 * pi</code></td></tr>
-<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td> <td><code>(defparameter 2pi (* 2 pi))</code></td></tr>
-</table>
-</blockquote>
-
-<p><var>Variable assignment:</var></p>
-
-<blockquote>
-<table>
-<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td>
-<code><span class="salcmd">set</span> a = random(127), b += 2, c &amp;= b, m.keynum = a</code></td></tr>
-<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td><td>
-<code>(setf a (random 127) b (+ b 2) c (nconc c (list b)) (slot-value m 'keynum) a)</code></td></tr>
-</table>
-</blockquote>
-
-
-<p><var>Function definition:</var></p>
-
-<blockquote>
-<table>
-<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td>
-<pre><span class="salcmd">define</span> <span class="saltyp">function</span> rankey (low, high)
-  <span class="salres">begin</span>
-    <span class="salres">with</span> range = high - low
-    <span class="salres">return</span> low + random(range)
-  <span class="salres">end</span></pre></td></tr>
-<tr> <td style="padding-right: 1em; vertical-align: top;">Lisp:</td><td>
-<pre>(defun rankey (low high)
-  (let ((range (- high low)))
-    (+ low (random range))))</pre></td></tr>
-</table>
-</blockquote>
-
-<p><var>Musical process definition:</var></p>
-
-<blockquote>
-<table>
-<tr> <td style="padding-right: 1em; vertical-align: top;">SAL:</td><td>
-<pre><span class="salcmd">define</span> <span class="saltyp">process</span> foo (n, r)
-  <span class="salres">run</span> <span class="salres">repeat</span> n
-    <span class="salres">for</span> k = rankey(60, 80)
-    <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k]
-    <span class="salres">wait</span> r
-  <span class="salres">end</span></pre></td></tr>
-
-  <tr><td style="padding-right: 1em; vertical-align: top;">Lisp:</td>
-    <td > <pre>(defun foo (n r)
-  (process repeat n
-           for k = (rankey 60 80)
-           output (new midi :time (now) :keynum k)
-           wait r))</pre></td></tr>
-</table>
-</blockquote>
-
--->
-
-<h2 id="commands">SAL Mode</h2>
-
-<p>SAL mode is an Emacs editing mode that provides a SAL edit menu, syntax highlighting and evaluation services for SAL programs.
+<p>SAL mode is an Emacs editing mode that provides an editing menu, syntax highlighting and evaluation services for SAL programs.
 
 <h3>The SAL menu</h3>
 
 
 <table style="background: #eeeeee; border: 1px solid darkgray">
-  <tr><td><a href="#start_cm">Start CM</a></td></tr>
-  <tr><td style="border-bottom: 1px solid darkgray;"><a href="#show_repl">Show REPL</a></td></tr>
-  <tr><td ><a href="#execute">Execute</td></tr>
-  <tr><td style="border-bottom: 1px solid darkgray;"> <a href="#trace">&radic;  Trace</a></td></tr>
-  <tr><td><a href="#use_system">Use System</a> </td></tr>
-  <tr><td><a href="#show_directory">Show Directory</a></td></tr>
-  <tr><td><a href="#set_directory">Set Directory...</a></td></tr>
-  <tr><td><a href="#load_file">Load File...</a></td></tr>
-  <tr><td style="color:silver;"><a href="#comile_file">Compile File...</a></td></tr>
-  <tr><td style="color:silver;"><a href="#import_file">Import File...</a></td></tr>
-  <tr><td style="border-bottom: 1px solid darkgray;"><a href="#import_file">Play File...</a></td></tr>
- <tr><td><a href="#help">Help</a></td></tr>
+  <tr><td colspan="2"><a href="#start_cm">Start CM</a></td></tr>
+  <tr><td colspan="2" style="border-bottom: 1px solid darkgray;"><a href="#show_repl">Show REPL</a></td></tr>
+  <tr><td colspan="2" ><a href="#execute">Execute</td></tr>
+  <tr><td style="border-bottom: 1px solid darkgray;"> <a href="#debug">Debug</a></td> <td style="border-bottom: 1px solid darkgray;text-align:right;"> &gt;</td></tr>
+  <tr><td><a href="#use_system">Use System</a> </td> <td style="text-align:right;"> &gt;</td></tr>
+  <tr><td colspan="2"><a href="#show_directory">Show Directory</a></td></tr>
+  <tr><td colspan="2"><a href="#set_directory">Set Directory...</a></td></tr>
+  <tr><td colspan="2"><a href="#load_file">Load File...</a></td></tr>
+  <tr><td colspan="2" style="color:silver;"><a href="#comile_file">Compile File...</a></td></tr>
+  <tr><td colspan="2" style="color:silver;"><a href="#import_file">Import File...</a></td></tr>
+  <tr><td colspan="2" style="border-bottom: 1px solid darkgray;"><a href="#import_file">Play File...</a></td></tr>
+ <tr><td><a href="#help">Help</a></td> <td style="text-align:right;"> &gt;</td> </tr>
 </table>
 </blockquote>
 
@@ -200,6 +85,7 @@ and Lisp syntax:
   <dt id="start_cm">Start CM</dt>  <dd>Start/Kill a Common Music session.</dd>
   <dt id="show_repl">Show REPL</dt>  <dd>Makes REPL window visible on screen.</dd>
   <dt id="execute">Execute</dt>  <dd>Execute SAL command before point.</dd>
+  <dt id="trace">Debug</dt>  <dd>Submenu for debugging.</dd>
   <dt id="trace">Trace</dt>  <dd>Toggle tracing (debugging).</dd>
   <dt id="use_system">Use System</dt> <dd>Submenu for loading software systems.</dd>
   <dt id="show_directory">Show Directory</dt>  <dd>Shows current working directory.</dd>
@@ -212,7 +98,7 @@ and Lisp syntax:
 </dl>
 
 <h3>Syntax Highlighting</h3>
-<p>Sal mode colorizes program text in the following way:</p>
+<p>Sal mode colorizes program text:</p>
 
 <ul>
   <li>Comments are <span class="salcom">red</span>
@@ -225,33 +111,91 @@ and Lisp syntax:
 </ul>
 
 
+<div class="float"> <p> SAL mode syntax highlighting</p>
+<pre class="code">
+<span class="salcom">; The 'define' command</span>
+<span class="salcmd">define</span> <span class="saltyp">process</span> simp(num, rate, dur, lowkey, hikey, amp, chan)
+  <span class="salres">run</span> <span class="salres">repeat</span> num
+    <span class="salres">output</span> make(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> now(),
+                <span class="salkey">duration:</span> dur,
+                <span class="salkey">keynum:</span> between(lowkey,hikey) ,
+                <span class="salkey">amplitude:</span> amp,
+                <span class="salkey">channel:</span> chan)
+    <span class="salres">wait</span> rate
+  <span class="salres">end</span>
+
+<span class="salcom">; The 'open' command</span>
+<span class="salcmd">open</span> <span class="salstr">"test.mid"</span>, <span class="salkey">tempo:</span> 90
+
+<span class="salcom">; The 'sprout' command</span>
+<span class="salcmd">sprout</span> simp(16, .25, .5, 60, 70, .3, 0)
+</pre>
+</div>
+
 <h3>Evaluation Services</h3>
 
 
-<p>To evaluate a SAL command, place the cursor at the end of the statement and press Enter on the keypad. Any print out associated with the command will appear in the Lisp REPL window.</p>
+<p>To evaluate a SAL command, place the cursor at the end of the
+statement and press Enter on the keypad. Output associated with the
+command will appear in the Lisp REPL window.</p>
 
+<h2 id="language">Language</h2>
 
-
-<!-- COMMANDS -->
-
-
-<h2 id="commands">Commands</h2>
-
-<p>Commands are "top-level" statements that can be directly executed
+<!-- <p>Commands are "top-level" statements that can be directly executed
 from an Emacs buffer in <code>sal-mode</code>. To execute a Sal
-command use the SAL menu to start a Sal session, then place the cursor
-after the command expression and press the keypad Enter key.</p>
+command first select Start CM from the SAL menu, then place the cursor
+after the command expression and press the keypad Enter key.</p> -->
 
+
+<!-- BEGIN -->
+<dl class="dictsyntax" id="begin">
+<dt>[Statement]</dt>
+<dd><code class="entry">begin</code> [<var>var-decl</var>] {<var>statement</var>}+ <code class="entry">end</code></dd>
+</dl>
+
+<p> Sequences one or more statements as a single statement.  Local
+variables can be declared using an optional <a
+href="#with"><code>with</code></a> statement followed by a sequence of
+one or more statements and terminated with the required
+<code>end</code> tag.</p>
+
+
+<div class="float">
+<pre class="code">
+<span class="salcmd">begin</span> 
+  <span class="salres">with</span> kn = random(128),
+       pc = kn % 12
+  <span class="salres">print</span> "a random keynum: ", kn
+  <span class="salres">print</span> "its pitch class: ", pc
+<span class="salcmd">end</span>    
+</pre>
+</div>
+
+
+
+<!-- CHDIR -->
 
 <dl class="dictsyntax" id="chdir">
 <dt>[Command]</dt>
-<dd><code class="entry">chdir</code> [<var>dir</var>]</dd>
+<dd><code class="entry">chdir</code> <var>dir</var></dd>
 </dl>
 
-<p> Change the working directory to <var>dir</var>. If <var>dir</var>
-is not provided it defaults to the user's home directory. Otherwise
-the value of <var>dir</var> should be a directory string or variable
+<p> Change the working directory to <var>dir</var>. The value should be a directory string or variable
 containing a directory string.</p>
+
+<div class="float">
+<pre class="code">
+<span class="salcmd">chdir</span> <span class="salstr">"/Lisp/sal"</span>
+
+<span class="salcmd">chdir</span> <span class="salstr">"~/"</span>
+
+<span class="salcmd">print</span> pwd()
+<span class="result">&rArr;</span> <span class="salstr">/User/hkt/</span>
+</pre>
+</div>
+
+
+
 
 <span id="define"></span>
 
@@ -260,13 +204,15 @@ containing a directory string.</p>
 <dd><code class="entry">define variable</code> <var>name</var> [<code class="entry">=</code> <var>sexpr</var>] {<code class="entry">,</code> <var>name</var> [<code class="entry">=</code> <var>sexpr</var>]}*</dd>
 </dl>
 
-<p> Defines a global variable <var>name</var> with optional value <var>sexpr</var>. If <var>sexpr</var> is not provided the value of the variable defaults to false. Use commas to define more than one variable at a time. </p>
-
-<h4>Example</h4>
+<p> Defines a global variable <var>name</var> with optional value
+<var>sexpr</var>. If <var>sexpr</var> is not provided the value of the
+variable defaults to false. Use commas to define more than one
+variable at a time. </p>
 
 <div class="float">
 <pre class="code">
-<span class="salcmd">define</span> <span class="saltyp">variable</span> myrow = {0 1 11 2 10 3 9 4 8 5 7 6}
+<span class="salcmd">define</span> <span class="saltyp">variable</span> myrow = {0 1 11 2 10 3 9 4 8 5 7 6} ,
+                mytempo = pick(60, 90, 120, 144)
 </pre>
 </div>
 
@@ -276,43 +222,32 @@ containing a directory string.</p>
 <dd><code class="entry">define function</code> <var>name</var> <code>(</code>[<var>parameter</var>] {<code class="entry">,</code> <var>parameter</var>}*<code>)</code> {<var>statement</var>}</dd>
 </dl>
 
-<p>A function definition consists of the <var>name</var> of the function, a series of zero or more <var>parameters</var>, or input variables, enclosed within <code>()</code> and followed by a single statement which will be executed when the function is called. Values passed to the function will be available in the corresponding <var>parameter</var>. Use a <a href="#begin"><code>begin</code></a> block to declare local variables or to include more than one statement in the body of the function. Use the <a href="#return"><code>return</code></a> statement to return one or more values from a function. A function without a <a href="#return"><code>return</code></a> statement returns nothing as its value.</p>
+<p>A function definition consists of the <var>name</var> of the
+function, a series of zero or more <var>parameters</var>, or input
+variables, enclosed within <code>()</code> and followed by a single
+statement which will be executed when the function is called. Values
+passed to the function will be available in the corresponding
+<var>parameter</var>. Use a <a href="#begin"><code>begin</code></a>
+block to declare local variables or to include more than one statement
+in the body of the function. Use the <a
+href="#return"><code>return</code></a> statement to return one or more
+values from a function. A function without a <a
+href="#return"><code>return</code></a> statement returns nothing as
+its value.</p>
 
-<h4>Example</h4>
 <div class="float">
 <pre class="code">
-<span class="comment">; pitch class transposition of a row </span>
+<span class="salcom">; pitch class transposition of a row </span>
 
-<span class="salcmd">define</span> <span class="saltyp">function</span> pctransp(row, pc)
-  <span class="salres">loop</span> <span class="salres">with</span> l = list()
+<span class="salcmd">define</span> <span class="saltyp">function</span> pctransp (row, pc)
+  <span class="salres">loop</span> <span class="salres">with</span> l = {}
     <span class="salres">for</span> i <span class="salres">in</span> row
     <span class="salres">set</span> l &amp;= mod( i + pc, 12)
     <span class="salres">finally</span> <span class="salres">return</span> l
   <span class="salres">end</span>
-
-<span class="comment">; pc inversion of a row </span>
-
-<span class="salcmd">define</span> <span class="saltyp">function</span> pcinvert(row)
-  <span class="salres">loop</span> <span class="salres">with</span> l = list()
-    <span class="salres">for</span> i <span class="salres">in</span> row
-    <span class="salres">set</span> l &amp;= mod( - i, 12)
-    <span class="salres">finally</span> <span class="salres">return</span> l
-  <span class="salres">end</span>
-
-<span class="comment">; compute the matrix of a row</span>
-
-<span class="salcmd">define</span> <span class="saltyp">function</span> matrix(row)
-  <span class="salres">loop</span> <span class="salres">with</span> mat = list(), inv = pcinvert(row)
-    <span class="salres">for</span> i <span class="salres">in</span> inv
-    <span class="salres">for</span> new = pctransp(row, i)
-    <span class="salres">set</span> mat &amp;= new
-    <span class="salres">finally</span> <span class="salres">return</span> mat
-  <span class="salres">end</span>
-
-<span class="salcmd">print</span> matrix(myrow)
 </pre>
 </div>
-
+  
 <dl class="dictsyntax" id="define_process">
 <dt>[Command]</dt>
 <dd><code class="entry">define process</code> <var>name</var> <code>(</code>[<var>parameter</var>] {<code class="entry">,</code> <var>parameter</var>}*<code>)</code> {<var>statement</var>}</dd>
@@ -322,25 +257,24 @@ containing a directory string.</p>
 <a href="#return"><code>return</code></a> statements and they must contain a <a href="#run"><code>run</code></a> block as their final statement. The <code>run</code> block is syntactically identical to the  <a href="#run"><code>loop</code></a> statement except that it supports several additional statements that are specific to musical process definitions, for example <a href="#output"><code>output</code></a> and <a href="#wait"><code>wait</code></a>.
 <!-- Use <a href="#output"><code>output</code></a> statements inside the <code>run</code> block to send musical object to an <a href="#open">open output stream</a> on each iteration.</p> -->
 
-<h4>Example</h4>
 <div class="float">
 <pre class="code">
 <span class="salcmd">define</span> <span class="saltyp">process</span> foo(n, r)
   <span class="salres">run</span> <span class="salres">repeat</span> n
     <span class="salres">for</span> k = between(40, 70)
-    <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k]
+    <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="salkey">time:</span> now() <span class="salkey">keynum:</span> k]
     <span class="salres">if</span> even?(k) <span class="salres">then</span>
-      <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k + 12]
+      <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="salkey">time:</span> now() <span class="salkey">keynum:</span> k + 12]
       <span class="salres">else</span>
 	<span class="salres">begin</span>
-	  <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k - 12]
+	  <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="salkey">time:</span> now() <span class="salkey">keynum:</span> k - 12]
 	  <span class="salres">if</span> odds(.4) <span class="salres">then</span>
-	    <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> now() <span class="keyword">keynum:</span> k - random(12)]
+	    <span class="salres">output</span> <span class="special">#a</span>[<span class="saltyp">midi</span> <span class="salkey">time:</span> now() <span class="salkey">keynum:</span> k - random(12)]
 	<span class="salres">end</span>
     <span class="salres">wait</span> random(r)
   <span class="salres">end</span>
 
-<span class="salcmd">open</span> <span class="string">"test.mid"</span>
+<span class="salcmd">open</span> <span class="salstr">"test.mid"</span>
 
 <span class="salcmd">sprout</span> foo(20, .4)
 </pre>
@@ -406,14 +340,6 @@ offset or list of the same.
 <!-- STATEMENTS -->
 
 <h2 id="statements">Statements</h2>
-
-<!-- BEGIN -->
-<dl class="dictsyntax" id="begin">
-<dt>[Statement]</dt>
-<dd><code class="entry">begin</code> [<var>var-decl</var>] {<var>statement</var>}+ <code class="entry">end</code></dd>
-</dl>
-
-<p> Combines one or more statements into a single statement.  Optional local variables can be declared using the <a href="#with"><code>with</code></a> statement followed by a sequence of one or more statements and terminated with the required <code>end</code> tag.</p>
 
 <!-- EXEC -->
 <!-- 
@@ -575,14 +501,64 @@ according to the assignment operator <var>op</var>:</p>
 </blockquote>
 </dd>  
 
-<dt>Booleans</dt>
+<dt>Arithmetic expressions</dt>
+<dd><p>Arithmetic expressions are infix. The following operators are defined:</p>
+
+<table class= "float">
+<tr><th class="lcol" style="padding-right: 1em;">operator</th><th class="lcol">meaning</th></tr>
+<tr><td><code>  + </code></td><td>  addition  </td></tr>  
+<tr><td><code>  - </code></td><td>  subtraction  </td></tr>  
+<tr><td><code>  * </code></td><td>  multiplication  </td></tr>  
+<tr><td><code>  / </code></td><td>  division  </td></tr>
+<tr><td><code>  % </code></td><td>  modulus (remainder after division)  </td></tr>
+<tr><td><code>  ^ </code></td><td>  exponentiation  </td></tr>
+<tr><td><code>  = </code></td><td>  equal  </td></tr>
+<tr><td><code>  != </code></td><td> not equal  </td></tr>
+<tr><td><code>  &gt; </code></td><td>  greater than  </td></tr>
+<tr><td><code>  &lt; </code></td><td>  less than  </td></tr>
+<tr><td><code>  &gt;= </code></td><td> greater than or equal  </td></tr>
+<tr><td><code>  &lt;= </code></td><td> less than or equal  </td></tr>
+<tr><td><code>  ~= </code></td><td> general equality  </td></tr>
+<tr><td><code>  &amp;  </code></td><td> logical and   </td></tr>
+<tr><td><code>  |  </code></td><td> logical or  </td></tr>
+<tr><td><code>  !  </code></td><td> logical not  </td></tr>
+</table>
+  
+<p> Operators <em>must</em> be delimited from their operands using
+spaces and/or parentheses. In other words, 2 / 4 is division and 2/4
+is a ratio; 2 + 4 is addition and 2+4 is nothing. Standard operator
+precedence rules apply if no parentheses are provided.</p>
+
+<blockquote>
+<pre><span class="salcmd">print</span> 10 ^ 2 + 1
+<span class="salcmd">print</span> (1 + 3) * 4
+<span class="salcmd">print</span> 2 != 1 + random(2)
+<span class="salcmd">print</span> 13 % 12
+<span class="salcmd">print</span> 2 &gt;= 1 & 3 = 2 + 1
+<span class="salcmd">print</span> {c e g} ~= {c e g}
+</pre>
+</blockquote>
+</dd>
+
+
+<dt>Boolean Values</dt>
 <dd><p><code><span class="special">#t</span></code> is boolean true and <code><span class="special">#f</span></code> is boolean false.</p></dd>
 
 
-<dt>Strings</dt>
-<dd><p>A string of uninterpreted characters enclosed within <code><span class="string">""</span></code>. Example:</p>
+<dt>Conditional Value</dt>
+
+
+<dd><p><code><span class="special">#?</span> (</code> <var>test</var> <code>,</code>  <var>true</var> [<code>,</code> <var>false</var> ] <code>)</code> </p>
+
 <blockquote>
-<pre><span class="salcmd">print</span> <span class="string">"A4 is "</span>, 440</pre>
+<pre><span class="salcmd">print</span> #? (0 > 1, 100, random(30) )</pre>
+</blockquote>
+</dd>
+
+<dt>Strings</dt>
+<dd><p>A string of uninterpreted characters enclosed within <code><span class="salstr">""</span></code>. Example:</p>
+<blockquote>
+<pre><span class="salcmd">print</span> <span class="salstr">"A4 is "</span>, 440</pre>
 </blockquote>
 </dd>  
 
@@ -632,21 +608,13 @@ Commas must always separate the individual arguments. Some functions support <em
 <blockquote>
 <pre><span class="salcmd">print</span> list()
 <span class="salcmd">print</span> pick(100, 200, 300)
-<span class="salcmd">print</span> note(440, <span class="keyword">hz:</span> <span class="special">#t</span>)
+<span class="salcmd">print</span> note(440, <span class="salkey">hz:</span> <span class="special">#t</span>)
 </pre>
 </blockquote>
 
 
 </dd>
 
-<dt>Arithmetic expressions</dt>
-<dd><p>Arithmetic sexprs are infix. Operators <em>must</em> be
-delimited from their operands using spaces and/or parentheses. In
-other words, 2 / 4 is division and 2/4 is a ratio; 2 + 4 is addition
-and 2+4 is nothing. Standard operator precedence rules apply if no
-parentheses are provided.</p>
-
-</dd>
 
 <!-- 
 
@@ -663,7 +631,7 @@ construction.</p>
 
   <ul><li id="object_constructor"><p>Object constructors are comprised of the class of the object followed by zero or more keyword slot initializations:</p>
 
-<pre><span class="special">#a</span>[<span class="saltyp">midi</span> <span class="keyword">time:</span> 0 <span class="keyword">keynum:</span> random(127)]</pre>
+<pre><span class="special">#a</span>[<span class="saltyp">midi</span> <span class="salkey">time:</span> 0 <span class="salkey">keynum:</span> random(127)]</pre>
 </li>
 <li id="list_constructor"><p>List and vector constructors use a simplified loop syntax with a special <code>collect</code> statement:</p>
 <pre><span class="special">#a</span>[<span class="saltyp">list</span> for i below 10 collect i]
