@@ -10,7 +10,7 @@
 ;; add-to-list load-path "/Lisp/sal/"
 
 (require 'font-lock)
-;(require 'slime)
+(require 'slime)
 
 (when (member 'aquamacs features)
   (setq aquamacs-known-major-modes
@@ -20,127 +20,14 @@
 (unless (boundp 'cm-program)
   (defvar cm-program "cm -s sal"))
 
-(defvar sal-mode-hook nil)
-
-(defvar sal-mode-map
-  (let ((map (make-sparse-keymap)))
-    map)
-  "Keymap for SAL major mode")
-
-(defvar sal-systems '(("CLM" :clm) ("Fomus" :fomus) ("Portmidi" :portmidi) ("RTS" :rts)))
-
-(defvar sal-easy-menu
-  (let ((con '(slime-connected-p)))
-    `("SAL"
-      [ "Start CM" start-sal :visible (not ,con) ]
-      [ "Kill CM" stop-sal :visible ,con ]
-      [ "Show REPL" slime-switch-to-output-buffer :active ,con]
-      "--"
-      [ "Execute" sal-enter ,con]
-      [ "Trace" toggle-trace :active NIL :style toggle
-	:selected *sal-trace*]
-      "---"
-      ,(cons "Use System"
-	    (loop for s in sal-systems 
-		  collect
-		  (vector (if (consp s) (car s) (format "%s" s))
-			  `(load-system , (if (consp s) (cadr s) s))
-			  `(and (slime-connected-p)
-			       (system-unloaded-p
-				,(if (consp s) (cadr s) s))))))
-;      ("Use System"
-;       ["CLM" (load-system :clm) (and ,con (system-unloaded-p :clm))]
-;       ["Fomus" (load-system :fomus)
-;	(and ,con (system-unloaded-p :fomus))]
-;       ["Portmidi" (load-system :portmidi)
-;	(and ,con (system-unloaded-p :portmidi))]
-;       ["RTS" (load-system :rts)
-;	(and ,con (system-unloaded-p :rts))]
-;       )
-      ["Current Directory" sal-get-directory ,con]
-      ["Set Directory..." sal-set-directory ,con]
-      ["Load File..." sal-load-file ,con]
-      ["Compile File..." sal-compile-file nil]
-      ["Import File..." sal-import-file nil]
-      ["Play File..." sal-play-file ,con]
-      "---"
-      ("Help"
-       [ "SAL Manual"
-	 (browse-url "http://commonmusic.sf.net/doc/dict/sal-topic.html")]
-       [ "CM Dictionary"
-	 (browse-url "http://commonmusic.sf.net/doc/dict/index.html")]
-       [ "Lookup symbol" sal-lookup-doc-at-point])
-      )))
-
-(defun sal-load-system ()
-  )
-
-(defun start-sal ()
-  (interactive)
-  (cond ((boundp 'cm-systems) ; cm.el loaded...
-	 (let ((cm-systems (add-to-list 'cm-systems 'sal)))
-	   (cm cm-program)))
-	(t
-	 (slime-start :program cm-program))))
-
-(defun stop-sal ()
-  "Kill *slime-repl* and all associated buffers."
-  (interactive)
-  (slime-repl-sayoonara))
-
-(easy-menu-define menubar-sal sal-mode-map "SAL" sal-easy-menu)
-
-(define-key sal-mode-map (kbd "<kp-enter>")
-  'sal-enter)
-
-(define-key sal-mode-map (kbd "<help>")
-  'sal-lookup-doc-at-point)
-
-(defun sal-get-directory ()
-  (interactive )
-  (let ((cur (slime-eval '(cm::pwd) "CM")))
-    (message (format "Current directory: %s" cur))))
-
-(defun sal-set-directory ()
-  (interactive )
-  (let ((cur (slime-eval '(cm::pwd) "CM")))
-    (if (stringp cur)
-	(let ((dir (read-directory-name "Set Output Directory"
-					nil cur nil)))
-	  (progn 
-	    (message (format "Directory set to %S" dir))
-	    (slime-eval-async `(cl::progn (cm::cd ,dir) (cl::values))
-			      nil "CM"))))))
-
-(defun sal-play-file ()
-  (interactive )
-  (let ((cur (slime-eval '(cm::pwd) "CM")))
-    (if (stringp cur)
-	(let ((fil (read-file-name "Play file" cur nil t)))
-	  (if (string-match "\\.\\(aiff\\|wav\\|mid\\)\\'"
-			    fil)
-	      (progn (message (format "Playing %S" fil))
-		     (slime-eval-async `(cm::play ,fil) nil "CM"))
-	    (message (format "Don't know how to play %s" fil)))))))
-
-(defun sal-load-file ()
-  (interactive )
-  (let ((cur (slime-eval '(cm::pwd) "CM")))
-    (if (stringp cur)
-	(let ((fil (read-file-name "Load file" cur nil t)))
-	  (if (string-match "\\.\\(lisp\\|sal\\|cm\\)\\'"
-			    fil)
-	      (progn (message (format "Loading %S" fil))
-		     (slime-eval-async `(cm::sal-load, fil) nil "CM"))
-	    (message (format "Don't know how to load %s" fil)))))))
-
 (defvar sal-mode-syntax-table (make-syntax-table))
 
 (add-to-list 'auto-mode-alist '("\\.sal$" . sal-mode))
 
-;; commands are SAL statements allowed at top-level, i.e. starting in
-;; column 0.  at some point this list will have to allow new commands
-;; to be added during the editing session
+;; commands are "top-level" SAL statements, i.e. starting at column 0.
+;; when the user presses Enter, we get the command starting before
+;; point and send that string to lisp.  if we didnt insist on the
+;; column 0 restriction we would have have sal's parser in Emacs!
 
 (defvar sal-commands 
   '("begin" "chdir" "define" "if" "load" "loop" "open" "play" "print" 
@@ -150,7 +37,8 @@
 
 (defvar sal-statements
   (append sal-commands 
-	  '("run" "exec" "output" "return" "unless" "wait" "when" "with")))
+	  '("run" "exec" "output" "return" "unless" "wait" 
+	    "when" "with")))
 
 ;; add literals that are not statments.
 
@@ -212,57 +100,151 @@
 
 (defvar sal-font-lock-keywords sal-font-lock-keywords-3)
 
-;;; sal editing commmands
+;;;
+;;; SAL Menu
+;;;
 
+(defvar sal-mode-map
+  (let ((map (make-sparse-keymap)))
+    map)
+  "Keymap for SAL major mode")
+
+(defvar *sal-break* nil)
 (defvar *sal-trace* nil)
-(defvar *sal-debug* nil) ; this
+(defvar *sal-loaded-systems* (list))
+
+(defvar sal-easy-menu
+  (let ((con '(slime-connected-p)))
+    `("SAL"
+      [ "Start CM" start-sal :visible (not ,con) ]
+      [ "Kill CM" stop-sal :visible ,con ]
+      [ "Show REPL" slime-switch-to-output-buffer :active ,con]
+      "--"
+      [ "Execute" sal-enter ,con]
+      ("Debug"
+       [ "Trace Commands" toggle-trace :style toggle :active ,con
+	 :selected *sal-trace*]
+       [ "Break on Errors" toggle-break :style toggle :active ,con
+	 :selected *sal-break*]
+       )
+      "---"
+      ("Use System"
+       ["CLM" (sal-load-system :clm)
+	(and ,con (system-unloaded-p :clm))]
+       ["Fomus" (sal-load-system :fomus)
+	(and ,con (system-unloaded-p :fomus))]
+       ["Midishare" (sal-load-system :midishare)
+	(and ,con (system-unloaded-p :midishare))]
+       ["OSC" (sal-load-system :osc) 
+	(and ,con (system-unloaded-p :osc))]
+       ["Portmidi" (sal-load-system :portmidi)
+	(and ,con (system-unloaded-p :portmidi))]
+       ["RTS" (sal-load-system :rts)
+	(and ,con (system-unloaded-p :rts))]
+       ["Sa" (sal-load-system :sa)
+	(and ,con (system-unloaded-p :sa))]
+       )
+      ["Current Directory" sal-get-directory ,con]
+      ["Set Directory..." sal-set-directory ,con]
+      ["Load File..." sal-load-file ,con]
+      ["Compile File..." sal-compile-file nil]
+      ["Import File..." sal-import-file nil]
+      ["Play File..." sal-play-file ,con]
+      "---"
+      ("Help"
+       [ "SAL Manual"
+	 (browse-url "http://commonmusic.sf.net/doc/dict/sal-topic.html")]
+       [ "CM Dictionary"
+	 (browse-url "http://commonmusic.sf.net/doc/dict/index.html")]
+       [ "Lookup Symbol" sal-lookup-doc-at-point])
+      )))
+
+(easy-menu-define menubar-sal sal-mode-map "SAL" sal-easy-menu)
+
+(define-key sal-mode-map (kbd "<kp-enter>")
+  'sal-enter)
+
+(define-key sal-mode-map (kbd "<help>")
+  'sal-lookup-doc-at-point)
+
+(defun start-sal ()
+  (interactive)
+  (cond ((boundp 'cm-systems) ; cm.el loaded...
+	 (let ((cm-systems (add-to-list 'cm-systems 'sal)))
+	   (cm cm-program)))
+	(t
+	 (slime-start :program cm-program))))
+
+(defun stop-sal ()
+  "Kill *slime-repl* and all associated buffers."
+  (interactive)
+  (slime-repl-sayoonara))
+
+(defun sal-get-directory ()
+  (interactive )
+  (let ((cur (slime-eval '(cm::pwd) "CM")))
+    (message (format "Current directory: %s" cur))))
+
+(defun sal-set-directory ()
+  (interactive )
+  (let ((cur (slime-eval '(cm::pwd) "CM")))
+    (if (stringp cur)
+	(let ((dir (read-directory-name "Set Output Directory"
+					nil cur nil)))
+	  (progn 
+	    (message (format "Directory set to %S" dir))
+	    (slime-eval-async `(cl::progn (cm::cd ,dir) (cl::values))
+			      nil "CM"))))))
+
+(defun sal-play-file ()
+  (interactive )
+  (let ((cur (slime-eval '(cm::pwd) "CM")))
+    (if (stringp cur)
+	(let ((fil (read-file-name "Play file" cur nil t)))
+	  (if (string-match "\\.\\(aiff\\|wav\\|mid\\)\\'"
+			    fil)
+	      (progn (message (format "Playing %S" fil))
+		     (slime-eval-async `(cm::play ,fil) nil "CM"))
+	    (message (format "Don't know how to play %s" fil)))))))
+
+(defun sal-load-file ()
+  (interactive )
+  (let ((cur (slime-eval '(cm::pwd) "CM")))
+    (if (stringp cur)
+	(let ((fil (read-file-name "Load file" cur nil t)))
+	  (if (string-match "\\.\\(lisp\\|sal\\|cm\\)\\'"
+			    fil)
+	      (progn (message (format "Loading %S" fil))
+		     (slime-eval-async `(cm::sal-load, fil) nil "CM"))
+	    (message (format "Don't know how to load %s" fil)))))))
 
 (defun toggle-trace ()
   (interactive )
-  (if *sal-debug*
-      (message "Cannot toggle trace while Debug is ON.")
-    (progn
-      (setq *sal-trace* (not *sal-trace*))
-      (slime-eval-async
-       `(common-lisp::setq cm::*sal-trace* ,*sal-trace* ) nil "CM")
-      (message (if *sal-trace* "Trace ON" "Trace OFF")))))
+  (slime-eval-async `(cl::setq cm::*sal-trace* (cl::not cm::*sal-trace*))
+		    (lambda (v) (setq *sal-trace* v))))
 
-(defun toggle-debug ()
-  (interactive)
-  (if *sal-trace*
-      (message "Cannot toggle debug while Trace in ON.")
-    (let ((forms (list)))
-      (setq *sal-debug* (not *sal-debug*))
-      (cond ((not *sal-debug*)
-	     (setq forms `(common-lisp::setq cm::*sal-eval* t
-					     cm::*sal-trace* nil)))
-	    (t 
-	     (setq forms `(common-lisp::setq cm::*sal-eval* nil
-					     cm::*sal-trace* t))))
-      (slime-eval-async forms nil "CM")
-      (message (if *sal-debug* "Debug ON" "Debug OFF")))))
-
-(defun this-line ()
-  "Return the vertical position of point..."
-  (+ (count-lines (point-min) (point))
-     (if (= (current-column) 0) 1 0)))
+(defun toggle-break ()
+  (interactive )
+  (slime-eval-async `(cl::setq cm::*sal-break* (cl::not cm::*sal-break*))
+		    (lambda (v) (setq *sal-break* v))))
 
 ;; system loading
 
 (defun system-loaded-p (sys)
-  ;; true if system is already loaded in running cm. this fast method
-  ;; only works if the system pushes its name onto features, but this
-  ;; is true in all cases so far...
-  (slime-eval `(cl:find ,sys cl:*features*) "CL-USER"))
+  ;;(slime-eval `(cl:find ,sys cl:*features*) "CL-USER")
+  (member sys *sal-loaded-systems*))
 
 (defun system-unloaded-p (sys)
   (not (system-loaded-p sys)))
 
-(defun load-system (sys)
-  ;; the progn is to stop slime attempting to return the actual asdf
-  ;; struct returned by use-system back to emacs, which causes weird
-  ;; things to happen :)
-  (slime-eval-async `(cl:progn (cl-user:use-system ,sys) t) nil "CM"))
+(defun sal-load-system (sys)
+  ;; return the keyword name if loaded. FIX: this assumes that each
+  ;; system pushes something onto features!
+  (slime-eval-async `(cl:progn (cl-user:use-system ,sys)
+			       (cl:find ,sys cl:*features*)) 
+		    (lambda (s) 
+		      (if (eql s sys)
+			  (push s *sal-loaded-systems*)))))
 
 (defvar sal-loaded-p nil)
 
@@ -282,7 +264,8 @@
     ;; THIS HAS TO BE CLEARED WHEN CM IS KILLED
     (if (not (sal-loaded-p))
 	(if (y-or-n-p "SAL system not loaded. Attempt to load SAL? ")
-	    (slime-eval-async '(cl:progn (cl-user:use-system :sal) t) nil "CM"))
+	    (slime-eval-async '(cl:progn (cl-user:use-system :sal) t)
+			      nil "CM"))
       (let ((left 0) 
 	    (right 0)
 	    (cmd nil)
@@ -294,7 +277,8 @@
 	      ((or (= (point) (point-max))
 		   (looking-at "[ \t]*$"))
 	       ;;(setq left (save-excursion (beginning-of-line) (point)))
-	       (setq left (backwards-sal-statement sal-command-start-regexp ))
+	       (setq left (backwards-sal-statement 
+			   sal-command-start-regexp ))
 	       (setq right (point))))
 	(if (and left right (< left right))
 	    (let ((cmd (buffer-substring-no-properties left right)))
@@ -310,7 +294,8 @@
   (interactive)
   (let ((cell (bounds-of-thing-at-point 'symbol)))
     (if cell
-	(let ((word (buffer-substring-no-properties (car cell) (cdr cell))))
+	(let ((word (buffer-substring-no-properties (car cell)
+						    (cdr cell))))
 	  (if (member word sal-statements)
 	      (progn
 		(when (equal word "define")
@@ -416,9 +401,11 @@
 		       ;; if so, indent to arg column of continued
 		       ;; command
 		       (if (incomplete-statementp extent)
-			   (setq cur-indent (statement-arg-indent (point)))
+			   (setq cur-indent
+				 (statement-arg-indent (point)))
 			 ;; increase indent level
-			 (if (looking-at sal-indenting-substatements-regexp)
+			 (if (looking-at 
+			      sal-indenting-substatements-regexp)
 			     (setq cur-indent (+ (current-indentation)
 						 indent-width))))
 		       )))))))
@@ -498,6 +485,8 @@
 	    (- here (point)))
 	nil))))
 
+(defvar sal-mode-hook nil)
+
 (defun sal-mode ()
   "Major mode for editing SAL files"
   (interactive)
@@ -514,7 +503,8 @@
   (set (make-local-variable 'font-lock-defaults)
        '(sal-font-lock-keywords nil))
   (set (make-local-variable 'indent-line-function) 'sal-indent-line)  
-  (set (make-local-variable 'fill-paragraph-function) 'lisp-fill-paragraph)  
+  (set (make-local-variable 'fill-paragraph-function)
+       'lisp-fill-paragraph)  
   (set (make-local-variable 'comment-start) ";")
 ;  (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
 
