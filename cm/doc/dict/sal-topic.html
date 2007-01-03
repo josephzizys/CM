@@ -15,13 +15,11 @@
 <dd>SAL</dd>
 </dl>
 
-<!-- h2>Introduction</h4 -->
-
 <h2>Contents</h2>
 <ol>
   <li><a href="#introduction">Introduction</a></li>
   <li><a href="#sal-mode">SAL Mode</a></li>
-  <li><a href="#statements">Language</a></li>
+  <li><a href="#language">Language</a></li>
   <li><a href="#sexprs">Symbolic Expressions</a></li>
   <li><a href="#reserved">Reserved words</a></li>
   <li><a href="#lacunae">Notes and Lacun&aelig;</a></li>
@@ -43,7 +41,9 @@ School of Music for many years. </p>
 that is loaded into Common Music <!--(using <a
 href="use-system-fn.html">use-system</a>) --> and an Emacs mode
 (<code>sal-mode</code>) that supports editing and executing SAL
-programs. <!-- Sal's lexer and parser often do a better job explaining
+programs. </p>
+
+<!-- Sal's lexer and parser often do a better job explaining
 syntax errors than the underlying Lisp error system and (by default)
 runtime errors are reported without entering the Lisp error break. -->
 
@@ -54,13 +54,12 @@ task such as triggering output, defining functions and musical
 processes, loading files, and so on. A statement is a construct in the
 SAL language, such as <code>set</code>, <code>loop</code>,
 <code>define</code>, etc.  A symbolic expression , or <var>sexpr</var>
-is something that evaluates to a value.
-</p>
+is something that evaluates to a value.  </p>
 
 
 <h2 id="sal-mode">SAL Mode</h2>
 
-<p>SAL mode is an Emacs editing mode that provides an editing menu, syntax highlighting and evaluation services for SAL programs.
+<p>SAL mode is an Emacs editing mode that provides an editing menu, syntax highlighting and evaluation services for SAL programs.</p>
 
 <h3>The SAL menu</h3>
 
@@ -79,13 +78,12 @@ is something that evaluates to a value.
   <tr><td colspan="2" style="border-bottom: 1px solid darkgray;"><a href="#import_file">Play File...</a></td></tr>
  <tr><td><a href="#help">Help</a></td> <td style="text-align:right;"> &gt;</td> </tr>
 </table>
-</blockquote>
 
 <dl>
   <dt id="start_cm">Start CM</dt>  <dd>Start/Kill a Common Music session.</dd>
   <dt id="show_repl">Show REPL</dt>  <dd>Makes REPL window visible on screen.</dd>
   <dt id="execute">Execute</dt>  <dd>Execute SAL command before point.</dd>
-  <dt id="trace">Debug</dt>  <dd>Submenu for debugging.</dd>
+  <dt id="debug">Debug</dt>  <dd>Submenu for debugging.</dd>
   <dt id="trace">Trace</dt>  <dd>Toggle tracing (debugging).</dd>
   <dt id="use_system">Use System</dt> <dd>Submenu for loading software systems.</dd>
   <dt id="show_directory">Show Directory</dt>  <dd>Shows current working directory.</dd>
@@ -101,7 +99,7 @@ is something that evaluates to a value.
 <p>Sal mode colorizes program text:</p>
 
 <ul>
-  <li>Comments are <span class="salcom">red</span>
+  <li>Comments are <span class="salcom">red</span></li>
   <li>Strings are <span class="salstr">tan</span></li>
   <li>Commands are  <span class="salcmd">blue</span> </li>
   <li>Reserved words are <span class="salres">purple</span></li>
@@ -166,7 +164,7 @@ one or more statements and terminated with the required
   <span class="salres">with</span> kn = random(128),
        pc = kn % 12
   <span class="salres">print</span> <span class="salstr">"a random keynum: "</span>, kn
-  <span class="salres">print</span> <span class="salstr">"its pitch clss: "</span>, pc
+  <span class="salres">print</span> <span class="salstr">"its pitch class: "</span>, pc
 <span class="salcmd">end</span>    
 </pre>
 </div>
@@ -233,14 +231,21 @@ its value.</p>
 
 <div class="float">
 <pre class="code">
-<span class="salcmd">define</span> <span class="saltyp">function</span> pctransp (row, pc)
+<span class="salcmd">define</span> <span class="saltyp">function</span> rowtransp (row, pc)
   <span class="salres">loop</span> <span class="salres">with</span> l = {}
     <span class="salres">for</span> i <span class="salres">in</span> row
-    <span class="salres">set</span> l &amp;= (i + pc) % 12   <span class="salcom">; collect mod 12!</span>
+    <span class="salres">set</span> l &amp;= (i + pc) % 12
     <span class="salres">finally</span> <span class="salres">return</span> l
-  <span class="salres">end</span></pre>
-</div>
+  <span class="salres">end</span>
 
+<span class="salcmd">begin</span>
+  <span class="salres">with</span> rr = shuffle({0 1 2 3 4 5 6 7 8 9 10 11} ) ,
+       pc = random(12),
+       tr = rowtransp( rr, pc )
+  <span class="salres">print</span> <span class="salstr">"row: "</span>, rr, <span class="salstr">" int:"</span>, pc, <span class="salstr">" transposed: "</span>, tr
+<span class="salcmd">end</span>
+</pre>
+</div>
 <!-- DEFINE PROCESS -->
   
 <dl class="dictsyntax" id="define_process">
@@ -250,19 +255,19 @@ its value.</p>
 
 <p> Musical process definitions are very similar to functions except that they do not have
 <a href="#return"><code>return</code></a> statements and they must contain a <a href="#run"><code>run</code></a> block as their final statement. The <code>run</code> block is syntactically identical to the  <a href="#run"><code>loop</code></a> statement except that it supports several additional statements specific to musical process definitions: <a href="#output"><code>output</code></a> and <a href="#wait"><code>wait</code></a>.
-<!-- Use <a href="#output"><code>output</code></a> statements inside the <code>run</code> block to send musical object to an <a href="#open">open output stream</a> on each iteration.</p> -->
+</p>
 
 <div class="float">
 <pre class="code">
 <span class="salcmd">define</span> <span class="saltyp">process</span> foo(n, r)
   <span class="salres">run</span> <span class="salres">repeat</span> n
     <span class="salres">for</span> k = between(40, 70)
-    <span class="salres">output</span> make</span>(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> now() <span class="salkey">keynum:</span> k]
+    <span class="salres">output</span> make(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> now() <span class="salkey">keynum:</span> k]
     <span class="salres">if</span> even?(k) <span class="salres">then</span>
-      <span class="salres">output</span> make</span>(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> now() <span class="salkey">,keynum:</span> k + 12)
+      <span class="salres">output</span> make(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> now() <span class="salkey">,keynum:</span> k + 12)
       <span class="salres">else</span>
 	<span class="salres">begin</span>
-	  <span class="salres">output</span> make</span>(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> now(), <span class="salkey">keynum:</span> k - 12)
+	  <span class="salres">output</span> make(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> now(), <span class="salkey">keynum:</span> k - 12)
 	  <span class="salres">if</span> odds(.4) <span class="salres">then</span>
 	    <span class="salres">output</span> make(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> now(), <span class="salkey">keynum:</span> k - random(12))
 	<span class="salres">end</span>
@@ -288,7 +293,7 @@ its value.</p>
 <span class="salcmd">begin</span>
   <span class="salres">with</span> d1 = random(6), d2 = random(6)
   
-  <span class="salres">if</span> (d1 = 0 & d2 = 0) <span class="salres">then</span>
+  <span class="salres">if</span> (d1 = 0 &amp; d2 = 0) <span class="salres">then</span>
     <span class="salres">print</span> <span class="salstr">"Snake eyes!"</span>
   <span class="salres">else</span>
     <span class="salres">print</span> <span class="salstr">"Loser :("</span>
@@ -300,17 +305,16 @@ its value.</p>
 <dt>[Statement]</dt>
 <dd><code class="entry">load</code> <var>file</var></dd>
 </dl>
-
-<p> Loads a Lisp or SAL source <var>file</var> into Lisp. <var>File</var> should be a pathname string or variable containing a pathname string.
-</p>
+<p> Loads a Lisp or SAL source <var>file</var> into
+Lisp. <var>File</var> should be a pathname string or variable
+containing a pathname string.  </p>
 <div class="float">
 <pre class="code">
-<span class="salcmd">load</span> <span class="salstr">"mycomp.sal"</span></pre></div>
-
-
-
+<span class="salcmd">load</span> <span class="salstr">"mycomp.sal"</span></pre>
+</div>
 
 <!-- LOOP -->
+
 <dl class="dictsyntax" id="loop">
 <dt>[Statement]</dt>
 <dd><code class="entry">loop</code> [<var>var-decl</var>] {<var>stepping</var>}* {<var>stopping</var>}* {<var>action</var>}+ [<var>finally</var>]
@@ -334,7 +338,7 @@ zero or more <var>stopping</var> statements, one or more <var>action</var> state
 
 <tr><th colspan="2" class="lcol" style="border-top: 1px solid gray; padding-right: 1em">conditional statements</th></tr>
 <tr><td><code>when</code> <var>sexpr</var></td> <td> action executed if <var>sexpr</var> is true</td> </tr>
-<tr><td><code>until</code> <var>sexpr</var></td> <td> action executed when <var>sexpr</var> is false</td> </tr>
+<tr><td><code>until</code> <var>sexpr</var></td> <td> action executed if <var>sexpr</var> is false</td> </tr>
 
 <tr><th colspan="2" class="lcol" style="border-top: 1px solid gray; padding-right: 1em;">action statements</th></tr>
 <tr><td> any SAL statement</td> <td>  statements are executed, they do not return values </td> </tr>
@@ -348,8 +352,8 @@ zero or more <var>stopping</var> statements, one or more <var>action</var> state
 <span class="salcmd">loop</span> <span class="salres">with</span> keys = {}, even = {}, sum = 0, lo = 128, hi = -1 
   <span class="salres">repeat</span> 10
   <span class="salres">for</span> k = random(128)
-  <span class="salres">set</span> keys &= k, sum += k, lo <= k, hi >= k
-  <span class="salres">when</span> even?(k) <span class="salres">set</span> even &= k
+  <span class="salres">set</span> keys &amp;= k, sum += k, lo &lt;= k, hi &gt;= k
+  <span class="salres">when</span> even?(k) <span class="salres">set</span> even &amp;= k
   <span class="salres">finally</span>
   <span class="salres">begin</span>
     <span class="salres">with</span> avr = sum / 10.0
@@ -482,6 +486,18 @@ according to the assignment operator <var>op</var>:</p>
 </table>
 </blockquote>
 
+<div class="float">
+<pre class="code">
+<span class="salcmd">loop</span>
+  <span class="salres">with</span> a, b = 0, c = 1, d = {}, e = {}, f = -1, g = 0
+  <span class="salres">for</span> i <span class="salres">below</span> 5
+    <span class="salres">set</span> a = i, b += 1, c *= 2, d &amp;= i, e @= i, f &lt;= i, g &gt;= i
+  <span class="salres">finally</span> <span class="salres">print</span> list(a,b,c,d,e,f,g)
+<span class="salcmd">end</span></pre>
+</div>
+
+<!--  <span class="salres">finally</span> <span class="salres">print</span> a,<span class="salstr">" "</span>, b,<span class="salstr">" "</span>, c,<span class="salstr">" "</span>, d,<span class="salstr">" "</span> e,<span class="salstr">" "</span>, f,<span class="salstr">" "</span>, g -->
+
 <!-- SPROUT -->
 
 <dl class="dictsyntax" id="sprout">
@@ -501,7 +517,19 @@ offset or list of the same.
 <span class="salcmd">open</span> <span class="salstr">"test.mid"</span>
 
 <span class="salcmd">sprout</span> list(make(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> 0, <span class="salkey">keynum:</span> random(128)),
-            make(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> 1, <span class="salkey">keynum:</span> random(128)) )
+            make(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">time:</span> 1, <span class="salkey">keynum:</span> random(128)) )</pre>
+</div>
+
+<!-- SYSTEM -->
+
+<dl class="dictsyntax" id="system">
+<dt>[Statement]</dt>
+<dd><code class="entry">system</code> <var>sys</var></dd>
+</dl>
+<p> Loads an ASDF defined software system into Lisp. <var>Sys</var> should be the string or self-evaluating symbol name of the system to load. See <a href="http://commonmusic.sf.net/doc/install.html">software installation</a> for more information.</p>
+<div class="float">
+<pre class="code">
+<span class="salcmd">system</span> <span class="salstr">"fomus"</span></pre>
 </div>
 
 <!-- UNLESS -->
@@ -586,7 +614,7 @@ precedence rules apply if no parentheses are provided.</p>
 <span class="salcmd">print</span> (1 + 3) * 4
 <span class="salcmd">print</span> 2 != 1 + random(2)
 <span class="salcmd">print</span> 13 % 12
-<span class="salcmd">print</span> 2 &gt;= 1 & 3 = 2 + 1
+<span class="salcmd">print</span> 2 &gt;= 1 &amp; 3 = 2 + 1
 <span class="salcmd">print</span> {c e g} ~= {c e g}
 </pre>
 </blockquote>
@@ -626,7 +654,7 @@ precedence rules apply if no parentheses are provided.</p>
 </dd>
 
 <dt id="lists">Lists</dt>
-<dd><p>Sequences of constant data enclosed within <code>{}</code>. Lists may contain numbers, booleans,, symbols, strings, and other lists.</p>
+<dd><p>Sequences of constant data enclosed within <code>{}</code>. Lists may contain numbers, booleans, symbols, strings, and other lists.</p>
 <blockquote>
 <pre><span class="salcmd">print</span> {c 60 e 64}</pre>
 </blockquote>
@@ -636,7 +664,7 @@ precedence rules apply if no parentheses are provided.</p>
 <dd><p>A variable reference <var>vvv</var>.<var>sss</var> where <var>vvv</var> is the name of the variable and <var>sss</var> is the name of a slot. Slot value references can appear in expressions and values can be assigned to slots by the <a href="#set">set</a> statement.</p>
 <blockquote>
 <pre><span class="salcmd">set</span> foo = make(<span class="saltyp">&lt;midi&gt;</span>), foo.keynum = random(128)
-<span class="salcmd">print</span> foo.keynum / 2
+<span class="salcmd">print</span> foo.keynum / 2</pre>
 </blockquote>
 </dd>
 
@@ -644,8 +672,7 @@ precedence rules apply if no parentheses are provided.</p>
 <dd><p>A variable identifier followed by one or more comma-delimited indices enclosed within <code>[]</code>.</p>
 <blockquote>
 <pre><span class="salcmd">set</span> x = list(100, 200, 300)
-<span class="salcmd">print</span> x[1], " ", x[random(3)]
-</pre>
+<span class="salcmd">print</span> x[1], " ", x[random(3)]</pre>
 </blockquote>
 </dd>
 
@@ -658,9 +685,9 @@ Commas separate the individual arguments. Some functions support <em>named param
 <span class="salcmd">print</span> make(<span class="saltyp">&lt;midi&gt;</span>, <span class="salkey">keynum:</span> random(128), <span class="salkey">duration:</span> .5)</pre>
 </blockquote>
 </dd>
+</dl>
 
 <h2 id="reserved">Reserved Symbols</h2>
-
 
 <table >
 <tr>
@@ -708,7 +735,8 @@ Commas separate the individual arguments. Some functions support <em>named param
 <td style="padding:1em;"> <a href="#loop"><code>when</code></a> </td>
 <td style="padding:1em;"> <a href="#loop"><code>while</code></a> </td>
 <td style="padding:1em;"> <a href="#with"><code>with</code></a> </td>
-<td style="padding:1em;"></td> <td style="padding:1em;"><td style="padding:1em;"></td> <td style="padding:1em;"> <td style="padding:1em;"></td> 
+<td style="padding:1em;"></td> <td style="padding:1em;"></td>
+<td style="padding:1em;"></td> <td style="padding:1em;"></td> <td style="padding:1em;"></td> 
 
 </tr>
 </table>
@@ -726,8 +754,6 @@ Commas separate the individual arguments. Some functions support <em>named param
 
   <li> Lisp keywords are legal sexprs but they are not function
   parameter names.</li>
-
-
 
 </ul>
 
