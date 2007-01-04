@@ -13,12 +13,46 @@
 (require 'slime)
 
 (when (member 'aquamacs features)
-  (setq aquamacs-known-major-modes
-	(add-to-list 'aquamacs-known-major-modes '(sal-mode . "SAL")
-		     )))
+  (add-to-list 'aquamacs-known-major-modes '(sal-mode . "SAL"))
+  ;; make inferior lisp buffer invisible in buffer menu
+  (add-to-list 'obof-other-frame-regexps " \\*inferior-lisp\\*")
+  (add-to-list 'obof-other-frame-regexps "\\*slime-repl\\\\*"))
 
 (unless (boundp 'cm-program)
-  (defvar cm-program "cm -s sal"))
+  (defvar cm-program "cm")
+  (loop for type in '(".midi" ".mid" ".snd" ".aiff" ".wav" ".osc"
+		    ".fas" ".dfas" ".fasl" ".lib" ".ppcf" ".so"
+		    ".dylib")
+	do (add-to-list 'completion-ignored-extensions type)))
+
+(defun start-sal ()
+  (interactive)
+  (unless (slime-connected-p)
+    (let ((parsed (split-string cm-program)))
+      (add-hook 'slime-connected-hook 'sal-start-hook)
+      (slime-start :program (first parsed) 
+		   :program-args (rest parsed)
+		   :init (lambda (port coding)
+			   (concat (slime-init-command port coding)
+				   (format "(use-system :sal)\n" )))
+		   :buffer (if (member 'aquamacs features)
+			       " *inferior-lisp*"
+			     "*inferior-lisp*")))))
+
+(defun sal-start-hook ()
+  ;; set repl package and readtable to cm...
+  (slime-repl-send-string "(cm)")
+  ;; aquamacs: hide inferior lisp buffer if visible after slime starts
+  (when (member 'aquamacs features)
+    (let ((ilw (get-buffer-window " *inferior-lisp*" t)))
+      (if ilw (delete-frame (window-frame ilw)))))
+  ;; dont interfere with other (non-cm) sessions
+  (remove-hook 'slime-connected-hook 'sal-start-hook))
+
+(defun stop-sal ()
+  "Kill *slime-repl* and all associated buffers."
+  (interactive)
+  (slime-repl-sayoonara))
 
 (defvar sal-mode-syntax-table (make-syntax-table))
 
@@ -167,19 +201,6 @@
 (define-key sal-mode-map (kbd "<help>")
   'sal-lookup-doc-at-point)
 
-(defun start-sal ()
-  (interactive)
-  (cond ((boundp 'cm-systems) ; cm.el loaded...
-	 (let ((cm-systems (add-to-list 'cm-systems 'sal)))
-	   (cm cm-program)))
-	(t
-	 (slime-start :program cm-program))))
-
-(defun stop-sal ()
-  "Kill *slime-repl* and all associated buffers."
-  (interactive)
-  (slime-repl-sayoonara))
-
 (defun sal-get-directory ()
   (interactive )
   (let ((cur (slime-eval '(cm::pwd) "CM")))
@@ -251,7 +272,7 @@
 (defun sal-loaded-p ()
   ;; true if sal is loaded in running cm.
   (if (not sal-loaded-p)
-      (if (system-loaded-p :sal)
+      (if (slime-eval `(cl:find :sal cl:*features*) "CL-USER")
 	  (progn (setq sal-loaded-p t)
 		 t)
 	nil)
