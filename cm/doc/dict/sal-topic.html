@@ -479,8 +479,9 @@ according to the assignment operator <var>op</var>:</p>
 <tr><td><code>=</code></td> <td> sets <var>var</var> to the value of <var>sexpr</var> </td> </tr>
 <tr><td><code>+=</code></td> <td> increments <var>var</var> by the value of <var>sexpr</var> </td> </tr>
 <tr><td><code>*=</code></td> <td> scales <var>var</var> by the value of <var>sexpr</var> </td> </tr>
-<tr><td><code>&amp;=</code></td> <td> appends value of <var>sexpr</var> to the list in <var>var</var> </td> </tr>
-<tr><td><code>@=</code></td> <td> prepends value of <var>sexpr</var> to the list in <var>var</var> </td> </tr>
+<tr><td><code>&amp;=</code></td> <td> collects value of <var>sexpr</var> at the end of the list in <var>var</var> </td> </tr>
+<tr><td><code>^=</code></td> <td> appends the list <var>sexpr</var> to the end of the list in <var>var</var> </td> </tr>
+<tr><td><code>@=</code></td> <td> collects value of <var>sexpr</var> at the front of the list in <var>var</var> </td> </tr>
 <tr><td><code>&lt;=</code></td> <td> minimizes <var>var</var> with the value <var>sexpr</var> </td> </tr>
 <tr><td><code>&gt;=</code></td> <td> maximizes <var>var</var> with the value <var>sexpr</var> </td> </tr>
 </table>
