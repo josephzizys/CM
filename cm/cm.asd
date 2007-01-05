@@ -415,7 +415,7 @@
     (cmcall :cm-logo)))
 
 (defun use-system (sys &key directory bin-directory
-                   (verbose t) warnings )
+                   (verbose t) warnings symbols )
   ;; load system from either:
   ;;  (1) user supplied dir
   ;;  (2) entry in asdf:*central-registry*
@@ -495,6 +495,28 @@
             (asdf:operate loading-op sys))))
     (when bin-directory
       (remove-method #'asdf:output-files meth))
+    (when symbols
+      (let* ((p (find-package (string-upcase name)))
+	     (s (string symbols))
+	     (m (if (string-equal s "force") :force
+		    (if (or (string-equal s "import")
+			    (string-equal s "use"))
+			:import
+			nil)))
+	     (l ())
+	     x)
+	(if (not p)
+	    (format t "Can't import symbols, no package named ~A."
+		    name)
+	    (do-external-symbols (s p)
+	      (setq x (find-symbol (string s) :cm))
+	      (if (not x)
+		  (import s ':cm)		  
+		  (if (not (eq x s))
+		      (if (eql m ':force) (shadowing-import s ':cm)
+			  (push s l))))))
+		  
+	(format t "The following conflicting symbols were not imported:~%~{ ~s~}." l)))
     (asdf:find-system sys)))
 
 (export '(cm use-system) :cl-user)
