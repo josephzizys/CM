@@ -146,7 +146,7 @@
 (defvar *sal-break* nil)
 (defvar *sal-trace* nil)
 (defvar *sal-loaded-systems* (list))
-
+(defvar *sal-use-symbols* nil)
 (defvar sal-easy-menu
   (let ((con '(slime-connected-p)))
     `("SAL"
@@ -177,6 +177,10 @@
 	(and ,con (system-unloaded-p :rts))]
        ["Sa" (sal-load-system :sa)
 	(and ,con (system-unloaded-p :sa))]
+       "---"
+       [ "Import Symbols"
+	 (setq *sal-use-symbols* (not *sal-use-symbols*))
+	 :style toggle :active ,con :selected *sal-use-symbols*]
        )
       ["Current Directory" sal-get-directory ,con]
       ["Set Directory..." sal-set-directory ,con]
@@ -261,11 +265,12 @@
 (defun sal-load-system (sys)
   ;; return the keyword name if loaded. FIX: this assumes that each
   ;; system pushes something onto features!
-  (slime-eval-async `(cl:progn (cl-user:use-system ,sys)
-			       (cl:find ,sys cl:*features*)) 
-		    (lambda (s) 
-		      (if (eql s sys)
-			  (push s *sal-loaded-systems*)))))
+  (slime-eval-async 
+   `(cl:progn (cl-user:use-system ,sys :symbols , *sal-use-symbols*)
+	      (cl:find ,sys cl:*features*)) 
+   (lambda (s) 
+     (if (eql s sys)
+	 (push s *sal-loaded-systems*)))))
 
 (defvar sal-loaded-p nil)
 
