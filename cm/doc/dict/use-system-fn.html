@@ -61,6 +61,13 @@ file. The default value is boolean true.
 <dd>
 If true then compiler warnings are printed otherwise they are not. The default values is false.
 </dd>
+
+<dt> <code class="keyword">:symbols</code> <var>boolean</var> </dt>
+<dd> If true then the system's external symbols are imported into CM
+after the system is loaded. Conflicting symbols are not imported and
+the use is warned. (Conflicting symbols may still be referenced via 
+normal package prefixing).  </dd>
+
 </dl>
 
 <h4>Examples:</h4>
