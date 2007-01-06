@@ -1,11 +1,17 @@
 ----------------------------------------------------------------------
-CM 2.9.1
+CM 2.10.0
+
+o use-system has new arg :symbols {#t | #f} that optionally imports
+  symbols from loaded system's package. conflicting symbols are not
+  imported and the user is warned. (conflicting symbols can still be
+  referenced via normal package prefixing.)
 
 o New FOMUS inits: :play #t causes midi file to be written, 
   :tempo <num> is midi playback tempo, defaults to 60.
   Default value of :view init is now T.
 
-o tunings now support :stepsand :octave inits for equal tempered tunings
+o tunings now support :steps and :octave inits for equal tempered
+  tunings
   (new tuning :steps 24)
   (new tuning :steps 13 :octave 3)
 
@@ -64,6 +70,7 @@ o  New time conversion functions sec, msec and usec that convert
 o cm-version takes optional formatting arg that returns version as
   :string :list or :number
 
+o "aif" is recognized as an aiff file
 
 Changes:
 
@@ -71,6 +78,8 @@ o Durations and wait values must agree with time format under RTS
 
 Bug Fixes:
 
+o fixed bug that prevented process stepping vars that reference 'with'
+  variables from working
 o tunings now look at intitial :cent or :scaler values, if 0 or 1
   then the values are taken to be (absolute) degrees otherwise
   they are taken to be relative steps between degrees (Per Bloland)

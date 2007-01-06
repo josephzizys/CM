@@ -48,6 +48,7 @@
       <li><a href="#player">Player Interface</a></li>
       <li><a href="#portmidi">Portmidi Interface</a></li>
       <li><a href="#rts">Real Time Scheduling</a> (RTS)</li>
+      <li><a href="#sa">Sa</a> </li>
       <li><a href="#sal">SAL</a> </li>
     </ol>
   </li>
@@ -524,6 +525,25 @@ $ make
 <p>
 See the <a href="dict/rts-topic.html">RTS</a> topic help for more information about working with RTS.
 </p>
+
+
+<!-- SA -->
+<h3 id="sa">Sa</h3>
+<p><code>(<a href="dict/use-system-fn.html">use-system</a> <span class="keyword">:sa</span>)</code></p>
+<p>
+A Common Lisp interface to
+the <a href="http://music.nuim.ie//musictec/SndObj/main.html">SndObj Audio Library</a>.
+</p>
+
+<ul>
+<li>Author: Todd Ingalls</li>
+<li>Downloads: <a href="http://sourceforge.net/project/showfiles.php?group_id=9766&package_id=172088">Sa</a></li>
+<li>Supporting: OpenMCL, SBCL</li>
+<li>Requirements: GCC, configure, make, <a href="http://www.portaudio.com/">PortAudio</a>, <a href="http://music.nuim.ie//musictec/SndObj/main.html">SndObj</a>, <a href="#cffi">CFFI</a>. The libraries and include files for Portaudio and SndObj must be installed under /usr/local/lib and /usr/local/include, respectively.</li>
+<li>Installation: Restore the Sa sources under your Lisp installation directory and see the enclosed README.
+
+</li>
+</ul>
 
 
 <h3 id="sal">SAL</h3>
