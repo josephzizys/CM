@@ -160,6 +160,10 @@
                        collect x 
                        do (set! x (+ x 1)))
                  '(0 1 2 3 4 5 6 7 8 9)))
+  (check "with x and y ... for i from x below y"
+	 (equal? (iter with a = 0 and b = 10
+		       for i from a below b collect i)
+		'(0 1 2 3 4 5 6 7 8 9)))
   (check "repeat...count"
          (equal? (iter repeat 4 count 4)
                  4))
@@ -169,6 +173,11 @@
                        collect x)
                  (list true false true false true false 
                        true false true false)))
+  (check "with x = 10 repeat...for...= x...then"
+	 (equal? (iter with x = 10 repeat 5
+		       for y = x then (+ x y 10) 
+		       collect y)
+		 '(10 30 50 70 90))) 
   (check "repeat count/true" 
          (equal? (iter repeat 10 count #t)
                  10))
