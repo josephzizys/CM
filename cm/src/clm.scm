@@ -175,7 +175,7 @@
                  :accessor audio-file-output-trace))
   :name 'audio-file
   :metaclass <io-class>                 ; moved to the files.
-  :file-types '("*.snd" "*.aiff" "*.wav")
+  :file-types '("*.snd" "*.aiff" "*.aif" "*.wav")
   :definer (function snd-writer))
 
 (define (set-audio-output-hook! fn)
@@ -498,7 +498,8 @@
       (cond ((string-ci=? ftype "snd")
              (set! autype mus-next)
              (set! fmat mus-bshort))
-            ((string-ci=? ftype "aiff")
+            ((or (string-ci=? ftype "aiff")
+		 (string-ci=? ftype "aif"))
              (set! autype mus-aifc)
              (set! fmat mus-bshort))
             ((string-ci=? ftype "wav")
