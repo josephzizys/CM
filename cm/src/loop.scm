@@ -185,6 +185,7 @@
   (let ((var (cadr forms))
         (tail (cddr forms))
         (bind '())
+	(init '())
         (from #f)
         (head #f)
         (last #f)
@@ -246,23 +247,32 @@
        (if (eq? last 'below)
          (set! test '>=)
          (set! test '>))))
-    
     ;; add binding for initial value
-    (push (make-binding var (or from 0)) bind)
+    (if (or (not from) (number? from))
+	(push (make-binding var (or from 0)) bind)
+	;; var may depend on 'with' var, so have to 
+	;; delay setting initial value to init clause
+	(begin (push (make-binding var #f) bind)
+	       (push `(set! ,var ,from) init)))
     ;; add binding for non-constant stepping values.
     (if (not step)
       (set! step 1)
       (if (not (number? step))
         (let ((var (gensym "v")))
-          (push (make-binding var step) bind)
+          (push (make-binding var #f) bind)
+	  (push `(set! , var ,step) init)
           (set! step var))))
     (set! step `(set! ,var (,incr ,var ,step)))
     (if stop
       (let ((end (gensym "v")))
-        (push (make-binding end stop) bind)
+	(if (number? stop)
+	    (push (make-binding end stop) bind)
+	    (begin (push (make-binding end #f) bind)
+		   (push `(set! ,end ,stop) init)))
         (set! stop (list test var end))))
     (values (make-loop-clause 'operator 'for
 			      'bindings (reverse bind)
+			      'initially (reverse init)
 			      'stepping (list step)
 			      'end-tests (if (not stop)
 					   '() (list stop)))
