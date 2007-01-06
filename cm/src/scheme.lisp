@@ -75,18 +75,16 @@
                form)))))
 
 (defmacro define-macro (formals &body body)
-  (let ((z (last  formals))
-        (a ()))
-    (if (null (cdr z ))
-      (setq a (cdr formals))
-      (setq a (append (loop with tail = (cdr formals)
-			 while (consp tail) collect (pop tail))
-                      (list (car z))
-                      (list '&rest)
-                      (list (cdr z)))))
-    `(defmacro ,(car formals) ,a ,@body)))
+  ;; (define-macro (foo bar baz . buz) ...)
+  (let ((name (pop formals))
+	(args (list)))
+    (loop while (consp formals)
+	 do (push (pop formals) args))
+    (if formals (setq args (list* formals '&rest args)))
+    `(defmacro ,name ,(nreverse args) ,@body)))
 
 ;;;
+
 (defmacro set! (a b) 
   `(progn (setf ,a ,b) ; guile has genealized set!
           (values)))
