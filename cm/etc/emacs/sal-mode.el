@@ -71,7 +71,7 @@
 
 (defvar sal-statements
   (append sal-commands 
-	  '("run" "exec" "output" "return" "unless" "wait" 
+	  '("run" "output" "return" "unless" "wait" ;"exec"
 	    "when" "with")))
 
 ;; add literals that are not statments.
@@ -268,9 +268,10 @@
   (slime-eval-async 
    `(cl:progn (cl-user:use-system ,sys :symbols , *sal-use-symbols*)
 	      (cl:find ,sys cl:*features*)) 
-   (lambda (s) 
-     (if (eql s sys)
-	 (push s *sal-loaded-systems*)))))
+;   (lambda (s) 
+;     (if (eql s sys)
+;	 (push s *sal-loaded-systems*)))
+   ))
 
 (defvar sal-loaded-p nil)
 
