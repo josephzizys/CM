@@ -11,29 +11,30 @@
 (in-package cm)
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
-  (defmacro saltest (pat str &optional res)
-    `(let ((r (quote ,res))
-	   a b c x)
-       (multiple-value-setq (a b c)
-	 (parse *sal-grammer* ,pat  ,str))
-       c
-       (cond ((not a)
-	      (if (typep b 'sal-error)
-		  (if (eql r ':error)
-		      (setq x t)
-		      (setq x nil))
+  (defmacro saltest (pat str &optional res &rest args)
+    (if (not res)
+	`(parse *sal-grammer* ,pat ,str ,@args)	
+	`(let ((r (quote ,res))
+	       a b c x)
+	   (multiple-value-setq (a b c)
+	     (parse *sal-grammer* ,pat  ,str ,@args))
+	   c
+	   (cond ((not a)
+		  (if (typep b 'sal-error)
+		      (if (eql r ':error)
+			  (setq x t)
+			  (setq x nil))
+		      (setq x nil)))
+		 ((equal b r)
+		  (setq x t))
+		 (t
 		  (setq x nil)))
-	     ((equal b r)
-	      (setq x t))
-	     (t (setq x nil)))
-       (if (not x)
-	   (let ((*print-case* ':downcase))
-	     ;(format t "~&Test ~S ~S failed!~%fail result: ~S" 
-	;	     ,pat ,str b)
-	     (format t "~&(saltest ~S ~S ~W)" ,pat ,str b)
-	     )
-	   t)))
-  )
+	   (if (not x)
+	       (let ((*print-case* ':downcase))
+		 (format t "~&~&>>>>>>>> Test ~S ~S failed,~&>>>>>>>> value:  ~S~&>>>>>>>> result: ~S" 
+			 ,pat ,str r b)
+		 nil)
+	       t)))))
 
 (saltest :list "{}" (list))
 (saltest :list "{{}}" '(nil))
@@ -159,34 +160,19 @@
 ; (saltest-pattern-constructor "markov {1 2 -> 3 4}")
 ; (saltest-pattern-constructor "markov {1 2 -> {3 .1} 4}")
 
-
 (saltest :procdecl
-"process foo ()
+	 "process foo ()
   run repeat 10
     print now()
   end"
-1)
+	 (defprocess foo nil (process repeat 10 do (sal-print (now))))
+	 :info '((:definition . :process)))
 
-"process foo ()
-  begin 
-    run repeat 10
-      print now()
-    end
-  end"
+(saltest :fundecl "function foo () begin print 123 end"
+	 (defun foo nil (progn (sal-print 123)) (values)))
 
-"process foo ()
-  begin with x, y
-    set x = 2
-    run repeat 10
-      print now()
-    end
-  end"
+(saltest :vardecl "variable foo = 1" (defparameter foo 1))
 
-
-(parse  *sal-grammer* :fundecl "function foo () begin print 123 end")
-
-(parse *sal-grammer* :vardecl "variable foo = 1")
-
-(parse  *sal-grammer* :procdecl "process foo () run repeat 10 print 123 end")  
-
-(parse  *sal-grammer*  :command "define process foo () run repeat 10 print 123 end")
+(saltest :procdecl "process foo () run repeat 10 print 123 end"  
+	 (defprocess foo nil (process repeat 10 do (sal-print 123)))
+	 :info '((:definition . :process)))
