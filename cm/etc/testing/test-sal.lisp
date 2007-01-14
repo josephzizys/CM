@@ -31,7 +31,7 @@
 		  (setq x nil)))
 	   (if (not x)
 	       (let ((*print-case* ':downcase))
-		 (format t "~&~&>>>>>>>> Test ~S ~S failed,~&>>>>>>>> value:  ~S~&>>>>>>>> result: ~S" 
+		 (format t "~&~&>>>>>>>> Test ~S ~S failed,~&         value:  ~S~&         result: ~S" 
 			 ,pat ,str r b)
 		 nil)
 	       t)))))
@@ -45,8 +45,8 @@
 (saltest :list "{1}" '(1))
 (saltest :list "{1 {2 3}}" '(1 (2 3)))
 
-(saltest :aref "a[1]" (elt a 1)
-(saltest :aref "a[1,2]" (elt a 1 2))
+(saltest :aref "a[1]" (elt a 1))
+(saltest :aref "a[1,2]" (aref a 1 2))
 (saltest :aref "a[random(10)]" (elt a (random 10)))
 
 (saltest :sexpr "foo" foo)
@@ -59,6 +59,12 @@
 (saltest :funcall "foo(1,2,hi: 1, ho: 33)" (foo 1 2 :hi 1 :ho 33))
 (saltest :funcall "foo(bar())" (foo (bar)))
 (saltest :funcall "foo(bar(1))" (foo (bar 1)))
+
+; (parse sexpr :ifexpr "?( #t, #t , #f)")
+; (parse sexpr :ifexpr "?( #t, :foo)")
+; (parse sexpr :ifexpr "?( 10 < a, :foo, 44 + random(100))")
+; (parse sexpr :ifexpr "?( fii(a), :true)")
+
 
 
 (saltest :funcall "foo(1, hi: bar(2), ho: 3)" (foo 1 :hi (bar 2) :ho 3))
@@ -143,7 +149,7 @@
 	    do (sal-print i x)))
 
 ;; operator tests
-(saltest :sexpr "x % y" (mod x y)
+(saltest :sexpr "x % y" (mod x y))
 (saltest :sexpr "y ^ z" (expt y z))
 (saltest :sexpr "a = b | c < d | e >= f"
 	 (or (or (= a b) (< c d)) (>= e f)))
@@ -176,3 +182,55 @@
 (saltest :procdecl "process foo () run repeat 10 print 123 end"  
 	 (defprocess foo nil (process repeat 10 do (sal-print 123)))
 	 :info '((:definition . :process)))
+
+(saltest :fundecl "function row->tp (row)
+  loop with a = first(row), new = {}
+    for b in rest(row)
+    set new &= tp(a,b), a = b
+    finally
+    begin
+      set new &= tp(a,first(row))
+      return new
+    end
+  end"
+	 (DEFUN ROW->TP (ROW) (LOOP WITH A = (FIRST ROW) WITH NEW = (LIST) FOR B IN (REST ROW) DO (PROGN (SETF NEW (NCONC NEW (LIST (TP A B)))) (SETF A B)) FINALLY (PROGN (SETF NEW (NCONC NEW (LIST (TP A (FIRST ROW))))) (RETURN-FROM ROW->TP (VALUES NEW)))) (VALUES))
+	 :info '((:definition . :function)))
+
+(saltest :loop-statement "loop with keys = {}, even = {}, sum = 0, lo = 128, hi = -1 
+  repeat 10
+  for k = random(128)
+  set keys &= k, sum += k, lo <= k, hi >= k
+  when even?(k) set even &= k
+  finally
+  begin
+    with avr = sum / 10.0
+    print list(keys,even,avr,lo,hi)
+  end
+end" 
+	 (LOOP WITH KEYS = (LIST) WITH EVEN = (LIST) WITH SUM = 0 WITH LO = 128 WITH HI = -1 REPEAT 10 FOR K = (RANDOM 128) DO (PROGN (SETF KEYS (NCONC KEYS (LIST K))) (SETF SUM (+ SUM K)) (SETF LO (MIN LO K)) (SETF HI (MAX HI K))) (WHEN (EVEN? K) (SETF EVEN (NCONC EVEN (LIST K)))) FINALLY (LET* ((AVR (/ SUM 10.0))) (SAL-PRINT (LIST KEYS EVEN AVR LO HI))))
+)
+
+(saltest :loop-statement "loop
+  with a, b = 0, c = 1, d = {}, e = {}, f = -1, g = 0
+  for i below 5
+    set a = i, b += 1, c *= 2, d &= i, e @= i, f <= i, g >= i
+  finally print list(a,b,c,d,e,f,g)
+end"
+	 (LOOP WITH A = NIL WITH B = 0 WITH C = 1 WITH D = (LIST) WITH E = (LIST) WITH F = -1 WITH G = 0 FOR I BELOW 5 DO (PROGN (SETF A I) (SETF B (+ B 1)) (SETF C (* C 2)) (SETF D (NCONC D (LIST I))) (SETF E (CONS I E)) (SETF F (MIN F I)) (SETF G (MAX G I))) FINALLY (SAL-PRINT (LIST A B C D E F G)))
+)
+
+(saltest :statement "begin
+  open \"test.mid\"
+  define process simp ()
+    run repeat 10 output make(<midi>) wait .2
+    end
+  sprout simp()
+end"
+(PROGN (SAL-OPEN "test.mid") (SAL-DEFINE ':PROCESS '(DEFPROCESS SIMP NIL (PROCESS REPEAT 10 DO (OUTPUT (MAKE-INSTANCE 'MIDI)) (WAIT 0.2)))) (SAL-SPROUT (SIMP)))
+)
+
+(saltest :statement "sprout make(<midi>)"
+	 (SAL-SPROUT (MAKE-INSTANCE 'MIDI)))
+
+(saltest :statement "sprout list(make(<midi>), foo()), {10 20}"
+	 (SAL-SPROUT (LIST (MAKE-INSTANCE 'MIDI) (FOO)) :AT '(10 20)))

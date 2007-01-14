@@ -52,7 +52,12 @@
 (defun stop-sal ()
   "Kill *slime-repl* and all associated buffers."
   (interactive)
-  (slime-repl-sayoonara))
+  (slime-repl-sayoonara)
+  (setq *sal-loaded-p* nil)
+  (setq *sal-break* nil)
+  (setq *sal-trace* nil)
+  (setq *sal-loaded-systems* (list))
+  (setq *sal-use-symbols* nil))
 
 (defvar sal-mode-syntax-table (make-syntax-table))
 
@@ -74,7 +79,7 @@
 	  '("run" "output" "return" "unless" "wait" ;"exec"
 	    "when" "with")))
 
-;; add literals that are not statments.
+;; add literals that are not statements.
 
 (defvar sal-reserved
   (append sal-statements
@@ -237,8 +242,7 @@
   (let ((cur (slime-eval '(cm::pwd) "CM")))
     (if (stringp cur)
 	(let ((fil (read-file-name "Load file" cur nil t)))
-	  (if (string-match "\\.\\(lisp\\|sal\\|cm\\)\\'"
-			    fil)
+	  (if t ;(string-match "\\.\\(lisp\\|sal\\|cm\\)\\'" fil)
 	      (progn (message (format "Loading %S" fil))
 		     (slime-eval-async `(cm::sal-load, fil) nil "CM"))
 	    (message (format "Don't know how to load %s" fil)))))))
@@ -273,13 +277,13 @@
 ;	 (push s *sal-loaded-systems*)))
    ))
 
-(defvar sal-loaded-p nil)
+(defvar *sal-loaded-p* nil)
 
 (defun sal-loaded-p ()
   ;; true if sal is loaded in running cm.
-  (if (not sal-loaded-p)
+  (if (not *sal-loaded-p*)
       (if (slime-eval `(cl:find :sal cl:*features*) "CL-USER")
-	  (progn (setq sal-loaded-p t)
+	  (progn (setq *sal-loaded-p* t)
 		 t)
 	nil)
     t))
