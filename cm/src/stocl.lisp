@@ -266,6 +266,7 @@
     (string?             stringp)
     (string=?            string=)
     (string-append       nil              string-append->concat)
+    (string-downcase!    nstring-downcase)
     (string-capitalize!  nstring-capitalize)
     (string-ci<?         string-lessp)
     (string-ci=?         string-equal)

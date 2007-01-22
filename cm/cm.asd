@@ -370,6 +370,8 @@
                                   :depends-on ("objects"))
                            (:file "scheduler" :scheme t 
                                   :depends-on ("io"))
+                           (:file "gnuplot" :scheme t
+                                  :depends-on ("io"))
                            (:file "sco" :scheme t
                                   :depends-on ("io"))
                            (:file "clm" :scheme t
