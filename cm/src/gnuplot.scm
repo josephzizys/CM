@@ -1,7 +1,5 @@
-(in-package cm)
-
 ;;; **********************************************************************
-;;; Copyright (C) 2005 Heinrich Taube, <taube (at) uiuc (dot) edu>
+;;; Copyright (C) 2007 Heinrich Taube, <taube (at) uiuc (dot) edu>
 ;;;
 ;;; This program is free software; you can redistribute it and/or
 ;;; modify it under the terms of the Lisp Lesser Gnu Public License.
@@ -45,11 +43,17 @@
 	(set! spec (car tail)))))
 
 (define (print-gnuplot-setting f k v . p)
-  ;; print file or plot settings depending on p
-  (if (or (not v) (null? v) (member k gnuplot-non-settings)) #f
+  ;; print global file setting or individual plot setting depending on
+  ;; p. f is file, k is (keyword) setting, v is its value.  skip null
+  ;; or non-gnu settings.
+  (if (or (not v) (null? v) (member k gnuplot-non-settings))
+      #f
       (let ((s (find-gnuplot-setting k)))
+	;; global set command
 	(if (null? p) (format f "set"))
+	;; print setting name
 	(format f " ~a" (the-string k))
+	;; print setting value
 	(cond (s
 	       ;; call special formatter
 	       ( (cadr s) f v))
@@ -118,18 +122,47 @@
 	      (slot-bound? x sl)
 	      (number? (slot-ref x sl))))))
 
-(define (print-gnuplot-slot-data f x sl)
-  (do ((tail sl (cdr tail)))
-      ((null? tail) #f)
-    (format f " ~s" (slot-ref x (car tail)))))
+(define (print-gnuplot-plot file data fmat)
+  (cond ((not fmat)
+	 (err "Missing :data format for ~s." data))
+	((eq? fmat #t)
+	 ;; each sublist is a point record (single line )
+	 (do ((tail data (cdr tail)))
+	     ((null? tail) #f)
+	   (do ((e (car tail) (cdr e)))
+	       ((null e) #f)
+	     (format file " ~s" (car e)))
+	   (format file "~%")))
+	((eq? fmat ':y)
+	 (do ((tail data (cdr tail)))
+	     ((null? tail) #f)
+	   (format file " ~s~%" (car tail))))
+	((eq? fmat ':xy)
+	 (do ((tail data (cddr tail)))
+	     ((null? tail) #f)
+	   (format file " ~s ~s~%" (car tail) (cadr tail))))
+	((is-a? (car data) <object>)
+	 (if (slot-data? (car data) fmat)
+	     (do ((tail data (cdr tail)))
+		 ((null? tail) #f)
+	       (do ((sl tail (cdr sl)))
+		   ((null? sl) #f)
+		 (format file " ~s" (slot-ref x (car sl))))
+	       (format file "~%"))
+	     (err "Missing slot data for ~s in  ~s." 
+		  fmat (car data))))
+	(else
+	 (err "Unknown :data format ~s." fmat)))
+  (format file "e~%"))
 
 ; (gnuplot t :title "asdf" :margin 1 :xrange '(-pi pi))
 ; (gnuplot t :title "asdf" :margin 1 )
 
-(define (gnuplot file . args)
+(define (gnuplot path . args)
   (let ((plots (list))
 	(infos (list :view #t :data #f)))
     ;; handle global file settings until first plot
+    (with-open-file (file path :direction :output :if-exists :supersede)
     (do ((tail args (cddr tail)))
 	((or (null? tail)
 	     (not (keyword? (car tail))))
@@ -167,7 +200,8 @@
       ;; data args are handled specially
       (do ((tail (cdr args) (cddr tail)))
 	  ((or (null? tail)
-	       (not (keyword? (car tail)))))
+	       (not (keyword? (car tail))))
+	   (set! args tail))
 	(cond ((null? (cdr tail))
 	       (err "Missing value for keyword ~s." (car tail)))
 	      ((eq? (car tail) ':data)
@@ -187,50 +221,46 @@
 	     (list-set! plotd 1 (guess-data-format (car plotd)))))
       (push plotd plots)
       )
-      ;; plots now list of (<plotdata> <format> (ranges..) settings...)
-      ;; print plot command and args for each plot. 
-      (format f "plot")
-      ;; print settings for each plot...
-      (do ((tail plots (cdr tail)))
-	  ((null? tail) 
-	   (format f "~%"))
-	(let* ((plotd (car tail))
-	       (dataf (list-ref plotd 1))
-	       (range (list-ref plotd 2)))
-	  ;; , separates individual plot clauses
-	  (unless (eq? tail plots)
-	    (format f ","))
+    ;;(print (list :plots-> plots))
+    ;; plots now list of (<plotdata> <format> (ranges..) settings...)
+    ;; print plot command and args for each plot. 
+    (format file "plot")
+    ;; print settings for each plot...
+    (do ((tail plots (cdr tail)))
+	((null? tail) 
+	 (format file "~%"))
+      (let* ((plotd (car tail))
+	     (range (list-ref plotd 2)))
+	;; , separates individual plot clauses
+	(unless (eq? tail plots)
+          (format file ","))
 	  ;; print plot ranges...
-	  (do ((tail range (cddr tail))
-	       (func (find-gnuplot-setting :xrange)))
-	      ((null? tail) #f)
-	      (if (second tail)
-		  ( func f (second tail))))
-	  (format f " '-'")
-	  ;; map over and print plot-specific settings
-	  (do ((tail (nth-tail plotd 3) (cddr tail)))
-	      ((null? tail) #f)
-	    (print-gnuplot-setting file (car tail) (cadr tail) #t))))
-	;; print individual data blocks
-	(do ((tail plots (cdr tail)))
+	(do ((tail range (cddr tail))
+	     (func (find-gnuplot-setting :xrange)))
 	    ((null? tail) #f)
-	  (let* ((plotd (first tail))
-		 (pdata (first plotd))
-		 (dataf (second plotd)))
-	    (print-gnuplot-plot f pdata dataf)))
-      )
-	    
+	  (if (second tail)
+	      ( func file (second tail))))
+	(format file " '-'")
+	;; map over and print plot-specific settings
+	(do ((tail (list-tail plotd 3) (cddr tail)))
+	    ((null? tail) #f)
+	  (print-gnuplot-setting file (car tail) (cadr tail) #t))))
+    ;; print individual data blocks
+    (do ((tail plots (cdr tail)))
+	((null? tail) #f)
+      (let* ((plotd (first tail))
+	     (pdata (first plotd))
+	     (dataf (second plotd)))
+	(print-gnuplot-plot file pdata dataf)))
+    )(shell (format #f "gnuplot ~a" path))
+    path))
 
+; (gnuplot "test.plt" :title "hiho" :style '(:data :linespoints ) (list 0 0 50 .9 100 0) (list 0 1 100 0))
+; (gnuplot "test.plt" :title "hiho"  (list 0 0 50 .9 100 0) :with :linespoints (list 0 1 100 0))
+; (gnuplot "test.plt" :data :xy (list 0 0 50 .9 100 0) )
+; (gnuplot "test.plt" :title "hiho" :data :xy (list 0 0 50 .9 100 0) (list 0 1 100 0) :data :y)
 
 ;;;
 ;;; eof
 ;;;
 
-
-
-
-
-
-
-
-; plot hooke(), data: :y
