@@ -17,6 +17,12 @@
 	(else
 	 (string-downcase (format #f "~a" x)))))
 
+(define gnuplot-data-styles
+  '( :lines :points :linespoints :impulses :dots :steps :fsteps :histeps
+	   :errorbars :xerrorbars :yerrorbars :xyerrorbars :errorlines
+	   :xerrorlines :yerrorlines :boxes :filledboxes :filledcurves
+	   :boxederrorbars :boxxyerrorbars :financebars :candlesticks
+	   :vector))
 (define gnuplot-special-settings
   (list 
    (list ':title 
@@ -27,7 +33,14 @@
 		   (the-string (car v)) (the-string (cadr v)))))
    (list '(:xrange :yrange :zrange)
 	 (lambda (f v) 
-	   (format f " [~a:~a]" (the-string (car v)) (the-string (cadr v)))))))
+	   (format f " [~a:~a]" (the-string (car v))
+		   (the-string (cadr v)))))
+   (list ':style
+	 (lambda (f v)
+	   (if (member v gnuplot-data-styles)
+	       (format f " style ~a" (the-string v))
+	       (format f " ~a" (the-string v)))))
+   ))
 
 (define gnuplot-non-settings
   '(:view :data))
