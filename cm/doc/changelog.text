@@ -1,3 +1,10 @@
+CM 2.11.0
+
+o New Gnuplot support:
+    gnuplot function writes data sets to gnuplot
+    gnuplot-file supports process output to gnuplot
+  see dictionary entries for more information.
+
 ----------------------------------------------------------------------
 CM 2.10.0
 

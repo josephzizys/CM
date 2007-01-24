@@ -16,23 +16,47 @@
   (if (member (os-name) '(darwin osx macosx)) "aqua" #f))
 
 (define *gnuplot-default-settings*
-  '(:view #t :style :linespoints :data #f))
+  '(:view #t :style :linespoints :points #f))
 
-(define-class* <gnu-file> (<event-file>)
-  ((objects :init-value '() :init-keyword :objects
-           :accessor sco-file-header))
+(define-class* <gnuplot-file> (<event-file>)
+  ((objects :init-value '() :accessor gnuplot-file-objects))
   :name 'gnuplot-file
   :metaclass <io-class>
   :file-types '("*.plt"))
 
-(define-method* (close-io (io <gnuplot-file>) . mode)
-  (next-method)
-  (when (eq? (io-direction io) ':output)
-    (unless (eq? mode ':force)	
-      (let ()
-	)))
-  )
+;;;
+;;; override main methods since we dont write file until end.
+;;; 
 
+(define-method* (open-io (io <gnuplot-file>) dir . args)
+  dir args
+  (set! (gnuplot-file-objects io) (list))
+  io)
+
+(define-method* (close-io (io <gnuplot-file>) . mode)
+  (if (not (eq? mode ':force)) ; no errors
+      (let ((data (gnuplot-file-objects io))
+	    (path #f)
+	    (comm #f))
+	(if (not (null? data))
+	    (begin
+	      (bump-version io) ; still do versioning...
+	      (set! path (file-output-filename io))
+	      (set! comm (format #f "# ~a output on ~a~%"
+				 (cm-version)
+				 (date-and-time)))
+	      (apply (function gnuplot) 
+		     path
+		     :comment comm
+		     (append (event-stream-args io)
+			     (list (reverse! data))))
+	      io)))))
+
+(define-method* (write-event (obj <event>) (io <gnuplot-file>) time)
+  (set! (object-time obj) time)
+  (set! (gnuplot-file-objects io) 
+	(cons obj (gnuplot-file-objects io) )))
+			     
 (define gnuplot-data-styles
   '(:lines :points :linespoints :impulses :dots :steps :fsteps :histeps
 	   :errorbars :xerrorbars :yerrorbars :xyerrorbars :errorlines
@@ -42,7 +66,7 @@
 
 (define gnuplot-non-gnu-settings 
   ;; settings that dont belong to gnuplot
-  '(:view :data))
+  '(:view :points :comment))
 
 (define (the-string x)
   (cond ((string? x) x)
@@ -135,8 +159,8 @@
 	  ((is-a? a <object>)
 	   (let ((xslot #f)
 		 (yslot #f)
-		 (xtest '(time beg start startime begin begin-time start-time 
-			  onset off x))
+		 (xtest '(time beg start startime begin begin-time 
+			       start-time onset off x))
 		 (ytest '(keynum frequency freq pitch frq note y)))
 	     (do ((l xtest (cdr l)))
 		 ((or (null? l) xslot) #f)
@@ -156,16 +180,24 @@
   ;; test object x for valid slots
   (cond ((null? sl) #t)
 	((pair? sl) 
-	 (and (slot-data? (car sl))
-	      (slot-data? (cdr sl))))
+	 (and (slot-data? x (car sl))
+	      (slot-data? x (cdr sl))))
 	(else
 	 (and (slot-exists? x sl)
 	      (slot-bound? x sl)
 	      (number? (slot-ref x sl))))))
 
+(define (slot-data x sl)
+  (cond ((null? sl) '())
+	((pair? sl) 
+	 (cons (slot-data x (car sl))
+	       (slot-data x (cdr sl))))
+	(else
+	 (slot-ref x sl))))
+
 (define (print-gnuplot-plot file data fmat)
   (cond ((not fmat)
-	 (err "Missing :data format for ~s." data))
+	 (err "Missing :points format for ~s." data))
 	((eq? fmat #t)
 	 ;; each sublist is a point record (single line )
 	 (do ((tail data (cdr tail)))
@@ -174,6 +206,15 @@
 	       ((null e) #f)
 	     (format file " ~s" (car e)))
 	   (format file "~%")))
+	((number? fmat)
+	 (do ()
+	     ((null? data) #f)
+	   (do ((i 0 (+ i 1)))
+	       ((or (not (< i fmat))
+		    (null? data)))
+		(format file "~%"))
+	     (format file " ~s" (car data))
+	     (set! data (cdr data))))
 	((eq? fmat ':y)
 	 (do ((tail data (cdr tail)))
 	     ((null? tail) #f)
@@ -184,131 +225,141 @@
 	   (format file " ~s ~s~%" (car tail) (cadr tail))))
 	((is-a? (car data) <object>)
 	 (if (slot-data? (car data) fmat)
-	     (do ((tail data (cdr tail)))
-		 ((null? tail) #f)
-	       (do ((sl tail (cdr sl)))
-		   ((null? sl) #f)
-		 (format file " ~s" (slot-ref x (car sl))))
-	       (format file "~%"))
+	     (letrec ((slotdata (lambda (f x sl)
+				  (cond ((null? sl) #f)
+					((pair? sl) 
+					 (slotdata f x (car sl))
+					 (slotdata f x (cdr sl)))
+					(else
+					 (format f " ~s" (slot-ref x sl)))))))
+               (do ((tail data (cdr tail)))
+                   ((null? tail) #f)
+                 (slotdata file (car tail) fmat)
+		 (format file "~%")))
 	     (err "Missing slot data for ~s in  ~s." 
 		  fmat (car data))))
 	(else
-	 (err "Unknown :data format ~s." fmat)))
+	 (err "Unknown :points format ~s." fmat)))
   (format file "e~%"))
 
 ; (gnuplot t :title "asdf" :margin 1 :xrange '(-pi pi))
 ; (gnuplot t :title "asdf" :margin 1 )
 
 (define (gnuplot path . args)
+    ;; file is open file or stream
   (let ((plots (list))
-	(infos (list-copy *gnuplot-default-settings*)))
-    ;; handle global file settings until first plot
+        (infos (list-copy *gnuplot-default-settings*)))
     (with-open-file (file path :direction :output :if-exists :supersede)
-    (do ((tail args (cddr tail)))
-	((or (null? tail)
-	     (not (keyword? (car tail))))
-	 (if (null? tail)
-	     (err "Missing plot data in: ~s" args)
-	     (set! args tail)))
-      (cond ((null? (cdr tail))
-	     (err "Missing value for keyword ~s." (car tail)))
-	    ((member (car tail) *gnuplot-default-settings*)
-	     ;; update default infos with user's info
-	     (set-car! (cdr (member (car tail) infos))
-		       (cadr tail))
-	     )
-	    (else
-	     (print-gnuplot-setting file (car tail) (cadr tail)))))
-    ;; now iterate infos and output (possibly updated) values
-    (do ((tail infos (cddr tail)))
-	((null? tail) #f)
-      (if (not (member (car tail) gnuplot-non-gnu-settings))
-	  (print-gnuplot-setting file (car tail) (cadr tail))))
+	;; write optional comment line
+	(let ((str (member ':comment args)))
+	  (if str (format file "#~A~%" (caddr str))))
+	;; handle global file settings until first plot
+	(do ((tail args (cddr tail)))
+	    ((or (null? tail)
+		 (not (keyword? (car tail))))
+	     (if (null? tail)
+		 (err "Missing plot data in: ~s" args)
+		 (set! args tail)))
+	  (cond ((null? (cdr tail))
+		 (err "Missing value for keyword ~s." (car tail)))
+		((member (car tail) *gnuplot-default-settings*)
+		 ;; update default infos with user's info
+		 (set-car! (cdr (member (car tail) infos))
+			   (cadr tail))
+		 )
+		(else
+		 (print-gnuplot-setting file (car tail) (cadr tail)))))
+	;; now iterate infos and output (possibly updated) values
+	(do ((tail infos (cddr tail)))
+	    ((null? tail) #f)
+	  (if (not (member (car tail) gnuplot-non-gnu-settings))
+	      (print-gnuplot-setting file (car tail) (cadr tail))))
+	;; args now series of plot specs: ({<plotdata> {key val}*}+ )
+	(do ((plotd #f))
+	    ((null? args)
+	     (set! plots (reverse! plots)))
+	  ;; plot data can be list or seq
+	  (set! plotd (if (is-a? (car args) <seq>)
+			  (subobjects (car args))
+			  (car args)))
+	  (unless (and (pair? plotd)
+		       (or (number? (car plotd)) ; env/data list
+			   (and (pair? (car plotd)) ; point records
+				(number? (caar plotd)))
+			   (is-a? (car plotd) <object>))) ; objects
+	    (err "Not a list or seq containing plot data: ~s"
+		 (car args)))
+	  ;; plotd is: (<plotdata> <format> (ranges..) settings...)
+	  (setq plotd (list plotd
+			    (list-prop infos ':points)
+			    (list :trange #f :xrange #f :yrange #f)
+			    ))
+	  ;; gather keyargs for current plot until next plot. ranges and
+	  ;; data args are handled specially
+	  (do ((tail (cdr args) (cddr tail)))
+	      ((or (null? tail)
+		   (not (keyword? (car tail))))
+	       (set! args tail))
+	    (cond ((null? (cdr tail))
+		   (err "Missing value for keyword ~s." (car tail)))
+		  ((eq? (car tail) ':points)
+		   ;; update plot-specific data format
+		   (list-set! plotd 1 (cadr tail)))
+		  (else
+		   (let ((rng (member (car tail) (third plotd))))
+		     (if (not rng)
+			 (append! plotd (list (car tail) (cadr tail)))
+			 (set-car! (cdr rng) (cadr tail))))))
+	    )
+	  ;; if data is point data (lists) ignore :points spec else try to
+	  ;; guess data format if not explicitly provided.
+	  (cond ((pair? (caar plotd))
+		 (list-set! plotd 1 #t))
+		((not (second plotd))	; user did not indicate format
+		 (list-set! plotd 1 (guess-data-format (car plotd)))))
+	  (push plotd plots)
+	  )
+	;;(print (list :plots-> plots))
+	;; plots now list of (<plotdata> <format> (ranges..) settings...)
+	;; print plot command and args for each plot. 
+	(format file "plot")
+	;; print settings for each plot...
+	(do ((tail plots (cdr tail)))
+	    ((null? tail) 
+	     (format file "~%"))
+	  (let* ((plotd (car tail))
+		 (range (list-ref plotd 2)))
+	    ;; , separates individual plot clauses
+	    (unless (eq? tail plots)
+	      (format file ","))
+	    ;; print plot ranges...
+	    (do ((tail range (cddr tail))
+		 (func (find-gnuplot-setting ':xrange))) ; get printer
+		((null? tail) #f)
+	      (if (second tail)
+		  ( func file (second tail))))
+	    (format file " '-'")
+	    ;; map over and print plot-specific settings
+	    (do ((tail (list-tail plotd 3) (cddr tail)))
+		((null? tail) #f)
+	      (print-gnuplot-setting file (car tail) (cadr tail) #t))))
+	;; print individual data blocks
+	(do ((tail plots (cdr tail)))
+	    ((null? tail) #f)
+	  (let* ((plotd (first tail))
+		 (pdata (first plotd))
+		 (dataf (second plotd)))
+	    (print-gnuplot-plot file pdata dataf)))
 
-    ;; args now series of plot specs: ({<plotdata> {key val}*}+ )
-    (do ((plotd #f))
-	((null? args)
-	 (set! plots (reverse! plots)))
-      ;; plot data can be list or seq
-      (set! plotd (if (is-a? (car args) <seq>)
-		      (subobjects (car args))
-		      (car args)))
-      (unless (and (pair? plotd)
-                   (or (number? (car plotd))  ; env/data list
-		       (and (pair? (car plotd)) ; point records
-			    (number? (caar plotd)))
-                       (is-a? (car plotd) <object>))) ; objects
-        (err "Not a list or seq containing plot data: ~s" (car args)))
-      ;; plotd is: (<plotdata> <format> (ranges..) settings...)
-      (setq plotd (list plotd
-			(list-prop infos ':data)
-			(list :trange #f :xrange #f :yrange #f)
-			))
-      ;; gather keyargs for current plot until next plot. ranges and
-      ;; data args are handled specially
-      (do ((tail (cdr args) (cddr tail)))
-	  ((or (null? tail)
-	       (not (keyword? (car tail))))
-	   (set! args tail))
-	(cond ((null? (cdr tail))
-	       (err "Missing value for keyword ~s." (car tail)))
-	      ((eq? (car tail) ':data)
-	       ;; update plot-specific data format
-	       (list-set! plotd 1 (cadr tail)))
-	      (else
-	       (let ((rng (member (car tail) (third plotd))))
-		 (if (not rng)
-		     (append! plotd (list (car tail) (cadr tail)))
-		     (set-car! (cdr rng) (cadr tail))))))
-	)
-      ;; if data is point data (lists) ignore :data spec else try to
-      ;; guess data format if not explicitly provided.
-      (cond ((pair? (caar plotd))
-	     (list-set! plotd 1 #t))
-	    ((not (second plotd)) ; user did not indicate format
-	     (list-set! plotd 1 (guess-data-format (car plotd)))))
-      (push plotd plots)
-      )
-    ;;(print (list :plots-> plots))
-    ;; plots now list of (<plotdata> <format> (ranges..) settings...)
-    ;; print plot command and args for each plot. 
-    (format file "plot")
-    ;; print settings for each plot...
-    (do ((tail plots (cdr tail)))
-	((null? tail) 
-	 (format file "~%"))
-      (let* ((plotd (car tail))
-	     (range (list-ref plotd 2)))
-	;; , separates individual plot clauses
-	(unless (eq? tail plots)
-          (format file ","))
-	  ;; print plot ranges...
-	(do ((tail range (cddr tail))
-	     (func (find-gnuplot-setting ':xrange))) ; get printer
-	    ((null? tail) #f)
-	  (if (second tail)
-	      ( func file (second tail))))
-	(format file " '-'")
-	;; map over and print plot-specific settings
-	(do ((tail (list-tail plotd 3) (cddr tail)))
-	    ((null? tail) #f)
-	  (print-gnuplot-setting file (car tail) (cadr tail) #t))))
-    ;; print individual data blocks
-    (do ((tail plots (cdr tail)))
-	((null? tail) #f)
-      (let* ((plotd (first tail))
-	     (pdata (first plotd))
-	     (dataf (second plotd)))
-	(print-gnuplot-plot file pdata dataf)))
-    )
-    (if (list-prop infos ':view)
-	(shell (format #f "~a ~a" *gnuplot* path)))
-    path))
+	path)
+      (if (list-prop infos ':view)
+	  (shell (format #f "~a ~a" *gnuplot* path)))
+      path))
 
 ; (gnuplot "test.plt" :title "hiho" :style ':linespoints (list 0 0 50 .9 100 0) (list 0 1 100 0))
 ; (gnuplot "test.plt" :title "hiho"  (list 0 0 50 .9 100 0) :with :linespoints (list 0 1 100 0))
-; (gnuplot "test.plt" :data :xy (list 0 0 50 .9 100 0) )
-; (gnuplot "test.plt" :title "hiho" :data :xy (list 0 0 50 .9 100 0) (list 0 1 100 0) )
+; (gnuplot "test.plt" :points :xy (list 0 0 50 .9 100 0) )
+; (gnuplot "test.plt" :title "hiho" :points :xy (list 0 0 50 .9 100 0) (list 0 1 100 0) )
 
 ;;;
 ;;; eof
