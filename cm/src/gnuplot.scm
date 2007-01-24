@@ -10,6 +10,40 @@
 ;;; $Revision$
 ;;; $Date$
 
+(define *gnuplot* "gnuplot")
+
+(define *gnuterm* 
+  (if (member (os-name) '(darwin osx macosx)) "aqua" #f))
+
+(define *gnuplot-default-settings*
+  '(:view #t :style :linespoints :data #f))
+
+(define-class* <gnu-file> (<event-file>)
+  ((objects :init-value '() :init-keyword :objects
+           :accessor sco-file-header))
+  :name 'gnuplot-file
+  :metaclass <io-class>
+  :file-types '("*.plt"))
+
+(define-method* (close-io (io <gnuplot-file>) . mode)
+  (next-method)
+  (when (eq? (io-direction io) ':output)
+    (unless (eq? mode ':force)	
+      (let ()
+	)))
+  )
+
+(define gnuplot-data-styles
+  '(:lines :points :linespoints :impulses :dots :steps :fsteps :histeps
+	   :errorbars :xerrorbars :yerrorbars :xyerrorbars :errorlines
+	   :xerrorlines :yerrorlines :boxes :filledboxes :filledcurves
+	   :boxederrorbars :boxxyerrorbars :financebars :candlesticks
+	   :vector))
+
+(define gnuplot-non-gnu-settings 
+  ;; settings that dont belong to gnuplot
+  '(:view :data))
+
 (define (the-string x)
   (cond ((string? x) x)
 	((keyword? x) (string-downcase (keyword->string x)))
@@ -17,12 +51,6 @@
 	(else
 	 (string-downcase (format #f "~a" x)))))
 
-(define gnuplot-data-styles
-  '( :lines :points :linespoints :impulses :dots :steps :fsteps :histeps
-	   :errorbars :xerrorbars :yerrorbars :xyerrorbars :errorlines
-	   :xerrorlines :yerrorlines :boxes :filledboxes :filledcurves
-	   :boxederrorbars :boxxyerrorbars :financebars :candlesticks
-	   :vector))
 (define gnuplot-special-settings
   (list 
    (list ':title 
@@ -38,12 +66,9 @@
    (list ':style
 	 (lambda (f v)
 	   (if (member v gnuplot-data-styles)
-	       (format f " style ~a" (the-string v))
+	       (format f " data ~a" (the-string v))
 	       (format f " ~a" (the-string v)))))
    ))
-
-(define gnuplot-non-settings
-  '(:view :data))
 
 (define (find-gnuplot-setting k )
   (do ((tail gnuplot-special-settings (cdr tail))
@@ -59,7 +84,7 @@
   ;; print global file setting or individual plot setting depending on
   ;; p. f is file, k is (keyword) setting, v is its value.  skip null
   ;; or non-gnu settings.
-  (if (or (not v) (null? v) (member k gnuplot-non-settings))
+  (if (or (not v) (null? v) (member k gnuplot-non-gnu-settings))
       #f
       (let ((s (find-gnuplot-setting k)))
 	;; global set command
@@ -73,6 +98,9 @@
 	      ((eq? v #t)
 	       ;; simply print the setting
 	       #f)
+	      ;((member v '(:no :unset))
+	      ; (if (not p) (format f "unset" ))
+	      ; )
 	      ((string? v)
 	       (format f " ~a" (the-string v)))
 	      ((pair? v)
@@ -173,7 +201,7 @@
 
 (define (gnuplot path . args)
   (let ((plots (list))
-	(infos (list :view #t :data #f)))
+	(infos (list-copy *gnuplot-default-settings*)))
     ;; handle global file settings until first plot
     (with-open-file (file path :direction :output :if-exists :supersede)
     (do ((tail args (cddr tail)))
@@ -184,12 +212,19 @@
 	     (set! args tail)))
       (cond ((null? (cdr tail))
 	     (err "Missing value for keyword ~s." (car tail)))
-	    ((member (car tail) gnuplot-non-settings)
+	    ((member (car tail) *gnuplot-default-settings*)
 	     ;; update default infos with user's info
 	     (set-car! (cdr (member (car tail) infos))
-		       (cadr tail)))
+		       (cadr tail))
+	     )
 	    (else
 	     (print-gnuplot-setting file (car tail) (cadr tail)))))
+    ;; now iterate infos and output (possibly updated) values
+    (do ((tail infos (cddr tail)))
+	((null? tail) #f)
+      (if (not (member (car tail) gnuplot-non-gnu-settings))
+	  (print-gnuplot-setting file (car tail) (cadr tail))))
+
     ;; args now series of plot specs: ({<plotdata> {key val}*}+ )
     (do ((plotd #f))
 	((null? args)
@@ -249,7 +284,7 @@
           (format file ","))
 	  ;; print plot ranges...
 	(do ((tail range (cddr tail))
-	     (func (find-gnuplot-setting :xrange)))
+	     (func (find-gnuplot-setting ':xrange))) ; get printer
 	    ((null? tail) #f)
 	  (if (second tail)
 	      ( func file (second tail))))
@@ -265,13 +300,15 @@
 	     (pdata (first plotd))
 	     (dataf (second plotd)))
 	(print-gnuplot-plot file pdata dataf)))
-    )(shell (format #f "gnuplot ~a" path))
+    )
+    (if (list-prop infos ':view)
+	(shell (format #f "~a ~a" *gnuplot* path)))
     path))
 
-; (gnuplot "test.plt" :title "hiho" :style '(:data :linespoints ) (list 0 0 50 .9 100 0) (list 0 1 100 0))
+; (gnuplot "test.plt" :title "hiho" :style ':linespoints (list 0 0 50 .9 100 0) (list 0 1 100 0))
 ; (gnuplot "test.plt" :title "hiho"  (list 0 0 50 .9 100 0) :with :linespoints (list 0 1 100 0))
 ; (gnuplot "test.plt" :data :xy (list 0 0 50 .9 100 0) )
-; (gnuplot "test.plt" :title "hiho" :data :xy (list 0 0 50 .9 100 0) (list 0 1 100 0) :data :y)
+; (gnuplot "test.plt" :title "hiho" :data :xy (list 0 0 50 .9 100 0) (list 0 1 100 0) )
 
 ;;;
 ;;; eof
