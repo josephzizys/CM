@@ -257,7 +257,7 @@
 	    (err "Not a list or seq containing plot data: ~s"
 		 (car args)))
 	  ;; plotd is: (<plotdata> <format> (ranges..) settings...)
-	  (setq plotd (list plotd
+	  (set! plotd (list plotd
 			    (list-prop infos ':points)
 			    (list :trange #f :xrange #f :yrange #f)
 			    ))

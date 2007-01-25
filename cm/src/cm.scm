@@ -22,7 +22,7 @@
       (load-path "")
       (file-list '("loop" "level1" "utils" "mop" "objects"
 		   "data" "scales" "spectral" "patterns"
-                   "io" "scheduler" "sco" "clm" "clm2"
+                   "io" "scheduler" "gnuplot" "plt" "sco" "clm" "clm2"
                    "midi1" "midi2" "midi3"
 		   "osc" "sc" "pm" "rt")))
   (cond-expand
