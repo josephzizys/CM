@@ -113,9 +113,9 @@ list of slot names to access in a flat list of CLOS objects. </dd>
 <span class="floatlabel">Example 1.</span> Plotting data sets 
 </p>
 <pre class="code">
-(gnuplot <span class="string">"test.plt</span> '( 0 0 50 .9 100 0) )
+(gnuplot <span class="string">"test.plt"</span> '( 0 0 50 .9 100 0) )
 
-(gnuplot <span class="string">"test.plt</span> <span class="keyword">:title</span> <span class="string">"My envelopes"</span>
+(gnuplot <span class="string">"test.plt"</span> <span class="keyword">:title</span> <span class="string">"My envelopes"</span>
 	 '(0 0 25 .9 75 .9 100 0) <span class="keyword">:title</span> <span class="string">"ramp"</span>	
 	 '(0 1 5 .5 10 .1 100 0) <span class="keyword">:title</span> <span class="string">"expt"</span> 
 	 '(0 0 50 1 100 0) <span class="keyword">:title</span> <span class="string">"updown"</span>)
@@ -155,8 +155,7 @@ list of slot names to access in a flat list of CLOS objects. </dd>
 		       <span class="keyword">:duration</span> .1)
 	   wait (<a href="between-fn.html">between</a> .1 1)))
 
-
-(<a href="io-mac.html">io</a> <span class="string">"algo.plt"</span> <span class="keyword">:title</span> <span class="string">"My very own process"</span> <span class="keyword">:style</span> <span class="keyword">:points</span> <span class="keyword">:pointsize</span> 2)
+(<a href="io-mac.html">io</a> <span class="string">"algo.plt"</span> <span class="keyword">:title</span> <span class="string">"My very own process"</span> <span class="keyword">:nokey</span> <span class="special">#t</span> <span class="keyword">:style</span> <span class="keyword">:points</span> <span class="keyword">:pointsize</span> 2)
 
 (<a href="events-fn.html">events</a> (simp 20 ) <span class="string">"algo.plt"</span>)
 </pre>
