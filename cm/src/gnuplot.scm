@@ -10,6 +10,14 @@
 ;;; $Revision$
 ;;; $Date$
 
+;;; Lisp wrapper to Gnuplot library. Should work in any Scheme with keywords
+;;; and the following definitions in effect:
+;;; (format ...) with ~a and ~s directives
+;;; (os-name ) returns symbol name of os
+;;; (shell <string>) exec string as shell command
+;;; (list-prop plist sym) look up sym's value in plist
+;;; most-negative-fixnum
+
 (define *gnuplot* "gnuplot")
 
 (define *gnuterm* 
@@ -17,45 +25,6 @@
 
 (define *gnuplot-default-settings*
   '(:view #t :style :linespoints :points #f))
-
-(define-class* <gnuplot-file> (<event-file>)
-  ((objects :init-value '() :accessor gnuplot-file-objects))
-  :name 'gnuplot-file
-  :metaclass <io-class>
-  :file-types '("*.plt"))
-
-;;;
-;;; override main methods since we dont write file until end.
-;;; 
-
-(define-method* (open-io (io <gnuplot-file>) dir . args)
-  dir args
-  (set! (gnuplot-file-objects io) (list))
-  io)
-
-(define-method* (close-io (io <gnuplot-file>) . mode)
-  (if (not (eq? mode ':force)) ; no errors
-      (let ((data (gnuplot-file-objects io))
-	    (path #f)
-	    (comm #f))
-	(if (not (null? data))
-	    (begin
-	      (bump-version io) ; still do versioning...
-	      (set! path (file-output-filename io))
-	      (set! comm (format #f "# ~a output on ~a~%"
-				 (cm-version)
-				 (date-and-time)))
-	      (apply (function gnuplot) 
-		     path
-		     :comment comm
-		     (append (event-stream-args io)
-			     (list (reverse! data))))
-	      io)))))
-
-(define-method* (write-event (obj <event>) (io <gnuplot-file>) time)
-  (set! (object-time obj) time)
-  (set! (gnuplot-file-objects io) 
-	(cons obj (gnuplot-file-objects io) )))
 			     
 (define gnuplot-data-styles
   '(:lines :points :linespoints :impulses :dots :steps :fsteps :histeps
@@ -68,7 +37,7 @@
   ;; settings that dont belong to gnuplot
   '(:view :points :comment))
 
-(define (the-string x)
+(define (thing->string x)
   (cond ((string? x) x)
 	((keyword? x) (string-downcase (keyword->string x)))
 	((symbol? x) (string-downcase (symbol->string x)))
@@ -78,20 +47,20 @@
 (define gnuplot-special-settings
   (list 
    (list ':title 
-	 (lambda (f v) (format f " ~s" (the-string v))))
+	 (lambda (f v) (format f " ~s" (thing->string v))))
    (list '(:origin :size)
 	 (lambda (f v)
 	   (format f " ~a,~a"  
-		   (the-string (car v)) (the-string (cadr v)))))
+		   (thing->string (car v)) (thing->string (cadr v)))))
    (list '(:xrange :yrange :zrange)
 	 (lambda (f v) 
-	   (format f " [~a:~a]" (the-string (car v))
-		   (the-string (cadr v)))))
+	   (format f " [~a:~a]" (thing->string (car v))
+		   (thing->string (cadr v)))))
    (list ':style
 	 (lambda (f v)
 	   (if (member v gnuplot-data-styles)
-	       (format f " data ~a" (the-string v))
-	       (format f " ~a" (the-string v)))))
+	       (format f " data ~a" (thing->string v))
+	       (format f " ~a" (thing->string v)))))
    ))
 
 (define (find-gnuplot-setting k )
@@ -114,7 +83,7 @@
 	;; global set command
 	(if (null? p) (format f "set"))
 	;; print setting name
-	(format f " ~a" (the-string k))
+	(format f " ~a" (thing->string k))
 	;; print setting value
 	(cond (s
 	       ;; call special formatter
@@ -122,17 +91,14 @@
 	      ((eq? v #t)
 	       ;; simply print the setting
 	       #f)
-	      ;((member v '(:no :unset))
-	      ; (if (not p) (format f "unset" ))
-	      ; )
 	      ((string? v)
-	       (format f " ~a" (the-string v)))
+	       (format f " ~a" v))
 	      ((pair? v)
 	       (do ((tail v (cdr tail)))
 		   ((null? tail) #f)
-		 (format f " ~a" (the-string (car tail)))))
+		 (format f " ~a" (thing->string (car tail)))))
 	      (else
-	       (format f " ~a" (the-string v))))
+	       (format f " ~a" (thing->string v))))
 	(if (null? p) (format f "~%"))
 	#f)))
 
@@ -142,7 +108,7 @@
 ; (guess-data-format (list (new midi)))
 
 (define (guess-data-format dat)
-  (let ((a (first dat)))
+  (let ((a (car dat)))
     (cond ((number? a)
 	   (do ((l dat (cdr l))
 		(i 0 (+ i 1))
@@ -249,7 +215,8 @@
     ;; file is open file or stream
   (let ((plots (list))
         (infos (list-copy *gnuplot-default-settings*)))
-    (with-open-file (file path :direction :output :if-exists :supersede)
+    (call-with-output-file path
+      (lambda (file)
 	;; write optional comment line
 	(let ((str (member ':comment args)))
 	  (if str (format file "#~A~%" (caddr str))))
@@ -306,7 +273,7 @@
 		   ;; update plot-specific data format
 		   (list-set! plotd 1 (cadr tail)))
 		  (else
-		   (let ((rng (member (car tail) (third plotd))))
+		   (let ((rng (member (car tail) (caddr plotd))))
 		     (if (not rng)
 			 (append! plotd (list (car tail) (cadr tail)))
 			 (set-car! (cdr rng) (cadr tail))))))
@@ -315,7 +282,7 @@
 	  ;; guess data format if not explicitly provided.
 	  (cond ((pair? (caar plotd))
 		 (list-set! plotd 1 #t))
-		((not (second plotd))	; user did not indicate format
+		((not (cadr plotd))	; user did not indicate format
 		 (list-set! plotd 1 (guess-data-format (car plotd)))))
 	  (push plotd plots)
 	  )
@@ -336,8 +303,8 @@
 	    (do ((tail range (cddr tail))
 		 (func (find-gnuplot-setting ':xrange))) ; get printer
 		((null? tail) #f)
-	      (if (second tail)
-		  ( func file (second tail))))
+	      (if (cadr tail)
+		  ( func file (cadr tail))))
 	    (format file " '-'")
 	    ;; map over and print plot-specific settings
 	    (do ((tail (list-tail plotd 3) (cddr tail)))
@@ -346,12 +313,12 @@
 	;; print individual data blocks
 	(do ((tail plots (cdr tail)))
 	    ((null? tail) #f)
-	  (let* ((plotd (first tail))
-		 (pdata (first plotd))
-		 (dataf (second plotd)))
+	  (let* ((plotd (car tail))
+		 (pdata (car plotd))
+		 (dataf (cadr plotd)))
 	    (print-gnuplot-plot file pdata dataf)))
 
-	path)
+	#t))
       (if (list-prop infos ':view)
 	  (shell (format #f "~a ~a" *gnuplot* path)))
       path))
