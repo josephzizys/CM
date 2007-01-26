@@ -18,13 +18,12 @@
 ;;; (list-prop plist sym) look up sym's value in plist
 ;;; most-negative-fixnum
 
-(define *gnuplot* "gnuplot")
-
-(define *gnuterm* 
-  (if (member (os-name) '(darwin osx macosx)) "aqua" #f))
+(define *gnuplot* "gnuplot -persist")
 
 (define *gnuplot-default-settings*
-  '(:view #t :style :linespoints :points #f))
+  (list :view #t :style :linespoints :points #f
+	:terminal (if (member (os-name) '(darwin osx macosx))
+		      "aqua" #f)))
 			     
 (define gnuplot-data-styles
   '(:lines :points :linespoints :impulses :dots :steps :fsteps :histeps
