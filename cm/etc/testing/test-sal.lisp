@@ -234,3 +234,8 @@ end"
 
 (saltest :statement "sprout list(make(<midi>), foo()), {10 20}"
 	 (SAL-SPROUT (LIST (MAKE-INSTANCE 'MIDI) (FOO)) :AT '(10 20)))
+
+
+
+(saltest :statement "begin with x = {1 2 3} print x, interpl(x[0], {0 0 100 1}) end"
+	 (let* ((x (copy-list '(1 2 3)))) (sal-print x (interpl (elt x 0) '(0 0 100 1)))))
