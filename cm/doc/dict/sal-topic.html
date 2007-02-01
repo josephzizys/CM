@@ -280,6 +280,22 @@ its value.</p>
 </pre>
 </div>
 
+
+
+<!-- EXEC -->
+
+<dl class="dictsyntax" id="exec">
+<dt>[Statement]</dt>
+<dd><code class="entry">exec</code> <var>sexpr</var> {<code>,</code> <var>sexpr</var>}*</dd>
+</dl>
+<p> Executes one or more comma-delimited <var>sexprs</var>.  <var>Sexprs</var> should produce side effect(s) since nothing is printed or returned by the command itself.</p>
+<div class="float">
+<pre class="code">
+<span class="salcmd">exec</span> cd()
+</pre></div>
+
+
+
 <!-- IF -->
 
 <dl class="dictsyntax" id="if">
@@ -386,6 +402,19 @@ to its type when you open it.</p>
 <dd><code class="entry">output</code> <var>event</var> </dd>
 </dl>
 <p> Sends a musical <var>event</var> or list of the same to the <a href="#open">open output stream</a>. See <a href="#define_process"><code>define process</code></a> for more information.</p>
+
+<!-- PLOT -->
+
+<dl class="dictsyntax" id="plot">
+<dt>[Statement]</dt>
+<dd><code class="entry">plot</code> {<var>plot</var> | <var>param</var>:  <var>sexpr</var>} [<code>,</code> <code>...</code>]</dd>
+</dl>
+<p> Generates a plot (graphical display) of data according to the specified arguments and the open plotting stream. Currently only Gnuplot streams are supported. See <a href="http://commonmusic.sf.net/doc/dict/gnuplot-fn.html"><code>gnuplot</code></a> for more information.</p>
+<div class="float">
+<pre class="code">
+<span class="salcmd">open</span> <span class="salstr">"test.plt"</span>, <span class="salkey">title:</span> <span class="salstr">"My envelopes"</span>
+<span class="salcmd">plot</span> {0 1 100 0}, {0 0 50 1 75 1 100 0}
+</pre></div>
 
 <!-- PRINT -->
 
@@ -698,6 +727,7 @@ Commas separate the individual arguments. Some functions support <em>named param
 <td style="padding:1em;"> <a href="#chdir"><code>chdir</code></a> </td>
 <td style="padding:1em;"> <a href="#define"><code>define</code></a> </td>
 <td style="padding:1em;"> <a href="#if"><code>else</code></a> </td>
+<td style="padding:1em;"> <a href="#exec"><code>exec</code></a> </td>
 <td style="padding:1em;"> <a href="#begin"><code>end</code></a> </td>
 <td style="padding:1em;"> <a href="#loop"><code>finally</code></a> </td>
 <td style="padding:1em;"> <a href="#loop"><code>for</code></a> </td>
@@ -712,6 +742,7 @@ Commas separate the individual arguments. Some functions support <em>named param
 <td style="padding:1em;"> <a href="#loop"><code>loop</code></a> </td>
 <td style="padding:1em;"> <a href="#output"><code>output</code></a> </td>
 <td style="padding:1em;"> <a href="#run"><code>over</code></a> </td>
+<td style="padding:1em;"> <a href="#plot"><code>plot</code></a> </td>
 <td style="padding:1em;"> <a href="#print"><code>print</code></a> </td>
 <td style="padding:1em;"> <a href="#define_process"><code>process</code></a> </td>
 <td style="padding:1em;"> <a href="#loop"><code>repeat</code></a> </td>
