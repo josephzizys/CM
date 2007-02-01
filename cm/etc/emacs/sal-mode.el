@@ -68,9 +68,9 @@
 ;; point and send that string to lisp.  if we didnt insist on the
 ;; column 0 restriction we would have have sal's parser in Emacs!
 
-(defvar sal-commands 
-  '("begin" "chdir" "define" "if" "load" "loop" "open" "play" "print" 
-    "rts" "set"  "sprout" "system"))
+(defvar sal-commands
+  '("begin" "chdir" "define" "exec" "if" "load" "loop" "open" "play"
+    "plot" "print" "rts" "set"  "sprout" "system"))
 
 ;; add non-top-level statements
 
