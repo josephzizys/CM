@@ -93,7 +93,6 @@
 	(len #f)
 	(octave #f))
     (dopairs (a v args)
-
       (case a
         ((:cents ) 
          (if extern
@@ -108,13 +107,14 @@
 	((:steps )
          (if extern
            (err "only one of :cents, :ratios or :steps allowed."))
-	 (set! cents? #f)
-	 (set! octave (or (scale-octave obj) 2.0))
 	 (unless (and (number? v) (integer? v))
            (err "tuning: :steps value ~s is not an integer." v))
-	 (set! extern (loop for i to v
-			    collect (expt octave (/ i v))))
-	 (print extern))))
+	 (set! cents? #t)
+	 ;; use cents to work with rational value
+	 (let* ((o (scaler->cents (or (scale-octave obj) 2)))
+		(i (/ o v)))
+	   (setq extern (loop repeat v collect i)))
+	 )))
     (unless (pair? extern)
       (err "Tuning needs :ratios or :cents initialization."))
     ;; removed because noop
