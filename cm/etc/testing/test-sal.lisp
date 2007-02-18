@@ -12,29 +12,32 @@
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defmacro saltest (pat str &optional res &rest args)
-    (if (not res)
-	`(parse *sal-grammer* ,pat ,str ,@args)	
-	`(let ((r (quote ,res))
-	       a b c x)
-	   (multiple-value-setq (a b c)
-	     (parse *sal-grammer* ,pat  ,str ,@args))
-	   c
-	   (cond ((not a)
-		  (if (typep b 'sal-error)
-		      (if (eql r ':error)
-			  (setq x t)
-			  (setq x nil))
-		      (setq x nil)))
-		 ((equal b r)
-		  (setq x t))
-		 (t
+    `(let ((r (quote ,res))
+	   a b c x)
+       (multiple-value-setq (a b c)
+	 (parse *sal-grammer* ,pat  ,str ,@args))
+       c
+       (cond ((not r)
+	      (let ((*print-case* ':downcase))
+		(pprint b))
+	      (setq x t)
+	      )
+	     ((not a)
+	      (if (typep b 'sal-error)
+		  (if (eql r ':error)
+		      (setq x t)
+		      (setq x nil))
 		  (setq x nil)))
-	   (if (not x)
-	       (let ((*print-case* ':downcase))
-		 (format t "~&~&>>>>>>>> Test ~S ~S failed,~&         value:  ~S~&         result: ~S" 
-			 ,pat ,str r b)
-		 nil)
-	       t)))))
+	     ((equal b r)
+	      (setq x t))
+	     (t
+	      (setq x nil)))
+       (if (not x)
+	   (let ((*print-case* ':downcase))
+	     (format t "~&~&>>>>>>>> Test ~S ~S failed,~&         value:  ~S~&         result: ~S" 
+		     ,pat ,str r b)
+	     nil)
+	   t))))
 
 (saltest :list "{}" (list))
 (saltest :list "{{}}" '(nil))
@@ -133,22 +136,65 @@
 (saltest :bindings "x, y" ((x nil) (y nil)))
 (saltest :bindings "x = 3" ((x 3)))
 (saltest :bindings "x = 3, c, vv = x" ((x 3) (c nil) (vv x)))
+
+;;;
+;;; loop tests
+;;;
+
 (saltest :loop-statement "loop for i from 1 to 10 print i end"
 	 (loop for i from 1 to 10 do (sal-print i)))
+
 (saltest :loop-statement "loop for i from 1 print i end" 
 	 (loop for i from 1 do (sal-print i)))
+
 (saltest :loop-statement "loop for i to 2 print i end"
 	 (loop for i to 2 do (sal-print i)))
+
 (saltest :loop-statement "loop for i below 10 print i end" 
 	 (loop for i below 10 do (sal-print i)))
+
 (saltest :loop-statement "loop for i from 1 to 10 by 10 print i end" 
 	 (loop for i from 1 to 10 by 10 do (sal-print i)))
+
 (saltest :loop-statement 
 	 "loop repeat 10 for x = 1 then 2 for i from 3 print i, x end" 
 	 (loop repeat 10 for x = 1 then 2 for i from 3
 	    do (sal-print i x)))
 
-;; operator tests
+(saltest :loop-statement "loop for i from 0 + 1 to 10 + 1 print i end" 
+	 (loop for i from (+ 0 1) to (+ 10 1) do (sal-print i)))
+
+(saltest :loop-statement "loop for i below 10 + 1 ^ 3 print i end" 
+	 (loop for i below (+ 10 (expt 1 3)) do (sal-print i)))
+
+
+(saltest :loop-statement "loop with keys = {}, even = {}, sum = 0, lo = 128, hi = -1 
+  repeat 10
+  for k = random(128)
+  set keys &= k, sum += k, lo <= k, hi >= k
+  when even?(k) set even &= k
+  finally
+  begin
+    with avr = sum / 10.0
+    print list(keys,even,avr,lo,hi)
+  end
+end" 
+	 (LOOP WITH KEYS = (LIST) WITH EVEN = (LIST) WITH SUM = 0 WITH LO = 128 WITH HI = -1 REPEAT 10 FOR K = (RANDOM 128) DO (PROGN (SETF KEYS (NCONC KEYS (LIST K))) (SETF SUM (+ SUM K)) (SETF LO (MIN LO K)) (SETF HI (MAX HI K))) (WHEN (EVEN? K) (SETF EVEN (NCONC EVEN (LIST K)))) FINALLY (LET* ((AVR (/ SUM 10.0))) (SAL-PRINT (LIST KEYS EVEN AVR LO HI))))
+)
+
+(saltest :loop-statement "loop
+  with a, b = 0, c = 1, d = {}, e = {}, f = -1, g = 0
+  for i below 5
+    set a = i, b += 1, c *= 2, d &= i, e @= i, f <= i, g >= i
+  finally print list(a,b,c,d,e,f,g)
+end"
+	 (LOOP WITH A = NIL WITH B = 0 WITH C = 1 WITH D = (LIST) WITH E = (LIST) WITH F = -1 WITH G = 0 FOR I BELOW 5 DO (PROGN (SETF A I) (SETF B (+ B 1)) (SETF C (* C 2)) (SETF D (NCONC D (LIST I))) (SETF E (CONS I E)) (SETF F (MIN F I)) (SETF G (MAX G I))) FINALLY (SAL-PRINT (LIST A B C D E F G)))
+)
+
+;;;
+;;; operator tests
+;;;
+
 (saltest :sexpr "x % y" (mod x y))
 (saltest :sexpr "y ^ z" (expt y z))
 (saltest :sexpr "a = b | c < d | e >= f"
@@ -196,28 +242,9 @@
 	 (DEFUN ROW->TP (ROW) (LOOP WITH A = (FIRST ROW) WITH NEW = (LIST) FOR B IN (REST ROW) DO (PROGN (SETF NEW (NCONC NEW (LIST (TP A B)))) (SETF A B)) FINALLY (PROGN (SETF NEW (NCONC NEW (LIST (TP A (FIRST ROW))))) (RETURN-FROM ROW->TP (VALUES NEW)))) (VALUES))
 	 :info '((:definition . :function)))
 
-(saltest :loop-statement "loop with keys = {}, even = {}, sum = 0, lo = 128, hi = -1 
-  repeat 10
-  for k = random(128)
-  set keys &= k, sum += k, lo <= k, hi >= k
-  when even?(k) set even &= k
-  finally
-  begin
-    with avr = sum / 10.0
-    print list(keys,even,avr,lo,hi)
-  end
-end" 
-	 (LOOP WITH KEYS = (LIST) WITH EVEN = (LIST) WITH SUM = 0 WITH LO = 128 WITH HI = -1 REPEAT 10 FOR K = (RANDOM 128) DO (PROGN (SETF KEYS (NCONC KEYS (LIST K))) (SETF SUM (+ SUM K)) (SETF LO (MIN LO K)) (SETF HI (MAX HI K))) (WHEN (EVEN? K) (SETF EVEN (NCONC EVEN (LIST K)))) FINALLY (LET* ((AVR (/ SUM 10.0))) (SAL-PRINT (LIST KEYS EVEN AVR LO HI))))
-)
-
-(saltest :loop-statement "loop
-  with a, b = 0, c = 1, d = {}, e = {}, f = -1, g = 0
-  for i below 5
-    set a = i, b += 1, c *= 2, d &= i, e @= i, f <= i, g >= i
-  finally print list(a,b,c,d,e,f,g)
-end"
-	 (LOOP WITH A = NIL WITH B = 0 WITH C = 1 WITH D = (LIST) WITH E = (LIST) WITH F = -1 WITH G = 0 FOR I BELOW 5 DO (PROGN (SETF A I) (SETF B (+ B 1)) (SETF C (* C 2)) (SETF D (NCONC D (LIST I))) (SETF E (CONS I E)) (SETF F (MIN F I)) (SETF G (MAX G I))) FINALLY (SAL-PRINT (LIST A B C D E F G)))
-)
+;;;
+;;; top level statements
+;;;
 
 (saltest :statement "begin
   open \"test.mid\"
@@ -226,16 +253,14 @@ end"
     end
   sprout simp()
 end"
-(PROGN (SAL-OPEN "test.mid") (SAL-DEFINE ':PROCESS '(DEFPROCESS SIMP NIL (PROCESS REPEAT 10 DO (OUTPUT (MAKE-INSTANCE 'MIDI)) (WAIT 0.2)))) (SAL-SPROUT (SIMP)))
-)
+	 (PROGN (SAL-OPEN "test.mid") (SAL-DEFINE ':PROCESS '(DEFPROCESS SIMP NIL (PROCESS REPEAT 10 DO (OUTPUT (MAKE-INSTANCE 'MIDI)) (WAIT 0.2)))) (SAL-SPROUT (SIMP)))
+	 )
 
 (saltest :statement "sprout make(<midi>)"
 	 (SAL-SPROUT (MAKE-INSTANCE 'MIDI)))
 
 (saltest :statement "sprout list(make(<midi>), foo()), {10 20}"
 	 (SAL-SPROUT (LIST (MAKE-INSTANCE 'MIDI) (FOO)) :AT '(10 20)))
-
-
 
 (saltest :statement "begin with x = {1 2 3} print x, interpl(x[0], {0 0 100 1}) end"
 	 (let* ((x (copy-list '(1 2 3)))) (sal-print x (interpl (elt x 0) '(0 0 100 1)))))
