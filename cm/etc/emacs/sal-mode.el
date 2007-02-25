@@ -317,7 +317,7 @@
 		;; (message cmd)
 		(if multi
 		    (slime-eval-async
-		     `(cm::sal ,cmd :pattern :command-sequence) nil "CM")
+		     `(cm::sal ,cmd :pattern :statement-sequence) nil "CM")
 		  (slime-eval-async `(cm::sal ,cmd ) nil "CM")))))))))
 
 (defun sal-lookup-doc-at-point ()
