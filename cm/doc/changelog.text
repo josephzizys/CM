@@ -1,9 +1,17 @@
 CM 2.11.0
 
-o New Gnuplot support:
-    gnuplot function writes data sets to gnuplot
-    gnuplot-file supports process output to gnuplot
-  see dictionary entries for more information.
+  o New Gnuplot support: gnuplot function writes data sets to gnuplot
+    gnuplot-file supports process output to gnuplot see dictionary
+    entries for more information.
+
+  o 'markov-analyze' now takes a :period arguement for setting the
+    length of the defined pattern (anders vinjar)
+
+Bug fixes:
+  o  :channel-tuning initarg to 'import-events' for midi files now documented
+  o 'amplitude' function fixed to allow either keyword or symbol amps (johannes quint)
+  o fomus file now respects :versioning #t assigments (johannes quint)
+  o fixed bug in tunings that didnt recogize :steps <n> as being equal tempered.
 
 ----------------------------------------------------------------------
 CM 2.10.0
