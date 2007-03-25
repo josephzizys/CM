@@ -184,15 +184,18 @@ is <span class="keyword">:ticks</span>,
 
 </dd>
 
+<dt><span class="keyword">:channel-tuning</span> { <var>true</var> |
+<var>false</var>}</dt> <dd> If true then any channel tuning
+information in the midi file will be parsed and converted into
+floating point keynumbers in the imported MIDI events.  </dd>
 
 <dt><span class="keyword">:keynum-format</span> {<span class="keyword">:keynum</span> | <span class="keyword">:note</span> | <span class="keyword">:hertz</span>}</dt>
 <dd>
-
-
 Determines how MIDI key number values are to be interpreted. Defaults
 to <span class="keyword">:keynum</span>.
-
 </dd>
+
+
 
 
 <dt><span class="keyword">:note-off-stack</span> {<var>true</var> | <var>false</var>}</dt>
