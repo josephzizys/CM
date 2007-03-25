@@ -462,18 +462,11 @@
 (define *loudest* 1.0)
 (define *power* 1.0)
 (define *logical-amplitudes*
-  '(niente 0/10 pppp 1/10 ppp 2/10 pp 3/10 p 4/10
-    mp 5/10 mf 6/10 f 7/10 ff 8/10 fff 9/10 ffff 10/10))
+  '((niente :niente) 0/10 (pppp :pppp) 1/10 (ppp :ppp) 2/10 
+    (pp :pp) 3/10 (p :p) 4/10 (mp :mp) 5/10 (mf :mf) 6/10
+    (f :f) 7/10 (ff :ff) 8/10 (fff :fff) 9/10 (ffff :ffff) 10/10))
 
 (define-generic* amplitude)
-
-(define-method* (amplitude (amp <symbol>) . args)
-  (with-args (args &optional (softest *softest*) 
-		   (loudest *loudest*) (power *power*))
-    (amplitude (or (list-prop *logical-amplitudes* amp)
-		   (err "'~s' is not a logical amplitude."
-			amp))
-	       softest loudest power)))
 
 (define-method* (amplitude (amp <number>) . args)
   (with-args (args &optional (softest *softest*) 
@@ -485,6 +478,20 @@
                    (loudest *loudest*) (power *power*))
     (map (lambda (x) (amplitude x softest loudest power))
          amp)))
+
+(define-method* (amplitude amp . args)
+  (with-args (args &optional (softest *softest*) 
+		   (loudest *loudest*) (power *power*))
+     (do ((tail *logical-amplitudes* (cddr tail))
+	  (ampl #f))
+	 ((or (null? tail) ampl)
+	  (if (not ampl)
+	      (err "'~s' is not a logical amplitude." amp)
+	      (amplitude ampl softest loudest power)))
+       (if (or (and (pair? (car tail))
+		    (member amp (car tail)))
+	       (equal? (car tail) amp))
+	   (set! ampl (cadr tail))))))
 
 ;;;
 ;;; Envelope Lists 
@@ -1056,6 +1063,7 @@
 		   (pattern? #t)	; #f or pattern
 		   sort?
 		   (print-decimals 3)
+		   (period #f)
 		   key)
     (let ((len (length seq)) 
 	  (labels '())			; the set of all outcomes 
@@ -1194,7 +1202,7 @@
 	        (pprint `(new markov of ', pat)))
 	      (if pattern?
                 ;; patterns not defined yet, cant use new or <markov>
-	        (make (find-class* 'markov) :of pat)
+	        (make (find-class* 'markov) :of pat :for period)
 	        (values))))))
 
 (define (histogram numbers lo hi slots)
