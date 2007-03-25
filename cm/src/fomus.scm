@@ -66,7 +66,7 @@
       (let* ((args (event-stream-args io))
              (bend (list-prop args ':output)))
         (unless bend
-          (let* ((file (io-filename io))
+          (let* ((file (file-output-filename io))
                  (type (filename-type file)))
             (cond ((equal? type "ly")
                    (set! bend (list ':lilypond :filename file
