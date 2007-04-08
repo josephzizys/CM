@@ -52,6 +52,14 @@
 (saltest :aref "a[1,2]" (aref a 1 2))
 (saltest :aref "a[random(10)]" (elt a (random 10)))
 
+(saltest :sexpr "a" a)
+(saltest :sexpr "a." a.)
+(saltest :sexpr ".a" .a)
+(saltest :sexpr "a.b" (slot-value a 'b))
+(saltest :sexpr "a.b.c" a.b.c)
+(saltest :sexpr "e+w" e+w)
+(saltest :sexpr "->" ->)
+
 (saltest :sexpr "foo" foo)
 (saltest :funcall "foo()" (foo))
 (saltest :funcall "foo ()" (foo))
