@@ -402,7 +402,7 @@
 ;;; main functions
 ;;;
 
-(defun cm ()
+(defun cm (&rest systems)
   (flet ((cmcall (fn &rest args)
            (apply (find-symbol (string fn) :cm) args))
          (cmvar (var)
@@ -416,6 +416,8 @@
           (setf (symbol-value sym)
                 (cons (cons (symbol-name :cm) (cmvar :*cm-readtable*))
                       (symbol-value sym))))))
+    (let ((*trace-output* nil))
+      (dolist (s systems) (use-system s :verbose nil)))
     (cmcall :cm-logo)))
 
 (defun use-system (sys &key directory bin-directory
@@ -491,7 +493,7 @@
       (when (member name '("clm" "cmn") :test #'equal)
         (setq loading-op 'asdf:load-source-op))
       (if warnings
-          (asdf:operate loading-op sys)
+          (asdf:operate loading-op sys :verbose nil)
           (handler-bind ((style-warning  #'muffle-warning)
                          (warning #'muffle-warning)
                          #+sbcl (sb-ext:compiler-note #'muffle-warning)
