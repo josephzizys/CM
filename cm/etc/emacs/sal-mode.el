@@ -26,6 +26,28 @@
 		    ".dylib")
 	do (add-to-list 'completion-ignored-extensions type)))
 
+(unless (global-key-binding (kbd "<f8>"))
+  (global-set-key (kbd "<f8>") 'slime-toggle-repl))
+
+(defun slime-toggle-repl ()
+  "Toggle between *slime-repl* and last lisp or SAL buffer."
+  (interactive)
+  (if (slime-connected-p)
+      (let ((repl (slime-repl-buffer)))
+        (if repl
+            (let ((this (current-buffer))
+		  next)
+              (if (eq repl this)
+                  (setq next (loop for b in (buffer-list)
+				   when (with-current-buffer b
+					  (or (eq major-mode 'lisp-mode)
+					      (eq major-mode 'sal-mode)
+					      ))
+				   return b))
+		(setq next (slime-repl-buffer)))
+	      (when next
+		(switch-to-buffer next)))))))
+
 (defun start-sal ()
   (interactive)
   (unless (slime-connected-p)
@@ -204,7 +226,6 @@
       )))
 
 (easy-menu-define menubar-sal sal-mode-map "SAL" sal-easy-menu)
-;(easy-menu-add menubar-sal sal-mode-map)
 
 (define-key sal-mode-map (kbd "<kp-enter>")
   'sal-enter)
@@ -525,7 +546,7 @@
 
 (defvar sal-mode-hook nil)
 (add-hook 'sal-mode-hook
-          (defun slime-add-easy-menu ()
+          (defun sal-add-easy-menu ()
             (easy-menu-add sal-easy-menu 'sal-mode-map)))
 
 (defun sal-mode ()
