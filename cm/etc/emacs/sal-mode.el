@@ -11,6 +11,7 @@
 
 (require 'font-lock)
 (require 'slime)
+;(when (featurep 'xemacs) (require 'overlay))
 
 (when (member 'aquamacs features)
   (add-to-list 'aquamacs-known-major-modes '(sal-mode . "SAL"))
@@ -155,8 +156,8 @@
 (defvar sal-easy-menu
   (let ((con '(slime-connected-p)))
     `("SAL"
-      [ "Start CM" start-sal :visible (not ,con) ]
-      [ "Kill CM" stop-sal :visible ,con ]
+      [ "Start CM" start-sal :active (not ,con) ]
+      [ "Kill CM" stop-sal :active ,con ]
       [ "Show REPL" slime-switch-to-output-buffer :active ,con]
       "--"
       [ "Execute" sal-enter ,con]
@@ -203,6 +204,7 @@
       )))
 
 (easy-menu-define menubar-sal sal-mode-map "SAL" sal-easy-menu)
+;(easy-menu-add menubar-sal sal-mode-map)
 
 (define-key sal-mode-map (kbd "<kp-enter>")
   'sal-enter)
@@ -288,6 +290,11 @@
 	nil)
     t))
 
+(when (not (featurep 'xemacs))
+  (defun region-exists-p ()
+    (and mark-active ; simple.el
+	 (not (null (mark))))))
+
 (defun sal-enter ()
   (interactive)
   (if (not (slime-connected-p ))
@@ -301,7 +308,7 @@
 	    (right 0)
 	    (cmd nil)
 	    (multi nil))
-	(cond ((and mark-active (not (null (mark))))
+	(cond ((region-exists-p)
 	       (setq left (region-beginning))
 	       (setq right (region-end))
 	       (setq multi t))
@@ -517,6 +524,9 @@
 	nil))))
 
 (defvar sal-mode-hook nil)
+(add-hook 'sal-mode-hook
+          (defun slime-add-easy-menu ()
+            (easy-menu-add sal-easy-menu 'sal-mode-map)))
 
 (defun sal-mode ()
   "Major mode for editing SAL files"
