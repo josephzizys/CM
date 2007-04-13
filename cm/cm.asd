@@ -416,7 +416,7 @@
           (setf (symbol-value sym)
                 (cons (cons (symbol-name :cm) (cmvar :*cm-readtable*))
                       (symbol-value sym))))))
-    (let ((*trace-output* nil))
+    (let (#-sbcl (*trace-output* nil))
       (dolist (s systems) (use-system s :verbose nil)))
     (cmcall :cm-logo)))
 
