@@ -32,16 +32,16 @@
       (add-hook 'slime-connected-hook 'sal-start-hook)
       (slime-start :program (first parsed) 
 		   :program-args (rest parsed)
-		   :init (lambda (port coding)
-			   (concat (slime-init-command port coding)
-				   (format "(use-system :sal)\n" )))
+;;		   :init (lambda (port coding)
+;;			   (concat (slime-init-command port coding)
+;;				   (format "(use-system :sal)\n" )))
 		   :buffer (if (member 'aquamacs features)
 			       " *inferior-lisp*"
 			     "*inferior-lisp*")))))
 
 (defun sal-start-hook ()
   ;; set repl package and readtable to cm...
-  (slime-repl-send-string "(cm)")
+  (slime-repl-send-string "(cm :sal)")
   ;; aquamacs: hide inferior lisp buffer if visible after slime starts
   (when (member 'aquamacs features)
     (let ((ilw (get-buffer-window " *inferior-lisp*" t)))
