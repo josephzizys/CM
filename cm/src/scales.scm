@@ -542,10 +542,16 @@
       (set! deg (or (list-ref into int)
                     (if force?
                       ;; slam to closest degree if not testing
-                      (loop for i from int downto 0 
-                         for j = (list-ref into i)
-                         when j return j)
-                      #f)))
+;                      (loop for i from int downto 0 
+;                         for j = (list-ref into i)
+;                         when j return j)
+			(loop for j from 1 to 12
+			      thereis
+			      (or (and (> (- int j) -1)
+				       (list-ref into (- int j)))
+				  (and (< (+ int j) div)
+				       (list-ref into (+ int j)))))
+			#f)))
       (if deg
          (+ (* oct (scale-divisions mode))
             deg)
