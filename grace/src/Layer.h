@@ -102,7 +102,6 @@ class Layer {
   int getLayerStyle(){return style;}
   void setLayerStyle(int s){style=s;}
   bool isDrawStyle(int i) {return (style & i);}
-
   int numPoints() ;
   bool isPoints() ;
   void sortPoints() ;
@@ -110,7 +109,10 @@ class Layer {
   void initPoint(LayerPoint * p);
   float getPointX(int i) ;
   float getPointY(int i) ;
-  float getPointZ(int i) ;
+  float getPointZ(int i) ; 
+  float getSelPointX(int i) ;
+  float getSelPointY(int i) ;
+  float getSelPointZ(int i) ;
   void setPointX(int i, float f) ;
   void setPointY(int i, float f) ;
   void setPointZ(int i, float f) ;
@@ -119,10 +121,12 @@ class Layer {
   void removePoint(int i) ;
   void deletePoint(int i) ;
   bool isSelection() ;
-  int numSelection() ;
+  int numSelected() ;
+  bool isSelected(int i) ;
   void clearSelection() ;
   void setSelection(int i) ;
-
+  void addSelection(int i) ;
+  void printSelection() ;
 };
 
 class XYLayer : public Layer {

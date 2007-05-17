@@ -9,6 +9,9 @@
 // $Date$ 
 
 #include "Layer.h"
+#include <iostream>
+using namespace std;
+
 
 Layer::Layer (String nam, Colour col) 
   : transp(true),
@@ -28,8 +31,8 @@ Layer::Layer (String nam, Colour col)
 }
   
 Layer::~Layer() {
+  _selection.clear(false);
   _points.clear(true);
-  _selection.clear(true);
 };
 
 int Layer::numPoints() {
@@ -74,6 +77,18 @@ float Layer::getPointZ(int i) {
   return _points[i]->getVal(_z);
 }
 
+float Layer::getSelPointX(int i) {
+  return _selection[i]->getVal(_x);
+}
+
+float Layer::getSelPointY(int i) {
+  return _selection[i]->getVal(_y);
+}
+
+float Layer::getSelPointZ(int i) {
+  return _selection[i]->getVal(_z);
+}
+
 void Layer::setPointX(int i, float f) {
   _points[i]->setVal(_x, f);
 }
@@ -109,7 +124,7 @@ bool Layer::isSelection() {
   return (_selection.size() > 0);
 }
 
-int Layer::numSelection() {
+int Layer::numSelected() {
   return _selection.size();
 }
 
@@ -119,8 +134,24 @@ void Layer::clearSelection() {
 
 void Layer::setSelection(int i) {
   clearSelection();
+  addSelection(i);
+}
+
+void Layer::addSelection(int i) {
   _selection.add(_points[i]);
 }
+
+bool Layer::isSelected(int i) {
+  return _selection.contains(_points[i]);
+}
+
+void Layer::printSelection() {
+  cout << "#<selection:";
+  for (int i=0; i<numSelected() ; i++)
+    cout << " " << _points.indexOf(_selection[i]) ;
+  cout << ">" << endl;
+}
+
 
 /*
  * Point Layers

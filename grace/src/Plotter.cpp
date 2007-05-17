@@ -508,6 +508,8 @@ class PlotView  : public Component {
 
   void setSelection(int i);
   bool isSelection() {return (selection != -1);}
+  bool isInside(float x, float y, float left, float top,
+		float right, float bottom);
   void mouseDown(const MouseEvent &e) ;
   void mouseDrag(const MouseEvent &e) ;
   void mouseUp(const MouseEvent &e) ;
@@ -515,6 +517,7 @@ class PlotView  : public Component {
   void drawGrid(Graphics& g);
   void drawCheckerBoard(Graphics& g);
   void drawLayer(Graphics& g, Layer * l);
+  
 };
 
 
@@ -616,6 +619,8 @@ void PlotView::drawGrid(Graphics& g) {
 void PlotView::drawLayer(Graphics& g, Layer * layer) {
   double half=ppp/2;
   double ax, ay, px, py, lx, ly, ox, oy;
+  // GETTER FOR ACCESSING EITHER POINTS OR SELECTION
+  // float (Layer::*xgetter)( int) = &Layer::getPointX;
 
   // need pixel origins for vert/horiz lines/bars
   if (yaxis->from < 0.0 && yaxis->to >= 0.0)
@@ -628,6 +633,9 @@ void PlotView::drawLayer(Graphics& g, Layer * layer) {
 
   g.setColour(layer->color);
   for (int i=0;i<layer->numPoints();i++) {
+
+    // GETTER FOR ACCESSING EITHER POINTS OR SELECTION
+    //ax=(layer->*xgetter) (i);  // axis coords
 
     ax=layer->getPointX(i);  // axis coords
     ay=layer->getPointY(i);
@@ -658,48 +666,89 @@ void PlotView::drawLayer(Graphics& g, Layer * layer) {
   }
 }
 
+bool PlotView::isInside(float x, float y, float left, float top, 
+			float right, float bottom) {
+  if ( (left <= x) && (x <= right)  &&
+       (bottom <= y) && (y <= top) )
+    return true;
+  else return false;
+}
+
 void PlotView::mouseDown (const MouseEvent &e) {
   Layer * focus=focusview->getFocusLayer();
   // shoudnt happen
   if (focus==(Layer *)NULL) return;
-  double x=xaxis->toValue(e.getMouseDownX());
-  double y=yaxis->toValue(e.getMouseDownY());
-  double px, py;
+  int mxp=e.getMouseDownX();
+  int myp=e.getMouseDownY();
 
-  cout << "xpix=" << e.getMouseDownX() << " ypix=" << e.getMouseDownY()
-       << " x=" << x << " y=" << y << endl;
-
-  if (e.mods.isShiftDown()) {
-      focus->addPoint(x, y);
-      repaint();
-      return;
-    }
-
-    if (e.mods.isAltDown()) {
-      for (int i=0; i < focus->numPoints(); i++) {
-	px=focus->getPointX(i);
-	if ( (x > px-.01) && (x < px+.01)) {
-	  py=focus->getPointY(i);
-	  if ((y > py-.01) && (y < py+.01)) {
-	    focus->deletePoint(i);
-	    setSelection(-1);
-	    repaint();
-	  }
-	}
-      }
-      return;
-    }
-    for (int i=0; i < focus->numPoints(); i++) {
-      px=focus->getPointX(i);
-      if ((x > px-.01) && (x < px+.01)) {
-	py=focus->getPointY(i);
-	if ((y > py-.01) && (y < py+.01)) {
-	  cout << "point=" << i << endl;
-	  setSelection(i);
-	}
-      }
-    }
+  if ( e.mods.isShiftDown() ) {
+    int i = focus->addPoint(xaxis->toValue(mxp),
+			    yaxis->toValue(myp));
+    focus->addSelection( i);
+    repaint();
     return;
+    }
+
+    double half=ppp/2;
+    int point=-1;
+    double left, top, right, bottom, x, y;
+
+    if ( focus->isDrawStyle(Layer::hbox) ) {
+      // speed: since box height is constant check point y againt a
+      // (constant) vertical box height centered on mouse y
+      top=yaxis->toValue( myp - half);
+      bottom=yaxis->toValue( myp + half);
+      x=xaxis->toValue( mxp);
+      for (int i=0; i < focus->numPoints(); i++) {
+	left=focus->getPointX(i);
+	right=left+focus->getPointZ(i);
+	y=focus->getPointY(i);
+	if ( isInside(x, y, left, top, right, bottom) ) {
+	  //cout <<"Got POINT[" << i << "] x=" << x << " y=" << y << endl;
+	  point=i;
+	  break;
+	}
+	// give up when points are rightward of mouse x
+	else if (left > x)
+	  break;
+      }
+    }
+    else {
+      // speed: use a constant "point" around mouse x and y and try to
+      // find a point thats inside it
+      left=xaxis->toValue( mxp - half);
+      top=yaxis->toValue( myp - half);
+      right=xaxis->toValue( mxp + half);
+      bottom=yaxis->toValue( myp + half);
+
+      for (int i=0; i < focus->numPoints(); i++) {
+	x=focus->getPointX(i);
+	y=focus->getPointY(i);
+	if ( isInside(x, y, left, top , right, bottom) ) {
+	  //cout <<"Got POINT[" << i << "] x=" << x << " y=" << y << endl;
+	  point=i;
+	  break;
+	} 
+	// give up when points are rightward of mouse x
+	else if (x > right) 
+	  break;
+      }
+    }
+
+    if ( point<0 ) {
+      focus->clearSelection();
+      printf("cleared selection\n");
+      repaint();
+    }
+    else if ( focus->isSelected(point) ) {
+      printf("point already selected\n");
+    }
+    else {
+      focus->addSelection(point);
+      cout << "selecting POINT[" << point<<  "]" << endl;
+      focus->printSelection();
+      repaint();
+    }
 }
 
 void PlotView::mouseDrag(const MouseEvent &e) {
