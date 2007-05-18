@@ -13,9 +13,7 @@
 
 #include "juce.h"
 
-// LayerPoint: a point with a (variable) number of float fields. The
-// fields define the plottable parameter values used by the different
-// types of layers.
+// LayerPoint: a point with a (variable) number of plottable float fields.
 
 class LayerPoint {
  public:
@@ -24,6 +22,10 @@ class LayerPoint {
   ~LayerPoint() {delete[] vals;}
   float getVal(int i) {return vals[i];}
   void setVal(int i, float f) {vals[i]=f;} 
+  void incVal(int i, float f) {vals[i]+=f;} 
+  void subVal(int i, float f) {vals[i]-=f;} 
+  void mulVal(int i, float f) {vals[i]*=f;} 
+  void divVal(int i, float f) {vals[i]/=f;} 
 };
 
 class comp00 {
@@ -117,6 +119,10 @@ class Layer {
   void setPointY(int i, float f) ;
   void setPointZ(int i, float f) ;
   void setPointXY(int i, float x, float y) ;
+
+  void setSelPointXY(int i, float x, float y) ;
+  void incSelPointXY(int i, float x, float y) ;
+
   void setPointXYZ(int i, float x, float y, float z) ;
   void removePoint(int i) ;
   void deletePoint(int i) ;
@@ -124,6 +130,7 @@ class Layer {
   int numSelected() ;
   bool isSelected(int i) ;
   void clearSelection() ;
+  void removeSelection(int i) ;
   void setSelection(int i) ;
   void addSelection(int i) ;
   void printSelection() ;

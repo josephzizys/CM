@@ -106,6 +106,16 @@ void Layer::setPointXY(int i, float x, float y) {
   _points[i]->setVal(_y, y);
 }
 
+void Layer::setSelPointXY(int i, float x, float y) {
+  _selection[i]->setVal(_x, x);
+  _selection[i]->setVal(_y, y);
+}
+
+void Layer::incSelPointXY(int i, float x, float y) {
+  _selection[i]->incVal(_x, x);
+  _selection[i]->incVal(_y, y);
+}
+
 void Layer::setPointXYZ(int i, float x, float y, float z) {
   _points[i]->setVal(_x, x);
   _points[i]->setVal(_y, y);
@@ -130,6 +140,10 @@ int Layer::numSelected() {
 
 void Layer::clearSelection() {
   _selection.clear(false);   // DONT delete!
+}
+
+void Layer::removeSelection(int i) {
+  _selection.removeObject(_points[i], false);
 }
 
 void Layer::setSelection(int i) {
