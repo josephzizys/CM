@@ -467,16 +467,22 @@ class PlotView  : public Component {
     bgTiled
   };
 
+  enum {
+    drawNormal = 0,
+    drawSel,
+    moveSel,
+    undoSel};
+
   Plotter * plotter;
   FocusView * focusview;
   double ppi, ppp, pad; // pix per inc, pix per point, margin pad
   AxisView * xaxis;
   AxisView * yaxis;
   Colour bgcolors[6];
-  int selection;
+  int drawmode;
 
   PlotView (Plotter * p, FocusView * f) 
-    : ppi (60.0) , ppp (8.0) , pad (8.0), selection(-1){
+    : ppi (60.0) , ppp (8.0) , pad (8.0) {
     plotter=p;
     focusview=f;
     xaxis=(AxisView *)NULL;
@@ -506,8 +512,6 @@ class PlotView  : public Component {
     return bgcolors[((t-1)*2)+1];
   }
 
-  void setSelection(int i);
-  bool isSelection() {return (selection != -1);}
   bool isInside(float x, float y, float left, float top,
 		float right, float bottom);
   void mouseDown(const MouseEvent &e) ;
@@ -516,17 +520,23 @@ class PlotView  : public Component {
   void resizeForDrawing();
   void drawGrid(Graphics& g);
   void drawCheckerBoard(Graphics& g);
-  void drawLayer(Graphics& g, Layer * l);
-  
-};
-
-
-void PlotView::setSelection(int i) {
-  selection=i;
-  // -1 means collapse selection?
-  if (i<0) {
+  void drawLayer(Graphics& g, Layer * l, int drawsel=0);
+  void drawSelection (Graphics& g, Layer * layr, int mode);
+  int visiblePixelLeft () { return plotter->viewport->getViewPositionX(); }
+  int visiblePixelTop () { return plotter->viewport->getViewPositionY(); }
+  int visiblePixelRight () { 
+    return (plotter->viewport->getViewPositionX() +
+	    plotter->viewport->getViewWidth());
   }
-}
+  int visiblePixelBottom () { 
+    return (plotter->viewport->getViewPositionY() +
+	    plotter->viewport->getViewHeight());
+  }
+  double visibleValueLeft() { return xaxis->toValue(visiblePixelLeft()); }
+  double visibleValueRight() { return xaxis->toValue(visiblePixelRight()); }
+  double visibleValueTop() { return yaxis->toValue(visiblePixelTop()); }
+  double visibleValueBottom() { return yaxis->toValue(visiblePixelBottom()); }
+};
 
 void PlotView::resizeForDrawing() {
   // called when zoom value changes to reset total size of plotting view
@@ -546,29 +556,129 @@ void PlotView::resizeForDrawing() {
 
 void PlotView::paint (Graphics& g) {
   // erase with white
-  g.fillAll (bgcolors[0]);
+  Layer * focus=focusview->getFocusLayer();
 
-  // don't do anything unless axis and layer is set. is this necessary??
   if ((xaxis==(AxisView *)NULL) || (yaxis==(AxisView *)NULL) ||
       (focusview==(FocusView *)NULL))
     return;
 
-  Layer * focus=focusview->getFocusLayer();
-
-  if (focus->getLayerBGStyle()==bgGrid)
-    drawGrid(g);
-  else if (focus->getLayerBGStyle()==bgTiled)
-    drawCheckerBoard(g);
-  else if (focus->getLayerBGStyle()==bgSolid)
-    g.fillAll(bgColor2(bgSolid));
-
-  // if focus is transparent draw background plots.
-  if (focus->isTransparent()) 
-    for (int i=0; i < plotter->numLayers(); i++) {
-      Layer * l = plotter->getLayer(i);
-      if (focus != l) drawLayer(g, l);
+  if (drawmode==undoSel) {
+    drawLayer( g, focus, undoSel);
+  }
+  else if (drawmode==moveSel) {
     }
-  drawLayer(g,focus);
+  else {
+    g.fillAll (bgcolors[0]);
+    // don't do anything unless axis and layer is set. is this necessary??
+    if (focus->getLayerBGStyle()==bgGrid)
+      drawGrid(g);
+    else if (focus->getLayerBGStyle()==bgTiled)
+      drawCheckerBoard(g);
+    else if (focus->getLayerBGStyle()==bgSolid)
+      g.fillAll(bgColor2(bgSolid));
+    // if focus is transparent draw background plots.
+    if (focus->isTransparent()) 
+      for (int i=0; i < plotter->numLayers(); i++) {
+	Layer * l = plotter->getLayer(i);
+	if (focus != l) drawLayer(g, l);
+      }
+    drawLayer(g,focus);
+    if ( focus->isSelection() ) {
+      drawLayer( g, focus, drawSel);
+    }
+  }
+}
+
+void PlotView::drawLayer(Graphics& g, Layer * layer, int dmode) {
+  double half=ppp/2;
+  double ax, ay, px, py, lx, ly, ox, oy;
+  Colour color, selcolor= Colours::grey;
+  // Getters access either points or selection
+  float (Layer::*xgetter)( int) ;
+  float (Layer::*ygetter)( int) ;
+  float (Layer::*zgetter)( int) ;
+  int ndraw;
+  bool fillp=true;
+
+  if ( (dmode == drawNormal) || (dmode= moveSel) ) {
+    // drawNormal: draw everything usng layer's color
+    // moveSel: draw everything but selected points are grey
+    color=layer->color;
+    ndraw=layer->numPoints();
+    xgetter = &Layer::getPointX;
+    ygetter = &Layer::getPointY;
+    zgetter = &Layer::getPointZ;
+  }
+  else {
+    // drawSel: draw ONLY (selected) pointheads, grey no lines
+    // undoSel: draw ONLY (selected) pointheads, layer color no lines
+    if (dmode==undoSel)
+      color=layer->color;
+    else color=selcolor;
+    ndraw=layer->numSelected();
+    xgetter = &Layer::getSelPointX;
+    ygetter = &Layer::getSelPointY;
+    zgetter = &Layer::getSelPointZ;
+  }
+
+  // need pixel origins for vert/horiz lines/bars
+  if (yaxis->from < 0.0 && yaxis->to >= 0.0)
+    oy=yaxis->toPixel(0.0);
+  else oy=yaxis->toPixel(yaxis->from);
+
+  if (xaxis->from < 0.0 && xaxis->to >= 0.0)
+    ox=xaxis->toPixel(0.0);
+  else ox=xaxis->toPixel(xaxis->from);
+
+  g.setColour(color);
+  for (int i=0; i<ndraw; i++) {
+    //ax=layer->getPointX(i);  // axis coords
+    //ay=layer->getPointY(i);
+    ax=(layer->*xgetter) (i);  
+    ay=(layer->*ygetter) (i);  
+    px=xaxis->toPixel(ax);   // pixel coords
+    py=yaxis->toPixel(ay);
+
+    if (layer->isDrawStyle(Layer::point)) {
+      // if we are moving selection then draw selected point gray
+      if ((dmode==moveSel ) && layer->isSelected(i) ) {
+	g.setColour(selcolor);
+	g.fillEllipse(px-half, py-half, ppp,ppp);
+	g.setColour(color);
+      }
+      else
+	g.fillEllipse(px-half, py-half, ppp,ppp);
+    }
+
+    // dont do lines if drawing/undrawing selection
+    if ( layer->isDrawStyle(Layer::line) && 
+	 ((dmode==drawNormal) || (dmode==moveSel)) ) {
+      if (layer->isDrawStyle(Layer::vertical))
+	g.drawLine( px, oy, px, py); // vertical line from orign
+      else if (layer->isDrawStyle(Layer::horizontal) )
+	g.drawLine( ox, py, px, py); // horizontal line from origin
+      else if (i>0)  // normal line between points
+	g.drawLine( lx, ly, px, py);
+      }
+    if (layer->isDrawStyle(Layer::hbox)) {
+      // cant convert the relative Z directly to pixel because of axis
+      // padding.  so to get pixel width of Z, get absolute axis
+      // position of Z, convert to pixel and then subtract out px
+      //double az = ax+layer->getPointZ(i);
+      double az=ax + (layer->*zgetter) (i);  
+      double pz = (int)xaxis->toPixel(az);
+      // draw selected boxes gray if moving
+      if ((dmode==moveSel ) && layer->isSelected(i) ) {
+	g.setColour(selcolor);
+	g.fillRect((int)px, (int)(py-half), (int)(pz-px), (int)ppp);
+	g.setColour(color);
+      }
+      else
+	g.fillRect((int)px, (int)(py-half), (int)(pz-px), (int)ppp);
+    }
+    lx=px;
+    ly=py;
+  }
 }
 
 void PlotView::drawCheckerBoard(Graphics& g) {
@@ -616,56 +726,6 @@ void PlotView::drawGrid(Graphics& g) {
   g.setColour(c1);
 }
 
-void PlotView::drawLayer(Graphics& g, Layer * layer) {
-  double half=ppp/2;
-  double ax, ay, px, py, lx, ly, ox, oy;
-  // GETTER FOR ACCESSING EITHER POINTS OR SELECTION
-  // float (Layer::*xgetter)( int) = &Layer::getPointX;
-
-  // need pixel origins for vert/horiz lines/bars
-  if (yaxis->from < 0.0 && yaxis->to >= 0.0)
-    oy=yaxis->toPixel(0.0);
-  else oy=yaxis->toPixel(yaxis->from);
-
-  if (xaxis->from < 0.0 && xaxis->to >= 0.0)
-    ox=xaxis->toPixel(0.0);
-  else ox=xaxis->toPixel(xaxis->from);
-
-  g.setColour(layer->color);
-  for (int i=0;i<layer->numPoints();i++) {
-
-    // GETTER FOR ACCESSING EITHER POINTS OR SELECTION
-    //ax=(layer->*xgetter) (i);  // axis coords
-
-    ax=layer->getPointX(i);  // axis coords
-    ay=layer->getPointY(i);
-    px=xaxis->toPixel(ax);   // pixel coords
-    py=yaxis->toPixel(ay);
-
-    if (layer->isDrawStyle(Layer::point))
-      g.fillEllipse(px-half, py-half, ppp,ppp);
-
-    if (layer->isDrawStyle(Layer::line)) {
-      if (layer->isDrawStyle(Layer::vertical))
-	g.drawLine( px, oy, px, py); // vertical line from orign
-      else if (layer->isDrawStyle(Layer::horizontal) )
-	g.drawLine( ox, py, px, py); // horizontal line from origin
-      else if (i>0)  // normal line between points
-	g.drawLine( lx, ly, px, py);
-      }
-    if (layer->isDrawStyle(Layer::hbox)) {
-      // cant convert the relative Z directly to pixel because of axis
-      // padding.  so to get pixel width of Z, get absolute axis
-      // position of Z, convert to pixel and then subtract out px
-      double az = ax+layer->getPointZ(i);
-      double pz = (int)xaxis->toPixel(az);
-      g.fillRect((int)px, (int)(py-half), (int)(pz-px), (int)ppp);
-    }
-    lx=px;
-    ly=py;
-  }
-}
-
 bool PlotView::isInside(float x, float y, float left, float top, 
 			float right, float bottom) {
   if ( (left <= x) && (x <= right)  &&
@@ -673,6 +733,15 @@ bool PlotView::isInside(float x, float y, float left, float top,
     return true;
   else return false;
 }
+
+/*
+selmode 0  1 draw 2 erase 3 move
+Mouse-click - set selection
+Mouse-shift-click add/remove selection
+Mouse-control-click create point
+Mouse-meta-click delete point
+*/
+
 
 void PlotView::mouseDown (const MouseEvent &e) {
   Layer * focus=focusview->getFocusLayer();
@@ -736,9 +805,12 @@ void PlotView::mouseDown (const MouseEvent &e) {
     }
 
     if ( point<0 ) {
+      // only need to draw exising selection normal
+      drawmode=undoSel;
+      repaint();
       focus->clearSelection();
       printf("cleared selection\n");
-      repaint();
+      drawmode=drawNormal;
     }
     else if ( focus->isSelected(point) ) {
       printf("point already selected\n");
@@ -747,29 +819,25 @@ void PlotView::mouseDown (const MouseEvent &e) {
       focus->addSelection(point);
       cout << "selecting POINT[" << point<<  "]" << endl;
       focus->printSelection();
+      drawmode=drawSel;
       repaint();
+      drawmode=drawNormal;
     }
 }
 
 void PlotView::mouseDrag(const MouseEvent &e) {
   Layer * focus=focusview->getFocusLayer();
-  if (selection > -1) {
+  /*if (selection > -1) {
     double x=xaxis->toValue(e.x);
     double y=yaxis->toValue(e.y);
     focus->setPointXY(selection, x, y );
     repaint();
   }
-  return;
+  */
 }
 
 void PlotView::mouseUp(const MouseEvent &e) {
   Layer * focus=focusview->getFocusLayer();
-  if ( isSelection() ) {
-    focus->sortPoints();
-    // this should NOT clear the selection at some
-    setSelection(-1); 
-    repaint();
-  }
 }
 
 /***********************************************************************
