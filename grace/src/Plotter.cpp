@@ -454,11 +454,67 @@ void FocusView::buttonClicked (Button* b) {
 
 /***********************************************************************
  *
+ * Region: sweeping and editing
+ *
+ **********************************************************************/
+
+class Region : public Component {
+public:
+  enum {selection = 1, horizontal, vertical};
+  int type;
+  Colour fillcolor, linecolor;
+  int linewidth;
+  AxisView * xa;
+  AxisView * ya;
+  Region ()
+    : fillcolor(Colour(0x66dddddd )),
+      linecolor(Colour(0x99111111)),
+      linewidth(1),
+      type(1)
+     {
+     }
+  ~Region() { }
+  bool isActive() { return isVisible(); }
+  void setType(int t) {type=t;}
+
+  void beginSweep (const MouseEvent& e, AxisView * x, AxisView * y) {
+    xa=x;
+    ya=y;
+    setSize(0,0);
+  }
+  void sweep (const MouseEvent& e) {
+    const int x1 = e.getMouseDownX();
+    const int y1 = e.getMouseDownY();
+    setBounds(jmin(x1, e.x), jmin(y1, e.y), abs(e.x - x1), abs (e.y - y1));
+    setVisible(true);
+  }
+  void endSweep (const MouseEvent& e) {
+    printf("region: x1=%f x2=%f, y1=%f, y2=%f\n", minX(),  maxX(), minY(),  maxY());
+    setSize(0,0);
+    setVisible(false);
+  }
+  double minX() {return xa->toValue(getX());}
+  double maxX() {return xa->toValue(getRight());}
+  double minY() {return ya->toValue(getBottom());}
+  double maxY() {return ya->toValue(getY());}
+
+  void paint (Graphics& g) {
+    g.fillAll(fillcolor);
+    g.setColour (linecolor);
+    g.drawRect (0, 0, getWidth(), getHeight(), linewidth);
+    //printf("region: x=%d y=%d, w=%d, h=%d\n", getX(), getY(), getWidth(), getHeight());
+   }
+};
+
+/***********************************************************************
+ *
  * PlotView: the drawing canvas
  *
  **********************************************************************/
 
-class PlotView  : public Component {
+class PlotView  : public Component,
+		  public LassoSource <Component*>
+{
  public:
   enum BGStyle {
     // ids for drawing different backgrounds.
@@ -480,6 +536,9 @@ class PlotView  : public Component {
   AxisView * yaxis;
   Colour bgcolors[6];
   Point mousedown, mousemove;
+  SelectedItemSet<Component*> selection;
+  LassoComponent <Component*> lasso;
+  Region region;
 
   PlotView (Plotter * p, FocusView * f) 
     : ppi (60.0) , ppp (8.0) , pad (8.0) {
@@ -536,6 +595,9 @@ class PlotView  : public Component {
   double visibleValueRight() { return xaxis->toValue(visiblePixelRight()); }
   double visibleValueTop() { return yaxis->toValue(visiblePixelTop()); }
   double visibleValueBottom() { return yaxis->toValue(visiblePixelBottom()); }
+
+  void findLassoItemsInArea (Array <Component*>& res, int x, int y, int w, int h) {}
+  SelectedItemSet <Component*>& getLassoSelection() {return selection;}
 };
 
 void PlotView::resizeForDrawing() {
@@ -709,8 +771,6 @@ bool PlotView::isInside(float x, float y, float left, float top,
   else return false;
 }
 
-
-
 void PlotView::mouseDown (const MouseEvent &e) {
   Layer * focus=focusview->getFocusLayer();
   // shoudnt happen
@@ -776,8 +836,14 @@ void PlotView::mouseDown (const MouseEvent &e) {
 
   if ( point<0 ) {
     // Mouse down on empty space point
-    focus->clearSelection();
-    repaint();
+    if (focus->isSelection()) {
+      focus->clearSelection();
+      repaint();
+    }
+    else {
+      addChildComponent (&region);
+      region.beginSweep(e, xaxis, yaxis);
+    }
   }
   else if ( focus->isSelected(point) ) {
     // point is already selected.
@@ -810,19 +876,26 @@ void PlotView::mouseDrag(const MouseEvent &e) {
       focus->incSelPointXY(i, dx, dy);
     repaint();
     mousemove.setXY(e.x,e.y);
-  }      
+  } 
+  else {
+    region.toFront(false);
+    region.sweep(e);
+  }
 }
 
 void PlotView::mouseUp(const MouseEvent &e) {
   Layer * focus=focusview->getFocusLayer();
-    if (focus->isSelection()) {
-      if (mousedown.getX() != mousemove.getX() ) {
-	printf("sorting after move\n");
-	focus->sortPoints();
-      }
-      repaint();
+  if (focus->isSelection()) {
+    if (mousedown.getX() != mousemove.getX() ) {
+      printf("sorting after move\n");
+      focus->sortPoints();
     }
-
+    repaint();
+  }
+  else {
+    region.endSweep(e);
+    removeChildComponent(&region);
+  }
 }
 
 /***********************************************************************
