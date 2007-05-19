@@ -507,17 +507,60 @@ public:
 };
 
 /***********************************************************************
- *
- * PlotView: the drawing canvas
+ * BackView: grid and background plots.
+ * PlotView: the focus layer's drawing canvas
  *
  **********************************************************************/
+
+void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis, 
+	       double ppp, double zoom, bool isFoc, SelectedItemSet<int> * sel);
+
+void drawGrid(Graphics& g, AxisView * xaxis, AxisView * yaxis, 
+	      Colour c1, Colour c2) ;
+
+class BackView : public Component {
+public:
+  enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
+  BGStyle bgstyle;
+  Colour bgcolors[6];
+  Plotter * plotter;
+  bool nodraw;
+  BackView (Plotter * p) {
+    plotter=p;
+    bgcolors[0]=Colours::white;
+    bgcolors[1]=Colours::lightyellow;
+    bgcolors[2]=Colours::darkgrey;
+    bgcolors[3]=Colours::lightgrey;
+    bgcolors[4]=Colours::lavender;
+    bgcolors[5]=Colour(0xf7, 0xf7, 0xf7);
+    //setInterceptsMouseClicks(false,false);
+  }
+  void paint (Graphics& g) {
+    //if (nodraw) {nodraw=false; return;}
+    printf("BACKPLOT PAINT\n");
+    g.fillAll (bgcolors[0]);
+    AxisView * xaxis = plotter->getXAxis();
+    AxisView * yaxis = plotter->getYAxis();
+
+    drawGrid(g, xaxis, yaxis, bgcolors[2], bgcolors[3]);
+
+    for (int i=0; i < plotter->numLayers(); i++) {
+      Layer * l = plotter->getLayer(i);
+      if (! plotter->isFocusLayer(l) ) 
+	drawLayer(g, l, xaxis, yaxis, 8.0, 1.0, false, 
+		  (SelectedItemSet<int> *)NULL);
+    }
+  }
+  ~BackView () {};
+};
 
 class PlotView : public Component {
  public:
   // ids for drawing different backgrounds.
   enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
-  enum {drawNormal = 0, drawSel, moveSel, undoSel};
+
   Plotter * plotter;
+  BackView * backview;
   FocusView * focusview;
   double ppi, ppp, pad; // pix per inc, pix per point, margin pad
   AxisView * xaxis;
@@ -526,11 +569,27 @@ class PlotView : public Component {
   Point mousedown, mousemove;
   SelectedItemSet<int> selection;
   Region region;
+  void repaintFocusPlot() {
+    //backview->nodraw=true;
+    repaint();
+  }
 
   PlotView (Plotter * p, FocusView * f) 
     : ppi (60.0) , ppp (8.0) , pad (8.0) {
     plotter=p;
     focusview=f;
+
+    //    backview=new BackView(p);
+    // addChildComponent(backview);
+    // backview->setVisible(true);  
+    // setInterceptsMouseClicks(true,false);
+    backview=new BackView(p);
+    // add ourselves as a child of the backview and then add the
+    // backview to the viewport
+    backview->addChildComponent(this);
+    backview->setVisible(true);
+    setTopLeftPosition(0,0);
+
     xaxis=(AxisView *)NULL;
     yaxis=(AxisView *)NULL;
     ////    focus=(Layer *)NULL;
@@ -543,10 +602,16 @@ class PlotView : public Component {
     // bgTiled colors
     bgcolors[4]=Colours::lavender;
     bgcolors[5]=Colour(0xf7, 0xf7, 0xf7);
+
   };
 
   void paint (Graphics& g);
-  ~PlotView () {};
+  void resized() {backview->setSize(getWidth(),getHeight());}
+    
+  ~PlotView () {
+    removeChildComponent(backview);
+    delete backview;
+  };
 
   Colour bgColor1(BGStyle t) {
     // each bgstyle has two colors associated with it.
@@ -562,9 +627,9 @@ class PlotView : public Component {
   void mouseDrag(const MouseEvent &e) ;
   void mouseUp(const MouseEvent &e) ;
   void resizeForDrawing();
-  void drawGrid(Graphics& g);
+  //  void drawGrid(Graphics& g);
   void drawCheckerBoard(Graphics& g);
-  void drawLayer(Graphics& g, Layer * l, int drawsel=0);
+  //void drawLayer(Graphics& g, Layer * l, int drawsel=0);
 
   int visiblePixelLeft () { return plotter->viewport->getViewPositionX(); }
   int visiblePixelTop () { return plotter->viewport->getViewPositionY(); }
@@ -615,51 +680,21 @@ void PlotView::resizeForDrawing() {
   //std::cout << "plotview: " << getWidth() << " " << getHeight() << "\n" ;
 }
 
-void PlotView::paint (Graphics& g) {
-  // erase with white
-  Layer * focus=focusview->getFocusLayer();
+/* void PlotView::drawLayer(Graphics& g, Layer * layer, int dmode) { */
 
-  if ((xaxis==(AxisView *)NULL) || (yaxis==(AxisView *)NULL) ||
-      (focusview==(FocusView *)NULL))
-    return;
-
-  g.fillAll (bgcolors[0]);
-  // don't do anything unless axis and layer is set. is this necessary??
-  if (focus->getLayerBGStyle()==bgGrid)
-    drawGrid(g);
-  else if (focus->getLayerBGStyle()==bgTiled)
-    drawCheckerBoard(g);
-  else if (focus->getLayerBGStyle()==bgSolid)
-    g.fillAll(bgColor2(bgSolid));
-  // if focus is transparent draw background plots.
-  if (focus->isTransparent()) 
-    for (int i=0; i < plotter->numLayers(); i++) {
-      Layer * l = plotter->getLayer(i);
-      if (focus != l) drawLayer(g, l);
-    }
-  drawLayer(g,focus, drawSel);
-
-}
-
-void PlotView::drawLayer(Graphics& g, Layer * layer, int dmode) {
+void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis, 
+	       double ppp, double zoom, bool isFoc, SelectedItemSet<int> * sel) {
+  
   double half=ppp/2;
   double ax, ay, px, py, lx, ly, ox, oy;
   Colour color, selcolor= Colours::grey;
-  // Getters access either points or selection
-  float (Layer::*xgetter)( int) ;
-  float (Layer::*ygetter)( int) ;
-  float (Layer::*zgetter)( int) ;
   int ndraw;
   bool fillp=true;
   //printf("visible left=%f, right=%f\n", visibleValueLeft(), visibleValueRight());
   color=layer->color;
   ndraw=layer->numPoints();
-  xgetter = &Layer::getPointX;
-  ygetter = &Layer::getPointY;
-  zgetter = &Layer::getPointZ;
 
   // need pixel origins for vert/horiz lines/bars
-
   if (yaxis->from < 0.0 && yaxis->to >= 0.0)
     oy=yaxis->toPixel(0.0);
   else oy=yaxis->toPixel(yaxis->from);
@@ -670,10 +705,8 @@ void PlotView::drawLayer(Graphics& g, Layer * layer, int dmode) {
 
   g.setColour(color);
   for (int i=0; i<ndraw; i++) {
-    //ax=layer->getPointX(i);  // axis coords
-    //ay=layer->getPointY(i);
-    ax=(layer->*xgetter) (i);  
-    ay=(layer->*ygetter) (i);  
+    ax=layer->getPointX(i);  
+    ay=layer->getPointY(i);  
     px=xaxis->toPixel(ax);   // pixel coords
     py=yaxis->toPixel(ay);
 
@@ -688,7 +721,7 @@ void PlotView::drawLayer(Graphics& g, Layer * layer, int dmode) {
 
     if (layer->isDrawStyle(Layer::point)) {
       // if we are moving selection then draw selected point gray
-      if ((dmode==drawSel ) && isSelected(i) ) {
+      if ( isFoc && sel->isSelected(i) ) {
 	g.setColour(selcolor);
 	g.fillEllipse(px-half, py-half, ppp,ppp);
 	g.setColour(color);
@@ -700,11 +733,10 @@ void PlotView::drawLayer(Graphics& g, Layer * layer, int dmode) {
       // cant convert the relative Z directly to pixel because of axis
       // padding.  so to get pixel width of Z, get absolute axis
       // position of Z, convert to pixel and then subtract out px
-      //double az = ax+layer->getPointZ(i);
-      double az=ax + (layer->*zgetter) (i);  
+      double az=ax + layer->getPointZ(i);  
       double pz = (int)xaxis->toPixel(az);
       // draw selected boxes gray if moving
-      if ((dmode==drawSel ) && isSelected(i) ) {
+      if ( isFoc && sel->isSelected(i) ) {
 	g.setColour(selcolor);
 	g.fillRect((int)px, (int)(py-half), (int)(pz-px), (int)ppp);
 	g.setColour(color);
@@ -717,6 +749,38 @@ void PlotView::drawLayer(Graphics& g, Layer * layer, int dmode) {
   }
 }
 
+void PlotView::paint (Graphics& g) {
+  // erase with white
+  Layer * focus=focusview->getFocusLayer();
+
+  if ((xaxis==(AxisView *)NULL) || (yaxis==(AxisView *)NULL) ||
+      (focusview==(FocusView *)NULL))
+    return;
+
+
+  /*  THIS SHOULD BE IN BACKPLOT DRAWING
+
+  g.fillAll (bgcolors[0]);
+  // don't do anything unless axis and layer is set. is this necessary??
+  if (focus->getLayerBGStyle()==bgGrid)
+    drawGrid(g);
+  else if (focus->getLayerBGStyle()==bgTiled)
+    drawCheckerBoard(g);
+  else if (focus->getLayerBGStyle()==bgSolid)
+    g.fillAll(bgColor2(bgSolid));
+  // if focus is transparent draw background plots.
+  if (focus->isTransparent()) 
+    for (int i=0; i < plotter->numLayers(); i++) {
+      Layer * l = plotter->getLayer(i);
+      if (focus != l) 
+	drawLayer(g, l, xaxis, yaxis, ppp, 1.0, false, 
+		  (SelectedItemSet<int> *)NULL);
+    }
+  */
+  drawLayer(g, focus, xaxis, yaxis, ppp, 1.0, true, &selection);
+}
+
+
 void PlotView::drawCheckerBoard(Graphics& g) {
   g.fillCheckerBoard((int)pad, (int)pad, 
 		     (int)(getWidth()-pad*2), 
@@ -727,10 +791,11 @@ void PlotView::drawCheckerBoard(Graphics& g) {
 		     bgColor2(bgTiled));
 }
 
-void PlotView::drawGrid(Graphics& g) {
+void drawGrid(Graphics& g, AxisView * xaxis, AxisView * yaxis, 
+	      Colour c1, Colour c2) {
   // draw grid underneath plots
-  Colour c1=bgColor1(bgGrid);
-  Colour c2=bgColor2(bgGrid);
+  //Colour c1=bgColor1(bgGrid);
+  //Colour c2=bgColor2(bgGrid);
   double left=xaxis->offset;
   double right=left+xaxis->size();
   double bottom=yaxis->offset;
@@ -803,7 +868,7 @@ void PlotView::mouseDown (const MouseEvent &e) {
     if ( e.mods.isShiftDown() )
       addSelection( i);
     else setSelection(i);
-    repaint();
+    repaintFocusPlot();
     return;
   }
 
@@ -856,7 +921,7 @@ void PlotView::mouseDown (const MouseEvent &e) {
     if ( isSelection() ) {
       if ( ! e.mods.isShiftDown() ) {
 	clearSelection();
-	repaint();
+	repaintFocusPlot();
       }
     }
     addChildComponent (&region);
@@ -867,7 +932,7 @@ void PlotView::mouseDown (const MouseEvent &e) {
     // Mouse-shift-click remove Point from selection
     if ( e.mods.isShiftDown() ) {
       removeSelection(point);
-      repaint();
+      repaintFocusPlot();
     }
   }
   else {
@@ -877,7 +942,7 @@ void PlotView::mouseDown (const MouseEvent &e) {
     if ( e.mods.isShiftDown() ) 
       addSelection(point);
     else setSelection(point);
-    repaint();
+    repaintFocusPlot();
   }
   printSelection();
 }
@@ -890,7 +955,7 @@ void PlotView::mouseDrag(const MouseEvent &e) {
     float dy=yaxis->toValue(e.y) - yaxis->toValue(mousemove.getY()) ;
     for (int i=0; i<numSelected(); i++)
       focus->incPoint( getSelected(i), dx, dy);
-    repaint();
+    repaintFocusPlot();
     mousemove.setXY(e.x,e.y);
   } 
   else {
@@ -907,7 +972,7 @@ void PlotView::mouseUp(const MouseEvent &e) {
       focus->sortPoints(&selection);
       printSelection();
     }
-    repaint();
+    repaintFocusPlot();
   }
   else if ( e.getDistanceFromDragStart() == 0) {
     // clicked without drag
@@ -921,7 +986,7 @@ void PlotView::mouseUp(const MouseEvent &e) {
     region.endSweep(e);
     selectPointsInside(l,t,r,b);
     removeChildComponent(&region);
-    repaint();
+    repaintFocusPlot();
   }
 }
 
@@ -957,7 +1022,7 @@ Plotter::Plotter (PlotType pt) {
   setAxisView( new AxisView(ytyp, AxisView::vertical) );
 
   // HACK: cobble up some demo layers.
-  for (int i=0; i<1; i++) {
+  for (int i=0; i<3; i++) {
     String nam = T("Layer") + String(layers.size()+1);
     Colour col = cols[layers.size() % 8];
     if (pt==MidiPlot)
@@ -969,8 +1034,9 @@ Plotter::Plotter (PlotType pt) {
   addChildComponent(xaxis);  
   addChildComponent(yaxis);  
   plotview->resizeForDrawing();  // calc plots width/height
-
-  viewport->setViewedComponent(plotview);
+  // add the backview to th viewport. the plotview is a child of the
+  // backview
+  viewport->setViewedComponent(plotview->backview);
   viewport->setScrollBarsShown (true, true);
   addChildComponent(viewport);
   addChildComponent(focusview);

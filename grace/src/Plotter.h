@@ -153,11 +153,14 @@ class Plotter  : public Component,
   Plotter (PlotType pt) ;
   ~Plotter () ;
   void setAxisView(AxisView * a) ;
+  AxisView * getXAxis() {return xaxis;}
+  AxisView * getYAxis() {return yaxis;}
   void addLayer(Layer * l);
   int numLayers();
   Layer * getLayer(int i);
   Layer * findLayer(int id);
   Layer * getFocusLayer();
+  bool isFocusLayer(Layer * l) {return (l == getFocusLayer()); }
   void setFocusLayer(Layer * l);
 
   void resized () ;
