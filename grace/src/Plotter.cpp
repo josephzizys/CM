@@ -454,7 +454,7 @@ void FocusView::buttonClicked (Button* b) {
 
 /***********************************************************************
  *
- * Region: sweeping and editing
+ * Region and selection, sweeping and editing
  *
  **********************************************************************/
 
@@ -489,7 +489,7 @@ public:
     setVisible(true);
   }
   void endSweep (const MouseEvent& e) {
-    printf("region: x1=%f x2=%f, y1=%f, y2=%f\n", minX(),  maxX(), minY(),  maxY());
+    //printf("region: x1=%f x2=%f, y1=%f, y2=%f\n", minX(),  maxX(), minY(),  maxY());
     setSize(0,0);
     setVisible(false);
   }
@@ -512,23 +512,11 @@ public:
  *
  **********************************************************************/
 
-class PlotView  : public Component,
-		  public LassoSource <Component*>
-{
+class PlotView : public Component {
  public:
-  enum BGStyle {
-    // ids for drawing different backgrounds.
-    bgSolid = 1,
-    bgGrid,
-    bgTiled
-  };
-
-  enum {
-    drawNormal = 0,
-    drawSel,
-    moveSel,
-    undoSel};
-
+  // ids for drawing different backgrounds.
+  enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
+  enum {drawNormal = 0, drawSel, moveSel, undoSel};
   Plotter * plotter;
   FocusView * focusview;
   double ppi, ppp, pad; // pix per inc, pix per point, margin pad
@@ -536,8 +524,7 @@ class PlotView  : public Component,
   AxisView * yaxis;
   Colour bgcolors[6];
   Point mousedown, mousemove;
-  SelectedItemSet<Component*> selection;
-  LassoComponent <Component*> lasso;
+  SelectedItemSet<int> selection;
   Region region;
 
   PlotView (Plotter * p, FocusView * f) 
@@ -571,8 +558,6 @@ class PlotView  : public Component,
     return bgcolors[((t-1)*2)+1];
   }
 
-  bool isInside(float x, float y, float left, float top,
-		float right, float bottom);
   void mouseDown(const MouseEvent &e) ;
   void mouseDrag(const MouseEvent &e) ;
   void mouseUp(const MouseEvent &e) ;
@@ -580,7 +565,7 @@ class PlotView  : public Component,
   void drawGrid(Graphics& g);
   void drawCheckerBoard(Graphics& g);
   void drawLayer(Graphics& g, Layer * l, int drawsel=0);
-  void drawSelection (Graphics& g, Layer * layr, int mode);
+
   int visiblePixelLeft () { return plotter->viewport->getViewPositionX(); }
   int visiblePixelTop () { return plotter->viewport->getViewPositionY(); }
   int visiblePixelRight () { 
@@ -596,8 +581,22 @@ class PlotView  : public Component,
   double visibleValueTop() { return yaxis->toValue(visiblePixelTop()); }
   double visibleValueBottom() { return yaxis->toValue(visiblePixelBottom()); }
 
-  void findLassoItemsInArea (Array <Component*>& res, int x, int y, int w, int h) {}
-  SelectedItemSet <Component*>& getLassoSelection() {return selection;}
+  bool isSelection() {return (selection.getNumSelected() > 0);}
+  int numSelected() {return selection.getNumSelected();}
+  bool isSelected(int h) {return selection.isSelected(h);}
+  void clearSelection() {selection.deselectAll();}
+  void removeSelection(int h) {selection.deselect(h);}
+  void setSelection(int h) {selection.selectOnly(h);}
+  void addSelection(int h) {selection.addToSelection(h);}
+  int getSelected(int i) {return selection.getSelectedItem(i);}
+  bool isInside(float x, float y, float left, float top,
+		float right, float bottom);
+  void selectPointsInside(float left, float top, float right, float bottom) ;
+  void printSelection() {
+    printf("#<Selection:");
+    for (int i=0;i<numSelected(); i++) printf(" %d", getSelected(i));
+    printf(">\n");
+  }
 };
 
 void PlotView::resizeForDrawing() {
@@ -689,7 +688,7 @@ void PlotView::drawLayer(Graphics& g, Layer * layer, int dmode) {
 
     if (layer->isDrawStyle(Layer::point)) {
       // if we are moving selection then draw selected point gray
-      if ((dmode==drawSel ) && layer->isSelected(i) ) {
+      if ((dmode==drawSel ) && isSelected(i) ) {
 	g.setColour(selcolor);
 	g.fillEllipse(px-half, py-half, ppp,ppp);
 	g.setColour(color);
@@ -705,7 +704,7 @@ void PlotView::drawLayer(Graphics& g, Layer * layer, int dmode) {
       double az=ax + (layer->*zgetter) (i);  
       double pz = (int)xaxis->toPixel(az);
       // draw selected boxes gray if moving
-      if ((dmode==drawSel ) && layer->isSelected(i) ) {
+      if ((dmode==drawSel ) && isSelected(i) ) {
 	g.setColour(selcolor);
 	g.fillRect((int)px, (int)(py-half), (int)(pz-px), (int)ppp);
 	g.setColour(color);
@@ -771,6 +770,20 @@ bool PlotView::isInside(float x, float y, float left, float top,
   else return false;
 }
 
+void PlotView::selectPointsInside(float left, float top, float right, float bottom){
+  Layer * focus=focusview->getFocusLayer();
+  //printf("looking in region: left=%f top=%f, right=%f, bottom=%f\n",x1, y2, x2, y1);
+  //clearSelection();
+  for (int i=0; i<focus->numPoints(); i++) {
+    double x=focus->getPointX(i);
+    double y=focus->getPointY(i);
+    if ( isInside(x, y, left, top, right, bottom) ) {
+      addSelection(i);
+    }
+    else if (x > right) break; // stop looking
+  }
+}
+
 void PlotView::mouseDown (const MouseEvent &e) {
   Layer * focus=focusview->getFocusLayer();
   // shoudnt happen
@@ -779,13 +792,17 @@ void PlotView::mouseDown (const MouseEvent &e) {
   int mxp=e.getMouseDownX();
   int myp=e.getMouseDownY();
 
-  // cache mouse down position 
+  // cache mouse down position  FIX THIS ISNT NEEDED
   mousedown.setXY(mxp, myp);
   mousemove.setXY(mxp, myp);
 
+  // Control-Click: add point make selection
+  // Control-Shift-Click: add point add selection.
   if ( e.mods.isCtrlDown() ) {
     int i = focus->addPoint(xaxis->toValue(mxp), yaxis->toValue(myp));
-    focus->addSelection( i);
+    if ( e.mods.isShiftDown() )
+      addSelection( i);
+    else setSelection(i);
     repaint();
     return;
   }
@@ -835,21 +852,21 @@ void PlotView::mouseDown (const MouseEvent &e) {
   }
 
   if ( point<0 ) {
-    // Mouse down on empty space point
-    if (focus->isSelection()) {
-      focus->clearSelection();
-      repaint();
+    // Mouse down on empty space . Add to selection if shift is down
+    if ( isSelection() ) {
+      if ( ! e.mods.isShiftDown() ) {
+	clearSelection();
+	repaint();
+      }
     }
-    else {
-      addChildComponent (&region);
-      region.beginSweep(e, xaxis, yaxis);
-    }
+    addChildComponent (&region);
+    region.beginSweep(e, xaxis, yaxis);
   }
-  else if ( focus->isSelected(point) ) {
+  else if ( isSelected(point) ) {
     // point is already selected.
     // Mouse-shift-click remove Point from selection
     if ( e.mods.isShiftDown() ) {
-      focus->removeSelection(point);
+      removeSelection(point);
       repaint();
     }
   }
@@ -858,22 +875,21 @@ void PlotView::mouseDown (const MouseEvent &e) {
     // Mouse-Click: set point as (single) selection
     // Mouse-shift-click:   add Point from selection
     if ( e.mods.isShiftDown() ) 
-      focus->addSelection(point);
-    else focus->setSelection(point);
+      addSelection(point);
+    else setSelection(point);
     repaint();
   }
-  focus->printSelection();
+  printSelection();
 }
 
 void PlotView::mouseDrag(const MouseEvent &e) {
   Layer * focus=focusview->getFocusLayer();
   
-  if (focus->isSelection()) {
+  if ( isSelection() ) {
     float dx=xaxis->toValue(e.x) - xaxis->toValue(mousemove.getX()) ;
     float dy=yaxis->toValue(e.y) - yaxis->toValue(mousemove.getY()) ;
-    //printf("dx=%f, dy=%f\n", dx, dy);
-    for (int i=0;i<focus->numSelected(); i++) 
-      focus->incSelPointXY(i, dx, dy);
+    for (int i=0; i<numSelected(); i++)
+      focus->incPoint( getSelected(i), dx, dy);
     repaint();
     mousemove.setXY(e.x,e.y);
   } 
@@ -885,16 +901,27 @@ void PlotView::mouseDrag(const MouseEvent &e) {
 
 void PlotView::mouseUp(const MouseEvent &e) {
   Layer * focus=focusview->getFocusLayer();
-  if (focus->isSelection()) {
+  if ( isSelection() ) {
     if (mousedown.getX() != mousemove.getX() ) {
       printf("sorting after move\n");
-      focus->sortPoints();
+      focus->sortPoints(&selection);
+      printSelection();
     }
     repaint();
   }
+  else if ( e.getDistanceFromDragStart() == 0) {
+    // clicked without drag
+  }
   else {
+    // get region extent before closing region!
+    float l = region.minX();
+    float t = region.maxY();
+    float r = region.maxX();
+    float b = region.minY();
     region.endSweep(e);
+    selectPointsInside(l,t,r,b);
     removeChildComponent(&region);
+    repaint();
   }
 }
 

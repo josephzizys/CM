@@ -17,8 +17,10 @@
 
 class LayerPoint {
  public:
+  enum {selected = 1, muted = 2};
+  int flags;
   float * vals;
-  LayerPoint(int n) {vals=new float[n];}
+ LayerPoint(int n) : flags(0) {vals=new float[n];}
   ~LayerPoint() {delete[] vals;}
   float getVal(int i) {return vals[i];}
   void setVal(int i, float f) {vals[i]=f;} 
@@ -58,17 +60,10 @@ class Layer {
   };
 
   /* The layer points kept in X sorted order. */
-
   OwnedArray <LayerPoint> _points;
-
-  /* Points can be selected by the mouse. These will be drawn in
-  a different color, etc. */
-
-  OwnedArray <LayerPoint> _selection;
 
   /* A preallocated point holding default field values that new points
      will be merged with to produce a fully specfifed point. */
-
   LayerPoint * _defaults;  // default values for new points
 
   /* _x _y and _z are point field indexes that the plotter will use to
@@ -106,34 +101,27 @@ class Layer {
   bool isDrawStyle(int i) {return (style & i);}
   int numPoints() ;
   bool isPoints() ;
-  void sortPoints() ;
+  void sortPoints (SelectedItemSet<int> * sel) ;
   int addPoint(float x, float y) ;
   void initPoint(LayerPoint * p);
   float getPointX(int i) ;
   float getPointY(int i) ;
   float getPointZ(int i) ; 
-  float getSelPointX(int i) ;
-  float getSelPointY(int i) ;
-  float getSelPointZ(int i) ;
   void setPointX(int i, float f) ;
   void setPointY(int i, float f) ;
   void setPointZ(int i, float f) ;
-  void setPointXY(int i, float x, float y) ;
+  void incPointX(int i, float f) ;
+  void incPointY(int i, float f) ;
+  void incPointZ(int i, float f) ;
+  void mulPointX(int i, float f) ;
+  void mulPointY(int i, float f) ;
+  void mulPointZ(int i, float f) ;
 
-  void setSelPointXY(int i, float x, float y) ;
-  void incSelPointXY(int i, float x, float y) ;
-
-  void setPointXYZ(int i, float x, float y, float z) ;
+  void setPoint(int i, float x, float y) ;
+  void incPoint(int i, float x, float y) ;
+  void mulPoint(int i, float x, float y) ;
   void removePoint(int i) ;
   void deletePoint(int i) ;
-  bool isSelection() ;
-  int numSelected() ;
-  bool isSelected(int i) ;
-  void clearSelection() ;
-  void removeSelection(int i) ;
-  void setSelection(int i) ;
-  void addSelection(int i) ;
-  void printSelection() ;
 };
 
 class XYLayer : public Layer {

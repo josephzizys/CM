@@ -31,7 +31,6 @@ Layer::Layer (String nam, Colour col)
 }
   
 Layer::~Layer() {
-  _selection.clear(false);
   _points.clear(true);
 };
 
@@ -43,9 +42,26 @@ bool Layer::isPoints() {
   return (_points.size()>0);
 }
 
-void Layer::sortPoints() {
+void Layer::sortPoints(SelectedItemSet<int> * sel) {
   comp00 comp;
+  // have to recalculate selection array after sort
+  // mark each point in selection as being selected
+  for (int i=0;i < sel->getNumSelected(); i++) {
+    int h=sel->getSelectedItem(i);
+    _points[h]->flags=LayerPoint::selected;
+  }
+  // sort array
   _points.sort(comp);
+  // update selection with new handles
+  if (sel->getNumSelected() > 0) {
+    sel->deselectAll();
+    for (int h=0; h < _points.size(); h++) {
+      if ( _points[h]->flags == LayerPoint::selected ) {
+	_points[h]->flags=0;
+	sel->addToSelection(h);
+      }
+    }
+  }
 }
 
 int Layer::addPoint(float x, float y) {
@@ -65,61 +81,35 @@ void Layer::initPoint(LayerPoint * p) {
       p->vals[i]=_defaults->vals[i];
 }
 
-float Layer::getPointX(int i) {
-  return _points[i]->getVal(_x);
-}
+float Layer::getPointX(int i) {return _points[i]->getVal(_x);}
+float Layer::getPointY(int i) {return _points[i]->getVal(_y);}
+float Layer::getPointZ(int i) {return _points[i]->getVal(_z);}
 
-float Layer::getPointY(int i) {
-  return _points[i]->getVal(_y);
-}
+void Layer::setPointX(int i, float f) {_points[i]->setVal(_x, f);}
+void Layer::setPointY(int i, float f) {_points[i]->setVal(_y, f);}
+void Layer::setPointZ(int i, float f) {_points[i]->setVal(_z, f);}
 
-float Layer::getPointZ(int i) {
-  return _points[i]->getVal(_z);
-}
+void Layer::incPointX(int i, float f) {_points[i]->incVal(_x, f);}
+void Layer::incPointY(int i, float f) {_points[i]->incVal(_y, f);}
+void Layer::incPointZ(int i, float f) {_points[i]->incVal(_z, f);}
 
-float Layer::getSelPointX(int i) {
-  return _selection[i]->getVal(_x);
-}
+void Layer::mulPointX(int i, float f) {_points[i]->mulVal(_x, f);}
+void Layer::mulPointY(int i, float f) {_points[i]->mulVal(_y, f);}
+void Layer::mulPointZ(int i, float f) {_points[i]->mulVal(_z, f);}
 
-float Layer::getSelPointY(int i) {
-  return _selection[i]->getVal(_y);
-}
-
-float Layer::getSelPointZ(int i) {
-  return _selection[i]->getVal(_z);
-}
-
-void Layer::setPointX(int i, float f) {
-  _points[i]->setVal(_x, f);
-}
-
-void Layer::setPointY(int i, float f) {
-  _points[i]->setVal(_y, f);
-}
-
-void Layer::setPointZ(int i, float f) {
-  _points[i]->setVal(_z, f);
-}
-
-void Layer::setPointXY(int i, float x, float y) {
+void Layer::setPoint(int i, float x, float y) {
   _points[i]->setVal(_x, x);
   _points[i]->setVal(_y, y);
 }
 
-void Layer::setSelPointXY(int i, float x, float y) {
-  _selection[i]->setVal(_x, x);
-  _selection[i]->setVal(_y, y);
+void Layer::incPoint(int i, float x, float y) {
+  _points[i]->incVal(_x, x);
+  _points[i]->incVal(_y, y);
 }
 
-void Layer::incSelPointXY(int i, float x, float y) {
-  _selection[i]->incVal(_x, x);
-  _selection[i]->incVal(_y, y);
-}
-
-void Layer::setPointXYZ(int i, float x, float y, float z) {
-  _points[i]->setVal(_x, x);
-  _points[i]->setVal(_y, y);
-  _points[i]->setVal(_z, z);
+void Layer::mulPoint(int i, float x, float y) {
+  _points[i]->mulVal(_x, x);
+  _points[i]->mulVal(_y, y);
 }
 
 void Layer::removePoint(int i) {
@@ -129,43 +119,6 @@ void Layer::removePoint(int i) {
 void Layer::deletePoint(int i) {
   _points.remove(i, true);
 }
-
-bool Layer::isSelection() {
-  return (_selection.size() > 0);
-}
-
-int Layer::numSelected() {
-  return _selection.size();
-}
-
-void Layer::clearSelection() {
-  _selection.clear(false);   // DONT delete!
-}
-
-void Layer::removeSelection(int i) {
-  _selection.removeObject(_points[i], false);
-}
-
-void Layer::setSelection(int i) {
-  clearSelection();
-  addSelection(i);
-}
-
-void Layer::addSelection(int i) {
-  _selection.add(_points[i]);
-}
-
-bool Layer::isSelected(int i) {
-  return _selection.contains(_points[i]);
-}
-
-void Layer::printSelection() {
-  cout << "#<selection:";
-  for (int i=0; i<numSelected() ; i++)
-    cout << " " << _points.indexOf(_selection[i]) ;
-  cout << ">" << endl;
-}
-
 
 /*
  * Point Layers
