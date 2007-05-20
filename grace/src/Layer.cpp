@@ -21,8 +21,7 @@ Layer::Layer (String nam, Colour col)
     _defaults ( (LayerPoint *)NULL),
     arity (2),
     name (String::empty),
-    style(lineandpoint),
-    bgstyle (2)    // 2=bgGrid. this should not be part of layers...
+    style(lineandpoint)
 {
   static int layerid=100;
   name=nam;

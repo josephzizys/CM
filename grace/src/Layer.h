@@ -78,7 +78,7 @@ class Layer {
   int id;           // unique id
   Colour color;     // line and point color
   int style;        // drawing style
-  int bgstyle;      // background style
+
   bool transp;      // allow back plots to be visible
   
   Layer(String nam, Colour col);
@@ -92,8 +92,6 @@ class Layer {
   void setLayerColor(Colour c){color=c;}
   String getLayerName(){return name;}
   void setLayerName(String n){name=n;}
-  int getLayerBGStyle() {return bgstyle;}
-  void setLayerBGStyle(int s) { bgstyle=s;}
   bool isTransparent() {return transp;}
   void setTransparent(bool b) {transp=b;}  
   int getLayerStyle(){return style;}

@@ -15,6 +15,7 @@
 #include "Layer.h"
 
 class PlotView;         // defined in Plotter.cpp
+class BackView;
 class PlotViewport;
 class FocusView;
 
@@ -34,13 +35,6 @@ enum PlotType {
 class AxisView : public Component {
 
 public:
-
-  enum AxisOrientation {
-    // could add others: point color, Z axis, etc
-    horizontal = 1,
-    vertical  
-  };
-
   enum AxisType {
     untyped = 0,
     normalized,
@@ -61,23 +55,21 @@ public:
   int decimals;   // num decimals to show in labels
   double zoom;    // zoom factor
   double ppi;     // pixels per increment (distance between labels)
-  double ppp;     // pixels per point (point size)
   double offset;  // pixel position of axis origin
-  bool vert;      // axis is vertical
+  int orient;     // orientation (horizontal, vertical)
   bool logr;      // axis is logarithmic
   PlotViewport * viewport;  // back pointer to viewport
 
-  AxisView (AxisType typ, AxisOrientation ori)
+  AxisView (AxisType typ)
     : type(0), from (0.0), to (1.0), by (.25), ticks (4), zoom (1.0),
-    ppi (120.0), ppp (8.0), offset (0.0), decimals (2), 
-    viewport ((PlotViewport *)NULL)  {
-
-    init(typ, ori);
+    ppi (120.0), offset (0.0), decimals (2), 
+    viewport (0)  {
+    init(typ);
   }
 
-  void init(AxisType a, AxisOrientation b);
-  bool isVertical() { return vert; }
-  bool isHorizontal() { return !vert; }
+  void init(AxisType t);
+  bool isVertical();
+  bool isHorizontal();
   bool isLinear() { return !logr; }
   bool isLogarithmic() { return logr; }
   double getZoom() { return zoom; }
@@ -139,32 +131,54 @@ class Plotter  : public Component,
 {
 
  public:
+  enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
+  enum Orientation {horizontal = 1, vertical };
   AxisView * xaxis;
   AxisView * yaxis;
   Slider * xzoom;
   Slider * yzoom;
   PlotViewport * viewport;
   PlotView * plotview;
+  BackView * backview;
   FocusView * focusview;
   OwnedArray <Layer> layers;
   Font font;
   Random * rand; // a private random state
+  double zoom;
+  double ppp;  // point size (pixels per point)
 
   Plotter (PlotType pt) ;
   ~Plotter () ;
-  void setAxisView(AxisView * a) ;
-  AxisView * getXAxis() {return xaxis;}
-  AxisView * getYAxis() {return yaxis;}
+
+  double getZoom() {return zoom;}
+  void setZoom(double z) {zoom=z;}
+  double getPointSize(){return ppp;}
+  void setPointSize(double siz){ppp=siz;}
+
+  AxisView * getAxisView(Orientation o);
+  void setAxisView(AxisView * a, Orientation o) ;
+
+  BackView * getBackView();
+  PlotView * getPlotView();
+  FocusView * getFocusView();
+  PlotViewport * getPlotViewport();
+
+  // layers
   void addLayer(Layer * l);
   int numLayers();
   Layer * getLayer(int i);
   Layer * findLayer(int id);
   Layer * getFocusLayer();
-  bool isFocusLayer(Layer * l) {return (l == getFocusLayer()); }
+  bool isFocusLayer(Layer * l);
   void setFocusLayer(Layer * l);
 
   void resized () ;
   void redrawPlotView();
+  void redrawBackView();
+  BGStyle getBackViewStyle();
+  void setBackViewStyle(BGStyle style);
+  bool isBackViewPlotting();
+  void setBackViewPlotting(bool val);
   void sliderValueChanged (Slider *slider) ;
   void sliderDragStarted (Slider *slider) {};
   void sliderDragEnded (Slider *slider) {};
