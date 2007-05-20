@@ -190,12 +190,18 @@ class Plotter  : public Component,
 /// Plotter Window
 ///
 
-class PlotterWindow  : public DocumentWindow {
+class PlotterWindow : public DocumentWindow,
+  public MenuBarModel {
 
 public:
   Plotter * plotter;
+  MenuBarComponent * menubar;
   PlotterWindow (PlotType pt) ;
   ~PlotterWindow () ;
+  const StringArray getMenuBarNames (MenuBarComponent* mbar);
+  const PopupMenu getMenuForIndex (MenuBarComponent* mbar, int idx, 
+				   const String &name);
+  void menuItemSelected (MenuBarComponent* mbar, int id, int idx);
   void closeButtonPressed () ;
 };
 

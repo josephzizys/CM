@@ -1204,13 +1204,44 @@ void Plotter::scrollBarMoved (ScrollBar * sb, const double nrs) {
  *
  **********************************************************************/
 
+const StringArray PlotterWindow::getMenuBarNames (MenuBarComponent* mbar) {
+  const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"), T("Help"), 0 };
+  return StringArray((const tchar**) menuNames);
+}
+
+
+const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx, 
+						const String &name) {
+  PopupMenu menu;
+  switch (idx) {
+  case 0 :
+    menu.addItem( 1, T("New Plotter"));
+    break;
+  case 1 :
+    menu.addItem( 2, T("Select All"));
+    break;
+  case 2 :
+    menu.addItem( 3, T("Show Backgroud Plots"), true, true);
+    break;
+  case 3 :
+    menu.addItem( 4, T("Command Help"));
+    break;
+  }
+  return menu;
+}
+
+void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
+  printf("menubar selected item: %d\n", id);
+}
+
 PlotterWindow::PlotterWindow (PlotType pt)
   : DocumentWindow (String::empty , Colours::silver, 
 		    DocumentWindow::allButtons, true ) {
   String title;
 
   plotter = new Plotter( pt ) ;
-
+  menubar = new MenuBarComponent(this);
+  setMenuBar(this, 0);
   switch (pt) {
   case MidiPlot :
     title = T("MIDI Plotter");
