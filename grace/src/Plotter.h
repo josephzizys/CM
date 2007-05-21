@@ -25,8 +25,7 @@ enum PlotType {
   MidiPlot,
   VKeyPlot,
   FomusPlot,
-  SpearPlot
-  };
+  CLMPlot};
 
 ///
 /// Axis View
@@ -133,6 +132,44 @@ class Plotter  : public Component,
  public:
   enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
   enum Orientation {horizontal = 1, vertical };
+
+  /*  Plotter Command IDs have lower 8 bits available for encoding
+      command information. Use this Lisp code to generate the C
+      declaration:
+
+(defun plotter-enums(start &rest names)
+  (format t "  enum PlotterCommand {~%")
+  (loop with m = (1- (length names))
+     for n in names for i from 0
+     do (format t "    cmd~A = ~D~:[,~;};~]~%" n (ash (+ start i) 8) (= i m))))
+(plotter-enums 0 "FileNew" "FileOpen" "FileSave" "FileSaveAs" "FileImport" "FileExport" "EditCut" "EditCopy" "EditPaste" "EditClear" "EditSelectAll" "EditFind" "LayerAdd" "LayerDelete" "LayerSelect" "ViewStyle" "ViewBgStyle" "ViewBgColor" "ViewBgPlotting" "ViewBgMousing" "ViewMouseGuide" "HelpCommands")
+
+   */
+
+  enum PlotterCommand {
+    cmdFileNew = 0,
+    cmdFileOpen = 256,
+    cmdFileSave = 512,
+    cmdFileSaveAs = 768,
+    cmdFileImport = 1024,
+    cmdFileExport = 1280,
+    cmdEditCut = 1536,
+    cmdEditCopy = 1792,
+    cmdEditPaste = 2048,
+    cmdEditClear = 2304,
+    cmdEditSelectAll = 2560,
+    cmdEditFind = 2816,
+    cmdLayerAdd = 3072,
+    cmdLayerDelete = 3328,
+    cmdLayerSelect = 3584,
+    cmdViewStyle = 3840,
+    cmdViewBgStyle = 4096,
+    cmdViewBgColor = 4352,
+    cmdViewBgPlotting = 4608,
+    cmdViewBgMousing = 4864,
+    cmdViewMouseGuide = 5120,
+    cmdHelpCommands = 5376};
+
   AxisView * xaxis;
   AxisView * yaxis;
   Slider * xzoom;
@@ -146,6 +183,8 @@ class Plotter  : public Component,
   Random * rand; // a private random state
   double zoom;
   double ppp;  // point size (pixels per point)
+  int flags;
+  PlotType plottype;
 
   Plotter (PlotType pt) ;
   ~Plotter () ;
@@ -154,6 +193,7 @@ class Plotter  : public Component,
   void setZoom(double z) {zoom=z;}
   double getPointSize(){return ppp;}
   void setPointSize(double siz){ppp=siz;}
+  PlotType getPlotType() {return plottype;}
 
   AxisView * getAxisView(Orientation o);
   void setAxisView(AxisView * a, Orientation o) ;

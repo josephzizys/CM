@@ -938,11 +938,14 @@ void PlotView::mouseUp(const MouseEvent &e) {
 
 Plotter::Plotter (PlotType pt) 
   : ppp (8.0),
-    zoom (1.0)
+    zoom (1.0),
+    flags (0)
 {
   Colour cols[8] = { Colours::red, Colours::green, Colours::blue, 
 		     Colours::magenta, Colours::cyan, Colours::sienna,
 		     Colours::orange, Colours::coral};
+
+  plottype=pt;
   font=Font(Font::getDefaultSansSerifFontName(), 10.0, Font::bold);
   rand=new Random(Time::currentTimeMillis());
   focusview=new FocusView(this);
@@ -1205,33 +1208,126 @@ void Plotter::scrollBarMoved (ScrollBar * sb, const double nrs) {
  **********************************************************************/
 
 const StringArray PlotterWindow::getMenuBarNames (MenuBarComponent* mbar) {
-  const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"), T("Help"), 0 };
+  const tchar* const menuNames[] = { T("File"), T("Edit"), T("Layer"), T("View"), T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
+
 
 
 const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx, 
 						const String &name) {
   PopupMenu menu;
+  PopupMenu sub1, sub2, sub3;
+  PlotType type=plotter->getPlotType();
   switch (idx) {
   case 0 :
-    menu.addItem( 1, T("New Plotter"));
+    // File Menu
+    sub1.addItem( Plotter::cmdFileNew + XYPlot, T("XY Data"));
+    sub1.addItem( Plotter::cmdFileNew + XYZPlot, T("XYZ Data"), false);
+    sub1.addItem( Plotter::cmdFileNew + MidiPlot, T("Midi"));
+    sub1.addItem( Plotter::cmdFileNew + VKeyPlot, T("Fomus"), false);
+    sub1.addItem( Plotter::cmdFileNew + FomusPlot, T("Vkey"), false);
+    sub1.addItem( Plotter::cmdFileNew + CLMPlot, T("CLM"), false);
+    menu.addSubMenu(T("New"), sub1, true);    
+    menu.addItem( Plotter::cmdFileOpen, T("Open..."), false);
+    menu.addItem( Plotter::cmdFileSave, T("Save"), false);
+    menu.addItem( Plotter::cmdFileImport, T("Import..."), false);
+    menu.addItem( Plotter::cmdFileExport, T("Export..."), false);
     break;
   case 1 :
-    menu.addItem( 2, T("Select All"));
+    // Edit Menu
+    menu.addItem( Plotter::cmdEditCut, T("Cut"));
+    menu.addItem( Plotter::cmdEditCopy, T("Copy"));
+    menu.addItem( Plotter::cmdEditPaste, T("Paste"));
+    menu.addItem( Plotter::cmdEditClear, T("Clear"));
+    menu.addSeparator();
+    menu.addItem( Plotter::cmdEditSelectAll, T("Select All"));
+    menu.addSeparator();
+    menu.addItem( Plotter::cmdEditFind, T("Find..."), false);
     break;
   case 2 :
-    menu.addItem( 3, T("Show Backgroud Plots"), true, true);
+    // Layer Menu
+    if (type == MidiPlot) {
+      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Midi"));
+      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Program Change"), false);
+      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Controller"), false);
+      menu.addSubMenu(T("Add"), sub1, true);          
+    }
+    else menu.addItem( Plotter::cmdLayerAdd + type, T("Add"));
+    menu.addItem(Plotter::cmdLayerDelete, T("Delete"), (plotter->numLayers() > 1));
+    menu.addSeparator(); 
+    // append existing layers to end of menu in plotting color :)
+    for (int i=0; i<plotter->numLayers(); i++) {
+      Layer * layer=plotter->getLayer(i);
+      menu.addColouredItem( Plotter::cmdLayerSelect + layer->getLayerID(),
+			    layer->getLayerName(),
+			    layer->getLayerColor(),
+			    true,
+			    plotter->isFocusLayer(layer));
+	}
     break;
   case 3 :
-    menu.addItem( 4, T("Command Help"));
+    menu.addItem( Plotter::cmdViewStyle + Layer::line, T("Line"));
+    menu.addItem( Plotter::cmdViewStyle + Layer::point, T("Point"));
+    menu.addItem( Plotter::cmdViewStyle + Layer::lineandpoint, T("Line and Point"));
+    menu.addItem( Plotter::cmdViewStyle + Layer::hbox, T("Horizontal Box"),
+		  (type > XYPlot));
+    menu.addItem( Plotter::cmdViewStyle + Layer::vline, T("Vertical Line"));
+    menu.addItem( Plotter::cmdViewStyle + Layer::vlineandpoint, T("Vertical Line and Point"));
+    menu.addItem( Plotter::cmdViewStyle + Layer::vbar, T("Vertical Bar"), false);
+    menu.addSeparator();
+    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgGrid, T("Grid"));
+    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgTiled, T("Tiled"));
+    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgSolid, T("Solid"));
+    sub1.addSeparator();
+    sub1.addItem( Plotter::cmdViewBgColor, T("Colors..."), false);
+    sub1.addSeparator();
+    sub1.addItem( Plotter::cmdViewBgPlotting, T("Show All Layers"), true, true);
+    sub1.addItem( Plotter::cmdViewBgMousing, T("Back Layer Mousing"), true, false);
+    menu.addSubMenu(T("Background"), sub1, true);    
+    menu.addSeparator();
+    menu.addItem( Plotter::cmdViewMouseGuide, T("Mouse Guide"), false);
+    break;
+  case 4 :
+    menu.addItem( Plotter::cmdHelpCommands, T("Command Help"));
     break;
   }
   return menu;
 }
 
 void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
-  printf("menubar selected item: %d\n", id);
+  int arg = id & 0x000000FF;
+  int com = id & 0xFFFFFF00;
+  printf("menubar: command=%d data=%d\n", com, arg);
+  switch (com) {
+  case Plotter::cmdFileNew :
+  case Plotter::cmdFileOpen :
+  case Plotter::cmdFileSave :
+  case Plotter::cmdFileSaveAs :
+  case Plotter::cmdFileImport :
+  case Plotter::cmdFileExport :
+  case Plotter::cmdEditCut :
+  case Plotter::cmdEditCopy :
+  case Plotter::cmdEditPaste :
+  case Plotter::cmdEditClear :
+  case Plotter::cmdEditSelectAll :
+  case Plotter::cmdEditFind :
+  case Plotter::cmdLayerAdd :
+  case Plotter::cmdLayerDelete :
+  case Plotter::cmdLayerSelect :
+  case Plotter::cmdViewStyle : 
+  case Plotter::cmdViewBgStyle :
+  case Plotter::cmdViewBgColor :
+  case Plotter::cmdViewBgPlotting :
+  case Plotter::cmdViewBgMousing :
+  case Plotter::cmdViewMouseGuide :
+  case Plotter::cmdHelpCommands :
+  default :
+    break;
+  }
+
+
+
 }
 
 PlotterWindow::PlotterWindow (PlotType pt)
