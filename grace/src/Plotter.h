@@ -211,6 +211,7 @@ class Plotter  : public Component,
   Layer * getFocusLayer();
   bool isFocusLayer(Layer * l);
   void setFocusLayer(Layer * l);
+  void deleteFocusLayer();
 
   void resized () ;
   void redrawPlotView();

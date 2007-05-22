@@ -10,6 +10,7 @@
 
 #include "Plotter.h"
 #include <iostream>
+#include <limits>
 using namespace std;
 
 //
@@ -28,8 +29,10 @@ class PlotViewport : public Viewport {
     getHorizontalScrollBar()->addListener(p);
     getVerticalScrollBar()->setName(T("yscroll"));
     getVerticalScrollBar()->addListener(p);
+    // setOpaque(true);
   }
   ~PlotViewport () {}
+  //void paint(Graphics& g) {g.fillAll(Colours::white);}
 };
 
 ///
@@ -210,22 +213,15 @@ void AxisView::paint (Graphics& g) {
 
 class FocusView  : public Component,
                    public ComboBoxListener,
-                   public ButtonListener {
+		   public LabelListener {
 public:
   Plotter * plotter;
   Layer * focuslayer;
   ComboBox* layerMenu;
-  ToggleButton* allButton;
-  TextButton* colorButton;
-  Label* label;
-  TextEditor* xBuffer;
-  Label* label2;
-  TextEditor* yBuffer;
-  ComboBox* drawMenu;
-  Label* label3;
-  TextEditor* zBuffer;
-  ComboBox* bgMenu;
-  ToggleButton* guideButton;
+  Label* xlabel;
+  Label* xvalue;
+  Label* ylabel;
+  Label* yvalue;
 
   FocusView (Plotter * p);
   ~FocusView();
@@ -234,172 +230,106 @@ public:
   Layer * getFocusLayer() { return focuslayer;}
   void resized();
   void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
-  void buttonClicked (Button* buttonThatWasClicked);
-  juce_UseDebuggingNewOperator
+  void labelTextChanged(Label * label);
+
+  //  juce_UseDebuggingNewOperator
+  //  FocusView (const FocusView&);
+  //  const FocusView& operator= (const FocusView&);
+
+  //void setSelectionPoint(float x, float y);
   
-  FocusView (const FocusView&);
-  const FocusView& operator= (const FocusView&);
 };
 
 FocusView::FocusView (Plotter * p)
   : plotter (0),
     focuslayer (0),
     layerMenu (0),
-    allButton (0),
-    colorButton (0),
-    label (0),
-    xBuffer (0),
-    label2 (0),
-    yBuffer (0),
-    drawMenu (0),
-    label3 (0),
-    zBuffer (0),
-    bgMenu (0),
-    guideButton (0) {
+    xlabel (0),
+    xvalue (0),
+    ylabel (0),
+    yvalue (0) {
   plotter=p;
+  Font font=Font( 14.0, Font::bold);
+  int width=font.getStringWidth(T("X:"));
+
   addAndMakeVisible (layerMenu = new ComboBox (String::empty));
   layerMenu->setEditableText (true);
   layerMenu->setJustificationType (Justification::centredLeft);
   layerMenu->setTextWhenNothingSelected (String::empty);
   layerMenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
   layerMenu->addListener (this);
+  layerMenu->setBounds (0, 0, 100, 24);
 
-  addAndMakeVisible (allButton = new ToggleButton (String::empty));
-  allButton->setButtonText (T("Transparent"));
-  allButton->addButtonListener (this);
+  addAndMakeVisible (xlabel = new Label (T("xlabel"), T("X:")));
+  xlabel->setFont (font);
+  xlabel->setJustificationType (Justification::centredRight);
+  xlabel->setColour (Label::backgroundColourId, Colour(230, 230, 0xff) );
+  xlabel->setEditable (false, false, false);
+  xlabel->setSize(width,24);
 
-  addAndMakeVisible (colorButton = new TextButton (String::empty));
-  colorButton->setButtonText (T("Color..."));
-  colorButton->addButtonListener (this);
+  addAndMakeVisible (xvalue = new Label (T("xvalue"), String::empty));
+  xvalue->setFont (font);
+  xvalue->setJustificationType (Justification::centredRight);
+  xvalue->setEditable (true);
+  xvalue->setColour (Label::backgroundColourId, Colours::white);
+  xvalue->setBounds(130, 0, 60, 24);
+  xvalue->addListener(this);
+  xlabel->attachToComponent(xvalue, true);
 
-  addAndMakeVisible (label = new Label (String::empty, T("x:")));
-  label->setFont (Font (15.0000f, Font::plain));
-  label->setJustificationType (Justification::centredLeft);
-  label->setEditable (false, false, false);
-  label->setColour (Label::backgroundColourId, Colour (0x0));
-  label->setColour (Label::textColourId, Colours::black);
-  label->setColour (Label::outlineColourId, Colour (0x0));
-  label->setColour (TextEditor::textColourId, Colours::black);
-  label->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  addAndMakeVisible (ylabel = new Label (String::empty, T("Y:")));
+  ylabel->setFont(font);
+  ylabel->setJustificationType (Justification::centredRight);
+  ylabel->setColour (Label::backgroundColourId, Colour(230, 230, 0xff) );
+  ylabel->setEditable (false, false, false);
+  ylabel->setSize(width,24);
 
-  addAndMakeVisible (xBuffer = new TextEditor (String::empty));
-  xBuffer->setMultiLine (false);
-  xBuffer->setReturnKeyStartsNewLine (false);
-  xBuffer->setReadOnly (false);
-  xBuffer->setScrollbarsShown (false);
-  xBuffer->setCaretVisible (true);
-  xBuffer->setPopupMenuEnabled (false);
-  xBuffer->setText (T("1000.00"));
+  addAndMakeVisible (yvalue = new Label (T("yvalue"), T("1000.00")));
+  yvalue->setFont (font);
+  yvalue->setJustificationType (Justification::centredRight);
+  yvalue->setEditable (true);
+  yvalue->setColour (Label::backgroundColourId, Colours::white);
+  yvalue->setBounds(220, 0, 60,24);
+  xvalue->addListener(this);
+  ylabel->attachToComponent(yvalue, true);
 
-  addAndMakeVisible (label2 = new Label (String::empty, T("y:")));
-  label2->setFont (Font (15.0000f, Font::plain));
-  label2->setJustificationType (Justification::centredLeft);
-  label2->setEditable (false, false, false);
-  label2->setColour (Label::backgroundColourId, Colour (0x0));
-  label2->setColour (Label::textColourId, Colours::black);
-  label2->setColour (Label::outlineColourId, Colour (0x0));
-  label2->setColour (TextEditor::textColourId, Colours::black);
-  label2->setColour (TextEditor::backgroundColourId, Colour (0x0));
-
-  addAndMakeVisible (yBuffer = new TextEditor (String::empty));
-  yBuffer->setMultiLine (false);
-  yBuffer->setReturnKeyStartsNewLine (false);
-  yBuffer->setReadOnly (false);
-  yBuffer->setScrollbarsShown (false);
-  yBuffer->setCaretVisible (true);
-  yBuffer->setPopupMenuEnabled (false);
-  yBuffer->setText (T("1000.00"));
-
-  addAndMakeVisible (drawMenu = new ComboBox (String::empty));
-  drawMenu->setEditableText (false);
-  drawMenu->setJustificationType (Justification::centredLeft);
-  drawMenu->setTextWhenNothingSelected (String::empty);
-  drawMenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
-  drawMenu->addItem (T("Line"), Layer::line);
-  drawMenu->addItem (T("Point"), Layer::point);
-  drawMenu->addItem (T("Line+Point"), Layer::lineandpoint);
-  drawMenu->addItem (T("Horizontal Box"), Layer::hbox);
-  drawMenu->setItemEnabled(Layer::hbox, false);
-  drawMenu->addItem (T("Vertical"), Layer::vlineandpoint);
-  drawMenu->addItem (T("Vertical Bar"), Layer::vbar);
-  drawMenu->setItemEnabled(Layer::vbar, false);
-  drawMenu->addListener (this);
-  
-  addAndMakeVisible (label3 = new Label (String::empty, T("z:")));
-  label3->setFont (Font (15.0000f, Font::plain));
-  label3->setJustificationType (Justification::centredLeft);
-  label3->setEditable (false, false, false);
-  label3->setColour (Label::backgroundColourId, Colour (0x0));
-  label3->setColour (Label::textColourId, Colours::black);
-  label3->setColour (Label::outlineColourId, Colour (0x0));
-  label3->setColour (TextEditor::textColourId, Colours::black);
-  label3->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (zBuffer = new TextEditor (String::empty));
-  zBuffer->setMultiLine (false);
-  zBuffer->setReturnKeyStartsNewLine (false);
-  zBuffer->setReadOnly (false);
-  zBuffer->setScrollbarsShown (false);
-  zBuffer->setCaretVisible (true);
-  zBuffer->setPopupMenuEnabled (false);
-  zBuffer->setText (T("1000.00"));
-  
-  addAndMakeVisible (bgMenu = new ComboBox (String::empty));
-  bgMenu->setEditableText (false);
-  bgMenu->setJustificationType (Justification::centredLeft);
-  bgMenu->setTextWhenNothingSelected (String::empty);
-  bgMenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
-  bgMenu->addItem (T("Grid"), Plotter::bgGrid);
-  bgMenu->addItem (T("Tiled"), Plotter::bgTiled);
-  bgMenu->addItem (T("Solid"), Plotter::bgSolid);
-  bgMenu->setSelectedId(1); // do this before listener is hooked up
-  bgMenu->addListener (this);
-  
-  addAndMakeVisible (guideButton = new ToggleButton (String::empty));
-  guideButton->setButtonText (T("Guide"));
-  guideButton->addButtonListener (this);
-  setSize (440, 54);
+  setSize(440,24);
 }
 
 FocusView::~FocusView() {
   deleteAndZero (layerMenu);
-  deleteAndZero (allButton);
-  deleteAndZero (colorButton);
-  deleteAndZero (label);
-  deleteAndZero (xBuffer);
-  deleteAndZero (label2);
-  deleteAndZero (yBuffer);
-  deleteAndZero (drawMenu);
-  deleteAndZero (label3);
-  deleteAndZero (zBuffer);
-  deleteAndZero (bgMenu);
-  deleteAndZero (guideButton);
+  deleteAndZero (xlabel);
+  deleteAndZero (xvalue);
+  deleteAndZero (ylabel);
+  deleteAndZero (yvalue);
 }
 
 void FocusView::setFocusLayer(Layer * l) {
   focuslayer=l;
-  bgMenu->setSelectedId(plotter->getBackViewStyle(), true);
+  Colour c = l->getLayerColor();
   layerMenu->setSelectedId(l->getLayerID(), true);
-  layerMenu->setColour(ComboBox::textColourId,
-		       l->getLayerColor());
+  layerMenu->setColour(ComboBox::textColourId, c);
   layerMenu->setText(l->getLayerName(), true);  
-  drawMenu->setSelectedId(l->style, true);
-  allButton->setToggleState(l->isTransparent(), true);
+
+  xlabel->setColour(Label::textColourId, c);
+  ylabel->setColour(Label::textColourId, c);
 }
 
 void FocusView::resized() {
-  layerMenu->setBounds (0, 0, 176, 24);
-  allButton->setBounds (179, 26, 92, 24);
-  colorButton->setBounds (5, 26, 55, 24);
-  label->setBounds (182, 0, 20, 24);
-  xBuffer->setBounds (204, 0, 60, 24);
-  label2->setBounds (273, 0, 20, 24);
-  yBuffer->setBounds (295, 0, 60, 24);
-  drawMenu->setBounds (64, 26, 112, 24);
-  label3->setBounds (361, 0, 20, 24);
-  zBuffer->setBounds (382, 0, 60, 24);
-  bgMenu->setBounds (365, 26, 78, 24);
-  guideButton->setBounds (269, 26, 63, 24);
+}
+
+void FocusView::labelTextChanged(Label * label) {
+  String str;
+  float val, min;
+  if ( label->getName() == T("xvalue") ) {
+    str=label->getText();
+    val=str.getFloatValue(); // this really nees parsing!
+    printf("float is %f\n", val);
+    min=
+
+
+  }
+  else {
+  }
 }
 
 void FocusView::comboBoxChanged (ComboBox* m) {
@@ -407,9 +337,8 @@ void FocusView::comboBoxChanged (ComboBox* m) {
   int sid=m->getSelectedId();  // item id = layer's id
   if (m == layerMenu) {
     if (sid==0) {
-      // editied the text, rename the current layer.
+      // renamed the current layer.
       int fid = foc->getLayerID();
-      cout << "focus id " << fid << endl;
       foc->setLayerName(m->getText());  // rename layer
       // rename layer's associated item in menu...
       for (int i=0;i<m->getNumItems(); i++)
@@ -419,33 +348,11 @@ void FocusView::comboBoxChanged (ComboBox* m) {
 	}
     }
     else {
-      printf("Layer menu change triggering redrawing\n");
       plotter->setFocusLayer(plotter->findLayer(sid));
       plotter->redrawBackView();
       plotter->redrawPlotView();
     }
   }
-  else if (m == drawMenu) {
-    foc->setLayerStyle(m->getSelectedId());
-    plotter->redrawPlotView();
-  }
-  else if (m == bgMenu) {
-    plotter->setBackViewStyle( (Plotter::BGStyle)m->getSelectedId());
-    plotter->redrawBackView();
-  }
-}
-
-void FocusView::buttonClicked (Button* b) {
-  Layer * l;
-    if (b == allButton) {
-      plotter->setBackViewPlotting(b->getToggleState());
-      plotter->redrawBackView();
-    }
-    else if (b == colorButton) {
-      ColourSelector cols();
-    }
-    else if (b == guideButton) {
-    }
 }
 
 /***********************************************************************
@@ -624,6 +531,11 @@ class PlotView : public Component {
   void setSelection(int h) {selection.selectOnly(h);}
   void addSelection(int h) {selection.addToSelection(h);}
   int getSelected(int i) {return selection.getSelectedItem(i);}
+  void moveSelection(int orient, float val);
+  void incSelection(int orient, float val);
+  float getSelectionMin(int orient);
+  float getSelectionMax(int orient);
+
   bool isInside(float x, float y, float left, float top,
 		float right, float bottom);
 
@@ -637,6 +549,24 @@ class PlotView : public Component {
   }
 };
 
+float PlotView::getSelectionMin(int orient) {
+  Layer * layer = plotter->getFocusLayer();
+  numeric_limits<float> info;
+  float (Layer::*getter)( int) ;
+  float lim=info.max();
+
+  if (orient == Plotter::horizontal)
+    getter = &Layer::getPointX;
+  else 
+    getter = &Layer::getPointY;
+
+  for (int i = 0; i< numSelected(); i++) {
+    int h = getSelected(i);
+    lim=jmin( lim, (layer->*getter) (i) );
+  }
+  return lim;
+}
+  
 void PlotView::resizeForDrawing() {
   // called when zoom value changes to reset total size of plotting view
   double xsiz, ysiz, xtot, ytot;
@@ -1218,6 +1148,7 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx,
 						const String &name) {
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3;
+  int val;
   PlotType type=plotter->getPlotType();
   switch (idx) {
   case 0 :
@@ -1267,23 +1198,35 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx,
 	}
     break;
   case 3 :
-    menu.addItem( Plotter::cmdViewStyle + Layer::line, T("Line"));
-    menu.addItem( Plotter::cmdViewStyle + Layer::point, T("Point"));
-    menu.addItem( Plotter::cmdViewStyle + Layer::lineandpoint, T("Line and Point"));
+    val=plotter->getFocusLayer()->getLayerStyle();
+    menu.addItem( Plotter::cmdViewStyle + Layer::line, T("Line"),
+		  true, (val==Layer::line));
+    menu.addItem( Plotter::cmdViewStyle + Layer::point, T("Point"),
+		  true, (val==Layer::point));
+    menu.addItem( Plotter::cmdViewStyle + Layer::lineandpoint, T("Line and Point"),
+		  true, (val==Layer::lineandpoint));
     menu.addItem( Plotter::cmdViewStyle + Layer::hbox, T("Horizontal Box"),
-		  (type > XYPlot));
-    menu.addItem( Plotter::cmdViewStyle + Layer::vline, T("Vertical Line"));
-    menu.addItem( Plotter::cmdViewStyle + Layer::vlineandpoint, T("Vertical Line and Point"));
-    menu.addItem( Plotter::cmdViewStyle + Layer::vbar, T("Vertical Bar"), false);
+		  (type > XYPlot), (val==Layer::hbox));
+    menu.addItem( Plotter::cmdViewStyle + Layer::vline, T("Vertical Line"),
+		  true, (val==Layer::vline));
+    menu.addItem( Plotter::cmdViewStyle + Layer::vlineandpoint, T("Vertical Line and Point"),
+		  true, (val==Layer::vlineandpoint));
+    menu.addItem( Plotter::cmdViewStyle + Layer::vbar, T("Vertical Bar"),
+		  false, (val==Layer::vbar));
     menu.addSeparator();
-    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgGrid, T("Grid"));
-    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgTiled, T("Tiled"));
-    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgSolid, T("Solid"));
+    val=plotter->getBackViewStyle();
+    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgGrid, T("Grid"),
+		  true, (val==Plotter::bgGrid));
+    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgTiled, T("Tiled"),
+		  true, (val==Plotter::bgTiled));
+    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgSolid, T("Solid"),
+		  true, (val==Plotter::bgSolid));
     sub1.addSeparator();
     sub1.addItem( Plotter::cmdViewBgColor, T("Colors..."), false);
     sub1.addSeparator();
-    sub1.addItem( Plotter::cmdViewBgPlotting, T("Show All Layers"), true, true);
-    sub1.addItem( Plotter::cmdViewBgMousing, T("Back Layer Mousing"), true, false);
+    sub1.addItem( Plotter::cmdViewBgPlotting, T("Show All Layers"), true, 
+		  plotter->isBackViewPlotting() );
+    sub1.addItem( Plotter::cmdViewBgMousing, T("Back Layer Mousing"), false, false);
     menu.addSubMenu(T("Background"), sub1, true);    
     menu.addSeparator();
     menu.addItem( Plotter::cmdViewMouseGuide, T("Mouse Guide"), false);
@@ -1296,11 +1239,15 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx,
 }
 
 void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
+  // commandIDs reserve lower 8 bits for command-specific information
   int arg = id & 0x000000FF;
-  int com = id & 0xFFFFFF00;
-  printf("menubar: command=%d data=%d\n", com, arg);
-  switch (com) {
+  int cmd = id & 0xFFFFFF00;
+  bool tog;
+  printf("menubar: command=%d data=%d\n", cmd, arg);
+  switch (cmd) {
   case Plotter::cmdFileNew :
+    new PlotterWindow( (PlotType)arg);
+    break;
   case Plotter::cmdFileOpen :
   case Plotter::cmdFileSave :
   case Plotter::cmdFileSaveAs :
@@ -1312,22 +1259,37 @@ void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
   case Plotter::cmdEditClear :
   case Plotter::cmdEditSelectAll :
   case Plotter::cmdEditFind :
+    break;
   case Plotter::cmdLayerAdd :
+    break;
   case Plotter::cmdLayerDelete :
+    break;
   case Plotter::cmdLayerSelect :
-  case Plotter::cmdViewStyle : 
+    // FIX: make layer ids start at 1 to use all 8 bits
+    plotter->setFocusLayer(plotter->findLayer(arg));
+    plotter->redrawBackView();
+    plotter->redrawPlotView();
+    break;
+  case Plotter::cmdViewStyle :
+    plotter->getFocusLayer()->setLayerStyle(arg);
+    plotter->redrawPlotView();
+    break;
   case Plotter::cmdViewBgStyle :
+    plotter->setBackViewStyle( (Plotter::BGStyle)arg);
+    plotter->redrawBackView();
+    break;
   case Plotter::cmdViewBgColor :
+    break;
   case Plotter::cmdViewBgPlotting :
+    plotter->setBackViewPlotting( ! plotter->isBackViewPlotting()); 
+    plotter->redrawBackView();
+    break;
   case Plotter::cmdViewBgMousing :
   case Plotter::cmdViewMouseGuide :
   case Plotter::cmdHelpCommands :
   default :
     break;
   }
-
-
-
 }
 
 PlotterWindow::PlotterWindow (PlotType pt)
