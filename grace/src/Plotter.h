@@ -225,6 +225,10 @@ class Plotter  : public Component,
   void sliderDragEnded (Slider *slider) {};
   void scrollBarMoved (ScrollBar * sb, const double nrs) ;
 
+  void selectAll();
+  void clearSelection();
+  void moveSelection();
+
 };
 
 ///

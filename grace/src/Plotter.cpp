@@ -205,155 +205,6 @@ void AxisView::paint (Graphics& g) {
   g.setColour(Colours::black);
 }
 
-/***********************************************************************
- *
- * FocusView: controls for working with the top-most (focus) plot
- *
- **********************************************************************/
-
-class FocusView  : public Component,
-                   public ComboBoxListener,
-		   public LabelListener {
-public:
-  Plotter * plotter;
-  Layer * focuslayer;
-  ComboBox* layerMenu;
-  Label* xlabel;
-  Label* xvalue;
-  Label* ylabel;
-  Label* yvalue;
-
-  FocusView (Plotter * p);
-  ~FocusView();
-
-  void setFocusLayer(Layer * l);
-  Layer * getFocusLayer() { return focuslayer;}
-  void resized();
-  void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
-  void labelTextChanged(Label * label);
-
-  //  juce_UseDebuggingNewOperator
-  //  FocusView (const FocusView&);
-  //  const FocusView& operator= (const FocusView&);
-
-  //void setSelectionPoint(float x, float y);
-  
-};
-
-FocusView::FocusView (Plotter * p)
-  : plotter (0),
-    focuslayer (0),
-    layerMenu (0),
-    xlabel (0),
-    xvalue (0),
-    ylabel (0),
-    yvalue (0) {
-  plotter=p;
-  Font font=Font( 14.0, Font::bold);
-  int width=font.getStringWidth(T("X:"));
-
-  addAndMakeVisible (layerMenu = new ComboBox (String::empty));
-  layerMenu->setEditableText (true);
-  layerMenu->setJustificationType (Justification::centredLeft);
-  layerMenu->setTextWhenNothingSelected (String::empty);
-  layerMenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
-  layerMenu->addListener (this);
-  layerMenu->setBounds (0, 0, 100, 24);
-
-  addAndMakeVisible (xlabel = new Label (T("xlabel"), T("X:")));
-  xlabel->setFont (font);
-  xlabel->setJustificationType (Justification::centredRight);
-  xlabel->setColour (Label::backgroundColourId, Colour(230, 230, 0xff) );
-  xlabel->setEditable (false, false, false);
-  xlabel->setSize(width,24);
-
-  addAndMakeVisible (xvalue = new Label (T("xvalue"), String::empty));
-  xvalue->setFont (font);
-  xvalue->setJustificationType (Justification::centredRight);
-  xvalue->setEditable (true);
-  xvalue->setColour (Label::backgroundColourId, Colours::white);
-  xvalue->setBounds(130, 0, 60, 24);
-  xvalue->addListener(this);
-  xlabel->attachToComponent(xvalue, true);
-
-  addAndMakeVisible (ylabel = new Label (String::empty, T("Y:")));
-  ylabel->setFont(font);
-  ylabel->setJustificationType (Justification::centredRight);
-  ylabel->setColour (Label::backgroundColourId, Colour(230, 230, 0xff) );
-  ylabel->setEditable (false, false, false);
-  ylabel->setSize(width,24);
-
-  addAndMakeVisible (yvalue = new Label (T("yvalue"), T("1000.00")));
-  yvalue->setFont (font);
-  yvalue->setJustificationType (Justification::centredRight);
-  yvalue->setEditable (true);
-  yvalue->setColour (Label::backgroundColourId, Colours::white);
-  yvalue->setBounds(220, 0, 60,24);
-  xvalue->addListener(this);
-  ylabel->attachToComponent(yvalue, true);
-
-  setSize(440,24);
-}
-
-FocusView::~FocusView() {
-  deleteAndZero (layerMenu);
-  deleteAndZero (xlabel);
-  deleteAndZero (xvalue);
-  deleteAndZero (ylabel);
-  deleteAndZero (yvalue);
-}
-
-void FocusView::setFocusLayer(Layer * l) {
-  focuslayer=l;
-  Colour c = l->getLayerColor();
-  layerMenu->setSelectedId(l->getLayerID(), true);
-  layerMenu->setColour(ComboBox::textColourId, c);
-  layerMenu->setText(l->getLayerName(), true);  
-
-  xlabel->setColour(Label::textColourId, c);
-  ylabel->setColour(Label::textColourId, c);
-}
-
-void FocusView::resized() {
-}
-
-void FocusView::labelTextChanged(Label * label) {
-  String str;
-  float val, min;
-  if ( label->getName() == T("xvalue") ) {
-    str=label->getText();
-    val=str.getFloatValue(); // this really nees parsing!
-    printf("float is %f\n", val);
-    min=
-
-
-  }
-  else {
-  }
-}
-
-void FocusView::comboBoxChanged (ComboBox* m) {
-  Layer * foc = getFocusLayer();
-  int sid=m->getSelectedId();  // item id = layer's id
-  if (m == layerMenu) {
-    if (sid==0) {
-      // renamed the current layer.
-      int fid = foc->getLayerID();
-      foc->setLayerName(m->getText());  // rename layer
-      // rename layer's associated item in menu...
-      for (int i=0;i<m->getNumItems(); i++)
-	if (m->getItemId(i) == fid) {
-	  m->changeItemText(fid,m->getText());
-	  break;
-	}
-    }
-    else {
-      plotter->setFocusLayer(plotter->findLayer(sid));
-      plotter->redrawBackView();
-      plotter->redrawPlotView();
-    }
-  }
-}
 
 /***********************************************************************
  *
@@ -484,12 +335,21 @@ public:
   ~BackView () {};
 };
 
+/***********************************************************************
+ *
+ * PlotView: the focus layer's drawing canvas
+ *
+ **********************************************************************/
+
+
 class PlotView : public Component {
  public:
   Plotter * plotter;
   BackView * backview;
   double pad; // pix per inc, pix per point, margin pad
   Point mousedown, mousemove;
+  Label * xvalue;  // pointers to focus view's point display
+  Label * yvalue;
   SelectedItemSet<int> selection;
   Region region;
 
@@ -531,11 +391,10 @@ class PlotView : public Component {
   void setSelection(int h) {selection.selectOnly(h);}
   void addSelection(int h) {selection.addToSelection(h);}
   int getSelected(int i) {return selection.getSelectedItem(i);}
-  void moveSelection(int orient, float val);
-  void incSelection(int orient, float val);
+  void moveSelection(float val, int orient);
+  void incSelection(float val, int orient);
   float getSelectionMin(int orient);
   float getSelectionMax(int orient);
-
   bool isInside(float x, float y, float left, float top,
 		float right, float bottom);
 
@@ -862,6 +721,147 @@ void PlotView::mouseUp(const MouseEvent &e) {
 
 /***********************************************************************
  *
+ * FocusView: controls for working with the top-most (focus) plot
+ *
+ **********************************************************************/
+
+class FocusView  : public Component,
+                   public ComboBoxListener,
+		   public LabelListener {
+public:
+  Plotter * plotter;
+  Layer * focuslayer;
+  ComboBox* layerMenu;
+  Label* xlabel;
+  Label* xvalue;
+  Label* ylabel;
+  Label* yvalue;
+
+  FocusView (Plotter * p);
+  ~FocusView();
+
+  void setFocusLayer(Layer * l);
+  Layer * getFocusLayer() { return focuslayer;}
+  void resized();
+  void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
+  void labelTextChanged(Label * label);
+};
+
+FocusView::FocusView (Plotter * p)
+  : plotter (0),
+    focuslayer (0),
+    layerMenu (0),
+    xlabel (0),
+    xvalue (0),
+    ylabel (0),
+    yvalue (0) {
+  plotter=p;
+  Font font=Font( 14.0, Font::bold);
+  int width=font.getStringWidth(T("X:"));
+
+  addAndMakeVisible (layerMenu = new ComboBox (String::empty));
+  layerMenu->setEditableText (true);
+  layerMenu->setJustificationType (Justification::centredLeft);
+  layerMenu->setTextWhenNothingSelected (String::empty);
+  layerMenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
+  layerMenu->addListener (this);
+  layerMenu->setBounds (0, 0, 100, 24);
+
+  addAndMakeVisible (xlabel = new Label (T("xlabel"), T("X:")));
+  xlabel->setFont (font);
+  xlabel->setJustificationType (Justification::centredRight);
+  xlabel->setColour (Label::backgroundColourId, Colour(230, 230, 0xff) );
+  xlabel->setEditable (false, false, false);
+  xlabel->setSize(width,24);
+
+  addAndMakeVisible (xvalue = new Label (T("xvalue"), String::empty));
+  xvalue->setFont (font);
+  xvalue->setJustificationType (Justification::centredRight);
+  xvalue->setEditable (true);
+  xvalue->setColour (Label::backgroundColourId, Colours::white);
+  xvalue->setBounds(130, 0, 60, 24);
+  xvalue->addListener(this);
+  xlabel->attachToComponent(xvalue, true);
+
+  addAndMakeVisible (ylabel = new Label (String::empty, T("Y:")));
+  ylabel->setFont(font);
+  ylabel->setJustificationType (Justification::centredRight);
+  ylabel->setColour (Label::backgroundColourId, Colour(230, 230, 0xff) );
+  ylabel->setEditable (false, false, false);
+  ylabel->setSize(width,24);
+
+  addAndMakeVisible (yvalue = new Label (T("yvalue"), T("1000.00")));
+  yvalue->setFont (font);
+  yvalue->setJustificationType (Justification::centredRight);
+  yvalue->setEditable (true);
+  yvalue->setColour (Label::backgroundColourId, Colours::white);
+  yvalue->setBounds(220, 0, 60,24);
+  xvalue->addListener(this);
+  ylabel->attachToComponent(yvalue, true);
+
+  setSize(440,24);
+}
+
+FocusView::~FocusView() {
+  deleteAndZero (layerMenu);
+  deleteAndZero (xlabel);
+  deleteAndZero (xvalue);
+  deleteAndZero (ylabel);
+  deleteAndZero (yvalue);
+}
+
+void FocusView::setFocusLayer(Layer * l) {
+  focuslayer=l;
+  Colour c = l->getLayerColor();
+  layerMenu->setSelectedId(l->getLayerID(), true);
+  layerMenu->setColour(ComboBox::textColourId, c);
+  layerMenu->setText(l->getLayerName(), true);  
+
+  xlabel->setColour(Label::textColourId, c);
+  ylabel->setColour(Label::textColourId, c);
+}
+
+void FocusView::resized() {
+}
+
+void FocusView::labelTextChanged(Label * label) {
+  String str;
+  float val, min;
+  if ( label->getName() == T("xvalue") ) {
+    str=label->getText();
+    val=str.getFloatValue(); // this really nees parsing!
+    printf("float is %f\n", val);
+    //plotter->plotview->moveSelection(val, Plotter::horizontal);
+  }
+  else {
+  }
+}
+
+void FocusView::comboBoxChanged (ComboBox* m) {
+  Layer * foc = getFocusLayer();
+  int sid=m->getSelectedId();  // item id = layer's id
+  if (m == layerMenu) {
+    if (sid==0) {
+      // renamed the current layer.
+      int fid = foc->getLayerID();
+      foc->setLayerName(m->getText());  // rename layer
+      // rename layer's associated item in menu...
+      for (int i=0;i<m->getNumItems(); i++)
+	if (m->getItemId(i) == fid) {
+	  m->changeItemText(fid,m->getText());
+	  break;
+	}
+    }
+    else {
+      plotter->setFocusLayer(plotter->findLayer(sid));
+      plotter->redrawBackView();
+      plotter->redrawPlotView();
+    }
+  }
+}
+
+/***********************************************************************
+ *
  * Plotter: contains all the subcomponents for plotting
  *
  **********************************************************************/
@@ -880,6 +880,10 @@ Plotter::Plotter (PlotType pt)
   rand=new Random(Time::currentTimeMillis());
   focusview=new FocusView(this);
   plotview=new PlotView (this);
+  // cache xy buffers in plot vuew for fast updating.
+  plotview->xvalue=focusview->xvalue;
+  plotview->yvalue=focusview->yvalue;
+
   backview=new BackView(this);
   // plot view is child of backview so that it is in front
   backview->addChildComponent(plotview);
@@ -1144,7 +1148,8 @@ const StringArray PlotterWindow::getMenuBarNames (MenuBarComponent* mbar) {
 
 
 
-const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx, 
+const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
+						int idx, 
 						const String &name) {
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3;
@@ -1180,12 +1185,15 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx,
     // Layer Menu
     if (type == MidiPlot) {
       sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Midi"));
-      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Program Change"), false);
-      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Controller"), false);
+      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Program Change"),
+		    false);
+      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Controller"), 
+		    false);
       menu.addSubMenu(T("Add"), sub1, true);          
     }
     else menu.addItem( Plotter::cmdLayerAdd + type, T("Add"));
-    menu.addItem(Plotter::cmdLayerDelete, T("Delete"), (plotter->numLayers() > 1));
+    menu.addItem(Plotter::cmdLayerDelete, T("Delete"),
+		 (plotter->numLayers() > 1));
     menu.addSeparator(); 
     // append existing layers to end of menu in plotting color :)
     for (int i=0; i<plotter->numLayers(); i++) {
@@ -1203,13 +1211,15 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx,
 		  true, (val==Layer::line));
     menu.addItem( Plotter::cmdViewStyle + Layer::point, T("Point"),
 		  true, (val==Layer::point));
-    menu.addItem( Plotter::cmdViewStyle + Layer::lineandpoint, T("Line and Point"),
+    menu.addItem( Plotter::cmdViewStyle + Layer::lineandpoint,
+		  T("Line and Point"),
 		  true, (val==Layer::lineandpoint));
     menu.addItem( Plotter::cmdViewStyle + Layer::hbox, T("Horizontal Box"),
 		  (type > XYPlot), (val==Layer::hbox));
     menu.addItem( Plotter::cmdViewStyle + Layer::vline, T("Vertical Line"),
 		  true, (val==Layer::vline));
-    menu.addItem( Plotter::cmdViewStyle + Layer::vlineandpoint, T("Vertical Line and Point"),
+    menu.addItem( Plotter::cmdViewStyle + Layer::vlineandpoint, 
+		  T("Vertical Line and Point"),
 		  true, (val==Layer::vlineandpoint));
     menu.addItem( Plotter::cmdViewStyle + Layer::vbar, T("Vertical Bar"),
 		  false, (val==Layer::vbar));
@@ -1226,7 +1236,8 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx,
     sub1.addSeparator();
     sub1.addItem( Plotter::cmdViewBgPlotting, T("Show All Layers"), true, 
 		  plotter->isBackViewPlotting() );
-    sub1.addItem( Plotter::cmdViewBgMousing, T("Back Layer Mousing"), false, false);
+    sub1.addItem( Plotter::cmdViewBgMousing, T("Back Layer Mousing"), 
+		  false, false);
     menu.addSubMenu(T("Background"), sub1, true);    
     menu.addSeparator();
     menu.addItem( Plotter::cmdViewMouseGuide, T("Mouse Guide"), false);
@@ -1238,7 +1249,8 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar, int idx,
   return menu;
 }
 
-void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
+void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id, 
+				      int idx) {
   // commandIDs reserve lower 8 bits for command-specific information
   int arg = id & 0x000000FF;
   int cmd = id & 0xFFFFFF00;
