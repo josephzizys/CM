@@ -388,11 +388,12 @@ class PlotView : public Component {
   bool isSelected(int h) {return selection.isSelected(h);}
   void clearSelection() {selection.deselectAll();}
   void removeSelection(int h) {selection.deselect(h);}
-  void setSelection(int h) {selection.selectOnly(h);}
+  void setSelection(int h) ;
   void addSelection(int h) {selection.addToSelection(h);}
   int getSelected(int i) {return selection.getSelectedItem(i);}
   void moveSelection(float val, int orient);
   void incSelection(float val, int orient);
+  void incSelectionXY(float x, float y);
   float getSelectionMin(int orient);
   float getSelectionMax(int orient);
   bool isInside(float x, float y, float left, float top,
@@ -406,7 +407,27 @@ class PlotView : public Component {
     for (int i=0;i<numSelected(); i++) printf(" %d", getSelected(i));
     printf(">\n");
   }
+
+  void setPointBuffers(float x, float y);
+  void clearPointBuffers();
 };
+
+void PlotView::setPointBuffers(float x, float y) {
+  xvalue->setText(String(x,2), false);
+  yvalue->setText(String(y,2), false);
+}
+
+void PlotView::clearPointBuffers() {
+  xvalue->setText(String::empty, false);
+  yvalue->setText(String::empty, false);
+}  
+
+void PlotView::setSelection(int h) {
+  Layer * focus = plotter->getFocusLayer();
+  selection.selectOnly(h);
+  setPointBuffers(focus->getPointX(h),
+		  focus->getPointY(h));
+}
 
 float PlotView::getSelectionMin(int orient) {
   Layer * layer = plotter->getFocusLayer();
@@ -426,6 +447,12 @@ float PlotView::getSelectionMin(int orient) {
   return lim;
 }
   
+void PlotView::incSelectionXY(float dx, float dy) {
+  Layer * focus = plotter->getFocusLayer();
+  for (int i=0; i<numSelected(); i++)
+    focus->incPoint( getSelected(i), dx, dy);
+}
+
 void PlotView::resizeForDrawing() {
   // called when zoom value changes to reset total size of plotting view
   double xsiz, ysiz, xtot, ytot;
@@ -790,7 +817,7 @@ FocusView::FocusView (Plotter * p)
   ylabel->setEditable (false, false, false);
   ylabel->setSize(width,24);
 
-  addAndMakeVisible (yvalue = new Label (T("yvalue"), T("1000.00")));
+  addAndMakeVisible (yvalue = new Label (T("yvalue"), String::empty));
   yvalue->setFont (font);
   yvalue->setJustificationType (Justification::centredRight);
   yvalue->setEditable (true);

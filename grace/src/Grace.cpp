@@ -34,9 +34,9 @@ void GraceApp::openInitialWindows () {
   EditorWindow * e = new EditorWindow( File(T("demo.sal")) ) ;
   e->editor->buffer->setText(T("; this is a sal buffer with emacs support\n\ndefine function rankeys (n)\n  loop with l = {}\n    for i below n\n    set l &= random(127)\n    finally return l\n  end\n\nprint \"random keys \", rankeys(20)\n\nprint make(<midi>, time: now(), keynum: between(60, 80)\n\nbegin\n  open \"test.mid\", versioning: #t\n  sprout fuff( note(440, :hz) ,2) ; keywords colored as constants\nend\n"));
     e->editor->buffer->colorizeAll();
-    PlotterWindow * p1 = new PlotterWindow( MidiPlot ) ;
+    //    PlotterWindow * p1 = new PlotterWindow( MidiPlot ) ;
     PlotterWindow * p2 = new PlotterWindow( XYPlot ) ;
-    p2->setTopLeftPosition(p1->getX()+40,p1->getY()+40);
+    p2->setTopLeftPosition(e->getX()+40,e->getY()+40);
 }
 
 void GraceApp::openSplashWindow (bool modal) {
@@ -74,7 +74,9 @@ const String GraceApp::getApplicationVersion () {
 }
 
 bool GraceApp::moreThanOneInstanceAllowed () {
-  return false;
+  // JUCE LINUX BUG: if this is false then Grace will not launch on
+  // Fedora Core Linux unless you are su'ed to ROOT.
+  return true;
 }
 
 void GraceApp::anotherInstanceStarted (const String& commandLine) {
