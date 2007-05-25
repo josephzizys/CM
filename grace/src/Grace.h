@@ -23,7 +23,7 @@ public:
     ConsoleWindow* console;
     FontList* fontList;
     ApplicationCommandManager *commandManager ;
-    //    AudioDeviceManager * audioManager;
+    AudioDeviceManager * audioManager;
 
     GraceApp() ;
     ~GraceApp();
@@ -33,16 +33,13 @@ public:
     void shutdown() ;
     const String getApplicationName() ;
     const String getApplicationVersion() ;
-    //   EditorWindow * newFile(syntaxID mode);
-    //   EditorWindow * openFile(String defaultDir);
-    //   EditorWindow * editFile(File file);
-
+    void graceQuit(bool ask);
     void printMessage(String str);
     void printWarning(String str);
     void printError(String str);
     void printBanner();
 
-    //    AudioDeviceManager * getAudioDeviceManager();
+    AudioDeviceManager * getAudioDeviceManager();
 
 };
 

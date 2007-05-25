@@ -34,7 +34,7 @@ ConsoleComponent::~ConsoleComponent () {
 }
 
 ConsoleWindow::ConsoleWindow (bool dosplash)
-  : DocumentWindow (String::empty , Colours::white,
+  : DocumentWindow ( T("Console") , Colours::white,
 		    DocumentWindow::allButtons, true ) {
   menubar = new MenuBarComponent(this);
   setMenuBar(this,0);
@@ -56,26 +56,13 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
 }
 
 ConsoleWindow::~ConsoleWindow () {
-
+  // this will be called by GraceApp
 }
 
 void ConsoleWindow::closeButtonPressed () {
-  if (AlertWindow::showOkCancelBox
-      (AlertWindow::QuestionIcon, T("Quit"),
-       T("Really quit Grace? Any unsaved work will be lost."),
-       String::empty, String::empty)
-      )
-    JUCEApplication::quit();
+  GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
+  app->graceQuit(true);
 }
-
-/*
-void ConsoleWindow::resized() {
-  console->buffer->setSize(getWidth(),getHeight());
-  if (isSplashVisible())
-    splash->setSize(getWidth(),getHeight());
-}
-*/
-
 
 /*
  * Console specific methods
@@ -196,10 +183,8 @@ bool ConsoleWindow::isSplashVisible() {
 const StringArray ConsoleWindow::getMenuBarNames (MenuBarComponent* mbar) {
   const tchar* const menuNames[] = { T("Grace"), T("Edit"), T("View"),
 				     T("Audio"), T("Lisp"), T("Help"), 0 };
-  printf("here1 \n");
   return StringArray((const tchar**) menuNames);
 }
-
 
 const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 						int idx,
@@ -208,8 +193,6 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3;
   int val;
-
-
 
   switch (idx) {
   case 0 :
@@ -269,8 +252,8 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
   // lower seven bits may encode command information
   int arg = id & 0x0000007F;
   int cmd = id & 0xFFFFFF80;
-    ApplicationCommandManager * cm
-      = ((GraceApp*)JUCEApplication::getInstance())->commandManager;
+  GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
+  ApplicationCommandManager * cm = app->commandManager;
 
   printf("menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
 
@@ -287,6 +270,8 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
     // doesnt work
     //cm->invokeDirectly(TextBuffer::cmdOpen,false);
     break;
+  case cmdGraceQuit :
+    app->graceQuit(true);
   default :
     break;
   }

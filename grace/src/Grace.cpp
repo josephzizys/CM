@@ -24,13 +24,28 @@ void GraceApp::initialise (const String& commandLine) {
   home.setAsCurrentWorkingDirectory();
   LookAndFeel::setDefaultLookAndFeel(&shinyLookAndFeel);
   commandManager = new ApplicationCommandManager();
-  //  audioManager= new AudioDeviceManager();
-  //  audioManager->initialise(1,2,0,true);
+  audioManager= new AudioDeviceManager();
+  audioManager->initialise(1,2,0,true);
   fontList = FontList::getInstance();
   console = new ConsoleWindow(true);
-  //  console->centreWithSize (450, 370); // 3440
   printBanner();
 }
+
+void GraceApp::graceQuit (bool ask) {
+  bool doit=false;
+  if (ask) {
+    if (AlertWindow::showOkCancelBox
+	(AlertWindow::QuestionIcon, T("Quit"),
+	 T("Really quit Grace? Any unsaved work will be lost."),
+	 T("OK"), T("Cancel"))
+	)
+      doit=true;
+  }
+  else doit=false;
+  if (doit)
+    JUCEApplication::quit();
+}
+
 
 void GraceApp::shutdown () {
   /*  delete console;
