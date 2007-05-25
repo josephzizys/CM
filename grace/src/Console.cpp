@@ -273,8 +273,8 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
     break;
   case cmdAudioMidiSetup: 
   case cmdAudioAudioSetup: 
-    // FIX: WHY DOESNT AUDIO.CPP GET COMPILED?:
-    //new AudioMidiWindow();
+    // CRASHES
+    // new AudioMidiWindow();
     break;
   case cmdGraceQuit :
     app->graceQuit(true);

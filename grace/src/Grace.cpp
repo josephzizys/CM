@@ -24,8 +24,8 @@ void GraceApp::initialise (const String& commandLine) {
   home.setAsCurrentWorkingDirectory();
   LookAndFeel::setDefaultLookAndFeel(&shinyLookAndFeel);
   commandManager = new ApplicationCommandManager();
-  audioManager= new AudioDeviceManager();
-  audioManager->initialise(1,2,0,true);
+  //audioManager= new AudioDeviceManager();
+  audioManager.initialise(1,2,0,true);
   fontList = FontList::getInstance();
   console = new ConsoleWindow(true);
   printBanner();

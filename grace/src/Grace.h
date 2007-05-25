@@ -23,7 +23,7 @@ public:
     ConsoleWindow* console;
     FontList* fontList;
     ApplicationCommandManager *commandManager ;
-    AudioDeviceManager * audioManager;
+    AudioDeviceManager audioManager;
 
     GraceApp() ;
     ~GraceApp();

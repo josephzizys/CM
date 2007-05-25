@@ -8,7 +8,7 @@ AudioMidiWindow::AudioMidiWindow ()
   //audioDevice is global in Grace.h
   GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
 
-  AudioDeviceSelectorComponent selectorControl(app->audioDevice, 2, 16, 
+  AudioDeviceSelectorComponent selectorControl(app->audioManager, 2, 16, 
 					       2, 16, true);
   setContentComponent(&selectorControl);
   setResizable(true, true);
