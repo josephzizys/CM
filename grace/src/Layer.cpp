@@ -23,10 +23,10 @@ Layer::Layer (String nam, Colour col)
     name (String::empty),
     style(lineandpoint)
 {
-  static int layerid=100;
+  static int layerid=1;
   name=nam;
   color=col;
-  id=++layerid;
+  id=layerid++;
 }
   
 Layer::~Layer() {

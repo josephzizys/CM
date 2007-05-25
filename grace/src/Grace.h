@@ -22,6 +22,9 @@ public:
     
     ConsoleWindow* console;
     FontList* fontList;
+    ApplicationCommandManager *commandManager ;
+    //    AudioDeviceManager * audioManager;
+
     GraceApp() ;
     ~GraceApp();
     void anotherInstanceStarted (const String& commandLine);
@@ -30,18 +33,17 @@ public:
     void shutdown() ;
     const String getApplicationName() ;
     const String getApplicationVersion() ;
-    EditorWindow * newFile(syntaxID mode);
-    EditorWindow * openFile(String defaultDir);
-    EditorWindow * editFile(File file);
-    ApplicationCommandManager *commandManager ;
-    
-    void openInitialWindows();
-    void openSplashWindow(bool modal);
+    //   EditorWindow * newFile(syntaxID mode);
+    //   EditorWindow * openFile(String defaultDir);
+    //   EditorWindow * editFile(File file);
 
     void printMessage(String str);
     void printWarning(String str);
     void printError(String str);
     void printBanner();
+
+    //    AudioDeviceManager * getAudioDeviceManager();
+
 };
 
 

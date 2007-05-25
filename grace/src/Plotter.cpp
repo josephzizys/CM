@@ -898,9 +898,6 @@ Plotter::Plotter (PlotType pt)
     zoom (1.0),
     flags (0)
 {
-  Colour cols[8] = { Colours::red, Colours::green, Colours::blue, 
-		     Colours::magenta, Colours::cyan, Colours::sienna,
-		     Colours::orange, Colours::coral};
 
   plottype=pt;
   font=Font(Font::getDefaultSansSerifFontName(), 10.0, Font::bold);
@@ -932,15 +929,7 @@ Plotter::Plotter (PlotType pt)
   setAxisView( new AxisView(xtyp), horizontal );
   setAxisView( new AxisView(ytyp), vertical );
 
-  // HACK: cobble up some demo layers.
-  for (int i=0; i<3; i++) {
-    String nam = T("Layer") + String(layers.size()+1);
-    Colour col = cols[layers.size() % 8];
-    if (pt==MidiPlot)
-      addLayer( new MidiLayer(nam,col) );
-    else 
-      addLayer( new XYLayer(nam,col) );
-  }
+  addLayer(pt);
 
   addChildComponent(xaxis);  
   addChildComponent(yaxis);  
@@ -1093,17 +1082,24 @@ void Plotter::setFocusLayer(Layer * l) {
   focusview->setFocusLayer(l);
 }
 
-void Plotter::addLayer(Layer * l) {
-  layers.add(l);
-  // HACK cobble up some points for demo!
-  for (int i=0;i<=20; i++) 
-    l->addPoint(xaxis->from + (rand->nextFloat() * xaxis->range()),
-		yaxis->from + (rand->nextFloat() * yaxis->range()));
+void Plotter::addLayer(PlotType pt) {
+  String nam = T("Layer") + String(layers.size()+1);
+  // lets use GnuPlot's default colors:
+  static Colour cols[8] = { Colours::red, Colours::green, Colours::blue, 
+			    Colours::magenta, Colours::cyan, Colours::sienna,
+			    Colours::orange, Colours::coral};
+  Colour col = cols[layers.size() % 8];
+  Layer * layer;
 
-  focusview->layerMenu->addItem(l->getLayerName(),
-				l->getLayerID());
-  // make new plot the focus plot
-  setFocusLayer(l);
+  if (pt==MidiPlot)
+    layer = new MidiLayer(nam,col);
+  else 
+    layer = new XYLayer(nam,col);
+
+  layers.add(layer);
+  focusview->layerMenu->addItem(layer->getLayerName(),
+				layer->getLayerID());
+  setFocusLayer(layer);
 }
 
 ///
@@ -1169,10 +1165,10 @@ void Plotter::scrollBarMoved (ScrollBar * sb, const double nrs) {
  **********************************************************************/
 
 const StringArray PlotterWindow::getMenuBarNames (MenuBarComponent* mbar) {
-  const tchar* const menuNames[] = { T("File"), T("Edit"), T("Layer"), T("View"), T("Help"), 0 };
+  const tchar* const menuNames[] = { T("File"), T("Edit"), T("Layer"), T("View"), T("Compose"),
+				     T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
-
 
 
 const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
@@ -1185,17 +1181,18 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
   switch (idx) {
   case 0 :
     // File Menu
-    sub1.addItem( Plotter::cmdFileNew + XYPlot, T("XY Data"));
-    sub1.addItem( Plotter::cmdFileNew + XYZPlot, T("XYZ Data"), false);
-    sub1.addItem( Plotter::cmdFileNew + MidiPlot, T("Midi"));
-    sub1.addItem( Plotter::cmdFileNew + VKeyPlot, T("Fomus"), false);
-    sub1.addItem( Plotter::cmdFileNew + FomusPlot, T("Vkey"), false);
-    sub1.addItem( Plotter::cmdFileNew + CLMPlot, T("CLM"), false);
+    sub1.addItem( Plotter::cmdPlotterNew + XYPlot, T("XY"));
+    sub1.addItem( Plotter::cmdPlotterNew + XYZPlot, T("XYZ"), false);
+    sub1.addItem( Plotter::cmdPlotterNew + MidiPlot, T("Midi"));
+    sub1.addItem( Plotter::cmdPlotterNew + VKeyPlot, T("Fomus"), false);
+    sub1.addItem( Plotter::cmdPlotterNew + FomusPlot, T("Vkey"), false);
+    sub1.addItem( Plotter::cmdPlotterNew + SpearPlot, T("Spear"), false);
+    sub1.addItem( Plotter::cmdPlotterNew + CLMPlot, T("CLM"), false);
     menu.addSubMenu(T("New"), sub1, true);    
-    menu.addItem( Plotter::cmdFileOpen, T("Open..."), false);
-    menu.addItem( Plotter::cmdFileSave, T("Save"), false);
-    menu.addItem( Plotter::cmdFileImport, T("Import..."), false);
-    menu.addItem( Plotter::cmdFileExport, T("Export..."), false);
+    menu.addItem( Plotter::cmdPlotterOpen, T("Open..."), false);
+    menu.addItem( Plotter::cmdPlotterSave, T("Save"), false);
+    menu.addItem( Plotter::cmdPlotterImport, T("Import..."), false);
+    menu.addItem( Plotter::cmdPlotterExport, T("Export..."), false);
     break;
   case 1 :
     // Edit Menu
@@ -1270,6 +1267,10 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( Plotter::cmdViewMouseGuide, T("Mouse Guide"), false);
     break;
   case 4 :
+    menu.addItem( Plotter::cmdComposeDistributions, T("Distributions..."), false);
+    menu.addItem( Plotter::cmdComposeGenerate, T("Generate..."), false);
+    break;
+  case 5 :
     menu.addItem( Plotter::cmdHelpCommands, T("Command Help"));
     break;
   }
@@ -1279,19 +1280,21 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
 void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id, 
 				      int idx) {
   // commandIDs reserve lower 8 bits for command-specific information
-  int arg = id & 0x000000FF;
-  int cmd = id & 0xFFFFFF00;
+  // lower seven bits may encode command information
+  int arg = id & 0x0000007F;
+  int cmd = id & 0xFFFFFF80;
   bool tog;
-  printf("menubar: command=%d data=%d\n", cmd, arg);
+  printf("plotter menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
+
   switch (cmd) {
-  case Plotter::cmdFileNew :
+  case Plotter::cmdPlotterNew :
     new PlotterWindow( (PlotType)arg);
     break;
-  case Plotter::cmdFileOpen :
-  case Plotter::cmdFileSave :
-  case Plotter::cmdFileSaveAs :
-  case Plotter::cmdFileImport :
-  case Plotter::cmdFileExport :
+  case Plotter::cmdPlotterOpen :
+  case Plotter::cmdPlotterSave :
+  case Plotter::cmdPlotterSaveAs :
+  case Plotter::cmdPlotterImport :
+  case Plotter::cmdPlotterExport :
   case Plotter::cmdEditCut :
   case Plotter::cmdEditCopy :
   case Plotter::cmdEditPaste :
@@ -1300,6 +1303,7 @@ void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id,
   case Plotter::cmdEditFind :
     break;
   case Plotter::cmdLayerAdd :
+    plotter->addLayer( (PlotType)arg);
     break;
   case Plotter::cmdLayerDelete :
     break;

@@ -1046,3 +1046,6 @@ static const unsigned char resource_grace_png[] = { 137,80,78,71,13,10,26,10,0,0
 
 const char* GraceSplash::grace_png = (const char*) resource_grace_png;
 const int GraceSplash::grace_pngSize = 58074;
+
+const char* SplashComponent::grace_png = (const char*) resource_grace_png;
+const int SplashComponent::grace_pngSize = 58074;

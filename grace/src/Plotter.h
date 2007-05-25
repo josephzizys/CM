@@ -25,6 +25,7 @@ enum PlotType {
   MidiPlot,
   VKeyPlot,
   FomusPlot,
+  SpearPlot,
   CLMPlot};
 
 ///
@@ -133,42 +134,73 @@ class Plotter  : public Component,
   enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
   enum Orientation {horizontal = 1, vertical };
 
-  /*  Plotter Command IDs have lower 8 bits available for encoding
-      command information. Use this Lisp code to generate the C
-      declaration:
+/*
 
-(defun plotter-enums(start &rest names)
-  (format t "  enum PlotterCommand {~%")
-  (loop with m = (1- (length names))
-     for n in names for i from 0
-     do (format t "    cmd~A = ~D~:[,~;};~]~%" n (ash (+ start i) 8) (= i m))))
-(plotter-enums 0 "FileNew" "FileOpen" "FileSave" "FileSaveAs" "FileImport" "FileExport" "EditCut" "EditCopy" "EditPaste" "EditClear" "EditSelectAll" "EditFind" "LayerAdd" "LayerDelete" "LayerSelect" "ViewStyle" "ViewBgStyle" "ViewBgColor" "ViewBgPlotting" "ViewBgMousing" "ViewMouseGuide" "HelpCommands")
+;; Grace menu command IDS are organized in "menubar blocks" and have
+;; their lower 7 bits available for encoding command information. each
+;; menubar block has max 128 commands. Use this lisp code to generate
+;; the enum definition for a menubar:
+
+(in-package :cm)
+
+(defun enums (block enumname &rest names)
+  (let* ((cmdinfo #xFF)
+         (blockwidth (* 128 cmdinfo))
+	 (blockstart (* blockwidth block)))
+  (format t "  enum ~A {~%" enumname)
+  (loop with m = (length names)
+     for n in names for i from 1
+     do (if (= i 128) (error "too many commands, block size = 128"))
+     (format t "    cmd~A = ~D~:[,~;};~]~%" n
+	     (+ (ash i 8) blockstart)
+	     (= i m)))))
+
+(enums 1 "ConsoleCommand" "GraceEditorNew" "GraceEditorOpen" 
+         "GracePlotterNew" "GracePreferences" "GraceQuit"
+	 "EditCopy" "EditSelectAll"
+	 "ViewFonts"  "ViewThemes"
+	 "AudioMidiSetup" "AudioAudioSetup"
+	 "LispRestart" "LispInputTracing" "LispErrorTracing"
+	 "HelpConsole" "HelpAboutGrace")
+
+(enums 2 "PlotterCommand" "PlotterNew" "PlotterOpen" "PlotterSave" "PlotterSaveAs"
+         "PlotterImport" "PlotterExport"
+         "EditCut" "EditCopy" "EditPaste" "EditClear" "EditSelectAll" "EditFind"
+         "LayerAdd" "LayerDelete" 
+	 "LayerSelect" "ViewStyle" "ViewBgStyle" "ViewBgColor" "ViewBgPlotting"
+	 "ViewBgMousing" "ViewMouseGuide" 
+	 "ComposeDistributions" "ComposeGenerate"
+	 "HelpCommands")
+
+
 
    */
 
   enum PlotterCommand {
-    cmdFileNew = 0,
-    cmdFileOpen = 256,
-    cmdFileSave = 512,
-    cmdFileSaveAs = 768,
-    cmdFileImport = 1024,
-    cmdFileExport = 1280,
-    cmdEditCut = 1536,
-    cmdEditCopy = 1792,
-    cmdEditPaste = 2048,
-    cmdEditClear = 2304,
-    cmdEditSelectAll = 2560,
-    cmdEditFind = 2816,
-    cmdLayerAdd = 3072,
-    cmdLayerDelete = 3328,
-    cmdLayerSelect = 3584,
-    cmdViewStyle = 3840,
-    cmdViewBgStyle = 4096,
-    cmdViewBgColor = 4352,
-    cmdViewBgPlotting = 4608,
-    cmdViewBgMousing = 4864,
-    cmdViewMouseGuide = 5120,
-    cmdHelpCommands = 5376};
+    cmdPlotterNew = 65536,
+    cmdPlotterOpen = 65792,
+    cmdPlotterSave = 66048,
+    cmdPlotterSaveAs = 66304,
+    cmdPlotterImport = 66560,
+    cmdPlotterExport = 66816,
+    cmdEditCut = 67072,
+    cmdEditCopy = 67328,
+    cmdEditPaste = 67584,
+    cmdEditClear = 67840,
+    cmdEditSelectAll = 68096,
+    cmdEditFind = 68352,
+    cmdLayerAdd = 68608,
+    cmdLayerDelete = 68864,
+    cmdLayerSelect = 69120,
+    cmdViewStyle = 69376,
+    cmdViewBgStyle = 69632,
+    cmdViewBgColor = 69888,
+    cmdViewBgPlotting = 70144,
+    cmdViewBgMousing = 70400,
+    cmdViewMouseGuide = 70656,
+    cmdComposeDistributions = 70912,
+    cmdComposeGenerate = 71168,
+    cmdHelpCommands = 71424};
 
   AxisView * xaxis;
   AxisView * yaxis;
@@ -204,7 +236,7 @@ class Plotter  : public Component,
   PlotViewport * getPlotViewport();
 
   // layers
-  void addLayer(Layer * l);
+  void addLayer(PlotType pt);
   int numLayers();
   Layer * getLayer(int i);
   Layer * findLayer(int id);
