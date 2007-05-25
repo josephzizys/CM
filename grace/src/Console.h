@@ -48,6 +48,8 @@ class ConsoleWindow  : public DocumentWindow,
 {
 public:
 
+  /* Look in Plotter.h for the code that generates the enum command IDs */
+
   enum ConsoleCommand {
     cmdGraceEditorNew = 32896,
     cmdGraceEditorOpen = 33152,

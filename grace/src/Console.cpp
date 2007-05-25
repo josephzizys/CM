@@ -13,6 +13,7 @@
 #include "Buffer.h"
 #include "Editor.h"
 #include "Grace.h"
+#include "Audio.h"
 
 /* 
  * Console Window
@@ -230,8 +231,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addSubMenu( T("Themes"), sub1, true);
     break;
   case 3 :
-    menu.addItem( cmdAudioMidiSetup, T("Midi Setup..."), false); 
-    menu.addItem( cmdAudioAudioSetup, T("Audio Setup..."), false); 
+    menu.addItem( cmdAudioMidiSetup, T("Midi Setup..."), true); 
+    menu.addItem( cmdAudioAudioSetup, T("Audio Setup..."), true); 
     break;
   case 4 :
     menu.addItem( cmdLispRestart, T("Restart"), false); 
@@ -269,6 +270,11 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
   case cmdGraceEditorOpen :
     // doesnt work
     //cm->invokeDirectly(TextBuffer::cmdOpen,false);
+    break;
+  case cmdAudioMidiSetup: 
+  case cmdAudioAudioSetup: 
+    // FIX: WHY DOESNT AUDIO.CPP GET COMPILED?:
+    //new AudioMidiWindow();
     break;
   case cmdGraceQuit :
     app->graceQuit(true);
