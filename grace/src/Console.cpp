@@ -275,10 +275,28 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
   case cmdAudioAudioSetup: 
     // CRASHES
     // new AudioMidiWindow();
+    showAudioMidiWindow();
     break;
   case cmdGraceQuit :
     app->graceQuit(true);
   default :
     break;
   }
+}
+
+void ConsoleWindow::showAudioMidiWindow()
+{
+  GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
+
+  AudioDeviceSelectorComponent audioSettingsComp (app->audioManager,
+						  0, 16,
+						  2, 16,
+						  true);
+  audioSettingsComp.setSize (500, 300);
+  
+  DialogWindow::showModalDialog (T("Audio Settings"),
+				 &audioSettingsComp,
+				 this,
+				 Colours::azure,
+				 true);
 }

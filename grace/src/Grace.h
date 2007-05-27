@@ -13,6 +13,7 @@
 #include "juce.h"
 #include "FontList.h"
 #include "Console.h"
+#include "Audio.h"
 
 class GraceApp : public JUCEApplication
 {

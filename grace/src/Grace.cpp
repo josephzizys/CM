@@ -24,11 +24,11 @@ void GraceApp::initialise (const String& commandLine) {
   home.setAsCurrentWorkingDirectory();
   LookAndFeel::setDefaultLookAndFeel(&shinyLookAndFeel);
   commandManager = new ApplicationCommandManager();
-  //audioManager= new AudioDeviceManager();
   audioManager.initialise(1,2,0,true);
   fontList = FontList::getInstance();
   console = new ConsoleWindow(true);
   printBanner();
+  
 }
 
 void GraceApp::graceQuit (bool ask) {
@@ -52,7 +52,7 @@ void GraceApp::shutdown () {
   delete audioManager;
   delete commandManager;
   */
-  LookAndFeel::setDefaultLookAndFeel(0);
+  //LookAndFeel::setDefaultLookAndFeel(0); // this causes crash. not needed. 
 }
 
 const String GraceApp::getApplicationName () {

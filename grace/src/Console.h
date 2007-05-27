@@ -103,6 +103,7 @@ public:
   void hideSplash();
   bool isSplashVisible() ;
 
+  void showAudioMidiWindow();
 };
 
 #endif
