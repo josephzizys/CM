@@ -59,7 +59,7 @@ class Layer {
     hbox = 40
   };
 
-  /* The layer points kept in X sorted order. */
+  /* layer points kept in X sorted order. */
   OwnedArray <LayerPoint> _points;
 
   /* A preallocated point holding default field values that new points
@@ -68,18 +68,18 @@ class Layer {
 
   /* _x _y and _z are point field indexes that the plotter will use to
      access values to plot. In other words, there is no hardwired X, Y
-     or Z values, a layer can display ANY field (assuming of course
+     or Z fields, a layer can display ANY field (assuming of course
      that the current axis is correctly configured for the values. */
 
-  int _x, _y, _z;   // indexes into point fields for X Y Z values
+  int _x, _y, _z;   // (current) field indexes to get/set X Y Z values
 
-  int arity;        // arity of points
+  int arity;        // arity of point
   String name;      // layer name
   int id;           // unique id
   Colour color;     // line and point color
   int style;        // drawing style
 
-  bool transp;      // allow back plots to be visible
+  bool transp;      // allow back plots to be visible. unused
   
   Layer(String nam, Colour col);
   ~Layer();
@@ -99,27 +99,55 @@ class Layer {
   bool isDrawStyle(int i) {return (style & i);}
   int numPoints() ;
   bool isPoints() ;
-  void sortPoints (SelectedItemSet<int> * sel) ;
+  void sortPoints () ;
   int addPoint(float x, float y) ;
-  void initPoint(LayerPoint * p);
+  void initPoint(LayerPoint* p);
+
+  LayerPoint* getPoint(int i);
+  int getPointIndex(LayerPoint* p);
+
   float getPointX(int i) ;
+  float getPointX(LayerPoint* p) ;
   float getPointY(int i) ;
+  float getPointY(LayerPoint* p) ;
   float getPointZ(int i) ; 
+  float getPointZ(LayerPoint* p) ;
+
   void setPointX(int i, float f) ;
+  void setPointX(LayerPoint* p, float f) ;
   void setPointY(int i, float f) ;
+  void setPointY(LayerPoint* p, float f) ;
   void setPointZ(int i, float f) ;
+  void setPointZ(LayerPoint* p, float f) ;
+
   void incPointX(int i, float f) ;
+  void incPointX(LayerPoint* p, float f) ;
   void incPointY(int i, float f) ;
+  void incPointY(LayerPoint* p, float f) ;
   void incPointZ(int i, float f) ;
+  void incPointZ(LayerPoint* p, float f) ;
+
   void mulPointX(int i, float f) ;
+  void mulPointX(LayerPoint* p, float f) ;
   void mulPointY(int i, float f) ;
+  void mulPointY(LayerPoint* p, float f) ;
   void mulPointZ(int i, float f) ;
+  void mulPointZ(LayerPoint* p, float f) ;
 
   void setPoint(int i, float x, float y) ;
+  void setPoint(LayerPoint* p, float x, float y);
+
   void incPoint(int i, float x, float y) ;
+  void incPoint(LayerPoint* p, float x, float y);
+
   void mulPoint(int i, float x, float y) ;
+  void mulPoint(LayerPoint* p, float x, float y);
+
   void removePoint(int i) ;
+  void removePoint(LayerPoint* p) ;
+
   void deletePoint(int i) ;
+  void deletePoint(LayerPoint* p) ;
 };
 
 class XYLayer : public Layer {

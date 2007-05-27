@@ -269,7 +269,8 @@ public:
  **********************************************************************/
 
 void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis, 
-	       double ppp, double zoom, bool isFoc, SelectedItemSet<int> * sel);
+	       double ppp, double zoom, bool isFoc, 
+	       SelectedItemSet<LayerPoint*> * sel);
 
 void drawGrid(Graphics& g, AxisView * xaxis, AxisView * yaxis, 
 	      Colour c1, Colour c2) ;
@@ -327,7 +328,7 @@ public:
       layer = plotter->getLayer(i);
       if (! plotter->isFocusLayer(layer) ) 
 	drawLayer(g, layer, xaxis, yaxis, psize, 1.0, false, 
-		  (SelectedItemSet<int> *)NULL);
+		  (SelectedItemSet<LayerPoint*> *)NULL);
       }
     }
   }
@@ -350,8 +351,9 @@ class PlotView : public Component {
   Point mousedown, mousemove;
   Label * xvalue;  // pointers to focus view's point display
   Label * yvalue;
-  SelectedItemSet<int> selection;
+  SelectedItemSet<LayerPoint*> selection;
   Region region;
+  Layer * focuslayer; // cached focus layer for fast acesss
 
   PlotView (Plotter * p) 
     : pad (8.0) {
@@ -383,19 +385,55 @@ class PlotView : public Component {
   double visibleValueTop(){return yaxis->toValue(visiblePixelTop()); }
   double visibleValueBottom(){return yaxis->toValue(visiblePixelBottom());}
   */
+
+  void setPointBuffers(float x, float y);
+  void setPointBuffers(LayerPoint* p) {
+    setPointBuffers(focuslayer->getPointX(p),
+		    focuslayer->getPointY(p));
+  }
+
+  void clearPointBuffers();
+
   bool isSelection() {return (selection.getNumSelected() > 0);}
   int numSelected() {return selection.getNumSelected();}
-  bool isSelected(int h) {return selection.isSelected(h);}
-  void clearSelection() {selection.deselectAll();}
-  void removeSelection(int h) {selection.deselect(h);}
-  void setSelection(int h) ;
-  void addSelection(int h) {selection.addToSelection(h);}
-  int getSelected(int i) {return selection.getSelectedItem(i);}
-  void moveSelection(float val, int orient);
-  void incSelection(float val, int orient);
-  void incSelectionXY(float x, float y);
-  float getSelectionMin(int orient);
-  float getSelectionMax(int orient);
+
+  bool isSelected(LayerPoint* p) {return selection.isSelected(p);}
+  bool isSelected(int h) {return isSelected(focuslayer->getPoint(h));}
+
+  void clearSelection() {
+    selection.deselectAll();
+    clearPointBuffers();
+  }
+
+  void removeSelection(LayerPoint* p) {selection.deselect(p);}
+  void removeSelection(int h) {removeSelection(focuslayer->getPoint(h));}
+
+  void setSelection(LayerPoint* p) ;
+  void setSelection(int h) {setSelection(focuslayer->getPoint(h));}
+
+  void addSelection(LayerPoint* p) {
+    selection.addToSelection(p);
+    if (numSelected()==1) {
+    }
+    else clearPointBuffers();
+
+  }
+  void addSelection(int h) {addSelection(focuslayer->getPoint(h));}
+
+  LayerPoint* getSelected(int i) {return selection.getSelectedItem(i);}
+  int getSelectedIndex(int i) {
+    return focuslayer->getPointIndex(selection.getSelectedItem(i));
+  }
+
+  void moveSelection(float val, Plotter::Orientation orient);
+  void moveSelection(float x, float y);
+
+  void shiftSelection(float val, Plotter::Orientation orient);
+  void shiftSelection(float x, float y);
+
+  float getSelectionMin(Plotter::Orientation orient);
+  float getSelectionMax(Plotter::Orientation orient);
+
   bool isInside(float x, float y, float left, float top,
 		float right, float bottom);
 
@@ -404,12 +442,10 @@ class PlotView : public Component {
 
   void printSelection() {
     printf("#<Selection:");
-    for (int i=0;i<numSelected(); i++) printf(" %d", getSelected(i));
+    for (int i=0;i<numSelected(); i++)
+      printf(" %d", getSelectedIndex(i));
     printf(">\n");
   }
-
-  void setPointBuffers(float x, float y);
-  void clearPointBuffers();
 };
 
 void PlotView::setPointBuffers(float x, float y) {
@@ -422,17 +458,15 @@ void PlotView::clearPointBuffers() {
   yvalue->setText(String::empty, false);
 }  
 
-void PlotView::setSelection(int h) {
-  Layer * focus = plotter->getFocusLayer();
-  selection.selectOnly(h);
-  setPointBuffers(focus->getPointX(h),
-		  focus->getPointY(h));
+void PlotView::setSelection(LayerPoint* p) {
+  selection.selectOnly(p);
+  setPointBuffers(focuslayer->getPointX(p),
+		  focuslayer->getPointY(p));
 }
 
-float PlotView::getSelectionMin(int orient) {
-  Layer * layer = plotter->getFocusLayer();
+float PlotView::getSelectionMin(Plotter::Orientation orient) {
   numeric_limits<float> info;
-  float (Layer::*getter)( int) ;
+  float (Layer::*getter) (LayerPoint* p) ;
   float lim=info.max();
 
   if (orient == Plotter::horizontal)
@@ -441,16 +475,20 @@ float PlotView::getSelectionMin(int orient) {
     getter = &Layer::getPointY;
 
   for (int i = 0; i< numSelected(); i++) {
-    int h = getSelected(i);
-    lim=jmin( lim, (layer->*getter) (i) );
+    lim=jmin( lim, (focuslayer->*getter) (  getSelected(i) ) );
   }
   return lim;
 }
   
-void PlotView::incSelectionXY(float dx, float dy) {
-  Layer * focus = plotter->getFocusLayer();
-  for (int i=0; i<numSelected(); i++)
-    focus->incPoint( getSelected(i), dx, dy);
+void PlotView::shiftSelection(float dx, float dy) {
+  int n=numSelected();
+  for (int i=0; i<n; i++)
+    focuslayer->incPoint( getSelected(i), dx, dy);
+  if (n==1) {
+    LayerPoint* p=getSelected(0);
+    setPointBuffers(focuslayer->getPointX(p),
+		    focuslayer->getPointY(p));
+  }
 }
 
 void PlotView::resizeForDrawing() {
@@ -470,7 +508,8 @@ void PlotView::resizeForDrawing() {
 }
 
 void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis, 
-	       double ppp, double zoom, bool isFoc, SelectedItemSet<int> * sel) {
+	       double ppp, double zoom, bool isFoc, 
+	       SelectedItemSet<LayerPoint*> * sel) {
   double half=ppp/2;
   double ax, ay, px, py, lx, ly, ox, oy;
   Colour color, selcolor= Colours::grey;
@@ -491,8 +530,9 @@ void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis,
 
   g.setColour(color);
   for (int i=0; i<ndraw; i++) {
-    ax=layer->getPointX(i);  
-    ay=layer->getPointY(i);  
+    LayerPoint* p = layer->getPoint(i);
+    ax=layer->getPointX(p);
+    ay=layer->getPointY(p);  
     px=xaxis->toPixel(ax);   // pixel coords
     py=yaxis->toPixel(ay);
 
@@ -507,7 +547,7 @@ void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis,
 
     if (layer->isDrawStyle(Layer::point)) {
       // if we are moving selection then draw selected point gray
-      if ( isFoc && sel->isSelected(i) ) {
+      if ( isFoc && sel->isSelected(p) ) {
 	g.setColour(selcolor);
 	g.fillEllipse(px-half, py-half, ppp,ppp);
 	g.setColour(color);
@@ -518,10 +558,10 @@ void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis,
     else if (layer->isDrawStyle(Layer::hbox)) {
       // to get pixel width of Z, get absolute axis position of Z,
       // convert to pixel and then subtract out px
-      double az=ax + layer->getPointZ(i);  
+      double az=ax + layer->getPointZ(p);
       double pz = (int)xaxis->toPixel(az);
       // draw selected boxes gray if moving
-      if ( isFoc && sel->isSelected(i) ) {
+      if ( isFoc && sel->isSelected(p) ) {
 	g.setColour(selcolor);
 	g.fillRect((int)px, (int)(py-half), (int)(pz-px), (int)ppp);
 	g.setColour(color);
@@ -536,8 +576,7 @@ void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis,
 
 void PlotView::paint (Graphics& g) {
   // erase with white
-  Layer * focus=plotter->getFocusLayer();
-  drawLayer(g, plotter->getFocusLayer(), 
+  drawLayer(g, focuslayer,
 	    plotter->getAxisView(Plotter::horizontal),
 	    plotter->getAxisView(Plotter::vertical),
 	    plotter->getPointSize(),
@@ -588,12 +627,11 @@ bool PlotView::isInside(float x, float y, float left, float top,
 }
 
 void PlotView::selectPointsInside(float left, float top, float right, float bottom){
-  Layer * focus=plotter->getFocusLayer();
   //printf("looking in region: left=%f top=%f, right=%f, bottom=%f\n",x1, y2, x2, y1);
   //clearSelection();
-  for (int i=0; i<focus->numPoints(); i++) {
-    double x=focus->getPointX(i);
-    double y=focus->getPointY(i);
+  for (int i=0; i<focuslayer->numPoints(); i++) {
+    double x=focuslayer->getPointX(i);
+    double y=focuslayer->getPointY(i);
     if ( isInside(x, y, left, top, right, bottom) ) {
       addSelection(i);
     }
@@ -602,9 +640,8 @@ void PlotView::selectPointsInside(float left, float top, float right, float bott
 }
 
 void PlotView::mouseDown (const MouseEvent &e) {
-  Layer * focus=plotter->getFocusLayer();
   // shoudnt happen
-  if (focus==(Layer *)NULL) return;
+  if (focuslayer==(Layer *)NULL) return;
 
   int mxp=e.getMouseDownX();
   int myp=e.getMouseDownY();
@@ -618,8 +655,8 @@ void PlotView::mouseDown (const MouseEvent &e) {
   // Control-Click: add point make selection
   // Control-Shift-Click: add point add selection.
   if ( e.mods.isCtrlDown() ) {
-    int i = focus->addPoint(xaxis->toValue(mxp),
-			    yaxis->toValue(myp));
+    int i = focuslayer->addPoint(xaxis->toValue(mxp),
+				 yaxis->toValue(myp));
     if ( e.mods.isShiftDown() )
       addSelection( i);
     else setSelection(i);
@@ -628,21 +665,21 @@ void PlotView::mouseDown (const MouseEvent &e) {
   }
 
   double half=plotter->getPointSize()/2;
-  int point=-1;
+  int h=-1;
   double left, top, right, bottom, x, y;
 
-  if ( focus->isDrawStyle(Layer::hbox) ) {
+  if ( focuslayer->isDrawStyle(Layer::hbox) ) {
     // speed: since box height is constant check point y againt a
     // (constant) vertical box height centered on mouse y
     top=yaxis->toValue( myp - half);
     bottom=yaxis->toValue( myp + half);
     x=xaxis->toValue( mxp);
-    for (int i=0; i < focus->numPoints(); i++) {
-      left=focus->getPointX(i);
-      right=left+focus->getPointZ(i);
-      y=focus->getPointY(i);
+    for (int i=0; i < focuslayer->numPoints(); i++) {
+      left=focuslayer->getPointX(i);
+      right=left+focuslayer->getPointZ(i);
+      y=focuslayer->getPointY(i);
       if ( isInside(x, y, left, top, right, bottom) ) {
-	point=i;
+	h=i;
 	break;
       }
       // give up when points are rightward of mouse x
@@ -658,11 +695,11 @@ void PlotView::mouseDown (const MouseEvent &e) {
     right=xaxis->toValue( mxp + half);
     bottom=yaxis->toValue( myp + half);
 
-    for (int i=0; i < focus->numPoints(); i++) {
-      x=focus->getPointX(i);
-      y=focus->getPointY(i);
+    for (int i=0; i < focuslayer->numPoints(); i++) {
+      x=focuslayer->getPointX(i);
+      y=focuslayer->getPointY(i);
       if ( isInside(x, y, left, top , right, bottom) ) {
-	point=i;
+	h=i;
 	break;
       } 
       // give up when points are rightward of mouse x
@@ -671,7 +708,7 @@ void PlotView::mouseDown (const MouseEvent &e) {
     }
   }
 
-  if ( point<0 ) {
+  if ( h<0 ) {
     // Mouse down on empty space . Add to selection if shift is down
     if ( isSelection() ) {
       if ( ! e.mods.isShiftDown() ) {
@@ -682,11 +719,11 @@ void PlotView::mouseDown (const MouseEvent &e) {
     addChildComponent (&region);
     region.beginSweep(e, xaxis, yaxis);
   }
-  else if ( isSelected(point) ) {
+  else if ( isSelected(h) ) {
     // point is already selected.
     // Mouse-shift-click remove Point from selection
     if ( e.mods.isShiftDown() ) {
-      removeSelection(point);
+      removeSelection(h);
       repaintFocusPlot();
     }
   }
@@ -695,22 +732,22 @@ void PlotView::mouseDown (const MouseEvent &e) {
     // Mouse-Click: set point as (single) selection
     // Mouse-shift-click:   add Point from selection
     if ( e.mods.isShiftDown() ) 
-      addSelection(point);
-    else setSelection(point);
+      addSelection(h);
+    else setSelection(h);
     repaintFocusPlot();
   }
 }
 
 void PlotView::mouseDrag(const MouseEvent &e) {
-  Layer * focus=plotter->getFocusLayer();
   AxisView * xaxis=plotter->getAxisView(Plotter::horizontal);
   AxisView * yaxis=plotter->getAxisView(Plotter::vertical);
   
   if ( isSelection() ) {
     float dx=xaxis->toValue(e.x) - xaxis->toValue(mousemove.getX()) ;
     float dy=yaxis->toValue(e.y) - yaxis->toValue(mousemove.getY()) ;
-    for (int i=0; i<numSelected(); i++)
-      focus->incPoint( getSelected(i), dx, dy);
+    //    for (int i=0; i<numSelected(); i++)
+    //      focuslayer->incPoint( getSelected(i), dx, dy);
+    shiftSelection(dx, dy);
     repaintFocusPlot();
     mousemove.setXY(e.x,e.y);
   } 
@@ -721,11 +758,10 @@ void PlotView::mouseDrag(const MouseEvent &e) {
 }
 
 void PlotView::mouseUp(const MouseEvent &e) {
-  Layer * focus=plotter->getFocusLayer();
   if ( isSelection() ) {
     if (mousedown.getX() != mousemove.getX() ) {
       printf("sorting after move\n");
-      focus->sortPoints(&selection);
+      focuslayer->sortPoints();
       printSelection();
     }
     repaintFocusPlot();
@@ -839,6 +875,8 @@ FocusView::~FocusView() {
 
 void FocusView::setFocusLayer(Layer * l) {
   focuslayer=l;
+  plotter->getPlotView()->clearSelection();
+  plotter->getPlotView()->focuslayer=l;
   Colour c = l->getLayerColor();
   layerMenu->setSelectedId(l->getLayerID(), true);
   layerMenu->setColour(ComboBox::textColourId, c);
@@ -1078,7 +1116,6 @@ bool Plotter::isFocusLayer(Layer * l) {
 }
 
 void Plotter::setFocusLayer(Layer * l) {
-  plotview->clearSelection();  // flush any selection
   focusview->setFocusLayer(l);
 }
 
@@ -1165,11 +1202,11 @@ void Plotter::scrollBarMoved (ScrollBar * sb, const double nrs) {
  **********************************************************************/
 
 const StringArray PlotterWindow::getMenuBarNames (MenuBarComponent* mbar) {
-  const tchar* const menuNames[] = { T("File"), T("Edit"), T("Layer"), T("View"), T("Compose"),
-				     T("Help"), 0 };
+  const tchar* const menuNames[] = { T("Plotter"), T("Edit"), T("Layer"), 
+				     T("View"), T("Compose"),
+				     T("Analyze"), T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
-
 
 const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
 						int idx, 
@@ -1182,7 +1219,6 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
   case 0 :
     // File Menu
     sub1.addItem( Plotter::cmdPlotterNew + XYPlot, T("XY"));
-    sub1.addItem( Plotter::cmdPlotterNew + XYZPlot, T("XYZ"), false);
     sub1.addItem( Plotter::cmdPlotterNew + MidiPlot, T("Midi"));
     sub1.addItem( Plotter::cmdPlotterNew + VKeyPlot, T("Fomus"), false);
     sub1.addItem( Plotter::cmdPlotterNew + FomusPlot, T("Vkey"), false);
@@ -1230,23 +1266,37 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
 	}
     break;
   case 3 :
-    val=plotter->getFocusLayer()->getLayerStyle();
-    menu.addItem( Plotter::cmdViewStyle + Layer::line, T("Line"),
-		  true, (val==Layer::line));
-    menu.addItem( Plotter::cmdViewStyle + Layer::point, T("Point"),
-		  true, (val==Layer::point));
-    menu.addItem( Plotter::cmdViewStyle + Layer::lineandpoint,
-		  T("Line and Point"),
-		  true, (val==Layer::lineandpoint));
-    menu.addItem( Plotter::cmdViewStyle + Layer::hbox, T("Horizontal Box"),
-		  (type > XYPlot), (val==Layer::hbox));
-    menu.addItem( Plotter::cmdViewStyle + Layer::vline, T("Vertical Line"),
-		  true, (val==Layer::vline));
-    menu.addItem( Plotter::cmdViewStyle + Layer::vlineandpoint, 
-		  T("Vertical Line and Point"),
-		  true, (val==Layer::vlineandpoint));
-    menu.addItem( Plotter::cmdViewStyle + Layer::vbar, T("Vertical Bar"),
-		  false, (val==Layer::vbar));
+    {
+      Layer * layer=plotter->getFocusLayer();
+      // add these with focus colored items to make it clear that the
+      // styling change only affects the focus plot
+      menu.addColouredItem( Plotter::cmdViewStyle + Layer::line, T("Line"),
+			    layer->getLayerColor(),
+			    true, (val==Layer::line));
+      menu.addColouredItem( Plotter::cmdViewStyle + Layer::point, T("Point"),
+			    layer->getLayerColor(),
+			    true, (val==Layer::point));
+    menu.addColouredItem( Plotter::cmdViewStyle + Layer::lineandpoint,
+			  T("Line and Point"),
+			  layer->getLayerColor(),
+			  true, (val==Layer::lineandpoint));
+    menu.addColouredItem( Plotter::cmdViewStyle + Layer::hbox, 
+			  T("Horizontal Box"),
+			  layer->getLayerColor(),
+			  (type > XYPlot), (val==Layer::hbox));
+    menu.addColouredItem( Plotter::cmdViewStyle + Layer::vline, 
+			  T("Vertical Line"),
+			  layer->getLayerColor(),
+			  true, (val==Layer::vline));
+    menu.addColouredItem( Plotter::cmdViewStyle + Layer::vlineandpoint, 
+			  T("Vertical Line and Point"),
+			  layer->getLayerColor(),
+			  true, (val==Layer::vlineandpoint));
+    menu.addColouredItem( Plotter::cmdViewStyle + Layer::vbar, 
+			  T("Vertical Bar"),
+			  layer->getLayerColor(),
+			  false, (val==Layer::vbar));
+    }
     menu.addSeparator();
     val=plotter->getBackViewStyle();
     sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgGrid, T("Grid"),
@@ -1267,10 +1317,16 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( Plotter::cmdViewMouseGuide, T("Mouse Guide"), false);
     break;
   case 4 :
-    menu.addItem( Plotter::cmdComposeDistributions, T("Distributions..."), false);
-    menu.addItem( Plotter::cmdComposeGenerate, T("Generate..."), false);
+    menu.addItem( Plotter::cmdComposeDistributions, T("Distributions..."),
+		  false);
+    menu.addItem( Plotter::cmdComposeGenerate, T("Generate..."), 
+		  false);
     break;
   case 5 :
+    menu.addItem( Plotter::cmdAnalyzeHistogram, T("Histogram..."), false);
+    menu.addItem( Plotter::cmdAnalyzeDeviation, T("Deviation..."), false);
+    break;
+  case 6 :
     menu.addItem( Plotter::cmdHelpCommands, T("Command Help"));
     break;
   }
@@ -1304,6 +1360,8 @@ void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id,
     break;
   case Plotter::cmdLayerAdd :
     plotter->addLayer( (PlotType)arg);
+    // redraw back view to include old
+    plotter->redrawBackView();
     break;
   case Plotter::cmdLayerDelete :
     break;

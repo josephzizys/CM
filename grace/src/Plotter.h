@@ -170,6 +170,7 @@ class Plotter  : public Component,
 	 "LayerSelect" "ViewStyle" "ViewBgStyle" "ViewBgColor" "ViewBgPlotting"
 	 "ViewBgMousing" "ViewMouseGuide" 
 	 "ComposeDistributions" "ComposeGenerate"
+	 "AnalyzeHistogram" "AnalyzeDeviation"
 	 "HelpCommands")
 
 
@@ -200,7 +201,9 @@ class Plotter  : public Component,
     cmdViewMouseGuide = 70656,
     cmdComposeDistributions = 70912,
     cmdComposeGenerate = 71168,
-    cmdHelpCommands = 71424};
+    cmdAnalyzeHistogram = 71424,
+    cmdAnalyzeDeviation = 71680,
+    cmdHelpCommands = 71936};
 
   AxisView * xaxis;
   AxisView * yaxis;
