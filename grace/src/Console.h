@@ -14,6 +14,18 @@
 #include "juce.h"
 #include "Resources.h"
 
+// Aquamacs themes from Resources/site-lisp/color-theme-themes.gz
+// As previewed in Slime repl these are the value mappings used:
+//   bgColor:             background-color
+//   inputColor           foreground-color
+//   outputColor          font-lock-string-face
+//   errorColor           {USE RED ALL THEMES?}
+//   warningColor         font-lock-warning-face
+//   highlightColor       region
+//   highlightTextColor   region
+//   caretColor:          cursor-color
+
+
 class ConsoleTheme {
  public:
   enum {bgColor=0, inputColor, outputColor, errorColor, warningColor,
@@ -33,15 +45,24 @@ class ConsoleTheme {
   void setColor(int i, Colour c) {colors[i]=c;}
 };
 
-class ConsoleComponent  : public Component {
+class Console : public Component {
  public:
   TextEditor * buffer;
-  ConsoleComponent ();
-  ~ConsoleComponent();
+  ConsoleTheme themes[8];   // make these alloc'ed
+  int curtheme;
+  int numthemes;
+  Console ();
+  ~Console();
   void resized() {buffer->setSize(getWidth(),getHeight());}
   void paint (Graphics& g) {g.fillAll (Colours::black); }
+  int numThemes() {return numthemes;}
+  void initTheme(int i) ;
+  void setTheme(int i);
+  String getThemeName(int i) {return themes[i].name;}
+  Font getThemeFont(int i) {return themes[i].font;}
+  ConsoleTheme* getCurrentTheme() {return &themes[curtheme];}
+  bool isCurrentTheme(int i) {return (curtheme==i);}
 };
-
 
 class ConsoleWindow  : public DocumentWindow,
   public MenuBarModel
@@ -68,7 +89,7 @@ public:
     cmdHelpConsole = 36480,
     cmdHelpAboutGrace = 36736};
 
-  ConsoleComponent * console;
+  Console * console;
   ConsoleTheme theme;
   SplashComponent * splash;
   MenuBarComponent * menubar;
@@ -85,9 +106,6 @@ public:
   TextEditor * getConsole();
   bool isConsoleReadOnly();
   void setConsoleReadOnly(bool b);
-
-  void setConsoleDefaultTheme () ;
-  void applyConsoleTheme();
   void setConsoleTextColor(int c);
   void consoleClear();
   void consoleCopy();
@@ -107,14 +125,3 @@ public:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-

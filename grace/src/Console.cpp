@@ -15,32 +15,127 @@
 #include "Grace.h"
 #include "Audio.h"
 
-/* 
- * Console Window
- */
-
-ConsoleComponent::ConsoleComponent () {
+Console::Console () : 
+  numthemes (0),
+  curtheme (0) 
+{
   buffer = new TextEditor( String::empty) ;
   buffer->setMultiLine(true);
   buffer->setScrollToShowCursor(true);
   buffer->setReadOnly(true);
   buffer->setCaretVisible(false);    
   addChildComponent(buffer);
+  printf("before init\n");
+  numthemes=6;
+  for (int i=0; i<numthemes; i++)
+    initTheme(i);
+  printf("after init\n");
+  setTheme(0);
+  printf("after settheme\n");
   buffer->setVisible(true);
   setVisible(true);
 }
 
-ConsoleComponent::~ConsoleComponent () {
+Console::~Console () {
   delete buffer;
+}
+
+void Console::initTheme (int idx) {
+  String n=String::empty;
+  uint32 b, i, o, r, h, c;
+  uint32 w=0xff8c00, e=0xcd0000;
+  Font f=Font(Font::getDefaultMonospacedFontName(), 
+	      17.0f, Font::plain );
+  switch (idx) {
+  case 0 :
+    n=T("Clarity and Beauty");
+    b=0x000000; i=0xffffff; o=0xffa07a; 
+    r=0xbebebe; h=0xffffff; c=0xffff00;
+    break;
+  case 1 :
+    n=T("Deep Blue");
+    b=0x102e4e;  i=0xeeeeee;  o=0xdeb887;  
+    r=0x008b8b;  h=0xeeeeee;  c=0x00ff00;        
+    break;
+  case 2 :
+    n=T("Gnome");
+    b=0x2f4f4f;  i=0xf5deb3;  o=0xffa07a;
+    r=0x008b8b;  h=0x00ffff;  c=0xd3d3d3;
+    break;
+  case 3 :
+    n=T("Snowish");
+    b=0xeee9e9;  i=0x2f4f4f;  o=0x9400d3;  
+    r=0xeedc82;  h=0x2f4f4f;  c=0xcd0000;
+    break;
+  case 4 :
+    n=T("Standard Emacs");
+    b=0xffffff;  i=0x000000;  o=0xbc8f8f;  
+    r=0xeedc82;  h=0x000000;  c=0x000000;
+    break;
+  case 5 :
+    n=T("Standard XEmacs");
+    b=0xcccccc;  i=0x000000;  o=0x008b00;  
+    r=0xa6a6a6;  h=0x000000;  c=0xcd0000;
+    break;
+  default :
+    n=String::empty;
+    b=0xffffff; i=0x000000; o=0x000000; 
+    r=0xbebebe; h=0x000000; c=0xff0000;
+    break;
+  }
+  b += 0xff000000;  i += 0xff000000;   o += 0xff000000;
+  r += 0xff000000;  h += 0xff000000;   c += 0xff000000;  
+  themes[idx].name=n;
+  themes[idx].font=f;
+  themes[idx].setColor(ConsoleTheme::bgColor, Colour(b));
+  themes[idx].setColor(ConsoleTheme::inputColor, Colour(i));
+  themes[idx].setColor(ConsoleTheme::outputColor, Colour(o));
+  themes[idx].setColor(ConsoleTheme::warningColor, Colour(w));
+  themes[idx].setColor(ConsoleTheme::errorColor, Colour(e));
+  themes[idx].setColor(ConsoleTheme::hiliteColor, Colour(r));
+  themes[idx].setColor(ConsoleTheme::hiliteTextColor, Colour(h));
+  themes[idx].setColor(ConsoleTheme::caretColor, Colour(c));
+
+  /*  themes[idx].font=Font(Font::getDefaultMonospacedFontName(), 
+		  17.0f, Font::plain );
+  themes[idx].setColor(ConsoleTheme::bgColor, Colours::black);
+  themes[idx].setColor(ConsoleTheme::inputColor, Colours::white);
+  themes[idx].setColor(ConsoleTheme::outputColor, Colours::lightsalmon);
+  themes[idx].setColor(ConsoleTheme::errorColor, Colours::red);
+  themes[idx].setColor(ConsoleTheme::warningColor,Colours::orange);
+  themes[idx].setColor(ConsoleTheme::hiliteColor, Colours::grey);
+  themes[idx].setColor(ConsoleTheme::hiliteTextColor, Colours::white);
+  themes[idx].setColor(ConsoleTheme::caretColor,Colours::yellow);
+  */
+}
+
+void Console::setTheme(int i) {
+  curtheme=i;
+  printf("set theme: current them is %s\n",
+	 themes[i].name.toUTF8());
+  buffer->setFont( themes[i].getFont() );
+  buffer->setColour( TextEditor::backgroundColourId, 
+		     themes[i].getColor(ConsoleTheme::bgColor));
+  buffer->setColour( TextEditor::textColourId,
+		     themes[i].getColor(ConsoleTheme::outputColor));
+  buffer->setColour( TextEditor::highlightColourId,
+		     themes[i].getColor(ConsoleTheme::hiliteColor));
+  buffer->setColour( TextEditor::highlightedTextColourId,
+		     themes[i].getColor(ConsoleTheme::hiliteTextColor));
+  buffer->setColour( TextEditor::caretColourId,
+		     themes[i].getColor(ConsoleTheme::caretColor));
+  buffer->applyFontToAllText(themes[i].getFont());
 }
 
 ConsoleWindow::ConsoleWindow (bool dosplash)
   : DocumentWindow ( T("Console") , Colours::white,
 		    DocumentWindow::allButtons, true ) {
+
   menubar = new MenuBarComponent(this);
+  printf( "before manubar\n");
   setMenuBar(this,0);
-  console=new ConsoleComponent();
-  setConsoleDefaultTheme();
+  printf( "before new consloe\n");
+  console=new Console();
   splash=new SplashComponent();
   setContentComponent(console);
   setResizable(true, true); 
@@ -88,40 +183,12 @@ void ConsoleWindow::setConsoleReadOnly(bool b) {
   }
 }
 
-void ConsoleWindow::setConsoleDefaultTheme () {
-  // Aquamacs theme "Clarity and Beauty" by Richard Wellum
-  theme.name=T("Clarity and Beauty");
-  theme.font=Font(Font::getDefaultMonospacedFontName(), 
-		  17.0f, Font::plain );
-  theme.setColor(ConsoleTheme::bgColor, Colours::black);
-  theme.setColor(ConsoleTheme::inputColor, Colours::white);
-  theme.setColor(ConsoleTheme::outputColor, Colours::lightsalmon);
-  theme.setColor(ConsoleTheme::errorColor, Colours::red);
-  theme.setColor(ConsoleTheme::warningColor,Colours::orange);
-  theme.setColor(ConsoleTheme::hiliteColor, Colours::grey);
-  theme.setColor(ConsoleTheme::hiliteTextColor, Colours::white);
-  theme.setColor(ConsoleTheme::caretColor,Colours::yellow);
-  applyConsoleTheme();
-}
-
-void ConsoleWindow::applyConsoleTheme() {
-  console->buffer->setFont(theme.getFont());
-  console->buffer->setColour( TextEditor::backgroundColourId, 
-		      theme.getColor(ConsoleTheme::bgColor));
-  console->buffer->setColour( TextEditor::textColourId,
-		      theme.getColor(ConsoleTheme::outputColor));
-  console->buffer->setColour( TextEditor::highlightColourId,
-		      theme.getColor(ConsoleTheme::hiliteColor));
-  console->buffer->setColour( TextEditor::highlightedTextColourId,
-		      theme.getColor(ConsoleTheme::hiliteTextColor));
-  console->buffer->setColour( TextEditor::caretColourId,
-		      theme.getColor(ConsoleTheme::caretColor));
-  console->buffer->applyFontToAllText(theme.getFont());
-}
 
 void ConsoleWindow::setConsoleTextColor (int c) {
-  console->buffer->setColour( TextEditor::textColourId,
-			      theme.getColor(c));
+    console->buffer->setColour(TextEditor::textColourId,
+  			     console->getCurrentTheme()->getColor(c));
+  //  console->buffer->setColour(TextEditor::textColourId,
+  //  			     Colours::white);
 }
 
 void ConsoleWindow::consoleClear() {
@@ -199,10 +266,10 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
   case 0 :
     menu.addItem( cmdGraceEditorNew, T("New Editor"), true);    
     sub1.addItem( cmdGracePlotterNew + XYPlot, T("XY"));
-    sub1.addItem( cmdGracePlotterNew + XYZPlot, T("XYZ"), false);
     sub1.addItem( cmdGracePlotterNew + MidiPlot, T("Midi"));
     sub1.addItem( cmdGracePlotterNew + VKeyPlot, T("Fomus"), false);
     sub1.addItem( cmdGracePlotterNew + FomusPlot, T("Vkey"), false);
+    sub1.addItem( cmdGracePlotterNew + SpearPlot, T("Spear"), false);
     sub1.addItem( cmdGracePlotterNew + CLMPlot, T("CLM"), false);
     menu.addSubMenu( T("New Plotter"), sub1, true);    
     menu.addSeparator();
@@ -219,14 +286,12 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
   case 2 :
     menu.addItem( cmdViewFonts, T("Show Fonts..."), false);    
     menu.addSeparator();
-    sub1.addItem( cmdViewThemes + 1, T("Clarity and Beauty"), true, true);
-    sub1.addItem( cmdViewThemes + 2, T("Gnome"), false);
-    sub1.addItem( cmdViewThemes + 3, T("Deep Blue"), false);
-    sub1.addItem( cmdViewThemes + 4, T("Snowish"), false);
-    sub1.addItem( cmdViewThemes + 5, T("Standard Emacs"), false);
-    sub1.addItem( cmdViewThemes + 6, T("Standard XEmacs"), false);
+    for (int i=0;i<console->numThemes(); i++)
+      sub1.addItem( cmdViewThemes + i, console->getThemeName(i),
+		    true, console->isCurrentTheme(i));
     sub1.addSeparator();
-    sub1.addItem( cmdViewThemes + 7, T("Roll your Own..."), 
+    sub1.addItem( cmdViewThemes + console->numThemes(), 
+		  T("Roll Your Own..."), 
 		  false);
     menu.addSubMenu( T("Themes"), sub1, true);
     break;
@@ -237,7 +302,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
   case 4 :
     menu.addItem( cmdLispRestart, T("Restart"), false); 
     menu.addItem( cmdLispInputTracing, T("Trace Input"), false); 
-    menu.addItem( cmdLispErrorTracing, T("Trace Errors"), false); 
+    menu.addItem( cmdLispErrorTracing, T("Backtrace Errors"), false); 
     break;
 
   case 5 :
@@ -273,12 +338,12 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
     break;
   case cmdAudioMidiSetup: 
   case cmdAudioAudioSetup: 
-    // CRASHES
-    // new AudioMidiWindow();
     showAudioMidiWindow();
     break;
   case cmdGraceQuit :
     app->graceQuit(true);
+  case cmdViewThemes :
+    console->setTheme( arg);
   default :
     break;
   }
