@@ -125,6 +125,26 @@ public:
 /// Plotter
 ///
 
+class PointClipboard {
+ public:
+  OwnedArray <LayerPoint> points;
+  Layer* layer;
+  PointClipboard() {}
+  ~PointClipboard() {}
+  int size() {return points.size();}
+  bool isEmpty() {return (size()==0);}
+  LayerPoint* getPoint(int i) {return points[i];}
+  Layer* getLayer() {return layer;}
+  void set(Layer* layr, SelectedItemSet<LayerPoint*> * sel) {
+    layer=layr;
+    points.clear();
+    for (int i=0;i<sel->getNumSelected(); i++)
+      points.add(sel->getSelectedItem(i));
+  }
+  void clear() {layer=0; points.clear(false);}
+  void add(LayerPoint* p) {points.add(p);}
+};
+
 class Plotter  : public Component, 
   public SliderListener ,    // for callback from zoom slider
   public ScrollBarListener   // for callback from scrollbars
@@ -163,18 +183,16 @@ class Plotter  : public Component,
 	 "LispRestart" "LispInputTracing" "LispErrorTracing"
 	 "HelpConsole" "HelpAboutGrace")
 
-(enums 2 "PlotterCommand" "PlotterNew" "PlotterOpen" "PlotterSave" "PlotterSaveAs"
-         "PlotterImport" "PlotterExport"
-         "EditCut" "EditCopy" "EditPaste" "EditClear" "EditSelectAll" "EditFind"
+(enums 2 "PlotterCommand" "PlotterNew" "PlotterOpen" "PlotterSave" 
+         "PlotterSaveAs" "PlotterImport" "PlotterExport"
+	 "EditUndo" "EditRedo" "EditCut" "EditCopy" "EditPaste"
+	 "EditSelectAll" "EditClear" "EditFind"
          "LayerAdd" "LayerDelete" 
 	 "LayerSelect" "ViewStyle" "ViewBgStyle" "ViewBgColor" "ViewBgPlotting"
 	 "ViewBgMousing" "ViewMouseGuide" 
 	 "ComposeDistributions" "ComposeGenerate"
 	 "AnalyzeHistogram" "AnalyzeDeviation"
 	 "HelpCommands")
-
-
-
    */
 
   enum PlotterCommand {
@@ -184,26 +202,28 @@ class Plotter  : public Component,
     cmdPlotterSaveAs = 66304,
     cmdPlotterImport = 66560,
     cmdPlotterExport = 66816,
-    cmdEditCut = 67072,
-    cmdEditCopy = 67328,
-    cmdEditPaste = 67584,
-    cmdEditClear = 67840,
-    cmdEditSelectAll = 68096,
-    cmdEditFind = 68352,
-    cmdLayerAdd = 68608,
-    cmdLayerDelete = 68864,
-    cmdLayerSelect = 69120,
-    cmdViewStyle = 69376,
-    cmdViewBgStyle = 69632,
-    cmdViewBgColor = 69888,
-    cmdViewBgPlotting = 70144,
-    cmdViewBgMousing = 70400,
-    cmdViewMouseGuide = 70656,
-    cmdComposeDistributions = 70912,
-    cmdComposeGenerate = 71168,
-    cmdAnalyzeHistogram = 71424,
-    cmdAnalyzeDeviation = 71680,
-    cmdHelpCommands = 71936};
+    cmdEditUndo = 67072,
+    cmdEditRedo = 67328,
+    cmdEditCut = 67584,
+    cmdEditCopy = 67840,
+    cmdEditPaste = 68096,
+    cmdEditSelectAll = 68352,
+    cmdEditClear = 68608,
+    cmdEditFind = 68864,
+    cmdLayerAdd = 69120,
+    cmdLayerDelete = 69376,
+    cmdLayerSelect = 69632,
+    cmdViewStyle = 69888,
+    cmdViewBgStyle = 70144,
+    cmdViewBgColor = 70400,
+    cmdViewBgPlotting = 70656,
+    cmdViewBgMousing = 70912,
+    cmdViewMouseGuide = 71168,
+    cmdComposeDistributions = 71424,
+    cmdComposeGenerate = 71680,
+    cmdAnalyzeHistogram = 71936,
+    cmdAnalyzeDeviation = 72192,
+    cmdHelpCommands = 72448};
 
   AxisView * xaxis;
   AxisView * yaxis;
@@ -214,6 +234,7 @@ class Plotter  : public Component,
   BackView * backview;
   FocusView * focusview;
   OwnedArray <Layer> layers;
+  UndoManager actions;
   Font font;
   Random * rand; // a private random state
   double zoom;
@@ -239,14 +260,15 @@ class Plotter  : public Component,
   PlotViewport * getPlotViewport();
 
   // layers
-  void addLayer(PlotType pt);
   int numLayers();
-  Layer * getLayer(int i);
-  Layer * findLayer(int id);
-  Layer * getFocusLayer();
-  bool isFocusLayer(Layer * l);
-  void setFocusLayer(Layer * l);
-  void deleteFocusLayer();
+  Layer* getLayer(int i);
+  Layer* findLayer(int id);
+  Layer* getFocusLayer();
+  bool isFocusLayer(Layer* l);
+  void setFocusLayer(Layer* l);
+  void addLayer(Layer* l);
+  Layer* newLayer(PlotType pt);
+  void removeLayer(Layer* l);
 
   void resized () ;
   void redrawPlotView();
@@ -261,6 +283,7 @@ class Plotter  : public Component,
   void scrollBarMoved (ScrollBar * sb, const double nrs) ;
 
   void selectAll();
+  void deselectAll();
   void clearSelection();
   void moveSelection();
 
