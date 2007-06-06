@@ -15,9 +15,10 @@
 #include "Grace.h"
 #include "Audio.h"
 
+
 Console::Console () : 
   numthemes (0),
-  curtheme (0) 
+  curtheme (0)
 {
   buffer = new TextEditor( String::empty) ;
   buffer->setMultiLine(true);
@@ -129,8 +130,9 @@ void Console::setTheme(int i) {
 
 ConsoleWindow::ConsoleWindow (bool dosplash)
   : DocumentWindow ( T("Console") , Colours::white,
-		    DocumentWindow::allButtons, true ) {
-
+		     DocumentWindow::allButtons, true ),
+    lisp (0)
+{
   menubar = new MenuBarComponent(this);
   printf( "before manubar\n");
   setMenuBar(this,0);

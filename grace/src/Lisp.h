@@ -12,18 +12,34 @@
 #define __LISP__
 
 #include "juce.h"
+#include "Console.h"
 
+class LispConnection : public InterprocessConnection {
+ public:
+  enum LispFlavor {SBCL=1, OpenMCL, CLisp, Gauche, Guile, Custom};
+  StringArray commands;
+  String lisp;
+  String args;
+  int port;
+  String host;
+ LispConnection (LispFlavor flavor) 
+   : host (T("localhost")),
+    port (8000),
+    lisp (T("/usr/local/bin/openmcl")),
+    args (String::empty)
+    {
+    }
 
+  ~LispConnection () { }
 
+    bool startLisp();
+    bool killLisp();
 
+    void connectionMade ();
+    void connectionLost ();
+    void messageReceived ();
 
-
-
-
-
-
-
-
+};
 
 
 #endif

@@ -10,3 +10,16 @@
 
 #include "Lisp.h"
 
+// bool File::startAsProcess (const String &parameters = String::empty) const throw ()
+
+void LispConnection::connectionMade () {
+  printf("Lisp connected.\n");
+}
+
+void connectionLost () {
+  printf("Lisp connection lost.\n");
+}
+
+void messageReceived () {
+  printf("Message received!\n");
+}

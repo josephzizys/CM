@@ -13,6 +13,7 @@
 
 #include "juce.h"
 #include "Resources.h"
+#include "Lisp.h"
 
 // Aquamacs themes from Resources/site-lisp/color-theme-themes.gz
 // As previewed in Slime repl these are the value mappings used:
@@ -93,7 +94,7 @@ public:
   ConsoleTheme theme;
   SplashComponent * splash;
   MenuBarComponent * menubar;
-
+  LispConnection * lisp;
   ConsoleWindow (bool dosplash) ;
   ~ConsoleWindow () ;
   void closeButtonPressed () ;
