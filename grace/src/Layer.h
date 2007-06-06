@@ -17,10 +17,8 @@
 
 class LayerPoint {
  public:
-  enum {selected = 1, muted = 2};
-  int flags;
   float * vals;
- LayerPoint(int n) : flags(0) {vals=new float[n];}
+ LayerPoint(int n) {vals=new float[n];}
   ~LayerPoint() {delete[] vals;}
   float getVal(int i) {return vals[i];}
   void setVal(int i, float f) {vals[i]=f;} 
@@ -41,9 +39,84 @@ class comp00 {
   }
 };
 
+class Axis {
+ public:
+  enum AxisType {
+    normalized = 0,
+    percentage,
+    keynum,
+    amplitude,
+    seconds,
+    frequency,
+    hertz,        // log plotting (not implemented yet)
+    mididata,     // 0-127 display
+    unitcircle
+  };
+  String name;
+  AxisType type; 
+  double from;    // minimum value
+  double to;      // maximum value
+  double by;      // inc along axis
+  int ticks;      // number of ticks per inc to draw
+  int decimals;   // num decimals to show in labels
+
+  void init (AxisType typ) {
+    // init axis data according to common "templates"
+    name=String::empty;
+    decimals=2;
+    type=typ;
+    switch (typ) {
+    case percentage :
+      from=0.0; to=100.0; by=25.0; ticks=5;
+      break;
+    case keynum :
+      from=0.0; to=127; by=12.0; ticks=12;
+      break;
+    case mididata :
+      from=0.0; to=127; by=8.0; ticks=8;
+      break;
+    case seconds :
+      from=0.0; to=60.0; by=1.0; ticks=4;
+      break;
+    case frequency :  // linear freq
+      from=0.0; to=11025.0; by=1.0; ticks=2;
+      break;
+    case hertz :  // log freq
+      from=8.175798; to=16744.035; by=2.0; ticks=6; 
+      break;
+    case unitcircle :
+      from=-1.0; to=1.0; by=.25; ticks=4;
+    case normalized :
+    case amplitude :
+    default :
+      from=0.0; to=1.0; by=0.25; ticks=5;
+      break;
+    }
+  }
+
+  Axis (AxisType typ) {init(typ);}
+  ~Axis () {}
+  double getMinimum() {return from;}
+  void setMinimum(double v) {from=v;}
+  double getMaximum() {return to;}
+  void setMaximum(double v) {to=v;}
+  double getIncrement() {return by;}
+  void setIncrement(double v) {by=v;}
+  double getIncrements() {return (to-from)/by;}
+  int getTicks() {return ticks;}
+  int setTicks(int v) {ticks=v;}
+  int getDecimals() {return decimals;}
+  void setDecimals(int v) {decimals=v;}
+  double getRange() {return to-from;}
+  float rescale(float val, Axis* orig){
+    return (getMinimum() + 
+	    (getRange() * ((val - orig->getMinimum()) / 
+			   orig->getRange())));
+  }
+};
+
 class Layer {
  public:
-
   enum {      
     // drawing style info (or'd together) FIX this should be moved.
     line = 1,
@@ -60,20 +133,25 @@ class Layer {
   };
 
   /* layer points kept in X sorted order. */
+
   OwnedArray <LayerPoint> _points;
 
   /* A preallocated point holding default field values that new points
      will be merged with to produce a fully specfifed point. */
-  LayerPoint * _defaults;  // default values for new points
 
-  /* _x _y and _z are point field indexes that the plotter will use to
-     access values to plot. In other words, there is no hardwired X, Y
-     or Z fields, a layer can display ANY field (assuming of course
-     that the current axis is correctly configured for the values. */
+  LayerPoint * _defaults; 
 
-  int _x, _y, _z;   // (current) field indexes to get/set X Y Z values
+  /* _x _y and _z hold the point field indices used to graph x y and z
+     point values. these indicies can be changed on the fly so that a
+     layer can display differnet dimensions of data in the same set of
+     points */
 
-  int arity;        // arity of point
+  int _x, _y, _z; 
+
+  /* axis objects, one for each field in points  */
+  OwnedArray <Axis> _axes;
+  StringArray pfields;
+  int arity;        // number of fields in points
   String name;      // layer name
   int id;           // unique id
   Colour color;     // line and point color
@@ -148,6 +226,9 @@ class Layer {
 
   void deletePoint(int i) ;
   void deletePoint(LayerPoint* p) ;
+  Axis* getAxis() ;
+  void setAxis(int i, Axis* a);
+
 };
 
 class XYLayer : public Layer {

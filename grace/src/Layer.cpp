@@ -30,7 +30,9 @@ Layer::Layer (String nam, Colour col)
 }
   
 Layer::~Layer() {
+  //  printf("in layer delete\n");
   _points.clear(true);
+  _axes.clear(true);
 };
 
 int Layer::numPoints() {
@@ -152,9 +154,13 @@ void Layer::deletePoint(LayerPoint* p) {
 XYLayer::XYLayer(String s, Colour c) 
   : Layer(s, c)
 {
+  const tchar* const names [] = { T("X"), T("Y"), 0 };
+  //  params=StringArray((const tchar**) menuNames);
   arity=2;
   _x=0;
   _y=1;
+  _axes.add(new Axis(Axis::normalized) );
+  _axes.add(new Axis(Axis::normalized) );
   style=Layer::lineandpoint;
 }
 
@@ -165,7 +171,12 @@ XYLayer::XYLayer(String s, Colour c)
 MidiLayer::MidiLayer(String s, Colour c) 
   : Layer(s, c)
 {
-  arity=5;
+  arity=4;
+  // Time Duration Keynum Amplitude
+  _axes.add(new Axis(Axis::seconds));
+  _axes.add(_axes[0]);   // dur and time must share same axis
+  _axes.add(new Axis(Axis::keynum));
+  _axes.add(new Axis(Axis::normalized));
   _x=0;
   _y=2;   // Y is keynum field
   _z=1;   // Z is duration field
@@ -174,14 +185,14 @@ MidiLayer::MidiLayer(String s, Colour c)
   _defaults->setVal(1, 0.5);
   _defaults->setVal(2, 60.0);
   _defaults->setVal(3, 0.5);
-  _defaults->setVal(4, 0.0);
 
   style=Layer::hbox;
-  //style=Layer::lineandpoint;
+  
 }
 
 MidiLayer::~MidiLayer() {
   // DOES THE CALL TO ~Layer() HAPPEN IF THIS METHOD IS HERE?
+
   delete _defaults;
 }
 

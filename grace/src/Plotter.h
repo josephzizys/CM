@@ -35,86 +35,54 @@ enum PlotType {
 class AxisView : public Component {
 
 public:
-  enum AxisType {
-    untyped = 0,
-    normalized,
-    percentage,
-    keynum,
-    amplitude,
-    seconds,
-    frequency,
-    hertz,        // log plotting (not implemented yet)
-    mididata,     // 0-127 display
-    unitcircle
- };
-  int type; 
-  double from;    // minimum value
-  double to;      // maximum value
-  double by;      // inc along axis
-  int ticks;      // number of ticks per inc to draw
-  int decimals;   // num decimals to show in labels
-  double zoom;    // zoom factor
-  double ppi;     // pixels per increment (distance between labels)
-  double offset;  // pixel position of axis origin
+  Axis * axis;
+  double _spread; // expansion factor for "zooming" space on axis
+  double _ppi;    // pixels per increment (distance between labels)
+  double _offset; // pixel position of axis origin
   int orient;     // orientation (horizontal, vertical)
-  bool logr;      // axis is logarithmic
   PlotViewport * viewport;  // back pointer to viewport
 
-  AxisView (AxisType typ)
-    : type(0), from (0.0), to (1.0), by (.25), ticks (4), zoom (1.0),
-    ppi (120.0), offset (0.0), decimals (2), 
-    viewport (0)  {
-    init(typ);
+ AxisView (Axis::AxisType typ)
+    : _spread (1.0), _ppi (120.0), _offset (0.0), viewport (0)  {
+    axis=new Axis(typ);
   }
 
-  void init(AxisType t);
   bool isVertical();
   bool isHorizontal();
-  bool isLinear() { return !logr; }
-  bool isLogarithmic() { return logr; }
-  double getZoom() { return zoom; }
-  double setZoom(double z) { return zoom=z; }
-  int getTicks() { return ticks; }
-  int setTicks(int t) { return ticks=t; }
-  void setRange(double a, double b, double c) {
-    from=a; to=b; by=c;
-  }
+  double getSpread() {return _spread;}
+  void setSpread(double v) {_spread=v; }
+  double getOrigin() {return _offset;}
+  void setOrigin(double v) {_offset=v; }  
 
-  double range () {
-    // range between axis min and max
-    return to-from;
-  }
+  double axisMinimum() {return axis->getMinimum();}
+  double axisMaximum() {return axis->getMaximum();}
+  int numTicks(){return axis->getTicks();}
 
-  double increments() {
-    // total number of divisions along axis. may not be integer
-    return (to-from)/by;
+  double incrementSize () {
+    // size of pixels per increment at current spread
+    return( _ppi * _spread);
   }
 
   double tickSize () {
-  // pixel distance between graduals 
-    return (ppi * zoom) / ticks;
+    // pixel distance between graduals 
+    return incrementSize() / axis->getTicks();
   }
 
-  double incrementSize () {
-  // size of pixels per increment at current zoom
-    return( ppi * zoom);
-  }
-
-  double size () {
-    // size of axis in pixels at current zoom. may not be integer
-    return (ppi * zoom) * increments();
+  double extent () {
+    // size of axis in pixels at current spread. may not be integer
+    return incrementSize() * axis->getIncrements();
   }
 
   double toValue (double pix) {
     // convert pixel position to value in axis coords
-    double p = size() * ( isVertical() ) ? offset - pix : pix - offset;
-    return from + (range() * ( p / size()));
+    double p = extent() * ( isVertical() ) ? _offset - pix : pix - _offset;
+    return axis->getMinimum() + (axis->getRange() * ( p / extent()));
   }
     
   double toPixel (double val) {
     // convert value in axis coords to pixel position
-    double p = size() * ( (val-from) / range());
-    return ( isVertical() ) ? offset - p : offset + p;
+    double p = extent() * ( (val - axis->getMinimum()) / axis->getRange());
+    return ( isVertical() ) ? _offset - p : _offset + p;
   }
 
   void paint (Graphics& g) ;
@@ -146,7 +114,7 @@ class PointClipboard {
 };
 
 class Plotter  : public Component, 
-  public SliderListener ,    // for callback from zoom slider
+  public SliderListener ,    // for callback from spread slider
   public ScrollBarListener   // for callback from scrollbars
 {
 
@@ -227,8 +195,8 @@ class Plotter  : public Component,
 
   AxisView * xaxis;
   AxisView * yaxis;
-  Slider * xzoom;
-  Slider * yzoom;
+  Slider * xspread;
+  Slider * yspread;
   PlotViewport * viewport;
   PlotView * plotview;
   BackView * backview;

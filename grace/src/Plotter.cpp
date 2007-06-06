@@ -39,36 +39,6 @@ class PlotViewport : public Viewport {
 /// Axis methods
 ///
 
-void AxisView::init (AxisType typ) {
-  // init axis data according to common "templates"
-  logr = false;
-  switch (typ) {
-  case percentage :
-    from=0.0; to=100.0; by=25.0; ticks=5;
-    break;
-  case keynum :
-  case mididata :
-    from=0.0; to=128; by=12.0; ticks=12;
-    break;
-  case seconds :
-    from=0.0; to=60.0; by=1.0; ticks=4;
-    break;
-  case frequency :  // linear freq
-    from=0.0; to=11025.0; by=1.0; ticks=2;
-    break;
-  case hertz :  // log freq
-    from=8.175798; to=16744.035; by=2.0; ticks=6; logr=true;
-    break;
-  case unitcircle :
-    from=-1.0; to=1.0; by=.25;
-  case normalized :
-  case amplitude :
-  default :
-    from=0.0; to=1.0; by=0.25; ticks=5;
-    break;
-  }
-}
-
 bool AxisView::isVertical() {
   return (orient==Plotter::vertical);
 }
@@ -111,9 +81,10 @@ void AxisView::paint (Graphics& g) {
   Font font=viewport->plotter->font;
   String labl;
   double lhei=font.getHeight(), lwid, just;
-  double pval=offset; 
-  double aval=from;   
+  double pval=getOrigin(); 
+  double aval=axis->getMinimum();   
   double save;
+  double by=axis->getIncrement();
 
   g.setFont(font);
 
@@ -138,14 +109,14 @@ void AxisView::paint (Graphics& g) {
     while ( pval<=width ) {
       g.setColour(col1);
       g.drawVerticalLine((int)pval,height*.5, height);
-      labl=String(aval,decimals);
+      labl=String(aval,axis->getDecimals());
       lwid=font.getStringWidthFloat(labl);
       just=(int)(-lwid*(pval/width));  // twiddle label justification
       g.drawText(labl,(int)(pval+just),0,(int)lwid,(int)lhei, 
 		 Justification::topLeft, false);
       // draw minor ticks above each major tick
       g.setColour(col2);
-      for (int i=1;i<ticks;i++)
+      for (int i=1;i<numTicks();i++)
 	g.drawVerticalLine((int)(pval+(tsiz*i)), height*.75, height);
       pval+=isiz;
       aval+=by;
@@ -175,7 +146,7 @@ void AxisView::paint (Graphics& g) {
     while (pval>=0) {
      g.setColour(col1);
      g.drawHorizontalLine((int)pval,width*.5, width);
-     labl=String(aval,decimals);
+     labl=String(aval,axis->getDecimals());
      lwid=font.getStringWidthFloat(labl);
 
      // METHOD1: justify vertically, but now the view has to be wider.
@@ -189,7 +160,7 @@ void AxisView::paint (Graphics& g) {
      // g.drawTextAsPath(labl, AffineTransform::identity.rotated(float_Pi*2*-.25,width,pval));
 
      g.setColour(col2);
-     for (int i=1;i<ticks;i++)
+     for (int i=1;i<numTicks();i++)
        g.drawHorizontalLine((int)(pval-(tsiz*i)), width*.75, width);
       pval-=isiz;
       aval+=by;
@@ -270,7 +241,7 @@ public:
  **********************************************************************/
 
 void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis, 
-	       double ppp, double zoom, bool isFoc, 
+	       double ppp, double spread, bool isFoc, 
 	       SelectedItemSet<LayerPoint*> * sel);
 
 void drawGrid(Graphics& g, AxisView * xaxis, AxisView * yaxis, 
@@ -313,10 +284,10 @@ public:
     if (bgstyle==Plotter::bgGrid)
       drawGrid(g, xaxis, yaxis, bgcolors[2], bgcolors[3]);
     else if (bgstyle==Plotter::bgTiled)
-      g.fillCheckerBoard((int)xaxis->offset,
-			 (int)(yaxis->offset-yaxis->size()),
-			 (int)xaxis->size(), 
-			 (int)yaxis->size(),
+      g.fillCheckerBoard((int)xaxis->getOrigin(),
+			 (int)(yaxis->getOrigin()-yaxis->extent()),
+			 (int)xaxis->extent(), 
+			 (int)yaxis->extent(),
 			 (int)xaxis->tickSize(), 
 			 (int)yaxis->tickSize(),
 			 bgcolors[4],bgcolors[5]);
@@ -511,18 +482,18 @@ void PlotView::shiftSelection(float dx, float dy) {
 // drawing and mouse
 
 void PlotView::resizeForDrawing() {
-  // called when zoom value changes to reset total size of plotting view
+  // called when spread value changes to reset total size of plotting view
   double xsiz, ysiz, xtot, ytot;
   AxisView * xaxis=plotter->getAxisView(Plotter::horizontal);
   AxisView * yaxis=plotter->getAxisView(Plotter::vertical);
   // xpad and ypad are margins around the plotting area so points at
-  // then edge aren't clipped
-  xsiz=xaxis->size();
-  ysiz=yaxis->size();
+  // the edge aren't clipped
+  xsiz=xaxis->extent();
+  ysiz=yaxis->extent();
   xtot=pad+xsiz+pad;
   ytot=pad+ysiz+pad;
-  xaxis->offset=pad;
-  yaxis->offset=ytot-pad;
+  xaxis->setOrigin(pad);
+  yaxis->setOrigin(ytot-pad);
   setSize( (int)xtot, (int)ytot );
 }
 
@@ -539,13 +510,13 @@ void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis,
   ndraw=layer->numPoints();
 
   // need pixel origins for vert/horiz lines/bars
-  if (yaxis->from < 0.0 && yaxis->to >= 0.0)
+  if (yaxis->axisMinimum() < 0.0 && yaxis->axisMaximum() >= 0.0)
     oy=yaxis->toPixel(0.0);
-  else oy=yaxis->toPixel(yaxis->from);
+  else oy=yaxis->toPixel(yaxis->axisMinimum());
 
-  if (xaxis->from < 0.0 && xaxis->to >= 0.0)
+  if (xaxis->axisMinimum() < 0.0 && xaxis->axisMaximum() >= 0.0)
     ox=xaxis->toPixel(0.0);
-  else ox=xaxis->toPixel(xaxis->from);
+  else ox=xaxis->toPixel(xaxis->axisMinimum());
 
   g.setColour(color);
   for (int i=0; i<ndraw; i++) {
@@ -606,31 +577,31 @@ void PlotView::paint (Graphics& g) {
 
 void drawGrid(Graphics& g, AxisView * xaxis, AxisView * yaxis, 
 	      Colour c1, Colour c2) {
-  double left=xaxis->offset;
-  double right=left+xaxis->size();
-  double bottom=yaxis->offset;
-  double top=bottom-yaxis->size();
+  double left=xaxis->getOrigin();
+  double right=left+xaxis->extent();
+  double bottom=yaxis->getOrigin();
+  double top=bottom-yaxis->extent();
   double v,p,t,d;
   //std::cout << "drawgrid "<<left<<" "<<top<<" "<<bottom<<" "<<right<<"\n";
-  p=xaxis->offset;
+  p=xaxis->getOrigin();
   d=xaxis->incrementSize();
   t=xaxis->tickSize();
   while (p <= right) {
     g.setColour(c1);
     g.drawVerticalLine((int)p, top, bottom);
     g.setColour(c2);
-    for (int i=1;i<xaxis->ticks;i++) 
+    for (int i=1;i<xaxis->numTicks();i++) 
       g.drawVerticalLine((int)(p+(t*i)), top, bottom);
     p += d;
   }
-  p=yaxis->offset;
+  p=yaxis->getOrigin();
   d=yaxis->incrementSize();
   t=yaxis->tickSize();
   while (p >= top) {
     g.setColour(c1);
     g.drawHorizontalLine((int)p, left, right);
     g.setColour(c2);
-    for (int i=1;i<yaxis->ticks;i++) 
+    for (int i=1;i<yaxis->numTicks();i++) 
       g.drawHorizontalLine((int)(p-(t*i)), left, right);
     p -= d;
   }
@@ -976,15 +947,15 @@ Plotter::Plotter (PlotType pt)
   plotview->setTopLeftPosition(0,0);
   viewport=new PlotViewport (this);
 
-  AxisView::AxisType xtyp, ytyp;
+  Axis::AxisType xtyp, ytyp;
   switch (pt) {
   case MidiPlot :
-    xtyp=AxisView::seconds;
-    ytyp=AxisView::keynum;
+    xtyp=Axis::seconds;
+    ytyp=Axis::keynum;
     break;
   case XYPlot :
   default :
-    xtyp=ytyp=AxisView::normalized;
+    xtyp=ytyp=Axis::normalized;
   }
     
   // set axis views...
@@ -1004,26 +975,26 @@ Plotter::Plotter (PlotType pt)
   addChildComponent(viewport);
   addChildComponent(focusview);
 
-  xzoom=new Slider(T("xzoom"));
-  xzoom->setSliderStyle(Slider::LinearHorizontal);
-  xzoom->setTextBoxStyle (Slider::NoTextBox, false, 0, 0);
-  xzoom->addListener(this);
-  xzoom->setRange(-2.0, 2.0, .1);
-  xzoom->setValue(0.0);
-  xzoom->setSize(100,20);
-  addChildComponent(xzoom);
-  yzoom=new Slider(T("yzoom"));
-  yzoom->setSliderStyle(Slider::LinearVertical);
-  yzoom->setTextBoxStyle (Slider::NoTextBox, false, 0, 0);
-  yzoom->addListener(this);
-  yzoom->setRange(-2.0, 2.0, .1);
-  yzoom->setValue(0.0);
-  yzoom->setSize(20,100);
-  addChildComponent(yzoom);
+  xspread=new Slider(T("xspread"));
+  xspread->setSliderStyle(Slider::LinearHorizontal);
+  xspread->setTextBoxStyle (Slider::NoTextBox, false, 0, 0);
+  xspread->addListener(this);
+  xspread->setRange(-2.0, 2.0, .1);
+  xspread->setValue(0.0);
+  xspread->setSize(100,20);
+  addChildComponent(xspread);
+  yspread=new Slider(T("yspread"));
+  yspread->setSliderStyle(Slider::LinearVertical);
+  yspread->setTextBoxStyle (Slider::NoTextBox, false, 0, 0);
+  yspread->addListener(this);
+  yspread->setRange(-2.0, 2.0, .1);
+  yspread->setValue(0.0);
+  yspread->setSize(20,100);
+  addChildComponent(yspread);
   // i was hoping that delaying visibility would limit paint() to 1
   // call but this doesnt seem to help.
-  xzoom->setVisible(true);
-  yzoom->setVisible(true);
+  xspread->setVisible(true);
+  yspread->setVisible(true);
   // scroll to origin of axis
   //this doenst work >:(
   //viewport->getVerticalScrollBar()->scrollToBottom();
@@ -1039,8 +1010,8 @@ Plotter::Plotter (PlotType pt)
 Plotter::~Plotter() {
   deleteAndZero(xaxis);
   deleteAndZero(yaxis);
-  deleteAndZero(xzoom);
-  deleteAndZero(yzoom);
+  deleteAndZero(xspread);
+  deleteAndZero(yspread);
   deleteAndZero(plotview);
   deleteAndZero(backview);
   deleteAndZero(viewport);
@@ -1194,8 +1165,8 @@ void Plotter::deselectAll() {
 ///
 
 void Plotter::resized () {
-  xzoom->setCentrePosition(getWidth()/2, getHeight()-20);
-  yzoom->setCentrePosition(getWidth()-20, getHeight()/2);
+  xspread->setCentrePosition(getWidth()/2, getHeight()-20);
+  yspread->setCentrePosition(getWidth()-20, getHeight()/2);
   // insets: left=60 top=60 right=40 bottom=40 (scrollers take 20)
   viewport->setBounds(60, 60, getWidth()-100, getHeight()-150);
 
@@ -1210,17 +1181,17 @@ void Plotter::sliderValueChanged (Slider *slider) {
   double z = pow(2.0, slider->getValue());
   String name = slider->getName();
 
-  if ( name == T("xzoom") )
-    xaxis->setZoom(z);
+  if ( name == T("xspread") )
+    xaxis->setSpread(z);
   else
-    yaxis->setZoom(z);
+    yaxis->setSpread(z);
   plotview->resizeForDrawing();
   // now have to update the size of the Axis' view -- this is NOT the
-  // size of the axis! Note that if zoom has gotten larger then the
+  // size of the axis! Note that if spread has gotten larger then the
   // size of the axis view doenst actually change, in which case we
   // have to force a repaint to see the axis content drawn at the new
-  // zoom.
-  if ( name == T("xzoom") ) {
+  // spread.
+  if ( name == T("xspread") ) {
     int old=getWidth();
     xaxis->setSize(viewport->getViewWidth(), xaxis->getHeight());
     if (old==getWidth()) 
