@@ -133,6 +133,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
 		     DocumentWindow::allButtons, true ),
     lisp (0)
 {
+  lisp = new LispConnection();
   menubar = new MenuBarComponent(this);
   printf( "before manubar\n");
   setMenuBar(this,0);
@@ -155,6 +156,9 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
 
 ConsoleWindow::~ConsoleWindow () {
   // this will be called by GraceApp
+  if ( lisp->isLispRunning() )
+    lisp->killLisp();
+  delete lisp;
 }
 
 void ConsoleWindow::closeButtonPressed () {
@@ -302,7 +306,11 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( cmdAudioAudioSetup, T("Audio Setup..."), true); 
     break;
   case 4 :
-    menu.addItem( cmdLispRestart, T("Restart"), false); 
+    if ( lisp->isLispRunning() )
+      menu.addItem( cmdLispRestart, T("Stop")); 
+    else 
+      menu.addItem( cmdLispRestart, T("Start")); 
+    menu.addSeparator();
     menu.addItem( cmdLispInputTracing, T("Trace Input"), false); 
     menu.addItem( cmdLispErrorTracing, T("Backtrace Errors"), false); 
     break;
@@ -344,8 +352,16 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
     break;
   case cmdGraceQuit :
     app->graceQuit(true);
+    break;
   case cmdViewThemes :
     console->setTheme( arg);
+    break;
+  case cmdLispRestart :
+    if (lisp->isLispRunning())
+      lisp->killLisp();
+    else 
+      lisp->startLisp();
+    break;
   default :
     break;
   }

@@ -12,7 +12,6 @@
 #define __LISP__
 
 #include "juce.h"
-#include "Console.h"
 
 class LispConnection : public InterprocessConnection {
  public:
@@ -21,10 +20,13 @@ class LispConnection : public InterprocessConnection {
   String lisp;
   String args;
   int port;
+  int lpid;
   String host;
- LispConnection (LispFlavor flavor) 
+
+ LispConnection () 
    : host (T("localhost")),
     port (8000),
+    lpid (-1),
     lisp (T("/usr/local/bin/openmcl")),
     args (String::empty)
     {
@@ -34,13 +36,11 @@ class LispConnection : public InterprocessConnection {
 
     bool startLisp();
     bool killLisp();
-
+    bool isLispRunning();
     void connectionMade ();
     void connectionLost ();
-    void messageReceived ();
-
+    void messageReceived (const MemoryBlock &message);
 };
-
 
 #endif
 
