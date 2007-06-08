@@ -309,7 +309,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     if ( lisp->isLispRunning() )
       menu.addItem( cmdLispConnect, T("Stop")); 
     else 
-      menu.addItem( cmdLispConnect, T("Start")); 
+      menu.addItem( cmdLispConnect, T("Start"), 
+		    lisp->isLispStartable()); 
     menu.addItem( cmdLispConfigure, T("Configure..."), 
 		  (! lisp->isLispRunning() )
 		  ); 

@@ -52,7 +52,7 @@ class LispConnection : public InterprocessConnection {
   void setWait(int v) {wait=v;}
   uint32 getMagicNumber() {return mnum;}
   void setMagicNumber(uint32 v) {mnum=v;}
-  int getImplementaton() {return impl;}
+  int getImplementation() {return impl;}
   void setImplementation(int v) {impl=v;}
   String getExecutable() {return lisp;}
   void setExecutable(String v) {lisp=v;}
@@ -85,7 +85,7 @@ public:
   void sliderValueChanged (Slider* sliderThatWasMoved);
   String getApplication();  
   void setApplication(String app);
-  void updateConnection();
+  bool updateConnection();
   void updateFromConnection();
 
 private:

@@ -151,19 +151,6 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   setSize(408, 280);
 }
 
-void ConfigureLispView::updateFromConnection () {
-  hostbuffer->setText(connection->getHost(),true);
-  portbuffer->setText(String(connection->getPort()), true);
-  timeslider->setValue((double)connection->getWait(), true);
-  magicbuffer->setText(String(connection->getMagicNumber()), true);
-  if (connection->getType() == LispConnection::local) {
-    hostbuffer->setEditable(false, false);
-  }
-  else {
-    hostbuffer->setEditable(true, true);
-  }
-}
-
 ConfigureLispView::~ConfigureLispView () {
     deleteAndZero (impgroup);
     deleteAndZero (sbclbutton);
@@ -214,6 +201,62 @@ void ConfigureLispView::resized() {
     cancelbutton->setBounds (264, 248, 60, 24);
 }
 
+void ConfigureLispView::updateFromConnection () {
+  hostbuffer->setText(connection->getHost(), true);
+  portbuffer->setText(String(connection->getPort()), true);
+  timeslider->setValue((double)(connection->getWait()), true);
+  magicbuffer->setText(String((uint32)(connection->getMagicNumber())), true);
+  if (connection->getType() == LispConnection::local)
+    hostbuffer->setEditable(false, false);
+  else
+    hostbuffer->setEditable(true, true);
+  int i=connection->getImplementation();
+  if (i==LispConnection::SBCL) sbclbutton->setToggleState(true,false);
+  else if (i==LispConnection::OpenMCL) openmclbutton->setToggleState(true,false);
+  else if (i==LispConnection::CLisp) clispbutton->setToggleState(true,false);
+  else if (i==LispConnection::Custom) custombutton->setToggleState(true,false);
+  progbuf->setText(connection->getExecutable(), true);
+  argsbuf->setText(connection->getArguments(), true);
+}
+
+bool ConfigureLispView::updateConnection () {
+  String s1, s2, s3;
+  int i1, i2, i3=-1;
+  uint32 u1;
+  s1=hostbuffer->getText();
+  i1=portbuffer->getText().getIntValue();
+  if (i1<1024) {
+    portbuffer->setColour (Label::backgroundColourId, Colours::lightpink);
+    return false;
+  }
+  i2=(int)(timeslider->getValue());
+  u1=(uint32)(magicbuffer->getText().getIntValue());
+  if (sbclbutton->getToggleState()) i3=LispConnection::SBCL;
+  else if (openmclbutton->getToggleState()) i3=LispConnection::OpenMCL;
+  else if (clispbutton->getToggleState()) i3=LispConnection::CLisp;
+  else if (custombutton->getToggleState()) i3=LispConnection::Custom;
+  if (i3<LispConnection::SBCL) return false;
+  s2=progbuf->getText();
+  if (s2 != String::empty) {
+    File file=File(s2);
+    if ( !file.existsAsFile() ) {
+      progbuf->setColour(Label::backgroundColourId, Colours::lightpink);
+      return false;
+    }
+  }
+  s3=argsbuf->getText();
+  //printf("Lisp config: host=%s, port=%d wait=%d magic=%u lisp=%d prog=%s args=%s\n",
+  //       s1.toUTF8(), i1, i2, u1, i3,s2.toUTF8(),s3.toUTF8()) ;
+  connection->setHost(s1);
+  connection->setPort(i1);
+  connection->setWait(i2);
+  connection->setMagicNumber(u1);
+  connection->setImplementation(i3);
+  connection->setExecutable(s2);
+  connection->setArguments(s3);
+  return true;
+}
+
 void ConfigureLispView::setApplication(String path) {
   progbuf->setEditable(false, false, true); // assume not Custom
   progbuf->setText(path, true); // force check of exe file
@@ -233,15 +276,21 @@ String ConfigureLispView::getApplication() {
 }
 
 void ConfigureLispView::buttonClicked (Button* buttonThatWasClicked) {
+  DialogWindow* win;
   if (buttonThatWasClicked == okbutton) {
+    if (! updateConnection() ) return;
+    win=(DialogWindow*)getTopLevelComponent();
+    win->getCloseButton()->triggerClick();
     return;
   }
   if (buttonThatWasClicked == cancelbutton) {
+    win=(DialogWindow*)getTopLevelComponent();
+    win->getCloseButton()->triggerClick();
     return;
   }
 
   if (buttonThatWasClicked == sbclbutton) {
-    setApplication( T("/usr/local/bin/openmcl"));
+    setApplication( T("/usr/local/bin/sbcl"));
     }
   else if (buttonThatWasClicked == openmclbutton) {
     setApplication( T("/usr/local/bin/openmcl"));
@@ -275,6 +324,11 @@ void ConfigureLispView::labelTextChanged (Label* labelThatHasChanged) {
   else if (labelThatHasChanged == argsbuf) {
   }
   else if (labelThatHasChanged == portbuffer) {
+    int i1=portbuffer->getText().getIntValue();
+    if (i1<1024)
+      portbuffer->setColour (Label::backgroundColourId, Colours::lightpink);
+    else
+      portbuffer->setColour (Label::backgroundColourId, Colours::white);
   }
   else if (labelThatHasChanged == magicbuffer) {
   }
@@ -294,6 +348,7 @@ bool LispConnection::isLispStartable () {
 
 bool LispConnection::startLisp () {
   String command = lisp + T(" ") + args;
+
   char* const argv[4] = { "/bin/sh", "-c", (char*) (const char*) command, 0 };
   const int cpid = fork();
 
