@@ -14,18 +14,16 @@
 #include <signal.h>
 #include <unistd.h>
 
-
-//==============================================================================
-ConfigureLispView::ConfigureLispView ()
+ConfigureLispView::ConfigureLispView (LispConnection* c)
     : impgroup (0),
       sbclbutton (0),
       openmclbutton (0),
       clispbutton (0),
       custombutton (0),
-      programlabel (0),
-      argumentslabel (0),
-      programbuffer (0),
-      argsbuffer (0),
+      proglab (0),
+      argslab (0),
+      progbuf (0),
+      argsbuf (0),
       congroup (0),
       hostlabel (0),
       hostbuffer (0),
@@ -34,148 +32,148 @@ ConfigureLispView::ConfigureLispView ()
       timeslider (0),
       timelabel (0),
       magiclabel (0),
-      magicbuffer (0)
-{
-    addAndMakeVisible (impgroup = new GroupComponent (T("impgroup"),
-                                                      T("Implementation")));
+      magicbuffer (0),
+      okbutton (0),
+      cancelbutton (0)
+{ 
+  connection=c;
+  addAndMakeVisible (impgroup = new GroupComponent (String::empty,
+						    T("Application")));
 
-    addAndMakeVisible (sbclbutton = new ToggleButton (T("sbclbutton")));
-    sbclbutton->setButtonText (T("SBCL"));
-    sbclbutton->addButtonListener (this);
-    sbclbutton->setToggleState (true, false);
+  addAndMakeVisible (sbclbutton = new ToggleButton (String::empty));
+  sbclbutton->setButtonText (T("SBCL"));
+  sbclbutton->addButtonListener (this);
+  sbclbutton->setRadioGroupId(1);
 
-    addAndMakeVisible (openmclbutton = new ToggleButton (T("openmclbutton")));
-    openmclbutton->setButtonText (T("OpenMCL"));
-    openmclbutton->addButtonListener (this);
+  addAndMakeVisible (openmclbutton = new ToggleButton (String::empty));
+  openmclbutton->setButtonText (T("OpenMCL"));
+  openmclbutton->addButtonListener (this);
+  openmclbutton->setRadioGroupId(1);
 
-    addAndMakeVisible (clispbutton = new ToggleButton (T("clispbutton")));
-    clispbutton->setButtonText (T("CLisp"));
-    clispbutton->addButtonListener (this);
+  addAndMakeVisible (clispbutton = new ToggleButton (String::empty));
+  clispbutton->setButtonText (T("CLisp"));
+  clispbutton->addButtonListener (this);
+  clispbutton->setRadioGroupId(1);
 
-    addAndMakeVisible (custombutton = new ToggleButton (T("custombutton")));
-    custombutton->setButtonText (T("Custom"));
-    custombutton->addButtonListener (this);
+  addAndMakeVisible (custombutton = new ToggleButton (String::empty));
+  custombutton->setButtonText (T("Custom"));
+  custombutton->addButtonListener (this);
+  custombutton->setRadioGroupId(1);
 
-    addAndMakeVisible (programlabel = new Label (T("programlabel"),
-                                                 T("Lisp program:")));
-    programlabel->setFont (Font (15.0000f, Font::plain));
-    programlabel->setJustificationType (Justification::centredRight);
-    programlabel->setEditable (false, false, false);
-    programlabel->setColour (TextEditor::textColourId, Colours::black);
-    programlabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  addAndMakeVisible(proglab = new Label(String::empty,T("Executable:")));
+  proglab->setFont (Font (15.0000f, Font::plain));
+  proglab->setJustificationType (Justification::centredRight);
+  proglab->setEditable (false, false, false);
 
-    addAndMakeVisible (argumentslabel = new Label (T("argumentslabel"),
-                                                   T("Arguments:")));
-    argumentslabel->setFont (Font (15.0000f, Font::plain));
-    argumentslabel->setJustificationType (Justification::centredRight);
-    argumentslabel->setEditable (false, false, false);
-    argumentslabel->setColour (TextEditor::textColourId, Colours::black);
-    argumentslabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  addAndMakeVisible (argslab = new Label (String::empty,
+						 T("Arguments:")));
+  argslab->setFont (Font (15.0000f, Font::plain));
+  argslab->setJustificationType (Justification::centredRight);
 
-    addAndMakeVisible (programbuffer = new Label (T("programbuffer"),
-                                                  T("/usr/local/bin/sbcl")));
-    programbuffer->setFont (Font (15.0000f, Font::plain));
-    programbuffer->setJustificationType (Justification::centredLeft);
-    programbuffer->setEditable (false, false, false);
-    programbuffer->setColour (Label::outlineColourId, Colours::black);
-    programbuffer->setColour (TextEditor::textColourId, Colours::black);
-    programbuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  addAndMakeVisible(progbuf = new Label(String::empty, String::empty));
+  progbuf->setFont(Font (15.0000f, Font::plain));
+  progbuf->setJustificationType(Justification::centredLeft);
+  // true= Return checks existence of executable
+  progbuf->setEditable(false, false, true);
+  progbuf->setColour(Label::outlineColourId, Colours::black);
+  progbuf->setColour(Label::backgroundColourId, Colours::white);
+  progbuf->addListener(this);
 
-    addAndMakeVisible (argsbuffer = new Label (T("argsbuffer"),
-                                               String::empty));
-    argsbuffer->setFont (Font (15.0000f, Font::plain));
-    argsbuffer->setJustificationType (Justification::centredLeft);
-    argsbuffer->setEditable (true, true, false);
-    argsbuffer->setColour (Label::outlineColourId, Colours::black);
-    argsbuffer->setColour (TextEditor::textColourId, Colours::black);
-    argsbuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
-    argsbuffer->addListener (this);
+  addAndMakeVisible(argsbuf = new Label(String::empty, String::empty));
+  argsbuf->setFont( Font(15.0000f, Font::plain));
+  argsbuf->setJustificationType(Justification::centredLeft);
+  argsbuf->setEditable(true, true, false);
+  argsbuf->setColour(Label::outlineColourId, Colours::black);
+  argsbuf->setColour(Label::backgroundColourId, Colours::white);
+  argsbuf->addListener(this);
 
-    addAndMakeVisible (congroup = new GroupComponent (T("congroup"),
-                                                      T("Connection")));
+  addAndMakeVisible(congroup = new GroupComponent(String::empty,
+						  T("Connection")));
+  addAndMakeVisible(hostlabel = new Label(String::empty, T("Host:")));
+  hostlabel->setFont( Font(15.0000f, Font::plain));
+  hostlabel->setJustificationType(Justification::centredRight);
+  hostlabel->setEditable(false, false, false);
 
-    addAndMakeVisible (hostlabel = new Label (T("hostlabel"),
-                                              T("Host:")));
-    hostlabel->setFont (Font (15.0000f, Font::plain));
-    hostlabel->setJustificationType (Justification::centredRight);
-    hostlabel->setEditable (false, false, false);
-    hostlabel->setColour (TextEditor::textColourId, Colours::black);
-    hostlabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  addAndMakeVisible(hostbuffer = new Label (String::empty,
+					     String::empty));
+  hostbuffer->setFont(Font(15.0000f, Font::plain));
+  hostbuffer->setJustificationType(Justification::centredLeft);
+  hostbuffer->setEditable(false, false, false);
+  hostbuffer->setColour(Label::outlineColourId, Colours::black);
+  hostbuffer->setColour(Label::backgroundColourId, Colours::white);
 
-    addAndMakeVisible (hostbuffer = new Label (T("hostbuffer"),
-                                               T("localhost")));
-    hostbuffer->setFont (Font (15.0000f, Font::plain));
-    hostbuffer->setJustificationType (Justification::centredLeft);
-    hostbuffer->setEditable (false, false, false);
-    hostbuffer->setColour (Label::outlineColourId, Colours::black);
-    hostbuffer->setColour (TextEditor::textColourId, Colours::black);
-    hostbuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  addAndMakeVisible(portlabel = new Label(String::empty, T("Port:")));
+  portlabel->setFont(Font (15.0000f, Font::plain));
+  portlabel->setJustificationType(Justification::centredRight);
+  portlabel->setEditable(false, false, false);
 
-    addAndMakeVisible (portlabel = new Label (T("portlabel"),
-                                              T("Port:")));
-    portlabel->setFont (Font (15.0000f, Font::plain));
-    portlabel->setJustificationType (Justification::centredRight);
-    portlabel->setEditable (false, false, false);
-    portlabel->setColour (TextEditor::textColourId, Colours::black);
-    portlabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  addAndMakeVisible (portbuffer = new Label(String::empty, String::empty));
+  portbuffer->setFont (Font (15.0000f, Font::plain));
+  portbuffer->setJustificationType (Justification::centredLeft);
+  portbuffer->setEditable (true, true, false);
+  portbuffer->setColour (Label::outlineColourId, Colours::black);
+  portbuffer->setColour (Label::backgroundColourId, Colours::white);
+  portbuffer->addListener (this);
 
-    addAndMakeVisible (portbuffer = new Label (T("portbuffer"),
-                                               T("8000")));
-    portbuffer->setFont (Font (15.0000f, Font::plain));
-    portbuffer->setJustificationType (Justification::centredLeft);
-    portbuffer->setEditable (true, true, false);
-    portbuffer->setColour (Label::outlineColourId, Colours::black);
-    portbuffer->setColour (TextEditor::textColourId, Colours::black);
-    portbuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
-    portbuffer->addListener (this);
+  addAndMakeVisible(timeslider = new Slider (String::empty));
+  timeslider->setRange(5, 60, 1);
+  timeslider->setSliderStyle(Slider::LinearHorizontal);
+  timeslider->setTextBoxStyle(Slider::TextBoxLeft, false, 30, 20);
+  timeslider->addListener(this);
 
-    addAndMakeVisible (timeslider = new Slider (T("timeslider")));
-    timeslider->setRange (5, 60, 1);
-    timeslider->setSliderStyle (Slider::LinearHorizontal);
-    timeslider->setTextBoxStyle (Slider::TextBoxLeft, false, 30, 20);
-    timeslider->addListener (this);
+  addAndMakeVisible(timelabel = new Label(String::empty, T("Timeout:")));
+  timelabel->setFont( Font(15.0000f, Font::plain));
+  timelabel->setJustificationType(Justification::centredRight);
+  timelabel->setEditable(false, false, false);
 
-    addAndMakeVisible (timelabel = new Label (T("timelabel"),
-                                              T("Timeout:")));
-    timelabel->setFont (Font (15.0000f, Font::plain));
-    timelabel->setJustificationType (Justification::centredRight);
-    timelabel->setEditable (false, false, false);
-    timelabel->setColour (TextEditor::textColourId, Colours::black);
-    timelabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  addAndMakeVisible(magiclabel = new Label(String::empty, T("Magic #:")));
+  magiclabel->setFont(Font (15.0000f, Font::plain));
+  magiclabel->setJustificationType(Justification::centredRight);
+  magiclabel->setEditable(false, false, false);
 
-    addAndMakeVisible (magiclabel = new Label (T("magiclabel"),
-                                               T("Magic #:")));
-    magiclabel->setFont (Font (15.0000f, Font::plain));
-    magiclabel->setJustificationType (Justification::centredRight);
-    magiclabel->setEditable (false, false, false);
-    magiclabel->setColour (TextEditor::textColourId, Colours::black);
-    magiclabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  addAndMakeVisible(magicbuffer = new Label(String::empty, String::empty));
+  magicbuffer->setFont (Font (15.0000f, Font::plain));
+  magicbuffer->setJustificationType (Justification::centredLeft);
+  // dont allow editing for now...
+  magicbuffer->setEditable (false, false, false);
+  magicbuffer->setColour (Label::outlineColourId, Colours::black);
+  magicbuffer->setColour (Label::backgroundColourId, Colours::white);
+  magicbuffer->addListener (this);
 
-    addAndMakeVisible (magicbuffer = new Label (T("magicbuffer"),
-                                                T("4071923244")));
-    magicbuffer->setFont (Font (15.0000f, Font::plain));
-    magicbuffer->setJustificationType (Justification::centredLeft);
-    magicbuffer->setEditable (true, true, false);
-    magicbuffer->setColour (Label::outlineColourId, Colours::black);
-    magicbuffer->setColour (TextEditor::textColourId, Colours::black);
-    magicbuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
-    magicbuffer->addListener (this);
+  addAndMakeVisible (okbutton = new TextButton (String::empty));
+  okbutton->setButtonText (T("OK"));
+  okbutton->addButtonListener (this);
 
-    setSize (408, 250);
-
+  addAndMakeVisible (cancelbutton = new TextButton (String::empty));
+  cancelbutton->setButtonText (T("Cancel"));
+  cancelbutton->addButtonListener (this);
+  updateFromConnection();
+  setSize(408, 280);
 }
 
-ConfigureLispView::~ConfigureLispView()
-{
+void ConfigureLispView::updateFromConnection () {
+  hostbuffer->setText(connection->getHost(),true);
+  portbuffer->setText(String(connection->getPort()), true);
+  timeslider->setValue((double)connection->getWait(), true);
+  magicbuffer->setText(String(connection->getMagicNumber()), true);
+  if (connection->getType() == LispConnection::local) {
+    hostbuffer->setEditable(false, false);
+  }
+  else {
+    hostbuffer->setEditable(true, true);
+  }
+}
+
+ConfigureLispView::~ConfigureLispView () {
     deleteAndZero (impgroup);
     deleteAndZero (sbclbutton);
     deleteAndZero (openmclbutton);
     deleteAndZero (clispbutton);
     deleteAndZero (custombutton);
-    deleteAndZero (programlabel);
-    deleteAndZero (argumentslabel);
-    deleteAndZero (programbuffer);
-    deleteAndZero (argsbuffer);
+    deleteAndZero (proglab);
+    deleteAndZero (argslab);
+    deleteAndZero (progbuf);
+    deleteAndZero (argsbuf);
     deleteAndZero (congroup);
     deleteAndZero (hostlabel);
     deleteAndZero (hostbuffer);
@@ -185,26 +183,24 @@ ConfigureLispView::~ConfigureLispView()
     deleteAndZero (timelabel);
     deleteAndZero (magiclabel);
     deleteAndZero (magicbuffer);
+    deleteAndZero (okbutton);
+    deleteAndZero (cancelbutton);
 }
 
-//==============================================================================
-void ConfigureLispView::paint (Graphics& g)
-{
-    g.fillAll (Colours::white);
+//void ConfigureLispView::paint (Graphics& g) {
+//  g.fillAll (Colours::white);
+//}
 
-}
-
-void ConfigureLispView::resized()
-{
+void ConfigureLispView::resized() {
     impgroup->setBounds (8, 120, 392, 120);
     sbclbutton->setBounds (16, 136, 90, 24);
     openmclbutton->setBounds (112, 136, 90, 24);
     clispbutton->setBounds (208, 136, 90, 24);
     custombutton->setBounds (304, 136, 88, 24);
-    programlabel->setBounds (16, 168, 96, 24);
-    argumentslabel->setBounds (16, 200, 96, 24);
-    programbuffer->setBounds (120, 168, 264, 24);
-    argsbuffer->setBounds (120, 200, 264, 24);
+    proglab->setBounds (16, 168, 96, 24);
+    argslab->setBounds (16, 200, 96, 24);
+    progbuf->setBounds (120, 168, 264, 24);
+    argsbuf->setBounds (120, 200, 264, 24);
     congroup->setBounds (8, 8, 392, 96);
     hostlabel->setBounds (24, 32, 40, 24);
     hostbuffer->setBounds (72, 32, 152, 24);
@@ -214,81 +210,87 @@ void ConfigureLispView::resized()
     timelabel->setBounds (24, 64, 64, 24);
     magiclabel->setBounds (216, 64, 64, 24);
     magicbuffer->setBounds (288, 64, 96, 24);
-    //[UserResized] Add your own custom resize handling here..
-    //[/UserResized]
+    okbutton->setBounds (336, 248, 60, 24);
+    cancelbutton->setBounds (264, 248, 60, 24);
 }
 
-void ConfigureLispView::buttonClicked (Button* buttonThatWasClicked)
-{
-    if (buttonThatWasClicked == sbclbutton)
-    {
-    }
-    else if (buttonThatWasClicked == openmclbutton)
-    {
-    }
-    else if (buttonThatWasClicked == clispbutton)
-    {
-    }
-    else if (buttonThatWasClicked == custombutton)
-    {
-    }
-
+void ConfigureLispView::setApplication(String path) {
+  progbuf->setEditable(false, false, true); // assume not Custom
+  progbuf->setText(path, true); // force check of exe file
+  argsbuf->setText(String::empty, true);
 }
 
-void ConfigureLispView::labelTextChanged (Label* labelThatHasChanged)
-{
+String ConfigureLispView::getApplication() {
+  String path=progbuf->getText();
+  if ( path==String::empty )
+    return path;
+  else {
+    File file=File(path);    
+    if ( file.existsAsFile() )
+      return path;
+    else return String::empty;
+  }
+}
 
-    if (labelThatHasChanged == argsbuffer)
-    {
+void ConfigureLispView::buttonClicked (Button* buttonThatWasClicked) {
+  if (buttonThatWasClicked == okbutton) {
+    return;
+  }
+  if (buttonThatWasClicked == cancelbutton) {
+    return;
+  }
+
+  if (buttonThatWasClicked == sbclbutton) {
+    setApplication( T("/usr/local/bin/openmcl"));
     }
-    else if (labelThatHasChanged == portbuffer)
-    {
+  else if (buttonThatWasClicked == openmclbutton) {
+    setApplication( T("/usr/local/bin/openmcl"));
     }
-    else if (labelThatHasChanged == magicbuffer)
-    {
-
+  else if (buttonThatWasClicked == clispbutton) {
+    setApplication( T("/usr/local/bin/clisp"));
     }
-
-}
-
-void ConfigureLispView::sliderValueChanged (Slider* sliderThatWasMoved)
-{
-    if (sliderThatWasMoved == timeslider)
-    {
+  else if (buttonThatWasClicked == custombutton) {
+    progbuf->setEditable(true, true, true);
+    progbuf->setColour(Label::backgroundColourId, Colours::white);
+    progbuf->setText(String::empty, false);
+    argsbuf->setText(String::empty, false);
     }
 }
 
-//==============================================================================
-//==============================================================================
-//==============================================================================
-
-
-ConfigureLispDialog::ConfigureLispDialog () 
-  : DialogWindow( T("Configure Lisp"), Colours::white, true)
-{
-    setSize (408, 250);
-    setContentComponent( config = new ConfigureLispView() );
-    config->setVisible(true);
-    setVisible(true);
+void ConfigureLispView::labelTextChanged (Label* labelThatHasChanged) {
+  if (labelThatHasChanged == progbuf) {
+    // check lisp program to make sure it exists.
+    // show red background if lisp executable doesnt exist.
+    String path=progbuf->getText();
+    if ( path == String::empty) 
+      progbuf->setColour(Label::backgroundColourId, Colours::white);
+    else {
+      File file=File(path);
+      if ( file.existsAsFile() )
+	progbuf->setColour(Label::backgroundColourId, Colours::white);
+      else
+	progbuf->setColour(Label::backgroundColourId, Colours::lightpink);
+    }
+  }
+  else if (labelThatHasChanged == argsbuf) {
+  }
+  else if (labelThatHasChanged == portbuffer) {
+  }
+  else if (labelThatHasChanged == magicbuffer) {
+  }
 }
 
-ConfigureLispDialog::~ConfigureLispDialog() {
-  delete config;
+void ConfigureLispView::sliderValueChanged (Slider* sliderThatWasMoved) {
+    if (sliderThatWasMoved == timeslider) {
+    }
 }
 
-void ConfigureLispDialog::paint (Graphics& g) {
-    g.fillAll (Colours::white);
-}
+//=========================================================================
+//=========================================================================
 
-void ConfigureLispDialog::resized() {
-}
-
-
-//==============================================================================
-//==============================================================================
-//==============================================================================
-
-
+bool LispConnection::isLispStartable () {
+  return ((type==remote) || (lisp != String::empty));
+}  
 
 bool LispConnection::startLisp () {
   String command = lisp + T(" ") + args;

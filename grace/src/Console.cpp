@@ -307,9 +307,12 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     break;
   case 4 :
     if ( lisp->isLispRunning() )
-      menu.addItem( cmdLispRestart, T("Stop")); 
+      menu.addItem( cmdLispConnect, T("Stop")); 
     else 
-      menu.addItem( cmdLispRestart, T("Start")); 
+      menu.addItem( cmdLispConnect, T("Start")); 
+    menu.addItem( cmdLispConfigure, T("Configure..."), 
+		  (! lisp->isLispRunning() )
+		  ); 
     menu.addSeparator();
     menu.addItem( cmdLispInputTracing, T("Trace Input"), false); 
     menu.addItem( cmdLispErrorTracing, T("Backtrace Errors"), false); 
@@ -356,30 +359,38 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
   case cmdViewThemes :
     console->setTheme( arg);
     break;
-  case cmdLispRestart :
+  case cmdLispConnect :
     if (lisp->isLispRunning())
       lisp->killLisp();
     else 
       lisp->startLisp();
+    break;
+  case cmdLispConfigure :
+    showConfigureLispWindow();
     break;
   default :
     break;
   }
 }
 
-void ConsoleWindow::showAudioMidiWindow()
-{
-  GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
+void ConsoleWindow::showConfigureLispWindow () {
+  DialogWindow::showModalDialog (T("Configure Lisp"),
+				 new ConfigureLispView(lisp),
+				 this,
+				 Colour(0xffe5e5e5),
+				 true);
+}
 
+void ConsoleWindow::showAudioMidiWindow () {
+  GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
   AudioDeviceSelectorComponent audioSettingsComp (app->audioManager,
 						  0, 16,
 						  2, 16,
 						  true);
   audioSettingsComp.setSize (500, 300);
-  
   DialogWindow::showModalDialog (T("Audio Settings"),
 				 &audioSettingsComp,
 				 this,
-				 Colours::azure,
+				 Colour(0xffe5e5e5),
 				 true);
 }

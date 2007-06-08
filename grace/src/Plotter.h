@@ -148,7 +148,7 @@ class Plotter  : public Component,
 	 "EditCopy" "EditSelectAll"
 	 "ViewFonts"  "ViewThemes"
 	 "AudioMidiSetup" "AudioAudioSetup"
-	 "LispRestart" "LispInputTracing" "LispErrorTracing"
+	 "LispConnect" "LispConfigure" "LispInputTracing" "LispErrorTracing"
 	 "HelpConsole" "HelpAboutGrace")
 
 (enums 2 "PlotterCommand" "PlotterNew" "PlotterOpen" "PlotterSave" 

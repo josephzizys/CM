@@ -15,33 +15,57 @@
 
 class LispConnection : public InterprocessConnection {
  public:
-  enum LispFlavor {SBCL=1, OpenMCL, CLisp, Gauche, Guile, Custom};
-  StringArray commands;
-  String lisp;
-  String args;
-  int port;
-  int lpid;
-  String host;
+  enum {local=1, remote};
+  enum {SBCL=1, OpenMCL, CLisp, Custom};
+  int type;  // local or remote
+  String host;  // hostname
+  int port;  // connection port
+  int wait;  // timeout after
+  int lpid;  // inferior lisp process id
+  uint32 mnum;  //magic number?
+  int impl;  // SBCL, OpenMCL ...
+  String lisp; // program to exec
+  String args; // program args
 
  LispConnection () 
-   : host (T("localhost")),
+   : type (local),
+    host (T("localhost")),
     port (8000),
+    wait (15),
     lpid (-1),
-    lisp (T("/usr/local/bin/sbcl")),
+    mnum (0xf2b49e2c),
+    impl (0),
+    lisp (String::empty),
     args (String::empty)
     {
     }
 
   ~LispConnection () { }
 
-    bool startLisp();
-    bool killLisp();
-    bool isLispRunning();
-    void connectionMade ();
-    void connectionLost ();
-    void messageReceived (const MemoryBlock &message);
+  int getType() {return type;}
+  void setType(int v) {type=v;}
+  String getHost() {return host;}
+  void setHost(String v) {host=v;}
+  int getPort() {return port;}
+  void setPort(int v) {port=v;}
+  int getWait() {return wait;}
+  void setWait(int v) {wait=v;}
+  uint32 getMagicNumber() {return mnum;}
+  void setMagicNumber(uint32 v) {mnum=v;}
+  int getImplementaton() {return impl;}
+  void setImplementation(int v) {impl=v;}
+  String getExecutable() {return lisp;}
+  void setExecutable(String v) {lisp=v;}
+  String getArguments() {return args;}
+  void setArguments(String v) {args=v;}
+  bool isLispStartable();
+  bool startLisp();
+  bool killLisp();
+  bool isLispRunning();
+  void connectionMade ();
+  void connectionLost ();
+  void messageReceived (const MemoryBlock &message);
 };
-
 
 class ConfigureLispView  : public Component,
                            public ButtonListener,
@@ -49,61 +73,44 @@ class ConfigureLispView  : public Component,
                            public SliderListener
 {
 public:
+  StringArray lisps;
+  LispConnection* connection;
 
-    ConfigureLispView ();
-    ~ConfigureLispView();
-    void paint (Graphics& g);
-    void resized();
-    void buttonClicked (Button* buttonThatWasClicked);
-    void labelTextChanged (Label* labelThatHasChanged);
-    void sliderValueChanged (Slider* sliderThatWasMoved);
-    juce_UseDebuggingNewOperator
-
-private:
-    GroupComponent* impgroup;
-    ToggleButton* sbclbutton;
-    ToggleButton* openmclbutton;
-    ToggleButton* clispbutton;
-    ToggleButton* custombutton;
-    Label* programlabel;
-    Label* argumentslabel;
-    Label* programbuffer;
-    Label* argsbuffer;
-    GroupComponent* congroup;
-    Label* hostlabel;
-    Label* hostbuffer;
-    Label* portlabel;
-    Label* portbuffer;
-    Slider* timeslider;
-    Label* timelabel;
-    Label* magiclabel;
-    Label* magicbuffer;
-
-    ConfigureLispView (const ConfigureLispView&);
-    const ConfigureLispView& operator= (const ConfigureLispView&);
-};
-
-
-
-
-class ConfigureLispDialog  : public DialogWindow
-{
-public:
-    ConfigureLispDialog ();
-    ~ConfigureLispDialog();
-    void paint (Graphics& g);
-    void resized();
-    juce_UseDebuggingNewOperator
+  ConfigureLispView (LispConnection* c);
+  ~ConfigureLispView();
+  //void paint (Graphics& g);
+  void resized();
+  void buttonClicked (Button* buttonThatWasClicked);
+  void labelTextChanged (Label* labelThatHasChanged);
+  void sliderValueChanged (Slider* sliderThatWasMoved);
+  String getApplication();  
+  void setApplication(String app);
+  void updateConnection();
+  void updateFromConnection();
 
 private:
-    ConfigureLispView* config;
-    ConfigureLispDialog (const ConfigureLispDialog&);
-    const ConfigureLispDialog& operator= (const ConfigureLispDialog&);
+  GroupComponent* impgroup;
+  ToggleButton* sbclbutton;
+  ToggleButton* openmclbutton;
+  ToggleButton* clispbutton;
+  ToggleButton* custombutton;
+  Label* proglab;
+  Label* argslab;
+  Label* progbuf;
+  Label* argsbuf;
+  GroupComponent* congroup;
+  Label* hostlabel;
+  Label* hostbuffer;
+  Label* portlabel;
+  Label* portbuffer;
+  Slider* timeslider;
+  Label* timelabel;
+  Label* magiclabel;
+  Label* magicbuffer;
+  TextButton* okbutton;
+  TextButton* cancelbutton;
+
 };
-
-
-
-
 
 #endif
 

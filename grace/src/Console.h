@@ -70,7 +70,7 @@ class ConsoleWindow  : public DocumentWindow,
 {
 public:
 
-  /* Look in Plotter.h for the code that generates the enum command IDs */
+  /* See Plotter.h for the code that generates these enum command IDs */
 
   enum ConsoleCommand {
     cmdGraceEditorNew = 32896,
@@ -84,11 +84,12 @@ public:
     cmdViewThemes = 34944,
     cmdAudioMidiSetup = 35200,
     cmdAudioAudioSetup = 35456,
-    cmdLispRestart = 35712,
-    cmdLispInputTracing = 35968,
-    cmdLispErrorTracing = 36224,
-    cmdHelpConsole = 36480,
-    cmdHelpAboutGrace = 36736};
+    cmdLispConnect = 35712,
+    cmdLispConfigure = 35968,
+    cmdLispInputTracing = 36224,
+    cmdLispErrorTracing = 36480,
+    cmdHelpConsole = 36736,
+    cmdHelpAboutGrace = 36992};
 
   Console * console;
   ConsoleTheme theme;
@@ -123,6 +124,7 @@ public:
   bool isSplashVisible() ;
 
   void showAudioMidiWindow();
+  void showConfigureLispWindow();
 };
 
 #endif
