@@ -211,10 +211,14 @@ void ConfigureLispView::updateFromConnection () {
   else
     hostbuffer->setEditable(true, true);
   int i=connection->getImplementation();
-  if (i==LispConnection::SBCL) sbclbutton->setToggleState(true,false);
-  else if (i==LispConnection::OpenMCL) openmclbutton->setToggleState(true,false);
-  else if (i==LispConnection::CLisp) clispbutton->setToggleState(true,false);
-  else if (i==LispConnection::Custom) custombutton->setToggleState(true,false);
+  if (i==LispConnection::SBCL) 
+    sbclbutton->setToggleState(true,false);
+  else if (i==LispConnection::OpenMCL) 
+    openmclbutton->setToggleState(true,false);
+  else if (i==LispConnection::CLisp) 
+    clispbutton->setToggleState(true,false);
+  else if (i==LispConnection::Custom) 
+    custombutton->setToggleState(true,false);
   progbuf->setText(connection->getExecutable(), true);
   argsbuf->setText(connection->getArguments(), true);
 }
@@ -347,12 +351,23 @@ bool LispConnection::isLispStartable () {
 }  
 
 bool LispConnection::startLisp () {
-  String command = lisp + T(" ") + args;
+  connectToLisp();
+  return true;
+/*
+  String command=getExecutable();
+  if (getArguments() != String::empty)
+    command += getArguments();
+  command +=  T(" --load \"/Lisp/grace/src/socketserver.lisp\"");
+  command +=  T(" --eval '(start-server " );
+  command += String(getPort());
+  command += ")'" ;
 
-  char* const argv[4] = { "/bin/sh", "-c", (char*) (const char*) command, 0 };
+  printf("Starting lisp: %s\n", command.toUTF8() );
+
+  char* const argv[4] = { "/bin/sh", "-c", (char*)(const char*)command, 0};
   const int cpid = fork();
 
-  printf("Starting lisp with: '%s'\n", command.toUTF8() );
+
   if (cpid == 0)  {
     // Child process
     if (execve(argv[0], argv, 0) < 0)
@@ -367,8 +382,22 @@ bool LispConnection::startLisp () {
     // Parent process
     lpid=cpid;
     printf("Lisp started, pid=%d\n", lpid);
+    connectToLisp();
   }
   return true;
+*/
+}
+
+bool LispConnection::connectToLisp () {
+
+  printf("Attempting to connect to %s on port %d...\n",
+	 getHost().toUTF8(), getPort());
+
+  if ( connectToSocket( getHost(), getPort(), (getWait()*1000) ) ) {
+    return true;
+  }  
+  else printf("FAILED TO CONNECT\n");
+  return false;
 }
 
 bool LispConnection::isLispRunning () {
@@ -376,6 +405,9 @@ bool LispConnection::isLispRunning () {
 }
 
 bool LispConnection::killLisp () {
+  if ( isConnected() )
+    disconnect();
+
   if ( isLispRunning() ) {
     kill(lpid, SIGKILL);
     lpid=-1;
@@ -384,14 +416,37 @@ bool LispConnection::killLisp () {
   return false;
 }
 
+void LispConnection::sendLispSexpr(String sexpr) {
+  if (! isConnected() )  return;
+  int len=sexpr.length();
+  //const char* msg=sexpr.toUTF8();
+  printf("Grace sending: '%s'\n", sexpr.toUTF8());
+  MemoryBlock mem=MemoryBlock(len, true);  
+  for (int i=0; i<len; i++)
+    mem[i]=(char)sexpr[i];
+  sendMessage(mem);
+}
+
+void LispConnection::testConnection() {
+  if (! isConnected() )  return;
+  String test= T("(+");
+  int num = 2+Random::getSystemRandom().nextInt(9);
+  for (int i=0; i<num; i++)
+    test = test + T(" ") + String(Random::getSystemRandom().nextInt(100000));
+  test += T(")");
+  sendLispSexpr(test);
+}  
+
 void LispConnection::connectionMade () {
-  printf("Lisp connected.\n");
+  printf("Lisp connected =:)\n");
 }
 
 void LispConnection::connectionLost () {
-  printf("Lisp connection lost.\n");
+  printf("Lisp connection lost =:(\n");
 }
 
 void LispConnection::messageReceived (const MemoryBlock &message) {
-  printf("Message received!\n");
+  int len=message.getSize();
+  String text=String((const char *)message, len);
+  printf("Grace received: '%s'\n", text.toUTF8());
 }

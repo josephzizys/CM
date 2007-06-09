@@ -17,6 +17,7 @@
 
 (defclass connection ()
   ((serve? :initarg :serve? :accessor connection-serve?)
+   (binary? :initarg :binary? :accessor connection-binary?)
    (stream :initarg :stream :accessor connection-stream)
    (socket :initarg :socket :accessor connection-socket)
    (reader :initarg :reader :accessor connection-reader)
@@ -44,6 +45,11 @@
   #+(and clisp win32)
   (win32::GetCurrentProcessId)
   )
+
+(defun kill-lisp ()
+  #+sbcl (sb-ext:quit)
+  #+openmcl (ccl:quit)
+  #+clisp (ext:quit))
 
 (defgeneric connection-local-port (obj))
 (defgeneric connection-remote-port (obj))
@@ -186,26 +192,91 @@
 (defmethod connection-open? ((obj connection))
   (open-stream-p (connection-stream obj)))
 
+(defun read-u32 (stream)
+  (let ((u 0))
+    ;; this will suffer from os/endian nonsense.
+    (loop  for i from 0 to 3
+       do (setq u (+ u (ash (read-byte stream) (* 8 i)))))
+    u))
+  
+(defun write-u32 (u32 stream)
+  (loop for i from 0 to 3
+     do (write-byte (ldb (byte 8 (* i 8)) u32)
+		    stream))
+  u32)
+
+#||(defun ru32 (stream)
+  (let ((u 0))
+    (loop  for i from 0 to 3
+       do (setq u (+ u (ash (pop stream) (* 8 i)))))
+    u))
+(defun wu32 (u32 )
+  (loop for i from 0 to 3
+     collect (ldb (byte 8 (* i 8)) u32)))||#
+
 ;; the stupidest server ever!
 
 (defun serve-connection (connection)
-  (unwind-protect
-       (catch :socket-server
-	 (let (sexpr value)
-	   (loop 
-	      (setq sexpr (funcall (connection-reader connection)
-				   connection))
-	      ;; this needs multiple-value-list!
-	      (setq value (funcall (connection-evaler connection)
-				   connection sexpr))
-	      (setf +++ ++ ++ + + sexpr)
-	      (setf *** ** ** * * value)
-	      (funcall (connection-sender connection)
-		       connection value))))
-    (close-connection connection)
-    (format t "; Connection closed.~%")
-    (force-output t)))
-  
+  (flet ((serve ()
+	   (catch :socket-server
+	     (let ((stream (connection-stream connection))
+		   magic length string sexpr value)
+	       magic length string sexpr value
+	       (loop 
+		  (setq magic (read-u32 stream ))
+		  (setq length (read-u32 stream ))
+		  ;;(FORMAT T "lisp receiving: magic=~S, length=~S~%" magic length)
+		  (setq string (make-string length))
+		  (loop for i below length
+		     do (setf (elt string i)
+			      (code-char (read-byte stream))))
+		  (setq sexpr (read-from-string string))
+		  (format t "Lisp received: '~S'~%" sexpr)
+		  (setq value (funcall (connection-evaler connection)
+				       connection sexpr))
+		  (format t "Lisp sending: '~S'~%" value)
+		  (force-output t)
+		  (setq string (format nil "~S" value))
+		  (setq length (length string))
+		  (write-u32 magic stream)
+		  (write-u32 length stream)
+		  (loop for i below length
+		       do (write-byte (char-code (elt string i)) stream))
+		  (force-output stream)
+		  )))))
+    (let (res)
+      (unwind-protect
+	   (setq res (serve ))
+	(close-connection connection)
+	(format t "; Connection closed.~%")
+	(force-output t)
+	(if (eql res ':kill)
+	    (kill-lisp))))))
+
+(defun serve-text-connection (connection)
+  (flet ((serve ()
+	   (catch :socket-server
+	       (loop with sexpr and value
+		  do 
+		    (setq sexpr (funcall (connection-reader connection)
+					 connection))
+		  ;; this needs multiple-value-list!
+		    (setq value (funcall (connection-evaler connection)
+					 connection sexpr))
+		    (setf +++ ++ ++ + + sexpr)
+		    (setf *** ** ** * * value)
+		    (funcall (connection-sender connection)
+			     connection value)
+		    ))))
+    (let (res)
+      (unwind-protect
+	   (setq res (serve ))
+	(close-connection connection)
+	(format t "; Connection closed.~%")
+	(force-output t)
+	(if (eql res ':kill)
+	    (kill-lisp))))))
+       
 (defun start-server (port &key bin)
   (let ((con (open-server-connection port :bin bin)))
     (format t "; started socket server: port=~d, pid=~d~%"
@@ -214,6 +285,7 @@
     (serve-connection con)))
 
 (defun stop-server () (throw :socket-server ':quit))
+(defun kill-server () (throw :socket-server ':kill))
 
 (defun close-socket (socket)
   ;; do i need this? (sb-sys:invalidate-descriptor (socket-fd socket))
@@ -235,29 +307,31 @@
 
 (defun open-connection (host port &optional bin)
   ;; open connection to (server) host on port
+  (let (socket stream)
   #+openmcl
-  (let ((soc (ccl:make-socket :remote-host host :remote-port port
-			      :format (if bin :binary :text))))
-    (make-instance 'connection :socket soc :stream soc))
+  (progn
+    (setq socket (ccl:make-socket :remote-host host :remote-port port
+				  :format (if bin :binary :text)))
+    (setq stream socket))
   #+sbcl
-  (let ((sock (make-instance 'sb-bsd-sockets:inet-socket
-			       :type :stream :protocol :tcp)))
-    (sb-bsd-sockets:socket-connect sock
+  (progn
+    (setq socket (make-instance 'sb-bsd-sockets:inet-socket
+				:type :stream :protocol :tcp))
+    (sb-bsd-sockets:socket-connect socket
 				   (sb-bsd-sockets::host-ent-address
 				    (sb-bsd-sockets:get-host-by-name host))
 				   port)
-    (make-instance 'connection 
-		   :serve? nil
-		   :reader (function connection-read)
-		   :sender (function connection-print)
-		   :evaler (function connection-eval)
-		   :stream (sb-bsd-sockets:socket-make-stream 
-			    sock :input t :output t
+    (setq stream (sb-bsd-sockets:socket-make-stream 
+			    socket :input t :output t
 			    :buffering (if bin :none :line)
 			    :element-type
-			    (if bin '(unsigned-byte 8) 'character))
-     
-		   :socket sock)))
+			    (if bin '(unsigned-byte 8) 'character))))
+  (make-instance 'connection 
+		 :serve? nil
+		 :reader (function connection-read)
+		 :sender (function connection-print)
+		 :evaler (function connection-eval)
+		 :stream stream :socket socket)))
 
 (defmacro servlisp (c form) 
   `(progn (format t "<- ~S~%" ',form)

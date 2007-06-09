@@ -315,8 +315,14 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 		  (! lisp->isLispRunning() )
 		  ); 
     menu.addSeparator();
-    menu.addItem( cmdLispInputTracing, T("Trace Input"), false); 
-    menu.addItem( cmdLispErrorTracing, T("Backtrace Errors"), false); 
+    //    menu.addItem( cmdLispInputTracing, T("Trace Input"), false); 
+    //    menu.addItem( cmdLispErrorTracing, T("Backtrace Errors"), false); 
+
+    menu.addItem( cmdLispInputTracing, T("Test Connection"),
+		  true); //lisp->isConnected()); 
+    menu.addItem( cmdLispErrorTracing, T("Send kill server"), 
+		  true); //lisp->isConnected()); 
+
     break;
 
   case 5 :
@@ -335,7 +341,7 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
   GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
   ApplicationCommandManager * cm = app->commandManager;
 
-  printf("menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
+  //printf("menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
 
   switch (cmd) {
   case cmdGracePlotterNew :
@@ -369,6 +375,14 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
   case cmdLispConfigure :
     showConfigureLispWindow();
     break;
+  case cmdLispInputTracing :
+    lisp->testConnection();
+    break;
+  case cmdLispErrorTracing :
+    lisp->sendLispSexpr( T("(kill-server)\n") );
+    lisp->disconnect();
+    break;
+
   default :
     break;
   }

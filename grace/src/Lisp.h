@@ -28,7 +28,8 @@ class LispConnection : public InterprocessConnection {
   String args; // program args
 
  LispConnection () 
-   : type (local),
+   : InterprocessConnection(true),
+    type (local),
     host (T("localhost")),
     port (8000),
     wait (15),
@@ -62,8 +63,11 @@ class LispConnection : public InterprocessConnection {
   bool startLisp();
   bool killLisp();
   bool isLispRunning();
+  bool connectToLisp();
   void connectionMade ();
   void connectionLost ();
+  void sendLispSexpr(String in);
+  void testConnection();
   void messageReceived (const MemoryBlock &message);
 };
 
