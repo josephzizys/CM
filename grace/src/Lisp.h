@@ -13,6 +13,11 @@
 
 #include "juce.h"
 
+class LispConnection;
+class ConsoleWindow;
+
+#include "Console.h"
+
 class LispConnection : public InterprocessConnection {
  public:
   enum {local=1, remote};
@@ -26,23 +31,10 @@ class LispConnection : public InterprocessConnection {
   int impl;  // SBCL, OpenMCL ...
   String lisp; // program to exec
   String args; // program args
+  ConsoleWindow* console;
 
- LispConnection () 
-   : InterprocessConnection(true),
-    type (local),
-    host (T("localhost")),
-    port (8000),
-    wait (15),
-    lpid (-1),
-    mnum (0xf2b49e2c),
-    impl (0),
-    lisp (String::empty),
-    args (String::empty)
-    {
-    }
-
-  ~LispConnection () { }
-
+  LispConnection (ConsoleWindow* w);
+  ~LispConnection ();
   int getType() {return type;}
   void setType(int v) {type=v;}
   String getHost() {return host;}

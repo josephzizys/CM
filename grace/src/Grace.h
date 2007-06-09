@@ -35,13 +35,10 @@ public:
     const String getApplicationName() ;
     const String getApplicationVersion() ;
     void graceQuit(bool ask);
-    void printMessage(String str);
-    void printWarning(String str);
-    void printError(String str);
     void printBanner();
-
     AudioDeviceManager * getAudioDeviceManager();
-
+    ConsoleWindow* getConsole() {return console;}
+    
 };
 
 

@@ -84,6 +84,7 @@ void Console::initTheme (int idx) {
     r=0xbebebe; h=0x000000; c=0xff0000;
     break;
   }
+  w += 0xff000000;  e += 0xff000000;
   b += 0xff000000;  i += 0xff000000;   o += 0xff000000;
   r += 0xff000000;  h += 0xff000000;   c += 0xff000000;  
   themes[idx].name=n;
@@ -91,7 +92,7 @@ void Console::initTheme (int idx) {
   themes[idx].setColor(ConsoleTheme::bgColor, Colour(b));
   themes[idx].setColor(ConsoleTheme::inputColor, Colour(i));
   themes[idx].setColor(ConsoleTheme::outputColor, Colour(o));
-  themes[idx].setColor(ConsoleTheme::warningColor, Colour(w));
+  themes[idx].setColor(ConsoleTheme::warningColor,Colour(w));
   themes[idx].setColor(ConsoleTheme::errorColor, Colour(e));
   themes[idx].setColor(ConsoleTheme::hiliteColor, Colour(r));
   themes[idx].setColor(ConsoleTheme::hiliteTextColor, Colour(h));
@@ -133,7 +134,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
 		     DocumentWindow::allButtons, true ),
     lisp (0)
 {
-  lisp = new LispConnection();
+  lisp = new LispConnection(this);
   menubar = new MenuBarComponent(this);
   printf( "before manubar\n");
   setMenuBar(this,0);
@@ -219,18 +220,19 @@ void ConsoleWindow::consoleTerpri() {
 }
 
 void ConsoleWindow::consolePrint( String str) {
-  printf("printing\n");
   setConsoleTextColor(ConsoleTheme::outputColor);
   console->buffer->insertTextAtCursor(str);
 }
 
 void ConsoleWindow::consoleError( String str) {
   setConsoleTextColor(ConsoleTheme::errorColor);
+  //console->buffer->setColour(TextEditor::textColourId, Colours::red);
   console->buffer->insertTextAtCursor(str);
 }
 
 void ConsoleWindow::consoleWarning( String str) {
   setConsoleTextColor(ConsoleTheme::warningColor);
+  //console->buffer->setColour(TextEditor::textColourId, Colours::orange);
   console->buffer->insertTextAtCursor(str);
 }
 

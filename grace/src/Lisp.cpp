@@ -346,14 +346,33 @@ void ConfigureLispView::sliderValueChanged (Slider* sliderThatWasMoved) {
 //=========================================================================
 //=========================================================================
 
+LispConnection::LispConnection (ConsoleWindow* w) 
+   : InterprocessConnection(true),
+    type (local),
+    host (T("localhost")),
+    port (8000),
+    wait (15),
+    lpid (-1),
+    mnum (0xf2b49e2c),
+    impl (0),
+    lisp (String::empty),
+    args (String::empty)
+{
+  console=w;
+}
+
+LispConnection::~LispConnection () {
+ }
+
 bool LispConnection::isLispStartable () {
   return ((type==remote) || (lisp != String::empty));
 }  
 
 bool LispConnection::startLisp () {
-  connectToLisp();
-  return true;
-/*
+/* 
+  // THIS WORKS BUT IS COMMENTED OUT UNTIL I CAN FIGURE OUT HOW TO
+  // WAIT FOR THE SERVER TO LOAD UP BEFORE ATTEMPTING A CONNECTION.
+
   String command=getExecutable();
   if (getArguments() != String::empty)
     command += getArguments();
@@ -386,17 +405,20 @@ bool LispConnection::startLisp () {
   }
   return true;
 */
+
+  return  connectToLisp();
 }
 
 bool LispConnection::connectToLisp () {
+  String message = T("Connecting to Lisp on '") + getHost() +
+    T("' port ") + String(getPort()) + T("...\n") ;
 
-  printf("Attempting to connect to %s on port %d...\n",
-	 getHost().toUTF8(), getPort());
-
+  console->consolePrint(message);
   if ( connectToSocket( getHost(), getPort(), (getWait()*1000) ) ) {
+    console->consolePrint( T("OK =:)\n") );
     return true;
   }  
-  else printf("FAILED TO CONNECT\n");
+  else console->consoleError( T("FAILED >:(\n") );
   return false;
 }
 
@@ -417,9 +439,11 @@ bool LispConnection::killLisp () {
 }
 
 void LispConnection::sendLispSexpr(String sexpr) {
-  if (! isConnected() )  return;
+  if (! isConnected() ){
+    console->consoleWarning(T("Lisp not connected.\n"));
+    return;
+  }
   int len=sexpr.length();
-  //const char* msg=sexpr.toUTF8();
   printf("Grace sending: '%s'\n", sexpr.toUTF8());
   MemoryBlock mem=MemoryBlock(len, true);  
   for (int i=0; i<len; i++)
@@ -428,7 +452,10 @@ void LispConnection::sendLispSexpr(String sexpr) {
 }
 
 void LispConnection::testConnection() {
-  if (! isConnected() )  return;
+  if (! isConnected() )  {
+    console->consoleWarning(T("Lisp not connected.\n"));
+    return;
+  }
   String test= T("(+");
   int num = 2+Random::getSystemRandom().nextInt(9);
   for (int i=0; i<num; i++)
@@ -438,15 +465,15 @@ void LispConnection::testConnection() {
 }  
 
 void LispConnection::connectionMade () {
-  printf("Lisp connected =:)\n");
 }
 
 void LispConnection::connectionLost () {
-  printf("Lisp connection lost =:(\n");
+  console->consoleWarning(T("Lisp connection lost =:/\n"));
 }
 
 void LispConnection::messageReceived (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
-  printf("Grace received: '%s'\n", text.toUTF8());
+  console->consolePrint(text);
+  console->consoleTerpri();
 }
