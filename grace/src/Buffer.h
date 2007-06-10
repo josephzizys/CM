@@ -13,6 +13,7 @@
 
 #include "juce.h"
 #include "Syntax.h"
+#include "Console.h"
 
 class TextRange
 {
@@ -50,9 +51,6 @@ class TextBuffer : public TextEditor,
   void keyCommandAction(const KeyPress& key);
   void keyIllegalAction(const KeyPress& key);
   void keyDefaultAction(const KeyPress& key);
-  void bufferMessage(String str);
-  void bufferWarning(String str);
-  void bufferError(String str);
   void keyPressed(const KeyPress& key) ;
   void mouseDown(const MouseEvent &e) ;
 
@@ -194,8 +192,7 @@ class TextBuffer : public TextEditor,
   void revertFile();
   void setFontType(const String typeface);
   void setFontSize( float size );
-
-
+  ConsoleWindow* getConsole();
 };
 
 

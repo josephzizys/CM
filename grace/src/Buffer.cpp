@@ -12,6 +12,7 @@
 #include "Editor.h"
 #include "FontList.h"
 #include "Grace.h"
+//#include "Console.h"
 
 /*
 Unresolved problems:
@@ -29,7 +30,6 @@ TextBuffer::TextBuffer (String pathname, syntaxID id, TopLevelWindow *pwind)
   setReturnKeyStartsNewLine(true);
   setCaretPosition(0);
   setPoint(0);
-  printf("Buffer syntax=%d\n", (int)id);
   initSyntax(id);
   parentWindow = pwind;
   editfont = Font(Font::getDefaultMonospacedFontName(), 17.0f, Font::plain );
@@ -49,7 +49,6 @@ void TextBuffer::initSyntax (syntaxID id) {
     syntax= new SalSyntax();
     break;
   case syntaxLisp :
-  case syntaxConsole :
     syntax= new LispSyntax();
     break;
   case syntaxText :
@@ -118,8 +117,6 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdToggleHiliting,
     cmdSymbolHelp,
     cmdEval
-
-
   };
   
   commands.addArray (ids, sizeof (ids) / sizeof (ids [0]));
@@ -255,7 +252,7 @@ bool TextBuffer::perform (const InvocationInfo& info)
   switch (info.commandID) 
     {
     case cmdNew:
-      newFile(syntaxConsole);
+      newFile(syntaxSal);
       break;
     case cmdOpen:
       openFile();
@@ -334,8 +331,8 @@ bool TextBuffer::perform (const InvocationInfo& info)
       break;
     case cmdIndent:
       break;
-    
     case cmdEval:
+      evalLastSexpr();
       break;
     default:
       return false;
@@ -620,8 +617,9 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
 }
    
 void TextBuffer::keyIllegalAction(const KeyPress& key) {
-  String msg = key.getTextDescription() + T(" is not a keyboard command.") ;
-  bufferError(msg);
+  String msg = T("Editor: ") + key.getTextDescription() +
+    T(" is not a command.\n") ;
+  getConsole()->consolePrint(msg, ConsoleTheme::errorColor);
 }
 
 // the main key handling function. dispatches to other key handlers
@@ -890,10 +888,12 @@ int TextBuffer::forwardSexpr() {
 
   typ = scan_sexpr(syntax->syntab, text, 0, end, SCAN_CODE, &loc);
   if (typ == SCAN_UNLEVEL)
-    printf("Can't move forward past end of list.\n");
+    getConsole()->consolePrint(T("Editor C-M-f:\nCan't move forward past end of list.\n"),
+			       ConsoleTheme::warningColor);
   else if (typ == SCAN_UNMATCHED)
-    printf("Forward unmatched delimiter.\n");
-  else 
+    getConsole()->consolePrint(T("Editor C-M-f:\nForward unmatched delimiter.\n"),
+			       ConsoleTheme::warningColor);
+  else
     setPoint(pos+loc);
   return point();
 }
@@ -902,12 +902,13 @@ int TextBuffer::backwardSexpr() {
   String text = backwardTopLevelText();
   int typ, loc, pos=point(), end=text.length();
 
-  //  printf("||||||||\n%s\n||||||||\n", text.toUTF8());
   typ = scan_sexpr(syntax->syntab, text, end-1, -1, SCAN_CODE, &loc);
   if (typ == SCAN_UNLEVEL)
-    printf("Can't move backward past start of list.\n");
+    getConsole()->consolePrint(T("Editor C-M-b:\nCan't move backward past start of list.\n"),
+			       ConsoleTheme::warningColor);
   else if (typ == SCAN_UNMATCHED)
-    printf("Backward unmatched delimiter.\n");
+    getConsole()->consolePrint(T("Editor: C-M-b:\nBackward unmatched delimiter.\n"),
+			       ConsoleTheme::warningColor);
   else 
     setPoint(pos-end+loc+1);
   //printf("char at loc+1='%c'\n", text[loc+1]);
@@ -1057,14 +1058,57 @@ void TextBuffer::selectAll() {
   }
 }
 
+///
+/// Evaluation
+///
+
 int TextBuffer::evalLastSexpr() {
-  int side1, side2, result;
-  //  side2=point();
-  //  side1=??
-  //  if ( (result > 0) && (side2 > side1) ) {
-  //    String text=getTextSubstring(side1, side2);
-  //printf("EVAL:\"%s\"\n", text.toUTF8() );
-  //}
+  switch (syntaxId) {
+  case syntaxLisp :
+  case syntaxSal :
+    break;
+  default :
+    return 0;
+  }
+
+  String text=backwardTopLevelText();
+  int typ=SCAN_EMPTY, end=text.length(), pos=end-1, old=pos;
+  // parse backwards 1 sexpr for lisp or to toplevel for Sal
+  while (pos>-1) {
+  typ = scan_sexpr(syntax->syntab, text, old, -1, SCAN_CODE, &pos);
+  if ( (typ<=SCAN_EMPTY) || (syntaxId==syntaxLisp))
+    break;
+  old=pos;
+  }
+
+  if (typ==SCAN_EMPTY) {
+    getConsole()->consolePrint(T("Editor (eval): Nothing to evaluate.\n"),
+			       ConsoleTheme::warningColor);
+  }
+  if (typ<SCAN_EMPTY) {
+    int l1, l2;
+    getConsole()->consolePrint( T("Editor (eval): Unbalanced expression:\n"),
+				ConsoleTheme::errorColor);
+    // print line containing error with ^ marking offending position
+    for (l2=old+1; l2<end; l2++)
+      if (text[l2]=='\n') break;
+    for (l1=old; l1>-1; l1--)
+      if (text[l1]=='\n') break;
+    l1++;
+    getConsole()->consolePrint( text.substring(l1,l2), ConsoleTheme::errorColor);
+    getConsole()->consoleTerpri();
+    String mark=String::empty;
+    for (int i=l1; i<old; i++)
+      mark += T(" ");
+    mark += T("^");
+    getConsole()->consolePrint( mark, ConsoleTheme::errorColor);
+    getConsole()->consoleTerpri();
+    return 0;
+  }
+  if (syntaxId==syntaxSal)
+    getConsole()->consoleEval(text, true);
+  else
+    getConsole()->consoleEval(text, false);
   return 0;
 }
 
@@ -1220,7 +1264,6 @@ void TextBuffer::syntacticIndent() {
     }
     col=syntax->getIndent( txt, -1, len, pos);
   }
-  printf("indent column: %d\n", col);
   indentToColumn(col);
 }
 
@@ -1228,19 +1271,8 @@ void TextBuffer::syntacticIndent() {
 /// Non commands
 ///
 
-void TextBuffer::bufferMessage(String str) {
-  //  GraceApp * app = (GraceApp *)GraceApp::getInstance();
-  //  app->printMessage(str);
-}
-
-void TextBuffer::bufferWarning(String str) {
-  //  GraceApp * app = (GraceApp *)GraceApp::getInstance();
-  //  app->printWarning(T("Warning: ") + str);
-}
-
-void TextBuffer::bufferError(String str) {
-  //  GraceApp * app = (GraceApp *)GraceApp::getInstance();
-  //  app->printError(T("Error: ") + str);
+ConsoleWindow* TextBuffer::getConsole() {
+  return ((GraceApp *)GraceApp::getInstance())->getConsole();
 }
 
 int dodo=0;
@@ -1277,7 +1309,7 @@ void TextBuffer::colorize (int from, int to, bool force) {
   // offset is the starting position of text string in buffer.
   setCaretVisible(false);
   setScrollToShowCursor(false);
-  printf("hiliting %d to %d...\n", from, to);
+  //printf("hiliting %d to %d...\n", from, to);
   while (pos < len) {
     typ=parse_sexpr(syntax->syntab,text,-1,len,1,SCAN_COLOR,&pos,&start,&end);
     hilite=hiliteNone;
@@ -1314,7 +1346,7 @@ void TextBuffer::colorize (int from, int to, bool force) {
   setPoint(here);
   setCaretVisible(true);
   setScrollToShowCursor(true);
-  printf("...done!\n");
+  //printf("...done!\n");
 }
 
 void TextBuffer::colorizeAll() {
@@ -1355,7 +1387,7 @@ void TextBuffer::colorizeAfterChange(int cmd) {
 }
 
 void TextBuffer::toggleHiliting() {
-  printf("toggle color\n");
+  //printf("toggle color\n");
   setHiliting ( ! isHiliting() ) ;
   if ( isHiliting() ) 
     colorizeAll();
@@ -1367,7 +1399,6 @@ void TextBuffer::toggleHiliting() {
     setText(text);
   }
 }
-
 
 void TextBuffer::saveFile() {
   editfile.replaceWithText( getText() ) ;

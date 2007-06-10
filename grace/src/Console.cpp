@@ -15,7 +15,6 @@
 #include "Grace.h"
 #include "Audio.h"
 
-
 Console::Console () : 
   numthemes (0),
   curtheme (0)
@@ -26,13 +25,11 @@ Console::Console () :
   buffer->setReadOnly(true);
   buffer->setCaretVisible(false);    
   addChildComponent(buffer);
-  printf("before init\n");
   numthemes=6;
   for (int i=0; i<numthemes; i++)
     initTheme(i);
-  printf("after init\n");
+
   setTheme(0);
-  printf("after settheme\n");
   buffer->setVisible(true);
   setVisible(true);
 }
@@ -44,9 +41,12 @@ Console::~Console () {
 void Console::initTheme (int idx) {
   String n=String::empty;
   uint32 b, i, o, r, h, c;
-  uint32 w=0xff8c00, e=0xcd0000;
+
   Font f=Font(Font::getDefaultMonospacedFontName(), 
 	      17.0f, Font::plain );
+  // make value, warning and error colors consistent across themes (?)
+  uint32 v= 0x00cd00, w=0xff8c00, e=0xcd0000;
+
   switch (idx) {
   case 0 :
     n=T("Clarity and Beauty");
@@ -84,9 +84,9 @@ void Console::initTheme (int idx) {
     r=0xbebebe; h=0x000000; c=0xff0000;
     break;
   }
-  w += 0xff000000;  e += 0xff000000;
-  b += 0xff000000;  i += 0xff000000;   o += 0xff000000;
-  r += 0xff000000;  h += 0xff000000;   c += 0xff000000;  
+  v += 0xff000000;  w += 0xff000000;  e += 0xff000000;
+  b += 0xff000000;  i += 0xff000000;  o += 0xff000000;
+  r += 0xff000000;  h += 0xff000000;  c += 0xff000000;  
   themes[idx].name=n;
   themes[idx].font=f;
   themes[idx].setColor(ConsoleTheme::bgColor, Colour(b));
@@ -94,27 +94,15 @@ void Console::initTheme (int idx) {
   themes[idx].setColor(ConsoleTheme::outputColor, Colour(o));
   themes[idx].setColor(ConsoleTheme::warningColor,Colour(w));
   themes[idx].setColor(ConsoleTheme::errorColor, Colour(e));
+  themes[idx].setColor(ConsoleTheme::valueColor, Colour(v));
   themes[idx].setColor(ConsoleTheme::hiliteColor, Colour(r));
   themes[idx].setColor(ConsoleTheme::hiliteTextColor, Colour(h));
   themes[idx].setColor(ConsoleTheme::caretColor, Colour(c));
-
-  /*  themes[idx].font=Font(Font::getDefaultMonospacedFontName(), 
-		  17.0f, Font::plain );
-  themes[idx].setColor(ConsoleTheme::bgColor, Colours::black);
-  themes[idx].setColor(ConsoleTheme::inputColor, Colours::white);
-  themes[idx].setColor(ConsoleTheme::outputColor, Colours::lightsalmon);
-  themes[idx].setColor(ConsoleTheme::errorColor, Colours::red);
-  themes[idx].setColor(ConsoleTheme::warningColor,Colours::orange);
-  themes[idx].setColor(ConsoleTheme::hiliteColor, Colours::grey);
-  themes[idx].setColor(ConsoleTheme::hiliteTextColor, Colours::white);
-  themes[idx].setColor(ConsoleTheme::caretColor,Colours::yellow);
-  */
 }
 
 void Console::setTheme(int i) {
   curtheme=i;
-  printf("set theme: current them is %s\n",
-	 themes[i].name.toUTF8());
+  printf("current theme: %s\n", themes[i].name.toUTF8());
   buffer->setFont( themes[i].getFont() );
   buffer->setColour( TextEditor::backgroundColourId, 
 		     themes[i].getColor(ConsoleTheme::bgColor));
@@ -136,9 +124,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
 {
   lisp = new LispConnection(this);
   menubar = new MenuBarComponent(this);
-  printf( "before manubar\n");
   setMenuBar(this,0);
-  printf( "before new consloe\n");
   console=new Console();
   splash=new SplashComponent();
   setContentComponent(console);
@@ -219,22 +205,44 @@ void ConsoleWindow::consoleTerpri() {
   console->buffer->insertTextAtCursor(T("\n"));
 }
 
-void ConsoleWindow::consolePrint( String str) {
+void ConsoleWindow::consoleFreshLine() {
+  int pos=console->buffer->getCaretPosition();
+  if (pos > 0) {
+    if (T("\n") != console->buffer->getTextSubstring(pos-1,pos)) {
+      KeyPress key = KeyPress(KeyPress::endKey);
+      //KeyPress dkey = KeyPress(KeyPress::downKey);
+      console->buffer->keyPressed(key);
+      console->buffer->insertTextAtCursor(T("\n"));
+    }
+  }
+}	
+
+void ConsoleWindow::consolePrint( String str, ConsoleTheme::ColorType typ,
+				  bool eob) {
+  if (eob) consoleGotoEOB();
+  setConsoleTextColor(typ);
+  console->buffer->insertTextAtCursor(str);
+}
+
+void ConsoleWindow::consoleEval (String code, bool isSal) {
+  // HACK display until eval is tied in
+  consolePrint(code, ConsoleTheme::inputColor);
+  consoleTerpri();
+}
+
+
+/*
+void ConsoleWindow::consolePrint( String str, ) {
   setConsoleTextColor(ConsoleTheme::outputColor);
   console->buffer->insertTextAtCursor(str);
 }
-
 void ConsoleWindow::consoleError( String str) {
-  setConsoleTextColor(ConsoleTheme::errorColor);
-  //console->buffer->setColour(TextEditor::textColourId, Colours::red);
-  console->buffer->insertTextAtCursor(str);
+  consolePrint(str, ConsoleTheme::errorColor);
 }
-
 void ConsoleWindow::consoleWarning( String str) {
-  setConsoleTextColor(ConsoleTheme::warningColor);
-  //console->buffer->setColour(TextEditor::textColourId, Colours::orange);
-  console->buffer->insertTextAtCursor(str);
+  consolePrint(str, ConsoleTheme::warningColor);
 }
+*/
 
 void ConsoleWindow::showSplash () {
   splash->setSize(console->getWidth(),console->getHeight());

@@ -22,6 +22,7 @@
 //   outputColor          font-lock-string-face
 //   errorColor           {USE RED ALL THEMES?}
 //   warningColor         font-lock-warning-face
+//   valueColor           green3
 //   highlightColor       region
 //   highlightTextColor   region
 //   caretColor:          cursor-color
@@ -29,11 +30,11 @@
 
 class ConsoleTheme {
  public:
-  enum {bgColor=0, inputColor, outputColor, errorColor, warningColor,
-	hiliteColor, hiliteTextColor, caretColor};	
+  enum ColorType {bgColor=0, inputColor, outputColor, errorColor, warningColor,
+		  valueColor, hiliteColor, hiliteTextColor, caretColor};	
   String name;
   Font font;
-  Colour colors[8];
+  Colour colors[9];
   ConsoleTheme() {}
   ~ConsoleTheme() {}
   String getName() {return name;}
@@ -113,11 +114,14 @@ public:
   void consoleCopy();
   void consoleSelectAll();
   void consoleGotoEOB();
-  void consoleTerpri();
-  void consolePrint(String str);
-  void consoleError(String str);
-  void consoleWarning(String str);
-
+  void consoleTerpri();  
+  void consoleFreshLine();
+  void consolePrint(String str, 
+		    ConsoleTheme::ColorType typ=ConsoleTheme::outputColor,
+		    bool eob=true);
+  //void consoleError(String str);
+  //void consoleWarning(String str);
+  void consoleEval(String code, bool isSal);
   void installMenbar();
   void showSplash();
   void hideSplash();

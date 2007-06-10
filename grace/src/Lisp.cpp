@@ -712,14 +712,24 @@ bool LispConnection::startLisp () {
 
 bool LispConnection::connectToLisp () {
   String message = T("Connecting to Lisp on '") + getHost() +
-    T("' port ") + String(getPort()) + T("...\n") ;
+    T("' port ") + String(getPort()) + T("...") ;
 
   console->consolePrint(message);
+  // try to force the message to print or it wont appear until after
+  // the connection attempt. this is ok if a connection is actually
+  // made, but if its not then it takes Timeout seconds for the
+  // message to appear...
+  console->console->buffer->repaint(); 
+  // this has no effect
+  Time::waitForMillisecondCounter(Time::getMillisecondCounter()+500);
+
   if ( connectToSocket( getHost(), getPort(), (getWait()*1000) ) ) {
-    console->consolePrint( T("OK =:)\n") );
+    console->consolePrint(T("OK =:)\n"), 
+			  ConsoleTheme::valueColor);
     return true;
   }  
-  else console->consoleError( T("FAILED >:(\n") );
+  else console->consolePrint(T("FAIL :(\n"),
+			     ConsoleTheme::errorColor);
   return false;
 }
 
@@ -741,7 +751,8 @@ bool LispConnection::killLisp () {
 
 void LispConnection::sendLispSexpr(String sexpr) {
   if (! isConnected() ){
-    console->consoleWarning(T("Lisp not connected.\n"));
+    console->consolePrint(T("Lisp not connected.\n"),
+			  ConsoleTheme::warningColor);
     return;
   }
   int len=sexpr.length();
@@ -754,7 +765,8 @@ void LispConnection::sendLispSexpr(String sexpr) {
 
 void LispConnection::testConnection() {
   if (! isConnected() )  {
-    console->consoleWarning(T("Lisp not connected.\n"));
+    console->consolePrint(T("Lisp not connected.\n"),
+			  ConsoleTheme::warningColor);
     return;
   }
   String test= T("(+");
@@ -769,21 +781,21 @@ void LispConnection::connectionMade () {
 }
 
 void LispConnection::connectionLost () {
-  console->consoleWarning(T("Lisp connection lost =:/\n"));
+  console->consolePrint(T("Lisp connection lost =:/\n"),
+			ConsoleTheme::warningColor
+			);
 }
 
 void LispConnection::messageReceived (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
-  console->consolePrint(text);
+  console->consolePrint(text, ConsoleTheme::valueColor);
   console->consoleTerpri();
 }
 
 
 // ok this would be the point to handle different types of messages 
 // coming back from the lisp
-
-
 
 void LispConnection::handleMessage (const Message& message)
 {
