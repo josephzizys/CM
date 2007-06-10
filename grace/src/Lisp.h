@@ -18,8 +18,61 @@ class ConsoleWindow;
 
 #include "Console.h"
 
-class LispConnection : public InterprocessConnection {
- public:
+class LispProcessConnection : public Thread,
+			      private MessageListener
+{
+public:
+  LispProcessConnection (const bool callbacksOnMessageThread = true);
+  ~LispProcessConnection();
+  
+  typedef enum MessageType
+    {
+      msgString = 0xb734128b,
+      msgBinaryData,
+
+      msgSetPackage,
+      msgLispEval,
+      msgSalEval,
+      msgValues,
+      msgError,
+      msgWarning,
+      msgPrintout
+    } ;
+  
+  bool connectToSocket (const String& hostName,
+			const int portNumber,
+			const int timeOutMillisecs);
+  bool connectToPipe (const String& pipeName);
+  bool createPipe (const String& pipeName);
+  void disconnect();
+  bool isConnected() const;
+  bool sendMessage (const MemoryBlock& message, MessageType messageType=msgLispEval);
+  virtual void connectionMade() = 0;
+  virtual void connectionLost() = 0;
+  virtual void messageReceived (const MemoryBlock& message) = 0;
+  virtual void handleMessage (const Message& message) = 0; //what to do with message
+  
+private:
+  CriticalSection pipeAndSocketLock;
+  Socket* socket;
+  NamedPipe* pipe;
+  bool callbackConnectionState;
+  const bool useMessageThread;
+  
+  void initialiseWithSocket (Socket* const socket_);
+  void initialiseWithPipe (NamedPipe* const pipe_);
+  void connectionMadeInt();
+  void connectionLostInt();
+  void deliverDataInt (const MemoryBlock& data);
+  bool readNextMessageInt();
+  void run();
+  LispProcessConnection (const LispProcessConnection&);
+  const LispProcessConnection& operator= (const LispProcessConnection&);
+};
+
+
+class LispConnection : public LispProcessConnection {
+public:
   enum {local=1, remote};
   enum {SBCL=1, OpenMCL, CLisp, Custom};
   int type;  // local or remote
@@ -61,6 +114,9 @@ class LispConnection : public InterprocessConnection {
   void sendLispSexpr(String in);
   void testConnection();
   void messageReceived (const MemoryBlock &message);
+  
+  void handleMessage (const Message& message);
+
 };
 
 class ConfigureLispView  : public Component,

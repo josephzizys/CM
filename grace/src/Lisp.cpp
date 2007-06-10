@@ -14,62 +14,363 @@
 #include <signal.h>
 #include <unistd.h>
 
+//==============================================================================
+LispProcessConnection::LispProcessConnection (const bool callbacksOnMessageThread)
+  : Thread (T("Grace to Lisp connection")),
+    socket (0),
+    pipe (0),
+    callbackConnectionState (false),
+    useMessageThread (callbacksOnMessageThread)
+    
+{
+}
+
+LispProcessConnection::~LispProcessConnection()
+{
+  disconnect();
+}
+
+
+//==============================================================================
+bool LispProcessConnection::connectToSocket (const String& hostName,
+					     const int portNumber,
+					     const int timeOutMillisecs)
+{
+  disconnect();
+  
+  const ScopedLock sl (pipeAndSocketLock);
+  socket = new Socket();
+  
+  if (socket->connect (hostName, portNumber, timeOutMillisecs))
+    {
+      connectionMadeInt();
+      startThread();
+      return true;
+    }
+  else
+    {
+      deleteAndZero (socket);
+      return false;
+    }
+}
+
+bool LispProcessConnection::connectToPipe (const String& pipeName)
+{
+  disconnect();
+  
+  NamedPipe* const newPipe = new NamedPipe();
+  
+  if (newPipe->openExisting (pipeName))
+    {
+      const ScopedLock sl (pipeAndSocketLock);
+      initialiseWithPipe (newPipe);
+      return true;
+    }
+  else
+    {
+      delete newPipe;
+      return false;
+    }
+}
+
+bool LispProcessConnection::createPipe (const String& pipeName)
+{
+  disconnect();
+  
+  NamedPipe* const newPipe = new NamedPipe();
+  
+  if (newPipe->createNewPipe (pipeName))
+    {
+      const ScopedLock sl (pipeAndSocketLock);
+      initialiseWithPipe (newPipe);
+      return true;
+    }
+  else
+    {
+      delete newPipe;
+      return false;
+    }
+}
+
+void LispProcessConnection::disconnect()
+{
+  if (socket != 0)
+    socket->close();
+  
+  if (pipe != 0)
+    {
+      pipe->cancelPendingReads();
+      pipe->close();
+    }
+  
+  stopThread (4000);
+  
+  {
+    const ScopedLock sl (pipeAndSocketLock);
+    deleteAndZero (socket);
+    deleteAndZero (pipe);
+  }
+  
+  connectionLostInt();
+}
+
+bool LispProcessConnection::isConnected() const
+{
+  const ScopedLock sl (pipeAndSocketLock);
+  
+  return ((socket != 0 && socket->isConnected())
+	  || (pipe != 0 && pipe->isOpen()))
+    && isThreadRunning();
+}
+
+//==============================================================================
+bool LispProcessConnection::sendMessage (const MemoryBlock& message, MessageType messageType)
+{
+  uint32 messageHeader[2];
+  messageHeader [0] = swapIfBigEndian ((uint32) messageType);
+  messageHeader [1] = swapIfBigEndian ((uint32) message.getSize());
+  
+  MemoryBlock messageData (sizeof (messageHeader) + message.getSize());
+  messageData.copyFrom (messageHeader, 0, sizeof (messageHeader));
+  messageData.copyFrom (message.getData(), sizeof (messageHeader), message.getSize());
+  
+  int bytesWritten = 0;
+  
+  const ScopedLock sl (pipeAndSocketLock);
+  
+  if (socket != 0)
+    {
+      bytesWritten = socket->write (messageData.getData(), messageData.getSize());
+    }
+  else if (pipe != 0)
+    {
+      bytesWritten = pipe->write (messageData.getData(), messageData.getSize());
+    }
+  
+  if (bytesWritten < 0)
+    {
+      // error..
+      return false;
+    }
+  
+  return (bytesWritten == messageData.getSize());
+}
+
+//==============================================================================
+void LispProcessConnection::initialiseWithSocket (Socket* const socket_)
+{
+  jassert (socket == 0);
+  socket = socket_;
+  connectionMadeInt();
+  startThread();
+}
+
+void LispProcessConnection::initialiseWithPipe (NamedPipe* const pipe_)
+{
+  jassert (pipe == 0);
+  pipe = pipe_;
+  connectionMadeInt();
+  startThread();
+}
+
+
+void LispProcessConnection::connectionMadeInt()
+{
+  if (! callbackConnectionState)
+    {
+      callbackConnectionState = true;
+      
+      if (useMessageThread)
+	postMessage (new Message (msgString, 1, 0, 0));
+      else
+	connectionMade();
+    }
+}
+
+void LispProcessConnection::connectionLostInt()
+{
+  if (callbackConnectionState)
+    {
+      callbackConnectionState = false;
+      
+      if (useMessageThread)
+	postMessage (new Message (msgString, 2, 0, 0));
+      else
+	connectionLost();
+    }
+}
+
+void LispProcessConnection::deliverDataInt (const MemoryBlock& data)
+{
+  jassert (callbackConnectionState);
+  
+  if (useMessageThread)
+    postMessage (new Message (msgString , 0, 0, new MemoryBlock (data)));
+  else
+    messageReceived (data);
+}
+
+//==============================================================================
+bool LispProcessConnection::readNextMessageInt()
+{
+  const int maximumMessageSize = 1024 * 1024 * 10; // sanity check
+  
+  uint32 messageHeader[2];
+  const int bytes = (socket != 0) ? socket->read (messageHeader, sizeof (messageHeader))
+    : pipe->read (messageHeader, sizeof (messageHeader));
+  
+  if (bytes == sizeof (messageHeader) )
+    {
+      const int bytesInMessage = (int) swapIfBigEndian (messageHeader[1]);
+      
+      if (bytesInMessage > 0 && bytesInMessage < maximumMessageSize)
+        {
+	  MemoryBlock messageData (bytesInMessage, true);
+	  int bytesRead = 0;
+	  
+	  while (bytesRead < bytesInMessage)
+            {
+	      if (threadShouldExit())
+		return false;
+	      
+	      const int numThisTime = jmin (bytesInMessage, 65536);
+	      const int bytesIn = (socket != 0) ? socket->read (((char*) messageData.getData()) + bytesRead, numThisTime)
+		: pipe->read (((char*) messageData.getData()) + bytesRead, numThisTime);
+	      
+	      if (bytesIn <= 0)
+		break;
+	      
+	      bytesRead += bytesIn;
+            }
+	  
+	  if (bytesRead >= 0)
+	    deliverDataInt (messageData);
+        }
+    }
+  else if (bytes < 0)
+    {
+      {
+	const ScopedLock sl (pipeAndSocketLock);
+	deleteAndZero (socket);
+      }
+      
+      connectionLostInt();
+      return false;
+    }
+  
+  return true;
+}
+
+void LispProcessConnection::run()
+{
+  while (! threadShouldExit())
+    {
+      if (socket != 0)
+        {
+	  const int ready = socket->isReady (0);
+	  
+	  if (ready < 0)
+            {
+	      {
+		const ScopedLock sl (pipeAndSocketLock);
+		deleteAndZero (socket);
+	      }
+	      
+	      connectionLostInt();
+	      break;
+            }
+	  else if (ready > 0)
+            {
+	      if (! readNextMessageInt())
+		break;
+            }
+	  else
+            {
+	      Thread::sleep (2);
+            }
+        }
+      else if (pipe != 0)
+        {
+	  if (! pipe->isOpen())
+            {
+	      {
+		const ScopedLock sl (pipeAndSocketLock);
+		deleteAndZero (pipe);
+	      }
+	      
+	      connectionLostInt();
+	      break;
+            }
+	  else
+            {
+	      if (! readNextMessageInt())
+		break;
+            }
+        }
+      else
+        {
+	  break;
+        }
+    }
+}
+
+
 ConfigureLispView::ConfigureLispView (LispConnection* c)
-    : impgroup (0),
-      sbclbutton (0),
-      openmclbutton (0),
-      clispbutton (0),
-      custombutton (0),
-      proglab (0),
-      argslab (0),
-      progbuf (0),
-      argsbuf (0),
-      congroup (0),
-      hostlabel (0),
-      hostbuffer (0),
-      portlabel (0),
-      portbuffer (0),
-      timeslider (0),
-      timelabel (0),
-      magiclabel (0),
-      magicbuffer (0),
-      okbutton (0),
-      cancelbutton (0)
+  : impgroup (0),
+    sbclbutton (0),
+    openmclbutton (0),
+    clispbutton (0),
+    custombutton (0),
+    proglab (0),
+    argslab (0),
+    progbuf (0),
+    argsbuf (0),
+    congroup (0),
+    hostlabel (0),
+    hostbuffer (0),
+    portlabel (0),
+    portbuffer (0),
+    timeslider (0),
+    timelabel (0),
+    magiclabel (0),
+    magicbuffer (0),
+    okbutton (0),
+    cancelbutton (0)
 { 
   connection=c;
   addAndMakeVisible (impgroup = new GroupComponent (String::empty,
 						    T("Application")));
-
+  
   addAndMakeVisible (sbclbutton = new ToggleButton (String::empty));
   sbclbutton->setButtonText (T("SBCL"));
   sbclbutton->addButtonListener (this);
   sbclbutton->setRadioGroupId(1);
-
+  
   addAndMakeVisible (openmclbutton = new ToggleButton (String::empty));
   openmclbutton->setButtonText (T("OpenMCL"));
   openmclbutton->addButtonListener (this);
   openmclbutton->setRadioGroupId(1);
-
+  
   addAndMakeVisible (clispbutton = new ToggleButton (String::empty));
   clispbutton->setButtonText (T("CLisp"));
   clispbutton->addButtonListener (this);
   clispbutton->setRadioGroupId(1);
-
+  
   addAndMakeVisible (custombutton = new ToggleButton (String::empty));
   custombutton->setButtonText (T("Custom"));
   custombutton->addButtonListener (this);
   custombutton->setRadioGroupId(1);
-
+  
   addAndMakeVisible(proglab = new Label(String::empty,T("Executable:")));
   proglab->setFont (Font (15.0000f, Font::plain));
   proglab->setJustificationType (Justification::centredRight);
   proglab->setEditable (false, false, false);
-
+  
   addAndMakeVisible (argslab = new Label (String::empty,
-						 T("Arguments:")));
+					  T("Arguments:")));
   argslab->setFont (Font (15.0000f, Font::plain));
   argslab->setJustificationType (Justification::centredRight);
-
+  
   addAndMakeVisible(progbuf = new Label(String::empty, String::empty));
   progbuf->setFont(Font (15.0000f, Font::plain));
   progbuf->setJustificationType(Justification::centredLeft);
@@ -78,7 +379,7 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   progbuf->setColour(Label::outlineColourId, Colours::black);
   progbuf->setColour(Label::backgroundColourId, Colours::white);
   progbuf->addListener(this);
-
+  
   addAndMakeVisible(argsbuf = new Label(String::empty, String::empty));
   argsbuf->setFont( Font(15.0000f, Font::plain));
   argsbuf->setJustificationType(Justification::centredLeft);
@@ -86,27 +387,27 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   argsbuf->setColour(Label::outlineColourId, Colours::black);
   argsbuf->setColour(Label::backgroundColourId, Colours::white);
   argsbuf->addListener(this);
-
+  
   addAndMakeVisible(congroup = new GroupComponent(String::empty,
 						  T("Connection")));
   addAndMakeVisible(hostlabel = new Label(String::empty, T("Host:")));
   hostlabel->setFont( Font(15.0000f, Font::plain));
   hostlabel->setJustificationType(Justification::centredRight);
   hostlabel->setEditable(false, false, false);
-
+  
   addAndMakeVisible(hostbuffer = new Label (String::empty,
-					     String::empty));
+					    String::empty));
   hostbuffer->setFont(Font(15.0000f, Font::plain));
   hostbuffer->setJustificationType(Justification::centredLeft);
   hostbuffer->setEditable(false, false, false);
   hostbuffer->setColour(Label::outlineColourId, Colours::black);
   hostbuffer->setColour(Label::backgroundColourId, Colours::white);
-
+  
   addAndMakeVisible(portlabel = new Label(String::empty, T("Port:")));
   portlabel->setFont(Font (15.0000f, Font::plain));
   portlabel->setJustificationType(Justification::centredRight);
   portlabel->setEditable(false, false, false);
-
+  
   addAndMakeVisible (portbuffer = new Label(String::empty, String::empty));
   portbuffer->setFont (Font (15.0000f, Font::plain));
   portbuffer->setJustificationType (Justification::centredLeft);
@@ -114,18 +415,18 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   portbuffer->setColour (Label::outlineColourId, Colours::black);
   portbuffer->setColour (Label::backgroundColourId, Colours::white);
   portbuffer->addListener (this);
-
+  
   addAndMakeVisible(timeslider = new Slider (String::empty));
   timeslider->setRange(5, 60, 1);
   timeslider->setSliderStyle(Slider::LinearHorizontal);
   timeslider->setTextBoxStyle(Slider::TextBoxLeft, false, 30, 20);
   timeslider->addListener(this);
-
+  
   addAndMakeVisible(timelabel = new Label(String::empty, T("Timeout:")));
   timelabel->setFont( Font(15.0000f, Font::plain));
   timelabel->setJustificationType(Justification::centredRight);
   timelabel->setEditable(false, false, false);
-
+  
   addAndMakeVisible(magiclabel = new Label(String::empty, T("Magic #:")));
   magiclabel->setFont(Font (15.0000f, Font::plain));
   magiclabel->setJustificationType(Justification::centredRight);
@@ -347,7 +648,7 @@ void ConfigureLispView::sliderValueChanged (Slider* sliderThatWasMoved) {
 //=========================================================================
 
 LispConnection::LispConnection (ConsoleWindow* w) 
-   : InterprocessConnection(true),
+   : LispProcessConnection(true),
     type (local),
     host (T("localhost")),
     port (8000),
@@ -476,4 +777,56 @@ void LispConnection::messageReceived (const MemoryBlock &message) {
   String text=String((const char *)message, len);
   console->consolePrint(text);
   console->consoleTerpri();
+}
+
+
+// ok this would be the point to handle different types of messages 
+// coming back from the lisp
+
+
+
+void LispConnection::handleMessage (const Message& message)
+{
+  if (message.intParameter1 == (uint32)msgString )
+    {
+      switch (message.intParameter2)
+        {
+        case 0:
+	  {
+            MemoryBlock* const data = (MemoryBlock*) message.pointerParameter;
+            messageReceived (*data);
+            delete data;
+            break;
+	  }
+	  
+        case 1:
+	  connectionMade();
+	  break;
+	  
+        case 2:
+	  connectionLost();
+	  break;
+        }
+    } else if (message.intParameter1 == (uint32)msgBinaryData) 
+    {
+      switch (message.intParameter2)
+        {
+        case 0:
+	  {
+            MemoryBlock* const data = (MemoryBlock*) message.pointerParameter;
+            messageReceived (*data);
+            delete data;
+            break;
+	  }
+	  
+        case 1:
+	  connectionMade();
+	  break;
+	  
+        case 2:
+	  connectionLost();
+	  break;
+        }
+    }
+
 }
