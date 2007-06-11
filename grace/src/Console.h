@@ -75,8 +75,8 @@ public:
 
   enum ConsoleCommand {
     cmdGraceEditorNew = 32896,
-    cmdGraceEditorOpen = 33152,
-    cmdGracePlotterNew = 33408,
+    cmdGracePlotterNew = 33152,
+    cmdGraceEditorOpen = 33408,
     cmdGracePreferences = 33664,
     cmdGraceQuit = 33920,
     cmdEditCopy = 34176,
@@ -87,10 +87,11 @@ public:
     cmdAudioAudioSetup = 35456,
     cmdLispConnect = 35712,
     cmdLispConfigure = 35968,
-    cmdLispInputTracing = 36224,
-    cmdLispErrorTracing = 36480,
-    cmdHelpConsole = 36736,
-    cmdHelpAboutGrace = 36992};
+    cmdLispCompileFile = 36224,
+    cmdLispLoadFile = 36480,
+    cmdLispLoadSystem = 36736,
+    cmdHelpConsole = 36992,
+    cmdHelpAboutGrace = 37248};
 
   Console * console;
   ConsoleTheme theme;

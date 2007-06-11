@@ -280,18 +280,21 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 
   switch (idx) {
   case 0 :
-    menu.addItem( cmdGraceEditorNew, T("New Editor"), true);    
+    // should make syntaxId enum global !!
+    sub1.addItem( cmdGraceEditorNew + 3, T("Sal"), true); 
+    sub1.addItem( cmdGraceEditorNew + 2, T("Lisp"), true);
+    sub1.addItem( cmdGraceEditorNew + 1, T("Text"), true);
+    menu.addSubMenu( T("New Editor"), sub1, true);    
     sub1.addItem( cmdGracePlotterNew + XYPlot, T("XY"));
-    sub1.addItem( cmdGracePlotterNew + MidiPlot, T("Midi"));
-    sub1.addItem( cmdGracePlotterNew + VKeyPlot, T("Fomus"), false);
-    sub1.addItem( cmdGracePlotterNew + FomusPlot, T("Vkey"), false);
-    sub1.addItem( cmdGracePlotterNew + SpearPlot, T("Spear"), false);
-    sub1.addItem( cmdGracePlotterNew + CLMPlot, T("CLM"), false);
-    menu.addSubMenu( T("New Plotter"), sub1, true);    
+    sub2.addItem( cmdGracePlotterNew + MidiPlot, T("Midi"));
+    sub2.addItem( cmdGracePlotterNew + VKeyPlot, T("Fomus"), false);
+    sub2.addItem( cmdGracePlotterNew + FomusPlot, T("Vkey"), false);
+    sub2.addItem( cmdGracePlotterNew + SpearPlot, T("Spear"), false);
+    sub2.addItem( cmdGracePlotterNew + CLMPlot, T("CLM"), false);
+    menu.addSubMenu( T("New Plotter"), sub2, true);    
+    menu.addItem( cmdGraceEditorOpen, T("Open File..."), true);
     menu.addSeparator();
-    menu.addItem( cmdGraceEditorOpen, T("Open..."), true);
-    menu.addSeparator();
-    sub1.addItem( cmdGracePreferences, T("Preferences..."), false);
+    menu.addItem( cmdGracePreferences, T("Preferences..."), false);
     menu.addSeparator();
     menu.addItem( cmdGraceQuit, T("Quit Grace"), true);
     break;
@@ -317,24 +320,18 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     break;
   case 4 :
     if ( lisp->isLispRunning() )
-      menu.addItem( cmdLispConnect, T("Stop")); 
+      menu.addItem( cmdLispConnect, T("Stop Lisp")); 
     else 
-      menu.addItem( cmdLispConnect, T("Start"), 
+      menu.addItem( cmdLispConnect, T("Start Lisp"), 
 		    lisp->isLispStartable()); 
     menu.addItem( cmdLispConfigure, T("Configure..."), 
 		  (! lisp->isLispRunning() )
 		  ); 
     menu.addSeparator();
-    //    menu.addItem( cmdLispInputTracing, T("Trace Input"), false); 
-    //    menu.addItem( cmdLispErrorTracing, T("Backtrace Errors"), false); 
-
-    menu.addItem( cmdLispInputTracing, T("Test Connection"),
-		  true); //lisp->isConnected()); 
-    menu.addItem( cmdLispErrorTracing, T("Send kill server"), 
-		  true); //lisp->isConnected()); 
-
+    menu.addItem( cmdLispCompileFile, T("Compile File..."), false);
+    menu.addItem( cmdLispLoadFile, T("Load File..."), false);
+    menu.addItem( cmdLispLoadSystem, T("Load System..."), false);
     break;
-
   case 5 :
     menu.addItem( cmdHelpConsole, T("Console Help"), false); 
     menu.addItem( cmdHelpAboutGrace, T("About Grace"), false); 
@@ -360,11 +357,18 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
   case cmdGraceEditorNew :
     // doesnt work
     //cm->invokeDirectly(TextBuffer::cmdNew,false);
-    new EditorWindow( File( T("untitled.sal")) );
+    new EditorWindow(String::empty, false, arg);
     break;
   case cmdGraceEditorOpen :
     // doesnt work
     //cm->invokeDirectly(TextBuffer::cmdOpen,false);
+    {
+      FileChooser choose (T("Open File"), 
+			  File::getSpecialLocation(File::userHomeDirectory),
+			  String::empty, true);
+      if ( choose.browseForFileToOpen() )
+	new EditorWindow(choose.getResult().getFullPathName(), true, 0);
+    }
     break;
   case cmdAudioMidiSetup: 
   case cmdAudioAudioSetup: 
@@ -377,22 +381,17 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
     console->setTheme( arg);
     break;
   case cmdLispConnect :
-    if (lisp->isLispRunning())
-      lisp->killLisp();
+    if (lisp->isLispRunning()) {
+      //lisp->killLisp();
+      lisp->sendLispSexpr( T("(kill-server)\n") );
+      lisp->disconnect();
+    }
     else 
       lisp->startLisp();
     break;
   case cmdLispConfigure :
     showConfigureLispWindow();
     break;
-  case cmdLispInputTracing :
-    lisp->testConnection();
-    break;
-  case cmdLispErrorTracing :
-    lisp->sendLispSexpr( T("(kill-server)\n") );
-    lisp->disconnect();
-    break;
-
   default :
     break;
   }
