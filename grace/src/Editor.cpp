@@ -50,24 +50,53 @@ bool addSyntaxFileType(String name, syntaxID synt) {
   return true;
 }
 
-EditorWindow::EditorWindow (File afile)
+EditorWindow::EditorWindow (String filename, bool load, int synt)
   : DocumentWindow (String::empty , Colours::white, 
 		    DocumentWindow::allButtons, true ) {
   
-  editfile=File(afile);
-  
+  static int unt=0;
+  if (filename==String::empty) {
+    filename=T("untitled");
+    //if (unt>0) filename += unt;
+    if (synt==syntaxSal)
+      filename += T(".sal");
+    else if (synt==syntaxLisp)
+      filename += T(".lisp");
+    else {
+      filename += T(".text");
+      synt=syntaxText;
+    }
+    //unt++;
+  }
+
+  editfile=File(filename);
+
   String type = editfile.getFileExtension();
   String path = editfile.getFullPathName();
-  syntaxID mode = getSyntaxFromFileType(type);
+  syntaxID mode;
   TextBuffer * buffer;
+
+  switch (synt) {
+  case syntaxSal :
+  case syntaxLisp :
+  case syntaxText :
+    mode=(syntaxID)synt;
+    break;
+  default:
+    mode = getSyntaxFromFileType(type);
+    break;
+  }
+
   setName( editfile.getFileName() );
   setWantsKeyboardFocus(false);
   editor = new EditorComponent( path, mode) ;
   buffer=editor->buffer;
   buffer->setFont( Font(Font::getDefaultMonospacedFontName(), 17.0f, Font::plain ) );
-  if ( afile.existsAsFile() ) {
-    buffer->setText( afile.loadFileAsString() );
+
+  if ( load && editfile.existsAsFile() ) {
+    buffer->setText( editfile.loadFileAsString() );
   }
+
   buffer->setVisible(true);  // dont show window until subs are ready.
   editor->setVisible(true);
   setContentComponent(editor);
@@ -122,7 +151,12 @@ const PopupMenu EditorWindow::getMenuForIndex (MenuBarComponent* menuBar, int me
   
   if (menuIndex == 0) 
     {
-      menu.addCommandItem( commandManager, TextBuffer::cmdNew );
+      PopupMenu bufs;
+      bufs.addCommandItem( commandManager, TextBuffer::cmdNewSal );
+      bufs.addCommandItem( commandManager, TextBuffer::cmdNewLisp );
+      bufs.addCommandItem( commandManager, TextBuffer::cmdNewText );
+      menu.addSubMenu(T("New"), bufs, true);
+      menu.addSeparator();
       menu.addCommandItem( commandManager, TextBuffer::cmdOpen);
       menu.addSeparator();
       //menu.addCommandItem( commandManager, TextBuffer::cmdClose);

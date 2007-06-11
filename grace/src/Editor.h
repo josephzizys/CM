@@ -46,7 +46,7 @@ class EditorWindow  : public DocumentWindow,
   EditorComponent* editor;
   TextBuffer* getTextBuffer() {return editor->buffer; }
   
-  EditorWindow ( File edit) ;
+  EditorWindow (String filename, bool load=false, int syntax=0) ;
   ~EditorWindow () ;
   void closeButtonPressed () ;
 
