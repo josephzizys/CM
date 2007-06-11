@@ -17,8 +17,7 @@ using namespace std;
 // Syntax IDs, one for each syntax. 
 
 enum syntaxID {
-  syntaxNone = -1,
-  syntaxConsole,
+  syntaxNone = 0,
   syntaxText,
   syntaxLisp,
   syntaxSal
