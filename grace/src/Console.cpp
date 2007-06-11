@@ -285,7 +285,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     sub1.addItem( cmdGraceEditorNew + 2, T("Lisp"), true);
     sub1.addItem( cmdGraceEditorNew + 1, T("Text"), true);
     menu.addSubMenu( T("New Editor"), sub1, true);    
-    sub1.addItem( cmdGracePlotterNew + XYPlot, T("XY"));
+    sub2.addItem( cmdGracePlotterNew + XYPlot, T("XY"));
     sub2.addItem( cmdGracePlotterNew + MidiPlot, T("Midi"));
     sub2.addItem( cmdGracePlotterNew + VKeyPlot, T("Fomus"), false);
     sub2.addItem( cmdGracePlotterNew + FomusPlot, T("Vkey"), false);
