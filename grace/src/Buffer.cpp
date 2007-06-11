@@ -70,7 +70,9 @@ ApplicationCommandTarget* TextBuffer::getNextCommandTarget()
 void TextBuffer::getAllCommands (Array <CommandID>& commands)
 {
   const CommandID ids[] = { 
-    cmdNew,
+    cmdNewSal,
+    cmdNewLisp,
+    cmdNewText,
     cmdOpen,
     cmdSave,
     cmdSaveAs,
@@ -133,9 +135,15 @@ void TextBuffer::getCommandInfo (const CommandID commandID, ApplicationCommandIn
   
   switch (commandID)
     {
-    case cmdNew:
-      result.setInfo (T("New Editor..."), String::empty, fileCategory, 0);
+    case cmdNewSal:
+      result.setInfo (T("SAL"), String::empty, fileCategory, 0);
       result.addDefaultKeypress (T('N'), ModifierKeys::commandModifier);
+      break;
+    case cmdNewLisp:
+      result.setInfo (T("Lisp"), String::empty, fileCategory, 0);
+      break;
+    case cmdNewText:
+      result.setInfo (T("Text"), String::empty, fileCategory, 0);
       break;
     case cmdOpen:
       result.setInfo (T("Open"), String::empty, fileCategory, 0);
@@ -183,7 +191,6 @@ void TextBuffer::getCommandInfo (const CommandID commandID, ApplicationCommandIn
     case cmdFonts:
       result.setInfo (T("Font"), String::empty, preferencesCategory, 0);      
       break;
-
     case cmdLineBackward:
       result.setInfo (T("Move up line"), String::empty, navigationCategory, 0);
       break;
@@ -251,8 +258,14 @@ bool TextBuffer::perform (const InvocationInfo& info)
 {
   switch (info.commandID) 
     {
-    case cmdNew:
+    case cmdNewSal:
       newFile(syntaxSal);
+      break;
+    case cmdNewLisp:
+      newFile(syntaxLisp);
+      break;
+    case cmdNewText:
+      newFile(syntaxText);
       break;
     case cmdOpen:
       openFile();
@@ -1108,7 +1121,7 @@ int TextBuffer::evalLastSexpr() {
   if (syntaxId==syntaxSal)
     getConsole()->consoleEval(text, true);
   else
-    getConsole()->consoleEval(text, false);
+    getConsole()->consoleEval(text.substring(pos+1), false);
   return 0;
 }
 
@@ -1424,14 +1437,7 @@ void TextBuffer::saveFileAs() {
 }
 
 void TextBuffer::newFile(syntaxID mode) {
-  // Open untitled (new) file with syntax Mode.
-  static int num = 1;
-  String name = T("untitled");
-  if (num > 1) name << num;
-  if (mode == syntaxSal) name << T(".sal") ;    
-  else if (mode == syntaxLisp) name << T(".lisp") ;
-  num++;
-  new EditorWindow( File(name) ) ;
+  new EditorWindow( String::empty, false, mode ) ;
 }
 
 void TextBuffer::openFile() {
@@ -1444,7 +1450,7 @@ void TextBuffer::openFile() {
 
   if ( choose.browseForFileToOpen() ) {
     File f = choose.getResult();
-    new EditorWindow(f);
+    new EditorWindow(f.getFullPathName(), true, 0);
   }
 }
 

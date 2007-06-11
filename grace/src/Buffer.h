@@ -57,7 +57,9 @@ class TextBuffer : public TextEditor,
  public:
 
   enum CommandIDs {
-    cmdNew = 20001,
+    cmdNewSal = 20001,
+    cmdNewLisp,
+    cmdNewText,
     cmdOpen,
     cmdSave,
     cmdSaveAs,
