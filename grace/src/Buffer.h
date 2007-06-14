@@ -15,18 +15,6 @@
 #include "Syntax.h"
 #include "Console.h"
 
-class TextRange
-{
- public:
-  int start;
-  int end;
-  TextRange(int a, int b) { end = a; end = b;}
-  ~TextRange() {}
-
-  void setRange(int a, int b) { start = a; end = b;}
-  int length() { return end-start;}
-};
-
 class TextBuffer : public TextEditor,
 		   public ApplicationCommandTarget
 {
@@ -34,8 +22,6 @@ class TextBuffer : public TextEditor,
   Syntax* syntax;
   int thisact, lastact;
   int goalColumn;
-  bool changed; // needs save
-  bool hiliting; // wants hiliting
 
   TopLevelWindow *parentWindow;
 
@@ -52,70 +38,112 @@ class TextBuffer : public TextEditor,
   void keyIllegalAction(const KeyPress& key);
   void keyDefaultAction(const KeyPress& key);
   void keyPressed(const KeyPress& key) ;
-  void mouseDown(const MouseEvent &e) ;
-
+  //void mouseDown(const MouseEvent &e) ;
+  void mouseDoubleClick(const MouseEvent &e) ;
  public:
 
-  enum CommandIDs {
-    cmdNewSal = 20001,
-    cmdNewLisp,
-    cmdNewText,
-    cmdOpen,
-    cmdSave,
-    cmdSaveAs,
-    cmdRevert,
-    cmdClose,
-    cmdUndo,
-    cmdRedo,
-    cmdCut,
-    cmdCopy,
-    cmdPaste,
-    cmdSelectAll,
-    cmdOptions,
-    cmdFonts,
-    
-    cmdCharForward,
-    cmdCharBackward,
-    cmdWordForward,
-    cmdWordBackward,
-    cmdSexprForward,
-    cmdSexprBackward,
-    cmdLineForward,
-    cmdLineBackward,
-    cmdPageForward,
-    cmdPageBackward,
-    cmdGotoEOL,
-    cmdGotoBOL,
-    cmdGotoEOB,
-    cmdGotoBOB,
-    cmdGotoColumn,
-    cmdGotoLine,
+  enum BufferFlags {needsave=1, readonly=2, hiliteoff=4, parensoff=8, 
+		    load=16};
+  int flags;
+  
+  int getFlag(int f) {return (flags & f);}
+  bool testFlag(int f) {return (getFlag(f) == f);}
+  void setFlagOn(int f) {flags |= f; return ;}
+  void setFlagOff(int f) {flags &= ~f; return ;}
+  bool toggleFlag(int f) {flags ^= f; return testFlag(f);}
 
-    cmdBackspace,
-    cmdDelete,
-    cmdKillWord,
-    cmdKillSexpr,
-    cmdKillWhite,
-    cmdKillLine,
-    cmdInsertChar,
-    cmdInsertLine,
-    cmdOpenLine,
+/*
+(defun enums (block enumname &rest names)
+  (let* ((cmdinfo #xFF)
+         (blockwidth (* 128 cmdinfo))
+	 (blockstart (* blockwidth block)))
+  (format t "  enum ~A {~%" enumname)
+  (loop with m = (length names)
+     for n in names for i from 1
+     do (if (= i 128) (error "too many commands, block size = 128"))
+     (format t "    cmd~A = ~D~:[,~;};~]~%" n
+	     (+ (ash i 8) blockstart)
+	     (= i m)))))
+(enums 3 "EditorCommand" "NewSal" "NewLisp" "NewText" "Open"
+       "Save" "SaveAs" "Revert" "Close" "Undo" "Redo"
+       "Cut" "Copy" "Paste" "SelectAll" "Options" "Fonts"
+       "CharForward" "CharBackward" "WordForward" 
+       "WordBackward" "SexprForward" "SexprBackward"
+       "LineForward" "LineBackward" "PageForward"
+       "PageBackward" "GotoEOL" "GotoBOL" "GotoEOB"
+       "GotoBOB" "GotoColumn" "GotoLine"  "Backspace"
+       "Delete" "KillWord" "KillSexpr" "KillWhite"
+       "KillLine" "InsertChar" "InsertLine" "OpenLine"
+       "ViewFontList" "ViewFontSize" "Complete" "Indent"
+       "ToggleHiliting" "ToggleParens" "ToggleReadWrite"
+        "Eval" "HelpEditor" )
+*/
+ 
+  enum EditorCommand {
+    cmdNewSal = 98176,
+    cmdNewLisp = 98432,
+    cmdNewText = 98688,
+    cmdOpen = 98944,
+    cmdSave = 99200,
+    cmdSaveAs = 99456,
+    cmdRevert = 99712,
+    cmdClose = 99968,
+    cmdUndo = 100224,
+    cmdRedo = 100480,
+    cmdCut = 100736,
+    cmdCopy = 100992,
+    cmdPaste = 101248,
+    cmdSelectAll = 101504,
+    cmdOptions = 101760,
+    cmdFonts = 102016,
+    cmdCharForward = 102272,
+    cmdCharBackward = 102528,
+    cmdWordForward = 102784,
+    cmdWordBackward = 103040,
+    cmdSexprForward = 103296,
+    cmdSexprBackward = 103552,
+    cmdLineForward = 103808,
+    cmdLineBackward = 104064,
+    cmdPageForward = 104320,
+    cmdPageBackward = 104576,
+    cmdGotoEOL = 104832,
+    cmdGotoBOL = 105088,
+    cmdGotoEOB = 105344,
+    cmdGotoBOB = 105600,
+    cmdGotoColumn = 105856,
+    cmdGotoLine = 106112,
+    cmdBackspace = 106368,
+    cmdDelete = 106624,
+    cmdKillWord = 106880,
+    cmdKillSexpr = 107136,
+    cmdKillWhite = 107392,
+    cmdKillLine = 107648,
+    cmdInsertChar = 107904,
+    cmdInsertLine = 108160,
+    cmdOpenLine = 108416,
+    cmdViewFontList = 108672,
+    cmdViewFontSize = 108928,
+    cmdComplete = 109184,
+    cmdIndent = 109440,
+    cmdToggleHiliting = 109696,
+    cmdToggleParens = 109952,
+    cmdToggleReadWrite = 110208,
+    cmdEval = 110464,
+    cmdHelpEditor = 110720};
 
-    cmdComplete,
-    cmdIndent,
-    cmdToggleHiliting,
-    cmdSymbolHelp,
-    cmdEval
-  };
-
-  bool isHiliting() {return hiliting;}
-  void setHiliting(bool h) {hiliting=h;}
-  bool isChanged()  {return changed;}
-  void setChanged(bool c) {changed=c;}
-    
-  TextBuffer(String nam, syntaxID m, TopLevelWindow *pwind = 0);
+  TextBuffer(syntaxID id, int flg);
   ~TextBuffer();
+
   syntaxID getBufferSyntax() { return syntaxId; }
+
+  bool isHiliting();
+  void toggleHiliting();
+  bool isParensMatching();
+  void toggleParensMatching ();
+  bool isChanged();
+  void setChanged(bool b);
+  void toggleReadOnly();
+
   int point ();
   int setPoint(int p);
   int incPoint(int i);
@@ -155,7 +183,8 @@ class TextBuffer : public TextEditor,
   int forwardSexpr();
   int backwardSexpr();
   int evalLastSexpr();
-  void toggleHiliting() ;
+  //  void toggleHiliting() ;
+  void matchParens();
   void colorize(int from, int to, bool force) ;
   void colorizeAll() ;
   void colorizeAfterChange(int cmd) ;
@@ -181,19 +210,10 @@ class TextBuffer : public TextEditor,
   void getCommandInfo (const CommandID commandID, ApplicationCommandInfo& result);
   bool perform (const InvocationInfo& info);
 
-
-  File editfile;
-  Font editfont;
-
-
-  
-  void openFile();
-  void newFile(syntaxID syn);
-  void saveFile();
-  void saveFileAs();
-  void revertFile();
   void setFontType(const String typeface);
+  float getFontSize( );
   void setFontSize( float size );
+
   ConsoleWindow* getConsole();
 };
 

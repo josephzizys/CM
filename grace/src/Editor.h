@@ -13,54 +13,46 @@
 
 #include "Buffer.h"
 
-const int fontSizeList[] = {9, 10, 12, 14, 16, 18, 24, 32};
+const int fontSizeList[] = 
+  {9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 24, 28, 32};
 
 class EditorComponent : public Component {
-  // this class is currently useless since all it holds is the
-  // buffer. maybe later can group buffer with other stuff
-
   void resized () { buffer->setSize(getWidth(), getHeight()); }
-
  public:
-  
   TextBuffer* buffer;
-
-  EditorComponent (String pathname, syntaxID mode) {
-    buffer = new TextBuffer(pathname, mode);
+  EditorComponent (syntaxID mode, int flags) {
+    buffer = new TextBuffer(mode, flags);
     buffer->setTopLeftPosition(0,0);
     addChildComponent( buffer, -1);
   }
-
-  ~EditorComponent() {
-    buffer->~TextBuffer();
-  }
+  ~EditorComponent() {buffer->~TextBuffer();}
 };
 
-class EditorWindow  : public DocumentWindow,
-		      public MenuBarModel
-{
+class EditorWindow : public DocumentWindow, public MenuBarModel {
  public:
-  
   File editfile;
   Font editfont;
   EditorComponent* editor;
-  TextBuffer* getTextBuffer() {return editor->buffer; }
   
-  EditorWindow (String filename, bool load=false, int syntax=0) ;
+  EditorWindow (int syntax=0, int flags=0, String file=String::empty,
+		String title=String::empty, String text=String::empty) ;
   ~EditorWindow () ;
+
+  void openFile();
+  void closeFile();
+  void newFile(syntaxID syn);
+  void saveFile();
+  void saveFileAs();
+  void revertFile();
+  void showEditorHelp(int id);
+  TextBuffer* getTextBuffer() {return editor->buffer; }
   void closeButtonPressed () ;
-
-  /* File Menu */
-
   ApplicationCommandManager *commandManager;
-  
-
-  // menubar and menus
   const StringArray getMenuBarNames (MenuBarComponent* menuBar);
-  const PopupMenu getMenuForIndex (MenuBarComponent* menuBar, int menuIndex, const String& menuName);
-  void menuItemSelected (MenuBarComponent* menuBar, int menuItemID, int topLevelMenuIndex);
-   
- 
+  const PopupMenu getMenuForIndex (MenuBarComponent* menuBar, int menuIndex, 
+				   const String& menuName);
+  void menuItemSelected (MenuBarComponent* menuBar, int menuItemID, 
+			 int topLevelMenuIndex);
 };
 
 #endif

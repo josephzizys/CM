@@ -12,38 +12,23 @@
 #include "Editor.h"
 #include "FontList.h"
 #include "Grace.h"
-//#include "Console.h"
-
-/*
-Unresolved problems:
-JUCE Home/End and Up/Down keys dont search for true BOL/EOL conditions
-so cursor motion fails on wrapped lines...
-*/
 
 #define BUFMAX 0xFFFFFFF
 
-TextBuffer::TextBuffer (String pathname, syntaxID id, TopLevelWindow *pwind) 
- : TextEditor(pathname) {
-  changed=false;
+TextBuffer::TextBuffer (syntaxID id, int flg) 
+  : TextEditor(String::empty) {
+  flags=flg;
   setWantsKeyboardFocus(true);
   setMultiLine(true);
   setReturnKeyStartsNewLine(true);
   setCaretPosition(0);
   setPoint(0);
   initSyntax(id);
-  parentWindow = pwind;
-  editfont = Font(Font::getDefaultMonospacedFontName(), 17.0f, Font::plain );
-  // adding a TextChanged listener doesnt work because JUCE calls the
-  // listener even if there is only cursor motion!
-  // addListener( new TextBufferListener( this ) );
- 
-  //
 }
 
 void TextBuffer::initSyntax (syntaxID id) {
   // initialize buffers' syntax table for the appropriate editing mode
   syntaxId=id;
-  hiliting=(id==syntaxText) ? false : true;
   switch (id) {
   case syntaxSal :
     syntax= new SalSyntax();
@@ -53,6 +38,8 @@ void TextBuffer::initSyntax (syntaxID id) {
     break;
   case syntaxText :
   default : 
+    syntaxId=syntaxText;
+    setFlagOn(hiliteoff);
     syntax= new TextSyntax();
     break;
   }
@@ -76,8 +63,8 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdOpen,
     cmdSave,
     cmdSaveAs,
+    cmdRevert,
     cmdClose,
-    
     cmdUndo,
     cmdRedo,
     cmdCut,
@@ -86,7 +73,6 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdSelectAll,
     cmdOptions,
     cmdFonts,
-    
     cmdCharForward,
     cmdCharBackward,
     cmdWordForward,
@@ -103,7 +89,6 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdGotoBOB,
     cmdGotoColumn,
     cmdGotoLine,
-
     cmdBackspace,
     cmdDelete,
     cmdKillWord,
@@ -113,19 +98,22 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdInsertChar,
     cmdInsertLine,
     cmdOpenLine,
-
+    cmdViewFontList,
+    cmdViewFontSize,
     cmdComplete,
     cmdIndent,
     cmdToggleHiliting,
-    cmdSymbolHelp,
-    cmdEval
+    cmdToggleParens,
+    cmdToggleReadWrite,
+    cmdEval,
+    cmdHelpEditor,
   };
   
   commands.addArray (ids, sizeof (ids) / sizeof (ids [0]));
 }
 
-void TextBuffer::getCommandInfo (const CommandID commandID, ApplicationCommandInfo& result)
-{
+void TextBuffer::getCommandInfo (const CommandID commandID, 
+				 ApplicationCommandInfo& result) {
   const String fileCategory (T("File"));
   const String preferencesCategory (T("Preferences"));
   const String navigationCategory (T("Navigation"));
@@ -133,21 +121,27 @@ void TextBuffer::getCommandInfo (const CommandID commandID, ApplicationCommandIn
   const String optionsCategory (T("Options"));
   PopupMenu fontsMenu;
   
-  switch (commandID)
-    {
+  switch (commandID) {
     case cmdNewSal:
       result.setInfo (T("SAL"), String::empty, fileCategory, 0);
       result.addDefaultKeypress (T('N'), ModifierKeys::commandModifier);
       break;
     case cmdNewLisp:
       result.setInfo (T("Lisp"), String::empty, fileCategory, 0);
+      result.addDefaultKeypress (T('N'), 
+				 ModifierKeys::commandModifier | 
+				 ModifierKeys::shiftModifier);
       break;
     case cmdNewText:
       result.setInfo (T("Text"), String::empty, fileCategory, 0);
       break;
     case cmdOpen:
-      result.setInfo (T("Open"), String::empty, fileCategory, 0);
+      result.setInfo (T("Open..."), String::empty, fileCategory, 0);
       result.addDefaultKeypress (T('O'), ModifierKeys::commandModifier);
+      break;
+    case cmdClose:
+      result.setInfo (T("Close"), String::empty, fileCategory, 0);
+      result.addDefaultKeypress (T('W'), ModifierKeys::commandModifier);
       break;
     case cmdSave:
       result.setInfo (T("Save"), String::empty, fileCategory, 0);
@@ -155,11 +149,12 @@ void TextBuffer::getCommandInfo (const CommandID commandID, ApplicationCommandIn
       break;
     case cmdSaveAs:
       result.setInfo (T("Save As..."), String::empty, fileCategory, 0);
-      result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier || ModifierKeys::shiftModifier);
+      result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier | 
+				 ModifierKeys::shiftModifier);
       break;
-    case cmdClose:
-      result.setInfo (T("Close"), String::empty, fileCategory, 0);
-      result.addDefaultKeypress (T('W'), ModifierKeys::commandModifier);
+    case cmdRevert:
+      result.setInfo (T("Revert"), String::empty, fileCategory, 0);
+      result.addDefaultKeypress (T('R'), ModifierKeys::commandModifier);
       break;
     case cmdUndo:
       result.setInfo (T("Undo"), String::empty, editingCategory, 0);
@@ -167,7 +162,8 @@ void TextBuffer::getCommandInfo (const CommandID commandID, ApplicationCommandIn
       break;
     case cmdRedo:
       result.setInfo (T("Redo"), String::empty, editingCategory, 0);
-      result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier | ModifierKeys::shiftModifier);
+      result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier | 
+				 ModifierKeys::shiftModifier);
       break;
     case cmdCut:
       result.setInfo (T("Cut"), String::empty, editingCategory, 0);
@@ -213,13 +209,16 @@ void TextBuffer::getCommandInfo (const CommandID commandID, ApplicationCommandIn
       result.setInfo (T("Move to end of line"), String::empty, navigationCategory, 0);
       break;
     case cmdGotoBOL:
-      result.setInfo (T("Move to beginning of line"), String::empty, navigationCategory, 0);
+      result.setInfo (T("Move to beginning of line"), String::empty, 
+		      navigationCategory, 0);
       break;
     case cmdGotoEOB:
-      result.setInfo (T("Move to end of document"), String::empty, navigationCategory, 0);
+      result.setInfo (T("Move to end of document"), String::empty, 
+		      navigationCategory, 0);
       break;
     case cmdGotoBOB:
-      result.setInfo (T("Move to beginning of document"), String::empty, navigationCategory, 0);
+      result.setInfo (T("Move to beginning of document"), String::empty,
+		      navigationCategory, 0);
       break;
     case cmdPageBackward:
       result.setInfo (T("Move page up"), String::empty, navigationCategory, 0);
@@ -228,131 +227,136 @@ void TextBuffer::getCommandInfo (const CommandID commandID, ApplicationCommandIn
       result.setInfo (T("Move page down"), String::empty, navigationCategory, 0);
       break; 
     case cmdSexprForward:
-      result.setInfo (T("Move to end of sexpr"), String::empty, navigationCategory, 0);
+      result.setInfo (T("Move to end of sexpr"), String::empty, 
+		      navigationCategory, 0);
       break;
     case cmdSexprBackward:
-      result.setInfo (T("Move to beginning of sexpr"), String::empty, navigationCategory, 0);
+      result.setInfo (T("Move to beginning of sexpr"), String::empty, 
+		      navigationCategory, 0);
       break;
-
     case cmdDelete:
       result.setInfo (T("Delete backward"), String::empty, editingCategory, 0);
       break;
     case cmdKillSexpr:
-      result.setInfo (T("Delete to end of sexpr"), String::empty, editingCategory, 0);
+      result.setInfo (T("Delete to end of sexpr"), String::empty,
+		      editingCategory, 0);
       break;
     case cmdIndent:
       result.setInfo (T("Indent"), String::empty, editingCategory, 0);
       break;
-    
     case cmdEval:
       result.setInfo (T("Eval"), String::empty, editingCategory, 0);
       break;
     default:
       break;
-      
-    }
+  }
 }
 
-
-bool TextBuffer::perform (const InvocationInfo& info)
-{
-  switch (info.commandID) 
-    {
-    case cmdNewSal:
-      newFile(syntaxSal);
-      break;
-    case cmdNewLisp:
-      newFile(syntaxLisp);
-      break;
-    case cmdNewText:
-      newFile(syntaxText);
-      break;
-    case cmdOpen:
-      openFile();
-      break;
-    case cmdSave:
-      saveFile();
-      break;
-    case cmdSaveAs:
-      saveFileAs();
-      break;
-    case cmdUndo:
-      break;
-    case cmdRedo:
-      break;
-    case cmdCut:
-      cut();
-      break;
-    case cmdCopy:
-      copy();
-      break;
-    case cmdPaste:
-      paste();
-      break;
-    case cmdSelectAll:
-      selectAll();
-      break;
-      /* could open dialogue window, etc for these */
-    case cmdOptions:
-      break;
-    case cmdFonts:
-      break;
-    case cmdLineBackward:
-      previousLine();
-      break;
-    case cmdLineForward:
-      nextLine();
-      break;
-    case cmdCharBackward:
-       backwardChar();
-      break;      
-    case cmdCharForward:
-      forwardChar();
-      break;
-    case cmdWordBackward:
-       backwardWord();
-      break;
-    case cmdWordForward:
-       forwardWord();
-      break;
-    case cmdGotoEOL:
-       gotoEOL();
-       break;
-    case cmdGotoBOL:
-       gotoBOL();
-      break;
-    case cmdGotoEOB:
-       gotoEOB();
-      break;
-    case cmdGotoBOB:
-       gotoBOB();
-      break;
-    case cmdPageBackward:
-       backwardScreen();
-      break;
-    case cmdPageForward:
-      forwardScreen();
-      break; 
-    case cmdSexprForward:
-      break;
-    case cmdSexprBackward:
-      break;
-
-    case cmdDelete:
-      break;
-    case cmdKillSexpr:
-      break;
-    case cmdIndent:
-      break;
-    case cmdEval:
-      evalLastSexpr();
-      break;
-    default:
-      return false;
-    }
+bool TextBuffer::perform (const InvocationInfo& info) {
+  switch (info.commandID) {
+  case cmdNewSal:
+    ((EditorWindow*)getTopLevelComponent())->newFile(syntaxSal);
+    break;
+  case cmdNewLisp:
+    ((EditorWindow*)getTopLevelComponent())->newFile(syntaxLisp);
+    break;
+  case cmdNewText:
+    ((EditorWindow*)getTopLevelComponent())->newFile(syntaxText);
+    break;
+  case cmdOpen:
+    ((EditorWindow*)getTopLevelComponent())->openFile();
+    break;
+  case cmdClose:
+    ((EditorWindow*)getTopLevelComponent())->closeFile();
+    break;
+  case cmdSave:
+    ((EditorWindow*)getTopLevelComponent())->saveFile();
+    break;
+  case cmdSaveAs:
+    ((EditorWindow*)getTopLevelComponent())->saveFileAs();
+    break;
+  case cmdRevert:
+    ((EditorWindow*)getTopLevelComponent())->revertFile();
+    break;  
+  case cmdUndo:
+    break;
+  case cmdRedo:
+    break;
+  case cmdCut:
+    cut();
+    setChanged(true);
+    break;
+  case cmdCopy:
+    copy();
+    break;
+  case cmdPaste:
+    paste();
+    setChanged(true);
+    break;
+  case cmdSelectAll:
+    selectAll();
+    break;
+  case cmdOptions:
+    break;
+  case cmdFonts:
+    break;
+  case cmdLineBackward:
+    previousLine();
+    break;
+  case cmdLineForward:
+    nextLine();
+    break;
+  case cmdCharBackward:
+    backwardChar();
+    break;      
+  case cmdCharForward:
+    forwardChar();
+    break;
+  case cmdWordBackward:
+    backwardWord();
+    break;
+  case cmdWordForward:
+    forwardWord();
+    break;
+  case cmdGotoEOL:
+    gotoEOL();
+    break;
+  case cmdGotoBOL:
+    gotoBOL();
+    break;
+  case cmdGotoEOB:
+    gotoEOB();
+    break;
+  case cmdGotoBOB:
+    gotoBOB();
+    break;
+  case cmdPageBackward:
+    backwardScreen();
+    break;
+  case cmdPageForward:
+    forwardScreen();
+    break; 
+  case cmdSexprForward:
+    break;
+  case cmdSexprBackward:
+    break;
+  case cmdDelete:
+    setChanged(true);
+    break;
+  case cmdKillSexpr:
+    setChanged(true);
+    break;
+  case cmdIndent:
+    setChanged(true);
+    break;
+  case cmdEval:
+    evalLastSexpr();
+    break;
+  default:
+    return false;
+  }
   return true;
 }
-
 
 //
 // Emacs Key Actions
@@ -464,6 +468,7 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
     keyIllegalAction(key);
   }
   if (alias != 0) {
+    setChanged(true);
     TextEditor::keyPressed(KeyPress(alias));
   }
 }
@@ -472,13 +477,17 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
   int kcode = key.getKeyCode();
   //printf("Control-X: %s\n", key.getTextDescription().toUTF8() );
   switch (kcode) {
+  case 'c':
+  case 'C':
+    ((EditorWindow*)getTopLevelComponent())->closeFile();
+    break;
   case 'e':
   case 'E':
     evalLastSexpr();
     break;
   case 'f':
   case 'F':
-    openFile();
+    ((EditorWindow*)getTopLevelComponent())->openFile();
     break;
   case 'h':
   case 'H':
@@ -486,11 +495,11 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
     break;
   case 's':
   case 'S':
-    saveFile();
+    ((EditorWindow*)getTopLevelComponent())->saveFile();
     break;
   case 'w':
   case 'W':
-    saveFileAs();
+    ((EditorWindow*)getTopLevelComponent())->saveFileAs();
     break;
   case 'z' :
   case 'Z' :
@@ -597,23 +606,26 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     break;
   case 'O' :
   case 'o' :
-    openFile();
+    ((EditorWindow*)getTopLevelComponent())->openFile();
     break;
   case 'N' :
   case 'n' :  
     // new window should probably default to sal mode. Maybe
     // Shift-Command-M for opening new Lisp buffer (?)
     sid=(key.getModifiers().isShiftDown()) ? syntaxLisp : syntaxSal;
-    newFile(sid);
+    ((EditorWindow*)getTopLevelComponent())->newFile(sid);
     break;
   case 'R' :
   case 'r' :
-    revertFile();
+    ((EditorWindow*)getTopLevelComponent())->revertFile();
     break;
   case 'S' :
   case 's' :
-    saveFile();
+    ((EditorWindow*)getTopLevelComponent())->saveFile();
     break;
+  case 'w' :
+  case 'W' :
+    ((EditorWindow*)getTopLevelComponent())->closeFile();
   case 'x' :
   case 'X' :
     cut();
@@ -659,18 +671,28 @@ void TextBuffer::keyPressed (const KeyPress& key) {
     case '\n' :
     case '\r' :
       TextEditor::keyPressed(key);
-      setChanged(true); 
+      setChanged(true);
       colorizeAfterChange(cmdInsertLine);
       break;
     case 8 :  // backspace
       TextEditor::keyPressed(key);
-      setChanged(true); 
+      setChanged(true);
       colorizeAfterChange(cmdBackspace);
       break;
     case 127 :  // delete
       TextEditor::keyPressed(key);
       setChanged(true);
       colorizeAfterChange(cmdDelete);
+      break;
+    case ')':
+      TextEditor::keyPressed(key);
+      if ( isParensMatching() )
+	matchParens();
+      break;
+    case '}':
+      TextEditor::keyPressed(key);
+      if ( (syntaxId==syntaxSal) && isParensMatching() )
+	matchParens();
       break;
     default :  // inserting text
       if (31<keyCode && keyCode<127) {
@@ -702,11 +724,6 @@ void TextBuffer::keyPressed (const KeyPress& key) {
   storeAction();
 }
   
-void TextBuffer::mouseDown (const MouseEvent &e) {
-  // Call underlying method and then update point.
-  TextEditor::mouseDown(e);
-}  	
-
 ///
 /// Emacs Cursor Motion : point() etc
 ///
@@ -1071,6 +1088,50 @@ void TextBuffer::selectAll() {
   }
 }
 
+void TextBuffer::mouseDoubleClick (const MouseEvent &e) {
+  // Call underlying method and then update point.
+  int a, b;
+  //if (e.getNumberOfClicks() == 2) {
+    String it = getTextSubstring(point(),point()+1);
+    switch (it[0]) {
+    case '(' :
+    case '{' :
+    case '"' :
+      a=point();
+      b=forwardSexpr();
+      if (b>a) setHighlightedRegion(a,b-a);
+      break;
+    case ')' :
+    case '}' :
+      b=incPoint(1);
+      a=backwardSexpr();
+      if (a<b) setHighlightedRegion(a,b-a);
+      break;
+    default:
+      TextEditor::mouseDoubleClick(e);
+      break;
+    }
+    //}
+    //else 
+    //  TextEditor::mouseDoubleClick(e);
+}  	
+
+void TextBuffer::matchParens() {
+  int b=point();
+  int a=backwardSexpr();
+  if (a<b) {
+    String s=getTextSubstring(a,a+1);
+    printf("matching paren '%s\n", s.toUTF8());
+    //Colour c=findColour(TextEditor::highlightedTextColourId);
+    /// setColour(TextEditor::highlightedTextColourId, Colours::green);
+    setHighlightedRegion(a,b-a);
+    uint32 now = Time::getMillisecondCounter();
+    Time::waitForMillisecondCounter(now+100);
+    //setColour(TextEditor::highlightedTextColourId, c);
+    setPoint(b);
+  }
+}
+
 ///
 /// Evaluation
 ///
@@ -1399,10 +1460,18 @@ void TextBuffer::colorizeAfterChange(int cmd) {
   colorize(bot,top,true);
 }
 
+//
+// Flag twidding.
+//
+
+bool TextBuffer::isHiliting() {
+  return !testFlag(hiliteoff);
+}
+
 void TextBuffer::toggleHiliting() {
-  //printf("toggle color\n");
-  setHiliting ( ! isHiliting() ) ;
-  if ( isHiliting() ) 
+  if (syntaxId==syntaxText) return;
+  toggleFlag(hiliteoff);
+  if ( isHiliting() )
     colorizeAll();
   else {
     String text=getText();
@@ -1413,69 +1482,46 @@ void TextBuffer::toggleHiliting() {
   }
 }
 
-void TextBuffer::saveFile() {
-  editfile.replaceWithText( getText() ) ;
-  setChanged(false);
+bool TextBuffer::isParensMatching() {
+  return !testFlag(parensoff);
 }
 
-void TextBuffer::saveFileAs() {
-  File dir;
-
-  if ( editfile.existsAsFile() )
-    dir = editfile.getParentDirectory();
-  else dir = File::getSpecialLocation(File::userHomeDirectory);
-
-  FileChooser choose (String::empty, dir, String::empty, true);
-
-  if ( choose.browseForFileToSave(true) ) {
-    File f = choose.getResult();
-    f.replaceWithText( getText() );
-    setChanged(false);
-    editfile=File(f);
-    parentWindow->setName( editfile.getFileName() );
-  }
+void TextBuffer::toggleParensMatching () {
+  toggleFlag(parensoff); 
+  return;
 }
 
-void TextBuffer::newFile(syntaxID mode) {
-  new EditorWindow( String::empty, false, mode ) ;
+bool TextBuffer::isChanged() {
+  return testFlag(needsave);
 }
 
-void TextBuffer::openFile() {
-  File dir;
-  if ( editfile.existsAsFile() )
-    dir = editfile.getParentDirectory();
-  else dir = File::getSpecialLocation(File::userHomeDirectory);
-
-  FileChooser choose (T("Open File"), dir, String::empty, true);
-
-  if ( choose.browseForFileToOpen() ) {
-    File f = choose.getResult();
-    new EditorWindow(f.getFullPathName(), true, 0);
-  }
+void TextBuffer::setChanged(bool b) {
+  if (b) setFlagOn(needsave); 
+  else setFlagOff(needsave); 
+  return;
 }
 
-void TextBuffer::revertFile() {
-  File file = File( getName() );
-  bool doit=false;
-  if ( file.existsAsFile() ) 
-    doit=AlertWindow::showOkCancelBox
-      (AlertWindow::QuestionIcon, T("Revert File"),
-       T("Really revert to last saved version of file?"),
-       T("OK"), T("Cancel"));
-  if ( doit ) {
-    setText( file.loadFileAsString() ) ;
-    if ( isHiliting() )
-      colorizeAll();
-  }
+void TextBuffer::toggleReadOnly() {
+  toggleFlag(readonly);
+  setReadOnly(testFlag(readonly));
 }
 
+///
+/// Font twiddling.
+///
 
 void TextBuffer::setFontType(const String name) {
-  editfont.setTypefaceName( name );
-  applyFontToAllText(editfont);
+  Font font=getFont();
+  font.setTypefaceName( name );
+  applyFontToAllText(font);
 }
 
 void TextBuffer::setFontSize( float size ) {
-  editfont.setHeight(size);
-  applyFontToAllText(editfont);
+  Font font=getFont();
+  font.setHeight(size);
+  applyFontToAllText(font);
+}
+
+float TextBuffer::getFontSize(  ) {
+  return getFont().getHeight();
 }
