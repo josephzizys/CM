@@ -13,9 +13,8 @@
 
 #include "juce.h"
 
-//const char * getGraceSplashData() ;
-//int getGraceSplashSize();
-
+String getEditorHelp();
+String getPlotterHelp();
 
 class SplashComponent : public Component {
  public:

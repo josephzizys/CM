@@ -10,6 +10,109 @@
 
 #include "Resources.h"
 
+String getPlotterHelp () {
+  return String::empty;
+}
+
+String getEditorHelp () {
+  String help = T("The Grace text editor supports the following set of features:\n\
+\n\
+ o  Syntax highlighting for SAL and Lisp programs\n\
+ o  Syntax line indentation (Tab key)\n\
+ o  Evaluation services\n\
+ o  Emacs Lite command emulation\n\
+\n\
+Editing Syntax\n\
+\n\
+The behavior of each Editor window depends on its \"editing syntax\".\n\
+The editor supports three syntaxes: SAL, Lisp and Text. You choose the\n\
+syntax you want to work with when you create a new Editor window with\n\
+the File>New Editor command. When you open an existing file with the\n\
+File>Open... command the syntax is selected automatically according to\n\
+the file's type extension:\n\
+\n\
+   SAL:   .sal\n\
+   Lisp:  .lisp .lsp .cl .scm .cm .clm .ins .cmn .fms .asd\n\
+   Text:  .text .txt .*\n\
+\n\
+The SAL and Lisp editing syntaxes provide syntax highlighting, or text\n\
+coloration based on the syntax of coding symbols. Highlighting is\n\
+currently an expensive (slow) operation due to the underlying editor's\n\
+string and text support. This will be addressed in a future release.\n\
+\n\
+Each syntax provides an automatic line indentation service to\n\
+help make your programs readable. To use it simply type the Tab key on\n\
+a line to indent it according to the style rules of the underlying\n\
+syntax.\n\
+\n\
+Both SAL and Lisp syntaxes provide code evaluation services. In order\n\
+to perform evaluation Lisp must be running (Console>Lisp>Start Lisp).\n\
+\n\
+To evaluate a SAL command, place the cursor at the end of the\n\
+command and press COMMAND-Enter.\n\
+\n\
+To evaluate a LISP command, place the cursor at the end of a sexpr and\n\
+type C-xC-e (see below).\n\
+\n\
+Emacs Lite Commands\n\
+\n\
+The Grace editor supports a fair number of Emacs editing commands.\n\
+Emacs commands are keystroke combinations involving the CONTROL, META\n\
+and COMMAND keys combined with one (or more) additional keys.\n\
+In the documentation that follows pressing CONTROL, META and COMMAND is\n\
+shortened to C- M- and COM-, respectively. For example, C-f means to\n\
+hold down the Control key and type the f key and C-M-f means to hold\n\
+down both the Control and Meta keys while typing the f key.\n\
+\n\
+Cursor Motion:\n\
+\n\
+ C-f         Forward character\n\
+ C-b         Backward character\n\
+ M-f         Forward word\n\
+ M-b         Backward word\n\
+ C-M-f       Forward sexpr\n\
+ C-M-b       Backward sexpr\n\
+\n\
+Line Motion:\n\
+\n\
+ C-a         Beginning of line\n\
+ C-e         End of line\n\
+ C-n         Next line\n\
+ C-p         Previous Line\n\
+\n\
+Screen Motion:\n\
+\n\
+ C-v         Forward screen\n\
+ M-v         Backward screen\n\
+ M-<         Beginning of buffer\n\
+ M->         End of buffer\n\
+\n\
+Editing Commands:\n\
+\n\
+ C-w         Cut\n\
+ M-w         Copy\n\
+ C-d         Delete forward character\n\
+ M-d         Delete forward word\n\
+ C-M d       Delete forward sexpr\n\
+ C-k         Kill line\n\
+ C-y         Yank line\n\
+ C-o         Open line\n\
+\n\
+Syntax specific commands\n\
+\n\
+ Tab         Indent line for syntax\n\
+ C-xC-e      Evaluate last sexpr (Lisp)\n\
+ COM-Enter   Evaluate last command (SAL)\n\
+\n\
+File Commands:\n\
+ C-xC-f      Open file\n\
+ C-xC-s	     Save file\n\
+ C-xC-r      Revert file\n\
+ C-xC-c      Kill editor\n");
+return help;
+}
+
+
 // JUCER_RESOURCE: grace_png, 58074, "/Lisp/grace/grace.png"
 
 static const unsigned char resource_grace_png[] = { 137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,1,193,0,0,1,82,8,2,0,0,0,5,43,243,82,0,0,0,9,112,72,89,115,0,0,11,19,0,0,11,19,1,
