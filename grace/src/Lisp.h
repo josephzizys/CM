@@ -32,7 +32,9 @@ public:
 
       msgError,
       msgWarning,
-      msgPrintout
+      msgPrintout, 
+
+      msgStatus = 0xFF
     } ;
   
   bool connectToSocket (const String& hostName,
@@ -59,7 +61,7 @@ private:
   void initialiseWithPipe (NamedPipe* const pipe_);
   void connectionMadeInt();
   void connectionLostInt();
-  void deliverDataInt (const MemoryBlock& data);
+  void deliverDataInt (const MemoryBlock& data, MessageType messageType);
   bool readNextMessageInt();
   void run();
   LispProcessConnection (const LispProcessConnection&);
@@ -107,7 +109,11 @@ public:
   void sendLispSexpr(String in);
   void testConnection();
   void messageReceived (const MemoryBlock &message);
-  
+
+  void postMessage (const MemoryBlock &message);
+  void postWarning (const MemoryBlock &message);
+  void postError (const MemoryBlock &message);
+  void handleBinaryData (const MemoryBlock &message);
   void handleMessage (const Message& message);
 
 };

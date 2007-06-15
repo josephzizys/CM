@@ -181,7 +181,7 @@ void LispProcessConnection::connectionMadeInt()
       callbackConnectionState = true;
       
       if (useMessageThread)
-	postMessage (new Message (msgString, 1, 0, 0));
+	postMessage (new Message (msgStatus, 1, 0, 0));
       else
 	connectionMade();
     }
@@ -194,18 +194,18 @@ void LispProcessConnection::connectionLostInt()
       callbackConnectionState = false;
       
       if (useMessageThread)
-	postMessage (new Message (msgString, 2, 0, 0));
+	postMessage (new Message (msgStatus, 2, 0, 0));
       else
 	connectionLost();
     }
 }
 
-void LispProcessConnection::deliverDataInt (const MemoryBlock& data)
+void LispProcessConnection::deliverDataInt (const MemoryBlock& data,  MessageType messageType )
 {
   jassert (callbackConnectionState);
   
   if (useMessageThread)
-    postMessage (new Message (msgString , 0, 0, new MemoryBlock (data)));
+    postMessage (new Message (messageType , 0, 0, new MemoryBlock (data)));
   else
     messageReceived (data);
 }
@@ -244,7 +244,7 @@ bool LispProcessConnection::readNextMessageInt()
             }
 	  
 	  if (bytesRead >= 0)
-	    deliverDataInt (messageData);
+	    deliverDataInt (messageData, (MessageType)swapIfBigEndian (messageHeader[0]) );
         }
     }
   else if (bytes < 0)
@@ -763,9 +763,39 @@ void LispConnection::connectionLost () {
 void LispConnection::messageReceived (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
+  console->consolePrint(text,ConsoleTheme::valueColor);
+  console->consoleTerpri();
+}
+
+void LispConnection::postMessage (const MemoryBlock &message) {
+  printf("post value\n");
+  int len=message.getSize();
+  String text=String((const char *)message, len);
   console->consolePrint(text, ConsoleTheme::valueColor);
   console->consoleTerpri();
 }
+
+void LispConnection::postWarning (const MemoryBlock &message) {
+  printf("post warning\n");
+  int len=message.getSize();
+  String text=String((const char *)message, len);
+  console->consolePrintWarning(text);
+  console->consoleTerpri();
+}
+
+void LispConnection::postError (const MemoryBlock &message) {
+  printf("post error\n");
+  int len=message.getSize();
+  String text=String((const char *)message, len);
+  console->consolePrintError(text);
+  console->consoleTerpri();
+}
+
+ void LispConnection::handleBinaryData (const MemoryBlock &message)
+ {
+   printf("grace got binary data from lisp\n");
+ }
+
 
 
 // ok this would be the point to handle different types of messages 
@@ -773,46 +803,51 @@ void LispConnection::messageReceived (const MemoryBlock &message) {
 
 void LispConnection::handleMessage (const Message& message)
 {
-  if (message.intParameter1 == (uint32)msgString )
-    {
-      switch (message.intParameter2)
-        {
-        case 0:
-	  {
-            MemoryBlock* const data = (MemoryBlock*) message.pointerParameter;
-            messageReceived (*data);
-            delete data;
-            break;
-	  }
-	  
-        case 1:
-	  connectionMade();
-	  break;
-	  
-        case 2:
-	  connectionLost();
-	  break;
-        }
-    } else if (message.intParameter1 == (uint32)msgBinaryData) 
-    {
-      switch (message.intParameter2)
-        {
-        case 0:
-	  {
-            MemoryBlock* const data = (MemoryBlock*) message.pointerParameter;
-            messageReceived (*data);
-            delete data;
-            break;
-	  }
-	  
-        case 1:
-	  connectionMade();
-	  break;
-	  
-        case 2:
-	  connectionLost();
-	  break;
-        }
-    }
+  MemoryBlock* const data = (MemoryBlock*) message.pointerParameter;
+  
+  printf ("message %i\n", message.intParameter1);
 
+  switch( message.intParameter1 ) {
+  
+  case (uint32)msgStatus:   //status messages about the connection
+    {
+      switch  (message.intParameter2) {
+      case 1:
+	connectionMade();
+	break;
+	
+      case 2:
+	connectionLost();
+	break;
+      }
+    }
+    break;
+    
+  case  (uint32)msgPrintout:
+   
+    postMessage (*data);
+    delete data;
+    break;
+    
+  case (uint32)msgWarning:
+
+    postWarning (*data);
+    delete data;
+    break;
+
+  case (uint32)msgError:
+
+    postWarning (*data);
+    delete data;
+    break;
+    
+  case (uint32)msgBinaryData:
+
+    handleBinaryData (*data);
+    delete data;
+    break;
+ 
+  default:
+    break;
+  }
 }

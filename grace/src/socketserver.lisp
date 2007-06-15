@@ -12,8 +12,44 @@
 
 (in-package cl-user)
 
+
+;;; messags types
+(defparameter *msgString* 0)
+(defparameter *msgBinaryData* 1)
+(defparameter *msgError* 2)
+(defparameter *msgWarning* 3)
+(defparameter *msgPrintout* 4)
+
+
+;;; capture these if we want to explicitly send to them
+;;; for debugging
+
+(defparameter *lisp-standard-input* *standard-input*)
+(defparameter *lisp-standard-output* *standard-output*)
+(defparameter *lisp-terminal-io* *terminal-io*)
+(defparameter *lisp-debug-io* *debug-io*)
+(defparameter *lisp-error-output* *error-output*)
+(defparameter *lisp-query-io* *query-io*)
+
+;;
+
 #+sbcl (require :sb-bsd-sockets)
 #+sbcl (require :sb-posix)
+
+(defun read-u32 (stream)
+  (let ((u 0))
+    ;; this will suffer from os/endian nonsense.
+    (loop  for i from 0 to 3
+       do (setq u (+ u (ash (read-byte stream) (* 8 i)))))
+    u))
+  
+(defun write-u32 (u32 stream)
+  (loop for i from 0 to 3
+     do (write-byte (ldb (byte 8 (* i 8)) u32)
+		    stream))
+  u32)
+
+
 
 (defclass connection ()
   ((serve? :initarg :serve? :accessor connection-serve?)
@@ -147,15 +183,124 @@
          (*standard-input* io))
     (read io)))
 
-(defun connection-eval (connection form)
-  (let* ((io (connection-stream connection))
-         (*standard-input* io)
-         (*standard-output* io)
-         (*trace-output* io)
-         (*debug-io* io)
-         (*query-io* io)
-         (*terminal-io* io))
-    (eval form)))
+
+(defun connection-eval (stdout warn error form)
+  ;;char-output-stream should be same as *standard-output*
+  ;;but let's make it explicit
+  (setf *standard-output* stdout)
+  (handler-case (print (eval form))
+    (warning () 
+      (progn
+	(format warn "Warning: something isn't quite right with ~S~%" form)
+	(force-output warn)))
+    (serious-condition () 
+      (progn
+	(format error "Error: wow really bad error in ~S~%" form)
+	(force-output error))))
+  (force-output stdout))
+    
+
+
+;;; this is a gray stream for standard output to send back to grace
+;;; this merely wraps around the instance of stream in connection 
+(defclass connection-character-output-stream (fundamental-character-output-stream)
+  ((binary-stream :initform nil :initarg :binary-stream :accessor binary-stream)
+   (byte-buffer :initform (make-array 8192 :element-type '(unsigned-byte 8)) :accessor byte-buffer)
+   (buffer-index :initform 0 :accessor buffer-index)))
+
+(defmethod send-output-buffer ((stream connection-character-output-stream))
+  (let ((binary-stream (binary-stream stream))
+	(length (buffer-index stream)))
+    (write-u32 *msgPrintout* binary-stream)
+    (write-u32 length binary-stream)
+    (loop for i below length
+       do (write-byte (aref (byte-buffer stream) i) binary-stream))
+    (setf (buffer-index stream) 0)))
+
+
+(defmethod stream-write-char ((stream connection-character-output-stream) char)
+  (setf (aref (byte-buffer stream) (buffer-index stream)) (char-code char))
+  (incf (buffer-index stream))
+  char)
+
+(defmethod stream-line-column ((stream connection-character-output-stream))
+  nil)
+
+(defmethod stream-start-line-p ((stream connection-character-output-stream))
+  nil)
+
+(defmethod stream-write-string ((stream connection-character-output-stream) string 
+				&optional start end)
+  (loop for i from start below end
+       do
+       (stream-write-char stream (elt string i)))
+  string)
+
+(defmethod stream-terpri ((stream connection-character-output-stream))
+  (stream-write-char stream #\newline)
+  nil)
+
+(defmethod stream-fresh-line  ((stream connection-character-output-stream))
+  (stream-write-char stream #\newline)
+  nil)
+
+(defmethod stream-force-output ((stream connection-character-output-stream))
+  (let ((binary-stream (binary-stream stream)))
+    (send-output-buffer stream)
+    (force-output binary-stream)
+    (setf (buffer-index stream) 0)
+  nil))
+
+(defmethod stream-finish-output  ((stream connection-character-output-stream))
+  (force-output stream)
+  nil)
+
+(defmethod stream-advance-to-column ((stream connection-character-output-stream) column)
+  nil)
+
+(defmethod stream-clear-output  ((stream connection-character-output-stream))
+  (let ((binary-stream (binary-stream stream)))
+    (clear-output binary-stream)
+    (setf (buffer-index stream) 0)
+    nil))
+
+
+;;; subclass of connection-character-output-stream used for errors 
+;;;
+
+(defclass connection-error-output-stream (connection-character-output-stream)
+  ((binary-stream :initform nil :initarg :binary-stream :accessor binary-stream)
+   (byte-buffer :initform (make-array 8192 :element-type '(unsigned-byte 8)) :accessor byte-buffer)
+   (buffer-index :initform 0 :accessor buffer-index)))
+
+(defmethod send-output-buffer ((stream connection-error-output-stream))
+  (let ((binary-stream (binary-stream stream))
+	(length (buffer-index stream)))
+    (write-u32 *msgError* binary-stream)
+    (write-u32 length binary-stream)
+    (loop for i below length
+       do (write-byte (aref (byte-buffer stream) i) binary-stream))
+    (setf (buffer-index stream) 0)))
+
+;;; subclass of connection-character-output-stream used for warnings
+;;;
+
+(defclass connection-warn-output-stream (connection-character-output-stream)
+  ((binary-stream :initform nil :initarg :binary-stream :accessor binary-stream)
+   (byte-buffer :initform (make-array 8192 :element-type '(unsigned-byte 8)) :accessor byte-buffer)
+   (buffer-index :initform 0 :accessor buffer-index)))
+
+(defmethod send-output-buffer ((stream connection-warn-output-stream))
+  (let ((binary-stream (binary-stream stream))
+	(length (buffer-index stream)))
+    (write-u32 *msgWarning* binary-stream)
+    (write-u32 length binary-stream)
+    (loop for i below length
+       do (write-byte (aref (byte-buffer stream) i) binary-stream))
+    (setf (buffer-index stream) 0)))
+
+;;;
+
 
 (defun open-server-connection (port &key bin)
   ;; open socket/stream on port and wait for client to connect,
@@ -192,66 +337,72 @@
 (defmethod connection-open? ((obj connection))
   (open-stream-p (connection-stream obj)))
 
-(defun read-u32 (stream)
-  (let ((u 0))
-    ;; this will suffer from os/endian nonsense.
-    (loop  for i from 0 to 3
-       do (setq u (+ u (ash (read-byte stream) (* 8 i)))))
-    u))
-  
-(defun write-u32 (u32 stream)
-  (loop for i from 0 to 3
-     do (write-byte (ldb (byte 8 (* i 8)) u32)
-		    stream))
-  u32)
 
-#||(defun ru32 (stream)
-  (let ((u 0))
-    (loop  for i from 0 to 3
-       do (setq u (+ u (ash (pop stream) (* 8 i)))))
-    u))
-(defun wu32 (u32 )
-  (loop for i from 0 to 3
-     collect (ldb (byte 8 (* i 8)) u32)))||#
 
 ;; the stupidest server ever!
 
+
+
 (defun serve-connection (connection)
-  (flet ((serve ()
-	   (catch :socket-server
-	     (let ((stream (connection-stream connection))
-		   magic length string sexpr value)
-	       magic length string sexpr value
-	       (loop 
-		  (setq magic (read-u32 stream ))
-		  (setq length (read-u32 stream ))
-		  ;;(FORMAT T "lisp receiving: magic=~S, length=~S~%" magic length)
-		  (setq string (make-string length))
-		  (loop for i below length
-		     do (setf (elt string i)
-			      (code-char (read-byte stream))))
-		  (setq sexpr (read-from-string string))
-		  (format t "Lisp received: '~S'~%" sexpr)
-		  (setq value (funcall (connection-evaler connection)
-				       connection sexpr))
-		  (format t "Lisp sending: '~S'~%" value)
-		  (force-output t)
-		  (setq string (format nil "~S" value))
-		  (setq length (length string))
-		  (write-u32 magic stream)
-		  (write-u32 length stream)
-		  (loop for i below length
-		       do (write-byte (char-code (elt string i)) stream))
-		  (force-output stream)
-		  )))))
-    (let (res)
-      (unwind-protect
-	   (setq res (serve ))
-	(close-connection connection)
-	(format t "; Connection closed.~%")
-	(force-output t)
-	(if (eql res ':kill)
-	    (kill-lisp))))))
+  (let* ((stream (connection-stream connection))
+	 (char-output-stream (make-instance 'connection-character-output-stream :binary-stream stream))
+	 (error-output-stream (make-instance 'connection-error-output-stream :binary-stream stream))
+	 (warn-output-stream (make-instance 'connection-warn-output-stream :binary-stream stream)))
+    (setf *standard-output* char-output-stream)
+    (setf *error-output* error-output-stream)
+
+    (flet ((serve ()
+	     (catch :socket-server
+	       (let* ((binary-confirmation-message (loop for i across "binary message" collect (char-code i)))
+		      (confirmation-bytes (make-array (length binary-confirmation-message)
+						      :initial-contents binary-confirmation-message
+						      :element-type '(unsigned-byte 8)))
+		      message-type length string sexpr value byte-vector)
+		 message-type length string sexpr value byte-vector
+		 (loop 
+		    (setq message-type (read-u32 stream ))
+		    (setq length (read-u32 stream ))
+		    (FORMAT *lisp-standard-output* "lisp receiving: message-type=~S, length=~S~%" message-type length)
+		    (cond 
+		      ((= message-type *msgString*)
+		       (progn
+			 (setq string (make-string length))
+		       (loop for i below length
+			  do (setf (elt string i)
+				   (code-char (read-byte stream))))
+		       (setq sexpr (read-from-string string))
+		       (format *lisp-standard-output* "Lisp received string: '~S'~%" sexpr)
+		       (funcall (connection-evaler connection) char-output-stream warn-output-stream error-output-stream sexpr)))
+		      
+		      ((= message-type *msgBinaryData*)
+		       (progn
+			 (setq byte-vector (make-array length :element-type '(unsigned-byte 8)))
+			 (loop for i below length
+			    do (setf (aref byte-vector i) (read-byte stream)))
+		       (format *lisp-standard-output* "Lisp received binary message: '~S'~%" byte-vector)
+		       (format *lisp-standard-output* "Lisp sending binary confirmation bytes: '~S'~%" confirmation-bytes)
+		       (setq length (length confirmation-bytes))
+		       (write-u32 *msgBinaryData* stream)
+		       (write-u32 length stream)
+		       (write-sequence confirmation-bytes stream)
+		       (force-output stream)))
+		      (t (format *lisp-standard-output* "Lisp received unknown message-type with id: '~S'~%" 
+				 message-type))))))))
+	   (let (res)
+	     (unwind-protect
+		  (setq res (serve ))
+	       ;;set outputs back to lisp
+	       (setf *standard-output* *lisp-standard-output*)
+	       (setf *error-output* *lisp-error-output*)
+	       (close-connection connection)
+	       ;close streams
+	       (close char-output-stream)
+	       (close error-output-stream)
+	       (close warn-output-stream)
+	       (format t "; Connection closed.~%")
+	       (force-output t)
+	       (if (eql res ':kill)
+		   (kill-lisp)))))))
 
 (defun serve-text-connection (connection)
   (flet ((serve ()
@@ -279,7 +430,7 @@
        
 (defun start-server (port &key bin)
   (let ((con (open-server-connection port :bin bin)))
-    (format t "; started socket server: port=~d, pid=~d~%"
+    (format *lisp-standard-output* "; started socket server: port=~d, pid=~d~%"
 	    (connection-local-port con) (getpid))
     (force-output t)
     (serve-connection con)))
@@ -334,10 +485,10 @@
 		 :stream stream :socket socket)))
 
 (defmacro servlisp (c form) 
-  `(progn (format t "<- ~S~%" ',form)
+  `(progn (format *lisp-standard-output* "<- ~S~%" ',form)
 	  (connection-print ,c ',form)
 	  (let ((ans (connection-read ,c)))
-	    (format t "-> ~S~%" ans))
+	    (format *lisp-standard-output* "-> ~S~%" ans))
 	  (values)))
 
 ; SERVER: (this waits until client does open-socket-stream...)

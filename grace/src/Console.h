@@ -120,8 +120,9 @@ public:
   void consolePrint(String str, 
 		    ConsoleTheme::ColorType typ=ConsoleTheme::outputColor,
 		    bool eob=true);
-  //void consoleError(String str);
-  //void consoleWarning(String str);
+  void consolePrintWarning( String str,  bool eob=true);
+  void consolePrintError( String str,  bool eob=true);
+  
   void consoleEval(String code, bool isSal);
   void installMenbar();
   void showSplash();

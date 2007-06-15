@@ -14,6 +14,7 @@
 #include "Editor.h"
 #include "Grace.h"
 #include "Audio.h"
+#include "Lisp.h"
 
 Console::Console () : 
   numthemes (0),
@@ -224,25 +225,32 @@ void ConsoleWindow::consolePrint( String str, ConsoleTheme::ColorType typ,
   console->buffer->insertTextAtCursor(str);
 }
 
-void ConsoleWindow::consoleEval (String code, bool isSal) {
-  // HACK display until eval is tied in
-  consolePrint(code, ConsoleTheme::inputColor);
-  consoleTerpri();
-}
-
-
-/*
-void ConsoleWindow::consolePrint( String str, ) {
-  setConsoleTextColor(ConsoleTheme::outputColor);
+void ConsoleWindow::consolePrintWarning( String str,  bool eob) {
+  if (eob) consoleGotoEOB();
+  setConsoleTextColor(ConsoleTheme::warningColor);
   console->buffer->insertTextAtCursor(str);
 }
-void ConsoleWindow::consoleError( String str) {
-  consolePrint(str, ConsoleTheme::errorColor);
+
+void ConsoleWindow::consolePrintError( String str,  bool eob) {
+  if (eob) consoleGotoEOB();
+  setConsoleTextColor(ConsoleTheme::errorColor);
+  console->buffer->insertTextAtCursor(str);
 }
-void ConsoleWindow::consoleWarning( String str) {
-  consolePrint(str, ConsoleTheme::warningColor);
+
+
+
+void ConsoleWindow::consoleEval (String code, bool isSal) {
+  // HACK display until eval is tied in
+  //  consolePrint(code, ConsoleTheme::inputColor);
+  //consoleTerpri();
+  if( !isSal )
+    lisp->sendLispSexpr(code);
+  else
+    printf("sending sal not supported yet!\n");
 }
-*/
+
+
+
 
 void ConsoleWindow::showSplash () {
   splash->setSize(console->getWidth(),console->getHeight());
