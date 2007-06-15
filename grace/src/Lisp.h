@@ -27,13 +27,9 @@ public:
   
   typedef enum MessageType
     {
-      msgString = 0xb734128b,
+      msgString = 0x0,
       msgBinaryData,
 
-      msgSetPackage,
-      msgLispEval,
-      msgSalEval,
-      msgValues,
       msgError,
       msgWarning,
       msgPrintout
@@ -46,7 +42,7 @@ public:
   bool createPipe (const String& pipeName);
   void disconnect();
   bool isConnected() const;
-  bool sendMessage (const MemoryBlock& message, MessageType messageType=msgLispEval);
+  bool sendMessage (const MemoryBlock& message, MessageType messageType=msgString);
   virtual void connectionMade() = 0;
   virtual void connectionLost() = 0;
   virtual void messageReceived (const MemoryBlock& message) = 0;
@@ -96,8 +92,6 @@ public:
   void setPort(int v) {port=v;}
   int getWait() {return wait;}
   void setWait(int v) {wait=v;}
-  uint32 getMagicNumber() {return mnum;}
-  void setMagicNumber(uint32 v) {mnum=v;}
   int getImplementation() {return impl;}
   void setImplementation(int v) {impl=v;}
   String getExecutable() {return lisp;}
@@ -157,8 +151,6 @@ private:
   Label* portbuffer;
   Slider* timeslider;
   Label* timelabel;
-  Label* magiclabel;
-  Label* magicbuffer;
   TextButton* okbutton;
   TextButton* cancelbutton;
 

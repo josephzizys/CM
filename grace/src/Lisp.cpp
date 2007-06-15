@@ -332,8 +332,6 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
     portbuffer (0),
     timeslider (0),
     timelabel (0),
-    magiclabel (0),
-    magicbuffer (0),
     okbutton (0),
     cancelbutton (0)
 { 
@@ -427,20 +425,6 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   timelabel->setJustificationType(Justification::centredRight);
   timelabel->setEditable(false, false, false);
   
-  addAndMakeVisible(magiclabel = new Label(String::empty, T("Magic #:")));
-  magiclabel->setFont(Font (15.0000f, Font::plain));
-  magiclabel->setJustificationType(Justification::centredRight);
-  magiclabel->setEditable(false, false, false);
-
-  addAndMakeVisible(magicbuffer = new Label(String::empty, String::empty));
-  magicbuffer->setFont (Font (15.0000f, Font::plain));
-  magicbuffer->setJustificationType (Justification::centredLeft);
-  // dont allow editing for now...
-  magicbuffer->setEditable (false, false, false);
-  magicbuffer->setColour (Label::outlineColourId, Colours::black);
-  magicbuffer->setColour (Label::backgroundColourId, Colours::white);
-  magicbuffer->addListener (this);
-
   addAndMakeVisible (okbutton = new TextButton (String::empty));
   okbutton->setButtonText (T("OK"));
   okbutton->addButtonListener (this);
@@ -469,8 +453,6 @@ ConfigureLispView::~ConfigureLispView () {
     deleteAndZero (portbuffer);
     deleteAndZero (timeslider);
     deleteAndZero (timelabel);
-    deleteAndZero (magiclabel);
-    deleteAndZero (magicbuffer);
     deleteAndZero (okbutton);
     deleteAndZero (cancelbutton);
 }
@@ -496,8 +478,6 @@ void ConfigureLispView::resized() {
     portbuffer->setBounds (288, 32, 96, 24);
     timeslider->setBounds (96, 64, 104, 24);
     timelabel->setBounds (24, 64, 64, 24);
-    magiclabel->setBounds (216, 64, 64, 24);
-    magicbuffer->setBounds (288, 64, 96, 24);
     okbutton->setBounds (336, 248, 60, 24);
     cancelbutton->setBounds (264, 248, 60, 24);
 }
@@ -506,7 +486,6 @@ void ConfigureLispView::updateFromConnection () {
   hostbuffer->setText(connection->getHost(), true);
   portbuffer->setText(String(connection->getPort()), true);
   timeslider->setValue((double)(connection->getWait()), true);
-  magicbuffer->setText(String((uint32)(connection->getMagicNumber())), true);
   if (connection->getType() == LispConnection::local)
     hostbuffer->setEditable(false, false);
   else
@@ -535,7 +514,6 @@ bool ConfigureLispView::updateConnection () {
     return false;
   }
   i2=(int)(timeslider->getValue());
-  u1=(uint32)(magicbuffer->getText().getIntValue());
   if (sbclbutton->getToggleState()) i3=LispConnection::SBCL;
   else if (openmclbutton->getToggleState()) i3=LispConnection::OpenMCL;
   else if (clispbutton->getToggleState()) i3=LispConnection::CLisp;
@@ -550,12 +528,10 @@ bool ConfigureLispView::updateConnection () {
     }
   }
   s3=argsbuf->getText();
-  //printf("Lisp config: host=%s, port=%d wait=%d magic=%u lisp=%d prog=%s args=%s\n",
-  //       s1.toUTF8(), i1, i2, u1, i3,s2.toUTF8(),s3.toUTF8()) ;
+
   connection->setHost(s1);
   connection->setPort(i1);
   connection->setWait(i2);
-  connection->setMagicNumber(u1);
   connection->setImplementation(i3);
   connection->setExecutable(s2);
   connection->setArguments(s3);
@@ -635,8 +611,7 @@ void ConfigureLispView::labelTextChanged (Label* labelThatHasChanged) {
     else
       portbuffer->setColour (Label::backgroundColourId, Colours::white);
   }
-  else if (labelThatHasChanged == magicbuffer) {
-  }
+
 }
 
 void ConfigureLispView::sliderValueChanged (Slider* sliderThatWasMoved) {
