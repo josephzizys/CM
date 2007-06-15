@@ -76,7 +76,6 @@ public:
   int port;  // connection port
   int wait;  // timeout after
   int lpid;  // inferior lisp process id
-  uint32 mnum;  //magic number?
   int impl;  // SBCL, OpenMCL ...
   String lisp; // program to exec
   String args; // program args

@@ -629,7 +629,6 @@ LispConnection::LispConnection (ConsoleWindow* w)
     port (8000),
     wait (15),
     lpid (-1),
-    mnum (0xf2b49e2c),
     impl (0),
     lisp (String::empty),
     args (String::empty)
