@@ -357,7 +357,7 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
   case cmdGraceEditorNew :
     // doesnt work
     //cm->invokeDirectly(TextBuffer::cmdNew,false);
-    new EditorWindow(String::empty, false, arg);
+    new EditorWindow(arg);
     break;
   case cmdGraceEditorOpen :
     // doesnt work
@@ -367,7 +367,9 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
 			  File::getSpecialLocation(File::userHomeDirectory),
 			  String::empty, true);
       if ( choose.browseForFileToOpen() )
-	new EditorWindow(choose.getResult().getFullPathName(), true, 0);
+	new EditorWindow(0, TextBuffer::load,
+                       choose.getResult().getFullPathName());
+
     }
     break;
   case cmdAudioMidiSetup: 
