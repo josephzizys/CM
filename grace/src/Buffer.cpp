@@ -18,6 +18,7 @@
 TextBuffer::TextBuffer (syntaxID id, int flg) 
   : TextEditor(String::empty) {
   flags=flg;
+  matching=-1;
   setWantsKeyboardFocus(true);
   setMultiLine(true);
   setReturnKeyStartsNewLine(true);
@@ -650,6 +651,29 @@ void TextBuffer::keyIllegalAction(const KeyPress& key) {
 // the main key handling function. dispatches to other key handlers
 // depending on what keys have been pressed
 
+bool TextBuffer::isMatching() {return (matching > -1);}
+
+void TextBuffer::startMatching(int pos1, int pos2) {
+  setPoint(pos1);
+  setColour(TextEditor::caretColourId, Colours::red);
+  matching=pos2;
+  startTimer(1000);
+}
+
+void TextBuffer::timerCallback() {
+  stopMatching();
+}
+
+void TextBuffer::stopMatching() {
+  if (matching != -1) {
+    printf("stopping matching\n");
+    setPoint(matching);  
+    setColour(TextEditor::caretColourId, Colours::black);
+    matching=-1;
+    if (isTimerRunning()) stopTimer();
+  }
+}
+
 void TextBuffer::keyPressed (const KeyPress& key) {
   int keyCode, keyMod, flag, last;
   keyCode =  key.getKeyCode();
@@ -660,6 +684,8 @@ void TextBuffer::keyPressed (const KeyPress& key) {
   // previous command.
   last = lastact;
   setAction(0);
+
+  if ( isMatching() ) stopMatching();
 
   if (last == actControlX)
     keyControlXAction(key);
@@ -1120,15 +1146,10 @@ void TextBuffer::matchParens() {
   int b=point();
   int a=backwardSexpr();
   if (a<b) {
-    String s=getTextSubstring(a,a+1);
-    printf("matching paren '%s\n", s.toUTF8());
-    //Colour c=findColour(TextEditor::highlightedTextColourId);
-    /// setColour(TextEditor::highlightedTextColourId, Colours::green);
-    setHighlightedRegion(a,b-a);
-    uint32 now = Time::getMillisecondCounter();
-    Time::waitForMillisecondCounter(now+100);
-    //setColour(TextEditor::highlightedTextColourId, c);
-    setPoint(b);
+    startMatching(a,b);
+    //    setCaretPosition(a);
+    //    setColour(TextEditor::caretColourId, Colours::red);
+    //    matching=b;
   }
 }
 

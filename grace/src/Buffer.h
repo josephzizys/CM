@@ -16,13 +16,14 @@
 #include "Console.h"
 
 class TextBuffer : public TextEditor,
-		   public ApplicationCommandTarget
+  public ApplicationCommandTarget,
+  public Timer
 {
   syntaxID syntaxId;
   Syntax* syntax;
   int thisact, lastact;
   int goalColumn;
-
+  int matching;
   TopLevelWindow *parentWindow;
 
   void initSyntax(syntaxID m);
@@ -40,6 +41,7 @@ class TextBuffer : public TextEditor,
   void keyPressed(const KeyPress& key) ;
   //void mouseDown(const MouseEvent &e) ;
   void mouseDoubleClick(const MouseEvent &e) ;
+
  public:
 
   enum BufferFlags {needsave=1, readonly=2, hiliteoff=4, parensoff=8, 
@@ -140,6 +142,10 @@ class TextBuffer : public TextEditor,
   void toggleHiliting();
   bool isParensMatching();
   void toggleParensMatching ();
+  bool isMatching();
+  void startMatching(int pos1, int pos2);
+  void stopMatching();
+  void timerCallback();
   bool isChanged();
   void setChanged(bool b);
   void toggleReadOnly();
