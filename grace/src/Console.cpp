@@ -33,10 +33,12 @@ Console::Console () :
   setTheme(0);
   buffer->setVisible(true);
   setVisible(true);
+  lock = new CriticalSection();
 }
 
 Console::~Console () {
   delete buffer;
+  delete lock;
 }
 
 void Console::initTheme (int idx) {
@@ -130,6 +132,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   splash=new SplashComponent();
   setContentComponent(console);
   setResizable(true, true); 
+  setAlwaysOnTop(true);
   setVisible(true);
   console->buffer->setVisible(true);
   setVisible(true);
@@ -220,21 +223,20 @@ void ConsoleWindow::consoleFreshLine() {
 
 void ConsoleWindow::consolePrint( String str, ConsoleTheme::ColorType typ,
 				  bool eob) {
+
+  console->lock->enter();
   if (eob) consoleGotoEOB();
   setConsoleTextColor(typ);
   console->buffer->insertTextAtCursor(str);
+  console->lock->exit();
 }
 
 void ConsoleWindow::consolePrintWarning( String str,  bool eob) {
-  if (eob) consoleGotoEOB();
-  setConsoleTextColor(ConsoleTheme::warningColor);
-  console->buffer->insertTextAtCursor(str);
+  consolePrint(str, ConsoleTheme::warningColor, eob);
 }
 
 void ConsoleWindow::consolePrintError( String str,  bool eob) {
-  if (eob) consoleGotoEOB();
-  setConsoleTextColor(ConsoleTheme::errorColor);
-  console->buffer->insertTextAtCursor(str);
+  consolePrint(str, ConsoleTheme::errorColor, eob);
 }
 
 

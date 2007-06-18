@@ -53,6 +53,7 @@ class Console : public Component {
   ConsoleTheme themes[8];   // make these alloc'ed
   int curtheme;
   int numthemes;
+  CriticalSection * lock;
   Console ();
   ~Console();
   void resized() {buffer->setSize(getWidth(),getHeight());}
@@ -98,6 +99,8 @@ public:
   SplashComponent * splash;
   MenuBarComponent * menubar;
   LispConnection * lisp;
+  
+
   ConsoleWindow (bool dosplash) ;
   ~ConsoleWindow () ;
   void closeButtonPressed () ;
@@ -131,6 +134,10 @@ public:
 
   void showAudioMidiWindow();
   void showConfigureLispWindow();
+
+
+  
+
 };
 
 #endif
