@@ -49,7 +49,9 @@
 		    stream))
   u32)
 
-
+;;;
+;;; 
+;;;
 
 (defclass connection ()
   ((serve? :initarg :serve? :accessor connection-serve?)
@@ -184,25 +186,35 @@
     (read io)))
 
 
-(defun connection-eval (stdout warn error form)
-  ;;char-output-stream should be same as *standard-output*
-  ;;but let's make it explicit
-  (setf *standard-output* stdout)
-  (handler-case (print (eval form))
-    (warning () 
-      (progn
-	(format warn "Warning: something isn't quite right with ~S~%" form)
-	(force-output warn)))
-    (serious-condition () 
-      (progn
-	(format error "Error: wow really bad error in ~S~%" form)
-	(force-output error))))
-  (force-output stdout))
-    
+(defun connection-eval (standard-out warn-out error-out form)
+  (let ((vals))
+    ;;standard-output-stream should be same as *standard-output*
+    ;;but let's make it explicit
+    (setf *standard-output* standard-out)
+    (setf *error-output* warn-out) ; really where warn goes
+    (unwind-protect
+       (handler-case
+	   (progn
+	     (setq vals (multiple-value-list (eval form)))
+	     (setq +++ ++ ++ + + form)
+	     (setq *** ** ** * * (car vals))
+	     (dolist (v vals) 
+	       (pprint v standard-out)))
+	 (error (c)
+	   (progn
+	     (format error-out ">>> Lisp error:~%    ~
+                      Error type: ~A~%    ~
+                      Error message: ~A"
+		     (type-of c) c )
+	     (force-output error-out))))
+      (force-output standard-out))))
+
+
 
 
 ;;; this is a gray stream for standard output to send back to grace
 ;;; this merely wraps around the instance of stream in connection 
+
 (defclass connection-character-output-stream (fundamental-character-output-stream)
   ((binary-stream :initform nil :initarg :binary-stream :accessor binary-stream)
    (byte-buffer :initform (make-array 8192 :element-type '(unsigned-byte 8)) :accessor byte-buffer)
@@ -266,7 +278,8 @@
 
 
 ;;; subclass of connection-character-output-stream used for errors 
-;;;
+;;; really doesn't need to be a subclass at this point. could
+;;; set message-type with slot, but could be useful in future
 
 (defclass connection-error-output-stream (connection-character-output-stream)
   ((binary-stream :initform nil :initarg :binary-stream :accessor binary-stream)
@@ -345,12 +358,11 @@
 
 (defun serve-connection (connection)
   (let* ((stream (connection-stream connection))
-	 (char-output-stream (make-instance 'connection-character-output-stream :binary-stream stream))
+	 (standard-output-stream (make-instance 'connection-character-output-stream :binary-stream stream))
 	 (error-output-stream (make-instance 'connection-error-output-stream :binary-stream stream))
 	 (warn-output-stream (make-instance 'connection-warn-output-stream :binary-stream stream)))
-    (setf *standard-output* char-output-stream)
     (setf *error-output* error-output-stream)
-
+    (setf *standard-output* standard-output-stream)
     (flet ((serve ()
 	     (catch :socket-server
 	       (let* ((binary-confirmation-message (loop for i across "binary message" collect (char-code i)))
@@ -372,7 +384,7 @@
 				   (code-char (read-byte stream))))
 		       (setq sexpr (read-from-string string))
 		       (format *lisp-standard-output* "Lisp received string: '~S'~%" sexpr)
-		       (funcall (connection-evaler connection) char-output-stream warn-output-stream error-output-stream sexpr)))
+		       (funcall (connection-evaler connection) standard-output-stream warn-output-stream error-output-stream sexpr)))
 		      
 		      ((= message-type *msgBinaryData*)
 		       (progn
@@ -396,7 +408,7 @@
 	       (setf *error-output* *lisp-error-output*)
 	       (close-connection connection)
 	       ;close streams
-	       (close char-output-stream)
+	       (close standard-output-stream)
 	       (close error-output-stream)
 	       (close warn-output-stream)
 	       (format t "; Connection closed.~%")
