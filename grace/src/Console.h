@@ -28,6 +28,37 @@
 //   caretColor:          cursor-color
 
 
+
+
+
+class TransparencySlider : public Slider
+{
+public:
+  TransparencySlider(DocumentWindow* _window);
+  ~TransparencySlider();
+  DocumentWindow *window;
+};
+
+class TransparencySliderListener : public SliderListener
+{
+public:
+  TransparencySliderListener();
+  ~TransparencySliderListener();
+  void sliderValueChanged(Slider * slider);
+
+}; 
+
+class SliderMenuComponent : public PopupMenuCustomComponent
+{
+public:
+  SliderMenuComponent(DocumentWindow* _window);
+  ~SliderMenuComponent();
+  TransparencySlider *slider;
+  void getIdealSize(int &idealWidth, int &idealHeight);
+};
+
+
+
 class ConsoleTheme {
  public:
   enum ColorType {bgColor=0, inputColor, outputColor, errorColor, warningColor,
@@ -57,7 +88,7 @@ class Console : public Component {
   Console ();
   ~Console();
   void resized() {buffer->setSize(getWidth(),getHeight());}
-  void paint (Graphics& g) {g.fillAll (Colours::black); }
+  void paint (Graphics& g) {g.fillAll (Colours::transparentBlack); }
   int numThemes() {return numthemes;}
   void initTheme(int i) ;
   void setTheme(int i);
@@ -84,22 +115,24 @@ public:
     cmdEditSelectAll = 34432,
     cmdViewFonts = 34688,
     cmdViewThemes = 34944,
-    cmdAudioMidiSetup = 35200,
-    cmdAudioAudioSetup = 35456,
-    cmdLispConnect = 35712,
-    cmdLispConfigure = 35968,
-    cmdLispCompileFile = 36224,
-    cmdLispLoadFile = 36480,
-    cmdLispLoadSystem = 36736,
-    cmdHelpConsole = 36992,
-    cmdHelpAboutGrace = 37248};
+    cmdConsoleTransparency = 35200,
+    cmdAudioMidiSetup = 35456,
+    cmdAudioAudioSetup = 35712,
+    cmdLispConnect = 35968,
+    cmdLispConfigure = 36224,
+    cmdLispCompileFile = 36480,
+    cmdLispLoadFile = 36736,
+    cmdLispLoadSystem = 36992,
+    cmdHelpConsole = 37248,
+    cmdHelpAboutGrace = 37504
+  };
+
 
   Console * console;
   ConsoleTheme theme;
   SplashComponent * splash;
   MenuBarComponent * menubar;
   LispConnection * lisp;
-  
 
   ConsoleWindow (bool dosplash) ;
   ~ConsoleWindow () ;
@@ -135,8 +168,8 @@ public:
   void showAudioMidiWindow();
   void showConfigureLispWindow();
 
-
-  
+  double currentTransparency;
+  TransparencySliderListener * sliderListener;
 
 };
 

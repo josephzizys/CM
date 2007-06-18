@@ -16,6 +16,63 @@
 #include "Audio.h"
 #include "Lisp.h"
 
+
+TransparencySlider::TransparencySlider(DocumentWindow* _window) : Slider(String::empty)
+{
+  window = _window;
+  setRange(10, 100, 0);
+  setSliderStyle(Slider::LinearHorizontal);
+  setTextBoxStyle(Slider::TextBoxLeft, false, 80, 20);
+  setValue(100.0);
+}
+
+TransparencySlider::~TransparencySlider()
+{
+}
+
+TransparencySliderListener::TransparencySliderListener() : SliderListener()
+{
+}
+
+TransparencySliderListener::~TransparencySliderListener()
+{
+}
+
+void TransparencySliderListener::sliderValueChanged(Slider *slider)
+{
+  TransparencySlider *tslider = (TransparencySlider*)slider;
+  ConsoleWindow *win = (ConsoleWindow*)(tslider->window);
+  ConsoleTheme *theme = win->console->getCurrentTheme();
+  Colour bgcolor = win->getBackgroundColour();
+  Colour teditColor = theme->getColor(ConsoleTheme::bgColor);
+  
+  double val = slider->getValue();
+  win->setBackgroundColour( bgcolor.withAlpha( (float) (val / 100.5) ));
+  theme->setColor(ConsoleTheme::bgColor, teditColor.withAlpha( (float) (val / 100.5) ));
+  win->currentTransparency = val;
+  
+}
+
+
+SliderMenuComponent::SliderMenuComponent(DocumentWindow* _window) : PopupMenuCustomComponent(true)
+{
+  addAndMakeVisible (slider = new TransparencySlider (_window));
+  slider->setValue(100.0);
+  slider->setBounds(0, 0, 300, 24);
+}
+
+SliderMenuComponent::~SliderMenuComponent()
+{
+  delete slider;
+}
+
+void SliderMenuComponent::getIdealSize(int &idealWidth, int &idealHeight)
+{
+  idealWidth = 300;
+  idealHeight = 24;
+}
+
+
 Console::Console () : 
   numthemes (0),
   curtheme (0)
@@ -143,6 +200,9 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
     if ( isSplashVisible() ) // user might have clicked
       hideSplash();
   }
+  sliderListener = new TransparencySliderListener();
+  currentTransparency = 100.0;
+
 }
 
 ConsoleWindow::~ConsoleWindow () {
@@ -285,9 +345,11 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 						const String &name)
 {
   PopupMenu menu;
-  PopupMenu sub1, sub2, sub3;
+  PopupMenu sub1, sub2, sub3, sub4;
   int val;
-
+  SliderMenuComponent *sliderComp = new SliderMenuComponent(this);
+  sliderComp->slider->setValue(currentTransparency);
+  sliderComp->slider->addListener(sliderListener);
   switch (idx) {
   case 0 :
     // should make syntaxId enum global !!
@@ -313,6 +375,9 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( cmdEditSelectAll, T("Select All"), true);
     break;
   case 2 :
+    
+    sub4.addCustomItem( cmdConsoleTransparency,  sliderComp);
+    
     menu.addItem( cmdViewFonts, T("Show Fonts..."), false);    
     menu.addSeparator();
     for (int i=0;i<console->numThemes(); i++)
@@ -323,6 +388,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 		  T("Roll Your Own..."), 
 		  false);
     menu.addSubMenu( T("Themes"), sub1, true);
+    menu.addSubMenu( T("Console Transparency"), sub4, true);
     break;
   case 3 :
     menu.addItem( cmdAudioMidiSetup, T("Midi Setup..."), true); 
