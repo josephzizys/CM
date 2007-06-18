@@ -13,26 +13,37 @@
 using namespace std;
 
 
-Layer::Layer (String nam, Colour col) 
+Layer::Layer (int ari, String nam, Colour col) 
   : transp(true),
     _x (0),
     _y (1),
     _z (2),
     _defaults ( (LayerPoint *)NULL),
-    arity (2),
     name (String::empty),
     style(lineandpoint)
 {
   static int layerid=1;
+  arity=ari;
+  pstyle=new int[arity];
+  for (int i=0;i<arity; i++)
+    pstyle[i]=0;
+  paxis= new Axis*[arity];
+  for(int i=0;i<arity; i++)
+    paxis[i]=(Axis *)NULL;
   name=nam;
   color=col;
   id=layerid++;
 }
   
 Layer::~Layer() {
-  //  printf("in layer delete\n");
+  printf("in layer delete\n");
   _points.clear(true);
-  _axes.clear(true);
+
+  for (int i=0;i<arity;i++)
+    if (paxis[i] != (Axis *)NULL) delete paxis[i];
+  delete[] paxis;
+  delete[] pstyle;
+  printf("leaving layer delete\n");
 };
 
 int Layer::numPoints() {
@@ -146,22 +157,22 @@ void Layer::deletePoint(LayerPoint* p) {
   _points.removeObject(p, true);
 }
 
-
 /*
  * Point Layers
  */
 
 XYLayer::XYLayer(String s, Colour c) 
-  : Layer(s, c)
+  : Layer(2, s, c)
 {
-  const tchar* const names [] = { T("X"), T("Y"), 0 };
+  //const tchar* const names [] = { T("X"), T("Y"), 0 };
   //  params=StringArray((const tchar**) menuNames);
-  arity=2;
   _x=0;
   _y=1;
-  _axes.add(new Axis(Axis::normalized) );
-  _axes.add(new Axis(Axis::normalized) );
-  style=Layer::lineandpoint;
+  fields.add(T("X"));
+  fields.add(T("Y"));
+  setAxis(0, (Axis *)NULL); 
+  setAxis(1, new Axis(Axis::normalized)); 
+  pstyle[1]=Layer::lineandpoint;
 }
 
 /*
@@ -169,14 +180,23 @@ XYLayer::XYLayer(String s, Colour c)
  */
 
 MidiLayer::MidiLayer(String s, Colour c) 
-  : Layer(s, c)
+  : Layer(4, s, c) 
 {
-  arity=4;
   // Time Duration Keynum Amplitude
-  _axes.add(new Axis(Axis::seconds));
-  _axes.add(_axes[0]);   // dur and time must share same axis
-  _axes.add(new Axis(Axis::keynum));
-  _axes.add(new Axis(Axis::normalized));
+  fields.add(T("Time"));
+  fields.add(T("Duration"));
+  fields.add(T("Keynum"));
+  fields.add(T("Amplitude"));
+
+  setAxis(0, (Axis *)NULL); 
+  setAxis(1, (Axis *)NULL); 
+  setAxis(2, new Axis(Axis::keynum));
+  setAxis(3, new Axis(Axis::normalized));
+
+  pstyle[1]=Layer::vlineandpoint;
+  pstyle[2]=Layer::hbox;
+  pstyle[3]=Layer::vlineandpoint;
+
   _x=0;
   _y=2;   // Y is keynum field
   _z=1;   // Z is duration field
@@ -185,14 +205,12 @@ MidiLayer::MidiLayer(String s, Colour c)
   _defaults->setVal(1, 0.5);
   _defaults->setVal(2, 60.0);
   _defaults->setVal(3, 0.5);
-
   style=Layer::hbox;
-  
 }
 
 MidiLayer::~MidiLayer() {
   // DOES THE CALL TO ~Layer() HAPPEN IF THIS METHOD IS HERE?
-
+  printf("in midilayer delete\n");
   delete _defaults;
 }
 

@@ -36,7 +36,7 @@ class PlotViewport : public Viewport {
 };
 
 ///
-/// Axis methods
+/// AxisView methods
 ///
 
 bool AxisView::isVertical() {
@@ -51,6 +51,7 @@ void AxisView::paint (Graphics& g) {
   g.fillAll (Colours::white); 
   // lightly shade lower half to match pretty scrollbars
   g.setColour(Colour(0xf7, 0xf7, 0xf7)); 
+  if (!hasAxis() ) return;
   int w=getWidth();
   int h=getHeight();
 
@@ -240,11 +241,11 @@ public:
  *
  **********************************************************************/
 
-void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis, 
+void drawLayer(Graphics& g, Layer * layer, AxisView * haxview, AxisView * vaxview, 
 	       double ppp, double spread, bool isFoc, 
 	       SelectedItemSet<LayerPoint*> * sel);
 
-void drawGrid(Graphics& g, AxisView * xaxis, AxisView * yaxis, 
+void drawGrid(Graphics& g, AxisView * haxview, AxisView * vaxview, 
 	      Colour c1, Colour c2) ;
 
 class BackView : public Component {
@@ -272,24 +273,25 @@ public:
   void setBackViewStyle( Plotter::BGStyle b) {bgstyle=b;}
   bool isBackViewPlotting() {return bgplots;}
   void setBackViewPlotting( bool b) {bgplots=b;}
-
+  void setBackViewCaching(bool b) {setBufferedToImage(b);}
   void paint (Graphics& g) {
-    printf("NEW BACKPLOT BITMAP\n");
     g.fillAll(bgcolors[0]);
-    AxisView * xaxis = plotter->getAxisView(Plotter::horizontal);
-    AxisView * yaxis = plotter->getAxisView(Plotter::vertical);
+    AxisView * haxview = plotter->getHorizontalAxisView();
+    AxisView * vaxview = plotter->getVerticalAxisView();
     Layer * layer;
+    
+    if (!vaxview->hasAxis() || !haxview->hasAxis()) return;
 
     // draw background grid
     if (bgstyle==Plotter::bgGrid)
-      drawGrid(g, xaxis, yaxis, bgcolors[2], bgcolors[3]);
+      drawGrid(g, haxview, vaxview, bgcolors[2], bgcolors[3]);
     else if (bgstyle==Plotter::bgTiled)
-      g.fillCheckerBoard((int)xaxis->getOrigin(),
-			 (int)(yaxis->getOrigin()-yaxis->extent()),
-			 (int)xaxis->extent(), 
-			 (int)yaxis->extent(),
-			 (int)xaxis->tickSize(), 
-			 (int)yaxis->tickSize(),
+      g.fillCheckerBoard((int)haxview->getOrigin(),
+			 (int)(vaxview->getOrigin()-vaxview->extent()),
+			 (int)haxview->extent(), 
+			 (int)vaxview->extent(),
+			 (int)haxview->tickSize(), 
+			 (int)vaxview->tickSize(),
 			 bgcolors[4],bgcolors[5]);
     else g.fillAll(bgcolors[1]);
 
@@ -299,7 +301,7 @@ public:
     for (int i=0; i < plotter->numLayers(); i++) {
       layer = plotter->getLayer(i);
       if (! plotter->isFocusLayer(layer) ) 
-	drawLayer(g, layer, xaxis, yaxis, psize, 1.0, false, 
+	drawLayer(g, layer, haxview, vaxview, psize, 1.0, false, 
 		  (SelectedItemSet<LayerPoint*> *)NULL);
       }
     }
@@ -351,10 +353,10 @@ class PlotView : public Component {
     return (plotter->viewport->getViewPositionY() +
 	    plotter->viewport->getViewHeight());
   }
-  double visibleValueLeft(){return xaxis->toValue(visiblePixelLeft());}
-  double visibleValueRight(){return xaxis->toValue(visiblePixelRight());}
-  double visibleValueTop(){return yaxis->toValue(visiblePixelTop()); }
-  double visibleValueBottom(){return yaxis->toValue(visiblePixelBottom());}
+  double visibleValueLeft(){return haxview->toValue(visiblePixelLeft());}
+  double visibleValueRight(){return haxview->toValue(visiblePixelRight());}
+  double visibleValueTop(){return vaxview->toValue(visiblePixelTop()); }
+  double visibleValueBottom(){return vaxview->toValue(visiblePixelBottom());}
   */
 
   void setPointBuffers(float x, float y);
@@ -484,20 +486,20 @@ void PlotView::shiftSelection(float dx, float dy) {
 void PlotView::resizeForDrawing() {
   // called when spread value changes to reset total size of plotting view
   double xsiz, ysiz, xtot, ytot;
-  AxisView * xaxis=plotter->getAxisView(Plotter::horizontal);
-  AxisView * yaxis=plotter->getAxisView(Plotter::vertical);
+  AxisView * haxview=plotter->getHorizontalAxisView();
+  AxisView * vaxview=plotter->getVerticalAxisView();
   // xpad and ypad are margins around the plotting area so points at
   // the edge aren't clipped
-  xsiz=xaxis->extent();
-  ysiz=yaxis->extent();
+  xsiz=haxview->extent();
+  ysiz=vaxview->extent();
   xtot=pad+xsiz+pad;
   ytot=pad+ysiz+pad;
-  xaxis->setOrigin(pad);
-  yaxis->setOrigin(ytot-pad);
+  haxview->setOrigin(pad);
+  vaxview->setOrigin(ytot-pad);
   setSize( (int)xtot, (int)ytot );
 }
 
-void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis, 
+void drawLayer(Graphics& g, Layer * layer, AxisView * haxview, AxisView * vaxview, 
 	       double ppp, double zoom, bool isFoc, 
 	       SelectedItemSet<LayerPoint*> * sel) {
   double half=ppp/2;
@@ -510,21 +512,21 @@ void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis,
   ndraw=layer->numPoints();
 
   // need pixel origins for vert/horiz lines/bars
-  if (yaxis->axisMinimum() < 0.0 && yaxis->axisMaximum() >= 0.0)
-    oy=yaxis->toPixel(0.0);
-  else oy=yaxis->toPixel(yaxis->axisMinimum());
+  if (vaxview->axisMinimum() < 0.0 && vaxview->axisMaximum() >= 0.0)
+    oy=vaxview->toPixel(0.0);
+  else oy=vaxview->toPixel(vaxview->axisMinimum());
 
-  if (xaxis->axisMinimum() < 0.0 && xaxis->axisMaximum() >= 0.0)
-    ox=xaxis->toPixel(0.0);
-  else ox=xaxis->toPixel(xaxis->axisMinimum());
+  if (haxview->axisMinimum() < 0.0 && haxview->axisMaximum() >= 0.0)
+    ox=haxview->toPixel(0.0);
+  else ox=haxview->toPixel(haxview->axisMinimum());
 
   g.setColour(color);
   for (int i=0; i<ndraw; i++) {
     LayerPoint* p = layer->getPoint(i);
     ax=layer->getPointX(p);
     ay=layer->getPointY(p);  
-    px=xaxis->toPixel(ax);   // pixel coords
-    py=yaxis->toPixel(ay);
+    px=haxview->toPixel(ax);   // pixel coords
+    py=vaxview->toPixel(ay);
 
     if ( layer->isDrawStyle(Layer::line)  ) {
       if (layer->isDrawStyle(Layer::vertical))
@@ -549,7 +551,7 @@ void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis,
       // to get pixel width of Z, get absolute axis position of Z,
       // convert to pixel and then subtract out px
       double az=ax + layer->getPointZ(p);
-      double pz = (int)xaxis->toPixel(az);
+      double pz = (int)haxview->toPixel(az);
       // draw selected boxes gray if moving
       if ( isFoc && sel->isSelected(p) ) {
 	g.setColour(selcolor);
@@ -567,41 +569,41 @@ void drawLayer(Graphics& g, Layer * layer, AxisView * xaxis, AxisView * yaxis,
 void PlotView::paint (Graphics& g) {
   // erase with white
   drawLayer(g, focuslayer,
-	    plotter->getAxisView(Plotter::horizontal),
-	    plotter->getAxisView(Plotter::vertical),
+	    plotter->getHorizontalAxisView(),
+	    plotter->getVerticalAxisView(),
 	    plotter->getPointSize(),
 	    1.0,
 	    true,
 	    &selection);
 }
 
-void drawGrid(Graphics& g, AxisView * xaxis, AxisView * yaxis, 
+void drawGrid(Graphics& g, AxisView * haxview, AxisView * vaxview, 
 	      Colour c1, Colour c2) {
-  double left=xaxis->getOrigin();
-  double right=left+xaxis->extent();
-  double bottom=yaxis->getOrigin();
-  double top=bottom-yaxis->extent();
+  double left=haxview->getOrigin();
+  double right=left+haxview->extent();
+  double bottom=vaxview->getOrigin();
+  double top=bottom-vaxview->extent();
   double v,p,t,d;
   //std::cout << "drawgrid "<<left<<" "<<top<<" "<<bottom<<" "<<right<<"\n";
-  p=xaxis->getOrigin();
-  d=xaxis->incrementSize();
-  t=xaxis->tickSize();
+  p=haxview->getOrigin();
+  d=haxview->incrementSize();
+  t=haxview->tickSize();
   while (p <= right) {
     g.setColour(c1);
     g.drawVerticalLine((int)p, top, bottom);
     g.setColour(c2);
-    for (int i=1;i<xaxis->numTicks();i++) 
+    for (int i=1;i<haxview->numTicks();i++) 
       g.drawVerticalLine((int)(p+(t*i)), top, bottom);
     p += d;
   }
-  p=yaxis->getOrigin();
-  d=yaxis->incrementSize();
-  t=yaxis->tickSize();
+  p=vaxview->getOrigin();
+  d=vaxview->incrementSize();
+  t=vaxview->tickSize();
   while (p >= top) {
     g.setColour(c1);
     g.drawHorizontalLine((int)p, left, right);
     g.setColour(c2);
-    for (int i=1;i<yaxis->numTicks();i++) 
+    for (int i=1;i<vaxview->numTicks();i++) 
       g.drawHorizontalLine((int)(p-(t*i)), left, right);
     p -= d;
   }
@@ -635,8 +637,8 @@ void PlotView::mouseDown (const MouseEvent &e) {
 
   int mxp=e.getMouseDownX();
   int myp=e.getMouseDownY();
-  AxisView * xaxis=plotter->getAxisView(Plotter::horizontal);
-  AxisView * yaxis=plotter->getAxisView(Plotter::vertical);
+  AxisView * haxview=plotter->getHorizontalAxisView();
+  AxisView * vaxview=plotter->getVerticalAxisView();
 
   // cache mouse down position  FIX THIS ISNT NEEDED
   mousedown.setXY(mxp, myp);
@@ -645,8 +647,8 @@ void PlotView::mouseDown (const MouseEvent &e) {
   // Control-Click: add point make selection
   // Control-Shift-Click: add point add selection.
   if ( e.mods.isCtrlDown() ) {
-    int i = focuslayer->addPoint(xaxis->toValue(mxp),
-				 yaxis->toValue(myp));
+    int i = focuslayer->addPoint(haxview->toValue(mxp),
+				 vaxview->toValue(myp));
     if ( e.mods.isShiftDown() )
       addSelection( i);
     else setSelection(i);
@@ -661,9 +663,9 @@ void PlotView::mouseDown (const MouseEvent &e) {
   if ( focuslayer->isDrawStyle(Layer::hbox) ) {
     // speed: since box height is constant check point y againt a
     // (constant) vertical box height centered on mouse y
-    top=yaxis->toValue( myp - half);
-    bottom=yaxis->toValue( myp + half);
-    x=xaxis->toValue( mxp);
+    top=vaxview->toValue( myp - half);
+    bottom=vaxview->toValue( myp + half);
+    x=haxview->toValue( mxp);
     for (int i=0; i < focuslayer->numPoints(); i++) {
       left=focuslayer->getPointX(i);
       right=left+focuslayer->getPointZ(i);
@@ -680,10 +682,10 @@ void PlotView::mouseDown (const MouseEvent &e) {
   else {
     // calc a constant "point" around mouse x and y and try to
     // find a point thats inside it
-    left=xaxis->toValue( mxp - half);
-    top=yaxis->toValue( myp - half);
-    right=xaxis->toValue( mxp + half);
-    bottom=yaxis->toValue( myp + half);
+    left=haxview->toValue( mxp - half);
+    top=vaxview->toValue( myp - half);
+    right=haxview->toValue( mxp + half);
+    bottom=vaxview->toValue( myp + half);
 
     for (int i=0; i < focuslayer->numPoints(); i++) {
       x=focuslayer->getPointX(i);
@@ -707,7 +709,7 @@ void PlotView::mouseDown (const MouseEvent &e) {
       }
     }
     addChildComponent (&region);
-    region.beginSweep(e, xaxis, yaxis);
+    region.beginSweep(e, haxview, vaxview);
   }
   else if ( isSelected(h) ) {
     // point is already selected.
@@ -729,12 +731,12 @@ void PlotView::mouseDown (const MouseEvent &e) {
 }
 
 void PlotView::mouseDrag(const MouseEvent &e) {
-  AxisView * xaxis=plotter->getAxisView(Plotter::horizontal);
-  AxisView * yaxis=plotter->getAxisView(Plotter::vertical);
+  AxisView * haxview=plotter->getHorizontalAxisView();
+  AxisView * vaxview=plotter->getVerticalAxisView();
   
   if ( isSelection() ) {
-    float dx=xaxis->toValue(e.x) - xaxis->toValue(mousemove.getX()) ;
-    float dy=yaxis->toValue(e.y) - yaxis->toValue(mousemove.getY()) ;
+    float dx=haxview->toValue(e.x) - haxview->toValue(mousemove.getX()) ;
+    float dy=vaxview->toValue(e.y) - vaxview->toValue(mousemove.getY()) ;
     //    for (int i=0; i<numSelected(); i++)
     //      focuslayer->incPoint( getSelected(i), dx, dy);
     shiftSelection(dx, dy);
@@ -797,7 +799,7 @@ public:
   Layer* getFocusLayer() { return focuslayer;}
   void resized();
   void labelTextChanged(Label * label);
-
+  void updateFieldLabels();
   void setNameBuffer(String name, bool act=false) {
     layername->setText(name, act);
   }
@@ -821,8 +823,8 @@ FocusView::FocusView (Plotter * p)
   plotter=p;
   Font font=Font( 14.0, Font::bold);
 
-  int width=font.getStringWidth(T("Name: "));
-  addAndMakeVisible(nlabel = new Label(String::empty, T("Name:")));
+  int width=font.getStringWidth(T("Layer: "));
+  addAndMakeVisible(nlabel = new Label(String::empty, T("Layer:")));
   nlabel->setFont (font);
   nlabel->setJustificationType (Justification::centredRight);
   nlabel->setColour (Label::backgroundColourId, Colour(230, 230, 0xff) );
@@ -855,7 +857,6 @@ FocusView::FocusView (Plotter * p)
   xvalue->setColour (Label::backgroundColourId, Colours::white);
   xvalue->setBounds(layername->getRight()+30, 0, 60, 24);
   xvalue->addListener(this);
-  xlabel->attachToComponent(xvalue, true);
 
   addAndMakeVisible (ylabel = new Label (String::empty, T("Y:")));
   ylabel->setFont(font);
@@ -871,11 +872,25 @@ FocusView::FocusView (Plotter * p)
   yvalue->setColour (Label::backgroundColourId, Colours::white);
   yvalue->setBounds(xvalue->getRight()+30, 0, 60,24);
   xvalue->addListener(this);
-  ylabel->attachToComponent(yvalue, true);
 
   setSize(440,24);
 }
 
+void FocusView::updateFieldLabels() {
+  String xstr=focuslayer->getFieldName(focuslayer->getXField()) + T(": ");
+  String ystr=focuslayer->getFieldName(focuslayer->getYField()) + T(": ");
+  xlabel->setText(xstr, false);
+  xlabel->setBounds(layername->getRight()+25, xlabel->getY(),
+		    xlabel->getFont().getStringWidth(xstr),
+		    xlabel->getHeight());
+  xvalue->setTopLeftPosition(xlabel->getRight(),xvalue->getY());
+  ylabel->setText(ystr, false);
+  ylabel->setBounds(xvalue->getRight()+25, ylabel->getY(),
+		    ylabel->getFont().getStringWidth(ystr), 
+		    ylabel->getHeight());
+  yvalue->setTopLeftPosition(ylabel->getRight(), yvalue->getY());
+}  
+		  
 FocusView::~FocusView() {
   deleteAndZero(nlabel);
   deleteAndZero(layername);
@@ -889,6 +904,10 @@ void FocusView::setFocusLayer(Layer * l) {
   focuslayer=l;
   plotter->getPlotView()->deselectAll();
   plotter->getPlotView()->focuslayer=l;
+
+  plotter->setHorizontalAxis(focuslayer->getXAxis());
+  plotter->setVerticalAxis(focuslayer->getYAxis());
+
   Colour c = l->getLayerColor();
   layername->setColour(Label::textColourId, c);
   layername->setText(l->getLayerName(), false);
@@ -896,7 +915,9 @@ void FocusView::setFocusLayer(Layer * l) {
   //  ylabel->setColour(Label::textColourId, c);
   xvalue->setColour(Label::textColourId, c);
   yvalue->setColour(Label::textColourId, c);
+  updateFieldLabels();
 }
+
 
 void FocusView::resized() {
 }
@@ -958,14 +979,15 @@ Plotter::Plotter (PlotType pt)
     xtyp=ytyp=Axis::normalized;
   }
     
-  // set axis views...
-  setAxisView( new AxisView(xtyp), horizontal );
-  setAxisView( new AxisView(ytyp), vertical );
+  // set shared X axis and create Axis views...
+  shared=new Axis(xtyp);
+  haxview=new AxisView(viewport, horizontal);
+  vaxview=new AxisView(viewport, vertical);
 
   newLayer(pt);
 
-  addChildComponent(xaxis);  
-  addChildComponent(yaxis);  
+  addChildComponent(haxview);  
+  addChildComponent(vaxview);  
   plotview->resizeForDrawing();  // calc plots width/height
 
   // add the backview to the viewport. the plotview is a child of the
@@ -1003,13 +1025,22 @@ Plotter::Plotter (PlotType pt)
   backview->setVisible(true);
   plotview->setVisible(true);
   focusview->setVisible(true);
-  xaxis->setVisible(true);
-  yaxis->setVisible(true);
+  haxview->setVisible(true);
+  vaxview->setVisible(true);
 }
 
 Plotter::~Plotter() {
-  deleteAndZero(xaxis);
-  deleteAndZero(yaxis);
+  // zero out shared axis before deleting
+  for (int i=0; i<numLayers(); i++) {
+    Layer* l=getLayer(i);
+    for (int j=0; j<l->getLayerArity(); j++)
+      if (l->getAxis(j)==getSharedAxis()) {
+	printf("unlink axis=%d\n",j); 
+	l->setAxis(j, (Axis *)NULL);
+      }
+  }
+  deleteAndZero(haxview);
+  deleteAndZero(vaxview);
   deleteAndZero(xspread);
   deleteAndZero(yspread);
   deleteAndZero(plotview);
@@ -1017,6 +1048,7 @@ Plotter::~Plotter() {
   deleteAndZero(viewport);
   deleteAndZero(focusview);
   layers.clear(true);
+  delete shared;
   delete rand;
 }
 
@@ -1024,19 +1056,23 @@ Plotter::~Plotter() {
 /// Component View Accessing 
 ///
 
-AxisView * Plotter::getAxisView(Orientation o) {
-  if (o == horizontal) return xaxis;
-  else return yaxis;
-}
+AxisView* Plotter::getHorizontalAxisView() {return haxview;}
+AxisView* Plotter::getVerticalAxisView() {return vaxview;}
 
-void Plotter::setAxisView (AxisView * a, Orientation o) {
-  // add axis to plotter (and to its plotview as well).
-  a->viewport=this->viewport;
-  a->orient=o;
-  if ( o==vertical )
-    yaxis=a;
-  else if ( o==horizontal )
-    xaxis=a;
+void Plotter::setHorizontalAxis (Axis* a) {haxview->setAxis(a);}
+void Plotter::redrawHorizontalAxisView() {haxview->repaint();}
+
+void Plotter::setVerticalAxis (Axis* a) {vaxview->setAxis(a);}
+void Plotter::redrawVerticalAxisView() {vaxview->repaint();}
+
+void Plotter::setFocusVerticalField(int i) {
+  Layer* layer=getFocusLayer();
+  layer->setYField(i);
+  setVerticalAxis(layer->getAxis(i));
+  redrawVerticalAxisView();
+  redrawPlotView();
+  focusview->updateFieldLabels();
+  redrawFocusView();  
 }
 
 BackView * Plotter::getBackView() {
@@ -1077,6 +1113,10 @@ void Plotter::redrawPlotView() {
 
 void Plotter::redrawBackView() {
   backview->repaint();
+}
+
+void Plotter::redrawFocusView() {
+  focusview->repaint();
 }
 
 
@@ -1132,6 +1172,12 @@ Layer* Plotter::newLayer(PlotType pt) {
 }
 
 void Plotter::addLayer(Layer* layer) {
+  // axis[0] unfilled axis will be set to Plotter's shared axis
+  for (int i=0; i < layer->getLayerArity(); i++)
+    if (layer->getAxis(i) == (Axis *)NULL) {
+      printf("axis[%d]=shared\n", i);
+	layer->setAxis(i, getSharedAxis());
+    }
   layers.add(layer);
   setFocusLayer(layer);
 }
@@ -1149,6 +1195,9 @@ void Plotter::removeLayer(Layer* layer) {
       }
     }
   }
+  for (int i=0; i<layer->getLayerArity(); i++)
+    if (layer->getAxis(i) == getSharedAxis()) 
+      layer->setAxis(i, (Axis *)NULL);
   layers.removeObject(layer,false);
 }
 
@@ -1170,11 +1219,24 @@ void Plotter::resized () {
   // insets: left=60 top=60 right=40 bottom=40 (scrollers take 20)
   viewport->setBounds(60, 60, getWidth()-100, getHeight()-150);
 
-  xaxis->setBounds(60, 30, viewport->getViewWidth(), 26); 
-  yaxis->setBounds(30, 60, 26, viewport->getViewHeight());
+  haxview->setBounds(60, 30, viewport->getViewWidth(), 26); 
+  vaxview->setBounds(30, 60, 26, viewport->getViewHeight());
   focusview->setBounds(30, viewport->getBottom()+4,
 		       viewport->getWidth()+34, // axis+spacer
 		       focusview->getHeight());
+}
+
+/// Spread slider
+
+void Plotter::sliderDragStarted (Slider *slider) {
+  // turn off image caching while slider is moving to speed up the
+  // continuous drawing.  perhaps this should turn off back plot
+  // drawing altogether and just show the focus plot and grid?
+  getBackView()->setBackViewCaching(false);
+}
+
+void Plotter::sliderDragEnded (Slider *slider) {
+  getBackView()->setBackViewCaching(true);
 }
 
 void Plotter::sliderValueChanged (Slider *slider) {
@@ -1182,9 +1244,9 @@ void Plotter::sliderValueChanged (Slider *slider) {
   String name = slider->getName();
 
   if ( name == T("xspread") )
-    xaxis->setSpread(z);
+    haxview->setSpread(z);
   else
-    yaxis->setSpread(z);
+    vaxview->setSpread(z);
   plotview->resizeForDrawing();
   // now have to update the size of the Axis' view -- this is NOT the
   // size of the axis! Note that if spread has gotten larger then the
@@ -1193,15 +1255,15 @@ void Plotter::sliderValueChanged (Slider *slider) {
   // spread.
   if ( name == T("xspread") ) {
     int old=getWidth();
-    xaxis->setSize(viewport->getViewWidth(), xaxis->getHeight());
+    haxview->setSize(viewport->getViewWidth(), haxview->getHeight());
     if (old==getWidth()) 
-      xaxis->repaint();
+      haxview->repaint();
   }  
   else {
     int old=getHeight();
-    yaxis->setSize(yaxis->getWidth(), viewport->getViewHeight()) ;
+    vaxview->setSize(vaxview->getWidth(), viewport->getViewHeight()) ;
     if (old==getHeight()) 
-      yaxis->repaint();
+      vaxview->repaint();
   }
 } 
 
@@ -1211,9 +1273,9 @@ void Plotter::scrollBarMoved (ScrollBar * sb, const double nrs) {
   String name = sb->getName();
   
   if ( name == T("xscroll") )
-    xaxis->repaint();
+    haxview->repaint();
   else
-    yaxis->repaint();
+    vaxview->repaint();
 }
 
 /***********************************************************************
@@ -1380,6 +1442,14 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
 			    T("Vertical Bar"),
 			    layer->getLayerColor(),
 			    false, (val==Layer::vbar));
+      menu.addSeparator(); 
+      // 0'th field is hardwired to x axis.
+      for (int i=1; i<layer->getLayerArity(); i++)
+	sub2.addItem( Plotter::cmdViewVertical + i,
+		      layer->getFieldName(i),
+		      true,
+		      (layer->getYField()==i));
+      menu.addSubMenu(T("Vertical Display"), sub2, true);
     }
     menu.addSeparator();
     val=plotter->getBackViewStyle();
@@ -1411,7 +1481,7 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( Plotter::cmdAnalyzeDeviation, T("Deviation..."), false);
     break;
   case 6 :
-    menu.addItem( Plotter::cmdHelpCommands, T("Command Help"));
+    menu.addItem( Plotter::cmdHelpCommands, T("Plotter Help"));
     break;
   }
   return menu;
@@ -1424,8 +1494,6 @@ void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id,
   int arg = id & 0x0000007F;
   int cmd = id & 0xFFFFFF80;
   bool tog;
-  printf("plotter menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
-
   switch (cmd) {
   case Plotter::cmdPlotterNew :
     new PlotterWindow( (PlotType)arg);
@@ -1476,6 +1544,9 @@ void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id,
     plotter->getFocusLayer()->setLayerStyle(arg);
     plotter->redrawPlotView();
     break;
+  case Plotter::cmdViewVertical :
+    plotter->setFocusVerticalField(arg);
+    break;
   case Plotter::cmdViewBgStyle :
     plotter->setBackViewStyle( (Plotter::BGStyle)arg);
     plotter->redrawBackView();
@@ -1524,7 +1595,6 @@ PlotterWindow::~PlotterWindow () {
 }
 
 void PlotterWindow::closeButtonPressed () {
-  //JUCEApplication::quit();
   this->~PlotterWindow();
 }
 

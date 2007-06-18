@@ -149,8 +149,11 @@ class Layer {
   int _x, _y, _z; 
 
   /* axis objects, one for each field in points  */
-  OwnedArray <Axis> _axes;
-  StringArray pfields;
+  OwnedArray <Axis> axes;
+  Axis** paxis;
+  StringArray fields;
+  int* pstyle;
+
   int arity;        // number of fields in points
   String name;      // layer name
   int id;           // unique id
@@ -159,7 +162,7 @@ class Layer {
 
   bool transp;      // allow back plots to be visible. unused
   
-  Layer(String nam, Colour col);
+  Layer(int ari, String nam, Colour col);
   ~Layer();
 
   int getLayerArity() {return arity;}
@@ -172,9 +175,11 @@ class Layer {
   void setLayerName(String n){name=n;}
   bool isTransparent() {return transp;}
   void setTransparent(bool b) {transp=b;}  
-  int getLayerStyle(){return style;}
-  void setLayerStyle(int s){style=s;}
-  bool isDrawStyle(int i) {return (style & i);}
+  //  int getLayerStyle(){return style;}
+  //  void setLayerStyle(int s){style=s;}
+  int getLayerStyle(){return pstyle[_y];}
+  void setLayerStyle(int s){pstyle[_y]=s;}
+  bool isDrawStyle(int i) {return (pstyle[_y] & i);}
   int numPoints() ;
   bool isPoints() ;
   void sortPoints () ;
@@ -226,9 +231,23 @@ class Layer {
 
   void deletePoint(int i) ;
   void deletePoint(LayerPoint* p) ;
-  Axis* getAxis() ;
-  void setAxis(int i, Axis* a);
 
+  //  Axis* getAxis(int i) {return axes[i];}
+  //  void setAxis(int i, Axis* a){axes.set(i,a,false);} 
+  Axis* getAxis(int i) {return paxis[i];}
+  void setAxis(int i, Axis* a) {paxis[i]=a;}
+  Axis* getXAxis() {return getAxis(_x);}
+  Axis* getYAxis() {return getAxis(_y);}
+
+  int getXField() {return _x;}
+  int getYField() {return _y;}
+  int getZField() {return _z;}
+  void setXField(int f) {_x=f;}
+  void setYField(int f) {_y=f;}
+  void getZField(int f) {_z=f;}
+  String getFieldName(int f) {return fields[f];}
+  int getFieldIndex(String f) {return fields.indexOf(f, true);}
+  void addFieldName(String n){fields.add(n);}
 };
 
 class XYLayer : public Layer {

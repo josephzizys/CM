@@ -42,17 +42,21 @@ public:
   int orient;     // orientation (horizontal, vertical)
   PlotViewport * viewport;  // back pointer to viewport
 
- AxisView (Axis::AxisType typ)
-    : _spread (1.0), _ppi (120.0), _offset (0.0), viewport (0)  {
-    axis=new Axis(typ);
+ AxisView (PlotViewport* vp, int o)
+   : _spread (1.0), _ppi (120.0), _offset (0.0), viewport (0), axis (0) {
+    viewport=vp;
+    orient=o;
   }
-
   bool isVertical();
   bool isHorizontal();
   double getSpread() {return _spread;}
   void setSpread(double v) {_spread=v; }
   double getOrigin() {return _offset;}
   void setOrigin(double v) {_offset=v; }  
+
+  bool hasAxis() {return axis != (Axis *)NULL;}
+  Axis* getAxis() {return axis;}
+  void setAxis(Axis* a) {axis=a;}
 
   double axisMinimum() {return axis->getMinimum();}
   double axisMaximum() {return axis->getMaximum();}
@@ -156,8 +160,9 @@ class Plotter  : public Component,
          "PlotterSaveAs" "PlotterImport" "PlotterExport"
 	 "EditUndo" "EditRedo" "EditCut" "EditCopy" "EditPaste"
 	 "EditSelectAll" "EditClear" "EditFind"
-         "LayerAdd" "LayerDelete" 
-	 "LayerSelect" "ViewStyle" "ViewBgStyle" "ViewBgColor" "ViewBgPlotting"
+         "LayerAdd" "LayerDelete" "LayerSelect"
+         "ViewStyle" "ViewVertical" "ViewBgStyle" 
+         "ViewBgColor" "ViewBgPlotting"
 	 "ViewBgMousing" "ViewMouseGuide" 
 	 "ComposeDistributions" "ComposeGenerate"
 	 "AnalyzeHistogram" "AnalyzeDeviation"
@@ -183,19 +188,21 @@ class Plotter  : public Component,
     cmdLayerDelete = 69376,
     cmdLayerSelect = 69632,
     cmdViewStyle = 69888,
-    cmdViewBgStyle = 70144,
-    cmdViewBgColor = 70400,
-    cmdViewBgPlotting = 70656,
-    cmdViewBgMousing = 70912,
-    cmdViewMouseGuide = 71168,
-    cmdComposeDistributions = 71424,
-    cmdComposeGenerate = 71680,
-    cmdAnalyzeHistogram = 71936,
-    cmdAnalyzeDeviation = 72192,
-    cmdHelpCommands = 72448};
+    cmdViewVertical = 70144,
+    cmdViewBgStyle = 70400,
+    cmdViewBgColor = 70656,
+    cmdViewBgPlotting = 70912,
+    cmdViewBgMousing = 71168,
+    cmdViewMouseGuide = 71424,
+    cmdComposeDistributions = 71680,
+    cmdComposeGenerate = 71936,
+    cmdAnalyzeHistogram = 72192,
+    cmdAnalyzeDeviation = 72448,
+    cmdHelpCommands = 72704};
 
-  AxisView * xaxis;
-  AxisView * yaxis;
+  Axis* shared;
+  AxisView * haxview;
+  AxisView * vaxview;
   Slider * xspread;
   Slider * yspread;
   PlotViewport * viewport;
@@ -213,16 +220,21 @@ class Plotter  : public Component,
 
   Plotter (PlotType pt) ;
   ~Plotter () ;
-
   double getZoom() {return zoom;}
   void setZoom(double z) {zoom=z;}
   double getPointSize(){return ppp;}
   void setPointSize(double siz){ppp=siz;}
   PlotType getPlotType() {return plottype;}
 
-  AxisView * getAxisView(Orientation o);
-  void setAxisView(AxisView * a, Orientation o) ;
+  Axis* getSharedAxis() {return shared;}
 
+  //  void setAxisView(Axis* a, Orientation o) ;
+  void setHorizontalAxis(Axis* a);
+  void setVerticalAxis(Axis* a);
+
+
+  AxisView * getHorizontalAxisView();
+  AxisView * getVerticalAxisView();
   BackView * getBackView();
   PlotView * getPlotView();
   FocusView * getFocusView();
@@ -235,6 +247,7 @@ class Plotter  : public Component,
   Layer* getFocusLayer();
   bool isFocusLayer(Layer* l);
   void setFocusLayer(Layer* l);
+  void setFocusVerticalField(int i);
   void addLayer(Layer* l);
   Layer* newLayer(PlotType pt);
   void removeLayer(Layer* l);
@@ -242,13 +255,16 @@ class Plotter  : public Component,
   void resized () ;
   void redrawPlotView();
   void redrawBackView();
+  void redrawHorizontalAxisView();
+  void redrawVerticalAxisView();
+  void redrawFocusView();
   BGStyle getBackViewStyle();
   void setBackViewStyle(BGStyle style);
   bool isBackViewPlotting();
   void setBackViewPlotting(bool val);
   void sliderValueChanged (Slider *slider) ;
-  void sliderDragStarted (Slider *slider) {};
-  void sliderDragEnded (Slider *slider) {};
+  void sliderDragStarted (Slider *slider) ;
+  void sliderDragEnded (Slider *slider) ;
   void scrollBarMoved (ScrollBar * sb, const double nrs) ;
 
   void selectAll();
