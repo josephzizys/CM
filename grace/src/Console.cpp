@@ -189,7 +189,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   splash=new SplashComponent();
   setContentComponent(console);
   setResizable(true, true); 
-  setAlwaysOnTop(true);
+  //setAlwaysOnTop(true);
   setVisible(true);
   console->buffer->setVisible(true);
   setVisible(true);
