@@ -768,7 +768,7 @@ void LispConnection::messageReceived (const MemoryBlock &message) {
 }
 
 void LispConnection::postMessage (const MemoryBlock &message) {
-  printf("post value\n");
+  //  printf("post value\n");
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->consolePrint(text, ConsoleTheme::valueColor);
@@ -776,7 +776,7 @@ void LispConnection::postMessage (const MemoryBlock &message) {
 }
 
 void LispConnection::postWarning (const MemoryBlock &message) {
-  printf("post warning\n");
+  //  printf("post warning\n");
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->consolePrintWarning(text);
@@ -784,7 +784,7 @@ void LispConnection::postWarning (const MemoryBlock &message) {
 }
 
 void LispConnection::postError (const MemoryBlock &message) {
-  printf("post error\n");
+  //printf("post error\n");
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->consolePrintError(text);
@@ -805,7 +805,7 @@ void LispConnection::handleMessage (const Message& message)
 {
   MemoryBlock* const data = (MemoryBlock*) message.pointerParameter;
   
-  printf ("message %i\n", message.intParameter1);
+  printf ("message id %i\n", message.intParameter1);
 
   switch( message.intParameter1 ) {
   
