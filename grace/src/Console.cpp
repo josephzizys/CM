@@ -17,48 +17,44 @@
 #include "Lisp.h"
 
 
-TransparencySlider::TransparencySlider(DocumentWindow* _window) : Slider(String::empty)
-{
+TransparencySlider::TransparencySlider(DocumentWindow* _window) : Slider(String::empty) {
   window = _window;
-  setRange(10, 100, 0);
+  setRange(10, 100, 1);
   setSliderStyle(Slider::LinearHorizontal);
-  setTextBoxStyle(Slider::TextBoxLeft, false, 80, 20);
-  setValue(100.0);
+  setTextBoxStyle(Slider::NoTextBox, false, 80, 20);
+  setValue(((ConsoleWindow *)window)->getOpacity(), false);
+  setTextValueSuffix(T("%"));
 }
 
-TransparencySlider::~TransparencySlider()
-{
-}
+TransparencySlider::~TransparencySlider() { }
 
-TransparencySliderListener::TransparencySliderListener() : SliderListener()
-{
-}
-
-TransparencySliderListener::~TransparencySliderListener()
-{
-}
-
-void TransparencySliderListener::sliderValueChanged(Slider *slider)
-{
+void ConsoleWindow::sliderValueChanged(Slider *slider) {
   TransparencySlider *tslider = (TransparencySlider*)slider;
   ConsoleWindow *win = (ConsoleWindow*)(tslider->window);
+  TextEditor* ted=win->getConsole();
   ConsoleTheme *theme = win->console->getCurrentTheme();
   Colour bgcolor = win->getBackgroundColour();
   Colour teditColor = theme->getColor(ConsoleTheme::bgColor);
-  
   double val = slider->getValue();
+  ted->setColour(TextEditor::backgroundColourId,
+		 teditColor.withAlpha( (float) (val / 100.5)));
   win->setBackgroundColour( bgcolor.withAlpha( (float) (val / 100.5) ));
-  theme->setColor(ConsoleTheme::bgColor, teditColor.withAlpha( (float) (val / 100.5) ));
-  win->currentTransparency = val;
-  
+  win->setOpacity(val);
 }
 
 
-SliderMenuComponent::SliderMenuComponent(DocumentWindow* _window) : PopupMenuCustomComponent(true)
+SliderMenuComponent::SliderMenuComponent(DocumentWindow* _window) 
+  : PopupMenuCustomComponent(false)
 {
-  addAndMakeVisible (slider = new TransparencySlider (_window));
-  slider->setValue(100.0);
-  slider->setBounds(0, 0, 300, 24);
+  String str=T("Opacity");
+  Label* lab=new Label(String::empty, str);
+  Font font=Font(getLookAndFeel().getPopupMenuFont());
+  lab->setFont(font);
+  lab->setBounds(24,0,font.getStringWidth(str), 30);
+  addAndMakeVisible(lab);
+  addAndMakeVisible(slider = new TransparencySlider (_window));
+  slider->setValue(((ConsoleWindow *)_window)->getOpacity(), false);
+  slider->setBounds(lab->getRight()+8, 0, 80, 30);
 }
 
 SliderMenuComponent::~SliderMenuComponent()
@@ -68,8 +64,8 @@ SliderMenuComponent::~SliderMenuComponent()
 
 void SliderMenuComponent::getIdealSize(int &idealWidth, int &idealHeight)
 {
-  idealWidth = 300;
-  idealHeight = 24;
+  idealWidth = 200;
+  idealHeight = 30;
 }
 
 
@@ -161,11 +157,21 @@ void Console::initTheme (int idx) {
 }
 
 void Console::setTheme(int i) {
+  ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
   curtheme=i;
   printf("current theme: %s\n", themes[i].name.toUTF8());
+
+
   buffer->setFont( themes[i].getFont() );
+
+  
   buffer->setColour( TextEditor::backgroundColourId, 
-		     themes[i].getColor(ConsoleTheme::bgColor));
+		     themes[i].getColor(ConsoleTheme::bgColor)
+		     );
+  //bgcolor.withAlpha( (float) (val / 100.5) ));
+  //win->setBackgroundColour( 
+  //themes[i].getColor(ConsoleTheme::bgColor));
+
   buffer->setColour( TextEditor::textColourId,
 		     themes[i].getColor(ConsoleTheme::outputColor));
   buffer->setColour( TextEditor::highlightColourId,
@@ -190,7 +196,6 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   setContentComponent(console);
   setResizable(true, true); 
   //setAlwaysOnTop(true);
-  setVisible(true);
   console->buffer->setVisible(true);
   setVisible(true);
   centreWithSize (450, 375);
@@ -200,9 +205,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
     if ( isSplashVisible() ) // user might have clicked
       hideSplash();
   }
-  sliderListener = new TransparencySliderListener();
   currentTransparency = 100.0;
-
 }
 
 ConsoleWindow::~ConsoleWindow () {
@@ -239,7 +242,6 @@ void ConsoleWindow::setConsoleReadOnly(bool b) {
     console->buffer->setCaretVisible(true);    
   }
 }
-
 
 void ConsoleWindow::setConsoleTextColor (int c) {
     console->buffer->setColour(TextEditor::textColourId,
@@ -283,8 +285,8 @@ void ConsoleWindow::consoleFreshLine() {
 
 void ConsoleWindow::consolePrint( String str, ConsoleTheme::ColorType typ,
 				  bool eob) {
-
   console->lock->enter();
+  ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
   if (eob) consoleGotoEOB();
   setConsoleTextColor(typ);
   console->buffer->insertTextAtCursor(str);
@@ -299,8 +301,6 @@ void ConsoleWindow::consolePrintError( String str,  bool eob) {
   consolePrint(str, ConsoleTheme::errorColor, eob);
 }
 
-
-
 void ConsoleWindow::consoleEval (String code, bool isSal) {
   // HACK display until eval is tied in
   //  consolePrint(code, ConsoleTheme::inputColor);
@@ -310,9 +310,6 @@ void ConsoleWindow::consoleEval (String code, bool isSal) {
   else
     printf("sending sal not supported yet!\n");
 }
-
-
-
 
 void ConsoleWindow::showSplash () {
   splash->setSize(console->getWidth(),console->getHeight());
@@ -347,9 +344,6 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3, sub4;
   int val;
-  SliderMenuComponent *sliderComp = new SliderMenuComponent(this);
-  sliderComp->slider->setValue(currentTransparency);
-  sliderComp->slider->addListener(sliderListener);
   switch (idx) {
   case 0 :
     // should make syntaxId enum global !!
@@ -375,9 +369,6 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( cmdEditSelectAll, T("Select All"), true);
     break;
   case 2 :
-    
-    sub4.addCustomItem( cmdConsoleTransparency,  sliderComp);
-    
     menu.addItem( cmdViewFonts, T("Show Fonts..."), false);    
     menu.addSeparator();
     for (int i=0;i<console->numThemes(); i++)
@@ -388,7 +379,13 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 		  T("Roll Your Own..."), 
 		  false);
     menu.addSubMenu( T("Themes"), sub1, true);
-    menu.addSubMenu( T("Console Transparency"), sub4, true);
+    //    menu.addCustomItem( cmdConsoleTransparency,  sliderComp);
+    {
+      SliderMenuComponent *sliderComp = new SliderMenuComponent(this);
+      sliderComp->slider->setValue(getOpacity(), false);
+      sliderComp->slider->addListener(this);
+      menu.addCustomItem( cmdConsoleTransparency,  sliderComp);
+    }
     break;
   case 3 :
     menu.addItem( cmdAudioMidiSetup, T("Midi Setup..."), true); 

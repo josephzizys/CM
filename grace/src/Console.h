@@ -27,10 +27,6 @@
 //   highlightTextColor   region
 //   caretColor:          cursor-color
 
-
-
-
-
 class TransparencySlider : public Slider
 {
 public:
@@ -39,14 +35,14 @@ public:
   DocumentWindow *window;
 };
 
-class TransparencySliderListener : public SliderListener
-{
-public:
-  TransparencySliderListener();
-  ~TransparencySliderListener();
-  void sliderValueChanged(Slider * slider);
-
-}; 
+//class TransparencySliderListener : public SliderListener
+//{
+//public:
+//  TransparencySliderListener();
+//  ~TransparencySliderListener();
+//  void sliderValueChanged(Slider * slider);
+//
+//}; 
 
 class SliderMenuComponent : public PopupMenuCustomComponent
 {
@@ -99,7 +95,8 @@ class Console : public Component {
 };
 
 class ConsoleWindow  : public DocumentWindow,
-  public MenuBarModel
+  public MenuBarModel,
+  public SliderListener
 {
 public:
 
@@ -169,8 +166,12 @@ public:
   void showConfigureLispWindow();
 
   double currentTransparency;
-  TransparencySliderListener * sliderListener;
+  //TransparencySliderListener * sliderListener;  
+  void sliderValueChanged(Slider * slider);
+  double getOpacity(){return currentTransparency;}
+  void setOpacity(double o) {currentTransparency=o;}
 
 };
 
 #endif
+
