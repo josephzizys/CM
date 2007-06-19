@@ -160,18 +160,14 @@ void Console::setTheme(int i) {
   ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
   curtheme=i;
   printf("current theme: %s\n", themes[i].name.toUTF8());
-
-
+  win->setOpacity(100.0);
   buffer->setFont( themes[i].getFont() );
-
-  
+  Colour bgcolor=themes[i].getColor(ConsoleTheme::bgColor);
   buffer->setColour( TextEditor::backgroundColourId, 
-		     themes[i].getColor(ConsoleTheme::bgColor)
+		     // this screws up splash screen
+		     //bgcolor.withAlpha((float) (win->getOpacity() / 100.5))
+		     bgcolor
 		     );
-  //bgcolor.withAlpha( (float) (val / 100.5) ));
-  //win->setBackgroundColour( 
-  //themes[i].getColor(ConsoleTheme::bgColor));
-
   buffer->setColour( TextEditor::textColourId,
 		     themes[i].getColor(ConsoleTheme::outputColor));
   buffer->setColour( TextEditor::highlightColourId,
@@ -186,7 +182,8 @@ void Console::setTheme(int i) {
 ConsoleWindow::ConsoleWindow (bool dosplash)
   : DocumentWindow ( T("Console") , Colours::white,
 		     DocumentWindow::allButtons, true ),
-    lisp (0)
+    lisp (0),
+    currentTransparency (100.0)
 {
   lisp = new LispConnection(this);
   menubar = new MenuBarComponent(this);
@@ -197,15 +194,16 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   setResizable(true, true); 
   //setAlwaysOnTop(true);
   console->buffer->setVisible(true);
-  setVisible(true);
+
   centreWithSize (450, 375);
+  setVisible(true);
   if (dosplash) {
     showSplash();
     splash->fadeOutComponent(4000);
     if ( isSplashVisible() ) // user might have clicked
       hideSplash();
   }
-  currentTransparency = 100.0;
+
 }
 
 ConsoleWindow::~ConsoleWindow () {
