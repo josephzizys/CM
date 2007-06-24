@@ -209,7 +209,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
 ConsoleWindow::~ConsoleWindow () {
   // this will be called by GraceApp
   if ( lisp->isLispRunning() )
-    lisp->killLisp();
+    lisp->stopLisp();
   delete lisp;
 }
 
@@ -281,10 +281,19 @@ void ConsoleWindow::consoleFreshLine() {
   }
 }	
 
+void ConsoleWindow::display( String str, ConsoleTheme::ColorType typ) {
+  console->lock->enter();
+  consoleGotoEOB();
+  setConsoleTextColor(typ);
+  console->buffer->insertTextAtCursor(str);
+  console->lock->exit();
+}
+
 void ConsoleWindow::consolePrint( String str, ConsoleTheme::ColorType typ,
 				  bool eob) {
   console->lock->enter();
-  ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
+  //ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
+  //toFront();
   if (eob) consoleGotoEOB();
   setConsoleTextColor(typ);
   console->buffer->insertTextAtCursor(str);
@@ -298,6 +307,11 @@ void ConsoleWindow::consolePrintWarning( String str,  bool eob) {
 void ConsoleWindow::consolePrintError( String str,  bool eob) {
   consolePrint(str, ConsoleTheme::errorColor, eob);
 }
+
+void ConsoleWindow::consolePrintValues( String str,  bool eob) {
+  consolePrint(str, ConsoleTheme::valueColor, eob);
+}
+
 
 void ConsoleWindow::consoleEval (String code, bool isSal) {
   // HACK display until eval is tied in
@@ -395,13 +409,13 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     else 
       menu.addItem( cmdLispConnect, T("Start Lisp"), 
 		    lisp->isLispStartable()); 
-    menu.addItem( cmdLispConfigure, T("Configure..."), 
-		  (! lisp->isLispRunning() )
-		  ); 
     menu.addSeparator();
+    menu.addItem( cmdLispLoadSystem, T("Load System..."), false);
     menu.addItem( cmdLispCompileFile, T("Compile File..."), false);
     menu.addItem( cmdLispLoadFile, T("Load File..."), false);
-    menu.addItem( cmdLispLoadSystem, T("Load System..."), false);
+    menu.addSeparator();
+    menu.addItem( cmdLispConfigure, T("Configure Lisp..."), 
+		  (! lisp->isLispRunning() )); 
     break;
   case 5 :
     menu.addItem( cmdHelpConsole, T("Console Help"), false); 
@@ -411,9 +425,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
   return menu;
 }
 
-void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
-{
-  // lower seven bits may encode command information
+void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
+  // lower seven bits encode command information
   int arg = id & 0x0000007F;
   int cmd = id & 0xFFFFFF80;
   GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
@@ -455,9 +468,7 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx)
     break;
   case cmdLispConnect :
     if (lisp->isLispRunning()) {
-      //lisp->killLisp();
-      lisp->sendLispSexpr( T("(kill-server)\n") );
-      lisp->disconnect();
+      lisp->stopLisp();
     }
     else 
       lisp->startLisp();

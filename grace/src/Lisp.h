@@ -24,16 +24,20 @@ class LispProcessConnection : public Thread,
 public:
   LispProcessConnection (const bool callbacksOnMessageThread = true);
   ~LispProcessConnection();
-  
+
+  // message types, must be same as socketserver.lisp !!
   typedef enum MessageType
     {
-      msgString = 0x0,
-      msgBinaryData,
-
+      msgBinaryData  = 0x0,
+      // grace->lisp
+      msgLispEval,
+      msgSalEval,
+      // lisp->grace
       msgError,
       msgWarning,
       msgPrintout, 
-
+      msgValues, 
+      msgKillLisp, 
       msgStatus = 0xFF
     } ;
   
@@ -44,7 +48,7 @@ public:
   bool createPipe (const String& pipeName);
   void disconnect();
   bool isConnected() const;
-  bool sendMessage (const MemoryBlock& message, MessageType messageType=msgString);
+  bool sendMessage (const MemoryBlock& message, MessageType messageType);
   virtual void connectionMade() = 0;
   virtual void connectionLost() = 0;
   virtual void messageReceived (const MemoryBlock& message) = 0;
@@ -69,18 +73,27 @@ private:
 };
 
 
-class LispConnection : public LispProcessConnection {
-public:
+class LispConnection : public LispProcessConnection,
+  public Timer
+{
+ public:
   enum {local=1, remote};
-  enum {SBCL=1, OpenMCL, CLisp, Custom};
+  enum {SBCL=1, OpenMCL, CLisp};
   int type;  // local or remote
   String host;  // hostname
   int port;  // connection port
-  int wait;  // timeout after
-  int lpid;  // inferior lisp process id
+   int lpid;  // inferior lisp process id
   int impl;  // SBCL, OpenMCL ...
   String lisp; // program to exec
   String args; // program args
+  File pollfile;
+  File lispexedir;
+  File lispsysdir;
+  int timeout;    // connection timeout (sec)
+  int waiting;    // current wait time (ms)
+
+ String lispinfo;
+
   ConsoleWindow* console;
 
   LispConnection (ConsoleWindow* w);
@@ -89,21 +102,34 @@ public:
   void setType(int v) {type=v;}
   String getHost() {return host;}
   void setHost(String v) {host=v;}
+  bool isLocalHost();
   int getPort() {return port;}
   void setPort(int v) {port=v;}
-  int getWait() {return wait;}
-  void setWait(int v) {wait=v;}
+  int getTimeOut() {return timeout;}
+  void setTimeOut(int v) {timeout=v;}
   int getImplementation() {return impl;}
   void setImplementation(int v) {impl=v;}
   String getExecutable() {return lisp;}
   void setExecutable(String v) {lisp=v;}
   String getArguments() {return args;}
   void setArguments(String v) {args=v;}
+
+  File getGraceResourceDirectory(String sub=String::empty);
+  File getLispExecutableDirectory(String sub=String::empty);
+
+  File getLispSystemsDirectory(String sub=String::empty);
+  void setLispSystemsDirectory(File dir) {lispsysdir=dir;}
+
+  File getPollFile(bool newfile=false);
+  void deletePollFile();
+
   bool isLispStartable();
-  bool startLisp();
-  bool killLisp();
   bool isLispRunning();
-  bool connectToLisp();
+  bool launchLisp();
+  void startLisp();
+  void stopLisp();
+  void timerCallback();
+
   void connectionMade ();
   void connectionLost ();
   void sendLispSexpr(String in);
@@ -111,8 +137,10 @@ public:
   void messageReceived (const MemoryBlock &message);
 
   void postMessage (const MemoryBlock &message);
+  void postPrintout (const MemoryBlock &message);
   void postWarning (const MemoryBlock &message);
   void postError (const MemoryBlock &message);
+  void postValues (const MemoryBlock &message);
   void handleBinaryData (const MemoryBlock &message);
   void handleMessage (const Message& message);
 
@@ -140,6 +168,14 @@ public:
   void updateFromConnection();
 
 private:
+  GroupComponent* congroup;
+  Label* hostlabel;
+  Label* hostbuffer;
+  Label* portlabel;
+  Label* portbuffer;
+  Slider* timeslider;
+  Label* timelabel;
+
   GroupComponent* impgroup;
   ToggleButton* sbclbutton;
   ToggleButton* openmclbutton;
@@ -149,13 +185,11 @@ private:
   Label* argslab;
   Label* progbuf;
   Label* argsbuf;
-  GroupComponent* congroup;
-  Label* hostlabel;
-  Label* hostbuffer;
-  Label* portlabel;
-  Label* portbuffer;
-  Slider* timeslider;
-  Label* timelabel;
+
+  GroupComponent* sysgroup;
+  Label* syslab;
+  Label* sysbuf;
+
   TextButton* okbutton;
   TextButton* cancelbutton;
 

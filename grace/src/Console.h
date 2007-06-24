@@ -148,6 +148,8 @@ public:
   void consoleCopy();
   void consoleSelectAll();
   void consoleGotoEOB();
+  void display(String str,
+	       ConsoleTheme::ColorType typ=ConsoleTheme::outputColor);
   void consoleTerpri();  
   void consoleFreshLine();
   void consolePrint(String str, 
@@ -155,7 +157,7 @@ public:
 		    bool eob=true);
   void consolePrintWarning( String str,  bool eob=true);
   void consolePrintError( String str,  bool eob=true);
-  
+  void consolePrintValues( String str,  bool eob=true);  
   void consoleEval(String code, bool isSal);
   void installMenbar();
   void showSplash();
