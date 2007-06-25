@@ -168,6 +168,41 @@
 		    (ipaddr->dotted lh) lp (ipaddr->dotted rh) rp)))
       (format stream "#<connection [closed]>")))
 
+(defun read-eval-print (conn string standard-out warn-out error-out values-out)
+  error-out
+  (let ((step ':read)
+	(form nil))
+    (handler-case
+	(progn
+	  (setq form (read-from-string string))
+	  (setq step ':eval)
+	  (multiple-value-list (eval form))
+	  )
+      (error (c)
+	;; AVOIDS STREAMS UNDER ERROR (OPENMCL)
+	(let* ((msg (format nil ">>> Lisp ~A error:~%    ~A" step c))
+	       (len (length msg))
+	       (str (connection-stream conn)))
+	  ;; flush pending output/warnings messages (?)
+	  (force-output str) 
+	  (write-u32 +msgError+ str)
+	  (write-u32 len str)
+	  (dotimes (i len)
+	    (write-byte (char-code (elt msg i)) str))
+	  (force-output str)
+	  ))
+      (:no-error (vals)
+	(setq step ':print)
+	(setq +++ ++ ++ + + form)
+	(setq *** ** ** * * (car vals))
+	;; send pending output/warning messages before values
+	(force-output standard-out)
+	(force-output warn-out)
+	(when vals
+	  (dolist (v vals) (pprint v values-out))
+	  (force-output values-out))))
+    (values)))
+
 (defun connection-read (standard-out warn-out error-out string errform)
   (let (form)
     warn-out standard-out
@@ -180,77 +215,39 @@
 	  (setq form (read-from-string string)))
       (error (c)
 	(progn
-	  (format error-out ">>> Lisp error (READ) :~%    ~A"
+	  (format error-out ">>> Lisp READ error:~%    ~A"
 		  c)
 	  (force-output error-out)
 	  (setq form errform))))
     (FORMAT *lisp-standard-output* "form: ~S~%" form)
     (FORCE-OUTPUT *lisp-standard-output*)
     form))
-
-#|
-DOESNTWORK
+	   
 (defun connection-eval (standard-out warn-out error-out values-out form)
-  (let (vals)
-    ;;standard-output-stream should be same as *standard-output*
-    ;;but let's make it explicit
-    warn-out standard-out
-;;    (setf *standard-output* standard-out)
-;;    (setf *error-output* warn-out) ; really where warn goes
-
-    (FORMAT *lisp-standard-output* "evaling: ~S~%" form)
-    (FORCE-OUTPUT *lisp-standard-output*)
-    (handler-bind ((error (lambda (c)
-			    (let ((str (format nil "Lisp error (EVAL): ~s~%" c))
-				  )
-			      (FORMAT *lisp-standard-output* "caught error: ~a~%" c)
-			      (FORCE-OUTPUT *lisp-standard-output*)
-			      (FORMAT *lisp-standard-output* "error-out: ~s~%" error-out)
-			      (format error-out str)
-			      (force-output error-out)))))
+  (handler-case (multiple-value-list (eval form))
+    (error (c)
+      (let ((str (format nil ">>> Lisp EVAL error:~%    ~A"
+			 c)))
+	(FORMAT *lisp-standard-output* str)
+	(FORCE-OUTPUT *lisp-standard-output*)
+	;; flush other streams
+	(force-output warn-out)
+	(force-output standard-out)
+	(force-output values-out)
+	;; send error message
+	(format error-out str)
+	(force-output error-out)))
+    (:no-error (vals)
       (setq +++ ++ ++ + + form)
-      (setq vals (multiple-value-list (eval form)))
       (setq *** ** ** * * (car vals))
+      ;; flush other streams
       (force-output standard-out)
       (force-output warn-out)
       (when vals
-	(FORMAT *lisp-standard-output* "sending: ~S~%" vals)
-	(FORCE-OUTPUT *lisp-standard-output*)
 	(dolist (v vals) (pprint v values-out))
-	(force-output values-out)
-	))
-    (values)))
-|#
+	(force-output values-out))))
+  (values))
 
-	   
-(defun connection-eval (standard-out warn-out error-out values-out form)
-  (let ()
-    ;;standard-output-stream should be same as *standard-output*
-    ;;but let's make it explicit
-    warn-out standard-out
-    (FORMAT *lisp-standard-output* "evaling: ~S~%" form)
-    (FORCE-OUTPUT *lisp-standard-output*)
-    (handler-case (multiple-value-list (eval form))
-      (error (c)
-	(let ((str (format nil ">>> Lisp error (EVAL): ~A~%" c))
-	      )
-	  (FORMAT *lisp-standard-output* "caught error: ~a~%" c)
-	  (FORCE-OUTPUT *lisp-standard-output*)
-	  (format error-out str)
-	  (force-output error-out)))
-      (:no-error (vals)
-	(setq +++ ++ ++ + + form)
-	(setq *** ** ** * * (car vals))
-	(force-output standard-out)
-	(force-output warn-out)
-	(when vals
-	  (FORMAT *lisp-standard-output* "sending: ~S~%" vals)
-	  (FORCE-OUTPUT *lisp-standard-output*)
-	  (dolist (v vals) (pprint v values-out))
-	  (force-output values-out)
-	  ))
-      )
-    ))
 
 ; (progn (defparameter *lisp-standard-output* *standard-output*)(defparameter s *standard-output*))
 ; (connection-eval s s s s '(define asd ()))
@@ -452,7 +449,7 @@ DOESNTWORK
 		      (*error-output* warn-output-stream)
 		      (*standard-output* standard-output-stream)
 		      message-type length string sexpr value byte-vector)
-		 message-type length string sexpr value byte-vector
+		 message-type length string sexpr value byte-vector error-value
 		 (format *lisp-standard-output* "standard-output: ~s~%error-output: ~s~%warn-output: ~s~%values-output: ~s~%" standard-output-stream error-output-stream warn-output-stream
 			 values-output-stream)
 		 (force-output *lisp-standard-output*)
@@ -464,11 +461,12 @@ DOESNTWORK
 			  (setq length (read-u32 stream)))
 		      (error (c) 
 			(format *lisp-standard-output*
-				"; Unexpected stream error or EOF: ~A."
+				"; Unexpected socket stream error: ~A.~%~
+                                 ; Quitting lisp..."
 				c)
 			(kill-server)))
 		    (format *lisp-standard-output*
-			    "lisp receiving: message-type=~S, length=~S~%"
+			    "lisp receive: message-type=~S, length=~S~%"
 			    message-type length)
 		    (cond 
 		      ((= message-type +msgLispEval+)
@@ -476,7 +474,14 @@ DOESNTWORK
 		       (loop for i below length
 			  do (setf (elt string i)
 				   (code-char (read-byte stream))))
-		       (setq sexpr (connection-read standard-output-stream
+		       (read-eval-print connection
+					string
+					standard-output-stream
+					warn-output-stream
+					error-output-stream
+					values-output-stream)					
+
+		       #|(setq sexpr (connection-read standard-output-stream
 						    warn-output-stream
 						    error-output-stream
 						    string
@@ -486,7 +491,7 @@ DOESNTWORK
 					  warn-output-stream 
 					  error-output-stream
 					  values-output-stream
-					  sexpr)))
+					  sexpr))|#)
 		      ((= message-type +msgSalEval+)
 		       )
 		      ((= message-type +msgBinaryData+)
