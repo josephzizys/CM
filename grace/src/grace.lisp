@@ -1,17 +1,23 @@
 (in-package :cl-user)
 
-#-(or sbcl openmcl clisp)
-(error "Attempt to load grace.lisp into an unknown lisp implementation.")
+(defmethod asdf:perform :after ((a t)(b t))
+  (force-output *error-output*)
+  (force-output *standard-output*)
+  ) 
 
-(defvar *grace-source-directory* 
-  (make-pathname :name nil :type nil
-                 :defaults (or *load-pathname*
-			       *default-pathname-defaults*))
-  "The directory containing Grace lisp runtime sources.")
+;#-(or sbcl openmcl clisp)
+;(error "Attempt to load grace.lisp into an unknown lisp implementation.")
 
-(defvar *grace-fasl-directory* *grace-source-directory*
-  "The directory containing Grace runtime compiled files.")
+;(defvar *grace-source-directory* 
+;  (make-pathname :name nil :type nil
+;                 :defaults (or *load-pathname*
+;			       *default-pathname-defaults*))
+;  "The directory containing Grace lisp runtime sources.")
 
+;(defvar *grace-fasl-directory* *grace-source-directory*
+;  "The directory containing Grace runtime compiled files.")
+
+#|
 (flet ((compload (f)
 	 (let ((s (merge-pathnames f *grace-source-directory*))
 	       (c (compile-file-pathname
@@ -28,6 +34,7 @@
   ;; add grace as a feature
   (pushnew ':grace *features*)
   )
+|#
 
 
 

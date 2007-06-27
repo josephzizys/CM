@@ -73,16 +73,15 @@ private:
 };
 
 
-class LispConnection : public LispProcessConnection,
-  public Timer
-{
+class LispConnection : public LispProcessConnection, public Timer {
  public:
-  enum {local=1, remote};
   enum {SBCL=1, OpenMCL, CLisp};
-  int type;  // local or remote
+  OwnedArray<StringArray> lisps;
+  OwnedArray<StringArray> systems;
+
   String host;  // hostname
   int port;  // connection port
-   int lpid;  // inferior lisp process id
+  int lpid;  // inferior lisp process id
   int impl;  // SBCL, OpenMCL ...
   String lisp; // program to exec
   String args; // program args
@@ -91,21 +90,34 @@ class LispConnection : public LispProcessConnection,
   File lispsysdir;
   int timeout;    // connection timeout (sec)
   int waiting;    // current wait time (ms)
-
- String lispinfo;
+  String lispinfo;
 
   ConsoleWindow* console;
 
   LispConnection (ConsoleWindow* w);
   ~LispConnection ();
-  int getType() {return type;}
-  void setType(int v) {type=v;}
   String getHost() {return host;}
   void setHost(String v) {host=v;}
   bool isLocalHost();
+
+  int LispConnection::getOS() {
+    SystemStats::OperatingSystemType sys = SystemStats::getOperatingSystemType();
+    return (int)sys;
+  }
+  bool isHostWindows() {return ((getOS() & SystemStats::Windows) != 0);}
+  bool isHostLinux() {return ((getOS() & SystemStats::Linux) != 0);}
+  bool isHostMacOSX() {return ((getOS() & SystemStats::MacOSX) != 0);}
+  
+  void addLisp (String name, String url, String prog, String arg) ;
+  StringArray getLisp (int i);
+  void addLispSystem (String title, String url, String name) ;
+  StringArray getLispSystem(int i) ;
+  StringArray getLispSystem(String s) ;
+
   int getPort() {return port;}
   void setPort(int v) {port=v;}
   int getTimeOut() {return timeout;}
+
   void setTimeOut(int v) {timeout=v;}
   int getImplementation() {return impl;}
   void setImplementation(int v) {impl=v;}
@@ -114,10 +126,9 @@ class LispConnection : public LispProcessConnection,
   String getArguments() {return args;}
   void setArguments(String v) {args=v;}
 
-  File getGraceResourceDirectory(String sub=String::empty);
-  File getLispExecutableDirectory(String sub=String::empty);
-
-  File getLispSystemsDirectory(String sub=String::empty);
+  File getGraceResourceDirectory();
+  File getLispExecutableDirectory();
+  File getLispSystemsDirectory();
   void setLispSystemsDirectory(File dir) {lispsysdir=dir;}
 
   File getPollFile(bool newfile=false);
@@ -194,6 +205,7 @@ private:
   TextButton* cancelbutton;
 
 };
+
 
 #endif
 

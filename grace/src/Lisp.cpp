@@ -499,7 +499,7 @@ void ConfigureLispView::updateFromConnection () {
   hostbuffer->setText(connection->getHost(), true);
   portbuffer->setText(String(connection->getPort()), true);
   timeslider->setValue((double)(connection->getTimeOut()), true);
-  if (connection->getType() == LispConnection::local)
+  if ( connection->isLocalHost() )
     hostbuffer->setEditable(false, false);
   else
     hostbuffer->setEditable(true, true);
@@ -605,6 +605,12 @@ void ConfigureLispView::labelTextChanged (Label* labelThatHasChanged) {
   }
   else if (labelThatHasChanged == sysbuf) {
     String path=sysbuf->getText();
+
+    /*    LispSystem* cm= new LispSystem(T("CM"));
+    String asdf=cm->findSystemFile(path);
+    printf("cmpath=%s\n", asdf.toUTF8());
+    */
+
     if ( path == String::empty || File(path).isDirectory() )
       sysbuf->setColour(Label::backgroundColourId, Colours::white);
     else
@@ -620,9 +626,92 @@ void ConfigureLispView::sliderValueChanged (Slider* sliderThatWasMoved) {
 //=========================================================================
 //=========================================================================
 
+void LispConnection::addLisp (String name, String url, String exec, String eval) {
+  // 0=name 1=url 2=progname 3=evalarg 4=pathname 5=usrargs
+  StringArray* l=new StringArray();
+  l->add(name);
+  l->add(url);
+  if (isHostWindows()) exec += T(".exe");
+  l->add(exec);
+  l->add(eval);
+  l->add(T(""));
+  l->add(T(""));
+  lisps.add(l);
+}
+
+StringArray LispConnection::getLisp(int i=-1) {
+  if (i<0) i=getImplementation();
+  return *(lisps[i]);
+}
+
+String getLispName (StringArray lisp) {return lisp[0];}
+String getLispUrl(StringArray lisp) {return lisp[1];}
+String getLispEvalArg(StringArray lisp) {return lisp[3];}
+String getLispExec(StringArray lisp) {return lisp[4];}
+String getLispUserExec(StringArray lisp) {return lisp[4];}
+String getLispUserArgs(StringArray lisp) {return lisp[5];}
+void setLispUserExec(StringArray lisp, String exec) {lisp.set(4,exec);}
+void setLispUserArgs(StringArray lisp, String args) {lisp.set(5,args);}
+String getLispExecutable(StringArray lisp, File dir=File::nonexistent) {
+  String path=lisp[2];
+  if (dir != File::nonexistent)
+    return dir.getChildFile(path).getFullPathName();
+  return path;
+}
+
+///
+/// Lisp System (ASDF) support
+///
+
+void LispConnection::addLispSystem (String title, String url, String name) {
+  // 0=name 1=url 2=userpath
+  StringArray* l=new StringArray();
+  l->add(name);
+  l->add(title);
+  l->add(url);
+  systems.add(l);
+}
+
+StringArray LispConnection::getLispSystem(int i) {
+  return *(systems[i]);
+}
+
+String getLispSystemName(StringArray sys) {return sys[0];}
+String getLispSystemUrl(StringArray sys) {return sys[1];}
+String getLispSystemTitle(StringArray sys) {return sys[2];}
+
+StringArray LispConnection::getLispSystem(String name) {
+  for (int i=0; i<systems.size(); i++) {
+    StringArray s=getLispSystem(i);
+    if (name.equalsIgnoreCase(s[0]) )
+      return s;
+  }
+  return StringArray();
+}
+
+String findLispSystemFile(StringArray sys, File root) {
+  if ( root.isDirectory() ) {
+    String name=getLispSystemName(sys).toLowerCase();
+    String file=name+T(".asd");
+    if ( root.getChildFile(file).existsAsFile() )
+      return root.getChildFile(file).getFullPathName();
+    else {
+      OwnedArray<File> dirs;
+      int d=root.findChildFiles(dirs, File::findDirectories, false, (name + T("*")));
+      for (int i=0; i<d; i++)  {
+	OwnedArray<File> asds;
+	int b=dirs[i]->findChildFiles(asds, File::findFiles, false, file);
+	if (b==1)
+	  return asds[0]->getFullPathName();
+	asds.clear();
+      }
+    }
+  }
+  return String::empty;
+}
+
 LispConnection::LispConnection (ConsoleWindow* w) 
    : LispProcessConnection(true),
-     type (local),
      host (T("localhost")),
      port (8000),
      lpid (-1),
@@ -637,6 +726,44 @@ LispConnection::LispConnection (ConsoleWindow* w)
   console=w;
   lispsysdir=getLispSystemsDirectory();
   lispexedir=getLispExecutableDirectory();
+  addLisp(T("SBCL"), T("http://sbcl.sourceforge.net/"),
+	  T("sbcl"), T("--eval"));
+  addLisp(T("OpenMCL"), T("http://openmcl.closure.com/"),
+	  T("openmcl"), T("--eval"));
+  addLisp(T("CLISP"), T("http://clisp.cons.org/"),
+	  T("clisp"), T("-x"));
+  //  addLisp(T("CMUCL"), T( "http://www.cons.org/cmucl/"),
+  //	  T("lisp"), T("-eval"));
+
+  for (int i=0;i<lisps.size(); i++) {
+    StringArray a = getLisp(i);
+    printf("lisp=%s\n", getLispExecutable(a,lispexedir).toUTF8());
+  }
+
+  addLispSystem( T("Common Music"), 
+		 T("http://commonmusic.sourceforge.net"),
+		 T("cm"));
+  addLispSystem( T("Simple Algorithmic Language"),
+		 T("http://commonmusic.sourceforge.net/doc/dict/sal-topic.html"),
+		 T("sal"));
+  addLispSystem( T("Common Foreign Function Interface"),
+		 T("http://common-lisp.net/project/cffi/"),
+		 T("cffi"));
+  addLispSystem( T("FOMUS"),
+		 T("http://common-lisp.net/project/fomus/"),
+		 T("fomus"));
+  addLispSystem( T("Portmidi"),
+		 T("http://www.cs.cmu.edu/~music/portmusic/"),
+		 T("portmidi"));
+  addLispSystem( T("Real Time Scheduler"),
+		 T("http://commonmusic.sourceforge.net/doc/dict/rts-topic.html"),
+		 T("rts"));
+  addLispSystem( T("Common Lisp Music"),
+		 T("http://ccrma.stanford.edu/software/clm/"),
+		 T("clm"));
+  addLispSystem( T("Common Music Notation"),
+		 T("http://ccrma.stanford.edu/software/cmn/"),
+		 T("cmn"));
 }
 
 LispConnection::~LispConnection () {
@@ -647,40 +774,48 @@ bool LispConnection::isLispRunning () {
 }  
 
 bool LispConnection::isLispStartable () {
-  return ((type==remote) || (lisp != String::empty));
+  return ( ! isLocalHost() || (lisp != String::empty));
 }  
+
+/*
+int LispConnection::getOS() {
+    SystemStats::OperatingSystemType sys = SystemStats::getOperatingSystemType();
+    return (int)sys;
+}
+*/
 
 bool LispConnection::isLocalHost() {
   return (getHost().equalsIgnoreCase(T("localhost")) ||
 	  getHost() == T("127.0.0.1"));
 }
 
-File LispConnection::getGraceResourceDirectory(String sub) {
-  SystemStats::OperatingSystemType sys = SystemStats::getOperatingSystemType();
+File LispConnection::getGraceResourceDirectory() {
+  // return the directory of the "site wide" resource directory for
+  // grace.  for now we determine this relative to the directory that
+  // contains the currently running executable:
+  //   MacOSX:   {exedir}/../Resources/
+  //   Windows:  {exedir}/Resources/
+  //   Linux:    {exedir}/../lib/grace
   File exe = File::getSpecialLocation(File::currentExecutableFile);
-  File dir;
-  if ( (sys & SystemStats::Windows) != 0)     // win32: "{exe}/Resources/"
-    dir=exe.getSiblingFile(T("Resources"));
-  else if ( (sys & SystemStats::Linux) != 0)  // Linux: "{exe}../lib/grace/"
-    dir=exe.getParentDirectory().getParentDirectory().getChildFile(T("lib/grace"));
-  else if ( (sys & SystemStats::MacOSX) != 0) // OSX:   "{exe}../Resources/"
-    dir=exe.getParentDirectory().getParentDirectory().getChildFile(T("Resources"));
-  if (sub != String::empty)
-    dir=dir.getChildFile(sub);
-  return dir;
+  if ( isHostWindows() )     // win32: "{exe}/Resources/"
+    return exe.getSiblingFile(T("Resources"));
+  else if ( isHostLinux() )  // Linux: "{exe}../lib/grace/"
+    return exe.getParentDirectory().getParentDirectory().getChildFile(T("lib/grace"));
+  else if ( isHostMacOSX() ) // OSX:   "{exe}../Resources/"
+    return exe.getParentDirectory().getParentDirectory().getChildFile(T("Resources"));
+  else
+    return File::nonexistent;
 }
 
-File LispConnection::getLispSystemsDirectory(String sub) {
-  //  SystemStats::OperatingSystemType sys = SystemStats::getOperatingSystemType();
-  //  if ( (sys & SystemStats::Linux) != 0)
-  //    return File("/usr/local/src/lisp/");
-  //  else 
-    return getGraceResourceDirectory(sub);
+File LispConnection::getLispSystemsDirectory() {
+  // return the "site wide" lisp system's directory.  this directory
+  // will be searched for ASDF systems if they are loaded without
+  // explicit pathnames.
+  return getGraceResourceDirectory();
 }
 
-File LispConnection::getLispExecutableDirectory(String sub) {
-  SystemStats::OperatingSystemType sys = SystemStats::getOperatingSystemType();
-  if ( (sys & SystemStats::Windows) != 0) 
+File LispConnection::getLispExecutableDirectory() {
+  if ( isHostWindows() ) 
     return File::getSpecialLocation(File::currentApplicationFile).getParentDirectory().getParentDirectory();
   else
     return File(T("/usr/local/bin/"));
@@ -700,39 +835,44 @@ bool LispConnection::launchLisp () {
   String lisp = getExecutable();
   String args = getArguments();
   File poll = getPollFile(true);
-  File load = getGraceResourceDirectory(T("grace")).getChildFile(T("grace.lisp"));
+  File load = getGraceResourceDirectory().getChildFile(T("grace/grace.asd"));
   
   if (lisp == String::empty) {
-    console->consolePrintError(T("Lisp: executable not set.\n"));
+    console->consolePrintError(T(">>> Lisp executable not set.\n"));
     return false;
   }
   if (! File(lisp).existsAsFile() ) {
-    String msg=T("Lisp: executable ") + lisp + T(" does not exist.\n");
+    String msg=T(">>> Lisp executable ") + lisp + T(" does not exist.\n");
     console->consolePrintError(msg);
     return false;
   }
   if (! load.existsAsFile() ) {
-    String msg=T(">>> Lisp file ") + load.getFullPathName() + T(" does not exist.\n");
+    String msg=T(">>> System file ") + load.getFullPathName() + T(" does not exist.\n");
     console->consolePrintError(msg);
     return false;
   }
 
   if (args != String::empty) args += T(" ");
-    
+  String eval; 
   if ( getImplementation() == SBCL  ) 
-    args += T("--eval ");
+    eval = T("--eval ");
   else if ( getImplementation() == OpenMCL ) 
-    args = T("--eval ");
+    eval = T("--eval ");
   else if ( getImplementation() == CLisp ) 
-    args += T("-x ");
+    eval = T("-x ");
 
-  args += T("'(progn (load ") + load.getFullPathName().quoted() + T(") ") +
-    T("(start-server ") + String(getPort()) + T(" ") + poll.getFullPathName().quoted() + T("))'");
+  args += eval;
+  args += T("'(load ") + load.getFullPathName().quoted() + T(")'");
+  args += T(" ") + eval;
+  args += T("'(asdf:oos (quote asdf:load-op) \"grace\")'");
+  args += T(" ") + eval;
+  args += T("'(start-server ") + String(getPort()) + T(" ") + poll.getFullPathName().quoted() + T(")'");
 
+  console->consoleClear();
   console->consolePrint(T("Launching ") + lisp + T(" ") + args + T("\n"));
 
   if (! File(lisp).startAsProcess(args) ) {
-    console->consolePrintError(T("Lisp: executable ") + lisp + T(" failed to start.\n"));
+    console->consolePrintError(T(">>> Lisp executable ") + lisp + T(" failed to start.\n"));
     return false;
   }
   return true;
@@ -758,8 +898,8 @@ void LispConnection::timerCallback () {
 void LispConnection::startLisp () {
   if (isConnected()) return;
   if (getPort() < 1024) {
-    console->consolePrintError(T("Lisp: connection port ") + 
-			       String(getPort()) + T(" not > 1024.\n"));
+    console->consolePrintError(T(">>> Lisp connection port ") + 
+			       String(getPort()) + T(" is not > 1024.\n"));
     return;
   }
   waiting=0;
