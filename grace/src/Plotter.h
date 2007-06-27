@@ -147,15 +147,6 @@ class Plotter  : public Component,
 	     (+ (ash i 8) blockstart)
 	     (= i m)))))
 
-(enums 1 "ConsoleCommand" "GraceEditorNew" "GracePlotterNew"
-         "GraceEditorOpen" "GracePreferences" "GraceQuit"
-	 "EditCopy" "EditSelectAll"
-	 "ViewFonts"  "ViewThemes"
-	 "AudioMidiSetup" "AudioAudioSetup"
-	 "LispConnect" "LispConfigure" "LispCompileFile" "LispLoadFile"
-                       "LispLoadSystem"
-	 "HelpConsole" "HelpAboutGrace")
-
 (enums 2 "PlotterCommand" "PlotterNew" "PlotterOpen" "PlotterSave" 
          "PlotterSaveAs" "PlotterImport" "PlotterExport"
 	 "EditUndo" "EditRedo" "EditCut" "EditCopy" "EditPaste"
