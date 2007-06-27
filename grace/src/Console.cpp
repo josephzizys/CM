@@ -21,7 +21,7 @@ TransparencySlider::TransparencySlider(DocumentWindow* _window) : Slider(String:
   window = _window;
   setRange(10, 100, 1);
   setSliderStyle(Slider::LinearHorizontal);
-  setTextBoxStyle(Slider::NoTextBox, false, 80, 20);
+  setTextBoxStyle(Slider::NoTextBox, false, 70, 20);
   setValue(((ConsoleWindow *)window)->getOpacity(), false);
   setTextValueSuffix(T("%"));
 }
@@ -54,7 +54,7 @@ SliderMenuComponent::SliderMenuComponent(DocumentWindow* _window)
   addAndMakeVisible(lab);
   addAndMakeVisible(slider = new TransparencySlider (_window));
   slider->setValue(((ConsoleWindow *)_window)->getOpacity(), false);
-  slider->setBounds(lab->getRight()+8, 0, 80, 30);
+  slider->setBounds(lab->getRight()+8, 0, 70, 30);
 }
 
 SliderMenuComponent::~SliderMenuComponent()
@@ -312,6 +312,16 @@ void ConsoleWindow::consolePrintValues( String str,  bool eob) {
   consolePrint(str, ConsoleTheme::valueColor, eob);
 }
 
+float ConsoleWindow::getFontSize( ) {
+  return getConsole()->getFont().getHeight();
+}
+
+void ConsoleWindow::setFontSize( float size ) {
+  TextEditor* ed=getConsole();
+  Font font=ed->getFont();
+  font.setHeight(size);
+  ed->applyFontToAllText(font);
+}
 
 void ConsoleWindow::consoleEval (String code, bool isSal) {
   // HACK display until eval is tied in
@@ -381,8 +391,16 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( cmdEditSelectAll, T("Select All"), true);
     break;
   case 2 :
-    menu.addItem( cmdViewFonts, T("Show Fonts..."), false);    
+    menu.addItem( cmdViewClearText, T("Clear Text"), true);
     menu.addSeparator();
+    for (int i = 0;i<16;i++) {
+      sub2.addItem(cmdViewFontSize+i,
+		   String( fontSizeList[i] ),
+		   true, 
+		   (getFontSize() == fontSizeList[i])
+		   );
+    }
+    menu.addSubMenu(T("Font Size"), sub2, true);
     for (int i=0;i<console->numThemes(); i++)
       sub1.addItem( cmdViewThemes + i, console->getThemeName(i),
 		    true, console->isCurrentTheme(i));
@@ -391,12 +409,11 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 		  T("Roll Your Own..."), 
 		  false);
     menu.addSubMenu( T("Themes"), sub1, true);
-    //    menu.addCustomItem( cmdConsoleTransparency,  sliderComp);
     {
       SliderMenuComponent *sliderComp = new SliderMenuComponent(this);
       sliderComp->slider->setValue(getOpacity(), false);
       sliderComp->slider->addListener(this);
-      menu.addCustomItem( cmdConsoleTransparency,  sliderComp);
+      menu.addCustomItem( cmdViewOpacity,  sliderComp);
     }
     break;
   case 3 :
@@ -405,17 +422,15 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     break;
   case 4 :
     if ( lisp->isLispRunning() )
-      menu.addItem( cmdLispConnect, T("Stop Lisp")); 
+      menu.addItem( cmdLispConnect, T("Quit Lisp")); 
     else 
       menu.addItem( cmdLispConnect, T("Start Lisp"), 
 		    lisp->isLispStartable()); 
     menu.addSeparator();
     menu.addItem( cmdLispLoadSystem, T("Load System..."), false);
-    menu.addItem( cmdLispCompileFile, T("Compile File..."), false);
     menu.addItem( cmdLispLoadFile, T("Load File..."), false);
     menu.addSeparator();
-    menu.addItem( cmdLispConfigure, T("Configure Lisp..."), 
-		  (! lisp->isLispRunning() )); 
+    menu.addItem( cmdLispConfigure, T("Configure Lisp..."), true); 
     break;
   case 5 :
     menu.addItem( cmdHelpConsole, T("Console Help"), false); 
@@ -435,37 +450,47 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
   //printf("menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
 
   switch (cmd) {
+
   case cmdGracePlotterNew :
     new PlotterWindow( (PlotType)arg);
     break;
+
   case cmdGraceEditorNew :
-    // doesnt work
-    //cm->invokeDirectly(TextBuffer::cmdNew,false);
     new EditorWindow(arg);
     break;
+
   case cmdGraceEditorOpen :
-    // doesnt work
-    //cm->invokeDirectly(TextBuffer::cmdOpen,false);
     {
       FileChooser choose (T("Open File"), 
 			  File::getSpecialLocation(File::userHomeDirectory),
 			  String::empty, true);
       if ( choose.browseForFileToOpen() )
 	new EditorWindow(0, TextBuffer::load,
-                       choose.getResult().getFullPathName());
-
+			 choose.getResult().getFullPathName());
     }
     break;
+
+  case cmdGraceQuit :
+    app->graceQuit(true);
+    break;
+
+  case cmdViewClearText :
+    consoleClear();
+    break;
+
+  case cmdViewFontSize :
+    setFontSize((float)arg);
+    break;
+
   case cmdAudioMidiSetup: 
   case cmdAudioAudioSetup: 
     showAudioMidiWindow();
     break;
-  case cmdGraceQuit :
-    app->graceQuit(true);
-    break;
+
   case cmdViewThemes :
     console->setTheme( arg);
     break;
+
   case cmdLispConnect :
     if (lisp->isLispRunning()) {
       lisp->stopLisp();
@@ -473,9 +498,11 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
     else 
       lisp->startLisp();
     break;
+
   case cmdLispConfigure :
     showConfigureLispWindow();
     break;
+
   default :
     break;
   }
