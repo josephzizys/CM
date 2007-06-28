@@ -16,6 +16,12 @@
 String getEditorHelp();
 String getPlotterHelp();
 
+File getGraceResourceDirectory ();
+int getHostOS();
+bool isHostWindows();
+bool isHostLinux();
+bool isHostMacOSX();
+
 class SplashComponent : public Component {
  public:
   Image * logo;

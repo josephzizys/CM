@@ -10,6 +10,40 @@
 
 #include "Resources.h"
 
+File getGraceResourceDirectory() {
+  // returns the "site wide" resource directory for grace determined
+  // relative to the directory that contains the running executable:
+  //   MacOSX:   {exedir}/../Resources/
+  //   Windows:  {exedir}/Resources/
+  //   Linux:    {exedir}/../lib/grace
+  File exe = File::getSpecialLocation(File::currentExecutableFile);
+  if ( isHostWindows() )     // win32: "{exe}/Resources/"
+    return exe.getSiblingFile(T("Resources"));
+  else if ( isHostLinux() )  // Linux: "{exe}../lib/grace/"
+    return exe.getParentDirectory().getParentDirectory().getChildFile(T("lib/grace"));
+  else if ( isHostMacOSX() ) // OSX:   "{exe}../Resources/"
+    return exe.getParentDirectory().getParentDirectory().getChildFile(T("Resources"));
+  else
+    return File::nonexistent;
+}
+
+int getHostOS() {
+  SystemStats::OperatingSystemType sys = SystemStats::getOperatingSystemType();
+  return (int)sys;
+}
+
+bool isHostWindows () {
+  return ((getHostOS() & SystemStats::Windows) != 0);
+}
+
+bool isHostLinux() {
+  return ((getHostOS() & SystemStats::Linux) != 0);
+}
+
+bool isHostMacOSX() {
+  return ((getHostOS() & SystemStats::MacOSX) != 0);
+}
+
 String getPlotterHelp () {
   return String::empty;
 }
