@@ -421,16 +421,28 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( cmdAudioAudioSetup, T("Audio Setup..."), true); 
     break;
   case 4 :
-    if ( lisp->isLispRunning() )
-      menu.addItem( cmdLispConnect, T("Quit Lisp")); 
-    else 
-      menu.addItem( cmdLispConnect, T("Start Lisp"), 
-		    lisp->isLispStartable()); 
-    menu.addSeparator();
-    menu.addItem( cmdLispLoadSystem, T("Load System..."), false);
-    menu.addItem( cmdLispLoadFile, T("Load File..."), false);
-    menu.addSeparator();
-    menu.addItem( cmdLispConfigure, T("Configure Lisp..."), true); 
+    {
+      bool running=lisp->isLispRunning();
+      if ( running )
+	menu.addItem( cmdLispConnect, T("Quit Lisp")); 
+      else 
+	menu.addItem( cmdLispConnect, T("Start Lisp"), 
+		      lisp->isLispStartable()); 
+      menu.addSeparator();
+      Lisp* l=lisp->getLisp();
+      for (int i=0; i<lisp->numASDFs(); i++) {
+	ASDF* a=lisp->getASDF(i);
+	sub1.addItem( cmdLispLoadSystem + i,
+		      a->getASDFName(),
+		      (running && a->isSupported(l)));
+      }
+      sub1.addSeparator();
+      sub1.addItem( cmdLispLoadSystem + 127, T("Other..."), running);
+      menu.addSubMenu(T("Load System"), sub1, running);
+      menu.addItem( cmdLispLoadFile, T("Load File..."), running);
+      menu.addSeparator();
+      menu.addItem( cmdLispConfigure, T("Configure Lisp..."), true); 
+    }
     break;
   case 5 :
     menu.addItem( cmdHelpConsole, T("Console Help"), false); 

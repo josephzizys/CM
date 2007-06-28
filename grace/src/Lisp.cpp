@@ -386,14 +386,20 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   sbclbutton->setButtonText (T("SBCL"));
   sbclbutton->addButtonListener (this);
   sbclbutton->setRadioGroupId(1);
+  sbclbutton->setEnabled(c->findLisp(Lisp::SBCL)->isSupportedOS());
+
   addAndMakeVisible (openmclbutton = new ToggleButton (String::empty));
   openmclbutton->setButtonText (T("OpenMCL"));
   openmclbutton->addButtonListener (this);
   openmclbutton->setRadioGroupId(1);
+  openmclbutton->setEnabled(c->findLisp(Lisp::OpenMCL)->isSupportedOS());
+
   addAndMakeVisible (clispbutton = new ToggleButton (String::empty));
   clispbutton->setButtonText (T("CLisp"));
   clispbutton->addButtonListener (this);
   clispbutton->setRadioGroupId(1);
+  clispbutton->setEnabled(c->findLisp(Lisp::CLISP)->isSupportedOS());
+
   addAndMakeVisible(proglab = new Label(String::empty,T("Executable:")));
   proglab->setFont (Font (15.0000f, Font::plain));
   proglab->setJustificationType (Justification::centredRight);
@@ -421,11 +427,11 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   argsbuf->addListener(this);
   // System software
   addAndMakeVisible (sysgroup = new GroupComponent (String::empty,
-						    T("Lisp Software Systems")));
-  addAndMakeVisible (syslab = new Label (String::empty,
-					  T("Root Directory:")));
-  syslab->setFont (Font (15.0000f, Font::plain));
-  syslab->setJustificationType (Justification::centredRight);
+						    T("Lisp Systems Directory")));
+  //  addAndMakeVisible (syslab = new Label (String::empty,
+  //					 T("Root Directory:")));
+  //  syslab->setFont (Font (15.0000f, Font::plain));
+  //  syslab->setJustificationType (Justification::centredRight);
   addAndMakeVisible(sysbuf = new Label(String::empty, String::empty));
   sysbuf->setFont(Font (15.0000f, Font::plain));
   sysbuf->setJustificationType(Justification::centredLeft);
@@ -463,7 +469,7 @@ ConfigureLispView::~ConfigureLispView () {
     deleteAndZero (progbuf);
     deleteAndZero (argsbuf);
     deleteAndZero (sysgroup);
-    deleteAndZero (syslab);
+    //    deleteAndZero (syslab);
     deleteAndZero (sysbuf);
     deleteAndZero (okbutton);
     deleteAndZero (cancelbutton);
@@ -488,8 +494,9 @@ void ConfigureLispView::resized() {
     argsbuf->setBounds (120, 200, 264, 24);
 
     sysgroup->setBounds (8, argslab->getY()+56, 392, 64);
-    syslab->setBounds (16, sysgroup->getY()+24, 96, 24);
-    sysbuf->setBounds (120, syslab->getY(), 264, 24);
+    //    syslab->setBounds (16, sysgroup->getY()+24, 96, 24);
+    //    sysbuf->setBounds (120, syslab->getY(), 264, 24);
+    sysbuf->setBounds (24, sysgroup->getY()+24, 96+264, 24);
 
     okbutton->setBounds (336, sysbuf->getY()+60, 60, 24);
     cancelbutton->setBounds (264, sysbuf->getY()+60, 60, 24);
@@ -503,15 +510,18 @@ void ConfigureLispView::updateFromConnection () {
     hostbuffer->setEditable(false, false);
   else
     hostbuffer->setEditable(true, true);
-  int i=connection->getImplementation();
-  if (i==LispConnection::SBCL) 
-    sbclbutton->setToggleState(true,false);
-  else if (i==LispConnection::OpenMCL) 
-    openmclbutton->setToggleState(true,false);
-  else if (i==LispConnection::CLisp) 
-    clispbutton->setToggleState(true,false);
-  progbuf->setText(connection->getExecutable(), true);
-  argsbuf->setText(connection->getArguments(), true);
+
+  Lisp* l=connection->getLisp();
+  if (l != (Lisp *)NULL) {
+    if (l->isLispImplementation(Lisp::SBCL) )
+      sbclbutton->setToggleState(true,true);
+    else if (l->isLispImplementation(Lisp::OpenMCL)  )
+      openmclbutton->setToggleState(true,true);
+    else if (l->isLispImplementation(Lisp::CLISP) )
+      clispbutton->setToggleState(true,true);
+  }
+  else
+    chooseLisp( (Lisp *)NULL);
   sysbuf->setText(connection->getLispSystemsDirectory().getFullPathName(), true);
 }
 
@@ -522,9 +532,14 @@ bool ConfigureLispView::updateConnection () {
   s1=hostbuffer->getText();
   i1=portbuffer->getText().getIntValue();
   i2=(int)(timeslider->getValue());
-  if (sbclbutton->getToggleState()) i3=LispConnection::SBCL;
-  else if (openmclbutton->getToggleState()) i3=LispConnection::OpenMCL;
-  else if (clispbutton->getToggleState()) i3=LispConnection::CLisp;
+
+  if (sbclbutton->getToggleState()) 
+    connection->setLisp(connection->findLisp(Lisp::SBCL));
+  else if (openmclbutton->getToggleState())
+    connection->setLisp(connection->findLisp(Lisp::OpenMCL));
+  else if (clispbutton->getToggleState())
+    connection->setLisp(connection->findLisp(Lisp::CLISP));
+
   s2=progbuf->getText();
   s3=argsbuf->getText();
   s4=sysbuf->getText();
@@ -532,28 +547,24 @@ bool ConfigureLispView::updateConnection () {
   connection->setHost(s1);
   connection->setPort(i1);
   connection->setTimeOut(i2);
-  connection->setImplementation(i3);
-  connection->setExecutable(s2);
-  connection->setArguments(s3);
+  Lisp* l=connection->getLisp();
+  if (l != (Lisp *)NULL) {
+    l->setLispProgram(s2);
+    l->setLispProgramArgs(s3);
+  }
   connection->setLispSystemsDirectory(File(s4));
   return true;
 }
 
-void ConfigureLispView::setApplication(String path) {
-  //  progbuf->setEditable(false, false, true); // assume not Custom
-  progbuf->setText(path, true); // force check of exe file
-  argsbuf->setText(String::empty, true);
-}
-
-String ConfigureLispView::getApplication() {
-  String path=progbuf->getText();
-  if ( path==String::empty )
-    return path;
+void ConfigureLispView::chooseLisp(Lisp* lisp) {
+  // set Executable and Arguments buffers from selected lisp
+  if (lisp != (Lisp *)NULL) {
+    progbuf->setText(lisp->getLispProgram(), true); 
+    argsbuf->setText(lisp->getLispProgramArgs(), true);
+  }
   else {
-    File file=File(path);    
-    if ( file.existsAsFile() )
-      return path;
-    else return String::empty;
+    progbuf->setText(String::empty, true);
+    argsbuf->setText(String::empty, true);
   }
 }
 
@@ -570,17 +581,17 @@ void ConfigureLispView::buttonClicked (Button* buttonThatWasClicked) {
     win->getCloseButton()->triggerClick();
     return;
   }
-  String exe;
-  if (buttonThatWasClicked == sbclbutton) exe=T("sbcl");
-  else if (buttonThatWasClicked == openmclbutton) exe=T("openmcl");
-  else if (buttonThatWasClicked == clispbutton) exe=T("clisp");
-  if ((SystemStats::getOperatingSystemType() & SystemStats::Windows) != 0) 
-    exe+=T(".exe");
-  setApplication(connection->getLispExecutableDirectory().getChildFile(exe).getFullPathName());
+  if (buttonThatWasClicked == sbclbutton) 
+    chooseLisp(connection->findLisp(Lisp::SBCL));
+  else if (buttonThatWasClicked == openmclbutton)
+      chooseLisp(connection->findLisp(Lisp::OpenMCL));    
+  else if (buttonThatWasClicked == clispbutton)
+    chooseLisp(connection->findLisp(Lisp::CLISP));
 }
 
 void ConfigureLispView::labelTextChanged (Label* labelThatHasChanged) {
   if (labelThatHasChanged == portbuffer) {
+    // show red background if port number is invalid
     int i1=portbuffer->getText().getIntValue();
     if (i1<1024)
       portbuffer->setColour (Label::backgroundColourId, Colours::lightpink);
@@ -588,7 +599,6 @@ void ConfigureLispView::labelTextChanged (Label* labelThatHasChanged) {
       portbuffer->setColour (Label::backgroundColourId, Colours::white);
   }
   else if (labelThatHasChanged == progbuf) {
-    // check lisp program to make sure it exists.
     // show red background if lisp executable doesnt exist.
     String path=progbuf->getText();
     if ( path == String::empty) 
@@ -604,6 +614,7 @@ void ConfigureLispView::labelTextChanged (Label* labelThatHasChanged) {
   else if (labelThatHasChanged == argsbuf) {
   }
   else if (labelThatHasChanged == sysbuf) {
+    // show red background if lisp systems dir doesnt exist.
     String path=sysbuf->getText();
 
     /*    LispSystem* cm= new LispSystem(T("CM"));
@@ -626,80 +637,23 @@ void ConfigureLispView::sliderValueChanged (Slider* sliderThatWasMoved) {
 //=========================================================================
 //=========================================================================
 
-void LispConnection::addLisp (String name, String url, String exec, String eval) {
-  // 0=name 1=url 2=progname 3=evalarg 4=pathname 5=usrargs
-  StringArray* l=new StringArray();
-  l->add(name);
-  l->add(url);
-  if (isHostWindows()) exec += T(".exe");
-  l->add(exec);
-  l->add(eval);
-  l->add(T(""));
-  l->add(T(""));
-  lisps.add(l);
-}
-
-StringArray LispConnection::getLisp(int i=-1) {
-  if (i<0) i=getImplementation();
-  return *(lisps[i]);
-}
-
-String getLispName (StringArray lisp) {return lisp[0];}
-String getLispUrl(StringArray lisp) {return lisp[1];}
-String getLispEvalArg(StringArray lisp) {return lisp[3];}
-String getLispExec(StringArray lisp) {return lisp[4];}
-String getLispUserExec(StringArray lisp) {return lisp[4];}
-String getLispUserArgs(StringArray lisp) {return lisp[5];}
-void setLispUserExec(StringArray lisp, String exec) {lisp.set(4,exec);}
-void setLispUserArgs(StringArray lisp, String args) {lisp.set(5,args);}
-String getLispExecutable(StringArray lisp, File dir=File::nonexistent) {
-  String path=lisp[2];
-  if (dir != File::nonexistent)
-    return dir.getChildFile(path).getFullPathName();
-  return path;
-}
-
 ///
 /// Lisp System (ASDF) support
 ///
 
-void LispConnection::addLispSystem (String title, String url, String name) {
-  // 0=name 1=url 2=userpath
-  StringArray* l=new StringArray();
-  l->add(name);
-  l->add(title);
-  l->add(url);
-  systems.add(l);
-}
-
-StringArray LispConnection::getLispSystem(int i) {
-  return *(systems[i]);
-}
-
-String getLispSystemName(StringArray sys) {return sys[0];}
-String getLispSystemUrl(StringArray sys) {return sys[1];}
-String getLispSystemTitle(StringArray sys) {return sys[2];}
-
-StringArray LispConnection::getLispSystem(String name) {
-  for (int i=0; i<systems.size(); i++) {
-    StringArray s=getLispSystem(i);
-    if (name.equalsIgnoreCase(s[0]) )
-      return s;
-  }
-  return StringArray();
-}
-
-String findLispSystemFile(StringArray sys, File root) {
+String ASDF::findASDFFile(File root) {
   if ( root.isDirectory() ) {
-    String name=getLispSystemName(sys).toLowerCase();
+    String name=getASDFName(true);
     String file=name+T(".asd");
     if ( root.getChildFile(file).existsAsFile() )
       return root.getChildFile(file).getFullPathName();
     else {
+      // look for subdir whose name starts with the ASDF's name, if it
+      // exists then look for the asdf file inside it.
       OwnedArray<File> dirs;
+      OwnedArray<File> asds;
       int d=root.findChildFiles(dirs, File::findDirectories, false, (name + T("*")));
-      for (int i=0; i<d; i++)  {
-	OwnedArray<File> asds;
+      for (int i=0; i<d; i++) {
 	int b=dirs[i]->findChildFiles(asds, File::findFiles, false, file);
 	if (b==1)
 	  return asds[0]->getFullPathName();
@@ -710,60 +664,84 @@ String findLispSystemFile(StringArray sys, File root) {
   return String::empty;
 }
 
+String ASDF::getLoadForm(String path) {
+  String form=T("(progn ");
+  if (before != String::empty)
+    form += before + T(" ");
+  form += T("(load ") + path + T(") (asdf:oos (quote ") + op + T("))");
+  if (after != String::empty)
+    form += T(" ") + after;
+  form += T(")");
+  return form;
+}
+
 LispConnection::LispConnection (ConsoleWindow* w) 
    : LispProcessConnection(true),
      host (T("localhost")),
      port (8000),
      lpid (-1),
-     impl (0),
-     lisp (String::empty),
-     args (String::empty),
+     impl ((Lisp *)NULL),
      timeout (15),
      pollfile (File::nonexistent),
-     lispexedir (File::nonexistent),
      lispsysdir (File::nonexistent)     
 {
   console=w;
-  lispsysdir=getLispSystemsDirectory();
-  lispexedir=getLispExecutableDirectory();
-  addLisp(T("SBCL"), T("http://sbcl.sourceforge.net/"),
-	  T("sbcl"), T("--eval"));
-  addLisp(T("OpenMCL"), T("http://openmcl.closure.com/"),
-	  T("openmcl"), T("--eval"));
-  addLisp(T("CLISP"), T("http://clisp.cons.org/"),
-	  T("clisp"), T("-x"));
-  //  addLisp(T("CMUCL"), T( "http://www.cons.org/cmucl/"),
-  //	  T("lisp"), T("-eval"));
+  int allos=(SystemStats::Windows | SystemStats::MacOSX | 
+	     SystemStats::Linux );
+  int nowin=(SystemStats::MacOSX | SystemStats::Linux ); 
 
-  for (int i=0;i<lisps.size(); i++) {
-    StringArray a = getLisp(i);
-    printf("lisp=%s\n", getLispExecutable(a,lispexedir).toUTF8());
-  }
+  addLisp(new Lisp( (Lisp::CLTL | Lisp::SBCL), T("SBCL"),
+		    T("http://sbcl.sourceforge.net/"),
+		    T("sbcl"), T("--eval"), nowin));
+  addLisp(new Lisp( (Lisp::CLTL | Lisp::OpenMCL), T("OpenMCL"),
+		    T("http://openmcl.closure.com/"),
+		    T("openmcl"), T("--eval"), nowin));
+  addLisp(new Lisp( (Lisp::CLTL | Lisp::CLISP), T("CLISP"),
+		    T("http://clisp.cons.org/"),
+		    T("clisp"), T("-x"), allos));
 
-  addLispSystem( T("Common Music"), 
-		 T("http://commonmusic.sourceforge.net"),
-		 T("cm"));
-  addLispSystem( T("Simple Algorithmic Language"),
-		 T("http://commonmusic.sourceforge.net/doc/dict/sal-topic.html"),
-		 T("sal"));
-  addLispSystem( T("Common Foreign Function Interface"),
-		 T("http://common-lisp.net/project/cffi/"),
-		 T("cffi"));
-  addLispSystem( T("FOMUS"),
-		 T("http://common-lisp.net/project/fomus/"),
-		 T("fomus"));
-  addLispSystem( T("Portmidi"),
-		 T("http://www.cs.cmu.edu/~music/portmusic/"),
-		 T("portmidi"));
-  addLispSystem( T("Real Time Scheduler"),
-		 T("http://commonmusic.sourceforge.net/doc/dict/rts-topic.html"),
-		 T("rts"));
-  addLispSystem( T("Common Lisp Music"),
-		 T("http://ccrma.stanford.edu/software/clm/"),
-		 T("clm"));
-  addLispSystem( T("Common Music Notation"),
-		 T("http://ccrma.stanford.edu/software/cmn/"),
-		 T("cmn"));
+  // initialize the Lisp systems directory to the apps resource dir.
+  lispsysdir=getGraceResourceDirectory();
+
+  addASDF(new ASDF( T("Grace"), T("Grace"), 
+		    T("http://commonmusic.sourceforge.net"),
+		    allos, allos, allos));
+  addASDF(new ASDF( T("CM"), T("Common Music"), 
+		    T("http://commonmusic.sourceforge.net"),
+		    allos, allos, allos));
+  addASDF(new ASDF( T("SAL"), T("Simple Algorithmic Language"),
+		    T("http://commonmusic.sourceforge.net/doc/dict/sal-topic.html"),
+		    allos, allos, allos));
+  addASDF(new ASDF( T("CFFI"), T("Common Foreign Function Interface"),
+		    T("http://common-lisp.net/project/cffi/"),
+		    allos, allos, allos));
+  addASDF(new ASDF( T("FOMUS"), T("FOMUS"),
+		    T("http://common-lisp.net/project/fomus/"),
+		    allos, allos, allos));
+  addASDF(new ASDF(  T("Portmidi"), T("Portmidi"),
+		     T("http://www.cs.cmu.edu/~music/portmusic/"),
+		     nowin, nowin, nowin));
+  addASDF(new ASDF( T("CLM"), T("Common Lisp Music"),
+		    T("http://ccrma.stanford.edu/software/clm/"),
+		    nowin, nowin, 0));
+  addASDF(new ASDF( T("CMN"), T("Common Music Notation"),
+		    T("http://ccrma.stanford.edu/software/cmn/"),
+		    allos, allos, allos));
+  addASDF(new ASDF( T("RTS"), T("Real Time Scheduler"),
+		    T("http://commonmusic.sourceforge.net/doc/dict/rts-topic.html"),
+		    SystemStats::Linux, SystemStats::MacOSX, 0));
+  /*
+  for(int i=0;i<numASDFs();i++) {
+    ASDF* a= getASDF(i);
+    for(int j=0; j<numLisps(); j++) {
+      Lisp* l=lisps[j];
+      printf("%s %s: MaxOSX=%d, Linux=%d, Windows=%d\n",
+	     a->getASDFName().toUTF8(),
+	     l->getLispName().toUTF8(),
+	     a->isSupported(l,SystemStats::MacOSX),
+	     a->isSupported(l,SystemStats::Linux),
+	     a->isSupported(l,SystemStats::Windows));
+	}} */
 }
 
 LispConnection::~LispConnection () {
@@ -774,7 +752,7 @@ bool LispConnection::isLispRunning () {
 }  
 
 bool LispConnection::isLispStartable () {
-  return ( ! isLocalHost() || (lisp != String::empty));
+  return ( ! isLocalHost() || (getLisp() != (Lisp *)NULL));
 }  
 
 /*
@@ -789,37 +767,6 @@ bool LispConnection::isLocalHost() {
 	  getHost() == T("127.0.0.1"));
 }
 
-File LispConnection::getGraceResourceDirectory() {
-  // return the directory of the "site wide" resource directory for
-  // grace.  for now we determine this relative to the directory that
-  // contains the currently running executable:
-  //   MacOSX:   {exedir}/../Resources/
-  //   Windows:  {exedir}/Resources/
-  //   Linux:    {exedir}/../lib/grace
-  File exe = File::getSpecialLocation(File::currentExecutableFile);
-  if ( isHostWindows() )     // win32: "{exe}/Resources/"
-    return exe.getSiblingFile(T("Resources"));
-  else if ( isHostLinux() )  // Linux: "{exe}../lib/grace/"
-    return exe.getParentDirectory().getParentDirectory().getChildFile(T("lib/grace"));
-  else if ( isHostMacOSX() ) // OSX:   "{exe}../Resources/"
-    return exe.getParentDirectory().getParentDirectory().getChildFile(T("Resources"));
-  else
-    return File::nonexistent;
-}
-
-File LispConnection::getLispSystemsDirectory() {
-  // return the "site wide" lisp system's directory.  this directory
-  // will be searched for ASDF systems if they are loaded without
-  // explicit pathnames.
-  return getGraceResourceDirectory();
-}
-
-File LispConnection::getLispExecutableDirectory() {
-  if ( isHostWindows() ) 
-    return File::getSpecialLocation(File::currentApplicationFile).getParentDirectory().getParentDirectory();
-  else
-    return File(T("/usr/local/bin/"));
-}
 
 File LispConnection::getPollFile(bool newfile) {
   if (newfile) pollfile=File::createTempFile(T("grace"));
@@ -832,35 +779,48 @@ void LispConnection::deletePollFile() {
 }
 
 bool LispConnection::launchLisp () {
-  String lisp = getExecutable();
-  String args = getArguments();
+  Lisp* lisp = getLisp();
+
   File poll = getPollFile(true);
   File load = getGraceResourceDirectory().getChildFile(T("grace/grace.asd"));
   
-  if (lisp == String::empty) {
-    console->consolePrintError(T(">>> Lisp executable not set.\n"));
+  // Check to make sure we can start Lisp...
+  if (lisp == (Lisp *)NULL) {
+    console->consolePrintError(T(">>> Lisp has not been configured.\n"));
     return false;
   }
-  if (! File(lisp).existsAsFile() ) {
-    String msg=T(">>> Lisp executable ") + lisp + T(" does not exist.\n");
+  String prog = lisp->getLispProgram();
+  if (prog == String::empty) {
+    console->consolePrintError(T(">>> Lisp executable has not been set.\n"));
+    return false;
+  }
+  if (! File(prog).existsAsFile() ) {
+    String msg=T(">>> Lisp executable ") + prog + T(" does not exist.\n");
     console->consolePrintError(msg);
     return false;
   }
+
+  /*
+  StringArray g=getLispSystem(T("grace"));
+  String f=findLispSystemFile(g,getGraceResourceDirectory());
+  if (f==String::empty) {
+    console->consolePrintError(T("System file ") +
+			       getGraceResourceDirectory().getChildFile(T("grace")).getChildFile("grace.asd").getFullPathName()
+			       + T(" does not exist.\n"));
+    return false;
+  }
+  else printf("grace=%s\n",f.toUTF8());
+  */
+      
   if (! load.existsAsFile() ) {
     String msg=T(">>> System file ") + load.getFullPathName() + T(" does not exist.\n");
     console->consolePrintError(msg);
     return false;
   }
 
+  String args = lisp->getLispProgramArgs();
   if (args != String::empty) args += T(" ");
-  String eval; 
-  if ( getImplementation() == SBCL  ) 
-    eval = T("--eval ");
-  else if ( getImplementation() == OpenMCL ) 
-    eval = T("--eval ");
-  else if ( getImplementation() == CLisp ) 
-    eval = T("-x ");
-
+  String eval=lisp->getLispEvalArg() + T(" ");
   args += eval;
   args += T("'(load ") + load.getFullPathName().quoted() + T(")'");
   args += T(" ") + eval;
@@ -869,10 +829,10 @@ bool LispConnection::launchLisp () {
   args += T("'(start-server ") + String(getPort()) + T(" ") + poll.getFullPathName().quoted() + T(")'");
 
   console->consoleClear();
-  console->consolePrint(T("Launching ") + lisp + T(" ") + args + T("\n"));
+  console->consolePrint(T("Launching ") + prog + T(" ") + args + T("\n"));
 
-  if (! File(lisp).startAsProcess(args) ) {
-    console->consolePrintError(T(">>> Lisp executable ") + lisp + T(" failed to start.\n"));
+  if (! File(prog).startAsProcess(args) ) {
+    console->consolePrintError(T(">>> Lisp executable ") + prog + T(" failed to start.\n"));
     return false;
   }
   return true;
@@ -915,13 +875,12 @@ void LispConnection::connectionMade () {
   lispinfo=pollfile.loadFileAsString();
   printf("lispinfo=%s\n", lispinfo.toUTF8());
   deletePollFile();
-  String msg;
+
   console->consolePrintValues(T(" =:)\n"));
-  if (isLocalHost() )
-    msg=T("Connected to Lisp on port ") ;
-  else
-    msg=T("Connected to Lisp on ") + getHost() + T(":") ;
-  console->consolePrint(msg + String(getPort()) + T("\n"));
+  String msg=T("Connected to ") + getLisp()->getLispName() + " on ";
+  if (!isLocalHost() )
+    msg+= getHost() + T(" ");
+  console->consolePrint(msg + T("port ") + String(getPort()) + T("\n"));
 }
 
 void LispConnection::stopLisp () {
