@@ -9,20 +9,25 @@
 ;;; $Revision$
 ;;; $Date$
 
-(in-package cl-user)
+(in-package grace)
 
 ;;;
 ;;; message constants, must be same as Lisp.cpp !!
 ;;;
 
-(defconstant +msgBinaryData+ 0)
-(defconstant +msgLispEval+ 1)
-(defconstant +msgSalEval+ 2)
-(defconstant +msgError+ 3)
-(defconstant +msgWarning+ 4)
-(defconstant +msgPrintout+ 5)
-(defconstant +msgValues+ 6)
-(defconstant +msgKillLisp+ 7)
+(defconstant +msgNone+ 0)
+(defconstant +msgBinaryData+ 1)
+(defconstant +msgLispEval+ 2)
+(defconstant +msgLispBufferEval+ 3)
+(defconstant +msgSalBufferEval+ 4)
+(defconstant +msgError+ 5)
+(defconstant +msgWarning+ 6)
+(defconstant +msgPrintout+ 7)
+(defconstant +msgValues+ 8)
+(defconstant +msgKillLisp+ 9)
+(defconstant +msgListFeatures+ 10)
+(defconstant +msgListPackages+ 11)
+(defconstant +msgLoadSystem+ 12)
 
 ;;; capture these if we want to explicitly send to them
 ;;; for debugging
@@ -33,8 +38,6 @@
 (defparameter *lisp-debug-io* *debug-io*)
 (defparameter *lisp-error-output* *error-output*)
 (defparameter *lisp-query-io* *query-io*)
-
-;;
 
 #+sbcl
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -58,18 +61,22 @@
 ;;; 
 ;;;
 
+(defvar *connections* '())
+
 (defclass connection ()
   ((serve? :initarg :serve? :accessor connection-serve?)
    (binary? :initarg :binary? :accessor connection-binary?)
    (stream :initarg :stream :accessor connection-stream)
    (socket :initarg :socket :accessor connection-socket)
-;;   (reader :initarg :reader :accessor connection-reader)
-;;   (evaler :initarg :evaler :accessor connection-evaler)
-;;   (sender :initarg :sender :accessor connection-sender)
    ))
 
 (defgeneric close-connection (obj))
 (defgeneric connection-open? (con))
+(defgeneric connection-local-port (obj))
+(defgeneric connection-remote-port (obj))
+(defgeneric connection-remote-host (obj))
+(defgeneric connection-send (conn msg data))
+(defgeneric connection-read (conn))
 
 (defun ipaddr->dotted (addr)
   #+openmcl (ccl:ipaddr-to-dotted addr)
@@ -93,15 +100,10 @@
   (funcall (find-symbol "GetCurrentProcessId" :win32))
   )
 
-
 (defun kill-lisp ()
   #+sbcl (sb-ext:quit)
   #+openmcl (ccl:quit)
   #+clisp (ext:quit))
-
-(defgeneric connection-local-port (obj))
-(defgeneric connection-remote-port (obj))
-(defgeneric connection-remote-host (obj))
 
 (defmethod connection-local-port ((obj connection))
   (let ((sock (connection-socket obj)))
@@ -168,10 +170,12 @@
 		    (ipaddr->dotted lh) lp (ipaddr->dotted rh) rp)))
       (format stream "#<connection [closed]>")))
 
-(defun read-eval-print (conn string standard-out warn-out error-out values-out)
+(defun read-eval-print (conn string standard-out warn-out error-out
+			values-out pkg)
   error-out
   (let ((step ':read)
-	(form nil))
+	(form nil)
+	(*package* pkg))
     (handler-case
 	(progn
 	  (setq form (read-from-string string))
@@ -203,56 +207,20 @@
 	  (force-output values-out))))
     (values)))
 
-(defun connection-read (standard-out warn-out error-out string errform)
-  (let (form)
-    warn-out standard-out
- ;;   (setf *standard-output* standard-out)
- ;;   (setf *error-output* warn-out) ; really where warn goes
-    (handler-case
-	(progn
-	  (FORMAT *lisp-standard-output* "reading: ~S~%" string)
-	  (FORCE-OUTPUT *lisp-standard-output*)	  
-	  (setq form (read-from-string string)))
-      (error (c)
-	(progn
-	  (format error-out ">>> Lisp READ error:~%    ~A"
-		  c)
-	  (force-output error-out)
-	  (setq form errform))))
-    (FORMAT *lisp-standard-output* "form: ~S~%" form)
-    (FORCE-OUTPUT *lisp-standard-output*)
-    form))
-	   
-(defun connection-eval (standard-out warn-out error-out values-out form)
-  (handler-case (multiple-value-list (eval form))
-    (error (c)
-      (let ((str (format nil ">>> Lisp EVAL error:~%    ~A"
-			 c)))
-	(FORMAT *lisp-standard-output* str)
-	(FORCE-OUTPUT *lisp-standard-output*)
-	;; flush other streams
-	(force-output warn-out)
-	(force-output standard-out)
-	(force-output values-out)
-	;; send error message
-	(format error-out str)
-	(force-output error-out)))
-    (:no-error (vals)
-      (setq +++ ++ ++ + + form)
-      (setq *** ** ** * * (car vals))
-      ;; flush other streams
-      (force-output standard-out)
-      (force-output warn-out)
-      (when vals
-	(dolist (v vals) (pprint v values-out))
-	(force-output values-out))))
-  (values))
-
-
-; (progn (defparameter *lisp-standard-output* *standard-output*)(defparameter s *standard-output*))
-; (connection-eval s s s s '(define asd ()))
-
-
+(defmethod connection-send ((con connection) (message t) (data t))
+  (format *lisp-standard-output*
+	  "connection-send: unimplemented for ~
+           message=~s and data=~s~%" message data))
+	  
+(defmethod connection-send ((conn connection) (message integer)
+			    (data string))
+  (let* ((stream (connection-stream conn))
+	 (length (length data)))
+    (write-u32 message stream)
+    (write-u32 length stream)
+    (loop for i below length
+       do (write-byte (char-code (aref data i)) stream))
+    (force-output stream)))
 
 ;;; this is a gray stream for standard output to send back to grace
 ;;; this merely wraps around the instance of stream in connection 
@@ -413,6 +381,19 @@
 (defun stop-server () (throw :socket-server ':quit))
 (defun kill-server () (throw :socket-server ':kill))
 
+#|
+(defun send (msg &optional string)
+  (let* ((len (length string)))
+    (write-u32 msg stream)
+    (write-u32 len stream)
+    (when (> len 0)
+      (loop for i below len do
+	   (write-byte
+    (write-sequence confirmation-bytes stream)
+
+)))))|#
+
+
 (defun serve-connection (connection)
   ;; TODO: fix for threaded lisps like openmcl and sbcl/linux!!
   (let* ((stream (connection-stream connection))
@@ -433,8 +414,6 @@
 			 :message-type +msgValues+
 			 :binary-stream stream))
 	 )
-;;    (setf *error-output* error-output-stream)
-;;    (setf *standard-output* standard-output-stream)
     (flet ((serve ()
 	     (catch :socket-server
 	       (let* ((binary-confirmation-message 
@@ -445,19 +424,22 @@
 				   :initial-contents 
 				   binary-confirmation-message
 				   :element-type '(unsigned-byte 8)))
-		      (error-value (gensym))
 		      (*error-output* warn-output-stream)
 		      (*standard-output* standard-output-stream)
-		      message-type length string sexpr value byte-vector)
-		 message-type length string sexpr value byte-vector error-value
-		 (format *lisp-standard-output* "standard-output: ~s~%error-output: ~s~%warn-output: ~s~%values-output: ~s~%" standard-output-stream error-output-stream warn-output-stream
+		      message length string vector)
+		 message length string vector
+		 (format *lisp-standard-output* 
+			 "standard-output: ~s~%error-output: ~s~%warn-output: ~s~%values-output: ~s~%"
+			 standard-output-stream
+			 error-output-stream
+			 warn-output-stream
 			 values-output-stream)
 		 (force-output *lisp-standard-output*)
 		 (loop 
 		    (handler-case
 			;; handle broken connection
 			(progn
-			  (setq message-type (read-u32 stream))
+			  (setq message (read-u32 stream))
 			  (setq length (read-u32 stream)))
 		      (error (c) 
 			(format *lisp-standard-output*
@@ -465,11 +447,12 @@
                                  ; Quitting lisp..."
 				c)
 			(kill-server)))
-		    (format *lisp-standard-output*
-			    "lisp receive: message-type=~S, length=~S~%"
-			    message-type length)
 		    (cond 
-		      ((= message-type +msgLispEval+)
+		      ((= message +msgSalBufferEval+)
+		       )
+		      ((= message +msgLispBufferEval+)
+		       )
+		      ((= message +msgLispEval+)
 		       (setq string (make-string length))
 		       (loop for i below length
 			  do (setf (elt string i)
@@ -479,64 +462,61 @@
 					standard-output-stream
 					warn-output-stream
 					error-output-stream
-					values-output-stream)					
-
-		       #|(setq sexpr (connection-read standard-output-stream
-						    warn-output-stream
-						    error-output-stream
-						    string
-						    error-value))
-		       (unless (eql sexpr error-value)
-			 (connection-eval standard-output-stream 
-					  warn-output-stream 
-					  error-output-stream
-					  values-output-stream
-					  sexpr))|#)
-		      ((= message-type +msgSalEval+)
+					values-output-stream
+					*package*))
+		      ((or (= message +msgListPackages+)
+			   (= message +msgListFeatures+))
+		       (let ((data
+			      (if (= message +msgListFeatures+)
+				  *features*
+				  (sort (mapcar (function package-name)
+						(list-all-packages))
+					(function string-lessp)))))
+			 (setq string
+			       (format nil "~A~{ ~A~}" (car data)
+				       (cdr data)))
+			 (setq length (length string))
+			 (write-u32 message stream)
+			 (write-u32 length stream)
+			 (dotimes (i length)
+			   (write-byte (char-code (elt string i))
+				       stream))
+			 (force-output stream)))
+		      ((= message +msgListFeatures+)
 		       )
-		      ((= message-type +msgBinaryData+)
-		       (progn
-			 (setq byte-vector 
-			       (make-array length :element-type 
-					   '(unsigned-byte 8)))
-			 (loop for i below length
-			    do (setf (aref byte-vector i)
-				     (read-byte stream)))
-			 (format *lisp-standard-output* 
-			       "Lisp received binary message: '~S'~%"
-			       byte-vector)
-			 (format *lisp-standard-output* 
-			       "Lisp sending confirmation bytes: '~S'~%"
-			       confirmation-bytes)
+		      ((= message +msgBinaryData+)
+		       (setq vector (make-array length :element-type 
+						'(unsigned-byte 8)))
+		       (loop for i below length
+			  do (setf (aref vector i)
+				   (read-byte stream)))
 		       (setq length (length confirmation-bytes))
 		       (write-u32 +msgBinaryData+ stream)
 		       (write-u32 length stream)
 		       (write-sequence confirmation-bytes stream)
-		       (force-output stream)))
-		      ((= message-type +msgKillLisp+)
-		       (format *lisp-standard-output* "KILLING LISP.~%")
+		       (force-output stream))
+		      ((= message +msgKillLisp+)
 		       (kill-server))
 		      (t (format *lisp-standard-output*
-				 "Lisp unknown message-type: '~S'~%" 
-				 message-type))))))))
+				 "Lisp unknown message: '~S'~%" 
+				 message))))))))
 	   (let (res)
 	     (unwind-protect
 		  (setq res (serve ))
-	       ;;set outputs back to lisp
-;;	       (setf *standard-output* *lisp-standard-output*)
-;;	       (setf *error-output* *lisp-error-output*)
 	       ;close streams
 	       (close standard-output-stream)
 	       (close error-output-stream)
 	       (close warn-output-stream)
 	       (close values-output-stream)
-
 	       (close-connection connection)
-
 	       (format *lisp-standard-output* "; Connection closed.~%")
 	       (force-output t)
 	       (if (eql res ':kill)
 		   (kill-lisp)))))))
+
+(defun grace-connection (&optional arg)
+  (declare (ignore arg))
+  (car *connections*))
 
 (defun start-server (port pollfile)
   ;; write polling file to tell (localhost) caller that connection is
@@ -545,6 +525,7 @@
                      :if-exists :error :if-does-not-exist :create)
     (format s "~S~{ ~S~}~%" (getpid) *features*))
   (let ((con (open-server-connection port)))
+    (push con *connections*) ; for now only 1
     (format *lisp-standard-output*
 	    "; started socket server: port=~d, pid=~d~%"
 	    (connection-local-port con) (getpid))
@@ -605,12 +586,9 @@
 					(if bin '(unsigned-byte 8)
 					    'character)))
     (setq stream socket))
-  (make-instance 'connection 
-		 :serve? nil
-;;		 :reader (function connection-read)
-;;		 :sender (function connection-print)
-;;		 :evaler (function connection-eval)
+  (make-instance 'connection :serve? nil
 		 :stream stream :socket socket)))
 
-
-
+;;;
+;;; eof
+;;;

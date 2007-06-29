@@ -1,40 +1,30 @@
-(in-package :cl-user)
+;;; **********************************************************************
+;;; Copyright (C) 2007 Todd Ingalls, Rick Taube.
+;;; This program is free software; you can redistribute it and/or modify
+;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
+;;; this agreement is available at http://www.cliki.net/LLGPL            
+;;; **********************************************************************
+
+;;; $Name$
+;;; $Revision$
+;;; $Date$
+
+(in-package :grace)
+
+(defmethod asdf:perform :after ((a asdf:load-op) (b asdf:system))
+  ;; notify grace of newly loaded system if connected
+  (let ((con (grace-connection)))
+    (when (and con (connection-open? con))
+      (connection-send con +msgLoadSystem+
+		       (asdf:component-name b)))
+    ))
 
 (defmethod asdf:perform :after ((a t)(b t))
-  (force-output *error-output*)
+  ;; flush tyo or warnings during file loading/compiling
   (force-output *standard-output*)
+  (force-output *error-output*)
   ) 
 
-;#-(or sbcl openmcl clisp)
-;(error "Attempt to load grace.lisp into an unknown lisp implementation.")
-
-;(defvar *grace-source-directory* 
-;  (make-pathname :name nil :type nil
-;                 :defaults (or *load-pathname*
-;			       *default-pathname-defaults*))
-;  "The directory containing Grace lisp runtime sources.")
-
-;(defvar *grace-fasl-directory* *grace-source-directory*
-;  "The directory containing Grace runtime compiled files.")
-
-#|
-(flet ((compload (f)
-	 (let ((s (merge-pathnames f *grace-source-directory*))
-	       (c (compile-file-pathname
-		   (merge-pathnames f *grace-fasl-directory*))))
-
-	   (if (or (not (probe-file c))
-		   (> (file-write-date s) (file-write-date c)))
-	       (setq c (compile-file s)))
-	   (load c))))
-  #+sbcl(require :asdf)
-  #+openmcl(require :asdf)
-  #+clisp (compload "asdf.lisp")
-  (compload "socketserver.lisp")
-  ;; add grace as a feature
-  (pushnew ':grace *features*)
-  )
-|#
-
-
-
+;;;
+;;; eof
+;;;
