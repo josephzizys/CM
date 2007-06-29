@@ -52,6 +52,7 @@ class Lisp {
 }; 
 
 class ASDF {
+  enum {Grace=0, CM, SAL}; // these are "required" (?)
   String name, title, url, op, before, after;
   int flags [NUM_LISPS];
   bool loa;
@@ -77,7 +78,6 @@ class ASDF {
     if (lower) return name.toLowerCase();
     return name;
   }
-
   bool isSupported(Lisp* lisp, int os=-1) {
     if (os<0) os=getHostOS();
     int i=lisp->getLispIndex();
@@ -103,16 +103,19 @@ public:
   // message types, must be same as socketserver.lisp !!
   typedef enum MessageType
     {
-      msgBinaryData  = 0x0,
-      // grace->lisp
+      msgNone = 0x0,
+      msgBinaryData ,
       msgLispEval,
-      msgSalEval,
-      // lisp->grace
+      msgLispBufferEval,
+      msgSalBufferEval,
       msgError,
       msgWarning,
       msgPrintout, 
       msgValues, 
       msgKillLisp, 
+      msgListFeatures,
+      msgListPackages,
+      msgLoadSystem,
       msgStatus = 0xFF
     } ;
   
@@ -243,8 +246,13 @@ class LispConnection : public LispProcessConnection, public Timer {
   void connectionMade ();
   void connectionLost ();
   void sendLispSexpr(String in);
-  void testConnection();
+  void sendSalBufferSexpr(String in);
+  void sendLispBufferSexpr(String pkg, String in);
+
   void messageReceived (const MemoryBlock &message);
+  void handleLoadSystem(const MemoryBlock &message);
+  void handleListPackages(const MemoryBlock &message);
+  void handleListFeatures(const MemoryBlock &message);
 
   void postMessage (const MemoryBlock &message);
   void postPrintout (const MemoryBlock &message);

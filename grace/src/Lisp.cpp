@@ -826,7 +826,7 @@ bool LispConnection::launchLisp () {
   args += T(" ") + eval;
   args += T("'(asdf:oos (quote asdf:load-op) \"grace\")'");
   args += T(" ") + eval;
-  args += T("'(start-server ") + String(getPort()) + T(" ") + poll.getFullPathName().quoted() + T(")'");
+  args += T("'(grace:start-server ") + String(getPort()) + T(" ") + poll.getFullPathName().quoted() + T(")'");
 
   console->consoleClear();
   console->consolePrint(T("Launching ") + prog + T(" ") + args + T("\n"));
@@ -885,12 +885,14 @@ void LispConnection::connectionMade () {
 
 void LispConnection::stopLisp () {
   if ( isConnected() ) {
-    //  sendLispSexpr(T("(kill-server)"));
     MemoryBlock mem=MemoryBlock(0, true);  
     sendMessage(mem, msgKillLisp);
     lpid=-1;
     disconnect();
     console->consolePrint(T("Lisp disconnected.\n"));
+    // mark all system unloaded.
+    for (int i=0;i<numASDFs();i++)
+      getASDF(i)->setLoaded(false);
   }
 }
 
@@ -898,6 +900,8 @@ void LispConnection::connectionLost () {
   if (lpid != -1)
     console->consolePrintError(T("Lisp: connection unexpectedly lost!\n"));
 }
+
+// Sending and receiving messages
 
 void LispConnection::sendLispSexpr(String sexpr) {
   if (! isConnected() ){
@@ -912,8 +916,11 @@ void LispConnection::sendLispSexpr(String sexpr) {
   sendMessage(mem, msgLispEval);
 }
 
-void LispConnection::testConnection() {
-}  
+void LispConnection::sendSalBufferSexpr(String sexpr) {
+}
+
+void LispConnection::sendLispBufferSexpr(String package, String sexpr) {
+}
 
 void LispConnection::messageReceived (const MemoryBlock &message) {
   printf("in message receive, what is this for?\n");
@@ -947,7 +954,6 @@ void LispConnection::postError (const MemoryBlock &message) {
 }
 
 void LispConnection::postValues (const MemoryBlock &message) {
-  printf("post values\n");
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->consolePrint(text, ConsoleTheme::valueColor);
@@ -956,6 +962,24 @@ void LispConnection::postValues (const MemoryBlock &message) {
 
 void LispConnection::handleBinaryData (const MemoryBlock &message) {
    printf("grace got binary data from lisp\n");
+}
+
+void LispConnection::handleLoadSystem (const MemoryBlock &message) {
+  int len=message.getSize();
+  printf("received LoadSystem message system, len=%d", len);
+  String text=String((const char *)message, len);
+  printf(" text=%s\n", text.toUTF8());
+  ASDF* s=findASDF(text);
+  if (s != (ASDF *)NULL)
+    s->setLoaded(true);
+}
+
+void LispConnection::handleListPackages (const MemoryBlock &message) {
+   printf("grace got listPackages data from lisp\n");
+}
+
+void LispConnection::handleListFeatures (const MemoryBlock &message) {
+   printf("grace got listFeatures data from lisp\n");
 }
 
 // ok this would be the point to handle different types of messages 
@@ -994,11 +1018,22 @@ void LispConnection::handleMessage (const Message& message) {
     postValues(*data);
     delete data;
     break;
+  case (uint32)msgLoadSystem:
+    handleLoadSystem(*data);
+    delete data;
+    break;
+  case (uint32)msgListPackages:
+    printf("ListPackages message\n");    
+    break;
+  case (uint32)msgListFeatures:
+    printf("ListPackages message\n");    
+    break;
   case (uint32)msgBinaryData:
     handleBinaryData (*data);
     delete data;
     break;
- 
+  case (uint32)msgNone:
+    printf("Caught msgNone and dont know why...\n");
   default:
     break;
   }

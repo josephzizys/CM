@@ -434,7 +434,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 	ASDF* a=lisp->getASDF(i);
 	sub1.addItem( cmdLispLoadSystem + i,
 		      a->getASDFName(),
-		      (running && a->isSupported(l)));
+		      (running && a->isSupported(l)),
+		      a->isLoaded());
       }
       sub1.addSeparator();
       sub1.addItem( cmdLispLoadSystem + 127, T("Other..."), running);
