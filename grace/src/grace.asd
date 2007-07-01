@@ -29,6 +29,7 @@
   #+clisp (:use :gray)
   #+openmcl
   (:import-from :ccl
+		:fundamental-character-output-stream
 		:stream-write-char :stream-line-column
 		:stream-start-line-p :stream-write-string
 		:stream-terpri :stream-fresh-line
@@ -45,6 +46,7 @@
   :licence "LLGPL"
   :serial t
   :components (
+	       (:file "gray")
 	       (:file "socketserver")
 	       (:file "grace")
   	      ))
