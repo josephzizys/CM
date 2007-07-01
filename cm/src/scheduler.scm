@@ -354,7 +354,7 @@
 
 (define-method* (schedule-object (obj <pair>) start sched)
   ;; CHANGE: this now calls its self recursivly as it should
-  (dolist (o obj) (schedule-object o start start sched)))
+  (dolist (o obj) (schedule-object o start sched)))
 
 (define-method* (schedule-object (obj <seq>) start sched)
   ;; CHANGE: this conses seq onto head of subobjects

@@ -416,7 +416,6 @@
          (chn (cadr loc))
 	 (dur #f) 
 	 (at #f)
-	 (evt (ms:MidiNewEv ms:typeNote))
 	 (sched (scheduling-mode))
          (evt #f))
     (cond ((eq? sched ':events)
@@ -628,13 +627,14 @@
 (define (ms:sprout obj ahead out)
   ;; add process obj to MidiShare's queue
   ;; RUN-PROC is a callback defined in openmcl.lis
-  out
-  (let ((id (add-proc obj )))
-    (if id
-        (ms:MidiTask run-proc (+ (ms:MidiGetTime)
-                                 (or ahead 0) )
-                     (midishare-stream-refnum out) id 0 0)
-        (warn "Can't sprout, no room left in process table!")))
+  obj ahead out
+;;  (let ((id (add-proc obj )))
+;;    (if id
+;;        (ms:MidiTask run-proc (+ (ms:MidiGetTime)
+;;                                 (or ahead 0) )
+;;                     (midishare-stream-refnum out) id 0 0)
+;;        (warn "Can't sprout, no room left in process table!")))
+  (err "ms:sprout unsupported (see openmcl.lisp for more info)")
   (values))
 
 (define (parse-ms-output forms clauses ops)

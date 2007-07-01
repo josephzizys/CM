@@ -29,10 +29,8 @@
     recv-mode io hook
     (err *pm-not-loaded-error*)))
 
-(define-method* (recv? (io <portmidi-stream>) . args)
-  (with-args (args &optional state)
-    io state
-    #f))
+(define-method* (recv? (io <portmidi-stream>))
+  (err *pm-not-loaded-error*))
 
 (define (rtserr fn args)
   (err "Attempt to call ~s without RTS loaded."  (cons fn args)))

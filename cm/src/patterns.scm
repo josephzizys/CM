@@ -254,11 +254,9 @@
 	(hook (pattern-hooks obj)) ; just eop-hook now...
         (len #f)
 	(parser (pattern-parser obj))
-	(returner #f)
 	(type #f)
 	(optn #f)
 	(valu #f)
-	(retn #f)
 	(constant? #f))
     ;; pattern slots with multiple initargs must be parsed from the
     ;; args since goops doesn't recogize them as true initargs...
@@ -2745,7 +2743,6 @@
 	(etyp #f)  ; element type
 	(elts #f)
 	(opts #f)
-	(retn #f)  ; true if return value func
 	)
     (multiple-value-setq (vars args) (gather-substs form))
     (check-pattern-option args pattern-types #t)

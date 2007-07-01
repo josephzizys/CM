@@ -149,6 +149,13 @@
 (defgeneric (setf io-class-definer) (val obj))
 (defgeneric io-class-file-versions (obj))
 (defgeneric (setf io-class-file-versions) (val obj))
+
+(defgeneric stream-receive-init (stream hook args))
+(defgeneric stream-receive-start (stream args))
+(defgeneric stream-receive-stop (stream))
+(defgeneric stream-receive-deinit (stream))
+(defgeneric stream-receive? (stream))
+
 ;(defgeneric validate-superclass (obj1 obj2))
 (defgeneric make-load-form (obj))
 (defgeneric fill-object (obj1 obj2))
@@ -252,43 +259,7 @@
 (defgeneric set-receive-mode! (stream mode))
 (defgeneric reply-set-slots (obj lst))
 
-
-;; bug??: sprout has 2 optionals but rt-sprout has them required
-;(defgeneric rt-sprout (obj time dest))
-;(defgeneric rt-now (io))
-
-(in-package "SB-KERNEL")
-
-#+darwin ; remove when the darwin version release contains it
-(defun round-numeric-bound (x class format up-p)
-  (if x
-      (let ((cx (if (consp x) (car x) x)))
-        (ecase class
-          ((nil rational) x)
-          (integer
-           (if (and (consp x) (integerp cx))
-               (if up-p (1+ cx) (1- cx))
-               (if up-p (ceiling cx) (floor cx))))
-          (float
-           (let ((res
-                  (cond
-                    ((and format (subtypep format 'double-float))
-                      (if (<= most-negative-double-float cx
-                              most-positive-double-float)
-                          (coerce cx format)
-                          nil))
-                     (t
-                      (if (<= most-negative-single-float cx
-                              most-positive-single-float)
-                          ;; FIXME
-                          (coerce cx (or format 'single-float))
-                          nil)))))
-              (if (consp x) (list res) res)))))
-       nil))
-
-
-
-
-
-
-
+(defgeneric recv (io &rest args))
+(defgeneric recv? (io))
+(defgeneric recv-stop (io))
+(defgeneric recv-set! (io hook &rest args))
