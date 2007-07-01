@@ -643,16 +643,16 @@ void ConfigureLispView::sliderValueChanged (Slider* sliderThatWasMoved) {
 
 String ASDF::findASDFFile(File root) {
   if ( root.isDirectory() ) {
-    String name=getASDFName(true);
-    String file=name+T(".asd");
+    String file=getASDFFileName();
     if ( root.getChildFile(file).existsAsFile() )
       return root.getChildFile(file).getFullPathName();
     else {
-      // look for subdir whose name starts with the ASDF's name, if it
-      // exists then look for the asdf file inside it.
+      // search for subdir whose name starts with the ASDF's name, if
+      // it exists then look inside for the .asd file.
       OwnedArray<File> dirs;
       OwnedArray<File> asds;
-      int d=root.findChildFiles(dirs, File::findDirectories, false, (name + T("*")));
+      int d=root.findChildFiles(dirs, File::findDirectories, false,
+				( getASDFName(true) + T("*")));
       for (int i=0; i<d; i++) {
 	int b=dirs[i]->findChildFiles(asds, File::findFiles, false, file);
 	if (b==1)
@@ -668,10 +668,11 @@ String ASDF::getLoadForm(String path) {
   String form=T("(progn ");
   if (before != String::empty)
     form += before + T(" ");
-  form += T("(load ") + path + T(") (asdf:oos (quote ") + op + T("))");
+  form += T("(load ") + path.quoted() + T(") (asdf:oos (quote ") + 
+    oper + T(") ") + getASDFName(true).quoted() + T(")");
   if (after != String::empty)
     form += T(" ") + after;
-  form += T(")");
+  form += T("(values))");
   return form;
 }
 
@@ -681,7 +682,7 @@ LispConnection::LispConnection (ConsoleWindow* w)
      port (8000),
      lpid (-1),
      impl ((Lisp *)NULL),
-     timeout (15),
+     timeout (20),
      pollfile (File::nonexistent),
      lispsysdir (File::nonexistent)     
 {
@@ -703,45 +704,20 @@ LispConnection::LispConnection (ConsoleWindow* w)
   // initialize the Lisp systems directory to the apps resource dir.
   lispsysdir=getGraceResourceDirectory();
 
-  addASDF(new ASDF( T("Grace"), T("Grace"), 
-		    T("http://commonmusic.sourceforge.net"),
-		    allos, allos, allos));
-  addASDF(new ASDF( T("CM"), T("Common Music"), 
-		    T("http://commonmusic.sourceforge.net"),
-		    allos, allos, allos));
-  addASDF(new ASDF( T("SAL"), T("Simple Algorithmic Language"),
-		    T("http://commonmusic.sourceforge.net/doc/dict/sal-topic.html"),
-		    allos, allos, allos));
-  addASDF(new ASDF( T("CFFI"), T("Common Foreign Function Interface"),
-		    T("http://common-lisp.net/project/cffi/"),
-		    allos, allos, allos));
-  addASDF(new ASDF( T("FOMUS"), T("FOMUS"),
-		    T("http://common-lisp.net/project/fomus/"),
-		    allos, allos, allos));
-  addASDF(new ASDF(  T("Portmidi"), T("Portmidi"),
-		     T("http://www.cs.cmu.edu/~music/portmusic/"),
-		     nowin, nowin, nowin));
-  addASDF(new ASDF( T("CLM"), T("Common Lisp Music"),
-		    T("http://ccrma.stanford.edu/software/clm/"),
-		    nowin, nowin, 0));
-  addASDF(new ASDF( T("CMN"), T("Common Music Notation"),
-		    T("http://ccrma.stanford.edu/software/cmn/"),
-		    allos, allos, allos));
-  addASDF(new ASDF( T("RTS"), T("Real Time Scheduler"),
-		    T("http://commonmusic.sourceforge.net/doc/dict/rts-topic.html"),
-		    SystemStats::Linux, SystemStats::MacOSX, 0));
-  /*
-  for(int i=0;i<numASDFs();i++) {
-    ASDF* a= getASDF(i);
-    for(int j=0; j<numLisps(); j++) {
-      Lisp* l=lisps[j];
-      printf("%s %s: MaxOSX=%d, Linux=%d, Windows=%d\n",
-	     a->getASDFName().toUTF8(),
-	     l->getLispName().toUTF8(),
-	     a->isSupported(l,SystemStats::MacOSX),
-	     a->isSupported(l,SystemStats::Linux),
-	     a->isSupported(l,SystemStats::Windows));
-	}} */
+  String path=String::empty;
+  addASDF(new ASDF( T("Grace"), path, allos, allos, allos));
+  addASDF(new ASDF( T("CM"), path, allos, allos, allos,
+		    T("asdf:load-op"), String::empty, 
+		    T("(cl-user::cm)")));
+  addASDF(new ASDF( T("CFFI"), path, allos, allos, allos));
+  addASDF(new ASDF( T("FOMUS"), path, allos, allos, allos));
+  addASDF(new ASDF( T("Portmidi"), path, nowin, nowin, nowin));
+  addASDF(new ASDF( T("CLM"), path, nowin, nowin, 0,
+		    T("asdf:load-source-op")));
+  addASDF(new ASDF( T("CMN"), path, allos, allos, allos,
+		    T("asdf:load-source-op")));
+  addASDF(new ASDF( T("RTS"), path, SystemStats::Linux,
+		    SystemStats::MacOSX, 0));
 }
 
 LispConnection::~LispConnection () {
@@ -755,18 +731,10 @@ bool LispConnection::isLispStartable () {
   return ( ! isLocalHost() || (getLisp() != (Lisp *)NULL));
 }  
 
-/*
-int LispConnection::getOS() {
-    SystemStats::OperatingSystemType sys = SystemStats::getOperatingSystemType();
-    return (int)sys;
-}
-*/
-
 bool LispConnection::isLocalHost() {
   return (getHost().equalsIgnoreCase(T("localhost")) ||
 	  getHost() == T("127.0.0.1"));
 }
-
 
 File LispConnection::getPollFile(bool newfile) {
   if (newfile) pollfile=File::createTempFile(T("grace"));
@@ -780,59 +748,48 @@ void LispConnection::deletePollFile() {
 
 bool LispConnection::launchLisp () {
   Lisp* lisp = getLisp();
-
-  File poll = getPollFile(true);
-  File load = getGraceResourceDirectory().getChildFile(T("grace/grace.asd"));
-  
-  // Check to make sure we can start Lisp...
+  // Do upfront checks to make sure we can start Lisp...
   if (lisp == (Lisp *)NULL) {
     console->consolePrintError(T(">>> Lisp has not been configured.\n"));
     return false;
   }
   String prog = lisp->getLispProgram();
   if (prog == String::empty) {
-    console->consolePrintError(T(">>> Lisp executable has not been set.\n"));
+    console->consolePrintError(T(">>> Lisp program has not been set.\n"));
     return false;
   }
   if (! File(prog).existsAsFile() ) {
-    String msg=T(">>> Lisp executable ") + prog + T(" does not exist.\n");
+    String msg=T(">>> Lisp program ") + prog + T(" does not exist.\n");
     console->consolePrintError(msg);
     return false;
   }
-
-  /*
-  StringArray g=getLispSystem(T("grace"));
-  String f=findLispSystemFile(g,getGraceResourceDirectory());
-  if (f==String::empty) {
-    console->consolePrintError(T("System file ") +
-			       getGraceResourceDirectory().getChildFile(T("grace")).getChildFile("grace.asd").getFullPathName()
-			       + T(" does not exist.\n"));
-    return false;
-  }
-  else printf("grace=%s\n",f.toUTF8());
-  */
-      
+  // Dont start if Grace system definition isnt found.
+  File load = getLispSystemsDirectory().getChildFile(T("grace/grace.asd"));
   if (! load.existsAsFile() ) {
-    String msg=T(">>> System file ") + load.getFullPathName() + T(" does not exist.\n");
-    console->consolePrintError(msg);
+    console->consolePrintError( T(">>> System file ") + 
+				load.getFullPathName() + 
+				T(" does not exist.\n"));
     return false;
   }
-
-  String args = lisp->getLispProgramArgs();
+  // build --eval expers for starting the grace server. spread over
+  // multiple args to avoid package nonsense...
+  String args = lisp->getLispProgramArgs(); // start with users' own
   if (args != String::empty) args += T(" ");
-  String eval=lisp->getLispEvalArg() + T(" ");
+  String eval=lisp->getLispEvalArg() + T(" "); // --eval, -x etc
   args += eval;
   args += T("'(load ") + load.getFullPathName().quoted() + T(")'");
   args += T(" ") + eval;
   args += T("'(asdf:oos (quote asdf:load-op) \"grace\")'");
   args += T(" ") + eval;
-  args += T("'(grace:start-server ") + String(getPort()) + T(" ") + poll.getFullPathName().quoted() + T(")'");
+  args += T("'(grace:start-server ") + String(getPort()) + T(" ") +
+    getPollFile(true).getFullPathName().quoted() +
+    T(")'");
 
   console->consoleClear();
   console->consolePrint(T("Launching ") + prog + T(" ") + args + T("\n"));
 
   if (! File(prog).startAsProcess(args) ) {
-    console->consolePrintError(T(">>> Lisp executable ") + prog + T(" failed to start.\n"));
+    console->consolePrintError(T(">>> Lisp program ") + prog + T(" failed to start.\n"));
     return false;
   }
   return true;
@@ -867,7 +824,7 @@ void LispConnection::startLisp () {
   if ( isLocalHost() )
     if (! launchLisp() )
       return;
-  console->consolePrint(T("Polling socket server ..."));
+  console->consolePrint(T("Polling socket server"));
   startTimer(1000);
 }
 
@@ -881,6 +838,8 @@ void LispConnection::connectionMade () {
   if (!isLocalHost() )
     msg+= getHost() + T(" ");
   console->consolePrint(msg + T("port ") + String(getPort()) + T("\n"));
+  getASDF(ASDF::Grace)->setLoaded(true);
+  loadASDF( getASDF(ASDF::CM) );
 }
 
 void LispConnection::stopLisp () {
@@ -901,7 +860,51 @@ void LispConnection::connectionLost () {
     console->consolePrintError(T("Lisp: connection unexpectedly lost!\n"));
 }
 
+// ASDF loading
+
+bool LispConnection::loadASDF(ASDF* asdf) {
+  if ( ! isLispRunning () ) return false;
+  if ( asdf->isLoaded() ) return true;
+  File file = asdf->getDefinitionFile( getLispSystemsDirectory() );
+  String load = String::empty;
+  if ( file.existsAsFile() ) {
+    load=asdf->getLoadForm(file.getFullPathName());
+  }
+  else {
+    String bad=asdf->getPathName();
+    if (bad==String::empty)
+      bad=getLispSystemsDirectory().getChildFile(T("**")).getChildFile(asdf->getASDFFileName()).getFullPathName();
+    console->consolePrintError( T(">>> System ") + asdf->getASDFName() + 
+				T(" not found:\n") + bad + 
+				T(" does not exist.\n"));
+    return false;
+  }
+  sendLispSexpr(load);
+  return true;
+}
+
+bool LispConnection::chooseASDF() {
+  FileChooser choose (T("Load System"), getLispSystemsDirectory(),
+		      T("*.asd"),
+		      true);
+  if ( choose.browseForFileToOpen() ) {
+    File file = choose.getResult();
+    String name=file.getFileNameWithoutExtension();
+    ASDF* asdf=findASDF(name);
+    if (asdf == (ASDF *)NULL) {
+      asdf=new ASDF(name, file.getFullPathName(), Lisp::OsAll,
+		    Lisp::OsAll, Lisp::OsAll);
+      addASDF(asdf);
+    }
+    else
+      asdf->setPathName( file.getFullPathName() );
+    loadASDF(asdf);
+  }
+}
+
+//
 // Sending and receiving messages
+//
 
 void LispConnection::sendLispSexpr(String sexpr) {
   if (! isConnected() ){

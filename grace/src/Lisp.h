@@ -23,6 +23,11 @@ class ConsoleWindow;
 class Lisp {
  public:
   enum {CLTL=1, Scheme=2, SBCL=4, OpenMCL=8, CLISP=16};
+  enum {OsAll = (SystemStats::Windows | SystemStats::MacOSX | 
+		 SystemStats::Linux ),
+	OsUnix = (SystemStats::MacOSX | SystemStats::Linux ),
+	OsWin = (SystemStats::Windows )
+  };
   String name, url, eval, exec, args;
   int os, imp, num;
 
@@ -52,44 +57,47 @@ class Lisp {
 }; 
 
 class ASDF {
-  enum {Grace=0, CM, SAL}; // these are "required" (?)
-  String name, title, url, op, before, after;
+  String name, path, oper, before, after;
   int flags [NUM_LISPS];
   bool loa;
  public:
-
-  ASDF (String n, String t, String u, int f0, int f1, int f2, String o=T("asdf:load-op"),
+  enum {Grace=0, CM}; // enumerate "required" systems (?)
+  ASDF (String n, String p, int f0, int f1, int f2, String o=T("asdf:load-op"),
 	String b=String::empty, String a=String::empty) {
     name=n;
-    title=t;
-    url=u;
+    path=p;
     flags[0]=f0; flags[1]=f1; flags[2]=f2;
-    op=o;
+    oper=o;
     before=b;
     after=a;
     loa=false;
   }
 
   ~ASDF () {}
-
-  String getASDFTitle() {return title;}
-
-  String getASDFName(bool lower=false) {
+  String getPathName() {return path;}
+  void setPathName(String p) {path=p;}
+  String getASDFName (bool lower=false) {
     if (lower) return name.toLowerCase();
     return name;
   }
-  bool isSupported(Lisp* lisp, int os=-1) {
+  String getASDFFileName () {
+    return getASDFName(true) + T(".asd");
+  }
+  bool isLoadable(Lisp* lisp, int os=-1) {
     if (os<0) os=getHostOS();
     int i=lisp->getLispIndex();
     return ((flags[i] & os) != 0);
   }
-
-  String getASDFUrl() {return url;}
-
   bool isLoaded() {return loa;}
   bool setLoaded(bool f) { loa=f;}
-
   String findASDFFile(File dir);
+  File getDefinitionFile(File dir=File::nonexistent) {
+    String path=getPathName();
+    if (path != String::empty) return File(path);
+    path=findASDFFile(dir);
+    if (path != String::empty) return File(path);
+    return File(getASDFFileName());
+  }
   String getLoadForm(String path);
 };
 
@@ -208,21 +216,16 @@ class LispConnection : public LispProcessConnection, public Timer {
   // Lisp ASDF Systems
 
   int numASDFs(){return asdfs.size();}
-
-  void addASDF (ASDF* s) {
-    asdfs.add(s);
-  }
-
-  ASDF* getASDF(int i) {
-    return asdfs[i];
-  }
-
+  void addASDF (ASDF* s) {asdfs.add(s);}
+  ASDF* getASDF(int i) {return asdfs[i];}
   ASDF* findASDF(String name) {
     for (int i=0; i<numASDFs(); i++)
       if (asdfs[i]->getASDFName().equalsIgnoreCase(name) )
 	return asdfs[i];
     return (ASDF *)NULL;
   }
+  bool loadASDF(ASDF* asdf);
+  bool chooseASDF();
 
   // Socket connection
 
@@ -281,6 +284,7 @@ public:
   void labelTextChanged (Label* labelThatHasChanged);
   void sliderValueChanged (Slider* sliderThatWasMoved);
   void chooseLisp(Lisp* lisp);
+
   bool updateConnection();
   void updateFromConnection();
 

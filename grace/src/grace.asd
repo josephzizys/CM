@@ -23,7 +23,7 @@
 (defpackage :grace
   (:use :common-lisp)
   (:export :start-server :kill-server :*connections*
-           :grace-connection :connection-send
+           :grace-connection :connection-send :connection-send-error
            :connection-read)
   #+sbcl (:use :sb-gray)
   #+clisp (:use :gray)

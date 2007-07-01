@@ -434,11 +434,11 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 	ASDF* a=lisp->getASDF(i);
 	sub1.addItem( cmdLispLoadSystem + i,
 		      a->getASDFName(),
-		      (running && a->isSupported(l)),
+		      (running && a->isLoadable(l)),
 		      a->isLoaded());
       }
       sub1.addSeparator();
-      sub1.addItem( cmdLispLoadSystem + 127, T("Other..."), running);
+      sub1.addItem( cmdLispLoadSystem + 127, T("Load..."), running);
       menu.addSubMenu(T("Load System"), sub1, running);
       menu.addItem( cmdLispLoadFile, T("Load File..."), running);
       menu.addSeparator();
@@ -514,6 +514,12 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
 
   case cmdLispConfigure :
     showConfigureLispWindow();
+    break;
+
+  case cmdLispLoadSystem :
+    if ( arg==127 )
+      lisp->chooseASDF();
+    else lisp->loadASDF(lisp->getASDF(arg));
     break;
 
   default :
