@@ -333,25 +333,30 @@
                            #+clisp (:file "clisp" :depends-on ("pkg"))
                            #+cmu (:file "cmu" :depends-on ("pkg"))
 			   #+ecl (:file "ecl" :depends-on ("pkg"))
-                           #+lispworks (:file "lispworks" :depends-on ("pkg"))
+                           #+lispworks (:file "lispworks" 
+					      :depends-on ("pkg"))
                            #+(and mcl (not openmcl)) (:file "mcl" 
-                                                            :depends-on ("pkg"))
+                                                            :depends-on
+							    ("pkg"))
                            #+openmcl (:file "openmcl" :depends-on ("pkg"))
                            #+sbcl (:file "sbcl" :depends-on ("pkg"))
-                           (:file "iter" :scheme "loop" :depends-on ("pkg"))
+                           (:file "iter" :scheme "loop" 
+				  :depends-on ("pkg"))
                            (:file "level1" 
                                   :depends-on ("pkg" #+allegro "acl"
                                                      #+clisp "clisp"
                                                      #+cmu "cmu"
 						     #+ecl "ecl"
-                                                     #+lispworks "lispworks"
+                                                     #+lispworks
+						     "lispworks"
                                                      #+(and mcl (not openmcl)) 
                                                      "mcl"
                                                      #+openmcl "openmcl"
                                                      #+sbcl "sbcl"
                                                      "iter"))
                            (:file "clos" :depends-on ("level1"))
-                           #-no-scheme (:file "scheme" :depends-on ("pkg"))
+                           #-no-scheme
+			   (:file "scheme" :depends-on ("pkg"))
                            (:file "utils" :scheme t
                                   :depends-on ("level1"))
                            (:file "mop" :scheme t
@@ -393,32 +398,17 @@
                            (:file "player" :scheme t 
                                   :depends-on ("midishare"))
                            (:file "sc" :scheme t :depends-on ("io"))
-                           (:file "pm" :scheme t :depends-on ("io" "midi3"))
+                           (:file "pm" :scheme t 
+			               :depends-on ("io" "midi3"))
 			   (:file "rt" :scheme t :depends-on ("io"))
+			   (:file "parse" :depends-on ("pkg"))
+			   (:file "sal" :depends-on ("scheduler" "parse"))
                            )))
     )
 
 ;;;
 ;;; main functions
 ;;;
-
-(defun cm (&rest systems)
-  (flet ((cmcall (fn &rest args)
-           (apply (find-symbol (string fn) :cm) args))
-         (cmvar (var)
-           (symbol-value (find-symbol (string var) :cm))))
-    (setf *package* (find-package :cm))
-    (setf *readtable* (cmvar :*cm-readtable*))
-    ;; add slime readtable mapping...
-    (let ((swank-pkg (find-package :swank)))
-      (when swank-pkg
-        (let ((sym (intern (symbol-name :*readtable-alist*) swank-pkg)))
-          (setf (symbol-value sym)
-                (cons (cons (symbol-name :cm) (cmvar :*cm-readtable*))
-                      (symbol-value sym))))))
-    (let (#-sbcl (*trace-output* nil))
-      (dolist (s systems) (use-system s :verbose nil)))
-    (cmcall :cm-logo)))
 
 (defun use-system (sys &key directory bin-directory
                    (verbose t) warnings symbols )
@@ -516,6 +506,24 @@
 		      (push s l)))))
 	(if l (format t "; The following conflicting symbols were not imported from ~a:~%~{ ~s~}." name l))))
     (asdf:find-system sys)))
+
+(defun cm (&rest systems)
+  (flet ((cmcall (fn &rest args)
+           (apply (find-symbol (string fn) :cm) args))
+         (cmvar (var)
+           (symbol-value (find-symbol (string var) :cm))))
+    (setf *package* (find-package :cm))
+    (setf *readtable* (cmvar :*cm-readtable*))
+    ;; add slime readtable mapping...
+    (let ((swank-pkg (find-package :swank)))
+      (when swank-pkg
+        (let ((sym (intern (symbol-name :*readtable-alist*) swank-pkg)))
+          (setf (symbol-value sym)
+                (cons (cons (symbol-name :cm) (cmvar :*cm-readtable*))
+                      (symbol-value sym))))))
+    (let (#-sbcl (*trace-output* nil))
+      (dolist (s systems) (use-system s :verbose nil)))
+    (cmcall :cm-logo)))
 
 (export '(cm use-system) :cl-user)
 
