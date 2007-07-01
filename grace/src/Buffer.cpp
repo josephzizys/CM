@@ -25,6 +25,10 @@ TextBuffer::TextBuffer (syntaxID id, int flg)
   setCaretPosition(0);
   setPoint(0);
   initSyntax(id);
+#ifdef JUCE_MAC
+  setFlagOn(emacsmode);
+#endif
+
 }
 
 void TextBuffer::initSyntax (syntaxID id) {
@@ -58,22 +62,31 @@ ApplicationCommandTarget* TextBuffer::getNextCommandTarget()
 void TextBuffer::getAllCommands (Array <CommandID>& commands)
 {
   const CommandID ids[] = { 
-    cmdNewSal,
-    cmdNewLisp,
-    cmdNewText,
-    cmdOpen,
-    cmdSave,
-    cmdSaveAs,
-    cmdRevert,
-    cmdClose,
-    cmdUndo,
-    cmdRedo,
-    cmdCut,
-    cmdCopy,
-    cmdPaste,
-    cmdSelectAll,
-    cmdOptions,
-    cmdFonts,
+    cmdFileNewSal,
+    cmdFileNewLisp,
+    cmdFileNewText,
+    cmdFileOpen,
+    cmdFileSave,
+    cmdFileSaveAs,
+    cmdFileRevert,
+    cmdFileClose,
+    cmdEditUndo,
+    cmdEditRedo,
+    cmdEditCut,
+    cmdEditCopy,
+    cmdEditPaste,
+    cmdEditSelectAll,
+    cmdEditImport,
+    cmdViewFontList,
+    cmdViewFontSize,
+    cmdViewThemes,
+    cmdOptionsHiliting,
+    cmdOptionsParens,
+    cmdOptionsEmacsMode,
+    cmdLispEval,
+    cmdLispSetPackage,
+    cmdSalEval,
+    cmdHelpEditor,
     cmdCharForward,
     cmdCharBackward,
     cmdWordForward,
@@ -99,16 +112,9 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdInsertChar,
     cmdInsertLine,
     cmdOpenLine,
-    cmdViewFontList,
-    cmdViewFontSize,
     cmdComplete,
     cmdIndent,
-    cmdToggleHiliting,
-    cmdToggleParens,
-    cmdToggleReadWrite,
-    cmdEval,
-    cmdHelpEditor,
-  };
+    cmdToggleReadWrite};
   
   commands.addArray (ids, sizeof (ids) / sizeof (ids [0]));
 }
@@ -123,183 +129,196 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   PopupMenu fontsMenu;
   
   switch (commandID) {
-    case cmdNewSal:
-      result.setInfo (T("SAL"), String::empty, fileCategory, 0);
-      result.addDefaultKeypress (T('N'), ModifierKeys::commandModifier);
-      break;
-    case cmdNewLisp:
-      result.setInfo (T("Lisp"), String::empty, fileCategory, 0);
-      result.addDefaultKeypress (T('N'), 
-				 ModifierKeys::commandModifier | 
-				 ModifierKeys::shiftModifier);
-      break;
-    case cmdNewText:
-      result.setInfo (T("Text"), String::empty, fileCategory, 0);
-      break;
-    case cmdOpen:
-      result.setInfo (T("Open..."), String::empty, fileCategory, 0);
-      result.addDefaultKeypress (T('O'), ModifierKeys::commandModifier);
-      break;
-    case cmdClose:
-      result.setInfo (T("Close"), String::empty, fileCategory, 0);
-      result.addDefaultKeypress (T('W'), ModifierKeys::commandModifier);
-      break;
-    case cmdSave:
-      result.setInfo (T("Save"), String::empty, fileCategory, 0);
-      result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier);
-      break;
-    case cmdSaveAs:
-      result.setInfo (T("Save As..."), String::empty, fileCategory, 0);
-      result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier | 
-				 ModifierKeys::shiftModifier);
-      break;
-    case cmdRevert:
-      result.setInfo (T("Revert"), String::empty, fileCategory, 0);
-      result.addDefaultKeypress (T('R'), ModifierKeys::commandModifier);
-      break;
-    case cmdUndo:
-      result.setInfo (T("Undo"), String::empty, editingCategory, 0);
-      result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier);
-      break;
-    case cmdRedo:
-      result.setInfo (T("Redo"), String::empty, editingCategory, 0);
-      result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier | 
-				 ModifierKeys::shiftModifier);
-      break;
-    case cmdCut:
-      result.setInfo (T("Cut"), String::empty, editingCategory, 0);
-      result.addDefaultKeypress (T('X'), ModifierKeys::commandModifier);
-      break;
-    case cmdCopy:
-      result.setInfo (T("Copy"), String::empty, editingCategory, 0);
-      result.addDefaultKeypress (T('C'), ModifierKeys::commandModifier);
-      break;
-    case cmdPaste:
-      result.setInfo (T("Paste"), String::empty, editingCategory, 0);
-      result.addDefaultKeypress (T('V'), ModifierKeys::commandModifier);
-      break;
-    case cmdSelectAll:
-      result.setInfo (T("Select All"), String::empty, editingCategory, 0);
-      result.addDefaultKeypress (T('A'), ModifierKeys::commandModifier);
-      break;
-    case cmdOptions:
-      result.setInfo (T("Preferences"), String::empty, preferencesCategory, 0);
-      break;
-    case cmdFonts:
-      result.setInfo (T("Font"), String::empty, preferencesCategory, 0);      
-      break;
-    case cmdLineBackward:
-      result.setInfo (T("Move up line"), String::empty, navigationCategory, 0);
-      break;
-    case cmdLineForward:
-      result.setInfo (T("Move down line"), String::empty, navigationCategory, 0);
-      break;
-    case cmdCharBackward:
-      result.setInfo (T("Move back char"), String::empty, navigationCategory, 0);
-      break;      
-    case cmdCharForward:
-      result.setInfo (T("Move forward char"), String::empty, navigationCategory, 0);
-      break;
-    case cmdWordBackward:
-      result.setInfo (T("Move backward word"), String::empty, navigationCategory, 0);
-      break;
-    case cmdWordForward:
-      result.setInfo (T("Move forward word"), String::empty, navigationCategory, 0);
-      break;
-    case cmdGotoEOL:
-      result.setInfo (T("Move to end of line"), String::empty, navigationCategory, 0);
-      break;
-    case cmdGotoBOL:
-      result.setInfo (T("Move to beginning of line"), String::empty, 
-		      navigationCategory, 0);
-      break;
-    case cmdGotoEOB:
-      result.setInfo (T("Move to end of document"), String::empty, 
-		      navigationCategory, 0);
-      break;
-    case cmdGotoBOB:
-      result.setInfo (T("Move to beginning of document"), String::empty,
-		      navigationCategory, 0);
-      break;
-    case cmdPageBackward:
-      result.setInfo (T("Move page up"), String::empty, navigationCategory, 0);
-      break;
-    case cmdPageForward:
-      result.setInfo (T("Move page down"), String::empty, navigationCategory, 0);
-      break; 
-    case cmdSexprForward:
-      result.setInfo (T("Move to end of sexpr"), String::empty, 
-		      navigationCategory, 0);
-      break;
-    case cmdSexprBackward:
-      result.setInfo (T("Move to beginning of sexpr"), String::empty, 
-		      navigationCategory, 0);
-      break;
-    case cmdDelete:
-      result.setInfo (T("Delete backward"), String::empty, editingCategory, 0);
-      break;
-    case cmdKillSexpr:
-      result.setInfo (T("Delete to end of sexpr"), String::empty,
-		      editingCategory, 0);
-      break;
-    case cmdIndent:
-      result.setInfo (T("Indent"), String::empty, editingCategory, 0);
-      break;
-    case cmdEval:
-      result.setInfo (T("Eval"), String::empty, editingCategory, 0);
-      break;
-    default:
-      break;
+  case cmdFileNewSal:
+    result.setInfo (T("SAL"), String::empty, fileCategory, 0);
+    result.addDefaultKeypress (T('N'), ModifierKeys::commandModifier);
+    break;
+  case cmdFileNewLisp:
+    result.setInfo (T("Lisp"), String::empty, fileCategory, 0);
+    result.addDefaultKeypress (T('N'), 
+			       ModifierKeys::commandModifier | 
+			       ModifierKeys::shiftModifier);
+    break;
+  case cmdFileNewText:
+    result.setInfo (T("Text"), String::empty, fileCategory, 0);
+    break;
+  case cmdFileOpen:
+    result.setInfo (T("Open..."), String::empty, fileCategory, 0);
+    result.addDefaultKeypress (T('O'), ModifierKeys::commandModifier);
+    break;
+  case cmdFileClose:
+    result.setInfo (T("Close"), String::empty, fileCategory, 0);
+    result.addDefaultKeypress (T('W'), ModifierKeys::commandModifier);
+    break;
+  case cmdFileSave:
+    result.setInfo (T("Save"), String::empty, fileCategory, 0);
+    result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier);
+    break;
+  case cmdFileSaveAs:
+    result.setInfo (T("Save As..."), String::empty, fileCategory, 0);
+    result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier | 
+			       ModifierKeys::shiftModifier);
+    break;
+  case cmdFileRevert:
+    result.setInfo (T("Revert"), String::empty, fileCategory, 0);
+    result.addDefaultKeypress (T('R'), ModifierKeys::commandModifier);
+    break;
+  case cmdEditUndo:
+    result.setInfo (T("Undo"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier);
+    break;
+  case cmdEditRedo:
+    result.setInfo (T("Redo"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier | 
+			       ModifierKeys::shiftModifier);
+    break;
+  case cmdEditCut:
+    result.setInfo (T("Cut"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress (T('X'), ModifierKeys::commandModifier);
+    break;
+  case cmdEditCopy:
+    result.setInfo (T("Copy"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress (T('C'), ModifierKeys::commandModifier);
+    break;
+  case cmdEditPaste:
+    result.setInfo (T("Paste"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress (T('V'), ModifierKeys::commandModifier);
+    break;
+  case cmdEditSelectAll:
+    result.setInfo (T("Select All"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress (T('A'), ModifierKeys::commandModifier);
+    break;
+  case cmdEditImport:
+    result.setInfo (T("Import"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress(T('I'), ModifierKeys::commandModifier);
+    break;
+  case cmdOptionsParens:
+    result.setInfo (T("Parens Matching"), String::empty, 
+		    preferencesCategory, 0);
+    break;
+  case cmdOptionsEmacsMode:
+    result.setInfo (T("Emacs Mode"), String::empty, 
+		    preferencesCategory, 0);
+    break;
+  case cmdLispEval:
+    result.setInfo (T("Eval"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
+    break;
+  case cmdLispSetPackage:
+    result.setInfo (T("Set Package"), String::empty, editingCategory, 0);
+    break;
+  case cmdSalEval:
+    result.setInfo (T("Execute"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
+    break;
+
+  case cmdLineBackward:
+    result.setInfo (T("Up line"), String::empty, navigationCategory, 0);
+    break;
+  case cmdLineForward:
+    result.setInfo (T("Down line"), String::empty, navigationCategory, 0);
+    break;
+  case cmdCharBackward:
+    result.setInfo (T("Backward char"), String::empty, navigationCategory, 0);
+    break;      
+  case cmdCharForward:
+    result.setInfo (T("Forward char"), String::empty, navigationCategory, 0);
+    break;
+  case cmdWordBackward:
+    result.setInfo (T("Backward word"), String::empty, navigationCategory, 0);
+    break;
+  case cmdWordForward:
+    result.setInfo (T("Forward word"), String::empty, navigationCategory, 0);
+    break;
+  case cmdGotoEOL:
+    result.setInfo (T("End of line"), String::empty, navigationCategory, 0);
+    break;
+  case cmdGotoBOL:
+    result.setInfo (T("Beginning of line"), String::empty, 
+		    navigationCategory, 0);
+    break;
+  case cmdGotoEOB:
+    result.setInfo (T("End of buffer"), String::empty, 
+		    navigationCategory, 0);
+    break;
+  case cmdGotoBOB:
+    result.setInfo (T("Beginning of buffer"), String::empty,
+		    navigationCategory, 0);
+    break;
+  case cmdPageBackward:
+    result.setInfo (T("Page up"), String::empty, navigationCategory, 0);
+    break;
+  case cmdPageForward:
+    result.setInfo (T("Page down"), String::empty, navigationCategory, 0);
+    break; 
+  case cmdSexprForward:
+    result.setInfo (T("End of sexpr"), String::empty, 
+		    navigationCategory, 0);
+    break;
+  case cmdSexprBackward:
+    result.setInfo (T("Beginning of sexpr"), String::empty, 
+		    navigationCategory, 0);
+    break;
+  case cmdDelete:
+    result.setInfo (T("Delete backward"), String::empty, editingCategory, 0);
+    break;
+  case cmdKillSexpr:
+    result.setInfo (T("Delete to end of sexpr"), String::empty,
+		    editingCategory, 0);
+    break;
+  case cmdIndent:
+    result.setInfo (T("Indent"), String::empty, editingCategory, 0);
+    break;
+  default:
+    break;
   }
 }
 
 bool TextBuffer::perform (const InvocationInfo& info) {
   switch (info.commandID) {
-  case cmdNewSal:
+  case cmdFileNewSal:
     ((EditorWindow*)getTopLevelComponent())->newFile(syntaxSal);
     break;
-  case cmdNewLisp:
+  case cmdFileNewLisp:
     ((EditorWindow*)getTopLevelComponent())->newFile(syntaxLisp);
     break;
-  case cmdNewText:
+  case cmdFileNewText:
     ((EditorWindow*)getTopLevelComponent())->newFile(syntaxText);
     break;
-  case cmdOpen:
+  case cmdFileOpen:
     ((EditorWindow*)getTopLevelComponent())->openFile();
     break;
-  case cmdClose:
+  case cmdFileClose:
     ((EditorWindow*)getTopLevelComponent())->closeFile();
     break;
-  case cmdSave:
+  case cmdFileSave:
     ((EditorWindow*)getTopLevelComponent())->saveFile();
     break;
-  case cmdSaveAs:
+  case cmdFileSaveAs:
     ((EditorWindow*)getTopLevelComponent())->saveFileAs();
     break;
-  case cmdRevert:
+  case cmdFileRevert:
     ((EditorWindow*)getTopLevelComponent())->revertFile();
     break;  
-  case cmdUndo:
+  case cmdEditUndo:
     break;
-  case cmdRedo:
+  case cmdEditRedo:
     break;
-  case cmdCut:
+  case cmdEditCut:
     cut();
     setChanged(true);
     break;
-  case cmdCopy:
+  case cmdEditCopy:
     copy();
     break;
-  case cmdPaste:
+  case cmdEditPaste:
     paste();
     setChanged(true);
     break;
-  case cmdSelectAll:
+  case cmdEditSelectAll:
     selectAll();
     break;
-  case cmdOptions:
-    break;
-  case cmdFonts:
+  case cmdEditImport:
     break;
   case cmdLineBackward:
     previousLine();
@@ -350,7 +369,10 @@ bool TextBuffer::perform (const InvocationInfo& info) {
   case cmdIndent:
     setChanged(true);
     break;
-  case cmdEval:
+  case cmdLispEval:
+    evalLastSexpr();
+    break;
+  case cmdSalEval:
     evalLastSexpr();
     break;
   default:
@@ -385,14 +407,24 @@ int TextBuffer::isKeyAction (const KeyPress& key) {
   // return code if control, meta or command keys are down
   // ignoring Shift key
   int flag = 0;
-  if ( key.getModifiers().isCtrlDown() )
-    flag = emacsControl;
-  if ( key.getModifiers().isAltDown() )
-    flag |= emacsMeta;
-  if ( key.getModifiers().isCommandDown() )
-    flag |= emacsCommand;
+  if ( isEmacsMode() ) {
+    if ( key.getModifiers().isCtrlDown() )
+      flag = emacsControl;
+    if ( key.getModifiers().isAltDown() )
+      flag |= emacsMeta;
+#ifdef JUCE_MAC
+    if ( key.getModifiers().isCommandDown() )
+      flag |= emacsCommand;
+#endif
+  }
+  else {
+    if ( key.getModifiers().isCommandDown() )
+      flag |= emacsCommand;
+  }
+
   if ((flag != 0) && key.getModifiers().isAnyMouseButtonDown() )
     flag = -1;
+
   return flag;
 }
 
@@ -463,7 +495,7 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
   case 'Y' :
     paste();
     setChanged(true);
-    colorizeAfterChange(cmdPaste);
+    colorizeAfterChange(cmdEditPaste);
     break;
   default :
     keyIllegalAction(key);
@@ -515,7 +547,7 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 // actually changes the keycode from ascii to some weird unicode
 // nonsense. need to track down if its juce or the mac thats
 // resposible for this mess
-
+#ifdef JUCE_MAC
 #define META_F 402
 #define META_B 8747
 #define META_D 8706
@@ -526,6 +558,19 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 #define META_GT 728
 // this is unfortunate -- juce maps keypad enter to return :(
 #define KPAD_ENTER 13
+#endif
+
+#ifndef JUCE_MAC
+#define META_F 102
+#define META_B 98
+#define META_D 100
+#define META_V 118
+#define META_SPACE 32
+#define META_DOT 46
+#define META_LT 60
+#define META_GT 62
+#define KPAD_ENTER 13
+#endif
 
 void TextBuffer::keyMetaAction(const KeyPress& key) {
   int kcode = key.getKeyCode();
@@ -568,6 +613,7 @@ void TextBuffer::keyControlMetaAction(const KeyPress& key) {
   switch (kcode) {
   case 'f' :
   case 'F' :
+
     forwardSexpr();
     break;
   case 'b' :
@@ -599,7 +645,7 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
   case 'V' :
     paste(); 
     setChanged(true);
-    colorizeAfterChange(cmdPaste);
+    colorizeAfterChange(cmdEditPaste);
     break;
   case 'c' :
   case 'C' :
@@ -1454,7 +1500,7 @@ void TextBuffer::colorizeAfterChange(int cmd) {
   int loc=point(), bol=pointBOL(), eol=pointEOL();
   int bot=bol, top=eol;
   switch (cmd) {
-  case cmdPaste :  
+  case cmdEditPaste :  
     // point is after pasted material. colorize from bol before
     // previous point to eol AFTER pasted
     top=eol;

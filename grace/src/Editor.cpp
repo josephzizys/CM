@@ -142,79 +142,120 @@ void EditorWindow::closeButtonPressed () {
     }
 
 const StringArray EditorWindow::getMenuBarNames(MenuBarComponent* mbar) {
-  const tchar* const menuNames[] = { T("File"), T("Edit"),  T("View"), 
-				     T("Help"),0 };
-  return StringArray ((const tchar**) menuNames);
+  const tchar* const textbar [] = { T("File"), T("Edit"),  T("View"), 
+				    T("Options"),  T("Help"), 0};
+  const tchar* const lispbar [] = { T("File"), T("Edit"),  T("View"), 
+				    T("Options"), T("Lisp"), T("Help"), 0};
+  const tchar* const salbar [] = { T("File"), T("Edit"),  T("View"), 
+				    T("Options"), T("SAL"), T("Help"), 0};
+  if ( getTextBuffer()->isLispSyntax() )
+    return StringArray((const tchar**)lispbar);
+  else if ( getTextBuffer()->isSalSyntax() )
+    return StringArray((const tchar**)salbar);    
+  else
+    return StringArray((const tchar**)textbar);    
+}
+
+const PopupMenu EditorWindow::getLispMenu () {
+  PopupMenu menu;
+  menu.addCommandItem( commandManager, TextBuffer::cmdLispEval);
+  menu.addSeparator();
+  menu.addCommandItem( commandManager, TextBuffer::cmdLispSetPackage);
+  return menu;
+}
+
+const PopupMenu EditorWindow::getSalMenu () {
+  PopupMenu menu, sub1, sub2;
+  menu.addCommandItem( commandManager, TextBuffer::cmdSalEval);
+  return menu;
+}
+
+const PopupMenu EditorWindow::getHelpMenu () {
+  PopupMenu menu, sub1;
+  menu.addItem(TextBuffer::cmdHelpEditor+0, T("Editor Help"));
+  sub1.addItem(TextBuffer::cmdHelpEditor+1, T("Hello World"));
+  sub1.addItem(TextBuffer::cmdHelpEditor+2, T("Expressions"));
+  sub1.addItem(TextBuffer::cmdHelpEditor+3, T("Function Calls"));
+  sub1.addItem(TextBuffer::cmdHelpEditor+4, T("Making Sound"));
+  sub1.addItem(TextBuffer::cmdHelpEditor+5, T("Variables"));
+  sub1.addItem(TextBuffer::cmdHelpEditor+6, T("Functions"));
+  sub1.addItem(TextBuffer::cmdHelpEditor+7, T("Iteration"));
+  menu.addSubMenu(T("SAL Tutorials"), sub1, true);
+  menu.addSeparator();
+  menu.addItem(TextBuffer::cmdHelpEditor+8, T("CM Dictionary"));
+  menu.addItem(TextBuffer::cmdHelpEditor+9, T("CM Homepage"));
+  menu.addItem(TextBuffer::cmdHelpEditor+10, T("Juce Homepage"));
+  return menu;
 }
 
 const PopupMenu EditorWindow::getMenuForIndex (MenuBarComponent* menuBar, 
 					       int menuIndex,
 					       const String& menuName) {
   PopupMenu menu, sub1, sub2;
-  //FontList* fontList = FontList::getInstance();
   
   if (menuIndex == 0) {
-    sub1.addCommandItem( commandManager, TextBuffer::cmdNewSal );
-    sub1.addCommandItem( commandManager, TextBuffer::cmdNewLisp );
-    sub1.addCommandItem( commandManager, TextBuffer::cmdNewText );
+    // File menu
+    sub1.addCommandItem( commandManager, TextBuffer::cmdFileNewSal );
+    sub1.addCommandItem( commandManager, TextBuffer::cmdFileNewLisp );
+    sub1.addCommandItem( commandManager, TextBuffer::cmdFileNewText );
     menu.addSubMenu(T("New"), sub1, true);
-    menu.addCommandItem( commandManager, TextBuffer::cmdOpen);
+    menu.addCommandItem( commandManager, TextBuffer::cmdFileOpen);
     menu.addSeparator();
-    menu.addCommandItem( commandManager, TextBuffer::cmdSave);
-    menu.addCommandItem( commandManager, TextBuffer::cmdSaveAs);
-    menu.addCommandItem( commandManager, TextBuffer::cmdRevert);
+    menu.addCommandItem( commandManager, TextBuffer::cmdFileSave);
+    menu.addCommandItem( commandManager, TextBuffer::cmdFileSaveAs);
+    menu.addCommandItem( commandManager, TextBuffer::cmdFileRevert);
     menu.addSeparator();
-    menu.addCommandItem( commandManager, TextBuffer::cmdClose);
+    menu.addCommandItem( commandManager, TextBuffer::cmdFileClose);
   }
   else if (menuIndex == 1) {
-      menu.addCommandItem( commandManager, TextBuffer::cmdUndo);
-      menu.addCommandItem( commandManager, TextBuffer::cmdRedo);
-      menu.addSeparator();
-      menu.addCommandItem( commandManager, TextBuffer::cmdCopy);
-      menu.addCommandItem( commandManager, TextBuffer::cmdCut);
-      menu.addCommandItem( commandManager, TextBuffer::cmdPaste);
-      menu.addCommandItem( commandManager, TextBuffer::cmdSelectAll);
-    }
+    // Edit menu
+    menu.addCommandItem( commandManager, TextBuffer::cmdEditUndo);
+    menu.addCommandItem( commandManager, TextBuffer::cmdEditRedo);
+    menu.addSeparator();
+    menu.addCommandItem( commandManager, TextBuffer::cmdEditCopy);
+    menu.addCommandItem( commandManager, TextBuffer::cmdEditCut);
+    menu.addCommandItem( commandManager, TextBuffer::cmdEditPaste);
+    menu.addCommandItem( commandManager, TextBuffer::cmdEditSelectAll);
+    menu.addSeparator();
+    menu.addCommandItem( commandManager, TextBuffer::cmdEditImport);
+  }
   else if (menuIndex == 2) {
-      //for (int i = 0;i<fontList->fontNames.size();i++) {
-      //sub1.addItem(i+1, fontList->fontNames[i], true, false);
-      //}
-      for (int i = 0;i<16;i++) {
-	sub2.addItem(TextBuffer::cmdViewFontSize+i,
-		     String( fontSizeList[i] ),
-		     true, 
-		     (getTextBuffer()->getFontSize() == fontSizeList[i])
-		     );
-      }
-      //menu.addSubMenu(T("Font"), fontsMenu, false);
-      menu.addSubMenu(T("Font Size"), sub2, true);
-      menu.addSeparator();
-      menu.addItem(TextBuffer::cmdToggleHiliting,
-		   T("Highlighting"), 
-		   (getTextBuffer()->getBufferSyntax() != syntaxText),
-		   getTextBuffer()->isHiliting()
+    // View menu
+    for (int i = 0;i<16;i++)
+      sub1.addItem(TextBuffer::cmdViewFontSize+i,
+		   String( fontSizeList[i] ),
+		   true, 
+		   (getTextBuffer()->getFontSize() == fontSizeList[i])
 		   );
-      menu.addItem(TextBuffer::cmdToggleParens,
-		   T("Parens Matching"),
-		   (getTextBuffer()->getBufferSyntax() != syntaxText),
-		   getTextBuffer()->isParensMatching()
-		   );
+    menu.addSubMenu(T("Font Size"), sub1, true);
+    menu.addSeparator();
+    menu.addSubMenu(T("Themes"), sub2, false);
   }
   else if (menuIndex == 3) {
-    menu.addItem(TextBuffer::cmdHelpEditor+0, T("Editor Help"));
-    sub1.addItem(TextBuffer::cmdHelpEditor+1, T("Hello World"));
-    sub1.addItem(TextBuffer::cmdHelpEditor+2, T("Expressions"));
-    sub1.addItem(TextBuffer::cmdHelpEditor+3, T("Function Calls"));
-    sub1.addItem(TextBuffer::cmdHelpEditor+4, T("Making Sound"));
-    sub1.addItem(TextBuffer::cmdHelpEditor+5, T("Variables"));
-    sub1.addItem(TextBuffer::cmdHelpEditor+6, T("Functions"));
-    sub1.addItem(TextBuffer::cmdHelpEditor+7, T("Iteration"));
-    menu.addSubMenu(T("SAL Tutorials"), sub1, true);
+    // Options menu
+    menu.addItem(TextBuffer::cmdOptionsHiliting,
+		 T("Highlighting"), 
+		 !getTextBuffer()->isTextSyntax(),
+		 getTextBuffer()->isHiliting()
+		 );
+    menu.addItem(TextBuffer::cmdOptionsParens,
+		 T("Parens Matching"),
+		 !getTextBuffer()->isTextSyntax(),
+		 getTextBuffer()->isParensMatching()
+		 );
     menu.addSeparator();
-    menu.addItem(TextBuffer::cmdHelpEditor+8, T("CM Dictionary"));
-    menu.addItem(TextBuffer::cmdHelpEditor+9, T("CM Homepage"));
-    menu.addItem(TextBuffer::cmdHelpEditor+10, T("Juce Homepage"));
+    menu.addItem(TextBuffer::cmdOptionsEmacsMode,
+		 T("Emacs Mode"), true,
+		 getTextBuffer()->isEmacsMode()
+		 );
   }
+  else if ((menuIndex == 4) && getTextBuffer()->isSalSyntax() )
+    menu=getSalMenu();
+  else if ((menuIndex == 4) && getTextBuffer()->isLispSyntax() )
+    menu=getLispMenu();
+  else 
+   menu=getHelpMenu();
+
   return menu;
 }
 
@@ -223,16 +264,18 @@ void EditorWindow::menuItemSelected (MenuBarComponent* menuBar,
   int arg = id & 0x0000007F;
   int cmd = id & 0xFFFFFF80;
   switch (cmd) {
-
   case TextBuffer::cmdViewFontSize :
     getTextBuffer()->setFontSize(fontSizeList[arg]);
     getTextBuffer()->colorizeAll();
     break;
-  case TextBuffer::cmdToggleHiliting :
+  case TextBuffer::cmdOptionsHiliting :
     getTextBuffer()->toggleHiliting();      
     break;
-  case TextBuffer::cmdToggleParens :
+  case TextBuffer::cmdOptionsParens :
     getTextBuffer()->toggleParensMatching();
+    break;
+  case TextBuffer::cmdOptionsEmacsMode :
+    getTextBuffer()->toggleEmacsMode();
     break;
   case TextBuffer::cmdHelpEditor :
     showEditorHelp(arg);

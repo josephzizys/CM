@@ -53,6 +53,9 @@ class EditorWindow : public DocumentWindow, public MenuBarModel {
 				   const String& menuName);
   void menuItemSelected (MenuBarComponent* menuBar, int menuItemID, 
 			 int topLevelMenuIndex);
+  const PopupMenu getSalMenu();
+  const PopupMenu getLispMenu();
+  const PopupMenu getHelpMenu();
 };
 
 #endif

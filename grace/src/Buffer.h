@@ -45,14 +45,21 @@ class TextBuffer : public TextEditor,
  public:
 
   enum BufferFlags {needsave=1, readonly=2, hiliteoff=4, parensoff=8, 
-		    load=16};
+		    load=16, emacsmode=32};
   int flags;
-  
+
   int getFlag(int f) {return (flags & f);}
   bool testFlag(int f) {return (getFlag(f) == f);}
   void setFlagOn(int f) {flags |= f; return ;}
   void setFlagOff(int f) {flags &= ~f; return ;}
   bool toggleFlag(int f) {flags ^= f; return testFlag(f);}
+
+  bool isTextSyntax() {return (syntaxId==syntaxText);}
+  bool isSalSyntax() {return (syntaxId==syntaxSal);}
+  bool isLispSyntax() {return (syntaxId==syntaxLisp);}
+  bool isEmacsMode() {return testFlag(emacsmode);}
+  void toggleEmacsMode() {toggleFlag(emacsmode);}
+
 
 /*
 (defun enums (block enumname &rest names)
@@ -66,9 +73,21 @@ class TextBuffer : public TextEditor,
      (format t "    cmd~A = ~D~:[,~;};~]~%" n
 	     (+ (ash i 8) blockstart)
 	     (= i m)))))
-(enums 3 "EditorCommand" "NewSal" "NewLisp" "NewText" "Open"
-       "Save" "SaveAs" "Revert" "Close" "Undo" "Redo"
-       "Cut" "Copy" "Paste" "SelectAll" "Options" "Fonts"
+
+(enums 3 "EditorCommand"
+       "FileNewSal" "FileNewLisp" "FileNewText" "FileOpen"
+       "FileSave" "FileSaveAs" "FileRevert" "FileClose"
+       "EditUndo" "EditRedo" "EditCut" "EditCopy" "EditPaste"
+       "EditSelectAll" "EditImport"
+
+       "ViewFontList" "ViewFontSize" "ViewThemes"
+
+       "OptionsHiliting" "OptionsParens" "OptionsEmacsMode"
+
+       "LispEval" "LispSetPackage"
+       "SalEval"
+       "HelpEditor"
+
        "CharForward" "CharBackward" "WordForward" 
        "WordBackward" "SexprForward" "SexprBackward"
        "LineForward" "LineBackward" "PageForward"
@@ -76,62 +95,65 @@ class TextBuffer : public TextEditor,
        "GotoBOB" "GotoColumn" "GotoLine"  "Backspace"
        "Delete" "KillWord" "KillSexpr" "KillWhite"
        "KillLine" "InsertChar" "InsertLine" "OpenLine"
-       "ViewFontList" "ViewFontSize" "Complete" "Indent"
-       "ToggleHiliting" "ToggleParens" "ToggleReadWrite"
-        "Eval" "HelpEditor" )
+       "Complete" "Indent"  "ToggleReadWrite"
+ )
 */
  
   enum EditorCommand {
-    cmdNewSal = 98176,
-    cmdNewLisp = 98432,
-    cmdNewText = 98688,
-    cmdOpen = 98944,
-    cmdSave = 99200,
-    cmdSaveAs = 99456,
-    cmdRevert = 99712,
-    cmdClose = 99968,
-    cmdUndo = 100224,
-    cmdRedo = 100480,
-    cmdCut = 100736,
-    cmdCopy = 100992,
-    cmdPaste = 101248,
-    cmdSelectAll = 101504,
-    cmdOptions = 101760,
-    cmdFonts = 102016,
-    cmdCharForward = 102272,
-    cmdCharBackward = 102528,
-    cmdWordForward = 102784,
-    cmdWordBackward = 103040,
-    cmdSexprForward = 103296,
-    cmdSexprBackward = 103552,
-    cmdLineForward = 103808,
-    cmdLineBackward = 104064,
-    cmdPageForward = 104320,
-    cmdPageBackward = 104576,
-    cmdGotoEOL = 104832,
-    cmdGotoBOL = 105088,
-    cmdGotoEOB = 105344,
-    cmdGotoBOB = 105600,
-    cmdGotoColumn = 105856,
-    cmdGotoLine = 106112,
-    cmdBackspace = 106368,
-    cmdDelete = 106624,
-    cmdKillWord = 106880,
-    cmdKillSexpr = 107136,
-    cmdKillWhite = 107392,
-    cmdKillLine = 107648,
-    cmdInsertChar = 107904,
-    cmdInsertLine = 108160,
-    cmdOpenLine = 108416,
-    cmdViewFontList = 108672,
-    cmdViewFontSize = 108928,
-    cmdComplete = 109184,
-    cmdIndent = 109440,
-    cmdToggleHiliting = 109696,
-    cmdToggleParens = 109952,
-    cmdToggleReadWrite = 110208,
-    cmdEval = 110464,
-    cmdHelpEditor = 110720};
+    cmdFileNewSal = 98176,
+    cmdFileNewLisp = 98432,
+    cmdFileNewText = 98688,
+    cmdFileOpen = 98944,
+    cmdFileSave = 99200,
+    cmdFileSaveAs = 99456,
+    cmdFileRevert = 99712,
+    cmdFileClose = 99968,
+    cmdEditUndo = 100224,
+    cmdEditRedo = 100480,
+    cmdEditCut = 100736,
+    cmdEditCopy = 100992,
+    cmdEditPaste = 101248,
+    cmdEditSelectAll = 101504,
+    cmdEditImport = 101760,
+    cmdViewFontList = 102016,
+    cmdViewFontSize = 102272,
+    cmdViewThemes = 102528,
+    cmdOptionsHiliting = 102784,
+    cmdOptionsParens = 103040,
+    cmdOptionsEmacsMode = 103296,
+    cmdLispEval = 103552,
+    cmdLispSetPackage = 103808,
+    cmdSalEval = 104064,
+    cmdHelpEditor = 104320,
+    cmdCharForward = 104576,
+    cmdCharBackward = 104832,
+    cmdWordForward = 105088,
+    cmdWordBackward = 105344,
+    cmdSexprForward = 105600,
+    cmdSexprBackward = 105856,
+    cmdLineForward = 106112,
+    cmdLineBackward = 106368,
+    cmdPageForward = 106624,
+    cmdPageBackward = 106880,
+    cmdGotoEOL = 107136,
+    cmdGotoBOL = 107392,
+    cmdGotoEOB = 107648,
+    cmdGotoBOB = 107904,
+    cmdGotoColumn = 108160,
+    cmdGotoLine = 108416,
+    cmdBackspace = 108672,
+    cmdDelete = 108928,
+    cmdKillWord = 109184,
+    cmdKillSexpr = 109440,
+    cmdKillWhite = 109696,
+    cmdKillLine = 109952,
+    cmdInsertChar = 110208,
+    cmdInsertLine = 110464,
+    cmdOpenLine = 110720,
+    cmdComplete = 110976,
+    cmdIndent = 111232,
+    cmdToggleReadWrite = 111488};
+
 
   TextBuffer(syntaxID id, int flg);
   ~TextBuffer();
