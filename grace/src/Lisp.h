@@ -112,18 +112,17 @@ public:
   typedef enum MessageType
     {
       msgNone = 0x0,
-      msgBinaryData ,
-      msgLispEval,
-      msgLispBufferEval,
-      msgSalBufferEval,
       msgError,
       msgWarning,
       msgPrintout, 
       msgValues, 
+      msgLispEval,
+      msgSalEval,
       msgKillLisp, 
-      msgListFeatures,
-      msgListPackages,
       msgLoadSystem,
+      msgListPackages,
+      msgListFeatures,
+      msgBinaryData = 128,  // binary messages > 128
       msgStatus = 0xFF
     } ;
   
@@ -248,9 +247,7 @@ class LispConnection : public LispProcessConnection, public Timer {
 
   void connectionMade ();
   void connectionLost ();
-  void sendLispSexpr(String in);
-  void sendSalBufferSexpr(String in);
-  void sendLispBufferSexpr(String pkg, String in);
+  void sendLispSexpr(String sexpr, int msg=msgLispEval);
 
   void messageReceived (const MemoryBlock &message);
   void handleLoadSystem(const MemoryBlock &message);

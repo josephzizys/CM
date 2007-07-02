@@ -320,14 +320,26 @@ void ConsoleWindow::setFontSize( float size ) {
   ed->applyFontToAllText(font);
 }
 
-void ConsoleWindow::consoleEval (String code, bool isSal) {
-  // HACK display until eval is tied in
-  //  consolePrint(code, ConsoleTheme::inputColor);
-  //consoleTerpri();
-  if( !isSal )
-    lisp->sendLispSexpr(code);
-  else
-    printf("sending sal not supported yet!\n");
+void ConsoleWindow::consoleEval (String code, bool isSal, 
+				 bool isRegion) {
+  String sexpr;
+  int message;
+
+  if ( isSal ) {
+    message=LispConnection::msgSalEval;
+    code=code.replace(T("\""),T("\\\"") );
+    sexpr=( T("(cm::sal ") + String("\"") + code + String("\"") );
+    if ( isRegion )
+      sexpr+=T(" :pattern :statement-sequence");
+    sexpr+=T(")");
+  }
+  else {
+    message=LispConnection::msgLispEval;
+    sexpr=code;
+    if ( isRegion )
+      sexpr= T("(progn ") + sexpr + T(")");
+  }
+  lisp->sendLispSexpr(sexpr, message);
 }
 
 void ConsoleWindow::showSplash () {

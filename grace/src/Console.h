@@ -187,7 +187,7 @@ public:
   void consolePrintWarning( String str,  bool eob=true);
   void consolePrintError( String str,  bool eob=true);
   void consolePrintValues( String str,  bool eob=true);  
-  void consoleEval(String code, bool isSal);
+  void consoleEval(String code, bool isSal, bool region);
   void installMenbar();
   void showSplash();
   void hideSplash();

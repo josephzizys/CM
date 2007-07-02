@@ -906,7 +906,7 @@ bool LispConnection::chooseASDF() {
 // Sending and receiving messages
 //
 
-void LispConnection::sendLispSexpr(String sexpr) {
+void LispConnection::sendLispSexpr(String sexpr, int msg) {
   if (! isConnected() ){
     console->consolePrintError(T("Lisp: not connected.\n"));
     return;
@@ -916,13 +916,7 @@ void LispConnection::sendLispSexpr(String sexpr) {
   MemoryBlock mem=MemoryBlock(len, true);  
   for (int i=0; i<len; i++)
     mem[i]=(char)sexpr[i];
-  sendMessage(mem, msgLispEval);
-}
-
-void LispConnection::sendSalBufferSexpr(String sexpr) {
-}
-
-void LispConnection::sendLispBufferSexpr(String package, String sexpr) {
+  sendMessage(mem, (MessageType)msg);
 }
 
 void LispConnection::messageReceived (const MemoryBlock &message) {

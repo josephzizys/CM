@@ -372,10 +372,10 @@ bool TextBuffer::perform (const InvocationInfo& info) {
     setChanged(true);
     break;
   case cmdLispEval:
-    evalLastSexpr();
+    evalText();
     break;
   case cmdSalEval:
-    evalLastSexpr();
+    evalText();
     break;
   default:
     return false;
@@ -518,7 +518,7 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
     break;
   case 'e':
   case 'E':
-    evalLastSexpr();
+    evalText();
     break;
   case 'f':
   case 'F':
@@ -682,7 +682,7 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
   case 'e' :
   case 'E' :
   case KPAD_ENTER :
-    evalLastSexpr();
+    evalText();
     break;
   default :
     keyIllegalAction(key);
@@ -1205,7 +1205,7 @@ void TextBuffer::matchParens() {
 /// Evaluation
 ///
 
-int TextBuffer::evalLastSexpr() {
+int TextBuffer::evalText() {
   String cmdname;
 
   switch (syntaxId) {
@@ -1264,9 +1264,9 @@ int TextBuffer::evalLastSexpr() {
     return 0;
   }
   if (syntaxId==syntaxSal)
-    getConsole()->consoleEval(text, true);
+    getConsole()->consoleEval(text, true, region);
   else
-    getConsole()->consoleEval(text.substring(pos+1), false);
+    getConsole()->consoleEval(text.substring(pos+1), false, region);
   return 0;
 }
 

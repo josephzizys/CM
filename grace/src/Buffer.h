@@ -210,7 +210,7 @@ class TextBuffer : public TextEditor,
   int backwardWord();  
   int forwardSexpr();
   int backwardSexpr();
-  int evalLastSexpr();
+  int evalText();
   //  void toggleHiliting() ;
   void matchParens();
   void colorize(int from, int to, bool force) ;

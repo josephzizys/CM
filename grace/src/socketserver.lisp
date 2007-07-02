@@ -16,18 +16,17 @@
 ;;;
 
 (defconstant +msgNone+ 0)
-(defconstant +msgBinaryData+ 1)
-(defconstant +msgLispEval+ 2)
-(defconstant +msgLispBufferEval+ 3)
-(defconstant +msgSalBufferEval+ 4)
-(defconstant +msgError+ 5)
-(defconstant +msgWarning+ 6)
-(defconstant +msgPrintout+ 7)
-(defconstant +msgValues+ 8)
-(defconstant +msgKillLisp+ 9)
+(defconstant +msgError+ 1)
+(defconstant +msgWarning+ 2)
+(defconstant +msgPrintout+ 3)
+(defconstant +msgValues+ 4)
+(defconstant +msgLispEval+ 5)
+(defconstant +msgSalEval+ 6)
+(defconstant +msgKillLisp+ 7)
+(defconstant +msgLoadSystem+ 8)
+(defconstant +msgListPackages+ 9)
 (defconstant +msgListFeatures+ 10)
-(defconstant +msgListPackages+ 11)
-(defconstant +msgLoadSystem+ 12)
+(defconstant +msgBinaryData+ 128)
 
 ;;; capture these if we want to explicitly send to them
 ;;; for debugging
@@ -182,7 +181,7 @@
 
 (defun read-eval-print (conn string standard-out warn-out error-out
 			values-out pkg)
-  error-out
+  error-out pkg
   (let ((step ':read)
 	(form nil)
 ;;	(*package* pkg)
@@ -273,19 +272,6 @@
 (defun stop-server () (throw :socket-server ':quit))
 (defun kill-server () (throw :socket-server ':kill))
 
-#|
-(defun send (msg &optional string)
-  (let* ((len (length string)))
-    (write-u32 msg stream)
-    (write-u32 len stream)
-    (when (> len 0)
-      (loop for i below len do
-	   (write-byte
-    (write-sequence confirmation-bytes stream)
-
-)))))|#
-
-
 (defun serve-connection (connection)
   ;; TODO: fix for threaded lisps like openmcl and sbcl/linux!!
   (let* ((stream (connection-stream connection))
@@ -320,19 +306,30 @@
 		      (*standard-output* standard-output-stream)
 		      message length string vector)
 		 message length string vector
-		 (format *lisp-standard-output* 
-			 "standard-output: ~s~%error-output: ~s~%warn-output: ~s~%values-output: ~s~%"
-			 standard-output-stream
-			 error-output-stream
-			 warn-output-stream
-			 values-output-stream)
-		 (force-output *lisp-standard-output*)
 		 (loop 
 		    (handler-case
-			;; handle broken connection
+			;; handler protect connection reading
 			(progn
 			  (setq message (read-u32 stream))
-			  (setq length (read-u32 stream)))
+			  (setq length (read-u32 stream))
+			  (format *lisp-standard-output*
+				  "lisp receive: msg=~d, len=~d~%"
+				  message length)
+			  ;; read data, binary > 128
+			  (cond ((< message +msgBinaryData+ )
+				 (setq string (make-string length))
+				 (dotimes (i length)
+				   (setf (elt string i)
+					 (code-char
+					  (read-byte stream)))))
+				(t
+				 (setq vector
+				       (make-array length :element-type 
+						   '(unsigned-byte 8)))
+				 (dotimes (i length)
+				   (setf (aref vector i)
+					 (read-byte stream)))))
+			  )
 		      (error (c) 
 			(format *lisp-standard-output*
 				"; Unexpected socket stream error: ~A.~%~
@@ -340,15 +337,13 @@
 				c)
 			(kill-server)))
 		    (cond 
-		      ((= message +msgSalBufferEval+)
-		       )
-		      ((= message +msgLispBufferEval+)
+		      ((= message +msgSalEval+)
+		       ;; sal handles parsing, errors and printout
+		       ;;(format *lisp-standard-output*
+		       ;;        "Sal input: ~S~%" string)
+		       (eval (read-from-string string))
 		       )
 		      ((= message +msgLispEval+)
-		       (setq string (make-string length))
-		       (loop for i below length
-			  do (setf (elt string i)
-				   (code-char (read-byte stream))))
 		       (read-eval-print connection
 					string
 					standard-output-stream
@@ -377,11 +372,8 @@
 		      ((= message +msgListFeatures+)
 		       )
 		      ((= message +msgBinaryData+)
-		       (setq vector (make-array length :element-type 
-						'(unsigned-byte 8)))
-		       (loop for i below length
-			  do (setf (aref vector i)
-				   (read-byte stream)))
+		       
+		       
 		       (setq length (length confirmation-bytes))
 		       (write-u32 +msgBinaryData+ stream)
 		       (write-u32 length stream)
