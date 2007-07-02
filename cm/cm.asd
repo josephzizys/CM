@@ -18,7 +18,8 @@
 (require :asdf
          #-(or sbcl openmcl ecl)
          (make-pathname :name "asdf" :type "lisp"
-                        :directory (append (pathname-directory *load-pathname*)
+                        :directory (append (pathname-directory
+					    *load-pathname*)
                                            '("src"))
                         :defaults *load-pathname*))
 
@@ -210,6 +211,7 @@
 
 (defclass cm-application (asdf:system) ())
 (defclass initialize-op (asdf:operation) ())
+;;(defclass generate-op (asdf:operation) ())
 (defclass finalize-op (asdf:operation) ())
 
 (defun savevars (cm &rest vars)
@@ -230,8 +232,27 @@
             '*load-verbose* '*load-print*)
   (setq *compile-print* nil *compile-verbose* nil
         *load-verbose* nil *load-print* nil)
-  (format t "~%; CM install directory: \"~A\""
+  (format t "; CM install directory: \"~A\"~%"
           *cm-directory*))
+
+#||
+;; this is the Right Way to generate the scheme-derived lisp files
+;; from the scheme sources in one operation. unfortunately it wont
+;; work because the generate step will happen before pkg.lisp is
+;; loaded and so stocl will bomb when it tries to read package
+;; qualified symbols like pm:getDeviceInfo...
+(defmethod asdf:perform  ((op generate-op) (obj cm-application))
+  (labels ((insure-derived-lisp-files (op obj)
+	     (cond ((null obj) nil)
+		   ((typep obj 'asdf:module)
+		    (loop for c in (asdf:module-components obj)
+		       do (insure-derived-lisp-files op c)))
+		   ((typep obj 'cm-source-file)
+		    (asdf:perform op obj)
+		    )
+		   (t nil))))
+    (insure-derived-lisp-files op obj)))
+||#
 
 (defmethod asdf:perform  ((op finalize-op) cm)
   ;; add cm feature before loading other systems...
@@ -258,10 +279,13 @@
                                    (sys cm-application))
   ;; add the initialize and finalize ops to list of operations
   (let ((init (make-instance 'initialize-op))
+;;	(gens (make-instance 'generate-op))
         (last (make-instance 'finalize-op)))
-    (nconc (list (cons init sys))
-           (call-next-method)
-           (list (cons last sys)))))
+    (append (list (cons init sys)
+;;		  (cons gens sys)
+		  )
+	    (call-next-method)
+	    (list (cons last sys)))))
 
 ;;;
 ;;; CM source file has potential dependancy on scheme file
@@ -270,11 +294,15 @@
 (defclass cm-source-file (asdf:cl-source-file) 
   ((scm :initform nil :initarg :scheme :accessor scm-source-file)))
 
-(defmethod asdf:output-files ((operation asdf:compile-op) (f cm-source-file))
+(defclass stocl (asdf:cl-source-file) ()) ; generate lisp from scheme
+
+(defmethod asdf:output-files ((operation asdf:compile-op)
+			      (f cm-source-file))
   ;; make compile pathnames include the bin directory
   (list (fasl-pathname (asdf:component-pathname f))))
   
-(defmethod asdf:input-files ((operation asdf:compile-op) (f cm-source-file))
+(defmethod asdf:input-files ((operation asdf:compile-op) 
+			     (f cm-source-file))
   ;; include scheme dependancies
   (let ((lsp (asdf:component-pathname f))
         (scm (scm-source-file f)))
@@ -285,9 +313,41 @@
               lsp)
         (list lsp))))
 
-(defmethod asdf:perform :before ((operation asdf:compile-op) (f cm-source-file))
+#|| 
+;; unused
+(defmethod asdf:perform ((operation generate-op) (f cm-source-file))
   ;; generate scheme sources if necessary
   (let ((scheme (scm-source-file f)))
+    (if scheme
+        (let* ((lsp (asdf:component-pathname f))
+               (scm (make-pathname :name (if (stringp scheme) scheme
+                                             (pathname-name lsp))
+                                   :type "scm" :defaults lsp)))
+          (if (probe-file scm)
+              (when (or (not (probe-file lsp))
+                        (> (file-write-date (truename scm))
+                           (file-write-date (truename lsp))))
+                (unless (boundp 'toplevel-translations)
+		  (load (merge-pathnames "pkg" lsp) :verbose nil)
+                  (load (merge-pathnames "stocl" lsp) :verbose nil))
+                (format t "; Generating ~S~%"
+                        (enough-namestring lsp *cm-directory*))
+                (funcall 'stocl scm :file lsp :verbose nil)
+		)
+              (error "Scheme source ~S not found."
+                     (namestring scm)))))
+    ))
+||#
+
+(defmethod asdf:perform :before ((operation asdf:compile-op) 
+				 (f cm-source-file))
+  (format t "; Compiling ~S~%"
+	  (enough-namestring (asdf:component-pathname f)
+			     *cm-directory*))
+  ;; this is correct but it doesnt work because the lisp files are
+  ;; generated so quickly that they have the same write data as their
+  ;; compiled fasl!!
+  #||(let ((scheme (scm-source-file f)))
     (if scheme
         (let* ((lsp (asdf:component-pathname f))
                (scm (make-pathname :name (if (stringp scheme) scheme
@@ -301,18 +361,63 @@
                   (load (merge-pathnames "stocl" lsp) :verbose nil))
                 (format t "~%; Generating ~S"
                         (enough-namestring lsp *cm-directory*))
-                (funcall 'stocl scm :file lsp :verbose nil))
+                (funcall 'stocl scm :file lsp :verbose nil)
+		;;(sleep 1)
+		)
               (error "Scheme source ~S not found."
                      (namestring scm)))))
     (format t "~%; Compiling ~S"
             (enough-namestring (asdf:component-pathname f)
-                               *cm-directory*))))
+                               *cm-directory*)))||#
+  )
 
 (defmethod asdf:perform :before ((op asdf:load-op) (f cm-source-file))
-  (format t "~%; Loading ~S"
+  (format t "; Loading ~S~%"
           (enough-namestring (fasl-pathname
                               (asdf:component-pathname f))
                              *cm-directory*)))
+
+(defmethod asdf:perform :around ((op t) (f stocl))
+  (call-next-method))
+
+(defmethod asdf:perform :around ((op asdf:load-op) (f stocl))
+  ;; the hack solution is to generate the .lisp sources in one
+  ;; operation but AFTER pkg.lisp has been loaded. the
+  ;; 'stocl' class is the component class for "stocl.lisp: it
+  ;; checks for any lisp files that need to be generated and, if true,
+  ;; loads stocl and generates the dependant .lisp files.
+  (labels ((derived-lisp-files ( obj)
+	     (cond ((null obj) nil)
+		   ((typep obj 'asdf:module)
+		    (loop for c in (asdf:module-components obj)
+		       append (derived-lisp-files c)))
+		   ((typep obj 'cm-source-file)
+		    (let ((scheme (scm-source-file obj)))
+		      (if (not scheme) nil
+			  (let* ((lsp (asdf:component-pathname obj))
+				 (scm (make-pathname 
+				       :name (if (stringp scheme) scheme
+						 (pathname-name lsp))
+				       :type "scm" :defaults lsp)))
+			    (if (probe-file scm)
+				(if (or (not (probe-file lsp))
+					(> (file-write-date (truename scm))
+					   (file-write-date
+					    (truename lsp))))
+				    (list (cons scm lsp))
+				    (list))
+				(error "Scheme source ~S not found."
+				       (namestring scm)))))))
+		   (t nil))))
+    (let ((todo (derived-lisp-files (asdf:component-system f))))
+      (when todo
+	(call-next-method)
+	(dolist (l todo)
+	  (format t "; Generating ~S~%"
+		  (enough-namestring (cdr l ) *cm-directory*))
+	  (force-output *standard-output*)
+	  (funcall 'stocl (car l) :file (cdr l)
+		   :verbose nil))))))
 
 ;;;
 ;;; system definition
@@ -327,8 +432,11 @@
     :components
     ((:module "src"
               :default-component-class cm-source-file
+	      :serial t
               :components (
-                           (:file "pkg")
+                           (:file "pkg" )
+			   ;; generates lisp files if needed
+			   (:stocl "stocl" :depends-on ("pkg"))
                            #+allegro (:file "acl" :depends-on ("pkg"))
                            #+clisp (:file "clisp" :depends-on ("pkg"))
                            #+cmu (:file "cmu" :depends-on ("pkg"))
@@ -496,7 +604,7 @@
 	    (l ())
 	    x)
         (if (not p)
-	    (format t "; Can't import symbols, no package named ~A."
+	    (format t "; Can't import symbols, no package named ~A.~%"
 		    name)
 	    (do-external-symbols (s p)
 	      (setq x (find-symbol (string s) :cm))
