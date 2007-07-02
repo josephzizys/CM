@@ -202,16 +202,18 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
     break;
   case cmdLispEval:
     result.setInfo (T("Eval"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
+    result.addDefaultKeypress(T('E'), ModifierKeys::commandModifier);
+    result.setActive(getConsole()->lisp->isLispRunning() );
     break;
   case cmdLispSetPackage:
     result.setInfo (T("Set Package"), String::empty, editingCategory, 0);
+    result.setActive(getConsole()->lisp->isLispRunning() );
     break;
   case cmdSalEval:
     result.setInfo (T("Execute"), String::empty, editingCategory, 0);
     result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
+    result.setActive(getConsole()->lisp->getASDF(ASDF::CM)->isLoaded() );
     break;
-
   case cmdLineBackward:
     result.setInfo (T("Up line"), String::empty, navigationCategory, 0);
     break;
@@ -1204,32 +1206,47 @@ void TextBuffer::matchParens() {
 ///
 
 int TextBuffer::evalLastSexpr() {
+  String cmdname;
+
   switch (syntaxId) {
-  case syntaxLisp :
   case syntaxSal :
+    cmdname=T("Execute");
+    break;
+  case syntaxLisp :
+    cmdname=T("Eval");
     break;
   default :
     return 0;
   }
 
-  String text=backwardTopLevelText();
+  bool region=(getHighlightedRegionLength() > 0);
+  String text;
+
+  if ( region )
+    text=getHighlightedText();
+  else
+    text=backwardTopLevelText();
+
   int typ=SCAN_EMPTY, end=text.length(), pos=end-1, old=pos;
+
   // parse backwards 1 sexpr for lisp or to toplevel for Sal
+  // if region parse whole thing
   while (pos>-1) {
-  typ = scan_sexpr(syntax->syntab, text, old, -1, SCAN_CODE, &pos);
-  if ( (typ<=SCAN_EMPTY) || (syntaxId==syntaxLisp))
-    break;
-  old=pos;
+    typ = scan_sexpr(syntax->syntab, text, old, -1, SCAN_CODE, &pos);
+    if ( (typ<=SCAN_EMPTY) || ((syntaxId==syntaxLisp) && !region) )
+      break;
+    old=pos;
   }
 
   if (typ==SCAN_EMPTY) {
-    getConsole()->consolePrint(T("Editor (eval): Nothing to evaluate.\n"),
-			       ConsoleTheme::warningColor);
+    getConsole()->consolePrintWarning(cmdname + T(": nothing selected.\n"));
+    return 0;
   }
+
   if (typ<SCAN_EMPTY) {
     int l1, l2;
-    getConsole()->consolePrint( T("Editor (eval): Unbalanced expression:\n"),
-				ConsoleTheme::errorColor);
+    getConsole()->consolePrintError( T(">>> ") + cmdname +
+				     T(": unbalanced expression:\n"));
     // print line containing error with ^ marking offending position
     for (l2=old+1; l2<end; l2++)
       if (text[l2]=='\n') break;

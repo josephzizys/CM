@@ -121,8 +121,8 @@ void Console::initTheme (int idx) {
     break;
   case 3 :
     n=T("Snowish");
-    b=0xeee9e9;  i=0x2f4f4f;  o=0x9400d3;  
-    r=0xeedc82;  h=0x2f4f4f;  c=0xcd0000;
+    b=0xeee9e9;  i=0x2f4f4f;  o=0x9400d3;
+    r=0xeedc82;  h=0x000000;  c=0xcd0000;
     break;
   case 4 :
     n=T("Standard Emacs");
@@ -160,14 +160,11 @@ void Console::setTheme(int i) {
   ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
   curtheme=i;
   printf("current theme: %s\n", themes[i].name.toUTF8());
-  win->setOpacity(100.0);
+  //  win->setOpacity(100.0);
   buffer->setFont( themes[i].getFont() );
   Colour bgcolor=themes[i].getColor(ConsoleTheme::bgColor);
   buffer->setColour( TextEditor::backgroundColourId, 
-		     // this screws up splash screen
-		     //bgcolor.withAlpha((float) (win->getOpacity() / 100.5))
-		     bgcolor
-		     );
+		     bgcolor);
   buffer->setColour( TextEditor::textColourId,
 		     themes[i].getColor(ConsoleTheme::outputColor));
   buffer->setColour( TextEditor::highlightColourId,
@@ -363,6 +360,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
 						int idx,
 						const String &name)
 {
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  ApplicationCommandManager* cm = app->commandManager;
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3, sub4;
   int val;
@@ -391,8 +390,6 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( cmdEditSelectAll, T("Select All"), true);
     break;
   case 2 :
-    menu.addItem( cmdViewClearText, T("Clear Text"), true);
-    menu.addSeparator();
     for (int i = 0;i<16;i++) {
       sub2.addItem(cmdViewFontSize+i,
 		   String( fontSizeList[i] ),
@@ -402,7 +399,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     }
     menu.addSubMenu(T("Font Size"), sub2, true);
     for (int i=0;i<console->numThemes(); i++)
-      sub1.addItem( cmdViewThemes + i, console->getThemeName(i),
+      sub1.addItem( cmdViewThemes + i,
+		    console->getThemeName(i),
 		    true, console->isCurrentTheme(i));
     sub1.addSeparator();
     sub1.addItem( cmdViewThemes + console->numThemes(), 
@@ -415,10 +413,12 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
       sliderComp->slider->addListener(this);
       menu.addCustomItem( cmdViewOpacity,  sliderComp);
     }
+    menu.addSeparator();
+    menu.addItem( cmdViewClearText, T("Clear Console"), true);
     break;
   case 3 :
-    menu.addItem( cmdAudioMidiSetup, T("Midi Setup..."), true); 
-    menu.addItem( cmdAudioAudioSetup, T("Audio Setup..."), true); 
+    menu.addItem(cmdAudioMidiSetup, T("Midi Setup..."), true);
+    menu.addItem(cmdAudioAudioSetup, T("Audio Setup..."),true);
     break;
   case 4 :
     {
@@ -461,7 +461,6 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
   ApplicationCommandManager * cm = app->commandManager;
 
   //printf("menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
-
   switch (cmd) {
 
   case cmdGracePlotterNew :
