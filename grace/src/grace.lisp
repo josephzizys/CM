@@ -25,6 +25,8 @@
   (force-output *error-output*)
   ) 
 
+(pushnew ':grace *features*)
+
 ;;;
 ;;; eof
 ;;;
