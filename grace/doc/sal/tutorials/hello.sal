@@ -1,0 +1,48 @@
+; SAL programs consist of commands and comments.  Commands start in
+; the first column and their names appear in blue. Comments are
+; introduced with a semicolon and are colored red.
+
+; Commands do things when you 'execute' them. To execute a command put
+; the cursor at the very end of the command line and press
+; COMMAND-Enter. Then look in the console window for any associated
+; output. Try it with this print command!
+
+print "Hello, world!"
+
+; Here is a more complex print example. It has two clauses and spans
+; two lines. The first line (clause) selects a word at random, the
+; second clause contains the second word of the message. Put the
+; cursor at the end of the second line and press COMMAND-Enter several
+; times to see what happens:
+
+print pick("Hello", "Tag", "Hola", "Bonjour") , 
+      ", world!"
+
+; You can access help about commands by placing your cursor on a
+; command word and pressing the Help key. Try doing this on the
+; preceding print command...
+
+; Here is an example of defining a musical algorithm. Put the cursor
+; just after the work 'end' and press COMMAND-Enter:
+
+define process piano-phase (length, keys, tempo)
+  run 
+    with pat = make(<cycle>, of: keys)
+    until now() >= length
+    output make(<midi>, time: now(), keynum: next(pat), duration: tempo)
+    wait tempo
+  end
+
+; You can group a series of commands together using begin and end
+; statements. This block declares two local variables and then
+; executes two commands, Place the cursor just after the word 'end'
+; and execute the command to hear what it does:
+
+begin 
+  with notes = {e4 fs4 b4 cs5 d5 fs4 e4 cs5 b4 fs4 d5 cs5},
+       length = 20
+  open "pattern.mid"
+  sprout list(piano-phase (length, notes, .166),
+              piano-phase (length, notes, .17))
+end
+
