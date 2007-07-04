@@ -153,6 +153,7 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   case cmdFileSave:
     result.setInfo (T("Save"), String::empty, fileCategory, 0);
     result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier);
+    result.setActive( isChanged() && !testFlag(nosave) ) ;
     break;
   case cmdFileSaveAs:
     result.setInfo (T("Save As..."), String::empty, fileCategory, 0);
@@ -733,6 +734,8 @@ void TextBuffer::keyPressed (const KeyPress& key) {
   last = lastact;
   setAction(0);
 
+  printf("key=%d mod=%d\n", keyCode, keyMod);
+  
   if ( isMatching() ) stopMatching();
 
   if (last == actControlX)
@@ -748,6 +751,12 @@ void TextBuffer::keyPressed (const KeyPress& key) {
       setChanged(true);
       colorizeAfterChange(cmdInsertLine);
       break;
+
+      // hkt 00000000000000000000000000000
+    case 5 :
+      lookupHelpAtPoint();
+      break;
+
     case 8 :  // backspace
       TextEditor::keyPressed(key);
       setChanged(true);
@@ -1609,3 +1618,34 @@ void TextBuffer::setFontSize( float size ) {
 float TextBuffer::getFontSize(  ) {
   return getFont().getHeight();
 }
+
+void TextBuffer::lookupHelpAtPoint() {
+  bool region=(getHighlightedRegionLength() > 0);
+  String text;
+
+  if ( region )
+    text=getHighlightedText();
+  else {
+    int pos=point();
+    int bol=pointBOL();
+    text=getTextSubstring(bol, pointEOL() );
+    int len=text.length();
+    int beg=skip_syntax(syntax->syntab, text, T("w_"), pos-bol-1, -1);
+    int end=skip_syntax(syntax->syntab, text, T("w_"), pos-bol, len);
+    printf("beg=%d, end=%d\n", beg+1, end);
+    if (beg+1==end) return;
+    text=text.substring(beg+1,end);
+  }
+  printf("lookup help for %s\n", text.toUTF8() );
+  SynTok* tok=syntax->getSynTok(text);
+  if (tok == (SynTok *)NULL) return;
+  String file=T("doc/sal/help/") + text + T(".sal");
+  File help=getGraceResourceDirectory().getChildFile(file);
+  if ( help.existsAsFile() ) {
+    new EditorWindow(syntaxSal, 
+		     (TextBuffer::load | TextBuffer::nosave), 
+		     help.getFullPathName(),
+		     ( T("Help for ") + text));
+  }
+}
+

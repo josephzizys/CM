@@ -45,7 +45,7 @@ class TextBuffer : public TextEditor,
  public:
 
   enum BufferFlags {needsave=1, readonly=2, hiliteoff=4, parensoff=8, 
-		    load=16, emacsmode=32};
+		    load=16, nosave=32, emacsmode=64};
   int flags;
 
   int getFlag(int f) {return (flags & f);}
@@ -243,6 +243,9 @@ class TextBuffer : public TextEditor,
   void setFontSize( float size );
 
   ConsoleWindow* getConsole();
+
+  // hkt 000000000000000000000000000
+  void lookupHelpAtPoint() ;
 };
 
 

@@ -63,6 +63,7 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 			    String title, String text)
   : DocumentWindow (String::empty , Colours::white, 
 		    DocumentWindow::allButtons, true ) {
+
   if (filename==String::empty) 
     if (title==String::empty) {
       filename=T("untitled");
@@ -78,8 +79,8 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
     }
     else
       editfile=File::nonexistent;
-  else
-    editfile=File(filename);
+    else 
+      editfile=File(filename);
 
   if (title==String::empty)
     setName( filename );
@@ -173,18 +174,19 @@ const PopupMenu EditorWindow::getSalMenu () {
 const PopupMenu EditorWindow::getHelpMenu () {
   PopupMenu menu, sub1;
   menu.addItem(TextBuffer::cmdHelpEditor+0, T("Editor Help"));
-  sub1.addItem(TextBuffer::cmdHelpEditor+1, T("Hello World"));
-  sub1.addItem(TextBuffer::cmdHelpEditor+2, T("Expressions"));
-  sub1.addItem(TextBuffer::cmdHelpEditor+3, T("Function Calls"));
-  sub1.addItem(TextBuffer::cmdHelpEditor+4, T("Making Sound"));
-  sub1.addItem(TextBuffer::cmdHelpEditor+5, T("Variables"));
-  sub1.addItem(TextBuffer::cmdHelpEditor+6, T("Functions"));
-  sub1.addItem(TextBuffer::cmdHelpEditor+7, T("Iteration"));
+  sub1.addItem(TextBuffer::cmdHelpEditor+1, T("Hello World"), true);
+  sub1.addItem(TextBuffer::cmdHelpEditor+2, T("Expressions"), false);
+  sub1.addItem(TextBuffer::cmdHelpEditor+3, T("Function Calls"), false);
+  sub1.addItem(TextBuffer::cmdHelpEditor+4, T("Making Sound"), false);
+  sub1.addItem(TextBuffer::cmdHelpEditor+5, T("Variables"), false);
+  sub1.addItem(TextBuffer::cmdHelpEditor+6, T("Functions"), false);
+  sub1.addItem(TextBuffer::cmdHelpEditor+7, T("Iteration"), false);
   menu.addSubMenu(T("SAL Tutorials"), sub1, true);
   menu.addSeparator();
-  menu.addItem(TextBuffer::cmdHelpEditor+8, T("CM Dictionary"));
-  menu.addItem(TextBuffer::cmdHelpEditor+9, T("CM Homepage"));
-  menu.addItem(TextBuffer::cmdHelpEditor+10, T("Juce Homepage"));
+  menu.addItem(TextBuffer::cmdHelpEditor+8, T("SAL Dictionary"));
+  menu.addItem(TextBuffer::cmdHelpEditor+9, T("CM Dictionary"));
+  menu.addItem(TextBuffer::cmdHelpEditor+10, T("CM Homepage"));
+  menu.addItem(TextBuffer::cmdHelpEditor+11, T("Juce Homepage"));
   return menu;
 }
 
@@ -328,6 +330,7 @@ void EditorWindow::saveFileAs() {
     f.replaceWithText( buff->getText() );
     editfile=File(f);
     buff->setChanged(false);
+    buff->setFlagOff(TextBuffer::nosave);
     setName( editfile.getFileName() );
   }
 }
@@ -350,6 +353,9 @@ void EditorWindow::revertFile() {
 
 void EditorWindow::showEditorHelp(int arg) {
   URL u;
+  File f;
+
+  printf("HERE arg=%d\n", arg);
 
   switch(arg) {
   case 0:
@@ -357,6 +363,16 @@ void EditorWindow::showEditorHelp(int arg) {
 		     T("Editor Help"), getEditorHelp());
     break;
   case 1:
+    {
+      f=getGraceResourceDirectory().getChildFile(T("doc/sal/tutorials/hello.sal"));
+      
+      printf("file=%s\n", f.getFullPathName().toUTF8());
+      
+      if ( f.existsAsFile() ) {
+	new EditorWindow(syntaxSal, (TextBuffer::load | TextBuffer::nosave), 
+			 f.getFullPathName());
+      }
+    }
     break;
   case 2:
     break;
@@ -370,15 +386,25 @@ void EditorWindow::showEditorHelp(int arg) {
     break;
   case 7:
     break;
+
   case 8:
+    f=getGraceResourceDirectory().getChildFile(T("doc/sal/sal.html"));
+    printf("file=%s\n", f.getFullPathName().toUTF8());
+    if ( f.existsAsFile() ) {
+      u=URL( (T("file://") + f.getFullPathName()) );
+      u.launchInDefaultBrowser();
+    }
+    break;
+
+  case 9:
     u=URL(T("http://commonmusic.sourceforge.net/doc/dict/index.html"));
     u.launchInDefaultBrowser();
     break;
-  case 9:
+  case 10:
     u=URL(T("http://commonmusic.sourceforge.net/doc/cm.html"));
     u.launchInDefaultBrowser();
     break;  
-  case 10:
+  case 11:
     u=URL(T("http://www.rawmaterialsoftware.com/juce"));
     u.launchInDefaultBrowser();
     break;
