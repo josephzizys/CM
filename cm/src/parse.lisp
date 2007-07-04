@@ -128,7 +128,16 @@
 		     (subseq source beg end)))
 	   (mark (make-string (+ pos 1) :initial-element #\space)))
       (setf (elt mark pos) #\^)
-      (format t "~%>>> ~@(~A~) error: ~A.~%~%~A~%~A" 
+      #+grace
+      (grace:connection-send-error 
+       (grace:grace-connection)
+       (format nil ">>> Sal ~(~A~) error: ~A.~%~%~A~%~A" 
+	       (sal-error-type x)
+	       (sal-error-text x)
+	       line
+	       mark))
+      #-grace
+      (format t "~%>>> Sal ~(~A~) error: ~A.~%~%~A~%~A" 
 	      (sal-error-type x)
 	      (sal-error-text x)
 	      line
