@@ -538,7 +538,10 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
 
   default :
     // help menu=index 5 
-    if (idx==5) commonHelpItemSelected(cmd,arg);
+    if (idx==5)
+      commonWindowItemSelected(cmd,arg);
+    else if (idx==6)
+      commonHelpItemSelected(cmd,arg);
     break;
   }
 }
