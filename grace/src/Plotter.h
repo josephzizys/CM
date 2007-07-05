@@ -126,70 +126,37 @@ class Plotter  : public Component,
   enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
   enum Orientation {horizontal = 1, vertical };
 
-/*
-
-;; Grace menu command IDS are organized in "menubar blocks" and have
-;; their lower 7 bits available for encoding command information. each
-;; menubar block has max 128 commands. Use this lisp code to generate
-;; the enum definition for a menubar:
-
-(in-package :cm)
-
-(defun enums (block enumname &rest names)
-  (let* ((cmdinfo #xFF)
-         (blockwidth (* 128 cmdinfo))
-	 (blockstart (* blockwidth block)))
-  (format t "  enum ~A {~%" enumname)
-  (loop with m = (length names)
-     for n in names for i from 1
-     do (if (= i 128) (error "too many commands, block size = 128"))
-     (format t "    cmd~A = ~D~:[,~;};~]~%" n
-	     (+ (ash i 8) blockstart)
-	     (= i m)))))
-
-(enums 2 "PlotterCommand" "PlotterNew" "PlotterOpen" "PlotterSave" 
-         "PlotterSaveAs" "PlotterImport" "PlotterExport"
-	 "EditUndo" "EditRedo" "EditCut" "EditCopy" "EditPaste"
-	 "EditSelectAll" "EditClear" "EditFind"
-         "LayerAdd" "LayerDelete" "LayerSelect"
-         "ViewStyle" "ViewVertical" "ViewBgStyle" 
-         "ViewBgColor" "ViewBgPlotting"
-	 "ViewBgMousing" "ViewMouseGuide" 
-	 "ComposeDistributions" "ComposeGenerate"
-	 "AnalyzeHistogram" "AnalyzeDeviation"
-	 "HelpCommands")
-   */
+  // ENUMS define in grace.lisp
 
   enum PlotterCommand {
-    cmdPlotterNew = 65536,
-    cmdPlotterOpen = 65792,
-    cmdPlotterSave = 66048,
-    cmdPlotterSaveAs = 66304,
-    cmdPlotterImport = 66560,
-    cmdPlotterExport = 66816,
-    cmdEditUndo = 67072,
-    cmdEditRedo = 67328,
-    cmdEditCut = 67584,
-    cmdEditCopy = 67840,
-    cmdEditPaste = 68096,
-    cmdEditSelectAll = 68352,
-    cmdEditClear = 68608,
-    cmdEditFind = 68864,
-    cmdLayerAdd = 69120,
-    cmdLayerDelete = 69376,
-    cmdLayerSelect = 69632,
-    cmdViewStyle = 69888,
-    cmdViewVertical = 70144,
-    cmdViewBgStyle = 70400,
-    cmdViewBgColor = 70656,
-    cmdViewBgPlotting = 70912,
-    cmdViewBgMousing = 71168,
-    cmdViewMouseGuide = 71424,
-    cmdComposeDistributions = 71680,
-    cmdComposeGenerate = 71936,
-    cmdAnalyzeHistogram = 72192,
-    cmdAnalyzeDeviation = 72448,
-    cmdHelpCommands = 72704};
+    cmdPlotterNew = 98176,
+    cmdPlotterOpen = 98432,
+    cmdPlotterSave = 98688,
+    cmdPlotterSaveAs = 98944,
+    cmdPlotterImport = 99200,
+    cmdPlotterExport = 99456,
+    cmdEditUndo = 99712,
+    cmdEditRedo = 99968,
+    cmdEditCut = 100224,
+    cmdEditCopy = 100480,
+    cmdEditPaste = 100736,
+    cmdEditSelectAll = 100992,
+    cmdEditClear = 101248,
+    cmdEditFind = 101504,
+    cmdLayerAdd = 101760,
+    cmdLayerDelete = 102016,
+    cmdLayerSelect = 102272,
+    cmdViewStyle = 102528,
+    cmdViewVertical = 102784,
+    cmdViewBgStyle = 103040,
+    cmdViewBgColor = 103296,
+    cmdViewBgPlotting = 103552,
+    cmdViewBgMousing = 103808,
+    cmdViewMouseGuide = 104064,
+    cmdComposeDistributions = 104320,
+    cmdComposeGenerate = 104576,
+    cmdAnalyzeHistogram = 104832,
+    cmdAnalyzeDeviation = 105088};
 
   Axis* shared;
   AxisView * haxview;

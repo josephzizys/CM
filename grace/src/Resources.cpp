@@ -9,6 +9,7 @@
 // $Date$ 
 
 #include "Resources.h"
+#include "Editor.h"
 
 File getGraceResourceDirectory() {
   // returns the "site wide" resource directory for grace determined
@@ -45,107 +46,130 @@ bool isHostMacOSX() {
 }
 
 String getPlotterHelp () {
+  // REMOVE!
   return String::empty;
 }
 
 String getEditorHelp () {
-  String help = T("The Grace text editor supports the following set of features:\n\
-\n\
- o  Syntax highlighting for SAL and Lisp programs\n\
- o  Syntax line indentation (Tab key)\n\
- o  Evaluation services\n\
- o  Emacs Lite command emulation\n\
-\n\
-Editing Syntax\n\
-\n\
-The behavior of each Editor window depends on its \"editing syntax\".\n\
-The editor supports three syntaxes: SAL, Lisp and Text. You choose the\n\
-syntax you want to work with when you create a new Editor window with\n\
-the File>New Editor command. When you open an existing file with the\n\
-File>Open... command the syntax is selected automatically according to\n\
-the file's type extension:\n\
-\n\
-   SAL:   .sal\n\
-   Lisp:  .lisp .lsp .cl .scm .cm .clm .ins .cmn .fms .asd\n\
-   Text:  .text .txt .*\n\
-\n\
-The SAL and Lisp editing syntaxes provide syntax highlighting, or text\n\
-coloration based on the syntax of coding symbols. Highlighting is\n\
-currently an expensive (slow) operation due to the underlying editor's\n\
-string and text support. This will be addressed in a future release.\n\
-\n\
-Each syntax provides an automatic line indentation service to\n\
-help make your programs readable. To use it simply type the Tab key on\n\
-a line to indent it according to the style rules of the underlying\n\
-syntax.\n\
-\n\
-Both SAL and Lisp syntaxes provide code evaluation services. In order\n\
-to perform evaluation Lisp must be running (Console>Lisp>Start Lisp).\n\
-\n\
-To evaluate a SAL command, place the cursor at the end of the\n\
-command and press COMMAND-Enter.\n\
-\n\
-To evaluate a LISP command, place the cursor at the end of a sexpr and\n\
-type C-xC-e (see below).\n\
-\n\
-Emacs Lite Commands\n\
-\n\
-The Grace editor supports a fair number of Emacs editing commands.\n\
-Emacs commands are keystroke combinations involving the CONTROL, META\n\
-and COMMAND keys combined with one (or more) additional keys.\n\
-In the documentation that follows pressing CONTROL, META and COMMAND is\n\
-shortened to C- M- and COM-, respectively. For example, C-f means to\n\
-hold down the Control key and type the f key and C-M-f means to hold\n\
-down both the Control and Meta keys while typing the f key.\n\
-\n\
-Cursor Motion:\n\
-\n\
- C-f         Forward character\n\
- C-b         Backward character\n\
- M-f         Forward word\n\
- M-b         Backward word\n\
- C-M-f       Forward sexpr\n\
- C-M-b       Backward sexpr\n\
-\n\
-Line Motion:\n\
-\n\
- C-a         Beginning of line\n\
- C-e         End of line\n\
- C-n         Next line\n\
- C-p         Previous Line\n\
-\n\
-Screen Motion:\n\
-\n\
- C-v         Forward screen\n\
- M-v         Backward screen\n\
- M-<         Beginning of buffer\n\
- M->         End of buffer\n\
-\n\
-Editing Commands:\n\
-\n\
- C-w         Cut\n\
- M-w         Copy\n\
- C-d         Delete forward character\n\
- M-d         Delete forward word\n\
- C-M d       Delete forward sexpr\n\
- C-k         Kill line\n\
- C-y         Yank line\n\
- C-o         Open line\n\
-\n\
-Syntax specific commands\n\
-\n\
- Tab         Indent line for syntax\n\
- C-xC-e      Evaluate last sexpr (Lisp)\n\
- COM-Enter   Evaluate last command (SAL)\n\
-\n\
-File Commands:\n\
- C-xC-f      Open file\n\
- C-xC-s	     Save file\n\
- C-xC-r      Revert file\n\
- C-xC-c      Kill editor\n");
-return help;
+  // REMOVE!
+  return String::empty;
 }
 
+void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
+  PopupMenu sub1;
+  if (w==winConsole)
+    menu->addItem(cmdHelpWindow+w, T("Console Help"));
+  else if (w==winEditor)
+    menu->addItem(cmdHelpWindow+w, T("Editor Help"));
+  else if (w==winPlotter)
+    menu->addItem(cmdHelpWindow+w, T("Plotter Help"));
+  menu->addSeparator();
+  sub1.addItem(cmdHelpSalTutorial+0, T("Hello World"));
+  sub1.addItem(cmdHelpSalTutorial+1, T("Symbolic Expressions"));
+  sub1.addItem(cmdHelpSalTutorial+2, T("Function Calls"));
+  sub1.addItem(cmdHelpSalTutorial+3, T("Working with Lists"));
+  sub1.addItem(cmdHelpSalTutorial+4, T("Making Sound"));
+  sub1.addItem(cmdHelpSalTutorial+5, T("Defining Variables"));
+  sub1.addItem(cmdHelpSalTutorial+6, T("Defining Functions"));
+  sub1.addItem(cmdHelpSalTutorial+7, T("Iteration"));
+  sub1.addItem(cmdHelpSalTutorial+8, T("Musical Processes"));
+  menu->addSubMenu(T("SAL Tutorials"), sub1, true);
+  menu->addSeparator();
+  menu->addItem(cmdHelpURL+0, T("SAL Dictionary"));
+  menu->addItem(cmdHelpURL+1, T("CM Dictionary"));
+  menu->addItem(cmdHelpURL+2, T("CM Homepage"));
+  menu->addItem(cmdHelpURL+3, T("Juce Homepage"));
+  menu->addSeparator();
+  menu->addItem(cmdHelpAboutGrace, T("About Grace"), false);
+}
+
+void commonHelpItemSelected (int cmd, int arg) {
+  File res=File::nonexistent;
+  URL url;
+  String err;
+
+  switch (cmd) {
+  case cmdHelpWindow :
+    res=getGraceResourceDirectory();
+    if (arg == winConsole)
+      res=res.getChildFile(T("doc/console.html"));
+    else if (arg == winEditor)
+      res=res.getChildFile(T("doc/editor.html"));
+    if (arg == winPlotter)
+      res=res.getChildFile(T("doc/plotter.html"));
+    if ( res.existsAsFile() )
+      URL(res.getFullPathName()).launchInDefaultBrowser();
+    else err=res.getFullPathName();
+    break;
+
+  case cmdHelpSalTutorial :
+    res=getGraceResourceDirectory().getChildFile(T("doc/sal/tutorials/"));
+    if (arg == 0) res=res.getChildFile(T("hello.sal"));
+    else if (arg == 1) res=res.getChildFile(T("sexpr.sal"));
+    else if (arg == 2) res=res.getChildFile(T("funcall.sal"));
+    else if (arg == 3) res=res.getChildFile(T("lists.sal"));
+    else if (arg == 4) res=res.getChildFile(T("sound.sal"));
+    else if (arg == 5) res=res.getChildFile(T("variables.sal"));
+    else if (arg == 6) res=res.getChildFile(T("functions.sal"));
+    else if (arg == 7) res=res.getChildFile(T("loop.sal"));
+    else if (arg == 8) res=res.getChildFile(T("processes.sal"));
+    if ( res.existsAsFile() )
+	new EditorWindow(0, (TextBuffer::load | TextBuffer::nosave), 
+			 res.getFullPathName());
+    else err=res.getFullPathName();
+    break;
+
+  case cmdHelpURL :
+    if (arg == 0) {
+      res=getGraceResourceDirectory().getChildFile(T("doc/sal/sal.html"));
+      if ( res.existsAsFile() )
+	url=URL(res.getFullPathName());
+      else err=res.getFullPathName();
+    }
+    else if (arg == 1 )
+      url=URL(T("http://commonmusic.sf.net/doc/dict/index.html"));
+    else if (arg == 2)
+      url=URL(T("http://commonmusic.sf.net/doc/cm.html"));
+    else if (arg == 3)
+      url=URL(T("http://www.rawmaterialsoftware.com/juce"));
+    if (err==String::empty)
+      url.launchInDefaultBrowser();
+    break;  
+
+  case cmdHelpAboutGrace :
+    break;
+
+  default :
+    break;
+  }
+
+  /*  if (err != String::empty ) {
+    GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+    ConsoleWindow* con=app->GetConsole();
+    con->consolePrintError(T(">>> Help file ") + err + T(" does not exist."));
+  }
+  */
+}
+
+void addCommonWindowItems(PopupMenu* menu, GraceWindowType w) {
+  // window type is ignored for now but could be used to organize the
+  // window list according to the type of window that is filling the
+  // menu. of course each window would have to record its 'type'...
+  for (int i=0; i<  TopLevelWindow::getNumTopLevelWindows(); i++) {
+    TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(i);
+    menu->addItem(cmdWindowSelect+i, w->getName() );
+  }
+}
+
+void commonWindowItemSelected (int cmd, int arg) {
+  switch (cmd) {
+  case cmdWindowSelect :
+    printf("fixme to select window #%d!\n", arg);
+    break;
+  default :
+    break;
+  }
+}
 
 // JUCER_RESOURCE: grace_png, 58074, "/Lisp/grace/grace.png"
 

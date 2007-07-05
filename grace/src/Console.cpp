@@ -364,7 +364,8 @@ bool ConsoleWindow::isSplashVisible() {
 
 const StringArray ConsoleWindow::getMenuBarNames (MenuBarComponent* mbar) {
   const tchar* const menuNames[] = { T("Grace"), T("Edit"), T("View"),
-				     T("Audio"), T("Lisp"), T("Help"), 0 };
+				     T("Audio"), T("Lisp"), 
+				     T("Windows"), T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
 
@@ -458,8 +459,10 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
     }
     break;
   case 5 :
-    menu.addItem( cmdHelpConsole, T("Console Help"), false); 
-    menu.addItem( cmdHelpAboutGrace, T("About Grace"), false); 
+    addCommonWindowItems(&menu, winConsole);
+    break;
+  case 6 :
+    addCommonHelpItems(&menu, winConsole);
     break;
   }
   return menu;
@@ -534,6 +537,8 @@ void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
     break;
 
   default :
+    // help menu=index 5 
+    if (idx==5) commonHelpItemSelected(cmd,arg);
     break;
   }
 }

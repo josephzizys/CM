@@ -86,7 +86,7 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdLispEval,
     cmdLispSetPackage,
     cmdSalEval,
-    cmdHelpEditor,
+    cmdSymbolHelp,
     cmdCharForward,
     cmdCharBackward,
     cmdWordForward,
@@ -215,6 +215,13 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
     result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
     result.setActive(getConsole()->lisp->getASDF(ASDF::CM)->isLoaded() );
     break;
+
+  case cmdSymbolHelp:
+    result.setInfo (T("SAL Symbol Help"), String::empty, editingCategory, 0);
+    // command H doesn work :(
+    // result.addDefaultKeypress(  String::empty, ModifierKeys::commandModifier);
+    break;
+
   case cmdLineBackward:
     result.setInfo (T("Up line"), String::empty, navigationCategory, 0);
     break;
@@ -378,6 +385,10 @@ bool TextBuffer::perform (const InvocationInfo& info) {
   case cmdSalEval:
     evalText();
     break;
+  case cmdSymbolHelp:
+    lookupHelpAtPoint();
+    break;
+
   default:
     return false;
   }

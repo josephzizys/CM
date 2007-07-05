@@ -11,6 +11,8 @@
 #include "Plotter.h"
 #include <iostream>
 #include <limits>
+#include "Resources.h"
+
 using namespace std;
 
 //
@@ -1344,7 +1346,7 @@ public:
 const StringArray PlotterWindow::getMenuBarNames (MenuBarComponent* mbar) {
   const tchar* const menuNames[] = { T("Plotter"), T("Edit"), T("Layer"), 
 				     T("View"), T("Compose"),
-				     T("Analyze"), T("Help"), 0 };
+				     T("Analyze"), T("Windows"), T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
 
@@ -1481,7 +1483,10 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
     menu.addItem( Plotter::cmdAnalyzeDeviation, T("Deviation..."), false);
     break;
   case 6 :
-    menu.addItem( Plotter::cmdHelpCommands, T("Plotter Help"));
+    addCommonWindowItems(&menu, winPlotter);
+    break;
+  case 7 :
+    addCommonHelpItems(&menu, winPlotter);
     break;
   }
   return menu;
@@ -1559,8 +1564,11 @@ void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id,
     break;
   case Plotter::cmdViewBgMousing :
   case Plotter::cmdViewMouseGuide :
-  case Plotter::cmdHelpCommands :
   default :
+    if (idx==6)
+      commonWindowItemSelected(cmd,arg);
+    else if (idx==7)
+      commonHelpItemSelected(cmd,arg);
     break;
   }
 }

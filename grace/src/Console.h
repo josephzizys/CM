@@ -100,36 +100,7 @@ class ConsoleWindow  : public DocumentWindow,
 {
 public:
 
-/*
-
-;; Grace menu command IDS are organized in "menubar blocks" and have
-;; their lower 7 bits available for encoding command information. each
-;; menubar block has max 128 commands. Use this lisp code to generate
-;; the enum definition for a menubar:
-
-(in-package :cm)
-
-(defun enums (block enumname &rest names)
-  (let* ((cmdinfo #xFF)
-         (blockwidth (* 128 cmdinfo))
-	 (blockstart (* blockwidth block)))
-  (format t "  enum ~A {~%" enumname)
-  (loop with m = (length names)
-     for n in names for i from 1
-     do (if (= i 128) (error "too many commands, block size = 128"))
-     (format t "    cmd~A = ~D~:[,~;};~]~%" n
-	     (+ (ash i 8) blockstart)
-	     (= i m)))))
-
-(enums 1 "ConsoleCommand" "GraceEditorNew" "GracePlotterNew"
-         "GraceEditorOpen" "GracePreferences" "GraceQuit"
-	 "EditCopy" "EditSelectAll"
-	 "ViewClearText" "ViewFontSize"  "ViewThemes" "ViewOpacity"
-	 "AudioMidiSetup" "AudioAudioSetup"
-	 "LispConnect" "LispLoadSystem" "LispLoadFile" 
-	 "LispConfigure"
-	 "HelpConsole" "HelpAboutGrace")
-*/
+  // ENUMS defined in grace.lisp
 
   enum ConsoleCommand {
     cmdGraceEditorNew = 32896,
@@ -148,9 +119,7 @@ public:
     cmdLispConnect = 36224,
     cmdLispLoadSystem = 36480,
     cmdLispLoadFile = 36736,
-    cmdLispConfigure = 36992,
-    cmdHelpConsole = 37248,
-    cmdHelpAboutGrace = 37504};
+    cmdLispConfigure = 36992};
 
   Console * console;
   ConsoleTheme theme;

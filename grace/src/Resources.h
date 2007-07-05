@@ -13,8 +13,21 @@
 
 #include "juce.h"
 
-String getEditorHelp();
-String getPlotterHelp();
+enum GraceWindowType {winConsole=1, winEditor, winPlotter};
+
+// ENUMS defined in grace.lisp
+
+enum SharedCommand {
+  cmdWindowSelect = 130816,
+  cmdHelpWindow = 131072,
+  cmdHelpSalTutorial = 131328,
+  cmdHelpURL = 131584,
+  cmdHelpAboutGrace = 131840};
+
+void addCommonWindowItems(PopupMenu* menu, GraceWindowType w);
+void addCommonHelpItems(PopupMenu* menu, GraceWindowType w);
+void commonWindowItemSelected(int cmd, int arg);
+void commonHelpItemSelected(int cmd, int arg);
 
 File getGraceResourceDirectory ();
 int getHostOS();
