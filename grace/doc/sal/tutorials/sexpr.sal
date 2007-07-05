@@ -1,0 +1,600 @@
+;
+;; Symbolic Expressions
+;
+
+; SAL programs are built out of commands that process 'symbolic
+; expressions' to accomplish their tasks.  A symbolic expression, or
+; 'sexpr' is anything that produces a value for a command to use. The
+; most common sexprs we will encounter are: numbers, arithmetic
+; expressions, symbols (variables and function names), booleans,
+; strings and lists.
+
+;; Evaluation
+
+; A sexpr produces a value through a process called 'evaluation':
+; every time you execute a command by pressing Enter you trigger sexpr
+; evaluation. Simple sexprs like numbers are called 'self-evaluating
+; expressions' because they evaluate to the same thing as the original
+; sexpr: 100 evaluates to 100. But most sexprs produce values that are
+; not identical to the original.  For example, this print command
+; evaluates the sexpr '1 + 2 * 3' and then prints the resulting value:
+
+print 1 + 2 * 3
+
+;
+;; Numbers
+;
+
+; Numbers lies at the heart of music composition.  We will work with
+; three different types of numbers as we design compositional
+; algorithms: integers, ratios and floats.
+
+;
+;; Integers 
+;
+
+; Integers are whole, counting numbers like 1, 2, 3, -6 and so
+; on. Digits can be optionally preceded by a + or - sign. Integers are
+; ubiquitous in computer composition.  You can work with really big
+; integers if you want to! Lets add one to the total number of atoms
+; in our galaxy (approximately 10 to the 66th power):
+
+print 10 ^ 66 + 1
+
+;; Musical integers: MIDI key numbers
+
+; In terms of musical integers you will incounter, the MIDI protocol
+; uses only the integers 0<128 to express information like pitch. For
+; example, a MIDI 'key number' is a integer 0<128 where 60 is defined
+; to be C4. So 59 is B3, 72 would be C5, 21 is the lowest A on the
+; piano (A1), 108 is the highest C on the piano (C8), and so on.  We
+; will be working with MIDI keynumber a great deal in this class.
+; take the time to become familiar with them.
+
+;
+;; Ratios
+;
+
+; A ratio is a quotient of two integers written n/d, where n is the
+; numerator and d is the denominator. no spaces are allowed between
+; the numbers or slash. A ratio is one way to represent a real number,
+; i.e. a number that lies in between two integers. For example 5/3
+; lies between the integers 1 and 2. Ratios are very useful for
+; representing exact proportionality. 
+
+print 1/3
+
+print 2/7
+
+; Note that that ratios they are automatically reduced to their
+; simplest forms when you evaluate them:
+
+print 1/1
+
+print 6/10
+
+print 15/3
+
+;; Musical ratios: proportional (metric) time 
+
+; We can represent musical time as ratio values, where 1 means one
+; beat, 1/3 = one third of a beat (triplet), 5/7 means 5 sevenths of a
+; beat and so on. Of course we will need a 'tempo factor' to convert
+; our proportional time representation into actual clock time for a
+; performance.
+
+;
+;; Floating point numbers
+;
+
+; Floating point numbers, or 'floats', are another way to represent
+; real numbers.  Floats contain two parts separated by a decimal
+; point: the integer portion (significand) is to the left of the dot
+; and the fractional part (mantissa) is to the right of the dot:
+
+print 123.456
+
+; It is important to understand that floats can only approximate some
+; numbers.  For example .3333 is close to but not equal to 1/3 and
+; 3.141592653589793 is only an approximation of the trancendental
+; number pi.  Realize that when you calculate with an approximation
+; you introduce an error (however small) into your work.
+
+;; Musical floats: floating point keynumbers
+
+; Recall that MIDI represents key numbers as integer values 0 < 128.
+; Common Music extends MIDI's key numbers to include FLOATING POINT
+; key numbers as well. A floating point keynum is interpreted as the
+; value 'kkk.cc' where kkk is a MIDI keynum and cc is a CENT value
+; above it. Since each semitone has 100 cents, the float keynum 60.5
+; sounds one quarter tone above Middle C, the value 59.1 would sound
+; 10 cents above B3 and so on. (the smallest cent value humans can
+; discriminate between is approximately 5 cents).
+
+;; Musical floats: amplitude
+
+;; We will also use floating point numbers 0.0 to 1.0 to represent
+;; amplitude values, where 0.0 is silence and 1 means "as loud as
+;; possible". Numbers between 0.0-1.0 are sometimes referred to as
+;; 'normalized numbers' which means that they have no scale
+;; (size). This makes perfect sense for amplitud because loudness
+;; depends on enviornmental factors (loudness levels) in the computer
+;; or stereo amplifier more than the actual sound source. But you can
+;; still think of the values as absolute if you like: .1 = pppp, .5 =
+;; mp .7 = f and 1.0 = ffff for example.
+
+;
+;; Arithmetic Expressions
+;
+
+; Arithmetic expressions in SAL are made up of numbers (or sexpers
+; that evaluate to numbers...) joined together by 'math operators':
+
+;  +   addition
+;  -   subtraction
+;  *   multiplication
+;  /   division
+;  %   modulus (remainder after division)
+;  ^   exponentiation
+
+; OPERATORS MUST BE DELIMITED FROM THEIR OPERANDS BY SPACES AND/OR
+; PARENTHESES.  In other words, '2 / 4' is division and '2/4' is a
+; ratio; '2 + 4' is addition and '2+4' is an error. Normal math
+; operator precedence rules apply if there are no parentheses:
+
+print 10 ^ 2 + 1
+
+print 1 + 3 * 4
+
+print (1 + 3) * 4
+
+print 2 * 3 + 4 * 5
+
+print 2 = 1 + 1
+
+print 13 % 12
+
+; in this example the first minus is subtraction, the second minus is
+; part of a number:
+
+print 2 - -1
+
+; this is NOT an arithmetic expression:
+
+print 2*pi+1
+
+; this is NOT subtraction:
+
+print 100-2
+
+; Now fix these last two examples, press Enter to make sure they work.
+
+;
+;; Mixed Expressions
+;
+
+; Since we will work with different types of numbers it is important
+; to understand how they interact if they are combined in a single
+; expression. If an expression contains only rational numbers
+; (integers and ratios) then only rational values will result:
+
+print 10 + 1/2
+
+print 1/2 + 1/2
+
+print 1000 * 5/999
+
+; If an expression contains any floating point number the entire
+; expression will produce a floating point value:
+
+print 10 * 1/2 + 0.0
+
+; It is sometimes necessary to convert one type of number into
+; another. We will learn how to do this in the next chapter when we
+; learn about the common math functions.
+
+;
+;; Arithmetic Relations
+;
+
+; SAL's arithmetic relations are:
+
+;  =   equal
+;  !=  not equal
+;  >   greater than
+;  <   less than
+;  >=  greater than or equal
+;  <=  less than or equal
+;  ~=  general equality (i.e. two things "look" the same)
+
+; Relations evaluate to true (#t) or #f (false). See the section on
+; Boolean values for more information about this.
+
+print 2 = 1 + 1
+
+print 2 != 1
+
+print 2 < 1 + 1
+
+print 2 <= 1 + 1
+
+print 2 > 1 
+
+print 2 >= 1
+
+print {c e g} ~= {c e g}
+
+print :hi ~= :ho
+
+print "Woo-Woo" ~= "Woo-Woo"
+
+;; relations are most commonly used for testing numbers in order to do
+;; something. the 'if' statement is typical:
+
+if random(2) = 0 then print "winner!" else print "loser!"
+
+; we will talk much more about 'if' and conditioal evaluation in a
+; later chapter...
+
+;
+;; Symbols (variables and function names)
+; 
+
+; Symbols are names for constants, variables and functions.  When a
+; symbol is used as a variable or constant its value replaces the
+; symbol (name) when the expression is evaluated.  For example the
+; symbol 'pi' is a predefined constant that holds the number Pi.  This
+; means that you can use the name 'pi' in a math expression rather
+; than having to type the actual number.
+
+print 2 * pi
+
+; Many global variable names in Common Music and Lisp include
+; surrounding ** in their names mark them clearly. For example, the variable
+; *scale* holds Common Music's default scale:
+
+print *scale*
+
+; you can define your own variables using the 'define variable'
+; command:
+
+define variable 2pi = 2 * pi
+
+print 2pi
+
+; much more about this later...
+
+;; special variable notations
+
+; there are two handy notations that you can use with variable names
+; to access common types of data stored in variables.
+
+; (1) if a variable holds a list you can access (get or set) any
+; element in the list using the notation xxx[n] , where xxx is the
+; name of the variable and n is the element's position (zero based) in
+; the list. for example:
+
+define variable var = {a b c d e f g}
+
+print var[0]
+
+print var[6]
+
+print "my random scale degree=", var[ random(7) ]
+
+; (2) If the variable holds an object you can access (get or set) any
+; slot value in the object using the notation xxx.yyy, where xxx is
+; the name of the variable and yyy is the name of the slot:
+
+define variable var = make(<midi>, keynum: random(128), duration: 3)
+
+print var.keynum
+
+print var.duration
+
+;
+;; Symbols as command and function names
+;
+
+; Commands and functions have symbol names too. For example the symbol
+; 'print' is the name of the command that displays values, the symbol
+; 'random' is the name of a function that returns a random value each
+; time it is evaluated:
+
+print random(100)
+
+;
+;; Function calls
+; 
+
+; You can tell the difference between a symbol used as a function name
+; and a symbol used as a variable name by the fact that function calls
+; symbols ALWAYS include () just after the function name. The
+; parenthesis hold then input sexprs passed to the function and must
+; appear even if there are no input values:
+
+print list()
+
+print list(1)
+
+;; use commas to separate inputs if there is more than one:
+
+print list(1, 2, 3, list(4,5), 6)
+
+
+; much more about this later...
+
+; Notice that if you try to use the symbol 'list' as a variable rather
+; than a function you will get an error because no variable with the
+; name 'list' has been defined:
+
+print list
+
+;; Self-evaluating symbols
+
+; Sometimes one really wants to use a symbol for its name, not for its
+; value as a variable or as a function name.  To make a
+; self-evaluating symbol, simply precede the symbol by a colon. For
+; example:
+
+print :list
+
+; notice that the symbol :list evaluates to :list.  The colon will
+; turn any symbol into a self-evalutaing symbol.
+
+;
+;; Boolean Values: #t and #f
+;
+
+; A boolean value denotes truth or falsity. In SAL #t denotes True and
+; #f means False:
+
+print #t
+
+print #f
+
+; A 'boolean expression' is an expression that returns true or
+; false. For example the arithmetic relations are boolean expressions:
+
+print 1 = 2
+
+; Note that the value #f (false) is also used to denote 'nothing'
+; (nil) or 'the empty list'.  So an empty list (a list with no
+; elements) prints as #f. More about this later...
+
+print list()
+
+; Functions that return boolean values are called 'predicates'. For
+; example, the functions 'even?' and 'odd?' return true or false based
+; on a test of their inputs. Note that many predicate functions end
+; with ? or -p to clearly mark them as functions that return true or
+; false.
+
+print odd?(1)
+
+print odd?(2)
+
+print even?(1)
+
+print even?(2)
+
+;
+;; Logical Expressions
+;
+
+; SAL provides the three logical operators: 
+
+; &   logical AND 
+; |   logical OR
+; !   logical NOT
+
+; Like arithmetic relations, the logical operators return boolean
+; values based on a test of their arguments.
+
+; The & operator (logical AND) is true only if BOTH its operands are
+; true:
+
+print #f & #f
+
+print #f & #t
+
+print #t & #f
+
+print #t & #t
+
+; the | operator (logical OR) is true if EITHER of its operands are
+; true:
+
+print #f | #f
+
+print #f | #t
+
+print #t | #f
+
+print #t | #t
+
+; the ! operator (logical NOT) is the boolean opposite of its operand:
+
+print ! #t
+
+print ! #f
+
+print ! ! #t
+
+; The logical operators can be combined with the arithmetic relations
+; to test a series of expressions. Thses sorts of test expressions are
+; called 'predicate tests' are most commonly found in th 'if'
+; command. To see how this works, consider this next example that
+; mimics rolling two dice. The "snake eyes" message only appears if
+; both dice land on side 1. Put the cursor at the end of the last line
+; and press Enter repeatedly.  You may have to execute the statement
+; many times to get a snake eyes!
+
+if ( random(6) = 1) & (random(6) = 1 ) then
+  print "snake eyes!"
+else
+  print "loser >:("
+
+; Much more about the 'if' statement when we learn how to define new
+; functions...
+
+;
+;; Conditional Expression: #?(test, true, false)
+;
+
+; A conditional expression is an expression that returns one of two
+; possible valuesw based on a boolean test expression. If the test
+; expression is true the true value is returned, otherwise an optional
+; false value is returned. The sytax of the conditional expression is:
+
+; #? (test, true [,false])
+
+print #? ( 0 < 1, 100)
+
+print #?( 0 > 1, 100)
+
+print #? (0 > 1, 100, random(30) )
+
+;
+;; Strings
+; 
+
+; Strings are text surrounded by "".  WHen the print command prints
+; strings it does not inclucde the surrounding parentheses in the
+; display.
+
+print "Hello, world!"
+
+; Strings are unevaluated, that is, SAL does not look inside strings
+; to evaluate what they contain. You can see this in the following
+; examples:
+
+print 1 = 1
+
+print "1 = 1"
+
+print random(pi)
+
+print "random(pi)"
+
+;
+;; Lists
+;
+
+; Lists are structures that group a series of elements together. A
+; list can hold any number of elements, including none. Lists are
+; written using { } to delimit the individual elements that make up
+; the list:
+
+print {1 2 3 4 5}
+
+; elements inside {} are NOT EVALUATED so symbols will not be treated
+; as variables or function names:
+
+print {bach is a great composer}
+
+; the empty list (a list of no elements) is a special case: 
+
+print {}
+
+; since an empty list is nothing it prints as #f, because #f means
+; both false and nothing (nil).
+
+; When you write a list using brackets, EVERY open bracket MUST be
+; belanced by a corresponding right bracket: this is correct:
+
+print {1 2 3 {4 5}}
+
+; this is an error:
+
+print {1 2 3 { 4 5}
+
+; lists can hold any type of data, including other lists. This
+; 'recursive' feature (Lists inside lists) makes the list an extreemly
+; versitle structure: there is practically no limit to complexity of
+; information that they can represent. What does this list represent?
+
+
+print {{"3-9*"  {0 2 7} {0 1 0 0 2 0} "Quartal Trichord"}
+       {"3-10*" {0 3 6} {0 0 2 0 0 1} "Diminished Chord"}
+       {"F3-11" {0 3 7} {0 0 1 1 1 0} "Minor Chord"}
+       {"3-11B" {0 4 7} {0 0 1 1 1 0} "Major Chord"}}
+
+;; Musical lists:  sequences
+
+; Lists are the most natural way to represent musical 'sequences':
+; information to be performed in left-to-right order.
+
+;;  here is a twelve tone row
+
+print {0 8 3 2 11 10 1 7 9 4 6 5}
+
+;; here is a non-retrogradable rhythm:
+
+print { 1 2 3/4 5/4 3/4 2 1}
+
+;; here are three major chords:
+
+print {{60 64 65} {62 66 69} {64 68 71}}
+
+;; Note lists
+
+; here is an alternate way of getting the same result as the last
+; example:
+
+print keynum( {{c4 e g} {d4 fs a} {e4 gs b}} )
+
+;  Note lists are lists that contain note names that can be converted
+;  to and from key number lists. A note name is a letter: c d e f g a
+;  b plus an optional sharp or flat letters: s f n ss ff (Sharp Flat
+;  Natural double sharp, double flat) plus an optional octave number
+;  -1 ... 10. Examples:
+
+; c5    C5
+; df2   D flat 2
+; gs5   G sharp 5
+; eff3  E double flat 3
+; an0   A natural 0
+
+; The 'keynum' function converts note names to key numbers. Note that
+; octave numbers are sticky inside note lists, i.e. they only have to
+; be written when they change: 
+
+print keynum( {c4 d ef f gs g3 a bff c ds5 e fs g} )
+
+; the 'note' function convert key numbers to note names.
+
+print note ( {{60 64 65} {62 66 69} {64 68 71}} )
+
+;
+;; Objects
+;
+
+; Objects are complex structures that hold named values called
+; 'slots'. 
+
+; The name of some classes variables (variables that hold class definitions)
+; are surrounded by <>, for example the variable <midi> holds the
+; class definition if Common Music's MIDI note object:
+
+print <midi>
+
+; To create an object you call the 'make' function and pass it the new
+; object's class (type) and the values of its slots.  this example
+; makes a new midi note with its time slot set to 45:
+
+
+print make(<midi>, keynum: random(128) )
+
+print make(<midi>, time: 45)
+
+;; this example show all the possible attributes you can set in a midi note:
+
+print make(<midi>, time: 0, keynum: random(128),
+           duration: pick(1, 1/2, 1/4),
+           amplitude: .2,
+           channel: 0)
+           
+; We will be using objects when we start composing music, much more
+; about this later!...
+

@@ -10,10 +10,7 @@
 <body>
 <div id="content">
 
-<dl class="dictsyntax">
-<dt>[Topic]</dt>
-<dd>SAL</dd>
-</dl>
+<h1>SAL Overview</h1>
 
 <h2>Contents</h2>
 <ol>
@@ -32,50 +29,30 @@ music programs in Common Music.  The name <em>SAL</em> stands for
 Simple Algorithmic Language (or Secretly Another Lisp, as you wish)
 and it is an <em>hommage</em> to <a
 href="http://ems.music.uiuc.edu/~martiran/">Sal Martirano</a>, a
-brilliant and influential composer who was a professor at the UIUC
-School of Music for many years. </p>
+brilliant and influential composer who was a professor at the
+University of Illinois School of Music for many years. </p>
 
-<p> SAL consists of two software components: a lexer/parser that is
-part of the Common Music system and an <em>editing mode</em>
-(<code>sal-mode</code>) that supports developing and executing SAL
-programs inside a text editing window.</p>
+<p>SAL consists of two software components: a lexer/parser that is
+part of the Common Music system and an <em>editing mode</em> that
+supports developing and executing SAL programs inside an editing
+window.</p>
 
 <p> A SAL program consists of <var>commands</var>,
 <var>statements</var> and <var>symbolic expressions</var>.  A command
-is a "top-level" statement that is <var>executed</var> to accomplish a
-task such as triggering output, defining functions and musical
-processes, loading files, and so on. A statement is a construct in the
-SAL language, such as <code>set</code>, <code>loop</code>,
-<code>define</code>, etc.  A symbolic expression , or <var>sexpr</var>
-is something that evaluates to a value.  </p>
+is a "top-level" statement that gets <var>executed</var> to accomplish
+a task such as generating musical output, defining variables,
+functions and musical processes, displaying plots, loading files, and
+so on. A statement is any construct in the SAL language, such as
+<code>set</code>, <code>loop</code>, <code>define</code>, etc.  A
+symbolic expression , or <var>sexpr</var> is something that a
+statement evaluates to produce a value.  </p>
 
-<h2 id="sal-mode">SAL Mode</h2>
+<h2 id="sal-mode">SAL Editing Mode</h2>
 
-<p>SAL mode is an Emacs editing mode provides an editing menu, syntax highlighting and evaluation services for SAL programs.</p>
-
-<h3>The SAL menu</h3>
-
-<table style="background: #eeeeee; border: 1px solid darkgray">
-  <tr><td colspan="2" ><a href="#execute">Execute (CMD-Enter)</a></td></tr>
-  <tr><td colspan="2" style="border-bottom: 1px solid darkgray;"><a href="#show_repl">Show Console</a></td></tr>
-  <tr><td colspan="2"><a href="#show_directory">Show Directory</a></td></tr>
-
-  <tr><td colspan="2"><a href="#set_directory">Set Directory...</a></td></tr>
-  <tr><td colspan="2"><a href="#load_file">Load File...</a></td></tr>
-  <tr><td colspan="2" style="color:silver;"><a href="#comile_file">Compile File...</a></td></tr>
-</table>
-
-<dl>
-  <dt id="show_repl">Show Console</dt>  <dd>Make the console window visible on screen.</dd>
-  <dt id="execute">Execute</dt>  <dd>Execute the SAL command before cursor.</dd>
-  <dt id="show_directory">Show Directory</dt>  <dd>Shows current working directory.</dd>
-  <dt id="set_directory">Set Directory...</dt>  <dd>Sets working directory.</dd>
-  <dt id="load_file">Load File...</dt>  <dd>Pop-up dialog loads SAL or Lisp file.</dd>
-</dl>
-
-<h3>The Help menu</h3>
-
-<p>blah blah</p>
+<p>The SAL editing mode provides support for developing algorithmic
+compositions inside an editing window. THis support consists of
+<em>syntax highlighting</em> or code coloring, evaluation services for
+execting SAL programs and a menu for accessing common tasks. </p>
 
 <h3>Syntax Highlighting</h3>
 <p>Sal mode colorizes program text as follows:</p>
@@ -116,6 +93,34 @@ is something that evaluates to a value.  </p>
 <p>To execute a SAL command, place the cursor just after the end of
 the command text and press COMMAND-Enter on the keyboard. Any output
 associated with the command will appear in the Console window.</p>
+
+<h3>The SAL menu</h3>
+
+<table style="background: #eeeeee; border: 1px solid darkgray">
+  <tr><td colspan="2" ><a href="#execute">Execute (CMD-Enter)</a></td></tr>
+  <tr><td colspan="2" style="border-bottom: 1px solid darkgray;"><a href="#show_repl">Show Console</a></td></tr>
+  <tr><td colspan="2"><a href="#show_directory">Show Directory</a></td></tr>
+
+  <tr><td colspan="2"><a href="#set_directory">Set Directory...</a></td></tr>
+  <tr><td colspan="2"><a href="#load_file">Load File...</a></td></tr>
+  <tr><td colspan="2" style="color:silver;"><a href="#comile_file">Compile File...</a></td></tr>
+</table>
+
+<dl>
+  <dt id="show_repl">Show Console</dt>  <dd>Make the console window visible on screen.</dd>
+  <dt id="execute">Execute</dt>  <dd>Execute the SAL command before cursor.</dd>
+  <dt id="show_directory">Show Directory</dt>  <dd>Shows current working directory.</dd>
+  <dt id="set_directory">Set Directory...</dt>  <dd>Sets working directory.</dd>
+  <dt id="load_file">Load File...</dt>  <dd>Pop-up dialog loads SAL or Lisp file.</dd>
+</dl>
+
+<h3>The Help menu</h3>
+
+<p>The Help menu contains command help lookup, on-line SAL tutorials
+and access to related html documents on the web. To can also get
+symbol help using a keyboard shortcut: place your cursor on a SAL
+command word and press COMMAND-H (or the Help key) to bring up the
+help file associated with the command.</p>
 
 <h2 id="language">Language</h2>
 

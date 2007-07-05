@@ -1,29 +1,51 @@
 ; SAL programs consist of commands and comments.  Commands start in
 ; the first column and their names appear in blue. Comments are
-; introduced with a semicolon and are colored red.
+; introduced with a semicolon and are colored red. Commands do things
+; when you 'execute' them. To execute a command put the cursor at the
+; very end of the command line and press COMMAND-Enter. Then look in
+; the console window for any associated output. Try it with this print
+; command!
 
-; Commands do things when you 'execute' them. To execute a command put
-; the cursor at the very end of the command line and press
-; COMMAND-Enter. Then look in the console window for any associated
-; output. Try it with this print command!
-
-print "Hello, world!"
-
-; Here is a more complex print example. It has two clauses and spans
-; two lines. The first line (clause) selects a word at random, the
-; second clause contains the second word of the message. Put the
-; cursor at the end of the second line and press COMMAND-Enter several
-; times to see what happens:
-
-print pick("Hello", "Tag", "Hola", "Bonjour") , 
-      ", world!"
+print "Hello world!"
 
 ; You can access help about commands by placing your cursor on a
-; command word and pressing the Help key. Try doing this on the
-; preceding print command...
+; command word and pressing the Help key. Try this on the preceding
+; print command...
+
+
+; Here is a more complex print example that contains two clauses and
+; is spread over several lines. The first clause selects a greeting at
+; random, the second clause contains the second word of the
+; message. Put the cursor at the end of the last line and press
+; COMMAND-Enter several times to see what happens:
+
+print pick("Hello", "Tag", 
+           "Hola", "Bonjour") ,
+      " world!"
+
+; if you notice that you are pressing COMMAND-Enter a bunch of times,
+; consider using a loop. Put your cursor just after the 'end' and
+; press Command-Enter:
+
+loop repeat 10
+  for msg = pick("Hello", "Tag", "Hola", "Bonjour")
+  print msg, " world!"
+  end
+  
+;  any construct that concludes with the word 'end' is called a 'code
+;  block'.  code blocks can include a 'with' statement to define local
+;  variables.
+
+begin
+  with msg = pick("Hello world!", "Goodbye world!"), 
+       key = random(128)
+  print msg
+  print "my random keynum is ", key
+end
 
 ; Here is an example of defining a musical algorithm. Put the cursor
-; just after the work 'end' and press COMMAND-Enter:
+; just after the word 'end' and press COMMAND-Enter to define the
+; process:
 
 define process piano-phase (length, keys, tempo)
   run 
@@ -33,15 +55,29 @@ define process piano-phase (length, keys, tempo)
     wait tempo
   end
 
-; You can group a series of commands together using begin and end
-; statements. This block declares two local variables and then
-; executes two commands, Place the cursor just after the word 'end'
-; and execute the command to hear what it does:
+; this next block declares two local variables and then opens a midi
+; file and runs two copies of our piano-phase algorithm. Place the
+; cursor just after the word 'end' and execute the command to hear
+; what it does:
 
 begin 
   with notes = {e4 fs4 b4 cs5 d5 fs4 e4 cs5 b4 fs4 d5 cs5},
        length = 20
-  open "pattern.mid"
+  open "reich.mid"
+  sprout list(piano-phase (length, notes, .166),
+              piano-phase (length, notes, .17))
+end
+
+; lets have the block shuffle the trope to compose differnt versions
+; of the piece each time we press COMMAND-Enter (apologies to steve
+; reich!) since we are not sure what we will be hearing, we save
+; different versions of the piece so we can choose the one we like the
+; best:
+
+begin 
+  with notes = shuffle( {e4 fs4 b4 cs5 d5 fs4 e4 cs5 b4 fs4 d5 cs5}),
+       length = 20
+  open "reich.mid", versioning: #t
   sprout list(piano-phase (length, notes, .166),
               piano-phase (length, notes, .17))
 end

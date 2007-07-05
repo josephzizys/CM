@@ -1,0 +1,116 @@
+;
+;; Working with lists
+;
+
+;; A list is a structure that holds elements.  To create a list put
+;; the elements inside { } or create it using the list() function. the
+;; following two commands are equivalent:
+
+print {60 62 63 65 67}
+
+print list(60, 62, 63, 65, 67)
+
+; lists can hold numbers, symbols, strings etc even other lists
+
+define variable notes = {c d e f g a b}
+
+print notes
+
+define variable chords = {{c e g} {d f a}}
+
+print chords
+
+; use the {} notation when you know the exact contents of the list.
+; use the list function when some elements need to be calculated
+; (evaluated) before being placed in the list. This example generates
+; a variant triad list each time its evaluated:
+
+print note( list( between(60,62), between(63,66), between(67,70) ) )
+
+;
+;; 'length' tells you how many elemnts are in a list:
+;
+
+print length(notes)
+
+print length(chords)
+
+; an empty list has zero elements:
+
+print length( {} )
+
+;
+;; 'append' concatenates input lists into one list
+;
+
+print append(notes, notes, notes)
+
+; append expects all its inputs to be proper lists. this is an error:
+
+print append(notes, 60, 61, 62, notes)
+
+; this is correct:
+
+print append(notes, {60 61 62}, notes)
+
+
+;
+;; 'list*' adds elements to the front of its last input (a list):
+;
+
+print list*(1,2,3, {a b c})
+
+;
+;; 'first' ... 'tenth' returns the element at that position:
+
+print first({a b c d e f g})
+
+print third({a b c d e f g})
+
+print seventh({a b c d e f g})
+
+; you can nest calls to access sublist elements:
+
+print third( second( { {c e g} {d f a} }))
+
+;
+;; 'elt' returns the element at an integer index (zero based)
+;
+
+print elt({a b c d e f g }, 0)
+
+print elt({a b c d e f g }, 1)
+
+print elt({a b c d e f g }, random(7))
+
+;
+;; the 'reverse' function reverses the elements in a list (duh)
+;
+
+print reverse( {1 2 3 4 5} )
+
+define variable palin =  {a     m a n   a   p l a n   p a n a m a} 
+
+print append(palin, reverse(palin))
+
+;
+;;  'butlast' returns all but the last element
+; 
+
+print butlast( {a b c d e f g} )
+
+print append(palin, reverse(butlast(palin)))
+
+
+;
+;; 'pickl' randomly selects an element from a list:
+;
+
+print pickl( {a b c d e f g})
+
+
+;
+;; 'shuffle' randomly scrambles the elements of a list:
+
+print shuffle( {a b c d e f g})
+

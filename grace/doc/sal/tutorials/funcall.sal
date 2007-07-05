@@ -1,0 +1,171 @@
+;
+;; Function calls
+;
+
+; Functions are the single most important concept we will master this
+; semester.  Everything we do will involve using, or 'calling'
+; functions. Learning how to work with functions is fundamental to
+; your success as an algorithmic composer
+
+; A 'function' is an algorithm (procedure) that receives input values,
+; performs a calculation and returns an output value. To call a
+; function you type its name followed by its input values, if any,
+; inside ().  In this example the print command calls the 'random'
+; function and passes it the value '128'. The value returned by the
+; random function is then printed:
+
+print random(128)
+
+; Function argument list.
+
+; The arguments passed to a function, however many, must appear inside
+; a balancing pair of parentheses () called the 'function argument
+; list'. Individual arguments inside the list are separated by
+; commas. We can demonstrate this using the 'list' function. In this
+; next example we call the list function with zero arguments. note
+; that in the case of no arguments the surrounding argument list ()
+; must still be provided!:
+
+print list()
+
+; calling the list function with one argument:
+
+print list(1)
+
+; calling the list funtion with two args:
+
+print list(1,2)
+
+; calling the list function with seven arguments. Note that spaces
+; before or after commas and parentheses are ignored:
+
+print list ( 1, 2, 3, 4,5 ,    6,7 )
+
+; Because commas delimit the indivdual input arguments, each argument
+; can involve 'nested' expressions and function calls. Such embedded
+; sexprs are actually quite common. In this example the list function
+; is called with three arguments: a number, a math expression and a
+; nested function call. the nested function call has 2 arguments (100
+; and 200):
+
+print list( 1, 2 + 3, between(100,200) )
+
+; In this example the outer-most function call has two arguments, each
+; is a nested function call. Each of the nested function calls have
+; three arguments.
+
+print list( list(1,2,3) , list(100,200, 300) )
+
+; Note that nesting can occur to any level. Hint: you can double-click
+; parenthesis to see exactly the scope of arguemnts they surround:
+
+print list( list( list( list(1,2,3), 4), 5), 6)
+
+; things can get pretty hairy if you want them too!
+
+print list( 1, 2 + 3, sin(pi / 1 + random(2.0)), list(4,5,6))
+
+;
+;; Function parameters
+;
+
+; Functions accept arguments (input values) via inlets called
+; 'parameters'. When a function is called the arguments inside the
+; argument list are processed in a left to right manner, each argument
+; is placed in the correspoding parameter inside the function's
+; definition. This process is called 'binding'. How parameters are
+; bound to values in the argument list depends on what type of
+; parameter is involved. There are three basic types of parameters:
+; required, optional and named. When the function is defined the
+; programmer specifies the order of parameters in the function call
+; list and what type of parameter each one is.
+
+; Required parameters
+
+; A required parameter must be passed an argument value when the
+; function is called.  For example, the predicate function 'odd?'  is
+; defined with a single required parameter:
+
+print odd?(1)
+
+;  This means that it is an error to pass this function more or less
+; than one argument when you call it. both of these examples are
+; errors:
+
+print odd?()
+
+print odd?(1,2,3)
+
+; Optional parameters
+
+; An optional parameter means that its argument value can be supplied
+; or not. If a value is not supplied the optional parameter receives a
+; 'default value' determined by the progammer when the function was
+; defined. Some functions take only optional parameters, and you can
+; specify as many of them as you want to, including zero! The 'list'
+; function is an example of this type of function. However, it is more
+; common for functions to support a specific number of required or
+; optional parameters. Or to allow a mixture of both required and
+; optional. In this case the required parameters are specified first
+; followed by any optional parameters.
+
+; For example, Common Music's 'odds' function is defined with one
+; required parameter and two optional ones. This means that the first
+; (required) parameter must be suppied, the remaing two can be
+; supplied or not. The required argument for 'odds' is a probablity
+; factor where 0 odds means always false, .5 odds means the function
+; is true/false half the time, and 1 is always true. Execute each
+; command several times to see the boolean value the function
+; produces:
+
+print odds(0)
+
+print odds(.5)
+
+print odds(1)
+
+; However, odds also has two optional parameters that you can pass
+; values to return instead of boolean true and false:
+
+print odds(.5, "winner!")
+
+print odds(.5, "Heads", "Tails")
+
+;
+;; Named parameters
+;
+
+; Notice that in the case of the 'odds' function, in order to specify
+; the second optional value (the false value) you must specify the
+; first value as well. If there are more one or two optionals this
+; requirement becomes significant: to specify the last optional value
+; will REQUIRE you specify all the preceding ones.
+
+; A 'named parameter' is a special type of optional parameter that is
+; specified by NAME. That is, when you specify a named parameter you
+; type both the name of the parameter AND its input value together as
+; a pair. Each pair is then separated by a comma. Parameter names
+; always end with a colon and are highlighted in pink coloring. Since
+; named parameters have names they can be specified in any order and
+; you only have to specify the ones you really care about.  all the
+; unspecifed named parameters will receive their default values as
+; determined by the programmer.
+
+; Common Music's 'make' function provides an example of named
+; parameters. make function creates musical objects. Its first
+; parameter -- the class, or type, of object to create -- is
+; required. But the rest of its parameters are optional named
+; parameters that let you set values in the object when you create
+; it. 
+
+print make(<midi>)
+
+print make(<midi>, keynum: random(128))
+
+; Note that each named parameter argument is a pair: the parmeter's
+; name followed by its value. the pairs are separated by comma an can
+; appear in any order. only those paremeters that differ from their
+; default values need to be specified.
+
+print make(<midi>, time: 10, keynum: random(128), duration: pick(1,2))
+
