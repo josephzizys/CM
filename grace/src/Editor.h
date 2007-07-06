@@ -13,6 +13,45 @@
 
 #include "Buffer.h"
 
+class TextFileOutputStream : public FileOutputStream
+{
+ public:
+  TextFileOutputStream(const File& f,
+		       const int bufferSize_);
+  ~TextFileOutputStream();
+  void writeText (const String& text,
+		  const bool asUnicode,
+		  const bool writeUnicodeHeaderBytes,
+		  const bool asDOS);
+};
+
+
+
+class TextFile : public File
+{
+ public:
+  TextFile();
+  TextFile (const String& path);
+  TextFile (const File& other) ;
+
+  ~TextFile();
+
+  TextFileOutputStream* createOutputStream (const int bufferSize = 0x8000) ;
+
+  bool appendText (const String& textToAppend,
+		   const bool asUnicode = false,
+		   const bool writeUnicodeHeaderBytes = false) ;
+  
+  bool replaceWithText (const String& textToWrite,
+			const bool asUnicode = false,
+			const bool writeUnicodeHeaderBytes = false) ;
+ 
+  
+  
+};
+
+
+
 const int fontSizeList[] = 
   {9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 24, 28, 32};
 
@@ -30,7 +69,7 @@ class EditorComponent : public Component {
 
 class EditorWindow : public DocumentWindow, public MenuBarModel {
  public:
-  File editfile;
+  TextFile editfile;
   Font editfont;
   EditorComponent* editor;
   

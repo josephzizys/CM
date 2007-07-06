@@ -13,6 +13,157 @@
 #include "Grace.h"
 #include "Resources.h"
 
+TextFileOutputStream::TextFileOutputStream(const File& f,
+					   const int bufferSize_) 
+  : FileOutputStream(f, bufferSize_)
+{
+
+}
+
+TextFileOutputStream::~TextFileOutputStream()
+{
+  
+}
+
+void TextFileOutputStream::writeText(const String& text,
+				const bool asUnicode,
+				const bool writeUnicodeHeaderBytes,
+				const bool asDOS)
+{
+    if (asUnicode)
+    {
+        if (writeUnicodeHeaderBytes)
+            write ("\x0ff\x0fe", 2);
+
+        const juce_wchar* src = (const juce_wchar*) text;
+        bool lastCharWasReturn = false;
+	if(asDOS) {
+	  while (*src != 0)
+	    {
+	      if (*src == L'\n' && ! lastCharWasReturn)
+                writeShort ((short) L'\r');
+	      
+	      lastCharWasReturn = (*src == L'\r');
+	      writeShort ((short) *src++);
+	    }
+	} else {
+	  while (*src != 0)
+	    {
+	      writeShort ((short) *src++);
+	    }
+	}
+    }
+    else
+    {
+        const char* src = (const char*) text;
+        const char* t = src;
+
+	if(asDOS) {
+	  for (;;)
+	    {
+	      if (*t == '\n')
+		{
+		  if (t > src)
+                    write (src, (int) (t - src));
+		  
+		  write ("\r\n", 2);
+		  src = t + 1;
+		}
+	      else if (*t == '\r')
+		{
+		  if (t[1] == '\n')
+                    ++t;
+		}
+	      else if (*t == 0)
+		{
+		  if (t > src)
+                    write (src, (int) (t - src));
+		  
+		  break;
+		}
+	      
+	      ++t;
+	    }
+	} else {
+	  write( src, text.length());
+		  
+	}
+    }
+}
+
+
+
+TextFile::TextFile() : File()
+{
+}
+
+TextFile::TextFile(const File& other) : File(other)
+{
+
+}
+
+
+TextFile::TextFile (const String& path) : File(path)
+{
+}
+  
+
+TextFile::~TextFile()
+{
+}
+
+TextFileOutputStream* TextFile::createOutputStream (const int bufferSize)
+{
+  TextFileOutputStream* const out = new TextFileOutputStream (*this, bufferSize);
+    
+    if (out->areAnyErrors())
+    {
+        delete out;
+        return 0;
+    }
+    else
+    {
+        return out;
+    }
+}
+
+
+bool TextFile::appendText (const String& text,
+			   const bool asUnicode,
+			   const bool writeUnicodeHeaderBytes) 
+{
+  TextFileOutputStream* const out = createOutputStream();
+  
+  if (out != 0)
+    {
+      out->writeText (text, asUnicode, writeUnicodeHeaderBytes, false);
+      delete out;
+      
+      return true;
+    }
+  
+  return false;
+}
+
+bool TextFile::replaceWithText (const String& textToWrite,
+				const bool asUnicode,
+				const bool writeUnicodeHeaderBytes)
+{
+  const TextFile tempFile (getSiblingFile (T(".") + getFileName()).getNonexistentSibling (false));
+  
+  if (tempFile.appendText (textToWrite, asUnicode, writeUnicodeHeaderBytes)
+      && tempFile.moveFileTo (*this))
+    {
+      return true;
+    }
+  
+  tempFile.deleteFile();
+  return false;
+}
+
+
+
+
 struct {
   // global filetype->syntax mapping. new mappings can be added via
   // addSyntaxFileType
@@ -75,15 +226,15 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 	filename += T(".text");
 	synt=syntaxText;
       }
-      editfile=File(filename);
+      editfile=TextFile(filename);
     }
     else
-      editfile=File::nonexistent;
+      editfile=TextFile::nonexistent;
     else 
-      editfile=File(filename);
+      editfile=TextFile(filename);
 
   if (title==String::empty)
-    setName( File(filename).getFileName() );
+    setName( TextFile(filename).getFileName() );
   else 
     setName(title);
 
@@ -295,7 +446,7 @@ void EditorWindow::openFile() {
     dir = File::getSpecialLocation(File::userHomeDirectory);
   FileChooser choose (T("Open File"), dir, String::empty, true);
   if ( choose.browseForFileToOpen() ) {
-    File f = choose.getResult();
+    TextFile f = (TextFile)choose.getResult();
     new EditorWindow(0, TextBuffer::load, f.getFullPathName());
   }
 }
@@ -322,9 +473,9 @@ void EditorWindow::saveFileAs() {
     dir = File::getSpecialLocation(File::userHomeDirectory);
   FileChooser choose (String::empty, dir, String::empty, true);
   if ( choose.browseForFileToSave(true) ) {
-    File f = choose.getResult();
+    TextFile f = choose.getResult();
     f.replaceWithText( buff->getText() );
-    editfile=File(f);
+    editfile=TextFile(f);
     buff->setChanged(false);
     buff->setFlagOff(TextBuffer::nosave);
     setName( editfile.getFileName() );
