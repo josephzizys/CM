@@ -206,8 +206,9 @@ class TextBuffer : public TextEditor,
 
   ConsoleWindow* getConsole();
 
-  // hkt 000000000000000000000000000
   void lookupHelpAtPoint() ;
+  void reformatCommentBlock () ;
+  void changeCase(int flag);
 };
 
 

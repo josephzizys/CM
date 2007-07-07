@@ -561,16 +561,20 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 // actually changes the keycode from ascii to some weird unicode
 // nonsense. need to track down if its juce or the mac thats
 // resposible for this mess
+
 #ifdef JUCE_MAC
 #define META_F 402
 #define META_B 8747
 #define META_D 8706
+#define META_Q 339    // hkt
 #define META_V 8730
 #define META_SPACE 160
 #define META_DOT 8805
 #define META_LT 175
 #define META_GT 728
-// this is unfortunate -- juce maps keypad enter to return :(
+#define META_L 172
+#define META_U 0
+#define META_C 231
 #define KPAD_ENTER 13
 #endif
 
@@ -578,23 +582,39 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 #define META_F 102
 #define META_B 98
 #define META_D 100
+#define META_Q 113          // hkt
 #define META_V 118
 #define META_SPACE 32
 #define META_DOT 46
 #define META_LT 60
 #define META_GT 62
+#define META_L 76
+#define META_U 85
+#define META_C 67
 #define KPAD_ENTER 13
 #endif
 
 void TextBuffer::keyMetaAction(const KeyPress& key) {
   int kcode = key.getKeyCode();
-  //printf("Meta key: %d\n", kcode );
+  printf("Meta key: %d\n", kcode );
   switch ( kcode ) {
   case META_F :
     forwardWord();
     break;
   case META_B :
     backwardWord();
+    break;
+  case META_Q :
+    reformatCommentBlock();
+    break;
+  case META_L :
+    changeCase(0);
+    break;
+  case META_U :
+    changeCase(1);
+    break;
+  case META_C :
+    changeCase(2);
     break;
   case META_V :
     backwardScreen();
@@ -762,12 +782,9 @@ void TextBuffer::keyPressed (const KeyPress& key) {
       setChanged(true);
       colorizeAfterChange(cmdInsertLine);
       break;
-
-      // hkt 00000000000000000000000000000
     case 5 :
       lookupHelpAtPoint();
       break;
-
     case 8 :  // backspace
       TextEditor::keyPressed(key);
       setChanged(true);
@@ -1443,6 +1460,7 @@ void TextBuffer::syntacticIndent() {
     col=syntax->getIndent( txt, -1, len, pos);
   }
   indentToColumn(col);
+  colorizeAfterChange(cmdIndent); // recolor current line
 }
 
 ///
@@ -1452,8 +1470,6 @@ void TextBuffer::syntacticIndent() {
 ConsoleWindow* TextBuffer::getConsole() {
   return ((GraceApp *)GraceApp::getInstance())->getConsole();
 }
-
-int dodo=0;
 
 void TextBuffer::colorize (int from, int to, bool force) {
   // FIX: recoloring should only happen in the visible region of
@@ -1467,22 +1483,6 @@ void TextBuffer::colorize (int from, int to, bool force) {
   hiliteID hilite;
   Colour color, normal=syntax->hilites[hiliteNone];
   static KeyPress dkey = KeyPress(KeyPress::deleteKey);
-
-  /*
-  if (force) {
-    // if recoloring, check if odd number of " in the edited region.  if
-    // yes then color till end of buffer....
-    // inserting " will have to do this as well i guess...
-    int quo=0;
-    for (int i=0;i<len;i++)
-      if (text[i]=='\"') quo++;
-    if (1 == quo % 2) {
-      printf("odd string delims: hiliting rest of buffer\n");
-      text=getTextSubstring(from,bufferMax());
-      len=text.length();
-    }
-  }
-  */
 
   // offset is the starting position of text string in buffer.
   setCaretVisible(false);
@@ -1556,6 +1556,10 @@ void TextBuffer::colorizeAfterChange(int cmd) {
       bot=point();
       setPoint(loc);
       }
+    break;
+  case cmdIndent :   // colorize current line
+    bot=bol;
+    top=eol;
     break;
   default :
     break;
@@ -1660,3 +1664,102 @@ void TextBuffer::lookupHelpAtPoint() {
   }
 }
 
+void TextBuffer::reformatCommentBlock () {
+  // reformats toplevel comment block
+  setCaretVisible(false);
+  int here = gotoBOL();
+  int save=here;
+  int beg=-1, end=-1;
+  String c;
+  // find start and end of block;
+  while (1) {
+    c=getTextSubstring(here, here+1);
+    if (c == T(";")) {
+      beg=here;
+      if ( moveLine(-1) )
+	here=point();
+      else break;
+    }
+    else break;
+  }
+  if (beg==-1) {
+    setCaretVisible(true);
+    return;
+  }
+  here=save;
+  while (1) {
+    c=getTextSubstring(here, here+1);    
+    if (c == T(";")) {
+      end=here;
+      if ( moveLine(1) )
+	here=point();
+      else break;
+    }
+    else break;
+  }
+  setPoint(end);
+  end=pointEOL();
+  String block=getTextSubstring(beg,end);
+  //printf("comment block='%s'\n",block.toUTF8());
+  deleteRegion(beg,end);
+  setPoint(beg);
+
+  Colour comment=syntax->hilites[hiliteComment];
+  Colour regular=syntax->hilites[hiliteNone];
+  setColour(TextEditor::textColourId, comment);
+  int len=block.length();
+  int col=0;
+  String tok;
+  int num=0;
+  for (int i=0;i<len;i++)
+    if (block[i]==';') num++;
+    else break;
+  beg=end=0;
+  while (1) {
+    beg=skip_syntax(syntax->syntab, block, T("-<"), end, len); 
+    if (beg==len) break;
+    // beg is now on nonwhite non comment.
+    end=skip_syntax(syntax->syntab, block, T("^-<"), beg, len); 
+    tok=block.substring(beg,end);
+    if ( (col + tok.length() + 1) > 70) {
+      insertTextAtCursor(T("\n"));
+      col=0;
+    }
+    if (col==0) {
+      for (int i=0;i<num;i++)
+	insertTextAtCursor(T(";"));
+      col+=num;
+    }
+    insertTextAtCursor(T(" "));
+    insertTextAtCursor(tok);
+    col+=tok.length()+1;
+  }
+
+  setColour(TextEditor::textColourId, regular);
+  setCaretVisible(true);
+}
+
+void TextBuffer::changeCase(int flag) {
+  int beg=point();
+  int end=forwardWord();
+  String text=getTextSubstring(beg, end);
+  if (text==String::empty) return;
+  deleteRegion(beg,end);
+  if (flag==0)
+    insertTextAtCursor(text.toLowerCase());
+  else if (flag==1)
+    insertTextAtCursor(text.toUpperCase());
+  else if (flag==2) {
+    int len=text.length();
+    // get first alphachar 
+    int loc=skip_syntax(syntax->syntab, text, T("^w"), 0, len);	
+    insertTextAtCursor(text.substring(0,loc));
+    if (loc<len) {
+      insertTextAtCursor(text.substring(loc,loc+1).toUpperCase());
+      insertTextAtCursor(text.substring(loc+1,len));
+    }
+  }
+  beg=point();
+  colorizeAfterChange(cmdIndent); // recolorize whole line for now..
+  setPoint(beg);
+}
