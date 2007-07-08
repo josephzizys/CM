@@ -1,20 +1,128 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
-<style type="text/css" media="all">
-@import "grace.css";
-</style>
-<title>The Console Window</title>
-</head>
-<body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html
+xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"> <head>
+<meta http-equiv="content-type" content="text/html;
+charset=iso-8859-1"/> <style type="text/css" media="all"> @import
+"grace.css"; </style> <title>The Console Window</title> </head> <body>
 <div id="content">
 
 <h1>Overview:<br/>The Console Window</h1>
 
-<p>The Console window blah blah blah....</p>
+<p>The Console window is used by Grace commands to display, or return,
+text information back to the user. The Console is the "main window"
+for Grace and closing it will quit the application.</a>
 
+<h2>Color Themes</h2>
+
+<p>The appearance of the Console can be customized by applying various
+"color themes" to it. A number of different color themes are available
+under the View&gt;Themes sub menu. In general, a theme controls the
+Console's background color and the color of "normal" output text. A
+few special types of messages have a consistent appearance across all
+themes:
+
+<span style="font-size:large;">
+<ul>
+  <li><span class="graceerror">Error messages are red</span></li>
+  <li><span class="gracewarning">Warning messages are orange</span></li>  
+  <li><span class="gracevalues">Return values are green</span></li>  
+</ul>
+</span>
+
+<h2>The Lisp Menu</h2>
+
+<p>The Lisp menu allows you configure, start, stop and customize
+aspects of a Lisp session. In order to start Lisp several requirements
+must be met:</p>
+
+<ul>
+
+<li>You must have a recent version of either <a
+href="http://www.sbcl.org/platform-table.html">SBCL</a>, <a
+href="http://openmcl.clozure.com/Distributions/index.html">OpenMCL</a>
+or <a
+href="http://sourceforge.net/project/showfiles.php?group_id=1355">CLisp</a>
+installed on your machine, and you must know where the executable
+resides. If you have installed a binary version of Grace on Windows or
+OS X then an executable is included under the Application's Resources
+directory.</li>
+
+<li>You must have a Lisp systems directory that contains, at a
+minimum, the Grace runtime Lisp system (system file: grace/grace.asd)
+and the Common Music system (system file: cm/cm.asd). The Lisp systems
+directory is the (parent) directory that will contain the various <A
+href="http://www.cliki.net/asdf">ASDF</a> defined Lisp systems that
+you want Grace to compile and load for you. The Lisp system directory
+can reside anywhere on your file system but, since Lisp systems are
+compiled at runtime, you must have write permission in all
+sub directories of this directory.  If you have installed a binary
+version of Grace on Windows or OS X the Lisp systems directory is
+included under the Resources directory of the application.</li> </ul>
+
+
+<h3>Starting and Stopping Lisp</h3>
+
+<p>If the Lisp&gt;Start Lisp item is active select it it to start a
+Lisp session. If it is not active then use the Lisp&gt;Configure Lisp
+item to configure the session so that it can be started. If
+Lisp&gt;Stop Lisp is available use it to kill the current (running)
+Lisp session.</p>
+
+<p>Once Lisp is running the Console window will display any output
+that results from the Lisp session. Note that the Console window is
+<em>not</em> a Lisp REPL (this is a feature not a bug); to evaluate
+Lisp expressions or execute SAL code open a new Editor window and
+enter your code there. Then: </p>
+
+<ul>
   
+<li>To execute SAL commands, place the cursor at the end of the
+Command and press COMMAND-Enter, or use the SAL&gt;Execute Command
+item.</li> <li>To evaluate a Lisp expression, place the cursor just
+after the expr and type COMMAND-E (or C-x C-e if Emacs mode is
+enabled) or use the LISP&gt;Eval Expr item.</li>
+
+</ul>
+
+<h3>Configuring Lisp</h3>
+
+<p>Use Lisp&gt;Configure Lisp to open a dialog window to specify the
+ information that is required before a Lisp session can be
+ started. Here is an explanation of the various fields that appear in
+ this dialog:</p>
+
+<ul>
+
+  <li>The Host field allows you to specify the computer that will act
+  as the "Lisp server" that Grace will connect to and communicate
+  with. Currently this field "read only" and is set to
+  <code>localhost</code>, i.e. the physical machine you are
+  using.</li>
+  
+  <li>The Port field allows you to specify the port (socket) number
+  that will be used to communicate with Lisp once the Lisp server has
+  started running. The port number can be any value above
+  1024. Normally there is no reason to change the default port
+  value. However, if you have already attempted to start Lisp and
+  failed you might bump this number to insure that a new port will be
+  used for the next connection.</li>
+
+<li>The radio buttons allow you to select the Lisp implementation that
+you will use during the Lisp session. When you select one of the
+implementations, the default path to that lisp's executable will be
+displayed in the associated typein field. If the background color of
+this field is red it means that Grace cannot find the listed
+executable. In this case you should type the pathname to the
+executable by hand and press Enter to select it.</li>
+
+<li>Use the Lisp Systems Directory field to specify the pathname to
+the directory on your machine that contains the Grace runtime system
+(definition file: grace/grace.asd) and Common Music (definition file:
+cm/cm.asd). Since Lisp systems get compiled when they are loaded, you
+must have write permission in the various sub directories of the Lisp
+Systems Directory.  Add any Lisp ASDF system you want to this
+directory for easy access and loading.</li> </ul>
+
 </div>
 </body>
 </html>

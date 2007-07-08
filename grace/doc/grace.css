@@ -343,6 +343,11 @@ span.saltyp {color: #228b22;}
 span.salcmd {color: #0000ff;}
 span.salcon {color: #5f9ea0;}
 
+span.graceoutput {color: #ffa07a;} 
+span.graceerror {color: #cd0000;} 
+span.gracewarning {color: #ff8c00;}  
+span.gracevalues {color: #00cd00;} 
+
 /* code.salstr {color: #bc8f8f;} 
 code.salout {color: #bc8f8f;} 
 code.salcom {color: #b22222;}  
