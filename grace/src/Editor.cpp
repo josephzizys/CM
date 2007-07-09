@@ -13,6 +13,9 @@
 #include "Grace.h"
 #include "Resources.h"
 
+
+
+
 TextFileOutputStream::TextFileOutputStream(const File& f,
 					   const int bufferSize_) 
   : FileOutputStream(f, bufferSize_)
@@ -95,16 +98,27 @@ void TextFileOutputStream::writeText(const String& text,
 
 TextFile::TextFile() : File()
 {
+  #ifdef JUCE_WIN
+  isDOS = true;
+#else
+  isDOS = false;
+#endif
+
 }
 
 TextFile::TextFile(const File& other) : File(other)
 {
-
+  #ifdef JUCE_WIN
+  isDOS = true;
+#else
+  isDOS = false;
+#endif
 }
 
 
 TextFile::TextFile (const String& path) : File(path)
 {
+
 }
   
 
@@ -136,7 +150,7 @@ bool TextFile::appendText (const String& text,
   
   if (out != 0)
     {
-      out->writeText (text, asUnicode, writeUnicodeHeaderBytes, false);
+      out->writeText (text, asUnicode, writeUnicodeHeaderBytes, isDOS);
       delete out;
       
       return true;
@@ -161,6 +175,31 @@ bool TextFile::replaceWithText (const String& textToWrite,
   return false;
 }
 
+const String TextFile::loadFileAsString()
+{
+  String str;
+  String outstr;
+  int i;
+  tchar c;
+
+  if (! existsAsFile())
+    return String::empty;
+  
+  FileInputStream in (*this);
+  str =  in.readEntireStreamAsString();
+  printf("loading text file\n");
+  
+  for(i=0;i<str.length();i++) {
+    c = str[i];
+    if(c == '\r') {
+      printf("this is dos:\n");
+      isDOS = true;
+    }
+    else
+      outstr << c;
+  }
+  return outstr;
+}
 
 
 

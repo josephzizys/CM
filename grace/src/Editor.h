@@ -36,6 +36,8 @@ class TextFile : public File
 
   ~TextFile();
 
+  bool isDOS;
+
   TextFileOutputStream* createOutputStream (const int bufferSize = 0x8000) ;
 
   bool appendText (const String& textToAppend,
@@ -45,9 +47,9 @@ class TextFile : public File
   bool replaceWithText (const String& textToWrite,
 			const bool asUnicode = false,
 			const bool writeUnicodeHeaderBytes = false) ;
- 
-  
-  
+
+  const String loadFileAsString();
+
 };
 
 
