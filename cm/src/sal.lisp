@@ -1153,7 +1153,10 @@
     (cond ((eql type ':variable)
 	   (dolist (v name)
 	     (sal-message "~@(~A~): ~(~A~) = " type v)
-	     (funcall *sal-printer* (symbol-value v)))
+	     (funcall *sal-printer* (symbol-value v))
+	     #+grace
+	     (force-output *standard-output*)
+	     )
 	   )
 	  ((member type '(:function :process))
 	   (if (null data)
