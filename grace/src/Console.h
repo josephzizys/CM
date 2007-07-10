@@ -131,10 +131,9 @@ public:
   ~ConsoleWindow () ;
   void closeButtonPressed () ;
   //  void resized();
-  const StringArray getMenuBarNames (MenuBarComponent* mbar);
-  const PopupMenu getMenuForIndex (MenuBarComponent* mbar, int idx, 
-				   const String &name);
-  void menuItemSelected (MenuBarComponent* mbar, int id, int idx);
+  const StringArray getMenuBarNames ();
+  const PopupMenu getMenuForIndex (int idx, const String &name);
+  void menuItemSelected (int id, int idx);
 
   TextEditor * getConsole();
   bool isConsoleReadOnly();

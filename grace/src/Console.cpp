@@ -184,7 +184,8 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
 {
   lisp = new LispConnection(this);
   menubar = new MenuBarComponent(this);
-  setMenuBar(this,0);
+  setMenuBar(this);
+  //setApplicationCommandManagerToWatch(commandManager);
   console=new Console();
   splash=new SplashComponent();
   setContentComponent(console);
@@ -362,15 +363,14 @@ bool ConsoleWindow::isSplashVisible() {
  *
  */
 
-const StringArray ConsoleWindow::getMenuBarNames (MenuBarComponent* mbar) {
+const StringArray ConsoleWindow::getMenuBarNames () {
   const tchar* const menuNames[] = { T("Grace"), T("Edit"), T("View"),
 				     T("Audio"), T("Lisp"), 
 				     T("Windows"), T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
 
-const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
-						int idx,
+const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 						const String &name)
 {
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
@@ -468,7 +468,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (MenuBarComponent* mbar,
   return menu;
 }
 
-void ConsoleWindow::menuItemSelected (MenuBarComponent* mbar, int id, int idx) {
+void ConsoleWindow::menuItemSelected (int id, int idx) {
   // lower seven bits encode command information
   int arg = id & 0x0000007F;
   int cmd = id & 0xFFFFFF80;

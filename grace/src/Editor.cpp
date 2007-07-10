@@ -163,7 +163,7 @@ bool TextFile::replaceWithText (const String& textToWrite,
 				const bool asUnicode,
 				const bool writeUnicodeHeaderBytes)
 {
-  const TextFile tempFile (getSiblingFile (T(".") + getFileName()).getNonexistentSibling (false));
+  TextFile tempFile (getSiblingFile (T(".") + getFileName()).getNonexistentSibling (false));
   
   if (tempFile.appendText (textToWrite, asUnicode, writeUnicodeHeaderBytes)
       && tempFile.moveFileTo (*this))
@@ -187,12 +187,11 @@ const String TextFile::loadFileAsString()
   
   FileInputStream in (*this);
   str =  in.readEntireStreamAsString();
-  printf("loading text file\n");
+
   
   for(i=0;i<str.length();i++) {
     c = str[i];
     if(c == '\r') {
-      printf("this is dos:\n");
       isDOS = true;
     }
     else
@@ -303,7 +302,8 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 		  JUCEApplication::getInstance())->commandManager;
   setWantsKeyboardFocus(false);  
   addKeyListener (commandManager->getKeyMappings());
-  setMenuBar(this, commandManager);
+  setMenuBar(this);
+  setApplicationCommandManagerToWatch( commandManager );
   commandManager->registerAllCommandsForTarget(buffer);
   // dont show window until very last
   setVisible(true);
@@ -332,7 +332,7 @@ void EditorWindow::closeButtonPressed () {
     this->~EditorWindow();
     }
 
-const StringArray EditorWindow::getMenuBarNames(MenuBarComponent* mbar) {
+const StringArray EditorWindow::getMenuBarNames() {
   const tchar* const textbar [] = { T("File"), T("Edit"),  T("View"), 
 				    T("Options"), T("Text"), T("Windows"), T("Help"), 0};
   const tchar* const lispbar [] = { T("File"), T("Edit"),  T("View"), 
@@ -371,8 +371,7 @@ const PopupMenu EditorWindow::getHelpMenu () {
   return menu;
 }
 
-const PopupMenu EditorWindow::getMenuForIndex (MenuBarComponent* menuBar, 
-					       int menuIndex,
+const PopupMenu EditorWindow::getMenuForIndex ( int menuIndex,
 					       const String& menuName) {
   PopupMenu menu, sub1, sub2;
   
@@ -446,8 +445,7 @@ const PopupMenu EditorWindow::getMenuForIndex (MenuBarComponent* menuBar,
   return menu;
 }
 
-void EditorWindow::menuItemSelected (MenuBarComponent* menuBar,
-				     int id, int idx) {
+void EditorWindow::menuItemSelected (int id, int idx) {
   int arg = id & 0x0000007F;
   int cmd = id & 0xFFFFFF80;
   switch (cmd) {

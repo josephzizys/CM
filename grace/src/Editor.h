@@ -89,10 +89,10 @@ class EditorWindow : public DocumentWindow, public MenuBarModel {
   TextBuffer* getTextBuffer() {return editor->buffer; }
   void closeButtonPressed () ;
   ApplicationCommandManager *commandManager;
-  const StringArray getMenuBarNames (MenuBarComponent* menuBar);
-  const PopupMenu getMenuForIndex (MenuBarComponent* menuBar, int menuIndex, 
+  const StringArray getMenuBarNames ();
+  const PopupMenu getMenuForIndex (int menuIndex, 
 				   const String& menuName);
-  void menuItemSelected (MenuBarComponent* menuBar, int menuItemID, 
+  void menuItemSelected ( int menuItemID, 
 			 int topLevelMenuIndex);
   const PopupMenu getSalMenu();
   const PopupMenu getLispMenu();

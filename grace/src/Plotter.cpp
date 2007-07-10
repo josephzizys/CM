@@ -1343,15 +1343,14 @@ public:
  * PlotterWindow: top level window for plotting
  **********************************************************************/
 
-const StringArray PlotterWindow::getMenuBarNames (MenuBarComponent* mbar) {
+const StringArray PlotterWindow::getMenuBarNames () {
   const tchar* const menuNames[] = { T("Plotter"), T("Edit"), T("Layer"), 
 				     T("View"), T("Compose"),
 				     T("Analyze"), T("Windows"), T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
 
-const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
-						int idx, 
+const PopupMenu PlotterWindow::getMenuForIndex (int idx, 
 						const String &name) {
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3;
@@ -1492,7 +1491,7 @@ const PopupMenu PlotterWindow::getMenuForIndex (MenuBarComponent* mbar,
   return menu;
 }
 
-void PlotterWindow::menuItemSelected (MenuBarComponent* mbar, int id, 
+void PlotterWindow::menuItemSelected (int id, 
 				      int idx) {
   // commandIDs reserve lower 8 bits for command-specific information
   // lower seven bits may encode command information
@@ -1580,7 +1579,7 @@ PlotterWindow::PlotterWindow (PlotType pt)
 
   plotter = new Plotter( pt ) ;
   menubar = new MenuBarComponent(this);
-  setMenuBar(this, 0);
+  setMenuBar(this);
   switch (pt) {
   case MidiPlot :
     title = T("MIDI Plotter");
