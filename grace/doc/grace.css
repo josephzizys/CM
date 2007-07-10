@@ -316,7 +316,6 @@ td.lcell {
   text-align: left;
 }
 
-
 img {
   border: none;
 }
@@ -343,31 +342,19 @@ span.saltyp {color: #228b22;}
 span.salcmd {color: #0000ff;}
 span.salcon {color: #5f9ea0;}
 
+span.menuitem {font-weight: bold; font-variant: small-caps;}
 span.graceoutput {color: #ffa07a;} 
 span.graceerror {color: #cd0000;} 
 span.gracewarning {color: #ff8c00;}  
 span.gracevalues {color: #00cd00;} 
 
-/* code.salstr {color: #bc8f8f;} 
-code.salout {color: #bc8f8f;} 
-code.salcom {color: #b22222;}  
-code.salkey {color: #da70d6;} 
-code.salres {color: #a020f0;}
-code.saltyp {color: #228b22;}
-code.salcmd {color: #0000ff;}
-code.salcon {color: #5f9ea0;}
-*/
 
-/* span.printout { color: #3f7f7f; font-size: smaller; } */
 div.printout {
   margin: 0px;
   color: #3f7f7f;
   font-size: smaller; 
   background: #f7f7f7;
 }
-
-
-
 
 
 span.author {font-style: normal;}

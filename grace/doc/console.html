@@ -8,24 +8,24 @@ charset=iso-8859-1"/> <style type="text/css" media="all"> @import
 
 <h1>Overview:<br/>The Console Window</h1>
 
-<p>The Console window is used by Grace commands to display, or return,
-text information back to the user. The Console is the "main window"
-for Grace and closing it will quit the application.</a>
+<p>The Console window displays text messages and information produced
+by Grace commands. The Console is the "main window" for
+Grace and closing it will quit the application.</a>
 
 <h2>Color Themes</h2>
 
-<p>The appearance of the Console can be customized by applying various
-"color themes" to it. A number of different color themes are available
-under the View&gt;Themes sub menu. In general, a theme controls the
-Console's background color and the color of "normal" output text. A
-few special types of messages have a consistent appearance across all
-themes:
+<p>The appearance of the Console can be customized by applying "color
+themes" to it. A number of different themes are available under the
+<span class="menuitem">View&gt;Themes</span> sub menu. In general, a
+theme controls the Console's background color and the color of
+"normal" output text. A few (special) messages have a consistent
+appearance across all themes:
 
 <span style="font-size:large;">
 <ul>
-  <li><span class="graceerror">Error messages are red</span></li>
+  <li><span class="graceerror">Error/fail messages are red</span></li>
   <li><span class="gracewarning">Warning messages are orange</span></li>  
-  <li><span class="gracevalues">Return values are green</span></li>  
+  <li><span class="gracevalues">Return/success values are green</span></li>  
 </ul>
 </span>
 
@@ -47,49 +47,25 @@ resides. If you have installed a binary version of Grace on Windows or
 OS X then an executable is included under the Application's Resources
 directory.</li>
 
-<li>You must have a Lisp systems directory that contains, at a
-minimum, the Grace runtime Lisp system (system file: grace/grace.asd)
-and the Common Music system (system file: cm/cm.asd). The Lisp systems
-directory is the (parent) directory that will contain the various <A
+<li>You must have a <em>Lisp systems directory</em> that contains, at
+a minimum, the Grace runtime Lisp system (system file:
+grace/grace.asd) and the Common Music system (system file:
+cm/cm.asd). The Lisp systems directory is the parent directory that
+Grace will use to find the various <A
 href="http://www.cliki.net/asdf">ASDF</a> defined Lisp systems that
-you want Grace to compile and load for you. The Lisp system directory
-can reside anywhere on your file system but, since Lisp systems are
-compiled at runtime, you must have write permission in all
-sub directories of this directory.  If you have installed a binary
-version of Grace on Windows or OS X the Lisp systems directory is
-included under the Resources directory of the application.</li> </ul>
-
-
-<h3>Starting and Stopping Lisp</h3>
-
-<p>If the Lisp&gt;Start Lisp item is active select it it to start a
-Lisp session. If it is not active then use the Lisp&gt;Configure Lisp
-item to configure the session so that it can be started. If
-Lisp&gt;Stop Lisp is available use it to kill the current (running)
-Lisp session.</p>
-
-<p>Once Lisp is running the Console window will display any output
-that results from the Lisp session. Note that the Console window is
-<em>not</em> a Lisp REPL (this is a feature not a bug); to evaluate
-Lisp expressions or execute SAL code open a new Editor window and
-enter your code there. Then: </p>
-
-<ul>
-  
-<li>To execute SAL commands, place the cursor at the end of the
-Command and press COMMAND-Enter, or use the SAL&gt;Execute Command
-item.</li> <li>To evaluate a Lisp expression, place the cursor just
-after the expr and type COMMAND-E (or C-x C-e if Emacs mode is
-enabled) or use the LISP&gt;Eval Expr item.</li>
-
-</ul>
+are compiled and loaded into a running Lisp session.  The Lisp system
+directory can reside anywhere on your file system.  Since Lisp systems
+are compiled at runtime, you must have write permission under this
+directory.  If you have installed a binary version of Grace on Windows
+or OS X the Lisp systems directory is included under the Resources
+directory of the application.</li> </ul>
 
 <h3>Configuring Lisp</h3>
 
-<p>Use Lisp&gt;Configure Lisp to open a dialog window to specify the
- information that is required before a Lisp session can be
- started. Here is an explanation of the various fields that appear in
- this dialog:</p>
+<p>Use the <span class="menuitem">Lisp&gt;Configure Lisp...</span>
+ dialog window to specify the information that is required to start a
+ Lisp session. Here is an explanation of the various fields of this
+ dialog:</p>
 
 <ul>
 
@@ -122,6 +98,33 @@ cm/cm.asd). Since Lisp systems get compiled when they are loaded, you
 must have write permission in the various sub directories of the Lisp
 Systems Directory.  Add any Lisp ASDF system you want to this
 directory for easy access and loading.</li> </ul>
+<h3>Starting and Stopping Lisp</h3>
+
+<p>If the <span class="menuitem">Lisp&gt;Start Lisp</span> item is
+active select it to start a Lisp session. If it is not active then
+use <span class="menuitem">Lisp&gt;Configure Lisp...</span>  to
+configure the session so that it can be started. If <span
+class="menuitem">Lisp&gt;Stop Lisp</span> is available use it to kill
+the current (running) Lisp session.</p>
+
+<p>Once Lisp is running the Console window will display any output
+that results from the Lisp session. Note that the Console window is
+<em>not</em> a Lisp REPL (this is a feature not a bug); to evaluate
+Lisp expressions or execute SAL code open a new Editor window and
+enter your code there. Then: </p>
+
+<ul>
+  
+<li>To execute SAL commands, place the cursor at the end of the
+Command and press <span class="emacscmd">COMMAND-Enter</span>, or use the <span
+class="menuitem">SAL&gt;Execute Command</span> item.</li> <li>To
+evaluate a Lisp expression, place the cursor just after the expr and
+type <span class="emacscmd">COMMAND-E</span> (or <span class="emacscmd">C-xC-e</span> if Emacs mode is enabled) or use the <span
+class="menuitem">Lisp&gt;Eval Expr</span> item.</li>
+
+</ul>
+
+
 
 </div>
 </body>
