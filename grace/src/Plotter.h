@@ -249,6 +249,31 @@ public:
 				   const String &name);
   void menuItemSelected (int id, int idx);
   void closeButtonPressed () ;
+  void showExportPointsDialog();
+};
+
+class ExportPointsDialog : public Component, 
+  public ButtonListener 
+{
+ public:
+  Plotter* plotter;
+  int numfields;
+  bool* include;
+  Label* exportlabel;
+  ComboBox* exportmenu;
+  Label* tolabel;
+  ComboBox* tomenu;
+  TextButton* fieldsbutton;
+  Label* formatlabel;
+  Label* valuelabel;
+  ComboBox* valuemenu;
+  ComboBox* formatmenu;
+  TextButton* exportbutton;
+  ExportPointsDialog(Plotter* plotter);
+  ~ExportPointsDialog();
+  void resized();
+  void buttonClicked (Button* button);
+  void exportPoints();
 };
 
 #endif

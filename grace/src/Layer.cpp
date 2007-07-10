@@ -12,6 +12,17 @@
 #include <iostream>
 using namespace std;
 
+String LayerPoint::valToText(int field, int decimals, String name) {
+  String text;
+  if (decimals==0)
+    text = String( (int)(.5 + getVal(field)) );
+  else 
+    text = String( getVal(field), decimals );
+  if (name == String::empty)
+    return text;
+  else
+    return name + T(" ") + text;
+}
 
 Layer::Layer (int ari, String nam, Colour col) 
   : transp(true),
@@ -20,7 +31,8 @@ Layer::Layer (int ari, String nam, Colour col)
     _z (2),
     _defaults ( (LayerPoint *)NULL),
     name (String::empty),
-    style(lineandpoint)
+    style (lineandpoint),
+    pclass (String::empty)
 {
   static int layerid=1;
   arity=ari;
@@ -157,6 +169,40 @@ void Layer::deletePoint(LayerPoint* p) {
   _points.removeObject(p, true);
 }
 
+String Layer::exportPoint(LayerPoint* point, int fmask, int fmat,
+			  bool sal, int deci) {
+  // point: the point to export
+  // fmask: bit mask, each 1 bit means that field is included
+  // fmat: 1=envelope, 2=point record, 3=object definition
+  String text=String::empty;
+
+  for (int i=0; i<arity; i++) 
+    if ( fmask & (1 << i) ) { // check field mask
+      String name=String::empty;
+      if (fmat==3)  // add field keyword for objects
+	if (sal)
+	  name=fields[i].toLowerCase() + T(":");
+	else
+	  name=T(":") + fields[i].toLowerCase();
+      // add delimiter if not at start.
+      if (text != String::empty)
+	text += (sal && (fmat==3)) ? T(", ") : T(" ");
+      text += point->valToText(i, deci, name);
+    }
+
+  if (fmat==2)    // point records are themselves lists
+    if (sal) 
+      text = T("{") + text + T("}");
+    else
+      text = T("(") + text + T(")"); 
+  else if (fmat==3)
+    if (sal)
+      text = T("make(<") + getPointClass() + T(">, ") + text + T(")");
+    else
+      text = T("(make-instance '") + getPointClass() + T(" ") + text + T(")");
+  return text;
+}
+
 /*
  * Point Layers
  */
@@ -182,6 +228,7 @@ XYLayer::XYLayer(String s, Colour c)
 MidiLayer::MidiLayer(String s, Colour c) 
   : Layer(4, s, c) 
 {
+  pclass=T("midi");
   // Time Duration Keynum Amplitude
   fields.add(T("Time"));
   fields.add(T("Duration"));

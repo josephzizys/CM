@@ -26,6 +26,8 @@ class LayerPoint {
   void subVal(int i, float f) {vals[i]-=f;} 
   void mulVal(int i, float f) {vals[i]*=f;} 
   void divVal(int i, float f) {vals[i]/=f;} 
+  String valToText(int field, int decimals=2,
+		   String name=String::empty);
 };
 
 class comp00 {
@@ -155,6 +157,7 @@ class Layer {
   int* pstyle;
 
   int arity;        // number of fields in points
+  String pclass;    // point class name
   String name;      // layer name
   int id;           // unique id
   Colour color;     // line and point color
@@ -185,6 +188,9 @@ class Layer {
   void sortPoints () ;
   int addPoint(float x, float y) ;
   void initPoint(LayerPoint* p);
+
+  String getPointClass() {return pclass;}
+  void setPointClass(String c){pclass=c;}
 
   LayerPoint* getPoint(int i);
   int getPointIndex(LayerPoint* p);
@@ -248,6 +254,8 @@ class Layer {
   String getFieldName(int f) {return fields[f];}
   int getFieldIndex(String f) {return fields.indexOf(f, true);}
   void addFieldName(String n){fields.add(n);}
+  String exportPoint(LayerPoint* p, int fmask, int fmat,
+		     bool sal, int deci=2);
 };
 
 class XYLayer : public Layer {

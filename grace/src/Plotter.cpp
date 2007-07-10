@@ -1369,7 +1369,7 @@ const PopupMenu PlotterWindow::getMenuForIndex (int idx,
     menu.addItem( Plotter::cmdPlotterOpen, T("Open..."), false);
     menu.addItem( Plotter::cmdPlotterSave, T("Save"), false);
     menu.addItem( Plotter::cmdPlotterImport, T("Import..."), false);
-    menu.addItem( Plotter::cmdPlotterExport, T("Export..."), false);
+    menu.addItem( Plotter::cmdPlotterExport, T("Export..."), true);
     break;
   case 1 :
     // Edit Menu
@@ -1506,7 +1506,10 @@ void PlotterWindow::menuItemSelected (int id,
   case Plotter::cmdPlotterSave :
   case Plotter::cmdPlotterSaveAs :
   case Plotter::cmdPlotterImport :
+    break;
   case Plotter::cmdPlotterExport :
+    showExportPointsDialog();
+    break;
   case Plotter::cmdEditUndo :
     plotter->actions.undo();
     break;
@@ -1606,3 +1609,212 @@ void PlotterWindow::closeButtonPressed () {
 }
 
  
+//
+// Export Dialog
+//
+
+
+ExportPointsDialog::ExportPointsDialog (Plotter* p)
+    : exportlabel (0),
+      exportmenu (0),
+      tolabel (0),
+      tomenu (0),
+      fieldsbutton (0),
+      formatlabel (0),
+      formatmenu (0),
+      valuelabel (0),
+      valuemenu (0),
+      exportbutton (0),
+      plotter(0),
+      include(0)
+{
+  plotter=p;
+  numfields=plotter->getFocusLayer()->getLayerArity();
+  include=new bool[numfields];
+
+  for (int i=0;i<numfields; i++) include[i]=true;
+
+  Font font=Font (15.0000f, Font::plain);
+  addAndMakeVisible(exportlabel = new Label(String::empty, T("Export:")));
+  exportlabel->setFont(font);
+
+  addAndMakeVisible (exportmenu = new ComboBox (String::empty));
+  exportmenu->setEditableText (false);
+  exportmenu->addItem (T("Layer"), 1);
+  exportmenu->addItem (T("Selection"), 2);
+  exportmenu->setSelectedId(1);
+  exportmenu->setItemEnabled(2, plotter->getPlotView()->isSelection());
+
+  addAndMakeVisible(tolabel=new Label(String::empty, T("For:")));
+  tolabel->setFont (font);
+
+  addAndMakeVisible(tomenu = new ComboBox (String::empty));
+  tomenu->setEditableText(false);
+  tomenu->addItem(T("SAL"), 1);
+  tomenu->addItem(T("Lisp"), 2);
+  tomenu->setSelectedId(1);
+
+  addAndMakeVisible(fieldsbutton = new TextButton (String::empty));
+  fieldsbutton->setButtonText(T("Included Fields..."));
+  fieldsbutton->addButtonListener (this);
+
+  addAndMakeVisible(formatlabel = new Label(String::empty, T("Format:")));
+  formatlabel->setFont(font);
+
+  addAndMakeVisible(formatmenu = new ComboBox(String::empty));
+  formatmenu->setEditableText (false);
+  formatmenu->addItem(T("Envelope List"), 1);
+  formatmenu->addItem(T("Point Records"), 2);
+  formatmenu->addItem(T("Object Definitions"), 3);
+  formatmenu->addItem(T("Pattern Definitions"), 4);
+  formatmenu->addItem(T("Process Definition"), 5);
+  formatmenu->setItemEnabled(4, false);
+  formatmenu->setItemEnabled(5, false);
+
+  // default export for XY is envelope else objects
+  if (plotter->getPlotType()==XYPlot) {
+    formatmenu->setSelectedId(1);
+    formatmenu->setItemEnabled(3, false); 
+  }
+  else 
+    formatmenu->setSelectedId(3);
+
+  addAndMakeVisible(valuelabel=new Label(String::empty, 
+					 T("Value format:")));
+  addAndMakeVisible(valuemenu = new ComboBox(String::empty));
+  valuemenu->addItem(T("0"), 1);
+  valuemenu->addItem(T("0.0"), 2);
+  valuemenu->addItem(T("0.00"), 3);
+  valuemenu->addItem(T("0.000"), 4);
+  valuemenu->addItem(T("0.0000"), 5);
+  valuemenu->setSelectedId(3);
+
+  addAndMakeVisible(exportbutton = new TextButton(String::empty));
+  exportbutton->setButtonText(T("Export"));
+  exportbutton->addButtonListener(this);
+  setSize(440, 140);
+}
+
+ExportPointsDialog::~ExportPointsDialog() {
+  delete[] include;
+  deleteAndZero (exportlabel);
+  deleteAndZero (formatlabel);
+  deleteAndZero (valuelabel);
+  deleteAndZero (exportbutton);
+  deleteAndZero (tolabel);
+  deleteAndZero (tomenu);
+  deleteAndZero (fieldsbutton);
+  deleteAndZero (valuemenu);
+  deleteAndZero (formatmenu);
+  deleteAndZero (exportmenu);
+}
+
+void ExportPointsDialog::resized() {
+  exportlabel->setBounds (16, 16, 56, 24);
+  exportmenu->setBounds (76, 16, 88, 24);
+  tolabel->setBounds (176, 16, 34, 24);
+  tomenu->setBounds (210, 16, 80, 24);
+  fieldsbutton->setBounds (304, 16, 120, 26);
+  formatlabel->setBounds (16, 56, 56, 24);
+  formatmenu->setBounds (77, 56, 150, 24);
+  valuelabel->setBounds (246, 56, 92, 24);
+  valuemenu->setBounds (342, 56, 80, 24);
+  exportbutton->setBounds (274, 96, 150, 24);
+}
+
+void ExportPointsDialog::exportPoints() {
+  Layer* layer=plotter->getFocusLayer();
+  PlotView* plotview=plotter->getPlotView();
+  if (layer->numPoints() == 0)
+    return;
+  bool layerexport=(exportmenu->getSelectedId()==1);
+  bool salexport=(tomenu->getSelectedId()==1);
+  int decimals=valuemenu->getSelectedId()-1;
+  int format=formatmenu->getSelectedId();
+  int numparams=0;
+  int parammask=0;
+
+  // turn included fields into parameter strings for sal or lisp
+  for (int i=0; i<numfields; i++) 
+    if ( include[i] ) {
+      parammask += 1<<i;
+      numparams++;
+    }
+  // do nothing if user deselected all fields!
+  if (numparams==0) return;
+
+  String text = (salexport) ? T("define variable exported = ")
+    : T("(defparameter exported ");
+  int indent,column;
+  String spaces;
+
+  if ((format==1) || (format==2)) {
+    // static number exporting
+    text += (salexport) ? T("{") : T("'(");
+    indent=text.length();
+  }
+  else {
+    // exports require eval form
+    String line = (salexport) ? T("  list(") : T("  (list ");
+    text += T("\n") + line;
+    indent=line.length();
+  }
+  spaces=String::repeatedString(T(" "), indent);
+  column=indent;
+
+  LayerPoint* point;
+  int length=(layerexport) ? layer->numPoints() : plotview->numSelected();
+  for (int i=0; i<length; i++) {
+    point=(layerexport) ? layer->getPoint(i) : plotview->getSelected(i);
+    String one=layer->exportPoint(point, parammask, format,
+				  salexport, decimals);
+    int len=one.length();
+    if (format==3) {
+      column=indent;
+      if (i>0) {
+	text += (salexport) ? T(",\n") : T("\n");
+	text += spaces;
+      }
+    }
+    else if ((column+len) > 73) {
+	column=indent;
+	text += T("\n") + spaces;
+    }
+    else if (i>0)
+      text += T(" ");
+    text+=one;
+    column+=len;
+  }
+  // add appropriate close parens...
+  if (format==3)
+    text += T("\n") + spaces + ((salexport) ? T(")\n") : T("))\n"));
+  else
+    text += (salexport) ? T("}\n") : T("))\n");
+  //  printf("%s\n",text.toUTF8());
+  SystemClipboard::copyTextToClipboard(text);
+}
+
+void ExportPointsDialog::buttonClicked (Button* button) {
+  if (button == exportbutton) {
+    PlotterWindow* win=(PlotterWindow*)getTopLevelComponent();
+    exportPoints();
+    win->getCloseButton()->triggerClick();
+  }
+  else if (button == fieldsbutton) {
+    int i;
+    PopupMenu m;
+    for (i=0; i<numfields; i++)
+      m.addItem(i+1, plotter->getFocusLayer()->getFieldName(i),
+		true, include[i]);
+    i=m.showAt(button);
+    if (i != 0) include[i-1]=(!include[i-1]);
+  }
+}
+
+void PlotterWindow::showExportPointsDialog () {
+  DialogWindow::showModalDialog(T("Export Points to Clipboard"),
+				new ExportPointsDialog(plotter),
+				this,
+				Colour(0xffe5e5e5),
+				true);
+}
