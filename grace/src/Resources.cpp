@@ -10,6 +10,7 @@
 
 #include "Resources.h"
 #include "Editor.h"
+#include "Grace.h"
 
 File getGraceResourceDirectory() {
   // returns the "site wide" resource directory for grace determined
@@ -98,8 +99,26 @@ void commonHelpItemSelected (int cmd, int arg) {
     if (arg == winPlotter)
       res=res.getChildFile(T("doc/plotter.html"));
     if ( res.existsAsFile() )
+#ifdef LINUX
+      // launchInDefaultBrowser on Linux does not for local files so I
+      // have to hardwire a browser. At some point this could be a
+      // Preference setting...
+      {
+	String u=T("file://") + res.getFullPathName();
+        File foxy=File(T("/usr/bin/firefox"));
+        if ( foxy.existsAsFile() ) {
+          foxy.startAsProcess(u.quoted());
+        }
+        else
+	  err=T(">>> Can't open ") + u + T(" because ") +
+	      foxy.getFullPathName() + T(" does not exist.");
+      }
+#endif
+#ifndef LINUX
       URL(res.getFullPathName()).launchInDefaultBrowser();
-    else err=res.getFullPathName();
+#endif
+    else err=T(">>> Help file ") + res.getFullPathName() +
+	   T(" does not exist.");
     break;
 
   case cmdHelpSalTutorial :
@@ -116,7 +135,8 @@ void commonHelpItemSelected (int cmd, int arg) {
     if ( res.existsAsFile() )
 	new EditorWindow(0, (TextBuffer::load | TextBuffer::nosave), 
 			 res.getFullPathName());
-    else err=res.getFullPathName();
+    else err=T(">>> Help file ") + res.getFullPathName() +
+	   T(" does not exist.");
     break;
 
   case cmdHelpURL :
@@ -124,7 +144,8 @@ void commonHelpItemSelected (int cmd, int arg) {
       res=getGraceResourceDirectory().getChildFile(T("doc/sal/sal.html"));
       if ( res.existsAsFile() )
 	url=URL(res.getFullPathName());
-      else err=res.getFullPathName();
+      else err=T(">>> Help file ") + res.getFullPathName() + 
+	     T(" does not exist.");
     }
     else if (arg == 1 )
       url=URL(T("http://commonmusic.sf.net/doc/dict/index.html"));
@@ -135,20 +156,17 @@ void commonHelpItemSelected (int cmd, int arg) {
     if (err==String::empty)
       url.launchInDefaultBrowser();
     break;  
-
   case cmdHelpAboutGrace :
     break;
-
   default :
     break;
   }
 
-  /*  if (err != String::empty ) {
+  if (err != String::empty ) {
     GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
-    ConsoleWindow* con=app->GetConsole();
-    con->consolePrintError(T(">>> Help file ") + err + T(" does not exist."));
+    app->getConsole()->consolePrintError(err);
   }
-  */
+  return;
 }
 
 void addCommonWindowItems(PopupMenu* menu, GraceWindowType w) {
