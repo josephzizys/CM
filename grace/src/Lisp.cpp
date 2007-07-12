@@ -763,13 +763,24 @@ bool LispConnection::launchLisp () {
     console->consolePrintError(msg);
     return false;
   }
-  // Dont start if Grace system definition isnt found.
-  File load = getLispSystemsDirectory().getChildFile(T("grace/grace.asd"));
-  if (! load.existsAsFile() ) {
-    console->consolePrintError( T(">>> System file ") + 
-				load.getFullPathName() + 
-				T(" does not exist.\n"));
-    return false;
+  // Dont start if Grace system definition isnt found. look under both
+  // LispSystemsDirectory and GraceResourceDirectory
+  File load;
+  File lsys = getLispSystemsDirectory().getChildFile(T("grace/grace.asd"));
+  if (lsys.existsAsFile() )
+    load=lsys;
+  else {
+    File reso = getGraceResourceDirectory().getChildFile(T("grace/grace.asd"));    
+    if ( reso.existsAsFile() ) 
+      load=reso;
+    else {
+      String err = T(">>> Grace system definition file grace/grace.asd cannot be found under the Lisp systems directory ") +
+	lsys.getFullPathName();
+      if (reso != lsys)
+	err += T(" or under the Grace resource directory ") + reso.getFullPathName() ;
+      console->consolePrintError(err);
+      return false;
+    }
   }
   // build --eval expers for starting the grace server. spread over
   // multiple args to avoid package nonsense...
