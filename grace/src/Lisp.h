@@ -96,7 +96,7 @@ class ASDF {
     if (path != String::empty) return File(path);
     path=findASDFFile(dir);
     if (path != String::empty) return File(path);
-    return File(getASDFFileName());
+    return File::nonexistent;
   }
   String getLoadForm(String path);
 };

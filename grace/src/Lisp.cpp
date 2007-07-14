@@ -750,16 +750,17 @@ bool LispConnection::launchLisp () {
   Lisp* lisp = getLisp();
   // Do upfront checks to make sure we can start Lisp...
   if (lisp == (Lisp *)NULL) {
-    console->consolePrintError(T(">>> Lisp has not been configured.\n"));
+    console->consolePrintError(T(">>> Lisp failed to start, use Console>Lisp>Configure Lisp... to configure the Lisp session.\n"));
     return false;
   }
   String prog = lisp->getLispProgram();
   if (prog == String::empty) {
-    console->consolePrintError(T(">>> Lisp program has not been set.\n"));
+    console->consolePrintError(T(">>> Lisp program has not been set. Use Console>Lisp>Configure Lisp... to configure the Lisp session.\n"));
     return false;
   }
   if (! File(prog).existsAsFile() ) {
-    String msg=T(">>> Lisp program ") + prog + T(" does not exist.\n");
+    String msg=T(">>> Lisp program ") + prog + 
+      T(" does not exist.\nUse Console>Lisp>Configure Lisp... to configure the Lisp session.\n");
     console->consolePrintError(msg);
     return false;
   }
@@ -774,10 +775,11 @@ bool LispConnection::launchLisp () {
     if ( reso.existsAsFile() ) 
       load=reso;
     else {
-      String err = T(">>> Grace system definition file grace/grace.asd cannot be found under the Lisp systems directory ") +
+      String err = T(">>> System file grace.asd cannot be found under the Lisp systems directory ") +
 	lsys.getFullPathName();
       if (reso != lsys)
-	err += T(" or under the Grace resource directory ") + reso.getFullPathName() ;
+	err += T(" or under the Grace resource directory ") + reso.getFullPathName() + T(".");
+      err += T("\nUse Console>Lisp>Configure Lisp... to configure the Lisp session.");
       console->consolePrintError(err);
       return false;
     }
@@ -800,7 +802,8 @@ bool LispConnection::launchLisp () {
   console->consolePrint(T("Launching ") + prog + T(" ") + args + T("\n"));
 
   if (! File(prog).startAsProcess(args) ) {
-    console->consolePrintError(T(">>> Lisp program ") + prog + T(" failed to start.\n"));
+    console->consolePrintError(T(">>> Lisp program ") + prog + 
+      T(" failed to start.\nUse Console>Lisp>Configure Lisp... to configure the Lisp session.\n"));
     return false;
   }
   return true;
