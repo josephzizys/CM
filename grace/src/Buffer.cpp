@@ -25,6 +25,7 @@ TextBuffer::TextBuffer (syntaxID id, int flg)
   setCaretPosition(0);
   setPoint(0);
   initSyntax(id);
+  setPopupMenuEnabled(false);
 #ifdef JUCE_MAC
   setFlagOn(emacsmode);
 #endif
@@ -578,6 +579,10 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 #define META_U 0
 #define META_C 231
 #define KPAD_ENTER 13
+#define ARROWL 28
+#define ARROWR 29
+#define ARROWU 30
+#define ARROWD 31
 #endif
 
 #ifndef JUCE_MAC
@@ -594,11 +599,15 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 #define META_U 85
 #define META_C 67
 #define KPAD_ENTER 13
+#define ARROWL 268435537
+#define ARROWR 268435539
+#define ARROWU 268435538
+#define ARROWD 268435540
 #endif
 
 void TextBuffer::keyMetaAction(const KeyPress& key) {
   int kcode = key.getKeyCode();
-  printf("Meta key: %d\n", kcode );
+  //  printf("Meta key: %d\n", kcode );
   switch ( kcode ) {
   case META_F :
     forwardWord();
@@ -719,16 +728,16 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     evalText();
     break;
     // hkt 000000000000000000000000
-  case 28 : // left 
+  case ARROWL : // left 
     gotoBOL();
     break;
-  case 29 : 
+  case ARROWR : 
     gotoEOL();
     break;
-  case 30 : // up
+  case ARROWU : // up
     gotoBOB();
     break;
-  case 31 : 
+  case ARROWD : 
     gotoEOB();
     break;
 
@@ -762,7 +771,7 @@ void TextBuffer::timerCallback() {
 
 void TextBuffer::stopMatching() {
   if (matching != -1) {
-    printf("stopping matching\n");
+    //printf("stopping matching\n");
     setPoint(matching);  
     setColour(TextEditor::caretColourId, Colours::black);
     matching=-1;
@@ -781,7 +790,7 @@ void TextBuffer::keyPressed (const KeyPress& key) {
   last = lastact;
   setAction(0);
 
-  printf("key=%d mod=%d\n", keyCode, keyMod);
+  //printf("key=%d mod=%d\n", keyCode, keyMod);
   
   if ( isMatching() ) stopMatching();
 
@@ -798,7 +807,11 @@ void TextBuffer::keyPressed (const KeyPress& key) {
       setChanged(true);
       colorizeAfterChange(cmdInsertLine);
       break;
-    case 5 :
+#ifdef JUCE_MAC
+    case 5 :           // Help key
+#else
+    case 268435646 :   // F1
+#endif
       lookupHelpAtPoint();
       break;
     case 8 :  // backspace
@@ -890,7 +903,7 @@ int TextBuffer::incPoint(int i) {
 // hkt 0000000000000000000
 int TextBuffer::gotoBOL () {
   int pos=findCharBackward('\n');
-  printf("pos=%d\n", pos);
+  //  printf("pos=%d\n", pos);
   if (pos<0) return gotoBOB();
   else return setPoint(pos);
 }
@@ -1734,11 +1747,11 @@ void TextBuffer::lookupHelpAtPoint() {
     int len=text.length();
     int beg=skip_syntax(syntax->syntab, text, T("w_"), pos-bol-1, -1);
     int end=skip_syntax(syntax->syntab, text, T("w_"), pos-bol, len);
-    printf("beg=%d, end=%d\n", beg+1, end);
+    //    printf("beg=%d, end=%d\n", beg+1, end);
     if (beg+1==end) return;
     text=text.substring(beg+1,end);
   }
-  printf("lookup help for %s\n", text.toUTF8() );
+  //  printf("lookup help for %s\n", text.toUTF8() );
   SynTok* tok=syntax->getSynTok(text);
   if (tok == (SynTok *)NULL) return;
   String file=T("doc/sal/help/") + text + T(".sal");
