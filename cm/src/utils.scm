@@ -284,7 +284,7 @@
 ;;;   minor:       backwards-compatible API change, i.e. "feature-add"
 ;;;   maintenance: no API change, bug fix only.
 
-(define %cm-version% #x2B0)
+(define %cm-version% #x2B1)
 
 (define (cm-version-number . arg)
   ;; return raw 3 byte version number or version list
