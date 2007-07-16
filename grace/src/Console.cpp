@@ -197,7 +197,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   setVisible(true);
   if (dosplash) {
     showSplash();
-    splash->fadeOutComponent(4000);
+    splash->fadeOutComponent(5000);
     if ( isSplashVisible() ) // user might have clicked
       hideSplash();
   }
@@ -327,6 +327,10 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
   int message;
 
   if ( isSal ) {
+    if (! lisp->getASDF(ASDF::CM)->isLoaded() ) {
+      consolePrintError(">>> SAL: Common Music system is not loaded.\nUse Console>Lisp>Load System>Load... to load Common Music.\n");
+      return;
+    }
     message=LispConnection::msgSalEval;
     code=code.replace(T("\""),T("\\\"") );
     sexpr=( T("(cm::sal ") + String("\"") + code + String("\"") );

@@ -846,7 +846,7 @@ void LispConnection::startLisp () {
 
 void LispConnection::connectionMade () {
   lispinfo=pollfile.loadFileAsString();
-  printf("lispinfo=%s\n", lispinfo.toUTF8());
+  //printf("lispinfo=%s\n", lispinfo.toUTF8());
   deletePollFile();
 
   console->consolePrintValues(T(" =:)\n"));
@@ -996,7 +996,7 @@ void LispConnection::handleListFeatures (const MemoryBlock &message) {
 
 void LispConnection::handleMessage (const Message& message) {
   MemoryBlock* const data = (MemoryBlock*) message.pointerParameter;
-  printf ("message id %i\n", message.intParameter1);
+  //printf ("message id %i\n", message.intParameter1);
   switch( message.intParameter1 ) {
   case (uint32)msgStatus:   //status messages about the connection
     {
