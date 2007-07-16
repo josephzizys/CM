@@ -8,9 +8,15 @@ charset=iso-8859-1"/> <style type="text/css" media="all"> @import
 
 <h1>Overview:<br/>The Console Window</h1>
 
-<p>The Console window displays text messages and information produced
-by Grace commands. The Console is the "main window" for
-Grace and closing it will quit the application.</a>
+<p>
+
+The Console window is the "main window" for Grace; there is only one
+Console and closing it will quit the application.  The main purpose of
+the Console is to show text messages produced by executing SAL or Lisp
+statements in an <a href="editor.html">Editor window</a> and to dispay errors and warnings produced by Grace
+commands.
+
+</p>
 
 <h2>Color Themes</h2>
 
@@ -18,8 +24,8 @@ Grace and closing it will quit the application.</a>
 themes" to it. A number of different themes are available under the
 <span class="menuitem">View&gt;Themes</span> sub menu. In general, a
 theme controls the Console's background color and the color of
-"normal" output text. A few (special) messages have a consistent
-appearance across all themes:
+"normal" output text. A few special types of messages have a
+consistent appearance across all themes:
 
 <span style="font-size:large;">
 <ul>
@@ -47,8 +53,8 @@ resides. If you have installed a binary version of Grace on Windows or
 OS X then an executable is included under the Application's Resources
 directory.</li>
 
-<li>You must have a <em>Lisp systems directory</em> that contains, at
-a minimum, the Grace runtime Lisp system (system file:
+<li>You should have a <em>Lisp systems directory</em> that contains,
+at a minimum, the Grace runtime Lisp system (system file:
 grace/grace.asd) and the Common Music system (system file:
 cm/cm.asd). The Lisp systems directory is the parent directory that
 Grace will use to find the various <A

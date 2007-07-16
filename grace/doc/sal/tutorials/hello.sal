@@ -1,31 +1,34 @@
 ; A SAL program consists of comments, commands and symbolic
-; expressions. Comments appear in red and are ignored by SAL. They
-; begin with a semi-colon and last until the end of the line: 
+; expressions. Comments are ignored by SAL. They begin with a
+; semi-colon and last until the end of the line:
 
 ; this is a comment
 
 ; A command is a statement that gets executed to accomplish a task.
-; Commands start in the first column and their names appear in blue.
-; Here's a simple first example of the 'print' command. Put the cursor
-; at the end of the command line and press COMMAND-Enter. Then look in
-; the console window for the associated output.
+; Commands expressions start in the first column and their command
+; names appear in blue.  Here's a simple first example using the
+; 'print' command. Put the cursor at the end of the command line and
+; press COMMAND-Enter. Then look in the console window for the
+; associated output. Lisp must be running in order to execute a
+; command.
 
 print "Hello, world!"
 
-; You can access help about any command by placing your cursor on a
-; command word and pressing the Help key (Mac) or F1 on Linux or
-; Windows. Try using the help on the preceding print command...
+; You can command help by placing your cursor on a command word and
+; pressing the Help key on the Mac or F1 on Linux or Windows. Try
+; accessing help on the preceding print command...
 
-; A symbolic expression is something that 'evaluates' to a value. This
-; next print command. contains two clauses: the first clause is a
-; symbolic expression (in this case a function call) that selects a
-; greeting at random, the second clause contains the second word of
-; the message. Note that the comma connects command and function
-; arguments when more than one is specified. Put the cursor at the end
-; of the last line and press COMMAND-Enter several times to see what
-; happens:
+; A symbolic expression is something that produces a value for a
+; command to use. This next print command is spread over two lines and
+; contains two clauses: the first clause is a function call that picks
+; a word at random, the second clause contains the second word of the
+; message. Note that the comma is used to connect command and function
+; arguments when there is more than one of them. Put the cursor at the
+; end of the secnod line and press COMMAND-Enter several times to see
+; what happens:
 
-print odds(.6, "Hello", "Goodbye"), " world!"
+print odds(.6, "Hello", "Goodbye"), 
+      " world!"
 
 ; if you notice that you are pressing COMMAND-Enter a bunch of times,
 ; consider using a loop. Put your cursor just after the 'end' and
@@ -36,22 +39,19 @@ loop repeat 10
 end
  
 ; any construct that concludes with the word 'end' is called a 'code
-; block'. code blocks can i contain more than one statement:
-
-loop for i from 1 to between(5, 20)
-  print i, " " , odds(.6, "Hello", "Goodbye"), " world!"
-end
+; block'. code blocks can declare local variables and contain more
+; than one statement:
 
 begin
-  with key = between(60,90) 
+  with key = between(60,90) ,
        amp = random(128)
-  print msg
+  print "my random amp is ", amp
   print "my random keynum is ", key
 end
 
-; Here is an example of defining a musical algorithm. Put the cursor
-; just after the word 'end' and press COMMAND-Enter to define the
-; process:
+; Here is an example of defining a musical algorithm, also a code
+; block. Put the cursor just after the word 'end' and press
+; COMMAND-Enter to define the process:
 
 define process piano-phase (length, keys, tempo)
   run 
@@ -74,10 +74,10 @@ begin
               piano-phase (length, notes, .17))
 end
 
-; lets have the block shuffle the trope to compose differnt versions
-; of the piece each time we press COMMAND-Enter. since we are not sure what we will be hearing, we save
-; different versions of the piece so we can choose the one we like the
-; best:
+; shuffle the trope to compose differnt versions of the piece each
+; time we press COMMAND-Enter. since we are not sure what we will be
+; hearing, we save different versions of the piece so we can choose
+; the one we like the best:
 
 begin 
   with notes = shuffle( {e4 fs4 b4 cs5 d5 fs4 e4 cs5 b4 fs4 d5 cs5}),
@@ -87,43 +87,4 @@ begin
               piano-phase (length, notes, .17))
 end
 
-
- Moeglich natuerlich auch die Arbeit mit Hertz oder mit ganzzahligen
-; Proportionen
-; Beispiel: Ein Abschnitt, der aus Unterabschnitten mit zufaellig
-; gewaehlten Obertoenen zu gegebenen Grundtoenen besteht
-
-define function partial(fund, proportion)
-  begin
-    with freq = hertz(fund) * proportion
-  return keynum(freq, :hz)
-
-define process partiels(fund, partials, tpo)
-  run
-    for f in fund
-    loop
-      for p in shuffle(partials)
-      for tme from 0 by tpo
-      output make(<midi>, time: now() + tme, duration: tpo, 
-                  keynum: partial(f,p))
-    end
-    wait length(partials) * tpo + .25
-  end
-
-sprout partiels({c1 af0 e1 cs1 f1 d1 bf0},{4 5 6 7 9 11 13},.2)
-
-; Das Gleiche mit vierstimmigen Akkorden
-
-define process partiels2(fund,partials,tpo)
-  run
-    for f in fund
-    loop
-      for p in shuffle(partials)
-      repeat 4
-      output make(<midi>, time: now(), duration: tpo, keynum: partial(f,p))
-    end
-    wait tpo + .1
-  end
-
-sprout partiels2({c1 af0 e1 cs1 f1 d1 bf0},{4 5 6 7 9 11 13},2)
 
