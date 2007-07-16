@@ -209,6 +209,8 @@ class TextBuffer : public TextEditor,
   void lookupHelpAtPoint() ;
   void reformatCommentBlock () ;
   void changeCase(int flag);
+  int findCharForward(char c);
+  int findCharBackward(char c);
 };
 
 

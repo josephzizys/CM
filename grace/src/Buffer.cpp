@@ -324,6 +324,8 @@ bool TextBuffer::perform (const InvocationInfo& info) {
   case cmdEditPaste:
     paste();
     setChanged(true);
+    // hkt 0000000000000000000
+    colorizeAfterChange(cmdEditPaste);
     break;
   case cmdEditSelectAll:
     selectAll();
@@ -716,6 +718,20 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
   case KPAD_ENTER :
     evalText();
     break;
+    // hkt 000000000000000000000000
+  case 28 : // left 
+    gotoBOL();
+    break;
+  case 29 : 
+    gotoEOL();
+    break;
+  case 30 : // up
+    gotoBOB();
+    break;
+  case 31 : 
+    gotoEOB();
+    break;
+
   default :
     keyIllegalAction(key);
     break;
@@ -805,12 +821,16 @@ void TextBuffer::keyPressed (const KeyPress& key) {
       if ( (syntaxId==syntaxSal) && isParensMatching() )
 	matchParens();
       break;
+      // hkt ???
     default :  // inserting text
       if (31<keyCode && keyCode<127) {
       TextEditor::keyPressed(key);
       setChanged(true);
       colorizeAfterChange(cmdInsertChar);
       }
+      // hkt 00000000000000
+      else TextEditor::keyPressed(key);
+
     }
   else if (flag < 1)
     keyIllegalAction(key);
@@ -867,16 +887,32 @@ int TextBuffer::incPoint(int i) {
   return setPoint(point() + i);
 }
 
+// hkt 0000000000000000000
+int TextBuffer::gotoBOL () {
+  int pos=findCharBackward('\n');
+  printf("pos=%d\n", pos);
+  if (pos<0) return gotoBOB();
+  else return setPoint(pos);
+}
+
+int TextBuffer::gotoEOL () {
+  int pos=findCharForward('\n');
+  if (pos<0) return gotoEOB();
+  else return setPoint(pos);
+}
+/*
 int TextBuffer::gotoBOL () {
   static KeyPress key = KeyPress(KeyPress::homeKey);
   TextEditor::keyPressed(key);
   return point();
 }
+
 int TextBuffer::gotoEOL () {
   static KeyPress key = KeyPress(KeyPress::endKey);
   TextEditor::keyPressed(key);
   return point();
-}
+  }
+*/
 
 int TextBuffer::gotoBOB () {
   return setPoint( 0 );
@@ -898,6 +934,55 @@ int TextBuffer::backwardChar() {
   return point();
 }
 
+bool TextBuffer::moveLine(int n) {
+  // the main function for moving and accessing line text. moves N
+  // lines forward or backward and positions point at BOL.  returns
+  // true if line actually moved, else false. checking for false
+  // allows code to stop line iteration without bounds checking.
+  int old = gotoBOL();
+  // warning: this code assumes setting point out of bounds is legal
+  if (n < 0) {
+    for (int i=n; i<0; i++) {
+      incPoint(-1);
+      gotoBOL();
+    }
+  }
+  else if (n > 0) {
+    for (int i=0; i<n; i++) {
+      gotoEOL();
+      incPoint(1);
+    }
+  }
+  //printf("in move line, new position is %d.\n", point() );
+  return  ( pointBOL() == old ) ? false : true;
+}
+
+void TextBuffer::nextLine() {
+  // Emacs C-n  motion including goal column
+  int col;
+  if ( ! isLastAction(actMoveLine) )
+    goalColumn=pointColumn();
+  moveLine(1);
+  col=pointColumn();
+  if ( (col < goalColumn) && (pointLineLength() >= goalColumn) )
+    incPoint(goalColumn-col);
+  setAction(actMoveLine);
+}
+
+void TextBuffer::previousLine() {
+  // Emacs C-p motion including goal column
+
+  int col;
+  if ( ! isLastAction(actMoveLine) )
+    goalColumn=pointColumn();
+  moveLine(-1);
+  col=pointColumn();
+  if ( (col < goalColumn) && (pointLineLength() >= goalColumn) )
+    incPoint(goalColumn-col);
+  setAction(actMoveLine);
+}
+
+/*
 bool TextBuffer::moveLine(int n) {
   // the main function for moving and accessing line text. its based
   // on up/down key so that does not require buffer bounds checking to
@@ -943,6 +1028,8 @@ void TextBuffer::previousLine() {
     incPoint(goalColumn-col);
   setAction(actMoveLine);
 }
+
+*/
 
 void TextBuffer::forwardScreen() {
   static KeyPress key = KeyPress(KeyPress::pageDownKey);
@@ -1762,4 +1849,56 @@ void TextBuffer::changeCase(int flag) {
   beg=point();
   colorizeAfterChange(cmdIndent); // recolorize whole line for now..
   setPoint(beg);
+}
+
+// hkt 0000000000000000
+
+#define CHUNKSIZE 128
+
+int TextBuffer::findCharForward(char c) {
+  int pos=point();
+  int len;
+  int loc=-1;
+  String str;
+  // potential gocha: this works only because its not an error to pass
+  // getTextSubstring an index that is out of range.
+  str = getTextSubstring(pos, pos+CHUNKSIZE);
+  len = str.length();
+  while (1) {
+    if (len==0) break;
+    for (int i=0; i<len; i++)
+      if (str[i] == c) {
+	loc=pos+i;
+	break;
+      }
+    if (loc>-1) break;
+    pos += len;
+    str = getTextSubstring(pos, pos+CHUNKSIZE);
+    len = str.length();
+  }
+  return loc;
+}
+
+int TextBuffer::findCharBackward(char c) {
+  int pos=point();
+  int len;
+  int loc=-1;
+  String str;
+  // potential gocha: this works only because its not an error to pass
+  // getTextSubstring an index that is out of range.
+  str = getTextSubstring(pos-CHUNKSIZE, pos);
+  len = str.length();
+  while (1) {
+    if (len==0) break;
+    for (int i=len-1; i>-1; i--)
+      if (str[i] == c) {
+	loc=pos-(len-i)+1;
+	break;
+      }
+    if (loc>-1) break;
+    pos -= len;
+    str = getTextSubstring(pos-CHUNKSIZE, pos);
+    len = str.length();
+  }
+  return loc;
 }
