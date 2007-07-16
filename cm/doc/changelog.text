@@ -1,3 +1,11 @@
+CM 2.11.1
+
+  o Added SAL and grace support to the kernel sources, new features
+  #+grace and #+sal
+  o Fixed the double-compile issue when cl sources are generated from
+  scheme.
+  o Cleaned up clisp and sbcl code to eliminate most style warnings.
+
 CM 2.11.0
 
   o New Gnuplot support: gnuplot function writes data sets to gnuplot
