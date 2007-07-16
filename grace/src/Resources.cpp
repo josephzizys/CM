@@ -19,10 +19,16 @@ File getGraceResourceDirectory() {
   //   Windows:  {exedir}/Resources/
   //   Linux:    {exedir}/../lib/grace
   File exe = File::getSpecialLocation(File::currentExecutableFile);
+
   if ( isHostWindows() )     // win32: "{exe}/Resources/"
     return exe.getSiblingFile(T("Resources"));
-  else if ( isHostLinux() )  // Linux: "{exe}../lib/grace/"
-    return exe.getParentDirectory().getParentDirectory().getChildFile(T("lib/grace"));
+  else if ( isHostLinux() ) {  // Linux: "{exe}../lib/grace/"
+    //    return
+    // exe.getParentDirectory().getParentDirectory().getChildFile(T("lib/grace"));
+    // goddam it, currentExecutableFile is nonsense on linux. for now
+    // i simply return a hardwired path.
+    return File(T("/usr/local/lib/grace"));
+  }
   else if ( isHostMacOSX() ) // OSX:   "{exe}../Resources/"
     return exe.getParentDirectory().getParentDirectory().getChildFile(T("Resources"));
   else
@@ -76,7 +82,8 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   sub1.addItem(cmdHelpSalTutorial+8, T("Musical Processes"));
   menu->addSubMenu(T("SAL Tutorials"), sub1, true);
   menu->addSeparator();
-  menu->addItem(cmdHelpURL+0, T("SAL Dictionary"));
+  //  menu->addItem(cmdHelpURL+0, T("SAL Dictionary"));
+  menu->addItem(cmdHelpWindow+11, T("SAL Dictionary"));
   menu->addItem(cmdHelpURL+1, T("CM Dictionary"));
   menu->addItem(cmdHelpURL+2, T("CM Homepage"));
   menu->addItem(cmdHelpURL+3, T("Juce Homepage"));
@@ -98,6 +105,9 @@ void commonHelpItemSelected (int cmd, int arg) {
       res=res.getChildFile(T("doc/editor.html"));
     if (arg == winPlotter)
       res=res.getChildFile(T("doc/plotter.html"));
+    else if (arg==11)
+      res=res.getChildFile(T("doc/sal/sal.html"));
+
     if ( res.existsAsFile() )
 #ifdef LINUX
       // launchInDefaultBrowser on Linux does not for local files so I
