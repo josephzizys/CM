@@ -1344,9 +1344,10 @@ public:
  **********************************************************************/
 
 const StringArray PlotterWindow::getMenuBarNames () {
-  const tchar* const menuNames[] = { T("Plotter"), T("Edit"), T("Layer"), 
-				     T("View"), T("Compose"),
-				     T("Analyze"), T("Windows"), T("Help"), 0 };
+  const tchar* 
+    const menuNames[] = { T("Plotter"), T("Edit"), T("Layer"), T("View"), 
+			  // T("Compose"),T("Analyze"),
+			  T("Windows"), T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
 
@@ -1471,7 +1472,7 @@ const PopupMenu PlotterWindow::getMenuForIndex (int idx,
     menu.addSeparator();
     menu.addItem( Plotter::cmdViewMouseGuide, T("Mouse Guide"), false);
     break;
-  case 4 :
+    /*  case 4 :
     menu.addItem( Plotter::cmdComposeDistributions, T("Distributions..."),
 		  false);
     menu.addItem( Plotter::cmdComposeGenerate, T("Generate..."), 
@@ -1481,10 +1482,11 @@ const PopupMenu PlotterWindow::getMenuForIndex (int idx,
     menu.addItem( Plotter::cmdAnalyzeHistogram, T("Histogram..."), false);
     menu.addItem( Plotter::cmdAnalyzeDeviation, T("Deviation..."), false);
     break;
-  case 6 :
+    */
+  case 4 :
     addCommonWindowItems(&menu, winPlotter);
     break;
-  case 7 :
+  case 5 :
     addCommonHelpItems(&menu, winPlotter);
     break;
   }
@@ -1567,9 +1569,9 @@ void PlotterWindow::menuItemSelected (int id,
   case Plotter::cmdViewBgMousing :
   case Plotter::cmdViewMouseGuide :
   default :
-    if (idx==6)
+    if (idx==4)
       commonWindowItemSelected(cmd,arg);
-    else if (idx==7)
+    else if (idx==5)
       commonHelpItemSelected(cmd,arg);
     break;
   }
