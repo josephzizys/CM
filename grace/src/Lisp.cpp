@@ -392,7 +392,9 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   openmclbutton->setButtonText (T("OpenMCL"));
   openmclbutton->addButtonListener (this);
   openmclbutton->setRadioGroupId(1);
-  openmclbutton->setEnabled(c->findLisp(Lisp::OpenMCL)->isSupportedOS());
+  //  openmclbutton->setEnabled(c->findLisp(Lisp::OpenMCL)->isSupportedOS());
+  // gray streams dont work
+  openmclbutton->setEnabled(false);
 
   addAndMakeVisible (clispbutton = new ToggleButton (String::empty));
   clispbutton->setButtonText (T("CLisp"));
@@ -888,7 +890,7 @@ bool LispConnection::loadASDF(ASDF* asdf) {
     String bad=asdf->getPathName();
     if (bad==String::empty)
       bad=getLispSystemsDirectory().getChildFile(T("**")).getChildFile(asdf->getASDFFileName()).getFullPathName();
-    console->consolePrintError( T(">>> System ") + asdf->getASDFName() + 
+    console->consolePrintWarning( T("Warning: system ") + asdf->getASDFName() + 
 				T(" not found:\n") + bad + 
 				T(" does not exist.\n"));
     return false;
@@ -922,7 +924,7 @@ bool LispConnection::chooseASDF() {
 
 void LispConnection::sendLispSexpr(String sexpr, int msg) {
   if (! isConnected() ){
-    console->consolePrintError(T("Lisp: not connected.\n"));
+    console->consolePrintError(T(">>> Lisp not connected. Use Console>Lisp>Start Lisp\nto start a Lisp session.\n"));
     return;
   }
   int len=sexpr.length();
@@ -949,7 +951,6 @@ void LispConnection::postMessage (const MemoryBlock &message) {
 }
 
 void LispConnection::postWarning (const MemoryBlock &message) {
-   printf("post warning\n");
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->consolePrintWarning(text);
@@ -957,7 +958,6 @@ void LispConnection::postWarning (const MemoryBlock &message) {
 }
 
 void LispConnection::postError (const MemoryBlock &message) {
-  printf("post error\n");
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->consolePrintError(text);
@@ -977,9 +977,7 @@ void LispConnection::handleBinaryData (const MemoryBlock &message) {
 
 void LispConnection::handleLoadSystem (const MemoryBlock &message) {
   int len=message.getSize();
-  printf("received LoadSystem message system, len=%d", len);
   String text=String((const char *)message, len);
-  printf(" text=%s\n", text.toUTF8());
   ASDF* s=findASDF(text);
   if (s != (ASDF *)NULL)
     s->setLoaded(true);
