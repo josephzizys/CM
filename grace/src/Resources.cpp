@@ -194,9 +194,10 @@ void addCommonWindowItems(PopupMenu* menu, GraceWindowType w) {
 }
 
 void commonWindowItemSelected (int cmd, int arg) {
+  TopLevelWindow* w;
   switch (cmd) {
   case cmdWindowSelect :
-    TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(arg);
+    w= TopLevelWindow::getTopLevelWindow(arg);
     if (w != (TopLevelWindow *)NULL) {
       w->grabKeyboardFocus();
       w->toFront(true);
@@ -206,7 +207,7 @@ void commonWindowItemSelected (int cmd, int arg) {
     {
       bool n=TopLevelWindow::getTopLevelWindow(0)->isUsingNativeTitleBar();
       for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++) {
-	TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(i);
+	w = TopLevelWindow::getTopLevelWindow(i);
 	w->setUsingNativeTitleBar(!n);
       }
     }
