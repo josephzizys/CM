@@ -76,9 +76,10 @@
 	 )
 
 ;; Items shared across different menubars. [Resource.h]
-(enums 4 "SharedCommand" "WindowSelect"
-         "HelpWindow" "HelpSalTutorial" "HelpURL"
-         "HelpAboutGrace")
+(enums 4 "SharedCommand" "WindowSelect" "WindowNative" 
+       "WindowConsole" 
+       "HelpWindow" "HelpSalTutorial" "HelpURL"
+       "HelpAboutGrace")
 
 ||#
 
