@@ -19,10 +19,12 @@ enum GraceWindowType {winConsole=1, winEditor, winPlotter};
 
 enum SharedCommand {
   cmdWindowSelect = 130816,
-  cmdHelpWindow = 131072,
-  cmdHelpSalTutorial = 131328,
-  cmdHelpURL = 131584,
-  cmdHelpAboutGrace = 131840};
+  cmdWindowNative = 131072,
+  cmdWindowConsole = 131328,
+  cmdHelpWindow = 131584,
+  cmdHelpSalTutorial = 131840,
+  cmdHelpURL = 132096,
+  cmdHelpAboutGrace = 132352};
 
 void addCommonWindowItems(PopupMenu* menu, GraceWindowType w);
 void addCommonHelpItems(PopupMenu* menu, GraceWindowType w);

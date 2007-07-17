@@ -183,16 +183,33 @@ void addCommonWindowItems(PopupMenu* menu, GraceWindowType w) {
   // window type is ignored for now but could be used to organize the
   // window list according to the type of window that is filling the
   // menu. of course each window would have to record its 'type'...
+  bool n=TopLevelWindow::getTopLevelWindow(0)->isUsingNativeTitleBar();
   for (int i=0; i<  TopLevelWindow::getNumTopLevelWindows(); i++) {
     TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(i);
     menu->addItem(cmdWindowSelect+i, w->getName() );
   }
+  menu->addSeparator();
+  menu->addItem(cmdWindowNative, T("Native Titlebars"), true,
+		n);
 }
 
 void commonWindowItemSelected (int cmd, int arg) {
   switch (cmd) {
   case cmdWindowSelect :
-    printf("fixme to select window #%d!\n", arg);
+    TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(arg);
+    if (w != (TopLevelWindow *)NULL) {
+      w->grabKeyboardFocus();
+      w->toFront(true);
+    }
+    break;
+  case cmdWindowNative :
+    {
+      bool n=TopLevelWindow::getTopLevelWindow(0)->isUsingNativeTitleBar();
+      for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++) {
+	TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(i);
+	w->setUsingNativeTitleBar(!n);
+      }
+    }
     break;
   default :
     break;
