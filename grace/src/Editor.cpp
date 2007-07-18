@@ -288,6 +288,10 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 
   editor = new EditorComponent((syntaxID)synt, flags) ;
   setContentComponent(editor);
+
+  PropertiesFile* p=GracePreferences::getInstance()->getProperties();
+  setUsingNativeTitleBar(p->getBoolValue(T("NativeTitleBars")));
+  
   TextBuffer* buffer=editor->buffer;
   Font font= Font(Font::getDefaultMonospacedFontName(),
 		  17.0f, Font::plain);

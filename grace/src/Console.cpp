@@ -190,6 +190,9 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   splash=new SplashComponent();
   setContentComponent(console);
   setResizable(true, true); 
+  
+  PropertiesFile* p=GracePreferences::getInstance()->getProperties();
+  setUsingNativeTitleBar(p->getBoolValue(T("NativeTitleBars")));
   //setAlwaysOnTop(true);
   console->buffer->setVisible(true);
 
