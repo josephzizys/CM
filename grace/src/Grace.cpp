@@ -27,6 +27,7 @@ void GraceApp::initialise (const String& commandLine) {
   audioManager.initialise(1,2,0,true);
   fontList = FontList::getInstance();
   console = new ConsoleWindow(true);
+  prefs=GracePreferences::getInstance();
   printBanner();
   
 }
@@ -37,20 +38,22 @@ void GraceApp::graceQuit (bool ask) {
     if (AlertWindow::showOkCancelBox
 	(AlertWindow::QuestionIcon, T("Quit"),
 	 T("Really quit Grace? Any unsaved work will be lost."),
-	 T("OK"), T("Cancel"))
+	 T("   OK   "), T("Cancel"))
 	)
       doit=true;
   }
   else doit=false;
-  if (doit)
+  if (doit) {
     JUCEApplication::quit();
+  }
 }
 
-
 void GraceApp::shutdown () {
-  /*  delete console;
-  delete audioManager;
-  delete commandManager;
+  delete prefs;
+  /*  WHY IS THIS COMMENTED OUT?
+     delete console;
+     delete audioManager;
+     delete commandManager;
   */
   //LookAndFeel::setDefaultLookAndFeel(0); // this causes crash. not needed. 
 }

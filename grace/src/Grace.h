@@ -38,7 +38,7 @@ public:
     void printBanner();
     AudioDeviceManager * getAudioDeviceManager();
     ConsoleWindow* getConsole() {return console;}
-    
+    GracePreferences* prefs;
 };
 
 

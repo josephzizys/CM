@@ -85,4 +85,15 @@ public:
   //    const GraceSplash& operator= (const GraceSplash&);
 };
 
+class GracePreferences {
+ public:
+  PropertiesFile* propfile;
+  GracePreferences();
+  ~GracePreferences();
+  PropertiesFile* getProperties() {return propfile;}
+  bool save();
+  void initPropertiesFile ();
+  juce_DeclareSingleton (GracePreferences, true);
+};
+
 #endif 

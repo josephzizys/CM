@@ -217,6 +217,47 @@ void commonWindowItemSelected (int cmd, int arg) {
   }
 }
 
+//
+// Preferences
+//
+
+juce_ImplementSingleton (GracePreferences);
+
+GracePreferences::GracePreferences() {
+  initPropertiesFile();
+}
+
+void GracePreferences::initPropertiesFile () {
+  propfile=PropertiesFile::createDefaultAppPropertiesFile
+    (T("Grace"), T("prefs"), String::empty, false, -1, 
+     PropertiesFile::storeAsXML);
+  if (!propfile->containsKey(T("NativeTitleBars")))
+    propfile->setValue(T("NativeTitleBars"), true);
+  if (!propfile->containsKey(T("LispImplementation")))
+    propfile->setValue(T("LispImplementation"), T(""));
+  if (!propfile->containsKey(T("LispExecutable")))
+    propfile->setValue(T("LispExecutable"), T(""));
+  if (!propfile->containsKey(T("LispExecutableArgs")))
+    propfile->setValue(T("LispExecutableArgs"), T(""));
+  if (!propfile->containsKey(T("LispSystemsDirectory")))
+    propfile->setValue(T("LispSystemsDirectory"), 
+		       getGraceResourceDirectory().getFullPathName());
+} 
+
+//   setUsingNativeTitleBar(propfile->getBoolValue(T("NativeTitleBars")));
+
+bool GracePreferences::save() {
+  propfile->save();
+  return true;
+}
+
+GracePreferences::~GracePreferences() {
+  save();
+  delete propfile;
+  clearSingletonInstance();
+}
+
+
 // JUCER_RESOURCE: grace_png, 58074, "/Lisp/grace/grace.png"
 
 static const unsigned char resource_grace_png[] = { 137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,1,193,0,0,1,82,8,2,0,0,0,5,43,243,82,0,0,0,9,112,72,89,115,0,0,11,19,0,0,11,19,1,
