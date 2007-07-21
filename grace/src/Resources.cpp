@@ -278,6 +278,18 @@ void GracePreferences::initPropertiesFile () {
 
   // initialize asdfs to Xml values from file
   asdfs=propfile->getXmlValue( T("LispSystems") );
+
+  recentlyloaded.clear();
+  recentlyloaded.setMaxNumberOfItems(10);
+  recentlyloaded.restoreFromString
+    (propfile->getValue(T("RecentlyLoadedFiles")));
+  recentlyloaded.removeNonExistentFiles();
+
+  recentlyedited.clear();
+  recentlyedited.setMaxNumberOfItems(10);
+  recentlyedited.restoreFromString
+    (propfile->getValue(T("RecentlyEditedFiles")));
+  recentlyedited.removeNonExistentFiles();
 } 
 
 GracePreferences::~GracePreferences() {
@@ -285,13 +297,14 @@ GracePreferences::~GracePreferences() {
   delete propfile;
   delete lisps;
   delete asdfs;
-
   clearSingletonInstance();
 }
 
 bool GracePreferences::save() {
   propfile->setValue(T("LispImplementations"), lisps);
   propfile->setValue(T("LispSystems"), asdfs);
+  propfile->setValue (T("RecentlyLoadedFiles"), recentlyloaded.toString());
+  propfile->setValue (T("RecentlyEditedFiles"), recentlyedited.toString());
   propfile->save();
   return true;
 }
@@ -307,6 +320,40 @@ bool GracePreferences::isNativeTitleBars() {
 void GracePreferences::setNativeTitleBars(bool b) {
   propfile->setValue(T("NativeTitleBars"), b);
 }
+
+
+void GracePreferences::addRecentlyLoadedFile(File f) {
+  recentlyloaded.addFile(f);
+}
+
+File GracePreferences::getRecentlyLoadedFile(int i) {
+  recentlyloaded.getFile(i);
+}
+
+void GracePreferences::clearRecentlyLoadedFiles() {
+  recentlyloaded.clear();
+}
+
+bool GracePreferences::areRecentlyLoadedFiles() {
+  return (recentlyloaded.getNumFiles()>0);
+}
+
+void GracePreferences::addRecentlyEditedFile(File f) {
+  recentlyedited.addFile(f);
+}
+
+File GracePreferences::getRecentlyEditedFile(int i) {
+  recentlyedited.getFile(i);
+}
+
+void GracePreferences::clearRecentlyEditedFiles() {
+  recentlyedited.clear();
+}
+
+bool GracePreferences::areRecentlyEditedFiles() {
+  return (recentlyedited.getNumFiles()>0);
+}
+
 
 //
 // Lisp 
@@ -497,6 +544,13 @@ String ASDF::getLoadForm(String path) {
 XmlElement* GracePreferences::getLispSystems() {
   //return propfile->getXmlValue(T("LispSystems"));
   return asdfs;
+}
+
+void GracePreferences::clearLispSystems() {
+  // process asdfs in reverse order so indexes remain valid after
+  // removal. Grace and CM systems [0 and 1] remain
+  for (int i=numASDFs()-1; i>1; i--)
+    asdfs->removeChildElement(asdfs->getChildElement(i), true);
 }
 
 int GracePreferences::numASDFs () {

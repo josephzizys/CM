@@ -412,7 +412,9 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
     sub2.addItem( cmdGracePlotterNew + SpearPlot, T("Spear"), false);
     sub2.addItem( cmdGracePlotterNew + CLMPlot, T("CLM"), false);
     menu.addSubMenu( T("New Plotter"), sub2, true);    
-    menu.addItem( cmdGraceEditorOpen, T("Open File..."), true);
+
+    menu.addItem( cmdGraceOpenFile, T("Open File..."), true);
+
     menu.addSeparator();
     menu.addItem( cmdGracePreferences, T("Preferences..."), false);
     menu.addSeparator();
@@ -506,16 +508,27 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     new EditorWindow(arg);
     break;
 
-  case cmdGraceEditorOpen :
+  case cmdGraceOpenFile :
     {
       FileChooser choose (T("Open File"), 
 			  File::getSpecialLocation(File::userHomeDirectory),
 			  String::empty, true);
-      if ( choose.browseForFileToOpen() )
-	new EditorWindow(0, TextBuffer::load,
-			 choose.getResult().getFullPathName());
+      if ( choose.browseForFileToOpen() ) {
+	String f=choose.getResult().getFullPathName();
+	new EditorWindow(0, TextBuffer::load, f);
+	p->addRecentlyEditedFile(f);
+      }
     }
     break;
+
+  case cmdGraceOpenRecent :
+    {
+      String f=p->getRecentlyEditedFile(arg).getFullPathName();
+      new EditorWindow(0, TextBuffer::load, f);
+    }
+
+  case cmdGraceClearRecent :
+    p->clearRecentlyEditedFiles();
 
   case cmdGraceQuit :
     app->graceQuit(true);

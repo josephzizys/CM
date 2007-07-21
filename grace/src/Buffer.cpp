@@ -67,6 +67,8 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdFileNewLisp,
     cmdFileNewText,
     cmdFileOpen,
+    cmdFileOpenRecent,
+    cmdFileClearRecent,
     cmdFileSave,
     cmdFileSaveAs,
     cmdFileRevert,
@@ -147,6 +149,12 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   case cmdFileOpen:
     result.setInfo (T("Open..."), String::empty, fileCategory, 0);
     result.addDefaultKeypress (T('O'), ModifierKeys::commandModifier);
+    break;
+  case cmdFileOpenRecent:
+    result.setInfo (T("Open Recent File"), String::empty, fileCategory, 0);
+    break;
+  case cmdFileClearRecent:
+    result.setInfo (T("Clear Recent Files"), String::empty, fileCategory, 0);
     break;
   case cmdFileClose:
     result.setInfo (T("Close"), String::empty, fileCategory, 0);

@@ -124,14 +124,29 @@ class GracePreferences {
   PropertiesFile* propfile;
   XmlElement* lisps; // initalized from property files
   XmlElement* asdfs; // initalized from property files
+  RecentlyOpenedFilesList recentlyloaded;
+  RecentlyOpenedFilesList recentlyedited;
+
   GracePreferences();
   ~GracePreferences();
+  void initPropertiesFile ();
 
   PropertiesFile* getProperties() {return propfile;}
-  bool isNativeTitleBars();
-  void setNativeTitleBars(bool b);
   bool save();
-  void initPropertiesFile ();
+  bool isNativeTitleBars();
+
+  // General preferences
+  void setNativeTitleBars(bool b) ;
+
+  void addRecentlyLoadedFile(File f) ;
+  File getRecentlyLoadedFile(int i) ;
+  bool areRecentlyLoadedFiles();
+  void clearRecentlyLoadedFiles() ;
+
+  void addRecentlyEditedFile(File f) ;
+  File getRecentlyEditedFile(int i) ;
+  bool areRecentlyEditedFiles();
+  void clearRecentlyEditedFiles() ;
 
   // Lisp Implementations support
   XmlElement* getLispImplementations();
@@ -146,9 +161,10 @@ class GracePreferences {
   Lisp* getLisp (int i) ;
   int getLispIndex(Lisp* lisp) ;
   Lisp* findLisp(String name) ;
-  // Lisp ASDF Systems
 
+  // Lisp ASDF Systems support
   XmlElement* getLispSystems() ;
+  void clearLispSystems() ;
   int numASDFs() ;
   ASDF* getASDF(int i) ;
   void addASDF(ASDF* a) ;
