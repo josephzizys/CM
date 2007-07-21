@@ -35,7 +35,6 @@ public:
     const String getApplicationName() ;
     const String getApplicationVersion() ;
     void graceQuit(bool ask);
-    void printBanner();
     AudioDeviceManager * getAudioDeviceManager();
     ConsoleWindow* getConsole() {return console;}
     GracePreferences* prefs;

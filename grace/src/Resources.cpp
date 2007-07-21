@@ -174,7 +174,7 @@ void commonHelpItemSelected (int cmd, int arg) {
 
   if (err != String::empty ) {
     GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
-    app->getConsole()->consolePrintError(err);
+    app->getConsole()->printError(err);
   }
   return;
 }
@@ -223,40 +223,309 @@ void commonWindowItemSelected (int cmd, int arg) {
 
 juce_ImplementSingleton (GracePreferences);
 
-GracePreferences::GracePreferences() {
+GracePreferences::GracePreferences()
+  : lisps ((XmlElement *)NULL),
+    asdfs ((XmlElement *)NULL)
+{
   initPropertiesFile();
 }
 
+// Property File
+
 void GracePreferences::initPropertiesFile () {
+  
   propfile=PropertiesFile::createDefaultAppPropertiesFile
     (T("Grace"), T("prefs"), String::empty, false, -1, 
      PropertiesFile::storeAsXML);
+
+  // initialize any undefined properties
   if (!propfile->containsKey(T("NativeTitleBars")))
     propfile->setValue(T("NativeTitleBars"), true);
-  if (!propfile->containsKey(T("LispImplementation")))
-    propfile->setValue(T("LispImplementation"), T(""));
-  if (!propfile->containsKey(T("LispExecutable")))
-    propfile->setValue(T("LispExecutable"), T(""));
-  if (!propfile->containsKey(T("LispExecutableArgs")))
-    propfile->setValue(T("LispExecutableArgs"), T(""));
+
   if (!propfile->containsKey(T("LispSystemsDirectory")))
     propfile->setValue(T("LispSystemsDirectory"), 
 		       getGraceResourceDirectory().getFullPathName());
+
+  if (!propfile->containsKey(T("LispLaunchAtStartup")) )
+    propfile->setValue(T("LispLaunchAtStartup"), false);
+
+  if (!propfile->containsKey(T("LispImplementations")) ) {
+    XmlElement* top=new XmlElement(T("list"));
+    top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
+				    T("clisp"), T("")));
+    top->addChildElement( new Lisp( T("OpenMCL"), T("cltl"), T("--eval"), 
+				      T("openmcl"), T("")));
+    top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
+				      T("sbcl"), T("")));
+    propfile->setValue(T("LispImplementations"), top);
+  }
+
+  // initialize lisps to Xml list from file
+  lisps=propfile->getXmlValue( T("LispImplementations") );
+
+  if (!propfile->containsKey(T("LispToLaunch")) )
+    setLispToLaunch(getLisp(0));
+
+  if (!propfile->containsKey(T("LispSystems")) ){
+    XmlElement* top=new XmlElement(T("list"));
+    top->addChildElement( new ASDF( T("Grace")));
+    top->addChildElement( new ASDF( T("CM"), String::empty,
+				    T("asdf:load-op"),
+				    String::empty,
+				    T("(cl-user::cm)")));
+    propfile->setValue(T("LispSystems"), top);
+  }
+
+  // initialize asdfs to Xml values from file
+  asdfs=propfile->getXmlValue( T("LispSystems") );
 } 
-
-//   setUsingNativeTitleBar(propfile->getBoolValue(T("NativeTitleBars")));
-
-bool GracePreferences::save() {
-  propfile->save();
-  return true;
-}
 
 GracePreferences::~GracePreferences() {
   save();
   delete propfile;
+  delete lisps;
+  delete asdfs;
+
   clearSingletonInstance();
 }
 
+bool GracePreferences::save() {
+  propfile->setValue(T("LispImplementations"), lisps);
+  propfile->setValue(T("LispSystems"), asdfs);
+  propfile->save();
+  return true;
+}
+
+//
+// General Preferences
+//
+
+bool GracePreferences::isNativeTitleBars() {
+  return propfile->getBoolValue(T("NativeTitleBars"),true);
+}
+
+void GracePreferences::setNativeTitleBars(bool b) {
+  propfile->setValue(T("NativeTitleBars"), b);
+}
+
+//
+// Lisp 
+//
+
+Lisp::Lisp (String n, String t, String o, String e, String a)
+  : XmlElement(T("lisp"))
+{ 
+  if ( isHostWindows() )
+    e+=T(".exe");
+  else
+    e=T("/usr/local/bin/") + e;
+  setAttribute(T("name"), n);
+  setAttribute(T("type"), t);
+  setAttribute(T("optn"), o);
+  setAttribute(T("exec"), e);
+  setAttribute(T("args"), a);
+}
+
+String Lisp::getLispName () {
+  return getStringAttribute(T("name"));
+}
+
+String Lisp::getLispEvalArg () {
+  return getStringAttribute(T("optn"));
+}
+
+String Lisp::getLispProgram () {
+  return getStringAttribute(T("exec"));
+}
+
+void Lisp::setLispProgram (String e) {
+  setAttribute(T("exec"), e);
+}
+
+String Lisp::getLispProgramArgs () {
+  return getStringAttribute(T("args"));
+}
+
+void Lisp::setLispProgramArgs (String a) {
+  setAttribute(T("args"), a);
+}
+
+// Lisp Preferences
+
+XmlElement* GracePreferences::getLispImplementations() {
+  //return propfile->getXmlValue(T("LispImplementations"));
+  return lisps;
+}
+
+Lisp* GracePreferences::getLispToLaunch() {
+  String name=propfile->getValue(T("LispToLaunch"));
+  return findLisp(name);
+}
+
+void GracePreferences::setLispToLaunch(Lisp* l) {
+  if (l==(Lisp *)NULL)
+    propfile->setValue(T("LispToLaunch"), String::empty);
+  else
+    propfile->setValue(T("LispToLaunch"), l->getLispName());
+}
+
+int GracePreferences::numLisps () {
+  return getLispImplementations()->getNumChildElements();
+}
+
+Lisp* GracePreferences::getLisp (int i) {
+  XmlElement* lisps=getLispImplementations();
+  return (Lisp *)(lisps->getChildElement(i));
+}
+
+int GracePreferences::getLispIndex(Lisp* lisp) {
+  if (lisp == (Lisp *)NULL) return -1;
+  XmlElement* lisps=getLispImplementations();
+  int i=0;
+  forEachXmlChildElement(*lisps, c)
+    if ( c->compareAttribute(T("name"), lisp->getLispName()) )
+      return i;
+    else i++;
+  return -1;
+}
+
+Lisp* GracePreferences::findLisp(String name) {
+  XmlElement* lisps=getLispImplementations();
+  forEachXmlChildElement(*lisps, c)
+    if ( c->compareAttribute(T("name"), name) )
+      return (Lisp *) c;
+  return (Lisp *)NULL;
+}
+
+File GracePreferences::getLispSystemsDirectory () {
+  return File(propfile->getValue(T("LispSystemsDirectory")));
+}
+
+void GracePreferences::setLispSystemsDirectory (File dir) {
+  propfile->setValue(T("LispSystemsDirectory"),
+		     dir.getFullPathName());
+}
+
+bool GracePreferences::isLispLaunchAtStartup() {
+  return propfile->getBoolValue(T("LispLaunchAtStartup"),false);
+}
+
+void GracePreferences::setLispLaunchAtStartup(bool b) {
+  propfile->setValue(T("LispLaunchAtStartup"), b);
+}
+
+/// ASDFs
+
+ASDF::ASDF (String n, String p, String o, String b, String a) 
+  : XmlElement(T("asdf"))
+{
+  setAttribute(T("name"), n);
+  setAttribute(T("path"), p);
+  setAttribute(T("oper"), o);
+  setAttribute(T("before"), b);
+  setAttribute(T("after"), a);
+}
+
+String ASDF::getPathName() {
+  return getStringAttribute(T("path"));
+}
+
+void ASDF::setPathName(String p) {
+  setAttribute(T("path"), p);
+}
+
+String ASDF::getASDFName (bool lower) {
+  String name=getStringAttribute(T("name"));
+  if (lower) return name.toLowerCase();
+  return name;
+}
+
+String ASDF::getASDFFileName () {
+  return getASDFName(true) + T(".asd");
+}
+
+String ASDF::findASDFFile(File root) {
+  if ( root.isDirectory() ) {
+    String file=getASDFFileName();
+    if ( root.getChildFile(file).existsAsFile() )
+      return root.getChildFile(file).getFullPathName();
+    else {
+      // search for subdir whose name starts with the ASDF's name, if
+      // it exists then look inside for the .asd file.
+      OwnedArray<File> dirs;
+      OwnedArray<File> asds;
+      int d=root.findChildFiles(dirs, File::findDirectories, false,
+				( getASDFName(true) + T("*")));
+      for (int i=0; i<d; i++) {
+	int b=dirs[i]->findChildFiles(asds, File::findFiles, false, file);
+	if (b==1)
+	  return asds[0]->getFullPathName();
+	asds.clear();
+      }
+    }
+  }
+  return String::empty;
+}
+
+File ASDF::getDefinitionFile(File dir) {
+  String path=getPathName();
+  // if a hardwired path, use it
+  if (path != String::empty) return File(path);
+  // else look under Lisp Systems Directory
+  path=findASDFFile(dir);
+  if (path != String::empty) return File(path);
+  return File::nonexistent;
+}
+
+String ASDF::getLoadForm(String path) {
+  String before=getStringAttribute(T("before"));
+  String after=getStringAttribute(T("after"));
+  String oper=getStringAttribute(T("oper"));
+  String form=T("(progn ");
+  if (before != String::empty)
+    form += before + T(" ");
+  form += T("(load ") + path.quoted() + T(") (asdf:oos (quote ") + 
+    oper + T(") ") + getASDFName(true).quoted() + T(")");
+  if (after != String::empty)
+    form += T(" ") + after;
+  form += T("(values))");
+  return form;
+}
+
+// ASDF Preferences
+
+XmlElement* GracePreferences::getLispSystems() {
+  //return propfile->getXmlValue(T("LispSystems"));
+  return asdfs;
+}
+
+int GracePreferences::numASDFs () {
+  return getLispSystems()->getNumChildElements();
+}
+
+ASDF* GracePreferences::getASDF(int i) {
+  XmlElement* all=getLispSystems();
+  return (ASDF *)(all->getChildElement(i));
+}
+
+void GracePreferences::addASDF (ASDF* s) {
+  XmlElement* all=getLispSystems();
+  ASDF* old=findASDF(s->getASDFName());
+  if (old==(ASDF *)NULL)
+    all->addChildElement(s);
+  else
+    all->replaceChildElement(old,s);
+}
+
+ASDF* GracePreferences::findASDF(String name) {
+  XmlElement* all=getLispSystems();
+  forEachXmlChildElement(*all, c) {
+    if ( c->compareAttribute(T("name"), name, true) ) {
+      return (ASDF *) c;
+    }
+  }
+  return (ASDF *)NULL;
+}
 
 // JUCER_RESOURCE: grace_png, 58074, "/Lisp/grace/grace.png"
 

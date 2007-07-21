@@ -26,10 +26,8 @@ void GraceApp::initialise (const String& commandLine) {
   commandManager = new ApplicationCommandManager();
   audioManager.initialise(1,2,0,true);
   fontList = FontList::getInstance();
-  console = new ConsoleWindow(true);
   prefs=GracePreferences::getInstance();
-  printBanner();
-  
+  console = new ConsoleWindow(true);
 }
 
 void GraceApp::graceQuit (bool ask) {
@@ -73,14 +71,6 @@ bool GraceApp::moreThanOneInstanceAllowed () {
 }
 
 void GraceApp::anotherInstanceStarted (const String& commandLine) {
-}
-
-void GraceApp::printBanner() {
-  String banner = getApplicationName() + T(" ")
-    + getApplicationVersion()
-    + T("\n(c) 2007 Todd Ingalls, Rick Taube\n");
-  console->consolePrint( banner);
-  //console->gotoEOB();
 }
 
 //==============================================================================

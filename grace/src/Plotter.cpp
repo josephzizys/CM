@@ -1585,8 +1585,10 @@ PlotterWindow::PlotterWindow (PlotType pt)
   plotter = new Plotter( pt ) ;
   menubar = new MenuBarComponent(this);
   setMenuBar(this);
-  PropertiesFile* p=GracePreferences::getInstance()->getProperties();
-  setUsingNativeTitleBar(p->getBoolValue(T("NativeTitleBars")));
+
+  GracePreferences* p=GracePreferences::getInstance();
+  setUsingNativeTitleBar(p->isNativeTitleBars());
+
   switch (pt) {
   case MidiPlot :
     title = T("MIDI Plotter");

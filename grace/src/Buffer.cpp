@@ -128,7 +128,8 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   const String editingCategory (T("Editing"));
   const String optionsCategory (T("Options"));
   PopupMenu fontsMenu;
-  
+  GracePreferences* p=GracePreferences::getInstance();
+
   switch (commandID) {
   case cmdFileNewSal:
     result.setInfo (T("SAL"), String::empty, fileCategory, 0);
@@ -214,7 +215,7 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   case cmdSalEval:
     result.setInfo (T("Execute"), String::empty, editingCategory, 0);
     result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
-    result.setActive(getConsole()->lisp->getASDF(ASDF::CM)->isLoaded() );
+    result.setActive(getConsole()->lisp->isLoaded(p->getASDF(ASDF::CM)));
     break;
 
   case cmdSymbolHelp:
@@ -750,7 +751,7 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
 void TextBuffer::keyIllegalAction(const KeyPress& key) {
   String msg = T("Editor: ") + key.getTextDescription() +
     T(" is not a command.\n") ;
-  getConsole()->consolePrint(msg, ConsoleTheme::errorColor);
+  getConsole()->printMessage(msg, ConsoleTheme::errorColor);
 }
 
 // the main key handling function. dispatches to other key handlers
@@ -1129,10 +1130,10 @@ int TextBuffer::forwardSexpr() {
 
   typ = scan_sexpr(syntax->syntab, text, 0, end, SCAN_CODE, &loc);
   if (typ == SCAN_UNLEVEL)
-    getConsole()->consolePrint(T("Editor C-M-f:\nCan't move forward past end of list.\n"),
+    getConsole()->printMessage(T("Editor C-M-f:\nCan't move forward past end of list.\n"),
 			       ConsoleTheme::warningColor);
   else if (typ == SCAN_UNMATCHED)
-    getConsole()->consolePrint(T("Editor C-M-f:\nForward unmatched delimiter.\n"),
+    getConsole()->printMessage(T("Editor C-M-f:\nForward unmatched delimiter.\n"),
 			       ConsoleTheme::warningColor);
   else
     setPoint(pos+loc);
@@ -1145,10 +1146,10 @@ int TextBuffer::backwardSexpr() {
 
   typ = scan_sexpr(syntax->syntab, text, end-1, -1, SCAN_CODE, &loc);
   if (typ == SCAN_UNLEVEL)
-    getConsole()->consolePrint(T("Editor C-M-b:\nCan't move backward past start of list.\n"),
+    getConsole()->printMessage(T("Editor C-M-b:\nCan't move backward past start of list.\n"),
 			       ConsoleTheme::warningColor);
   else if (typ == SCAN_UNMATCHED)
-    getConsole()->consolePrint(T("Editor: C-M-b:\nBackward unmatched delimiter.\n"),
+    getConsole()->printMessage(T("Editor: C-M-b:\nBackward unmatched delimiter.\n"),
 			       ConsoleTheme::warningColor);
   else 
     setPoint(pos-end+loc+1);
@@ -1376,13 +1377,13 @@ int TextBuffer::evalText() {
   }
 
   if (typ==SCAN_EMPTY) {
-    getConsole()->consolePrintWarning(cmdname + T(": nothing selected.\n"));
+    getConsole()->printWarning(cmdname + T(": nothing selected.\n"));
     return 0;
   }
 
   if (typ<SCAN_EMPTY) {
     int l1, l2;
-    getConsole()->consolePrintError( T(">>> ") + cmdname +
+    getConsole()->printError( T(">>> ") + cmdname +
 				     T(": unbalanced expression:\n"));
     // print line containing error with ^ marking offending position
     for (l2=old+1; l2<end; l2++)
@@ -1390,14 +1391,14 @@ int TextBuffer::evalText() {
     for (l1=old; l1>-1; l1--)
       if (text[l1]=='\n') break;
     l1++;
-    getConsole()->consolePrint( text.substring(l1,l2), ConsoleTheme::errorColor);
-    getConsole()->consoleTerpri();
+    getConsole()->printMessage( text.substring(l1,l2), ConsoleTheme::errorColor);
+    getConsole()->terpri();
     String mark=String::empty;
     for (int i=l1; i<old; i++)
       mark += T(" ");
     mark += T("^");
-    getConsole()->consolePrint( mark, ConsoleTheme::errorColor);
-    getConsole()->consoleTerpri();
+    getConsole()->printMessage( mark, ConsoleTheme::errorColor);
+    getConsole()->terpri();
     return 0;
   }
   if (syntaxId==syntaxSal)

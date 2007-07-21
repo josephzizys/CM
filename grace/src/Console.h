@@ -53,8 +53,6 @@ public:
   void getIdealSize(int &idealWidth, int &idealHeight);
 };
 
-
-
 class ConsoleTheme {
  public:
   enum ColorType {bgColor=0, inputColor, outputColor, errorColor, warningColor,
@@ -147,14 +145,15 @@ public:
   void consoleGotoEOB();
   void display(String str,
 	       ConsoleTheme::ColorType typ=ConsoleTheme::outputColor);
-  void consoleTerpri();  
-  void consoleFreshLine();
-  void consolePrint(String str, 
+  void terpri();  
+  void freshLine();
+  void printMessage(String str, 
 		    ConsoleTheme::ColorType typ=ConsoleTheme::outputColor,
 		    bool eob=true);
-  void consolePrintWarning( String str,  bool eob=true);
-  void consolePrintError( String str,  bool eob=true);
-  void consolePrintValues( String str,  bool eob=true);  
+  void printBanner();
+  void printWarning( String str,  bool eob=true);
+  void printError( String str,  bool eob=true);
+  void printValues( String str,  bool eob=true);  
   void consoleEval(String code, bool isSal, bool region);
   void installMenbar();
   void showSplash();

@@ -85,14 +85,75 @@ public:
   //    const GraceSplash& operator= (const GraceSplash&);
 };
 
+
+#define NUM_LISPS 3
+
+class Lisp : public XmlElement {
+ public:
+  Lisp (String n, String t, String o, String e, String a) ;
+  ~Lisp () {}
+  String getLispName () ;
+  String getLispEvalArg () ;
+  String getLispProgram () ;
+  void setLispProgram (String e) ;
+  String getLispProgramArgs () ;
+  void setLispProgramArgs (String a) ;
+}; 
+
+class ASDF : public XmlElement {
+ public:
+
+  enum {Grace=0, CM}; // enums for "required" systems
+
+  ASDF (String n, String p=String::empty,
+	String o=T("asdf:load-op"), String b=String::empty,
+	String a=String::empty) ;
+  ~ASDF () {}
+  String getPathName() ;
+  void setPathName(String p) ;
+  String getASDFName (bool lower=false) ;
+  String getASDFFileName () ;
+  String findASDFFile(File dir);
+  File getDefinitionFile(File dir=File::nonexistent) ;
+  String getLoadForm(String path);
+};
+
+
 class GracePreferences {
  public:
   PropertiesFile* propfile;
+  XmlElement* lisps; // initalized from property files
+  XmlElement* asdfs; // initalized from property files
   GracePreferences();
   ~GracePreferences();
+
   PropertiesFile* getProperties() {return propfile;}
+  bool isNativeTitleBars();
+  void setNativeTitleBars(bool b);
   bool save();
   void initPropertiesFile ();
+
+  // Lisp Implementations support
+  XmlElement* getLispImplementations();
+  File getLispSystemsDirectory () ;
+  void setLispSystemsDirectory (File dir) ;
+  bool isLispLaunchAtStartup();
+  void setLispLaunchAtStartup(bool b);
+
+  Lisp* getLispToLaunch();
+  void setLispToLaunch(Lisp* l);
+  int numLisps () ;
+  Lisp* getLisp (int i) ;
+  int getLispIndex(Lisp* lisp) ;
+  Lisp* findLisp(String name) ;
+  // Lisp ASDF Systems
+
+  XmlElement* getLispSystems() ;
+  int numASDFs() ;
+  ASDF* getASDF(int i) ;
+  void addASDF(ASDF* a) ;
+  ASDF* findASDF(String n) ;
+
   juce_DeclareSingleton (GracePreferences, true);
 };
 

@@ -191,8 +191,8 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   setContentComponent(console);
   setResizable(true, true); 
   
-  PropertiesFile* p=GracePreferences::getInstance()->getProperties();
-  setUsingNativeTitleBar(p->getBoolValue(T("NativeTitleBars")));
+  GracePreferences* p=GracePreferences::getInstance();
+  setUsingNativeTitleBar(p->isNativeTitleBars());
   //setAlwaysOnTop(true);
   console->buffer->setVisible(true);
 
@@ -204,7 +204,9 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
     if ( isSplashVisible() ) // user might have clicked
       hideSplash();
   }
-
+  printBanner();
+  if (p->isLispLaunchAtStartup())
+    lisp->startLisp();
 }
 
 ConsoleWindow::~ConsoleWindow () {
@@ -222,6 +224,14 @@ void ConsoleWindow::closeButtonPressed () {
 /*
  * Console specific methods
  */
+
+void ConsoleWindow::printBanner() {
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  String banner = app->getApplicationName() + T(" ")
+    + app->getApplicationVersion()
+    + T("\n(c) 2007 Todd Ingalls, Rick Taube\n");
+  printMessage( banner);
+}
 
 TextEditor * ConsoleWindow::getConsole() {
   return console->buffer;
@@ -251,6 +261,7 @@ void ConsoleWindow::setConsoleTextColor (int c) {
 
 void ConsoleWindow::consoleClear() {
   console->buffer->clear();
+  printBanner();
 }
 
 void ConsoleWindow::consoleCopy() {
@@ -266,11 +277,11 @@ void ConsoleWindow::consoleGotoEOB() {
   console->buffer->setCaretPosition(0xFFFFFF);
 }
 
-void ConsoleWindow::consoleTerpri() {
+void ConsoleWindow::terpri() {
   console->buffer->insertTextAtCursor(T("\n"));
 }
 
-void ConsoleWindow::consoleFreshLine() {
+void ConsoleWindow::freshLine() {
   int pos=console->buffer->getCaretPosition();
   if (pos > 0) {
     if (T("\n") != console->buffer->getTextSubstring(pos-1,pos)) {
@@ -290,7 +301,7 @@ void ConsoleWindow::display( String str, ConsoleTheme::ColorType typ) {
   console->lock->exit();
 }
 
-void ConsoleWindow::consolePrint( String str, ConsoleTheme::ColorType typ,
+void ConsoleWindow::printMessage( String str, ConsoleTheme::ColorType typ,
 				  bool eob) {
   console->lock->enter();
   //ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
@@ -301,16 +312,16 @@ void ConsoleWindow::consolePrint( String str, ConsoleTheme::ColorType typ,
   console->lock->exit();
 }
 
-void ConsoleWindow::consolePrintWarning( String str,  bool eob) {
-  consolePrint(str, ConsoleTheme::warningColor, eob);
+void ConsoleWindow::printWarning( String str,  bool eob) {
+  printMessage(str, ConsoleTheme::warningColor, eob);
 }
 
-void ConsoleWindow::consolePrintError( String str,  bool eob) {
-  consolePrint(str, ConsoleTheme::errorColor, eob);
+void ConsoleWindow::printError( String str,  bool eob) {
+  printMessage(str, ConsoleTheme::errorColor, eob);
 }
 
-void ConsoleWindow::consolePrintValues( String str,  bool eob) {
-  consolePrint(str, ConsoleTheme::valueColor, eob);
+void ConsoleWindow::printValues( String str,  bool eob) {
+  printMessage(str, ConsoleTheme::valueColor, eob);
 }
 
 float ConsoleWindow::getFontSize( ) {
@@ -328,10 +339,11 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
 				 bool isRegion) {
   String sexpr;
   int message;
+  GracePreferences* p=GracePreferences::getInstance();
 
   if ( isSal ) {
-    if (! lisp->getASDF(ASDF::CM)->isLoaded() ) {
-      consolePrintError(">>> SAL: Common Music system is not loaded.\nUse Console>Lisp>Load System>Load... to load Common Music.\n");
+    if (! lisp->isLoaded(p->getASDF(ASDF::CM)) ) {
+      printError(">>> SAL: Common Music system is not loaded.\nUse Console>Lisp>Load System>Load... to load Common Music.\n");
       return;
     }
     message=LispConnection::msgSalEval;
@@ -382,6 +394,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 {
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   ApplicationCommandManager* cm = app->commandManager;
+  GracePreferences* p=GracePreferences::getInstance();
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3, sub4;
   int val;
@@ -449,13 +462,12 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 	menu.addItem( cmdLispConnect, T("Start Lisp"), 
 		      lisp->isLispStartable()); 
       menu.addSeparator();
-      Lisp* l=lisp->getLisp();
-      for (int i=0; i<lisp->numASDFs(); i++) {
-	ASDF* a=lisp->getASDF(i);
+      for (int i=0; i<p->numASDFs(); i++) {
+	ASDF* a=p->getASDF(i);
 	sub1.addItem( cmdLispLoadSystem + i,
 		      a->getASDFName(),
-		      (running && a->isLoadable(l)),
-		      a->isLoaded());
+		      running,
+		      lisp->isLoaded(a));
       }
       sub1.addSeparator();
       sub1.addItem( cmdLispLoadSystem + 127, T("Load..."), running);
@@ -481,6 +493,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
   int cmd = id & 0xFFFFFF80;
   GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
   ApplicationCommandManager * cm = app->commandManager;
+  GracePreferences* p=GracePreferences::getInstance();
 
   //printf("menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
   switch (cmd) {
@@ -540,7 +553,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
   case cmdLispLoadSystem :
     if ( arg==127 )
       lisp->chooseASDF();
-    else lisp->loadASDF(lisp->getASDF(arg));
+    else lisp->loadASDF(p->getASDF(arg));
     break;
 
   default :
