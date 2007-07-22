@@ -125,7 +125,7 @@ class GracePreferences {
   XmlElement* lisps; // initalized from property files
   XmlElement* asdfs; // initalized from property files
   RecentlyOpenedFilesList recentlyloaded;
-  RecentlyOpenedFilesList recentlyedited;
+  RecentlyOpenedFilesList recentlyopened;
 
   GracePreferences();
   ~GracePreferences();
@@ -138,15 +138,18 @@ class GracePreferences {
   // General preferences
   void setNativeTitleBars(bool b) ;
 
+  // Recently opened and loaded files support
+  void addRecentlyOpenedFile(File f) ;
+  File getRecentlyOpenedFile(int i) ;
+  void addRecentlyOpenedItems(PopupMenu* m, int i);
+  bool areRecentlyOpenedFiles();
+  void clearRecentlyOpenedFiles() ;
+
   void addRecentlyLoadedFile(File f) ;
   File getRecentlyLoadedFile(int i) ;
+  void addRecentlyLoadedItems(PopupMenu* m, int i);
   bool areRecentlyLoadedFiles();
   void clearRecentlyLoadedFiles() ;
-
-  void addRecentlyEditedFile(File f) ;
-  File getRecentlyEditedFile(int i) ;
-  bool areRecentlyEditedFiles();
-  void clearRecentlyEditedFiles() ;
 
   // Lisp Implementations support
   XmlElement* getLispImplementations();

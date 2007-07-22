@@ -104,8 +104,8 @@ public:
     cmdGraceEditorNew = 32896,
     cmdGracePlotterNew = 33152,
     cmdGraceOpenFile = 33408,
-    cmdGraceOpenRecent = 33664,
-    cmdGraceClearRecent = 33920,
+    cmdGraceOpenRecentFile = 33664,
+    cmdGraceClearRecentFiles = 33920,
     cmdGracePreferences = 34176,
     cmdGraceQuit = 34432,
     cmdEditCopy = 34688,
@@ -118,10 +118,12 @@ public:
     cmdAudioAudioSetup = 36480,
     cmdLispConnect = 36736,
     cmdLispLoadSystem = 36992,
-    cmdLispLoadFile = 37248,
+    cmdLispLoadRecentSystem = 37248,
     cmdLispClearRecentSystems = 37504,
-    cmdLispClearRecentLoaded = 37760,
-    cmdLispConfigure = 38016};
+    cmdLispLoadFile = 37760,
+    cmdLispLoadRecentFile = 38016,
+    cmdLispClearRecentLoaded = 38272,
+    cmdLispConfigure = 38528};
 
   Console * console;
   ConsoleTheme theme;

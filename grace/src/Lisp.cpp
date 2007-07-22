@@ -744,6 +744,41 @@ void LispConnection::connectionLost () {
     console->printError(T("Lisp: connection unexpectedly lost!\n"));
 }
 
+// File loading
+
+bool LispConnection::loadFile(File file) {
+  if ( ! isLispRunning () ) return false;
+  if ( ! file.existsAsFile() ) {
+    console->printWarning( T("Warning: file ") +
+			   file.getFullPathName() +
+			   T(" does not exist."));
+    return false;
+  }
+  String sexpr=T("(load ") + file.getFullPathName().quoted() + T(")");
+  sendLispSexpr(sexpr);
+  setLoaded(file);
+  GracePreferences* p=GracePreferences::getInstance();
+  p->addRecentlyLoadedFile(file);
+  return true;
+}
+
+void LispConnection::chooseAndLoadFile() {
+  GracePreferences* p=GracePreferences::getInstance();
+  File dir;
+  // directory defaults to directory of most recently loaded file or
+  // to Lisp Systems Directory if none.
+  if ( p->areRecentlyLoadedFiles() )
+    dir=p->getRecentlyLoadedFile(0).getParentDirectory();
+  else
+    dir=p->getLispSystemsDirectory();
+  FileChooser choose (T("Load File"), dir, String::empty, true);
+  if ( choose.browseForFileToOpen() ) {
+    File file = choose.getResult();
+    loadFile(file);
+  }
+}
+
+
 // ASDF loading
 
 bool LispConnection::loadASDF(ASDF* asdf) {
@@ -768,7 +803,7 @@ bool LispConnection::loadASDF(ASDF* asdf) {
   return true;
 }
 
-bool LispConnection::chooseASDF() {
+void LispConnection::chooseAndLoadASDF() {
   GracePreferences* p=GracePreferences::getInstance();
   FileChooser choose (T("Load System"),
 		      p->getLispSystemsDirectory(),
@@ -845,15 +880,23 @@ void LispConnection::handleBinaryData (const MemoryBlock &message) {
    printf("grace got binary data from lisp\n");
 }
 
-bool LispConnection::isLoaded(XmlElement* x) {
-  return loaded.contains(x);
+bool LispConnection::isLoaded(ASDF* a) {
+  return loaded.contains(a->getASDFFileName());
 }
 
-void LispConnection::setLoaded(XmlElement* x) {
-  loaded.add(x);
+void LispConnection::setLoaded(ASDF* a) {
+  loaded.add(a->getASDFFileName());
 }
 
-void LispConnection::clearLoaded() {loaded.clear(false);}
+bool LispConnection::isLoaded(File f) {
+  return loaded.contains(f.getFullPathName());
+}
+
+void LispConnection::setLoaded(File f) {
+  loaded.add(f.getFullPathName());
+}
+
+void LispConnection::clearLoaded() {loaded.clear();}
 
 void LispConnection::handleLoadSystem (const MemoryBlock &message) {
   int len=message.getSize();

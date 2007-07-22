@@ -66,7 +66,10 @@ class EditorComponent : public Component {
     buffer->setTopLeftPosition(0,0);
     addChildComponent( buffer, -1);
   }
-  ~EditorComponent() {buffer->~TextBuffer();}
+  ~EditorComponent() {
+    printf("in ~EditorComponent\n");
+    buffer->~TextBuffer();
+  }
 };
 
 class EditorWindow : public DocumentWindow, public MenuBarModel {

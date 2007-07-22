@@ -191,7 +191,9 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   setContentComponent(console);
   setResizable(true, true); 
   
-  GracePreferences* p=GracePreferences::getInstance();
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  GracePreferences* p=app->getPreferences();
+
   setUsingNativeTitleBar(p->isNativeTitleBars());
   //setAlwaysOnTop(true);
   console->buffer->setVisible(true);
@@ -339,7 +341,10 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
 				 bool isRegion) {
   String sexpr;
   int message;
-  GracePreferences* p=GracePreferences::getInstance();
+
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  GracePreferences* p=app->getPreferences();
+  //  GracePreferences* p=GracePreferences::getInstance();
 
   if ( isSal ) {
     if (! lisp->isLoaded(p->getASDF(ASDF::CM)) ) {
@@ -393,8 +398,10 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 						const String &name)
 {
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  //  GracePreferences* p=GracePreferences::getInstance();
+  GracePreferences* p=app->getPreferences();
   ApplicationCommandManager* cm = app->commandManager;
-  GracePreferences* p=GracePreferences::getInstance();
+
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3, sub4;
   int val;
@@ -413,7 +420,17 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
     sub2.addItem( cmdGracePlotterNew + CLMPlot, T("CLM"), false);
     menu.addSubMenu( T("New Plotter"), sub2, true);    
 
+    menu.addSeparator();
     menu.addItem( cmdGraceOpenFile, T("Open File..."), true);
+    if ( p->areRecentlyOpenedFiles() ) {
+      printf("in fill menu, are recently edited files\n");
+      p->addRecentlyOpenedItems(&sub3, cmdGraceOpenRecentFile);
+      sub3.addSeparator();
+      sub3.addItem( cmdGraceClearRecentFiles, T("Clear"), true);
+      menu.addSubMenu( T("Open Recent"), sub3, true);
+    }
+    else
+      printf("in fill menu, NO recently edited files\n");
 
     menu.addSeparator();
     menu.addItem( cmdGracePreferences, T("Preferences..."), false);
@@ -464,17 +481,30 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 	menu.addItem( cmdLispConnect, T("Start Lisp"), 
 		      lisp->isLispStartable()); 
       menu.addSeparator();
+      // Load system
       for (int i=0; i<p->numASDFs(); i++) {
 	ASDF* a=p->getASDF(i);
-	sub1.addItem( cmdLispLoadSystem + i,
-		      a->getASDFName(),
-		      running,
+	sub1.addItem( cmdLispLoadRecentSystem + i,
+		      a->getASDFName(), true,
 		      lisp->isLoaded(a));
       }
       sub1.addSeparator();
-      sub1.addItem( cmdLispLoadSystem + 127, T("Load..."), running);
+      sub1.addItem( cmdLispLoadSystem, T("Load..."), 
+		    true);
+      if ( p->numASDFs() > 2 )
+	sub1.addItem( cmdLispClearRecentSystems, T("Clear"),
+		      running);
       menu.addSubMenu(T("Load System"), sub1, running);
-      menu.addItem( cmdLispLoadFile, T("Load File..."), running);
+      // Load File
+      if ( p->areRecentlyLoadedFiles() ) {
+	p->addRecentlyLoadedItems(&sub2, cmdLispLoadRecentFile);
+	sub2.addSeparator();
+	sub2.addItem( cmdLispLoadFile, T("Load..."), running);
+	sub2.addItem( cmdLispClearRecentLoaded, T("Clear"), running);
+	menu.addSubMenu(T("Load File"), sub2, running);
+      }
+      else
+	menu.addItem( cmdLispLoadFile, T("Load File..."), running);
       menu.addSeparator();
       menu.addItem( cmdLispConfigure, T("Configure Lisp..."), true); 
     }
@@ -495,8 +525,9 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
   int cmd = id & 0xFFFFFF80;
   GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
   ApplicationCommandManager * cm = app->commandManager;
-  GracePreferences* p=GracePreferences::getInstance();
-
+  //  GracePreferences* p=GracePreferences::getInstance();
+  GracePreferences* p=app->getPreferences();
+  File f;
   //printf("menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
   switch (cmd) {
 
@@ -516,19 +547,23 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
       if ( choose.browseForFileToOpen() ) {
 	String f=choose.getResult().getFullPathName();
 	new EditorWindow(0, TextBuffer::load, f);
-	p->addRecentlyEditedFile(f);
+	// STUB OUT
+	// p->addRecentlyOpenedFile(f);
       }
     }
     break;
 
-  case cmdGraceOpenRecent :
+  case cmdGraceOpenRecentFile :
     {
-      String f=p->getRecentlyEditedFile(arg).getFullPathName();
-      new EditorWindow(0, TextBuffer::load, f);
+      printf("arg=%d\n", arg);
+      f=p->getRecentlyOpenedFile(arg);
+      new EditorWindow(0, TextBuffer::load, f.getFullPathName());
+      printf("after, are recently editied files=%d\n", p->areRecentlyOpenedFiles());
     }
 
-  case cmdGraceClearRecent :
-    p->clearRecentlyEditedFiles();
+  case cmdGraceClearRecentFiles :
+    p->clearRecentlyOpenedFiles();
+    break;
 
   case cmdGraceQuit :
     app->graceQuit(true);
@@ -552,9 +587,8 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     break;
 
   case cmdLispConnect :
-    if (lisp->isLispRunning()) {
+    if (lisp->isLispRunning())
       lisp->stopLisp();
-    }
     else 
       lisp->startLisp();
     break;
@@ -564,9 +598,27 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     break;
 
   case cmdLispLoadSystem :
-    if ( arg==127 )
-      lisp->chooseASDF();
-    else lisp->loadASDF(p->getASDF(arg));
+    lisp->chooseAndLoadASDF();
+    break;
+
+  case cmdLispLoadRecentSystem :
+    lisp->loadASDF(p->getASDF(arg));
+    break;
+
+  case cmdLispClearRecentSystems :
+    p->clearLispSystems();
+    break;
+
+  case cmdLispLoadFile :
+    lisp->chooseAndLoadFile();
+    break;
+
+  case cmdLispLoadRecentFile :
+    lisp->loadFile(p->getRecentlyLoadedFile(arg));
+    break;
+
+  case cmdLispClearRecentLoaded :
+    p->clearRecentlyLoadedFiles();
     break;
 
   default :

@@ -13,9 +13,6 @@
 #include "Grace.h"
 #include "Resources.h"
 
-
-
-
 TextFileOutputStream::TextFileOutputStream(const File& f,
 					   const int bufferSize_) 
   : FileOutputStream(f, bufferSize_)
@@ -290,8 +287,7 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
   setContentComponent(editor);
 
   GracePreferences* p=GracePreferences::getInstance();
-  setUsingNativeTitleBar(p->isNativeTitleBars());
-  
+
   TextBuffer* buffer=editor->buffer;
   Font font= Font(Font::getDefaultMonospacedFontName(),
 		  17.0f, Font::plain);
@@ -309,6 +305,10 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
   setMenuBar(this);
   setApplicationCommandManagerToWatch( commandManager );
   commandManager->registerAllCommandsForTarget(buffer);
+
+  //  setUsingNativeTitleBar(p->isNativeTitleBars());
+  setUsingNativeTitleBar(false);
+  
   // dont show window until very last
   setVisible(true);
   if ( text != String::empty )
@@ -323,8 +323,11 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 }
 
 EditorWindow::~EditorWindow () {
+  printf("in ~EditorWindow\n");
   editor->~EditorComponent();
+  printf("after ~EditorComponent\n");
 }
+
 
 void EditorWindow::closeButtonPressed () {
   if ( ! getTextBuffer()->isChanged() ||
@@ -332,9 +335,12 @@ void EditorWindow::closeButtonPressed () {
 	(AlertWindow::QuestionIcon, T("Close"),
 	 T("Really close the window? Unsaved work will be lost."),
 	 T("   OK   "), T("Cancel"))
-	) )
+	) ) {
+    printf("before ~EditorWindow\n");
     this->~EditorWindow();
-    }
+    printf("after ~EditorWindow\n");
+  }
+}
 
 const StringArray EditorWindow::getMenuBarNames() {
   const tchar* const textbar [] = { T("File"), T("Edit"),  T("View"), 
@@ -378,7 +384,8 @@ const PopupMenu EditorWindow::getHelpMenu () {
 const PopupMenu EditorWindow::getMenuForIndex ( int menuIndex,
 					       const String& menuName) {
   PopupMenu menu, sub1, sub2;
-  
+  GracePreferences* p=GracePreferences::getInstance();
+
   if (menuIndex == 0) {
     // File menu
     sub1.addCommandItem( commandManager, TextBuffer::cmdFileNewSal );
@@ -386,6 +393,12 @@ const PopupMenu EditorWindow::getMenuForIndex ( int menuIndex,
     sub1.addCommandItem( commandManager, TextBuffer::cmdFileNewText );
     menu.addSubMenu(T("New"), sub1, true);
     menu.addCommandItem( commandManager, TextBuffer::cmdFileOpen);
+    if ( p->areRecentlyOpenedFiles() ) {
+      p->addRecentlyOpenedItems(&sub2,TextBuffer::cmdFileOpenRecent);
+      sub2.addSeparator();
+      sub2.addItem(TextBuffer::cmdFileClearRecent, T("Clear"));
+      menu.addSubMenu(T("Open Recent"), sub2);
+    }
     menu.addSeparator();
     menu.addCommandItem( commandManager, TextBuffer::cmdFileSave);
     menu.addCommandItem( commandManager, TextBuffer::cmdFileSaveAs);
@@ -452,7 +465,23 @@ const PopupMenu EditorWindow::getMenuForIndex ( int menuIndex,
 void EditorWindow::menuItemSelected (int id, int idx) {
   int arg = id & 0x0000007F;
   int cmd = id & 0xFFFFFF80;
+  GracePreferences* p=GracePreferences::getInstance();
+
   switch (cmd) {
+
+  case TextBuffer::cmdFileOpenRecent :
+    {
+      File f=p->getRecentlyOpenedFile(arg);
+      printf("recently edited path=%s\n", f.getFullPathName().toUTF8());
+      printf("recently edited name=%s\n", f.getFileName().toUTF8());
+      new EditorWindow(0, TextBuffer::load, f.getFullPathName());
+    }
+    break;
+
+  case TextBuffer::cmdFileClearRecent :
+    p->clearRecentlyOpenedFiles();
+    break;
+
   case TextBuffer::cmdViewFontSize :
     getTextBuffer()->setFontSize(fontSizeList[arg]);
     getTextBuffer()->colorizeAll();
@@ -493,7 +522,8 @@ void EditorWindow::openFile() {
 }
 
 void EditorWindow::closeFile() {
-  getCloseButton()->triggerClick();
+  // getCloseButton()->triggerClick();
+  delete this;
 }
 
 void EditorWindow::saveFile() {

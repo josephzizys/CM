@@ -83,7 +83,7 @@ class LispConnection : public LispProcessConnection, public Timer {
   File pollfile;
   int timeout;    // connection timeout (sec)
   int waiting;    // current wait time (ms)
-  OwnedArray<XmlElement> loaded; // array of loaded systems and files.
+  StringArray loaded; // array of loaded systems and files.
   ConsoleWindow* console;
 
   LispConnection (ConsoleWindow* w);
@@ -92,11 +92,16 @@ class LispConnection : public LispProcessConnection, public Timer {
   void setHost(String v) {host=v;}
   bool isLocalHost();
 
-  bool isLoaded(XmlElement* x) ;
-  void setLoaded(XmlElement* x) ;
+  bool isLoaded(ASDF* a) ;
+  void setLoaded(ASDF* a) ;
+  bool isLoaded(File f) ;
+  void setLoaded(File f) ;
+
   void clearLoaded() ;
+  void chooseAndLoadASDF();
   bool loadASDF(ASDF* asdf) ;
-  bool chooseASDF();
+  void chooseAndLoadFile();
+  bool loadFile(File f) ;
 
   // Socket connection
 

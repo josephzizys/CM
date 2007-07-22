@@ -38,6 +38,7 @@ public:
     AudioDeviceManager * getAudioDeviceManager();
     ConsoleWindow* getConsole() {return console;}
     GracePreferences* prefs;
+    GracePreferences* getPreferences() {return prefs;}
 };
 
 

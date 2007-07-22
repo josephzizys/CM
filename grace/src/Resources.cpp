@@ -285,11 +285,11 @@ void GracePreferences::initPropertiesFile () {
     (propfile->getValue(T("RecentlyLoadedFiles")));
   recentlyloaded.removeNonExistentFiles();
 
-  recentlyedited.clear();
-  recentlyedited.setMaxNumberOfItems(10);
-  recentlyedited.restoreFromString
-    (propfile->getValue(T("RecentlyEditedFiles")));
-  recentlyedited.removeNonExistentFiles();
+  recentlyopened.clear();
+  recentlyopened.setMaxNumberOfItems(10);
+  recentlyopened.restoreFromString
+    (propfile->getValue(T("RecentlyOpenedFiles")));
+  recentlyopened.removeNonExistentFiles();
 } 
 
 GracePreferences::~GracePreferences() {
@@ -304,7 +304,7 @@ bool GracePreferences::save() {
   propfile->setValue(T("LispImplementations"), lisps);
   propfile->setValue(T("LispSystems"), asdfs);
   propfile->setValue (T("RecentlyLoadedFiles"), recentlyloaded.toString());
-  propfile->setValue (T("RecentlyEditedFiles"), recentlyedited.toString());
+  propfile->setValue (T("RecentlyOpenedFiles"), recentlyopened.toString());
   propfile->save();
   return true;
 }
@@ -326,8 +326,12 @@ void GracePreferences::addRecentlyLoadedFile(File f) {
   recentlyloaded.addFile(f);
 }
 
+void GracePreferences::addRecentlyLoadedItems(PopupMenu* m, int i) {
+  recentlyloaded.createPopupMenuItems(*m, i, false, true);
+}
+
 File GracePreferences::getRecentlyLoadedFile(int i) {
-  recentlyloaded.getFile(i);
+  return recentlyloaded.getFile(i);
 }
 
 void GracePreferences::clearRecentlyLoadedFiles() {
@@ -338,22 +342,28 @@ bool GracePreferences::areRecentlyLoadedFiles() {
   return (recentlyloaded.getNumFiles()>0);
 }
 
-void GracePreferences::addRecentlyEditedFile(File f) {
-  recentlyedited.addFile(f);
+void GracePreferences::addRecentlyOpenedFile(File f) {
+  recentlyopened.addFile(f);
 }
 
-File GracePreferences::getRecentlyEditedFile(int i) {
-  recentlyedited.getFile(i);
+void GracePreferences::addRecentlyOpenedItems(PopupMenu* m, int i) {
+  recentlyopened.createPopupMenuItems(*m, i, false, true);
 }
 
-void GracePreferences::clearRecentlyEditedFiles() {
-  recentlyedited.clear();
+
+File GracePreferences::getRecentlyOpenedFile(int i) {
+  printf("in recentlyopened, int=%d\n", i);
+  printf("in recentlyopened, numfiles=%d\n", recentlyopened.getNumFiles());
+  return recentlyopened.getFile(i);
 }
 
-bool GracePreferences::areRecentlyEditedFiles() {
-  return (recentlyedited.getNumFiles()>0);
+void GracePreferences::clearRecentlyOpenedFiles() {
+  recentlyopened.clear();
 }
 
+bool GracePreferences::areRecentlyOpenedFiles() {
+  return (recentlyopened.getNumFiles()>0);
+}
 
 //
 // Lisp 
