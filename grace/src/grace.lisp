@@ -33,13 +33,14 @@
 ;; Console menu enums [Console.h]
 
 (enums 1 "ConsoleCommand" "GraceEditorNew" "GracePlotterNew"
-         "GraceOpenFile" "GraceOpenRecent" "GraceClearRecent"
+         "GraceOpenFile" "GraceOpenRecentFile" "GraceClearRecentFiles"
 	 "GracePreferences" "GraceQuit"
 	 "EditCopy" "EditSelectAll"
 	 "ViewClearText" "ViewFontSize"  "ViewThemes" "ViewOpacity"
 	 "AudioMidiSetup" "AudioAudioSetup"
-	 "LispConnect" "LispLoadSystem" "LispLoadFile" 
-	 "LispClearRecentSystems" "LispClearRecentLoaded"
+	 "LispConnect" 
+	 "LispLoadSystem" "LispLoadRecentSystem" "LispClearRecentSystems"
+	 "LispLoadFile" "LispLoadRecentFile" "LispClearRecentLoaded"
 	 "LispConfigure" )
 
 ;; Editor/Buffer menu enums. [Buffer.h]
