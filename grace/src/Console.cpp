@@ -198,7 +198,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   //setAlwaysOnTop(true);
   console->buffer->setVisible(true);
 
-  centreWithSize (450, 375);
+  centreWithSize (450, 350);
   setVisible(true);
   if (dosplash) {
     showSplash();
@@ -547,19 +547,16 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
       if ( choose.browseForFileToOpen() ) {
 	String f=choose.getResult().getFullPathName();
 	new EditorWindow(0, TextBuffer::load, f);
-	// STUB OUT
-	// p->addRecentlyOpenedFile(f);
       }
     }
     break;
 
   case cmdGraceOpenRecentFile :
     {
-      printf("arg=%d\n", arg);
       f=p->getRecentlyOpenedFile(arg);
       new EditorWindow(0, TextBuffer::load, f.getFullPathName());
-      printf("after, are recently editied files=%d\n", p->areRecentlyOpenedFiles());
     }
+    break;
 
   case cmdGraceClearRecentFiles :
     p->clearRecentlyOpenedFiles();

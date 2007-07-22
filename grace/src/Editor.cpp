@@ -249,6 +249,8 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 			    String title, String text)
   : DocumentWindow (String::empty , Colours::white, 
 		    DocumentWindow::allButtons, true ) {
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  GracePreferences* prefs=app->getPreferences();
 
   if (filename==String::empty) 
     if (title==String::empty) {
@@ -286,8 +288,6 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
   editor = new EditorComponent((syntaxID)synt, flags) ;
   setContentComponent(editor);
 
-  GracePreferences* p=GracePreferences::getInstance();
-
   TextBuffer* buffer=editor->buffer;
   Font font= Font(Font::getDefaultMonospacedFontName(),
 		  17.0f, Font::plain);
@@ -298,15 +298,15 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
   // set buffer to standard 74 column width.  + 10 adds space for
   // scrollers to avoid linewrap when scoller appears :/
   centreWithSize(font.getStringWidth(T("M"))*74+10, 400); 
-  commandManager=((GraceApp*)
-		  JUCEApplication::getInstance())->commandManager;
+  commandManager=app->commandManager;
   setWantsKeyboardFocus(false);  
   addKeyListener (commandManager->getKeyMappings());
   setMenuBar(this);
   setApplicationCommandManagerToWatch( commandManager );
   commandManager->registerAllCommandsForTarget(buffer);
 
-  //  setUsingNativeTitleBar(p->isNativeTitleBars());
+  // BUG: If setNativeTitleBars is TRUE then closing the window crashes the app
+  //  setUsingNativeTitleBar(prefs->isNativeTitleBars());
   setUsingNativeTitleBar(false);
   
   // dont show window until very last
@@ -314,8 +314,10 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
   if ( text != String::empty )
     buffer->setText( text );    
   else if ( buffer->testFlag(TextBuffer::load) &&
-	    editfile.existsAsFile() )
+	    editfile.existsAsFile() ) {
     buffer->setText( editfile.loadFileAsString() );
+    prefs->addRecentlyOpenedFile(editfile);
+  }
   if ( !buffer->isEmpty() && buffer->isHiliting() )
     buffer->colorizeAll();  // could this be done in a thread?
   if ( buffer->testFlag(TextBuffer::readonly) )
