@@ -306,8 +306,8 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
   commandManager->registerAllCommandsForTarget(buffer);
 
   // BUG: If setNativeTitleBars is TRUE then closing the window crashes the app
-  //  setUsingNativeTitleBar(prefs->isNativeTitleBars());
-  setUsingNativeTitleBar(false);
+    setUsingNativeTitleBar(prefs->isNativeTitleBars());
+  //setUsingNativeTitleBar(false);
   
   // dont show window until very last
   setVisible(true);
