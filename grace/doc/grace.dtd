@@ -1,0 +1,57 @@
+<!--  XML definitions used by Grace -->
+
+
+<!ELEMENT plotter   (sharedaxis, layer*)>
+<!ELEMENT layer     (fields, defaults, axes, points)>
+<!ELEMENT defaults  (field+)>
+<!ELEMENT fields    (field+)>
+<!ELEMENT axes      (axis+)>
+<!ELEMENT points    (point*)>
+<!ELEMENT point     (field+)>
+
+<!ATTLIST plotter 
+	  name CDATA #IMPLIED
+	  type (xy | midi) #REQUIRED
+	  >
+
+<!ELEMENT field     (#PCDATA)>
+<!ATTLIST layer
+	  type (xy | midi) #REQUIRED
+	  airity CDATA #REQUIRED
+	  name ID #IMPLIED
+	  color CDATA #IMPLIED
+	  style (linesandpoints | lines | points | box)	"linesandpoints"
+	  >
+
+<!ELEMENT axis      EMPTY>
+<!ATTLIST axis
+	  type (normalized | percentage | keynum | amplitude |
+	       seconds | hertz | mididata | unitcircle) #REQUIRED
+	  name CDATA #IMPLIED
+	  from CDATA #IMPLIED
+	  to CDATA #IMPLIED
+	  by CDATA #IMPLIED
+	  ticks CDATA #IMPLIED
+	  decimals CDATA #IMPLIED
+	  >
+
+<!ELEMENT lisp      EMPTY>
+<!ATTLIST lisp
+	  name CDATA #REQUIRED
+	  type (commonlisp | scheme) #REQUIRED
+	  optn CDATA #REQUIRED
+	  exec CDATA #REQUIRED
+	  args CDATA #IMPLIED
+	  >
+
+<!ELEMENT asdf      EMPTY>
+<!ATTLIST asdf
+	  name CDATA #REQUIRED
+	  path CDATA #IMPLIED
+	  oper CDATA #IMPLIED
+	  before CDATA #IMPLIED
+	  after CDATA #IMPLIED
+	  >
+
+<!ENTITY sharedaxis "shared axis">
+
