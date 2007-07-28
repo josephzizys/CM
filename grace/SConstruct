@@ -1,5 +1,6 @@
 # ========================================================================
 # scons [JUCEDIR=/usr/local/src/juce-1.43] [install]
+# ========================================================================
 # $Revision$
 # $Date$ 
 
@@ -9,7 +10,7 @@ sources = ['Audio.cpp', 'Buffer.cpp', 'Console.cpp',
            'Editor.cpp', 'FontList.cpp', 'Grace.cpp',
            'Layer.cpp', 'Lisp.cpp', 'Resources.cpp', 
            'Plotter.cpp', 'Syntab.cpp', 'Syntax.cpp']
-lispfiles = ['grace.asd', 'socketserver.lisp', 'grace.lisp']
+lispfiles = ['grace.asd', 'grace.lisp', 'gray.lisp', 'socketserver.lisp']
 
 opts = Options('grace.conf', ARGUMENTS)
 opts.AddOptions(PathOption('JUCEDIR',
