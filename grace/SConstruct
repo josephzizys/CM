@@ -1,0 +1,126 @@
+# ========================================================================
+# scons [JUCEDIR=/usr/local/src/juce-1.43] [install]
+# $Revision$
+# $Date$ 
+
+import os
+
+sources = ['Audio.cpp', 'Buffer.cpp', 'Console.cpp', 
+           'Editor.cpp', 'FontList.cpp', 'Grace.cpp',
+           'Layer.cpp', 'Lisp.cpp', 'Resources.cpp', 
+           'Plotter.cpp', 'Syntab.cpp', 'Syntax.cpp']
+lispfiles = ['grace.asd', 'socketserver.lisp', 'grace.lisp']
+
+opts = Options('grace.conf', ARGUMENTS)
+opts.AddOptions(PathOption('JUCEDIR',
+			   'Path to JUCE installation directory',
+			   os.path.expanduser('~'),
+			   PathOption.PathIsDir))
+
+env=Environment(options = opts) 
+   
+opts.Save('grace.conf', env)
+Help(opts.GenerateHelpText(env))
+
+# Platform normalization and checks
+
+if (env['PLATFORM'] == 'darwin') :
+    # DARWIN
+    execdir = 'build/Grace.app/Contents/MacOS'
+    datadir = 'build/Grace.app/Contents/Resources'
+    # ppc has to use g++ 3.3, CXXVERSION doesnt work.
+    if (os.uname()[4] == 'Power Macintosh') :
+        env.Replace(CXX = 'g++-3.3')
+    env.Append(FRAMEWORKS = ['Carbon', 'CoreServices', 'CoreAudio', 
+                             'CoreMidi', 'ApplicationServices',
+                             'AGL', 'QuickTime', 'IOKIT'] ,        
+               CPPDEFINES = ['JUCE_MAC'])
+elif ( env['PLATFORM'] == 'posix' ) :
+    # LINUX
+    execdir = '/usr/local/bin'
+    datadir = '/usr/local/lib/grace'
+    env.Append(CPPDEFINES = ['LINUX', 'HAVE_CONFIG_H'],
+               CPPPATH = ['/usr/X11R6/include'],
+               LIBPATH = ['/usr/X11R6/lib'],
+               )
+    con = Configure(env)
+    if (not con.CheckLib('freetype') ) :
+        print 'Aborting: freetype library not found'
+        Exit(1)
+    if (not con.CheckLib('GLU') ) :
+        print 'Aborting: GLU (X11) library not found'
+        Exit(1)
+    if (not con.CheckLib('GL') ) :
+        print 'Aborting: GLU (X11) library not found'
+        Exit(1)
+    if (not con.CheckLib('asound') ) :
+        print 'Aborting: asound (ALSA) library not found'
+        Exit(1)
+    env = con.Finish()
+elif ( env['PLATFORM'] == 'win32' ) :
+    # WINDOZE
+    execdir = '/build/Grace'
+    datadir = '/build/Grace/Resources'
+    print 'fixme for windoze!'
+    Exit(1)
+else :
+    print 'Unsupported platform: ',  env['PLATFORM']
+    Exit(1)
+
+# Build
+
+BuildDir('build', 'src', duplicate = 0)
+
+env.Append(CPPPATH = ['src', env['JUCEDIR']],
+           CPPDEFINES = ['NDEBUG'],
+           LIBPATH = [os.path.join(env['JUCEDIR'],'bin')]
+           )
+
+con = Configure(env)
+
+# Check for juce.h
+if ( not con.CheckCXXHeader('juce.h') ) :
+    print 'Cannot find JUCE include file: juce.h'
+    print 'Try passing JUCE directory to SCons: scons JUCEDIR=/path/to/juce'
+    Exit(1)
+
+# Check for libjuce.a
+if ( not con.CheckLib('juce') ) :
+    print 'Cannot find JUCE release library: ', env['LIBPREFIX']+'juce'+env['LIBSUFFIX']
+    print 'Try passing JUCE directory to SCons: scons JUCEDIR=/path/to/juce'
+    Exit(1)
+
+env = con.Finish()  # this updates env with lib info
+
+exe = env.Program( 'build/grace', [os.path.join('build', x) for x in sources])
+
+# Installation
+
+def install_docs() :
+    srcdocs = []
+    dstdocs = []
+    for root,dirs,files in os.walk('doc') :
+        if ('CVS' in dirs) : 
+            dirs.remove('CVS')
+        for f in files :
+            p = os.path.join(root,f)
+            dstdocs += [os.path.join(datadir,p)]
+            srcdocs += [p]
+    return env.InstallAs(dstdocs,srcdocs)
+
+def install_lisp() :
+    return env.Install(os.path.join(datadir,'grace'),
+                       [os.path.join('src', f) for f in lispfiles])
+
+def install_exec() :
+    return env.Install(execdir, exe)
+
+if ('install' in COMMAND_LINE_TARGETS) :
+    env.Alias('install-exec', install_exec())
+    env.Alias('install-docs', install_docs())
+    env.Alias('install-lisp', install_lisp())
+    env.Alias('install', ['install-exec', 'install-docs', 'install-lisp'])
+elif (env['PLATFORM'] in ['darwin', 'win32']) :
+    # always update the app's dir with the current executable
+    env.Alias('install-exec', install_exec())
+
