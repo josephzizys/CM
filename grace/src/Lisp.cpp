@@ -12,7 +12,10 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
+
+#if LINUX || JUCE_MAC
 #include <unistd.h>
+#endif
 
 //==============================================================================
 LispProcessConnection::LispProcessConnection (const bool callbacksOnMessageThread)
@@ -592,7 +595,7 @@ LispConnection::~LispConnection () {
  }
 
 bool LispConnection::isLispRunning () {
-  isConnected();
+  return isConnected();
 }  
 
 bool LispConnection::isLispStartable () {
