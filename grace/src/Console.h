@@ -58,16 +58,16 @@ class ConsoleTheme {
   enum ColorType {bgColor=0, inputColor, outputColor, errorColor, warningColor,
 		  valueColor, hiliteColor, hiliteTextColor, caretColor};	
   String name;
-  Font font;
+  //Font font;
   Colour colors[9];
   ConsoleTheme() {}
   ~ConsoleTheme() {}
   String getName() {return name;}
   void setName(String n) {name=n;}
-  Font getFont() {return font;}
-  void setFont(Font f) {font=f;}
-  float getFontHeight() {return font.getHeight();}
-  void setFontHeight(float h) {return font.setHeight(h);}
+  //Font getFont() {return font;}
+  //void setFont(Font f) {font=f;}
+  //float getFontHeight() {return font.getHeight();}
+  //void setFontHeight(float h) {return font.setHeight(h);}
   Colour getColor(int i) {return colors[i];}
   void setColor(int i, Colour c) {colors[i]=c;}
 };
@@ -87,8 +87,14 @@ class Console : public Component {
   void initTheme(int i) ;
   void setTheme(int i);
   String getThemeName(int i) {return themes[i].name;}
-  Font getThemeFont(int i) {return themes[i].font;}
-  ConsoleTheme* getCurrentTheme() {return &themes[curtheme];}
+  //Font getThemeFont(int i) {return themes[i].font;}
+  ConsoleTheme* getTheme(int i){return &themes[i];}
+  ConsoleTheme* getCurrentTheme() {return getTheme(curtheme);}
+  int findTheme(String name) {
+    for (int i=0; i<numThemes(); i++)
+      if (getThemeName(i) == name) return i;
+    return -1;
+  }
   bool isCurrentTheme(int i) {return (curtheme==i);}
 };
 

@@ -290,7 +290,8 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 
   TextBuffer* buffer=editor->buffer;
   Font font= Font(Font::getDefaultMonospacedFontName(),
-		  17.0f, Font::plain);
+		  prefs->getEditorFontSize(),
+		  Font::plain);
   buffer->setFont(font);
   buffer->setVisible(true);
   editor->setVisible(true);

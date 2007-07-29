@@ -68,22 +68,28 @@ void SliderMenuComponent::getIdealSize(int &idealWidth, int &idealHeight)
   idealHeight = 30;
 }
 
-
 Console::Console () : 
   numthemes (0),
   curtheme (0)
 {
+  GracePreferences* p=GracePreferences::getInstance();
   buffer = new TextEditor( String::empty) ;
   buffer->setMultiLine(true);
   buffer->setScrollToShowCursor(true);
   buffer->setReadOnly(true);
   buffer->setCaretVisible(false);    
   addChildComponent(buffer);
+  buffer->setFont( Font(Font::getDefaultMonospacedFontName(), 
+			p->getConsoleFontSize(),
+			Font::plain));
   numthemes=6;
   for (int i=0; i<numthemes; i++)
     initTheme(i);
-
-  setTheme(0);
+  int t=findTheme(p->getConsoleTheme());
+  if (t==-1)
+    setTheme(0); 
+  else
+    setTheme(t);
   buffer->setVisible(true);
   setVisible(true);
   lock = new CriticalSection();
@@ -98,8 +104,8 @@ void Console::initTheme (int idx) {
   String n=String::empty;
   uint32 b, i, o, r, h, c;
 
-  Font f=Font(Font::getDefaultMonospacedFontName(), 
-	      17.0f, Font::plain );
+  //Font f=Font(Font::getDefaultMonospacedFontName(), 
+  //	      17.0f, Font::plain );
   // make value, warning and error colors consistent across themes (?)
   uint32 v= 0x00cd00, w=0xff8c00, e=0xcd0000;
 
@@ -144,7 +150,7 @@ void Console::initTheme (int idx) {
   b += 0xff000000;  i += 0xff000000;  o += 0xff000000;
   r += 0xff000000;  h += 0xff000000;  c += 0xff000000;  
   themes[idx].name=n;
-  themes[idx].font=f;
+  //themes[idx].font=f;
   themes[idx].setColor(ConsoleTheme::bgColor, Colour(b));
   themes[idx].setColor(ConsoleTheme::inputColor, Colour(i));
   themes[idx].setColor(ConsoleTheme::outputColor, Colour(o));
@@ -159,9 +165,8 @@ void Console::initTheme (int idx) {
 void Console::setTheme(int i) {
   ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
   curtheme=i;
-  printf("current theme: %s\n", themes[i].name.toUTF8());
   //  win->setOpacity(100.0);
-  buffer->setFont( themes[i].getFont() );
+  //buffer->setFont( themes[i].getFont() );
   Colour bgcolor=themes[i].getColor(ConsoleTheme::bgColor);
   buffer->setColour( TextEditor::backgroundColourId, 
 		     bgcolor);
@@ -173,7 +178,10 @@ void Console::setTheme(int i) {
 		     themes[i].getColor(ConsoleTheme::hiliteTextColor));
   buffer->setColour( TextEditor::caretColourId,
 		     themes[i].getColor(ConsoleTheme::caretColor));
-  buffer->applyFontToAllText(themes[i].getFont());
+  //buffer->applyFontToAllText(themes[i].getFont());
+  buffer->applyFontToAllText(buffer->getFont());
+  GracePreferences* p=GracePreferences::getInstance();
+  p->setConsoleTheme(getThemeName(curtheme));
 }
 
 ConsoleWindow::ConsoleWindow (bool dosplash)
@@ -191,13 +199,10 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
   setContentComponent(console);
   setResizable(true, true); 
   
-  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
-  GracePreferences* p=app->getPreferences();
-
+  //GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  GracePreferences* p=GracePreferences::getInstance();
   setUsingNativeTitleBar(p->isNativeTitleBars());
-  //setAlwaysOnTop(true);
   console->buffer->setVisible(true);
-
   centreWithSize (450, 350);
   setVisible(true);
   if (dosplash) {
@@ -331,21 +336,22 @@ float ConsoleWindow::getFontSize( ) {
 }
 
 void ConsoleWindow::setFontSize( float size ) {
+  printf("fontsize=%f\n", size);
+  GracePreferences* p=GracePreferences::getInstance();
   TextEditor* ed=getConsole();
   Font font=ed->getFont();
   font.setHeight(size);
   ed->applyFontToAllText(font);
+  p->setConsoleFontSize(size);
 }
 
 void ConsoleWindow::consoleEval (String code, bool isSal, 
 				 bool isRegion) {
   String sexpr;
   int message;
-
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   GracePreferences* p=app->getPreferences();
   //  GracePreferences* p=GracePreferences::getInstance();
-
   if ( isSal ) {
     if (! lisp->isLoaded(p->getASDF(ASDF::CM)) ) {
       printError(">>> SAL: Common Music system is not loaded.\nUse Console>Lisp>Load System>Load... to load Common Music.\n");
@@ -571,7 +577,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     break;
 
   case cmdViewFontSize :
-    setFontSize((float)arg);
+    setFontSize(fontSizeList[arg]);
     break;
 
   case cmdAudioMidiSetup: 

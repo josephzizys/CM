@@ -240,7 +240,13 @@ void GracePreferences::initPropertiesFile () {
 
   // initialize any undefined properties
   if (!propfile->containsKey(T("NativeTitleBars")))
-    propfile->setValue(T("NativeTitleBars"), true);
+    setNativeTitleBars(true);
+  if (!propfile->containsKey(T("ConsoleTheme")))
+    setConsoleTheme(T("Clarity and Beauty"));
+  if (!propfile->containsKey(T("ConsoleFontSize")))
+    setConsoleFontSize(17.0);
+  if (!propfile->containsKey(T("EditorFontSize")))
+    setEditorFontSize(17.0);
 
   if (!propfile->containsKey(T("LispSystemsDirectory")))
     propfile->setValue(T("LispSystemsDirectory"), 
@@ -314,13 +320,36 @@ bool GracePreferences::save() {
 //
 
 bool GracePreferences::isNativeTitleBars() {
-  return propfile->getBoolValue(T("NativeTitleBars"),true);
+  return propfile->getBoolValue(T("NativeTitleBars"));
 }
 
 void GracePreferences::setNativeTitleBars(bool b) {
   propfile->setValue(T("NativeTitleBars"), b);
 }
 
+String GracePreferences::getConsoleTheme() {
+  return propfile->getValue(T("ConsoleTheme"));
+}
+
+void GracePreferences::setConsoleTheme(String t) {
+  propfile->setValue(T("ConsoleTheme"), t);
+}
+
+float GracePreferences::getConsoleFontSize() {
+  return (float)(propfile->getDoubleValue(T("ConsoleFontSize")));
+}
+
+void GracePreferences::setConsoleFontSize(float f) {
+  propfile->setValue(T("ConsoleFontSize"), (double)f);
+}
+
+float GracePreferences::getEditorFontSize() {
+  return (float)(propfile->getDoubleValue(T("EditorFontSize")));
+}
+
+void GracePreferences::setEditorFontSize(float f) {
+  propfile->setValue(T("EditorFontSize"), (double)f);
+}
 
 void GracePreferences::addRecentlyLoadedFile(File f) {
   recentlyloaded.addFile(f);
@@ -352,8 +381,6 @@ void GracePreferences::addRecentlyOpenedItems(PopupMenu* m, int i) {
 
 
 File GracePreferences::getRecentlyOpenedFile(int i) {
-  printf("in recentlyopened, int=%d\n", i);
-  printf("in recentlyopened, numfiles=%d\n", recentlyopened.getNumFiles());
   return recentlyopened.getFile(i);
 }
 

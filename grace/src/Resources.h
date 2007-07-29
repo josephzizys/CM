@@ -133,10 +133,17 @@ class GracePreferences {
 
   PropertiesFile* getProperties() {return propfile;}
   bool save();
-  bool isNativeTitleBars();
+
 
   // General preferences
+  bool isNativeTitleBars();
   void setNativeTitleBars(bool b) ;
+  String getConsoleTheme() ;
+  void setConsoleTheme(String t) ;
+  float getConsoleFontSize() ;
+  void setConsoleFontSize(float s) ;
+  float getEditorFontSize() ;
+  void setEditorFontSize(float s) ;
 
   // Recently opened and loaded files support
   void addRecentlyOpenedFile(File f) ;
