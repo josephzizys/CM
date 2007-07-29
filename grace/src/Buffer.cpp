@@ -1424,7 +1424,7 @@ int TextBuffer::openLine() {
   // C-o new line does not change point
   int here = point();
   insertTextAtCursor(T("\n"));
-  setPoint(here);
+  return setPoint(here);
 }
 
 int TextBuffer::insertText (String str) {
@@ -1506,6 +1506,7 @@ int TextBuffer::forwardDeleteChars (String chars) {
     setHighlightedRegion(pos,top-pos);
     insertTextAtCursor(String::empty);    
   }
+  return point();
 }
 
 int TextBuffer::currentIndent() {
@@ -1734,9 +1735,11 @@ void TextBuffer::setFontType(const String name) {
 }
 
 void TextBuffer::setFontSize( float size ) {
+  GracePreferences* p=GracePreferences::getInstance();
   Font font=getFont();
   font.setHeight(size);
   applyFontToAllText(font);
+  p->setEditorFontSize(size);
 }
 
 float TextBuffer::getFontSize(  ) {
