@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html
+xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"> <head>
+<meta http-equiv="content-type" content="text/html;
+charset=iso-8859-1"/> <style type="text/css" media="all"> @import
+"grace.css"; </style> <title>The Console Window</title> </head> <body>
+<div id="content">
+
+<h1>Installing Grace</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#binary_installation">Binary Installation</li>
+
+  <li><a href="#source_installation">Source Installation
+  <ul>
+    <li><a href="#svn">Installing sources with subversion</a></li>
+    <li><a href="#requirements">Requirements for building Grace</a></li>
+    <li><a href="#building">Building and installing from sources</a></li>
+    <li><a href="#starting">Starting Grace with standard output visible<a/></li>
+    <li><a href="#lisp">Running Lisp under Grace</a></li>
+    </ul>
+  </li>
+    
+  <li><a href="#juce">Installing JUCE (version 4.3)</a>
+  <ul>
+    <li><a href="#juce_linux">Building JUCE on Linux</a></li>
+    <li><a href="#juce_osx">Building JUCE on OS X</a></li>
+  </ul>
+</li>
+</ul>
+
+<h2 id="binary_installation">Binary Installation</h2>
+
+<p><em>  Not written. </em></p>
+
+
+<h2 id="source_installation">Source Installation</h2>
+
+<h3 id="svn">Installing sources with subversion (svn)</h3>
+<p>
+To download the Grace source tree using subversion do (all one line):
+</p>
+
+<pre class="code">
+$ svn co https://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/grace grace</pre>
+
+<h3 id="requirements">Requirements for building Grace</h3>
+<ul>
+  <li><a href="http://www.scons.org/">SCons build tool</a></li>
+  <li><a href="http://www.rawmaterialsoftware.com/juce/">JUCE</a>  (see <a href="#juce">Section 3</a>) </li>
+  <li>Latest version of <a href="http://sbcl.sourceforge.net/platform-table.html">SBCL</a> or <a href="http://sourceforge.net/project/showfiles.php?group_id=1355">CLisp</a></li>
+</ul>
+
+<h3 id="building">Building and installing from sources</h3>
+
+<p>  To build and install Grace from sources do:</p>
+
+   <pre class="code">
+$ cd /path/to/grace
+$ scons JUCEDIR=/path/to/jucedir
+$ scons install</pre>
+
+<p> where <code>/path/to/...</code> is replaced with the appropriate
+path on your machine.  The first command will compile sources, the
+second will install the executable and copy the runtime support into
+the <em>resource directory</em>. </p>
+
+<p>On OSX the installation paths are:</p>
+
+   <blockquote>
+       executable:	build/Grace.app/Contents/MacOS/grace<br/>
+       resource dir:	build/Grace.app/Contents/Resources/*
+   </blockquote>
+   <p>
+   On Linux the installation paths are:
+   </p>
+
+   <blockquote>
+   executable:	/usr/local/bin/grace<br/>
+   resource dir:	/usr/local/lib/grace/*
+   </blockquote>
+   
+  <p>
+   On Windows the installation paths are:
+   </p>
+   <blockquote>
+       executable:	/build/Grace/grace.exe<br/>
+       resource dir:	/build/Grace/Resources/*
+   </blockquote>
+
+   <p> The resource directory contains Grace's rutime Lisp code, help
+   files, tutorials, etc.  On OS X and Windows the resource directory
+   is bundled together with the executable so once you have done
+   'scons install' you can move the application bundle anywhere,
+   e.g. into your /Applications folder on the Mac or your C:\Program
+   Files\ directory on Windows.  </p>
+
+<p>If you have write permission in the installation directory its also
+easiest if you install CM under that directory as well:</p>
+
+<pre class="code">
+$ cd /path/to/grace/resources/
+$ svn co https://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/cm cm</pre>
+
+<p>Regardless of where you put your CM source tree, you should compile
+CM sources from inside Grace or things won't work correctly when you
+start lisp.</p>
+
+<h3 id="starting">Starting Grace with standard output visible</h3>
+
+ <p> Grace prints debugging information to standard output. To make
+  this information visible you can start start the application from
+  the terminal like this: </p>
+
+   <pre class="code">
+    # Linux:
+    $ grace &
+    # OS X:
+    $ exec Grace.app/Contents/MacOS/Grace &</pre>
+   
+<h3 id="lisp">Running Lisp under Grace</h3>
+
+<p> In order to start Lisp under Grace you must have a recent version
+of SBCL or Clisp installed on your machine and the Grace ASDF Lisp
+system installed in either your Lisp systems directory or under the
+Grace resource directory.  </p>
+
+<p> Use the <span class="menuitem">Console&gt;Lisp&gt;Start
+Lisp</span> menu item to start a Lisp session. Use <span
+class="menuitem">Console&gt;Lisp&gt;Configure Lisp...</span> to
+configure a Lisp session so that it can be started.  </p>
+
+To establish a Lisp session Grace looks for its grace.asd Lisp system
+under a 'Lisp systems directory' -- a root directory that contains the
+various ASDF Lisp systems that you commonly work with. When Grace
+starts up the Lisp systems directory defaults to the Resource
+directory.  You can change this path using the <span
+class="menuitem">Console&gt;Lisp&gt;Configure Lisp...</span>
+dialog. The Lisp systems directory can be located anywhere on the file
+system but the various ASDF system directories installed under it must
+be writeable by the user. The Lisp systems directory should contain
+(at a minimum) the Grace lisp system (shipped under the resource
+directory) and the Common Music system.  If grace/grace.asd is not
+found under the Lisp systems directory then Grace will use the version
+shipped under the Resources directory. In this case, you must have
+write permission in that directory since ASDF systems get compiled by
+Lisp.  The first time you load an ASDF system it will be
+compiled. Only load Common Music from systems that have been compiled
+under Grace.  </p> <p> Output produced by evaluating Lisp code or SAL
+commands appears in the Console window. The console window is NOT a
+Lisp REPL. To evaluate Lisp or Sal code, open the appropriate type of
+Editor window and used <span class="emacscmd">COMMAND-Enter</span> to
+send expressions or SAL commands to Lisp. See <span
+class="menuitem">Console&gt;Help</span> and <span
+class="menuitem">Editor&gt;Help</span> for more information about this
+process.  </p>
+
+<h2 id="juce">Installing JUCE</h2>
+
+<p>
+Grace uses the JUCE 4.3 RELEASE library (juce/bin/libjuce.a)
+</p>
+
+<h3 id="juce_linux">Building JUCE on Linux</h3>
+
+<ol>
+  <li>
+  <p>
+  Edit the file juce/juce_Config.h and turn unicode support OFF by
+  setting JUCE_STRINGS_ARE_UNICODE to 0:
+  </p>
+
+  <pre class="code">
+#ifndef JUCE_STRINGS_ARE_UNICODE
+  #define JUCE_STRINGS_ARE_UNICODE 0 
+#endif</pre>
+
+  <p>[Strictly speaking you don't have to do this but if you don't the
+  text editor will be too slow for anything but the smallest files.]
+  </p>
+
+  </li>
+
+  <li>
+  <p>
+  Turn OFF linking to the Xinerama  multi-monitor lib unless you
+  are using it. If so you will have to add it to the linking set.
+  </p>
+  <pre class="code">
+#ifndef JUCE_USE_XINERAMA
+  #define JUCE_USE_XINERAMA 0
+#endif</pre>
+  </li>
+
+  <li>
+  <p>
+  Make the Release version of libjuce.a:
+  </p>
+
+  <pre class="code">
+$ cd juce/build/linux
+$ make CONFIG=Release</pre>
+</p>
+  
+<p>
+  If you are successful the JUCE library will be saved in
+  juce/bin/libjuce.a.
+</p>
+</li>
+</ol>
+
+
+<h3 id="juce_osx">Building JUCE on OSX</h3>
+
+<ol>
+  <li>
+
+<p> Edit the file juce/juce_Config.h and turn unicode support OFF by
+setting JUCE_STRINGS_ARE_UNICODE to 0: </p>
+
+<pre class="code">  
+#ifndef JUCE_STRINGS_ARE_UNICODE
+  #define JUCE_STRINGS_ARE_UNICODE 0 
+#endif
+</pre>
+<p>
+
+[Strictly speaking you don't have to do this but if you don't the text
+ editor will be too slow for anything but the smallest files.]
+
+<li>
+
+  <p> Edit the file juce/build/macosx/juce.xcconfig and make sure
+  XCODE is using an appropriate SDK for your machine. Your SDKs are
+  located under /Developer/SDKs/. This is the contents of my
+  juce.xcconfig that I complied on a 10.4 PPC machine: </p>
+
+<pre class="code">
+ARCHS = ppc i386
+SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk
+GCC_VERSION_ppc = 3.3
+MACOSX_DEPLOYMENT_TARGET_ppc = 10.4
+OTHER_LD_FLAGS_ppc = /Developer/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/darwin/3.3/libstdc++.a
+SDKROOT_ppc = /Developer/SDKs/MacOSX10.4u.sdk</pre>
+</p>
+</li>  
+
+<li>
+
+<p> Open the JUCE Xcode project in juce/build/macosx/Juce.xcodeproj
+and select <span class="menuitem">Project&gt;Set Active Build Configuration&gt;Release</span>.  Then
+press the Build icon.  If you are successful the JUCE library will be
+saved in juce/bin/libjuce.a.  </p>
+
+</div>
+<hr/>
+<!-- hhmts start --> Last modified: Mon Jul 30 09:15:27 CDT 2007 <!-- hhmts end -->
+</body>
+</html>
