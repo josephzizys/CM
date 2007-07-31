@@ -1,41 +1,39 @@
-<!--  XML definitions used by Grace -->
+<!--  XML definitions -->
+<!--  http://www.validome.org/grammar/validate/  -->
 
+<!-- Plotters -->
 
-<!ELEMENT plotter   (sharedaxis, layer*)>
-<!ELEMENT layer     (fields, defaults, axes, points)>
-<!ELEMENT defaults  (field+)>
-<!ELEMENT fields    (field+)>
-<!ELEMENT axes      (axis+)>
-<!ELEMENT points    (point*)>
-<!ELEMENT point     (field+)>
-
+<!ELEMENT plotter (layer+)>
 <!ATTLIST plotter 
 	  name CDATA #IMPLIED
-	  type (xy | midi) #REQUIRED
+	  sharedaxis CDATA #REQUIRED
 	  >
 
-<!ELEMENT field     (#PCDATA)>
+<!ELEMENT layer (pointinfo, point*)>
 <!ATTLIST layer
-	  type (xy | midi) #REQUIRED
-	  airity CDATA #REQUIRED
 	  name ID #IMPLIED
 	  color CDATA #IMPLIED
-	  style (linesandpoints | lines | points | box)	"linesandpoints"
+	  style (linespoints | lines | points | impulse | box) "linespoints"
 	  >
 
-<!ELEMENT axis      EMPTY>
-<!ATTLIST axis
-	  type (normalized | percentage | keynum | amplitude |
-	       seconds | hertz | mididata | unitcircle) #REQUIRED
-	  name CDATA #IMPLIED
-	  from CDATA #IMPLIED
-	  to CDATA #IMPLIED
-	  by CDATA #IMPLIED
-	  ticks CDATA #IMPLIED
-	  decimals CDATA #IMPLIED
+<!ELEMENT pointinfo (pointfield, pointfield+)>
+<!ATTLIST pointinfo
+	  name CDATA #REQUIRED
+	  type CDATA "float"
 	  >
 
-<!ELEMENT lisp      EMPTY>
+<!ELEMENT pointfield EMPTY>
+<!ATTLIST pointfield
+	  name ID #REQUIRED
+	  default CDATA #REQUIRED
+	  axis CDATA #REQUIRED
+	  >
+
+<!ELEMENT point (#PCDATA)>
+
+<!-- Lisp implementations and ASDF systems -->
+
+<!ELEMENT lisp EMPTY>
 <!ATTLIST lisp
 	  name CDATA #REQUIRED
 	  type (commonlisp | scheme) #REQUIRED
@@ -44,7 +42,7 @@
 	  args CDATA #IMPLIED
 	  >
 
-<!ELEMENT asdf      EMPTY>
+<!ELEMENT asdf EMPTY>
 <!ATTLIST asdf
 	  name CDATA #REQUIRED
 	  path CDATA #IMPLIED
@@ -53,5 +51,19 @@
 	  after CDATA #IMPLIED
 	  >
 
-<!ENTITY sharedaxis "shared axis">
+<!-- MIDI connections and channels -->
+
+<!ELEMENT midiconnection     (midichannel*)>
+<!ATTLIST midiconnection
+	  input CDATA #REQUIRED
+	  output CDATA #REQUIRED
+	  channeltuning CDATA "1"
+	  >
+
+<!ELEMENT midichannel EMPTY>
+<!ATTLIST midichannel
+	  id ID #REQUIRED
+	  pc CDATA "0"
+	  >
+
 
