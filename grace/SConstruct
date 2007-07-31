@@ -6,13 +6,14 @@
 
 import os
 
-sources = ['Audio.cpp', 'Buffer.cpp', 'Console.cpp', 
-           'Editor.cpp', 'FontList.cpp', 'Grace.cpp',
-           'Layer.cpp', 'Lisp.cpp', 'Resources.cpp', 
-           'Plotter.cpp', 'Syntab.cpp', 'Syntax.cpp']
+sources = ['Audio.cpp', 'Buffer.cpp', 'Console.cpp', 'Editor.cpp',
+           'FontList.cpp', 'Grace.cpp', 'Layer.cpp', 'Lisp.cpp',
+           'Resources.cpp', 'Plotter.cpp', 'Syntab.cpp', 'Syntax.cpp']
+
 lispfiles = ['grace.asd', 'grace.lisp', 'gray.lisp', 'socketserver.lisp']
 
 opts = Options('grace.conf', ARGUMENTS)
+
 opts.AddOptions(PathOption('JUCEDIR',
 			   'Path to JUCE installation directory',
 			   os.path.expanduser('~'),
@@ -21,6 +22,7 @@ opts.AddOptions(PathOption('JUCEDIR',
 env=Environment(options = opts) 
    
 opts.Save('grace.conf', env)
+
 Help(opts.GenerateHelpText(env))
 
 # Platform normalization and checks
@@ -80,12 +82,14 @@ env.Append(CPPPATH = ['src', env['JUCEDIR']],
 con = Configure(env)
 
 # Check for juce.h
+
 if ( not con.CheckCXXHeader('juce.h') ) :
     print 'Cannot find JUCE include file: juce.h'
     print 'Try passing JUCE directory to SCons: scons JUCEDIR=/path/to/juce'
     Exit(1)
 
 # Check for libjuce.a
+
 if ( not con.CheckLib('juce') ) :
     print 'Cannot find JUCE release library: ', env['LIBPREFIX']+'juce'+env['LIBSUFFIX']
     print 'Try passing JUCE directory to SCons: scons JUCEDIR=/path/to/juce'
@@ -101,8 +105,7 @@ def install_docs() :
     srcdocs = []
     dstdocs = []
     for root,dirs,files in os.walk('doc') :
-        if ('CVS' in dirs) : 
-            dirs.remove('CVS')
+        if ('.svn' in dirs) : dirs.remove('.svn')
         for f in files :
             p = os.path.join(root,f)
             dstdocs += [os.path.join(datadir,p)]
