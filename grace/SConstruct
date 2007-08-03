@@ -64,15 +64,15 @@ elif ( env['PLATFORM'] == 'win32' ) :
     # WINDOZE
     execdir = '/build/Grace'
     datadir = '/build/Grace/Resources'
-    print 'fixme for windoze!'
-    Exit(1)
+    #print 'fixme for windoze!'
+    #Exit(1)
 else :
     print 'Unsupported platform: ',  env['PLATFORM']
     Exit(1)
 
 # Build
 
-BuildDir('build', 'src', duplicate = 0)
+BuildDir('./build', 'src', duplicate = 0)
 
 env.Append(CPPPATH = ['src', env['JUCEDIR']],
            CPPDEFINES = ['NDEBUG'],
@@ -89,11 +89,16 @@ if ( not con.CheckCXXHeader('juce.h') ) :
     Exit(1)
 
 # Check for libjuce.a
-
-if ( not con.CheckLib('juce') ) :
-    print 'Cannot find JUCE release library: ', env['LIBPREFIX']+'juce'+env['LIBSUFFIX']
-    print 'Try passing JUCE directory to SCons: scons JUCEDIR=/path/to/juce'
-    Exit(1)
+if ( env['PLATFORM'] == 'win32' ) :
+    if ( not con.CheckLib('jucelib_static_Win32') ) :
+        print 'Cannot find JUCE release library: ', env['LIBPREFIX']+'juce'+env['LIBSUFFIX']
+        print 'Try passing JUCE directory to SCons: scons JUCEDIR=/path/to/juce'
+        Exit(1)
+else :
+    if ( not con.CheckLib('juce') ) :
+        print 'Cannot find JUCE release library: ', env['LIBPREFIX']+'juce'+env['LIBSUFFIX']
+        print 'Try passing JUCE directory to SCons: scons JUCEDIR=/path/to/juce'
+        Exit(1)
 
 env = con.Finish()  # this updates env with lib info
 
