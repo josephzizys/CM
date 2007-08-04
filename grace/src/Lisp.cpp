@@ -657,6 +657,7 @@ bool LispConnection::launchLisp () {
       return false;
     }
   }
+#ifndef WINDOWS
   // build --eval expers for starting the grace server. spread over
   // multiple args to avoid package nonsense...
   String args = lisp->getLispProgramArgs(); // start with users' own
@@ -670,6 +671,23 @@ bool LispConnection::launchLisp () {
   args += T("'(grace:start-server ") + String(getPort()) + T(" ") +
     getPollFile(true).getFullPathName().quoted() +
     T(")'");
+#else
+  
+   // build --eval expers for starting the grace server. spread over
+  // multiple args to avoid package nonsense...
+  String args = lisp->getLispProgramArgs(); // start with users' own
+  if (args != String::empty) args += T(" ");
+  String eval=lisp->getLispEvalArg() + T(" "); // --eval, -x etc
+  args += eval;
+  args += T("\"(load ") + String::charToString('\\') + String::charToString('"') + String(load.getFullPathName()).replace(T("\\"), T("\\\\")) + String::charToString('\\') + T("\")\"");
+  args += T(" ") + eval;
+  args += T("\"(asdf:oos (quote asdf:load-op)") + String::charToString('\\') + T("\"grace") + String::charToString('\\') + T("\")\"");
+  args += T(" ") + eval;
+  args += T("\"(grace:start-server ") + String(getPort()) + T(" ") + String::charToString('\\') + String::charToString('"') +
+    String(getPollFile(true).getFullPathName()).replace(T("\\"), T("\\\\")) + String::charToString('\\') + T("\")\"");
+  
+#endif
+
 
   console->consoleClear();
   console->printMessage(T("Launching ") + prog + T(" ") + args + T("\n"));
