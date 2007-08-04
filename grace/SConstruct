@@ -90,7 +90,7 @@ if ( not con.CheckCXXHeader('juce.h') ) :
 # Check for libjuce.a
 if ( env['PLATFORM'] == 'win32' ) :
     if ( not con.CheckLib('jucelib_static_Win32') ) :
-        print 'Cannot find JUCE release library: ', env['LIBPREFIX']+'juce'+env['LIBSUFFIX']
+        print 'Cannot find JUCE release library: ', env['LIBPREFIX']+'jucelib_static_Win32'+env['LIBSUFFIX']
         print 'Try passing JUCE directory to SCons: scons JUCEDIR=/path/to/juce'
         Exit(1)
 else :
