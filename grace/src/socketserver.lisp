@@ -96,7 +96,7 @@
   #+(and clisp (not win32))
   (system::process-id)
   #+(and clisp win32) 
-  (funcall (find-symbol "GetCurrentProcessId" :win32))
+  (funcall #'cl-user::process-id)
   )
 
 (defun kill-lisp ()
