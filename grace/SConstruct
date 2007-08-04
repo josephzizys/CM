@@ -62,17 +62,16 @@ elif ( env['PLATFORM'] == 'posix' ) :
     env = con.Finish()
 elif ( env['PLATFORM'] == 'win32' ) :
     # WINDOZE
-    execdir = '/build/Grace'
-    datadir = '/build/Grace/Resources'
-    #print 'fixme for windoze!'
-    #Exit(1)
+    execdir = 'build/Grace'
+    datadir = 'build/Grace/Resources'
+    env.Append(CPPDEFINES = ['WINDOWS'])
 else :
     print 'Unsupported platform: ',  env['PLATFORM']
     Exit(1)
 
 # Build
 
-BuildDir('./build', 'src', duplicate = 0)
+BuildDir('build', 'src', duplicate = 0)
 
 env.Append(CPPPATH = ['src', env['JUCEDIR']],
            CPPDEFINES = ['NDEBUG'],
