@@ -66,7 +66,11 @@ const String GraceApp::getApplicationVersion () {
 bool GraceApp::moreThanOneInstanceAllowed () {
   // JUCE LINUX BUG: if this is false then Grace will not launch on
   // Fedora Core Linux unless you are su'ed to ROOT.
+#ifdef LINUX
   return true;
+#else
+  return false;
+#endif
 }
 
 void GraceApp::anotherInstanceStarted (const String& commandLine) {

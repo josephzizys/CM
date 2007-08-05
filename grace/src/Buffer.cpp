@@ -26,7 +26,7 @@ TextBuffer::TextBuffer (syntaxID id, int flg)
   setPoint(0);
   initSyntax(id);
   setPopupMenuEnabled(false);
-#ifdef JUCE_MAC
+#ifdef DARWIN
   setFlagOn(emacsmode);
 #endif
 
@@ -438,7 +438,7 @@ int TextBuffer::isKeyAction (const KeyPress& key) {
       flag = emacsControl;
     if ( key.getModifiers().isAltDown() )
       flag |= emacsMeta;
-#ifdef JUCE_MAC
+#ifdef DARWIN
     if ( key.getModifiers().isCommandDown() )
       flag |= emacsCommand;
 #endif
@@ -574,7 +574,7 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 // nonsense. need to track down if its juce or the mac thats
 // resposible for this mess
 
-#ifdef JUCE_MAC
+#ifdef DARWIN
 #define META_F 402
 #define META_B 8747
 #define META_D 8706
@@ -594,7 +594,7 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 #define ARROWD 31
 #endif
 
-#ifndef JUCE_MAC
+#ifndef DARWIN
 #define META_F 102
 #define META_B 98
 #define META_D 100
@@ -816,7 +816,7 @@ void TextBuffer::keyPressed (const KeyPress& key) {
       setChanged(true);
       colorizeAfterChange(cmdInsertLine);
       break;
-#ifdef JUCE_MAC
+#ifdef DARWIN
     case 5 :           // Help key
 #else
     case 268435646 :   // F1

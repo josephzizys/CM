@@ -320,14 +320,17 @@ void ConsoleWindow::printMessage( String str, ConsoleTheme::ColorType typ,
 }
 
 void ConsoleWindow::printWarning( String str,  bool eob) {
+  freshLine();
   printMessage(str, ConsoleTheme::warningColor, eob);
 }
 
 void ConsoleWindow::printError( String str,  bool eob) {
+  freshLine();
   printMessage(str, ConsoleTheme::errorColor, eob);
 }
 
 void ConsoleWindow::printValues( String str,  bool eob) {
+  freshLine();
   printMessage(str, ConsoleTheme::valueColor, eob);
 }
 

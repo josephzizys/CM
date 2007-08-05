@@ -531,21 +531,29 @@ void EditorWindow::closeFile() {
 
 void EditorWindow::saveFile() {
   TextBuffer* buff=getTextBuffer();
-  if ( buff->isChanged() ) {
-    editfile.replaceWithText( buff->getText() ) ;
-    buff->setChanged(false);
-  }
+  if ( buff->isChanged() )
+    if (editfile.existsAsFile() ) {
+      editfile.replaceWithText( buff->getText() ) ;
+      buff->setChanged(false);
+    }
+    else {
+      printf("fullname=%s\n",editfile.getFullPathName().toUTF8());
+      printf("name=%s\n",editfile.getFileName().toUTF8());
+      saveFileAs(editfile);
+    }
 }
 
-void EditorWindow::saveFileAs() {
+void EditorWindow::saveFileAs(File defaultfile) {
   TextBuffer* buff=getTextBuffer();
   File dir;
+  if (defaultfile==File::nonexistent)
+    if ( editfile.existsAsFile() )
+      defaultfile = editfile.getParentDirectory();
+    else
+      defaultfile = File::getSpecialLocation(File::userHomeDirectory);
+  printf("defaultfile=%s\n", defaultfile.getFullPathName().toUTF8());
 
-  if ( editfile.existsAsFile() )
-    dir = editfile.getParentDirectory();
-  else
-    dir = File::getSpecialLocation(File::userHomeDirectory);
-  FileChooser choose (String::empty, dir, String::empty, true);
+  FileChooser choose (T("Save File As"), defaultfile, T("*.*"), true);
   if ( choose.browseForFileToSave(true) ) {
     TextFile f = choose.getResult();
     f.replaceWithText( buff->getText() );

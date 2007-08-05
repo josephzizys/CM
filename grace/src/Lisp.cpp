@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#if LINUX || JUCE_MAC
+#if LINUX || DARWIN
 #include <unistd.h>
 #endif
 
@@ -618,6 +618,12 @@ void LispConnection::deletePollFile() {
   pollfile=File::nonexistent;
 }
 
+#ifdef WINDOWS
+String escapeForDOS(String path) {
+  return path.replace(T("//"),T("////"));
+}
+#endif
+
 bool LispConnection::launchLisp () {
   GracePreferences* p=GracePreferences::getInstance();
   Lisp* lisp = p->getLispToLaunch();
@@ -672,26 +678,25 @@ bool LispConnection::launchLisp () {
     getPollFile(true).getFullPathName().quoted() +
     T(")'");
 #else
-  
-   // build --eval expers for starting the grace server. spread over
+  // build --eval expers for starting the grace server. spread over
   // multiple args to avoid package nonsense...
   String args = lisp->getLispProgramArgs(); // start with users' own
   if (args != String::empty) args += T(" ");
   String eval=lisp->getLispEvalArg() + T(" "); // --eval, -x etc
   args += eval;
-  args += T("\"(load ") + String::charToString('\\') + String::charToString('"') + String(load.getFullPathName()).replace(T("\\"), T("\\\\")) + String::charToString('\\') + T("\")\"");
+  
+  args += T("\"(load ") + String::charToString('\\') + String::charToString('"') + 
+    escapeForDos(load.getFullPathName()) + String::charToString('\\') + T("\")\"");
   args += T(" ") + eval;
   args += T("\"(asdf:oos (quote asdf:load-op)") + String::charToString('\\') + T("\"grace") + String::charToString('\\') + T("\")\"");
   args += T(" ") + eval;
-  args += T("\"(grace:start-server ") + String(getPort()) + T(" ") + String::charToString('\\') + String::charToString('"') +
-    String(getPollFile(true).getFullPathName()).replace(T("\\"), T("\\\\")) + String::charToString('\\') + T("\")\"");
-  
+  args += T("\"(grace:start-server ") + String(getPort()) + T(" ") +
+    String::charToString('\\') + String::charToString('"') +
+    escapeForDos(getPollFile(true).getFullPathName()) +
+    String::charToString('\\') + T("\")\"");
 #endif
-
-
   console->consoleClear();
   console->printMessage(T("Launching ") + prog + T(" ") + args + T("\n"));
-
   if (! File(prog).startAsProcess(args) ) {
     console->printError(T(">>> Lisp program ") + prog + 
       T(" failed to start.\nUse Console>Lisp>Configure Lisp... to configure the Lisp session.\n"));
@@ -775,7 +780,12 @@ bool LispConnection::loadFile(File file) {
 			   T(" does not exist."));
     return false;
   }
-  String sexpr=T("(load ") + file.getFullPathName().quoted() + T(")");
+#ifdef WINDOWS
+  String path=escapeForDOS(file.getFullPathName());
+#else
+  String path=file.getFullPathName();
+#endif
+  String sexpr=T("(load ") + path.quoted() + T(")");
   sendLispSexpr(sexpr);
   setLoaded(file);
   GracePreferences* p=GracePreferences::getInstance();
@@ -799,7 +809,6 @@ void LispConnection::chooseAndLoadFile() {
   }
 }
 
-
 // ASDF loading
 
 bool LispConnection::loadASDF(ASDF* asdf) {
@@ -809,7 +818,12 @@ bool LispConnection::loadASDF(ASDF* asdf) {
   File file = asdf->getDefinitionFile( p->getLispSystemsDirectory() );
   String load = String::empty;
   if ( file.existsAsFile() ) {
-    load=asdf->getLoadForm(file.getFullPathName());
+#ifdef WINDOWS
+  String path=escapeForDOS(file.getFullPathName());
+#else
+  String path=file.getFullPathName();
+#endif
+    load=asdf->getLoadForm(path);
   }
   else {
     String bad=asdf->getPathName();
@@ -866,35 +880,35 @@ void LispConnection::messageReceived (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->printMessage(text,ConsoleTheme::valueColor);
-  console->terpri();
+  //console->terpri();
 }
 
 void LispConnection::postMessage (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->printMessage(text, ConsoleTheme::outputColor);
-  console->terpri();
+  //  console->terpri();
 }
 
 void LispConnection::postWarning (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->printWarning(text);
-  console->terpri();
+  //  console->terpri();
 }
 
 void LispConnection::postError (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->printError(text);
-  console->terpri();
+  //  console->terpri();
 }
 
 void LispConnection::postValues (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->printMessage(text, ConsoleTheme::valueColor);
-  console->terpri();
+  //  console->terpri();
 }
 
 void LispConnection::handleBinaryData (const MemoryBlock &message) {
