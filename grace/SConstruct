@@ -38,7 +38,7 @@ if (env['PLATFORM'] == 'darwin') :
     env.Append(FRAMEWORKS = ['Carbon', 'CoreServices', 'CoreAudio', 
                              'CoreMidi', 'ApplicationServices',
                              'AGL', 'QuickTime', 'IOKIT'] ,        
-               CPPDEFINES = ['JUCE_MAC'])
+               CPPDEFINES = ['DARWIN'])
 elif ( env['PLATFORM'] == 'posix' ) :
     # LINUX
     execdir = '/usr/local/bin'
