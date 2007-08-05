@@ -9,7 +9,7 @@
 // $Date$ 
 
 #include "Plotter.h"
-#include <iostream>
+//#include <iostream>
 #include <limits>
 #include "Resources.h"
 

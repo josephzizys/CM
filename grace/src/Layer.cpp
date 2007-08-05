@@ -9,7 +9,7 @@
 // $Date$ 
 
 #include "Layer.h"
-#include <iostream>
+//#include <iostream>
 using namespace std;
 
 String LayerPoint::valToText(int field, int decimals, String name) {
