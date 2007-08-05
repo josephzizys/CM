@@ -1189,6 +1189,27 @@ bool TextBuffer::isEOL() {
 
 int TextBuffer::pointBOL () {
   static KeyPress key = KeyPress(KeyPress::homeKey);
+  int here = getCaretPosition();
+  setCaretVisible(false);
+  int there=gotoBOL();
+  setCaretPosition(here);
+  setCaretVisible(true);
+  return there;
+}
+
+int TextBuffer::pointEOL() {
+  static KeyPress key = KeyPress(KeyPress::endKey);
+  int here = getCaretPosition();
+  setCaretVisible(false);
+  int there=gotoEOL();
+  setCaretPosition(here);
+  setCaretVisible(true);
+  return there;
+}
+
+/*
+int TextBuffer::pointBOL () {
+  static KeyPress key = KeyPress(KeyPress::homeKey);
   int here = getCaretPosition(), there;
   setCaretVisible(false);
   TextEditor::keyPressed(key);
@@ -1197,7 +1218,6 @@ int TextBuffer::pointBOL () {
   setCaretVisible(true);
   return there;
 }
-
 int TextBuffer::pointEOL() {
   static KeyPress key = KeyPress(KeyPress::endKey);
   int here = getCaretPosition(), there;
@@ -1208,6 +1228,7 @@ int TextBuffer::pointEOL() {
   setCaretVisible(true);
   return there;
 }
+*/
 
 int TextBuffer::pointColumn() {
   return point() - pointBOL();
