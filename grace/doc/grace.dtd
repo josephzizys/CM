@@ -5,15 +5,23 @@
 
 <!ELEMENT plotter (layer+)>
 <!ATTLIST plotter 
-	  name CDATA #IMPLIED
-	  sharedaxis CDATA #REQUIRED
+	  title CDATA #IMPLIED
+	  xaxis CDATA #REQUIRED
+	  yaxis CDATA #IMPLIED
 	  >
 
-<!ELEMENT layer (pointinfo, point*)>
+<!ELEMENT layer (graphstyle*, pointinfo, point*)>
 <!ATTLIST layer
 	  name ID #IMPLIED
+	  >
+
+<!ELEMENT graphstyle EMPTY>
+<!ATTLIST graphstyle 
+	  style (lines | points | linespoints | impulse | box) #REQUIRED
 	  color CDATA #IMPLIED
-	  style (linespoints | lines | points | impulse | box) "linespoints"
+	  x CDATA #REQUIRED
+	  y CDATA #REQUIRED
+	  z CDATA #IMPLIED
 	  >
 
 <!ELEMENT pointinfo (pointfield, pointfield+)>
