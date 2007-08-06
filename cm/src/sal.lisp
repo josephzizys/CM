@@ -1152,7 +1152,7 @@
     (sal-eval form t)
     (cond ((eql type ':variable)
 	   (dolist (v name)
-	     (sal-message "~@(~A~): ~(~A~) = " type v)
+	     (format *standard-output* "~@(~A~): ~(~A~) = " type v)
 	     (funcall *sal-printer* (symbol-value v))
 	     (terpri *standard-output*)
 	     (force-output *standard-output*)
