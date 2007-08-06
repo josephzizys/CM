@@ -1086,7 +1086,7 @@
 			   (sb-ext:code-deletion-note #'muffle-warning))
 			(eval form)))
 	(error (c)
-	  (let ((text (format nil "~&>>> Lisp runtime error:~%    ~A"
+	  (let ((text (format nil ">>> Lisp runtime error:~%    ~A~&"
 			      c )))
 	    #+grace
 	    (grace:connection-send-error (grace:grace-connection)
@@ -1123,9 +1123,9 @@
 (defparameter *sal-printer* #'sal-printer)
 
 (defun sal-message (string &rest args)
-  #-grace (format t "~&; ")
-  (apply #'format t string args)
-  #+grace (force-output *standard-output*)
+  (apply #'format *standard-output* string args)
+  (terpri *standard-output*)
+  (force-output *standard-output*)
   )
 
 ;;;
@@ -1154,7 +1154,7 @@
 	   (dolist (v name)
 	     (sal-message "~@(~A~): ~(~A~) = " type v)
 	     (funcall *sal-printer* (symbol-value v))
-	     #+grace
+	     (terpri *standard-output*)
 	     (force-output *standard-output*)
 	     )
 	   )
@@ -1167,9 +1167,9 @@
     (values)))
 
 (defun sal-print (&rest args)
-  #-grace (terpri)
   (map nil *sal-printer* args)
-  #+grace (force-output *standard-output*)
+  (terpri *standard-output*)
+  (force-output *standard-output*)
   (values))
 
 (defun plus (&rest nums)
