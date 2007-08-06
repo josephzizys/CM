@@ -294,7 +294,7 @@
 (defobject midi (event)
   ((keynum :initform 60)
    (duration :initform .5)
-   (amplitude :initform 64)
+   (amplitude :initform .5)
    (channel :initform 0 :accessor midi-channel))
   (:parameters time duration keynum amplitude channel)
   (:event-streams ))
