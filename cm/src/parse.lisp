@@ -131,13 +131,13 @@
       #+grace
       (grace:connection-send-error 
        (grace:grace-connection)
-       (format nil ">>> Sal ~(~A~) error: ~A.~%~%~A~%~A" 
+       (format nil ">>> Sal ~(~A~) error: ~A.~%~%~A~%~A~%" 
 	       (sal-error-type x)
 	       (sal-error-text x)
 	       line
 	       mark))
       #-grace
-      (format t "~%>>> Sal ~(~A~) error: ~A.~%~%~A~%~A" 
+      (format t "~%>>> Sal ~(~A~) error: ~A.~%~%~A~%~A~%" 
 	      (sal-error-type x)
 	      (sal-error-text x)
 	      line
