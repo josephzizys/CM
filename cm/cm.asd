@@ -69,7 +69,7 @@
         (stdout
          (ccl:external-process-output-stream
           (ccl:run-program (cm.sh) '("-q" ) :wait nil :output :stream))))
-    #+sbcl
+    #+(and sbcl (not win32))
     (stdout
      (sb-ext:process-output
       (sb-ext:run-program (cm.sh) '("-q") :output :stream)))
@@ -169,10 +169,10 @@
   ;; #+lispworks  sys:*line-arguments-list*
   ;; #+openmcl (ccl::command-line-arguments)
   bat
-  #-(or clisp allegro)
-  (progn (format t "cm.bat: Sorry, only CLISP and ACL are supported.")
+  #-(or clisp allegro sbcl)
+  (progn (format t "cm.bat: only CLISP, ACL, SBCL are supported.")
          nil)
-  #+(or clisp allegro)
+  #+(or clisp allegro sbcl)
   (let* ((loadup 
 	  (format nil "\"(progn (load \\\"~Acm.lisp\\\" :verbose nil) (cm))\""
 		  (substitute #\/ #\\ (cm-directory "src"))))
@@ -188,21 +188,24 @@
                                (translate-logical-pathname
                                 (merge-pathnames s "sys:"))
                                s))
-                        (list "-e" loadup)))
+                        (list "-e" loadup))
+	  #+sbcl (append sb-ext:*posix-argv*
+			 (list "--eval" loadup))
+	  )
          (*print-escape* nil))
-    (when (find #\Space (first arglist))
-      (warn "cm.bat: Lisp command path ~S contains spaces."
-            (first arglist)))
-    (when (find #\Space *cm-directory*)
-      (warn "cm.bat: Directory path ~S contains spaces."
-            *cm-directory*))
+;;    (when (find #\Space (first arglist))
+;;      (warn "cm.bat: Lisp command path ~S contains spaces."
+;;            (first arglist)))
+;;    (when (find #\space *cm-directory*)
+;;      (warn "cm.bat: CM directory path ~S contains spaces."
+;;            *cm-directory*))
     (with-open-file (out bat :direction :output :if-does-not-exist :create)
       (format out ":: Windows startup script for Common Music")
       (format out "~%@echo off" )
-      ;; add string around cmd if it has spaces.
-      (format out "~%~{~A ~}" arglist)
+      ;; print quotes around exec'ed cmd to allow spaces
+      (format out "~%\"~A\"~{ ~A~}" (car arglist) (cdr arglist))
       ;; pass any shell args on to the cmd.
-      (format out "%1 %2 %3 %4 %5 %6 %7 %8 %9")
+      (format out " %1 %2 %3 %4 %5 %6 %7 %8 %9")
       (namestring out))))
 
 ;;;
@@ -213,6 +216,14 @@
 (defclass initialize-op (asdf:operation) ())
 ;;(defclass generate-op (asdf:operation) ())
 (defclass finalize-op (asdf:operation) ())
+
+;;;
+;;; CM source file has potential dependancy on scheme file
+;;;
+
+(defclass cm-source-file (asdf:cl-source-file) 
+  ((scm :initform nil :initarg :scheme :accessor scm-source-file)
+   (after :initform nil :initarg :after :accessor cm-source-file-after)))
 
 (defun savevars (cm &rest vars)
   ;; save global var bindings so they can be restored after load
@@ -232,160 +243,9 @@
             '*load-verbose* '*load-print*)
   (setq *compile-print* nil *compile-verbose* nil
         *load-verbose* nil *load-print* nil)
-  (format t "; CM install directory: \"~A\"~%"
-          *cm-directory*))
-
-#||
-;; this is the Right Way to generate the scheme-derived lisp files
-;; from the scheme sources in one operation. unfortunately it wont
-;; work because the generate step will happen before pkg.lisp is
-;; loaded and so stocl will bomb when it tries to read package
-;; qualified symbols like pm:getDeviceInfo...
-(defmethod asdf:perform  ((op generate-op) (obj cm-application))
-  (labels ((insure-derived-lisp-files (op obj)
-	     (cond ((null obj) nil)
-		   ((typep obj 'asdf:module)
-		    (loop for c in (asdf:module-components obj)
-		       do (insure-derived-lisp-files op c)))
-		   ((typep obj 'cm-source-file)
-		    (asdf:perform op obj)
-		    )
-		   (t nil))))
-    (insure-derived-lisp-files op obj)))
-||#
-
-(defmethod asdf:perform  ((op finalize-op) cm)
-  ;; add cm feature before loading other systems...
-  (pushnew ':cm *features*)
-  ;; load site init file if it exists
-  (let ((init (merge-pathnames "cminit.lisp"
-                               (cm-directory "etc"))))
-    (if (probe-file init) (load init )))
-  ;; load user init file if it exists
-  (let ((init (merge-pathnames ".cminit.lisp"
-                               (user-homedir-pathname))))
-    (if (probe-file init) (load init )))
-  (restorevars cm)
-
-  #+(and (or win32 microsoft-32) (or clisp allegro))
-  (let ((bat (merge-pathnames "cm.bat" (cm-directory "bin"))))
-    (unless (probe-file bat)
-      (format t "~%; Saving startup script in \"~A\""
-              (namestring bat))
-      (cm.bat bat)))
-  )
-
-(defmethod asdf::traverse :around ((op asdf:load-op) 
-                                   (sys cm-application))
-  ;; add the initialize and finalize ops to list of operations
-  (let ((init (make-instance 'initialize-op))
-;;	(gens (make-instance 'generate-op))
-        (last (make-instance 'finalize-op)))
-    (append (list (cons init sys)
-;;		  (cons gens sys)
-		  )
-	    (call-next-method)
-	    (list (cons last sys)))))
-
-;;;
-;;; CM source file has potential dependancy on scheme file
-;;;
-
-(defclass cm-source-file (asdf:cl-source-file) 
-  ((scm :initform nil :initarg :scheme :accessor scm-source-file)))
-
-(defclass stocl (asdf:cl-source-file) ()) ; generate lisp from scheme
-
-(defmethod asdf:output-files ((operation asdf:compile-op)
-			      (f cm-source-file))
-  ;; make compile pathnames include the bin directory
-  (list (fasl-pathname (asdf:component-pathname f))))
-  
-(defmethod asdf:input-files ((operation asdf:compile-op) 
-			     (f cm-source-file))
-  ;; include scheme dependancies
-  (let ((lsp (asdf:component-pathname f))
-        (scm (scm-source-file f)))
-    (if scm
-        (list (make-pathname :name (if (stringp scm) scm
-                                       (pathname-name lsp))
-                             :type "scm" :defaults lsp)
-              lsp)
-        (list lsp))))
-
-#|| 
-;; unused
-(defmethod asdf:perform ((operation generate-op) (f cm-source-file))
-  ;; generate scheme sources if necessary
-  (let ((scheme (scm-source-file f)))
-    (if scheme
-        (let* ((lsp (asdf:component-pathname f))
-               (scm (make-pathname :name (if (stringp scheme) scheme
-                                             (pathname-name lsp))
-                                   :type "scm" :defaults lsp)))
-          (if (probe-file scm)
-              (when (or (not (probe-file lsp))
-                        (> (file-write-date (truename scm))
-                           (file-write-date (truename lsp))))
-                (unless (boundp 'toplevel-translations)
-		  (load (merge-pathnames "pkg" lsp) :verbose nil)
-                  (load (merge-pathnames "stocl" lsp) :verbose nil))
-                (format t "; Generating ~S~%"
-                        (enough-namestring lsp *cm-directory*))
-                (funcall 'stocl scm :file lsp :verbose nil)
-		)
-              (error "Scheme source ~S not found."
-                     (namestring scm)))))
-    ))
-||#
-
-(defmethod asdf:perform :before ((operation asdf:compile-op) 
-				 (f cm-source-file))
-  (format t "; Compiling ~S~%"
-	  (enough-namestring (asdf:component-pathname f)
-			     *cm-directory*))
-  ;; this is correct but it doesnt work because the lisp files are
-  ;; generated so quickly that they have the same write data as their
-  ;; compiled fasl!!
-  #||(let ((scheme (scm-source-file f)))
-    (if scheme
-        (let* ((lsp (asdf:component-pathname f))
-               (scm (make-pathname :name (if (stringp scheme) scheme
-                                             (pathname-name lsp))
-                                   :type "scm" :defaults lsp)))
-          (if (probe-file scm)
-              (when (or (not (probe-file lsp))
-                        (> (file-write-date (truename scm))
-                           (file-write-date (truename lsp))))
-                (unless (boundp 'toplevel-translations)
-                  (load (merge-pathnames "stocl" lsp) :verbose nil))
-                (format t "~%; Generating ~S"
-                        (enough-namestring lsp *cm-directory*))
-                (funcall 'stocl scm :file lsp :verbose nil)
-		;;(sleep 1)
-		)
-              (error "Scheme source ~S not found."
-                     (namestring scm)))))
-    (format t "~%; Compiling ~S"
-            (enough-namestring (asdf:component-pathname f)
-                               *cm-directory*)))||#
-  )
-
-(defmethod asdf:perform :before ((op asdf:load-op) (f cm-source-file))
-  (format t "; Loading ~S~%"
-          (enough-namestring (fasl-pathname
-                              (asdf:component-pathname f))
-                             *cm-directory*)))
-
-(defmethod asdf:perform :around ((op t) (f stocl))
-  (call-next-method))
-
-(defmethod asdf:perform :around ((op asdf:load-op) (f stocl))
-  ;; the hack solution is to generate the .lisp sources in one
-  ;; operation but AFTER pkg.lisp has been loaded. the
-  ;; 'stocl' class is the component class for "stocl.lisp: it
-  ;; checks for any lisp files that need to be generated and, if true,
-  ;; loads stocl and generates the dependant .lisp files.
+  (format t "; CM install directory: ~A~%"
+          *cm-directory*) 
+  ;; check for missing or out-of-date lisp files.
   (labels ((derived-lisp-files ( obj)
 	     (cond ((null obj) nil)
 		   ((typep obj 'asdf:module)
@@ -409,15 +269,95 @@
 				(error "Scheme source ~S not found."
 				       (namestring scm)))))))
 		   (t nil))))
-    (let ((todo (derived-lisp-files (asdf:component-system f))))
+    (let ((todo (derived-lisp-files cm)))
       (when todo
-	(call-next-method)
-	(dolist (l todo)
-	  (format t "; Generating ~S~%"
-		  (enough-namestring (cdr l ) *cm-directory*))
-	  (force-output *standard-output*)
-	  (funcall 'stocl (car l) :file (cdr l)
-		   :verbose nil))))))
+	;; to translate scheme code we find the "pkg.lisp" component
+	;; and set its after func to a closure that generates the
+	;; needed lisp files from scheme sources after the pkg.lisp
+	;; has been loaded. this is becuase the packages defined in
+	;; pkg.lisp must be in effect in order to read/write package
+	;; qualified symbols in the source code.
+	(let ((pkg (asdf:find-component (asdf:find-component cm "src") "pkg")))
+	  (setf (cm-source-file-after pkg)
+		(lambda (f)
+		  ;; load stocl.lisp
+		  (load (make-pathname :name "stocl" 
+				       :defaults (asdf:component-pathname f)))
+		  ;; generate needed files.
+		  (dolist (l todo)
+		    (format t "; Generating ~A.~A~%"
+			    (pathname-name (cdr l )) 
+			    (pathname-type (cdr l)))
+		    (force-output *standard-output*)
+		    (funcall 'stocl (car l) :file (cdr l)
+			     :verbose nil))
+		  #+nil (sleep 1)
+		  )))))))
+
+(defmethod asdf:perform  ((op finalize-op) cm)
+  ;; add cm feature before loading other systems...
+  (pushnew ':cm *features*)
+  ;; load site init file if it exists
+  (let ((init (merge-pathnames "cminit.lisp"
+                               (cm-directory "etc"))))
+    (if (probe-file init) (load init )))
+  ;; load user init file if it exists
+  (let ((init (merge-pathnames ".cminit.lisp"
+                               (user-homedir-pathname))))
+    (if (probe-file init) (load init )))
+  (restorevars cm)
+  #+(and (or win32 microsoft-32) (or clisp allegro sbcl))
+  (let* ((bat (merge-pathnames #+allegro "cm-acl.bat"
+			       #+clisp "cm-clisp.bat"
+			       #+sbcl "cm-sbcl.bat"
+			       (cm-directory "bin"))))
+    (unless (probe-file bat)
+      (format t "~%; Saving startup script in \"~A\""
+              (namestring bat))
+      (cm.bat bat)))
+  )
+
+(defmethod asdf::traverse :around ((op asdf:load-op) 
+                                   (sys cm-application))
+  ;; add the initialize and finalize ops to list of operations
+  (let ((init (make-instance 'initialize-op))
+        (last (make-instance 'finalize-op)))
+    (append (list (cons init sys)
+		  )
+	    (call-next-method)
+	    (list (cons last sys)))))
+
+(defmethod asdf:output-files ((operation asdf:compile-op)
+			      (f cm-source-file))
+  ;; make compile pathnames include the bin directory
+  (list (fasl-pathname (asdf:component-pathname f))))
+  
+(defmethod asdf:input-files ((operation asdf:compile-op) 
+			     (f cm-source-file))
+  ;; include scheme dependancies
+  (let ((lsp (asdf:component-pathname f))
+        (scm (scm-source-file f)))
+    (if scm
+        (list (make-pathname :name (if (stringp scm) scm
+                                       (pathname-name lsp))
+                             :type "scm" :defaults lsp)
+              lsp)
+        (list lsp))))
+
+
+(defmethod asdf:perform :before ((operation asdf:compile-op) 
+				 (f cm-source-file))
+  (format t "; Compiling ~A.~A~%"
+	  (pathname-name (asdf:component-pathname f))
+	  (pathname-type (asdf:component-pathname f))))
+
+(defmethod asdf:perform :before ((op asdf:load-op) (f cm-source-file))
+  (let ((c (compile-file-pathname (asdf:component-pathname f))))
+    (format t "; Loading ~A.~A~%" (pathname-name c) (pathname-type c))))
+
+(defmethod asdf:perform :after ((op asdf:load-op) (f cm-source-file))
+  (if (slot-value f 'after)
+      (funcall (slot-value f 'after) f)))
 
 ;;;
 ;;; system definition
@@ -426,17 +366,15 @@
 (asdf:defsystem :cm
     :description "Common Music"
     :class cm-application
-    :version "2.7.0"
+    :version "2.11.1"
     :author "Rick Taube <taube (at) uiuc.edu>"
     :licence "LLGPL"
     :components
     ((:module "src"
               :default-component-class cm-source-file
-	      :serial t
+;	      :serial t
               :components (
-                           (:file "pkg" )
-			   ;; generates lisp files if needed
-			   (:stocl "stocl" :depends-on ("pkg"))
+			   (:file "pkg" )
                            #+allegro (:file "acl" :depends-on ("pkg"))
                            #+clisp (:file "clisp" :depends-on ("pkg"))
                            #+cmu (:file "cmu" :depends-on ("pkg"))
@@ -487,6 +425,8 @@
                                   :depends-on ("objects"))
                            (:file "plt" :scheme t
                                   :depends-on ("io" "gnuplot"))
+;			   (:file "plotter" :scheme t
+;				  :depends-on ("io" "gnuplot"))
                            (:file "sco" :scheme t
                                   :depends-on ("io"))
                            (:file "clm" :scheme t
