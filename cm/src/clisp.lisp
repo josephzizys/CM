@@ -75,9 +75,25 @@
 
 ;(defun object-address (x) (sys::address-of x))
 
+#-win32
 (defun shell (cmd &key (output t) (wait t))
   (ext:run-shell-command cmd :output (if output :terminal nil)
                          :wait wait))
+#+win32
+(defun shell (cmd &key (wait nil) (output t))
+
+  (let ((pos (or (search ".exe" cmd)
+		 (search ".bat" cmd))))
+    (if pos
+	(let* ((exe (subseq cmd 0 (+ pos 4)))
+	       (arg (substitute #\\ #\/ 
+				(subseq cmd (+ pos 4)))))
+	  ;; explicity quote command if it contains spaces
+	  (when (find #\space exe)
+	    (setq exe (concatenate 'string "\"" exe "\"")))
+	  (ext:run-shell-command (concatenate 'string
+					      exe arg)
+				 :output output :wait wait)))))
 
 (defconstant directory-delimiter #\/)
 
