@@ -150,10 +150,10 @@
                   "/usr/local/bin/qtplay")
                  (else "open")))
           ((member os '(win32 windows))
-           (if (file-exists?
-                "/Program Files/Windows Media Player/mplayer2.exe")
-                "\\\"Program Files\\Windows Media Player\"\\mplayer2.exe"
-                #f))
+	   (let ((mp "/Program Files/Windows Media Player/mplayer2.exe"))
+	     (if (file-exists? mp)
+		 mp
+		 #f)))
           )))
 
 (define (play-midi-file file . args)
