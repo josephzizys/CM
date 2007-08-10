@@ -86,10 +86,22 @@
 ;;  (let ((str (apply #'format nil format strings)))
 ;;    (sb-ext:run-program "/bin/csh" (list "-fc" str) :output t)))
 
+#-win32
 (defun shell (cmd &key (wait t) (output t))
   (sb-ext:run-program "/bin/csh" (list "-fc" cmd)
                       :output output :wait wait))
-
+#+win32
+(defun shell (cmd &key (wait t) (output t))
+  ;; Unfortunately there is no Shell in sbcl windows.
+  (let ((pos (or (search ".exe" cmd)
+		 (search ".bat" cmd))))
+    (if pos
+	(let* ((exe (subseq cmd 0 (+ pos 4)))
+	       (arg (substitute #\\ #\/ 
+				(subseq cmd (+ pos 4)))))
+	  (sb-ext:run-program exe (list arg)
+			      :output output :wait wait)))))
+	    
 (defun cd (&optional (dir (user-homedir-pathname )))
   (sb-posix:chdir dir)
   (let ((host (pathname-host dir))
