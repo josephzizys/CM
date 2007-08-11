@@ -350,14 +350,18 @@ void ConsoleWindow::setFontSize( float size ) {
 
 void ConsoleWindow::consoleEval (String code, bool isSal, 
 				 bool isRegion) {
+  if (! lisp->isLispRunning() ){
+    printError(T(">>> Lisp is not running. Use Console>Lisp>Start Lisp\nto start a Lisp session.\n"));
+    return;
+  }
+
   String sexpr;
   int message;
-  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
-  GracePreferences* p=app->getPreferences();
-  //  GracePreferences* p=GracePreferences::getInstance();
+  GracePreferences* p=GracePreferences::getInstance();
+
   if ( isSal ) {
     if (! lisp->isLoaded(p->getASDF(ASDF::CM)) ) {
-      printError(">>> SAL: Common Music system is not loaded.\nUse Console>Lisp>Load System>Load... to load Common Music.\n");
+      printError(">>> SAL: Common Music is not loaded.\nUse Console>Lisp>Load System> to load Common Music.\n");
       return;
     }
     message=LispConnection::msgSalEval;

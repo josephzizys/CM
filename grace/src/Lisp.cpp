@@ -863,10 +863,6 @@ void LispConnection::chooseAndLoadASDF() {
 //
 
 void LispConnection::sendLispSexpr(String sexpr, int msg) {
-  if (! isConnected() ){
-    console->printError(T(">>> Lisp not connected. Use Console>Lisp>Start Lisp\nto start a Lisp session.\n"));
-    return;
-  }
   int len=sexpr.length();
   printf("Grace sending: '%s'\n", sexpr.toUTF8());
   MemoryBlock mem=MemoryBlock(len, true);  
