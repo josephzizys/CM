@@ -620,7 +620,7 @@ void LispConnection::deletePollFile() {
 
 #ifdef WINDOWS
 String escapeForDOS(String path) {
-  return path.replace(T("//"),T("////"));
+  return path.replace(T("\\"),T("\\\\"));
 }
 #endif
 
@@ -686,13 +686,13 @@ bool LispConnection::launchLisp () {
   args += eval;
   
   args += T("\"(load ") + String::charToString('\\') + String::charToString('"') + 
-    escapeForDos(load.getFullPathName()) + String::charToString('\\') + T("\")\"");
+    escapeForDOS(load.getFullPathName()) + String::charToString('\\') + T("\")\"");
   args += T(" ") + eval;
   args += T("\"(asdf:oos (quote asdf:load-op)") + String::charToString('\\') + T("\"grace") + String::charToString('\\') + T("\")\"");
   args += T(" ") + eval;
   args += T("\"(grace:start-server ") + String(getPort()) + T(" ") +
     String::charToString('\\') + String::charToString('"') +
-    escapeForDos(getPollFile(true).getFullPathName()) +
+    escapeForDOS(getPollFile(true).getFullPathName()) +
     String::charToString('\\') + T("\")\"");
 #endif
   console->consoleClear();
