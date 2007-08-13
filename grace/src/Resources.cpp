@@ -257,12 +257,43 @@ void GracePreferences::initPropertiesFile () {
 
   if (!propfile->containsKey(T("LispImplementations")) ) {
     XmlElement* top=new XmlElement(T("list"));
-    top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
-				    T("clisp"), T("")));
+
+    // look for <ResDir>/bin/clisp if it exists set exe to that and
+    // the -B arg to <ResDir>/lib/clisp
+#ifdef WINDOWS
+    String clispexe=T("clisp.exe");
+#else
+    String clispexe=T("clisp");
+#endif
+    File clispdir=getGraceResourceDirectory().getChildFile(T("clisp"));
+    File clispcom=clispdir.getChildFile(clispexe);
+    if ( clispcom.existsAsFile() )
+      top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
+				      clispcom.getFullPathName(), 
+				      (T("-B ") + clispdir.getFullPathName())));
+    else
+      top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
+				      clispexe, T("")));
+    // OPENMCL
     top->addChildElement( new Lisp( T("OpenMCL"), T("cltl"), T("--eval"), 
 				      T("openmcl"), T("")));
-    top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
-				      T("sbcl"), T("")));
+#ifdef WINDOWS
+    String sbclexe=T("sbcl.exe");
+#else
+    String sbclexe=T("sbcl");
+#endif
+    File sbcldir=getGraceResourceDirectory().getChildFile(T("sbcl"));
+    File sbclcom=sbcldir.getChildFile(sbclexe);
+    // I dont think this will work as is because SBCL_HOME probably
+    // has to be set too or (require ...) won't work
+    if ( sbclcom.existsAsFile() )
+      top->addChildElement(new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
+				     sbclcom.getFullPathName(), 
+				     (T("--core ") + 
+				      sbcldir.getChildFile(T("sbcl.core")).getFullPathName())));
+    else
+      top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
+				      sbclexe, T("")));
     propfile->setValue(T("LispImplementations"), top);
   }
 
@@ -399,10 +430,10 @@ bool GracePreferences::areRecentlyOpenedFiles() {
 Lisp::Lisp (String n, String t, String o, String e, String a)
   : XmlElement(T("lisp"))
 { 
-  if ( isHostWindows() )
-    e+=T(".exe");
-  else
-    e=T("/usr/local/bin/") + e;
+  //  if ( isHostWindows() )
+  //    e+=T(".exe");
+  //  else
+  //    e=T("/usr/local/bin/") + e;
   setAttribute(T("name"), n);
   setAttribute(T("type"), t);
   setAttribute(T("optn"), o);
