@@ -260,17 +260,22 @@ void GracePreferences::initPropertiesFile () {
 
     // look for <ResDir>/bin/clisp if it exists set exe to that and
     // the -B arg to <ResDir>/lib/clisp
-#ifdef WINDOWS
-    String clispexe=T("clisp.exe");
-#else
+#ifndef WINDOWS
     String clispexe=T("clisp");
+#else
+    String clispexe=T("clisp.exe");
 #endif
     File clispdir=getGraceResourceDirectory().getChildFile(T("clisp"));
     File clispcom=clispdir.getChildFile(clispexe);
     if ( clispcom.existsAsFile() )
       top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
 				      clispcom.getFullPathName(), 
-				      (T("-B ") + clispdir.getFullPathName())));
+#ifndef WINDOWS
+				      (T("-B ") + clispdir.getFullPathName())
+#else
+				      T("")
+#endif
+				      ));
     else
       top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
 				      clispexe, T("")));
