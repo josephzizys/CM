@@ -410,7 +410,7 @@ bool TextBuffer::perform (const InvocationInfo& info) {
 //
 // Emacs Key Actions
 //
-
+#ifndef WINDOWS
 #define emacsControl 1
 #define emacsMeta 2
 #define emacsControlMeta 3
@@ -418,6 +418,21 @@ bool TextBuffer::perform (const InvocationInfo& info) {
 #define emacsCommandControl 5
 #define emacsCommandMeta 6
 #define emacsCommandControlMeta 7
+
+#else
+
+#define emacsControl 2
+#define emacsMeta 4
+#define emacsControlMeta 6
+//all set to numbers too high.
+#define emacsCommand 178
+#define emacsCommandControl 179
+#define emacsCommandMeta 180
+#define emacsCommandControlMeta 181
+
+
+
+#endif 
 
 // some commands span more than one command invocation.
 
@@ -432,6 +447,7 @@ enum editAction
 int TextBuffer::isKeyAction (const KeyPress& key) {
   // return code if control, meta or command keys are down
   // ignoring Shift key
+
   int flag = 0;
   if ( isEmacsMode() ) {
     if ( key.getModifiers().isCtrlDown() )
@@ -534,7 +550,7 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
 
 void TextBuffer::keyControlXAction (const KeyPress& key) {
   int kcode = key.getKeyCode();
-  //printf("Control-X: %s\n", key.getTextDescription().toUTF8() );
+ //rintf("Control-X: %s\n", key.getTextDescription().toUTF8() );
   switch (kcode) {
   case 'c':
   case 'C':
@@ -594,7 +610,7 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 #define ARROWD 31
 #endif
 
-#ifndef DARWIN
+#ifndef DARWIN && WINDOWS
 #define META_F 102
 #define META_B 98
 #define META_D 100
@@ -614,9 +630,29 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
 #define ARROWD 268435540
 #endif
 
+#ifdef WINDOWS
+#define META_F 70
+#define META_B 66
+#define META_D 68
+#define META_Q 81        // hkt
+#define META_V 86
+#define META_SPACE 32
+#define META_DOT '.'
+#define META_LT 60
+#define META_GT 62
+#define META_L 76
+#define META_U 85
+#define META_C 67
+#define KPAD_ENTER 13
+#define ARROWL 65573
+#define ARROWR 65575
+#define ARROWU 65574
+#define ARROWD 65576
+#endif
+
 void TextBuffer::keyMetaAction(const KeyPress& key) {
   int kcode = key.getKeyCode();
-  //  printf("Meta key: %d\n", kcode );
+   // printf("Meta key: %d\n", kcode );
   switch ( kcode ) {
   case META_F :
     forwardWord();
@@ -663,7 +699,7 @@ void TextBuffer::keyMetaAction(const KeyPress& key) {
 
 void TextBuffer::keyControlMetaAction(const KeyPress& key) {
   int kcode = key.getKeyCode();
-  //printf("CtrlMeta: %d\n", keycode);
+  //printf("CtrlMeta: %d\n", kcode);
   switch (kcode) {
   case 'f' :
   case 'F' :
