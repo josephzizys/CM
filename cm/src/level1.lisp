@@ -30,8 +30,7 @@
   #+unix 'unix
   #+linux 'linux
   #+(or win32 windows microsoft-32) 'win32
-  #+cygwin 'cygwin
-
+  #+cygwin 'cygwin)
 
 ;;;
 ;;; cm-directory is parent directory of src/
