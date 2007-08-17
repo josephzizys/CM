@@ -141,14 +141,14 @@
 
 (define *midi-player*
   (let ((os  (os-name )))
-    (cond ((member os '(darwin osx macosx))
+    (cond ((member os '(darwin osx macos macosx))
            (cond ((file-exists? "/usr/local/bin/timidity")
                   "/usr/local/bin/timidity")
                  ((file-exists? "/usr/local/bin/qtplay")
                   "/usr/local/bin/qtplay")
                  (else "open")))
 	  ((member os '(unix linux cygwin))
-           "timidity -quiet=2")
+           "timidity")
           ((member os '(win32 windows))
 	   (let ((mp "/Program Files/Windows Media Player/mplayer2.exe"))
 	     (if (file-exists? mp)
@@ -156,6 +156,7 @@
 ;;		 "\\\"Program Files\\Windows Media Player\"\\mplayer2.exe"
 ;;		 "c:\\\"Program Files\"\\\"Windows Media Player\"\\mplayer2.exe"
 		 #f)))
+	  (else #f)
           )))
 
 (define (play-midi-file file . args)
