@@ -141,31 +141,35 @@
 
 (define *midi-player*
   (let ((os  (os-name )))
-    (cond ((member os '(unix linux cygwin))
-           "timidity -quiet=2")
-          ((member os '(darwin osx macosx))
+    (cond ((member os '(darwin osx macosx))
            (cond ((file-exists? "/usr/local/bin/timidity")
                   "/usr/local/bin/timidity")
                  ((file-exists? "/usr/local/bin/qtplay")
                   "/usr/local/bin/qtplay")
                  (else "open")))
+	  ((member os '(unix linux cygwin))
+           "timidity -quiet=2")
           ((member os '(win32 windows))
 	   (let ((mp "/Program Files/Windows Media Player/mplayer2.exe"))
 	     (if (file-exists? mp)
 		 mp
+;;		 "\\\"Program Files\\Windows Media Player\"\\mplayer2.exe"
+;;		 "c:\\\"Program Files\"\\\"Windows Media Player\"\\mplayer2.exe"
 		 #f)))
           )))
 
 (define (play-midi-file file . args)
   (if (list-prop args ':play #t)
-    (let* ((cmd *midi-player*)
-           (tyo (list-prop args ':verbose))
-           (wai (list-prop args ':wait))
-           )
-      (set! cmd (string-append *midi-player* " " file))
-      (if tyo (format #t "~%; ~a" cmd))
-      (shell cmd :wait wai :output #f)
-      file)
+      (if *midi-player*
+	  (let* ((cmd *midi-player*)
+		 (tyo (list-prop args ':verbose))
+		 (wai (list-prop args ':wait))
+		 )
+	    (set! cmd (string-append *midi-player* " " file))
+	    (if tyo (format #t "~%; ~a" cmd))
+	    (shell cmd :wait wai :output #f)
+	    file)
+	  #f)
     #f))
 
 (set-midi-output-hook! (function play-midi-file))

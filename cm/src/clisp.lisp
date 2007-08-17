@@ -79,21 +79,42 @@
 (defun shell (cmd &key (output t) (wait t))
   (ext:run-shell-command cmd :output (if output :terminal nil)
                          :wait wait))
+(defun shell-quoted-pathname-for-dos (path)
+  (let ((dev (pathname-device path))
+	(dir (apply #'concatenate
+		    'string
+		    (loop for d in (cdr (pathname-directory path)) 
+			  if (find #\space d)
+			  collect (concatenate 'string "\"" d "\"") 
+			  else collect d
+			  collect "\\")))
+	(nam (pathname-name path))
+	(ext (pathname-type path)))
+    (concatenate 'string dev ":\\" dir nam "." ext)))
+
 #+win32
 (defun shell (cmd &key (wait nil) (output t))
-
-  (let ((pos (or (search ".exe" cmd)
-		 (search ".bat" cmd))))
+  (let ((pos (or (search ".exe" cmd)(search ".bat" cmd))))
     (if pos
-	(let* ((exe (subseq cmd 0 (+ pos 4)))
-	       (arg (substitute #\\ #\/ 
-				(subseq cmd (+ pos 4)))))
-	  ;; explicity quote command if it contains spaces
-	  (when (find #\space exe)
-	    (setq exe (concatenate 'string "\"" exe "\"")))
-	  (ext:run-shell-command (concatenate 'string
-					      exe arg)
-				 :output output :wait wait)))))
+	(let* ((exe (probe-file (subseq cmd 0 (+ pos 4)))))
+	  (if (null exe)
+	      (warning "Cant shell ~s, executable does not exist."
+		       cmd)
+	      (let ((arg (substitute #\\ #\/ (subseq cmd (+ pos 4)))))
+		;; convert to Windows format pathname
+		(setq exe (namestring exe))
+		;; explicity quote if path contains spaces
+		(when (find #\space exe)
+		  (setq exe (shell-quoted-pathname-for-dos exe)))
+		(format t "DOS shell gets: ~S~%"
+			(concatenate 'string exe arg))
+		(ext:run-shell-command (concatenate 'string
+						    exe arg)
+				       :output output :wait wait))))
+	(ext:run-shell-command cmd :output output :wait wait))))
+
+; (setq foo (namestring (probe-file "/program files/windows media player/mplayer2.exe")))
+; (shell-quoted-pathname-for-dos foo)
 
 (defconstant directory-delimiter #\/)
 
