@@ -13,7 +13,7 @@ charset=iso-8859-1"/> <style type="text/css" media="all"> @import
 <ul>
   <li><a href="#binary_installation">Binary Installation</li>
 
-  <li><a href="#source_installation">Source Installation
+  <li><a href="#source_installation">Source Installation</a>
   <ul>
     <li><a href="#svn">Installing sources with subversion</a></li>
     <li><a href="#requirements">Requirements for building Grace</a></li>
@@ -23,6 +23,8 @@ charset=iso-8859-1"/> <style type="text/css" media="all"> @import
     </ul>
   </li>
     
+  <li><a href="#building_binary">Building Binary Installation</a></li>
+
   <li><a href="#juce">Installing JUCE (version 4.3)</a>
   <ul>
     <li><a href="#juce_linux">Building JUCE on Linux</a></li>
@@ -157,6 +159,33 @@ class="menuitem">Console&gt;Help</span> and <span
 class="menuitem">Editor&gt;Help</span> for more information about this
 process.  </p>
 
+<h2 id="building_binary">Building a Binary Installation of Grace</h2>
+<p>How to make a relocatable, binary install of Grace.</p>
+<ol>
+  <li>First build and install Grace from sources as usual:
+  <pre>$ scons JUCEDIR=/path/to/juce
+$ scons install
+</pre>
+  </li>
+  <li>Change directories to the Grace resource directory (Windows=build/Grace/Resources, OSX=build/Grace.app/Contents/Resources, Linux=/usr/local/lib/grace) and install the lisp sources for cm, fomus and whatever other Lisp systems you want to include with the app:<pre>$ cd build/Grace.app/Contents/Resources
+$ svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/cm cm  
+$ svn co svn://common-lisp.net/project/fomus/svn/fomus/trunk fomus
+</pre>  
+</li>
+  <li>Create either a clisp or sbcl directory under the Resource dir and copy the appropriate executable and lib trees to that directory:
+  <pre># installing clisp
+$ mkdir clisp
+$ cp /usr/local/bin/clisp clisp
+$ cp -r /usr/local/lib/clisp clisp
+
+# installing sbcl
+$ mkdir sbcl
+$ cp /usr/local/bin/sbcl sbcl
+$ cp -r /usr/local/lib/sbcl sbcl
+
+</pre></li>
+</ol>
+
 <h2 id="juce">Installing JUCE</h2>
 
 <p>
@@ -256,6 +285,6 @@ saved in juce/bin/libjuce.a.  </p>
 
 </div>
 <hr/>
-<!-- hhmts start --> Last modified: Mon Jul 30 09:15:27 CDT 2007 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Fri Aug 17 16:31:33 CDT 2007 <!-- hhmts end -->
 </body>
 </html>
