@@ -24,7 +24,7 @@
 (define *scale* #f)           ; set at end of file
 
 (define (rest? f)
-  (or (eq? f 'r)
+  (or (eq? f 'r) (eq? f ':r)
       (eq? f -1)
       (equal? f 0.0)))
 
