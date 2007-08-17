@@ -1,90 +1,142 @@
 ; A SAL program consists of comments, commands and symbolic
-; expressions. Comments are ignored by SAL. They begin with a
+; expressions. Comments are colored red and contain information for
+; the reader but are otherwise ignored by SAL. A comment starts with a
 ; semi-colon and last until the end of the line:
 
 ; this is a comment
 
-; A command is a statement that gets executed to accomplish a task.
-; Commands expressions start in the first column and their command
-; names appear in blue.  Here's a simple first example using the
-; 'print' command. Put the cursor at the end of the command line and
-; press COMMAND-Enter. Then look in the console window for the
-; associated output. Lisp must be running in order to execute a
-; command.
+;
+;; Commands
+;
+
+; A command is something that gets 'executed' to accomplish a task.
+; Commands always start in the first column and their names are blue.
+; Here is a simple first command:
 
 print "Hello, world!"
 
-; You can command help by placing your cursor on a command word and
-; pressing the Help key on the Mac or F1 on Linux or Windows. Try
-; accessing help on the preceding print command...
+; To execute this command, place your cursor at the end of the command
+; expression and press COMMAND-Enter (on Windows and Linux the COMMAND
+; key is the CONTROL key. On the Mac the COMMAND key is the APPLE key
+; just to the left of the spacebar.) Then look in the Console window
+; for the associated output. If you don't see any output then you need
+; to start Lisp running, use the Console>Lisp>Start Lisp menu command
+; to begin a Lisp session.
+
+;
+;; Accessing Command Help
+;
+
+; You can access help about a command by placing your cursor on the
+; blue command word and pressing the Help key (on the Mac) or F1 on
+; Linux/Windows. Try accessing help about the print command you just
+; executed.
+
+;
+;; Symbolic Expressions
+;
 
 ; A symbolic expression is something that produces a value for a
-; command to use. This next print command is spread over two lines and
-; contains two clauses: the first clause is a function call that picks
-; a word at random, the second clause contains the second word of the
-; message. Note that the comma is used to connect command and function
-; arguments when there is more than one of them. Put the cursor at the
-; end of the secnod line and press COMMAND-Enter several times to see
-; what happens:
+; command to use. In the preceding print command the string "Hello
+; world!" is a symbolic expression. Here is example of slightly more
+; complex symbolic expression that uses the 'pick' function to select
+; a message at random:
 
-print odds(.6, "Hello", "Goodbye"), 
-      " world!"
+print pick("Hello, world!", "Goodbye, world!" )
+
+; Put your cursor at the end of the command line and press
+; COMMAND-Enter several times. Try adding your own messages! Make sure
+; you separate each expression by a comma.
 
 ; if you notice that you are pressing COMMAND-Enter a bunch of times,
 ; consider using a loop. Put your cursor just after the 'end' and
-; press Command-Enter:
+; press COMMAND-Enter:
 
 loop repeat 10
-  print odds(.6, "Hello", "Goodbye"), " world!"
+  print pick("Hello, world!", "Goodbye, world!" )
 end
  
-; any construct that concludes with the word 'end' is called a 'code
-; block'. code blocks can declare local variables and contain more
+; Any statement that closes with the word 'end' is called a 'code
+; block'. Code blocks can declare local variables and contain more
 ; than one statement:
 
 begin
   with key = between(60,90) ,
-       amp = random(128)
-  print "my random amp is ", amp
+       amp = random(.5)
   print "my random keynum is ", key
+  print "my random octave is ", key + 12
+  print "my random amp is ", amp
+end
+
+;; Note that in math expressions the operators MUST be delimited by
+;; spaces. If you dont use parens to grour terms then normal operator
+;; precedence applies:
+
+print 1 + 2 * 3 
+print (1 + 2) * 3
+
+;; math expressions can contain function calls and function calls can
+;; contain expression
+
+loop for x from 0 to 1 by 1/8
+  print "x=", x, " sin(2pi*x)/2=", sin(2 * pi * x) / 2
 end
 
 ; Here is an example of defining a musical algorithm, also a code
 ; block. Put the cursor just after the word 'end' and press
 ; COMMAND-Enter to define the process:
 
-define process piano-phase (length, keys, tempo)
+define process piano-phase (stop, keys, rate)
   run 
     with pat = make(<cycle>, of: keys)
-    until now() >= length
-    output make(<midi>, time: now(), keynum: next(pat), duration: tempo)
-    wait tempo
+    until now() >= stop
+    output make(<midi>, time: now(), keynum: next(pat), duration: rate)
+    wait rate
   end
 
-; this next block declares two local variables and then opens a midi
-; file and runs two copies of our piano-phase algorithm. Place the
-; cursor just after the word 'end' and execute the command to hear
-; what it does:
+; WINDOWS AND LINUX: before atempting to listen to the example, make
+; sure that your midi player is set up correctly for your machine:
 
-begin 
-  with notes = {e4 fs4 b4 cs5 d5 fs4 e4 cs5 b4 fs4 d5 cs5},
-       length = 20
+print *midi-player*
+
+; if its not correct then set it to something appropriate:
+
+set *midi-player* = "/path/to/midiplayer"
+
+; now we can listen to our little musical algorithm. this next block
+; declares two local variables: 'notes' holds holds a list of notes to
+; play and 'stop' is the number of seconds to play. the code then
+; opens a MIDI file and runs two copies of our piano-phase algorithm.
+; Place the cursor just after the word 'end' and execute the command
+; to hear what it does:
+
+; WINDOWS: Make sure you quit your midiplayer before you re-run the
+; examples:
+
+begin
+  with notes = {e4 fs4 b4 cs5 d5 fs4 e4 cs5 b4 fs4 d5 cs5} ,
+       stop = 20
   open "reich.mid"
-  sprout list(piano-phase (length, notes, .166),
-              piano-phase (length, notes, .17))
+  sprout list( piano-phase(stop, notes, .167),
+               piano-phase(stop, notes, .17))
 end
 
-; shuffle the trope to compose differnt versions of the piece each
-; time we press COMMAND-Enter. since we are not sure what we will be
-; hearing, we save different versions of the piece so we can choose
-; the one we like the best:
+; you can compute different versions of a piece and choose the ones
+; you like. in this example we will shuffle the trope each time to
+; compose differnt versions of the piece whene we press COMMAND-Enter.
+; since we are not sure what we will be hearing, we save different
+; versions of the file so that we can review and choose the ones we
+; like the best:
 
 begin 
   with notes = shuffle( {e4 fs4 b4 cs5 d5 fs4 e4 cs5 b4 fs4 d5 cs5}),
-       length = 20
+       stop = 20
   open "reich.mid", versioning: #t
-  sprout list(piano-phase (length, notes, .166),
-              piano-phase (length, notes, .17))
+  sprout list(piano-phase(stop, notes, .167),
+              piano-phase(stop, notes, .17))
 end
+
+;; try substituting your own values!
+
 
 
