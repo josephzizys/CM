@@ -25,12 +25,13 @@
   (defvar midi-receive-hook))
 
 (defun os-name ()
-  ;; this must come first since clisp includes unix on darwin
-  #+(or darwin osx macos macosx) 'darwin
+  ;; darwin and win 32 must come later so its the return value
   #+unix 'unix
   #+linux 'linux
+  #+cygwin 'cygwin
+  #+(or darwin osx macos macosx) 'darwin
   #+(or win32 windows microsoft-32) 'win32
-  #+cygwin 'cygwin)
+  )
 
 ;;;
 ;;; cm-directory is parent directory of src/
