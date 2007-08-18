@@ -24,7 +24,7 @@
 (define *scale* #f)           ; set at end of file
 
 (define (rest? f)
-  (or (eq? f 'r) (eq? f ':r)
+  (or (eq? f 'r) (eq? r ':r)
       (eq? f -1)
       (equal? f 0.0)))
 
@@ -273,6 +273,7 @@
   (let ((table (scale-table tuning))
         (rst (make-sd :note 'r :keynum -1)))
     (hash-set! table 'r (list rst))
+    (hash-set! table ':r (list rst))
     (hash-set! table -1 (list rst))
     (when octaves
       (dolist (deg degrees)
@@ -726,7 +727,7 @@
 	 (entries (and table (scale-ref table note)))
          (entry (and entries (first entries))))
     (if entry
-      (if (eq? note 'r)
+      (if (or (eq? note 'r) (eq? note ':r))
         (sd-keynum entry)
         (if (sd-octave entry)		; got a note.
           (begin
@@ -1136,7 +1137,7 @@
 
 (define-method* (transpose (note <symbol>) int . args)
   (with-args (args &optional (scale *scale*))
-    (if (eq? note 'r)
+    (if (or (eq? note 'r) (eq? note ':r))
       note
       (if (number? int)
 	(let* ((table (scale-table scale))
