@@ -1193,13 +1193,15 @@
 			      (write-char #\space))
 		            (display s)
 		            )))))
-	          (newline)))
+	          (newline))
+		(force-output))
 	      (when (or pattern? (member print? '(#t pattern :pattern)))
 	        (set! pat  
 		      (loop for row in table 
 		            collect (append (car row) '(->) (cddr row)))))
 	      (when (member print? '(#t pattern :pattern))
-	        (pprint `(new markov of ', pat)))
+	        (pprint `(new markov of ', pat))
+		(force-output))
 	      (if pattern?
                 ;; patterns not defined yet, cant use new or <markov>
 	        (make (find-class* 'markov) :of pat :for period)
