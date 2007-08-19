@@ -172,17 +172,28 @@ $ svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/cm cm
 $ svn co svn://common-lisp.net/project/fomus/svn/fomus/trunk fomus
 </pre>  
 </li>
-  <li>Create either a clisp or sbcl directory under the Resource dir and copy the appropriate executable and lib trees to that directory:
-  <pre># installing clisp
-$ mkdir clisp
-$ cp /usr/local/bin/clisp clisp
-$ cp -r /usr/local/lib/clisp clisp
+<li>Optional: Install CLISP or SBCL under the Resource dir (see below).</li>
+</ol>
 
-# installing sbcl
-$ mkdir sbcl
-$ cp /usr/local/bin/sbcl sbcl
-$ cp -r /usr/local/lib/sbcl sbcl
-
+<h3>Installing a standalone CLISP under the resource directory</h3>
+<h4>OSX PPC/Intel</h4>
+<ol>
+  <li>Download and untar the CLISP source tarball somewhere.</li>
+  <li>Compile CLISP and make its distribution tarball:
+<pre>$ ./configure --ignore-absence-of-libsigsegv --without-readline
+$ cd src
+$ ./makemake  --without-readline    > Makefile
+$ make config.lisp
+$ emacs config.lisp
+$ make
+$ make check
+$ make distrib
+</pre>
+</li>
+<li>Untar the distribution under the Grace resource directory and rename the clisp-nn/ directory to just clisp/:  
+<pre>$ cd /path/to/grace/resources
+$ tar -zxf /path/to/clisp/src/clisp.tar.gz
+$ mv clisp-nn clisp
 </pre></li>
 </ol>
 
@@ -285,6 +296,6 @@ saved in juce/bin/libjuce.a.  </p>
 
 </div>
 <hr/>
-<!-- hhmts start --> Last modified: Fri Aug 17 16:31:33 CDT 2007 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Sun Aug 19 07:43:54 CDT 2007 <!-- hhmts end -->
 </body>
 </html>
