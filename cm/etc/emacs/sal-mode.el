@@ -64,7 +64,7 @@
 
 (defun sal-start-hook ()
   ;; set repl package and readtable to cm...
-  (slime-repl-send-string "(cm :sal)")
+  (slime-repl-send-string "(cm)")
   ;; aquamacs: hide inferior lisp buffer if visible after slime starts
   (when (member 'aquamacs features)
     (let ((ilw (get-buffer-window " *inferior-lisp*" t)))
@@ -229,6 +229,8 @@
 
 (define-key sal-mode-map (kbd "<kp-enter>")
   'sal-enter)
+
+; (define-key sal-mode-map (kbd "<C-return>")  'sal-enter)
 
 (define-key sal-mode-map (kbd "<help>")
   'sal-lookup-doc-at-point)
