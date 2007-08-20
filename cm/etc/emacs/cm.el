@@ -190,10 +190,15 @@
 		     (goto-char (point-max)))
 		    (t )))))))
 
+(when (not (featurep 'xemacs))
+  (defun region-exists-p ()
+    (and mark-active ; simple.el
+	 (not (null (mark))))))
+
 (defun slime-eval-expr ()
   "Evals expr before point, at point, around point, whole region."
   (interactive)
-  (if (and mark-active (not (null (mark))))
+  (if (region-exists-p )
       (slime-eval-region (region-beginning) (region-end))
     (let ((wspace '(?\  ?\t ?\r ?\n))
 	  (left-char (char-before))
@@ -229,7 +234,7 @@ selected; indent whole defun if prefixed."
   (interactive)
   (if current-prefix-arg
       (slime-reindent-defun )
-    (if (and (and mark-active (not (null (mark))))
+    (if (and (region-exists-p)
 	     (> (count-lines (region-beginning) (region-end)) 1))
 	(lisp-indent-region (region-beginning) (region-end))
       (slime-indent-and-complete-symbol))))
