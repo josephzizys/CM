@@ -190,7 +190,7 @@
 	(progn
 	  (setq form (read-from-string string))
 	  (setq step ':eval)
-	  (format *lisp-standard-output* "evaling: ~S~%" form)
+;;	  (format *lisp-standard-output* "evaling: ~S~%" form)
 	  (multiple-value-list (eval form))
 	  )
       (error (c)
@@ -213,9 +213,11 @@
     (values)))
 
 (defmethod connection-send ((con connection) (message t) (data t))
-  (format *lisp-standard-output*
-	  "connection-send: unimplemented for ~
-           message=~s and data=~s~%" message data))
+  con message data
+;;  (format *lisp-standard-output*
+;;	  "connection-send: unimplemented for ~
+;;           message=~s and data=~s~%" message data)
+  )
 	  
 (defmethod connection-send ((conn connection) (message integer)
 			    (data string))
@@ -312,9 +314,9 @@
 			(progn
 			  (setq message (read-u32 stream))
 			  (setq length (read-u32 stream))
-			  (format *lisp-standard-output*
-				  "lisp receive: msg=~d, len=~d~%"
-				  message length)
+;;			  (format *lisp-standard-output*
+;;				  "lisp receive: msg=~d, len=~d~%"
+;;				  message length)
 			  ;; read data, binary > 128
 			  (cond ((< message +msgBinaryData+ )
 				 (setq string (make-string length))
@@ -331,10 +333,10 @@
 					 (read-byte stream)))))
 			  )
 		      (error (c) 
-			(format *lisp-standard-output*
-				"; Unexpected socket stream error: ~A.~%~
-                                 ; Quitting lisp..."
-				c)
+;;			(format *lisp-standard-output*
+;;				"; Unexpected socket stream error: ~A.~%~
+;;                                 ; Quitting lisp..."
+;;				c)
 			(kill-server)))
 		    (cond 
 		      ((= message +msgSalEval+)
@@ -381,9 +383,11 @@
 		       (force-output stream))
 		      ((= message +msgKillLisp+)
 		       (kill-server))
-		      (t (format *lisp-standard-output*
-				 "Lisp unknown message: '~S'~%" 
-				 message))))))))
+		      (t
+;;		       (format *lisp-standard-output*
+;;				 "Lisp unknown message: '~S'~%" 
+;;				 message)
+		       )))))))
 	   (let (res)
 	     (unwind-protect
 		  (setq res (serve ))
@@ -393,7 +397,7 @@
 	       (close warn-output-stream)
 	       (close values-output-stream)
 	       (close-connection connection)
-	       (format *lisp-standard-output* "; Connection closed.~%")
+;;	       (format *lisp-standard-output* "; Connection closed.~%")
 	       (force-output t)
 	       (if (eql res ':kill)
 		   (kill-lisp)))))))
@@ -410,9 +414,10 @@
     (format s "~S~{ ~S~}~%" (getpid) *features*))
   (let ((con (open-server-connection port)))
     (push con *connections*) ; for now only 1
-    (format *lisp-standard-output*
-	    "; started socket server: port=~d, pid=~d~%"
-	    (connection-local-port con) (getpid))
+;;    (format *lisp-standard-output*
+;;	    "; started socket server: port=~d, pid=~d~%"
+;;	    (connection-local-port con) (getpid))
+    
     (force-output t)
     (serve-connection con)))
 
