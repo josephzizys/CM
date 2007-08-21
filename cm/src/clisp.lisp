@@ -98,16 +98,13 @@
     (if pos
 	(let* ((exe (probe-file (subseq cmd 0 (+ pos 4)))))
 	  (if (null exe)
-	      (warning "Cant shell ~s, executable does not exist."
-		       cmd)
+	      nil
 	      (let ((arg (substitute #\\ #\/ (subseq cmd (+ pos 4)))))
 		;; convert to Windows format pathname
 		(setq exe (namestring exe))
 		;; explicity quote if path contains spaces
 		(when (find #\space exe)
 		  (setq exe (shell-quoted-pathname-for-dos exe)))
-		(format t "DOS shell gets: ~S~%"
-			(concatenate 'string exe arg))
 		(ext:run-shell-command (concatenate 'string
 						    exe arg)
 				       :output output :wait wait))))
