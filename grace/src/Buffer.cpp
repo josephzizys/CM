@@ -214,16 +214,24 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   case cmdLispEval:
     result.setInfo (T("Eval"), String::empty, editingCategory, 0);
     result.addDefaultKeypress(T('E'), ModifierKeys::commandModifier);
-    result.setActive(getConsole()->lisp->isLispRunning() );
+#ifndef EMBED_SCHEME
+	  result.setActive(getConsole()->lisp->isLispRunning() );
+#endif
     break;
   case cmdLispSetPackage:
     result.setInfo (T("Set Package"), String::empty, editingCategory, 0);
+#ifndef EMBED_SCHEME
+
     result.setActive(getConsole()->lisp->isLispRunning() );
+#endif
     break;
   case cmdSalEval:
     result.setInfo (T("Execute"), String::empty, editingCategory, 0);
     result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
+#ifndef EMBED_SCHEME
+	  
     result.setActive(getConsole()->lisp->isLoaded(p->getASDF(ASDF::CM)));
+#endif
     break;
 
   case cmdSymbolHelp:

@@ -27,6 +27,11 @@ void GraceApp::initialise (const String& commandLine) {
   fontList = FontList::getInstance();
   prefs=GracePreferences::getInstance();
   console = new ConsoleWindow(true);
+#ifdef EMBED_SCHEME
+  schemeProcess = new SchemeThread(T("Scheme Thread"));
+  schemeProcess->startThread();
+#endif
+  
 }
 
 void GraceApp::graceQuit (bool ask) {

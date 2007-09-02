@@ -15,6 +15,11 @@
 #include "Console.h"
 #include "Audio.h"
 
+#ifdef EMBED_SCHEME
+#include "Scheme.h"
+#endif
+
+
 class GraceApp : public JUCEApplication
 {
     ShinyLookAndFeel shinyLookAndFeel;
@@ -39,6 +44,11 @@ public:
     ConsoleWindow* getConsole() {return console;}
     GracePreferences* prefs;
     GracePreferences* getPreferences() {return prefs;}
+#ifdef EMBED_SCHEME
+	SchemeThread* schemeProcess;
+#endif
+	
+	
 };
 
 

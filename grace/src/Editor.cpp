@@ -326,9 +326,7 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 }
 
 EditorWindow::~EditorWindow () {
-  printf("in ~EditorWindow\n");
-  editor->~EditorComponent();
-  printf("after ~EditorComponent\n");
+  //delete editor;
 }
 
 
@@ -339,9 +337,7 @@ void EditorWindow::closeButtonPressed () {
 	 T("Really close the window? Unsaved work will be lost."),
 	 T("   OK   "), T("Cancel"))
 	) ) {
-    printf("before ~EditorWindow\n");
-    this->~EditorWindow();
-    printf("after ~EditorWindow\n");
+    closeFile();
   }
 }
 

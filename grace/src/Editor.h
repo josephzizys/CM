@@ -67,8 +67,7 @@ class EditorComponent : public Component {
     addChildComponent( buffer, -1);
   }
   ~EditorComponent() {
-    printf("in ~EditorComponent\n");
-    buffer->~TextBuffer();
+    //delete buffer;
   }
 };
 

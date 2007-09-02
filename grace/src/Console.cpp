@@ -14,7 +14,13 @@
 #include "Editor.h"
 #include "Grace.h"
 #include "Audio.h"
+
+
+#ifndef EMBED_SCHEME
 #include "Lisp.h"
+#else
+#include "Scheme.h"
+#endif
 
 
 TransparencySlider::TransparencySlider(DocumentWindow* _window) : Slider(String::empty) {
@@ -187,10 +193,16 @@ void Console::setTheme(int i) {
 ConsoleWindow::ConsoleWindow (bool dosplash)
   : DocumentWindow ( T("Console") , Colours::white,
 		     DocumentWindow::allButtons, true ),
+#ifndef EMBED_SCHEME
     lisp (0),
+#endif
+
     currentTransparency (100.0)
 {
+#ifndef EMBED_SCHEME
+		
   lisp = new LispConnection(this);
+#endif
   menubar = new MenuBarComponent(this);
   setMenuBar(this);
   //setApplicationCommandManagerToWatch(commandManager);
@@ -212,15 +224,21 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
       hideSplash();
   }
   printBanner();
+#ifndef EMBED_SCHEME
+
   if (p->isLispLaunchAtStartup())
     lisp->startLisp();
+#endif
 }
 
 ConsoleWindow::~ConsoleWindow () {
   // this will be called by GraceApp
+#ifndef EMBED_SCHEME
+
   if ( lisp->isLispRunning() )
     lisp->stopLisp();
   delete lisp;
+#endif
 }
 
 void ConsoleWindow::closeButtonPressed () {
@@ -348,6 +366,7 @@ void ConsoleWindow::setFontSize( float size ) {
   p->setConsoleFontSize(size);
 }
 
+#ifndef EMBED_SCHEME
 void ConsoleWindow::consoleEval (String code, bool isSal, 
 				 bool isRegion) {
   if (! lisp->isLispRunning() ){
@@ -379,6 +398,17 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
   }
   lisp->sendLispSexpr(sexpr, message);
 }
+#else
+
+void ConsoleWindow::consoleEval (String code, bool isSal, 
+								 bool isRegion) {
+
+	((GraceApp *)GraceApp::getInstance())->schemeProcess->EvalString = code;
+	((GraceApp *)GraceApp::getInstance())->schemeProcess->notify();
+
+}
+
+#endif
 
 void ConsoleWindow::showSplash () {
   splash->setSize(console->getWidth(),console->getHeight());
@@ -486,7 +516,9 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
     menu.addItem(cmdAudioAudioSetup, T("Audio Setup..."),true);
     break;
   case 4 :
-    {
+    
+#ifndef EMBED_SCHEME
+  {
       bool running=lisp->isLispRunning();
       if ( running )
 	menu.addItem( cmdLispConnect, T("Quit Lisp")); 
@@ -500,6 +532,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 	sub1.addItem( cmdLispLoadRecentSystem + i,
 		      a->getASDFName(), true,
 		      lisp->isLoaded(a));
+
       }
       sub1.addSeparator();
       sub1.addItem( cmdLispLoadSystem, T("Load..."), 
@@ -521,6 +554,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       menu.addSeparator();
       menu.addItem( cmdLispConfigure, T("Configure Lisp..."), true); 
     }
+#endif
     break;
   case 5 :
     addCommonWindowItems(&menu, winConsole);
@@ -595,7 +629,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
   case cmdViewThemes :
     console->setTheme( arg);
     break;
-
+#ifndef EMBED_SCHEME
   case cmdLispConnect :
     if (lisp->isLispRunning())
       lisp->stopLisp();
@@ -630,7 +664,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
   case cmdLispClearRecentLoaded :
     p->clearRecentlyLoadedFiles();
     break;
-
+#endif
   default :
     // help menu=index 5 
     if (idx==5)
@@ -642,11 +676,14 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
 }
 
 void ConsoleWindow::showConfigureLispWindow () {
+#ifndef EMBED_SCHEME
   DialogWindow::showModalDialog (T("Configure Lisp"),
+								 
 				 new ConfigureLispView(lisp),
 				 this,
 				 Colour(0xffe5e5e5),
 				 true);
+#endif
 }
 
 void ConsoleWindow::showAudioMidiWindow () {
