@@ -28,7 +28,7 @@ void GraceApp::initialise (const String& commandLine) {
   prefs=GracePreferences::getInstance();
   console = new ConsoleWindow(true);
 #ifdef EMBED_SCHEME
-  schemeProcess = new SchemeThread(T("Scheme Thread"));
+  schemeProcess = new SchemeThread(T("Scheme Thread"), console);
   schemeProcess->startThread();
 #endif
   

@@ -12,15 +12,18 @@
 #include "juce.h"
 #include "chicken.h"
 
+class ConsoleWindow;
+
+#include "Console.h"
+
 class SchemeThread : public Thread
 {
-
-public:	
-	SchemeThread(String name);
-	~SchemeThread();
-	void run();
-	
-	String EvalString;
+ public:	
+  SchemeThread(String name, ConsoleWindow* win);
+  ~SchemeThread();
+  void run();
+  ConsoleWindow* console;
+  String EvalString;
 };
 
 #endif
