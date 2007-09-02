@@ -115,7 +115,7 @@ int LispSyntax::getIndent(const String text, int bot, int top, int beg) {
 
   // Search backwards for the closest (unbalanced) open paren
   while ( (pos != bot)  ) {
-    typ = scan_sexpr(syntab, text, pos, bot, SCAN_CODE, &loc);
+    typ = scan_sexpr(syntab, text, pos, bot, SCAN_CODE, &loc, NULL);
     pos = loc;
     if (typ == SCAN_UNLEVEL)
       break;

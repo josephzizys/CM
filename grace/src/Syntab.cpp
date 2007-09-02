@@ -356,20 +356,21 @@ int level_scan_p (int l, int a, int b, int c, int d) {
 }
 
 #define SCAN_COMMENTS 1
-#define SCAN_PARENS  2
+#define SCAN_PARENS   2
+#define SCAN_TOKENS   3
 
 scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
-		      int *stop) {
-/* scan forward/backward in string advancing position pos 1 BEYOND the
- * next balanced sexpr in string, according to mode. End is the
- * EXCLUDING position at which scanning will stop. so to scan
- * backwards to the start of string, end should be -1, to scan
- * forwards to end of the string end should be length of str. The
- * final position of the scan is return in stop, and will never be a
- * constituent position of what was scanned.  Direction of scan is
- * controlled by pos relative to end: pos<end scans forward otherwise
- * the scan is backward. Returns a scantype indicating was scanned.
- */
+		      int *stop, int *levs) {
+  /* scan forward/backward in string advancing position pos 1 BEYOND the
+   * next balanced sexpr in string, according to mode. End is the
+   * EXCLUDING position at which scanning will stop. so to scan
+   * backwards to the start of string, end should be -1, to scan
+   * forwards to end of the string end should be length of str. The
+   * final position of the scan is return in stop, and will never be a
+   * constituent position of what was scanned.  Direction of scan is
+   * controlled by pos relative to end: pos<end scans forward otherwise
+   * the scan is backward. Returns a scantype indicating was scanned.
+   */
   int typ = SCAN_EMPTY;
   int dir = GETDIR(pos, end), loc=0, par=0, sqr=0, cur=0, ang=0;
   bool skcom=true, skpar=false;
@@ -377,6 +378,10 @@ scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
   if (mode==SCAN_COLOR) {
     skcom=false;
     skpar=true;
+  }
+  else if (mode==SCAN_TOKENS) {
+    skcom=true;
+    skpar=false;
   }
 
   while (1) {
@@ -449,8 +454,8 @@ scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
 		( BDIR_P(dir) && char_close_p(tab, chr) ) ) {
 	if ( paren_char_p(chr) ) par++;
 	else if ( curly_char_p(chr) ) cur++;
-	else if ( square_char_p(chr) ) sqr++;
-	else if ( angle_char_p(chr) ) ang++;
+	//	else if ( square_char_p(chr) ) sqr++;
+	//	else if ( angle_char_p(chr) ) ang++;
 	pos = loc + dir;
       }
       // CLOSE PAREN. if level is already zero we can't go further
@@ -460,11 +465,10 @@ scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
 	  if ( par == 0 ) typ = SCAN_UNLEVEL; else par--;
 	else if ( curly_char_p(chr) ) 
 	  if ( cur == 0 ) typ = SCAN_UNLEVEL; else cur--;
-	else if ( square_char_p(chr) ) 
-	  if ( sqr == 0 ) typ = SCAN_UNLEVEL; else sqr--;
-	else if ( angle_char_p(chr) ) 
-	  if ( ang == 0 ) typ = SCAN_UNLEVEL; else ang--;
-
+	//	else if ( square_char_p(chr) ) 
+	//	  if ( sqr == 0 ) typ = SCAN_UNLEVEL; else sqr--;
+	//	else if ( angle_char_p(chr) ) 
+	//	  if ( ang == 0 ) typ = SCAN_UNLEVEL; else ang--;
 	if ( typ < 0 ) {
 	  pos = loc + dir;
 	  break;
@@ -478,7 +482,6 @@ scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
       }
     }
   } // end while loop
-
   // set stop postion and return scanresult
   if ( typ < 0 ) {
     *stop = pos;
@@ -517,7 +520,7 @@ scanresult parse_sexpr(SynTab tab, String str, int bot, int top, int dir,
     end = top;
     opp = bot;
   }
-  typ = scan_sexpr(tab, str, pos, end, mode, &pos);
+  typ = scan_sexpr(tab, str, pos, end, mode, &pos, NULL);
   chk=typ;
   if (typ < 1) {
     *poz=pos;
@@ -533,7 +536,7 @@ scanresult parse_sexpr(SynTab tab, String str, int bot, int top, int dir,
     // now have the far side, reverse the scan back towards starting
     // position to find the near side. this skips whitespace and
     // comments
-    chk = scan_sexpr(tab, str, pos-dir, opp, mode, &loc);
+    chk = scan_sexpr(tab, str, pos-dir, opp, mode, &loc, NULL);
     if ( typ != chk ) {
       printf("Shouldn't: type mismatch %d and %d (pos=%d, end=%d).",
 	     typ, chk, pos, opp);
@@ -758,14 +761,14 @@ void show_sexprs (SynTab tab, String str, int len, int dir, int poz) {
 
   old = pos;
   while (1) {
-    typ = scan_sexpr(tab, str, old, end, SCAN_CODE, &pos);
+    typ = scan_sexpr(tab, str, old, end, SCAN_CODE, &pos, NULL);
     if ( typ < 1 ) {
       if ( typ < 0 ) 
 	printf("\"%s\"\t(pos=%d)\n",labl(typ) , pos); //labs[typ + 2]
       break;
     }
     else {
-      chk = scan_sexpr(tab, str, pos-dir, opp, SCAN_CODE, &loc);
+      chk = scan_sexpr(tab, str, pos-dir, opp, SCAN_CODE, &loc, NULL);
       if ( typ != chk )
 	printf("Shouldn't: type mismatch %d and %d (pos=%d, end=%d).",
 	       typ, chk, loc, opp);

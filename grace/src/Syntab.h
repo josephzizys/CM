@@ -142,8 +142,7 @@ int skip_white(SynTab tab, String str, int pos, int end, int skcom) ;
 int search_delim(SynTab tab, String str, int pos, int end, char del) ;
 void substr(char * buf, String str, int beg, int end) ;
 scanresult scan_sexpr(SynTab tab, String buf, int start, int end, int mode, 
-		      int *stop) ;
-scanresult parse_sexpr(SynTab tab, String str, int bot, int top, int dir, int mode,
-		       int * poz, int * s1, int * s2) ;
-
+		      int *stop, int *levs) ;
+scanresult parse_sexpr(SynTab tab, String str, int bot, int top, int dir, 
+		       int mode, int * poz, int * s1, int * s2) ;
 #endif

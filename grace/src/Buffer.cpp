@@ -1180,7 +1180,7 @@ int TextBuffer::forwardSexpr() {
   String text = forwardTopLevelText();
   int typ, loc, pos=point(), end=text.length();
 
-  typ = scan_sexpr(syntax->syntab, text, 0, end, SCAN_CODE, &loc);
+  typ = scan_sexpr(syntax->syntab, text, 0, end, SCAN_CODE, &loc, NULL);
   if (typ == SCAN_UNLEVEL)
     getConsole()->printMessage(T("Editor C-M-f:\nCan't move forward past end of list.\n"),
 			       ConsoleTheme::warningColor);
@@ -1196,7 +1196,7 @@ int TextBuffer::backwardSexpr() {
   String text = backwardTopLevelText();
   int typ, loc, pos=point(), end=text.length();
 
-  typ = scan_sexpr(syntax->syntab, text, end-1, -1, SCAN_CODE, &loc);
+  typ = scan_sexpr(syntax->syntab, text, end-1, -1, SCAN_CODE, &loc, NULL);
   if (typ == SCAN_UNLEVEL)
     getConsole()->printMessage(T("Editor C-M-b:\nCan't move backward past start of list.\n"),
 			       ConsoleTheme::warningColor);
@@ -1443,7 +1443,7 @@ int TextBuffer::evalText() {
   // parse backwards 1 sexpr for lisp or to toplevel for Sal
   // if region parse whole thing
   while (pos>-1) {
-    typ = scan_sexpr(syntax->syntab, text, old, -1, SCAN_CODE, &pos);
+    typ = scan_sexpr(syntax->syntab, text, old, -1, SCAN_CODE, &pos, NULL);
     if ( (typ<=SCAN_EMPTY) || ((syntaxId==syntaxLisp) && !region) )
       break;
     old=pos;
