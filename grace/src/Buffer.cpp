@@ -333,7 +333,11 @@ bool TextBuffer::perform (const InvocationInfo& info) {
   case cmdEditRedo:
     break;
   case cmdEditCut:
-    cut();
+    //cut();
+    if (getHighlightedRegionLength()>0) {
+      copy();
+      keyPressed(KeyPress(KeyPress::deleteKey));
+    }
     setChanged(true);
     break;
   case cmdEditCopy:
@@ -535,7 +539,11 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
     break;
   case 'w' :
   case 'W' :
-    cut();
+    //cut();
+    if (getHighlightedRegionLength()>0) {
+      copy();
+      keyPressed(KeyPress(KeyPress::deleteKey));
+    }
     break;
   case 'x' :
   case 'X' :
@@ -773,7 +781,11 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     ((EditorWindow*)getTopLevelComponent())->closeFile();
   case 'x' :
   case 'X' :
-    cut();
+    //cut();
+    if (getHighlightedRegionLength()>0) {
+      copy();
+      keyPressed(KeyPress(KeyPress::deleteKey));
+    }
     break;
   case 'e' :
   case 'E' :
@@ -794,6 +806,14 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     gotoEOB();
     break;
 
+  case 'T' : 
+  case 't' : 
+    if (syntaxId == syntaxSal) {
+      String text=backwardTopLevelText();
+      if (text != String::empty)
+	((SalSyntax *)syntax)->tokenize(text);
+    }
+    break;
   default :
     keyIllegalAction(key);
     break;
