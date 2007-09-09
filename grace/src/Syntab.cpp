@@ -355,9 +355,7 @@ int level_scan_p (int l, int a, int b, int c, int d) {
   return ( (l == a) && (l == b) && (l == c) && (l == d) ) ? 1 : 0;
 }
 
-#define SCAN_COMMENTS 1
-#define SCAN_PARENS   2
-#define SCAN_TOKENS   3
+//#define SCAN_COMMENTS 1
 
 scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
 		      int *stop, int *levs) {
@@ -379,7 +377,7 @@ scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
     skcom=false;
     skpar=true;
   }
-  else if (mode==SCAN_TOKENS) {
+  else if (mode==SCAN_PARSER) {
     skcom=true;
     skpar=false;
   }
@@ -437,24 +435,41 @@ scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
 	  break;
 	}
       }
-      // PUNCTUATION. keep going
+      // PUNCTUATION. keep going unless parser mode
       else if ( char_punctuation_p(tab,chr) ) {
 	pos = loc + dir;
+	if (mode==SCAN_PARSER) {
+	  typ=SCAN_PUNCT;
+	  break;
+	}
       }
       // PREFIX. keep going
       else if ( char_prefix_p(tab, chr) ) {
 	pos = loc + dir;
       }
+      // PARENS
       else if (skpar) {
-	// SKIPPING PARENS
+	// we are ignoring parens
 	pos = loc + dir;
+      }
+      else if (mode==SCAN_PARSER) {
+	// parens are tokens for parser
+	pos=loc+dir;
+	if ( char_open_p(tab,chr)) {
+	  typ=SCAN_OPEN;
+	  break;
+	}
+	else if ( char_close_p(tab,chr) ) {
+	  typ=SCAN_CLOSE;
+	  break;
+	}
       }
       // OPEN PAREN. increment level of approproate paren.
       else if ( ( FDIR_P(dir) && char_open_p(tab, chr) ) ||
 		( BDIR_P(dir) && char_close_p(tab, chr) ) ) {
 	if ( paren_char_p(chr) ) par++;
 	else if ( curly_char_p(chr) ) cur++;
-	//	else if ( square_char_p(chr) ) sqr++;
+	else if ( square_char_p(chr) ) sqr++;
 	//	else if ( angle_char_p(chr) ) ang++;
 	pos = loc + dir;
       }
@@ -465,8 +480,8 @@ scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
 	  if ( par == 0 ) typ = SCAN_UNLEVEL; else par--;
 	else if ( curly_char_p(chr) ) 
 	  if ( cur == 0 ) typ = SCAN_UNLEVEL; else cur--;
-	//	else if ( square_char_p(chr) ) 
-	//	  if ( sqr == 0 ) typ = SCAN_UNLEVEL; else sqr--;
+		else if ( square_char_p(chr) ) 
+		  if ( sqr == 0 ) typ = SCAN_UNLEVEL; else sqr--;
 	//	else if ( angle_char_p(chr) ) 
 	//	  if ( ang == 0 ) typ = SCAN_UNLEVEL; else ang--;
 	if ( typ < 0 ) {
@@ -478,10 +493,13 @@ scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
 	  typ = SCAN_LIST;
 	  break;
 	}
-	else pos = loc + dir;
+	else {
+	  pos = loc + dir;
+	}
       }
     }
   } // end while loop
+
   // set stop postion and return scanresult
   if ( typ < 0 ) {
     *stop = pos;
@@ -568,8 +586,8 @@ scanresult parse_sexpr(SynTab tab, String str, int bot, int top, int dir,
 char buffer[TESTBUFLEN];
 
 void show_words(SynTab tab, String str, int len, int dir, int pos) ;
-void show_sexprs(SynTab tab, String str, int len, int dir, int pos) ;
 void show_parse (SynTab tab, String str, int len, int dir, int poz, int mode) ;
+//void show_sexprs(SynTab tab, String str, int len, int dir, int pos) ;
 
 int main (int argc, char** argv) {
   FILE * fp;
@@ -585,10 +603,9 @@ int main (int argc, char** argv) {
   if ( argc < 2 ) {
     printf("Usage:\na.out [-b -w -c -p] filename\n");
     printf("      default is FORWARD SEXPR scan\n");
-    printf("      -b=BACKWARD, -w=WORD, -p=starting postion\n");
+    printf("      -b=BACKWARD, -w=WORD, -c=COLOR -t=TOKEN -p=PARSER\n"); // -p=starting postion
     return 0;
   }
-
 
   for (i = 1; i < argc; i++) 
     if (argv[i][0] == '-')
@@ -599,11 +616,14 @@ int main (int argc, char** argv) {
       case 'f':
 	dir=FDIR;
 	break;
-      case 'p':
-	pos = atoi(argv[++i]) ;
-	break;
+	//      case 'p':
+	//	pos = atoi(argv[++i]) ;
+	//	break;
       case 'w':
 	tst = 0;
+	break;
+      case 'p':
+	tst = SCAN_PARSER;
 	break;
       case 's':
 	tst = SCAN_CODE;
@@ -622,8 +642,8 @@ int main (int argc, char** argv) {
     sty=0;
   }
   else if ( (strlen(file) > 5) && (0 == strcmp(".sal", &file[strlen(file)-4])) ) {
-    init_syntab(tab, T(""), T(""), T("~!@#$%^&*-_=+|:<.>/?"),
-	      T(";"), T("`'"), T("\""), T("([{"), T(")]}"), T(","), T("\\") );
+    init_syntab(tab, T(""), T(""), T("~!@$%^&*-_=+|:<.>/?"),
+	      T(";"), T("#`'"), T("\""), T("([{"), T(")]}"), T(","), T("\\") );
     sty=1;
   }
   else {
@@ -670,6 +690,7 @@ int main (int argc, char** argv) {
   printf("  start=%d\n", pos);
   if (tst == 0 ) printf("  motion=WORD\n");
   else if (tst == SCAN_CODE ) printf("  motion=SEXPR\n");
+  else if (tst == SCAN_PARSER ) printf("  motion=PARSER\n");
   else printf("  motion=COLOR\n");
   printf("\n");
   if (tst == 0 )
@@ -679,7 +700,7 @@ int main (int argc, char** argv) {
 #ifndef NOJUCE
   show_words(tab, String(buffer), len, dir, pos);
 #endif
-  else 
+  else
 #ifdef NOJUCE
     show_parse(tab,buffer,len,dir, pos, tst);
 #endif
@@ -722,7 +743,10 @@ char * labl(int i) {
   if (i == 2) return "String";
   if (i == 3) return "List";
   if (i == 4) return "Comment";
-  return "<unknown>";
+  if (i == 5) return "Open";
+  if (i == 6) return "Close";
+  if (i == 7) return "Punct";
+  return "UNKNOWN";
 }
 
 void show_parse (SynTab tab, String str, int len, int dir, int poz, int mode) {
@@ -744,6 +768,7 @@ void show_parse (SynTab tab, String str, int len, int dir, int poz, int mode) {
   }
 }
 
+/*
 void show_sexprs (SynTab tab, String str, int len, int dir, int poz) {
   int num = 0, old, end, opp;
   char sub[65536];
@@ -783,5 +808,7 @@ void show_sexprs (SynTab tab, String str, int len, int dir, int poz) {
   }
   printf("\n");
 }
+
+*/
 
 #endif

@@ -9,7 +9,10 @@
 // $Date$ 
 
 #include "Syntax.h"
+#include "Console.h"
 #include <map>;
+#include <cctype>
+
 using namespace std;
 
 Syntax::Syntax (String a, String b, String c, String d, String e, String f, 
@@ -28,49 +31,78 @@ bool Syntax::isWhiteBetween(const String txt, int lb, int ub) {
   return false;
 }
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/*
+ * Text Syntax
+ */
+
+TextSyntax::TextSyntax () 
+  : Syntax( T(""), T(""), T("~@#$%^&*-_=+|<>/"),
+	    T(""), T(""), T("\""), T("([{"), T(")]}"),
+	    T(",.!?;:'`\\"), T("")) {
+}
+
+bool TextSyntax::isTopLevel(String line) {
+  // true if line is empty or white in column zero.
+  if ( line == String::empty )
+    return true;
+  else if ( char_white_p(syntab, line[0]) )
+    return true;
+  else return false;
+}
+
+SynTok* TextSyntax::getSynTok (String n) {
+  return (SynTok *) NULL;
+}
+
+int TextSyntax::getIndent (const String text, int bot, int top, int beg) {
+  return 4;
+}
+
+hiliteID TextSyntax::getHilite (const String text, int start, int end) {
+  return hiliteNone;
+}
+
+/*
  * Lisp Syntax
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+ */
 
 int lispTokCtr = 0;
 SynTokMap lispTokMap;
 
-void addLispTok (const String n, int a, hiliteID b, int c, int d) {
-  if (a==0) 
-    a=lispTokCtr;
-  lispTokCtr++;
-  lispTokMap[n] = new SynTok(n, a, b, c, d);
+void addLispTok (const String n, int t, hiliteID h, int i) {
+  lispTokMap[n] = new SynTok(n, ++lispTokCtr, h, i);
 }
 
 void initLispToks() {
   printf("initing lisp map\n");
-  addLispTok( T("block"), 0, hilite4, 1, 0);
-  addLispTok( T("defclass"), 0, hilite4, 3, 0);
-  addLispTok( T("defconstant"), 0, hilite4, 1, 0);
-  addLispTok( T("define"), 0, hilite4, 1, 0);
-  addLispTok( T("definstrument"), 0, hilite4, 2, 0);
-  addLispTok( T("defmethod"), 0, hilite4, 3, 0);
-  addLispTok( T("defobject"), 0, hilite4, 2, 0);
-  addLispTok( T("defparameter"), 0, hilite4, 1, 0);
-  addLispTok( T("defprocess"), 0, hilite4, 2, 0);
-  addLispTok( T("defun"), 0, hilite4, 2, 0);
-  addLispTok( T("defvar"), 0, hilite4, 1, 0);
-  addLispTok( T("do"), 0, hilite4, 2, 0);
-  addLispTok( T("do*"), 0, hilite4, 2, 0);
-  addLispTok( T("dolist"), 0, hilite4, 1, 0);
-  addLispTok( T("dotimes"), 0, hilite4, 1, 0);
-  addLispTok( T("eval-when"), 0, hilite4, 1, 0);
-  addLispTok( T("flet"), 0, hilite4, 1, 0);
-  addLispTok( T("if"), 0, hilite4, 1, 0);
-  addLispTok( T("labels"), 0, hilite4, 1, 0);
-  addLispTok( T("lambda"), 0, hilite4, 1, 0);
-  addLispTok( T("let"), 0, hilite4, 1, 0);
-  addLispTok( T("let*"), 0, hilite4, 1, 0);
-  addLispTok( T("loop"), 0, hilite4, 0, 0);
-  addLispTok( T("process"), 0, hilite4, 2, 0);
-  addLispTok( T("rlet"), 0, hilite4, 1, 0);
-  addLispTok( T("unless"), 0, hilite4, 1, 0);
-  addLispTok( T("when"), 0, hilite4, 1, 0);
+  addLispTok( T("begin"), 0, hilite4, 1);
+  addLispTok( T("block"), 0, hilite4, 1);
+  addLispTok( T("defclass"), 0, hilite4, 3);
+  addLispTok( T("defconstant"), 0, hilite4, 1);
+  addLispTok( T("define"), 0, hilite4, 1);
+  addLispTok( T("definstrument"), 0, hilite4, 2);
+  addLispTok( T("defmethod"), 0, hilite4, 3);
+  addLispTok( T("defobject"), 0, hilite4, 2);
+  addLispTok( T("defparameter"), 0, hilite4, 1);
+  addLispTok( T("defprocess"), 0, hilite4, 2);
+  addLispTok( T("defun"), 0, hilite4, 2);
+  addLispTok( T("defvar"), 0, hilite4, 1);
+  addLispTok( T("do"), 0, hilite4, 2);
+  addLispTok( T("do*"), 0, hilite4, 2);
+  addLispTok( T("dolist"), 0, hilite4, 1);
+  addLispTok( T("dotimes"), 0, hilite4, 1);
+  addLispTok( T("eval-when"), 0, hilite4, 1);
+  addLispTok( T("flet"), 0, hilite4, 1);
+  addLispTok( T("if"), 0, hilite4, 1);
+  addLispTok( T("labels"), 0, hilite4, 1);
+  addLispTok( T("lambda"), 0, hilite4, 1);
+  addLispTok( T("let"), 0, hilite4, 1);
+  addLispTok( T("let*"), 0, hilite4, 1);
+  addLispTok( T("loop"), 0, hilite4, 0);
+  addLispTok( T("process"), 0, hilite4, 2);
+  addLispTok( T("rlet"), 0, hilite4, 1);
+  addLispTok( T("unless"), 0, hilite4, 1);
+  addLispTok( T("when"), 0, hilite4, 1);
 }
 
 SynTok* LispSyntax::getSynTok (String n) {
@@ -150,7 +182,7 @@ int LispSyntax::getIndent(const String text, int bot, int top, int beg) {
   // determine if we do a "body" indent
   args=-1; // -1 means token has no distinuished args
   tok=getSynTok(text.substring(sx1, sx2));
-  if (tok != (SynTok *)NULL) args=tok->indent;
+  if (tok != (SynTok *)NULL) args=tok->getIndent();
   //printf("lisp '%s' with %d distinguished args.\n",
 
   // args == 0 is immediate body indent (like loop)
@@ -204,75 +236,99 @@ hiliteID LispSyntax::getHilite (const String text, int start, int end) {
     return hilite5;
   SynTok * tok = getSynTok(text.substring(start,end));
   if (tok != (SynTok *)NULL)
-    return tok->hilite;
+    return tok->getHilite();
   return hiliteNone;
 }
 
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/*
  * Sal Syntax
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+ */
 
 int salMapCtr = 0;
 SynTokMap salTokMap;
 
-void addSalTok (const String n, int a, hiliteID b, int c, int d) {
-  salTokMap[n] = new SynTok(n, a, b, c, d);
+void addSalTok (const String n, int a, int d, hiliteID c) {
+  salTokMap[n] = new SynTok(n, a, c, 0, d);
 }
 
-void initSalToks() {
-  printf("initing SAL map\n");
+void SalSyntax::initSalToks() {
   salMapCtr=1;
-  addSalTok( T("begin"), salBegin, hilite5, 1, salCommand);
-  addSalTok( T("chdir"), salChdir, hilite5, 0,salCommand);
-  addSalTok( T("define"), salDefine, hilite5, 1, salCommand);
-  addSalTok( T("else"), salElse, hilite5, 1, salClausal);
-  addSalTok( T("end"), salEnd, hilite5, -1, salClausal);
-  addSalTok( T("exec"), salExec, hilite5, 0, salCommand);
-  addSalTok( T("if"), salIf, hilite5, 0, salCommand);
-  addSalTok( T("load"), salLoad, hilite5, 0, salCommand);
-  addSalTok( T("loop"), salLoop, hilite5, 1, salCommand);
-  addSalTok( T("open"), salOpen, hilite5, 0, salCommand);
-  addSalTok( T("output"), salOutput, hilite5, 0, salClausal);
-  addSalTok( T("play"), salPlay, hilite5, 0, salCommand);
-  addSalTok( T("plot"), salPlot, hilite5, 0, salCommand);
-  addSalTok( T("print"), salPrint, hilite5, 0, salCommand);
-  addSalTok( T("return"), salReturn, hilite5, 0, salClausal);
-  addSalTok( T("rts"), salRts, hilite5, 0, salCommand);
-  addSalTok( T("run"), salRun, hilite5, 1, salCommand);
-  addSalTok( T("set"), salSet, hilite5, 0, salCommand);
-  addSalTok( T("sprout"), salSprout, hilite5, 0, salCommand);
-  addSalTok( T("system"), salSystem, hilite5, 0, salCommand);
-  addSalTok( T("then"), salThen, hilite5, 1, salClausal);
-  addSalTok( T("unless"), salUnless, hilite5, 0, salClausal);
-  addSalTok( T("until"), salUntil, hilite5, 0, salClausal);
-  addSalTok( T("wait"), salWait, hilite5, 0, salClausal);
-  addSalTok( T("when"), salWhen, hilite5, 0, salClausal);
-  addSalTok( T("while"), salWhile, hilite5, 0, salClausal);
-  addSalTok( T("with"), salWith, hilite5, 0, salClausal);
+  addSalTok( T("begin"), SalBegin, SalCommand, hilite5);
+  addSalTok( T("chdir"), SalChdir,SalCommand, hilite5);
+  addSalTok( T("define"), SalDefine, SalCommand, hilite5);
+  addSalTok( T("else"), SalElse, SalStatement, hilite5);
+  addSalTok( T("end"), SalEnd, SalStatement, hilite5);
+  addSalTok( T("exec"), SalExec, SalCommand, hilite5);
+  addSalTok( T("if"), SalIf, SalCommand, hilite5);
+  addSalTok( T("load"), SalLoad, SalCommand, hilite5);
+  addSalTok( T("loop"), SalLoop, SalCommand, hilite5);
+  addSalTok( T("open"), SalOpen, SalCommand, hilite5);
+  addSalTok( T("output"), SalOutput, SalStatement, hilite5);
+  addSalTok( T("play"), SalPlay, SalCommand, hilite5);
+  addSalTok( T("plot"), SalPlot, SalCommand, hilite5);
+  addSalTok( T("print"), SalPrint, SalCommand, hilite5);
+  addSalTok( T("return"), SalReturn, SalStatement, hilite5);
+  addSalTok( T("run"), SalRun, SalCommand, hilite5);
+  addSalTok( T("set"), SalSet, SalCommand, hilite5);
+  addSalTok( T("sprout"), SalSprout, SalCommand, hilite5);
+  addSalTok( T("system"), SalSystem, SalCommand, hilite5);
+  addSalTok( T("then"), SalThen, SalStatement, hilite5);
+  addSalTok( T("unless"), SalUnless, SalStatement, hilite5);
+  addSalTok( T("until"), SalUntil, SalStatement, hilite5);
+  addSalTok( T("wait"), SalWait, SalStatement, hilite5);
+  addSalTok( T("when"), SalWhen, SalStatement, hilite5);
+  addSalTok( T("while"), SalWhile, SalStatement, hilite5);
+  addSalTok( T("with"), SalWith, SalStatement, hilite5);
 
-  addSalTok( T("process"), salProcess, hilite6, 0, salReserved);
-  addSalTok( T("function"), salFunction, hilite6, 0, salReserved);
-  addSalTok( T("variable"), salVariable, hilite6, 0, salReserved);
+  addSalTok( T("process"), SalProcess, SalClausal, hilite6);
+  addSalTok( T("function"), SalFunction, SalClausal, hilite6);
+  addSalTok( T("variable"), SalVariable, SalClausal, hilite6);
   
-  int res=100;
-  // should really have real ids for these too...
-  addSalTok( T("above"), res++, hilite5, 0, salReserved);
-  addSalTok( T("below"), res++, hilite5, 0, salReserved);
-  addSalTok( T("by"), res++, hilite5, 0, salReserved);
-  addSalTok( T("downto"), res++, hilite5, 0, salReserved);
-  addSalTok( T("finally"), res++, hilite5, 0, salReserved);
-  addSalTok( T("for"), res++, hilite5, 0, salReserved);
-  addSalTok( T("from"), res++, hilite5, 0, salReserved);
-  addSalTok( T("in"), res++, hilite5, 0, salReserved);
-  addSalTok( T("over"), res++, hilite5, 0, salReserved);
-  addSalTok( T("repeat"), res++, hilite5, 0, salReserved);
-  addSalTok( T("to"), res++, hilite5, 0, salReserved);
+  addSalTok( T("above"), SalAbove, SalClausal, hilite5);
+  addSalTok( T("below"), SalBelow, SalClausal, hilite5);
+  addSalTok( T("by"), SalBy, SalClausal, hilite5);
+  addSalTok( T("downto"), SalDownto, SalClausal, hilite5);
+  addSalTok( T("finally"), SalFinally, SalClausal, hilite5);
+  addSalTok( T("for"), SalFor, SalClausal, hilite5);
+  addSalTok( T("from"), SalFrom, SalClausal, hilite5);
+  addSalTok( T("in"), SalIn, SalClausal, hilite5);
+  addSalTok( T("over"), SalOver, SalClausal, hilite5);
+  addSalTok( T("repeat"), SalRepeat, SalClausal, hilite5);
+  addSalTok( T("to"), SalTo, SalClausal, hilite5);
+
+  //  Operators, data field is op weight
+  addSalTok( T("|"), SalOr, 1, hiliteNone);
+  addSalTok( T("&"), SalAnd, 2, hiliteNone);
+  addSalTok( T("!"), SalNot, 3, hiliteNone);
+  addSalTok( T("="), SalEqual, 4, hiliteNone); // relation and op
+  addSalTok( T("!="), SalNotEqual, 4, hiliteNone);  
+  addSalTok( T("<"), SalLess, 4, hiliteNone);
+  addSalTok( T(">"), SalGreater, 4, hiliteNone);
+  addSalTok( T("<="), SalLessEqual, 4, hiliteNone); // relation and op
+  addSalTok( T(">="), SalGreaterEqual, 4, hiliteNone); // relation and op
+  addSalTok( T("~="), SalGeneralEqual, 4, hiliteNone);  
+  addSalTok( T("+"), SalPlus, 5, hiliteNone);
+  addSalTok( T("-"), SalMinus, 5, hiliteNone);
+  addSalTok( T("%"), SalMod, 5, hiliteNone);
+  addSalTok( T("*"), SalTimes, 6, hiliteNone);  
+  addSalTok( T("/"), SalDivide, 6, hiliteNone);
+  addSalTok( T("^"), SalExpt, 7, hiliteNone);
+  // assignment (also: = <= >=)
+  addSalTok( T("+="), SalInc, 0, hiliteNone);
+  addSalTok( T("*="), SalMul, 0, hiliteNone);
+  addSalTok( T("&="), SalCol, 0, hiliteNone);
+  addSalTok( T("*="), SalPre, 0, hiliteNone);  
+  addSalTok( T("^="), SalApp, 0, hiliteNone);
+  // hash tokens
+  addSalTok( T("#t"), SalTrue, 0, hiliteNone);
+  addSalTok( T("#f"), SalFalse, 0, hiliteNone);
+  addSalTok( T("#?"), SalQMark, 0, hiliteNone);
 }
 
 SalSyntax::SalSyntax () 
-  : Syntax( T(""), T(""), T("~!@#$%^&*-_=+|:<.>/?"),
-	    T(";"), T("`'"), T("\""), T("([{"), T(")]})"),
+  : Syntax( T(""), T(""), T("~!@$%^&*-_=+|:<.>/?"),
+	    T(";"), T("#"), T("\""), T("([{"), T(")]})"),
 	    T(","), T("\\")) {
   if ( salMapCtr == 0)
     initSalToks();
@@ -305,7 +361,7 @@ bool SalSyntax::isTopLevel(String line) {
   int end=skip_syntax(syntab, line, T("w"), 0, line.length() );
   if ( end > 0 ) {
     SynTok * tok = getSynTok(line.substring(0,end));
-    if ( (tok != (SynTok *)NULL) && tok->toktype==salCommand )
+    if ( (tok != (SynTok *)NULL) && tok->getLiteralClass()==SalCommand )
       return true;
     else return false;
   }
@@ -322,8 +378,8 @@ int lineIndent(const String str, int bot, int top, int pos) {
 int SalSyntax::isSalStatement(const String name) {
   SynTok * tok = getSynTok(name);
   if ( tok == (SynTok *)NULL ) return -1;
-  if ( tok->toktype < salReserved )
-    return tok->id;
+  if ( (tok->getLiteralClass() & SalStatement) == SalStatement)
+    return tok->getType();
   return -1;
 }
 
@@ -342,9 +398,9 @@ int SalSyntax::backwardSal(const String text, int bot, int top, int *poz, int *s
     else if (typ == SCAN_TOKEN) {
       tst = isSalStatement( text.substring(sx1,sx2) ) ;
       if ( tst > -1) {
-	if (tst == salEnd)
+	if (tst == SalEnd)
 	  lev++;
-	else if ( (tst == salBegin) || (tst == salLoop) ||  (tst == salRun)) 
+	else if ( (tst == SalBegin) || (tst == SalLoop) ||  (tst == SalRun)) 
 	  lev--;
 	// stop if no pending "end"
 	if (lev <= 0) {
@@ -367,7 +423,7 @@ int SalSyntax::getIndent(const String text, int bot, int top, int poz) {
   typ=parse_sexpr(syntab, text, pos-1, top, 1, SCAN_CODE, 
 		  &pos, &sx1, &sx2); 
   if ( (typ==SCAN_TOKEN) && (sx2-sx1 == 3) &&
-       (salEnd==isSalStatement( text.substring(sx1,sx2) )) ) {
+       (SalEnd==isSalStatement( text.substring(sx1,sx2) )) ) {
     end=true;
   }
 
@@ -386,7 +442,7 @@ int SalSyntax::getIndent(const String text, int bot, int top, int poz) {
 	pos--;
     else
       // have sal cmd. stop on Then or Else or cmd starts line
-      if ( (sal==salThen) || (sal==salElse) )
+      if ( (sal==SalThen) || (sal==SalElse) )
 	break;
       else if ( isWhiteBetween(text,move_bol(text,pos,bot),pos) )
 	break;
@@ -407,15 +463,15 @@ int SalSyntax::getIndent(const String text, int bot, int top, int poz) {
   // 4. If Tab line is End then indent=-2. 
   // 5. If first token preceding original position is a comma then
   // indent to first arg position
-  if ( ((sal==salThen) || (sal==salElse)) && 
+  if ( ((sal==SalThen) || (sal==SalElse)) && 
        isWhiteBetween(text,pos+4, move_eol(text,pos,top)) ) {
     //printf("then/else at end\n");
     col+=2;
   }
-  else if (sal==salDefine)
+  else if (sal==SalDefine)
     col+=2;
   else if ( (typ==SCAN_UNLEVEL) &&
-	    ( (sal==salLoop) || (sal==salRun) || (sal==salBegin)) ) {
+	    ( (sal==SalLoop) || (sal==SalRun) || (sal==SalBegin)) ) {
     col+=2;
     //printf("loop/run: col set to %d\n", *col);
     if ( end ) col-=2;
@@ -425,7 +481,7 @@ int SalSyntax::getIndent(const String text, int bot, int top, int poz) {
     int tmp=pos-1; // pos is start index of current command
     int pre=-1;
     backwardSal(text,bot,top,&tmp,&pre);
-    if ( (pre==salThen) || (pre==salElse) || (pre==salDefine)) {
+    if ( (pre==SalThen) || (pre==SalElse) || (pre==SalDefine)) {
       col-=2;
       //printf("previous then/else: col set to %d\n", *col);      
     }
@@ -455,43 +511,303 @@ hiliteID SalSyntax::getHilite (const String text, int start, int end) {
   SynTok * tok = getSynTok(text.substring(start,end));
   if (tok == (SynTok *)NULL)
     return hiliteNone;
-  if ((tok->toktype==salCommand) || (tok->id==salEnd)) {
+  if ((tok->getLiteralClass()==SalCommand) || (tok->getType()==SalEnd)) {
     // show commands at start of line as executable, allow balancing
     // End in col 0 to show blue too.
     if (start==0 || text[start-1] == '\n')
       return hilite4;
     else return hilite5;
   }
-  else return tok->hilite;
-}
-    
-/*
- * Text Syntax
- */
-
-TextSyntax::TextSyntax () 
-  : Syntax( T(""), T(""), T("~@#$%^&*-_=+|<>/"),
-	    T(""), T(""), T("\""), T("([{"), T(")]}"),
-	    T(",.!?;:'`\\"), T("")) {
+  else return tok->getHilite();
 }
 
-bool TextSyntax::isTopLevel(String line) {
-  // true if line is empty or white in column zero.
-  if ( line == String::empty )
-    return true;
-  else if ( char_white_p(syntab, line[0]) )
-    return true;
-  else return false;
+void salError(String str, int err, SynTok *tok);
+SynTok *findUnbalanced(OwnedArray<SynTok> &tokens, int target, int other, int level);
+int classifyToken(SynTok *tok);
+int isLiteralToken(SynTok *tok);
+int isSpecialToken(SynTok *tok);
+int isNumberToken(SynTok *tok);
+int isClassToken(SynTok *tok);
+int isSlotToken(SynTok *tok);
+int isIdentifierToken(SynTok *tok);
+
+void SalSyntax::tokenize(String str) {
+  int old=0, len=str.length(), pos=0, beg=0, end=0, lev[]={0,0,0};
+  int typ;
+  SynTok *tok;
+  OwnedArray<SynTok> tokens;
+
+  while (true) {
+    old=pos;
+    typ=parse_sexpr(syntab,str,-1,len,1,SCAN_PARSER,&pos,&beg,&end);
+    switch (typ) {
+    case SCAN_EMPTY :
+      tok=NULL;
+      break;
+    case SCAN_UNMATCHED:
+      // this happens if we hit an unterminated string...
+      // we need to find the starting char
+      for (beg=old;beg<pos;beg++)
+	if (str[beg]=='\"') break;
+      tok=new SynTok(T("\""), SalString, beg);
+      break;
+    case SCAN_STRING :
+      tok=new SynTok(str.substring(beg,end), SalString, beg);
+      break;
+    case SCAN_PUNCT :
+      tok=new SynTok(T(","), SalComma, beg );
+      break;
+    case SCAN_OPEN :
+      if ( paren_char_p(str[beg]) ) {
+	lev[0]++;
+	tok=new SynTok(T("("), SalLParen, beg);
+      }
+      else if ( curly_char_p(str[beg]) ) {
+	lev[1]++;
+	tok=new SynTok(T("{"), SalLCurly, beg);
+      }
+      else {
+	lev[2]++;
+	tok=new SynTok(T("["), SalLBrace, beg);
+      }
+      break;
+    case SCAN_CLOSE :
+      if ( paren_char_p(str[beg]) ) {
+	if ( --lev[0]<0 ) typ=SCAN_UNLEVEL;
+	tok=new SynTok(T(")"), SalRParen, beg);
+      }
+      else if ( curly_char_p(str[beg]) ) {
+	if ( --lev[1]<0 ) typ=SCAN_UNLEVEL;
+	tok=new SynTok(T("}"), SalRCurly, beg);
+      }
+      else {
+	if ( --lev[2]<0 ) typ=SCAN_UNLEVEL;
+	tok=new SynTok(T("]"), SalRBrace, beg);
+      }
+      break;
+    case SCAN_TOKEN :
+      tok=new SynTok(str.substring(beg,end), SalUntyped, beg);
+      typ=classifyToken(tok);
+      // if (typ==SalUntyped) typ=SalUnknown;
+      break;
+    default:  
+      // error code
+      printf("error code=%d, tok=%s\n", typ, str.substring(beg,end).toUTF8());
+      tok=new SynTok(str.substring(beg,end), SalUntyped, beg);
+      break;
+    } // end switch(typ)
+
+    if (tok != NULL) tokens.add(tok);
+
+    // stop if empty or error.
+    if (typ<1)
+      break;
+
+  }  // end while(true)
+
+  printf("typ=%d, lev[0]=%d,lev[1]=%d\n", typ, lev[0], lev[1]);
+
+  // if no errors search for any unmatched delimiters
+  if ( typ>=0 ) {
+    if (lev[0] > 0) {
+      tok=findUnbalanced(tokens, SalLParen, SalRParen, lev[0]);
+      typ=SCAN_UNMATCHED;
+    }
+    else if (lev[1] > 0) {
+      tok=findUnbalanced(tokens, SalLCurly, SalRCurly, lev[1]);
+      typ=SCAN_UNMATCHED;
+    }
+    else if (lev[2] > 0) {
+      tok=findUnbalanced(tokens, SalLBrace, SalRBrace, lev[2]);
+      typ=SCAN_UNMATCHED;
+    }
+  }
+
+  if (typ<0) {
+    salError(str, typ, tok);
+  }
+  else {
+    printf("Tokens:\n");
+    for (int i=0; i<tokens.size(); i++)
+      tokens[i]->trace();
+    printf("\n-------\n");    
+  }
+  tokens.clear();
 }
 
-SynTok* TextSyntax::getSynTok (String n) {
-  return (SynTok *) NULL;
+void salError(String str, int err, SynTok *tok) {
+  String errstr= T(">>> Error: ");
+  switch (err) {
+
+  case SCAN_UNMATCHED:
+  case SCAN_UNLEVEL:
+    errstr << T("Unmatched '") << tok->name << T("':\n");
+    break;
+
+  case SalSyntax::SalUnknown :
+  default:
+    errstr << T("Invalid expression '") << tok->name << T("':\n");
+    break;
+
+  }
+  // isolate line containing error position
+  int len=str.length();
+  int pos=tok->getStart();
+  int beg=pos-1;
+  for ( ; beg>-1; beg--)
+    if (str[beg]=='\n') break;
+  beg++;
+  int end=pos;
+  for ( ; end<len; end++)
+    if ( str[end]=='\n') break;
+  errstr << str.substring(beg,end) << T("\n");
+  // indented "^" marks error position
+  for (int i=beg;i<pos;i++)
+    errstr << T(" ");
+  errstr << T("^\n");
+  
+  printf(errstr.toUTF8());
+
 }
 
-int TextSyntax::getIndent (const String text, int bot, int top, int beg) {
-  return 4;
+int addToken (String str, int start, int end) {
 }
 
-hiliteID TextSyntax::getHilite (const String text, int start, int end) {
-  return hiliteNone;
+SynTok *findUnbalanced(OwnedArray<SynTok> &tokens, int target, int other, int level) {
+  int n=level;
+  for (int i=tokens.size()-1; i>-1; i--) {
+    if ( tokens[i]->getType()==target )
+      if (n == level)
+	return tokens[i];
+      else
+	n--;
+    else if  ( tokens[i]->getType()==other )
+      n++;
+  }
+  printf("WARNING: failed to find unbalanced!\n");
+  return NULL;
 }
+
+int classifyToken(SynTok *tok) {
+  // test if literal
+  int flag=isLiteralToken(tok);
+  if (flag != SalSyntax::SalUntyped) return flag; 
+  // test if class
+  flag=isClassToken(tok);
+  if (flag != SalSyntax::SalUntyped) return flag; 
+  // test if number
+  flag=isNumberToken(tok);
+  if (flag != SalSyntax::SalUntyped) return flag; 
+  flag=isIdentifierToken(tok);
+  if (flag != SalSyntax::SalUntyped) return flag; 
+  return SalSyntax::SalUnknown;
+}
+
+int isLiteralToken(SynTok *tok) {
+  int typ=SalSyntax::SalUntyped;
+  SynTokMap::iterator iter = salTokMap.find(tok->getName());
+  if ( iter != salTokMap.end() ) {
+    typ=iter->second->getType();
+    tok->setType(typ);
+  }
+  return typ;
+}
+
+int isClassToken(SynTok *tok) {
+  // isClassToken has to be called AFTER check for operator else the
+  // check balancing <> wont work
+  int typ=SalSyntax::SalUntyped;
+  String str=tok->getName();
+  if (str[0]=='<')
+    if (str.length()-1=='>')
+      if (true) {
+	typ=SalSyntax::SalClass;
+	tok->setType(typ);
+      }
+      else typ=SalSyntax::SalUnknown;
+    else if (str.length()-1=='>')
+      typ=SalSyntax::SalUnknown;
+  return typ;
+}
+
+int isNumberToken(SynTok *tok) {
+  String str=tok->getName();
+  int len=str.length();
+  int typ=SalSyntax::SalInteger;
+  int dot=0, div=0, dig=0;
+  for (int pos=0; pos<len; pos++) {
+    if (typ <= SalSyntax::SalUntyped) return typ;
+    switch ( str[pos] ) {
+    case '+':
+    case '-':
+      if (pos>0) typ=SalSyntax::SalUntyped;
+      break;
+    case '.':
+      if (dot>0) typ=SalSyntax::SalUntyped;
+      if (div>0) typ=SalSyntax::SalUntyped;
+      dot++;
+      break;
+    case '/':
+      typ=SalSyntax::SalRatio;
+      if (div>0) typ=SalSyntax::SalUntyped;
+      if (dig==0) typ=SalSyntax::SalUntyped;
+      if (dot>0) typ=SalSyntax::SalUntyped;
+      if (pos==len-1) typ=SalSyntax::SalUntyped;
+      div++;
+      break;
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+      dig++;
+      if (dot>0) typ=SalSyntax::SalFloat;
+      break;
+    default:
+      typ=SalSyntax::SalUntyped;
+    }
+  }
+  tok->setType(typ);
+  return typ;
+}
+
+int isIdentifierToken(SynTok *tok) {
+  String str=tok->getName();
+  String sym=T("~!@$%^&*-_=+|:<.>/?");
+  int len=str.length();
+  int typ=SalSyntax::SalUntyped;
+  int chr=0, dot=0, din=0, col=0;
+
+  for (int pos=0; pos<len; pos++) {
+    if ( typ<0 ) return typ;
+    chr=str[pos];
+    if ( chr=='.' ) {
+      dot++;
+      din=pos;
+    }
+    else if ( chr==':') {
+      if (typ != SalSyntax::SalUntyped) typ=SalSyntax::SalUnknown;
+      else if (col>0) typ=SalSyntax::SalUnknown;
+      else if (pos==0) typ=SalSyntax::SalKeyword;
+      else if (pos==len-1) typ=SalSyntax::SalKeyparam;
+      col++;
+    }
+    else if ( isalnum(chr) || sym.containsChar(chr) )
+      ;
+    else typ=SalSyntax::SalUnknown;
+  }
+  if ( (typ==SalSyntax::SalUntyped) && dot==1 && din>0 && din<(len-1) )
+    typ=SalSyntax::SalSlotRef;
+  if (typ==SalSyntax::SalUntyped)
+    typ=SalSyntax::SalIdentifier;
+  if (typ>0)
+    tok->setType(typ);
+  return typ;
+}
+
+

@@ -45,7 +45,8 @@ char * T(char * s) {return s;};
 
 enum scanmode {
   SCAN_CODE = 1,    // skip over comments, parse list levels
-  SCAN_COLOR       // scan comments, dont parse list levels
+  SCAN_COLOR,       // scan comments, dont parse list levels
+  SCAN_PARSER
 };
 
 
@@ -67,7 +68,10 @@ enum scanresult  {
   SCAN_TOKEN,
   SCAN_STRING,
   SCAN_LIST,
-  SCAN_COMMENT
+  SCAN_COMMENT,
+  SCAN_OPEN,
+  SCAN_CLOSE,
+  SCAN_PUNCT
 };
 
 /*
@@ -145,4 +149,9 @@ scanresult scan_sexpr(SynTab tab, String buf, int start, int end, int mode,
 		      int *stop, int *levs) ;
 scanresult parse_sexpr(SynTab tab, String str, int bot, int top, int dir, 
 		       int mode, int * poz, int * s1, int * s2) ;
+
+
+
+
+
 #endif

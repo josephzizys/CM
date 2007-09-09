@@ -53,25 +53,31 @@ enum hiliteID {
 class SynTok {
  public:
   String name;       // string to match
-  int id;            // unique id in table (reverse mapping?)
-  hiliteID hilite;   // hilite id for token
-  int indent;        // indentation value (syntax specific)
-  int toktype;       // token classification (syntax specific)
+  int type;          // token classification table (reverse mapping?)
+  int data1;         // data fields (use is syntax specific)
+  int data2;    
+  int data3;
 
-  SynTok(String n, int a, hiliteID b, int c, int d) {
+  SynTok(String n, int t, int d1=0, int d2=0, int d3=0) {
     name=n;
-    id=a;
-    hilite=b;
-    indent=c;
-    toktype=d;
+    type=t;
+    data1=d1;
+    data2=d2;
+    data3=d3;
   }
   ~SynTok() {}
-
-  void tyo() {
-    printf("#<SynTok \"%s\",%d,%d,%d,%d>\n",
-	   name.toUTF8(),id,hilite,indent,toktype);
-  };
-
+  String getName() {return name;}
+  void setName(String n){name=n;}
+  int getType() {return type;}
+  void setType(int t) {type=t;}
+  hiliteID getHilite() {return (hiliteID)data1;}
+  int getStart() {return data1;}
+  int getIndent() {return data2;}
+  int getLiteralClass() {return data3;}
+  void trace() {
+    if (type==0) printf("<? %s> ",name.toUTF8());
+    else printf("<%s> ",name.toUTF8());
+  }
 };
 
 typedef std::map <String, SynTok*> SynTokMap;
@@ -117,28 +123,131 @@ class LispSyntax : public Syntax
   hiliteID getHilite (const String text, int start, int end) ;
 };
 
-enum salID {salBegin = 1, salChdir, salDefine, salElse, salEnd, salExec, 
-	    salFunction, salIf, salLoad, salLoop, salOpen, salOutput,
-	    salPlay, salPlot, salPrint, salProcess, salReturn, salRts, 
-	    salRun, salSet, salSprout, salSystem, salThen, salUnless,
-	    salUntil, salVariable, salWait, salWhen, salWhile, salWith};
-
-enum salTyp {salCommand = 1,  // is toplevel command
-	     salClausal,      // is part of command
-	     salReserved};    // is (non-command) reserved word
-
 class SalSyntax : public Syntax
 {
  public:
+  enum SalLiteralType {
+    SalStatement = 1,      // #b001
+    SalClausal = 2,        // #b010
+    SalCommand = 5};       // #b101  -- command is also statement
+
+  enum SalErrors {
+    SalUnknown = -100,  // allow room for scan errors
+    SalBadIdentifier,
+    SalBadSlot,
+    SalBadClass,
+    SalBadNumber,
+    SalBadSpecial
+  };
+
+  enum SalTokType {
+    SalUntyped = 0,
+    // Delimiters
+    SalComma = 100,
+    SalLParen,
+    SalRParen,
+    SalLCurly,
+    SalRCurly,
+    SalLBrace,
+    SalRBrace,
+    // String
+    SalString = 200,
+    // Numbers
+    SalInteger = 300,
+    SalRatio,
+    SalFloat,
+    // Operators... (data: weight)
+    SalPlus = 400,
+    SalMinus,
+    SalTimes,
+    SalDivide,
+    SalMod,
+    SalExpt,
+    // ...relations
+    SalEqual = 425,
+    SalNotEqual,
+    SalLess,
+    SalGreater,
+    SalLessEqual,  
+    SalGreaterEqual,  
+    SalGeneralEqual,
+    // ...logic
+    SalAnd = 450,
+    SalOr,
+    SalNot,
+    // ...assignment
+    SalInc = 475,
+    SalMul,
+    SalCol,
+    SalPre,
+    SalApp,
+    // Keywords
+    SalKeyparam = 500,
+    SalKeyword ,
+    // Classes
+    SalClass = 600,
+    SalSlotRef,
+    // Special (hash) Notations
+    SalTrue = 700,
+    SalFalse,
+    SalQMark,
+    // Literals... (data: statement=001, clausal=10, command=101)
+    SalBegin = 800,
+    SalChdir,
+    SalDefine,
+    SalExec, 
+    SalIf,
+    SalLoad,
+    SalLoop,
+    SalOpen,
+    SalOutput,
+    SalPlay,
+    SalPlot,
+    SalPrint, 
+    SalReturn,
+    SalRun,
+    SalSet,
+    SalSprout,
+    SalSystem,
+    // ...clausals
+    SalAbove,
+    SalBelow,
+    SalBy,
+    SalDownto,
+    SalElse,
+    SalEnd,
+    SalFinally,
+    SalFor,
+    SalFrom,
+    SalIn,
+    SalOver,
+    SalRepeat,
+    SalTo,
+    SalThen, 
+    SalUnless,
+    SalUntil,
+    SalWait,
+    SalWhen,
+    SalWhile, 
+    SalWith,
+    // ...define types
+    SalFunction,
+    SalProcess,
+    SalVariable,
+    // Indetifiers
+    SalIdentifier = 1000
+  };
 
   SalSyntax();
   ~SalSyntax() {};
+  void initSalToks();
   bool isTopLevel(String line) ;
   SynTok* getSynTok (String n) ;
   int getIndent (const String text, int bot, int top, int beg) ;
   int isSalStatement(const String str);
   int backwardSal(const String text, int bot, int top, int *poz, int *sal);
   hiliteID getHilite (const String text, int start, int end) ;
+  void tokenize(String str);
 };
 
 #endif
