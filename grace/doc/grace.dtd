@@ -1,43 +1,43 @@
 <!--  XML definitions -->
 <!--  http://www.validome.org/grammar/validate/  -->
 
+<!--  Point definitions -->
+
+<!ELEMENT pointdefs (pointdef*)>
+
+<!ELEMENT pointdef (field, field+)>
+<!ATTLIST pointdef
+	  name ID #REQUIRED
+	  >
+
+<!ELEMENT field EMPTY>
+<!ATTLIST field
+	  name ID #REQUIRED
+	  axis CDATA #REQUIRED
+	  default CDATA #IMPLIED
+	  >
+
 <!-- Plotters -->
 
-<!ELEMENT plotter (layer+)>
-<!ATTLIST plotter 
-	  title CDATA #IMPLIED
-	  xaxis CDATA #REQUIRED
-	  yaxis CDATA #IMPLIED
-	  >
+<!ELEMENT point (#PCDATA)>
 
-<!ELEMENT layer (graphstyle*, pointinfo, point*)>
+<!ELEMENT layer (point*)>
+
 <!ATTLIST layer
 	  name ID #IMPLIED
-	  >
-
-<!ELEMENT graphstyle EMPTY>
-<!ATTLIST graphstyle 
-	  style (lines | points | linespoints | impulse | box) #REQUIRED
+	  style (linespoints | points | lines | impulses | boxes | vboxes)
+	  #IMPLIED
 	  color CDATA #IMPLIED
-	  x CDATA #REQUIRED
-	  y CDATA #REQUIRED
-	  z CDATA #IMPLIED
+	  scalers CDATA #IMPLIED
+	  offsets CDATA #IMPLIED
 	  >
 
-<!ELEMENT pointinfo (pointfield, pointfield+)>
-<!ATTLIST pointinfo
-	  name CDATA #REQUIRED
-	  type CDATA "float"
-	  >
+<!ELEMENT plotter (layer+)>
 
-<!ELEMENT pointfield EMPTY>
-<!ATTLIST pointfield
-	  name ID #REQUIRED
-	  default CDATA #REQUIRED
-	  axis CDATA #REQUIRED
+<!ATTLIST plotter 
+	  name ID #IMPLIED
+	  pointdef IDREF #REQUIRED
 	  >
-
-<!ELEMENT point (#PCDATA)>
 
 <!-- Lisp implementations and ASDF systems -->
 
@@ -58,20 +58,4 @@
 	  before CDATA #IMPLIED
 	  after CDATA #IMPLIED
 	  >
-
-<!-- MIDI connections and channels -->
-
-<!ELEMENT midiconnection     (midichannel*)>
-<!ATTLIST midiconnection
-	  input CDATA #REQUIRED
-	  output CDATA #REQUIRED
-	  channeltuning CDATA "1"
-	  >
-
-<!ELEMENT midichannel EMPTY>
-<!ATTLIST midichannel
-	  id ID #REQUIRED
-	  pc CDATA "0"
-	  >
-
 
