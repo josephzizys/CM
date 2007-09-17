@@ -22,7 +22,7 @@
 
 class GraceApp : public JUCEApplication
 {
-    ShinyLookAndFeel shinyLookAndFeel;
+  LookAndFeel shinyLookAndFeel;
 
 public:
     

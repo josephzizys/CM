@@ -38,7 +38,7 @@ class TextBuffer : public TextEditor,
   void keyCommandAction(const KeyPress& key);
   void keyIllegalAction(const KeyPress& key);
   void keyDefaultAction(const KeyPress& key);
-  void keyPressed(const KeyPress& key) ;
+  bool keyPressed(const KeyPress& key) ;
   //void mouseDown(const MouseEvent &e) ;
   void mouseDoubleClick(const MouseEvent &e) ;
 

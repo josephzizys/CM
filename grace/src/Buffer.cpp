@@ -852,7 +852,7 @@ void TextBuffer::stopMatching() {
   }
 }
 
-void TextBuffer::keyPressed (const KeyPress& key) {
+bool TextBuffer::keyPressed (const KeyPress& key) {
   int keyCode, keyMod, flag, last;
   keyCode =  key.getKeyCode();
   keyMod = key.getModifiers().getRawFlags();
@@ -939,6 +939,7 @@ void TextBuffer::keyPressed (const KeyPress& key) {
     }
   }
   storeAction();
+  return true;
 }
   
 ///

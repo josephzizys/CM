@@ -127,7 +127,7 @@ TextFileOutputStream* TextFile::createOutputStream (const int bufferSize)
 {
   TextFileOutputStream* const out = new TextFileOutputStream (*this, bufferSize);
     
-    if (out->areAnyErrors())
+    if (out->failedToOpen())
     {
         delete out;
         return 0;
