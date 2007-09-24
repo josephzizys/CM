@@ -8,7 +8,8 @@ import os
 
 sources = ['Audio.cpp', 'Buffer.cpp', 'Console.cpp', 'Editor.cpp',
            'FontList.cpp', 'Grace.cpp', 'Layer.cpp', 'Lisp.cpp',
-           'Resources.cpp', 'Plotter.cpp', 'Syntab.cpp', 'Syntax.cpp']
+           'Resources.cpp', 'Plotter.cpp', 'Points.cpp',
+           'Syntab.cpp', 'Syntax.cpp']
 
 lispfiles = ['asdf.lisp', 'grace.asd', 'grace.lisp', 'gray.lisp',
              'socketserver.lisp']
