@@ -19,10 +19,23 @@
   ((binary-stream :initform nil :initarg :binary-stream 
 		  :accessor binary-stream)
    (message-type :initarg :message-type :accessor message-type)
-   (byte-buffer :initform (make-array 8192 :element-type
+   (byte-buffer :initform (make-array 8192 
+				      :fill-pointer 0
+				      :adjustable t
+				      :element-type
 				      '(unsigned-byte 8)) 
 		:accessor byte-buffer)
-   (buffer-index :initform 0 :accessor buffer-index)))
+   ;(buffer-index :initform 0 :accessor buffer-index)
+   ))
+
+(defmacro buffer-index (a) `(fill-pointer (byte-buffer ,a)))
+
+;(defgeneric buffer-index (ary))
+;(defgeneric (setf buffer-index) (ary val))
+;(defmethod buffer-index ((stream connection-character-output-stream))
+;  (fill-pointer (byte-buffer ary)))
+;(defmethod (setf buffer-index) ((stream connection-character-output-stream) val)
+;  (setf (fill-pointer (byte-buffer ary)) val))
 
 (defgeneric send-output-buffer (stream))
 
@@ -37,9 +50,10 @@
 
 (defmethod stream-write-char ((stream connection-character-output-stream)
 			      char)
-  (setf (aref (byte-buffer stream) (buffer-index stream)) 
-	(char-code char))
-  (incf (buffer-index stream))
+  ;;(setf (aref (byte-buffer stream) (buffer-index stream)) 
+  ;;      (char-code char))
+  ;;(incf (buffer-index stream))
+  (vector-push-extend (char-code char) (byte-buffer stream))
   char)
 
 (defmethod stream-line-column ((stream connection-character-output-stream))
