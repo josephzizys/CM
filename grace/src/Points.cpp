@@ -3,15 +3,52 @@
 #include <sstream>
 #include <iostream>
 
+struct fieldprototype {
+  // global name->field prototype mapping.
+  String name;
+  int type;
+  float from, to, by;
+  int ticks;
+} fieldprototypes[] = 
+  {
+    {T("float"), PointField::Float, 0.0, 1.0, 0.1, 10},
+    {T("integer"), PointField::Integer, 0.0, 100.0, 10.0, 10},
+    {T("normalized"), PointField::Normalized, 0.0, 1.0, .25, 5},
+    {T("percentage"), PointField::Percentage, 0.0, 100.0, 25.0, 5},
+    {T("keynum"), PointField::Keynum, 0.0, 127.0, 12.0, 12},
+    {T("amplitude"), PointField::Amplitude, 0.0, 1.0, .25, 5},
+    {T("seconds"), PointField::Seconds, 0.0, 60.0, 1.0, 4},
+    {T(""), 0, 0.0, 0.0, 0.0, 0}
+  }; 
+
+fieldprototype *findfieldprototype (String n) {
+  int i=0;
+  while (fieldprototypes[i].name != String::empty) 
+    if (fieldprototypes[i].name.equalsIgnoreCase(n))
+      return &fieldprototypes[i];
+  return NULL;
+}
+
+PointField::PointField(PointField *pf) {
+  name=String(pf->name);
+  index=pf->index;
+  type=pf->type;
+  dval=pf->dval;
+  from=pf->from;
+  to=pf->to;
+  by=pf->by;
+  ticks=pf->ticks;
+}
+
+PointField::PointField(XmlElement *xml) {
+}
+
 String PointField::getTypeName() {
   static char *axisnames[] = { T("float"), T("integer"),
 			       T("normalized"), T("percentage"),
 			       T("keynum"), T("amplitude"),
 			       T("seconds") };
   return String(axisnames[ getType() ]) ;
-}
-
-PointField::PointField(XmlElement *xml) {
 }
 
 XmlElement * PointField::toXml() {

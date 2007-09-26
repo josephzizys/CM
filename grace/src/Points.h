@@ -18,8 +18,17 @@
 // A PointDef defines its own collection of PointFields.
 
 class PointField {
+  String name;   // name of field
+  int index;     // value index into a float *point array
+  int type;      // what type of values field represents.
+  float dval;    // default value for point creation.
+  double from;   // lower value bound (used by plotter axis)
+  double to;     // upper value bound (plotter)
+  double by;     // tick increment along axis (plotter)
+  int ticks;     // number of sub ticks
+ public:
   enum FieldType {
-    Float=0,
+    Float=1,
     Integer,
     Normalized,
     Percentage,
@@ -27,22 +36,12 @@ class PointField {
     Amplitude,
     Seconds,
   };
-  String name;   // name of field
-  int index;     // value index into a float *point array
-  FieldType type; // what type of values field represents.
-  float dval;    // default value for point creation.
-  double from;   // lower value bound (used by plotter axis)
-  double to;     // upper value bound (plotter)
-  double by;     // tick increment along axis (plotter)
-  int ticks;     // number of sub ticks
-
- public:
-
   PointField(XmlElement *xml) ;
+  PointField(PointField *pf);
   ~PointField() {}
   String getName() {return name;}
   void setName(String n) {name=n;}
-  FieldType getType() {return type;}
+  int getType() {return type;}
   void setType(FieldType t) {type=t;}
   int getIndex() {return index;}
   void setIndex(int i) {index=i;}
