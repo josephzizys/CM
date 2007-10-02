@@ -74,35 +74,36 @@ void addLispTok (const String n, int t, hiliteID h, int i) {
 }
 
 void initLispToks() {
+  int t=0;
   printf("initing lisp map\n");
-  addLispTok( T("begin"), 0, hilite4, 1);
-  addLispTok( T("block"), 0, hilite4, 1);
-  addLispTok( T("defclass"), 0, hilite4, 3);
-  addLispTok( T("defconstant"), 0, hilite4, 1);
-  addLispTok( T("define"), 0, hilite4, 1);
-  addLispTok( T("definstrument"), 0, hilite4, 2);
-  addLispTok( T("defmethod"), 0, hilite4, 3);
-  addLispTok( T("defobject"), 0, hilite4, 2);
-  addLispTok( T("defparameter"), 0, hilite4, 1);
-  addLispTok( T("defprocess"), 0, hilite4, 2);
-  addLispTok( T("defun"), 0, hilite4, 2);
-  addLispTok( T("defvar"), 0, hilite4, 1);
-  addLispTok( T("do"), 0, hilite4, 2);
-  addLispTok( T("do*"), 0, hilite4, 2);
-  addLispTok( T("dolist"), 0, hilite4, 1);
-  addLispTok( T("dotimes"), 0, hilite4, 1);
-  addLispTok( T("eval-when"), 0, hilite4, 1);
-  addLispTok( T("flet"), 0, hilite4, 1);
-  addLispTok( T("if"), 0, hilite4, 1);
-  addLispTok( T("labels"), 0, hilite4, 1);
-  addLispTok( T("lambda"), 0, hilite4, 1);
-  addLispTok( T("let"), 0, hilite4, 1);
-  addLispTok( T("let*"), 0, hilite4, 1);
-  addLispTok( T("loop"), 0, hilite4, 0);
-  addLispTok( T("process"), 0, hilite4, 2);
-  addLispTok( T("rlet"), 0, hilite4, 1);
-  addLispTok( T("unless"), 0, hilite4, 1);
-  addLispTok( T("when"), 0, hilite4, 1);
+  addLispTok( T("begin"), t++, hilite4, 1);
+  addLispTok( T("block"), t++, hilite4, 1);
+  addLispTok( T("defclass"), t++, hilite4, 3);
+  addLispTok( T("defconstant"), t++, hilite4, 1);
+  addLispTok( T("define"), t++, hilite4, 1);
+  addLispTok( T("definstrument"), t++, hilite4, 2);
+  addLispTok( T("defmethod"), t++, hilite4, 3);
+  addLispTok( T("defobject"), t++, hilite4, 2);
+  addLispTok( T("defparameter"), t++, hilite4, 1);
+  addLispTok( T("defprocess"), t++, hilite4, 2);
+  addLispTok( T("defun"), t++, hilite4, 2);
+  addLispTok( T("defvar"), t++, hilite4, 1);
+  addLispTok( T("do"), t++, hilite4, 2);
+  addLispTok( T("do*"), t++, hilite4, 2);
+  addLispTok( T("dolist"), t++, hilite4, 1);
+  addLispTok( T("dotimes"), t++, hilite4, 1);
+  addLispTok( T("eval-when"), t++, hilite4, 1);
+  addLispTok( T("flet"), t++, hilite4, 1);
+  addLispTok( T("if"), t++, hilite4, 1);
+  addLispTok( T("labels"), t++, hilite4, 1);
+  addLispTok( T("lambda"), t++, hilite4, 1);
+  addLispTok( T("let"), t++, hilite4, 1);
+  addLispTok( T("let*"), t++, hilite4, 1);
+  addLispTok( T("loop"), t++, hilite4, 0);
+  addLispTok( T("process"), t++, hilite4, 2);
+  addLispTok( T("rlet"), t++, hilite4, 1);
+  addLispTok( T("unless"), t++, hilite4, 1);
+  addLispTok( T("when"), t++, hilite4, 1);
 }
 
 SynTok* LispSyntax::getSynTok (String n) {
@@ -240,7 +241,6 @@ hiliteID LispSyntax::getHilite (const String text, int start, int end) {
   return hiliteNone;
 }
 
-
 /*
  * Sal Syntax
  */
@@ -248,82 +248,82 @@ hiliteID LispSyntax::getHilite (const String text, int start, int end) {
 int salMapCtr = 0;
 SynTokMap salTokMap;
 
-void addSalTok (const String n, int a, int d, hiliteID c) {
-  salTokMap[n] = new SynTok(n, a, c, 0, d);
+void addSalTok (const String n, int t, hiliteID c) {
+  salTokMap[n] = new SynTok(n, t, c);
 }
 
 void SalSyntax::initSalToks() {
   salMapCtr=1;
-  addSalTok( T("begin"), SalBegin, SalCommand, hilite5);
-  addSalTok( T("chdir"), SalChdir,SalCommand, hilite5);
-  addSalTok( T("define"), SalDefine, SalCommand, hilite5);
-  addSalTok( T("else"), SalElse, SalStatement, hilite5);
-  addSalTok( T("end"), SalEnd, SalStatement, hilite5);
-  addSalTok( T("exec"), SalExec, SalCommand, hilite5);
-  addSalTok( T("if"), SalIf, SalCommand, hilite5);
-  addSalTok( T("load"), SalLoad, SalCommand, hilite5);
-  addSalTok( T("loop"), SalLoop, SalCommand, hilite5);
-  addSalTok( T("open"), SalOpen, SalCommand, hilite5);
-  addSalTok( T("output"), SalOutput, SalStatement, hilite5);
-  addSalTok( T("play"), SalPlay, SalCommand, hilite5);
-  addSalTok( T("plot"), SalPlot, SalCommand, hilite5);
-  addSalTok( T("print"), SalPrint, SalCommand, hilite5);
-  addSalTok( T("return"), SalReturn, SalStatement, hilite5);
-  addSalTok( T("run"), SalRun, SalCommand, hilite5);
-  addSalTok( T("set"), SalSet, SalCommand, hilite5);
-  addSalTok( T("sprout"), SalSprout, SalCommand, hilite5);
-  addSalTok( T("system"), SalSystem, SalCommand, hilite5);
-  addSalTok( T("then"), SalThen, SalStatement, hilite5);
-  addSalTok( T("unless"), SalUnless, SalStatement, hilite5);
-  addSalTok( T("until"), SalUntil, SalStatement, hilite5);
-  addSalTok( T("wait"), SalWait, SalStatement, hilite5);
-  addSalTok( T("when"), SalWhen, SalStatement, hilite5);
-  addSalTok( T("while"), SalWhile, SalStatement, hilite5);
-  addSalTok( T("with"), SalWith, SalStatement, hilite5);
+  addSalTok( T("begin"), SalBegin, hilite5);
+  addSalTok( T("chdir"), SalChdir, hilite5);
+  addSalTok( T("define"), SalDefine, hilite5);
+  addSalTok( T("else"), SalElse, hilite5);
+  addSalTok( T("end"), SalEnd, hilite5);
+  addSalTok( T("exec"), SalExec, hilite5);
+  addSalTok( T("if"), SalIf, hilite5);
+  addSalTok( T("load"), SalLoad, hilite5);
+  addSalTok( T("loop"), SalLoop, hilite5);
+  addSalTok( T("open"), SalOpen, hilite5);
+  addSalTok( T("output"), SalOutput, hilite5);
+  addSalTok( T("play"), SalPlay, hilite5);
+  addSalTok( T("plot"), SalPlot, hilite5);
+  addSalTok( T("print"), SalPrint, hilite5);
+  addSalTok( T("return"), SalReturn, hilite5);
+  addSalTok( T("run"), SalRun, hilite5);
+  addSalTok( T("set"), SalSet, hilite5);
+  addSalTok( T("sprout"), SalSprout, hilite5);
+  addSalTok( T("system"), SalSystem, hilite5);
+  addSalTok( T("then"), SalThen, hilite5);
+  addSalTok( T("unless"), SalUnless, hilite5);
+  addSalTok( T("until"), SalUntil, hilite5);
+  addSalTok( T("wait"), SalWait, hilite5);
+  addSalTok( T("when"), SalWhen, hilite5);
+  addSalTok( T("while"), SalWhile, hilite5);
+  addSalTok( T("with"), SalWith, hilite5);
 
-  addSalTok( T("process"), SalProcess, SalClausal, hilite6);
-  addSalTok( T("function"), SalFunction, SalClausal, hilite6);
-  addSalTok( T("variable"), SalVariable, SalClausal, hilite6);
+  addSalTok( T("process"), SalProcess, hilite6);
+  addSalTok( T("function"), SalFunction, hilite6);
+  addSalTok( T("variable"), SalVariable, hilite6);
   
-  addSalTok( T("above"), SalAbove, SalClausal, hilite5);
-  addSalTok( T("below"), SalBelow, SalClausal, hilite5);
-  addSalTok( T("by"), SalBy, SalClausal, hilite5);
-  addSalTok( T("downto"), SalDownto, SalClausal, hilite5);
-  addSalTok( T("finally"), SalFinally, SalClausal, hilite5);
-  addSalTok( T("for"), SalFor, SalClausal, hilite5);
-  addSalTok( T("from"), SalFrom, SalClausal, hilite5);
-  addSalTok( T("in"), SalIn, SalClausal, hilite5);
-  addSalTok( T("over"), SalOver, SalClausal, hilite5);
-  addSalTok( T("repeat"), SalRepeat, SalClausal, hilite5);
-  addSalTok( T("to"), SalTo, SalClausal, hilite5);
+  addSalTok( T("above"), SalAbove, hilite5);
+  addSalTok( T("below"), SalBelow, hilite5);
+  addSalTok( T("by"), SalBy, hilite5);
+  addSalTok( T("downto"), SalDownto, hilite5);
+  addSalTok( T("finally"), SalFinally, hilite5);
+  addSalTok( T("for"), SalFor, hilite5);
+  addSalTok( T("from"), SalFrom, hilite5);
+  addSalTok( T("in"), SalIn, hilite5);
+  addSalTok( T("over"), SalOver, hilite5);
+  addSalTok( T("repeat"), SalRepeat, hilite5);
+  addSalTok( T("to"), SalTo, hilite5);
 
   //  Operators, data field is op weight
-  addSalTok( T("|"), SalOr, 1, hiliteNone);
-  addSalTok( T("&"), SalAnd, 2, hiliteNone);
-  addSalTok( T("!"), SalNot, 3, hiliteNone);
-  addSalTok( T("="), SalEqual, 4, hiliteNone); // relation and op
-  addSalTok( T("!="), SalNotEqual, 4, hiliteNone);  
-  addSalTok( T("<"), SalLess, 4, hiliteNone);
-  addSalTok( T(">"), SalGreater, 4, hiliteNone);
-  addSalTok( T("<="), SalLessEqual, 4, hiliteNone); // relation and op
-  addSalTok( T(">="), SalGreaterEqual, 4, hiliteNone); // relation and op
-  addSalTok( T("~="), SalGeneralEqual, 4, hiliteNone);  
-  addSalTok( T("+"), SalPlus, 5, hiliteNone);
-  addSalTok( T("-"), SalMinus, 5, hiliteNone);
-  addSalTok( T("%"), SalMod, 5, hiliteNone);
-  addSalTok( T("*"), SalTimes, 6, hiliteNone);  
-  addSalTok( T("/"), SalDivide, 6, hiliteNone);
-  addSalTok( T("^"), SalExpt, 7, hiliteNone);
+  addSalTok( T("|"), SalOr, hiliteNone);
+  addSalTok( T("&"), SalAnd, hiliteNone);
+  addSalTok( T("!"), SalNot, hiliteNone);
+  addSalTok( T("="), SalEqual, hiliteNone); // relation and op
+  addSalTok( T("!="), SalNotEqual, hiliteNone);  
+  addSalTok( T("<"), SalLess, hiliteNone);
+  addSalTok( T(">"), SalGreater, hiliteNone);
+  addSalTok( T("<="), SalLessEqual, hiliteNone); // relation and op
+  addSalTok( T(">="), SalGreaterEqual, hiliteNone); // relation and op
+  addSalTok( T("~="), SalGeneralEqual, hiliteNone);  
+  addSalTok( T("+"), SalPlus, hiliteNone);
+  addSalTok( T("-"), SalMinus, hiliteNone);
+  addSalTok( T("%"), SalMod, hiliteNone);
+  addSalTok( T("*"), SalTimes, hiliteNone);  
+  addSalTok( T("/"), SalDivide, hiliteNone);
+  addSalTok( T("^"), SalExpt, hiliteNone);
   // assignment (also: = <= >=)
-  addSalTok( T("+="), SalInc, 0, hiliteNone);
-  addSalTok( T("*="), SalMul, 0, hiliteNone);
-  addSalTok( T("&="), SalCol, 0, hiliteNone);
-  addSalTok( T("*="), SalPre, 0, hiliteNone);  
-  addSalTok( T("^="), SalApp, 0, hiliteNone);
+  addSalTok( T("+="), SalInc, hiliteNone);
+  addSalTok( T("*="), SalMul, hiliteNone);
+  addSalTok( T("&="), SalCol, hiliteNone);
+  addSalTok( T("*="), SalPre, hiliteNone);  
+  addSalTok( T("^="), SalApp, hiliteNone);
   // hash tokens
-  addSalTok( T("#t"), SalTrue, 0, hiliteNone);
-  addSalTok( T("#f"), SalFalse, 0, hiliteNone);
-  addSalTok( T("#?"), SalQMark, 0, hiliteNone);
+  addSalTok( T("#t"), SalTrue, hiliteNone);
+  addSalTok( T("#f"), SalFalse, hiliteNone);
+  addSalTok( T("#?"), SalQMark, hiliteNone);
 }
 
 SalSyntax::SalSyntax () 
@@ -361,7 +361,7 @@ bool SalSyntax::isTopLevel(String line) {
   int end=skip_syntax(syntab, line, T("w"), 0, line.length() );
   if ( end > 0 ) {
     SynTok * tok = getSynTok(line.substring(0,end));
-    if ( (tok != (SynTok *)NULL) && tok->getLiteralClass()==SalCommand )
+    if ( (tok != (SynTok *)NULL) && isSalCommandType(tok->getType()) )
       return true;
     else return false;
   }
@@ -378,7 +378,7 @@ int lineIndent(const String str, int bot, int top, int pos) {
 int SalSyntax::isSalStatement(const String name) {
   SynTok * tok = getSynTok(name);
   if ( tok == (SynTok *)NULL ) return -1;
-  if ( (tok->getLiteralClass() & SalStatement) == SalStatement)
+  if ( isSalStatementType(tok->getType()) )
     return tok->getType();
   return -1;
 }
@@ -511,7 +511,7 @@ hiliteID SalSyntax::getHilite (const String text, int start, int end) {
   SynTok * tok = getSynTok(text.substring(start,end));
   if (tok == (SynTok *)NULL)
     return hiliteNone;
-  if ((tok->getLiteralClass()==SalCommand) || (tok->getType()==SalEnd)) {
+  if ( (isSalCommandType(tok->getType())) || (tok->getType()==SalEnd)) {
     // show commands at start of line as executable, allow balancing
     // End in col 0 to show blue too.
     if (start==0 || text[start-1] == '\n')
@@ -627,13 +627,28 @@ void SalSyntax::tokenize(String str) {
     salError(str, typ, tok);
   }
   else {
-    printf("Tokens:\n");
-    for (int i=0; i<tokens.size(); i++)
-      tokens[i]->trace();
-    printf("\n-------\n");    
+    printf("\n(");
+      for (int i=0; i<tokens.size(); i++) {
+	if (i>0) printf(" ");
+      tokens[i]->print();
+      }
+    printf(")\n");    
   }
   tokens.clear();
 }
+
+void SynTok::print(bool lisp) {
+  if (lisp) {
+    printf("(t #x%x \"%s\" %d)", type, name.toUTF8(), data1);
+  }
+  else {
+    if (type==0)
+      printf("<? %s> ",name.toUTF8());
+    else
+      printf("<%s> ",name.toUTF8());
+  }
+}
+
 
 void salError(String str, int err, SynTok *tok) {
   String errstr= T(">>> Error: ");
