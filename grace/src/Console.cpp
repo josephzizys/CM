@@ -401,10 +401,9 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
 #else
 
 void ConsoleWindow::consoleEval (String code, bool isSal, 
-								 bool isRegion) {
-
-	((GraceApp *)GraceApp::getInstance())->schemeProcess->EvalString = code;
-	((GraceApp *)GraceApp::getInstance())->schemeProcess->notify();
+				 bool isRegion) 
+{
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->insertMessage(new SchemeMessage(code));
 
 }
 
