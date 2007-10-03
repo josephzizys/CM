@@ -17,6 +17,7 @@
 
 #ifdef EMBED_SCHEME
 #include "Scheme.h"
+#include "Nodes.h"
 #endif
 
 
@@ -30,7 +31,8 @@ public:
     FontList* fontList;
     ApplicationCommandManager *commandManager ;
     AudioDeviceManager audioManager;
-
+    MidiOutput* midiOutput;
+    NodeQueue *queue;
     GraceApp() ;
     ~GraceApp();
     void anotherInstanceStarted (const String& commandLine);

@@ -20,19 +20,23 @@ class ConsoleWindow;
 //extern "C" {
 //  void C_ccall C_grace_toplevel(C_word c,C_word t0,C_word t1) C_noret;
 //}
+#include "Nodes.h"
+
+class Node;
 
 class SchemeMessage
 {
-public:
-  enum {SCHEME_STRING, SCHEME_NODE};	
-  
-  SchemeMessage(String mess) { type = SCHEME_STRING; string = mess; }
-  //SchemeMessage(Node* n);
-  ~SchemeMessage() {}
+ public:
+  enum {SCHEME_STRING, SCHEME_NODE};
+  SchemeMessage( String str ) ;
+  SchemeMessage( Node* n ) ;
+  ~SchemeMessage();
   int type;
-  //Node* node;
   String string;
+  Node *node;
 };
+
+
 
 
 class SchemeThread : public Thread

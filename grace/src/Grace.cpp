@@ -19,7 +19,8 @@ GraceApp::~GraceApp () {}
 
 void GraceApp::initialise (const String& commandLine) {
   File home = File::getSpecialLocation(File::userHomeDirectory);
-
+  StringArray devices;
+  int i=0;
   home.setAsCurrentWorkingDirectory();
   LookAndFeel::setDefaultLookAndFeel(&shinyLookAndFeel);
   commandManager = new ApplicationCommandManager();
@@ -27,8 +28,17 @@ void GraceApp::initialise (const String& commandLine) {
   fontList = FontList::getInstance();
   prefs=GracePreferences::getInstance();
   console = new ConsoleWindow(true);
+  console->printMessage(T("Midi Devices:\n"));
+  devices = MidiOutput::getDevices ();
+  for(i=0;i<devices.size();i++)
+    console->printMessage(" " +  devices[i] + "\n");
+  midiOutput = MidiOutput::openDevice(0);
+
 #ifdef EMBED_SCHEME
   schemeProcess = new SchemeThread(T("Scheme Thread"), console);
+  queue =  new NodeQueue("node queue", schemeProcess, midiOutput);
+  schemeProcess->setPriority(8);
+  queue->startThread();
   schemeProcess->startThread();
 #endif
   

@@ -11,6 +11,23 @@
 #include "Scheme.h"
 #include "ChickenBridge.h"
 
+SchemeMessage::SchemeMessage( Node *n ) 
+{ 
+	type = SCHEME_NODE; 	
+	node = n; 
+}
+
+SchemeMessage::SchemeMessage( String str ) 
+{ 
+	type = SCHEME_STRING; 
+	string = str; 
+}
+
+SchemeMessage::~SchemeMessage() 
+{
+}
+
+
 SchemeThread::SchemeThread(String name, ConsoleWindow *win) :
   Thread(name)
 {
@@ -43,13 +60,12 @@ void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
       break;
       
     case SCHEME_NODE:
-      /* double nexttime;
-      NodeQueue::Node* n = (NodeQueue::Node*)schemeMessage->message;
-      nexttime = G_apply_process(  n->closure );
+      double nexttime;
+      nexttime = G_apply_process(schemeMessage->node->closure);
       if(nexttime == -1)
-	delete n;
+	delete  schemeMessage->node ;
       else
-      n->queue->reinsertNode(n, nexttime);*/
+	schemeMessage->node->queue->reinsertNode(schemeMessage->node, nexttime);
       break;
       
     default:
