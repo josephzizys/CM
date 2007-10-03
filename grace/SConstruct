@@ -91,7 +91,7 @@ con = Configure(env)
 if(env['EMBED_SCHEME']) :
     sources = ['Audio.cpp', 'Buffer.cpp', 'Console.cpp', 'Editor.cpp', 
 	'FontList.cpp', 'Grace.cpp', 'Layer.cpp', 'Scheme.cpp',
-    'Resources.cpp', 'Plotter.cpp', 'Syntab.cpp', 'Syntax.cpp']
+    'Resources.cpp', 'Plotter.cpp', 'Syntab.cpp', 'Syntax.cpp', 'ChickenBridge.cpp']
     env.Append(CPPDEFINES = ['EMBED_SCHEME'])
     if ( not con.CheckLib('chicken') ) :
         print 'Cannot find chicken  library: ', env['LIBPREFIX']+'chicken'+env['LIBSUFFIX']
