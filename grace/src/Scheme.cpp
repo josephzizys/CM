@@ -8,6 +8,8 @@
  */
 
 #include "Scheme.h"
+#include "Scheme.h"
+#include "ChickenBridge.h"
 
 SchemeThread::SchemeThread(String name, ConsoleWindow *win) :
   Thread(name)
@@ -19,44 +21,102 @@ SchemeThread::~SchemeThread()
 {
 }
 
+void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
+{
+  String text;
+
+  switch (schemeMessage->type) 
+    {
+    case SCHEME_STRING:
+      C_word res;	
+      char buffer[8192];      
+      res = CHICKEN_eval_string_to_string( (char*)((String&)schemeMessage->string).toUTF8(), buffer, 8192 );
+      if (res==0) {
+	CHICKEN_get_error_message(buffer, 8192);
+	text=T(String(buffer));
+	console->printError(text);
+	bzero(buffer, 8192);
+      } else
+	console->printMessage(String(buffer) + T("\n"));
+
+      
+      break;
+      
+    case SCHEME_NODE:
+      /* double nexttime;
+      NodeQueue::Node* n = (NodeQueue::Node*)schemeMessage->message;
+      nexttime = G_apply_process(  n->closure );
+      if(nexttime == -1)
+	delete n;
+      else
+      n->queue->reinsertNode(n, nexttime);*/
+      break;
+      
+    default:
+      break;
+    }
+}
+
+void SchemeThread::insertMessage(SchemeMessage* schemeMessage)
+{
+  printf("inserting message\n");
+  messageBuffer.lockArray();
+  messageBuffer.add( schemeMessage );
+  messageBuffer.unlockArray();
+  notify();
+}
+
 void SchemeThread::run() {
   int res;
   C_word k;
   C_word r;
   char buffer[8192];
   String text = T("Chicken Scheme");
+  
 
-  res = CHICKEN_initialize(0, 0, 0, CHICKEN_default_toplevel);
+  res = CHICKEN_initialize(0, 0, 0, (void*)C_grace_toplevel);
+  
   if (res==0) {
     console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
     return;
   }
-  k = CHICKEN_run(CHICKEN_default_toplevel);
-  k = CHICKEN_continue(k);
+  res = CHICKEN_run(NULL);
+  
+  if (res==0) {
+    console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
+    return;
+  }
+  
+
   res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", 
 				       buffer, 8192);
   if (res>0) 
     text = text + T(", version ") + String(buffer).unquoted();
   text += T("\n(c) 2000-2007 Felix L. Winkelmann\n");
-
+  
   console->printMessage(text);
   bzero(buffer, 8192);
+
+  if (res==0) {
+    console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
+    return;
+  }
+  
+  CHICKEN_eval_string("(require-extension srfi-18)", &r);
+
+  
+  CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
+  CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
+  CHICKEN_eval_string("(define *grace-err-out*  (make-output-port print-error (lambda () #f)))", NULL);
+  CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
+
   while ( !threadShouldExit() ) {
+    while( messageBuffer.size() > 0 ) {
+      handleMessage( messageBuffer[0] );
+      messageBuffer.remove(0, true); 
+    }
     wait(-1);
-    // set console to typeout color for printing under eval
-    console->setConsoleTextColor(ConsoleTheme::outputColor);
-    res = CHICKEN_eval_string_to_string( (char*)EvalString, buffer, 8192);
-    if (res==0) {
-      CHICKEN_get_error_message(buffer, 8192);
-      text=T(">>> ") + String(buffer) ;
-      console->printError(text);
-    }
-    else {
-      text=String(buffer);
-      if (text != String::empty)
-	console->printValues(text );
-    }
-    bzero(buffer, 8192);
   }	
 }
 
+ 

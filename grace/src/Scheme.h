@@ -16,12 +16,35 @@ class ConsoleWindow;
 
 #include "Console.h"
 
+
+//extern "C" {
+//  void C_ccall C_grace_toplevel(C_word c,C_word t0,C_word t1) C_noret;
+//}
+
+class SchemeMessage
+{
+public:
+  enum {SCHEME_STRING, SCHEME_NODE};	
+  
+  SchemeMessage(String mess) { type = SCHEME_STRING; string = mess; }
+  //SchemeMessage(Node* n);
+  ~SchemeMessage() {}
+  int type;
+  //Node* node;
+  String string;
+};
+
+
 class SchemeThread : public Thread
 {
- public:	
+ public:
+  enum {SCHEME_STRING, SCHEME_NODE};
   SchemeThread(String name, ConsoleWindow* win);
   ~SchemeThread();
   void run();
+  void handleMessage(SchemeMessage* message);
+  void insertMessage(SchemeMessage* message);
+  OwnedArray<SchemeMessage, CriticalSection> messageBuffer;
   ConsoleWindow* console;
   String EvalString;
 };
