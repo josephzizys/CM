@@ -29,10 +29,8 @@ void NodeQueue::addNode(int type, double _time, float* vals, int num_vals, C_wor
 {
 	
   Node *n = new Node(_time, type, vals, num_vals, c);
-  //	if(type == 1)
-  //		printf("add - %f id - %i\n", _time, (int)&c);	
   n->queue = this;
-  
+
   nodes.lockArray();
   nodes.addSorted(comparator, n);
   nodes.unlockArray();	
@@ -53,8 +51,7 @@ void NodeQueue::reinsertNode(Node *n, double newtime )
   
   nodes.lockArray();
   n->time += newtime;
-  
-  //nodes.removeObject(n, false);
+
   nodes.addSorted(comparator, n); 
   nodes.unlockArray();
   
@@ -64,7 +61,6 @@ void NodeQueue::reinsertNode(Node *n, double newtime )
 void NodeQueue::run()
 {
   double cur;
-  //	wait(-1); //needs to get notified by scheme thread;
   
   while(!threadShouldExit() )
     {
@@ -98,12 +94,12 @@ void Node::process()
       queue->removeNode(this);
       break;
     case PROCESS:
-      printf("this %i", (int)&closure);
       queue->removeNode(this, false);
       queue->schemeThread->insertMessage( new SchemeMessage( this ) );
-      //			queue->schemeThread->notify();
       break;
-    case FUNCTION:
+    case CLOSURE:
+      queue->removeNode(this, false);
+      queue->schemeThread->insertMessage( new SchemeMessage( this ) );
       break;
     default:
       break;
@@ -119,10 +115,9 @@ Node::Node(double _time, int _type, float *vals, int num_vals, C_word c)
     time = Time::getMillisecondCounterHiRes();
   else
     time = _time + Time::getMillisecondCounterHiRes();
-  
-  
+
   type = _type;
-  
+  printf("type %i\n", type);
   switch (type) 
     {
     case ATOM:
@@ -130,16 +125,17 @@ Node::Node(double _time, int _type, float *vals, int num_vals, C_word c)
 	values.add( vals[i]);
       break;
     case PROCESS:
-      closure = c;
+      gcroot = CHICKEN_new_gc_root();
+      CHICKEN_gc_root_set(gcroot, c);
       num = num_vals;
       break;
-    case FUNCTION:
-      closure = c;
+    case CLOSURE:
+      gcroot = CHICKEN_new_gc_root();
+      CHICKEN_gc_root_set(gcroot, c);
       break;
     default:
       break;
-    }
-  
+    }  
 }
 
 

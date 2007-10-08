@@ -15,11 +15,6 @@
 class ConsoleWindow;
 
 #include "Console.h"
-
-
-//extern "C" {
-//  void C_ccall C_grace_toplevel(C_word c,C_word t0,C_word t1) C_noret;
-//}
 #include "Nodes.h"
 
 class Node;

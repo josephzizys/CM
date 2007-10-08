@@ -13,14 +13,14 @@
 
 SchemeMessage::SchemeMessage( Node *n ) 
 { 
-	type = SCHEME_NODE; 	
-	node = n; 
+  type = SCHEME_NODE; 	
+  node = n; 
 }
 
 SchemeMessage::SchemeMessage( String str ) 
 { 
-	type = SCHEME_STRING; 
-	string = str; 
+  type = SCHEME_STRING; 
+  string = str; 
 }
 
 SchemeMessage::~SchemeMessage() 
@@ -36,11 +36,13 @@ SchemeThread::SchemeThread(String name, ConsoleWindow *win) :
 
 SchemeThread::~SchemeThread()
 {
+
 }
 
 void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
 {
   String text;
+  C_word closure;
 
   switch (schemeMessage->type) 
     {
@@ -54,20 +56,25 @@ void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
 	console->printError(text);
 	bzero(buffer, 8192);
       } else
-	console->printMessage(String(buffer) + T("\n"));
-
-      
+	console->printValues(String(buffer) + T("\n"));
       break;
       
     case SCHEME_NODE:
-      double nexttime;
-      nexttime = G_apply_process(schemeMessage->node->closure);
-      if(nexttime == -1)
-	delete  schemeMessage->node ;
-      else
-	schemeMessage->node->queue->reinsertNode(schemeMessage->node, nexttime);
+      if(schemeMessage->node->type == Node::PROCESS ) {
+	double nexttime;
+	closure = CHICKEN_gc_root_ref(schemeMessage->node->gcroot);
+	nexttime = C_c_double( C_callback(closure, 0));
+	if(nexttime == -1)
+	  delete  schemeMessage->node ;
+	else
+	  schemeMessage->node->queue->reinsertNode(schemeMessage->node, nexttime);
+      } else {
+	closure = CHICKEN_gc_root_ref(schemeMessage->node->gcroot);
+	C_callback(closure, 0);
+	delete schemeMessage->node ;
+      }
       break;
-      
+     
     default:
       break;
     }
@@ -75,7 +82,6 @@ void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
 
 void SchemeThread::insertMessage(SchemeMessage* schemeMessage)
 {
-  printf("inserting message\n");
   messageBuffer.lockArray();
   messageBuffer.add( schemeMessage );
   messageBuffer.unlockArray();
@@ -89,7 +95,7 @@ void SchemeThread::run() {
   char buffer[8192];
   String text = T("Chicken Scheme");
   
-
+  
   res = CHICKEN_initialize(0, 0, 0, (void*)C_grace_toplevel);
   
   if (res==0) {
@@ -103,7 +109,6 @@ void SchemeThread::run() {
     return;
   }
   
-
   res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", 
 				       buffer, 8192);
   if (res>0) 
@@ -119,7 +124,6 @@ void SchemeThread::run() {
   }
   
   CHICKEN_eval_string("(require-extension srfi-18)", &r);
-
   
   CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
   CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);

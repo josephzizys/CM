@@ -21,15 +21,18 @@ class Node
 {
  public:
   Node(double _time, int _type, float *vals=0, int num_vals=0, C_word c=0) ;		
-  ~Node(){ }
-  enum {ATOM, PROCESS, FUNCTION };
+  ~Node(){ 
+    if(type ==  PROCESS || type == CLOSURE) 
+      CHICKEN_delete_gc_root(gcroot);
+  }
+  enum {ATOM, PROCESS, CLOSURE };
   double time;
   int type;
   Array<float> values;
-  C_word closure;
+
   NodeQueue *queue;
   int num;
-  
+  void *gcroot;
   
   void process();
   void print();
