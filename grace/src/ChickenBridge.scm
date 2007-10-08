@@ -25,16 +25,23 @@ void insert_midi_note(double time, float k, float v)
 
 void insert_process( double time, C_word proc )
 {
- printf("length of node before %i, ", ((GraceApp *)GraceApp::getInstance())->queue->nodes.size());
   ((GraceApp *)GraceApp::getInstance())->queue->addNode(1, time, 0, 0, proc);
-   printf("length of node after %i, ", ((GraceApp *)GraceApp::getInstance())->queue->nodes.size());
 }
+
+void insert_closure( double time, C_word proc )
+{
+  ((GraceApp *)GraceApp::getInstance())->queue->addNode(2, time, 0, 0, proc);
+}
+
+
  
 <#
 
 (declare
  (unit grace)
- (export print-message print-error G_apply_process  insert-process now insert-midi-note runran runproc))
+ (uses extras)
+ (export print-message print-error insert-process make-process
+         now insert-closure insert-midi-note runran runproc))
 
 (define print-message
   (foreign-lambda void "print_mess" c-string))
@@ -44,6 +51,9 @@ void insert_process( double time, C_word proc )
 
 (define insert-process
   (foreign-lambda void "insert_process" double scheme-object))
+
+(define insert-closure
+  (foreign-lambda void "insert_closure" double scheme-object))
 
 (define insert-midi-note
   (foreign-lambda void "insert_midi_note" double float float));
@@ -72,23 +82,14 @@ void insert_process( double time, C_word proc )
       (set! r (+ r d)))))
 
 (define (runproc k n d)
-  (insert-process 0.0
-                  (make-process
-                   (lambda ()
-                     (insert-midi-note 0.0 k 100)
-                     (insert-midi-note 200.0 k 0))
-                   n d)))
-
-
-
-;;(define (runproc n d)
- ;; (insert-process 0.0 (lambda () 0.0)))
+  (let ((proc (make-process
+               (lambda ()
+                 (insert-midi-note 0.0 k 100)
+                 (insert-midi-note 90.0 k 0))
+               n d)))
+    (insert-process 0.0 proc)))
 
  
-(define-external (G_apply_process (scheme-object closure)) double
-  (apply closure '()))
-
-
 
 (return-to-host)
 
