@@ -21,10 +21,8 @@ class Node
 {
  public:
   Node(double _time, int _type, float *vals=0, int num_vals=0, C_word c=0) ;		
-  ~Node(){ 
-    if(type ==  PROCESS || type == CLOSURE) 
-      CHICKEN_delete_gc_root(gcroot);
-  }
+  ~Node();
+
   enum {ATOM, PROCESS, CLOSURE };
   double time;
   int type;
@@ -34,6 +32,11 @@ class Node
   int num;
   void *gcroot;
   
+  double now;
+  double elapsed;
+  
+  C_word *now_ptr;
+  C_word *elapsed_ptr;
   void process();
   void print();
   

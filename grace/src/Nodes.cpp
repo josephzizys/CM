@@ -61,17 +61,15 @@ void NodeQueue::reinsertNode(Node *n, double newtime )
 void NodeQueue::run()
 {
   double cur;
-  
+
   while(!threadShouldExit() )
     {
+      
       if( nodes.size() > 0) {
-	cur = Time::getMillisecondCounterHiRes();
+	cur = round(Time::getMillisecondCounterHiRes());
 	
 	while ( nodes.size() > 0 && cur >= nodes[0]->time ) {
-	  
 	  nodes[0]->process();
-	  cur = Time::getMillisecondCounterHiRes();
-	  
 	}
       }		
       wait(1);
@@ -79,6 +77,11 @@ void NodeQueue::run()
 }
 
 
+Node::~Node(){ 
+    if(type ==  PROCESS || type == CLOSURE) {
+      CHICKEN_delete_gc_root(gcroot);
+    } 
+}
 
 void Node::process()
 {
@@ -87,10 +90,10 @@ void Node::process()
   switch (type)
     {
     case ATOM:
-      if(values[0] == 0.0) 
-	queue->output->sendMessageNow( MidiMessage::noteOff( 1, (int)values[0]) );
+      if(values[1] == 0.0) 
+	queue->output->sendMessageNow( MidiMessage::noteOff( (int)values[2], (int)values[0]) );
       else 
-	queue->output->sendMessageNow( MidiMessage::noteOn(  1, (int)values[0], 127.0f / values[1]) );
+	queue->output->sendMessageNow( MidiMessage::noteOn((int)values[2], (int)values[0], 127.0f / values[1]) );
       queue->removeNode(this);
       break;
     case PROCESS:
@@ -117,17 +120,21 @@ Node::Node(double _time, int _type, float *vals, int num_vals, C_word c)
     time = _time + Time::getMillisecondCounterHiRes();
 
   type = _type;
-  printf("type %i\n", type);
+
   switch (type) 
     {
     case ATOM:
       for(i=0;i<num_vals;i++)
 	values.add( vals[i]);
+      delete vals;
       break;
     case PROCESS:
       gcroot = CHICKEN_new_gc_root();
       CHICKEN_gc_root_set(gcroot, c);
       num = num_vals;
+      now_ptr = C_alloc(1);
+      elapsed_ptr = C_alloc(1);
+      now = time;
       break;
     case CLOSURE:
       gcroot = CHICKEN_new_gc_root();

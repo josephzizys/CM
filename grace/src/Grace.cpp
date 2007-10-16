@@ -13,6 +13,9 @@
 #include "Plotter.h"
 #include "Grace.h"
 
+
+
+
 // NEVER touch these, use initialize() and shutdown() methods!
 GraceApp::GraceApp () : console (0) {}
 GraceApp::~GraceApp () {}
