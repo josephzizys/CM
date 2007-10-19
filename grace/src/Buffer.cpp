@@ -864,60 +864,47 @@ bool TextBuffer::keyPressed (const KeyPress& key) {
   setAction(0);
 
   //printf("key=%d mod=%d\n", keyCode, keyMod);
-  
+
   if ( isMatching() ) stopMatching();
 
   if (last == actControlX)
     keyControlXAction(key);
-  else if (flag == 0) 
-    switch (keyCode) {
-    case '\t' :
+  else if (flag == 0) {
+    if (keyCode == KeyPress::tabKey)
       syntacticIndent();
-      break;
-    case '\n' :
-    case '\r' :
-      TextEditor::keyPressed(key);
-      setChanged(true);
-      colorizeAfterChange(cmdInsertLine);
-      break;
-#ifdef DARWIN
-    case 5 :           // Help key
-#else
-    case 268435646 :   // F1
-#endif
+    else if (keyCode == KeyPress::returnKey) {
+	TextEditor::keyPressed(key);
+	setChanged(true);
+	colorizeAfterChange(cmdInsertLine);
+      }
+    else if (keyCode == KeyPress::F1Key)
       lookupHelpAtPoint();
-      break;
-    case 8 :  // backspace
+    else if (keyCode == KeyPress::backspaceKey) {
       TextEditor::keyPressed(key);
       setChanged(true);
       colorizeAfterChange(cmdBackspace);
-      break;
-    case 127 :  // delete
+      }
+    else if (keyCode == KeyPress::deleteKey ) {
       TextEditor::keyPressed(key);
       setChanged(true);
       colorizeAfterChange(cmdDelete);
-      break;
-    case ')':
-      TextEditor::keyPressed(key);
-      if ( isParensMatching() )
-	matchParens();
-      break;
-    case '}':
-      TextEditor::keyPressed(key);
-      if ( (syntaxId==syntaxSal) && isParensMatching() )
-	matchParens();
-      break;
-      // hkt ???
-    default :  // inserting text
-      if (31<keyCode && keyCode<127) {
-      TextEditor::keyPressed(key);
-      setChanged(true);
-      colorizeAfterChange(cmdInsertChar);
-      }
-      // hkt 00000000000000
-      else TextEditor::keyPressed(key);
-
     }
+    else {
+      // inserting normal text but maybe match parens
+      juce_wchar c=key.getTextCharacter();
+      TextEditor::keyPressed(key); // call editor method
+      setChanged(true);
+      if ( (c==')') && isParensMatching() ) {
+	matchParens();
+      }
+      else if ( (c=='}') && (syntaxId==syntaxSal) && isParensMatching() ) {
+	matchParens();
+      }
+      else if ((31<c && c<127)) {
+	colorizeAfterChange(cmdInsertChar);
+      }
+    }
+  }
   else if (flag < 1)
     keyIllegalAction(key);
   else {
