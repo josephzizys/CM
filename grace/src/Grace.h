@@ -17,8 +17,9 @@
 
 #ifdef EMBED_SCHEME
 #include "Scheme.h"
-#include "Nodes.h"
 #endif
+#include "Nodes.h"
+
 
 
 class GraceApp : public JUCEApplication
@@ -47,6 +48,7 @@ public:
     GracePreferences* prefs;
     GracePreferences* getPreferences() {return prefs;}
 #ifdef EMBED_SCHEME
+
 	SchemeThread* schemeProcess;
 #endif
 	
