@@ -17,8 +17,9 @@
 
 #ifdef EMBED_SCHEME
 #include "Scheme.h"
-#endif
 #include "Nodes.h"
+#endif
+
 
 
 
@@ -33,7 +34,10 @@ public:
     ApplicationCommandManager *commandManager ;
     AudioDeviceManager audioManager;
     MidiOutput* midiOutput;
+#ifdef EMBED_SCHEME
     NodeQueue *queue;
+    SchemeThread* schemeProcess;
+#endif
     GraceApp() ;
     ~GraceApp();
     void anotherInstanceStarted (const String& commandLine);
@@ -47,12 +51,6 @@ public:
     ConsoleWindow* getConsole() {return console;}
     GracePreferences* prefs;
     GracePreferences* getPreferences() {return prefs;}
-#ifdef EMBED_SCHEME
-
-	SchemeThread* schemeProcess;
-#endif
-	
-	
 };
 
 
