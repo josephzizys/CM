@@ -14,14 +14,6 @@
 using namespace std;
 #include "Syntab.h"
 
-
-
-
-
-
-
-
-
 // Syntax IDs, one for each syntax. 
 
 enum syntaxID {
@@ -110,22 +102,30 @@ class TextSyntax : public Syntax
 {
  public:
   TextSyntax();
-  ~TextSyntax() {};
+  ~TextSyntax() {
+    clearSingletonInstance();
+  };
   bool isTopLevel(String line) ;
   SynTok* getSynTok (String n);
   int getIndent (const String text, int bot, int top, int beg) ;
   hiliteID getHilite (const String text, int start, int end) ;
+  juce_DeclareSingleton (TextSyntax, true)
 };
 
 class LispSyntax : public Syntax
 {
  public:
   LispSyntax();
-  ~LispSyntax() {};
+
+  ~LispSyntax() {
+    clearSingletonInstance();
+  };
+
   bool isTopLevel(String line) ;
   SynTok* getSynTok (String n) ;
   int getIndent (const String text, int bot, int top, int beg) ;
   hiliteID getHilite (const String text, int start, int end) ;
+  juce_DeclareSingleton (LispSyntax, true)
 };
 
 class SalSyntax : public Syntax
@@ -308,7 +308,10 @@ class SalSyntax : public Syntax
   };
 
   SalSyntax();
-  ~SalSyntax() {};
+
+  ~SalSyntax() {
+    clearSingletonInstance();
+  };
 
   bool isSalType(int i) {
     return (0 <= i) && (i < SAL_TYPE_END);
@@ -367,9 +370,13 @@ class SalSyntax : public Syntax
   int backwardSal(const String text, int bot, int top, int *poz, int *sal);
   hiliteID getHilite (const String text, int start, int end) ;
   void tokenize(String str);
+  juce_DeclareSingleton (SalSyntax, true)
 };
 
 #endif
+
+
+
 
 
 

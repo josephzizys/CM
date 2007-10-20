@@ -15,6 +15,10 @@
 
 using namespace std;
 
+juce_ImplementSingleton(TextSyntax) ;
+juce_ImplementSingleton(LispSyntax) ;
+juce_ImplementSingleton(SalSyntax) ;
+
 Syntax::Syntax (String a, String b, String c, String d, String e, String f, 
 		String g, String h, String i, String j) {
   init_syntab(syntab, a, b, c, d, e, f, g, h, i, j);
