@@ -30,7 +30,7 @@ class TextBuffer : public TextEditor,
   void setAction(int act) { thisact=act ;}
   void storeAction() { lastact=thisact; }
   bool isLastAction(int act) { return (lastact==act) ? true : false; }
-  int isKeyAction(const KeyPress& key);
+  int isKeyCommand(const KeyPress& key);
   void keyControlAction(const KeyPress& key);
   void keyControlXAction(const KeyPress& key);
   void keyMetaAction(const KeyPress& key);
@@ -46,6 +46,11 @@ class TextBuffer : public TextEditor,
 
   enum BufferFlags {needsave=1, readonly=2, hiliteoff=4, parensoff=8, 
 		    load=16, nosave=32, emacsmode=64};
+
+  // some commands span more than one command
+  enum editAction { actMoveLine = 1, actKillLine, actKillWord, actKillSexpr, 
+		    actControlX };
+
   int flags;
 
   int getFlag(int f) {return (flags & f);}

@@ -37,16 +37,16 @@ void TextBuffer::initSyntax (syntaxID id) {
   syntaxId=id;
   switch (id) {
   case syntaxSal :
-    syntax= new SalSyntax();
+    syntax=SalSyntax::getInstance();
     break;
   case syntaxLisp :
-    syntax= new LispSyntax();
+    syntax=LispSyntax::getInstance();
     break;
   case syntaxText :
   default : 
     syntaxId=syntaxText;
     setFlagOn(hiliteoff);
-    syntax= new TextSyntax();
+    syntax= TextSyntax::getInstance();
     break;
   }
 }
@@ -303,6 +303,7 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
 }
 
 bool TextBuffer::perform (const InvocationInfo& info) {
+  printf("in TextBuf Perform\n");
   switch (info.commandID) {
   case cmdFileNewSal:
     ((EditorWindow*)getTopLevelComponent())->newFile(syntaxSal);
@@ -420,137 +421,246 @@ bool TextBuffer::perform (const InvocationInfo& info) {
 }
 
 //
-// Emacs Key Actions
+// Emacs Key Commands
 //
+
+class KeyCommands {
+public:
+  // seperate enums and arrays because the methods that call this code
+  // already know what modifier group to search
+  enum {Ctrl_A, Ctrl_B, Ctrl_D, Ctrl_E, Ctrl_F, Ctrl_K, Ctrl_N,
+	Ctrl_O, Ctrl_P, Ctrl_T, Ctrl_V, Ctrl_W, Ctrl_X, Ctrl_Y, 
+	MAXCTRLKEY};
+  enum {Meta_B, Meta_C,  Meta_D, Meta_F, Meta_L, Meta_Q, Meta_U, Meta_V, 
+	Meta_Sp, Meta_LT, Meta_GT, 
+	MAXMETAKEY};
+  enum {CtrlX_C, CtrlX_E, CtrlX_F, CtrlX_H, CtrlX_S, CtrlX_W, CtrlX_Z,
+	MAXCTRLXKEY};
+  enum {CtrlMeta_F, CtrlMeta_B, CtrlMeta_K, MAXCTRLMETAKEY};
+  enum {Com_A, Com_C, Com_E, Com_N, Com_O, Com_R, Com_S, Com_T, Com_V,
+	Com_W, Com_X, Com_Ret, Com_ArL, Com_ArR, Com_ArU, Com_ArD,
+	MAXCOMKEY};
 #ifndef WINDOWS
-#define emacsControl 1
-#define emacsMeta 2
-#define emacsControlMeta 3
-#define emacsCommand 4
-#define emacsCommandControl 5
-#define emacsCommandMeta 6
-#define emacsCommandControlMeta 7
-
+  enum {emacsControl=1, emacsMeta, emacsControlMeta, emacsCommand, emacsCommandControl,
+	emacsCommandMeta, emacsCommandControlMeta};
 #else
-
-#define emacsControl 2
-#define emacsMeta 4
-#define emacsControlMeta 6
-//all set to numbers too high.
-#define emacsCommand 178
-#define emacsCommandControl 179
-#define emacsCommandMeta 180
-#define emacsCommandControlMeta 181
-
-
-
+  enum {emacsControl=2, emacsMeta=4, emacsControlMeta=6,
+	// noops in windows (?)
+	emacsCommand=178,emacsCommandControl=179, emacsCommandMeta=180, 
+	emacsCommandControlMeta=181};
 #endif 
 
-// some commands span more than one command invocation.
+  KeyPress ctrlkeys[MAXCTRLKEY];
+  KeyPress metakeys[MAXMETAKEY];
+  KeyPress ctrlxkeys[MAXCTRLXKEY];
+  KeyPress ctrlmetakeys[MAXCTRLMETAKEY];
+  KeyPress comkeys[MAXCOMKEY];
 
-enum editAction 
-  { actMoveLine = 1,
-    actKillLine,
-    actKillWord,
-    actKillSexpr,
-    actControlX
-  };
+  KeyCommands() {
+    ctrlkeys[Ctrl_A]=KeyPress::createFromDescription(T("ctrl + A"));
+    ctrlkeys[Ctrl_B]=KeyPress::createFromDescription(T("ctrl + B"));
+    ctrlkeys[Ctrl_D]=KeyPress::createFromDescription(T("ctrl + D"));
+    ctrlkeys[Ctrl_E]=KeyPress::createFromDescription(T("ctrl + E"));
+    ctrlkeys[Ctrl_F]=KeyPress::createFromDescription(T("ctrl + F"));
+    ctrlkeys[Ctrl_K]=KeyPress::createFromDescription(T("ctrl + K"));
+    ctrlkeys[Ctrl_N]=KeyPress::createFromDescription(T("ctrl + N"));
+    ctrlkeys[Ctrl_O]=KeyPress::createFromDescription(T("ctrl + O"));
+    ctrlkeys[Ctrl_P]=KeyPress::createFromDescription(T("ctrl + P"));
+    ctrlkeys[Ctrl_T]=KeyPress::createFromDescription(T("ctrl + T"));
+    ctrlkeys[Ctrl_V]=KeyPress::createFromDescription(T("ctrl + V"));
+    ctrlkeys[Ctrl_W]=KeyPress::createFromDescription(T("ctrl + W"));
+    ctrlkeys[Ctrl_X]=KeyPress::createFromDescription(T("ctrl + X"));
+    ctrlkeys[Ctrl_Y]=KeyPress::createFromDescription(T("ctrl + Y"));
 
-int TextBuffer::isKeyAction (const KeyPress& key) {
-  // return code if control, meta or command keys are down
-  // ignoring Shift key
+    metakeys[Meta_B]=KeyPress::createFromDescription(T("option + B"));
+    metakeys[Meta_C]=KeyPress::createFromDescription(T("option + C"));
+    metakeys[Meta_D]=KeyPress::createFromDescription(T("option + D"));
+    metakeys[Meta_F]=KeyPress::createFromDescription(T("option + F"));
+    metakeys[Meta_L]=KeyPress::createFromDescription(T("option + L"));
+    metakeys[Meta_Q]=KeyPress::createFromDescription(T("option + Q"));
+    metakeys[Meta_U]=KeyPress::createFromDescription(T("option + U"));
+    metakeys[Meta_V]=KeyPress::createFromDescription(T("option + V"));
+    metakeys[Meta_Sp]=KeyPress::createFromDescription(T("option + spacebar"));
+    metakeys[Meta_LT]=KeyPress::createFromDescription(T("shift + option + ,"));
+    metakeys[Meta_GT]=KeyPress::createFromDescription(T("shift + option + ."));
+    //metakeys[Meta_ArL]=KeyPress::createFromDescription(T("option + cursor left"));
+    //metakeys[Meta_ArR]=KeyPress::createFromDescription(T("option + cursor right"));
+    //metakeys[Meta_ArU]=KeyPress::createFromDescription(T("option + cursor up"));
+    //metakeys[Meta_ArD]=KeyPress::createFromDescription(T("option + cursor down"));
 
+    ctrlxkeys[CtrlX_C]=KeyPress::createFromDescription(T("ctrl + C"));
+    ctrlxkeys[CtrlX_E]=KeyPress::createFromDescription(T("ctrl + E"));
+    ctrlxkeys[CtrlX_F]=KeyPress::createFromDescription(T("ctrl + F"));
+    ctrlxkeys[CtrlX_H]=KeyPress::createFromDescription(T("ctrl + H"));
+    ctrlxkeys[CtrlX_S]=KeyPress::createFromDescription(T("ctrl + S"));
+    ctrlxkeys[CtrlX_W]=KeyPress::createFromDescription(T("ctrl + W"));
+    ctrlxkeys[CtrlX_Z]=KeyPress::createFromDescription(T("ctrl + Z"));
+
+    ctrlmetakeys[CtrlMeta_F]=KeyPress::createFromDescription(T("ctrl + option + F"));
+    ctrlmetakeys[CtrlMeta_B]=KeyPress::createFromDescription(T("ctrl + option + B"));
+    ctrlmetakeys[CtrlMeta_K]=KeyPress::createFromDescription(T("ctrl + option + K"));
+
+    comkeys[Com_A]=KeyPress::createFromDescription(T("command + A"));
+    comkeys[Com_C]=KeyPress::createFromDescription(T("command + C"));
+    comkeys[Com_E]=KeyPress::createFromDescription(T("command + E"));
+    comkeys[Com_N]=KeyPress::createFromDescription(T("command + N"));
+    comkeys[Com_O]=KeyPress::createFromDescription(T("command + O"));
+    comkeys[Com_R]=KeyPress::createFromDescription(T("command + R"));
+    comkeys[Com_S]=KeyPress::createFromDescription(T("command + S"));
+    comkeys[Com_T]=KeyPress::createFromDescription(T("command + T"));
+    comkeys[Com_V]=KeyPress::createFromDescription(T("command + V"));
+    comkeys[Com_W]=KeyPress::createFromDescription(T("command + W"));
+    comkeys[Com_X]=KeyPress::createFromDescription(T("command + X"));
+    comkeys[Com_Ret]=KeyPress::createFromDescription(T("command + return"));
+    comkeys[Com_ArL]=KeyPress::createFromDescription(T("command + cursor left"));
+    comkeys[Com_ArR]=KeyPress::createFromDescription(T("command + cursor right"));
+    comkeys[Com_ArU]=KeyPress::createFromDescription(T("command + cursor up"));
+    comkeys[Com_ArD]=KeyPress::createFromDescription(T("command + cursor down"));
+  }
+
+  ~KeyCommands() {
+    clearSingletonInstance();
+  }
+
+  int isCtrlCommand(KeyPress key) {
+    for (int i=0; i<MAXCTRLKEY; i++)
+      if (ctrlkeys[i]==key) return i;
+    return -1;
+  }
+
+  int isMetaCommand(KeyPress key) {
+    for (int i=0; i<MAXMETAKEY; i++)
+      if (metakeys[i]==key) return i;
+    return -1;
+  }
+
+  int isCtrlXCommand(KeyPress key) {
+    for (int i=0; i<MAXCTRLXKEY; i++)
+      if (ctrlxkeys[i]==key) return i;
+    return -1;
+  }
+
+  int isCtrlMetaCommand(KeyPress key) {
+    for (int i=0; i<MAXCTRLMETAKEY; i++)
+      if (ctrlmetakeys[i]==key) return i;
+    return -1;
+  }
+
+  int isComKeyCommand(KeyPress key) {
+    for (int i=0; i<MAXCOMKEY; i++)
+      if (comkeys[i]==key) return i;
+    return -1;
+  }
+
+  juce_DeclareSingleton (KeyCommands, true)
+
+};
+
+juce_ImplementSingleton (KeyCommands) ;
+
+// Main Keyboard Command functions
+
+int getCtrlCommand(KeyPress key) {
+  return KeyCommands::getInstance()->isCtrlCommand(key);
+}
+
+int getMetaCommand(KeyPress key) {
+  return KeyCommands::getInstance()->isMetaCommand(key);
+}
+
+int getCtrlMetaCommand(KeyPress key) {
+  return KeyCommands::getInstance()->isCtrlMetaCommand(key);
+}
+
+int getCtrlXCommand(KeyPress key) {
+  return KeyCommands::getInstance()->isCtrlXCommand(key);
+}
+
+int getComKeyCommand(KeyPress key) {
+  return KeyCommands::getInstance()->isComKeyCommand(key);
+}
+
+
+int TextBuffer::isKeyCommand (const KeyPress& key) {
+  // true if Emacs mode and C, M or COM keys down w Shift ignored
   int flag = 0;
   if ( isEmacsMode() ) {
     if ( key.getModifiers().isCtrlDown() )
-      flag = emacsControl;
+      flag = KeyCommands::emacsControl;
     if ( key.getModifiers().isAltDown() )
-      flag |= emacsMeta;
+      flag |= KeyCommands::emacsMeta;
 #ifdef DARWIN
     if ( key.getModifiers().isCommandDown() )
-      flag |= emacsCommand;
+      flag |= KeyCommands::emacsCommand;
 #endif
   }
   else {
     if ( key.getModifiers().isCommandDown() )
-      flag |= emacsCommand;
+      flag |= KeyCommands::emacsCommand;
   }
-
   if ((flag != 0) && key.getModifiers().isAnyMouseButtonDown() )
-    flag = -1;
-
-  return flag;
+    return -1;
+  else
+    return flag;
 }
 
 void TextBuffer::keyControlAction(const KeyPress& key) {
-  int kcode = key.getKeyCode();
-  int alias = 0;
-  // this is unfortunate -- for some reason the control key in JUCE
-  // causes the charcode to be uppercase! maybe its just the mac...
-  switch (kcode) {
-  case 'a' :
-  case 'A' :
+  // Called if Emacs mode AND keypress has Control Key down
+  int cmd = getCtrlCommand(key);
+
+  //String text = key.getTextDescription();
+  //printf("keypress: T(\"%s\"), command: %d\n", text.toUTF8(), cmd);
+
+  switch (cmd) {
+  case KeyCommands::Ctrl_A :
     gotoBOL();
     break;
-  case 'b' :
-  case 'B' :
+  case KeyCommands::Ctrl_B :
     backwardChar();
     break;
-  case 'd' :
-  case 'D' :
+  case KeyCommands::Ctrl_D :
     deleteChar(1);
     setChanged(true);
     colorizeAfterChange(cmdDelete);
     break;
-  case 'e' :
-  case 'E' :
+  case KeyCommands::Ctrl_E :
     gotoEOL();
     break;
-  case 'f' :
-  case 'F' :
+  case KeyCommands::Ctrl_F :
     forwardChar();
     break;
-  case 'k' :
-  case 'K' :
+  case KeyCommands::Ctrl_K :
     killLine();
     setChanged(true);
     colorizeAfterChange(cmdKillLine);
     break;
-  case 'n' :
-  case 'N' :
+  case KeyCommands::Ctrl_N :
     nextLine(); 
     break;
-  case 'o' :
-  case 'O' :
+  case KeyCommands::Ctrl_O :
     openLine();
     setChanged(true);
     colorizeAfterChange(cmdOpenLine);
     break;
-  case 'p' :
-  case 'P' :
+  case KeyCommands::Ctrl_P :
     previousLine();
     break;
-  case 't' :     /** C-t for temp command testing  **/
-  case 'T' :
+  case KeyCommands::Ctrl_T :
+    /**** C-t for temp command testing  ****/
     break;
-  case 'v' :
-  case 'V' :
+  case KeyCommands::Ctrl_V :
     forwardScreen();
     break;
-  case 'w' :
-  case 'W' :
-    //cut();
+  case KeyCommands::Ctrl_W :
     if (getHighlightedRegionLength()>0) {
       copy();
       keyPressed(KeyPress(KeyPress::deleteKey));
     }
     break;
-  case 'x' :
-  case 'X' :
+  case KeyCommands::Ctrl_X :
     setAction(actControlX);
     break;
-  case 'y' :
-  case 'Y' :
+  case KeyCommands::Ctrl_Y :
     paste();
     setChanged(true);
     colorizeAfterChange(cmdEditPaste);
@@ -558,42 +668,35 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
   default :
     keyIllegalAction(key);
   }
-  if (alias != 0) {
-    setChanged(true);
-    TextEditor::keyPressed(KeyPress(alias));
-  }
 }
 
 void TextBuffer::keyControlXAction (const KeyPress& key) {
-  int kcode = key.getKeyCode();
- //rintf("Control-X: %s\n", key.getTextDescription().toUTF8() );
-  switch (kcode) {
-  case 'c':
-  case 'C':
+  // Called if EmacMode AND keypress after Control X
+  int cmd = getCtrlXCommand(key);
+
+  //String text = key.getTextDescription();
+  //printf("keypress: T(\"%s\"), command: %d\n", text.toUTF8(), cmd);
+
+  switch (cmd) {
+  case KeyCommands::CtrlX_C :
     ((EditorWindow*)getTopLevelComponent())->closeFile();
     break;
-  case 'e':
-  case 'E':
+  case KeyCommands::CtrlX_E :
     evalText();
     break;
-  case 'f':
-  case 'F':
+  case KeyCommands::CtrlX_F :
     ((EditorWindow*)getTopLevelComponent())->openFile();
     break;
-  case 'h':
-  case 'H':
+  case KeyCommands::CtrlX_H :
     toggleHiliting();
     break;
-  case 's':
-  case 'S':
+  case KeyCommands::CtrlX_S :
     ((EditorWindow*)getTopLevelComponent())->saveFile();
     break;
-  case 'w':
-  case 'W':
+  case KeyCommands::CtrlX_W :
     ((EditorWindow*)getTopLevelComponent())->saveFileAs();
     break;
-  case 'z' :
-  case 'Z' :
+  case KeyCommands::CtrlX_Z :
     break;
   default :
     keyIllegalAction(key);
@@ -601,108 +704,47 @@ void TextBuffer::keyControlXAction (const KeyPress& key) {
   } 
 }
 
-// this hair is really unfortunate -- for some reason the meta key
-// actually changes the keycode from ascii to some weird unicode
-// nonsense. need to track down if its juce or the mac thats
-// resposible for this mess
-
-#ifdef DARWIN
-#define META_F 402
-#define META_B 8747
-#define META_D 8706
-#define META_Q 339    // hkt
-#define META_V 8730
-#define META_SPACE 160
-#define META_DOT 8805
-#define META_LT 175
-#define META_GT 728
-#define META_L 172
-#define META_U 0
-#define META_C 231
-#define KPAD_ENTER 13
-#define ARROWL 28
-#define ARROWR 29
-#define ARROWU 30
-#define ARROWD 31
-#endif
-
-#ifndef DARWIN && WINDOWS
-#define META_F 102
-#define META_B 98
-#define META_D 100
-#define META_Q 113          // hkt
-#define META_V 118
-#define META_SPACE 32
-#define META_DOT 46
-#define META_LT 60
-#define META_GT 62
-#define META_L 76
-#define META_U 85
-#define META_C 67
-#define KPAD_ENTER 13
-#define ARROWL 268435537
-#define ARROWR 268435539
-#define ARROWU 268435538
-#define ARROWD 268435540
-#endif
-
-#ifdef WINDOWS
-#define META_F 70
-#define META_B 66
-#define META_D 68
-#define META_Q 81        // hkt
-#define META_V 86
-#define META_SPACE 32
-#define META_DOT '.'
-#define META_LT 60
-#define META_GT 62
-#define META_L 76
-#define META_U 85
-#define META_C 67
-#define KPAD_ENTER 13
-#define ARROWL 65573
-#define ARROWR 65575
-#define ARROWU 65574
-#define ARROWD 65576
-#endif
-
 void TextBuffer::keyMetaAction(const KeyPress& key) {
-  int kcode = key.getKeyCode();
-   // printf("Meta key: %d\n", kcode );
-  switch ( kcode ) {
-  case META_F :
+  // Called if EmacsMode AND keypress has Meta key down
+  int cmd = getMetaCommand(key);
+
+  //String text = key.getTextDescription();
+  //printf("keypress: T(\"%s\"), command: %d\n", text.toUTF8(), cmd);
+
+  switch ( cmd ) {
+  case KeyCommands::Meta_F :
     forwardWord();
     break;
-  case META_B :
+  case KeyCommands::Meta_B :
     backwardWord();
     break;
-  case META_Q :
+  case KeyCommands::Meta_Q :
     reformatCommentBlock();
     break;
-  case META_L :
+  case KeyCommands::Meta_L :
     changeCase(0);
     break;
-  case META_U :
+  case KeyCommands::Meta_U :
     changeCase(1);
     break;
-  case META_C :
+  case KeyCommands::Meta_C :
     changeCase(2);
     break;
-  case META_V :
+  case KeyCommands::Meta_V :
     backwardScreen();
     break;
-  case META_LT :
+  case KeyCommands::Meta_LT :
     gotoBOB();
     break;
-  case META_GT :
+  case KeyCommands::Meta_GT :
     gotoEOB();
     break;
-  case META_D :
+  case KeyCommands::Meta_D :
     killWord();
     setChanged(true);
     colorizeAfterChange(cmdKillWord);
     break;
-  case META_SPACE :
+  case KeyCommands::Meta_Sp :
     forwardDeleteChars( T(" \t\n") );
     setChanged(true);
     colorizeAfterChange(cmdKillWhite);
@@ -714,20 +756,20 @@ void TextBuffer::keyMetaAction(const KeyPress& key) {
 }
 
 void TextBuffer::keyControlMetaAction(const KeyPress& key) {
-  int kcode = key.getKeyCode();
-  //printf("CtrlMeta: %d\n", kcode);
-  switch (kcode) {
-  case 'f' :
-  case 'F' :
+  // Called if EmacsMode AND keypress has Ctrl Meta down
+  int cmd = getCtrlMetaCommand(key);
 
+  //  String text = key.getTextDescription();
+  //  printf("keypress: T(\"%s\"), command: %d\n", text.toUTF8(), cmd);
+
+  switch (cmd) {
+  case KeyCommands::CtrlMeta_F :
     forwardSexpr();
     break;
-  case 'b' :
-  case 'B' :
+  case KeyCommands::CtrlMeta_B :
     backwardSexpr();
     break;
-  case 'k' :
-  case 'K' :
+  case KeyCommands::CtrlMeta_K :
     killSexpr();
     setChanged(true);
     colorizeAfterChange(cmdKillSexpr);
@@ -739,75 +781,64 @@ void TextBuffer::keyControlMetaAction(const KeyPress& key) {
 }
 
 void TextBuffer::keyCommandAction(const KeyPress& key) {
-  int kcode = key.getKeyCode();
+  // Called if keypress is Command Key
+  int cmd = getComKeyCommand(key);
   syntaxID sid = syntaxSal;
-  //printf("Command: %d\n", kcode );
-  switch ( kcode ) {
-  case 'a' :
-  case 'A' :
+
+  //String text = key.getTextDescription();
+  //printf("keypress: T(\"%s\")\n", text.toUTF8());
+
+  switch ( cmd ) {
+  case KeyCommands::Com_A :
     selectAll();
     break;
-  case 'v' :
-  case 'V' :
+  case KeyCommands::Com_V :
     paste(); 
     setChanged(true);
     colorizeAfterChange(cmdEditPaste);
     break;
-  case 'c' :
-  case 'C' :
+  case KeyCommands::Com_C :
     copy();
     break;
-  case 'O' :
-  case 'o' :
+  case KeyCommands::Com_O :
     ((EditorWindow*)getTopLevelComponent())->openFile();
     break;
-  case 'N' :
-  case 'n' :  
-    // new window should probably default to sal mode. Maybe
-    // Shift-Command-M for opening new Lisp buffer (?)
+  case KeyCommands::Com_N :
     sid=(key.getModifiers().isShiftDown()) ? syntaxLisp : syntaxSal;
     ((EditorWindow*)getTopLevelComponent())->newFile(sid);
     break;
-  case 'R' :
-  case 'r' :
+  case KeyCommands::Com_R :
     ((EditorWindow*)getTopLevelComponent())->revertFile();
     break;
-  case 'S' :
-  case 's' :
+  case KeyCommands::Com_S :
     ((EditorWindow*)getTopLevelComponent())->saveFile();
     break;
-  case 'w' :
-  case 'W' :
+  case KeyCommands::Com_W :
     ((EditorWindow*)getTopLevelComponent())->closeFile();
-  case 'x' :
-  case 'X' :
-    //cut();
+  case KeyCommands::Com_X :
     if (getHighlightedRegionLength()>0) {
       copy();
       keyPressed(KeyPress(KeyPress::deleteKey));
     }
     break;
-  case 'e' :
-  case 'E' :
-  case KPAD_ENTER :
+  case KeyCommands::Com_E :
+  case KeyCommands::Com_Ret :
     evalText();
     break;
-    // hkt 000000000000000000000000
-  case ARROWL : // left 
+  case KeyCommands::Com_ArL :
     gotoBOL();
     break;
-  case ARROWR : 
+  case KeyCommands::Com_ArR :
     gotoEOL();
     break;
-  case ARROWU : // up
+  case KeyCommands::Com_ArU :
     gotoBOB();
     break;
-  case ARROWD : 
+  case KeyCommands::Com_ArD :
     gotoEOB();
     break;
-
-  case 'T' : 
-  case 't' : 
+  case KeyCommands::Com_T :
+    /****  SAL TESTING  *****/
     if (syntaxId == syntaxSal) {
       String text=backwardTopLevelText();
       if (text != String::empty)
@@ -856,7 +887,7 @@ bool TextBuffer::keyPressed (const KeyPress& key) {
   int keyCode, keyMod, flag, last;
   keyCode =  key.getKeyCode();
   keyMod = key.getModifiers().getRawFlags();
-  flag = isKeyAction(key);
+  flag = isKeyCommand(key);
   // some commands like killLine need to know what the last command
   // was.  setAction() and storeAction() keep a memory of (one)
   // previous command.
@@ -909,16 +940,16 @@ bool TextBuffer::keyPressed (const KeyPress& key) {
     keyIllegalAction(key);
   else {
     switch (flag) {
-    case emacsControl :
+    case KeyCommands::emacsControl :
       keyControlAction(key);
       break;
-    case emacsMeta :
+    case KeyCommands::emacsMeta :
       keyMetaAction(key);
       break;
-    case emacsCommand :
+    case KeyCommands::emacsCommand :
       keyCommandAction(key);
       break;
-    case emacsControlMeta :
+    case KeyCommands::emacsControlMeta :
       keyControlMetaAction(key);
       break;
     default :
