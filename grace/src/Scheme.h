@@ -46,6 +46,8 @@ class SchemeThread : public Thread
   OwnedArray<SchemeMessage, CriticalSection> messageBuffer;
   ConsoleWindow* console;
   String EvalString;
+  char *evalBuffer ; 
+  char *errorBuffer ; 
 };
 
 #endif

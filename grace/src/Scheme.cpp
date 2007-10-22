@@ -34,6 +34,8 @@ SchemeThread::SchemeThread(String name, ConsoleWindow *win) :
 Thread(name)
 {
   console=win;
+  evalBuffer = new char[8192];
+  errorBuffer = new char[8192];
 }
 
 SchemeThread::~SchemeThread()
@@ -50,17 +52,18 @@ void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
   {
     case SCHEME_STRING:
       int res;	
-      char buffer[ 8192] ;  
-      
-      res = CHICKEN_eval_string_to_string( (char*)(schemeMessage->string).toUTF8(), buffer, 8192 );
+      bzero(evalBuffer, 8192);
+      bzero(errorBuffer, 8192);
+
+      res = CHICKEN_eval_string_to_string( (char*)(schemeMessage->string).toUTF8(), evalBuffer, schemeMessage->string.length() );
       
       if (res==0) {
-        bzero(buffer, 8192);
-        CHICKEN_get_error_message(buffer, 8192);
-        text=T(String(buffer));
+        
+        CHICKEN_get_error_message(errorBuffer, strlen(errorBuffer));
+        text=T(String(errorBuffer));
         console->printError(text);
       } else
-        console->printValues(String(buffer) + T("\n"));
+        console->printValues(String(evalBuffer) + T("\n"));
        messageBuffer.removeObject(schemeMessage, true);
       break;
       
@@ -72,6 +75,7 @@ void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
         C_word *elapsed_ptr;
         C_word now_word;
         C_word elapsed_word;
+
         now_ptr = C_alloc(1);
         elapsed_ptr = C_alloc(1);
                
@@ -82,10 +86,9 @@ void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
         elapsed_word = C_flonum( &elapsed_ptr, elapsed); 
         C_save( now_word );
         C_save( elapsed_word );
+
         nexttime = C_c_double( C_callback(closure, 2));
-        C_restore;
-        C_restore;
-      
+    
         if(nexttime == -1) {
           delete schemeMessage->node;
           messageBuffer.removeObject(schemeMessage, true);
