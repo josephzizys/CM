@@ -19,10 +19,22 @@ juce_ImplementSingleton(TextSyntax) ;
 juce_ImplementSingleton(LispSyntax) ;
 juce_ImplementSingleton(SalSyntax) ;
 
-Syntax::Syntax (String a, String b, String c, String d, String e, String f, 
-		String g, String h, String i, String j) {
+Syntax::Syntax (String a, String b, String c, String d, String e, 
+		String f, String g, String h, String i, String j) 
+  : numtoks (0)
+{
   init_syntab(syntab, a, b, c, d, e, f, g, h, i, j);
-  for(int i=0; i<MAXHILITE; i++) hilites[i]=Colours::black;
+  for (int i=0; i<MAXHILITE; i++) hilites[i]=Colours::black;
+}
+
+Syntax::~Syntax() {
+}
+
+SynTok * Syntax::getSynTok (String n) {
+  SynTokMap::iterator iter = tokens.find(n);
+  if ( iter == tokens.end() )
+    return (SynTok *) NULL;
+  return iter->second;
 }
 
 bool Syntax::isWhiteBetween(const String txt, int lb, int ub) {
@@ -35,14 +47,19 @@ bool Syntax::isWhiteBetween(const String txt, int lb, int ub) {
   return false;
 }
 
-/*
- * Text Syntax
- */
+/************************************************************************
+ * Text Syntax                                                          *
+ ************************************************************************/
 
 TextSyntax::TextSyntax () 
   : Syntax( T(""), T(""), T("~@#$%^&*-_=+|<>/"),
 	    T(""), T(""), T("\""), T("([{"), T(")]}"),
-	    T(",.!?;:'`\\"), T("")) {
+	    T(",.!?;:'`\\"), T("")) 
+{
+}
+
+TextSyntax::~TextSyntax() {
+  clearSingletonInstance();
 }
 
 bool TextSyntax::isTopLevel(String line) {
@@ -54,10 +71,6 @@ bool TextSyntax::isTopLevel(String line) {
   else return false;
 }
 
-SynTok* TextSyntax::getSynTok (String n) {
-  return (SynTok *) NULL;
-}
-
 int TextSyntax::getIndent (const String text, int bot, int top, int beg) {
   return 4;
 }
@@ -66,69 +79,58 @@ hiliteID TextSyntax::getHilite (const String text, int start, int end) {
   return hiliteNone;
 }
 
-/*
- * Lisp Syntax
- */
-
-int lispTokCtr = 0;
-SynTokMap lispTokMap;
-
-void addLispTok (const String n, int t, hiliteID h, int i) {
-  lispTokMap[n] = new SynTok(n, ++lispTokCtr, h, i);
-}
-
-void initLispToks() {
-  int t=0;
-  printf("initing lisp map\n");
-  addLispTok( T("begin"), t++, hilite4, 1);
-  addLispTok( T("block"), t++, hilite4, 1);
-  addLispTok( T("defclass"), t++, hilite4, 3);
-  addLispTok( T("defconstant"), t++, hilite4, 1);
-  addLispTok( T("define"), t++, hilite4, 1);
-  addLispTok( T("definstrument"), t++, hilite4, 2);
-  addLispTok( T("defmethod"), t++, hilite4, 3);
-  addLispTok( T("defobject"), t++, hilite4, 2);
-  addLispTok( T("defparameter"), t++, hilite4, 1);
-  addLispTok( T("defprocess"), t++, hilite4, 2);
-  addLispTok( T("defun"), t++, hilite4, 2);
-  addLispTok( T("defvar"), t++, hilite4, 1);
-  addLispTok( T("do"), t++, hilite4, 2);
-  addLispTok( T("do*"), t++, hilite4, 2);
-  addLispTok( T("dolist"), t++, hilite4, 1);
-  addLispTok( T("dotimes"), t++, hilite4, 1);
-  addLispTok( T("eval-when"), t++, hilite4, 1);
-  addLispTok( T("flet"), t++, hilite4, 1);
-  addLispTok( T("if"), t++, hilite4, 1);
-  addLispTok( T("labels"), t++, hilite4, 1);
-  addLispTok( T("lambda"), t++, hilite4, 1);
-  addLispTok( T("let"), t++, hilite4, 1);
-  addLispTok( T("let*"), t++, hilite4, 1);
-  addLispTok( T("loop"), t++, hilite4, 0);
-  addLispTok( T("process"), t++, hilite4, 2);
-  addLispTok( T("rlet"), t++, hilite4, 1);
-  addLispTok( T("unless"), t++, hilite4, 1);
-  addLispTok( T("when"), t++, hilite4, 1);
-}
-
-SynTok* LispSyntax::getSynTok (String n) {
-  SynTokMap::iterator iter = lispTokMap.find(n);
-  if ( iter == lispTokMap.end() )
-    return (SynTok *) NULL;
-  return iter->second;
-}
+/************************************************************************
+ * Lisp Syntax                                                          *
+ ************************************************************************/
 
 LispSyntax::LispSyntax () 
   : Syntax( T(""), T(""), T("~!@$%^&*-_=+[{]}|:<.>/?"),
 	    T(";"), T("`#',"), T("\""), T("("), T(")"),
-	    T(","), T("\\")) {
-  if ( lispTokCtr == 0 )
-    initLispToks();
+	    T(","), T("\\"))
+{
   // hilite4 = special forms
   // hilite5 = lisp keywords
   hilites[hiliteString]=Colours::rosybrown;
   hilites[hiliteComment]=Colours::firebrick;
   hilites[hilite4]=Colour(0xa0, 0x20, 0xf0); //Colours::purple;
   hilites[hilite5]=Colours::orchid;
+
+  addLispTok( T("begin"), numtoks++, hilite4, 1);
+  addLispTok( T("block"), numtoks++, hilite4, 1);
+  addLispTok( T("defclass"), numtoks++, hilite4, 3);
+  addLispTok( T("defconstant"), numtoks++, hilite4, 1);
+  addLispTok( T("define"), numtoks++, hilite4, 1);
+  addLispTok( T("definstrument"), numtoks++, hilite4, 2);
+  addLispTok( T("defmethod"), numtoks++, hilite4, 3);
+  addLispTok( T("defobject"), numtoks++, hilite4, 2);
+  addLispTok( T("defparameter"), numtoks++, hilite4, 1);
+  addLispTok( T("defprocess"), numtoks++, hilite4, 2);
+  addLispTok( T("defun"), numtoks++, hilite4, 2);
+  addLispTok( T("defvar"), numtoks++, hilite4, 1);
+  addLispTok( T("do"), numtoks++, hilite4, 2);
+  addLispTok( T("do*"), numtoks++, hilite4, 2);
+  addLispTok( T("dolist"), numtoks++, hilite4, 1);
+  addLispTok( T("dotimes"), numtoks++, hilite4, 1);
+  addLispTok( T("eval-when"), numtoks++, hilite4, 1);
+  addLispTok( T("flet"), numtoks++, hilite4, 1);
+  addLispTok( T("if"), numtoks++, hilite4, 1);
+  addLispTok( T("labels"), numtoks++, hilite4, 1);
+  addLispTok( T("lambda"), numtoks++, hilite4, 1);
+  addLispTok( T("let"), numtoks++, hilite4, 1);
+  addLispTok( T("let*"), numtoks++, hilite4, 1);
+  addLispTok( T("loop"), numtoks++, hilite4, 0);
+  addLispTok( T("process"), numtoks++, hilite4, 2);
+  addLispTok( T("rlet"), numtoks++, hilite4, 1);
+  addLispTok( T("unless"), numtoks++, hilite4, 1);
+  addLispTok( T("when"), numtoks++, hilite4, 1);
+}
+
+LispSyntax::~LispSyntax() {
+  clearSingletonInstance();
+}
+
+void LispSyntax::addLispTok (const String n, int t, hiliteID h, int i) {
+  tokens[n] = new SynTok(n, t, h, i);
 }
 
 bool LispSyntax::isTopLevel(String line) {
@@ -245,19 +247,28 @@ hiliteID LispSyntax::getHilite (const String text, int start, int end) {
   return hiliteNone;
 }
 
-/*
- * Sal Syntax
- */
+/************************************************************************
+ * SAL Syntax                                                           *
+ ************************************************************************/
 
-int salMapCtr = 0;
-SynTokMap salTokMap;
+SalSyntax::SalSyntax () 
+  : Syntax( T(""), T(""), T("~!@$%^&*-_=+|:<.>/?"),
+	    T(";"), T("#"), T("\""), T("([{"), T(")]})"),
+	    T(","), T("\\")) {
+  // SAL Hilites:
+  //  hilite4 = commands
+  //  hilite5 = clausals/reserved
+  //  hilite6 = classes
+  //  hilite7 = keywords
+  //  hilite8 = lispkeys/constants/#notation
+  hilites[hiliteString]=Colours::rosybrown;
+  hilites[hiliteComment]=Colours::firebrick;
+  hilites[hilite4]=Colours::blue;
+  hilites[hilite5]=Colour(0xa0, 0x20, 0xf0); //Colours::purple;
+  hilites[hilite6]=Colours::forestgreen;
+  hilites[hilite7]=Colours::orchid;
+  hilites[hilite8]=Colours::cadetblue;
 
-void addSalTok (const String n, int t, hiliteID c) {
-  salTokMap[n] = new SynTok(n, t, c);
-}
-
-void SalSyntax::initSalToks() {
-  salMapCtr=1;
   addSalTok( T("begin"), SalBegin, hilite5);
   addSalTok( T("chdir"), SalChdir, hilite5);
   addSalTok( T("define"), SalDefine, hilite5);
@@ -330,32 +341,13 @@ void SalSyntax::initSalToks() {
   addSalTok( T("#?"), SalQMark, hiliteNone);
 }
 
-SalSyntax::SalSyntax () 
-  : Syntax( T(""), T(""), T("~!@$%^&*-_=+|:<.>/?"),
-	    T(";"), T("#"), T("\""), T("([{"), T(")]})"),
-	    T(","), T("\\")) {
-  if ( salMapCtr == 0)
-    initSalToks();
-  // SAL Hilites:
-  //  hilite4 = commands
-  //  hilite5 = clausals/reserved
-  //  hilite6 = classes
-  //  hilite7 = keywords
-  //  hilite8 = lispkeys/constants/#notation
-  hilites[hiliteString]=Colours::rosybrown;
-  hilites[hiliteComment]=Colours::firebrick;
-  hilites[hilite4]=Colours::blue;
-  hilites[hilite5]=Colour(0xa0, 0x20, 0xf0); //Colours::purple;
-  hilites[hilite6]=Colours::forestgreen;
-  hilites[hilite7]=Colours::orchid;
-  hilites[hilite8]=Colours::cadetblue;
+SalSyntax::~SalSyntax() {
+  clearSingletonInstance();
 }
 
-SynTok* SalSyntax::getSynTok (String n) {
-  SynTokMap::iterator iter = salTokMap.find(n);
-  if ( iter == salTokMap.end() )
-    return (SynTok *) NULL;
-  return iter->second;
+void SalSyntax::addSalTok (const String n, int t, hiliteID c) {
+  numtoks++;
+  tokens[n] = new SynTok(n, t, c);
 }
 
 bool SalSyntax::isTopLevel(String line) {
@@ -525,21 +517,15 @@ hiliteID SalSyntax::getHilite (const String text, int start, int end) {
   else return tok->getHilite();
 }
 
-void salError(String str, int err, SynTok *tok);
-SynTok *findUnbalanced(OwnedArray<SynTok> &tokens, int target, int other, int level);
-int classifyToken(SynTok *tok);
-int isLiteralToken(SynTok *tok);
-int isSpecialToken(SynTok *tok);
-int isNumberToken(SynTok *tok);
-int isClassToken(SynTok *tok);
-int isSlotToken(SynTok *tok);
-int isIdentifierToken(SynTok *tok);
+/*
+ * SAL Lexer
+ */
 
 void SalSyntax::tokenize(String str) {
   int old=0, len=str.length(), pos=0, beg=0, end=0, lev[]={0,0,0};
   int typ;
   SynTok *tok;
-  OwnedArray<SynTok> tokens;
+  OwnedArray<SynTok> tokenstream;
 
   while (true) {
     old=pos;
@@ -590,8 +576,8 @@ void SalSyntax::tokenize(String str) {
       }
       break;
     case SCAN_TOKEN :
-      tok=new SynTok(str.substring(beg,end), SalUntyped, beg);
-      typ=classifyToken(tok);
+      tok=new SynTok(String::empty, SalUntyped, beg);
+      typ=classifyToken(str.substring(beg,end), tok);
       // if (typ==SalUntyped) typ=SalUnknown;
       break;
     default:  
@@ -601,7 +587,7 @@ void SalSyntax::tokenize(String str) {
       break;
     } // end switch(typ)
 
-    if (tok != NULL) tokens.add(tok);
+    if (tok != NULL) tokenstream.add(tok);
 
     // stop if empty or error.
     if (typ<1)
@@ -609,20 +595,20 @@ void SalSyntax::tokenize(String str) {
 
   }  // end while(true)
 
-  printf("typ=%d, lev[0]=%d,lev[1]=%d\n", typ, lev[0], lev[1]);
+  //  printf("typ=%d, lev[0]=%d,lev[1]=%d\n", typ, lev[0], lev[1]);
 
   // if no errors search for any unmatched delimiters
   if ( typ>=0 ) {
     if (lev[0] > 0) {
-      tok=findUnbalanced(tokens, SalLParen, SalRParen, lev[0]);
+      tok=findUnbalanced(tokenstream, SalLParen, SalRParen, lev[0]);
       typ=SCAN_UNMATCHED;
     }
     else if (lev[1] > 0) {
-      tok=findUnbalanced(tokens, SalLCurly, SalRCurly, lev[1]);
+      tok=findUnbalanced(tokenstream, SalLCurly, SalRCurly, lev[1]);
       typ=SCAN_UNMATCHED;
     }
     else if (lev[2] > 0) {
-      tok=findUnbalanced(tokens, SalLBrace, SalRBrace, lev[2]);
+      tok=findUnbalanced(tokenstream, SalLBrace, SalRBrace, lev[2]);
       typ=SCAN_UNMATCHED;
     }
   }
@@ -631,19 +617,20 @@ void SalSyntax::tokenize(String str) {
     salError(str, typ, tok);
   }
   else {
-    printf("\n(");
-      for (int i=0; i<tokens.size(); i++) {
+    String code=str.replace(T("\""),T("\\\"") );
+    printf("\n\"%s\"\n(", code.toUTF8());
+      for (int i=0; i<tokenstream.size(); i++) {
 	if (i>0) printf(" ");
-      tokens[i]->print();
+	tokenstream[i]->print();
       }
-    printf(")\n");    
+      printf(")\n");    
   }
-  tokens.clear();
+  tokenstream.clear();
 }
 
 void SynTok::print(bool lisp) {
   if (lisp) {
-    printf("(t #x%x \"%s\" %d)", type, name.toUTF8(), data1);
+    printf("(#x%x \"%s\" %d)", type, name.toUTF8(), data1);
   }
   else {
     if (type==0)
@@ -653,8 +640,7 @@ void SynTok::print(bool lisp) {
   }
 }
 
-
-void salError(String str, int err, SynTok *tok) {
+void SalSyntax::salError(String str, int err, SynTok *tok) {
   String errstr= T(">>> Error: ");
   switch (err) {
 
@@ -692,56 +678,64 @@ void salError(String str, int err, SynTok *tok) {
 int addToken (String str, int start, int end) {
 }
 
-SynTok *findUnbalanced(OwnedArray<SynTok> &tokens, int target, int other, int level) {
+SynTok * SalSyntax::findUnbalanced(OwnedArray<SynTok> &tokenstream, int target,
+				   int other, int level) {
   int n=level;
-  for (int i=tokens.size()-1; i>-1; i--) {
-    if ( tokens[i]->getType()==target )
+  for (int i=tokenstream.size()-1; i>-1; i--) {
+    if ( tokenstream[i]->getType()==target )
       if (n == level)
-	return tokens[i];
+	return tokenstream[i];
       else
 	n--;
-    else if  ( tokens[i]->getType()==other )
+    else if  ( tokenstream[i]->getType()==other )
       n++;
   }
   printf("WARNING: failed to find unbalanced!\n");
   return NULL;
 }
 
-int classifyToken(SynTok *tok) {
-  // test if literal
-  int flag=isLiteralToken(tok);
+int SalSyntax::classifyToken(String str, SynTok *tok) {
+  // attempt to classify the token string by calling the various
+  // predicates and returning the first predicate type>0 or type<0
+  // (error) 
+  int flag=isLiteralToken(str,tok);
   if (flag != SalSyntax::SalUntyped) return flag; 
-  // test if class
-  flag=isClassToken(tok);
+
+  flag=isClassToken(str,tok);
   if (flag != SalSyntax::SalUntyped) return flag; 
-  // test if number
-  flag=isNumberToken(tok);
+
+  flag=isNumberToken(str, tok);
   if (flag != SalSyntax::SalUntyped) return flag; 
-  flag=isIdentifierToken(tok);
+
+  flag=isIdentifierToken(str, tok);
   if (flag != SalSyntax::SalUntyped) return flag; 
   return SalSyntax::SalUnknown;
 }
 
-int isLiteralToken(SynTok *tok) {
+int SalSyntax::isLiteralToken(String str, SynTok *tok) {
+  //String str=tok->getName()
   int typ=SalSyntax::SalUntyped;
-  SynTokMap::iterator iter = salTokMap.find(tok->getName());
-  if ( iter != salTokMap.end() ) {
+  SynTokMap::iterator iter = tokens.find(str);
+  if ( iter != tokens.end() ) {
     typ=iter->second->getType();
     tok->setType(typ);
+    tok->setName(str);
   }
   return typ;
 }
 
-int isClassToken(SynTok *tok) {
+int SalSyntax::isClassToken(String str, SynTok *tok) {
   // isClassToken has to be called AFTER check for operator else the
   // check balancing <> wont work
   int typ=SalSyntax::SalUntyped;
-  String str=tok->getName();
+  int len=str.length();
+  //String str=tok->getName();
   if (str[0]=='<')
-    if (str.length()-1=='>')
+    if (str[len-1]=='>')
       if (true) {
 	typ=SalSyntax::SalClass;
 	tok->setType(typ);
+	tok->setName(str.substring(1,len-2));
       }
       else typ=SalSyntax::SalUnknown;
     else if (str.length()-1=='>')
@@ -749,8 +743,8 @@ int isClassToken(SynTok *tok) {
   return typ;
 }
 
-int isNumberToken(SynTok *tok) {
-  String str=tok->getName();
+int SalSyntax::isNumberToken(String str, SynTok *tok) {
+  //String str=tok->getName();
   int len=str.length();
   int typ=SalSyntax::SalInteger;
   int dot=0, div=0, dig=0;
@@ -792,11 +786,14 @@ int isNumberToken(SynTok *tok) {
     }
   }
   tok->setType(typ);
+  if (typ>SalSyntax::SalUntyped) {
+    tok->setName(str);
+  }
   return typ;
 }
 
-int isIdentifierToken(SynTok *tok) {
-  String str=tok->getName();
+int SalSyntax::isIdentifierToken(String str, SynTok *tok) {
+  //  String str=tok->getName();
   String sym=T("~!@$%^&*-_=+|:<.>/?");
   int len=str.length();
   int typ=SalSyntax::SalUntyped;
@@ -824,8 +821,15 @@ int isIdentifierToken(SynTok *tok) {
     typ=SalSyntax::SalSlotRef;
   if (typ==SalSyntax::SalUntyped)
     typ=SalSyntax::SalIdentifier;
-  if (typ>0)
+  if (typ>0) {
     tok->setType(typ);
+    if (typ==SalSyntax::SalKeyparam)
+      tok->setName(str.dropLastCharacters(1));
+    else if (typ==SalSyntax::SalKeyword)
+      tok->setName(str.substring(1));
+    else
+      tok->setName(str);
+  }
   return typ;
 }
 

@@ -24,6 +24,14 @@ enum syntaxID {
   };
 
 // Hilite IDs, one for each hilite. currently allow 8
+// Emacs Hilite colors:
+//   string: font-lock-string-case RosyBrown #bc8f8f 
+//   comment: font-lock-comment-face firebrick  #b22222
+//   keyword:  font-lock-builtin-face orchid #da70d6
+//   special:  font-lock-keyword-face purple #a020f0
+//   class: font-lock-type-case ForestGreen #228b22
+//   command: font-lock-function-name-face blue1 #0000ff
+//   constants: font-lock-constant-face CadetBlue #5f9ea0 
 
 #define MAXHILITE 8
 
@@ -37,16 +45,6 @@ enum hiliteID {
   hilite7,
   hilite8
 };
-
-// Emacs Hilite colors (SAL):
-// string: font-lock-string-case RosyBrown #bc8f8f 
-// comment: font-lock-comment-face firebrick  #b22222
-// keyword:  font-lock-builtin-face orchid #da70d6
-// special:  font-lock-keyword-face purple #a020f0
-// class: font-lock-type-case ForestGreen #228b22
-// command: font-lock-function-name-face blue1 #0000ff
-// #constants: font-lock-constant-face CadetBlue #5f9ea0 
-
 
 // SynTok holds info about distinguished tokens for each syntax
 
@@ -84,49 +82,58 @@ class Syntax
  public:
   SynTab syntab;
   Colour hilites[MAXHILITE];
+  SynTokMap tokens;
+  int numtoks;
+
   Syntax(String a, String b, String c, String d, String e, String f, 
 	 String g, String h, String i, String j);
-  ~Syntax() {};
+  ~Syntax() ;
+
   virtual bool isTopLevel(String line) =0;
-  //  virtual void initSynToks() =0;
-  //  virtual void addSynTok(const String n, int a, hiliteID b, int c, int d) =0;
-  virtual SynTok* getSynTok (String n) =0;
   virtual int getIndent (const String text, int bot, int top, int beg) =0;
   virtual hiliteID getHilite (const String text, int start, int end) =0;
 
+  SynTok * Syntax::getSynTok (String n) ;
   bool isWhiteBetween (const String txt, int lb, int ub);
   Colour getHiliteColour(hiliteID id) {return hilites[id];}
 };
+
+/************************************************************************
+ * Text Syntax                                                          *
+ ************************************************************************/
 
 class TextSyntax : public Syntax
 {
  public:
   TextSyntax();
-  ~TextSyntax() {
-    clearSingletonInstance();
-  };
+  ~TextSyntax() ;
+
   bool isTopLevel(String line) ;
-  SynTok* getSynTok (String n);
   int getIndent (const String text, int bot, int top, int beg) ;
   hiliteID getHilite (const String text, int start, int end) ;
   juce_DeclareSingleton (TextSyntax, true)
 };
 
+/************************************************************************
+ * Lisp Syntax                                                          *
+ ************************************************************************/
+
 class LispSyntax : public Syntax
 {
  public:
   LispSyntax();
-
-  ~LispSyntax() {
-    clearSingletonInstance();
-  };
+  ~LispSyntax() ;
+  void addLispTok(const String n, int t, hiliteID h, int i) ;
 
   bool isTopLevel(String line) ;
-  SynTok* getSynTok (String n) ;
   int getIndent (const String text, int bot, int top, int beg) ;
   hiliteID getHilite (const String text, int start, int end) ;
   juce_DeclareSingleton (LispSyntax, true)
 };
+
+/************************************************************************
+ * SAL Syntax                                                           *
+ ************************************************************************/
 
 class SalSyntax : public Syntax
 {
@@ -308,10 +315,10 @@ class SalSyntax : public Syntax
   };
 
   SalSyntax();
+  ~SalSyntax() ;
+  void addSalTok (const String n, int t, hiliteID c) ;
 
-  ~SalSyntax() {
-    clearSingletonInstance();
-  };
+  // Type predicates
 
   bool isSalType(int i) {
     return (0 <= i) && (i < SAL_TYPE_END);
@@ -362,14 +369,23 @@ class SalSyntax : public Syntax
     return (SAL_RULE_BEG < i) && (i < SAL_RULE_END);
   }
 
-  void initSalToks();
   bool isTopLevel(String line) ;
-  SynTok* getSynTok (String n) ;
   int getIndent (const String text, int bot, int top, int beg) ;
   int isSalStatement(const String str);
   int backwardSal(const String text, int bot, int top, int *poz, int *sal);
   hiliteID getHilite (const String text, int start, int end) ;
+  // SAL lexer
   void tokenize(String str);
+  void salError(String str, int err, SynTok *tok);
+  SynTok *findUnbalanced(OwnedArray<SynTok> &tokens, int target, int other, int level);
+  int classifyToken(String str, SynTok *tok);
+  int isLiteralToken(String str, SynTok *tok);
+  int isSpecialToken(String str, SynTok *tok);
+  int isNumberToken(String str, SynTok *tok);
+  int isClassToken(String str, SynTok *tok);
+  int isSlotToken(String str, SynTok *tok);
+  int isIdentifierToken(String str, SynTok *tok);
+
   juce_DeclareSingleton (SalSyntax, true)
 };
 
