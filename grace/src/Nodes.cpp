@@ -30,7 +30,7 @@ void NodeQueue::addNode(int type, double _time, float* vals, int num_vals, C_wor
 	
   Node *n = new Node(_time, type, vals, num_vals, c);
   n->queue = this;
-
+  
   nodes.lockArray();
   nodes.addSorted(comparator, n);
   nodes.unlockArray();	
@@ -50,8 +50,7 @@ void NodeQueue::reinsertNode(Node *n, double newtime )
 {
   
   nodes.lockArray();
-  n->time += newtime;
-
+  n->time += newtime;  
   nodes.addSorted(comparator, n); 
   nodes.unlockArray();
   
@@ -61,39 +60,37 @@ void NodeQueue::reinsertNode(Node *n, double newtime )
 void NodeQueue::run()
 {
   double cur;
-
+  
   while(!threadShouldExit() )
-    {
+  {
+    if( nodes.size() > 0) {
+      cur = round(Time::getMillisecondCounterHiRes());
       
-      if( nodes.size() > 0) {
-	cur = round(Time::getMillisecondCounterHiRes());
-	
-	while ( nodes.size() > 0 && cur >= nodes[0]->time ) {
-	  nodes[0]->process();
-	}
-      }		
-      wait(1);
-    }
+      while ( nodes.size() > 0 && cur >= nodes[0]->time ) {
+        nodes[0]->process();
+      }
+    }		
+    wait(1);
+  }
 }
 
 
 Node::~Node(){ 
-    if(type ==  PROCESS || type == CLOSURE) {
-      CHICKEN_delete_gc_root(gcroot);
-    } 
+  if(type ==  PROCESS || type == CLOSURE) {
+    CHICKEN_delete_gc_root(gcroot);
+  } 
 }
 
 void Node::process()
 {
-  C_word res;
   
   switch (type)
-    {
+  {
     case ATOM:
       if(values[1] == 0.0) 
-	queue->output->sendMessageNow( MidiMessage::noteOff( (int)values[2], (int)values[0]) );
+        queue->output->sendMessageNow( MidiMessage::noteOff( (int)values[2], (int)values[0]) );
       else 
-	queue->output->sendMessageNow( MidiMessage::noteOn((int)values[2], (int)values[0], 127.0f / values[1]) );
+        queue->output->sendMessageNow( MidiMessage::noteOn((int)values[2], (int)values[0], 127.0f / values[1]) );
       queue->removeNode(this);
       break;
     case PROCESS:
@@ -106,7 +103,7 @@ void Node::process()
       break;
     default:
       break;
-    }	
+  }	
   
 }
 
@@ -118,22 +115,20 @@ Node::Node(double _time, int _type, float *vals, int num_vals, C_word c)
     time = Time::getMillisecondCounterHiRes();
   else
     time = _time + Time::getMillisecondCounterHiRes();
-
+  start = time;
   type = _type;
-
+  
   switch (type) 
-    {
+  {
     case ATOM:
       for(i=0;i<num_vals;i++)
-	values.add( vals[i]);
+        values.add( vals[i]);
       delete vals;
       break;
     case PROCESS:
       gcroot = CHICKEN_new_gc_root();
       CHICKEN_gc_root_set(gcroot, c);
       num = num_vals;
-      now_ptr = C_alloc(1);
-      elapsed_ptr = C_alloc(1);
       now = time;
       break;
     case CLOSURE:
@@ -142,7 +137,7 @@ Node::Node(double _time, int _type, float *vals, int num_vals, C_word c)
       break;
     default:
       break;
-    }  
+  }  
 }
 
 

@@ -25,18 +25,16 @@ class Node
 
   enum {ATOM, PROCESS, CLOSURE };
   double time;
+  double start;
+  double now;
+  
   int type;
   Array<float> values;
 
   NodeQueue *queue;
   int num;
   void *gcroot;
-  
-  double now;
-  double elapsed;
-  
-  C_word *now_ptr;
-  C_word *elapsed_ptr;
+   
   void process();
   void print();
   

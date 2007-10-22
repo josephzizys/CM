@@ -6,11 +6,13 @@
 
 void print_mess(char * st)
 {
+
   ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st));
 }
 
 void print_error(char * st)
 {
+
   ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st));
 }
 
@@ -46,7 +48,9 @@ void insert_closure( double time, C_word proc )
          make-note-on make-note-off expand-send
          mp:note mp:on mp:off mp:prog
          mp:ctrl mp:alloff mp:micro mp:inhook send
-         runran runproc expand-go go now))
+         runran runproc expand-go go ))
+
+
 
 
 (define print-message
@@ -56,13 +60,13 @@ void insert_closure( double time, C_word proc )
   (foreign-lambda void "print_error" c-string))
 
 (define insert-process
-  (foreign-lambda void "insert_process" double scheme-object))
+  (foreign-safe-lambda void "insert_process" double scheme-object))
 
 (define insert-closure
-  (foreign-lambda void "insert_closure" double scheme-object))
+  (foreign-safe-lambda void "insert_closure" double scheme-object))
 
 (define insert-midi-note
-  (foreign-lambda void "insert_midi_note" double float float float));
+  (foreign-safe-lambda void "insert_midi_note" double float float float));
 
 (define make-note-on
   (lambda (t k v c)
@@ -71,11 +75,11 @@ void insert_closure( double time, C_word proc )
 (define make-note-off
   (lambda (t k c)
     (insert-midi-note t k 0.0 c)))
-
+#|
 (define now
   (foreign-lambda* double ()
      " C_return(Time::getMillisecondCounterHiRes());"))
-
+|#
 
 
 
@@ -302,8 +306,30 @@ void insert_closure( double time, C_word proc )
 	,@init))))
 
 
-
-
 (return-to-host)
+
+
+#|
+
+(define (foo )
+  (go ((i 0 (+ i 1))
+       (k 60 (+ 60 (random 60))))
+      ((= i 10) )
+    (print i)
+    (wait 100)))
+(insert-process 0.0 (foo))
+
+
+(define (foo )
+  (go ((i 0 (+ i 1))
+       (k 60 (+ 60 (random 60))))
+      ((= i 200) )
+
+    (wait 100)))
+(insert-process 0.0 (foo))
+
+
+(Sprout (foo))
+|#
 
 ;;csc -c++ -embedded -t ChickenBridge.scm
