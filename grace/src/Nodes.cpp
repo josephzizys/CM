@@ -162,15 +162,6 @@ void NodeQueue::reinsertNode(Node *n, double newtime )
   //  nodes.unlockArray();
 }
 
-
-
-//void gccall(int mode, long x)
-//{
-//  printf("%i %i %f\n",  mode, x, Time::getMillisecondCounterHiRes());
-//  
-//}
-
-
 bool NodeQueue::init() {
   int res;
   C_word r;
@@ -197,9 +188,8 @@ bool NodeQueue::init() {
     console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
     return false;
   }
- // C_post_gc_hook = gccall;
-//  CHICKEN_eval_string("(require-extension srfi-18)", &r);
-//  CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
+  CHICKEN_eval_string("(require-extension srfi-18)", &r);
+ // CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
 //  CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
 //  CHICKEN_eval_string("(define *grace-err-out*  (make-output-port print-error (lambda () #f)))", NULL);
 //  CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
@@ -234,6 +224,7 @@ void NodeQueue::run()
       else delete n;
     } // end inner loop
     wait(1);
+
   }
 }
 
