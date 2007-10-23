@@ -38,12 +38,12 @@ void GraceApp::initialise (const String& commandLine) {
   midiOutput = MidiOutput::openDevice(0);
 
 #ifdef EMBED_SCHEME
-  schemeProcess = new SchemeThread(T("Scheme Thread"), console);
-  queue =  new NodeQueue("node queue", schemeProcess, midiOutput);
-  schemeProcess->setPriority(8);
+  //  schemeProcess = new SchemeThread(T("Scheme Thread"), console);
+  queue =  new NodeQueue("Scheduler", console, midiOutput);
+  //  schemeProcess->setPriority(8);
   queue->startThread();
   queue->setPriority(8);
-  schemeProcess->startThread();
+  //  schemeProcess->startThread();
 #endif
   
 }

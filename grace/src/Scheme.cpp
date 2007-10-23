@@ -76,19 +76,21 @@ void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
         C_word now_word;
         C_word elapsed_word;
 
-        now_ptr = C_alloc(1);
-        elapsed_ptr = C_alloc(1);
+	//        now_ptr = C_alloc(1);
+	//        elapsed_ptr = C_alloc(1);
                
         closure = CHICKEN_gc_root_ref(schemeMessage->node->gcroot);
-        schemeMessage->node->now = Time::getMillisecondCounterHiRes();
-        now_word = C_flonum( &now_ptr, schemeMessage->node->now);
-        elapsed = schemeMessage->node->now - schemeMessage->node->start;
-        elapsed_word = C_flonum( &elapsed_ptr, elapsed); 
-        C_save( now_word );
-        C_save( elapsed_word );
+	//        schemeMessage->node->now = Time::getMillisecondCounterHiRes();
+	//        now_word = C_flonum( &now_ptr, schemeMessage->node->now);
+	//        elapsed = schemeMessage->node->now - schemeMessage->node->start;
+	//        elapsed_word = C_flonum( &elapsed_ptr, elapsed); 
+	//        C_save( now_word );
+	//        C_save( elapsed_word );
 
-        nexttime = C_c_double( C_callback(closure, 2));
-    
+	//        nexttime = C_c_double( C_callback(closure, 2));
+
+        nexttime = C_c_double( C_callback(closure, 0));
+	printf("nexttime=%d\n", nexttime);
         if(nexttime == -1) {
           delete schemeMessage->node;
           messageBuffer.removeObject(schemeMessage, true);

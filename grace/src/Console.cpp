@@ -20,6 +20,7 @@
 #include "Lisp.h"
 #else
 #include "Scheme.h"
+#include "Nodes.h"
 #endif
 
 
@@ -403,8 +404,8 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
 void ConsoleWindow::consoleEval (String code, bool isSal, 
 				 bool isRegion) 
 {
-  ((GraceApp *)GraceApp::getInstance())->schemeProcess->insertMessage(new SchemeMessage(code));
-
+  //  ((GraceApp *)GraceApp::getInstance())->schemeProcess->insertMessage(new SchemeMessage(code));
+  ((GraceApp *)GraceApp::getInstance())->queue->addNode(Node::EXPR, 0.0, code);
 }
 
 #endif

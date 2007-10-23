@@ -12,32 +12,33 @@
 
 #include <juce.h>
 #include <chicken.h>
-#include "Scheme.h"
+#include "Console.h"
+
+//#include "Scheme.h"
 
 class NodeQueue;
-class SchemeThread;
+//class SchemeThread;
 
 class Node 
 {
  public:
-  Node(double _time, int _type, float *vals=0, int num_vals=0, C_word c=0) ;		
+  Node(double _time, int _type, float *vals=0, int num_vals=0, C_word c=0, 
+       String s=String::empty) ;		
   ~Node();
 
-  enum {ATOM, PROCESS, CLOSURE };
+  enum {ATOM, PROCESS, CLOSURE, EXPR };
   double time;
   double start;
-  double now;
-  
+  //  double now;
+  String expr;
   int type;
-  Array<float> values;
 
+  Array<float> values;
   NodeQueue *queue;
   int num;
   void *gcroot;
-   
-  void process();
+  bool process();
   void print();
-  
 };
 
 class NodeComparator
@@ -56,19 +57,25 @@ class NodeComparator
 class NodeQueue : public Thread
 {
  public:
+  ConsoleWindow* console;
+  String EvalString;
+  char *evalBuffer ; 
+  char *errorBuffer ; 
   MidiOutput *output;
-  SchemeThread *schemeThread;
+  //  SchemeThread *schemeThread;
   
-  NodeQueue(String name, SchemeThread *thread,  MidiOutput *out);
+  NodeQueue(String name, ConsoleWindow *win,  MidiOutput *out);
   ~NodeQueue();
 
   OwnedArray<Node, CriticalSection> nodes;
 
   void addNode(int type, double _time, float* vals=0, int num_vals=0, C_word c=0);
+  void addNode(int type, double _time, String str);
   void removeNode(Node *n, bool deleteObject=true );
   void reinsertNode(Node *n, double newtime );
   
   NodeComparator comparator;
+  bool init();
   void run();
   
 };

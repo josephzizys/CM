@@ -6,24 +6,35 @@
 
 void print_mess(char * st)
 {
-
-  ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st));
+//  ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st));
+    printf("%s", st);
 }
 
 void print_error(char * st)
 {
-
-  ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st));
+ //((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st));
+    printf("%s", st);
 }
 
-void insert_midi_note(double time, float k, float v, float c)
-{
- float *vals = new float[3];
+void insert_midi_on(double time, float k, float v, float c) {
+ float vals[3];
  vals[0] = k;
  vals[1] = v;
  vals[2] = c;
- ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time, vals, 3, 0);
+ ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time, (float *)vals, 3, 0);
+}
 
+void insert_midi_note(double time, double dur, float k, float v, float c) {
+ float on[3];
+ float off[3];
+ on[0] = k;
+ on[1] = v;
+ on[2] = c;
+ ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time, (float *)on, 3, 0);
+ off[0] = k;
+ off[1] = 0.0;
+ off[2] = c;
+ ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time+dur, (float *)off, 3, 0);
 }
 
 void insert_process( double time, C_word proc )
@@ -43,15 +54,12 @@ void insert_closure( double time, C_word proc )
  (unit grace)
  (run-time-macros)
  (uses extras)
- (export print-message print-error insert-process make-process
+ (export print-message print-error insert-process
          insert-closure insert-midi-note
          make-note-on make-note-off expand-send
          mp:note mp:on mp:off mp:prog
          mp:ctrl mp:alloff mp:micro mp:inhook send
-         runran runproc expand-go go ))
-
-
-
+         expand-go go ))
 
 (define print-message
   (foreign-lambda void "print_mess" c-string))
@@ -66,23 +74,22 @@ void insert_closure( double time, C_word proc )
   (foreign-safe-lambda void "insert_closure" double scheme-object))
 
 (define insert-midi-note
-  (foreign-safe-lambda void "insert_midi_note" double float float float));
+  (foreign-safe-lambda void "insert_midi_note" double double float float float));
 
 (define make-note-on
   (lambda (t k v c)
-    (insert-midi-note t k v c)))
+    (insert-midi-on t k v c)))
 
 (define make-note-off
   (lambda (t k c)
-    (insert-midi-note t k 0.0 c)))
+    (insert-midi-on t k 0.0 c)))
 #|
 (define now
   (foreign-lambda* double ()
      " C_return(Time::getMillisecondCounterHiRes());"))
 |#
 
-
-
+#|
 (define (make-process p num interval)
   (let ((t interval) (c 0))
     (lambda ()
@@ -91,8 +98,6 @@ void insert_closure( double time, C_word proc )
       (if (> c num)
           (set! t -1.0))
       t)))
-
-
 (define (runran n d)
   (let ((r 0.0))
     (do ((i 0 (+ i 1)))
@@ -100,7 +105,6 @@ void insert_closure( double time, C_word proc )
       (insert-midi-note r 60 100)
       (insert-midi-note (+ 200 r) 60  0)
       (set! r (+ r d)))))
-
 (define (runproc k n d)
   (let ((proc (make-process
                (lambda ()
@@ -108,8 +112,7 @@ void insert_closure( double time, C_word proc )
                  (insert-midi-note 90.0 k 0))
                n d)))
     (insert-process 0.0 proc)))
-
-
+|#
 
 (define *messages* (make-hash-table equal?))
 
@@ -206,8 +209,10 @@ void insert_closure( double time, C_word proc )
 ;; port:method defintions
 
 (define (mp:note time dur key amp chan)
-  (make-note-on time key amp chan)
-  (make-note-off (+ time dur) key chan))
+  ;;(make-note-on time key amp chan)
+  ;;(make-note-off (+ time dur) key chan)
+  (insert-midi-note time dur key amp chan)
+  )
 
 (define (mp:on time key vel chan)
   (error "message function not implemented."))
@@ -291,11 +296,11 @@ void insert_closure( double time, C_word proc )
 	  (elapsed (gensym)) ; param that receives elapsed from C
 	  (delta (gensym)))
       `((lambda (,@bind)
-	  (lambda (,now ,elapsed)
+	  (lambda (,elapsed)
 	    (let* ((,delta 0)
-		   (now (lambda () ,now))
-		   (wait (lambda (n) (set! ,delta n)))
-		   (elapsed (lambda () ,elapsed)))
+		   (elapsed (lambda () ,elapsed))
+		   (wait (lambda (x) (set! ,delta x)))
+		   )
 	      (cond (,(car terminate)
 		     ,@(cdr terminate)
 		     -1)
@@ -305,9 +310,7 @@ void insert_closure( double time, C_word proc )
 		     ,delta)))))
 	,@init))))
 
-
 (return-to-host)
-
 
 #|
 
@@ -332,4 +335,4 @@ void insert_closure( double time, C_word proc )
 (Sprout (foo))
 |#
 
-;;csc -c++ -embedded -t ChickenBridge.scm
+;; csc -c++ -embedded -t ChickenBridge.scm
