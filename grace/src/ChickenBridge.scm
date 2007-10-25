@@ -290,29 +290,102 @@ void insert_closure( double time, C_word proc )
 	    (set! step (append step
 			       (if (eq? s #:null) (list)
 				   (list `(set! ,v , s))))))
-	  (error "binding clause not a list (var init [step])" 
+	  (error "binding clause not list (var init [step])" 
 		 (car tail))))
-    (let ((now (gensym)) ; param that receives now() from C
-	  (elapsed (gensym)) ; param that receives elapsed from C
-	  (delta (gensym)))
+    (let ((paramvar (gensym)) ; callback param receives time from C
+	  (deltavar (gensym))
+	  (errorvar (gensym))
+	  (safety #t)
+	  (procbody '()))
+      ;; optional (declare ...) can be first form in body
+      (if (and (pair? body)
+	       (pair? (car body))
+	       (eq? (caar body) 'declare))
+	  (do ((decl (cdar body) (cdr decl)))
+	      ((null? decl) 
+	       (set! body (cdr body))) ; remove decl from body
+	    (if (and (pair? (car decl))
+		     (pair? (cdar decl)))
+		(case (caar decl)
+		  ((safety )
+		   (if (not (car (cdar decl)))
+		       (set! safety #f)))
+		  (else
+		   (error "unknown declaration" (car decl))))
+		(error "declaration not list (decl val)" (car decl)))))
+
+      (set! procbody
+	    `(cond (,(car terminate) ,@(cdr terminate)
+		    -1)  ; -1 = stop 
+		   (else ,@body  ; users code
+			 ,@step ; stepping forms
+			 ,deltavar)))  ; return delta
+      (if safety
+	  (set! procbody
+
+; this works with (require-extension chicken-more-macros)
+		`(condition-case
+		  ,procbody
+		  (,errorvar 
+		   (exn)
+		   (printf ">>> Aborting process at time ~S:~%    Error: ~S" 
+			   ,paramvar
+			   ( (condition-property-accessor 'exn 'message) 
+			     ,errorvar))
+		   -2))
+; this doesnt work
+;		`(with-exception-handler
+;		  (lambda (,errorvar)
+;		    (printf ">>> Aborting process at time ~S:~%    Error: ~S"
+;		     ,paramvar
+;		     ((condition-property-accessor 'exn 'message)
+;		      ,errorvar))
+;		    -2
+;		    )
+;		  (lambda () ,procbody))
+		))
       `((lambda (,@bind)
-	  (lambda (,elapsed)
-	    (let* ((,delta 0)
-		   (elapsed (lambda () ,elapsed))
-		   (wait (lambda (x) (set! ,delta x)))
+	  (lambda (,paramvar)
+	    (let* ((,deltavar 0)
+		   (elapsed (lambda () ,paramvar))
+		   (wait (lambda (x) (set! ,deltavar x)))
 		   )
-	      (cond (,(car terminate)
-		     ,@(cdr terminate)
-		     -1)
-		    (else
-		     ,@body
-		     ,@step
-		     ,delta)))))
-	,@init))))
+	      ,procbody
+	      )))
+	,@init)
+      )))
 
 (return-to-host)
 
 #|
+
+
+(pp 
+  (go ((i 0 (+ i 1))
+       (e 12)
+       (k 60))
+      ((= i e) #f)
+    (print (elapsed ))
+    (mp:note 0 90 (+ k i) 80 0)
+    (wait 100)))
+
+
+
+(with-exception-handler
+	       (lambda (e) -1)
+	       (lambda ()
+		 (cond (,(car terminate)
+			,@(cdr terminate)
+			-1)
+		       (else
+			,@body
+			,@step
+			,delta))))
+
+
+
+
+
 
 (define (foo )
   (go ((i 0 (+ i 1))
@@ -336,3 +409,4 @@ void insert_closure( double time, C_word proc )
 |#
 
 ;; csc -c++ -embedded -t ChickenBridge.scm
+

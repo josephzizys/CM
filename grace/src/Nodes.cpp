@@ -189,6 +189,7 @@ bool NodeQueue::init() {
     return false;
   }
   CHICKEN_eval_string("(require-extension srfi-18)", &r);
+  CHICKEN_eval_string("(require-extension chicken-more-macros)", &r);
  // CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
 //  CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
 //  CHICKEN_eval_string("(define *grace-err-out*  (make-output-port print-error (lambda () #f)))", NULL);
