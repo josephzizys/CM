@@ -840,9 +840,10 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
   case KeyCommands::Com_T :
     /****  SAL TESTING  *****/
     if (syntaxId == syntaxSal) {
-      String text=backwardTopLevelText();
-      if (text != String::empty)
-	((SalSyntax *)syntax)->tokenize(text);
+      //      String text=backwardTopLevelText();
+      //      if (text != String::empty)
+      //	((SalSyntax *)syntax)->tokenize(text);
+      salTokenize();
     }
     break;
   default :
@@ -1087,55 +1088,6 @@ void TextBuffer::previousLine() {
   setAction(actMoveLine);
 }
 
-/*
-bool TextBuffer::moveLine(int n) {
-  // the main function for moving and accessing line text. its based
-  // on up/down key so that does not require buffer bounds checking to
-  // determine if it can move or not.  function moves N lines forward
-  // or backward if n<0 and positions point at BOL.  returns true if
-  // line actually moved, else false. checking for false allows code
-  // to stop line iteration without bounds checking.
-  static KeyPress ukey = KeyPress(KeyPress::upKey);
-  static KeyPress dkey = KeyPress(KeyPress::downKey);
-  //  int old = point();
-  int old = gotoBOL();
-  // this code assumes up/down key always places cursor at BOL
-  if (n < 0)
-    for (int i=n; i<0; i++) TextEditor::keyPressed(ukey);
-  else if (n > 0)
-    for (int i=0; i<n; i++) TextEditor::keyPressed(dkey);
-  //printf("in move line, new position is %d.\n", point() );
-  return  ( pointBOL() == old ) ? false : true;
-}
-
-void TextBuffer::nextLine() {
-  // Emacs C-n  motion including goal column
-  static KeyPress key = KeyPress(KeyPress::downKey);
-  int col;
-  if ( ! isLastAction(actMoveLine) )
-    goalColumn=pointColumn();
-  TextEditor::keyPressed(key); 
-  col=pointColumn();
-  if ( (col < goalColumn) && (pointLineLength() >= goalColumn) )
-    incPoint(goalColumn-col);
-  setAction(actMoveLine);
-}
-
-void TextBuffer::previousLine() {
-  // Emacs C-p motion including goal column
-  static KeyPress key = KeyPress(KeyPress::upKey);
-  int col;
-  if ( ! isLastAction(actMoveLine) )
-    goalColumn=pointColumn();
-  TextEditor::keyPressed(key); 
-  col=pointColumn();
-  if ( (col < goalColumn) && (pointLineLength() >= goalColumn) )
-    incPoint(goalColumn-col);
-  setAction(actMoveLine);
-}
-
-*/
-
 void TextBuffer::forwardScreen() {
   static KeyPress key = KeyPress(KeyPress::pageDownKey);
   TextEditor::keyPressed(key); 
@@ -1289,29 +1241,6 @@ int TextBuffer::pointEOL() {
   setCaretVisible(true);
   return there;
 }
-
-/*
-int TextBuffer::pointBOL () {
-  static KeyPress key = KeyPress(KeyPress::homeKey);
-  int here = getCaretPosition(), there;
-  setCaretVisible(false);
-  TextEditor::keyPressed(key);
-  there=getCaretPosition();
-  setCaretPosition(here);
-  setCaretVisible(true);
-  return there;
-}
-int TextBuffer::pointEOL() {
-  static KeyPress key = KeyPress(KeyPress::endKey);
-  int here = getCaretPosition(), there;
-  setCaretVisible(false);
-  TextEditor::keyPressed(key);
-  there=getCaretPosition();
-  setCaretPosition(here);
-  setCaretVisible(true);
-  return there;
-}
-*/
 
 int TextBuffer::pointColumn() {
   return point() - pointBOL();
@@ -2030,4 +1959,49 @@ int TextBuffer::findCharBackward(char c) {
     len = str.length();
   }
   return loc;
+}
+
+
+///////// sal testing
+
+void TextBuffer::salTokenize() {
+  if (! isBOB() ) {
+    String text=backwardTopLevelText();
+    if (text != String::empty)
+      ((SalSyntax *)syntax)->tokenize(text);
+    return;
+  }
+  bool eob=false;
+  String str=String::empty;
+  while (! eob) {
+    int b, e;
+    String l;
+    while ( ! eob) {
+      b=point();
+      e=pointEOL();
+      if ( e > b) {
+	l=getTextSubstring(b,e);
+	if (l[0] != ';')  break;
+      }
+      if ( ! moveLine(1) ) {
+	eob=true;
+      }
+    }
+    str=String::empty;
+    while ( ! eob) {
+      if (str != String::empty) str += T("\n");
+      str += l;
+      if ( ! moveLine(1) ) {
+	eob=true;
+      }
+      b=point();
+      e=pointEOL();
+      if (b == e) break;
+      l=getTextSubstring(b,e);      
+      if ( l[0]==';' ) break;
+    }
+    if (str != String::empty)
+      ((SalSyntax *)syntax)->tokenize(str);
+  }
+  return;
 }

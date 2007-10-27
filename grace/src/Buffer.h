@@ -218,7 +218,10 @@ class TextBuffer : public TextEditor,
   void changeCase(int flag);
   int findCharForward(char c);
   int findCharBackward(char c);
+
+  void salTokenize();
 };
+
 
 
 /* 
