@@ -42,7 +42,7 @@ void GraceApp::initialise (const String& commandLine) {
   queue =  new NodeQueue("Scheduler", console, midiOutput);
   //  schemeProcess->setPriority(8);
   queue->startThread();
-  queue->setPriority(8);
+  queue->setPriority(10);
   //  schemeProcess->startThread();
 #endif
   
