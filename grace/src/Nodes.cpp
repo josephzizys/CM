@@ -15,12 +15,13 @@
 //  Nodes
 //
 
+
 Node::Node(double _time, int _type, float *vals, int num_vals, C_word c, String s) 
-  : time (0.0),
-    start (0.0),
-    type (0),
-    num (0),
-    expr (String::empty)
+: time (0.0),
+start (0.0),
+type (0),
+num (0),
+expr (String::empty)
 { 
   int i;
   
@@ -32,26 +33,26 @@ Node::Node(double _time, int _type, float *vals, int num_vals, C_word c, String 
   type = _type;
   
   switch (type) {
-  case ATOM:
-    for(i=0;i<num_vals;i++)
-      values.add( vals[i]);
-    //    delete vals;
-    break;
-  case PROCESS:
-    gcroot = CHICKEN_new_gc_root();
-    CHICKEN_gc_root_set(gcroot, c);
-    num = num_vals;
-    break;
-  case CLOSURE:
-    gcroot = CHICKEN_new_gc_root();
-    CHICKEN_gc_root_set(gcroot, c);
-    break;
-  case EXPR :
-    // does this need to copy?
-    expr=String(s);
-    break;
-  default:
-    break;
+    case ATOM:
+      for(i=0;i<num_vals;i++)
+        values.add( vals[i]);
+      //    delete vals;
+      break;
+    case PROCESS:
+      gcroot = CHICKEN_new_gc_root();
+      CHICKEN_gc_root_set(gcroot, c);
+      num = num_vals;
+      break;
+    case CLOSURE:
+      gcroot = CHICKEN_new_gc_root();
+      CHICKEN_gc_root_set(gcroot, c);
+      break;
+    case EXPR :
+      // does this need to copy?
+      expr=String(s);
+      break;
+    default:
+      break;
   }  
 }
 
@@ -64,63 +65,71 @@ Node::~Node(){
 bool Node::process() {
   // return true if node should be rescheduled
   bool more=false;
-
+  double d;
+  int i;
   switch (type) {
-
-  case ATOM:
-    if(values[1] == 0.0) 
-      queue->output->sendMessageNow( MidiMessage::noteOff( (int)values[2], (int)values[0]) );
-    else 
-      queue->output->sendMessageNow( MidiMessage::noteOn((int)values[2], (int)values[0], 127.0f / values[1]) );
-    break;
-
-  case PROCESS:
+    
+    case ATOM:
+      if(values[1] == 0.0) 
+        queue->output->sendMessageNow( MidiMessage::noteOff( (int)values[2], (int)values[0]) );
+      else 
+        queue->output->sendMessageNow( MidiMessage::noteOn((int)values[2], (int)values[0], (uint8)values[1]) );
+     
+     
+      break;
+      
+    case PROCESS:
     {
-        double nexttime ;
-        C_word *elapsed_ptr;
-        C_word elapsed_word;
-	C_word closure;
+      double nexttime ;
+      C_word *elapsed_ptr;
+      C_word elapsed_word;
+      C_word closure;
+      
 
-        closure = CHICKEN_gc_root_ref(gcroot);
-	elapsed_ptr = C_alloc(C_SIZEOF_FLONUM);
-	elapsed_word = C_flonum( &elapsed_ptr, time - start); 
-	C_save( elapsed_word );
-        nexttime = C_c_double( C_callback(closure, 1));
-        if (nexttime < 0) {
-	  printf("done!\n");
-        } 
-	else {
-	  more=true;
-	  time += nexttime;
-        }
+      closure = CHICKEN_gc_root_ref(gcroot);
+      elapsed_ptr = C_alloc(1); //this allocates a C_word note bytes
+      elapsed_word = C_flonum( &elapsed_ptr, time - start); 
+      C_save( elapsed_word );
+      nexttime = C_c_double( C_callback(closure, 1));
+      if (nexttime < 0) {
+        printf("done!\n");
+      } 
+      else {
+        more=true;
+        time += nexttime;
+      }
     }
-    break;
-
-  case CLOSURE:
-    break;
-
-  case EXPR :
+      break;
+      
+    case CLOSURE:
+      closure = CHICKEN_gc_root_ref(gcroot);
+      C_callback(closure, 0);
+      break;
+      
+    case EXPR :
     {
-      int res;	
+      C_word res;	
       bzero(queue->evalBuffer, 8192);
       bzero(queue->errorBuffer, 8192);
       res = CHICKEN_eval_string_to_string( (char *)expr.toUTF8(), queue->evalBuffer,
-					   expr.length() );
+                                           8192);
+//      printf("res %i\n", res);
+      
       if ( res==0 ) {
-	CHICKEN_get_error_message(queue->errorBuffer, 8192);
-	String text=T(String(queue->errorBuffer));
-	//queue->console->printError(text);
-	printf(">>> %s\n", queue->errorBuffer);
+        CHICKEN_get_error_message(queue->errorBuffer, strlen(queue->errorBuffer));
+        String text=T(String(queue->errorBuffer));
+        //queue->console->printError(text);
+        printf(">>> %s\n", queue->errorBuffer);
       }
       else {
         //queue->console->printValues(String(queue->evalBuffer) + T("\n"));
-	printf("*** Value: %s\n", queue->evalBuffer);
+        printf("*** Value: %s\n", queue->evalBuffer);
       }
     }
-    break;
-
-  default:
-    break;
+      break;
+      
+    default:
+      break;
   }	
   return more;
 }
@@ -130,12 +139,13 @@ bool Node::process() {
 //
 
 NodeQueue::NodeQueue(String name, ConsoleWindow *win, MidiOutput *out)
-  : Thread(name)
+: Thread(name)
 {	
   console = win;
   output = out;
   evalBuffer = new char[8192];
   errorBuffer = new char[8192];
+  nodes = new OwnedArray<Node, CriticalSection>::OwnedArray(1024);
 }
 
 NodeQueue::~NodeQueue()
@@ -190,60 +200,72 @@ bool NodeQueue::init() {
   }
   CHICKEN_eval_string("(require-extension srfi-18)", &r);
   CHICKEN_eval_string("(require-extension chicken-more-macros)", &r);
- // CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
-//  CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
-//  CHICKEN_eval_string("(define *grace-err-out*  (make-output-port print-error (lambda () #f)))", NULL);
-//  CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
+  // CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
+  //  CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
+  //  CHICKEN_eval_string("(define *grace-err-out*  (make-output-port print-error (lambda () #f)))", NULL);
+  //  CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
   return true;
 }
 
+  
 void NodeQueue::run()
 {
   // start chicken
+  
   if (! init() ) return;
-
+  //  int i = 0;
+  double curr;
+  
   while( !threadShouldExit() ) {
-    while (true) {
-      // lock array before referencing node[0]
-      nodes.lockArray();
-      if ( (nodes.size() == 0) || 
-	   (nodes[0]->time > round(Time::getMillisecondCounterHiRes())) ) {
-	nodes.unlockArray();
-	break;
-      }
-      Node *n=nodes[0];
-      nodes.removeObject(n, false);
-      nodes.unlockArray();
-      // call process function with nodes unlocked other nodes can be
-      // added to queue under callback
-      if ( n->process() ) {
-	// if process() returns true node wants reinsertion
-	nodes.lockArray();
-	nodes.addSorted(comparator, n); 
-	nodes.unlockArray();
-      }
-      else delete n;
-    } // end inner loop
-    wait(1);
+    
+    while(nodes->size() > 0) {     
+      curr = Time::getMillisecondCounterHiRes() ;
+      
+      while ( nodes->getFirst()->time <= curr ) {
 
+        if ( nodes->getFirst()->process() ) {
+          nodes->lockArray();
+          nodes->addSorted(comparator, nodes->getFirst()); 
+          nodes->remove(0, false);
+          nodes->unlockArray();
+        }
+        else 
+          nodes->remove(0, true);
+        if(nodes->size() < 1)
+          break;
+      }
+       wait(1);
+    }
+    wait(-1);
   }
+  
 }
+  
+void NodeQueue::clear()
+{
+  nodes->lockArray();
+  nodes->clear();
+  nodes->unlockArray();
+
+  
+}
+
 
 void NodeQueue::addNode(int type, double _time, float* vals, int num_vals, C_word c)
 {
   Node *n = new Node(_time, type, vals, num_vals, c);
   n->queue = this;
-  nodes.lockArray();
-  nodes.addSorted(comparator, n);
-  nodes.unlockArray();	
+  nodes->lockArray();
+  nodes->addSorted(comparator, n);
+  nodes->unlockArray();	
   notify();
 }
 
 void NodeQueue::addNode(int type, double _time, String s) {
   Node *n = new Node(_time, type, NULL, 0, 0, s);
   n->queue = this;
-  nodes.lockArray();
-  nodes.addSorted(comparator, n);
-  nodes.unlockArray();	
+  nodes->lockArray();
+  nodes->addSorted(comparator, n);
+  nodes->unlockArray();	
   notify();
 }  

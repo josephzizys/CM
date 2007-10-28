@@ -67,8 +67,7 @@ class NodeQueue : public Thread
   NodeQueue(String name, ConsoleWindow *win,  MidiOutput *out);
   ~NodeQueue();
 
-  OwnedArray<Node, CriticalSection> nodes;
-
+  OwnedArray<Node, CriticalSection> *nodes;
   void addNode(int type, double _time, float* vals=0, int num_vals=0, C_word c=0);
   void addNode(int type, double _time, String str);
   void removeNode(Node *n, bool deleteObject=true );
@@ -77,7 +76,8 @@ class NodeQueue : public Thread
   NodeComparator comparator;
   bool init();
   void run();
-  
+  void clear();
+
 };
 
 
