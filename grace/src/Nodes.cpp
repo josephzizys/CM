@@ -115,7 +115,7 @@ bool Node::process() {
 //      printf("res %i\n", res);
       
       if ( res==0 ) {
-        CHICKEN_get_error_message(queue->errorBuffer, strlen(queue->errorBuffer));
+        CHICKEN_get_error_message(queue->errorBuffer, 8192);
         String text=T(String(queue->errorBuffer));
         //queue->console->printError(text);
         printf(">>> %s\n", queue->errorBuffer);
