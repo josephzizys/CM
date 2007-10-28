@@ -21,20 +21,18 @@ void insert_midi_on(double time, float k, float v, float c) {
  vals[0] = k;
  vals[1] = v;
  vals[2] = c;
- ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time, (float *)vals, 3, 0);
+ ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time, vals, 3, 0);
 }
 
 void insert_midi_note(double time, double dur, float k, float v, float c) {
  float on[3];
  float off[3];
- on[0] = k;
+ on[0] =  off[0] = k;
  on[1] = v;
- on[2] = c;
- ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time, (float *)on, 3, 0);
- off[0] = k;
  off[1] = 0.0;
- off[2] = c;
- ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time+dur, (float *)off, 3, 0);
+ on[2] = off[2] =  c;
+ ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time, on, 3, 0);
+ ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time+dur, off, 3, 0);
 }
 
 void insert_process( double time, C_word proc )
