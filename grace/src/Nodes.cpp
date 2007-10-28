@@ -101,8 +101,10 @@ bool Node::process() {
       break;
       
     case CLOSURE:
+      {
       C_word closure = CHICKEN_gc_root_ref(gcroot);
       C_callback(closure, 0);
+      }
       break;
       
     case EXPR :
