@@ -65,8 +65,7 @@ Node::~Node(){
 bool Node::process() {
   // return true if node should be rescheduled
   bool more=false;
-  double d;
-  int i;
+
   switch (type) {
     
     case ATOM:
@@ -102,7 +101,7 @@ bool Node::process() {
       break;
       
     case CLOSURE:
-      closure = CHICKEN_gc_root_ref(gcroot);
+      C_word closure = CHICKEN_gc_root_ref(gcroot);
       C_callback(closure, 0);
       break;
       
