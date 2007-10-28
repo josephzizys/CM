@@ -122,7 +122,8 @@ class TextBuffer : public TextEditor,
     cmdOpenLine = 78592,
     cmdComplete = 78848,
     cmdIndent = 79104,
-    cmdToggleReadWrite = 79360};
+    cmdToggleReadWrite = 79360, 
+    cmdClearQueue = 79361};
 
   TextBuffer(syntaxID id, int flg);
   ~TextBuffer();

@@ -13,6 +13,10 @@
 #include "FontList.h"
 #include "Grace.h"
 
+#ifdef EMBED_SCHEME
+#include "Nodes.h"
+#endif
+
 #define BUFMAX 0xFFFFFFF
 
 TextBuffer::TextBuffer (syntaxID id, int flg) 
@@ -117,7 +121,7 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdOpenLine,
     cmdComplete,
     cmdIndent,
-    cmdToggleReadWrite};
+    cmdToggleReadWrite, cmdClearQueue};
   
   commands.addArray (ids, sizeof (ids) / sizeof (ids [0]));
 }
@@ -297,6 +301,10 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   case cmdIndent:
     result.setInfo (T("Indent"), String::empty, editingCategory, 0);
     break;
+  cmdClearQueue:
+    result.setInfo (T("Clear Queue"), String::empty, editingCategory, 0);
+    break;
+
   default:
     break;
   }
@@ -413,7 +421,11 @@ bool TextBuffer::perform (const InvocationInfo& info) {
   case cmdSymbolHelp:
     lookupHelpAtPoint();
     break;
-
+  case cmdClearQueue:
+#ifdef EMBED_SCHEME
+    ((GraceApp *)GraceApp::getInstance())->queue->clear();
+#endif
+    break;
   default:
     return false;
   }
@@ -438,7 +450,7 @@ public:
 	MAXCTRLXKEY};
   enum {CtrlMeta_F, CtrlMeta_B, CtrlMeta_K, MAXCTRLMETAKEY};
   enum {Com_A, Com_C, Com_E, Com_N, Com_O, Com_R, Com_S, Com_T, Com_V,
-	Com_W, Com_X, Com_Ret, Com_ArL, Com_ArR, Com_ArU, Com_ArD,
+	Com_W, Com_X, Com_Ret, Com_ArL, Com_ArR, Com_ArU, Com_ArD, Com_Period,
 	MAXCOMKEY};
 #ifndef WINDOWS
   enum {emacsControl=1, emacsMeta, emacsControlMeta, emacsCommand, emacsCommandControl,
@@ -511,6 +523,7 @@ public:
     comkeys[Com_V]=KeyPress::createFromDescription(T("command + V"));
     comkeys[Com_W]=KeyPress::createFromDescription(T("command + W"));
     comkeys[Com_X]=KeyPress::createFromDescription(T("command + X"));
+    comkeys[Com_Period] = KeyPress::createFromDescription(T("command + ."));
     comkeys[Com_Ret]=KeyPress::createFromDescription(T("command + return"));
     comkeys[Com_ArL]=KeyPress::createFromDescription(T("command + cursor left"));
     comkeys[Com_ArR]=KeyPress::createFromDescription(T("command + cursor right"));
@@ -815,11 +828,17 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     break;
   case KeyCommands::Com_W :
     ((EditorWindow*)getTopLevelComponent())->closeFile();
+    break;
   case KeyCommands::Com_X :
     if (getHighlightedRegionLength()>0) {
       copy();
       keyPressed(KeyPress(KeyPress::deleteKey));
     }
+    break;
+  case KeyCommands::Com_Period :
+#ifdef EMBED_SCHEME
+    ((GraceApp *)GraceApp::getInstance())->queue->clear();
+#endif
     break;
   case KeyCommands::Com_E :
   case KeyCommands::Com_Ret :
@@ -837,6 +856,7 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
   case KeyCommands::Com_ArD :
     gotoEOB();
     break;
+    
   case KeyCommands::Com_T :
     /****  SAL TESTING  *****/
     if (syntaxId == syntaxSal) {
