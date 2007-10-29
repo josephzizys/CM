@@ -113,6 +113,7 @@ LispSyntax::LispSyntax ()
   addLispTok( T("dotimes"), numtoks++, hilite4, 1);
   addLispTok( T("eval-when"), numtoks++, hilite4, 1);
   addLispTok( T("flet"), numtoks++, hilite4, 1);
+  addLispTok( T("go"), numtoks++, hilite4, 2);
   addLispTok( T("if"), numtoks++, hilite4, 1);
   addLispTok( T("labels"), numtoks++, hilite4, 1);
   addLispTok( T("lambda"), numtoks++, hilite4, 1);
@@ -278,16 +279,23 @@ SalSyntax::SalSyntax ()
   addSalTok( T("if"), SalIf, hilite5);
   addSalTok( T("load"), SalLoad, hilite5);
   addSalTok( T("loop"), SalLoop, hilite5);
+#ifndef EMBED_SCHEME
   addSalTok( T("open"), SalOpen, hilite5);
   addSalTok( T("output"), SalOutput, hilite5);
   addSalTok( T("play"), SalPlay, hilite5);
+#endif
   addSalTok( T("plot"), SalPlot, hilite5);
   addSalTok( T("print"), SalPrint, hilite5);
   addSalTok( T("return"), SalReturn, hilite5);
   addSalTok( T("run"), SalRun, hilite5);
+#ifdef EMBED_SCHEME
+  addSalTok( T("send"), SalSet, hilite5);
+#endif
   addSalTok( T("set"), SalSet, hilite5);
   addSalTok( T("sprout"), SalSprout, hilite5);
+#ifndef EMBED_SCHEME
   addSalTok( T("system"), SalSystem, hilite5);
+#endif
   addSalTok( T("then"), SalThen, hilite5);
   addSalTok( T("unless"), SalUnless, hilite5);
   addSalTok( T("until"), SalUntil, hilite5);
@@ -295,11 +303,10 @@ SalSyntax::SalSyntax ()
   addSalTok( T("when"), SalWhen, hilite5);
   addSalTok( T("while"), SalWhile, hilite5);
   addSalTok( T("with"), SalWith, hilite5);
-
   addSalTok( T("process"), SalProcess, hilite6);
   addSalTok( T("function"), SalFunction, hilite6);
   addSalTok( T("variable"), SalVariable, hilite6);
-  
+ 
   addSalTok( T("above"), SalAbove, hilite5);
   addSalTok( T("below"), SalBelow, hilite5);
   addSalTok( T("by"), SalBy, hilite5);
@@ -522,7 +529,7 @@ hiliteID SalSyntax::getHilite (const String text, int start, int end) {
  */
 
 void SalSyntax::tokenize(String str) {
-  int old=0, len=str.length(), pos=0, beg=0, end=0, lev[]={0,0,0};
+  int old=0, len=str.length(), pos=0, beg=0, end=0, lev[]={0,0,0,0};
   int typ;
   SynTok *tok;
   OwnedArray<SynTok> tokenstream;
@@ -578,6 +585,21 @@ void SalSyntax::tokenize(String str) {
     case SCAN_TOKEN :
       tok=new SynTok(String::empty, SalUntyped, beg);
       typ=classifyToken(str.substring(beg,end), tok);
+      // begin ... end block matching
+      if (isSalType(typ))
+	if (SalTypeDataBits(typ)==SalBlockClose) {
+	  if (--lev[3]<0) {
+	    typ=SalSyntax::UnmatchedEnd;
+	  }
+	  else ;
+	  //	  printf("decrement level=%d: %s\n",lev[3],
+	  //		 str.substring(beg,end).toUTF8());
+	}
+	else if (SalTypeDataBits(typ)==SalBlockOpen) {
+	  lev[3]++;
+	  //	  printf("increment level=%d: %s\n",lev[3],
+	  //		 str.substring(beg,end).toUTF8());
+	}
       // if (typ==SalUntyped) typ=SalUnknown;
       break;
     default:  
@@ -611,6 +633,11 @@ void SalSyntax::tokenize(String str) {
       tok=findUnbalanced(tokenstream, SalLBrace, SalRBrace, lev[2]);
       typ=SCAN_UNMATCHED;
     }
+    else if (lev[3] > 0) {
+      tok=findUnbalanced(tokenstream, SalBlockOpen, SalBlockClose,
+			 lev[3]);
+      typ=SalSyntax::MissingEnd;
+    }
   }
 
   if (typ<0) {
@@ -618,7 +645,7 @@ void SalSyntax::tokenize(String str) {
   }
   else {
     String code=str.replace(T("\""),T("\\\"") );
-    printf("\n\"%s\"\n(", code.toUTF8());
+    printf("\n(\"%s\"\n", code.toUTF8());
       for (int i=0; i<tokenstream.size(); i++) {
 	if (i>0) printf(" ");
 	tokenstream[i]->print();
@@ -629,15 +656,7 @@ void SalSyntax::tokenize(String str) {
 }
 
 void SynTok::print(bool lisp) {
-  if (lisp) {
-    printf("(#x%x \"%s\" %d)", type, name.toUTF8(), data1);
-  }
-  else {
-    if (type==0)
-      printf("<? %s> ",name.toUTF8());
-    else
-      printf("<%s> ",name.toUTF8());
-  }
+  printf("(#x%x \"%s\" %d)", type, name.unquoted().toUTF8(), data1);
 }
 
 void SalSyntax::salError(String str, int err, SynTok *tok) {
@@ -646,9 +665,12 @@ void SalSyntax::salError(String str, int err, SynTok *tok) {
 
   case SCAN_UNMATCHED:
   case SCAN_UNLEVEL:
+  case SalSyntax::UnmatchedEnd :
     errstr << T("Unmatched '") << tok->name << T("':\n");
     break;
-
+  case SalSyntax::MissingEnd :
+    errstr << T("'") << tok->name << T("' missing 'end':\n");
+    break;
   case SalSyntax::SalUnknown :
   default:
     errstr << T("Invalid expression '") << tok->name << T("':\n");
@@ -681,13 +703,25 @@ int addToken (String str, int start, int end) {
 SynTok * SalSyntax::findUnbalanced(OwnedArray<SynTok> &tokenstream, int target,
 				   int other, int level) {
   int n=level;
+
+  //printf("target=%x, other=%x, level=%d\n", target, other, level);
   for (int i=tokenstream.size()-1; i>-1; i--) {
-    if ( tokenstream[i]->getType()==target )
+    int typ=tokenstream[i]->getType();
+    //    printf("rawtype=%x\n", typ);
+    //    printf("databits=%x\n", SalTypeDataBits(typ));
+   // if target is not a type then its data (e.g. SalBlockOpen)
+    if ( ! isSalType(target) )  {
+      //      printf("data test!\n", typ);
+      typ=SalTypeDataBits(typ);
+      //      printf("data test, data=%d\n", typ);
+    }
+    //    else printf("not testing data!\n");
+    if ( typ == target )
       if (n == level)
 	return tokenstream[i];
       else
 	n--;
-    else if  ( tokenstream[i]->getType()==other )
+    else if  ( typ == other )
       n++;
   }
   printf("WARNING: failed to find unbalanced!\n");
