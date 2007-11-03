@@ -17,7 +17,7 @@
 
 #ifdef EMBED_SCHEME
 #include "Scheme.h"
-#include "Nodes.h"
+#include "OutputQueue.h"
 #endif
 
 
@@ -35,8 +35,8 @@ public:
     AudioDeviceManager audioManager;
     MidiOutput* midiOutput;
 #ifdef EMBED_SCHEME
-    NodeQueue *queue;
     SchemeThread* schemeProcess;
+    OutputQueue* outputQueue;
 #endif
     GraceApp() ;
     ~GraceApp();

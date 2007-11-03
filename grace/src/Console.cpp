@@ -20,7 +20,7 @@
 #include "Lisp.h"
 #else
 #include "Scheme.h"
-#include "Nodes.h"
+#include "OutputQueue.h"
 #endif
 
 
@@ -279,6 +279,7 @@ void ConsoleWindow::setConsoleReadOnly(bool b) {
 }
 
 void ConsoleWindow::setConsoleTextColor (int c) {
+  const MessageManagerLock mmLock;
     console->buffer->setColour(TextEditor::textColourId,
   			     console->getCurrentTheme()->getColor(c));
   //  console->buffer->setColour(TextEditor::textColourId,
@@ -300,14 +301,17 @@ void ConsoleWindow::consoleSelectAll() {
 }
 
 void ConsoleWindow::consoleGotoEOB() {
+  const MessageManagerLock mmLock;
   console->buffer->setCaretPosition(0xFFFFFF);
 }
 
 void ConsoleWindow::terpri() {
+  const MessageManagerLock mmLock;
   console->buffer->insertTextAtCursor(T("\n"));
 }
 
 void ConsoleWindow::freshLine() {
+  const MessageManagerLock mmLock;
   int pos=console->buffer->getCaretPosition();
   if (pos > 0) {
     if (T("\n") != console->buffer->getTextSubstring(pos-1,pos)) {
@@ -320,6 +324,7 @@ void ConsoleWindow::freshLine() {
 }	
 
 void ConsoleWindow::display( String str, ConsoleTheme::ColorType typ) {
+  const MessageManagerLock mmLock;
   console->lock->enter();
   consoleGotoEOB();
   setConsoleTextColor(typ);
@@ -329,6 +334,7 @@ void ConsoleWindow::display( String str, ConsoleTheme::ColorType typ) {
 
 void ConsoleWindow::printMessage( String str, ConsoleTheme::ColorType typ,
 				  bool eob) {
+  const MessageManagerLock mmLock;
   console->lock->enter();
   //ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
   //toFront();
@@ -404,8 +410,7 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
 void ConsoleWindow::consoleEval (String code, bool isSal, 
 				 bool isRegion) 
 {
-  //  ((GraceApp *)GraceApp::getInstance())->schemeProcess->insertMessage(new SchemeMessage(code));
-  ((GraceApp *)GraceApp::getInstance())->queue->addNode(Node::EXPR, 0.0, code);
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode(SchemeNode::EXPR, 0.0, code);
 }
 
 #endif

@@ -339,6 +339,7 @@ void EditorWindow::closeButtonPressed () {
 	) ) {
     closeFile();
   }
+  delete this;
 }
 
 const StringArray EditorWindow::getMenuBarNames() {
@@ -521,8 +522,7 @@ void EditorWindow::openFile() {
 }
 
 void EditorWindow::closeFile() {
-  // getCloseButton()->triggerClick();
-  delete this;
+
 }
 
 void EditorWindow::saveFile() {

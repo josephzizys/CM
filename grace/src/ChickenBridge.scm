@@ -2,18 +2,18 @@
 #>
 #include "Grace.h"
 #include "Scheme.h"
-#include "Nodes.h"
+#include "OutputQueue.h"
 
 void print_mess(char * st)
 {
-//  ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st));
-    printf("%s", st);
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st));
+   // printf("%s", st);
 }
 
 void print_error(char * st)
 {
- //((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st));
-    printf("%s", st);
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st));
+ //   printf("%s", st);
 }
 
 void insert_midi_on(double time, float k, float v, float c) {
@@ -21,7 +21,9 @@ void insert_midi_on(double time, float k, float v, float c) {
  vals[0] = k;
  vals[1] = v;
  vals[2] = c;
- ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time, vals, 3, 0);
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.lockArray();
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, vals, 3);
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
 }
 
 void insert_midi_note(double time, double dur, float k, float v, float c) {
@@ -31,18 +33,20 @@ void insert_midi_note(double time, double dur, float k, float v, float c) {
  on[1] = v;
  off[1] = 0.0;
  on[2] = off[2] =  c;
- ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time, on, 3, 0);
- ((GraceApp *)GraceApp::getInstance())->queue->addNode(0, time+dur, off, 3, 0);
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.lockArray();
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, on, 3);
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time+dur, off, 3); 
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
 }
 
 void insert_process( double time, C_word proc )
 {
-  ((GraceApp *)GraceApp::getInstance())->queue->addNode(1, time, 0, 0, proc);
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode(0, time, proc);
 }
 
 void insert_closure( double time, C_word proc )
 {
-  ((GraceApp *)GraceApp::getInstance())->queue->addNode(2, time, 0, 0, proc);
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode(1, time, proc);
 }
 
  
@@ -52,12 +56,13 @@ void insert_closure( double time, C_word proc )
  (unit grace)
  (run-time-macros)
  (uses extras)
+ (usual-integrations)
  (export print-message print-error insert-process
          insert-closure insert-midi-note
          make-note-on make-note-off expand-send
          mp:note mp:on mp:off mp:prog
          mp:ctrl mp:alloff mp:micro mp:inhook send
-         expand-go go ))
+         expand-go go run_process current-time-hi-res))
 
 (define print-message
   (foreign-lambda void "print_mess" c-string))
@@ -81,36 +86,16 @@ void insert_closure( double time, C_word proc )
 (define make-note-off
   (lambda (t k c)
     (insert-midi-on t k 0.0 c)))
-#|
-(define now
+
+
+(define-external (run_process (scheme-object closure) (double elapsed)) double
+  (apply closure (list elapsed)))
+
+
+(define current-time-hi-res
   (foreign-lambda* double ()
      " C_return(Time::getMillisecondCounterHiRes());"))
-|#
 
-#|
-(define (make-process p num interval)
-  (let ((t interval) (c 0))
-    (lambda ()
-      (apply p '())
-      (set! c (+ c 1))
-      (if (> c num)
-          (set! t -1.0))
-      t)))
-(define (runran n d)
-  (let ((r 0.0))
-    (do ((i 0 (+ i 1)))
-        ((> i n))
-      (insert-midi-note r 60 100)
-      (insert-midi-note (+ 200 r) 60  0)
-      (set! r (+ r d)))))
-(define (runproc k n d)
-  (let ((proc (make-process
-               (lambda ()
-                 (insert-midi-note 0.0 k 100)
-                 (insert-midi-note 90.0 k 0))
-               n d)))
-    (insert-process 0.0 proc)))
-|#
 
 (define *messages* (make-hash-table equal?))
 
@@ -343,15 +328,30 @@ void insert_closure( double time, C_word proc )
 ;		  (lambda () ,procbody))
 		))
       `((lambda (,@bind)
-	  (lambda (,paramvar)
+	  (lambda (,paramvar )
 	    (let* ((,deltavar 0)
 		   (elapsed (lambda () ,paramvar))
-		   (wait (lambda (x) (set! ,deltavar x)))
+                   (wait (lambda (x)
+                           (set! ,deltavar x)))
 		   )
 	      ,procbody
 	      )))
 	,@init)
       )))
+
+;;       `((lambda (,@bind)
+;; 	  (lambda (,paramvar ,timevar)
+;; 	    (let* ((,deltavar 0)
+;; 		   (elapsed (lambda () ,paramvar))
+;;                    (wait (lambda (x)
+;;                            (set! ,deltavar (- x (- (current-time-hi-res) ,timevar)))))
+;; 		   )
+;; 	      ,procbody
+;; 	      )))
+;; 	,@init)
+;;       )))
+
+
 
 (return-to-host)
 

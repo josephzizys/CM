@@ -1,178 +1,244 @@
 /*
- *  Scheme.cpp
- *  
+ *  Nodes.cpp
+ *  rker
  *
- *  Created by todd ingalls on 9/1/07.
+ *  Created by Todd Ingalls on 9/24/07.
  *  Copyright 2007 __MyCompanyName__. All rights reserved.
  *
  */
 
-#include "Scheme.h"
+#include "Grace.h"
 #include "Scheme.h"
 #include "ChickenBridge.h"
 
-SchemeMessage::SchemeMessage( Node *n ) 
+// 
+//  Nodes
+//
+
+
+
+SchemeNode::SchemeNode(double _time, int _type, C_word c)
+: time (0.0),start (0.0),type (0), expr (String::empty)
 { 
-  type = SCHEME_NODE; 	
-  node = n; 
-  string = 0;
+  type = _type;
+     
+  if(_time == 0.0) 
+    time = Time::getMillisecondCounterHiRes();
+  else
+    time = _time + Time::getMillisecondCounterHiRes();
+
+  start = time;
+   
+  closureGCRoot = CHICKEN_new_gc_root();
+  CHICKEN_gc_root_set(closureGCRoot, c);
 }
 
-SchemeMessage::SchemeMessage( String str ) 
+SchemeNode::SchemeNode(double _time, int _type, String s)
+: time (0.0),start (0.0),type (0), closure(0)
 { 
-  type = SCHEME_STRING; 
-  string = str; 
-  node = 0;
+  type = EXPR;
+  expr=s;
+  time = 0.0; //will always be ready to call
 }
 
-SchemeMessage::~SchemeMessage() 
-{
+SchemeNode::~SchemeNode(){ 
+  if(type ==  PROCESS || type == PROCEDURE) {
+    CHICKEN_delete_gc_root(closureGCRoot);
+  } 
 }
 
+bool SchemeNode::process(double curtime) {
+  bool more=false;
+  
+  switch (type) {
+    case EXPR :
+    {
+      C_word res;	
+      bzero(schemeThread->evalBuffer, 8192);
+      bzero(schemeThread->errorBuffer, 8192);
+      res = CHICKEN_eval_string_to_string( (char *)expr.toUTF8(), schemeThread->evalBuffer,
+                                           8192);
+      if ( res==0 ) {
+        CHICKEN_get_error_message(schemeThread->errorBuffer, 8192);
+        String text=T(String(schemeThread->errorBuffer));
+        schemeThread->console->printError(text);
+//        printf(">>> %s\n", schemeThread->errorBuffer);
+      }
+      else {
+        schemeThread->console->printValues(String(schemeThread->evalBuffer) + T("\n"));
+  //      printf("*** Value: %s\n", schemeThread->evalBuffer);
+      }
+    }
+      break;
+          
+    case PROCESS:
+    {
+      double nexttime, offset; 
+            
+      nexttime = run_process( CHICKEN_gc_root_ref(closureGCRoot), time  - start);
+      offset = Time::getMillisecondCounterHiRes() - curtime;
 
-SchemeThread::SchemeThread(String name, ConsoleWindow *win) :
-Thread(name)
-{
-  console=win;
+      if (nexttime < 0) {
+        return more;
+      } 
+      else {
+        more=true;
+        time += nexttime + offset;
+        
+      }
+    }
+      break;
+
+    case PROCEDURE:
+      C_word closure = CHICKEN_gc_root_ref(closureGCRoot);
+      C_callback(closure, 0);
+      break;
+
+    default:
+      break;
+  }	
+  return more;
+}
+
+//
+// Scheduler
+//
+
+SchemeThread::SchemeThread(String name, ConsoleWindow *win)
+: Thread(name)
+{	
+  console = win;
   evalBuffer = new char[8192];
   errorBuffer = new char[8192];
 }
 
 SchemeThread::~SchemeThread()
 {
-  
+  delete evalBuffer;
+  delete errorBuffer;
 }
 
-void SchemeThread::handleMessage(SchemeMessage* schemeMessage)
+void postGCHook(int m, long ms)
 {
-  String text;
-  C_word closure;
-  
-  switch (schemeMessage->type) 
-  {
-    case SCHEME_STRING:
-      int res;	
-      bzero(evalBuffer, 8192);
-      bzero(errorBuffer, 8192);
-
-      res = CHICKEN_eval_string_to_string( (char*)(schemeMessage->string).toUTF8(), evalBuffer, schemeMessage->string.length() );
-      
-      if (res==0) {
-        
-        CHICKEN_get_error_message(errorBuffer, strlen(errorBuffer));
-        text=T(String(errorBuffer));
-        console->printError(text);
-      } else
-        console->printValues(String(evalBuffer) + T("\n"));
-       messageBuffer.removeObject(schemeMessage, true);
-      break;
-      
-    case SCHEME_NODE:
-      if(schemeMessage->node->type == Node::PROCESS ) {
-        double nexttime ;
-        double elapsed;
-        C_word *now_ptr;
-        C_word *elapsed_ptr;
-        C_word now_word;
-        C_word elapsed_word;
-
-	//        now_ptr = C_alloc(1);
-	//        elapsed_ptr = C_alloc(1);
-               
-        closure = CHICKEN_gc_root_ref(schemeMessage->node->gcroot);
-	//        schemeMessage->node->now = Time::getMillisecondCounterHiRes();
-	//        now_word = C_flonum( &now_ptr, schemeMessage->node->now);
-	//        elapsed = schemeMessage->node->now - schemeMessage->node->start;
-	//        elapsed_word = C_flonum( &elapsed_ptr, elapsed); 
-	//        C_save( now_word );
-	//        C_save( elapsed_word );
-
-	//        nexttime = C_c_double( C_callback(closure, 2));
-
-        nexttime = C_c_double( C_callback(closure, 0));
-	printf("nexttime=%d\n", nexttime);
-        if(nexttime == -1) {
-          delete schemeMessage->node;
-          messageBuffer.removeObject(schemeMessage, true);
-        } else {
-          schemeMessage->node->queue->reinsertNode(schemeMessage->node, nexttime);
-          messageBuffer.removeObject(schemeMessage, true);
-        }
-        
-      } else {
-        closure = CHICKEN_gc_root_ref(schemeMessage->node->gcroot);
-        C_callback(closure, 0);
-        delete schemeMessage->node;
-        messageBuffer.removeObject(schemeMessage, true);
-      }
-      break;
-      
-    default:
-      break;
-  }
-
+  if(m == 1)
+    printf("major gc - %i\n", ms);
 }
 
-void SchemeThread::insertMessage(SchemeMessage* schemeMessage)
-{
-  messageBuffer.lockArray();
-  messageBuffer.add( schemeMessage );
-  messageBuffer.unlockArray();
-  notify();
-}
-
-
-void SchemeThread::run() {
+bool SchemeThread::init() {
   int res;
   C_word r;
   char buffer[8192];
   String text = T("Chicken Scheme");
   
+ // res = CHICKEN_initialize(20000000,  64000,  0, (void*)C_grace_toplevel);
+  
   res = CHICKEN_initialize(0, 0, 0,  (void*)C_grace_toplevel);
-  
   if (res==0) {
     console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
-    return;
+    return false;
   }
-  
   res = CHICKEN_run(NULL);
-  
   if (res==0) {
     console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
-    return;
+    return false;
   }
-  
-  res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", 
-                                       buffer, 8192);
+  res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", buffer, 8192);
   if (res>0) 
     text = text + T(", version ") + String(buffer).unquoted();
   text += T("\n(c) 2000-2007 Felix L. Winkelmann\n");
-  
   console->printMessage(text);
   bzero(buffer, 8192);
-  
   if (res==0) {
     console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
-    return;
+    return false;
   }
-  
+ // C_post_gc_hook = postGCHook;
   CHICKEN_eval_string("(require-extension srfi-18)", &r);
+  CHICKEN_eval_string("(require-extension srfi-1)", &r);
+  CHICKEN_eval_string("(require-extension chicken-more-macros)", &r);
   
   CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
-  CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
-  CHICKEN_eval_string("(define *grace-err-out*  (make-output-port print-error (lambda () #f)))", NULL);
-  CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
-
+  res = CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
+  if ( res==0 ) {
+    CHICKEN_get_error_message(errorBuffer, 8192);
+    String text=T(String(errorBuffer));
+    console->printError(text);
+    //        printf(">>> %s\n", schemeThread->errorBuffer);
+  }
+  res = CHICKEN_eval_string("(define *grace-err-out*  (make-output-port print-error (lambda () #f)))", NULL);
+  if ( res==0 ) {
+    CHICKEN_get_error_message(errorBuffer, 8192);
+    String text=T(String(errorBuffer));
+    console->printError(text);
+    //        printf(">>> %s\n", schemeThread->errorBuffer);
+  }
+  res = CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
+  if ( res==0 ) {
+    CHICKEN_get_error_message(errorBuffer, 8192);
+    String text=T(String(errorBuffer));
+    console->printError(text);
+    //        printf(">>> %s\n", schemeThread->errorBuffer);
+  }
   
-  while ( !threadShouldExit() ) {
-    while( messageBuffer.size() > 0 ) {
-      messageBuffer.lockArray();
-      handleMessage( messageBuffer[0] );
-      messageBuffer.unlockArray();
+  return true;
+}
+
+
+void SchemeThread::run()
+{
+  // start chicken  
+  if (! init() ) return;
+  double curr;
+  
+  while( !threadShouldExit() ) {
+    
+    while(schemeNodes.size() > 0) {     
+      curr = Time::getMillisecondCounterHiRes() ;
+      
+      while ( schemeNodes.getFirst()->time <= curr ) {
+        
+        if ( schemeNodes.getFirst()->process( curr = Time::getMillisecondCounterHiRes()  ) ) {
+          schemeNodes.addSorted(comparator, schemeNodes.getFirst()); 
+          schemeNodes.remove(0, false);
+        }
+        else 
+          schemeNodes.remove(0, true);
+    
+        if(schemeNodes.size() == 0) 
+          break;
+
       }
+      usleep(100);
+
+    }
     wait(-1);
   }
   
 }
 
+void SchemeThread::clear()
+{
+  schemeNodes.lockArray();
+  schemeNodes.clear();
+  schemeNodes.unlockArray();
+}
 
+
+void SchemeThread::addNode(int type, double _time, C_word c)
+{
+  SchemeNode *n = new SchemeNode(_time, type, c);
+  n->schemeThread = this;
+  schemeNodes.lockArray();
+  schemeNodes.addSorted(comparator, n);
+  schemeNodes.unlockArray();
+  notify();
+}
+
+void SchemeThread::addNode(int type, double _time, String s) {
+  SchemeNode *n = new SchemeNode(_time, type, s);
+  n->schemeThread = this;
+  schemeNodes.lockArray();
+  schemeNodes.addSorted(comparator, n);
+  schemeNodes.unlockArray();
+  notify();
+}  

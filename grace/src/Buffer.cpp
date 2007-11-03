@@ -14,7 +14,7 @@
 #include "Grace.h"
 
 #ifdef EMBED_SCHEME
-#include "Nodes.h"
+#include "OutputQueue.h"
 #endif
 
 #define BUFMAX 0xFFFFFFF
@@ -423,7 +423,7 @@ bool TextBuffer::perform (const InvocationInfo& info) {
     break;
   case cmdClearQueue:
 #ifdef EMBED_SCHEME
-    ((GraceApp *)GraceApp::getInstance())->queue->clear();
+    ((GraceApp *)GraceApp::getInstance())->schemeProcess->clear();
 #endif
     break;
   default:
@@ -837,7 +837,8 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     break;
   case KeyCommands::Com_Period :
 #ifdef EMBED_SCHEME
-    ((GraceApp *)GraceApp::getInstance())->queue->clear();
+    printf("clear\n");
+    ((GraceApp *)GraceApp::getInstance())->schemeProcess->clear();
 #endif
     break;
   case KeyCommands::Com_E :
@@ -1638,6 +1639,7 @@ void TextBuffer::colorize (int from, int to, bool force) {
   // FIX: recoloring should only happen in the visible region of
   // buffer but i dont see anyway to get this information from the
   // viewpoint
+
   String text = getTextSubstring(from, to);
   int len = text.length();
   int here = point(), pos = 0, start, end;
