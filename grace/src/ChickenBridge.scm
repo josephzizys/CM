@@ -1,4 +1,3 @@
-
 #>
 #include "Grace.h"
 #include "Scheme.h"
@@ -6,14 +5,14 @@
 
 void print_mess(char * st)
 {
- ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st));
-   // printf("%s", st);
+// ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st));
+   printf("%s", st);
 }
 
 void print_error(char * st)
 {
- ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st));
- //   printf("%s", st);
+// ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st));
+   printf("%s", st);
 }
 
 void insert_midi_on(double time, float k, float v, float c) {
@@ -278,6 +277,7 @@ void insert_closure( double time, C_word proc )
     (let ((paramvar (gensym)) ; callback param receives time from C
 	  (deltavar (gensym))
 	  (errorvar (gensym))
+	  (contvar (gensym))
 	  (safety #t)
 	  (procbody '()))
       ;; optional (declare ...) can be first form in body
@@ -305,27 +305,27 @@ void insert_closure( double time, C_word proc )
 			 ,deltavar)))  ; return delta
       (if safety
 	  (set! procbody
-
 ; this works with (require-extension chicken-more-macros)
-		`(condition-case
-		  ,procbody
-		  (,errorvar 
-		   (exn)
-		   (printf ">>> Aborting process at time ~S:~%    Error: ~S" 
-			   ,paramvar
-			   ( (condition-property-accessor 'exn 'message) 
-			     ,errorvar))
-		   -2))
-; this doesnt work
-;		`(with-exception-handler
-;		  (lambda (,errorvar)
-;		    (printf ">>> Aborting process at time ~S:~%    Error: ~S"
-;		     ,paramvar
-;		     ((condition-property-accessor 'exn 'message)
-;		      ,errorvar))
-;		    -2
-;		    )
-;		  (lambda () ,procbody))
+;		`(condition-case
+;		  ,procbody
+;		  (,errorvar 
+;		   (exn)
+;		   (printf ">>> Aborting process at time ~S:~%    Error: ~S" 
+;			   ,paramvar
+;			   ( (condition-property-accessor 'exn 'message) 
+;			     ,errorvar))
+;		   -2))
+		`(call-with-current-continuation
+		  (lambda (,contvar)
+		    (with-exception-handler
+		     (lambda (,errorvar)
+		       (printf ">>> Aborting process at time ~S:~%    Error: ~S"
+			       ,paramvar
+			       ((condition-property-accessor 'exn 'message)
+			       ,errorvar))
+		       (,contvar -2))
+		     (lambda () ,procbody))
+		    ))
 		))
       `((lambda (,@bind)
 	  (lambda (,paramvar )
@@ -339,72 +339,7 @@ void insert_closure( double time, C_word proc )
 	,@init)
       )))
 
-;;       `((lambda (,@bind)
-;; 	  (lambda (,paramvar ,timevar)
-;; 	    (let* ((,deltavar 0)
-;; 		   (elapsed (lambda () ,paramvar))
-;;                    (wait (lambda (x)
-;;                            (set! ,deltavar (- x (- (current-time-hi-res) ,timevar)))))
-;; 		   )
-;; 	      ,procbody
-;; 	      )))
-;; 	,@init)
-;;       )))
-
-
-
 (return-to-host)
-
-#|
-
-
-(pp 
-  (go ((i 0 (+ i 1))
-       (e 12)
-       (k 60))
-      ((= i e) #f)
-    (print (elapsed ))
-    (mp:note 0 90 (+ k i) 80 0)
-    (wait 100)))
-
-
-
-(with-exception-handler
-	       (lambda (e) -1)
-	       (lambda ()
-		 (cond (,(car terminate)
-			,@(cdr terminate)
-			-1)
-		       (else
-			,@body
-			,@step
-			,delta))))
-
-
-
-
-
-
-(define (foo )
-  (go ((i 0 (+ i 1))
-       (k 60 (+ 60 (random 60))))
-      ((= i 10) )
-    (print i)
-    (wait 100)))
-(insert-process 0.0 (foo))
-
-
-(define (foo )
-  (go ((i 0 (+ i 1))
-       (k 60 (+ 60 (random 60))))
-      ((= i 200) )
-
-    (wait 100)))
-(insert-process 0.0 (foo))
-
-
-(Sprout (foo))
-|#
 
 ;; csc -c++ -embedded -t ChickenBridge.scm
 
