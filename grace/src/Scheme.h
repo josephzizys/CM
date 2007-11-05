@@ -33,7 +33,10 @@ public:
   String expr;
   
   void *closureGCRoot;
+  C_word *elapsed_ptr;
+  C_word elapsed_word;
   C_word closure;
+  
   SchemeThread *schemeThread;
   
   bool process(double curr);
