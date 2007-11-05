@@ -60,13 +60,13 @@ bool SchemeNode::process(double curtime) {
                                            8192);
       if ( res==0 ) {
         CHICKEN_get_error_message(schemeThread->errorBuffer, 8192);
-        String text=T(String(schemeThread->errorBuffer));
-        schemeThread->console->printError(text);
-//        printf(">>> %s\n", schemeThread->errorBuffer);
+	//	String text=T(String(schemeThread->errorBuffer));
+	//	schemeThread->console->printError(text);
+        printf(">>> %s\n", schemeThread->errorBuffer);
       }
       else {
-        schemeThread->console->printValues(String(schemeThread->evalBuffer) + T("\n"));
-  //      printf("*** Value: %s\n", schemeThread->evalBuffer);
+	//        schemeThread->console->printValues(String(schemeThread->evalBuffer) + T("\n"));
+	printf("*** Value: %s\n", schemeThread->evalBuffer);
       }
     }
       break;
@@ -164,7 +164,7 @@ bool SchemeThread::init() {
  // C_post_gc_hook = postGCHook;
   CHICKEN_eval_string("(require-extension srfi-18)", &r);
   CHICKEN_eval_string("(require-extension srfi-1)", &r);
-  CHICKEN_eval_string("(require-extension chicken-more-macros)", &r);
+  //  CHICKEN_eval_string("(require-extension chicken-more-macros)", &r);
   
   CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
   res = CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
