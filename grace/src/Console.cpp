@@ -696,6 +696,7 @@ void ConsoleWindow::showAudioMidiWindow () {
   AudioDeviceSelectorComponent audioSettingsComp (app->audioManager,
 						  0, 16,
 						  2, 16,
+						  true,
 						  true);
   audioSettingsComp.setSize (500, 300);
   DialogWindow::showModalDialog (T("Audio Settings"),
