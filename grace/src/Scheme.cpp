@@ -90,8 +90,10 @@ bool SchemeNode::process(double curtime) {
       break;
 
     case PROCEDURE:
+      {
       C_word closure = CHICKEN_gc_root_ref(closureGCRoot);
       C_callback(closure, 0);
+      }
       break;
 
     default:
