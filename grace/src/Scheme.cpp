@@ -73,17 +73,24 @@ bool SchemeNode::process(double curtime) {
           
     case PROCESS:
     {
-      double nexttime, offset; 
-            
-      nexttime = run_process( CHICKEN_gc_root_ref(closureGCRoot), time  - start);
-      offset = Time::getMillisecondCounterHiRes() - curtime;
+      double nexttime;//, offset; 
+      
+      closure = CHICKEN_gc_root_ref(closureGCRoot);
+      elapsed_ptr = C_alloc(1); 
+      elapsed_word = C_flonum( &elapsed_ptr, time - start); 
+      
+      C_save( elapsed_word );
+      nexttime = C_c_double( C_callback(closure, 1));
+      
+//      offset = Time::getMillisecondCounterHiRes() - curtime;
 
       if (nexttime < 0) {
         return more;
       } 
       else {
         more=true;
-        time += nexttime + offset;
+        time += nexttime;
+//        time += nexttime + offset;
         
       }
     }
