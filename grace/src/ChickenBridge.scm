@@ -1,7 +1,26 @@
+;;; **********************************************************************
+;;; Copyright (C) 2007 Todd Ingalls, Rick Taube.
+;;; This program is free software; you can redistribute it and/or modify
+;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
+;;; this agreement is available at http://www.cliki.net/LLGPL            
+;;; **********************************************************************
+
 #>
+
+/*************************************************************************
+ * Copyright (C) 2007 Todd Ingalls, Rick Taube.                          *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the Lisp Lesser Gnu Public License. The text of *
+ * this agreement is available at http://www.cliki.net/LLGPL             *
+ *************************************************************************/
+
 #include "Grace.h"
 #include "Scheme.h"
 #include "OutputQueue.h"
+
+//
+// Console Window code
+//
 
 void print_mess(char * st)
 {
@@ -15,17 +34,11 @@ void print_error(char * st)
    printf("%s", st);
 }
 
-void insert_midi_on(double time, float k, float v, float c) {
- float vals[3];
- vals[0] = k;
- vals[1] = v;
- vals[2] = c;
- ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.lockArray();
- ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, vals, 3);
- ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
-}
+//
+// MIDI Port code
+//
 
-void insert_midi_note(double time, double dur, float k, float v, float c) {
+void mp_note(double time, double dur, float k, float v, float c) {
  float on[3];
  float off[3];
  on[0] =  off[0] = k;
@@ -38,17 +51,55 @@ void insert_midi_note(double time, double dur, float k, float v, float c) {
  ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
 }
 
-void insert_process( double time, C_word proc )
-{
-  ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode(0, time, proc);
+void mp_on(double time, float k, float v, float c) {
+ float vals[3];
+ vals[0] = k;
+ vals[1] = v;
+ vals[2] = c;
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.lockArray();
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, vals, 3);
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
 }
 
-void insert_closure( double time, C_word proc )
+//
+// Scheduler code
+//
+
+void scheduler_sprout( C_word proc, double time, int id)
 {
-  ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode(1, time, proc);
+  ((GraceApp *)
+   GraceApp::getInstance())->schemeProcess->addNode(0, time, proc, id);
 }
 
+bool scheduler_is_paused () {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->isPaused();
+}
+
+void scheduler_pause() {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->setPaused(true);
+}
+
+void scheduler_cont () {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->setPaused(false);
+}
+
+void scheduler_stop (int id) {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->stop(id);
+}
+
+void scheduler_hush () {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->stop(-1);
+  ((GraceApp *)GraceApp::getInstance())->outputQueue->clear();
+}
+
+bool scheduler_is_time_milliseconds () {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->isTimeMilliseconds();
+}
  
+void scheduler_set_time_milliseconds (bool b) {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->setTimeMilliseconds(b);
+}
+
 <#
 
 (declare
@@ -56,12 +107,19 @@ void insert_closure( double time, C_word proc )
  (run-time-macros)
  (uses extras)
  (usual-integrations)
- (export print-message print-error insert-process
-         insert-closure insert-midi-note
-         make-note-on make-note-off expand-send
+ (export print-message print-error 
          mp:note mp:on mp:off mp:prog
-         mp:ctrl mp:alloff mp:micro mp:inhook send
-         expand-go go run_process current-time-hi-res))
+         mp:ctrl mp:alloff mp:micro mp:inhook 
+	 send go
+	 now time-format
+	 sprout stop hush pause paused? cont
+	 ))
+
+;;;
+;;; FFI glue code
+;;;
+
+;; Console window
 
 (define print-message
   (foreign-lambda void "print_mess" c-string))
@@ -69,32 +127,133 @@ void insert_closure( double time, C_word proc )
 (define print-error
   (foreign-lambda void "print_error" c-string))
 
-(define insert-process
-  (foreign-safe-lambda void "insert_process" double scheme-object))
+;; MIDI Port
 
-(define insert-closure
-  (foreign-safe-lambda void "insert_closure" double scheme-object))
+(define mp-note
+  (foreign-safe-lambda void "mp_note" double double float float float));
 
-(define insert-midi-note
-  (foreign-safe-lambda void "insert_midi_note" double double float float float));
+;;(define-external (run_process (scheme-object closure) (double elapsed)) double
+;;  ( closure  elapsed))
+;;
+;;(define current-time-hi-res
+;;  (foreign-lambda* double ()
+;;     " C_return(Time::getMillisecondCounterHiRes());"))
 
-(define make-note-on
-  (lambda (t k v c)
-    (insert-midi-on t k v c)))
+;; Time
 
-(define make-note-off
-  (lambda (t k c)
-    (insert-midi-on t k 0.0 c)))
+(define current-time-milliseconds
+  (foreign-lambda* int ()
+     " C_return( (int) Time::getMillisecondCounterHiRes());"))
 
+(define current-time-seconds
+  (foreign-lambda* float ()
+     " C_return( (float) (Time::getMillisecondCounterHiRes() / 1000.0));"))
+  
+(define scheduler-is-time-milliseconds
+  (foreign-safe-lambda bool "scheduler_is_time_milliseconds" )  )
 
-(define-external (run_process (scheme-object closure) (double elapsed)) double
-  (apply closure (list elapsed)))
+(define scheduler-set-time-milliseconds
+  (foreign-safe-lambda void "scheduler_set_time_milliseconds" bool))
 
+;; Scheduler API
 
-(define current-time-hi-res
-  (foreign-lambda* double ()
-     " C_return(Time::getMillisecondCounterHiRes());"))
+(define scheduler-sprout
+  (foreign-safe-lambda void "scheduler_sprout" scheme-object double int))
 
+(define scheduler-paused?
+  (foreign-safe-lambda bool "scheduler_is_paused" ))
+
+(define scheduler-pause
+  (foreign-safe-lambda void "scheduler_pause"))
+
+(define scheduler-cont
+  (foreign-safe-lambda void "scheduler_cont" ))
+
+(define scheduler-stop
+  (foreign-safe-lambda void "scheduler_stop" int))
+
+(define scheduler-hush
+  (foreign-safe-lambda void "scheduler_hush" ))
+
+;;;
+;;; top level scheme code
+;;;
+
+(define (sprout proc . args)
+  ;; (sprout {proc|list} [ahead|list] [id|list])
+  (let-optionals
+   args ((start 0)
+	 (id -1))
+   (let ((nextstart (lambda ()
+		      (if (pair? start)
+			  (let ((v (car start)))
+			    (set! start (if (null? (cdr start))
+					    (car start) (cdr start)))
+			    v)
+			  start)))
+	 (nextid (lambda ()
+		   (if (pair? id)
+			(let ((v (car id)))
+			  (set! id (if (null? (cdr id))
+				       (car id) (cdr id)))
+			  v)
+			id))))
+     (cond ((pair? proc)
+	    (do ((p proc (cdr p)))
+		((null? p) proc)
+	      (scheduler-sprout (car p) (nextstart) (nextid))))
+	   (else
+	    (scheduler-sprout proc (nextstart) (nextid))
+	    proc))
+     ;; if return proc would chicken put it in a History list and so
+     ;; never get gc'd?
+     (values))))
+
+(define now current-time-milliseconds)
+
+(define (time-format . arg)
+  (if (null? arg)
+      (if (scheduler-is-time-milliseconds ) 1000 1.0)
+      (case (car arg)
+	((1.0 1 s)
+	 (set! now current-time-seconds)
+	 (scheduler-set-time-milliseconds #f)
+	 )
+	((1000 m)
+	 (set! now current-time-milliseconds)
+	 (scheduler-set-time-milliseconds #t)
+	 )
+	(else
+	 (error "not a time-format" (car arg))))))
+
+(define (pause )
+  (scheduler-pause )
+  (values))
+
+(define (paused? )
+  (scheduler-paused?))
+
+(define (cont )
+  (scheduler-cont )
+  (values))
+
+(define (stop . procid)
+  (if (null? procid)
+      (scheduler-stop -1)
+      (do ((tail procid (cdr tail)))
+	  ((null? tail) #f)
+	(if (fixnum? (car tail))
+	    (scheduler-stop (car tail))
+	    (error "Not an integer id" (car tail)))))
+  (values))
+
+(define (hush )
+  (scheduler-hush)
+  (values))
+
+;;;
+;;; send macro
+;;;
 
 (define *messages* (make-hash-table equal?))
 
@@ -189,11 +348,10 @@ void insert_closure( double time, C_word proc )
   (expand-send mess data))
 
 ;; port:method defintions
+;; DO THESE NEED ERROR HANDLING AROUND ARGS?
 
 (define (mp:note time dur key amp chan)
-  ;;(make-note-on time key amp chan)
-  ;;(make-note-off (+ time dur) key chan)
-  (insert-midi-note time dur key amp chan)
+  (mp-note time dur key amp chan)
   )
 
 (define (mp:on time key vel chan)
@@ -223,24 +381,9 @@ void insert_closure( double time, C_word proc )
 (define-send-message mp:inhook ((#:func #f)))
 
 
-
-
-
-#|
-; tests
-(send mp:note)
-(send mp:note #:chan 2)
-(send mp:note (now) 1)
-(send mp:note (now) 1 #:chan 3 #:key 44)
-; ERRORS
-(send mp:Note 5 6)
-(send mp:note 1 2 3 4 5 6)
-(send mp:note 1 #:chan 2 (now) 4)
-(send mp:note 1 #:key 33 #:foo 2 )
-(send mp:note 1 #:key 33 #:key 2 )
-|#
-
-
+;;;
+;;; GO macro
+;;;
 
 (define-macro (go bindings terminate . body)
   (expand-go bindings terminate body)

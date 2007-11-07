@@ -16,29 +16,27 @@
 class ConsoleWindow;
 class SchemeThread;
 
-
-
 class SchemeNode 
 {
 public:
-  SchemeNode(double _time, int _type, C_word c);
+  enum {PROCESS, PROCEDURE, EXPR , SALEVAL, PAUSE};
+
+  SchemeNode(double _time, int _type, C_word c, int _id);
   SchemeNode(double _time, int _type, String s);
+  SchemeNode(double _time, int _type);
   ~SchemeNode();
-  
-  enum {PROCESS, PROCEDURE, EXPR };
+
   int type;
+  int id;
   double time;
   double start;
-
   String expr;
-  
   void *closureGCRoot;
   C_word *elapsed_ptr;
   C_word elapsed_word;
   C_word closure;
   
   SchemeThread *schemeThread;
-  
   bool process(double curr);
   bool init();
   void run();
@@ -57,7 +55,6 @@ public:
   }
 };
 
-
 class SchemeThread : public Thread
 {
 public:
@@ -67,18 +64,24 @@ public:
   String EvalString;
   char *evalBuffer ; 
   char *errorBuffer ; 
+  bool pausing;
+  bool timemsec;
 
   OwnedArray<SchemeNode, CriticalSection> schemeNodes;
-  
-  void addNode(int type, double _time, C_word c=0);
+  SchemeNodeComparator comparator;  
+
+  void addNode(int type, double _time, C_word c=0, int _id=-1);
   void addNode(int type, double _time, String str);
   void removeNode(SchemeNode *n, bool deleteObject=true );
   void reinsertNode(SchemeNode *n, double newtime );
   void run();
   bool init();
   void clear();
-  SchemeNodeComparator comparator;
-
+  bool isTimeMilliseconds () { return timemsec; }
+  void setTimeMilliseconds(bool b) { timemsec=b;}
+  bool isPaused() { return pausing; }
+  void setPaused(bool b);
+  void stop(int id=-1);
 };
 
 #endif

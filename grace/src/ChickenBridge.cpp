@@ -1,6 +1,6 @@
 /* Generated from ChickenBridge.scm by the CHICKEN compiler
    http://www.call-with-current-continuation.org
-   2007-11-05 15:59
+   2007-11-07 07:11
    Version 2.731 - macosx-unix-gnu-ppc - [ manyargs dload ptables applyhook ]
 (c)2000-2007 Felix L. Winkelmann | compiled 2007-10-29 on galen.local (Darwin)
    command line: ChickenBridge.scm -output-file ChickenBridge.cpp -quiet
@@ -10,9 +10,21 @@
 #include "chicken.h"
 
 
+
+/*************************************************************************
+ * Copyright (C) 2007 Todd Ingalls, Rick Taube.                          *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the Lisp Lesser Gnu Public License. The text of *
+ * this agreement is available at http://www.cliki.net/LLGPL             *
+ *************************************************************************/
+
 #include "Grace.h"
 #include "Scheme.h"
 #include "OutputQueue.h"
+
+//
+// Console Window code
+//
 
 void print_mess(char * st)
 {
@@ -26,17 +38,11 @@ void print_error(char * st)
    printf("%s", st);
 }
 
-void insert_midi_on(double time, float k, float v, float c) {
- float vals[3];
- vals[0] = k;
- vals[1] = v;
- vals[2] = c;
- ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.lockArray();
- ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, vals, 3);
- ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
-}
+//
+// MIDI Port code
+//
 
-void insert_midi_note(double time, double dur, float k, float v, float c) {
+void mp_note(double time, double dur, float k, float v, float c) {
  float on[3];
  float off[3];
  on[0] =  off[0] = k;
@@ -49,20 +55,56 @@ void insert_midi_note(double time, double dur, float k, float v, float c) {
  ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
 }
 
-void insert_process( double time, C_word proc )
-{
-  ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode(0, time, proc);
+void mp_on(double time, float k, float v, float c) {
+ float vals[3];
+ vals[0] = k;
+ vals[1] = v;
+ vals[2] = c;
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.lockArray();
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, vals, 3);
+ ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
 }
 
-void insert_closure( double time, C_word proc )
+//
+// Scheduler code
+//
+
+void scheduler_sprout( C_word proc, double time, int id)
 {
-  ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode(1, time, proc);
+  ((GraceApp *)
+   GraceApp::getInstance())->schemeProcess->addNode(0, time, proc, id);
 }
 
+bool scheduler_is_paused () {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->isPaused();
+}
+
+void scheduler_pause() {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->setPaused(true);
+}
+
+void scheduler_cont () {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->setPaused(false);
+}
+
+void scheduler_stop (int id) {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->stop(id);
+}
+
+void scheduler_hush () {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->stop(-1);
+  ((GraceApp *)GraceApp::getInstance())->outputQueue->clear();
+}
+
+bool scheduler_is_time_milliseconds () {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->isTimeMilliseconds();
+}
  
+void scheduler_set_time_milliseconds (bool b) {
+  ((GraceApp *)GraceApp::getInstance())->schemeProcess->setTimeMilliseconds(b);
+}
 
 
-C_externexport  double  run_process(C_word t0,double t1);
 
 static C_PTABLE_ENTRY *create_ptable(void);
 C_noret_decl(C_library_toplevel)
@@ -74,24 +116,120 @@ C_externimport void C_ccall C_extras_toplevel(C_word c,C_word d,C_word k) C_nore
 C_noret_decl(C_extras_toplevel)
 C_externimport void C_ccall C_extras_toplevel(C_word c,C_word d,C_word k) C_noret;
 
-static C_TLS C_word lf[134];
+static C_TLS C_word lf[160];
 
 
-/* from current-time-hi-res in k209 in k206 in k203 in k200 */
-#define return(x) C_cblock C_r = (C_flonum(&C_a,(x))); goto C_ret; C_cblockend
-static C_word C_fcall stub53(C_word C_buf) C_regparm;
-C_regparm static C_word C_fcall stub53(C_word C_buf){
+/* from k438 in hush in k294 in k291 in k288 in k285 */
+C_noret_decl(stub69)
+static void C_ccall stub69(C_word C_c,C_word C_self,C_word C_k,C_word C_buf) C_noret;
+static void C_ccall stub69(C_word C_c,C_word C_self,C_word C_k,C_word C_buf){
 C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
- C_return(Time::getMillisecondCounterHiRes());
+int C_level=C_save_callback_continuation(&C_a,C_k);
+scheduler_hush();
+C_k=C_restore_callback_continuation2(C_level);
+C_kontinue(C_k,C_r);}
+
+/* from k432 */
+C_noret_decl(stub64)
+static void C_ccall stub64(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0) C_noret;
+static void C_ccall stub64(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0){
+C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
+int t0=(int )C_unfix(C_a0);
+int C_level=C_save_callback_continuation(&C_a,C_k);
+scheduler_stop(t0);
+C_k=C_restore_callback_continuation2(C_level);
+C_kontinue(C_k,C_r);}
+
+/* from k416 in cont in k294 in k291 in k288 in k285 */
+C_noret_decl(stub59)
+static void C_ccall stub59(C_word C_c,C_word C_self,C_word C_k,C_word C_buf) C_noret;
+static void C_ccall stub59(C_word C_c,C_word C_self,C_word C_k,C_word C_buf){
+C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
+int C_level=C_save_callback_continuation(&C_a,C_k);
+scheduler_cont();
+C_k=C_restore_callback_continuation2(C_level);
+C_kontinue(C_k,C_r);}
+
+/* from k407 in pause in k294 in k291 in k288 in k285 */
+C_noret_decl(stub55)
+static void C_ccall stub55(C_word C_c,C_word C_self,C_word C_k,C_word C_buf) C_noret;
+static void C_ccall stub55(C_word C_c,C_word C_self,C_word C_k,C_word C_buf){
+C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
+int C_level=C_save_callback_continuation(&C_a,C_k);
+scheduler_pause();
+C_k=C_restore_callback_continuation2(C_level);
+C_kontinue(C_k,C_r);}
+
+/* from k398 in paused? in k294 in k291 in k288 in k285 */
+C_noret_decl(stub51)
+static void C_ccall stub51(C_word C_c,C_word C_self,C_word C_k,C_word C_buf) C_noret;
+static void C_ccall stub51(C_word C_c,C_word C_self,C_word C_k,C_word C_buf){
+C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
+int C_level=C_save_callback_continuation(&C_a,C_k);
+C_r=C_mk_bool(scheduler_is_paused());
+C_k=C_restore_callback_continuation2(C_level);
+C_kontinue(C_k,C_r);}
+
+/* from k392 */
+C_noret_decl(stub44)
+static void C_ccall stub44(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1,C_word C_a2) C_noret;
+static void C_ccall stub44(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1,C_word C_a2){
+C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
+C_word t0=(C_word )(C_a0);
+double t1=(double )C_c_double(C_a1);
+int t2=(int )C_unfix(C_a2);
+int C_level=C_save_callback_continuation(&C_a,C_k);
+scheduler_sprout(t0,t1,t2);
+C_k=C_restore_callback_continuation2(C_level);
+C_kontinue(C_k,C_r);}
+
+/* from k372 in scheduler-set-time-milliseconds in k294 in k291 in k288 in k285 */
+C_noret_decl(stub36)
+static void C_ccall stub36(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0) C_noret;
+static void C_ccall stub36(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0){
+C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
+int t0=(int )C_truep(C_a0);
+int C_level=C_save_callback_continuation(&C_a,C_k);
+scheduler_set_time_milliseconds(t0);
+C_k=C_restore_callback_continuation2(C_level);
+C_kontinue(C_k,C_r);}
+
+/* from k363 in time-format in k294 in k291 in k288 in k285 */
+C_noret_decl(stub31)
+static void C_ccall stub31(C_word C_c,C_word C_self,C_word C_k,C_word C_buf) C_noret;
+static void C_ccall stub31(C_word C_c,C_word C_self,C_word C_k,C_word C_buf){
+C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
+int C_level=C_save_callback_continuation(&C_a,C_k);
+C_r=C_mk_bool(scheduler_is_time_milliseconds());
+C_k=C_restore_callback_continuation2(C_level);
+C_kontinue(C_k,C_r);}
+
+/* from current-time-seconds in k294 in k291 in k288 in k285 */
+#define return(x) C_cblock C_r = (C_flonum(&C_a,(x))); goto C_ret; C_cblockend
+static C_word C_fcall stub28(C_word C_buf) C_regparm;
+C_regparm static C_word C_fcall stub28(C_word C_buf){
+C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
+ C_return( (float) (Time::getMillisecondCounterHiRes() / 1000.0));
 C_ret:
 #undef return
 
 return C_r;}
 
-/* from k292 */
-C_noret_decl(stub33)
-static void C_ccall stub33(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1,C_word C_a2,C_word C_a3,C_word C_a4) C_noret;
-static void C_ccall stub33(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1,C_word C_a2,C_word C_a3,C_word C_a4){
+/* from current-time-milliseconds in k294 in k291 in k288 in k285 */
+#define return(x) C_cblock C_r = (C_fix((C_word)(x))); goto C_ret; C_cblockend
+static C_word C_fcall stub26(C_word C_buf) C_regparm;
+C_regparm static C_word C_fcall stub26(C_word C_buf){
+C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
+ C_return( (int) Time::getMillisecondCounterHiRes());
+C_ret:
+#undef return
+
+return C_r;}
+
+/* from k351 */
+C_noret_decl(stub17)
+static void C_ccall stub17(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1,C_word C_a2,C_word C_a3,C_word C_a4) C_noret;
+static void C_ccall stub17(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1,C_word C_a2,C_word C_a3,C_word C_a4){
 C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
 double t0=(double )C_c_double(C_a0);
 double t1=(double )C_c_double(C_a1);
@@ -99,35 +237,11 @@ float t2=(float )C_c_double(C_a2);
 float t3=(float )C_c_double(C_a3);
 float t4=(float )C_c_double(C_a4);
 int C_level=C_save_callback_continuation(&C_a,C_k);
-insert_midi_note(t0,t1,t2,t3,t4);
+mp_note(t0,t1,t2,t3,t4);
 C_k=C_restore_callback_continuation2(C_level);
 C_kontinue(C_k,C_r);}
 
-/* from k263 */
-C_noret_decl(stub22)
-static void C_ccall stub22(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1) C_noret;
-static void C_ccall stub22(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1){
-C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
-double t0=(double )C_c_double(C_a0);
-C_word t1=(C_word )(C_a1);
-int C_level=C_save_callback_continuation(&C_a,C_k);
-insert_closure(t0,t1);
-C_k=C_restore_callback_continuation2(C_level);
-C_kontinue(C_k,C_r);}
-
-/* from k250 */
-C_noret_decl(stub14)
-static void C_ccall stub14(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1) C_noret;
-static void C_ccall stub14(C_word C_c,C_word C_self,C_word C_k,C_word C_buf,C_word C_a0,C_word C_a1){
-C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
-double t0=(double )C_c_double(C_a0);
-C_word t1=(C_word )(C_a1);
-int C_level=C_save_callback_continuation(&C_a,C_k);
-insert_process(t0,t1);
-C_k=C_restore_callback_continuation2(C_level);
-C_kontinue(C_k,C_r);}
-
-/* from k230 in print-error in k209 in k206 in k203 in k200 */
+/* from k315 in print-error in k294 in k291 in k288 in k285 */
 static C_word C_fcall stub7(C_word C_buf,C_word C_a0) C_regparm;
 C_regparm static C_word C_fcall stub7(C_word C_buf,C_word C_a0){
 C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
@@ -135,7 +249,7 @@ char * t0=(char * )C_string_or_null(C_a0);
 print_error(t0);
 return C_r;}
 
-/* from k216 in print-message in k209 in k206 in k203 in k200 */
+/* from k301 in print-message in k294 in k291 in k288 in k285 */
 static C_word C_fcall stub1(C_word C_buf,C_word C_a0) C_regparm;
 C_regparm static C_word C_fcall stub1(C_word C_buf,C_word C_a0){
 C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
@@ -145,321 +259,472 @@ return C_r;}
 
 C_noret_decl(C_grace_toplevel)
 C_externexport void C_ccall C_grace_toplevel(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_202)
-static void C_ccall f_202(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_205)
-static void C_ccall f_205(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_208)
-static void C_ccall f_208(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_211)
-static void C_ccall f_211(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_323)
-static void C_ccall f_323(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_1109)
-static void C_ccall f_1109(C_word c,C_word t0,C_word t1,C_word t2,C_word t3) C_noret;
-C_noret_decl(f_1156)
-static void C_ccall f_1156(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_1146)
-static void C_ccall f_1146(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_287)
+static void C_ccall f_287(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_290)
+static void C_ccall f_290(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_293)
+static void C_ccall f_293(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_296)
+static void C_ccall f_296(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_769)
+static void C_ccall f_769(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1555)
+static void C_ccall f_1555(C_word c,C_word t0,C_word t1,C_word t2,C_word t3) C_noret;
+C_noret_decl(f_1602)
+static void C_ccall f_1602(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1592)
+static void C_ccall f_1592(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1559)
+static void C_ccall f_1559(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_772)
+static void C_ccall f_772(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1549)
+static void C_ccall f_1549(C_word c,C_word t0,C_word t1,C_word t2,...) C_noret;
+C_noret_decl(f_1549)
+static void C_ccall f_1549r(C_word t0,C_word t1,C_word t2,C_word t4) C_noret;
+C_noret_decl(f_788)
+static void C_ccall f_788(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1001)
+static void C_ccall f_1001(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_791)
+static void C_ccall f_791(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_794)
+static void C_ccall f_794(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_806)
+static void C_ccall f_806(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_854)
+static void C_fcall f_854(C_word t0,C_word t1,C_word t2,C_word t3,C_word t4) C_noret;
+C_noret_decl(f_870)
+static void C_ccall f_870(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_880)
+static void C_ccall f_880(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_979)
+static void C_ccall f_979(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_975)
+static void C_ccall f_975(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_924)
+static void C_ccall f_924(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_930)
+static void C_ccall f_930(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_864)
+static void C_fcall f_864(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_809)
+static void C_ccall f_809(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_814)
+static void C_fcall f_814(C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_827)
+static void C_fcall f_827(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1011)
+static void C_ccall f_1011(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1062)
+static void C_ccall f_1062(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1065)
+static void C_ccall f_1065(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1068)
+static void C_ccall f_1068(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1071)
+static void C_ccall f_1071(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1074)
+static void C_ccall f_1074(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1077)
+static void C_ccall f_1077(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1080)
+static void C_ccall f_1080(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1083)
+static void C_ccall f_1083(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1543)
+static void C_ccall f_1543(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,...) C_noret;
+C_noret_decl(f_1543)
+static void C_ccall f_1543r(C_word t0,C_word t1,C_word t2,C_word t3,C_word t5) C_noret;
+C_noret_decl(f_1101)
+static void C_ccall f_1101(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1104)
+static void C_ccall f_1104(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1378)
+static void C_fcall f_1378(C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_1486)
+static void C_ccall f_1486(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1398)
+static void C_fcall f_1398(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1407)
+static void C_fcall f_1407(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1411)
+static void C_ccall f_1411(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1415)
+static void C_ccall f_1415(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1423)
+static void C_fcall f_1423(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1419)
+static void C_ccall f_1419(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1388)
+static void C_ccall f_1388(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1107)
+static void C_ccall f_1107(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1110)
+static void C_ccall f_1110(C_word c,C_word t0,C_word t1) C_noret;
 C_noret_decl(f_1113)
 static void C_ccall f_1113(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_326)
-static void C_ccall f_326(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_1103)
-static void C_ccall f_1103(C_word c,C_word t0,C_word t1,C_word t2,...) C_noret;
-C_noret_decl(f_1103)
-static void C_ccall f_1103r(C_word t0,C_word t1,C_word t2,C_word t4) C_noret;
-C_noret_decl(f_565)
-static void C_ccall f_565(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_616)
-static void C_ccall f_616(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_619)
-static void C_ccall f_619(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_622)
-static void C_ccall f_622(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_625)
-static void C_ccall f_625(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_628)
-static void C_ccall f_628(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_631)
-static void C_ccall f_631(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_634)
-static void C_ccall f_634(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_637)
-static void C_ccall f_637(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_1097)
-static void C_ccall f_1097(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,...) C_noret;
-C_noret_decl(f_1097)
-static void C_ccall f_1097r(C_word t0,C_word t1,C_word t2,C_word t3,C_word t5) C_noret;
-C_noret_decl(f_640)
-static void C_ccall f_640(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_1095)
-static void C_ccall f_1095(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_642)
-static void C_ccall f_642(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4) C_noret;
-C_noret_decl(f_655)
-static void C_ccall f_655(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_658)
-static void C_ccall f_658(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_932)
-static void C_fcall f_932(C_word t0,C_word t1,C_word t2) C_noret;
-C_noret_decl(f_1040)
-static void C_ccall f_1040(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_952)
-static void C_fcall f_952(C_word t0,C_word t1) C_noret;
-C_noret_decl(f_961)
-static void C_fcall f_961(C_word t0,C_word t1) C_noret;
-C_noret_decl(f_965)
-static void C_ccall f_965(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_969)
-static void C_ccall f_969(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_977)
-static void C_fcall f_977(C_word t0,C_word t1) C_noret;
-C_noret_decl(f_973)
-static void C_ccall f_973(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_942)
-static void C_ccall f_942(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_661)
-static void C_ccall f_661(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_664)
-static void C_ccall f_664(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_667)
-static void C_ccall f_667(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_670)
-static void C_ccall f_670(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_673)
-static void C_ccall f_673(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_926)
-static void C_ccall f_926(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_825)
-static void C_fcall f_825(C_word t0,C_word t1) C_noret;
-C_noret_decl(f_832)
-static void C_ccall f_832(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_834)
-static void C_fcall f_834(C_word t0,C_word t1,C_word t2) C_noret;
-C_noret_decl(f_906)
-static void C_ccall f_906(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_858)
-static void C_fcall f_858(C_word t0,C_word t1) C_noret;
-C_noret_decl(f_861)
-static void C_ccall f_861(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_882)
-static void C_ccall f_882(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_848)
-static void C_ccall f_848(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1116)
+static void C_ccall f_1116(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1119)
+static void C_ccall f_1119(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1372)
+static void C_ccall f_1372(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1271)
+static void C_fcall f_1271(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1278)
+static void C_ccall f_1278(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1280)
+static void C_fcall f_1280(C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_1352)
+static void C_ccall f_1352(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1304)
+static void C_fcall f_1304(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1307)
+static void C_ccall f_1307(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1328)
+static void C_ccall f_1328(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1294)
+static void C_ccall f_1294(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1122)
+static void C_ccall f_1122(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1260)
+static void C_ccall f_1260(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1248)
+static void C_ccall f_1248(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1244)
+static void C_ccall f_1244(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1129)
+static void C_fcall f_1129(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1086)
+static void C_ccall f_1086(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1541)
+static void C_ccall f_1541(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1055)
+static void C_ccall f_1055(C_word c,C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_1049)
+static void C_ccall f_1049(C_word c,C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_1043)
+static void C_ccall f_1043(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_1037)
+static void C_ccall f_1037(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5) C_noret;
+C_noret_decl(f_1031)
+static void C_ccall f_1031(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4) C_noret;
+C_noret_decl(f_1025)
+static void C_ccall f_1025(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5) C_noret;
+C_noret_decl(f_1019)
+static void C_ccall f_1019(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5) C_noret;
+C_noret_decl(f_1013)
+static void C_ccall f_1013(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5,C_word t6) C_noret;
+C_noret_decl(f_330)
+static void C_ccall f_330(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_774)
+static void C_fcall f_774(C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_782)
+static void C_ccall f_782(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_758)
+static void C_ccall f_758(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_440)
+static void C_ccall f_440(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_762)
+static void C_ccall f_762(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_700)
+static void C_ccall f_700(C_word c,C_word t0,C_word t1,...) C_noret;
+C_noret_decl(f_700)
+static void C_ccall f_700r(C_word t0,C_word t1,C_word t3) C_noret;
+C_noret_decl(f_718)
+static void C_fcall f_718(C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_728)
+static void C_ccall f_728(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_704)
+static void C_ccall f_704(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_691)
+static void C_ccall f_691(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_418)
+static void C_ccall f_418(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_695)
+static void C_ccall f_695(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_685)
+static void C_ccall f_685(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_400)
+static void C_ccall f_400(C_word c,C_word t0,C_word t1) C_noret;
 C_noret_decl(f_676)
 static void C_ccall f_676(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_814)
-static void C_ccall f_814(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_802)
-static void C_ccall f_802(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_798)
-static void C_ccall f_798(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_683)
-static void C_fcall f_683(C_word t0,C_word t1) C_noret;
-C_noret_decl(f_609)
-static void C_ccall f_609(C_word c,C_word t0,C_word t1,C_word t2) C_noret;
-C_noret_decl(f_603)
-static void C_ccall f_603(C_word c,C_word t0,C_word t1,C_word t2) C_noret;
-C_noret_decl(f_597)
-static void C_ccall f_597(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_591)
-static void C_ccall f_591(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5) C_noret;
-C_noret_decl(f_585)
-static void C_ccall f_585(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4) C_noret;
-C_noret_decl(f_579)
-static void C_ccall f_579(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5) C_noret;
-C_noret_decl(f_573)
-static void C_ccall f_573(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5) C_noret;
-C_noret_decl(f_567)
-static void C_ccall f_567(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5,C_word t6) C_noret;
-C_noret_decl(f_338)
-static void C_ccall f_338(C_word c,C_word t0,C_word t1,C_word t2,C_word t3) C_noret;
-C_noret_decl(f_342)
-static void C_ccall f_342(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_555)
-static void C_ccall f_555(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_345)
-static void C_ccall f_345(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_348)
-static void C_ccall f_348(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_360)
-static void C_ccall f_360(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_408)
-static void C_fcall f_408(C_word t0,C_word t1,C_word t2,C_word t3,C_word t4) C_noret;
-C_noret_decl(f_424)
-static void C_ccall f_424(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_434)
-static void C_ccall f_434(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_533)
-static void C_ccall f_533(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_529)
-static void C_ccall f_529(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_478)
-static void C_ccall f_478(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_484)
-static void C_ccall f_484(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_418)
-static void C_fcall f_418(C_word t0,C_word t1) C_noret;
-C_noret_decl(f_363)
-static void C_ccall f_363(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_368)
-static void C_fcall f_368(C_word t0,C_word t1,C_word t2) C_noret;
-C_noret_decl(f_381)
-static void C_fcall f_381(C_word t0,C_word t1) C_noret;
-C_noret_decl(f_328)
-static void C_fcall f_328(C_word t0,C_word t1,C_word t2) C_noret;
-C_noret_decl(f_336)
-static void C_ccall f_336(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_318)
-static void C_ccall f_318(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_308)
-static void C_ccall f_308(C_word c,C_word t0,C_word t1,C_word t2,C_word t3) C_noret;
-C_noret_decl(f_302)
-static void C_ccall f_302(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4) C_noret;
-C_noret_decl(f_296)
-static void C_ccall f_296(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5) C_noret;
-C_noret_decl(f_267)
-static void C_ccall f_267(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5,C_word t6) C_noret;
-C_noret_decl(f_271)
-static void C_ccall f_271(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_254)
-static void C_ccall f_254(C_word c,C_word t0,C_word t1,C_word t2,C_word t3) C_noret;
-C_noret_decl(f_258)
-static void C_ccall f_258(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_241)
-static void C_ccall f_241(C_word c,C_word t0,C_word t1,C_word t2,C_word t3) C_noret;
-C_noret_decl(f_245)
-static void C_ccall f_245(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_227)
-static void C_ccall f_227(C_word c,C_word t0,C_word t1,C_word t2) C_noret;
-C_noret_decl(f_232)
-static void C_ccall f_232(C_word c,C_word t0,C_word t1) C_noret;
-C_noret_decl(f_213)
-static void C_ccall f_213(C_word c,C_word t0,C_word t1,C_word t2) C_noret;
-C_noret_decl(f_218)
-static void C_ccall f_218(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_409)
+static void C_ccall f_409(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_680)
+static void C_ccall f_680(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_613)
+static void C_ccall f_613(C_word c,C_word t0,C_word t1,...) C_noret;
+C_noret_decl(f_613)
+static void C_ccall f_613r(C_word t0,C_word t1,C_word t3) C_noret;
+C_noret_decl(f_638)
+static void C_fcall f_638(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_365)
+static void C_ccall f_365(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_626)
+static void C_ccall f_626(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_445)
+static void C_ccall f_445(C_word c,C_word t0,C_word t1,C_word t2,...) C_noret;
+C_noret_decl(f_445)
+static void C_ccall f_445r(C_word t0,C_word t1,C_word t2,C_word t4) C_noret;
+C_noret_decl(f_564)
+static void C_fcall f_564(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_559)
+static void C_fcall f_559(C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_447)
+static void C_fcall f_447(C_word t0,C_word t1,C_word t2,C_word t3) C_noret;
+C_noret_decl(f_554)
+static void C_ccall f_554(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_558)
+static void C_ccall f_558(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_550)
+static void C_ccall f_550(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_518)
+static void C_fcall f_518(C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_543)
+static void C_ccall f_543(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_547)
+static void C_ccall f_547(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_528)
+static void C_ccall f_528(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_507)
+static void C_ccall f_507(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_477)
+static void C_fcall f_477(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_449)
+static void C_fcall f_449(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_423)
+static void C_fcall f_423(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_427)
+static void C_ccall f_427(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_379)
+static void C_fcall f_379(C_word t0,C_word t1,C_word t2,C_word t3) C_noret;
+C_noret_decl(f_383)
+static void C_ccall f_383(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_370)
+static void C_fcall f_370(C_word t0,C_word t1) C_noret;
+C_noret_decl(f_374)
+static void C_ccall f_374(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_358)
+static void C_ccall f_358(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_355)
+static void C_ccall f_355(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_312)
+static void C_ccall f_312(C_word c,C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_317)
+static void C_ccall f_317(C_word c,C_word t0,C_word t1) C_noret;
+C_noret_decl(f_298)
+static void C_ccall f_298(C_word c,C_word t0,C_word t1,C_word t2) C_noret;
+C_noret_decl(f_303)
+static void C_ccall f_303(C_word c,C_word t0,C_word t1) C_noret;
 
-/* from run_process */
- double  run_process(C_word t0,double t1){
-C_word x, *a=C_alloc(0+3);
-C_callback_adjust_stack_limits(a);
-x=((C_word)t0);
-C_save(x);
-x=C_flonum(&a,t1);
-C_save(x);
-return C_c_double(C_callback_wrapper((void *)f_308,2));}
-
-C_noret_decl(trf_932)
-static void C_fcall trf_932(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_932(void *dummy){
-C_word t2=C_pick(0);
-C_word t1=C_pick(1);
-C_word t0=C_pick(2);
-C_adjust_stack(-3);
-f_932(t0,t1,t2);}
-
-C_noret_decl(trf_952)
-static void C_fcall trf_952(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_952(void *dummy){
-C_word t1=C_pick(0);
-C_word t0=C_pick(1);
-C_adjust_stack(-2);
-f_952(t0,t1);}
-
-C_noret_decl(trf_961)
-static void C_fcall trf_961(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_961(void *dummy){
-C_word t1=C_pick(0);
-C_word t0=C_pick(1);
-C_adjust_stack(-2);
-f_961(t0,t1);}
-
-C_noret_decl(trf_977)
-static void C_fcall trf_977(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_977(void *dummy){
-C_word t1=C_pick(0);
-C_word t0=C_pick(1);
-C_adjust_stack(-2);
-f_977(t0,t1);}
-
-C_noret_decl(trf_825)
-static void C_fcall trf_825(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_825(void *dummy){
-C_word t1=C_pick(0);
-C_word t0=C_pick(1);
-C_adjust_stack(-2);
-f_825(t0,t1);}
-
-C_noret_decl(trf_834)
-static void C_fcall trf_834(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_834(void *dummy){
-C_word t2=C_pick(0);
-C_word t1=C_pick(1);
-C_word t0=C_pick(2);
-C_adjust_stack(-3);
-f_834(t0,t1,t2);}
-
-C_noret_decl(trf_858)
-static void C_fcall trf_858(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_858(void *dummy){
-C_word t1=C_pick(0);
-C_word t0=C_pick(1);
-C_adjust_stack(-2);
-f_858(t0,t1);}
-
-C_noret_decl(trf_683)
-static void C_fcall trf_683(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_683(void *dummy){
-C_word t1=C_pick(0);
-C_word t0=C_pick(1);
-C_adjust_stack(-2);
-f_683(t0,t1);}
-
-C_noret_decl(trf_408)
-static void C_fcall trf_408(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_408(void *dummy){
+C_noret_decl(trf_854)
+static void C_fcall trf_854(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_854(void *dummy){
 C_word t4=C_pick(0);
 C_word t3=C_pick(1);
 C_word t2=C_pick(2);
 C_word t1=C_pick(3);
 C_word t0=C_pick(4);
 C_adjust_stack(-5);
-f_408(t0,t1,t2,t3,t4);}
+f_854(t0,t1,t2,t3,t4);}
 
-C_noret_decl(trf_418)
-static void C_fcall trf_418(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_418(void *dummy){
+C_noret_decl(trf_864)
+static void C_fcall trf_864(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_864(void *dummy){
 C_word t1=C_pick(0);
 C_word t0=C_pick(1);
 C_adjust_stack(-2);
-f_418(t0,t1);}
+f_864(t0,t1);}
 
-C_noret_decl(trf_368)
-static void C_fcall trf_368(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_368(void *dummy){
+C_noret_decl(trf_814)
+static void C_fcall trf_814(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_814(void *dummy){
 C_word t2=C_pick(0);
 C_word t1=C_pick(1);
 C_word t0=C_pick(2);
 C_adjust_stack(-3);
-f_368(t0,t1,t2);}
+f_814(t0,t1,t2);}
 
-C_noret_decl(trf_381)
-static void C_fcall trf_381(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_381(void *dummy){
+C_noret_decl(trf_827)
+static void C_fcall trf_827(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_827(void *dummy){
 C_word t1=C_pick(0);
 C_word t0=C_pick(1);
 C_adjust_stack(-2);
-f_381(t0,t1);}
+f_827(t0,t1);}
 
-C_noret_decl(trf_328)
-static void C_fcall trf_328(void *dummy) C_regparm C_noret;
-C_regparm static void C_fcall trf_328(void *dummy){
+C_noret_decl(trf_1378)
+static void C_fcall trf_1378(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_1378(void *dummy){
 C_word t2=C_pick(0);
 C_word t1=C_pick(1);
 C_word t0=C_pick(2);
 C_adjust_stack(-3);
-f_328(t0,t1,t2);}
+f_1378(t0,t1,t2);}
+
+C_noret_decl(trf_1398)
+static void C_fcall trf_1398(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_1398(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_1398(t0,t1);}
+
+C_noret_decl(trf_1407)
+static void C_fcall trf_1407(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_1407(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_1407(t0,t1);}
+
+C_noret_decl(trf_1423)
+static void C_fcall trf_1423(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_1423(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_1423(t0,t1);}
+
+C_noret_decl(trf_1271)
+static void C_fcall trf_1271(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_1271(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_1271(t0,t1);}
+
+C_noret_decl(trf_1280)
+static void C_fcall trf_1280(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_1280(void *dummy){
+C_word t2=C_pick(0);
+C_word t1=C_pick(1);
+C_word t0=C_pick(2);
+C_adjust_stack(-3);
+f_1280(t0,t1,t2);}
+
+C_noret_decl(trf_1304)
+static void C_fcall trf_1304(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_1304(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_1304(t0,t1);}
+
+C_noret_decl(trf_1129)
+static void C_fcall trf_1129(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_1129(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_1129(t0,t1);}
+
+C_noret_decl(trf_774)
+static void C_fcall trf_774(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_774(void *dummy){
+C_word t2=C_pick(0);
+C_word t1=C_pick(1);
+C_word t0=C_pick(2);
+C_adjust_stack(-3);
+f_774(t0,t1,t2);}
+
+C_noret_decl(trf_718)
+static void C_fcall trf_718(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_718(void *dummy){
+C_word t2=C_pick(0);
+C_word t1=C_pick(1);
+C_word t0=C_pick(2);
+C_adjust_stack(-3);
+f_718(t0,t1,t2);}
+
+C_noret_decl(trf_638)
+static void C_fcall trf_638(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_638(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_638(t0,t1);}
+
+C_noret_decl(trf_564)
+static void C_fcall trf_564(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_564(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_564(t0,t1);}
+
+C_noret_decl(trf_559)
+static void C_fcall trf_559(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_559(void *dummy){
+C_word t2=C_pick(0);
+C_word t1=C_pick(1);
+C_word t0=C_pick(2);
+C_adjust_stack(-3);
+f_559(t0,t1,t2);}
+
+C_noret_decl(trf_447)
+static void C_fcall trf_447(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_447(void *dummy){
+C_word t3=C_pick(0);
+C_word t2=C_pick(1);
+C_word t1=C_pick(2);
+C_word t0=C_pick(3);
+C_adjust_stack(-4);
+f_447(t0,t1,t2,t3);}
+
+C_noret_decl(trf_518)
+static void C_fcall trf_518(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_518(void *dummy){
+C_word t2=C_pick(0);
+C_word t1=C_pick(1);
+C_word t0=C_pick(2);
+C_adjust_stack(-3);
+f_518(t0,t1,t2);}
+
+C_noret_decl(trf_477)
+static void C_fcall trf_477(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_477(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_477(t0,t1);}
+
+C_noret_decl(trf_449)
+static void C_fcall trf_449(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_449(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_449(t0,t1);}
+
+C_noret_decl(trf_423)
+static void C_fcall trf_423(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_423(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_423(t0,t1);}
+
+C_noret_decl(trf_379)
+static void C_fcall trf_379(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_379(void *dummy){
+C_word t3=C_pick(0);
+C_word t2=C_pick(1);
+C_word t1=C_pick(2);
+C_word t0=C_pick(3);
+C_adjust_stack(-4);
+f_379(t0,t1,t2,t3);}
+
+C_noret_decl(trf_370)
+static void C_fcall trf_370(void *dummy) C_regparm C_noret;
+C_regparm static void C_fcall trf_370(void *dummy){
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+f_370(t0,t1);}
 
 C_noret_decl(tr7)
 static void C_fcall tr7(C_proc7 k) C_regparm C_noret;
@@ -473,6 +738,17 @@ C_word t1=C_pick(5);
 C_word t0=C_pick(6);
 C_adjust_stack(-7);
 (k)(7,t0,t1,t2,t3,t4,t5,t6);}
+
+C_noret_decl(tr5)
+static void C_fcall tr5(C_proc5 k) C_regparm C_noret;
+C_regparm static void C_fcall tr5(C_proc5 k){
+C_word t4=C_pick(0);
+C_word t3=C_pick(1);
+C_word t2=C_pick(2);
+C_word t1=C_pick(3);
+C_word t0=C_pick(4);
+C_adjust_stack(-5);
+(k)(5,t0,t1,t2,t3,t4);}
 
 C_noret_decl(tr6)
 static void C_fcall tr6(C_proc6 k) C_regparm C_noret;
@@ -495,17 +771,6 @@ C_word t0=C_pick(2);
 C_adjust_stack(-3);
 (k)(3,t0,t1,t2);}
 
-C_noret_decl(tr5)
-static void C_fcall tr5(C_proc5 k) C_regparm C_noret;
-C_regparm static void C_fcall tr5(C_proc5 k){
-C_word t4=C_pick(0);
-C_word t3=C_pick(1);
-C_word t2=C_pick(2);
-C_word t1=C_pick(3);
-C_word t0=C_pick(4);
-C_adjust_stack(-5);
-(k)(5,t0,t1,t2,t3,t4);}
-
 C_noret_decl(tr4)
 static void C_fcall tr4(C_proc4 k) C_regparm C_noret;
 C_regparm static void C_fcall tr4(C_proc4 k){
@@ -523,6 +788,19 @@ C_word t1=C_pick(0);
 C_word t0=C_pick(1);
 C_adjust_stack(-2);
 (k)(2,t0,t1);}
+
+C_noret_decl(tr2r)
+static void C_fcall tr2r(C_proc2 k) C_regparm C_noret;
+C_regparm static void C_fcall tr2r(C_proc2 k){
+int n;
+C_word *a,t2;
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+n=C_rest_count(0);
+a=C_alloc(n*3);
+t2=C_restore_rest(a,n);
+(k)(t0,t1,t2);}
 
 C_noret_decl(tr4r)
 static void C_fcall tr4r(C_proc4 k) C_regparm C_noret;
@@ -553,6 +831,19 @@ a=C_alloc(n*3);
 t3=C_restore_rest(a,n);
 (k)(t0,t1,t2,t3);}
 
+C_noret_decl(tr2rv)
+static void C_fcall tr2rv(C_proc2 k) C_regparm C_noret;
+C_regparm static void C_fcall tr2rv(C_proc2 k){
+int n;
+C_word *a,t2;
+C_word t1=C_pick(0);
+C_word t0=C_pick(1);
+C_adjust_stack(-2);
+n=C_rest_count(0);
+a=C_alloc(n+1);
+t2=C_restore_rest_vector(a,n);
+(k)(t0,t1,t2);}
+
 /* toplevel */
 static C_TLS int toplevel_initialized=0;
 C_noret_decl(toplevel_trampoline)
@@ -572,119 +863,126 @@ if(!C_demand(3)){
 C_save(t1);
 C_reclaim((void*)toplevel_trampoline,NULL);}
 toplevel_initialized=1;
-if(!C_demand_2(1150)){
+if(!C_demand_2(1164)){
 C_save(t1);
-C_rereclaim2(1150*sizeof(C_word), 1);
+C_rereclaim2(1164*sizeof(C_word), 1);
 t1=C_restore;}
 a=C_alloc(3);
-C_initialize_lf(lf,134);
+C_initialize_lf(lf,160);
 lf[0]=C_h_intern(&lf[0],13,"print-message");
 lf[1]=C_h_intern(&lf[1],17,"\003sysmake-c-string");
 lf[2]=C_static_lambda_info(C_heaptop,19,"(print-message a04)");
 lf[3]=C_h_intern(&lf[3],11,"print-error");
 lf[4]=C_static_lambda_info(C_heaptop,18,"(print-error a610)");
-lf[5]=C_h_intern(&lf[5],14,"insert-process");
-lf[6]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
-lf[7]=C_h_intern(&lf[7],6,"\003sysgc");
-lf[8]=C_static_lambda_info(C_heaptop,28,"(insert-process a1316 a1217)");
-lf[9]=C_h_intern(&lf[9],14,"insert-closure");
+lf[6]=C_static_lambda_info(C_heaptop,27,"(current-time-milliseconds)");
+lf[8]=C_static_lambda_info(C_heaptop,22,"(current-time-seconds)");
 lf[10]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
-lf[11]=C_static_lambda_info(C_heaptop,28,"(insert-closure a2124 a2025)");
-lf[12]=C_h_intern(&lf[12],16,"insert-midi-note");
-lf[13]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
-lf[14]=C_static_lambda_info(C_heaptop,48,"(insert-midi-note a3235 a3136 a3037 a2938 a2839)");
-lf[15]=C_h_intern(&lf[15],12,"make-note-on");
-lf[16]=C_h_intern(&lf[16],14,"insert-midi-on");
-lf[17]=C_static_lambda_info(C_heaptop,30,"(make-note-on t42 k43 v44 c45)");
-lf[18]=C_h_intern(&lf[18],13,"make-note-off");
-lf[19]=C_flonum(C_heaptop,0.0);
-lf[20]=C_static_lambda_info(C_heaptop,27,"(make-note-off t46 k47 c48)");
-lf[21]=C_h_intern(&lf[21],11,"run_process");
-lf[22]=C_static_lambda_info(C_heaptop,33,"(run_process closure49 elapsed50)");
-lf[23]=C_h_intern(&lf[23],19,"current-time-hi-res");
-lf[24]=C_static_lambda_info(C_heaptop,21,"(current-time-hi-res)");
-lf[27]=C_h_intern(&lf[27],5,"error");
-lf[28]=C_h_intern(&lf[28],7,"sprintf");
-lf[29]=C_static_lambda_info(C_heaptop,21,"(ferror str62 args63)");
-lf[30]=C_h_intern(&lf[30],11,"expand-send");
-lf[31]=C_static_lambda_info(C_heaptop,13,"(do91 tail93)");
-lf[32]=C_static_string(C_heaptop,37,"~S found duplicate keyword \047~S\047 in ~S");
-lf[33]=C_static_string(C_heaptop,33,"~S missing value for keyword \047~S\047");
-lf[34]=C_static_string(C_heaptop,53,"~S found invalid keyword \047~S\047~%Available keywords: ~S");
-lf[35]=C_h_intern(&lf[35],7,"\003sysmap");
-lf[36]=C_h_intern(&lf[36],3,"car");
-lf[37]=C_static_string(C_heaptop,32,"~S expected keyword but got \047~S\047");
-lf[38]=C_h_intern(&lf[38],8,"keyword\077");
-lf[39]=C_static_string(C_heaptop,35,"~S expected ~A arguments but got ~A");
-lf[40]=C_static_lambda_info(C_heaptop,24,"(do74 key76 arg77 pos78)");
-lf[41]=C_h_intern(&lf[41],6,"append");
-lf[42]=C_static_string(C_heaptop,24,"~S is an invalid message");
-lf[43]=C_static_lambda_info(C_heaptop,6,"(a554)");
-lf[44]=C_h_intern(&lf[44],14,"hash-table-ref");
-lf[45]=C_h_intern(&lf[45],14,"symbol->string");
-lf[46]=C_static_lambda_info(C_heaptop,27,"(expand-send mesg64 data65)");
-lf[47]=C_h_intern(&lf[47],7,"mp:note");
-lf[48]=C_static_lambda_info(C_heaptop,46,"(mp:note time100 dur101 key102 amp103 chan104)");
-lf[49]=C_h_intern(&lf[49],5,"mp:on");
-lf[50]=C_static_string(C_heaptop,33,"message function not implemented.");
-lf[51]=C_static_lambda_info(C_heaptop,37,"(mp:on time105 key106 vel107 chan108)");
-lf[52]=C_h_intern(&lf[52],6,"mp:off");
-lf[53]=C_static_string(C_heaptop,33,"message function not implemented.");
-lf[54]=C_static_lambda_info(C_heaptop,38,"(mp:off time109 key110 vel111 chan112)");
-lf[55]=C_h_intern(&lf[55],7,"mp:prog");
-lf[56]=C_static_string(C_heaptop,33,"message function not implemented.");
-lf[57]=C_static_lambda_info(C_heaptop,33,"(mp:prog time113 prog114 chan115)");
-lf[58]=C_h_intern(&lf[58],7,"mp:ctrl");
-lf[59]=C_static_string(C_heaptop,33,"message function not implemented.");
-lf[60]=C_static_lambda_info(C_heaptop,40,"(mp:ctrl time116 ctrl117 val118 chan119)");
-lf[61]=C_h_intern(&lf[61],9,"mp:alloff");
-lf[62]=C_static_string(C_heaptop,33,"message function not implemented.");
-lf[63]=C_static_lambda_info(C_heaptop,11,"(mp:alloff)");
-lf[64]=C_h_intern(&lf[64],8,"mp:micro");
-lf[65]=C_static_string(C_heaptop,33,"message function not implemented.");
-lf[66]=C_static_lambda_info(C_heaptop,18,"(mp:micro divs120)");
-lf[67]=C_h_intern(&lf[67],9,"mp:inhook");
-lf[68]=C_static_string(C_heaptop,33,"message function not implemented.");
-lf[69]=C_static_lambda_info(C_heaptop,19,"(mp:inhook func121)");
-lf[70]=C_h_intern(&lf[70],9,"expand-go");
-lf[71]=C_h_intern(&lf[71],4,"else");
-lf[72]=C_h_intern(&lf[72],4,"cond");
-lf[73]=C_h_intern(&lf[73],6,"lambda");
-lf[74]=C_h_intern(&lf[74],7,"elapsed");
-lf[75]=C_h_intern(&lf[75],1,"x");
-lf[76]=C_h_intern(&lf[76],4,"set!");
-lf[77]=C_h_intern(&lf[77],4,"wait");
-lf[78]=C_h_intern(&lf[78],4,"let*");
-lf[79]=C_h_intern(&lf[79],5,"quote");
-lf[80]=C_h_intern(&lf[80],3,"exn");
-lf[81]=C_h_intern(&lf[81],7,"message");
-lf[82]=C_h_intern(&lf[82],27,"condition-property-accessor");
-lf[83]=C_h_intern(&lf[83],6,"printf");
-lf[84]=C_static_string(C_heaptop,47,">>> Aborting process at time ~S:~%    Error: ~S");
-lf[85]=C_h_intern(&lf[85],22,"with-exception-handler");
-lf[86]=C_h_intern(&lf[86],30,"call-with-current-continuation");
-lf[87]=C_h_intern(&lf[87],10,"\003sysappend");
-lf[88]=C_h_intern(&lf[88],6,"safety");
-lf[89]=C_h_intern(&lf[89],4,"cdar");
-lf[90]=C_static_string(C_heaptop,19,"unknown declaration");
-lf[91]=C_h_intern(&lf[91],4,"caar");
-lf[92]=C_static_string(C_heaptop,31,"declaration not list (decl val)");
-lf[93]=C_static_lambda_info(C_heaptop,15,"(do147 decl149)");
-lf[94]=C_h_intern(&lf[94],7,"declare");
-lf[95]=C_h_intern(&lf[95],6,"gensym");
-lf[96]=C_h_intern(&lf[96],5,"\000null");
-lf[97]=C_static_string(C_heaptop,41,"binding clause not list (var init [step])");
-lf[98]=C_static_lambda_info(C_heaptop,15,"(do131 tail133)");
-lf[99]=C_static_string(C_heaptop,36,"go stopping clause missing test form");
-lf[100]=C_static_string(C_heaptop,29,"go stopping clause not a list");
-lf[101]=C_static_string(C_heaptop,22,"go bindings not a list");
-lf[102]=C_static_lambda_info(C_heaptop,44,"(expand-go bindings125 terminate126 body127)");
-lf[103]=C_h_intern(&lf[103],14,"return-to-host");
-lf[104]=C_static_lambda_info(C_heaptop,42,"(a1096 bindings122 terminate123 . body124)");
-lf[105]=C_h_intern(&lf[105],18,"\003sysregister-macro");
-lf[106]=C_h_intern(&lf[106],2,"go");
-lf[107]=C_h_intern(&lf[107],15,"hash-table-set!");
-lf[108]=C_static_string(C_heaptop,9,"mp:inhook");
+lf[11]=C_h_intern(&lf[11],6,"\003sysgc");
+lf[12]=C_static_lambda_info(C_heaptop,39,"(scheduler-set-time-milliseconds a3538)");
+lf[14]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
+lf[15]=C_static_lambda_info(C_heaptop,36,"(scheduler-sprout a4346 a4247 a4148)");
+lf[17]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
+lf[18]=C_static_lambda_info(C_heaptop,22,"(scheduler-stop a6366)");
+lf[19]=C_h_intern(&lf[19],6,"sprout");
+lf[20]=C_static_lambda_info(C_heaptop,11,"(nextstart)");
+lf[21]=C_static_lambda_info(C_heaptop,8,"(nextid)");
+lf[22]=C_static_lambda_info(C_heaptop,10,"(do91 p93)");
+lf[23]=C_static_lambda_info(C_heaptop,21,"(body77 start83 id84)");
+lf[24]=C_static_lambda_info(C_heaptop,21,"(def-id80 %start7599)");
+lf[25]=C_static_lambda_info(C_heaptop,13,"(def-start79)");
+lf[26]=C_h_intern(&lf[26],9,"\003syserror");
+lf[27]=C_static_string(C_heaptop,27,"too many optional arguments");
+lf[28]=C_static_lambda_info(C_heaptop,24,"(sprout proc73 . args74)");
+lf[29]=C_h_intern(&lf[29],3,"now");
+lf[30]=C_h_intern(&lf[30],11,"time-format");
+lf[31]=C_flonum(C_heaptop,1.0);
+lf[32]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
+lf[33]=C_flonum(C_heaptop,1.0);
+lf[34]=C_h_intern(&lf[34],1,"m");
+lf[35]=C_h_intern(&lf[35],5,"error");
+lf[36]=C_static_string(C_heaptop,17,"not a time-format");
+lf[37]=C_h_intern(&lf[37],1,"s");
+lf[38]=C_static_lambda_info(C_heaptop,22,"(time-format . arg106)");
+lf[39]=C_h_intern(&lf[39],5,"pause");
+lf[40]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
+lf[41]=C_static_lambda_info(C_heaptop,7,"(pause)");
+lf[42]=C_h_intern(&lf[42],7,"paused\077");
+lf[43]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
+lf[44]=C_static_lambda_info(C_heaptop,9,"(paused\077)");
+lf[45]=C_h_intern(&lf[45],4,"cont");
+lf[46]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
+lf[47]=C_static_lambda_info(C_heaptop,6,"(cont)");
+lf[48]=C_h_intern(&lf[48],4,"stop");
+lf[49]=C_static_string(C_heaptop,17,"Not an integer id");
+lf[50]=C_static_lambda_info(C_heaptop,15,"(do120 tail122)");
+lf[51]=C_static_lambda_info(C_heaptop,18,"(stop . procid119)");
+lf[52]=C_h_intern(&lf[52],4,"hush");
+lf[53]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
+lf[54]=C_static_lambda_info(C_heaptop,6,"(hush)");
+lf[57]=C_h_intern(&lf[57],7,"sprintf");
+lf[58]=C_static_lambda_info(C_heaptop,23,"(ferror str133 args134)");
+lf[59]=C_h_intern(&lf[59],7,"mp:note");
+lf[60]=C_static_lambda_info(C_heaptop,3,"\000\000\000");
+lf[61]=C_static_lambda_info(C_heaptop,46,"(mp:note time171 dur172 key173 amp174 chan175)");
+lf[62]=C_h_intern(&lf[62],5,"mp:on");
+lf[63]=C_static_string(C_heaptop,33,"message function not implemented.");
+lf[64]=C_static_lambda_info(C_heaptop,37,"(mp:on time176 key177 vel178 chan179)");
+lf[65]=C_h_intern(&lf[65],6,"mp:off");
+lf[66]=C_static_string(C_heaptop,33,"message function not implemented.");
+lf[67]=C_static_lambda_info(C_heaptop,38,"(mp:off time180 key181 vel182 chan183)");
+lf[68]=C_h_intern(&lf[68],7,"mp:prog");
+lf[69]=C_static_string(C_heaptop,33,"message function not implemented.");
+lf[70]=C_static_lambda_info(C_heaptop,33,"(mp:prog time184 prog185 chan186)");
+lf[71]=C_h_intern(&lf[71],7,"mp:ctrl");
+lf[72]=C_static_string(C_heaptop,33,"message function not implemented.");
+lf[73]=C_static_lambda_info(C_heaptop,40,"(mp:ctrl time187 ctrl188 val189 chan190)");
+lf[74]=C_h_intern(&lf[74],9,"mp:alloff");
+lf[75]=C_static_string(C_heaptop,33,"message function not implemented.");
+lf[76]=C_static_lambda_info(C_heaptop,11,"(mp:alloff)");
+lf[77]=C_h_intern(&lf[77],8,"mp:micro");
+lf[78]=C_static_string(C_heaptop,33,"message function not implemented.");
+lf[79]=C_static_lambda_info(C_heaptop,18,"(mp:micro divs191)");
+lf[80]=C_h_intern(&lf[80],9,"mp:inhook");
+lf[81]=C_static_string(C_heaptop,33,"message function not implemented.");
+lf[82]=C_static_lambda_info(C_heaptop,19,"(mp:inhook func192)");
+lf[83]=C_h_intern(&lf[83],14,"return-to-host");
+lf[84]=C_h_intern(&lf[84],4,"else");
+lf[85]=C_h_intern(&lf[85],4,"cond");
+lf[86]=C_h_intern(&lf[86],6,"lambda");
+lf[87]=C_h_intern(&lf[87],7,"elapsed");
+lf[88]=C_h_intern(&lf[88],1,"x");
+lf[89]=C_h_intern(&lf[89],4,"set!");
+lf[90]=C_h_intern(&lf[90],4,"wait");
+lf[91]=C_h_intern(&lf[91],4,"let*");
+lf[92]=C_h_intern(&lf[92],5,"quote");
+lf[93]=C_h_intern(&lf[93],3,"exn");
+lf[94]=C_h_intern(&lf[94],7,"message");
+lf[95]=C_h_intern(&lf[95],27,"condition-property-accessor");
+lf[96]=C_h_intern(&lf[96],6,"printf");
+lf[97]=C_static_string(C_heaptop,47,">>> Aborting process at time ~S:~%    Error: ~S");
+lf[98]=C_h_intern(&lf[98],22,"with-exception-handler");
+lf[99]=C_h_intern(&lf[99],30,"call-with-current-continuation");
+lf[100]=C_h_intern(&lf[100],10,"\003sysappend");
+lf[101]=C_h_intern(&lf[101],6,"safety");
+lf[102]=C_h_intern(&lf[102],4,"cdar");
+lf[103]=C_static_string(C_heaptop,19,"unknown declaration");
+lf[104]=C_h_intern(&lf[104],4,"caar");
+lf[105]=C_static_string(C_heaptop,31,"declaration not list (decl val)");
+lf[106]=C_static_lambda_info(C_heaptop,15,"(do218 decl220)");
+lf[107]=C_h_intern(&lf[107],7,"declare");
+lf[108]=C_h_intern(&lf[108],6,"gensym");
+lf[109]=C_h_intern(&lf[109],6,"append");
+lf[110]=C_h_intern(&lf[110],5,"\000null");
+lf[111]=C_static_string(C_heaptop,41,"binding clause not list (var init [step])");
+lf[112]=C_static_lambda_info(C_heaptop,15,"(do202 tail204)");
+lf[113]=C_static_string(C_heaptop,36,"go stopping clause missing test form");
+lf[114]=C_static_string(C_heaptop,29,"go stopping clause not a list");
+lf[115]=C_static_string(C_heaptop,22,"go bindings not a list");
+lf[116]=C_static_lambda_info(C_heaptop,42,"(a1542 bindings193 terminate194 . body195)");
+lf[117]=C_h_intern(&lf[117],18,"\003sysregister-macro");
+lf[118]=C_h_intern(&lf[118],2,"go");
+lf[119]=C_h_intern(&lf[119],15,"hash-table-set!");
+lf[120]=C_static_string(C_heaptop,9,"mp:inhook");
 tmp=C_intern(C_heaptop,9,"mp:inhook");
 C_save(tmp);
 tmp=C_intern(C_heaptop,5,"\000func");
@@ -694,9 +992,9 @@ C_save(tmp);
 tmp=C_h_list(2,C_pick(1),C_pick(0));
 C_drop(2);
 C_save(tmp);
-lf[109]=C_h_list(2,C_pick(1),C_pick(0));
+lf[121]=C_h_list(2,C_pick(1),C_pick(0));
 C_drop(2);
-lf[110]=C_static_string(C_heaptop,8,"mp:micro");
+lf[122]=C_static_string(C_heaptop,8,"mp:micro");
 tmp=C_intern(C_heaptop,8,"mp:micro");
 C_save(tmp);
 tmp=C_intern(C_heaptop,5,"\000divs");
@@ -706,14 +1004,14 @@ C_save(tmp);
 tmp=C_h_list(2,C_pick(1),C_pick(0));
 C_drop(2);
 C_save(tmp);
-lf[111]=C_h_list(2,C_pick(1),C_pick(0));
+lf[123]=C_h_list(2,C_pick(1),C_pick(0));
 C_drop(2);
-lf[112]=C_static_string(C_heaptop,9,"mp:alloff");
+lf[124]=C_static_string(C_heaptop,9,"mp:alloff");
 tmp=C_intern(C_heaptop,9,"mp:alloff");
 C_save(tmp);
 tmp=C_SCHEME_END_OF_LIST;
-lf[113]=C_h_pair(C_restore,tmp);
-lf[114]=C_static_string(C_heaptop,7,"mp:ctrl");
+lf[125]=C_h_pair(C_restore,tmp);
+lf[126]=C_static_string(C_heaptop,7,"mp:ctrl");
 tmp=C_intern(C_heaptop,7,"mp:ctrl");
 C_save(tmp);
 tmp=C_intern(C_heaptop,5,"\000time");
@@ -744,9 +1042,9 @@ C_save(tmp);
 tmp=C_h_list(2,C_pick(1),C_pick(0));
 C_drop(2);
 C_save(tmp);
-lf[115]=C_h_list(5,C_pick(4),C_pick(3),C_pick(2),C_pick(1),C_pick(0));
+lf[127]=C_h_list(5,C_pick(4),C_pick(3),C_pick(2),C_pick(1),C_pick(0));
 C_drop(5);
-lf[116]=C_static_string(C_heaptop,7,"mp:prog");
+lf[128]=C_static_string(C_heaptop,7,"mp:prog");
 tmp=C_intern(C_heaptop,7,"mp:prog");
 C_save(tmp);
 tmp=C_intern(C_heaptop,5,"\000time");
@@ -770,9 +1068,9 @@ C_save(tmp);
 tmp=C_h_list(2,C_pick(1),C_pick(0));
 C_drop(2);
 C_save(tmp);
-lf[117]=C_h_list(4,C_pick(3),C_pick(2),C_pick(1),C_pick(0));
+lf[129]=C_h_list(4,C_pick(3),C_pick(2),C_pick(1),C_pick(0));
 C_drop(4);
-lf[118]=C_static_string(C_heaptop,6,"mp:off");
+lf[130]=C_static_string(C_heaptop,6,"mp:off");
 tmp=C_intern(C_heaptop,6,"mp:off");
 C_save(tmp);
 tmp=C_intern(C_heaptop,5,"\000time");
@@ -803,9 +1101,9 @@ C_save(tmp);
 tmp=C_h_list(2,C_pick(1),C_pick(0));
 C_drop(2);
 C_save(tmp);
-lf[119]=C_h_list(5,C_pick(4),C_pick(3),C_pick(2),C_pick(1),C_pick(0));
+lf[131]=C_h_list(5,C_pick(4),C_pick(3),C_pick(2),C_pick(1),C_pick(0));
 C_drop(5);
-lf[120]=C_static_string(C_heaptop,5,"mp:on");
+lf[132]=C_static_string(C_heaptop,5,"mp:on");
 tmp=C_intern(C_heaptop,5,"mp:on");
 C_save(tmp);
 tmp=C_intern(C_heaptop,5,"\000time");
@@ -836,9 +1134,9 @@ C_save(tmp);
 tmp=C_h_list(2,C_pick(1),C_pick(0));
 C_drop(2);
 C_save(tmp);
-lf[121]=C_h_list(5,C_pick(4),C_pick(3),C_pick(2),C_pick(1),C_pick(0));
+lf[133]=C_h_list(5,C_pick(4),C_pick(3),C_pick(2),C_pick(1),C_pick(0));
 C_drop(5);
-lf[122]=C_static_string(C_heaptop,7,"mp:note");
+lf[134]=C_static_string(C_heaptop,7,"mp:note");
 tmp=C_intern(C_heaptop,7,"mp:note");
 C_save(tmp);
 tmp=C_intern(C_heaptop,5,"\000time");
@@ -876,60 +1174,74 @@ C_save(tmp);
 tmp=C_h_list(2,C_pick(1),C_pick(0));
 C_drop(2);
 C_save(tmp);
-lf[123]=C_h_list(6,C_pick(5),C_pick(4),C_pick(3),C_pick(2),C_pick(1),C_pick(0));
+lf[135]=C_h_list(6,C_pick(5),C_pick(4),C_pick(3),C_pick(2),C_pick(1),C_pick(0));
 C_drop(6);
-lf[124]=C_static_lambda_info(C_heaptop,23,"(a1102 mess98 . data99)");
-lf[125]=C_h_intern(&lf[125],4,"send");
-lf[126]=C_h_intern(&lf[126],10,"*messages*");
-lf[127]=C_h_intern(&lf[127],14,"string->symbol");
-lf[128]=C_static_string(C_heaptop,51,"message function not string, symbol or list of both");
-lf[129]=C_static_lambda_info(C_heaptop,21,"(a1108 func56 info57)");
-lf[130]=C_h_intern(&lf[130],19,"define-send-message");
-lf[131]=C_h_intern(&lf[131],15,"make-hash-table");
-lf[132]=C_h_intern(&lf[132],6,"equal\077");
-lf[133]=C_static_lambda_info(C_heaptop,10,"(toplevel)");
-C_register_lf2(lf,134,create_ptable());
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_202,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+lf[136]=C_static_lambda_info(C_heaptop,15,"(do162 tail164)");
+lf[137]=C_static_string(C_heaptop,37,"~S found duplicate keyword \047~S\047 in ~S");
+lf[138]=C_static_string(C_heaptop,33,"~S missing value for keyword \047~S\047");
+lf[139]=C_static_string(C_heaptop,53,"~S found invalid keyword \047~S\047~%Available keywords: ~S");
+lf[140]=C_h_intern(&lf[140],7,"\003sysmap");
+lf[141]=C_h_intern(&lf[141],3,"car");
+lf[142]=C_static_string(C_heaptop,32,"~S expected keyword but got \047~S\047");
+lf[143]=C_h_intern(&lf[143],8,"keyword\077");
+lf[144]=C_static_string(C_heaptop,35,"~S expected ~A arguments but got ~A");
+lf[145]=C_static_lambda_info(C_heaptop,28,"(do145 key147 arg148 pos149)");
+lf[146]=C_static_string(C_heaptop,24,"~S is an invalid message");
+lf[147]=C_static_lambda_info(C_heaptop,7,"(a1000)");
+lf[148]=C_h_intern(&lf[148],14,"hash-table-ref");
+lf[149]=C_h_intern(&lf[149],14,"symbol->string");
+lf[150]=C_static_lambda_info(C_heaptop,25,"(a1548 mess169 . data170)");
+lf[151]=C_h_intern(&lf[151],4,"send");
+lf[152]=C_h_intern(&lf[152],10,"*messages*");
+lf[153]=C_h_intern(&lf[153],14,"string->symbol");
+lf[154]=C_static_string(C_heaptop,51,"message function not string, symbol or list of both");
+lf[155]=C_static_lambda_info(C_heaptop,23,"(a1554 func127 info128)");
+lf[156]=C_h_intern(&lf[156],19,"define-send-message");
+lf[157]=C_h_intern(&lf[157],15,"make-hash-table");
+lf[158]=C_h_intern(&lf[158],6,"equal\077");
+lf[159]=C_static_lambda_info(C_heaptop,10,"(toplevel)");
+C_register_lf2(lf,160,create_ptable());
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_287,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
 C_library_toplevel(2,C_SCHEME_UNDEFINED,t2);}
 
-/* k200 */
-static void C_ccall f_202(C_word c,C_word t0,C_word t1){
+/* k285 */
+static void C_ccall f_287(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_202,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_205,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_save_and_reclaim((void*)tr2,(void*)f_287,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_290,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
 C_eval_toplevel(2,C_SCHEME_UNDEFINED,t2);}
 
-/* k203 in k200 */
-static void C_ccall f_205(C_word c,C_word t0,C_word t1){
+/* k288 in k285 */
+static void C_ccall f_290(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_205,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_208,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_save_and_reclaim((void*)tr2,(void*)f_290,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_293,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
 C_extras_toplevel(2,C_SCHEME_UNDEFINED,t2);}
 
-/* k206 in k203 in k200 */
-static void C_ccall f_208(C_word c,C_word t0,C_word t1){
+/* k291 in k288 in k285 */
+static void C_ccall f_293(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_208,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_211,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_save_and_reclaim((void*)tr2,(void*)f_293,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_296,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
 C_extras_toplevel(2,C_SCHEME_UNDEFINED,t2);}
 
-/* k209 in k206 in k203 in k200 */
-static void C_ccall f_211(C_word c,C_word t0,C_word t1){
+/* k294 in k291 in k288 in k285 */
+static void C_ccall f_296(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -942,26 +1254,38 @@ C_word t9;
 C_word t10;
 C_word t11;
 C_word t12;
-C_word ab[30],*a=ab;
+C_word t13;
+C_word t14;
+C_word t15;
+C_word t16;
+C_word t17;
+C_word t18;
+C_word ab[45],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_211,2,t0,t1);}
-t2=C_mutate((C_word*)lf[0]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_213,a[2]=lf[2],tmp=(C_word)a,a+=3,tmp));
-t3=C_mutate((C_word*)lf[3]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_227,a[2]=lf[4],tmp=(C_word)a,a+=3,tmp));
-t4=C_mutate((C_word*)lf[5]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_241,a[2]=lf[8],tmp=(C_word)a,a+=3,tmp));
-t5=C_mutate((C_word*)lf[9]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_254,a[2]=lf[11],tmp=(C_word)a,a+=3,tmp));
-t6=C_mutate((C_word*)lf[12]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_267,a[2]=lf[14],tmp=(C_word)a,a+=3,tmp));
-t7=C_mutate((C_word*)lf[15]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_296,a[2]=lf[17],tmp=(C_word)a,a+=3,tmp));
-t8=C_mutate((C_word*)lf[18]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_302,a[2]=lf[20],tmp=(C_word)a,a+=3,tmp));
-t9=C_mutate((C_word*)lf[21]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_308,a[2]=lf[22],tmp=(C_word)a,a+=3,tmp));
-t10=C_mutate((C_word*)lf[23]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_318,a[2]=lf[24],tmp=(C_word)a,a+=3,tmp));
-t11=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_323,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 99   make-hash-table");
-t12=C_retrieve(lf[131]);
-((C_proc3)C_retrieve_proc(t12))(3,t12,t11,*((C_word*)lf[132]+1));}
+C_save_and_reclaim((void*)tr2,(void*)f_296,2,t0,t1);}
+t2=C_mutate((C_word*)lf[0]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_298,a[2]=lf[2],tmp=(C_word)a,a+=3,tmp));
+t3=C_mutate((C_word*)lf[3]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_312,a[2]=lf[4],tmp=(C_word)a,a+=3,tmp));
+t4=C_mutate(&lf[5],(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_355,a[2]=lf[6],tmp=(C_word)a,a+=3,tmp));
+t5=C_mutate(&lf[7],(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_358,a[2]=lf[8],tmp=(C_word)a,a+=3,tmp));
+t6=C_mutate(&lf[9],(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_370,a[2]=lf[12],tmp=(C_word)a,a+=3,tmp));
+t7=C_mutate(&lf[13],(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_379,a[2]=lf[15],tmp=(C_word)a,a+=3,tmp));
+t8=C_mutate(&lf[16],(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_423,a[2]=lf[18],tmp=(C_word)a,a+=3,tmp));
+t9=C_mutate((C_word*)lf[19]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_445,a[2]=lf[28],tmp=(C_word)a,a+=3,tmp));
+t10=C_mutate((C_word*)lf[29]+1,lf[5]);
+t11=C_mutate((C_word*)lf[30]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_613,a[2]=lf[38],tmp=(C_word)a,a+=3,tmp));
+t12=C_mutate((C_word*)lf[39]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_676,a[2]=lf[41],tmp=(C_word)a,a+=3,tmp));
+t13=C_mutate((C_word*)lf[42]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_685,a[2]=lf[44],tmp=(C_word)a,a+=3,tmp));
+t14=C_mutate((C_word*)lf[45]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_691,a[2]=lf[47],tmp=(C_word)a,a+=3,tmp));
+t15=C_mutate((C_word*)lf[48]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_700,a[2]=lf[51],tmp=(C_word)a,a+=3,tmp));
+t16=C_mutate((C_word*)lf[52]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_758,a[2]=lf[54],tmp=(C_word)a,a+=3,tmp));
+t17=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_769,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 258  make-hash-table");
+t18=C_retrieve(lf[157]);
+((C_proc3)C_retrieve_proc(t18))(3,t18,t17,*((C_word*)lf[158]+1));}
 
-/* k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_323(C_word c,C_word t0,C_word t1){
+/* k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_769(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -970,16 +1294,16 @@ C_word t5;
 C_word ab[6],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_323,2,t0,t1);}
-t2=C_mutate(&lf[25],t1);
-t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_326,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1109,a[2]=lf[129],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 101  ##sys#register-macro");
-t5=C_retrieve(lf[105]);
-((C_proc4)C_retrieve_proc(t5))(4,t5,t3,lf[130],t4);}
+C_save_and_reclaim((void*)tr2,(void*)f_769,2,t0,t1);}
+t2=C_mutate(&lf[55],t1);
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_772,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1555,a[2]=lf[155],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 260  ##sys#register-macro");
+t5=C_retrieve(lf[117]);
+((C_proc4)C_retrieve_proc(t5))(4,t5,t3,lf[156],t4);}
 
-/* a1108 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_1109(C_word c,C_word t0,C_word t1,C_word t2,C_word t3){
+/* a1554 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1555(C_word c,C_word t0,C_word t1,C_word t2,C_word t3){
 C_word tmp;
 C_word t4;
 C_word t5;
@@ -997,58 +1321,58 @@ C_word ab[18],*a=ab;
 if(c!=4) C_bad_argc_2(c,4,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr4,(void*)f_1109,4,t0,t1,t2,t3);}
+C_save_and_reclaim((void*)tr4,(void*)f_1555,4,t0,t1,t2,t3);}
 t4=(*a=C_VECTOR_TYPE|1,a[1]=t2,tmp=(C_word)a,a+=2,tmp);
 t5=C_SCHEME_FALSE;
 t6=(*a=C_VECTOR_TYPE|1,a[1]=t5,tmp=(C_word)a,a+=2,tmp);
-t7=(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_1113,a[2]=t6,a[3]=t1,a[4]=t3,a[5]=t4,tmp=(C_word)a,a+=6,tmp);
+t7=(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_1559,a[2]=t6,a[3]=t1,a[4]=t3,a[5]=t4,tmp=(C_word)a,a+=6,tmp);
 if(C_truep((C_word)C_i_pairp(((C_word*)t4)[1]))){
 t8=(C_word)C_i_car(((C_word*)t4)[1]);
 t9=C_set_block_item(t6,0,t8);
 t10=(C_word)C_i_cadr(((C_word*)t4)[1]);
 t11=C_set_block_item(t4,0,t10);
 t12=t7;
-f_1113(2,t12,t11);}
+f_1559(2,t12,t11);}
 else{
 if(C_truep((C_word)C_i_stringp(((C_word*)t4)[1]))){
 t8=C_set_block_item(t6,0,((C_word*)t4)[1]);
-t9=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1146,a[2]=t7,a[3]=t4,tmp=(C_word)a,a+=4,tmp);
-C_trace("ChickenBridge.scm: 108  string->symbol");
-t10=*((C_word*)lf[127]+1);
+t9=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1592,a[2]=t7,a[3]=t4,tmp=(C_word)a,a+=4,tmp);
+C_trace("ChickenBridge.scm: 267  string->symbol");
+t10=*((C_word*)lf[153]+1);
 ((C_proc3)C_retrieve_proc(t10))(3,t10,t9,((C_word*)t4)[1]);}
 else{
 if(C_truep((C_word)C_i_symbolp(((C_word*)t4)[1]))){
-t8=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1156,a[2]=t7,a[3]=t6,tmp=(C_word)a,a+=4,tmp);
-C_trace("ChickenBridge.scm: 110  symbol->string");
-t9=*((C_word*)lf[45]+1);
+t8=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1602,a[2]=t7,a[3]=t6,tmp=(C_word)a,a+=4,tmp);
+C_trace("ChickenBridge.scm: 269  symbol->string");
+t9=*((C_word*)lf[149]+1);
 ((C_proc3)C_retrieve_proc(t9))(3,t9,t8,((C_word*)t4)[1]);}
 else{
-C_trace("ChickenBridge.scm: 112  error");
-t8=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t8))(3,t8,t7,lf[128]);}}}}
+C_trace("ChickenBridge.scm: 271  error");
+t8=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t8))(3,t8,t7,lf[154]);}}}}
 
-/* k1154 in a1108 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_1156(C_word c,C_word t0,C_word t1){
+/* k1600 in a1554 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1602(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word *a;
 t2=C_mutate(((C_word *)((C_word*)t0)[3])+1,t1);
 t3=((C_word*)t0)[2];
-f_1113(2,t3,t2);}
+f_1559(2,t3,t2);}
 
-/* k1144 in a1108 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_1146(C_word c,C_word t0,C_word t1){
+/* k1590 in a1554 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1592(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word *a;
 t2=C_mutate(((C_word *)((C_word*)t0)[3])+1,t1);
 t3=((C_word*)t0)[2];
-f_1113(2,t3,t2);}
+f_1559(2,t3,t2);}
 
-/* k1111 in a1108 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_1113(C_word c,C_word t0,C_word t1){
+/* k1557 in a1554 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1559(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1056,34 +1380,32 @@ C_word t4;
 C_word ab[21],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_1113,2,t0,t1);}
+C_save_and_reclaim((void*)tr2,(void*)f_1559,2,t0,t1);}
 t2=(C_word)C_a_i_cons(&a,2,((C_word*)((C_word*)t0)[5])[1],((C_word*)t0)[4]);
-t3=(C_word)C_a_i_list(&a,2,lf[79],t2);
+t3=(C_word)C_a_i_list(&a,2,lf[92],t2);
 t4=((C_word*)t0)[3];
-((C_proc2)(void*)(*((C_word*)t4+1)))(2,t4,(C_word)C_a_i_list(&a,4,lf[107],lf[126],((C_word*)((C_word*)t0)[2])[1],t3));}
+((C_proc2)(void*)(*((C_word*)t4+1)))(2,t4,(C_word)C_a_i_list(&a,4,lf[119],lf[152],((C_word*)((C_word*)t0)[2])[1],t3));}
 
-/* k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_326(C_word c,C_word t0,C_word t1){
+/* k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_772(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word t4;
 C_word t5;
-C_word t6;
-C_word ab[12],*a=ab;
+C_word ab[9],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_326,2,t0,t1);}
-t2=C_mutate(&lf[26],(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_328,a[2]=lf[29],tmp=(C_word)a,a+=3,tmp));
-t3=C_mutate((C_word*)lf[30]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_338,a[2]=lf[46],tmp=(C_word)a,a+=3,tmp));
-t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_565,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-t5=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1103,a[2]=lf[124],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 188  ##sys#register-macro");
-t6=C_retrieve(lf[105]);
-((C_proc4)C_retrieve_proc(t6))(4,t6,t4,lf[125],t5);}
+C_save_and_reclaim((void*)tr2,(void*)f_772,2,t0,t1);}
+t2=C_mutate(&lf[56],(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_774,a[2]=lf[58],tmp=(C_word)a,a+=3,tmp));
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1011,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1549,a[2]=lf[150],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 347  ##sys#register-macro");
+t5=C_retrieve(lf[117]);
+((C_proc4)C_retrieve_proc(t5))(4,t5,t3,lf[151],t4);}
 
-/* a1102 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_1103(C_word c,C_word t0,C_word t1,C_word t2,...){
+/* a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1549(C_word c,C_word t0,C_word t1,C_word t2,...){
 C_word tmp;
 C_word t3;
 va_list v;
@@ -1091,22 +1413,368 @@ C_word *a,c2=c;
 C_save_rest(t2,c2,3);
 if(c<3) C_bad_min_argc_2(c,3,t0);
 C_check_for_interrupt;
-if(!C_demand(c*C_SIZEOF_PAIR+0)){
-C_save_and_reclaim((void*)tr3r,(void*)f_1103r,3,t0,t1,t2);}
+if(!C_demand(c*C_SIZEOF_PAIR+6)){
+C_save_and_reclaim((void*)tr3r,(void*)f_1549r,3,t0,t1,t2);}
 else{
 a=C_alloc((c-3)*3);
 t3=C_restore_rest(a,C_rest_count(0));
-f_1103r(t0,t1,t2,t3);}}
+f_1549r(t0,t1,t2,t3);}}
 
-static void C_ccall f_1103r(C_word t0,C_word t1,C_word t2,C_word t3){
+static void C_ccall f_1549r(C_word t0,C_word t1,C_word t2,C_word t3){
 C_word tmp;
 C_word t4;
-C_trace("ChickenBridge.scm: 189  expand-send");
-t4=C_retrieve(lf[30]);
-((C_proc4)C_retrieve_proc(t4))(4,t4,t1,t2,t3);}
+C_word t5;
+C_word t6;
+C_word t7;
+C_word *a=C_alloc(6);
+t4=t3;
+t5=(*a=C_VECTOR_TYPE|1,a[1]=t4,tmp=(C_word)a,a+=2,tmp);
+t6=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_788,a[2]=t1,a[3]=t5,tmp=(C_word)a,a+=4,tmp);
+if(C_truep((C_word)C_i_symbolp(t2))){
+C_trace("ChickenBridge.scm: 278  symbol->string");
+t7=*((C_word*)lf[149]+1);
+((C_proc3)C_retrieve_proc(t7))(3,t7,t6,t2);}
+else{
+t7=t6;
+f_788(2,t7,t2);}}
 
-/* k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_565(C_word c,C_word t0,C_word t1){
+/* k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_788(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word ab[8],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_788,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_791,a[2]=t1,a[3]=((C_word*)t0)[2],a[4]=((C_word*)t0)[3],tmp=(C_word)a,a+=5,tmp);
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1001,a[2]=lf[147],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 279  hash-table-ref");
+t4=*((C_word*)lf[148]+1);
+((C_proc5)C_retrieve_proc(t4))(5,t4,t2,lf[55],t1,t3);}
+
+/* a1000 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1001(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word *a;
+if(c!=2) C_bad_argc_2(c,2,t0);
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_1001,2,t0,t1);}
+t2=t1;
+((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,C_SCHEME_FALSE);}
+
+/* k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_791(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word ab[9],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_791,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_794,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=t1,a[5]=((C_word*)t0)[4],tmp=(C_word)a,a+=6,tmp);
+t3=t1;
+if(C_truep(t3)){
+t4=t2;
+f_794(2,t4,C_SCHEME_UNDEFINED);}
+else{
+C_trace("ChickenBridge.scm: 280  ferror");
+f_774(t2,lf[146],(C_word)C_a_i_list(&a,1,((C_word*)t0)[2]));}}
+
+/* k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_794(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word t8;
+C_word t9;
+C_word ab[12],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_794,2,t0,t1);}
+t2=((C_word*)((C_word*)t0)[5])[1];
+t3=(C_word)C_i_car(((C_word*)t0)[4]);
+t4=(C_word)C_i_cdr(((C_word*)t0)[4]);
+t5=C_SCHEME_FALSE;
+t6=(*a=C_VECTOR_TYPE|1,a[1]=t5,tmp=(C_word)a,a+=2,tmp);
+t7=(C_word)C_i_length(t4);
+t8=(*a=C_CLOSURE_TYPE|9,a[1]=(C_word)f_806,a[2]=t7,a[3]=t2,a[4]=((C_word*)t0)[2],a[5]=t6,a[6]=((C_word*)t0)[5],a[7]=((C_word*)t0)[3],a[8]=t4,a[9]=t3,tmp=(C_word)a,a+=10,tmp);
+C_trace("ChickenBridge.scm: 287  append");
+t9=*((C_word*)lf[109]+1);
+((C_proc4)C_retrieve_proc(t9))(4,t9,t8,t4,C_SCHEME_END_OF_LIST);}
+
+/* k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_806(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word ab[19],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_806,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_809,a[2]=((C_word*)t0)[7],a[3]=((C_word*)t0)[8],a[4]=t1,a[5]=((C_word*)t0)[9],tmp=(C_word)a,a+=6,tmp);
+t3=C_SCHEME_UNDEFINED;
+t4=(*a=C_VECTOR_TYPE|1,a[1]=t3,tmp=(C_word)a,a+=2,tmp);
+t5=C_set_block_item(t4,0,(*a=C_CLOSURE_TYPE|10,a[1]=(C_word)f_854,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=t1,a[6]=((C_word*)t0)[8],a[7]=((C_word*)t0)[5],a[8]=t4,a[9]=((C_word*)t0)[6],a[10]=lf[145],tmp=(C_word)a,a+=11,tmp));
+t6=((C_word*)t4)[1];
+f_854(t6,t2,C_SCHEME_FALSE,C_SCHEME_FALSE,C_fix(0));}
+
+/* do145 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_854(C_word t0,C_word t1,C_word t2,C_word t3,C_word t4){
+C_word tmp;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word t8;
+C_word t9;
+C_word t10;
+C_word t11;
+C_word t12;
+C_word ab[26],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_854,NULL,5,t0,t1,t2,t3,t4);}
+t5=(*a=C_VECTOR_TYPE|1,a[1]=t2,tmp=(C_word)a,a+=2,tmp);
+t6=(*a=C_VECTOR_TYPE|1,a[1]=t3,tmp=(C_word)a,a+=2,tmp);
+t7=(*a=C_VECTOR_TYPE|1,a[1]=t4,tmp=(C_word)a,a+=2,tmp);
+if(C_truep((C_word)C_i_nullp(((C_word*)((C_word*)t0)[9])[1]))){
+t8=t1;
+((C_proc2)(void*)(*((C_word*)t8+1)))(2,t8,C_SCHEME_FALSE);}
+else{
+t8=(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_864,a[2]=t7,a[3]=t6,a[4]=t5,a[5]=t1,a[6]=((C_word*)t0)[8],tmp=(C_word)a,a+=7,tmp);
+t9=(*a=C_CLOSURE_TYPE|12,a[1]=(C_word)f_870,a[2]=((C_word*)t0)[2],a[3]=t7,a[4]=((C_word*)t0)[3],a[5]=((C_word*)t0)[4],a[6]=((C_word*)t0)[5],a[7]=t6,a[8]=((C_word*)t0)[6],a[9]=t5,a[10]=((C_word*)t0)[9],a[11]=t8,a[12]=((C_word*)t0)[7],tmp=(C_word)a,a+=13,tmp);
+t10=((C_word*)((C_word*)t0)[7])[1];
+if(C_truep(t10)){
+t11=t9;
+f_870(2,t11,C_SCHEME_FALSE);}
+else{
+t11=(C_word)C_i_car(((C_word*)((C_word*)t0)[9])[1]);
+C_trace("ChickenBridge.scm: 298  keyword?");
+t12=C_retrieve(lf[143]);
+((C_proc3)C_retrieve_proc(t12))(3,t12,t9,t11);}}}
+
+/* k868 in do145 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_870(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word t8;
+C_word t9;
+C_word t10;
+C_word t11;
+C_word t12;
+C_word t13;
+C_word t14;
+C_word ab[32],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_870,2,t0,t1);}
+if(C_truep(t1)){
+t2=C_set_block_item(((C_word*)t0)[12],0,C_SCHEME_TRUE);
+t3=((C_word*)t0)[11];
+f_864(t3,t2);}
+else{
+t2=((C_word*)((C_word*)t0)[12])[1];
+if(C_truep(t2)){
+t3=(C_word)C_i_car(((C_word*)((C_word*)t0)[10])[1]);
+t4=C_mutate(((C_word *)((C_word*)t0)[9])+1,t3);
+t5=(C_word)C_i_assoc(((C_word*)((C_word*)t0)[9])[1],((C_word*)t0)[8]);
+t6=C_mutate(((C_word *)((C_word*)t0)[7])+1,t5);
+t7=(C_word)C_i_cdr(((C_word*)((C_word*)t0)[10])[1]);
+t8=C_mutate(((C_word *)((C_word*)t0)[10])+1,t7);
+t9=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_924,a[2]=((C_word*)t0)[4],a[3]=((C_word*)t0)[9],a[4]=((C_word*)t0)[5],a[5]=((C_word*)t0)[11],a[6]=((C_word*)t0)[10],a[7]=((C_word*)t0)[6],a[8]=((C_word*)t0)[7],tmp=(C_word)a,a+=9,tmp);
+t10=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_979,a[2]=((C_word*)t0)[8],a[3]=((C_word*)t0)[7],a[4]=((C_word*)t0)[9],a[5]=((C_word*)t0)[5],a[6]=t9,a[7]=((C_word*)t0)[10],tmp=(C_word)a,a+=8,tmp);
+C_trace("ChickenBridge.scm: 318  keyword?");
+t11=C_retrieve(lf[143]);
+((C_proc3)C_retrieve_proc(t11))(3,t11,t10,((C_word*)((C_word*)t0)[9])[1]);}
+else{
+t3=(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_880,a[2]=((C_word*)t0)[11],a[3]=((C_word*)t0)[10],a[4]=((C_word*)t0)[3],a[5]=((C_word*)t0)[6],tmp=(C_word)a,a+=6,tmp);
+if(C_truep((C_word)C_i_nequalp(((C_word*)((C_word*)t0)[3])[1],((C_word*)t0)[2]))){
+t4=(C_word)C_i_length(((C_word*)t0)[4]);
+C_trace("ChickenBridge.scm: 308  ferror");
+f_774(t3,lf[144],(C_word)C_a_i_list(&a,3,((C_word*)t0)[5],((C_word*)t0)[2],t4));}
+else{
+t4=t3;
+f_880(2,t4,C_SCHEME_UNDEFINED);}}}}
+
+/* k878 in k868 in do145 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_880(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word t8;
+C_word t9;
+C_word ab[4],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_880,2,t0,t1);}
+t2=(C_word)C_i_list_tail(((C_word*)t0)[5],((C_word*)((C_word*)t0)[4])[1]);
+t3=(C_word)C_i_car(((C_word*)((C_word*)t0)[3])[1]);
+t4=(C_word)C_i_set_car(t2,t3);
+t5=(C_word)C_i_cdr(((C_word*)((C_word*)t0)[3])[1]);
+t6=C_mutate(((C_word *)((C_word*)t0)[3])+1,t5);
+t7=(C_word)C_a_i_plus(&a,2,((C_word*)((C_word*)t0)[4])[1],C_fix(1));
+t8=C_mutate(((C_word *)((C_word*)t0)[4])+1,t7);
+t9=((C_word*)t0)[2];
+f_864(t9,t8);}
+
+/* k977 in k868 in do145 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_979(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word ab[17],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_979,2,t0,t1);}
+if(C_truep(t1)){
+if(C_truep((C_word)C_i_nullp(((C_word*)((C_word*)t0)[7])[1]))){
+C_trace("ChickenBridge.scm: 322  ferror");
+f_774(((C_word*)t0)[6],lf[138],(C_word)C_a_i_list(&a,2,((C_word*)t0)[5],((C_word*)((C_word*)t0)[4])[1]));}
+else{
+t2=((C_word*)((C_word*)t0)[3])[1];
+if(C_truep(t2)){
+t3=((C_word*)t0)[6];
+f_924(2,t3,C_SCHEME_UNDEFINED);}
+else{
+t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_975,a[2]=((C_word*)t0)[4],a[3]=((C_word*)t0)[5],a[4]=((C_word*)t0)[6],tmp=(C_word)a,a+=5,tmp);
+C_trace("map");
+t4=*((C_word*)lf[140]+1);
+((C_proc4)(void*)(*((C_word*)t4+1)))(4,t4,t3,*((C_word*)lf[141]+1),((C_word*)t0)[2]);}}}
+else{
+C_trace("ChickenBridge.scm: 319  ferror");
+f_774(((C_word*)t0)[6],lf[142],(C_word)C_a_i_list(&a,2,((C_word*)t0)[5],((C_word*)((C_word*)t0)[4])[1]));}}
+
+/* k973 in k977 in k868 in do145 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_975(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word ab[9],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_975,2,t0,t1);}
+C_trace("ChickenBridge.scm: 325  ferror");
+f_774(((C_word*)t0)[4],lf[139],(C_word)C_a_i_list(&a,3,((C_word*)t0)[3],((C_word*)((C_word*)t0)[2])[1],t1));}
+
+/* k922 in k868 in do145 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_924(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word ab[14],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_924,2,t0,t1);}
+t2=(C_word)C_i_member(((C_word*)((C_word*)t0)[8])[1],((C_word*)t0)[7]);
+t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_930,a[2]=((C_word*)t0)[5],a[3]=t2,a[4]=((C_word*)t0)[6],tmp=(C_word)a,a+=5,tmp);
+if(C_truep(t2)){
+t4=t3;
+f_930(2,t4,C_SCHEME_UNDEFINED);}
+else{
+C_trace("ChickenBridge.scm: 332  ferror");
+f_774(t3,lf[137],(C_word)C_a_i_list(&a,3,((C_word*)t0)[4],((C_word*)((C_word*)t0)[3])[1],((C_word*)t0)[2]));}}
+
+/* k928 in k922 in k868 in do145 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_930(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word *a;
+t2=(C_word)C_i_car(((C_word*)((C_word*)t0)[4])[1]);
+t3=(C_word)C_i_set_car(((C_word*)t0)[3],t2);
+t4=(C_word)C_i_cdr(((C_word*)((C_word*)t0)[4])[1]);
+t5=C_mutate(((C_word *)((C_word*)t0)[4])+1,t4);
+t6=((C_word*)t0)[2];
+f_864(t6,t5);}
+
+/* k862 in do145 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_864(C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word *a;
+t2=((C_word*)((C_word*)t0)[6])[1];
+f_854(t2,((C_word*)t0)[5],((C_word*)((C_word*)t0)[4])[1],((C_word*)((C_word*)t0)[3])[1],((C_word*)((C_word*)t0)[2])[1]);}
+
+/* k807 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_809(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word ab[9],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_809,2,t0,t1);}
+t2=C_SCHEME_UNDEFINED;
+t3=(*a=C_VECTOR_TYPE|1,a[1]=t2,tmp=(C_word)a,a+=2,tmp);
+t4=C_set_block_item(t3,0,(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_814,a[2]=((C_word*)t0)[3],a[3]=t3,a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=lf[136],tmp=(C_word)a,a+=7,tmp));
+t5=((C_word*)t3)[1];
+f_814(t5,((C_word*)t0)[2],((C_word*)t0)[4]);}
+
+/* do162 in k807 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_814(C_word t0,C_word t1,C_word t2){
+C_word tmp;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word ab[8],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_814,NULL,3,t0,t1,t2);}
+if(C_truep((C_word)C_i_nullp(t2))){
+t3=t1;
+((C_proc2)(void*)(*((C_word*)t3+1)))(2,t3,(C_word)C_a_i_cons(&a,2,((C_word*)t0)[5],((C_word*)t0)[4]));}
+else{
+t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_827,a[2]=t1,a[3]=((C_word*)t0)[3],a[4]=t2,tmp=(C_word)a,a+=5,tmp);
+t4=(C_word)C_i_car(t2);
+if(C_truep((C_word)C_i_member(t4,((C_word*)t0)[2]))){
+t5=(C_word)C_i_car(t2);
+t6=(C_word)C_i_cadr(t5);
+t7=t3;
+f_827(t7,(C_word)C_i_set_car(t2,t6));}
+else{
+t5=t3;
+f_827(t5,C_SCHEME_UNDEFINED);}}}
+
+/* k825 in do162 in k807 in k804 in k792 in k789 in k786 in a1548 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_827(C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word *a;
+t2=(C_word)C_i_cdr(((C_word*)t0)[4]);
+t3=((C_word*)((C_word*)t0)[3])[1];
+f_814(t3,((C_word*)t0)[2],t2);}
+
+/* k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1011(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1121,120 +1789,120 @@ C_word t11;
 C_word ab[27],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_565,2,t0,t1);}
-t2=C_mutate((C_word*)lf[47]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_567,a[2]=lf[48],tmp=(C_word)a,a+=3,tmp));
-t3=C_mutate((C_word*)lf[49]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_573,a[2]=lf[51],tmp=(C_word)a,a+=3,tmp));
-t4=C_mutate((C_word*)lf[52]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_579,a[2]=lf[54],tmp=(C_word)a,a+=3,tmp));
-t5=C_mutate((C_word*)lf[55]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_585,a[2]=lf[57],tmp=(C_word)a,a+=3,tmp));
-t6=C_mutate((C_word*)lf[58]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_591,a[2]=lf[60],tmp=(C_word)a,a+=3,tmp));
-t7=C_mutate((C_word*)lf[61]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_597,a[2]=lf[63],tmp=(C_word)a,a+=3,tmp));
-t8=C_mutate((C_word*)lf[64]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_603,a[2]=lf[66],tmp=(C_word)a,a+=3,tmp));
-t9=C_mutate((C_word*)lf[67]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_609,a[2]=lf[69],tmp=(C_word)a,a+=3,tmp));
-t10=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_616,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 216  hash-table-set!");
-t11=C_retrieve(lf[107]);
-((C_proc5)C_retrieve_proc(t11))(5,t11,t10,lf[25],lf[122],lf[123]);}
+C_save_and_reclaim((void*)tr2,(void*)f_1011,2,t0,t1);}
+t2=C_mutate((C_word*)lf[59]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1013,a[2]=lf[61],tmp=(C_word)a,a+=3,tmp));
+t3=C_mutate((C_word*)lf[62]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1019,a[2]=lf[64],tmp=(C_word)a,a+=3,tmp));
+t4=C_mutate((C_word*)lf[65]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1025,a[2]=lf[67],tmp=(C_word)a,a+=3,tmp));
+t5=C_mutate((C_word*)lf[68]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1031,a[2]=lf[70],tmp=(C_word)a,a+=3,tmp));
+t6=C_mutate((C_word*)lf[71]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1037,a[2]=lf[73],tmp=(C_word)a,a+=3,tmp));
+t7=C_mutate((C_word*)lf[74]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1043,a[2]=lf[76],tmp=(C_word)a,a+=3,tmp));
+t8=C_mutate((C_word*)lf[77]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1049,a[2]=lf[79],tmp=(C_word)a,a+=3,tmp));
+t9=C_mutate((C_word*)lf[80]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1055,a[2]=lf[82],tmp=(C_word)a,a+=3,tmp));
+t10=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1062,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 374  hash-table-set!");
+t11=C_retrieve(lf[119]);
+((C_proc5)C_retrieve_proc(t11))(5,t11,t10,lf[55],lf[134],lf[135]);}
 
-/* k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_616(C_word c,C_word t0,C_word t1){
+/* k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1062(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_616,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_619,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 217  hash-table-set!");
-t3=C_retrieve(lf[107]);
-((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[25],lf[120],lf[121]);}
+C_save_and_reclaim((void*)tr2,(void*)f_1062,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1065,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 375  hash-table-set!");
+t3=C_retrieve(lf[119]);
+((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[55],lf[132],lf[133]);}
 
-/* k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_619(C_word c,C_word t0,C_word t1){
+/* k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1065(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_619,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_622,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 218  hash-table-set!");
-t3=C_retrieve(lf[107]);
-((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[25],lf[118],lf[119]);}
+C_save_and_reclaim((void*)tr2,(void*)f_1065,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1068,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 376  hash-table-set!");
+t3=C_retrieve(lf[119]);
+((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[55],lf[130],lf[131]);}
 
-/* k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_622(C_word c,C_word t0,C_word t1){
+/* k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1068(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_622,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_625,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 219  hash-table-set!");
-t3=C_retrieve(lf[107]);
-((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[25],lf[116],lf[117]);}
+C_save_and_reclaim((void*)tr2,(void*)f_1068,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1071,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 377  hash-table-set!");
+t3=C_retrieve(lf[119]);
+((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[55],lf[128],lf[129]);}
 
-/* k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_625(C_word c,C_word t0,C_word t1){
+/* k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1071(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_625,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_628,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 220  hash-table-set!");
-t3=C_retrieve(lf[107]);
-((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[25],lf[114],lf[115]);}
+C_save_and_reclaim((void*)tr2,(void*)f_1071,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1074,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 378  hash-table-set!");
+t3=C_retrieve(lf[119]);
+((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[55],lf[126],lf[127]);}
 
-/* k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_628(C_word c,C_word t0,C_word t1){
+/* k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1074(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_628,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_631,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 221  hash-table-set!");
-t3=C_retrieve(lf[107]);
-((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[25],lf[112],lf[113]);}
+C_save_and_reclaim((void*)tr2,(void*)f_1074,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1077,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 379  hash-table-set!");
+t3=C_retrieve(lf[119]);
+((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[55],lf[124],lf[125]);}
 
-/* k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_631(C_word c,C_word t0,C_word t1){
+/* k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1077(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_631,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_634,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 222  hash-table-set!");
-t3=C_retrieve(lf[107]);
-((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[25],lf[110],lf[111]);}
+C_save_and_reclaim((void*)tr2,(void*)f_1077,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1080,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 380  hash-table-set!");
+t3=C_retrieve(lf[119]);
+((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[55],lf[122],lf[123]);}
 
-/* k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_634(C_word c,C_word t0,C_word t1){
+/* k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1080(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[3],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_634,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_637,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 223  hash-table-set!");
-t3=C_retrieve(lf[107]);
-((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[25],lf[108],lf[109]);}
+C_save_and_reclaim((void*)tr2,(void*)f_1080,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1083,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 381  hash-table-set!");
+t3=C_retrieve(lf[119]);
+((C_proc5)C_retrieve_proc(t3))(5,t3,t2,lf[55],lf[120],lf[121]);}
 
-/* k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_637(C_word c,C_word t0,C_word t1){
+/* k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1083(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1242,15 +1910,15 @@ C_word t4;
 C_word ab[6],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_637,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_640,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1097,a[2]=lf[104],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 245  ##sys#register-macro");
-t4=C_retrieve(lf[105]);
-((C_proc4)C_retrieve_proc(t4))(4,t4,t2,lf[106],t3);}
+C_save_and_reclaim((void*)tr2,(void*)f_1083,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1086,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1543,a[2]=lf[116],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 388  ##sys#register-macro");
+t4=C_retrieve(lf[117]);
+((C_proc4)C_retrieve_proc(t4))(4,t4,t2,lf[118],t3);}
 
-/* a1096 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_1097(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,...){
+/* a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1543(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,...){
 C_word tmp;
 C_word t4;
 va_list v;
@@ -1258,46 +1926,14 @@ C_word *a,c2=c;
 C_save_rest(t3,c2,4);
 if(c<4) C_bad_min_argc_2(c,4,t0);
 C_check_for_interrupt;
-if(!C_demand(c*C_SIZEOF_PAIR+0)){
-C_save_and_reclaim((void*)tr4r,(void*)f_1097r,4,t0,t1,t2,t3);}
+if(!C_demand(c*C_SIZEOF_PAIR+17)){
+C_save_and_reclaim((void*)tr4r,(void*)f_1543r,4,t0,t1,t2,t3);}
 else{
 a=C_alloc((c-4)*3);
 t4=C_restore_rest(a,C_rest_count(0));
-f_1097r(t0,t1,t2,t3,t4);}}
+f_1543r(t0,t1,t2,t3,t4);}}
 
-static void C_ccall f_1097r(C_word t0,C_word t1,C_word t2,C_word t3,C_word t4){
-C_word tmp;
-C_word t5;
-C_trace("ChickenBridge.scm: 246  expand-go");
-t5=C_retrieve(lf[70]);
-((C_proc5)C_retrieve_proc(t5))(5,t5,t1,t2,t3,t4);}
-
-/* k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_640(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word t3;
-C_word t4;
-C_word ab[6],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_640,2,t0,t1);}
-t2=C_mutate((C_word*)lf[70]+1,(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_642,a[2]=lf[102],tmp=(C_word)a,a+=3,tmp));
-t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1095,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 342  return-to-host");
-t4=C_retrieve(lf[103]);
-((C_proc2)C_retrieve_proc(t4))(2,t4,t3);}
-
-/* k1093 in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_1095(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word *a;
-t2=((C_word*)t0)[2];
-((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,C_SCHEME_UNDEFINED);}
-
-/* expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_642(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4){
+static void C_ccall f_1543r(C_word t0,C_word t1,C_word t2,C_word t3,C_word t4){
 C_word tmp;
 C_word t5;
 C_word t6;
@@ -1308,52 +1944,50 @@ C_word t10;
 C_word t11;
 C_word t12;
 C_word t13;
-C_word ab[17],*a=ab;
-if(c!=5) C_bad_argc_2(c,5,t0);
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr5,(void*)f_642,5,t0,t1,t2,t3,t4);}
-t5=(*a=C_VECTOR_TYPE|1,a[1]=t4,tmp=(C_word)a,a+=2,tmp);
-t6=C_SCHEME_END_OF_LIST;
-t7=(*a=C_VECTOR_TYPE|1,a[1]=t6,tmp=(C_word)a,a+=2,tmp);
-t8=C_SCHEME_END_OF_LIST;
-t9=(*a=C_VECTOR_TYPE|1,a[1]=t8,tmp=(C_word)a,a+=2,tmp);
-t10=C_SCHEME_END_OF_LIST;
-t11=(*a=C_VECTOR_TYPE|1,a[1]=t10,tmp=(C_word)a,a+=2,tmp);
-t12=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_655,a[2]=t2,a[3]=t11,a[4]=t5,a[5]=t9,a[6]=t1,a[7]=t7,a[8]=t3,tmp=(C_word)a,a+=9,tmp);
+C_word t14;
+C_word *a=C_alloc(17);
+t5=t4;
+t6=(*a=C_VECTOR_TYPE|1,a[1]=t5,tmp=(C_word)a,a+=2,tmp);
+t7=C_SCHEME_END_OF_LIST;
+t8=(*a=C_VECTOR_TYPE|1,a[1]=t7,tmp=(C_word)a,a+=2,tmp);
+t9=C_SCHEME_END_OF_LIST;
+t10=(*a=C_VECTOR_TYPE|1,a[1]=t9,tmp=(C_word)a,a+=2,tmp);
+t11=C_SCHEME_END_OF_LIST;
+t12=(*a=C_VECTOR_TYPE|1,a[1]=t11,tmp=(C_word)a,a+=2,tmp);
+t13=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_1101,a[2]=t2,a[3]=t12,a[4]=t6,a[5]=t10,a[6]=t1,a[7]=t8,a[8]=t3,tmp=(C_word)a,a+=9,tmp);
 if(C_truep((C_word)C_i_listp(t2))){
-t13=t12;
-f_655(2,t13,C_SCHEME_UNDEFINED);}
+t14=t13;
+f_1101(2,t14,C_SCHEME_UNDEFINED);}
 else{
-C_trace("ChickenBridge.scm: 254  error");
-t13=*((C_word*)lf[27]+1);
-((C_proc4)C_retrieve_proc(t13))(4,t13,t12,lf[101],t2);}}
+C_trace("ChickenBridge.scm: 397  error");
+t14=*((C_word*)lf[35]+1);
+((C_proc4)C_retrieve_proc(t14))(4,t14,t13,lf[115],t2);}}
 
-/* k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_655(C_word c,C_word t0,C_word t1){
+/* k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1101(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[9],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_655,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_658,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=((C_word*)t0)[7],a[8]=((C_word*)t0)[8],tmp=(C_word)a,a+=9,tmp);
+C_save_and_reclaim((void*)tr2,(void*)f_1101,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_1104,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=((C_word*)t0)[7],a[8]=((C_word*)t0)[8],tmp=(C_word)a,a+=9,tmp);
 if(C_truep((C_word)C_i_listp(((C_word*)t0)[8]))){
 if(C_truep((C_word)C_i_nullp(((C_word*)t0)[8]))){
-C_trace("ChickenBridge.scm: 258  error");
-t3=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t3))(3,t3,t2,lf[99]);}
+C_trace("ChickenBridge.scm: 401  error");
+t3=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t3))(3,t3,t2,lf[113]);}
 else{
 t3=t2;
-f_658(2,t3,C_SCHEME_UNDEFINED);}}
+f_1104(2,t3,C_SCHEME_UNDEFINED);}}
 else{
-C_trace("ChickenBridge.scm: 256  error");
-t3=*((C_word*)lf[27]+1);
-((C_proc4)C_retrieve_proc(t3))(4,t3,t2,lf[100],((C_word*)t0)[8]);}}
+C_trace("ChickenBridge.scm: 399  error");
+t3=*((C_word*)lf[35]+1);
+((C_proc4)C_retrieve_proc(t3))(4,t3,t2,lf[114],((C_word*)t0)[8]);}}
 
-/* k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_658(C_word c,C_word t0,C_word t1){
+/* k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1104(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1363,16 +1997,16 @@ C_word t6;
 C_word ab[17],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_658,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_661,a[2]=((C_word*)t0)[3],a[3]=((C_word*)t0)[4],a[4]=((C_word*)t0)[5],a[5]=((C_word*)t0)[6],a[6]=((C_word*)t0)[7],a[7]=((C_word*)t0)[8],tmp=(C_word)a,a+=8,tmp);
+C_save_and_reclaim((void*)tr2,(void*)f_1104,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_1107,a[2]=((C_word*)t0)[3],a[3]=((C_word*)t0)[4],a[4]=((C_word*)t0)[5],a[5]=((C_word*)t0)[6],a[6]=((C_word*)t0)[7],a[7]=((C_word*)t0)[8],tmp=(C_word)a,a+=8,tmp);
 t3=C_SCHEME_UNDEFINED;
 t4=(*a=C_VECTOR_TYPE|1,a[1]=t3,tmp=(C_word)a,a+=2,tmp);
-t5=C_set_block_item(t4,0,(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_932,a[2]=((C_word*)t0)[3],a[3]=((C_word*)t0)[5],a[4]=((C_word*)t0)[7],a[5]=t4,a[6]=lf[98],tmp=(C_word)a,a+=7,tmp));
+t5=C_set_block_item(t4,0,(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_1378,a[2]=((C_word*)t0)[3],a[3]=((C_word*)t0)[5],a[4]=((C_word*)t0)[7],a[5]=t4,a[6]=lf[112],tmp=(C_word)a,a+=7,tmp));
 t6=((C_word*)t4)[1];
-f_932(t6,t2,((C_word*)t0)[2]);}
+f_1378(t6,t2,((C_word*)t0)[2]);}
 
-/* do131 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_932(C_word t0,C_word t1,C_word t2){
+/* do202 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_1378(C_word t0,C_word t1,C_word t2){
 C_word tmp;
 C_word t3;
 C_word t4;
@@ -1384,26 +2018,26 @@ C_word t9;
 C_word ab[16],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_932,NULL,3,t0,t1,t2);}
+C_save_and_reclaim((void*)trf_1378,NULL,3,t0,t1,t2);}
 if(C_truep((C_word)C_i_nullp(t2))){
 t3=t1;
 ((C_proc2)(void*)(*((C_word*)t3+1)))(2,t3,C_SCHEME_FALSE);}
 else{
-t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_942,a[2]=t1,a[3]=((C_word*)t0)[5],a[4]=t2,tmp=(C_word)a,a+=5,tmp);
-t4=(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_952,a[2]=t3,a[3]=((C_word*)t0)[2],a[4]=((C_word*)t0)[3],a[5]=((C_word*)t0)[4],a[6]=t2,tmp=(C_word)a,a+=7,tmp);
+t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_1388,a[2]=t1,a[3]=((C_word*)t0)[5],a[4]=t2,tmp=(C_word)a,a+=5,tmp);
+t4=(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_1398,a[2]=t3,a[3]=((C_word*)t0)[2],a[4]=((C_word*)t0)[3],a[5]=((C_word*)t0)[4],a[6]=t2,tmp=(C_word)a,a+=7,tmp);
 t5=(C_word)C_i_car(t2);
 if(C_truep((C_word)C_i_pairp(t5))){
-t6=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1040,a[2]=t4,a[3]=t2,tmp=(C_word)a,a+=4,tmp);
+t6=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1486,a[2]=t4,a[3]=t2,tmp=(C_word)a,a+=4,tmp);
 t7=(C_word)C_i_car(t2);
 t8=(C_word)C_i_length(t7);
-C_trace("ChickenBridge.scm: 262  <");
+C_trace("ChickenBridge.scm: 405  <");
 C_lessp(5,0,t6,C_fix(0),t8,C_fix(4));}
 else{
 t6=t4;
-f_952(t6,C_SCHEME_FALSE);}}}
+f_1398(t6,C_SCHEME_FALSE);}}}
 
-/* k1038 in do131 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_1040(C_word c,C_word t0,C_word t1){
+/* k1484 in do202 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1486(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1413,13 +2047,13 @@ if(C_truep(t1)){
 t2=(C_word)C_i_car(((C_word*)t0)[3]);
 t3=(C_word)C_i_car(t2);
 t4=((C_word*)t0)[2];
-f_952(t4,(C_word)C_i_symbolp(t3));}
+f_1398(t4,(C_word)C_i_symbolp(t3));}
 else{
 t2=((C_word*)t0)[2];
-f_952(t2,C_SCHEME_FALSE);}}
+f_1398(t2,C_SCHEME_FALSE);}}
 
-/* k950 in do131 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_952(C_word t0,C_word t1){
+/* k1396 in do202 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_1398(C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1434,30 +2068,30 @@ C_word t11;
 C_word ab[8],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_952,NULL,2,t0,t1);}
+C_save_and_reclaim((void*)trf_1398,NULL,2,t0,t1);}
 if(C_truep(t1)){
 t2=(C_word)C_i_car(((C_word*)t0)[6]);
 t3=(C_word)C_i_car(t2);
 t4=(C_word)C_i_car(((C_word*)t0)[6]);
 t5=(C_word)C_i_cadr(t4);
-t6=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_961,a[2]=t5,a[3]=t3,a[4]=((C_word*)t0)[2],a[5]=((C_word*)t0)[3],a[6]=((C_word*)t0)[4],a[7]=((C_word*)t0)[5],tmp=(C_word)a,a+=8,tmp);
+t6=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_1407,a[2]=t5,a[3]=t3,a[4]=((C_word*)t0)[2],a[5]=((C_word*)t0)[3],a[6]=((C_word*)t0)[4],a[7]=((C_word*)t0)[5],tmp=(C_word)a,a+=8,tmp);
 t7=(C_word)C_i_car(((C_word*)t0)[6]);
 t8=(C_word)C_i_cddr(t7);
 if(C_truep((C_word)C_i_nullp(t8))){
 t9=t6;
-f_961(t9,lf[96]);}
+f_1407(t9,lf[110]);}
 else{
 t9=(C_word)C_i_car(((C_word*)t0)[6]);
 t10=t6;
-f_961(t10,(C_word)C_i_caddr(t9));}}
+f_1407(t10,(C_word)C_i_caddr(t9));}}
 else{
 t2=(C_word)C_i_car(((C_word*)t0)[6]);
-C_trace("ChickenBridge.scm: 275  error");
-t3=*((C_word*)lf[27]+1);
-((C_proc4)C_retrieve_proc(t3))(4,t3,((C_word*)t0)[2],lf[97],t2);}}
+C_trace("ChickenBridge.scm: 418  error");
+t3=*((C_word*)lf[35]+1);
+((C_proc4)C_retrieve_proc(t3))(4,t3,((C_word*)t0)[2],lf[111],t2);}}
 
-/* k959 in k950 in do131 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_961(C_word t0,C_word t1){
+/* k1405 in k1396 in do202 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_1407(C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1465,15 +2099,15 @@ C_word t4;
 C_word ab[12],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_961,NULL,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_965,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=t1,a[5]=((C_word*)t0)[4],a[6]=((C_word*)t0)[5],a[7]=((C_word*)t0)[6],a[8]=((C_word*)t0)[7],tmp=(C_word)a,a+=9,tmp);
+C_save_and_reclaim((void*)trf_1407,NULL,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_1411,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=t1,a[5]=((C_word*)t0)[4],a[6]=((C_word*)t0)[5],a[7]=((C_word*)t0)[6],a[8]=((C_word*)t0)[7],tmp=(C_word)a,a+=9,tmp);
 t3=(C_word)C_a_i_list(&a,1,((C_word*)t0)[3]);
-C_trace("ChickenBridge.scm: 270  append");
-t4=*((C_word*)lf[41]+1);
+C_trace("ChickenBridge.scm: 413  append");
+t4=*((C_word*)lf[109]+1);
 ((C_proc4)C_retrieve_proc(t4))(4,t4,t2,((C_word*)((C_word*)t0)[7])[1],t3);}
 
-/* k963 in k959 in k950 in do131 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_965(C_word c,C_word t0,C_word t1){
+/* k1409 in k1405 in k1396 in do202 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1411(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1482,16 +2116,16 @@ C_word t5;
 C_word ab[10],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_965,2,t0,t1);}
+C_save_and_reclaim((void*)tr2,(void*)f_1411,2,t0,t1);}
 t2=C_mutate(((C_word *)((C_word*)t0)[8])+1,t1);
-t3=(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_969,a[2]=((C_word*)t0)[3],a[3]=((C_word*)t0)[4],a[4]=((C_word*)t0)[5],a[5]=((C_word*)t0)[6],a[6]=((C_word*)t0)[7],tmp=(C_word)a,a+=7,tmp);
+t3=(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_1415,a[2]=((C_word*)t0)[3],a[3]=((C_word*)t0)[4],a[4]=((C_word*)t0)[5],a[5]=((C_word*)t0)[6],a[6]=((C_word*)t0)[7],tmp=(C_word)a,a+=7,tmp);
 t4=(C_word)C_a_i_list(&a,1,((C_word*)t0)[2]);
-C_trace("ChickenBridge.scm: 271  append");
-t5=*((C_word*)lf[41]+1);
+C_trace("ChickenBridge.scm: 414  append");
+t5=*((C_word*)lf[109]+1);
 ((C_proc4)C_retrieve_proc(t5))(4,t5,t3,((C_word*)((C_word*)t0)[7])[1],t4);}
 
-/* k967 in k963 in k959 in k950 in do131 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_969(C_word c,C_word t0,C_word t1){
+/* k1413 in k1409 in k1405 in k1396 in do202 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1415(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1502,106 +2136,106 @@ C_word t7;
 C_word ab[20],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_969,2,t0,t1);}
+C_save_and_reclaim((void*)tr2,(void*)f_1415,2,t0,t1);}
 t2=C_mutate(((C_word *)((C_word*)t0)[6])+1,t1);
-t3=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_973,a[2]=((C_word*)t0)[4],a[3]=((C_word*)t0)[5],tmp=(C_word)a,a+=4,tmp);
-t4=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_977,a[2]=((C_word*)t0)[5],a[3]=t3,tmp=(C_word)a,a+=4,tmp);
-t5=(C_word)C_eqp(((C_word*)t0)[3],lf[96]);
+t3=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1419,a[2]=((C_word*)t0)[4],a[3]=((C_word*)t0)[5],tmp=(C_word)a,a+=4,tmp);
+t4=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1423,a[2]=((C_word*)t0)[5],a[3]=t3,tmp=(C_word)a,a+=4,tmp);
+t5=(C_word)C_eqp(((C_word*)t0)[3],lf[110]);
 if(C_truep(t5)){
 t6=t4;
-f_977(t6,C_SCHEME_END_OF_LIST);}
+f_1423(t6,C_SCHEME_END_OF_LIST);}
 else{
-t6=(C_word)C_a_i_list(&a,3,lf[76],((C_word*)t0)[2],((C_word*)t0)[3]);
+t6=(C_word)C_a_i_list(&a,3,lf[89],((C_word*)t0)[2],((C_word*)t0)[3]);
 t7=t4;
-f_977(t7,(C_word)C_a_i_list(&a,1,t6));}}
+f_1423(t7,(C_word)C_a_i_list(&a,1,t6));}}
 
-/* k975 in k967 in k963 in k959 in k950 in do131 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_977(C_word t0,C_word t1){
+/* k1421 in k1413 in k1409 in k1405 in k1396 in do202 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_1423(C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word *a;
-C_trace("ChickenBridge.scm: 272  append");
-t2=*((C_word*)lf[41]+1);
+C_trace("ChickenBridge.scm: 415  append");
+t2=*((C_word*)lf[109]+1);
 ((C_proc4)C_retrieve_proc(t2))(4,t2,((C_word*)t0)[3],((C_word*)((C_word*)t0)[2])[1],t1);}
 
-/* k971 in k967 in k963 in k959 in k950 in do131 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_973(C_word c,C_word t0,C_word t1){
+/* k1417 in k1413 in k1409 in k1405 in k1396 in do202 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1419(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word *a;
 t2=C_mutate(((C_word *)((C_word*)t0)[3])+1,t1);
 t3=((C_word*)t0)[2];
-f_942(2,t3,t2);}
+f_1388(2,t3,t2);}
 
-/* k940 in do131 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_942(C_word c,C_word t0,C_word t1){
+/* k1386 in do202 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1388(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word *a;
 t2=(C_word)C_i_cdr(((C_word*)t0)[4]);
 t3=((C_word*)((C_word*)t0)[3])[1];
-f_932(t3,((C_word*)t0)[2],t2);}
+f_1378(t3,((C_word*)t0)[2],t2);}
 
-/* k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_661(C_word c,C_word t0,C_word t1){
+/* k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1107(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[8],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_661,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_664,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=((C_word*)t0)[7],tmp=(C_word)a,a+=8,tmp);
-C_trace("ChickenBridge.scm: 277  gensym");
-t3=C_retrieve(lf[95]);
+C_save_and_reclaim((void*)tr2,(void*)f_1107,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_1110,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=((C_word*)t0)[7],tmp=(C_word)a,a+=8,tmp);
+C_trace("ChickenBridge.scm: 420  gensym");
+t3=C_retrieve(lf[108]);
 ((C_proc2)C_retrieve_proc(t3))(2,t3,t2);}
 
-/* k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_664(C_word c,C_word t0,C_word t1){
+/* k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1110(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[9],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_664,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_667,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=t1,a[8]=((C_word*)t0)[7],tmp=(C_word)a,a+=9,tmp);
-C_trace("ChickenBridge.scm: 278  gensym");
-t3=C_retrieve(lf[95]);
+C_save_and_reclaim((void*)tr2,(void*)f_1110,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_1113,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=t1,a[8]=((C_word*)t0)[7],tmp=(C_word)a,a+=9,tmp);
+C_trace("ChickenBridge.scm: 421  gensym");
+t3=C_retrieve(lf[108]);
 ((C_proc2)C_retrieve_proc(t3))(2,t3,t2);}
 
-/* k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_667(C_word c,C_word t0,C_word t1){
+/* k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1113(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[10],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_667,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|9,a[1]=(C_word)f_670,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=t1,a[8]=((C_word*)t0)[7],a[9]=((C_word*)t0)[8],tmp=(C_word)a,a+=10,tmp);
-C_trace("ChickenBridge.scm: 279  gensym");
-t3=C_retrieve(lf[95]);
+C_save_and_reclaim((void*)tr2,(void*)f_1113,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|9,a[1]=(C_word)f_1116,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=t1,a[8]=((C_word*)t0)[7],a[9]=((C_word*)t0)[8],tmp=(C_word)a,a+=10,tmp);
+C_trace("ChickenBridge.scm: 422  gensym");
+t3=C_retrieve(lf[108]);
 ((C_proc2)C_retrieve_proc(t3))(2,t3,t2);}
 
-/* k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_670(C_word c,C_word t0,C_word t1){
+/* k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1116(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[11],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_670,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|10,a[1]=(C_word)f_673,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=t1,a[5]=((C_word*)t0)[4],a[6]=((C_word*)t0)[5],a[7]=((C_word*)t0)[6],a[8]=((C_word*)t0)[7],a[9]=((C_word*)t0)[8],a[10]=((C_word*)t0)[9],tmp=(C_word)a,a+=11,tmp);
-C_trace("ChickenBridge.scm: 280  gensym");
-t3=C_retrieve(lf[95]);
+C_save_and_reclaim((void*)tr2,(void*)f_1116,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|10,a[1]=(C_word)f_1119,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=t1,a[5]=((C_word*)t0)[4],a[6]=((C_word*)t0)[5],a[7]=((C_word*)t0)[6],a[8]=((C_word*)t0)[7],a[9]=((C_word*)t0)[8],a[10]=((C_word*)t0)[9],tmp=(C_word)a,a+=11,tmp);
+C_trace("ChickenBridge.scm: 423  gensym");
+t3=C_retrieve(lf[108]);
 ((C_proc2)C_retrieve_proc(t3))(2,t3,t2);}
 
-/* k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_673(C_word c,C_word t0,C_word t1){
+/* k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1119(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1615,55 +2249,55 @@ C_word t10;
 C_word ab[26],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_673,2,t0,t1);}
+C_save_and_reclaim((void*)tr2,(void*)f_1119,2,t0,t1);}
 t2=C_SCHEME_TRUE;
 t3=(*a=C_VECTOR_TYPE|1,a[1]=t2,tmp=(C_word)a,a+=2,tmp);
 t4=C_SCHEME_END_OF_LIST;
 t5=(*a=C_VECTOR_TYPE|1,a[1]=t4,tmp=(C_word)a,a+=2,tmp);
-t6=(*a=C_CLOSURE_TYPE|13,a[1]=(C_word)f_676,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=t1,a[6]=t3,a[7]=((C_word*)t0)[5],a[8]=((C_word*)t0)[6],a[9]=((C_word*)t0)[7],a[10]=((C_word*)t0)[8],a[11]=((C_word*)t0)[9],a[12]=t5,a[13]=((C_word*)t0)[10],tmp=(C_word)a,a+=14,tmp);
-t7=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_825,a[2]=t6,a[3]=t3,a[4]=((C_word*)t0)[3],tmp=(C_word)a,a+=5,tmp);
+t6=(*a=C_CLOSURE_TYPE|13,a[1]=(C_word)f_1122,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=t1,a[6]=t3,a[7]=((C_word*)t0)[5],a[8]=((C_word*)t0)[6],a[9]=((C_word*)t0)[7],a[10]=((C_word*)t0)[8],a[11]=((C_word*)t0)[9],a[12]=t5,a[13]=((C_word*)t0)[10],tmp=(C_word)a,a+=14,tmp);
+t7=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_1271,a[2]=t6,a[3]=t3,a[4]=((C_word*)t0)[3],tmp=(C_word)a,a+=5,tmp);
 if(C_truep((C_word)C_i_pairp(((C_word*)((C_word*)t0)[3])[1]))){
 t8=(C_word)C_i_car(((C_word*)((C_word*)t0)[3])[1]);
 if(C_truep((C_word)C_i_pairp(t8))){
-t9=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_926,a[2]=t7,tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 286  caar");
-t10=*((C_word*)lf[91]+1);
+t9=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1372,a[2]=t7,tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 429  caar");
+t10=*((C_word*)lf[104]+1);
 ((C_proc3)C_retrieve_proc(t10))(3,t10,t9,((C_word*)((C_word*)t0)[3])[1]);}
 else{
 t9=t7;
-f_825(t9,C_SCHEME_FALSE);}}
+f_1271(t9,C_SCHEME_FALSE);}}
 else{
 t8=t7;
-f_825(t8,C_SCHEME_FALSE);}}
+f_1271(t8,C_SCHEME_FALSE);}}
 
-/* k924 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_926(C_word c,C_word t0,C_word t1){
+/* k1370 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1372(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word *a;
 t2=((C_word*)t0)[2];
-f_825(t2,(C_word)C_eqp(t1,lf[94]));}
+f_1271(t2,(C_word)C_eqp(t1,lf[107]));}
 
-/* k823 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_825(C_word t0,C_word t1){
+/* k1269 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_1271(C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word ab[5],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_825,NULL,2,t0,t1);}
+C_save_and_reclaim((void*)trf_1271,NULL,2,t0,t1);}
 if(C_truep(t1)){
-t2=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_832,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],tmp=(C_word)a,a+=5,tmp);
-C_trace("ChickenBridge.scm: 287  cdar");
-t3=*((C_word*)lf[89]+1);
+t2=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_1278,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],tmp=(C_word)a,a+=5,tmp);
+C_trace("ChickenBridge.scm: 430  cdar");
+t3=*((C_word*)lf[102]+1);
 ((C_proc3)C_retrieve_proc(t3))(3,t3,t2,((C_word*)((C_word*)t0)[4])[1]);}
 else{
 t2=((C_word*)t0)[2];
-f_676(2,t2,C_SCHEME_UNDEFINED);}}
+f_1122(2,t2,C_SCHEME_UNDEFINED);}}
 
-/* k830 in k823 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_832(C_word c,C_word t0,C_word t1){
+/* k1276 in k1269 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1278(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1672,15 +2306,15 @@ C_word t5;
 C_word ab[8],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_832,2,t0,t1);}
+C_save_and_reclaim((void*)tr2,(void*)f_1278,2,t0,t1);}
 t2=C_SCHEME_UNDEFINED;
 t3=(*a=C_VECTOR_TYPE|1,a[1]=t2,tmp=(C_word)a,a+=2,tmp);
-t4=C_set_block_item(t3,0,(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_834,a[2]=((C_word*)t0)[3],a[3]=t3,a[4]=((C_word*)t0)[4],a[5]=lf[93],tmp=(C_word)a,a+=6,tmp));
+t4=C_set_block_item(t3,0,(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_1280,a[2]=((C_word*)t0)[3],a[3]=t3,a[4]=((C_word*)t0)[4],a[5]=lf[106],tmp=(C_word)a,a+=6,tmp));
 t5=((C_word*)t3)[1];
-f_834(t5,((C_word*)t0)[2],t1);}
+f_1280(t5,((C_word*)t0)[2],t1);}
 
-/* do147 in k830 in k823 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_834(C_word t0,C_word t1,C_word t2){
+/* do218 in k1276 in k1269 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_1280(C_word t0,C_word t1,C_word t2){
 C_word tmp;
 C_word t3;
 C_word t4;
@@ -1692,35 +2326,35 @@ C_word t9;
 C_word ab[13],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_834,NULL,3,t0,t1,t2);}
+C_save_and_reclaim((void*)trf_1280,NULL,3,t0,t1,t2);}
 if(C_truep((C_word)C_i_nullp(t2))){
 t3=(C_word)C_i_cdr(((C_word*)((C_word*)t0)[4])[1]);
 t4=C_mutate(((C_word *)((C_word*)t0)[4])+1,t3);
 t5=t1;
 ((C_proc2)(void*)(*((C_word*)t5+1)))(2,t5,t4);}
 else{
-t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_848,a[2]=t1,a[3]=((C_word*)t0)[3],a[4]=t2,tmp=(C_word)a,a+=5,tmp);
-t4=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_858,a[2]=t2,a[3]=((C_word*)t0)[2],a[4]=t3,tmp=(C_word)a,a+=5,tmp);
+t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_1294,a[2]=t1,a[3]=((C_word*)t0)[3],a[4]=t2,tmp=(C_word)a,a+=5,tmp);
+t4=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_1304,a[2]=t2,a[3]=((C_word*)t0)[2],a[4]=t3,tmp=(C_word)a,a+=5,tmp);
 t5=(C_word)C_i_car(t2);
 if(C_truep((C_word)C_i_pairp(t5))){
-t6=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_906,a[2]=t4,tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 291  cdar");
-t7=*((C_word*)lf[89]+1);
+t6=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1352,a[2]=t4,tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 434  cdar");
+t7=*((C_word*)lf[102]+1);
 ((C_proc3)C_retrieve_proc(t7))(3,t7,t6,t2);}
 else{
 t6=t4;
-f_858(t6,C_SCHEME_FALSE);}}}
+f_1304(t6,C_SCHEME_FALSE);}}}
 
-/* k904 in do147 in k830 in k823 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_906(C_word c,C_word t0,C_word t1){
+/* k1350 in do218 in k1276 in k1269 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1352(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word *a;
 t2=((C_word*)t0)[2];
-f_858(t2,(C_word)C_i_pairp(t1));}
+f_1304(t2,(C_word)C_i_pairp(t1));}
 
-/* k856 in do147 in k830 in k823 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_858(C_word t0,C_word t1){
+/* k1302 in do218 in k1276 in k1269 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_1304(C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1728,20 +2362,20 @@ C_word t4;
 C_word ab[5],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_858,NULL,2,t0,t1);}
+C_save_and_reclaim((void*)trf_1304,NULL,2,t0,t1);}
 if(C_truep(t1)){
-t2=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_861,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],tmp=(C_word)a,a+=5,tmp);
-C_trace("ChickenBridge.scm: 292  caar");
-t3=*((C_word*)lf[91]+1);
+t2=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_1307,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],tmp=(C_word)a,a+=5,tmp);
+C_trace("ChickenBridge.scm: 435  caar");
+t3=*((C_word*)lf[104]+1);
 ((C_proc3)C_retrieve_proc(t3))(3,t3,t2,((C_word*)t0)[2]);}
 else{
 t2=(C_word)C_i_car(((C_word*)t0)[2]);
-C_trace("ChickenBridge.scm: 298  error");
-t3=*((C_word*)lf[27]+1);
-((C_proc4)C_retrieve_proc(t3))(4,t3,((C_word*)t0)[4],lf[92],t2);}}
+C_trace("ChickenBridge.scm: 441  error");
+t3=*((C_word*)lf[35]+1);
+((C_proc4)C_retrieve_proc(t3))(4,t3,((C_word*)t0)[4],lf[105],t2);}}
 
-/* k859 in k856 in do147 in k830 in k823 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_861(C_word c,C_word t0,C_word t1){
+/* k1305 in k1302 in do218 in k1276 in k1269 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1307(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1750,45 +2384,45 @@ C_word t5;
 C_word ab[4],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_861,2,t0,t1);}
-t2=(C_word)C_eqp(t1,lf[88]);
+C_save_and_reclaim((void*)tr2,(void*)f_1307,2,t0,t1);}
+t2=(C_word)C_eqp(t1,lf[101]);
 if(C_truep(t2)){
-t3=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_882,a[2]=((C_word*)t0)[3],a[3]=((C_word*)t0)[4],tmp=(C_word)a,a+=4,tmp);
-C_trace("ChickenBridge.scm: 294  cdar");
-t4=*((C_word*)lf[89]+1);
+t3=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1328,a[2]=((C_word*)t0)[3],a[3]=((C_word*)t0)[4],tmp=(C_word)a,a+=4,tmp);
+C_trace("ChickenBridge.scm: 437  cdar");
+t4=*((C_word*)lf[102]+1);
 ((C_proc3)C_retrieve_proc(t4))(3,t4,t3,((C_word*)t0)[2]);}
 else{
 t3=(C_word)C_i_car(((C_word*)t0)[2]);
-C_trace("ChickenBridge.scm: 297  error");
-t4=*((C_word*)lf[27]+1);
-((C_proc4)C_retrieve_proc(t4))(4,t4,((C_word*)t0)[4],lf[90],t3);}}
+C_trace("ChickenBridge.scm: 440  error");
+t4=*((C_word*)lf[35]+1);
+((C_proc4)C_retrieve_proc(t4))(4,t4,((C_word*)t0)[4],lf[103],t3);}}
 
-/* k880 in k859 in k856 in do147 in k830 in k823 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_882(C_word c,C_word t0,C_word t1){
+/* k1326 in k1305 in k1302 in do218 in k1276 in k1269 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1328(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word *a;
 if(C_truep((C_word)C_i_car(t1))){
 t2=((C_word*)t0)[3];
-f_848(2,t2,C_SCHEME_UNDEFINED);}
+f_1294(2,t2,C_SCHEME_UNDEFINED);}
 else{
 t2=C_set_block_item(((C_word*)t0)[2],0,C_SCHEME_FALSE);
 t3=((C_word*)t0)[3];
-f_848(2,t3,t2);}}
+f_1294(2,t3,t2);}}
 
-/* k846 in do147 in k830 in k823 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_848(C_word c,C_word t0,C_word t1){
+/* k1292 in do218 in k1276 in k1269 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1294(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word *a;
 t2=(C_word)C_i_cdr(((C_word*)t0)[4]);
 t3=((C_word*)((C_word*)t0)[3])[1];
-f_834(t3,((C_word*)t0)[2],t2);}
+f_1280(t3,((C_word*)t0)[2],t2);}
 
-/* k674 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_676(C_word c,C_word t0,C_word t1){
+/* k1120 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1122(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1798,17 +2432,17 @@ C_word t6;
 C_word ab[17],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_676,2,t0,t1);}
+C_save_and_reclaim((void*)tr2,(void*)f_1122,2,t0,t1);}
 t2=(C_word)C_i_car(((C_word*)t0)[13]);
-t3=(*a=C_CLOSURE_TYPE|13,a[1]=(C_word)f_814,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=((C_word*)t0)[7],a[8]=((C_word*)t0)[8],a[9]=((C_word*)t0)[9],a[10]=((C_word*)t0)[10],a[11]=((C_word*)t0)[11],a[12]=((C_word*)t0)[12],a[13]=t2,tmp=(C_word)a,a+=14,tmp);
+t3=(*a=C_CLOSURE_TYPE|13,a[1]=(C_word)f_1260,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=((C_word*)t0)[6],a[7]=((C_word*)t0)[7],a[8]=((C_word*)t0)[8],a[9]=((C_word*)t0)[9],a[10]=((C_word*)t0)[10],a[11]=((C_word*)t0)[11],a[12]=((C_word*)t0)[12],a[13]=t2,tmp=(C_word)a,a+=14,tmp);
 t4=(C_word)C_i_cdr(((C_word*)t0)[13]);
 t5=(C_word)C_a_i_list(&a,1,C_fix(-1));
-C_trace("ChickenBridge.scm: 249  ##sys#append");
-t6=*((C_word*)lf[87]+1);
+C_trace("ChickenBridge.scm: 392  ##sys#append");
+t6=*((C_word*)lf[100]+1);
 ((C_proc4)(void*)(*((C_word*)t6+1)))(4,t6,t3,t4,t5);}
 
-/* k812 in k674 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_814(C_word c,C_word t0,C_word t1){
+/* k1258 in k1120 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1260(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1818,26 +2452,26 @@ C_word t6;
 C_word ab[22],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_814,2,t0,t1);}
+C_save_and_reclaim((void*)tr2,(void*)f_1260,2,t0,t1);}
 t2=(C_word)C_a_i_cons(&a,2,((C_word*)t0)[13],t1);
-t3=(*a=C_CLOSURE_TYPE|11,a[1]=(C_word)f_798,a[2]=((C_word*)t0)[4],a[3]=((C_word*)t0)[5],a[4]=((C_word*)t0)[6],a[5]=((C_word*)t0)[7],a[6]=((C_word*)t0)[8],a[7]=((C_word*)t0)[9],a[8]=((C_word*)t0)[10],a[9]=((C_word*)t0)[11],a[10]=((C_word*)t0)[12],a[11]=t2,tmp=(C_word)a,a+=12,tmp);
-t4=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_802,a[2]=((C_word*)t0)[3],a[3]=t3,tmp=(C_word)a,a+=4,tmp);
+t3=(*a=C_CLOSURE_TYPE|11,a[1]=(C_word)f_1244,a[2]=((C_word*)t0)[4],a[3]=((C_word*)t0)[5],a[4]=((C_word*)t0)[6],a[5]=((C_word*)t0)[7],a[6]=((C_word*)t0)[8],a[7]=((C_word*)t0)[9],a[8]=((C_word*)t0)[10],a[9]=((C_word*)t0)[11],a[10]=((C_word*)t0)[12],a[11]=t2,tmp=(C_word)a,a+=12,tmp);
+t4=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_1248,a[2]=((C_word*)t0)[3],a[3]=t3,tmp=(C_word)a,a+=4,tmp);
 t5=(C_word)C_a_i_list(&a,1,((C_word*)t0)[10]);
-C_trace("ChickenBridge.scm: 249  ##sys#append");
-t6=*((C_word*)lf[87]+1);
+C_trace("ChickenBridge.scm: 392  ##sys#append");
+t6=*((C_word*)lf[100]+1);
 ((C_proc4)(void*)(*((C_word*)t6+1)))(4,t6,t4,((C_word*)((C_word*)t0)[2])[1],t5);}
 
-/* k800 in k812 in k674 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_802(C_word c,C_word t0,C_word t1){
+/* k1246 in k1258 in k1120 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1248(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word *a;
-C_trace("ChickenBridge.scm: 249  ##sys#append");
-t2=*((C_word*)lf[87]+1);
+C_trace("ChickenBridge.scm: 392  ##sys#append");
+t2=*((C_word*)lf[100]+1);
 ((C_proc4)(void*)(*((C_word*)t2+1)))(4,t2,((C_word*)t0)[3],((C_word*)((C_word*)t0)[2])[1],t1);}
 
-/* k796 in k812 in k674 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_798(C_word c,C_word t0,C_word t1){
+/* k1242 in k1258 in k1120 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1244(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1861,34 +2495,34 @@ C_word t20;
 C_word ab[116],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_798,2,t0,t1);}
-t2=(C_word)C_a_i_cons(&a,2,lf[71],t1);
-t3=(C_word)C_a_i_list(&a,3,lf[72],((C_word*)t0)[11],t2);
+C_save_and_reclaim((void*)tr2,(void*)f_1244,2,t0,t1);}
+t2=(C_word)C_a_i_cons(&a,2,lf[84],t1);
+t3=(C_word)C_a_i_list(&a,3,lf[85],((C_word*)t0)[11],t2);
 t4=C_mutate(((C_word *)((C_word*)t0)[10])+1,t3);
-t5=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_683,a[2]=((C_word*)t0)[5],a[3]=((C_word*)t0)[6],a[4]=((C_word*)t0)[7],a[5]=((C_word*)t0)[10],a[6]=((C_word*)t0)[8],a[7]=((C_word*)t0)[9],tmp=(C_word)a,a+=8,tmp);
+t5=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_1129,a[2]=((C_word*)t0)[5],a[3]=((C_word*)t0)[6],a[4]=((C_word*)t0)[7],a[5]=((C_word*)t0)[10],a[6]=((C_word*)t0)[8],a[7]=((C_word*)t0)[9],tmp=(C_word)a,a+=8,tmp);
 if(C_truep(((C_word*)((C_word*)t0)[4])[1])){
 t6=(C_word)C_a_i_list(&a,1,((C_word*)t0)[3]);
 t7=(C_word)C_a_i_list(&a,1,((C_word*)t0)[2]);
-t8=(C_word)C_a_i_list(&a,2,lf[79],lf[80]);
-t9=(C_word)C_a_i_list(&a,2,lf[79],lf[81]);
-t10=(C_word)C_a_i_list(&a,3,lf[82],t8,t9);
+t8=(C_word)C_a_i_list(&a,2,lf[92],lf[93]);
+t9=(C_word)C_a_i_list(&a,2,lf[92],lf[94]);
+t10=(C_word)C_a_i_list(&a,3,lf[95],t8,t9);
 t11=(C_word)C_a_i_list(&a,2,t10,((C_word*)t0)[2]);
-t12=(C_word)C_a_i_list(&a,4,lf[83],lf[84],((C_word*)t0)[9],t11);
+t12=(C_word)C_a_i_list(&a,4,lf[96],lf[97],((C_word*)t0)[9],t11);
 t13=(C_word)C_a_i_list(&a,2,((C_word*)t0)[3],C_fix(-2));
-t14=(C_word)C_a_i_list(&a,4,lf[73],t7,t12,t13);
-t15=(C_word)C_a_i_list(&a,3,lf[73],C_SCHEME_END_OF_LIST,((C_word*)((C_word*)t0)[10])[1]);
-t16=(C_word)C_a_i_list(&a,3,lf[85],t14,t15);
-t17=(C_word)C_a_i_list(&a,3,lf[73],t6,t16);
-t18=(C_word)C_a_i_list(&a,2,lf[86],t17);
+t14=(C_word)C_a_i_list(&a,4,lf[86],t7,t12,t13);
+t15=(C_word)C_a_i_list(&a,3,lf[86],C_SCHEME_END_OF_LIST,((C_word*)((C_word*)t0)[10])[1]);
+t16=(C_word)C_a_i_list(&a,3,lf[98],t14,t15);
+t17=(C_word)C_a_i_list(&a,3,lf[86],t6,t16);
+t18=(C_word)C_a_i_list(&a,2,lf[99],t17);
 t19=C_mutate(((C_word *)((C_word*)t0)[10])+1,t18);
 t20=t5;
-f_683(t20,t19);}
+f_1129(t20,t19);}
 else{
 t6=t5;
-f_683(t6,C_SCHEME_UNDEFINED);}}
+f_1129(t6,C_SCHEME_UNDEFINED);}}
 
-/* k681 in k796 in k812 in k674 in k671 in k668 in k665 in k662 in k659 in k656 in k653 in expand-go in k638 in k635 in k632 in k629 in k626 in k623 in k620 in k617 in k614 in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_683(C_word t0,C_word t1){
+/* k1127 in k1242 in k1258 in k1120 in k1117 in k1114 in k1111 in k1108 in k1105 in k1102 in k1099 in a1542 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_1129(C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -1906,196 +2540,152 @@ C_word t14;
 C_word ab[90],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_683,NULL,2,t0,t1);}
+C_save_and_reclaim((void*)trf_1129,NULL,2,t0,t1);}
 t2=(C_word)C_a_i_list(&a,1,((C_word*)t0)[7]);
 t3=(C_word)C_a_i_list(&a,2,((C_word*)t0)[6],C_fix(0));
-t4=(C_word)C_a_i_list(&a,3,lf[73],C_SCHEME_END_OF_LIST,((C_word*)t0)[7]);
-t5=(C_word)C_a_i_list(&a,2,lf[74],t4);
-t6=(C_word)C_a_i_list(&a,1,lf[75]);
-t7=(C_word)C_a_i_list(&a,3,lf[76],((C_word*)t0)[6],lf[75]);
-t8=(C_word)C_a_i_list(&a,3,lf[73],t6,t7);
-t9=(C_word)C_a_i_list(&a,2,lf[77],t8);
+t4=(C_word)C_a_i_list(&a,3,lf[86],C_SCHEME_END_OF_LIST,((C_word*)t0)[7]);
+t5=(C_word)C_a_i_list(&a,2,lf[87],t4);
+t6=(C_word)C_a_i_list(&a,1,lf[88]);
+t7=(C_word)C_a_i_list(&a,3,lf[89],((C_word*)t0)[6],lf[88]);
+t8=(C_word)C_a_i_list(&a,3,lf[86],t6,t7);
+t9=(C_word)C_a_i_list(&a,2,lf[90],t8);
 t10=(C_word)C_a_i_list(&a,3,t3,t5,t9);
-t11=(C_word)C_a_i_list(&a,3,lf[78],t10,((C_word*)((C_word*)t0)[5])[1]);
-t12=(C_word)C_a_i_list(&a,3,lf[73],t2,t11);
-t13=(C_word)C_a_i_list(&a,3,lf[73],((C_word*)((C_word*)t0)[4])[1],t12);
+t11=(C_word)C_a_i_list(&a,3,lf[91],t10,((C_word*)((C_word*)t0)[5])[1]);
+t12=(C_word)C_a_i_list(&a,3,lf[86],t2,t11);
+t13=(C_word)C_a_i_list(&a,3,lf[86],((C_word*)((C_word*)t0)[4])[1],t12);
 t14=((C_word*)t0)[3];
 ((C_proc2)(void*)(*((C_word*)t14+1)))(2,t14,(C_word)C_a_i_cons(&a,2,t13,((C_word*)((C_word*)t0)[2])[1]));}
 
-/* mp:inhook in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_609(C_word c,C_word t0,C_word t1,C_word t2){
+/* k1084 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1086(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word ab[3],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_1086,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_1541,a[2]=((C_word*)t0)[2],tmp=(C_word)a,a+=3,tmp);
+C_trace("ChickenBridge.scm: 485  return-to-host");
+t3=C_retrieve(lf[83]);
+((C_proc2)C_retrieve_proc(t3))(2,t3,t2);}
+
+/* k1539 in k1084 in k1081 in k1078 in k1075 in k1072 in k1069 in k1066 in k1063 in k1060 in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1541(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word *a;
+t2=((C_word*)t0)[2];
+((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,C_SCHEME_UNDEFINED);}
+
+/* mp:inhook in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1055(C_word c,C_word t0,C_word t1,C_word t2){
 C_word tmp;
 C_word t3;
 C_word *a;
 if(c!=3) C_bad_argc_2(c,3,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr3,(void*)f_609,3,t0,t1,t2);}
-C_trace("ChickenBridge.scm: 212  error");
-t3=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t3))(3,t3,t1,lf[68]);}
+C_save_and_reclaim((void*)tr3,(void*)f_1055,3,t0,t1,t2);}
+C_trace("ChickenBridge.scm: 370  error");
+t3=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t3))(3,t3,t1,lf[81]);}
 
-/* mp:micro in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_603(C_word c,C_word t0,C_word t1,C_word t2){
+/* mp:micro in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1049(C_word c,C_word t0,C_word t1,C_word t2){
 C_word tmp;
 C_word t3;
 C_word *a;
 if(c!=3) C_bad_argc_2(c,3,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr3,(void*)f_603,3,t0,t1,t2);}
-C_trace("ChickenBridge.scm: 210  error");
-t3=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t3))(3,t3,t1,lf[65]);}
+C_save_and_reclaim((void*)tr3,(void*)f_1049,3,t0,t1,t2);}
+C_trace("ChickenBridge.scm: 368  error");
+t3=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t3))(3,t3,t1,lf[78]);}
 
-/* mp:alloff in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_597(C_word c,C_word t0,C_word t1){
+/* mp:alloff in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1043(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word *a;
 if(c!=2) C_bad_argc_2(c,2,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_597,2,t0,t1);}
-C_trace("ChickenBridge.scm: 208  error");
-t2=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t2))(3,t2,t1,lf[62]);}
+C_save_and_reclaim((void*)tr2,(void*)f_1043,2,t0,t1);}
+C_trace("ChickenBridge.scm: 366  error");
+t2=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t2))(3,t2,t1,lf[75]);}
 
-/* mp:ctrl in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_591(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5){
+/* mp:ctrl in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1037(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5){
 C_word tmp;
 C_word t6;
 C_word *a;
 if(c!=6) C_bad_argc_2(c,6,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr6,(void*)f_591,6,t0,t1,t2,t3,t4,t5);}
-C_trace("ChickenBridge.scm: 206  error");
-t6=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t6))(3,t6,t1,lf[59]);}
+C_save_and_reclaim((void*)tr6,(void*)f_1037,6,t0,t1,t2,t3,t4,t5);}
+C_trace("ChickenBridge.scm: 364  error");
+t6=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t6))(3,t6,t1,lf[72]);}
 
-/* mp:prog in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_585(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4){
+/* mp:prog in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1031(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4){
 C_word tmp;
 C_word t5;
 C_word *a;
 if(c!=5) C_bad_argc_2(c,5,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr5,(void*)f_585,5,t0,t1,t2,t3,t4);}
-C_trace("ChickenBridge.scm: 204  error");
-t5=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t5))(3,t5,t1,lf[56]);}
+C_save_and_reclaim((void*)tr5,(void*)f_1031,5,t0,t1,t2,t3,t4);}
+C_trace("ChickenBridge.scm: 362  error");
+t5=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t5))(3,t5,t1,lf[69]);}
 
-/* mp:off in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_579(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5){
+/* mp:off in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1025(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5){
 C_word tmp;
 C_word t6;
 C_word *a;
 if(c!=6) C_bad_argc_2(c,6,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr6,(void*)f_579,6,t0,t1,t2,t3,t4,t5);}
-C_trace("ChickenBridge.scm: 202  error");
-t6=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t6))(3,t6,t1,lf[53]);}
+C_save_and_reclaim((void*)tr6,(void*)f_1025,6,t0,t1,t2,t3,t4,t5);}
+C_trace("ChickenBridge.scm: 360  error");
+t6=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t6))(3,t6,t1,lf[66]);}
 
-/* mp:on in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_573(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5){
+/* mp:on in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1019(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5){
 C_word tmp;
 C_word t6;
 C_word *a;
 if(c!=6) C_bad_argc_2(c,6,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr6,(void*)f_573,6,t0,t1,t2,t3,t4,t5);}
-C_trace("ChickenBridge.scm: 200  error");
-t6=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t6))(3,t6,t1,lf[50]);}
+C_save_and_reclaim((void*)tr6,(void*)f_1019,6,t0,t1,t2,t3,t4,t5);}
+C_trace("ChickenBridge.scm: 358  error");
+t6=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t6))(3,t6,t1,lf[63]);}
 
-/* mp:note in k563 in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_567(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5,C_word t6){
+/* mp:note in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_1013(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5,C_word t6){
 C_word tmp;
 C_word t7;
-C_word *a;
+C_word t8;
+C_word ab[8],*a=ab;
 if(c!=7) C_bad_argc_2(c,7,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr7,(void*)f_567,7,t0,t1,t2,t3,t4,t5,t6);}
-C_trace("ChickenBridge.scm: 196  insert-midi-note");
-t7=*((C_word*)lf[12]+1);
-((C_proc7)C_retrieve_proc(t7))(7,t7,t1,t2,t3,t4,t5,t6);}
+C_save_and_reclaim((void*)tr7,(void*)f_1013,7,t0,t1,t2,t3,t4,t5,t6);}
+t7=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_330,a[2]=t1,a[3]=t6,a[4]=t5,a[5]=t4,a[6]=t3,a[7]=t2,tmp=(C_word)a,a+=8,tmp);
+C_trace("##sys#gc");
+t8=C_retrieve(lf[11]);
+((C_proc3)C_retrieve_proc(t8))(3,t8,t7,C_SCHEME_FALSE);}
 
-/* expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_338(C_word c,C_word t0,C_word t1,C_word t2,C_word t3){
-C_word tmp;
-C_word t4;
-C_word t5;
-C_word t6;
-C_word ab[6],*a=ab;
-if(c!=4) C_bad_argc_2(c,4,t0);
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr4,(void*)f_338,4,t0,t1,t2,t3);}
-t4=(*a=C_VECTOR_TYPE|1,a[1]=t3,tmp=(C_word)a,a+=2,tmp);
-t5=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_342,a[2]=t1,a[3]=t4,tmp=(C_word)a,a+=4,tmp);
-if(C_truep((C_word)C_i_symbolp(t2))){
-C_trace("ChickenBridge.scm: 119  symbol->string");
-t6=*((C_word*)lf[45]+1);
-((C_proc3)C_retrieve_proc(t6))(3,t6,t5,t2);}
-else{
-t6=t5;
-f_342(2,t6,t2);}}
-
-/* k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_342(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word t3;
-C_word t4;
-C_word ab[8],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_342,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_345,a[2]=t1,a[3]=((C_word*)t0)[2],a[4]=((C_word*)t0)[3],tmp=(C_word)a,a+=5,tmp);
-t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_555,a[2]=lf[43],tmp=(C_word)a,a+=3,tmp);
-C_trace("ChickenBridge.scm: 120  hash-table-ref");
-t4=*((C_word*)lf[44]+1);
-((C_proc5)C_retrieve_proc(t4))(5,t4,t2,lf[25],t1,t3);}
-
-/* a554 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_555(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word *a;
-if(c!=2) C_bad_argc_2(c,2,t0);
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_555,2,t0,t1);}
-t2=t1;
-((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,C_SCHEME_FALSE);}
-
-/* k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_345(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word t3;
-C_word t4;
-C_word ab[9],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_345,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_348,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=t1,a[5]=((C_word*)t0)[4],tmp=(C_word)a,a+=6,tmp);
-t3=t1;
-if(C_truep(t3)){
-t4=t2;
-f_348(2,t4,C_SCHEME_UNDEFINED);}
-else{
-C_trace("ChickenBridge.scm: 121  ferror");
-f_328(t2,lf[42],(C_word)C_a_i_list(&a,1,((C_word*)t0)[2]));}}
-
-/* k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_348(C_word c,C_word t0,C_word t1){
+/* k328 in mp:note in k1009 in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_330(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -2104,44 +2694,372 @@ C_word t5;
 C_word t6;
 C_word t7;
 C_word t8;
-C_word t9;
-C_word ab[12],*a=ab;
+C_word ab[11],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_348,2,t0,t1);}
-t2=((C_word*)((C_word*)t0)[5])[1];
-t3=(C_word)C_i_car(((C_word*)t0)[4]);
-t4=(C_word)C_i_cdr(((C_word*)t0)[4]);
-t5=C_SCHEME_FALSE;
-t6=(*a=C_VECTOR_TYPE|1,a[1]=t5,tmp=(C_word)a,a+=2,tmp);
-t7=(C_word)C_i_length(t4);
-t8=(*a=C_CLOSURE_TYPE|9,a[1]=(C_word)f_360,a[2]=t7,a[3]=t2,a[4]=((C_word*)t0)[2],a[5]=t6,a[6]=((C_word*)t0)[5],a[7]=((C_word*)t0)[3],a[8]=t4,a[9]=t3,tmp=(C_word)a,a+=10,tmp);
-C_trace("ChickenBridge.scm: 128  append");
-t9=*((C_word*)lf[41]+1);
-((C_proc4)C_retrieve_proc(t9))(4,t9,t8,t4,C_SCHEME_END_OF_LIST);}
+C_save_and_reclaim((void*)tr2,(void*)f_330,2,t0,t1);}
+t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
+t3=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[7]);
+t4=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[6]);
+t5=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[5]);
+t6=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[4]);
+t7=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[3]);
+t8=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub17,a[2]=lf[60],tmp=(C_word)a,a+=3,tmp);
+((C_proc8)C_retrieve_proc(t8))(8,t8,((C_word*)t0)[2],t2,t3,t4,t5,t6,t7);}
 
-/* k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_360(C_word c,C_word t0,C_word t1){
+/* ferror in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_fcall f_774(C_word t1,C_word t2,C_word t3){
+C_word tmp;
+C_word t4;
+C_word t5;
+C_word ab[3],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_774,NULL,3,t1,t2,t3);}
+t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_782,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+C_apply(5,0,t4,C_retrieve(lf[57]),t2,t3);}
+
+/* k780 in ferror in k770 in k767 in k294 in k291 in k288 in k285 */
+static void C_ccall f_782(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word *a;
+C_trace("ChickenBridge.scm: 275  error");
+t2=*((C_word*)lf[35]+1);
+((C_proc3)C_retrieve_proc(t2))(3,t2,((C_word*)t0)[2],t1);}
+
+/* hush in k294 in k291 in k288 in k285 */
+static void C_ccall f_758(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word ab[6],*a=ab;
+if(c!=2) C_bad_argc_2(c,2,t0);
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_758,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_762,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_440,a[2]=t2,tmp=(C_word)a,a+=3,tmp);
+C_trace("##sys#gc");
+t4=C_retrieve(lf[11]);
+((C_proc3)C_retrieve_proc(t4))(3,t4,t3,C_SCHEME_FALSE);}
+
+/* k438 in hush in k294 in k291 in k288 in k285 */
+static void C_ccall f_440(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word ab[11],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_440,2,t0,t1);}
+t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub69,a[2]=lf[53],tmp=(C_word)a,a+=3,tmp);
+((C_proc3)C_retrieve_proc(t3))(3,t3,((C_word*)t0)[2],t2);}
+
+/* k760 in hush in k294 in k291 in k288 in k285 */
+static void C_ccall f_762(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word *a;
+C_trace("ChickenBridge.scm: 252  values");
+C_values(2,0,((C_word*)t0)[2]);}
+
+/* stop in k294 in k291 in k288 in k285 */
+static void C_ccall f_700(C_word c,C_word t0,C_word t1,...){
+C_word tmp;
+C_word t2;
+va_list v;
+C_word *a,c2=c;
+C_save_rest(t1,c2,2);
+C_check_for_interrupt;
+if(!C_demand(c*C_SIZEOF_PAIR+9)){
+C_save_and_reclaim((void*)tr2r,(void*)f_700r,2,t0,t1);}
+else{
+a=C_alloc((c-2)*3);
+t2=C_restore_rest(a,C_rest_count(0));
+f_700r(t0,t1,t2);}}
+
+static void C_ccall f_700r(C_word t0,C_word t1,C_word t2){
+C_word tmp;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word *a=C_alloc(9);
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_704,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+if(C_truep((C_word)C_i_nullp(t2))){
+C_trace("ChickenBridge.scm: 242  scheduler-stop");
+f_423(t3,C_fix(-1));}
+else{
+t4=C_SCHEME_UNDEFINED;
+t5=(*a=C_VECTOR_TYPE|1,a[1]=t4,tmp=(C_word)a,a+=2,tmp);
+t6=C_set_block_item(t5,0,(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_718,a[2]=t5,a[3]=lf[50],tmp=(C_word)a,a+=4,tmp));
+t7=((C_word*)t5)[1];
+f_718(t7,t3,t2);}}
+
+/* do120 in stop in k294 in k291 in k288 in k285 */
+static void C_fcall f_718(C_word t0,C_word t1,C_word t2){
+C_word tmp;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word ab[5],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_718,NULL,3,t0,t1,t2);}
+if(C_truep((C_word)C_i_nullp(t2))){
+t3=t1;
+((C_proc2)(void*)(*((C_word*)t3+1)))(2,t3,C_SCHEME_FALSE);}
+else{
+t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_728,a[2]=t1,a[3]=((C_word*)t0)[2],a[4]=t2,tmp=(C_word)a,a+=5,tmp);
+t4=(C_word)C_i_car(t2);
+if(C_truep((C_word)C_fixnump(t4))){
+t5=(C_word)C_i_car(t2);
+C_trace("ChickenBridge.scm: 246  scheduler-stop");
+f_423(t3,t5);}
+else{
+t5=(C_word)C_i_car(t2);
+C_trace("ChickenBridge.scm: 247  error");
+t6=*((C_word*)lf[35]+1);
+((C_proc4)C_retrieve_proc(t6))(4,t6,t3,lf[49],t5);}}}
+
+/* k726 in do120 in stop in k294 in k291 in k288 in k285 */
+static void C_ccall f_728(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word *a;
+t2=(C_word)C_i_cdr(((C_word*)t0)[4]);
+t3=((C_word*)((C_word*)t0)[3])[1];
+f_718(t3,((C_word*)t0)[2],t2);}
+
+/* k702 in stop in k294 in k291 in k288 in k285 */
+static void C_ccall f_704(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word *a;
+C_trace("ChickenBridge.scm: 248  values");
+C_values(2,0,((C_word*)t0)[2]);}
+
+/* cont in k294 in k291 in k288 in k285 */
+static void C_ccall f_691(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word ab[6],*a=ab;
+if(c!=2) C_bad_argc_2(c,2,t0);
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_691,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_695,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_418,a[2]=t2,tmp=(C_word)a,a+=3,tmp);
+C_trace("##sys#gc");
+t4=C_retrieve(lf[11]);
+((C_proc3)C_retrieve_proc(t4))(3,t4,t3,C_SCHEME_FALSE);}
+
+/* k416 in cont in k294 in k291 in k288 in k285 */
+static void C_ccall f_418(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word ab[11],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_418,2,t0,t1);}
+t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub59,a[2]=lf[46],tmp=(C_word)a,a+=3,tmp);
+((C_proc3)C_retrieve_proc(t3))(3,t3,((C_word*)t0)[2],t2);}
+
+/* k693 in cont in k294 in k291 in k288 in k285 */
+static void C_ccall f_695(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word *a;
+C_trace("ChickenBridge.scm: 238  values");
+C_values(2,0,((C_word*)t0)[2]);}
+
+/* paused? in k294 in k291 in k288 in k285 */
+static void C_ccall f_685(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word ab[3],*a=ab;
+if(c!=2) C_bad_argc_2(c,2,t0);
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_685,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_400,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+C_trace("##sys#gc");
+t3=C_retrieve(lf[11]);
+((C_proc3)C_retrieve_proc(t3))(3,t3,t2,C_SCHEME_FALSE);}
+
+/* k398 in paused? in k294 in k291 in k288 in k285 */
+static void C_ccall f_400(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word ab[11],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_400,2,t0,t1);}
+t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub51,a[2]=lf[43],tmp=(C_word)a,a+=3,tmp);
+((C_proc3)C_retrieve_proc(t3))(3,t3,((C_word*)t0)[2],t2);}
+
+/* pause in k294 in k291 in k288 in k285 */
+static void C_ccall f_676(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word ab[6],*a=ab;
+if(c!=2) C_bad_argc_2(c,2,t0);
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_676,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_680,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_409,a[2]=t2,tmp=(C_word)a,a+=3,tmp);
+C_trace("##sys#gc");
+t4=C_retrieve(lf[11]);
+((C_proc3)C_retrieve_proc(t4))(3,t4,t3,C_SCHEME_FALSE);}
+
+/* k407 in pause in k294 in k291 in k288 in k285 */
+static void C_ccall f_409(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word ab[11],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_409,2,t0,t1);}
+t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub55,a[2]=lf[40],tmp=(C_word)a,a+=3,tmp);
+((C_proc3)C_retrieve_proc(t3))(3,t3,((C_word*)t0)[2],t2);}
+
+/* k678 in pause in k294 in k291 in k288 in k285 */
+static void C_ccall f_680(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word *a;
+C_trace("ChickenBridge.scm: 231  values");
+C_values(2,0,((C_word*)t0)[2]);}
+
+/* time-format in k294 in k291 in k288 in k285 */
+static void C_ccall f_613(C_word c,C_word t0,C_word t1,...){
+C_word tmp;
+C_word t2;
+va_list v;
+C_word *a,c2=c;
+C_save_rest(t1,c2,2);
+C_check_for_interrupt;
+if(!C_demand(c*C_SIZEOF_PAIR+11)){
+C_save_and_reclaim((void*)tr2rv,(void*)f_613r,2,t0,t1);}
+else{
+a=C_alloc((c-2)*3);
+t2=C_restore_rest_vector(a,C_rest_count(0));
+f_613r(t0,t1,t2);}}
+
+static void C_ccall f_613r(C_word t0,C_word t1,C_word t2){
+C_word tmp;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word t8;
+C_word t9;
+C_word *a=C_alloc(11);
+if(C_truep((C_word)C_vemptyp(t2))){
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_626,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_365,a[2]=t3,tmp=(C_word)a,a+=3,tmp);
+C_trace("##sys#gc");
+t5=C_retrieve(lf[11]);
+((C_proc3)C_retrieve_proc(t5))(3,t5,t4,C_SCHEME_FALSE);}
+else{
+t3=(C_word)C_i_vector_ref(t2,C_fix(0));
+t4=(C_word)C_i_eqvp(t3,lf[33]);
+t5=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_638,a[2]=t2,a[3]=t3,a[4]=t1,tmp=(C_word)a,a+=5,tmp);
+if(C_truep(t4)){
+t6=t5;
+f_638(t6,t4);}
+else{
+t6=(C_word)C_eqp(t3,C_fix(1));
+t7=t5;
+f_638(t7,(C_truep(t6)?t6:(C_word)C_eqp(t3,lf[37])));}}}
+
+/* k636 in time-format in k294 in k291 in k288 in k285 */
+static void C_fcall f_638(C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word t4;
 C_word t5;
 C_word t6;
-C_word ab[19],*a=ab;
+C_word t7;
+C_word *a;
+if(C_truep(t1)){
+t2=C_mutate((C_word*)lf[29]+1,lf[7]);
+C_trace("ChickenBridge.scm: 220  scheduler-set-time-milliseconds");
+f_370(((C_word*)t0)[4],C_SCHEME_FALSE);}
+else{
+t2=(C_word)C_eqp(((C_word*)t0)[3],C_fix(1000));
+t3=(C_truep(t2)?t2:(C_word)C_eqp(((C_word*)t0)[3],lf[34]));
+if(C_truep(t3)){
+t4=C_mutate((C_word*)lf[29]+1,lf[5]);
+C_trace("ChickenBridge.scm: 224  scheduler-set-time-milliseconds");
+f_370(((C_word*)t0)[4],C_SCHEME_TRUE);}
+else{
+t4=(C_word)C_i_vector_ref(((C_word*)t0)[2],C_fix(0));
+C_trace("ChickenBridge.scm: 227  error");
+t5=*((C_word*)lf[35]+1);
+((C_proc4)C_retrieve_proc(t5))(4,t5,((C_word*)t0)[4],lf[36],t4);}}}
+
+/* k363 in time-format in k294 in k291 in k288 in k285 */
+static void C_ccall f_365(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word ab[11],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_360,2,t0,t1);}
-t2=(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_363,a[2]=((C_word*)t0)[7],a[3]=((C_word*)t0)[8],a[4]=t1,a[5]=((C_word*)t0)[9],tmp=(C_word)a,a+=6,tmp);
-t3=C_SCHEME_UNDEFINED;
-t4=(*a=C_VECTOR_TYPE|1,a[1]=t3,tmp=(C_word)a,a+=2,tmp);
-t5=C_set_block_item(t4,0,(*a=C_CLOSURE_TYPE|10,a[1]=(C_word)f_408,a[2]=((C_word*)t0)[2],a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],a[5]=t1,a[6]=((C_word*)t0)[8],a[7]=((C_word*)t0)[5],a[8]=t4,a[9]=((C_word*)t0)[6],a[10]=lf[40],tmp=(C_word)a,a+=11,tmp));
-t6=((C_word*)t4)[1];
-f_408(t6,t2,C_SCHEME_FALSE,C_SCHEME_FALSE,C_fix(0));}
+C_save_and_reclaim((void*)tr2,(void*)f_365,2,t0,t1);}
+t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub31,a[2]=lf[32],tmp=(C_word)a,a+=3,tmp);
+((C_proc3)C_retrieve_proc(t3))(3,t3,((C_word*)t0)[2],t2);}
 
-/* do74 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_408(C_word t0,C_word t1,C_word t2,C_word t3,C_word t4){
+/* k624 in time-format in k294 in k291 in k288 in k285 */
+static void C_ccall f_626(C_word c,C_word t0,C_word t1){
 C_word tmp;
+C_word t2;
+C_word *a;
+t2=((C_word*)t0)[2];
+((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,(C_truep(t1)?C_fix(1000):lf[31]));}
+
+/* sprout in k294 in k291 in k288 in k285 */
+static void C_ccall f_445(C_word c,C_word t0,C_word t1,C_word t2,...){
+C_word tmp;
+C_word t3;
+va_list v;
+C_word *a,c2=c;
+C_save_rest(t2,c2,3);
+if(c<3) C_bad_min_argc_2(c,3,t0);
+C_check_for_interrupt;
+if(!C_demand(c*C_SIZEOF_PAIR+12)){
+C_save_and_reclaim((void*)tr3r,(void*)f_445r,3,t0,t1,t2);}
+else{
+a=C_alloc((c-3)*3);
+t3=C_restore_rest(a,C_rest_count(0));
+f_445r(t0,t1,t2,t3);}}
+
+static void C_ccall f_445r(C_word t0,C_word t1,C_word t2,C_word t3){
+C_word tmp;
+C_word t4;
 C_word t5;
 C_word t6;
 C_word t7;
@@ -2149,35 +3067,60 @@ C_word t8;
 C_word t9;
 C_word t10;
 C_word t11;
-C_word t12;
-C_word ab[26],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_408,NULL,5,t0,t1,t2,t3,t4);}
-t5=(*a=C_VECTOR_TYPE|1,a[1]=t2,tmp=(C_word)a,a+=2,tmp);
-t6=(*a=C_VECTOR_TYPE|1,a[1]=t3,tmp=(C_word)a,a+=2,tmp);
-t7=(*a=C_VECTOR_TYPE|1,a[1]=t4,tmp=(C_word)a,a+=2,tmp);
-if(C_truep((C_word)C_i_nullp(((C_word*)((C_word*)t0)[9])[1]))){
-t8=t1;
-((C_proc2)(void*)(*((C_word*)t8+1)))(2,t8,C_SCHEME_FALSE);}
+C_word *a=C_alloc(12);
+t4=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_447,a[2]=t2,a[3]=lf[23],tmp=(C_word)a,a+=4,tmp);
+t5=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_559,a[2]=t4,a[3]=lf[24],tmp=(C_word)a,a+=4,tmp);
+t6=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_564,a[2]=t5,a[3]=lf[25],tmp=(C_word)a,a+=4,tmp);
+if(C_truep((C_word)C_i_nullp(t3))){
+C_trace("def-start79100");
+t7=t6;
+f_564(t7,t1);}
 else{
-t8=(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_418,a[2]=t7,a[3]=t6,a[4]=t5,a[5]=t1,a[6]=((C_word*)t0)[8],tmp=(C_word)a,a+=7,tmp);
-t9=(*a=C_CLOSURE_TYPE|12,a[1]=(C_word)f_424,a[2]=((C_word*)t0)[2],a[3]=t7,a[4]=((C_word*)t0)[3],a[5]=((C_word*)t0)[4],a[6]=((C_word*)t0)[5],a[7]=t6,a[8]=((C_word*)t0)[6],a[9]=t5,a[10]=((C_word*)t0)[9],a[11]=t8,a[12]=((C_word*)t0)[7],tmp=(C_word)a,a+=13,tmp);
-t10=((C_word*)((C_word*)t0)[7])[1];
-if(C_truep(t10)){
-t11=t9;
-f_424(2,t11,C_SCHEME_FALSE);}
+t7=(C_word)C_i_car(t3);
+t8=(C_word)C_i_cdr(t3);
+if(C_truep((C_word)C_i_nullp(t8))){
+C_trace("def-id8098");
+t9=t5;
+f_559(t9,t1,t7);}
 else{
-t11=(C_word)C_i_car(((C_word*)((C_word*)t0)[9])[1]);
-C_trace("ChickenBridge.scm: 139  keyword?");
-t12=C_retrieve(lf[38]);
-((C_proc3)C_retrieve_proc(t12))(3,t12,t9,t11);}}}
+t9=(C_word)C_i_car(t8);
+t10=(C_word)C_i_cdr(t8);
+if(C_truep((C_word)C_i_nullp(t10))){
+C_trace("body7782");
+t11=t4;
+f_447(t11,t1,t7,t9);}
+else{
+C_trace("##sys#error");
+t11=*((C_word*)lf[26]+1);
+((C_proc4)(void*)(*((C_word*)t11+1)))(4,t11,t1,lf[27],t10);}}}}
 
-/* k422 in do74 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_424(C_word c,C_word t0,C_word t1){
+/* def-start79 in sprout in k294 in k291 in k288 in k285 */
+static void C_fcall f_564(C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
+C_word *a;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_564,NULL,2,t0,t1);}
+C_trace("def-id8098");
+t2=((C_word*)t0)[2];
+f_559(t2,t1,C_fix(0));}
+
+/* def-id80 in sprout in k294 in k291 in k288 in k285 */
+static void C_fcall f_559(C_word t0,C_word t1,C_word t2){
+C_word tmp;
 C_word t3;
+C_word *a;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_559,NULL,3,t0,t1,t2);}
+C_trace("body7782");
+t3=((C_word*)t0)[2];
+f_447(t3,t1,t2,C_fix(-1));}
+
+/* body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_fcall f_447(C_word t0,C_word t1,C_word t2,C_word t3){
+C_word tmp;
 C_word t4;
 C_word t5;
 C_word t6;
@@ -2189,222 +3132,259 @@ C_word t11;
 C_word t12;
 C_word t13;
 C_word t14;
-C_word ab[32],*a=ab;
+C_word ab[33],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_424,2,t0,t1);}
-if(C_truep(t1)){
-t2=C_set_block_item(((C_word*)t0)[12],0,C_SCHEME_TRUE);
-t3=((C_word*)t0)[11];
-f_418(t3,t2);}
+C_save_and_reclaim((void*)trf_447,NULL,4,t0,t1,t2,t3);}
+t4=(*a=C_VECTOR_TYPE|1,a[1]=t2,tmp=(C_word)a,a+=2,tmp);
+t5=(*a=C_VECTOR_TYPE|1,a[1]=t3,tmp=(C_word)a,a+=2,tmp);
+t6=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_449,a[2]=t4,a[3]=lf[20],tmp=(C_word)a,a+=4,tmp);
+t7=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_477,a[2]=t5,a[3]=lf[21],tmp=(C_word)a,a+=4,tmp);
+t8=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_507,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+if(C_truep((C_word)C_i_pairp(((C_word*)t0)[2]))){
+t9=C_SCHEME_UNDEFINED;
+t10=(*a=C_VECTOR_TYPE|1,a[1]=t9,tmp=(C_word)a,a+=2,tmp);
+t11=C_set_block_item(t10,0,(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_518,a[2]=t6,a[3]=t7,a[4]=t10,a[5]=((C_word*)t0)[2],a[6]=lf[22],tmp=(C_word)a,a+=7,tmp));
+t12=((C_word*)t10)[1];
+f_518(t12,t8,((C_word*)t0)[2]);}
 else{
-t2=((C_word*)((C_word*)t0)[12])[1];
-if(C_truep(t2)){
-t3=(C_word)C_i_car(((C_word*)((C_word*)t0)[10])[1]);
-t4=C_mutate(((C_word *)((C_word*)t0)[9])+1,t3);
-t5=(C_word)C_i_assoc(((C_word*)((C_word*)t0)[9])[1],((C_word*)t0)[8]);
-t6=C_mutate(((C_word *)((C_word*)t0)[7])+1,t5);
-t7=(C_word)C_i_cdr(((C_word*)((C_word*)t0)[10])[1]);
-t8=C_mutate(((C_word *)((C_word*)t0)[10])+1,t7);
-t9=(*a=C_CLOSURE_TYPE|8,a[1]=(C_word)f_478,a[2]=((C_word*)t0)[4],a[3]=((C_word*)t0)[9],a[4]=((C_word*)t0)[5],a[5]=((C_word*)t0)[11],a[6]=((C_word*)t0)[10],a[7]=((C_word*)t0)[6],a[8]=((C_word*)t0)[7],tmp=(C_word)a,a+=9,tmp);
-t10=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_533,a[2]=((C_word*)t0)[8],a[3]=((C_word*)t0)[7],a[4]=((C_word*)t0)[9],a[5]=((C_word*)t0)[5],a[6]=t9,a[7]=((C_word*)t0)[10],tmp=(C_word)a,a+=8,tmp);
-C_trace("ChickenBridge.scm: 159  keyword?");
-t11=C_retrieve(lf[38]);
-((C_proc3)C_retrieve_proc(t11))(3,t11,t10,((C_word*)((C_word*)t0)[9])[1]);}
-else{
-t3=(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_434,a[2]=((C_word*)t0)[11],a[3]=((C_word*)t0)[10],a[4]=((C_word*)t0)[3],a[5]=((C_word*)t0)[6],tmp=(C_word)a,a+=6,tmp);
-if(C_truep((C_word)C_i_nequalp(((C_word*)((C_word*)t0)[3])[1],((C_word*)t0)[2]))){
-t4=(C_word)C_i_length(((C_word*)t0)[4]);
-C_trace("ChickenBridge.scm: 149  ferror");
-f_328(t3,lf[39],(C_word)C_a_i_list(&a,3,((C_word*)t0)[5],((C_word*)t0)[2],t4));}
-else{
-t4=t3;
-f_434(2,t4,C_SCHEME_UNDEFINED);}}}}
+t9=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_550,a[2]=((C_word*)t0)[2],a[3]=t8,tmp=(C_word)a,a+=4,tmp);
+t10=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_554,a[2]=t7,a[3]=((C_word*)t0)[2],a[4]=t9,tmp=(C_word)a,a+=5,tmp);
+C_trace("ChickenBridge.scm: 206  nextstart");
+t11=t6;
+f_449(t11,t10);}}
 
-/* k432 in k422 in do74 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_434(C_word c,C_word t0,C_word t1){
+/* k552 in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_ccall f_554(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
-C_word t4;
-C_word t5;
-C_word t6;
-C_word t7;
-C_word t8;
-C_word t9;
-C_word ab[4],*a=ab;
+C_word ab[5],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_434,2,t0,t1);}
-t2=(C_word)C_i_list_tail(((C_word*)t0)[5],((C_word*)((C_word*)t0)[4])[1]);
-t3=(C_word)C_i_car(((C_word*)((C_word*)t0)[3])[1]);
-t4=(C_word)C_i_set_car(t2,t3);
-t5=(C_word)C_i_cdr(((C_word*)((C_word*)t0)[3])[1]);
-t6=C_mutate(((C_word *)((C_word*)t0)[3])+1,t5);
-t7=(C_word)C_a_i_plus(&a,2,((C_word*)((C_word*)t0)[4])[1],C_fix(1));
-t8=C_mutate(((C_word *)((C_word*)t0)[4])+1,t7);
-t9=((C_word*)t0)[2];
-f_418(t9,t8);}
+C_save_and_reclaim((void*)tr2,(void*)f_554,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_558,a[2]=t1,a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],tmp=(C_word)a,a+=5,tmp);
+C_trace("ChickenBridge.scm: 206  nextid");
+t3=((C_word*)t0)[2];
+f_477(t3,t2);}
 
-/* k531 in k422 in do74 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_533(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word t3;
-C_word t4;
-C_word ab[17],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_533,2,t0,t1);}
-if(C_truep(t1)){
-if(C_truep((C_word)C_i_nullp(((C_word*)((C_word*)t0)[7])[1]))){
-C_trace("ChickenBridge.scm: 163  ferror");
-f_328(((C_word*)t0)[6],lf[33],(C_word)C_a_i_list(&a,2,((C_word*)t0)[5],((C_word*)((C_word*)t0)[4])[1]));}
-else{
-t2=((C_word*)((C_word*)t0)[3])[1];
-if(C_truep(t2)){
-t3=((C_word*)t0)[6];
-f_478(2,t3,C_SCHEME_UNDEFINED);}
-else{
-t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_529,a[2]=((C_word*)t0)[4],a[3]=((C_word*)t0)[5],a[4]=((C_word*)t0)[6],tmp=(C_word)a,a+=5,tmp);
-C_trace("map");
-t4=*((C_word*)lf[35]+1);
-((C_proc4)(void*)(*((C_word*)t4+1)))(4,t4,t3,*((C_word*)lf[36]+1),((C_word*)t0)[2]);}}}
-else{
-C_trace("ChickenBridge.scm: 160  ferror");
-f_328(((C_word*)t0)[6],lf[37],(C_word)C_a_i_list(&a,2,((C_word*)t0)[5],((C_word*)((C_word*)t0)[4])[1]));}}
-
-/* k527 in k531 in k422 in do74 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_529(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word ab[9],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_529,2,t0,t1);}
-C_trace("ChickenBridge.scm: 166  ferror");
-f_328(((C_word*)t0)[4],lf[34],(C_word)C_a_i_list(&a,3,((C_word*)t0)[3],((C_word*)((C_word*)t0)[2])[1],t1));}
-
-/* k476 in k422 in do74 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_478(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word t3;
-C_word t4;
-C_word ab[14],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_478,2,t0,t1);}
-t2=(C_word)C_i_member(((C_word*)((C_word*)t0)[8])[1],((C_word*)t0)[7]);
-t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_484,a[2]=((C_word*)t0)[5],a[3]=t2,a[4]=((C_word*)t0)[6],tmp=(C_word)a,a+=5,tmp);
-if(C_truep(t2)){
-t4=t3;
-f_484(2,t4,C_SCHEME_UNDEFINED);}
-else{
-C_trace("ChickenBridge.scm: 173  ferror");
-f_328(t3,lf[32],(C_word)C_a_i_list(&a,3,((C_word*)t0)[4],((C_word*)((C_word*)t0)[3])[1],((C_word*)t0)[2]));}}
-
-/* k482 in k476 in k422 in do74 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_484(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word t3;
-C_word t4;
-C_word t5;
-C_word t6;
-C_word *a;
-t2=(C_word)C_i_car(((C_word*)((C_word*)t0)[4])[1]);
-t3=(C_word)C_i_set_car(((C_word*)t0)[3],t2);
-t4=(C_word)C_i_cdr(((C_word*)((C_word*)t0)[4])[1]);
-t5=C_mutate(((C_word *)((C_word*)t0)[4])+1,t4);
-t6=((C_word*)t0)[2];
-f_418(t6,t5);}
-
-/* k416 in do74 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_418(C_word t0,C_word t1){
+/* k556 in k552 in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_ccall f_558(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word *a;
-t2=((C_word*)((C_word*)t0)[6])[1];
-f_408(t2,((C_word*)t0)[5],((C_word*)((C_word*)t0)[4])[1],((C_word*)((C_word*)t0)[3])[1],((C_word*)((C_word*)t0)[2])[1]);}
+C_trace("ChickenBridge.scm: 206  scheduler-sprout");
+f_379(((C_word*)t0)[4],((C_word*)t0)[3],((C_word*)t0)[2],t1);}
 
-/* k361 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_363(C_word c,C_word t0,C_word t1){
+/* k548 in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_ccall f_550(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
-C_word t3;
-C_word t4;
-C_word t5;
-C_word ab[9],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_363,2,t0,t1);}
-t2=C_SCHEME_UNDEFINED;
-t3=(*a=C_VECTOR_TYPE|1,a[1]=t2,tmp=(C_word)a,a+=2,tmp);
-t4=C_set_block_item(t3,0,(*a=C_CLOSURE_TYPE|6,a[1]=(C_word)f_368,a[2]=((C_word*)t0)[3],a[3]=t3,a[4]=((C_word*)t0)[4],a[5]=((C_word*)t0)[5],a[6]=lf[31],tmp=(C_word)a,a+=7,tmp));
-t5=((C_word*)t3)[1];
-f_368(t5,((C_word*)t0)[2],((C_word*)t0)[4]);}
+C_word *a;
+t2=((C_word*)t0)[3];
+f_507(2,t2,((C_word*)t0)[2]);}
 
-/* do91 in k361 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_368(C_word t0,C_word t1,C_word t2){
+/* do91 in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_fcall f_518(C_word t0,C_word t1,C_word t2){
 C_word tmp;
 C_word t3;
 C_word t4;
 C_word t5;
 C_word t6;
-C_word t7;
-C_word ab[8],*a=ab;
+C_word ab[10],*a=ab;
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_368,NULL,3,t0,t1,t2);}
+C_save_and_reclaim((void*)trf_518,NULL,3,t0,t1,t2);}
 if(C_truep((C_word)C_i_nullp(t2))){
 t3=t1;
-((C_proc2)(void*)(*((C_word*)t3+1)))(2,t3,(C_word)C_a_i_cons(&a,2,((C_word*)t0)[5],((C_word*)t0)[4]));}
+((C_proc2)(void*)(*((C_word*)t3+1)))(2,t3,((C_word*)t0)[5]);}
 else{
-t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_381,a[2]=t1,a[3]=((C_word*)t0)[3],a[4]=t2,tmp=(C_word)a,a+=5,tmp);
+t3=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_528,a[2]=t1,a[3]=((C_word*)t0)[4],a[4]=t2,tmp=(C_word)a,a+=5,tmp);
 t4=(C_word)C_i_car(t2);
-if(C_truep((C_word)C_i_member(t4,((C_word*)t0)[2]))){
-t5=(C_word)C_i_car(t2);
-t6=(C_word)C_i_cadr(t5);
-t7=t3;
-f_381(t7,(C_word)C_i_set_car(t2,t6));}
-else{
-t5=t3;
-f_381(t5,C_SCHEME_UNDEFINED);}}}
+t5=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_543,a[2]=((C_word*)t0)[3],a[3]=t4,a[4]=t3,tmp=(C_word)a,a+=5,tmp);
+C_trace("ChickenBridge.scm: 204  nextstart");
+t6=((C_word*)t0)[2];
+f_449(t6,t5);}}
 
-/* k379 in do91 in k361 in k358 in k346 in k343 in k340 in expand-send in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_381(C_word t0,C_word t1){
+/* k541 in do91 in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_ccall f_543(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word ab[5],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_543,2,t0,t1);}
+t2=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_547,a[2]=t1,a[3]=((C_word*)t0)[3],a[4]=((C_word*)t0)[4],tmp=(C_word)a,a+=5,tmp);
+C_trace("ChickenBridge.scm: 204  nextid");
+t3=((C_word*)t0)[2];
+f_477(t3,t2);}
+
+/* k545 in k541 in do91 in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_ccall f_547(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word *a;
+C_trace("ChickenBridge.scm: 204  scheduler-sprout");
+f_379(((C_word*)t0)[4],((C_word*)t0)[3],((C_word*)t0)[2],t1);}
+
+/* k526 in do91 in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_ccall f_528(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
 C_word *a;
 t2=(C_word)C_i_cdr(((C_word*)t0)[4]);
 t3=((C_word*)((C_word*)t0)[3])[1];
-f_368(t3,((C_word*)t0)[2],t2);}
+f_518(t3,((C_word*)t0)[2],t2);}
 
-/* ferror in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_fcall f_328(C_word t1,C_word t2,C_word t3){
-C_word tmp;
-C_word t4;
-C_word t5;
-C_word ab[3],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)trf_328,NULL,3,t1,t2,t3);}
-t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_336,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
-C_apply(5,0,t4,C_retrieve(lf[28]),t2,t3);}
-
-/* k334 in ferror in k324 in k321 in k209 in k206 in k203 in k200 */
-static void C_ccall f_336(C_word c,C_word t0,C_word t1){
+/* k505 in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_ccall f_507(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word *a;
-C_trace("ChickenBridge.scm: 116  error");
-t2=*((C_word*)lf[27]+1);
-((C_proc3)C_retrieve_proc(t2))(3,t2,((C_word*)t0)[2],t1);}
+C_trace("ChickenBridge.scm: 210  values");
+C_values(2,0,((C_word*)t0)[2]);}
 
-/* current-time-hi-res in k209 in k206 in k203 in k200 */
-static void C_ccall f_318(C_word c,C_word t0,C_word t1){
+/* nextid in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_fcall f_477(C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word *a;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_477,NULL,2,t0,t1);}
+if(C_truep((C_word)C_i_pairp(((C_word*)((C_word*)t0)[2])[1]))){
+t2=(C_word)C_i_car(((C_word*)((C_word*)t0)[2])[1]);
+t3=(C_word)C_i_cdr(((C_word*)((C_word*)t0)[2])[1]);
+t4=(C_word)C_i_nullp(t3);
+t5=(C_truep(t4)?(C_word)C_i_car(((C_word*)((C_word*)t0)[2])[1]):(C_word)C_i_cdr(((C_word*)((C_word*)t0)[2])[1]));
+t6=C_mutate(((C_word *)((C_word*)t0)[2])+1,t5);
+t7=t1;
+((C_proc2)(void*)(*((C_word*)t7+1)))(2,t7,t2);}
+else{
+t2=t1;
+((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,((C_word*)((C_word*)t0)[2])[1]);}}
+
+/* nextstart in body77 in sprout in k294 in k291 in k288 in k285 */
+static void C_fcall f_449(C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word t6;
+C_word t7;
+C_word *a;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_449,NULL,2,t0,t1);}
+if(C_truep((C_word)C_i_pairp(((C_word*)((C_word*)t0)[2])[1]))){
+t2=(C_word)C_i_car(((C_word*)((C_word*)t0)[2])[1]);
+t3=(C_word)C_i_cdr(((C_word*)((C_word*)t0)[2])[1]);
+t4=(C_word)C_i_nullp(t3);
+t5=(C_truep(t4)?(C_word)C_i_car(((C_word*)((C_word*)t0)[2])[1]):(C_word)C_i_cdr(((C_word*)((C_word*)t0)[2])[1]));
+t6=C_mutate(((C_word *)((C_word*)t0)[2])+1,t5);
+t7=t1;
+((C_proc2)(void*)(*((C_word*)t7+1)))(2,t7,t2);}
+else{
+t2=t1;
+((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,((C_word*)((C_word*)t0)[2])[1]);}}
+
+/* scheduler-stop in k294 in k291 in k288 in k285 */
+static void C_fcall f_423(C_word t1,C_word t2){
+C_word tmp;
+C_word t3;
+C_word t4;
+C_word ab[4],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_423,NULL,2,t1,t2);}
+t3=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_427,a[2]=t1,a[3]=t2,tmp=(C_word)a,a+=4,tmp);
+C_trace("##sys#gc");
+t4=C_retrieve(lf[11]);
+((C_proc3)C_retrieve_proc(t4))(3,t4,t3,C_SCHEME_FALSE);}
+
+/* k425 in scheduler-stop in k294 in k291 in k288 in k285 */
+static void C_ccall f_427(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word ab[11],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_427,2,t0,t1);}
+t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
+t3=(C_word)C_i_foreign_fixnum_argumentp(((C_word*)t0)[3]);
+t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub64,a[2]=lf[17],tmp=(C_word)a,a+=3,tmp);
+((C_proc4)C_retrieve_proc(t4))(4,t4,((C_word*)t0)[2],t2,t3);}
+
+/* scheduler-sprout in k294 in k291 in k288 in k285 */
+static void C_fcall f_379(C_word t1,C_word t2,C_word t3,C_word t4){
+C_word tmp;
+C_word t5;
+C_word t6;
+C_word ab[6],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_379,NULL,4,t1,t2,t3,t4);}
+t5=(*a=C_CLOSURE_TYPE|5,a[1]=(C_word)f_383,a[2]=t2,a[3]=t1,a[4]=t4,a[5]=t3,tmp=(C_word)a,a+=6,tmp);
+C_trace("##sys#gc");
+t6=C_retrieve(lf[11]);
+((C_proc3)C_retrieve_proc(t6))(3,t6,t5,C_SCHEME_FALSE);}
+
+/* k381 in scheduler-sprout in k294 in k291 in k288 in k285 */
+static void C_ccall f_383(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word t4;
+C_word t5;
+C_word ab[11],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_383,2,t0,t1);}
+t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
+t3=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[5]);
+t4=(C_word)C_i_foreign_fixnum_argumentp(((C_word*)t0)[4]);
+t5=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub44,a[2]=lf[14],tmp=(C_word)a,a+=3,tmp);
+((C_proc6)C_retrieve_proc(t5))(6,t5,((C_word*)t0)[3],t2,((C_word*)t0)[2],t3,t4);}
+
+/* scheduler-set-time-milliseconds in k294 in k291 in k288 in k285 */
+static void C_fcall f_370(C_word t1,C_word t2){
+C_word tmp;
+C_word t3;
+C_word t4;
+C_word ab[4],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)trf_370,NULL,2,t1,t2);}
+t3=(*a=C_CLOSURE_TYPE|3,a[1]=(C_word)f_374,a[2]=t2,a[3]=t1,tmp=(C_word)a,a+=4,tmp);
+C_trace("##sys#gc");
+t4=C_retrieve(lf[11]);
+((C_proc3)C_retrieve_proc(t4))(3,t4,t3,C_SCHEME_FALSE);}
+
+/* k372 in scheduler-set-time-milliseconds in k294 in k291 in k288 in k285 */
+static void C_ccall f_374(C_word c,C_word t0,C_word t1){
+C_word tmp;
+C_word t2;
+C_word t3;
+C_word ab[11],*a=ab;
+C_check_for_interrupt;
+if(!C_stack_probe(&a)){
+C_save_and_reclaim((void*)tr2,(void*)f_374,2,t0,t1);}
+t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub36,a[2]=lf[10],tmp=(C_word)a,a+=3,tmp);
+((C_proc4)C_retrieve_proc(t3))(4,t3,((C_word*)t0)[3],t2,((C_word*)t0)[2]);}
+
+/* current-time-seconds in k294 in k291 in k288 in k285 */
+static void C_ccall f_358(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word t3;
@@ -2412,150 +3392,25 @@ C_word ab[6],*a=ab;
 if(c!=2) C_bad_argc_2(c,2,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_318,2,t0,t1);}
+C_save_and_reclaim((void*)tr2,(void*)f_358,2,t0,t1);}
 t2=(C_word)C_a_i_bytevector(&a,1,C_fix(4));
 t3=t1;
-((C_proc2)(void*)(*((C_word*)t3+1)))(2,t3,(C_word)stub53(t2));}
+((C_proc2)(void*)(*((C_word*)t3+1)))(2,t3,(C_word)stub28(t2));}
 
-/* run_process in k209 in k206 in k203 in k200 */
-static void C_ccall f_308(C_word c,C_word t0,C_word t1,C_word t2,C_word t3){
+/* current-time-milliseconds in k294 in k291 in k288 in k285 */
+static void C_ccall f_355(C_word c,C_word t0,C_word t1){
 C_word tmp;
-C_word t4;
-C_word t5;
-C_word ab[3],*a=ab;
-if(c!=4) C_bad_argc_2(c,4,t0);
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr4,(void*)f_308,4,t0,t1,t2,t3);}
-t4=(C_word)C_a_i_list(&a,1,t3);
-C_apply(4,0,t1,t2,t4);}
-
-/* make-note-off in k209 in k206 in k203 in k200 */
-static void C_ccall f_302(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4){
-C_word tmp;
-C_word t5;
+C_word t2;
 C_word *a;
-if(c!=5) C_bad_argc_2(c,5,t0);
+if(c!=2) C_bad_argc_2(c,2,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr5,(void*)f_302,5,t0,t1,t2,t3,t4);}
-C_trace("ChickenBridge.scm: 87   insert-midi-on");
-t5=C_retrieve(lf[16]);
-((C_proc6)C_retrieve_proc(t5))(6,t5,t1,t2,t3,lf[19],t4);}
+C_save_and_reclaim((void*)tr2,(void*)f_355,2,t0,t1);}
+t2=t1;
+((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,(C_word)stub26(C_SCHEME_UNDEFINED));}
 
-/* make-note-on in k209 in k206 in k203 in k200 */
-static void C_ccall f_296(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5){
-C_word tmp;
-C_word t6;
-C_word *a;
-if(c!=6) C_bad_argc_2(c,6,t0);
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr6,(void*)f_296,6,t0,t1,t2,t3,t4,t5);}
-C_trace("ChickenBridge.scm: 83   insert-midi-on");
-t6=C_retrieve(lf[16]);
-((C_proc6)C_retrieve_proc(t6))(6,t6,t1,t2,t3,t4,t5);}
-
-/* insert-midi-note in k209 in k206 in k203 in k200 */
-static void C_ccall f_267(C_word c,C_word t0,C_word t1,C_word t2,C_word t3,C_word t4,C_word t5,C_word t6){
-C_word tmp;
-C_word t7;
-C_word t8;
-C_word ab[8],*a=ab;
-if(c!=7) C_bad_argc_2(c,7,t0);
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr7,(void*)f_267,7,t0,t1,t2,t3,t4,t5,t6);}
-t7=(*a=C_CLOSURE_TYPE|7,a[1]=(C_word)f_271,a[2]=t1,a[3]=t6,a[4]=t5,a[5]=t4,a[6]=t3,a[7]=t2,tmp=(C_word)a,a+=8,tmp);
-C_trace("##sys#gc");
-t8=C_retrieve(lf[7]);
-((C_proc3)C_retrieve_proc(t8))(3,t8,t7,C_SCHEME_FALSE);}
-
-/* k269 in insert-midi-note in k209 in k206 in k203 in k200 */
-static void C_ccall f_271(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word t3;
-C_word t4;
-C_word t5;
-C_word t6;
-C_word t7;
-C_word t8;
-C_word ab[11],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_271,2,t0,t1);}
-t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
-t3=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[7]);
-t4=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[6]);
-t5=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[5]);
-t6=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[4]);
-t7=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[3]);
-t8=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub33,a[2]=lf[13],tmp=(C_word)a,a+=3,tmp);
-((C_proc8)C_retrieve_proc(t8))(8,t8,((C_word*)t0)[2],t2,t3,t4,t5,t6,t7);}
-
-/* insert-closure in k209 in k206 in k203 in k200 */
-static void C_ccall f_254(C_word c,C_word t0,C_word t1,C_word t2,C_word t3){
-C_word tmp;
-C_word t4;
-C_word t5;
-C_word ab[5],*a=ab;
-if(c!=4) C_bad_argc_2(c,4,t0);
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr4,(void*)f_254,4,t0,t1,t2,t3);}
-t4=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_258,a[2]=t3,a[3]=t1,a[4]=t2,tmp=(C_word)a,a+=5,tmp);
-C_trace("##sys#gc");
-t5=C_retrieve(lf[7]);
-((C_proc3)C_retrieve_proc(t5))(3,t5,t4,C_SCHEME_FALSE);}
-
-/* k256 in insert-closure in k209 in k206 in k203 in k200 */
-static void C_ccall f_258(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word t3;
-C_word t4;
-C_word ab[11],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_258,2,t0,t1);}
-t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
-t3=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[4]);
-t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub22,a[2]=lf[10],tmp=(C_word)a,a+=3,tmp);
-((C_proc5)C_retrieve_proc(t4))(5,t4,((C_word*)t0)[3],t2,t3,((C_word*)t0)[2]);}
-
-/* insert-process in k209 in k206 in k203 in k200 */
-static void C_ccall f_241(C_word c,C_word t0,C_word t1,C_word t2,C_word t3){
-C_word tmp;
-C_word t4;
-C_word t5;
-C_word ab[5],*a=ab;
-if(c!=4) C_bad_argc_2(c,4,t0);
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr4,(void*)f_241,4,t0,t1,t2,t3);}
-t4=(*a=C_CLOSURE_TYPE|4,a[1]=(C_word)f_245,a[2]=t3,a[3]=t1,a[4]=t2,tmp=(C_word)a,a+=5,tmp);
-C_trace("##sys#gc");
-t5=C_retrieve(lf[7]);
-((C_proc3)C_retrieve_proc(t5))(3,t5,t4,C_SCHEME_FALSE);}
-
-/* k243 in insert-process in k209 in k206 in k203 in k200 */
-static void C_ccall f_245(C_word c,C_word t0,C_word t1){
-C_word tmp;
-C_word t2;
-C_word t3;
-C_word t4;
-C_word ab[11],*a=ab;
-C_check_for_interrupt;
-if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr2,(void*)f_245,2,t0,t1);}
-t2=(C_word)C_a_i_bytevector(&a,1,C_fix(6));
-t3=(C_word)C_i_foreign_flonum_argumentp(((C_word*)t0)[4]);
-t4=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)stub14,a[2]=lf[6],tmp=(C_word)a,a+=3,tmp);
-((C_proc5)C_retrieve_proc(t4))(5,t4,((C_word*)t0)[3],t2,t3,((C_word*)t0)[2]);}
-
-/* print-error in k209 in k206 in k203 in k200 */
-static void C_ccall f_227(C_word c,C_word t0,C_word t1,C_word t2){
+/* print-error in k294 in k291 in k288 in k285 */
+static void C_ccall f_312(C_word c,C_word t0,C_word t1,C_word t2){
 C_word tmp;
 C_word t3;
 C_word t4;
@@ -2564,8 +3419,8 @@ C_word ab[3],*a=ab;
 if(c!=3) C_bad_argc_2(c,3,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr3,(void*)f_227,3,t0,t1,t2);}
-t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_232,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+C_save_and_reclaim((void*)tr3,(void*)f_312,3,t0,t1,t2);}
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_317,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
 if(C_truep(t2)){
 t4=(C_word)C_i_foreign_string_argumentp(t2);
 C_trace("##sys#make-c-string");
@@ -2573,18 +3428,18 @@ t5=C_retrieve(lf[1]);
 ((C_proc3)C_retrieve_proc(t5))(3,t5,t3,t4);}
 else{
 t4=t3;
-f_232(2,t4,C_SCHEME_FALSE);}}
+f_317(2,t4,C_SCHEME_FALSE);}}
 
-/* k230 in print-error in k209 in k206 in k203 in k200 */
-static void C_ccall f_232(C_word c,C_word t0,C_word t1){
+/* k315 in print-error in k294 in k291 in k288 in k285 */
+static void C_ccall f_317(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word *a;
 t2=((C_word*)t0)[2];
 ((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,(C_word)stub7(C_SCHEME_UNDEFINED,t1));}
 
-/* print-message in k209 in k206 in k203 in k200 */
-static void C_ccall f_213(C_word c,C_word t0,C_word t1,C_word t2){
+/* print-message in k294 in k291 in k288 in k285 */
+static void C_ccall f_298(C_word c,C_word t0,C_word t1,C_word t2){
 C_word tmp;
 C_word t3;
 C_word t4;
@@ -2593,8 +3448,8 @@ C_word ab[3],*a=ab;
 if(c!=3) C_bad_argc_2(c,3,t0);
 C_check_for_interrupt;
 if(!C_stack_probe(&a)){
-C_save_and_reclaim((void*)tr3,(void*)f_213,3,t0,t1,t2);}
-t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_218,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
+C_save_and_reclaim((void*)tr3,(void*)f_298,3,t0,t1,t2);}
+t3=(*a=C_CLOSURE_TYPE|2,a[1]=(C_word)f_303,a[2]=t1,tmp=(C_word)a,a+=3,tmp);
 if(C_truep(t2)){
 t4=(C_word)C_i_foreign_string_argumentp(t2);
 C_trace("##sys#make-c-string");
@@ -2602,10 +3457,10 @@ t5=C_retrieve(lf[1]);
 ((C_proc3)C_retrieve_proc(t5))(3,t5,t3,t4);}
 else{
 t4=t3;
-f_218(2,t4,C_SCHEME_FALSE);}}
+f_303(2,t4,C_SCHEME_FALSE);}}
 
-/* k216 in print-message in k209 in k206 in k203 in k200 */
-static void C_ccall f_218(C_word c,C_word t0,C_word t1){
+/* k301 in print-message in k294 in k291 in k288 in k285 */
+static void C_ccall f_303(C_word c,C_word t0,C_word t1){
 C_word tmp;
 C_word t2;
 C_word *a;
@@ -2613,103 +3468,133 @@ t2=((C_word*)t0)[2];
 ((C_proc2)(void*)(*((C_word*)t2+1)))(2,t2,(C_word)stub1(C_SCHEME_UNDEFINED,t1));}
 
 #ifdef C_ENABLE_PTABLES
-static C_PTABLE_ENTRY ptable[97] = {
+static C_PTABLE_ENTRY ptable[127] = {
 {"toplevelChickenBridge.scm",(void*)C_grace_toplevel},
-{"f_202ChickenBridge.scm",(void*)f_202},
-{"f_205ChickenBridge.scm",(void*)f_205},
-{"f_208ChickenBridge.scm",(void*)f_208},
-{"f_211ChickenBridge.scm",(void*)f_211},
-{"f_323ChickenBridge.scm",(void*)f_323},
-{"f_1109ChickenBridge.scm",(void*)f_1109},
-{"f_1156ChickenBridge.scm",(void*)f_1156},
-{"f_1146ChickenBridge.scm",(void*)f_1146},
-{"f_1113ChickenBridge.scm",(void*)f_1113},
-{"f_326ChickenBridge.scm",(void*)f_326},
-{"f_1103ChickenBridge.scm",(void*)f_1103},
-{"f_565ChickenBridge.scm",(void*)f_565},
-{"f_616ChickenBridge.scm",(void*)f_616},
-{"f_619ChickenBridge.scm",(void*)f_619},
-{"f_622ChickenBridge.scm",(void*)f_622},
-{"f_625ChickenBridge.scm",(void*)f_625},
-{"f_628ChickenBridge.scm",(void*)f_628},
-{"f_631ChickenBridge.scm",(void*)f_631},
-{"f_634ChickenBridge.scm",(void*)f_634},
-{"f_637ChickenBridge.scm",(void*)f_637},
-{"f_1097ChickenBridge.scm",(void*)f_1097},
-{"f_640ChickenBridge.scm",(void*)f_640},
-{"f_1095ChickenBridge.scm",(void*)f_1095},
-{"f_642ChickenBridge.scm",(void*)f_642},
-{"f_655ChickenBridge.scm",(void*)f_655},
-{"f_658ChickenBridge.scm",(void*)f_658},
-{"f_932ChickenBridge.scm",(void*)f_932},
-{"f_1040ChickenBridge.scm",(void*)f_1040},
-{"f_952ChickenBridge.scm",(void*)f_952},
-{"f_961ChickenBridge.scm",(void*)f_961},
-{"f_965ChickenBridge.scm",(void*)f_965},
-{"f_969ChickenBridge.scm",(void*)f_969},
-{"f_977ChickenBridge.scm",(void*)f_977},
-{"f_973ChickenBridge.scm",(void*)f_973},
-{"f_942ChickenBridge.scm",(void*)f_942},
-{"f_661ChickenBridge.scm",(void*)f_661},
-{"f_664ChickenBridge.scm",(void*)f_664},
-{"f_667ChickenBridge.scm",(void*)f_667},
-{"f_670ChickenBridge.scm",(void*)f_670},
-{"f_673ChickenBridge.scm",(void*)f_673},
-{"f_926ChickenBridge.scm",(void*)f_926},
-{"f_825ChickenBridge.scm",(void*)f_825},
-{"f_832ChickenBridge.scm",(void*)f_832},
-{"f_834ChickenBridge.scm",(void*)f_834},
-{"f_906ChickenBridge.scm",(void*)f_906},
-{"f_858ChickenBridge.scm",(void*)f_858},
-{"f_861ChickenBridge.scm",(void*)f_861},
-{"f_882ChickenBridge.scm",(void*)f_882},
-{"f_848ChickenBridge.scm",(void*)f_848},
-{"f_676ChickenBridge.scm",(void*)f_676},
-{"f_814ChickenBridge.scm",(void*)f_814},
-{"f_802ChickenBridge.scm",(void*)f_802},
-{"f_798ChickenBridge.scm",(void*)f_798},
-{"f_683ChickenBridge.scm",(void*)f_683},
-{"f_609ChickenBridge.scm",(void*)f_609},
-{"f_603ChickenBridge.scm",(void*)f_603},
-{"f_597ChickenBridge.scm",(void*)f_597},
-{"f_591ChickenBridge.scm",(void*)f_591},
-{"f_585ChickenBridge.scm",(void*)f_585},
-{"f_579ChickenBridge.scm",(void*)f_579},
-{"f_573ChickenBridge.scm",(void*)f_573},
-{"f_567ChickenBridge.scm",(void*)f_567},
-{"f_338ChickenBridge.scm",(void*)f_338},
-{"f_342ChickenBridge.scm",(void*)f_342},
-{"f_555ChickenBridge.scm",(void*)f_555},
-{"f_345ChickenBridge.scm",(void*)f_345},
-{"f_348ChickenBridge.scm",(void*)f_348},
-{"f_360ChickenBridge.scm",(void*)f_360},
-{"f_408ChickenBridge.scm",(void*)f_408},
-{"f_424ChickenBridge.scm",(void*)f_424},
-{"f_434ChickenBridge.scm",(void*)f_434},
-{"f_533ChickenBridge.scm",(void*)f_533},
-{"f_529ChickenBridge.scm",(void*)f_529},
-{"f_478ChickenBridge.scm",(void*)f_478},
-{"f_484ChickenBridge.scm",(void*)f_484},
-{"f_418ChickenBridge.scm",(void*)f_418},
-{"f_363ChickenBridge.scm",(void*)f_363},
-{"f_368ChickenBridge.scm",(void*)f_368},
-{"f_381ChickenBridge.scm",(void*)f_381},
-{"f_328ChickenBridge.scm",(void*)f_328},
-{"f_336ChickenBridge.scm",(void*)f_336},
-{"f_318ChickenBridge.scm",(void*)f_318},
-{"f_308ChickenBridge.scm",(void*)f_308},
-{"f_302ChickenBridge.scm",(void*)f_302},
+{"f_287ChickenBridge.scm",(void*)f_287},
+{"f_290ChickenBridge.scm",(void*)f_290},
+{"f_293ChickenBridge.scm",(void*)f_293},
 {"f_296ChickenBridge.scm",(void*)f_296},
-{"f_267ChickenBridge.scm",(void*)f_267},
-{"f_271ChickenBridge.scm",(void*)f_271},
-{"f_254ChickenBridge.scm",(void*)f_254},
-{"f_258ChickenBridge.scm",(void*)f_258},
-{"f_241ChickenBridge.scm",(void*)f_241},
-{"f_245ChickenBridge.scm",(void*)f_245},
-{"f_227ChickenBridge.scm",(void*)f_227},
-{"f_232ChickenBridge.scm",(void*)f_232},
-{"f_213ChickenBridge.scm",(void*)f_213},
-{"f_218ChickenBridge.scm",(void*)f_218},
+{"f_769ChickenBridge.scm",(void*)f_769},
+{"f_1555ChickenBridge.scm",(void*)f_1555},
+{"f_1602ChickenBridge.scm",(void*)f_1602},
+{"f_1592ChickenBridge.scm",(void*)f_1592},
+{"f_1559ChickenBridge.scm",(void*)f_1559},
+{"f_772ChickenBridge.scm",(void*)f_772},
+{"f_1549ChickenBridge.scm",(void*)f_1549},
+{"f_788ChickenBridge.scm",(void*)f_788},
+{"f_1001ChickenBridge.scm",(void*)f_1001},
+{"f_791ChickenBridge.scm",(void*)f_791},
+{"f_794ChickenBridge.scm",(void*)f_794},
+{"f_806ChickenBridge.scm",(void*)f_806},
+{"f_854ChickenBridge.scm",(void*)f_854},
+{"f_870ChickenBridge.scm",(void*)f_870},
+{"f_880ChickenBridge.scm",(void*)f_880},
+{"f_979ChickenBridge.scm",(void*)f_979},
+{"f_975ChickenBridge.scm",(void*)f_975},
+{"f_924ChickenBridge.scm",(void*)f_924},
+{"f_930ChickenBridge.scm",(void*)f_930},
+{"f_864ChickenBridge.scm",(void*)f_864},
+{"f_809ChickenBridge.scm",(void*)f_809},
+{"f_814ChickenBridge.scm",(void*)f_814},
+{"f_827ChickenBridge.scm",(void*)f_827},
+{"f_1011ChickenBridge.scm",(void*)f_1011},
+{"f_1062ChickenBridge.scm",(void*)f_1062},
+{"f_1065ChickenBridge.scm",(void*)f_1065},
+{"f_1068ChickenBridge.scm",(void*)f_1068},
+{"f_1071ChickenBridge.scm",(void*)f_1071},
+{"f_1074ChickenBridge.scm",(void*)f_1074},
+{"f_1077ChickenBridge.scm",(void*)f_1077},
+{"f_1080ChickenBridge.scm",(void*)f_1080},
+{"f_1083ChickenBridge.scm",(void*)f_1083},
+{"f_1543ChickenBridge.scm",(void*)f_1543},
+{"f_1101ChickenBridge.scm",(void*)f_1101},
+{"f_1104ChickenBridge.scm",(void*)f_1104},
+{"f_1378ChickenBridge.scm",(void*)f_1378},
+{"f_1486ChickenBridge.scm",(void*)f_1486},
+{"f_1398ChickenBridge.scm",(void*)f_1398},
+{"f_1407ChickenBridge.scm",(void*)f_1407},
+{"f_1411ChickenBridge.scm",(void*)f_1411},
+{"f_1415ChickenBridge.scm",(void*)f_1415},
+{"f_1423ChickenBridge.scm",(void*)f_1423},
+{"f_1419ChickenBridge.scm",(void*)f_1419},
+{"f_1388ChickenBridge.scm",(void*)f_1388},
+{"f_1107ChickenBridge.scm",(void*)f_1107},
+{"f_1110ChickenBridge.scm",(void*)f_1110},
+{"f_1113ChickenBridge.scm",(void*)f_1113},
+{"f_1116ChickenBridge.scm",(void*)f_1116},
+{"f_1119ChickenBridge.scm",(void*)f_1119},
+{"f_1372ChickenBridge.scm",(void*)f_1372},
+{"f_1271ChickenBridge.scm",(void*)f_1271},
+{"f_1278ChickenBridge.scm",(void*)f_1278},
+{"f_1280ChickenBridge.scm",(void*)f_1280},
+{"f_1352ChickenBridge.scm",(void*)f_1352},
+{"f_1304ChickenBridge.scm",(void*)f_1304},
+{"f_1307ChickenBridge.scm",(void*)f_1307},
+{"f_1328ChickenBridge.scm",(void*)f_1328},
+{"f_1294ChickenBridge.scm",(void*)f_1294},
+{"f_1122ChickenBridge.scm",(void*)f_1122},
+{"f_1260ChickenBridge.scm",(void*)f_1260},
+{"f_1248ChickenBridge.scm",(void*)f_1248},
+{"f_1244ChickenBridge.scm",(void*)f_1244},
+{"f_1129ChickenBridge.scm",(void*)f_1129},
+{"f_1086ChickenBridge.scm",(void*)f_1086},
+{"f_1541ChickenBridge.scm",(void*)f_1541},
+{"f_1055ChickenBridge.scm",(void*)f_1055},
+{"f_1049ChickenBridge.scm",(void*)f_1049},
+{"f_1043ChickenBridge.scm",(void*)f_1043},
+{"f_1037ChickenBridge.scm",(void*)f_1037},
+{"f_1031ChickenBridge.scm",(void*)f_1031},
+{"f_1025ChickenBridge.scm",(void*)f_1025},
+{"f_1019ChickenBridge.scm",(void*)f_1019},
+{"f_1013ChickenBridge.scm",(void*)f_1013},
+{"f_330ChickenBridge.scm",(void*)f_330},
+{"f_774ChickenBridge.scm",(void*)f_774},
+{"f_782ChickenBridge.scm",(void*)f_782},
+{"f_758ChickenBridge.scm",(void*)f_758},
+{"f_440ChickenBridge.scm",(void*)f_440},
+{"f_762ChickenBridge.scm",(void*)f_762},
+{"f_700ChickenBridge.scm",(void*)f_700},
+{"f_718ChickenBridge.scm",(void*)f_718},
+{"f_728ChickenBridge.scm",(void*)f_728},
+{"f_704ChickenBridge.scm",(void*)f_704},
+{"f_691ChickenBridge.scm",(void*)f_691},
+{"f_418ChickenBridge.scm",(void*)f_418},
+{"f_695ChickenBridge.scm",(void*)f_695},
+{"f_685ChickenBridge.scm",(void*)f_685},
+{"f_400ChickenBridge.scm",(void*)f_400},
+{"f_676ChickenBridge.scm",(void*)f_676},
+{"f_409ChickenBridge.scm",(void*)f_409},
+{"f_680ChickenBridge.scm",(void*)f_680},
+{"f_613ChickenBridge.scm",(void*)f_613},
+{"f_638ChickenBridge.scm",(void*)f_638},
+{"f_365ChickenBridge.scm",(void*)f_365},
+{"f_626ChickenBridge.scm",(void*)f_626},
+{"f_445ChickenBridge.scm",(void*)f_445},
+{"f_564ChickenBridge.scm",(void*)f_564},
+{"f_559ChickenBridge.scm",(void*)f_559},
+{"f_447ChickenBridge.scm",(void*)f_447},
+{"f_554ChickenBridge.scm",(void*)f_554},
+{"f_558ChickenBridge.scm",(void*)f_558},
+{"f_550ChickenBridge.scm",(void*)f_550},
+{"f_518ChickenBridge.scm",(void*)f_518},
+{"f_543ChickenBridge.scm",(void*)f_543},
+{"f_547ChickenBridge.scm",(void*)f_547},
+{"f_528ChickenBridge.scm",(void*)f_528},
+{"f_507ChickenBridge.scm",(void*)f_507},
+{"f_477ChickenBridge.scm",(void*)f_477},
+{"f_449ChickenBridge.scm",(void*)f_449},
+{"f_423ChickenBridge.scm",(void*)f_423},
+{"f_427ChickenBridge.scm",(void*)f_427},
+{"f_379ChickenBridge.scm",(void*)f_379},
+{"f_383ChickenBridge.scm",(void*)f_383},
+{"f_370ChickenBridge.scm",(void*)f_370},
+{"f_374ChickenBridge.scm",(void*)f_374},
+{"f_358ChickenBridge.scm",(void*)f_358},
+{"f_355ChickenBridge.scm",(void*)f_355},
+{"f_312ChickenBridge.scm",(void*)f_312},
+{"f_317ChickenBridge.scm",(void*)f_317},
+{"f_298ChickenBridge.scm",(void*)f_298},
+{"f_303ChickenBridge.scm",(void*)f_303},
 {NULL,NULL}};
 #endif
 
