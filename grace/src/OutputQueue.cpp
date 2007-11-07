@@ -11,14 +11,12 @@
 #include "Grace.h"
 #include "ChickenBridge.h"
 
-
 //
 //  Nodes
 //
 
-
 OutputNode::OutputNode(double _time, float *vals, int num_vals)
-: time (0.0),num (0)
+  : time (0.0), num (0)
 { 
   int i = 0;
   //  if(_time == 0.0) 
@@ -43,32 +41,34 @@ OutputNode::~OutputNode()
 void OutputNode::process() {
   // array [0]=keynum, [1]=velocity, [2]=channel
   if(values[1] == 0.0) {
-    outputQueue->output->sendMessageNow( MidiMessage::noteOff( (int)values[2],
-							       (int)values[0]) );
+    outputQueue->output->
+      sendMessageNow( MidiMessage::noteOff( (int)values[2],
+					    (int)values[0]) );
     //    printf("sending off %d at %d\n", (int)values[0], 
     //	   (int)Time::getMillisecondCounterHiRes());
   }
   else 
   {
-    outputQueue->output->sendMessageNow( MidiMessage::noteOn((int)values[2], (int)values[0], values[1] / 127.0f));
+    outputQueue->output->
+      sendMessageNow( MidiMessage::noteOn((int)values[2], 
+					  (int)values[0], 
+					  values[1] / 127.0f));
     //    printf("sending On %d at %d\n", (int)values[0], 
     //	   (int)Time::getMillisecondCounterHiRes());
     
   }
 }
 
-
-
 OutputQueue::OutputQueue(String name,MidiOutput *out)
-: Thread(name)
+: Thread(name) , porttype (0)
 {	
+  porttype=MIDIOUT;
   output = out;
 }
 
 OutputQueue::~OutputQueue()
 {
 }
-
 
 void OutputQueue::run()
 {
@@ -98,9 +98,13 @@ void OutputQueue::clear()
 {
   outputNodes.lockArray();
   outputNodes.clear();
+
+  // avoid hanging notes if port is MIDIOUT
+  if ( porttype==MIDIOUT )
+    for ( int i=0; i< 16; i++ )
+      output->sendMessageNow( MidiMessage::allSoundOff(i) );
   outputNodes.unlockArray();
 }
-
 
 void OutputQueue::addNode(double _time, float* vals, int num_vals)
 {

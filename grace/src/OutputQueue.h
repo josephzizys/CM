@@ -46,6 +46,8 @@ public:
 class OutputQueue : public Thread
 {
 public:
+  enum { MIDIOUT=1, MIDISEQ, PLOTTER };
+  int porttype;
   MidiOutput *output;
   OutputQueue(String name, MidiOutput *out);
   ~OutputQueue();
@@ -58,8 +60,5 @@ public:
   void clear();
   
 };
-
-
-
 
 #endif
