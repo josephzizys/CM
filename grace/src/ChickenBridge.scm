@@ -45,10 +45,8 @@ void mp_note(double time, double dur, float k, float v, float c) {
  on[1] = v;
  off[1] = 0.0;
  on[2] = off[2] =  c;
- ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.lockArray();
  ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, on, 3);
  ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time+dur, off, 3); 
- ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
 }
 
 void mp_on(double time, float k, float v, float c) {
@@ -56,9 +54,7 @@ void mp_on(double time, float k, float v, float c) {
  vals[0] = k;
  vals[1] = v;
  vals[2] = c;
- ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.lockArray();
  ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, vals, 3);
- ((GraceApp *)GraceApp::getInstance())->outputQueue->outputNodes.unlockArray();
 }
 
 //
@@ -111,6 +107,7 @@ void scheduler_set_time_milliseconds (bool b) {
          mp:note mp:on mp:off mp:prog
          mp:ctrl mp:alloff mp:micro mp:inhook 
 	 send go
+	 current-time-milliseconds current-time-seconds
 	 now time-format
 	 sprout stop hush pause paused? cont
 	 ))
@@ -142,12 +139,12 @@ void scheduler_set_time_milliseconds (bool b) {
 ;; Time
 
 (define current-time-milliseconds
-  (foreign-lambda* int ()
-     " C_return( (int) Time::getMillisecondCounterHiRes());"))
+  (foreign-lambda* double ()
+     " C_return( Time::getMillisecondCounterHiRes());"))
 
 (define current-time-seconds
-  (foreign-lambda* float ()
-     " C_return( (float) (Time::getMillisecondCounterHiRes() / 1000.0));"))
+  (foreign-lambda* double ()
+     " C_return( (Time::getMillisecondCounterHiRes() / 1000.0) );"))
   
 (define scheduler-is-time-milliseconds
   (foreign-safe-lambda bool "scheduler_is_time_milliseconds" )  )
