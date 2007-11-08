@@ -42,17 +42,19 @@ void OutputNode::process() {
   // array [0]=keynum, [1]=velocity, [2]=channel
   if(values[1] == 0.0) {
     outputQueue->output->
-      sendMessageNow( MidiMessage::noteOff( (int)values[2],
+      sendMessageNow( MidiMessage::noteOff( (int)values[2]+1,
 					    (int)values[0]) );
     //    printf("sending off %d at %d\n", (int)values[0], 
     //	   (int)Time::getMillisecondCounterHiRes());
   }
   else 
   {
+    // velocity range either 0.0-1.0 or 0.0-127.0
+    float vel = (values[1]>1.0) ? (values[1] / 127.0f) : values[1] ;
     outputQueue->output->
-      sendMessageNow( MidiMessage::noteOn((int)values[2], 
+      sendMessageNow( MidiMessage::noteOn((int)values[2]+1, 
 					  (int)values[0], 
-					  values[1] / 127.0f));
+					  vel));
     //    printf("sending On %d at %d\n", (int)values[0], 
     //	   (int)Time::getMillisecondCounterHiRes());
     
