@@ -78,14 +78,15 @@ bool SchemeNode::process(double curtime) {
     {
       double nexttime;
       closure = CHICKEN_gc_root_ref(closureGCRoot);
-      elapsed_ptr = C_alloc(1); 
-      // Time format milliseconds or seconds
+
+      // Time format is either int milliseconds or float seconds
       if ( schemeThread->isTimeMilliseconds() ) {
-	elapsed_word = C_flonum( &elapsed_ptr, time - start); 
+	elapsed_word = C_fix( (int)(time-start)); 
 	C_save( elapsed_word );
 	nexttime = C_c_double( C_callback(closure, 1));
       }
       else {
+	elapsed_ptr = C_alloc(C_SIZEOF_FLONUM); 
 	elapsed_word = C_flonum( &elapsed_ptr, (time - start)/1000.0); 
 	C_save( elapsed_word );
 	nexttime = C_c_double( C_callback(closure, 1)) * 1000.0 ;
