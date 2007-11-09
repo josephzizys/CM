@@ -125,23 +125,34 @@ public:
     cmdViewFontSize = 35456,
     cmdViewThemes = 35712,
     cmdViewOpacity = 35968,
-    cmdAudioMidiSetup = 36224,
-    cmdAudioAudioSetup = 36480,
-    cmdLispConnect = 36736,
-    cmdLispLoadSystem = 36992,
-    cmdLispLoadRecentSystem = 37248,
-    cmdLispClearRecentSystems = 37504,
-    cmdLispLoadFile = 37760,
-    cmdLispLoadRecentFile = 38016,
-    cmdLispClearRecentLoaded = 38272,
-    cmdLispConfigure = 38528};
+    cmdPortsMidiOutputOpen = 36224,
+    cmdPortsMidiOutputTest = 36480,
+    cmdPortsMidiOutputHush = 36736,
+    cmdPortsMidiOutputTuning = 36992,
+    cmdPortsMidiOutputInstruments = 37248,
+    cmdPortsMidiInputOpen = 37504,
+    cmdPortsMidiInputHook = 37760,
+    cmdPortsAudioSetup = 38016,
+    cmdLispConnect = 38272,
+    cmdLispLoadSystem = 38528,
+    cmdLispLoadRecentSystem = 38784,
+    cmdLispClearRecentSystems = 39040,
+    cmdLispLoadFile = 39296,
+    cmdLispLoadRecentFile = 39552,
+    cmdLispClearRecentLoaded = 39808,
+    cmdLispConfigure = 40064};
+
+#ifdef EMBED_SCHEME
+  enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};
+#else
+  enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, LISPMENU, WINDOWSMENU, HELPMENU};
+#endif
 
   Console * console;
   ConsoleTheme theme;
   SplashComponent * splash;
   MenuBarComponent * menubar;
 #ifndef EMBED_SCHEME
-
   LispConnection * lisp;
 #endif
   ConsoleWindow (bool dosplash) ;

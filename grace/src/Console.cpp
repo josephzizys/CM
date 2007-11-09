@@ -436,9 +436,13 @@ bool ConsoleWindow::isSplashVisible() {
  */
 
 const StringArray ConsoleWindow::getMenuBarNames () {
+#ifdef EMBED_SCHEME
   const tchar* const menuNames[] = { T("Grace"), T("Edit"), T("View"),
-				     T("Audio"), T("Lisp"), 
-				     T("Windows"), T("Help"), 0 };
+				     T("Ports"), T("Windows"), T("Help"), 0 };
+#else
+  const tchar* const menuNames[] = { T("Grace"), T("Edit"), T("View"),
+				     T("Ports"), T("Lisp"), T("Windows"), T("Help"), 0 };
+#endif
   return StringArray((const tchar**) menuNames);
 }
 
@@ -454,8 +458,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
   PopupMenu sub1, sub2, sub3, sub4;
   int val;
   switch (idx) {
-  case 0 :
-    // should make syntaxId enum global !!
+  case GRACEMENU :
     sub1.addItem( cmdGraceEditorNew + 3, T("Sal"), true); 
     sub1.addItem( cmdGraceEditorNew + 2, T("Lisp"), true);
     sub1.addItem( cmdGraceEditorNew + 1, T("Text"), true);
@@ -467,29 +470,25 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
     sub2.addItem( cmdGracePlotterNew + SpearPlot, T("Spear"), false);
     sub2.addItem( cmdGracePlotterNew + CLMPlot, T("CLM"), false);
     menu.addSubMenu( T("New Plotter"), sub2, true);    
-
     menu.addSeparator();
     menu.addItem( cmdGraceOpenFile, T("Open File..."), true);
     if ( p->areRecentlyOpenedFiles() ) {
-      printf("in fill menu, are recently edited files\n");
       p->addRecentlyOpenedItems(&sub3, cmdGraceOpenRecentFile);
       sub3.addSeparator();
       sub3.addItem( cmdGraceClearRecentFiles, T("Clear"), true);
       menu.addSubMenu( T("Open Recent"), sub3, true);
     }
-    else
-      printf("in fill menu, NO recently edited files\n");
 
     menu.addSeparator();
     menu.addItem( cmdGracePreferences, T("Preferences..."), false);
     menu.addSeparator();
     menu.addItem( cmdGraceQuit, T("Quit Grace"), true);
     break;
-  case 1 :
+  case EDITMENU :
     menu.addItem( cmdEditCopy, T("Copy"), true);    
     menu.addItem( cmdEditSelectAll, T("Select All"), true);
     break;
-  case 2 :
+  case VIEWMENU :
     for (int i = 0;i<16;i++) {
       sub2.addItem(cmdViewFontSize+i,
 		   String( fontSizeList[i] ),
@@ -516,14 +515,40 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
     menu.addSeparator();
     menu.addItem( cmdViewClearText, T("Clear Console"), true);
     break;
-  case 3 :
-    menu.addItem(cmdAudioMidiSetup, T("Midi Setup..."), true);
-    menu.addItem(cmdAudioAudioSetup, T("Audio Setup..."),true);
+
+  case PORTSMENU :
+    {
+      StringArray devs= MidiOutput::getDevices();
+      if (devs.size() == 0)
+	sub2.addItem(cmdPortsMidiOutputOpen, T("no devices"), false);
+      else
+	for (int i=0;i<devs.size();i++)
+	  sub1.addItem(cmdPortsMidiOutputOpen + i, devs[i]);
+      sub1.addSeparator();
+      sub1.addItem(cmdPortsMidiOutputTest, T("Test"), false);
+      sub1.addItem(cmdPortsMidiOutputHush, T("Hush"), false);
+      sub1.addSeparator();
+      sub1.addItem(cmdPortsMidiOutputTuning, T("Tuning..."), false);
+      sub1.addItem(cmdPortsMidiOutputInstruments, T("Instruments...."), false);
+      
+      devs= MidiInput::getDevices();
+      if (devs.size() == 0)
+	sub2.addItem(cmdPortsMidiInputOpen, T("no devices"), false);
+      else
+	for (int i=0;i<devs.size();i++)
+	  sub2.addItem(cmdPortsMidiInputOpen + i, devs[i]);
+      sub2.addSeparator();
+      sub2.addItem(cmdPortsMidiInputHook, T("Input Hook..."), false);
+
+      menu.addSubMenu( T("Midi Out") , sub1);
+      menu.addSubMenu(T("Midi In"), sub2);
+      menu.addItem(cmdPortsAudioSetup, T("Audio Setup..."),true);
+    }
     break;
-  case 4 :
-    
+
 #ifndef EMBED_SCHEME
-  {
+  case LISPMENU :
+    {
       bool running=lisp->isLispRunning();
       if ( running )
 	menu.addItem( cmdLispConnect, T("Quit Lisp")); 
@@ -537,7 +562,6 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 	sub1.addItem( cmdLispLoadRecentSystem + i,
 		      a->getASDFName(), true,
 		      lisp->isLoaded(a));
-
       }
       sub1.addSeparator();
       sub1.addItem( cmdLispLoadSystem, T("Load..."), 
@@ -559,12 +583,12 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       menu.addSeparator();
       menu.addItem( cmdLispConfigure, T("Configure Lisp..."), true); 
     }
-#endif
     break;
-  case 5 :
+#endif
+  case WINDOWSMENU :
     addCommonWindowItems(&menu, winConsole);
     break;
-  case 6 :
+  case HELPMENU :
     addCommonHelpItems(&menu, winConsole);
     break;
   }
@@ -606,6 +630,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
   case cmdGraceOpenRecentFile :
     {
       f=p->getRecentlyOpenedFile(arg);
+
       new EditorWindow(0, TextBuffer::load, f.getFullPathName());
     }
     break;
@@ -626,14 +651,25 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     setFontSize(fontSizeList[arg]);
     break;
 
-  case cmdAudioMidiSetup: 
-  case cmdAudioAudioSetup: 
+  case cmdPortsMidiOutputOpen:
+  case cmdPortsMidiOutputTest:
+  case cmdPortsMidiOutputHush:
+  case cmdPortsMidiOutputTuning:
+  case cmdPortsMidiOutputInstruments:
+    break;
+
+  case cmdPortsMidiInputOpen:
+  case cmdPortsMidiInputHook:
+    break;
+
+  case cmdPortsAudioSetup: 
     showAudioMidiWindow();
     break;
 
   case cmdViewThemes :
     console->setTheme( arg);
     break;
+
 #ifndef EMBED_SCHEME
   case cmdLispConnect :
     if (lisp->isLispRunning())
@@ -641,40 +677,34 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     else 
       lisp->startLisp();
     break;
-
   case cmdLispConfigure :
     showConfigureLispWindow();
     break;
-
   case cmdLispLoadSystem :
     lisp->chooseAndLoadASDF();
     break;
-
   case cmdLispLoadRecentSystem :
     lisp->loadASDF(p->getASDF(arg));
     break;
-
   case cmdLispClearRecentSystems :
     p->clearLispSystems();
     break;
-
   case cmdLispLoadFile :
     lisp->chooseAndLoadFile();
     break;
-
   case cmdLispLoadRecentFile :
     lisp->loadFile(p->getRecentlyLoadedFile(arg));
     break;
-
   case cmdLispClearRecentLoaded :
     p->clearRecentlyLoadedFiles();
     break;
 #endif
+
   default :
     // help menu=index 5 
-    if (idx==5)
+    if (idx==WINDOWSMENU)
       commonWindowItemSelected(cmd,arg);
-    else if (idx==6)
+    else if (idx==HELPMENU)
       commonHelpItemSelected(cmd,arg);
     break;
   }
@@ -696,8 +726,8 @@ void ConsoleWindow::showAudioMidiWindow () {
   AudioDeviceSelectorComponent audioSettingsComp (app->audioManager,
 						  0, 16,
 						  2, 16,
-						  true,
-						  true);
+						  false,
+						  false);
   audioSettingsComp.setSize (500, 300);
   DialogWindow::showModalDialog (T("Audio Settings"),
 				 &audioSettingsComp,
@@ -705,3 +735,8 @@ void ConsoleWindow::showAudioMidiWindow () {
 				 Colour(0xffe5e5e5),
 				 true);
 }
+
+
+
+
+
