@@ -14,7 +14,7 @@
 #include "juce.h"
 #include "Resources.h"
 
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
 #include "Lisp.h"
 #else
 #include "Scheme.h"
@@ -142,7 +142,7 @@ public:
     cmdLispClearRecentLoaded = 39808,
     cmdLispConfigure = 40064};
 
-#ifdef EMBED_SCHEME
+#ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};
 #else
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, LISPMENU, WINDOWSMENU, HELPMENU};
@@ -152,7 +152,7 @@ public:
   ConsoleTheme theme;
   SplashComponent * splash;
   MenuBarComponent * menubar;
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
   LispConnection * lisp;
 #endif
   ConsoleWindow (bool dosplash) ;

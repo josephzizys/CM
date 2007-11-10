@@ -13,9 +13,6 @@
 #include "Plotter.h"
 #include "Grace.h"
 
-
-
-
 // NEVER touch these, use initialize() and shutdown() methods!
 GraceApp::GraceApp () : console (0) {}
 GraceApp::~GraceApp () {}
@@ -28,24 +25,18 @@ void GraceApp::initialise (const String& commandLine) {
   LookAndFeel::setDefaultLookAndFeel(&shinyLookAndFeel);
   commandManager = new ApplicationCommandManager();
   audioManager.initialise(1,2,0,true);
-  fontList = FontList::getInstance();
+  //  fontList = FontList::getInstance();
   prefs=GracePreferences::getInstance();
   console = new ConsoleWindow(true);
-  console->printMessage(T("Midi Devices:\n"));
-  devices = MidiOutput::getDevices ();
-  for(i=0;i<devices.size();i++)
-    console->printMessage(" " +  devices[i] + "\n");
-  midiOutput = MidiOutput::openDevice(0);
 
-#ifdef EMBED_SCHEME
-
+#ifdef SCHEME
   schemeProcess =  new SchemeThread("Scheduler", console);
   schemeProcess->setPriority(10);
   schemeProcess->startThread();
-  outputQueue = new OutputQueue("Output Queue", midiOutput);
-  outputQueue->setPriority(9);
-  outputQueue->startThread();
-  
+  midiport = new MidiPort("Midi Port");
+  midiport->openOutput(0);
+  midiport->setPriority(9);
+  midiport->startThread();
 #endif
   
 }

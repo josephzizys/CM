@@ -10,11 +10,11 @@
 
 #include "Buffer.h"
 #include "Editor.h"
-#include "FontList.h"
+//#include "FontList.h"
 #include "Grace.h"
 
-#ifdef EMBED_SCHEME
-#include "OutputQueue.h"
+#ifdef SCHEME
+#include "Midi.h"
 #endif
 
 #define BUFMAX 0xFFFFFFF
@@ -30,7 +30,7 @@ TextBuffer::TextBuffer (syntaxID id, int flg)
   setPoint(0);
   initSyntax(id);
   setPopupMenuEnabled(false);
-#ifdef DARWIN
+#ifdef MACOSX
   setFlagOn(emacsmode);
 #endif
 
@@ -218,13 +218,13 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   case cmdLispEval:
     result.setInfo (T("Eval"), String::empty, editingCategory, 0);
     result.addDefaultKeypress(T('E'), ModifierKeys::commandModifier);
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
 	  result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
     break;
   case cmdLispSetPackage:
     result.setInfo (T("Set Package"), String::empty, editingCategory, 0);
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
 
     result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
@@ -232,7 +232,7 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   case cmdSalEval:
     result.setInfo (T("Execute"), String::empty, editingCategory, 0);
     result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
 	  
     result.setActive(getConsole()->lisp->isLoaded(p->getASDF(ASDF::CM)));
 #endif
@@ -422,7 +422,7 @@ bool TextBuffer::perform (const InvocationInfo& info) {
     lookupHelpAtPoint();
     break;
   case cmdClearQueue:
-#ifdef EMBED_SCHEME
+#ifdef SCHEME
     ((GraceApp *)GraceApp::getInstance())->schemeProcess->clear();
 #endif
     break;
@@ -602,7 +602,7 @@ int TextBuffer::isKeyCommand (const KeyPress& key) {
       flag = KeyCommands::emacsControl;
     if ( key.getModifiers().isAltDown() )
       flag |= KeyCommands::emacsMeta;
-#ifdef DARWIN
+#ifdef MACOSX
     if ( key.getModifiers().isCommandDown() )
       flag |= KeyCommands::emacsCommand;
 #endif
@@ -836,9 +836,19 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     }
     break;
   case KeyCommands::Com_Period :
-#ifdef EMBED_SCHEME
-    printf("clear\n");
-    ((GraceApp *)GraceApp::getInstance())->schemeProcess->clear();
+#ifdef SCHEME
+    printf("FIXME\n");
+    // i dont think this is correct -- as its currently written the
+    // inner while loop for schemeProcess->run() assumes that nodes[0]
+    // is a valid pointer, this clear() could destroy the pointer at 0
+    // behind its back
+
+    // ((GraceApp *)GraceApp::getInstance())->schemeProcess->clear();
+
+    // This will be needed too:
+
+    // ((GraceApp *)GraceApp::getInstance())->midiport->clear();
+
 #endif
     break;
   case KeyCommands::Com_E :

@@ -1,5 +1,3 @@
-
-
 #ifndef __CHICKENBRIDGE__
 #define __CHICKENBRIDGE__
 

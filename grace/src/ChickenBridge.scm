@@ -16,7 +16,7 @@
 
 #include "Grace.h"
 #include "Scheme.h"
-#include "OutputQueue.h"
+#include "Midi.h"
 
 //
 // Console Window code
@@ -39,22 +39,23 @@ void print_error(char * st)
 //
 
 void mp_note(double time, double dur, float k, float v, float c) {
- float on[3];
- float off[3];
- on[0] =  off[0] = k;
- on[1] = v;
- off[1] = 0.0;
- on[2] = off[2] =  c;
- ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, on, 3);
- ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time+dur, off, 3); 
+ ((GraceApp *)GraceApp::getInstance())->midiport->sendNote(time, dur, k, v, c); 
 }
 
 void mp_on(double time, float k, float v, float c) {
- float vals[3];
- vals[0] = k;
- vals[1] = v;
- vals[2] = c;
- ((GraceApp *)GraceApp::getInstance())->outputQueue->addNode(time, vals, 3);
+ ((GraceApp *)GraceApp::getInstance())->midiport->sendOn(time, k, v, c);
+}
+
+void mp_off(double time, float k, float v, float c) {
+ ((GraceApp *)GraceApp::getInstance())->midiport->sendOff(time, k, v, c);
+}
+
+void mp_prog(double time, float p, float c) {
+ ((GraceApp *)GraceApp::getInstance())->midiport->sendProg(time, p, c);
+}
+
+void mp_ctrl(double time, float n, float v, float c) {
+ ((GraceApp *)GraceApp::getInstance())->midiport->sendCtrl(time, n, v, c);
 }
 
 //
@@ -85,7 +86,7 @@ void scheduler_stop (int id) {
 
 void scheduler_hush () {
   ((GraceApp *)GraceApp::getInstance())->schemeProcess->stop(-1);
-  ((GraceApp *)GraceApp::getInstance())->outputQueue->clear();
+  ((GraceApp *)GraceApp::getInstance())->midiport->clear();
 }
 
 bool scheduler_is_time_milliseconds () {

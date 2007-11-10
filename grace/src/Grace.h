@@ -11,13 +11,13 @@
 #ifndef __GRACE__
 #define __GRACE__
 #include "juce.h"
-#include "FontList.h"
+//#include "FontList.h"
 #include "Console.h"
-#include "Audio.h"
+//#include "Audio.h"
 
-#ifdef EMBED_SCHEME
+#ifdef SCHEME
 #include "Scheme.h"
-#include "OutputQueue.h"
+#include "Midi.h"
 #endif
 
 
@@ -30,13 +30,13 @@ class GraceApp : public JUCEApplication
 public:
     
     ConsoleWindow* console;
-    FontList* fontList;
+    //    FontList* fontList;
     ApplicationCommandManager *commandManager ;
     AudioDeviceManager audioManager;
     MidiOutput* midiOutput;
-#ifdef EMBED_SCHEME
+#ifdef SCHEME
     SchemeThread* schemeProcess;
-    OutputQueue* outputQueue;
+    MidiPort* midiport;
 #endif
     GraceApp() ;
     ~GraceApp();
@@ -49,6 +49,7 @@ public:
     void graceQuit(bool ask);
     AudioDeviceManager * getAudioDeviceManager();
     ConsoleWindow* getConsole() {return console;}
+    MidiPort* getMidiPort() {return midiport;}
     GracePreferences* prefs;
     GracePreferences* getPreferences() {return prefs;}
 };

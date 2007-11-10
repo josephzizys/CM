@@ -279,7 +279,7 @@ SalSyntax::SalSyntax ()
   addSalTok( T("if"), SalIf, hilite5);
   addSalTok( T("load"), SalLoad, hilite5);
   addSalTok( T("loop"), SalLoop, hilite5);
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
   addSalTok( T("open"), SalOpen, hilite5);
   addSalTok( T("output"), SalOutput, hilite5);
   addSalTok( T("play"), SalPlay, hilite5);
@@ -288,12 +288,12 @@ SalSyntax::SalSyntax ()
   addSalTok( T("print"), SalPrint, hilite5);
   addSalTok( T("return"), SalReturn, hilite5);
   addSalTok( T("run"), SalRun, hilite5);
-#ifdef EMBED_SCHEME
+#ifdef SCHEME
   addSalTok( T("send"), SalSet, hilite5);
 #endif
   addSalTok( T("set"), SalSet, hilite5);
   addSalTok( T("sprout"), SalSprout, hilite5);
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
   addSalTok( T("system"), SalSystem, hilite5);
 #endif
   addSalTok( T("then"), SalThen, hilite5);

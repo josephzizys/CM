@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#if LINUX || DARWIN
+#if LINUX || MACOSX
 #include <unistd.h>
 #endif
 

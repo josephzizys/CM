@@ -9,7 +9,6 @@
 // $Date$ 
 
 #include "Editor.h"
-#include "FontList.h"
 #include "Grace.h"
 #include "Resources.h"
 

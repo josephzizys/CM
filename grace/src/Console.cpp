@@ -13,14 +13,13 @@
 #include "Buffer.h"
 #include "Editor.h"
 #include "Grace.h"
-#include "Audio.h"
+//#include "Audio.h"
 
-
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
 #include "Lisp.h"
 #else
 #include "Scheme.h"
-#include "OutputQueue.h"
+#include "Midi.h"
 #endif
 
 
@@ -194,13 +193,13 @@ void Console::setTheme(int i) {
 ConsoleWindow::ConsoleWindow (bool dosplash)
   : DocumentWindow ( T("Console") , Colours::white,
 		     DocumentWindow::allButtons, true ),
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
     lisp (0),
 #endif
 
     currentTransparency (100.0)
 {
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
 		
   lisp = new LispConnection(this);
 #endif
@@ -225,7 +224,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
       hideSplash();
   }
   printBanner();
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
 
   if (p->isLispLaunchAtStartup())
     lisp->startLisp();
@@ -234,7 +233,7 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
 
 ConsoleWindow::~ConsoleWindow () {
   // this will be called by GraceApp
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
 
   if ( lisp->isLispRunning() )
     lisp->stopLisp();
@@ -373,7 +372,7 @@ void ConsoleWindow::setFontSize( float size ) {
   p->setConsoleFontSize(size);
 }
 
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
 void ConsoleWindow::consoleEval (String code, bool isSal, 
 				 bool isRegion) {
   if (! lisp->isLispRunning() ){
@@ -436,7 +435,7 @@ bool ConsoleWindow::isSplashVisible() {
  */
 
 const StringArray ConsoleWindow::getMenuBarNames () {
-#ifdef EMBED_SCHEME
+#ifdef SCHEME
   const tchar* const menuNames[] = { T("Grace"), T("Edit"), T("View"),
 				     T("Ports"), T("Windows"), T("Help"), 0 };
 #else
@@ -519,34 +518,40 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
   case PORTSMENU :
     {
       StringArray devs= MidiOutput::getDevices();
-      if (devs.size() == 0)
+      int ndevs=devs.size();
+      // warning! this activity test has to make sure no processes are
+      // running either!
+      bool active=app->midiport->isOutputQueueActive();
+      if ( ndevs == 0)
 	sub2.addItem(cmdPortsMidiOutputOpen, T("no devices"), false);
       else
-	for (int i=0;i<devs.size();i++)
-	  sub1.addItem(cmdPortsMidiOutputOpen + i, devs[i]);
+	for (int i=0;i<ndevs;i++)
+	  sub1.addItem(cmdPortsMidiOutputOpen + i, devs[i],
+		       ( ! active ),
+		       app->midiport->isOpenOutput(i));
       sub1.addSeparator();
-      sub1.addItem(cmdPortsMidiOutputTest, T("Test"), false);
-      sub1.addItem(cmdPortsMidiOutputHush, T("Hush"), false);
+      sub1.addItem(cmdPortsMidiOutputTest, T("Test"), ( ! active ));
+      sub1.addItem(cmdPortsMidiOutputHush, T("Hush"), active);
       sub1.addSeparator();
-      sub1.addItem(cmdPortsMidiOutputTuning, T("Tuning..."), false);
-      sub1.addItem(cmdPortsMidiOutputInstruments, T("Instruments...."), false);
-      
+      sub1.addItem(cmdPortsMidiOutputTuning, T("Tuning..."), ( ! active ));
+      sub1.addItem(cmdPortsMidiOutputInstruments, T("Instruments...."),
+		   ( ! active ));
+      // stub out for now
       devs= MidiInput::getDevices();
       if (devs.size() == 0)
 	sub2.addItem(cmdPortsMidiInputOpen, T("no devices"), false);
       else
 	for (int i=0;i<devs.size();i++)
-	  sub2.addItem(cmdPortsMidiInputOpen + i, devs[i]);
+	  sub2.addItem(cmdPortsMidiInputOpen + i, devs[i], false);
       sub2.addSeparator();
       sub2.addItem(cmdPortsMidiInputHook, T("Input Hook..."), false);
-
       menu.addSubMenu( T("Midi Out") , sub1);
       menu.addSubMenu(T("Midi In"), sub2);
-      menu.addItem(cmdPortsAudioSetup, T("Audio Setup..."),true);
+      menu.addItem(cmdPortsAudioSetup, T("Audio Setup..."));
     }
     break;
 
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
   case LISPMENU :
     {
       bool running=lisp->isLispRunning();
@@ -652,7 +657,11 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     break;
 
   case cmdPortsMidiOutputOpen:
+    app->getMidiPort()->openOutput(arg);
+    break;
   case cmdPortsMidiOutputTest:
+    app->getMidiPort()->testMidiOutput();
+    break;
   case cmdPortsMidiOutputHush:
   case cmdPortsMidiOutputTuning:
   case cmdPortsMidiOutputInstruments:
@@ -670,7 +679,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     console->setTheme( arg);
     break;
 
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
   case cmdLispConnect :
     if (lisp->isLispRunning())
       lisp->stopLisp();
@@ -711,7 +720,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
 }
 
 void ConsoleWindow::showConfigureLispWindow () {
-#ifndef EMBED_SCHEME
+#ifndef SCHEME
   DialogWindow::showModalDialog (T("Configure Lisp"),
 								 
 				 new ConfigureLispView(lisp),
