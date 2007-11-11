@@ -206,6 +206,51 @@ bool SchemeThread::init() {
 
 void SchemeThread::run()
 {
+  double qtime, utime;
+  SchemeNode* node;
+  // start chicken  
+  if (! init() ) return;
+  pausing=false;
+  while ( true ) {
+    if ( threadShouldExit() )
+      break;
+    while ( true ) {     
+      schemeNodes.lockArray();
+      node=schemeNodes.getFirst();
+      schemeNodes.unlockArray();      
+      if ( node == NULL ) {
+	break;
+      }
+      qtime=node->time;
+      utime = Time::getMillisecondCounterHiRes() ;
+      // this should probably test if the difference between qtime and
+      // utime is less that 1ms, if not then it probably shouldn't
+      // sleep (?)
+      if ( qtime > utime ) {
+	wait(1);
+      }
+      else {
+	bool keep=node->process(0.0);
+	if ( keep ) {
+	  schemeNodes.lockArray();
+	  schemeNodes.addSorted(comparator,node); 
+          schemeNodes.remove(0, false);
+	  schemeNodes.unlockArray();
+	}
+	else {
+	  schemeNodes.lockArray();
+          schemeNodes.remove(0, true);
+	  schemeNodes.unlockArray();
+	}
+      }
+    }
+    wait(-1);
+  }
+}
+
+/*** THIS VERSION WORKS
+void SchemeThread::run()
+{
   // start chicken  
   if (! init() ) return;
   double curr;
@@ -229,6 +274,7 @@ void SchemeThread::run()
     wait(-1);
   }
 }
+***/
 
 void SchemeThread::clear()
 {

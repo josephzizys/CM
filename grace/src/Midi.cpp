@@ -150,6 +150,39 @@ String MidiPort::getDeviceName(int id, bool isOut) {
 //
 
 void MidiPort::run() {
+  double qtime, utime;
+  MidiNode* node;
+  while ( true ) {
+    if ( threadShouldExit() )
+      break;
+    while ( true ) {     
+      outputNodes.lockArray();
+      node=outputNodes.getFirst();
+      if ( node == NULL ) {
+	outputNodes.unlockArray();      
+	break;
+      }
+      qtime=node->time;
+      utime=Time::getMillisecondCounterHiRes() ;
+      // this should probably test if the difference between qtime and
+      // utime is less that 1ms, if not then it probably shouldn't
+      // sleep (?)
+      if ( qtime > utime ) {
+	outputNodes.unlockArray();
+	wait(1);
+      }
+      else {
+      node->process();
+      outputNodes.remove(0, true);
+      outputNodes.unlockArray();      
+      }
+    }
+    wait(-1);
+  }
+}
+
+/*** THIS VERSIONS WORKS
+void MidiPort::run() {
   double curr;
   while( !threadShouldExit() ) {
     while(outputNodes.size() > 0) {     
@@ -171,6 +204,7 @@ void MidiPort::run() {
     wait(-1);
   }
 }
+***/
 
 bool MidiPort::isOutputQueueActive() { 
   outputNodes.lockArray(); 
