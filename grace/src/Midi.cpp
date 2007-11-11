@@ -195,7 +195,13 @@ void MidiPort::addNode(MidiNode *n) {
   n->midiport = this;
   n->time += Time::getMillisecondCounterHiRes();
   outputNodes.addSorted(comparator, n);
-  outputNodes.unlockArray();	
+  outputNodes.unlockArray();
+  /*  printf("added type=%d, at %f pos=%d of %d\n", 
+	 n->type,
+	 n->time,
+	 outputNodes.indexOf(n),
+	 outputNodes.size()
+	 ); */
   notify();
 }
 

@@ -93,11 +93,12 @@ bool SchemeNode::process(double curtime) {
       }
       //      offset = Time::getMillisecondCounterHiRes() - curtime;
       if (nexttime < 0) {
-        return more;
+        return false;
       } 
       else {
         more=true;
-        time += nexttime;
+	//        time += nexttime;
+	time = (Time::getMillisecondCounterHiRes() + nexttime) ;
 	//	time += nexttime + offset;
       }
     }
@@ -213,7 +214,8 @@ void SchemeThread::run()
     while(schemeNodes.size() > 0) {     
       curr = Time::getMillisecondCounterHiRes() ;
       while ( schemeNodes.getFirst()->time <= curr ) {
-        if ( schemeNodes.getFirst()->process( curr = Time::getMillisecondCounterHiRes()  ) ) {
+	//was: process(curr = Time::getMillisecondCounterHiRes())
+        if ( schemeNodes.getFirst()->process( 0.0  ) ) {
           schemeNodes.addSorted(comparator, schemeNodes.getFirst()); 
           schemeNodes.remove(0, false);
         }
