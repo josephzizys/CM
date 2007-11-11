@@ -461,23 +461,14 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
     sub1.addItem( cmdGraceEditorNew + 3, T("Sal"), true); 
     sub1.addItem( cmdGraceEditorNew + 2, T("Lisp"), true);
     sub1.addItem( cmdGraceEditorNew + 1, T("Text"), true);
-    menu.addSubMenu( T("New Editor"), sub1, true);    
-    sub2.addItem( cmdGracePlotterNew + XYPlot, T("XY"));
-    sub2.addItem( cmdGracePlotterNew + MidiPlot, T("Midi"));
-    sub2.addItem( cmdGracePlotterNew + VKeyPlot, T("Fomus"), false);
-    sub2.addItem( cmdGracePlotterNew + FomusPlot, T("Vkey"), false);
-    sub2.addItem( cmdGracePlotterNew + SpearPlot, T("Spear"), false);
-    sub2.addItem( cmdGracePlotterNew + CLMPlot, T("CLM"), false);
-    menu.addSubMenu( T("New Plotter"), sub2, true);    
-    menu.addSeparator();
-    menu.addItem( cmdGraceOpenFile, T("Open File..."), true);
+    menu.addSubMenu( T("New"), sub1, true);    
+    menu.addItem( cmdGraceOpenFile, T("Open..."), true);
     if ( p->areRecentlyOpenedFiles() ) {
       p->addRecentlyOpenedItems(&sub3, cmdGraceOpenRecentFile);
       sub3.addSeparator();
       sub3.addItem( cmdGraceClearRecentFiles, T("Clear"), true);
       menu.addSubMenu( T("Open Recent"), sub3, true);
     }
-
     menu.addSeparator();
     menu.addItem( cmdGracePreferences, T("Preferences..."), false);
     menu.addSeparator();
@@ -533,7 +524,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       sub1.addItem(cmdPortsMidiOutputTest, T("Test"), ( ! active ));
       sub1.addItem(cmdPortsMidiOutputHush, T("Hush"), active);
       sub1.addSeparator();
-      sub1.addItem(cmdPortsMidiOutputTuning, T("Tuning..."), ( ! active ));
+      sub1.addItem(cmdPortsMidiOutputTuning, T("Microtuning..."), ( ! active ));
       sub1.addItem(cmdPortsMidiOutputInstruments, T("Instruments...."),
 		   ( ! active ));
       // stub out for now
@@ -547,6 +538,20 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       sub2.addItem(cmdPortsMidiInputHook, T("Input Hook..."), false);
       menu.addSubMenu( T("Midi Out") , sub1);
       menu.addSubMenu(T("Midi In"), sub2);
+      menu.addSeparator();
+      sub3.addItem(0, T("New"), false);
+      sub3.addItem(0, T("Delete"), false);
+      sub3.addItem(0, T("Plot"), false);
+      sub3.addItem(0, T("Import..."), false);
+      sub3.addItem(0, T("Save..."), false);
+      menu.addSubMenu(T("Midi File"), sub3);
+      menu.addSeparator();
+      sub4.addItem( cmdGracePlotterNew + XYPlot, T("XY"));
+      sub4.addItem( cmdGracePlotterNew + MidiPlot, T("Midi"));
+      menu.addSubMenu( T("Plotter"), sub4, true);    
+      menu.addSeparator();
+      menu.addItem(0, T("Osc Setup..."), false);    
+      //menu.addSeparator();
       menu.addItem(cmdPortsAudioSetup, T("Audio Setup..."));
     }
     break;
