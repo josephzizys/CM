@@ -60,8 +60,9 @@ public:
 
 class ConsoleTheme {
  public:
-  enum ColorType {bgColor=0, inputColor, outputColor, errorColor, warningColor,
-		  valueColor, hiliteColor, hiliteTextColor, caretColor};	
+  enum ColorType {bgColor=0, inputColor, outputColor, errorColor,
+		  warningColor, valueColor, hiliteColor, hiliteTextColor,
+		  caretColor};	
   String name;
   //Font font;
   Colour colors[9];
@@ -145,7 +146,8 @@ public:
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};
 #else
-  enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, LISPMENU, WINDOWSMENU, HELPMENU};
+  enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, LISPMENU, WINDOWSMENU,
+	HELPMENU};
 #endif
 
   Console * console;
@@ -172,18 +174,15 @@ public:
   void consoleClear();
   void consoleCopy();
   void consoleSelectAll();
-  void consoleGotoEOB();
-  void display(String str,
-	       ConsoleTheme::ColorType typ=ConsoleTheme::outputColor);
+  void gotoEOB();
+  void display(String str, ConsoleTheme::ColorType col, bool forcepaint);
   void terpri();  
   void freshLine();
-  void printMessage(String str, 
-		    ConsoleTheme::ColorType typ=ConsoleTheme::outputColor,
-		    bool eob=true);
   void printBanner();
-  void printWarning( String str,  bool eob=true);
-  void printError( String str,  bool eob=true);
-  void printValues( String str,  bool eob=true);  
+  void printMessage(String str, bool redraw=false);
+  void printWarning(String str, bool redraw=false);
+  void printError(String str, bool redraw=false);
+  void printValues(String str, bool redraw=false);  
   void consoleEval(String code, bool isSal, bool region);
   void installMenbar();
   void showSplash();

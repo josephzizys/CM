@@ -22,15 +22,15 @@
 // Console Window code
 //
 
-void print_mess(char * st)
+void print_message(char * st)
 {
-// ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st));
+// ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st), true);
    printf("%s", st);
 }
 
 void print_error(char * st)
 {
-// ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st));
+// ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st), true);
    printf("%s", st);
 }
 
@@ -120,7 +120,7 @@ void scheduler_set_time_milliseconds (bool b) {
 ;; Console window
 
 (define print-message
-  (foreign-lambda void "print_mess" c-string))
+  (foreign-lambda void "print_message" c-string))
 
 (define print-error
   (foreign-lambda void "print_error" c-string))

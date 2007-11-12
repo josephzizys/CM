@@ -311,7 +311,6 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
 }
 
 bool TextBuffer::perform (const InvocationInfo& info) {
-  printf("in TextBuf Perform\n");
   switch (info.commandID) {
   case cmdFileNewSal:
     ((EditorWindow*)getTopLevelComponent())->newFile(syntaxSal);
@@ -884,9 +883,9 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
 }
    
 void TextBuffer::keyIllegalAction(const KeyPress& key) {
-  String msg = T("Editor: ") + key.getTextDescription() +
-    T(" is not a command.\n") ;
-  getConsole()->printMessage(msg, ConsoleTheme::errorColor);
+  String msg = T(">>> Error: ") + key.getTextDescription() +
+    T(" is not a keyboard command.\n") ;
+  getConsole()->printError(msg);
 }
 
 // the main key handling function. dispatches to other key handlers
@@ -1204,11 +1203,9 @@ int TextBuffer::forwardSexpr() {
 
   typ = scan_sexpr(syntax->syntab, text, 0, end, SCAN_CODE, &loc, NULL);
   if (typ == SCAN_UNLEVEL)
-    getConsole()->printMessage(T("Editor C-M-f:\nCan't move forward past end of list.\n"),
-			       ConsoleTheme::warningColor);
+    getConsole()->printWarning(T("Editor C-M-f:\nCan't move forward past end of list.\n"));
   else if (typ == SCAN_UNMATCHED)
-    getConsole()->printMessage(T("Editor C-M-f:\nForward unmatched delimiter.\n"),
-			       ConsoleTheme::warningColor);
+    getConsole()->printWarning(T("Editor C-M-f:\nForward unmatched delimiter.\n"));
   else
     setPoint(pos+loc);
   return point();
@@ -1220,11 +1217,9 @@ int TextBuffer::backwardSexpr() {
 
   typ = scan_sexpr(syntax->syntab, text, end-1, -1, SCAN_CODE, &loc, NULL);
   if (typ == SCAN_UNLEVEL)
-    getConsole()->printMessage(T("Editor C-M-b:\nCan't move backward past start of list.\n"),
-			       ConsoleTheme::warningColor);
+    getConsole()->printWarning(T("Editor C-M-b:\nCan't move backward past start of list.\n"));
   else if (typ == SCAN_UNMATCHED)
-    getConsole()->printMessage(T("Editor: C-M-b:\nBackward unmatched delimiter.\n"),
-			       ConsoleTheme::warningColor);
+    getConsole()->printWarning(T("Editor: C-M-b:\nBackward unmatched delimiter.\n"));
   else 
     setPoint(pos-end+loc+1);
   //printf("char at loc+1='%c'\n", text[loc+1]);
@@ -1463,13 +1458,13 @@ int TextBuffer::evalText() {
     for (l1=old; l1>-1; l1--)
       if (text[l1]=='\n') break;
     l1++;
-    getConsole()->printMessage( text.substring(l1,l2), ConsoleTheme::errorColor);
+    getConsole()->printError( text.substring(l1,l2));
     getConsole()->terpri();
     String mark=String::empty;
     for (int i=l1; i<old; i++)
       mark += T(" ");
     mark += T("^");
-    getConsole()->printMessage( mark, ConsoleTheme::errorColor);
+    getConsole()->printError( mark);
     getConsole()->terpri();
     return 0;
   }

@@ -299,7 +299,7 @@ void ConsoleWindow::consoleSelectAll() {
   console->buffer->setHighlightedRegion( 0, 0xFFFFFFF );
 }
 
-void ConsoleWindow::consoleGotoEOB() {
+void ConsoleWindow::gotoEOB() {
   const MessageManagerLock mmLock;
   console->buffer->setCaretPosition(0xFFFFFF);
 }
@@ -322,41 +322,42 @@ void ConsoleWindow::freshLine() {
   }
 }	
 
-void ConsoleWindow::display( String str, ConsoleTheme::ColorType typ) {
-  const MessageManagerLock mmLock;
-  console->lock->enter();
-  consoleGotoEOB();
-  setConsoleTextColor(typ);
-  console->buffer->insertTextAtCursor(str);
-  console->lock->exit();
-}
-
-void ConsoleWindow::printMessage( String str, ConsoleTheme::ColorType typ,
-				  bool eob) {
+void ConsoleWindow::display(String str, ConsoleTheme::ColorType col, bool force) {
   const MessageManagerLock mmLock;
   printf("Console: '%s'\n", str.toUTF8());
   console->lock->enter();
-  //ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
-  //toFront();
-  if (eob) consoleGotoEOB();
-  setConsoleTextColor(typ);
+  setConsoleTextColor(col);
   console->buffer->insertTextAtCursor(str);
+  if (force) {
+    //console->buffer->repaint();
+    //console->repaint();
+    repaint();
+  }
   console->lock->exit();
 }
 
-void ConsoleWindow::printWarning( String str,  bool eob) {
+void ConsoleWindow::printMessage( String str, bool force) {
+  gotoEOB();
   freshLine();
-  printMessage(str, ConsoleTheme::warningColor, eob);
+  display(str, ConsoleTheme::outputColor, force);
 }
 
-void ConsoleWindow::printError( String str,  bool eob) {
+void ConsoleWindow::printWarning( String str, bool force) {
+  gotoEOB();
   freshLine();
-  printMessage(str, ConsoleTheme::errorColor, eob);
+  display(str, ConsoleTheme::warningColor, force);
 }
 
-void ConsoleWindow::printValues( String str,  bool eob) {
+void ConsoleWindow::printError( String str, bool force) {
+  gotoEOB();
   freshLine();
-  printMessage(str, ConsoleTheme::valueColor, eob);
+  display(str, ConsoleTheme::errorColor, force);
+}
+
+void ConsoleWindow::printValues( String str, bool force) {
+  gotoEOB();
+  freshLine();
+  display(str, ConsoleTheme::valueColor, force);
 }
 
 float ConsoleWindow::getFontSize( ) {
@@ -364,7 +365,6 @@ float ConsoleWindow::getFontSize( ) {
 }
 
 void ConsoleWindow::setFontSize( float size ) {
-  printf("fontsize=%f\n", size);
   GracePreferences* p=GracePreferences::getInstance();
   TextEditor* ed=getConsole();
   Font font=ed->getFont();
@@ -387,7 +387,7 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
 
   if ( isSal ) {
     if (! lisp->isLoaded(p->getASDF(ASDF::CM)) ) {
-      printError(">>> SAL: Common Music is not loaded.\nUse Console>Lisp>Load System> to load Common Music.\n");
+      printError(">>> Error: Common Music is not loaded.\nUse Console>Lisp>Load System> to load Common Music.\n");
       return;
     }
     message=LispConnection::msgSalEval;

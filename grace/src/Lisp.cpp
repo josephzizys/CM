@@ -875,36 +875,32 @@ void LispConnection::messageReceived (const MemoryBlock &message) {
   printf("in message receive, what is this for?\n");
   int len=message.getSize();
   String text=String((const char *)message, len);
-  console->printMessage(text,ConsoleTheme::valueColor);
-  //console->terpri();
+  console->printValues(text);
 }
 
 void LispConnection::postMessage (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
-  console->printMessage(text, ConsoleTheme::outputColor);
-  //  console->terpri();
+  console->printMessage(text);
 }
 
 void LispConnection::postWarning (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->printWarning(text);
-  //  console->terpri();
 }
 
 void LispConnection::postError (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
   console->printError(text);
-  //  console->terpri();
 }
 
 void LispConnection::postValues (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
-  console->printMessage(text, ConsoleTheme::valueColor);
-  //  console->terpri();
+  console->printValues(text);
+
 }
 
 void LispConnection::handleBinaryData (const MemoryBlock &message) {

@@ -1,6 +1,6 @@
 /* Generated from ChickenBridge.scm by the CHICKEN compiler
    http://www.call-with-current-continuation.org
-   2007-11-10 16:38
+   2007-11-12 13:05
    Version 2.731 - macosx-unix-gnu-ppc - [ manyargs dload ptables applyhook ]
 (c)2000-2007 Felix L. Winkelmann | compiled 2007-10-29 on galen.local (Darwin)
    command line: ChickenBridge.scm -output-file ChickenBridge.cpp -quiet
@@ -26,15 +26,15 @@
 // Console Window code
 //
 
-void print_mess(char * st)
+void print_message(char * st)
 {
-// ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st));
+// ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st), true);
    printf("%s", st);
 }
 
 void print_error(char * st)
 {
-// ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st));
+// ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st), true);
    printf("%s", st);
 }
 
@@ -251,7 +251,7 @@ static C_word C_fcall stub1(C_word C_buf,C_word C_a0) C_regparm;
 C_regparm static C_word C_fcall stub1(C_word C_buf,C_word C_a0){
 C_word C_r=C_SCHEME_UNDEFINED,*C_a=(C_word*)C_buf;
 char * t0=(char * )C_string_or_null(C_a0);
-print_mess(t0);
+print_message(t0);
 return C_r;}
 
 C_noret_decl(C_grace_toplevel)

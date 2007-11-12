@@ -59,16 +59,18 @@ bool SchemeNode::process(double curtime) {
       C_word res;	
       bzero(schemeThread->evalBuffer, 8192);
       bzero(schemeThread->errorBuffer, 8192);
-      res = CHICKEN_eval_string_to_string( (char *)expr.toUTF8(), schemeThread->evalBuffer,
+      res = CHICKEN_eval_string_to_string( (char *)expr.toUTF8(),
+					   schemeThread->evalBuffer,
                                            8192);
       if ( res==0 ) {
         CHICKEN_get_error_message(schemeThread->errorBuffer, 8192);
-	String text=T(String(schemeThread->errorBuffer));
-	schemeThread->console->printError(text);
+	String text=T(">>> ") + T(String(schemeThread->errorBuffer));
+	schemeThread->console->printError(text, true);
         //printf(">>> %s\n", schemeThread->errorBuffer);
       }
       else {
-	schemeThread->console->printValues(String(schemeThread->evalBuffer) + T("\n"));
+	schemeThread->console->
+	  printValues(String(schemeThread->evalBuffer), true);
 	//printf("*** Value: %s\n", schemeThread->evalBuffer);
       }
     }
@@ -155,22 +157,25 @@ bool SchemeThread::init() {
   
   res = CHICKEN_initialize(0, 0, 0,  (void*)C_grace_toplevel);
   if (res==0) {
-    console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
+    console->printError(T(">>> Error: Chicken failed to initialize.\n"),
+			true);	
     return false;
   }
   res = CHICKEN_run(NULL);
   if (res==0) {
-    console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
+    console->printError(T(">>> Error: Chicken failed to initialize.\n"),
+			true);	
     return false;
   }
   res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", buffer, 8192);
   if (res>0) 
     text = text + T(", version ") + String(buffer).unquoted();
   text += T("\n(c) 2000-2007 Felix L. Winkelmann\n");
-  console->printMessage(text);
+  console->printMessage(text, true);
   bzero(buffer, 8192);
   if (res==0) {
-    console->printError(T(">>> Error: Chicken failed to initialize.\n"));	
+    console->printError(T(">>> Error: Chicken failed to initialize.\n"),
+			true);	
     return false;
   }
  // C_post_gc_hook = postGCHook;
@@ -182,22 +187,22 @@ bool SchemeThread::init() {
   res = CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
   if ( res==0 ) {
     CHICKEN_get_error_message(errorBuffer, 8192);
-    String text=T(String(errorBuffer));
-    console->printError(text);
+    String text=T(">>> ") + T(String(errorBuffer));
+    console->printError(text, true);
     //        printf(">>> %s\n", schemeThread->errorBuffer);
   }
   res = CHICKEN_eval_string("(define *grace-err-out*  (make-output-port print-error (lambda () #f)))", NULL);
   if ( res==0 ) {
     CHICKEN_get_error_message(errorBuffer, 8192);
-    String text=T(String(errorBuffer));
-    console->printError(text);
+    String text=T(">>> ") + T(String(errorBuffer));
+    console->printError(text, true);
     //        printf(">>> %s\n", schemeThread->errorBuffer);
   }
   res = CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
   if ( res==0 ) {
     CHICKEN_get_error_message(errorBuffer, 8192);
-    String text=T(String(errorBuffer));
-    console->printError(text);
+    String text=T(">>> ") + T(String(errorBuffer));
+    console->printError(text, true);
     //        printf(">>> %s\n", schemeThread->errorBuffer);
   }
   
