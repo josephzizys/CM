@@ -191,7 +191,7 @@ void Console::setTheme(int i) {
 }
 
 ConsoleWindow::ConsoleWindow (bool dosplash)
-  : DocumentWindow ( T("Console") , Colours::white,
+ : DocumentWindow ( T("Console") , Colours::white,
 		     DocumentWindow::allButtons, true ),
 #ifndef SCHEME
     lisp (0),
@@ -334,6 +334,7 @@ void ConsoleWindow::display( String str, ConsoleTheme::ColorType typ) {
 void ConsoleWindow::printMessage( String str, ConsoleTheme::ColorType typ,
 				  bool eob) {
   const MessageManagerLock mmLock;
+  printf("Console: '%s'\n", str.toUTF8());
   console->lock->enter();
   //ConsoleWindow* win=((ConsoleWindow*)getTopLevelComponent());
   //toFront();
@@ -436,10 +437,10 @@ bool ConsoleWindow::isSplashVisible() {
 
 const StringArray ConsoleWindow::getMenuBarNames () {
 #ifdef SCHEME
-  const tchar* const menuNames[] = { T("Grace"), T("Edit"), T("View"),
+  const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"),
 				     T("Ports"), T("Windows"), T("Help"), 0 };
 #else
-  const tchar* const menuNames[] = { T("Grace"), T("Edit"), T("View"),
+  const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"),
 				     T("Ports"), T("Lisp"), T("Windows"), T("Help"), 0 };
 #endif
   return StringArray((const tchar**) menuNames);

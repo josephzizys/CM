@@ -63,13 +63,13 @@ bool SchemeNode::process(double curtime) {
                                            8192);
       if ( res==0 ) {
         CHICKEN_get_error_message(schemeThread->errorBuffer, 8192);
-	//	String text=T(String(schemeThread->errorBuffer));
-	//	schemeThread->console->printError(text);
-        printf(">>> %s\n", schemeThread->errorBuffer);
+	String text=T(String(schemeThread->errorBuffer));
+	schemeThread->console->printError(text);
+        //printf(">>> %s\n", schemeThread->errorBuffer);
       }
       else {
-	//        schemeThread->console->printValues(String(schemeThread->evalBuffer) + T("\n"));
-	printf("*** Value: %s\n", schemeThread->evalBuffer);
+	schemeThread->console->printValues(String(schemeThread->evalBuffer) + T("\n"));
+	//printf("*** Value: %s\n", schemeThread->evalBuffer);
       }
     }
     break;
