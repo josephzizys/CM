@@ -74,7 +74,7 @@ float Toolbox::keynum_to_hertz (float kn) {
   return A00 * pow(2, ((kn + 3) / 12));
 }
 
-float Toolbox::keynum_to_pc (float kn) {
+int Toolbox::keynum_to_pc (float kn) {
   return ((int)kn) % 12;
 }
 

@@ -23,20 +23,15 @@ namespace Toolbox {
   float rhythm_to_seconds(float beats, float tempo=60.0, float beat=.25) ;
   float cents_to_scaler(int cents) ;
   int scaler_to_cents(float scaler);
-  float hertz_to_keynum (float hz) ;
   float keynum_to_hertz (float kn) ;
-  float keynum_to_pc (float kn) ;
-  // randomness
-  void ranstate_set(int64 s) ;
-  //  float ranf(float f) ;
-  //  int rani(int r) ;
-  //  float between(float lb, float ub) ;
-  //  int between(int lb, int ub) ;
+  int keynum_to_pc (float kn) ;
+  float hertz_to_keynum (float hz) ;
 
-  float ran(float f) ;
-  float ran(float f1, float f2) ;
+  void ranstate_set(int64 s) ;
   int ran(int i) ;
+  float ran(float f) ;
   int ran(int i1, int i2) ;
+  float ran(float f1, float f2) ;
 
   float ranlow() ;
   float ranhigh() ;

@@ -125,7 +125,7 @@
 
 (define (pickl args)
   (if (null? args)
-      (error "cannot pick from empty list: " arg)
+      (error "cannot pick from empty list: " args)
       (list-ref args (tb:rani (length args)))))
 
 (define (pick . args)
