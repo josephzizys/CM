@@ -99,6 +99,8 @@ void scheduler_set_time_milliseconds (bool b) {
 
 <#
 
+(include "Toolbox.scm")
+
 (declare
  (unit grace)
  (run-time-macros)
@@ -111,6 +113,14 @@ void scheduler_set_time_milliseconds (bool b) {
 	 current-time-milliseconds current-time-seconds
 	 now time-format
 	 sprout stop hush pause paused? cont
+	 ;; toolbox
+	 rescale discrete int quantize decimals
+	 cents->scaler scaler->cents
+	 keynum->hertz keynum->pc hertz->keynum
+	 rhythm->seconds
+	 interpl interp
+	 ran ran-set! 
+	 pick pickl odds
 	 ))
 
 ;;;
