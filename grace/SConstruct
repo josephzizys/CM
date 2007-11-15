@@ -9,7 +9,7 @@ import os
 sources = ['Buffer.cpp', 'Console.cpp', 'Editor.cpp',
            'Grace.cpp', 'Layer.cpp', 'Lisp.cpp',
            'Resources.cpp', 'Plotter.cpp', 'Points.cpp',
-           'Syntab.cpp', 'Syntax.cpp']
+           'Syntab.cpp', 'Syntax.cpp' 'Toolbox.cpp']
 
 lispfiles = ['asdf.lisp', 'grace.asd', 'grace.lisp', 'gray.lisp',
              'socketserver.lisp']
@@ -87,8 +87,8 @@ con = Configure(env)
 if (env['SCHEME']) :
     sources = ['Buffer.cpp', 'Console.cpp', 'Editor.cpp', 
                'Grace.cpp', 'Layer.cpp', 'Scheme.cpp',
-               'Resources.cpp', 'Plotter.cpp', 'Syntab.cpp', 'Syntax.cpp', 'ChickenBridge.cpp',
-               'Midi.cpp']
+               'Resources.cpp', 'Plotter.cpp', 'Syntab.cpp', 'Syntax.cpp', 
+               'ChickenBridge.cpp', 'Midi.cpp', 'Toolbox.cpp']
     env.Append(CPPDEFINES = ['SCHEME'])
     if ( not con.CheckLib('chicken') ) :
         print 'Cannot find chicken  library: ', env['LIBPREFIX']+'chicken'+env['LIBSUFFIX']
