@@ -18,7 +18,7 @@ namespace Toolbox {
   float rescale (float x, float x1, float x2, float y1, float y2, float b=1.0) ;
   int discrete (float x, float x1, float x2, int y1, int y2, float b=1.0);
   int float_to_fixnum(float f) ;
-  float decimals(float val, int places) ;
+  float decimals(float val, int places=3) ;
   float quantize(float val, float step);
   float rhythm_to_seconds(float beats, float tempo=60.0, float beat=.25) ;
   float cents_to_scaler(int cents) ;
@@ -35,15 +35,16 @@ namespace Toolbox {
 
   float ranlow() ;
   float ranhigh() ;
-  float ranmid() ;
-  float ranbeta (float a, float b) ;
-  float ranexp (float lambda) ;
-  float ranexp2 (float lambda) ;
+  float ranmiddle() ;
+  float ranbeta (float a=.5, float b=.5) ;
+  float ranexp (float lambda=1) ;
+  float ranexp2 (float lambda=1) ;
   float rangauss(float sigma=1, float mu=0) ;
   float rancauchy() ;
-  int ranpoisson (float lambda) ;
-  float rangamma (float nu) ;
+  int ranpoisson (float lambda=1) ;
+  float rangamma (float k=1) ;
   float ranpink() ;
+  float one_over_f_aux(int n, float *r, float h) ;
   float ranbrown() ; 
 }
 

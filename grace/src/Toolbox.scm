@@ -41,6 +41,30 @@
   (foreign-lambda int "Toolbox::ran" int int))
 (define tb:betf
   (foreign-lambda float "Toolbox::ran" float float))
+(define tb:ranlow
+  (foreign-lambda float "Toolbox::ranlow" ))
+(define tb:ranhigh
+  (foreign-lambda float "Toolbox::ranhigh" ))
+(define tb:ranmiddle
+  (foreign-lambda float "Toolbox::ranmiddle" ))
+(define tb:rangauss
+  (foreign-lambda float "Toolbox::rangauss" float float))
+(define tb:ranexp
+  (foreign-lambda float "Toolbox::ranexp" float))
+;;(define tb:ranexp2
+;  (foreign-lambda float "Toolbox::ranexp2" float))
+(define tb:ranbeta
+  (foreign-lambda float "Toolbox::ranbeta" float float))
+(define tb:rangamma
+  (foreign-lambda float "Toolbox::rangamma" float))
+(define tb:rancauchy
+  (foreign-lambda float "Toolbox::rancauchy" ))
+(define tb:ranpoisson
+  (foreign-lambda int "Toolbox::ranpoisson" float))
+(define tb:ranpink
+  (foreign-lambda float "Toolbox::ranpink" ))
+(define tb:ranbrown
+  (foreign-lambda float "Toolbox::ranbrown" ))
 
 ;;
 ;; API
@@ -62,8 +86,10 @@
 (define (quantize num steps)
   (tb:quantize num steps))
 
-(define (decimals num digits)
-  (tb:decimals num digits))
+(define (decimals num . digits)
+  (if (null? digits)
+      (tb:decimals num 3)
+      (tb:decimals num (car digits))))
 
 (define (rhythm->seconds beats . args)
   (let-optionals args ((tempo 60.0)
@@ -111,17 +137,24 @@
 (define (ran-set! seed)
   (tb:ran-set! seed))
 
-(define (ran n . n2)
-  (if (null? n2)
-      (if (fixnum? n) (tb:rani n) (tb:ranf n))
-      (if (and (fixnum? n) (fixnum? (car n2)))
-	  (tb:beti n (car n2))
-	  (tb:betf n (car n2)))))
+(define (ran . args)
+  ;; args: n n2
+  (if (null? args)
+      (tb:ranf 1.0)
+      (if (null? (cdr args))
+	  (if (fixnum? (car args)) 
+	      (tb:rani (car args))
+	      (tb:ranf (car args)))
+	  (if (and (fixnum? (car args)) (fixnum? (cadr args)))
+	      (tb:beti (car args) (cadr args))
+	      (tb:betf (car args) (cadr args))))))
 
 (define (odds n . args)
-  (let-optionals args ((true #t)
-		       (false #f))
-    (if (< (tb:ranf 1) n) true false)))
+  (if (null? args)
+      (if (< (tb:ranf 1.0) n) #t #f)
+      (if (null? (cdr args))
+	  (if (< (tb:ranf 1.0) n) (car args) #f)
+	  (if (< (tb:ranf 1.0) n) (car args) (cadr args)))))
 
 (define (pickl args)
   (if (null? args)
@@ -130,4 +163,60 @@
 
 (define (pick . args)
   (pickl args))
+
+;; non-uniform distibutions
+
+(define (ranlow )
+  (tb:ranlow))
+
+(define (ranhigh )
+  (tb:ranhigh))
+
+(define (ranmiddle)
+  (tb:ranmiddle))
+
+(define (ranbeta . args)
+  ;; args: a b
+  (if (null? args)
+      (tb:ranbeta .5 .5)
+      (if (null? (cdr args))
+	  (tb:ranbeta (car args) (car args))
+	  (tb:ranbeta (car args) (cadr args)))))
+
+(define (ranexp . args)
+  ;; args: lambda
+  (if (null? args)
+      (tb:ranexp 1)
+      (tb:ranexp (car args))))
+
+(define (rangauss . args)
+  ;; args: sigma mu
+  (if (null? args)
+      (tb:rangauss 1 0)
+      (if (null? (cdr args))
+	  (tb:rangauss (car args) 0)
+	  (tb:rangauss (car args) (cdr args)))))
+
+(define (rancauchy )
+  (tb:rancauchy))
+
+(define (ranpoisson . args)
+  ;; args: lambda
+  (if (null? arg)
+      (tb:ranpoisson 1)
+      (tb:ranpoisson (car args))))
+
+(define (rangamma . args)
+  ;; args: k
+  (if (null? args)
+      (tb:rangamma 1)
+      (tb:rangamma (car args))))
+
+(define (ranbrown )
+  (tb:ranbrown) )
+
+(define (ranpink )
+  (tb:ranpink))
+
+;;; eof
 

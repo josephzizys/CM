@@ -121,6 +121,8 @@ void scheduler_set_time_milliseconds (bool b) {
 	 interpl interp
 	 ran ran-set! 
 	 pick pickl odds
+	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
+	 rancauchy ranpoisson ranpink ranbrown
 	 ))
 
 ;;;

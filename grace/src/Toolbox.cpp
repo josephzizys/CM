@@ -118,7 +118,7 @@ float Toolbox::ranhigh() {
   return juce::jmax( ranstate.nextFloat(), ranstate.nextFloat());
 }
 
-float Toolbox::ranmid() {
+float Toolbox::ranmiddle() {
   return (ranstate.nextFloat() + ranstate.nextFloat()) / 2.0f;
 }
 
@@ -190,35 +190,69 @@ float Toolbox::rangamma (float nu) {
   return - juce::logf(r);
 }
 
-// http://home.earthlink.net/~ltrammell/tech/pinkalg.htm
+//// http://home.earthlink.net/~ltrammell/tech/pinkalg.htm
+//// this doesnt seem to work.. too bad as it would keep the load even
+//#define NGEN 3
+//float av[NGEN] = {0.0046306,  0.0059961,  0.0083586};
+//float pv[NGEN] = {0.31878,  0.77686,  0.97785};
+//
+//// (loop for x in  '(0.0046306  0.0059961  0.0083586) collect (* x 2 (- (random 1.0) .5)))
+//float randreg[NGEN] = {0.0018758787, -0.0027519993, 0.0025562837};
+//float Toolbox::ranpink() {
+//  // Update each generator state per probability schedule
+//  float rv = ranstate.nextFloat();
+//  for (int i=0; i<NGEN; i++)
+//    if (rv > pv[i])
+//      randreg[i] = av[i] * 2 * (ranstate.nextFloat()-0.5);
+//  // sum the generators
+//  return randreg[0] + randreg[1] + randreg[2];
+//}
 
-#define NGEN 3
-float pv[NGEN] = {0.31878,  0.77686,  0.97785};
-float av[NGEN] = {0.0046306,  0.0059961,  0.0083586};
-// (loop for x in  '(0.0046306  0.0059961  0.0083586) collect (* x 2 (- (random 1.0) .5)))
-float randreg[NGEN] = {0.0018758787, -0.0027519993, 0.0025562837};
+#define POW2 5
+#define POWN 32
+float pinking[POWN];
 
-float Toolbox::ranpink() {
-  // Update each generator state per probability schedule
-  float rv = ranstate.nextFloat();
-  for (int i=0; i<NGEN; i++)
-    if (rv > pv[i])
-      randreg[i] = av[i] * 2 * (ranstate.nextFloat()-0.5);
-  // sum the generators
-  return randreg[0] + randreg[1] + randreg[2];
+float Toolbox::one_over_f_aux(int n, float *r, float halfrange) {
+  float sum=0.0;
+  for (int i=0; i<POW2; i++) {
+    float p = juce::powf(2.0, i);
+    if ( ! ((n / p) == ((n - 1) / p)) )
+      r[i]=( (ranstate.nextFloat() * 2 * halfrange) - halfrange) ;
+    sum += r[i];
+  }
+  return sum;
 }
 
-// http://vellocet.com/dsp/noise/VRand.h
+float Toolbox::ranpink() {
+  // Based on Gardner (1978) and Dick Moore (1988?)
+  static int i=POWN;
+  if ( i==POWN ) {
+    float r[POW2];
+    float h=1.0/POW2;
+    for (int n=0; n<POWN; n++) {
+      pinking[n]=one_over_f_aux(n, r, h);
+    }
+    i=0;
+    //    for (int j=0;j<32;j++)
+    //      printf(" %f", pinking[j]);
+    //    printf("\n");
+  }
+  else i++;
+  return pinking[i];
+}
 
 float Toolbox::ranbrown() {
+  // from http://vellocet.com/dsp/noise/VRand.h
+  // but made to generate between -1 1
+
   static float b=0.0;
   while ( true ) {
-    float  r = ranstate.nextFloat();
+    float  r = ranstate.nextFloat()*2-1;
     b += r;
-    if (b<-8.0f || b>8.0f) b -= r;
+    if (b<-16.0f || b>16.0f) b -= r;
       else break;
     }
-  // make it return interval 0-1.
-  return (b*0.0625)+.5;
+  // return interval -1 1.
+  return (b*0.0625);
 }
 
