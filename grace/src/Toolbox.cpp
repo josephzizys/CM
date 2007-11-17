@@ -14,7 +14,7 @@
 
 float Toolbox::rescale (float x, float x1, float x2, float y1, float y2, float b) {
   if ( x >= x2 ) 
-    return y1;
+    return y2;
   else
     if ( x <= x1 )
       return y1;
