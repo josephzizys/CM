@@ -114,11 +114,12 @@ void scheduler_set_time_milliseconds (bool b) {
 	 now time-format
 	 sprout stop hush pause paused? cont
 	 ;; toolbox
-	 rescale discrete int quantize decimals
+	 rescale discrete lookup int quantize decimals
 	 cents->scaler scaler->cents
 	 keynum->hertz keynum->pc hertz->keynum
 	 rhythm->seconds
 	 interpl interp
+	 steps
 	 ran ran-set! 
 	 pick pickl odds
 	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
@@ -219,7 +220,9 @@ void scheduler_set_time_milliseconds (bool b) {
      ;; never get gc'd?
      (values))))
 
-(define now current-time-milliseconds)
+;;(define now current-time-milliseconds)
+
+(define now current-time-seconds)
 
 (define (time-format . arg)
   (if (null? arg)

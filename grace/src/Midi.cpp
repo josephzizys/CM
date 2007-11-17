@@ -227,7 +227,8 @@ void MidiPort::clear()
 void MidiPort::addNode(MidiNode *n) {
   outputNodes.lockArray();
   n->midiport = this;
-  n->time += Time::getMillisecondCounterHiRes();
+  // MILLI
+  n->time = (n->time * 1000.0) + Time::getMillisecondCounterHiRes();
   outputNodes.addSorted(comparator, n);
   outputNodes.unlockArray();
   /*  printf("added type=%d, at %f pos=%d of %d\n", 
@@ -277,9 +278,11 @@ void MidiPort::testMidiOutput () {
     // vals[0]=keynum, [1]=velocity, [2]=channel
     float key = x + (12 * (3 + Random::getSystemRandom().nextInt(5) )) ;
     float vel = 32.0 + Random::getSystemRandom().nextInt(64);
-    float dur = ((( 2 + Random::getSystemRandom().nextInt(6)) ^ 2) * 30.0);
+    // MILLI
+    float dur = ((( 2 + Random::getSystemRandom().nextInt(6)) ^ 2) * (30.0 / 1000.0));
     sendNote(time, dur, key, vel, 0.0);
-    time += ((Random::getSystemRandom().nextInt(5) ^ 2) * 30.0);
+    // MILLI
+    time += ((Random::getSystemRandom().nextInt(5) ^ 2) * (30.0 / 1000.0));
   }
 }
 

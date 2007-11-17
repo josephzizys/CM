@@ -82,14 +82,16 @@ bool SchemeNode::process(double curtime) {
       closure = CHICKEN_gc_root_ref(closureGCRoot);
 
       // Time format is either int milliseconds or float seconds
-      if ( schemeThread->isTimeMilliseconds() ) {
+      // MILLI
+      if ( 0 ) { //schemeThread->isTimeMilliseconds()
 	elapsed_word = C_fix( (int)(time-start)); 
 	C_save( elapsed_word );
 	nexttime = C_c_double( C_callback(closure, 1));
       }
       else {
 	elapsed_ptr = C_alloc(C_SIZEOF_FLONUM); 
-	elapsed_word = C_flonum( &elapsed_ptr, (time - start)/1000.0); 
+	// MILLI
+	elapsed_word = C_flonum( &elapsed_ptr, (double)((time - start)/1000.0)); 
 	C_save( elapsed_word );
 	nexttime = C_c_double( C_callback(closure, 1)) * 1000.0 ;
       }
@@ -128,7 +130,7 @@ bool SchemeNode::process(double curtime) {
 //
 
 SchemeThread::SchemeThread(String name, ConsoleWindow *win)
-  : Thread(name), pausing (false), timemsec (true)
+  : Thread(name), pausing (false), timemsec (false)
 {	
   console = win;
   evalBuffer = new char[8192];
