@@ -80,6 +80,14 @@
       (tb:discrete x x1 x2 i1 i2 1)
       (tb:discrete x x1 x2 i1 i2 (car b))))
 
+(define (lookup x x1 x2 list . args)
+  (list-ref list
+	    (if (null? args)
+		(tb:discrete x x1 x2 0 (length list) 1)
+		(if (null? (cdr args))
+		    (tb:discrete x x1 x2 0 (car args) 1)
+		    (tb:discrete x x1 x2 0 (car args) (cdr args))))))
+
 (define (int f)
   (tb:int f))
 
@@ -133,6 +141,19 @@
 
 (define (interp x . args)
   (interpl x args))
+
+(define (steps len keynum . args)
+  (let ((head (list #t)))
+    (do ((i 0 (+ i 1))
+         (k keynum)
+         (l (length args))
+         (t head))
+        ((not (< i len)) (cdr head))
+      (set-cdr! t (list k))
+      (set! t (cdr t))
+      (set! k (+ k (list-ref args (modulo i l)))))))
+
+;;; randomnesss
 
 (define (ran-set! seed)
   (tb:ran-set! seed))
