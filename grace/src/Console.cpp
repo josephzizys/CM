@@ -194,13 +194,12 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
  : DocumentWindow ( T("Console") , Colours::white,
 		     DocumentWindow::allButtons, true ),
 #ifndef SCHEME
-    lisp (0),
+   lisp (0),
 #endif
-
-    currentTransparency (100.0)
+   currentTransparency (100.0),
+   evalnum (0)
 {
 #ifndef SCHEME
-		
   lisp = new LispConnection(this);
 #endif
   menubar = new MenuBarComponent(this);
@@ -324,14 +323,14 @@ void ConsoleWindow::freshLine() {
 
 void ConsoleWindow::display(String str, ConsoleTheme::ColorType col, bool force) {
   const MessageManagerLock mmLock;
-  printf("Console: '%s'\n", str.toUTF8());
+  //  printf("Console: '%s'\n", str.toUTF8());
   console->lock->enter();
   setConsoleTextColor(col);
   console->buffer->insertTextAtCursor(str);
   if (force) {
     //console->buffer->repaint();
     //console->repaint();
-    repaint();
+    // repaint();
   }
   console->lock->exit();
 }
@@ -410,6 +409,8 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
 void ConsoleWindow::consoleEval (String code, bool isSal, 
 				 bool isRegion) 
 {
+  evalnum++;
+  printf("[%d] Eval: '%s'\n", evalnum, code.toUTF8());
   ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode(SchemeNode::EXPR, 0.0, code);
 }
 

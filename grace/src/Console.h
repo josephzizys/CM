@@ -157,6 +157,7 @@ public:
 #ifndef SCHEME
   LispConnection * lisp;
 #endif
+  int evalnum;
   ConsoleWindow (bool dosplash) ;
   ~ConsoleWindow () ;
   void closeButtonPressed () ;
