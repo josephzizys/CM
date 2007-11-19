@@ -78,7 +78,21 @@ class ConsoleTheme {
   void setColor(int i, Colour c) {colors[i]=c;}
 };
 
-class Console : public Component {
+class ConsoleMessage {
+ public:
+  enum {TEXT, VALUES, WARNING, ERROR};
+  int type;
+  String text;
+  ConsoleMessage(int typ, String txt) {
+    type=typ;
+    text=txt;
+  }
+  ~ConsoleMessage() {}
+};
+
+class Console : public Component,
+  public AsyncUpdater
+{
  public:
   TextEditor * buffer;
   ConsoleTheme themes[8];   // make these alloc'ed
@@ -93,7 +107,6 @@ class Console : public Component {
   void initTheme(int i) ;
   void setTheme(int i);
   String getThemeName(int i) {return themes[i].name;}
-  //Font getThemeFont(int i) {return themes[i].font;}
   ConsoleTheme* getTheme(int i){return &themes[i];}
   ConsoleTheme* getCurrentTheme() {return getTheme(curtheme);}
   int findTheme(String name) {
@@ -102,6 +115,10 @@ class Console : public Component {
     return -1;
   }
   bool isCurrentTheme(int i) {return (curtheme==i);}
+
+  OwnedArray<ConsoleMessage, CriticalSection> messages;
+  void handleAsyncUpdate() ;
+  void display(String str, ConsoleTheme::ColorType col);
 };
 
 class ConsoleWindow  : public DocumentWindow,
@@ -163,6 +180,7 @@ public:
   void closeButtonPressed () ;
   //  void resized();
   const StringArray getMenuBarNames ();
+  const StringArray getTuningItems ();
   const PopupMenu getMenuForIndex (int idx, const String &name);
   void menuItemSelected (int id, int idx);
 
@@ -176,7 +194,7 @@ public:
   void consoleCopy();
   void consoleSelectAll();
   void gotoEOB();
-  void display(String str, ConsoleTheme::ColorType col, bool forcepaint);
+
   void terpri();  
   void freshLine();
   void printBanner();
@@ -184,6 +202,9 @@ public:
   void printWarning(String str, bool redraw=false);
   void printError(String str, bool redraw=false);
   void printValues(String str, bool redraw=false);  
+
+
+
   void consoleEval(String code, bool isSal, bool region);
   void installMenbar();
   void showSplash();
@@ -199,6 +220,9 @@ public:
   double getOpacity(){return currentTransparency;}
   void setOpacity(double o) {currentTransparency=o;}
 
+  void postConsoleTextMessage(String msg, int typ=ConsoleMessage::TEXT,
+			      bool dotrig=true);
+  void doAsyncUpdate() ;
 };
 
 #endif

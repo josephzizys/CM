@@ -1,11 +1,9 @@
-/*
- *  Nodes.cpp
- *  rker
- *
- *  Created by Todd Ingalls on 9/24/07.
- *  Copyright 2007 __MyCompanyName__. All rights reserved.
- *
- */
+/*************************************************************************
+ * Copyright (C) 2007 Todd Ingalls, Rick Taube.                          *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the Lisp Lesser Gnu Public License. The text of *
+ * this agreement is available at http://www.cliki.net/LLGPL             *
+ *************************************************************************/
 
 #include "Grace.h"
 #include "Scheme.h"
@@ -63,15 +61,16 @@ bool SchemeNode::process(double curtime) {
 					   schemeThread->evalBuffer,
                                            8192);
       if ( res==0 ) {
-        CHICKEN_get_error_message(schemeThread->errorBuffer, 8192);
-	String text=T(">>> ") + T(String(schemeThread->errorBuffer));
-        printf("%s\n", text.toUTF8());
-	schemeThread->console->printError(text, true);
+	printf("ErrorRet!\n", schemeThread->errorBuffer);
+	schemeThread->reportChickenError();
       }
       else {
 	printf("Returned: %s\n", schemeThread->evalBuffer);
+	String s=String(schemeThread->evalBuffer);
+	if ( !s.endsWithChar('\n') )
+	  s << T("\n");
 	schemeThread->console->
-	  printValues(String(schemeThread->evalBuffer), true);
+	  postConsoleTextMessage(s, ConsoleMessage::VALUES);
       }
     }
     break;
@@ -91,7 +90,8 @@ bool SchemeNode::process(double curtime) {
       else {
 	elapsed_ptr = C_alloc(C_SIZEOF_FLONUM); 
 	// MILLI
-	elapsed_word = C_flonum( &elapsed_ptr, (double)((time - start)/1000.0)); 
+	elapsed_word = C_flonum( &elapsed_ptr, 
+				 (double)((time - start)/1000.0)); 
 	C_save( elapsed_word );
 	nexttime = C_c_double( C_callback(closure, 1)) * 1000.0 ;
       }
@@ -149,65 +149,61 @@ void postGCHook(int m, long ms)
     printf("major gc - %i\n", ms);
 }
 
+void SchemeThread::reportChickenError (String text) {
+  // if text is null we are reporting a runtime error so we fetch the
+  // text from the error buffer and insure that it ends with \n
+  if ( text == String::empty ) {
+    CHICKEN_get_error_message(errorBuffer, 8192);
+    text=T(">>> ") + T(String(errorBuffer));
+    if ( ! text.endsWithChar('\n') )
+      text << T("\n");
+  }  
+  console->postConsoleTextMessage(text, ConsoleMessage::ERROR);
+}
+
 bool SchemeThread::init() {
   int res;
   C_word r;
   char buffer[8192];
   String text = T("Chicken Scheme");
   
- // res = CHICKEN_initialize(20000000,  64000,  0, (void*)C_grace_toplevel);
-  
+  //res = CHICKEN_initialize(20000000, 64000, 0, (void*)C_grace_toplevel);
   res = CHICKEN_initialize(0, 0, 0,  (void*)C_grace_toplevel);
   if (res==0) {
-    console->printError(T(">>> Error: Chicken failed to initialize.\n"),
-			true);	
+    reportChickenError( T(">>> Error: Chicken failed to initialize.\n") );
     return false;
   }
   res = CHICKEN_run(NULL);
   if (res==0) {
-    console->printError(T(">>> Error: Chicken failed to initialize.\n"),
-			true);	
+    reportChickenError( T(">>> Error: Chicken failed to initialize.\n") );
     return false;
   }
-  res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", buffer, 8192);
+  res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", 
+				       buffer, 8192);
   if (res>0) 
     text = text + T(", version ") + String(buffer).unquoted();
   text += T("\n(c) 2000-2007 Felix L. Winkelmann\n");
-  console->printMessage(text, true);
+  // console->printMessage(text, true);
+  console->postConsoleTextMessage(text);
+  //console->doAsyncUpdate();	
   bzero(buffer, 8192);
   if (res==0) {
-    console->printError(T(">>> Error: Chicken failed to initialize.\n"),
-			true);	
+    reportChickenError( T(">>> Error: Chicken failed to initialize.\n") );
     return false;
   }
- // C_post_gc_hook = postGCHook;
+
   CHICKEN_eval_string("(require-extension srfi-18)", &r);
   CHICKEN_eval_string("(require-extension srfi-1)", &r);
-  //  CHICKEN_eval_string("(require-extension chicken-more-macros)", &r);
-  
-  CHICKEN_eval_string("(define *grace-std-out*  (make-output-port print-message (lambda () #f)))", NULL);
+  CHICKEN_eval_string("(define *grace-std-out* (make-output-port print-message (lambda () #f)))", NULL);
   res = CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
-  if ( res==0 ) {
-    CHICKEN_get_error_message(errorBuffer, 8192);
-    String text=T(">>> ") + T(String(errorBuffer));
-    console->printError(text, true);
-    //        printf(">>> %s\n", schemeThread->errorBuffer);
-  }
-  res = CHICKEN_eval_string("(define *grace-err-out*  (make-output-port print-error (lambda () #f)))", NULL);
-  if ( res==0 ) {
-    CHICKEN_get_error_message(errorBuffer, 8192);
-    String text=T(">>> ") + T(String(errorBuffer));
-    console->printError(text, true);
-    //        printf(">>> %s\n", schemeThread->errorBuffer);
-  }
+  if ( res==0 )
+    reportChickenError();
+  res = CHICKEN_eval_string("(define *grace-err-out* (make-output-port print-error (lambda () #f)))", NULL);
+  if ( res==0 )
+    reportChickenError();
   res = CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
-  if ( res==0 ) {
-    CHICKEN_get_error_message(errorBuffer, 8192);
-    String text=T(">>> ") + T(String(errorBuffer));
-    console->printError(text, true);
-    //        printf(">>> %s\n", schemeThread->errorBuffer);
-  }
-  
+  if ( res==0 )
+    reportChickenError();
   return true;
 }
 

@@ -6,7 +6,6 @@
 ;;; **********************************************************************
 
 #>
-
 /*************************************************************************
  * Copyright (C) 2007 Todd Ingalls, Rick Taube.                          *
  * This program is free software; you can redistribute it and/or modify  *
@@ -22,16 +21,24 @@
 // Console Window code
 //
 
-void print_message(char * st)
-{
-// ((GraceApp *)GraceApp::getInstance())->getConsole()->printMessage( String(st), true);
-   printf("%s", st);
+void print_message(char * st) {
+  // attempt at buffering: if string ends with #\Return, send string
+  // AND trigger update else send string without triggering update
+  String s=String(st);
+  if ( s.endsWithChar('\n') )
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::TEXT, true);
+  else
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::TEXT, false);
 }
 
-void print_error(char * st)
-{
-// ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( String(st), true);
-   printf("%s", st);
+void print_error(char * st) {
+  // attempt at buffering: if string ends with #\Return, send string
+  // AND trigger update else send string without triggering update
+  String s=String(st);
+  if ( s.endsWithChar('\n') )
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::ERROR, true);
+  else
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::ERROR, false);
 }
 
 //
@@ -114,7 +121,7 @@ void scheduler_set_time_milliseconds (bool b) {
 	 now time-format
 	 sprout stop hush pause paused? cont
 	 ;; toolbox
-	 rescale discrete lookup int quantize decimals
+	 rescale discrete int quantize decimals
 	 cents->scaler scaler->cents
 	 keynum->hertz keynum->pc hertz->keynum
 	 rhythm->seconds
@@ -384,15 +391,14 @@ void scheduler_set_time_milliseconds (bool b) {
 
 ;; message definitions
 
-(define-send-message mp:note ((#:time 0) (#:dur .5) (#:key 60) (#:amp 127) (#:chan 1)))
-(define-send-message mp:on   ((#:time 0) (#:key 60) (#:vel 64) (#:chan 1)))
-(define-send-message mp:off  ((#:time 0) (#:key 60) (#:vel 64) (#:chan 1)))
-(define-send-message mp:prog ((#:time 0) (#:prog 60) (#:chan 0)))
-(define-send-message mp:ctrl ((#:time 0) (#:ctrl 60) (#:val 0) (#:chan 1)))
+(define-send-message mp:note ((#:wait 0) (#:dur .5) (#:key 60) (#:amp 127) (#:chan 1)))
+(define-send-message mp:on   ((#:wait 0) (#:key 60) (#:vel 64) (#:chan 1)))
+(define-send-message mp:off  ((#:wait 0) (#:key 60) (#:vel 64) (#:chan 1)))
+(define-send-message mp:prog ((#:wait 0) (#:prog 60) (#:chan 0)))
+(define-send-message mp:ctrl ((#:wait 0) (#:ctrl 60) (#:val 0) (#:chan 1)))
 (define-send-message mp:alloff ())
 (define-send-message mp:micro ((#:divs 1)))
 (define-send-message mp:inhook ((#:func #f)))
-
 
 ;;;
 ;;; GO macro
@@ -475,10 +481,11 @@ void scheduler_set_time_milliseconds (bool b) {
 		  (lambda (,contvar)
 		    (with-exception-handler
 		     (lambda (,errorvar)
-		       (printf ">>> Aborting process at time ~S:~%    Error: ~S"
-			       ,paramvar
-			       ((condition-property-accessor 'exn 'message)
-			       ,errorvar))
+		       (print-error
+			(sprintf ">>> Error: ~A~%    Aborting process at time ~S~%"
+				 ((condition-property-accessor 'exn 'message) ,errorvar)
+				 ,paramvar
+				 ))
 		       (,contvar -2))
 		     (lambda () ,procbody))
 		    ))

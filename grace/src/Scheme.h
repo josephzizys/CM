@@ -70,6 +70,7 @@ public:
   OwnedArray<SchemeNode, CriticalSection> schemeNodes;
   SchemeNodeComparator comparator;  
 
+  void reportChickenError(String text=String::empty);
   void addNode(int type, double _time, C_word c=0, int _id=-1);
   void addNode(int type, double _time, String str);
   void removeNode(SchemeNode *n, bool deleteObject=true );

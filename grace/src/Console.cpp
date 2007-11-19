@@ -190,6 +190,41 @@ void Console::setTheme(int i) {
   p->setConsoleTheme(getThemeName(curtheme));
 }
 
+void Console::display(String str, ConsoleTheme::ColorType col) {
+  buffer->setCaretPosition(0xFFFFFF);
+  buffer->setColour(TextEditor::textColourId,
+		    getCurrentTheme()->getColor(col));
+  buffer->insertTextAtCursor(str);
+}
+
+void Console::handleAsyncUpdate( ) {
+  // this happens in the main thread
+  for (int i=0; i<messages.size(); i++)
+    switch ( messages[i]->type ) {
+    case ConsoleMessage::TEXT :
+      display( messages[i]->text, ConsoleTheme::outputColor);
+      break;
+    case ConsoleMessage::VALUES :
+      display( messages[i]->text, ConsoleTheme::valueColor);
+      break;
+    case ConsoleMessage::WARNING :
+      display( messages[i]->text, ConsoleTheme::warningColor);
+      break;
+    case ConsoleMessage::ERROR :
+      display( messages[i]->text, ConsoleTheme::errorColor);
+      break;
+    default:
+      break;
+    }
+  messages.lockArray();
+  messages.clear();
+  messages.unlockArray();
+}
+
+//////////////////////////////////////////////////////////////////////
+/// Console window
+//
+
 ConsoleWindow::ConsoleWindow (bool dosplash)
  : DocumentWindow ( T("Console") , Colours::white,
 		     DocumentWindow::allButtons, true ),
@@ -277,7 +312,7 @@ void ConsoleWindow::setConsoleReadOnly(bool b) {
 }
 
 void ConsoleWindow::setConsoleTextColor (int c) {
-  const MessageManagerLock mmLock;
+  //  const MessageManagerLock mmLock;
     console->buffer->setColour(TextEditor::textColourId,
   			     console->getCurrentTheme()->getColor(c));
   //  console->buffer->setColour(TextEditor::textColourId,
@@ -299,17 +334,17 @@ void ConsoleWindow::consoleSelectAll() {
 }
 
 void ConsoleWindow::gotoEOB() {
-  const MessageManagerLock mmLock;
+  //  const MessageManagerLock mmLock;
   console->buffer->setCaretPosition(0xFFFFFF);
 }
 
 void ConsoleWindow::terpri() {
-  const MessageManagerLock mmLock;
+  //  const MessageManagerLock mmLock;
   console->buffer->insertTextAtCursor(T("\n"));
 }
 
 void ConsoleWindow::freshLine() {
-  const MessageManagerLock mmLock;
+  //  const MessageManagerLock mmLock;
   int pos=console->buffer->getCaretPosition();
   if (pos > 0) {
     if (T("\n") != console->buffer->getTextSubstring(pos-1,pos)) {
@@ -321,42 +356,20 @@ void ConsoleWindow::freshLine() {
   }
 }	
 
-void ConsoleWindow::display(String str, ConsoleTheme::ColorType col, bool force) {
-  const MessageManagerLock mmLock;
-  //  printf("Console: '%s'\n", str.toUTF8());
-  console->lock->enter();
-  setConsoleTextColor(col);
-  console->buffer->insertTextAtCursor(str);
-  if (force) {
-    //console->buffer->repaint();
-    //console->repaint();
-    // repaint();
-  }
-  console->lock->exit();
+void ConsoleWindow::printMessage(String str, bool force) {
+  console->display(str, ConsoleTheme::outputColor);
 }
 
-void ConsoleWindow::printMessage( String str, bool force) {
-  gotoEOB();
-  freshLine();
-  display(str, ConsoleTheme::outputColor, force);
+void ConsoleWindow::printWarning(String str, bool force) {
+  console->display(str, ConsoleTheme::warningColor);
 }
 
-void ConsoleWindow::printWarning( String str, bool force) {
-  gotoEOB();
-  freshLine();
-  display(str, ConsoleTheme::warningColor, force);
+void ConsoleWindow::printError(String str, bool force) {
+  console->display(str, ConsoleTheme::errorColor);
 }
 
-void ConsoleWindow::printError( String str, bool force) {
-  gotoEOB();
-  freshLine();
-  display(str, ConsoleTheme::errorColor, force);
-}
-
-void ConsoleWindow::printValues( String str, bool force) {
-  gotoEOB();
-  freshLine();
-  display(str, ConsoleTheme::valueColor, force);
+void ConsoleWindow::printValues(String str, bool force) {
+  console->display(str, ConsoleTheme::valueColor);
 }
 
 float ConsoleWindow::getFontSize( ) {
@@ -439,12 +452,27 @@ bool ConsoleWindow::isSplashVisible() {
 const StringArray ConsoleWindow::getMenuBarNames () {
 #ifdef SCHEME
   const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"),
-				     T("Ports"), T("Windows"), T("Help"), 0 };
+				     T("Ports"), T("Windows"), T("Help"),
+				     0 };
 #else
   const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"),
-				     T("Ports"), T("Lisp"), T("Windows"), T("Help"), 0 };
+				     T("Ports"), T("Lisp"), T("Windows"), 
+				     T("Help"), 0 };
 #endif
   return StringArray((const tchar**) menuNames);
+}
+
+const StringArray ConsoleWindow::getTuningItems () {
+  const tchar* const items [] = { 
+    "Semitones (100 cents)", "Quartertones (50 cents)",
+    "6th tones (33.3 cents)", "8th tones (25 cents)",
+    "10th tones (20 cents)", "12th tones (16.6 cents)", 
+    "14th tones (14.3 cents)", "16th tones (12.5 cents)", 
+    "18th tones (11.1 cents)", "20th tones (10 cents)",
+    "22nd tones (9 cents)", "24th tones (8.2 cents)", 
+    "26th tones (7.7 cents)", "28th tones (7.1 cents)",
+    "30th tones (6.6 cents)", "32nd tones (6.25 cents)", 0 };
+  return StringArray((const tchar**) items);
 }
 
 const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
@@ -526,7 +554,9 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       sub1.addItem(cmdPortsMidiOutputTest, T("Test"), ( ! active ));
       sub1.addItem(cmdPortsMidiOutputHush, T("Hush"), active);
       sub1.addSeparator();
-      sub1.addItem(cmdPortsMidiOutputTuning, T("Microtuning..."), ( ! active ));
+
+      sub1.addItem(cmdPortsMidiOutputTuning, T("Microtuning"), (!active));
+
       sub1.addItem(cmdPortsMidiOutputInstruments, T("Instruments...."),
 		   ( ! active ));
       // stub out for now
@@ -543,7 +573,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       menu.addSeparator();
       sub3.addItem(0, T("New"), false);
       sub3.addItem(0, T("Delete"), false);
-      sub3.addItem(0, T("Plot"), false);
+      sub3.addItem(0, T("Plotter"), false);
       sub3.addItem(0, T("Import..."), false);
       sub3.addItem(0, T("Save..."), false);
       menu.addSubMenu(T("Midi File"), sub3);
@@ -629,9 +659,10 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
 
   case cmdGraceOpenFile :
     {
-      FileChooser choose (T("Open File"), 
-			  File::getSpecialLocation(File::userHomeDirectory),
-			  String::empty, true);
+      FileChooser choose
+	(T("Open File"), 
+	 File::getSpecialLocation(File::userHomeDirectory),
+	 String::empty, true);
       if ( choose.browseForFileToOpen() ) {
 	String f=choose.getResult().getFullPathName();
 	new EditorWindow(0, TextBuffer::load, f);
@@ -666,9 +697,11 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
   case cmdPortsMidiOutputOpen:
     app->getMidiPort()->openOutput(arg);
     break;
+
   case cmdPortsMidiOutputTest:
     app->getMidiPort()->testMidiOutput();
     break;
+
   case cmdPortsMidiOutputHush:
   case cmdPortsMidiOutputTuning:
   case cmdPortsMidiOutputInstruments:
@@ -752,7 +785,15 @@ void ConsoleWindow::showAudioMidiWindow () {
 				 true);
 }
 
+void ConsoleWindow::doAsyncUpdate() {
+  console->triggerAsyncUpdate();
+}
 
-
-
-
+void ConsoleWindow::postConsoleTextMessage(String msg, int typ, 
+					   bool trig) {
+  console->messages.lockArray();
+  console->messages.add(new ConsoleMessage(typ, msg));
+  console->messages.unlockArray();
+  if ( trig )
+    console->triggerAsyncUpdate();
+}
