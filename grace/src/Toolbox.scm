@@ -75,18 +75,23 @@
       (tb:rescale x x1 x2 y1 y2 1)
       (tb:rescale x x1 x2 y1 y2 (car b))))
 
-(define (discrete x x1 x2 i1 i2 . b)
-  (if (null? b)
-      (tb:discrete x x1 x2 i1 i2 1)
-      (tb:discrete x x1 x2 i1 i2 (car b))))
+;;(define (discrete x x1 x2 i1 i2 . b)
+;;  (if (null? b)
+;;      (tb:discrete x x1 x2 i1 i2 1)
+;;      (tb:discrete x x1 x2 i1 i2 (car b))))
 
-(define (lookup x x1 x2 list . args)
-  (list-ref list
-	    (if (null? args)
-		(tb:discrete x x1 x2 0 (length list) 1)
-		(if (null? (cdr args))
-		    (tb:discrete x x1 x2 0 (car args) 1)
-		    (tb:discrete x x1 x2 0 (car args) (cdr args))))))
+;; this combines LOOKUP with DISCRETE
+(define (discrete x x1 x2 i1 . args)
+  (if (pair? i1 )
+      (list-ref i1
+		(if (null? args)
+		    (tb:discrete x x1 x2 0 (length i1) 1)
+		    (if (null? (cdr args))
+			(tb:discrete x x1 x2 0 (car args) 1)
+			(tb:discrete x x1 x2 0 (car args) (cadr args)))))
+      (if (null? (cdr args))
+	  (tb:discrete x x1 x2 i1 (car args) 1)
+	  (tb:discrete x x1 x2 i1 (car args) (cadr args)))))
 
 (define (int f)
   (tb:int f))
@@ -141,6 +146,8 @@
 
 (define (interp x . args)
   (interpl x args))
+
+;; transformations
 
 (define (steps len keynum . args)
   (let ((head (list #t)))
