@@ -324,7 +324,7 @@ img {
 
 span.emacscmd { font-weight: bold; font-size: smaller; }
 span.emacskey { text-decoration: underline }
-span.string  {color: #228b22;} 
+span.string  {color: #a0522d } /* sienna: #a0522d saddle-brown: #8b4513 orig: #bc8f8f; */
 span.comment {font-style: italic; color: gray;} /* slate gray3 */
 span.keyword {color: #b22222;}
 span.special {color: #d2691e;}

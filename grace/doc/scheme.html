@@ -1,0 +1,646 @@
+<html>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "grace.css";
+</style>
+<body>
+
+<h1> Grace with Real Time Scheduling and Chicken Scheme</h1>
+
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#scheduler">The Scheduler</a></li>
+  <li><a href="#processes">Musical Processes</a></li>
+  <li><a href="#ports">Ports</a></li>
+  <li><a href="#toolbox">Composition Toolbox</a></li>
+  <li><a href="#examples">Examples</a></li>
+  <li><a href="#xml">XML Description</a></li>
+</ul>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Grace can be built with either Common Lisp or <A
+href="http://www.call-with-current-continuation.org">Chicken
+Scheme</a> as its extension language for algorithmic composition.  The
+CL binding supports file-based, non-real time work with software systems
+like Common Music, CLM, Fomus etc. <!-- In the CL binding Grace
+communicates with a (separate) Lisp process running SBCL or CLISP over
+a network socket connection. --> The new Scheme binding is a
+lightweight, minimalist interface designed for realtime algorithmic
+composition. </p>
+
+<p>The distinguishing features of the Scheme binding compared to the
+CL binding are:</p>
+
+<ul>
+  <li>Scheme is a part of the Grace executable and
+  is always running</li>
+  <li>Common Music is not involved.</li>
+  <li>Scheduler is only real time and is always running</li>
+  <li>Ports replace files </li>
+  <li>XML replaces Lisp classes</li>
+  <li>Future additions: SAL (very soon), XML point description for Plotter (soon), real time audio using JUCE Audio Plugin Framework and graphics using JUCE's OpenGL api (year)</li>
+</ul>
+
+<!-- blockquote>
+<span style="font-size:small;">
+* See <a href="#toolbox">Toolbox</a>. <br/>
+<!-- ** Use loops to <a href="#send"><code>send</code></a> data in <a href="#nrt">non-real time</a> -->
+</span>
+</blockquote -->
+
+
+<!-- p> The Common Lisp binding uses a network socket connection to send
+data between Grace and a separate process running SBCL or CLISP with
+Common Music loaded. It provides essentially non-realtime, file-based
+algorithmic composition services.<p> </li -->
+
+<!-- p>By default Grace builds with the Scheme back end and the Scheme
+binding is the primary focus of Grace development in the future.  -->
+
+<!-- p>To build Grace for use with Common Lisp specify 'scons CL=1'
+on the command line. </p -->
+
+<h2 id="scheduler">The Scheduler</h2>
+
+<p>The scheduler is a JUCE thread that executes on a 1 millisecond
+tick. There are just a few entry points:</p>
+
+<dl id="sprout"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">sprout</span> (<var>process</var> [<var>ahead=0</var>] [<var>id=0</var>])<br/> &rarr; <var>void</var></pre></dt>
+
+<dd>Adds <a href="#processes"><var>process</var></a> to the scheduler
+starting <var>ahead</var> time from now. If an optional integer
+<var>id</var> is provided it tags the process in the scheduling queue;
+tagged processes can then be selectively removed from the scheduler
+using <a href="#stop"><code>stop</code></a>. The <var>process</var>
+parameter can be a single process or list of processes. If it is a
+list then <var>ahead</var> and <var>id</var> can also be lists and
+their values are paired with each process in left-to-right order. See
+<a href="#processes">Musical Processes</a> for more information.</dd>
+</dl>
+
+<dl id="stop"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">stop</span> ([<var>id</var>] <var>...</var>)<br/> &rarr; <var>void</var></pre></dt>
+
+<dd>Stops processes currently running in the scheduling queue. If no
+ids are given all the processes are stopped, otherwise only processes
+with the specified ids are removed. Multiple processes can share a
+common id.</dd> </dl>
+
+<dl id="hush"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">hush</span> ()<br/> &rarr; <var>void</var></pre></dt>
+<dd>Stops all processes currently running and flushes any pending events in the output queue.</dd>
+</dl>
+
+<dl id="pause"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">pause</span> ()<br/> &rarr; <var>void</var></pre></dt>
+<dd>Suspends the process scheduler.</dd>
+</dl>
+
+<dl id="cont"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">cont</span> ()<br/> &rarr; <var>void</var></pre></dt>
+<dd>Resumes (continues) the paused scheduler.</dd>
+</dl>
+
+<dl id="now"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">now ()</span><br/> &rarr; <var>float</var></pre></dt>
+<dd>Returns the current time of the scheduler. See also <a href="#elapsed"><code>elapsed</code></a><!-- and <a href="#time-format"><code>time-format</code -->.</a></dd>
+</dl>
+
+<!-- dl id="time-format"><dt><pre>time-format ([format])<br/> &rarr; <var>int</var></pre></dt>
+
+<dd> Gets/sets the format of time values returned by <a
+href="#now"><code>now</code></a> and <a
+href="#elapsed"><code>elapsed</code></a>. Called without argument the
+function returns the current format. Specify 1000 as <var>format</var> to
+set the clock mode to integer milliseconds. Specify 1 as
+<var>format</var> to set the clock mode to floating point
+seconds.</dd></dl -->
+
+
+<!-- p>The <a href="#send"><code>send</code></a> function enqueues data
+into the scheduler if the data's time stamp is in the future (greater
+than 0).</p -->
+
+
+<h2 id="processes">Musical Processes</h2>
+
+<p>A musical process is a Scheme function of one argument that you <a
+href="#sprout"><code>sprout</code></a> into the scheduler with an
+(optional) delay time. At the appropriate (real) time the scheduler
+calls the function and passes it the elapsed time since the process
+was sprouted. The function executes and returns either (1) the amount
+of time the scheduler should wait until it calls the function again or
+(2) a negative number if the function should not be called
+again. </p>
+
+<blockquote>
+
+<pre><span class="comment">; process starts two seconds in the future and outputs a random note
+; every .1 seconds with a .05 probability of stopping after each note.</span>
+
+(sprout (<span class="special">lambda</span> (e)
+          (send <span class="string">"mp:note"</span> <span class="keyword">#:key</span> (ran 60 80))
+          (odds .05 -1 .1)))
+        2)
+</pre>
+</blockquote>
+
+<h3 id="go">The <code>go</code> Macro</h3> <p>The <code>go</code>
+macro is an easy way to create a process function, it has the same
+syntax as Scheme's <a
+href="http://www.schemers.org/Documents/Standards/R5RS/HTML/r5rs-Z-H-7.html#%_sec_4.2.4"><code>do</code></a>
+but returns an iterative process instead of performing iteration
+directly. It also wraps your code inside an error handler so Scheme
+can't crash from errors under the callback:</p>
+
+<dl><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">go</span> ((<var>var</var> <var>init</var> [<var>step</var>]) <var>...</var>)
+   (<var>stop?</var> <var>finally</var> <var>...</var>)
+  <var>body</var> <var>...</var></pre></dt>
+<dd>
+
+After the name of the macro comes its <var>binding list</var>, each
+binding is a list containing the name of a local variable
+<var>var</var> followed by its initial value <var>init</var> and an
+(optional) stepping expression <var>step</var>. After the binding list
+comes the termination clause that is evaluated each time through the
+loop; if the <var>stop?</var> expression is true then any
+<var>finally</var> expressions are evaluated and the process stops
+running.  If the <var>stop?</var> expression evaluates to false then
+each <var>body</var> form is evaluated in sequential order.  These
+forms have access to two local functions that are only defined within
+the lexical body of <code>go</code>:</dd> </dl>
+
+<dl id="wait"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">wait</span> (<var>ahead</var>)<br/>&rarr; <var>float</var></pre></dt>
+
+<dd><p>A local function only defined within the body of <a
+href="#go"><code>go</code></a> that sets the time delta for the next
+runtime of the process.</p></dd>
+
+</dl>
+
+<dl id="elapsed"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">elapsed</span> ()<br/>&rarr; <var>float</var></pre></dt>
+
+<dd><p>A local function only defined within the body of <a
+href="#go"><code>go</code></a> that returns the elapsed time since the
+process was first sprouted.</p></dd>
+
+</dl>
+  
+<h4>Example</h4>
+<p>This definition:</p>
+
+<blockquote>
+
+<pre>(<span class="special">define</span> (<span class="defined">simp</span> n)
+  (<span class="special">go</span> ((i 0 (+ i 1))
+       (k 60 (ran 30 70)))
+      ((= i n) (printf <span class="string">"Bye!"</span>))
+    (send <span class="string">"mp:note"</span> <span class="keyword">#:key</span> k)
+    (wait .1)))
+</pre>  
+</blockquote>
+
+<p>will expand into something like:</p>
+
+<blockquote>
+
+<pre>(<span class="special">define</span> (<span class="defined">simp</span> n)
+  ((<span class="special">lambda</span> (i k)
+     (<span class="special">lambda</span> (g10) <span class="comment">; process function</span>
+       (<span class="special">if</span> (= i n)
+           (<span class="special">begin</span> (printf <span class="string">"Bye!"</span>)
+                  -1) <span class="comment">; negative delta to stop</span>
+         (<span class="special">let*</span> ((g11 0)
+	        (elapsed (<span class="special">lambda</span> () g10))
+                (wait (<span class="special">lambda</span> (n) (set! g11 n))))
+           <span class="comment">;; user code</span>
+           (mp:note 0 .5 k .5 0)	
+           (wait .1)
+           <span class="comment">;; variable stepping</span>
+           (set! i (+ i 1))
+           (set! k (ran 30 70))
+           <span class="comment">;; delta to next run time</span>
+           g11))))
+   0
+   60))
+</pre>
+</blockquote>
+
+<h2 id="ports">Ports</h2>
+
+<p> Ports are JUCE singletons that route data from/to 
+devices, displays, files, etc. The set of available ports is determined
+at compile time. <!-- For example, if Grace is compiled with OSC
+support then the application will have an Osc port, otherwise it will
+not.  Grace opens all its ports automatically when it starts
+up. --> Port configurations can be customized using the Ports menu in the Console window. The current state of each port is saved in the Grace.pref file.</p>
+
+<p>The following ports are always defined in Grace. The name in
+parenthesis is the port's <var>prefix</var> that can appear in <a
+href="#send"><code>send</code></a> statements to route data to the
+port.</p>
+
+<ul>
+<li> Midi Port (<code>mp</code>) connects to an external Midi device or application.</li>
+<li> Midi Seq (<code>ms</code>) connects to a MIDI sequence (buffer) that can be saved to disk.</li>
+<li> Plotter Port (<code>pp</code>) connects to the top-most plotter display window.</li>
+
+</ul>
+
+<p>Other (possible) ports could be provided:</p>
+
+<ul>
+
+<li> OSC (<code>osc</code>) messaging using <a href="http://www.audiomulch.com/~rossb/code/oscpack/">oscpack</a> </li>
+<li> Fomus (<code>fom</code>) using the upcoming C++ version of Fomus </li>
+<li> Supercollider (<code>sc</code>) <var> Define synthpatch templates using XML? </var> </li>
+<li> Audio Plugin Port (<code>au</code>) using new JUCE VST plugin framework </li>
+<li> OpenGL Port (<code>gl</code>) <var>using JUCE OpenGL?</var></li>
+</ul>
+
+<h3 id="send">Sending Data To Ports</h3>
+
+<p>Every port implements a set of <var>methods</var> that you can send
+data to. The <a href="#send"><code>send</code></a> macro routes data to a specific method
+on a port:</p>
+
+<dl>
+  <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span></span> (<var>message data...</var>)<br/>&rarr; <var>void</var></pre></dt>
+<dd>
+
+<p>
+
+The first argument to <code>send</code> is its <var>message</var>, a
+literal string or symbol in the format <var>port</var><span
+style="font-weight: bold;">:</span><var>method</var> that identifies a
+specific port and method to receive the <var>data</var> specified as positional and/or keyword
+arguments to the macro. Parameters that do not appear receive their default
+values. Its an error to specify positional values once keyword
+arguments have been introduced or for a keyword name to appear more
+than once in the data list.  </p> </dd> </dl>
+
+<p>Some possible ways of passing data to the midi port's note method:
+
+<blockquote>
+<pre>
+(send <span class="string">"mp:note"</span> <span class="keyword">#:key</span> 70)
+(send <span class="string">"mp:note"</span> 0 1 60 .1 0)
+(send <span class="string">"mp:note"</span> 0 1 <span class="keyword">#:key</span> 60 <span class="keyword">#:chan</span> 10)
+(send <span class="string">"mp:note"</span> <span class="keyword">#:chan</span> 10 <span class="keyword">#:time</span> 2 <span class="keyword">#:key</span> 60)
+</pre>
+</blockquote>
+
+<!-- p> The following would all signal an error at macro expansion time: </p>
+
+<blockquote>
+<pre>
+send (<span class="string">"mp:Note"</span> 0 1)
+send (<span class="string">"mp:note"</span> 0 1 60 .1 0 1)
+send (<span class="string">"mp:note"</span> <span class="keyword">#:key</span> 60 .3)
+send (<span class="string">"mp:note"</span> <span class="keyword">#:key</span> 60 <span class="keyword">#:key</span> 33)
+send (<span class="string">"mp:note"</span> <span class="keyword">#:foo</span> 0 )
+</pre>
+</blockquote>
+-->
+
+<h3 id="nrt">Sending Data in Non-Real Time</h3>
+
+<p> Some ports, like the Plotter Port or Midi Seq, are non-real time
+in the sense that data can be incrementally inserted into the port's
+buffer any point. Events in the buffer share a single (zero-based)
+time line. When you send data it should contain a zero based time
+stamp.  <!-- Data sent without a time stamp will be added at time zero
+in the buffer otherwise it will be inserted at its proper temporal
+position in the buffer: --></p>
+
+<blockquote>
+<pre>(<span class="special">do</span> ((i 0 (+ i 1)))
+    ((= i 100) <span class="keyword">#f</span>)
+  (send <span class="string">"pp:note"</span> <span class="keyword">#:time</span> (ran 20.0) <span class="keyword">#:key</span> (ran 60 80)))
+</pre>
+</blockquote>
+
+<p>To add data from a real time process you can use <a
+href="#elapsed"><code>elapsed</code></a> values as the (zero-based)
+time stamp for the data that is sent to a non-real time port:</p>
+
+<blockquote>
+<pre>(<span class="special">go</span> ((i 0 (+ i 1))
+     (k 60 (ran 40 70)))
+    ((= i 100) <span class="keyword">#f</span>)
+  (send <span class="string">"mp:note"</span> <span class="keyword">#:key</span> k)
+  (send <span class="string">"pp:note"</span> <span class="keyword">#:time</span> (elapsed) <span class="keyword">#:key</span> k)
+  (wait (ran .1 .4)))
+</pre>  
+</blockquote>
+
+<h3>Midi Port Methods</h3>
+<p>Before sending anything to the Midi Port first make sure you have an output connection established with the <span class="menuitem">Ports&gt;Midi Out&gt;</span> Menu in the Console window. You can test that the connection actually works by using the <span class="menuitem">Ports&gt;Midi Out&gt;Test</span> to send a random burst of messages to the output device.</p>
+
+<dl>
+  <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span> (<span class="string">"mp:note"</span> <var>wait=0</var> <var>dur=.5</var> <var>key=60</var> <var>amp=.5</var> <var>chan=0</var>)</pre></dt>
+  <dd><p>Sends note data to midi port.</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:on"</span> <var>wait=0 <var>key=60</var> <var>vel=64</var> <var>chan=0</var>)</pre</dt>
+  <dd><p>Sends Note On data to midi port. (Not yet implemented.)</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:off"</span> <var>wait=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var>)</pre</dt>
+  <dd><p>Sends Note Off data to midi port. (Not yet implemented.)</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:prog"</span> <var>wait=0</var> <var>prog=0</var> <var>chan=0</var>)</pre</dt>
+  <dd<p>>Sends Program Change data to midi port. (Not yet implemented.)</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:ctrl"</span> <var>wait=0</var> <var>ctrl=0</var> <var>val=0</var> <var>chan=0</var>)</pre</dt>
+  <dd><p>Sends Control Change data to midi port (Not yet implemented.).</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:alloff"</span> )</pre</dt>
+  <dd><p>Sends All Notes Off to midi port. (Not yet implemented.)</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:microdiv"</span> <var>divs</var>)</pre</dt>
+  <dd><p>Sets number of divisions per semitone of midi port. (Not yet implemented.)</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:inhook"</span> <var>function</var>)</pre</dt>
+  <dd><p>Sets the input hook of port to <var>function</var> or clears an existing hook if value is #f. The function's arguments must be arity 4 and is passed four values: (time opcode data1=0 data2=0) where opcode contains the MIDI opcode of the message. Data1 and data2 contain zeros if opcode passes fewer arguments. (Not yet implemented.)</p></dd>
+
+</dl>
+
+<h3>Midi Seq Methods</h3>
+<p>Supports reading and writing data from/to a Midi Sequence. (Not yet implemented.)</p>
+<!-- dl>
+  <dt><pre>send (<span class="string">"ms:note"</span> <var>time</var> <var>dur</var> <var>key</var> <var>amp</var> <var>chan</var>)</pre></dt>
+  <dd>Sends note data to midi sequence port</dd >
+  <dt><pre>(send <span class="string">"ms:prog"</span> <var>time prog chan</var>)</pre></dt>
+  <dd>Sends Program Change data to midi sequence port</dd >
+  <dt><code>send (<span class="string">"ms:ctrl"</span> <var>time ctrl val chan</var>)</code></dt>
+  <dd>Sends Control Change data to midi sequence port.</dd >
+  <dt><code>send (<span class="string">"ms:play"</span>)</dt>
+  <dd>Plays current midi sequence.</dd >
+  <dt><code>send( <span class="string">"ms:stop"</span>)</dt>
+  <dd>Stops playing current midi sequence and rewinds to start to of sequence.</dt>
+  <dt><code>send(<span class="string">"ms:pause"</span>)</dd >
+  <dd>Stops playing current midi sequence.</dt>
+  <dt><code>send(<span class="string">"ms:new"</span>)</dt>
+  <dd>Creates new sequence, pushing old one onto sequence stack.</dd >
+  <dt><code>send(<span class="string">"ms:clear"</span>)</dt>
+  <dd>Clears sequence of any data. </dd >
+  <dt><code>send(<span class="string">"ms:save"</span>)</dt>
+  <dd>Saves sequence data to disk as midi file. </dd >
+  <dt><code>send(<span class="string">"ms:saveall"</span>)</dt>
+  <dd>Saves all sequences to disk as level 1 midi file. </dd >
+  <dt><code>send(<span class="string">"ms:saveas"</span> <var>file</var>)</dt>
+  <dd>Saves current sequence to specified file. Use .xml extension to save data as formatted XML text. </dd >
+  <dt><code>send(<span class="string">"mf:mapnotes"</span>  <var>function</var> </span>)</dt>
+  <dd>Maps <var>function</var> over note data in sequence. Function args must be arity 5:  (time dur key amp chan).</dd >
+  <dt><code>send(<span class="string">"mf:load"</span> <var>file</var> </span>)</dt>
+  <dd>Load .mid or .xml file into sequence.</dd >
+  <dt><code>send(<span class="string">"mf:plot"</span> <var>file</var> </span>)</dt>
+  <dd>Send midi sequence to a Plotter window.</dd >
+</dl -->
+
+
+<h3>Plotter Port Methods</h3>
+<p>Routes data to the focus layer of the current plotter window. (Not yet implemented.)</p>
+
+
+<h2 id="toolbox">Composition Toolbox</h2>
+
+<p>The following functions have been added to Chicken Scheme to facilite algorithmic music compostion. Over time
+most of CM's toolbox will become available as optional modules, e.g.
+<code> (use patterns)</code>, <code> (use tuning)</code>,  etc.</p>
+
+<h3>Mapping and Transformation</h3>
+
+<dl id="rescale">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">rescale</span> (<var>x</var> <var>x1</var> <var>x2</var> <var>y1</var> <var>y2</var> [<var>base=1</var>]) <br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns a floating point value between <var>y1</var> and <var>y2</var> that is proportional to <var>x</var> between <var>x1</var> and <var>x2</var>. If <var>base</var> is 1 the rescaling is linear otherwise its exponential where <var>base</var> &gt; 1 produce increasing spread as <var>x</var> approaches <var>x2</var> and values  &lt; 1 produce descreasing spread.</dd></dl>
+  
+<dl id="discrete">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">discrete</span> (<var>x</var> <var>x1</var> <var>x2</var> <var>d1</var> [<var>d2</var>] [<var>base=1</var>])<br/>&rarr; <var>sexpr</var></pre></dt>
+<dd>Similar to <code>rescale</code> except floating point <var>x</var> is mapped onto discrete values. If <var>d1</var> and <var>d2</var> are integers then <var>x</var> is mapped onto the range of integers  <var>d1</var> to <var>d2</var>. Otherwise, <var>d1</var> should be a list of values and <var>x</var> is mapped onto the elements of <var>d1</var> with <var>d2</var> an optional length that defaults to the length of <var>d1</var>. </dd></dl>
+
+<dl id="interpl">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">interpl</span> (<var>x</var> <var>list</var> [<var>base=1</var>])<br/>&rarr; <var>float</var></pre></dt>
+<dd>Same as CM.</dd></dl>
+
+<dl id="interp">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">interp</span> (<var>x</var> <var>x1 y1</var> <var>...</var>)<br</>&rarr; <var>float</var></pre></dt>
+<dd>Same as CM.</dd></dl>
+
+<dl id="steps">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">steps</span> (<var>len</var> <var>from</var> <var>step</var> <var>...</var>)<br/>&rarr; <var>list</var></pre></dt>
+<dd>Returns a list of <var>len</var> values starting on <var>from</var> and incremented by each <var>step</var> (positive or negative) read mod the number of steps. For example, <code>(steps 24 60 2 1 )</code>  would return a 3 octave ascending octatonic scale starting on key number 60.</dd></dl>
+
+
+<dl id="rhythm-seconds">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">rhythm-&gt;seconds</span> (<var>fraction</var> [<var>tempo</var>=60] [<var>beat</var>=1])<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns the time in seconds of <var>fraction</var> of <var>beat</var> in <var>tempo</var>.</dd></dl>
+
+<dl id="cents-scaler">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">cents-&gt;scaler</span> (<var>cents</var>)<br/>&rarr; <var>float</var></pre></dt>
+<dd>Same as CM.</dd></dl>
+
+<dl id="scaler-cents">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">scaler-&gt;cents</span> (<var>scaler</var>)<br/>&rarr; <var>int</var></pre></dt>
+<dd>Same as CM.</dd></dl>
+
+<dl id="hertz-keynum">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">hertz-&gt;keynum</span> (<var>hertz</var>)<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns floating point key number of <var>hertz</var>.</dd></dl>
+
+<dl id="keynum-hertz">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">keynum-&gt;hertz</span> (<var>knum</var>)<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns hertz value of key number.</dd></dl>
+
+<dl id="keynum-pc">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">keynum-&gt;pc</span> (<var>knum</var>)<br/>&rarr; <var>int</var></pre></dt>
+<dd>Returns integer pitch class of key number.</dd></dl>
+
+<dl id="int">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">int</span> (<var>x</var>)<br/>&rarr; <var>int</var></pre></dt>
+<dd>Rounds a floating point <var>x</var> to the nearest fixnum integer.</dd></dl>
+
+<dl id="quantize">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">quantize</span> (<var>x</var> <var>step</var>)<br/>&rarr; <var>float</var></pre></dt>
+<dd>Same as CM. <!-- Rounds a floating point <var>x</var> to the nearest multiple of <var>step</var> --></dd></dl>
+
+
+<!-- dl id="decimals">
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">decimals</span> (<var>x</var> [<var>precision</var>=3])<br/>&rarr; <var>float</var></pre></dt>
+<dd>Same as CM. </dd></dl -->
+
+<h3>Randomness</h3>
+
+<p>All the functions that perform random selection are based on a common C++ random
+state object that can be seeded using <a href="#ran-set!"><code>ran-set!</code></a>.</p>
+
+<h4>Uniform Distribution</h4>
+
+<dl id="ran">
+
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ran</span> ([<var>n</var>=1.0] [<var>n2</var>])<br/>&rarr; <var>int</var> | <var>float</var></pre></dt>
+
+<dd>If called without arguments it returns a random number between 0
+and 1 (exclusive). Otherwise <var>n</var> should be a positive or
+negative number and a random number 0 to <var>n</var> (exlusive) and
+of the same type as <var>n</var> (int or float) is returned. If
+<var>n2</var> is provided then a random number between <var>n</var>
+and <var>n2</var> (exclusive) is returned where <var>n2</var> can be
+greater or less than <var>n</var>.</dd>
+
+</dl>
+
+<dl><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">odds</span> (<var>n</var> [<var>true</var>=#t] [<var>false</var>=#f])<br/>&rarr; <var>sexpr</var></pre></dt>
+<dd>Same as CM.</dd></dl>
+
+<dl id="pickl"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">pickl</span> (<var>list</var>)<br/>&rarr; <var>sexpr</var></pre></dt>
+<dd>Same as CM.</dd></dl>
+
+<dl id="pick"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">pick</span> (<var>arg</var> <var>...</var>)<br/>&rarr; <var>sexpr</var></pre></dt>
+<dd>Same as CM.</dd></dl>
+
+<h4>Nonuniform Distributions</h4>
+
+<dl id="ranpink"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ranpink</span> ()<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns a pinkish  (1/f)  value between -1 and 1.</dd></dl>
+
+<dl id="ranbrown"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ranbrown</span> ()<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns a brownish  (1/f<sup>2</sup>) value between -1 and 1.</dd></dl>
+
+<dl id="ranlow"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ranlow</span> ()<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns a value between 0 and 1 with lower values more likely.</dd></dl>
+
+<dl id="ranhigh"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ranhigh</span> ()<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns a value between 0 and 1 with higher values more likely.</dd></dl>
+
+<dl id="ranmid"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ranmiddle</span> ()<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns a value between 0 and 1 with middle values more likely.</dd></dl>
+
+<dl id="rangauss"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">rangauss</span> ([<var>lambda=1</var>] [<var>mu</var>=0])<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns unbounded value from the  <a href="http://en.wikipedia.org/wiki/Normal_distribution">normal distribution</a> with standard deviation <var>lambda</var> and mean <var>mu</var>.</dd></dl>
+
+<dl id="ranexp"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ranexp</span> ([<var>lambda=1</var>])<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns a value greater than 0 from the  <a href="">exponential distribution</a> with stretching factor <var>lambda</var>.</dd></dl>
+
+<dl id="ranbeta"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ranbeta</span> ([<var>a</var>=.5] [<var>b</var>=<var>a</var>])<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns value between 0 and 1 from the  <a href="http://en.wikipedia.org/wiki/Beta_distribution">beta distribution</a>.</dd></dl>
+
+<dl id="rangamma"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">rangamma</span> ([<var>k</var>=1])<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns value greater than 0 from the  <a href="http://en.wikipedia.org/wiki/Gamma_distribution">gamma distribution</a>.</dd></dl>
+
+
+<dl id="rancauchy"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">rancauchy</span> ()<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns an unbounded value from the <a href="http://en.wikipedia.org/wiki/Cauchy_distribution">Cauchy distribution</a>.</dd></dl>
+
+
+<dl id="ranpoisson"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ranpoisson</span> ([<var>lambda=1</var>])<br/>&rarr; <var>float</var></pre></dt>
+<dd>Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wiki/Poisson_distribution">Poisson distribution</a> with shape factor <var>lambda</var>.</dd></dl>
+
+<h4>Seeding</h4>
+
+<dl id="ran-set!"><dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ran-set! (<var>uint</var>)<br/>&rarr; <var>void</var></pre></dt><dd>Initialize the random state generator with the unsigned integer value <var>uint</var>.</dd></dl>
+
+<h2 id="examples">Examples</h2>
+
+<div class="float">
+<p>Map pink noise onto scales.</p>
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">pinkscale</span> len scale)
+  (<span class="special">go</span> ((i 0 (+ i 1)))
+      ((= i len) )
+    (send <span class="string">"mp:note"</span> <span class="keyword">#:key</span> (discrete (ranpink) -1 1 scale))
+    (wait .2)))
+
+(<span class="special">define</span> <span class="defined">dorian</span> (steps 50 20 2 1 2 2 2 1 2))
+
+(sprout (pinkscale 100 dorian))
+
+(<span class="special">let</span> ((wierdo (steps 40 20 2 (ran 1 4) 2 (ran 1 4) 2)))
+  (sprout (pinkscale 100 wierdo)))
+</pre>
+</div>
+
+<div class="float">
+<p>Use ids to selectively stop processes.</p>
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">chopin</span> n r d k)
+  (<span class="special">go</span> ((i 0 (+ i 1)))
+      ((= i n) #f)
+    (send <span class="string">"mp:note"</span> <span class="keyword">#:dur</span> d <span class="keyword">#:key</span> k)
+    (wait r)))
+
+<span class="comment">;; sprout D# minor chord with ids</span>
+
+(<span class="special">begin</span> 
+  (sprout (chopin 100 .5 .25 63) 0 1)
+  (sprout (chopin 100 .5 .25 66) 0 2)
+  (sprout (chopin 100 .5 .25 70) 0 3)
+  (sprout (chopin 100 .5 .25 75) 0 1)
+  )
+
+<span class="comment">;; first stop F#, then A# then the D# octave</span>
+
+(stop 2)
+(stop 3)
+(stop 1)
+</pre>
+</div>
+
+<div class="float">
+<p>Pentatonic wind chimes with envelopes.</p>
+<pre class="code">
+(<span class="special">define</span> (<span class="defined">chime</span> n r)
+  (<span class="special">go</span> ((i 0 (+ i 1))
+       (l '(1 3 6 8 10 13))
+       (k (+ 36 (* 12 (ran 6))))
+       )
+      ((= i n) #f)
+    (send <span class="string">"mp:note"</span> 0 (ran 2.0 4.0)
+          (+ k (list-ref l (ran 6)))
+          (interp i 0 90 n 30))
+    (wait r)
+    (set! r (* r (interp i 0 1 (/ 1 n) 1 n 1.5)))))
+
+(sprout (chime 20 .1) )
+</pre>
+</div>
+
+<h2 id="xml">XML Description</h2>
+
+<p>Plotter saves, loads, imports and exports data using
+XML entities defined in the DTD file "grace/doc/grace.dtd". </p>
+
+<p>Users can define their own Plotter points by declaring the
+poin using the XML <code>&lt;<span
+class="xmlentity">pointdef</span>&gt;</code> ... <code>&lt;<span
+class="xmlentity">/pointdef</span>&gt;</code> entity.  Here is the
+definition of Plotter's (predefined) xy point: </p>
+
+<pre>
+&lt;<span class="xmlentity">pointdef</span>&gt;
+  &lt;<span class="xmlentity">name</span>&gt;xy&lt;<span class="xmlentity">/name</span>&gt;
+  &lt;<span class="xmlentity">fieldlist</span>&gt;
+    &lt;<span class="xmlentity">field</span>&gt; &lt;<span class="xmlentity">name</span>&gt;x&lt;<span class="xmlentity">/name</span>&gt; &lt;<span class="xmlentity">type</span>&gt;float 0 1&lt;<span class="xmlentity">/type</span>&gt; &lt;<span class="xmlentity">default</span>&gt;0&lt;<span class="xmlentity">/default</span>&gt; &lt;<span class="xmlentity">/field</span>&gt;
+    &lt;<span class="xmlentity">field</span>&gt; &lt;<span class="xmlentity">name</span>&gt;y&lt;<span class="xmlentity">/name</span>&gt; &lt;<span class="xmlentity">type</span>&gt;float 0 1&lt;<span class="xmlentity">/type</span>&gt; &lt;<span class="xmlentity">default</span>&gt;0&lt;<span class="xmlentity">/default</span>&gt; &lt;<span class="xmlentity">/field</span>&gt;
+  &lt;<span class="xmlentity">/fieldlist</span>&gt;
+&lt;<span class="xmlentity">/pointdef</span>&gt;
+</pre>
+
+
+<p>Point definitions can be converted to sound by providing a <code>
+&lt;<span class="xmlentity">soundmap</span>&gt; ... &lt;<span
+class="xmlentity">/soundmap</span>&gt; </code> entity that describes
+how to transform the point's field values into data sent to a
+port. For example, this description would convert an xy point into a
+Midi Port note by converting point's <var>x</var> field to a time value
+between 0 and 10, the <var>y</var> field to a key number between 60 72, and
+constant values for duration (.5) amplitude (.25) and channel (0):</p>
+
+<pre>
+&lt;<span class="xmlentity">soundmap</span>&gt;
+  &lt;<span class="xmlentity">mp:note </span>&gt;
+    &lt;<span class="xmlentity">mp:time</span>&gt; &lt;<span class="xmlentity">source</span>&gt;x&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">scaler</span>&gt;10&lt;<span class="xmlentity">/scaler</span>&gt; &lt;<span class="xmlentity">/mp:time</span>&gt;
+    &lt;<span class="xmlentity">mp:dur</span>&gt; &lt;<span class="xmlentity">source</span>&gt;.5&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">/mp:dur</span>&gt;
+    &lt;<span class="xmlentity">mp:key</span>&gt; &lt;<span class="xmlentity">source</span>&gt;y&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">scaler</span>&gt;12&lt;<span class="xmlentity">/scaler</span>&gt; &lt;<span class="xmlentity">offset</span>&gt;60&lt;<span class="xmlentity">/offset</span>&gt; &lt;<span class="xmlentity">/mp:key</span>&gt;
+    &lt;<span class="xmlentity">mp:amp</span>&gt; &lt;<span class="xmlentity">source</span>&gt;.25&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">scaler</span>&gt;127&lt;<span class="xmlentity">/scaler</span>&gt; &lt;<span class="xmlentity">/mp:amp</span>&gt;
+    &lt;<span class="xmlentity">mp:chan</span>&gt; &lt;<span class="xmlentity">source</span>&gt;0&lt;<span class="xmlentity">/source</span>&gt; &lt;<span class="xmlentity">/mp:chan</span>&gt;
+  &lt;<span class="xmlentity">/mp:note</span>&gt;
+&lt;<span class="xmlentity">/soundmap</span>&gt;
+</pre>
+
+
+<p>User defined XML descriptions are saved in the
+Grace.prefs file:
+</p>
+
+</body>
+</html>
+

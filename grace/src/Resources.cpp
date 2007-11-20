@@ -71,6 +71,9 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   else if (w==winPlotter)
     menu->addItem(cmdHelpWindow+w, T("Plotter Help"));
   menu->addSeparator();
+#ifdef SCHEME
+  menu->addItem(cmdHelpWindow+12, T("Scheme")); 
+#endif 
   sub1.addItem(cmdHelpSalTutorial+0, T("Hello World"));
   sub1.addItem(cmdHelpSalTutorial+1, T("Symbolic Expressions"));
   sub1.addItem(cmdHelpSalTutorial+2, T("Function Calls"));
@@ -107,6 +110,8 @@ void commonHelpItemSelected (int cmd, int arg) {
       res=res.getChildFile(T("doc/plotter.html"));
     else if (arg==11)
       res=res.getChildFile(T("doc/sal/sal.html"));
+    else if (arg==12)
+      res=res.getChildFile(T("doc/scheme.html"));
 
     if ( res.existsAsFile() )
 #ifdef LINUX
