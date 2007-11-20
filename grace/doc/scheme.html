@@ -26,7 +26,7 @@ CL binding supports file-based, non-real time work with software systems
 like Common Music, CLM, Fomus etc. <!-- In the CL binding Grace
 communicates with a (separate) Lisp process running SBCL or CLISP over
 a network socket connection. --> The new Scheme binding is a
-lightweight, minimalist interface designed for realtime algorithmic
+lightweight, minimalist interface designed for real time algorithmic
 composition. </p>
 
 <p>The distinguishing features of the Scheme binding compared to the
@@ -243,15 +243,15 @@ port.</p>
 
 </ul>
 
-<p>Other (possible) ports could be provided:</p>
+<p>Other ports will be provided, possibly:</p>
 
 <ul>
 
-<li> OSC (<code>osc</code>) messaging using <a href="http://www.audiomulch.com/~rossb/code/oscpack/">oscpack</a> </li>
-<li> Fomus (<code>fom</code>) using the upcoming C++ version of Fomus </li>
-<li> Supercollider (<code>sc</code>) <var> Define synthpatch templates using XML? </var> </li>
-<li> Audio Plugin Port (<code>au</code>) using new JUCE VST plugin framework </li>
-<li> OpenGL Port (<code>gl</code>) <var>using JUCE OpenGL?</var></li>
+<li> OSC Port using <a href="http://www.audiomulch.com/~rossb/code/oscpack/">oscpack</a> </li>
+<li> Fomus using the (upcoming) C++ version of Fomus (libfomus) </li>
+<li> Supercollider using synthpatch templates in XML? </li>
+<li> Audio Port using new JUCE audio plugin framework </li>
+<li> OpenGL Port using JUCE OpenGL binding</li>
 </ul>
 
 <h3 id="send">Sending Data To Ports</h3>
@@ -335,20 +335,20 @@ time stamp for the data that is sent to a non-real time port:</p>
 
 <dl>
   <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span> (<span class="string">"mp:note"</span> <var>wait=0</var> <var>dur=.5</var> <var>key=60</var> <var>amp=.5</var> <var>chan=0</var>)</pre></dt>
-  <dd><p>Sends note data to midi port.</p></dd>
-  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:on"</span> <var>wait=0 <var>key=60</var> <var>vel=64</var> <var>chan=0</var>)</pre</dt>
-  <dd><p>Sends Note On data to midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:off"</span> <var>wait=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var>)</pre</dt>
-  <dd><p>Sends Note Off data to midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:prog"</span> <var>wait=0</var> <var>prog=0</var> <var>chan=0</var>)</pre</dt>
-  <dd<p>>Sends Program Change data to midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:ctrl"</span> <var>wait=0</var> <var>ctrl=0</var> <var>val=0</var> <var>chan=0</var>)</pre</dt>
+  <dd><p>Send note data to midi port.</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span> (<span class="string">"mp:on"</span> <var>wait=0</var> <var>key=60</var> <var>vel=64</var> <var>chan=0</var>)</pre></dt>
+  <dd><p>Send Note On data to midi port. (Not yet implemented.)</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span> (<span class="string">"mp:off"</span> <var>wait=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var>)</pre></dt>
+  <dd><p>Send Note Off data to midi port. (Not yet implemented.)</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span> (<span class="string">"mp:prog"</span> <var>wait=0</var> <var>prog=0</var> <var>chan=0</var>)</pre></dt>
+  <dd><p>Send Program Change data to midi port. (Not yet implemented.)</p></dd>
+  <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span> (<span class="string">"mp:ctrl"</span> <var>wait=0</var> <var>ctrl=0</var> <var>val=0</var> <var>chan=0</var>)</pre></dt>
   <dd><p>Sends Control Change data to midi port (Not yet implemented.).</p></dd>
-  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:alloff"</span> )</pre</dt>
+  <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span> (<span class="string">"mp:alloff"</span> )</pre></dt>
   <dd><p>Sends All Notes Off to midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:microdiv"</span> <var>divs</var>)</pre</dt>
+  <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span> (<span class="string">"mp:micro"</span> <var>divs</var>)</pre></dt>
   <dd><p>Sets number of divisions per semitone of midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><pre<span style="font-weight:bold;">send</span> (<span class="string">"mp:inhook"</span> <var>function</var>)</pre</dt>
+  <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">send</span> (<span class="string">"mp:inhook"</span> <var>function</var>)</pre></dt>
   <dd><p>Sets the input hook of port to <var>function</var> or clears an existing hook if value is #f. The function's arguments must be arity 4 and is passed four values: (time opcode data1=0 data2=0) where opcode contains the MIDI opcode of the message. Data1 and data2 contain zeros if opcode passes fewer arguments. (Not yet implemented.)</p></dd>
 
 </dl>
@@ -401,7 +401,7 @@ most of CM's toolbox will become available as optional modules, e.g.
 
 <dl id="rescale">
 <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">rescale</span> (<var>x</var> <var>x1</var> <var>x2</var> <var>y1</var> <var>y2</var> [<var>base=1</var>]) <br/>&rarr; <var>float</var></pre></dt>
-<dd>Returns a floating point value between <var>y1</var> and <var>y2</var> that is proportional to <var>x</var> between <var>x1</var> and <var>x2</var>. If <var>base</var> is 1 the rescaling is linear otherwise its exponential where <var>base</var> &gt; 1 produce increasing spread as <var>x</var> approaches <var>x2</var> and values  &lt; 1 produce descreasing spread.</dd></dl>
+<dd>Returns a floating point value between <var>y1</var> and <var>y2</var> that is proportional to <var>x</var> between <var>x1</var> and <var>x2</var>. If <var>base</var> is 1 the rescaling is linear otherwise its exponential where <var>base</var> &gt; 1 produce increasing spread as <var>x</var> approaches <var>x2</var> and values  &lt; 1 produce decreasing spread.</dd></dl>
   
 <dl id="discrete">
 <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">discrete</span> (<var>x</var> <var>x1</var> <var>x2</var> <var>d1</var> [<var>d2</var>] [<var>base=1</var>])<br/>&rarr; <var>sexpr</var></pre></dt>
@@ -412,7 +412,7 @@ most of CM's toolbox will become available as optional modules, e.g.
 <dd>Same as CM.</dd></dl>
 
 <dl id="interp">
-<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">interp</span> (<var>x</var> <var>x1 y1</var> <var>...</var>)<br</>&rarr; <var>float</var></pre></dt>
+<dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">interp</span> (<var>x</var> <var>x1 y1</var> <var>...</var>)<br/>&rarr; <var>float</var></pre></dt>
 <dd>Same as CM.</dd></dl>
 
 <dl id="steps">
@@ -468,9 +468,9 @@ state object that can be seeded using <a href="#ran-set!"><code>ran-set!</code><
 
 <dt style="background-color:#e6e6ff;"><pre><span style="font-weight:bold;">ran</span> ([<var>n</var>=1.0] [<var>n2</var>])<br/>&rarr; <var>int</var> | <var>float</var></pre></dt>
 
-<dd>If called without arguments it returns a random number between 0
+<dd>If called without arguments returns a random floating point number between 0
 and 1 (exclusive). Otherwise <var>n</var> should be a positive or
-negative number and a random number 0 to <var>n</var> (exlusive) and
+negative number and a random number 0 to <var>n</var> (exclusive) and
 of the same type as <var>n</var> (int or float) is returned. If
 <var>n2</var> is provided then a random number between <var>n</var>
 and <var>n2</var> (exclusive) is returned where <var>n2</var> can be
@@ -599,7 +599,7 @@ greater or less than <var>n</var>.</dd>
 XML entities defined in the DTD file "grace/doc/grace.dtd". </p>
 
 <p>Users can define their own Plotter points by declaring the
-poin using the XML <code>&lt;<span
+point using the XML <code>&lt;<span
 class="xmlentity">pointdef</span>&gt;</code> ... <code>&lt;<span
 class="xmlentity">/pointdef</span>&gt;</code> entity.  Here is the
 definition of Plotter's (predefined) xy point: </p>
