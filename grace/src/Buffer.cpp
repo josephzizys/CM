@@ -353,9 +353,8 @@ bool TextBuffer::perform (const InvocationInfo& info) {
     break;
   case cmdEditPaste:
     paste();
-    setChanged(true);
-    // hkt 0000000000000000000
-    colorizeAfterChange(cmdEditPaste);
+    //setChanged(true);
+    //colorizeAfterChange(cmdEditPaste);
     break;
   case cmdEditSelectAll:
     selectAll();
@@ -674,8 +673,8 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
     break;
   case KeyCommands::Ctrl_Y :
     paste();
-    setChanged(true);
-    colorizeAfterChange(cmdEditPaste);
+    //setChanged(true);
+    //colorizeAfterChange(cmdEditPaste);
     break;
   default :
     keyIllegalAction(key);
@@ -806,8 +805,8 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     break;
   case KeyCommands::Com_V :
     paste(); 
-    setChanged(true);
-    colorizeAfterChange(cmdEditPaste);
+    //setChanged(true);
+    //colorizeAfterChange(cmdEditPaste);
     break;
   case KeyCommands::Com_C :
     copy();
@@ -2031,4 +2030,25 @@ void TextBuffer::salTokenize() {
       ((SalSyntax *)syntax)->tokenize(str);
   }
   return;
+}
+
+void TextBuffer::paste() {
+  String clip=SystemClipboard::getTextFromClipboard();
+  if ( clip.isNotEmpty() ) {
+    if ( clip.containsChar( '\r') ) {
+      printf("Converting CR chars\n");
+#ifdef MACOSX
+      clip=clip.replaceCharacter('\r', '\n');
+#else
+      String temp=String::empty;
+      for (int i=0; i<clip.length(); i++)
+	if (clip[i] != '\r' ) 
+	  temp << clip[i];
+      clip=temp;
+#endif
+    }
+    insertTextAtCursor(clip);
+    setChanged(true);
+    colorizeAfterChange(cmdEditPaste);
+  }
 }

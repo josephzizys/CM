@@ -188,6 +188,7 @@ class TextBuffer : public TextEditor,
   void colorizeAfterChange(int cmd) ;
 
   // editing
+  void paste() ;
   void updateClipboardWithKill(String text, int cmd);
   int deleteChar(int num);
   int openLine();
