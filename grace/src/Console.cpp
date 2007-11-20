@@ -456,7 +456,7 @@ const StringArray ConsoleWindow::getMenuBarNames () {
 				     0 };
 #else
   const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"),
-				     T("Ports"), T("Lisp"), T("Windows"), 
+				     T("Lisp"), T("Windows"), 
 				     T("Help"), 0 };
 #endif
   return StringArray((const tchar**) menuNames);
@@ -536,6 +536,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
     menu.addItem( cmdViewClearText, T("Clear Console"), true);
     break;
 
+#ifdef SCHEME
   case PORTSMENU :
     {
       StringArray devs= MidiOutput::getDevices();
@@ -584,9 +585,10 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       menu.addSeparator();
       menu.addItem(0, T("Osc Setup..."), false);    
       //menu.addSeparator();
-      menu.addItem(cmdPortsAudioSetup, T("Audio Setup..."));
+      menu.addItem(cmdPortsAudioSetup, T("Audio Setup..."), false);
     }
     break;
+#endif
 
 #ifndef SCHEME
   case LISPMENU :
@@ -694,6 +696,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     setFontSize(fontSizeList[arg]);
     break;
 
+#ifdef SCHEME
   case cmdPortsMidiOutputOpen:
     app->getMidiPort()->openOutput(arg);
     break;
@@ -710,14 +713,16 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
   case cmdPortsMidiInputOpen:
   case cmdPortsMidiInputHook:
     break;
+#endif
 
   case cmdPortsAudioSetup: 
-    showAudioMidiWindow();
+    //    showAudioMidiWindow();
     break;
 
   case cmdViewThemes :
     console->setTheme( arg);
     break;
+
 
 #ifndef SCHEME
   case cmdLispConnect :
@@ -771,6 +776,7 @@ void ConsoleWindow::showConfigureLispWindow () {
 }
 
 void ConsoleWindow::showAudioMidiWindow () {
+  /*
   GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
   AudioDeviceSelectorComponent audioSettingsComp (app->audioManager,
 						  0, 16,
@@ -783,6 +789,7 @@ void ConsoleWindow::showAudioMidiWindow () {
 				 this,
 				 Colour(0xffe5e5e5),
 				 true);
+  */
 }
 
 void ConsoleWindow::doAsyncUpdate() {

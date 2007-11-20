@@ -49,7 +49,9 @@ public:
     void graceQuit(bool ask);
     AudioDeviceManager * getAudioDeviceManager();
     ConsoleWindow* getConsole() {return console;}
+#ifdef SCHEME
     MidiPort* getMidiPort() {return midiport;}
+#endif
     GracePreferences* prefs;
     GracePreferences* getPreferences() {return prefs;}
 };
