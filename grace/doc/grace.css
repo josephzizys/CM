@@ -324,11 +324,22 @@ img {
 
 span.emacscmd { font-weight: bold; font-size: smaller; }
 span.emacskey { text-decoration: underline }
-span.string  {color: #a0522d } /* sienna: #a0522d saddle-brown: #8b4513 orig: #bc8f8f; */
-span.comment {font-style: italic; color: gray;} /* slate gray3 */
+
+/*
+span.string  {color: #bc8f8f;} 
+span.comment {font-style: italic; color: gray;} 
 span.keyword {color: #b22222;}
 span.special {color: #d2691e;}
 span.defined {color: #ff0000;}
+*/
+
+span.string  {color: #a0522d } /* sienna: #a0522d saddle-brown: #8b4513 orig: #bc8f8f; */
+span.comment {font-style: italic; color: #b22222;}  
+span.keyword {color: #5f9ea0;}
+span.special {color: #a020f0; }
+span.defined {color: #0000ff;}
+/* span.xmlentity {color: #1e90ff;} */
+
 span.result {font-weight: bold; color: silver;}
 span.input  {font-weight: bold;}
 span.prompt, span.output  { }
