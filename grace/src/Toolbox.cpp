@@ -9,7 +9,20 @@
 // $Date: $ 
 
 #include "Toolbox.h"
+#if (defined(PPC) && defined(MACOSX))
+#define POWF(a,b)	(juce::powf( (a) , (b) ))
+#define LOGF(a)		(juce::logf( (a) ))
+#define EXPF(a)		(juce::expf( (a) ))
+#define SQRTF(a)	(juce::sqrtf( (a) ))
+#define TANF(a)		(juce::tanf( (a) ))
+#else
 #include <math.h>
+#define POWF(a,b)	(powf( (a) , (b) ))
+#define LOGF(a)		(logf( (a) ))
+#define EXPF(a)		(expf( (a) ))
+#define SQRTF(a)	(sqrtf( (a) ))
+#define TANF(a)		(tanf( (a) ))
+#endif
 
 // mapping, scaling and offsetting
 
@@ -24,7 +37,7 @@ float Toolbox::rescale (float x, float x1, float x2, float y1, float y2, float b
 	return (((( y2 - y1) / (x2 - x1)) * (x - x1)) + y1);
       else {
 	float p = (x - x1) / (x2 - x1);
-	return y1 + ( ( (y2 - y1) / (b - 1.0)) * (powf(b, p) - 1.0));
+	return y1 + ( ( (y2 - y1) / (b - 1.0)) * (POWF(b, p) - 1.0));
       }
 }
 
@@ -57,18 +70,18 @@ float Toolbox::rhythm_to_seconds(float beats, float tempo, float beat) {
 
 float Toolbox::cents_to_scaler(int cents) {
   float p = ((float)cents)/1200.0f;
-  return powf(2.0f,p);
+  return POWF(2.0f,p);
 }
 
 int Toolbox::scaler_to_cents(float scaler) {
-  return (int)((logf(scaler)/logf(2.0)) * 1200);
+  return (int)((LOGF(scaler)/LOGF(2.0)) * 1200);
 }
 
 #define A00	6.875   // keynum 0
 
 float Toolbox::hertz_to_keynum (float hz) {
   // subtract 3 shifts to A
-  return (((logf(hz) - logf(A00) ) / logf(2)) * 12) - 3;
+  return (((LOGF(hz) - LOGF(A00) ) / LOGF(2)) * 12) - 3;
 }
 
 float Toolbox::keynum_to_hertz (float kn) {
@@ -128,24 +141,24 @@ float Toolbox::ranbeta (float a, float b) {
   while (true) {
     r1 = ranstate.nextFloat();
     r2 = ranstate.nextFloat();
-    y1 = powf(r1,ra);
-    y2 = powf(r2,rb);
+    y1 = POWF(r1,ra);
+    y2 = POWF(r2,rb);
     sum=y1+y2;
     if ( sum <= 1.0) return (float) (y1 / sum);
   }
 }
 
 float Toolbox::ranexp (float lambda) {
-  return (- logf(1.0f - ranstate.nextFloat())) / lambda;
+  return (- LOGF(1.0f - ranstate.nextFloat())) / lambda;
 }
 
 float Toolbox::ranexp2 (float lambda) {
-  float ee = (2 * expf(-1.0));
+  float ee = (2 * EXPF(-1.0));
   float u, v;
   while ( true ) {
     u = 1.0 - ranstate.nextFloat();
     v = ee * ranstate.nextFloat();
-    if ( v <= (ee * u * logf(u)) )
+    if ( v <= (ee * u * LOGF(u)) )
       return (v / u) / lambda;
   }
 }
@@ -153,7 +166,7 @@ float Toolbox::ranexp2 (float lambda) {
 //float Toolbox::gauss() {
 //  float a = ranstate.nextFloat();
 //  float b = ranstate.nextFloat();
-//  return (float)( sqrtf(-2.0 * logf(1.0-a)) *
+//  return (float)( SQRTF(-2.0 * LOGF(1.0-a)) *
 //		  cosf(juce::float_Pi * 2 * b) );
 //}
 
@@ -165,15 +178,15 @@ float Toolbox::rangauss (float sigma, float mu) {
     y = -1 + 2 * ranstate.nextFloat();
     r2 = x * x + y * y;
   } while (r2 > 1.0 || r2 == 0);
-  return (sigma * y * sqrtf(-2.0 * logf(r2) / r2))+mu;
+  return (sigma * y * SQRTF(-2.0 * LOGF(r2) / r2))+mu;
 }
 
 float Toolbox::rancauchy() {
-  return(tanf(juce::float_Pi*(ranstate.nextFloat() - 0.5f)));
+  return(TANF(juce::float_Pi*(ranstate.nextFloat() - 0.5f)));
 }
 
 int Toolbox::ranpoisson (float lambda) {
-  float b = expf( - lambda);
+  float b = EXPF( - lambda);
   int n = 0;
   float p = 1.0;
   while ( true ) {
@@ -188,7 +201,7 @@ float Toolbox::rangamma (float nu) {
   int n=(int)round(nu);
   for (int i=0; i<n; i++)
     r = r * (1 - ranstate.nextFloat());
-  return - logf(r);
+  return - LOGF(r);
 }
 
 //// http://home.earthlink.net/~ltrammell/tech/pinkalg.htm
@@ -216,7 +229,7 @@ float pinking[POWN];
 float Toolbox::one_over_f_aux(int n, float *r, float halfrange) {
   float sum=0.0;
   for (int i=0; i<POW2; i++) {
-    float p = powf(2.0, i);
+    float p = POWF(2.0, i);
     if ( ! ((n / p) == ((n - 1) / p)) )
       r[i]=( (ranstate.nextFloat() * 2 * halfrange) - halfrange) ;
     sum += r[i];

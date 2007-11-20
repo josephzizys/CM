@@ -43,6 +43,7 @@ if (env['PLATFORM'] == 'darwin') :
     # ppc has to use g++ 3.3, CXXVERSION doesnt work.
     if (os.uname()[4] == 'Power Macintosh') :
         env.Replace(CXX = 'g++-3.3')
+        env.Append(CPPDEFINES = ['PPC'])
     env.Append(FRAMEWORKS = ['Carbon', 'CoreServices', 'CoreAudio', 
                              'CoreMidi', 'ApplicationServices',
                              'AGL', 'QuickTime', 'IOKIT'] ,        
