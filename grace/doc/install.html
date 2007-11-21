@@ -11,17 +11,17 @@ charset=iso-8859-1"/> <style type="text/css" media="all"> @import
 <h2 id="contents">Contents</h2>
 
 <ul>
-  <li><a href="#binary_installation">Binary Installation</li>
-
+  <!-- li><a href="#binary_installation">Binary Installation</a></li -->
   <li><a href="#source_installation">Source Installation</a>
   <ul>
-    <li><a href="#svn">Installing sources with subversion</a></li>
-    <li><a href="#requirements">Requirements for building Grace</a></li>
-    <li><a href="#building">Building and installing from sources</a></li>
-    <li><a href="#starting">Starting Grace with standard output visible<a/></li>
-    <li><a href="#lisp">Running Lisp under Grace</a></li>
-    </ul>
-  </li>
+    <li><a href="#requirements">Requirements</a></li>
+    <li><a href="#svn">Downloading the sources (svn) </a></li>
+    <li><a href="#compiling">Compiling the sources</a></li>
+    <li><a href="#installing">Installing the runtime</a></li>
+    <li><a href="#starting">Starting Grace with standard output visible</a></li>
+    <li><a href="#lisp">Running Common Lisp under Grace</a></li>
+  </ul>
+</li>
     
   <li><a href="#building_binary">Building Binary Installation</a></li>
 
@@ -30,44 +30,69 @@ charset=iso-8859-1"/> <style type="text/css" media="all"> @import
     <li><a href="#juce_linux">Building JUCE on Linux</a></li>
     <li><a href="#juce_osx">Building JUCE on OS X</a></li>
   </ul>
+  <li><a href="#chicken">Installing Chicken Scheme</a>
+
 </li>
 </ul>
 
-<h2 id="binary_installation">Binary Installation</h2>
-
-<p><em>  Not written. </em></p>
+<!-- h2 id="binary_installation">Binary Installation</h2>
+<p><em>  Not written. </em></p -->
 
 
 <h2 id="source_installation">Source Installation</h2>
 
-<h3 id="svn">Installing sources with subversion (svn)</h3>
+<h3 id="requirements">Requirements</h3>
+
+<p>Building Grace from sources requires that the following software systems are  installed and working properly on your system:
+
+<ul>
+  <li><a href="http://subversion.tigris.org/">Subversion</a></li>
+  <li><a href="http://www.scons.org/">SCons</a></li>
+  <li><a href="http://www.rawmaterialsoftware.com/juce/">JUCE</a> </li>
+</ul>
+
+<p>A working Lisp system is also required for the Grace runtime:</p>
+
+<ul>
+  <li>If you are building Grace with <a href="http://www.call-with-current-continuation.org">Chicken Scheme</a> then you need <a href="#chicken">libchicken</a>.
+
+  <li>If you are building Grace to use with Common Lisp then you need to install the latest version of <a href="http://sbcl.sourceforge.net/platform-table.html">SBCL</a> or <a href="http://sourceforge.net/project/showfiles.php?group_id=1355">CLisp</a></li>
+
+</ul>
+
+<h3 id="svn">Downloading the sources (svn)</h3>
 <p>
-To download the Grace source tree using subversion do (all one line):
+To download the Grace source tree type the following command all on one line:
 </p>
 
 <pre class="code">
-$ svn co https://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/grace grace</pre>
+$ svn co https://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/grace</pre>
 
-<h3 id="requirements">Requirements for building Grace</h3>
-<ul>
-  <li><a href="http://www.scons.org/">SCons build tool</a></li>
-  <li><a href="http://www.rawmaterialsoftware.com/juce/">JUCE</a>  (see <a href="#juce">Section 3</a>) </li>
-  <li>Latest version of <a href="http://sbcl.sourceforge.net/platform-table.html">SBCL</a> or <a href="http://sourceforge.net/project/showfiles.php?group_id=1355">CLisp</a></li>
-</ul>
+<h3 id="compiling">Compiling the sources</h3>
 
-<h3 id="building">Building and installing from sources</h3>
+<p>To compile Grace with Chicken Scheme do:</p>
 
-<p>  To build and install Grace from sources do:</p>
+<pre class="code">
+$ cd /path/to/grace
+$ scons JUCEDIR=/path/to/jucedir SCHEME=1
+</pre>
 
-   <pre class="code">
+<p>To compile Grace to use with Common Lisp do:</p>
+
+<pre class="code">
 $ cd /path/to/grace
 $ scons JUCEDIR=/path/to/jucedir
-$ scons install</pre>
+</pre>
 
-<p> where <code>/path/to/...</code> is replaced with the appropriate
-path on your machine.  The first command will compile sources, the
-second will install the executable and copy the runtime support into
-the <em>resource directory</em>. </p>
+<p>If you are successful the compiled files and exectuable will be in grace/build.</p>
+
+<h3 id="installing">Installing the runtime</h3>
+
+<p>Once you have compiled the app you can install the binary runtime (executable, documentation and runtime support) on your system:</p>
+
+<pre class="code">
+$ scons install</pre>
+</pre>
 
 <p>On OSX the installation paths are:</p>
 
@@ -120,14 +145,23 @@ start lisp.</p>
     # Linux:
     $ grace &
     # OS X:
-    $ exec Grace.app/Contents/MacOS/Grace &</pre>
+    $ cd /path/to/grace
+    $ exec build/Grace.app/Contents/MacOS/Grace &</pre>
    
-<h3 id="lisp">Running Lisp under Grace</h3>
+<h3 id="scheme">Running Scheme under Grace</h3>
 
-<p> In order to start Lisp under Grace you must have a recent version
-of SBCL or Clisp installed on your machine and the Grace ASDF Lisp
-system installed in either your Lisp systems directory or under the
-Grace resource directory.  </p>
+<p>In order to run Grace with Scheme the Chicken runtime library
+(/usr/local/lib/libchicken) must be found by Grace when it starts
+up. (On linux I had to copy the lib to /usr/lib/ for this to work).
+If Grace starts without an error then Scheme is running and you don't
+need to do anything else. </p>
+
+<h3 id="cltl">Running Common Lisp under Grace</h3>
+
+<p> In order to start Common Lisp under Grace you must have a recent
+version of SBCL or Clisp installed on your machine and the Grace ASDF
+Lisp system installed in either your Lisp systems directory or under
+the Grace resource directory.  </p>
 
 <p> Use the <span class="menuitem">Console&gt;Lisp&gt;Start
 Lisp</span> menu item to start a Lisp session. Use <span
@@ -197,11 +231,9 @@ $ mv clisp-nn clisp
 </pre></li>
 </ol>
 
-<h2 id="juce">Installing JUCE</h2>
 
-<p>
-Grace uses the JUCE 4.3 RELEASE library (juce/bin/libjuce.a)
-</p>
+
+<h2 id="juce">Installing JUCE</h2>
 
 <h3 id="juce_linux">Building JUCE on Linux</h3>
 
@@ -288,14 +320,32 @@ SDKROOT_ppc = /Developer/SDKs/MacOSX10.4u.sdk</pre>
 </li>  
 
 <li>
-
 <p> Open the JUCE Xcode project in juce/build/macosx/Juce.xcodeproj
 and select <span class="menuitem">Project&gt;Set Active Build Configuration&gt;Release</span>.  Then
 press the Build icon.  If you are successful the JUCE library will be
 saved in juce/bin/libjuce.a.  </p>
+</li>
+</ol>
+
+<h2 id="chicken">Installing Chicken Scheme</h2>
+<p>To build libchicken first download the lastest release of  <a href = "http://chicken.wiki.br/releases">Chicken Scheme</a> and then compile and install it. (Type just  'make'
+ inside the chicken directory to get the list of supported platforms.)</p>
+
+<pre class="code">
+$ tar -zxf chickentar.gz
+$ cd chicken
+$ make
+$ make PLATFORM=macosx
+$ sudo make PLATFORM=macosx install
+</pre>
+
+<p>That will compile chicken and install its commands (csi, csc) and
+library (libchicken) on your system. (If you are on linux then you may
+also have to copy libchicken.so to /usr/bin if Grace can't find it
+when it starts up...)</p>
 
 </div>
 <hr/>
-<!-- hhmts start --> Last modified: Sun Aug 19 07:43:54 CDT 2007 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Wed Nov 21 07:33:37 CST 2007 <!-- hhmts end -->
 </body>
 </html>
