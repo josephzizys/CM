@@ -28,6 +28,7 @@ public:
 
   int type;
   int id;
+  int nodeid;
   double time;
   double start;
   String expr;
