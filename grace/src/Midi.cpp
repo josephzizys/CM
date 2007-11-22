@@ -89,8 +89,10 @@ MidiPort::MidiPort(String name, String out, String in)
 
 MidiPort::~MidiPort()
 {
+  printf("deleting MidiPort\n");
   if ( output != NULL ) delete output;
   if ( input != NULL ) delete input;
+  outputNodes.clear();
 }
 
 void MidiPort::openOutput(String name) {

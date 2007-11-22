@@ -151,8 +151,10 @@ SchemeThread::SchemeThread(String name, ConsoleWindow *win)
 
 SchemeThread::~SchemeThread()
 {
+  printf("deleting SchemeThread\n");
   delete evalBuffer;
   delete errorBuffer;
+  schemeNodes.clear();
 }
 
 void postGCHook(int m, long ms)
