@@ -180,9 +180,27 @@ bool SchemeThread::init() {
   C_word r;
   char buffer[8192];
   String text = T("Chicken Scheme");
+  GracePreferences* prefs=GracePreferences::getInstance();
+  int hsz=prefs->getSchemeHeapSize();
+  int ssz=prefs->getSchemeStackSize();
 
-  //res = CHICKEN_initialize(20000000, 64000, 0, (void*)C_grace_toplevel);
-  res = CHICKEN_initialize(0, 0, 0,  (void*)C_grace_toplevel);
+  if ( SCHEME_DEBUG )
+    printf("Chicken init: heap=%d stack=%d\n", hsz, ssz);
+
+  /* chicken/runtime.c :
+    #define DEFAULT_STACK_SIZE             64000
+    #define DEFAULT_SYMBOL_TABLE_SIZE      2999
+    #define DEFAULT_HEAP_SIZE              500000
+    #define MINIMAL_HEAP_SIZE              500000
+    #define DEFAULT_MAXIMAL_HEAP_SIZE      2147483632
+  */
+
+  // default to 4x Chicken's minimum heap size
+  res = CHICKEN_initialize(hsz, ssz, 0, (void*)C_grace_toplevel);
+
+  //  res = CHICKEN_initialize(0, 0, 0,  (void*)C_grace_toplevel);
+  //  res = CHICKEN_initialize(20000000, 64000, 0, (void*)C_grace_toplevel);
+
   if (res==0) {
     reportChickenError( T(">>> Error: Chicken failed to initialize.\n") );
     return false;
@@ -267,17 +285,20 @@ void SchemeThread::run()
 	  int mytyp=node->type;
 	  delete node;
 	  if ( SCHEME_DEBUG ) {
-	    if (mytyp=SchemeNode::PROCESS)
+	    if (mytyp==SchemeNode::PROCESS)
 	      printf("deleted process node %d\n", myid);	
 	    else
 	      printf("deleted eval node %d\n", myid);
 	    schemeNodes.lockArray();
 	    int mysize=schemeNodes.size();
-	    printf ("Queue size: %d\nQueue nodes:", mysize);
-	    //	  for (int i=0;i<mysize;i++)
-	    //	    printf(" %d",schemeNodes[i]->nodeid);
-	    //	  printf("\n");
-	    schemeNodes.unlockArray();		  
+	    printf ("Queue size: %d\n", mysize);
+	    if (mysize>0) {
+	    printf ("Remaining nodes: ");
+	    for (int i=0;i<mysize;i++)
+	      printf(" %d",schemeNodes[i]->nodeid);
+	    printf("\n");
+	    }
+	    schemeNodes.unlockArray();	
 	  }
 	  //	  schemeNodes.lockArray();
 	  //          schemeNodes.remove(0, true);
@@ -286,6 +307,7 @@ void SchemeThread::run()
 	  //printf("...done removing %d, array size now %d\n", myid, mysize);	  
 	}
       }
+      node=NULL;
     }
     wait(-1);
   }
@@ -331,7 +353,7 @@ void SchemeThread::clear()
 void SchemeThread::addNode(int type, double _time, C_word c, int _id)
 {
   static int nextid=1000;
-  SchemeNode *n = new SchemeNode(_time, type, c, _id);
+  SchemeNode *n = new SchemeNode(_time, SchemeNode::PROCESS, c, _id);
   n->nodeid=++nextid;
   if ( SCHEME_DEBUG )
     printf("adding process node %d...\n", n->nodeid);
