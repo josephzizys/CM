@@ -253,6 +253,13 @@ void GracePreferences::initPropertiesFile () {
   if (!propfile->containsKey(T("EditorFontSize")))
     setEditorFontSize(17.0);
 
+  // default to 4x Chicken's minimum heap size
+  if (!propfile->containsKey(T("SchemeHeapSize")))
+    setSchemeHeapSize(2000000);
+  // default to Chicken's default stack size
+  if (!propfile->containsKey(T("SchemeStackSize")))
+    setSchemeStackSize(64000);
+
   if (!propfile->containsKey(T("LispSystemsDirectory")))
     propfile->setValue(T("LispSystemsDirectory"), 
 		       getGraceResourceDirectory().getFullPathName());
@@ -431,6 +438,25 @@ void GracePreferences::clearRecentlyOpenedFiles() {
 
 bool GracePreferences::areRecentlyOpenedFiles() {
   return (recentlyopened.getNumFiles()>0);
+}
+
+//
+// Scheme
+//
+
+int GracePreferences::getSchemeHeapSize() {
+  return propfile->getIntValue(T("SchemeHeapSize"));
+}
+void GracePreferences::setSchemeHeapSize(int size) {
+  propfile->setValue(T("SchemeHeapSize"), size);
+}
+
+int GracePreferences::getSchemeStackSize() {
+  return propfile->getIntValue(T("SchemeStackSize")); 
+}
+
+void GracePreferences::setSchemeStackSize(int size) {
+  propfile->setValue(T("SchemeStackSize"), size);
 }
 
 //
