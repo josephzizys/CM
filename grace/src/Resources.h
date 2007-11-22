@@ -158,6 +158,12 @@ class GracePreferences {
   bool areRecentlyLoadedFiles();
   void clearRecentlyLoadedFiles() ;
 
+  // Scheme Preferences
+  int getSchemeHeapSize() ;
+  void setSchemeHeapSize(int size) ;
+  int getSchemeStackSize() ;
+  void setSchemeStackSize(int size) ;
+
   // Lisp Implementations support
   XmlElement* getLispImplementations();
   File getLispSystemsDirectory () ;
