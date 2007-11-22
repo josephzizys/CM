@@ -301,11 +301,59 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   case cmdIndent:
     result.setInfo (T("Indent"), String::empty, editingCategory, 0);
     break;
-  cmdClearQueue:
+  case cmdClearQueue:
     result.setInfo (T("Clear Queue"), String::empty, editingCategory, 0);
     break;
 
+  case cmdViewFontList :   
+    result.setInfo (T("Font Lisp"), String::empty, editingCategory, 0);
+    break;
+  case cmdViewFontSize :   
+    result.setInfo (T("Font Size"), String::empty, editingCategory, 0);
+    break;
+  case cmdViewThemes :   
+    result.setInfo (T("Themes"), String::empty, editingCategory, 0);
+    break;
+  case cmdOptionsHiliting :   
+    result.setInfo (T("Toggle Highlighting"), String::empty, editingCategory, 0);
+    break;
+  case cmdGotoColumn :   
+    result.setInfo (T("Goto Column"), String::empty, editingCategory, 0);
+    break;
+  case cmdGotoLine :   
+    result.setInfo (T("Goto Line"), String::empty, editingCategory, 0);
+    break;
+  case cmdBackspace :   
+    result.setInfo (T("Backspace"), String::empty, editingCategory, 0);
+    break;
+  case cmdKillWord :   
+    result.setInfo (T("Kill Word"), String::empty, editingCategory, 0);
+    break;
+  case cmdKillWhite :   
+    result.setInfo (T("Kill Whitespace"), String::empty, editingCategory, 0);
+    break;
+  case cmdKillLine :   
+    result.setInfo (T("Kill Line"), String::empty, editingCategory, 0);
+    break;
+  case cmdInsertChar :   
+    result.setInfo (T("Insert Character"), String::empty, editingCategory, 0);
+    break;
+  case cmdInsertLine :   
+    result.setInfo (T("Insert Line"), String::empty, editingCategory, 0);
+    break;
+  case cmdOpenLine :   
+    result.setInfo (T("Open Line"), String::empty, editingCategory, 0);
+    break;
+  case cmdComplete :   
+    result.setInfo (T("Complete"), String::empty, editingCategory, 0);
+    break;
+  case cmdToggleReadWrite :   
+    result.setInfo (T("Toggle Read/Write"), String::empty, editingCategory, 0);
+    break;
   default:
+    printf("FIXME: in getCommandInfo (Buffer.cpp) no info for command id %d.\n",
+	   commandID);
+    result.setInfo (T("UNKNOWN"), String::empty, editingCategory, 0);
     break;
   }
 }

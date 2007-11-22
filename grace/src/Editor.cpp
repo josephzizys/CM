@@ -251,7 +251,7 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   GracePreferences* prefs=app->getPreferences();
 
-  if (filename==String::empty) 
+  if (filename==String::empty) {
     if (title==String::empty) {
       filename=T("untitled");
       if (synt==syntaxSal)
@@ -262,17 +262,20 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 	filename += T(".text");
 	synt=syntaxText;
       }
-      editfile=TextFile(filename);
+      editfile=TextFile(T("~/") + filename);
+      title=filename;
     }
-    else
+    else {      // have title
       editfile=TextFile::nonexistent;
-    else 
-      editfile=TextFile(filename);
+    }
+  }
+  else {
+    editfile=TextFile(filename);
+    if (title == String::empty)
+      title=editfile.getFileName();
+  }
 
-  if (title==String::empty)
-    setName( TextFile(filename).getFileName() );
-  else 
-    setName(title);
+  setName(title);
 
   switch (synt) {
   case syntaxSal :
@@ -336,7 +339,7 @@ void EditorWindow::closeButtonPressed () {
 	 T("Really close the window? Unsaved work will be lost."),
 	 T("   OK   "), T("Cancel"))
 	) ) {
-    closeFile();
+    //    closeFile();
   }
   delete this;
 }
@@ -521,7 +524,7 @@ void EditorWindow::openFile() {
 }
 
 void EditorWindow::closeFile() {
-
+  closeButtonPressed();
 }
 
 void EditorWindow::saveFile() {
