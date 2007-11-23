@@ -9,7 +9,7 @@
 #include "Scheme.h"
 #include "ChickenBridge.h"
 
-#define SCHEME_DEBUG 2
+#define SCHEME_DEBUG 4
 // 1= trace scheme entry/exit points
 // 2= add trace gc
 // 3= add trace of node creation/insertion/deletion points
@@ -202,15 +202,12 @@ bool SchemeThread::init() {
   GracePreferences* prefs=GracePreferences::getInstance();
   int hsize=prefs->getSchemeHeapSize();
   int ssize=prefs->getSchemeStackSize();
-  hsize=500000*1;
-  ssize=64000*4;
 
   if ( SCHEME_DEBUG )
     printf("Chicken init: heap=%d stack=%d\n", hsize, ssize);
-
-  // default to 4x Chicken's minimum heap size
   res = CHICKEN_initialize(hsize, ssize, 0, (void*)C_grace_toplevel);
   //  res = CHICKEN_initialize(0, 0, 0,  (void*)C_grace_toplevel);
+  // default to 4x Chicken's minimum heap size
   //  res = CHICKEN_initialize(20000000, 64000, 0, (void*)C_grace_toplevel);
 
   if (res==0) {
@@ -225,7 +222,7 @@ bool SchemeThread::init() {
 
   if ( SCHEME_DEBUG > 1) {
     C_post_gc_hook = postGCHook;
-    C_heap_size_is_fixed = 1;
+    // C_heap_size_is_fixed = 1;
   }
 
   res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", 
