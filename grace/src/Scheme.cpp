@@ -9,7 +9,11 @@
 #include "Scheme.h"
 #include "ChickenBridge.h"
 
-#define SCHEME_DEBUG 1
+#define SCHEME_DEBUG 2
+// 1= trace scheme entry/exit points
+// 2= add trace gc
+// 3= add trace of node creation/insertion/deletion points
+
 
 // 
 //  Nodes
@@ -66,11 +70,15 @@ bool SchemeNode::process(double curtime) {
 					   schemeThread->evalBuffer,
                                            8192);
       if ( res==0 ) {
-	printf("Scheme Error: %s\n", schemeThread->errorBuffer);
+	//printf("...Error: %s\n", schemeThread->errorBuffer);
+	if ( SCHEME_DEBUG )
+	  printf("...done calling eval node %d\n", nodeid);
 	schemeThread->reportChickenError();
       }
       else {
-	printf("Returned: %s\n", schemeThread->evalBuffer);
+	//printf("returned: %s\n", schemeThread->evalBuffer);
+	if ( SCHEME_DEBUG )
+	  printf("...done calling eval node %d\n", nodeid);
 	String s=String(schemeThread->evalBuffer);
 	if ( !s.endsWithChar('\n') )
 	  s << T("\n");
@@ -182,12 +190,6 @@ bool SchemeThread::init() {
   C_word r;
   char buffer[8192];
   String text = T("Chicken Scheme");
-  GracePreferences* prefs=GracePreferences::getInstance();
-  int hsz=prefs->getSchemeHeapSize();
-  int ssz=prefs->getSchemeStackSize();
-
-  if ( SCHEME_DEBUG )
-    printf("Chicken init: heap=%d stack=%d\n", hsz, ssz);
 
   /* chicken/runtime.c :
     #define DEFAULT_STACK_SIZE             64000
@@ -197,9 +199,17 @@ bool SchemeThread::init() {
     #define DEFAULT_MAXIMAL_HEAP_SIZE      2147483632
   */
 
-  // default to 4x Chicken's minimum heap size
-  res = CHICKEN_initialize(hsz, ssz, 0, (void*)C_grace_toplevel);
+  GracePreferences* prefs=GracePreferences::getInstance();
+  int hsize=prefs->getSchemeHeapSize();
+  int ssize=prefs->getSchemeStackSize();
+  hsize=500000*1;
+  ssize=64000*4;
 
+  if ( SCHEME_DEBUG )
+    printf("Chicken init: heap=%d stack=%d\n", hsize, ssize);
+
+  // default to 4x Chicken's minimum heap size
+  res = CHICKEN_initialize(hsize, ssize, 0, (void*)C_grace_toplevel);
   //  res = CHICKEN_initialize(0, 0, 0,  (void*)C_grace_toplevel);
   //  res = CHICKEN_initialize(20000000, 64000, 0, (void*)C_grace_toplevel);
 
@@ -212,6 +222,12 @@ bool SchemeThread::init() {
     reportChickenError( T(">>> Error: Chicken failed to initialize.\n") );
     return false;
   }
+
+  if ( SCHEME_DEBUG > 1) {
+    C_post_gc_hook = postGCHook;
+    C_heap_size_is_fixed = 1;
+  }
+
   res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", 
 				       buffer, 8192);
   if (res>0) 
@@ -237,8 +253,6 @@ bool SchemeThread::init() {
   res = CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
   if ( res==0 )
     reportChickenError();
-  if ( SCHEME_DEBUG )
-    C_post_gc_hook = postGCHook;
   return true;
 }
 
@@ -273,20 +287,20 @@ void SchemeThread::run()
 	schemeNodes.unlockArray();
 	bool keep=node->process(0.0);
 	if ( keep ) {
-	  if ( SCHEME_DEBUG )
+	  if ( SCHEME_DEBUG > 2)
 	    printf("reinserting process node %d...\n", node->nodeid);
 	  schemeNodes.lockArray();
 	  schemeNodes.addSorted(comparator,node); 
 	  //          schemeNodes.remove(0, false);
 	  schemeNodes.unlockArray();
-	  if ( SCHEME_DEBUG )
+	  if ( SCHEME_DEBUG > 2)
 	    printf("...done reinserting process node %d\n", node->nodeid);
 	}
 	else {
 	  int myid=node->nodeid;
 	  int mytyp=node->type;
 	  delete node;
-	  if ( SCHEME_DEBUG ) {
+	  if ( SCHEME_DEBUG > 2) {
 	    if (mytyp==SchemeNode::PROCESS)
 	      printf("deleted process node %d\n", myid);	
 	    else
@@ -311,6 +325,8 @@ void SchemeThread::run()
       }
       node=NULL;
     }
+    if ( SCHEME_DEBUG )
+      printf("scheduling queue is empty\n");
     wait(-1);
   }
 }
@@ -357,14 +373,14 @@ void SchemeThread::addNode(int type, double _time, C_word c, int _id)
   static int nextid=1000;
   SchemeNode *n = new SchemeNode(_time, SchemeNode::PROCESS, c, _id);
   n->nodeid=++nextid;
-  if ( SCHEME_DEBUG )
+  if ( SCHEME_DEBUG > 2)
     printf("adding process node %d...\n", n->nodeid);
   n->schemeThread = this;
   schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, n);
   schemeNodes.unlockArray();
   notify();
-  if ( SCHEME_DEBUG )
+  if ( SCHEME_DEBUG > 2)
     printf("...done adding process node %d\n", n->nodeid);
 }
 
@@ -372,14 +388,14 @@ void SchemeThread::addNode(int type, double _time, String s) {
   static int nextid=000;
   SchemeNode *n = new SchemeNode(_time, type, s);
   n->nodeid=++nextid;
-  if ( SCHEME_DEBUG )
+  if ( SCHEME_DEBUG > 2)
     printf("adding eval node %d...\n", n->nodeid);
   n->schemeThread = this;
   schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, n);
   schemeNodes.unlockArray();
   notify();
-  if ( SCHEME_DEBUG )
+  if ( SCHEME_DEBUG > 2)
     printf("...done adding eval node %d\n", n->nodeid);
 }  
 
