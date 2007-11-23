@@ -58,13 +58,23 @@ void GraceApp::graceQuit (bool ask) {
 }
 
 void GraceApp::shutdown () {
+  printf("in shutdown\n");
+  if ( schemeProcess->isThreadRunning() ) {
+    schemeProcess->stop();
+    schemeProcess->stopThread(2000);
+  }
+  delete schemeProcess;
+
+  if ( midiport->isThreadRunning() ) {
+    midiport->clear();
+    midiport->stopThread(2000);
+  }
+  delete midiport;
+  delete console;
   delete prefs;
-  /*  WHY IS THIS COMMENTED OUT?
-     delete console;
-     delete audioManager;
-     delete commandManager;
-  */
+  delete commandManager;
   //LookAndFeel::setDefaultLookAndFeel(0); // this causes crash. not needed. 
+  printf("end shutdown\n");
 }
 
 const String GraceApp::getApplicationName () {
@@ -72,7 +82,7 @@ const String GraceApp::getApplicationName () {
 }
 
 const String GraceApp::getApplicationVersion () {
-  return T("0.0.1");
+  return T("0.2.0");
 }
 
 bool GraceApp::moreThanOneInstanceAllowed () {
