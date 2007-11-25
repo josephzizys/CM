@@ -94,7 +94,7 @@ class Syntax
   virtual int getIndent (const String text, int bot, int top, int beg) =0;
   virtual hiliteID getHilite (const String text, int start, int end) =0;
 
-  SynTok * Syntax::getSynTok (String n) ;
+  SynTok * getSynTok (String n) ;
   bool isWhiteBetween (const String txt, int lb, int ub);
   Colour getHiliteColour(hiliteID id) {return hilites[id];}
 };
