@@ -44,10 +44,10 @@ PointField::PointField(XmlElement *xml) {
 }
 
 String PointField::getTypeName() {
-  static char *axisnames[] = { T("float"), T("integer"),
-			       T("normalized"), T("percentage"),
-			       T("keynum"), T("amplitude"),
-			       T("seconds") };
+  static char *axisnames[] = { "float", "integer",
+			       "normalized", "percentage",
+			       "keynum", "amplitude",
+			       "seconds" };
   return String(axisnames[ getType() ]) ;
 }
 
