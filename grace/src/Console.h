@@ -126,8 +126,21 @@ class ConsoleWindow  : public DocumentWindow,
   public SliderListener
 {
 public:
-
-  // ENUMS defined in grace.lisp
+  /*    enums() defined in grace.lisp */
+  /*    (enums 1 "ConsoleCommand" "GraceEditorNew" "GracePlotterNew"
+         "GraceOpenFile" "GraceOpenRecentFile" "GraceClearRecentFiles"
+	 "GracePreferences" "GraceQuit"
+	 "EditCopy" "EditSelectAll"
+	 "ViewClearText" "ViewFontSize"  "ViewThemes" "ViewOpacity"
+	 "PortsMidiOutOpen" "PortsMidiOutTest" "PortsMidiOutHush"
+	 "PortsMidiOutTuning" "PortsMidiOutInstruments"
+	 "PortsMidiInOpen" "PortsMidiInTest" "PortsMidiInHook"
+	 "PortsMidiInRecord" "PortsMidiInConfigure"
+	 "PortsAudioSetup"
+	 "LispConnect" 
+	 "LispLoadSystem" "LispLoadRecentSystem" "LispClearRecentSystems"
+	 "LispLoadFile" "LispLoadRecentFile" "LispClearRecentLoaded"
+	 "LispConfigure")  */
 
   enum ConsoleCommand {
     cmdGraceEditorNew = 32896,
@@ -143,22 +156,25 @@ public:
     cmdViewFontSize = 35456,
     cmdViewThemes = 35712,
     cmdViewOpacity = 35968,
-    cmdPortsMidiOutputOpen = 36224,
-    cmdPortsMidiOutputTest = 36480,
-    cmdPortsMidiOutputHush = 36736,
-    cmdPortsMidiOutputTuning = 36992,
-    cmdPortsMidiOutputInstruments = 37248,
-    cmdPortsMidiInputOpen = 37504,
-    cmdPortsMidiInputHook = 37760,
-    cmdPortsAudioSetup = 38016,
-    cmdLispConnect = 38272,
-    cmdLispLoadSystem = 38528,
-    cmdLispLoadRecentSystem = 38784,
-    cmdLispClearRecentSystems = 39040,
-    cmdLispLoadFile = 39296,
-    cmdLispLoadRecentFile = 39552,
-    cmdLispClearRecentLoaded = 39808,
-    cmdLispConfigure = 40064};
+    cmdPortsMidiOutOpen = 36224,
+    cmdPortsMidiOutTest = 36480,
+    cmdPortsMidiOutHush = 36736,
+    cmdPortsMidiOutTuning = 36992,
+    cmdPortsMidiOutInstruments = 37248,
+    cmdPortsMidiInOpen = 37504,
+    cmdPortsMidiInTest = 37760,
+    cmdPortsMidiInHook = 38016,
+    cmdPortsMidiInRecord = 38272,
+    cmdPortsMidiInConfigure = 38528,
+    cmdPortsAudioSetup = 38784,
+    cmdLispConnect = 39040,
+    cmdLispLoadSystem = 39296,
+    cmdLispLoadRecentSystem = 39552,
+    cmdLispClearRecentSystems = 39808,
+    cmdLispLoadFile = 40064,
+    cmdLispLoadRecentFile = 40320,
+    cmdLispClearRecentLoaded = 40576,
+    cmdLispConfigure = 40832};
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};
@@ -201,8 +217,6 @@ public:
   void printWarning(String str, bool redraw=false);
   void printError(String str, bool redraw=false);
   void printValues(String str, bool redraw=false);  
-
-
 
   void consoleEval(String code, bool isSal, bool region);
   void installMenbar();

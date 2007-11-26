@@ -33,10 +33,11 @@ void GraceApp::initialise (const String& commandLine) {
   schemeProcess =  new SchemeThread("Scheduler", console);
   schemeProcess->setPriority(10);
   schemeProcess->startThread();
-  midiport = new MidiPort("Midi Port");
-  midiport->openOutput(0);
-  midiport->setPriority(9);
-  midiport->startThread();
+  midiOutPort = new MidiOutPort(console);
+  midiOutPort->open(0);
+  midiOutPort->setPriority(9);
+  midiOutPort->startThread();
+  midiInPort = new MidiInPort(console);
 #endif
   
 }
@@ -65,11 +66,15 @@ void GraceApp::shutdown () {
   }
   delete schemeProcess;
 
-  if ( midiport->isThreadRunning() ) {
-    midiport->clear();
-    midiport->stopThread(2000);
+  if ( midiOutPort->isThreadRunning() ) {
+    midiOutPort->clear();
+    midiOutPort->stopThread(2000);
   }
-  delete midiport;
+  delete midiOutPort;
+
+  if ( midiInPort->isActive() )
+    midiInPort->stop();
+  delete midiInPort;
   delete console;
   delete prefs;
   delete commandManager;

@@ -46,23 +46,23 @@ void print_error(char * st) {
 //
 
 void mp_note(double time, double dur, float k, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiport->sendNote(time, dur, k, v, c); 
+ ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendNote(time, dur, k, v, c); 
 }
 
 void mp_on(double time, float k, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiport->sendOn(time, k, v, c);
+ ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendOn(time, k, v, c);
 }
 
 void mp_off(double time, float k, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiport->sendOff(time, k, v, c);
+ ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendOff(time, k, v, c);
 }
 
 void mp_prog(double time, float p, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiport->sendProg(time, p, c);
+ ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendProg(time, p, c);
 }
 
 void mp_ctrl(double time, float n, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiport->sendCtrl(time, n, v, c);
+ ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendCtrl(time, n, v, c);
 }
 
 //
@@ -93,7 +93,7 @@ void scheduler_stop (int id) {
 
 void scheduler_hush () {
   ((GraceApp *)GraceApp::getInstance())->schemeProcess->stop(-1);
-  ((GraceApp *)GraceApp::getInstance())->midiport->clear();
+  ((GraceApp *)GraceApp::getInstance())->midiOutPort->clear();
 }
 
 bool scheduler_is_time_milliseconds () {

@@ -893,7 +893,7 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
 
     // This will be needed too:
 
-    // ((GraceApp *)GraceApp::getInstance())->midiport->clear();
+    // ((GraceApp *)GraceApp::getInstance())->midiOutPort->clear();
 
 #endif
     break;

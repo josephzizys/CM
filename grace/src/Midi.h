@@ -5,7 +5,7 @@
 #include <chicken.h>
 #include "Console.h"
 
-class MidiPort;
+class MidiOutPort;
 
 class MidiNode {
  public:
@@ -19,7 +19,7 @@ class MidiNode {
   double time;
   int num;
   Array<float> values;
-  MidiPort *midiport;
+  MidiOutPort *midiOutPort;
   MidiNode(int typ, double wait, float *vals=0, int num_vals=0) ;		
   MidiNode(int typ, double wait, float data1, float data2);
   MidiNode(int typ, double wait, float data1, float data2, float data3);
@@ -40,28 +40,22 @@ public:
   }
 };
 
-class MidiPort : public Thread
+class MidiOutPort : public Thread
 {
 public:
-  int indev, outdev;
-  MidiOutput *output;
-  MidiInput *input;
+  int devid;
+  MidiOutput *device;
+  ConsoleWindow *console;
   OwnedArray<MidiNode, CriticalSection> outputNodes;
   
-  MidiPort(String name, String out=String::empty, String in=String::empty);
-  ~MidiPort();
+  MidiOutPort(ConsoleWindow *win);
+  ~MidiOutPort();
 
-  void openOutput(int id);
-  void openOutput(String name);
-  bool isOpenOutput(int id=-1) ;
+  void open(int id);
+  void open(String name);
+  bool isOpen(int id=-1) ;
   void testMidiOutput();
-
-  void openInput(int id) {return;}
-  void openInput(String name) {return;}
-  bool isOpenInput(int id=-1) {return false;}
-
   bool isOutputQueueActive();
-  String getDeviceName(int id, bool isOut=true);
 
   void run();
   void clear();
@@ -76,4 +70,43 @@ public:
   void sendCtrl(double wait, float ctrl, float val, float chan);
 };
 
+class MidiInPort : public MidiInputCallback {
+ public:
+  ConsoleWindow *console;
+  int devid;
+  MidiInput *device;
+  unsigned int channelmask;
+  unsigned int messagefilt;
+  enum {STOPPED, TESTING, SCHEMEHOOK, RECORDING}; // running mode
+  int runmode;
+  bool trace;
+  C_word schemehook;
+  MidiInPort(ConsoleWindow *win);
+  ~MidiInPort();
+  void open(int id);
+  void open(String name);
+  bool isOpen(int id=-1);
+  bool start(int mode);
+  void stop();
+  bool isActive(int mode=-1);
+
+  void startSchemeInput(C_word func, unsigned int chanmask=0, 
+			unsigned int msgfilt=0);
+  void stopSchemeInput() ;
+  unsigned int getChannelMask();
+  unsigned int getMessageFilter();
+  void setChannelMask(unsigned int m);
+  void setMessageFilter(unsigned int f);
+  bool isTracing();
+  void setTracing(bool t);
+  void startTestInput();
+  void stopTestInput();
+  void startRecordInput() ;
+  void stopRecordInput() ;
+  bool isChannelActive(int chan);
+  void isMessageWanted(int m);
+  void handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &msg) ;
+  void handlePartialSysexMessage (MidiInput *dev, const uint8 *data, 
+				  const int num, const double time);
+};
 #endif

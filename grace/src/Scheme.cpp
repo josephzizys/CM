@@ -222,7 +222,7 @@ bool SchemeThread::init() {
 
   if ( SCHEME_DEBUG > 1) {
     C_post_gc_hook = postGCHook;
-    // C_heap_size_is_fixed = 1;
+    C_heap_size_is_fixed = 1;
   }
 
   res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", 

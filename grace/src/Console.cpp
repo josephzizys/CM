@@ -464,14 +464,14 @@ const StringArray ConsoleWindow::getMenuBarNames () {
 
 const StringArray ConsoleWindow::getTuningItems () {
   const tchar* const items [] = { 
-    "Semitones (100 cents)", "Quartertones (50 cents)",
-    "6th tones (33.3 cents)", "8th tones (25 cents)",
-    "10th tones (20 cents)", "12th tones (16.6 cents)", 
-    "14th tones (14.3 cents)", "16th tones (12.5 cents)", 
-    "18th tones (11.1 cents)", "20th tones (10 cents)",
-    "22nd tones (9 cents)", "24th tones (8.2 cents)", 
-    "26th tones (7.7 cents)", "28th tones (7.1 cents)",
-    "30th tones (6.6 cents)", "32nd tones (6.25 cents)", 0 };
+    "Semitone (100 cents)", "Quartertone (50 cents)",
+    "6th tone (33.3 cents)", "8th tone (25 cents)",
+    "10th tone (20 cents)", "12th tone (16.6 cents)", 
+    "14th tone (14.3 cents)", "16th tone (12.5 cents)", 
+    "18th tone (11.1 cents)", "20th tone (10 cents)",
+    "22nd tone (9 cents)", "24th tone (8.2 cents)", 
+    "26th tone (7.7 cents)", "28th tone (7.1 cents)",
+    "30th tone (6.6 cents)", "32nd tone (6.25 cents)", 0 };
   return StringArray((const tchar**) items);
 }
 
@@ -484,7 +484,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
   ApplicationCommandManager* cm = app->commandManager;
 
   PopupMenu menu;
-  PopupMenu sub1, sub2, sub3, sub4;
+  PopupMenu sub1, sub2, sub3, sub4, sub5;
   int val;
   switch (idx) {
   case GRACEMENU :
@@ -539,44 +539,73 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 #ifdef SCHEME
   case PORTSMENU :
     {
+      // MIDI OUT MENU
       StringArray devs= MidiOutput::getDevices();
       int ndevs=devs.size();
       // warning! this activity test has to make sure no processes are
       // running either!
-      bool active=app->midiport->isOutputQueueActive();
+      bool active=app->midiOutPort->isOutputQueueActive();
       if ( ndevs == 0)
-	sub2.addItem(cmdPortsMidiOutputOpen, T("no devices"), false);
+	sub1.addItem(cmdPortsMidiOutOpen, T("(no devices)"), false);
       else
 	for (int i=0;i<ndevs;i++)
-	  sub1.addItem(cmdPortsMidiOutputOpen + i, devs[i],
+	  sub1.addItem(cmdPortsMidiOutOpen + i, devs[i],
 		       ( ! active ),
-		       app->midiport->isOpenOutput(i));
+		       app->midiOutPort->isOpen(i));
       sub1.addSeparator();
-      sub1.addItem(cmdPortsMidiOutputTest, T("Test"), ( ! active ));
-      sub1.addItem(cmdPortsMidiOutputHush, T("Hush"), active);
+      sub1.addItem(cmdPortsMidiOutTest, T("Test Output"), ( ! active ));
+      sub1.addItem(cmdPortsMidiOutHush, T("Hush"), active);
       sub1.addSeparator();
-
-      sub1.addItem(cmdPortsMidiOutputTuning, T("Microtuning"), (!active));
-
-      sub1.addItem(cmdPortsMidiOutputInstruments, T("Instruments...."),
+      devs=getTuningItems();
+      for (int i=0;i<devs.size();i++)
+	sub5.addItem(cmdPortsMidiOutTuning+i, devs[i], i==0, i==0);
+      sub1.addSubMenu( T("Microtuning") , sub5);
+      sub1.addItem(cmdPortsMidiOutInstruments, T("Instruments...."),
 		   ( ! active ));
-      // stub out for now
+      menu.addSubMenu( T("Midi Out") , sub1);
+      // MIDI IN (stubbed for now)
       devs= MidiInput::getDevices();
+
+      printf("isopen=%d isactive=%d\n",
+	     app->midiInPort->isOpen(),
+	     app->midiInPort->isActive() );
+
       if (devs.size() == 0)
-	sub2.addItem(cmdPortsMidiInputOpen, T("no devices"), false);
+	sub2.addItem(cmdPortsMidiInOpen, T("(no devices)"), false);
       else
 	for (int i=0;i<devs.size();i++)
-	  sub2.addItem(cmdPortsMidiInputOpen + i, devs[i], false);
+	  sub2.addItem(cmdPortsMidiInOpen + i, devs[i],
+		       // cant choose port if anything active
+		       ( ! app->midiInPort->isActive(i) ) ,
+		       app->midiInPort->isOpen(i) );
       sub2.addSeparator();
-      sub2.addItem(cmdPortsMidiInputHook, T("Input Hook..."), false);
-      menu.addSubMenu( T("Midi Out") , sub1);
+
+      sub2.addItem(cmdPortsMidiInTest, T("Test Input"),
+		   // sensitive if port is open, no device activity or
+		   // is same activity
+		   ( app->midiInPort->isOpen() &&
+		     (!app->midiInPort->isActive() ||
+		      app->midiInPort->isActive(MidiInPort::TESTING) )),
+		   app->midiInPort->isActive(MidiInPort::TESTING));
+      
+      sub2.addItem(cmdPortsMidiInRecord, T("Record Input"), 
+		   // sensitive if port is open, no device activity or
+		   // is same activity
+		   ( app->midiInPort->isOpen() &&
+		     (!app->midiInPort->isActive() ||
+		       app->midiInPort->isActive(MidiInPort::RECORDING) )),
+		   app->midiInPort->isActive(MidiInPort::RECORDING) );
+      sub2.addItem(cmdPortsMidiInHook, T("Clear Input Hook"),
+		   app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) );
+      sub2.addSeparator();
+      sub2.addItem(cmdPortsMidiInConfigure, T("Configure..."));
       menu.addSubMenu(T("Midi In"), sub2);
       menu.addSeparator();
-      sub3.addItem(0, T("New"), false);
-      sub3.addItem(0, T("Delete"), false);
-      sub3.addItem(0, T("Plotter"), false);
-      sub3.addItem(0, T("Import..."), false);
-      sub3.addItem(0, T("Save..."), false);
+      sub3.addItem(1, T("New"), false);
+      sub3.addItem(2, T("Delete"), false);
+      sub3.addItem(3, T("Copy to Plotter"), false);
+      sub3.addItem(4, T("Import..."), false);
+      sub3.addItem(5, T("Save..."), false);
       menu.addSubMenu(T("Midi File"), sub3);
       menu.addSeparator();
       sub4.addItem( cmdGracePlotterNew + XYPlot, T("XY"));
@@ -697,22 +726,49 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     break;
 
 #ifdef SCHEME
-  case cmdPortsMidiOutputOpen:
-    app->getMidiPort()->openOutput(arg);
+
+  case cmdPortsMidiOutOpen:
+    app->getMidiOutPort()->open(arg);
     break;
 
-  case cmdPortsMidiOutputTest:
-    app->getMidiPort()->testMidiOutput();
+  case cmdPortsMidiOutTest:
+    app->getMidiOutPort()->testMidiOutput();
     break;
 
-  case cmdPortsMidiOutputHush:
-  case cmdPortsMidiOutputTuning:
-  case cmdPortsMidiOutputInstruments:
+  case cmdPortsMidiOutHush :
+    app->schemeProcess->stop();
+    app->midiOutPort->clear();
     break;
 
-  case cmdPortsMidiInputOpen:
-  case cmdPortsMidiInputHook:
+  case cmdPortsMidiOutTuning :
     break;
+
+  case cmdPortsMidiOutInstruments :
+    break;
+
+  case cmdPortsMidiInOpen :
+    app->midiInPort->open(arg);
+    break;
+
+  case cmdPortsMidiInTest :
+    if ( app->midiInPort->isActive(MidiInPort::TESTING) )
+      app->midiInPort->stopTestInput();
+    else 
+      app->midiInPort->startTestInput();
+    break;
+
+  case cmdPortsMidiInRecord :
+    if ( app->midiInPort->isActive(MidiInPort::RECORDING) )
+      app->midiInPort->stopRecordInput();
+    else 
+      app->midiInPort->startRecordInput();
+    break;
+
+  case cmdPortsMidiInHook :
+    if ( app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) )
+      app->midiInPort->stopSchemeInput();
+    break;
+
 #endif
 
   case cmdPortsAudioSetup: 

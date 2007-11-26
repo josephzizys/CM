@@ -33,13 +33,15 @@ public:
     //    FontList* fontList;
     ApplicationCommandManager *commandManager ;
     AudioDeviceManager audioManager;
-    MidiOutput* midiOutput;
 #ifdef SCHEME
     SchemeThread* schemeProcess;
-    MidiPort* midiport;
+    MidiOutPort* midiOutPort;
+    MidiInPort* midiInPort;
 #endif
     GraceApp() ;
     ~GraceApp();
+
+
     void anotherInstanceStarted (const String& commandLine);
     bool moreThanOneInstanceAllowed() ;
     void initialise (const String& commandLine);
@@ -50,7 +52,10 @@ public:
     AudioDeviceManager * getAudioDeviceManager();
     ConsoleWindow* getConsole() {return console;}
 #ifdef SCHEME
-    MidiPort* getMidiPort() {return midiport;}
+
+    MidiOutPort* getMidiOutPort() {return midiOutPort;}
+    MidiInPort * getMidiInPort(){return midiInPort;}
+
 #endif
     GracePreferences* prefs;
     GracePreferences* getPreferences() {return prefs;}
