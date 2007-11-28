@@ -253,9 +253,9 @@ void GracePreferences::initPropertiesFile () {
   if (!propfile->containsKey(T("EditorFontSize")))
     setEditorFontSize(17.0);
 
-  // default to Chicken's minimum heap size
+  // default to 2x Chicken's minimum heap size
   if (!propfile->containsKey(T("SchemeHeapSize")))
-    setSchemeHeapSize(500000);
+    setSchemeHeapSize(1000000);
   // default to Chicken's default stack size
   if (!propfile->containsKey(T("SchemeStackSize")))
     setSchemeStackSize(64000);
