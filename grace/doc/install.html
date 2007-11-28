@@ -8,67 +8,58 @@ charset=iso-8859-1"/> <style type="text/css" media="all"> @import
 
 <h1>Installing Grace</h1>
 
-<h2 id="contents">Contents</h2>
-
-<ul>
-  <!-- li><a href="#binary_installation">Binary Installation</a></li -->
-  <li><a href="#source_installation">Source Installation</a>
   <ul>
     <li><a href="#requirements">Requirements</a></li>
-    <li><a href="#svn">Downloading the sources (svn) </a></li>
-    <li><a href="#compiling">Compiling the sources</a></li>
-    <li><a href="#installing">Installing the runtime</a></li>
+    <li><a href="#svn">Downloading sources (svn) </a></li>
+    <li><a href="#compiling">Compiling sources</a></li>
+    <li><a href="#installing">Installing the application</a></li>
+    <li><a href="#scheme">Running Grace with Scheme</a></li>
+    <li><a href="#lisp">Running Grace with Common Lisp</a></li>
     <li><a href="#starting">Starting Grace with standard output visible</a></li>
-    <li><a href="#lisp">Running Common Lisp under Grace</a></li>
   </ul>
-</li>
     
-  <li><a href="#building_binary">Building Binary Installation</a></li>
 
-  <li><a href="#juce">Installing JUCE (version 4.3)</a>
   <ul>
-    <li><a href="#juce_linux">Building JUCE on Linux</a></li>
-    <li><a href="#juce_osx">Building JUCE on OS X</a></li>
+  <li><a href="#juce">Installing JUCE</a>
+  <ul>
+    <li><a href="#juce_linux">Installing JUCE on Linux</a></li>
+    <li><a href="#juce_osx">Installing JUCE on OS X</a></li>
   </ul>
   <li><a href="#chicken">Installing Chicken Scheme</a>
-
-</li>
+  <li><a href="#building_binary">Building a binary release of Grace</a></li>
 </ul>
 
 <!-- h2 id="binary_installation">Binary Installation</h2>
 <p><em>  Not written. </em></p -->
 
 
-<h2 id="source_installation">Source Installation</h2>
 
 <h3 id="requirements">Requirements</h3>
 
-<p>Building Grace from sources requires that the following software systems are  installed and working properly on your system:
+<p>Installing Grace from its sources requires the following software systems:
 
 <ul>
   <li><a href="http://subversion.tigris.org/">Subversion</a></li>
   <li><a href="http://www.scons.org/">SCons</a></li>
   <li><a href="http://www.rawmaterialsoftware.com/juce/">JUCE</a> </li>
+  <li><a href="http://www.call-with-current-continuation.org/">Chicken Scheme</a> if you are building Grace with real time scheduling.</li>
+  <li><a href="http://sbcl.sourceforge.net/platform-table.html">SBCL</a> or <a href="http://sourceforge.net/project/showfiles.php?group_id=1355">CLisp</a> if you are building Grace with Common Lisp (Common Music, CLM, etc)</li>
 </ul>
 
-<p>A working Lisp system is also required for the Grace runtime:</p>
-
-<ul>
-  <li>If you are building Grace with <a href="http://www.call-with-current-continuation.org">Chicken Scheme</a> then you need <a href="#chicken">libchicken</a>.
-
-  <li>If you are building Grace to use with Common Lisp then you need to install the latest version of <a href="http://sbcl.sourceforge.net/platform-table.html">SBCL</a> or <a href="http://sourceforge.net/project/showfiles.php?group_id=1355">CLisp</a></li>
-
-</ul>
-
-<h3 id="svn">Downloading the sources (svn)</h3>
-<p>
-To download the Grace source tree type the following command all on one line:
-</p>
+<h3 id="svn">Downloading sources (svn)</h3> <p>Use
+<code>svn</code> to download the Grace source tree. Use your favorite
+SVN client or type the following command in the Terminal (all on one
+line): </p>
 
 <pre class="code">
-$ svn co https://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/grace</pre>
+$ svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/grace grace</pre>
 
-<h3 id="compiling">Compiling the sources</h3>
+<h3 id="compiling">Compiling sources</h3>
+
+<p>Before you attempt to compile the sources make sure that JUCE and
+Chicken Scheme (if you are using Scheme) are already
+installed on your computer. There are instructions at the end of this
+document that explain how to do this.</p>
 
 <p>To compile Grace with Chicken Scheme do:</p>
 
@@ -86,9 +77,9 @@ $ scons JUCEDIR=/path/to/jucedir
 
 <p>If you are successful the compiled files and exectuable will be in grace/build.</p>
 
-<h3 id="installing">Installing the runtime</h3>
+<h3 id="installing">Installing the application</h3>
 
-<p>Once you have compiled the app you can install the binary runtime (executable, documentation and runtime support) on your system:</p>
+<p>Once you have compiled Grace you can install the runtime (executable, documentation and runtime support) on your system like this:</p>
 
 <pre class="code">
 $ scons install</pre>
@@ -135,26 +126,24 @@ $ svn co https://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/cm cm</pre>
 CM sources from inside Grace or things won't work correctly when you
 start lisp.</p>
 
-<h3 id="starting">Starting Grace with standard output visible</h3>
 
- <p> Grace prints debugging information to standard output. To make
-  this information visible you can start start the application from
-  the terminal like this: </p>
-
-   <pre class="code">
-    # Linux:
-    $ grace &
-    # OS X:
-    $ cd /path/to/grace
-    $ exec build/Grace.app/Contents/MacOS/Grace &</pre>
-   
 <h3 id="scheme">Running Scheme under Grace</h3>
 
-<p>In order to run Grace with Scheme the Chicken runtime library
-(/usr/local/lib/libchicken) must be found by Grace when it starts
-up. (On linux I had to copy the lib to /usr/lib/ for this to work).
-If Grace starts without an error then Scheme is running and you don't
-need to do anything else. </p>
+<p>The Chicken Scheme library (libchicken) is loaded autmatically when
+Grace starts up. If Grace starts without any errors then Scheme is
+running and you don't need to do anything else. If your linux is too
+retarded to look in /usr/local/lib for libraries, you can tell it to do so
+with a line like this in your ~/.bash_profile (or whatever init script
+is appropriate):
+
+<pre class="code">
+export LD_LIBRARY_PATH=/usr/local/lib
+</pre>
+<p>Alternately you can make a link to the library like this:</p>
+
+<pre class="code">
+sudo ln -s /usr/local/lib/libchicken.so /usr/lib/libchicken.so
+</pre>
 
 <h3 id="cltl">Running Common Lisp under Grace</h3>
 
@@ -193,57 +182,37 @@ class="menuitem">Console&gt;Help</span> and <span
 class="menuitem">Editor&gt;Help</span> for more information about this
 process.  </p>
 
-<h2 id="building_binary">Building a Binary Installation of Grace</h2>
-<p>How to make a relocatable, binary install of Grace.</p>
-<ol>
-  <li>First build and install Grace from sources as usual:
-  <pre>$ scons JUCEDIR=/path/to/juce
-$ scons install
-</pre>
-  </li>
-  <li>Change directories to the Grace resource directory (Windows=build/Grace/Resources, OSX=build/Grace.app/Contents/Resources, Linux=/usr/local/lib/grace) and install the lisp sources for cm, fomus and whatever other Lisp systems you want to include with the app:<pre>$ cd build/Grace.app/Contents/Resources
-$ svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/cm cm  
-$ svn co svn://common-lisp.net/project/fomus/svn/fomus/trunk fomus
-</pre>  
-</li>
-<li>Optional: Install CLISP or SBCL under the Resource dir (see below).</li>
-</ol>
+<h3 id="starting">Starting Grace with standard output visible</h3>
 
-<h3>Installing a standalone CLISP under the resource directory</h3>
-<h4>OSX PPC/Intel</h4>
-<ol>
-  <li>Download and untar the CLISP source tarball somewhere.</li>
-  <li>Compile CLISP and make its distribution tarball:
-<pre>$ ./configure --ignore-absence-of-libsigsegv --without-readline
-$ cd src
-$ ./makemake  --without-readline    > Makefile
-$ make config.lisp
-$ emacs config.lisp
-$ make
-$ make check
-$ make distrib
-</pre>
-</li>
-<li>Untar the distribution under the Grace resource directory and rename the clisp-nn/ directory to just clisp/:  
-<pre>$ cd /path/to/grace/resources
-$ tar -zxf /path/to/clisp/src/clisp.tar.gz
-$ mv clisp-nn clisp
-</pre></li>
-</ol>
+ <p> Grace prints debugging information to standard output. To make
+  this information visible you can start start the application from
+  the terminal like this: </p>
+
+   <pre class="code">
+    # Linux:
+    $ grace &
+    # OS X:
+    $ cd /path/to/grace
+    $ exec build/Grace.app/Contents/MacOS/Grace &</pre>
 
 
 
 <h2 id="juce">Installing JUCE</h2>
 
-<h3 id="juce_linux">Building JUCE on Linux</h3>
+<p>Installing JUCE is straightforward, the biggest issue is making
+sure you disable UNICODE support (everywhere), OpenGL support unless
+you have the OpenGL libraries installed and (on Linux) disabling Xinerama support you dont use it.</p>
+
+
+<h3 id="juce_linux">Installing JUCE on Linux</h3>
 
 <ol>
   <li>
   <p>
-  Edit the file juce/juce_Config.h and turn unicode support OFF by
-  setting JUCE_STRINGS_ARE_UNICODE to 0:
+  Edit the file juce/juce_Config.h.
   </p>
 
+  <p> Turn unicode support OFF by  setting JUCE_STRINGS_ARE_UNICODE to 0:</p>
   <pre class="code">
 #ifndef JUCE_STRINGS_ARE_UNICODE
   #define JUCE_STRINGS_ARE_UNICODE 0 
@@ -253,13 +222,17 @@ $ mv clisp-nn clisp
   text editor will be too slow for anything but the smallest files.]
   </p>
 
-  </li>
-
-  <li>
   <p>
-  Turn OFF linking to the Xinerama  multi-monitor lib unless you
-  are using it. If so you will have to add it to the linking set.
+  Turn OFF OpenGL support unless you have the OpenGL libraries installed:
   </p>
+  <pre class="code">
+  #ifndef JUCE_OPENGL
+  #define JUCE_OPENGL 0
+#endif</pre>
+
+  <p> Turn OFF Xinerama (multi-monitor lib) unless you are using
+  it. (If so you will have to add it to the linking set): </p>
+
   <pre class="code">
 #ifndef JUCE_USE_XINERAMA
   #define JUCE_USE_XINERAMA 0
@@ -275,16 +248,16 @@ $ mv clisp-nn clisp
 $ cd juce/build/linux
 $ make CONFIG=Release</pre>
 </p>
-  
+ </li>
+</ol>
+ 
 <p>
   If you are successful the JUCE library will be saved in
   juce/bin/libjuce.a.
 </p>
-</li>
-</ol>
 
 
-<h3 id="juce_osx">Building JUCE on OSX</h3>
+<h3 id="juce_osx">Installing JUCE on OSX</h3>
 
 <ol>
   <li>
@@ -301,9 +274,18 @@ setting JUCE_STRINGS_ARE_UNICODE to 0: </p>
 
 [Strictly speaking you don't have to do this but if you don't the text
  editor will be too slow for anything but the smallest files.]
+</p>
+
+<p>
+  Turn OFF OpenGL support unless you have the OpenGL libraries installed:
+</p>
+  <pre class="code">
+  #ifndef JUCE_OPENGL
+  #define JUCE_OPENGL 0
+#endif</pre>
+  </li>
 
 <li>
-
   <p> Edit the file juce/build/macosx/juce.xcconfig and make sure
   XCODE is using an appropriate SDK for your machine. Your SDKs are
   located under /Developer/SDKs/. This is the contents of my
@@ -344,8 +326,53 @@ library (libchicken) on your system. (If you are on linux then you may
 also have to copy libchicken.so to /usr/bin if Grace can't find it
 when it starts up...)</p>
 
+
+
+
+<h2 id="building_binary">Building a Binary Installation of Grace</h2>
+<p>How to make a relocatable, binary install of Grace. (Documented here mainly so I don't foget how to do it!)</p>
+<ol>
+  <li>First build and install Grace from sources as usual:
+  <pre>$ scons JUCEDIR=/path/to/juce
+$ scons install
+</pre>
+  </li>
+  <li>Change directories to the Grace resource directory (Windows=build/Grace/Resources, OSX=build/Grace.app/Contents/Resources, Linux=/usr/local/lib/grace) and install the lisp sources for cm, fomus and whatever other Lisp systems you want to include with the app:<pre>$ cd build/Grace.app/Contents/Resources
+$ svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/cm cm  
+$ svn co svn://common-lisp.net/project/fomus/svn/fomus/trunk fomus
+</pre>  
+</li>
+<li>Optional: Install CLISP or SBCL under the Resource dir (see below).</li>
+</ol>
+
+<h3>Installing a standalone CLISP under the resource directory</h3>
+<h4>OSX PPC/Intel</h4>
+<ol>
+  <li>Download and untar the CLISP source tarball somewhere.</li>
+  <li>Compile CLISP and make its distribution tarball:
+<pre>$ ./configure --ignore-absence-of-libsigsegv --without-readline
+$ cd src
+$ ./makemake  --without-readline    > Makefile
+$ make config.lisp
+$ emacs config.lisp
+$ make
+$ make check
+$ make distrib
+</pre>
+</li>
+<li>Untar the distribution under the Grace resource directory and rename the clisp-nn/ directory to just clisp/:  
+<pre>$ cd /path/to/grace/resources
+$ tar -zxf /path/to/clisp/src/clisp.tar.gz
+$ mv clisp-nn clisp
+</pre></li>
+</ol>
+
+
+
+
+
 </div>
 <hr/>
-<!-- hhmts start --> Last modified: Wed Nov 21 07:33:37 CST 2007 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Tue Nov 27 18:10:09 CST 2007 <!-- hhmts end -->
 </body>
 </html>
