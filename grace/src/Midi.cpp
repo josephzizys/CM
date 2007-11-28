@@ -455,12 +455,9 @@ void MidiInPort::setMessageFilter(unsigned int f) {
 }
 
 void MidiInPort::handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &msg) {
-  printf("in MIDI callback\n");
   // JUCE: chan>0 means channel message, 0 means not a channel message 
   int chan=msg.getChannel();
   String info=String::empty;
-
-  printf("tracing=%d\n",trace);
 
   if ( chan>0 ) { 
     chan--;  // we are zero based folk
@@ -469,7 +466,8 @@ void MidiInPort::handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &m
       // FIXME: REPLACE TRUES WITH MESSAGEFILT TEST...
       if ( msg.isNoteOn() && true ) {
 	if ( trace )
-	  info=T("On: chan=") + String(chan) + T(" key=") + String(msg.getNoteNumber()) +
+	  info=T("On: chan=") + String(chan) + T(" key=") + 
+	    String(msg.getNoteNumber()) +
 	    T(" vel=") + String(msg.getVelocity());
 	// now handle note off message...
       }
@@ -482,30 +480,35 @@ void MidiInPort::handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &m
       else if ( msg.isProgramChange() && true ) {
 	if ( trace )
 	  info=T("Prog: chan=") + String(chan) + 
-	    T(" prog=") + MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
+	    T(" prog=") + 
+	    MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
 	// now handle program change message...
       }
       else if ( msg.isController() && true ) {
 	if ( trace )
 	  info=T("Ctrl: chan=") + String(chan) + 
-	    T(" ctrl=") + MidiMessage::getControllerName(msg.getControllerNumber()) +
+	    T(" ctrl=") + 
+	    MidiMessage::getControllerName(msg.getControllerNumber()) +
 	    T(" value=") + String(msg.getControllerValue());
 	// now handle control change message
       }
       else if ( msg.isPitchWheel() && true ) {
 	if ( trace )
-	  info=T("Pw: chan=") + String(chan) + T(" value=") + String(msg.getPitchWheelValue());
+	  info=T("Pw: chan=") + String(chan) + T(" value=") +
+	    String(msg.getPitchWheelValue());
 	// now handle pitch wheel message...
       }
       else if ( msg.isChannelPressure() && true ) {
 	if ( trace )
-	  info=T("Cp: chan=") + String(chan) + T(" value=") + String(msg.getChannelPressureValue());
+	  info=T("Cp: chan=") + String(chan) + T(" value=") +
+	    String(msg.getChannelPressureValue());
 	// now handle channel pressure message...
 
       }
       else if ( msg.isAftertouch() && true ) {
 	if ( trace )
-	  info=T("At: chan=") + String(chan) + T(" value=") + String(msg.getAfterTouchValue());
+	  info=T("At: chan=") + String(chan) + T(" value=") +
+	    String(msg.getAfterTouchValue());
       // now handle aftertouch message...
       }
       else {
@@ -532,7 +535,12 @@ void MidiInPort::handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &m
   }
 
   if (trace) {
-    console->printMessage(String(msg.getTimeStamp(), 3) + T(" ") + info + T("\n"));
+    // i think this was crashing Grace because this callback is not
+    // happening in the main thread (?)
+    //console->printMessage(String(msg.getTimeStamp(), 3) + T(" ") + info + T("\n"));
+    console->postConsoleTextMessage(String(msg.getTimeStamp(), 3) +
+				    T(" ") + info + T("\n"), 
+				    ConsoleMessage::TEXT, true);
   }
 }
 
