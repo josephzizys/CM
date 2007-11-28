@@ -386,19 +386,19 @@ void scheduler_set_time_milliseconds (bool b) {
   (error "message function not implemented."))
 (define (mp:micro divs)
   (error "message function not implemented."))
-(define (mp:inhook func)
+(define (mp:inhook func chans mask)
   (error "message function not implemented."))
 
 ;; message definitions
 
-(define-send-message mp:note ((#:wait 0) (#:dur .5) (#:key 60) (#:amp 127) (#:chan 1)))
-(define-send-message mp:on   ((#:wait 0) (#:key 60) (#:vel 64) (#:chan 1)))
-(define-send-message mp:off  ((#:wait 0) (#:key 60) (#:vel 64) (#:chan 1)))
+(define-send-message mp:note ((#:wait 0) (#:dur .5) (#:key 60) (#:amp .5) (#:chan 0)))
+(define-send-message mp:on   ((#:wait 0) (#:key 60) (#:vel 64) (#:chan 0)))
+(define-send-message mp:off  ((#:wait 0) (#:key 60) (#:vel 64) (#:chan 0)))
 (define-send-message mp:prog ((#:wait 0) (#:prog 60) (#:chan 0)))
-(define-send-message mp:ctrl ((#:wait 0) (#:ctrl 60) (#:val 0) (#:chan 1)))
+(define-send-message mp:ctrl ((#:wait 0) (#:ctrl 60) (#:val 0) (#:chan 0)))
 (define-send-message mp:alloff ())
 (define-send-message mp:micro ((#:divs 1)))
-(define-send-message mp:inhook ((#:func #f)))
+(define-send-message mp:inhook ((#:func #f) (:chans 0) (:filt 0)))
 
 ;;;
 ;;; GO macro
