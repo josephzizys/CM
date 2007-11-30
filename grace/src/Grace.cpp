@@ -59,6 +59,7 @@ void GraceApp::graceQuit (bool ask) {
 }
 
 void GraceApp::shutdown () {
+#ifdef SCHEME
   printf("in shutdown\n");
   if ( schemeProcess->isThreadRunning() ) {
     schemeProcess->stop();
@@ -75,6 +76,7 @@ void GraceApp::shutdown () {
   if ( midiInPort->isActive() )
     midiInPort->stop();
   delete midiInPort;
+#endif
   delete console;
   delete prefs;
   delete commandManager;

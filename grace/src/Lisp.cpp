@@ -42,7 +42,7 @@ bool LispProcessConnection::connectToSocket (const String& hostName,
   disconnect();
   
   const ScopedLock sl (pipeAndSocketLock);
-  socket = new Socket();
+  socket = new StreamingSocket();
   
   if (socket->connect (hostName, portNumber, timeOutMillisecs))
     {
@@ -162,7 +162,7 @@ bool LispProcessConnection::sendMessage (const MemoryBlock& message,
 }
 
 //==============================================================================
-void LispProcessConnection::initialiseWithSocket (Socket* const socket_)
+void LispProcessConnection::initialiseWithSocket (StreamingSocket* const socket_)
 {
   jassert (socket == 0);
   socket = socket_;
@@ -272,7 +272,7 @@ void LispProcessConnection::run()
     {
       if (socket != 0)
         {
-	  const int ready = socket->isReady (0);
+	  const int ready = socket->waitUntilReady (true, 0);
 	  
 	  if (ready < 0)
             {

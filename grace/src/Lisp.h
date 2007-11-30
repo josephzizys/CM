@@ -58,12 +58,12 @@ public:
   
 private:
   CriticalSection pipeAndSocketLock;
-  Socket* socket;
+  StreamingSocket* socket;
   NamedPipe* pipe;
   bool callbackConnectionState;
   const bool useMessageThread;
   
-  void initialiseWithSocket (Socket* const socket_);
+  void initialiseWithSocket (StreamingSocket* const socket_);
   void initialiseWithPipe (NamedPipe* const pipe_);
   void connectionMadeInt();
   void connectionLostInt();
