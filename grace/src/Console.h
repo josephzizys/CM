@@ -195,7 +195,6 @@ public:
   void closeButtonPressed () ;
   //  void resized();
   const StringArray getMenuBarNames ();
-  const StringArray getTuningItems ();
   const PopupMenu getMenuForIndex (int idx, const String &name);
   void menuItemSelected (int id, int idx);
 

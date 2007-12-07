@@ -462,6 +462,8 @@ const StringArray ConsoleWindow::getMenuBarNames () {
   return StringArray((const tchar**) menuNames);
 }
 
+/*
+moved to midi.cpp
 const StringArray ConsoleWindow::getTuningItems () {
   const tchar* const items [] = { 
     "Semitone (100 cents)", "Quartertone (50 cents)",
@@ -474,6 +476,7 @@ const StringArray ConsoleWindow::getTuningItems () {
     "30th tone (6.6 cents)", "32nd tone (6.25 cents)", 0 };
   return StringArray((const tchar**) items);
 }
+*/
 
 const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 						const String &name)
@@ -556,10 +559,12 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       sub1.addItem(cmdPortsMidiOutTest, T("Test Output"), ( ! active ));
       sub1.addItem(cmdPortsMidiOutHush, T("Hush"), active);
       sub1.addSeparator();
-      devs=getTuningItems();
-      for (int i=0;i<devs.size();i++)
-	sub5.addItem(cmdPortsMidiOutTuning+i, devs[i], i==0, i==0);
-      sub1.addSubMenu( T("Microtuning") , sub5);
+      for (int i=1;i<=16;i++)
+	sub5.addItem(cmdPortsMidiOutTuning+i, 
+		     app->midiOutPort->getTuningName(i),
+		     ( ! active ),
+		     app->midiOutPort->isTuning(i));
+      sub1.addSubMenu( T("Tuning Resolution") , sub5);
       sub1.addItem(cmdPortsMidiOutInstruments, T("Instruments...."),
 		   ( ! active ));
       menu.addSubMenu( T("Midi Out") , sub1);
@@ -741,6 +746,7 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     break;
 
   case cmdPortsMidiOutTuning :
+    app->midiOutPort->setTuning(arg, true);
     break;
 
   case cmdPortsMidiOutInstruments :
