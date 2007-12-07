@@ -128,10 +128,10 @@ bool SchemeNode::process(double curtime) {
     }
     break;
 
-  case PROCEDURE:
+  case INHOOK:
     {
-      C_word closure = CHICKEN_gc_root_ref(closureGCRoot);
-      C_callback(closure, 0);
+      // C_word closure = CHICKEN_gc_root_ref(closureGCRoot);
+      // C_callback(closure, 0);
     }
     break;
 
@@ -139,8 +139,17 @@ bool SchemeNode::process(double curtime) {
     //printf ("processing pause node :(\n");
     break;
 
-    default:
-      break;
+  case STOP :
+    if ( SCHEME_DEBUG )
+      printf("...calling stop node %d\n", nodeid);
+    //    schemeThread->flush(id);
+    if ( SCHEME_DEBUG )
+      printf("...done calling stop node %d\n", nodeid);
+
+    break;
+
+  default:
+    break;
   }	
   return more;
 }
@@ -452,6 +461,10 @@ void SchemeThread::setPaused(bool p) {
 }
 
 void SchemeThread::stop(int id) {
+  //  addNode(SchemeNode::STOP, );
+}
+
+void SchemeThread::stopProcesses(int id) {
   // stop all process with id from running. if id=-1 then stop all
   // processes. iterate queue in reverse order so removal index always
   // valid. do NOT touch index 0 since that's the (eval) node that got

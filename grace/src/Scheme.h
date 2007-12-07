@@ -19,7 +19,7 @@ class SchemeThread;
 class SchemeNode 
 {
 public:
-  enum {PROCESS, PROCEDURE, EXPR , SALEVAL, PAUSE};
+  enum {PROCESS, INHOOK, EXPR, SAL, PAUSE, STOP };
 
   SchemeNode(double _time, int _type, C_word c, int _id);
   SchemeNode(double _time, int _type, String s);
@@ -39,9 +39,6 @@ public:
   
   SchemeThread *schemeThread;
   bool process(double curr);
-  bool init();
-  void run();
-  void clear();
 };
 
 class SchemeNodeComparator
@@ -84,6 +81,7 @@ public:
   bool isPaused() { return pausing; }
   void setPaused(bool b);
   void stop(int id=-1);
+  void stopProcesses(int id) ;
 };
 
 #endif
