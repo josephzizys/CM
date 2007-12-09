@@ -9,11 +9,10 @@
 #include "Scheme.h"
 #include "ChickenBridge.h"
 
-#define SCHEME_DEBUG 4
+#define SCHEME_DEBUG 2
 // 1= trace scheme entry/exit points
 // 2= add trace gc
 // 3= add trace of node creation/insertion/deletion points
-
 
 // 
 //  Nodes
@@ -142,10 +141,9 @@ bool SchemeNode::process(double curtime) {
   case STOP :
     if ( SCHEME_DEBUG )
       printf("...calling stop node %d\n", nodeid);
-    //    schemeThread->flush(id);
+    schemeThread->stopProcesses(id);
     if ( SCHEME_DEBUG )
       printf("...done calling stop node %d\n", nodeid);
-
     break;
 
   default:
@@ -291,6 +289,12 @@ void SchemeThread::run()
 	schemeNodes.lockArray();
 	schemeNodes.remove(0, false);
 	schemeNodes.unlockArray();
+	// NOTE: the node to process has now been popped from the
+	// queue.  i did this while trying to debug the random
+	// crashing. im not sure if this is the right thing to do or
+	// not since this means that flushing the queue, etc will have
+	// no effect on this node. Search for the word POP to see the
+	// places this affects...
 	bool keep=node->process(0.0);
 	if ( keep ) {
 	  if ( SCHEME_DEBUG > 2)
@@ -421,10 +425,12 @@ void SchemeThread::setPaused(bool p) {
     // cache start time of pause in node
     n->start=delta;
     schemeNodes.lockArray();
-    // the eval node that got us here is at queu index 0 so add pause
+    // NOTE: POP removed the node that got us here so
+    // we add pause node at index 0.
+    // otherwise the eval node that got us here is at queu index 0 so add pause
     // at index 1 so that it becomes the head of the queue after the
     // eval node is popped
-    schemeNodes.insert(1,n); 
+    schemeNodes.insert(0,n); // POP
     schemeNodes.unlockArray();
     pausing=true;
     notify();
@@ -461,25 +467,39 @@ void SchemeThread::setPaused(bool p) {
 }
 
 void SchemeThread::stop(int id) {
-  //  addNode(SchemeNode::STOP, );
+  // always add stop nodes to the front of the queue.
+  SchemeNode *node = new SchemeNode (0.0, SchemeNode::STOP);
+  node->nodeid=0;
+  node->id=id;
+  if ( SCHEME_DEBUG > 2)
+    printf("adding stop node %d...\n", node->nodeid);
+  node->schemeThread = this;
+  schemeNodes.lockArray();
+  schemeNodes.insert(0,node);
+  schemeNodes.unlockArray();
+  notify();
+  if ( SCHEME_DEBUG > 2)
+    printf("...done adding stop node %d\n", node->nodeid);
 }
 
 void SchemeThread::stopProcesses(int id) {
-  // stop all process with id from running. if id=-1 then stop all
-  // processes. iterate queue in reverse order so removal index always
-  // valid. do NOT touch index 0 since that's the (eval) node that got
-  // us here!
+  // this is called by a STOP node from process().  stop all processes
+  // with id from running. if id=-1 then stop all processes. iterate
+  // queue in reverse order so removal index remains valid.  NOTE: POP
+  // removed the (STOP) node that got us here so this deletes up to
+  // and including index 0. otherwise dont include index 0
   schemeNodes.lockArray();
-  if (id==-1) { 
-    for (int i=schemeNodes.size()-1; i>0; i--)
+  if ( id<0 ) { 
+    for (int i=schemeNodes.size()-1; i>=0; i--)
       if (schemeNodes[i]->type == SchemeNode::PROCESS)
 	schemeNodes.remove(i,true);
   }
   else {
     // else selectively remove all nodes with id process queue in
     // reverse order so removal index always valid
-    for (int i=schemeNodes.size()-1; i>0; i--)
-      if (schemeNodes[i]->id == id)
+    for (int i=schemeNodes.size()-1; i>=0; i--)
+      if ( (schemeNodes[i]->type == SchemeNode::PROCESS) && 
+	   (schemeNodes[i]->id == id) )
 	schemeNodes.remove(i,true);
   }
   schemeNodes.unlockArray();
