@@ -71,18 +71,36 @@ public:
   void sendCtrl(double wait, float ctrl, float val, float chan);
   void sendBend(double wait, float val, float chan);
 
-  // micro
-  StringArray tuningnames ;
-  String getTuningName(int t);
-  int microdivisions;
-  int pitchbendwidth;
-  int programchanges[16];
+  // microtuning support
+  static float channeltunings [16][16] ;
+  int   microdivisions;  // divisions per semitone: 1-16
+  float microincrement; // size of tuning's division (1.0=semitone)
+  int   microchancount; // number of addressable channels in tuning
+  int   microchanblock; // total number of channels used by tuning
+  bool  avoiddrumtrack; // if true then avoid channel 9
+  int   pitchbendwidth;
+  StringArray tuningnames ; // string name for each tuning
   int getTuning() ;
-  bool isTuning(int t);
   void setTuning(int tune, bool send=true) ;
+  bool isTuning(int tune);
+  String getTuningName(int tune);
+  int getTuningDivisions(int tune); // number of division
+  int getTuningChannels(int tune); // number of addressable chans
+  int getTuningChannelsClaimed(int tune); // total chans used
+  bool avoidDrumTrack();
+  void setAvoidDrumTrack(bool b);
+  int getPitchBendWidth();
+  void setPitchBendWidth(int w);
   void sendTuning();
-  void getInstrument(int chan);
-  void setInstrument(int chan, int pc);
+
+  // instruments
+  int programchanges[16];
+  int getInstrument(int chan);
+  void setInstrument(int chan, int pc, bool send=false);
+  bool isInstrumentChannel(int chan);
+  void sendInstruments();
+  void resetInstruments();
+  void showInstrumentsWindow();
 };
 
 class MidiInPort : public MidiInputCallback {

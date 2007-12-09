@@ -133,7 +133,8 @@ public:
 	 "EditCopy" "EditSelectAll"
 	 "ViewClearText" "ViewFontSize"  "ViewThemes" "ViewOpacity"
 	 "PortsMidiOutOpen" "PortsMidiOutTest" "PortsMidiOutHush"
-	 "PortsMidiOutTuning" "PortsMidiOutInstruments"
+	 "PortsMidiOutTuning" "PortsMidiOutDrumTrack" "PortsMidiOutPitchBend"
+	 "PortsMidiOutInstruments"
 	 "PortsMidiInOpen" "PortsMidiInTest" "PortsMidiInHook"
 	 "PortsMidiInRecord" "PortsMidiInConfigure"
 	 "PortsAudioSetup"
@@ -160,21 +161,23 @@ public:
     cmdPortsMidiOutTest = 36480,
     cmdPortsMidiOutHush = 36736,
     cmdPortsMidiOutTuning = 36992,
-    cmdPortsMidiOutInstruments = 37248,
-    cmdPortsMidiInOpen = 37504,
-    cmdPortsMidiInTest = 37760,
-    cmdPortsMidiInHook = 38016,
-    cmdPortsMidiInRecord = 38272,
-    cmdPortsMidiInConfigure = 38528,
-    cmdPortsAudioSetup = 38784,
-    cmdLispConnect = 39040,
-    cmdLispLoadSystem = 39296,
-    cmdLispLoadRecentSystem = 39552,
-    cmdLispClearRecentSystems = 39808,
-    cmdLispLoadFile = 40064,
-    cmdLispLoadRecentFile = 40320,
-    cmdLispClearRecentLoaded = 40576,
-    cmdLispConfigure = 40832};
+    cmdPortsMidiOutDrumTrack = 37248,
+    cmdPortsMidiOutPitchBend = 37504,
+    cmdPortsMidiOutInstruments = 37760,
+    cmdPortsMidiInOpen = 38016,
+    cmdPortsMidiInTest = 38272,
+    cmdPortsMidiInHook = 38528,
+    cmdPortsMidiInRecord = 38784,
+    cmdPortsMidiInConfigure = 39040,
+    cmdPortsAudioSetup = 39296,
+    cmdLispConnect = 39552,
+    cmdLispLoadSystem = 39808,
+    cmdLispLoadRecentSystem = 40064,
+    cmdLispClearRecentSystems = 40320,
+    cmdLispLoadFile = 40576,
+    cmdLispLoadRecentFile = 40832,
+    cmdLispClearRecentLoaded = 41088,
+    cmdLispConfigure = 41344};
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};

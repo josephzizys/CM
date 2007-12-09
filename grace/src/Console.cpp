@@ -487,7 +487,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
   ApplicationCommandManager* cm = app->commandManager;
 
   PopupMenu menu;
-  PopupMenu sub1, sub2, sub3, sub4, sub5;
+  PopupMenu sub1, sub2, sub3, sub4, sub5, sub6;
   int val;
   switch (idx) {
   case GRACEMENU :
@@ -559,21 +559,29 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       sub1.addItem(cmdPortsMidiOutTest, T("Test Output"), ( ! active ));
       sub1.addItem(cmdPortsMidiOutHush, T("Hush"), active);
       sub1.addSeparator();
+      int t= app->midiOutPort->getTuning();
       for (int i=1;i<=16;i++)
 	sub5.addItem(cmdPortsMidiOutTuning+i, 
 		     app->midiOutPort->getTuningName(i),
-		     ( ! active ),
-		     app->midiOutPort->isTuning(i));
-      sub1.addSubMenu( T("Tuning Resolution") , sub5);
+		     ( ! active ), (i==t));
+      sub5.addSeparator();
+      sub5.addItem(cmdPortsMidiOutDrumTrack, T("Avoid Drum Track"),
+		   (t>1), app->midiOutPort->avoidDrumTrack());
+      t=app->midiOutPort->getPitchBendWidth();
+      for (int b=1;b<13; b++)
+	sub6.addItem(cmdPortsMidiOutPitchBend+b, 
+		     String(b), true, (b==t));
+      sub5.addSubMenu( T("Pitch Bend Width") , sub6);      
+      sub1.addSubMenu( T("Microtuning") , sub5);
       sub1.addItem(cmdPortsMidiOutInstruments, T("Instruments...."),
 		   ( ! active ));
       menu.addSubMenu( T("Midi Out") , sub1);
+      menu.addSeparator();
       // MIDI IN (stubbed for now)
       devs= MidiInput::getDevices();
 
-      printf("isopen=%d isactive=%d\n",
-	     app->midiInPort->isOpen(),
-	     app->midiInPort->isActive() );
+      //      printf("isopen=%d isactive=%d\n", app->midiInPort->isOpen(),
+      //	     app->midiInPort->isActive() );
 
       if (devs.size() == 0)
 	sub2.addItem(cmdPortsMidiInOpen, T("(no devices)"), false);
@@ -749,7 +757,17 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     app->midiOutPort->setTuning(arg, true);
     break;
 
+  case cmdPortsMidiOutPitchBend :
+    app->midiOutPort->setPitchBendWidth(arg);
+    break;
+
+  case cmdPortsMidiOutDrumTrack :
+    app->midiOutPort->
+      setAvoidDrumTrack(! app->midiOutPort->avoidDrumTrack());
+    break;
+
   case cmdPortsMidiOutInstruments :
+    app->midiOutPort->showInstrumentsWindow();
     break;
 
   case cmdPortsMidiInOpen :
