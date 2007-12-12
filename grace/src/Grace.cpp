@@ -89,7 +89,8 @@ const String GraceApp::getApplicationName () {
 }
 
 const String GraceApp::getApplicationVersion () {
-  return T("0.2.0");
+  //  return T("0.2.0");
+  return T("(rev: ") + String(VERSION) + T(")");
 }
 
 bool GraceApp::moreThanOneInstanceAllowed () {

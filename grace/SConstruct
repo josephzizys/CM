@@ -92,6 +92,20 @@ else :
 
 BuildDir('build', 'src', duplicate = 0)
 
+def get_revision_string ():
+    p = os.path.join(os.curdir,'.svn','entries')
+    if os.path.exists(p) :
+        f = open(p, 'r')
+        data = f.read()
+        f.close()
+        data = map(str.splitlines,data.split('\n\x0c\n'))
+        return data[0][10]
+    return 'unknown'
+
+vers='VERSION=' + get_revision_string() 
+
+env.Append(CPPDEFINES = [vers] )
+
 env.Append(CPPPATH = ['src', env['JUCEDIR']],
            LIBPATH = [os.path.join(env['JUCEDIR'],'bin')]
            )
