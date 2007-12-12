@@ -131,6 +131,7 @@ void scheduler_set_time_milliseconds (bool b) {
 	 pick pickl odds
 	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
 	 rancauchy ranpoisson ranpink ranbrown
+	 sal
 	 ))
 
 ;;;
@@ -501,6 +502,14 @@ void scheduler_set_time_milliseconds (bool b) {
 	      )))
 	,@init)
       )))
+
+;; SAL
+
+(define (sal str tokens)
+  (print str)
+  (print tokens)
+  )
+
 
 (return-to-host)
 
