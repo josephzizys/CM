@@ -139,7 +139,7 @@ class MidiInPort : public MidiInputCallback {
   bool isChannelActive(int chan);
   void isMessageWanted(int m);
   void handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &msg) ;
-  void handlePartialSysexMessage (MidiInput *dev, const uint8 *data, 
+  void handlePartialSysexMessage (MidiInput *dev, const juce::uint8 *data, 
 				  const int num, const double time);
 };
 #endif

@@ -624,7 +624,7 @@ void MidiInPort::handleIncomingMidiMessage (MidiInput *dev,
 }
 
 void MidiInPort::handlePartialSysexMessage (MidiInput *dev,
-					    const uint8 *data, 
+					    const juce::uint8 *data, 
 					    const int num, 
 					    const double time) {
   printf("in MIDI sysex callback\n");  

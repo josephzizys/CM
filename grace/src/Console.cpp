@@ -108,12 +108,12 @@ Console::~Console () {
 
 void Console::initTheme (int idx) {
   String n=String::empty;
-  uint32 b, i, o, r, h, c;
+  juce::uint32 b, i, o, r, h, c;
 
   //Font f=Font(Font::getDefaultMonospacedFontName(), 
   //	      17.0f, Font::plain );
   // make value, warning and error colors consistent across themes (?)
-  uint32 v= 0x00cd00, w=0xff8c00, e=0xcd0000;
+  juce::uint32 v= 0x00cd00, w=0xff8c00, e=0xcd0000;
 
   switch (idx) {
   case 0 :
