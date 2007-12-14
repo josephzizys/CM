@@ -17,16 +17,50 @@
 GraceApp::GraceApp () : console (0) {}
 GraceApp::~GraceApp () {}
 
-void GraceApp::initialise (const String& commandLine) {
+void GraceApp::initialise (const String& commandLine) {  
   File home = File::getSpecialLocation(File::userHomeDirectory);
-  StringArray devices;
-  int i=0;
   home.setAsCurrentWorkingDirectory();
+  prefs=GracePreferences::getInstance();
+
+  File exe = File::getSpecialLocation(File::currentExecutableFile);
+
+#ifdef MACOSX
+  resourceDirectory = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("Resources"));
+#elif LINUX
+  resourceDirectory = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("lib/grace"));
+#elif WINDOWS
+  resourceDirectory = File::getSpecialLocation(File::currentExecutableFile).getSiblingFile(T("Resources"));
+#endif
+
+  String graceinfo;
+  graceinfo << T("\n-----------------------------------------------------------\n")
+	    << getApplicationName() << T(" ") << getApplicationVersion() 
+	    << T("\nExecutable file: ")
+	    << File::getSpecialLocation(File::currentExecutableFile).getFullPathName()
+	    << T("\nResource directory: ")
+    //	    << getGraceResourceDirectory().getFullPathName()
+    //	    << File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("lib/grace")).getFullPathName()
+	    << getResourceDirectoryPathName()
+	    << T("\nApplication file: ")
+	    << File::getSpecialLocation(File::currentApplicationFile).getFullPathName()
+	    << T("\nPreferences file: ")
+	    << prefs->getProperties()->getFile().getFullPathName()
+	    << T("\nHome directory: ")
+	    << File::getSpecialLocation(File::userHomeDirectory).getFullPathName()
+	    << T("\nCurrent working directory: ")
+	    << File::getCurrentWorkingDirectory().getFullPathName()
+	    << T("\nUser documents directory: ")
+	    << File::getSpecialLocation(File::userDocumentsDirectory).getFullPathName()
+	    << T("\nUser application data directory: ")
+	    << File::getSpecialLocation(File::userApplicationDataDirectory).getFullPathName()
+	    << T("\nCommon application data directory: ")
+	    << File::getSpecialLocation(File::commonApplicationDataDirectory).getFullPathName()
+	    << T("\nTemp directory: ")
+	    << T("\n\n");
+  printf("%s", graceinfo.toUTF8());
   LookAndFeel::setDefaultLookAndFeel(&shinyLookAndFeel);
   commandManager = new ApplicationCommandManager();
   audioManager.initialise(1,2,0,true);
-  //  fontList = FontList::getInstance();
-  prefs=GracePreferences::getInstance();
   console = new ConsoleWindow(true);
 
 #ifdef SCHEME
@@ -39,7 +73,7 @@ void GraceApp::initialise (const String& commandLine) {
   midiOutPort->startThread();
   midiInPort = new MidiInPort(console);
 #endif
-  
+
 }
 
 void GraceApp::graceQuit (bool ask) {

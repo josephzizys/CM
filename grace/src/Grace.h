@@ -38,9 +38,9 @@ public:
     MidiOutPort* midiOutPort;
     MidiInPort* midiInPort;
 #endif
+    File resourceDirectory;
     GraceApp() ;
     ~GraceApp();
-
 
     void anotherInstanceStarted (const String& commandLine);
     bool moreThanOneInstanceAllowed() ;
@@ -55,6 +55,8 @@ public:
 
     MidiOutPort* getMidiOutPort() {return midiOutPort;}
     MidiInPort * getMidiInPort(){return midiInPort;}
+    File getResourceDirectory() {return resourceDirectory;}
+    String getResourceDirectoryPathName() {return resourceDirectory.getFullPathName();}
 
 #endif
     GracePreferences* prefs;
