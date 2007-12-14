@@ -398,7 +398,7 @@ class SalSyntax : public Syntax
   int backwardSal(const String text, int bot, int top, int *poz, int *sal);
   hiliteID getHilite (const String text, int start, int end) ;
   // SAL lexer
-  void tokenize(String str);
+  String tokenize(String str);
   void salError(String str, int err, SynTok *tok);
   SynTok *findUnbalanced(OwnedArray<SynTok> &tokens, int target, int other, int level);
   SynTok *findUnbalancedBlock(OwnedArray<SynTok> &tokens, int level);

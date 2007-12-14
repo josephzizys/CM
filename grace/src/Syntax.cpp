@@ -9,7 +9,7 @@
 // $Date$ 
 
 #include "Syntax.h"
-#include "Console.h"
+#include "Grace.h"
 #include <map>;
 #include <cctype>
 
@@ -528,11 +528,12 @@ hiliteID SalSyntax::getHilite (const String text, int start, int end) {
  * SAL Lexer
  */
 
-void SalSyntax::tokenize(String str) {
+String SalSyntax::tokenize(String str) {
   int old=0, len=str.length(), pos=0, beg=0, end=0, lev[]={0,0,0,0};
   int typ;
   SynTok *tok;
   OwnedArray<SynTok> tokenstream;
+  String tokenstring=String::empty;
 
   while (true) {
     old=pos;
@@ -644,15 +645,18 @@ void SalSyntax::tokenize(String str) {
     salError(str, typ, tok);
   }
   else {
-    String code=str.replace(T("\""),T("\\\"") );
-    printf("\n(\"%s\"\n", code.toUTF8());
-      for (int i=0; i<tokenstream.size(); i++) {
-	if (i>0) printf(" ");
-	tokenstream[i]->print();
-      }
-      printf(")\n");    
+    tokenstring=T("(");
+    for (int i=0; i<tokenstream.size(); i++) {
+      if (i>0) tokenstring << T(" ");
+      // each token is triplet: (<saltype> <string> <position>)
+      tokenstring << T("(#x") << String::toHexString( tokenstream[i]->type )
+		  << T(" \"") << tokenstream[i]->name.unquoted() << T("\" ") 
+		  << String(tokenstream[i]->data1) << T(")") ;
+    }
+    tokenstring << T(")");    
   }
   tokenstream.clear();
+  return tokenstring;
 }
 
 void SynTok::print(bool lisp) {
@@ -693,8 +697,8 @@ void SalSyntax::salError(String str, int err, SynTok *tok) {
     errstr << T(" ");
   errstr << T("^\n");
   
-  printf(errstr.toUTF8());
-
+  //  printf(errstr.toUTF8());
+  ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( errstr);
 }
 
 int addToken (String str, int start, int end) {

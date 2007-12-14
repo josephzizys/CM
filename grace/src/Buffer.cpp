@@ -1510,13 +1510,25 @@ int TextBuffer::evalText() {
     String mark=String::empty;
     for (int i=l1; i<old; i++)
       mark += T(" ");
-    mark += T("^");
+    mark += T("^\n");
     getConsole()->printError( mark);
-    getConsole()->terpri();
     return 0;
   }
-  if (syntaxId==syntaxSal)
+  if (syntaxId==syntaxSal) {
+#ifdef SCHEME
+    // parse input into token string. if null then an error was
+    // reported
+    String tokens=((SalSyntax *)syntax)->tokenize(text);
+    if (tokens == String::empty)
+      return 0;
+    // quotify string chars in input text
+    String input=text.replace(T("\""),T("\\\"") );
+    text=T("(sal \"") + input + T("\"") + T(" ") +
+      T("(quote ") + tokens + T("))");
+#endif
+    //    printf("SAL='%s'\n",text.toUTF8() );
     getConsole()->consoleEval(text, true, region);
+  }
   else
     getConsole()->consoleEval(text.substring(pos+1), false, region);
   return 0;
