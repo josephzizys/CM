@@ -96,8 +96,8 @@ $ scons install</pre>
    </p>
 
    <blockquote>
-   executable:	/usr/local/bin/grace<br/>
-   resource dir:	/usr/local/lib/grace/*
+   executable:          build/bin/grace<br/>
+   resource dir:	build/lib/grace/*
    </blockquote>
    
   <p>
@@ -113,19 +113,22 @@ $ scons install</pre>
    is bundled together with the executable so once you have done
    'scons install' you can move the application bundle anywhere,
    e.g. into your /Applications folder on the Mac or your C:\Program
-   Files\ directory on Windows.  </p>
+   Files\ directory on Windows. On Linux you can move the contents of build/bin and build/lib to under /usr/local like this </p>
+<pre class="code">
+$ sudo "(cd build && tar -cf - bin lib) | (cd /usr/local && tar -xvf -)"
+</pre>
 
-<p>If you have write permission in the installation directory its also
-easiest if you install CM under that directory as well:</p>
+<h4>Additional Common Lisp Installation</h4>
+
+<p>If you are building Grace to use with Common Lisp you can install CM (and any other Lisp systems you want to work with) under the resource directory so that all your Lisp runtime will be located under a common parent directory. The resource directory will become the default Lisp site directory when Grace starts up.</p>
 
 <pre class="code">
 $ cd /path/to/grace/resources/
 $ svn co https://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/cm cm</pre>
 
-<p>Regardless of where you put your CM source tree, you should compile
+<p>Regardless of where you put your CM source tree, you must compile
 CM sources from inside Grace or things won't work correctly when you
-start lisp.</p>
-
+start lisp!</p>
 
 <h3 id="scheme">Running Scheme under Grace</h3>
 
@@ -194,8 +197,6 @@ process.  </p>
     # OS X:
     $ cd /path/to/grace
     $ exec build/Grace.app/Contents/MacOS/Grace &</pre>
-
-
 
 <h2 id="juce">Installing JUCE</h2>
 

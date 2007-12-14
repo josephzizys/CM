@@ -59,8 +59,8 @@ if (env['PLATFORM'] == 'darwin') :
                CPPDEFINES = ['MACOSX'])
 elif ( env['PLATFORM'] == 'posix' ) :
     # LINUX
-    execdir = '/usr/local/bin'
-    datadir = '/usr/local/lib/grace'
+    execdir = 'build/bin'
+    datadir = 'build/lib/grace'
     env.Append(CPPDEFINES = ['LINUX', 'HAVE_CONFIG_H'],
                CPPPATH = ['/usr/X11R6/include'],
                LIBPATH = ['/usr/X11R6/lib'],
@@ -92,9 +92,8 @@ else :
 
 BuildDir('build', 'src', duplicate = 0)
 
-# Always add -DVERSION=nnn to compile definitions. this little hack taken from:
+# Always add -DVERSION=nnn to compile definitions. this little hack adapted from:
 # http://svn.python.org/projects/sandbox/trunk/setuptools/setuptools/command/egg_info.py
-
 def get_revision_string ():
     rev=0
     p = os.path.join(os.curdir,'.svn','entries')
@@ -102,9 +101,12 @@ def get_revision_string ():
         f = open(p, 'r')
         data = f.read()
         f.close()
-        data = map(str.splitlines,data.split('\n\x0c\n'))
-        del data[0][0] 
-        rev = max([int(d[9]) for d in data if len(d)>9 and d[9]]+[0])
+        if data.startswith('8') :
+            data = map(str.splitlines,data.split('\n\x0c\n'))
+            del data[0][0] 
+            rev = max([int(d[9]) for d in data if len(d)>9 and d[9]]+[0])
+    if rev == 0 :
+        print "Warning: VERSION=0 (svn client outdated or nonexistent)"
     return str(rev)
 
 env.Append(CPPDEFINES = ['VERSION=' + get_revision_string() ] )
@@ -119,8 +121,6 @@ if (env['SCHEME']) :
     if ( not con.CheckLib('chicken') ) :
         print 'Cannot find chicken  library: ', env['LIBPREFIX']+'chicken'+env['LIBSUFFIX']
         Exit(1)
-
-
 
 # Check for juce.h
 
