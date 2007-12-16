@@ -21,15 +21,17 @@ void GraceApp::initialise (const String& commandLine) {
   File home = File::getSpecialLocation(File::userHomeDirectory);
   home.setAsCurrentWorkingDirectory();
   prefs=GracePreferences::getInstance();
-
-  File exe = File::getSpecialLocation(File::currentExecutableFile);
-
-#ifdef MACOSX
-  resourceDirectory = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("Resources"));
+  // Cache the absolute path to the resource directory. This is
+  // normally determined relative to the Grace executable at run time
+  // unless a compile time RESOURCEDIR has been specified
+#ifdef RESOURCEDIR
+  resourceDirectory = File(String(RESOURCEDIR));
+#elif MACOSX
+  resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("Resources")).getFullPathName());
 #elif LINUX
-  resourceDirectory = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("lib/grace"));
+  resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("lib/grace")).getFullPathName());
 #elif WINDOWS
-  resourceDirectory = File::getSpecialLocation(File::currentExecutableFile).getSiblingFile(T("Resources"));
+  resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getSiblingFile(T("Resources")).getFullPathName());
 #endif
 
   String graceinfo;
@@ -38,9 +40,7 @@ void GraceApp::initialise (const String& commandLine) {
 	    << T("\nExecutable file: ")
 	    << File::getSpecialLocation(File::currentExecutableFile).getFullPathName()
 	    << T("\nResource directory: ")
-    //	    << getGraceResourceDirectory().getFullPathName()
-    //	    << File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("lib/grace")).getFullPathName()
-	    << getResourceDirectoryPathName()
+ 	    << getResourceDirectoryPathName()
 	    << T("\nApplication file: ")
 	    << File::getSpecialLocation(File::currentApplicationFile).getFullPathName()
 	    << T("\nPreferences file: ")
@@ -56,6 +56,7 @@ void GraceApp::initialise (const String& commandLine) {
 	    << T("\nCommon application data directory: ")
 	    << File::getSpecialLocation(File::commonApplicationDataDirectory).getFullPathName()
 	    << T("\nTemp directory: ")
+	    << File::getSpecialLocation(File::tempDirectory).getFullPathName()
 	    << T("\n\n");
   printf("%s", graceinfo.toUTF8());
   LookAndFeel::setDefaultLookAndFeel(&shinyLookAndFeel);
@@ -94,7 +95,6 @@ void GraceApp::graceQuit (bool ask) {
 
 void GraceApp::shutdown () {
 #ifdef SCHEME
-  printf("in shutdown\n");
   if ( schemeProcess->isThreadRunning() ) {
     schemeProcess->stop();
     schemeProcess->stopThread(2000);
@@ -115,7 +115,6 @@ void GraceApp::shutdown () {
   delete prefs;
   delete commandManager;
   //LookAndFeel::setDefaultLookAndFeel(0); // this causes crash. not needed. 
-  printf("end shutdown\n");
 }
 
 const String GraceApp::getApplicationName () {

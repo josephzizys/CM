@@ -290,6 +290,11 @@ void ConsoleWindow::printBanner() {
     + app->getApplicationVersion()
     + T("\n(c) 2007 Todd Ingalls, Rick Taube\n");
   printMessage( banner);
+  File reso=File(app->getResourceDirectoryPathName());
+  if ( ! reso.isDirectory() )
+    printWarning(T("Warning: application resource directory '") + 
+		 reso.getFullPathName() + T("' does not exist.\n"));
+
 }
 
 TextEditor * ConsoleWindow::getConsole() {

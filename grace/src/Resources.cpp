@@ -13,26 +13,7 @@
 #include "Grace.h"
 
 File getGraceResourceDirectory() {
-  // returns the "site wide" resource directory for grace determined
-  // relative to the directory that contains the running executable:
-  //   MacOSX:   {exedir}/../Resources/
-  //   Windows:  {exedir}/Resources/
-  //   Linux:    {exedir}/../lib/grace
-  File exe = File::getSpecialLocation(File::currentExecutableFile);
-
-  if ( isHostWindows() )     // win32: "{exe}/Resources/"
-    return exe.getSiblingFile(T("Resources"));
-  else if ( isHostLinux() ) {  // Linux: "{exe}../lib/grace/"
-    //    return
-    // exe.getParentDirectory().getParentDirectory().getChildFile(T("lib/grace"));
-    // goddam it, currentExecutableFile is nonsense on linux. for now
-    // i simply return a hardwired path.
-    return File(T("/usr/local/lib/grace"));
-  }
-  else if ( isHostMacOSX() ) // OSX:   "{exe}../Resources/"
-    return exe.getParentDirectory().getParentDirectory().getChildFile(T("Resources"));
-  else
-    return File::nonexistent;
+  return ((GraceApp *)JUCEApplication::getInstance())->getResourceDirectory();
 }
 
 int getHostOS() {

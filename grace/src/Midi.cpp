@@ -130,7 +130,6 @@ MidiOutPort::MidiOutPort(ConsoleWindow *win)
 
 MidiOutPort::~MidiOutPort()
 {
-  printf("deleting MidiOutPort\n");
   if ( device != NULL ) delete device;
   outputNodes.clear();
 }
@@ -164,7 +163,7 @@ void MidiOutPort::open(int id) {
 			String(id) + T(").\n"));
   else
     devid=id;
-  printf("Midi out: dev=%d\n", id);
+  //printf("Midi out: dev=%d\n", id);
 }
 
 bool MidiOutPort::isOpen(int id) {
@@ -399,7 +398,7 @@ void MidiInPort::open(int id) {
 			String(id) + T(".\n"));
   else
     devid=id;
-  printf("Opened midi input device %d\n", id);
+  //printf("Opened midi input device %d\n", id);
 }
 
 void MidiInPort::open(String name) {
@@ -507,7 +506,7 @@ void MidiInPort::stopRecordInput() {
 }
 
 void MidiInPort::setTracing(bool t) {
-  printf("tracing set to %d\n", t);
+  //printf("tracing set to %d\n", t);
   trace=t;
 }
 
@@ -614,9 +613,6 @@ void MidiInPort::handleIncomingMidiMessage (MidiInput *dev,
   }
 
   if (trace) {
-    // i think this was crashing Grace because this callback is not
-    // happening in the main thread (?)
-    //console->printMessage(String(msg.getTimeStamp(), 3) + T(" ") + info + T("\n"));
     console->postConsoleTextMessage(String(msg.getTimeStamp(), 3) +
 				    T(" ") + info + T("\n"), 
 				    ConsoleMessage::TEXT, true);
@@ -627,7 +623,6 @@ void MidiInPort::handlePartialSysexMessage (MidiInput *dev,
 					    const juce::uint8 *data, 
 					    const int num, 
 					    const double time) {
-  printf("in MIDI sysex callback\n");  
 }
 
 ///
@@ -702,8 +697,8 @@ void MidiOutPort::setTuning(int tune, bool send) {
   microincrement=1.0/tune; // size of microdivision as fraction of 1
   microchancount=(int)(16.0/((float)microdivisions)); // num user addressable microchans
   microchanblock=microchancount*microdivisions; // total num chans claimed
-  printf("Tuning=%d, size=%f, chans=%d, claim=%d\n", microdivisions,
-	 microincrement, microchancount, microchanblock);
+  //  printf("Tuning=%d, size=%f, chans=%d, claim=%d\n", microdivisions,
+	 //	 microincrement, microchancount, microchanblock);
   if (send)
     sendTuning();
 }
@@ -757,7 +752,7 @@ void MidiOutPort::setPitchBendWidth(int b) {
 void MidiOutPort::sendTuning() {
  if ( ! isOpen() )
     return;
-  printf("Sending tuning %d:\n", getTuning());
+ //  printf("Sending tuning %d:\n", getTuning());
   int tunerow=getTuning()-1, channel, bendval;
   for (channel=0;channel<16; channel++) {
     bendval=(int)round(Toolbox::rescale( channeltunings[tunerow] [channel], 
@@ -765,7 +760,7 @@ void MidiOutPort::sendTuning() {
 					 pitchbendwidth,
 					 0,
 					 16383));
-    printf("chan %d: %f, %d\n", channel,channeltunings[tunerow] [channel], bendval);
+    //    printf("chan %d: %f, %d\n", channel,channeltunings[tunerow] [channel], bendval);
     // IS THIS THREAD SAFE?
     device->sendMessageNow( MidiMessage::pitchWheel(channel+1,bendval));    
   }
@@ -834,13 +829,13 @@ public:
   void setInstrument(int chan, int inst) 
   {
     // chan is a physcial channel 0-15
-    printf("assignment: chan=%d, inst=%d\n", chan, inst);
+    //    printf("assignment: chan=%d, inst=%d\n", chan, inst);
     instruments[chan]=inst;
     chan++;
     // now set all the microtuned channels to the same instrument!
     while ( (chan<16) && !port->isInstrumentChannel(chan) ) {
       instruments[chan]=inst;
-      printf("assignment: chan=%d, inst=%d\n", chan, inst);
+      //      printf("assignment: chan=%d, inst=%d\n", chan, inst);
       chan++;
     }
     //    for (chan=0;chan<16;chan++) printf(" %d:%d", chan, instruments[chan]);
@@ -1033,7 +1028,7 @@ void GMInstrumentList::listBoxItemClicked(int row, const MouseEvent &e)
   int arow=assignments->getSelectedRow(); // selected row in assignments list
   if (arow<0) return;
   int chan=assignments->rowToChannel(arow);
-  printf("assigning row=%d (physical channel %d) to %d\n", arow, chan, inst);
+  // printf("assigning row=%d (physical channel %d) to %d\n", arow, chan, inst);
   assignments->setInstrument(chan,inst);
   assignments->repaintRow(arow);
   // Mark assignment list as changed and enable Revert button
@@ -1044,7 +1039,7 @@ void GMInstrumentList::listBoxItemClicked(int row, const MouseEvent &e)
 void InstrumentView::buttonClicked (Button *button) 
 {
   if ( button->getName() == T("Send") ) {
-    printf("SENDING!\n");
+    //printf("SENDING!\n");
     // copy/send program changes, clear changed flag, deselect all
     // rows in list boxes and disable Revert button
     assignments->saveInstruments();
