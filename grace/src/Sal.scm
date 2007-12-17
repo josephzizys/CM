@@ -18,11 +18,16 @@
 
 ;
 
+(define *input* (list))
+(define *tokens* (list))
+(define *rule* #f)
+
 (define (sal str toks)
-  (let ((form #f) )
-    (set! toks (tokenize toks))
-    (set! form (parse SalStatementRule toks #f 0 #f #f))
-    form))
+  (set! *input* toks)
+  (set! *tokens* (tokenize toks))
+  (if *rule*
+      (parse *rule* *tokens* #f 0 #f #f)
+      *input*))
 
 ;
 ;;; Tokens
@@ -925,20 +930,25 @@
 (defrule SalBindRule (or (and SalIdentifier SalEqual SalSexprRule)
 			 SalIdentifier)
   (lambda (args errf)
-    ;;(print #:args-> args)
      (if (pair? args)
-	 (make-parse-unit SalBindRule (list (first args) (third args)) #f)
-	 (make-parse-unit SalBindRule (list args 
-					    (make-parse-unit SalFalse "#f" #f)
-					    ) #f)))
+	 (make-parse-unit SalBindRule
+			  (list (first args) (third args))
+			  #f)
+	 (make-parse-unit SalBindRule
+			  (list args 
+				(make-parse-unit SalFalse "#f" #f)
+				)
+			  #f)))
   (lambda (unit info errf) 
     (map (lambda (e) (emit e info errf))
 	 (parse-unit-parsed unit))))
 
+;; "with ..." is NOT a statement
+
 (defrule SalBindingsRule
   (and SalWith SalBindRule (* SalComma SalBindRule))
   (lambda (args errf)
-    (print (list #:args-> args))
+    ;; remove WITH token
     (if (not (third args))
 	(make-parse-unit SalBindingsRule
 			 (list (second args))
@@ -949,8 +959,10 @@
 						  SalComma))
 			 #f)))
   (lambda (unit info errf) 
-    (map (lambda (e) (emit e info errf))
-	 (parse-unit-parsed unit))))
+    ;; tell subforms that the context is a let bindings
+    (let ((i (add-emit-info #:bindings #t info)))
+      (map (lambda (e) (emit e i errf))
+	   (parse-unit-parsed unit)))))
 
 ; (parse SalBindingsRule (tokenize `((, SalWith "with" 0) (,SalIdentifier "aaa" 24) )) #f 0 #f display)
 
@@ -958,7 +970,159 @@
 
 ; (parse SalBindingsRule (tokenize `((, SalWith "with" 0) (,SalIdentifier "aaa" 24)  (#x2804 "=" 12) (#xb00 "3" 14) (#x100 "," 22) (,SalIdentifier "bbb" 24) (#x2804 "=" 12) (,SalIdentifier "aaa" 24) (#x1905 "+" 12) (#xb00 "3" 10))) #f 0 #f display)
 
+;;;
+;;; assignment (set)
+;;;
+
+(defrule SalAssignRule
+  (and (or SalArefRule SalIdentifier)
+       (or SalEqual SalLessEqual SalGreaterEqual
+	   SalInc SalMul SalCol SalPre SalApp)
+       SalSexprRule)
+  (lambda (args errf)
+    (make-parse-unit SalAssignRule args #f))
+  )
+
+(defrule SalAssignmentRule
+  (and SalSet SalAssignRule (* SalComma SalAssignRule))
+  (lambda (args errf)
+    (if (not (third args))
+	(make-parse-unit SalAssignmentRule
+			 (list (second args))
+			 #f)
+	(make-parse-unit SalAssignmentRule
+			 (cons (second args)
+			       (remove-token-type (third args)
+						  SalComma))
+			 #f)))
+  (lambda (unit info errf)
+    (let ((assigns (parse-unit-parsed unit)))
+      ;;(print (list #:emit-assignment assigns))
+      (let* ((head (list 'begin ))
+	     (tail head))
+	(do ((iter assigns (cdr iter)))
+	    ((null? iter)
+	     ;; remove surrounding begin if only one form
+	     (if (null? (cddr head)) 
+		 (cadr head)
+		 head))
+	  (let* ((asgn (parse-unit-parsed (car iter)) )
+		 (vref (emit (first asgn) info errf))
+		 ;; dont emit the operator just check its type
+		 (oper (parse-unit-type (second asgn)))
+		 (expr (emit (third asgn) info errf))
+		 (form #f))
+	    ;;(print (list #:assignment asgn))
+	    (cond ((SalType=? oper SalEqual)
+		   (set! form expr))
+		  ((SalType=? oper SalInc)
+		   (set! form `(+ ,vref ,expr)))
+		  ((SalType=? oper SalMul)
+		   (set! form `(* ,vref ,expr)))
+		  ((SalType=? oper SalCol)
+		   (set! form `(append ,vref (list ,expr))))
+		  ((SalType=? oper SalPre)
+		   (set! form `(cons ,expr ,vref)))
+		  ((SalType=? oper SalApp)
+		   (set! form `(append ,vref ,expr)))
+		  ((SalType=? oper SalLessEqual)
+		   (set! form `(min ,vref ,expr)))
+		  ((SalType=? oper SalGreaterEqual)
+		   (set! form `(max ,vref ,expr))))
+	    ;; if we are setting a list location then have to rewrite
+	    ;; as a list setter. this WON'T work for AREFS...
+	    (if (and (pair? vref) (eq? (first vref) 'list-ref))
+		(set! form `(set-car! (list-tail ,(second vref)
+						 ,(third vref))
+				      ,form))
+		(set! form `(set! ,vref ,form)))
+	    (set-cdr! tail (list form))
+	    (set! tail (cdr tail))
+	    ))))))
+
+; (parse SalAssignmentRule (tokenize '((16128 "set" 0) (24576 "foo" 4) (10244 "=" 8) (2816 "123" 10))) #f 0 #f #f)
+
+; (parse SalAssignmentRule (tokenize '((16128 "set" 0) (24576 "foo" 4) (10244 "=" 8) (2816 "1" 10) (6405 "+" 12) (2816 "2" 14) (6405 "+" 16) (2816 "3" 18) (256 "," 19) (24576 "bar" 21) (11264 "+=" 25) (2816 "2" 28) (7174 "/" 30) (2816 "5" 32) (256 "," 33) (24576 "baz" 35) (12032 "*=" 39) (2816 "3" 42) (256 "," 43) (24576 "bif" 45) (11776 "&=" 49) (2816 "3" 52) (256 "," 53) (24576 "bof" 55) (12032 "*=" 59) (2816 "4" 62) (256 "," 63) (24576 "buf" 65) (12288 "^=" 69) (24576 "list" 72) (512 "(" 76) (2816 "9" 77) (768 ")" 78) (256 "," 79) (24576 "zuz" 81) (10500 "<=" 85) (2816 "4" 88) (256 "," 89) (24576 "zaz" 91) (10756 ">=" 95) (2816 "3" 98) ))  #f 0 #f #f)
+
+(defrule SalBlockRule
+  (and SalBegin (@ SalBindingsRule) (* SalStatementRule) SalEnd)
+  (lambda (args errf)
+    ;; args: (BEGIN [(<bindings>)] (...) END)
+    ;;(print (list #:block-> args))
+    (let ((vars (second args))
+	  (body (third args)))
+      (if (not vars) #f (set! vars (first vars)))
+      (make-parse-unit SalBlockRule
+		       (cons vars body)
+		       #f)))
+  (lambda (unit info errf)
+    ;; ( <bindings> . <statements>)
+    (let ((bloc (parse-unit-parsed unit)))
+      (let ((vars (car bloc)) ; #<bindings> or #f
+	    (body (emit (cdr bloc) info errf)))
+	;; at some point this could pass var decls into (emit body) to
+	;; catch unknown variable errors etc.
+	;;(print (list #:vars-> vars))
+	(if (not vars)
+	    `(begin ,@body)
+	    `(let* ,(emit vars info errf)
+	       ,@body)))))
+  )
+
+;; FIX: Should WHEN and UNLESS be Commands ??
+
+(defrule SalConditionalRule 
+  (or (and SalIf SalSexprRule SalThen (@ SalStatementRule)
+	   (@ SalElse SalStatementRule))
+      (and SalWhen SalSexprRule SalStatementRule)
+      (and SalUnless SalSexprRule SalStatementRule))
+  (lambda (args errf)
+    ;;(print (list #:if-> args))
+    (let ((oper (first args))
+	  (test (second args))
+	  (data (list)))
+      (if (token-unit-type=? oper SalIf)
+	  (let ((clause (fourth args))
+		(then #f)
+		(else #f))
+	    (if (not clause)
+		(set! then (make-parse-unit SalFalse "#f" #f))
+		(set! then (first clause)))
+	    (set! clause (fifth args))
+	    (if (not clause)
+		(set! else (make-parse-unit SalFalse "#f" #f))
+		(set! else (cadr clause)))
+	    (set! data (list oper test then else))
+	    )
+	  (set! data (list oper test (third args))))
+      (make-parse-unit SalConditionalRule data #f)))
+  (lambda (unit info errf)
+    ;; THIS METHOD CAN BE REMOVED...
+    (let ((data (parse-unit-parsed unit)))
+      ;;(print (list #:data-> data))
+      (emit data info errf))))
+
+;;;
+;;;
+;;;
+
+(defrule SalStatementRule
+  (or SalBlockRule 
+      SalPrintStatementRule
+      SalSproutStatementRule
+      SalSendStatementRule
+      SalAssignmentRule
+      )
+  #f
+  #f)
+
 #|
+;; RENAME:
+;; SalBindingsRule -> SalWithStatementRule
+;; SalAssignmentRule -> SalSetStatementRule
+;; SalBlockRule -> SalBeginEndStatementRule
+;; DELETE: SalAssignerRule SalSetRule
+
 (define SalTypes
   `((SalUntyped 0)
     (SAL_TOKEN_BEG *)
