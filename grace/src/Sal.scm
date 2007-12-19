@@ -1102,6 +1102,237 @@
       ;;(print (list #:data-> data))
       (emit data info errf))))
 
+;;
+;; iteration
+;;
+
+(define (sal-parse-stepping args errf)
+  ;; return a stepping clause used by loop and run.  each clause is
+  ;; represented by one or more five element lists:
+  ;; (<var> <bind> <loop> <step> <stop>)
+  ;; when <var> is a variable to bind, <bind> is its binding list
+  ;; value, <loop> is its assignment statement at the top of the loop,
+  ;; <step> is its incrementing expression at the bottom of the loop,
+  ;; and <stop> is an expression that, if true, stops the iteration.
+  (let ((data (list))
+	(user #f)
+	(expr #f)
+	(temp #f)
+	(stop #f)
+	(then #f)
+	(bool #f)
+	(tail #f)
+	(loop #f)
+	(size #f)
+	(mode #f)
+	(goal #f)
+	(from #f)
+	(step #f))
+    (cond ((token-unit-type=? (first args) SalRepeat)
+	   ;; (repeat <expr>)
+	   (set! expr (emit (second args) (list) errf))
+	   (set! temp (gensym "temp"))
+	   (set! stop (gensym "stop"))
+	   (set! data (list (list stop expr #f #f #f)
+			    (list temp 0 #f
+				  `(set! ,temp (+ ,temp 1))
+				  `(= ,temp ,stop)))))
+	  ((token-unit-type=? (third args) SalEqual)
+	   ;; (for <v> = <expr> #f)
+	   ;; (for <v> = <expr> (then <expr>))
+	   (set! user (emit (second args) (list) errf))
+	   (set! expr (emit (fourth args) (list) errf))
+	   (set! then (fifth args))
+	   (if then
+	       (begin
+		 (set! then (emit (cadr then) (list) errf))
+		 (set! bool (gensym "bool"))
+		 (set! loop `(if ,bool
+				 (begin (set! ,bool #f) 
+					(set! ,user ,expr))
+				 (set! ,user ,then)))
+		 (set! data (list (list bool #t #f #f #f))))
+	       (set! loop `(set! ,user ,expr)))
+	   (set! data (append data (list (list user #f loop #f #f)))))
+	  ((token-unit-type=? (third args) SalIn)
+	   ;; (for <v> in <expr>)
+	   (set! user (emit (second args) (list) errf))
+	   (set! expr (emit (fourth args) (list) errf))
+	   (set! tail (gensym "tail"))
+	   (set! data (list (list tail expr #f 
+				  `(set! ,tail (cdr ,tail))
+				  `(null? ,tail))
+			    (list user #f `(set! ,user (car ,tail)) #f #f))))
+	  (else
+	   (set! size (length args))
+	   (set! user (emit (second args) (list) errf))
+	   ;; the LAST element always #f or (by <expr>)
+	   (set! step (list-ref args (- size 1)))
+	   (if step
+	       (set! step (emit (cadr step) (list) errf))
+	       (set! step 1))
+	   (cond ((= size 6)
+		  ;; (for <var> from <expr> (LIMIT <expr>) (by <expr>))
+		  ;; (for <var> from <expr> (LIMIT <expr>) #f)
+		  ;; (for <var> from <expr> #f #f)
+		  (set! from (emit (fourth args) (list) errf))
+		  (if (fifth args)
+		      (begin (set! mode (car (fifth args)))
+			     (set! goal (emit (cadr (fifth args)) (list) errf)))
+		      (begin (set! mode #f)
+			     (set! goal #f))))
+		 (else
+		  ;; (for <var> LIMIT <expr> (by <expr>))
+		  ;; (for <var> LIMIT <expr> #f)
+		  (set! from 0)
+		  (set! mode (third args))
+		  (set! goal (emit (fourth args) (list) errf))))
+	   (if (not (number? step))
+	       (let ((var (gensym "step")))
+		 (set! data (append data (list (list var step #f #f #f))))
+		 (set! step var)))
+	   (if (not (number? from))
+	       (let ((var (gensym "from")))
+		 (set! data (append data (list (list var from #f #f #f))))
+		 (set! from var)))
+	   (if goal
+	       (if (not (number? goal))
+		   (let ((var (gensym "goal")))
+		     (set! data (append data (list (list var goal #f #f #f))))
+		     (set! goal var))))
+	   (if (not mode)
+	       (set! step `(set! ,user (+ ,user ,step)))
+	       (cond ((token-unit-type=? mode SalBelow)
+		      (set! stop `(>= ,user ,goal))
+		      (set! step `(set! ,user (+ ,user ,step))))
+		     ((token-unit-type=? mode SalTo)
+		      (set! stop `(> ,user ,goal))
+		      (set! step `(set! ,user (+ ,user ,step))))
+		     ((token-unit-type=? mode SalAbove)
+		      (set! stop `(<= ,user ,goal))
+		      (set! step `(set! ,user (- ,user ,step))))
+		     ((token-unit-type=? mode SalDownto)
+		      (set! stop `(< ,user ,goal))
+		      (set! step `(set! ,user (- ,user ,step))))))
+	   (set! data (append data (list (list user from #f step stop))))))
+    (make-parse-unit SalSteppingRule data #f)))
+
+(defrule SalSteppingRule
+  (or (and SalRepeat SalSexprRule)
+      (and SalFor SalIdentifier SalEqual SalSexprRule (@ SalThen SalSexprRule))
+      (and SalFor SalIdentifier SalIn SalSexprRule)
+      ;;(and SalFor SalIdentifier SalOver SalSexprRule (@ SalBy SalSexprRule))
+      (and SalFor SalIdentifier SalFrom SalSexprRule
+	   (@ (or SalBelow SalTo SalAbove SalDownto) SalSexprRule)
+	   (@ SalBy SalSexprRule))
+      (and SalFor SalIdentifier 
+	   (or SalBelow SalTo SalAbove SalDownto) SalSexprRule
+	   (@ SalBy SalSexprRule)))
+  sal-parse-stepping
+  #f)
+
+(defrule SalTerminationRule
+  (or (and SalWhile SalSexprRule) (and SalUntil SalSexprRule))
+  (lambda (args errf)
+    (make-parse-unit SalTerminationRule args #f))
+  #f)
+
+(define (sal-emit-iteration unit info errf)
+    ;; DATA: (<with> (<stepping>) (<stop>) (<actions>) <finally>)
+  (let* ((data (parse-unit-parsed unit))
+	 ;; forms
+	 (bind (list))
+	 (loop (list))
+	 (step (list))
+	 (stop (list))
+	 (done (list))
+	 )
+    (print (list #:emit-> data))
+    ;; tell subforms what type of iteration we are
+    (if (= SalLoopStatementRule (parse-unit-type unit))
+	(set! info (add-emit-info #:loop #t info))
+	(set! info (add-emit-info #:run #t info)))
+    ;; add user's with variables to binding list
+    (if (first data)
+	(set! bind (append bind (emit (first data) info errf))))
+    ;; map over the stepping clauses adding iteration forms
+    (do ((tail (second data) (cdr tail)))
+	((null? tail) #f)
+      ;; each stepping clause contains a list of 5-element lists:
+      ;; ( (<var> <bind> <loop> <step> <stop>) ...)
+      (do ((clauses (parse-unit-parsed (car tail)) (cdr clauses)))
+	  ((null? clauses) #f)
+	(let ((clause (first clauses)))
+	  ;; add stepping vars to binding list
+	  (print (list #:clause-> clause))
+	  (set! bind (append bind (list (list (first clause) (second clause)))))
+	  (if (third clause)
+	      (set! loop (append loop (list (third clause)))))
+	  (if (fourth clause)
+	      (set! step (append step (list (fourth clause)))))
+	  (if (fifth clause)
+	      (set! stop (append stop (list (fifth clause))))))))
+    ;; add user's body statements to loop forms
+    (do ((tail (fourth data) (cdr tail)))
+	((null? tail) #f)
+      (set! loop (append loop (list (emit (car tail) info errf)))))
+    ;; add stepping forms after all the user's actions.
+    (set! loop (append loop step))
+    ;; add user's termination clauses to stop forms
+    (do ((tail (third data) (cdr tail)))
+	((null? tail) #f)
+      ;; data is (<while|until> <statement>)
+      (let* ((data (parse-unit-parsed (car tail)))
+	     (form (emit (second data) info errf)))
+	(if (token-unit-type=? (car data) SalWhile)
+	    (set! form `(not , form)))
+	(set! stop (append stop (list form)))))
+    ;; turn stop forms into a valid lisp expression
+    (if (pair? stop)
+	(if (null? (cdr stop))
+	    (set! stop (car stop)) ; only one
+	    (set! stop (cons 'or stop))) ; or together
+	(begin
+	  ;;(warn "A (possibly) non-terminating iteration is being defined.")
+	  (set! stop #f)))
+    ;; add finally clause, defaults to #f
+    (if (fifth data)
+	(set! done (emit (fifth data) info errf))
+	(set! done #f))
+    `(let* ,bind
+       (do ()
+	   (,stop , done)
+	 ,@loop
+	 ))))
+
+(defrule SalLoopStatementRule
+  (and SalLoop
+       (@ SalBindingsRule)
+       (* SalSteppingRule )
+       (* SalTerminationRule)
+       (+ SalStatementRule)
+       (@ SalFinally SalStatementRule)
+       SalEnd)
+  (lambda (args errf)
+    (let ((vars (second args))
+	  (step (third args))
+	  (stop (fourth args))
+	  (body (fifth args))
+	  (done (sixth args)))
+      ;; #f or (<bindings)
+      (if vars (set! vars (car vars)))
+      ;; ()  or (<step>...)
+      ;;(if (null? step) (set! step #f))
+      ;; ()  or (<stop>...)
+      ;;(if (null? stop) (set! stop #f))
+      ;; #f or (finally <statement>)
+      (if done (set! done (cadr done)))
+      (make-parse-unit SalLoopStatementRule
+		       (list vars step stop body done)
+		       #f)))
+    sal-emit-iteration
+  )
+
 ;;;
 ;;;
 ;;;
@@ -1112,9 +1343,20 @@
       SalSproutStatementRule
       SalSendStatementRule
       SalAssignmentRule
+      SalConditionalRule
+      SalLoopStatementRule
       )
   #f
   #f)
+
+
+
+
+
+
+
+
+
 
 #|
 ;; RENAME:
