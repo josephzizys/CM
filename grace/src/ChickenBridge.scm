@@ -503,13 +503,73 @@ void scheduler_set_time_milliseconds (bool b) {
 	,@init)
       )))
 
-;; SAL
+;;;
+;;; SAL support
+;;;
 
-(define (sal str tokens)
-  (print str)
-  (print tokens)
-  )
+(define (sal:eval input )
+  #f)
 
+(define (sal:format str . args)
+  (print-message (apply sprintf str args) ))
+
+(define (sal:error str . args)
+  (print-error (apply sprintf str args) ))
+
+(define *print-decimals* 3)
+
+(define (sal:print thing)
+  (cond ((not thing)
+	 (print-message "#f") )
+	((null? thing)
+	 (print-message "{}"))
+	((pair? thing) 
+	 (print-message "{" )
+	 (do ((tail thing (cdr tail)))
+	     ((null? tail) #f)
+	   (sal:print (car tail)) 
+	   (if (not (null? (cdr tail)))
+	       (print-message " ")))
+	 (print-message "}" ))
+	((eq? thing #t)
+	 (print-message "#t" ))
+	((number? thing)
+	 (if (inexact? thing)
+	     (if (eq? *print-decimals* #t)
+		 (print-message (number->string thing))
+		 (print-message (number->string
+				 (decimals thing *print-decimals*))))
+	     (print-message (number->string thing))))
+	((string? thing)
+	 (print-message thing))
+	(else
+	 (print-message (sprintf "~S" thing))))
+  (values))
+
+(define (sal:chdir )
+  (print-error ">>> Error: chdir command not implemented.\n"))
+
+(define (sal:load file)
+  (let ((f (file-exists? file)))
+    (if (not f)
+	(sal:error ">>> Error: file does not exist: ~S~%" file)
+	(let ((l (string-length file)))
+	  (if (and (> l 4) (substring?= file ".sal" (- l 4)))
+	      (print-error ">>> Error: loading .sal files not implemented.\n")
+	      (load file))))
+    (values)))
+
+(define (sal:open . args)
+  (print-error ">>> Error: open command not implemented.\n"))
+
+(define (sal:output . args)
+  (print-error ">>> Error: output command not implemented.\n"))
+
+(define (sal:plot . args)
+  (print-error ">>> Error: plot command not implemented.\n"))
+
+(define (sal:system . args)
+  (print-error ">>> Error: system command not implemented.\n"))
 
 (return-to-host)
 
