@@ -132,7 +132,7 @@
 ;; parse units
 ;
 
-(define-record parse-unit type parsed postion)
+(define-record parse-unit type parsed position)
 
 (define-record-printer (parse-unit u p)
   (let ((typ (parse-unit-type u)))
@@ -154,12 +154,22 @@
 
 ;; emit methods
 
-(define (add-emit-info name data info)
-  (cons (cons name data) info))
+;; emit methods can access/pass information up/down the emit subcall
+;; chain by adding things to the info parameter.
 
 (define (get-emit-info name info)
   (let ((x (assoc name info)))
     (and x (cdr x))))
+
+(define (add-emit-info name data info)
+  (cons (cons name data) info))
+
+(define (set-emit-info! name data info)
+  ;; nconc data to end of info. this allows subforms to pass info back
+  ;; up to calling forms.
+  (let ((i (assoc name info)))
+    (if (not i) (error "no info for " name))
+    (set-cdr! i data)))
 
 (define (emit x info errf)
   (cond ((token-unit? x)
@@ -940,9 +950,9 @@
 		       (cons (second args) rest)
 		       #f)))
   (lambda (unit info errf) 
-    (let ((data (map (lambda (e) (emit e info errf))
+    (let* ((data (map (lambda (e) (emit e info errf))
 		     (parse-unit-parsed unit)))
-	  (mesg (first data)))
+	   (mesg (first data)))
       ;; check args for mesg
       `(send ,mesg ,@(cdr data)))
     ))
@@ -952,6 +962,10 @@
 ; (parse SalSendStatementRule (tokenize `((, SalSend "send" 0) (#x900 "mp:note" 24) (#x100 "," 22) (#xb00 "1" 6) (#x100 "," 22) (#xb00 "-99" 6))) #f 0 #f display)
 ; (parse SalSendStatementRule (tokenize `((, SalSend "send" 0) (#x900 "mp:note" 24) (#x100 "," 22) (#x1600 "ziz" 13) (#xb00 "1" 6) (#x100 "," 22) (#x1600 "pif" 13) (#xb00 "-99" 6))) #f 0 #f display)
 ; (parse SalSendStatementRule (tokenize `((, SalSend "send" 0) (#x900 "mp:note" 24) (#x100 "," 22) (#xb00 "1000" 6) (#x100 "," 22) (#x1600 "ziz" 13) (#xb00 "1" 6) (#x100 "," 22) (#x1600 "pif" 13) (#xb00 "-99" 6))) #f 0 #f display)
+
+(defrule SalExecStatementRule (and SalExec SalSexprRule)
+  (lambda (args errf) (second args))
+  #f)
 
 (defrule SalLoadStatementRule (and SalLoad SalSexprRule)
   (simple-unit-parser SalLoadStatementRule)
@@ -990,15 +1004,23 @@
     (let ((data (parse-unit-parsed unit)))
       (if (not (get-emit-info #:run info))
 	  ( errf (make-parse-error "wait statement outside run block"
-				   (parse-unit-pos (car data)))
-		 ))
-      
-    )))
+				   (parse-unit-position
+				    (car data)))))
+      (emit data info errf))))
+
 
 (defrule SalFunctionReturnRule
   (and SalReturn SalSexprRule)
   (simple-unit-parser SalFunctionReturnRule)
-  #f)
+  (lambda (unit info errf)
+    (let ((data (parse-unit-parsed unit)))
+      (if (not (get-emit-info #:function info))
+	  ( errf (make-parse-error "return statement outside function"
+				   (parse-unit-position
+				    (car data)))))
+      ;; tell calling function that we have a return statemen
+      (set-emit-info! #:function #:return info)
+      (emit data info errf))))
 
 ;;
 ;; WITH variable bindings (not a statement)
@@ -1313,13 +1335,13 @@
 
 (defrule SalTerminationRule
   (or (and SalWhile SalSexprRule) (and SalUntil SalSexprRule))
-  (lambda (args errf)
-    (make-parse-unit SalTerminationRule args #f))
+  (simple-unit-parser SalTerminationRule)
   #f)
 
 (define (sal-emit-iteration unit info errf)
     ;; DATA: (<with> (<stepping>) (<stop>) (<actions>) <finally>)
   (let* ((data (parse-unit-parsed unit))
+	 (run? #f)
 	 ;; forms
 	 (bind (list))
 	 (loop (list))
@@ -1327,11 +1349,18 @@
 	 (stop (list))
 	 (done (list))
 	 )
-    ;;(print (list #:emit-> data))
+    (print (list #:sal-emit-iteration data))
     ;; tell subforms what type of iteration we are
-    (if (= SalLoopStatementRule (parse-unit-type unit))
-	(set! info (add-emit-info #:loop #t info))
-	(set! info (add-emit-info #:run #t info)))
+    (cond ((= SalLoopStatementRule (parse-unit-type unit))
+	   (set! info (add-emit-info #:loop #t info))
+	   )
+	  (else
+	   (if (not (get-emit-info #:process info))
+	       ( errf (make-parse-error "run statement outside process" 
+					(parse-unit-position
+					 (car data))) ))
+	   (set! info (add-emit-info #:run #t info))
+	   (set! run? #t)))
     ;; add user's with variables to binding list
     (if (first data)
 	(set! bind (append bind (emit (first data) info errf))))
@@ -1362,13 +1391,13 @@
     ;; add user's termination clauses to stop forms
     (do ((tail (third data) (cdr tail)))
 	((null? tail) #f)
-      ;; data is (<while|until> <statement>)
+      ;; data is (<while until> <statement>)
       (let* ((data (parse-unit-parsed (car tail)))
 	     (form (emit (second data) info errf)))
 	(if (token-unit-type=? (car data) SalWhile)
 	    (set! form `(not , form)))
 	(set! stop (append stop (list form)))))
-    ;; turn stop forms into a valid lisp expression
+    ;; turn all stop forms into one valid lisp expression
     (if (pair? stop)
 	(if (null? (cdr stop))
 	    (set! stop (car stop)) ; only one
@@ -1380,14 +1409,41 @@
     (if (fifth data)
 	(set! done (emit (fifth data) info errf))
 	(set! done #f))
-    `(let* ,bind
-       (do ()
-	   (,stop , done)
-	 ,@loop
-	 ))))
+    
+    (if (not run?)
+	`(let* ,bind (do () (,stop , done) ,@loop))
+	(let* ((timevar (gensym "time"))
+	       (waitvar (gensym "wait"))
+	       (errorvar (gensym "error"))
+	       (abortvar (gensym "abort")))
+	  `(let* ,bind
+	     ;; the process closure
+	     (lambda (,timevar)
+	       (let* ((,waitvar 0)
+		      (elapsed (lambda () ,timevar))
+		      (wait (lambda (x) (set! ,waitvar x))))
+		 ;; wrap run statement in error handler
+		 (call-with-current-continuation
+		  (lambda (,abortvar)
+		    (with-exception-handler
+		     (lambda (,errorvar)
+		       (print-error
+			(sprintf 
+			 ">>> Error: ~A~%    process aborted at time ~S~%"
+			 ((condition-property-accessor 'exn 'message) 
+			  ,errorvar)
+			 ,timevar
+			 ))
+		       (,abortvar -2)  ;; abort and remove process
+		       )
+		     ;; the run statements
+		     (lambda ()
+		       (cond (,stop ,done -1)
+			     (else ,@loop ,waitvar)))))))))
+	  ))))
 
 (defrule SalLoopStatementRule
-  (and SalLoop
+  (and (or SalLoop SalRun)
        (@ SalBindingsRule)
        (* SalSteppingRule )
        (* SalTerminationRule)
@@ -1402,16 +1458,108 @@
 	  (done (sixth args)))
       ;; #f or (<bindings)
       (if vars (set! vars (car vars)))
-      ;; ()  or (<step>...)
-      ;;(if (null? step) (set! step #f))
-      ;; ()  or (<stop>...)
-      ;;(if (null? stop) (set! stop #f))
-      ;; #f or (finally <statement>)
       (if done (set! done (cadr done)))
       (make-parse-unit SalLoopStatementRule
 		       (list vars step stop body done)
 		       #f)))
-    sal-emit-iteration
+  (lambda (unit info errf)
+    (sal-emit-iteration unit info errf ))
+  )
+
+;;;
+
+(defrule SalFunDeclRule
+  (and SalIdentifier
+       (or (and SalLParen SalRParen)
+	   (and SalLParen 
+		SalIdentifier (* SalComma SalIdentifier)
+		SalRParen))
+       SalStatementRule)
+  (lambda (args errf)
+    ;;(print (list #:funcdecl-> args))
+    (let ((name (first args))
+	  (pars (second args))
+	  (body (third args)))
+      (if (= (length pars) 2)
+	  ;; pars: ( <(>  <)> )
+	  (set! pars (list))
+	  ;; pars: ( <(> <sym> (<,> <sym> ...) <)> )
+	  (set! pars (cons (second pars)
+			   (remove-token-type (third pars) SalComma))))
+      (make-parse-unit SalFunDeclRule (list name pars body) #f)) ))
+
+(defrule SalDefineStatementRule
+  (and SalDefine
+       (or (and SalVariable SalBindRule (* SalComma SalBindRule))
+	   (and SalFunction SalFunDeclRule)
+	   (and SalProcess SalFunDeclRule)))
+  (lambda (args errf)
+    ;; args: (<define> (<TYPE> ...))
+;    (print (list #:define-args-> args))
+    ;; flush <define> and set args to (<TYPE> ...)
+    (set! args (second args)) ; 
+    (let ((type (first args)))
+      (if (token-unit-type=? type SalVariable)
+	  ;; flatten args to (<type> <bind> ...)
+	  (set! args
+		(cons type (cons (second args)
+				 (remove-token-type (third args)
+						    SalComma)))))
+      (make-parse-unit SalDefineStatementRule args #f)))
+  (lambda (unit info errf)
+    (let* ((data (parse-unit-parsed unit))
+	   (type (first data))
+	   (head (list 'begin))
+	   (tail head))
+      ;; data: (<variable> <bind> ....) OR (<function> <fundecl>)
+      (cond ((token-unit-type=? type SalVariable)
+	     ;; rest of data is list of bindings
+	     (do ((rest (cdr data) (cdr rest)))
+		 ((null? rest) #f)
+	       (let* ((bind (emit (car rest) info errf))
+		      (var (car bind))
+		      (str (sprintf "Variable: ~A = " var)))
+	       (set-cdr! tail (list (cons 'define bind)
+				    `(sal:print ,str ,var)))
+	       (set! tail (cddr tail)))))
+	    (else ;; function or process. second element is
+		  ;; <SalFunDeclRule>: (<name> <params> <body>)
+	     (let* ((data (parse-unit-parsed (second data)))
+		    (name (emit (first data) info errf))
+		    (pars (emit (second data) info errf))
+		    (body (third data))
+		    (mesg #f)
+		    (form #f))
+;	       (print (list #:procdata-> name pars body))
+	       (cond ((token-unit-type=? type SalFunction)
+		      (set! info (add-emit-info #:function #t info))
+		      (set! form (emit body info errf))
+		      ;(print (list #:after-emitinfo-> info))
+		      (if (eq? #:return (get-emit-info #:function info))
+			  (set! form
+				`(call-with-current-continuation
+				  (lambda (return) ,form))))
+		      (set! form `(define ,(cons name pars) ,form))
+		      (set! mesg "Function: "))
+		     ((token-unit-type=? type SalProcess)
+		      (set! info (add-emit-info #:process #t info))
+		      (set! form (emit body info errf))
+		      (set! form `(define ,(cons name pars) ,form))
+		      (set! mesg "Process: ")))
+	       (do ((args (string-append mesg (symbol->string name) " ("))
+		    (tail pars (cdr tail)))
+		   ((null? tail)
+		    (set! mesg `(print-message
+				 ,(string-append args ")"))))
+		 (set! args (string-append args
+					   (symbol->string (car tail))))
+		 (if (not (null? (cdr tail)))
+		     (set! args (string-append args ", "))))
+	       ;; message printed before definition to help track
+	       ;; compiler warnings
+	       (set-cdr! head (list mesg form))
+	       )))
+      head))
   )
 
 ;;;
@@ -1419,7 +1567,8 @@
 ;;;
 
 (defrule SalStatementRule
-  (or SalBlockRule 
+  (or SalDefineStatementRule
+      SalBlockRule 
       SalPrintStatementRule
       SalSproutStatementRule
       SalSendStatementRule
@@ -1433,18 +1582,10 @@
       SalPlotStatementRule
       SalLoadStatementRule
       SalChdirStatementRule
+      SalExecStatementRule
       )
   #f
   #f)
-
-
-
-
-
-
-
-
-
 
 #|
 ;; RENAME:
