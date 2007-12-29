@@ -1233,7 +1233,7 @@
 	   (set! data (list (list stop expr #f #f #f)
 			    (list temp 0 #f
 				  `(set! ,temp (+ ,temp 1))
-				  `(= ,temp ,stop)))))
+				  `(>= ,temp ,stop)))))
 	  ((token-unit-type=? (third args) SalEqual)
 	   ;; (for <v> = <expr> #f)
 	   ;; (for <v> = <expr> (then <expr>))
@@ -1349,7 +1349,7 @@
 	 (stop (list))
 	 (done (list))
 	 )
-    (print (list #:sal-emit-iteration data))
+    ;(print (list #:sal-emit-iteration data))
     ;; tell subforms what type of iteration we are
     (cond ((= SalLoopStatementRule (parse-unit-type unit))
 	   (set! info (add-emit-info #:loop #t info))
@@ -1451,7 +1451,8 @@
        (@ SalFinally SalStatementRule)
        SalEnd)
   (lambda (args errf)
-    (let ((vars (second args))
+    (let ((type (first args))
+	  (vars (second args))
 	  (step (third args))
 	  (stop (fourth args))
 	  (body (fifth args))
@@ -1459,9 +1460,11 @@
       ;; #f or (<bindings)
       (if vars (set! vars (car vars)))
       (if done (set! done (cadr done)))
-      (make-parse-unit SalLoopStatementRule
+      (make-parse-unit (if (token-unit-type=? type SalLoop)
+			   SalLoopStatementRule
+			   SalRunStatementRule)
 		       (list vars step stop body done)
-		       #f)))
+		       (parse-unit-position type))))
   (lambda (unit info errf)
     (sal-emit-iteration unit info errf ))
   )
