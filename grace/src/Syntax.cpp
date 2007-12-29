@@ -334,7 +334,7 @@ SalSyntax::SalSyntax ()
   addSalTok( T("+="), SalInc, hiliteNone);
   addSalTok( T("*="), SalMul, hiliteNone);
   addSalTok( T("&="), SalCol, hiliteNone);
-  addSalTok( T("*="), SalPre, hiliteNone);  
+  addSalTok( T("@="), SalPre, hiliteNone);  
   addSalTok( T("^="), SalApp, hiliteNone);
   // hash tokens
   addSalTok( T("#t"), SalTrue, hiliteNone);
