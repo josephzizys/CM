@@ -15,6 +15,7 @@
 
 #include "Grace.h"
 #include "Scheme.h"
+#include "Syntax.h"
 #include "Midi.h"
 
 //
@@ -104,9 +105,36 @@ void scheduler_set_time_milliseconds (bool b) {
   ((GraceApp *)GraceApp::getInstance())->schemeProcess->setTimeMilliseconds(b);
 }
 
+//void print_current_directory() {
+//  String s=File::getCurrentWorkingDirectory().getFullPathName().quoted() + T("\n");
+//  ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::TEXT, true);
+//}
+
+char *get_current_directory() {
+  return (char *)File::getCurrentWorkingDirectory().getFullPathName().toUTF8();
+}
+
+void set_current_directory (char *path) {
+  File dir=File(String(path));
+  if ( dir.isDirectory() ) {
+    dir.setAsCurrentWorkingDirectory();
+    //print_working_directory();
+  }
+  else {
+    String s=T(">>> Error: ") + dir.getFullPathName().quoted() + T(" is not a directory.\n");
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::ERROR, true);
+  }			 
+}
+
+void load_sal_file(char *path) {
+  SalSyntax::getInstance()->loadFile( String(path) );  
+}
+
 <#
 
 (include "Toolbox.scm")
+
+(include "Sal.scm")
 
 (declare
  (unit grace)
@@ -116,7 +144,7 @@ void scheduler_set_time_milliseconds (bool b) {
  (export print-message print-error 
          mp:note mp:on mp:off mp:prog
          mp:ctrl mp:alloff mp:micro mp:inhook 
-	 send go
+	 send expand-send go
 	 current-time-milliseconds current-time-seconds
 	 now time-format
 	 sprout stop hush pause paused? cont
@@ -131,8 +159,52 @@ void scheduler_set_time_milliseconds (bool b) {
 	 pick pickl odds
 	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
 	 rancauchy ranpoisson ranpink ranbrown
-	 sal
+	 sal sal:print sal:chdir sal:load sal:open sal:output load-sal-file
+	 ;; utilities
+	 current-directory change-directory 
+	 first second third fourth fifth sixth seventh eighth ninth tenth
+	 list* last butlast
 	 ))
+;;;
+;;; essential utilities
+;;;
+
+(define first car)
+(define second cadr)
+(define third caddr)
+(define fourth cadddr)
+(define fifth (lambda (l) (car (cddddr l))))
+(define sixth (lambda (l) (cadr (cddddr l))))
+(define seventh (lambda (l) (caddr (cddddr l))))
+(define eighth (lambda (l) (cadddr (cddddr l))))
+(define ninth (lambda (l) (car (cddddr (cddddr l)))))
+(define tenth (lambda (l) (cadr (cddddr (cddddr l)))))
+
+(define (rest l) (cdr l))
+
+(define (last l) (if (null? (cdr l)) l (last (cdr l))))
+
+(define (butlast l)
+  (cond ((null? (cdr l)) (list))
+	((null? (cddr l)) (list (car l)))
+	(else
+	 (cons (car l) (butlast (cdr l))))))
+
+(define (list* . args)
+  (cond ((null? args)
+	 (error ">>> Error: too few arguments to list*."))
+        ((null? (cdr args))
+	 (car args))
+        (else
+          (cons (car args)
+                (apply list* (cdr args))))))
+
+(define (current-directory )
+  ((foreign-lambda c-string "get_current_directory" )))
+
+(define (change-directory . dir)
+  ((foreign-lambda void "set_current_directory" c-string)
+   (if (null? dir) "~/" (car dir))))
 
 ;;;
 ;;; FFI glue code
@@ -193,6 +265,12 @@ void scheduler_set_time_milliseconds (bool b) {
 
 (define scheduler-hush
   (foreign-safe-lambda void "scheduler_hush" ))
+
+;; OS interface
+
+
+(define (load-sal-file file)
+  ((foreign-lambda void "load_sal_file" c-string) file))
 
 ;;;
 ;;; top level scheme code
@@ -292,11 +370,19 @@ void scheduler_set_time_milliseconds (bool b) {
 	   (error "message function not string, symbol or list of both")))
     `(hash-table-set! *messages* ,name (quote ,(cons func info)))))
 
-(define (ferror str  . args)
-  (error (apply sprintf str args)))
+;;(define (ferror str  . args)
+;;  (error (apply sprintf str args)))
 
-(define (expand-send mesg data)
-  (let* ((mess (if (symbol? mesg) (symbol->string mesg) mesg))
+(define (expand-send mesg data errf)
+  ;; errf is an error continuation if called from sal
+  (let* ((ferror (or errf (lambda (str . args)
+			    (error (apply sprintf str args)))))
+	 (sal? errf)
+	 ;; show sal style keywords if called from sal
+	 (keyname (if sal?
+		      (lambda (k) (sprintf "~A:" (keyword->string k)))
+		      (lambda (k) k)))
+	 (mess (if (symbol? mesg) (symbol->string mesg) mesg))
 	 (entry (hash-table-ref *messages* mess	(lambda () #f))))
     (if (not entry) (ferror "~S is an invalid message" mess) )
     (let* ((save data)
@@ -340,18 +426,18 @@ void scheduler_set_time_milliseconds (bool b) {
 		      (ferror "~S expected keyword but got '~S'"
 			      mess key))
 		     ((null? data)
-		      (ferror "~S missing value for keyword '~S'" 
-			      mess key))
+		      (ferror "~S missing value for keyword '~A'" 
+			      mess (keyname key)))
 		     ((not arg)
 		      (ferror
-		       "~S found invalid keyword '~S'~%Available keywords: ~S"
-			      mess key (map car info))))
+		       "~S invalid keyword '~A'~%Available keywords: ~A"
+			      mess key (map (lambda (x) (keyname (car x))) info))))
 	       ;; replace key's arg in data with val. if arg is
 	       ;; already replaced then keyword was specified twice
 	       (let ((tail (member arg args)))
 		 (if (not tail)
-		     (ferror "~S found duplicate keyword '~S' in ~S"
-			     mess key save))
+		     (ferror "~S duplicate keyword '~S'"
+			     mess (keyname key)))
 		 (set-car! tail (car data)))
 	       (set! data (cdr data)))))
       ;; remap args replacing remaining args with default data
@@ -366,7 +452,7 @@ void scheduler_set_time_milliseconds (bool b) {
       )))
 
 (define-macro (send mess . data)
-  (expand-send mess data))
+  (expand-send mess data #f))
 
 ;; port:method defintions
 ;; DO THESE NEED ERROR HANDLING AROUND ARGS?
@@ -503,73 +589,8 @@ void scheduler_set_time_milliseconds (bool b) {
 	,@init)
       )))
 
-;;;
-;;; SAL support
-;;;
 
-(define (sal:eval input )
-  #f)
 
-(define (sal:format str . args)
-  (print-message (apply sprintf str args) ))
-
-(define (sal:error str . args)
-  (print-error (apply sprintf str args) ))
-
-(define *print-decimals* 3)
-
-(define (sal:print thing)
-  (cond ((not thing)
-	 (print-message "#f") )
-	((null? thing)
-	 (print-message "{}"))
-	((pair? thing) 
-	 (print-message "{" )
-	 (do ((tail thing (cdr tail)))
-	     ((null? tail) #f)
-	   (sal:print (car tail)) 
-	   (if (not (null? (cdr tail)))
-	       (print-message " ")))
-	 (print-message "}" ))
-	((eq? thing #t)
-	 (print-message "#t" ))
-	((number? thing)
-	 (if (inexact? thing)
-	     (if (eq? *print-decimals* #t)
-		 (print-message (number->string thing))
-		 (print-message (number->string
-				 (decimals thing *print-decimals*))))
-	     (print-message (number->string thing))))
-	((string? thing)
-	 (print-message thing))
-	(else
-	 (print-message (sprintf "~S" thing))))
-  (values))
-
-(define (sal:chdir )
-  (print-error ">>> Error: chdir command not implemented.\n"))
-
-(define (sal:load file)
-  (let ((f (file-exists? file)))
-    (if (not f)
-	(sal:error ">>> Error: file does not exist: ~S~%" file)
-	(let ((l (string-length file)))
-	  (if (and (> l 4) (substring?= file ".sal" (- l 4)))
-	      (print-error ">>> Error: loading .sal files not implemented.\n")
-	      (load file))))
-    (values)))
-
-(define (sal:open . args)
-  (print-error ">>> Error: open command not implemented.\n"))
-
-(define (sal:output . args)
-  (print-error ">>> Error: output command not implemented.\n"))
-
-(define (sal:plot . args)
-  (print-error ">>> Error: plot command not implemented.\n"))
-
-(define (sal:system . args)
-  (print-error ">>> Error: system command not implemented.\n"))
 
 (return-to-host)
 

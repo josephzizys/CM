@@ -10,10 +10,10 @@
 
 #include "Syntax.h"
 #include "Grace.h"
-#include <map>;
+//#include <map>
 #include <cctype>
 
-using namespace std;
+//using namespace std;
 
 juce_ImplementSingleton(TextSyntax) ;
 juce_ImplementSingleton(LispSyntax) ;
@@ -21,8 +21,10 @@ juce_ImplementSingleton(SalSyntax) ;
 
 Syntax::Syntax (String a, String b, String c, String d, String e, 
 		String f, String g, String h, String i, String j) 
-  : numtoks (0)
+  : numtoks (0),
+    type (syntaxNone)
 {
+
   init_syntab(syntab, a, b, c, d, e, f, g, h, i, j);
   for (int i=0; i<MAXHILITE; i++) hilites[i]=Colours::black;
 }
@@ -56,6 +58,7 @@ TextSyntax::TextSyntax ()
 	    T(""), T(""), T("\""), T("([{"), T(")]}"),
 	    T(",.!?;:'`\\"), T("")) 
 {
+  type=syntaxText;
 }
 
 TextSyntax::~TextSyntax() {
@@ -88,6 +91,7 @@ LispSyntax::LispSyntax ()
 	    T(";"), T("`#',"), T("\""), T("("), T(")"),
 	    T(","), T("\\"))
 {
+  type=syntaxLisp;
   // hilite4 = special forms
   // hilite5 = lisp keywords
   hilites[hiliteString]=Colours::rosybrown;
@@ -248,6 +252,55 @@ hiliteID LispSyntax::getHilite (const String text, int start, int end) {
   return hiliteNone;
 }
 
+void LispSyntax::evalText(String text, bool isRegion, bool expand) {
+  int typ=SCAN_EMPTY;
+  int end=text.length();
+  int pos=end-1;
+  int old=pos;
+
+  while (pos>-1) {
+    typ = scan_sexpr( syntab, text, old, -1, SCAN_CODE, &pos, NULL);
+    if (typ<=SCAN_EMPTY)
+      break;
+    old=pos;
+  }
+
+  if ( typ==SCAN_EMPTY ) {
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->
+      printWarning( T("Lisp eval: empty selection.\n"));
+  }
+  else if (typ<SCAN_EMPTY) {
+    int l1, l2;
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->
+      printError( T(">>> Error: Lisp eval: unbalanced expression:\n"));
+    // print line containing error with ^ marking offending position
+    for (l2=old+1; l2<end; l2++)
+      if (text[l2]=='\n') break;
+    for (l1=old; l1>-1; l1--)
+      if (text[l1]=='\n') break;
+    l1++;
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->
+      printError( text.substring(l1,l2) + T("\n"));
+    String mark=String::empty;
+    for (int i=l1; i<old; i++)
+      mark += T(" ");
+    mark += T("^\n");
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->
+      printError( mark);
+  }
+  else {
+    text=text.substring(pos+1);
+    if (expand)
+#ifdef SCHEME
+      text=T("(pp (macroexpand (quote ") + text + T(")))");
+#else
+      text=T("(progn (pprint (macroexpand (quote ") + text + T("))) (values))");
+#endif
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->
+      consoleEval(text, false, isRegion);
+  }
+}
+
 /************************************************************************
  * SAL Syntax                                                           *
  ************************************************************************/
@@ -255,7 +308,9 @@ hiliteID LispSyntax::getHilite (const String text, int start, int end) {
 SalSyntax::SalSyntax () 
   : Syntax( T(""), T(""), T("~!@$%^&*-_=+|:<.>/?"),
 	    T(";"), T("#"), T("\""), T("([{"), T(")]})"),
-	    T(","), T("\\")) {
+	    T(","), T("\\")) 
+{
+  type=syntaxSal;
   // SAL Hilites:
   //  hilite4 = commands
   //  hilite5 = clausals/reserved
@@ -337,9 +392,11 @@ SalSyntax::SalSyntax ()
   addSalTok( T("@="), SalPre, hiliteNone);  
   addSalTok( T("^="), SalApp, hiliteNone);
   // hash tokens
-  addSalTok( T("#t"), SalTrue, hiliteNone);
-  addSalTok( T("#f"), SalFalse, hiliteNone);
-  addSalTok( T("#?"), SalQMark, hiliteNone);
+  addSalTok( T("#t"), SalTrue, hilite8);
+  addSalTok( T("#f"), SalFalse, hilite8);
+  addSalTok( T("#?"), SalQMark, hilite8);
+  addSalTok( T("#$"), SalUnquote, hilite8);
+  addSalTok( T("#^"), SalSplice, hilite8);
 }
 
 SalSyntax::~SalSyntax() {
@@ -518,6 +575,35 @@ hiliteID SalSyntax::getHilite (const String text, int start, int end) {
   else return tok->getHilite();
 }
 
+void SalSyntax::evalText(String text, bool isRegion, bool expand) {
+  String tokens=tokenize(text);
+  // if null then error was reported...
+  if (tokens == String::empty)
+    return ;
+#ifdef SCHEME  
+  int rule=(isRegion) ? SalSyntax::SalStatementSequenceRule : 0;
+  String exp = (expand) ? T("#t") : T("#f");
+  // quotify string chars in input text
+  String input=text.replace(T("\""),T("\\\"") );
+  // build call to sal function
+  text=T("(sal \"") + input + T("\"") + T(" ") +
+    String(rule) + T(" ") +
+    T("(quote ") + tokens + T(") ") + exp + T(")");
+#endif
+  ((GraceApp *)GraceApp::getInstance())->getConsole()->
+    consoleEval(text, true, isRegion);
+}
+
+void SalSyntax::loadFile(String path) {
+  File file = File(path);
+  if (!file.existsAsFile()) {
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->
+      printError( T(">>> Error: file ") + path + T(" does not exist.\n"));
+    return;
+  }
+  evalText( file.loadFileAsString(), true);
+}
+
 /*
  * SAL Lexer
  */
@@ -690,8 +776,6 @@ void SalSyntax::salError(String str, int err, SynTok *tok) {
   for (int i=beg;i<pos;i++)
     errstr << T(" ");
   errstr << T("^\n");
-  
-  //  printf(errstr.toUTF8());
   ((GraceApp *)GraceApp::getInstance())->getConsole()->printError( errstr);
 }
 

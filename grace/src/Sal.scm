@@ -8,32 +8,11 @@
 ;;; $Revision: 1364 $
 ;;; $Date: 2007-08-07 09:39:39 -0500 (Tue, 07 Aug 2007) $
 
-(begin
-  (define first car)
-  (define second cadr)
-  (define third caddr)
-  (define fourth cadddr)
-  (define fifth (lambda (l) (cadddr (cdr l))))
-  (define sixth (lambda (l) (cadddr (cddr l)))))
-
-;
-
-(define *input* (list))
-(define *tokens* (list))
-(define *rule* #f)
-
-(define (sal str toks)
-  (set! *input* toks)
-  (set! *tokens* (tokenize toks))
-  (if *rule*
-      (pp (parse *rule* *tokens* #f 0 #f #f))
-      *input*))
-
 ;
 ;;; Tokens
 ;
  
-(define-record token type string location)
+(define-record token type string position)
 
 (define-record-printer (token t p)
   (fprintf p "#<t x~X ~S>" (token-type t) (token-string t)))
@@ -44,24 +23,9 @@
       (apply make-token l)))
 
 (define (tokenize l) (map list->token l))
-
-(define (tokens->string toks)
-  (apply string-append (map token-string toks)))
-
-(define (token=? tok patval) ; is pat always a pattern value?
-  (if (not (number? patval)) 
-      (error "fix token=? : not a number" patval))
-  (if (token? tok)
-      (SalType=? (token-type tok) patval)
-      (error "fix token=? : not a token" tok)))
-
 (define (first-token toks) (car toks))
 (define (rest-tokens toks) (cdr toks))
 (define (null-tokens? toks) (null? toks))
-
-;(define (first-token toks) toks)
-;(define (rest-tokens toks) (toks-next toks))
-;(define (null-tokens? toks) (eq? toks #f))
 
 ;
 ;;; Rules
@@ -122,11 +86,11 @@
 ;;; parse errors
 ;
 
-(define-record parse-error string pos)
+(define-record parse-error string position)
 (define-record-printer (parse-error e p)
-  (fprintf p "#<parse-error ~S (pos ~S)>"
+  (fprintf p "#<parse-error ~S (@ ~S)>"
 	   (parse-error-string e)
-	   (parse-error-pos e)))
+	   (parse-error-position e)))
 
 ;
 ;; parse units
@@ -241,7 +205,8 @@
 
 (define (simple-unit-parser type)
   ;; return a parse unit that simply holds its subforms
-  (lambda (args errf) (make-parse-unit type args #f)))
+  (lambda (args errf)
+    (make-parse-unit type args #f)))
 
 (define (simple-unit-emitter func)
   ;; return an emitter that emits a lisp form for each subunit with
@@ -263,6 +228,8 @@
 ;;; the parser
 ;
 
+(define *maxtokpos* #f)
+
 (define (parse pattern tokens . args)
   ;; returns a lisp expression or a parse-error
   (let ((junk-allowed #f)
@@ -272,23 +239,21 @@
      (lambda (errf)
        (call-with-values 
 	   (lambda ()
-	     (parser pattern tokens #f 0 trace 
-		     errf ;(lambda (e) (err e))
-		     ))
+	     (set! *maxtokpos* 0)
+	     (parser pattern tokens #f 0 trace errf))
 	 (lambda (success results remains) 
 	   (if (and success (or (null? remains) junk-allowed)) 
 	       (emit results
 		     ;; top-level info is syntax to emit
 		     (add-emit-info #:syntax #:scheme info)
-		     errf ;(lambda (e) (err e))
-		     )
-	       (make-parse-error "Unparsable input: "
-				 (if (null? remains) -1
-				     (token-location
-				      (car remains)))))))))))
+		     errf)
+	       (make-parse-error "Illegal statement: "
+				 *maxtokpos*))))))))
 
 (define (parser pat tokens force-and level trace errf)
   (if trace (printf "~%parse[~A]: pattern=~S tokens=~S" level pat tokens))
+  (or (null-tokens? tokens)
+      (set! *maxtokpos* (max *maxtokpos* (token-position (first-token tokens)))))
   (cond	((pattern-value? pat)
 	 ;; pattern value: is either a TokenType or RuleType
 	 (let ((typ (pattern-value pat)))
@@ -301,7 +266,7 @@
 			    (values #t
 				    (make-parse-unit (token-type tok)
 						     (token-string tok)
-						     (token-location tok))
+						     (token-position tok))
 				    (rest-tokens tokens))
 			    (values #f #f tokens)))))
 		 ((SalRuleType? typ)
@@ -457,147 +422,150 @@
   (define SalFalse #x1200)
   (define SAL_BOOL_END #x1300)
   (define SalQMark #x1400)
-  (define SAL_HASH_END #x1500)
-  (define SAL_DATA_END #x1500)
-  (define SalKeyparam #x1600)
-  (define SalClass #x1700)
-  (define SAL_OP_BEG #x1800)
-  (define SalPlus #x1905)
-  (define SalMinus #x1a05)
-  (define SalTimes #x1b06)
-  (define SalDivide #x1c06)
-  (define SalMod #x1d05)
-  (define SalExpt #x1e07)
-  (define SalAnd #x1f02)
-  (define SalOr #x2001)
-  (define SalNot #x2103)
-  (define SAL_RELATION_BEG #x2200)
-  (define SalLess #x2304)
-  (define SalGreater #x2404)
-  (define SalNotEqual #x2504)
-  (define SalGeneralEqual #x2604)
-  (define SAL_ASSIGNMENT_BEG #x2700)
-  (define SalEqual #x2804)
-  (define SalLessEqual #x2904)
-  (define SalGreaterEqual #x2a04)
-  (define SAL_RELATION_END #x2b00)
-  (define SAL_OP_END #x2b00)
-  (define SalInc #x2c00)
-  (define SalMul #x2d00)
-  (define SalCol #x2e00)
-  (define SalPre #x2f00)
-  (define SalApp #x3000)
-  (define SAL_ASSIGNMENT_END #x3100)
-  (define SAL_LITERAL_BEG #x3100)
-  (define SAL_STATEMENT_BEG #x3100)
-  (define SAL_COMMAND_BEG #x3100)
-  (define SalBegin #x3210)
-  (define SalChdir #x3300)
-  (define SalDefine #x3400)
-  (define SalExec #x3500)
-  (define SalIf #x3600)
-  (define SalLoad #x3700)
-  (define SalLoop #x3810)
-  (define SalOpen #x3900)
-  (define SalPlay #x3a00)
-  (define SalPlot #x3b00)
-  (define SalPrint #x3c00)
-  (define SalRun #x3d10)
-  (define SalSend #x3e00)
-  (define SalSet #x3f00)
-  (define SalSprout #x4000)
-  (define SalSystem #x4100)
-  (define SalUse #x4200)
-  (define SAL_COMMAND_END #x4300)
-  (define SAL_CONSTITUENT_BEG #x4300)
-  (define SalElse #x4400)
-  (define SalEnd #x4511)
-  (define SalOutput #x4600)
-  (define SalReturn #x4700)
-  (define SalThen #x4800)
-  (define SalUnless #x4900)
-  (define SalUntil #x4a00)
-  (define SalWait #x4b00)
-  (define SalWhen #x4c00)
-  (define SalWhile #x4d00)
-  (define SalWith #x4e00)
-  (define SAL_CONSTITUENT_END #x4f00)
-  (define SAL_STATEMENT_END #x4f00)
-  (define SAL_CLAUSAL_BEG #x4f00)
-  (define SalAbove #x5000)
-  (define SalBelow #x5100)
-  (define SalBy #x5200)
-  (define SalDownto #x5300)
-  (define SalFinally #x5400)
-  (define SalFor #x5500)
-  (define SalFrom #x5600)
-  (define SalIn #x5700)
-  (define SalOver #x5800)
-  (define SalRepeat #x5900)
-  (define SalTo #x5a00)
-  (define SAL_CLAUSAL_END #x5b00)
-  (define SAL_LITERAL_END #x5b00)
-  (define SAL_DEFINE_BEG #x5b00)
-  (define SalFunction #x5c00)
-  (define SalProcess #x5d00)
-  (define SalVariable #x5e00)
-  (define SAL_DEFINE_END #x5f00)
-  (define SAL_IDENTIFIER_BEG #x5f00)
-  (define SalIdentifier #x6000)
-  (define SalSlotRef #x6100)
-  (define SAL_IDENTIFIER_END #x6200)
-  (define SAL_TOKEN_END #x6200)
-  (define SAL_RULE_BEG #x6200)
-  (define SalNumberRule #x6300)
-  (define SalBoolRule #x6400)
-  (define SalAtomRule #x6500)
-  (define SalListRule #x6600)
-  (define SalEltRule #x6700)
-  (define SalArefRule #x6800)
-  (define SalIfExprRule #x6900)
-  (define SalFuncallRule #x6a00)
-  (define SalFunargsRule #x6b00)
-  (define SalPargsRule #x6c00)
-  (define SalKargsRule #x6d00)
-  (define SalOpRule #x6e00)
-  (define SalMexprRule #x6f00)
-  (define SalTermRule #x7000)
-  (define SalSexprRule #x7100)
-  (define SalBindingsRule #x7200)
-  (define SalBindRule #x7300)
-  (define SalAssignmentRule #x7400)
-  (define SalAssignRule #x7500)
-  (define SalAssignerRule #x7600)
-  (define SalSetRule #x7700)
-  (define SalFunctionReturnRule #x7800)
-  (define SalProcessWaitRule #x7900)
-  (define SalBlockRule #x7a00)
-  (define SalConditionalRule #x7b00)
-  (define SalLoopStatementRule #x7c00)
-  (define SalRunStatementRule #x7d00)
-  (define SalSteppingRule #x7e00)
-  (define SalTerminationRule #x7f00)
-  (define SalPrintStatementRule #x8000)
-  (define SalExecStatementRule #x8100)
-  (define SalOpenStatementRule #x8200)
-  (define SalSendStatementRule #x8300)
-  (define SalSproutStatementRule #x8400)
-  (define SalOutputStatementRule #x8500)
-  (define SalLoadStatementRule #x8600)
-  (define SalSystemStatementRule #x8700)
-  (define SalChdirStatementRule #x8800)
-  (define SalPlayStatementRule #x8900)
-  (define SalPlotStatementRule #x8a00)
-  (define SalDefineStatementRule #x8b00)
-  (define SalStatementRule #x8c00)
-  (define SalStatementSequenceRule #x8d00)
-  (define SalDeclarationRule #x8e00)
-  (define SalVarDeclRule #x8f00)
-  (define SalFunDeclRule #x9000)
-  (define SalProcDeclRule #x9100)
-  (define SalProcessBodyRule #x9200)
-  (define SAL_RULE_END #x9300)
-  (define SAL_TYPE_END #x9300)
+  (define SalUnquote #x1500)
+  (define SalSplice #x1600)
+  (define SAL_HASH_END #x1700)
+  (define SAL_DATA_END #x1700)
+  (define SalKeyparam #x1800)
+  (define SalClass #x1900)
+  (define SAL_OP_BEG #x1a00)
+  (define SalPlus #x1b05)
+  (define SalMinus #x1c05)
+  (define SalTimes #x1d06)
+  (define SalDivide #x1e06)
+  (define SalMod #x1f05)
+  (define SalExpt #x2007)
+  (define SalAnd #x2102)
+  (define SalOr #x2201)
+  (define SalNot #x2303)
+  (define SAL_RELATION_BEG #x2400)
+  (define SalLess #x2504)
+  (define SalGreater #x2604)
+  (define SalNotEqual #x2704)
+  (define SalGeneralEqual #x2804)
+  (define SAL_ASSIGNMENT_BEG #x2900)
+  (define SalEqual #x2a04)
+  (define SalLessEqual #x2b04)
+  (define SalGreaterEqual #x2c04)
+  (define SAL_RELATION_END #x2d00)
+  (define SAL_OP_END #x2d00)
+  (define SalInc #x2e00)
+  (define SalMul #x2f00)
+  (define SalCol #x3000)
+  (define SalPre #x3100)
+  (define SalApp #x3200)
+  (define SAL_ASSIGNMENT_END #x3300)
+  (define SAL_LITERAL_BEG #x3300)
+  (define SAL_STATEMENT_BEG #x3300)
+  (define SAL_COMMAND_BEG #x3300)
+  (define SalBegin #x3410)
+  (define SalChdir #x3500)
+  (define SalDefine #x3600)
+  (define SalExec #x3700)
+  (define SalIf #x3800)
+  (define SalLoad #x3900)
+  (define SalLoop #x3a10)
+  (define SalOpen #x3b00)
+  (define SalPlay #x3c00)
+  (define SalPlot #x3d00)
+  (define SalPrint #x3e00)
+  (define SalRun #x3f10)
+  (define SalSend #x4000)
+  (define SalSet #x4100)
+  (define SalSprout #x4200)
+  (define SalSystem #x4300)
+  (define SalUse #x4400)
+  (define SAL_COMMAND_END #x4500)
+  (define SAL_CONSTITUENT_BEG #x4500)
+  (define SalElse #x4600)
+  (define SalEnd #x4711)
+  (define SalOutput #x4800)
+  (define SalReturn #x4900)
+  (define SalThen #x4a00)
+  (define SalUnless #x4b00)
+  (define SalUntil #x4c00)
+  (define SalWait #x4d00)
+  (define SalWhen #x4e00)
+  (define SalWhile #x4f00)
+  (define SalWith #x5000)
+  (define SAL_CONSTITUENT_END #x5100)
+  (define SAL_STATEMENT_END #x5100)
+  (define SAL_CLAUSAL_BEG #x5100)
+  (define SalAbove #x5200)
+  (define SalBelow #x5300)
+  (define SalBy #x5400)
+  (define SalDownto #x5500)
+  (define SalFinally #x5600)
+  (define SalFor #x5700)
+  (define SalFrom #x5800)
+  (define SalIn #x5900)
+  (define SalOver #x5a00)
+  (define SalRepeat #x5b00)
+  (define SalTo #x5c00)
+  (define SAL_CLAUSAL_END #x5d00)
+  (define SAL_LITERAL_END #x5d00)
+  (define SAL_DEFINE_BEG #x5d00)
+  (define SalFunction #x5e00)
+  (define SalProcess #x5f00)
+  (define SalVariable #x6000)
+  (define SAL_DEFINE_END #x6100)
+  (define SAL_IDENTIFIER_BEG #x6100)
+  (define SalIdentifier #x6200)
+  (define SalSlotRef #x6300)
+  (define SAL_IDENTIFIER_END #x6400)
+  (define SAL_TOKEN_END #x6400)
+  (define SAL_RULE_BEG #x6400)
+  (define SalNumberRule #x6500)
+  (define SalBoolRule #x6600)
+  (define SalAtomRule #x6700)
+  (define SalListRule #x6800)
+  (define SalEltRule #x6900)
+  (define SalArefRule #x6a00)
+  (define SalIfExprRule #x6b00)
+  (define SalUnquoteRule #x6c00)
+  (define SalFuncallRule #x6d00)
+  (define SalFunargsRule #x6e00)
+  (define SalPargsRule #x6f00)
+  (define SalKargsRule #x7000)
+  (define SalOpRule #x7100)
+  (define SalMexprRule #x7200)
+  (define SalTermRule #x7300)
+  (define SalSexprRule #x7400)
+  (define SalBindingsRule #x7500)
+  (define SalBindRule #x7600)
+  (define SalAssignmentRule #x7700)
+  (define SalAssignRule #x7800)
+  (define SalAssignerRule #x7900)
+  (define SalSetRule #x7a00)
+  (define SalFunctionReturnRule #x7b00)
+  (define SalProcessWaitRule #x7c00)
+  (define SalBlockRule #x7d00)
+  (define SalConditionalRule #x7e00)
+  (define SalLoopStatementRule #x7f00)
+  (define SalRunStatementRule #x8000)
+  (define SalSteppingRule #x8100)
+  (define SalTerminationRule #x8200)
+  (define SalPrintStatementRule #x8300)
+  (define SalExecStatementRule #x8400)
+  (define SalOpenStatementRule #x8500)
+  (define SalSendStatementRule #x8600)
+  (define SalSproutStatementRule #x8700)
+  (define SalOutputStatementRule #x8800)
+  (define SalLoadStatementRule #x8900)
+  (define SalSystemStatementRule #x8a00)
+  (define SalChdirStatementRule #x8b00)
+  (define SalPlayStatementRule #x8c00)
+  (define SalPlotStatementRule #x8d00)
+  (define SalDefineStatementRule #x8e00)
+  (define SalStatementRule #x8f00)
+  (define SalStatementSequenceRule #x9000)
+  (define SalDeclarationRule #x9100)
+  (define SalVarDeclRule #x9200)
+  (define SalFunDeclRule #x9300)
+  (define SalProcDeclRule #x9400)
+  (define SalProcessBodyRule #x9500)
+  (define SAL_RULE_END #x9600)
+  (define SAL_TYPE_END #x9600)
   )
 
 (define (SalType? x) (and (<= #x100 x) (< x SAL_TYPE_END)))
@@ -681,16 +649,39 @@
 	  ;; top-level {} call (list) to create the list.
 	  (if (null? sub)
 	      (list 'list)
-	      (let ((l (emit sub (add-emit-info #:list #t info) errf)))
+	      (let* ((i (add-emit-info #:list #t info))
+		     (l (emit sub i errf))
+		     (q #f))	
+		(if (eq? (get-emit-info #:list i)  #:unquote)
+		    (set! q (list 'quasiquote l))
+		    (set! q (list 'quote l)))
 		;; if in a bindings copy the constant list to avoid user
 		;; side effecting constant (quoted) data.
 		(if (get-emit-info #:bindings info)
-		    `(append (quote ,l) (list))
-		    `(quote ,l))))
+		    `(append ,q (list))
+		    q)))
 	  (emit sub info errf))))
   )
 
-(defrule SalEltRule (or SalAtomRule SalListRule SalString)
+(defrule SalUnquoteRule (and (or SalUnquote SalSplice) SalSexprRule)
+  (simple-unit-parser SalUnquoteRule)
+  (lambda (unit info errf)
+    (let* ((subs (parse-unit-parsed  unit))
+	   (unq? (token-unit-type=? (car subs) SalUnquote))
+	   (lis? (get-emit-info #:list info)))
+      (if (not lis?) 
+	  ( errf (make-parse-error
+		  (if unq? "#$ outside of list." 
+		      "#^ outside of list." )
+		  (parse-unit-position (car subs)))))
+      (let ((expr (emit (second subs) info errf)))
+	;; tell superior list that we have an unquote
+	(set-emit-info! #:list #:unquote info)
+	(if unq?
+	    (list 'unquote expr)
+	    (list 'unquote-splicing expr))))))
+
+(defrule SalEltRule (or SalAtomRule SalListRule SalString SalUnquoteRule)
   #f
   #f)
 
@@ -785,10 +776,6 @@
 	      (append args1 (cadr args))
 	      args1))))
   #f)
-
-(define *sal-special-forms*
-  '((make emit-make)
-    (send emit-send)))
 
 (defrule SalFuncallRule (and SalIdentifier SalFunargsRule)
   (lambda (args errf)
@@ -948,20 +935,17 @@
 		(set! rest (append (first rest) (third rest))))))
       (make-parse-unit SalSendStatementRule
 		       (cons (second args) rest)
-		       #f)))
+		       (parse-unit-position (car args))
+		       )))
   (lambda (unit info errf) 
-    (let* ((data (map (lambda (e) (emit e info errf))
-		     (parse-unit-parsed unit)))
+    (let* ((data (emit (parse-unit-parsed unit) info errf))
 	   (mesg (first data)))
       ;; check args for mesg
-      `(send ,mesg ,@(cdr data)))
-    ))
-
-; (parse SalSendStatementRule (tokenize `((, SalSend "send" 0) (#x900 "mp:note" 24))) #f 0 #f display)
-; (parse SalSendStatementRule (tokenize `((, SalSend "send" 0) (#x900 "mp:note" 24) (#x100 "," 22) (#xb00 "1" 6))) #f 0 #f display)
-; (parse SalSendStatementRule (tokenize `((, SalSend "send" 0) (#x900 "mp:note" 24) (#x100 "," 22) (#xb00 "1" 6) (#x100 "," 22) (#xb00 "-99" 6))) #f 0 #f display)
-; (parse SalSendStatementRule (tokenize `((, SalSend "send" 0) (#x900 "mp:note" 24) (#x100 "," 22) (#x1600 "ziz" 13) (#xb00 "1" 6) (#x100 "," 22) (#x1600 "pif" 13) (#xb00 "-99" 6))) #f 0 #f display)
-; (parse SalSendStatementRule (tokenize `((, SalSend "send" 0) (#x900 "mp:note" 24) (#x100 "," 22) (#xb00 "1000" 6) (#x100 "," 22) (#x1600 "ziz" 13) (#xb00 "1" 6) (#x100 "," 22) (#x1600 "pif" 13) (#xb00 "-99" 6))) #f 0 #f display)
+      (expand-send (car data) (cdr data)
+		   (lambda (str . args)
+		     ( errf (make-parse-error
+			     (apply sprintf str args)
+			     (parse-unit-position unit))))))))
 
 (defrule SalExecStatementRule (and SalExec SalSexprRule)
   (lambda (args errf) (second args))
@@ -993,7 +977,8 @@
      (cons (first args)
 	   (cons (second args)
 		 (remove-token-type (third args)
-				    SalComma)))))
+				    SalComma)))
+     #f))
   (lambda (unit info errf)
     '(fix-me plot))
   )
@@ -1060,12 +1045,6 @@
     (let ((i (add-emit-info #:bindings #t info)))
       (map (lambda (e) (emit e i errf))
 	   (parse-unit-parsed unit)))))
-
-; (parse SalBindingsRule (tokenize `((, SalWith "with" 0) (,SalIdentifier "aaa" 24) )) #f 0 #f display)
-
-; (parse SalBindingsRule (tokenize `((, SalWith "with" 0) (,SalIdentifier "aaa" 24)  (#x2804 "=" 12) (#xb00 "3" 14))) #f 0 #f display)
-
-; (parse SalBindingsRule (tokenize `((, SalWith "with" 0) (,SalIdentifier "aaa" 24)  (#x2804 "=" 12) (#xb00 "3" 14) (#x100 "," 22) (,SalIdentifier "bbb" 24) (#x2804 "=" 12) (,SalIdentifier "aaa" 24) (#x1905 "+" 12) (#xb00 "3" 10))) #f 0 #f display)
 
 ;;;
 ;;; assignment (set)
@@ -1136,10 +1115,6 @@
 	    (set-cdr! tail (list form))
 	    (set! tail (cdr tail))
 	    ))))))
-
-; (parse SalAssignmentRule (tokenize '((16128 "set" 0) (24576 "foo" 4) (10244 "=" 8) (2816 "123" 10))) #f 0 #f #f)
-
-; (parse SalAssignmentRule (tokenize '((16128 "set" 0) (24576 "foo" 4) (10244 "=" 8) (2816 "1" 10) (6405 "+" 12) (2816 "2" 14) (6405 "+" 16) (2816 "3" 18) (256 "," 19) (24576 "bar" 21) (11264 "+=" 25) (2816 "2" 28) (7174 "/" 30) (2816 "5" 32) (256 "," 33) (24576 "baz" 35) (12032 "*=" 39) (2816 "3" 42) (256 "," 43) (24576 "bif" 45) (11776 "&=" 49) (2816 "3" 52) (256 "," 53) (24576 "bof" 55) (12032 "*=" 59) (2816 "4" 62) (256 "," 63) (24576 "buf" 65) (12288 "^=" 69) (24576 "list" 72) (512 "(" 76) (2816 "9" 77) (768 ")" 78) (256 "," 79) (24576 "zuz" 81) (10500 "<=" 85) (2816 "4" 88) (256 "," 89) (24576 "zaz" 91) (10756 ">=" 95) (2816 "3" 98) ))  #f 0 #f #f)
 
 (defrule SalBlockRule
   (and SalBegin (@ SalBindingsRule) (* SalStatementRule) SalEnd)
@@ -1339,7 +1314,7 @@
   #f)
 
 (define (sal-emit-iteration unit info errf)
-    ;; DATA: (<with> (<stepping>) (<stop>) (<actions>) <finally>)
+    ;; DATA: (<loop|run> <with> (<stepping>) (<stop>) (<actions>) <finally>)
   (let* ((data (parse-unit-parsed unit))
 	 (run? #f)
 	 ;; forms
@@ -1351,9 +1326,8 @@
 	 )
     ;(print (list #:sal-emit-iteration data))
     ;; tell subforms what type of iteration we are
-    (cond ((= SalLoopStatementRule (parse-unit-type unit))
-	   (set! info (add-emit-info #:loop #t info))
-	   )
+    (cond ((token-unit-type=? (car data) SalLoop)
+	   (set! info (add-emit-info #:loop #t info)))
 	  (else
 	   (if (not (get-emit-info #:process info))
 	       ( errf (make-parse-error "run statement outside process" 
@@ -1361,6 +1335,8 @@
 					 (car data))) ))
 	   (set! info (add-emit-info #:run #t info))
 	   (set! run? #t)))
+    ;; pop loop|run tag off data
+    (set! data (cdr data))
     ;; add user's with variables to binding list
     (if (first data)
 	(set! bind (append bind (emit (first data) info errf))))
@@ -1460,10 +1436,8 @@
       ;; #f or (<bindings)
       (if vars (set! vars (car vars)))
       (if done (set! done (cadr done)))
-      (make-parse-unit (if (token-unit-type=? type SalLoop)
-			   SalLoopStatementRule
-			   SalRunStatementRule)
-		       (list vars step stop body done)
+      (make-parse-unit SalLoopStatementRule
+		       (list type vars step stop body done)
 		       (parse-unit-position type))))
   (lambda (unit info errf)
     (sal-emit-iteration unit info errf ))
@@ -1530,10 +1504,27 @@
 	     (let* ((data (parse-unit-parsed (second data)))
 		    (name (emit (first data) info errf))
 		    (pars (emit (second data) info errf))
+		    ;; copy pars for possible sideeffect
+		    (decl (cons name (append pars (list))))
 		    (body (third data))
 		    (mesg #f)
-		    (form #f))
+		    (form #f)
+		    )
 ;	       (print (list #:procdata-> name pars body))
+
+	       ;; decl is (funcname {arg}*). if last arg contains
+	       ;; "..." then its an &rest arg: replace last cdr of
+	       ;; decl with arg minus the "..."
+	       (if (not (null? (cdr decl)))
+		   (let* ((tail (list-tail decl (- (length decl) 2)))
+			  (name (symbol->string (cadr tail)))
+			  (size (string-length name)))
+		     (if (and (> size 3)
+			      (string=? (substring name (- size 3)) 
+					"..."))
+			 (set-cdr! tail
+				   (string->symbol
+				    (substring name 0 (- size 3)))))))
 	       (cond ((token-unit-type=? type SalFunction)
 		      (set! info (add-emit-info #:function #t info))
 		      (set! form (emit body info errf))
@@ -1542,18 +1533,18 @@
 			  (set! form
 				`(call-with-current-continuation
 				  (lambda (return) ,form))))
-		      (set! form `(define ,(cons name pars) ,form))
+		      (set! form (list 'define decl form))
 		      (set! mesg "Function: "))
 		     ((token-unit-type=? type SalProcess)
 		      (set! info (add-emit-info #:process #t info))
 		      (set! form (emit body info errf))
-		      (set! form `(define ,(cons name pars) ,form))
+		      (set! form (list 'define decl form))
 		      (set! mesg "Process: ")))
 	       (do ((args (string-append mesg (symbol->string name) " ("))
 		    (tail pars (cdr tail)))
 		   ((null? tail)
 		    (set! mesg `(print-message
-				 ,(string-append args ")"))))
+				 ,(string-append args ")\n"))))
 		 (set! args (string-append args
 					   (symbol->string (car tail))))
 		 (if (not (null? (cdr tail)))
@@ -1590,6 +1581,138 @@
   #f
   #f)
 
+(defrule SalStatementSequenceRule (+ SalStatementRule)
+  (lambda (args errf)
+    (make-parse-unit SalStatementSequenceRule
+		     args (parse-unit-position (first args))))
+  (lambda (unit info errf)
+    (cons 'begin (emit (parse-unit-parsed unit) info errf))))
+
+;;;
+;;; Sal Runtime Support
+;;;
+    
+(define *sal-string* #f)
+(define *sal-tokens* #f)
+(define *sal-output* #f)
+(define *sal-parse* SalStatementRule)
+
+(define (sal string rule tokens trace?)
+  (set! *sal-string* string)
+  (set! *sal-tokens* (tokenize tokens))
+  (if (= rule 0)
+      (set! rule *sal-parse*)
+      #f)
+  (set! *sal-output* (parse rule *sal-tokens* #f 0 #f #f))
+  (cond ((parse-error? *sal-output*)
+	 (print-sal-error *sal-string* *sal-output*))
+	(trace?
+	 (pp *sal-output*)
+	 )
+	(else
+	 (eval *sal-output*)
+	 ))
+  (values))
+
+(define (print-sal-error str err)
+  (let* ((len (string-length str))
+	 (pos (parse-error-position err))
+	 (beg (- pos 1))
+	 (end 0)
+	 )
+    ;; isolate line containing error position
+    (do ((f #f))
+	((or f (= beg -1)) #f)
+      (if (char=? (string-ref str beg) #\newline)
+	  (set! f #t)
+	  (set! beg (- beg 1))))
+    ;; beg now 1+ nearest leftward #\Return or at 0
+    (set! beg (+ beg 1))
+    ;; find end of error line
+    (set! end pos)
+    (do ((f #f))
+	((or f (= end len)) #f)
+      (if (char=? (string-ref str end) #\newline)
+	  (set! f #t)
+	  (set! end (+ end 1))))
+    (print-error
+     (string-append ">>> Error: " 
+		    (parse-error-string err)
+		    (make-string 1 #\newline)
+		    (substring str beg end) 
+		    (make-string 1 #\newline)
+		    (let* ((siz (- pos beg))
+			   (pad (make-string (+ siz 2) #\space)))
+		      (string-set! pad siz #\^)
+		      (string-set! pad (+ siz 1) #\newline)
+		      pad)))
+    (values)))
+
+
+(define *print-decimals* 3)
+
+(define (sal:print . args)
+  (letrec ((printer 
+	    (lambda (thing)
+	      (cond ((not thing)
+		     (print-message "#f") )
+		    ((null? thing)
+		     (print-message "{}"))
+		    ((pair? thing) 
+		     (print-message "{" )
+		     (do ((tail thing (cdr tail)))
+			 ((null? tail) #f)
+		       (printer (car tail)) 
+		       (if (not (null? (cdr tail)))
+			   (print-message " ")))
+		     (print-message "}" ))
+		    ((eq? thing #t)
+		     (print-message "#t" ))
+		    ((number? thing)
+		     (if (inexact? thing)
+			 (if (eq? *print-decimals* #t)
+			     (print-message (number->string thing))
+			     (print-message (number->string
+					     (decimals thing *print-decimals*))))
+			 (print-message (number->string thing))))
+		    ((string? thing)
+		     (print-message thing))
+		    (else
+		     (print-message (sprintf "~S" thing)))))))
+    (do ((tail args (cdr tail)))
+	((null? tail)
+	 (print-message "\n"))
+      (printer (car tail)))
+    (values)))
+
+(define (sal:chdir path)
+  (change-directory path)
+  (values))
+
+(define (sal:load file)
+  (let ((f (file-exists? file)))
+    (if (not f)
+	(print-error (string-append ">>> Error: file \""
+				    file
+				    "\"does not exist\n"))
+	(let ((l (string-length file)))
+	  (if (and (> l 4) (substring=? file ".sal" (- l 4)))
+	      (load-sal-file file)
+	      (load file))))
+    (values)))
+
+(define (sal:open . args)
+  (print-error ">>> Error: open command not implemented.\n"))
+
+(define (sal:output . args)
+  (print-error ">>> Error: output command not implemented.\n"))
+
+(define (sal:plot . args)
+  (print-error ">>> Error: plot command not implemented.\n"))
+
+(define (sal:system . args)
+  (print-error ">>> Error: system command not implemented.\n"))
+
 #|
 ;; RENAME:
 ;; SalBindingsRule -> SalWithStatementRule
@@ -1625,6 +1748,8 @@
     SalFalse
     SAL_BOOL_END
     SalQMark
+    SalUnquote
+    SalSplice
     SAL_HASH_END
     (SAL_DATA_END *)
     ;; Named Parameters
@@ -1735,6 +1860,7 @@
     SalEltRule
     SalArefRule
     SalIfExprRule
+    SalUnquoteRule
     SalFuncallRule
     SalFunargsRule
     SalPargsRule

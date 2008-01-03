@@ -362,23 +362,44 @@ const StringArray EditorWindow::getMenuBarNames() {
 const PopupMenu EditorWindow::getLispMenu () {
   PopupMenu menu;
   menu.addCommandItem( commandManager, TextBuffer::cmdLispEval);
+  menu.addCommandItem( commandManager, TextBuffer::cmdLispExpand);
+  menu.addSeparator();
+#ifndef SCHEME
+  menu.addCommandItem( commandManager, TextBuffer::cmdLispCompileFile);
+#endif
+  menu.addCommandItem( commandManager, TextBuffer::cmdLispLoadFile);
+  menu.addSeparator();
+  menu.addCommandItem( commandManager, TextBuffer::cmdLispShowDirectory);
+  menu.addCommandItem( commandManager, TextBuffer::cmdLispSetDirectory);  
+#ifndef SCHEME
   menu.addSeparator();
   menu.addCommandItem( commandManager, TextBuffer::cmdLispSetPackage);
+#endif
+  menu.addSeparator();
+  menu.addCommandItem( commandManager, TextBuffer::cmdLispSymbolHelp);
   return menu;
 }
 
 const PopupMenu EditorWindow::getSalMenu () {
   PopupMenu menu, sub1, sub2;
   menu.addCommandItem( commandManager, TextBuffer::cmdSalEval);
+  menu.addCommandItem( commandManager, TextBuffer::cmdSalExpand);
+  menu.addSeparator();
+  menu.addCommandItem( commandManager, TextBuffer::cmdSalLoadFile);
+  menu.addSeparator();
+  menu.addCommandItem( commandManager, TextBuffer::cmdSalShowDirectory);
+  menu.addCommandItem( commandManager, TextBuffer::cmdSalSetDirectory);
+  menu.addSeparator();
+  menu.addCommandItem( commandManager, TextBuffer::cmdSalSymbolHelp);
   return menu;
 }
 
 const PopupMenu EditorWindow::getHelpMenu () {
   PopupMenu menu, sub1;
-  if (getTextBuffer()->isSalSyntax()) {
-    menu.addCommandItem( commandManager, TextBuffer::cmdSymbolHelp);
-    menu.addSeparator();
-  }
+  //  if (getTextBuffer()->isSalSyntax()) {
+  //    menu.addCommandItem( commandManager, TextBuffer::cmdSymbolHelp);
+  //    menu.addSeparator();
+  //  }
   addCommonHelpItems(&menu, winEditor);
   return menu;
 }
@@ -515,7 +536,8 @@ void EditorWindow::openFile() {
   if ( editfile.existsAsFile() )
     dir = editfile.getParentDirectory();
   else
-    dir = File::getSpecialLocation(File::userHomeDirectory);
+    dir = File::getCurrentWorkingDirectory();
+
   FileChooser choose (T("Open File"), dir, String::empty, true);
   if ( choose.browseForFileToOpen() ) {
     TextFile f = (TextFile)choose.getResult();
@@ -548,8 +570,8 @@ void EditorWindow::saveFileAs(File defaultfile) {
     if ( editfile.existsAsFile() )
       defaultfile = editfile.getParentDirectory();
     else
-      defaultfile = File::getSpecialLocation(File::userHomeDirectory);
-  printf("defaultfile=%s\n", defaultfile.getFullPathName().toUTF8());
+      //defaultfile = File::getSpecialLocation(File::userHomeDirectory);
+      defaultfile = File::getCurrentWorkingDirectory();
 
   FileChooser choose (T("Save File As"), defaultfile, T("*.*"), true);
   if ( choose.browseForFileToSave(true) ) {
@@ -578,3 +600,71 @@ void EditorWindow::revertFile() {
   }
 }
 
+void EditorWindow::loadFile() {
+  File dir;
+  if ( editfile.existsAsFile() )
+    dir = editfile.getParentDirectory();
+  else
+    dir = File::getCurrentWorkingDirectory();
+
+  FileChooser choose (T("Load File"), dir, String::empty, true);
+  if ( choose.browseForFileToOpen() ) {
+    File f = choose.getResult();
+    if ( f.hasFileExtension( T(".sal") ) ) {
+#ifdef SCHEME
+      SalSyntax::getInstance()->loadFile( f.getFullPathName() );
+#else
+      ((GraceApp *)GraceApp::getInstance())->getConsole()->
+	consoleEval( T("load \\\"") + f.getFullPathName() + T("\\\""), true, false );      
+#endif      
+    }
+    else
+#ifdef SCHEME
+      ((GraceApp *)GraceApp::getInstance())->getConsole()->
+	consoleEval( T("(load ") + f.getFullPathName().quoted() +T(")"), false, false );
+#else
+      ((GraceApp *)GraceApp::getInstance())->getConsole()->
+	consoleEval( T("(load \\\"") + f.getFullPathName() + T("\\\")"), false, false );
+#endif
+  }
+}
+
+void EditorWindow::compileFile() {
+  File dir;
+  if ( editfile.existsAsFile() )
+    dir=editfile.getParentDirectory();
+  else
+    dir=File::getCurrentWorkingDirectory();
+
+  FileChooser choose (T("Compile File"), dir, String::empty, true);
+  if ( choose.browseForFileToOpen() ) {
+    File f = choose.getResult();
+#ifndef SCHEME
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->
+      consoleEval( T("(compile-file \\\"") + f.getFullPathName() + T("\\\")"), false, false );
+#endif
+  }
+}
+
+void EditorWindow::showDirectory() {
+  ((GraceApp *)GraceApp::getInstance())->getConsole()->
+    printMessage( T("Current directory: ") + 
+		  File::getCurrentWorkingDirectory().getFullPathName().quoted() +
+		  T("\n") );
+}
+
+void EditorWindow::setDirectory() {
+  FileChooser choose (T("Change Directory"), File::getCurrentWorkingDirectory(), String::empty, true);
+  if ( choose.browseForDirectory() ) {
+    choose.getResult().setAsCurrentWorkingDirectory();
+#ifndef SCHEME
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->
+      consoleEval( T("(cd \\\"") + f.getFullPathName() + T("\\\")"), false, false );
+#else
+    showDirectory();
+#endif
+  }
+}
+
+void EditorWindow::setPackage() {
+}

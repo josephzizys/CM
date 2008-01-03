@@ -423,15 +423,15 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
   lisp->sendLispSexpr(sexpr, message);
 }
 #else
-
-void ConsoleWindow::consoleEval (String code, bool isSal, 
-				 bool isRegion) 
-{
+void ConsoleWindow::consoleEval (String code, bool isSal, bool isRegion) {
+  int nodetype=SchemeNode::EXPR;
   evalnum++;
   printf("[%d] Eval: '%s'\n", evalnum, code.toUTF8());
-  ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode(SchemeNode::EXPR, 0.0, code);
+  if ( isSal )
+    nodetype=SchemeNode::SAL;
+  ((GraceApp *)GraceApp::getInstance())->
+    schemeProcess->addNode(nodetype, 0.0, code);
 }
-
 #endif
 
 void ConsoleWindow::showSplash () {

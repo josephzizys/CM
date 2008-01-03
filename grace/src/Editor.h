@@ -99,6 +99,13 @@ class EditorWindow : public DocumentWindow, public MenuBarModel {
   const PopupMenu getSalMenu();
   const PopupMenu getLispMenu();
   const PopupMenu getHelpMenu();
+
+  void loadFile();
+  void compileFile();
+  void showDirectory();
+  void setDirectory();
+  void setPackage();    
+
 };
 
 #endif

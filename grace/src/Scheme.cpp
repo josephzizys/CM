@@ -32,11 +32,12 @@ SchemeNode::SchemeNode(double _time, int _type, C_word c, int _id)
   CHICKEN_gc_root_set(closureGCRoot, c);
 }
 
-SchemeNode::SchemeNode(double _time, int _type, String s)
+SchemeNode::SchemeNode(double _time, int _type, String _expr)
   : time (0.0),start (0.0),type (0), closure(0), id (-1)
 { 
-  type = EXPR;
-  expr=s;
+  //  type = EXPR;
+  type=_type;
+  expr=_expr;
   time = 0.0; //will always be ready to call
 }
 
@@ -87,7 +88,14 @@ bool SchemeNode::process(double curtime) {
       expr=String::empty;
     }
     break;
-          
+  case SAL :
+    {
+      C_word err;
+      int res = CHICKEN_eval_string((char *)expr.toUTF8(), NULL);
+      if ( res==0 )
+	schemeThread->reportChickenError();
+    }
+    break;
   case PROCESS:
     {
       if ( SCHEME_DEBUG )
