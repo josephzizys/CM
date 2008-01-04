@@ -24,7 +24,7 @@ opts.Save('grace.conf', env)
 Help(opts.GenerateHelpText(env))
 
 sources = ['Buffer.cpp', 'Console.cpp', 'Editor.cpp',
-           'Grace.cpp', 'Layer.cpp',
+           'Grace.cpp', 'Layer.cpp', 'Help.cpp' ,
            'Resources.cpp', 'Plotter.cpp', 'Points.cpp',
            'Syntab.cpp', 'Syntax.cpp']
 
