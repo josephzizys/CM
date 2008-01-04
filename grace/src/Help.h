@@ -34,6 +34,7 @@ public:
 
   String lookupHelp(String sym, String helppath) ;
   StringPairArray matchingHelp(String match, String help) ;
+  void openHelpInBrowser(String help) ;
 
   void addSalHelp();
   void addGraceSchemeHelp();

@@ -6,6 +6,7 @@
  *************************************************************************/
 
 #include "Help.h"
+#include "Grace.h"
 
 ///
 /// Symbol Help. This should get moved to its own File!
@@ -72,6 +73,11 @@ String SymbolHelp::lookupHelp(String symbol, String helppath) {
     }
   }
   return String::empty;
+}
+
+void SymbolHelp::openHelpInBrowser(String help) {
+  URL url=URL(help);
+  url.launchInDefaultBrowser();
 }
 
 void SymbolHelp::addSalHelp() {
@@ -698,21 +704,17 @@ void SymbolHelp::addCommonLispMusicHelp() {
   clmmap.set( T("make-sum-of-sines"), T("sndclm.html#make-sum-of-sines"));
   clmmap.set( T("pan-mix"), T("sndscm.html#panmix"));
   clmmap.set( T("snd-warning"), T("extsnd.html#sndwarning"));
-  clmmap.set( T("after-lisp-graph-hook"),
-   
-  T("extsnd.html#afterlispgraphhook"));
+  clmmap.set( T("after-lisp-graph-hook"), T("extsnd.html#afterlispgraphhook"));
   clmmap.set( T("explode-sf2"), T("sndscm.html#explodesf2"));
   clmmap.set( T("make-sync-frame-reader"), T("sndscm.html#makesyncframereader"));
   clmmap.set( T("pan-mix-vct"), T("sndscm.html#panmixvct"));
   clmmap.set( T("snd-warning-hook"), T("extsnd.html#sndwarninghook"));
-  clmmap.set( T("after-open-hook"), 
-  T("extsnd.html#afteropenhook"));
+  clmmap.set( T("after-open-hook"), T("extsnd.html#afteropenhook"));
   clmmap.set( T("exponentially-weighted-moving-average"), T("sndscm.html#exponentiallyweightedmovingaverage"));
   clmmap.set( T("make-table-lookup"), T("sndclm.html#make-table-lookup"));
   clmmap.set( T("partials->polynomial"), T("sndclm.html#partialstopolynomial"));
   clmmap.set( T("sndwarp"), T("sndscm.html#sndwarp"));
-  clmmap.set( T("after-save-as-hook"), 
-  T("extsnd.html#aftersaveashook"));
+  clmmap.set( T("after-save-as-hook"), T("extsnd.html#aftersaveashook"));
   clmmap.set( T("extract-channel"), T("extsnd.html#extractchannel"));
   clmmap.set( T("make-triangle-wave"), T("sndclm.html#make-triangle-wave"));
   clmmap.set( T("partials->wave"), T("sndclm.html#partialstowave"));
@@ -992,7 +994,6 @@ void SymbolHelp::addCommonLispMusicHelp() {
   clmmap.set( T("rand-interp"), T("sndclm.html#rand-interp"));
   clmmap.set( T("squelch-update"), T("extsnd.html#squelchupdate"));
   clmmap.set( T("channel-polynomial"), T("sndscm.html#channelpolynomial"));
-  clmmap.set( T("FOF synthesis"), T("sndscm.html#fofins"));
   clmmap.set( T("mix-maxamp"), T("sndscm.html#mixmaxamp"));
   clmmap.set( T("rand-interp?"), T("sndclm.html#rand-interp?"));
   clmmap.set( T("squelch-vowels"), T("sndscm.html#squelchvowels"));
@@ -1794,7 +1795,6 @@ void SymbolHelp::addCommonLispMusicHelp() {
   clmmap.set( T("x-axis-label"), T("extsnd.html#xaxislabel"));
   clmmap.set( T("emacs-style-save-as"), T("sndscm.html#emacsstylesaveas"));
   clmmap.set( T("make-graph-data"), T("extsnd.html#makegraphdata"));
-  clmmap.set( T("<b>Noise Reduction</b>"), T("sndscm.html#noisystory"));
   clmmap.set( T("show-transform-peaks"), T("extsnd.html#showtransformpeaks"));
   clmmap.set( T("x-axis-style"), T("extsnd.html#xaxisstyle"));
   clmmap.set( T("env"), T("sndclm.html#env"));
