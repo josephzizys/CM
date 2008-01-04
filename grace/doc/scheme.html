@@ -340,21 +340,19 @@ time stamp for the data that is sent to a non-real time port:</p>
 <p>Before sending anything to the Midi Port first make sure you have an output connection established with the <span class="menuitem">Ports&gt;Midi Out&gt;</span> Menu in the Console window. You can test that the connection actually works by using the <span class="menuitem">Ports&gt;Midi Out&gt;Test</span> to send a random burst of messages to the output device.</p>
 
 <dl>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:note"</span> <var>wait=0</var> <var>dur=.5</var> <var>key=60</var> <var>amp=.5</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:note" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:note"</span> <var>wait=0</var> <var>dur=.5</var> <var>key=60</var> <var>amp=.5</var> <var>chan=0</var>)</code></dt>
   <dd><p>Send note data to midi port.</p></dd>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:on"</span> <var>wait=0</var> <var>key=60</var> <var>vel=64</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:on" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:on"</span> <var>wait=0</var> <var>key=60</var> <var>vel=64</var> <var>chan=0</var>)</code></dt>
   <dd><p>Send Note On data to midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:off"</span> <var>wait=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:off" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:off"</span> <var>wait=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var>)</code></dt>
   <dd><p>Send Note Off data to midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:prog"</span> <var>wait=0</var> <var>prog=0</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:prog" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:prog"</span> <var>wait=0</var> <var>prog=0</var> <var>chan=0</var>)</code></dt>
   <dd><p>Send Program Change data to midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:ctrl"</span> <var>wait=0</var> <var>ctrl=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:ctrl" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:ctrl"</span> <var>wait=0</var> <var>ctrl=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
   <dd><p>Sends Control Change data to midi port (Not yet implemented.).</p></dd>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:alloff"</span> )</code></dt>
+  <dt id="mp:alloff" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:alloff"</span> )</code></dt>
   <dd><p>Sends All Notes Off to midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:micro"</span> <var>divs</var>)</code></dt>
-  <dd><p>Sets number of divisions per semitone of midi port. (Not yet implemented.)</p></dd>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:inhook"</span> <var>function</var>)</code></dt>
+  <dt id="mp:inhook" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:inhook"</span> <var>function</var>)</code></dt>
   <dd><p>Sets the input hook of port to <var>function</var> or clears an existing hook if value is #f. The function's arguments must be arity 4 and is passed four values: (time opcode data1=0 data2=0) where opcode contains the MIDI opcode of the message. Data1 and data2 contain zeros if opcode passes fewer arguments. (Not yet implemented.)</p></dd>
 
 </dl>
@@ -402,6 +400,48 @@ time stamp for the data that is sent to a non-real time port:</p>
 <p>The following functions have been added to Chicken Scheme to facilite algorithmic music compostion. Over time
 most of CM's toolbox will become available as optional modules, e.g.
 <code> (use patterns)</code>, <code> (use tuning)</code>,  etc.</p>
+
+<h3>Lists</h3>
+
+<dl id="list*">
+  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">list*</span> (<var>...</var> <var>list</var>)<br/>&rarr; <var>list</var></code></dt>
+<dd>Adds the elements in <var>...</var> onto the front of <var>list</var></dd>
+</dl>
+
+<dl id="first">
+<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">first</span> (<var>list</var>) <!-- <span style="font-weight:bold;">second</span> (<var>list</var>) --> <var>...</var> <span style="font-weight:bold;">tenth</span> (<var>list</var>)<br/>&rarr; <var>object</var></code></dt>
+<dd>Accessors returning the first, second, third, fourth, fifth, sixth, seventh, eighth, ninth and tenth element of a <var>list</var>.  </dd>
+</dl>
+
+<dl id="rest">
+<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">rest</span> (<var>list</var>)<br/>&rarr; <var>list</var></code></dt>
+<dd>Returns a list of all but the first element in <var>list</var>. </dd>
+</dl>
+
+<dl id="last">
+<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">last</span> (<var>list</var>)<br/>&rarr; <var>list</var></code></dt>
+<dd>Returns the last (tail) list in <var>list</var>. </dd>
+</dl>
+
+
+<dl id="butlast">
+<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">butlast</span> (<var>list</var>)<br/>&rarr; <var>list</var></code></dt>
+<dd>Returns all but the last (tail) list in <var>list</var>. </dd>
+</dl>
+
+<h3>File System</h3>
+
+<dl id="current-directory">
+<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">current-directory</span> ()<br/>&rarr; <var>list</var></code></dt>
+<dd>Returns the full pathname string to the current working directory. </dd>
+</dl>
+
+<dl id="change-directory">
+<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">change-directory</span> (<var>pathname</var>)<br/>&rarr; <var>void</var></code></dt>
+<dd>Changes the current working directory to the <var>pathname</var> string. </dd>
+</dl>
+
+
 
 <h3>Mapping and Transformation</h3>
 
