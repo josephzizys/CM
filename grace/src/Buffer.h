@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2007 Todd Ingalls, Rick Taube.                          *
+ * Copyright (C) 2007, 2008 Todd Ingalls, Rick Taube.                    *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the Lisp Lesser Gnu Public License. The text of *
  * this agreement is available at http://www.cliki.net/LLGPL             *
@@ -14,36 +14,6 @@
 #include "juce.h"
 #include "Syntax.h"
 #include "Console.h"
-
-///
-/// Symbol Help. THIS SHOULD GET MOVED TO A HELP.CPP FILE...
-///
-
-class SymbolHelp {
-public:
-  StringPairArray maproots;
-  StringPairArray salmap;
-  StringPairArray graceschememap;
-  StringPairArray schememap;
-  StringPairArray cmmap;
-  StringPairArray clmmap;
-  StringPairArray fomusmap;
-  StringPairArray clmap;
-  SymbolHelp () ;
-  ~SymbolHelp() ;
-  bool isHtmlHelp(String ref) ;
-  String getRoot(String help) ;
-  String getHelp(String sym, String helppath) ;
-  void addSalHelp();
-  void addGraceSchemeHelp();
-  void addSchemeHelp();
-  void addCommonMusicHelp();
-  void addCommonLispMusicHelp();
-  void addFomusHelp();  
-  void addCommonLispHelp();
-  juce_DeclareSingleton (SymbolHelp, true)
-};
-
 
 class TextBuffer : public TextEditor,
   public ApplicationCommandTarget,
