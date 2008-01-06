@@ -54,7 +54,7 @@ if (env['PLATFORM'] == 'darwin') :
         env.Replace(CXX = 'g++-3.3')
         env.Append(CPPDEFINES = ['PPC'])
     env.Append(FRAMEWORKS = ['Carbon', 'CoreServices', 'CoreAudio', 
-                             'CoreMidi', 'ApplicationServices',
+                             'CoreMidi', 'ApplicationServices', 'OpenGL',
                              'AGL', 'QuickTime', 'IOKIT'] ,        
                CPPDEFINES = ['MACOSX'])
 elif ( env['PLATFORM'] == 'posix' ) :
