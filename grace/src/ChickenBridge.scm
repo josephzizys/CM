@@ -17,6 +17,7 @@
 #include "Scheme.h"
 #include "Syntax.h"
 #include "Midi.h"
+#include <juce.h>
 
 //
 // Console Window code
@@ -130,6 +131,13 @@ void load_sal_file(char *path) {
   SalSyntax::getInstance()->loadFile( String(path) );  
 }
 
+//INput Hook Code
+void set_input_hook( C_word proc, unsigned int chanmask, unsigned int msgfilt )
+{
+ ((GraceApp *)GraceApp::getInstance())->schemeProcess->setInputHook( proc, chanmask, msgfilt );
+}
+
+
 <#
 
 (include "Toolbox.scm")
@@ -165,6 +173,10 @@ void load_sal_file(char *path) {
 	 first second third fourth fifth sixth seventh eighth ninth tenth
 	 list* last butlast
 	 ))
+
+;;input hook
+
+
 ;;;
 ;;; essential utilities
 ;;;
@@ -473,8 +485,10 @@ void load_sal_file(char *path) {
   (error "message function not implemented."))
 (define (mp:micro divs)
   (error "message function not implemented."))
-(define (mp:inhook func chans mask)
-  (error "message function not implemented."))
+
+(define mp:inhook 
+  (foreign-lambda void "set_input_hook" scheme-object unsigned-int unsigned-int))
+
 
 ;; message definitions
 
