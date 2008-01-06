@@ -365,9 +365,10 @@ MidiInPort::MidiInPort(ConsoleWindow *win)
     channelmask (0xFFFFFFFF),
     messagefilt (0),
     runmode (STOPPED),
-    trace (false),
-    schemehook (0) {
+    trace (false)
+{
   console=win;
+
 }
 
 MidiInPort::~MidiInPort() {
@@ -465,8 +466,8 @@ bool MidiInPort::isActive(int mode) {
     return (runmode == mode); // test specific run mode
 }
 
-void MidiInPort::startSchemeInput(C_word func, unsigned int chanmask, 
-				     unsigned int msgfilt) {
+void MidiInPort::startSchemeInput(unsigned int chanmask, 
+				  unsigned int msgfilt) {
   // SET UP THE SCHEME HOOK FOR CALLBACK BEFORE STARTING
   start(SCHEMEHOOK);
 }
@@ -603,18 +604,20 @@ void MidiInPort::handleIncomingMidiMessage (MidiInput *dev,
     // message is either sysex or meta, drop for now in either case
     return;
   }
-
+#ifdef SCHEME  
   // AT THIS POINT CALL RECORDING CODE OR SCHEMEHOOK COE
   if ( isActive(SCHEMEHOOK) ) {
+    ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode((int)SchemeNode::INHOOK, 0.0, msg);
     printf("Calling scheme hook!\n");
   }
+#endif
   else if ( isActive(RECORDING) ) {
     printf("Recording message!\n");
   }
 
   if (trace) {
     console->postConsoleTextMessage(String(msg.getTimeStamp(), 3) +
-				    T(" ") + info + T("\n"), 
+    			    T(" ") + info + T("\n"), 
 				    ConsoleMessage::TEXT, true);
   }
 }

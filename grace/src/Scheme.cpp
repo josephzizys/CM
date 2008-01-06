@@ -19,7 +19,7 @@
 //
 
 SchemeNode::SchemeNode(double _time, int _type, C_word c, int _id)
-  : time (0.0),start (0.0),type (0), expr (String::empty) 
+  : time (0.0),start (0.0),type (0), expr (String::empty) , mmess(0)
 { 
   type = _type;
   id = _id;
@@ -33,7 +33,7 @@ SchemeNode::SchemeNode(double _time, int _type, C_word c, int _id)
 }
 
 SchemeNode::SchemeNode(double _time, int _type, String _expr)
-  : time (0.0),start (0.0),type (0), closure(0), id (-1)
+  : time (0.0),start (0.0),type (0), closure(0), id (-1), mmess(0)
 { 
   //  type = EXPR;
   type=_type;
@@ -42,10 +42,15 @@ SchemeNode::SchemeNode(double _time, int _type, String _expr)
 }
 
 SchemeNode::SchemeNode(double _time, int _type)
-  : start (0.0), closure (0), expr (String::empty), id (-1)
+  : start (0.0), closure (0), expr (String::empty), id (-1), mmess(0)
 { 
   time = _time;
   type = _type;
+}
+
+SchemeNode::SchemeNode(double _time, int _type, const MidiMessage &_mess)
+  : time(0.0), type(_type), mmess(_mess)
+{
 }
 
 SchemeNode::~SchemeNode(){ 
@@ -54,6 +59,8 @@ SchemeNode::~SchemeNode(){
   //    CHICKEN_delete_gc_root(closureGCRoot);
   //  } 
 }
+
+
 
 bool SchemeNode::process(double curtime) {
   bool more=false;
@@ -136,9 +143,14 @@ bool SchemeNode::process(double curtime) {
     break;
 
   case INHOOK:
-    {
-      // C_word closure = CHICKEN_gc_root_ref(closureGCRoot);
-      // C_callback(closure, 0);
+    {      
+      printf("huh\n");
+      printf("is noteon %i\n", mmess.isNoteOn());
+      C_word *mmess_ptr;
+      mmess_ptr = C_alloc( sizeof(MidiMessage*) );
+      C_save(C_mpointer(&mmess_ptr , (void*)&mmess));
+      closure = CHICKEN_gc_root_ref(schemeThread->inputClosureGCRoot);
+      C_callback(closure, 1);
     }
     break;
 
@@ -170,6 +182,7 @@ SchemeThread::SchemeThread(String name, ConsoleWindow *win)
   console = win;
   evalBuffer = new char[8192];
   errorBuffer = new char[8192];
+  inputClosureGCRoot = CHICKEN_new_gc_root();
 }
 
 SchemeThread::~SchemeThread()
@@ -177,6 +190,7 @@ SchemeThread::~SchemeThread()
   printf("deleting SchemeThread\n");
   delete evalBuffer;
   delete errorBuffer;
+  CHICKEN_delete_gc_root(inputClosureGCRoot);
   schemeNodes.clear();
 }
 
@@ -186,6 +200,18 @@ void postGCHook(int m, long ms)
     printf("\nMAJOR GC\n\n");
   else
     printf("minor GC\n");
+}
+
+
+
+void SchemeThread::setInputHook(C_word hook, unsigned int chanmask, unsigned int msgfilt)
+{
+  if(hook == C_SCHEME_FALSE)
+    ((GraceApp*)GraceApp::getInstance())->midiInPort->stopSchemeInput();
+  else {
+    CHICKEN_gc_root_set(inputClosureGCRoot, hook);
+    ((GraceApp*)GraceApp::getInstance())->midiInPort->startSchemeInput(chanmask, msgfilt);
+  }
 }
 
 void SchemeThread::reportChickenError (String text) {
@@ -417,6 +443,21 @@ void SchemeThread::addNode(int type, double _time, String s) {
     printf("...done adding eval node %d\n", n->nodeid);
 }  
 
+void SchemeThread::addNode(int type, double _time, const MidiMessage &mess) {
+  static int nextid=000;
+  SchemeNode *n = new SchemeNode(_time, type, mess);
+  n->nodeid=++nextid;
+  if ( SCHEME_DEBUG > 2)
+    printf("adding input hook node %d...\n", n->nodeid);
+  n->schemeThread = this;
+  schemeNodes.lockArray();
+  schemeNodes.addSorted(comparator, n);
+  schemeNodes.unlockArray();
+  notify();
+  if ( SCHEME_DEBUG > 2)
+    printf("...done adding input hook node %d\n", n->nodeid);
+}  
+
 void SchemeThread::setPaused(bool p) {
   if (p) {
     // pause the scheduler.
@@ -512,4 +553,5 @@ void SchemeThread::stopProcesses(int id) {
   }
   schemeNodes.unlockArray();
 }
+
 

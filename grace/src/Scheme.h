@@ -12,6 +12,7 @@
 #include "juce.h"
 #include "chicken.h"
 #include "Console.h"
+#include "Midi.h"
 
 class ConsoleWindow;
 class SchemeThread;
@@ -24,6 +25,7 @@ public:
   SchemeNode(double _time, int _type, C_word c, int _id);
   SchemeNode(double _time, int _type, String s);
   SchemeNode(double _time, int _type);
+  SchemeNode(double _time, int _type, const MidiMessage &_mess);
   ~SchemeNode();
 
   int type;
@@ -32,6 +34,7 @@ public:
   double time;
   double start;
   String expr;
+  const MidiMessage mmess;
   void *closureGCRoot;
   C_word *elapsed_ptr;
   C_word elapsed_word;
@@ -65,12 +68,15 @@ public:
   bool pausing;
   bool timemsec;
 
+  void *inputClosureGCRoot;
+  
   OwnedArray<SchemeNode, CriticalSection> schemeNodes;
   SchemeNodeComparator comparator;  
 
   void reportChickenError(String text=String::empty);
   void addNode(int type, double _time, C_word c=0, int _id=-1);
   void addNode(int type, double _time, String str);
+  void addNode(int type, double _time, const MidiMessage &mess);
   void removeNode(SchemeNode *n, bool deleteObject=true );
   void reinsertNode(SchemeNode *n, double newtime );
   void run();
@@ -82,6 +88,7 @@ public:
   void setPaused(bool b);
   void stop(int id=-1);
   void stopProcesses(int id) ;
+  void setInputHook(C_word hook, unsigned int chanmask=0, unsigned int msgfilt=0);
 };
 
 #endif

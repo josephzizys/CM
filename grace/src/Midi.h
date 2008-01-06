@@ -1,11 +1,13 @@
 #ifndef __MIDI__
 #define __MIDI__
 
+
 #include <juce.h>
 #include <chicken.h>
 #include "Console.h"
 
 class MidiOutPort;
+class ConsoleWindow;
 
 class MidiNode {
  public:
@@ -41,9 +43,8 @@ public:
   }
 };
 
-class MidiOutPort : public Thread
-{
-public:
+class MidiOutPort : public Thread {
+ public:
   int devid;
   MidiOutput *device;
   ConsoleWindow *console;
@@ -113,7 +114,7 @@ class MidiInPort : public MidiInputCallback {
   enum {STOPPED, TESTING, SCHEMEHOOK, RECORDING}; // running mode
   int runmode;
   bool trace;
-  C_word schemehook;
+  //C_word schemehook;
   MidiInPort(ConsoleWindow *win);
   ~MidiInPort();
   void open(int id);
@@ -122,8 +123,11 @@ class MidiInPort : public MidiInputCallback {
   bool start(int mode);
   void stop();
   bool isActive(int mode=-1);
-
-  void startSchemeInput(C_word func, unsigned int chanmask=0, 
+  
+  //hook is set in SchemeThread and only passing mask and filt
+  // can use these to determine whether an INHOOK node needs to be
+  // created in Scheme Thread
+  void startSchemeInput(unsigned int chanmask=0, 
 			unsigned int msgfilt=0);
   void stopSchemeInput() ;
   unsigned int getChannelMask();
@@ -141,5 +145,6 @@ class MidiInPort : public MidiInputCallback {
   void handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &msg) ;
   void handlePartialSysexMessage (MidiInput *dev, const juce::uint8 *data, 
 				  const int num, const double time);
+
 };
 #endif
