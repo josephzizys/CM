@@ -84,10 +84,10 @@ def get_revision_string ():
 
 if (env['PLATFORM'] == 'darwin') :
     # DARWIN
-    if (env['PLATFORM'] == 'SCHEME') :
+    if (env['SCHEME'] ) :
         execdir = 'build/Grace.app/Contents/MacOS'
         datadir = 'build/Grace.app/Contents/Resources'
-    else:
+    else :
         execdir = 'build/GraceCL.app/Contents/MacOS'
         datadir = 'build/GraceCL.app/Contents/Resources'
     # ppc has to use g++ 3.3, CXXVERSION doesnt work.
@@ -122,7 +122,7 @@ elif ( env['PLATFORM'] == 'posix' ) :
     env = con.Finish()
 elif ( env['PLATFORM'] == 'win32' ) :
     # WINDOZE
-    if (env['PLATFORM'] == 'SCHEME') :
+    if (env['SCHEME'] ) :
         execdir = 'build/Grace'
         datadir = 'build/Grace/Resources'
     else:

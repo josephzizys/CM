@@ -253,10 +253,12 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
 #endif
     break;
 
+#ifndef SCHEME
   case cmdLispCompileFile:
     result.setInfo (T("Compile..."), String::empty, editingCategory, 0);
     result.setActive(getConsole()->lisp->isLispRunning() );
     break;
+#endif
 
   case cmdLispShowDirectory:
   case cmdSalShowDirectory:
@@ -273,11 +275,13 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
 #endif
     break;
 
+#ifndef SCHEME
   case cmdLispSetPackage:
     result.setInfo (T("Set Package..."), String::empty, editingCategory, 0);
 
     result.setActive(getConsole()->lisp->isLispRunning() );
     break;
+#endif
 
   case cmdLispSymbolHelp:
   case cmdSalSymbolHelp:
