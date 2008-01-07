@@ -31,7 +31,6 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w);
 void commonWindowItemSelected(int cmd, int arg);
 void commonHelpItemSelected(int cmd, int arg);
 
-File getGraceResourceDirectory ();
 int getHostOS();
 bool isHostWindows();
 bool isHostLinux();
@@ -166,8 +165,8 @@ class GracePreferences {
 
   // Lisp Implementations support
   XmlElement* getLispImplementations();
-  File getLispSystemsDirectory () ;
-  void setLispSystemsDirectory (File dir) ;
+  File getAsdfSystemsDirectory () ;
+  void setAsdfSystemsDirectory (File dir) ;
   bool isLispLaunchAtStartup();
   void setLispLaunchAtStartup(bool b);
 
@@ -179,7 +178,7 @@ class GracePreferences {
   Lisp* findLisp(String name) ;
 
   // Lisp ASDF Systems support
-  XmlElement* getLispSystems() ;
+  XmlElement* getAsdfSystems() ;
   void clearLispSystems() ;
   int numASDFs() ;
   ASDF* getASDF(int i) ;

@@ -12,13 +12,8 @@
 #include "Editor.h"
 #include "Grace.h"
 
-File getGraceResourceDirectory() {
-  return ((GraceApp *)JUCEApplication::getInstance())->getResourceDirectory();
-}
-
 int getHostOS() {
-  SystemStats::OperatingSystemType sys = SystemStats::getOperatingSystemType();
-  return (int)sys;
+  return (int)SystemStats::getOperatingSystemType();
 }
 
 bool isHostWindows () {
@@ -76,13 +71,14 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
 }
 
 void commonHelpItemSelected (int cmd, int arg) {
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   File res=File::nonexistent;
   URL url;
   String err;
 
   switch (cmd) {
   case cmdHelpWindow :
-    res=getGraceResourceDirectory();
+    res=app->getResourceDirectory();
     if (arg == winConsole)
       res=res.getChildFile(T("doc/console.html"));
     else if (arg == winEditor)
@@ -118,7 +114,7 @@ void commonHelpItemSelected (int cmd, int arg) {
     break;
 
   case cmdHelpSalTutorial :
-    res=getGraceResourceDirectory().getChildFile(T("doc/sal/tutorials/"));
+    res=app->getResourceDirectory().getChildFile(T("doc/sal/tutorials/"));
     if (arg == 0) res=res.getChildFile(T("hello.sal"));
     else if (arg == 1) res=res.getChildFile(T("sexpr.sal"));
     else if (arg == 2) res=res.getChildFile(T("funcall.sal"));
@@ -137,7 +133,7 @@ void commonHelpItemSelected (int cmd, int arg) {
 
   case cmdHelpURL :
     if (arg == 0) {
-      res=getGraceResourceDirectory().getChildFile(T("doc/sal/sal.html"));
+      res=app->getResourceDirectory().getChildFile(T("doc/sal/sal.html"));
       if ( res.existsAsFile() )
 	url=URL(res.getFullPathName());
       else err=T(">>> Help file ") + res.getFullPathName() + 
@@ -219,7 +215,7 @@ GracePreferences::GracePreferences()
 // Property File
 
 void GracePreferences::initPropertiesFile () {
-  
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   propfile=PropertiesFile::createDefaultAppPropertiesFile
     (T("Grace"), T("prefs"), String::empty, false, -1, 
      PropertiesFile::storeAsXML);
@@ -241,9 +237,9 @@ void GracePreferences::initPropertiesFile () {
   if (!propfile->containsKey(T("SchemeStackSize")))
     setSchemeStackSize(64000);
 
-  if (!propfile->containsKey(T("LispSystemsDirectory")))
-    propfile->setValue(T("LispSystemsDirectory"), 
-		       getGraceResourceDirectory().getFullPathName());
+  if (!propfile->containsKey(T("AsdfSystemsDirectory")))
+    propfile->setValue(T("AsdfSystemsDirectory"), 
+		       app->getResourceDirectoryPathName());
 
   if (!propfile->containsKey(T("LispLaunchAtStartup")) )
     propfile->setValue(T("LispLaunchAtStartup"), false);
@@ -251,68 +247,66 @@ void GracePreferences::initPropertiesFile () {
   if (!propfile->containsKey(T("LispImplementations")) ) {
     XmlElement* top=new XmlElement(T("list"));
 
-    // look for <ResDir>/bin/clisp if it exists set exe to that and
-    // the -B arg to <ResDir>/lib/clisp
-#ifndef WINDOWS
-    String clispexe=T("clisp");
+#ifdef WINDOWS
+    String clispexe=T("");
 #else
-    String clispexe=T("clisp.exe");
+    String clispexe=T("/usr/local/bin/clisp");
 #endif
-    File clispdir=getGraceResourceDirectory().getChildFile(T("clisp"));
-    File clispcom=clispdir.getChildFile(clispexe);
-    if ( clispcom.existsAsFile() )
-      top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
-				      clispcom.getFullPathName(), 
-#ifndef WINDOWS
-				      (T("-B ") + clispdir.getFullPathName())
+    //    File clispdir=getResourceDirectory().getChildFile(T("clisp"));
+    //    File clispcom=clispdir.getChildFile(clispexe);
+    //    if ( clispcom.existsAsFile() )
+    //      top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
+    //				      clispcom.getFullPathName(), 
+    //#ifndef WINDOWS
+    //				      (T("-B ") + clispdir.getFullPathName())
+    //#else
+    //				      T("")
+    //#endif
+    //				      ));
+    //    else
+    top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
+				    clispexe, T("")));
+#ifdef WINDOWS
+    String sbclexe=T("");
 #else
-				      T("")
-#endif
-				      ));
-    else
-      top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
-				      clispexe, T("")));
     // OPENMCL
     top->addChildElement( new Lisp( T("OpenMCL"), T("cltl"), T("--eval"), 
-				      T("openmcl"), T("")));
-#ifdef WINDOWS
-    String sbclexe=T("sbcl.exe");
-#else
-    String sbclexe=T("sbcl");
+				    T("/usr/local/bin/openmcl"), T("")));
+    String sbclexe=T("/usr/local/bin/sbcl");
 #endif
-    File sbcldir=getGraceResourceDirectory().getChildFile(T("sbcl"));
-    File sbclcom=sbcldir.getChildFile(sbclexe);
+    //    File sbcldir=getResourceDirectory().getChildFile(T("sbcl"));
+    //    File sbclcom=sbcldir.getChildFile(sbclexe);
     // I dont think this will work as is because SBCL_HOME probably
     // has to be set too or (require ...) won't work
-    if ( sbclcom.existsAsFile() )
-      top->addChildElement(new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
-				     sbclcom.getFullPathName(), 
-				     (T("--core ") + 
-				      sbcldir.getChildFile(T("sbcl.core")).getFullPathName())));
-    else
-      top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
-				      sbclexe, T("")));
+
+    //    if ( sbclcom.existsAsFile() )
+    //      top->addChildElement(new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
+    //				     sbclcom.getFullPathName(), 
+    //				     (T("--core ") + sbcldir.getChildFile(T("sbcl.core")).getFullPathName())
+    //				     ));
+    //    else
+    top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"), sbclexe, T("")));
     propfile->setValue(T("LispImplementations"), top);
   }
 
   // initialize lisps to Xml list from file
   lisps=propfile->getXmlValue( T("LispImplementations") );
 
-  if (!propfile->containsKey(T("LispToLaunch")) )
-    setLispToLaunch(getLisp(0));
+  //  if (!propfile->containsKey(T("LispToLaunch")) )
+  //    setLispToLaunch(getLisp(0));
 
-  if (!propfile->containsKey(T("LispSystems")) ){
+  if (!propfile->containsKey(T("AsdfSystems")) ){
     XmlElement* top=new XmlElement(T("list"));
     top->addChildElement( new ASDF( T("Grace")));
     top->addChildElement( new ASDF( T("CM"), String::empty,
 				    T("asdf:load-op"),
 				    String::empty,
 				    T("(cl-user::cm)")));
-    propfile->setValue(T("LispSystems"), top);
+    propfile->setValue(T("AsdfSystems"), top);
   }
 
   // initialize asdfs to Xml values from file
-  asdfs=propfile->getXmlValue( T("LispSystems") );
+  asdfs=propfile->getXmlValue( T("AsdfSystems") );
 
   recentlyloaded.clear();
   recentlyloaded.setMaxNumberOfItems(10);
@@ -337,7 +331,7 @@ GracePreferences::~GracePreferences() {
 
 bool GracePreferences::save() {
   propfile->setValue(T("LispImplementations"), lisps);
-  propfile->setValue(T("LispSystems"), asdfs);
+  propfile->setValue(T("AsdfSystems"), asdfs);
   propfile->setValue (T("RecentlyLoadedFiles"), recentlyloaded.toString());
   propfile->setValue (T("RecentlyOpenedFiles"), recentlyopened.toString());
   propfile->save();
@@ -491,6 +485,8 @@ XmlElement* GracePreferences::getLispImplementations() {
 
 Lisp* GracePreferences::getLispToLaunch() {
   String name=propfile->getValue(T("LispToLaunch"));
+  if (name == String::empty) 
+    return (Lisp *)NULL;
   return findLisp(name);
 }
 
@@ -529,12 +525,12 @@ Lisp* GracePreferences::findLisp(String name) {
   return (Lisp *)NULL;
 }
 
-File GracePreferences::getLispSystemsDirectory () {
-  return File(propfile->getValue(T("LispSystemsDirectory")));
+File GracePreferences::getAsdfSystemsDirectory () {
+  return File(propfile->getValue(T("AsdfSystemsDirectory")));
 }
 
-void GracePreferences::setLispSystemsDirectory (File dir) {
-  propfile->setValue(T("LispSystemsDirectory"),
+void GracePreferences::setAsdfSystemsDirectory (File dir) {
+  propfile->setValue(T("AsdfSystemsDirectory"),
 		     dir.getFullPathName());
 }
 
@@ -626,8 +622,8 @@ String ASDF::getLoadForm(String path) {
 
 // ASDF Preferences
 
-XmlElement* GracePreferences::getLispSystems() {
-  //return propfile->getXmlValue(T("LispSystems"));
+XmlElement* GracePreferences::getAsdfSystems() {
+  //return propfile->getXmlValue(T("AsdfSystems"));
   return asdfs;
 }
 
@@ -639,16 +635,16 @@ void GracePreferences::clearLispSystems() {
 }
 
 int GracePreferences::numASDFs () {
-  return getLispSystems()->getNumChildElements();
+  return getAsdfSystems()->getNumChildElements();
 }
 
 ASDF* GracePreferences::getASDF(int i) {
-  XmlElement* all=getLispSystems();
+  XmlElement* all=getAsdfSystems();
   return (ASDF *)(all->getChildElement(i));
 }
 
 void GracePreferences::addASDF (ASDF* s) {
-  XmlElement* all=getLispSystems();
+  XmlElement* all=getAsdfSystems();
   ASDF* old=findASDF(s->getASDFName());
   if (old==(ASDF *)NULL)
     all->addChildElement(s);
@@ -657,7 +653,7 @@ void GracePreferences::addASDF (ASDF* s) {
 }
 
 ASDF* GracePreferences::findASDF(String name) {
-  XmlElement* all=getLispSystems();
+  XmlElement* all=getAsdfSystems();
   forEachXmlChildElement(*all, c) {
     if ( c->compareAttribute(T("name"), name, true) ) {
       return (ASDF *) c;

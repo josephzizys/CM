@@ -475,7 +475,7 @@ const PopupMenu EditorWindow::getMenuForIndex ( int menuIndex,
     if (getTextBuffer()->isSalSyntax() )
       menu=getSalMenu();
     if (getTextBuffer()->isLispSyntax() )    
-      menu=getSalMenu();
+      menu=getLispMenu();
     // Oops! Text menu  is currently empty!
   }
   else if (menuIndex == 5) 
@@ -495,8 +495,6 @@ void EditorWindow::menuItemSelected (int id, int idx) {
   case TextBuffer::cmdFileOpenRecent :
     {
       File f=p->getRecentlyOpenedFile(arg);
-      printf("recently edited path=%s\n", f.getFullPathName().toUTF8());
-      printf("recently edited name=%s\n", f.getFileName().toUTF8());
       new EditorWindow(0, TextBuffer::load, f.getFullPathName());
     }
     break;
@@ -615,16 +613,19 @@ void EditorWindow::loadFile() {
       SalSyntax::getInstance()->loadFile( f.getFullPathName() );
 #else
       ((GraceApp *)GraceApp::getInstance())->getConsole()->
-	consoleEval( T("load \\\"") + f.getFullPathName() + T("\\\""), true, false );      
+	consoleEval( T("load \"") + f.getFullPathName() + T("\""),
+		     true, false );      
 #endif      
     }
     else
 #ifdef SCHEME
       ((GraceApp *)GraceApp::getInstance())->getConsole()->
-	consoleEval( T("(load ") + f.getFullPathName().quoted() +T(")"), false, false );
+	consoleEval( T("(load ") + f.getFullPathName().quoted() +T(")"), 
+		     false, false );
 #else
       ((GraceApp *)GraceApp::getInstance())->getConsole()->
-	consoleEval( T("(load \\\"") + f.getFullPathName() + T("\\\")"), false, false );
+	consoleEval( T("(load \"") + f.getFullPathName() + T("\")"), 
+		     false, false );
 #endif
   }
 }
@@ -641,7 +642,8 @@ void EditorWindow::compileFile() {
     File f = choose.getResult();
 #ifndef SCHEME
     ((GraceApp *)GraceApp::getInstance())->getConsole()->
-      consoleEval( T("(compile-file \\\"") + f.getFullPathName() + T("\\\")"), false, false );
+      consoleEval( T("(compile-file \"") + f.getFullPathName() + T("\")"), 
+		   false, false );
 #endif
   }
 }
@@ -659,7 +661,7 @@ void EditorWindow::setDirectory() {
     choose.getResult().setAsCurrentWorkingDirectory();
 #ifndef SCHEME
     ((GraceApp *)GraceApp::getInstance())->getConsole()->
-      consoleEval( T("(cd \\\"") + f.getFullPathName() + T("\\\")"), false, false );
+      consoleEval( T("(cd \\\"") + choose.getResult().getFullPathName() + T("\\\")"), false, false );
 #else
     showDirectory();
 #endif

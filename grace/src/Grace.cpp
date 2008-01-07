@@ -118,12 +118,16 @@ void GraceApp::shutdown () {
 }
 
 const String GraceApp::getApplicationName () {
+#ifndef SCHEME
+  return T("Grace CL");
+#else    
   return T("Grace");
+#endif
 }
 
 const String GraceApp::getApplicationVersion () {
   //  return T("0.2.0");
-  return T("r") + String(VERSION) ;
+  return T("(rev ") + String(VERSION) + T(")") ;
 }
 
 bool GraceApp::moreThanOneInstanceAllowed () {

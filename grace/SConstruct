@@ -43,12 +43,53 @@ else :
     jucelibname='juce'
     env.Append( CPPDEFINES = 'NDEBUG' )
 
+# utility code
+
+def install_docs() :
+    srcdocs = []
+    dstdocs = []
+    for root,dirs,files in os.walk('doc') :
+        if ('.svn' in dirs) : dirs.remove('.svn')
+        for f in files :
+            p = os.path.join(root,f)
+            dstdocs += [os.path.join(datadir,p)]
+            srcdocs += [p]
+    return env.InstallAs(dstdocs,srcdocs)
+
+def install_lisp() :
+    return env.Install(os.path.join(datadir,'grace'),
+                       [os.path.join('src', f) for f in lispfiles])
+
+def install_exec() :
+    return env.Install(execdir, exe)
+
+def get_revision_string ():
+    # Always add -DVERSION=nnn to compile definitions. this little hack adapted from:
+    # http://svn.python.org/projects/sandbox/trunk/setuptools/setuptools/command/egg_info.py
+    rev=0
+    p = os.path.join(os.curdir,'.svn','entries')
+    if os.path.exists(p) :
+        f = open(p, 'r')
+        data = f.read()
+        f.close()
+        if data.startswith('8') :
+            data = map(str.splitlines,data.split('\n\x0c\n'))
+            del data[0][0] 
+            rev = max([int(d[9]) for d in data if len(d)>9 and d[9]]+[0])
+    if rev == 0 :
+        print "Warning: VERSION=0 (svn client outdated or nonexistent)"
+    return str(rev)
+
 # Platform normalization and checks
 
 if (env['PLATFORM'] == 'darwin') :
     # DARWIN
-    execdir = 'build/Grace.app/Contents/MacOS'
-    datadir = 'build/Grace.app/Contents/Resources'
+    if (env['PLATFORM'] == 'SCHEME') :
+        execdir = 'build/Grace.app/Contents/MacOS'
+        datadir = 'build/Grace.app/Contents/Resources'
+    else:
+        execdir = 'build/GraceCL.app/Contents/MacOS'
+        datadir = 'build/GraceCL.app/Contents/Resources'
     # ppc has to use g++ 3.3, CXXVERSION doesnt work.
     if (os.uname()[4] == 'Power Macintosh') :
         env.Replace(CXX = 'g++-3.3')
@@ -81,8 +122,12 @@ elif ( env['PLATFORM'] == 'posix' ) :
     env = con.Finish()
 elif ( env['PLATFORM'] == 'win32' ) :
     # WINDOZE
-    execdir = 'build/Grace'
-    datadir = 'build/Grace/Resources'
+    if (env['PLATFORM'] == 'SCHEME') :
+        execdir = 'build/Grace'
+        datadir = 'build/Grace/Resources'
+    else:
+        execdir = 'build/GraceCL'
+        datadir = 'build/GraceCL/Resources'
     env.Append(CPPDEFINES = ['WINDOWS'])
 else :
     print 'Unsupported platform: ',  env['PLATFORM']
@@ -91,23 +136,6 @@ else :
 # Build
 
 BuildDir('build', 'src', duplicate = 0)
-
-# Always add -DVERSION=nnn to compile definitions. this little hack adapted from:
-# http://svn.python.org/projects/sandbox/trunk/setuptools/setuptools/command/egg_info.py
-def get_revision_string ():
-    rev=0
-    p = os.path.join(os.curdir,'.svn','entries')
-    if os.path.exists(p) :
-        f = open(p, 'r')
-        data = f.read()
-        f.close()
-        if data.startswith('8') :
-            data = map(str.splitlines,data.split('\n\x0c\n'))
-            del data[0][0] 
-            rev = max([int(d[9]) for d in data if len(d)>9 and d[9]]+[0])
-    if rev == 0 :
-        print "Warning: VERSION=0 (svn client outdated or nonexistent)"
-    return str(rev)
 
 env.Append(CPPDEFINES = ['VERSION=' + get_revision_string() ] )
 
@@ -143,27 +171,12 @@ else :
 
 env = con.Finish()  # this updates env with lib info
 
-exe = env.Program( 'build/grace', [os.path.join('build', x) for x in sources])
+if (env['SCHEME']) :
+    exe = env.Program( 'build/grace', [os.path.join('build', x) for x in sources])
+else:
+    exe = env.Program( 'build/gracecl', [os.path.join('build', x) for x in sources])
 
 # Installation
-
-def install_docs() :
-    srcdocs = []
-    dstdocs = []
-    for root,dirs,files in os.walk('doc') :
-        if ('.svn' in dirs) : dirs.remove('.svn')
-        for f in files :
-            p = os.path.join(root,f)
-            dstdocs += [os.path.join(datadir,p)]
-            srcdocs += [p]
-    return env.InstallAs(dstdocs,srcdocs)
-
-def install_lisp() :
-    return env.Install(os.path.join(datadir,'grace'),
-                       [os.path.join('src', f) for f in lispfiles])
-
-def install_exec() :
-    return env.Install(execdir, exe)
 
 if ('install' in COMMAND_LINE_TARGETS) :
     env.Alias('install-exec', install_exec())

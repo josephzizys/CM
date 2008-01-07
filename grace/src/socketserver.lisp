@@ -15,6 +15,8 @@
 ;;; message constants, must be same as Lisp.cpp !!
 ;;;
 
+(defparameter cl-user::%error-disconnect nil)
+
 (defconstant +msgNone+ 0)
 (defconstant +msgError+ 1)
 (defconstant +msgWarning+ 2)
@@ -26,6 +28,7 @@
 (defconstant +msgLoadSystem+ 8)
 (defconstant +msgListPackages+ 9)
 (defconstant +msgListFeatures+ 10)
+(defconstant +msgErrorDisconnect+ 11)
 (defconstant +msgBinaryData+ 128)
 
 ;;; capture these if we want to explicitly send to them
@@ -172,7 +175,9 @@
 (defun connection-send-error (conn text)
   (let* ((length (length text))
 	 (stream (connection-stream conn)))
-    (write-u32 +msgError+ stream)
+    (if cl-user::%error-disconnect
+	(write-u32 +msgErrorDisconnect+ stream)
+	(write-u32 +msgError+ stream))
     (write-u32 length stream)
     (dotimes (i length)
       (write-byte (char-code (aref text i)) stream))
@@ -195,7 +200,7 @@
 	  )
       (error (c)
 	;; OPENMCL: CANT USE GRAY STREAMS UNDER ERROR (BUG ??)
-	(let* ((msg (format nil ">>> Lisp ~A error:~%    ~A" step c))
+	(let* ((msg (format nil ">>> Error: ~A" c))
 	       (str (connection-stream conn)))
 	  ;; first flush any pending output/warnings messages (?)
 	  (force-output str) 
@@ -294,6 +299,7 @@
 			 :message-type +msgValues+
 			 :binary-stream stream))
 	 )
+
     (flet ((serve ()
 	     (catch :socket-server
 	       (let* ((binary-confirmation-message 
@@ -306,8 +312,10 @@
 				   :element-type '(unsigned-byte 8)))
 		      (*error-output* warn-output-stream)
 		      (*standard-output* standard-output-stream)
+		      (*terminal-io* standard-output-stream)
 		      message length string vector)
 		 message length string vector
+
 		 (loop 
 		    (handler-case
 			;; handler protect connection reading
@@ -374,8 +382,6 @@
 		      ((= message +msgListFeatures+)
 		       )
 		      ((= message +msgBinaryData+)
-		       
-		       
 		       (setq length (length confirmation-bytes))
 		       (write-u32 +msgBinaryData+ stream)
 		       (write-u32 length stream)
@@ -391,6 +397,11 @@
 	   (let (res)
 	     (unwind-protect
 		  (setq res (serve ))
+
+;	       #+sbcl
+;	       (progn (setq sb-impl::*max-event-to-usec* nil)
+;		      (setq sb-impl::*periodic-polling-function* nil))
+	       
 	       ;close streams
 	       (close standard-output-stream)
 	       (close error-output-stream)

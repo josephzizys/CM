@@ -17,6 +17,7 @@ class LispConnection;
 class ConsoleWindow;
 
 #include "Console.h"
+#include "Grace.h"
 
 class LispProcessConnection : public Thread,
 			      private MessageListener
@@ -39,6 +40,7 @@ public:
       msgLoadSystem,
       msgListPackages,
       msgListFeatures,
+      msgErrorDisconnect,
       msgBinaryData = 128,  // binary messages > 128
       msgStatus = 0xFF
     } ;
@@ -84,6 +86,8 @@ class LispConnection : public LispProcessConnection, public Timer {
   int timeout;    // connection timeout (sec)
   int waiting;    // current wait time (ms)
   StringArray loaded; // array of loaded systems and files.
+  int cmMinVersion;
+  bool cmAutoLoad;
   ConsoleWindow* console;
 
   LispConnection (ConsoleWindow* w);
@@ -178,6 +182,7 @@ private:
   FilenameComponent* sysbuf;
 
   ToggleButton* autobutton;
+  ToggleButton* autocmbutton;
   TextButton* okbutton;
   TextButton* cancelbutton;
 

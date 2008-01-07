@@ -386,10 +386,13 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   lispmenu->setEditableText (false);
   lispmenu->setJustificationType (Justification::centredLeft);
   lispmenu->setTextWhenNothingSelected (T("Select Lisp"));
-  for (int i=0; i<p->numLisps(); i++)
+  for (int i=0; i<p->numLisps(); i++) {
     lispmenu->addItem (p->getLisp(i)->getLispName(), i+1);
+    // disable OpenMCL until I can get it working...
+    if ( p->getLisp(i)->getLispName() == T("OpenMCL") )
+      lispmenu->setItemEnabled(i+1, false);
+  }
   lispmenu->addListener (this);
-
   addAndMakeVisible(proglab = new Label(String::empty,T("Executable:")));
   proglab->setFont (Font (15.0000f, Font::plain));
   proglab->setJustificationType (Justification::centredRight);
@@ -418,22 +421,15 @@ ConfigureLispView::ConfigureLispView (LispConnection* c)
   argsbuf->setEditable(true, true, false);
 
   // System software
-  addAndMakeVisible (sysgroup = new GroupComponent (String::empty,
-						    T("Lisp Systems Directory")));
-  addAndMakeVisible(sysbuf = new FilenameComponent(String::empty,
-						   p->getLispSystemsDirectory(),
-						   true,
-						   true,
-						   false,
-						   String::empty,
-						   String::empty,
-						   T("Select Directory")
-						   ));
+  addAndMakeVisible (sysgroup = new GroupComponent (String::empty, T("ASDF Systems Directory")));
+  addAndMakeVisible(sysbuf = new FilenameComponent(String::empty, p->getAsdfSystemsDirectory(), true, true, false, String::empty, String::empty, T("Select Directory")));
   sysbuf->setMaxNumberOfRecentFiles(1);
 
   // buttons
   addAndMakeVisible (autobutton = new ToggleButton (String::empty));
   autobutton->setButtonText (T("Launch lisp at startup"));
+  addAndMakeVisible (autocmbutton = new ToggleButton (String::empty));
+  autocmbutton->setButtonText (T("Autoload Common Music"));
 
   addAndMakeVisible (okbutton = new TextButton (String::empty));
   okbutton->setButtonText (T("OK"));
@@ -464,6 +460,7 @@ ConfigureLispView::~ConfigureLispView () {
     deleteAndZero (sysgroup);
     deleteAndZero (sysbuf);
     deleteAndZero (autobutton);
+    deleteAndZero (autocmbutton);
     deleteAndZero (okbutton);
     deleteAndZero (cancelbutton);
 }
@@ -487,7 +484,9 @@ void ConfigureLispView::resized() {
     sysgroup->setBounds (8, argslab->getY()+56, 392, 64);
     sysbuf->setBounds (24, sysgroup->getY()+24, 96+264, 24);
 
-    autobutton->setBounds (8, sysbuf->getY()+60, 170, 24);
+    autobutton->setBounds (8, sysbuf->getY()+45, 170, 24); //60
+    autocmbutton->setBounds (8, sysbuf->getY()+65, 170, 24);
+
     okbutton->setBounds (336, sysbuf->getY()+60, 60, 24);
     cancelbutton->setBounds (264, sysbuf->getY()+60, 60, 24);
 }
@@ -504,11 +503,12 @@ void ConfigureLispView::updateFromConnection () {
 
   Lisp* l=p->getLispToLaunch();
   if (l == (Lisp *)NULL)
-    lispmenu->setSelectedId( 1, false);
+    ; //   lispmenu->setSelectedId( 1, false);
   else
     lispmenu->setSelectedId( p->getLispIndex(l)+1, false);
-  sysbuf->setCurrentFile(p->getLispSystemsDirectory(), false);
+  sysbuf->setCurrentFile(p->getAsdfSystemsDirectory(), false);
   autobutton->setToggleState(p->isLispLaunchAtStartup(),false);
+  autocmbutton->setToggleState(connection->cmAutoLoad,false);
 }
 
 bool ConfigureLispView::updateConnection () {
@@ -537,8 +537,9 @@ bool ConfigureLispView::updateConnection () {
     l->setLispProgram(s2);
     l->setLispProgramArgs(s3);
   }
-  p->setLispSystemsDirectory(File(s4));
+  p->setAsdfSystemsDirectory(File(s4));
   p->setLispLaunchAtStartup(autobutton->getToggleState());
+  connection->cmAutoLoad=autocmbutton->getToggleState();
   return true;
 }
 
@@ -586,7 +587,9 @@ LispConnection::LispConnection (ConsoleWindow* w)
      port (8000),
      lpid (-1),
      timeout (20),
-     pollfile (File::nonexistent)
+     pollfile (File::nonexistent),
+     cmMinVersion (0x2B2),
+     cmAutoLoad (true)
 {
   console=w;
 }
@@ -625,43 +628,40 @@ String escapeForDOS(String path) {
 #endif
 
 bool LispConnection::launchLisp () {
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   GracePreferences* p=GracePreferences::getInstance();
   Lisp* lisp = p->getLispToLaunch();
   // Do upfront checks to make sure we can start Lisp...
-  if (lisp == (Lisp *)NULL) {
-    console->printError(T(">>> Lisp failed to start, use Console>Lisp>Configure Lisp... to configure the Lisp session.\n"));
+  if ( lisp == (Lisp *)NULL)  {
+    console->printError(T(">>> Error: Lisp implementaton has not been set, use Console>Lisp>Configure Lisp... to configure the Lisp session.\n"));
     return false;
   }
   String prog = lisp->getLispProgram();
   if (prog == String::empty) {
-    console->printError(T(">>> Lisp program has not been set. Use Console>Lisp>Configure Lisp... to configure the Lisp session.\n"));
+    console->printError(T(">>> Error: Lisp executable has not been set. Use Console>Lisp>Configure Lisp... to configure the Lisp session.\n"));
     return false;
   }
-  if (! File(prog).existsAsFile() ) {
-    String msg=T(">>> Lisp program ") + prog + 
-      T(" does not exist.\nUse Console>Lisp>Configure Lisp... to configure the Lisp session.\n");
-    console->printError(msg);
+  else if (! File(prog).existsAsFile() ) {
+    console->printError( T(">>> Error: Lisp executable ") + prog + T(" does not exist.\nUse Console>Lisp>Configure Lisp... to configure the Lisp session.\n") );
     return false;
   }
-  // Dont start if Grace system definition isnt found. look under both
-  // LispSystemsDirectory and GraceResourceDirectory
+  // Dont start Lisp if Grace system definition isnt found. look under both
+  // AsdfSystemsDirectory and GraceResourceDirectory
   File load;
-  File lsys = p->getLispSystemsDirectory().getChildFile(T("grace/grace.asd"));
-  if (lsys.existsAsFile() )
+  File reso = app->getResourceDirectory().getChildFile(T("grace/grace.asd"));    
+  File lsys = p->getAsdfSystemsDirectory().getChildFile(T("grace/grace.asd"));
+
+  if ( reso.existsAsFile() ) 
+    load=reso;
+  else if ( lsys.existsAsFile() )
     load=lsys;
   else {
-    File reso = getGraceResourceDirectory().getChildFile(T("grace/grace.asd"));    
-    if ( reso.existsAsFile() ) 
-      load=reso;
-    else {
-      String err = T(">>> System file grace.asd cannot be found under the Lisp systems directory ") +
-	lsys.getFullPathName();
-      if (reso != lsys)
-	err += T(" or under the Grace resource directory ") + reso.getFullPathName() + T(".");
-      err += T("\nUse Console>Lisp>Configure Lisp... to configure the Lisp session.");
-      console->printError(err);
-      return false;
-    }
+    String err = T(">>> Error: Grace system definition file cannot be located under the resource directory: ") + reso.getFullPathName();
+    if (reso != lsys)
+      err += T(" or under the ASDF systems directory: ") + lsys.getFullPathName() + T(".");
+    err += T("\nUse Console>Lisp>Configure Lisp... to configure the Lisp session.");
+    console->printError(err);
+    return false;
   }
 #ifndef WINDOWS
   // build --eval expers for starting the grace server. spread over
@@ -698,7 +698,7 @@ bool LispConnection::launchLisp () {
   console->consoleClear();
   console->printMessage(T("Launching ") + prog + T(" ") + args + T("\n"));
   if (! File(prog).startAsProcess(args) ) {
-    console->printError(T(">>> Lisp program ") + prog + 
+    console->printError(T(">>> Lisp executable ") + prog + 
       T(" failed to start.\nUse Console>Lisp>Configure Lisp... to configure the Lisp session.\n"));
     return false;
   }
@@ -750,7 +750,8 @@ void LispConnection::connectionMade () {
     msg+= getHost() + T(" ");
   console->printMessage(msg + T("port ") + String(getPort()) + T("\n"));
   setLoaded(p->getASDF(ASDF::Grace));
-  loadASDF( p->getASDF(ASDF::CM) );
+  if ( cmAutoLoad )
+    loadASDF( p->getASDF(ASDF::CM) );
 }
 
 void LispConnection::stopLisp () {
@@ -801,7 +802,7 @@ void LispConnection::chooseAndLoadFile() {
   if ( p->areRecentlyLoadedFiles() )
     dir=p->getRecentlyLoadedFile(0).getParentDirectory();
   else
-    dir=p->getLispSystemsDirectory();
+    dir=p->getAsdfSystemsDirectory();
   FileChooser choose (T("Load File"), dir, String::empty, true);
   if ( choose.browseForFileToOpen() ) {
     File file = choose.getResult();
@@ -809,13 +810,13 @@ void LispConnection::chooseAndLoadFile() {
   }
 }
 
-// ASDF loading
+// ASDF loading 
 
 bool LispConnection::loadASDF(ASDF* asdf) {
   if ( ! isLispRunning () ) return false;
   if ( isLoaded(asdf) ) return true;
   GracePreferences* p=GracePreferences::getInstance();
-  File file = asdf->getDefinitionFile( p->getLispSystemsDirectory() );
+  File file = asdf->getDefinitionFile( p->getAsdfSystemsDirectory() );
   String load = String::empty;
   if ( file.existsAsFile() ) {
 #ifdef WINDOWS
@@ -828,20 +829,24 @@ bool LispConnection::loadASDF(ASDF* asdf) {
   else {
     String bad=asdf->getPathName();
     if (bad==String::empty)
-      bad=p->getLispSystemsDirectory().getChildFile(T("**")).getChildFile(asdf->getASDFFileName()).getFullPathName();
-    console->printWarning( T("Warning: system ") + asdf->getASDFName() + 
-				T(" not found:\n") + bad + 
-				T(" does not exist.\n"));
+      bad=p->getAsdfSystemsDirectory().getChildFile(T("**")).getChildFile(asdf->getASDFFileName()).getFullPathName();
+    console->printError( T(">>> Error: failed to load ") +
+			 asdf->getASDFName() + 
+			 T(" because the ASDF definition file ") + 
+			 bad + T(" does not exist.\n"));
     return false;
   }
   sendLispSexpr(load);
+  // if loading CM test for min version compatability
+  if ( asdf->getASDFName() == T("CM") )
+    sendLispSexpr(T("(grace::insure-cm-version " + String(cmMinVersion) + ")"));
   return true;
 }
 
 void LispConnection::chooseAndLoadASDF() {
   GracePreferences* p=GracePreferences::getInstance();
   FileChooser choose (T("Load System"),
-		      p->getLispSystemsDirectory(),
+		      p->getAsdfSystemsDirectory(),
 		      T("*.asd"),
 		      true);
   if ( choose.browseForFileToOpen() ) {
@@ -974,6 +979,11 @@ void LispConnection::handleMessage (const Message& message) {
   case (uint32)msgError:
     postError(*data);
     delete data;
+    break;
+  case (uint32)msgErrorDisconnect:
+    postError(*data);
+    delete data;
+    stopLisp();
     break;
   case (uint32)msgValues:
     postValues(*data);

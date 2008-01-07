@@ -11,6 +11,27 @@
 
 (in-package :grace)
 
+(defun insure-cm-version (vers)
+  (let ((sym (and (find-package :CM)
+		  (find-symbol "%CM-VERSION%" :CM))))
+    (when (and sym (< (symbol-value sym) vers))
+      (defparameter cl-user::%error-disconnect t)
+      (let ((num (format nil "~a.~a.~a" (ldb (byte 4 8) vers)
+			 (ldb (byte 4 4) vers) (ldb (byte 4 0) vers))))
+	(error "Attempting to load a version of Common Music that will not work correctly in Grace. To fix the problem please upgrade your Common Music sources in '~a' to version ~A (or higher) and start Lisp again.~%"
+	       (funcall (find-symbol "CM-DIRECTORY" :CL-USER))
+	       num)))
+    (values)))
+
+;#+sbcl
+;(eval-when (:load-toplevel)
+;  (setq sb-impl::*max-event-to-usec* 1000)
+;  (setq sb-impl::*periodic-polling-function*
+;	(lambda ()
+;	  (force-output *standard-output*)
+;	  (force-output *terminal-io*)
+;	  ))
+;  )
 
 ;; Grace menubar command IDS are organized in "menubar blocks". each
 ;; id has its lower 7 bits available for encoding command
