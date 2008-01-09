@@ -19,26 +19,6 @@
 
 (in-package :cl-user)
 
-#+grace
-(eval-when (:load-toplevel)
-  ;; Trigger an error if the compiled version of this file is loaded
-  ;; outside of Grace but was compiled in Grace.
-  (unless (find ':grace *features*)
-    (error "Attempting to load a version of Common Music that was compiled in Grace. This version will not work correctly. To fix the problem please delete all '.~A' files in the directory '~A' and start CM again.~%"
-	   (pathname-type *load-truename*)
-	   (namestring (make-pathname :defaults *load-truename*
-				      :name nil :type nil)))))
-#-grace 
-(eval-when (:load-toplevel)
-  ;; Trigger an error if the compiled version of this file is loaded
-  ;; into Grace without having been compiled in Grace.
-  (when (find ':grace *features*)
-    (defparameter cl-user::%error-disconnect t)
-    (error "Attempting to load a version of Common Music that was not compiled in Grace. This version will not work correctly. To fix the problem please delete all '.~A' files in the directory '~A' and start Lisp again.~%"
-	   (pathname-type *load-truename*)
-	   (namestring (make-pathname :defaults *load-truename*
-				      :name nil :type nil)))))
-
 ;;;
 ;;; defstub: define entry points of unloaded systems
 ;;;

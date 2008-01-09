@@ -101,7 +101,7 @@
   `(funcall ,func (make-instance 'sal-error :type ':read
 		 :line ,input :text ,message :start ,pos)))
 
-(defun pperror (x)
+(defun pperror (x &optional (stream t))
   (let* ((source (sal-error-line x))
 	 (llen (length source))
 	 (beg nil)
@@ -128,21 +128,12 @@
 		     (subseq source beg end)))
 	   (mark (make-string (+ pos 1) :initial-element #\space)))
       (setf (elt mark pos) #\^)
-      #+grace
-      (grace:connection-send-error 
-       (grace:grace-connection)
-       (format nil ">>> Sal ~(~A~) error: ~A.~%~%~A~%~A~%" 
-	       (sal-error-type x)
-	       (sal-error-text x)
-	       line
-	       mark))
-      #-grace
-      (format t "~%>>> Sal ~(~A~) error: ~A.~%~%~A~%~A~%" 
+      (format stream "~%>>> Sal ~(~A~) error: ~A.~%~%~A~%~A~%" 
 	      (sal-error-type x)
 	      (sal-error-text x)
 	      line
 	      mark)
-      x)))
+      )))
 
 ;;;
 ;;; tokeinizing

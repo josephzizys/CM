@@ -1048,6 +1048,11 @@
 ;;; the main function. accepts string input, calls parser and then evals
 ;;;
 
+(defun report-error (string)
+  (if (find ':grace *features*) 
+      (funcall (find-symbol "REPORT-ERROR" :grace) string)
+      (write-string string)))
+
 (defun sal (input &key (pattern *top-level-pattern*) 
 	    (grammer *sal-grammer*))
   ;; slime nonsense: package needs to be reset before input string is
@@ -1063,7 +1068,7 @@
 		   ;; add input text if error doesnt contain it
 		   (unless (sal-error-line b)
 		     (setf (sal-error-line b) input))
-		   (pperror b)
+		   (report-error (pperror b nil))
 		   ))
 	     )
 	    (t
@@ -1076,24 +1081,21 @@
   (if *sal-eval*
       (if (or *sal-break* recursive?)
 	  (eval form)
-      (handler-case (progn
-		      #-sbcl (eval form)
-		      #+sbcl
-		      (handler-bind 
-			  ((style-warning  #'muffle-warning)
-			   (warning #'muffle-warning)
-			   (sb-ext:compiler-note #'muffle-warning)
-			   (sb-ext:code-deletion-note #'muffle-warning))
-			(eval form)))
-	(error (c)
-	  (let ((text (format nil ">>> Lisp runtime error:~%    ~A~&"
-			      c )))
-	    #+grace
-	    (grace:connection-send-error (grace:grace-connection)
-					 text)
-	    #-grace (write-string text)
-	    )))
-      ))
+	  (handler-case (progn
+			  #-sbcl (eval form)
+			  #+sbcl
+			  (handler-bind 
+			      ((style-warning  #'muffle-warning)
+			       (warning #'muffle-warning)
+			       (sb-ext:compiler-note #'muffle-warning)
+			       (sb-ext:code-deletion-note #'muffle-warning))
+			    (eval form)))
+	    (error (c)
+	      (let ((text (format nil ">>> Lisp runtime error:~%    ~A~&"
+				  c )))
+		(report-error text)
+		)))
+	  ))
   (values))
 
 (defparameter *sal-print-decimals* 3)
