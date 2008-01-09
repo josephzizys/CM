@@ -121,6 +121,7 @@ class ASDF : public XmlElement {
 class GracePreferences {
  public:
   PropertiesFile* propfile;
+  bool loadPrefs;
   XmlElement* lisps; // initalized from property files
   XmlElement* asdfs; // initalized from property files
   RecentlyOpenedFilesList recentlyloaded;
@@ -128,11 +129,10 @@ class GracePreferences {
 
   GracePreferences();
   ~GracePreferences();
-  void initPropertiesFile ();
-
+  void initPreferences (String cmdlineargs);
   PropertiesFile* getProperties() {return propfile;}
   bool save();
-
+  void print();
 
   // General preferences
   bool isNativeTitleBars();
@@ -184,6 +184,9 @@ class GracePreferences {
   ASDF* getASDF(int i) ;
   void addASDF(ASDF* a) ;
   ASDF* findASDF(String n) ;
+  bool autoLoadCM();
+  void setAutoLoadCM(bool b);
+
 
   juce_DeclareSingleton (GracePreferences, true);
 };

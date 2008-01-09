@@ -23,15 +23,12 @@
 	       num)))
     (values)))
 
-;#+sbcl
-;(eval-when (:load-toplevel)
-;  (setq sb-impl::*max-event-to-usec* 1000)
-;  (setq sb-impl::*periodic-polling-function*
-;	(lambda ()
-;	  (force-output *standard-output*)
-;	  (force-output *terminal-io*)
-;	  ))
-;  )
+(defun grace-connection (&optional arg)
+  (declare (ignore arg))
+  (car *connections*))
+
+(defun report-error (text)
+  (connection-send-error (grace-connection) text))
 
 ;; Grace menubar command IDS are organized in "menubar blocks". each
 ;; id has its lower 7 bits available for encoding command

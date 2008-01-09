@@ -46,6 +46,7 @@ public:
   AudioDeviceManager * getAudioDeviceManager();
   ConsoleWindow* getConsole() {return console;}
   File getResourceDirectory() {return resourceDirectory;}
+  void setResourceDirectory(File dir) {resourceDirectory=dir;}
   String getResourceDirectoryPathName() {return resourceDirectory.getFullPathName();}
   GracePreferences* prefs;
   GracePreferences* getPreferences() {return prefs;}

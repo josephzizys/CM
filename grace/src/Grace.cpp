@@ -20,10 +20,8 @@ GraceApp::~GraceApp () {}
 void GraceApp::initialise (const String& commandLine) {  
   File home = File::getSpecialLocation(File::userHomeDirectory);
   home.setAsCurrentWorkingDirectory();
-  prefs=GracePreferences::getInstance();
   // Cache the absolute path to the resource directory. This is
-  // normally determined relative to the Grace executable at run time
-  // unless a compile time RESOURCEDIR has been specified
+  // normally determined relative to the Grace executable at run time and can be overridden by the --resource-directory command arg.
 #ifdef RESOURCEDIR
   resourceDirectory = File(String(RESOURCEDIR));
 #elif MACOSX
@@ -33,6 +31,19 @@ void GraceApp::initialise (const String& commandLine) {
 #elif WINDOWS
   resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getSiblingFile(T("Resources")).getFullPathName());
 #endif
+
+  // delete prefs file if its earlier than the release date
+  File pref=PropertiesFile::getDefaultAppSettingsFile(T("Grace"), T("prefs"), String::empty, false);
+  if ( pref.existsAsFile() ) {
+    Time releasedate (2008, 0, 8, 9, 20) ;
+    if (pref.getLastModificationTime() < releasedate ) {
+      pref.deleteFile();
+    }
+  }
+
+  // create and initialize preferences
+  prefs=GracePreferences::getInstance();
+  prefs->initPreferences(commandLine) ;
 
   String graceinfo;
   graceinfo << T("\n-----------------------------------------------------------\n")
@@ -57,13 +68,15 @@ void GraceApp::initialise (const String& commandLine) {
 	    << File::getSpecialLocation(File::commonApplicationDataDirectory).getFullPathName()
 	    << T("\nTemp directory: ")
 	    << File::getSpecialLocation(File::tempDirectory).getFullPathName()
-	    << T("\n\n");
+	    << T("\n");
   printf("%s", graceinfo.toUTF8());
+  prefs->print();
+  printf("-----------------------------------------------------------\n");
+
   LookAndFeel::setDefaultLookAndFeel(&shinyLookAndFeel);
   commandManager = new ApplicationCommandManager();
   audioManager.initialise(1,2,0,true);
   console = new ConsoleWindow(true);
-
 #ifdef SCHEME
   schemeProcess =  new SchemeThread("Scheduler", console);
   schemeProcess->setPriority(10);
@@ -74,7 +87,6 @@ void GraceApp::initialise (const String& commandLine) {
   midiOutPort->startThread();
   midiInPort = new MidiInPort(console);
 #endif
-
 }
 
 void GraceApp::graceQuit (bool ask) {

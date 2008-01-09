@@ -492,6 +492,7 @@ void ConfigureLispView::resized() {
 }
 
 void ConfigureLispView::updateFromConnection () {
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   GracePreferences* p=GracePreferences::getInstance();
   hostbuffer->setText(connection->getHost(), true);
   portbuffer->setText(String(connection->getPort()), true);
@@ -506,9 +507,17 @@ void ConfigureLispView::updateFromConnection () {
     ; //   lispmenu->setSelectedId( 1, false);
   else
     lispmenu->setSelectedId( p->getLispIndex(l)+1, false);
-  sysbuf->setCurrentFile(p->getAsdfSystemsDirectory(), false);
+
+  sysbuf->setMaxNumberOfRecentFiles(2);
+  String asdfdir=p->getAsdfSystemsDirectory().getFullPathName();
+  String resodir=app->getResourceDirectoryPathName();
+
+  sysbuf->addRecentlyUsedFile(File(asdfdir));
+  if (asdfdir != resodir) 
+    sysbuf->addRecentlyUsedFile(File(resodir));
+  sysbuf->setCurrentFile(asdfdir, false);
   autobutton->setToggleState(p->isLispLaunchAtStartup(),false);
-  autocmbutton->setToggleState(connection->cmAutoLoad,false);
+  autocmbutton->setToggleState(p->autoLoadCM(),false);
 }
 
 bool ConfigureLispView::updateConnection () {
@@ -539,7 +548,7 @@ bool ConfigureLispView::updateConnection () {
   }
   p->setAsdfSystemsDirectory(File(s4));
   p->setLispLaunchAtStartup(autobutton->getToggleState());
-  connection->cmAutoLoad=autocmbutton->getToggleState();
+  p->setAutoLoadCM(autocmbutton->getToggleState());
   return true;
 }
 
@@ -586,10 +595,9 @@ LispConnection::LispConnection (ConsoleWindow* w)
      host (T("localhost")),
      port (8000),
      lpid (-1),
-     timeout (20),
+     timeout (30),
      pollfile (File::nonexistent),
-     cmMinVersion (0x2B2),
-     cmAutoLoad (true)
+     cmMinVersion (0x2B2)
 {
   console=w;
 }
@@ -750,7 +758,7 @@ void LispConnection::connectionMade () {
     msg+= getHost() + T(" ");
   console->printMessage(msg + T("port ") + String(getPort()) + T("\n"));
   setLoaded(p->getASDF(ASDF::Grace));
-  if ( cmAutoLoad )
+  if ( p->autoLoadCM() )
     loadASDF( p->getASDF(ASDF::CM) );
 }
 
@@ -830,9 +838,9 @@ bool LispConnection::loadASDF(ASDF* asdf) {
     String bad=asdf->getPathName();
     if (bad==String::empty)
       bad=p->getAsdfSystemsDirectory().getChildFile(T("**")).getChildFile(asdf->getASDFFileName()).getFullPathName();
-    console->printError( T(">>> Error: failed to load ") +
-			 asdf->getASDFName() + 
-			 T(" because the ASDF definition file ") + 
+    console->printError( T(">>> Error: ") + 
+			 asdf->getASDFName() +
+			 T(" failed to load because the ASDF definition file ") + 
 			 bad + T(" does not exist.\n"));
     return false;
   }

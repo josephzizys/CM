@@ -312,6 +312,7 @@
 				   :element-type '(unsigned-byte 8)))
 		      (*error-output* warn-output-stream)
 		      (*standard-output* standard-output-stream)
+		      (*trace-output* standard-output-stream)
 		      (*terminal-io* standard-output-stream)
 		      message length string vector)
 		 message length string vector
@@ -341,6 +342,7 @@
 					 (read-byte stream)))))
 			  )
 		      (error (c) 
+			c
 ;;			(format *lisp-standard-output*
 ;;				"; Unexpected socket stream error: ~A.~%~
 ;;                                 ; Quitting lisp..."
@@ -397,11 +399,6 @@
 	   (let (res)
 	     (unwind-protect
 		  (setq res (serve ))
-
-;	       #+sbcl
-;	       (progn (setq sb-impl::*max-event-to-usec* nil)
-;		      (setq sb-impl::*periodic-polling-function* nil))
-	       
 	       ;close streams
 	       (close standard-output-stream)
 	       (close error-output-stream)
@@ -412,10 +409,6 @@
 	       (force-output t)
 	       (if (eql res ':kill)
 		   (kill-lisp)))))))
-
-(defun grace-connection (&optional arg)
-  (declare (ignore arg))
-  (car *connections*))
 
 (defun start-server (port pollfile)
   ;; write polling file to tell (localhost) caller that connection is

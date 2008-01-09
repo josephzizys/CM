@@ -207,18 +207,94 @@ juce_ImplementSingleton (GracePreferences);
 
 GracePreferences::GracePreferences()
   : lisps ((XmlElement *)NULL),
-    asdfs ((XmlElement *)NULL)
+    asdfs ((XmlElement *)NULL),
+    loadPrefs (true)
 {
-  initPropertiesFile();
 }
 
-// Property File
-
-void GracePreferences::initPropertiesFile () {
+void GracePreferences::initPreferences (String cmdline) {
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
-  propfile=PropertiesFile::createDefaultAppPropertiesFile
-    (T("Grace"), T("prefs"), String::empty, false, -1, 
-     PropertiesFile::storeAsXML);
+  StringArray toks ;
+  toks.addTokens(cmdline, true);
+  int argc=toks.size(), argn=0;
+
+  // have to check --no-prefs before anything else
+  if ( toks.contains( T("--no-prefs") ) ) {
+    propfile=new PropertiesFile(File::nonexistent, -1, 
+				PropertiesFile::storeAsXML);
+    loadPrefs=false;
+  }
+  else
+    propfile=PropertiesFile::createDefaultAppPropertiesFile
+      ( T("Grace"), T("prefs"), String::empty, false, -1,
+	PropertiesFile::storeAsXML);
+
+  // add lisp implementations
+  if (!propfile->containsKey(T("LispImplementations")) ) {
+    XmlElement* top=new XmlElement(T("list"));
+    top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
+#ifdef WINDOWS
+				    T(""),
+#else
+				    T("/usr/local/bin/clisp"),
+#endif
+				    T("")));
+    top->addChildElement( new Lisp( T("OpenMCL"), T("cltl"), T("--eval"), 
+				    T("/usr/local/bin/openmcl"),
+				    T("")));
+    top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
+#ifdef WINDOWS
+				    T(""),
+#else
+				    T("/usr/local/bin/sbcl"),
+#endif
+				    T("")));
+    propfile->setValue(T("LispImplementations"), top);
+  }
+
+  // parse command line args
+  while ( argn < argc ) {
+    if ( toks[argn]==T("--resource-directory") ) {
+      if ( ++argn < argc ) 
+	app->setResourceDirectory( File(toks[argn++]) );
+    }
+    else if ( toks[argn]==T("--asdf-systems-directory") ) {
+      if ( ++argn < argc )
+	setAsdfSystemsDirectory( File(toks[argn++]) );
+    }
+    else if ( toks[argn]==T("--scbl-program") ) {
+      if ( ++argn < argc ) {
+	Lisp *l=findLisp( T("SBCL"));
+	setLispToLaunch( l );
+	l->setLispProgram( toks[argn++] );
+      }
+    }
+    else if ( toks[argn]==T("--clisp-program") ) {
+      if ( ++argn < argc ) {
+	Lisp *l=findLisp( T("CLISP") );
+	setLispToLaunch( l );
+	l->setLispProgram( toks[argn++] );
+      }
+    }
+    else if ( toks[argn]==T("--scheme-heap-size") ) {
+      if ( ++argn < argc ) {
+	setSchemeHeapSize( toks[argn++].getIntValue() );
+      }
+    }
+    else if ( toks[argn]==T("--scheme-stack-size") ) {
+      if ( ++argn < argc ) {
+	setSchemeStackSize( toks[argn++].getIntValue() );
+      }
+    }
+    else if ( toks[argn]==T("--scheme-repository") ) {
+      argn=+2;
+    }
+    else if ( toks[argn]==T("--library-directory") ) {
+      argn=+2;
+    }
+    else 
+      argn++;
+  }
 
   // initialize any undefined properties
   if (!propfile->containsKey(T("NativeTitleBars")))
@@ -244,57 +320,8 @@ void GracePreferences::initPropertiesFile () {
   if (!propfile->containsKey(T("LispLaunchAtStartup")) )
     propfile->setValue(T("LispLaunchAtStartup"), false);
 
-  if (!propfile->containsKey(T("LispImplementations")) ) {
-    XmlElement* top=new XmlElement(T("list"));
-
-#ifdef WINDOWS
-    String clispexe=T("");
-#else
-    String clispexe=T("/usr/local/bin/clisp");
-#endif
-    //    File clispdir=getResourceDirectory().getChildFile(T("clisp"));
-    //    File clispcom=clispdir.getChildFile(clispexe);
-    //    if ( clispcom.existsAsFile() )
-    //      top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
-    //				      clispcom.getFullPathName(), 
-    //#ifndef WINDOWS
-    //				      (T("-B ") + clispdir.getFullPathName())
-    //#else
-    //				      T("")
-    //#endif
-    //				      ));
-    //    else
-    top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
-				    clispexe, T("")));
-#ifdef WINDOWS
-    String sbclexe=T("");
-#else
-    // OPENMCL
-    top->addChildElement( new Lisp( T("OpenMCL"), T("cltl"), T("--eval"), 
-				    T("/usr/local/bin/openmcl"), T("")));
-    String sbclexe=T("/usr/local/bin/sbcl");
-#endif
-    //    File sbcldir=getResourceDirectory().getChildFile(T("sbcl"));
-    //    File sbclcom=sbcldir.getChildFile(sbclexe);
-    // I dont think this will work as is because SBCL_HOME probably
-    // has to be set too or (require ...) won't work
-
-    //    if ( sbclcom.existsAsFile() )
-    //      top->addChildElement(new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
-    //				     sbclcom.getFullPathName(), 
-    //				     (T("--core ") + sbcldir.getChildFile(T("sbcl.core")).getFullPathName())
-    //				     ));
-    //    else
-    top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"), sbclexe, T("")));
-    propfile->setValue(T("LispImplementations"), top);
-  }
-
   // initialize lisps to Xml list from file
   lisps=propfile->getXmlValue( T("LispImplementations") );
-
-  //  if (!propfile->containsKey(T("LispToLaunch")) )
-  //    setLispToLaunch(getLisp(0));
-
   if (!propfile->containsKey(T("AsdfSystems")) ){
     XmlElement* top=new XmlElement(T("list"));
     top->addChildElement( new ASDF( T("Grace")));
@@ -302,12 +329,17 @@ void GracePreferences::initPropertiesFile () {
 				    T("asdf:load-op"),
 				    String::empty,
 				    T("(cl-user::cm)")));
+    top->addChildElement( new ASDF( T("CLM"), String::empty,
+				    T("asdf:load-source-op")));
+    top->addChildElement( new ASDF( T("FOMUS")));
     propfile->setValue(T("AsdfSystems"), top);
   }
 
+  if (!propfile->containsKey(T("AutoLoadCM")) )
+    setAutoLoadCM(true);
+
   // initialize asdfs to Xml values from file
   asdfs=propfile->getXmlValue( T("AsdfSystems") );
-
   recentlyloaded.clear();
   recentlyloaded.setMaxNumberOfItems(10);
   recentlyloaded.restoreFromString
@@ -330,12 +362,40 @@ GracePreferences::~GracePreferences() {
 }
 
 bool GracePreferences::save() {
+  if (loadPrefs) {
   propfile->setValue(T("LispImplementations"), lisps);
   propfile->setValue(T("AsdfSystems"), asdfs);
   propfile->setValue (T("RecentlyLoadedFiles"), recentlyloaded.toString());
   propfile->setValue (T("RecentlyOpenedFiles"), recentlyopened.toString());
   propfile->save();
   return true;
+  }
+  return false;
+}
+
+void GracePreferences::print() {
+  String info=T("Preferences:");
+  info << T("\n  Prefs file loaded: ") << ((loadPrefs) ? T("yes") : T("no"))
+       << T("\n  NativeTitleBars: ") << (( isNativeTitleBars() ) ? T("yes") : T("no") )
+       << T("\n  ConsoleTheme: ") << getConsoleTheme()
+       << T("\n  ConsoleFontSize: ") << getConsoleFontSize()
+       << T("\n  EditorFontSize: ") << getEditorFontSize();
+#ifdef SCHEME
+  info << T("\n  HeapSize: ") << getSchemeHeapSize()
+       << T("\n  StackSize: ") << getSchemeStackSize();
+#else
+  Lisp *lisp=getLispToLaunch();
+  if (lisp==NULL)
+    info << T("\n  LispToLaunch: none") ;
+  else
+    info << T("\n  LispToLaunch: ") << lisp->getLispName()
+	 << T("\n     exec: ") << lisp->getLispProgram()
+	 << T("\n     args: ") << lisp->getLispProgramArgs() ;
+  info << T("\n  AsdfSystemsDirectory: ") << getAsdfSystemsDirectory().getFullPathName()
+       << T("\n  LispLaunchAtStartup: ") << (( isLispLaunchAtStartup() ) ? T("yes") : T("no"))
+       << T("\n  AutoLoadCM: ") << (( autoLoadCM() ) ? T("yes") : T("no"));
+#endif
+  printf("%s\n",info.toUTF8());
 }
 
 //
@@ -542,6 +602,7 @@ void GracePreferences::setLispLaunchAtStartup(bool b) {
   propfile->setValue(T("LispLaunchAtStartup"), b);
 }
 
+
 /// ASDFs
 
 ASDF::ASDF (String n, String p, String o, String b, String a) 
@@ -660,6 +721,14 @@ ASDF* GracePreferences::findASDF(String name) {
     }
   }
   return (ASDF *)NULL;
+}
+
+bool GracePreferences::autoLoadCM() {
+  return propfile->getBoolValue(T("AutoLoadCM"), true);
+}
+
+void GracePreferences::setAutoLoadCM(bool b) {
+  propfile->setValue(T("AutoLoadCM"), b);
 }
 
 // JUCER_RESOURCE: grace_png, 58074, "/Lisp/grace/grace.png"
