@@ -458,6 +458,18 @@
 ;;; main functions
 ;;;
 
+(eval-when (:load-toplevel :execute)
+(setf (logical-pathname-translations "MUS")
+      `(("clm;**;*.*" "mus:clm-3;**;*.*")
+        ("**;*.*" 
+         , (make-pathname :name :wild :type :wild
+                          :directory
+                          (append 
+                           (butlast 
+                            (pathname-directory *cm-directory*))
+                           (list :wild-inferiors))))))
+)
+
 (defun use-system (sys &key directory bin-directory
                    (verbose t) warnings symbols )
   ;; load system from either:
