@@ -206,8 +206,10 @@ void postGCHook(int m, long ms)
 
 void SchemeThread::setInputHook(C_word hook, unsigned int chanmask, unsigned int msgfilt)
 {
-  if(hook == C_SCHEME_FALSE)
+  if(hook == C_SCHEME_FALSE) {
+    CHICKEN_gc_root_set(inputClosureGCRoot, C_SCHEME_FALSE);
     ((GraceApp*)GraceApp::getInstance())->midiInPort->stopSchemeInput();
+  }
   else {
     CHICKEN_gc_root_set(inputClosureGCRoot, hook);
     ((GraceApp*)GraceApp::getInstance())->midiInPort->startSchemeInput(chanmask, msgfilt);
