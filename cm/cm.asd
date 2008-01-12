@@ -459,7 +459,7 @@
 ;;;
 
 (eval-when (:load-toplevel :execute)
-(setf (logical-pathname-translations "MUS")
+(setf (logical-pathname-translations "SYS")
       `(("clm;**;*.*" "mus:clm-3;**;*.*")
         ("**;*.*" 
          , (make-pathname :name :wild :type :wild

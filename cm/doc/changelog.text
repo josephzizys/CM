@@ -1,3 +1,7 @@
+CM 2.11.2
+  o removed dependancy on #+grace and #-grace feature
+  o added "SYS" logical-pathname-translation to cm.asd
+
 CM 2.11.1
 
   o Added SAL and grace support to the kernel sources, new features
