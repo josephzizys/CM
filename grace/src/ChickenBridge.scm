@@ -486,9 +486,36 @@ void set_input_hook( C_word proc, unsigned int chanmask, unsigned int msgfilt )
 (define (mp:micro divs)
   (error "message function not implemented."))
 
-(define mp:inhook 
-  (foreign-lambda void "set_input_hook" scheme-object unsigned-int unsigned-int))
+(define (mp:inhook %hook . args)
+  ;;(foreign-lambda void "set_input_hook" scheme-object unsigned-int unsigned-int)
+  (let ((chans 0)
+	(filt 0))
+    (when (pair? args)
+      (set! chans (car args))
+      (when (pair? (cdr args))
+        (set! filt (cadr args))))
 
+    ( (foreign-lambda void "set_input_hook" scheme-object unsigned-int unsigned-int)
+
+      ;; hook closure wraps a call to user's hook inside error protection
+      (lambda (%msg)
+	(call-with-current-continuation
+	 (lambda (%cont)
+	   (with-exception-handler
+	    (lambda (%err)
+	      (print-error
+	       (sprintf ">>> Error: ~A~%    Aborting MIDI inhook.~%"
+			((condition-property-accessor 'exn 'message) %err)
+			))
+	      (%cont -1)  ; -1 means error
+	      )
+	    (lambda () 
+	      ( %hook %msg)  ;; call users hook with the received message
+	      0 ; 0 means success
+	      )
+	    ))))
+      chans
+      filt)))
 
 ;; message definitions
 
