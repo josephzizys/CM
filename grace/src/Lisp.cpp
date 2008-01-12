@@ -723,6 +723,7 @@ void LispConnection::timerCallback () {
     console->printError(T(" =:(\n"));
     console->printMessage(T("Connection failed.\n"));
     stopTimer();
+    setPort(getPort()+1); // avoid reusing port
   }
   else {
     console->printMessage(T("."));
@@ -760,6 +761,8 @@ void LispConnection::connectionMade () {
   setLoaded(p->getASDF(ASDF::Grace));
   if ( p->autoLoadCM() )
     loadASDF( p->getASDF(ASDF::CM) );
+
+  setPort(getPort()+1); // avoid reusing port unless
 }
 
 void LispConnection::stopLisp () {
@@ -784,9 +787,8 @@ void LispConnection::connectionLost () {
 bool LispConnection::loadFile(File file) {
   if ( ! isLispRunning () ) return false;
   if ( ! file.existsAsFile() ) {
-    console->printWarning( T("Warning: file ") +
-			   file.getFullPathName() +
-			   T(" does not exist."));
+    console->printError( T(">>> Error: file ") + file.getFullPathName() +
+			 T(" does not exist.\n"));
     return false;
   }
 #ifdef WINDOWS
@@ -818,6 +820,39 @@ void LispConnection::chooseAndLoadFile() {
   }
 }
 
+bool LispConnection::compileFile(File file) {
+  if ( ! isLispRunning () ) return false;
+  if ( ! file.existsAsFile() ) {
+    console->printError( T(">>> Error: file ") + file.getFullPathName() +
+			 T(" does not exist.\n"));
+    return false;
+  }
+#ifdef WINDOWS
+  String path=escapeForDOS(file.getFullPathName());
+#else
+  String path=file.getFullPathName();
+#endif
+  String sexpr=T("(compile-file ") + path.quoted() + T(")");
+  sendLispSexpr(sexpr);
+  return true;
+}
+
+void LispConnection::chooseAndCompileFile() {
+  GracePreferences* p=GracePreferences::getInstance();
+  File dir;
+  // directory defaults to directory of most recently loaded file or
+  // to Lisp Systems Directory if none.
+  if ( p->areRecentlyLoadedFiles() )
+    dir=p->getRecentlyLoadedFile(0).getParentDirectory();
+  else
+    dir=p->getAsdfSystemsDirectory();
+  FileChooser choose (T("Compile File"), dir, String::empty, true);
+  if ( choose.browseForFileToOpen() ) {
+    File file = choose.getResult();
+    compileFile(file);
+  }
+}
+
 // ASDF loading 
 
 bool LispConnection::loadASDF(ASDF* asdf) {
@@ -845,9 +880,10 @@ bool LispConnection::loadASDF(ASDF* asdf) {
     return false;
   }
   sendLispSexpr(load);
+  setLoaded(asdf);
   // if loading CM test for min version compatability
-  if ( asdf->getASDFName() == T("CM") )
-    sendLispSexpr(T("(grace::insure-cm-version " + String(cmMinVersion) + ")"));
+  //  if ( asdf->getASDFName() == T("CM") )
+  //    sendLispSexpr(T("(grace::insure-cm-version " + String(cmMinVersion) + ")"));
   return true;
 }
 

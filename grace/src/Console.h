@@ -140,8 +140,8 @@ public:
 	 "PortsAudioSetup"
 	 "LispConnect" 
 	 "LispLoadSystem" "LispLoadRecentSystem" "LispClearRecentSystems"
-	 "LispLoadFile" "LispLoadRecentFile" "LispClearRecentLoaded"
-	 "LispConfigure")  */
+	 "LispLoadFile" "LispLoadRecentFile" "LispCompileFile" 
+	 "LispClearRecentLoaded" "LispConfigure")  */
 
   enum ConsoleCommand {
     cmdGraceEditorNew = 32896,
@@ -176,8 +176,9 @@ public:
     cmdLispClearRecentSystems = 40320,
     cmdLispLoadFile = 40576,
     cmdLispLoadRecentFile = 40832,
-    cmdLispClearRecentLoaded = 41088,
-    cmdLispConfigure = 41344};
+    cmdLispCompileFile = 41088,
+    cmdLispClearRecentLoaded = 41344,
+    cmdLispConfigure = 41600};
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};

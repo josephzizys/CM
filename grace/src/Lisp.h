@@ -106,6 +106,8 @@ class LispConnection : public LispProcessConnection, public Timer {
   bool loadASDF(ASDF* asdf) ;
   void chooseAndLoadFile();
   bool loadFile(File f) ;
+  void chooseAndCompileFile();
+  bool compileFile(File f) ;
 
   // Socket connection
 

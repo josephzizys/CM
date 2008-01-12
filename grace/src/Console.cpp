@@ -660,17 +660,16 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       if ( p->numASDFs() > 2 )
 	sub1.addItem( cmdLispClearRecentSystems, T("Clear"),
 		      running);
-      menu.addSubMenu(T("Load System"), sub1, running);
-      // Load File
+      menu.addSubMenu(T("ASDF Systems"), sub1, running);
+      menu.addItem( cmdLispLoadFile, T("Load File..."), running);
+
       if ( p->areRecentlyLoadedFiles() ) {
 	p->addRecentlyLoadedItems(&sub2, cmdLispLoadRecentFile);
 	sub2.addSeparator();
-	sub2.addItem( cmdLispLoadFile, T("Load..."), running);
 	sub2.addItem( cmdLispClearRecentLoaded, T("Clear"), running);
-	menu.addSubMenu(T("Load File"), sub2, running);
+	menu.addSubMenu(T("Load Recent"), sub2, running);
       }
-      else
-	menu.addItem( cmdLispLoadFile, T("Load File..."), running);
+      menu.addItem( cmdLispCompileFile, T("Compile File..."), running);
       menu.addSeparator();
       menu.addItem( cmdLispConfigure, T("Configure Lisp..."), true); 
     }

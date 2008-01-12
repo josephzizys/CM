@@ -247,7 +247,7 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
     break;
   case cmdLispLoadFile:
   case cmdSalLoadFile:
-    result.setInfo (T("Load..."), String::empty, editingCategory, 0);
+    result.setInfo (T("Load File..."), String::empty, editingCategory, 0);
 #ifndef SCHEME
     result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
@@ -255,7 +255,7 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
 
 #ifndef SCHEME
   case cmdLispCompileFile:
-    result.setInfo (T("Compile..."), String::empty, editingCategory, 0);
+    result.setInfo (T("Compile File..."), String::empty, editingCategory, 0);
     result.setActive(getConsole()->lisp->isLispRunning() );
     break;
 #endif

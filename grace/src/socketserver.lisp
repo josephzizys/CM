@@ -189,13 +189,13 @@
   error-out pkg
   (let ((step ':read)
 	(form nil)
-;;	(*package* pkg)
+	;;	(*package* pkg)
 	)
     (handler-case
 	(progn
 	  (setq form (read-from-string string))
 	  (setq step ':eval)
-;;	  (format *lisp-standard-output* "evaling: ~S~%" form)
+	  ;;	  (format *lisp-standard-output* "evaling: ~S~%" form)
 	  (multiple-value-list (eval form))
 	  )
       (error (c)
@@ -212,9 +212,13 @@
 	;; send pending output/warning messages before values
 	(force-output standard-out)
 	(force-output warn-out)
-	(when vals
-	  (dolist (v vals) (pprint v values-out))
-	  (force-output values-out))))
+	(cond ((null vals)
+	       (connection-send conn +msgValues+ (format nil "~%OK"))
+	       )
+	      (t
+	       (dolist (v vals) (pprint v values-out))
+	       (force-output values-out))
+	      )))
     (values)))
 
 (defmethod connection-send ((con connection) (message t) (data t))
