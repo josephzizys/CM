@@ -182,7 +182,7 @@ SchemeThread::SchemeThread(String name, ConsoleWindow *win)
   console = win;
   evalBuffer = new char[8192];
   errorBuffer = new char[8192];
-  inputClosureGCRoot = CHICKEN_new_gc_root();
+ 
 }
 
 SchemeThread::~SchemeThread()
@@ -291,6 +291,10 @@ bool SchemeThread::init() {
   res = CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
   if ( res==0 )
     reportChickenError();
+  
+  inputClosureGCRoot = CHICKEN_new_gc_root();
+  
+  
   return true;
 }
 
