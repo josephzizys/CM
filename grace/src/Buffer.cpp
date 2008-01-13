@@ -232,7 +232,7 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
 
   case cmdLispEval:
     result.setInfo (T("Eval"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress(T('E'), ModifierKeys::commandModifier);
+    result.addDefaultKeypress( KeyPress::returnKey, ModifierKeys::ctrlModifier);
 #ifndef SCHEME
     result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
@@ -286,7 +286,12 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   case cmdLispSymbolHelp:
   case cmdSalSymbolHelp:
     result.setInfo (T("Symbol Help"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress(T('?'), ModifierKeys::commandModifier);
+    //    result.addDefaultKeypress(T('?'), ModifierKeys::commandModifier);
+#ifdef MACOSX
+    result.defaultKeypresses.add( KeyPress::createFromDescription(T("shift + command + /")));    
+#else
+    result.defaultKeypresses.add( KeyPress::createFromDescription(T("shift + command + ?")));
+#endif
     break;
 
   case cmdSalEval:
@@ -639,7 +644,11 @@ public:
     comkeys[Com_W]=KeyPress::createFromDescription(T("command + W"));
     comkeys[Com_X]=KeyPress::createFromDescription(T("command + X"));
     comkeys[Com_Period] = KeyPress::createFromDescription(T("command + ."));
+#ifdef MACOSX
     comkeys[Com_QMark] = KeyPress::createFromDescription(T("shift + command + /"));
+#else
+    comkeys[Com_QMark] = KeyPress::createFromDescription(T("shift + command + ?"));
+#endif
     comkeys[Com_Ret]=KeyPress::createFromDescription(T("command + return"));
     comkeys[Com_ArL]=KeyPress::createFromDescription(T("command + cursor left"));
     comkeys[Com_ArR]=KeyPress::createFromDescription(T("command + cursor right"));
@@ -652,32 +661,42 @@ public:
   }
 
   int isCtrlCommand(KeyPress key) {
-    for (int i=0; i<MAXCTRLKEY; i++)
+    for (int i=0; i<MAXCTRLKEY; i++) {
+      //      printf("is Ctrl Key\n");
       if (ctrlkeys[i]==key) return i;
+    }
     return -1;
   }
 
   int isMetaCommand(KeyPress key) {
-    for (int i=0; i<MAXMETAKEY; i++)
+    for (int i=0; i<MAXMETAKEY; i++) {
+      //      printf("is Meta Key\n");
       if (metakeys[i]==key) return i;
+    }
     return -1;
   }
 
   int isCtrlXCommand(KeyPress key) {
-    for (int i=0; i<MAXCTRLXKEY; i++)
+    for (int i=0; i<MAXCTRLXKEY; i++) {
+      //      printf("is C-x Key\n");
       if (ctrlxkeys[i]==key) return i;
+    }
     return -1;
   }
 
   int isCtrlMetaCommand(KeyPress key) {
-    for (int i=0; i<MAXCTRLMETAKEY; i++)
+    for (int i=0; i<MAXCTRLMETAKEY; i++) {
+      //      printf("is C-M- Key\n");
       if (ctrlmetakeys[i]==key) return i;
+    }
     return -1;
   }
 
   int isComKeyCommand(KeyPress key) {
-    for (int i=0; i<MAXCOMKEY; i++)
+    for (int i=0; i<MAXCOMKEY; i++){
+      //      printf("is Command Key\n");
       if (comkeys[i]==key) return i;
+    }
     return -1;
   }
 
