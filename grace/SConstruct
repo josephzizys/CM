@@ -45,6 +45,33 @@ else :
 
 # utility code
 
+def osx_info_plist () :
+    f = open('build/Info.plist', 'w')
+    f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+    f.write("<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n")
+    f.write("<plist version=\"1.0\">\n")
+    f.write("<dict>\n")
+    f.write("	<key>CFBundleDevelopmentRegion</key>\n")
+    f.write("	<string>English</string>\n")
+    f.write("	<key>CFBundleExecutable</key>\n")
+    f.write("	<string>grace</string>\n")
+    f.write("	<key>CFBundleIdentifier</key>\n")
+    f.write("	<string>com.apple.myCarbonNibApp</string>\n")
+    f.write("	<key>CFBundleInfoDictionaryVersion</key>\n")
+    f.write("	<string>6.0</string>\n")
+    f.write("	<key>CFBundlePackageType</key>\n")
+    f.write("	<string>APPL</string>\n")
+    f.write("	<key>CFBundleSignature</key>\n")
+    f.write("	<string>????</string>\n")
+    f.write("	<key>CFBundleVersion</key>\n")
+    f.write("	<string>0.1</string>\n")
+    f.write("	<key>CSResourcesFileMapped</key>\n")
+    f.write("	<true/>\n")
+    f.write("</dict>\n")
+    f.write("</plist>\n")
+    f.close()
+
+
 def install_docs() :
     srcdocs = []
     dstdocs = []
@@ -186,4 +213,6 @@ if ('install' in COMMAND_LINE_TARGETS) :
 elif (env['PLATFORM'] in ['darwin', 'win32']) :
     # always update the app's dir with the current executable
     env.Alias('install-exec', install_exec())
+
+env.Clean('build/Console.o','build/grace')
 
