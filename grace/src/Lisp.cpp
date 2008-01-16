@@ -131,9 +131,9 @@ bool LispProcessConnection::sendMessage (const MemoryBlock& message,
 					 MessageType messageType)
 // changed: force type to be specified...
 {
-  uint32 messageHeader[2];
-  messageHeader [0] = swapIfBigEndian ((uint32) messageType);
-  messageHeader [1] = swapIfBigEndian ((uint32) message.getSize());
+  juce::uint32 messageHeader[2];
+  messageHeader [0] = swapIfBigEndian ((juce::uint32) messageType);
+  messageHeader [1] = swapIfBigEndian ((juce::uint32) message.getSize());
 
   MemoryBlock messageData (sizeof (messageHeader) + message.getSize());
   messageData.copyFrom(messageHeader, 0, sizeof (messageHeader));
@@ -220,7 +220,7 @@ bool LispProcessConnection::readNextMessageInt()
 {
   const int maximumMessageSize = 1024 * 1024 * 10; // sanity check
   
-  uint32 messageHeader[2];
+  juce::uint32 messageHeader[2];
   const int bytes = (socket != 0) ? socket->read (messageHeader, sizeof (messageHeader))
     : pipe->read (messageHeader, sizeof (messageHeader));
   
@@ -524,7 +524,7 @@ bool ConfigureLispView::updateConnection () {
   GracePreferences* p=GracePreferences::getInstance();
   String s1, s2, s3, s4;
   int i1, i2, i3=-1;
-  uint32 u1;
+  juce::uint32 u1;
 
   s1=hostbuffer->getText();
   i1=portbuffer->getText().getIntValue();
@@ -913,7 +913,7 @@ void LispConnection::chooseAndLoadASDF() {
 
 void LispConnection::sendLispSexpr(String sexpr, int msg) {
   int len=sexpr.length();
-  printf("Grace sending: '%s'\n", sexpr.toUTF8());
+  printf("Send: '%s'\n", sexpr.toUTF8());
   MemoryBlock mem=MemoryBlock(len, true);  
   for (int i=0; i<len; i++)
     mem[i]=(char)sexpr[i];
@@ -948,8 +948,8 @@ void LispConnection::postError (const MemoryBlock &message) {
 void LispConnection::postValues (const MemoryBlock &message) {
   int len=message.getSize();
   String text=String((const char *)message, len);
+  printf("Recv: '%s'\n", text.toUTF8());
   console->printValues(text);
-
 }
 
 void LispConnection::handleBinaryData (const MemoryBlock &message) {
@@ -999,7 +999,7 @@ void LispConnection::handleMessage (const Message& message) {
   MemoryBlock* const data = (MemoryBlock*) message.pointerParameter;
   //printf ("message id %i\n", message.intParameter1);
   switch( message.intParameter1 ) {
-  case (uint32)msgStatus:   //status messages about the connection
+  case (juce::uint32)msgStatus:   //status messages about the connection
     {
       switch  (message.intParameter2) {
       case 1:
@@ -1012,42 +1012,42 @@ void LispConnection::handleMessage (const Message& message) {
     }
     break;
     
-  case (uint32)msgPrintout:
+  case (juce::uint32)msgPrintout:
     postMessage(*data);
     delete data;
     break;
-  case (uint32)msgWarning:
+  case (juce::uint32)msgWarning:
     postWarning(*data);
     delete data;
     break;
-  case (uint32)msgError:
+  case (juce::uint32)msgError:
     postError(*data);
     delete data;
     break;
-  case (uint32)msgErrorDisconnect:
+  case (juce::uint32)msgErrorDisconnect:
     postError(*data);
     delete data;
     stopLisp();
     break;
-  case (uint32)msgValues:
+  case (juce::uint32)msgValues:
     postValues(*data);
     delete data;
     break;
-  case (uint32)msgLoadSystem:
+  case (juce::uint32)msgLoadSystem:
     handleLoadSystem(*data);
     delete data;
     break;
-  case (uint32)msgListPackages:
+  case (juce::uint32)msgListPackages:
     printf("ListPackages message\n");    
     break;
-  case (uint32)msgListFeatures:
+  case (juce::uint32)msgListFeatures:
     printf("ListPackages message\n");    
     break;
-  case (uint32)msgBinaryData:
+  case (juce::uint32)msgBinaryData:
     handleBinaryData (*data);
     delete data;
     break;
-  case (uint32)msgNone:
+  case (juce::uint32)msgNone:
     printf("Caught msgNone and dont know why...\n");
   default:
     break;

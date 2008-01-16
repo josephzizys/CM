@@ -22,6 +22,7 @@
 
 TextBuffer::TextBuffer (syntaxID id, int flg) 
   : TextEditor(String::empty) {
+  GracePreferences* p=GracePreferences::getInstance();
   flags=flg;
   matching=-1;
   setWantsKeyboardFocus(true);
@@ -31,10 +32,9 @@ TextBuffer::TextBuffer (syntaxID id, int flg)
   setPoint(0);
   initSyntax(id);
   setPopupMenuEnabled(false);
-#ifdef MACOSX
-  setFlagOn(emacsmode);
-#endif
-
+  //  if (p->isEmacsMode())
+  //      setFlagOn(emacsmode);
+  //      setFlagOff(emacsmode);
 }
 
 void TextBuffer::initSyntax (syntaxID id) {
@@ -100,13 +100,6 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     cmdLispSetDirectory,
     cmdLispSetPackage,
     cmdLispSymbolHelp,
-
-    cmdSalEval,
-    cmdSalExpand,
-    cmdSalLoadFile,
-    cmdSalShowDirectory,
-    cmdSalSetDirectory,
-    cmdSalSymbolHelp,
 
     cmdCharForward,
     cmdCharBackward,
@@ -222,84 +215,67 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
     result.addDefaultKeypress(T('I'), ModifierKeys::commandModifier);
     break;
   case cmdOptionsParens:
-    result.setInfo (T("Parens Matching"), String::empty, 
-		    preferencesCategory, 0);
+    result.setInfo (T("Parens Matching"), String::empty, preferencesCategory, 0);
     break;
   case cmdOptionsEmacsMode:
-    result.setInfo (T("Emacs Mode"), String::empty, 
-		    preferencesCategory, 0);
+    result.setInfo (T("Emacs Mode"), String::empty, preferencesCategory, 0);
     break;
 
+    // LISP and SAL MENU
+
   case cmdLispEval:
-    result.setInfo (T("Eval"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress( KeyPress::returnKey, ModifierKeys::ctrlModifier);
+    result.setInfo (T("Execute"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
 #ifndef SCHEME
     result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
     break;
-  case cmdSalExpand:
+
   case cmdLispExpand:
-    result.setInfo ((commandID==cmdLispExpand) ? T("Macro Expand") : T("Expand"), 
-		    String::empty, editingCategory, 0);
+    result.setInfo (T("Expand"), String::empty, editingCategory, 0);
 #ifndef SCHEME
     result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
     break;
+
   case cmdLispLoadFile:
-  case cmdSalLoadFile:
     result.setInfo (T("Load File..."), String::empty, editingCategory, 0);
 #ifndef SCHEME
     result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
     break;
 
-#ifndef SCHEME
   case cmdLispCompileFile:
+#ifndef SCHEME
     result.setInfo (T("Compile File..."), String::empty, editingCategory, 0);
     result.setActive(getConsole()->lisp->isLispRunning() );
-    break;
 #endif
+    break;
 
   case cmdLispShowDirectory:
-  case cmdSalShowDirectory:
     result.setInfo (T("Current Directory"), String::empty, editingCategory, 0);
 #ifndef SCHEME
     result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
     break;
+
   case cmdLispSetDirectory:
-  case cmdSalSetDirectory:
     result.setInfo (T("Change Directory..."), String::empty, editingCategory, 0);
 #ifndef SCHEME
     result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
     break;
 
-#ifndef SCHEME
   case cmdLispSetPackage:
+#ifndef SCHEME
     result.setInfo (T("Set Package..."), String::empty, editingCategory, 0);
-
     result.setActive(getConsole()->lisp->isLispRunning() );
-    break;
 #endif
+    break;
 
   case cmdLispSymbolHelp:
-  case cmdSalSymbolHelp:
-    result.setInfo (T("Symbol Help"), String::empty, editingCategory, 0);
-    //    result.addDefaultKeypress(T('?'), ModifierKeys::commandModifier);
-#ifdef MACOSX
-    result.defaultKeypresses.add( KeyPress::createFromDescription(T("shift + command + /")));    
-#else
-    result.defaultKeypresses.add( KeyPress::createFromDescription(T("shift + command + ?")));
-#endif
-    break;
-
-  case cmdSalEval:
-    result.setInfo (T("Execute"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
-#ifndef SCHEME
-    result.setActive(getConsole()->lisp->isLoaded(p->getASDF(ASDF::CM)));
-#endif
+    result.setInfo (T("Documentation"), String::empty, editingCategory, 0);
+    result.addDefaultKeypress(T('D'), ModifierKeys::commandModifier);
     break;
 
   case cmdLineBackward:
@@ -324,16 +300,13 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
     result.setInfo (T("End of line"), String::empty, navigationCategory, 0);
     break;
   case cmdGotoBOL:
-    result.setInfo (T("Beginning of line"), String::empty, 
-		    navigationCategory, 0);
+    result.setInfo (T("Beginning of line"), String::empty, navigationCategory, 0);
     break;
   case cmdGotoEOB:
-    result.setInfo (T("End of buffer"), String::empty, 
-		    navigationCategory, 0);
+    result.setInfo (T("End of buffer"), String::empty, navigationCategory, 0);
     break;
   case cmdGotoBOB:
-    result.setInfo (T("Beginning of buffer"), String::empty,
-		    navigationCategory, 0);
+    result.setInfo (T("Beginning of buffer"), String::empty, navigationCategory, 0);
     break;
   case cmdPageBackward:
     result.setInfo (T("Page up"), String::empty, navigationCategory, 0);
@@ -342,19 +315,16 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
     result.setInfo (T("Page down"), String::empty, navigationCategory, 0);
     break; 
   case cmdSexprForward:
-    result.setInfo (T("End of sexpr"), String::empty, 
-		    navigationCategory, 0);
+    result.setInfo (T("End of sexpr"), String::empty, navigationCategory, 0);
     break;
   case cmdSexprBackward:
-    result.setInfo (T("Beginning of sexpr"), String::empty, 
-		    navigationCategory, 0);
+    result.setInfo (T("Beginning of sexpr"), String::empty, navigationCategory, 0);
     break;
   case cmdDelete:
     result.setInfo (T("Delete backward"), String::empty, editingCategory, 0);
     break;
   case cmdKillSexpr:
-    result.setInfo (T("Delete to end of sexpr"), String::empty,
-		    editingCategory, 0);
+    result.setInfo (T("Delete to end of sexpr"), String::empty, editingCategory, 0);
     break;
   case cmdIndent:
     result.setInfo (T("Indent"), String::empty, editingCategory, 0);
@@ -515,33 +485,27 @@ bool TextBuffer::perform (const InvocationInfo& info) {
     break;
 
   case cmdLispEval:
-  case cmdSalEval:
     evalText();
     break;
   case cmdLispExpand:
-  case cmdSalExpand:
     evalText(true);
     break;
   case cmdLispLoadFile:
-  case cmdSalLoadFile:
     ((EditorWindow*)getTopLevelComponent())->loadFile();
     break;
   case cmdLispCompileFile:
     ((EditorWindow*)getTopLevelComponent())->compileFile();
     break;
   case cmdLispShowDirectory:
-  case cmdSalShowDirectory:
     ((EditorWindow*)getTopLevelComponent())->showDirectory();
     break;
   case cmdLispSetDirectory:
-  case cmdSalSetDirectory:
     ((EditorWindow*)getTopLevelComponent())->setDirectory();
     break;
   case cmdLispSetPackage:
     ((EditorWindow*)getTopLevelComponent())->setPackage();
     break;
   case cmdLispSymbolHelp:
-  case cmdSalSymbolHelp:
     lookupHelpAtPoint();
     break;
 
@@ -568,9 +532,8 @@ public:
   enum {CtrlX_C, CtrlX_E, CtrlX_F, CtrlX_H, CtrlX_S, CtrlX_W, CtrlX_Z,
 	MAXCTRLXKEY};
   enum {CtrlMeta_F, CtrlMeta_B, CtrlMeta_K, MAXCTRLMETAKEY};
-  enum {Com_A, Com_C, Com_E, Com_N, Com_O, Com_R, Com_S, Com_T, Com_V,
+  enum {Com_A, Com_C, Com_D, Com_E, Com_N, Com_O, Com_R, Com_S, Com_T, Com_V,
 	Com_W, Com_X, Com_Ret, Com_ArL, Com_ArR, Com_ArU, Com_ArD, Com_Period,
-	Com_QMark,
 	MAXCOMKEY};
 #ifndef WINDOWS
   enum {emacsControl=1, emacsMeta, emacsControlMeta, emacsCommand, emacsCommandControl,
@@ -634,6 +597,7 @@ public:
 
     comkeys[Com_A]=KeyPress::createFromDescription(T("command + A"));
     comkeys[Com_C]=KeyPress::createFromDescription(T("command + C"));
+    comkeys[Com_D]=KeyPress::createFromDescription(T("command + D"));
     comkeys[Com_E]=KeyPress::createFromDescription(T("command + E"));
     comkeys[Com_N]=KeyPress::createFromDescription(T("command + N"));
     comkeys[Com_O]=KeyPress::createFromDescription(T("command + O"));
@@ -644,11 +608,6 @@ public:
     comkeys[Com_W]=KeyPress::createFromDescription(T("command + W"));
     comkeys[Com_X]=KeyPress::createFromDescription(T("command + X"));
     comkeys[Com_Period] = KeyPress::createFromDescription(T("command + ."));
-#ifdef MACOSX
-    comkeys[Com_QMark] = KeyPress::createFromDescription(T("shift + command + /"));
-#else
-    comkeys[Com_QMark] = KeyPress::createFromDescription(T("shift + command + ?"));
-#endif
     comkeys[Com_Ret]=KeyPress::createFromDescription(T("command + return"));
     comkeys[Com_ArL]=KeyPress::createFromDescription(T("command + cursor left"));
     comkeys[Com_ArR]=KeyPress::createFromDescription(T("command + cursor right"));
@@ -732,7 +691,12 @@ int getComKeyCommand(KeyPress key) {
 int TextBuffer::isKeyCommand (const KeyPress& key) {
   // true if Emacs mode and C, M or COM keys down w Shift ignored
   int flag = 0;
-  if ( isEmacsMode() ) {
+  //  printf("keypress=%s\n", key.getTextDescription().toUTF8());
+  //  if ( isEmacsMode() ) {
+
+  GracePreferences* p=GracePreferences::getInstance();
+
+  if ( p->isEmacsMode() ) {
     if ( key.getModifiers().isCtrlDown() )
       flag = KeyCommands::emacsControl;
     if ( key.getModifiers().isAltDown() )
@@ -978,7 +942,7 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
 #endif
     break;
 
-  case KeyCommands::Com_QMark:
+  case KeyCommands::Com_D:
     lookupHelpAtPoint();
     break;
 
@@ -998,15 +962,8 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
   case KeyCommands::Com_ArD :
     gotoEOB();
     break;
-    
   case KeyCommands::Com_T :
-    /****  SAL TESTING  *****/
-    if (syntaxId == syntaxSal) {
-      //      String text=backwardTopLevelText();
-      //      if (text != String::empty)
-      //	((SalSyntax *)syntax)->tokenize(text);
-      salTokenize();
-    }
+    // testing....
     break;
   default :
     keyIllegalAction(key);

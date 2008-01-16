@@ -137,6 +137,8 @@ class GracePreferences {
   // General preferences
   bool isNativeTitleBars();
   void setNativeTitleBars(bool b) ;
+  bool isEmacsMode();
+  void setEmacsMode(bool b);
   String getConsoleTheme() ;
   void setConsoleTheme(String t) ;
   float getConsoleFontSize() ;
@@ -150,7 +152,6 @@ class GracePreferences {
   void addRecentlyOpenedItems(PopupMenu* m, int i);
   bool areRecentlyOpenedFiles();
   void clearRecentlyOpenedFiles() ;
-
   void addRecentlyLoadedFile(File f) ;
   File getRecentlyLoadedFile(int i) ;
   void addRecentlyLoadedItems(PopupMenu* m, int i);

@@ -328,6 +328,7 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
 }
 
 EditorWindow::~EditorWindow () {
+  //  GracePreferences* p=GracePreferences::getInstance();
   //delete editor;
 }
 
@@ -364,33 +365,21 @@ const PopupMenu EditorWindow::getLispMenu () {
   menu.addCommandItem( commandManager, TextBuffer::cmdLispEval);
   menu.addCommandItem( commandManager, TextBuffer::cmdLispExpand);
   menu.addSeparator();
+  menu.addCommandItem( commandManager, TextBuffer::cmdLispLoadFile);
 #ifndef SCHEME
   menu.addCommandItem( commandManager, TextBuffer::cmdLispCompileFile);
 #endif
-  menu.addCommandItem( commandManager, TextBuffer::cmdLispLoadFile);
   menu.addSeparator();
   menu.addCommandItem( commandManager, TextBuffer::cmdLispShowDirectory);
   menu.addCommandItem( commandManager, TextBuffer::cmdLispSetDirectory);  
-#ifndef SCHEME
-  menu.addSeparator();
-  menu.addCommandItem( commandManager, TextBuffer::cmdLispSetPackage);
-#endif
+  //#ifndef SCHEME
+  //  if (getTextBuffer()->isLispSyntax() ) {
+  //    menu.addSeparator();
+  //menu.addCommandItem( commandManager, TextBuffer::cmdLispSetPackage);
+  //}
+  //#endif
   menu.addSeparator();
   menu.addCommandItem( commandManager, TextBuffer::cmdLispSymbolHelp);
-  return menu;
-}
-
-const PopupMenu EditorWindow::getSalMenu () {
-  PopupMenu menu, sub1, sub2;
-  menu.addCommandItem( commandManager, TextBuffer::cmdSalEval);
-  menu.addCommandItem( commandManager, TextBuffer::cmdSalExpand);
-  menu.addSeparator();
-  menu.addCommandItem( commandManager, TextBuffer::cmdSalLoadFile);
-  menu.addSeparator();
-  menu.addCommandItem( commandManager, TextBuffer::cmdSalShowDirectory);
-  menu.addCommandItem( commandManager, TextBuffer::cmdSalSetDirectory);
-  menu.addSeparator();
-  menu.addCommandItem( commandManager, TextBuffer::cmdSalSymbolHelp);
   return menu;
 }
 
@@ -466,17 +455,11 @@ const PopupMenu EditorWindow::getMenuForIndex ( int menuIndex,
 		 getTextBuffer()->isParensMatching()
 		 );
     menu.addSeparator();
-    menu.addItem(TextBuffer::cmdOptionsEmacsMode,
-		 T("Emacs Mode"), true,
-		 getTextBuffer()->isEmacsMode()
-		 );
+    menu.addItem(TextBuffer::cmdOptionsEmacsMode, T("Emacs Mode"), 
+		 true, p->isEmacsMode() );
   }
   else if (menuIndex == 4) {
-    if (getTextBuffer()->isSalSyntax() )
-      menu=getSalMenu();
-    if (getTextBuffer()->isLispSyntax() )    
-      menu=getLispMenu();
-    // Oops! Text menu  is currently empty!
+    menu=getLispMenu();
   }
   else if (menuIndex == 5) 
     addCommonWindowItems(&menu, winEditor);
@@ -489,9 +472,7 @@ void EditorWindow::menuItemSelected (int id, int idx) {
   int arg = id & 0x0000007F;
   int cmd = id & 0xFFFFFF80;
   GracePreferences* p=GracePreferences::getInstance();
-
   switch (cmd) {
-
   case TextBuffer::cmdFileOpenRecent :
     {
       File f=p->getRecentlyOpenedFile(arg);
@@ -514,7 +495,13 @@ void EditorWindow::menuItemSelected (int id, int idx) {
     getTextBuffer()->toggleParensMatching();
     break;
   case TextBuffer::cmdOptionsEmacsMode :
-    getTextBuffer()->toggleEmacsMode();
+    {
+      bool b=p->isEmacsMode();
+      p->setEmacsMode( !b );
+      // FIX. emacs mode is now a preferecnce and should affect ALL
+      // open edit windows
+      //      getTextBuffer()->toggleEmacsMode();
+    }
     break;
   default:
     if (idx == 5)
@@ -661,7 +648,8 @@ void EditorWindow::setDirectory() {
     choose.getResult().setAsCurrentWorkingDirectory();
 #ifndef SCHEME
     ((GraceApp *)GraceApp::getInstance())->getConsole()->
-      consoleEval( T("(cd \\\"") + choose.getResult().getFullPathName() + T("\\\")"), false, false );
+      consoleEval( T("(cd \"") + choose.getResult().getFullPathName() + 
+		   T("\")"), false, false );
 #else
     showDirectory();
 #endif

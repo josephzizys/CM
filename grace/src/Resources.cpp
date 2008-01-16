@@ -299,6 +299,13 @@ void GracePreferences::initPreferences (String cmdline) {
   // initialize any undefined properties
   if (!propfile->containsKey(T("NativeTitleBars")))
     setNativeTitleBars(true);
+  if (!propfile->containsKey(T("EmacsMode")))
+#ifdef MACOSX
+    setEmacsMode(true);
+#else
+    setEmacsMode(false);
+#endif
+
   if (!propfile->containsKey(T("ConsoleTheme")))
     setConsoleTheme(T("Clarity and Beauty"));
   if (!propfile->containsKey(T("ConsoleFontSize")))
@@ -408,6 +415,14 @@ bool GracePreferences::isNativeTitleBars() {
 
 void GracePreferences::setNativeTitleBars(bool b) {
   propfile->setValue(T("NativeTitleBars"), b);
+}
+
+bool GracePreferences::isEmacsMode() {
+  return propfile->getBoolValue(T("EmacsMode"));
+}
+
+void GracePreferences::setEmacsMode(bool b) {
+  propfile->setValue(T("EmacsMode"), b);
 }
 
 String GracePreferences::getConsoleTheme() {
