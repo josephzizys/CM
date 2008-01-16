@@ -27,9 +27,11 @@
 <p> The behavior of an Editor window depends on its "editing mode".
 The Grace editor currently supports three different modes: SAL, Lisp
 and Text. You choose the editing mode you want to work with when you
-create a new editing window with the <span class="menuitem">File&gt;New Editor</span> command. When you
-open an existing file using<span class="menuitem"> File&gt;Open</span> the editing mode is selected
-automatically according to the file's extension: <p>
+create a new editing window with the <span
+class="menuitem">File&gt;New Editor</span> command. When you open an
+existing file using<span class="menuitem"> File&gt;Open</span> the
+editing mode is selected automatically according to the file's
+extension: <p>
 
 <dl>
   <dt>SAL</dt><dd>.sal</dd>
@@ -39,38 +41,41 @@ automatically according to the file's extension: <p>
 
 <p> Both SAL and Lisp editing modes provide <em>syntax
 highlighting</em>, or code coloring, based on the underlying mode's
-syntactic coding rules. Each editing mode also provides a line indentation service that
-you can use to help keep your programs readable. To use it simply
-press the Tab key to indent the current line according to the coding
-style rules of the underlying mode.  </p>
+syntactic coding rules. Each editing mode also provides a line
+indentation service that you can use to help keep your programs
+readable. To use it simply press the Tab key to indent the current
+line according to the coding style rules of the underlying mode.  </p>
 
-<p> Both SAL and Lisp syntaxes provide <em>code evaluation</em> services:</p>
+<p> Both SAL and Lisp syntaxes provide <em>code evaluation</em>
+services:</p>
 
 <ul>
+
   <li> To execute a SAL command, place the cursor at the end of the
 command and press <span class="emacscmd">COMMAND-Enter</span>.</li>
-<li>To evaluate a LISP expression, place the cursor at the end of the
-sexpr and type <span class="emacscmd">COMMAND-Enter</span>.</li>
+
+  <li>To evaluate a LISP expression, place the cursor at the end of
+the sexpr and type <span class="emacscmd">COMMAND-Enter</span>.</li>
 </ul>
 
-<p>Note: Lisp must be running in order to execute SAL or Lisp
-code. See <a href="console.html#Lisp">Console Help</a> for more
-information about starting Lisp.  </p>
+<p>Note: In GraceCL, Common Lisp must be running in order to execute
+SAL or Lisp code. See <a href="console.html#Lisp">Console Help</a> for
+more information about starting Lisp.  </p>
 
 <h2>Command Key Shortcuts</h2>
 
-<p>
-The Grace editor provides numerous Command key shortcuts for accessing
-common text editing operations.</p>
+<p> Command key shortcuts for accessing common text editing operations
+are listed below.</p>
 
 <ul>
 <li>On Linux and Windows the Command key is the Control key.</li>
-<li> On OS X the Command key is the Apple key just to the left of the Spacebar.
+<li>On OS X the Command key is the Apple key just to the left of the Spacebar.
 </ul>
 
-<p>On Linux and Windows the Command key shortcuts are disabled
-if Emacs Emulation is turned on. On OS X Emacs Mode and the
-Command key may be active at the same time.  </p>
+<p>On Linux and Windows the command key shortcuts are disabled if
+Emacs Mode is turned on because Emacs uses the Command key as its
+Control key.  On OS X the Command key is active even when Emacs Mode
+is turned on.  </p>
 
 <table class="float" width="75%">
 <tr><td><span class="emacscmd">COMMAND-N</span></td><td>new SAL file</td></tr>
@@ -87,30 +92,26 @@ Command key may be active at the same time.  </p>
 <tr><td><span class="emacscmd">COMMAND-V</span></td><td>paste</td></tr>
 <tr><td><span class="emacscmd">COMMAND-A</span></td><td>select all</td></tr>
 <tr><td><span class="emacscmd">COMMAND-ENTER</span></td><td>execute SAL or Lisp code</td></tr>
-<tr><td><span class="emacscmd">COMMAND-H</span></td><td>SAL symbol help</td></tr>
-<!-- <tr><td><span class="emacscmd">COMMAND-E</span></td><td>evalulate Lisp sexpr</td></tr> -->
+<tr><td><span class="emacscmd">COMMAND-D</span></td><td>documentation lookup</td></tr>
 <tr><td><span class="emacscmd">COMMAND-&larr;</span></td><td>beginning of line</td></tr>
 <tr><td><span class="emacscmd">COMMAND-&rarr;</span></td><td>end of line</td></tr>
 <tr><td><span class="emacscmd">COMMAND-&uarr;</span></td><td>beginning of buffer</td></tr>
 <tr><td><span class="emacscmd">COMMAND-&darr;</span></td><td>end of buffer</td></tr>
-
 </table>
-
 
 <h2>Emacs Lite Commands</h3>
 
-</p>Use <span class="menuitem">Options&gt;Emacs Mode</span> to enable/disable Emacs Mode in the the
-current edit window.  On OS X the default setting for Emacs Mode is
-enabled, on Windows and Linux it is disabled.  The Grace editor
-supports a fair number of Emacs editing commands.  Emacs commands are
-keystroke combinations involving the CONTROL and/or META keys combined
-with one (or more) additional keys.  In the documentation that follows
-pressing CONTROL or META is shortened to C- and M- respectively. For
-example, C-f means to hold down the Control key and type the f key and
-C-M-f means to hold down both the Control and Meta keys while typing
-the f key. Note: on OS X the Meta key is the Option key just right of
-the control key. On Linux and Windows the Meta key is the Alt key just
-to the left of the Spacebar.  </p>
+</p>If <span class="menuitem">Options&gt;Emacs Mode</span> is turned
+on the code editor supports the following Emacs commands listed below.  </p>
+
+<p>Emacs commands are keystroke combinations involving the CONTROL
+and/or META keys combined with one (or more) additional keys.  In the
+documentation that follows pressing CONTROL or META is shortened to C-
+and M- respectively. For example, C-f means to hold down the Control
+key and type the f key and C-M-f means to hold down both the Control
+and Meta keys while typing the f key. Note: on OS X the Meta key is
+the Option key just right of the control key. On Linux and Windows the
+Meta key is the Alt key just to the left of the Spacebar.  </p>
 
 <h3>Cursor Motion</h3>
 <table class="float" width="75%">
