@@ -32,6 +32,12 @@ void GraceApp::initialise (const String& commandLine) {
   resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getSiblingFile(T("Resources")).getFullPathName());
 #endif
 
+  // add resource directory to library path for loading libchicken
+#if (defined(MACOSX) && defined(SCHEME))
+  setenv("DYLD_LIBRARY_PATH", resourceDirectory.getFullPathName().toUTF8(), 1);
+  //  printf("DYLD_LIBRARY_PATH=%s\n",resourceDirectory.getFullPathName().toUTF8(), 1);
+#endif
+
   // delete prefs file if its earlier than the release date
   File pref=PropertiesFile::getDefaultAppSettingsFile(T("Grace"), T("prefs"), String::empty, false);
   if ( pref.existsAsFile() ) {
@@ -126,7 +132,6 @@ void GraceApp::shutdown () {
   delete console;
   delete prefs;
   delete commandManager;
-  //LookAndFeel::setDefaultLookAndFeel(0); // this causes crash. not needed. 
 }
 
 const String GraceApp::getApplicationName () {
@@ -138,8 +143,18 @@ const String GraceApp::getApplicationName () {
 }
 
 const String GraceApp::getApplicationVersion () {
-  //  return T("0.2.0");
-  return T("(rev ") + String(VERSION) + T(")") ;
+  String ver=String::empty;
+#ifdef RELEASE
+  int n=RELEASE, a=0, b=0;
+  if (n>0) {
+    a=n/100;
+    n=n % 100;
+    b=n/10;
+    n=n % 10;
+    ver=String(a) + T(".") + String(b) + T(".") + String(n) + T(" ");
+  }
+#endif
+  return ver + T("(rev ") + String(REVISION) + T(")") ;
 }
 
 bool GraceApp::moreThanOneInstanceAllowed () {

@@ -12,10 +12,9 @@ opts.AddOptions(PathOption('JUCEDIR',
 			   'Path to JUCE installation directory',
 			   os.path.expanduser('~'),
 			   PathOption.PathIsDir))
-			   
 opts.AddOptions(('SCHEME', 'Build Grace with Chicken Scheme embedded.', 0))
-
 opts.AddOptions(('DEBUG', 'Build Grace with JUCE debug library.', 0))
+opts.AddOptions(('RELEASE', 'Grace Release number.', 0))
 
 env=Environment(options = opts) 
 
@@ -99,7 +98,6 @@ if (env['PLATFORM'] == 'darwin') :
     if (os.uname()[4] == 'Power Macintosh') :
         env.Replace(CXX = 'g++-3.3')
         env.Append(CPPDEFINES = ['PPC'])
-        env.MergeFlags('-isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc')
     else:
         # build universal on intel
         env.MergeFlags('-arch i386 -arch ppc')
@@ -146,7 +144,11 @@ else :
 
 BuildDir('build', 'src', duplicate = 0)
 
-env.Append(CPPDEFINES = ['VERSION=' + get_revision_string() ] )
+env.Append(CPPDEFINES = ['REVISION=' + get_revision_string() ] )
+
+release = env['RELEASE']
+
+env.Append(CPPDEFINES = ['RELEASE=' + str(release)])
 
 env.Append(CPPPATH = ['src', env['JUCEDIR']],
            LIBPATH = [os.path.join(env['JUCEDIR'],'bin')]
