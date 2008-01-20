@@ -13,6 +13,8 @@
 #include "Buffer.h"
 #include "Editor.h"
 #include "Grace.h"
+#include "Midi.h"
+
 //#include "Audio.h"
 
 #ifndef SCHEME
@@ -236,7 +238,9 @@ ConsoleWindow::ConsoleWindow (bool dosplash)
 {
 #ifndef SCHEME
   lisp = new LispConnection(this);
+     
 #endif
+     
   menubar = new MenuBarComponent(this);
   setMenuBar(this);
   //setApplicationCommandManagerToWatch(commandManager);
@@ -613,8 +617,11 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 		     (!app->midiInPort->isActive() ||
 		       app->midiInPort->isActive(MidiInPort::RECORDING) )),
 		   app->midiInPort->isActive(MidiInPort::RECORDING) );
-      sub2.addItem(cmdPortsMidiInHook, T("Clear Input Hook"),
-		   app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) );
+     // sub2.addItem(cmdMidiInConfigure, T("Midi Receive Settings"),
+//                   true );
+
+     // sub2.addItem(cmdPortsMidiInHook, T("Clear Input Hook"),
+//		   app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) );
       sub2.addSeparator();
       sub2.addItem(cmdPortsMidiInConfigure, T("Configure..."));
       menu.addSubMenu(T("Midi In"), sub2);
@@ -791,19 +798,24 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     else 
       app->midiInPort->startRecordInput();
     break;
-
+    
+  case cmdPortsMidiInConfigure:
+    app->midiInPort->showMidiInDialog();
+    break;
+    
   case cmdPortsMidiInHook :
     if ( app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) )
       app->midiInPort->stopSchemeInput();
     break;
+  
 
 #endif
 
+    
   case cmdPortsAudioSetup: 
     //    showAudioMidiWindow();
     break;
-
-  case cmdViewThemes :
+   case cmdViewThemes :
     console->setTheme( arg);
     break;
 
@@ -890,3 +902,6 @@ void ConsoleWindow::postConsoleTextMessage(String msg, int typ,
   if ( trig )
     console->triggerAsyncUpdate();
 }
+
+
+

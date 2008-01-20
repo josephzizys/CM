@@ -5,10 +5,10 @@
 #include <juce.h>
 #include <chicken.h>
 #include "Console.h"
-
+#include "MidiReceiveComponent.h"
 class MidiOutPort;
 class ConsoleWindow;
-
+class MidiReceiveComponent;
 class MidiNode {
  public:
   enum {NODEON=1, NODEOFF, NODEPROG, NODECTRL, NODEBEND} ;
@@ -109,11 +109,23 @@ class MidiInPort : public MidiInputCallback {
   ConsoleWindow *console;
   int devid;
   MidiInput *device;
-  unsigned int channelmask;
-  unsigned int messagefilt;
+
+  MidiReceiveComponent *receiveComponent;
+
   enum {STOPPED, TESTING, SCHEMEHOOK, RECORDING}; // running mode
   int runmode;
   bool trace;
+  
+  bool noteOn;
+  bool noteOff;
+  bool controlChange;
+  bool programChange;
+  bool pitchBend;
+  bool aftertouch;
+  bool channelPressure;
+  int singleChannel;
+  bool allChannels;
+
   //C_word schemehook;
   MidiInPort(ConsoleWindow *win);
   ~MidiInPort();
@@ -127,13 +139,9 @@ class MidiInPort : public MidiInputCallback {
   //hook is set in SchemeThread and only passing mask and filt
   // can use these to determine whether an INHOOK node needs to be
   // created in Scheme Thread
-  void startSchemeInput(unsigned int chanmask=0, 
-			unsigned int msgfilt=0);
+  void startSchemeInput();
   void stopSchemeInput() ;
-  unsigned int getChannelMask();
-  unsigned int getMessageFilter();
-  void setChannelMask(unsigned int m);
-  void setMessageFilter(unsigned int f);
+  
   bool isTracing();
   void setTracing(bool t);
   void startTestInput();
@@ -145,6 +153,18 @@ class MidiInPort : public MidiInputCallback {
   void handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &msg) ;
   void handlePartialSysexMessage (MidiInput *dev, const juce::uint8 *data, 
 				  const int num, const double time);
-
+  
+  void setNoteOn(bool n);
+  void setNoteOff(bool n);
+  void setControlChange(bool n);
+  void setProgramChange(bool n);
+  void setPitchBend(bool n);
+  void setAftertouch(bool n);
+  void setChannelPressure(bool n);
+  void setSingleChannel(int n);
+  void setAllChannels(bool n);
+  void setTrace(bool n);
+  void printMidiMessageTrace (const MidiMessage &msg);
+  void showMidiInDialog();
 };
 #endif

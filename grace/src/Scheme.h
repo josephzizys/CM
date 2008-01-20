@@ -69,7 +69,7 @@ public:
   bool timemsec;
 
   void *inputClosureGCRoot;
-  
+    
   OwnedArray<SchemeNode, CriticalSection> schemeNodes;
   SchemeNodeComparator comparator;  
 
@@ -88,7 +88,7 @@ public:
   void setPaused(bool b);
   void stop(int id=-1);
   void stopProcesses(int id) ;
-  void setInputHook(C_word hook, unsigned int chanmask=0, unsigned int msgfilt=0);
+  void setInputHook(C_word hook);
 };
 
 #endif

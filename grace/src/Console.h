@@ -14,12 +14,16 @@
 #include "juce.h"
 #include "Resources.h"
 
+
 #ifndef SCHEME
+
 #include "Lisp.h"
 #else
 #include "Scheme.h"
+#include "MidiReceiveComponent.h"
 #endif
 
+class MidiReceiveComponent;
 // Aquamacs themes from Resources/site-lisp/color-theme-themes.gz
 // As previewed in Slime repl these are the value mappings used:
 //   bgColor:             background-color
@@ -178,7 +182,8 @@ public:
     cmdLispLoadRecentFile = 40832,
     cmdLispCompileFile = 41088,
     cmdLispClearRecentLoaded = 41344,
-    cmdLispConfigure = 41600};
+    cmdLispConfigure = 41600
+  };
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};
@@ -190,6 +195,9 @@ public:
   ConsoleTheme theme;
   SplashComponent * splash;
   MenuBarComponent * menubar;
+
+ 
+
 #ifndef SCHEME
   LispConnection * lisp;
 #endif
@@ -239,6 +247,7 @@ public:
   void postConsoleTextMessage(String msg, int typ=ConsoleMessage::TEXT,
 			      bool dotrig=true);
   void doAsyncUpdate() ;
+
 };
 
 #endif

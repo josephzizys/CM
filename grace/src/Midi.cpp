@@ -362,13 +362,12 @@ void MidiOutPort::testMidiOutput () {
 MidiInPort::MidiInPort(ConsoleWindow *win)
   : devid (-1),
     device (NULL),
-    channelmask (0xFFFFFFFF),
-    messagefilt (0),
     runmode (STOPPED),
     trace (false)
+    
 {
   console=win;
-
+  receiveComponent = new MidiReceiveComponent();
 }
 
 MidiInPort::~MidiInPort() {
@@ -466,19 +465,16 @@ bool MidiInPort::isActive(int mode) {
     return (runmode == mode); // test specific run mode
 }
 
-void MidiInPort::startSchemeInput(unsigned int chanmask, 
-				  unsigned int msgfilt) {
+void MidiInPort::startSchemeInput() {
   // SET UP THE SCHEME HOOK FOR CALLBACK BEFORE STARTING
   start(SCHEMEHOOK);
 }
 
 void MidiInPort::stopSchemeInput() {
   if ( !isActive(SCHEMEHOOK) ) {
-    //console->printError(T(">>> Error: Midi input port has no hook.\n"));
     return;
   }
   stop();
-  // CLEAR SCHEME HOOK AFTER STOPPING
 }
 
 void MidiInPort::startTestInput() {
@@ -507,7 +503,7 @@ void MidiInPort::stopRecordInput() {
 }
 
 void MidiInPort::setTracing(bool t) {
-  //printf("tracing set to %d\n", t);
+
   trace=t;
 }
 
@@ -515,22 +511,7 @@ bool MidiInPort::isTracing() {
   return trace;
 }
 
-unsigned int MidiInPort::getChannelMask() {
-  return channelmask;
-}
 
-unsigned int MidiInPort::getMessageFilter() {
-  return messagefilt;
-}  
-
-void MidiInPort::setChannelMask(unsigned int m) {
-  if (m==0) m=0xFFFFFFFF;
-  channelmask=m;
-}
-
-void MidiInPort::setMessageFilter(unsigned int f) {
-  messagefilt=f;
-}
 
 void MidiInPort::handleIncomingMidiMessage (MidiInput *dev, 
 					    const MidiMessage &msg) {
@@ -538,94 +519,155 @@ void MidiInPort::handleIncomingMidiMessage (MidiInput *dev,
   int chan=msg.getChannel();
   String info=String::empty;
 
-  if ( chan>0 ) { 
-    chan--;  // we are zero based folk
-    // test if channel message is wanted
-    if ( (channelmask && (1 << chan)) ) {
-      // FIXME: REPLACE TRUES WITH MESSAGEFILT TEST...
-      if ( msg.isNoteOn() && true ) {
-	if ( trace )
-	  info=T("On: chan=") + String(chan) + T(" key=") + 
-	    String(msg.getNoteNumber()) +
-	    T(" vel=") + String(msg.getVelocity());
-	// now handle note off message...
-      }
-      else if ( msg.isNoteOff() && true ) {
-	if ( trace )
-	  info=T("Off: chan=") + String(chan) + 
-	    T(" key=") + String(msg.getNoteNumber());
-	// now handle note off message...
-     }
-      else if ( msg.isProgramChange() && true ) {
-	if ( trace )
-	  info=T("Prog: chan=") + String(chan) + 
-	    T(" prog=") + 
-	    MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
-	// now handle program change message...
-      }
-      else if ( msg.isController() && true ) {
-	if ( trace )
-	  info=T("Ctrl: chan=") + String(chan) + 
-	    T(" ctrl=") + 
-	    MidiMessage::getControllerName(msg.getControllerNumber()) +
-	    T(" value=") + String(msg.getControllerValue());
-	// now handle control change message
-      }
-      else if ( msg.isPitchWheel() && true ) {
-	if ( trace )
-	  info=T("Pw: chan=") + String(chan) + T(" value=") +
-	    String(msg.getPitchWheelValue());
-	// now handle pitch wheel message...
-      }
-      else if ( msg.isChannelPressure() && true ) {
-	if ( trace )
-	  info=T("Cp: chan=") + String(chan) + T(" value=") +
-	    String(msg.getChannelPressureValue());
-	// now handle channel pressure message...
-
-      }
-      else if ( msg.isAftertouch() && true ) {
-	if ( trace )
-	  info=T("At: chan=") + String(chan) + T(" value=") +
-	    String(msg.getAfterTouchValue());
-      // now handle aftertouch message...
-      }
-      else {
-	// drop unwanted type of message
-	return;
-      }
-    }
-    else {
-      // drop unwanted channel message
+  if ( allChannels || msg.isForChannel(singleChannel) ) {     
+    if( msg.isNoteOn() && !noteOn) 
+      return;
+    else if(msg.isNoteOff() && !noteOff) 
+      return;
+    else if(msg.isController() && !controlChange)
+      return;
+    else if(msg.isProgramChange() && !programChange)
+      return;
+    else if(msg.isPitchWheel() && !pitchBend)
+      return;
+    else if(msg.isAftertouch() && !aftertouch)
+      return;
+    else if(msg.isChannelPressure() && !channelPressure)
       return;
     }
-  }
-  else {
-    // message is either sysex or meta, drop for now in either case
-    return;
-  }
+
 #ifdef SCHEME  
   // AT THIS POINT CALL RECORDING CODE OR SCHEMEHOOK COE
   if ( isActive(SCHEMEHOOK) ) {
     ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode((int)SchemeNode::INHOOK, 0.0, msg);
-    printf("Calling scheme hook!\n");
+
+
   }
 #endif
-  else if ( isActive(RECORDING) ) {
+  if ( isActive(RECORDING) ) {
     printf("Recording message!\n");
   }
 
   if (trace) {
+    printMidiMessageTrace(msg);
+  }
+}
+
+void MidiInPort::printMidiMessageTrace (const MidiMessage &msg)
+{
+  int chan=msg.getChannel();
+  String info;
+  if ( allChannels || msg.isForChannel(singleChannel) ) {  
+    if( msg.isNoteOn() )
+      info=T("On: chan=") + String(chan) + T(" key=") + String(msg.getNoteNumber()) +
+	T(" vel=") + String(msg.getVelocity());
+    else if(msg.isNoteOff()) 
+      info=T("Off: chan=") + String(chan) + 
+	T(" key=") + String(msg.getNoteNumber());
+    else if(msg.isController())
+      info=T("Ctrl: chan=") + String(chan) + 
+	T(" ctrl=") + 
+	MidiMessage::getControllerName(msg.getControllerNumber()) +
+	T(" value=") + String(msg.getControllerValue());  
+    else if(msg.isProgramChange() )
+      info=T("Prog: chan=") + String(chan) + 
+	T(" prog=") + 
+	MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
+    else if(msg.isPitchWheel())
+      info=T("Pw: chan=") + String(chan) + T(" value=") +
+	String(msg.getPitchWheelValue());
+    else if(msg.isAftertouch() )
+      info=T("At: chan=") + String(chan) + T(" value=") +
+	String(msg.getAfterTouchValue());
+    else if(msg.isChannelPressure())
+      info=T("CP: chan=") + String(chan) + T(" value=") +
+	String(msg.getChannelPressureValue());
     console->postConsoleTextMessage(String(msg.getTimeStamp(), 3) +
-    			    T(" ") + info + T("\n"), 
+				    T(" ") + info + T("\n"), 
 				    ConsoleMessage::TEXT, true);
   }
 }
+
+
 
 void MidiInPort::handlePartialSysexMessage (MidiInput *dev,
 					    const juce::uint8 *data, 
 					    const int num, 
 					    const double time) {
+}
+
+void MidiInPort::setTrace(bool n)
+{
+  trace = n;
+}
+
+void MidiInPort::setNoteOn(bool n)
+{
+  noteOn = n;
+}
+void MidiInPort::setNoteOff(bool n)
+{
+  noteOff = n;
+}
+
+void MidiInPort::setControlChange(bool n)
+{
+  controlChange = n;
+}
+
+void MidiInPort::setProgramChange(bool n)
+{
+  programChange = n;
+}
+
+void MidiInPort::setPitchBend(bool n)
+{
+  pitchBend = n;
+}
+
+void MidiInPort::setAftertouch(bool n)
+{
+  aftertouch = n;
+}
+
+void MidiInPort::setChannelPressure(bool n)
+{
+  channelPressure = n;
+}
+
+void MidiInPort::setSingleChannel(int n)
+{
+  singleChannel = n;
+  allChannels = false;
+}
+
+void MidiInPort::setAllChannels(bool n)
+{
+  singleChannel = 0;
+  allChannels = n;
+}
+
+void MidiInPort::showMidiInDialog()
+{
+  if( noteOn && noteOff && controlChange && programChange && pitchBend &&
+      aftertouch && channelPressure)
+    receiveComponent->allMessages->setToggleState(true, true);
+  else {
+    receiveComponent->noteOn->setToggleState(noteOn, true);
+    receiveComponent->noteOff->setToggleState(noteOff, true);
+    receiveComponent->controlChange->setToggleState(controlChange, true);
+    receiveComponent->programChange->setToggleState(programChange, true);
+    receiveComponent->pitchBend->setToggleState(pitchBend, true);
+    receiveComponent->aftertouch->setToggleState(aftertouch, true);
+    receiveComponent->channelPressure->setToggleState(channelPressure, true);
+  }
+  if(singleChannel) {
+    receiveComponent->singleChannel->setToggleState(true, true);
+    receiveComponent->channelIncrementor->setValue((double)singleChannel);
+  } else
+    receiveComponent->allChannels->setToggleState(true, true);
+  
+  DialogWindow::showModalDialog(T("Midi Receive Settings"), receiveComponent, console, Colours::white, true, false, false);
 }
 
 ///
