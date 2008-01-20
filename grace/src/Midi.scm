@@ -252,12 +252,13 @@ void set_input_hook( C_word proc )
 (define (mm:num m)
   ;; program change
   ( (foreign-lambda int "mm_data" (c-pointer "MidiMessage") int)
-    m 2))
+    m 1))
 
-(define (mm:vel-set! m v)
+(define (mm:num-set! m v)
   ( (foreign-lambda void "mm_set_data" (c-pointer "MidiMessage") int int)
      m 1 v)
   v)
+
 
 #|
 (define-getter-with-setter mm:time mm:time-set!)
