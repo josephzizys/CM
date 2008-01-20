@@ -147,7 +147,7 @@ void mm_set_data(MidiMessage *m, int n, int v ) {
 void set_input_hook( C_word proc )
 {
  // FIX
- ((GraceApp *)GraceApp::getInstance())->schemeProcess->setInputHook( proc, 0, 0 );
+ ((GraceApp *)GraceApp::getInstance())->schemeProcess->setInputHook( proc);
 }
 
 <#
