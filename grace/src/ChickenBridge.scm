@@ -1,5 +1,5 @@
 ;;; **********************************************************************
-;;; Copyright (C) 2007 Todd Ingalls, Rick Taube.
+;;; Copyright (C) 2007, 2008 Todd Ingalls, Rick Taube.
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
@@ -41,30 +41,6 @@ void print_error(char * st) {
     ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::ERROR, true);
   else
     ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::ERROR, false);
-}
-
-//
-// MIDI Port code
-//
-
-void mp_note(double time, double dur, float k, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendNote(time, dur, k, v, c); 
-}
-
-void mp_on(double time, float k, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendOn(time, k, v, c);
-}
-
-void mp_off(double time, float k, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendOff(time, k, v, c);
-}
-
-void mp_prog(double time, float p, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendProg(time, p, c);
-}
-
-void mp_ctrl(double time, float n, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendCtrl(time, n, v, c);
 }
 
 //
@@ -131,27 +107,24 @@ void load_sal_file(char *path) {
   SalSyntax::getInstance()->loadFile( String(path) );  
 }
 
-//INput Hook Code
-void set_input_hook( C_word proc, unsigned int chanmask, unsigned int msgfilt )
-{
- ((GraceApp *)GraceApp::getInstance())->schemeProcess->setInputHook( proc, chanmask, msgfilt );
-}
-
-
 <#
-
-(include "Toolbox.scm")
-
-(include "Sal.scm")
 
 (declare
  (unit grace)
  (run-time-macros)
- (uses extras)
+ (uses extras )
  (usual-integrations)
  (export print-message print-error 
-         mp:note mp:on mp:off mp:prog
-         mp:ctrl mp:alloff mp:micro mp:inhook 
+	 ;; MIDI
+	 mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend
+	 mm:make mm:free mm:copy 
+	 mm:type? mm:time mm:time-set! mm:chan mm:chan-set!
+	 mm:key mm:key-set! mm:vel mm:vel-set!
+	 mm:val mm:val-set! mm:num mm:num-set!
+
+         mp:note mp:off mp:on mp:touch mp:ctrl mp:prog mp:press mp:bend
+	 mp:mm mp:inhook 
+
 	 send expand-send go
 	 current-time-milliseconds current-time-seconds
 	 now time-format
@@ -164,7 +137,7 @@ void set_input_hook( C_word proc, unsigned int chanmask, unsigned int msgfilt )
 	 interpl interp
 	 steps
 	 ran ran-set! 
-	 pick pickl odds
+	 between pick pickl odds
 	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
 	 rancauchy ranpoisson ranpink ranbrown
 	 sal sal:print sal:chdir sal:load sal:open sal:output load-sal-file
@@ -173,194 +146,6 @@ void set_input_hook( C_word proc, unsigned int chanmask, unsigned int msgfilt )
 	 first second third fourth fifth sixth seventh eighth ninth tenth
 	 list* last butlast
 	 ))
-
-;;input hook
-
-
-;;;
-;;; essential utilities
-;;;
-
-(define first car)
-(define second cadr)
-(define third caddr)
-(define fourth cadddr)
-(define fifth (lambda (l) (car (cddddr l))))
-(define sixth (lambda (l) (cadr (cddddr l))))
-(define seventh (lambda (l) (caddr (cddddr l))))
-(define eighth (lambda (l) (cadddr (cddddr l))))
-(define ninth (lambda (l) (car (cddddr (cddddr l)))))
-(define tenth (lambda (l) (cadr (cddddr (cddddr l)))))
-
-(define (rest l) (cdr l))
-
-(define (last l) (if (null? (cdr l)) l (last (cdr l))))
-
-(define (butlast l)
-  (cond ((null? (cdr l)) (list))
-	((null? (cddr l)) (list (car l)))
-	(else
-	 (cons (car l) (butlast (cdr l))))))
-
-(define (list* . args)
-  (cond ((null? args)
-	 (error ">>> Error: too few arguments to list*."))
-        ((null? (cdr args))
-	 (car args))
-        (else
-          (cons (car args)
-                (apply list* (cdr args))))))
-
-(define (current-directory )
-  ((foreign-lambda c-string "get_current_directory" )))
-
-(define (change-directory . dir)
-  ((foreign-lambda void "set_current_directory" c-string)
-   (if (null? dir) "~/" (car dir))))
-
-;;;
-;;; FFI glue code
-;;;
-
-;; Console window
-
-(define print-message
-  (foreign-lambda void "print_message" c-string))
-
-(define print-error
-  (foreign-lambda void "print_error" c-string))
-
-;; MIDI Port
-
-(define mp-note
-  (foreign-safe-lambda void "mp_note" double double float float float));
-
-;;(define-external (run_process (scheme-object closure) (double elapsed)) double
-;;  ( closure  elapsed))
-;;
-;;(define current-time-hi-res
-;;  (foreign-lambda* double ()
-;;     " C_return(Time::getMillisecondCounterHiRes());"))
-
-;; Time
-
-(define current-time-milliseconds
-  (foreign-lambda* double ()
-     " C_return( Time::getMillisecondCounterHiRes());"))
-
-(define current-time-seconds
-  (foreign-lambda* double ()
-     " C_return( (Time::getMillisecondCounterHiRes() / 1000.0) );"))
-  
-(define scheduler-is-time-milliseconds
-  (foreign-safe-lambda bool "scheduler_is_time_milliseconds" )  )
-
-(define scheduler-set-time-milliseconds
-  (foreign-safe-lambda void "scheduler_set_time_milliseconds" bool))
-
-;; Scheduler API
-
-(define scheduler-sprout
-  (foreign-safe-lambda void "scheduler_sprout" scheme-object double int))
-
-(define scheduler-paused?
-  (foreign-safe-lambda bool "scheduler_is_paused" ))
-
-(define scheduler-pause
-  (foreign-safe-lambda void "scheduler_pause"))
-
-(define scheduler-cont
-  (foreign-safe-lambda void "scheduler_cont" ))
-
-(define scheduler-stop
-  (foreign-safe-lambda void "scheduler_stop" int))
-
-(define scheduler-hush
-  (foreign-safe-lambda void "scheduler_hush" ))
-
-;; OS interface
-
-
-(define (load-sal-file file)
-  ((foreign-lambda void "load_sal_file" c-string) file))
-
-;;;
-;;; top level scheme code
-;;;
-
-(define (sprout proc . args)
-  ;; (sprout {proc|list} [ahead|list] [id|list])
-  (let-optionals
-   args ((start 0)
-	 (id -1))
-   (let ((nextstart (lambda ()
-		      (if (pair? start)
-			  (let ((v (car start)))
-			    (set! start (if (null? (cdr start))
-					    (car start) (cdr start)))
-			    v)
-			  start)))
-	 (nextid (lambda ()
-		   (if (pair? id)
-			(let ((v (car id)))
-			  (set! id (if (null? (cdr id))
-				       (car id) (cdr id)))
-			  v)
-			id))))
-     (cond ((pair? proc)
-	    (do ((p proc (cdr p)))
-		((null? p) proc)
-	      (scheduler-sprout (car p) (nextstart) (nextid))))
-	   (else
-	    (scheduler-sprout proc (nextstart) (nextid))
-	    proc))
-     ;; if return proc would chicken put it in a History list and so
-     ;; never get gc'd?
-     (values))))
-
-;;(define now current-time-milliseconds)
-
-(define now current-time-seconds)
-
-(define (time-format . arg)
-  (if (null? arg)
-      (if (scheduler-is-time-milliseconds ) 1000 1.0)
-      (case (car arg)
-	((1.0 1 s)
-	 (set! now current-time-seconds)
-	 (scheduler-set-time-milliseconds #f)
-	 )
-	((1000 m)
-	 (set! now current-time-milliseconds)
-	 (scheduler-set-time-milliseconds #t)
-	 )
-	(else
-	 (error "not a time-format" (car arg))))))
-
-(define (pause )
-  (scheduler-pause )
-  (values))
-
-(define (paused? )
-  (scheduler-paused?))
-
-(define (cont )
-  (scheduler-cont )
-  (values))
-
-(define (stop . procid)
-  (if (null? procid)
-      (scheduler-stop -1)
-      (do ((tail procid (cdr tail)))
-	  ((null? tail) #f)
-	(if (fixnum? (car tail))
-	    (scheduler-stop (car tail))
-	    (error "Not an integer id" (car tail)))))
-  (values))
-
-(define (hush )
-  (scheduler-hush)
-  (values))
 
 ;;;
 ;;; send macro
@@ -381,9 +166,6 @@ void set_input_hook( C_word proc, unsigned int chanmask, unsigned int msgfilt )
 	  (else
 	   (error "message function not string, symbol or list of both")))
     `(hash-table-set! *messages* ,name (quote ,(cons func info)))))
-
-;;(define (ferror str  . args)
-;;  (error (apply sprintf str args)))
 
 (define (expand-send mesg data errf)
   ;; errf is an error continuation if called from sal
@@ -466,67 +248,143 @@ void set_input_hook( C_word proc, unsigned int chanmask, unsigned int msgfilt )
 (define-macro (send mess . data)
   (expand-send mess data #f))
 
-;; port:method defintions
-;; DO THESE NEED ERROR HANDLING AROUND ARGS?
+(include "Toolbox.scm")
+(include "Sal.scm")
+(include "Midi.scm")
 
-(define (mp:note time dur key amp chan)
-  (mp-note time dur key amp chan)
-  )
+;; Console window
 
-(define (mp:on time key vel chan)
-  (error "message function not implemented."))
-(define (mp:off time key vel chan)
-  (error "message function not implemented."))
-(define (mp:prog time prog chan)
-  (error "message function not implemented."))
-(define (mp:ctrl time ctrl val chan)
-  (error "message function not implemented."))
-(define (mp:alloff )
-  (error "message function not implemented."))
-(define (mp:micro divs)
-  (error "message function not implemented."))
+(define print-message
+  (foreign-lambda void "print_message" c-string))
 
-(define (mp:inhook %hook . args)
-  ;;(foreign-lambda void "set_input_hook" scheme-object unsigned-int unsigned-int)
-  (let ((chans 0)
-	(filt 0))
-    (when (pair? args)
-      (set! chans (car args))
-      (when (pair? (cdr args))
-        (set! filt (cadr args))))
+(define print-error
+  (foreign-lambda void "print_error" c-string))
 
-    ( (foreign-lambda void "set_input_hook" scheme-object unsigned-int unsigned-int)
+;;(define-external (run_process (scheme-object closure) (double elapsed)) double
+;;  ( closure  elapsed))
+;;
+;;(define current-time-hi-res
+;;  (foreign-lambda* double ()
+;;     " C_return(Time::getMillisecondCounterHiRes());"))
 
-      ;; hook closure wraps a call to user's hook inside error protection
-      (lambda (%msg)
-	(call-with-current-continuation
-	 (lambda (%cont)
-	   (with-exception-handler
-	    (lambda (%err)
-	      (print-error
-	       (sprintf ">>> Error: ~A~%    Aborting MIDI inhook.~%"
-			((condition-property-accessor 'exn 'message) %err)
-			))
-	      (%cont -1)  ; -1 means error
-	      )
-	    (lambda () 
-	      ( %hook %msg)  ;; call users hook with the received message
-	      0 ; 0 means success
-	      )
-	    ))))
-      chans
-      filt)))
+;; Time
 
-;; message definitions
+(define current-time-milliseconds
+  (foreign-lambda* double ()
+     " C_return( Time::getMillisecondCounterHiRes());"))
 
-(define-send-message mp:note ((#:wait 0) (#:dur .5) (#:key 60) (#:amp .5) (#:chan 0)))
-(define-send-message mp:on   ((#:wait 0) (#:key 60) (#:vel 64) (#:chan 0)))
-(define-send-message mp:off  ((#:wait 0) (#:key 60) (#:vel 64) (#:chan 0)))
-(define-send-message mp:prog ((#:wait 0) (#:prog 60) (#:chan 0)))
-(define-send-message mp:ctrl ((#:wait 0) (#:ctrl 60) (#:val 0) (#:chan 0)))
-(define-send-message mp:alloff ())
-(define-send-message mp:micro ((#:divs 1)))
-(define-send-message mp:inhook ((#:func #f) (:chans 0) (:filt 0)))
+(define current-time-seconds
+  (foreign-lambda* double ()
+     " C_return( (Time::getMillisecondCounterHiRes() / 1000.0) );"))
+  
+(define scheduler-is-time-milliseconds
+  (foreign-safe-lambda bool "scheduler_is_time_milliseconds" )  )
+
+(define scheduler-set-time-milliseconds
+  (foreign-safe-lambda void "scheduler_set_time_milliseconds" bool))
+
+;; Scheduler API
+
+(define scheduler-sprout
+  (foreign-safe-lambda void "scheduler_sprout" scheme-object double int))
+
+(define scheduler-paused?
+  (foreign-safe-lambda bool "scheduler_is_paused" ))
+
+(define scheduler-pause
+  (foreign-safe-lambda void "scheduler_pause"))
+
+(define scheduler-cont
+  (foreign-safe-lambda void "scheduler_cont" ))
+
+(define scheduler-stop
+  (foreign-safe-lambda void "scheduler_stop" int))
+
+(define scheduler-hush
+  (foreign-safe-lambda void "scheduler_hush" ))
+
+;; OS interface
+
+(define (load-sal-file file)
+  ((foreign-lambda void "load_sal_file" c-string) file))
+
+;;;
+;;; top level scheme code
+;;;
+
+(define (sprout proc . args)
+  ;; (sprout {proc|list} [ahead|list] [id|list])
+  (let-optionals
+   args ((start 0)
+	 (id -1))
+   (let ((nextstart (lambda ()
+		      (if (pair? start)
+			  (let ((v (car start)))
+			    (set! start (if (null? (cdr start))
+					    (car start) (cdr start)))
+			    v)
+			  start)))
+	 (nextid (lambda ()
+		   (if (pair? id)
+			(let ((v (car id)))
+			  (set! id (if (null? (cdr id))
+				       (car id) (cdr id)))
+			  v)
+			id))))
+     (cond ((pair? proc)
+	    (do ((p proc (cdr p)))
+		((null? p) proc)
+	      (scheduler-sprout (car p) (nextstart) (nextid))))
+	   (else
+	    (scheduler-sprout proc (nextstart) (nextid))
+	    proc))
+     ;; if return proc would chicken put it in a History list and so
+     ;; never get gc'd?
+     (values))))
+
+;;(define now current-time-milliseconds)
+
+(define now current-time-seconds)
+
+(define (time-format . arg)
+  (if (null? arg)
+      (if (scheduler-is-time-milliseconds ) 1000 1.0)
+      (case (car arg)
+	((1.0 1 s)
+	 (set! now current-time-seconds)
+	 (scheduler-set-time-milliseconds #f)
+	 )
+	((1000 m)
+	 (set! now current-time-milliseconds)
+	 (scheduler-set-time-milliseconds #t)
+	 )
+	(else
+	 (error "not a time-format" (car arg))))))
+
+(define (pause )
+  (scheduler-pause )
+  (values))
+
+(define (paused? )
+  (scheduler-paused?))
+
+(define (cont )
+  (scheduler-cont )
+  (values))
+
+(define (stop . procid)
+  (if (null? procid)
+      (scheduler-stop -1)
+      (do ((tail procid (cdr tail)))
+	  ((null? tail) #f)
+	(if (fixnum? (car tail))
+	    (scheduler-stop (car tail))
+	    (error "Not an integer id" (car tail)))))
+  (values))
+
+(define (hush )
+  (scheduler-hush)
+  (values))
 
 ;;;
 ;;; GO macro
@@ -629,9 +487,6 @@ void set_input_hook( C_word proc, unsigned int chanmask, unsigned int msgfilt )
 	      )))
 	,@init)
       )))
-
-
-
 
 (return-to-host)
 

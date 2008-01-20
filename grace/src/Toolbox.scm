@@ -1,8 +1,47 @@
 #>
-
 #include "Toolbox.h"
-
 <#
+
+;;;
+;;; essential utilities
+;;;
+
+(define first car)
+(define second cadr)
+(define third caddr)
+(define fourth cadddr)
+(define fifth (lambda (l) (car (cddddr l))))
+(define sixth (lambda (l) (cadr (cddddr l))))
+(define seventh (lambda (l) (caddr (cddddr l))))
+(define eighth (lambda (l) (cadddr (cddddr l))))
+(define ninth (lambda (l) (car (cddddr (cddddr l)))))
+(define tenth (lambda (l) (cadr (cddddr (cddddr l)))))
+
+(define (rest l) (cdr l))
+
+(define (last l) (if (null? (cdr l)) l (last (cdr l))))
+
+(define (butlast l)
+  (cond ((null? (cdr l)) (list))
+	((null? (cddr l)) (list (car l)))
+	(else
+	 (cons (car l) (butlast (cdr l))))))
+
+(define (list* . args)
+  (cond ((null? args)
+	 (error ">>> Error: too few arguments to list*."))
+        ((null? (cdr args))
+	 (car args))
+        (else
+          (cons (car args)
+                (apply list* (cdr args))))))
+
+(define (current-directory )
+  ((foreign-lambda c-string "get_current_directory" )))
+
+(define (change-directory . dir)
+  ((foreign-lambda void "set_current_directory" c-string)
+   (if (null? dir) "~/" (car dir))))
 
 ;;;
 ;;; FFI
@@ -176,6 +215,9 @@
 	  (if (and (fixnum? (car args)) (fixnum? (cadr args)))
 	      (tb:beti (car args) (cadr args))
 	      (tb:betf (car args) (cadr args))))))
+
+(define (between a b)
+  (ran a b))
 
 (define (odds n . args)
   (if (null? args)
