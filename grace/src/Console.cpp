@@ -807,7 +807,6 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     console->setTheme( arg);
     break;
 
-
 #ifndef SCHEME
   case cmdLispConnect :
     if (lisp->isLispRunning())
@@ -829,6 +828,9 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     break;
   case cmdLispLoadFile :
     lisp->chooseAndLoadFile();
+    break;
+  case cmdLispCompileFile :
+    lisp->chooseAndCompileFile();
     break;
   case cmdLispLoadRecentFile :
     lisp->loadFile(p->getRecentlyLoadedFile(arg));
