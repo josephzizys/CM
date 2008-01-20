@@ -29,7 +29,7 @@ sources = ['Buffer.cpp', 'Console.cpp', 'Editor.cpp',
 
 if (env['SCHEME']) :
     env.Append(CPPDEFINES = ['SCHEME'])
-    sources = sources + ['Scheme.cpp', 'ChickenBridge.cpp', 'Midi.cpp', 'Toolbox.cpp']
+    sources = sources + ['Scheme.cpp', 'ChickenBridge.cpp', 'Midi.cpp', 'MidiReceiveComponent.cpp', 'Toolbox.cpp']
     lispfiles = []
 else :
     sources = sources + ['Lisp.cpp']
