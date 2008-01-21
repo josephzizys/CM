@@ -34,7 +34,8 @@ void GraceApp::initialise (const String& commandLine) {
 
   // add resource directory to library path for loading libchicken
 #if (defined(MACOSX) && defined(SCHEME))
-  setenv("DYLD_LIBRARY_PATH", resourceDirectory.getFullPathName().toUTF8(), 1);
+  setenv("DYLD_LIBRARY_PATH=", resourceDirectory.getFullPathName().toUTF8(), 1);
+   
   //  printf("DYLD_LIBRARY_PATH=%s\n",resourceDirectory.getFullPathName().toUTF8(), 1);
 #endif
 
