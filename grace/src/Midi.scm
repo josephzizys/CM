@@ -9,67 +9,44 @@
 
 #>
 
-void mp_note(double time, double dur, float k, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendNote(time, dur, k, v, c); 
+void mp_note(double time, double dur, float key, float vel, float chan) {
+ ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendNote(time, dur, key, vel, chan); 
 }
 
-void mp_off(double time, float k, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendOff(time, k, 0, c);
+void mp_data(int type, double time, float chan, float data1, float data2) {
+ ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendData(type, time, chan, data1, data2) ;
 }
 
-void mp_on(double time, float k, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendOn(time, k, v, c);
-}
-
-void mp_touch(double time, float v, float c) {
-}
-
-void mp_ctrl(double time, float n, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendCtrl(time, n, v, c);
-}
-
-void mp_prog(double time, float v, float c) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendProg(time, v, c);
-}
-
-void mp_press(double time, float v, float c) {
-}
-
-void mp_bend(double time, float v, float c) {
-}
-
-void mp_mm(MidiMessage *m) {
+void mp_message(MidiMessage *m) {
+ ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendMessage(m) ;
 }
 
 /// MidiMessage accessors
-
-enum {MM_OFF=0x8, MM_ON, MM_TOUCH, MM_CTRL, MM_PROG, 
-      MM_PRESS, MM_BEND};
 
 MidiMessage *mm_make(int type, double time, int chan, 
 		     int data1, int data2 ) {
   MidiMessage *m;
   chan++; // juce channels are 1 based
   switch (type) {
-  case MM_OFF :
+  case MidiNode::MM_OFF :
     m=new MidiMessage(MidiMessage::noteOff(chan, data1));
     break;
-  case MM_ON :
+  case MidiNode::MM_ON :
     m=new MidiMessage(MidiMessage::noteOn(chan, data1, (juce::uint8)data2));
     break;
-  case MM_TOUCH :
+  case MidiNode::MM_TOUCH :
     m=new MidiMessage(MidiMessage::aftertouchChange(chan, data1, data2));
     break;
-  case MM_CTRL :
+  case MidiNode::MM_CTRL :
     m=new MidiMessage(MidiMessage::controllerEvent(chan, data1, data2));
     break;
-  case MM_PROG :
+  case MidiNode::MM_PROG :
     m=new MidiMessage(MidiMessage::programChange(chan, data1));
     break;
-  case MM_PRESS :
+  case MidiNode::MM_PRESS :
     m=new MidiMessage(MidiMessage::channelPressureChange(chan, data1));
     break;
-  case MM_BEND :
+  case MidiNode::MM_BEND :
     m=new MidiMessage(MidiMessage::pitchWheel(chan, data1));
     break;
   default:
@@ -88,25 +65,25 @@ void mm_free(MidiMessage *m) {
 
 bool mm_is_type(MidiMessage *m, int typ) {
   switch (typ) {
-  case MM_OFF :
+  case MidiNode::MM_OFF :
     return m->isNoteOff();
     break;
-  case MM_ON :
+  case MidiNode::MM_ON :
     return m->isNoteOn();
     break;
-  case MM_TOUCH :
+  case MidiNode::MM_TOUCH :
     return m->isAftertouch();
     break;
-  case MM_CTRL :
+  case MidiNode::MM_CTRL :
     return m->isController();
     break;
-  case MM_PROG :
+  case MidiNode::MM_PROG :
     return m->isProgramChange();
     break;
-  case MM_PRESS :
+  case MidiNode::MM_PRESS :
     return m->isChannelPressure();
     break;
-  case MM_BEND :
+  case MidiNode::MM_BEND :
     return m->isPitchWheel();
     break;
   default:
@@ -171,7 +148,11 @@ void set_input_hook( C_word proc )
 	 ((foreign-lambda (c-pointer "MidiMessage") "mm_make"
 			  int double int int int)
 	  type time chan num val))
-	((<= mm:touch type mm:bend)
+	((= type mm:touch)
+	 ((foreign-lambda (c-pointer "MidiMessage") "mm_make"
+			  int double int int int)
+	  type time chan key val))
+	((<= mm:prog type mm:bend)
 	 ((foreign-lambda (c-pointer "MidiMessage") "mm_make"
 			  int double int int int)
 	  type time chan val 0))
@@ -229,17 +210,17 @@ void set_input_hook( C_word proc )
   v)
 
 (define (mm:val m)
-  (cond ((mm:type? m mm:ctrl)
+  (cond ((or (mm:type? m mm:ctrl) (mm:type? m mm:touch))
 	 ;; controlChange: 
 	 ( (foreign-lambda int "mm_data" (c-pointer "MidiMessage") int)
 	   m 2))
 	(else
-	 ;; afterTouch programChange channelPressure pitchBend
+	 ;; programChange channelPressure pitchBend
 	 ( (foreign-lambda int "mm_data" (c-pointer "MidiMessage") int)
 	   m 1))))	 
 
 (define (mm:val-set! m v)
-  (cond ((mm:type? m mm:ctrl)
+  (cond ((or (mm:type? m mm:ctrl) (mm:type? m mm:touch) )
 	 ( (foreign-lambda void "mm_set_data" (c-pointer "MidiMessage")
 			   int int)
 	   m 2 v))
@@ -278,35 +259,35 @@ void set_input_hook( C_word proc )
     time dur key amp chan))
 
 (define (mp:off time key chan)
-  ( (foreign-lambda void "mp_off" float float float)
-    time key chan))
+  ( (foreign-lambda void "mp_data" int double float float float)
+    mm:off time chan key 0))
 
 (define (mp:on time key vel chan)
-  ( (foreign-lambda void "mp_on" float float float float)
-    time key vel chan))
+  ( (foreign-lambda void "mp_data" int double float float float)
+    mm:on time chan key vel))
 
-(define (mp:touch time val chan)
-  ( (foreign-lambda void "mp_touch" float float float)
-    time val chan))
+(define (mp:touch time key val chan)
+  ( (foreign-lambda void "mp_data" int double float float float)
+    mm:touch time chan key val))
 
 (define (mp:ctrl time num val chan)
-  ( (foreign-lambda void "mp_ctrl" float float float float)
-    time num val chan))
+  ( (foreign-lambda void "mp_data" int double float float float)
+    mm:ctrl time chan num val))
 
 (define (mp:prog time val chan)
-  ( (foreign-lambda void "mp_prog" float float float)
-    time val chan))
+  ( (foreign-lambda void "mp_data" int double float float float)
+    mm:prog time chan val 0))
 
 (define (mp:press time val chan)
-  ( (foreign-lambda void "mp_press" float float float)
-    time val chan))
+  ( (foreign-lambda void "mp_data" int double float float float)
+    mm:press time chan val 0))
 
 (define (mp:bend time val chan)
-  ( (foreign-lambda void "mp_bend" float float float)
-    time val chan))
+  ( (foreign-lambda void "mp_data" int double float float float)
+    mm:bend time chan val 0))
 
 (define (mp:mm ptr)
-  ( (foreign-lambda void "mp_mm" (c-pointer "MidiMessage"))
+  ( (foreign-lambda void "mp_message" (c-pointer "MidiMessage"))
     ptr))
 
 (define (mp:inhook %hook)
@@ -333,12 +314,13 @@ void set_input_hook( C_word proc )
 (define-send-message mp:note ((#:time 0) (#:dur .5) (#:key 60) (#:amp .5) (#:chan 0)))
 (define-send-message mp:off ((#:time 0) (#:key 60) (#:chan 0)))
 (define-send-message mp:on ((#:time 0) (#:key 60) (#:vel 64) (#:chan 0)))
-(define-send-message mp:touch ((#:time 0) (#:val 0) (#:chan 0)))
+(define-send-message mp:touch ((#:time 0) (#:key 0) (#:val 0) (#:chan 0)))
 (define-send-message mp:ctrl ((#:time 0) (#:num 0) (#:val 0) (#:chan 0)))
 (define-send-message mp:prog ((#:time 0) (#:val 0) (#:chan 0)))
 (define-send-message mp:press ((#:time 0) (#:val 0) (#:chan 0)))
 (define-send-message mp:bend ((#:time 0) (#:val 8192) (#:chan 0)))
-(define-send-message mp:inhook ((#:func #f) (:chans 0) (:filt 0)))
+(define-send-message mp:mm ((#:mm #f) ))
+(define-send-message mp:inhook ((#:func #f) ))
 
 ;;; eof
 

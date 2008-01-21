@@ -17,75 +17,99 @@
 //
 
 MidiNode::MidiNode(int typ, double wait, float *vals, int num_vals)
-  : type (0), time (0.0), num (0) { 
+  : type (0), time (0.0), message (NULL), midiOutPort (NULL)
+{ 
   type=typ;
-  num=num_vals;
   time=wait;
   for (int i=0;i<num_vals;i++)
-    values.add( vals[i]);
+    values.add(vals[i]);
 
 }
 
-MidiNode::MidiNode(int typ, double wait, float data1, float data2) {
+MidiNode::MidiNode(int typ, double wait, float chan, float data1) 
+  : type (0), time (0.0), message (NULL), midiOutPort (NULL)
+{
   type=typ;
-  num=2;
   time=wait;
+  values.add(chan);
+  values.add(data1);
+}
+
+MidiNode::MidiNode(int typ, double wait, float chan, float data1,
+		   float data2) 
+  : type (0), time (0.0), message (NULL), midiOutPort (NULL)
+{
+  type=typ;
+  time=wait;
+  values.add(chan);
   values.add(data1);
   values.add(data2);
 }
 
-MidiNode::MidiNode(int typ, double wait, float data1, float data2,
-		   float data3) {
-  type=typ;
-  num=3;
-  time=wait;
-  values.add(data1);
-  values.add(data2);
-  values.add(data3);
+MidiNode::MidiNode(MidiMessage *msg)
+  : type (0), time (0.0), message (NULL), midiOutPort (NULL)
+{
+  type=MM_MESSAGE;
+  time=msg->getTimeStamp();
+  message=msg;
 }
 
 MidiNode::~MidiNode() { 
+  if (message != NULL) 
+    delete message;
   values.clear();
 }
 
 void MidiNode::process() {
   switch (type) {
-  case NODEON:
-    if ( values[ONVEL] > 0.0 ) {
-      // note on velocity range either 0.0-1.0 or 0.0-127.0
-      float vel=(values[ONVEL]>1.0) ? (values[ONVEL]/127.0f)
-	: values[ONVEL] ;
+  case MM_ON:
+    if ( values[DATA2] > 0.0 ) {
+      // note on velocity range 0.0-1.0 or 0.0-127.0
+      float vel=(values[DATA2]>1.0) ? (values[DATA2]/127.0f) : values[DATA2] ;
       midiOutPort->device->
-	sendMessageNow( MidiMessage::noteOn((int)values[ONCHAN]+1, 
-					    (int)values[ONKEY], 
+	sendMessageNow( MidiMessage::noteOn((int)values[DATA0]+1, 
+					    (int)values[DATA1], 
 					    vel));
     }
     else
       midiOutPort->device->
-	sendMessageNow( MidiMessage::noteOff( (int)values[ONCHAN]+1,
-					      (int)values[ONKEY]) );
+	sendMessageNow( MidiMessage::noteOff( (int)values[DATA0]+1,
+					      (int)values[DATA1]) );
     break;
-  case NODEOFF:
+  case MM_OFF:
     midiOutPort->device->
-      sendMessageNow( MidiMessage::noteOff( (int)values[OFFCHAN]+1,
-					    (int)values[OFFKEY]) );
+      sendMessageNow( MidiMessage::noteOff( (int)values[DATA0]+1,
+					    (int)values[DATA1]) );
     break;
-  case NODEPROG :
+  case MM_PROG :
     midiOutPort->device->
-      sendMessageNow( MidiMessage::programChange( (int)values[PROGCHAN]+1,
-						  (int)values[PROGNUM]) );
+      sendMessageNow( MidiMessage::programChange( (int)values[DATA0]+1,
+						  (int)values[DATA1]) );
     break;
-  case NODECTRL :
+  case MM_CTRL :
     midiOutPort->device->
-      sendMessageNow( MidiMessage::controllerEvent( (int)values[CTRLCHAN]+1,
-						    (int)values[CTRLNUM],
-						    (int)values[CTRLVAL]) );
+      sendMessageNow( MidiMessage::controllerEvent( (int)values[DATA0]+1,
+						    (int)values[DATA1],
+						    (int)values[DATA2]) );
     break;
-  case NODEBEND :
+  case MM_BEND :
     midiOutPort->device->
-      sendMessageNow( MidiMessage::pitchWheel( (int)values[BENDCHAN]+1,
-					       (int)values[BENDVAL]) );
+      sendMessageNow( MidiMessage::pitchWheel( (int)values[DATA0]+1,
+					       (int)values[DATA1]) );
     break;
+  case MM_TOUCH :
+    midiOutPort->device->
+      sendMessageNow( MidiMessage::aftertouchChange( (int)values[DATA0]+1,
+						     (int)values[DATA1],
+						     (int)values[DATA2]) );
+    break;
+  case MM_PRESS :
+    midiOutPort->device->
+      sendMessageNow( MidiMessage::channelPressureChange( (int)values[DATA0]+1,
+							  (int)values[DATA1]) );
+    break;
+  case MM_MESSAGE :
+    midiOutPort->device->sendMessageNow( *message );
   default:
     break;
   }
@@ -305,39 +329,50 @@ void MidiOutPort::sendNote(double wait, double duration, float keynum,
       keynum=key;
     }
   }
-  addNode( new MidiNode(MidiNode::NODEON, wait, channel, keynum, amplitude) );
-  addNode( new MidiNode(MidiNode::NODEOFF, wait+duration, channel, keynum) );
+  addNode( new MidiNode(MidiNode::MM_ON, wait, channel, keynum, amplitude) );
+  addNode( new MidiNode(MidiNode::MM_OFF, wait+duration, channel, keynum) );
 }
 
+void MidiOutPort::sendData(int type, double wait, float chan, float data1, float data2) {
+  addNode( new MidiNode(type, wait, chan, data1, data2) );
+}
+
+void MidiOutPort::sendMessage(MidiMessage *message) {
+  addNode( new MidiNode(message) );
+}
+
+/*
 void MidiOutPort::sendOn(double wait, float key, float vel, float chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
-  addNode( new MidiNode(MidiNode::NODEON, wait, chan, key, vel) );
+  addNode( new MidiNode(MidiNode::MM_ON, wait, chan, key, vel) );
 }
 
 void MidiOutPort::sendOff(double wait, float key, float vel, float chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
-  addNode( new MidiNode(MidiNode::NODEOFF, wait, chan, key) );
+  addNode( new MidiNode(MidiNode::MM_OFF, wait, chan, key) );
 }
 
 void MidiOutPort::sendProg(double wait, float prog, float chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
-  addNode( new MidiNode(MidiNode::NODEPROG, wait, chan, prog) );
+  addNode( new MidiNode(MidiNode::MM_PROG, wait, chan, prog) );
 }
 
 void MidiOutPort::sendCtrl(double wait, float ctrl, float val, float chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
-  addNode( new MidiNode(MidiNode::NODECTRL, wait, chan, ctrl, val) );
+  addNode( new MidiNode(MidiNode::MM_CTRL, wait, chan, ctrl, val) );
 }
 
 void MidiOutPort::sendBend(double wait, float bend, float chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
-  addNode( new MidiNode(MidiNode::NODEBEND, wait, chan, bend) );
+  addNode( new MidiNode(MidiNode::MM_BEND, wait, chan, bend) );
 }
+
+*/
 
 void MidiOutPort::testMidiOutput () {
   // Tobias Kunze's little testing algo from cm 1.4
