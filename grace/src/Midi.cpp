@@ -55,8 +55,6 @@ MidiNode::MidiNode(MidiMessage *msg)
 }
 
 MidiNode::~MidiNode() { 
-  if (message != NULL) 
-    delete message;
   values.clear();
 }
 
