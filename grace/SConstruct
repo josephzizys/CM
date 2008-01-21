@@ -98,9 +98,9 @@ if (env['PLATFORM'] == 'darwin') :
     if (os.uname()[4] == 'Power Macintosh') :
         env.Replace(CXX = 'g++-3.3')
         env.Append(CPPDEFINES = ['PPC'])
-    else:
-        # build universal on intel
-        env.MergeFlags('-arch i386 -arch ppc')
+#    else:
+#        # build universal on intel
+#        env.MergeFlags('-arch i386 -arch ppc')
     env.Append(FRAMEWORKS = ['Carbon', 'CoreServices', 'CoreAudio', 
                              'CoreMidi', 'ApplicationServices', 'OpenGL',
                              'AGL', 'QuickTime', 'IOKIT'] ,        

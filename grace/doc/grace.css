@@ -244,7 +244,7 @@ span.syntax {
 }
 
 code.keyword { 
-  color: #b22222;
+  color: #da70d6;
 }
 
 code.entry { 
@@ -325,24 +325,25 @@ img {
 span.emacscmd { font-weight: bold; font-size: smaller; }
 span.emacskey { text-decoration: underline }
 
-/*
-span.string  {color: #bc8f8f;} 
-span.comment {font-style: italic; color: gray;} 
-span.keyword {color: #b22222;}
-span.special {color: #d2691e;}
-span.defined {color: #ff0000;}
-*/
-
-span.string  {color: #a0522d } /* sienna: #a0522d saddle-brown: #8b4513 orig: #bc8f8f; */
-span.comment {font-style: italic; color: #b22222;}  
-span.keyword {color: #5f9ea0;}
+span.string  {color: #a0522d }
+span.comment {color: #b22222;}  
+span.keyword {color: #da70d6;}
 span.special {color: #a020f0; }
 span.defined {color: #0000ff;}
-/* span.xmlentity {color: #1e90ff;} */
+span.command {color: #0000cd;}
+span.constant {color: #5f9ea0;}
+span.reserved {color: #a020f0;}
+span.class {color: #228b22;}
 
 span.result {font-weight: bold; color: silver;}
 span.input  {font-weight: bold;}
 span.prompt, span.output  { }
+
+/*
+   orchid #da70d6;}
+   sienna: #a0522d saddle-brown: #8b4513 rosybrown: #bc8f8f; */
+
+*/
 
 span.salstr {color: #bc8f8f;} 
 span.salout {color: #bc8f8f;} 

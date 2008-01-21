@@ -18,9 +18,19 @@
   <li><a href="#scheduler">The Scheduler</a></li>
   <li><a href="#processes">Musical Processes</a></li>
   <li><a href="#ports">Ports</a></li>
-  <li><a href="#toolbox">Composition Toolbox</a></li>
+  <li><a href="#toolbox">Composition Toolbox</a>
+  <ul>
+    <li><a href="#lists">Lists</a></li>
+    <li><a href="#environment">Environment</a></li>
+    <li><a href="#mapping">Mapping and Transformation</a></li>
+    <li><a href="#randomness">Randomness</a></li>
+    <li><a href="#midimessage">Midi Messages</a></li>
+    </ul>
+  <li><a href="#sal">SAL Syntax</a>
+  </li>
+
   <li><a href="#examples">Examples</a></li>
-  <li><a href="#xml">XML Description</a></li>
+<!--   <li><a href="#xml">XML Description</a></li> -->
 </ul>
 
 <h2 id="introduction">Introduction</h2>
@@ -108,17 +118,6 @@ common id.</dd> </dl>
 <dd>Returns the current time of the scheduler. See also <a href="#elapsed"><code>elapsed</code></a><!-- and <a href="#time-format"><code>time-format</code -->.</dd>
 </dl>
 
-<!-- dl id="time-format"><dt><code>time-format ([format])<br/> &rarr; <var>int</var></code></dt>
-
-<dd> Gets/sets the format of time values returned by <a
-href="#now"><code>now</code></a> and <a
-href="#elapsed"><code>elapsed</code></a>. Called without argument the
-function returns the current format. Specify 1000 as <var>format</var> to
-set the clock mode to integer milliseconds. Specify 1 as
-<var>format</var> to set the clock mode to floating point
-seconds.</dd></dl -->
-
-
 <!-- p>The <a href="#send"><code>send</code></a> function enqueues data
 into the scheduler if the data's time stamp is in the future (greater
 than 0).</p -->
@@ -134,18 +133,6 @@ was sprouted. The function executes and returns either (1) the amount
 of time the scheduler should wait until it calls the function again or
 (2) a negative number if the function should not be called
 again. </p>
-
-<blockquote>
-
-<pre><span class="comment">; process starts two seconds in the future and outputs a random note
-; every .1 seconds with a .05 probability of stopping after each note.</span>
-
-(sprout (<span class="special">lambda</span> (e)
-          (send <span class="string">"mp:note"</span> <span class="keyword">#:key</span> (ran 60 80))
-          (odds .05 -1 .1)))
-        2)
-</pre>
-</blockquote>
 
 <h3 id="go">The <code>go</code> Macro</h3> <p>The <code>go</code>
 macro is an easy way to create a process function, it has the same
@@ -189,43 +176,16 @@ process was first sprouted.</p></dd>
 </dl>
   
 <h4>Example</h4>
-<p>This definition:</p>
 
 <blockquote>
-
 <pre>(<span class="special">define</span> (<span class="defined">simp</span> n)
   (<span class="special">go</span> ((i 0 (+ i 1))
        (k 60 (ran 30 70)))
-      ((= i n) (printf <span class="string">"Bye!"</span>))
+      ((= i n)  )
     (send <span class="string">"mp:note"</span> <span class="keyword">#:key</span> k)
     (wait .1)))
-</pre>  
-</blockquote>
 
-<p>will expand into something like:</p>
-
-<blockquote>
-
-<pre>(<span class="special">define</span> (<span class="defined">simp</span> n)
-  ((<span class="special">lambda</span> (i k)
-     (<span class="special">lambda</span> (g10) <span class="comment">; process function</span>
-       (<span class="special">if</span> (= i n)
-           (<span class="special">begin</span> (printf <span class="string">"Bye!"</span>)
-                  -1) <span class="comment">; negative delta to stop</span>
-         (<span class="special">let*</span> ((g11 0)
-	        (elapsed (<span class="special">lambda</span> () g10))
-                (wait (<span class="special">lambda</span> (n) (set! g11 n))))
-           <span class="comment">;; user code</span>
-           (mp:note 0 .5 k .5 0)	
-           (wait .1)
-           <span class="comment">;; variable stepping</span>
-           (set! i (+ i 1))
-           (set! k (ran 30 70))
-           <span class="comment">;; delta to next run time</span>
-           g11))))
-   0
-   60))
-</pre>
+(sprout (simp 20))</pre>  
 </blockquote>
 
 <h2 id="ports">Ports</h2>
@@ -281,7 +241,7 @@ values. Its an error to specify positional values once keyword
 arguments have been introduced or for a keyword name to appear more
 than once in the data list.  </p> </dd> </dl>
 
-<p>Some possible ways of passing data to the midi port's note method:</p>
+<h4>Example</h4>
 
 <blockquote>
 <pre>
@@ -292,19 +252,7 @@ than once in the data list.  </p> </dd> </dl>
 </pre>
 </blockquote>
 
-<!-- p> The following would all signal an error at macro expansion time: </p>
-
-<blockquote>
-<pre>
-send (<span class="string">"mp:Note"</span> 0 1)
-send (<span class="string">"mp:note"</span> 0 1 60 .1 0 1)
-send (<span class="string">"mp:note"</span> <span class="keyword">#:key</span> 60 .3)
-send (<span class="string">"mp:note"</span> <span class="keyword">#:key</span> 60 <span class="keyword">#:key</span> 33)
-send (<span class="string">"mp:note"</span> <span class="keyword">#:foo</span> 0 )
-</pre>
-</blockquote>
--->
-
+<!-- 
 <h3 id="nrt">Sending Data in Non-Real Time</h3>
 
 <p> Some ports, like the Plotter Port or Midi Seq, are non-real time
@@ -336,30 +284,64 @@ time stamp for the data that is sent to a non-real time port:</p>
 </pre>  
 </blockquote>
 
-<h3>Midi Port Methods</h3>
-<p>Before sending anything to the Midi Port first make sure you have an output connection established with the <span class="menuitem">Ports&gt;Midi Out&gt;</span> Menu in the Console window. You can test that the connection actually works by using the <span class="menuitem">Ports&gt;Midi Out&gt;Test</span> to send a random burst of messages to the output device.</p>
+-->
+
+<h3>Midi Port Send Methods</h3>
+
+<p>Before sending anything to the Midi Port first make sure you have
+an output connection established with the <span
+class="menuitem">Ports&gt;Midi Out&gt;</span> Menu in the Console
+window. You can test that the connection actually works by using the
+<span class="menuitem">Ports&gt;Midi Out&gt;Test</span> to send a
+random burst of messages to the output device.</p>
 
 <dl>
-  <dt id="mp:note" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:note"</span> <var>wait=0</var> <var>dur=.5</var> <var>key=60</var> <var>amp=.5</var> <var>chan=0</var>)</code></dt>
-  <dd><p>Send note data to midi port.</p></dd>
-  <dt id="mp:on" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:on"</span> <var>wait=0</var> <var>key=60</var> <var>vel=64</var> <var>chan=0</var>)</code></dt>
-  <dd><p>Send Note On data to midi port. (Not yet implemented.)</p></dd>
-  <dt id="mp:off" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:off"</span> <var>wait=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var>)</code></dt>
-  <dd><p>Send Note Off data to midi port. (Not yet implemented.)</p></dd>
-  <dt id="mp:prog" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:prog"</span> <var>wait=0</var> <var>prog=0</var> <var>chan=0</var>)</code></dt>
-  <dd><p>Send Program Change data to midi port. (Not yet implemented.)</p></dd>
-  <dt id="mp:ctrl" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:ctrl"</span> <var>wait=0</var> <var>ctrl=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
-  <dd><p>Sends Control Change data to midi port (Not yet implemented.).</p></dd>
-  <dt id="mp:alloff" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:alloff"</span> )</code></dt>
-  <dd><p>Sends All Notes Off to midi port. (Not yet implemented.)</p></dd>
+  <dt id="mp:note" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:note"</span> <var>time=0</var> <var>dur=.5</var> <var>key=60</var> <var>amp=.5</var> <var>chan=0</var>)</code></dt>
+  <dd><p>Sends note data to midi port.</p></dd>
+
+  <dt id="mp:on" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:on"</span> <var>time=0</var> <var>key=60</var> <var>vel=64</var> <var>chan=0</var>)</code></dt>
+  <dd><p>Sends note on data to midi port. </p></dd>
+
+  <dt id="mp:off" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:off"</span> <var>time=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var>)</code></dt>
+  <dd><p>Sends note off data to midi port.</p></dd>
+
+  <dt id="mp:prog" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:prog"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
+  <dd><p>Sends program change value to midi port. </p></dd>
+
+  <dt id="mp:ctrl" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:ctrl"</span> <var>time=0</var> <var>num=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
+  <dd><p>Sends control change data to midi port.</p></dd>
+
+  <dt id="mp:touch" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:touch"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
+  <dd>
+    <p>Sends after touch value to midi port.</p>
+  </dd>
+
+  <dt id="mp:press" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:press"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
+  <dd>
+    <p>Sends channel pressure value to midi port.</p>
+  </dd>
+
+  <dt id="mp:bend" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:bend"</span> <var>time=0</var> <var>val=8192</var> <var>chan=0</var>)</code></dt>
+  <dd>
+    <p>Sends pitch bend value 0-16383 to midi port.</p>
+  </dd>
+
+  <dt id="mp:mm" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:mm"</span> <var>message</var>)</code></dt>
+  <dd>
+    <p>Sends a low-level <a href="#midimessage">MIDI message</a> to the midi port.
+  </dd>
+
   <dt id="mp:inhook" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:inhook"</span> <var>function</var>)</code></dt>
-  <dd><p>Sets the input hook of port to <var>function</var> or clears an existing hook if value is #f. The function's arguments must be arity 4 and is passed four values: (time opcode data1=0 data2=0) where opcode contains the MIDI opcode of the message. Data1 and data2 contain zeros if opcode passes fewer arguments. (Not yet implemented.)</p></dd>
+  <dd><p>Sets <var>function</var> to receive Midi Messages that arrive at the Midi In port. The function is passed a single argument, the Midi Message receieved. See <a href="midimessage">Midi Messages</a> for more information. The hook should call <a href="#mm:free"><code>mm:free</code></a> on any message that it does not send to the output port.</p></dd>
 
 </dl>
 
+
+<!--
+
 <h3>Midi Seq Methods</h3>
 <p>Supports reading and writing data from/to a Midi Sequence. (Not yet implemented.)</p>
-<!-- dl>
+<dl>
   <dt><code>send (<span class="string">"ms:note"</span> <var>time</var> <var>dur</var> <var>key</var> <var>amp</var> <var>chan</var>)</code></dt>
   <dd>Sends note data to midi sequence port</dd >
   <dt><code>(send <span class="string">"ms:prog"</span> <var>time prog chan</var>)</code></dt>
@@ -388,11 +370,13 @@ time stamp for the data that is sent to a non-real time port:</p>
   <dd>Load .mid or .xml file into sequence.</dd >
   <dt><code>send(<span class="string">"mf:plot"</span> <var>file</var> </span>)</dt>
   <dd>Send midi sequence to a Plotter window.</dd >
-</dl -->
+</dl>
 
 
 <h3>Plotter Port Methods</h3>
 <p>Routes data to the focus layer of the current plotter window. (Not yet implemented.)</p>
+
+-->
 
 
 <h2 id="toolbox">Composition Toolbox</h2>
@@ -401,7 +385,7 @@ time stamp for the data that is sent to a non-real time port:</p>
 most of CM's toolbox will become available as optional modules, e.g.
 <code> (use patterns)</code>, <code> (use tuning)</code>,  etc.</p>
 
-<h3>Lists</h3>
+<h3 id="lists">Lists</h3>
 
 <dl id="list*">
   <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">list*</span> (<var>...</var> <var>list</var>)<br/>&rarr; <var>list</var></code></dt>
@@ -429,7 +413,7 @@ most of CM's toolbox will become available as optional modules, e.g.
 <dd>Returns all but the last (tail) list in <var>list</var>. </dd>
 </dl>
 
-<h3>File System</h3>
+<h3 id="environment">Environment</h3>
 
 <dl id="current-directory">
 <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">current-directory</span> ()<br/>&rarr; <var>list</var></code></dt>
@@ -441,9 +425,7 @@ most of CM's toolbox will become available as optional modules, e.g.
 <dd>Changes the current working directory to the <var>pathname</var> string. </dd>
 </dl>
 
-
-
-<h3>Mapping and Transformation</h3>
+<h3 id="mapping">Mapping and Transformation</h3>
 
 <dl id="rescale">
 <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">rescale</span> (<var>x</var> <var>x1</var> <var>x2</var> <var>y1</var> <var>y2</var> [<var>base=1</var>]) <br/>&rarr; <var>float</var></code></dt>
@@ -503,7 +485,7 @@ most of CM's toolbox will become available as optional modules, e.g.
 <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">decimals</span> (<var>x</var> [<var>precision</var>=3])<br/>&rarr; <var>float</var></code></dt>
 <dd>Same as CM. </dd></dl -->
 
-<h3>Randomness</h3>
+<h3 id="randomness">Randomness</h3>
 
 <p>All the functions that perform random selection are based on a common C++ random
 state object that can be seeded using <a href="#ran-set!"><code>ran-set!</code></a>.</p>
@@ -532,6 +514,13 @@ greater or less than <var>n</var>.</dd>
 
 <dl id="pick"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">pick</span> (<var>arg</var> <var>...</var>)<br/>&rarr; <var>sexpr</var></code></dt>
 <dd>Same as CM.</dd></dl>
+
+<dl id="between"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">between</span> (<var>low</var> <var>high</var>)<br/>&rarr; <var>number</var></code></dt>
+<dd>Same as CM.</dd></dl>
+
+
+
+
 
 <h4>Nonuniform Distributions</h4>
 
@@ -573,6 +562,240 @@ greater or less than <var>n</var>.</dd>
 <h4>Seeding</h4>
 
 <dl id="ran-set"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ran-set!</span> (<var>uint</var>)<br/>&rarr; <var>void</var></code></dt><dd>Initialize the random state generator with the unsigned integer value <var>uint</var>.</dd></dl>
+
+<h3 id="midimessage">Midi Messages</h3>
+
+<p> The <a href="#send"><code>send</code></a> macro provides a high
+level API for working with MIDI data. However, midi input hooks receive MIDI data directly from JUCE packaged as low-level C++ midi messages. The following scheme functions are provided for manipulating JUCE midi messages.</p>
+
+<dl id="mm:make"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:make</span> (<var>type args...</var>)<br/>&rarr; <var>message</var></code></dt>
+<dd>
+
+<p>
+Allocates a new a low-level JUCE MidiMessage according to a specified channel message <var>type</var> followed by zero or more keyword arguments as approprate to <var>type</var>.
+</p>
+
+<p>
+The following message type constants are defined:
+</p>
+  
+<blockquote>
+<code class="entry">mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend</code>
+</blockquote>
+<p>
+Keyword arguments applicable to all types of messages:
+</p>
+
+<dl>
+<dt><code class="keyword">#:time</code> <var>float</var></dt>
+<dd>The time (in seconds) to wait before the event will sound. Defaults to 0.0</dd>
+
+<dt><code class="keyword">#:chan</code> <var>integer</var></dt>
+<dd>The channel number of the event. Defaults to 0.</dd>
+
+</dl>
+
+<p>
+Keyword arguments applicable to <code class="entry">mm:off</code> messages:
+</p>
+<dl>
+<dt><code class="keyword">#:key</code> <em>integer</em></dt>
+<dd>An integer key number value 0-127. Defaults to 60.</dd>
+</dl>
+
+<p>
+Keyword arguments applicable to <code class="entry">mm:on</code> messages:
+</p>
+<dl>
+<dt><code class="keyword">#:key</code> <em>integer</em></dt>
+<dd>An integer key number value 0-127. Defaults to 60.</dd>
+<dt><code class="keyword">#:vel</code> <em>integer</em></dt>
+<dd>An integer velocity value 0-127. Defaults to 64.</dd>
+</dl>
+
+<p>
+Keyword arguments applicable to <code class="entry">mm:touch</code> messages:
+</p>
+<dl>
+<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dd>An integer aftertouch value 0-127. Defaults to 0.</dd>
+</dl>
+
+<p>
+Keyword arguments applicable to <code class="entry">mm:ctrl</code> messages:
+</p>
+<dl>
+<dt><code class="keyword">#:num</code> <em>integer</em></dt>
+<dd>A integer controller number 0-127. Defaults to 0.</dd>
+<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dd>An integer control change value 0-127. Defaults to 0.</dd>
+</dl>
+
+<p>
+Keyword arguments applicable to <code class="entry">mm:prog</code> messages:
+</p>
+<dl>
+<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dd>An integer program change value 0-127. Defaults to 0.</dd>
+</dl>
+
+<p>
+Keyword arguments applicable to <code class="entry">mm:press</code> messages:
+</p>
+<dl>
+<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dd>An integer pressure change value 0-127. Defaults to 0.</dd>
+</dl>
+
+<p>
+Keyword arguments applicable to <code class="entry">mm:bend</code> messages:
+</p>
+<dl>
+<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dd>An integer pitch bend value 0-16383. Defaults to 0.</dd>
+</dl>
+</dd>
+</dl>
+
+<dl id="mm:free"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:free</span> (<var> message</var>)<br/>&rarr; <var>void</var></code></dt>
+<dd>
+Deletes and reclaims memory from an allocated message. Note that the Midi Out port automatically frees messages once they are sent out the midi port. This function should be called by input hooks to free any message that it receives but does not use.
+</dd>
+</dl>
+
+<dl id="mm:copy"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:copy</span> (<var> message</var>)<br/>&rarr; <var>message</var></code></dt>
+<dd>
+Returns a copy of the specified midi message.
+</dd>
+</dl>
+
+<dl id="mm:type?"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:type?</span> (<var> message type</var>)<br/>&rarr; <var>bool</var></code></dt>
+<dd>
+Returns true if the MIDI <var>message</var> is of the specified <var>type</var>, one of <code class="entry">mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend</code>.
+</dd>
+</dl>
+
+
+
+
+
+<dl id="mm:time"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:time</span> (<var> message</var>)<br/>&rarr; <var>float</var></code></dt>
+<dd>
+Returns the time value of a midi message.
+</dd>
+</dl>
+<dl id="mm:time-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:time-set!</span> (<var> message value</var>)<br/>&rarr; <var>float</var></code></dt>
+<dd>
+Sets the time value of a midi message.
+</dd>
+</dl>
+
+<dl id="mm:chan"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:chan</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Returns the channel value of a midi message.
+</dd>
+</dl>
+<dl id="mm:chan-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:chan-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Sets the channel value of a midi message.
+</dd>
+</dl>
+
+<dl id="mm:key"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:key</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Returns the key number of an <code class="entry">mm:on</code> or <code class="entry">mm:off</code> message.
+</dd>
+</dl>
+<dl id="mm:key-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:key-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Sets the key number of an <code class="entry">mm:on</code> or <code class="entry">mm:off</code> message.
+</dd>
+</dl>
+
+<dl id="mm:vel"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:vel</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Returns the velocity value of an <code class="entry">mm:on</code> message.
+</dd>
+</dl>
+<dl id="mm:vel-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:vel-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Sets the velocity value of an <code class="entry">mm:on</code> message.
+</dd>
+</dl>
+
+<dl id="mm:val"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:val</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Returns the message value of an <code class="entry">mm:touch mm:ctrl mm:prog mm:press mm:bend</code> message.
+</dd>
+</dl>
+<dl id="mm:val-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:val-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Sets the message value of an <code class="entry">mm:touch mm:ctrl mm:prog mm:press mm:bend</code> message.
+</dd>
+</dl>
+
+<dl id="mm:num"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:num</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Returns the controller number of an <code class="entry">mm:ctrl</code> message.
+</dd>
+</dl>
+<dl id="mm:num-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:num-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dd>
+Sets the controller number value of an <code class="entry">mm:ctrl</code> message.
+</dd>
+</dl>
+
+<h2 id="sal">SAL Syntax</h2>
+<p>SAL syntax is supported in Chicken Scheme. It behaves exactly the same as in GraceCL except for the following changes and improvements: </p>
+
+<ul>
+
+<li>The <code>send</code> command sends data to ports:
+
+<blockquote>
+<pre><span class="command">send</span> <span class="string">"mp:note"</span>, 0, 1, 60, .1
+<span class="command">send</span> <span class="string">"mp:note"</span>, <span class="keyword">key:</span> 60, <span class="keyword">dur:</span> .1
+</pre>
+</blockquote>
+</li>
+
+<li>Quasi-quotation inside constant lists using <code>#$</code> (unquote) and <code>#^</code> (unquote-splice):
+
+<blockquote>
+<pre><span class="command">begin</span> <span class="reserved">with</span> foo = 99
+  <span class="reserved">print</span> {a <span class="constant">#$</span> foo b <span class="constant">#^</span> list(foo, foo + 1, foo + 2) c}
+<span class="command">end</span>
+&rarr; {a 99 b 99 100 101 c}
+</pre>
+</blockquote>
+</li>
+
+<li>A variable length (&rest) parameter defined by appending <code>...</code> to the last argument's name.</li>
+<blockquote>
+<pre><span class="command">define</span> <span class="class">function</span> foo (a, b...)
+  <span class="reserved">return</span> a * apply(+, b)
+</pre>
+</blockquote>
+
+
+<li>Functions can be applied to arguments:
+<blockquote>
+<pre>
+<span class="command">print</span> apply(+, {1 2 3 4 5})
+</pre>
+</blockquote>
+</li>
+
+<li>Commands <code>open</code> and <code>output</code> are not supported in Scheme.
+</li>
+
+</ul>
+
+<p>See <a href="http://commonmusic.sf.net/doc/dict/sal-topic.html">SAL documentation</a> for more information.
+
+
+
+
 
 <h2 id="examples">Examples</h2>
 
@@ -641,6 +864,7 @@ greater or less than <var>n</var>.</dd>
 </pre>
 </div>
 
+<!-- 
 <h2 id="xml">XML Description</h2>
 
 <p>Plotter saves, loads, imports and exports data using
@@ -688,6 +912,8 @@ constant values for duration (.5) amplitude (.25) and channel (0):</p>
 <p>User defined XML descriptions are saved in the
 Grace.prefs file:
 </p>
+
+-->
 
 </div>
 </body>
