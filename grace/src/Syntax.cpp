@@ -589,6 +589,15 @@ void SalSyntax::evalText(String text, bool isRegion, bool expand) {
   text=T("(sal \"") + input + T("\"") + T(" ") +
     String(rule) + T(" ") +
     T("(quote ") + tokens + T(") ") + exp + T(")");
+#else
+  text=(T("(cm::sal ") + String("\"") 
+	+ text.replace(T("\""),T("\\\""))
+	+ String("\"") );
+  if ( isRegion )
+    text << T(" :pattern :statement-sequence");
+  if ( expand )
+    text << T(" :expand t");
+  text << T(")");
 #endif
   ((GraceApp *)GraceApp::getInstance())->getConsole()->
     consoleEval(text, true, isRegion);

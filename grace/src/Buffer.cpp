@@ -1515,7 +1515,6 @@ int TextBuffer::evalText(bool macroexpand) {
     if (typ>SCAN_EMPTY) 
       text=text.substring(loc+1,end);
   }
-  printf("parsed-> %s\n", text.toUTF8());
   syntax->evalText(text, region, macroexpand);
   return 0;
 }

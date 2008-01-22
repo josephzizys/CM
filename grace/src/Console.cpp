@@ -401,22 +401,12 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
     printError(T(">>> Lisp is not running. Use Console>Lisp>Start Lisp\nto start a Lisp session.\n"));
     return;
   }
-
   String sexpr;
   int message;
   GracePreferences* p=GracePreferences::getInstance();
-
   if ( isSal ) {
-    if (! lisp->isLoaded(p->getASDF(ASDF::CM)) ) {
-      printError(">>> Error: Common Music is not loaded.\nUse Console>Lisp>Load System> to load Common Music.\n");
-      return;
-    }
     message=LispConnection::msgSalEval;
-    code=code.replace(T("\""),T("\\\"") );
-    sexpr=( T("(cm::sal ") + String("\"") + code + String("\"") );
-    if ( isRegion )
-      sexpr+=T(" :pattern :statement-sequence");
-    sexpr+=T(")");
+    sexpr=code;
   }
   else {
     message=LispConnection::msgLispEval;
@@ -429,8 +419,8 @@ void ConsoleWindow::consoleEval (String code, bool isSal,
 #else
 void ConsoleWindow::consoleEval (String code, bool isSal, bool isRegion) {
   int nodetype=SchemeNode::EXPR;
-  evalnum++;
-  printf("[%d] Eval: '%s'\n", evalnum, code.toUTF8());
+  //  evalnum++;
+  //  printf("[%d] Eval: '%s'\n", evalnum, code.toUTF8());
   if ( isSal )
     nodetype=SchemeNode::SAL;
   ((GraceApp *)GraceApp::getInstance())->
