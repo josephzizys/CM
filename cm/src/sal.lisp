@@ -1074,8 +1074,15 @@
 	     )
 	    (expand
              (let ((*print-case* ':downcase))
-	       (pprint b))
-	     (force-output *standard-output*))
+	       (if (and (consp b) (eql (car b) 'sal-define))
+		   (setf b (third b)))
+	       (if (and (consp b) (eql (car b) 'quote))
+		   (setf b (second b)))
+	       (if (and (consp b) (eql (car b) 'progn)
+			(null (cddr b)))
+		   (setf b (second b)))
+	       (pprint b)
+	       (force-output *standard-output*)))
 	    (t
 	     (sal-eval b)))
       (values))))
