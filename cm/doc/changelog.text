@@ -1,3 +1,6 @@
+CM 2.11.3
+   o added :expand option to sal
+   o fixed SYS logical pathname bug
 CM 2.11.2
   o removed dependancy on #+grace and #-grace feature
   o added "SYS" logical-pathname-translation to cm.asd
