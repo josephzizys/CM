@@ -10,76 +10,76 @@
 
 (in-package cm)
 
-; (progn (cd "/Lisp/sal/") (load "parse.lisp") (load "sal.lisp"))
+					; (progn (cd "/Lisp/sal/") (load "parse.lisp") (load "sal.lisp"))
 
 (defgrammer sexpr
-  '((:co )				; comma token
-    (:lc )				; left curly token
-    (:rc)
-    (:lp)				; left paren token
-    (:rp)
-    (:lb)
-    (:rb)
-    ;; basic datatypes
-    (:int ) (:float ) (:ratio ) (:string ) (:id ) (:key ) (:bool )
-    ;; placeholder for #a[...] constructor expressions, which are
-    ;; parsed at emit time...
-    (:object ) (:class)
-    (:number (or :int :float :ratio))
-    ;; atomic data
-    (:atom (or :int :float :ratio :id :bool))
-    ;; quoted lists
-    (:list (:lc (* :elt) :rc)  parse-qlist)
-    (:elt (or :atom :list :string))
-    (:aref (:id :lb :pargs :rb)  parse-aref)
-    ;; the :? token class is created by #?
-    (:ifexpr (:? :lp :sexpr :co :sexpr (@ :co :sexpr) :rp)
-     parse-ifexpr)
-    ;; funcall and funargs
-    (:funcall (:id :funargs)  parse-funcall)
-    (:funargs (or (:lp :rp)
-	       (:lp :pargs :rp)
-	       (:lp :kargs :rp)
-	       (:lp :pargs :co :kargs :rp))
-     parse-funargs)
-    (:pargs (or (:sexpr (+ :co :sexpr))
-	     :sexpr)
-     parse-parg)
-    (:kargs (or (:key :sexpr (+ :co :key :sexpr))
-	     (:key :sexpr))
-     parse-karg)
-    ;; if token class
-    (:?) 
-    ;; math ops
-    (:+ ) (:-) (:*) (:/) (:%) (:^)
-    ;; relations
-    (:= ) (:!= ) (:<) (:>) (:<=) (:>=) (:~=)
-    ;; logic
-    (:! ) (:& ) (:\|) 
-    ;; ops
-    (:op (or :+ :- :* :/ :% :^
-	  := :!= :< :> :<= :>= :~=
-	  :! :& :\|
-	  ))
-    (:mexpr (:term (* :op :term)) parse-mexpr)
-    (:term (or (:- :term)  (:! :term) (:lp :mexpr :rp)
-	    :ifexpr :funcall :aref :atom 
-	    ;; added for general equality
-	    :list :string)
-     parse-term)
-    ;;(:rel (or := :!= :< :> :<= :>=))
-    ;;(:relation (:term :rel :term))
-    (:sexpr
-     (or :mexpr :ifexpr :funcall :aref :list :string :object :class :atom))
-    )
+    '((:co )				; comma token
+      (:lc )				; left curly token
+      (:rc)
+      (:lp)				; left paren token
+      (:rp)
+      (:lb)
+      (:rb)
+      ;; basic datatypes
+      (:int ) (:float ) (:ratio ) (:string ) (:id ) (:key ) (:bool )
+      ;; placeholder for #a[...] constructor expressions, which are
+      ;; parsed at emit time...
+      (:object ) (:class)
+      (:number (or :int :float :ratio))
+      ;; atomic data
+      (:atom (or :int :float :ratio :id :bool))
+      ;; quoted lists
+      (:list (:lc (* :elt) :rc)  parse-qlist)
+      (:elt (or :atom :list :string))
+      (:aref (:id :lb :pargs :rb)  parse-aref)
+      ;; the :? token class is created by #?
+      (:ifexpr (:? :lp :sexpr :co :sexpr (@ :co :sexpr) :rp)
+       parse-ifexpr)
+      ;; funcall and funargs
+      (:funcall (:id :funargs)  parse-funcall)
+      (:funargs (or (:lp :rp)
+		 (:lp :pargs :rp)
+		 (:lp :kargs :rp)
+		 (:lp :pargs :co :kargs :rp))
+       parse-funargs)
+      (:pargs (or (:sexpr (+ :co :sexpr))
+	       :sexpr)
+       parse-parg)
+      (:kargs (or (:key :sexpr (+ :co :key :sexpr))
+	       (:key :sexpr))
+       parse-karg)
+      ;; if token class
+      (:?) 
+      ;; math ops
+      (:+ ) (:-) (:*) (:/) (:%) (:^)
+      ;; relations
+      (:= ) (:!= ) (:<) (:>) (:<=) (:>=) (:~=)
+      ;; logic
+      (:! ) (:& ) (:\|) 
+      ;; ops
+      (:op (or :+ :- :* :/ :% :^
+	    := :!= :< :> :<= :>= :~=
+	    :! :& :\|
+	    ))
+      (:mexpr (:term (* :op :term)) parse-mexpr)
+      (:term (or (:- :term)  (:! :term) (:lp :mexpr :rp)
+	      :ifexpr :funcall :aref :atom 
+	      ;; added for general equality
+	      :list :string)
+       parse-term)
+      ;;(:rel (or := :!= :< :> :<= :>=))
+      ;;(:relation (:term :rel :term))
+      (:sexpr
+       (or :mexpr :ifexpr :funcall :aref :list :string :object :class :atom))
+      )
   :literals '(:+ :- :* :/ := :!= :< :> :<= :>= :~= :! :& :\| ) ; :? not a literal
   )
 
 (defmacro emiterr (errf at str &rest args)
   `(funcall ,errf
-	    (make-instance 'sal-error :type ':read
-			   :text ,(if args `(format nil ,str ,@args) str)
-			   :start ,at)))
+    (make-instance 'sal-error :type ':read
+     :text ,(if args `(format nil ,str ,@args) str)
+     :start ,at)))
 
 (defmethod emit ((tok token) &optional info errf)
   info errf
@@ -194,8 +194,8 @@
 	       (token=? (car (cadr args)) ':co))
 	  (cons (car args)
 		(loop for x in (cadr args)
-		   unless (token=? x ':co) 
-		   collect x))
+		      unless (token=? x ':co) 
+		      collect x))
 	  (list args))))
 
 (defun parse-karg (args errf)
@@ -207,8 +207,8 @@
 		  (consp (caddr args))
 		  (token=? (car (caddr args)) ':co))
 	     (loop for x in (caddr args)
-		unless (token=? x ':co)
-		collect x)
+		   unless (token=? x ':co)
+		   collect x)
 	     (list))))
 
 (defun parse-funargs (args errf)
@@ -217,7 +217,7 @@
   ;; separater. omit lp/rp tokens 
   ;;(print (list :funargs-> args))
   (let ((args1 '()))
-    (pop args) ; remove :lp
+    (pop args)				; remove :lp
     (setq args1 (pop args))
     (if (token=? args1 ':rp)
 	(list)
@@ -258,18 +258,18 @@
 	       (name (class-name class))
 	       (extern (list 'make-instance `(quote ,name))))
 	  (loop for (keyw expr) on (cddr form) by #'cddr
-	     for init = (emit keyw info errf)
-	     unless (keywordp init)
-	     do (emiterr errf (+ (token-start type) 2
-				 (length (token-string type)))
-			 "Illegal initialization for class ~A" 
-			 (token-string type))
-	     do (if (find init slots :test #'member 
-			  :key #'slot-definition-initargs)
-		    (nconc extern (list init (emit expr info errf)))
-		    (emiterr errf (token-start keyw)
-			     "Invalid initialization for class ~A"
-			     (token-string type))))
+		for init = (emit keyw info errf)
+		unless (keywordp init)
+		do (emiterr errf (+ (token-start type) 2
+				    (length (token-string type)))
+			    "Illegal initialization for class ~A" 
+			    (token-string type))
+		do (if (find init slots :test #'member 
+			     :key #'slot-definition-initargs)
+		       (nconc extern (list init (emit expr info errf)))
+		       (emiterr errf (token-start keyw)
+				"Invalid initialization for class ~A"
+				(token-string type))))
 	  extern)
 	(cons 'make-instance (emit (cdr form) info errf)))))
 
@@ -299,15 +299,15 @@
 (defmethod emit ((unit term-unit) &optional info errf)
   (emit (parse-unit-parsed unit) info errf))
 
-;
+					;
 ;; bindings
-;
+					;
 
 (defgrammer bindings
-  '((:bindings (:bind (* :co :bind))
-     parse-bindings)
-    (:bind (or (:id := :sexpr)
-	    :id))))
+    '((:bindings (:bind (* :co :bind))
+       parse-bindings)
+      (:bind (or (:id := :sexpr)
+	      :id))))
 
 (defclass bindings-unit (parse-unit) ())
 
@@ -316,7 +316,7 @@
   ;; others = (<,> <expr> ...)
   (cons (funcall fn arg)
 	(loop for a in (cdr others) by #'cddr
-	   collect (funcall fn a))))
+	      collect (funcall fn a))))
 
 (defun parse-bindings (args errf)
   errf
@@ -346,12 +346,12 @@
 ;;;
 
 (defgrammer assignment
-  '((:assignment (:set :assign (* :co :assign))
-     parse-assignment)
-    (:assign ((or :aref :id) :assigner :sexpr))
-    (:assigner (or := :+= :*= :&= :@= :^= :<= :>=))
-    (:set ) (:= ) (:+= ) (:*= ) (:&= ) (:@=) (:^=) (:<= ) (:>=) 
-    ))
+    '((:assignment (:set :assign (* :co :assign))
+       parse-assignment)
+      (:assign ((or :aref :id) :assigner :sexpr))
+      (:assigner (or := :+= :*= :&= :@= :^= :<= :>=))
+      (:set ) (:= ) (:+= ) (:*= ) (:&= ) (:@=) (:^=) (:<= ) (:>=) 
+      ))
 
 (defclass assignment-unit (parse-unit) ())
 
@@ -406,11 +406,11 @@
 ;;;
 
 (defgrammer special-statements
-  '((:return-from (:return :sexpr (* :co :sexpr))
-      parse-return-from)
-    (:process-wait (:wait :sexpr)
-     parse-process-wait)
-    (:return ) (:wait )))
+    '((:return-from (:return :sexpr (* :co :sexpr))
+	parse-return-from)
+      (:process-wait (:wait :sexpr)
+       parse-process-wait)
+      (:return ) (:wait )))
 
 (defclass special-form-unit (parse-unit) ())
 
@@ -464,9 +464,9 @@
 ;;; end
 
 (defgrammer blocks	
-  '((:block (:begin (@ :with :bindings) (* :statement) :end)
-      parse-block)
-    (:begin ) (:with ) (:end )))
+    '((:block (:begin (@ :with :bindings) (* :statement) :end)
+	parse-block)
+      (:begin ) (:with ) (:end )))
 
 (defclass block-unit (parse-unit) ())
 
@@ -483,7 +483,7 @@
 (defmethod emit ((unit block-unit) &optional info errf)
   ;; ( <bindings> . <statements>)
   (let ((bloc (parse-unit-parsed unit)))
-    (let ((vars (car bloc)) ; #<bindings> or ()
+    (let ((vars (car bloc))		; #<bindings> or ()
 	  (body (emit (cdr bloc) info errf)))
       ;; at some point this could pass var decls into (emit body) to catch
       ;; unknown variable errors etc.
@@ -498,14 +498,14 @@
 ;;;
 
 (defgrammer conditional
-  '((:conditional (or ;; was just if
-		   (:if :sexpr :then (@ :statement) (@ :else :statement))
-		   (:when :sexpr :statement)
-		   (:unless :sexpr :statement))
-     parse-if)
-    (:if ) (:then ) (:else ) 
-    (:when ) (:unless )	;; added
-    ))
+    '((:conditional (or	;; was just if
+		     (:if :sexpr :then (@ :statement) (@ :else :statement))
+		     (:when :sexpr :statement)
+		     (:unless :sexpr :statement))
+       parse-if)
+      (:if ) (:then ) (:else ) 
+      (:when ) (:unless ) ;; added
+      ))
 
 (defclass if-unit (parse-unit) ())
 (defclass when-collect-unit (parse-unit) ())
@@ -539,8 +539,8 @@
       (setf (third l)
 	    (list* (first c) (second c)
 		   (loop for tail on (cddr c) by #'cddr
-		      collect 'and collect (car tail)
-		      collect (cadr tail)))))
+			 collect 'and collect (car tail)
+			 collect (cadr tail)))))
     p))
 
 (defmethod emit ((unit if-unit) &optional info errf)
@@ -581,35 +581,35 @@
 ;;;
 
 (defgrammer iteration
-  '((:loop-statement (:loop (@ :with :bindings ) 
-		      (* :stepping )
-		      (* :termination )
-		      (+ :statement )
-		      (@ :finally :statement)
-		      :end)
-     parse-loop-run)
-    (:run-statement (:run (@ :with :bindings)
-		     (* :stepping)
-		     (* :termination)
-		     (+ :statement) 
-		     (@ :finally :statement)
-		     :end)
-     parse-loop-run)
-    (:stepping (or (:repeat :sexpr)
-		(:for :id := :sexpr (@ :then :sexpr))
-		(:for :id :in :sexpr )
-		(:for :id :over :sexpr (@ :by :sexpr))
-		;;(:for :id (@ :from :sexpr) (or :below :to) :sexpr (@ :by :sexpr))
-		(:for :id :from :sexpr (@ (or :below :to :above :downto) :sexpr)
-		      (@ :by :sexpr))
-		(:for :id (or :below :to :above :downto) :sexpr (@ :by :sexpr))
-		)
-     parse-stepping)
-    (:termination (or (:while :sexpr) (:until :sexpr)))
-    ;; terminals
-    (:loop ) (:run ) (:repeat ) (:for ) (:from ) (:in ) (:below ) (:to )
-    (:above) (:downto) (:by ) (:over) (:while) (:until) (:finally )
-    ))
+    '((:loop-statement (:loop (@ :with :bindings ) 
+			(* :stepping )
+			(* :termination )
+			(+ :statement )
+			(@ :finally :statement)
+			:end)
+       parse-loop-run)
+      (:run-statement (:run (@ :with :bindings)
+		       (* :stepping)
+		       (* :termination)
+		       (+ :statement) 
+		       (@ :finally :statement)
+		       :end)
+       parse-loop-run)
+      (:stepping (or (:repeat :sexpr)
+		  (:for :id := :sexpr (@ :then :sexpr))
+		  (:for :id :in :sexpr )
+		  (:for :id :over :sexpr (@ :by :sexpr))
+		  ;;(:for :id (@ :from :sexpr) (or :below :to) :sexpr (@ :by :sexpr))
+		  (:for :id :from :sexpr (@ (or :below :to :above :downto) :sexpr)
+			(@ :by :sexpr))
+		  (:for :id (or :below :to :above :downto) :sexpr (@ :by :sexpr))
+		  )
+       parse-stepping)
+      (:termination (or (:while :sexpr) (:until :sexpr)))
+      ;; terminals
+      (:loop ) (:run ) (:repeat ) (:for ) (:from ) (:in ) (:below ) (:to )
+      (:above) (:downto) (:by ) (:over) (:while) (:until) (:finally )
+      ))
 
 (defclass iteration-unit (parse-unit) ())
 (defclass loop-run-unit (iteration-unit) ())
@@ -648,20 +648,20 @@
 	 ;; fourth arg is the first (required) sexpr
 	 (list* (first args) (second args) (third args) (fourth args)
 		(loop for x in (nthcdr 4 args) if (consp x)
-		   append x else if (not (null x)) collect x)))))
+		      append x else if (not (null x)) collect x)))))
 
 (defmethod emit ((unit loop-run-unit) &optional info errf)
   ;; (:run|:loop (with...)((for...))((while...))(statement...)(finally state) :end)
   (let* ((iter (parse-unit-parsed unit))
 	 (type (if (token=? (first iter) ':loop) ':loop ':run))
-	 (sub? (or (get-emit-info ':run info)  ; is THIS expr undeneath a run?
+	 (sub? (or (get-emit-info ':run info) ; is THIS expr undeneath a run?
 		   (get-emit-info ':loop info)))
 	 (info (add-emit-info type t info)) ; add :loop or :run to info
-	 (with (second iter))		  ; with decl
-	 (fors (third iter))		  ; stepping
-	 (stop (fourth iter))		  ; while|until
-	 (body (fifth iter))		  ; actions
-	 (done (sixth iter))		  ; finally clause
+	 (with (second iter))		; with decl
+	 (fors (third iter))		; stepping
+	 (stop (fourth iter))		; while|until
+	 (body (fifth iter))		; actions
+	 (done (sixth iter))		; finally clause
 	 )
     ;;(print (list :loop-run-emit-> iter))
     ;; do some error checks on run blocks. they must be inside a process
@@ -678,7 +678,7 @@
       ;; collect all with bindings into separate 'with {var} = {form}'
       ;; clauses so that they will be sequentially bound by loop macro
       (setq with (loop for b in (emit (cadr with) info errf)
-		    nconc (list 'with (first b) '= (second b)))))
+		       nconc (list 'with (first b) '= (second b)))))
     (unless (null fors)
       (setq fors (loop for f in fors nconc (emit f info errf))))
     (unless (null stop)
@@ -694,57 +694,57 @@
 ;;
 
 (defgrammer patterns
-  '((:pattern-statement (or (:cycle (* :var-decl)  (@ :of :item-type)
-				    (+ :basic-item) (* :pattern-option))
-			 (:heap (* :var-decl)  (@ :of :item-type) 
-				(+ :basic-item) (* :pattern-option))
-			 (:palindrome (* :var-decl) (@ :of :item-type) 
+    '((:pattern-statement (or (:cycle (* :var-decl)  (@ :of :item-type)
 				      (+ :basic-item) (* :pattern-option))
-			 (:line (* :var-decl) (@ :of :item-type)
-				(+ :basic-item) (* :pattern-option))
-			 (:weighting (* :var-decl) (@ :of :item-type)
-				     (+ :weighting-item) (* :pattern-option))
-			 (:markov (* :var-decl) (* :of :item-type)
-				  (+ :markov-item) (* :pattern-option))
-			 (:graph (* :var-decl) (@ :of :item-type)
-				 (+ :graph-item) (* :pattern-option))
-			 (:rewrite (* :var-decl) (* :of :item-type)
-				   (+ :rewrite-item) (* :pattern-option))
-			 (:palindrome (* :var-decl) (@ :of :item-type) 
+			   (:heap (* :var-decl)  (@ :of :item-type) 
+				  (+ :basic-item) (* :pattern-option))
+			   (:palindrome (* :var-decl) (@ :of :item-type) 
+					(+ :basic-item) (* :pattern-option))
+			   (:line (* :var-decl) (@ :of :item-type)
+				  (+ :basic-item) (* :pattern-option))
+			   (:weighting (* :var-decl) (@ :of :item-type)
+				       (+ :weighting-item) (* :pattern-option))
+			   (:markov (* :var-decl) (* :of :item-type)
+				    (+ :markov-item) (* :pattern-option))
+			   (:graph (* :var-decl) (@ :of :item-type)
+				   (+ :graph-item) (* :pattern-option))
+			   (:rewrite (* :var-decl) (* :of :item-type)
+				     (+ :rewrite-item) (* :pattern-option))
+			   (:palindrome (* :var-decl) (@ :of :item-type) 
+					(+ :basic-item) (* :pattern-option))
+			   (:rotation (* :var-decl) (@ :of :item-type) 
 				      (+ :basic-item) (* :pattern-option))
-			 (:rotation (* :var-decl) (@ :of :item-type) 
-				    (+ :basic-item) (* :pattern-option))
-			 )
-     parse-pattern-statement)
-    (:var-decl (:var-type := :sexpr))
-    (:var-type (or :with :alias))
-    (:item-type (or :notes :keynums :rhythms :amplitudes))
-    (:weighting-item (or (:lc :basic-item (* :weighting-option) :rc)
-		      :basic-item)
-     parse-weighting-node)
-    (:graph-item (:lc :basic-item (+ :graph-option) :rc)
-     parse-graph-node)
-    (:markov-item (:lc (* :atomic-item) :-> (+ :basic-item) :rc)
-     parse-markov-node)
-    (:rewrite-item (:lc (* :atomic-item) :-> (* :atomic-item) :rc)
-     parse-rewrite-node)
-    (:basic-item (or :atomic-item :list )) ;:string
-    (:atomic-item (or :number :id))
-    (:weighting-option (or (:weight :atomic-item)
-			(:min :atomic-item)
-			(:max :atomic-item)))
-    (:graph-option (or (:to :atomic-item) (:id :atomic-item)))
-    (:pattern-option (:pattern-init :sexpr))
-    (:pattern-init (or :for :from :to :in :through :repeat :tempo :elide))
-    ;; terminals
-    (:with ) (:alias )
-    (:cycle ) (:heap ) (:palindrome ) (:line ) (:weighting )
-    (:markov) (:graph ) (:rewrite) (:rotation)
-    (:notes ) (:keynums ) (:rhythms ) (:amplitudes )
-    (:id ) (:weight ) (:min ) (:max ) (:->)
-    (:for ) (:from ) (:of ) (:to ) (:in ) (:through ) (:repeat )
-    (:initially) (:tempo ) (:elide ) (:rotations )
-    ))
+			   )
+       parse-pattern-statement)
+      (:var-decl (:var-type := :sexpr))
+      (:var-type (or :with :alias))
+      (:item-type (or :notes :keynums :rhythms :amplitudes))
+      (:weighting-item (or (:lc :basic-item (* :weighting-option) :rc)
+			:basic-item)
+       parse-weighting-node)
+      (:graph-item (:lc :basic-item (+ :graph-option) :rc)
+       parse-graph-node)
+      (:markov-item (:lc (* :atomic-item) :-> (+ :basic-item) :rc)
+       parse-markov-node)
+      (:rewrite-item (:lc (* :atomic-item) :-> (* :atomic-item) :rc)
+       parse-rewrite-node)
+      (:basic-item (or :atomic-item :list )) ;:string
+      (:atomic-item (or :number :id))
+      (:weighting-option (or (:weight :atomic-item)
+			  (:min :atomic-item)
+			  (:max :atomic-item)))
+      (:graph-option (or (:to :atomic-item) (:id :atomic-item)))
+      (:pattern-option (:pattern-init :sexpr))
+      (:pattern-init (or :for :from :to :in :through :repeat :tempo :elide))
+      ;; terminals
+      (:with ) (:alias )
+      (:cycle ) (:heap ) (:palindrome ) (:line ) (:weighting )
+      (:markov) (:graph ) (:rewrite) (:rotation)
+      (:notes ) (:keynums ) (:rhythms ) (:amplitudes )
+      (:id ) (:weight ) (:min ) (:max ) (:->)
+      (:for ) (:from ) (:of ) (:to ) (:in ) (:through ) (:repeat )
+      (:initially) (:tempo ) (:elide ) (:rotations )
+      ))
 
 (defclass pattern-unit (parse-unit) ())
 
@@ -815,64 +815,64 @@
      (list* name 
 	    (second args)
 	    (loop for tail on (third args) by #'cdddr
-	       collect (second tail) collect (third tail))))
+		  collect (second tail) collect (third tail))))
     ((4 )
      ;; args = (<cmd> {<sexpr> | <key> <sexpr>} ({<,> <sexpr> | <key> <sexpr>})
      (cons name
 	   (loop for a in (list* (second args) (third args))
-	      unless (token=? a ':co)
-	      if (consp a) append a else collect a)))))
+		 unless (token=? a ':co)
+		 if (consp a) append a else collect a)))))
 
 (defgrammer statement
-  `(
-    (:print-statement (:print :sexpr (* :co :sexpr))
-     ,(lambda (a e) (restate 'sal-print a e 2)))
-    (:exec-statement (:exec :sexpr (* :co :sexpr))
-     ,(lambda (a e) (restate 'progn a e 2) ))
-    (:open-statement (:open :sexpr (* :co :key :sexpr))
-     ,(lambda (a e) (restate 'sal-open a e 3)))
-    (:sprout-statement (:sprout :sexpr (@ :co :sexpr)) 
-     ,(lambda (a e) e (make-instance 'sprout-unit :parsed a)))
-    (:output-statement (:output :sexpr) )
-    (:load-statement (:load :sexpr) 
-     ,(lambda (a e) (restate 'sal-load a e 1)))
-    (:system-statement (:system :sexpr (* :co :key :sexpr))
-     ,(lambda (a e) (restate 'sal-system a e 3)))
-    (:chdir-statement (:chdir :sexpr)
-     ,(lambda (a e) (restate 'sal-chdir a e 1)))
-    (:play-statement (:play :sexpr) )
-    (:plot-statement (:plot (or (:key :sexpr) :sexpr) (* :co (or (:key :sexpr) :sexpr)))
-		     , (lambda (a e) (restate 'sal-plot a e 4)))
-    (:rts-statement (:rts :sexpr)
-     ,(lambda (a e) (restate 'sal-rts a e 1)))
-    (:define-statement (:define :declaration) parse-define-command)
-    (:statement (or :block 
-		 :conditional
-		 :assignment 
-		 :print-statement
-		 :exec-statement
-		 :open-statement
-		 :sprout-statement
-		 :output-statement
-		 :load-statement
-		 :system-statement
-		 :chdir-statement
-		 :play-statement
-		 :rts-statement
-		 :plot-statement
-		 :loop-statement 
-		 :return-from		; emit check legality
-		 :process-wait		; emit checks legality
-		 :define-statement
-		 ))
-    (:statement-sequence (+ :statement) 
-			 ,(lambda (a e) e 
-				  ;; dont bother with an emit method, just wrap a progn around
-				  ;; multiple commands
-				  (if (null (cdr a)) (car a) (list* 'progn a))))
-    (:print ) (:open)  (:sprout ) (:output ) (:load) (:system) (:chdir ) 
-    (:play ) (:exec ) (:plot)  (:rts) (:define )
-    )
+    `(
+      (:print-statement (:print :sexpr (* :co :sexpr))
+       ,(lambda (a e) (restate 'sal-print a e 2)))
+      (:exec-statement (:exec :sexpr (* :co :sexpr))
+       ,(lambda (a e) (restate 'progn a e 2) ))
+      (:open-statement (:open :sexpr (* :co :key :sexpr))
+       ,(lambda (a e) (restate 'sal-open a e 3)))
+      (:sprout-statement (:sprout :sexpr (@ :co :sexpr)) 
+       ,(lambda (a e) e (make-instance 'sprout-unit :parsed a)))
+      (:output-statement (:output :sexpr) )
+      (:load-statement (:load :sexpr) 
+       ,(lambda (a e) (restate 'sal-load a e 1)))
+      (:system-statement (:system :sexpr (* :co :key :sexpr))
+       ,(lambda (a e) (restate 'sal-system a e 3)))
+      (:chdir-statement (:chdir :sexpr)
+       ,(lambda (a e) (restate 'sal-chdir a e 1)))
+      (:play-statement (:play :sexpr) )
+      (:plot-statement (:plot (or (:key :sexpr) :sexpr) (* :co (or (:key :sexpr) :sexpr)))
+       , (lambda (a e) (restate 'sal-plot a e 4)))
+      (:rts-statement (:rts :sexpr)
+       ,(lambda (a e) (restate 'sal-rts a e 1)))
+      (:define-statement (:define :declaration) parse-define-command)
+      (:statement (or :block 
+		   :conditional
+		   :assignment 
+		   :print-statement
+		   :exec-statement
+		   :open-statement
+		   :sprout-statement
+		   :output-statement
+		   :load-statement
+		   :system-statement
+		   :chdir-statement
+		   :play-statement
+		   :rts-statement
+		   :plot-statement
+		   :loop-statement 
+		   :return-from		; emit check legality
+		   :process-wait	; emit checks legality
+		   :define-statement
+		   ))
+      (:statement-sequence (+ :statement) 
+       ,(lambda (a e) e 
+		;; dont bother with an emit method, just wrap a progn around
+		;; multiple commands
+		(if (null (cdr a)) (car a) (list* 'progn a))))
+      (:print ) (:open)  (:sprout ) (:output ) (:load) (:system) (:chdir ) 
+      (:play ) (:exec ) (:plot)  (:rts) (:define )
+      )
   )
 
 (defclass sprout-unit (parse-unit) ())
@@ -900,37 +900,37 @@
 ;;;
 
 (defgrammer declarations
-  '((:declaration (or :vardecl :fundecl :procdecl))
-    (:vardecl (:variable :bindings)
-     parse-variable)
-    (:variable )
-    (:fundecl (:function :id (or (:lp :rp)
-				 (:lp :id (* :co :id) :rp))
-	       :statement)
-     parse-function)
-    (:function )
-    (:procdecl (:process :id (or (:lp :rp)
-				 (:lp :id (* :co :id) :rp))
-			 :process-body)
-     parse-process)
-    (:process-body
-     (or :run-statement
-      (:begin (@ :with :bindings) (* :statement) 
-	      :run-statement
-	      :end)))
-    (:process )
-    ))
+    '((:declaration (or :vardecl :fundecl :procdecl))
+      (:vardecl (:variable :bindings)
+       parse-variable)
+      (:variable )
+      (:fundecl (:function :id (or (:lp :rp)
+				   (:lp :id (* :co :id) :rp))
+		 :statement)
+       parse-function)
+      (:function )
+      (:procdecl (:process :id (or (:lp :rp)
+				   (:lp :id (* :co :id) :rp))
+		  :process-body)
+       parse-process)
+      (:process-body
+       (or :run-statement
+	(:begin (@ :with :bindings) (* :statement) 
+		:run-statement
+		:end)))
+      (:process )
+      ))
      
 (defclass declaration-unit (parse-unit) ())
 (defclass function-decl (declaration-unit) ())
 (defclass process-decl (declaration-unit) ())
 (defclass variable-decl (declaration-unit) ())
 ;; others can be added:
-;(defclass pattern-decl (declaration-unit) ())
-;(defclass class-decl (declaration-unit) ())
-;(defclass command-decl (declaration-unit) ())
-;(defclass synthdef-decl (declaration-unit) ())
-;(defclass instrument-decl (declaration-unit) ())
+					;(defclass pattern-decl (declaration-unit) ())
+					;(defclass class-decl (declaration-unit) ())
+					;(defclass command-decl (declaration-unit) ())
+					;(defclass synthdef-decl (declaration-unit) ())
+					;(defclass instrument-decl (declaration-unit) ())
 
 (defgeneric declaration-type (unit))
 (defmethod declaration-type ((u variable-decl)) ':variable)
@@ -950,7 +950,7 @@
     (if (null (cdr bind))
 	(cons 'defparameter (car bind) )
 	(cons 'progn (loop for b in bind
-			collect (cons 'defparameter b))))))
+			   collect (cons 'defparameter b))))))
 
 (defun parse-function (args errf &optional (type 'function-decl))
   ;; args = (:function :id (:lp ... :rp) <statement>)
@@ -1033,15 +1033,15 @@
 	iteration 
 	special-statements blocks
 	declarations
-	;command
+					;command
 	statement
 	))
 
 (defparameter *top-level-pattern*
   ;; default patterns we allow at top-level
   ':statement
-;  '(or :command :block :conditional :assignment ; :execute
-;    :loop-statement )
+					;  '(or :command :block :conditional :assignment ; :execute
+					;    :loop-statement )
   )
 
 ;;;
@@ -1053,10 +1053,11 @@
       (funcall (find-symbol "REPORT-ERROR" :grace) string)
       (write-string string)))
 
-(defun sal (input &key (pattern *top-level-pattern*) 
-	    (grammer *sal-grammer*))
+(defun sal (input &rest args &key (pattern *top-level-pattern*) 
+	    (grammer *sal-grammer*) (expand nil) &allow-other-keys)
   ;; slime nonsense: package needs to be reset before input string is
   ;; read
+  args
   (let ((*package* (find-package ':cm)))
     (setq *sal-input* input)
     (multiple-value-bind (a b c)
@@ -1071,10 +1072,12 @@
 		   (report-error (pperror b nil))
 		   ))
 	     )
+	    (expand
+             (let ((*print-case* ':downcase))
+	       (pprint b))
+	     (force-output *standard-output*))
 	    (t
-	     (if *sal-trace* (pprint b))
-	     (sal-eval b)
-	     ))
+	     (sal-eval b)))
       (values))))
 
 (defun sal-eval (form &optional recursive?)
