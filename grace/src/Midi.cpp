@@ -396,7 +396,16 @@ MidiInPort::MidiInPort(ConsoleWindow *win)
   : devid (-1),
     device (NULL),
     runmode (STOPPED),
-    trace (false)
+    trace (false),
+    noteOn(true),
+    noteOff(true),
+    controlChange(true),
+    programChange(true),
+    pitchBend(true),
+    aftertouch(true),
+    channelPressure(true),
+    allChannels(true),
+    singleChannel(0)
     
 {
   console=win;
