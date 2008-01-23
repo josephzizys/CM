@@ -896,23 +896,18 @@
 	(set! tail (cdr tail))))))
 
 (defrule SalSproutStatementRule 
-  (and SalSprout SalSexprRule (@ SalComma SalSexprRule))
+  (and SalSprout SalSexprRule (* SalComma SalSexprRule))
   (lambda (args errf)
-    ;; args (<sprout> <sexpr> { #f | (<,> <sexpr>) } )
+    ;; args (<sprout> <sexpr> ({<,> <sexpr>*)  )
     ;;(print (list #:args-> args))
-    (let ((opt (if (caddr args)
-		   (remove-token-type (caddr args) SalComma)
-		   #f)))
-      (make-parse-unit SalSproutStatementRule
-		       (list (cadr args) opt)
-		       #f)))
+    (make-parse-unit SalSproutStatementRule
+		     (cons (cadr args)
+			   (remove-token-type (caddr args) SalComma) )
+		     #f))
   (lambda (unit info errf)
     (let ((subs (parse-unit-parsed unit)))
-      (if (cadr subs)
-	  `(sprout ,(emit (car subs) info errf)
-		   ,(emit (cadr subs) info errf))
-	  `(sprout ,(emit (car subs) info errf)))))
-  )
+      ;; FIX this should check to make sure proper num args
+      (cons 'sprout (emit subs info errf)))))
 
 (defrule SalSendStatementRule
   (and SalSend (or SalString SalIdentifier)
@@ -1390,6 +1385,7 @@
 	`(let* ,bind (do () (,stop , done) ,@loop))
 	(let* ((timevar (gensym "time"))
 	       (waitvar (gensym "wait"))
+	       (waitpar (gensym "wait"))
 	       (errorvar (gensym "error"))
 	       (abortvar (gensym "abort")))
 	  `(let* ,bind
@@ -1397,7 +1393,7 @@
 	     (lambda (,timevar)
 	       (let* ((,waitvar 0)
 		      (elapsed (lambda () ,timevar))
-		      (wait (lambda (x) (set! ,waitvar x))))
+		      (wait (lambda (,waitpar) (set! ,waitvar ,waitpar))))
 		 ;; wrap run statement in error handler
 		 (call-with-current-continuation
 		  (lambda (,abortvar)

@@ -746,11 +746,11 @@ Sets the controller number value of an <code class="entry">mm:ctrl</code> messag
 </dl>
 
 <h2 id="sal">SAL Syntax</h2>
-<p>SAL syntax is supported in Chicken Scheme. It behaves exactly the same as in GraceCL except for the following changes and improvements: </p>
+<p><a href="http://commonmusic.sf.net/doc/dict/sal-topic.html">SAL syntax</a> is fully supported in Chicken Scheme with the following changes and improvements: </p>
 
 <ul>
 
-<li>The <code>send</code> command sends data to ports:
+<li>The <code><span class="command">send</span></code> command sends data to ports:
 
 <blockquote>
 <pre><span class="command">send</span> <span class="string">"mp:note"</span>, 0, 1, 60, .1
@@ -759,18 +759,22 @@ Sets the controller number value of an <code class="entry">mm:ctrl</code> messag
 </blockquote>
 </li>
 
-<li>Quasi-quotation inside constant lists using <code>#$</code> (unquote) and <code>#^</code> (unquote-splice):
+<li>Quasi-quotation is supported in constant lists. Use <code><span class="constant">#$</span></code> to unquote and <code><span class="constant">#^</span></code> to unquote-splice:
 
 <blockquote>
-<pre><span class="command">begin</span> <span class="reserved">with</span> foo = 99
-  <span class="reserved">print</span> {a <span class="constant">#$</span> foo b <span class="constant">#^</span> list(foo, foo + 1, foo + 2) c}
+<pre><span class="command">begin</span>
+  <span class="reserved">with</span> foo = 99
+  <span class="reserved">print</span> {x <span class="constant">#$</span> foo y <span class="constant">#^</span> list(foo, foo + 1, foo + 2) z}
 <span class="command">end</span>
-&rarr; {a 99 b 99 100 101 c}
+&rarr; {x 99 y 99 100 101 z}
 </pre>
 </blockquote>
 </li>
 
-<li>A variable length (&rest) parameter defined by appending <code>...</code> to the last argument's name.</li>
+<li>Variable length (&rest) parameters to functions or processes can
+be defined by appending <code>...</code> to the last argument's
+name.</li>
+
 <blockquote>
 <pre><span class="command">define</span> <span class="class">function</span> foo (a, b...)
   <span class="reserved">return</span> a * apply(+, b)
@@ -786,7 +790,7 @@ Sets the controller number value of an <code class="entry">mm:ctrl</code> messag
 </blockquote>
 </li>
 
-<li>Commands <code>open</code> and <code>output</code> are not supported in Scheme.
+<li>The commands <code><span class="command">open</span></code> and <code><span class="command">output</span></code> are not supported in Scheme.
 </li>
 
 </ul>
@@ -795,14 +799,15 @@ Sets the controller number value of an <code class="entry">mm:ctrl</code> messag
 
 
 
+<h2 id="examples">Code Examples</h2>
+
+<h3>Example 1</h3>
 
 
-<h2 id="examples">Examples</h2>
-
-
-<p>Map pink noise onto scales.</p>
+<p>Mapping pink noise onto scales.</p>
 
 <div class="float">
+<p>Scheme</p>
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">pinkscale</span> len scale)
   (<span class="special">go</span> ((i 0 (+ i 1)))
@@ -814,17 +819,41 @@ Sets the controller number value of an <code class="entry">mm:ctrl</code> messag
 
 (sprout (pinkscale 100 dorian))
 
-(<span class="special">let</span> ((wierdo (steps 40 20 2 (ran 1 4) 2 (ran 1 4) 2)))
-  (sprout (pinkscale 100 wierdo)))
+(<span class="special">let</span> ((wierd (steps 40 20 2 (ran 1 4) 2 (ran 1 4) 2)))
+  (sprout (pinkscale 100 wierd)))
 </pre>
 </div>
 
-<p>Use ids to selectively stop processes.</p>
 <div class="float">
+<p>SAL</p>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> pinkscale(len, scale)
+  <span class="reserved">run</span> <span class="reserved">repeat</span> len
+    <span class="reserved">send</span> <span class="string">"mp:note"</span>, <span class="keyword">key:</span> discrete( ranpink(), -1, 1, scale)
+    <span class="reserved">wait</span> .2
+  <span class="reserved">end</span>
+
+<span class="command">define</span> <span class="class">variable</span> dorian = steps(50, 20, 2, 1, 2, 2, 2, 1, 2)
+
+<span class="command">sprout</span> pinkscale(100, dorian)
+
+<span class="command">begin</span> <span class="reserved">with</span> weird = steps(40, 20, ran(1,4), 2, ran(1,4), 2)
+  <span class="reserved">print</span> <span class="string">"scale="</span>, weird
+  <span class="reserved">sprout</span> pinkscale(100, weird)
+<span class="command">end</span>
+</pre>
+</div>
+
+
+<h4>Example 2</h4>
+
+<p>Using ids to selectively stop processes.</p>
+<div class="float">
+<p>Scheme</p>
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">chopin</span> n r d k)
   (<span class="special">go</span> ((i 0 (+ i 1)))
-      ((= i n) #f)
+      ((= i n) <span class="constant">#f</span>)
     (send <span class="string">"mp:note"</span> <span class="keyword">#:dur</span> d <span class="keyword">#:key</span> k)
     (wait r)))
 
@@ -845,24 +874,158 @@ Sets the controller number value of an <code class="entry">mm:ctrl</code> messag
 </pre>
 </div>
 
+<div class="float">
+<p>SAL</p>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> chopin (n, r, d, k)
+  <span class="reserved">run</span> <span class="reserved">repeat</span> n
+    <span class="reserved">send</span> <span class="string">"mp:note"</span>, <span class="keyword">dur:</span> d, <span class="keyword">key:</span> k
+    <span class="reserved">wait</span> r
+  <span class="reserved">end</span>
+
+<span class="comment">;; sprout D# minor chord with ids</span>
+
+<span class="command">begin</span>
+  <span class="reserved">sprout</span> chopin(50, .5, .25, 63), 0, 1
+  <span class="reserved">sprout</span> chopin(50, .5, .25, 66), 0, 2
+  <span class="reserved">sprout</span> chopin(50, .5, .25, 70), 0, 3
+  <span class="reserved">sprout</span> chopin(50, .5, .25, 75), 0, 1
+<span class="command">end</span>
+
+<span class="comment">;; first stop F#, then A# then the D# octave</span>
+
+<span class="command">exec</span> stop(2)
+<span class="command">exec</span> stop(3)
+<span class="command">exec</span> stop(1)
+</pre>
+</div>
+
+
+<h4>Example 3</h4>
 
 <p>Pentatonic wind chimes with amp envelope and exponential decay.</p>
 
 <div class="float">
+<p>Scheme</p>
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">chimes</span> n)
   (<span class="special">go</span> ((i 0 (+ i 1))
        (l '(0 2 5 7 9 12))
        (k (+ 37 (* 12 (ran 6)))))
-      ((= i n) #f)
+      ((= i n) <span class="constant">#f</span>)
     (send <span class="string">"mp:note"</span> 0 (ran 2.0 4.0)
           (+ k (list-ref l (ran 6)))
           (interp i 0 90 n 30))
-    (wait (rescale i 0 n .1 (ran 1.5 3.0) 50))))
+    (wait (rescale i 0 n .1 (ran 1.5 2.0) 50))))
 
 (sprout (chimes 20 ) )
 </pre>
 </div>
+
+<div class="float">
+<p>SAL</p>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> chimes(n)
+  <span class="reserved">run</span> <span class="reserved">with</span> l = {0 2 5 7 9 12}, k = 37 + (12 * ran(6))
+    <span class="reserved">for</span> i <span class="reserved">below</span> n
+    <span class="reserved">send</span> <span class="string">"mp:note"</span>, 0, ran( 2.0, 4.0),
+         k + list-ref( l, ran( 6)),
+         interp(i, 0, 90, n, 30)
+    <span class="reserved">wait</span> rescale( i, 0, n, .1, ran(1.5, 2.0), 50)
+  <span class="reserved">end</span>
+
+<span class="command">sprout</span> chimes( 20 )
+</pre>
+</div>
+
+
+  
+<h4>Example 4</h4>
+
+<p>Triggering realtime processes via a MIDI input hook.</p>
+
+<div class="float">
+<p>Scheme</p>
+<pre class="code">
+<span class="comment">;; define a process thats plays a major or minor scale based on a given key</span>
+
+(<span class="special">define</span> (<span class="defined">playscale</span> key dur)
+  (<span class="special">let</span> ((scale (<span class="special">if</span> (odds .5)
+                 (steps 15 key 2 2 1 2 2 2 1)
+                 (steps 15 key 2 1 2 2 2 1 2))))
+    (<span class="special">go</span> ((i 0 (+ i 1))
+         (l (length scale))
+         (r (/ dur (length scale))))
+        ((= i l) <span class="constant">#f</span>)
+      (send <span class="string">"mp:note"</span> <span class="keyword">#:key</span> (list-ref scale i) 
+            <span class="keyword">#:dur</span> .5
+            <span class="keyword">#:amp</span> (interp i 0 .9 l .5))
+      (wait r))))
+
+<span class="comment">;; test the process</span>
+  
+(sprout (playscale 60 1.2))
+
+<span class="comment">;; define a hook to play a scale based on a key you press...</span>
+
+(<span class="special">define</span> (<span class="defined">myhook</span> m)
+  (<span class="special">if</span> (mm:type? m mm:on)
+    (<span class="special">let</span> ((k (mm:key m)))
+      (sprout (playscale k 1.2)))))
+
+<span class="comment">;; set hook ...</span>
+
+(send <span class="string">"mp:inhook"</span> myhook)
+
+<span class="comment">;; now play your MIDI keyboard ...  then clear your hook when done</span>
+
+(send <span class="string">"mp:inhook"</span> <span class="constant">#f</span>)
+</pre>
+</div>
+
+<div class="float">
+<p>SAL</p>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> playscale(key, dur)
+  <span class="reserved">run</span> <span class="reserved">with</span> scale = odds(.5, steps(15, key, 2, 2, 1, 2, 2, 2, 1),
+                        steps(15, key, 2, 1, 2, 2, 2, 1, 2)), 
+           len = length(scale)
+    <span class="reserved">for</span> i <span class="reserved">below</span> len
+    <span class="reserved">send</span> <span class="string">"mp:note"</span>, <span class="keyword">key:</span> list-ref( scale, i),
+         <span class="keyword">dur:</span> .5,
+         <span class="keyword">amp:</span> interp( i, 0, .9, len, .5)
+    <span class="reserved">wait</span> dur / len
+  <span class="reserved">end</span>
+
+<span class="comment">;; test the process</span>
+  
+<span class="command">sprout</span> playscale( 60, 1.2)
+
+<span class="comment">;; define a hook to play a scale based on a key you press...</span>
+
+<span class="command">define</span> <span class="class">function</span> myhook (m)
+  <span class="reserved">if</span> mm:type?( m, mm:on) <span class="reserved">then</span>
+    <span class="reserved">begin</span> <span class="reserved">with</span> k = mm:key(m)
+      <span class="reserved">sprout</span> playscale(k, 1.2)
+    <span class="reserved">end</span>
+
+<span class="comment">;; set hook ...</span>
+
+<span class="command">send</span> "mp:inhook"</span>, myhook
+
+<span class="comment">;; now play your MIDI keyboard ...  then clear your hook when done</span>
+
+<span class="command">send</span> "mp:inhook"</span>, #f</span>
+</pre>
+</div>
+
+
+
+
+
+
+
+
 
 <!-- 
 <h2 id="xml">XML Description</h2>
