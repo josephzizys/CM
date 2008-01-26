@@ -13,7 +13,6 @@
 #include "Buffer.h"
 #include "Editor.h"
 #include "Grace.h"
-#include "Midi.h"
 
 //#include "Audio.h"
 
