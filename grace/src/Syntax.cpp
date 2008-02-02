@@ -127,6 +127,7 @@ LispSyntax::LispSyntax ()
   addLispTok( T("process"), numtoks++, hilite4, 2);
   addLispTok( T("rlet"), numtoks++, hilite4, 1);
   addLispTok( T("unless"), numtoks++, hilite4, 1);
+  addLispTok( T("with-sound"), numtoks++, hiliteNone, 1);
   addLispTok( T("when"), numtoks++, hilite4, 1);
 }
 
