@@ -6,7 +6,7 @@
  *************************************************************************/
 
 // $Revision$
-// $Date$ 
+// $Date$
 
 #include "Editor.h"
 #include "Console.h"
@@ -17,7 +17,7 @@
 GraceApp::GraceApp () : console (0) {}
 GraceApp::~GraceApp () {}
 
-void GraceApp::initialise (const String& commandLine) {  
+void GraceApp::initialise (const String& commandLine) {
   File home = File::getSpecialLocation(File::userHomeDirectory);
   home.setAsCurrentWorkingDirectory();
   // Cache the absolute path to the resource directory. This is
@@ -35,12 +35,12 @@ void GraceApp::initialise (const String& commandLine) {
   // add resource directory to library path for loading libchicken
 #if (defined(MACOSX) && defined(SCHEME))
   setenv("DYLD_LIBRARY_PATH=", resourceDirectory.getFullPathName().toUTF8(), 1);
-   
+
   //  printf("DYLD_LIBRARY_PATH=%s\n",resourceDirectory.getFullPathName().toUTF8(), 1);
 #endif
 
-  // delete prefs file if its earlier than the release date
-  File pref=PropertiesFile::getDefaultAppSettingsFile(T("Grace"), T("prefs"), String::empty, false);
+  File pref=PropertiesFile::getDefaultAppSettingsFile(getApplicationName(), T("prefs"), String::empty, false);
+
   if ( pref.existsAsFile() ) {
     Time releasedate (2008, 0, 8, 9, 20) ;
     if (pref.getLastModificationTime() < releasedate ) {
@@ -54,7 +54,7 @@ void GraceApp::initialise (const String& commandLine) {
 
   String graceinfo;
   graceinfo << T("\n-----------------------------------------------------------\n")
-	    << getApplicationName() << T(" ") << getApplicationVersion() 
+	    << getApplicationName() << T(" ") << getApplicationVersion()
 	    << T("\nExecutable file: ")
 	    << File::getSpecialLocation(File::currentExecutableFile).getFullPathName()
 	    << T("\nResource directory: ")
@@ -137,8 +137,8 @@ void GraceApp::shutdown () {
 
 const String GraceApp::getApplicationName () {
 #ifndef SCHEME
-  return T("Grace CL");
-#else    
+  return T("GraceCL");
+#else
   return T("Grace");
 #endif
 }
@@ -152,10 +152,15 @@ const String GraceApp::getApplicationVersion () {
     n=n % 100;
     b=n/10;
     n=n % 10;
-    ver=String(a) + T(".") + String(b) + T(".") + String(n) + T(" ");
+    ver=String(a) + T(".") + String(b) + T(".") + String(n);
   }
 #endif
-  return ver + T("(rev ") + String(REVISION) + T(")") ;
+#ifdef REVISION
+  if (ver != String::empty)
+    ver << T(" ");
+  ver << T("(rev ") << String(REVISION) << T(")");
+#endif
+  return ver;
 }
 
 bool GraceApp::moreThanOneInstanceAllowed () {

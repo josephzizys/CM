@@ -6,7 +6,7 @@
  *************************************************************************/
 
 // $Revision$
-// $Date$ 
+// $Date$
 
 #include "Resources.h"
 #include "Editor.h"
@@ -48,8 +48,8 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
     menu->addItem(cmdHelpWindow+w, T("Plotter Help"));
   menu->addSeparator();
 #ifdef SCHEME
-  menu->addItem(cmdHelpWindow+12, T("Scheme")); 
-#endif 
+  menu->addItem(cmdHelpWindow+12, T("Scheme"));
+#endif
   sub1.addItem(cmdHelpSalTutorial+0, T("Hello World"));
   sub1.addItem(cmdHelpSalTutorial+1, T("Symbolic Expressions"));
   sub1.addItem(cmdHelpSalTutorial+2, T("Function Calls"));
@@ -125,7 +125,7 @@ void commonHelpItemSelected (int cmd, int arg) {
     else if (arg == 7) res=res.getChildFile(T("loop.sal"));
     else if (arg == 8) res=res.getChildFile(T("processes.sal"));
     if ( res.existsAsFile() )
-	new EditorWindow(0, (TextBuffer::load | TextBuffer::nosave), 
+	new EditorWindow(0, (TextBuffer::load | TextBuffer::nosave),
 			 res.getFullPathName());
     else err=T(">>> Help file ") + res.getFullPathName() +
 	   T(" does not exist.");
@@ -136,7 +136,7 @@ void commonHelpItemSelected (int cmd, int arg) {
       res=app->getResourceDirectory().getChildFile(T("doc/sal/sal.html"));
       if ( res.existsAsFile() )
 	url=URL(res.getFullPathName());
-      else err=T(">>> Help file ") + res.getFullPathName() + 
+      else err=T(">>> Help file ") + res.getFullPathName() +
 	     T(" does not exist.");
     }
     else if (arg == 1 )
@@ -147,7 +147,7 @@ void commonHelpItemSelected (int cmd, int arg) {
       url=URL(T("http://www.rawmaterialsoftware.com/juce"));
     if (err==String::empty)
       url.launchInDefaultBrowser();
-    break;  
+    break;
   case cmdHelpAboutGrace :
     break;
   default :
@@ -220,29 +220,29 @@ void GracePreferences::initPreferences (String cmdline) {
 
   // have to check --no-prefs before anything else
   if ( toks.contains( T("--no-prefs") ) ) {
-    propfile=new PropertiesFile(File::nonexistent, -1, 
+    propfile=new PropertiesFile(File::nonexistent, -1,
 				PropertiesFile::storeAsXML);
     loadPrefs=false;
   }
   else
     propfile=PropertiesFile::createDefaultAppPropertiesFile
-      ( T("Grace"), T("prefs"), String::empty, false, -1,
+      ( app->getApplicationName(), T("prefs"), String::empty, false, -1,
 	PropertiesFile::storeAsXML);
 
   // add lisp implementations
   if (!propfile->containsKey(T("LispImplementations")) ) {
     XmlElement* top=new XmlElement(T("list"));
-    top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"), 
+    top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"),
 #ifdef WINDOWS
 				    T(""),
 #else
 				    T("/usr/local/bin/clisp"),
 #endif
 				    T("")));
-    top->addChildElement( new Lisp( T("OpenMCL"), T("cltl"), T("--eval"), 
+    top->addChildElement( new Lisp( T("OpenMCL"), T("cltl"), T("--eval"),
 				    T("/usr/local/bin/openmcl"),
 				    T("")));
-    top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"), 
+    top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"),
 #ifdef WINDOWS
 				    T(""),
 #else
@@ -255,7 +255,7 @@ void GracePreferences::initPreferences (String cmdline) {
   // parse command line args
   while ( argn < argc ) {
     if ( toks[argn]==T("--resource-directory") ) {
-      if ( ++argn < argc ) 
+      if ( ++argn < argc )
 	app->setResourceDirectory( File(toks[argn++]) );
     }
     else if ( toks[argn]==T("--asdf-systems-directory") ) {
@@ -292,7 +292,7 @@ void GracePreferences::initPreferences (String cmdline) {
     else if ( toks[argn]==T("--library-directory") ) {
       argn=+2;
     }
-    else 
+    else
       argn++;
   }
 
@@ -321,7 +321,7 @@ void GracePreferences::initPreferences (String cmdline) {
     setSchemeStackSize(64000);
 
   if (!propfile->containsKey(T("AsdfSystemsDirectory")))
-    propfile->setValue(T("AsdfSystemsDirectory"), 
+    propfile->setValue(T("AsdfSystemsDirectory"),
 		       app->getResourceDirectoryPathName());
 
   if (!propfile->containsKey(T("LispLaunchAtStartup")) )
@@ -358,7 +358,7 @@ void GracePreferences::initPreferences (String cmdline) {
   recentlyopened.restoreFromString
     (propfile->getValue(T("RecentlyOpenedFiles")));
   recentlyopened.removeNonExistentFiles();
-} 
+}
 
 GracePreferences::~GracePreferences() {
   save();
@@ -502,7 +502,7 @@ void GracePreferences::setSchemeHeapSize(int size) {
 }
 
 int GracePreferences::getSchemeStackSize() {
-  return propfile->getIntValue(T("SchemeStackSize")); 
+  return propfile->getIntValue(T("SchemeStackSize"));
 }
 
 void GracePreferences::setSchemeStackSize(int size) {
@@ -510,12 +510,12 @@ void GracePreferences::setSchemeStackSize(int size) {
 }
 
 //
-// Lisp 
+// Lisp
 //
 
 Lisp::Lisp (String n, String t, String o, String e, String a)
   : XmlElement(T("lisp"))
-{ 
+{
   //  if ( isHostWindows() )
   //    e+=T(".exe");
   //  else
@@ -560,7 +560,7 @@ XmlElement* GracePreferences::getLispImplementations() {
 
 Lisp* GracePreferences::getLispToLaunch() {
   String name=propfile->getValue(T("LispToLaunch"));
-  if (name == String::empty) 
+  if (name == String::empty)
     return (Lisp *)NULL;
   return findLisp(name);
 }
@@ -620,7 +620,7 @@ void GracePreferences::setLispLaunchAtStartup(bool b) {
 
 /// ASDFs
 
-ASDF::ASDF (String n, String p, String o, String b, String a) 
+ASDF::ASDF (String n, String p, String o, String b, String a)
   : XmlElement(T("asdf"))
 {
   setAttribute(T("name"), n);
@@ -688,7 +688,7 @@ String ASDF::getLoadForm(String path) {
   String form=T("(progn ");
   if (before != String::empty)
     form += before + T(" ");
-  form += T("(load ") + path.quoted() + T(") (asdf:oos (quote ") + 
+  form += T("(load ") + path.quoted() + T(") (asdf:oos (quote ") +
     oper + T(") ") + getASDFName(true).quoted() + T(")");
   if (after != String::empty)
     form += T(" ") + after;

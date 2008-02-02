@@ -14,16 +14,16 @@
 // 2= include gc info in trace
 // 3= include node creation/insertion/deletion info in tracce
 
-// 
+//
 //  Nodes
 //
 
 SchemeNode::SchemeNode(double _time, int _type, C_word c, int _id)
   : time (0.0),start (0.0),type (0), expr (String::empty) , mmess(0)
-{ 
+{
   type = _type;
   id = _id;
-  if(_time == 0.0) 
+  if(_time == 0.0)
     time = Time::getMillisecondCounterHiRes();
   else
     time = _time + Time::getMillisecondCounterHiRes();
@@ -34,7 +34,7 @@ SchemeNode::SchemeNode(double _time, int _type, C_word c, int _id)
 
 SchemeNode::SchemeNode(double _time, int _type, String _expr)
   : time (0.0),start (0.0),type (0), closure(0), id (-1), mmess(0)
-{ 
+{
   //  type = EXPR;
   type=_type;
   expr=_expr;
@@ -43,7 +43,7 @@ SchemeNode::SchemeNode(double _time, int _type, String _expr)
 
 SchemeNode::SchemeNode(double _time, int _type)
   : start (0.0), closure (0), expr (String::empty), id (-1), mmess(0)
-{ 
+{
   time = _time;
   type = _type;
 }
@@ -53,26 +53,26 @@ SchemeNode::SchemeNode(double _time, int _type, const MidiMessage &_mess)
 {
 }
 
-SchemeNode::~SchemeNode(){ 
+SchemeNode::~SchemeNode(){
   // MOVED THIS TO PROCESS() TO SEE IF THIS CAUSED THE RANDOM CRASHING...
   //  if(type ==  PROCESS || type == PROCEDURE) {
   //    CHICKEN_delete_gc_root(closureGCRoot);
-  //  } 
+  //  }
 }
 
 
 
 bool SchemeNode::process(double curtime) {
   bool more=false;
-  
+
   switch (type) {
   case EXPR :
     {
       if ( SCHEME_DEBUG )
 	printf("\ncalling eval node %d...\n", nodeid);
-      C_word res;	
-      bzero(schemeThread->evalBuffer, 8192);
-      bzero(schemeThread->errorBuffer, 8192);
+      C_word res;
+      memset(schemeThread->evalBuffer, 0, 8192);
+      memset(schemeThread->errorBuffer, 0, 8192);
       res = CHICKEN_eval_string_to_string( (char *)expr.toUTF8(),
 					   schemeThread->evalBuffer,
                                            8192);
@@ -112,16 +112,16 @@ bool SchemeNode::process(double curtime) {
       // Time format is either int milliseconds or float seconds
       // MILLI
       if ( 0 ) { //schemeThread->isTimeMilliseconds()
-	elapsed_word = C_fix( (int)(time-start)); 
+	elapsed_word = C_fix( (int)(time-start));
 	C_save( elapsed_word );
 
 	nexttime = C_c_double( C_callback(closure, 1));
       }
       else {
-	elapsed_ptr = C_alloc(C_SIZEOF_FLONUM); 
+	elapsed_ptr = C_alloc(C_SIZEOF_FLONUM);
 	// MILLI
-	elapsed_word = C_flonum( &elapsed_ptr, 
-				 (double)((time - start)/1000.0)); 
+	elapsed_word = C_flonum( &elapsed_ptr,
+				 (double)((time - start)/1000.0));
 	C_save( elapsed_word );
 	nexttime = C_c_double( C_callback(closure, 1)) * 1000.0 ;
       }
@@ -132,7 +132,7 @@ bool SchemeNode::process(double curtime) {
       if (nexttime < 0) {
 	CHICKEN_delete_gc_root(closureGCRoot);
         return false;
-      } 
+      }
       else {
         more=true;
 	//        time += nexttime;
@@ -143,7 +143,7 @@ bool SchemeNode::process(double curtime) {
     break;
 
   case INHOOK:
-    {      
+    {
       printf("huh\n");
       printf("is noteon %i\n", mmess.isNoteOn());
       C_word *mmess_ptr;
@@ -168,7 +168,7 @@ bool SchemeNode::process(double curtime) {
 
   default:
     break;
-  }	
+  }
   return more;
 }
 
@@ -178,11 +178,11 @@ bool SchemeNode::process(double curtime) {
 
 SchemeThread::SchemeThread(String name, ConsoleWindow *win)
   : Thread(name), pausing (false), timemsec (false)
-{	
+{
   console = win;
   evalBuffer = new char[8192];
   errorBuffer = new char[8192];
- 
+
 }
 
 SchemeThread::~SchemeThread()
@@ -213,7 +213,7 @@ void SchemeThread::setInputHook(C_word hook)
   }
   else {
     CHICKEN_gc_root_set(inputClosureGCRoot, hook);
-    if(!((GraceApp*)GraceApp::getInstance())->midiInPort->isActive(MidiInPort::SCHEMEHOOK)) 
+    if(!((GraceApp*)GraceApp::getInstance())->midiInPort->isActive(MidiInPort::SCHEMEHOOK))
       ((GraceApp*)GraceApp::getInstance())->midiInPort->startSchemeInput();
   }
 }
@@ -223,10 +223,10 @@ void SchemeThread::reportChickenError (String text) {
   // text from the error buffer and insure that it ends with \n
   if ( text == String::empty ) {
     CHICKEN_get_error_message(errorBuffer, 8192);
-    text=T(">>> ") + T(String(errorBuffer));
+    text << T(">>> ") << String(errorBuffer);
     if ( ! text.endsWithChar('\n') )
       text << T("\n");
-  }  
+  }
   console->postConsoleTextMessage(text, ConsoleMessage::ERROR);
 }
 
@@ -270,15 +270,15 @@ bool SchemeThread::init() {
     C_heap_size_is_fixed = 1;
   }
 
-  res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)", 
+  res = CHICKEN_eval_string_to_string( (char*)"(chicken-version)",
 				       buffer, 8192);
-  if (res>0) 
+  if (res>0)
     text = text + T(", version ") + String(buffer).unquoted();
   text += T("\n(c) 2000-2007 Felix L. Winkelmann\n");
   // console->printMessage(text, true);
   console->postConsoleTextMessage(text);
-  //console->doAsyncUpdate();	
-  bzero(buffer, 8192);
+  //console->doAsyncUpdate();
+  memset(buffer, 0,8192);
   if (res==0) {
     reportChickenError( T(">>> Error: Chicken failed to initialize.\n") );
     return false;
@@ -295,10 +295,10 @@ bool SchemeThread::init() {
   res = CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
   if ( res==0 )
     reportChickenError();
-  
+
   inputClosureGCRoot = CHICKEN_new_gc_root();
-  
-  
+
+
   return true;
 }
 
@@ -306,16 +306,16 @@ void SchemeThread::run()
 {
   double qtime, utime;
   SchemeNode* node;
-  // start chicken  
+  // start chicken
   if (! init() ) return;
   pausing=false;
   while ( true ) {
     if ( threadShouldExit() )
       break;
-    while ( true ) {     
+    while ( true ) {
       schemeNodes.lockArray();
       node=schemeNodes.getFirst();
-      schemeNodes.unlockArray();      
+      schemeNodes.unlockArray();
       if ( node == NULL ) {
 	break;
       }
@@ -342,7 +342,7 @@ void SchemeThread::run()
 	  if ( SCHEME_DEBUG > 2)
 	    printf("reinserting process node %d...\n", node->nodeid);
 	  schemeNodes.lockArray();
-	  schemeNodes.addSorted(comparator,node); 
+	  schemeNodes.addSorted(comparator,node);
 	  //          schemeNodes.remove(0, false);
 	  schemeNodes.unlockArray();
 	  if ( SCHEME_DEBUG > 2)
@@ -354,7 +354,7 @@ void SchemeThread::run()
 	  delete node;
 	  if ( SCHEME_DEBUG > 2) {
 	    if (mytyp==SchemeNode::PROCESS)
-	      printf("deleted process node %d\n", myid);	
+	      printf("deleted process node %d\n", myid);
 	    else
 	      printf("deleted eval node %d\n", myid);
 	    schemeNodes.lockArray();
@@ -366,13 +366,13 @@ void SchemeThread::run()
 	      printf(" %d",schemeNodes[i]->nodeid);
 	    printf("\n");
 	    }
-	    schemeNodes.unlockArray();	
+	    schemeNodes.unlockArray();
 	  }
 	  //	  schemeNodes.lockArray();
 	  //          schemeNodes.remove(0, true);
 	  //mysize=schemeNodes.size();
 	  //schemeNodes.unlockArray();
-	  //printf("...done removing %d, array size now %d\n", myid, mysize);	  
+	  //printf("...done removing %d, array size now %d\n", myid, mysize);
 	}
       }
       node=NULL;
@@ -386,22 +386,22 @@ void SchemeThread::run()
 /*** THIS VERSION WORKS
 void SchemeThread::run()
 {
-  // start chicken  
+  // start chicken
   if (! init() ) return;
   double curr;
   pausing=false;
   while( !threadShouldExit() ) {
-    while(schemeNodes.size() > 0) {     
+    while(schemeNodes.size() > 0) {
       curr = Time::getMillisecondCounterHiRes() ;
       while ( schemeNodes.getFirst()->time <= curr ) {
 	//was: process(curr = Time::getMillisecondCounterHiRes())
         if ( schemeNodes.getFirst()->process( 0.0  ) ) {
-          schemeNodes.addSorted(comparator, schemeNodes.getFirst()); 
+          schemeNodes.addSorted(comparator, schemeNodes.getFirst());
           schemeNodes.remove(0, false);
         }
-        else 
+        else
           schemeNodes.remove(0, true);
-        if(schemeNodes.size() == 0) 
+        if(schemeNodes.size() == 0)
           break;
       }
       wait(1);
@@ -449,7 +449,7 @@ void SchemeThread::addNode(int type, double _time, String s) {
   notify();
   if ( SCHEME_DEBUG > 2)
     printf("...done adding eval node %d\n", n->nodeid);
-}  
+}
 
 void SchemeThread::addNode(int type, double _time, const MidiMessage &mess) {
   static int nextid=000;
@@ -464,7 +464,7 @@ void SchemeThread::addNode(int type, double _time, const MidiMessage &mess) {
   notify();
   if ( SCHEME_DEBUG > 2)
     printf("...done adding input hook node %d\n", n->nodeid);
-}  
+}
 
 void SchemeThread::setPaused(bool p) {
   if (p) {
@@ -515,7 +515,7 @@ void SchemeThread::setPaused(bool p) {
     //printf("pause node at=%d, pause dur=%d\n", i, (int)delta);
     for (int j=i+1; j< schemeNodes.size(); j++) {
       schemeNodes[j]->start += delta;
-      schemeNodes[j]->time += delta;    
+      schemeNodes[j]->time += delta;
     }
     schemeNodes.remove(i, true);
     schemeNodes.unlockArray();
@@ -546,7 +546,7 @@ void SchemeThread::stopProcesses(int id) {
   // removed the (STOP) node that got us here so this deletes up to
   // and including index 0. otherwise dont include index 0
   schemeNodes.lockArray();
-  if ( id<0 ) { 
+  if ( id<0 ) {
     for (int i=schemeNodes.size()-1; i>=0; i--)
       if (schemeNodes[i]->type == SchemeNode::PROCESS)
 	schemeNodes.remove(i,true);
@@ -555,7 +555,7 @@ void SchemeThread::stopProcesses(int id) {
     // else selectively remove all nodes with id process queue in
     // reverse order so removal index always valid
     for (int i=schemeNodes.size()-1; i>=0; i--)
-      if ( (schemeNodes[i]->type == SchemeNode::PROCESS) && 
+      if ( (schemeNodes[i]->type == SchemeNode::PROCESS) &&
 	   (schemeNodes[i]->id == id) )
 	schemeNodes.remove(i,true);
   }
