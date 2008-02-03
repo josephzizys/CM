@@ -1,0 +1,14 @@
+GraceCL 1.0.1
+
+	fixed bug that caused GraceCL and Grace to share preferences files
+	on all platforms and resource directories on linux
+	
+	fixed indentation bug for with-sound in Lisp buffers
+
+	updated resource with new clm tarball for init-with-sound fix
+
+	Win32 now supported
+
+	
+
+	

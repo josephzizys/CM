@@ -27,20 +27,18 @@ void GraceApp::initialise (const String& commandLine) {
 #elif MACOSX
   resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("Resources")).getFullPathName());
 #elif LINUX
-  resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile(T("lib/grace")).getFullPathName());
+  resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getChildFile((T("lib/") + getApplicationName())).getFullPathName());
 #elif WINDOWS
   resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getSiblingFile(T("Resources")).getFullPathName());
 #endif
 
-  // add resource directory to library path for loading libchicken
-#if (defined(MACOSX) && defined(SCHEME))
-  setenv("DYLD_LIBRARY_PATH=", resourceDirectory.getFullPathName().toUTF8(), 1);
-
-  //  printf("DYLD_LIBRARY_PATH=%s\n",resourceDirectory.getFullPathName().toUTF8(), 1);
-#endif
+  //  // add resource directory to library path for loading libchicken
+  //#if (defined(MACOSX) && defined(SCHEME))
+  //  setenv("DYLD_LIBRARY_PATH=", resourceDirectory.getFullPathName().toUTF8(), 1);
+  //  //  printf("DYLD_LIBRARY_PATH=%s\n",resourceDirectory.getFullPathName().toUTF8(), 1);
+  //#endif
 
   File pref=PropertiesFile::getDefaultAppSettingsFile(getApplicationName(), T("prefs"), String::empty, false);
-
   if ( pref.existsAsFile() ) {
     Time releasedate (2008, 0, 8, 9, 20) ;
     if (pref.getLastModificationTime() < releasedate ) {
