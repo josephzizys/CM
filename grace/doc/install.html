@@ -9,23 +9,16 @@ charset=iso-8859-1"/> <style type="text/css" media="all"> @import
 <h1>Installing and Running Grace</h1>
 
   <ul>
-    <li><a href="#requirements">Requirements</a></li>
+    <!-- li><a href="#requirements">Requirements</a></li -->
+    <li><a href="#introduction">Introduction </a></li>    
     <li><a href="#svn">Downloading Sources (SVN) </a></li>
     <li><a href="#compiling">Compiling Sources</a>
-    <ul>
-      <li> <a href="#compile_scheme">Compiling Grace with Scheme</a></li>
-      <li> <a href="#compile_cl">Compiling Grace with Common Lisp</a></li>
-      </ul>
-      </li>
-    <li><a href="#installing">Installing the Application</a></li>
-    <li><a href="#running">Running Grace</a>
-    <ul>
-    <li><a href="#scheme">Grace with Scheme</a></li>
-    <li><a href="#cl"> Grace with Common Lisp</a></li>
+    <li><a href="#premake">Creating Custom Build Scipts with premake</a>
+    <li><a href="#installing">Installing Runtime Resources</a></li>
+    <li><a href="#grace">Running Grace</a>
+    <li><a href="#gracecl">Running GraceCL</a>
     <li><a href="#starting">Starting Grace from the Command Line</a></li>
     <li><a href="#options">Command Line Options</a></li>
-    </ul>
-    </li>
     <li><a href="#appendix">Appendix</a>
     <ul>
       <li><a href="#juce">Installing JUCE</a>
@@ -39,21 +32,28 @@ charset=iso-8859-1"/> <style type="text/css" media="all"> @import
     </ul>
 </li>
 </ul>
-<!-- h2 id="binary_installation">Binary Installation</h2>
-<p><em>  Not written. </em></p -->
+
+<h2>Introduction</h2>
+
+<p>The Grace source tree contains source code for building two different applications, Grace and GraceCl, each of which runs three operating systems: Linux, MacOSX and Windows.
+
+<ul>
+<li><a href="scheme.html">Grace</a> is a realtime algorithmic composition enviroment using Chicken Scheme as its extension language.</li>
+<li>GraceCL is a non-realtime algorithmic composition enviroment using Common Lisp as its extension language for working with systems like CM CLM and FOMUS.<li>
+</ul>
 
 
-<h2 id="requirements">Requirements</h2>
+<!-- h2 id="requirements">Requirements</h2>
 
 <p>Installing Grace from its sources requires the following software systems:</p>
 
 <ul>
   <li><a href="http://subversion.tigris.org/">Subversion</a></li>
-  <li><a href="http://www.scons.org/">SCons</a></li>
   <li><a href="http://www.rawmaterialsoftware.com/juce/">JUCE</a> </li>
   <li><a href="http://www.call-with-current-continuation.org/">Chicken Scheme</a> if you are building Grace with real time scheduling.</li>
   <li><a href="http://sbcl.sourceforge.net/platform-table.html">SBCL</a> or <a href="http://sourceforge.net/project/showfiles.php?group_id=1355">CLisp</a> if you are building Grace with Common Lisp (Common Music, CLM, etc)</li>
-</ul>
+  <li>Optional: <a href="http://premake.sourceforge.net/">premake</a></li>
+</ul -->
 
 <h2 id="svn">Downloading Sources (SVN)</h2> <p>Use
 <code>svn</code> to download the Grace source tree. Use your favorite
@@ -67,89 +67,188 @@ $ svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/grace grace</pr
 
 <h2 id="compiling">Compiling Sources</h2>
 
-<p>Before you attempt to compile the sources to Grace you must have
-JUCE installed on your machine. See <a href="#juce">Installing JUCE</a>
-for more information.</p>
+<p>The grace/build directory contains scripts and project files for building Grace and GraceCL on Linux, OS X, and Windows:
+</p>
 
-<p>Grace can be built to run either Chicken Scheme or Common Lisp as
-its extension language.</p>
+<div class="float">
+<table width="85%">
+  <caption>Build directions for Grace and GraceCL</caption>
+  <tr><th ></th><th style="text-align: left;"> Linux </th> <th style="text-align: left;"> OS X</th> <th style="text-align: left;"> Windows/mingw </th> </tr>
+  <tr><th style="text-align: left;"> Grace </th>
+  <td >
+    <a href="#grace-linux">Makefile</a>
+  </td >
+  <td style="text-align: left;">
+    <a href="#grace-macosx">XCode</a> 
+  </td>
+  <td style="text-align: left;">
+    <a href="#grace-windows">CodeBlocks</a> <sup>1</sup>
+  </td>
+</tr>
+  <tr><th style="text-align: left;"> GraceCL </th>
+  <td>
+    <a href="#gracecl-linux">Makefile</a>
+  </td >
+  <td>
+    <a href="#gracecl-macosx">XCode</a>
+  </td>
+  <td>
+    <a href="#gracecl-windows">CodeBlocks</a>
+  </td>
+</tr>
+</table>
 
-<h3 id="compile_scheme">Compiling Grace with Scheme</h3>
+<p style="font-size: smaller;">
+1. <a href="http://forums.codeblocks.org/index.php?PHPSESSID=ac8b426f522b6aad04468cd60a8dadb2&topic=7717.0">Codeblocks svn 4853</a> (download the dlls for WxWidgets and Mingw on the same page)
+<br/>
+<!-- 2. <a href="http://developer.apple.com/tools/download/">XCode 3.0</a> -->
+</p>
 
-<p>To compile Grace with Chicken Scheme you must have Chicken Scheme
-installed on your machine. See <a href="#chicken">Installing Chicken
-Scheme</a> for more information.</p>
+</div>
+
+<p>The various build scripts assume that the <code>grace</code>,
+<code>juce</code> and <code>chicken</code> installation directories
+all reside inside a common parent directory and that they do not have
+any version numbers in their names. The parent directory can be any
+directory, e.g your home directory or the /usr/local/src prefix:
 
 <blockquote>
-<pre class="code">
-$ cd /path/to/grace
-$ scons JUCEDIR=/path/to/jucedir SCHEME=1
-</pre>
+<pre>/usr/local/src/grace
+/usr/local/src/juce
+/usr/local/src/chicken</pre>
 </blockquote>
 
-<h3 id="compile_cl">Compiling Grace with Common Lisp</h3>
-<p>To compile Grace to use with Common Lisp do:</p>
+<p> For any other installation configuration use the build/premake.lua
+script to generate a <a href="#premake">custom build script</a> for
+your machine.</p>
 
+<h4 id="grace-linux">Grace / Linux (Makefile)</h4>
 <blockquote>
-<pre class="code">
-$ cd /path/to/grace
-$ scons JUCEDIR=/path/to/jucedir
-</pre>
+<pre>$ cd build/linux
+$ make Grace
 </blockquote>
-  
-<p>If you are successful the compiled files and executable will be in grace/build.</p>
 
-<h2 id="installing">Installing the Application</h2>
+<h4 id="grace-macosx">Grace / OS X (XCode)</h4>
+<ul>
+<li>Double-click the XCode project file located in build/macosx.</li>
+<li>Select <span class="menuitem">Grace</span> from the <span class="menuitem">Active Target</span> pop-up menu.</li>
+<li>Select <span class="menuitem">Release</span> from the <span class="menuitem">Active Build Configuration</span> pop-up menu.</li>
+<li>Click on <span class="menuitem">Build</span>.</li>
+</ul>
 
-<p>Once you have compiled Grace you can install the run-time (executable, documentation and run-time support) on your system like this:</p>
+<h4 id="grace-windows">Grace / Windows (CodeBlocks+mingw)</h4>
+<ul>
+<li>Double-click the Grace.cbp project file located in build/windows.</li>
+<li>Select <span class="menuitem">Release</span> from the <span class="menuitem">Build Target</span> pop-up menu.</li>
+<li>Select <span class="menuitem">Build</span> from the main <span class="menuitem">Build</span> menu in the menubar.</li>
+</ul>
 
+<h4 id="gracecl-linux">GraceCL / Linux (Makefile)</h4>
 <blockquote>
-  <pre class="code">$ scons install</pre>
+<pre>$ cd build/linux
+$ make GraceCL
 </blockquote>
 
-<p>On OSX the installation paths are:</p>
+<h4 id="gracecl-macosx">GraceCL / OS X (XCode)</h4>
+<ul>
+<li>Double-click the XCode project file located in build/macosx.</li>
+<li>Select <span class="menuitem">GraceCL</span> from the <span class="menuitem">Active Target</span> pop-up menu.</li>
+<li>Select <span class="menuitem">Release</span> from the <span class="menuitem">Active Build Configuration</span> pop-up menu.</li>
+<li>Click on <span class="menuitem">Build</span>.</li>
+</ul>
+
+<h4 id="gracecl-windows">GraceCL / Windows (CodeBlocks+mingw)</h4>
+<ul>
+<li>Double-click the GraceCL.cbp project file located in build/windows.</li>
+<li>Select <span class="menuitem">Release</span> from the <span class="menuitem">Build Target</span> pop-up menu.</li>
+<li>Select <span class="menuitem">Build</span> from the main <span class="menuitem">Build</span> menu in the menubar.</li>
+</ul>
+
+<h2 id="premake">Creating Custom Build Scripts with <code>premake</code></h2>
+
+<p>If you have <a href="http:premake.sf.net">premake</a> installed you
+can use the build/premake.lua script to generate a custom build script for your machine. Premake scripts will work on all three supported operating systems.
 
 <ul>
-  <li>executable:	build/Grace.app/Contents/MacOS/grace</li>
-  <li>resource dir:	build/Grace.app/Contents/Resources/*</li>
+<li>Copy the build/premake.lua file into your OS build directory:
+
+<pre>$ cd build/linux
+$ cp ../premake.lua .</pre>
+
+<li> Call <code>premake</code> to generate the custom make script by
+passing it the appropriate <code>--target</code> value along with any
+of these additional options:
+
+<blockquote>
+<pre>--jucedir <var>/path/to/juce/</var>
+--chickendir <var>/path/to/chicken/</var>
+--release <var>nnn</var>
+--revision <var>num</var>
+--verbose</pre>
+</blockquote>
+
+<pre>$ premake --target gnu</pre>
+</li>
+
+Type <code>premake --help</code> for more information about the various build options.
+</li>
+</ul>
+
+<h2 id="installing">Installing Runtime Resources</h2>
+
+<p>Once you have compiled the application(s) you can install the
+run-time documentation and support code by copying the
+build/install.sh bash script into your OS build directory and
+executing it like this:</p>
+
+<blockquote>
+  <pre class="code">$ cd build/linux
+$ cp ../install.sh .
+$ ./install.sh Grace
+$ ./install.sh GraceCL
+</pre>
+</blockquote>
+
+<p>Note that on Windows you can get the bash shell as part of the MSYS
+or Cygwin distributions.
+
+<p>On OSX the installed resources are in:</p>
+
+<ul>
+  <li>build/Release/Grace.app/Contents/Resources/*</li>
+  <li>build/Release/GraceCL.app/Contents/Resources/*</li>
 </ul>
 
 <p>
-On Linux the installation paths are:
+On Linux the installed resources are in:
 </p>
 
 <ul>
-  <li>executable:          build/bin/grace</li>
-  <li>resource dir:	build/lib/grace/*</li>
+  <li>build/Release/Grace/lib/Grace/*</li>
+  <li>build/Release/GraceCL/lib/GraceCL/*</li>
 </ul>
    
 <p>
-On Windows the installation paths are:
+On Windows the installed resources are in:
 </p>
 
 <ul>
-  <li>executable:	/build/Grace/grace.exe</li>
-  <li>resource dir:	/build/Grace/Resources/*</li>
+  <li>build/Grace/Resources/*</li>
+  <li>build/GraceCL/Resources/*</li>
 </ul>
 
+<p>Note that when you install GraceCL the installation script will attempt to download and install the latest versions of CLM, CM and FOMUS into the resource directory using svn and curl. The resource directory will become the default Lisp site directory when Grace starts up.
+</p>
+
 <p> The resource directory contains Grace's run-time Lisp code, help
-files, tutorials, etc.  On OS X and Windows the resource directory is
-bundled together with the executable so once you have done 'scons
-install' you can move the application bundle anywhere, e.g. into your
-/Applications folder on the Mac or your C:\Program Files\ directory on
-Windows. On Linux you can move the contents of build/bin and build/lib
-to under /usr/local like this:</p>
+files, tutorials, etc. The resource directory is bundled together with
+the executable so you can move this application bundle anywhere,
+e.g. into your /Applications folder on the Mac or your C:\Program
+Files\ directory on Windows. On Linux you can move the contents of the
+bin/ and lib/ directories to under /usr/local like this:</p>
 
 <blockquote>
-  <pre class="code"> $ sudo "(cd build &amp;&amp; tar -cf - bin lib) | (cd /usr/local &amp;&amp; tar -xvf -)" </pre>
-</blockquote>
-
-<p>If you are building Grace to use with Common Lisp you can install CM (and any other Lisp systems you want to work with) under the resource directory so that all your Lisp run-time will be located under a common parent directory. The resource directory will become the default Lisp site directory when Grace starts up.</p>
-
-<blockquote>
-<pre class="code">
-$ cd /path/to/grace/resources/
-$ svn co https://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/cm cm</pre>
+  <pre class="code"> $ sudo "(cd build/Release/Grace &amp;&amp; tar -cf - bin lib) | (cd /usr/local &amp;&amp; tar -xvf -)" </pre>
 </blockquote>
 
 <h2 id="running">Running Grace </h2>
@@ -160,29 +259,22 @@ $ svn co https://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/cm cm</pre>
 <li>Grace with Common Lisp is a cross-platform environment for working with Lisp systems like Common Music, CLM, CMN, Fomus, etc. It is roughly equivalent to Emacs+Slime+CM+CLM+Fomus</li>
 </ul>
 
-<h3 id="scheme">Running Grace with Scheme </h3>
+<h3 id="grace">Running Grace</h3>
 
-<p>The Chicken Scheme library (libchicken) is loaded automatically when
-Grace starts up. If Grace starts without any errors then Scheme is
-running and you don't need to do anything else. If your Linux is too
-retarded to look in /usr/local/lib for libraries, you can tell it to do so
-with a line like this in your ~/.bash_profile (or whatever init script
-is appropriate):</p>
+<p>Since Grace is linked against libchicken when it is built the
+application is completely self-contained and nothing else needs to be
+done in order to use it. Note that if you do not statically link Grace
+with libchicken then chicken's library must reside somewhere on your
+path (/usr/local/lib/libchicken.so for example) or else the dynamic
+library will fail to load when you start Grace.</p>
 
-<blockquote>
-<pre class="code">export LD_LIBRARY_PATH=/usr/local/lib</pre>
-</blockquote>
+<h3 id="gracecl">Running GraceCL</h3>
 
-<p>Alternately you can make a link to the library like this:</p>
-
-<blockquote>
-<pre class="code">sudo ln -s /usr/local/lib/libchicken.so /usr/lib/libchicken.so</pre>
-</blockquote>
-
-<h3 id="cl">Running Grace with Common Lisp (Grace CL)</h3>
-
-<p> To run Grace with Common Lisp you must have a recent version of
-<a href="http://sbcl.sourceforge.net/platform-table.html">SBCL</a> or <a href="http://sourceforge.net/project/showfiles.php?group_id=1355">Clisp</a> installed on your machine. </p>
+<p> To run GraceCL (Grace with Common Lisp) you must have a recent
+version of <a
+href="http://sbcl.sourceforge.net/platform-table.html">SBCL</a> or <a
+href="http://sourceforge.net/project/showfiles.php?group_id=1355">Clisp</a>
+installed on your machine. </p>
 
 <p>Use <span class="menuitem">Console&gt;Lisp&gt;Configure
 Lisp...</span> to configure your Lisp session profile.  </p>
@@ -209,12 +301,11 @@ class="menuitem">Editor&gt;Help</span> for more information about this
 process.</p>
 
 
-<h3 id="starting">Starting Grace from the Command Line</h3>
+<h3 id="starting">Starting from the Command Line</h3>
 
-<p>You normally start Grace by simply double-clicking its icon but it
-is also possible to start Grace from the command line.  Starting Grace
-from the command line allows you to command line arguments to the app
-and also makes debugging information visible in the Terminal.</p>
+<p>Starting Grace or GraceCL from the command line allows you to pass
+command line arguments to the app and makes debugging information
+visible in the Terminal.</p>
 
 <p>To start the application from the terminal on Linux type: </p>
 
@@ -228,9 +319,9 @@ and also makes debugging information visible in the Terminal.</p>
 <pre class="code">$ exec /Applications/Grace.app/Contents/MacOS/Grace &amp;</pre>
 </blockquote>
 
-<h3 id="options">Command Line Options</h3>
+<h4 id="options">Command Line Options</h4>
 
-<p>Grace supports the following command line options. Command options override values stored in the preferences file.</p>
+<p>Grace supports the following command line options to override values stored in the preferences file.</p>
 <dl>
   <dt><code>--no-prefs</code></dt>
   <dd> Tells Grace to not load your preferences file. Starts the application with its release configuration.</dd>
@@ -257,7 +348,7 @@ sure you disable UNICODE support (everywhere), OpenGL support unless
 you have the OpenGL libraries installed and (on Linux) disabling Xinerama support you don't use it.</p>
 
 
-<h3 id="juce_linux">Installing JUCE on Linux</h3>
+<h4 id="juce_linux">Installing JUCE on Linux</h4>
 
 <ol>
   <li>
@@ -306,7 +397,7 @@ $ make CONFIG=Release</pre>
 </p>
 
 
-<h3 id="juce_osx">Installing JUCE on OSX</h3>
+<h4 id="juce_osx">Installing JUCE on OSX</h4>
 
 <ol>
   <li>
@@ -359,21 +450,28 @@ saved in juce/bin/libjuce.a.  </p>
 </ol>
 
 <h3 id="chicken">Installing Chicken Scheme</h3>
-<p>To build libchicken  download the latest release of  <a href = "http://chicken.wiki.br/releases">Chicken Scheme</a> and then compile and install it. Type just  'make'
- inside the chicken directory to get the list of supported platforms.</p>
+
+<p>Restore the latest release of <a href =
+"http://chicken.wiki.br/releases">Chicken Scheme</a> on your
+machine. Change directories to the chicken distribution directory and
+type just 'make' inside it to get the list of supported
+platforms. Then compile and install chicken by passing the appropriate
+value of PLATFORM to make:</p>
 
 <blockquote>
-<pre class="code">$ tar -zxf chickentar.gz
-$ cd chicken
-$ make
-$ make PLATFORM=macosx
+<pre class="code">$ make PLATFORM=linux
+$ sudo make PLATFORM=linux install</pre>
+</blockquote>
+
+<p>To build chicken Universal on OS X do this:</p>
+<blockquote>
+<pre class="code">$ export MACOSX_DEPLOYMENT_TARGET=10.4
+$ make PLATFORM=macosx ARCH=universal
 $ sudo make PLATFORM=macosx install</pre>
 </blockquote>
 
-<p>That will compile chicken and install its commands (csi, csc) and
-library (libchicken) on your system. (If you are on Linux then you may
-also have to copy libchicken.so to /usr/bin if Grace can't find it
-when it starts up...)</p>
+
+
 
 
 <!--
@@ -398,7 +496,7 @@ $ svn co svn://common-lisp.net/project/fomus/svn/fomus/trunk fomus
 </div>
 <hr/>
 <p>
-<!-- hhmts start --> Last modified: Wed Jan  9 13:40:29 CST 2008 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Mon Feb 11 07:14:08 CST 2008 <!-- hhmts end -->
 </p>
 </body>
 </html>
