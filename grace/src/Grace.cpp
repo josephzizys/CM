@@ -91,7 +91,9 @@ void GraceApp::initialise (const String& commandLine) {
   midiOutPort->setPriority(9);
   midiOutPort->startThread();
   midiInPort = new MidiInPort(console);
+  csoundPort = new CsoundPort(console);
 #endif
+
 }
 
 void GraceApp::graceQuit (bool ask) {

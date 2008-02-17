@@ -16,6 +16,7 @@
 #ifdef SCHEME
 #include "Scheme.h"
 #include "Midi.h"
+#include "Csound.h"
 #endif
 
 class GraceApp : public JUCEApplication
@@ -30,8 +31,10 @@ public:
   SchemeThread* schemeProcess;
   MidiOutPort* midiOutPort;
   MidiInPort* midiInPort;
+  CsoundPort* csoundPort;
   MidiOutPort* getMidiOutPort() {return midiOutPort;}
   MidiInPort * getMidiInPort(){return midiInPort;}
+  CsoundPort * getCsoundPort(){return csoundPort;}
 #endif
   File resourceDirectory;
   GraceApp() ;

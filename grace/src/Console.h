@@ -141,13 +141,14 @@ public:
 	 "PortsMidiOutInstruments"
 	 "PortsMidiInOpen" "PortsMidiInTest" "PortsMidiInHook"
 	 "PortsMidiInRecord" "PortsMidiInConfigure"
+	 "PortsCsoundOpen" "PortsCsoundTest" "PortsCsoundConfigure"
 	 "PortsAudioSetup"
 	 "LispConnect" 
 	 "LispLoadSystem" "LispLoadRecentSystem" "LispClearRecentSystems"
 	 "LispLoadFile" "LispLoadRecentFile" "LispCompileFile" 
 	 "LispClearRecentLoaded" "LispConfigure")  */
 
-  enum ConsoleCommand {
+    enum ConsoleCommand {
     cmdGraceEditorNew = 32896,
     cmdGracePlotterNew = 33152,
     cmdGraceOpenFile = 33408,
@@ -173,17 +174,19 @@ public:
     cmdPortsMidiInHook = 38528,
     cmdPortsMidiInRecord = 38784,
     cmdPortsMidiInConfigure = 39040,
-    cmdPortsAudioSetup = 39296,
-    cmdLispConnect = 39552,
-    cmdLispLoadSystem = 39808,
-    cmdLispLoadRecentSystem = 40064,
-    cmdLispClearRecentSystems = 40320,
-    cmdLispLoadFile = 40576,
-    cmdLispLoadRecentFile = 40832,
-    cmdLispCompileFile = 41088,
-    cmdLispClearRecentLoaded = 41344,
-    cmdLispConfigure = 41600
-  };
+    cmdPortsCsoundOpen = 39296,
+    cmdPortsCsoundTest = 39552,
+    cmdPortsCsoundConfigure = 39808,
+    cmdPortsAudioSetup = 40064,
+    cmdLispConnect = 40320,
+    cmdLispLoadSystem = 40576,
+    cmdLispLoadRecentSystem = 40832,
+    cmdLispClearRecentSystems = 41088,
+    cmdLispLoadFile = 41344,
+    cmdLispLoadRecentFile = 41600,
+    cmdLispCompileFile = 41856,
+    cmdLispClearRecentLoaded = 42112,
+    cmdLispConfigure = 42368};
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};

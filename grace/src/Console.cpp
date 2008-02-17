@@ -21,6 +21,7 @@
 #else
 #include "Scheme.h"
 #include "Midi.h"
+#include "Csound.h"
 #endif
 
 
@@ -485,7 +486,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
   ApplicationCommandManager* cm = app->commandManager;
 
   PopupMenu menu;
-  PopupMenu sub1, sub2, sub3, sub4, sub5, sub6;
+  PopupMenu sub1, sub2, sub3, sub4, sub5, sub6, sub7;
   int val;
   switch (idx) {
   case GRACEMENU :
@@ -574,7 +575,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       sub1.addItem(cmdPortsMidiOutInstruments, T("Instruments...."),
 		   ( ! active ));
       menu.addSubMenu( T("Midi Out") , sub1);
-      menu.addSeparator();
+      //menu.addSeparator();
       // MIDI IN (stubbed for now)
       devs= MidiInput::getDevices();
 
@@ -606,27 +607,30 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 		     (!app->midiInPort->isActive() ||
 		       app->midiInPort->isActive(MidiInPort::RECORDING) )),
 		   app->midiInPort->isActive(MidiInPort::RECORDING) );
-     // sub2.addItem(cmdMidiInConfigure, T("Midi Receive Settings"),
-//                   true );
-
-     // sub2.addItem(cmdPortsMidiInHook, T("Clear Input Hook"),
-//		   app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) );
+     // sub2.addItem(cmdMidiInConfigure, T("Midi Receive Settings"), true );
+     // sub2.addItem(cmdPortsMidiInHook, T("Clear Input Hook"), app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) );
       sub2.addSeparator();
       sub2.addItem(cmdPortsMidiInConfigure, T("Configure..."));
       menu.addSubMenu(T("Midi In"), sub2);
+      // PORTCSOUND
+#ifdef PORTCSOUND
       menu.addSeparator();
-      sub3.addItem(1, T("New"), false);
-      sub3.addItem(2, T("Delete"), false);
-      sub3.addItem(3, T("Copy to Plotter"), false);
-      sub3.addItem(4, T("Import..."), false);
-      sub3.addItem(5, T("Save..."), false);
-      menu.addSubMenu(T("Midi File"), sub3);
+      if ( app->getCsoundPort()->isOpen() )
+	sub3.addItem(cmdPortsCsoundOpen, T("Close"));
+      else
+	sub3.addItem(cmdPortsCsoundOpen, T("Open"));
+      sub3.addItem(cmdPortsCsoundTest, T("Test"), 
+		   app->getCsoundPort()->isOpen());
+      sub3.addItem(cmdPortsCsoundConfigure, T("Configure...") );
+      menu.addSubMenu(T("Csound"), sub3);
+#endif
+      // END PORTCSOUND
       menu.addSeparator();
       sub4.addItem( cmdGracePlotterNew + XYPlot, T("XY"));
       sub4.addItem( cmdGracePlotterNew + MidiPlot, T("Midi"));
       menu.addSubMenu( T("Plotter"), sub4, true);    
       menu.addSeparator();
-      menu.addItem(0, T("Osc Setup..."), false);    
+      //      menu.addItem(0, T("Osc Setup..."), false);    
       //menu.addSeparator();
       menu.addItem(cmdPortsAudioSetup, T("Audio Setup..."), false);
     }
@@ -796,11 +800,24 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     if ( app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) )
       app->midiInPort->stopSchemeInput();
     break;
-  
+
+  case cmdPortsCsoundOpen :
+    if ( app->getCsoundPort()->isOpen() )
+      app->getCsoundPort()->close();
+    else
+      app->getCsoundPort()->open();      
+    break;
+
+  case cmdPortsCsoundTest :
+    app->getCsoundPort()->testNote() ;
+    break;
+
+  case cmdPortsCsoundConfigure :
+    app->getCsoundPort()->configure();
+    break;
 
 #endif
 
-    
   case cmdPortsAudioSetup: 
     //    showAudioMidiWindow();
     break;

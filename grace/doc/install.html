@@ -170,29 +170,45 @@ $ make GraceCL
 can use the build/premake.lua script to generate a custom build script for your machine. Premake scripts will work on all three supported operating systems.
 
 <ul>
-<li>Copy the build/premake.lua file into your OS build directory:
+<li> Change directories into your appropriate OS build directory:
+<pre>$ cd grace/build/linux</pre>
 
-<pre>$ cd build/linux
-$ cp ../premake.lua .</pre>
+<li>Copy the build/premake.lua file into your OS build directory:
+<pre>$ cp ../premake.lua .</pre>
 
 <li> Call <code>premake</code> to generate the custom make script by
 passing it the appropriate <code>--target</code> value along with any
-of these additional options:
+additional options, eg:
 
-<blockquote>
-<pre>--jucedir <var>/path/to/juce/</var>
---chickendir <var>/path/to/chicken/</var>
---release <var>nnn</var>
---revision <var>num</var>
---verbose</pre>
-</blockquote>
-
-<pre>$ premake --target gnu</pre>
-</li>
-
-Type <code>premake --help</code> for more information about the various build options.
+<pre>$ premake --verbose --target gnu</pre>
 </li>
 </ul>
+
+<h3>Premake Build Options</h3>
+
+<dl>
+<dt><code>--verbose</code></dt>
+<dd>Enables printing compile and linking information during the build process. Highly recommended!</dd>
+<dt><code>--jucedir <var>/path/to/juce/</var></code></dt>
+<dd> Specifies a non-default path for juce directory (defaults are ../../../juce, /usr/local/src/juce)</dd>
+
+<dt><code>--chickendir <var>/path/to/chicken/</var></code></dt>
+<dd> specify a non-default path for chicken directory (Grace build only). (defaults to ../../../chicken, /usr/local/chicken).</dd>
+
+<dt><code>--csound</code></dt>
+<dd> Builds Grace with Csound port enabled. Csound libs and headers must be installed in their standard locations.</dd>
+
+<dt><code>--release <var>nnn</var></code></dt>
+
+<dd>Optional version release tag printed to Console window when the application starts
+up. Value nnn is between 100 and 1000 and is printed n.n.n</dd>
+  
+<dt><code>--revision <var>num</var></code></dt>
+<dd>Optional revision number printed to Console window when the application starts up.</dd>
+</dl>
+
+<p>Type <code>premake --help</code> for more information about the various build options.</p>
+
 
 <h2 id="installing">Installing Runtime Resources</h2>
 
@@ -496,7 +512,7 @@ $ svn co svn://common-lisp.net/project/fomus/svn/fomus/trunk fomus
 </div>
 <hr/>
 <p>
-<!-- hhmts start --> Last modified: Mon Feb 11 07:14:08 CST 2008 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Sun Feb 17 14:03:47 CST 2008 <!-- hhmts end -->
 </p>
 </body>
 </html>

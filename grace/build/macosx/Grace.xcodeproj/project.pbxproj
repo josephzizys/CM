@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0AD15ED60D68833C008CFAD2 /* Csound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0AD15ED50D68833C008CFAD2 /* Csound.cpp */; };
+		0AD15EE90D6884AA008CFAD2 /* CsoundLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AD15EE80D6884AA008CFAD2 /* CsoundLib.framework */; };
 		5F1827550D5A176400F53B16 /* libjuce.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1827540D5A176400F53B16 /* libjuce.a */; };
 		5F1827560D5A176400F53B16 /* libjuce.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1827540D5A176400F53B16 /* libjuce.a */; };
 		5F1827580D5A177B00F53B16 /* libuchicken.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1827570D5A177B00F53B16 /* libuchicken.a */; };
@@ -61,6 +63,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0AD15ED50D68833C008CFAD2 /* Csound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Csound.cpp; path = ../../src/Csound.cpp; sourceTree = SOURCE_ROOT; };
+		0AD15EE30D68835E008CFAD2 /* Csound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Csound.h; path = ../../src/Csound.h; sourceTree = SOURCE_ROOT; };
+		0AD15EE80D6884AA008CFAD2 /* CsoundLib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CsoundLib.framework; path = /Library/Frameworks/CsoundLib.framework; sourceTree = "<absolute>"; };
 		20286C33FDCF999611CA2CEA /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		5F1827540D5A176400F53B16 /* libjuce.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjuce.a; path = /usr/local/src/juce/bin/libjuce.a; sourceTree = "<absolute>"; };
 		5F1827570D5A177B00F53B16 /* libuchicken.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libuchicken.a; path = /usr/local/lib/libuchicken.a; sourceTree = "<absolute>"; };
@@ -146,6 +151,7 @@
 				5F18287C0D5A1FFC00F53B16 /* IOKit.framework in Frameworks */,
 				5F1828880D5A205F00F53B16 /* CoreMIDI.framework in Frameworks */,
 				5F18288E0D5A207700F53B16 /* OpenGL.framework in Frameworks */,
+				0AD15EE90D6884AA008CFAD2 /* CsoundLib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,6 +180,7 @@
 		20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				0AD15EE80D6884AA008CFAD2 /* CsoundLib.framework */,
 				5F18288D0D5A207700F53B16 /* OpenGL.framework */,
 				5F1828870D5A205F00F53B16 /* CoreMIDI.framework */,
 				5F1827570D5A177B00F53B16 /* libuchicken.a */,
@@ -192,6 +199,8 @@
 		5F1827CD0D5A1B8C00F53B16 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				0AD15EE30D68835E008CFAD2 /* Csound.h */,
+				0AD15ED50D68833C008CFAD2 /* Csound.cpp */,
 				5F1827D10D5A1B9E00F53B16 /* Layer.h */,
 				5F1827D20D5A1B9E00F53B16 /* Help.cpp */,
 				5F1827D30D5A1B9E00F53B16 /* Console.h */,
@@ -357,6 +366,7 @@
 				5F1828160D5A1B9F00F53B16 /* Plotter.cpp in Sources */,
 				5F1828180D5A1B9F00F53B16 /* Resources.cpp in Sources */,
 				5F1828360D5A1BDB00F53B16 /* Midi.cpp in Sources */,
+				0AD15ED60D68833C008CFAD2 /* Csound.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

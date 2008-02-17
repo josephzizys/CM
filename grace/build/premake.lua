@@ -2,6 +2,7 @@ addoption("release", "optional release number nnn (printed n.n.n)")
 addoption("revision", "optional source revision number")
 addoption("jucedir", "optional location of juce directory")
 addoption("chickendir", "optional location of chicken directory")
+addoption("csound", "build with csound support")
 
 if (options["jucedir"]) then
    juce_dir = options["jucedir"]
@@ -21,9 +22,12 @@ gracecl_files = {"Buffer", "Console", "Editor", "Grace",
 		 "Layer", "Lisp", "Help", "Resources",
 		 "Plotter", "Points", "Syntab", "Syntax"}
 
-grace_files = {"Buffer", "ChickenBridge", "Console", "Editor", "Grace", 
+grace_files = {"Buffer", "ChickenBridge", "Console", 
+	       "Csound",
+	       "Editor", "Grace", 
 	       "Help", "Layer", "Midi", "MidiReceiveComponent", "Resources",
-	       "Plotter", "Points", "Scheme", "Syntab", "Syntax", "Toolbox"}
+	       "Plotter", "Points", "Scheme", "Syntab", "Syntax", "Toolbox"
+	    }
 
 function source_files(files)
    local relative = {}
@@ -87,6 +91,11 @@ package = newpackage()
 package.name = "Grace"
 package.language = "c++"
 package.kind = "exe"
+
+--if ( options["csound"] ) then
+---   table.insert(grace_files, "Csound")
+--end
+
 package.files = { source_files( grace_files ) }
 package.includepaths = {chicken_dir, juce_dir, "/usr/local/include" }
 package.libpaths = {chicken_dir, juce_dir .. "/bin", "/usr/local/lib" }
@@ -96,7 +105,11 @@ if (macosx) then
    package.config["Release"].target = "Release/Grace.app/Contents/MacOS/Grace"
    package.config["Debug"].target = "Debug/Grace.app/Contents/MacOS/Grace"
    package.defines = { "MACOSX=1", "SCHEME=1" }
-   package.links = {"uchicken", "juce -framework Carbon -framework CoreServices -framework CoreAudio -framework CoreMidi -framework ApplicationServices -framework OpenGL -framework AGL -framework QuickTime -framework IOKIT"}
+   frameworks = " -framework Carbon -framework CoreServices -framework CoreAudio -framework CoreMidi -framework ApplicationServices -framework OpenGL -framework AGL -framework QuickTime -framework IOKIT"
+   if ( options["csound"] ) then
+      frameworks = frameworks .. " -framework CsoundLib"
+   end
+   package.links = {"uchicken", "juce" .. frameworks}
 elseif ( linux ) then
    package.config["Release"].target = "Release/Grace/bin/grace"
    package.config["Debug"].target = "Debug/Grace/bin/grace"
@@ -106,6 +119,10 @@ elseif ( windows ) then
    package.config["Release"].target = "Release/Grace/Grace"
    package.config["Debug"].target = "Debug/Grace/Grace"
    package.defines = { "WINDOWS=1", "SCHEME=1" }
+end
+
+if ( options["csound"] ) then
+   table.insert(package.defines, "PORTCSOUND=1")
 end
 
 add_release_options()
