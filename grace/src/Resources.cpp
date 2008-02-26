@@ -230,6 +230,7 @@ void GracePreferences::initPreferences (String cmdline) {
 	PropertiesFile::storeAsXML);
 
   // add lisp implementations
+#ifndef SCHEME
   if (!propfile->containsKey(T("LispImplementations")) ) {
     XmlElement* top=new XmlElement(T("list"));
     top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"),
@@ -251,6 +252,7 @@ void GracePreferences::initPreferences (String cmdline) {
 				    T("")));
     propfile->setValue(T("LispImplementations"), top);
   }
+#endif
 
   // parse command line args
   while ( argn < argc ) {
@@ -313,13 +315,14 @@ void GracePreferences::initPreferences (String cmdline) {
   if (!propfile->containsKey(T("EditorFontSize")))
     setEditorFontSize(17.0);
 
+#ifdef SCHEME
   // default to 2x Chicken's minimum heap size
   if (!propfile->containsKey(T("SchemeHeapSize")))
     setSchemeHeapSize(1000000);
   // default to Chicken's default stack size
   if (!propfile->containsKey(T("SchemeStackSize")))
     setSchemeStackSize(64000);
-
+#else
   if (!propfile->containsKey(T("AsdfSystemsDirectory")))
     propfile->setValue(T("AsdfSystemsDirectory"),
 		       app->getResourceDirectoryPathName());
@@ -358,6 +361,7 @@ void GracePreferences::initPreferences (String cmdline) {
   recentlyopened.restoreFromString
     (propfile->getValue(T("RecentlyOpenedFiles")));
   recentlyopened.removeNonExistentFiles();
+#endif
 }
 
 GracePreferences::~GracePreferences() {
@@ -369,11 +373,15 @@ GracePreferences::~GracePreferences() {
 }
 
 bool GracePreferences::save() {
+
   if (loadPrefs) {
-  propfile->setValue(T("LispImplementations"), lisps);
-  propfile->setValue(T("AsdfSystems"), asdfs);
+  printf("SAVING prefs\n");
   propfile->setValue (T("RecentlyLoadedFiles"), recentlyloaded.toString());
   propfile->setValue (T("RecentlyOpenedFiles"), recentlyopened.toString());
+#ifndef SCHEME
+  propfile->setValue(T("LispImplementations"), lisps);
+  propfile->setValue(T("AsdfSystems"), asdfs);
+#endif
   propfile->save();
   return true;
   }

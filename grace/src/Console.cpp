@@ -619,9 +619,11 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 	sub3.addItem(cmdPortsCsoundOpen, T("Close"));
       else
 	sub3.addItem(cmdPortsCsoundOpen, T("Open"));
-      sub3.addItem(cmdPortsCsoundTest, T("Test"), 
-		   app->getCsoundPort()->isOpen());
-      sub3.addItem(cmdPortsCsoundConfigure, T("Configure...") );
+      //      sub3.addSeparator();
+      //      sub3.addItem(cmdPortsCsoundTest, T("Test"), app->getCsoundPort()->isOpen());
+      sub3.addSeparator();
+      sub3.addItem(cmdPortsCsoundConfigure, T("Configure...") ,
+		   (! app->getCsoundPort()->isOpen()));
       menu.addSubMenu(T("Csound"), sub3);
 #endif
       // END PORTCSOUND

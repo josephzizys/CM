@@ -125,6 +125,9 @@ void load_sal_file(char *path) {
          mp:note mp:off mp:on mp:touch mp:ctrl mp:prog mp:press mp:bend
 	 mp:mm mp:inhook 
 
+	 ;; Csound
+	 cs:i cs:f  ;cs:note cs:func
+
 	 send expand-send go
 	 current-time-milliseconds current-time-seconds
 	 now time-format
@@ -184,65 +187,69 @@ void load_sal_file(char *path) {
 	   (info (cdr entry))
 	   (keys? #f)
 	   (argn (length info))
-	   ;; set args equal to info then replace with data
-	   (args (append info (list)))
 	   )
       ;; loop over data setting args to values from data.  data can be
       ;; mixture of positionals and keyword/value pairs.  once a
       ;; keyword is found the remaining data must be keyword/value
       ;; pairs
-      (do ((key #f)
-	   (arg #f)
-	   (pos 0))
-	  ((null? data) #f )
-	(cond ((and (not keys?)
-		    (keyword? (car data)))
-	       ;; maybe this clause should test if keyword is actually
-	       ;; valid for the message and only switch to keyword
-	       ;; style if (car data) is a keyword of the
-	       ;; message. currently any keyword switches to keyword
-	       ;; style which means you cant pass keywords as
-	       ;; positional values to the underlying functions.
-	       (set! keys? #t))
-	      ((not keys?)
-	       (if (= pos argn) 
-		   (ferror "~S expected ~A arguments but got ~A"
-			   mess argn (length save)))
-	       (set-car! (list-tail args pos)
-			 (car data))
-	       (set! data (cdr data))
-	       (set! pos (+ pos 1)))
-	      (else
-	       (set! key (car data))
-	       (set! arg (assoc key info))
-	       (set! data (cdr data))
-	       (cond ((not (keyword? key))
-		      (ferror "~S expected keyword but got '~S'"
-			      mess key))
-		     ((null? data)
-		      (ferror "~S missing value for keyword '~A'" 
-			      mess (keyname key)))
-		     ((not arg)
-		      (ferror
-		       "~S invalid keyword '~A'~%Available keywords: ~A"
-			      mess key (map (lambda (x) (keyname (car x))) info))))
-	       ;; replace key's arg in data with val. if arg is
-	       ;; already replaced then keyword was specified twice
-	       (let ((tail (member arg args)))
-		 (if (not tail)
-		     (ferror "~S duplicate keyword '~S'"
-			     mess (keyname key)))
-		 (set-car! tail (car data)))
-	       (set! data (cdr data)))))
-      ;; remap args replacing remaining args with default data
-      (do ((tail args (cdr tail)))
-	  ((null? tail)
-	   ;; quote this for now...
-	   ;;`(quote ,(cons func args))
-	   (cons func args)
-	   )
-	(if (member (car tail) info)
-	    (set-car! tail (cadr (car tail)))))
+      (if (eq? (car info) '&rest)
+	  (cons func data)
+	  (do (;; set args equal to info then replace with data
+	       (args (append info (list)))
+	       (key #f)
+	       (arg #f)
+	       (pos 0))
+	      ((null? data) 
+	       ;; remap args replacing unspecified args with default data
+	       (do ((tail args (cdr tail)))
+		   ((null? tail)
+		    ;; quote this for now...
+		    ;;`(quote ,(cons func args))
+		    (cons func args)
+		    )
+		 (if (member (car tail) info)
+		     (set-car! tail (cadr (car tail))))))
+	    (cond ((and (not keys?)
+			(keyword? (car data)))
+		   ;; maybe this clause should test if keyword is actually
+		   ;; valid for the message and only switch to keyword
+		   ;; style if (car data) is a keyword of the
+		   ;; message. currently any keyword switches to keyword
+		   ;; style which means you cant pass keywords as
+		   ;; positional values to the underlying functions.
+		   (set! keys? #t)
+		   )
+		  ((not keys?)
+		   (if (= pos argn)
+		       (ferror "~S expected ~A arguments but got ~A"
+			       mess argn (length save)))
+		   (set-car! (list-tail args pos)
+			     (car data))
+		   (set! data (cdr data))
+		   (set! pos (+ pos 1)))
+		  (else
+		   (set! key (car data))
+		   (set! arg (assoc key info))
+		   (set! data (cdr data))
+		   (cond ((not (keyword? key))
+			  (ferror "~S expected keyword but got '~S'"
+				  mess key))
+			 ((null? data)
+			  (ferror "~S missing value for keyword '~A'" 
+				  mess (keyname key)))
+			 ((not arg)
+			  (ferror
+			   "~S invalid keyword '~A'~%Available keywords: ~A"
+			   mess key (map (lambda (x) (keyname (car x)))
+					 info))))
+		   ;; replace key's arg in data with val. if arg is
+		   ;; already replaced then keyword was specified twice
+		   (let ((tail (member arg args)))
+		     (if (not tail)
+			 (ferror "~S duplicate keyword '~S'"
+				 mess (keyname key)))
+		     (set-car! tail (car data)))
+		   (set! data (cdr data))))))
       )))
 
 (define-macro (send mess . data)
@@ -251,6 +258,7 @@ void load_sal_file(char *path) {
 (include "Toolbox.scm")
 (include "Sal.scm")
 (include "Midi.scm")
+(include "Csound.scm")
 
 ;; Console window
 

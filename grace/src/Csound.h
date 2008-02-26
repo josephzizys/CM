@@ -7,6 +7,8 @@
 #include "Console.h"
 #ifdef PORTCSOUND
 #include <CsoundLib/csound.h> 
+#else
+typedef MYFLT double;
 #endif
 
 class ConsoleWindow;
@@ -28,17 +30,28 @@ class CsoundConnection : public Thread {
 
 class CsoundPort {
  public:
+
   String options;
-  String csdfile;
+  //  String csdfile;
+  RecentlyOpenedFilesList csdfiles;
   ConsoleWindow *console;
   CsoundConnection *connection;
   bool running;
+  bool tracing;
   CsoundPort(ConsoleWindow *win) ;
   ~CsoundPort() ;
+  String getOptions();
+  void setOptions(String opts);
+  File getCsdFile();
+  void setCsdFile(File file);
+  bool getTracing();
+  void setTracing(bool b);
+  void save();
+  void revert();
   bool open() ;
   bool isOpen() ;
   void close();
-  void sendNote(String data);
+  void sendEvent(char type, int len, MYFLT *pars);
   void testNote();
   void configure();
 };

@@ -204,8 +204,8 @@ port.</p>
 
 <ul>
 <li> Midi Port (<code>mp</code>) connects to an external Midi device or application.</li>
-<li> Midi Seq (<code>ms</code>) connects to a MIDI sequence (buffer) that can be saved to disk.</li>
-<li> Plotter Port (<code>pp</code>) connects to the top-most plotter display window.</li>
+<li> Csound Port (<code>sc</code>) connects to CSound5 library for realtime audio.</li>
+<li> Plotter Port (<code>pp</code>) connects to the top-most plotter display window. (not yet implemented)</li>
 
 </ul>
 
@@ -216,7 +216,7 @@ port.</p>
 <li> OSC Port using <a href="http://www.audiomulch.com/~rossb/code/oscpack/">oscpack</a> </li>
 <li> Fomus using the (upcoming) C++ version of Fomus (libfomus) </li>
 <li> Supercollider using synthpatch templates in XML? </li>
-<li> Audio Port using new JUCE audio plugin framework </li>
+<li> Audio Plugin Port using new JUCE audio plugin framework </li>
 <li> OpenGL Port using JUCE OpenGL binding</li>
 </ul>
 
@@ -227,7 +227,7 @@ data to. The <a href="#send"><code>send</code></a> macro routes data to a specif
 on a port:</p>
 
 <dl>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<var>message data...</var>)<br/>&rarr; <var>void</var></code></dt>
+  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <var>message data...</var><br/>&rarr; <var>void</var></code></dt>
 <dd>
 
 <p>
@@ -235,11 +235,12 @@ on a port:</p>
 The first argument to <code>send</code> is its <var>message</var>, a
 literal string or symbol in the format <var>port</var><span
 style="font-weight: bold;">:</span><var>method</var> that identifies a
-specific port and method to receive the <var>data</var> specified as positional and/or keyword
-arguments to the macro. Parameters that do not appear receive their default
-values. Its an error to specify positional values once keyword
-arguments have been introduced or for a keyword name to appear more
-than once in the data list.  </p> </dd> </dl>
+specific port and method to receive the <var>data</var> specified as
+positional and/or keyword arguments to the macro. Parameters that do
+not appear receive their default values (if any). Its an error to
+specify positional values once keyword arguments have been introduced
+or for a keyword name to appear more than once in the data list.  </p>
+</dd> </dl>
 
 <h4>Example</h4>
 
@@ -286,7 +287,7 @@ time stamp for the data that is sent to a non-real time port:</p>
 
 -->
 
-<h3>Midi Port Send Methods</h3>
+<h3>Midi Port Methods</h3>
 
 <p>Before sending anything to the Midi Port first make sure you have
 an output connection established with the <span
@@ -296,45 +297,77 @@ window. You can test that the connection actually works by using the
 random burst of messages to the output device.</p>
 
 <dl>
-  <dt id="mp:note" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:note"</span> <var>time=0</var> <var>dur=.5</var> <var>key=60</var> <var>amp=.5</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:note" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:note"</span> <var>time=0</var> <var>dur=.5</var> <var>key=60</var> <var>amp=.5</var> <var>chan=0</var></code></dt>
   <dd><p>Sends note data to midi port.</p></dd>
 
-  <dt id="mp:on" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:on"</span> <var>time=0</var> <var>key=60</var> <var>vel=64</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:on" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:on"</span> <var>time=0</var> <var>key=60</var> <var>vel=64</var> <var>chan=0</var></code></dt>
   <dd><p>Sends note on data to midi port. </p></dd>
 
-  <dt id="mp:off" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:off"</span> <var>time=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:off" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:off"</span> <var>time=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var></code></dt>
   <dd><p>Sends note off data to midi port.</p></dd>
 
-  <dt id="mp:prog" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:prog"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:prog" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:prog"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var></code></dt>
   <dd><p>Sends program change value to midi port. </p></dd>
 
-  <dt id="mp:ctrl" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:ctrl"</span> <var>time=0</var> <var>num=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:ctrl" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:ctrl"</span> <var>time=0</var> <var>num=0</var> <var>val=0</var> <var>chan=0</var></code></dt>
   <dd><p>Sends control change data to midi port.</p></dd>
 
-  <dt id="mp:touch" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:touch"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:touch" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:touch"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var></code></dt>
   <dd>
     <p>Sends after touch value to midi port.</p>
   </dd>
 
-  <dt id="mp:press" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:press"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:press" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:press"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var></code></dt>
   <dd>
     <p>Sends channel pressure value to midi port.</p>
   </dd>
 
-  <dt id="mp:bend" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:bend"</span> <var>time=0</var> <var>val=8192</var> <var>chan=0</var>)</code></dt>
+  <dt id="mp:bend" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:bend"</span> <var>time=0</var> <var>val=8192</var> <var>chan=0</var></code></dt>
   <dd>
     <p>Sends pitch bend value 0-16383 to midi port.</p>
   </dd>
 
-  <dt id="mp:mm" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:mm"</span> <var>message</var>)</code></dt>
+  <dt id="mp:mm" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:mm"</span> <var>message</var></code></dt>
   <dd>
     <p>Sends a low-level <a href="#midimessage">MIDI message</a> to the midi port.
   </dd>
 
-  <dt id="mp:inhook" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> (<span class="string">"mp:inhook"</span> <var>function</var>)</code></dt>
+  <dt id="mp:inhook" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:inhook"</span> <var>function</var></code></dt>
   <dd><p>Sets <var>function</var> to receive Midi Messages that arrive at the Midi In port. The function is passed a single argument, the Midi Message receieved. See <a href="midimessage">Midi Messages</a> for more information. The hook should call <a href="#mm:free"><code>mm:free</code></a> on any message that it does not send to the output port.</p></dd>
 
 </dl>
+
+<h3 id="csound">Csound Port Methods</h3>
+
+<p>To work with Csound in real time first use the <span class="menuitem">Ports&gt;Csound&gt;Configure...</span> menu item to configure the Csound port and then <span class="menuitem">Ports&gt;Csound&gt;Open</span> to open it. Once the port is open you can send data to Csound in real time using the <a href="#send"><code>send</code></a> methods documented below. Use <span class="menuitem">Ports&gt;Csound&gt;Clos</span> to close the port when you are done with Csound. Note that you can open and close the port multiple times in the same session, optionally reconfiguring it with differnet settings and CSD files each time you open it. Your Csound configuraion is saved in the Grace preferences file so that when you restart Grace the port will contain your last settings.</p>
+
+<dl>
+<dt id="sc:i" style="background-color:#e6e6ff;">
+  <code><span style="font-weight:bold;">send</span> <span class="string">"sc:i"</span> <var>ins start duration ...</var></code>
+  <br/>
+<code><span style="font-weight:bold;">send</span> <span class="string">"sc:i"</span> <var>list</var></code></dt>
+
+  <dd><p>Sends instrument data to the open Csound port.  The first value should be the instrument's number followed by the rest of its pfield values. For realtime audio the <var>start</var> value (pfield 2) should be 0. The <span class="string">"cs:i"</span> message also accepts a single <var>list</var> of values to be specified, in which case the <var>list</var> should contain the pfield data to send to Csound. Note that the <span class="string">"cs:i"</span> message is implemented by a Scheme function of the same name that can be called directly. For example, the following Scheme expressions are equivalent:
+    </p>
+<pre class="code">
+(send <span class="string">"cs:i"</span> 1 0 1 60 1000)
+(cs:i 1 0 1 60 1000)
+
+(<span class="special">define</span> <span class="defined">mypars</span> '(1 0 1 60 1000))
+
+(send <span class="string">"cs:i"</span> mypars)
+(cs:i mypars)
+</pre>
+<p>  </p>
+</dd>
+
+<dt id="sc:f" style="background-color:#e6e6ff;">
+  <code><span style="font-weight:bold;">send</span> <span class="string">"sc:f"</span> <var>num ...</var></code>
+  <br/>
+<code><span style="font-weight:bold;">send</span> <span class="string">"sc:f"</span> <var>list</var></code></dt>
+<dd><p>Sends function table data to Csound. Similar to <span class="string">"sc:i"</span> in all other respects.
+  </dd>
+  </dl>
 
 
 <!--
@@ -342,33 +375,33 @@ random burst of messages to the output device.</p>
 <h3>Midi Seq Methods</h3>
 <p>Supports reading and writing data from/to a Midi Sequence. (Not yet implemented.)</p>
 <dl>
-  <dt><code>send (<span class="string">"ms:note"</span> <var>time</var> <var>dur</var> <var>key</var> <var>amp</var> <var>chan</var>)</code></dt>
+  <dt><code>send <span class="string">"ms:note"</span> <var>time</var> <var>dur</var> <var>key</var> <var>amp</var> <var>chan</var></code></dt>
   <dd>Sends note data to midi sequence port</dd >
-  <dt><code>(send <span class="string">"ms:prog"</span> <var>time prog chan</var>)</code></dt>
+  <dt><code>(send <span class="string">"ms:prog"</span> <var>time prog chan</var></code></dt>
   <dd>Sends Program Change data to midi sequence port</dd >
-  <dt><code>send (<span class="string">"ms:ctrl"</span> <var>time ctrl val chan</var>)</code></dt>
+  <dt><code>send <span class="string">"ms:ctrl"</span> <var>time ctrl val chan</var></code></dt>
   <dd>Sends Control Change data to midi sequence port.</dd >
-  <dt><code>send (<span class="string">"ms:play"</span>)</dt>
+  <dt><code>send <span class="string">"ms:play"</span>)</dt>
   <dd>Plays current midi sequence.</dd >
   <dt><code>send( <span class="string">"ms:stop"</span>)</dt>
   <dd>Stops playing current midi sequence and rewinds to start to of sequence.</dt>
-  <dt><code>send(<span class="string">"ms:pause"</span>)</dd >
+  <dt><code>send<span class="string">"ms:pause"</span>)</dd >
   <dd>Stops playing current midi sequence.</dt>
-  <dt><code>send(<span class="string">"ms:new"</span>)</dt>
+  <dt><code>send<span class="string">"ms:new"</span>)</dt>
   <dd>Creates new sequence, pushing old one onto sequence stack.</dd >
-  <dt><code>send(<span class="string">"ms:clear"</span>)</dt>
+  <dt><code>send<span class="string">"ms:clear"</span>)</dt>
   <dd>Clears sequence of any data. </dd >
-  <dt><code>send(<span class="string">"ms:save"</span>)</dt>
+  <dt><code>send<span class="string">"ms:save"</span>)</dt>
   <dd>Saves sequence data to disk as midi file. </dd >
-  <dt><code>send(<span class="string">"ms:saveall"</span>)</dt>
+  <dt><code>send<span class="string">"ms:saveall"</span>)</dt>
   <dd>Saves all sequences to disk as level 1 midi file. </dd >
-  <dt><code>send(<span class="string">"ms:saveas"</span> <var>file</var>)</dt>
+  <dt><code>send<span class="string">"ms:saveas"</span> <var>file</var></dt>
   <dd>Saves current sequence to specified file. Use .xml extension to save data as formatted XML text. </dd >
-  <dt><code>send(<span class="string">"mf:mapnotes"</span>  <var>function</var> </span>)</dt>
+  <dt><code>send<span class="string">"mf:mapnotes"</span>  <var>function</var> </span>)</dt>
   <dd>Maps <var>function</var> over note data in sequence. Function args must be arity 5:  (time dur key amp chan).</dd >
-  <dt><code>send(<span class="string">"mf:load"</span> <var>file</var> </span>)</dt>
+  <dt><code>send<span class="string">"mf:load"</span> <var>file</var> </span>)</dt>
   <dd>Load .mid or .xml file into sequence.</dd >
-  <dt><code>send(<span class="string">"mf:plot"</span> <var>file</var> </span>)</dt>
+  <dt><code>send<span class="string">"mf:plot"</span> <var>file</var> </span>)</dt>
   <dd>Send midi sequence to a Plotter window.</dd >
 </dl>
 
@@ -377,7 +410,6 @@ random burst of messages to the output device.</p>
 <p>Routes data to the focus layer of the current plotter window. (Not yet implemented.)</p>
 
 -->
-
 
 <h2 id="toolbox">Composition Toolbox</h2>
 
@@ -393,7 +425,7 @@ most of CM's toolbox will become available as optional modules, e.g.
 </dl>
 
 <dl id="first">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">first</span> (<var>list</var>) <!-- <span style="font-weight:bold;">second</span> (<var>list</var>) --> <var>...</var> <span style="font-weight:bold;">tenth</span> (<var>list</var>)<br/>&rarr; <var>object</var></code></dt>
+<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">first</span> (<var>list</var>) <!-- br/> <var>...</var --> <br/> ... <span style="font-weight:bold;">tenth</span> (<var>list</var>)<br/>&rarr; <var>object</var></code></dt>
 <dd>Accessors returning the first, second, third, fourth, fifth, sixth, seventh, eighth, ninth and tenth element of a <var>list</var>.  </dd>
 </dl>
 
@@ -1019,12 +1051,42 @@ name.</li>
 </pre>
 </div>
 
+<h3>Example 5</h3>
 
+<p>Sending i1 instrument data to the Csound port. This instrument is defined in grace.cds shipped in with the runtime resources.
+</p>
 
+<div class="float">
+<p>Scheme</p>
+<pre class="code">
+<span class="comment"> </span>
+(<span class="special">define</span> (<span class="defined">rani1</span> len rhy lb ub amp)
+  (<span class="special">go</span> ((num 0 (+ num 1))
+       (dur (* rhy 2))
+       (key lb (ran lb ub)))
+      ((= num len) <span class="constant">#f</span>)
+    (send <span class="string">"cs:i"</span> 1 0 dur key amp)
+    (wait rhy)
+    ))
 
+(sprout (rani1 10 .2 60 72 1000))
+</pre>
+</div>  
 
+<div class="float">
+<p>SAL</p>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> ranins1(len, rhy, lb, ub, amp)
+  <span class="reserved">run</span> <span class="reserved">with</span> dur = rhy * 2
+    <span class="reserved">repeat</span> len
+    <span class="reserved">for</span> key = lb <span class="reserved">then</span> ran(lb,ub)
+    <span class="reserved">send</span> <span class="string">"cs:i"</span>, 1, 0, dur, key, amp
+    <span class="reserved">wait</span> rhy
+  <span class="reserved">end</span>
 
-
+<span class="command">sprout</span> ranins1(10, .2, 60, 72, 1000)
+</pre>
+</div>  
 
 
 <!-- 

@@ -72,6 +72,16 @@ if [[ "$CHOICE" == 1 || "$CHOICE" == 3 ]] ; then
 	mkdir "$RESDIR1"
     fi
     install_doc "$RESDIR1"
+
+    mkdir -p "$RESDIR1"/csound
+    # install lisp runtime
+    for f in $( ls ../../src/*.csd  )
+    do
+	ff="$RESDIR1"/csound`echo "$f" | sed 's/^[..\/]*src//'`
+	if [[ ! -e "$ff" || "$f" -nt "$ff" ]] ; then
+	    cp -v "$f" "$ff"
+	fi
+    done
 fi
 
 #
