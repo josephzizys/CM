@@ -72,7 +72,7 @@ $ svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/grace grace</pr
 
 <div class="float">
 <table width="85%">
-  <caption>Build directions for Grace and GraceCL</caption>
+  <!-- caption>Build directions for Grace and GraceCL</caption -->
   <tr><th ></th><th style="text-align: left;"> Linux </th> <th style="text-align: left;"> OS X</th> <th style="text-align: left;"> Windows/mingw </th> </tr>
   <tr><th style="text-align: left;"> Grace </th>
   <td >
@@ -106,11 +106,11 @@ $ svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk/grace grace</pr
 
 </div>
 
-<p>The various build scripts assume that the <code>grace</code>,
+<p>TheBy default the various build scripts assume that the <code>grace</code>,
 <code>juce</code> and <code>chicken</code> installation directories
-all reside inside a common parent directory and that they do not have
-any version numbers in their names. The parent directory can be any
-directory, e.g your home directory or the /usr/local/src prefix:
+ reside within a common parent directory and that they do not have
+version numbers as part of their names. The parent directory can be located anywhere
+directory, e.g your home directory or just /usr/local/src:
 
 <blockquote>
 <pre>/usr/local/src/grace
@@ -164,27 +164,14 @@ $ make GraceCL
 <li>Select <span class="menuitem">Build</span> from the main <span class="menuitem">Build</span> menu in the menubar.</li>
 </ul>
 
-<h2 id="premake">Creating Custom Build Scripts with <code>premake</code></h2>
+<h2 id="premake">Creating Custom Build Scripts with Premake</h2>
 
 <p>If you have <a href="http:premake.sf.net">premake</a> installed you
-can use the build/premake.lua script to generate a custom build script for your machine. Premake scripts will work on all three supported operating systems.
+can use the build/premake.lua script to generate a custom build script for
+Linux, OS X or Windows/Mingw.
 
-<ul>
-<li> Change directories into your appropriate OS build directory:
-<pre>$ cd grace/build/linux</pre>
 
-<li>Copy the build/premake.lua file into your OS build directory:
-<pre>$ cp ../premake.lua .</pre>
-
-<li> Call <code>premake</code> to generate the custom make script by
-passing it the appropriate <code>--target</code> value along with any
-additional options, eg:
-
-<pre>$ premake --verbose --target gnu</pre>
-</li>
-</ul>
-
-<h3>Premake Build Options</h3>
+<h3>Premake Options</h3>
 
 <dl>
 <dt><code>--verbose</code></dt>
@@ -209,6 +196,50 @@ up. Value nnn is between 100 and 1000 and is printed n.n.n</dd>
 
 <p>Type <code>premake --help</code> for more information about the various build options.</p>
 
+
+<h4>Generating Custom Makefiles</h4>
+
+<ol>
+<li> Change directories into your appropriate OS build directory.</li>
+<li>Copy the build/premake.lua file into your OS build directory.</li>
+<li> Call <code>premake</code> to generate the custom make script by
+passing it the appropriate <code>--target</code> value along with any
+additional options.</li>
+</ol>
+
+
+<h5 id="premake-basic">Generating Basic Makefiles</h5>
+
+<blockquote>
+<pre class="code">$ cd grace/build/linux
+$ cp ../premake.lua .
+$ premake --verbose --target gnu
+$ make
+</pre>
+</blockquote>
+
+<h5 id="premake-juce">Generating Makefiles with JUCE directory specified</h5>
+
+<blockquote>
+<pre class="code">$ cd grace/build/linux
+$ cp ../premake.lua .
+$ premake --verbose --target gnu --jucedir /home/hkt/juce
+$ make
+</pre>
+</blockquote>
+
+<h5 id="premake-csound">Generating Makefiles with Csound Support</h5>
+
+<p>Building Grace with Csound requires libcsound, libsndfile,
+and libportaudio libraries.</p>
+
+<blockquote>
+<pre class="code">$ cd grace/build/linux
+$ cp ../premake.lua .
+$ premake --verbose --target gnu --csound
+$ make
+</pre>
+</blockquote>
 
 <h2 id="installing">Installing Runtime Resources</h2>
 

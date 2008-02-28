@@ -6,7 +6,13 @@
 #include <juce.h>
 #include "Console.h"
 #ifdef PORTCSOUND
+
+#ifdef MACOSX
 #include <CsoundLib/csound.h> 
+#else
+#include <csound/csound.h> 
+#endif
+
 #else
 typedef MYFLT double;
 #endif

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # install.sh: Grace runtime support installation script.
 # Directions: Build the application(s), copy this script into your OS
@@ -34,8 +34,8 @@ case "$OSNAME" in
 	RESDIR2="build/Release/${GRACE2}.app/Contents/Resources"
 	;;
     Linux)
-	RESDIR1="build/${GRACE1}/lib/$GRACE1"
-	RESDIR2="build/${GRACE2}/lib/$GRACE2"
+	RESDIR1="build/Release/${GRACE1}/lib/$GRACE1"
+	RESDIR2="build/Release/${GRACE2}/lib/$GRACE2"
 	;;
     MINGW*)
 	RESDIR1="build/$GRACE1/Resources"

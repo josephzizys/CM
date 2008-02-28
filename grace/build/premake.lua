@@ -115,6 +115,10 @@ elseif ( linux ) then
    package.config["Debug"].target = "Debug/Grace/bin/grace"
    package.defines = { "LINUX=1", "SCHEME=1"}
    package.links = {"chicken", "juce", "freetype", "GLU", "GL", "asound"}
+   if ( options["csound"] ) then
+      table.insert(package.links, "csound")
+      table.insert(package.links, "sndfile")
+   end
 elseif ( windows ) then
    package.config["Release"].target = "Release/Grace/Grace"
    package.config["Debug"].target = "Debug/Grace/Grace"
