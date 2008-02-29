@@ -339,7 +339,7 @@ random burst of messages to the output device.</p>
 
 <h3 id="csound">Csound Port Methods</h3>
 
-<p>For realtime audio with Csound use the <span class="menuitem">Ports&gt;Csound&gt;Configure...</span> dialog to configure the Csound port with your audio settings and CSD file and then select <span class="menuitem">Ports&gt;Csound&gt;Open</span> to open the port. Once the port is open you can send data to Csound in real time using the <a href="#send"><code>send</code></a> methods documented below. Use <span class="menuitem">Ports&gt;Csound&gt;Clos</span> to close the port when you are done. Note that you can open and close the Csound port multiple times in the same session, optionally reconfiguring it with different settings and CSD files each time you open it. Your Csound configuraion is saved in the Grace preferences file so that when you restart Grace the port will contain your last settings.</p>
+<p>To generate realtime audio with Csound first use the <span class="menuitem">Ports&gt;Csound&gt;Configure...</span> dialog to configure the Csound port the way you want it and then use <span class="menuitem">Ports&gt;Csound&gt;Open</span> to open the port. Once the port is open you can send data to Csound in real time using the <a href="#send"><code>send</code></a> methods documented below. Use <span class="menuitem">Ports&gt;Csound&gt;Close</span> to close the port when you are done. You can open and close the Csound port multiple times in the same session, optionally reconfiguring it with different audio settings and CSD files each time you open it. The current Csound configuration is saved in the preferences file so that when you restart Grace the port will be initialized your settings from the previos session.</p>
 
 <dl>
 <dt id="sc:i" style="background-color:#e6e6ff;">
@@ -363,13 +363,14 @@ random burst of messages to the output device.</p>
 <pre class="code">
 (send <span class="string">"cs:i"</span> 1 0 1 60 1000)
 (cs:i 1 0 1 60 1000)
-
 (<span class="special">define</span> <span class="defined">mypars</span> '(1 0 1 60 1000))
-
 (send <span class="string">"cs:i"</span> mypars)
 (cs:i mypars)
 </pre>
+
+
 <p>  </p>
+    
 </dd>
 
 <dt id="sc:f" style="background-color:#e6e6ff;">
