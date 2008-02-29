@@ -24,7 +24,7 @@
     <li><a href="#environment">Environment</a></li>
     <li><a href="#mapping">Mapping and Transformation</a></li>
     <li><a href="#randomness">Randomness</a></li>
-    <li><a href="#midimessage">Midi Messages</a></li>
+    <li><a href="#midi-message">Midi Messages</a></li>
     </ul>
   <li><a href="#sal">SAL Syntax</a>
   </li>
@@ -339,7 +339,7 @@ random burst of messages to the output device.</p>
 
 <h3 id="csound">Csound Port Methods</h3>
 
-<p>To work with Csound in real time first use the <span class="menuitem">Ports&gt;Csound&gt;Configure...</span> menu item to configure the Csound port and then <span class="menuitem">Ports&gt;Csound&gt;Open</span> to open it. Once the port is open you can send data to Csound in real time using the <a href="#send"><code>send</code></a> methods documented below. Use <span class="menuitem">Ports&gt;Csound&gt;Clos</span> to close the port when you are done with Csound. Note that you can open and close the port multiple times in the same session, optionally reconfiguring it with differnet settings and CSD files each time you open it. Your Csound configuraion is saved in the Grace preferences file so that when you restart Grace the port will contain your last settings.</p>
+<p>For realtime audio with Csound use the <span class="menuitem">Ports&gt;Csound&gt;Configure...</span> dialog to configure the Csound port with your audio settings and CSD file and then select <span class="menuitem">Ports&gt;Csound&gt;Open</span> to open the port. Once the port is open you can send data to Csound in real time using the <a href="#send"><code>send</code></a> methods documented below. Use <span class="menuitem">Ports&gt;Csound&gt;Clos</span> to close the port when you are done. Note that you can open and close the Csound port multiple times in the same session, optionally reconfiguring it with different settings and CSD files each time you open it. Your Csound configuraion is saved in the Grace preferences file so that when you restart Grace the port will contain your last settings.</p>
 
 <dl>
 <dt id="sc:i" style="background-color:#e6e6ff;">
@@ -347,8 +347,19 @@ random burst of messages to the output device.</p>
   <br/>
 <code><span style="font-weight:bold;">send</span> <span class="string">"sc:i"</span> <var>list</var></code></dt>
 
-  <dd><p>Sends instrument data to the open Csound port.  The first value should be the instrument's number followed by the rest of its pfield values. For realtime audio the <var>start</var> value (pfield 2) should be 0. The <span class="string">"cs:i"</span> message also accepts a single <var>list</var> of values to be specified, in which case the <var>list</var> should contain the pfield data to send to Csound. Note that the <span class="string">"cs:i"</span> message is implemented by a Scheme function of the same name that can be called directly. For example, the following Scheme expressions are equivalent:
-    </p>
+  <dd>
+
+   <p>Sends instrument data to the open Csound port.  The first value
+    should be the instrument's number followed by the rest of its
+    pfield values. For realtime audio the <var>start</var> value
+    (pfield 2) should be 0. The <span class="string">"cs:i"</span>
+    message also accepts a single <var>list</var> of values to be
+    specified, in which case the <var>list</var> should contain the
+    pfield data to send to Csound. The <span
+    class="string">"cs:i"</span> message is also implemented as a
+    Scheme function of the same name that can be called directly. For
+    example, the following Scheme expressions are equivalent: </p>
+    
 <pre class="code">
 (send <span class="string">"cs:i"</span> 1 0 1 60 1000)
 (cs:i 1 0 1 60 1000)
@@ -369,7 +380,8 @@ random burst of messages to the output device.</p>
   </dd>
   </dl>
 
-
+<p>See <a href="#example5">Example 5</a> for an example of sending data to the Csound port.</p>
+  
 <!--
 
 <h3>Midi Seq Methods</h3>
@@ -595,10 +607,11 @@ greater or less than <var>n</var>.</dd>
 
 <dl id="ran-set"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ran-set!</span> (<var>uint</var>)<br/>&rarr; <var>void</var></code></dt><dd>Initialize the random state generator with the unsigned integer value <var>uint</var>.</dd></dl>
 
-<h3 id="midimessage">Midi Messages</h3>
+<h3 id="midi-message">Low Level Midi Messages</h3>
 
-<p> The <a href="#send"><code>send</code></a> macro provides a high
-level API for working with MIDI data. However, midi input hooks receive MIDI data directly from JUCE packaged as low-level C++ midi messages. The following scheme functions are provided for manipulating JUCE midi messages.</p>
+<p> MIDI input data comes directly from the open MIDI input device
+packaged as (C++) MidiMessage object. The following scheme functions
+provided an API for manipulating these low-level structures.</p>
 
 <dl id="mm:make"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:make</span> (<var>type args...</var>)<br/>&rarr; <var>message</var></code></dt>
 <dd>
@@ -778,7 +791,7 @@ Sets the controller number value of an <code class="entry">mm:ctrl</code> messag
 </dl>
 
 <h2 id="sal">SAL Syntax</h2>
-<p><a href="http://commonmusic.sf.net/doc/dict/sal-topic.html">SAL syntax</a> is fully supported in Chicken Scheme with the following changes and improvements: </p>
+<p><a href="http://commonmusic.sf.net/doc/dict/sal-topic.html">SAL syntax</a> is fully supported in Chicken Scheme with the following enhancements over the Common Lisp implementation: </p>
 
 <ul>
 
@@ -830,16 +843,15 @@ name.</li>
 <p>See <a href="http://commonmusic.sf.net/doc/dict/sal-topic.html">SAL documentation</a> for more information.
 
 
-
 <h2 id="examples">Code Examples</h2>
 
-<h3>Example 1</h3>
+<h3 id="example1">Example 1</h3>
 
 
 <p>Mapping pink noise onto scales.</p>
 
 <div class="float">
-<p>Scheme</p>
+<p><strong>Scheme</strong></p>
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">pinkscale</span> len scale)
   (<span class="special">go</span> ((i 0 (+ i 1)))
@@ -857,7 +869,7 @@ name.</li>
 </div>
 
 <div class="float">
-<p>SAL</p>
+<p><strong>SAL</strong></p>
 <pre class="code">
 <span class="command">define</span> <span class="class">process</span> pinkscale(len, scale)
   <span class="reserved">run</span> <span class="reserved">repeat</span> len
@@ -877,11 +889,11 @@ name.</li>
 </div>
 
 
-<h4>Example 2</h4>
+<h3 id="example2">Example 2</h3>
 
 <p>Using ids to selectively stop processes.</p>
 <div class="float">
-<p>Scheme</p>
+<p><strong>Scheme</strong></p>
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">chopin</span> n r d k)
   (<span class="special">go</span> ((i 0 (+ i 1)))
@@ -907,7 +919,7 @@ name.</li>
 </div>
 
 <div class="float">
-<p>SAL</p>
+<p><strong>SAL</strong></p>
 <pre class="code">
 <span class="command">define</span> <span class="class">process</span> chopin (n, r, d, k)
   <span class="reserved">run</span> <span class="reserved">repeat</span> n
@@ -933,12 +945,12 @@ name.</li>
 </div>
 
 
-<h4>Example 3</h4>
+<h3 id="example3">Example 3</h3>
 
 <p>Pentatonic wind chimes with amp envelope and exponential decay.</p>
 
 <div class="float">
-<p>Scheme</p>
+<p><strong>Scheme</strong></p>
 <pre class="code">
 (<span class="special">define</span> (<span class="defined">chimes</span> n)
   (<span class="special">go</span> ((i 0 (+ i 1))
@@ -955,7 +967,7 @@ name.</li>
 </div>
 
 <div class="float">
-<p>SAL</p>
+<p><strong>SAL</strong></p>
 <pre class="code">
 <span class="command">define</span> <span class="class">process</span> chimes(n)
   <span class="reserved">run</span> <span class="reserved">with</span> l = {0 2 5 7 9 12}, k = 37 + (12 * ran(6))
@@ -970,14 +982,13 @@ name.</li>
 </pre>
 </div>
 
-
-  
-<h4>Example 4</h4>
+ 
+<h3 id="example4">Example 4</h3>
 
 <p>Triggering realtime processes via a MIDI input hook.</p>
 
 <div class="float">
-<p>Scheme</p>
+<p><strong>Scheme</strong></p>
 <pre class="code">
 <span class="comment">;; define a process thats plays a major or minor scale based on a given key</span>
 
@@ -1016,7 +1027,7 @@ name.</li>
 </div>
 
 <div class="float">
-<p>SAL</p>
+<p><strong>SAL</strong></p>
 <pre class="code">
 <span class="command">define</span> <span class="class">process</span> playscale(key, dur)
   <span class="reserved">run</span> <span class="reserved">with</span> scale = odds(.5, steps(15, key, 2, 2, 1, 2, 2, 2, 1),
@@ -1051,13 +1062,13 @@ name.</li>
 </pre>
 </div>
 
-<h3>Example 5</h3>
+<h3 id="example5">Example 5</h3>
 
-<p>Sending i1 instrument data to the Csound port. This instrument is defined in grace.cds shipped in with the runtime resources.
+<p>Sending audio data to the Csound port in realtime. (The i1 instrument is defined in the file 'grace.csd' located in the application's resource directory.)
 </p>
 
 <div class="float">
-<p>Scheme</p>
+<p><strong>Scheme</strong></p>
 <pre class="code">
 <span class="comment"> </span>
 (<span class="special">define</span> (<span class="defined">rani1</span> len rhy lb ub amp)
@@ -1074,7 +1085,7 @@ name.</li>
 </div>  
 
 <div class="float">
-<p>SAL</p>
+<p><strong>SAL</strong></p>
 <pre class="code">
 <span class="command">define</span> <span class="class">process</span> ranins1(len, rhy, lb, ub, amp)
   <span class="reserved">run</span> <span class="reserved">with</span> dur = rhy * 2

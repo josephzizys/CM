@@ -200,15 +200,13 @@ up. Value nnn is between 100 and 1000 and is printed n.n.n</dd>
 <h4>Generating Custom Makefiles</h4>
 
 <ol>
-<li> Change directories into your appropriate OS build directory.</li>
-<li>Copy the build/premake.lua file into your OS build directory.</li>
-<li> Call <code>premake</code> to generate the custom make script by
-passing it the appropriate <code>--target</code> value along with any
-additional options.</li>
+<li> Change directory to  build/linux, build/macosx or build/windows.
+<li>Copy the build/premake.lua file into that directory.</li>
+<li> Call <code>premake</code>  and  pass it pas it the appropriate <code>--target</code> value along with any additional options.</li>
 </ol>
 
 
-<h5 id="premake-basic">Generating Basic Makefiles</h5>
+<h5 id="premake-basic">Generating the normal Makefiles</h5>
 
 <blockquote>
 <pre class="code">$ cd grace/build/linux
@@ -218,46 +216,39 @@ $ make
 </pre>
 </blockquote>
 
-<h5 id="premake-juce">Generating Makefiles with JUCE directory specified</h5>
+<h5 id="premake-juce">Generating Makefiles with alternate JUCE directory</h5>
 
 <blockquote>
 <pre class="code">$ cd grace/build/linux
 $ cp ../premake.lua .
-$ premake --verbose --target gnu --jucedir /home/hkt/juce
+$ premake --verbose --target gnu --jucedir /home/hkt/juce-1.43
 $ make
 </pre>
 </blockquote>
 
-<h5 id="premake-csound">Generating Makefiles with Csound Support</h5>
+<h5 id="premake-csound">Generating Makefile with Csound Port enabled</h5>
 
-<p>Building Grace with Csound requires libcsound, libsndfile,
+<p>Building Grace with Csound also requires libcsound, libsndfile,
 and libportaudio libraries.</p>
 
 <blockquote>
 <pre class="code">$ cd grace/build/linux
 $ cp ../premake.lua .
 $ premake --verbose --target gnu --csound
-$ make
+$ make Grace
 </pre>
 </blockquote>
 
 <h2 id="installing">Installing Runtime Resources</h2>
 
-<p>Once you have compiled the application(s) you can install the
-run-time documentation and support code by copying the
-build/install.sh bash script into your OS build directory and
-executing it like this:</p>
+<p>Once you have compiled Grace and/or GraceCL you should install the application's run-time documentation and support code:</p>
 
 <blockquote>
-  <pre class="code">$ cd build/linux
-$ cp ../install.sh .
+  <pre class="code">$ cp ../install.sh .
 $ ./install.sh Grace
 $ ./install.sh GraceCL
 </pre>
 </blockquote>
-
-<p>Note that on Windows you can get the bash shell as part of the MSYS
-or Cygwin distributions.
 
 <p>On OSX the installed resources are in:</p>
 
@@ -284,7 +275,7 @@ On Windows the installed resources are in:
   <li>build/GraceCL/Resources/*</li>
 </ul>
 
-<p>Note that when you install GraceCL the installation script will attempt to download and install the latest versions of CLM, CM and FOMUS into the resource directory using svn and curl. The resource directory will become the default Lisp site directory when Grace starts up.
+<p>Note that when you install GraceCL the installation script will attempt to download and install the latest versions of CLM, CM and FOMUS into the resource directory using svn and curl. The resource directory will become the default Lisp site directory when GraceCL starts up.
 </p>
 
 <p> The resource directory contains Grace's run-time Lisp code, help
@@ -543,7 +534,7 @@ $ svn co svn://common-lisp.net/project/fomus/svn/fomus/trunk fomus
 </div>
 <hr/>
 <p>
-<!-- hhmts start --> Last modified: Sun Feb 17 14:03:47 CST 2008 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Thu Feb 28 19:00:38 CST 2008 <!-- hhmts end -->
 </p>
 </body>
 </html>
