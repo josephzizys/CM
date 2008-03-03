@@ -61,7 +61,7 @@ package.name = "GraceCL"
 package.language = "c++"
 package.kind = "exe"
 package.files = { source_files( gracecl_files ) }
-package.includepaths = {juce_dir, "/usr/local/include" }
+package.includepaths = {juce_dir, "/usr/local/include", "/usr/include" }
 package.libpaths = {juce_dir .. "/bin", "/usr/local/lib", "/usr/lib" }
 package.objdir = "build/gracecl.obj"
 
@@ -97,7 +97,7 @@ package.kind = "exe"
 --end
 
 package.files = { source_files( grace_files ) }
-package.includepaths = {chicken_dir, juce_dir, "/usr/local/include" }
+package.includepaths = {chicken_dir, juce_dir, "/usr/local/include", "/usr/include" }
 package.libpaths = {chicken_dir, juce_dir .. "/bin", "/usr/local/lib" }
 package.objdir = "build/grace.obj"
 

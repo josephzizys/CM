@@ -289,24 +289,26 @@ bin/ and lib/ directories to under /usr/local like this:</p>
   <pre class="code"> $ sudo "(cd build/Release/Grace &amp;&amp; tar -cf - bin lib) | (cd /usr/local &amp;&amp; tar -xvf -)" </pre>
 </blockquote>
 
-<h2 id="running">Running Grace </h2>
+<!-- h2 id="running">Running Grace </h2>
 
 <p>Grace can run either Scheme or Common Lisp as its extension language.</p>
 <ul>
 <li>Grace with Scheme provides a cross-platform, real-time algorithmic composition environment. It is roughly equivalent to Emacs+Slime+CM+RTS+Portmidi. See <a href="scheme.html">Grace with Scheme</a> for more information.</li>
 <li>Grace with Common Lisp is a cross-platform environment for working with Lisp systems like Common Music, CLM, CMN, Fomus, etc. It is roughly equivalent to Emacs+Slime+CM+CLM+Fomus</li>
-</ul>
+</ul -->
 
-<h3 id="grace">Running Grace</h3>
+<h2 id="grace">Running Grace</h2>
 
-<p>Since Grace is linked against libchicken when it is built the
-application is completely self-contained and nothing else needs to be
-done in order to use it. Note that if you do not statically link Grace
-with libchicken then chicken's library must reside somewhere on your
-path (/usr/local/lib/libchicken.so for example) or else the dynamic
-library will fail to load when you start Grace.</p>
+<p>Grace is linked against Chicken and (possibly) Csound when it is
+built. If you do not statically link Grace with Chicken (by deleting
+all libchicken.so or libuchicken.dylib libraries before you link) then
+the libchicken.so library must reside somewhere on your path
+(/usr/local/lib/libchicken.so for example) or Grace will fail to
+start.  Similarily, if you download a binary version Grace with the Csound port
+enabled then you must install the Csound5 library on your machine
+before you start grace. </p>
 
-<h3 id="gracecl">Running GraceCL</h3>
+<h2 id="gracecl">Running GraceCL</h2>
 
 <p> To run GraceCL (Grace with Common Lisp) you must have a recent
 version of <a
@@ -534,7 +536,7 @@ $ svn co svn://common-lisp.net/project/fomus/svn/fomus/trunk fomus
 </div>
 <hr/>
 <p>
-<!-- hhmts start --> Last modified: Thu Feb 28 19:00:38 CST 2008 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Sun Mar  2 09:46:42 CST 2008 <!-- hhmts end -->
 </p>
 </body>
 </html>

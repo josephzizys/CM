@@ -138,17 +138,19 @@ public:
 	 "ViewClearText" "ViewFontSize"  "ViewThemes" "ViewOpacity"
 	 "PortsMidiOutOpen" "PortsMidiOutTest" "PortsMidiOutHush"
 	 "PortsMidiOutTuning" "PortsMidiOutDrumTrack" "PortsMidiOutPitchBend"
+	 "PortsMidiOutWrite" "PortsMidiOutClear" "PortsMidiOutDisplay"
 	 "PortsMidiOutInstruments"
 	 "PortsMidiInOpen" "PortsMidiInTest" "PortsMidiInHook"
 	 "PortsMidiInRecord" "PortsMidiInConfigure"
-	 "PortsCsoundOpen" "PortsCsoundTest" "PortsCsoundConfigure"
+	 "PortsCsoundOpen" "PortsCsoundTest" "PortsCsoundConfigure" "PortsCsoundWrite" 
+	 "PortsCsoundClear" "PortsCsoundPrint" "PortsCsoundDisplay"
 	 "PortsAudioSetup"
 	 "LispConnect" 
 	 "LispLoadSystem" "LispLoadRecentSystem" "LispClearRecentSystems"
 	 "LispLoadFile" "LispLoadRecentFile" "LispCompileFile" 
 	 "LispClearRecentLoaded" "LispConfigure")  */
 
-    enum ConsoleCommand {
+  enum ConsoleCommand {
     cmdGraceEditorNew = 32896,
     cmdGracePlotterNew = 33152,
     cmdGraceOpenFile = 33408,
@@ -168,25 +170,32 @@ public:
     cmdPortsMidiOutTuning = 36992,
     cmdPortsMidiOutDrumTrack = 37248,
     cmdPortsMidiOutPitchBend = 37504,
-    cmdPortsMidiOutInstruments = 37760,
-    cmdPortsMidiInOpen = 38016,
-    cmdPortsMidiInTest = 38272,
-    cmdPortsMidiInHook = 38528,
-    cmdPortsMidiInRecord = 38784,
-    cmdPortsMidiInConfigure = 39040,
-    cmdPortsCsoundOpen = 39296,
-    cmdPortsCsoundTest = 39552,
-    cmdPortsCsoundConfigure = 39808,
-    cmdPortsAudioSetup = 40064,
-    cmdLispConnect = 40320,
-    cmdLispLoadSystem = 40576,
-    cmdLispLoadRecentSystem = 40832,
-    cmdLispClearRecentSystems = 41088,
-    cmdLispLoadFile = 41344,
-    cmdLispLoadRecentFile = 41600,
-    cmdLispCompileFile = 41856,
-    cmdLispClearRecentLoaded = 42112,
-    cmdLispConfigure = 42368};
+    cmdPortsMidiOutWrite = 37760,
+    cmdPortsMidiOutClear = 38016,
+    cmdPortsMidiOutDisplay = 38272,
+    cmdPortsMidiOutInstruments = 38528,
+    cmdPortsMidiInOpen = 38784,
+    cmdPortsMidiInTest = 39040,
+    cmdPortsMidiInHook = 39296,
+    cmdPortsMidiInRecord = 39552,
+    cmdPortsMidiInConfigure = 39808,
+    cmdPortsCsoundOpen = 40064,
+    cmdPortsCsoundTest = 40320,
+    cmdPortsCsoundConfigure = 40576,
+    cmdPortsCsoundWrite = 40832,
+    cmdPortsCsoundClear = 41088,
+    cmdPortsCsoundPrint = 41344,
+    cmdPortsCsoundDisplay = 41600,
+    cmdPortsAudioSetup = 41856,
+    cmdLispConnect = 42112,
+    cmdLispLoadSystem = 42368,
+    cmdLispLoadRecentSystem = 42624,
+    cmdLispClearRecentSystems = 42880,
+    cmdLispLoadFile = 43136,
+    cmdLispLoadRecentFile = 43392,
+    cmdLispCompileFile = 43648,
+    cmdLispClearRecentLoaded = 43904,
+    cmdLispConfigure = 44160};
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};

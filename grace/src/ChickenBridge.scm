@@ -126,9 +126,9 @@ void load_sal_file(char *path) {
 	 mp:mm mp:inhook 
 
 	 ;; Csound
-	 cs:i cs:f  ;cs:note cs:func
+	 cs:i cs:f cs:print cs:clear cs:write
 
-	 send expand-send go
+	 *messages* send expand-send go
 	 current-time-milliseconds current-time-seconds
 	 now time-format
 	 sprout stop hush pause paused? cont
@@ -192,7 +192,7 @@ void load_sal_file(char *path) {
       ;; mixture of positionals and keyword/value pairs.  once a
       ;; keyword is found the remaining data must be keyword/value
       ;; pairs
-      (if (eq? (car info) '&rest)
+      (if (and (= argn 1) (eq? (car info) '&rest))
 	  (cons func data)
 	  (do (;; set args equal to info then replace with data
 	       (args (append info (list)))

@@ -203,8 +203,8 @@ href="#send"><code>send</code></a> statements to route data to the
 port.</p>
 
 <ul>
-<li> Midi Port (<code>mp</code>) connects to an external Midi device or application.</li>
-<li> Csound Port (<code>sc</code>) connects to CSound5 library for realtime audio.</li>
+<li> <a href="#midi">Midi Port</a> (<code>mp</code>) connects to a Midi device or application.</li>
+<li> <a href="#csound">Csound Port</a> (<code>sc</code>) connects to CSound5 for generating audio.</li>
 <li> Plotter Port (<code>pp</code>) connects to the top-most plotter display window. (not yet implemented)</li>
 
 </ul>
@@ -287,7 +287,7 @@ time stamp for the data that is sent to a non-real time port:</p>
 
 -->
 
-<h3>Midi Port Methods</h3>
+<h3 id="midi">Midi Port Methods</h3>
 
 <p>Before sending anything to the Midi Port first make sure you have
 an output connection established with the <span
@@ -339,7 +339,11 @@ random burst of messages to the output device.</p>
 
 <h3 id="csound">Csound Port Methods</h3>
 
-<p>To generate realtime audio with Csound first use the <span class="menuitem">Ports&gt;Csound&gt;Configure...</span> dialog to configure the Csound port the way you want it and then use <span class="menuitem">Ports&gt;Csound&gt;Open</span> to open the port. Once the port is open you can send data to Csound in real time using the <a href="#send"><code>send</code></a> methods documented below. Use <span class="menuitem">Ports&gt;Csound&gt;Close</span> to close the port when you are done. You can open and close the Csound port multiple times in the same session, optionally reconfiguring it with different audio settings and CSD files each time you open it. The current Csound configuration is saved in the preferences file so that when you restart Grace the port will be initialized your settings from the previos session.</p>
+<p>To generate realtime audio with Csound first use the <span class="menuitem">Ports&gt;Csound&gt;Configure...</span> dialog to configure the Csound port and then use <span class="menuitem">Ports&gt;Csound&gt;Open</span> to open the port. Once the port is open you can send data to Csound in real time using the <a href="#send"><code>send</code></a> methods documented below. Use <span class="menuitem">Ports&gt;Csound&gt;Close</span> to close the port when you are done. You can open and close the Csound port multiple times in the same session, optionally reconfiguring it with different audio settings and CSD files each time you open it. The current Csound configuration is saved in the preferences file so that when you restart Grace the port will be initialized your settings from the previos session.
+</p>
+
+<p>To generate non-realtime Csound audio send data to the port without opening it. In this case the (closed) port will buffer all the score events you send it until you decide to either write the score to Csound or delete it. When you are done adding score elements select <span class="menuitem">Ports&gt;Csound&gt;Write...</span> to write the score to csound or use <span class="menuitem">Ports&gt;Csound&gt;Clear</span> to delete the current score. Note that score events should have their start times (<var>pfield</var> 2) specified. You can send events to the score in any order, the score will be sorted by start time before it is written to Csound.
+</p>
 
 <dl>
 <dt id="sc:i" style="background-color:#e6e6ff;">
@@ -365,12 +369,8 @@ random burst of messages to the output device.</p>
 (cs:i 1 0 1 60 1000)
 (<span class="special">define</span> <span class="defined">mypars</span> '(1 0 1 60 1000))
 (send <span class="string">"cs:i"</span> mypars)
-(cs:i mypars)
-</pre>
-
-
-<p>  </p>
-    
+(cs:i mypars) </pre>
+    <p></p>
 </dd>
 
 <dt id="sc:f" style="background-color:#e6e6ff;">
@@ -379,6 +379,23 @@ random burst of messages to the output device.</p>
 <code><span style="font-weight:bold;">send</span> <span class="string">"sc:f"</span> <var>list</var></code></dt>
 <dd><p>Sends function table data to Csound. Similar to <span class="string">"sc:i"</span> in all other respects.
   </dd>
+<dt id="sc:clear" style="background-color:#e6e6ff;">
+  <code><span style="font-weight:bold;">send</span> <span class="string">"sc:clear"</span> </code>
+<dd><p>Clears the current contents of the port's score buffer.
+  </dd>
+
+<!-- 
+<dt id="sc:write" style="background-color:#e6e6ff;">
+  <code><span style="font-weight:bold;">send</span> <span class="string">"sc:write"</span> </code>
+<dd><p>Writes the current contents of the port's score buffer to csound.
+  </dd>
+
+<dt id="sc:print" style="background-color:#e6e6ff;">
+  <code><span style="font-weight:bold;">send</span> <span class="string">"sc:print"</span> <var>start=</var>0 <var>end=#f</var></code>
+<dd><p>Prints the current contents of the port's score buffer to the console window. If <var>start</var> is specifed then only events starting later than this value are printed. If <var>end</var> is specified then no events starting later than this time will be printed.
+  </dd>
+-->
+
   </dl>
 
 <p>See <a href="#example5">Example 5</a> for an example of sending data to the Csound port.</p>

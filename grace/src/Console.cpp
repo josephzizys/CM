@@ -617,13 +617,20 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       menu.addSeparator();
       if ( app->getCsoundPort()->isOpen() )
 	sub3.addItem(cmdPortsCsoundOpen, T("Close"));
-      else
-	sub3.addItem(cmdPortsCsoundOpen, T("Open"));
-      //      sub3.addSeparator();
-      //      sub3.addItem(cmdPortsCsoundTest, T("Test"), app->getCsoundPort()->isOpen());
+      else {
+	if ( app->getCsoundPort()->isScoreEmpty() )
+	  sub3.addItem(cmdPortsCsoundOpen, T("Open"));
+	else {
+	  sub3.addItem(cmdPortsCsoundWrite, T("Write..."));
+	  sub3.addItem(cmdPortsCsoundPrint, T("Print"));
+	  sub3.addItem(cmdPortsCsoundDisplay, T("Display"), false);
+	  sub3.addItem(cmdPortsCsoundClear, T("Clear"));
+	}
+      }
       sub3.addSeparator();
       sub3.addItem(cmdPortsCsoundConfigure, T("Configure...") ,
-		   (! app->getCsoundPort()->isOpen()));
+		   ((! app->getCsoundPort()->isOpen()) && app->getCsoundPort()->isScoreEmpty())
+		   );
       menu.addSubMenu(T("Csound"), sub3);
 #endif
       // END PORTCSOUND
@@ -808,6 +815,21 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
       app->getCsoundPort()->close();
     else
       app->getCsoundPort()->open();      
+    break;
+
+  case cmdPortsCsoundWrite :
+    app->getCsoundPort()->writeScore();
+    break;
+
+  case cmdPortsCsoundPrint :
+    app->getCsoundPort()->printScore();
+    break;
+
+  case cmdPortsCsoundDisplay :
+    break;
+
+  case cmdPortsCsoundClear :
+    app->getCsoundPort()->clearScore();
     break;
 
   case cmdPortsCsoundTest :

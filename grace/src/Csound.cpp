@@ -24,7 +24,10 @@ CsoundConnection::~CsoundConnection() {
 }
 
 bool CsoundConnection::init (String input) {
-  // start Csound and load csd file, return true if successful
+  // start Csound with init initargs
+
+  printf("cs init: '%s'\n", input.toUTF8() );
+
 #ifdef PORTCSOUND
   StringArray toks ;
   toks.addTokens(input, true); // use JUCE tokenizer...
@@ -33,18 +36,14 @@ bool CsoundConnection::init (String input) {
   for (int i=0; i<argc; i++) {
     argv[i]=(char*)toks[i].toUTF8();
   }  
-  //  printf("calling csoundCreate()...\n");
   csound=csoundCreate(NULL); 
-  //  printf("calling csoundCompile()...\n");
   int result=csoundCompile(csound, argc, argv); 
   if (result != 0)  {
     csoundDestroy(csound);
     csound=NULL;
-    //    printf("csoundCompile() failed, returning false\n");
     return false;
   }
 #endif
-  //  printf("csoundCompile() succeeded, returning true\n");
   return true;
 }  
 
@@ -76,7 +75,8 @@ void CsoundConnection::run () {
 //
 
 CsoundPort::CsoundPort (ConsoleWindow *win) 
-  : options (String::empty),
+  : portoptions (String::empty),
+    fileoptions (String::empty),
     console (NULL),
     running (false),
     connection (NULL) {
@@ -93,12 +93,20 @@ CsoundPort::~CsoundPort () {
   }
 }
 
-String CsoundPort::getOptions() {
-  return options;
+String CsoundPort::getPortOptions() {
+  return portoptions;
 }
 
-void CsoundPort::setOptions(String opts) {
-  options=opts;
+void CsoundPort::setPortOptions(String opts) {
+  portoptions=opts;
+}
+
+String CsoundPort::getFileOptions() {
+  return fileoptions;
+}
+
+void CsoundPort::setFileOptions(String opts) {
+  fileoptions=opts;
 }
 
 File CsoundPort::getCsdFile() {
@@ -127,7 +135,8 @@ void CsoundPort::setTracing(bool b) {
 
 void CsoundPort::save() {
   PropertiesFile *props=((GraceApp*)JUCEApplication::getInstance())->getPreferences()->getProperties();
-  props->setValue(T("CsoundOptions"), options);
+  props->setValue(T("CsoundPortOptions"), portoptions);
+  props->setValue(T("CsoundFileOptions"), fileoptions);
   props->setValue(T("CsoundCsdFiles"), csdfiles.toString() );
   //  printf("saving config, saved options=%s\n", props->getValue("CsoundOptions").toUTF8());
 }
@@ -137,6 +146,7 @@ void CsoundPort::revert() {
   PropertiesFile *props=((GraceApp*)JUCEApplication::getInstance())->getPreferences()->getProperties();
   String DEFAULT = ((GraceApp*)JUCEApplication::getInstance())->
     getResourceDirectory().getChildFile("csound/grace.csd").getFullPathName();
+
   csdfiles.restoreFromString(props->getValue(T("CsoundCsdFiles"), DEFAULT));
   // set csound options to preferences or to default if none.
 #ifdef MACOSX
@@ -146,7 +156,9 @@ void CsoundPort::revert() {
 #else
   DEFAULT=T("-+rtaudio=portaudio -o dac -d");
 #endif
-  options=props->getValue(T("CsoundOptions"), DEFAULT);
+  portoptions=props->getValue(T("CsoundPortOptions"), DEFAULT);
+  DEFAULT=T("-W -o test.wav -d");
+  fileoptions=props->getValue(T("CsoundFileOptions"), DEFAULT);
 }
 
 //
@@ -167,11 +179,11 @@ bool CsoundPort::open() {
   }
   connection = new CsoundConnection(this) ;
 
-  // Parse options into initargs passed to libCsound:
+  // Parse port options into initargs passed to libCsound:
   String input = String::empty ;
-  if ( options != String::empty )
-    if ( ! options.containsOnly( T(" \t\n") ) )
-      input << options;
+  if ( portoptions != String::empty )
+    if ( ! portoptions.containsOnly( T(" \t\n") ) )
+      input << portoptions;
 
   if ( csdfiles.getNumFiles() == 0 ) {
     console->printError( T(">>> Error: no CSD file set. Use Ports>Csound>Configure... to configure the Csound session.") );
@@ -187,7 +199,7 @@ bool CsoundPort::open() {
     input << " " << csdfiles.getFile(0).getFullPathName();
 
   console->printMessage( (T("Opening Csound ") + input + T(" ... ") ) );
-  if ( ! connection->init( T("csound") + input) ) {
+  if ( ! connection->init( T("csound ") + input) ) {
     console->printError(":(\n Csound port failed to open. Use Ports>Csound>Configure... to configure the Csound session.");
     delete connection;
     connection = NULL;
@@ -213,20 +225,26 @@ void CsoundPort::close()  {
   //  printf("csound closed!\n");
 }
 
-void CsoundPort::sendEvent(char type, int len, MYFLT *pars) {
+void CsoundPort::printScoreEvent (char type, int len, MYFLT *pars) {
+  //  String msg = T("cs: ");
+  String msg = String::empty;
+  msg << type << ((int)pars[0]) ;
+  for (int i=1; i<len; i++)
+    msg << T(" ") << ((float)pars[i] );
+  msg << T("\n");
+  console->printMessage( msg );
+}
+
+void CsoundPort::sendScoreEvent(char type, int len, MYFLT *pars) {
+  if (tracing) 
+    printScoreEvent(type, len, pars);
   if ( isOpen() ) {
 #ifdef PORTCSOUND
-    if (tracing) {
-      String msg = T("cs: ");
-      msg << type << ((int)pars[0]) ;
-      for (int i=1; i<len; i++)
-	msg << T(", ") << ((float)pars[i] );
-      msg << T("\n");
-      console->printMessage( msg );
-    }
     csoundScoreEvent(connection->csound, type, pars, len) ;
 #endif
   }
+  else
+    addScoreEvent(type, len, pars);
 }
 
 void CsoundPort::testNote() {
@@ -238,22 +256,78 @@ void CsoundPort::testNote() {
     pars[2]=1;
     pars[3]=60 + Random::getSystemRandom().nextInt(24);
     pars[4]=1000;
-    sendEvent ('i', len, pars) ;
+    sendScoreEvent ('i', len, pars) ;
   }
 }
+
+//
+// Score Interface
+//
+
+void CsoundPort::addScoreEvent(char type, int len, MYFLT *pars) {
+  score.add( new CsoundScoreEv(type, len, pars) );
+}
+
+void CsoundPort::sortScore() {
+  score.sort(comparator,true);
+}
+
+void CsoundPort::clearScore() {
+  score.clear();
+}
+
+void CsoundPort::printScore(double start, double endtime) {
+  int i;
+  if ( isScoreEmpty() )
+    return;
+  sortScore();
+  if (start > 0.0) {
+    for (i=0; i<score.size(); i++)
+      if ( score[i]->type=='i' && start==(double)(score[i]->pars[1]) )
+	break;
+  }
+  else {
+    for (i=0; i<score.size(); i++)
+      if (score[i]->type == 'f') {
+	printScoreEvent(score[i]->type, score[i]->size, score[i]->pars);
+      }
+      else break;
+  }
+  // i at first ins statement to print or end of buffer
+  for ( ; i<score.size(); i++) 
+    if ((double)(score[i]->pars[1]) > endtime) 
+      break;
+    else {
+      printScoreEvent(score[i]->type, score[i]->size, score[i]->pars);
+    }
+}
+
+int CsoundPort::numScoreEvents() {
+  return score.size();
+}
+
+bool CsoundPort::isScoreEmpty() {
+  return score.size() == 0;
+}
+
+//
+// Configure Dialog
+//
 
 class ConfigureCsoundDialog : public Component,
 			      public LabelListener,
 			      public FilenameComponentListener,
 			      public ButtonListener {
 public:
+  enum {configMode=0, writeMode};
   CsoundPort* port;
+  int mode;
   Label* label1;
   Label* label2;
   Label* options;
   FilenameComponent* csdfile;
   ToggleButton* tracebutton;
-  TextButton* savebutton;
+  TextButton* writebutton;
   ConfigureCsoundDialog(CsoundPort* p);
   ~ConfigureCsoundDialog();
   //  void paint (Graphics& g);
@@ -265,14 +339,17 @@ public:
 
 ConfigureCsoundDialog::ConfigureCsoundDialog (CsoundPort *p)
   : port (NULL),
+    mode (configMode),
     label1 (0),
     label2 (0),
     options (0),
     csdfile (0),
-    savebutton (0),
+    writebutton (0),
     tracebutton (0)
 {
   port=p;
+  if ( ! p->isScoreEmpty() )
+    mode=writeMode;
   addAndMakeVisible (label1 = new Label(String::empty, T("Options:")));
   label1->setFont (Font (15.0000f, Font::plain));
   label1->setJustificationType (Justification::centredRight);
@@ -285,8 +362,15 @@ ConfigureCsoundDialog::ConfigureCsoundDialog (CsoundPort *p)
   options->setColour(Label::outlineColourId, Colours::silver);
   options->setEditable(true, true, false);
   options->addListener(this);
-  options->setText ( port->getOptions() , false);
-  
+
+  // if the score not empty this dialog is being called by "Write..."
+  // otherwise its being called for port configuration.
+
+  if ( mode==configMode )
+    options->setText ( port->getPortOptions() , false);
+  else
+    options->setText ( port->getFileOptions() , false);
+
   addAndMakeVisible (label2 = new Label ( String::empty, T("CSD File:"))) ;
   label2->setFont (Font (15.0000f, Font::plain));
   label2->setJustificationType (Justification::centredRight);
@@ -298,25 +382,28 @@ ConfigureCsoundDialog::ConfigureCsoundDialog (CsoundPort *p)
 			  true, 
 			  false, 
 			  false, 
-			  T("*.csd"), 
+			  ( mode==configMode ) ? T("*.csd") : T("*.csd;*.orc") ,
 			  String::empty,
 			  T("Select CSD File..."));
   csdfile->addListener(this);
 
   StringArray files=port->csdfiles.getAllFilenames() ;
   csdfile->setRecentlyUsedFilenames(files);
-  if (files.size() > 0)
+  if ( files.size() > 0 )
     csdfile->setCurrentFile(port->csdfiles.getFile(0), false, false);
   addAndMakeVisible(csdfile);
 
-  addAndMakeVisible( tracebutton = new ToggleButton(T("Trace output")));
-  //tracebutton->setFont (Font (15.0000f, Font::plain));
-  tracebutton->setButtonText(T("Trace output"));
-  tracebutton->setToggleState(port->getTracing(), false);
-  tracebutton->addButtonListener(this);
-  
-  //  addAndMakeVisible( savebutton = new TextButton(T( "save"), T("Save") ));
-  //  savebutton->addButtonListener(this);
+  if ( mode==configMode ) {
+    addAndMakeVisible( tracebutton = new ToggleButton(T("Trace output")));
+    tracebutton->setButtonText(T("Trace output"));
+    tracebutton->setToggleState(port->getTracing(), false);
+    tracebutton->addButtonListener(this);
+  }  
+  else if ( mode==writeMode ) {
+    addAndMakeVisible( writebutton = new TextButton( T( "Write")));
+    writebutton->addButtonListener(this);
+  }
+
   setSize (600, 96 + 24 + 16);
 }
 
@@ -325,8 +412,12 @@ ConfigureCsoundDialog::~ConfigureCsoundDialog() {
   deleteAndZero(options);
   deleteAndZero(label2);
   deleteAndZero(csdfile);
-  deleteAndZero(tracebutton);
-  //  deleteAndZero(savebutton);
+  if ( mode==configMode ) {
+    deleteAndZero(tracebutton);
+  }
+  else {
+    deleteAndZero(writebutton);
+  }
 }
 
 //void ConfigureCsoundDialog::paint (Graphics& g) {
@@ -341,11 +432,17 @@ void ConfigureCsoundDialog::resized() {
   label2->setBounds(8,   56, 64, 24);
   csdfile->setBounds(80, 56, getWidth()-80-8-8, 24);
   // line3: y=96
-  tracebutton->setBounds(80, 96, 120, 24);
+  if ( mode==configMode )
+    tracebutton->setBounds(80, 96, 120, 24);
+  else
+    writebutton->setBounds(getWidth()-8-8-64, 96, 64, 24);    
 }
 
 void ConfigureCsoundDialog::labelTextChanged (Label *changed) {
-  port->setOptions( changed->getText() );
+  if ( mode==configMode )
+    port->setPortOptions( changed->getText() );
+  else
+    port->setFileOptions( changed->getText() );
 }
 
 void ConfigureCsoundDialog::filenameComponentChanged (FilenameComponent* changed) {
@@ -353,16 +450,73 @@ void ConfigureCsoundDialog::filenameComponentChanged (FilenameComponent* changed
 }
 
 void ConfigureCsoundDialog::buttonClicked (Button *clicked) {
-  if (clicked->getName() == T("Trace output") ) {
+  if ( clicked->getName() == T("Trace output") ) {
     port->setTracing( clicked->getToggleState() );
+  }
+  else if ( clicked->getName() == T("Write") ) {
+    ((DialogWindow *)getTopLevelComponent())->exitModalState(writeMode);
+    //    ((DialogWindow *)getTopLevelComponent())->closeButtonPressed();
   }
 }
 
 void CsoundPort::configure() {
-  DialogWindow::showModalDialog(T("Configure CSound"), 
+  DialogWindow::showModalDialog(T("Configure CSound Port"), 
 				new ConfigureCsoundDialog(this),
 				NULL,
 				Colour(0xffe5e5e5),
 				true, false, false);
   save();
 }
+
+void CsoundPort::writeScore() {
+  // Open configure dialog in Write mode
+  int res = DialogWindow::showModalDialog(T("Write Csound Score"),
+					  new ConfigureCsoundDialog(this),
+					  NULL,
+					  Colour(0xffe5e5e5),
+					  true, false, false);
+  if (res != ConfigureCsoundDialog::writeMode ) return;
+  if ( isScoreEmpty() ) return;
+
+  // Parse options and cds file into initargs passed to libCsound:
+  String input = String::empty ;
+  if ( fileoptions != String::empty )
+    if ( ! fileoptions.containsOnly( T(" \t\n") ) )
+      input << fileoptions;
+  if ( csdfiles.getNumFiles() == 0 ) {
+    console->printError( T(">>> Error: no CSD or ORC file set.") );
+    return;
+  }
+  else if (! csdfiles.getFile(0).existsAsFile() ) {
+    console->printError(T(">>> Error: the file ") + 
+			csdfiles.getFile(0).getFullPathName() +
+		        T(" does not exist.\n"));
+    return;
+  }
+  else
+    input << " " << csdfiles.getFile(0).getFullPathName();
+
+  // initialize csound 
+  console->printMessage( (T("Writing Csound score: ") + input + T(" ...\n") ) );
+  CsoundConnection *conn=new CsoundConnection(this);
+  if ( ! conn->init( T("csound ") + input) ) {
+    console->printError(":(\n Csound failed to start.");
+    delete conn;
+    return ;
+  }
+  save();
+#ifdef PORTCSOUND
+  // sort the score
+  sortScore();
+  // add the events
+  for (int i=0; i<numScoreEvents(); i++ ) 
+    csoundScoreEvent(conn->csound, score[i]->type, score[i]->pars, score[i]->size) ;
+  // run csound performace loop
+  while ( csoundPerformKsmps( conn->csound ) == 0) ;
+  // cleanup and close csoun
+  csoundCleanup(conn->csound);
+  csoundDestroy(conn->csound);
+#endif
+  console->printMessage( T("done!\n") );
+}
+
