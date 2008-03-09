@@ -54,58 +54,123 @@ class CsoundScoreEv {
 class CsoundScoreEvComparator {
  public:
   static int compareElements(CsoundScoreEv* e1, CsoundScoreEv* e2) {
-    if (e1->type=='f')
-      if (e2->type=='f')
-	return 0;
-      else return -1;
-    else if (e2->type=='f')
-      return 1;
+    //    if (e1->type=='f')
+    //      if (e2->type=='f')
+    //	return 0;
+    //      else return -1;
+    //    else if (e2->type=='f')
+    //      return 1;
     if ( e1->pars[1] <= e2->pars[1])
       return -1;
     return 1;
   }
 };
 
+class ExportCsoundDialog;
+
 class CsoundPort {
  public:
-
+  enum {portClosed=0, portOpen, portWriting};
+  enum {formatCsound=1, formatLispData, formatSalData,
+	formatLispSend, formatSalSend};
+  enum {exportConsole=1, exportClipboard, exportFile};
   String portoptions, fileoptions;
-  //  String csdfile;
-  RecentlyOpenedFilesList csdfiles;
+  RecentlyOpenedFilesList orcfiles;
   ConsoleWindow *console;
+  ExportCsoundDialog *exportdialog;
   CsoundConnection *connection;
   OwnedArray<CsoundScoreEv> score;
   CsoundScoreEvComparator comparator;
-  bool running;
+  int running;
   bool tracing;
+  CriticalSection lock;
   CsoundPort(ConsoleWindow *win) ;
   ~CsoundPort() ;
   String getPortOptions();
   void setPortOptions(String opts);
   String getFileOptions();
   void setFileOptions(String opts);
-  File getCsdFile();
-  void setCsdFile(File file);
+  File getOrcFile();
+  void setOrcFile(File file);
   bool getTracing();
   void setTracing(bool b);
   void save();
   void revert();
   bool open() ;
-  bool isOpen() ;
   void close();
-  void sendScoreEvent(char type, int len, MYFLT *pars);
-
-  void testNote();
-  void configure();
+  bool isOpen() ;
+  bool isClosed() ;
+  bool isWriting() ;
+  void lockCsound();
+  void unlockCsound();
   // scorefile api
-  void addScoreEvent(char type, int len, MYFLT *pars);
-  void printScoreEvent(char type, int len, MYFLT *pars);
-  void sortScore();
   void writeScore();
   void clearScore();
-  void printScore(double beg=0.0, double end=31536000.0);
+  void displayScore();
+  void exportScore();
+  void sendScoreEvent(char type, int len, MYFLT *pars);
+  void addScoreEvent(char type, int len, MYFLT *pars);
+  String getScoreEventText(int fmat, char type, int len, 
+			   MYFLT *pars);
+  String getScoreText(int fmat);
+  void sortScore();
   int numScoreEvents();
   bool isScoreEmpty();
+};
+
+class OpenCsoundDialog : public Component,
+  public LabelListener,
+  public FilenameComponentListener,
+  public ButtonListener 
+{
+ public:
+  CsoundPort* port;
+  int mode;
+  Label* label1;
+  Label* label2;
+  Label* options;
+  FilenameComponent* orcfile;
+  ToggleButton* tracebutton;
+  TextButton* openbutton;
+  OpenCsoundDialog(CsoundPort* p);
+  ~OpenCsoundDialog();
+  //  void paint (Graphics& g);
+  void resized();
+  void filenameComponentChanged (FilenameComponent* changed);
+  void labelTextChanged (Label *changed);
+  void buttonClicked (Button *clicked);
+};
+
+class ExportCsoundDialog : public Component,
+  public LabelListener,
+  public ComboBoxListener,
+  public FilenameComponentListener,
+  public ButtonListener
+{
+ public:
+  //    void paint (Graphics& g);
+  GroupComponent* scoregroup;
+  Label* fromlabel;
+  Label* tolabel;
+  Label* frombuffer;
+  Label* tobuffer;
+  Label* formatlabel;
+  ComboBox* formatmenu;
+  GroupComponent* exportgroup;
+  ToggleButton* consoletoggle;
+  ToggleButton* clipboardtoggle;
+  ToggleButton* filetoggle;
+  ToggleButton* itoggle;
+  ToggleButton* ftoggle;
+  TextButton* exportbutton;
+  FilenameComponent* filechooser;
+  ExportCsoundDialog () ;
+  ~ExportCsoundDialog () ;
+  void resized() ;
+  void filenameComponentChanged (FilenameComponent* changed);
+  void labelTextChanged (Label* labelThatHasChanged) ;
+  void comboBoxChanged (ComboBox* comboBoxThatHasChanged) ;
+  void buttonClicked (Button* buttonThatWasClicked) ;
 };
 
 #endif

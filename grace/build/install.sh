@@ -75,7 +75,7 @@ if [[ "$CHOICE" == 1 || "$CHOICE" == 3 ]] ; then
 
     mkdir -p "$RESDIR1"/csound
     # install lisp runtime
-    for f in $( ls ../../src/*.csd  )
+    for f in $( ls ../../src/*.orc  )
     do
 	ff="$RESDIR1"/csound`echo "$f" | sed 's/^[..\/]*src//'`
 	if [[ ! -e "$ff" || "$f" -nt "$ff" ]] ; then

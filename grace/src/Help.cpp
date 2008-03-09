@@ -120,11 +120,12 @@ void SymbolHelp::addSalHelp() {
 void SymbolHelp::addGraceSchemeHelp() {
   setHelpRoot( T("GraceScheme"), T("file://") + ((GraceApp *)GraceApp::getInstance())->
 	       getResourceDirectoryPathName() + T("/doc/"));
+  graceschememap.set( T("between"), T("scheme.html#between"));
   graceschememap.set( T("butlast"), T("scheme.html#butlast"));
   graceschememap.set( T("cents->scaler"), T("scheme.html#cents-scaler"));
-  graceschememap.set( T("change-directory"), T("scheme.html#change-directory"));
+  graceschememap.set( T("chdir"), T("scheme.html#chdir"));
   graceschememap.set( T("cont"), T("scheme.html#cont"));
-  graceschememap.set( T("current-directory"), T("scheme.html#current-directory"));
+  graceschememap.set( T("cwd"), T("scheme.html#cwd"));
   graceschememap.set( T("decimals"), T("scheme.html#decimals"));
   graceschememap.set( T("discrete"), T("scheme.html#discrete"));
   graceschememap.set( T("eighth"), T("scheme.html#first"));
@@ -141,7 +142,8 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("interpl"), T("scheme.html#interpl"));
   graceschememap.set( T("interp"), T("scheme.html#interp"));
   graceschememap.set( T("last"), T("scheme.html#last"));
-  graceschememap.set( T("mp:note"), T("scheme.html#mp:note"));
+  graceschememap.set( T("loop"), T("scheme.html#loop"));
+  graceschememap.set( T("mp:midi"), T("scheme.html#mp:midi"));
   graceschememap.set( T("mp:on"), T("scheme.html#mp:on"));
   graceschememap.set( T("mp:off"), T("scheme.html#mp:off"));
   graceschememap.set( T("mp:prog"), T("scheme.html#mp:prog"));
@@ -170,6 +172,9 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("rescale"), T("scheme.html#rescale"));
   graceschememap.set( T("rest"), T("scheme.html#rest"));
   graceschememap.set( T("rhythm->seconds"), T("scheme.html#rhythm-seconds"));
+  graceschememap.set( T("sc:i"), T("scheme.html#sc:i"));
+  graceschememap.set( T("sc:f"), T("scheme.html#sc:f"));
+  graceschememap.set( T("sc:clear"), T("scheme.html#sc:clear"));
   graceschememap.set( T("scaler->cents"), T("scheme.html#rhythm-seconds"));
   graceschememap.set( T("second"), T("scheme.html#first"));
   graceschememap.set( T("send"), T("scheme.html#send"));

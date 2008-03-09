@@ -40,8 +40,10 @@ String getEditorHelp () {
 
 void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   PopupMenu sub1;
-  if (w==winConsole)
+  if (w==winConsole) {
     menu->addItem(cmdHelpWindow+w, T("Console Help"));
+    menu->addItem(cmdHelpWindow+13, T("Ports Menu Help"));
+  }
   else if (w==winEditor)
     menu->addItem(cmdHelpWindow+w, T("Editor Help"));
   else if (w==winPlotter)
@@ -89,6 +91,8 @@ void commonHelpItemSelected (int cmd, int arg) {
       res=res.getChildFile(T("doc/sal/sal.html"));
     else if (arg==12)
       res=res.getChildFile(T("doc/scheme.html"));
+    else if (arg==13)
+      res=res.getChildFile(T("doc/ports.html"));
 
     if ( res.existsAsFile() )
 #ifdef LINUX

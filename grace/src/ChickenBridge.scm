@@ -122,17 +122,19 @@ void load_sal_file(char *path) {
 	 mm:key mm:key-set! mm:vel mm:vel-set!
 	 mm:val mm:val-set! mm:num mm:num-set!
 
-         mp:note mp:off mp:on mp:touch mp:ctrl mp:prog mp:press mp:bend
+         mp:midi mp:note mp:off mp:on mp:touch mp:ctrl mp:prog 
+	 mp:press mp:bend
 	 mp:mm mp:inhook 
 
 	 ;; Csound
-	 cs:i cs:f cs:print cs:clear cs:write
+	 cs:i cs:f cs:clear
 
 	 *messages* send expand-send go
 	 current-time-milliseconds current-time-seconds
 	 now time-format
 	 sprout stop hush pause paused? cont
 	 ;; toolbox
+
 	 rescale discrete int quantize decimals
 	 cents->scaler scaler->cents
 	 keynum->hertz keynum->pc hertz->keynum
@@ -143,10 +145,13 @@ void load_sal_file(char *path) {
 	 between pick pickl odds
 	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
 	 rancauchy ranpoisson ranpink ranbrown
-	 sal sal:print sal:chdir sal:load sal:open sal:output load-sal-file
+	 sal sal:print sal:chdir sal:load sal:open sal:output
+	 load-sal-file
 	 ;; utilities
-	 current-directory change-directory 
-	 first second third fourth fifth sixth seventh eighth ninth tenth
+	 loop
+	 cwd chdir
+	 first second third fourth fifth sixth seventh eighth
+	 ninth tenth
 	 list* last butlast
 	 ))
 
@@ -257,6 +262,7 @@ void load_sal_file(char *path) {
 
 (include "Toolbox.scm")
 (include "Sal.scm")
+(include "Loop.scm")
 (include "Midi.scm")
 (include "Csound.scm")
 

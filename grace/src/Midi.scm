@@ -258,6 +258,10 @@ void set_input_hook( C_word proc )
   ( (foreign-lambda void "mp_note" double double float float float)
     time dur key amp chan))
 
+(define (mp:midi time dur key amp chan)
+  ( (foreign-lambda void "mp_note" double double float float float)
+    time dur key amp chan))
+
 (define (mp:off time key chan)
   ( (foreign-lambda void "mp_data" int double float float float)
     mm:off time chan key 0))
@@ -312,6 +316,7 @@ void set_input_hook( C_word proc )
 ;; message definitions
 
 (define-send-message mp:note ((#:time 0) (#:dur .5) (#:key 60) (#:amp .5) (#:chan 0)))
+(define-send-message mp:midi ((#:time 0) (#:dur .5) (#:key 60) (#:amp .5) (#:chan 0)))
 (define-send-message mp:off ((#:time 0) (#:key 60) (#:chan 0)))
 (define-send-message mp:on ((#:time 0) (#:key 60) (#:vel 64) (#:chan 0)))
 (define-send-message mp:touch ((#:time 0) (#:key 0) (#:val 0) (#:chan 0)))

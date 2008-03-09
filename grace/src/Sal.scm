@@ -1682,7 +1682,7 @@
     (values)))
 
 (define (sal:chdir path)
-  (change-directory path)
+  (chdir path)
   (values))
 
 (define (sal:load file)

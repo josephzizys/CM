@@ -3,8 +3,12 @@ This is the readme for Grace.
 Directions for installing Grace are in doc/install.html. Or, for the
 terminally impatient, do:
 
-    $ scons JUCEDIR=/path/to/juce
-    $ scons install
+    cd build/linux
+    make Grace
+    make GraceCL
+    install Grace
+    install GraceCL
+
 
 
 

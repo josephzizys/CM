@@ -142,15 +142,15 @@ public:
 	 "PortsMidiOutInstruments"
 	 "PortsMidiInOpen" "PortsMidiInTest" "PortsMidiInHook"
 	 "PortsMidiInRecord" "PortsMidiInConfigure"
-	 "PortsCsoundOpen" "PortsCsoundTest" "PortsCsoundConfigure" "PortsCsoundWrite" 
-	 "PortsCsoundClear" "PortsCsoundPrint" "PortsCsoundDisplay"
+	 "PortsCsoundOpen" "PortsCsoundClose"  "PortsCsoundWrite"
+	 "PortsCsoundExport" "PortsCsoundDisplay" "PortsCsoundClear"
 	 "PortsAudioSetup"
 	 "LispConnect" 
 	 "LispLoadSystem" "LispLoadRecentSystem" "LispClearRecentSystems"
 	 "LispLoadFile" "LispLoadRecentFile" "LispCompileFile" 
 	 "LispClearRecentLoaded" "LispConfigure")  */
 
-  enum ConsoleCommand {
+   enum ConsoleCommand {
     cmdGraceEditorNew = 32896,
     cmdGracePlotterNew = 33152,
     cmdGraceOpenFile = 33408,
@@ -180,22 +180,21 @@ public:
     cmdPortsMidiInRecord = 39552,
     cmdPortsMidiInConfigure = 39808,
     cmdPortsCsoundOpen = 40064,
-    cmdPortsCsoundTest = 40320,
-    cmdPortsCsoundConfigure = 40576,
-    cmdPortsCsoundWrite = 40832,
-    cmdPortsCsoundClear = 41088,
-    cmdPortsCsoundPrint = 41344,
-    cmdPortsCsoundDisplay = 41600,
-    cmdPortsAudioSetup = 41856,
-    cmdLispConnect = 42112,
-    cmdLispLoadSystem = 42368,
-    cmdLispLoadRecentSystem = 42624,
-    cmdLispClearRecentSystems = 42880,
-    cmdLispLoadFile = 43136,
-    cmdLispLoadRecentFile = 43392,
-    cmdLispCompileFile = 43648,
-    cmdLispClearRecentLoaded = 43904,
-    cmdLispConfigure = 44160};
+    cmdPortsCsoundClose = 40320,
+    cmdPortsCsoundWrite = 40576,
+    cmdPortsCsoundExport = 40832,
+    cmdPortsCsoundDisplay = 41088,
+    cmdPortsCsoundClear = 41344,
+    cmdPortsAudioSetup = 41600,
+    cmdLispConnect = 41856,
+    cmdLispLoadSystem = 42112,
+    cmdLispLoadRecentSystem = 42368,
+    cmdLispClearRecentSystems = 42624,
+    cmdLispLoadFile = 42880,
+    cmdLispLoadRecentFile = 43136,
+    cmdLispCompileFile = 43392,
+    cmdLispClearRecentLoaded = 43648,
+    cmdLispConfigure = 43904};
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};

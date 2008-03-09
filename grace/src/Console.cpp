@@ -616,21 +616,20 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
 #ifdef PORTCSOUND
       menu.addSeparator();
       if ( app->getCsoundPort()->isOpen() )
-	sub3.addItem(cmdPortsCsoundOpen, T("Close"));
-      else {
+	sub3.addItem(cmdPortsCsoundClose, T("Close"));
+      else if ( app->getCsoundPort()->isWriting() )
+	sub3.addItem(cmdPortsCsoundClose, T("Abort Write"));
+      else {  // is currentlyclosed
 	if ( app->getCsoundPort()->isScoreEmpty() )
-	  sub3.addItem(cmdPortsCsoundOpen, T("Open"));
+	  sub3.addItem(cmdPortsCsoundOpen, T("Open..."));
 	else {
 	  sub3.addItem(cmdPortsCsoundWrite, T("Write..."));
-	  sub3.addItem(cmdPortsCsoundPrint, T("Print"));
-	  sub3.addItem(cmdPortsCsoundDisplay, T("Display"), false);
+	  sub3.addItem(cmdPortsCsoundExport, T("Export..."));
+	  sub3.addItem(cmdPortsCsoundDisplay, T("Display..."), false);
+	  sub3.addSeparator();
 	  sub3.addItem(cmdPortsCsoundClear, T("Clear"));
 	}
       }
-      sub3.addSeparator();
-      sub3.addItem(cmdPortsCsoundConfigure, T("Configure...") ,
-		   ((! app->getCsoundPort()->isOpen()) && app->getCsoundPort()->isScoreEmpty())
-		   );
       menu.addSubMenu(T("Csound"), sub3);
 #endif
       // END PORTCSOUND
@@ -811,33 +810,24 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     break;
 
   case cmdPortsCsoundOpen :
-    if ( app->getCsoundPort()->isOpen() )
-      app->getCsoundPort()->close();
-    else
-      app->getCsoundPort()->open();      
-    break;
-
   case cmdPortsCsoundWrite :
-    app->getCsoundPort()->writeScore();
+    app->getCsoundPort()->open();
     break;
 
-  case cmdPortsCsoundPrint :
-    app->getCsoundPort()->printScore();
+  case cmdPortsCsoundClose :
+    app->getCsoundPort()->close();
+    break;
+
+  case cmdPortsCsoundExport :
+    app->getCsoundPort()->exportScore();
     break;
 
   case cmdPortsCsoundDisplay :
+    app->getCsoundPort()->displayScore();
     break;
 
   case cmdPortsCsoundClear :
     app->getCsoundPort()->clearScore();
-    break;
-
-  case cmdPortsCsoundTest :
-    app->getCsoundPort()->testNote() ;
-    break;
-
-  case cmdPortsCsoundConfigure :
-    app->getCsoundPort()->configure();
     break;
 
 #endif

@@ -39,15 +39,8 @@ void cs_send_score_event (int type, int len, C_word lyst) {
   ((GraceApp *)GraceApp::getInstance())->getCsoundPort()->sendScoreEvent( ((type==2) ? 'f' : 'i'), len, buf);  
 }
 
-void cs_print_score (double beg, double endtime) {
-  ((GraceApp *)GraceApp::getInstance())->getCsoundPort()->printScore(beg, endtime);
-}
-
 void cs_clear_score () {
   ((GraceApp *)GraceApp::getInstance())->getCsoundPort()->clearScore();
-}
-void cs_write_score () {
-  ((GraceApp *)GraceApp::getInstance())->getCsoundPort()->writeScore();
 }
 
 <#
@@ -58,7 +51,8 @@ void cs_write_score () {
       (begin (if (and (null? (cdr args))
 		      (pair? (car args)))
 		 (set! args (car args)))
-	     ((foreign-lambda void "cs_send_score_event" int int scheme-object)
+	     ((foreign-lambda void "cs_send_score_event" 
+			      int int scheme-object)
 	      1
 	      (length args)
 	      args)))
@@ -69,40 +63,41 @@ void cs_write_score () {
       (begin (if (and (null? (cdr args))
 		      (pair? (car args)))
 		 (set! args (car args)))
-	     ((foreign-lambda void "cs_send_score_event" int int scheme-object)
+	     ((foreign-lambda void "cs_send_score_event"
+			      int int scheme-object)
 	      2
 	      (length args)
 	      args)))
   (values))
 
-(define (cs:print . args)
-  (let ((beg 0)
-	(end 31536000))
-    (when (not (null? args))
-      (if (not (null? (cdr args)))
-	  (if (number? (cadr args)) (set! end (cadr args))
-	      (error "end time not a number:" (cadr args))))
-      (if (not (null? (car args)))
-	  (if (number? (car args)) (set! beg (car args))
-	      (error "start time not a number:" (car args)))))
-    ((foreign-lambda void "cs_print_score" float float) beg end)
-    (values)))
+;(define (cs:print . args)
+;  (let ((beg 0)
+;	(end 31536000))
+;    (when (not (null? args))
+;      (if (not (null? (cdr args)))
+;	  (if (number? (cadr args)) (set! end (cadr args))
+;	      (error "end time not a number:" (cadr args))))
+;      (if (not (null? (car args)))
+;	  (if (number? (car args)) (set! beg (car args))
+;	      (error "start time not a number:" (car args)))))
+;    ((foreign-lambda void "cs_print_score" float float) beg end)
+;    (values)))
 
 (define (cs:clear)
   ( (foreign-lambda void "cs_clear_score" ) )
   )
 
-(define (cs:write)
-  ( (foreign-lambda void "cs_write_score" ) )
-  )
+;(define (cs:write)
+;  ( (foreign-lambda void "cs_write_score" ) )
+;  )
 
 ;(define cs:note cs:i)
 ;(define cs:func cs:f)
+;(define-send-message cs:print ((#:from 0) (#:to 31536000)))
+;(define-send-message cs:write ())
 
 (define-send-message cs:i (&rest))
 (define-send-message cs:f (&rest))
-(define-send-message cs:print ((#:from 0) (#:to 31536000)))
 (define-send-message cs:clear ())
-(define-send-message cs:write ())
 
 ;;; EOF

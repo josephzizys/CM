@@ -36,10 +36,10 @@
           (cons (car args)
                 (apply list* (cdr args))))))
 
-(define (current-directory )
+(define (cwd )
   ((foreign-lambda c-string "get_current_directory" )))
 
-(define (change-directory . dir)
+(define (chdir . dir)
   ((foreign-lambda void "set_current_directory" c-string)
    (if (null? dir) "~/" (car dir))))
 
