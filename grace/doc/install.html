@@ -391,6 +391,26 @@ you have the OpenGL libraries installed and (on Linux) disabling Xinerama suppor
 <h4 id="juce_linux">Installing JUCE on Linux</h4>
 
 <ol>
+
+  <li>
+ <p>Before attempting to build JUCE on Linux make sure that the header and lib files for the following libraries are installed on your machine:</p>
+
+<ul>
+<li>libx11-dev</li>
+<li>libasound2-dev</li>
+<li>libfreetype6-dev</li>
+<li>libglu1-mesa-dev</li>
+<li>libxinerama-dev (you can disable this, see below)</li>
+</ul>
+</li>
+
+
+
+
+
+
+
+
   <li>
   <p>
   Edit the file juce/juce_Config.h.
@@ -439,8 +459,13 @@ $ make CONFIG=Release</pre>
 
 <h4 id="juce_osx">Installing JUCE on OSX</h4>
 
+
+
+
 <ol>
-  <li>
+
+
+<li>
 
 <p> Edit the file juce/juce_Config.h and turn Unicode support OFF by
 setting JUCE_STRINGS_ARE_UNICODE to 0: </p>
@@ -536,7 +561,7 @@ $ svn co svn://common-lisp.net/project/fomus/svn/fomus/trunk fomus
 </div>
 <hr/>
 <p>
-<!-- hhmts start --> Last modified: Sun Mar  2 09:46:42 CST 2008 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Sun Mar  9 15:05:38 CDT 2008 <!-- hhmts end -->
 </p>
 </body>
 </html>

@@ -25,7 +25,7 @@ public:
     ~MidiReceiveComponent();
 
     //==============================================================================
-    void paint (Graphics& g);
+    //    void paint (Graphics& g);
     void resized();
     void buttonClicked (Button* buttonThatWasClicked);
     void sliderValueChanged (Slider* sliderThatWasMoved);
@@ -38,6 +38,7 @@ public:
     ToggleButton* pitchBend;
     ToggleButton* aftertouch;
     ToggleButton* channelPressure;
+    ToggleButton* activeSense;
     GroupComponent* groupComponent2;
     //GroupComponent* groupComponent3;
     ToggleButton* allChannels;
@@ -46,7 +47,6 @@ public:
     //TextEditor* hookField;
     //TextButton* setHook;
     //TextButton* clearHook;
-    ToggleButton* traceInput;
     //TextButton* doneButton;
     //TextButton* cancelButton;
     juce_UseDebuggingNewOperator

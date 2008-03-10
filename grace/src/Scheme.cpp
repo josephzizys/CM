@@ -206,12 +206,14 @@ void postGCHook(int m, long ms)
 
 void SchemeThread::setInputHook(C_word hook)
 {
-  if(hook == C_SCHEME_FALSE) {
+  if (hook == C_SCHEME_FALSE) {
+    printf("STOPPING scheme input\n");
     CHICKEN_gc_root_set(inputClosureGCRoot, C_SCHEME_FALSE);
     if( ((GraceApp*)GraceApp::getInstance())->midiInPort->isActive(MidiInPort::SCHEMEHOOK) )
       ((GraceApp*)GraceApp::getInstance())->midiInPort->stopSchemeInput();
   }
   else {
+    printf("STARTING scheme input\n");
     CHICKEN_gc_root_set(inputClosureGCRoot, hook);
     if(!((GraceApp*)GraceApp::getInstance())->midiInPort->isActive(MidiInPort::SCHEMEHOOK))
       ((GraceApp*)GraceApp::getInstance())->midiInPort->startSchemeInput();

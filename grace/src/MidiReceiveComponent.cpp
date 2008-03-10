@@ -24,23 +24,20 @@ MidiReceiveComponent::MidiReceiveComponent ()
     pitchBend (0),
     aftertouch (0),
     channelPressure(0),
+    activeSense (0),
     groupComponent2 (0),
     //groupComponent3 (0),
     allChannels (0),
     channelIncrementor (0),
-    singleChannel (0),
+    singleChannel (0)
     //    hookField (0),
     //setHook (0),
     //clearHook (0),
-    traceInput (0)//,
     //doneButton (0),
     //cancelButton (0)
 {
-  
-  
   addAndMakeVisible (groupComponent = new GroupComponent (T("Receive Messages Group"),
 							  T("Receive Messages")));
-  
   addAndMakeVisible (allMessages = new ToggleButton (T("All Messages Button")));
   allMessages->setButtonText (T("All Messages"));
   allMessages->addButtonListener (this);
@@ -73,6 +70,10 @@ MidiReceiveComponent::MidiReceiveComponent ()
   channelPressure->setButtonText (T("Channel Pressure"));
   channelPressure->addButtonListener (this);
   
+  addAndMakeVisible (activeSense = new ToggleButton (T("Active Sensing")));
+  activeSense->setButtonText (T("Active Sensing"));
+  activeSense->addButtonListener (this);
+
   addAndMakeVisible (groupComponent2 = new GroupComponent (T("Receive Channel Group"),
 							   T("Receive Channel")));
   
@@ -95,6 +96,7 @@ MidiReceiveComponent::MidiReceiveComponent ()
   singleChannel->setButtonText (T("Single Channel"));
   singleChannel->setRadioGroupId (1);
   singleChannel->addButtonListener (this);
+
   /*
   addAndMakeVisible (hookField = new TextEditor (T("Hook Field")));
   hookField->setMultiLine (false);
@@ -112,12 +114,7 @@ MidiReceiveComponent::MidiReceiveComponent ()
   addAndMakeVisible (clearHook = new TextButton (T("Clear Hook Button")));
   clearHook->setButtonText (T("Clear"));
   clearHook->addButtonListener (this);
-  */
-  addAndMakeVisible (traceInput = new ToggleButton (T("Trace Input Button")));
-  
-  traceInput->setButtonText (T("Trace Input"));
-  traceInput->addButtonListener (this);
-  /*
+
   addAndMakeVisible (doneButton = new TextButton (T("Done Button")));
   doneButton->setButtonText (T("Done"));
   doneButton->addButtonListener (this);
@@ -126,8 +123,7 @@ MidiReceiveComponent::MidiReceiveComponent ()
   cancelButton->setButtonText (T("Cancel"));
   cancelButton->addButtonListener (this);
   */
-  setSize (480, 260);
-  
+  setSize (480, 272);
 }
 
 MidiReceiveComponent::~MidiReceiveComponent()
@@ -150,22 +146,21 @@ MidiReceiveComponent::~MidiReceiveComponent()
   //deleteAndZero (hookField);
   //deleteAndZero (setHook);
   //deleteAndZero (clearHook);
-  deleteAndZero (traceInput);
+  deleteAndZero (activeSense);
   //deleteAndZero (doneButton);
   //deleteAndZero (cancelButton);
 
 }
 
 //==============================================================================
-void MidiReceiveComponent::paint (Graphics& g)
-{
-  g.fillAll (Colours::white);
-  
-}
+//void MidiReceiveComponent::paint (Graphics& g)
+//{
+//  g.fillAll (Colours::white);
+//}
 
 void MidiReceiveComponent::resized()
 {
-  groupComponent->setBounds (16, 16, 224, 212);
+  groupComponent->setBounds (16, 16, 224, 240);
   allMessages->setBounds (24, 32, 150, 24);
   noteOn->setBounds (40, 56, 150, 24);
   noteOff->setBounds (40, 80, 150, 24);
@@ -174,6 +169,8 @@ void MidiReceiveComponent::resized()
   pitchBend->setBounds (40, 152, 150, 24);
   aftertouch->setBounds (40, 176, 150, 24);
   channelPressure->setBounds (40, 200, 150, 24);
+  activeSense->setBounds (40, 224, 150, 24);
+
   groupComponent2->setBounds (264, 16, 200, 104);
   //groupComponent3->setBounds (264, 120, 200, 96);
   allChannels->setBounds (272, 32, 150, 24);
@@ -182,115 +179,77 @@ void MidiReceiveComponent::resized()
   //hookField->setBounds (280, 144, 150, 24);
   //setHook->setBounds (280, 176, 71, 24);
   //clearHook->setBounds (360, 176, 72, 24);
-  traceInput->setBounds (24, 224, 150, 24);
   //doneButton->setBounds (288, 224, 71, 24);
   //cancelButton->setBounds (376, 224, 71, 24);
 }
 
-void MidiReceiveComponent::buttonClicked (Button* buttonThatWasClicked)
-{
+void MidiReceiveComponent::buttonClicked (Button* buttonThatWasClicked) {
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
-  
-  if (buttonThatWasClicked == allMessages)
-    {
-      if(buttonThatWasClicked->getToggleState()) {
-        noteOn->setToggleState(false, false);
-        noteOff->setToggleState(false, false);
-        controlChange->setToggleState(false, false);
-        programChange->setToggleState(false, false);
-        pitchBend->setToggleState(false, false);
-        aftertouch->setToggleState(false, false);
-        channelPressure->setToggleState(false, false);
-	
-	app->midiInPort->setNoteOn(true);
-	app->midiInPort->setNoteOff(true);
-	app->midiInPort->setControlChange(true);
-	app->midiInPort->setProgramChange(true);
-	app->midiInPort->setPitchBend(true);
-	app->midiInPort->setAftertouch(true);
-	app->midiInPort->setChannelPressure(true);
-	
-      }
-	
-    }
-  else if (buttonThatWasClicked == noteOn)
-    {
-      
-      allMessages->setToggleState(false, true);
-      app->midiInPort->setNoteOn( buttonThatWasClicked->getToggleState() );
-    }
-  else if (buttonThatWasClicked == noteOff)
-    {
-      allMessages->setToggleState(false, true);
-      app->midiInPort->setNoteOff( buttonThatWasClicked->getToggleState() );
-    }
-  else if (buttonThatWasClicked == controlChange)
-    {
-      allMessages->setToggleState(false, true);
-      app->midiInPort->setControlChange( buttonThatWasClicked->getToggleState() );
-    }
-  else if (buttonThatWasClicked == programChange)
-    {
-      allMessages->setToggleState(false, true);
-      app->midiInPort->setProgramChange( buttonThatWasClicked->getToggleState() );
-    }
-  else if (buttonThatWasClicked == pitchBend)
-    {
-      allMessages->setToggleState(false, true);
-      app->midiInPort->setPitchBend( buttonThatWasClicked->getToggleState() );
-    }
-  else if (buttonThatWasClicked == aftertouch)
-    {
-      allMessages->setToggleState(false, true);
-      app->midiInPort->setAftertouch( buttonThatWasClicked->getToggleState() );
-    }
-  
-  else if (buttonThatWasClicked == channelPressure)
-    {
-      allMessages->setToggleState(false, true);
-      app->midiInPort->setChannelPressure( buttonThatWasClicked->getToggleState() );
-    }
-  else if (buttonThatWasClicked == allChannels)
-    {
-      if( buttonThatWasClicked->getToggleState() ) {
-        app->midiInPort->setAllChannels(true );
+  bool tog=buttonThatWasClicked->getToggleState();
 
-        channelIncrementor->setEnabled(false);
-      }
-
+  if ( buttonThatWasClicked == allMessages )  {
+    noteOn->setToggleState(tog, false);
+    noteOff->setToggleState(tog, false);
+    controlChange->setToggleState(tog, false);
+    programChange->setToggleState(tog, false);
+    pitchBend->setToggleState(tog, false);
+    aftertouch->setToggleState(tog, false);
+    channelPressure->setToggleState(tog, false);
+    activeSense->setToggleState(tog, false);	
+    app->midiInPort->setNoteOn(tog);
+    app->midiInPort->setNoteOff(tog);
+    app->midiInPort->setControlChange(tog);
+    app->midiInPort->setProgramChange(tog);
+    app->midiInPort->setPitchBend(tog);
+    app->midiInPort->setAftertouch(tog);
+    app->midiInPort->setChannelPressure(tog);
+    app->midiInPort->setActiveSense(tog);	
+  }
+  else if (buttonThatWasClicked == noteOn) {
+    allMessages->setToggleState(false, false);
+    app->midiInPort->setNoteOn( buttonThatWasClicked->getToggleState() );
+  }
+  else if (buttonThatWasClicked == noteOff) {
+    allMessages->setToggleState(false, false);
+    app->midiInPort->setNoteOff( buttonThatWasClicked->getToggleState() );
+  }
+  else if (buttonThatWasClicked == controlChange) {
+    allMessages->setToggleState(false, false);
+    app->midiInPort->setControlChange( buttonThatWasClicked->getToggleState() );
+  }
+  else if (buttonThatWasClicked == programChange) {
+    allMessages->setToggleState(false, false);
+    app->midiInPort->setProgramChange( buttonThatWasClicked->getToggleState() );
+  }
+  else if (buttonThatWasClicked == pitchBend) {
+    allMessages->setToggleState(false, false);
+    app->midiInPort->setPitchBend( buttonThatWasClicked->getToggleState() );
+  }
+  else if (buttonThatWasClicked == aftertouch) {
+    allMessages->setToggleState(false, false);
+    app->midiInPort->setAftertouch( buttonThatWasClicked->getToggleState() );
+  }
+  else if (buttonThatWasClicked == channelPressure) {
+    allMessages->setToggleState(false, false);
+    app->midiInPort->setChannelPressure( buttonThatWasClicked->getToggleState() );
+  }
+  else if (buttonThatWasClicked == activeSense) {
+    allMessages->setToggleState(false, false);
+    printf("setting activeSense %d\n",buttonThatWasClicked->getToggleState());
+    app->midiInPort->setActiveSense( buttonThatWasClicked->getToggleState() );
+  }
+  else if (buttonThatWasClicked == allChannels) {
+    if ( buttonThatWasClicked->getToggleState() ) {
+      app->midiInPort->setAllChannels(true );
+      channelIncrementor->setEnabled(false);
     }
-  else if (buttonThatWasClicked == singleChannel)
-    {
-      if( buttonThatWasClicked->getToggleState() ) {
-
-        channelIncrementor->setEnabled(true);
-        app->midiInPort->setSingleChannel( (int)channelIncrementor->getValue());
-      }
+  }
+  else if (buttonThatWasClicked == singleChannel) {
+    if( buttonThatWasClicked->getToggleState() ) {
+      channelIncrementor->setEnabled(true);
+      app->midiInPort->setSingleChannel( (int)channelIncrementor->getValue());
     }
-  /*
-  else if (buttonThatWasClicked == setHook)
-    {
-    }
-  else if (buttonThatWasClicked == clearHook)
-    {
-
-    }
-  */
-  else if (buttonThatWasClicked == traceInput)
-    {
-      app->midiInPort->setTrace( buttonThatWasClicked->getToggleState() );
-    }
-  /*
-  else if (buttonThatWasClicked == doneButton)
-    {
-      
-    }
-  else if (buttonThatWasClicked == cancelButton)
-    {
-      
-    }
-  */
-
+  }
 }
 
 void MidiReceiveComponent::sliderValueChanged (Slider* sliderThatWasMoved)

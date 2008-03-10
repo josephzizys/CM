@@ -404,9 +404,9 @@ MidiInPort::MidiInPort(ConsoleWindow *win)
     pitchBend(true),
     aftertouch(true),
     channelPressure(true),
+    activeSense(true),
     allChannels(true),
     singleChannel(0)
-    
 {
   console=win;
   receiveComponent = new MidiReceiveComponent();
@@ -513,6 +513,7 @@ void MidiInPort::startSchemeInput() {
 }
 
 void MidiInPort::stopSchemeInput() {
+  printf("stopping scheme input\n");
   if ( !isActive(SCHEMEHOOK) ) {
     return;
   }
@@ -553,84 +554,81 @@ bool MidiInPort::isTracing() {
   return trace;
 }
 
-
-
 void MidiInPort::handleIncomingMidiMessage (MidiInput *dev, 
 					    const MidiMessage &msg) {
   // JUCE: chan>0 means channel message, 0 means not a channel message 
   int chan=msg.getChannel();
   String info=String::empty;
 
+  if ( msg.isActiveSense() && !activeSense )
+      return;
   if ( allChannels || msg.isForChannel(singleChannel) ) {     
-    if( msg.isNoteOn() && !noteOn) 
+    if ( msg.isNoteOn() && !noteOn) 
       return;
-    else if(msg.isNoteOff() && !noteOff) 
+    else if ( msg.isNoteOff() && !noteOff ) 
       return;
-    else if(msg.isController() && !controlChange)
+    else if ( msg.isController() && !controlChange )
       return;
-    else if(msg.isProgramChange() && !programChange)
+    else if ( msg.isProgramChange() && !programChange )
       return;
-    else if(msg.isPitchWheel() && !pitchBend)
+    else if ( msg.isPitchWheel() && !pitchBend )
       return;
-    else if(msg.isAftertouch() && !aftertouch)
+    else if ( msg.isAftertouch() && !aftertouch )
       return;
-    else if(msg.isChannelPressure() && !channelPressure)
+    else if ( msg.isChannelPressure() && !channelPressure )
       return;
-    }
-
+  }
+  
 #ifdef SCHEME  
   // AT THIS POINT CALL RECORDING CODE OR SCHEMEHOOK COE
   if ( isActive(SCHEMEHOOK) ) {
-    ((GraceApp *)GraceApp::getInstance())->schemeProcess->addNode((int)SchemeNode::INHOOK, 0.0, msg);
-
-
+    ((GraceApp *)GraceApp::getInstance())->schemeProcess->
+      addNode((int)SchemeNode::INHOOK, 0.0, msg);
   }
 #endif
   if ( isActive(RECORDING) ) {
     printf("Recording message!\n");
   }
-
+  
   if (trace) {
     printMidiMessageTrace(msg);
   }
 }
 
-void MidiInPort::printMidiMessageTrace (const MidiMessage &msg)
-{
+void MidiInPort::printMidiMessageTrace (const MidiMessage &msg) {
   int chan=msg.getChannel();
   String info;
   if ( allChannels || msg.isForChannel(singleChannel) ) {  
-    if( msg.isNoteOn() )
-      info=T("On: chan=") + String(chan) + T(" key=") + String(msg.getNoteNumber()) +
-	T(" vel=") + String(msg.getVelocity());
-    else if(msg.isNoteOff()) 
-      info=T("Off: chan=") + String(chan) + 
-	T(" key=") + String(msg.getNoteNumber());
-    else if(msg.isController())
-      info=T("Ctrl: chan=") + String(chan) + 
-	T(" ctrl=") + 
-	MidiMessage::getControllerName(msg.getControllerNumber()) +
-	T(" value=") + String(msg.getControllerValue());  
-    else if(msg.isProgramChange() )
-      info=T("Prog: chan=") + String(chan) + 
-	T(" prog=") + 
-	MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
-    else if(msg.isPitchWheel())
-      info=T("Pw: chan=") + String(chan) + T(" value=") +
-	String(msg.getPitchWheelValue());
-    else if(msg.isAftertouch() )
-      info=T("At: chan=") + String(chan) + T(" value=") +
-	String(msg.getAfterTouchValue());
-    else if(msg.isChannelPressure())
-      info=T("CP: chan=") + String(chan) + T(" value=") +
-	String(msg.getChannelPressureValue());
-    console->postConsoleTextMessage(String(msg.getTimeStamp(), 3) +
-				    T(" ") + info + T("\n"), 
+    if ( msg.isNoteOn() )
+      info=T("on: chan=") + String(chan-1) + T(" key=")
+	+ String(msg.getNoteNumber()) + T(" vel=")
+	+ String(msg.getVelocity());
+    else if ( msg.isNoteOff() ) 
+      info=T("off: chan=") + String(chan-1) + T(" key=")
+	+ String(msg.getNoteNumber());
+    else if ( msg.isController() )
+      info=T("ctrl: chan=") + String(chan-1) + T(" ctrl=") 
+	+ MidiMessage::getControllerName(msg.getControllerNumber())
+	+ T(" value=") + String(msg.getControllerValue());  
+    else if ( msg.isProgramChange() )
+      info=T("prog: chan=") + String(chan-1) + T(" prog=")
+	+ MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
+    else if ( msg.isPitchWheel())
+      info=T("bend: chan=") + String(chan-1) + T(" val=")
+	+ String(msg.getPitchWheelValue());
+    else if ( msg.isAftertouch() )
+      info=T("touch: chan=") + String(chan-1) + T(" val=") 
+	+ String(msg.getAfterTouchValue());
+    else if ( msg.isChannelPressure() )
+      info=T("press: chan=") + String(chan-1) + T(" val=")
+	+ String(msg.getChannelPressureValue());
+    else if ( msg.isActiveSense() )
+      info=T("sense: time=") + String(msg.getTimeStamp(), 3);
+    console->postConsoleTextMessage(//String(msg.getTimeStamp(), 3) +  T(" ") +
+				    info + T("\n"), 
 				    ConsoleMessage::TEXT, true);
   }
 }
-
-
 
 void MidiInPort::handlePartialSysexMessage (MidiInput *dev,
 					    const juce::uint8 *data, 
@@ -638,32 +636,30 @@ void MidiInPort::handlePartialSysexMessage (MidiInput *dev,
 					    const double time) {
 }
 
-void MidiInPort::setTrace(bool n)
-{
+void MidiInPort::setTrace(bool n) {
   trace = n;
 }
 
-void MidiInPort::setNoteOn(bool n)
-{
+void MidiInPort::setActiveSense(bool n) {
+  activeSense = n;
+}
+
+void MidiInPort::setNoteOn(bool n) {
   noteOn = n;
 }
-void MidiInPort::setNoteOff(bool n)
-{
+void MidiInPort::setNoteOff(bool n) {
   noteOff = n;
 }
 
-void MidiInPort::setControlChange(bool n)
-{
+void MidiInPort::setControlChange(bool n) {
   controlChange = n;
 }
 
-void MidiInPort::setProgramChange(bool n)
-{
+void MidiInPort::setProgramChange(bool n) {
   programChange = n;
 }
 
-void MidiInPort::setPitchBend(bool n)
-{
+void MidiInPort::setPitchBend(bool n) {
   pitchBend = n;
 }
 
@@ -691,25 +687,34 @@ void MidiInPort::setAllChannels(bool n)
 
 void MidiInPort::showMidiInDialog()
 {
-  if( noteOn && noteOff && controlChange && programChange && pitchBend &&
-      aftertouch && channelPressure)
+  if ( noteOn && noteOff && controlChange && programChange && pitchBend &&
+      aftertouch && channelPressure && activeSense)
     receiveComponent->allMessages->setToggleState(true, true);
   else {
-    receiveComponent->noteOn->setToggleState(noteOn, true);
-    receiveComponent->noteOff->setToggleState(noteOff, true);
-    receiveComponent->controlChange->setToggleState(controlChange, true);
-    receiveComponent->programChange->setToggleState(programChange, true);
-    receiveComponent->pitchBend->setToggleState(pitchBend, true);
-    receiveComponent->aftertouch->setToggleState(aftertouch, true);
-    receiveComponent->channelPressure->setToggleState(channelPressure, true);
+    receiveComponent->allMessages->setToggleState(false, false);
+    receiveComponent->noteOn->setToggleState(noteOn, false);
+    receiveComponent->noteOff->setToggleState(noteOff, false);
+    receiveComponent->controlChange->setToggleState(controlChange, false);
+    receiveComponent->programChange->setToggleState(programChange, false);
+    receiveComponent->pitchBend->setToggleState(pitchBend, false);
+    receiveComponent->aftertouch->setToggleState(aftertouch, false);
+    receiveComponent->channelPressure->setToggleState(channelPressure, false);
+    receiveComponent->activeSense->setToggleState(activeSense, false);
   }
-  if(singleChannel) {
+
+  if (singleChannel) {
     receiveComponent->singleChannel->setToggleState(true, true);
     receiveComponent->channelIncrementor->setValue((double)singleChannel);
   } else
     receiveComponent->allChannels->setToggleState(true, true);
   
-  DialogWindow::showModalDialog(T("Midi Receive Settings"), receiveComponent, console, Colours::white, true, false, false);
+  DialogWindow::showModalDialog(T("Midi Receive Settings"), 
+				receiveComponent,
+				console, 
+				Colour(0xffe5e5e5),
+				true,
+				false,
+				false);
 }
 
 ///
@@ -880,9 +885,9 @@ void MidiOutPort::sendInstruments() {
     device->sendMessageNow( MidiMessage::programChange(c+1,programchanges[c]));
 }
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 /// Instrument Dialog
 //
 

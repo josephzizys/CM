@@ -111,6 +111,8 @@ class MidiInPort : public MidiInputCallback {
   int runmode;
   bool trace;
   
+  int singleChannel;
+  bool allChannels;
   bool noteOn;
   bool noteOff;
   bool controlChange;
@@ -118,8 +120,7 @@ class MidiInPort : public MidiInputCallback {
   bool pitchBend;
   bool aftertouch;
   bool channelPressure;
-  int singleChannel;
-  bool allChannels;
+  bool activeSense;
 
   //C_word schemehook;
   MidiInPort(ConsoleWindow *win);
@@ -159,6 +160,7 @@ class MidiInPort : public MidiInputCallback {
   void setSingleChannel(int n);
   void setAllChannels(bool n);
   void setTrace(bool n);
+  void setActiveSense(bool n);
   void printMidiMessageTrace (const MidiMessage &msg);
   void showMidiInDialog();
 };
