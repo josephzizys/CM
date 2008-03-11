@@ -87,8 +87,14 @@ hiliteID TextSyntax::getHilite (const String text, int start, int end) {
  ************************************************************************/
 
 LispSyntax::LispSyntax () 
-  : Syntax( T(""), T(""), T("~!@$%^&*-_=+[{]}|:<.>/?"),
-	    T(";"), T("`#',"), T("\""), T("("), T(")"),
+  : Syntax( T(""),
+	    T(""), 
+	    T("~!@$%^&*-_=+[{]}|:<.>/?"),
+	    T(";"), 
+	    T("`#',"),
+	    T("\""),
+	    T("("),
+	    T(")"),
 	    T(","), T("\\"))
 {
   type=syntaxLisp;
@@ -98,6 +104,7 @@ LispSyntax::LispSyntax ()
   hilites[hiliteComment]=Colours::firebrick;
   hilites[hilite4]=Colour(0xa0, 0x20, 0xf0); //Colours::purple;
   hilites[hilite5]=Colours::orchid;
+  hilites[hilite6]=Colours::cadetblue;
 
   addLispTok( T("begin"), numtoks++, hilite4, 1);
   addLispTok( T("block"), numtoks++, hilite4, 1);
@@ -245,9 +252,25 @@ hiliteID LispSyntax::getHilite (const String text, int start, int end) {
   // LISP:
   // hilite4 = special forms (syntax tokens)
   // hilite5 = lisp keywords
+  // hilite6 = constants
+
+#ifdef SCHEME 
+  if (text[end-1] == ':')  // DSL style keywords (Chicken scheme)
+    return hilite5;
+  if (text[start] == '#') {
+    if (((end-start)==2) && ((text[start+1]=='t') ||
+			     (text[start+1]=='f') ) )
+      return hilite6;
+    if (((end-start)>2) && text[start+1]==':')
+      return hilite5;
+    return hiliteNone;
+  }
+#else
   if (text[start] == ':' )
     return hilite5;
-  SynTok * tok = getSynTok(text.substring(start,end));
+#endif 
+
+ SynTok * tok = getSynTok(text.substring(start,end));
   if (tok != (SynTok *)NULL)
     return tok->getHilite();
   return hiliteNone;
