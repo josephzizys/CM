@@ -295,23 +295,26 @@ void set_input_hook( C_word proc )
     ptr))
 
 (define (mp:inhook %hook)
-  ( (foreign-lambda void "set_input_hook" scheme-object )
-    ;; hook closure wraps a call to user's hook inside error protection
-    (lambda (%msg)
-      (call-with-current-continuation
-       (lambda (%cont)
-	 (with-exception-handler
-	  (lambda (%err)
-	    (print-error
-	     (sprintf ">>> Error: ~A~%    Aborting MIDI inhook.~%"
-		      ((condition-property-accessor 'exn 'message) %err)
-		      ))
-	    (%cont -1)  ; -1 means error
-	    )
-	  (lambda () 
-	    ( %hook %msg)  ;; call users hook with the received message
-	    0 ; 0 means success
-	    )))))))
+  (if (procedure? %hook)
+      ( (foreign-lambda void "set_input_hook" scheme-object )
+	;; hook closure wraps a call to user's hook inside error protection
+	(lambda (%msg)
+	  (call-with-current-continuation
+	   (lambda (%cont)
+	     (with-exception-handler
+	      (lambda (%err)
+		(print-error
+		 (sprintf ">>> Error: ~A~%    Aborting MIDI inhook.~%"
+			  ((condition-property-accessor 'exn 'message) %err)
+			  ))
+		(%cont -1)  ; -1 means error
+		)
+	      (lambda () 
+		( %hook %msg)  ;; call users hook with the received message
+		0 ; 0 means success
+		))))))
+      ( (foreign-lambda void "set_input_hook"  scheme-object ) #f )
+      ))
 
 ;; message definitions
 

@@ -144,8 +144,6 @@ bool SchemeNode::process(double curtime) {
 
   case INHOOK:
     {
-      printf("huh\n");
-      printf("is noteon %i\n", mmess.isNoteOn());
       C_word *mmess_ptr;
       mmess_ptr = C_alloc( sizeof(MidiMessage*) );
       C_save(C_mpointer(&mmess_ptr , (void*)&mmess));
@@ -204,19 +202,20 @@ void postGCHook(int m, long ms)
 
 
 
-void SchemeThread::setInputHook(C_word hook)
-{
+void SchemeThread::setInputHook(C_word hook) {
   if (hook == C_SCHEME_FALSE) {
-    printf("STOPPING scheme input\n");
     CHICKEN_gc_root_set(inputClosureGCRoot, C_SCHEME_FALSE);
-    if( ((GraceApp*)GraceApp::getInstance())->midiInPort->isActive(MidiInPort::SCHEMEHOOK) )
-      ((GraceApp*)GraceApp::getInstance())->midiInPort->stopSchemeInput();
+    if( ((GraceApp*)GraceApp::getInstance())->midiInPort->
+	isActive(MidiInPort::SCHEMEHOOK) )
+      ((GraceApp*)GraceApp::getInstance())->midiInPort->
+	stopSchemeInput();
   }
   else {
-    printf("STARTING scheme input\n");
     CHICKEN_gc_root_set(inputClosureGCRoot, hook);
-    if(!((GraceApp*)GraceApp::getInstance())->midiInPort->isActive(MidiInPort::SCHEMEHOOK))
-      ((GraceApp*)GraceApp::getInstance())->midiInPort->startSchemeInput();
+    if(!((GraceApp*)GraceApp::getInstance())->midiInPort->
+       isActive(MidiInPort::SCHEMEHOOK))
+      ((GraceApp*)GraceApp::getInstance())->midiInPort->
+	startSchemeInput();
   }
 }
 

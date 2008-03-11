@@ -513,7 +513,6 @@ void MidiInPort::startSchemeInput() {
 }
 
 void MidiInPort::stopSchemeInput() {
-  printf("stopping scheme input\n");
   if ( !isActive(SCHEMEHOOK) ) {
     return;
   }
@@ -600,33 +599,32 @@ void MidiInPort::printMidiMessageTrace (const MidiMessage &msg) {
   String info;
   if ( allChannels || msg.isForChannel(singleChannel) ) {  
     if ( msg.isNoteOn() )
-      info=T("on: chan=") + String(chan-1) + T(" key=")
-	+ String(msg.getNoteNumber()) + T(" vel=")
+      info=T("on chan: ") + String(chan-1) + T(" key: ")
+	+ String(msg.getNoteNumber()) + T(" vel: ")
 	+ String(msg.getVelocity());
     else if ( msg.isNoteOff() ) 
-      info=T("off: chan=") + String(chan-1) + T(" key=")
+      info=T("off chan: ") + String(chan-1) + T(" key: ")
 	+ String(msg.getNoteNumber());
     else if ( msg.isController() )
-      info=T("ctrl: chan=") + String(chan-1) + T(" ctrl=") 
+      info=T("ctrl chan: ") + String(chan-1) + T(" ctrl: ") 
 	+ MidiMessage::getControllerName(msg.getControllerNumber())
-	+ T(" value=") + String(msg.getControllerValue());  
+	+ T(" value: ") + String(msg.getControllerValue());  
     else if ( msg.isProgramChange() )
-      info=T("prog: chan=") + String(chan-1) + T(" prog=")
+      info=T("prog chan: ") + String(chan-1) + T(" prog: ")
 	+ MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
     else if ( msg.isPitchWheel())
-      info=T("bend: chan=") + String(chan-1) + T(" val=")
+      info=T("bend chan: ") + String(chan-1) + T(" val: ")
 	+ String(msg.getPitchWheelValue());
     else if ( msg.isAftertouch() )
-      info=T("touch: chan=") + String(chan-1) + T(" val=") 
+      info=T("touch chan: ") + String(chan-1) + T(" val: ")
 	+ String(msg.getAfterTouchValue());
     else if ( msg.isChannelPressure() )
-      info=T("press: chan=") + String(chan-1) + T(" val=")
+      info=T("press chan: ") + String(chan-1) + T(" val: ")
 	+ String(msg.getChannelPressureValue());
     else if ( msg.isActiveSense() )
-      info=T("sense: time=") + String(msg.getTimeStamp(), 3);
-    console->postConsoleTextMessage(//String(msg.getTimeStamp(), 3) +  T(" ") +
-				    info + T("\n"), 
-				    ConsoleMessage::TEXT, true);
+      info=T("sense time: ") + String(msg.getTimeStamp(), 3);
+    //String(msg.getTimeStamp(), 3) +  T(" ") +
+    console->postConsoleTextMessage( info + T("\n"), ConsoleMessage::TEXT, true);
   }
 }
 
@@ -663,30 +661,25 @@ void MidiInPort::setPitchBend(bool n) {
   pitchBend = n;
 }
 
-void MidiInPort::setAftertouch(bool n)
-{
+void MidiInPort::setAftertouch(bool n) {
   aftertouch = n;
 }
 
-void MidiInPort::setChannelPressure(bool n)
-{
+void MidiInPort::setChannelPressure(bool n) {
   channelPressure = n;
 }
 
-void MidiInPort::setSingleChannel(int n)
-{
+void MidiInPort::setSingleChannel(int n) {
   singleChannel = n;
   allChannels = false;
 }
 
-void MidiInPort::setAllChannels(bool n)
-{
+void MidiInPort::setAllChannels(bool n) {
   singleChannel = 0;
   allChannels = n;
 }
 
-void MidiInPort::showMidiInDialog()
-{
+void MidiInPort::showMidiInDialog() {
   if ( noteOn && noteOff && controlChange && programChange && pitchBend &&
       aftertouch && channelPressure && activeSense)
     receiveComponent->allMessages->setToggleState(true, true);
