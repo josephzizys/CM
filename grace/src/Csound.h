@@ -14,7 +14,7 @@
 #endif
 
 #else
-typedef MYFLT double;
+typedef double MYFLT;
 #endif
 
 class ConsoleWindow;
