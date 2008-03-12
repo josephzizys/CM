@@ -183,7 +183,7 @@ process was first sprouted.</p></dd>
   (<span class="special">go</span> ((i 0 (+ i 1))
        (k 60 (ran 30 70)))
       ((= i n)  )
-    (send <span class="string">"mp:midi"</span> <span class="keyword">#:key</span> k)
+    (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> k)
     (wait .1)))
 
 (sprout (simp 20))</pre>  
@@ -233,10 +233,10 @@ or for a keyword name to appear more than once in the data list.  </p>
 <div class="float">
 <p><strong>Scheme</strong></p>
 <pre class="code">
-(send <span class="string">"mp:midi"</span> <span class="keyword">#:key</span> 70)
+(send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> 70)
 (send <span class="string">"mp:midi"</span> 0 1 60 .1 0)
-(send <span class="string">"mp:midi"</span> 0 1 <span class="keyword">#:key</span> 60 <span class="keyword">#:chan</span> 10)
-(send <span class="string">"mp:midi"</span> <span class="keyword">#:chan</span> 10 <span class="keyword">#:time</span> 2 <span class="keyword">#:key</span> 60)
+(send <span class="string">"mp:midi"</span> 0 1 <span class="keyword">key:</span> 60 <span class="keyword">chan:</span> 10)
+(send <span class="string">"mp:midi"</span> <span class="keyword">chan:</span> 10 <span class="keyword">time:</span> 2 <span class="keyword">key:</span> 60)
 </pre>
 </div>
 
@@ -253,10 +253,10 @@ window. You can test that the connection actually works by using the
 random burst of messages to the output device.</p>
 
 <dl>
-  <dt id="mp:midi" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:midi"</span> <var>time=0</var> <var>dur=.5</var> <var>key=60</var> <var>amp=.5</var> <var>chan=0</var></code></dt>
+  <dt id="mp:midi" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:midi"</span> <var>time=0</var>, <var>dur=.5</var>, <var>key=60</var>, <var>amp=.5</var>, <var>chan=0</var></code></dt>
   <dd><p>Sends note data to midi port.</p></dd>
 
-  <dt id="mp:on" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:on"</span> <var>time=0</var> <var>key=60</var> <var>vel=64</var> <var>chan=0</var></code></dt>
+  <dt id="mp:on" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:on"</span> <var>time 0</var> <var>key 60</var> <var>vel 64</var> <var>chan 0</var></code></dt>
   <dd><p>Sends note on data to midi port. </p></dd>
 
   <dt id="mp:off" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:off"</span> <var>time=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var></code></dt>
@@ -572,10 +572,10 @@ Keyword arguments applicable to all types of messages:
 </p>
 
 <dl>
-<dt><code class="keyword">#:time</code> <var>float</var></dt>
+<dt><code class="keyword">time:</code> <var>float</var></dt>
 <dd><p>The time (in seconds) to wait before the event will sound. Defaults to 0.0</p></dd>
 
-<dt><code class="keyword">#:chan</code> <var>integer</var></dt>
+<dt><code class="keyword">chan:</code> <var>integer</var></dt>
 <dd><p>The channel number of the event. Defaults to 0.</p></dd>
 
 </dl>
@@ -584,7 +584,7 @@ Keyword arguments applicable to all types of messages:
 Keyword arguments applicable to <code class="entry">mm:off</code> messages:
 </p>
 <dl>
-<dt><code class="keyword">#:key</code> <em>integer</em></dt>
+<dt><code class="keyword">key:</code> <em>integer</em></dt>
 <dd><p>An integer key number value 0-127. Defaults to 60.</p></dd>
 </dl>
 
@@ -592,9 +592,9 @@ Keyword arguments applicable to <code class="entry">mm:off</code> messages:
 Keyword arguments applicable to <code class="entry">mm:on</code> messages:
 </p>
 <dl>
-<dt><code class="keyword">#:key</code> <em>integer</em></dt>
+<dt><code class="keyword">key:</code> <em>integer</em></dt>
 <dd><p>An integer key number value 0-127. Defaults to 60.</p></dd>
-<dt><code class="keyword">#:vel</code> <em>integer</em></dt>
+<dt><code class="keyword">vel:</code> <em>integer</em></dt>
 <dd><p>An integer velocity value 0-127. Defaults to 64.</p></dd>
 </dl>
 
@@ -602,7 +602,7 @@ Keyword arguments applicable to <code class="entry">mm:on</code> messages:
 Keyword arguments applicable to <code class="entry">mm:touch</code> messages:
 </p>
 <dl>
-<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dt><code class="keyword">val:</code> <em>integer</em></dt>
 <dd><p>An integer aftertouch value 0-127. Defaults to 0.</p></dd>
 </dl>
 
@@ -610,9 +610,9 @@ Keyword arguments applicable to <code class="entry">mm:touch</code> messages:
 Keyword arguments applicable to <code class="entry">mm:ctrl</code> messages:
 </p>
 <dl>
-<dt><code class="keyword">#:num</code> <em>integer</em></dt>
+<dt><code class="keyword">num:</code> <em>integer</em></dt>
 <dd><p>A integer controller number 0-127. Defaults to 0.</p></dd>
-<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dt><code class="keyword">val:</code> <em>integer</em></dt>
 <dd><p>An integer control change value 0-127. Defaults to 0.</p></dd>
 </dl>
 
@@ -620,7 +620,7 @@ Keyword arguments applicable to <code class="entry">mm:ctrl</code> messages:
 Keyword arguments applicable to <code class="entry">mm:prog</code> messages:
 </p>
 <dl>
-<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dt><code class="keyword">val:</code> <em>integer</em></dt>
 <dd><p>An integer program change value 0-127. Defaults to 0.</p></dd>
 </dl>
 
@@ -628,7 +628,7 @@ Keyword arguments applicable to <code class="entry">mm:prog</code> messages:
 Keyword arguments applicable to <code class="entry">mm:press</code> messages:
 </p>
 <dl>
-<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dt><code class="keyword">val:</code> <em>integer</em></dt>
 <dd><p>An integer pressure change value 0-127. Defaults to 0.</p></dd>
 </dl>
 
@@ -636,7 +636,7 @@ Keyword arguments applicable to <code class="entry">mm:press</code> messages:
 Keyword arguments applicable to <code class="entry">mm:bend</code> messages:
 </p>
 <dl>
-<dt><code class="keyword">#:val</code> <em>integer</em></dt>
+<dt><code class="keyword">val:</code> <em>integer</em></dt>
 <dd><p>An integer pitch bend value 0-16383. Defaults to 0.</p></dd>
 </dl>
 </p></dd>
@@ -796,7 +796,7 @@ name.</li>
 (<span class="special">define</span> (<span class="defined">pinkscale</span> len scale)
   (<span class="special">go</span> ((i 0 (+ i 1)))
       ((= i len) )
-    (send <span class="string">"mp:midi"</span> <span class="keyword">#:key</span> (discrete (ranpink) -1 1 scale))
+    (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> (discrete (ranpink) -1 1 scale))
     (wait .2)))
 
 (<span class="special">define</span> <span class="defined">dorian</span> (steps 50 20 2 1 2 2 2 1 2))
@@ -838,7 +838,7 @@ name.</li>
 (<span class="special">define</span> (<span class="defined">chopin</span> n r d k)
   (<span class="special">go</span> ((i 0 (+ i 1)))
       ((= i n) <span class="constant">#f</span>)
-    (send <span class="string">"mp:midi"</span> <span class="keyword">#:dur</span> d <span class="keyword">#:key</span> k)
+    (send <span class="string">"mp:midi"</span> <span class="keyword">dur:</span> d <span class="keyword">key:</span> k)
     (wait r)))
 
 <span class="comment">;; sprout D# minor chord with ids</span>
@@ -940,9 +940,9 @@ name.</li>
          (l (length scale))
          (r (/ dur (length scale))))
         ((= i l) <span class="constant">#f</span>)
-      (send <span class="string">"mp:midi"</span> <span class="keyword">#:key</span> (list-ref scale i) 
-            <span class="keyword">#:dur</span> .5
-            <span class="keyword">#:amp</span> (interp i 0 .9 l .5))
+      (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> (list-ref scale i) 
+            <span class="keyword">dur:</span> .5
+            <span class="keyword">amp:</span> (interp i 0 .9 l .5))
       (wait r))))
 
 <span class="comment">;; test the process</span>
