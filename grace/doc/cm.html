@@ -5,13 +5,13 @@
 <style type="text/css" media="all">
 @import "grace.css";
 </style>
-<title>Grace with Real Time Scheduling and Chicken Scheme</title>
+<title>Common Music 3</title>
 </head>
 
 <body>
 <div id="content">
 
-<h1> Grace with Real Time Scheduling and Chicken Scheme</h1>
+<h1> Common Music 3</h1>
 
 <ul>
   <li><a href="#introduction">Introduction</a></li>
@@ -20,11 +20,13 @@
   <li><a href="#send">Sending Data to Ports</a></li>
   <li><a href="#toolbox">Composition Toolbox</a>
   <ul>
-    <li><a href="#lists">Lists</a></li>
     <li><a href="#environment">Environment</a></li>
+    <li><a href="#lists">Lists</a></li>
     <li><a href="#iteration">Iteration</a></li>
     <li><a href="#mapping">Mapping and Transformation</a></li>
     <li><a href="#randomness">Randomness</a></li>
+    <li><a href="#patterns">Patterns</a></li>
+    <li><a href="#spectral">Spectral Manipulation</a></li>
     <li><a href="#midi-message">Midi Messages</a></li>
     </ul>
   <li><a href="#sal">SAL Syntax</a>
@@ -36,58 +38,60 @@
 
 <h2 id="introduction">Introduction</h2>
 
-<p>Grace can be built with either Common Lisp or <a
+<p>The Common Music 3 branch is implemented in <a
 href="http://www.call-with-current-continuation.org">Chicken
-Scheme</a> as its extension language for algorithmic composition.  The
-CL binding supports file-based, non-real time work with software systems
-like Common Music, CLM, Fomus etc. <!-- In the CL binding Grace
-communicates with a (separate) Lisp process running SBCL or CLISP over
-a network socket connection. --> The new Scheme binding is a
-lightweight, minimalist interface designed for real time algorithmic
-composition. </p>
-
-<p>The distinguishing features of the Scheme binding compared to the
-CL binding are:</p>
+Scheme</a> and optimized for realtime scheduling within the Grace
+application. The distinguishing features of Common Music 3 compared to
+the previous (CM 2) line:</p>
 
 <ul>
-  <li>Scheme is a part of the Grace executable and
-  is always running</li>
-  <li>Common Music is not involved.</li>
-  <li>Scheduler is only real time and is always running</li>
-  <li>Ports replace files </li>
-  <li>XML replaces Lisp classes</li>
-  <li>Future additions: SAL (very soon), XML point description for Plotter (soon), real time audio using JUCE Audio Plugin Framework (year)</li>
+  <li>Does not compile or load sources at runtime.</li>
+  <li>Does not use an object system or generic functions.</li>
+
+  <li>Terser function calling syntax to facilitate interactive coding:
+  <ul>
+    <li>Opt/key parameters with DSSL style keywords (symbols ending with a colon e.g. <code><var class="optkey">a:</var></code> ) replace &optional and &keyword parameters in both Scheme and SAL. For example the opt/key function
+
+<code><span class="term">foo</span>(<var class="optkey">a:</var> <var class="optval">1</var>, <var class="optkey">b:</var> <var class="optval">3</var>)</code> could be called in any of the following ways: <code>foo() foo(4) foo(2, 3)  foo(a: 3) foo(b: 99) foo(a: 2, b: 4)</code>
+
+
+    
+
+</li>
+    <li>Not dependance on on quoted symbols and minimal dependance on keywords in data.
+    <li>Shorter names in general.</li>
+  </ul>
+  <li>SAL and Scheme equivalence. Documentation follows SAL syntax since its a simple matter for any Lisper to understand but the reverse is not true.</li>
+</li>
+  <li>Note names support quarter-tone inflections: quarter-tone down is <code>&lt;</code>, quarter-tone up is <code>&gt;</code>. For example <code>cs&gt;4</code> is one quarter-tone above <code>cs4</code>.</li>
+
+  <!-- li>XML description replaces Lisp class definitions.</li -->
+  <li>Ports replace files. </li>
 </ul>
 
-<!-- blockquote>
-<span style="font-size:small;">
-* See <a href="#toolbox">Toolbox</a>. <br/>
 
-</span>
-</blockquote -->
+<!-- h3>Documentation Syntax</h3>
 
+<ul>
+<li id="required">Required parameters appear in cursive font <code><var>foo</var></code></li>
 
-<!-- p> The Common Lisp binding uses a network socket connection to send
-data between Grace and a separate process running SBCL or CLISP with
-Common Music loaded. It provides essentially non-realtime, file-based
-algorithmic composition services.<p> </li -->
+<li id="optional">Optional parameters appear in square brackets together with their default value: <code>[<var>foo 1</var>]</code></li>
 
-<!-- p>By default Grace builds with the Scheme back end and the Scheme
-binding is the primary focus of Grace development in the future.  -->
+<li id="variable">Variable parameters appear with ellipses <code><var>foo...</var></code></li>
 
-<!-- p>To build Grace for use with Common Lisp specify 'scons CL=1'
-on the command line. </p -->
+<li id="named">Named parameters  appear as DSSSL keywords (named with colons at the end) along with their default values: <cod><var>foo: 1 bar: #f</var></code>.
+
+</ul  -->
 
 <h2 id="scheduler">The Scheduler</h2>
 
 <p>The scheduler is a JUCE thread that executes on a 1 millisecond
 tick. There are just a few entry points:</p>
 
-<dl id="sprout"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">sprout</span> (<var>process</var> [<var>ahead=0</var>] [<var>id=0</var>])<br/> &rarr; <var>void</var></code></dt>
+<dl id="sprout"><dt class="entry"><span style="font-weight:bold;">sprout</span>  <var>process</var>, <var class="optkey">ahead:</var> <var class="optval">0</var>, <var class="optkey">id:</var> <var class="optval">#f</var><br/> &rarr; <var>void</var></dt>
 
 <dd>Adds <a href="#processes"><var>process</var></a> to the scheduler
-starting <var>ahead</var> time from now. If an optional integer
-<var>id</var> is provided it tags the process in the scheduling queue;
+starting at <var>ahead</var> time from now. If <var>id</var> is provided it tags the process in the scheduling queue;
 tagged processes can then be selectively removed from the scheduler
 using <a href="#stop"><code>stop</code></a>. The <var>process</var>
 parameter can be a single process or list of processes. If it is a
@@ -96,26 +100,28 @@ their values are paired with each process in left-to-right order. See
 <a href="#processes">Musical Processes</a> for more information.</dd>
 </dl>
 
-<dl id="stop"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">stop</span> ([<var>id</var>] <var>...</var>)<br/> &rarr; <var>void</var></code></dt>
+<dl id="stop"><dt class="entry"><span class="term">stop</span> (<var>id...</var>)<br/>
+
+  &rarr; <var>void</var></dt>
 
 <dd>Stops processes currently running in the scheduling queue. If no
 ids are given all the processes are stopped, otherwise only processes
 with the specified ids are removed. Multiple processes can share a
 common id.</dd> </dl>
 
-<dl id="hush"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">hush</span> ()<br/> &rarr; <var>void</var></code></dt>
+<dl id="hush"><dt class="entry"><code><span class="term">hush</span> ()<br/> &rarr; <var>void</var></code></dt>
 <dd>Stops all processes currently running and flushes any pending events in the output queue.</dd>
 </dl>
 
-<dl id="pause"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">pause</span> ()<br/> &rarr; <var>void</var></code></dt>
+<dl id="pause"><dt class="entry"><code><span class="term">pause</span> ()<br/> &rarr; <var>void</var></code></dt>
 <dd>Suspends the process scheduler.</dd>
 </dl>
 
-<dl id="cont"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">cont</span> ()<br/> &rarr; <var>void</var></code></dt>
+<dl id="cont"><dt class="entry"><code><span class="term">cont</span> ()<br/> &rarr; <var>void</var></code></dt>
 <dd>Resumes (continues) the paused scheduler.</dd>
 </dl>
 
-<dl id="now"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">now ()</span><br/> &rarr; <var>float</var></code></dt>
+<dl id="now"><dt class="entry"><code><span class="term">now</span>  ()<br/> &rarr; <var>float</var></code></dt>
 <dd>Returns the current time of the scheduler. See also <a href="#elapsed"><code>elapsed</code></a><!-- and <a href="#time-format"><code>time-format</code -->.</dd>
 </dl>
 
@@ -143,7 +149,7 @@ but returns an iterative process instead of performing iteration
 directly. It also wraps your code inside an error handler so Scheme
 can't crash from errors under the callback:</p>
 
-<dl><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">go</span> ((<var>var</var> <var>init</var> [<var>step</var>]) <var>...</var>)
+<dl><dt class="entry"><code><span class="term">go</span> ((<var>var</var> <var>init</var> [<var>step</var>]) <var>...</var>)
    (<var>stop?</var> <var>finally</var> <var>...</var>)
   <var>body</var> <var>...</var></code></dt>
 <dd>
@@ -160,7 +166,7 @@ each <var>body</var> form is evaluated in sequential order.  These
 forms have access to two local functions that are only defined within
 the lexical body of <code>go</code>:</dd> </dl>
 
-<dl id="wait"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">wait</span> (<var>ahead</var>)<br/>&rarr; <var>float</var></code></dt>
+<dl id="wait"><dt class="entry"><code><span class="term">wait</span> (<var>ahead</var>)<br/>&rarr; <var>float</var></code></dt>
 
 <dd><p>A local function only defined within the body of <a
 href="#go"><code>go</code></a> that sets the time delta for the next
@@ -168,7 +174,7 @@ runtime of the process.</p></dd>
 
 </dl>
 
-<dl id="elapsed"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">elapsed</span> ()<br/>&rarr; <var>float</var></code></dt>
+<dl id="elapsed"><dt class="entry"><code><span class="term">elapsed</span> ()<br/>&rarr; <var>float</var></code></dt>
 
 <dd><p>A local function only defined within the body of <a
 href="#go"><code>go</code></a> that returns the elapsed time since the
@@ -203,7 +209,7 @@ takes. <p>Valid port names are (currently) <code>mp</code> for the Midi port and
 <code>cs</code> for the Csound port.</p>
 
 <dl>
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <var>message data ...</var><br/>&rarr; <var>void</var></code></dt>
+  <dt class="entry"><code><span class="term">send</span> <var>message data ...</var><br/>&rarr; <var>void</var></code></dt>
 <dd>
 
 <p>
@@ -253,52 +259,58 @@ window. You can test that the connection actually works by using the
 random burst of messages to the output device.</p>
 
 <dl>
-  <dt id="mp:midi" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:midi"</span> <var>time=0</var>, <var>dur=.5</var>, <var>key=60</var>, <var>amp=.5</var>, <var>chan=0</var></code></dt>
-  <dd><p>Sends note data to midi port.</p></dd>
+  <dt id="mp:midi" class="entry"><code><span class="term">send</span> <span class="string">"mp:midi"</span>,  <var class="optkey">time:</var> <var class="optval">0</var>, <var class="optkey">dur:</var> <var class="optval">.5</var>, <var class="optkey">key:</var> <var class="optval">60</var>, <var class="optkey">amp:</var> <var class="optval">.5</var>, <var class="optkey">chan:</var> <var class="optval"> 0</var></code>
+  </dt>
+  <dd><p>Send note data to midi port.</p></dd>
 
-  <dt id="mp:on" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:on"</span> <var>time 0</var> <var>key 60</var> <var>vel 64</var> <var>chan 0</var></code></dt>
-  <dd><p>Sends note on data to midi port. </p></dd>
+  <dt id="mp:on" class="entry"><code><span class="term">send</span> <span class="string">"mp:on"</span>, <var class="optkey">time:</var> <var class="optval">0</var>, <var class="optkey">key:</var> <var class="optval">60</var>, <var class="optkey">amp:</var> <var class="optval">.5</var>, <var class="optkey">chan:</var> <var class="optval">0</var></code></dt>
 
-  <dt id="mp:off" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:off"</span> <var>time=0</var> <var>key=60</var> <var>vel=127</var> <var>chan=0</var></code></dt>
+  <dd><p>Send note on data to midi port.</p>
+</dd>
+
+  <dt id="mp:off" class="entry"><code><span class="term">send</span> <span class="string">"mp:off"</span>, <var class="optkey">time:</var> <var class="optval">0</var> <var class="optkey">key:</var> <var class="optval">60</var>, <var class="optkey">vel:</var> <var class="optval">127</var>, <var class="optkey">chan:</var> <var class="optval">0</var></code></dt>
   <dd><p>Sends note off data to midi port.</p></dd>
 
-  <dt id="mp:prog" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:prog"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var></code></dt>
+  <dt id="mp:prog" class="entry"><code><span class="term">send</span> <span class="string">"mp:prog"</span>, <var class="optkey">time:</var> <var class="optval">0</var>,
+    <var class="optkey">val:</var> <var class="optval">0</var>, <var class="optkey">chan:</var> <var class="optval">0</var></code></dt>
   <dd><p>Sends program change value to midi port. </p></dd>
 
-  <dt id="mp:ctrl" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:ctrl"</span> <var>time=0</var> <var>num=0</var> <var>val=0</var> <var>chan=0</var></code></dt>
+  <dt id="mp:ctrl" class="entry"><code><span class="term">send</span> <span class="string">"mp:ctrl"</span>, <var class="optkey">time:</var> <var class="optval">0</var>,
+    <var class="optkey">num:</var> <var class="optval">0</var>, <var class="optkey">val:</var> <var class="optval">0</var>, <var class="optkey">chan:</var> <var class="optval">0</var></code></dt>
   <dd><p>Sends control change data to midi port.</p></dd>
 
-  <dt id="mp:touch" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:touch"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var></code></dt>
+  <dt id="mp:touch" class="entry"><code><span class="term">send</span> <span class="string">"mp:touch"</span>, <var class="optkey">time:</var> <var class="optval">0</var>, <var class="optkey">val:</var> <var class="optval">0</var>, <var class="optkey">chan:</var> <var class="optval">0</var></code></dt>
   <dd>
     <p>Sends after touch value to midi port.</p>
   </dd>
 
-  <dt id="mp:press" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:press"</span> <var>time=0</var> <var>val=0</var> <var>chan=0</var></code></dt>
+  <dt id="mp:press" class="entry"><code><span class="term">send</span> <span class="string">"mp:press"</span>, <var class="optkey">time:</var> <var class="optval">0</var>, <var class="optkey">val:</var> <var class="optval">0</var>, <var class="optkey">chan:</var> <var class="optval">0</var></code></dt>
   <dd>
     <p>Sends channel pressure value to midi port.</p>
   </dd>
 
-  <dt id="mp:bend" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:bend"</span> <var>time=0</var> <var>val=8192</var> <var>chan=0</var></code></dt>
+  <dt id="mp:bend" class="entry"><code><span class="term">send</span> <span class="string">"mp:bend"</span>, <var class="optkey">time:</var> <var class="optval"> 0</var>, <var class="optkey">val:</var> <var class="optval">8192</var>, <var class="optkey">chan:</var> <var class="optval">0</var></code></dt>
   <dd>
     <p>Sends pitch bend value 0-16383 to midi port.</p>
   </dd>
 
-  <dt id="mp:mm" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:mm"</span> <var>message</var></code></dt>
+  <dt id="mp:mm" class="entry"><code><span class="term">send</span> <span class="string">"mp:mm"</span>, <var>message</var></code></dt>
   <dd>
     <p>Sends a low-level <a href="#midi-message">MIDI message</a> to the midi port.
   </dd>
 
-  <dt id="mp:inhook" style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">send</span> <span class="string">"mp:inhook"</span> <var>function</var></code></dt>
+  <dt id="mp:inhook" class="entry"><code><span class="term">send</span> <span class="string">"mp:inhook"</span> <var>function</var></code></dt>
   <dd><p>Sets <var>function</var> to receive Midi Messages that arrive at the Midi In port. The function is passed a single argument, the Midi Message received. See <a href="midimessage">Midi Messages</a> for more information. The hook should call <a href="#mm:free"><code>mm:free</code></a> on any message that it does not send to the output port.</p></dd>
 
 </dl>
 
+
 <h3 id="csound-port">Csound Port Methods</h3>
 <dl>
-<dt id="cs:i" style="background-color:#e6e6ff;">
-  <code><span style="font-weight:bold;">send</span> <span class="string">"cs:i"</span> <var>ins start duration ...</var></code>
+<dt id="cs:i" class="entry">
+  <code><span class="term">send</span> <span class="string">"cs:i"</span> <var>ins, start, duration ...</var></code>
   <br/>
-<code><span style="font-weight:bold;">send</span> <span class="string">"cs:i"</span> <var>list</var></code></dt>
+<code><span class="term">send</span> <span class="string">"cs:i"</span> <var>list</var></code></dt>
 
   <dd>
 
@@ -322,14 +334,14 @@ random burst of messages to the output device.</p>
     <p></p>
 </dd>
 
-<dt id="cs:f" style="background-color:#e6e6ff;">
-  <code><span style="font-weight:bold;">send</span> <span class="string">"cs:f"</span> <var>num ...</var></code>
+<dt id="cs:f" class="entry">
+  <code><span class="term">send</span> <span class="string">"cs:f"</span>, <var>num...</var></code>
   <br/>
-<code><span style="font-weight:bold;">send</span> <span class="string">"cs:f"</span> <var>list</var></code></dt>
+<code><span class="term">send</span> <span class="string">"cs:f"</span>, <var>list</var></code></dt>
 <dd><p>Sends function table data to Csound. Similar to <span class="string">"cs:i"</span> in all other respects.
   </dd>
-<dt id="cs:clear" style="background-color:#e6e6ff;">
-  <code><span style="font-weight:bold;">send</span> <span class="string">"cs:clear"</span> </code>
+<dt id="cs:clear" class="entry">
+  <code><span class="term">send</span> <span class="string">"cs:clear"</span> </code>
 <dd><p>Clears the current contents of the port's score buffer.
   </dd>
 
@@ -362,111 +374,136 @@ facilitate algorithmic music composition. Over time most of CM's
 toolbox will become available as optional modules, e.g.  <code> (use
 patterns)</code>, <code> (use tuning)</code>, etc.</p>
 
+<h3 id="environment">Environment</h3>
+
+  
+<dl id="chdir">
+<dt class="entry"><code><span class="term">chdir</span> <var>pathname</var><br/>&rarr; <var>void</var></code></dt>
+<dd><p>Changes the current working directory to the <var>pathname</var> string. </p></dd>
+</dl>
+
+<dl id="cwd">
+<dt class="entry"><code><span class="term">cwd</span> ()<br/>&rarr; <var>string</var></code></dt>
+<dd><p>Returns the full pathname (string) of the current working directory. </p></dd>
+</dl>
+
+
+
 <h3 id="lists">Lists</h3>
 
 <dl id="list*">
-  <dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">list*</span> (<var>...</var> <var>list</var>)<br/>&rarr; <var>list</var></code></dt>
+  <dt class="entry"><code><span class="term">list*</span> (<var>...</var> <var>list</var>)<br/>&rarr; <var>list</var></code></dt>
 <dd><p>Adds the elements in <var>...</var> onto the front of <var>list</var></p></dd>
 </dl>
 
 <dl id="first">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">first</span> (<var>list</var>) <!-- br/> <var>...</var --> <br/> ... <span style="font-weight:bold;">tenth</span> (<var>list</var>)<br/>&rarr; <var>object</var></code></dt>
-<dd><p>Accessors returning the first, second, third, fourth, fifth, sixth, seventh, eighth, ninth and tenth element of a <var>list</var>.  </p></dd>
-</dl>
-
-<dl id="rest">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">rest</span> (<var>list</var>)<br/>&rarr; <var>list</var></code></dt>
-<dd><p>Returns a list of all but the first element in <var>list</var>. </p></dd>
+<dt class="entry"><code><span class="term">first</span> <var>list</var> <!-- br/> <var>...</var --> <br/> <var>...</var> <br/> <span class="term">tenth</span> <var>list</var><br/>&rarr; <var>object</var></code></dt>
+<dd><p>Returns the first, second, third, fourth, fifth, sixth, seventh, eighth, ninth or tenth element of a <var>list</var>.  </p></dd>
 </dl>
 
 <dl id="last">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">last</span> (<var>list</var>)<br/>&rarr; <var>list</var></code></dt>
-<dd><p>Returns the last (tail) list in <var>list</var>. </p></dd>
+<dt class="entry"><code><span class="term">last</span> <var>list</var><br/>&rarr; <var>object</var></code></dt>
+<dd><p>Returns the last element in <var>list</var>. </p></dd>
 </dl>
-
 
 <dl id="butlast">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">butlast</span> (<var>list</var>)<br/>&rarr; <var>list</var></code></dt>
-<dd><p>Returns all but the last (tail) list in <var>list</var>. </p></dd>
+<dt class="entry"><code><span class="term">butlast</span> <var>list</var><br/>&rarr; <var>list</var></code></dt>
+<dd><p>Returns all but the last element in <var>list</var>. </p></dd>
 </dl>
 
-<h3 id="environment">Environment</h3>
-
-<dl id="cwd">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">cwd</span> ()<br/>&rarr; <var>list</var></code></dt>
-<dd><p>Returns the full pathname string to the current working directory. </p></dd>
+<dl id="rest">
+<dt class="entry"><code><span class="term">rest</span> <var>list</var><br/>&rarr; <var>list</var></code></dt>
+<dd><p>Returns a list of all but the first element in <var>list</var>. </p></dd>
 </dl>
 
-<dl id="chdir">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">chdir</span> (<var>pathname</var>)<br/>&rarr; <var>void</var></code></dt>
-<dd><p>Changes the current working directory to the <var>pathname</var> string. </p></dd>
-</dl>
+<!-- dl id="tail">
+<dt class="entry"><code><span class="term">tail</span> <var>list</var><br/>&rarr; <var>list</var></code></dt>
+<dd><p>Returns the tail (final) list of <var>list</var>. </p></dd>
+</dl -->
+
+
 
 <h3 id="iteration">Iteration</h3>
 
 <dl id="loop">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">loop</span> {<var>clause</var>}*<br/>&rarr; <var>sexpr</var></code></dt>
+<dt class="entry"><code><span class="term">loop</span> {<var>clause</var>}*<br/>&rarr; <var>sexpr</var></code></dt>
 <dd><p>An (essentially) complete implementation of the <a href="http://www.lisp.org/HyperSpec/Body/sec_6-1.html">Common Lisp loop macro</a> is provided. </p></dd>
 </dl>
 
 <h3 id="mapping">Mapping and Transformation</h3>
 
+<dl id="note">
+<dt class="entry"><code><span class="term">note</span> <var>freq</var><br/>&rarr; <var>symbol</var></code></dt>
+<dd>
+
+<p>
+
+Returns the note name of <var>freq</var>, a key, note, or list of the
+same. A note consists of a pitch class letter (<code>c d e f g a
+b</code>), an optional sharp or flat letter (<code>s f</code>) an
+optional quarter tone inflection (<code>&lt;</code> or
+<code>&gt;</code>) and an octave number (<code>00</code>
+to <code>9</code>). Note names can be specified as strings, symbols or
+keywords. Inside note lists the octave number can be omitted from a
+note name in which case the octave defaults to the last octave
+specified, or to octave 4.
+
+</p>
+
+</dd></dl>
+
+<dl id="key">
+<dt class="entry"><span class="term">key</span> (<var>freq</var>)<br/>&rarr; <var>number</var></dt>
+<dd><p>Returns the key (number) of <var>freq</var>, a note, hertz value or list of same.</p></dd></dl>
+
+<dl id="hz">
+<dt class="entry"><span class="term">hz</span> (<var>freq</var>)<br/>&rarr; <var>number</var></dt>
+<dd><p>Returns the hertz value of <var>freq</var>, a note, key, or list of the same.</p></dd></dl>
+
+<dl id="steps">
+<dt class="entry"><span class="term">steps</span> (<var>num</var>, <var>start</var>, <var>step...</var>)<br/>&rarr; <var>list</var></dt>
+<dd><p>Returns a list of <var>num</var> keys starting on <var>start</var> and incremented by each <var>step</var> (positive or negative) read mod the number of steps. For example, <code>(steps 24 60 2 1 )</code>  would return a 3 octave ascending octatonic scale starting on key number 60.</p></dd></dl>
+
 <dl id="rescale">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">rescale</span> (<var>x</var> <var>x1</var> <var>x2</var> <var>y1</var> <var>y2</var> [<var>base=1</var>]) <br/>&rarr; <var>float</var></code></dt>
+<dt class="entry"><span class="term">rescale</span> (<var>x</var>, <var>x1</var>, <var>x2</var>, <var>y1</var>, <var>y2</var>, [<var>base 1</var>]) <br/>&rarr; <var>float</var></dt>
 <dd><p>Returns a floating point value between <var>y1</var> and <var>y2</var> that is proportional to <var>x</var> between <var>x1</var> and <var>x2</var>. If <var>base</var> is 1 the rescaling is linear otherwise its exponential where <var>base</var> &gt; 1 produce increasing spread as <var>x</var> approaches <var>x2</var> and values  &lt; 1 produce decreasing spread.</p></dd></dl>
   
 <dl id="discrete">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">discrete</span> (<var>x</var> <var>x1</var> <var>x2</var> <var>d1</var> [<var>d2</var>] [<var>base=1</var>])<br/>&rarr; <var>sexpr</var></code></dt>
+<dt class="entry"><span class="term">discrete</span> (<var>x</var>, <var>x1</var>, <var>x2</var>, <var>d1</var>, [<var>d2</var> #f], [<var>base 1</var>])<br/>&rarr; <var>sexpr</var></dt>
 <dd><p>Similar to <code>rescale</code> except floating point <var>x</var> is mapped onto discrete values. If <var>d1</var> and <var>d2</var> are integers then <var>x</var> is mapped onto the range of integers  <var>d1</var> to <var>d2</var>. Otherwise, <var>d1</var> should be a list of values and <var>x</var> is mapped onto the elements of <var>d1</var> with <var>d2</var> an optional length that defaults to the length of <var>d1</var>. </p></dd></dl>
 
 <dl id="interpl">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">interpl</span> (<var>x</var> <var>list</var> [<var>base=1</var>])<br/>&rarr; <var>float</var></code></dt>
+<dt class="entry"><span class="term">interpl</span> (<var>x</var>, <var>list</var>, [<var>base 1</var>])<br/>&rarr; <var>float</var></dt>
 <dd><p>Same as CM.</p></dd></dl>
 
 <dl id="interp">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">interp</span> (<var>x</var> <var>x1 y1</var> <var>...</var>)<br/>&rarr; <var>float</var></code></dt>
+<dt class="entry"><span class="term">interp</span> (<var>x</var>, <var>x1</var>, <var>y1</var> <var>...</var>)<br/>&rarr; <var>float</var></dt>
 <dd><p>Same as CM.</p></dd></dl>
-
-<dl id="steps">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">steps</span> (<var>len</var> <var>from</var> <var>step</var> <var>...</var>)<br/>&rarr; <var>list</var></code></dt>
-<dd><p>Returns a list of <var>len</var> values starting on <var>from</var> and incremented by each <var>step</var> (positive or negative) read mod the number of steps. For example, <code>(steps 24 60 2 1 )</code>  would return a 3 octave ascending octatonic scale starting on key number 60.</p></dd></dl>
 
 
 <dl id="rhythm-seconds">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">rhythm-&gt;seconds</span> (<var>fraction</var> [<var>tempo</var>=60] [<var>beat</var>=1])<br/>&rarr; <var>float</var></code></dt>
+<dt class="entry"><span class="term">rhythm-&gt;seconds</span> (<var>fraction</var>, <var class="optkey">tempo:</var> <var class="optval">60</var>, <var class="optkey">beat:</var>  <var class="optval">1</var>)<br/>&rarr; <var>float</var></dt>
 <dd><p>Returns the time in seconds of <var>fraction</var> of <var>beat</var> in <var>tempo</var>.</p></dd></dl>
 
 <dl id="cents-scaler">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">cents-&gt;scaler</span> (<var>cents</var>)<br/>&rarr; <var>float</var></code></dt>
+<dt class="entry"><span class="term">cents-&gt;scaler</span> (<var>cents</var>)<br/>&rarr; <var>float</var></dt>
 <dd><p>Same as CM.</p></dd></dl>
 
 <dl id="scaler-cents">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">scaler-&gt;cents</span> (<var>scaler</var>)<br/>&rarr; <var>int</var></code></dt>
+<dt class="entry"><span class="term">scaler-&gt;cents</span> (<var>scaler</var>)<br/>&rarr; <var>int</var></dt>
 <dd><p>Same as CM.</p></dd></dl>
 
-<dl id="hertz-keynum">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">hertz-&gt;keynum</span> (<var>hertz</var>)<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns floating point key number of <var>hertz</var>.</p></dd></dl>
-
-<dl id="keynum-hertz">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">keynum-&gt;hertz</span> (<var>knum</var>)<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns hertz value of key number.</p></dd></dl>
-
-<dl id="keynum-pc">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">keynum-&gt;pc</span> (<var>knum</var>)<br/>&rarr; <var>int</var></code></dt>
-<dd><p>Returns integer pitch class of key number.</p></dd></dl>
-
 <dl id="int">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">int</span> (<var>x</var>)<br/>&rarr; <var>int</var></code></dt>
-<dd><p>Rounds a floating point <var>x</var> to the nearest fixnum integer.</p></dd></dl>
+<dt class="entry"><span class="term">int</span> (<var>num</var>)<br/>&rarr; <var>integer</var></dt>
+<dd><p>Rounds floating point <var>num</var> to the nearest fixnum integer.</p></dd></dl>
 
 <dl id="quantize">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">quantize</span> (<var>x</var> <var>step</var>)<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Same as CM. <!-- Rounds a floating point <var>x</var> to the nearest multiple of <var>step</var> --></p></dd></dl>
+<dt class="entry"><span class="term">quantize</span> (<var>num</var>, <var>step</var>)<br/>&rarr; <var>float</var></dt>
+<dd><p>Quantizes <var>num</var> to size of <var>step</var>. <!-- Rounds a floating point <var>x</var> to the nearest multiple of <var>step</var> --></p></dd></dl>
 
 
 <!-- dl id="decimals">
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">decimals</span> (<var>x</var> [<var>precision</var>=3])<br/>&rarr; <var>float</var></code></dt>
+<dt class="entry"><span class="term">decimals</span> (<var>x</var> [<var>precision</var> 3])<br/>&rarr; <var>float</var></dt>
 <dd><p>Same as CM. </p></dd></dl -->
 
 <h3 id="randomness">Randomness</h3>
@@ -478,7 +515,7 @@ state object that can be seeded using <a href="#ran-set!"><code>ran-set!</code><
 
 <dl id="ran">
 
-<dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ran</span> ([<var>n</var>=1.0] [<var>n2</var>])<br/>&rarr; <var>int</var> | <var>float</var></code></dt>
+<dt class="entry"><span class="term">ran</span> ([<var>n</var> 1.0] [<var>n2</var>])<br/>&rarr; <var>int</var> | <var>float</var></dt>
 
 <dd><p>If called without arguments returns a random floating point number between 0
 and 1 (exclusive). Otherwise <var>n</var> should be a positive or
@@ -490,16 +527,16 @@ greater or less than <var>n</var>.</p></dd>
 
 </dl>
 
-<dl><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">odds</span> (<var>n</var> [<var>true</var>=#t] [<var>false</var>=#f])<br/>&rarr; <var>sexpr</var></code></dt>
+<dl><dt class="entry"><span class="term">odds</span> (<var>n</var> [<var>true</var> #t] [<var>false</var> #f])<br/>&rarr; <var>sexpr</var></dt>
 <dd><p>Same as CM.</p></dd></dl>
 
-<dl id="pickl"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">pickl</span> (<var>list</var>)<br/>&rarr; <var>sexpr</var></code></dt>
+<dl id="pickl"><dt class="entry"><code><span class="term">pickl</span> (<var>list</var>)<br/>&rarr; <var>sexpr</var></code></dt>
 <dd><p>Same as CM.</p></dd></dl>
 
-<dl id="pick"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">pick</span> (<var>arg</var> <var>...</var>)<br/>&rarr; <var>sexpr</var></code></dt>
+<dl id="pick"><dt class="entry"><code><span class="term">pick</span> (<var>arg</var> <var>...</var>)<br/>&rarr; <var>sexpr</var></code></dt>
 <dd><p>Same as CM.</p></dd></dl>
 
-<dl id="between"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">between</span> (<var>low</var> <var>high</var>)<br/>&rarr; <var>number</var></code></dt>
+<dl id="between"><dt class="entry"><code><span class="term">between</span> (<var>low</var> <var>high</var>)<br/>&rarr; <var>number</var></code></dt>
 <dd><p>Same as CM.</p></dd></dl>
 
 
@@ -508,113 +545,191 @@ greater or less than <var>n</var>.</p></dd>
 
 <h4>Nonuniform Distributions</h4>
 
-<dl id="ranpink"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ranpink</span> ()<br/>&rarr; <var>float</var></code></dt>
+<dl id="ranpink"><dt class="entry"><code><span class="term">ranpink</span> ()<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns a pinkish  (1/f)  value between -1 and 1.</p></dd></dl>
 
-<dl id="ranbrown"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ranbrown</span> ()<br/>&rarr; <var>float</var></code></dt>
+<dl id="ranbrown"><dt class="entry"><code><span class="term">ranbrown</span> ()<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns a brownish  (1/f<sup>2</sup>) value between -1 and 1.</p></dd></dl>
 
-<dl id="ranlow"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ranlow</span> ()<br/>&rarr; <var>float</var></code></dt>
+<dl id="ranlow"><dt class="entry"><code><span class="term">ranlow</span> ()<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns a value between 0 and 1 with lower values more likely.</p></dd></dl>
 
-<dl id="ranhigh"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ranhigh</span> ()<br/>&rarr; <var>float</var></code></dt>
+<dl id="ranhigh"><dt class="entry"><code><span class="term">ranhigh</span> ()<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns a value between 0 and 1 with higher values more likely.</p></dd></dl>
 
-<dl id="ranmid"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ranmiddle</span> ()<br/>&rarr; <var>float</var></code></dt>
+<dl id="ranmid"><dt class="entry"><code><span class="term">ranmiddle</span> ()<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns a value between 0 and 1 with middle values more likely.</p></dd></dl>
 
-<dl id="rangauss"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">rangauss</span> ([<var>lambda=1</var>] [<var>mu</var>=0])<br/>&rarr; <var>float</var></code></dt>
+<dl id="rangauss"><dt class="entry"><code><span class="term">rangauss</span> ([<var>lambda 1</var>], [<var>mu</var> 0])<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns unbounded value from the  <a href="http://en.wikipedia.org/wiki/Normal_distribution">normal distribution</a> with standard deviation <var>lambda</var> and mean <var>mu</var>.</p></dd></dl>
 
-<dl id="ranexp"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ranexp</span> ([<var>lambda=1</var>])<br/>&rarr; <var>float</var></code></dt>
+<dl id="ranexp"><dt class="entry"><code><span class="term">ranexp</span> ([<var>lambda 1</var>])<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns a value greater than 0 from the  <a href="">exponential distribution</a> with stretching factor <var>lambda</var>.</p></dd></dl>
 
-<dl id="ranbeta"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ranbeta</span> ([<var>a</var>=.5] [<var>b</var>=<var>a</var>])<br/>&rarr; <var>float</var></code></dt>
+<dl id="ranbeta"><dt class="entry"><code><span class="term">ranbeta</span> ([<var>a</var> .5], [<var>b</var> <var>a</var>])<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns value between 0 and 1 from the  <a href="http://en.wikipedia.org/wiki/Beta_distribution">beta distribution</a>.</p></dd></dl>
 
-<dl id="rangamma"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">rangamma</span> ([<var>k</var>=1])<br/>&rarr; <var>float</var></code></dt>
+<dl id="rangamma"><dt class="entry"><code><span class="term">rangamma</span> ([<var>k</var> 1])<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns value greater than 0 from the  <a href="http://en.wikipedia.org/wiki/Gamma_distribution">gamma distribution</a>.</p></dd></dl>
 
 
-<dl id="rancauchy"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">rancauchy</span> ()<br/>&rarr; <var>float</var></code></dt>
+<dl id="rancauchy"><dt class="entry"><code><span class="term">rancauchy</span> ()<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns an unbounded value from the <a href="http://en.wikipedia.org/wiki/Cauchy_distribution">Cauchy distribution</a>.</p></dd></dl>
 
 
-<dl id="ranpoisson"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ranpoisson</span> ([<var>lambda=1</var>])<br/>&rarr; <var>float</var></code></dt>
+<dl id="ranpoisson"><dt class="entry"><code><span class="term">ranpoisson</span> ([<var>lambda 1</var>])<br/>&rarr; <var>float</var></code></dt>
 <dd><p>Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wiki/Poisson_distribution">Poisson distribution</a> with shape factor <var>lambda</var>.</p></dd></dl>
 
 <h4>Seeding</h4>
 
-<dl id="ran-set"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">ran-set!</span> (<var>uint</var>)<br/>&rarr; <var>void</var></code></dt><dd><p>Initialize the random state generator with the unsigned integer value <var>uint</var>.</p></dd></dl>
+<dl id="ran-set"><dt class="entry"><code><span class="term">ran-set!</span> (<var>uint</var>)<br/>&rarr; <var>void</var></code></dt><dd><p>Initialize the random state generator with the unsigned integer value <var>uint</var>.</p></dd></dl>
+
+<h3 id="patterns">Patterns</h3>
+
+<p>
+
+Patterns are objects that generate data in different
+orderings. Patterns can used individually or <em>nested</em>
+ to form local orderings (sub-patterns) within the surrounding
+pattern.
+
+</p>
+
+<div class="float" id="table_1">
+<table>
+<tr><th class="lcol">Pattern</th><th class="lcol">Description</th></tr>
+<tr><td><a href="#make-cycle">Cycle</a> </a> <td>generates its elements in a continuous loop</td></tr>
+<tr><td><a href="#make-line">Line</a></td><td>generates its elements sequentially and sticks on last element</td></tr>
+<tr><td><a href="#make-palindrome">Palindrome</a></td><td>generates its elements forwards and backwards</td></tr>
+<tr><td><a href="#make-heap">Heap</a></td><td>generates random permutations of its elements</td></tr>
+<tr><td><a href="#make-rotation">Rotation</a></td><td>generates systematic permutations of its elements</td></tr>
+<tr><td><a href="#make-weighting">Weighting</a></td><td>generates elements from a weighted random distribution</td></tr>
+<tr><td><a href="#make-markov">Markov</a></td><td>generates nth order Markov chains of its elements</td></tr>
+<tr><td><a href="#make-graph">Graph</a></td><td>generates elements from a directed graph</td></tr>
+</table>
+</div>
+
+
+
+<dl id="make-cycle"><dt class="entry"><span class="term">make-cycle</span> (<var>items</var>, <var class="optkey">for:</var> <var class="optval">#f</var>, <var class="optkey">repeat:</var> <var class="optval">#f</var>) <br/>&rarr; <var>pattern</var></dt>
+<dd >
+
+Returns a pattern that generates its elements in a continual loop.
+
+<var>Items</var> is the list of data to generate and can include sub-patterns.
+
+<var>For</var> sets the number of internal reads that will make up the next period, or chunk, of data returned from the pattern. This value can be a number or pattern of numbers and defaults to the length of <var>items</var>.
+  
+<var>Repeat</var> sets an optional limit on the number of periods that the pattern can generate; once this limit has
+been reached the pattern will return an <a href="#eod?">end of data</a> marker instead of elements.
+</dd>
+</dl>
+
+<dl id="make-line"><dt class="entry"><span class="term">make-line</span> (<var>items</var>, <var class="optkey">for:</var> <var class="optval">#f</var>, <var class="optkey">repeat:</var> <var class="optval">#f</var>) <br/>&rarr; <var>pattern</var></dt>
+<dd>
+  <p>Returns a pattern that generates <var>items</var> sequentially and sticks on the last item.</p>
+</dd>
+</dl>
+
+<dl id="make-palindrome"><dt class="entry"><span class="term">make-palindrome</span> (<var>items</var>, <var class="optkey">for:</var> <var class="optval">#f</var>, <var class="optkey">repeat:</var> <var class="optval">#f</var>, <var class="optkey">elide:</var> <var class="optval">#f</var>) <br/>&rarr; <var>pattern</var></dt>
+<dd>
+  <p>Returns a pattern that generates <var>items</var> forwards and backwards. <var>Elide</var> determines what happens to the first and last items when the pattern reverses itself. If the value is false then these items are repeated. If the value is true then neither item is directly repeated. Otherwise the value can should be a two element list {<var>bool</var> <var>bool</var>} specifying the repeat value for the first and last item.</p>
+</dd>
+</dl>
+
+
+<dl id="make-weightings"><dt class="entry"><code><span class="term">make-weightings</span> (<var>items</var>, <var class="optkey">for:</var> <var class="optval">#f</var>, <var class="optkey">repeat:</var> <var class="optval">#f</var>) <br/>&rarr; <var>pattern</var></dt>
+<dd>
+  <p>Returns a weighting pattern that generates <var>items</var> from a weighted distribution.</p>
+Each item can be a datum, subpattern, or list:
+  <blockquote>
+  <pre>{<var>item</var> [<var>weight 1</var>] [<var>min 1</var>] [<var>max #f</var>]}</pre>
+  </blockquote>
+where <var>item</var> is the thing to generate, <var>weight</var> is its weight in the distribution relative to the other items in the pattern, <var>min</var> is the minimum number of times that <var>item</var> must be directly selelected before another item can be considered, and <var>max</var> is the maximum number of times that <var>item</var> can be directly selected before another item must be selected.
+  </p>
+</dd>
+</dl>
+
+<dl id="make-rotation"><dt class="entry"><span class="term">make-rotation</span> (<var>items</var>, <var class="optkey">for:</var> <var class="optval">#f</var>, <var class="optkey">repeat:</var> <var class="optval">#f</var> <var class="optkey">rotate:</var> <var class="optval">{0}</var>) <br/>&rarr; <var>pattern</var></dt>
+<dd>
+  <p>Returns a pattern that rotates its items according to <var>rotate</var>, which can be a list or a pattern of lists of the format:</p.
+<blockquote>
+  <pre>{<var>start</var> [<var>end</var>] [<var>step 1</var>] [<var>width 1</var>]}</pre>
+</blockquote>
+</dd>
+</dl>
+
+<dl id="make-markov"><dt class="entry"><span class="term">make-markov</span> (<var>items</var>, <var class="optkey">for:</var> <var class="optval">#f</var>, <var class="optkey">repeat:</var> <var class="optval">#f</var> <var class="optkey">past:</var> <var class="optval">{...}</var>) <br/>&rarr; <var>pattern</var></dt>
+<dd>
+  <p>Returns a pattern that generates its items according to (nth order) transitions lists:</p>
+<blockquote>
+  <pre>{<var>past ...</var> -&gt; {<var>next weight<var>} ... }</pre>
+</blockquote>
+<p> Items appearing before <code>-&gt;</code> in the rule are the past choice(s) that trigger the transition and items following <code>-&gt;</code> make up the weighted distribution determining the transition's next outcome. If <var>past</var> it supplied it will be the initial past choices to match the transitions against, otherwise the first transition rule is used. </p>
+</dd>
+</dl>
+
+<dl id="make-graph"><dt class="entry"><span class="term">make-graph</span> (<var>items</var>, <var class="optkey">for:</var> <var class="optval">#f</var>, <var class="optkey">repeat:</var> <var class="optval">#f</var>) <br/>&rarr; <var>pattern</var></dt>
+<dd>
+  <p>Returns a pattern that generates its items from a directed graph of nodes with transition patterns. Each node is a list:</p>
+<blockquote>
+  <pre>{<var>item</var> <var>to<var> [<var>id</var>] }</pre>
+</blockquote>
+<p>where <var>item</var> is the item or pattern to generate, <var>to</var> is an id or pattern of ids identifiying which node should follow the current node in the graph, and <var>id</var> is a unique identifier for the node which defaults to successive integers starting from 1.
+  
+</dd>
+</dl>
+
+
+<h3 id="spectral">Spectral Manipulation</h3>
+<p>blah </p>
+
+
+
 
 <h3 id="midi-message">Midi Messages</h3>
 
-<p> MIDI input data comes directly from the open MIDI input device
-packaged as low-level (C++) MidiMessages. The following functions
-provided an API for manipulating these foreign objects in Scheme.</p>
+<p> Data from the open MIDI input port is packaged in low-level (C++)
+MidiMessages. The following functions provided an API for manipulating
+these objects in Scheme.</p>
 
-<dl id="mm:make"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:make</span> (<var>type args...</var>)<br/>&rarr; <var>message</var></code></dt>
-<dd><p>
-
-<p>
-Allocates a new a low-level JUCE MidiMessage according to a specified channel message <var>type</var> followed by zero or more keyword arguments as appropriate to <var>type</var>.
-</p>
+<dl id="mm:make-on"><dt class="entry"><code class="entry">mm:make-on</code> <var class="optkey">time:</var> <var class="optval">0</var> <var class="optkey">key:</var> <var class="optval"> 60 </var> <var class="optkey">vel:</var> <var class="optval"> 64 </var>  <var class="optkey">chan:</var> <var class="optval"> 0 </var>
+<br/>&rarr; <var>message</var></code></dt>
+<dd>
 
 <p>
-The following message type constants are defined:
+Allocates a new Midi Note On message.
 </p>
-  
-<blockquote>
-<code class="entry">mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend</code>
-</blockquote>
-<p>
-Keyword arguments applicable to all types of messages:
-</p>
+</dd>
+</dl>
 
-<dl>
-<dt><code class="keyword">time:</code> <var>float</var></dt>
+<dl id="mm:on?"><dt class="entry"><code><span class="term">mm:on?</span> <var>message</var>
+<br/>&rarr; <var>boolean</var></code></dt>
+<dd>
+
+<p>
+Returns true if <var>message</var> is a Midi Note On message , otherwise false.
+</p>
+</dd>
+</dl>
+
+
 <dd><p>The time (in seconds) to wait before the event will sound. Defaults to 0.0</p></dd>
 
-<dt><code class="keyword">chan:</code> <var>integer</var></dt>
+
 <dd><p>The channel number of the event. Defaults to 0.</p></dd>
 
-</dl>
-
-<p>
-Keyword arguments applicable to <code class="entry">mm:off</code> messages:
-</p>
-<dl>
-<dt><code class="keyword">key:</code> <em>integer</em></dt>
 <dd><p>An integer key number value 0-127. Defaults to 60.</p></dd>
-</dl>
 
-<p>
-Keyword arguments applicable to <code class="entry">mm:on</code> messages:
-</p>
-<dl>
-<dt><code class="keyword">key:</code> <em>integer</em></dt>
-<dd><p>An integer key number value 0-127. Defaults to 60.</p></dd>
-<dt><code class="keyword">vel:</code> <em>integer</em></dt>
-<dd><p>An integer velocity value 0-127. Defaults to 64.</p></dd>
-</dl>
-
-<p>
-Keyword arguments applicable to <code class="entry">mm:touch</code> messages:
-</p>
-<dl>
 <dt><code class="keyword">val:</code> <em>integer</em></dt>
 <dd><p>An integer aftertouch value 0-127. Defaults to 0.</p></dd>
-</dl>
 
-<p>
-Keyword arguments applicable to <code class="entry">mm:ctrl</code> messages:
-</p>
-<dl>
+
 <dt><code class="keyword">num:</code> <em>integer</em></dt>
 <dd><p>A integer controller number 0-127. Defaults to 0.</p></dd>
 <dt><code class="keyword">val:</code> <em>integer</em></dt>
 <dd><p>An integer control change value 0-127. Defaults to 0.</p></dd>
-</dl>
+
 
 <p>
 Keyword arguments applicable to <code class="entry">mm:prog</code> messages:
@@ -642,19 +757,19 @@ Keyword arguments applicable to <code class="entry">mm:bend</code> messages:
 </p></dd>
 </dl>
 
-<dl id="mm:free"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:free</span> (<var> message</var>)<br/>&rarr; <var>void</var></code></dt>
+<dl id="mm:free"><dt class="entry"><code><span class="term">mm:free</span> (<var> message</var>)<br/>&rarr; <var>void</var></code></dt>
 <dd><p>
 Deletes and reclaims memory from an allocated message. Note that the Midi Out port automatically frees messages once they are sent out the midi port. This function should be called by input hooks to free any message that it receives but does not use.
 </p></dd>
 </dl>
 
-<dl id="mm:copy"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:copy</span> (<var> message</var>)<br/>&rarr; <var>message</var></code></dt>
+<dl id="mm:copy"><dt class="entry"><code><span class="term">mm:copy</span> (<var> message</var>)<br/>&rarr; <var>message</var></code></dt>
 <dd><p>
 Returns a copy of the specified midi message.
 </p></dd>
 </dl>
 
-<dl id="mm:type?"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:type?</span> (<var> message type</var>)<br/>&rarr; <var>bool</var></code></dt>
+<dl id="mm:type?"><dt class="entry"><code><span class="term">mm:type?</span> (<var> message type</var>)<br/>&rarr; <var>bool</var></code></dt>
 <dd><p>
 Returns true if the MIDI <var>message</var> is of the specified <var>type</var>, one of <code class="entry">mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend</code>.
 </p></dd>
@@ -664,67 +779,67 @@ Returns true if the MIDI <var>message</var> is of the specified <var>type</var>,
 
 
 
-<dl id="mm:time"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:time</span> (<var> message</var>)<br/>&rarr; <var>float</var></code></dt>
+<dl id="mm:time"><dt class="entry"><code><span class="term">mm:time</span> (<var> message</var>)<br/>&rarr; <var>float</var></code></dt>
 <dd><p>
 Returns the time value of a midi message.
 </p></dd>
 </dl>
-<dl id="mm:time-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:time-set!</span> (<var> message value</var>)<br/>&rarr; <var>float</var></code></dt>
+<dl id="mm:time-set!"><dt class="entry"><code><span class="term">mm:time-set!</span> (<var> message value</var>)<br/>&rarr; <var>float</var></code></dt>
 <dd><p>
 Sets the time value of a midi message.
 </p></dd>
 </dl>
 
-<dl id="mm:chan"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:chan</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:chan"><dt class="entry"><code class="term">mm:chan</code> <var> message</var><br/>&rarr; <var>integer</var></dt>
 <dd><p>
 Returns the channel value of a midi message.
 </p></dd>
 </dl>
-<dl id="mm:chan-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:chan-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:chan-set!"><dt class="entry"><code><span class="term">mm:chan-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
 <dd><p>
 Sets the channel value of a midi message.
 </p></dd>
 </dl>
 
-<dl id="mm:key"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:key</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:key"><dt class="entry"><code><span class="term">mm:key</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
 <dd><p>
 Returns the key number of an <code class="entry">mm:on</code> or <code class="entry">mm:off</code> message.
 </p></dd>
 </dl>
-<dl id="mm:key-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:key-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:key-set!"><dt class="entry"><code><span class="term">mm:key-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
 <dd><p>
 Sets the key number of an <code class="entry">mm:on</code> or <code class="entry">mm:off</code> message.
 </p></dd>
 </dl>
 
-<dl id="mm:vel"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:vel</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:vel"><dt class="entry"><code><span class="term">mm:vel</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
 <dd><p>
 Returns the velocity value of an <code class="entry">mm:on</code> message.
 </p></dd>
 </dl>
-<dl id="mm:vel-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:vel-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:vel-set!"><dt class="entry"><code><span class="term">mm:vel-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
 <dd><p>
 Sets the velocity value of an <code class="entry">mm:on</code> message.
 </p></dd>
 </dl>
 
-<dl id="mm:val"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:val</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:val"><dt class="entry"><code><span class="term">mm:val</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
 <dd><p>
 Returns the message value of an <code class="entry">mm:touch mm:ctrl mm:prog mm:press mm:bend</code> message.
 </p></dd>
 </dl>
-<dl id="mm:val-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:val-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:val-set!"><dt class="entry"><code><span class="term">mm:val-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
 <dd><p>
 Sets the message value of an <code class="entry">mm:touch mm:ctrl mm:prog mm:press mm:bend</code> message.
 </p></dd>
 </dl>
 
-<dl id="mm:num"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:num</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:num"><dt class="entry"><code><span class="term">mm:num</span> (<var> message</var>)<br/>&rarr; <var>integer</var></code></dt>
 <dd><p>
 Returns the controller number of an <code class="entry">mm:ctrl</code> message.
 </p></dd>
 </dl>
-<dl id="mm:num-set!"><dt style="background-color:#e6e6ff;"><code><span style="font-weight:bold;">mm:num-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
+<dl id="mm:num-set!"><dt class="entry"><code><span class="term">mm:num-set!</span> (<var> message value</var>)<br/>&rarr; <var>integer</var></code></dt>
 <dd><p>
 Sets the controller number value of an <code class="entry">mm:ctrl</code> message.
 </p></dd>
@@ -1038,6 +1153,8 @@ name.</li>
 <span class="command">sprout</span> ranins1(10, .2, 60, 72, 1000)
 </pre>
 </div>  
+
+
 
 
 <!-- 

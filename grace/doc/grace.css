@@ -247,12 +247,18 @@ code.keyword {
   color: #da70d6;
 }
 
+
+
 code.entry { 
   font-style: normal;
   font-weight: bold;
 }
 
 span.entry { 
+  font-weight: bold;
+}
+
+span.term { 
   font-weight: bold;
 }
 
@@ -269,8 +275,6 @@ ul.media li {
   list-style: none;
 }
 
-dt.lispnote     { color: #4b4; }
-dt.platformnote { color: #b44; }
 
 table.float {
   /* margin: .5em;  auto; */
@@ -339,6 +343,20 @@ span.result {font-weight: bold; color: silver;}
 span.input  {font-weight: bold;}
 span.prompt, span.output  { }
 
+var.optkey { 
+  font-style: oblique;
+  color: #da70d6;
+}
+
+var.optval { 
+  font-style: oblique;
+}
+
+
+
+
+
+
 /*
    orchid #da70d6;}
    sienna: #a0522d saddle-brown: #8b4513 rosybrown: #bc8f8f; */
@@ -368,15 +386,10 @@ div.printout {
   background: #f7f7f7;
 }
 
-
-span.author {font-style: normal;}
-span.book, span.journal {font-style: italic;}
-span.article {font-style: normal;}
-span.publisher {font-style: normal;}
-
 dl.syntax dt {
   float: right;
 }
+
 dl.syntax dd {
   margin: 0px;
 }
@@ -389,5 +402,10 @@ dl.dictsyntax dt {
 dl.dictsyntax dd {
   margin: 0px;
 }
+
+dt.entry {background: #e6e6ff;  
+    font-family: monospace;
+}
+
 
 /* EOF */

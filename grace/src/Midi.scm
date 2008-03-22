@@ -129,35 +129,89 @@ void set_input_hook( C_word proc )
 
 <#
 
-(define mm:off    #x8)
-(define mm:on     #x9)
-(define mm:touch  #xA)
-(define mm:ctrl   #xB)
-(define mm:prog   #xC)
-(define mm:press  #xD)
-(define mm:bend   #xE)
+(define-constant mm:off    #x8)
+(define-constant mm:on     #x9)
+(define-constant mm:touch  #xA)
+(define-constant mm:ctrl   #xB)
+(define-constant mm:prog   #xC)
+(define-constant mm:press  #xD)
+(define-constant mm:bend   #xE)
 
-(define (mm:make type #!key (time 0) (chan 0) 
-		 (key 60) (vel 64) (num 0) 
-		 (val 0) )
-  (cond ((<= mm:off type mm:on)
-	 ((foreign-lambda (c-pointer "MidiMessage") "mm_make"
-			  int double int int int)
-	  type time chan key vel))
-	((= type mm:ctrl)
-	 ((foreign-lambda (c-pointer "MidiMessage") "mm_make"
-			  int double int int int)
-	  type time chan num val))
-	((= type mm:touch)
-	 ((foreign-lambda (c-pointer "MidiMessage") "mm_make"
-			  int double int int int)
-	  type time chan key val))
-	((<= mm:prog type mm:bend)
-	 ((foreign-lambda (c-pointer "MidiMessage") "mm_make"
-			  int double int int int)
-	  type time chan val 0))
-	(else
-	 (error "Unknown MidiMessage type:" type))))
+(define (mm:make-on . args)
+  (with-optkeys (args (time 0) (key 60) (vel 64) (chan 0))
+    ( (foreign-lambda (c-pointer "MidiMessage") "mm_make"
+		      int double int int int)
+      mm:on time chan key vel)))
+
+(define (mm:on? m)
+  ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
+    m mm:on))
+
+(define (mm:make-off . args)
+  (with-optkeys (args (time 0) (key 60) (chan 0))
+    ( (foreign-lambda (c-pointer "MidiMessage") "mm_make"
+		      int double int int int)
+      mm:off time chan key 0)))
+
+(define (mm:off? m)
+  ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
+    m mm:off))
+
+(define (mm:make-touch . args)
+  (with-optkeys (args (time 0) (key 0) (val 0) (chan 0))
+    ( (foreign-lambda (c-pointer "MidiMessage") "mm_make"
+		      int double int int int)
+      mm:touch time chan key val)))
+
+(define (mm:touch? m)
+  ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
+    m mm:touch))
+
+(define (mm:make-ctrl . args)
+  (with-optkeys (args (time 0) (num 0) (val 0) (chan 0))
+    ( (foreign-lambda (c-pointer "MidiMessage") "mm_make"
+		      int double int int int)
+      mm:ctrl time chan num val)))
+
+(define (mm:ctrl? m)
+  ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
+    m mm:ctrl))
+
+(define (mm:make-prog . args)
+  (with-optkeys (args (time 0) (val 0) (chan 0))
+    ( (foreign-lambda (c-pointer "MidiMessage") "mm_make"
+		      int double int int int)
+      mm:prog time chan val 0)))
+
+(define (mm:prog? m)
+  ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
+    m mm:prog))
+
+(define (mm:make-press . args)
+  (with-optkeys (args (time 0) (val 0) (chan 0))
+    ( (foreign-lambda (c-pointer "MidiMessage") "mm_make"
+		      int double int int int)
+      mm:press time chan val 0)))
+
+(define (mm:press? m)
+  ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
+    m mm:press))
+
+(define (mm:make-bend . args)
+  (with-optkeys (args (time 0) (val 0) (chan 0))
+    ( (foreign-lambda (c-pointer "MidiMessage") "mm_make"
+		      int double int int int)
+      mm:bend time chan val 0)))
+
+(define (mm:bend? m)
+  ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
+    m mm:bend))
+
+
+
+
+
+
 
 (define (mm:free m)
   ( (foreign-lambda void "mm_free" (c-pointer "MidiMessage"))
@@ -169,9 +223,9 @@ void set_input_hook( C_word proc )
 		    (c-pointer "MidiMessage"))  
     m))
 
-(define (mm:type? m t)
-  ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
-    m t))
+;;(define (mm:type? m t)
+;;  ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
+;;    m t))
 
 (define (mm:time m)
   ( (foreign-lambda double "mm_time" (c-pointer "MidiMessage"))

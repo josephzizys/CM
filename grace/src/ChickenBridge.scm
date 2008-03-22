@@ -117,8 +117,11 @@ void load_sal_file(char *path) {
  (export print-message print-error 
 	 ;; MIDI
 	 mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend
-	 mm:make mm:free mm:copy 
-	 mm:type? mm:time mm:time-set! mm:chan mm:chan-set!
+	 mm:make-on mm:make-off mm:make-touch mm:make-ctrl
+	 mm:make-prog mm:make-press mm:make-bend
+	 mm:on? mm:off? mm:touch? mm:ctrl? mm:prog? mm:press? mm:end?
+	 mm:free mm:copy 
+	 mm:time mm:time-set! mm:chan mm:chan-set!
 	 mm:key mm:key-set! mm:vel mm:vel-set!
 	 mm:val mm:val-set! mm:num mm:num-set!
 
@@ -145,15 +148,92 @@ void load_sal_file(char *path) {
 	 between pick pickl odds
 	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
 	 rancauchy ranpoisson ranpink ranbrown
+	 note key hz
+	 ;; sal
 	 sal sal:print sal:chdir sal:load sal:open sal:output
 	 load-sal-file
 	 ;; utilities
 	 loop
-	 cwd chdir
+	 cwd chdir cm-logo
+
 	 first second third fourth fifth sixth seventh eighth
 	 ninth tenth
-	 list* last butlast
+	 list* last butlast ;tail
+	 with-optkeys expand-optkeys
+
+	 make-cycle make-line make-palindrome make-heap make-rotation 
+	 make-weighting make-markov make-graph markov-analyze
+	 next eop? eod?
 	 ))
+
+;;;  (opt/key) parameter support:
+
+(define-for-syntax (expand-optkeys user spec body)
+  (define (key-parse-clause info mode args user)
+    ;; return a case clause that parses one keyword
+    ;; info for each var: (<got> <var> <val>)
+    (let* ((got (car info))
+	   (var (cadr info))
+	   (key (string->keyword (symbol->string var)))
+	   )
+      `(( ,key )
+	(if ,got (error "Redundant keyword" , key))
+	(set! ,var (if (null? (cdr ,args))
+		       (error "Missing keyword value in" 
+			      , user)
+		       (cadr ,args)))
+	(set! ,got #t) ; mark that we have a value for this param
+	(set! ,mode #t) ; mark that we are now parsing keywords
+	(set! ,args (cddr ,args)))))
+  (define (opt-parse-clause info mode pars user)
+    (let ((got (car info))
+	  (var (cadr info)))
+      `(else
+	(when ,mode (error "Positional after keywords" 
+			   ,user))
+	(set! ,var (car ,pars))
+	(when (keyword? ,var) (error "Unknown keyword",  var))
+	(set! ,got #t) ; mark that we have a value for this param
+	(set! ,pars (cdr ,pars)))))
+  (define (parse-optkey info data mode args user keyc)
+    ;; return a complete parsing clause for one optkey variable. keyc
+    ;; holds all the key parsing clauses used by each case statement
+    `(unless (null? ,args)
+       (case (car ,args)
+	 ;; generate all keyword clauses
+	 ,@ keyc
+	    , (opt-parse-clause info mode args user))))
+  (let* ((data (map (lambda (v)
+		      ;; for each optkey variable v return a list
+		      ;; (<got> <var> <val>) where the <got> variable
+		      ;; indicates that <var> has been set, <var> is
+		      ;; the optkey variable and <val> is its default
+		      ;; value
+		      (if (pair? v)
+			  (cons (gensym (symbol->string (car v))) v)
+			  (list (gensym (symbol->string v)) v #f)))
+		    spec))
+	 (args (gensym "args")) ; holds arg data as its parsed
+	 (mode (gensym "keyp")) ; true if parsing keywords
+	 ;; the case clauses parsing each keyword
+	 (keyc (map (lambda (i) (key-parse-clause i mode args user))
+		 data)))
+    `(let* ,(map cdr data) ; bind optkey variables with default values
+       ;; bind status and parsing vars
+       (let ,(append (map (lambda (i) (list (car i) #f)) data)
+		     `((,args ,user)
+		       (,mode #f)))
+	 ;; generate a parsing expression for each optkey variable
+	 ,@ (map (lambda (i)
+		   (parse-optkey i data mode args user keyc))
+		 data)
+	 ;; add a check to make sure no dangling args.
+	    (unless (null? ,args)
+	      (error "Too many arguments" , user))
+	    ,@ body))))
+
+(define-macro (with-optkeys spec . body)
+  (expand-optkeys (car spec) (cdr spec) body))
 
 ;;;
 ;;; send macro
@@ -260,11 +340,65 @@ void load_sal_file(char *path) {
 (define-macro (send mess . data)
   (expand-send mess data #f))
 
+
+;; imlementation specific utilities 
+
+(define-constant most-positive-fixnum #x3fffffff)
+
+(define-constant most-negative-fixnum (- #x3fffffff))
+
+(define (cwd )
+  ((foreign-lambda c-string "get_current_directory" )))
+
+(define (chdir . dir)
+  ((foreign-lambda void "set_current_directory" c-string)
+   (if (null? dir) "~/" (car dir))))
+
+;;
+;; THE API
+;;
+
+(include "Utilities.scm")
 (include "Toolbox.scm")
+(include "Patterns.scm")
 (include "Sal.scm")
 (include "Loop.scm")
 (include "Midi.scm")
 (include "Csound.scm")
+
+;; Environment
+
+(define (cm-logo vers) 
+  ;; vers: nn.nn.nn
+  (define (cm-version vers)
+    (let ((a 0) (b 0) (c 0))
+      (set! a (inexact->exact (floor (/ vers 10000))))
+      (set! vers (modulo vers 10000))
+      (set! b (inexact->exact (floor (/ vers 100))))
+      (set! c (modulo vers 100))
+      (string-append "Common Music " (number->string a)
+		     "." (number->string b)
+		     "." (number->string c))))
+  (do ((e "~%")
+       (v (make-string 15))
+       (y 0 (+ y 1)))
+      ((= y 7) #f)
+    (printf (do ((x 0 (+ x 1)))
+		((= x 15)
+		 (if (= y 3)
+		     (string-append v " " (cm-version vers) "")
+		     (string-append v "")))
+	      (string-set! v x
+			   (if (<= 2 (- x y) 4) #\\
+			       (if (= (- x (- 4 (modulo (+ 13 y) 15))) 1)
+				   #\/
+				   (if (<= 1 y 5) #\-
+				       (if (= (* (- x 6) (- y 3)) 15) #\/
+					   #\space)))))))
+    (printf e))
+  (values))
+
+;; (cm-logo 30001)
 
 ;; Console window
 

@@ -296,6 +296,9 @@ bool SchemeThread::init() {
   res = CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
   if ( res==0 )
     reportChickenError();
+  res = CHICKEN_eval_string("(cm-logo 30000)", NULL);
+  if ( res==0 )
+    reportChickenError();
 
   inputClosureGCRoot = CHICKEN_new_gc_root();
 

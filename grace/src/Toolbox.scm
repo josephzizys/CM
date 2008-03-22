@@ -3,46 +3,7 @@
 <#
 
 ;;;
-;;; essential utilities
-;;;
-
-(define first car)
-(define second cadr)
-(define third caddr)
-(define fourth cadddr)
-(define fifth (lambda (l) (car (cddddr l))))
-(define sixth (lambda (l) (cadr (cddddr l))))
-(define seventh (lambda (l) (caddr (cddddr l))))
-(define eighth (lambda (l) (cadddr (cddddr l))))
-(define ninth (lambda (l) (car (cddddr (cddddr l)))))
-(define tenth (lambda (l) (cadr (cddddr (cddddr l)))))
-
-(define (rest l) (cdr l))
-
-(define (last l) (if (null? (cdr l)) l (last (cdr l))))
-
-(define (butlast l)
-  (cond ((null? (cdr l)) (list))
-	((null? (cddr l)) (list (car l)))
-	(else
-	 (cons (car l) (butlast (cdr l))))))
-
-(define (list* . args)
-  (cond ((null? args)
-	 (error ">>> Error: too few arguments to list*."))
-        ((null? (cdr args))
-	 (car args))
-        (else
-          (cons (car args)
-                (apply list* (cdr args))))))
-
-(define (cwd )
-  ((foreign-lambda c-string "get_current_directory" )))
-
-(define (chdir . dir)
-  ((foreign-lambda void "set_current_directory" c-string)
-   (if (null? dir) "~/" (car dir))))
-
+;;
 ;;;
 ;;; FFI
 ;;;
@@ -154,14 +115,14 @@
 (define (scaler->cents num)
   (tb:scaler->cents num))
 
-(define (keynum->hertz k)
-  (tb:keynum->hertz k))
+;;(define (keynum->hertz k)
+;;  (tb:keynum->hertz k))
 
-(define (keynum->pc k)
-  (tb:keynum->pc k))
+;;(define (keynum->pc k)
+;;  (tb:keynum->pc k))
 
-(define (hertz->keynum hz)
-  (tb:hertz->keynum hz))
+;;(define (hertz->keynum hz)
+;;  (tb:hertz->keynum hz))
 
 (define (interpl x coords . base)
   (let* ((x1 (if (null? coords)
@@ -288,5 +249,209 @@
 (define (ranpink )
   (tb:ranpink))
 
-;;; eof
+
+;*************************************************************************
+(define *notes* (make-hash-table equal?))
+
+(begin ;define (create-note-entries )
+  (let ((degrees '(("c" "bs" ) ("df" "cs") ("d"  ) ("ef" "ds" )
+		   ("e"  "ff") ("f" "es" ) ("fs" "gf" ) ("g"  )
+		   ("af" "gs") ("a" ) ("bf" "as" ) ("b" "cf" )))
+	(octaves '("00" "0" "1" "2" "3" "4" "5" "6"
+		   "7" "8" "9"))
+	(entries '()))
+    (do ((key 0 (+ key 1))
+;;	 (low (* 6.875 (expt 2 .25)))
+	 ) ; C = A * 2^(3/12)
+	((= key 128) 
+	 (let ((r (list "r" -1 0.0 #f #f)))
+	   (hash-table-set! *notes* "r" r)
+	   (hash-table-set! *notes* -1 r))
+	 #t)
+      (set! entries (list-ref degrees (modulo key 12)))
+      (do ((d entries (cdr d))
+	   (k key)
+	   (p (modulo key 12))
+	   (k< (- key .5))
+	   (k> (+ key .5))
+;;	   (f (* low (expt 2 (/ key 12))))
+;;	   (f> (* low (expt 2 (/ (+ key .5) 12))))
+;;	   (f< (* low (expt 2 (/ (- key .5) 12))))
+	   (f (tb:keynum->hertz key))
+	   (f> (tb:keynum->hertz (+ key .5)))
+	   (f< (tb:keynum->hertz (- key .5)))
+	   (o (inexact->exact (floor (/ key 12))))
+	   (x #f)
+	   (n #f)
+	   (e #f))
+	  ((null? d) #f)
+	(unless (and (= k 0) (string=? (car d) "bs"))
+	  (if (string=? (car d) "bs") (set! o (- o 1))
+	      (if (string=? (car d) "cf") (set! o (+ o 1))))
+	  ;; note entry: (<str> <key> <hz> <pc> <"oct">)
+	  (set! x (list-ref octaves o))
+	  (set! n (string-append (car d) x))
+	  (set! e (list n k f p x))
+	  (hash-table-set! *notes* n e)
+	  (when (eq? d entries) ; add keynum->note hash
+	    (hash-table-set! *notes* k e))
+	  ;; add <quarter tone entries
+	  (set! n (string-append (car d) "<" x))
+	  (set! e (list n k< f< #f x))
+	  (hash-table-set! *notes* n e)
+	  (when (eq? d entries) ; add only one keynum->note hash
+	    (hash-table-set! *notes* k< e))
+	  ;; add >quarter tone entries
+	  (set! n (string-append (car d) ">" x))
+	  (set! e (list n k> f> #f x))
+	  (hash-table-set! *notes* n e)
+	  (when (eq? d entries) ; add only one keynum->note hash
+	    (hash-table-set! *notes* k> e))
+	  )))))
+
+; (create-note-entries)
+
+(define (string->note-entry str oct err)
+  ;; note entry: (<str> <key> <hz> <pc> <"oct">)
+  (let ((entry (hash-table-ref *notes* str (lambda () #f))))
+    (if (not entry)
+	(if oct
+	    (hash-table-ref *notes* 
+			    (string-append str oct) 
+			    (lambda () 
+			      (and err (error "Not a note or key" str))))
+	    (and err (error "Not a note or key" str)))
+	entry)))
+
+;;(define (number->note-entry num err)
+;;  (let ((fix (if (exact? num) num
+;;		 (inexact->exact (round num)))))
+;;    (hash-table-ref *notes* fix
+;;		    (lambda () 
+;;		      (and err (error "Not a note or key" num))))))
+
+(define (number->note-entry num err)
+  (if (exact? num) 
+      (hash-table-ref *notes* num
+		    (lambda () 
+		      (and err (error "Not a note or key" num))))
+      (let* ((int (floor num))
+	     (rem (- num int)))
+	(hash-table-ref *notes*
+			(if (< rem 0.333333333333333) int
+			    (if (< rem 0.666666666666667)
+				(+ int .5)
+				(+ int 1)))
+			(lambda () 
+			  (and err (error "Not a note or key" num)))))))
+
+(define (note-aux freq doct err?)
+  ;; if doct (default octave string) we are parsing a note list
+  (cond ((number? freq)
+	 (number->note-entry freq err?))
+	((symbol? freq)
+	 (string->note-entry (symbol->string freq) doct err?))
+	((string? freq)
+	 (string->note-entry freq doct err?))
+	((keyword? freq)
+	 (string->note-entry (keyword->string freq) doct err?))	
+	((and err?)
+	 (error "Not a note or key" freq))
+	(else
+	 #f)))
+
+(define (note freq)
+  (if (list? freq)
+      (let ((head (list #f)))
+	(do ((tail freq (cdr tail))
+	     (defo "4")
+	     (this #f)
+	     (resl head))
+	    ((null? tail) (cdr head))
+	  (if (list? (car tail)) ; allow sublists...
+	      (begin
+		(set! this (note (car tail) ))
+		(set-cdr! resl (list this)))
+	      (begin
+		(set! this (note-aux (car tail) defo #t))
+		;; note entry: (<str> <key> <hz> <pc> <"oct">)
+		(set! defo (car (cddddr this)))
+		(set-cdr! resl (list (car this)))))
+	  (set! resl (cdr resl))))
+      (car (note-aux freq #f #t))))
+
+;; (note '(c5 d e f))
+;; (note '(60 50 70 32 ))
+;; (note 60.45)
+;; (note #:c5)
+;; (note "cs6")
+;; (note "cs")
+;; (note '(c d e5 (f b) g))
+;; (note (key 440))
+
+;;(define-constant +loga+ (log 6.875))
+;;(define-constant +log2+ (log 2))
+
+(define (key freq)
+  (cond ((list? freq)
+	 (let ((head (list #f)))
+	   (do ((tail freq (cdr tail))
+		(defo "4")
+		(this #f)
+		(resl head))
+	       ((null? tail) (cdr head))
+	     (if (or (list? (car tail))
+		     (number? (car tail)))
+		 (begin
+		   (set! this (key (car tail) ))
+		   (set-cdr! resl (list this)))
+		 (begin
+		   (set! this (note-aux (car tail) defo #t))
+		   ;; note entry: (<str> <key> <hz> <pc> <"oct">)
+		   (set-cdr! resl (list (cadr this)))
+		   (set! defo (car (cddddr this)))))
+	     (set! resl (cdr resl)))))
+	((number? freq)
+	 (if (> freq 0)
+;;	     (- (* (/ (- (log freq) +loga+) +log2+) 12) 3)
+	     (tb:hertz->keynum freq)
+	     -1))
+	(else
+	 (cadr (note-aux freq #f #t)))))
+
+;; (key 440)
+;; (key 'c4)
+;; (key '(c4 d e2 f))
+;; (key 'c)
+
+(define (hz freq)
+  (cond ((list? freq)
+	 (let ((head (list #f)))
+	   (do ((tail freq (cdr tail))
+		(defo "4")
+		(this #f)
+		(resl head))
+	       ((null? tail) (cdr head))
+	     (if (or (number? (car tail))
+		     (list? (car tail)))
+		 (begin
+		   (set! this (hz (car tail) ))
+		   (set-cdr! resl (list this)))
+		 (begin
+		   (set! this (note-aux (car tail) defo #t))
+		   (set-cdr! resl (list (caddr this)))
+		   (set! defo (car (cddddr this)))))
+	     (set! resl (cdr resl)))))
+	((number? freq)
+;;	 (* 6.875 (expt 2 (/ (+ freq 3) 12)))
+	 (tb:keynum->hertz freq)
+	 )
+	(else
+	 (caddr (note-aux freq #f #t)))))
+
+;; (hz 'c4)
+;; (hz 69)
+;; (hz '(c4 d e2 f g4 a))
+;; (hz '(20 60 87 33))
+;; (hz '(cs4 d e2 f g4 a))
 
