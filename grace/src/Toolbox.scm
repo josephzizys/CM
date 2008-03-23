@@ -71,9 +71,11 @@
 ;;
 
 (define (rescale x x1 x2 y1 y2 . b)
-  (if (null? b)
-      (tb:rescale x x1 x2 y1 y2 1)
-      (tb:rescale x x1 x2 y1 y2 (car b))))
+  (if (list? x)
+      (map (lambda (z) (apply rescale z x1 x2 y1 y2 b)) x)
+      (if (null? b)
+	  (tb:rescale x x1 x2 y1 y2 1)
+	  (tb:rescale x x1 x2 y1 y2 (car b)))))
 
 ;;(define (discrete x x1 x2 i1 i2 . b)
 ;;  (if (null? b)
@@ -88,13 +90,14 @@
 		    (tb:discrete x x1 x2 0 (length i1) 1)
 		    (if (null? (cdr args))
 			(tb:discrete x x1 x2 0 (car args) 1)
-			(tb:discrete x x1 x2 0 (car args) (cadr args)))))
+			(tb:discrete x x1 x2 0 (car args)
+				     (cadr args)))))
       (if (null? (cdr args))
 	  (tb:discrete x x1 x2 i1 (car args) 1)
 	  (tb:discrete x x1 x2 i1 (car args) (cadr args)))))
 
 (define (int f)
-  (tb:int f))
+  (if (list? f) (map int f)  (tb:int f)))
 
 (define (quantize num steps)
   (tb:quantize num steps))
@@ -110,10 +113,12 @@
 		 (tb:rhythm->seconds beats tempo beat)))
 
 (define (cents->scaler cents)
-  (tb:cents->scaler cents))
+  (if (list? cents) (map cents->scaler cents)
+      (tb:cents->scaler cents)))
 
 (define (scaler->cents num)
-  (tb:scaler->cents num))
+  (if (list? num) (map scaler->cents num)
+      (tb:scaler->cents num)))
 
 ;;(define (keynum->hertz k)
 ;;  (tb:keynum->hertz k))
@@ -145,7 +150,9 @@
 	  (set! y2 (cadr tail))))))
 
 (define (interp x . args)
-  (interpl x args))
+  (if (pair? (car args))
+      (apply interpl x (car args) (cdr args))
+      (interpl x args)))
 
 ;; transformations
 
@@ -165,35 +172,27 @@
 (define (ran-set! seed)
   (tb:ran-set! seed))
 
-(define (ran . args)
-  ;; args: n n2
-  (if (null? args)
-      (tb:ranf 1.0)
-      (if (null? (cdr args))
-	  (if (fixnum? (car args)) 
-	      (tb:rani (car args))
-	      (tb:ranf (car args)))
-	  (if (and (fixnum? (car args)) (fixnum? (cadr args)))
-	      (tb:beti (car args) (cadr args))
-	      (tb:betf (car args) (cadr args))))))
+(define (ran num)
+  (if (> num 1)
+      (if (fixnum? num) (tb:rani num)
+	  (tb:ranf num))
+      (tb:ranf num)))
 
 (define (between a b)
-  (ran a b))
+  (if (and (fixnum? a) (fixnum? b))
+      (tb:beti a b)
+      (tb:betf a b)))
+
+(define (pick args)
+  (if (null? args)
+      (error "Missing values to pick.")
+      (if (null? (cdr args))
+	  (list-ref (car args) (tb:rani (length args)))
+	  (list-ref args (tb:rani (length args))))))
 
 (define (odds n . args)
-  (if (null? args)
-      (if (< (tb:ranf 1.0) n) #t #f)
-      (if (null? (cdr args))
-	  (if (< (tb:ranf 1.0) n) (car args) #f)
-	  (if (< (tb:ranf 1.0) n) (car args) (cadr args)))))
-
-(define (pickl args)
-  (if (null? args)
-      (error "cannot pick from empty list: " args)
-      (list-ref args (tb:rani (length args)))))
-
-(define (pick . args)
-  (pickl args))
+  (with-optkeys (args (true #t) (false #f))
+    (if (< (tb:ranf 1.0) n) true false)))
 
 ;; non-uniform distibutions
 
@@ -208,11 +207,9 @@
 
 (define (ranbeta . args)
   ;; args: a b
-  (if (null? args)
-      (tb:ranbeta .5 .5)
-      (if (null? (cdr args))
-	  (tb:ranbeta (car args) (car args))
-	  (tb:ranbeta (car args) (cadr args)))))
+  (with-optkeys (args (a .5) b)
+    (if (not b) (set! b a))
+    (tb:ranbeta a b)))
 
 (define (ranexp . args)
   ;; args: lambda

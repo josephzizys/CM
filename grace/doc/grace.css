@@ -26,7 +26,7 @@ a:hover, a:active {
 }
 
 h1 {
-  font: normal 26pt "Century Gothic", sans-serif;
+  font: normal 28pt "Century Gothic", sans-serif;
   color: #666;
 }
 
@@ -205,11 +205,13 @@ span.floatlabel {
   font-weight: bold;
   color: #222;
 }
+
 pre.code {
   margin: 0px;
   padding: .5em 0px;
   border-top: 1px dashed #aaa;
   border-bottom: 1px dashed #aaa;
+  font-family: monaco, monospace;
 }
 
 pre.shell {
@@ -343,17 +345,6 @@ span.result {font-weight: bold; color: silver;}
 span.input  {font-weight: bold;}
 span.prompt, span.output  { }
 
-var.optkey { 
-  font-style: oblique;
-  color: #da70d6;
-}
-
-var.optval { 
-  font-style: oblique;
-}
-
-
-
 
 
 
@@ -404,8 +395,53 @@ dl.dictsyntax dd {
 }
 
 dt.entry {background: #e6e6ff;  
-    font-family: monospace;
+    font-family: monaco, monospace;
 }
 
 
-/* EOF */
+/* definition entries */
+
+table.entry {
+    border-collapse: collapse;
+    width: 100%;
+    border: 0;
+}
+
+tr.entry {
+    border: 0;
+    background: #e6e6ff
+}
+
+td.formals {
+    font-family: monaco, monospace;
+    font-size: normal;
+}
+
+td.label {
+    float: right;
+}
+
+td.retval {
+}
+
+var.arg, var.opt, var.optkey, var.optval, var.rest {
+    font-family: monaco, monospace;
+    font-style: italic;
+    font-size: normal;
+}
+
+span.argtype {
+    color: orange;
+}    
+    
+span.funcname {
+    font-weight: bold;
+}
+span.commandname {
+    color:  #0000cd;
+    font-weight: bold;
+}
+
+code {
+    font-family: monaco, monospace;
+}
