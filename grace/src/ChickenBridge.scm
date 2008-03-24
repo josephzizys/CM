@@ -138,17 +138,20 @@ void load_sal_file(char *path) {
 	 sprout stop hush pause paused? cont
 	 ;; toolbox
 
+	 note key hz pc transpose invert retrograde
+	 scale
+
 	 rescale discrete int quantize decimals
 	 cents->scaler scaler->cents
-	 keynum->hertz keynum->pc hertz->keynum
 	 rhythm->seconds
-	 interpl interp
-	 steps
+	 interp interpl  ; can remove interpl
+
 	 ran ran-set! 
-	 between pick pickl odds
+	 between pick ; pickl 
+	 odds
 	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
 	 rancauchy ranpoisson ranpink ranbrown
-	 note key hz
+
 	 ;; sal
 	 sal sal:print sal:chdir sal:load sal:open sal:output
 	 load-sal-file
@@ -157,8 +160,9 @@ void load_sal_file(char *path) {
 	 cwd chdir cm-logo
 
 	 first second third fourth fifth sixth seventh eighth
-	 ninth tenth
-	 list* last butlast ;tail
+	 ninth tenth last nth butlast rest list* make-list
+	 list-set!
+
 	 with-optkeys expand-optkeys
 
 	 make-cycle make-line make-palindrome make-heap make-rotation 

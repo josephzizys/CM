@@ -9,16 +9,18 @@
 ;;; basic non-r5rs utilities that are not scheme implementation specific     
 ;;;
 
-(define first car)
-(define second cadr)
-(define third caddr)
-(define fourth cadddr)
+;; Chicken gives us first-fourth
+;;(define first car)
+;;(define second cadr)
+;;(define third caddr)
+;;(define fourth cadddr)
 (define fifth (lambda (l) (car (cddddr l))))
 (define sixth (lambda (l) (cadr (cddddr l))))
 (define seventh (lambda (l) (caddr (cddddr l))))
 (define eighth (lambda (l) (cadddr (cddddr l))))
 (define ninth (lambda (l) (car (cddddr (cddddr l)))))
 (define tenth (lambda (l) (cadr (cddddr (cddddr l)))))
+(define nth list-ref)
 
 (define (rest l) (cdr l))
 

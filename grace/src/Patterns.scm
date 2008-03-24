@@ -6,8 +6,9 @@
 ;;; **********************************************************************
 
 ;;;
-;;; pattern bits
-;;;
+;;; patterns using structs instead of classes.
+;;; requires with-optkeys, arithmetic-test, list-set, tb:rani tb:ranf
+;;; 
 
 (define-constant +constant-data+    (arithmetic-shift 1 0))  ; avoid hair when possible
 (define-constant +default-period+   (arithmetic-shift 1 1))  ; no period specified
@@ -507,7 +508,8 @@
       (let ((len (pattern-length obj))
 	    (lis (car data)))
 	(do ((i 0 (+ i 1))
-	     (j (random len ) (random len))
+;;;	     (j (random len ) (random len))
+	     (j (tb:rani len ) (tb:rani len))
 	     (v #f))
 	    ((= i len)
 	     (set-cdr! data lis))
@@ -711,7 +713,9 @@
 	      (choices (car pool))
 	      (pick (lambda (c r)
 		      (do ((tail c (cdr tail))
-			   (index (random r )))
+;;;			   (index (random r ))
+			   (index (tb:ranf r ))
+			   )
 			  ( (< index (random-item-index (car tail)))
 			    (car tail)))))
 	      (next #f))
@@ -838,7 +842,10 @@
 					 (next-1 (caddr out)))))
 		    ;; always update second element to new value
 		    (set-car! (cdr out) sum))
-                (let ((n (random range)))
+                (let (
+;;;		      (n (random range))
+		      (n (tb:ranf range))
+		      )
 		  (do ((tail outputs (cdr tail)))
 		      ((< n (cadr (car tail)))
 		       (car (car tail)))))

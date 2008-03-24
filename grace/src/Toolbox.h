@@ -43,11 +43,10 @@ namespace Toolbox {
   float rancauchy() ;
   int ranpoisson (float lambda=1) ;
   float rangamma (float k=1) ;
-  float ranpink() ;
-  float one_over_f_aux(int n, float *r, float h) ;
-  float ranbrown() ; 
+  double ranpink() ;
+  double one_over_f_aux(int n, double *r, double h) ;
+  double ranbrown() ; 
 }
-
 
 //namespace tb = Toolbox;
 

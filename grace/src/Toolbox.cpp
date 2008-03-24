@@ -224,25 +224,25 @@ float Toolbox::rangamma (float nu) {
 
 #define POW2 5
 #define POWN 32
-float pinking[POWN];
+double pinking[POWN];
 
-float Toolbox::one_over_f_aux(int n, float *r, float halfrange) {
-  float sum=0.0;
+double Toolbox::one_over_f_aux(int n, double *r, double halfrange) {
+  double sum=0.0;
   for (int i=0; i<POW2; i++) {
-    float p = POWF(2.0, i);
+    double p = POWF(2.0, i);
     if ( ! ((n / p) == ((n - 1) / p)) )
-      r[i]=( (ranstate.nextFloat() * 2 * halfrange) - halfrange) ;
+      r[i]=( (ranstate.nextDouble() * 2 * halfrange) - halfrange) ;
     sum += r[i];
   }
   return sum;
 }
 
-float Toolbox::ranpink() {
+double Toolbox::ranpink() {
   // Based on Gardner (1978) and Dick Moore (1988?)
   static int i=POWN;
   if ( i==POWN ) {
-    float r[POW2];
-    float h=1.0/POW2;
+    double r[POW2];
+    double h=1.0/POW2;
     for (int n=0; n<POWN; n++) {
       pinking[n]=one_over_f_aux(n, r, h);
     }
@@ -255,13 +255,13 @@ float Toolbox::ranpink() {
   return pinking[i];
 }
 
-float Toolbox::ranbrown() {
+double Toolbox::ranbrown() {
   // from http://vellocet.com/dsp/noise/VRand.h
   // but made to generate between -1 1
 
-  static float b=0.0;
+  static double b=0.0;
   while ( true ) {
-    float  r = ranstate.nextFloat()*2-1;
+    double  r = ranstate.nextDouble()*2-1;
     b += r;
     if (b<-16.0f || b>16.0f) b -= r;
       else break;

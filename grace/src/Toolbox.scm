@@ -62,9 +62,9 @@
 (define tb:ranpoisson
   (foreign-lambda int "Toolbox::ranpoisson" float))
 (define tb:ranpink
-  (foreign-lambda float "Toolbox::ranpink" ))
+  (foreign-lambda double "Toolbox::ranpink" ))
 (define tb:ranbrown
-  (foreign-lambda float "Toolbox::ranbrown" ))
+  (foreign-lambda double "Toolbox::ranbrown" ))
 
 ;;
 ;; API
@@ -100,7 +100,9 @@
   (if (list? f) (map int f)  (tb:int f)))
 
 (define (quantize num steps)
-  (tb:quantize num steps))
+  (if (list? num)
+      (map (lambda (n) (tb:quantize n steps)) num)
+      (tb:quantize num steps)))
 
 (define (decimals num . digits)
   (if (null? digits)
@@ -113,11 +115,13 @@
 		 (tb:rhythm->seconds beats tempo beat)))
 
 (define (cents->scaler cents)
-  (if (list? cents) (map cents->scaler cents)
+  (if (list? cents)
+      (map tb:cents->scaler cents)
       (tb:cents->scaler cents)))
 
 (define (scaler->cents num)
-  (if (list? num) (map scaler->cents num)
+  (if (list? num)
+      (map tb:scaler->cents num)
       (tb:scaler->cents num)))
 
 ;;(define (keynum->hertz k)
@@ -156,7 +160,7 @@
 
 ;; transformations
 
-(define (steps len keynum . args)
+(define (scale len keynum . args)
   (let ((head (list #t)))
     (do ((i 0 (+ i 1))
          (k keynum)
@@ -332,7 +336,7 @@
       (hash-table-ref *notes* num
 		    (lambda () 
 		      (and err (error "Not a note or key" num))))
-      (let* ((int (floor num))
+      (let* ((int (inexact->exact (floor num)))
 	     (rem (- num int)))
 	(hash-table-ref *notes*
 			(if (< rem 0.333333333333333) int
@@ -451,4 +455,96 @@
 ;; (hz '(c4 d e2 f g4 a))
 ;; (hz '(20 60 87 33))
 ;; (hz '(cs4 d e2 f g4 a))
+
+(define (pc x)
+  ;; returns the pitch class (0-11) of a key, note or list of the same
+  (if (number? x)
+      (modulo x 12)
+      (if (pair? x)
+	  (if (number? (car x))
+	      (map pc x)
+	      (map pc (key x)))
+	  (modulo (key x) 12))))
+
+;; (pc 60)
+;; (pc 'cs4)
+;; (pc 'cs>4)
+;; (pc 'cs4)
+;; (pc '(d4 c f bf3))
+;; (pc '(50 30 12 22))
+
+(define (invert x)
+  (cond ((number? x)
+	 (if (< x 12)
+	     (modulo (- 12 x) 12)
+	     (error "No inversion for" x)))
+	((pair? x)
+	 (let ((invkeys
+		(lambda (keys) 
+		  ;; invert list of keys around first key in list
+		  (let* ((orig (car keys)) 
+			 (head (list orig)))
+		    (do ((tail (cdr keys) (cdr tail))
+			 (last head))
+			((null? tail)
+			 head)
+		      (set-cdr! last (list (- orig (- (car tail) orig))))
+		      (set! last (cdr last)))))))
+	   ;; check list for pcs, keynums or notes
+	   (if (number? (car x))
+	       (if (< (car x) 12)
+		   (map (lambda (z) (modulo (- 12 z) 12)) x)
+		   (invkeys x))
+	       (note (invkeys (key x))))))
+	(else
+	 (error "No inversion for" x))))
+
+; (invert '(60 62 64 ))
+; (invert  7)
+; (invert '(0 7 2 1))
+; (invert 60) ; err!
+; (invert '(bf3 df4 f))
+
+(define (transpose x y)
+  (cond ((number? x)
+	 (if (number? y)
+	     (if (and (< x 12) (< y 12))
+		 (modulo (+ x y) 12)
+		 (+ x y))
+	     (note (+ x (key y)))))
+	((pair? x)
+	 (let ((transpkeys
+		(lambda (keys orig) 
+		  ;; transpose a list of pcs keys or notes
+		  (let ((head (list #f)))
+		    (do ((tail keys (cdr tail))
+			 (last head))
+			((null? tail)
+			 (cdr head))
+		      (set-cdr! last (list (+ orig (car tail))))
+		      (set! last (cdr last))))))
+	       (orig (if (number? y) y (key y))))
+	   ;; check first in list for pc
+	   (if (number? (car x))
+	       (if (and (< (car x) 12) (< orig 12))
+		   (map (lambda (z) (modulo (+ z orig) 12)) x)
+		   (transpkeys x orig))
+	       (note (transpkeys (key x) orig)))))
+	(else
+	 (error "No transposion for" x))))
+
+; (transpose 7 7)
+; (transpose '(0 1 2 3 4 5 6 7 8 9 10 11) 7)
+; (invert '(0 1 2 3 4 5 6 7 8 9 10 11))
+; (transpose '(0 3 7) 'c4)
+; (transpose '(0 3 7) 11)
+; (transpose '(c4 e g) 12)
+
+;(define (matrix row)
+;  (map (lambda (i) (transpose row i))
+;       (invert row)))
+;
+;(matrix '(0 1 2 3 4 5 6 7 8 9 10 11))
+
+(define retrograde reverse)
 

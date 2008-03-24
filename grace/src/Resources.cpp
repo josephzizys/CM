@@ -50,7 +50,7 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
     menu->addItem(cmdHelpWindow+w, T("Plotter Help"));
   menu->addSeparator();
 #ifdef SCHEME
-  menu->addItem(cmdHelpWindow+12, T("Scheme"));
+  menu->addItem(cmdHelpWindow+12, T("Common Music"));
 #endif
   sub1.addItem(cmdHelpSalTutorial+0, T("Hello World"));
   sub1.addItem(cmdHelpSalTutorial+1, T("Symbolic Expressions"));
@@ -64,8 +64,10 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   menu->addSubMenu(T("SAL Tutorials"), sub1, true);
   menu->addSeparator();
   //  menu->addItem(cmdHelpURL+0, T("SAL Dictionary"));
+#ifndef SCHEME  
   menu->addItem(cmdHelpWindow+11, T("SAL Dictionary"));
   menu->addItem(cmdHelpURL+1, T("CM Dictionary"));
+#endif
   menu->addItem(cmdHelpURL+2, T("CM Homepage"));
   menu->addItem(cmdHelpURL+3, T("Juce Homepage"));
   menu->addSeparator();
@@ -90,7 +92,7 @@ void commonHelpItemSelected (int cmd, int arg) {
     else if (arg==11)
       res=res.getChildFile(T("doc/sal/sal.html"));
     else if (arg==12)
-      res=res.getChildFile(T("doc/scheme.html"));
+      res=res.getChildFile(T("doc/cm.html"));
     else if (arg==13)
       res=res.getChildFile(T("doc/ports.html"));
 

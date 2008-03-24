@@ -30,8 +30,7 @@
     <li><a href="#spectral">Spectral Manipulation</a></li>
     <li><a href="#midi-message">Midi Messages</a></li>
   </ul>
-</li>
-<li><a href="#sal">SAL Syntax</a></li>
+</li><li><a href="#sal">SAL Syntax</a></li>
 <li><a href="#examples">Examples</a></li>
 
 </ul>
@@ -48,11 +47,11 @@ the previous (CM 2) line:</p>
   <li>Does not compile or load sources at runtime.</li>
   <li>Does not use an object system or generic functions.</li>
 
-<li>Note names support quarter-tone inflections: quarter-tone down is <code>&lt;</code>, quarter-tone up is <code>&gt;</code>. For example <code>cs&gt;4</code> is one quarter-tone above <code>cs4</code>.</li>
+  <li>Simplifed frequency tools combine support for key, note, hz and pitch class manipuation. Note names support quarter-tone inflections (<code>&lt;</code> and <code>&gt;</code>) for example <code>cs&gt;4</code> is one quarter-tone above <code>cs4</code>.</li>
 
-  <li>Terser function syntax to facilitate interactive coding:
+  <li>Terser function syntax to assist with interactive coding:
   <ul>
-    <li>No dependance on quoted symbols or keywords as argument data.</li>
+    <li>No dependance on quoted symbols or keywords in argument data.</li>
     <li>Numerous functions expanded to handle lists as well as atomic data. This cuts down on looping boilerplate and reduces the number of functions in the API. Separate formals are provided in cases where list handling causes a significant difference in argument syntax.</li>
 
    <li>Opt/key parameters with DSSL style keywords (symbols ending with a colon) replace &amp;optional and &amp;keyword parameters. Opt/key parameters are optional parameters that can be specified positionally or by preceding a parameter value by its keyword name. For example if a function <code>foo</code> has two opt/key parameters named <var>a</var> and <var>b</var> then it could be called in any of the following ways: <code>(foo) (foo 4) (foo 2 3)  (foo a: 3) (foo b: 99) (foo a: 2 b: 4)  (foo b: 99 a: 2)</code>    </li>
@@ -581,52 +580,194 @@ patterns)</code>, <code> (use tuning)</code>, etc.</p>
 
 <h3 id="environment">Environment</h3>
 
-  
-<dl id="chdir">
-<dt class="entry"><code><span class="term">chdir</span> <var>pathname</var><br/>&rarr; <var>void</var></code></dt>
-<dd><p>Changes the current working directory to the <var>pathname</var> string. </p></dd>
-</dl>
+<!-- DEFINITION -->
+<table class="entry" id="chdir">
+  <tr class="entry">
+    <td class="formals">
+      <span class="commandname">chdir</span>
+      <var class="arg">pathname</var>
+    </td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      (<span class="funcname">chdir</span>
+      <var class="arg">pathname</var>)
+    </td>
+    <td class="label">Scheme</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Changes the current working directory to the <var>pathname</var> string.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="cwd">
-<dt class="entry"><code><span class="term">cwd</span> ()<br/>&rarr; <var>string</var></code></dt>
-<dd><p>Returns the full pathname (string) of the current working directory. </p></dd>
-</dl>
-
-
+<!-- DEFINITION -->
+<table class="entry" id="cwd">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">cwd</span> ()
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; string</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the full pathname string of the current working directory.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 <h3 id="lists">Lists</h3>
 
-<dl id="list*">
-  <dt class="entry"><code><span class="term">list*</span> (<var>...</var> <var>list</var>)<br/>&rarr; <var>list</var></code></dt>
-<dd><p>Adds the elements in <var>...</var> onto the front of <var>list</var></p></dd>
-</dl>
+<!-- DEFINITION -->
+<table class="entry" id="first">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">first</span>
+      (<var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; element</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the first element in <var>list</var>. Similar acccessors for the <code><span class="funcname">second</span></code> to <code><span class="funcname">tenth</span></code> elements are also defined.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="first">
-<dt class="entry"><code><span class="term">first</span> <var>list</var> <!-- br/> <var>...</var --> <br/> <var>...</var> <br/> <span class="term">tenth</span> <var>list</var><br/>&rarr; <var>object</var></code></dt>
-<dd><p>Returns the first, second, third, fourth, fifth, sixth, seventh, eighth, ninth or tenth element of a <var>list</var>.  </p></dd>
-</dl>
+<!-- DEFINITION -->
+<table class="entry" id="last">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">last</span>
+      (<var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; element</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the last element in <var>list</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="last">
-<dt class="entry"><code><span class="term">last</span> <var>list</var><br/>&rarr; <var>object</var></code></dt>
-<dd><p>Returns the last element in <var>list</var>. </p></dd>
-</dl>
+<!-- DEFINITION -->
+<table class="entry" id="nth">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">nth</span>
+      (<var class="arg">list</var>, <var class="arg">pos</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; element</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the element at <var>pos</var> position (zero based) in <var>list</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="butlast">
-<dt class="entry"><code><span class="term">butlast</span> <var>list</var><br/>&rarr; <var>list</var></code></dt>
-<dd><p>Returns all but the last element in <var>list</var>. </p></dd>
-</dl>
+<!-- DEFINITION -->
+<table class="entry" id="butlast">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">butlast</span>
+      (<var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a list of all but the last element in <var>list</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="rest">
-<dt class="entry"><code><span class="term">rest</span> <var>list</var><br/>&rarr; <var>list</var></code></dt>
-<dd><p>Returns a list of all but the first element in <var>list</var>. </p></dd>
-</dl>
+<!-- DEFINITION -->
+<table class="entry" id="rest">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">rest</span>
+      (<var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a list of all but the first element in <var>list</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<!-- dl id="tail">
-<dt class="entry"><code><span class="term">tail</span> <var>list</var><br/>&rarr; <var>list</var></code></dt>
-<dd><p>Returns the tail (final) list of <var>list</var>. </p></dd>
-</dl -->
+<!-- DEFINITION -->
+<table class="entry" id="list*">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">list*</span>
+      (<var class="rest">...</var>, <var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Adds elements in <var>...</var> onto the front of <var>list</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="make-list">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">make-list</span>
+      (<var class="arg">length</var> [<var class="opt">fill</var> <var class="optval"> #f</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a list of <var>length</var> elements with initial contents set to <var>fill</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="list-set!">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">list-set!</span>
+      (<var class="arg">list</var>, <var class="arg">pos</var>, <var class="arg">val</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; element</td></tr>
+</table>
+
+<blockquote>
+<p>
+Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 <h3 id="iteration">Iteration</h3>
 
@@ -637,8 +778,6 @@ patterns)</code>, <code> (use tuning)</code>, etc.</p>
 
 <h3 id="mapping">Mapping and Transformation</h3>
 
-
-
 <!-- DEFINITION -->
 <table class="entry" id="note">
   <tr class="entry">
@@ -648,20 +787,22 @@ patterns)</code>, <code> (use tuning)</code>, etc.</p>
     </td>
     <td class="label">Function</td>
   </tr>
-
-  <tr><td class="retval" colspan="2">&rarr; string</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; string or list</td></tr>
 </table>
-
 <blockquote>
 <p>
-Returns the note (string) of <var>freq</var>, which can be a key, note, list of the
-same or <a href="#spectrum">spectrum</a>. A note name consists of a pitch class letter (<code>c d e f g a
-b</code>), an optional sharp or flat letter (<code>s f</code>) an
-optional quarter tone inflection (<code>&lt;</code> or
-<code>&gt;</code>) and an octave number (<code>00</code> to
-<code>9</code>). Note names can be specified as strings, symbols or
-keywords. Inside note lists an octave number can be omitted, in which case the note's octave defaults to the last octave
-specified, or to octave 4.
+
+Returns the note (string) of <var>freq</var>, which can be a key, note
+or list of the same. A note name consists of a pitch class letter
+(<code>c</code> <code>d</code> <code>e</code> <code>f</code>
+<code>g</code> <code>a</code> <code>b</code>), an optional sharp or
+flat letter (<code>s</code> <code>f</code>) an optional quarter tone
+inflection (<code>&lt;</code> or <code>&gt;</code>) and an octave
+number (<code>00</code> to <code>9</code>). Note names can be
+specified as strings, symbols or keywords. Octave numbers inside note
+lists can be omitted, in which case the current note's octave defaults
+to the last octave specified, or to octave 4.
+
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -676,15 +817,14 @@ specified, or to octave 4.
     <td class="label">Function</td>
   </tr>
 
-  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
 </table>
-
 <blockquote>
 <p>
-Returns the key (number) of <var>freq</var>, which can be a note, hertz value, list of the same, or <a href="#spectrum">spectrum</a>.
-If a key contains a fractional part it is interpreted as cents above the integer key number, e.g. 60.5 is 50 cents above Middle C.
+Returns the key (number) of <var>freq</var>, which can be a note, hertz value or list of the same. If a key contains a fractional part it is interpreted as cents above the integer key number, e.g. 60.5 is 50 cents above Middle C.
 </p>
 </blockquote>
+<!-- END DEFINITION -->
 
 <!-- DEFINITION -->
 <table class="entry" id="hz">
@@ -695,37 +835,87 @@ If a key contains a fractional part it is interpreted as cents above the integer
     </td>
     <td class="label">Function</td>
   </tr>
-
-  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
 </table>
-
 <blockquote>
 <p>
-Returns the hertz value of <var>freq</var>, which can be a note, key, list of the same or <a href="#spectrum">spectrum</a>.
+Returns the hertz value of <var>freq</var>, which can be a note, key or list of the same.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
-
 <!-- DEFINITION -->
-<table class="entry" id="steps">
+<table class="entry" id="pc">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">steps</span>
+      <span class="funcname">pc</span>
+      (<var class="arg">freq</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns pitch class (0-11) of <var>freq</var>, which can be a note, key or list of the same.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="transpose">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">transpose</span>
+      (<var class="arg">freq</var>, <var class="arg">amount</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Transposes <var>freq</var> by <var>amount</var>.
+If <var>freq</var> and <var>amount</var> are both pitch classes then the transposition occurs in pitch class (mod 12) space. Otherwise <var>freq</var> should be a key, note or list of the same and it is transposed by <var>amount</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="invert">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">invert</span>
+      (<var class="arg">freq</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+If <var>freq</var> is a pitch class or list of pitch classes the pitch class complement(s) are returned. Otherwise <var>freq</var> should be a list of notes or keys  and the (strict) invertions around the first key or note in the list is returned.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="scale">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">scale</span>
       (<var class="arg">num</var>, <var class="arg">start</var>, <var class="rest">step...</var>)
     </td>
     <td class="label">Function</td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; list</td></tr>
 </table>
-
 <blockquote>
 <p>
-Returns a list of <var>num</var> keys starting on <var>start</var> and incremented by each <var>step</var> (positive or negative) read mod the number of steps. For example, <code>(steps 24 60 2 1 )</code>  would return a 3 octave ascending octatonic scale starting on key number 60.
+Returns a list of <var>num</var> keys starting on <var>start</var> and incremented by each <var>step</var> (positive or negative) read mod the number of steps. For example, <code>(steps 24 60 2 1 )</code>  would return an ascending 3 octave octatonic scale starting on key number 60.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
-
 
 <!-- DEFINITION -->
 <table class="entry" id="rescale">
@@ -736,7 +926,7 @@ Returns a list of <var>num</var> keys starting on <var>start</var> and increment
     </td>
     <td class="label">Function</td>
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
 </table>
 
 <blockquote>
@@ -762,19 +952,12 @@ Returns a list of <var>num</var> keys starting on <var>start</var> and increment
     <td class="label">Function</td>
   </tr>  <tr><td class="retval" colspan="2">&rarr; integer or element</td></tr>
 </table>
-
 <blockquote>
 <p>
 Similar to <code>rescale</code> except floating point <var>x</var> is mapped onto integer values between <var>i1</var> and <var>i2</var>, or onto the elements in <var>list</var>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
-
-
-
-
-
-</dd></dl>
 
 <!-- DEFINITION -->
 <table class="entry" id="interp">
@@ -793,7 +976,6 @@ Similar to <code>rescale</code> except floating point <var>x</var> is mapped ont
     <td class="label">Function</td>
   </tr>  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
 </table>
-
 <blockquote>
 <p>
 Blah blah.
@@ -801,26 +983,82 @@ Blah blah.
 </blockquote>
 <!-- END DEFINITION -->
 
-<dl id="rhythm-seconds">
+<!-- dl id="rhythm-seconds">
 <dt class="entry"><span class="term">rhythm-&gt;seconds</span> (<var>fraction</var>, <var class="optkey">tempo:</var> <var class="optval">60</var>, <var class="optkey">beat:</var>  <var class="optval">1</var>)<br/>&rarr; <var>float</var></dt>
 <dd><p>Returns the time in seconds of <var>fraction</var> of <var>beat</var> in <var>tempo</var>.</p></dd></dl>
+-->
 
-<dl id="cents-scaler">
-<dt class="entry"><span class="term">cents-&gt;scaler</span> (<var>cents</var>)<br/>&rarr; <var>float</var></dt>
-<dd><p>Same as CM.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="scaler-cents">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">scaler-&gt;cents</span>
+      (<var class="arg">num</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Converts a scaler <var>num</var> (ratio) or list of the same to the equivalent in cents.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="scaler-cents">
-<dt class="entry"><span class="term">scaler-&gt;cents</span> (<var>scaler</var>)<br/>&rarr; <var>int</var></dt>
-<dd><p>Same as CM.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="cents-scaler">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">cents-&gt;scaler</span>
+      (<var class="arg">cents</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Converts a <var>cents</var> value or list of the same to the scaler (ratio) equivalent.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="int">
-<dt class="entry"><span class="term">int</span> (<var>num</var>)<br/>&rarr; <var>integer</var></dt>
-<dd><p>Rounds a floating point <var>num</var> or list of the same to the nearest fixnum integer.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="int">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">int</span>
+      (<var class="arg">num</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Rounds a floating point <var>num</var> or list of the same to the nearest fixnum integer.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="quantize">
-<dt class="entry"><span class="term">quantize</span> (<var>num</var>, <var>step</var>)<br/>&rarr; <var>float</var></dt>
-<dd><p>Quantizes <var>num</var> to size of <var>step</var>. <!-- Rounds a floating point <var>x</var> to the nearest multiple of <var>step</var> --></p></dd></dl>
-
+<!-- DEFINITION -->
+<table class="entry" id="quantize">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">quantize</span>
+      (<var class="arg">num</var>, <var class="arg">step</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Quantizes <var>num</var> or list of the same to be a multiple of <var>step</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 <!-- dl id="decimals">
 <dt class="entry"><span class="term">decimals</span> (<var>x</var> [<var>precision</var> 3])<br/>&rarr; <var>float</var></dt>
@@ -855,19 +1093,67 @@ otherwise a floating point value is returned.
 </blockquote>
 <!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="between">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">between</span>
+      (<var class="arg">a</var>, <var class="arg">b</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a randomly choosen number between <var>a</var> and </var>b</var> (exclusive). The value of  <var>b</var> can be less than <var>a</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="between"><dt class="entry"><code><span class="term">between</span> (<var>low</var> <var>high</var>)<br/>&rarr; <var>number</var></code></dt>
-<dd><p>Returns a randomly choosen number between <var>a</var> and </var>b</var>, exclusive. The <var>b<var> value can be less than <var>a</var>.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="odds">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">odds</span>
+      (<var class="arg">num</var>, [<var class="opt">true</var> <var class="optval">#t</var>], [<var class="opt">false</var> <var class="optval">#f</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; value</td></tr>
+</table>
+<blockquote>
+<p>
+Returns value of <var>true</var> if a randomly chosen number between 0.0 and 1.0 is less than <var>num</var> else returns the value of <var>false</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 
-
-<dl><dt class="entry"><span class="term">odds</span> (<var>n</var> [<var>true</var> #t] [<var>false</var> #f])<br/>&rarr; <var>sexpr</var></dt>
-<dd><p> Returns <var>true</var> if a randomly chosen number between 0.0 and 1.0 is less than <var>n</var> else returns <var>false</var></p></dd></dl>
-
-
-<dl id="pick"><dt class="entry"><code><span class="term">pick</span> (<var>arg</var> <var>...</var>)<br/>&rarr; <var>item</var></code></dt>
-<dd><p>Returns a randomly selected <var>arg</var> as the value of the function. If only one argument is given it must be a list and a random value from the list is returned.</p></dd></dl>
-
+<!-- DEFINITION -->
+<table class="entry" id="pick">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">pick</span>
+      (<var class="rest">arg...</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">pick</span>
+      (<var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; value</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a randomly selected <var>arg</var> as the value of the function. If just one argument is given it should be a <var>list</var> and a randomly selected value from the list is returned.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 
 
@@ -1311,11 +1597,11 @@ name.</li>
     (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> (discrete (ranpink) -1 1 scale))
     (wait .2)))
 
-(<span class="special">define</span> <span class="defined">dorian</span> (steps 50 20 2 1 2 2 2 1 2))
+(<span class="special">define</span> <span class="defined">dorian</span> (scale 50 20 2 1 2 2 2 1 2))
 
 (sprout (pinkscale 100 dorian))
 
-(<span class="special">let</span> ((wierd (steps 40 20 2 (ran 1 4) 2 (ran 1 4) 2)))
+(<span class="special">let</span> ((wierd (scale 40 20 2 (between 1 4) 2 (between 1 4) 2)))
   (sprout (pinkscale 100 wierd)))
 </pre>
 </div>
@@ -1329,11 +1615,11 @@ name.</li>
     <span class="reserved">wait</span> .2
   <span class="reserved">end</span>
 
-<span class="command">define</span> <span class="class">variable</span> dorian = steps(50, 20, 2, 1, 2, 2, 2, 1, 2)
+<span class="command">define</span> <span class="class">variable</span> dorian = scale(50, 20, 2, 1, 2, 2, 2, 1, 2)
 
 <span class="command">sprout</span> pinkscale(100, dorian)
 
-<span class="command">begin</span> <span class="reserved">with</span> weird = steps(40, 20, ran(1,4), 2, ran(1,4), 2)
+<span class="command">begin</span> <span class="reserved">with</span> weird = scale(40, 20, between(1,4), 2, between(1,4), 2)
   <span class="reserved">print</span> <span class="string">"scale="</span>, weird
   <span class="reserved">sprout</span> pinkscale(100, weird)
 <span class="command">end</span>
@@ -1409,10 +1695,10 @@ name.</li>
        (l '(0 2 5 7 9 12))
        (k (+ 37 (* 12 (ran 6)))))
       ((= i n) <span class="constant">#f</span>)
-    (send <span class="string">"mp:midi"</span> 0 (ran 2.0 4.0)
-          (+ k (list-ref l (ran 6)))
+    (send <span class="string">"mp:midi"</span> 0 (between 2.0 4.0)
+          (+ k (nth l (ran 6)))
           (interp i 0 90 n 30))
-    (wait (rescale i 0 n .1 (ran 1.5 2.0) 50))))
+    (wait (rescale i 0 n .1 (between 1.5 2.0) 50))))
 
 (sprout (chimes 20 ) )
 </pre>
@@ -1424,10 +1710,10 @@ name.</li>
 <span class="command">define</span> <span class="class">process</span> chimes(n)
   <span class="reserved">run</span> <span class="reserved">with</span> l = {0 2 5 7 9 12}, k = 37 + (12 * ran(6))
     <span class="reserved">for</span> i <span class="reserved">below</span> n
-    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, 0, ran( 2.0, 4.0),
-         k + list-ref( l, ran( 6)),
+    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, 0, between( 2.0, 4.0),
+         k + nth( l, ran( 6)),
          interp(i, 0, 90, n, 30)
-    <span class="reserved">wait</span> rescale( i, 0, n, .1, ran(1.5, 2.0), 50)
+    <span class="reserved">wait</span> rescale( i, 0, n, .1, between(1.5, 2.0), 50)
   <span class="reserved">end</span>
 
 <span class="command">sprout</span> chimes( 20 )
@@ -1445,14 +1731,14 @@ name.</li>
 <span class="comment">;; define a process thats plays a major or minor scale based on a given key</span>
 
 (<span class="special">define</span> (<span class="defined">playscale</span> key dur)
-  (<span class="special">let</span> ((scale (<span class="special">if</span> (odds .5)
-                 (steps 15 key 2 2 1 2 2 2 1)
-                 (steps 15 key 2 1 2 2 2 1 2))))
+  (<span class="special">let</span> ((scl (<span class="special">if</span> (odds .5)
+                 (scale 15 key 2 2 1 2 2 2 1)
+                 (scale 15 key 2 1 2 2 2 1 2))))
     (<span class="special">go</span> ((i 0 (+ i 1))
-         (l (length scale))
-         (r (/ dur (length scale))))
+         (l (length scl))
+         (r (/ dur (length scl))))
         ((= i l) <span class="constant">#f</span>)
-      (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> (list-ref scale i) 
+      (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> (nth scl i) 
             <span class="keyword">dur:</span> .5
             <span class="keyword">amp:</span> (interp i 0 .9 l .5))
       (wait r))))
@@ -1464,7 +1750,7 @@ name.</li>
 <span class="comment">;; define a hook to play a scale based on a key you press...</span>
 
 (<span class="special">define</span> (<span class="defined">myhook</span> m)
-  (<span class="special">if</span> (mm:type? m mm:on)
+  (<span class="special">if</span> (mm:on? m )
     (<span class="special">let</span> ((k (mm:key m)))
       (sprout (playscale k 1.2)))))
 
@@ -1482,11 +1768,11 @@ name.</li>
 <p><strong>SAL</strong></p>
 <pre class="code">
 <span class="command">define</span> <span class="class">process</span> playscale(key, dur)
-  <span class="reserved">run</span> <span class="reserved">with</span> scale = odds(.5, steps(15, key, 2, 2, 1, 2, 2, 2, 1),
-                        steps(15, key, 2, 1, 2, 2, 2, 1, 2)), 
+  <span class="reserved">run</span> <span class="reserved">with</span> scl = odds(.5, scale(15, key, 2, 2, 1, 2, 2, 2, 1),
+                      scale(15, key, 2, 1, 2, 2, 2, 1, 2)), 
            len = length(scale)
     <span class="reserved">for</span> i <span class="reserved">below</span> len
-    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> list-ref( scale, i),
+    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> nth( scl, i),
          <span class="keyword">dur:</span> .5,
          <span class="keyword">amp:</span> interp( i, 0, .9, len, .5)
     <span class="reserved">wait</span> dur / len
@@ -1499,18 +1785,18 @@ name.</li>
 <span class="comment">;; define a hook to play a scale based on a key you press...</span>
 
 <span class="command">define</span> <span class="class">function</span> myhook (m)
-  <span class="reserved">if</span> mm:type?( m, mm:on) <span class="reserved">then</span>
+  <span class="reserved">if</span> mm:on?(m) <span class="reserved">then</span>
     <span class="reserved">begin</span> <span class="reserved">with</span> k = mm:key(m)
       <span class="reserved">sprout</span> playscale(k, 1.2)
     <span class="reserved">end</span>
 
 <span class="comment">;; set hook ...</span>
 
-<span class="command">send</span> "mp:inhook"</span>, myhook
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, myhook
 
 <span class="comment">;; now play your MIDI keyboard ...  then clear your hook when done</span>
 
-<span class="command">send</span> "mp:inhook"</span>, #f</span>
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, #f</span>
 </pre>
 </div>
 
