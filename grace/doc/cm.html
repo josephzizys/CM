@@ -535,11 +535,18 @@ Returns a version of <var>list</var> with its elements reversed.
     </td>
     <td class="label">Function</td>
   </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">scale</span>
+      (<var class="arg">num</var>, <var class="arg">start</var>, <var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
   <tr><td class="retval" colspan="2">&rarr; list</td></tr>
 </table>
 <blockquote>
 <p>
-Returns a list of <var>num</var> keys starting on <var>start</var> and incremented by each <var>step</var> (positive or negative) read mod the number of steps. For example, <code>(steps 24 60 2 1 )</code>  would return an ascending 3 octave octatonic scale starting on key number 60.
+Returns a list of <var>num</var> keys starting on <var>start</var> and incremented by each <var>step</var> or <var>list</var> of steps (positive or negative) read mod the number of steps.  For example <code>(steps 24 60 2 1)</code> returns a two octave version of the octatonic scale.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
