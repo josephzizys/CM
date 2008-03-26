@@ -1907,7 +1907,7 @@ Causes the function to evaluate to <var>value</var>.
 
 <h3 id="processes">Processes</h3>
 <p>
-Processes are functions that you <a href="#sprout"> <code>sprout</code></a> into the scheduler to execute in realtime.
+Processes are functions you <a href="#sprout"> <code>sprout</code></a> into the scheduler to execute in realtime.
 </p>
 
 <!-- DEFINITION -->
@@ -1921,7 +1921,7 @@ Processes are functions that you <a href="#sprout"> <code>sprout</code></a> into
   </tr>
     <tr class="entry">
     <td class="formals">
-       <span class="commandname">define</span> <span class="class">process</span> <var class="arg">name</var> ({<var class="arg">parameter</var>}*) {<var class="arg">statement</var>}*  {<var class="arg"><a href="#run">run</a></var>}  
+       <span class="commandname">define</span> <span class="class">process</span> <var class="arg">name</var> ({<var class="arg">parameter</var>}*) {<var class="arg">statement</var>}*  <a href="#run"><span class="reserved">run</span></a> {<var class="arg">clause</var>}+ <span class="reserved">end</span>  
     </td>
     <td class="label">SAL</td>
   </tr>
