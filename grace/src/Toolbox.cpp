@@ -48,7 +48,8 @@ float Toolbox::rescale (float x, float x1, float x2, float y1, float y2, float b
 
 int Toolbox::discrete (float x, float x1, float x2, int i1, int i2, float b) {
   // return integers from a to b as n goes from 0.0 to 1.0
-  return (int)round(Toolbox::rescale(x,x1,x2,(float)i1, (float)i2, b));
+  //  return (int)round(Toolbox::rescale(x,x1,x2,(float)i1, (float)i2, b));
+  return (int)floor(Toolbox::rescale(x,x1,x2,(float)i1, (float)i2, b));
 }
 
 int Toolbox::float_to_fixnum (float f) {

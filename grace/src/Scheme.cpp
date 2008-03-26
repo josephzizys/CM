@@ -9,7 +9,7 @@
 #include "Scheme.h"
 #include "ChickenBridge.h"
 
-#define SCHEME_DEBUG 0
+#define SCHEME_DEBUG 1
 // 1= trace scheme entry/exit points
 // 2= include gc info in trace
 // 3= include node creation/insertion/deletion info in tracce
@@ -68,14 +68,21 @@ bool SchemeNode::process(double curtime) {
   switch (type) {
   case EXPR :
     {
-      if ( SCHEME_DEBUG )
-	printf("\ncalling eval node %d...\n", nodeid);
       C_word res;
       memset(schemeThread->evalBuffer, 0, 8192);
       memset(schemeThread->errorBuffer, 0, 8192);
+      if ( SCHEME_DEBUG )
+	printf("\ncalling eval node %d, input '%s'\n", 
+	       nodeid,  (char *)expr.toUTF8()
+	       );
+
       res = CHICKEN_eval_string_to_string( (char *)expr.toUTF8(),
 					   schemeThread->evalBuffer,
                                            8192);
+      printf("\nafter eval-string-to-string, res=%d\n",res);
+
+
+
       if ( res==0 ) {
 	//printf("...Error: %s\n", schemeThread->errorBuffer);
 	if ( SCHEME_DEBUG )

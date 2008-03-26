@@ -82,7 +82,6 @@
 ;;      (tb:discrete x x1 x2 i1 i2 1)
 ;;      (tb:discrete x x1 x2 i1 i2 (car b))))
 
-;; this combines LOOKUP with DISCRETE
 (define (discrete x x1 x2 i1 . args)
   (if (pair? i1 )
       (list-ref i1
@@ -97,7 +96,28 @@
 	  (tb:discrete x x1 x2 i1 (car args) (cadr args)))))
 
 (define (int f)
-  (if (list? f) (map int f)  (tb:int f)))
+  (if (list? f) (map tb:int f)  (tb:int f)))
+
+;; equivalents for use in SAL
+
+(define (plus . args)
+  (if (null? args) 
+      0
+      (if (null? (cdr args))
+	  (if (list? (car args))
+	      (apply + (car args))
+	      (apply + args))
+	  (apply + args))))
+
+(define (minus arg . args)
+  (if (null? args)
+      (if (list? arg)
+	  (apply - arg)
+	  (- arg))
+      (apply - arg args)))
+
+(define times *)
+(define divide /)
 
 (define (quantize num steps)
   (if (list? num)
@@ -110,9 +130,10 @@
       (tb:decimals num (car digits))))
 
 (define (rhythm->seconds beats . args)
-  (let-optionals args ((tempo 60.0)
-		       (beat .25))
-		 (tb:rhythm->seconds beats tempo beat)))
+  (with-optkeys (args (tempo 60.0) (beat .25))
+    (if (list? beats)
+	(map (lambda (x) (tb:rhythm->seconds x tempo beat)) beats)
+	(tb:rhythm->seconds beats tempo beat))))
 
 (define (cents->scaler cents)
   (if (list? cents)
@@ -123,15 +144,6 @@
   (if (list? num)
       (map tb:scaler->cents num)
       (tb:scaler->cents num)))
-
-;;(define (keynum->hertz k)
-;;  (tb:keynum->hertz k))
-
-;;(define (keynum->pc k)
-;;  (tb:keynum->pc k))
-
-;;(define (hertz->keynum hz)
-;;  (tb:hertz->keynum hz))
 
 (define (interpl x coords . base)
   (let* ((x1 (if (null? coords)
@@ -162,6 +174,8 @@
 
 (define (scale len keynum . args)
   (let ((head (list #t)))
+    ;; args are steps... or list of steps
+    (if (null? (cdr args)) (set! args (car args)))
     (do ((i 0 (+ i 1))
          (k keynum)
          (l (length args))
@@ -173,8 +187,7 @@
 
 ;;; randomnesss
 
-(define (ran-set! seed)
-  (tb:ran-set! seed))
+(define ran-set! tb:ran-set!)
 
 (define (ran num)
   (if (> num 1)
@@ -187,12 +200,10 @@
       (tb:beti a b)
       (tb:betf a b)))
 
-(define (pick args)
-  (if (null? args)
-      (error "Missing values to pick.")
-      (if (null? (cdr args))
-	  (list-ref (car args) (tb:rani (length args)))
-	  (list-ref args (tb:rani (length args))))))
+(define (pick . args)
+  (if (null? (cdr args))
+      (list-ref (car args) (tb:rani (length (car args))))
+      (list-ref args (tb:rani (length args)))))
 
 (define (odds n . args)
   (with-optkeys (args (true #t) (false #f))
@@ -200,14 +211,11 @@
 
 ;; non-uniform distibutions
 
-(define (ranlow )
-  (tb:ranlow))
+(define ranlow tb:ranlow)
 
-(define (ranhigh )
-  (tb:ranhigh))
+(define ranhigh tb:ranhigh)
 
-(define (ranmiddle)
-  (tb:ranmiddle))
+(define ranmiddle tb:ranmiddle)
 
 (define (ranbeta . args)
   ;; args: a b
@@ -229,8 +237,7 @@
 	  (tb:rangauss (car args) 0)
 	  (tb:rangauss (car args) (cdr args)))))
 
-(define (rancauchy )
-  (tb:rancauchy))
+(define rancauchy tb:rancauchy)
 
 (define (ranpoisson . args)
   ;; args: lambda
@@ -244,11 +251,9 @@
       (tb:rangamma 1)
       (tb:rangamma (car args))))
 
-(define (ranbrown )
-  (tb:ranbrown) )
+(define ranbrown tb:ranbrown)
 
-(define (ranpink )
-  (tb:ranpink))
+(define ranpink tb:ranpink)
 
 
 ;*************************************************************************

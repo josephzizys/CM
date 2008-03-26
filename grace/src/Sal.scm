@@ -1645,11 +1645,11 @@
     (values)))
 
 
-(define *print-decimals* 3)
+(define *print-decimals* #t)
 
 (define (sal:print . args)
   (letrec ((printer 
-	    (lambda (thing)
+	    (lambda (thing lev)
 	      (cond ((not thing)
 		     (print-message "#f") )
 		    ((null? thing)
@@ -1658,27 +1658,30 @@
 		     (print-message "{" )
 		     (do ((tail thing (cdr tail)))
 			 ((null? tail) #f)
-		       (printer (car tail)) 
+		       (printer (car tail) (+ lev 1)) 
 		       (if (not (null? (cdr tail)))
 			   (print-message " ")))
 		     (print-message "}" ))
 		    ((eq? thing #t)
 		     (print-message "#t" ))
 		    ((number? thing)
-		     (if (inexact? thing)
-			 (if (eq? *print-decimals* #t)
-			     (print-message (number->string thing))
-			     (print-message (number->string
-					     (decimals thing *print-decimals*))))
-			 (print-message (number->string thing))))
+		     (print-message (number->string thing))
+;;		     (if (inexact? thing)
+;;			 (if (eq? *print-decimals* #t)
+;;			     (print-message (number->string thing))
+;;			     (print-message (number->string
+;;					     (decimals thing *print-decimals*))))
+;;			 (print-message (number->string thing)))
+		     )
 		    ((string? thing)
-		     (print-message thing))
+		     (print-message thing)
+		     )
 		    (else
 		     (print-message (sprintf "~S" thing)))))))
     (do ((tail args (cdr tail)))
 	((null? tail)
 	 (print-message "\n"))
-      (printer (car tail)))
+      (printer (car tail) 0))
     (values)))
 
 (define (sal:chdir path)

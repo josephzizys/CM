@@ -24,8 +24,6 @@
 
 (define (rest l) (cdr l))
 
-;;(define (tail l) (if (null? (cdr l)) l (tail (cdr l))))
-
 (define (last l) (if (null? (cdr l)) (car l) (last (cdr l))))
 
 (define (butlast l)
@@ -33,6 +31,8 @@
 	((null? (cddr l)) (list (car l)))
 	(else
 	 (cons (car l) (butlast (cdr l))))))
+
+(define (tail l) (if (null? (cdr l)) l (tail (cdr l))))
 
 (define (list* . args)
   (cond ((null? args)

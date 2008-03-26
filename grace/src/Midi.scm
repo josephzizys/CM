@@ -198,7 +198,7 @@ void set_input_hook( C_word proc )
     m mm:press))
 
 (define (mm:make-bend . args)
-  (with-optkeys (args (time 0) (val 0) (chan 0))
+  (with-optkeys (args (time 0) (val 8192) (chan 0))
     ( (foreign-lambda (c-pointer "MidiMessage") "mm_make"
 		      int double int int int)
       mm:bend time chan val 0)))
@@ -206,12 +206,6 @@ void set_input_hook( C_word proc )
 (define (mm:bend? m)
   ( (foreign-lambda bool "mm_is_type" (c-pointer "MidiMessage") int)
     m mm:bend))
-
-
-
-
-
-
 
 (define (mm:free m)
   ( (foreign-lambda void "mm_free" (c-pointer "MidiMessage"))

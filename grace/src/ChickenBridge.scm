@@ -142,6 +142,7 @@ void load_sal_file(char *path) {
 	 scale
 
 	 rescale discrete int quantize decimals
+	 plus minus times divide
 	 cents->scaler scaler->cents
 	 rhythm->seconds
 	 interp interpl  ; can remove interpl
@@ -387,6 +388,7 @@ void load_sal_file(char *path) {
        (v (make-string 15))
        (y 0 (+ y 1)))
       ((= y 7) #f)
+    (if (= y 0) (printf e))
     (printf (do ((x 0 (+ x 1)))
 		((= x 15)
 		 (if (= y 3)
