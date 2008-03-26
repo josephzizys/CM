@@ -40,6 +40,7 @@
   <li><a href="#environment">Environment</a></li>
  <li><a href="#expressions">SAL Expressions</a></li>
   <li><a href="#examples">Code Examples</a></li>
+  <li><a href="#sal_scheme_cltl">Appendix 1: Table of SAL, Scheme and Common Lisp</a></li>
 </ul>
 
 <h2 id="introduction">Introduction</h2>
@@ -2987,6 +2988,655 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
 <span class="command">sprout</span> ranins1(10, .2, 60, 72, 1000)
 </pre>
 </div>  
+
+
+<h2 id="sal_scheme_cltl">Appendix 1: Table of SAL, Scheme and Common Lisp</h2>
+
+<table>
+  <caption>Translation table for SAL, Scheme and Common Lisp entities.
+  <!-- Table Column Heading -->
+  <thead>
+  <tr>
+    <th> </th>
+    <th class="headingth" width="30%">
+      SAL
+    </th>
+    <th class="headingth" width="30%">
+
+      Scheme <a href="#foot1"><span class="footnoteref">1</a></span>
+    </th>
+    <th class="headingth" width="30%">
+      Common Lisp <a href="#foot2"><span class="footnoteref">2</a></span>
+    </th>
+  </tr>
+  </thead>
+
+  <tbody>
+
+  <!-- Booleans -->
+  <tr>    
+    <th class="headingth">Booleans</th>
+    <td class="saltd">
+      #f
+    </td>
+    <td class="schemetd">
+
+      #f
+    </td>
+    <td class="cltltd">
+      nil
+    </td>
+  </tr>
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      #t
+    </td>
+
+    <td class="schemetd">
+      #t
+    </td>
+    <td class="cltltd">
+      t
+    </td>
+  </tr>
+
+  <!-- Keywords -->
+  <tr>    
+    <th class="headingth">Keywords</th>
+
+    <td class="saltd">
+      foobar:
+    </td>
+    <td class="schemetd">
+      #:foobar <var>or</var> foobar:
+    </td>
+    <td class="cltltd">
+      :foobar
+    </td>
+  </tr>
+
+  <!-- Empty List -->
+  <tr>    
+    <th class="headingth">Lists</th>
+    <td class="saltd">
+      {}
+    </td>
+    <td class="schemetd">
+      '()
+    </td>
+
+    <td class="cltltd">
+      ()  <var>or</var> nil
+    </td>
+  </tr>
+
+  <!-- Constant Lists -->
+  <tr>    
+    <th class="headingth"> </th>
+
+    <td class="saltd">
+      {a b {1 2 3} c}
+    </td>
+    <td class="schemetd">
+      '(a b (1 2 3) e)
+    </td>
+    <td class="cltltd">
+      '(a b (1 2 3) e)
+    </td>
+  </tr>
+
+  <tr>    
+    <th class="headingth"> </th>
+
+    <td class="saltd">
+      {a #$ ran(100) c}
+    </td>
+    <td class="schemetd">
+      `(a ,(random 100) c}
+    </td>
+    <td class="cltltd">
+      `(a ,(random 100) c)
+    </td>
+  </tr>
+  <tr>    
+    <th class="headingth"> </th>
+
+    <td class="saltd">
+      {a #^ list(ran(100), ran(100)) c}
+    </td>
+    <td class="schemetd">
+      `(a ,@ (list (random 100) (random 100)) c}
+    </td>
+    <td class="cltltd">
+      `(a ,@(list (random 100) (random 100)) c)
+    </td>
+  </tr>
+
+  
+    <!-- Constant Lists -->
+  <tr>    
+    <th class="headingth">Arithmetic</th>
+    <td class="saltd">
+      1 + 2
+    </td>
+    <td class="schemetd">
+      (+ 1 2)
+    </td>
+
+    <td class="cltltd">
+      (+ 1 2)
+    </td>
+  </tr>
+  <tr>
+    <th class="headingth"> </th>
+    <td class="saltd">
+      - 1
+    </td>
+
+    <td class="schemetd">
+      (- 1)
+    </td>
+    <td class="cltltd">
+      (- 1)
+    </td>
+  </tr>
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+
+      1 + 2 + 3 * 4
+    </td>
+    <td class="schemetd">
+      (* (+ 1 2 3) 4)
+    </td>
+    <td class="cltltd">
+      (* (+ 1 2 3) 4)
+    </td>
+  </tr>
+  <tr>    
+    <th class="headingth"> </th>
+
+    <td class="saltd">
+      3 ^ 4
+    </td>
+    <td class="schemetd">
+      (expt 3 4)
+    </td>
+    <td class="cltltd">
+      (expt 3 4)
+    </td>
+  </tr>
+
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      3 % 4
+    </td>
+    <td class="schemetd">
+      (modulo 3 4)
+    </td>
+    <td class="cltltd">
+      (mod 3 4)
+    </td>
+
+  </tr>
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      a = b
+    </td>
+    <td class="schemetd">
+      (= a b)
+    </td>
+    <td class="cltltd">
+
+      (= a b)
+    </td>
+  </tr>
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      a / b != b * c
+    </td>
+    <td class="schemetd">
+      (not (= (/ a b) (* b c)))
+    </td>
+
+    <td class="cltltd">
+      (/= (/ a b) (* b c))
+    </td>
+  </tr>
+
+    <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      a ~= b
+    </td>
+    <td class="schemetd">
+      (equal a b)
+    </td>
+
+    <td class="cltltd">
+      (equal a b)
+    </td>
+  </tr>
+
+  <!-- Logic -->
+  <tr>    
+    <th class="headingth">Logic </th>
+    <td class="saltd">
+      a | b
+    </td>
+
+    <td class="schemetd">
+      (or a b)
+    </td>
+    <td class="cltltd">
+      (or a b)
+    </td>
+  </tr>
+  <tr>
+    <th class="headingth"> </th>
+
+    <td class="saltd">
+      ! a | b
+    </td>
+    <td class="schemetd">
+      (or (not a) b)
+    </td>
+    <td class="cltltd">
+      (or (not a) b)
+    </td>
+  </tr>
+
+  <tr>
+    <th class="headingth"> </th>
+    <td class="saltd">
+      a & b | ! c
+    </td>
+    <td class="schemetd">
+      (or (and a b) (not c))
+    </td>
+    <td class="cltltd">
+
+      (or (and a b) (not c))
+    </td>
+  </tr>
+
+  <tr>
+    <th class="headingth"> Conditionals</th>
+    <td class="saltd">
+      if a = b then ... else ...
+    </td>
+    <td class="schemetd">
+
+      (if (= a b) ... ...)
+    </td>
+    <td class="cltltd">
+      (if (= a b) ... ...)
+    </td>
+  </tr>
+
+  <tr>
+    <th class="headingth"> </th>
+    <td class="saltd">
+      when a = b print "win"
+    </td>
+    <td class="schemetd">
+     (when (= a b) (print "win"))
+    </td>
+    <td class="cltltd">
+     (when (= a b) (print "win"))
+    </td>
+  </tr>
+  <tr>
+    <th class="headingth"> </th>
+    <td class="saltd">
+      unless a = b print "win"
+    </td>
+    <td class="schemetd">
+     (unless (= a b) (print "win"))
+    </td>
+    <td class="cltltd">
+     (unless (= a b) (print "win"))
+    </td>
+  </tr>
+  <tr>
+    <th class="headingth"> </th>
+    <td class="saltd">
+      #?(a = b, -99, 2)
+    </td>
+    <td class="schemetd">
+
+      (if (= a b) -99 2)
+    </td>
+    <td class="cltltd">
+      (if (= a b) -99 2)
+    </td>
+  </tr>
+
+
+  <!-- Function calls -->
+  <tr>    
+    <th class="headingth">Function calls</th>
+
+    <td class="saltd">
+      list()
+    </td>
+    <td class="schemetd">
+      (list)
+    </td>
+    <td class="cltltd">
+      (list)
+    </td>
+  </tr>
+
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      list(10)
+    </td>
+    <td class="schemetd">
+      (list 10)
+    </td>
+    <td class="cltltd">
+      (list 10)
+    </td>
+
+  </tr>
+  <tr>
+    <th class="headingth"></th>
+    <td class="saltd">
+      list(1, 2 + 3, 4)
+    </td>
+    <td class="schemetd">
+      (list 1 (+ 2 3) 4)
+    </td>
+    <td class="cltltd">
+
+      (list 1 (+ 2 3) 4)
+    </td>
+  </tr>
+
+  <tr>
+    <th class="headingth"></th>
+    <td class="saltd">
+      list(1, 2, 3, random(10))
+    </td>
+    <td class="schemetd">
+
+      (list 1 2 3 (random 10))
+    </td>
+    <td class="cltltd">
+      (list 1 2 3 (random 10))
+    </td>
+  </tr>
+
+
+  <!-- Global Variables -->
+  <tr>    
+    <th class="headingth">Global variables</th>
+
+    <td class="saltd">
+      define variable foo
+    </td>
+    <td class="schemetd">
+      (define foo #f)
+    </td>
+    <td class="cltltd">
+      (defparameter foo nil)
+    </td>
+  </tr>
+
+  <!-- Global Variables 2
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      define variable a = 123,<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b = a + 1
+    </td>
+    <td class="schemetd">
+
+      (define a 123)<br/>
+      (define b (+ a 1))
+    </td>
+    <td class="cltltd">
+      (defparameter a 123)<br/>
+      (defparameter b (+ a 1))
+    </td>
+  </tr>  -->
+
+  <!-- Function Definitions -->
+
+  <tr>    
+    <th class="headingth">Function definitions </th>
+    <td class="saltd">
+      define function foo (a, b)<br/>
+      &nbsp;&nbsp;return a + random(b)
+
+    </td>
+    <td class="schemetd">
+
+      (define (foo a b)<br/>
+      &nbsp;&nbsp;(+ a (random b))
+    </td>
+    <td class="cltltd">
+      (defun foo (a b)<br/>
+      &nbsp;&nbsp;(+ a (random b)))
+    </td>
+  </tr>
+
+  <!-- Code blocks 1 -->
+  <tr>    
+    <th class="headingth">Code blocks</th>
+    <td class="saltd">
+      begin<br/>
+      &nbsp;&nbsp;...<br/>
+      end
+    </td>
+
+    <td class="schemetd">
+      (begin<br/>
+      &nbsp;&nbsp;...<br/>
+      &nbsp;&nbsp;)
+    </td>
+    <td class="cltltd">
+      (progn<br/>
+      &nbsp;&nbsp;...<br/>
+
+      &nbsp;&nbsp;)
+    </td>
+  </tr>
+
+
+ <!-- Code blocks 2 -->
+
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      begin<br/>
+      &nbsp;&nbsp;with a = 1, b = a + 2<br/>
+      &nbsp;&nbsp;...<br/>
+      end
+    </td>
+
+    <td class="schemetd">
+      (let* ((a 1)<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(b (+ a 2))<br/>
+      &nbsp;&nbsp;...<br/>
+      &nbsp;&nbsp;)
+    </td>
+    <td class="cltltd">
+      (let* ((a 1)<br/>
+
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(b (+ a 2))<br/>
+      &nbsp;&nbsp;...<br/>
+      &nbsp;&nbsp;)
+    </td>
+  </tr>
+
+
+
+
+  
+  <!-- Assignment 1 -->
+  <tr>    
+    <th class="headingth"> Assignment</th>
+    <td class="saltd">
+      set foo = 123
+    </td>
+    <td class="schemetd">
+      (set! foo 123)
+    </td>
+
+    <td class="cltltd">
+      (setf foo 123)
+    </td>
+  </tr>
+
+  <!-- Assignment 2 -->
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      set foo = 123, bar = foo
+    </td>
+
+    <td class="schemetd">
+      (set! foo 123)<br/>
+      (set! bar foo)
+    </td>
+    <td class="cltltd">
+      (setf foo 123
+            bar foo)
+    </td>
+  </tr>
+
+  <!-- Assignment 3 -->
+
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      set foo += 123
+    </td>
+    <td class="schemetd">
+      (set! foo (+ foo 123))
+    </td>
+    <td class="cltltd">
+      (incf foo 123)
+    </td>
+
+  </tr>
+
+  <!-- Assignment 4 -->
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      set foo *= 123
+    </td>
+    <td class="schemetd">
+      (set! foo (* foo 123))
+    </td>
+
+    <td class="cltltd">
+      (setf foo (* foo 123))
+    </td>
+  </tr>
+
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      set foo &= 123
+    </td>
+    <td class="schemetd">
+      (set! foo (append foo (list 123)))
+    </td>
+
+    <td class="cltltd">
+      (setf foo (append foo (list 123)))
+    </td>
+  </tr>
+
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      set foo @= 123
+    </td>
+    <td class="schemetd">
+      (set! foo (cons 123 foo))
+    </td>
+
+    <td class="cltltd">
+      (push 123 foo)
+    </td>
+  </tr>
+
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      set foo &lt;= 123
+    </td>
+    <td class="schemetd">
+      (set! foo (min 123 foo))
+    </td>
+
+    <td class="cltltd">
+      (setf foo (min 123 foo))
+    </td>
+  </tr>
+
+  <tr>    
+    <th class="headingth"> </th>
+    <td class="saltd">
+      set foo &gt;= 123
+    </td>
+    <td class="schemetd">
+      (set! foo (max 123 foo))
+    </td>
+
+    <td class="cltltd">
+      (setf foo (max 123 foo))
+    </td>
+  </tr>
+
+
+  <!-- Iteration -->
+  <tr>    
+    <th class="headingth">Iteration </th>
+    <td class="saltd">
+      loop ... end
+    </td>
+    <td class="schemetd">
+      (loop ...)
+    </td>
+
+    <td class="cltltd">
+      (loop ... )
+    </td>
+  </tr>
+
+  
+  </tbody>
+
+  <!--  TABLE FOOTER -->
+
+  <tfoot>
+  <tr>
+    <td> </td>
+    <td colspan="3" id="foot1">1.</span> Reference Scheme implementation: <a href="http://www.call-with-current-continuation.org/">Chicken Scheme</a>
+    </td>
+  </tr>
+
+  <tr>
+    <td> </td>
+    <td colspan="3" id="foot2">2. Reference Common Lisp: <a href="http:sbcl.sourceforge.net">Steel Bank Common Lisp (SBCL)</a>
+    </td>
+  </tr>
+  </tfoot>
+</table>    
+
+
+
 
 
 

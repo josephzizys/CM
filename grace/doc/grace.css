@@ -445,3 +445,29 @@ span.commandname {
 code {
     font-family: monaco, monospace;
 }
+
+th.headingth { }
+td.headingtd { background: lightyellow;}
+
+td.saltd {
+  background: #ffffcc;
+  font-style: normal;
+  font-family: monaco, monospace;
+  padding: .5em .5em;
+}
+td.schemetd {
+  background: #ccffcc;
+  font-style: normal;
+  font-family: monaco, monospace;
+  padding: .5em .5em;
+}
+td.cltltd {
+  background: #ccffff;
+  font-style: normal;
+  font-family: monaco, monospace;
+  padding: .5em .5em;
+}
+span.footnoteref {
+  font-size: smaller;
+  vertical-align:super;
+}
