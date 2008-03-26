@@ -46,7 +46,7 @@
 
 <p>The Common Music 3 branch is implemented in <a
 href="http://www.call-with-current-continuation.org">Chicken
-Scheme</a> and optimized for realtime scheduling within Grace. <!-- At some point in the future I will also release a non-gui (terminal) version that could be used from within Emacs. --> Since Scheme and realtime scheduling have caused significant design changes to the underlying code -- and thereby making source compatability with earlier versions of CM not even a possibility -- I have taken the opportunity to add, remove and modify CM's API to make it leaner, more interactive and to minimize the necessity of "boilerplate" code to process lists of data.
+Scheme</a> and optimized for realtime scheduling within Grace. <!-- At some point in the future I will also release a non-gui (terminal) version that could be used from within Emacs. --> Since Scheme and realtime scheduling have caused significant design changes to the underlying code --  thereby making source compatability with earlier versions of CM an impossibility -- I have taken the opportunity to add, remove and modify CM's API to make it a leaner, more interactive, system.
 </p>
 
 <p>
@@ -63,7 +63,7 @@ the previous (CM 2) line:
   <li>Terser function calling syntax to assist with interactive coding:
   <ul>
     <li>No dependance on quoted symbols or keywords in argument data.</li>
-    <li>Numerous functions expanded to handle lists as well as atomic data. This cuts down on looping boilerplate and reduces the number of functions in the API. In the documentation separate formals are provided in cases where list handling causes a significant difference in argument syntax.</li>
+    <li>Numerous functions expanded to handle lists as well as atomic data. This reduces the number of functions in the API and help minimize the need to write ad hoc iterations just to process list data . In the documentation separate formals are provided in cases where list handling causes a significant difference in argument syntax.</li>
 
    <li><a href="#opt/key">Opt/key</a> parameters with DSSSL style keywords (symbols ending with a colon) replace &amp;optional and &amp;keyword parameters.  </li>
     <li>Shorter names in general.</li>
