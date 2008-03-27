@@ -249,7 +249,7 @@ Returns the first element in <var>list</var>. Similar acccessors for the <code><
 </table>
 <blockquote>
 <p>
-Returns the last element in <var>list</var>. Note that this is not the same as Common Lisp's version! (see <a href="#tail"><code>tail</code></a>).
+Returns the last element in <var>list</var>. Note that this is not the same as Common Lisp's version (see <a href="#tail"><code>tail</code></a>).
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -267,7 +267,7 @@ Returns the last element in <var>list</var>. Note that this is not the same as C
 </table>
 <blockquote>
 <p>
-Returns the element at <var>pos</var> position (zero based) in <var>list</var>. Note that this is not the same as Common Lisp's version which, confusingly, has the arguments reversed.
+Returns the element at <var>pos</var> position (zero based) in <var>list</var>. Note that this is not the same as Common Lisp's version which (confusingly) reverses the arguments.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -327,6 +327,24 @@ Returns the tail (last cdr) of <var>list</var>.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<table class="entry" id="unique">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">unique</span>
+      (<var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Return a copy of <var>list</var> with duplicate elements removed.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
 <table class="entry" id="list*">
   <tr class="entry">
     <td class="formals">
@@ -357,7 +375,13 @@ Prepends elements in <var>...</var> onto the front of <var>list</var>.
 </table>
 <blockquote>
 <p>
-Returns a list of <var>length</var> elements with initial elements set to <var>fill</var>.
+
+Returns a list of <var>length</var> number of elements with initial
+contents initialized by <var>fill</var>.  If <var>fill</var> is a
+thunk (a function of zero arguments) it will be called
+<var>length</var> times to produce the contents of the list, otherwise
+all the elements in the list are set to <var>fill</var>.
+
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -380,7 +404,6 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
 </p>
 </blockquote>
 <!-- END DEFINITION -->
-
 
 <h3 id="mapping">Mapping and Transformation</h3>
 
@@ -523,10 +546,6 @@ Returns a version of <var>list</var> with its elements reversed.
 </blockquote>
 <!-- END DEFINITION -->
 
-
-
-
-
 <!-- DEFINITION -->
 <table class="entry" id="scale">
   <tr class="entry">
@@ -551,6 +570,26 @@ Returns a list of <var>num</var> keys starting on <var>start</var> and increment
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="scale-order">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">scale-order</span>
+      (<var class="arg">list</var>, [<var class="opt">mode</var> <var class="optval">1</var>])</td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a <var>list</var> of notes, keys or hertz values ordered according to <var>mode</var>, where 1 means ascending order, -1 means descending order and 0 means random order.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+
 
 <!-- DEFINITION -->
 <table class="entry" id="rescale">
@@ -677,7 +716,7 @@ state object that can be seeded using <a href="#ran-set!"><code>ran-set!</code><
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ran</span>
-      (<var class="arg">num</var>)
+      ([<var class="opt">num</var> <var class="optval"> 1.0</var>])
     </td>
     <td class="label">Function</td>
   </tr>
@@ -686,9 +725,8 @@ state object that can be seeded using <a href="#ran-set!"><code>ran-set!</code><
 
 <blockquote>
 <p>
-Returns a random number lying between 0 and <var>num</var> (exclusive). If
-<var>num</var> is an integer greater than 1 then an integer will be returned
-otherwise a floating point value is returned.
+Returns a random number between 0 and <var>num</var> (exclusive). If
+<var>num</var> is an integer greater than 1 then an integer will be returned otherwise a floating point value is returned.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -724,7 +762,7 @@ Returns a randomly choosen number between <var>a</var> and </var>b</var> (exclus
 </table>
 <blockquote>
 <p>
-Returns value of <var>true</var> if a randomly chosen number between 0.0 and 1.0 is less than <var>num</var> else returns the value of <var>false</var>.
+Returns <var>true</var> value if a randomly chosen number between 0.0 and 1.0 is less than <var>num</var> else returns <var>false</var> value.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -755,57 +793,233 @@ Returns a randomly selected <var>arg</var> as the value of the function. If just
 </blockquote>
 <!-- END DEFINITION -->
 
-
-
 <h4>Nonuniform Distributions</h4>
 
-<dl id="ranpink"><dt class="entry"><code><span class="term">ranpink</span> ()<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns a pinkish  (1/f)  value between -1 and 1.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="ranpink">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ranpink</span>
+      ()
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a pinkish  (1/f)  value between -1 and 1.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="ranbrown"><dt class="entry"><code><span class="term">ranbrown</span> ()<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns a brownish  (1/f<sup>2</sup>) value between -1 and 1.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="ranbrown">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ranbrown</span>
+      ()
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a brownish  (1/f<sup>2</sup>) value between -1 and 1.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="ranlow"><dt class="entry"><code><span class="term">ranlow</span> ()<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns a value between 0 and 1 with lower values more likely.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="ranlow">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ranlow</span>
+      ()
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a value between 0 and 1 with lower values more likely.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="ranhigh"><dt class="entry"><code><span class="term">ranhigh</span> ()<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns a value between 0 and 1 with higher values more likely.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="ranhigh">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ranhigh</span>
+      ()
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a value between 0 and 1 with higher values more likely.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="ranmid"><dt class="entry"><code><span class="term">ranmiddle</span> ()<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns a value between 0 and 1 with middle values more likely.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="ranmiddle">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ranmiddle</span>
+      ()
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a value between 0 and 1 with middle values more likely.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="rangauss"><dt class="entry"><code><span class="term">rangauss</span> ([<var>a 1</var>], [<var>b</var> 0])<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns unbounded value from the  <a href="http://en.wikipedia.org/wiki/Normal_distribution">normal distribution</a> with standard deviation <var>a</var> (sigma) and mean <var>b</var> (mu).</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="rangauss">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">rangauss</span>
+      ([<var class="opt">a</var> <var class="optval">1</var>], [<var class="opt">b</var> <var class="optval">0</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns unbounded value from the  <a href="http://en.wikipedia.org/wiki/Normal_distribution">normal distribution</a> with standard deviation <var>a</var> (sigma) and mean <var>b</var> (mu).
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="ranexp"><dt class="entry"><code><span class="term">ranexp</span> ([<var>lambda 1</var>])<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns a value greater than 0 from the  <a href="http://en.wikipedia.org/wiki/Exponential_distribution">exponential distribution</a> with stretching factor <var>lambda</var>.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="ranexp">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ranexp</span>
+      ([<var class="opt">lambda</var> <var class="optval">1</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a value greater than 0 from the  <a href="http://en.wikipedia.org/wiki/Exponential_distribution">exponential distribution</a> with stretching factor <var>lambda</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="ranbeta"><dt class="entry"><code><span class="term">ranbeta</span> ([<var>a</var> .5], [<var>b</var> <var>a</var>])<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns value between 0 and 1 from the  <a href="http://en.wikipedia.org/wiki/Beta_distribution">beta distribution</a>.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="ranbeta">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ranbeta</span>
+      ([<var class="opt">a</var> <var class="optval">.5</var>], [<var class="opt">b</var> <var class="optval">.5</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns value between 0 and 1 from the  <a href="http://en.wikipedia.org/wiki/Beta_distribution">beta distribution</a>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="rangamma"><dt class="entry"><code><span class="term">rangamma</span> ([<var>k</var> 1])<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns value greater than 0 from the  <a href="http://en.wikipedia.org/wiki/Gamma_distribution">gamma distribution</a>.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="rangamma">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">rangamma</span>
+      ([<var class="opt">k</var> <var class="optval">1</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns value greater than 0 from the  <a href="http://en.wikipedia.org/wiki/Gamma_distribution">gamma distribution</a>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="rancauchy">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">rancauchy</span>
+      ()
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns an unbounded value from the <a href="http://en.wikipedia.org/wiki/Cauchy_distribution">Cauchy distribution</a>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
-<dl id="rancauchy"><dt class="entry"><code><span class="term">rancauchy</span> ()<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns an unbounded value from the <a href="http://en.wikipedia.org/wiki/Cauchy_distribution">Cauchy distribution</a>.</p></dd></dl>
-
-
-<dl id="ranpoisson"><dt class="entry"><code><span class="term">ranpoisson</span> ([<var>lambda 1</var>])<br/>&rarr; <var>float</var></code></dt>
-<dd><p>Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wiki/Poisson_distribution">Poisson distribution</a> with shape factor <var>lambda</var>.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="ranpoisson">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ranpoisson</span>
+      ([<var class="opt">lambda</var> <var class="optval">1</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns an unbounded integer value from the <a href="http://en.wikipedia.org/wiki/Poisson_distribution">Poisson distribution</a> with shape factor <var>lambda</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 <h4>Seeding</h4>
 
-<dl id="ran-set"><dt class="entry"><code><span class="term">ran-set!</span> (<var>uint</var>)<br/>&rarr; <var>void</var></code></dt><dd><p>Initialize the random state generator with the unsigned integer value <var>uint</var>.</p></dd></dl>
+<!-- DEFINITION -->
+<table class="entry" id="ran-set!">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ran-set!</span>
+      (<var class="arg">uint</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Initialize the random state generator with the unsigned integer value <var>uint</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 <h3 id="patterns">Patterns</h3>
 
 <p>
 
-Patterns are objects that generate data in different
-orderings. Patterns can used individually or <em>nested</em>
- to form local orderings (sub-patterns) within the surrounding
-pattern.
+Patterns are objects that generate data in different orderings. They
+can used individually or <var>nested</var> to generate sub-patterns (local orderings)
+within a surrounding pattern.
 
 </p>
 
@@ -979,8 +1193,7 @@ Returns one or more elements from <var>pattern</var> according
 to <var>chunk</var>. If <var>chunk</var> is false
 then the next element from <var>pattern</var> is
 returned. If <var>chunk</var> is a number then that many elements are
-read from the pattern and returned in a list. Otherwise if length is
-true then the next period's worth of data is read from the pattern and returned in a list.
+read from the pattern and returned in a list. Otherwise if <var>chunk</var> is true then the next period's worth of data is returned in a list.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -994,12 +1207,12 @@ true then the next period's worth of data is read from the pattern and returned 
     </td>
     <td class="label">Function</td>
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; element</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; boolean</td></tr>
 </table>
 <blockquote>
 <p>
 Returns true if <var>pattern</var> is at the end of its current period. <var>Pattern</var>
-can be the state returned from the pattern or the pattern  itself.
+can be a pattern or the value returned from the pattern by <a href="#next">next</a>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -1013,22 +1226,428 @@ can be the state returned from the pattern or the pattern  itself.
     </td>
     <td class="label">Function</td>
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; element</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; boolean</td></tr>
 </table>
 <blockquote>
 <p>
 Returns true if <var>pattern</var> is at the end of its data.  This condition can only happen if the pattern was created with a <var>repeat</var> value explicitly provided. <var>Pattern</var>
-can be the state returned from the pattern or the pattern  itself.
+can be a pattern or the value returned from the pattern by <a href="#next">next</a>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
-
-
-
 <h3 id="spectral">Spectral Manipulation</h3>
 
-<p>Not yet written</p>
+<p>
+The following functions create, access or modify <var>spectrum</var> objects. A spectrum holds a sequence of hertz values ordered low to high, an (optional) sequence of amplitudes and an (optional) time value. Spectra can passed between Scheme and C++, for example sending them to a plotter window for display.
+</p>
+
+<h4>Creating Spectra</h4>
+
+
+<!-- DEFINITION -->
+<table class="entry" id="make-spectrum">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">make-spectrum</span>
+      (<var class="arg">freqs</var>, [<var class="optvar">amps</var> <var class="optval">#f</var>], [<var class="optvar">time</var> <var class="optval">#f</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
+</table>
+<blockquote>
+<p>
+Creates a spectrum out of the specified <var>freqs</var> (list of hertz values) an optional list of <var>amps</var> and an optional <var>time</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="fm-spectrum">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">fm-spectrum</span>
+      (<var class="arg">carrier</var>, <var class="arg">ratio</var>, <var class="arg">index</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a spectrum generated by <a href="http://en.wikipedia.org/wiki/Frequency_modulation_synthesis">Frequency Modulation</a> from a <var>carrier</var> frequency in hertz, a modulation <var>ratio</var> and an fm <var>index</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="rm-spectrum">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">rm-spectrum</span>  (<var class="arg">freq1</var>, <var class="arg">freq2</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a spectrum generated by <a href="http://en.wikipedia.org/wiki/Ring_modulation">ring modulation</a>, where <var>freq1</var> and <var>freq2</var> can be spectrum objects, lists of hertz values or single hertz values.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="import-spear-spectra">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">import-spear-frames</span>
+      (<var class="arg">file</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Imports <a href="http://www.klingbeil.com/spear/">SPEAR</a> frame data in <var>file</var> as a list of spectrum objects.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<h4>Accessing Spectral Information</h4>
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-size">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-size</span>
+
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; integer</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the number of frequency and amplitude pairs in <var>spectrum</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-time">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-time</span>
+
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float or #f</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the time of <var>spectrum</var> or false if there is none.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-maxfreq">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-maxfreq</span>
+
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the highest frequency in <var>spectrum</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-minfreq">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-minfreq</span>
+
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the lowest frequency in <var>spectrum</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-maxamp">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-maxamp</span>
+
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the highest amplitude in <var>spectrum</var> or 0.0 if there are no amplitudes.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-minamp">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-minamp</span>
+
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; float</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the lowest amplitude in <var>spectrum</var> or 0.0 if there are no amplitudes.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-freqs">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-freqs</span>
+      (<var class="arg">spectrum</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the frequency values of <var>spectrum</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-amps">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-amps</span>
+      (<var class="arg">spectrum</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the amplitude values of <var>spectrum</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-pairs">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-pairs</span>
+      (<var class="arg">spectrum</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a list containing the frequencies and amplitudes of <var>spectrum</var> formatted as pairs: <code>(</code><var>f<sub>1</sub> a<sub>1</sub> ... f<sub>n</sub> a<sub>n</sub></var><code>)</code>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-keys">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-keys</span>
+      (<var class="arg">spectrum</var>, <var class="opt">order</var> = <var class="optval">1</var>, <var class="opt">thresh</var> = <var class="optval">0.0</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a list of the frequency components of <var>spectrum</var> converted to <a href="#keys">keys</a>. 
+If <var>order</var> is 1 then keys are returned in low to high order.
+If <var>order</var> is -1 then keys are returned in high to low order.
+Otherwise if <var>order</var> is 0 then the list of keys is shuffled.
+<var>Threshold</var> is a minimum amplitude value that frequency componenents must possess in order to be returned as keys. If <var>threshold</var> is a list <code>(</code><var>min</var> <var>max</var><code>)</code> then it acts as a band pass.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-notes">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-notes</span>
+      (<var class="arg">spectrum</var>, <var class="opt">order</var> = <var class="optval">1</var>, <var class="opt">thresh</var> = <var class="optval">0.0</var>, <var class="opt">unique</var> = <var class="optval">#t</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a list of the frequency components of <var>spectrum</var> converted to <a href="#note">notes</a>.
+If <var>order</var> is 1 then keys are returned in low to high order.
+If <var>order</var> is -1 then keys are returned in high to low order.
+Otherwise if <var>order</var> is 0 then keys are returned in random order.
+if <var>unique</var> is true then the list will not contain any duplicate notes (converting hertz values to notes in quarter-tone resolution involves quantization).
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="add-spectrum">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">add-spectrum</span>
+      (<var class="arg">spectrum</var>, <var class="arg">freq</var>, <var class="arg">amp</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a new spectrum wih a pair of <var>freq</var> and <var>amp</var> values added into <var>spectrum</var>. If <var>freq</var> already exists in </var>spectrum</var> then <var>amp</var> is just added to its current amplitude.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="merge-spectra">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">merge-spectrum</span>
+      (<var class="arg">spectrum</var>, <var class="rest">spectra...</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
+</table>
+<blockquote>
+<p>
+Merges <var>spectrum</var> with zero or more additional <var>spectra</var>. If <var>spectra</var> is null then a copy of <var>spectrum</var> is returned.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="rescale-spectrum">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">rescale-spectrum</span>
+      (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="arg">envelope</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">rescale-spectrum</span>
+      (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="rest">xy...</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">rescale-spectrum</span>
+      (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="arg">y</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
+</table>
+<blockquote>
+
+<p>
+
+Returns a new version of <var>spectrum</var> with its frequency or
+amplitude components modified according to <var>mode</var> and an
+<var>envelope</var> of x y values or a sequence of <var>xy...</var> values or a single <var>y</var> value.
+
+This modification encompasses both filtering and rescaling effects applied to either the frequency or amplitude side of the spectrum.
+
+<p><var>Mode</var> is an integer (1-8) that specifies the how
+<var>spectrum</var> will be modified. The meaning of <var>mode</var>
+involves three independant considerations:</p>
+
+<ol>
+<li>Is the frequency or the amplitude side of <var>spectrum</var> being modified?</li>
+<li>Is the x domain of <var>envelope</var> amplitude or frequency?</li>
+<li>Are y values of <var>envelope</var> used as values or as coefficients?</li>
+</ol>
+
+<p>These considerations produce 8 possible "modes" that identify the following rescaling or filtering operations:</p>
+
+<table cellspacing="5">
+<tr><th class="lcol">Mode</th><th class="lcol">Domain modified</th> <th class="lcol">X domain of envelope</th> <th class="lcol">Y used as</th></tr>
+<tr><td>1</td><td>frequency</td> <td>frequency</td> <td>Value </td></tr>
+<tr><td>2</td><td>frequency</td> <td>frequency</td> <td>Scaler</td></tr>
+<tr><td>3</td><td>frequency</td> <td>amplitude</td> <td>Value</td></tr>
+<tr><td>4</td><td>frequency</td> <td>amplitude</td> <td>Scaler</td></tr>
+<tr><td>5</td><td>amplitude</td> <td>frequency</td> <td>Value</td></tr>
+<tr><td>6</td><td>amplitude</td> <td>frequency</td> <td>Scaler</td></tr>
+<tr><td>7</td><td>amplitude</td> <td>amplitude</td> <td>Value</td></tr>
+<tr><td>8</td><td>amplitude</td> <td>amplitude</td> <td>Scaler</td></tr>
+</table>
+
+<p>The table can be summarized as follows:</p>
+
+<ul>
+<li>Modes 1-4 modify the frequencies of the spectrum, modes 5-8 modify the amplitudes.</li>
+<li>Odd numbered modes interpolate new values for the spectrum.</li>
+<li>Even numbered modes interpolate coefficients to scale the spectrum.</li>
+<li>Modes 3 4 use amplitude to modify frequency.</li>
+<li>Modes 5 6 use frequency to modify amplitude.</li>
+</ul>
+
+<p>Envelope shortcuts:</p>
+<ul>
+  <li> Specify a single y value rather than an envelope to set or scale the spectrum by a constant value.</li>
+  <li> Use <code>#t</code> as an x or y value to stand for the maximum frequency or amplitude (so you dont have to actually retreive this value to use it).</li>
+  <li> Use <code>#f</code> as an x or y value to stand for the minimum frequency or amplitude.</li>
+</ul>
+
+<dl>
+  <dt>To compress frequencies in a spectrum by half:</dt>
+  <dd><code>rescale-spectrum(spectrum, 2, .5)</code></dd>
+  <dt>To low-pass a spectrum:</dt>
+  <dd><code>rescale-spectrum(spectrum, 5, {100 1 400 .2 100 .1})</code></dd>
+  <dt>To invert the frequencies in a spectrum:</dt>
+  <dd><code>rescale-spectrum(spectrum, 1, #f, #t, #t, #f)</code></dd>
+
+</dl>
+
+</blockquote>
+<!-- END DEFINITION -->
 
 <h3 id="midi-message">Midi Messages</h3>
 
@@ -1599,14 +2218,25 @@ Assigns each <var>variable</var> to <var>value</var> according to the assignment
 <h2 id="conditionals">Conditionals</h2>
 
 <!-- DEFINITION -->
-<table class="entry" id="if">
+<table class="entry" id="csif">
   <tr class="entry">
     <td class="formals">
       (<span class="funcname">if</span>
       <var class="arg">test</var> <var class="arg">then</var> [<var class="opt">else</var>])
     </td>
-    <td class="label">Macro</td>
+    <td class="label">Special Form</td>
   </tr>
+  <tr><td class="retval" colspan="2">&rarr; if dependant value</td></tr>
+</table>
+<blockquote>
+<p>
+If <var>test</var> is true evaluate <var>then</var> otherwise evaluate <var>else</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="if">
   <tr class="entry">
     <td class="formals">
       <span class="commandname">if</span>
@@ -1614,24 +2244,35 @@ Assigns each <var>variable</var> to <var>value</var> according to the assignment
     </td>
     <td class="label">SAL</td>
   </tr>
-  <tr><td class="retval" colspan="2">&rarr;  if dependant value (void for SAL)</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote>
 <p>
-If <var>test</var> is true execute  a <var>true</var> statement  otherwise execute an optional <var>false</var> statement. See also: <a href="#condval">conditional value</a>.
+If <var>test</var> is true execute <var>true</var> statement otherwise execute an optional <var>false</var> statement. See also: <a href="#condval">conditional value</a>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="cswhen">
+  <tr class="entry">
+    <td class="formals">
+      (<span class="funcname">when</span>
+      <var class="arg">test</var> {<var class="arg">form</var>}*)
+    </td>
+    <td class="label">Macro</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; value of last form</td></tr>
+</table>
+<blockquote>
+<p>
+Execute zero or more <var>forms</var> if <var>test</var> is true.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
 <table class="entry" id="when">
-  <tr class="entry">
-    <td class="formals">
-      (<span class="funcname">when</span>
-      <var class="arg">test</var> {<var class="arg">statement</var>}*)
-    </td>
-    <td class="label">Macro</td>
-  </tr>
     <tr class="entry">
     <td class="formals">
       <span class="commandname">when</span>
@@ -1649,15 +2290,26 @@ Execute <var>statement</var> if <var>test</var> is true.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="unless">
+<table class="entry" id="csunless">
   <tr class="entry">
     <td class="formals">
       (<span class="funcname">unless</span>
-      <var class="arg">test</var> {<var class="arg">statement</var>}*)
+      <var class="arg">test</var> {<var class="arg">form</var>}*)
     </td>
     <td class="label">Macro</td>
   </tr>
-    <tr class="entry">
+  <tr><td class="retval" colspan="2">&rarr; value of last form</td></tr>
+</table>
+<blockquote>
+<p>
+Execute zero or more <var>forms</var> if <var>test</var> is false.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="unless">
+  <tr class="entry">
     <td class="formals">
       <span class="commandname">unless</span>
       <var class="arg">test</var> <var class="arg">statement</var>
@@ -3281,25 +3933,25 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
   <tr>
     <th class="headingth"> </th>
     <td class="saltd">
-      when a = b print "win"
+      when a = b ...
     </td>
     <td class="schemetd">
-     (when (= a b) (print "win"))
+     (when (= a b) ...)
     </td>
     <td class="cltltd">
-     (when (= a b) (print "win"))
+     (when (= a b) ...)
     </td>
   </tr>
   <tr>
     <th class="headingth"> </th>
     <td class="saltd">
-      unless a = b print "win"
+      unless a = b ...
     </td>
     <td class="schemetd">
-     (unless (= a b) (print "win"))
+     (unless (= a b) ...)
     </td>
     <td class="cltltd">
-     (unless (= a b) (print "win"))
+     (unless (= a b) ...)
     </td>
   </tr>
   <tr>
@@ -3362,14 +4014,14 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
   <tr>
     <th class="headingth"></th>
     <td class="saltd">
-      list(1, 2, 3, random(10))
+      list(1, 2, ran(10))
     </td>
     <td class="schemetd">
 
-      (list 1 2 3 (random 10))
+      (list 1 2 (random 10))
     </td>
     <td class="cltltd">
-      (list 1 2 3 (random 10))
+      (list 1 2 (random 10))
     </td>
   </tr>
 
@@ -3379,13 +4031,13 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
     <th class="headingth">Global variables</th>
 
     <td class="saltd">
-      define variable foo
+      define variable a
     </td>
     <td class="schemetd">
-      (define foo #f)
+      (define a #f)
     </td>
     <td class="cltltd">
-      (defparameter foo nil)
+      (defparameter a nil)
     </td>
   </tr>
 
@@ -3412,18 +4064,18 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
   <tr>    
     <th class="headingth">Function definitions </th>
     <td class="saltd">
-      define function foo (a, b)<br/>
-      &nbsp;&nbsp;return a + random(b)
+      define function foo (a)<br/>
+      &nbsp;&nbsp;return a + ran(10)
 
     </td>
     <td class="schemetd">
 
-      (define (foo a b)<br/>
-      &nbsp;&nbsp;(+ a (random b))
+      (define (foo a)<br/>
+      &nbsp;&nbsp;(+ a (random 10))
     </td>
     <td class="cltltd">
-      (defun foo (a b)<br/>
-      &nbsp;&nbsp;(+ a (random b)))
+      (defun foo (a)<br/>
+      &nbsp;&nbsp;(+ a (random 10)))
     </td>
   </tr>
 
@@ -3484,14 +4136,14 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
   <tr>    
     <th class="headingth"> Assignment</th>
     <td class="saltd">
-      set foo = 123
+      set a = 123
     </td>
     <td class="schemetd">
-      (set! foo 123)
+      (set! a 123)
     </td>
 
     <td class="cltltd">
-      (setf foo 123)
+      (setf a 123)
     </td>
   </tr>
 
@@ -3499,16 +4151,15 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
   <tr>    
     <th class="headingth"> </th>
     <td class="saltd">
-      set foo = 123, bar = foo
+      set a = 123, b = a
     </td>
 
     <td class="schemetd">
-      (set! foo 123)<br/>
-      (set! bar foo)
+      (set! a 123)<br/>
+      (set! b a)
     </td>
     <td class="cltltd">
-      (setf foo 123
-            bar foo)
+      (setf a 123 b a)
     </td>
   </tr>
 
@@ -3517,13 +4168,13 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
   <tr>    
     <th class="headingth"> </th>
     <td class="saltd">
-      set foo += 123
+      set a += 123
     </td>
     <td class="schemetd">
-      (set! foo (+ foo 123))
+      (set! a (+ a 123))
     </td>
     <td class="cltltd">
-      (incf foo 123)
+      (incf a 123)
     </td>
 
   </tr>
@@ -3532,70 +4183,70 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
   <tr>    
     <th class="headingth"> </th>
     <td class="saltd">
-      set foo *= 123
+      set a *= 123
     </td>
     <td class="schemetd">
-      (set! foo (* foo 123))
+      (set! a (* a 123))
     </td>
 
     <td class="cltltd">
-      (setf foo (* foo 123))
+      (setf a (* a 123))
     </td>
   </tr>
 
   <tr>    
     <th class="headingth"> </th>
     <td class="saltd">
-      set foo &= 123
+      set a &= 123
     </td>
     <td class="schemetd">
-      (set! foo (append foo (list 123)))
+      (set! a (append a (list 123)))
     </td>
 
     <td class="cltltd">
-      (setf foo (append foo (list 123)))
+      (setf a (append a (list 123)))
     </td>
   </tr>
 
   <tr>    
     <th class="headingth"> </th>
     <td class="saltd">
-      set foo @= 123
+      set a @= 123
     </td>
     <td class="schemetd">
-      (set! foo (cons 123 foo))
+      (set! a (cons 123 a))
     </td>
 
     <td class="cltltd">
-      (push 123 foo)
+      (push 123 a)
     </td>
   </tr>
 
   <tr>    
     <th class="headingth"> </th>
     <td class="saltd">
-      set foo &lt;= 123
+      set a &lt;= 123
     </td>
     <td class="schemetd">
-      (set! foo (min 123 foo))
+      (set! a (min 123 a))
     </td>
 
     <td class="cltltd">
-      (setf foo (min 123 foo))
+      (setf a (min 123 a))
     </td>
   </tr>
 
   <tr>    
     <th class="headingth"> </th>
     <td class="saltd">
-      set foo &gt;= 123
+      set a &gt;= 123
     </td>
     <td class="schemetd">
-      (set! foo (max 123 foo))
+      (set! a (max 123 a))
     </td>
 
     <td class="cltltd">
-      (setf foo (max 123 foo))
+      (setf a (max 123 a))
     </td>
   </tr>
 
