@@ -215,7 +215,9 @@
 (define ran-set! tb:ran-set!)
 
 (define (ran . num)
-  (if (null? num) (set! num 1))
+  (if (null? num) 
+      (set! num 1)
+      (set! num (car num)))
   (if (> num 1)
       (if (fixnum? num) (tb:rani num)
 	  (tb:ranf num))
