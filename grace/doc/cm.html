@@ -47,24 +47,24 @@
 
 <p>The Common Music 3 branch is implemented in <a
 href="http://www.call-with-current-continuation.org">Chicken
-Scheme</a> and optimized for realtime scheduling within Grace. <!-- At some point in the future I will also release a non-gui (terminal) version that could be used from within Emacs. --> Since Scheme and realtime scheduling have caused significant design changes to the underlying code --  thereby making source compatability with earlier versions of CM an impossibility -- I have taken the opportunity to add, remove and modify CM's API to make it a leaner, more interactive, system.
+Scheme</a> and optimized for realtime scheduling within Grace. <!-- At some point in the future I will also release a non-gui (terminal) version that could be used from within Emacs. --> Since Scheme and realtime scheduling have caused significant design changes to the underlying code (thereby making source compatability with earlier versions of CM an impossibility) I have taken the opportunity to add, remove and modify CM's API in an attempt to make it a leaner, more interactive, system.
 </p>
 
 <p>
-The distinguishing features of Common Music 3 compared to
-the previous (CM 2) line:
+The distinguishing features of the Common Music 3 line compared to
+the previous version are:
 </p>
 
 <ul>
   <li>Does not compile or load sources at runtime.</li>
   <li>Does not use an object system or generic functions.</li>
 
-  <li>Simplifed frequency functions combine support for key, note, hz and pitch class manipuation. Note names can include quarter-tone inflections (<code>&lt;</code> and <code>&gt;</code>). <!-- for example <code>cs&gt;4</code> is one quarter-tone above <code>cs4</code> --></li>
+  <li>Simplifed frequency functions combine support for key, note, hz and pitch class manipuation and note names support quarter-tones (<code>&lt;</code> and <code>&gt;</code>). <!-- for example <code>cs&gt;4</code> is one quarter-tone above <code>cs4</code> --></li>
 
-  <li>Terser function calling syntax to assist with interactive coding:
+  <li>Terser calling syntax to assist interactive coding:
   <ul>
     <li>No dependance on quoted symbols or keywords in argument data.</li>
-    <li>Numerous functions expanded to handle lists as well as atomic data. This reduces the number of functions in the API and help minimize the need to write ad hoc iterations just to process list data . In the documentation separate formals are provided in cases where list handling causes a significant difference in argument syntax.</li>
+    <li>Numerous functions expanded to handle lists as well as atomic data. This reduces the number of functions in the API and help minimize the need for ad hoc looping and applying just to process list data. In the documentation separate formals are provided in cases where list handling causes a significant difference in argument syntax.</li>
 
    <li><a href="#opt/key">Opt/key</a> parameters with DSSSL style keywords (symbols ending with a colon) replace &amp;optional and &amp;keyword parameters.  </li>
     <li>Shorter names in general.</li>
@@ -566,7 +566,7 @@ Returns a version of <var>list</var> with its elements reversed.
 </table>
 <blockquote>
 <p>
-Returns a list of <var>num</var> keys starting on <var>start</var> and incremented by each <var>step</var> or <var>list</var> of steps (positive or negative) read mod the number of steps.  For example <code>(steps 24 60 2 1)</code> returns a two octave version of the octatonic scale.
+Returns a list of <var>num</var> keys starting on <var>start</var> and incremented by each <var>step</var> or <var>list</var> of steps (positive or negative) read mod the number of steps.  For example <code>(steps 16 60 2 1)</code> returns a two octave version of the octatonic scale.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
