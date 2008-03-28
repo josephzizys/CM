@@ -143,7 +143,7 @@ void load_sal_file(char *path) {
 
 	 rescale discrete int quantize decimals
 	 plus minus times divide
-	 cents->scaler scaler->cents
+	 cents->ratio ratio->cents
 	 rhythm->seconds
 	 interp interpl  ; can remove interpl
 

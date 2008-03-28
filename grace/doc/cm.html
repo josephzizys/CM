@@ -47,7 +47,7 @@
 
 <p>The Common Music 3 branch is implemented in <a
 href="http://www.call-with-current-continuation.org">Chicken
-Scheme</a> and optimized for real-time scheduling within Grace. Since Scheme and real-time scheduling triggered major design changes to the underlying code (and thereby ruled out source compatibility with the earlier version) I have taken this opportunity to make the API a leaner, more consistent, expressive and interactive one.
+Scheme</a> and optimized for interactive work within Grace. Since Scheme and real-time scheduling triggered major design changes to the underlying code (and thereby ruled out source compatibility with the earlier version) I have  taken this opportunity to make the API a leaner, more consistent and (hopefully) a more expressive one.
 </p>
 
 <p>
@@ -664,10 +664,10 @@ Blah blah.
 -->
 
 <!-- DEFINITION -->
-<table class="entry" id="scaler-cents">
+<table class="entry" id="ratio-cents">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">scaler-&gt;cents</span>
+      <span class="funcname">ratio-&gt;cents</span>
       (<var class="arg">num</var>)
     </td>
     <td class="label">Function</td>
@@ -676,7 +676,7 @@ Blah blah.
 </table>
 <blockquote>
 <p>
-Converts a scaler <var>num</var> (ratio) or list of the same to the equivalent in cents.
+Converts a ratio <var>num</var> or list of the same to the equivalent in cents.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -685,7 +685,7 @@ Converts a scaler <var>num</var> (ratio) or list of the same to the equivalent i
 <table class="entry" id="cents-scaler">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">cents-&gt;scaler</span>
+      <span class="funcname">cents-&gt;ratio</span>
       (<var class="arg">cents</var>)
     </td>
     <td class="label">Function</td>
@@ -694,7 +694,7 @@ Converts a scaler <var>num</var> (ratio) or list of the same to the equivalent i
 </table>
 <blockquote>
 <p>
-Converts a <var>cents</var> value or list of the same to the scaler (ratio) equivalent.
+Converts a <var>cent</var> value or list of the same to the ratio equivalent.
 </p>
 </blockquote>
 <!-- END DEFINITION -->

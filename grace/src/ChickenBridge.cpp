@@ -1,6 +1,6 @@
 /* Generated from ChickenBridge.scm by the CHICKEN compiler
    http://www.call-with-current-continuation.org
-   2008-03-27 20:47
+   2008-03-27 21:02
    Version 3.0.0 - macosx-unix-gnu-x86	[ manyargs dload ptables applyhook ]
    (c)2000-2008 Felix L. Winkelmann	compiled 2008-02-24 on zippy.local (Darwin)
    command line: ChickenBridge.scm -output-file ChickenBridge.cpp -quiet
@@ -351,8 +351,8 @@ static C_char C_TLS li65[] C_aligned={C_lihdr(0,0,26),40,113,117,97,110,116,105,
 static C_char C_TLS li66[] C_aligned={C_lihdr(0,0,29),40,100,101,99,105,109,97,108,115,32,110,117,109,51,52,55,32,46,32,100,105,103,105,116,115,51,52,56,41,0,0,0,0,0};
 static C_char C_TLS li67[] C_aligned={C_lihdr(0,0,12),40,97,55,48,49,49,32,120,51,56,57,41,0,0,0,0};
 static C_char C_TLS li68[] C_aligned={C_lihdr(0,0,36),40,114,104,121,116,104,109,45,62,115,101,99,111,110,100,115,32,98,101,97,116,115,51,52,57,32,46,32,97,114,103,115,51,53,48,41,0,0,0,0};
-static C_char C_TLS li69[] C_aligned={C_lihdr(0,0,24),40,99,101,110,116,115,45,62,115,99,97,108,101,114,32,99,101,110,116,115,51,57,51,41};
-static C_char C_TLS li70[] C_aligned={C_lihdr(0,0,22),40,115,99,97,108,101,114,45,62,99,101,110,116,115,32,110,117,109,51,57,52,41,0,0,0,0,0,0};
+static C_char C_TLS li69[] C_aligned={C_lihdr(0,0,23),40,99,101,110,116,115,45,62,114,97,116,105,111,32,99,101,110,116,115,51,57,51,41,0,0,0,0,0,0,0};
+static C_char C_TLS li70[] C_aligned={C_lihdr(0,0,21),40,114,97,116,105,111,45,62,99,101,110,116,115,32,110,117,109,51,57,52,41,0,0,0,0,0};
 static C_char C_TLS li71[] C_aligned={C_lihdr(0,0,15),40,100,111,52,48,51,32,116,97,105,108,52,48,53,41,0,0,0,0,0,0,0};
 static C_char C_TLS li72[] C_aligned={C_lihdr(0,0,34),40,105,110,116,101,114,112,108,32,120,51,57,53,32,99,111,111,114,100,115,51,57,54,32,46,32,98,97,115,101,51,57,55,41,0,0};
 static C_char C_TLS li73[] C_aligned={C_lihdr(0,0,23),40,105,110,116,101,114,112,32,120,52,49,51,32,46,32,97,114,103,115,52,49,52,41,0,0,0,0,0,0,0};
@@ -9943,8 +9943,8 @@ lf[102]=C_decode_literal(C_heaptop,"\376U60.0\000");
 lf[103]=C_decode_literal(C_heaptop,"\376U0.25\000");
 lf[104]=C_h_intern(&lf[104],6,"\000tempo");
 lf[105]=C_h_intern(&lf[105],5,"\000beat");
-lf[106]=C_h_intern(&lf[106],13,"cents->scaler");
-lf[107]=C_h_intern(&lf[107],13,"scaler->cents");
+lf[106]=C_h_intern(&lf[106],12,"cents->ratio");
+lf[107]=C_h_intern(&lf[107],12,"ratio->cents");
 lf[108]=C_h_intern(&lf[108],7,"interpl");
 lf[109]=C_decode_literal(C_heaptop,"\376B\000\000\033not an x y coordinate list:");
 lf[110]=C_h_intern(&lf[110],3,"err");
@@ -52713,7 +52713,7 @@ t2=(C_word)C_i_cddr(((C_word*)t0)[4]);
 t3=((C_word*)((C_word*)t0)[3])[1];
 f_7276(t3,((C_word*)t0)[2],t2);}
 
-/* scaler->cents in k5938 in k5645 in k5642 in k5638 in k5347 in k5344 in k5341 in k5338 */
+/* ratio->cents in k5938 in k5645 in k5642 in k5638 in k5347 in k5344 in k5341 in k5338 */
 static void C_ccall f_7242(C_word c,C_word t0,C_word t1,C_word t2){
 C_word tmp;
 C_word t3;
@@ -52731,7 +52731,7 @@ C_trace("ChickenBridge.scm: 367  tb:scaler->cents");
 t3=C_retrieve2(lf[72],"tb:scaler->cents");
 f_6595(3,t3,t1,t2);}}
 
-/* cents->scaler in k5938 in k5645 in k5642 in k5638 in k5347 in k5344 in k5341 in k5338 */
+/* cents->ratio in k5938 in k5645 in k5642 in k5638 in k5347 in k5344 in k5341 in k5338 */
 static void C_ccall f_7227(C_word c,C_word t0,C_word t1,C_word t2){
 C_word tmp;
 C_word t3;

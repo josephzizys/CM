@@ -160,12 +160,12 @@
 	(map (lambda (x) (tb:rhythm->seconds x tempo beat)) beats)
 	(tb:rhythm->seconds beats tempo beat))))
 
-(define (cents->scaler cents)
+(define (cents->ratio cents)
   (if (list? cents)
       (map tb:cents->scaler cents)
       (tb:cents->scaler cents)))
 
-(define (scaler->cents num)
+(define (ratio->cents num)
   (if (list? num)
       (map tb:scaler->cents num)
       (tb:scaler->cents num)))
