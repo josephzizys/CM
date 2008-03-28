@@ -22,7 +22,7 @@
     <li><a href="#mapping">Mapping and Transformation</a></li>
     <li><a href="#randomness">Randomness</a></li>
     <li><a href="#patterns">Patterns</a></li>
-    <li><a href="#spectral">Spectral Manipulation</a></li>
+    <li><a href="#spectral">Spectral Composition</a></li>
     <li><a href="#midi-message">Midi Messages</a></li>
   </ul>
   <li><a href="#assignment">Assignment</a></li>
@@ -47,7 +47,7 @@
 
 <p>The Common Music 3 branch is implemented in <a
 href="http://www.call-with-current-continuation.org">Chicken
-Scheme</a> and optimized for realtime scheduling within Grace. <!-- At some point in the future I will also release a non-gui (terminal) version that could be used from within Emacs. --> Since Scheme and realtime scheduling have caused significant design changes to the underlying code (thereby making source compatability with earlier versions of CM an impossibility) I have taken the opportunity to add, remove and modify CM's API in an attempt to make it a leaner, more interactive, system.
+Scheme</a> and optimized for real-time scheduling within Grace. Since Scheme and real-time scheduling have caused significant design changes to the underlying code (thereby ruling out source compatibility with the earlier version) I have taken this opportunity to modify the API in an attempt to make it a leaner, more consistent, expressive and interactive system.
 </p>
 
 <p>
@@ -59,12 +59,13 @@ the previous version are:
   <li>Does not compile or load sources at runtime.</li>
   <li>Does not use an object system or generic functions.</li>
 
-  <li>Simplifed frequency functions combine support for key, note, hz and pitch class manipuation and note names support quarter-tones (<code>&lt;</code> and <code>&gt;</code>). <!-- for example <code>cs&gt;4</code> is one quarter-tone above <code>cs4</code> --></li>
+  <li>Simplified frequency functions combine support for key, note, hz and pitch class manipulation and note names support quarter-tones (<code>&lt;</code> and <code>&gt;</code>). <!-- for example <code>cs&gt;4</code> is one quarter-tone above <code>cs4</code> --></li>
 
   <li>Terser calling syntax to assist interactive coding:
   <ul>
-    <li>No dependance on quoted symbols or keywords in argument data.</li>
-    <li>Numerous functions expanded to handle lists as well as atomic data. This reduces the number of functions in the API and help minimize the need for ad hoc looping and applying just to process list data. In the documentation separate formals are provided in cases where list handling causes a significant difference in argument syntax.</li>
+    <li>No dependence on quoted symbols or keywords in argument data.</li>
+    <li>Numerous functions expanded to handle lists as well as atomic data. This reduces the number of functions in the API and helps minimize the need for ad hoc looping to process list data. In the documentation separate formals are provided in cases where list handling causes a significant difference in argument syntax.</li>
+    <li>Functions that take variable arguments also permit a single list argument.</li>
 
    <li><a href="#opt/key">Opt/key</a> parameters with DSSSL style keywords (symbols ending with a colon) replace &amp;optional and &amp;keyword parameters.  </li>
     <li>Shorter names in general.</li>
@@ -231,7 +232,7 @@ Returns the division of one or more <var>nums</var>. If a single number is given
 </table>
 <blockquote>
 <p>
-Returns the first element in <var>list</var>. Similar acccessors for the <code><span class="funcname">second</span></code> to <code><span class="funcname">tenth</span></code> elements are also defined.
+Returns the first element in <var>list</var>. Similar accessors for the <code><span class="funcname">second</span></code> to <code><span class="funcname">tenth</span></code> elements are also defined.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -523,7 +524,7 @@ If <var>freq</var> and <var>amount</var> are both pitch classes then the transpo
 </table>
 <blockquote>
 <p>
-If <var>freq</var> is a pitch class or list of pitch classes the pitch class complement(s) are returned. Otherwise <var>freq</var> should be a list of notes or keys  and the (strict) invertions around the first key or note in the list is returned.
+If <var>freq</var> is a pitch class or list of pitch classes the pitch class complement(s) are returned. Otherwise <var>freq</var> should be a list of notes or keys  and the (strict) inversions around the first key or note in the list is returned.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -744,7 +745,7 @@ Returns a random number between 0 and <var>num</var> (exclusive). If
 </table>
 <blockquote>
 <p>
-Returns a randomly choosen number between <var>a</var> and </var>b</var> (exclusive). The value of  <var>b</var> can be less than <var>a</var>.
+Returns a randomly chosen number between <var>a</var> and </var>b</var> (exclusive). The value of  <var>b</var> can be less than <var>a</var>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -1102,7 +1103,7 @@ Returns a pattern that generates <var>items</var> forwards and backwards. <var>E
 <blockquote>
 <p>
 Returns a weighting pattern that generates <var>items</var> from a weighted distribution.
-Each item can be an item, subpattern, or list:
+Each item can be an item, sub-pattern, or list:
 </p>
 <blockquote>
   <p><code>{<var>item</var> [<var>weight 1</var>] [<var>min 1</var>] [<var>max #f</var>]}</code></p>
@@ -1172,7 +1173,7 @@ Returns a pattern that generates its items from a directed graph of nodes with t
   <p><code>{<var>item</var> <var>to</var> [<var>id</var>]}</code></p>
 </blockquote>
 <p>
-where <var>item</var> is the item or pattern to generate, <var>to</var> is an id or pattern of ids identifiying which node should follow the current node in the graph, and <var>id</var> is a unique identifier for the node which defaults to the node's position in <var>items</var> starting from 1.
+where <var>item</var> is the item or pattern to generate, <var>to</var> is an id or pattern of ids identifying which node should follow the current node in the graph, and <var>id</var> is a unique identifier for the node which defaults to the node's position in <var>items</var> starting from 1.
 </p>
 </blockquote>
 
@@ -1236,10 +1237,10 @@ can be a pattern or the value returned from the pattern by <a href="#next">next<
 </blockquote>
 <!-- END DEFINITION -->
 
-<h3 id="spectral">Spectral Manipulation</h3>
+<h3 id="spectral">Spectral Composition</h3>
 
 <p>
-The following functions create, access or modify <var>spectrum</var> objects. A spectrum holds a sequence of hertz values ordered low to high, an (optional) sequence of amplitudes and an (optional) time value. Spectra can passed between Scheme and C++, for example sending them to a plotter window for display.
+The following functions create, access or modify <var>spectrum</var> objects. A spectrum holds a sequence of hertz values ordered low to high, an (optional) sequence of amplitudes and an (optional) time value. Spectrum information can be easily converted to other representations, to notes and keys for example. <!-- Spectra can passed between Scheme and C++, for example sending them to a plotter window for display. -->
 </p>
 
 <h4>Creating Spectra</h4>
@@ -1496,8 +1497,8 @@ Returns a list containing the frequencies and amplitudes of <var>spectrum</var> 
 Returns a list of the frequency components of <var>spectrum</var> converted to <a href="#keys">keys</a>. 
 If <var>order</var> is 1 then keys are returned in low to high order.
 If <var>order</var> is -1 then keys are returned in high to low order.
-Otherwise if <var>order</var> is 0 then the list of keys is shuffled.
-<var>Threshold</var> is a minimum amplitude value that frequency componenents must possess in order to be returned as keys. If <var>threshold</var> is a list <code>(</code><var>min</var> <var>max</var><code>)</code> then it acts as a band pass.
+Otherwise if <var>order</var> is 0 then the list of keys are returned in a random order (shuffled).
+<var>Threshold</var> is a minimum amplitude value that frequency components must possess in order to be returned as keys. If <var>threshold</var> is a list <code>(</code><var>min</var> <var>max</var><code>)</code> then components whose amplitudes are greater than max are also suppressed.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -1537,7 +1538,7 @@ if <var>unique</var> is true then the list will not contain any duplicate notes 
 </table>
 <blockquote>
 <p>
-Returns a new spectrum wih a pair of <var>freq</var> and <var>amp</var> values added into <var>spectrum</var>. If <var>freq</var> already exists in </var>spectrum</var> then <var>amp</var> is just added to its current amplitude.
+Returns a new spectrum with a pair of <var>freq</var> and <var>amp</var> values added into <var>spectrum</var>. If <var>freq</var> already exists in </var>spectrum</var> then <var>amp</var> is just added to its current amplitude.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -1597,7 +1598,7 @@ This modification encompasses both filtering and rescaling effects applied to ei
 
 <p><var>Mode</var> is an integer (1-8) that specifies the how
 <var>spectrum</var> will be modified. The meaning of <var>mode</var>
-involves three independant considerations:</p>
+involves three independent considerations:</p>
 
 <ol>
 <li>Is the frequency or the amplitude side of <var>spectrum</var> being modified?</li>
@@ -1632,7 +1633,7 @@ involves three independant considerations:</p>
 <p>Envelope shortcuts:</p>
 <ul>
   <li> Specify a single y value rather than an envelope to set or scale the spectrum by a constant value.</li>
-  <li> Use <code>#t</code> as an x or y value to stand for the maximum frequency or amplitude (so you dont have to actually retreive this value to use it).</li>
+  <li> Use <code>#t</code> as an x or y value to stand for the maximum frequency or amplitude (so you don't have to actually retrieve this value to use it).</li>
   <li> Use <code>#f</code> as an x or y value to stand for the minimum frequency or amplitude.</li>
 </ul>
 
@@ -1652,7 +1653,7 @@ involves three independant considerations:</p>
 <h3 id="midi-message">Midi Messages</h3>
 
 <p> Data arriving from the open MIDI input port are packaged into
-low-level, C++ objects called <var>MIDI messages</var>. The following functions provide a simple API for manipulating these objects in Scheme. Note that arguments to these functions must be either messages, floating point <var>time</var> else fixnum data, and that any messages you allocate but do not send to the MIDI Out port should be reclaimed using <a href="#mm:free"><code>mm:free</code></a>.</p>
+low-level C++ objects called <var>MIDI messages</var>. The following functions provide a simple API for manipulating these objects in Scheme. Note that arguments to these functions must be either messages, floating point <var>time</var> else fixnum data, and that any messages you allocate but do not send to the MIDI Out port should be reclaimed using <a href="#mm:free"><code>mm:free</code></a>.</p>
 
 <!-- DEFINITION -->
 <table class="entry" id="mm:make-on">
@@ -2226,7 +2227,7 @@ Assigns each <var>variable</var> to <var>value</var> according to the assignment
     </td>
     <td class="label">Special Form</td>
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; if dependant value</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; if dependent value</td></tr>
 </table>
 <blockquote>
 <p>
@@ -2335,7 +2336,7 @@ Execute <var>statement</var> if <var>test</var> is false.
     </td>
     <td class="label">Macro</td>
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; loop dependant value</td></tr>
+  <tr><td class="retval" colspan="2">&rarr; loop dependent value</td></tr>
 </table>
 <blockquote>
 <p>
@@ -2364,18 +2365,18 @@ Defines an iteration. Optional local variables can be declared using the <a href
 <blockquote>
 <table class= "float">
 <tr><th colspan="2" class="lcol" style="padding-right: 1em">stepping statements</th></tr>
-<tr><td><code><span class="reserved">repeat</span></code> <var>sexpr</var></td> <td> sets the iteration limit to <var>sexpr</var> </td> </tr>
-<tr><td><code><span class="reserved">for</span></code> <var>var</var> <code><span class="reserved">=</span></code> <var>sexpr</var> [<code><span class="reserved">then</span></code> <var>sexpr2</var>]</td> <td> sets <var>var</var> to the value of <var>sexpr</var> on each iteration. If <code><span class="reserved">then</span></code> is specified <var>sexpr</var> is the initial value and <var>sexpr2</var> are the subsequent values</td></tr>
-<tr><td><code><span class="reserved">for</span></code> <var>var</var> <code><span class="reserved">in</span></code> <var>sexpr</var></td> <td> increments <var>var</var> over elements the list <var>sexpr</var></td></tr>
-<tr><td><code><span class="reserved">for</span></code> <var>var</var> [<code><span class="reserved">from</span></code> <var>sexpr</var>] [<code><span class="reserved">to</span> | <span class="reserved">below</span></code> <var>sexpr</var>] [<code><span class="reserved">by</span></code> <var>sexpr</var>]</td> <td> increments <var>var</var> from an on optional starting value to an ending value by an optional amount</td></tr>
+<tr><td><code><span class="reserved">repeat</span></code> <var>expr</var></td> <td> sets the iteration limit to <var>expr</var> </td> </tr>
+<tr><td><code><span class="reserved">for</span></code> <var>var</var> <code><span class="reserved">=</span></code> <var>expr</var> [<code><span class="reserved">then</span></code> <var>expr2</var>]</td> <td> sets <var>var</var> to the value of <var>expr</var> on each iteration. If <code><span class="reserved">then</span></code> is specified <var>expr</var> is the initial value and <var>expr2</var> are the subsequent values</td></tr>
+<tr><td><code><span class="reserved">for</span></code> <var>var</var> <code><span class="reserved">in</span></code> <var>expr</var></td> <td> increments <var>var</var> over elements the list <var>expr</var></td></tr>
+<tr><td><code><span class="reserved">for</span></code> <var>var</var> [<code><span class="reserved">from</span></code> <var>expr</var>] [<code><span class="reserved">to</span> | <span class="reserved">below</span></code> <var>expr</var>] [<code><span class="reserved">by</span></code> <var>expr</var>]</td> <td> increments <var>var</var> from an on optional starting value to an ending value by an optional amount</td></tr>
 
 <tr><th colspan="2" class="lcol" style="border-top: 1px solid gray; padding-right: 1em">stopping statements</th></tr>
-<tr><td><code><span class="reserved">while</span></code> <var>sexpr</var></td> <td> iteration continues while <var>sexpr</var> is true</td> </tr>
-<tr><td><code><span class="reserved">until</span></code> <var>sexpr</var></td> <td> iteration stops when <var>sexpr</var> is true</td> </tr>
+<tr><td><code><span class="reserved">while</span></code> <var>expr</var></td> <td> iteration continues while <var>expr</var> is true</td> </tr>
+<tr><td><code><span class="reserved">until</span></code> <var>expr</var></td> <td> iteration stops when <var>expr</var> is true</td> </tr>
 
 <tr><th colspan="2" class="lcol" style="border-top: 1px solid gray; padding-right: 1em">conditional statements</th></tr>
-<tr><td><code><span class="reserved">when</span></code> <var>sexpr</var></td> <td> action executed if <var>sexpr</var> is true</td> </tr>
-<tr><td><code><span class="reserved">until</span></code> <var>sexpr</var></td> <td> action executed if <var>sexpr</var> is false</td> </tr>
+<tr><td><code><span class="reserved">when</span></code> <var>expr</var></td> <td> action executed if <var>expr</var> is true</td> </tr>
+<tr><td><code><span class="reserved">until</span></code> <var>expr</var></td> <td> action executed if <var>expr</var> is false</td> </tr>
 
 <tr><th colspan="2" class="lcol" style="border-top: 1px solid gray; padding-right: 1em;">action statements</th></tr>
 <tr><td> any SAL statement</td> <td>  statements execute but do not return values </td> </tr>
@@ -2559,7 +2560,7 @@ Causes the function to evaluate to <var>value</var>.
 
 <h3 id="processes">Processes</h3>
 <p>
-Processes are functions you <a href="#sprout"> <code>sprout</code></a> into the scheduler to execute in realtime.
+Processes are functions you <a href="#sprout"> <code>sprout</code></a> into the scheduler to execute in real-time.
 </p>
 
 <!-- DEFINITION -->
@@ -2581,7 +2582,7 @@ Processes are functions you <a href="#sprout"> <code>sprout</code></a> into the 
 </table>
 <blockquote>
 <p>
-Defines a function that executes in the realtime scheduler. It should return a <a href="#run"> run</a> statement that contain the forms to execute in real-time:
+Defines a function that executes in the real-time scheduler. It should return a <a href="#run"> run</a> statement that contain the forms to execute in real-time:
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -2607,7 +2608,7 @@ Defines a function that executes in the realtime scheduler. It should return a <
 </table>
 <blockquote>
 
-<p>Identical to <a href="#iteration">loop</a> in most respects but iteration is manged by the <a href="#scheduler">scheduler</a>. The following runtime statements are avalable only within the lexical scope of a <code>run</code> block :</p>
+<p>Identical to <a href="#iteration">loop</a> in most respects but iteration is managed by the <a href="#scheduler">scheduler</a>. The following runtime statements are available only within the lexical scope of a <code>run</code> block :</p>
 
 <!-- DEFINITION -->
 <table class="entry" id="wait">
@@ -2896,7 +2897,7 @@ Sets <var>function</var> to receive <a href="midimessage">Midi Messages</a> that
 
    <p>Sends instrument data to the open Csound port.  The first value
     should be the instrument's number followed by the rest of its
-    pfield values. For realtime audio the <var>start</var> value
+    pfield values. For real-time audio the <var>start</var> value
     (pfield 2) should be 0. The <span class="string">"cs:i"</span>
     message also accepts a single <var>list</var> of values to be
     specified, in which case the <var>list</var> should contain the
@@ -2934,7 +2935,7 @@ instruments: <code>i1</code> is a karplus-strong pluck sound and
 <code>i2</code> is a sinewave. Both instruments take five identical
 parameters: <var>ins beg dur keynum amp</var> </code> where
 <var>ins</var> is the instrument number (1 or 2), <var>beg</var> is
-the begin time of the sound in seconds (normally 0 for realtime
+the begin time of the sound in seconds (normally 0 for real-time
 audio), <var>dur</var> is the sound duration in seconds,
 <var>keynum</var> is the note's frequency specified as a MIDI key
 number, and <var>amp</var> is the note's amplitude (0-10000).  </p>
@@ -3330,10 +3331,10 @@ precedence rules apply if no parentheses are provided. The following operators a
 <dl>
 
 <dt id="required">Required parameters</dt>
-<dd>Required parameters must be specified. A required parameter appers in the function definition documentation as <var class="arg">parameter</var>.</dd>
+<dd>Required parameters must be specified. A required parameter appears in the function definition documentation as <var class="arg">parameter</var>.</dd>
 
 <dt id="optional">Optional parameters</dt>
-<dd>Optional parameters may be specified or not.  If not they receive a default value, which is false if not otherwise idncated.  An optional parameter is shown in the function definition documentation as <code>[<var class="arg">parameter</var> <var="optval">value</var>]</code></dd>
+<dd>Optional parameters may be specified or not.  If not they receive a default value, which is false if not otherwise indicated.  An optional parameter is shown in the function definition documentation as <code>[<var class="arg">parameter</var> <var="optval">value</var>]</code></dd>
 
 <dt id="opt/key">Opt/key parameters</dt>
 <dd>Opt/key parameters are optional parameters that can be specified positionally or by preceding the  parameter value by the parameter's DSSSL keyword name (the name of the parameter with a colon at the end.) For example if a function <code>foo</code> has two opt/key parameters named <var>a</var> and <var>b</var> then it could be called in any of the following ways: <code>(foo) (foo 4) (foo 2 3)  (foo a: 3) (foo b: 99) (foo a: 2 b: 4)  (foo b: 99 a: 2)</code>   
@@ -3527,7 +3528,7 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
  
 <h3 id="example4">Example 4</h3>
 
-<p>Triggering realtime processes via a MIDI input hook.</p>
+<p>Triggering real-time processes via a MIDI input hook.</p>
 
 <div class="float">
 <p><strong>Scheme</strong></p>
@@ -3800,10 +3801,10 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
       1 + 2 + 3 * 4
     </td>
     <td class="schemetd">
-      (* (+ 1 2 3) 4)
+      (+ 1 2 (* 3 4))
     </td>
     <td class="cltltd">
-      (* (+ 1 2 3) 4)
+      (+ 1 2 (* 3 4))
     </td>
   </tr>
   <tr>    
@@ -4071,7 +4072,7 @@ An opt/key parameter is shown in the documentation as <var class="optkey">parame
     <td class="schemetd">
 
       (define (foo a)<br/>
-      &nbsp;&nbsp;(+ a (random 10))
+      &nbsp;&nbsp;(+ a (random 10)))
     </td>
     <td class="cltltd">
       (defun foo (a)<br/>
