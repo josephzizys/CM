@@ -1638,10 +1638,10 @@ involves three independent criteria:</p>
 </ul>
 
 <dl>
-  <dt>To compress frequencies in a spectrum by half:</dt>
+  <dt>To shift frequencies downward by half:</dt>
   <dd><code>rescale-spectrum(spectrum, 2, .5)</code></dd>
   <dt>To low-pass a spectrum:</dt>
-  <dd><code>rescale-spectrum(spectrum, 5, {100 1 400 .2 100 .1})</code></dd>
+  <dd><code>rescale-spectrum(spectrum, 5, {100 1 400 .2 1000 .1})</code></dd>
   <dt>To invert the frequencies in a spectrum:</dt>
   <dd><code>rescale-spectrum(spectrum, 1, #f, #t, #t, #f)</code></dd>
 
