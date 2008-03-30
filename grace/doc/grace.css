@@ -38,6 +38,14 @@ h1 {
 */
 
 
+h3.ex {
+  font: bold 141% sans-serif;
+  color: #444;
+  margin-bottom:.25em;
+}
+
+
+
 h2 {
   font: bold 168% sans-serif;
   color: #555;

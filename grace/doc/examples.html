@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "grace.css";
+</style>
+<title>CM 3 Examples</title>
+</head>
+
+<body>
+<div id="content">
+
+<h1> CM 3 Examples</h1>
+
+<ul>
+  <li>Working with lists of data</li>
+  <li>Notes, keys and scales</li>
+  <li>A Markov harmonizer</li>
+  <li>Mapping pink noise onto scales</li>
+  <li>Using ids to selectively stop processes</li>
+  <li>Pentatonic wind chimes with amp envelope and exponential decay</li>
+  <li>Triggering real-time processes via a MIDI input hook</li>
+  <li>Sending real-time data to Csound</li>  
+</ul>
+
+<p>Sources to these are available within Grace under the <span class="menuitem">Editor&gt;Help&gt;Examples&gt;</span> submenu.</p>
+
+<ul>  
+  <li><a href="examples.scm">examples.scm</a></li>
+  <li><a href="examples.sal">examples.sal</a></li>
+</ul>
+
+<!-- EXAMPLES -->
+
+<h2 id="pinkscale">Mapping pink noise onto scales</h2>
+
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+(<span class="special">define-process</span> (<span class="defined">pinkscale</span> len scale)
+  (<span class="special">run</span> repeat len
+       <span class="special">do</span>
+       (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> (discrete (ranpink) -1 1 scale))
+       (wait .125)))
+
+(<span class="special">define</span> <span class="defined">dorian</span> (scale 50 20 2 1 2 2 2 1 2))
+
+(sprout (pinkscale 60 dorian))
+</pre>
+</div>
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> pinkscale(len, scale)
+  <span class="reserved">run</span> <span class="reserved">repeat</span> len
+    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> discrete( ranpink(), -1, 1, scale)
+    <span class="reserved">wait</span> .125
+  <span class="reserved">end</span>
+
+<span class="command">define</span> <span class="class">variable</span> dorian = scale(50, 20, 2, 1, 2, 2, 2, 1, 2)
+
+<span class="command">sprout</span> pinkscale(60, dorian)
+</pre>
+</div>
+
+
+<h2 id="pinkscale">Using ids to selectively stop processes</h2>
+
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+(<span class="special">define-process</span> (<span class="defined">chopin</span> n r d k)
+  (<span class="special">run</span> repeat n
+       <span class="reserved">do</span>
+       (send <span class="string">"mp:midi"</span> <span class="keyword">dur:</span> d <span class="keyword">key:</span> k)
+       (wait r)))
+
+<span class="comment">;; sprout D# minor chord with ids</span>
+
+(<span class="special">begin</span> 
+  (sprout (chopin 100 .5 .25 63) 0 1)
+  (sprout (chopin 100 .5 .25 66) 0 2)
+  (sprout (chopin 100 .5 .25 70) 0 3)
+  (sprout (chopin 100 .5 .25 75) 0 1)
+  )
+
+<span class="comment">;; first stop F#, then A# then the D# octave</span>
+
+(stop 2)
+(stop 3)
+(stop 1)
+</pre>
+</div>
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> chopin (n, r, d, k)
+  <span class="reserved">run</span> <span class="reserved">repeat</span> n
+    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">dur:</span> d, <span class="keyword">key:</span> k
+    <span class="reserved">wait</span> r
+  <span class="reserved">end</span>
+
+<span class="comment">;; sprout D# minor chord with ids</span>
+
+<span class="command">begin</span>
+  <span class="reserved">sprout</span> chopin(50, .5, .25, 63), 0, 1
+  <span class="reserved">sprout</span> chopin(50, .5, .25, 66), 0, 2
+  <span class="reserved">sprout</span> chopin(50, .5, .25, 70), 0, 3
+  <span class="reserved">sprout</span> chopin(50, .5, .25, 75), 0, 1
+<span class="command">end</span>
+
+<span class="comment">;; first stop F#, then A# then the D# octave</span>
+
+<span class="command">exec</span> stop(2)
+<span class="command">exec</span> stop(3)
+<span class="command">exec</span> stop(1)
+</pre>
+</div>
+
+
+<h2 class="ex">Pentatonic wind chimes with amp envelope and exponential decay</h2>
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+(<span class="special">define-process</span> (<span class="defined">chimes</span> n)
+  (<span class="special">run</span> with l = '(0 2 5 7 9 12)
+       and k = (+ 37 (* 12 (ran 5)))
+       for i below n
+       <span class="special">do</span>
+       (send <span class="string">"mp:midi"</span> 0 (between 2.0 4.0)
+             (+ k (nth l (ran 6)))
+             (interp i 0 90 n 30))
+       (wait (rescale i 0 n .1 (between 1.5 2.0) 50))))
+
+(sprout (chimes 20 ) )
+</pre>
+</div>
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> chimes(n)
+  <span class="reserved">run</span> <span class="reserved">with</span> l = {0 2 5 7 9 12}, k = 37 + (12 * ran(5))
+    <span class="reserved">for</span> i <span class="reserved">below</span> n
+    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, 0, between( 2.0, 4.0),
+         k + nth( l, ran( 6)),
+         interp(i, 0, 90, n, 30)
+    <span class="reserved">wait</span> rescale( i, 0, n, .1, between(1.5, 2.0), 50)
+  <span class="reserved">end</span>
+
+<span class="command">sprout</span> chimes( 20 )
+</pre>
+</div>
+
+<h2 id="example4">Triggering real-time processes via a MIDI input hook</h2>
+
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+<span class="comment">;; define a process thats plays a major or minor scale based on a given key</span>
+
+(<span class="special">define-process </span>(<span class="defined">playscale</span> key dur)
+  (<span class="special">let*</span> ((scl (<span class="special">if</span> (odds .5)
+                  (scale 15 key 2 2 1 2 2 2 1)
+                  (scale 17 key 2 1 )))
+         (len (length scl)))
+    (<span class="special">run</span> for i below len
+         <span class="special">do</span>
+         (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> (nth scl i) 
+               <span class="keyword">dur:</span> .5 <span class="keyword">amp:</span> (interp i 0 .9 l .5))
+         (wait (/ dur len)))))
+
+<span class="comment">;; test the process</span>
+  
+(sprout (playscale 60 1.2))
+
+<span class="comment">;; define a hook to play a scale based on a key you press...</span>
+
+(<span class="special">define</span> (<span class="defined">myhook</span> m)
+  (<span class="special">if</span> (mm:on? m )
+    (<span class="special">let</span> ((k (mm:key m)))
+      (sprout (playscale k 1.2)))))
+
+<span class="comment">;; set hook ...</span>
+
+(send <span class="string">"mp:inhook"</span> myhook)
+
+<span class="comment">;; now play your MIDI keyboard ...  then clear your hook when done</span>
+
+(send <span class="string">"mp:inhook"</span> <span class="constant">#f</span>)
+</pre>
+</div>
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> playscale(key, dur)
+  <span class="reserved">run</span> <span class="reserved">with</span> scl = odds(.5, scale(15, key, 2, 2, 1, 2, 2, 2, 1),
+                      scale(17, key, 2, 1)), 
+           len = length(scl)
+    <span class="reserved">for</span> i <span class="reserved">below</span> len
+    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> nth( scl, i),
+         <span class="keyword">dur:</span> .5,
+         <span class="keyword">amp:</span> interp( i, 0, .9, len, .5)
+    <span class="reserved">wait</span> dur / len
+  <span class="reserved">end</span>
+
+<span class="comment">;; test the process</span>
+  
+<span class="command">sprout</span> playscale( 60, 1.2)
+
+<span class="comment">;; define a hook to play a scale based on a key you press...</span>
+
+<span class="command">define</span> <span class="class">function</span> myhook (m)
+  <span class="reserved">if</span> mm:on?(m) <span class="reserved">then</span>
+    <span class="reserved">begin</span> <span class="reserved">with</span> k = mm:key(m)
+      <span class="reserved">sprout</span> playscale(k, 1.2)
+    <span class="reserved">end</span>
+
+<span class="comment">;; set hook ...</span>
+
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, myhook
+
+<span class="comment">;; now play your MIDI keyboard ...  then clear your hook when done</span>
+
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, #f</span>
+</pre>
+</div>
+
+<h2 id="example5">Sending to the Csound port</h2>
+
+<p>To run this example your Ports menu must have a Csound port available and you nust have Csound 5 installed on your machine. The <code>i1</code> instrument used here is defined in "grace.orc" in the application resource directory.
+</p>
+
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+<span class="comment"> </span>
+(<span class="special">define</span> (<span class="defined">rani1</span> len rhy lb ub amp)
+  (<span class="special">go</span> ((num 0 (+ num 1))
+       (dur (* rhy 2))
+       (key lb (ran lb ub)))
+      ((= num len) <span class="constant">#f</span>)
+    (send <span class="string">"cs:i"</span> 1 0 dur key amp)
+    (wait rhy)
+    ))
+
+(sprout (rani1 10 .2 60 72 1000))
+</pre>
+</div>  
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> ranins1(len, rhy, lb, ub, amp)
+  <span class="reserved">run</span> <span class="reserved">with</span> dur = rhy * 2
+    <span class="reserved">repeat</span> len
+    <span class="reserved">for</span> key = lb <span class="reserved">then</span> ran(lb,ub)
+    <span class="reserved">send</span> <span class="string">"cs:i"</span>, 1, 0, dur, key, amp
+    <span class="reserved">wait</span> rhy
+  <span class="reserved">end</span>
+
+<span class="command">sprout</span> ranins1(10, .2, 60, 72, 1000)
+</pre>
+</div>  
+
+</body>
+</html>
