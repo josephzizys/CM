@@ -106,11 +106,9 @@ LispSyntax::LispSyntax ()
   hilites[hilite5]=Colours::orchid;
   hilites[hilite6]=Colours::cadetblue;
 
-  addLispTok( T("begin"), numtoks++, hilite4, 1);
-  addLispTok( T("block"), numtoks++, hilite4, 1);
+#ifndef SCHEME
   addLispTok( T("defclass"), numtoks++, hilite4, 3);
   addLispTok( T("defconstant"), numtoks++, hilite4, 1);
-  addLispTok( T("define"), numtoks++, hilite4, 1);
   addLispTok( T("definstrument"), numtoks++, hilite4, 2);
   addLispTok( T("defmethod"), numtoks++, hilite4, 3);
   addLispTok( T("defobject"), numtoks++, hilite4, 2);
@@ -118,23 +116,32 @@ LispSyntax::LispSyntax ()
   addLispTok( T("defprocess"), numtoks++, hilite4, 2);
   addLispTok( T("defun"), numtoks++, hilite4, 2);
   addLispTok( T("defvar"), numtoks++, hilite4, 1);
-  addLispTok( T("do"), numtoks++, hilite4, 2);
   addLispTok( T("do*"), numtoks++, hilite4, 2);
+  addLispTok( T("with-sound"), numtoks++, hiliteNone, 1);
   addLispTok( T("dolist"), numtoks++, hilite4, 1);
   addLispTok( T("dotimes"), numtoks++, hilite4, 1);
   addLispTok( T("eval-when"), numtoks++, hilite4, 1);
   addLispTok( T("flet"), numtoks++, hilite4, 1);
-  addLispTok( T("go"), numtoks++, hilite4, 2);
-  addLispTok( T("if"), numtoks++, hilite4, 1);
   addLispTok( T("labels"), numtoks++, hilite4, 1);
+  addLispTok( T("process"), numtoks++, hilite4, 2);
+  addLispTok( T("progn"), numtoks++, hilite4, 2);
+#else
+  addLispTok( T("begin"), numtoks++, hilite4, 1000);
+  addLispTok( T("define"), numtoks++, hilite4, 1);
+  addLispTok( T("define-process"), numtoks++, hilite4, 1);
+  addLispTok( T("run"), numtoks++, hilite4, 1000);
+#endif
+  addLispTok( T("and"), numtoks++, hilite4, 2);
+  addLispTok( T("cond"), numtoks++, hilite4, 2);
+  addLispTok( T("do"), numtoks++, hilite4, 2);
+  addLispTok( T("if"), numtoks++, hilite4, 1);
   addLispTok( T("lambda"), numtoks++, hilite4, 1);
   addLispTok( T("let"), numtoks++, hilite4, 1);
   addLispTok( T("let*"), numtoks++, hilite4, 1);
+  addLispTok( T("letrec"), numtoks++, hilite4, 1);
   addLispTok( T("loop"), numtoks++, hilite4, 0);
-  addLispTok( T("process"), numtoks++, hilite4, 2);
-  addLispTok( T("rlet"), numtoks++, hilite4, 1);
+  addLispTok( T("or"), numtoks++, hilite4, 2);
   addLispTok( T("unless"), numtoks++, hilite4, 1);
-  addLispTok( T("with-sound"), numtoks++, hiliteNone, 1);
   addLispTok( T("when"), numtoks++, hilite4, 1);
 }
 

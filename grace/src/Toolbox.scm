@@ -197,18 +197,58 @@
 
 ;; transformations
 
+(define (fit num lb ub . mode)
+  (if (null? mode) (set! mode 1)
+      (set! mode (car mode)))
+  (if (> lb ub) ;; rotate args
+      (let ((x lb))
+	(set! lb ub)
+	(set! ub x)))
+  (define (fit1 num lb ub mode)
+    (if (<= lb num ub) num
+	(let ((b (if (> num ub) ub lb))
+	      (r (- ub lb)))
+	  (cond ((eq? mode 1 ) ;; WRAP
+		 (+ (if (= b ub) lb ub)
+		    (remainder (- num b) r)))
+		((eq? mode 2) ;; REFLECT
+		 (let* ((2r (* 2 r))
+			(v (remainder (- num b) 2r)))
+		   (+ (if (> (abs v) r)
+			  ( (if (>= v 0) - +)
+			    v 2r)
+			  (- v))
+		      b)))
+		((eq? mode 3) ;; LIMIT
+		 b)
+		(else
+		 (error "mode not 1 2 or 3" mode))))))
+  (if (pair? num)
+      (map (lambda (n) (fit1 n lb ub mode)) num)
+      (fit1 num lb ub mode)))
+
 (define (scale len keynum . args)
-  (let ((head (list #t)))
-    ;; args are steps... or list of steps
-    (if (null? (cdr args)) (set! args (car args)))
+  ;; args is (steps...) or ((steps...) [limit] )
+  (let ((head (list #t))
+	(limit #f)
+	(mode 1))
+    (if (pair? (car args))
+	(if (null? (cdr args))
+	    (set! args (car args))
+	    (begin (set! limit (cadr args))
+		   (if (= limit keynum)
+		       (error "limit same as start" limit))
+		   (set! args (car args)))))
     (do ((i 0 (+ i 1))
          (k keynum)
          (l (length args))
          (t head))
         ((not (< i len)) (cdr head))
+      (if limit (set! k (fit k keynum limit mode)))
       (set-cdr! t (list k))
       (set! t (cdr t))
-      (set! k (+ k (list-ref args (modulo i l)))))))
+      (set! k (+ k (list-ref args (modulo i l))))
+      )))
 
 ;;; randomnesss
 

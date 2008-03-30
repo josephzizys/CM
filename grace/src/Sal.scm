@@ -5,6 +5,11 @@
 ;;; See http://www.cliki.net/LLGPL for the text of this agreement.
 ;;; **********************************************************************
 
+; To test outside of Grace:
+; (begin (define first car) (define second cadr) (define third caddr) (define fourth cadddr) (define print-error display ) (define print-message 'display) (define (expand-send a b c) `(quote ,(list #:expand-send-> a b))) (load "/Lisp/grace/src/Utilities.scm"))
+; (load "/Lisp/grace/src/Sal.scm")
+
+
 ;;; $Revision: 1364 $
 ;;; $Date: 2007-08-07 09:39:39 -0500 (Tue, 07 Aug 2007) $
 
@@ -917,6 +922,7 @@
   (lambda (args errf)
     ;; (<send> <msg> #f)
     ;; (<send> <msg> ( <,> (...)))
+    ;;;;(print (list #:parse-send-> args))
     (let ((rest (third args)))
       (if (not rest)
 	  (set! rest (list))
@@ -925,7 +931,9 @@
 	    ;; (<arg> <arg2> ...)
 	    ;; (<key> <arg> <key2> <arg2>)
 	    ;; ((<arg> ...) <,> (<key> <arg> ...) )
-	    (if (pair? (first rest)) ; positionals AND keys
+	    ;; if there is a <,> its positionals AND keys
+	    (if (and (not (null? (cdr rest)))
+		     (token-unit-type=? (second rest) SalComma))
 		;; remove <,>
 		(set! rest (append (first rest) (third rest))))))
       (make-parse-unit SalSendStatementRule
@@ -933,6 +941,7 @@
 		       (parse-unit-position (car args))
 		       )))
   (lambda (unit info errf) 
+    ;;(print (list #:expand-send-> unit (parse-unit-parsed unit)))
     (let* ((data (emit (parse-unit-parsed unit) info errf))
 	   (mesg (first data)))
       ;; check args for mesg
@@ -1399,13 +1408,8 @@
 		  (lambda (,abortvar)
 		    (with-exception-handler
 		     (lambda (,errorvar)
-		       (print-error
-			(sprintf 
-			 ">>> Error: ~A~%    process aborted at time ~S~%"
-			 ((condition-property-accessor 'exn 'message) 
-			  ,errorvar)
-			 ,timevar
-			 ))
+		       (print-error-message ,errorvar (current-error-port)
+					  ">>> Error (run)")
 		       (,abortvar -2)  ;; abort and remove process
 		       )
 		     ;; the run statements
@@ -1592,8 +1596,9 @@
 (define *sal-tokens* #f)
 (define *sal-output* #f)
 (define *sal-parse* SalStatementRule)
-
+(define *sal-trace-input* #f)
 (define (sal string rule tokens trace?)
+  (if *sal-trace-input* (printf "~S" tokens))
   (set! *sal-string* string)
   (set! *sal-tokens* (tokenize tokens))
   (if (= rule 0)

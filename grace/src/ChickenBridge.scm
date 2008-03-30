@@ -36,6 +36,10 @@ void print_message(char * st) {
 void print_error(char * st) {
   // attempt at buffering: if string ends with #\Return, send string
   // AND trigger update else send string without triggering update
+
+printf("in print_error\n");
+printf("  str='%s'\n",st);
+
   String s=String(st);
   if ( s.endsWithChar('\n') )
     ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::ERROR, true);
@@ -132,16 +136,17 @@ void load_sal_file(char *path) {
 	 ;; Csound
 	 cs:i cs:f cs:clear
 
-	 *messages* send expand-send go
+	 *messages* send expand-send 
+	 define-process run ;go
 	 current-time-milliseconds current-time-seconds
 	 now time-format
 	 sprout stop hush pause paused? cont
 	 ;; toolbox
 
 	 note key hz pc transpose invert retrograde
-	 scale
+	 scale 
 
-	 rescale discrete int quantize decimals
+	 rescale discrete fit int quantize decimals
 	 plus minus times divide
 	 cents->ratio ratio->cents
 	 rhythm->seconds
@@ -155,7 +160,7 @@ void load_sal_file(char *path) {
 
 	 ;; sal
 	 sal sal:print sal:chdir sal:load sal:open sal:output
-	 load-sal-file
+	 load-sal-file *sal-trace-input*
 	 ;; utilities
 	 loop
 	 cwd chdir cm-logo
@@ -540,10 +545,124 @@ void load_sal_file(char *path) {
   (scheduler-hush)
   (values))
 
+;;; RUN macro
+
+;; *process-stop* holds the stopping form: %%stopproc%% is the
+;; continuation call and -1 is the value returned to the scheduler.
+
+(define *process-stop* '(%%stopproc%% -1))
+
+(define (run-while-until forms clauses ops)
+  (let ((head forms)
+        (oper (pop forms))
+        (test #f)
+        (stop *process-stop*))
+    (when (null? forms)
+      (loop-error ops head "Missing '" oper "' expression."))
+    (case oper
+      ((until) (set! test (pop forms)))
+      ((while) (set! test `(not ,(pop forms)))))
+    (values (make-loop-clause 'operator oper 'looping
+             (list `(if ,test ,stop)))
+            forms)))
+
+(define *run-operators*
+  (let* ((omit '(collect append nconc sum count
+			 minimize maximize thereis
+			 always never return
+			 while until))
+	 (head (list #f))
+	 (tail head))
+    (do ((ops *loop-operators* (cdr ops)))
+	((null? ops)
+	 (set-cdr! 
+	  tail (list (list 'while (function run-while-until) #f )
+		     (list 'until (function run-while-until) #f )))
+	 (cdr head))
+      (unless (member (car (car ops)) omit)
+	(set-cdr! tail (list (car ops)))
+	(set! tail (cdr tail))))))
+
+;; (pprint  *run-operators*)
+
+(define (process-code-terminates? code stop)
+  ;; see if the stop form is anywhere in the expansions, if not issue
+  ;; a warning.  FIX: this should be a call/cc
+  (if (null? code) #f
+      (if (pair? code)
+	(or (process-code-terminates? (car code) stop)
+	    (process-code-terminates? (cdr code) stop))
+	(eq? code (car stop)))))
+
+(define (run-loop forms ops)
+  (let* ((parsed (parse-iteration 'run forms ops))
+	 (code '())
+	 (func #f)
+	 (tests '())
+	 ;; *process-stop* is form that gets exectuted to stop
+	 ;; the process
+	 (done *process-stop*)
+	 (CONT (car done)) ; continution
+	 (TIME (gensym "time"))
+	 (WAIT (gensym "wait"))
+	 (ERRV (gensym "err"))
+	)
+    (set! tests (loop-end-tests parsed))
+    (if (loop-finally parsed)
+      (set! done `(begin ,@(loop-finally parsed) ,done)))
+    (if (not (null? tests))
+      (begin
+       (if (null? (cdr tests))
+	 (set! tests (car tests))
+	 (set! tests (cons 'or tests)))
+       (set! tests `((if ,tests ,done))))
+      (unless (process-code-terminates?
+	       (loop-looping parsed) done)
+	(printf "Warning: possible non-terminating process.")
+        ))
+    (set! func 
+	  `(lambda (,TIME )
+	     (let* ((,WAIT 0)
+		    (elapsed (lambda () ,TIME))
+		    (wait (lambda (x) (set! ,WAIT x))))
+	       ;; this continuation is the error handler
+	       (call-with-current-continuation
+		(lambda (,CONT)
+		  (with-exception-handler
+		   (lambda (,ERRV)
+		     (print-error-message ,ERRV (current-error-port)
+					  ">>> Error (run)")
+		     ;;(print-call-chain (current-error-port))
+		     (,CONT -2)  ; -2 signifies stop with error
+		     )
+		   (lambda ()
+		     ,@ tests
+			,@ (loop-looping parsed)
+			   ,@ (loop-stepping parsed)
+			      , WAIT
+				)))))))
+
+    (if (and (null? (loop-bindings parsed))
+	     (null? (loop-initially parsed)))
+      func
+      ;; use let* sequential binding
+      `(let* ,(loop-bindings parsed)
+	 ,@(loop-initially parsed)
+	 ,func))))
+
+(define-macro (run . args)
+  (run-loop args *run-operators*))
+
+(define-macro (define-process formals . body)
+  (unless (and (pair? formals)(symbol? (car formals)))
+    (error "Illegal process formals" formals))
+  `(define ,formals ,@ body))
+
 ;;;
 ;;; GO macro
 ;;;
 
+#|
 (define-macro (go bindings terminate . body)
   (expand-go bindings terminate body)
   )
@@ -641,6 +760,7 @@ void load_sal_file(char *path) {
 	      )))
 	,@init)
       )))
+|#
 
 (return-to-host)
 
