@@ -40,6 +40,7 @@ String getEditorHelp () {
 
 void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   PopupMenu sub1;
+  PopupMenu sub2;
   if (w==winConsole) {
     menu->addItem(cmdHelpWindow+w, T("Console Help"));
     menu->addItem(cmdHelpWindow+13, T("Ports Menu Help"));
@@ -50,7 +51,10 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
     menu->addItem(cmdHelpWindow+w, T("Plotter Help"));
   menu->addSeparator();
 #ifdef SCHEME
-  menu->addItem(cmdHelpWindow+12, T("Common Music"));
+  menu->addItem(cmdHelpWindow+12, T("CM Dictionary"));
+  sub2.addItem(cmdHelpExamples+1, T("SAL"));
+  sub2.addItem(cmdHelpExamples+2, T("Scheme"));
+  menu->addSubMenu(T("Examples"), sub2, true);
 #endif
   sub1.addItem(cmdHelpSalTutorial+0, T("Hello World"));
   sub1.addItem(cmdHelpSalTutorial+1, T("Symbolic Expressions"));
@@ -69,7 +73,10 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   menu->addItem(cmdHelpURL+1, T("CM Dictionary"));
 #endif
   menu->addItem(cmdHelpURL+2, T("CM Homepage"));
-  menu->addItem(cmdHelpURL+3, T("Juce Homepage"));
+#ifdef SCHEME
+  menu->addItem(cmdHelpURL+3, T("Chicken Homepage"));
+#endif
+  menu->addItem(cmdHelpURL+4, T("Juce Homepage"));
   menu->addSeparator();
   menu->addItem(cmdHelpAboutGrace, T("About Grace"), false);
 }
@@ -81,6 +88,7 @@ void commonHelpItemSelected (int cmd, int arg) {
   String err;
 
   switch (cmd) {
+
   case cmdHelpWindow :
     res=app->getResourceDirectory();
     if (arg == winConsole)
@@ -95,7 +103,6 @@ void commonHelpItemSelected (int cmd, int arg) {
       res=res.getChildFile(T("doc/cm.html"));
     else if (arg==13)
       res=res.getChildFile(T("doc/ports.html"));
-
     if ( res.existsAsFile() )
 #ifdef LINUX
       // launchInDefaultBrowser on Linux does not for local files so I
@@ -116,6 +123,17 @@ void commonHelpItemSelected (int cmd, int arg) {
       URL(res.getFullPathName()).launchInDefaultBrowser();
 #endif
     else err=T(">>> Help file ") + res.getFullPathName() +
+	   T(" does not exist.");
+    break;
+
+  case cmdHelpExamples :
+    res=app->getResourceDirectory().getChildFile(T("doc/"));
+    if (arg == 1) res=res.getChildFile(T("examples.sal"));
+    else if (arg == 2) res=res.getChildFile(T("examples.scm"));
+    if ( res.existsAsFile() )
+	new EditorWindow(0, (TextBuffer::load | TextBuffer::nosave),
+			 res.getFullPathName());
+    else err=T(">>> Example file ") + res.getFullPathName() +
 	   T(" does not exist.");
     break;
 
@@ -150,6 +168,8 @@ void commonHelpItemSelected (int cmd, int arg) {
     else if (arg == 2)
       url=URL(T("http://commonmusic.sf.net/doc/cm.html"));
     else if (arg == 3)
+      url=URL(T("http://www.call-with-current-continuation.org/"));
+    else if (arg == 4)
       url=URL(T("http://www.rawmaterialsoftware.com/juce"));
     if (err==String::empty)
       url.launchInDefaultBrowser();

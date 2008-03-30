@@ -122,25 +122,7 @@
 	 "AnalyzeHistogram" "AnalyzeDeviation"
 	 )
 
-;; Items shared across different menubars. [Resource.h]
-(enums 4 "SharedCommand" "WindowSelect" "WindowNative" 
-       "WindowConsole" 
-       "HelpWindow" "HelpSalTutorial" "HelpURL"
-       "HelpAboutGrace")
-
 ||#
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 (defmethod asdf:perform :after ((a asdf:load-op) (b asdf:system))
