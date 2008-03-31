@@ -1,53 +1,98 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Creating and manipulting lists of data
+;; Creating and manipulating lists of data
 
-;; a new list of 10 elements
+;; a 10 element list
 (make-list 10)
 
-;; a list of 10 middle c's
-(make-list 20 (note 60))
+;; a list filled with zeros
 
-;; a list of 10 random numbers 0-1
+(make-list 10 0)
+
+;; a list with 10 random numbers 0-1
 (make-list 10 ran)
 
 ;; a list of 10 random numbers 0-10.0
 (make-list 10 ran 10.0)
 
-;; summing 10 random numbers 0-10.0
-(plus (make-list 10 ran 10.0))
-
-;; a list of 10 random numbers 0-10.0 quantized to .25
-(quantize (make-list 10 ran 10.0) .25)
-
-;; a list of 10 random numbers between 60 and 90
+;; a list of 10 integers between 60 and 90
 (make-list 10 between 60 90)
 
 ;; a list of 10 pinkish values (-1 to 1)
 (make-list 10 ranpink)
 
 ;; a list of 10 pinkish keys between 60 and 90
+(rescale (make-list 10 ranpink) -1 1 60 90)
+
+;; a list of 10 pinkish int keys between 60 and 90
 (discrete (make-list 10 ranpink) -1 1 60 90)
 
-;; a list of 10 pinkish qt notes beween 60 and 90
-(note (rescale (make-list 10 ranpink) -1 1 60 90))
+;; summing 10 random numbers 0-10.0
+(plus (make-list 10 ran 10.0))
 
-;; a list of 10 pinkish hertz beween 60 and 90
-(hz (discrete (make-list 10 ranpink) -1 1 60 90))
+;; a list of 10 random numbers quantized to .25
+(quantize (make-list 10 ran 10.0) .25)
 
-;; a list of 10 pinkish pitch classes beween 60 and 90
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Note, key and pc
+
+;; note quantizes to quarter tone resolution
+(note 60.1)
+
+(note 60.6)
+
+;; note key pc and hz all accept lists of data
+(note (make-list 10 between 60.0 80.0))
+
+;; lowest octave is 00 highest is 9
+(note '(0 127))
+
+;; octave numbers are sticky in note lists
+(key '(c4 d e f g a b c5 d e f g a b c6))
+
+;; a list of 10 pinkish notes beween 60 and 90
+(note (make-list 10 ranpink) -1 1 60 90)
+
+;; a list of 10 pinkish pitch classes 
 (pc (discrete (make-list 10 ranpink) -1 1 60 90))
 
-;; a pc matrix of 10 pinkish values
-(let ((row (pc (discrete (make-list 10 ranpink)
-                               -1 1 60 90))))
+;; transpose and invert work with notes, keys and pcs
+(transpose '(c4 e g) 12)
+
+(transpose 7 7)
+
+(invert '(c4 e g))
+
+(invert 11)
+
+;; marix generator
+(let ((row (shuffle 0 1 2 3 4 5 6 7 8 9 10 11)))
   (loop for i in (invert row)
-      collect (transpose row i)))
+        collect (transpose row i)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Scales and interval cycles
+
+(scale 16 60 2 1 2 2 1 2 2)
+
+;; octatonic with just whole and half steps
+(scale 16 60 2.04 1.12)
+
+;; scale goes either direction
+(scale 16 60 -2 -1 -2 -2 -1 -2 -2)
+
+;; does not assume octave repetiion
+(scale 16 60 2 1 2 1 1)
+
+;; scale accepts lists of intervals
+(scale 16 60 '(1 2 3))
+
+;; can give it a boundary for wrapping
+(note (scale 24 60 '(7 1 7 -1) 84))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; A markov harmonizer
 
-;; define 1st order markov pattern to generate steps between chord
-;; tones
+;; a 1st order markov pattern generates steps between chord tones
 
 (define mark
   (make-markov '((1 -> (1 .25) (2 2) (3 .5) (4 .4) (5 .3) (6 .1))
@@ -86,8 +131,8 @@
                  .5
                  (mm:vel mm)))))
 
-;; Set the inhook. But first make sure to turn off active senseing on
-;; the Midi In port!
+;; Set the inhook. First make sure to turn off active senseing on the
+;; Midi In port!
 
 (send "mp:inhook" chordhook)
 
@@ -97,7 +142,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Mapping pink noise onto scales
+;; Musical proceses 
 ;;
 
 (define-process (pinkscale len scale)

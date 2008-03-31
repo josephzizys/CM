@@ -14,7 +14,7 @@
 <h1> CM 3 Examples</h1>
 
 <ul>
-  <li>Working with lists of data</li>
+  <li>Working with lists</li>
   <li>Notes, keys and scales</li>
   <li>A Markov harmonizer</li>
   <li>Mapping pink noise onto scales</li>
@@ -24,16 +24,198 @@
   <li>Sending real-time data to Csound</li>  
 </ul>
 
-<p>Sources to these are available within Grace under the <span class="menuitem">Editor&gt;Help&gt;Examples&gt;</span> submenu.</p>
+<p>Example sources are available under the <span class="menuitem">Editor&gt;Help&gt;Examples&gt;</span> submenu.</p>
 
 <ul>  
   <li><a href="examples.scm">examples.scm</a></li>
   <li><a href="examples.sal">examples.sal</a></li>
 </ul>
 
-<!-- EXAMPLES -->
+<!-- LISTS -->
 
-<h2 id="pinkscale">Mapping pink noise onto scales</h2>
+<h2 id="lists">Working with lists</h2>
+<p>Many functions in the api process lists of data without recourse to interation.</p>
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+</div>
+
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+;; a 10 element list
+(make-list 10)
+
+;; a list filled with zeros
+
+(make-list 10 0)
+
+;; a list with 10 random numbers 0-1
+(make-list 10 ran)
+
+;; a list of 10 random numbers 0-10.0
+(make-list 10 ran 10.0)
+
+;; a list of 10 integers between 60 and 90
+(make-list 10 between 60 90)
+
+;; a list of 10 pinkish values (-1 to 1)
+(make-list 10 ranpink)
+
+;; a list of 10 pinkish keys between 60 and 90
+(rescale (make-list 10 ranpink) -1 1 60 90)
+
+;; a list of 10 pinkish int keys between 60 and 90
+(discrete (make-list 10 ranpink) -1 1 60 90)
+
+;; summing 10 random numbers 0-10.0
+(plus (make-list 10 ran 10.0))
+
+;; a list of 10 random numbers quantized to .25
+(quantize (make-list 10 ran 10.0) .25)
+</pre>
+</div>
+
+
+<h2 id="lists">Note, key and pc</h2>
+<p>Many functions in the api process lists of data without recourse to interation.</p>
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+</div>
+
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+;; note quantizes to quarter tone resolution
+(note 60.1)
+
+(note 60.6)
+
+;; note key pc and hz all accept lists of data
+(note (make-list 10 between 60.0 80.0))
+
+;; lowest octave is 00 highest is 9
+(note '(0 127))
+
+;; octave numbers are sticky in note lists
+(key '(c4 d e f g a b c5 d e f g a b c6))
+
+;; a list of 10 pinkish notes beween 60 and 90
+(note (make-list 10 ranpink) -1 1 60 90)
+
+;; a list of 10 pinkish pitch classes 
+(pc (discrete (make-list 10 ranpink) -1 1 60 90))
+
+;; transpose and invert work with notes, keys and pcs
+(transpose '(c4 e g) 12)
+
+(transpose 7 7)
+
+(invert '(c4 e g))
+
+(invert 11)
+
+;; marix generator
+(let ((row (shuffle 0 1 2 3 4 5 6 7 8 9 10 11)))
+  (loop for i in (invert row)
+        collect (transpose row i)))
+</pre>
+</div>
+
+
+<h2 id="lists">Scales and interval cycles</h2>
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+</div>
+
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+(scale 16 60 2 1 2 2 1 2 2)
+
+;; octatonic with just whole and half steps
+(scale 16 60 2.04 1.12)
+
+;; scale goes either direction
+(scale 16 60 -2 -1 -2 -2 -1 -2 -2)
+
+;; does not assume octave repetiion
+(scale 16 60 2 1 2 1 1)
+
+;; scale accepts lists of intervals
+(scale 16 60 '(1 2 3))
+
+;; can give it a boundary for wrapping
+(note (scale 24 60 '(7 1 7 -1) 84))
+</pre>
+</div>
+
+<h2 id="lists">A Markov harmonizer</h2>
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+</div>
+
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+;; a 1st order markov pattern generates steps between chord tones
+
+(define mark
+  (make-markov '((1 -> (1 .25) (2 2) (3 .5) (4 .4) (5 .3) (6 .1))
+                 (2 -> (3 1) (4 .5) (5 .3) (6 .2))
+                 (3 -> (1 .2) (2 1) (4 .5) (5 .3 (6 .2)))
+                 (4 -> (1 .2) (2 1) (3 .4) (4 .3) (6 .2))
+                 (5 -> (1 1) (2 1) (3 .5) (4 .5) (5 .5) (6 .5))
+                 (6 -> (1 1) (2 1) (3 .5) (4 .5) (5 .5) ))))
+
+;; try it out 
+
+(let ((n 5))
+  (note (scale n 60 (next mark (- n 1)))))
+
+;; define a player for chords
+
+(define (playchord ch d a)
+  (loop for c in ch
+        do (send "mp:midi" key: c dur: d amp: a)))
+
+;; try out the player
+
+(let ((n 5))
+  (playchord (scale n 60 (next mark (- n 1)) 1 .7)))
+
+;; define a midi hook. The louder the note the more chord tones are
+;; added
+
+(define (chordhook mm)
+  (if (mm:on? mm)
+    ;; interp returns a float
+    (let ((n (int (interp (mm:vel mm) 20 2 100 6))))
+      ;; the louder we play the more notes are added
+      (playchord (scale n (mm:key mm)
+                        (next mark (- n 1)))
+                 .5
+                 (mm:vel mm)))))
+
+;; Set the inhook. First make sure to turn off active senseing on the
+;; Midi In port!
+
+(send "mp:inhook" chordhook)
+
+;; clear the hook when you are done
+
+(send "mp:inhook" #f)
+</pre>
+</div>
+
+<h2 id="pinkscale">Musial Processes</h2>
 
 <div class="float">
 <h3 class="ex">Scheme</h3>
