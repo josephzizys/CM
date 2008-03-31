@@ -14,14 +14,15 @@
 <h1> CM 3 Examples</h1>
 
 <ul>
-  <li>Working with lists</li>
-  <li>Notes, keys and scales</li>
-  <li>A Markov harmonizer</li>
-  <li>Mapping pink noise onto scales</li>
-  <li>Using ids to selectively stop processes</li>
-  <li>Pentatonic wind chimes with amp envelope and exponential decay</li>
-  <li>Triggering real-time processes via a MIDI input hook</li>
-  <li>Sending real-time data to Csound</li>  
+  <li><a href="#lists">Working with lists</a></li>
+  <li><a href="#notes">Notes, keys and pcs</a></li>
+  <li><a href="#scales">Scales and interval cycles</a></li>
+  <li><a href="#harmonizer">A Markov harmonizer</a></li>
+  <li><a href="#processes">Mapping pink noise onto scales</a></li>
+  <li><a href="#ids">Using ids to selectively stop processes</a></li>
+  <li><a href="#chimes">Pentatonic wind chimes with amp envelope and exponential decay</a></li>
+  <li><a href="#triggering">Triggering real-time processes via a MIDI input hook</a></li>
+  <li><a href="#csound">Sending real-time data to Csound</a></li>  
 </ul>
 
 <p>Example sources are available under the <span class="menuitem">Editor&gt;Help&gt;Examples&gt;</span> submenu.</p>
@@ -39,77 +40,142 @@
 <div class="float">
 <h3 class="ex">SAL</h3>
 <pre class="code">
+<span class="comment">;; a 10 element list</span>
+<span class="command">print</span> make-list( 10)
+
+<span class="comment">;; a list filled with zeros</span>
+<span class="command">print</span> make-list(10, 0)
+
+<span class="comment">;; a list with 10 random numbers 0-1</span>
+<span class="command">print</span> make-list(10, ran)
+
+<span class="comment">;; a list of 10 random numbers 0-10.0</span>
+<span class="command">print</span> make-list(10, ran, 10.0)
+
+<span class="comment">;; a list of 10 integers between 60 and 90</span>
+<span class="command">print</span> make-list(10, between, 60, 90)
+
+<span class="comment">;; a list of 10 pinkish values (-1 to 1)</span>
+<span class="command">print</span> make-list(10, ranpink)
+
+<span class="comment">;; a list of 10 pinkish keys between 60 and 90</span>
+<span class="command">print</span> rescale( make-list(10, ranpink), -1, 1, 60, 90)
+
+<span class="comment">;; a list of 10 pinkish int keys between 60 and 90</span>
+<span class="command">print</span> discrete( make-list(10, ranpink), -1, 1, 60, 90)
+
+<span class="comment">;; summing 10 random numbers 0-10.0</span>
+<span class="command">print</span> plus( make-list(10, ran, 10.0))
+
+<span class="comment">;; a list of 10 random numbers quantized to .25</span>
+<span class="command">print</span> quantize( make-list(10, ran, 10.0) .25)
+</pre>
 </div>
 
 <div class="float">
 <h3 class="ex">Scheme</h3>
 <pre class="code">
-;; a 10 element list
+<span class="comment">;; a 10 element list</span>
 (make-list 10)
 
-;; a list filled with zeros
-
+<span class="comment">;; a list filled with zeros</span>
 (make-list 10 0)
 
-;; a list with 10 random numbers 0-1
+<span class="comment">;; a list with 10 random numbers 0-1</span>
 (make-list 10 ran)
 
-;; a list of 10 random numbers 0-10.0
+<span class="comment">;; a list of 10 random numbers 0-10.0</span>
 (make-list 10 ran 10.0)
 
-;; a list of 10 integers between 60 and 90
+<span class="comment">;; a list of 10 integers between 60 and 90</span>
 (make-list 10 between 60 90)
 
-;; a list of 10 pinkish values (-1 to 1)
+<span class="comment">;; a list of 10 pinkish values (-1 to 1)</span>
 (make-list 10 ranpink)
 
-;; a list of 10 pinkish keys between 60 and 90
+<span class="comment">;; a list of 10 pinkish keys between 60 and 90</span>
 (rescale (make-list 10 ranpink) -1 1 60 90)
 
-;; a list of 10 pinkish int keys between 60 and 90
+<span class="comment">;; a list of 10 pinkish int keys between 60 and 90</span>
 (discrete (make-list 10 ranpink) -1 1 60 90)
 
-;; summing 10 random numbers 0-10.0
+<span class="comment">;; summing 10 random numbers 0-10.0</span>
 (plus (make-list 10 ran 10.0))
 
-;; a list of 10 random numbers quantized to .25
+<span class="comment">;; a list of 10 random numbers quantized to .25</span>
 (quantize (make-list 10 ran 10.0) .25)
 </pre>
 </div>
 
 
-<h2 id="lists">Note, key and pc</h2>
-<p>Many functions in the api process lists of data without recourse to interation.</p>
+<h2 id="notes">Notes, keys and pcs</h2>
 
 <div class="float">
 <h3 class="ex">SAL</h3>
 <pre class="code">
+<span class="comment">;; note quantizes to quarter tone resolution</span>
+<span class="command">print</span> note( 60.1)
+
+<span class="command">print</span> note( 60.6)
+
+<span class="comment">;; note key pc and hz all accept lists of data</span>
+<span class="command">print</span> note( make-list(10, between, 60.0, 80.0))
+
+<span class="comment">;; lowest octave is 00 highest is 9</span>
+<span class="command">print</span> note( {0 127})
+
+<span class="comment">;; octave numbers are sticky in note lists</span>
+<span class="command">print</span> key( {c4 d e f g a b c5 d e f g a b c6} )
+
+<span class="comment">;; a list of 10 pinkish notes beween 60 and 90</span>
+<span class="command">print</span> note( make-list(10, ranpink), -1, 1, 60, 90)
+
+<span class="comment">;; a list of 10 pinkish pitch classes</span>
+<span class="command">print</span> pc( discrete( make-list(10, ranpink), -1, 1, 60, 90))
+
+<span class="comment">;; transpose and invert work with notes, keys and pcs</span>
+<span class="command">print</span> transpose( {c4 e g}, 12)
+
+<span class="command">print</span> transpose(7, 7)
+
+<span class="command">print</span> invert( {c4 e g} )
+
+<span class="command">print</span> invert(11)
+
+<span class="comment">;; marix generator</span>
+<span class="command">loop</span> <span class="reserved">with</span> mat = {},
+          row = shuffle( {0 1 2 3 4 5 6 7 8 9 10 11})
+  <span class="reserved">for</span> i <span class="reserved">in</span> invert(row)
+  <span class="reserved">set</span> mat &= transpose(row, i)
+  <span class="reserved">finally</span> <span class="reserved">print</span> mat
+<span class="command">end</span>
+</pre>
 </div>
 
 <div class="float">
 <h3 class="ex">Scheme</h3>
 <pre class="code">
-;; note quantizes to quarter tone resolution
+<span class="comment">;; note quantizes to quarter tone resolution</span>
 (note 60.1)
 
 (note 60.6)
 
-;; note key pc and hz all accept lists of data
+<span class="comment">;; note key pc and hz all accept lists of data</span>
 (note (make-list 10 between 60.0 80.0))
 
-;; lowest octave is 00 highest is 9
+<span class="comment">;; lowest octave is 00 highest is 9</span>
 (note '(0 127))
 
-;; octave numbers are sticky in note lists
+<span class="comment">;; octave numbers are sticky in note lists</span>
 (key '(c4 d e f g a b c5 d e f g a b c6))
 
-;; a list of 10 pinkish notes beween 60 and 90
+<span class="comment">;; a list of 10 pinkish notes beween 60 and 90</span>
 (note (make-list 10 ranpink) -1 1 60 90)
 
-;; a list of 10 pinkish pitch classes 
+<span class="comment">;; a list of 10 pinkish pitch classes</span> 
 (pc (discrete (make-list 10 ranpink) -1 1 60 90))
 
-;; transpose and invert work with notes, keys and pcs
+<span class="comment">;; transpose and invert work with notes, keys and pcs</span>
 (transpose '(c4 e g) 12)
 
 (transpose 7 7)
@@ -118,19 +184,35 @@
 
 (invert 11)
 
-;; marix generator
-(let ((row (shuffle 0 1 2 3 4 5 6 7 8 9 10 11)))
-  (loop for i in (invert row)
+<span class="comment">;; marix generator</span>
+(<span class="reserved">let</span> ((row (shuffle 0 1 2 3 4 5 6 7 8 9 10 11)))
+  (<span class="reserved">loop</span> for i in (invert row)
         collect (transpose row i)))
 </pre>
 </div>
 
-
-<h2 id="lists">Scales and interval cycles</h2>
+<h2 id="scales">Scales and interval cycles</h2>
 
 <div class="float">
 <h3 class="ex">SAL</h3>
 <pre class="code">
+<span class="command">print</span> scale(16, 60, 2, 1, 2, 2, 1, 2, 2)
+
+<span class="comment">;; octatonic with just whole and half steps</span> 
+<span class="command">print</span> scale(16, 60, 2.04, 1.12)
+
+<span class="comment">;; scale goes either direction</span> 
+<span class="command">print</span> scale(16, 60, -2, -1, -2, -2, -1, -2, -2)
+
+<span class="comment">;; does not assume octave repetition</span> 
+<span class="command">print</span> scale(16, 60, 2, 1, 2, 1, 1)
+
+<span class="comment">;; scale accepts lists of intervals</span> 
+<span class="command">print</span> scale(16, 60, {1 2 3})
+
+<span class="comment">;; can give it a boundary for wrapping</span> 
+<span class="command">print</span> note( scale(24, 60, {7 1 7 -1} 84) )
+</code>
 </div>
 
 <div class="float">
@@ -138,36 +220,89 @@
 <pre class="code">
 (scale 16 60 2 1 2 2 1 2 2)
 
-;; octatonic with just whole and half steps
+<span class="comment">;; octatonic with just whole and half steps</span> 
 (scale 16 60 2.04 1.12)
 
-;; scale goes either direction
+<span class="comment">;; scale goes either direction</span> 
 (scale 16 60 -2 -1 -2 -2 -1 -2 -2)
 
-;; does not assume octave repetiion
+<span class="comment">;; does not assume octave repetition</span> 
 (scale 16 60 2 1 2 1 1)
 
-;; scale accepts lists of intervals
+<span class="comment">;; scale accepts lists of intervals</span> 
 (scale 16 60 '(1 2 3))
 
-;; can give it a boundary for wrapping
+<span class="comment">;; can give it a boundary for wrapping</span> 
 (note (scale 24 60 '(7 1 7 -1) 84))
 </pre>
 </div>
 
-<h2 id="lists">A Markov harmonizer</h2>
+<h2 id="harmonizer">A Markov harmonizer</h2>
 
 <div class="float">
 <h3 class="ex">SAL</h3>
 <pre class="code">
+<span class="comment">;; a 1st order markov pattern generates steps between chord tones</span>
+
+<span class="command">define</span> <span class="class">variable</span> mark
+  make-markov( {{1 -> {1 .25} {2 2} {3 .5} {4 .4} {5 .3} {6 .1}}
+                {2 -> {3 1} {4 .5} {5 .3} {6 .2}}
+                {3 -> {1 .2} {2 1} {4 .5} {5 .3 {6 .2}}}
+                {4 -> {1 .2} {2 1} {3 .4} {4 .3} {6 .2}}
+                {5 -> {1 1} {2 1} {3 .5} {4 .5} {5 .5} {6 .5}}
+                {6 -> {1 1} {2 1} {3 .5} {4 .5} {5 .5} )
+
+<span class="comment">;; try it out</span>
+
+<span class="command">begin</span> <span class="reserved">with</span> n = 5
+  <span class="reserved">print</span> note( scale( n, 60, next(mark, n - 1)))
+<span class="command">end</span>
+
+<span class="comment">;; define a player for chords</span>
+
+<span class="command">define</span> <span class="class">function</span> playchord( ch, d, a)
+  <span class="reserved">loop</span> <span class="reserved">for</span> c <span class="reserved">in</span> ch
+    <span class="reserved">send</span> <span class="string">"mp:midi"</span> key: c dur: d amp: a
+   <span class="reserved">end</span>
+
+<span class="comment">;; try out the player</span>
+
+<span class="command">begin</span> <span class="reserved">with</span> n = 5
+  <span class="reserved">exec</span> playchord( scale( n, 60, next( mark, n - 1)),
+                  1, .7)
+<span class="command">end</span>
+
+<span class="comment">;; define a midi hook. The louder the note the more chord tones are
+;; added</span>
+
+<span class="command">define</span> <span class="class">function</span> chordhook(mm)
+  <span class="reserved">if</span> mm:on?( mm) <span class="reserved">then</span>
+    <span class="reserved">begin</span>
+      <span class="reserved">with</span> n = int( interp( mm:vel( mm), 20, 2, 100, 6))
+      <span class="comment">;; the louder we play the more notes are added</span>
+      <span class="reserved">exec</span> playchord( scale(n, mm:key( mm),
+                            next(mark, n - 1))
+                      .5
+                      mm:vel(mm))
+    <span class="reserved">end</span>
+
+<span class="comment">;; Set the inhook. First make sure to turn off active senseing on the
+;; Midi In port!</span>
+
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, chordhook
+
+<span class="comment">;; clear the hook when you are done</span>
+
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, <span class="constant">#f</span>
+</pre>
 </div>
 
 <div class="float">
 <h3 class="ex">Scheme</h3>
 <pre class="code">
-;; a 1st order markov pattern generates steps between chord tones
+<span class="comment">;; a 1st order markov pattern generates steps between chord tones</span>
 
-(define mark
+(<span class="reserved">define</span> mark
   (make-markov '((1 -> (1 .25) (2 2) (3 .5) (4 .4) (5 .3) (6 .1))
                  (2 -> (3 1) (4 .5) (5 .3) (6 .2))
                  (3 -> (1 .2) (2 1) (4 .5) (5 .3 (6 .2)))
@@ -175,62 +310,47 @@
                  (5 -> (1 1) (2 1) (3 .5) (4 .5) (5 .5) (6 .5))
                  (6 -> (1 1) (2 1) (3 .5) (4 .5) (5 .5) ))))
 
-;; try it out 
+<span class="comment">;; try it out</span>
 
-(let ((n 5))
+(<span class="reserved">let</span> ((n 5))
   (note (scale n 60 (next mark (- n 1)))))
 
-;; define a player for chords
+<span class="comment">;; define a player for chords</span>
 
-(define (playchord ch d a)
-  (loop for c in ch
-        do (send "mp:midi" key: c dur: d amp: a)))
+(<span class="reserved">define</span> (playchord ch d a)
+  (<span class="reserved">loop</span> for c in ch
+        <span class="reserved">do</span> (send <span class="string">"mp:midi"</span> key: c dur: d amp: a)))
 
-;; try out the player
+<span class="comment">;; try out the player</span>
 
-(let ((n 5))
+(<span class="reserved">let</span> ((n 5))
   (playchord (scale n 60 (next mark (- n 1)) 1 .7)))
 
-;; define a midi hook. The louder the note the more chord tones are
-;; added
+<span class="comment">;; define a midi hook. The louder the note the more chord tones are
+;; added</span>
 
-(define (chordhook mm)
-  (if (mm:on? mm)
-    ;; interp returns a float
-    (let ((n (int (interp (mm:vel mm) 20 2 100 6))))
-      ;; the louder we play the more notes are added
+(<span class="reserved">define</span> (chordhook mm)
+  (<span class="reserved">if</span> (mm:on? mm)
+    <span class="comment">;; interp returns a float</span>
+    (<span class="reserved">let</span> ((n (int (interp (mm:vel mm) 20 2 100 6))))
+      <span class="comment">;; the louder we play the more notes are added</span>
       (playchord (scale n (mm:key mm)
                         (next mark (- n 1)))
                  .5
                  (mm:vel mm)))))
 
-;; Set the inhook. First make sure to turn off active senseing on the
-;; Midi In port!
+<span class="comment">;; Set the inhook. First make sure to turn off active senseing on the
+;; Midi In port!</span>
 
-(send "mp:inhook" chordhook)
+(send <span class="string">"mp:inhook"</span> chordhook)
 
-;; clear the hook when you are done
+<span class="comment">;; clear the hook when you are done</span>
 
-(send "mp:inhook" #f)
+(send <span class="string">"mp:inhook"</span> <span class="constant">#f</span>)
 </pre>
 </div>
 
-<h2 id="pinkscale">Musial Processes</h2>
-
-<div class="float">
-<h3 class="ex">Scheme</h3>
-<pre class="code">
-(<span class="special">define-process</span> (<span class="defined">pinkscale</span> len scale)
-  (<span class="special">run</span> repeat len
-       <span class="special">do</span>
-       (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> (discrete (ranpink) -1 1 scale))
-       (wait .125)))
-
-(<span class="special">define</span> <span class="defined">dorian</span> (scale 50 20 2 1 2 2 2 1 2))
-
-(sprout (pinkscale 60 dorian))
-</pre>
-</div>
+<h2 id="processes">Musial Processes</h2>
 
 <div class="float">
 <h3 class="ex">SAL</h3>
@@ -247,34 +367,23 @@
 </pre>
 </div>
 
-
-<h2 id="pinkscale">Using ids to selectively stop processes</h2>
-
 <div class="float">
 <h3 class="ex">Scheme</h3>
 <pre class="code">
-(<span class="special">define-process</span> (<span class="defined">chopin</span> n r d k)
-  (<span class="special">run</span> repeat n
-       <span class="reserved">do</span>
-       (send <span class="string">"mp:midi"</span> <span class="keyword">dur:</span> d <span class="keyword">key:</span> k)
-       (wait r)))
+(<span class="special">define-process</span> (<span class="defined">pinkscale</span> len scale)
+  (<span class="special">run</span> repeat len
+       <span class="special">do</span>
+       (send <span class="string">"mp:midi"</span> <span class="keyword">key:</span> (discrete (ranpink) -1 1 scale))
+       (wait .125)))
 
-<span class="comment">;; sprout D# minor chord with ids</span>
+(<span class="special">define</span> <span class="defined">dorian</span> (scale 50 20 2 1 2 2 2 1 2))
 
-(<span class="special">begin</span> 
-  (sprout (chopin 100 .5 .25 63) 0 1)
-  (sprout (chopin 100 .5 .25 66) 0 2)
-  (sprout (chopin 100 .5 .25 70) 0 3)
-  (sprout (chopin 100 .5 .25 75) 0 1)
-  )
-
-<span class="comment">;; first stop F#, then A# then the D# octave</span>
-
-(stop 2)
-(stop 3)
-(stop 1)
+(sprout (pinkscale 60 dorian))
 </pre>
 </div>
+
+
+<h2 id="ids">Using ids to selectively stop processes</h2>
 
 <div class="float">
 <h3 class="ex">SAL</h3>
@@ -302,24 +411,34 @@
 </pre>
 </div>
 
-
-<h2 class="ex">Pentatonic wind chimes with amp envelope and exponential decay</h2>
 <div class="float">
 <h3 class="ex">Scheme</h3>
 <pre class="code">
-(<span class="special">define-process</span> (<span class="defined">chimes</span> n)
-  (<span class="special">run</span> with l = '(0 2 5 7 9 12)
-       and k = (+ 37 (* 12 (ran 5)))
-       for i below n
-       <span class="special">do</span>
-       (send <span class="string">"mp:midi"</span> 0 (between 2.0 4.0)
-             (+ k (nth l (ran 6)))
-             (interp i 0 90 n 30))
-       (wait (rescale i 0 n .1 (between 1.5 2.0) 50))))
+(<span class="special">define-process</span> (<span class="defined">chopin</span> n r d k)
+  (<span class="special">run</span> repeat n
+       <span class="reserved">do</span>
+       (send <span class="string">"mp:midi"</span> <span class="keyword">dur:</span> d <span class="keyword">key:</span> k)
+       (wait r)))
 
-(sprout (chimes 20 ) )
+<span class="comment">;; sprout D# minor chord with ids</span>
+
+(<span class="special">begin</span> 
+  (sprout (chopin 100 .5 .25 63) 0 1)
+  (sprout (chopin 100 .5 .25 66) 0 2)
+  (sprout (chopin 100 .5 .25 70) 0 3)
+  (sprout (chopin 100 .5 .25 75) 0 1)
+  )
+
+<span class="comment">;; first stop F#, then A# then the D# octave</span>
+
+(stop 2)
+(stop 3)
+(stop 1)
 </pre>
 </div>
+
+
+<h2 class="chimes">Pentatonic wind chimes with amp envelope and exponential decay</h2>
 
 <div class="float">
 <h3 class="ex">SAL</h3>
@@ -337,7 +456,62 @@
 </pre>
 </div>
 
-<h2 id="example4">Triggering real-time processes via a MIDI input hook</h2>
+<div class="float">
+<h3 class="ex">Scheme</h3>
+<pre class="code">
+(<span class="special">define-process</span> (<span class="defined">chimes</span> n)
+  (<span class="special">run</span> with l = '(0 2 5 7 9 12)
+       and k = (+ 37 (* 12 (ran 5)))
+       for i below n
+       <span class="special">do</span>
+       (send <span class="string">"mp:midi"</span> 0 (between 2.0 4.0)
+             (+ k (nth l (ran 6)))
+             (interp i 0 90 n 30))
+       (wait (rescale i 0 n .1 (between 1.5 2.0) 50))))
+
+(sprout (chimes 20 ) )
+</pre>
+</div>
+
+<h2 id="triggering">Triggering real-time processes via a MIDI input hook</h2>
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> playscale(key, dur)
+  <span class="reserved">run</span> <span class="reserved">with</span> scl = odds(.5, scale(15, key, 2, 2, 1, 2, 2, 2, 1),
+                      scale(17, key, 2, 1)), 
+           len = length(scl)
+    <span class="reserved">for</span> i <span class="reserved">below</span> len
+    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> nth( scl, i),
+         <span class="keyword">dur:</span> .5,
+         <span class="keyword">amp:</span> interp( i, 0, .9, len, .5)
+    <span class="reserved">wait</span> dur / len
+  <span class="reserved">end</span>
+
+<span class="comment">;; test the process</span>
+  
+<span class="command">sprout</span> playscale( 60, 1.2)
+
+<span class="comment">;; define a hook to play a scale based on a key you press...</span>
+
+<span class="command">define</span> <span class="class">function</span> myhook (m)
+  <span class="reserved">if</span> mm:on?(m) <span class="reserved">then</span>
+    <span class="reserved">begin</span> <span class="reserved">with</span> k = mm:key(m)
+      <span class="reserved">sprout</span> playscale(k, 1.2)
+    <span class="reserved">end</span>
+
+<span class="comment">;; set hook ...</span>
+
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, myhook
+
+<span class="comment">;; now play your MIDI keyboard ...  then clear your hook when done</span>
+
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, #f</span>
+</pre>
+</div>
+
+
 
 <div class="float">
 <h3 class="ex">Scheme</h3>
@@ -376,46 +550,27 @@
 </pre>
 </div>
 
-<div class="float">
-<h3 class="ex">SAL</h3>
-<pre class="code">
-<span class="command">define</span> <span class="class">process</span> playscale(key, dur)
-  <span class="reserved">run</span> <span class="reserved">with</span> scl = odds(.5, scale(15, key, 2, 2, 1, 2, 2, 2, 1),
-                      scale(17, key, 2, 1)), 
-           len = length(scl)
-    <span class="reserved">for</span> i <span class="reserved">below</span> len
-    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> nth( scl, i),
-         <span class="keyword">dur:</span> .5,
-         <span class="keyword">amp:</span> interp( i, 0, .9, len, .5)
-    <span class="reserved">wait</span> dur / len
-  <span class="reserved">end</span>
-
-<span class="comment">;; test the process</span>
-  
-<span class="command">sprout</span> playscale( 60, 1.2)
-
-<span class="comment">;; define a hook to play a scale based on a key you press...</span>
-
-<span class="command">define</span> <span class="class">function</span> myhook (m)
-  <span class="reserved">if</span> mm:on?(m) <span class="reserved">then</span>
-    <span class="reserved">begin</span> <span class="reserved">with</span> k = mm:key(m)
-      <span class="reserved">sprout</span> playscale(k, 1.2)
-    <span class="reserved">end</span>
-
-<span class="comment">;; set hook ...</span>
-
-<span class="command">send</span> <span class="string">"mp:inhook"</span>, myhook
-
-<span class="comment">;; now play your MIDI keyboard ...  then clear your hook when done</span>
-
-<span class="command">send</span> <span class="string">"mp:inhook"</span>, #f</span>
-</pre>
-</div>
-
-<h2 id="example5">Sending to the Csound port</h2>
+<h2 id="csound">Sending to the Csound port</h2>
 
 <p>To run this example your Ports menu must have a Csound port available and you nust have Csound 5 installed on your machine. The <code>i1</code> instrument used here is defined in "grace.orc" in the application resource directory.
 </p>
+
+
+<div class="float">
+<h3 class="ex">SAL</h3>
+<pre class="code">
+<span class="command">define</span> <span class="class">process</span> ranins1(len, rhy, lb, ub, amp)
+  <span class="reserved">run</span> <span class="reserved">with</span> dur = rhy * 2
+    <span class="reserved">repeat</span> len
+    <span class="reserved">for</span> key = lb <span class="reserved">then</span> ran(lb,ub)
+    <span class="reserved">send</span> <span class="string">"cs:i"</span>, 1, 0, dur, key, amp
+    <span class="reserved">wait</span> rhy
+  <span class="reserved">end</span>
+
+<span class="command">sprout</span> ranins1(10, .2, 60, 72, 1000)
+</pre>
+</div>  
+
 
 <div class="float">
 <h3 class="ex">Scheme</h3>
@@ -431,21 +586,6 @@
     ))
 
 (sprout (rani1 10 .2 60 72 1000))
-</pre>
-</div>  
-
-<div class="float">
-<h3 class="ex">SAL</h3>
-<pre class="code">
-<span class="command">define</span> <span class="class">process</span> ranins1(len, rhy, lb, ub, amp)
-  <span class="reserved">run</span> <span class="reserved">with</span> dur = rhy * 2
-    <span class="reserved">repeat</span> len
-    <span class="reserved">for</span> key = lb <span class="reserved">then</span> ran(lb,ub)
-    <span class="reserved">send</span> <span class="string">"cs:i"</span>, 1, 0, dur, key, amp
-    <span class="reserved">wait</span> rhy
-  <span class="reserved">end</span>
-
-<span class="command">sprout</span> ranins1(10, .2, 60, 72, 1000)
 </pre>
 </div>  
 
