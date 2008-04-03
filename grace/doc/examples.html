@@ -127,10 +127,10 @@
 <span class="comment">;; octave numbers are sticky in note lists</span>
 <span class="command">print</span> key( {c4 d e f g a b c5 d e f g a b c6} )
 
-<span class="comment">;; a list of 10 pinkish notes beween 60 and 90</span>
-<span class="command">print</span> note( make-list(10, ranpink), -1, 1, 60, 90)
+<span class="comment">;; 10 pinkish notes between 60 and 90</span>
+<span class="command">print</span> note( rescale( make-list(10, ranpink), -1, 1, 60, 90))
 
-<span class="comment">;; a list of 10 pinkish pitch classes</span>
+<span class="comment">;; 10 pinkish pitch classes</span>
 <span class="command">print</span> pc( discrete( make-list(10, ranpink), -1, 1, 60, 90))
 
 <span class="comment">;; transpose and invert work with notes, keys and pcs</span>
@@ -169,10 +169,10 @@
 <span class="comment">;; octave numbers are sticky in note lists</span>
 (key '(c4 d e f g a b c5 d e f g a b c6))
 
-<span class="comment">;; a list of 10 pinkish notes beween 60 and 90</span>
-(note (make-list 10 ranpink) -1 1 60 90)
+<span class="comment">;; 10 pinkish notes beween 60 and 90</span>
+(note (discrete (make-list 10 ranpink) -1 1 60 90))
 
-<span class="comment">;; a list of 10 pinkish pitch classes</span> 
+<span class="comment">;; 10 pinkish pitch classes</span> 
 (pc (discrete (make-list 10 ranpink) -1 1 60 90))
 
 <span class="comment">;; transpose and invert work with notes, keys and pcs</span>
@@ -185,7 +185,7 @@
 (invert 11)
 
 <span class="comment">;; marix generator</span>
-(<span class="reserved">let</span> ((row (shuffle 0 1 2 3 4 5 6 7 8 9 10 11)))
+(<span class="reserved">let</span> ((row (shuffle '(0 1 2 3 4 5 6 7 8 9 10 11))))
   (<span class="reserved">loop</span> for i in (invert row)
         collect (transpose row i)))
 </pre>
@@ -244,29 +244,28 @@
 <pre class="code">
 <span class="comment">;; a 1st order markov pattern generates steps between chord tones</span>
 
-<span class="command">define</span> <span class="class">variable</span> mark
-  make-markov( {{1 -> {1 .25} {2 2} {3 .5} {4 .4} {5 .3} {6 .1}}
-                {2 -> {3 1} {4 .5} {5 .3} {6 .2}}
-                {3 -> {1 .2} {2 1} {4 .5} {5 .3 {6 .2}}}
-                {4 -> {1 .2} {2 1} {3 .4} {4 .3} {6 .2}}
-                {5 -> {1 1} {2 1} {3 .5} {4 .5} {5 .5} {6 .5}}
-                {6 -> {1 1} {2 1} {3 .5} {4 .5} {5 .5} )
+<span class="command">define</span> <span class="class">variable</span> mark =
+  make-markov( {
+                {1 -> {1 .25} {2 2} {3 .5} {4 .4} {5 .3} {6 .1} }
+                {2 -> {3 1} {4 .5} {5 .3} {6 .2} }
+                {3 -> {1 .2} {2 1} {4 .5} {5 .3} {6 .2} }
+                {4 -> {1 .2} {2 1} {3 .4} {4 .3} {6 .2} }
+                {5 -> {1 1} {2 1} {3 .5} {4 .5} {5 .5} {6 .5} }
+                {6 -> {1 1} {2 1} {3 .5} {4 .5} {5 .5} }
+                } )
 
 <span class="comment">;; try it out</span>
-
 <span class="command">begin</span> <span class="reserved">with</span> n = 5
   <span class="reserved">print</span> note( scale( n, 60, next(mark, n - 1)))
 <span class="command">end</span>
 
 <span class="comment">;; define a player for chords</span>
-
 <span class="command">define</span> <span class="class">function</span> playchord( ch, d, a)
   <span class="reserved">loop</span> <span class="reserved">for</span> c <span class="reserved">in</span> ch
     <span class="reserved">send</span> <span class="string">"mp:midi"</span> key: c dur: d amp: a
    <span class="reserved">end</span>
 
 <span class="comment">;; try out the player</span>
-
 <span class="command">begin</span> <span class="reserved">with</span> n = 5
   <span class="reserved">exec</span> playchord( scale( n, 60, next( mark, n - 1)),
                   1, .7)
@@ -292,7 +291,6 @@
 <span class="command">send</span> <span class="string">"mp:inhook"</span>, chordhook
 
 <span class="comment">;; clear the hook when you are done</span>
-
 <span class="command">send</span> <span class="string">"mp:inhook"</span>, <span class="constant">#f</span>
 </pre>
 </div>
@@ -301,7 +299,6 @@
 <h3 class="ex">Scheme</h3>
 <pre class="code">
 <span class="comment">;; a 1st order markov pattern generates steps between chord tones</span>
-
 (<span class="reserved">define</span> mark
   (make-markov '((1 -> (1 .25) (2 2) (3 .5) (4 .4) (5 .3) (6 .1))
                  (2 -> (3 1) (4 .5) (5 .3) (6 .2))
@@ -311,24 +308,21 @@
                  (6 -> (1 1) (2 1) (3 .5) (4 .5) (5 .5) ))))
 
 <span class="comment">;; try it out</span>
-
 (<span class="reserved">let</span> ((n 5))
   (note (scale n 60 (next mark (- n 1)))))
 
 <span class="comment">;; define a player for chords</span>
-
 (<span class="reserved">define</span> (playchord ch d a)
   (<span class="reserved">loop</span> for c in ch
         <span class="reserved">do</span> (send <span class="string">"mp:midi"</span> key: c dur: d amp: a)))
 
 <span class="comment">;; try out the player</span>
-
 (<span class="reserved">let</span> ((n 5))
   (playchord (scale n 60 (next mark (- n 1)) 1 .7)))
 
 <span class="comment">;; define a midi hook. The louder the note the more chord tones are
 ;; added</span>
-
+  
 (<span class="reserved">define</span> (chordhook mm)
   (<span class="reserved">if</span> (mm:on? mm)
     <span class="comment">;; interp returns a float</span>
@@ -341,11 +335,10 @@
 
 <span class="comment">;; Set the inhook. First make sure to turn off active senseing on the
 ;; Midi In port!</span>
-
+  
 (send <span class="string">"mp:inhook"</span> chordhook)
 
 <span class="comment">;; clear the hook when you are done</span>
-
 (send <span class="string">"mp:inhook"</span> <span class="constant">#f</span>)
 </pre>
 </div>

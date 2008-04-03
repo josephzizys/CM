@@ -101,7 +101,7 @@ Returns <var>num</var> or list of same bounded by <var>min</var> and
 <var>max</var> according to <var>mode</var>. If <var>min</var> &lt;=
 <var>num</var> &lt;= <var>max</var> then <var>num</var> is
 returned. Otherwise, if <var>mode</var> is 1 then the outlying
-<var>num</var> is wrapped betwen <var>min</var> and <var>max</var>,
+<var>num</var> is wrapped between <var>min</var> and <var>max</var>,
 i.e. fit returns the remainder of number modulus the boundary
 range. If <var>mode</var> is 2, then the <var>min</var> and
 </var>max</var> boundaries reflect the outlying value back into range.
@@ -448,7 +448,7 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">note</span>
-      (<var class="arg">freq</var>)
+      (<var class="arg">nkl</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -457,7 +457,7 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
 <blockquote>
 <p>
 
-Returns the note (string) of <var>freq</var>, which can be a key, note
+Returns the note (string) of <var>nkl</var>, which can be a note, key
 or list of the same. A note name consists of a pitch class letter
 (<code>c</code> <code>d</code> <code>e</code> <code>f</code>
 <code>g</code> <code>a</code> <code>b</code>), an optional sharp or
@@ -477,7 +477,7 @@ to the last octave specified, or to octave 4.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">key</span>
-      (<var class="arg">freq</var>)
+      (<var class="arg">nhl</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -486,7 +486,7 @@ to the last octave specified, or to octave 4.
 </table>
 <blockquote>
 <p>
-Returns the key (number) of <var>freq</var>, which can be a note, hertz value or list of the same. If a key contains a fractional part it is interpreted as cents above the integer key number, e.g. 60.5 is 50 cents above Middle C.
+Returns the key (number) of <var>nhl</var>, which can be a note, hertz or list of the same. A floating point key <var>kkk.cc</var> is interpreted as the frequency <var>cc</var> cents above the integer key number <var>kkk</var>, e.g. 60.5 is 50 cents above Middle C.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -496,7 +496,7 @@ Returns the key (number) of <var>freq</var>, which can be a note, hertz value or
   <tr class="entry">
     <td class="formals">
       <span class="funcname">hz</span>
-      (<var class="arg">freq</var>)
+      (<var class="arg">nkl</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -504,7 +504,7 @@ Returns the key (number) of <var>freq</var>, which can be a note, hertz value or
 </table>
 <blockquote>
 <p>
-Returns the hertz value of <var>freq</var>, which can be a note, key or list of the same.
+Returns the hertz value of <var>nkl</var>, which can be a note, key or list of the same.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -514,7 +514,7 @@ Returns the hertz value of <var>freq</var>, which can be a note, key or list of 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">pc</span>
-      (<var class="arg">freq</var>)
+      (<var class="arg">nkl</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -522,7 +522,7 @@ Returns the hertz value of <var>freq</var>, which can be a note, key or list of 
 </table>
 <blockquote>
 <p>
-Returns pitch class (0-11) of <var>freq</var>, which can be a note, key or list of the same.
+Returns pitch class (0-11) of <var>nkl</var>, which can be a note, key or list of the same.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -532,7 +532,7 @@ Returns pitch class (0-11) of <var>freq</var>, which can be a note, key or list 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">transpose</span>
-      (<var class="arg">freq</var>, <var class="arg">amount</var>)
+      (<var class="arg">nkl</var>, <var class="arg">amount</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -540,8 +540,8 @@ Returns pitch class (0-11) of <var>freq</var>, which can be a note, key or list 
 </table>
 <blockquote>
 <p>
-Transposes <var>freq</var> by <var>amount</var>.
-If <var>freq</var> and <var>amount</var> are both pitch classes then the transposition occurs in pitch class (mod 12) space. Otherwise <var>freq</var> should be a key, note or list of the same and it is transposed by <var>amount</var>.
+Transposes <var>nkl</var> by <var>amount</var>.
+If <var>freq</var> and <var>amount</var> are both pitch classes then the transposition occurs in pitch class (mod 12) space. Otherwise <var>nkl</var> should be a key, note or list of the same and it is transposed by <var>amount</var>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -551,7 +551,7 @@ If <var>freq</var> and <var>amount</var> are both pitch classes then the transpo
   <tr class="entry">
     <td class="formals">
       <span class="funcname">invert</span>
-      (<var class="arg">freq</var>)
+      (<var class="arg">nkl</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -559,7 +559,7 @@ If <var>freq</var> and <var>amount</var> are both pitch classes then the transpo
 </table>
 <blockquote>
 <p>
-If <var>freq</var> is a pitch class or list of pitch classes the pitch class complement(s) are returned. Otherwise <var>freq</var> should be a list of notes or keys  and the (strict) inversions around the first key or note in the list is returned.
+If <var>nkl</var> is a pitch class or list of pitch classes the pitch class complement(s) are returned. Otherwise <var>nkl</var> should be a list of notes or keys and the (strict) inversions around the first key or note in the list is returned.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -667,6 +667,47 @@ Similar to <code>rescale</code> except floating point <var>x</var> is mapped ont
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="segs">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">segs</span>
+      (<var class="arg">num</var>, <var class="arg">sum</var>, [<var class="opt">mode</var> <var class="optval">1</var>],  [<var class="opt">base</var> <var class="optval">2</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">segs</span>
+      (<var class="arg">num</var>, <var class="arg">sum</var>, [<var class="opt">mode</var> <var class="optval">3</var>],  [<var class="opt">gen</var> <a href="#ran"><var class="optval">ran</var></a>], <var class="rest">args...</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+
+Returns <var>num</var> segments adding up to <var>sum</var>, where the
+relationship between each segment is determined by <var>mode</var>. If
+<var>mode</var> is 1 then the segments are exponentially related,
+where <var>base</var> values greater than 1 produce exponentially
+increasing segments, and reciprocals produce exponentially decreasing
+segments. If <var>mode</var> is 2 then the segments returned are
+related by the <a
+href="http://en.wikipedia.org/wiki/Geometric_series">geometric
+series</a>. If <var>mode</var> is 3 then random segments are returned
+where <var>gen</var> is the random function to use and
+<var>args...</var> are any values to pass to it.
+
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
 
 <!-- DEFINITION -->
 <table class="entry" id="interp">
@@ -786,6 +827,35 @@ Returns a randomly chosen number between <var>a</var> and </var>b</var> (exclusi
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<table class="entry" id="vary">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">vary</span>
+      (<var class="arg">value</var>, <var class="arg">pct</var>,
+      [<var class="opt">mode</var> <var class="optval">0</var>]
+      )
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a random number that deviates from <var>value</var> or list of
+the same by up to <var>pct</var> (1=100%) according to
+<var>mode</var>. If <var>mode</var> is 0 then <var>value</var> is at
+the center of what could be returned.  If <var>mode</var> is -1 then
+<var>value</var> is the maximum possible value, otherwise
+<var>mode</var> 1 places <var>value</var> at the minimum of what could
+be returned.
+</p>
+
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
 <table class="entry" id="odds">
   <tr class="entry">
     <td class="formals">
@@ -828,6 +898,49 @@ Returns a randomly selected <var>arg</var> as the value of the function. If just
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="shuffle">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">shuffle</span>
+      (<var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+
+Returns a version of <var>list</var> with the elements randomly
+reordered.
+
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="tendency">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">tendency</span>
+      (<var class="arg">x</var>, <var class="arg">low</var>, <var class="arg">high</var>, [<var class="opt">gen</var> <a href="#ran"><var class="optval">ran</var></a>], <var class="rest">args...</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+
+Returns a random lying between the values of <var>x</var> in the <var>low</var> and <var>high</var> envelopes. If <var>low</var> or <var>high</var> are constant for any <var>x</var> they may be numbers rather thane envelopes. <var>Gen</var> is an optional random function that will be applied to <var>args...</var> to generate the random number between <var>low</var> and <var>high</var>.
+
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
 
 <h4>Nonuniform Distributions</h4>
 
@@ -1190,6 +1303,25 @@ Items appearing before <code>-&gt;</code> in the rule are the past choice(s) tha
 </p>
 </blockquote>
 
+<!-- DEFINITION -->
+<table class="entry" id="markov-analyze">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">markov-analyze</span>
+      (<var class="arg">list</var>, [<var class="opt">order</var> = <var class="optval">1</var>], [<var class="opt">mode</var> = <var class="optval">1</var>])
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void, pattern or list</td></tr>
+</table>
+<blockquote>
+<p>
+Analyzes a <var>list</var> of data for a specified Markov <var>order</var> (0-n) and computes a table capturing the Markov transitions rules that generates a version <var>data</var> for the supplied <var>order</var>. Returns results according to <var>mode</var>. If <var>mode</var> is 1 then the transition table is printed in an easy to read row and column format. If mode is 2 then a <a href="#make-markov">markov pattern</a> containing the table is returned. If <var>mode</var> is 3 then the table is returned as a list of items suitable for passing to <a href="#make-markov"><code>make-markov</code></a>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
 <table id="make-graph" class="entry">
   <tr class="entry">
     <td class="formals">
@@ -1359,7 +1491,7 @@ Imports <a href="http://www.klingbeil.com/spear/">SPEAR</a> frame data in <var>f
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-size</span>
-
+      (<var class="arg">spectrum</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -1377,7 +1509,7 @@ Returns the number of frequency and amplitude pairs in <var>spectrum</var>.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-time</span>
-
+      (<var class="arg">spectrum</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -1395,7 +1527,7 @@ Returns the time of <var>spectrum</var> or false if there is none.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-maxfreq</span>
-
+      (<var class="arg">spectrum</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -1413,7 +1545,7 @@ Returns the highest frequency in <var>spectrum</var>.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-minfreq</span>
-
+      (<var class="arg">spectrum</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -1431,7 +1563,7 @@ Returns the lowest frequency in <var>spectrum</var>.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-maxamp</span>
-
+      (<var class="arg">spectrum</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -1449,7 +1581,7 @@ Returns the highest amplitude in <var>spectrum</var> or 0.0 if there are no ampl
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-minamp</span>
-
+      (<var class="arg">spectrum</var>)
     </td>
     <td class="label">Function</td>
   </tr>

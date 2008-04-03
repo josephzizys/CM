@@ -953,163 +953,159 @@
 ;;; (define aaa (make-graph `((a to: b) (b to: c) (c ,(make-weightings '(a b c))))))
 ;;; (next aaa)
 
-
-#|
-
-; print table
-; print pattern
-; return pattern
-
-; (markov-analyze seq 1 #f)
-
-(define (markov-analyze seq . args)
-  (with-args (args &key (order 1) 
-		   (print? #t)		; t pattern table
-		   (pattern? #t)	; #f or pattern
-		   sort?
-		   (print-decimals 3)
-		   (period #f)
-		   key)
-    (let ((len (length seq)) 
-	  (labels '())			; the set of all outcomes 
-	  (table '())
-	  ;(table-column-width 6)
-	  (row-label-width 8) 
-	  (pat #f)
-	  (field (+ print-decimals 2)))	; n.nnn 
-      (letrec ((add-outcome
-		(lambda (prev next) 
-		  (let ((entry ;(find prev table :test #'equal? :key #'car) ; was assoc 
-                         (find (lambda (x) (equal? prev (car x))) table)
-                          ))
-		    (if (not entry) 
-		      (push (list prev
-                                  (format #f "~s" prev) 
-                                  (list next 1))
-                            table) 
+(define (markov-analyze seq . args) 
+  (let* ((order (if (null? args) 1 (car args)))
+	 (mode (if (or (null? args) (null? (cdr args))) 1 (cadr args)))
+	 (len (length seq)) 
+	 (labels '())			; the set of all outcomes 
+	 (table '())
+	 (row-label-width 8) 
+	 (pat #f)
+	 (print-decimals 3)
+	 (field (+ print-decimals 2)))	; n.nnn 
+    (unless (member mode '(1 2 3))
+      (error "Not a legal mode" mode))
+    (letrec ((add-outcome
+	      (lambda (prev next) 
+		(let ((entry (find (lambda (x) (equal? prev (car x)))
+				   table)))
+		  (if (not entry) 
+		      (set! table (cons (list prev
+					      (format #f "~s" prev) 
+					      (list next 1))
+					table)) 
 		      (let ((e (assoc next (cddr entry)))) 
 			(if e 
-			  (set-car! (cdr e) (+ 1 (cadr e)))
-			  (set-cdr! (last-pair (cdr entry))
-				    (list (list next 1)))))))))
-	       (before?
-		(lambda (x y l) 
-		  (if (null? x) #t 
-                    (let ((p1 ;(position (car x) l :test #'equal?)
-                           (list-index (lambda (z) (equal? (car x) z)) l)
-                            ) 
-                          (p2 ;(position (car y) l :test #'equal?)
-                           (list-index (lambda (z) (equal? (car y) z)) l)
-                            )) 
+			    (set-car! (cdr e) (+ 1 (cadr e)))
+			    (set-cdr! (last-pair (cdr entry))
+				      (list (list next 1)))))))))
+	     (before?
+	      (lambda (x y l) 
+		(if (null? x) #t 
+                    (let ((p1 (list-index (lambda (z) (equal? (car x) z))
+					  l)) 
+                          (p2 (list-index (lambda (z) (equal? (car y) z))
+					  l)))
                       (cond ((< p1 p2) #t) 
                             ((= p1 p2) 
                              (before? (cdr x) (cdr y) l)) 
                             (else #f))))))
-	       (liststring 
-		(lambda (l)
-		  (if (null? l) ""
-		      (let ((a (format #f "~s" (car l))))
-			(do ((x (cdr l) (cdr x)))
-			    ((null? x) a)
-			  (set! a
-				(string-append 
-				 a (format #f " ~s" (car x))))))))))
-              
-        (dotimes (i len) 
-          (loop with prev = (list)
-             for j to order 
-             for x = (let ((raw (list-ref seq (modulo (+ i j) len)))) 
-                       (if key (key raw) raw)) 
-             ;; gather history in reverse order 
-             when (< j order) do (push x prev) 
-             finally 
-             (begin (add-outcome (reverse prev) x ) 
-                    (if (not (member x labels))
-                      (push x labels)))))
-	      
-        ;; sort the outcomes according to user specification:
-        ;; a list, a sorting function or nil. 
-        (cond ((pair? sort?) 
-               (set! labels sort?)) 
-              (sort? 
-               (set! labels (sort labels sort?))) 
-              ((number? (car labels))
-               (set! labels (sort labels (function <))))
-              ((and (car labels) (symbol? (car labels)))
-               (set! labels (sort labels
-                                  (lambda (x y) 
-                                    (string-ci<? (format #f "~a" x)
-                                                 (format #f "~a" y))))))
-              (else 
-               (set! labels (reverse labels)))) 
-	      ;; map over data, normalize weights 
-	      (loop for row in table 
-	            for lab = (cadr row)	; label
-	            for val = (cddr row) 
-	            maximize (string-length lab) into len 
-	            do 
-	            (let ((total (loop for e in val sum (cadr e)))) 
-		      (set! total (* total 1.0)) 
-		      (loop for e in val 
-		            do (set-car! (cdr e)
-				         (decimals (/ (cadr e) total) 
-					           print-decimals)))) 
-	            finally (set! row-label-width (max len row-label-width))) 
-              
-	      ;; sort table according to value order. 
-	      (set! table 
-	            (sort table (lambda (x y)
-			          (before? (car x) (car y) labels)))) 
-              
-	      (when (member print? '(#t table :table))
-	        (let* ((sp " ")
-		       (ln (make-string field #\-))) 
-	          ;; print column header row
-	          (begin (newline)
-		         (dotimes (i row-label-width) (write-char #\*))
-		         (dolist (l labels)
-		           (display sp);; column seperator
-		           (let* ((s (format #f "~a" l))
-			          (n (string-length s)))
-		             ;; write column pad
-		             (dotimes (i (max (- field n) 0))
-			       (write-char #\space))
-		             (display s))))
-	          ;; print each row
-	          (dolist (row table)
-	            (newline)
-	            (let* ((s (liststring (car row)))
-		           (n (string-length s)))
-		      ;; print left pad for row label
-		      (dotimes (i (max (- row-label-width n) 0))
-		        (write-char #\space))
-		      ;; print row label min row-label-width.
-		      (dotimes (i (min row-label-width n))
-		        (write-char (string-ref s i))))
-	            (dolist (l labels)
-		      (let ((v (assoc l (cddr row))))
-		        (if (not v)
-		          (begin  (display sp) (display ln))
-		          (let* ((s (number->string (cadr v)))
-			         (n (string-length s)))
-		            (display sp)
-		            ;; pad number
-		            (dotimes (i (max (- field n) 0))
-			      (write-char #\space))
-		            (display s)
-		            )))))
-	          (newline))
-		(force-output))
-	      (when (or pattern? (member print? '(#t pattern :pattern)))
-	        (set! pat  
-		      (loop for row in table 
-		            collect (append (car row) '(->) (cddr row)))))
-	      (when (member print? '(#t pattern :pattern))
-	        (pprint `(new markov of ', pat))
-		(force-output))
-	      (if pattern?
-                ;; patterns not defined yet, cant use new or <markov>
-	        (make (find-class* 'markov) :of pat :for period)
-	        (values))))))
+	     (liststring 
+	      (lambda (l)
+		(if (null? l) ""
+		    (let ((a (format #f "~s" (car l))))
+		      (do ((x (cdr l) (cdr x)))
+			  ((null? x) a)
+			(set! a
+			      (string-append 
+			       a (format #f " ~s" (car x))))))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i len) #f)
+	(do ((prev (list))
+	     (j 0 (+ j 1))  ; j to order
+	     (x #f))
+	    ((> j order)
+	     (add-outcome (reverse prev) x ) 
+	     (if (not (member x labels))
+		 (set! labels (cons x labels))))
+	  (set! x (list-ref seq (modulo (+ i j) len)))
+	  ;; gather history in reverse order 
+	  (when (< j order) (set! prev (cons x prev)))))
+      ;; sort the outcomes according to data
+      (cond ((number? (car labels))
+	     (set! labels (sort labels <)))
+	    ((and (car labels) (symbol? (car labels)))
+	     (set! labels (sort labels
+				(lambda (x y) 
+				  (string-ci<? (format #f "~a" x)
+					       (format #f "~a" y))))))
+	    (else 
+	     (set! labels (reverse labels))))
+      ;; map over data, normalize weights 
+      (do ((tail table (cdr tail))
+	   (len 0))
+	  ((null? tail)
+	   (set! row-label-width (max len row-label-width)) )
+	(let* ((row (car table))
+	       (lab (cadr row))	; label
+	       (val (cddr row)))
+	  (set! len (max len (string-length lab)))
+	  (let ((total (do ((e val (cdr e)) ; sum all e
+			    (s 0))
+			   ((null? e) s)
+			 (set! s (+ s (cadr (car e))))))) 
+	    (set! total (* total 1.0)) 
+	    (do ((e val (cdr e)))
+		((null? e) #f)
+	      (set-car! (cdr (car e))
+			(decimals (/ (cadr (car e)) total) 
+				  print-decimals))))))
+      ;; sort table according to value order. 
+      (set! table 
+	    (sort table (lambda (x y) (before? (car x) (car y) labels)))) 
+      ;; print table
+      (when (eq? mode 1)
+	(let* ((sp " ")
+	       (ln (make-string field #\-))) 
+	  ;; print column header row
+	  (newline)
+	  (do ((i 0 (+ i 1)))
+	      ((= i row-label-width) #f)
+	    (write-char #\*))
+	  (do ((l labels (cdr l)))
+	      ((null? l) #f)
+	    (display sp) ;; column separator
+	    (let* ((s (format #f "~a" (car l)))
+		   (n (string-length s)))
+	      ;; write column pad
+	      (do ((i 0 (+ i 1))
+		   (m (max (- field n) 0)))
+		  ((= i m) #f)
+		(write-char #\space))
+	      (display s)))
+	  ;; print each row
+	  (do ((tail table (cdr tail)))
+	      ((null? tail) #f)
+	    (let ((row (car tail)))
+	      (newline)
+	      (let* ((s (liststring (car row)))
+		     (n (string-length s)))
+		;; print left pad for row label
+		(do ((i 0 (+ i 1))
+		     (m (max (- row-label-width n) 0)))
+		    ((= i m) #f)
+		  (write-char #\space))
+		;; print row label min row-label-width.
+		(do ((i 0 (+ i 1))
+		     (m (min row-label-width n)))
+		    ((= i m) #f)
+		  (write-char (string-ref s i))))
+	      (do ((l labels (cdr l)))
+		  ((null? l) #f)
+		(let ((v (assoc (car l) (cddr row))))
+		  (if (not v)
+		      (begin (display sp) (display ln))
+		      (let* ((s (number->string (cadr v)))
+			     (n (string-length s)))
+			(display sp)
+			;; pad number
+			(do ((i 0 (+ i 1))
+			     (m (max (- field n) 0)))
+			    ((= i m) #f)
+			  (write-char #\space))
+			(display s)
+			))))))
+	  (newline))))
+    (when (> mode 1)
+      (set! pat (map (lambda (row) (append (car row) '(->) (cddr row)))
+		     table)))
+      (if (= mode 1)
+	  (values)
+	  (if (= mode 2)
+	      (make-markov pat)
+	      pat))))
 
-|#
+; (define aaa '(c4 c4 d4 c4 f4 e4 c4 c4 d4 c4 g4 f4 c4 c4 c5 a4 f4 e4 d4 bf4 bf4 a4 f4 g4 f4))
+; (markov-analyze aaa 1)
+
+

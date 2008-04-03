@@ -18,12 +18,18 @@
   (foreign-lambda float "Toolbox::decimals" float int))
 (define tb:quantize
   (foreign-lambda float "Toolbox::quantize" float float))
+
 (define tb:rhythm->seconds
   (foreign-lambda float "Toolbox::rhythm_to_seconds" float float float))
 (define tb:cents->scaler
   (foreign-lambda float "Toolbox::cents_to_scaler" int))
 (define tb:scaler->cents
   (foreign-lambda int "Toolbox::scaler_to_cents" float))
+(define tb:explseg
+  (foreign-lambda float "Toolbox::explseg" int int float float))
+(define tb:geoseg
+  (foreign-lambda float "Toolbox::geoseg" int int float float))
+
 (define tb:keynum->hertz
   (foreign-lambda float "Toolbox::keynum_to_hertz" float))
 (define tb:keynum->pc
@@ -149,15 +155,24 @@
       (map (lambda (n) (tb:quantize n steps)) num)
       (tb:quantize num steps)))
 
-(define (decimals num . digits)
-  (if (null? digits)
-      (tb:decimals num 3)
-      (tb:decimals num (car digits))))
+;; rounding in C++ version does not work.
 
+(define (decimals value places)
+  (let ((n (expt 10.0 places)))
+    (if (list? places)
+	(map (lambda (v) (/ (round (* v n)) n)) v)
+	(/ (round (* value n)) n))))
+
+;;(define (decimals num . digits)
+;;  (if (null? digits)
+;;      (tb:decimals num 3)
+;;      (tb:decimals num (car digits))))
+  
 (define (rhythm->seconds beats . args)
   (with-optkeys (args (tempo 60.0) (beat .25))
     (if (list? beats)
-	(map (lambda (x) (tb:rhythm->seconds x tempo beat)) beats)
+	(map (lambda (x) (tb:rhythm->seconds x tempo beat))
+	     beats)
 	(tb:rhythm->seconds beats tempo beat))))
 
 (define (cents->ratio cents)
@@ -170,16 +185,16 @@
       (map tb:scaler->cents num)
       (tb:scaler->cents num)))
 
-(define (interpl x coords . base)
+(define (interp1 x coords base)
   (let* ((x1 (if (null? coords)
-		 (error "not an x y coordinate list:" coords)
+		 (error "not an x y coordinate list" coords)
 		 (car coords)))
 	 (y1 (if (null? (cdr coords))
-		 (err "not an x y coordinate list:" coords)
+		 (err "not an x y coordinate list" coords)
 		 (cadr coords)))
 	 (x2 x1)
 	 (y2 y1)
-	 (b (if (null? base) 1 (car base))))
+	 (b base))
     (do ((tail (cddr coords) (cddr tail)))
 	((or (null? tail) (> x2 x))
 	 (tb:rescale x x1 x2 y1 y2 b))
@@ -191,9 +206,23 @@
 	  (set! y2 (cadr tail))))))
 
 (define (interp x . args)
+  (if (null? args) (error "missing x y coordinates"))
   (if (pair? (car args))
-      (apply interpl x (car args) (cdr args))
-      (interpl x args)))
+      (interp1 x (car args) 
+	       (if (null? (cdr args)) 1 (cadr args)))
+      (interp1 x args 1)))
+
+(define (tendency x low high . args)
+  (let ((rgen ran))
+    (if (not (null? args))
+	(begin (set! rgen (car args)) (set! args (cdr args))))
+    (if (pair? low) (set! low (interp1 x low 1)))
+    (if (pair? high) (set! high (interp1 x high 1)))
+    (if (= low high)
+	low
+	(+ low (apply rgen
+		      (if (> low high) (- low high) (- high low))
+		      args)))))
 
 ;; transformations
 
@@ -277,6 +306,24 @@
   (with-optkeys (args (true #t) (false #f))
     (if (< (tb:ranf 1.0) n) true false)))
 
+(define (vary val vari . mode)
+  (if (null? mode) (set! mode 0)
+      (set! mode (car mode)))
+  (if (not (member mode '(0 -1 1)))
+      (error "Not a legal mode" mode))
+  (define (vary1 val vari mode)
+    (if (or (<= vari 0) (= val 0))
+	val
+	(let* ((r (abs (* val vari)))
+	       (v (tb:ranf r )))
+	  (if (eq? mode 0)
+	      (+ (- val (* r .5)) v)
+	      (if (eq? mode 1) (+ val v) (- val v)))
+	  )))
+  (if (list? val)
+      (map (lambda (v) (vary1 v vari mode)) val)
+      (vary1 val vari mode)))
+
 ;; non-uniform distibutions
 
 (define ranlow tb:ranlow)
@@ -323,6 +370,46 @@
 
 (define ranpink tb:ranpink)
 
+(define (segs num sum . args)
+  (if (< num  1)
+      (list)
+      (let ((mode 1))
+	(if (pair? args)
+	    (begin (set! mode (car args))
+		   (set! args (cdr args))))
+	(cond ((or (eq? mode 1) (eq? mode 2)) ; expl or geo
+	       (let* ((func (if (eq? mode 1) tb:explseg tb:geoseg))
+		      (base (if (null? args) 2 (car args)))
+		      (head (list #f))
+		      (tail head))
+		 (if (< base 0) (error "Illegal base" base))
+		 (do ((i 0 (+ i 1)))
+		     ((= i num) (cdr head))
+		   (set-cdr! tail
+			     (list ( func i num sum base)))
+		   (set! tail (cdr tail)))))
+	      ((eq? mode 3)
+	       (let ((rgen ran))
+		 (if (not (null? args))
+		     (begin (set! rgen (car args))
+			    (set! args (cdr args))))
+		 (let* ((rsum (apply rgen args))
+			(head (list rsum))
+			(tail head))
+		   (do ((i 1 (+ i 1))
+			(n #f))
+		       ((not (< i num))
+			(do ((tail head (cdr tail)))
+			    ((null? tail) head)
+			  (set-car! tail
+				    (tb:rescale (car tail)
+						0 rsum 0 sum 1))))
+		     (set! n (apply rgen args))
+		     (set-cdr! tail (list n))
+		     (set! tail (cdr tail))
+		     (set! rsum (+ rsum n))))))
+	      (else
+	       (error "Not a legal mode" mode))))))
 
 ;*************************************************************************
 (define *notes* (make-hash-table equal?))
@@ -644,4 +731,4 @@
 			    (> (key a) (key b))))))
       (if (eq? mode 0)
 	  (shuffle scale)
-	  (error "not a mode" mode)))))
+	  (error "Not a legal mode" mode)))))

@@ -18,6 +18,11 @@ namespace Toolbox {
   float rescale (float x, float x1, float x2, float y1, float y2, float b=1.0) ;
   int discrete (float x, float x1, float x2, int y1, int y2, float b=1.0);
   int float_to_fixnum(float f) ;
+
+  float expl(float powr, float y0, float y1, float base);
+  float explseg(int i, int len, float sum, float base);
+  float geoseg(int i, int len, float sum, float base);
+
   float decimals(float val, int places=3) ;
   float quantize(float val, float step);
   float rhythm_to_seconds(float beats, float tempo=60.0, float beat=.25) ;

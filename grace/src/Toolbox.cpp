@@ -78,6 +78,29 @@ int Toolbox::scaler_to_cents(float scaler) {
   return (int)((LOGF(scaler)/LOGF(2.0)) * 1200);
 }
 
+float Toolbox::expl(float powr, float y0, float y1, float base) {
+  if (powr < 0) powr=0.0;
+  else if (powr > 1) powr = 1.0;
+  if (base == 1.0)
+    return y0 + ( powr * (y1 - y0));
+  return ( y0 + ( ( (y1 - y0) / (base - 1.0) ) *
+		  ( pow(base, powr) - 1.0 )));
+}
+
+float Toolbox::explseg( int i, int len, float sum, float powr) {
+  if (i >= len) i += -1;
+  float x1 = ((float)(i+1)) / ((float)len);
+  float x2 = ((float)i) / ((float)len);
+  float f1 = expl( x1, 0.0, 1.0, powr);
+  float f2 = (i <= 0) ? 0.0 : expl( x2, 0.0, 1.0, powr);
+  return ( sum * (f1 - f2) );
+}
+
+float Toolbox::geoseg(int i, int len, float sum, float base) {
+  if (len==0) return 0.0;
+  return sum * ( (1.0 - base) / (1.0 - pow(base, len))) ;
+}
+
 #define A00	6.875   // keynum 0
 
 float Toolbox::hertz_to_keynum (float hz) {
@@ -93,7 +116,9 @@ int Toolbox::keynum_to_pc (float kn) {
   return ((int)kn) % 12;
 }
 
+//
 // Randomness
+//
 
 Random::Random ranstate (1000);
 

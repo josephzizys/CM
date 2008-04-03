@@ -158,6 +158,9 @@ void load_sal_file(char *path) {
 	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
 	 rancauchy ranpoisson ranpink ranbrown
 
+	 vary segs tendency
+
+
 	 ;; sal
 	 sal sal:print sal:chdir sal:load sal:open sal:output
 	 load-sal-file *sal-trace-input*

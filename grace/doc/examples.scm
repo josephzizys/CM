@@ -49,10 +49,10 @@
 ;; octave numbers are sticky in note lists
 (key '(c4 d e f g a b c5 d e f g a b c6))
 
-;; a list of 10 pinkish notes beween 60 and 90
-(note (make-list 10 ranpink) -1 1 60 90)
+;; 10 pinkish notes beween 60 and 90
+(note (discrete (make-list 10 ranpink) -1 1 60 90))
 
-;; a list of 10 pinkish pitch classes 
+;; 10 pinkish pitch classes 
 (pc (discrete (make-list 10 ranpink) -1 1 60 90))
 
 ;; transpose and invert work with notes, keys and pcs
@@ -65,7 +65,7 @@
 (invert 11)
 
 ;; marix generator
-(let ((row (shuffle 0 1 2 3 4 5 6 7 8 9 10 11)))
+(let ((row (shuffle '(0 1 2 3 4 5 6 7 8 9 10 11))))
   (loop for i in (invert row)
         collect (transpose row i)))
 
