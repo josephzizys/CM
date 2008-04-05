@@ -954,17 +954,19 @@
 ;;; (next aaa)
 
 (define (markov-analyze seq . args) 
-  (let* ((order (if (null? args) 1 (car args)))
-	 (mode (if (or (null? args) (null? (cdr args))) 1 (cadr args)))
+  (let* ((morder #f) ; markov order
+	 (result #f) ; what to return
 	 (len (length seq)) 
 	 (labels '())			; the set of all outcomes 
 	 (table '())
 	 (row-label-width 8) 
-	 (pat #f)
 	 (print-decimals 3)
 	 (field (+ print-decimals 2)))	; n.nnn 
-    (unless (member mode '(1 2 3))
-      (error "Not a legal mode" mode))
+    (with-optkeys (args (order 1) (mode 1))
+      (set! morder order)
+      (set! result mode))
+    (unless (member result '(1 2 3))
+      (error "Not a legal mode" result))
     (letrec ((add-outcome
 	      (lambda (prev next) 
 		(let ((entry (find (lambda (x) (equal? prev (car x)))
@@ -993,24 +995,24 @@
 	     (liststring 
 	      (lambda (l)
 		(if (null? l) ""
-		    (let ((a (format #f "~s" (car l))))
+		    (let ((a (format #f "~a" (car l))))
 		      (do ((x (cdr l) (cdr x)))
 			  ((null? x) a)
 			(set! a
 			      (string-append 
-			       a (format #f " ~s" (car x))))))))))
+			       a (format #f " ~a" (car x))))))))))
       (do ((i 0 (+ i 1)))
 	  ((= i len) #f)
 	(do ((prev (list))
-	     (j 0 (+ j 1))  ; j to order
+	     (j 0 (+ j 1))  ; j to morder
 	     (x #f))
-	    ((> j order)
+	    ((> j morder)
 	     (add-outcome (reverse prev) x ) 
 	     (if (not (member x labels))
 		 (set! labels (cons x labels))))
 	  (set! x (list-ref seq (modulo (+ i j) len)))
 	  ;; gather history in reverse order 
-	  (when (< j order) (set! prev (cons x prev)))))
+	  (when (< j morder) (set! prev (cons x prev)))))
       ;; sort the outcomes according to data
       (cond ((number? (car labels))
 	     (set! labels (sort labels <)))
@@ -1026,7 +1028,7 @@
 	   (len 0))
 	  ((null? tail)
 	   (set! row-label-width (max len row-label-width)) )
-	(let* ((row (car table))
+	(let* ((row (car tail))
 	       (lab (cadr row))	; label
 	       (val (cddr row)))
 	  (set! len (max len (string-length lab)))
@@ -1040,11 +1042,11 @@
 	      (set-car! (cdr (car e))
 			(decimals (/ (cadr (car e)) total) 
 				  print-decimals))))))
-      ;; sort table according to value order. 
+      ;; sort table by labels
       (set! table 
 	    (sort table (lambda (x y) (before? (car x) (car y) labels)))) 
       ;; print table
-      (when (eq? mode 1)
+      (when (eq? result 1)
 	(let* ((sp " ")
 	       (ln (make-string field #\-))) 
 	  ;; print column header row
@@ -1096,14 +1098,16 @@
 			(display s)
 			))))))
 	  (newline))))
-    (when (> mode 1)
-      (set! pat (map (lambda (row) (append (car row) '(->) (cddr row)))
-		     table)))
-      (if (= mode 1)
-	  (values)
-	  (if (= mode 2)
+
+    (if (= result 1)
+	(values)
+	;; if returning pattern or data convert table to markov lists
+	(let ((pat (map (lambda (row)
+			  (append (car row) '(->) (cddr row)))
+			table)))
+	  (if (= result 2)
 	      (make-markov pat)
-	      pat))))
+	      pat)))))
 
 ; (define aaa '(c4 c4 d4 c4 f4 e4 c4 c4 d4 c4 g4 f4 c4 c4 c5 a4 f4 e4 d4 bf4 bf4 a4 f4 g4 f4))
 ; (markov-analyze aaa 1)
