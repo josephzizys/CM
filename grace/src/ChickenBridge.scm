@@ -149,17 +149,17 @@ void load_sal_file(char *path) {
 	 rescale discrete fit int quantize decimals
 	 plus minus times divide
 	 cents->ratio ratio->cents
-	 rhythm->seconds
-	 interp interpl  ; can remove interpl
+	 rhythm->seconds interp
 
-	 ran ran-set! 
-	 between pick ; pickl 
-	 odds
-	 ranlow ranhigh ranmiddle rangauss ranexp ranbeta rangamma
-	 rancauchy ranpoisson ranpink ranbrown
+	 between pick odds shuffle shuffle! vary segs tendency 
+	 ran ran-set! ranlow ranhigh ranmiddle rangauss ranexp
+	 ranbeta rangamma rancauchy ranpoisson ranpink ranbrown
 
-	 vary segs tendency
-
+	 rm-spectrum fm-spectrum spectrum make-spectrum
+	 spectrum-time spectrum-size spectrum-freqs spectrum-amps
+	 spectrum-keys spectrum-notes spectrum-pairs
+	 spectrum-minfreq spectrum-maxfreq spectrum-minamp
+	 spectrum-maxamp rescale-spectrum
 
 	 ;; sal
 	 sal sal:print sal:chdir sal:load sal:open sal:output
@@ -170,7 +170,7 @@ void load_sal_file(char *path) {
 
 	 first second third fourth fifth sixth seventh eighth
 	 ninth tenth last nth butlast rest list* make-list
-	 list-set!
+	 list-set! reverse!
 
 	 with-optkeys expand-optkeys
 
@@ -373,6 +373,7 @@ void load_sal_file(char *path) {
 
 (include "Utilities.scm")
 (include "Toolbox.scm")
+(include "Spectral.scm")
 (include "Patterns.scm")
 (include "Sal.scm")
 (include "Loop.scm")
@@ -493,12 +494,14 @@ void load_sal_file(char *path) {
 				       (car id) (cdr id)))
 			  v)
 			id))))
+     ;; arrrg! for some reason scheduler-sprout assumes milliseconds
      (cond ((pair? proc)
 	    (do ((p proc (cdr p)))
 		((null? p) proc)
-	      (scheduler-sprout (car p) (nextstart) (nextid))))
+	      (scheduler-sprout (car p) (* (nextstart) 1000)
+				(nextid))))
 	   (else
-	    (scheduler-sprout proc (nextstart) (nextid))
+	    (scheduler-sprout proc (* (nextstart) 1000) (nextid))
 	    proc))
      ;; if return proc would chicken put it in a History list and so
      ;; never get gc'd?

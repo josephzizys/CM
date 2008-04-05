@@ -71,6 +71,8 @@
   (foreign-lambda double "Toolbox::ranpink" ))
 (define tb:ranbrown
   (foreign-lambda double "Toolbox::ranbrown" ))
+(define (tb:bes-jn a b)
+  ( (foreign-lambda double "jn" int double) a b))
 
 ;;
 ;; API
@@ -323,6 +325,22 @@
   (if (list? val)
       (map (lambda (v) (vary1 v vari mode)) val)
       (vary1 val vari mode)))
+
+(define (shuffle! l)
+  (let ((s (length l)))
+    (do ((i 0 (+ i 1))
+	 (j (tb:rani s) (tb:rani s))
+	 (v #f))
+	((= i s) l)
+      (set! v (list-ref l i))
+      (set-car! (list-tail l i)
+		(list-ref l j))
+      (set-car! (list-tail l j) v))))
+
+(define (shuffle . args)
+  (if (null? (cdr args))
+      (shuffle! (append (car args) (list)))
+      (shuffle! (append args (list)))))
 
 ;; non-uniform distibutions
 
