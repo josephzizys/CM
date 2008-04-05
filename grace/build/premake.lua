@@ -109,7 +109,7 @@ if (macosx) then
    if ( options["csound"] ) then
       frameworks = frameworks .. " -framework CsoundLib"
    end
-   package.links = {"uchicken", "juce" .. frameworks}
+   package.links = {"chicken", "juce" .. frameworks}
 elseif ( linux ) then
    package.config["Release"].target = "Release/Grace/bin/grace"
    package.config["Debug"].target = "Debug/Grace/bin/grace"
