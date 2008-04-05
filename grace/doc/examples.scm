@@ -238,19 +238,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sending to the Csound port
 ;;
+
 ;; To run this example your Ports menu must have a Csound port
-;; available and you nust have Csound 5 installed on your machine. The
+;; available and you must have Csound 5 installed on your machine. The
 ;; i1 instrument used here is defined in "grace.orc" in the
-;; application resource directory.
- 
-(define (rani1 len rhy lb ub amp)
-  (go ((num 0 (+ num 1))
-       (dur (* rhy 2))
-       (key lb (ran lb ub)))
-      ((= num len) #f)
-    (send "cs:i" 1 0 dur key amp)
-    (wait rhy)
-    ))
+;; application resource directory. To run the example first use the
+;; Ports>Csound>Open... menu item to open the Csound port with the
+;; default orchestra file ("grace.orc") selected in the dialog box.
+
+(define-process (rani1 len rhy lb ub amp)
+  (run repeat len
+       for dur = (* rhy 2)
+       for k = lb then (between lb ub)
+       do
+       (send "cs:i" 1 0 dur key amp)
+       (wait rhy)))
 
 (sprout (rani1 10 .2 60 72 1000))
 

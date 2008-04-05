@@ -30,7 +30,7 @@ print discrete( make-list(10, ranpink), -1, 1, 60, 90)
 print plus( make-list(10, ran, 10.0))
 
 ;; a list of 10 random numbers quantized to .25
-print quantize( make-list(10, ran, 10.0) .25)
+print quantize( make-list(10, ran, 10.0), .25)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Note, key and pc
@@ -117,7 +117,7 @@ end
 
 define function playchord( ch, d, a)
   loop for c in ch
-    send "mp:midi" key: c dur: d amp: a
+    send "mp:midi", key: c, dur: d, amp: a
    end
 
 ;; try out the player
@@ -135,10 +135,8 @@ define function chordhook(mm)
     begin 
       with n = int( interp( mm:vel( mm), 20, 2, 100, 6))
       ;; the louder we play the more notes are added
-      exec playchord( scale(n, mm:key( mm),
-                            next(mark, n - 1))
-                      .5
-                      mm:vel(mm))
+      exec playchord( scale(n, mm:key( mm), next(mark, n - 1)),
+                      .5, mm:vel(mm))
     end
 
 ;; Set the inhook. First make sure to turn off active senseing on the
@@ -237,12 +235,19 @@ send "mp:inhook", #f
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sending to the Csound port
+;;
+;; To run this example your Ports menu must have a Csound port
+;; available and you must have Csound 5 installed on your machine. The
+;; i1 instrument used here is defined in "grace.orc" in the
+;; application resource directory. To run the example first use the
+;; Ports>Csound>Open... menu item to open the Csound port with the
+;; default orchestra file ("grace.orc") selected in the dialog box.
 
 define process ranins1(len, rhy, lb, ub, amp)
   run with dur = rhy * 2
     repeat len
-    for key = lb then ran(lb,ub)
-    send "cs:i", 1, 0, dur, key, amp
+    for k = lb then between(lb,ub)
+    send "cs:i", 1, 0, dur, k, amp
     wait rhy
   end
 
