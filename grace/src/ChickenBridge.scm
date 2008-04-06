@@ -144,7 +144,7 @@ void load_sal_file(char *path) {
 	 ;; toolbox
 
 	 note key hz pc transpose invert retrograde
-	 scale 
+	 scale scale-order
 
 	 rescale discrete fit int quantize decimals
 	 plus minus times divide
