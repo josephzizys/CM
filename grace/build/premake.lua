@@ -1,19 +1,13 @@
 addoption("release", "optional release number nnn (printed n.n.n)")
 addoption("revision", "optional source revision number")
 addoption("jucedir", "optional location of juce directory")
-addoption("chickendir", "optional location of chicken directory")
 addoption("csound", "build with csound support")
+addoption("debug", "build against debug libs")
 
 if (options["jucedir"]) then
    juce_dir = options["jucedir"]
 else
    juce_dir = "../../../juce"
-end
-
-if (options["chickendir"]) then
-   chicken_dir = options["chickendir"]
-else
-   chicken_dir = "../../../chicken"
 end
 
 source_dir = "../../src/"
@@ -92,13 +86,9 @@ package.name = "Grace"
 package.language = "c++"
 package.kind = "exe"
 
---if ( options["csound"] ) then
----   table.insert(grace_files, "Csound")
---end
-
 package.files = { source_files( grace_files ) }
-package.includepaths = {chicken_dir, juce_dir, "/usr/local/include", "/usr/include" }
-package.libpaths = {chicken_dir, juce_dir .. "/bin", "/usr/local/lib" }
+package.includepaths = { juce_dir, "/usr/local/include", "/usr/include" }
+package.libpaths = { juce_dir .. "/bin", "/usr/local/lib" }
 package.objdir = "build/grace.obj"
 
 if (macosx) then
@@ -109,12 +99,20 @@ if (macosx) then
    if ( options["csound"] ) then
       frameworks = frameworks .. " -framework CsoundLib"
    end
-   package.links = {"chicken", "juce" .. frameworks}
+-- Hack: add static lib as fullpathname to .linkoptions and NOT as 
+-- library in the .links else the static lib will be ignored by gcc
+   package.config["Release"].linkoptions = { "/usr/local/lib/libchicken.a" }
+   package.config["Debug"].linkoptions = { "/usr/local/lib/libchickendebug.a" }
+   package.config["Release"].links = { "juce" .. frameworks}
+   package.config["Debug"].links = { "jucedebug" .. frameworks}
 elseif ( linux ) then
+   package.defines = { "LINUX=1", "SCHEME=1"}
    package.config["Release"].target = "Release/Grace/bin/grace"
    package.config["Debug"].target = "Debug/Grace/bin/grace"
-   package.defines = { "LINUX=1", "SCHEME=1"}
-   package.links = {"chicken", "juce", "freetype", "GLU", "GL", "asound"}
+   package.config["Release"].linkoptions = { "/usr/local/lib/libchicken.a" }
+   package.config["Debug"].linkoptions = { "/usr/local/lib/libchickendebug.a" }
+   package.config["Release"].links = { "juce", "freetype", "GLU", "GL", "asound"}
+   package.config["Debug"].links = { "jucedebug", "freetype", "GLU", "GL", "asound"}
    if ( options["csound"] ) then
       table.insert(package.links, "csound")
       table.insert(package.links, "sndfile")
@@ -132,3 +130,13 @@ end
 add_release_options()
 
 -- EOF
+
+
+
+
+
+
+
+
+
+
