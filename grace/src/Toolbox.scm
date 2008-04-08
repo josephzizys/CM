@@ -14,8 +14,7 @@
   (foreign-lambda int "Toolbox::discrete" float float float int int float))
 (define tb:int
   (foreign-lambda int "Toolbox::float_to_fixnum" float))
-(define tb:decimals
-  (foreign-lambda float "Toolbox::decimals" float int))
+;;(define tb:decimals (foreign-lambda float "Toolbox::decimals" float int))
 (define tb:quantize
   (foreign-lambda float "Toolbox::quantize" float float))
 
@@ -161,8 +160,8 @@
 
 (define (decimals value places)
   (let ((n (expt 10.0 places)))
-    (if (list? places)
-	(map (lambda (v) (/ (round (* v n)) n)) v)
+    (if (list? value)
+	(map (lambda (v) (/ (round (* v n)) n)) value)
 	(/ (round (* value n)) n))))
 
 ;;(define (decimals num . digits)

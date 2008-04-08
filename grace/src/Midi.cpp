@@ -296,7 +296,7 @@ void MidiOutPort::sendNote(double wait, double duration, float keynum,
 			   float amplitude, float channel) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
-  jlimit(channel, (float)0.0, (float)15.0);
+  jlimit( (float)0.0, (float)15.0, channel);
   // only microtune if current tuning is not semitonal and user's
   // channel is a microtonal channel.
   if ( (getTuning() > 1) && (channel < microchanblock) ) {
@@ -777,7 +777,7 @@ void MidiOutPort::setTuning(int tune, bool send) {
   // each division of a tuning claims a physical midi channel tuned to
   // the division's cent value by sending a pitch bend. channels with
   // 0 cents are assignable by users.
-  jlimit(tune,1,16);
+  jlimit(1,16,tune);
   microdivisions=tune;  // tuning (1-16) = divisions per semitone.
   microincrement=1.0/tune; // size of microdivision as fraction of 1
   microchancount=(int)(16.0/((float)microdivisions)); // num user addressable microchans
@@ -790,25 +790,25 @@ void MidiOutPort::setTuning(int tune, bool send) {
 
 bool MidiOutPort::isTuning(int t) {
   // return true if current tuning
-  jlimit(t,1,16);
+  jlimit(1,16,t);
   return (microdivisions==t);
 }
 
 int MidiOutPort::getTuningDivisions(int t) {
-  jlimit(t,1,16);
+  jlimit(1,16,t);
   return t;
 }
 
 int MidiOutPort::getTuningChannels(int t) {
   // return number of addressable channels
   //return microchancount;
-  jlimit(t,1,16);
+  jlimit(1,16,t);
   return (int)(16.0/((float)t));
 }
 
 int MidiOutPort::getTuningChannelsClaimed(int t) {
   // return total number of physical channels claimed by tuning
-  jlimit(t,1,16);
+  jlimit(1,16,t);
   return getTuningChannels(t) * getTuningDivisions(t);
 }
 

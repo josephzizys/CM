@@ -169,7 +169,8 @@ void load_sal_file(char *path) {
 	 cwd chdir cm-logo
 
 	 first second third fourth fifth sixth seventh eighth
-	 ninth tenth last nth butlast rest list* make-list
+	 ninth tenth last nth butlast rest list* 
+	 make-list list-find list-index tail
 	 list-set! reverse!
 
 	 with-optkeys expand-optkeys

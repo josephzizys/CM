@@ -969,7 +969,8 @@
       (error "Not a legal mode" result))
     (letrec ((add-outcome
 	      (lambda (prev next) 
-		(let ((entry (find (lambda (x) (equal? prev (car x)))
+		(let ((entry (list-find (lambda (x)
+					  (equal? prev (car x)))
 				   table)))
 		  (if (not entry) 
 		      (set! table (cons (list prev
@@ -979,7 +980,7 @@
 		      (let ((e (assoc next (cddr entry)))) 
 			(if e 
 			    (set-car! (cdr e) (+ 1 (cadr e)))
-			    (set-cdr! (last-pair (cdr entry))
+			    (set-cdr! (tail (cdr entry))
 				      (list (list next 1)))))))))
 	     (before?
 	      (lambda (x y l) 

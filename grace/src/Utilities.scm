@@ -86,6 +86,22 @@
 		(l2 n obj)
 		(l1 n (car obj))))))
 
+(define (list-index p l)
+  (do ((tail l (cdr tail))
+       (i 0  (+ i 1))
+       (f #f))
+      ((or f (null? tail ))
+       f)
+    (if ( p (car tail)) (set! f i))))
+
+(define (list-find p l)
+  (do ((tail l (cdr tail))
+       (x #f)
+       (f #f))
+      ((or f (null? tail ))
+       f)
+    (if ( p (car tail)) (set! f (car tail)))))
+
 ;;(define (find-if f l)
 ;;  (call/cc (lambda (r) 
 ;;	     (do ((tail l (cdr tail)))
