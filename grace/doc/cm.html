@@ -416,7 +416,7 @@ Prepends elements in <var>...</var> onto the front of <var>list</var>.
 <blockquote>
 <p>
 
-Creates a new list with <var>length</var> number of elements.  If <var>fill</var> is provided the initial elemets in the list are set to it. If <var>function</var> is provided it is called <var>length</var> times with zero or more <var>args...</var> to produce the contents of the list.
+Creates a new list with <var>length</var> number of elements.  If <var>fill</var> is provided the initial elements in the list are set to it. If <var>function</var> is provided it is called <var>length</var> times with zero or more <var>args...</var> to produce the contents of the list.
 
 </p>
 </blockquote>
@@ -622,6 +622,23 @@ Returns a list of <var>num</var> keys starting on <var>start</var> and increment
 <blockquote>
 <p>
 Returns a <var>list</var> of notes, keys or hertz values ordered according to <var>mode</var>, where 1 means ascending order, -1 means descending order and 0 means random order.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="scale-order!">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">scale-order!</span>
+      (<var class="arg">list</var>, [<var class="opt">mode</var> <var class="optval">1</var>])</td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Like <a href="#scale-order"><code>scale-order</code></a> except that <var>list</var> is destructively modified by the ordering.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -904,6 +921,12 @@ Returns a randomly selected <var>arg</var> as the value of the function. If just
   <tr class="entry">
     <td class="formals">
       <span class="funcname">shuffle</span>
+      (<var class="arg">args...</var>)
+    </td>
+    <td class="label">Function</td>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">shuffle</span>
       (<var class="arg">list</var>)
     </td>
     <td class="label">Function</td>
@@ -913,8 +936,27 @@ Returns a randomly selected <var>arg</var> as the value of the function. If just
 <blockquote>
 <p>
 
-Returns a version of <var>list</var> with the elements randomly
-reordered.
+Returns a version of <var>args...</var> or a <var>list</var> of the same with the elements randomly reordered.
+
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="shuffle!">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">shuffle!</span>
+      (<var class="arg">list</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+
+Like <a href="#shuffle"><code>shuffle</code></a> except that <var>list</var> is destructively modified by the random reordering.
 
 </p>
 </blockquote>
@@ -1412,8 +1454,8 @@ The following functions create, access or modify <var>spectrum</var> objects. A 
 
 <h4>Creating Spectra</h4>
 
-
 <!-- DEFINITION -->
+<!--
 <table class="entry" id="make-spectrum">
   <tr class="entry">
     <td class="formals">
@@ -1429,6 +1471,7 @@ The following functions create, access or modify <var>spectrum</var> objects. A 
 Creates a spectrum out of the specified <var>freqs</var> (list of hertz values) an optional list of <var>amps</var> and an optional <var>time</var>.
 </p>
 </blockquote>
+-->
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
@@ -1653,7 +1696,7 @@ Returns a list containing the frequencies and amplitudes of <var>spectrum</var> 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-keys</span>
-      (<var class="arg">spectrum</var>, <var class="opt">order</var> = <var class="optval">1</var>, <var class="opt">thresh</var> = <var class="optval">0.0</var>)
+      (<var class="arg">spectrum</var>, <var class="opt">order</var> = <var class="optval">1</var>, <var class="opt">thresh</var> = <var class="optval">0.0</var>, <var class="opt">quant</var> = <var class="optval">#f</var>, <var class="opt">unique</var> = <var class="optval">#f</var>, <var class="opt">min</var> = <var class="optval">#f</var>, <var class="opt">max</var> = <var class="optval">#f</var>)
     </td>
     <td class="label">Function</td>
   </tr>
@@ -1661,42 +1704,41 @@ Returns a list containing the frequencies and amplitudes of <var>spectrum</var> 
 </table>
 <blockquote>
 <p>
-Returns a list of the frequency components of <var>spectrum</var> converted to <a href="#key">keys</a>. 
-If <var>order</var> is 1 then keys are returned in low to high order.
-If <var>order</var> is -1 then keys are returned in high to low order.
-Otherwise if <var>order</var> is 0 then the list of keys are returned in a random order (shuffled).
-<var>Threshold</var> is a minimum amplitude value that frequency components must possess in order to be returned as keys. If <var>threshold</var> is a list <code>(</code><var>min</var> <var>max</var><code>)</code> then components whose amplitudes are greater than max are also suppressed.
+
+Returns a list of the frequency components of <var>spectrum</var>
+converted to <a href="#key">keys</a>.
+
+<var>Order</var> specifies the <a href="#scale-order">scale order</a>
+the keys will be returned in.
+
+<var>Threshold</var> specifies a minimum amplitude that frequencies
+must possess in order to be returned as keys. If <var>threshold</var>
+is a list <code>(</code><var>min</var> <var>max</var><code>)</code>
+then components whose amplitudes are greater than max are also
+suppressed.
+
+If <var>quant</var> is a number between 0.0 and 1.0 then key values
+are quantized to that fractional cent value, e.g. <var>quant</var> .5
+returns key numbers quantized to the nearest quartertone and
+<var>quant</var> 1 returns key numbers rounded to the nearest integer.
+
+If <var>unique</var> is true then no duplicate key numbers will be returned if quanitzation is in effect.
+
+If a <var>min</var> key is specified then spectral values lower than
+that will be octave shifted upward until they equal or exceed
+it.
+
+If a <var>max</var> key is specified then spectral components above it will be octave shifted downward until they equal or are lower than it.
+
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="spectrum-notes">
+<table class="entry" id="spectrum-add!">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">spectrum-notes</span>
-      (<var class="arg">spectrum</var>, <var class="opt">order</var> = <var class="optval">1</var>, <var class="opt">thresh</var> = <var class="optval">0.0</var>, <var class="opt">unique</var> = <var class="optval">#t</var>)
-    </td>
-    <td class="label">Function</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
-</table>
-<blockquote>
-<p>
-Returns a list of the frequency components of <var>spectrum</var> converted to <a href="#note">notes</a>. <var>Order</var> and <var>thresh</var> are the same as in <a href="#spectrum-keys"><code>spectrum-keys</code></a>.
-<!-- If <var>order</var> is 1 then keys are returned in low to high order.
-If <var>order</var> is -1 then keys are returned in high to low order.
-Otherwise if <var>order</var> is 0 then keys are returned in random order. -->
-if <var>unique</var> is true then the list will not contain any duplicate notes (since converting hertz values to notes involves quantization unique insures that two componets less than a quarter-tone apart will produce only one note rather than two identical notes.)
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table class="entry" id="add-spectrum">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">add-spectrum</span>
+      <span class="funcname">spectrum-add!</span>
       (<var class="arg">spectrum</var>, <var class="arg">freq</var>, <var class="arg">amp</var>)
     </td>
     <td class="label">Function</td>
@@ -1705,12 +1747,13 @@ if <var>unique</var> is true then the list will not contain any duplicate notes 
 </table>
 <blockquote>
 <p>
-Returns a new spectrum with a pair of <var>freq</var> and <var>amp</var> values added into <var>spectrum</var>. If <var>freq</var> already exists in </var>spectrum</var> then <var>amp</var> is just added to its current amplitude.
+Adds a pair of <var>freq</var> and <var>amp</var> values into <var>spectrum</var>. If <var>freq</var> already exists in </var>spectrum</var> then <var>amp</var> is added to its current amplitude.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<!--
 <table class="entry" id="merge-spectra">
   <tr class="entry">
     <td class="formals">
@@ -1726,27 +1769,28 @@ Returns a new spectrum with a pair of <var>freq</var> and <var>amp</var> values 
 Merges <var>spectrum</var> with zero or more additional <var>spectra</var>. If <var>spectra</var> is null then a copy of <var>spectrum</var> is returned.
 </p>
 </blockquote>
+-->
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="rescale-spectrum">
+<table class="entry" id="spectrum-rescale!">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">rescale-spectrum</span>
+      <span class="funcname">spectrum-rescale!</span>
       (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="arg">envelope</var>)
     </td>
     <td class="label">Function</td>
   </tr>
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">rescale-spectrum</span>
+      <span class="funcname">spectrum-rescale!</span>
       (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="rest">xy...</var>)
     </td>
     <td class="label">Function</td>
   </tr>
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">rescale-spectrum</span>
+      <span class="funcname">spectrum-rescale!</span>
       (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="arg">y</var>)
     </td>
     <td class="label">Function</td>
@@ -1757,23 +1801,29 @@ Merges <var>spectrum</var> with zero or more additional <var>spectra</var>. If <
 
 <p>
 
-Returns a new version of <var>spectrum</var> with its frequency or
-amplitude components modified according to <var>mode</var> and an
-<var>envelope</var> of x y values or a sequence of <var>xy...</var> values or a single <var>y</var> value.
+Returns <var>spectrum</var> with its frequency or amplitude components
+modified according to <var>mode</var> and an <var>envelope</var> of x
+y values or a sequence of <var>xy...</var> values or a single
+<var>y</var> value.
 
-This modification encompasses both filtering and rescaling effects applied to either the frequency or amplitude side of the spectrum.
+This modification encompasses both filtering and rescaling effects
+applied to either the frequency or the amplitude side of the spectrum.
 
-<p><var>Mode</var> is an integer (1-8) that specifies the how
-<var>spectrum</var> will be modified. The meaning of <var>mode</var>
-involves three independent criteria:</p>
+<p><var>Mode</var> is an integer (1-8) that specifies how
+<var>spectrum</var> will be modified and its value depends on three
+independent criteria:</p>
 
 <ol>
-<li>Is rescaling applied to the frequency or the amplitude side of <var>spectrum</var>?</li>
+<li>Will rescaling be applied to the frequency or the amplitude side of <var>spectrum</var>?</li>
 <li>Is the x domain of <var>envelope</var> amplitude or frequency?</li>
-<li>Are y values of <var>envelope</var> used as values or as coefficients?</li>
+
+<li>Will the y values in <var>envelope</var> be used as coefficients
+or as (replacement) values?</li>
+
 </ol>
 
-<p>These considerations produce 8 possible "modes" that identify the following rescaling or filtering operations:</p>
+<p> These three critera produce 8 possible "modes" that identify the
+following rescaling or filtering operations:</p>
 
 <table cellspacing="5">
 <tr><th class="lcol">Mode</th><th class="lcol">Domain modified</th> <th class="lcol">X domain of envelope</th> <th class="lcol">Y used as</th></tr>
@@ -1806,11 +1856,11 @@ involves three independent criteria:</p>
 
 <dl>
   <dt>To shift frequencies downward by half:</dt>
-  <dd><code>rescale-spectrum(spectrum, 2, .5)</code></dd>
+  <dd><code>spectrum-rescale(spectrum, 2, .5)</code></dd>
   <dt>To low-pass a spectrum:</dt>
-  <dd><code>rescale-spectrum(spectrum, 5, {100 1 400 .2 1000 .1})</code></dd>
+  <dd><code>spectrum-rescale(spectrum, 5, {100 1 400 .2 1000 .1})</code></dd>
   <dt>To invert the frequencies in a spectrum:</dt>
-  <dd><code>rescale-spectrum(spectrum, 1, #f, #t, #t, #f)</code></dd>
+  <dd><code>spectrum-rescale(spectrum, 1, #f, #t, #t, #f)</code></dd>
 
 </dl>
 

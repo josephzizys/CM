@@ -144,7 +144,7 @@ void load_sal_file(char *path) {
 	 ;; toolbox
 
 	 note key hz pc transpose invert retrograde
-	 scale scale-order
+	 scale scale-order scale-order!
 
 	 rescale discrete fit int quantize decimals
 	 plus minus times divide
@@ -155,11 +155,11 @@ void load_sal_file(char *path) {
 	 ran ran-set! ranlow ranhigh ranmiddle rangauss ranexp
 	 ranbeta rangamma rancauchy ranpoisson ranpink ranbrown
 
-	 rm-spectrum fm-spectrum spectrum make-spectrum
+	 rm-spectrum fm-spectrum make-spectrum copy-spectrum
 	 spectrum-time spectrum-size spectrum-freqs spectrum-amps
-	 spectrum-keys spectrum-notes spectrum-pairs
+	 spectrum-keys spectrum-pairs
 	 spectrum-minfreq spectrum-maxfreq spectrum-minamp
-	 spectrum-maxamp rescale-spectrum
+	 spectrum-maxamp spectrum-add! spectrum-rescale!
 
 	 ;; sal
 	 sal sal:print sal:chdir sal:load sal:open sal:output
@@ -171,7 +171,7 @@ void load_sal_file(char *path) {
 	 first second third fourth fifth sixth seventh eighth
 	 ninth tenth last nth butlast rest list* 
 	 make-list list-find list-index tail
-	 list-set! reverse!
+	 list-set! reverse! every?
 
 	 with-optkeys expand-optkeys
 

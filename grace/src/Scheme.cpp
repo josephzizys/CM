@@ -19,7 +19,7 @@
 //
 
 SchemeNode::SchemeNode(double _time, int _type, C_word c, int _id)
-  : time (0.0),start (0.0),type (0), expr (String::empty) , mmess(0)
+  : time (0.0),start (0.0),type (0), expr (String::empty) , mmess(0xff)
 {
   type = _type;
   id = _id;
@@ -33,7 +33,7 @@ SchemeNode::SchemeNode(double _time, int _type, C_word c, int _id)
 }
 
 SchemeNode::SchemeNode(double _time, int _type, String _expr)
-  : time (0.0),start (0.0),type (0), closure(0), id (-1), mmess(0)
+  : time (0.0),start (0.0),type (0), closure(0), id (-1), mmess(0xff)
 {
   //  type = EXPR;
   type=_type;
@@ -42,7 +42,7 @@ SchemeNode::SchemeNode(double _time, int _type, String _expr)
 }
 
 SchemeNode::SchemeNode(double _time, int _type)
-  : start (0.0), closure (0), expr (String::empty), id (-1), mmess(0)
+  : start (0.0), closure (0), expr (String::empty), id (-1), mmess(0xff)
 {
   time = _time;
   type = _type;
@@ -282,7 +282,7 @@ bool SchemeThread::init() {
 				       buffer, 8192);
   if (res>0)
     text = text + T(", version ") + String(buffer).unquoted();
-  text += T("\n(c) 2000-2007 Felix L. Winkelmann\n");
+  text += T("\n(c) 2000-2008 Felix L. Winkelmann\n");
   // console->printMessage(text, true);
   console->postConsoleTextMessage(text);
   //console->doAsyncUpdate();
@@ -291,8 +291,6 @@ bool SchemeThread::init() {
     reportChickenError( T(">>> Error: Chicken failed to initialize.\n") );
     return false;
   }
-  CHICKEN_eval_string("(require-extension srfi-18)", &r);
-  CHICKEN_eval_string("(require-extension srfi-1)", &r);
   CHICKEN_eval_string("(define *grace-std-out* (make-output-port print-message (lambda () #f)))", NULL);
   res = CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
   if ( res==0 )
@@ -306,10 +304,7 @@ bool SchemeThread::init() {
   res = CHICKEN_eval_string("(cm-logo 30000)", NULL);
   if ( res==0 )
     reportChickenError();
-
   inputClosureGCRoot = CHICKEN_new_gc_root();
-
-
   return true;
 }
 

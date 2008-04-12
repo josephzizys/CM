@@ -102,6 +102,14 @@
        f)
     (if ( p (car tail)) (set! f (car tail)))))
 
+(define (every? f l)
+  (do ((tail l (cdr tail))
+       (flag #t))
+      ((or (not flag) (null? tail))
+       flag)
+    (if (f (car tail)) #f (set! flag #f))))
+
+
 ;;(define (find-if f l)
 ;;  (call/cc (lambda (r) 
 ;;	     (do ((tail l (cdr tail)))
