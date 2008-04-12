@@ -84,9 +84,9 @@ class EditorWindow : public DocumentWindow, public MenuBarModel {
   void openFile();
   void closeFile();
   void newFile(syntaxID syn);
-  void saveFile();
-  void saveFileAs(File defaultfile=File::nonexistent);
-  void revertFile();
+  bool saveFile();
+  bool saveFileAs(File defaultfile=File::nonexistent);
+  bool revertFile();
   void showEditorHelp(int id);
   TextBuffer* getTextBuffer() {return editor->buffer; }
   void closeButtonPressed () ;

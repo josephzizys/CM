@@ -332,17 +332,21 @@ EditorWindow::~EditorWindow () {
   //delete editor;
 }
 
-
 void EditorWindow::closeButtonPressed () {
-  if ( ! getTextBuffer()->isChanged() ||
-       (AlertWindow::showOkCancelBox
-	(AlertWindow::QuestionIcon, T("Close"),
-	 T("Really close the window? Unsaved work will be lost."),
-	 T("   OK   "), T("Cancel"))
-	) ) {
-    //    closeFile();
+  if ( ! getTextBuffer()->isChanged() )
+    delete this;
+  else {
+    if ( AlertWindow::showOkCancelBox
+	 (AlertWindow::QuestionIcon, T("Close"),
+	  T("Save buffer before closing?"),
+	  T("  Yes  "), T("  No  "))) {
+      if ( saveFile() ) {
+	delete this;
+      }
+    }
+    else
+      delete this;
   }
-  delete this;
 }
 
 const StringArray EditorWindow::getMenuBarNames() {
@@ -534,30 +538,28 @@ void EditorWindow::closeFile() {
   closeButtonPressed();
 }
 
-void EditorWindow::saveFile() {
+bool EditorWindow::saveFile() {
   TextBuffer* buff=getTextBuffer();
   if ( buff->isChanged() )
-    if (editfile.existsAsFile() ) {
+    if ( editfile.existsAsFile() ) {
       editfile.replaceWithText( buff->getText() ) ;
       buff->setChanged(false);
+      return true;
     }
     else {
-      printf("fullname=%s\n",editfile.getFullPathName().toUTF8());
-      printf("name=%s\n",editfile.getFileName().toUTF8());
-      saveFileAs(editfile);
+      return saveFileAs(editfile);
     }
+  return false;
 }
 
-void EditorWindow::saveFileAs(File defaultfile) {
+bool EditorWindow::saveFileAs(File defaultfile) {
   TextBuffer* buff=getTextBuffer();
   File dir;
   if (defaultfile==File::nonexistent)
     if ( editfile.existsAsFile() )
       defaultfile = editfile.getParentDirectory();
     else
-      //defaultfile = File::getSpecialLocation(File::userHomeDirectory);
       defaultfile = File::getCurrentWorkingDirectory();
-
   FileChooser choose (T("Save File As"), defaultfile, T("*.*"), true);
   if ( choose.browseForFileToSave(true) ) {
     TextFile f = choose.getResult();
@@ -566,10 +568,13 @@ void EditorWindow::saveFileAs(File defaultfile) {
     buff->setChanged(false);
     buff->setFlagOff(TextBuffer::nosave);
     setName( editfile.getFileName() );
+    return true;
   }
+  else
+    return false;
 }
 
-void EditorWindow::revertFile() {
+bool EditorWindow::revertFile() {
   TextBuffer* buff=getTextBuffer();
   bool doit=false;
   if ( buff->isChanged() && editfile.existsAsFile() ) 
@@ -582,7 +587,10 @@ void EditorWindow::revertFile() {
     buff->setChanged(false);
     if ( buff->isHiliting() )
       buff->colorizeAll();
+    return true;
   }
+  else
+    return false;
 }
 
 void EditorWindow::loadFile() {
