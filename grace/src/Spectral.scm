@@ -10,9 +10,9 @@
 (define-record spectrum time size freqs amps)
 
 (define-record-printer (spectrum obj port)
-  (fprintf port "#<spectrum ~S ~S>"
+  (fprintf port "#<spectrum ~S>"
 	   (spectrum-freqs obj)
-	   (spectrum-amps obj)
+	   ;;(spectrum-amps obj)
 	   ))
 
 ;(define (make-spectrum freqs . args)
@@ -110,10 +110,19 @@
 
 (define (spectrum-keys spectrum . args)
   (with-optkeys (args (order 1) (thresh #f) (quant #f) (unique #f)
-		      (min #f) (max #f) )
-    (spectrum->keys spectrum order thresh quant unique
-		    min max)))
-      
+		      (min #f) (max #f) ;(fit #f)
+		      )
+;    (let ((mink #f) (maxk #f))
+;      (cond ((pair? fit)
+;	     (set! mink (car fit))
+;	     (if (pair? (cdr fit))
+;		 (set! maxk (cadr fit))))
+;	    ((number? fit) (set! mink fit)))
+      (spectrum->keys spectrum order thresh quant unique
+		      min max)
+;      )
+    ))
+
 ; (define aaa (fm-spectrum1 100 1.4 3))
 ; (spectrum-time aaa)
 ; (spectrum-size aaa)
@@ -214,6 +223,29 @@
 ;             60
 ;(10 30 40 50)
 
+(define (spectrum-sort! spec)
+  (let ((entries (map (lambda (a b) (list a b))
+		      (spectrum-freqs spec)
+		      (spectrum-amps spec))))
+    (set! entries (sort! entries (lambda (a b) (< (car a) (car b)))))
+    ;; create the lists of freqs and amps reusing cons cells in
+    ;; entries, ie ((a 1) (b 2) (c 3)) => (a b c) (1 2 3). outer list
+    ;; reused as freqs list, cdrs of inner lists nconced together for
+    ;; amps list.
+    (let ((freqs entries)
+	  (ampls (car entries))) ; (a 1)
+      (do ((tail entries (cdr tail))
+	   (ampl ampls))
+	  ((null? tail)
+	   (spectrum-freqs-set! spec freqs)
+	   (spectrum-amps-set! spec (cdr ampls))
+	   spec)
+	(let* ((entry (car tail))
+	       (f (car entry)))
+	  (set-cdr! ampl (cdr entry))
+	  (set! ampl (cdr ampl))
+	  (set! (car tail) f))))))
+
 (define (spectrum-add! spec freq amp)
   (do ((freqs (spectrum-freqs spec) (cdr freqs))
        (amps (spectrum-amps spec) (cdr amps))
@@ -297,17 +329,27 @@
 		  ((null? l1) #f)
 		(sums-and-diffs spect (car l1) 0.0 freq2 0.0)))
 	  (if (pair? freq2)
-	      (do ((s2 freq2 (car s2)))
+	      (do ((s2 freq2 (cdr s2)))
 		  ((null? s2) #f)
 		(sums-and-diffs spect freq1 0.0 (car s2) 0.0))
 	      (sums-and-diffs spect freq1 0.0 freq2 0.0)))
       spect)))
 
+(define (spectrum-flip! spec)
+  (do ((maxf (spectrum-maxfreq spec))
+       (minf (spectrum-minfreq spec))
+       (tail (spectrum-freqs spec) (cdr tail))
+       (flip (list)))
+      ((null? tail)
+       (spectrum-freqs-set! spec flip)
+       spec)
+    ;;(set! r (cons (* maxf (/ (car l) ) minf) r))
+    (set! flip (cons (* minf (/ maxf (car tail)))
+		     flip))))
 
-      
 ;; interp key note every
 
-(define (spectrum-rescale spec mode . args)
+(define (spectrum-rescale! spec mode . args)
   (let ((scaling #f) 
 	(modifier #f)
 	(modified #f)
@@ -346,10 +388,10 @@
 	       ;; replace #f and #t with appropriate min max values
 	       (let ((xmin #f) (xmax #f) (ymin #f) (ymax #f))
 		 (if (bit-set? mode 1) ; env x is amp
-		     (begin (set! xmax (spectrum-maxamp spec))
-			    (set! xmin (spectrum-minamp spec)))
-		     (begin (set! xmax (spectrum-maxfreq spec))
-			    (set! xmin (spectrum-minfreq spec))))
+		     (begin (set! xmin (spectrum-minamp spec))
+			    (set! xmax (spectrum-maxamp spec)))
+		     (begin (set! xmin (spectrum-minfreq spec))
+			    (set! xmax (spectrum-maxfreq spec))))
 		 (if (bit-set? mode 2) ; env y is amp
 		     (begin (set! ymin (spectrum-minamp spec))
 			    (set! ymax (spectrum-maxamp spec)))
@@ -377,5 +419,76 @@
 				   (interp (car tail) args))))
 	       (do ((tail modified (cdr tail)))
 		   ((null? tail) #f)
-		 (set-car! tail (interp (car tail) args))))))
+		 (set-car! tail (interp (car tail) args))))
+	   (if (not (apply <= (spectrum-freqs spec)))
+	       (spectrum-sort! spec))))
     spec))
+
+; (define aaa (make-spectrum #f 6 '(100 200 300 400 500 800) '(0 0 0 0 0 0)))
+; aaa
+; (spectrum-rescale! aaa 1 100 800 800 100)
+
+(define (read-spear-frame str)
+  (let ((port (open-input-string str))
+	(rdat (lambda (p)
+		(let ((x (read p)))
+		  (if (eof-object? x) (error "Bad frame data" str))
+		  x)))
+	(time #f)
+	(size #f)
+	(amps (list #f))
+	(frqs (list #f)))
+    ;; read time and num partials
+    (set! time (rdat port))
+    (set! size (rdat port))
+    (do ((i 0 (+ i 1))
+	 (a amps)
+	 (f frqs))
+	((= i size) #f)
+      (rdat port) ; flush partial num
+      (set-cdr! f (list (rdat port))) ; read freq
+      (set! f (cdr f))
+      (set-cdr! a (list (rdat port))) ; read amp
+      (set! a (cdr a)))
+    (if (null? (cdr frqs)) ; omit null frames
+	#f ;;(list (cdr frqs) (cdr amps))
+	(make-spectrum time size (cdr frqs) (cdr amps)))))
+
+; (read-spear-frame "0.000000 13 12 170.647339 0.045844 11 209.358994 0.036739 10 318.045227 0.246056 9 363.138550 0.098190 8 449.606598 0.021067 7 534.593201 0.010766 6 668.234375 0.006407 5 1133.600830 0.019034 4 1230.239136 0.003197 3 1471.668579 0.001610 2 1626.804565 0.002571 1 2431.637695 0.001024 0 3032.626221 0.001559")
+
+(define (import-spear-frames file)
+  (with-input-from-file file
+    (lambda ()
+      (let ((port (current-input-port)))
+	;; read/check frame file header
+	(let ((rhdr (lambda (p)
+		      (let ((l (read-line p)))
+			(if (eof-object? l)
+			    (error "Not frame data" p))
+			l)))
+	      (line #f))
+	  (set! line (rhdr port))
+	  (if (not (equal? line "par-text-frame-format"))
+	      (error "Not frame data" port))
+	  (set! line (rhdr port))
+	  (if (not (equal? line 
+			   "point-type index frequency amplitude"))
+	      (error "Not frame data" port))
+	  ;; flush remaining header lines
+	  (do ()
+	      ((equal? line "frame-data") #f)
+	    (set! line (rhdr port))))
+	;; file now at frame-data, read spectra till eof
+	(let* ((head (list #f))
+	       (tail head))
+	  (do ((line (read-line port) (read-line port))
+	       (spec #f))
+	      ((eof-object? line)
+	       (cdr head))
+	    ;; omit empty spectra
+	    (set! spec (read-spear-frame line))
+	    (if spec
+		(begin
+		  (set-cdr! tail (list spec))
+		  (set! tail (cdr tail))))))))))
+

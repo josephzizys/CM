@@ -246,17 +246,19 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("scale-order"), T("cm.html#scale-order"));
   graceschememap.set( T("segs"), T("cm.html#segs"));
 
-  graceschememap.set( T("spectrum-time"), T("cm.html#spectrum-time"));  
-  graceschememap.set( T("spectrum-size"), T("cm.html#spectrum-size"));  
+  graceschememap.set( T("spectrum-add!"), T("cm.html#spectrum-add!"));  
+  graceschememap.set( T("spectrum-copy"), T("cm.html#spectrum-copy"));
+  graceschememap.set( T("spectrum-flip!"), T("cm.html#spectrum-flip!"));  
+  graceschememap.set( T("spectrum-freqs"), T("cm.html#spectrum-freqs"));  
+  graceschememap.set( T("spectrum-keys"), T("cm.html#spectrum-keys"));  
   graceschememap.set( T("spectrum-maxamp"), T("cm.html#spectrum-maxamp"));  
   graceschememap.set( T("spectrum-maxfreq"), T("cm.html#spectrum-maxfreq"));  
   graceschememap.set( T("spectrum-minamp"), T("cm.html#spectrum-minamp"));  
   graceschememap.set( T("spectrum-minfreq"), T("cm.html#spectrum-minfreq"));  
-  graceschememap.set( T("spectrum-freqs"), T("cm.html#spectrum-freqs"));  
-  graceschememap.set( T("spectrum-notes"), T("cm.html#spectrum-notes"));  
   graceschememap.set( T("spectrum-pairs"), T("cm.html#spectrum-pairs"));  
-  graceschememap.set( T("spectrum-keys"), T("cm.html#spectrum-keys"));  
-  graceschememap.set( T("spectrum-rescale"), T("cm.html#spectrum-rescale"));  
+  graceschememap.set( T("spectrum-rescale!"), T("cm.html#spectrum-rescale!"));  
+  graceschememap.set( T("spectrum-size"), T("cm.html#spectrum-size"));  
+  graceschememap.set( T("spectrum-time"), T("cm.html#spectrum-time"));  
 
   graceschememap.set( T("stop"), T("cm.html#stop"));
   graceschememap.set( T("times"), T("cm.html#times"));

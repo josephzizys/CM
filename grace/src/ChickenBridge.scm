@@ -155,11 +155,12 @@ void load_sal_file(char *path) {
 	 ran ran-set! ranlow ranhigh ranmiddle rangauss ranexp
 	 ranbeta rangamma rancauchy ranpoisson ranpink ranbrown
 
-	 rm-spectrum fm-spectrum make-spectrum copy-spectrum
+	 rm-spectrum fm-spectrum import-spear-frames spectrum-copy
 	 spectrum-time spectrum-size spectrum-freqs spectrum-amps
 	 spectrum-keys spectrum-pairs
 	 spectrum-minfreq spectrum-maxfreq spectrum-minamp
-	 spectrum-maxamp spectrum-add! spectrum-rescale!
+	 spectrum-maxamp spectrum-add! spectrum-flip!
+	 spectrum-rescale!
 
 	 ;; sal
 	 sal sal:print sal:chdir sal:load sal:open sal:output
