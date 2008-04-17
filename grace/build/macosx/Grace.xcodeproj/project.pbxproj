@@ -42,7 +42,6 @@
 		5F1827550D5A176400F53B16 /* libjuce.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1827540D5A176400F53B16 /* libjuce.a */; };
 		5F1827560D5A176400F53B16 /* libjuce.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1827540D5A176400F53B16 /* libjuce.a */; };
 		5F1827FE0D5A1B9F00F53B16 /* Help.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827D20D5A1B9E00F53B16 /* Help.cpp */; };
-		5F1827FF0D5A1B9F00F53B16 /* ChickenBridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827D40D5A1B9E00F53B16 /* ChickenBridge.cpp */; };
 		5F1828030D5A1B9F00F53B16 /* Toolbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827DB0D5A1B9F00F53B16 /* Toolbox.cpp */; };
 		5F1828050D5A1B9F00F53B16 /* Console.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827DD0D5A1B9F00F53B16 /* Console.cpp */; };
 		5F1828060D5A1B9F00F53B16 /* Syntab.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827DE0D5A1B9F00F53B16 /* Syntab.cpp */; };
@@ -88,6 +87,36 @@
 		5F1828890D5A205F00F53B16 /* CoreMIDI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1828870D5A205F00F53B16 /* CoreMIDI.framework */; };
 		5F18288E0D5A207700F53B16 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F18288D0D5A207700F53B16 /* OpenGL.framework */; };
 		5F18288F0D5A207700F53B16 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F18288D0D5A207700F53B16 /* OpenGL.framework */; };
+		5F97F8060DA9BF0A0019D3F4 /* ChickenBridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827D40D5A1B9E00F53B16 /* ChickenBridge.cpp */; };
+		5FC0DB980DAF1C650090C6D3 /* Help.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827D20D5A1B9E00F53B16 /* Help.cpp */; };
+		5FC0DB990DAF1C650090C6D3 /* Toolbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827DB0D5A1B9F00F53B16 /* Toolbox.cpp */; };
+		5FC0DB9A0DAF1C650090C6D3 /* Console.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827DD0D5A1B9F00F53B16 /* Console.cpp */; };
+		5FC0DB9B0DAF1C650090C6D3 /* Syntab.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827DE0D5A1B9F00F53B16 /* Syntab.cpp */; };
+		5FC0DB9C0DAF1C650090C6D3 /* Grace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827E30D5A1B9F00F53B16 /* Grace.cpp */; };
+		5FC0DB9D0DAF1C650090C6D3 /* Editor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827E70D5A1B9F00F53B16 /* Editor.cpp */; };
+		5FC0DB9E0DAF1C650090C6D3 /* Audio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827E90D5A1B9F00F53B16 /* Audio.cpp */; };
+		5FC0DB9F0DAF1C650090C6D3 /* Points.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827EB0D5A1B9F00F53B16 /* Points.cpp */; };
+		5FC0DBA00DAF1C650090C6D3 /* Layer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827EF0D5A1B9F00F53B16 /* Layer.cpp */; };
+		5FC0DBA10DAF1C650090C6D3 /* Syntax.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827F00D5A1B9F00F53B16 /* Syntax.cpp */; };
+		5FC0DBA20DAF1C650090C6D3 /* MidiReceiveComponent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827F20D5A1B9F00F53B16 /* MidiReceiveComponent.cpp */; };
+		5FC0DBA30DAF1C650090C6D3 /* Buffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827F30D5A1B9F00F53B16 /* Buffer.cpp */; };
+		5FC0DBA40DAF1C650090C6D3 /* Scheme.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827F40D5A1B9F00F53B16 /* Scheme.cpp */; };
+		5FC0DBA50DAF1C650090C6D3 /* Plotter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827F60D5A1B9F00F53B16 /* Plotter.cpp */; };
+		5FC0DBA60DAF1C650090C6D3 /* Resources.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827FD0D5A1B9F00F53B16 /* Resources.cpp */; };
+		5FC0DBA70DAF1C650090C6D3 /* Midi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827E20D5A1B9F00F53B16 /* Midi.cpp */; };
+		5FC0DBA80DAF1C650090C6D3 /* Csound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0AD15ED50D68833C008CFAD2 /* Csound.cpp */; };
+		5FC0DBA90DAF1C650090C6D3 /* ChickenBridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827D40D5A1B9E00F53B16 /* ChickenBridge.cpp */; };
+		5FC0DBAB0DAF1C650090C6D3 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
+		5FC0DBAD0DAF1C650090C6D3 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1828710D5A1FFC00F53B16 /* CoreServices.framework */; };
+		5FC0DBAE0DAF1C650090C6D3 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1828720D5A1FFC00F53B16 /* CoreAudio.framework */; };
+		5FC0DBAF0DAF1C650090C6D3 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1828730D5A1FFC00F53B16 /* ApplicationServices.framework */; };
+		5FC0DBB00DAF1C650090C6D3 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1828740D5A1FFC00F53B16 /* AGL.framework */; };
+		5FC0DBB10DAF1C650090C6D3 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1828750D5A1FFC00F53B16 /* QuickTime.framework */; };
+		5FC0DBB20DAF1C650090C6D3 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1828760D5A1FFC00F53B16 /* IOKit.framework */; };
+		5FC0DBB30DAF1C650090C6D3 /* CoreMIDI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1828870D5A205F00F53B16 /* CoreMIDI.framework */; };
+		5FC0DBB40DAF1C650090C6D3 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F18288D0D5A207700F53B16 /* OpenGL.framework */; };
+		5FC0DBBC0DAF1CAC0090C6D3 /* libchickendebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5FC0DB870DAF1BC90090C6D3 /* libchickendebug.a */; };
+		5FC0DBBD0DAF1CAF0090C6D3 /* libjucedebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5FC0DB850DAF1BB60090C6D3 /* libjucedebug.a */; };
 		8D0C4E920486CD37000505A6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
 /* End PBXBuildFile section */
 
@@ -146,6 +175,10 @@
 		5F18288D0D5A207700F53B16 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
 		5F1828A60D5A238F00F53B16 /* Grace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Grace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F50D6680D5A4871000DAD6F /* GraceCL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GraceCL.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5FC0DB850DAF1BB60090C6D3 /* libjucedebug.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjucedebug.a; path = ../../../../../src/juce/bin/libjucedebug.a; sourceTree = SOURCE_ROOT; };
+		5FC0DB870DAF1BC90090C6D3 /* libchickendebug.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libchickendebug.a; path = ../../../../../lib/libchickendebug.a; sourceTree = SOURCE_ROOT; };
+		5FC0DBB90DAF1C650090C6D3 /* Grace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Grace.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5FC0DBBB0DAF1C650090C6D3 /* Info copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info copy.plist"; sourceTree = "<group>"; };
 		8D0C4E960486CD37000505A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -186,6 +219,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5FC0DBAA0DAF1C650090C6D3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5FC0DBBD0DAF1CAF0090C6D3 /* libjucedebug.a in Frameworks */,
+				5FC0DBBC0DAF1CAC0090C6D3 /* libchickendebug.a in Frameworks */,
+				5FC0DBAB0DAF1C650090C6D3 /* Carbon.framework in Frameworks */,
+				5FC0DBAD0DAF1C650090C6D3 /* CoreServices.framework in Frameworks */,
+				5FC0DBAE0DAF1C650090C6D3 /* CoreAudio.framework in Frameworks */,
+				5FC0DBAF0DAF1C650090C6D3 /* ApplicationServices.framework in Frameworks */,
+				5FC0DBB00DAF1C650090C6D3 /* AGL.framework in Frameworks */,
+				5FC0DBB10DAF1C650090C6D3 /* QuickTime.framework in Frameworks */,
+				5FC0DBB20DAF1C650090C6D3 /* IOKit.framework in Frameworks */,
+				5FC0DBB30DAF1C650090C6D3 /* CoreMIDI.framework in Frameworks */,
+				5FC0DBB40DAF1C650090C6D3 /* OpenGL.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8D0C4E910486CD37000505A6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -223,6 +274,7 @@
 			children = (
 				8D0C4E960486CD37000505A6 /* Info.plist */,
 				0AF1A9B10DA7A5EE00E46E22 /* Info copy.plist */,
+				5FC0DBBB0DAF1C650090C6D3 /* Info copy.plist */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -232,9 +284,11 @@
 			children = (
 				0AF1A9B50DA7A77100E46E22 /* CsoundLib.framework */,
 				0AA95C960DA160060042B274 /* libchicken.a */,
+				5FC0DB870DAF1BC90090C6D3 /* libchickendebug.a */,
 				5F18288D0D5A207700F53B16 /* OpenGL.framework */,
 				5F1828870D5A205F00F53B16 /* CoreMIDI.framework */,
 				5F1827540D5A176400F53B16 /* libjuce.a */,
+				5FC0DB850DAF1BB60090C6D3 /* libjucedebug.a */,
 				5F1828710D5A1FFC00F53B16 /* CoreServices.framework */,
 				5F1828720D5A1FFC00F53B16 /* CoreAudio.framework */,
 				5F1828730D5A1FFC00F53B16 /* ApplicationServices.framework */,
@@ -297,6 +351,7 @@
 				5F1828A60D5A238F00F53B16 /* Grace.app */,
 				5F50D6680D5A4871000DAD6F /* GraceCL.app */,
 				0AF1A9AF0DA7A5EE00E46E22 /* Grace.app */,
+				5FC0DBB90DAF1C650090C6D3 /* Grace.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -339,6 +394,24 @@
 			productReference = 5F50D6680D5A4871000DAD6F /* GraceCL.app */;
 			productType = "com.apple.product-type.application";
 		};
+		5FC0DB950DAF1C650090C6D3 /* GraceDebug */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5FC0DBB60DAF1C650090C6D3 /* Build configuration list for PBXNativeTarget "GraceDebug" */;
+			buildPhases = (
+				5FC0DB960DAF1C650090C6D3 /* Resources */,
+				5FC0DB970DAF1C650090C6D3 /* Sources */,
+				5FC0DBAA0DAF1C650090C6D3 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GraceDebug;
+			productInstallPath = "$(HOME)/Applications";
+			productName = Grace;
+			productReference = 5FC0DBB90DAF1C650090C6D3 /* Grace.app */;
+			productType = "com.apple.product-type.application";
+		};
 		8D0C4E890486CD37000505A6 /* Grace */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C0E91AC508A95435008D54AB /* Build configuration list for PBXNativeTarget "Grace" */;
@@ -373,6 +446,7 @@
 				8D0C4E890486CD37000505A6 /* Grace */,
 				5F1824810D5A161400F53B16 /* GraceCL */,
 				0AF1A98B0DA7A5EE00E46E22 /* GraceCsound */,
+				5FC0DB950DAF1C650090C6D3 /* GraceDebug */,
 			);
 		};
 /* End PBXProject section */
@@ -386,6 +460,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		5F18247E0D5A161400F53B16 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5FC0DB960DAF1C650090C6D3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -447,12 +528,36 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5FC0DB970DAF1C650090C6D3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5FC0DB980DAF1C650090C6D3 /* Help.cpp in Sources */,
+				5FC0DB990DAF1C650090C6D3 /* Toolbox.cpp in Sources */,
+				5FC0DB9A0DAF1C650090C6D3 /* Console.cpp in Sources */,
+				5FC0DB9B0DAF1C650090C6D3 /* Syntab.cpp in Sources */,
+				5FC0DB9C0DAF1C650090C6D3 /* Grace.cpp in Sources */,
+				5FC0DB9D0DAF1C650090C6D3 /* Editor.cpp in Sources */,
+				5FC0DB9E0DAF1C650090C6D3 /* Audio.cpp in Sources */,
+				5FC0DB9F0DAF1C650090C6D3 /* Points.cpp in Sources */,
+				5FC0DBA00DAF1C650090C6D3 /* Layer.cpp in Sources */,
+				5FC0DBA10DAF1C650090C6D3 /* Syntax.cpp in Sources */,
+				5FC0DBA20DAF1C650090C6D3 /* MidiReceiveComponent.cpp in Sources */,
+				5FC0DBA30DAF1C650090C6D3 /* Buffer.cpp in Sources */,
+				5FC0DBA40DAF1C650090C6D3 /* Scheme.cpp in Sources */,
+				5FC0DBA50DAF1C650090C6D3 /* Plotter.cpp in Sources */,
+				5FC0DBA60DAF1C650090C6D3 /* Resources.cpp in Sources */,
+				5FC0DBA70DAF1C650090C6D3 /* Midi.cpp in Sources */,
+				5FC0DBA80DAF1C650090C6D3 /* Csound.cpp in Sources */,
+				5FC0DBA90DAF1C650090C6D3 /* ChickenBridge.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8D0C4E8F0486CD37000505A6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				5F1827FE0D5A1B9F00F53B16 /* Help.cpp in Sources */,
-				5F1827FF0D5A1B9F00F53B16 /* ChickenBridge.cpp in Sources */,
 				5F1828030D5A1B9F00F53B16 /* Toolbox.cpp in Sources */,
 				5F1828050D5A1B9F00F53B16 /* Console.cpp in Sources */,
 				5F1828060D5A1B9F00F53B16 /* Syntab.cpp in Sources */,
@@ -469,6 +574,7 @@
 				5F1828180D5A1B9F00F53B16 /* Resources.cpp in Sources */,
 				5F1828360D5A1BDB00F53B16 /* Midi.cpp in Sources */,
 				0AD15ED60D68833C008CFAD2 /* Csound.cpp in Sources */,
+				5F97F8060DA9BF0A0019D3F4 /* ChickenBridge.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -486,7 +592,7 @@
 					"_GLIBCXX_DEBUG=1",
 					"_GLIBCXX_DEBUG_PEDANTIC=1",
 				);
-				INFOPLIST_FILE = "/Lisp/grace/build/macosx/Info copy.plist";
+				INFOPLIST_FILE = Info.plist;
 				LIBRARY_SEARCH_PATHS = (
 					../../../chicken,
 					"$(inherited)",
@@ -496,29 +602,6 @@
 				USER_HEADER_SEARCH_PATHS = "../../../chicken ../../../juce /usr/local/src/juce /usr/local/include";
 			};
 			name = Debug;
-		};
-		0AF1A9AE0DA7A5EE00E46E22 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					MACOSX,
-					PORTCSOUND,
-					SCHEME,
-				);
-				INFOPLIST_FILE = /Lisp/grace/build/macosx/Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = (
-					../../../chicken,
-					"$(inherited)",
-					/usr/local/lib,
-				);
-				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
-				PRODUCT_NAME = Grace;
-				USER_HEADER_SEARCH_PATHS = "../../../chicken ../../../juce /usr/local/src/juce /usr/local/include";
-			};
-			name = Release;
 		};
 		5F1824850D5A161500F53B16 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -545,28 +628,29 @@
 			};
 			name = Debug;
 		};
-		5F1824860D5A161500F53B16 /* Release */ = {
+		5FC0DBB70DAF1C650090C6D3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_PREPROCESSOR_DEFINITIONS = MACOSX;
+				COPY_PHASE_STRIP = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					MACOSX,
+					SCHEME,
+					DEBUG,
+					"_GLIBCXX_DEBUG=1",
+					"_GLIBCXX_DEBUG_PEDANTIC=1",
+				);
 				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
 				LIBRARY_SEARCH_PATHS = (
+					../../../chicken,
 					"$(inherited)",
-					/usr/local/src/juce/bin,
+					/usr/local/lib,
+					"\\\"$(SRCROOT)/../../../../../src/juce/bin\\\"",
+					"\"$(SRCROOT)/../../../../../src/juce/bin\"",
 				);
-				OTHER_LDFLAGS = (
-					"-framework",
-					Carbon,
-				);
-				PREBINDING = NO;
-				PRODUCT_NAME = GraceCL;
-				WRAPPER_EXTENSION = app;
-				ZERO_LINK = NO;
+				PRODUCT_NAME = Grace;
+				USER_HEADER_SEARCH_PATHS = "../../../chicken ../../../juce /usr/local/src/juce /usr/local/include";
 			};
-			name = Release;
+			name = Debug;
 		};
 		C0E91AC608A95435008D54AB /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -584,33 +668,12 @@
 					../../../chicken,
 					"$(inherited)",
 					/usr/local/lib,
+					"\"$(SRCROOT)/../../../../../src/juce/bin\"",
 				);
 				PRODUCT_NAME = Grace;
 				USER_HEADER_SEARCH_PATHS = "../../../chicken ../../../juce /usr/local/src/juce /usr/local/include";
 			};
 			name = Debug;
-		};
-		C0E91AC708A95435008D54AB /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					MACOSX,
-					SCHEME,
-				);
-				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = (
-					../../../chicken,
-					"$(inherited)",
-					/usr/local/lib,
-				);
-				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
-				PRODUCT_NAME = Grace;
-				USER_HEADER_SEARCH_PATHS = "../../../chicken ../../../juce /usr/local/src/juce /usr/local/include";
-			};
-			name = Release;
 		};
 		C0E91ACA08A95435008D54AB /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -628,23 +691,6 @@
 			};
 			name = Debug;
 		};
-		C0E91ACB08A95435008D54AB /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
-				LIBRARY_SEARCH_PATHS = (
-					../../../juce/bin,
-					/usr/local/src/juce/bin,
-				);
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
-				SEPARATE_STRIP = YES;
-				USER_HEADER_SEARCH_PATHS = "../../../juce /usr/local/src/juce";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -652,37 +698,41 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0AF1A9AD0DA7A5EE00E46E22 /* Debug */,
-				0AF1A9AE0DA7A5EE00E46E22 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		5F1824870D5A161500F53B16 /* Build configuration list for PBXNativeTarget "GraceCL" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5F1824850D5A161500F53B16 /* Debug */,
-				5F1824860D5A161500F53B16 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
+		};
+		5FC0DBB60DAF1C650090C6D3 /* Build configuration list for PBXNativeTarget "GraceDebug" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5FC0DBB70DAF1C650090C6D3 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
 		};
 		C0E91AC508A95435008D54AB /* Build configuration list for PBXNativeTarget "Grace" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C0E91AC608A95435008D54AB /* Debug */,
-				C0E91AC708A95435008D54AB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		C0E91AC908A95435008D54AB /* Build configuration list for PBXProject "Grace" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C0E91ACA08A95435008D54AB /* Debug */,
-				C0E91ACB08A95435008D54AB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
