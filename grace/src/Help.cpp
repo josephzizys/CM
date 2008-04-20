@@ -122,7 +122,7 @@ void SymbolHelp::addGraceSchemeHelp() {
 	       getResourceDirectoryPathName() + T("/doc/"));
   graceschememap.set( T("between"), T("cm.html#between"));
   graceschememap.set( T("butlast"), T("cm.html#butlast"));
-  graceschememap.set( T("cents->ratio"), T("cm.html#cents-ratio"));
+  graceschememap.set( T("cents->ratio"), T("cm.html#cents-_ratio"));
   graceschememap.set( T("chdir"), T("cm.html#chdir"));
   graceschememap.set( T("cont"), T("cm.html#cont"));
   graceschememap.set( T("cwd"), T("cm.html#cwd"));
@@ -130,8 +130,8 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("discrete"), T("cm.html#discrete"));
   graceschememap.set( T("divide"), T("cm.html#divide"));
   graceschememap.set( T("eighth"), T("cm.html#eighth"));
-  graceschememap.set( T("eod?"), T("cm.html#eod?"));
-  graceschememap.set( T("eop?"), T("cm.html#eop?"));
+  graceschememap.set( T("eod?"), T("cm.html#eod_"));
+  graceschememap.set( T("eop?"), T("cm.html#eop_"));
   graceschememap.set( T("elapsed"), T("cm.html#elapsed"));
   graceschememap.set( T("fifth"), T("cm.html#fifth"));
   graceschememap.set( T("first"), T("cm.html#first"));
@@ -147,8 +147,8 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("interp"), T("cm.html#interp"));
   graceschememap.set( T("invert"), T("cm.html#ivert"));
   graceschememap.set( T("last"), T("cm.html#last"));
-  graceschememap.set( T("list*"), T("cm.html#list*"));
-  graceschememap.set( T("list-set!"), T("cm.html#list-set!"));
+  graceschememap.set( T("list*"), T("cm.html#list_"));
+  graceschememap.set( T("list-set!"), T("cm.html#list-set_"));
   graceschememap.set( T("loop"), T("cm.html#loop"));
 
   graceschememap.set( T("make-cycle"), T("cm.html#make-cycle"));
@@ -164,26 +164,26 @@ void SymbolHelp::addGraceSchemeHelp() {
 
   graceschememap.set( T("markov-analyze"), T("cm.html#markov-analyze"));
   graceschememap.set( T("minus"), T("cm.html#minus"));
-  graceschememap.set( T("mm:bend?"), T("cm.html#mm:bend?"));
-  graceschememap.set( T("mm:ctrl?"), T("cm.html#mm:ctrl?"));
-  graceschememap.set( T("mm:prog?"), T("cm.html#mm:prog?"));
-  graceschememap.set( T("mm:press?"), T("cm.html#mm:press?"));
-  graceschememap.set( T("mm:off?"), T("cm.html#mm:off?"));
-  graceschememap.set( T("mm:on?"), T("cm.html#mm:on?"));
-  graceschememap.set( T("mm:touch?"), T("cm.html#mm:touch?"));
+  graceschememap.set( T("mm:bend?"), T("cm.html#mm:bend_"));
+  graceschememap.set( T("mm:ctrl?"), T("cm.html#mm:ctrl_"));
+  graceschememap.set( T("mm:prog?"), T("cm.html#mm:prog_"));
+  graceschememap.set( T("mm:press?"), T("cm.html#mm:press_"));
+  graceschememap.set( T("mm:off?"), T("cm.html#mm:off_"));
+  graceschememap.set( T("mm:on?"), T("cm.html#mm:on_"));
+  graceschememap.set( T("mm:touch?"), T("cm.html#mm:touch_"));
 
   graceschememap.set( T("mm:chan"), T("cm.html#mm:chan"));
-  graceschememap.set( T("mm:chan-set!"), T("cm.html#mm:chan-set!"));
+  graceschememap.set( T("mm:chan-set!"), T("cm.html#mm:chan-set_"));
   graceschememap.set( T("mm:key"), T("cm.html#mm:key"));
-  graceschememap.set( T("mm:key-set!"), T("cm.html#mm:key-set!"));
+  graceschememap.set( T("mm:key-set!"), T("cm.html#mm:key-set_"));
   graceschememap.set( T("mm:num"), T("cm.html#mm:num"));
-  graceschememap.set( T("mm:num-set!"), T("cm.html#mm:num-set!"));
+  graceschememap.set( T("mm:num-set!"), T("cm.html#mm:num-set_"));
   graceschememap.set( T("mm:time"), T("cm.html#mm:time"));
-  graceschememap.set( T("mm:time-set!"), T("cm.html#mm:time-set!"));
+  graceschememap.set( T("mm:time-set!"), T("cm.html#mm:time-set_"));
   graceschememap.set( T("mm:val"), T("cm.html#mm:val"));
-  graceschememap.set( T("mm:val-set!"), T("cm.html#mm:val-set!"));
+  graceschememap.set( T("mm:val-set!"), T("cm.html#mm:val-set_"));
   graceschememap.set( T("mm:vel"), T("cm.html#mm:vel"));
-  graceschememap.set( T("mm:vel-set!"), T("cm.html#mm:vel-set!"));
+  graceschememap.set( T("mm:vel-set!"), T("cm.html#mm:vel-set_"));
 
   graceschememap.set( T("mm:make-bend"), T("cm.html#mm:make-bend"));
   graceschememap.set( T("mm:make-ctrl"), T("cm.html#mm:make-ctrl"));
@@ -225,12 +225,12 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("ranmid"), T("cm.html#ranmid"));
   graceschememap.set( T("ranpink"), T("cm.html#ranpink"));
   graceschememap.set( T("ranpoisson"), T("cm.html#ranpoisson"));
-  graceschememap.set( T("ran-set!"), T("cm.html#ran-set"));
-  graceschememap.set( T("ratio->cents"), T("cm.html#ratio-cents"));
+  graceschememap.set( T("ran-set!"), T("cm.html#ran-set_"));
+  graceschememap.set( T("ratio->cents"), T("cm.html#ratio-_cents"));
   graceschememap.set( T("rescale"), T("cm.html#rescale"));
   graceschememap.set( T("rest"), T("cm.html#rest"));
   graceschememap.set( T("retrograde"), T("cm.html#retrograde"));
-  graceschememap.set( T("rhythm->seconds"), T("cm.html#rhythm-seconds"));
+  //  graceschememap.set( T("rhythm->seconds"), T("cm.html#rhythm-_seconds"));
   graceschememap.set( T("rm-spectrum"), T("cm.html#rm-spectrum"));
   graceschememap.set( T("run"), T("cm.html#run"));
   graceschememap.set( T("cs:i"), T("cm.html#cs:i"));
@@ -246,9 +246,9 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("scale-order"), T("cm.html#scale-order"));
   graceschememap.set( T("segs"), T("cm.html#segs"));
 
-  graceschememap.set( T("spectrum-add!"), T("cm.html#spectrum-add!"));  
+  graceschememap.set( T("spectrum-add!"), T("cm.html#spectrum-add_"));  
   graceschememap.set( T("spectrum-copy"), T("cm.html#spectrum-copy"));
-  graceschememap.set( T("spectrum-flip!"), T("cm.html#spectrum-flip!"));  
+  graceschememap.set( T("spectrum-flip!"), T("cm.html#spectrum-flip_"));  
   graceschememap.set( T("spectrum-freqs"), T("cm.html#spectrum-freqs"));  
   graceschememap.set( T("spectrum-keys"), T("cm.html#spectrum-keys"));  
   graceschememap.set( T("spectrum-maxamp"), T("cm.html#spectrum-maxamp"));  
@@ -256,7 +256,7 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("spectrum-minamp"), T("cm.html#spectrum-minamp"));  
   graceschememap.set( T("spectrum-minfreq"), T("cm.html#spectrum-minfreq"));  
   graceschememap.set( T("spectrum-pairs"), T("cm.html#spectrum-pairs"));  
-  graceschememap.set( T("spectrum-rescale!"), T("cm.html#spectrum-rescale!"));  
+  graceschememap.set( T("spectrum-rescale!"), T("cm.html#spectrum-rescale_"));  
   graceschememap.set( T("spectrum-size"), T("cm.html#spectrum-size"));  
   graceschememap.set( T("spectrum-time"), T("cm.html#spectrum-time"));  
 

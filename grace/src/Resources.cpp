@@ -52,12 +52,17 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   menu->addSeparator();
 #ifdef SCHEME
   menu->addItem(cmdHelpWindow+12, T("CM Dictionary"));
-  sub2.addItem(cmdHelpExamples+1, T("SAL"));
-  sub2.addItem(cmdHelpExamples+2, T("Scheme"));
+  sub2.addItem(cmdHelpExamples+1, T("Notes, keys and pitch classes"));
+  sub2.addItem(cmdHelpExamples+2, T("Scales and interval cycles"));
+  sub2.addItem(cmdHelpExamples+3, T("Sending data to ports"));  
+  sub2.addItem(cmdHelpExamples+4, T("Markov harmonizer a la Messiaen"));  
+  sub2.addItem(cmdHelpExamples+5, T("Sprouting processes"));  
+  sub2.addItem(cmdHelpExamples+6, T("Building gestures"));  
+  sub2.addItem(cmdHelpExamples+7, T("A la maniere de 'continuum' (Ligeti)"));  
   menu->addSubMenu(T("Examples"), sub2, true);
 #endif
   sub1.addItem(cmdHelpSalTutorial+0, T("Hello World"));
-  sub1.addItem(cmdHelpSalTutorial+1, T("Symbolic Expressions"));
+  sub1.addItem(cmdHelpSalTutorial+1, T("Expressions"));
   sub1.addItem(cmdHelpSalTutorial+2, T("Function Calls"));
   sub1.addItem(cmdHelpSalTutorial+3, T("Working with Lists"));
   sub1.addItem(cmdHelpSalTutorial+4, T("Making Sound"));
@@ -67,9 +72,8 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   sub1.addItem(cmdHelpSalTutorial+8, T("Musical Processes"));
   menu->addSubMenu(T("SAL Tutorials"), sub1, true);
   menu->addSeparator();
-  //  menu->addItem(cmdHelpURL+0, T("SAL Dictionary"));
+
 #ifndef SCHEME  
-  menu->addItem(cmdHelpWindow+11, T("SAL Dictionary"));
   menu->addItem(cmdHelpURL+1, T("CM Dictionary"));
 #endif
   menu->addItem(cmdHelpURL+2, T("CM Homepage"));
@@ -127,9 +131,14 @@ void commonHelpItemSelected (int cmd, int arg) {
     break;
 
   case cmdHelpExamples :
-    res=app->getResourceDirectory().getChildFile(T("doc/"));
-    if (arg == 1) res=res.getChildFile(T("examples.sal"));
-    else if (arg == 2) res=res.getChildFile(T("examples.scm"));
+    res=app->getResourceDirectory().getChildFile(T("doc/examples/"));
+    if (arg == 1) res=res.getChildFile(T("notes.sal"));
+    else if (arg == 2) res=res.getChildFile(T("scales.sal"));
+    else if (arg == 3) res=res.getChildFile(T("send.sal"));
+    else if (arg == 4) res=res.getChildFile(T("harmonizer.sal"));
+    else if (arg == 5) res=res.getChildFile(T("sprout.sal"));
+    else if (arg == 6) res=res.getChildFile(T("gestures.sal"));
+    else if (arg == 7) res=res.getChildFile(T("continuum.sal"));
     if ( res.existsAsFile() )
 	new EditorWindow(0, (TextBuffer::load | TextBuffer::nosave),
 			 res.getFullPathName());
@@ -138,7 +147,7 @@ void commonHelpItemSelected (int cmd, int arg) {
     break;
 
   case cmdHelpSalTutorial :
-    res=app->getResourceDirectory().getChildFile(T("doc/sal/tutorials/"));
+    res=app->getResourceDirectory().getChildFile(T("doc/tutorials/"));
     if (arg == 0) res=res.getChildFile(T("hello.sal"));
     else if (arg == 1) res=res.getChildFile(T("sexpr.sal"));
     else if (arg == 2) res=res.getChildFile(T("funcall.sal"));
@@ -156,14 +165,7 @@ void commonHelpItemSelected (int cmd, int arg) {
     break;
 
   case cmdHelpURL :
-    if (arg == 0) {
-      res=app->getResourceDirectory().getChildFile(T("doc/sal/sal.html"));
-      if ( res.existsAsFile() )
-	url=URL(res.getFullPathName());
-      else err=T(">>> Help file ") + res.getFullPathName() +
-	     T(" does not exist.");
-    }
-    else if (arg == 1 )
+    if (arg == 1 )
       url=URL(T("http://commonmusic.sf.net/doc/dict/index.html"));
     else if (arg == 2)
       url=URL(T("http://commonmusic.sf.net/doc/cm.html"));

@@ -1,0 +1,20 @@
+;; Sending data to the Csound port
+
+;; To run this example your Ports menu must have a Csound port
+;; available and you must have Csound 5 installed on your machine. The
+;; i1 instrument used here is defined in "grace.orc" in the
+;; application resource directory. To run the example first use the
+;; Ports>Csound>Open... menu item to open the Csound port with the
+;; default orchestra file ("grace.orc") selected in the dialog box.
+
+define process ranins1(len, rhy, lb, ub, amp)
+  run with dur = rhy * 2
+    repeat len
+    for k = lb then between(lb,ub)
+    send "cs:i", 1, 0, dur, k, amp
+    wait rhy
+  end
+
+sprout ranins1(10, .2, 60, 72, 1000)
+
+

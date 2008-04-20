@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+span.string  {color: #bc8f8f;} 
+span.output  {color: #bc8f8f;} 
+span.comment {color: #b22222;}  
+span.keyword {color: #da70d6;} 
+span.reserved {color: #a020f0;}
+span.classof {color: #228b22;}
+span.command {color: #0000ff;}
+span.constant {color: #5f9ea0;}
+pre.salcode{}
+</style>
+<title>continuum.html</title>
+</head>
+<body>
+<p><span style="font-size:large;">Download source: <a href="/Lisp/grace/doc/examples/continuum.sal">
+<img src="fileicon.png" style="border:none;" alt="[fileicon.png]" /> continuum.sal</a></span></p>
+<hr/><pre class="salcode">
+<span class="comment">;; a la maniere de 'continuum' (ligeti)</span>
+
+<span class="command">define</span> <span class="classof">process</span> continuum (tmp, low-keys, high-keys, rhy-pat)
+  <span class="reserved">run</span> 
+    <span class="reserved">for</span> low <span class="reserved">in</span> low-keys
+    <span class="reserved">for</span> high <span class="reserved">in</span> high-keys
+    <span class="reserved">for</span> dur = next (rhy-pat)
+    <span class="reserved">sprout</span> register(tmp, dur, low, high, .4)
+    <span class="reserved">wait</span> dur
+  <span class="reserved">end</span>
+
+<span class="command">define</span> <span class="classof">process</span> register (rhy, dur, low, high, amp)
+  <span class="reserved">run</span> <span class="reserved">with</span> key-pat = make-heap( scale(high - low + 1, low, 1))
+    <span class="reserved">for</span> key = next(key-pat)
+    <span class="reserved">until</span> elapsed() &gt;= dur
+    <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> key, <span class="keyword">dur:</span> rhy, <span class="keyword">amp:</span> amp
+    <span class="reserved">wait</span> rhy
+  <span class="reserved">end</span>
+
+<span class="command">send</span> <span class="string">"mp:prog"</span>, <span class="keyword">chan:</span> 0, <span class="keyword">val:</span> 6
+
+<span class="command">sprout</span> continuum(.075,
+                 {60 59 58 57 56 55 54 53 52
+                  53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68
+                  69 70 71 72 73 74 75 76 77 78
+                  79 80 82 83 84 85 86 87 88 89},
+                 {62 63 64 65 66 67 68 69 70 
+                  70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70
+                  71 72 73 74 76 79 83 86 88 89
+                  89 89 89 89 89 89 89 89 89 89},
+                 make-weighting({.5 1 1.5 2 2.5})
+                 )
+
+<span class="comment">;; realtime-version</span>
+<span class="comment">;; globals for ambitus-frame</span>
+
+<span class="command">define</span> <span class="classof">variable</span> low = 60, high = 62
+
+<span class="comment">;; main loop</span>
+
+<span class="command">define</span> <span class="classof">process</span> rt-continuum (l,h,rhy,max-stay-tme)
+  <span class="reserved">begin</span>
+    <span class="reserved">set</span> low = l, high = h
+    <span class="reserved">run</span> <span class="reserved">with</span> lw = l, hg = high, 
+      <span class="comment">; how long there is no change of low or high?</span>
+      tme = 0
+      <span class="reserved">for</span> key = between (low, high + 1)
+      <span class="comment">; semitone-motion between low and high</span>
+      <span class="reserved">then</span> fit  (key + pick (1,-1), low, high)
+      <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">key:</span> key, <span class="keyword">dur:</span> rhy
+      <span class="comment">; change of low or high =&gt; tme = 0</span>
+      <span class="reserved">if</span> not(lw = low &amp; hg = high) 
+      <span class="reserved">then</span> <span class="reserved">set</span> tme = 0, lw = low, hg = high
+      <span class="reserved">wait</span> rhy
+      <span class="reserved">set</span> tme += rhy
+      <span class="comment">; no change for 'max-stay-tme' seconds =&gt; process ends</span>
+      <span class="comment">; with rit.</span>
+      <span class="reserved">if</span> tme &gt;= max-stay-tme 
+      <span class="reserved">then</span> 
+        <span class="reserved">begin</span> 
+          <span class="reserved">exec</span> stop ()
+          <span class="reserved">loop</span> <span class="reserved">with</span> r = rhy, tme = 0 
+            <span class="reserved">repeat</span> 30
+            <span class="reserved">send</span> <span class="string">"mp:midi"</span>, <span class="keyword">time:</span> tme, <span class="keyword">key:</span> key, <span class="keyword">dur:</span> r
+            <span class="reserved">set</span> key = fit (key + pick  (1,-1), low, high, 2)
+            <span class="reserved">set</span> r = r * 1.1, tme += r
+          <span class="reserved">end</span>          
+        <span class="reserved">end</span>
+    <span class="reserved">end</span>
+  <span class="reserved">end</span>
+
+<span class="comment">;; widen the frame:</span>
+<span class="command">define</span> <span class="classof">function</span> widen () 
+  <span class="reserved">begin</span>
+    <span class="reserved">if</span> odds (.5) <span class="reserved">then</span> <span class="reserved">set</span> high += 1 <span class="reserved">else</span> <span class="reserved">set</span> low += -1
+    <span class="reserved">print</span> low, <span class="string">" "</span>, high
+  <span class="reserved">end</span>
+
+<span class="comment">; narrow the frame:</span>
+<span class="command">define</span> <span class="classof">function</span> narrow () 
+  <span class="reserved">begin</span>
+    <span class="reserved">if</span> high - low &lt;= 1 <span class="reserved">then</span> <span class="reserved">exec</span> error ()
+    <span class="reserved">else</span> 
+      <span class="reserved">if</span> odds (.5) <span class="reserved">then</span> <span class="reserved">set</span> low += 1 <span class="reserved">else</span> <span class="reserved">set</span> high += -1
+      <span class="reserved">print</span> low, <span class="string">" "</span>, high
+  <span class="reserved">end</span>
+
+<span class="comment">; waits 3" for changes, if none then it retards and stops</span>
+
+<span class="command">sprout</span> rt-continuum (60,63,.075,3) 
+
+<span class="command">exec</span> widen ()
+
+<span class="command">exec</span> narrow ()
+
+<span class="comment">; a hook for changing low or high via midikeyboard</span>
+<span class="command">define</span> <span class="classof">function</span> set-frame (m)
+  <span class="reserved">begin</span> <span class="reserved">with</span> k
+  <span class="reserved">if</span> mm:on?(m) 
+  <span class="reserved">then</span> 
+    <span class="reserved">begin</span> <span class="reserved">set</span> k = mm:key(m)
+      <span class="reserved">if</span> k &lt; low <span class="reserved">then</span> <span class="reserved">set</span> low = k
+      <span class="reserved">else</span>
+        <span class="reserved">if</span> k &gt; high <span class="reserved">then</span> <span class="reserved">set</span> high = k
+        <span class="reserved">else</span>
+          <span class="reserved">if</span> k &gt; (high - low) / 2 + low  <span class="reserved">then</span> <span class="reserved">set</span> high = k 
+          <span class="reserved">else</span> <span class="reserved">set</span> low = k
+          <span class="reserved">if</span> low = high <span class="reserved">then</span> <span class="reserved">set</span> high += 1
+          <span class="reserved">print</span> low, <span class="string">" "</span>, high
+        <span class="reserved">end</span>
+  <span class="reserved">end</span>
+
+<span class="comment">; set hook</span>
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, set-frame
+
+<span class="comment">; wait for changes in at least 20''</span>
+<span class="command">sprout</span> rt-continuum (60,63,.075,10)
+
+<span class="comment">; play a MIDI keyboard</span>
+
+<span class="comment">; clear hook</span>
+<span class="command">send</span> <span class="string">"mp:inhook"</span>, <span class="constant">#f</span>
+</pre>
+</pre>
+<hr/>
+<div style="float:left;"><p>Generated by <em>sal2html</em> Sun Apr 20 10:09:46 2008</p></div><div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;" alt="Valid XHTML 1.0 Strict" height="31" width="88"/></a></div>
+</body>
+</html>

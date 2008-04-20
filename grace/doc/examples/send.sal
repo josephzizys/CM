@@ -1,0 +1,31 @@
+;; sending data to ports
+
+;; the send command routes data to specific methods on ports. the
+;; "mp:midi" message routes data to the Midi Port's midi method.  this
+;; data can be specified positionally: time, dur, key, amp, chan
+
+send "mp:midi", 0 , .5 , 60, .5, 0
+
+;; you can specify the data in any order using the keyword names of
+;; the args, for example:
+
+send "mp:midi", key: between(60, 90)
+
+;; you can mix positional and keywords
+
+send "mp:midi", 0, 2, amp: .4
+
+;; the "mp:prog" message to sends program changes:
+
+begin
+  send "mp:prog", val: between(0,8), chan: 0
+  send "mp:midi", key: between(60, 90)  
+end
+
+;; you can send data into the future by specifying time values greater
+;; than 0:
+
+loop for x from 0 by .2
+  send "mp:midi", x, key: between(60, 90)
+end
+
