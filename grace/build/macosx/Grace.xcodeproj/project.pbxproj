@@ -652,6 +652,117 @@
 			};
 			name = Debug;
 		};
+		5FC2E83F0DBBAD0A006ABF52 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				LIBRARY_SEARCH_PATHS = (
+					../../../juce/bin,
+					/usr/local/src/juce/bin,
+				);
+				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
+				SEPARATE_STRIP = YES;
+				USER_HEADER_SEARCH_PATHS = "../../../juce /usr/local/src/juce";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		5FC2E8400DBBAD0A006ABF52 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					MACOSX,
+					SCHEME,
+					DEBUG,
+					"_GLIBCXX_DEBUG=1",
+					"_GLIBCXX_DEBUG_PEDANTIC=1",
+				);
+				INFOPLIST_FILE = Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					../../../chicken,
+					"$(inherited)",
+					/usr/local/lib,
+					"\"$(SRCROOT)/../../../../../src/juce/bin\"",
+				);
+				PRODUCT_NAME = Grace;
+				USER_HEADER_SEARCH_PATHS = "../../../chicken ../../../juce /usr/local/src/juce /usr/local/include";
+			};
+			name = Release;
+		};
+		5FC2E8410DBBAD0A006ABF52 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					MACOSX,
+					DEBUG,
+				);
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/src/juce/bin,
+				);
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = GraceCL;
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = YES;
+			};
+			name = Release;
+		};
+		5FC2E8420DBBAD0A006ABF52 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					MACOSX,
+					SCHEME,
+					DEBUG,
+					"_GLIBCXX_DEBUG=1",
+					"_GLIBCXX_DEBUG_PEDANTIC=1",
+				);
+				INFOPLIST_FILE = Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					../../../chicken,
+					"$(inherited)",
+					/usr/local/lib,
+				);
+				PRODUCT_NAME = Grace;
+				USER_HEADER_SEARCH_PATHS = "../../../chicken ../../../juce /usr/local/src/juce /usr/local/include";
+			};
+			name = Release;
+		};
+		5FC2E8430DBBAD0A006ABF52 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					MACOSX,
+					SCHEME,
+					DEBUG,
+					"_GLIBCXX_DEBUG=1",
+					"_GLIBCXX_DEBUG_PEDANTIC=1",
+				);
+				INFOPLIST_FILE = Info.plist;
+				LIBRARY_SEARCH_PATHS = (
+					../../../chicken,
+					"$(inherited)",
+					/usr/local/lib,
+					"\\\"$(SRCROOT)/../../../../../src/juce/bin\\\"",
+					"\"$(SRCROOT)/../../../../../src/juce/bin\"",
+				);
+				PRODUCT_NAME = Grace;
+				USER_HEADER_SEARCH_PATHS = "../../../chicken ../../../juce /usr/local/src/juce /usr/local/include";
+			};
+			name = Release;
+		};
 		C0E91AC608A95435008D54AB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -698,6 +809,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0AF1A9AD0DA7A5EE00E46E22 /* Debug */,
+				5FC2E8420DBBAD0A006ABF52 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -706,6 +818,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5F1824850D5A161500F53B16 /* Debug */,
+				5FC2E8410DBBAD0A006ABF52 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -714,6 +827,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5FC0DBB70DAF1C650090C6D3 /* Debug */,
+				5FC2E8430DBBAD0A006ABF52 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -722,6 +836,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C0E91AC608A95435008D54AB /* Debug */,
+				5FC2E8400DBBAD0A006ABF52 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -730,6 +845,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C0E91ACA08A95435008D54AB /* Debug */,
+				5FC2E83F0DBBAD0A006ABF52 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
