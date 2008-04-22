@@ -164,10 +164,9 @@ void load_sal_file(char *path) {
 
 	 ;; sal
 	 sal sal:print sal:chdir sal:load sal:open sal:output
-	 load-sal-file *sal-trace-input*
+	 load-sal-file *sal-trace-input* !=
 	 ;; utilities
-	 loop
-	 cwd chdir cm-logo
+	 loop cwd chdir cm-logo
 
 	 first second third fourth fifth sixth seventh eighth
 	 ninth tenth last nth butlast rest list* 

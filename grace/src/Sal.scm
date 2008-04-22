@@ -1168,15 +1168,21 @@
 	    (if (not clause)
 		(set! else (make-parse-unit SalFalse "#f" #f))
 		(set! else (cadr clause)))
-	    (set! data (list oper test then else))
-	    )
+	    (set! data (list oper test then else)))
 	  (set! data (list oper test (third args))))
       (make-parse-unit SalConditionalRule data #f)))
   (lambda (unit info errf)
-    ;; THIS METHOD CAN BE REMOVED...
-    (let ((data (parse-unit-parsed unit)))
+    (let* ((data (parse-unit-parsed unit)))
       ;;(print (list #:data-> data))
-      (emit data info errf))))
+      (cond ((token-unit-type=? (car data) SalIf)
+	     (emit data info errf))
+	    ((token-unit-type=? (car data) SalWhen)
+	     `(if ,(emit (cadr data) info errf)
+		  , (emit (caddr data) info errf)))
+	    (else
+	     `(if (not ,(emit (cadr data) info errf))
+		  , (emit (caddr data) info errf))))))
+  )
 
 ;;
 ;; iteration
