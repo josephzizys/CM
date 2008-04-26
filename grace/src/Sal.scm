@@ -6,7 +6,7 @@
 ;;; **********************************************************************
 
 ; To test outside of Grace:
-; (begin (define first car) (define second cadr) (define third caddr) (define fourth cadddr) (define print-error display ) (define print-message 'display) (define (expand-send a b c) `(quote ,(list #:expand-send-> a b))) (load "/Lisp/grace/src/Utilities.scm"))
+; (begin (define first car) (define second cadr) (define third caddr) (define fourth cadddr) (define print-error display ) (define print-message display) (define (expand-send a b c) `(quote ,(list #:expand-send-> a b))) (load "/Lisp/grace/src/Utilities.scm"))
 ; (load "/Lisp/grace/src/Sal.scm")
 
 
@@ -1368,21 +1368,45 @@
 	      (set! step (append step (list (fourth clause)))))
 	  (if (fifth clause)
 	      (set! stop (append stop (list (fifth clause))))))))
-    ;; add user's body statements to loop forms
-    (do ((tail (fourth data) (cdr tail)))
-	((null? tail) #f)
-      (set! loop (append loop (list (emit (car tail) info errf)))))
-    ;; add stepping forms after all the user's actions.
-    (set! loop (append loop step))
-    ;; add user's termination clauses to stop forms
-    (do ((tail (third data) (cdr tail)))
-	((null? tail) #f)
-      ;; data is (<while until> <statement>)
-      (let* ((data (parse-unit-parsed (car tail)))
-	     (form (emit (second data) info errf)))
-	(if (token-unit-type=? (car data) SalWhile)
-	    (set! form `(not , form)))
-	(set! stop (append stop (list form)))))
+    ;; loop var now holds all the 'for' assignments, now add users
+    ;; actions and stepping clauses as the body of the loop
+    (let ((body (list)))
+      ;; add user's action statements 
+      (do ((tail (fourth data) (cdr tail)))
+	  ((null? tail) #f)
+	(set! body (append body (list (emit (car tail) info errf)))))
+    ;; add stepping forms after all the actions.
+    (set! body (append body step))
+    ;; if there is a while or until then this test has to appear
+    ;; lexically after all the for variables have values. if the test
+    ;; is false then the body is executed otherwise the halt var is
+    ;; set to true
+    (if (pair? (third data))
+	(let ((test (list))
+	      (halt (gensym "halt")))
+	  ;; add halt var to bindings list
+	  (set! bind (append bind (list (list halt #f))))
+	  ;; add halt var to stop tests
+	  (set! stop (append stop (list halt)))
+	  (do ((tail (third data) (cdr tail)))
+	      ((null? tail) #f)
+	    ;; data is (while|until <sexpr>)
+	    (let* ((data (parse-unit-parsed (car tail)))
+		   (form (emit (second data) info errf)))
+	      (if (token-unit-type=? (car data) SalWhile)
+		  (set! form `(not , form)))
+	      (set! test (append test (list form)))))
+	  ;; concat multiple tests into a single or
+	  (if (null? (cdr test))
+	      (set! test (car test))
+	      (set! test (cons 'or test)))
+	  ;; for processes setting halt to #t will cause the func to
+	  ;; run 1 more time at which point it will do its exit code
+	  (set! body `((if ,test (set! ,halt #t) (begin ,@ body))))
+	  ))
+    
+    (set! loop (append loop body))
+    )
     ;; turn all stop forms into one valid lisp expression
     (if (pair? stop)
 	(if (null? (cdr stop))

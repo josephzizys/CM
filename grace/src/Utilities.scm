@@ -10,10 +10,10 @@
 ;;;
 
 ;; Chicken gives us first-fourth
-;;(define first car)
-;;(define second cadr)
-;;(define third caddr)
-;;(define fourth cadddr)
+(define first car)
+(define second cadr)
+(define third caddr)
+(define fourth cadddr)
 (define fifth (lambda (l) (car (cddddr l))))
 (define sixth (lambda (l) (cadr (cddddr l))))
 (define seventh (lambda (l) (caddr (cddddr l))))

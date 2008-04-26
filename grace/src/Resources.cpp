@@ -55,6 +55,7 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   sub2.addItem(cmdHelpExamples+1, T("Notes, keys and pitch classes"));
   sub2.addItem(cmdHelpExamples+2, T("Scales and interval cycles"));
   sub2.addItem(cmdHelpExamples+3, T("Sending data to ports"));  
+  sub2.addItem(cmdHelpExamples+8, T("Sending data to Csound"));  
   sub2.addItem(cmdHelpExamples+4, T("Markov harmonizer a la Messiaen"));  
   sub2.addItem(cmdHelpExamples+5, T("Sprouting processes"));  
   sub2.addItem(cmdHelpExamples+6, T("Building gestures"));  
@@ -70,6 +71,7 @@ void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
   sub1.addItem(cmdHelpSalTutorial+6, T("Defining Functions"));
   sub1.addItem(cmdHelpSalTutorial+7, T("Iteration"));
   sub1.addItem(cmdHelpSalTutorial+8, T("Musical Processes"));
+
   menu->addSubMenu(T("SAL Tutorials"), sub1, true);
   menu->addSeparator();
 
@@ -139,6 +141,7 @@ void commonHelpItemSelected (int cmd, int arg) {
     else if (arg == 5) res=res.getChildFile(T("sprout.sal"));
     else if (arg == 6) res=res.getChildFile(T("gestures.sal"));
     else if (arg == 7) res=res.getChildFile(T("continuum.sal"));
+    else if (arg == 8) res=res.getChildFile(T("csound.sal"));
     if ( res.existsAsFile() )
 	new EditorWindow(0, (TextBuffer::load | TextBuffer::nosave),
 			 res.getFullPathName());

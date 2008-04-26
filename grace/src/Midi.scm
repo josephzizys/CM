@@ -258,7 +258,7 @@ void set_input_hook( C_word proc )
   v)
 
 (define (mm:val m)
-  (cond ((or (mm:type? m mm:ctrl) (mm:type? m mm:touch))
+  (cond ((or (mm:ctrl? m) (mm:touch? m))
 	 ;; controlChange: 
 	 ( (foreign-lambda int "mm_data" (c-pointer "MidiMessage") int)
 	   m 2))
@@ -268,7 +268,7 @@ void set_input_hook( C_word proc )
 	   m 1))))	 
 
 (define (mm:val-set! m v)
-  (cond ((or (mm:type? m mm:ctrl) (mm:type? m mm:touch) )
+  (cond ((or (mm:ctrl? m) (mm:touch? m))
 	 ( (foreign-lambda void "mm_set_data" (c-pointer "MidiMessage")
 			   int int)
 	   m 2 v))
