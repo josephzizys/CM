@@ -584,10 +584,12 @@
 		0AF1A9AD0DA7A5EE00E46E22 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					MACOSX,
 					SCHEME,
+					PORTCSOUND,
 					DEBUG,
 					"_GLIBCXX_DEBUG=1",
 					"_GLIBCXX_DEBUG_PEDANTIC=1",
@@ -724,9 +726,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					MACOSX,
 					SCHEME,
-					DEBUG,
-					"_GLIBCXX_DEBUG=1",
-					"_GLIBCXX_DEBUG_PEDANTIC=1",
+					PORTCSOUND,
 				);
 				INFOPLIST_FILE = Info.plist;
 				LIBRARY_SEARCH_PATHS = (

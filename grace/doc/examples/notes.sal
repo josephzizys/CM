@@ -1,26 +1,39 @@
 ;; Note, key and pc
 
-;; note quantizes to quarter tone resolution
-print note( 60.1)
+;; the note function converts keys or lists of notes to note names
 
-print note( 60.6)
+print note(60)
+print note({60 64 67})
+print note({c4 e g})
 
-;; note key pc and hz all accept lists of data
-print note( make-list(10, between, 60.0, 80.0))
+;; a floating point key kkk.cc means cc cents above key kkk:
+;; note quantizes to the nearest quarter tone. a name with > means
+;; quarter tone up and < is quarter tone down
 
-;; lowest octave is 00 highest is 9
+print note(60.5)
+print note(60.1)
+print note(60.6)
+
+;; lowest note octave is 00 and highest is 9
+
 print note( {0 127})
 
-;; octave numbers are sticky in note lists
+;; the key function converts notes and hertz values to key numbers
+
+print key(440)
 print key( {c4 d e f g a b c5 d e f g a b c6} )
 
-;; 10 pinkish notes beween 60 and 90
-print note( discrete( make-list(10, ranpink), -1, 1, 60, 90))
+;; the hz functoin converts notes and keys to hertz
 
-;; 10 pinkish pitch classes 
-print pc( discrete( make-list(10, ranpink), -1, 1, 60, 90))
+print hz(69.5)
+print hz( {c4 d e f g a b c5 d e f g a b c6} )
+
+;; the pc function converts notes keys to pitch classes
+
+print pc( {c4 d e f g a b c5 d e f g a b c6} )
 
 ;; transpose and invert work with notes, keys and pcs
+
 print transpose( {c4 e g}, 12)
 
 print transpose(7, 7)
@@ -29,9 +42,10 @@ print invert( {c4 e g} )
 
 print invert(11)
 
-;; random matrix generator
+;; a matrix generator:
 
 loop with row = shuffle( {0 1 2 3 4 5 6 7 8 9 10 11})
   for i in invert(row)
   print transpose(row, i)
 end
+      

@@ -14,18 +14,17 @@ sprout pinkscale(60, dorian)
 ;; sprouting more than one process at a time
 
 define process piano-phase (stop, keys, rate)
-  run 
-    with pat = make(<cycle>, of: keys)
-    until now() >= stop
-    output make(<midi>, time: now(), keynum: next(pat), duration: rate)
+  run with pat = make-cycle(keys)
+    until elapsed() >= stop
+    send "mp:midi", key: next(pat), dur: rate
     wait rate
   end
 
 begin
   with trope = {e4 fs4 b4 cs5 d5 fs4 e4 cs5 b4 fs4 d5 cs5} ,
        nsecs = 20
-  sprout list( piano-phase(nsecs, trope, .167),
-               piano-phase(nsecs, trope, .17))
+  sprout list( piano-phase(nsecs, key(trope), .167),
+               piano-phase(nsecs, key(trope), .17))
 end
 
 ;; Using ids to selectively stop processes
@@ -44,3 +43,13 @@ begin
   sprout chopin(50, .5, .25, 70), 0, 3
   sprout chopin(50, .5, .25, 75), 0, 1
 end
+
+;; stop F#
+exec stop(2)
+
+;; stop A#:
+exec stop(3)
+
+;; stop D# octave:
+exec stop(3)
+

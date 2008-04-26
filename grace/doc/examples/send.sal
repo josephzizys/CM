@@ -1,8 +1,11 @@
 ;; sending data to ports
 
-;; the send command routes data to specific methods on ports. the
-;; "mp:midi" message routes data to the Midi Port's midi method.  this
-;; data can be specified positionally: time, dur, key, amp, chan
+;; the send command routes message data to port methods. for example,
+;; the "mp:midi" message routes data to the Midi Port's midi
+;; method. Midi Port data can be specified positionally or using
+;; keyword arguments.
+
+;; positional values are interpeted: time, dur, key, amp, chan
 
 send "mp:midi", 0 , .5 , 60, .5, 0
 
@@ -25,7 +28,20 @@ end
 ;; you can send data into the future by specifying time values greater
 ;; than 0:
 
-loop for x from 0 by .2
+loop repeat 20 
+  for x from 0 by .2
   send "mp:midi", x, key: between(60, 90)
 end
+
+;; you can send data in real time using a process. real time data
+;; should either not have time stamp or a time stamp of 0 because the
+;; process sends the data exactly when it is needed.
+
+define process simp(n, r, lo, hi)
+  run repeat n 
+    send "mp:note", key: between(lo,hi)
+    wait pick(.1, .2 , .4)
+  end
+
+sprout simp(20, .1, 60, 84)
 
