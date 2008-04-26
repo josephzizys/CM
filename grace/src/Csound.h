@@ -8,9 +8,13 @@
 #ifdef PORTCSOUND
 
 #ifdef MACOSX
-#include <CsoundLib/csound.h> 
-#else
-#include <csound/csound.h> 
+#include <CsoundLib/csound.h>
+#endif
+#ifdef WINDOWS
+#include <csound.h>
+#endif
+#ifdef LINUX
+#include <csound/csound.h>
 #endif
 
 #else
@@ -110,7 +114,7 @@ class CsoundPort {
   void exportScore();
   void sendScoreEvent(char type, int len, MYFLT *pars);
   void addScoreEvent(char type, int len, MYFLT *pars);
-  String getScoreEventText(int fmat, char type, int len, 
+  String getScoreEventText(int fmat, char type, int len,
 			   MYFLT *pars);
   String getScoreText(int fmat);
   void sortScore();
@@ -121,7 +125,7 @@ class CsoundPort {
 class OpenCsoundDialog : public Component,
   public LabelListener,
   public FilenameComponentListener,
-  public ButtonListener 
+  public ButtonListener
 {
  public:
   CsoundPort* port;

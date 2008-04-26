@@ -57,6 +57,8 @@
 					<Add library="libglu32.a" />
 					<Add library="libuuid.a" />
 					<Add library="librpcrt4.a" />
+					<Add library="C:\Program Files\Csound\bin\csound64.dll.5.1" />
+					<Add library="C:\Program Files\Csound\bin\libsndfile-1.dll" />
 				</Linker>
 			</Target>
 		</Build>
@@ -67,8 +69,11 @@
 			<Add option="-DRELEASE=101" />
 			<Add option="-DSCHEME=1" />
 			<Add option="-DWINDOWS" />
+			<Add option="-DPORTCSOUND=1" />
 			<Add directory="..\..\..\juce\" />
 			<Add directory="..\..\..\chicken\include" />
+			<Add directory="C:\Program Files\Csound\include" />
+			<Add directory="C:\Program Files\Csound\bin" />
 		</Compiler>
 		<Linker>
 			<Add directory="..\..\..\juce\bin" />
