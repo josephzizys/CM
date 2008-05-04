@@ -12,12 +12,10 @@
 // Csound Performace Thread
 //
 
-CsoundConnection::CsoundConnection (CsoundPort *_port) :
-  Thread (T("Csound Thread") ),
-  port (NULL),
-  csound (NULL) 
-{
+CsoundConnection::CsoundConnection (CsoundPort *_port, int _mode) :
+  Thread (T("Csound Thread") ), port (NULL) ,mode (0), csound (NULL) {
   port=_port;  // backpointer to port
+  mode=_mode;  // This connection for writing audio file
 }
 
 CsoundConnection::~CsoundConnection() {
@@ -45,22 +43,26 @@ bool CsoundConnection::init (String input) {
   return true;
 }  
 
+bool CsoundConnection::isWriter() {
+  return (mode == CsoundPort::portWrite) ;
+}
+
 void CsoundConnection::run () { 
   // csound performace thread, either writes a score in non-realtime
   // or keeps port open until user explictly closes it.
 #ifdef PORTCSOUND
   // writing sound file
-  if ( port->isWriting() ) {
-    printf("thread writing!....\n");
+  if ( isWriter() ) {
     int res=0;
+    printf("BEGIN WRITING\n");
     while ( res == 0 ) {
       if ( threadShouldExit() ) // user abort
 	break;
       res=csoundPerformKsmps(csound);
     }
+    printf("END WRITING\n");
   }
   else  {
-    printf("thread running!....\n");
     // open for realtime. call performKsmps() until user closes port.
     while ( true ) {
       if ( threadShouldExit() )
@@ -77,12 +79,15 @@ void CsoundConnection::run () {
   csoundCleanup(csound);
   csoundDestroy(csound);
   csound=NULL;
-  if ( port->isWriting() )
-    port->console->postConsoleTextMessage( T("Csound score written.\n") );
-  else
-    port->console->postConsoleTextMessage( T("Csound port closed.\n") );    
-  port->running=CsoundPort::portClosed;
-  printf ("thread done!\n");
+  if ( isWriter() ) {
+    printf("END OF WRITE THREAD\n");
+    port->console->postConsoleTextMessage( T("Csound audio written.\n") );
+    port->setWriting(false);
+  }
+  else {
+    port->console->postConsoleTextMessage( T("Csound port closed.\n") ); 
+    port->setOpen(false);
+  }
 #endif
 }
 
@@ -94,8 +99,15 @@ CsoundPort::CsoundPort (ConsoleWindow *win)
   : portoptions (String::empty),
     fileoptions (String::empty),
     console (NULL),
-    running (CsoundPort::portClosed),
-    connection (NULL) {
+    portopen (false),
+    tracing (false),
+    writing (false),
+    scoremode (false),
+    recordmode (false),
+    scorestart (0.0),
+    scorestamp (-1.0),
+    port_connection (NULL),
+    file_connection (NULL) {
   console=win;
   orcfiles.setMaxNumberOfItems(10);
   revert(); // initialize config with values stored in prefs
@@ -107,10 +119,15 @@ CsoundPort::~CsoundPort () {
     delete exportdialog;
     exportdialog=NULL;
   }
-  if (connection != NULL) {
-    if (connection->isThreadRunning())
-      connection->stopThread(1000);
-    delete connection;
+  if (port_connection != NULL) {
+    if (port_connection->isThreadRunning())
+      port_connection->stopThread(1000);
+    delete port_connection;
+  }
+  if (file_connection != NULL) {
+    if (file_connection->isThreadRunning())
+      file_connection->stopThread(1000);
+    delete file_connection;
   }
 }
 
@@ -150,12 +167,58 @@ void CsoundPort::setOrcFile(File file) {
   orcfiles.addFile(file);
 }
 
-bool CsoundPort::getTracing() {
+bool CsoundPort::isOpen() {
+  return portopen ;
+}
+
+void CsoundPort::setOpen(bool b) {
+  portopen=b ;
+}
+
+bool CsoundPort::isClosed() {
+  return ! isOpen() ;
+}
+
+bool CsoundPort::isWriting() {
+  return writing ;
+}
+
+void CsoundPort::setWriting(bool b ) {
+  writing=b;
+}
+
+bool CsoundPort::isTraceMode() {
   return tracing;
 }
 
-void CsoundPort::setTracing(bool b) {
+void CsoundPort::setTraceMode(bool b) {
   tracing=b;
+}
+
+bool CsoundPort::isScoreMode() {
+  return scoremode;
+}
+
+void CsoundPort::setScoreMode(bool b) {
+  scoremode=b;
+  if (b)
+    setRecordMode(false);
+}
+
+bool CsoundPort::isRecordMode() {
+  return recordmode;
+}
+
+void CsoundPort::setRecordMode(bool b) {
+  recordmode=b;
+  scorestamp=-1.0;
+  if (b) {
+    setScoreMode(false);
+  }
+}
+
+void CsoundPort::setRecordStart (double st) {
+  scorestart=st;
 }
 
 //
@@ -193,39 +256,53 @@ void CsoundPort::revert() {
 // Port opening
 //
 
-bool CsoundPort::isOpen() {
-  return (running == portOpen) ;
-}
+bool CsoundPort::open (bool port) {
+  // Open realtime port or csound audio file
+  OpenCsoundDialog* dialog;
+  String title;
+  int mode;
 
-bool CsoundPort::isClosed() {
-  return (running == portClosed) ;
-}
-
-bool CsoundPort::isWriting() {
-  return (running == portWriting) ;
-}
-
-bool CsoundPort::open () {
-  if ( ! isClosed() ) return false;
-  OpenCsoundDialog *opencsound = new OpenCsoundDialog(this) ;
-  int mode = DialogWindow::showModalDialog( (isScoreEmpty()) ? T("Open Csound") : T("Write Csound"),
-					  opencsound,
-					  NULL, Colour(0xffe5e5e5),
-					  true, false, false);
-  delete opencsound;
-  printf("mode=%d\n", mode);
-  if ( (mode == portClosed) )
-    return false;
-  // if we are re-opening the port delete any old exhausted thread.
-  if (connection != NULL) {
-    delete connection;
-    connection = NULL;
+  if ( port ) {
+    if ( isOpen() ) return false;
+    dialog = new OpenCsoundDialog(this, CsoundPort::portOpen) ;
+    title = T("Open Csound");
   }
-  connection = new CsoundConnection(this) ;
+  else {
+    if ( isWriting() ) return false;
+    dialog = new OpenCsoundDialog(this, CsoundPort::portWrite) ;
+    title = T("Write Audio");
+  }
+  mode = DialogWindow::showModalDialog( title, dialog, NULL,
+					Colour(0xffe5e5e5),
+					true, false, false);
+  delete dialog;
+  switch (mode) {
+  case CsoundPort::portClosed : 
+    // aborted dialog
+    return false;
+    break;
+  case CsoundPort::portOpen :
+    // if we are re-opening the port delete any old exhausted thread.
+    if (port_connection != NULL) {
+      delete port_connection;
+      port_connection = NULL;
+    }
+    break;
+  case CsoundPort::portWrite:
+    if (file_connection != NULL) {
+      delete file_connection;
+      file_connection = NULL;
+    }
+    break;
+  default:
+    return false;
+  }
+  // create a new connection
+  CsoundConnection* conn = new CsoundConnection(this, mode) ;
 
   // Parse port or file options into initargs passed to libCsound:
   String input = String::empty ;
-  String options = ( mode==portWriting ) ? fileoptions : portoptions ;
+  String options = ( mode==portWrite ) ? fileoptions : portoptions ;
 
   if ( options != String::empty )
     if ( ! options.containsOnly( T(" \t\n") ) )
@@ -244,71 +321,170 @@ bool CsoundPort::open () {
   else
     input << " " << orcfiles.getFile(0).getFullPathName();
 
-  console->printMessage( T("Opening Csound port: ") + input + T(" ..."));
+  console->printMessage( T("Initializing Csound: ") + input + T(" ..."));
 
-  if ( ! connection->init( T("csound ") + input) ) {
+  if ( ! conn->init( T("csound ") + input) ) {
     console->printError(" :(\n Csound failed to initialize.\n");
-    delete connection;
-    connection = NULL;
+    delete conn;
     return false;
   }
+  // Csound is open and initialized
   console->printValues( T(" :)\n") );
 
-  if ( mode==portWriting ) {
-    console->printMessage( T("Writing score...\n") );    
-    writeScore();
+  if ( mode==portWrite ) {
+    console->printMessage( T("Writing Csound audio...\n") );   
+    // send score data to csound before starting performance thread
+    file_connection=conn;
+    writeScore(file_connection->csound);
+    setWriting(true);
   }
-  else
+  else {
     console->printMessage( T("Csound port open.\n") );    
-  running=mode;
-  connection->startThread();
+    port_connection=conn;
+    setOpen(true);
+  }
+  // start performance thread for realtime or score rendering
+  conn->startThread();
   return true;
 }
 
-void CsoundPort::close()  {
-  if ( running == portClosed) return ;
-  if (connection != NULL) {
-      if ( connection->isThreadRunning() )
-	connection->stopThread(1000);
-    delete connection;
-    connection=NULL;
+void CsoundPort::close(bool port) {
+  CsoundConnection* conn;
+  if (port) {
+    if ( isClosed() ) return;
+    conn = port_connection;
+    port_connection=NULL;
+    setOpen(false);
   }
-  running=portClosed;
-  //  printf("csound closed!\n");
+  else {
+    if ( ! isWriting() ) return;
+    conn = file_connection;
+    file_connection=NULL;
+    setWriting(false);
+  }
+  if (conn != NULL) {
+    if ( conn->isThreadRunning() )
+      conn->stopThread(1000);
+    delete conn;
+  }
+}
+
+//
+// Score Events
+//
+
+CsoundScoreEv::CsoundScoreEv(char typ, int siz, MYFLT *flt, String strval,
+			     int strpar)
+    : pars (NULL), strarg (String::empty)
+{
+  type=typ;
+  size=siz;
+  pars=new MYFLT[siz];
+  for (int i=0;i<siz;i++)
+    pars[i]=flt[i];
+  strarg=strval;
+  strpos=strpar;
+}
+
+CsoundScoreEv::~CsoundScoreEv() {
+  if ( pars != NULL )
+    delete [] pars;
+}
+
+String CsoundScoreEv::pfieldsToText(String delim) {
+  int i = 0;
+  String txt = String::empty;
+  String del = String::empty;
+  for (i=0; i<strpos; i++) {
+    txt << del << String( pars[i] );
+    del = delim;
+  }
+  // quote a string arg if present
+  if (i == strpos) {
+    txt << del << T("\"") << strarg << T("\"");
+    del = delim;
+    i++;
+  }
+  for ( ; i<size; i++) {
+    txt << del << String( pars[i] );
+    del = delim;
+  }
+  return txt;
+}
+
+String CsoundScoreEv::toText(int fmat) {
+  String text = String::empty;
+  switch (fmat) {
+  case CsoundPort::formatCsound :
+    text << String(&type,1) << T(" ") << pfieldsToText( T(" ") );
+    break;
+  case CsoundPort::formatSalData :
+    text << T("{") << pfieldsToText( T(" ") ) << T("}");
+    break;
+  case CsoundPort::formatLispData :
+    text << T("(") << pfieldsToText( T(" ") ) << T(")");
+    break;
+  case CsoundPort::formatSalSend :
+    text << T("send \"cs:") << String(&type,1) + T("\", ") 
+	 << pfieldsToText( T(", "));
+    break;
+  case CsoundPort::formatLispSend :
+    text << T("(send \"cs:") << String(&type,1) + T("\" ") 
+	 << pfieldsToText( T(" ") ) << T(")");
+    break;
+  default:
+    break;
+  }
+  return text;
 }
 
 //
 // Score Interface
 //
 
-String CsoundPort::getScoreEventText(int fmat, char type, int len,
-				     MYFLT *pars) {
-  String text = String::empty;
-  if (fmat == formatCsound ) {
-    text << type << ((int)pars[0]) ;
-    for (int i=1; i<len; i++)
-    text << T(" ") << ((float)pars[i] );
-    text << T("\n");
+void CsoundPort::sendScoreEvent(CsoundScoreEv* ev, bool del) {
+  // scoreMode means to add the event to the score rather than send
+  // out the port
+  if ( isScoreMode() ) {
+    addScoreEvent(ev);
+    if ( isTraceMode() )
+      console->postConsoleTextMessage( (ev->toText(formatCsound) + T("\n")) );
   }
-  return text;
-}
-
-void CsoundPort::sendScoreEvent(char type, int len, MYFLT *pars) {
-  if ( isOpen() ) {
-    if ( tracing )
-      console->postConsoleTextMessage( getScoreEventText( formatCsound, type, len, pars));
+  else if ( isOpen() ) {
+    // if port is open and we are not in score mode then send event to
+    // csound and delete the event if del flag is true
+    String msg = ev->toText(formatCsound);
     lockCsound();
 #ifdef PORTCSOUND
-    csoundScoreEvent(connection->csound, type, pars, len) ;
+    csoundInputMessage(port_connection->csound, msg.toUTF8() );
 #endif
     unlockCsound();
+
+    if ( isRecordMode() ) {
+      if (scorestamp<0.0) {
+	//	scorestamp=Time::highResolutionTicksToSeconds(Time::getHighResolutionTicks());	
+	scorestamp=Time::getMillisecondCounterHiRes()/1000.0;
+      }
+      //      double now=Time::highResolutionTicksToSeconds(Time::getHighResolutionTicks());	
+      double now=Time::getMillisecondCounterHiRes()/1000.0;
+      ev->pars[1]= ev->pars[1] + scorestart + (now-scorestamp);
+      addScoreEvent(ev);
+      del=false;  // don't gc the event we are recording!
+    }
+    if ( isTraceMode() )
+      console->postConsoleTextMessage( (msg + T("\n")) );
+    if (del) delete ev;
   }
-  else if ( isClosed() )
-    addScoreEvent(type, len, pars);
+  else {
+    // if no score or port open then delete the event
+    if ( isTraceMode() )
+      console->postConsoleTextMessage( (ev->toText(formatCsound) + T("\n")) );
+    delete ev;
+  }
 }
 
-void CsoundPort::addScoreEvent(char type, int len, MYFLT *pars) {
-  score.add( new CsoundScoreEv(type, len, pars) );
+void CsoundPort::addScoreEvent(CsoundScoreEv* ev) {
+  score.add( ev);
 }
 
 void CsoundPort::sortScore() {
@@ -319,22 +495,67 @@ void CsoundPort::clearScore() {
   score.clear();
 }
 
-void CsoundPort::writeScore() {
+void CsoundPort::playScore(double start, double end, double shift) {
+#ifdef PORTCSOUND  
+  if ( isOpen() ) {
+    sortScore();
+    int i = 0;
+    MYFLT p1,pn;
+    if (start>0.0) {
+      for ( ; i<score.size() ; i++)
+	if (score[i]->pars[1] >= start) 
+	  break;
+    }    
+    for ( ; i<numScoreEvents(); i++ ) {
+      if ( (end > 0.0) && (score[i]->pars[1] > end) )
+	break;
+      // shift event in time by shift amount
+      p1=score[i]->pars[1];
+      pn=score[i]->pars[1] + (MYFLT)shift;
+      score[i]->pars[1] = (pn<0.0) ? 0.0 : pn;
+      lockCsound();
+      csoundInputMessage(port_connection->csound,
+			 score[i]->toText(formatCsound).toUTF8() );
+      unlockCsound();
+      score[i]->pars[1] = p1;
+    }
+  }
+#endif
+}
+
+void CsoundPort::writeScore(CSOUND* csound) {
 #ifdef PORTCSOUND
   sortScore();
   int i;
   for (i=0; i<numScoreEvents(); i++ ) {
-    csoundScoreEvent (connection->csound, score[i]->type, score[i]->pars, 
-		      score[i]->size);
+    csoundInputMessage(csound, score[i]->toText(formatCsound).toUTF8() );
   }
   // add 'e' statement at end time of the last note in the score
-  MYFLT end[3] = {0.0, 0.0, 0.0};
-  end[1]=score[i-1]->pars[1]+score[i-1]->pars[2];
-  csoundScoreEvent(connection->csound, 'e', end, 3) ;  
+  float end=score[i-1]->pars[1]+score[i-1]->pars[2];
+  String e=T("e 0.0 ") + String(end) + T(" 0.0");
+  csoundInputMessage(csound, e.toUTF8() );
 #endif
 }
 
 void CsoundPort::displayScore() {
+}
+
+void CsoundPort::printScore(double start, double end) {
+  if ( isScoreEmpty() ) return;
+  sortScore();
+  int i = 0;
+  if (start>0.0) {
+    for ( ; i<score.size() ; i++)
+      if (score[i]->pars[1] >= start) 
+	break;
+  }
+  console->postConsoleTextMessage( T("s\n") );  
+  for ( ; i<score.size(); i++) {
+    if ( (end > 0.0) && (score[i]->pars[1] > end) )
+      break;
+    console->postConsoleTextMessage( (score[i]->toText(formatCsound) + T("\n")) );
+  }
+  console->postConsoleTextMessage( T("e\n") );  
 }
 
 void CsoundPort::exportScore() {
@@ -346,32 +567,27 @@ void CsoundPort::exportScore() {
   double start=exportdialog->frombuffer->getText().getDoubleValue();
   double endtime=exportdialog->tobuffer->getText().getDoubleValue();
   if ( endtime <= 0.0 ) endtime=3600.0*24.0;
-  printf("start=%f, end=%f\n", (float)start, (float)endtime);
+
   int format=exportdialog->formatmenu->getSelectedId();
   bool addi=exportdialog->itoggle->getToggleState();
   bool addf=exportdialog->ftoggle->getToggleState();
   int i=0;
-  String text, indent, after, pre1, pre2, delim, post;
+  String text, indent, after;
   switch (format) {
   case CsoundPort::formatCsound :
     text=T("s\n"); indent=String::empty; after=T("e\n");
-    pre1="f"; pre2="i"; delim=T(" "); post=T("\n");
     break;
   case CsoundPort::formatLispData :
     text=T("(define csound-score\n  '(\n"); indent=T("    "); after=T("  ))\n");
-    pre1=T("("); pre2=pre1; delim=T(" "); post=T(")\n");
     break;
   case CsoundPort::formatSalData :
     text=T("define variable csound-score = \n  {\n"); indent=T("   "); after=T("  }\n");
-    pre1=T("{"); pre2=pre1; delim=T(", "); post=T("}\n");
     break;
   case CsoundPort::formatLispSend :
     text=T("(begin\n"); indent=T("  "); after=T("  )\n");
-    pre1=T("(send \"cs:f\""); pre2=T("(send \"cs:i\""); delim=T(" "); post=T(")\n");
     break;
   case CsoundPort::formatSalSend :
     text=T("begin\n"); indent=T("  "); after=T("end\n");
-    pre1=T("send \"cs:f\""); pre2=T("send \"cs:i\""); delim=T(", "); post=T("\n");
     break;
   }
   sortScore();
@@ -383,19 +599,8 @@ void CsoundPort::exportScore() {
   for ( ; i<score.size(); i++) {
     if ( score[i]->pars[1] > endtime ) break;   // stop after endtime
     if ( (score[i]->type == 'i' && addi) || 
-	 (score[i]->type == 'f' && addf) ) {
-      if ( (format < CsoundPort::formatLispSend) ) {
-	text << indent << ((score[i]->type == 'i') ? pre2 : pre1)
-	     << ((int)score[i]->pars[0]) ;
-      }
-      else {
-	text << indent << ((score[i]->type == 'i') ? pre2 : pre1)
-	     << delim << ((int)score[i]->pars[0]) ;
-      }
-      for (int j=1; j<score[i]->size; j++)
-	text << delim << ((float)score[i]->pars[j] );
-      text << post;
-    }
+	 (score[i]->type == 'f' && addf) )
+      text << indent << score[i]->toText(format) << T("\n");
   }
   text << after;
   // output to console, clipboard or file.
@@ -404,7 +609,7 @@ void CsoundPort::exportScore() {
   else if ( exportdialog->clipboardtoggle->getToggleState() )
     SystemClipboard::copyTextToClipboard(text);
   else {
-    String comm=";;; Output by Grace " + Time::getCurrentTime().toString(true,true) + T("\n\n");
+    String comm="; written by Grace " + Time::getCurrentTime().toString(true,true) + T("\n\n");
     exportdialog->filechooser->getCurrentFile().replaceWithText(comm + text);
   }
 }
@@ -421,9 +626,9 @@ bool CsoundPort::isScoreEmpty() {
 //  Dialogs
 //
 
-OpenCsoundDialog::OpenCsoundDialog (CsoundPort *p)
+OpenCsoundDialog::OpenCsoundDialog (CsoundPort *p, int m)
   : port (NULL),
-    mode (CsoundPort::portOpen),
+    mode (0),
     label1 (0),
     label2 (0),
     options (0),
@@ -432,8 +637,7 @@ OpenCsoundDialog::OpenCsoundDialog (CsoundPort *p)
     tracebutton (0)
 {
   port=p;
-  if ( ! p->isScoreEmpty() )
-    mode=CsoundPort::portWriting;
+  mode=m;
   addAndMakeVisible (label1 = new Label(String::empty, T("Options:")));
   label1->setFont (Font (15.0000f, Font::plain));
   label1->setJustificationType (Justification::centredRight);
@@ -482,7 +686,7 @@ OpenCsoundDialog::OpenCsoundDialog (CsoundPort *p)
     //    tracebutton->addButtonListener(this);
   }  
 
-  if ( mode==CsoundPort::portWriting ) 
+  if ( mode==CsoundPort::portWrite ) 
     addAndMakeVisible( openbutton = new TextButton( T( "Write")));
   else 
     addAndMakeVisible( openbutton = new TextButton( T( "Open")));
@@ -528,11 +732,11 @@ void OpenCsoundDialog::filenameComponentChanged (FilenameComponent* changed) {
 
 void OpenCsoundDialog::buttonClicked (Button *clicked) {
   if ( clicked->getName() == T("Trace output") ) {
-    port->setTracing( clicked->getToggleState() );
+    port->setTraceMode( clicked->getToggleState() );
   }
   else if ( clicked->getName() == T("Write") ) {
     port->save();
-    ((DialogWindow *)getTopLevelComponent())->exitModalState(CsoundPort::portWriting);
+    ((DialogWindow *)getTopLevelComponent())->exitModalState(CsoundPort::portWrite);
   }
   else if ( clicked->getName() == T("Open") ) {
     port->save();

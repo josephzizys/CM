@@ -134,7 +134,7 @@ void load_sal_file(char *path) {
 	 mp:mm mp:inhook 
 
 	 ;; Csound
-	 cs:i cs:f cs:clear
+	 cs:score cs:record cs:trace cs:clear cs:print cs:play cs:i cs:f 
 
 	 *messages* send expand-send 
 	 define-process run ;go

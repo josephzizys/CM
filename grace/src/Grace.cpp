@@ -131,7 +131,10 @@ void GraceApp::shutdown () {
   delete midiInPort;
 
   if ( csoundPort->isOpen() )
-    csoundPort->close();
+    csoundPort->close(true);
+  if ( csoundPort->isWriting() )
+    csoundPort->close(false);
+
   delete csoundPort;
 
 #endif

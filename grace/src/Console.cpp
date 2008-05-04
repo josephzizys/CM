@@ -614,21 +614,36 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       menu.addSubMenu(T("Midi In"), sub2);
       // PORTCSOUND
 #ifdef PORTCSOUND
-      menu.addSeparator();
-      if ( app->getCsoundPort()->isOpen() )
-	sub3.addItem(cmdPortsCsoundClose, T("Close"));
-      else if ( app->getCsoundPort()->isWriting() )
-	sub3.addItem(cmdPortsCsoundClose, T("Abort Write"));
-      else {  // is currentlyclosed
-	if ( app->getCsoundPort()->isScoreEmpty() )
+      {
+	bool score = (! app->getCsoundPort()->isScoreEmpty());
+	bool isopen = app->getCsoundPort()->isOpen();
+	menu.addSeparator();
+	if ( isopen )
+	  sub3.addItem(cmdPortsCsoundClose, T("Close"));
+	else
 	  sub3.addItem(cmdPortsCsoundOpen, T("Open..."));
-	else {
-	  sub3.addItem(cmdPortsCsoundWrite, T("Write..."));
-	  sub3.addItem(cmdPortsCsoundExport, T("Export..."));
-	  sub3.addItem(cmdPortsCsoundDisplay, T("Display..."), false);
-	  sub3.addSeparator();
-	  sub3.addItem(cmdPortsCsoundClear, T("Clear"));
-	}
+	sub3.addSeparator();
+	sub3.addItem(cmdPortsCsoundRecordMode, 
+		     T("Record Output to Score"), isopen,
+		     app->getCsoundPort()->isRecordMode());
+	sub3.addItem(cmdPortsCsoundScoreMode, T("Route Output to Score"),
+		     true, app->getCsoundPort()->isScoreMode());
+	sub3.addSeparator();
+	sub7.addItem(cmdPortsCsoundPlay, T("Play"), (score && isopen));
+	if ( app->getCsoundPort()->isWriting() )
+	  sub7.addItem(cmdPortsCsoundAbortWrite, T("Abort Write"));
+	else
+	  sub7.addItem(cmdPortsCsoundWrite, T("Write Audio..."), score);
+	sub7.addSeparator();
+	sub7.addItem(cmdPortsCsoundPrint, T("Print"), score);
+	sub7.addItem(cmdPortsCsoundExport, T("Export..."), score);
+	sub7.addItem(cmdPortsCsoundDisplay, T("Plotter..."), false);
+	sub7.addSeparator();
+	sub7.addItem(cmdPortsCsoundClear, T("Clear"), score);
+	sub3.addSubMenu( T("Score"), sub7, true);    
+	sub3.addSeparator();
+	sub3.addItem(cmdPortsCsoundTraceMode, T("Trace Output"), true,
+		     app->getCsoundPort()->isTraceMode());
       }
       menu.addSubMenu(T("Csound"), sub3);
 #endif
@@ -810,12 +825,23 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     break;
 
   case cmdPortsCsoundOpen :
+    app->getCsoundPort()->open(true);
+    break;
+
   case cmdPortsCsoundWrite :
-    app->getCsoundPort()->open();
+    app->getCsoundPort()->open(false);
     break;
 
   case cmdPortsCsoundClose :
-    app->getCsoundPort()->close();
+    app->getCsoundPort()->close(true);
+    break;
+
+  case cmdPortsCsoundAbortWrite :
+    app->getCsoundPort()->close(false);
+    break;
+
+  case cmdPortsCsoundPlay :
+    app->getCsoundPort()->playScore();
     break;
 
   case cmdPortsCsoundExport :
@@ -826,8 +852,27 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
     app->getCsoundPort()->displayScore();
     break;
 
+  case cmdPortsCsoundPrint :
+    app->getCsoundPort()->printScore();
+    break;
+
   case cmdPortsCsoundClear :
     app->getCsoundPort()->clearScore();
+    break;
+
+  case cmdPortsCsoundScoreMode :
+    app->getCsoundPort()->
+      setScoreMode( (! app->getCsoundPort()->isScoreMode()) );
+    break;
+
+  case cmdPortsCsoundRecordMode :
+    app->getCsoundPort()->
+      setRecordMode( (! app->getCsoundPort()->isRecordMode()) );
+    break;
+
+  case cmdPortsCsoundTraceMode :
+    app->getCsoundPort()->
+      setTraceMode( (! app->getCsoundPort()->isTraceMode()) );
     break;
 
 #endif

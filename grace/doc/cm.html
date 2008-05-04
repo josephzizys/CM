@@ -36,7 +36,13 @@
     <li><a href="#processes">Processes</a></li>
   </ul>
   </li>
-  <li><a href="#send">Sending Data to Ports</a></li>
+  <li><a href="#send">Sending Data to Ports</a>
+  <ul>
+    <li><a href="#midi-port">Midi Port</a></li>
+    <li><a href="#csound-port">Csound Port</a></li>
+  </ul>
+</li>
+
   <li><a href="#scheduler">The Scheduler</a></li>
   <li><a href="#environment">Environment</a></li>
  <li><a href="#expressions">SAL Expressions</a></li>
@@ -3013,20 +3019,10 @@ Sets <var>function</var> to receive <a href="midimessage">Midi Messages</a> that
 
 <h3 id="csound-port">Csound Port Methods</h3>
 
-<p> The Csound port is only avaiable if Grace has been built with
-Csound support enabled the Csound5 libraries are installed on your
-machine.  </p>
+<p> The Csound port is avaiable in the Ports menu if Grace has been
+built with Csound support enabled and the Csound5 libraries are
+installed on your machine.  </p>
 
-<p>The file "grace.orc" in the Grace resource directory can be used to
-experiment with the Csound Port. The file contains two sample
-instruments: <code>i1</code> is a karplus-strong pluck sound and
-<code>i2</code> is a sinewave. Both instruments take five identical
-parameters: <var>ins beg dur key amp</var> where <var>ins</var> is the
-instrument number (1 or 2), <var>beg</var> is the begin time of the
-sound in seconds (normally 0 for real-time audio), <var>dur</var> is
-the sound duration in seconds, <var>key</var> is the note's frequency
-specified as a MIDI key number, and <var>amp</var> is the note's
-amplitude (0-10000).  </p>
 
 
 <!-- DEFINITION -->
@@ -3042,9 +3038,7 @@ amplitude (0-10000).  </p>
 
 <blockquote>
 <p>
-
 Sends instrument data to the Csound port.  The first value should be the instrument's number followed by the rest of its pfield values. For real-time audio the <var>start</var> value (pfield 2) should be 0. The <span class="string">"cs:i"</span> message also accepts a single <var>list</var> of values to be specified, in which case the <var>list</var> should contain the pfield data to send to Csound. The <span class="string">"cs:i"</span> message is also implemented as a Scheme function of the same name that can be called directly. For example, the following Scheme expressions are equivalent:
-
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -3078,14 +3072,99 @@ Sends function table data to Csound. Similar to <span class="string">"cs:i"</spa
 <blockquote>
 <p>
 
-Clears the contents of the Csound port's score buffer.
+Clears the port's score buffer of any contents.
 
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="cs:score">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:score"</span>, <var class="arg">status</var></td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+If <var>status</var> is true then the port is placed in "score mode" and subsequent data sent to the port are routed to the score using time stamps in the data as score time. The port does not have to be open to enable score mode. If <var>status</var> is false then score mode is stopped.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="cs:record">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:record"</span>, <var class="arg">status</var></td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+If <var>status</var> is true or a score start time for recording then the port is armed in "record mode" and subsequent data sent out the open port in real time are copied to the score using internal time stamps to produce time stamps in the score. If <var>status</var> false then recording is stopped.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="cs:trace">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:trace"</span>, <var class="arg">status</var></td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+If <var>status</var> is true then data sent to the port is echoed to the terminal.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="cs:print">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:print"</span>, <var class="opt">start = </var> <var id="optval"> 0.0</var> , <var class="opt">end = </var> <var id="optval"> #f</var></td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Prints score statements between <var>start</var> and <var>end</var> times to the console.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="cs:play">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:play"</span>, <var class="opt">start = </var> <var id="optval"> 0.0</var>, <var class="opt">end = </var> <var id="optval"> #f</var>
+, <var class="opt">shift = </var> <var id="optval"> 0</var></td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Sends score statements between <var>start</var> and <var>end</var> out the open Csound port with start times in playback shifted by <var>shift</var> amount.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<p>The file "grace.orc" in the Grace resource directory can be used to
+experiment with the Csound Port. The file contains two sample
+instruments: <code>i1</code> is a karplus-strong pluck sound and
+<code>i2</code> is a sinewave. Both instruments take five identical
+parameters: <var>ins beg dur key amp</var> where <var>ins</var> is the
+instrument number (1 or 2), <var>beg</var> is the begin time of the
+sound in seconds (normally 0 for real-time audio), <var>dur</var> is
+the sound duration in seconds, <var>key</var> is the note's frequency
+specified as a MIDI key number, and <var>amp</var> is the note's
+amplitude (0-10000).  </p>
+
 <!--
-<h3>Plotter Port Methods</h3>
+<h3 id="plotter-port">Plotter Port Methods</h3>
 <p>Routes data to the focus layer of the current plotter window. (Not yet implemented.)</p>
 -->
 

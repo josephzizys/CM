@@ -137,16 +137,24 @@ public:
 	 "EditCopy" "EditSelectAll"
 	 "ViewClearText" "ViewFontSize"  "ViewThemes" "ViewOpacity"
 	 "PortsMidiOutOpen" "PortsMidiOutTest" "PortsMidiOutHush"
-	 "PortsMidiOutTuning" "PortsMidiOutDrumTrack" "PortsMidiOutPitchBend"
+	 "PortsMidiOutAllNotesOff"
+	 "PortsMidiOutTuning" "PortsMidiOutDrumTrack"
+	 "PortsMidiOutPitchBend" 
 	 "PortsMidiOutWrite" "PortsMidiOutClear" "PortsMidiOutDisplay"
 	 "PortsMidiOutInstruments"
 	 "PortsMidiInOpen" "PortsMidiInTest" "PortsMidiInHook"
 	 "PortsMidiInRecord" "PortsMidiInConfigure"
-	 "PortsCsoundOpen" "PortsCsoundClose"  "PortsCsoundWrite"
-	 "PortsCsoundExport" "PortsCsoundDisplay" "PortsCsoundClear"
+	 "PortsCsoundOpen" "PortsCsoundClose"
+	 "PortsCsoundWrite" "PortsCsoundAbortWrite"
+	 "PortsCsoundPlay" "PortsCsoundImport"
+	 "PortsCsoundExport" "PortsCsoundPrint" "PortsCsoundDisplay"
+	 "PortsCsoundClear"
+	 "PortsCsoundScoreMode" "PortsCsoundRecordMode"
+	 "PortsCsoundTraceMode"
 	 "PortsAudioSetup"
 	 "LispConnect" 
-	 "LispLoadSystem" "LispLoadRecentSystem" "LispClearRecentSystems"
+	 "LispLoadSystem" "LispLoadRecentSystem"
+	 "LispClearRecentSystems"
 	 "LispLoadFile" "LispLoadRecentFile" "LispCompileFile" 
 	 "LispClearRecentLoaded" "LispConfigure")  */
 
@@ -167,34 +175,42 @@ public:
     cmdPortsMidiOutOpen = 36224,
     cmdPortsMidiOutTest = 36480,
     cmdPortsMidiOutHush = 36736,
-    cmdPortsMidiOutTuning = 36992,
-    cmdPortsMidiOutDrumTrack = 37248,
-    cmdPortsMidiOutPitchBend = 37504,
-    cmdPortsMidiOutWrite = 37760,
-    cmdPortsMidiOutClear = 38016,
-    cmdPortsMidiOutDisplay = 38272,
-    cmdPortsMidiOutInstruments = 38528,
-    cmdPortsMidiInOpen = 38784,
-    cmdPortsMidiInTest = 39040,
-    cmdPortsMidiInHook = 39296,
-    cmdPortsMidiInRecord = 39552,
-    cmdPortsMidiInConfigure = 39808,
-    cmdPortsCsoundOpen = 40064,
-    cmdPortsCsoundClose = 40320,
-    cmdPortsCsoundWrite = 40576,
-    cmdPortsCsoundExport = 40832,
-    cmdPortsCsoundDisplay = 41088,
-    cmdPortsCsoundClear = 41344,
-    cmdPortsAudioSetup = 41600,
-    cmdLispConnect = 41856,
-    cmdLispLoadSystem = 42112,
-    cmdLispLoadRecentSystem = 42368,
-    cmdLispClearRecentSystems = 42624,
-    cmdLispLoadFile = 42880,
-    cmdLispLoadRecentFile = 43136,
-    cmdLispCompileFile = 43392,
-    cmdLispClearRecentLoaded = 43648,
-    cmdLispConfigure = 43904};
+    cmdPortsMidiOutAllNotesOff = 36992,
+    cmdPortsMidiOutTuning = 37248,
+    cmdPortsMidiOutDrumTrack = 37504,
+    cmdPortsMidiOutPitchBend = 37760,
+    cmdPortsMidiOutWrite = 38016,
+    cmdPortsMidiOutClear = 38272,
+    cmdPortsMidiOutDisplay = 38528,
+    cmdPortsMidiOutInstruments = 38784,
+    cmdPortsMidiInOpen = 39040,
+    cmdPortsMidiInTest = 39296,
+    cmdPortsMidiInHook = 39552,
+    cmdPortsMidiInRecord = 39808,
+    cmdPortsMidiInConfigure = 40064,
+    cmdPortsCsoundOpen = 40320,
+    cmdPortsCsoundClose = 40576,
+    cmdPortsCsoundWrite = 40832,
+    cmdPortsCsoundAbortWrite = 41088,
+    cmdPortsCsoundPlay = 41344,
+    cmdPortsCsoundImport = 41600,
+    cmdPortsCsoundExport = 41856,
+    cmdPortsCsoundPrint = 42112,
+    cmdPortsCsoundDisplay = 42368,
+    cmdPortsCsoundClear = 42624,
+    cmdPortsCsoundScoreMode = 42880,
+    cmdPortsCsoundRecordMode = 43136,
+    cmdPortsCsoundTraceMode = 43392,
+    cmdPortsAudioSetup = 43648,
+    cmdLispConnect = 43904,
+    cmdLispLoadSystem = 44160,
+    cmdLispLoadRecentSystem = 44416,
+    cmdLispClearRecentSystems = 44672,
+    cmdLispLoadFile = 44928,
+    cmdLispLoadRecentFile = 45184,
+    cmdLispCompileFile = 45440,
+    cmdLispClearRecentLoaded = 45696,
+    cmdLispConfigure = 45952};
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};
