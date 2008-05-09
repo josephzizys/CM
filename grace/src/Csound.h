@@ -26,6 +26,7 @@
 
 #else
 typedef double MYFLT;
+typedef void CSOUND;
 #endif
 
 class ConsoleWindow;

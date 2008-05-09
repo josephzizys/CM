@@ -30,7 +30,10 @@ bool CsoundConnection::init (String input) {
   int argc=toks.size();
   char *argv[argc];
   for (int i=0; i<argc; i++) {
-    argv[i]=(char*)toks[i].toUTF8();
+    if ( toks[i].startsWith(T("\"")) )
+      argv[i]=(char*)toks[i].unquoted().toUTF8();	
+    else
+      argv[i]=(char*)toks[i].toUTF8();
   }  
   csound=csoundCreate(NULL); 
   int result=csoundCompile(csound, argc, argv); 
@@ -318,8 +321,12 @@ bool CsoundPort::open (bool port) {
 		        T("' does not exist.\n"));
     return false;
   }
-  else
-    input << " " << orcfiles.getFile(0).getFullPathName();
+  else {
+    String p=orcfiles.getFile(0).getFullPathName().trim();
+    if ( p.contains(T(" ")) )
+      p=p.quoted();
+    input << " " << p;
+  }
 
   console->printMessage( T("Initializing Csound: ") + input + T(" ..."));
 
