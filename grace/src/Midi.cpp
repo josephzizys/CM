@@ -60,59 +60,85 @@ MidiNode::~MidiNode() {
 
 void MidiNode::process() {
   switch (type) {
-  case MM_ON:
-    if ( values[DATA2] > 0.0 ) {
-      // note on velocity range 0.0-1.0 or 0.0-127.0
-      float vel=(values[DATA2]>1.0) ? (values[DATA2]/127.0f) : values[DATA2] ;
-      midiOutPort->device->
-	sendMessageNow( MidiMessage::noteOn((int)values[DATA0]+1, 
-					    (int)values[DATA1], 
-					    vel));
-    }
-    else
-      midiOutPort->device->
-	sendMessageNow( MidiMessage::noteOff( (int)values[DATA0]+1,
-					      (int)values[DATA1]) );
-    break;
-  case MM_OFF:
-    midiOutPort->device->
-      sendMessageNow( MidiMessage::noteOff( (int)values[DATA0]+1,
-					    (int)values[DATA1]) );
-    break;
-  case MM_PROG :
-    midiOutPort->device->
-      sendMessageNow( MidiMessage::programChange( (int)values[DATA0]+1,
-						  (int)values[DATA1]) );
-    break;
-  case MM_CTRL :
-    midiOutPort->device->
-      sendMessageNow( MidiMessage::controllerEvent( (int)values[DATA0]+1,
-						    (int)values[DATA1],
-						    (int)values[DATA2]) );
-    break;
-  case MM_BEND :
-    midiOutPort->device->
-      sendMessageNow( MidiMessage::pitchWheel( (int)values[DATA0]+1,
-					       (int)values[DATA1]) );
-    break;
-  case MM_TOUCH :
-    midiOutPort->device->
-      sendMessageNow( MidiMessage::aftertouchChange( (int)values[DATA0]+1,
-						     (int)values[DATA1],
-						     (int)values[DATA2]) );
-    break;
-  case MM_PRESS :
-    midiOutPort->device->
-      sendMessageNow( MidiMessage::channelPressureChange( (int)values[DATA0]+1,
-							  (int)values[DATA1]) );
-    break;
-  case MM_MESSAGE :
-    midiOutPort->device->sendMessageNow( *message );
-  default:
-    break;
+      
+    case MM_ON:
+      if ( values[DATA2] > 0.0 ) {
+        // note on velocity range 0.0-1.0 or 0.0-127.0
+        float vel=(values[DATA2]>1.0) ? (values[DATA2]/127.0f) : values[DATA2] ;
+        midiOutPort->device->sendMessageNow( MidiMessage::noteOn((int)values[DATA0]+1, 
+                                                                 (int)values[DATA1], 
+                                                                 vel));
+        if( midiOutPort->isRecording() ) {
+          midiOutPort->captureSequence.addEvent( MidiMessage::noteOn((int)values[DATA0]+1, 
+                                                                     (int)values[DATA1], 
+                                                                     vel), midiOutPort->recordOffset());
+          midiOutPort->captureSequence.updateMatchedPairs();
+        }
+      }
+      else {
+        midiOutPort->device->sendMessageNow( MidiMessage::noteOff( (int)values[DATA0]+1,
+                                                                  (int)values[DATA1]) );
+        if( midiOutPort->isRecording() )
+          midiOutPort->captureSequence.addEvent( MidiMessage::noteOff( (int)values[DATA0]+1,
+                                                                      (int)values[DATA1]), midiOutPort->recordOffset());
+      }
+      break;
+      case MM_OFF:
+      midiOutPort->device->sendMessageNow( MidiMessage::noteOff( (int)values[DATA0]+1,
+                                                                (int)values[DATA1]) );
+      if( midiOutPort->isRecording() )
+        midiOutPort->captureSequence.addEvent( MidiMessage::noteOff( (int)values[DATA0]+1,
+                                                                    (int)values[DATA1]), midiOutPort->recordOffset());
+      break;
+      case MM_PROG :
+      midiOutPort->device->sendMessageNow( MidiMessage::programChange( (int)values[DATA0]+1,
+                                                                      (int)values[DATA1]) );
+      if( midiOutPort->isRecording() )
+        midiOutPort->captureSequence.addEvent( MidiMessage::programChange( (int)values[DATA0]+1,
+                                                                          (int)values[DATA1]), midiOutPort->recordOffset());
+      break;
+      case MM_CTRL :
+      midiOutPort->device->sendMessageNow(  MidiMessage::controllerEvent((int)values[DATA0]+1,
+                                                                         (int)values[DATA1],
+                                                                         (int)values[DATA2]));
+      if( midiOutPort->isRecording() )
+        midiOutPort->captureSequence.addEvent( MidiMessage::controllerEvent((int)values[DATA0]+1,
+                                                                            (int)values[DATA1],
+                                                                            (int)values[DATA2]), midiOutPort->recordOffset());
+      break;
+      case MM_BEND :
+      midiOutPort->device->sendMessageNow( MidiMessage::pitchWheel( (int)values[DATA0]+1,
+                                                                   (int)values[DATA1]) );
+      if( midiOutPort->isRecording() )
+        midiOutPort->captureSequence.addEvent( MidiMessage::pitchWheel( (int)values[DATA0]+1,
+                                                                       (int)values[DATA1]), midiOutPort->recordOffset());
+      break;
+      case MM_TOUCH :
+      midiOutPort->device->sendMessageNow( MidiMessage::aftertouchChange( (int)values[DATA0]+1,
+                                                                         (int)values[DATA1],
+                                                                         (int)values[DATA2] ) );
+      if( midiOutPort->isRecording() )
+        midiOutPort->captureSequence.addEvent( MidiMessage::aftertouchChange( (int)values[DATA0]+1,
+                                                                             (int)values[DATA1],
+                                                                             (int)values[DATA2] ), midiOutPort->recordOffset());
+      break;
+      case MM_PRESS :
+      midiOutPort->device->sendMessageNow( MidiMessage::channelPressureChange( (int)values[DATA0]+1,
+                                                                              (int)values[DATA1]) );
+      if( midiOutPort->isRecording() )
+        midiOutPort->captureSequence.addEvent( MidiMessage::channelPressureChange( (int)values[DATA0]+1,
+                                                                                  (int)values[DATA1]), midiOutPort->recordOffset());
+      break;
+      case MM_MESSAGE :
+      //what to do here???
+      midiOutPort->device->sendMessageNow( *message );
+      
+      break;
+      default:
+  break;
+  
   }
 }
-
 //
 // Queue
 //
@@ -127,7 +153,9 @@ MidiOutPort::MidiOutPort(ConsoleWindow *win)
     microchancount (16),
     microchanblock (16),
     avoiddrumtrack (true),
-    pitchbendwidth (2)
+    pitchbendwidth (2),
+recording(false),
+writing(false)
 {	
   console=win;
   for(int i=0;i<16;i++)
@@ -196,6 +224,102 @@ bool MidiOutPort::isOpen(int id) {
   else
     return (id == devid); // asking if specific dev is open
 }
+
+
+void MidiOutPort::setRecording(bool r)
+{
+  printf("start recorindg\n");
+  FileChooser recordChooser("Select file to record to...", 
+                            File::getSpecialLocation (File::userHomeDirectory),
+                            "*.mid");
+  if(recordChooser.browseForFileToSave(true)) {
+    recording = r;
+    if(isRecording() && isWriting()) {
+      stopWriting();
+    }
+    fileForRecording = recordChooser.getResult();
+  }
+}
+
+bool MidiOutPort::isRecording()
+{
+  return recording;
+}
+
+void MidiOutPort::setWriting(bool r)
+{
+  FileChooser writeChooser("Select file to write to...", 
+                            File::getSpecialLocation (File::userHomeDirectory),
+                            "*.mid");
+  if(writeChooser.browseForFileToSave(true)) {
+    writing = r;
+    if(isRecording() && isWriting()) {
+      stopRecording();
+    }
+    fileForWriting = writeChooser.getResult();
+  }
+  //use FileChooser
+}
+
+bool MidiOutPort::isWriting()
+{
+  
+  return writing;
+}
+
+void MidiOutPort::startWriting(int tempo, int tsnum, int tsdenom)
+{
+  captureSequence.clear();
+  
+  captureSequence.addEvent( MidiMessage::timeSignatureMetaEvent(tsnum, tsdenom));
+  //captureSequence.addEvent( MidiMessage::tempoMetaEvent( tempo * 1000000));//in microseconds!!
+  startRecordTime = Time::getMillisecondCounterHiRes();
+  setRecording(true);
+  
+}
+
+void MidiOutPort::stopWriting()
+{
+  
+  setWriting(false);
+//  File file(T("/tmp/foo.mid"));
+
+  FileOutputStream outputStream(fileForWriting);
+  MidiFile * midifile = new MidiFile();
+  midifile->setSmpteTimeFormat(25, 40); //this equals 1 millisecond resolution
+  midifile->addTrack(captureSequence);
+  midifile->writeTo(outputStream );
+  
+}
+
+
+
+void MidiOutPort::startRecording(int tempo, int tsnum, int tsdenom)
+{
+  captureSequence.clear();
+  
+  captureSequence.addEvent( MidiMessage::timeSignatureMetaEvent(tsnum, tsdenom));
+  //captureSequence.addEvent( MidiMessage::tempoMetaEvent( tempo * 1000000));//in microseconds!!
+  startRecordTime = Time::getMillisecondCounterHiRes();
+  setRecording(true);
+  
+}
+
+void MidiOutPort::stopRecording()
+{
+  
+  setRecording(false);
+//  File file(T("/tmp/foo.mid"));
+
+  FileOutputStream outputStream(fileForRecording);
+  MidiFile * midifile = new MidiFile();
+  midifile->setSmpteTimeFormat(25, 40); //this equals 1 millisecond resolution
+  midifile->addTrack(captureSequence);
+  midifile->writeTo(outputStream );
+  
+}
+
+
 
 //
 // output queue 

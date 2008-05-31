@@ -97,6 +97,25 @@ class MidiOutPort : public Thread {
   void sendInstruments();
   void resetInstruments();
   void showInstrumentsWindow();
+  
+  //for recording output
+  MidiMessageSequence captureSequence;
+  bool recording;
+  void setRecording(bool r);
+  bool isRecording();
+  void setWriting(bool r);
+  bool writing;
+  bool isWriting();
+  void startWriting(int tempo=120, int tsnum=4, int tsdenom=4);
+  void stopWriting();
+  void startRecording(int tempo=120, int tsnum=4, int tsdenom=4);
+  void stopRecording();
+  double startRecordTime;
+  File fileForWriting;
+  File fileForRecording;
+  double recordOffset() { return Time::getMillisecondCounterHiRes() - startRecordTime; };
+  
+  void writeFile(); // create dialog window to pick tempo and meter
 };
 
 class MidiInPort : public MidiInputCallback {
