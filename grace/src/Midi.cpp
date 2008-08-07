@@ -197,13 +197,15 @@ void MidiOutPort::sendOut(MidiMessage& msg)
   device->sendMessageNow(msg);
   if ( isRecording() )
     {
+      // cache the time offset of the first recorded note 
       if (recordTimeOffset<0)
 	recordTimeOffset=msg.getTimeStamp();
-      //std::cout << "adding msg to seq at time " << time << "\n";
-      captureSequence.addEvent( MidiMessage(msg), 0);
+      // shift added tones by the recording offset
+      captureSequence.addEvent( MidiMessage(msg),
+				-recordTimeOffset //0
+				);
     }
 }
-
 
 MidiOutPort::MidiOutPort(ConsoleWindow *win)
   : Thread(T("Midi Out Port")),
@@ -1514,7 +1516,6 @@ void MidiFileInfoComponent::sliderValueChanged (Slider* slider)
 
 void MidiFileInfoComponent::buttonClicked (Button* button)
 {
-
   if (button == cancelbutton)
     {
       ((DialogWindow *)getTopLevelComponent())->exitModalState(false);
@@ -1562,7 +1563,7 @@ void MidiOutPort::writeSequence(bool ask)
     }
 
   captureSequence.updateMatchedPairs();
-  captureSequence.addTimeToMessages( - captureSequence.getStartTime() );
+  //  captureSequence.addTimeToMessages( - captureSequence.getStartTime() );
 
   FileOutputStream outputStream(sequenceFile.file);
   MidiFile* midifile = new MidiFile();
