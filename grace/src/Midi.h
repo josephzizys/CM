@@ -1,3 +1,13 @@
+/*************************************************************************
+ * Copyright (C) 2007 Todd Ingalls, Rick Taube.                          *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the Lisp Lesser Gnu Public License. The text of *
+ * this agreement is available at http://www.cliki.net/LLGPL             *
+ *************************************************************************/
+
+// $Revision: 1495 $
+// $Date: 2007-11-25 19:01:22 -0600 (Sun, 25 Nov 2007) $ 
+
 #ifndef __MIDI__
 #define __MIDI__
 
@@ -41,7 +51,64 @@ public:
   }
 };
 
-class MidiOutPort : public Thread {
+
+/*
+       addAndMakeVisible (depthSlider = new Slider (T("toolbar depth:")));
+        depthSlider->setRange (10.0, 200.0, 1.0);
+        depthSlider->setValue (50, false);
+        depthSlider->setSliderStyle (Slider::LinearHorizontal);
+        depthSlider->setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
+        depthSlider->addListener (this);
+        depthSlider->setBounds (80, 210, 300, 22);
+        (new Label (depthSlider->getName(), depthSlider->getName()))->attachToComponent (depthSlider, false);
+
+*/
+
+class MidiFileInfo
+{
+ public:
+  File file;  // output file name
+  int keysig; // 1 to 15 (1=7Flats, 8=CMajor, 15=7Sharps
+  int tempo;  // beats per minute
+  int tsig1;  // timesig numerator
+  int tsig2;  // timesig denominator
+  
+ MidiFileInfo() 
+   : file (File::nonexistent), keysig (8), tempo (120), tsig1(4), tsig2(4)
+    {
+    }      
+  
+  ~MidiFileInfo() {}
+  
+  MidiMessage getTempoMessage()
+  {
+    double micro=1000000.0*(60.0/(double)tempo);
+    return MidiMessage::tempoMetaEvent((int)micro);
+  }
+
+  MidiMessage getTimeSigMessage()
+  {
+    return MidiMessage::timeSignatureMetaEvent(tsig1, tsig2);
+  }
+
+  MidiMessage getKeySigMessage()
+  {
+    int sf=keysig-8;  // sf -7 to 7
+    //	if (sf<0) sf+=256;
+    // WTF? juce is missing a keysig constructor...
+    juce::uint8 d[8];
+    d[0] = 0xff; // is meta event
+    d[1] = 89;   // meta event opcode for keysig
+    d[2] = 0x02; // meta event data length
+    d[3] = sf;   // two's complement of -7 to 7
+    d[4] = 0;    // major mode
+    return MidiMessage(d, 5, 0.0); 
+  }
+};
+
+
+class MidiOutPort : public Thread 
+{
  public:
   int devid;
   MidiOutput *device;
@@ -98,24 +165,18 @@ class MidiOutPort : public Thread {
   void resetInstruments();
   void showInstrumentsWindow();
   
+  void sendOut(MidiMessage& msg);
   //for recording output
   MidiMessageSequence captureSequence;
+  MidiFileInfo sequenceFile;
+  bool isSequenceEmpty();
+  bool isSequenceData();
   bool recording;
+  double recordTimeOffset;
   void setRecording(bool r);
   bool isRecording();
-  void setWriting(bool r);
-  bool writing;
-  bool isWriting();
-  void startWriting(int tempo=120, int tsnum=4, int tsdenom=4);
-  void stopWriting();
-  void startRecording(int tempo=120, int tsnum=4, int tsdenom=4);
-  void stopRecording();
-  double startRecordTime;
-  File fileForWriting;
-  File fileForRecording;
-  double recordOffset() { return Time::getMillisecondCounterHiRes() - startRecordTime; };
-  
-  void writeFile(); // create dialog window to pick tempo and meter
+  void clearSequence();
+  void writeSequence(bool ask=false);
 };
 
 class MidiInPort : public MidiInputCallback {

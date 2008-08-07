@@ -487,6 +487,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
   
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3, sub4, sub5, sub6, sub7;
+  PopupMenu midiOutFileMenu;
   int val;
   switch (idx) {
     case GRACEMENU :
@@ -557,17 +558,9 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       sub1.addSeparator();
       sub1.addItem(cmdPortsMidiOutTest, T("Test Output"), ( ! active ));
       sub1.addItem(cmdPortsMidiOutHush, T("Hush"), active);
+
       sub1.addSeparator();
-      sub1.addItem(cmdPortsMidiOutRecordMode, 
-                   T("Record Output to Midi File"), true,
-                   app->midiOutPort->isRecording());
-      sub1.addItem(cmdPortsMidiOutFileMode, T("Route Output to Midi File"),
-                   true, app->midiOutPort->isWriting());
-      sub1.addItem(cmdPortsMidiOutFileWrite, T("Close Midi File"),
-                   true);
-      sub1.addSeparator();
-      
-      
+
       int t= app->midiOutPort->getTuning();
       for (int i=1;i<=16;i++)
         sub5.addItem(cmdPortsMidiOutTuning+i, 
@@ -584,14 +577,12 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       sub1.addSubMenu( T("Microtuning") , sub5);
       sub1.addItem(cmdPortsMidiOutInstruments, T("Instruments...."),
                    ( ! active ));
+
       //      
       menu.addSubMenu( T("Midi Out") , sub1);
       //menu.addSeparator();
       // MIDI IN (stubbed for now)
       devs= MidiInput::getDevices();
-      
-      //      printf("isopen=%d isactive=%d\n", app->midiInPort->isOpen(),
-      //	     app->midiInPort->isActive() );
       
       if (devs.size() == 0)
         sub2.addItem(cmdPortsMidiInOpen, T("(no devices)"), false);
@@ -623,6 +614,25 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
       sub2.addSeparator();
       sub2.addItem(cmdPortsMidiInConfigure, T("Configure..."));
       menu.addSubMenu(T("Midi In"), sub2);
+
+      // Midifile
+      midiOutFileMenu.addItem(cmdPortsMidiOutFileRecord,
+			      T("Record Midi Out"),
+			      true, app->midiOutPort->isRecording());
+      midiOutFileMenu.addSeparator();
+      midiOutFileMenu.addItem(cmdPortsMidiOutFileClear, 
+			      T("Clear"), 
+			      app->midiOutPort->isSequenceData());
+      midiOutFileMenu.addItem(cmdPortsMidiOutFileSave, 
+			      T("Save"),
+			      app->midiOutPort->isSequenceData());
+      midiOutFileMenu.addItem(cmdPortsMidiOutFileSaveAs, 
+			      T("Save As..."),
+			      app->midiOutPort->isSequenceData());
+      //sub1.addSubMenu( T("Midi File"), midiOutFileMenu);
+      menu.addSubMenu( T("Midi File"), midiOutFileMenu);
+
+
       // PORTCSOUND
 #ifdef PORTCSOUND
       {
@@ -795,20 +805,20 @@ void ConsoleWindow::menuItemSelected (int id, int idx) {
       app->midiOutPort->setTuning(arg, true);
       break;
       
-    case cmdPortsMidiOutRecordMode :
-      app->midiOutPort->setRecording(true);
+    case cmdPortsMidiOutFileRecord :
+      app->midiOutPort->setRecording( ! app->midiOutPort->isRecording() );
       break;
-      
-    case cmdPortsMidiOutFileMode :
-      app->midiOutPort->setWriting(true);
-      break;
-      
-    case cmdPortsMidiOutFileWrite :
 
-      if( app->midiOutPort->isRecording() )
-        app->midiOutPort->stopRecording();
-      if( app->midiOutPort->isWriting() )
-        app->midiOutPort->stopWriting();
+    case cmdPortsMidiOutFileClear :
+      app->midiOutPort->clearSequence();
+      break;
+      
+    case cmdPortsMidiOutFileSave :
+      app->midiOutPort->writeSequence();
+      break;                 
+
+    case cmdPortsMidiOutFileSaveAs :
+      app->midiOutPort->writeSequence(true);
       break;                 
 
     case cmdPortsMidiOutPitchBend :

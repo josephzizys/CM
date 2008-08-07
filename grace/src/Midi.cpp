@@ -1,5 +1,4 @@
 /*************************************************************************
- *
  * Copyright (C) 2007 Todd Ingalls, Rick Taube.                          *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the Lisp Lesser Gnu Public License. The text of *
@@ -12,6 +11,40 @@
 #include "Midi.h"
 #include "Grace.h"
 #include "Toolbox.h"
+#include <iostream>;
+
+
+String midiMessageToString (const MidiMessage &msg) {
+  int chan=msg.getChannel();
+  String info;
+  if ( msg.isNoteOn() )
+    info=T("on chan: ") + String(chan-1) + T(" key: ")
+      + String(msg.getNoteNumber()) + T(" vel: ")
+      + String(msg.getVelocity());
+  else if ( msg.isNoteOff() ) 
+    info=T("off chan: ") + String(chan-1) + T(" key: ")
+      + String(msg.getNoteNumber());
+  else if ( msg.isController() )
+    info=T("ctrl chan: ") + String(chan-1) + T(" ctrl: ") 
+      + MidiMessage::getControllerName(msg.getControllerNumber())
+      + T(" value: ") + String(msg.getControllerValue());  
+  else if ( msg.isProgramChange() )
+    info=T("prog chan: ") + String(chan-1) + T(" prog: ")
+      + MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
+  else if ( msg.isPitchWheel())
+    info=T("bend chan: ") + String(chan-1) + T(" val: ")
+      + String(msg.getPitchWheelValue());
+  else if ( msg.isAftertouch() )
+    info=T("touch chan: ") + String(chan-1) + T(" val: ")
+      + String(msg.getAfterTouchValue());
+  else if ( msg.isChannelPressure() )
+    info=T("press chan: ") + String(chan-1) + T(" val: ")
+      + String(msg.getChannelPressureValue());
+  else if ( msg.isActiveSense() )
+    info=T("sense time: ") + String(msg.getTimeStamp(), 3);
+  return info;
+}
+
 
 //
 //  Nodes
@@ -59,90 +92,118 @@ MidiNode::~MidiNode() {
   values.clear();
 }
 
-void MidiNode::process() {
-  switch (type) {
+
+void MidiNode::process()
+{
+  switch (type)
+    {
       
     case MM_ON:
-      if ( values[DATA2] > 0.0 ) {
-        // note on velocity range 0.0-1.0 or 0.0-127.0
-        float vel=(values[DATA2]>1.0) ? (values[DATA2]/127.0f) : values[DATA2] ;
-        midiOutPort->device->sendMessageNow( MidiMessage::noteOn((int)values[DATA0]+1, 
-                                                                 (int)values[DATA1], 
-                                                                 vel));
-        if( midiOutPort->isRecording() ) {
-          midiOutPort->captureSequence.addEvent( MidiMessage::noteOn((int)values[DATA0]+1, 
-                                                                     (int)values[DATA1], 
-                                                                     vel), midiOutPort->recordOffset());
-          midiOutPort->captureSequence.updateMatchedPairs();
-        }
+      if ( values[DATA2] > 0.0 )
+	{
+	  // handle velocity ranges 0.0-1.0 or 0.0-127.0
+	  float vel=(values[DATA2]>1.0) ? (values[DATA2]/127.0f) : values[DATA2] ;
+	  MidiMessage msg=MidiMessage::noteOn((int)values[DATA0]+1, 
+					      (int)values[DATA1], 
+					      vel);
+	  msg.setTimeStamp(time);
+	  midiOutPort->sendOut(msg);
+	}
+      else 
+	{
+	  MidiMessage msg=MidiMessage::noteOff( (int)values[DATA0]+1,
+						(int)values[DATA1]);
+	  msg.setTimeStamp(time);
+	  midiOutPort->sendOut(msg);
+	}
+      break;
+    case MM_OFF:
+      {
+	MidiMessage msg=MidiMessage::noteOff( (int)values[DATA0]+1,
+					      (int)values[DATA1]);
+	msg.setTimeStamp(time);
+	midiOutPort->sendOut(msg);
       }
-      else {
-        midiOutPort->device->sendMessageNow( MidiMessage::noteOff( (int)values[DATA0]+1,
-                                                                  (int)values[DATA1]) );
-        if( midiOutPort->isRecording() )
-          midiOutPort->captureSequence.addEvent( MidiMessage::noteOff( (int)values[DATA0]+1,
-                                                                      (int)values[DATA1]), midiOutPort->recordOffset());
-      }
       break;
-      case MM_OFF:
-      midiOutPort->device->sendMessageNow( MidiMessage::noteOff( (int)values[DATA0]+1,
-                                                                (int)values[DATA1]) );
-      if( midiOutPort->isRecording() )
-        midiOutPort->captureSequence.addEvent( MidiMessage::noteOff( (int)values[DATA0]+1,
-                                                                    (int)values[DATA1]), midiOutPort->recordOffset());
-      break;
-      case MM_PROG :
-      midiOutPort->device->sendMessageNow( MidiMessage::programChange( (int)values[DATA0]+1,
-                                                                      (int)values[DATA1]) );
-      if( midiOutPort->isRecording() )
-        midiOutPort->captureSequence.addEvent( MidiMessage::programChange( (int)values[DATA0]+1,
-                                                                          (int)values[DATA1]), midiOutPort->recordOffset());
-      break;
-      case MM_CTRL :
-      midiOutPort->device->sendMessageNow(  MidiMessage::controllerEvent((int)values[DATA0]+1,
-                                                                         (int)values[DATA1],
-                                                                         (int)values[DATA2]));
-      if( midiOutPort->isRecording() )
-        midiOutPort->captureSequence.addEvent( MidiMessage::controllerEvent((int)values[DATA0]+1,
-                                                                            (int)values[DATA1],
-                                                                            (int)values[DATA2]), midiOutPort->recordOffset());
-      break;
-      case MM_BEND :
-      midiOutPort->device->sendMessageNow( MidiMessage::pitchWheel( (int)values[DATA0]+1,
-                                                                   (int)values[DATA1]) );
-      if( midiOutPort->isRecording() )
-        midiOutPort->captureSequence.addEvent( MidiMessage::pitchWheel( (int)values[DATA0]+1,
-                                                                       (int)values[DATA1]), midiOutPort->recordOffset());
-      break;
-      case MM_TOUCH :
-      midiOutPort->device->sendMessageNow( MidiMessage::aftertouchChange( (int)values[DATA0]+1,
-                                                                         (int)values[DATA1],
-                                                                         (int)values[DATA2] ) );
-      if( midiOutPort->isRecording() )
-        midiOutPort->captureSequence.addEvent( MidiMessage::aftertouchChange( (int)values[DATA0]+1,
-                                                                             (int)values[DATA1],
-                                                                             (int)values[DATA2] ), midiOutPort->recordOffset());
-      break;
-      case MM_PRESS :
-      midiOutPort->device->sendMessageNow( MidiMessage::channelPressureChange( (int)values[DATA0]+1,
-                                                                              (int)values[DATA1]) );
-      if( midiOutPort->isRecording() )
-        midiOutPort->captureSequence.addEvent( MidiMessage::channelPressureChange( (int)values[DATA0]+1,
-                                                                                  (int)values[DATA1]), midiOutPort->recordOffset());
-      break;
-      case MM_MESSAGE :
-      //what to do here???
-      midiOutPort->device->sendMessageNow( *message );
       
+    case MM_PROG :
+      {
+	MidiMessage msg=MidiMessage::programChange( (int)values[DATA0]+1,
+						    (int)values[DATA1]);
+	msg.setTimeStamp(time);
+	midiOutPort->sendOut(msg);
+      }
       break;
-      default:
-  break;
-  
-  }
+      
+    case MM_CTRL :
+      {
+	MidiMessage msg=MidiMessage::controllerEvent((int)values[DATA0]+1,
+						     (int)values[DATA1],
+						     (int)values[DATA2]);
+	msg.setTimeStamp(time);
+	midiOutPort->sendOut(msg);
+      }
+      break;
+      
+    case MM_BEND :
+      {
+	MidiMessage msg=MidiMessage::pitchWheel((int)values[DATA0]+1,
+						(int)values[DATA1]) ;
+	msg.setTimeStamp(time);
+	midiOutPort->sendOut(msg);
+      }
+      break;
+      
+    case MM_TOUCH :
+      {
+	MidiMessage msg=MidiMessage::aftertouchChange((int)values[DATA0]+1,
+						      (int)values[DATA1],
+						      (int)values[DATA2] );
+	msg.setTimeStamp(time);
+	midiOutPort->sendOut(msg);
+      }
+      break;
+      
+    case MM_PRESS :
+      {
+	MidiMessage msg=
+	  MidiMessage::channelPressureChange((int)values[DATA0]+1,
+					     (int)values[DATA1]);
+	msg.setTimeStamp(time);
+	midiOutPort->sendOut(msg);
+      }
+      break;
+      
+    case MM_MESSAGE :
+      {
+	MidiMessage msg=*message;
+	msg.setTimeStamp(time);
+	midiOutPort->sendOut(msg);
+      }      
+      break;
+
+    default:
+      break;
+    }
 }
+
+
 //
 // Queue
 //
+
+void MidiOutPort::sendOut(MidiMessage& msg)
+{
+  device->sendMessageNow(msg);
+  if ( isRecording() )
+    {
+      if (recordTimeOffset<0)
+	recordTimeOffset=msg.getTimeStamp();
+      //std::cout << "adding msg to seq at time " << time << "\n";
+      captureSequence.addEvent( MidiMessage(msg), 0);
+    }
+}
+
 
 MidiOutPort::MidiOutPort(ConsoleWindow *win)
   : Thread(T("Midi Out Port")),
@@ -155,8 +216,9 @@ MidiOutPort::MidiOutPort(ConsoleWindow *win)
     microchanblock (16),
     avoiddrumtrack (true),
     pitchbendwidth (2),
-recording(false),
-writing(false)
+    recording(false),
+    recordTimeOffset (-1.0)
+    //    sequenceFile (File::nonexistent)
 {	
   console=win;
   for(int i=0;i<16;i++)
@@ -177,12 +239,14 @@ writing(false)
   tuningnames.add(T("7.1 Cent"));
   tuningnames.add(T("6.6 Cent"));
   tuningnames.add(T("6.25 Cent"));
+  captureSequence.clear();
 }
 
 MidiOutPort::~MidiOutPort()
 {
   if ( device != NULL ) delete device;
   outputNodes.clear();
+  captureSequence.clear();
 }
 
 void MidiOutPort::open(String name) {
@@ -226,20 +290,24 @@ bool MidiOutPort::isOpen(int id) {
     return (id == devid); // asking if specific dev is open
 }
 
+///
+/// recording output to sequence
+///
+
+bool MidiOutPort::isSequenceEmpty()
+{
+  return (captureSequence.getNumEvents()==0);
+}
+
+bool MidiOutPort::isSequenceData()
+{
+  return (captureSequence.getNumEvents()>0);
+}
 
 void MidiOutPort::setRecording(bool r)
 {
-  printf("start recorindg\n");
-  FileChooser recordChooser("Select file to record to...", 
-                            File::getSpecialLocation (File::userHomeDirectory),
-                            "*.mid");
-  if(recordChooser.browseForFileToSave(true)) {
-    recording = r;
-    if(isRecording() && isWriting()) {
-      stopWriting();
-    }
-    fileForRecording = recordChooser.getResult();
-  }
+  recording = r;
+  recordTimeOffset=-1;
 }
 
 bool MidiOutPort::isRecording()
@@ -247,79 +315,24 @@ bool MidiOutPort::isRecording()
   return recording;
 }
 
-void MidiOutPort::setWriting(bool r)
-{
-  FileChooser writeChooser("Select file to write to...", 
-                            File::getSpecialLocation (File::userHomeDirectory),
-                            "*.mid");
-  if(writeChooser.browseForFileToSave(true)) {
-    writing = r;
-    if(isRecording() && isWriting()) {
-      stopRecording();
-    }
-    fileForWriting = writeChooser.getResult();
-  }
-  //use FileChooser
-}
-
-bool MidiOutPort::isWriting()
-{
-  
-  return writing;
-}
-
-void MidiOutPort::startWriting(int tempo, int tsnum, int tsdenom)
+void MidiOutPort::clearSequence()
 {
   captureSequence.clear();
-  
-  captureSequence.addEvent( MidiMessage::timeSignatureMetaEvent(tsnum, tsdenom));
-  //captureSequence.addEvent( MidiMessage::tempoMetaEvent( tempo * 1000000));//in microseconds!!
-  startRecordTime = Time::getMillisecondCounterHiRes();
-  setRecording(true);
-  
-}
-
-void MidiOutPort::stopWriting()
-{
-  
-  setWriting(false);
-//  File file(T("/tmp/foo.mid"));
-
-  FileOutputStream outputStream(fileForWriting);
-  MidiFile * midifile = new MidiFile();
-  midifile->setSmpteTimeFormat(25, 40); //this equals 1 millisecond resolution
-  midifile->addTrack(captureSequence);
-  midifile->writeTo(outputStream );
-  
 }
 
 
+/*
 
-void MidiOutPort::startRecording(int tempo, int tsnum, int tsdenom)
-{
-  captureSequence.clear();
-  
-  captureSequence.addEvent( MidiMessage::timeSignatureMetaEvent(tsnum, tsdenom));
-  //captureSequence.addEvent( MidiMessage::tempoMetaEvent( tempo * 1000000));//in microseconds!!
-  startRecordTime = Time::getMillisecondCounterHiRes();
-  setRecording(true);
-  
-}
+portMIDI = MidiOutput::openDevice(0);
+File* fileHard;
+FileInputStream* fileInputStream;
+MidiFile fileMIDI;
+                       
+fileHard = new File (T("C:\Projets\Devcpp\file.mid"));
+fileInputStream = fileHard->createInputStream();
+fileMIDI->readFrom(*fileInputStream); // note the *
 
-void MidiOutPort::stopRecording()
-{
-  
-  setRecording(false);
-//  File file(T("/tmp/foo.mid"));
-
-  FileOutputStream outputStream(fileForRecording);
-  MidiFile * midifile = new MidiFile();
-  midifile->setSmpteTimeFormat(25, 40); //this equals 1 millisecond resolution
-  midifile->addTrack(captureSequence);
-  midifile->writeTo(outputStream );
-  
-}
-
+*/
 
 
 //
@@ -1281,3 +1294,286 @@ void MidiOutPort::showInstrumentsWindow () {
 				 true);
 }
 
+///
+/// MidiFileInfoDialog
+///
+
+class MidiFileInfoComponent  : public Component,
+                               public FilenameComponentListener,
+                               public ComboBoxListener,
+                               public SliderListener,
+                               public ButtonListener
+{
+public:
+  MidiFileInfoComponent (MidiFileInfo* info);
+  ~MidiFileInfoComponent();
+  void paint (Graphics& g);
+  void resized();
+  void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
+  void sliderValueChanged (Slider* sliderThatWasMoved);
+  void buttonClicked (Button* buttonThatWasClicked);
+  bool parseTimeSig(String str, int& numer, int& denom);
+  void filenameComponentChanged(FilenameComponent* f) ;
+private:
+  MidiFileInfo* midifileinfo;
+  FilenameComponent* fileeditor;
+  ComboBox* keysigmenu;
+  Label* keysiglabel;
+  Label* filelabel;
+  Slider* temposlider;
+  Label* timesiglabel;
+  Label* tempolabel;
+  TextButton* cancelbutton;
+  TextButton* savebutton;
+  TextEditor* timesigeditor;
+  MidiFileInfoComponent (const MidiFileInfoComponent&);
+  const MidiFileInfoComponent& operator= (const MidiFileInfoComponent&);
+};
+
+bool MidiFileInfoComponent::parseTimeSig (String str, int& n, int& d)
+{
+  int pos=str.indexOfChar('/');
+  if (pos<0) return false;
+  int a = str.substring(0,pos).getIntValue();
+  if (a<1) return false;
+  int b = str.substring(pos+1).getIntValue();
+  if (b<1) return false;
+  n=a;
+  d=b;
+  return true;
+}
+
+MidiFileInfoComponent::MidiFileInfoComponent (MidiFileInfo* info)
+    : midifileinfo (0),
+      fileeditor (0),
+      keysigmenu (0),
+      keysiglabel (0),
+      filelabel (0),
+      temposlider (0),
+      timesiglabel (0),
+      tempolabel (0),
+      cancelbutton (0),
+      savebutton (0),
+      timesigeditor (0)
+{
+  midifileinfo=info;
+  File file=midifileinfo->file;
+  if (file==File::nonexistent)
+    file=File::getSpecialLocation(File::userHomeDirectory).
+      getChildFile(T("test.mid"));
+  fileeditor = new FilenameComponent(String::empty, 
+				     file,
+				     true, 
+				     false, 
+				     true, 
+				     T("*.mid"),
+				     String::empty,
+				     T("Midi File..."));
+  fileeditor->setCurrentFile(file, false, false);
+  fileeditor->addListener(this);
+  
+  //  StringArray files=port->orcfiles.getAllFilenames() ;
+  //  orcfile->setRecentlyUsedFilenames(files);
+  //  if ( files.size() > 0 )
+  //    orcfile->setCurrentFile(port->orcfiles.getFile(0), false, false);
+  addAndMakeVisible(fileeditor);
+
+    addAndMakeVisible (keysigmenu = new ComboBox (T("keysigmenu")));
+    keysigmenu->setEditableText (false);
+    keysigmenu->setJustificationType (Justification::centredLeft);
+    keysigmenu->setTextWhenNothingSelected (String::empty);
+    keysigmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
+    keysigmenu->addItem (T("7 Flats"), 1);
+    keysigmenu->addItem (T("6 Flats"), 2);
+    keysigmenu->addItem (T("5 Flats"), 3);
+    keysigmenu->addItem (T("4 Flats"), 4);
+    keysigmenu->addItem (T("3 Flats"), 5);
+    keysigmenu->addItem (T("2 Flats"), 6);
+    keysigmenu->addItem (T("1 Flat"), 7);
+    keysigmenu->addItem (T("None"), 8);
+    keysigmenu->addItem (T("1 Sharp"), 9);
+    keysigmenu->addItem (T("2 Sharps"), 10);
+    keysigmenu->addItem (T("3 Sharps"), 11);
+    keysigmenu->addItem (T("4 Sharps"), 12);
+    keysigmenu->addItem (T("5 Sharps"), 13);
+    keysigmenu->addItem (T("6 Sharps"), 14);
+    keysigmenu->addItem (T("7 Sharps"), 15);
+    keysigmenu->setSelectedId(info->keysig);
+    keysigmenu->addListener (this);
+
+    addAndMakeVisible (keysiglabel = new Label (T("keysiglabel"),
+                                                T("Key Signature:")));
+    keysiglabel->setFont (Font (15.0000f, Font::plain));
+    keysiglabel->setJustificationType (Justification::centredLeft);
+    keysiglabel->setEditable (false, false, false);
+    keysiglabel->setColour (TextEditor::textColourId, Colours::black);
+    keysiglabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+
+    addAndMakeVisible (filelabel = new Label (T("filelabel"),
+                                              T("Midifile:")));
+    filelabel->setFont (Font (15.0000f, Font::plain));
+    filelabel->setJustificationType (Justification::centredLeft);
+    filelabel->setEditable (false, false, false);
+    filelabel->setColour (TextEditor::textColourId, Colours::black);
+    filelabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+
+    addAndMakeVisible (temposlider = new Slider (T("temposlider")));
+    temposlider->setRange (40, 208, 2);
+    temposlider->setSliderStyle (Slider::LinearHorizontal);
+    temposlider->setTextBoxStyle (Slider::TextBoxLeft, false, 40, 24);
+    temposlider->setValue(info->tempo);
+    temposlider->addListener (this);
+
+    addAndMakeVisible (timesiglabel = new Label (T("timesiglabel"),
+                                                 T("Time Signature:")));
+    timesiglabel->setFont (Font (15.0000f, Font::plain));
+    timesiglabel->setJustificationType (Justification::centredLeft);
+    timesiglabel->setEditable (false, false, false);
+    timesiglabel->setColour (TextEditor::textColourId, Colours::black);
+    timesiglabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+
+    addAndMakeVisible (tempolabel = new Label (T("tempolabel"),
+                                               T("Tempo:")));
+    tempolabel->setFont (Font (15.0000f, Font::plain));
+    tempolabel->setJustificationType (Justification::centredLeft);
+    tempolabel->setEditable (false, false, false);
+    tempolabel->setColour (TextEditor::textColourId, Colours::black);
+    tempolabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+
+    addAndMakeVisible (cancelbutton = new TextButton (T("cancelbutton")));
+    cancelbutton->setButtonText (T("Cancel"));
+    cancelbutton->addButtonListener (this);
+
+    addAndMakeVisible (savebutton = new TextButton (T("savebutton")));
+    savebutton->setButtonText (T("Save"));
+    savebutton->addButtonListener (this);
+
+    addAndMakeVisible (timesigeditor = new TextEditor (T("timesigeditor")));
+    timesigeditor->setMultiLine (false);
+    timesigeditor->setReturnKeyStartsNewLine (false);
+    timesigeditor->setReadOnly (false);
+    timesigeditor->setScrollbarsShown (true);
+    timesigeditor->setCaretVisible (true);
+    timesigeditor->setPopupMenuEnabled (true);
+    String text=String(info->tsig1) + T("/") + String(info->tsig2);
+    timesigeditor->setText (text);
+
+    setSize (600, 200);
+}
+
+MidiFileInfoComponent::~MidiFileInfoComponent()
+{
+    deleteAndZero (fileeditor);
+    deleteAndZero (keysigmenu);
+    deleteAndZero (keysiglabel);
+    deleteAndZero (filelabel);
+    deleteAndZero (temposlider);
+    deleteAndZero (timesiglabel);
+    deleteAndZero (tempolabel);
+    deleteAndZero (cancelbutton);
+    deleteAndZero (savebutton);
+    deleteAndZero (timesigeditor);
+}
+
+void MidiFileInfoComponent::paint (Graphics& g)
+{
+    g.fillAll (Colours::white);
+}
+
+void MidiFileInfoComponent::resized()
+{
+    fileeditor->setBounds (188, 24, 235, 24);
+    keysigmenu->setBounds (496, 80, 80, 24);
+    keysiglabel->setBounds (392, 80, 96, 24);
+    filelabel->setBounds (128, 24, 56, 24);
+    temposlider->setBounds (76, 80, 120, 24);
+    timesiglabel->setBounds (217, 80, 104, 24);
+    tempolabel->setBounds (12, 80, 56, 24);
+    cancelbutton->setBounds (200, 144, 88, 24);
+    savebutton->setBounds (320, 144, 88, 24);
+    timesigeditor->setBounds (329, 80, 40, 24);
+}
+
+void MidiFileInfoComponent::filenameComponentChanged(FilenameComponent* f) 
+{
+}
+
+void MidiFileInfoComponent::comboBoxChanged (ComboBox* combobox)
+{
+  if (combobox == keysigmenu)
+    {
+    }
+}
+
+void MidiFileInfoComponent::sliderValueChanged (Slider* slider)
+{
+  if (slider == temposlider)
+    {
+    }
+}
+
+void MidiFileInfoComponent::buttonClicked (Button* button)
+{
+
+  if (button == cancelbutton)
+    {
+      ((DialogWindow *)getTopLevelComponent())->exitModalState(false);
+    }
+  else if (button == savebutton)
+    {
+      if (fileeditor->getCurrentFile().existsAsFile())
+	{
+	  String msg= T("File ") + 
+	    fileeditor->getCurrentFile().getFullPathName() + 
+	    T(" exists.\nOverwrite?");
+	  if (! AlertWindow::showOkCancelBox(AlertWindow::QuestionIcon, 
+					     T("Save"), msg,
+					     T("   OK   "),
+					     T("Cancel")))
+	    return;
+	}
+      midifileinfo->file=fileeditor->getCurrentFile();
+      midifileinfo->tempo=temposlider->getValue();
+      midifileinfo->keysig=keysigmenu->getSelectedId();
+      int a,b;
+      if (parseTimeSig(timesigeditor->getText(), a, b))
+	{
+	  midifileinfo->tsig1=a;
+	  midifileinfo->tsig2=b;
+	}
+      ((DialogWindow *)getTopLevelComponent())->exitModalState(true);
+    }
+}
+
+void MidiOutPort::writeSequence(bool ask)
+{
+
+  if (isSequenceEmpty()) 
+    return;
+  if (ask || (sequenceFile.file==File::nonexistent))
+    {
+      MidiFileInfoComponent* comp=new MidiFileInfoComponent(&sequenceFile);
+      String title=(ask) ? T("Save As") : T("Save");
+      bool flag = DialogWindow::showModalDialog( title, comp, NULL,
+						 Colour(0xffe5e5e5),
+						 true, false, false);
+      delete comp;
+      if (!flag) return;
+    }
+
+  captureSequence.updateMatchedPairs();
+  captureSequence.addTimeToMessages( - captureSequence.getStartTime() );
+
+  FileOutputStream outputStream(sequenceFile.file);
+  MidiFile* midifile = new MidiFile();
+  midifile->setSmpteTimeFormat(25, 40); // equals 1 millisecond resolution
+
+  MidiMessageSequence track0;
+  track0.addEvent( sequenceFile.getTempoMessage(), 0);
+  track0.addEvent( sequenceFile.getTimeSigMessage(), 0);
+  track0.addEvent( sequenceFile.getKeySigMessage(), 0);
+  midifile->addTrack(track0);
+  midifile->addTrack(captureSequence);
+  midifile->writeTo(outputStream );
+  captureSequence.clear();
+}
