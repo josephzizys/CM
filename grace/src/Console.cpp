@@ -984,11 +984,11 @@ void ConsoleWindow::menuItemSelected (int id, int idx)
       break;
       
     case cmdPortsMidiSeqRestoreTrack :
-      app->midiOutPort->copyTrackToSequence( arg);
+      app->midiOutPort->restoreTrack( arg);
       break;
 
     case cmdPortsMidiSeqMixTrack :
-      app->midiOutPort->copyTrackToSequence( arg, true);
+      app->midiOutPort->mixTrack( arg);
       break;
       
     case cmdPortsMidiSeqSave :

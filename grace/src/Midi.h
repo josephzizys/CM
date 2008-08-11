@@ -30,7 +30,7 @@ class MidiNode {
   MidiMessage *message;
   Array<float> values;
   MidiOutPort *midiOutPort;
-  MidiNode(int typ, double wait, float *vals=0, int num_vals=0) ;		
+  MidiNode(int typ, double wait, float *vals=0, int num_vals=0) ;
   MidiNode(int typ, double wait, float chan, float data1);
   MidiNode(int typ, double wait, float chan, float data1, float data2);
   MidiNode(MidiMessage *msg);
@@ -50,19 +50,6 @@ public:
       return 1;
   }
 };
-
-
-/*
-       addAndMakeVisible (depthSlider = new Slider (T("toolbar depth:")));
-        depthSlider->setRange (10.0, 200.0, 1.0);
-        depthSlider->setValue (50, false);
-        depthSlider->setSliderStyle (Slider::LinearHorizontal);
-        depthSlider->setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
-        depthSlider->addListener (this);
-        depthSlider->setBounds (80, 210, 300, 22);
-        (new Label (depthSlider->getName(), depthSlider->getName()))->attachToComponent (depthSlider, false);
-
-*/
 
 class MidiFileInfo
 {
@@ -207,7 +194,7 @@ class MidiOutPort : public Thread
   static const int CaptureModeMidiIn=2;
   static const int CaptureModeScore=3;
 
-  /** the (current) capturing status **/
+  /** the (current) capturing mode **/
 
   int capturemode;
 
@@ -215,20 +202,25 @@ class MidiOutPort : public Thread
   void setCaptureMode(int mode);
   bool isCaptureMode(int mode);
     
-  /** the capture sequence **/
+  /** the capture sequence. time stamps are seconds **/
 
   MidiMessageSequence captureSequence;
   MidiFileInfo sequenceFile;
 
   /** time offset subtracted from MidiOut events that are recorded to
-      the capture sequence **/
+      the zero based capture sequence. when recoding begins the offset
+      is intialized to -1 which causes the first recorded event to
+      cache its true time stamp as the offset value. this value is
+      then subtracted from the subsequent captured events. **/
 
   double recordTimeOffset;
 
-  /** predicates to test the status of capture sequence **/
+  /** predicates to test the status of the capture sequence **/
 
   bool isSequenceEmpty();
   bool isSequenceData();
+
+  /** operations on the capture sequence **/
 
   void resetRecordingStart();
   void clearSequence();
@@ -246,24 +238,23 @@ class MidiOutPort : public Thread
   String getTrackName(int index);
   void setTrackName(int index, String name);
 
-  /** copy the capture seqence to a track. if index is -1 a new track
-      is added otherwise the track at index is replaced by the capture
-      sequence  **/
+  /** copies the capture seqence to a track. if index is -1 a new
+      track is added otherwise the track at index is replaced by the
+      capture sequence **/
 
   void copySequenceToTrack(int index=-1);
 
   /** copy contents of track back to sequence. if add is true the
-      track is mixed into the current contents of sequence otherwise
-      the seqence is replaced by track **/
+      track is mixed into the current contents otherwise the seqence
+      is replaced by track **/
 
-  void copyTrackToSequence(int index, bool add=false);
+  void copyTrackToSequence(int index, bool add=false, double shift=0.0);
 
   void renameTrack(int index);
   void deleteTrack(int index);
-
+  void restoreTrack(int index);
+  void mixTrack(int index);
   void importTracks();
-
-
 };
 
 class MidiInPort : public MidiInputCallback {

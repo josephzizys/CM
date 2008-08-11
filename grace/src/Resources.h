@@ -207,4 +207,108 @@ class GracePreferences {
   juce_DeclareSingleton (GracePreferences, true);
 };
 
+
+class TextDialogComponent  : public Component,
+                             public ButtonListener
+{
+private:
+  Label* textlabel;
+  TextEditor* textbuffer;
+  TextButton* cancelbutton;
+  TextButton* okbutton;
+
+public:
+  TextDialogComponent ()
+    : textlabel (0),
+      textbuffer (0),
+      cancelbutton (0),
+      okbutton (0)
+  {
+    addAndMakeVisible (textlabel = new Label (String::empty,
+                                              String::empty));
+    textlabel->setFont (Font (15.0000f, Font::plain));
+    textlabel->setJustificationType (Justification::centredRight);
+    textlabel->setEditable (false, false, false);
+    textlabel->setColour (TextEditor::textColourId, Colours::black);
+    textlabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    
+    addAndMakeVisible (textbuffer = new TextEditor (String::empty));
+    textbuffer->setMultiLine (false);
+    textbuffer->setReturnKeyStartsNewLine (false);
+    textbuffer->setReadOnly (false);
+    textbuffer->setScrollbarsShown (false);
+    textbuffer->setCaretVisible (true);
+    textbuffer->setPopupMenuEnabled (true);
+    textbuffer->setText (String::empty);
+
+    addAndMakeVisible (cancelbutton = new TextButton (String::empty));
+    cancelbutton->setButtonText (T("Cancel"));
+    cancelbutton->addButtonListener (this);
+    addAndMakeVisible (okbutton = new TextButton (String::empty));
+    okbutton->setButtonText (T("Ok"));
+    okbutton->addButtonListener (this);
+    setSize (300, 150);
+}
+
+  ~TextDialogComponent()
+  {
+    deleteAndZero (textlabel);
+    deleteAndZero (textbuffer);
+    deleteAndZero (cancelbutton);
+    deleteAndZero (okbutton);
+  }
+  
+  void paint (Graphics& g)
+  {
+    g.fillAll (Colours::white);
+  }
+
+  void resized()
+  {
+    textlabel->setBounds (16, 32, 88, 24);
+    textbuffer->setBounds (112, 32, 160, 24);
+    cancelbutton->setBounds (138 - 74, 88, 74, 24);
+    okbutton->setBounds (160, 88, 74, 24);
+  }
+
+  void TextDialogComponent::buttonClicked (Button* button)
+  {
+    if (button == cancelbutton)
+      ((DialogWindow *)getTopLevelComponent())->exitModalState(false);
+    else if (button == okbutton)
+      ((DialogWindow *)getTopLevelComponent())->exitModalState(true);
+  }
+  
+  static String ShowTextDialog(String title, String prompt, 
+			       String text, String okname,
+			       String cancelstr=String::empty )
+  {
+    TextDialogComponent* dialog= new TextDialogComponent();
+    String str=String::empty;
+    dialog->textlabel->setText(prompt,false);
+    dialog->textbuffer->setText(text,false);
+    dialog->textbuffer->setHighlightedRegion(0,text.length());
+    if (okname != String::empty)
+      dialog->okbutton->setButtonText(okname);
+    int res=DialogWindow::showModalDialog(title, dialog, NULL,
+					  Colour(0xffe5e5e5),
+					  true, false, false);
+    if (res)
+      str=dialog->textbuffer->getText().trim();
+    else
+      str=cancelstr;
+    delete dialog;
+    return str;
+  }
+  
+  String getText()
+  {
+    return textbuffer->getText().trim();
+  }
+  
+  // (prevent copy constructor and operator= being generated..)
+  TextDialogComponent (const TextDialogComponent&);
+  const TextDialogComponent& operator= (const TextDialogComponent&);
+};
+
 #endif 

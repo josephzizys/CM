@@ -410,6 +410,14 @@ void MidiOutPort::renameTrack(int index)
 {
   if ((index>=0) && (index<tracks.size()))
     {
+      String str=TextDialogComponent::ShowTextDialog(T("Rename Track"),
+						     T("Track Name:"),
+						     getTrackName(index),
+						     T("Rename"));
+      if (str != String::empty)
+	{
+	  tracks.getUnchecked(index)->name=str;
+	}
     }
 }
 
@@ -421,7 +429,29 @@ void MidiOutPort::deleteTrack(int index)
     }
 }
 
-void MidiOutPort::copyTrackToSequence(int index, bool add)
+void MidiOutPort::restoreTrack(int index)
+{
+  copyTrackToSequence( index, false, 0.0);
+}
+
+void MidiOutPort::mixTrack(int index)
+{
+  String abort=T("abort");
+  String str=TextDialogComponent::ShowTextDialog(T("Mix Track"),
+						 T("Start Time:"),
+						 T("0.0"),
+						 T("Mix"),
+						 abort);
+  if (str != abort)
+    {
+      double start=str.getDoubleValue();
+      if (start<0.0)
+	start=0.0;
+      copyTrackToSequence( index, true, start);
+    }
+}
+
+void MidiOutPort::copyTrackToSequence(int index, bool add, double shift)
 {
   if ((index>=0) && (index<tracks.size()))
     {
@@ -430,9 +460,9 @@ void MidiOutPort::copyTrackToSequence(int index, bool add)
       bool update=(captureSequence.getNumEvents()>0);
       captureSequence.
 	addSequence( *(tracks.getUnchecked(index)->sequence),
+		     shift,
 		     0.0,
-		     0.0,
-		     tracks.getUnchecked(index)->sequence->getEndTime()+1
+		     tracks.getUnchecked(index)->sequence->getEndTime()+shift+1
 		     );
       // delete all events that are not Channel messages...
       for (int i=captureSequence.getNumEvents()-1; i>=0; i--)
