@@ -11,39 +11,9 @@
 #include "Midi.h"
 #include "Grace.h"
 #include "Toolbox.h"
+#include "Editor.h"
+
 #include <iostream>;
-
-
-String midiMessageToString (const MidiMessage &msg) {
-  int chan=msg.getChannel();
-  String info;
-  if ( msg.isNoteOn() )
-    info=T("on chan: ") + String(chan-1) + T(" key: ")
-      + String(msg.getNoteNumber()) + T(" vel: ")
-      + String(msg.getVelocity());
-  else if ( msg.isNoteOff() ) 
-    info=T("off chan: ") + String(chan-1) + T(" key: ")
-      + String(msg.getNoteNumber());
-  else if ( msg.isController() )
-    info=T("ctrl chan: ") + String(chan-1) + T(" ctrl: ") 
-      + MidiMessage::getControllerName(msg.getControllerNumber())
-      + T(" value: ") + String(msg.getControllerValue());  
-  else if ( msg.isProgramChange() )
-    info=T("prog chan: ") + String(chan-1) + T(" prog: ")
-      + MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
-  else if ( msg.isPitchWheel())
-    info=T("bend chan: ") + String(chan-1) + T(" val: ")
-      + String(msg.getPitchWheelValue());
-  else if ( msg.isAftertouch() )
-    info=T("touch chan: ") + String(chan-1) + T(" val: ")
-      + String(msg.getAfterTouchValue());
-  else if ( msg.isChannelPressure() )
-    info=T("press chan: ") + String(chan-1) + T(" val: ")
-      + String(msg.getChannelPressureValue());
-  else if ( msg.isActiveSense() )
-    info=T("sense time: ") + String(msg.getTimeStamp(), 3);
-  return info;
-}
 
 
 //
@@ -187,23 +157,36 @@ void MidiNode::process()
     }
 }
 
-
 //
 // Queue
 //
 
 void MidiOutPort::sendOut(MidiMessage& msg)
 {
+  // WARNING: SHOULD THIS CHECK DEVICE?
   device->sendMessageNow(msg);
-  if ( isRecording() )
+  if ( isCaptureMode(CaptureModeMidiOut) )
     {
-      // cache the time offset of the first recorded note 
+
+      // if this is the first recorded note cache its time offset so
+      // we can subtract this value from the subsequence messages (we
+      // want the capture sequence timeline to be in zero-based
+      // seconds.)
+
       if (recordTimeOffset<0)
-	recordTimeOffset=msg.getTimeStamp();
-      // shift added tones by the recording offset
-      captureSequence.addEvent( MidiMessage(msg),
-				-recordTimeOffset //0
-				);
+	{
+	  recordTimeOffset=msg.getTimeStamp();
+	  std::cout << "Record time offset=" << recordTimeOffset << "\n";
+	}
+      /** WARNING: TIMESTAMPS ARE MILLISECONDS **/
+      /* captureSequence.addEvent( MidiMessage(msg),
+				-recordTimeOffset 
+				); */
+      // convert millisecond timestamps from output queue to seconds
+      // before adding messages to the capture sequence
+
+      double sec=(msg.getTimeStamp()-recordTimeOffset)/1000.0;
+      captureSequence.addEvent( MidiMessage(msg,sec) );
     }
 }
 
@@ -211,16 +194,14 @@ MidiOutPort::MidiOutPort(ConsoleWindow *win)
   : Thread(T("Midi Out Port")),
     device(0),
     devid (-1),
-    // micro initialized for semitone
-    microdivisions (1),
+    microdivisions (1),  // micro initialized for semitone
     microincrement (1.0),
     microchancount (16),
     microchanblock (16),
     avoiddrumtrack (true),
     pitchbendwidth (2),
-    recording(false),
-    recordTimeOffset (-1.0)
-    //    sequenceFile (File::nonexistent)
+    recordTimeOffset (-1.0),
+    capturemode(CaptureModeOff)
 {	
   console=win;
   for(int i=0;i<16;i++)
@@ -249,6 +230,7 @@ MidiOutPort::~MidiOutPort()
   if ( device != NULL ) delete device;
   outputNodes.clear();
   captureSequence.clear();
+  tracks.clear();
 }
 
 void MidiOutPort::open(String name) {
@@ -293,8 +275,38 @@ bool MidiOutPort::isOpen(int id) {
 }
 
 ///
-/// recording output to sequence
+/// Sequence capturing
 ///
+
+int MidiOutPort::getCaptureMode()
+{
+  return capturemode;
+}
+
+void MidiOutPort::setCaptureMode(int mode)
+{
+  switch (mode)
+    {
+    case CaptureModeMidiOut :
+      recordTimeOffset=-1;
+      capturemode=mode;
+      break;
+    case CaptureModeMidiIn :
+      capturemode=mode;
+      break;
+    case CaptureModeScore :
+      capturemode=mode;
+      break;
+    default:
+      capturemode=CaptureModeOff;
+      break;
+    }
+}
+
+bool MidiOutPort::isCaptureMode(int mode)
+{
+  return (capturemode==mode);
+}
 
 bool MidiOutPort::isSequenceEmpty()
 {
@@ -306,35 +318,185 @@ bool MidiOutPort::isSequenceData()
   return (captureSequence.getNumEvents()>0);
 }
 
-void MidiOutPort::setRecording(bool r)
+void MidiOutPort::resetRecordingStart()
 {
-  recording = r;
   recordTimeOffset=-1;
-}
-
-bool MidiOutPort::isRecording()
-{
-  return recording;
 }
 
 void MidiOutPort::clearSequence()
 {
   captureSequence.clear();
+  recordTimeOffset=-1;
 }
 
+void MidiOutPort::copySequenceToTrack(int index)
+{
+  // add a new track if index is -1 else replace track at index
+  if (isSequenceData())
+    {
+      captureSequence.updateMatchedPairs();
+      String name;
+      if (index>=0 && index<tracks.size())
+	{
+	  name=getTrackName(index);
+	  tracks.set(index, new MidiTrack( name, captureSequence));
+	}
+      else
+	{
+	  name=T("Untitled Track ") + String(tracks.size()+1);
+	  tracks.add(new MidiTrack( name, captureSequence));
+	}
+    }
+}
 
-/*
+void MidiOutPort::playSequence()
+{
+  captureSequence.updateMatchedPairs();
+  for (int i=0; i< captureSequence.getNumEvents(); i++)
+    {
+      MidiMessageSequence::MidiEventHolder* h =
+	captureSequence.getEventPointer(i);
+      if (h->message.isNoteOn())
+	{
+	  if (h->noteOffObject != NULL)
+	    {
+	      sendMessage(new MidiMessage(h->message));
+	      sendMessage(new MidiMessage(h->noteOffObject->message));
+	    }
+	}
+      else
+	sendMessage(new MidiMessage(h->message));
+    }
+}
 
-portMIDI = MidiOutput::openDevice(0);
-File* fileHard;
-FileInputStream* fileInputStream;
-MidiFile fileMIDI;
-                       
-fileHard = new File (T("C:\Projets\Devcpp\file.mid"));
-fileInputStream = fileHard->createInputStream();
-fileMIDI->readFrom(*fileInputStream); // note the *
+void MidiOutPort::plotSequence()
+{
+  captureSequence.updateMatchedPairs();
+}
 
-*/
+void MidiOutPort::printSequence()
+{
+  captureSequence.updateMatchedPairs();
+  String text=T("Seq");
+  int size=captureSequence.getNumEvents();
+  text << T(": ") << String(size) << T(" event");
+  if (size!=1)
+    text << T("s");
+  text << T(", ") << String(captureSequence.getEndTime())
+       << T(" seconds.\n");
+  console->printMessage(text);
+}
+
+///
+/// tracks
+///
+
+int MidiOutPort::getNumTracks()
+{
+  return tracks.size();
+}
+
+String MidiOutPort::getTrackName(int index)
+{
+  return tracks.getUnchecked(index)->name;
+}
+
+void MidiOutPort::setTrackName(int index, String nam)
+{
+  tracks.getUnchecked(index)->name=nam;
+}
+
+void MidiOutPort::renameTrack(int index)
+{
+  if ((index>=0) && (index<tracks.size()))
+    {
+    }
+}
+
+void MidiOutPort::deleteTrack(int index)
+{
+  if ((index>=0) && (index<tracks.size()))
+    {
+      tracks.remove(index);
+    }
+}
+
+void MidiOutPort::copyTrackToSequence(int index, bool add)
+{
+  if ((index>=0) && (index<tracks.size()))
+    {
+      if (!add) 
+	captureSequence.clear();
+      bool update=(captureSequence.getNumEvents()>0);
+      captureSequence.
+	addSequence( *(tracks.getUnchecked(index)->sequence),
+		     0.0,
+		     0.0,
+		     tracks.getUnchecked(index)->sequence->getEndTime()+1
+		     );
+      // delete all events that are not Channel messages...
+      for (int i=captureSequence.getNumEvents()-1; i>=0; i--)
+	if (captureSequence.getEventPointer(i)->message.getChannel()==0)
+	  captureSequence.deleteEvent(i, false);
+      if (update)
+	captureSequence.updateMatchedPairs();
+    }
+}
+
+void MidiOutPort::importTracks()
+{
+  FileChooser chooser (T("Import Midi File"),
+		       File::getSpecialLocation (File::userHomeDirectory),
+		       "*.mid");
+  if (!chooser.browseForFileToOpen())
+    return;
+  File import=chooser.getResult();
+  String name=import.getFileNameWithoutExtension();
+  FileInputStream* input=import.createInputStream();
+  MidiFile midifile;
+  midifile.readFrom(*input);
+  int numtracks=midifile.getNumTracks();
+  if (numtracks<1) 
+    return;
+
+  int format=midifile.getTimeFormat();
+  double smptetps=0.0; // smpte ticks per second
+  // juce time format is postive for beats and negative for SMTPE
+  if (format>0)
+    {
+      midifile.convertTimestampTicksToSeconds();    
+    }
+  else
+    {
+      // juce smpte frames per second is negative upper byte
+      int fps=0xFF-((format & 0xFF00) >> 8)+1;
+      int tpf=format & 0xFF;
+      smptetps=fps*tpf;
+    }
+  // start importing at track 1 in level 1 file
+  int track=((numtracks==1) ? 0 : 1);
+  int count=1;
+  while (track<numtracks)
+    {
+      const MidiMessageSequence* seq=midifile.getTrack(track);
+      // convert SMPTE ticks to seconds. The juce function
+      // convertTimestampTicksToSeconds doesnt seem to work for SMPTE
+      // ticks.
+      if (format<0)
+	{
+	  for (int i=0; i<seq->getNumEvents(); i++)
+	    {
+	      MidiMessageSequence::MidiEventHolder* h=
+		seq->getEventPointer(i);
+	      double t=h->message.getTimeStamp();
+	      h->message.setTimeStamp(t/smptetps);
+	    }
+	}
+      tracks.add(new MidiTrack( (name + T(" ") + String(count)), *seq));
+      track++;
+      count++;
+    }
+}
 
 
 //
@@ -434,8 +596,6 @@ void MidiOutPort::addNode(MidiNode *n) {
 
 void MidiOutPort::sendNote(double wait, double duration, float keynum, 
 			   float amplitude, float channel) {
-  // dont do anything if there is no open output port!
-  if ( device == NULL ) return;
   jlimit( (float)0.0, (float)15.0, channel);
   // only microtune if current tuning is not semitonal and user's
   // channel is a microtonal channel.
@@ -467,16 +627,38 @@ void MidiOutPort::sendNote(double wait, double duration, float keynum,
       keynum=key;
     }
   }
-  addNode( new MidiNode(MidiNode::MM_ON, wait, channel, keynum, amplitude) );
-  addNode( new MidiNode(MidiNode::MM_OFF, wait+duration, channel, keynum) );
+
+  if (isCaptureMode(CaptureModeScore))
+    {
+    }
+  // dont do anything if there is no open output port!
+  else if ( device != NULL )
+    {
+      addNode( new MidiNode(MidiNode::MM_ON, wait, channel, keynum, amplitude) );
+      addNode( new MidiNode(MidiNode::MM_OFF, wait+duration, channel, keynum) );
+    }
 }
 
-void MidiOutPort::sendData(int type, double wait, float chan, float data1, float data2) {
-  addNode( new MidiNode(type, wait, chan, data1, data2) );
+void MidiOutPort::sendData(int type, double wait, float chan, float data1, float data2)
+{
+  if (isCaptureMode(CaptureModeScore))
+    {
+    } 
+  else if ( device != NULL )
+    {
+      addNode( new MidiNode(type, wait, chan, data1, data2) );
+    }
 }
 
-void MidiOutPort::sendMessage(MidiMessage *message) {
-  addNode( new MidiNode(message) );
+void MidiOutPort::sendMessage(MidiMessage *message)
+{
+  if (isCaptureMode(CaptureModeScore))
+    {
+    } 
+  else if ( device != NULL )
+    {
+      addNode( new MidiNode(message) );
+    }
 }
 
 /*
@@ -520,8 +702,8 @@ void MidiOutPort::testMidiOutput () {
     float key = x + (12 * (3 + Random::getSystemRandom().nextInt(5) )) ;
     float vel = 32.0 + Random::getSystemRandom().nextInt(64);
     // MILLI
-    float dur = ((( 2 + Random::getSystemRandom().nextInt(6)) ^ 2) *
-		 (60.0 / 1000.0));
+    // float dur = ((( 2 + Random::getSystemRandom().nextInt(6)) ^ 2) * (60.0 / 1000.0));
+    float dur = .1 + (Random::getSystemRandom().nextInt(5) * .1);
     sendNote(time, dur, key, vel, 0.0);
     // MILLI
     time += ((Random::getSystemRandom().nextInt(5) ^ 2) * (60.0 / 1000.0));
@@ -1527,6 +1709,8 @@ void MidiFileInfoComponent::buttonClicked (Button* button)
 	  String msg= T("File ") + 
 	    fileeditor->getCurrentFile().getFullPathName() + 
 	    T(" exists.\nOverwrite?");
+	  // WARNING: JUCE dialog puts the OK button on the left,
+	  // which is backwards from Mac style...
 	  if (! AlertWindow::showOkCancelBox(AlertWindow::QuestionIcon, 
 					     T("Save"), msg,
 					     T("   OK   "),
@@ -1546,9 +1730,8 @@ void MidiFileInfoComponent::buttonClicked (Button* button)
     }
 }
 
-void MidiOutPort::writeSequence(bool ask)
+void MidiOutPort::saveSequence(bool ask)
 {
-
   if (isSequenceEmpty()) 
     return;
   if (ask || (sequenceFile.file==File::nonexistent))
@@ -1561,20 +1744,626 @@ void MidiOutPort::writeSequence(bool ask)
       delete comp;
       if (!flag) return;
     }
-
   captureSequence.updateMatchedPairs();
-  //  captureSequence.addTimeToMessages( - captureSequence.getStartTime() );
-
+  // BUG: if file already exits this seems to merge data into the old
+  // file instead of overwriting it...
   FileOutputStream outputStream(sequenceFile.file);
   MidiFile* midifile = new MidiFile();
+  //midifile->setTicksPerQuarterNote(960);
   midifile->setSmpteTimeFormat(25, 40); // equals 1 millisecond resolution
-
   MidiMessageSequence track0;
   track0.addEvent( sequenceFile.getTempoMessage(), 0);
   track0.addEvent( sequenceFile.getTimeSigMessage(), 0);
   track0.addEvent( sequenceFile.getKeySigMessage(), 0);
   midifile->addTrack(track0);
   midifile->addTrack(captureSequence);
+  // Convert the file's data from seconds to milliseconds to match the
+  // smpte time format
+  const MidiMessageSequence* seq=midifile->getTrack(1);
+  for (int i=0; i<seq->getNumEvents(); i++)
+    {
+      MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
+      h->message.setTimeStamp(h->message.getTimeStamp()*1000.0);
+    }
   midifile->writeTo(outputStream );
   captureSequence.clear();
 }
+
+///
+/// Export Dialog
+///
+
+class MidiFileExportComponent  : public Component,
+                                 public ComboBoxListener,
+                                 public LabelListener,
+                                 public ButtonListener
+{
+public:
+  static const int FormatSalData=1;
+  static const int FormatSalSend=2;
+  static const int FormatLispData=3;
+  static const int FormatLispSend=4;
+  
+  MidiFileExportComponent ();
+  ~MidiFileExportComponent();
+  void paint (Graphics& g);
+  void resized();
+  void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
+  void labelTextChanged (Label* labelThatHasChanged);
+  void buttonClicked (Button* buttonThatWasClicked);
+  
+  String channelMessageExportText(MidiMessage msg, double offtime, 
+				  int format, bool addtag) ;
+  
+  ComboBox* trackmenu;
+  Label* frombuffer;
+  Label* tobuffer;
+  ToggleButton* notesbutton;
+  ToggleButton* controlchangebutton;
+  ToggleButton* programchangebutton;
+  ToggleButton* pitchbendbutton;
+  ToggleButton* aftertouchbutton;
+  ToggleButton* pressurebutton;
+  ComboBox* channelmenu;
+  ToggleButton* consolebutton;
+  ToggleButton* clipboardbutton;
+    ToggleButton* neweditorbutton;
+  ComboBox* dataformatmenu;
+private:
+  GroupComponent* messagegroup;
+  GroupComponent* midifilegroup;
+  Label* tracklabel;
+  Label* fromlabel;
+  Label* tolabel;
+  Label* channellabel;
+  GroupComponent* exporttogroup;
+  TextButton* cancelbutton;
+  TextButton* exportbutton;
+  Label* dataformatlabel;
+  MidiFileExportComponent (const MidiFileExportComponent&);
+  const MidiFileExportComponent& operator= (const MidiFileExportComponent&);
+};
+
+MidiFileExportComponent::MidiFileExportComponent ()
+    : messagegroup (0),
+      midifilegroup (0),
+      tracklabel (0),
+      trackmenu (0),
+      fromlabel (0),
+      frombuffer (0),
+      tolabel (0),
+      tobuffer (0),
+      notesbutton (0),
+      controlchangebutton (0),
+      programchangebutton (0),
+      pitchbendbutton (0),
+      aftertouchbutton (0),
+      pressurebutton (0),
+      channellabel (0),
+      channelmenu (0),
+      exporttogroup (0),
+      consolebutton (0),
+      clipboardbutton (0),
+      neweditorbutton (0),
+      cancelbutton (0),
+      exportbutton (0),
+      dataformatlabel (0),
+      dataformatmenu (0)
+{
+  addAndMakeVisible (messagegroup =
+		     new GroupComponent (T("messagegroup"),
+					 T("Include")));
+  
+  addAndMakeVisible (midifilegroup =
+		     new GroupComponent (T("midifilegroup"),
+					 T("Export")));
+  
+  addAndMakeVisible (tracklabel = new Label (T("tracklabel"),
+					     T("Track:")));
+  tracklabel->setFont (Font (15.0000f, Font::plain));
+  tracklabel->setJustificationType (Justification::centredLeft);
+  tracklabel->setEditable (false, false, false);
+  tracklabel->setColour (TextEditor::textColourId, Colours::black);
+  tracklabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  tracklabel->setEnabled(false); // track not active
+
+  addAndMakeVisible (trackmenu = new ComboBox (T("trackmenu")));
+  trackmenu->setEditableText (false);
+  trackmenu->setJustificationType (Justification::centredLeft);
+  trackmenu->setTextWhenNothingSelected (String::empty);
+  trackmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
+  trackmenu->addItem (T("1"), 1);
+  trackmenu->addItem (T("2"), 2);
+  trackmenu->addListener (this);
+  trackmenu->setSelectedId(1);
+  trackmenu->setEnabled(false);
+  
+  addAndMakeVisible (fromlabel = new Label (T("fromlabel"),
+					    T("From:")));
+  fromlabel->setFont (Font (15.0000f, Font::plain));
+  fromlabel->setJustificationType (Justification::centredLeft);
+  fromlabel->setEditable (false, false, false);
+  fromlabel->setColour (TextEditor::textColourId, Colours::black);
+  fromlabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (frombuffer = new Label (T("frombuffer"),
+					     String::empty));
+  frombuffer->setFont (Font (15.0000f, Font::plain));
+  frombuffer->setJustificationType (Justification::centredLeft);
+  frombuffer->setEditable (true, true, false);
+  frombuffer->setColour (Label::backgroundColourId, Colours::white);
+  frombuffer->setColour (Label::outlineColourId, Colour (0xb2808080));
+  frombuffer->setColour (TextEditor::textColourId, Colours::black);
+  frombuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  frombuffer->addListener (this);
+  
+  addAndMakeVisible (tolabel = new Label (T("tolabel"),
+					  T("To:")));
+  tolabel->setFont (Font (15.0000f, Font::plain));
+  tolabel->setJustificationType (Justification::centredLeft);
+  tolabel->setEditable (false, false, false);
+  tolabel->setColour (TextEditor::textColourId, Colours::black);
+  tolabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (tobuffer = new Label (T("tobuffer"),
+					   String::empty));
+  tobuffer->setFont (Font (15.0000f, Font::plain));
+  tobuffer->setJustificationType (Justification::centredLeft);
+  tobuffer->setEditable (true, true, false);
+  tobuffer->setColour (Label::backgroundColourId, Colours::white);
+  tobuffer->setColour (Label::outlineColourId, Colour (0xb2808080));
+  tobuffer->setColour (TextEditor::textColourId, Colours::black);
+  tobuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  tobuffer->addListener (this);
+  
+  addAndMakeVisible (notesbutton = new ToggleButton (T("notesbutton")));
+  notesbutton->setButtonText (T("Notes"));
+  notesbutton->addButtonListener (this);
+  notesbutton->setToggleState (true, false);
+  
+  addAndMakeVisible (controlchangebutton =
+		     new ToggleButton (T("controlchangebutton")));
+  controlchangebutton->setButtonText (T("Control Changes"));
+  controlchangebutton->addButtonListener (this);
+  
+  addAndMakeVisible (programchangebutton =
+		     new ToggleButton (T("programchangebutton")));
+  programchangebutton->setButtonText (T("Program Changes"));
+  programchangebutton->addButtonListener (this);
+  
+  addAndMakeVisible (pitchbendbutton = 
+		     new ToggleButton (T("pitchbendbutton")));
+  pitchbendbutton->setButtonText (T("Pitch Bends"));
+  pitchbendbutton->addButtonListener (this);
+  
+  addAndMakeVisible (aftertouchbutton =
+		     new ToggleButton (T("aftertouchbutton")));
+  aftertouchbutton->setButtonText (T("Aftertouch"));
+  aftertouchbutton->addButtonListener (this);
+  
+  addAndMakeVisible (pressurebutton =
+		       new ToggleButton (T("pressurebutton")));
+  pressurebutton->setButtonText (T("Channel Pressure"));
+  pressurebutton->addButtonListener (this);
+  
+  addAndMakeVisible (channellabel = new Label (T("channellabel"),
+					       T("Channel:")));
+  channellabel->setFont (Font (15.0000f, Font::plain));
+  channellabel->setJustificationType (Justification::centredLeft);
+  channellabel->setEditable (false, false, false);
+  channellabel->setColour (TextEditor::textColourId, Colours::black);
+  channellabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (channelmenu = new ComboBox (T("channelmenu")));
+  channelmenu->setEditableText (false);
+  channelmenu->setJustificationType (Justification::centredLeft);
+  channelmenu->setTextWhenNothingSelected (String::empty);
+  channelmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
+  channelmenu->addItem (T("All"), 17);
+  channelmenu->addItem (T("1"), 1);
+  channelmenu->addItem (T("2"), 2);
+  channelmenu->addItem (T("3"), 3);
+  channelmenu->addItem (T("4"), 4);
+  channelmenu->addItem (T("5"), 5);
+  channelmenu->addItem (T("6"), 6);
+  channelmenu->addItem (T("7"), 7);
+  channelmenu->addItem (T("8"), 8);
+  channelmenu->addItem (T("9"), 9);
+  channelmenu->addItem (T("10"), 10);
+  channelmenu->addItem (T("11"), 11);
+  channelmenu->addItem (T("12"), 12);
+  channelmenu->addItem (T("13"), 13);
+  channelmenu->addItem (T("14"), 14);
+  channelmenu->addItem (T("15"), 15);
+  channelmenu->addItem (T("16"), 16);
+  channelmenu->setSelectedId(17);
+  channelmenu->addListener (this);
+  
+  addAndMakeVisible (exporttogroup = 
+		     new GroupComponent (T("exporttogroup"),
+					 T("Export To")));
+  
+  addAndMakeVisible (consolebutton = 
+		       new ToggleButton (T("consolebutton")));
+  consolebutton->setButtonText (T("Console"));
+  consolebutton->setRadioGroupId (1);
+  consolebutton->addButtonListener (this);
+  consolebutton->setToggleState (true, false);
+  
+  addAndMakeVisible (clipboardbutton = 
+		     new ToggleButton (T("clipboardbutton")));
+  clipboardbutton->setButtonText (T("Clipboard"));
+  clipboardbutton->setRadioGroupId (1);
+  clipboardbutton->addButtonListener (this);
+  
+  addAndMakeVisible (neweditorbutton =
+		     new ToggleButton (T("neweditorbutton")));
+  neweditorbutton->setButtonText (T("New Editor"));
+  neweditorbutton->setRadioGroupId (1);
+  neweditorbutton->addButtonListener (this);
+  
+  addAndMakeVisible (cancelbutton = new TextButton (T("cancelbutton")));
+  cancelbutton->setButtonText (T("Cancel"));
+  cancelbutton->addButtonListener (this);
+  
+  addAndMakeVisible (exportbutton = new TextButton (T("exportbutton")));
+  exportbutton->setButtonText (T("Export"));
+  exportbutton->addButtonListener (this);
+  
+  addAndMakeVisible (dataformatlabel = new Label (T("dataformatlabel"),
+						  T("Data Format:")));
+  dataformatlabel->setFont (Font (15.0000f, Font::plain));
+  dataformatlabel->setJustificationType (Justification::centredLeft);
+  dataformatlabel->setEditable (false, false, false);
+  dataformatlabel->setColour (TextEditor::textColourId, Colours::black);
+  dataformatlabel->setColour (TextEditor::backgroundColourId,
+			      Colour (0x0));
+  
+  addAndMakeVisible (dataformatmenu = 
+		     new ComboBox (T("dataformatmenu")));
+  dataformatmenu->setEditableText (false);
+  dataformatmenu->setJustificationType (Justification::centredLeft);
+  dataformatmenu->setTextWhenNothingSelected (String::empty);
+  dataformatmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
+  dataformatmenu->addItem (T("SAL Data"), FormatSalData);
+  dataformatmenu->addItem (T("Lisp Data"), FormatLispData);
+  dataformatmenu->addItem (T("SAL Sends"), FormatSalSend);
+  dataformatmenu->addItem (T("Lisp Sends"), FormatLispSend);
+  dataformatmenu->setSelectedId(FormatSalData);
+  dataformatmenu->addListener (this);
+  setSize (320, 374);
+}
+
+MidiFileExportComponent::~MidiFileExportComponent()
+{
+    deleteAndZero (messagegroup);
+    deleteAndZero (midifilegroup);
+    deleteAndZero (tracklabel);
+    deleteAndZero (trackmenu);
+    deleteAndZero (fromlabel);
+    deleteAndZero (frombuffer);
+    deleteAndZero (tolabel);
+    deleteAndZero (tobuffer);
+    deleteAndZero (notesbutton);
+    deleteAndZero (controlchangebutton);
+    deleteAndZero (programchangebutton);
+    deleteAndZero (pitchbendbutton);
+    deleteAndZero (aftertouchbutton);
+    deleteAndZero (pressurebutton);
+    deleteAndZero (channellabel);
+    deleteAndZero (channelmenu);
+    deleteAndZero (exporttogroup);
+    deleteAndZero (consolebutton);
+    deleteAndZero (clipboardbutton);
+    deleteAndZero (neweditorbutton);
+    deleteAndZero (cancelbutton);
+    deleteAndZero (exportbutton);
+    deleteAndZero (dataformatlabel);
+    deleteAndZero (dataformatmenu);
+}
+
+void MidiFileExportComponent::paint (Graphics& g)
+{
+    g.fillAll (Colours::white);
+}
+
+void MidiFileExportComponent::resized()
+{
+    messagegroup->setBounds (8, 104, 304, 128);
+    midifilegroup->setBounds (8, 0, 304, 96);
+    tracklabel->setBounds (16, 24, 48, 24);
+    trackmenu->setBounds (72, 24, 50, 24);
+    fromlabel->setBounds (16, 60, 47, 24);
+    frombuffer->setBounds (72, 60, 50, 24);
+    tolabel->setBounds (184, 60, 32, 24);
+    tobuffer->setBounds (224, 60, 50, 24);
+    notesbutton->setBounds (16, 128, 136, 24);
+    controlchangebutton->setBounds (16, 160, 136, 24);
+    programchangebutton->setBounds (16, 192, 136, 24);
+    pitchbendbutton->setBounds (168, 128, 128, 24);
+    aftertouchbutton->setBounds (168, 160, 128, 24);
+    pressurebutton->setBounds (168, 192, 128, 24);
+    channellabel->setBounds (152, 24, 64, 24);
+    channelmenu->setBounds (224, 24, 50, 24);
+    exporttogroup->setBounds (8, 240, 304, 88);
+    consolebutton->setBounds (16, 260, 88, 24);
+    clipboardbutton->setBounds (109, 260, 88, 24);
+    neweditorbutton->setBounds (208, 260, 88, 24);
+    cancelbutton->setBounds (40, 340, 112, 24);
+    exportbutton->setBounds (176, 340, 104, 24);
+    dataformatlabel->setBounds (40, 292, 88, 24);
+    dataformatmenu->setBounds (136, 292, 136, 24);
+}
+
+void MidiFileExportComponent::comboBoxChanged (ComboBox* comboBox)
+{
+    if (comboBox == trackmenu)
+    {
+    }
+    else if (comboBox == channelmenu)
+    {
+    }
+    else if (comboBox == dataformatmenu)
+    {
+    }
+}
+
+void MidiFileExportComponent::labelTextChanged (Label* label)
+{
+    if (label == frombuffer)
+    {
+    }
+    else if (label == tobuffer)
+    {
+    }
+}
+
+void MidiFileExportComponent::buttonClicked (Button* button)
+{
+    if (button == notesbutton)
+    {
+    }
+    else if (button == controlchangebutton)
+    {
+    }
+    else if (button == programchangebutton)
+    {
+    }
+    else if (button == pitchbendbutton)
+    {
+    }
+    else if (button == aftertouchbutton)
+    {
+    }
+    else if (button == pressurebutton)
+    {
+    }
+    else if (button == consolebutton)
+    {
+    }
+    else if (button == clipboardbutton)
+    {
+    }
+    else if (button == neweditorbutton)
+    {
+    }
+    else if (button == cancelbutton)
+    {
+      ((DialogWindow *)getTopLevelComponent())->exitModalState(false);
+
+    }
+    else if (button == exportbutton)
+    {
+      ((DialogWindow *)getTopLevelComponent())->exitModalState(true);
+    }
+}
+
+String MidiFileExportComponent::channelMessageExportText
+(MidiMessage msg,  double offtime, int fmat, bool addtag)
+{
+  // MESSAGE TIMES ARE IN MILLISECONDS
+  int chan=msg.getChannel()-1; 
+  String time=String::formatted(T("%.03f"),
+				((float)msg.getTimeStamp()));
+  String text=String::empty;
+  String prep=String::empty;
+  String sepr = ((fmat==FormatSalSend) ? T(", ") : T(" "));
+  bool note=false;
+  if ( msg.isNoteOn() )
+    {
+      note=true;
+      prep=T("mp:note");
+      double dur=offtime-msg.getTimeStamp();
+      text << time
+	   << sepr << String::formatted(T("%.03f"), (float)dur)
+	   << sepr << String(msg.getNoteNumber())
+	   << sepr << String(msg.getVelocity())
+	   << sepr << chan
+	;
+    }
+  else if ( msg.isController() )
+    {
+      prep=T("mp:ctrl");
+      text << time
+	   << sepr << String(msg.getControllerNumber())
+	   << sepr << String(msg.getControllerValue())
+	   << sepr << chan;
+    }
+  else if ( msg.isProgramChange() )
+    {
+      prep=T("mp:ctrl");
+      text << time
+	   << sepr << String(msg.getProgramChangeNumber())
+	   << sepr << chan;
+    }
+  else if ( msg.isPitchWheel())
+    {
+      prep=T("mp:pitch");
+      text << time
+	   << sepr << String(msg.getPitchWheelValue())
+	   << sepr << chan;
+    }
+  else if ( msg.isAftertouch() )
+    {
+      prep=T("mp:after");
+      text << time
+	   << sepr << String(msg.getAfterTouchValue())
+	   << sepr << chan;
+    }
+  else if ( msg.isChannelPressure() )
+    {
+      prep=T("mp:press");
+      text << time
+	   << sepr << String(msg.getChannelPressureValue())
+	   << sepr << chan;
+    }
+  else return T("");
+
+  switch (fmat)
+    {
+    case FormatSalData :
+      text=T("{") + text + T("}");
+      // tag non-note data with a comment showing its data type
+      if (!note && addtag) text << T("\t;") << prep;
+      break;
+    case FormatLispData :
+      text=T("(") + text + T(")");
+      // tag non-note data with a comment showing its data type
+      if (!note && addtag) text << T("\t;") << prep;
+      break;
+    case FormatSalSend :
+      text=T("send ") + prep.quoted() + sepr + text;
+      break;
+    case FormatLispSend :
+      text=String("(send ") + prep.quoted() + sepr + text + T(")");
+      break;
+    }
+  return text;
+}
+
+void MidiOutPort::exportSequence()
+{
+  MidiFileExportComponent* dialog=new MidiFileExportComponent();
+  String title=T("Export Sequence");
+  bool flag = DialogWindow::showModalDialog(title, dialog, NULL,
+					    Colour(0xffe5e5e5),
+					    true, false, false);
+  if (!flag)
+    {
+      delete dialog;
+      return;
+    }
+  captureSequence.updateMatchedPairs();
+  double start=dialog->frombuffer->getText().getDoubleValue();
+  double endtime=dialog->tobuffer->getText().getDoubleValue();
+  bool donote=dialog->notesbutton->getToggleState();
+  bool doctrl=dialog->controlchangebutton->getToggleState();
+  bool doprog=dialog->programchangebutton->getToggleState();
+  bool dobend=dialog->pitchbendbutton->getToggleState();
+  bool dotouch=dialog->aftertouchbutton->getToggleState();
+  bool dopress=dialog->pressurebutton->getToggleState();
+  int chans=dialog->channelmenu->getSelectedId();
+  int format=dialog->dataformatmenu->getSelectedId();
+
+  String text, indent, after;
+  switch (format) 
+    {
+    case MidiFileExportComponent::FormatLispData :
+      text=T("(define midi-export\n  '(\n");
+      indent=T("    "); 
+      after=T("  ))\n");
+      break;
+    case MidiFileExportComponent::FormatSalData :
+      text=T("define variable midi-export = \n  {\n");
+      indent=T("   "); 
+      after=T("  }\n");
+      break;
+    case MidiFileExportComponent::FormatLispSend :
+      text=T("(begin\n");
+      indent=T("  ");
+      after=T("  )\n");
+      break;
+    case MidiFileExportComponent::FormatSalSend :
+      text=T("begin\n"); 
+      indent=T("  "); 
+      after=T("end\n");
+      break;
+    }
+
+  for (int i=0; i< captureSequence.getNumEvents(); i++)
+    {
+      MidiMessageSequence::MidiEventHolder*
+	ev=captureSequence.getEventPointer(i);
+      // skip if less than start time
+      if ((start>0) && (ev->message.getTimeStamp()<start))
+	continue;
+      // stop if greater than end time
+      if ((endtime>0) && (ev->message.getTimeStamp()>endtime))
+	break;
+      // skip if not channel message or not selected channel
+      if ((ev->message.getChannel() == 0) ||
+	  ((chans<17) && (ev->message.getChannel() != chans)))
+	continue;
+      if (donote && ev->message.isNoteOn())
+	{
+	  double off;
+	  if (ev->noteOffObject)
+	    off=ev->noteOffObject->message.getTimeStamp();
+	  else 
+	    off=500.0; // missing note off???
+	  text << indent 
+	       << dialog->channelMessageExportText(ev->message, off, 
+						   format, true)
+	       << T("\n");
+	}
+      else if (doctrl && ev->message.isController())
+	text << indent
+	     << dialog->channelMessageExportText(ev->message, 0,
+						 format, true)
+	     << T("\n");
+      else if (doprog && ev->message.isProgramChange())
+	text << indent
+	     << dialog->channelMessageExportText(ev->message, 0,
+						 format, true)
+	     << T("\n");
+      else if (dobend && ev->message.isPitchWheel())
+	text << indent
+	     << dialog->channelMessageExportText(ev->message, 0,
+						 format, true)
+	     << T("\n");
+      else if (dotouch && ev->message.isAftertouch())
+	text << indent
+	     << dialog->channelMessageExportText(ev->message, 0,
+						 format, true)
+	     << T("\n");
+      else if (dopress && ev->message.isChannelPressure())
+	text << indent
+	     << dialog->channelMessageExportText(ev->message, 0,
+						 format, true)
+	     << T("\n");	  
+    }
+  text << after;
+  //std::cout << text.toUTF8();
+
+  if (dialog->consolebutton->getToggleState())
+    {
+    console->printMessage(text);
+    }
+  else if (dialog->clipboardbutton->getToggleState())
+    {
+      SystemClipboard::copyTextToClipboard(text);
+    }
+  else if (dialog->neweditorbutton->getToggleState() )
+    {
+      int synt;
+      if ((format==MidiFileExportComponent::FormatSalData) ||
+	  (format==MidiFileExportComponent::FormatSalSend))
+	synt=syntaxSal;
+      else
+	synt=syntaxLisp;
+      new EditorWindow(synt, TextBuffer::needsave, String::empty, T("Untitled"), text);
+    }
+
+  delete dialog;
+}
+

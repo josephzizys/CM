@@ -142,13 +142,24 @@ public:
 	 "PortsMidiOutPitchBend" 
 	 "PortsMidiOutInstruments"
 
-	 "PortsMidiOutFileRecord"
-         "PortsMidiOutFileClear"
-         "PortsMidiOutFileSave"
-         "PortsMidiOutFileSaveAs"
-         "PortsMidiOutFileResetStart"
-         "PortsMidiOutFileExport"
-         "PortsMidiOutFileImport"
+	 "PortsMidiSeqCaptureMidiOut"
+	 "PortsMidiSeqCaptureMidiIn"
+	 "PortsMidiSeqCaptureScore"
+         "PortsMidiSeqResetRecordingStart"
+         "PortsMidiSeqClear"
+         "PortsMidiSeqPlay"
+         "PortsMidiSeqPlotter"
+         "PortsMidiSeqPrintInfo"
+         "PortsMidiSeqCopyToTrack"
+         "PortsMidiSeqRenameTrack"
+         "PortsMidiSeqRestoreTrack"
+         "PortsMidiSeqMixTrack"
+         "PortsMidiSeqReplaceTrack"
+         "PortsMidiSeqDeleteTrack"
+         "PortsMidiSeqImport"
+         "PortsMidiSeqExport"
+         "PortsMidiSeqSave"
+         "PortsMidiSeqSaveAs"
 
 	 "PortsMidiInOpen" "PortsMidiInTest" "PortsMidiInHook"
 	 "PortsMidiInRecord" "PortsMidiInConfigure"
@@ -188,41 +199,53 @@ public:
     cmdPortsMidiOutDrumTrack = 37504,
     cmdPortsMidiOutPitchBend = 37760,
     cmdPortsMidiOutInstruments = 38016,
-    cmdPortsMidiOutFileRecord = 38272,
-    cmdPortsMidiOutFileClear = 38528,
-    cmdPortsMidiOutFileSave = 38784,
-    cmdPortsMidiOutFileSaveAs = 39040,
-    cmdPortsMidiOutFileResetStart = 39296,
-    cmdPortsMidiOutFileExport = 39552,
-    cmdPortsMidiOutFileImport = 39808,
-    cmdPortsMidiInOpen = 40064,
-    cmdPortsMidiInTest = 40320,
-    cmdPortsMidiInHook = 40576,
-    cmdPortsMidiInRecord = 40832,
-    cmdPortsMidiInConfigure = 41088,
-    cmdPortsCsoundOpen = 41344,
-    cmdPortsCsoundClose = 41600,
-    cmdPortsCsoundWrite = 41856,
-    cmdPortsCsoundAbortWrite = 42112,
-    cmdPortsCsoundPlay = 42368,
-    cmdPortsCsoundImport = 42624,
-    cmdPortsCsoundExport = 42880,
-    cmdPortsCsoundPrint = 43136,
-    cmdPortsCsoundDisplay = 43392,
-    cmdPortsCsoundClear = 43648,
-    cmdPortsCsoundScoreMode = 43904,
-    cmdPortsCsoundRecordMode = 44160,
-    cmdPortsCsoundTraceMode = 44416,
-    cmdPortsAudioSetup = 44672,
-    cmdLispConnect = 44928,
-    cmdLispLoadSystem = 45184,
-    cmdLispLoadRecentSystem = 45440,
-    cmdLispClearRecentSystems = 45696,
-    cmdLispLoadFile = 45952,
-    cmdLispLoadRecentFile = 46208,
-    cmdLispCompileFile = 46464,
-    cmdLispClearRecentLoaded = 46720,
-    cmdLispConfigure = 46976};
+    cmdPortsMidiSeqCaptureMidiOut = 38272,
+    cmdPortsMidiSeqCaptureMidiIn = 38528,
+    cmdPortsMidiSeqCaptureScore = 38784,
+    cmdPortsMidiSeqResetRecordingStart = 39040,
+    cmdPortsMidiSeqClear = 39296,
+    cmdPortsMidiSeqPlay = 39552,
+    cmdPortsMidiSeqPlotter = 39808,
+    cmdPortsMidiSeqPrintInfo = 40064,
+    cmdPortsMidiSeqCopyToTrack = 40320,
+    cmdPortsMidiSeqRenameTrack = 40576,
+    cmdPortsMidiSeqRestoreTrack = 40832,
+    cmdPortsMidiSeqMixTrack = 41088,
+    cmdPortsMidiSeqReplaceTrack = 41344,
+    cmdPortsMidiSeqDeleteTrack = 41600,
+    cmdPortsMidiSeqImport = 41856,
+    cmdPortsMidiSeqExport = 42112,
+    cmdPortsMidiSeqSave = 42368,
+    cmdPortsMidiSeqSaveAs = 42624,
+    cmdPortsMidiInOpen = 42880,
+    cmdPortsMidiInTest = 43136,
+    cmdPortsMidiInHook = 43392,
+    cmdPortsMidiInRecord = 43648,
+    cmdPortsMidiInConfigure = 43904,
+    cmdPortsCsoundOpen = 44160,
+    cmdPortsCsoundClose = 44416,
+    cmdPortsCsoundWrite = 44672,
+    cmdPortsCsoundAbortWrite = 44928,
+    cmdPortsCsoundPlay = 45184,
+    cmdPortsCsoundImport = 45440,
+    cmdPortsCsoundExport = 45696,
+    cmdPortsCsoundPrint = 45952,
+    cmdPortsCsoundDisplay = 46208,
+    cmdPortsCsoundClear = 46464,
+    cmdPortsCsoundScoreMode = 46720,
+    cmdPortsCsoundRecordMode = 46976,
+    cmdPortsCsoundTraceMode = 47232,
+    cmdPortsAudioSetup = 47488,
+    cmdLispConnect = 47744,
+    cmdLispLoadSystem = 48000,
+    cmdLispLoadRecentSystem = 48256,
+    cmdLispClearRecentSystems = 48512,
+    cmdLispLoadFile = 48768,
+    cmdLispLoadRecentFile = 49024,
+    cmdLispCompileFile = 49280,
+    cmdLispClearRecentLoaded = 49536,
+    cmdLispConfigure = 49792
+};
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};

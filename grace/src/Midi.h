@@ -106,6 +106,32 @@ class MidiFileInfo
   }
 };
 
+class MidiTrack
+{
+ public:
+  String name;
+  MidiMessageSequence* sequence;
+  bool selected;
+  MidiTrack (String nam, const MidiMessageSequence& from)
+    : name (String::empty), sequence (NULL), selected (false)
+    {
+      name=nam;
+      sequence=new MidiMessageSequence(from);
+    }
+
+  ~MidiTrack()
+    {
+      if (sequence) delete sequence;
+    }
+  bool isSelected()
+  { 
+    return selected;
+  }
+  void isSelected(bool b)
+  {
+    selected=b;
+  }
+};
 
 class MidiOutPort : public Thread 
 {
@@ -133,6 +159,12 @@ class MidiOutPort : public Thread
   void sendNote(double wait, double dur, float key, float vel, float chan);
   void sendData(int type, double wait, float chan, float data1, float data2);
   void sendMessage(MidiMessage *message);
+
+  /** called by node process to send a message out the device and
+      (possibly) record it in the capture sequence **/
+
+  void sendOut(MidiMessage& msg);
+
 
   // microtuning support
   static float channeltunings [16][16] ;
@@ -164,19 +196,74 @@ class MidiOutPort : public Thread
   void sendInstruments();
   void resetInstruments();
   void showInstrumentsWindow();
+
   
-  void sendOut(MidiMessage& msg);
-  //for recording output
+  // Midi Sequence Capturing
+
+  /** sequence capturing can be in exactly one of 4 modes **/
+
+  static const int CaptureModeOff=0;
+  static const int CaptureModeMidiOut=1;
+  static const int CaptureModeMidiIn=2;
+  static const int CaptureModeScore=3;
+
+  /** the (current) capturing status **/
+
+  int capturemode;
+
+  int getCaptureMode();
+  void setCaptureMode(int mode);
+  bool isCaptureMode(int mode);
+    
+  /** the capture sequence **/
+
   MidiMessageSequence captureSequence;
   MidiFileInfo sequenceFile;
+
+  /** time offset subtracted from MidiOut events that are recorded to
+      the capture sequence **/
+
+  double recordTimeOffset;
+
+  /** predicates to test the status of capture sequence **/
+
   bool isSequenceEmpty();
   bool isSequenceData();
-  bool recording;
-  double recordTimeOffset;
-  void setRecording(bool r);
-  bool isRecording();
+
+  void resetRecordingStart();
   void clearSequence();
-  void writeSequence(bool ask=false);
+  void playSequence();
+  void plotSequence();
+  void printSequence();
+  void saveSequence(bool ask=false);
+  void exportSequence();
+
+  /** versions of the capture sequence can be saved to and restored
+      from an array of "tracks" **/
+
+  OwnedArray<MidiTrack> tracks;
+  int getNumTracks();
+  String getTrackName(int index);
+  void setTrackName(int index, String name);
+
+  /** copy the capture seqence to a track. if index is -1 a new track
+      is added otherwise the track at index is replaced by the capture
+      sequence  **/
+
+  void copySequenceToTrack(int index=-1);
+
+  /** copy contents of track back to sequence. if add is true the
+      track is mixed into the current contents of sequence otherwise
+      the seqence is replaced by track **/
+
+  void copyTrackToSequence(int index, bool add=false);
+
+  void renameTrack(int index);
+  void deleteTrack(int index);
+
+  void importTracks();
+
+
 };
 
 class MidiInPort : public MidiInputCallback {
