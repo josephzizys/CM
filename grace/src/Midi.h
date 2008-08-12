@@ -59,6 +59,8 @@ class MidiFileInfo
   int tempo;  // beats per minute
   int tsig1;  // timesig numerator
   int tsig2;  // timesig denominator
+  bool insts;  // Include current Program change assigments
+  bool bends;  // Include current Tuning info
   
  MidiFileInfo() 
    : file (File::nonexistent), keysig (8), tempo (120), tsig1(4), tsig2(4)
@@ -174,10 +176,12 @@ class MidiOutPort : public Thread
   int getPitchBendWidth();
   void setPitchBendWidth(int w);
   void sendTuning();
+  void getTuningValues(Array<int>& vals);
 
   // instruments
   int programchanges[16];
   int getInstrument(int chan);
+  void getInstrumentValues(Array<int>& vals);
   void setInstrument(int chan, int pc, bool send=false);
   bool isInstrumentChannel(int chan);
   void sendInstruments();
