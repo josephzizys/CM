@@ -623,7 +623,8 @@ void MidiOutPort::addNode(MidiNode *n) {
 }
 
 void MidiOutPort::sendNote(double wait, double duration, float keynum, 
-			   float amplitude, float channel) {
+			   float amplitude, float channel) 
+{
   jlimit( (float)0.0, (float)15.0, channel);
   // only microtune if current tuning is not semitonal and user's
   // channel is a microtonal channel.
@@ -649,29 +650,68 @@ void MidiOutPort::sendNote(double wait, double duration, float keynum,
       if ( (chan == 9) && avoiddrumtrack ) {
 	chan--;
       }
-      //      printf("keynum=%f, quant=%f, chan=%d -> zone=%d, chan=%d, key=%d\n",
-      //	     foo, keynum, (int)channel, zone, chan, key);
       channel=chan;
       keynum=key;
     }
   }
-
+  
   if (isCaptureMode(CaptureModeScore))
     {
+      float amp=((amplitude>1.0) ? (amplitude/127) : amplitude);
+      captureSequence.
+	addEvent(MidiMessage::noteOn((int)channel, (int)keynum, amp),
+		 wait);
+      captureSequence.
+	addEvent(MidiMessage::noteOff((int)channel, (int)keynum),
+		 wait+duration);
+      // don't call updatematchedpairs until the seq is used
     }
-  // dont do anything if there is no open output port!
+  // otherwise add it to the output queue, but dont do anything if
+  // there is no open output port (is this right?)
   else if ( device != NULL )
     {
-      addNode( new MidiNode(MidiNode::MM_ON, wait, channel, keynum, amplitude) );
-      addNode( new MidiNode(MidiNode::MM_OFF, wait+duration, channel, keynum) );
+      addNode( new MidiNode(MidiNode::MM_ON, wait, channel, 
+			    keynum, amplitude) );
+      addNode( new MidiNode(MidiNode::MM_OFF, wait+duration, channel,
+			    keynum) );
     }
 }
 
-void MidiOutPort::sendData(int type, double wait, float chan, float data1, float data2)
+void MidiOutPort::sendData(int type, double wait, float chan, 
+			   float data1, float data2)
 {
   if (isCaptureMode(CaptureModeScore))
     {
-    } 
+      int ch=(int)chan;
+      int d1=(int)data1;
+      int d2=(int)data2;
+      if (type==MidiNode::MM_OFF)
+	captureSequence.addEvent(MidiMessage::noteOff(ch, d1),
+				 wait);
+      else if (type==MidiNode::MM_ON)
+	captureSequence.
+	  addEvent(MidiMessage::noteOn(ch, d1, data2),
+		   wait);
+      else if (type==MidiNode::MM_TOUCH)
+	captureSequence.
+	  addEvent(MidiMessage::aftertouchChange(ch, d1, d2),
+		   wait);
+      else if (type==MidiNode::MM_CTRL)
+	captureSequence.
+	  addEvent(MidiMessage::controllerEvent(ch, d1, d2),
+		   wait);
+      else if (type==MidiNode::MM_PROG)
+	captureSequence.
+	  addEvent(MidiMessage::programChange(ch, d1),
+		   wait);
+      else if (type==MidiNode::MM_PRESS)
+	captureSequence.
+	  addEvent(MidiMessage::channelPressureChange(ch, d1), 
+		   wait);
+      else if (type==MidiNode::MM_BEND)
+	captureSequence.addEvent(MidiMessage::pitchWheel(ch, d1),
+				 wait);
+    }
   else if ( device != NULL )
     {
       addNode( new MidiNode(type, wait, chan, data1, data2) );
@@ -682,6 +722,8 @@ void MidiOutPort::sendMessage(MidiMessage *message)
 {
   if (isCaptureMode(CaptureModeScore))
     {
+      captureSequence.addEvent(MidiMessage(*message));
+      delete message; // hmm is this right?
     } 
   else if ( device != NULL )
     {
@@ -1678,7 +1720,7 @@ MidiFileInfoComponent::MidiFileInfoComponent (MidiFileInfo* info)
     tempolabel->setColour (TextEditor::textColourId, Colours::black);
     tempolabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
 
-    addAndMakeVisible (timesigeditor = new TextEditor (T("timesigeditor")));
+    addAndMakeVisible(timesigeditor = new TextEditor (T("timesigeditor")));
     timesigeditor->setMultiLine (false);
     timesigeditor->setReturnKeyStartsNewLine (false);
     timesigeditor->setReadOnly (false);
@@ -1688,11 +1730,12 @@ MidiFileInfoComponent::MidiFileInfoComponent (MidiFileInfo* info)
     String text=String(info->tsig1) + T("/") + String(info->tsig2);
     timesigeditor->setText (text);
 
-    addAndMakeVisible (tuningbutton = new ToggleButton (T("tuningbutton")));
+    addAndMakeVisible(tuningbutton = new ToggleButton (T("tuningbutton")));
     tuningbutton->setButtonText (T("Include Current Tuning"));
     tuningbutton->addButtonListener (this);
 
-    addAndMakeVisible (instrumentbutton = new ToggleButton (T("instrumentbutton")));
+    addAndMakeVisible(instrumentbutton =
+		      new ToggleButton (T("instrumentbutton")));
     instrumentbutton->setButtonText (T("Include Current Instruments"));
     instrumentbutton->addButtonListener (this);
 
@@ -1750,16 +1793,10 @@ void MidiFileInfoComponent::filenameComponentChanged(FilenameComponent* f)
 
 void MidiFileInfoComponent::comboBoxChanged (ComboBox* combobox)
 {
-  if (combobox == keysigmenu)
-    {
-    }
 }
 
 void MidiFileInfoComponent::sliderValueChanged (Slider* slider)
 {
-  if (slider == temposlider)
-    {
-    }
 }
 
 void MidiFileInfoComponent::buttonClicked (Button* button)
@@ -1775,8 +1812,8 @@ void MidiFileInfoComponent::buttonClicked (Button* button)
 	  String msg= T("File ") + 
 	    fileeditor->getCurrentFile().getFullPathName() + 
 	    T(" exists.\nOverwrite?");
-	  // WARNING: JUCE dialog puts the OK button on the left,
-	  // which is backwards from Mac style...
+	  // ARRG, JUCE dialog puts the OK button on the left,
+	  // which is backwards from Mac style, i reverse it
 	  if (! AlertWindow::showOkCancelBox(AlertWindow::QuestionIcon, 
 					     T("Save"), msg,
 					     T("   OK   "),
@@ -1888,7 +1925,6 @@ private:
   TextButton* cancelbutton;
   TextButton* exportbutton;
   Label* dataformatlabel;
-  MidiFileExportComponent (const MidiFileExportComponent&);
   const MidiFileExportComponent& operator= (const MidiFileExportComponent&);
 };
 
@@ -2172,65 +2208,18 @@ void MidiFileExportComponent::resized()
 
 void MidiFileExportComponent::comboBoxChanged (ComboBox* comboBox)
 {
-    if (comboBox == trackmenu)
-    {
-    }
-    else if (comboBox == channelmenu)
-    {
-    }
-    else if (comboBox == dataformatmenu)
-    {
-    }
 }
 
 void MidiFileExportComponent::labelTextChanged (Label* label)
 {
-    if (label == frombuffer)
-    {
-    }
-    else if (label == tobuffer)
-    {
-    }
 }
 
 void MidiFileExportComponent::buttonClicked (Button* button)
 {
-    if (button == notesbutton)
-    {
-    }
-    else if (button == controlchangebutton)
-    {
-    }
-    else if (button == programchangebutton)
-    {
-    }
-    else if (button == pitchbendbutton)
-    {
-    }
-    else if (button == aftertouchbutton)
-    {
-    }
-    else if (button == pressurebutton)
-    {
-    }
-    else if (button == consolebutton)
-    {
-    }
-    else if (button == clipboardbutton)
-    {
-    }
-    else if (button == neweditorbutton)
-    {
-    }
-    else if (button == cancelbutton)
-    {
+  if (button == cancelbutton)
       ((DialogWindow *)getTopLevelComponent())->exitModalState(false);
-
-    }
-    else if (button == exportbutton)
-    {
+  else if (button == exportbutton)
       ((DialogWindow *)getTopLevelComponent())->exitModalState(true);
-    }
 }
 
 void MidiOutPort::exportSequence()
