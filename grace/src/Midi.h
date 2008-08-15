@@ -259,6 +259,13 @@ class MidiOutPort : public Thread
   void restoreTrack(int index);
   void mixTrack(int index);
   void importTracks();
+
+
+  const PopupMenu getMidiOutMenu();
+  const PopupMenu getMidiSeqMenu();
+  void performMidiOutCommand(CommandID id);
+  void performMidiSeqCommand(CommandID id);
+
 };
 
 class MidiInPort : public MidiInputCallback {
@@ -325,5 +332,9 @@ class MidiInPort : public MidiInputCallback {
   void setActiveSense(bool n);
   void printMidiMessageTrace (const MidiMessage &msg);
   void showMidiInDialog();
+
+  const PopupMenu getMidiInMenu();
+  void performMidiInCommand(CommandID id);
+
 };
 #endif

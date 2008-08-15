@@ -10,10 +10,7 @@
 
 #include "Syntax.h"
 #include "Grace.h"
-//#include <map>
 #include <cctype>
-
-//using namespace std;
 
 juce_ImplementSingleton(TextSyntax) ;
 juce_ImplementSingleton(LispSyntax) ;
@@ -22,11 +19,12 @@ juce_ImplementSingleton(SalSyntax) ;
 Syntax::Syntax (String a, String b, String c, String d, String e, 
 		String f, String g, String h, String i, String j) 
   : numtoks (0),
-    type (syntaxNone)
+    type (TextIDs::Empty)
 {
 
   init_syntab(syntab, a, b, c, d, e, f, g, h, i, j);
-  for (int i=0; i<MAXHILITE; i++) hilites[i]=Colours::black;
+  for (int i=0; i<HiliteIDs::NUMHILITES; i++)
+    hilites[i]=Colours::black;
 }
 
 Syntax::~Syntax() {
@@ -58,7 +56,7 @@ TextSyntax::TextSyntax ()
 	    T(""), T(""), T("\""), T("([{"), T(")]}"),
 	    T(",.!?;:'`\\"), T("")) 
 {
-  type=syntaxText;
+  type=TextIDs::Text;
 }
 
 TextSyntax::~TextSyntax() {
@@ -78,8 +76,8 @@ int TextSyntax::getIndent (const String text, int bot, int top, int beg) {
   return 4;
 }
 
-hiliteID TextSyntax::getHilite (const String text, int start, int end) {
-  return hiliteNone;
+HiliteID TextSyntax::getHilite (const String text, int start, int end) {
+  return HiliteIDs::None;
 }
 
 /************************************************************************
@@ -97,59 +95,59 @@ LispSyntax::LispSyntax ()
 	    T(")"),
 	    T(","), T("\\"))
 {
-  type=syntaxLisp;
-  // hilite4 = special forms
-  // hilite5 = lisp keywords
-  hilites[hiliteString]=Colours::rosybrown;
-  hilites[hiliteComment]=Colours::firebrick;
-  hilites[hilite4]=Colour(0xa0, 0x20, 0xf0); //Colours::purple;
-  hilites[hilite5]=Colours::orchid;
-  hilites[hilite6]=Colours::cadetblue;
+  type=TextIDs::Lisp;
+  // HiliteIDs::Hilite4 = special forms
+  // HiliteIDs::Hilite5 = lisp keywords
+  hilites[HiliteIDs::String]=Colours::rosybrown;
+  hilites[HiliteIDs::Comment]=Colours::firebrick;
+  hilites[HiliteIDs::Hilite4]=Colour(0xa0, 0x20, 0xf0); //Colours::purple;
+  hilites[HiliteIDs::Hilite5]=Colours::orchid;
+  hilites[HiliteIDs::Hilite6]=Colours::cadetblue;
 
 #ifndef SCHEME
-  addLispTok( T("defclass"), numtoks++, hilite4, 3);
-  addLispTok( T("defconstant"), numtoks++, hilite4, 1);
-  addLispTok( T("definstrument"), numtoks++, hilite4, 2);
-  addLispTok( T("defmethod"), numtoks++, hilite4, 3);
-  addLispTok( T("defobject"), numtoks++, hilite4, 2);
-  addLispTok( T("defparameter"), numtoks++, hilite4, 1);
-  addLispTok( T("defprocess"), numtoks++, hilite4, 2);
-  addLispTok( T("defun"), numtoks++, hilite4, 2);
-  addLispTok( T("defvar"), numtoks++, hilite4, 1);
-  addLispTok( T("do*"), numtoks++, hilite4, 2);
-  addLispTok( T("with-sound"), numtoks++, hiliteNone, 1);
-  addLispTok( T("dolist"), numtoks++, hilite4, 1);
-  addLispTok( T("dotimes"), numtoks++, hilite4, 1);
-  addLispTok( T("eval-when"), numtoks++, hilite4, 1);
-  addLispTok( T("flet"), numtoks++, hilite4, 1);
-  addLispTok( T("labels"), numtoks++, hilite4, 1);
-  addLispTok( T("process"), numtoks++, hilite4, 2);
-  addLispTok( T("progn"), numtoks++, hilite4, 2);
+  addLispTok( T("defclass"), numtoks++, HiliteIDs::Hilite4, 3);
+  addLispTok( T("defconstant"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("definstrument"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("defmethod"), numtoks++, HiliteIDs::Hilite4, 3);
+  addLispTok( T("defobject"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("defparameter"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("defprocess"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("defun"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("defvar"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("do*"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("with-sound"), numtoks++, HiliteIDs::None, 1);
+  addLispTok( T("dolist"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("dotimes"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("eval-when"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("flet"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("labels"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("process"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("progn"), numtoks++, HiliteIDs::Hilite4, 2);
 #else
-  addLispTok( T("begin"), numtoks++, hilite4, 1000);
-  addLispTok( T("define"), numtoks++, hilite4, 1);
-  addLispTok( T("define-process"), numtoks++, hilite4, 1);
-  addLispTok( T("run"), numtoks++, hilite4, 1000);
+  addLispTok( T("begin"), numtoks++, HiliteIDs::Hilite4, 1000);
+  addLispTok( T("define"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("define-process"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("run"), numtoks++, HiliteIDs::Hilite4, 1000);
 #endif
-  addLispTok( T("and"), numtoks++, hilite4, 2);
-  addLispTok( T("cond"), numtoks++, hilite4, 2);
-  addLispTok( T("do"), numtoks++, hilite4, 2);
-  addLispTok( T("if"), numtoks++, hilite4, 1);
-  addLispTok( T("lambda"), numtoks++, hilite4, 1);
-  addLispTok( T("let"), numtoks++, hilite4, 1);
-  addLispTok( T("let*"), numtoks++, hilite4, 1);
-  addLispTok( T("letrec"), numtoks++, hilite4, 1);
-  addLispTok( T("loop"), numtoks++, hilite4, 0);
-  addLispTok( T("or"), numtoks++, hilite4, 2);
-  addLispTok( T("unless"), numtoks++, hilite4, 1);
-  addLispTok( T("when"), numtoks++, hilite4, 1);
+  addLispTok( T("and"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("cond"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("do"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("if"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("lambda"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("let"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("let*"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("letrec"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("loop"), numtoks++, HiliteIDs::Hilite4, 0);
+  addLispTok( T("or"), numtoks++, HiliteIDs::Hilite4, 2);
+  addLispTok( T("unless"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("when"), numtoks++, HiliteIDs::Hilite4, 1);
 }
 
 LispSyntax::~LispSyntax() {
   clearSingletonInstance();
 }
 
-void LispSyntax::addLispTok (const String n, int t, hiliteID h, int i) {
+void LispSyntax::addLispTok (const String n, int t, HiliteID h, int i) {
   tokens[n] = new SynTok(n, t, h, i);
 }
 
@@ -254,33 +252,33 @@ int LispSyntax::getIndent(const String text, int bot, int top, int beg) {
   return standard_indent;
 }
 
-hiliteID LispSyntax::getHilite (const String text, int start, int end) {
+HiliteID LispSyntax::getHilite (const String text, int start, int end) {
   // determine color of token between start and end in text.
   // LISP:
-  // hilite4 = special forms (syntax tokens)
-  // hilite5 = lisp keywords
-  // hilite6 = constants
+  // HiliteIDs::Hilite4 = special forms (syntax tokens)
+  // HiliteIDs::Hilite5 = lisp keywords
+  // HiliteIDs::Hilite6 = constants
 
 #ifdef SCHEME 
   if (text[end-1] == ':')  // DSL style keywords (Chicken scheme)
-    return hilite5;
+    return HiliteIDs::Hilite5;
   if (text[start] == '#') {
     if (((end-start)==2) && ((text[start+1]=='t') ||
 			     (text[start+1]=='f') ) )
-      return hilite6;
+      return HiliteIDs::Hilite6;
     if (((end-start)>2) && text[start+1]==':')
-      return hilite5;
-    return hiliteNone;
+      return HiliteIDs::Hilite5;
+    return HiliteIDs::None;
   }
 #else
   if (text[start] == ':' )
-    return hilite5;
+    return HiliteIDs::Hilite5;
 #endif 
 
  SynTok * tok = getSynTok(text.substring(start,end));
   if (tok != (SynTok *)NULL)
     return tok->getHilite();
-  return hiliteNone;
+  return HiliteIDs::None;
 }
 
 void LispSyntax::evalText(String text, bool isRegion, bool expand) {
@@ -341,100 +339,100 @@ SalSyntax::SalSyntax ()
 	    T(";"), T("#"), T("\""), T("([{"), T(")]})"),
 	    T(","), T("\\")) 
 {
-  type=syntaxSal;
+  type=TextIDs::Sal;
   // SAL Hilites:
-  //  hilite4 = commands
-  //  hilite5 = clausals/reserved
-  //  hilite6 = classes
-  //  hilite7 = keywords
-  //  hilite8 = lispkeys/constants/#notation
-  hilites[hiliteString]=Colours::rosybrown;
-  hilites[hiliteComment]=Colours::firebrick;
-  hilites[hilite4]=Colours::blue;
-  hilites[hilite5]=Colour(0xa0, 0x20, 0xf0); //Colours::purple;
-  hilites[hilite6]=Colours::forestgreen;
-  hilites[hilite7]=Colours::orchid;
-  hilites[hilite8]=Colours::cadetblue;
+  //  HiliteIDs::Hilite4 = commands
+  //  HiliteIDs::Hilite5 = clausals/reserved
+  //  HiliteIDs::Hilite6 = classes
+  //  HiliteIDs::Hilite7 = keywords
+  //  HiliteIDs::Hilite8 = lispkeys/constants/#notation
+  hilites[HiliteIDs::String]=Colours::rosybrown;
+  hilites[HiliteIDs::Comment]=Colours::firebrick;
+  hilites[HiliteIDs::Hilite4]=Colours::blue;
+  hilites[HiliteIDs::Hilite5]=Colour(0xa0, 0x20, 0xf0); //Colours::purple;
+  hilites[HiliteIDs::Hilite6]=Colours::forestgreen;
+  hilites[HiliteIDs::Hilite7]=Colours::orchid;
+  hilites[HiliteIDs::Hilite8]=Colours::cadetblue;
 
-  addSalTok( T("begin"), SalBegin, hilite5);
-  addSalTok( T("chdir"), SalChdir, hilite5);
-  addSalTok( T("define"), SalDefine, hilite5);
-  addSalTok( T("else"), SalElse, hilite5);
-  addSalTok( T("end"), SalEnd, hilite5);
-  addSalTok( T("exec"), SalExec, hilite5);
-  addSalTok( T("if"), SalIf, hilite5);
-  addSalTok( T("load"), SalLoad, hilite5);
-  addSalTok( T("loop"), SalLoop, hilite5);
-  addSalTok( T("open"), SalOpen, hilite5);
-  addSalTok( T("output"), SalOutput, hilite5);
-  addSalTok( T("play"), SalPlay, hilite5);
-  addSalTok( T("plot"), SalPlot, hilite5);
-  addSalTok( T("print"), SalPrint, hilite5);
-  addSalTok( T("return"), SalReturn, hilite5);
-  addSalTok( T("run"), SalRun, hilite5);
-  addSalTok( T("send"), SalSend, hilite5);
-  addSalTok( T("set"), SalSet, hilite5);
-  addSalTok( T("sprout"), SalSprout, hilite5);
-  addSalTok( T("system"), SalSystem, hilite5);
-  addSalTok( T("then"), SalThen, hilite5);
-  addSalTok( T("unless"), SalUnless, hilite5);
-  addSalTok( T("until"), SalUntil, hilite5);
-  addSalTok( T("wait"), SalWait, hilite5);
-  addSalTok( T("when"), SalWhen, hilite5);
-  addSalTok( T("while"), SalWhile, hilite5);
-  addSalTok( T("with"), SalWith, hilite5);
-  addSalTok( T("process"), SalProcess, hilite6);
-  addSalTok( T("function"), SalFunction, hilite6);
-  addSalTok( T("variable"), SalVariable, hilite6);
+  addSalTok( T("begin"), SalBegin, HiliteIDs::Hilite5);
+  addSalTok( T("chdir"), SalChdir, HiliteIDs::Hilite5);
+  addSalTok( T("define"), SalDefine, HiliteIDs::Hilite5);
+  addSalTok( T("else"), SalElse, HiliteIDs::Hilite5);
+  addSalTok( T("end"), SalEnd, HiliteIDs::Hilite5);
+  addSalTok( T("exec"), SalExec, HiliteIDs::Hilite5);
+  addSalTok( T("if"), SalIf, HiliteIDs::Hilite5);
+  addSalTok( T("load"), SalLoad, HiliteIDs::Hilite5);
+  addSalTok( T("loop"), SalLoop, HiliteIDs::Hilite5);
+  addSalTok( T("open"), SalOpen, HiliteIDs::Hilite5);
+  addSalTok( T("output"), SalOutput, HiliteIDs::Hilite5);
+  addSalTok( T("play"), SalPlay, HiliteIDs::Hilite5);
+  addSalTok( T("plot"), SalPlot, HiliteIDs::Hilite5);
+  addSalTok( T("print"), SalPrint, HiliteIDs::Hilite5);
+  addSalTok( T("return"), SalReturn, HiliteIDs::Hilite5);
+  addSalTok( T("run"), SalRun, HiliteIDs::Hilite5);
+  addSalTok( T("send"), SalSend, HiliteIDs::Hilite5);
+  addSalTok( T("set"), SalSet, HiliteIDs::Hilite5);
+  addSalTok( T("sprout"), SalSprout, HiliteIDs::Hilite5);
+  addSalTok( T("system"), SalSystem, HiliteIDs::Hilite5);
+  addSalTok( T("then"), SalThen, HiliteIDs::Hilite5);
+  addSalTok( T("unless"), SalUnless, HiliteIDs::Hilite5);
+  addSalTok( T("until"), SalUntil, HiliteIDs::Hilite5);
+  addSalTok( T("wait"), SalWait, HiliteIDs::Hilite5);
+  addSalTok( T("when"), SalWhen, HiliteIDs::Hilite5);
+  addSalTok( T("while"), SalWhile, HiliteIDs::Hilite5);
+  addSalTok( T("with"), SalWith, HiliteIDs::Hilite5);
+  addSalTok( T("process"), SalProcess, HiliteIDs::Hilite6);
+  addSalTok( T("function"), SalFunction, HiliteIDs::Hilite6);
+  addSalTok( T("variable"), SalVariable, HiliteIDs::Hilite6);
  
-  addSalTok( T("above"), SalAbove, hilite5);
-  addSalTok( T("below"), SalBelow, hilite5);
-  addSalTok( T("by"), SalBy, hilite5);
-  addSalTok( T("downto"), SalDownto, hilite5);
-  addSalTok( T("finally"), SalFinally, hilite5);
-  addSalTok( T("for"), SalFor, hilite5);
-  addSalTok( T("from"), SalFrom, hilite5);
-  addSalTok( T("in"), SalIn, hilite5);
-  addSalTok( T("over"), SalOver, hilite5);
-  addSalTok( T("repeat"), SalRepeat, hilite5);
-  addSalTok( T("to"), SalTo, hilite5);
+  addSalTok( T("above"), SalAbove, HiliteIDs::Hilite5);
+  addSalTok( T("below"), SalBelow, HiliteIDs::Hilite5);
+  addSalTok( T("by"), SalBy, HiliteIDs::Hilite5);
+  addSalTok( T("downto"), SalDownto, HiliteIDs::Hilite5);
+  addSalTok( T("finally"), SalFinally, HiliteIDs::Hilite5);
+  addSalTok( T("for"), SalFor, HiliteIDs::Hilite5);
+  addSalTok( T("from"), SalFrom, HiliteIDs::Hilite5);
+  addSalTok( T("in"), SalIn, HiliteIDs::Hilite5);
+  addSalTok( T("over"), SalOver, HiliteIDs::Hilite5);
+  addSalTok( T("repeat"), SalRepeat, HiliteIDs::Hilite5);
+  addSalTok( T("to"), SalTo, HiliteIDs::Hilite5);
 
   //  Operators, data field is op weight
-  addSalTok( T("|"), SalOr, hiliteNone);
-  addSalTok( T("&"), SalAnd, hiliteNone);
-  addSalTok( T("!"), SalNot, hiliteNone);
-  addSalTok( T("="), SalEqual, hiliteNone); // relation and op
-  addSalTok( T("!="), SalNotEqual, hiliteNone);  
-  addSalTok( T("<"), SalLess, hiliteNone);
-  addSalTok( T(">"), SalGreater, hiliteNone);
-  addSalTok( T("<="), SalLessEqual, hiliteNone); // relation and op
-  addSalTok( T(">="), SalGreaterEqual, hiliteNone); // relation and op
-  addSalTok( T("~="), SalGeneralEqual, hiliteNone);  
-  addSalTok( T("+"), SalPlus, hiliteNone);
-  addSalTok( T("-"), SalMinus, hiliteNone);
-  addSalTok( T("%"), SalMod, hiliteNone);
-  addSalTok( T("*"), SalTimes, hiliteNone);  
-  addSalTok( T("/"), SalDivide, hiliteNone);
-  addSalTok( T("^"), SalExpt, hiliteNone);
+  addSalTok( T("|"), SalOr, HiliteIDs::None);
+  addSalTok( T("&"), SalAnd, HiliteIDs::None);
+  addSalTok( T("!"), SalNot, HiliteIDs::None);
+  addSalTok( T("="), SalEqual, HiliteIDs::None); // relation and op
+  addSalTok( T("!="), SalNotEqual, HiliteIDs::None);  
+  addSalTok( T("<"), SalLess, HiliteIDs::None);
+  addSalTok( T(">"), SalGreater, HiliteIDs::None);
+  addSalTok( T("<="), SalLessEqual, HiliteIDs::None); // relation and op
+  addSalTok( T(">="), SalGreaterEqual, HiliteIDs::None); // relation and op
+  addSalTok( T("~="), SalGeneralEqual, HiliteIDs::None);  
+  addSalTok( T("+"), SalPlus, HiliteIDs::None);
+  addSalTok( T("-"), SalMinus, HiliteIDs::None);
+  addSalTok( T("%"), SalMod, HiliteIDs::None);
+  addSalTok( T("*"), SalTimes, HiliteIDs::None);  
+  addSalTok( T("/"), SalDivide, HiliteIDs::None);
+  addSalTok( T("^"), SalExpt, HiliteIDs::None);
   // assignment (also: = <= >=)
-  addSalTok( T("+="), SalInc, hiliteNone);
-  addSalTok( T("*="), SalMul, hiliteNone);
-  addSalTok( T("&="), SalCol, hiliteNone);
-  addSalTok( T("@="), SalPre, hiliteNone);  
-  addSalTok( T("^="), SalApp, hiliteNone);
+  addSalTok( T("+="), SalInc, HiliteIDs::None);
+  addSalTok( T("*="), SalMul, HiliteIDs::None);
+  addSalTok( T("&="), SalCol, HiliteIDs::None);
+  addSalTok( T("@="), SalPre, HiliteIDs::None);  
+  addSalTok( T("^="), SalApp, HiliteIDs::None);
   // hash tokens
-  addSalTok( T("#t"), SalTrue, hilite8);
-  addSalTok( T("#f"), SalFalse, hilite8);
-  addSalTok( T("#?"), SalQMark, hilite8);
-  addSalTok( T("#$"), SalUnquote, hilite8);
-  addSalTok( T("#^"), SalSplice, hilite8);
+  addSalTok( T("#t"), SalTrue, HiliteIDs::Hilite8);
+  addSalTok( T("#f"), SalFalse, HiliteIDs::Hilite8);
+  addSalTok( T("#?"), SalQMark, HiliteIDs::Hilite8);
+  addSalTok( T("#$"), SalUnquote, HiliteIDs::Hilite8);
+  addSalTok( T("#^"), SalSplice, HiliteIDs::Hilite8);
 }
 
 SalSyntax::~SalSyntax() {
   clearSingletonInstance();
 }
 
-void SalSyntax::addSalTok (const String n, int t, hiliteID c) {
+void SalSyntax::addSalTok (const String n, int t, HiliteID c) {
   numtoks++;
   tokens[n] = new SynTok(n, t, c);
 }
@@ -576,32 +574,32 @@ int SalSyntax::getIndent(const String text, int bot, int top, int poz) {
   return (col<0) ? 0 : col;
 }
 
-hiliteID SalSyntax::getHilite (const String text, int start, int end) {
+HiliteID SalSyntax::getHilite (const String text, int start, int end) {
   // determine color of token between start and end in text.
   // SAL Hilites:
-  //  hilite4 = commands
-  //  hilite5 = clausals/reserved
-  //  hilite6 = classes
-  //  hilite7 = keywords
-  //  hilite8 = lispkeys/constants/#notation
+  //  HiliteIDs::Hilite4 = commands
+  //  HiliteIDs::Hilite5 = clausals/reserved
+  //  HiliteIDs::Hilite6 = classes
+  //  HiliteIDs::Hilite7 = keywords
+  //  HiliteIDs::Hilite8 = lispkeys/constants/#notation
 
   if ((text[start]=='<') && (text[end-1]=='>'))
-    return hilite6;  // <foo>
+    return HiliteIDs::Hilite6;  // <foo>
   if (text[end-1] == ':')
-    return hilite7;  // foo:
+    return HiliteIDs::Hilite7;  // foo:
   if (text[start] == ':' )
-    return hilite8;  // :foo
+    return HiliteIDs::Hilite8;  // :foo
   if (text[start] == '#')
-    return hilite8;  // #foo
+    return HiliteIDs::Hilite8;  // #foo
   SynTok * tok = getSynTok(text.substring(start,end));
   if (tok == (SynTok *)NULL)
-    return hiliteNone;
+    return HiliteIDs::None;
   if ( (isSalCommandType(tok->getType())) || (tok->getType()==SalEnd)) {
     // show commands at start of line as executable, allow balancing
     // End in col 0 to show blue too.
     if (start==0 || text[start-1] == '\n')
-      return hilite4;
-    else return hilite5;
+      return HiliteIDs::Hilite4;
+    else return HiliteIDs::Hilite5;
   }
   else return tok->getHilite();
 }

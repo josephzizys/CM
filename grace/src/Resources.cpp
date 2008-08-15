@@ -38,198 +38,6 @@ String getEditorHelp () {
   return String::empty;
 }
 
-void addCommonHelpItems(PopupMenu* menu, GraceWindowType w) {
-  PopupMenu sub1;
-  PopupMenu sub2;
-  if (w==winConsole) {
-    menu->addItem(cmdHelpWindow+w, T("Console Help"));
-    menu->addItem(cmdHelpWindow+13, T("Ports Menu Help"));
-  }
-  else if (w==winEditor)
-    menu->addItem(cmdHelpWindow+w, T("Editor Help"));
-  else if (w==winPlotter)
-    menu->addItem(cmdHelpWindow+w, T("Plotter Help"));
-  menu->addSeparator();
-#ifdef SCHEME
-  menu->addItem(cmdHelpWindow+12, T("CM Dictionary"));
-  sub2.addItem(cmdHelpExamples+1, T("Notes, keys and pitch classes"));
-  sub2.addItem(cmdHelpExamples+2, T("Scales and interval cycles"));
-  sub2.addItem(cmdHelpExamples+3, T("Sending data to ports"));  
-  sub2.addItem(cmdHelpExamples+8, T("Sending data to Csound"));  
-  sub2.addItem(cmdHelpExamples+4, T("Markov harmonizer a la Messiaen"));  
-  sub2.addItem(cmdHelpExamples+5, T("Sprouting processes"));  
-  sub2.addItem(cmdHelpExamples+6, T("Building gestures"));  
-  sub2.addItem(cmdHelpExamples+7, T("A la maniere de 'continuum' (Ligeti)"));  
-  menu->addSubMenu(T("Examples"), sub2, true);
-#endif
-  sub1.addItem(cmdHelpSalTutorial+0, T("Hello World"));
-  sub1.addItem(cmdHelpSalTutorial+1, T("Expressions"));
-  sub1.addItem(cmdHelpSalTutorial+2, T("Function Calls"));
-  sub1.addItem(cmdHelpSalTutorial+3, T("Working with Lists"));
-  sub1.addItem(cmdHelpSalTutorial+4, T("Making Sound"));
-  sub1.addItem(cmdHelpSalTutorial+5, T("Defining Variables"));
-  sub1.addItem(cmdHelpSalTutorial+6, T("Defining Functions"));
-  sub1.addItem(cmdHelpSalTutorial+7, T("Iteration"));
-  sub1.addItem(cmdHelpSalTutorial+8, T("Musical Processes"));
-
-  menu->addSubMenu(T("SAL Tutorials"), sub1, true);
-  menu->addSeparator();
-
-#ifndef SCHEME  
-  menu->addItem(cmdHelpURL+1, T("CM Dictionary"));
-#endif
-  menu->addItem(cmdHelpURL+2, T("CM Homepage"));
-#ifdef SCHEME
-  menu->addItem(cmdHelpURL+3, T("Chicken Homepage"));
-#endif
-  menu->addItem(cmdHelpURL+4, T("Juce Homepage"));
-  menu->addSeparator();
-  menu->addItem(cmdHelpAboutGrace, T("About Grace"), false);
-}
-
-void commonHelpItemSelected (int cmd, int arg) {
-  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
-  File res=File::nonexistent;
-  URL url;
-  String err;
-
-  switch (cmd) {
-
-  case cmdHelpWindow :
-    res=app->getResourceDirectory();
-    if (arg == winConsole)
-      res=res.getChildFile(T("doc/console.html"));
-    else if (arg == winEditor)
-      res=res.getChildFile(T("doc/editor.html"));
-    if (arg == winPlotter)
-      res=res.getChildFile(T("doc/plotter.html"));
-    else if (arg==11)
-      res=res.getChildFile(T("doc/sal/sal.html"));
-    else if (arg==12)
-      res=res.getChildFile(T("doc/cm.html"));
-    else if (arg==13)
-      res=res.getChildFile(T("doc/ports.html"));
-    if ( res.existsAsFile() )
-#ifdef LINUX
-      // launchInDefaultBrowser on Linux does not for local files so I
-      // have to hardwire a browser. At some point this could be a
-      // Preference setting...
-      {
-	String u=T("file://") + res.getFullPathName();
-        File foxy=File(T("/usr/bin/firefox"));
-        if ( foxy.existsAsFile() ) {
-          foxy.startAsProcess(u.quoted());
-        }
-        else
-	  err=T(">>> Can't open ") + u + T(" because ") +
-	      foxy.getFullPathName() + T(" does not exist.");
-      }
-#endif
-#ifndef LINUX
-      URL(res.getFullPathName()).launchInDefaultBrowser();
-#endif
-    else err=T(">>> Help file ") + res.getFullPathName() +
-	   T(" does not exist.");
-    break;
-
-  case cmdHelpExamples :
-    res=app->getResourceDirectory().getChildFile(T("doc/examples/"));
-    if (arg == 1) res=res.getChildFile(T("notes.sal"));
-    else if (arg == 2) res=res.getChildFile(T("scales.sal"));
-    else if (arg == 3) res=res.getChildFile(T("send.sal"));
-    else if (arg == 4) res=res.getChildFile(T("harmonizer.sal"));
-    else if (arg == 5) res=res.getChildFile(T("sprout.sal"));
-    else if (arg == 6) res=res.getChildFile(T("gestures.sal"));
-    else if (arg == 7) res=res.getChildFile(T("continuum.sal"));
-    else if (arg == 8) res=res.getChildFile(T("csound.sal"));
-    if ( res.existsAsFile() )
-	new EditorWindow(0, (TextBuffer::load | TextBuffer::nosave),
-			 res.getFullPathName());
-    else err=T(">>> Example file ") + res.getFullPathName() +
-	   T(" does not exist.");
-    break;
-
-  case cmdHelpSalTutorial :
-    res=app->getResourceDirectory().getChildFile(T("doc/tutorials/"));
-    if (arg == 0) res=res.getChildFile(T("hello.sal"));
-    else if (arg == 1) res=res.getChildFile(T("sexpr.sal"));
-    else if (arg == 2) res=res.getChildFile(T("funcall.sal"));
-    else if (arg == 3) res=res.getChildFile(T("lists.sal"));
-    else if (arg == 4) res=res.getChildFile(T("sound.sal"));
-    else if (arg == 5) res=res.getChildFile(T("variables.sal"));
-    else if (arg == 6) res=res.getChildFile(T("functions.sal"));
-    else if (arg == 7) res=res.getChildFile(T("loop.sal"));
-    else if (arg == 8) res=res.getChildFile(T("processes.sal"));
-    if ( res.existsAsFile() )
-	new EditorWindow(0, (TextBuffer::load | TextBuffer::nosave),
-			 res.getFullPathName());
-    else err=T(">>> Help file ") + res.getFullPathName() +
-	   T(" does not exist.");
-    break;
-
-  case cmdHelpURL :
-    if (arg == 1 )
-      url=URL(T("http://commonmusic.sf.net/doc/dict/index.html"));
-    else if (arg == 2)
-      url=URL(T("http://commonmusic.sf.net/doc/cm.html"));
-    else if (arg == 3)
-      url=URL(T("http://www.call-with-current-continuation.org/"));
-    else if (arg == 4)
-      url=URL(T("http://www.rawmaterialsoftware.com/juce"));
-    if (err==String::empty)
-      url.launchInDefaultBrowser();
-    break;
-  case cmdHelpAboutGrace :
-    break;
-  default :
-    break;
-  }
-
-  if (err != String::empty ) {
-    GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
-    app->getConsole()->printError(err);
-  }
-  return;
-}
-
-void addCommonWindowItems(PopupMenu* menu, GraceWindowType w) {
-  // window type is ignored for now but could be used to organize the
-  // window list according to the type of window that is filling the
-  // menu. of course each window would have to record its 'type'...
-  bool n=TopLevelWindow::getTopLevelWindow(0)->isUsingNativeTitleBar();
-  for (int i=0; i<  TopLevelWindow::getNumTopLevelWindows(); i++) {
-    TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(i);
-    menu->addItem(cmdWindowSelect+i, w->getName() );
-  }
-  menu->addSeparator();
-  menu->addItem(cmdWindowNative, T("Native Titlebars"), true,
-		n);
-}
-
-void commonWindowItemSelected (int cmd, int arg) {
-  TopLevelWindow* w;
-  switch (cmd) {
-  case cmdWindowSelect :
-    w= TopLevelWindow::getTopLevelWindow(arg);
-    if (w != (TopLevelWindow *)NULL) {
-      w->grabKeyboardFocus();
-      w->toFront(true);
-    }
-    break;
-  case cmdWindowNative :
-    {
-      bool n=TopLevelWindow::getTopLevelWindow(0)->isUsingNativeTitleBar();
-      for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++) {
-	w = TopLevelWindow::getTopLevelWindow(i);
-	w->setUsingNativeTitleBar(!n);
-      }
-    }
-    break;
-  default :
-    break;
-  }
-}
-
 //
 // Preferences
 //
@@ -243,92 +51,105 @@ GracePreferences::GracePreferences()
 {
 }
 
-void GracePreferences::initPreferences (String cmdline) {
+void GracePreferences::initPreferences (String cmdline)
+{
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   StringArray toks ;
   toks.addTokens(cmdline, true);
   int argc=toks.size(), argn=0;
-
+  
   // have to check --no-prefs before anything else
-  if ( toks.contains( T("--no-prefs") ) ) {
-    propfile=new PropertiesFile(File::nonexistent, -1,
-				PropertiesFile::storeAsXML);
-    loadPrefs=false;
-  }
+  if ( toks.contains( T("--no-prefs") ) )
+    {
+      propfile=new PropertiesFile(File::nonexistent, -1,
+				  PropertiesFile::storeAsXML);
+      loadPrefs=false;
+    }
   else
     propfile=PropertiesFile::createDefaultAppPropertiesFile
       ( app->getApplicationName(), T("prefs"), String::empty, false, -1,
 	PropertiesFile::storeAsXML);
-
+  
   // add lisp implementations
 #ifndef SCHEME
-  if (!propfile->containsKey(T("LispImplementations")) ) {
-    XmlElement* top=new XmlElement(T("list"));
-    top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"),
+  if (!propfile->containsKey(T("LispImplementations")) )
+    {
+      XmlElement* top=new XmlElement(T("list"));
+      top->addChildElement( new Lisp( T("CLISP"), T("cltl"), T("-x"),
 #ifdef WINDOWS
-				    T(""),
+				      T(""),
 #else
-				    T("/usr/local/bin/clisp"),
+				      T("/usr/local/bin/clisp"),
 #endif
-				    T("")));
-    top->addChildElement( new Lisp( T("OpenMCL"), T("cltl"), T("--eval"),
-				    T("/usr/local/bin/openmcl"),
-				    T("")));
-    top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"),
+				      T("")));
+      top->addChildElement( new Lisp( T("OpenMCL"), T("cltl"), T("--eval"),
+				      T("/usr/local/bin/openmcl"),
+				      T("")));
+      top->addChildElement( new Lisp( T("SBCL"), T("cltl"), T("--eval"),
 #ifdef WINDOWS
-				    T(""),
+				      T(""),
 #else
-				    T("/usr/local/bin/sbcl"),
+				      T("/usr/local/bin/sbcl"),
 #endif
-				    T("")));
-    propfile->setValue(T("LispImplementations"), top);
-  }
+				      T("")));
+      propfile->setValue(T("LispImplementations"), top);
+    }
 #endif
-
+  
   // parse command line args
-  while ( argn < argc ) {
-    if ( toks[argn]==T("--resource-directory") ) {
-      if ( ++argn < argc )
-	app->setResourceDirectory( File(toks[argn++]) );
-    }
-    else if ( toks[argn]==T("--asdf-systems-directory") ) {
-      if ( ++argn < argc )
-	setAsdfSystemsDirectory( File(toks[argn++]) );
-    }
-    else if ( toks[argn]==T("--scbl-program") ) {
-      if ( ++argn < argc ) {
-	Lisp *l=findLisp( T("SBCL"));
-	setLispToLaunch( l );
-	l->setLispProgram( toks[argn++] );
+  while (argn < argc)
+    {
+      if (toks[argn]==T("--resource-directory"))
+	{
+	  if (++argn < argc)
+	    app->setResourceDirectory(File(toks[argn++]));
+	}
+      else if (toks[argn]==T("--asdf-systems-directory"))
+	{
+	  if (++argn < argc)
+	    setAsdfSystemsDirectory(File(toks[argn++]));
+	}
+      else if ( toks[argn]==T("--scbl-program") )
+	{
+	  if (++argn < argc)
+	    {
+	      Lisp *l=findLisp(T("SBCL"));
+	      setLispToLaunch(l);
+	      l->setLispProgram(toks[argn++]);
+	    }
+	}
+      else if (toks[argn]==T("--clisp-program"))
+	{
+	  if (++argn < argc)
+	    {
+	      Lisp *l=findLisp(T("CLISP"));
+	      setLispToLaunch(l);
+	      l->setLispProgram( toks[argn++] );
+	    }
+	}
+      else if (toks[argn]==T("--scheme-heap-size"))
+	{
+	  if (++argn < argc) 
+	    {
+	      setSchemeHeapSize(toks[argn++].getIntValue());
+	    }
+	}
+      else if (toks[argn]==T("--scheme-stack-size")) 
+	{
+	  if (++argn < argc) {
+	    setSchemeStackSize( toks[argn++].getIntValue());
+	  }
+	}
+      else if (toks[argn]==T("--scheme-repository")) {
+	argn=+2;
       }
-    }
-    else if ( toks[argn]==T("--clisp-program") ) {
-      if ( ++argn < argc ) {
-	Lisp *l=findLisp( T("CLISP") );
-	setLispToLaunch( l );
-	l->setLispProgram( toks[argn++] );
+      else if (toks[argn]==T("--library-directory")) {
+	argn=+2;
       }
+      else
+	argn++;
     }
-    else if ( toks[argn]==T("--scheme-heap-size") ) {
-      if ( ++argn < argc ) {
-	setSchemeHeapSize( toks[argn++].getIntValue() );
-      }
-    }
-    else if ( toks[argn]==T("--scheme-stack-size") ) {
-      if ( ++argn < argc ) {
-	setSchemeStackSize( toks[argn++].getIntValue() );
-      }
-    }
-    else if ( toks[argn]==T("--scheme-repository") ) {
-      argn=+2;
-    }
-    else if ( toks[argn]==T("--library-directory") ) {
-      argn=+2;
-    }
-    else
-      argn++;
-  }
-
+  
   // initialize any undefined properties
   if (!propfile->containsKey(T("NativeTitleBars")))
     setNativeTitleBars(true);
@@ -336,16 +157,16 @@ void GracePreferences::initPreferences (String cmdline) {
 #ifdef MACOSX
     setEmacsMode(true);
 #else
-    setEmacsMode(false);
+  setEmacsMode(false);
 #endif
-
+  
   if (!propfile->containsKey(T("ConsoleTheme")))
     setConsoleTheme(T("Clarity and Beauty"));
   if (!propfile->containsKey(T("ConsoleFontSize")))
     setConsoleFontSize(17.0);
   if (!propfile->containsKey(T("EditorFontSize")))
     setEditorFontSize(17.0);
-
+  
 #ifdef SCHEME
   // default to 2x Chicken's minimum heap size
   if (!propfile->containsKey(T("SchemeHeapSize")))
@@ -357,28 +178,31 @@ void GracePreferences::initPreferences (String cmdline) {
   if (!propfile->containsKey(T("AsdfSystemsDirectory")))
     propfile->setValue(T("AsdfSystemsDirectory"),
 		       app->getResourceDirectoryPathName());
-
+  
   if (!propfile->containsKey(T("LispLaunchAtStartup")) )
     propfile->setValue(T("LispLaunchAtStartup"), false);
-
+  
   // initialize lisps to Xml list from file
   lisps=propfile->getXmlValue( T("LispImplementations") );
-  if (!propfile->containsKey(T("AsdfSystems")) ){
-    XmlElement* top=new XmlElement(T("list"));
-    top->addChildElement( new ASDF( T("Grace")));
-    top->addChildElement( new ASDF( T("CM"), String::empty,
+  if (!propfile->containsKey(T("AsdfSystems")))
+    {
+      XmlElement* top=new XmlElement(T("list"));
+      top->addChildElement(new ASDF(T("Grace")));
+      top->addChildElement(new ASDF(T("CM"), 
+				    String::empty,
 				    T("asdf:load-op"),
 				    String::empty,
 				    T("(cl-user::cm)")));
-    top->addChildElement( new ASDF( T("CLM"), String::empty,
+      top->addChildElement(new ASDF(T("CLM"),
+				    String::empty,
 				    T("asdf:load-source-op")));
-    top->addChildElement( new ASDF( T("FOMUS")));
-    propfile->setValue(T("AsdfSystems"), top);
-  }
-
+      top->addChildElement(new ASDF(T("FOMUS")));
+      propfile->setValue(T("AsdfSystems"), top);
+    }
+  
   if (!propfile->containsKey(T("AutoLoadCM")) )
     setAutoLoadCM(true);
-
+  
   // initialize asdfs to Xml values from file
   asdfs=propfile->getXmlValue( T("AsdfSystems") );
   recentlyloaded.clear();
@@ -386,16 +210,16 @@ void GracePreferences::initPreferences (String cmdline) {
   recentlyloaded.restoreFromString
     (propfile->getValue(T("RecentlyLoadedFiles")));
   recentlyloaded.removeNonExistentFiles();
-
+#endif
   recentlyopened.clear();
   recentlyopened.setMaxNumberOfItems(10);
-  recentlyopened.restoreFromString
-    (propfile->getValue(T("RecentlyOpenedFiles")));
+  recentlyopened.
+    restoreFromString(propfile->getValue(T("RecentlyOpenedFiles")));
   recentlyopened.removeNonExistentFiles();
-#endif
 }
 
-GracePreferences::~GracePreferences() {
+GracePreferences::~GracePreferences() 
+{
   save();
   delete propfile;
   delete lisps;
@@ -403,26 +227,31 @@ GracePreferences::~GracePreferences() {
   clearSingletonInstance();
 }
 
-bool GracePreferences::save() {
-
-  if (loadPrefs) {
-  printf("SAVING prefs\n");
-  propfile->setValue (T("RecentlyLoadedFiles"), recentlyloaded.toString());
-  propfile->setValue (T("RecentlyOpenedFiles"), recentlyopened.toString());
+bool GracePreferences::save()
+{
+  if (loadPrefs)
+    {
+      propfile->setValue (T("RecentlyOpenedFiles"), 
+			  recentlyopened.toString());
 #ifndef SCHEME
-  propfile->setValue(T("LispImplementations"), lisps);
-  propfile->setValue(T("AsdfSystems"), asdfs);
+      propfile->setValue (T("RecentlyLoadedFiles"), 
+			  recentlyloaded.toString());
+      propfile->setValue(T("LispImplementations"), lisps);
+      propfile->setValue(T("AsdfSystems"), asdfs);
 #endif
-  propfile->save();
-  return true;
-  }
+      propfile->save();
+      return true;
+    }
   return false;
 }
 
-void GracePreferences::print() {
+void GracePreferences::print()
+{
   String info=T("Preferences:");
-  info << T("\n  Prefs file loaded: ") << ((loadPrefs) ? T("yes") : T("no"))
-       << T("\n  NativeTitleBars: ") << (( isNativeTitleBars() ) ? T("yes") : T("no") )
+  info << T("\n  Prefs file loaded: ") 
+       << ((loadPrefs) ? T("yes") : T("no"))
+       << T("\n  NativeTitleBars: ") 
+       << (( isNativeTitleBars() ) ? T("yes") : T("no") )
        << T("\n  ConsoleTheme: ") << getConsoleTheme()
        << T("\n  ConsoleFontSize: ") << getConsoleFontSize()
        << T("\n  EditorFontSize: ") << getEditorFontSize();
@@ -437,9 +266,12 @@ void GracePreferences::print() {
     info << T("\n  LispToLaunch: ") << lisp->getLispName()
 	 << T("\n     exec: ") << lisp->getLispProgram()
 	 << T("\n     args: ") << lisp->getLispProgramArgs() ;
-  info << T("\n  AsdfSystemsDirectory: ") << getAsdfSystemsDirectory().getFullPathName()
-       << T("\n  LispLaunchAtStartup: ") << (( isLispLaunchAtStartup() ) ? T("yes") : T("no"))
-       << T("\n  AutoLoadCM: ") << (( autoLoadCM() ) ? T("yes") : T("no"));
+  info << T("\n  AsdfSystemsDirectory: ")
+       << getAsdfSystemsDirectory().getFullPathName()
+       << T("\n  LispLaunchAtStartup: ")
+       << (( isLispLaunchAtStartup() ) ? T("yes") : T("no"))
+       << T("\n  AutoLoadCM: ") 
+       << (( autoLoadCM() ) ? T("yes") : T("no"));
 #endif
   printf("%s\n",info.toUTF8());
 }
@@ -515,7 +347,6 @@ void GracePreferences::addRecentlyOpenedFile(File f) {
 void GracePreferences::addRecentlyOpenedItems(PopupMenu* m, int i) {
   recentlyopened.createPopupMenuItems(*m, i, false, true);
 }
-
 
 File GracePreferences::getRecentlyOpenedFile(int i) {
   return recentlyopened.getFile(i);

@@ -53,14 +53,13 @@ SchemeNode::SchemeNode(double _time, int _type, const MidiMessage &_mess)
 {
 }
 
-SchemeNode::~SchemeNode(){
+SchemeNode::~SchemeNode()
+{
   // MOVED THIS TO PROCESS() TO SEE IF THIS CAUSED THE RANDOM CRASHING...
   //  if(type ==  PROCESS || type == PROCEDURE) {
   //    CHICKEN_delete_gc_root(closureGCRoot);
   //  }
 }
-
-
 
 bool SchemeNode::process(double curtime) {
   bool more=false;
@@ -79,16 +78,14 @@ bool SchemeNode::process(double curtime) {
       res = CHICKEN_eval_string_to_string( (char *)expr.toUTF8(),
 					   schemeThread->evalBuffer,
                                            8192);
-      printf("\nafter eval-string-to-string, res=%d\n",res);
-
-
-
-      if ( res==0 ) {
-	//printf("...Error: %s\n", schemeThread->errorBuffer);
-	if ( SCHEME_DEBUG )
-	  printf("...done calling eval node %d\n", nodeid);
-	schemeThread->reportChickenError();
-      }
+      //printf("\nafter eval-string-to-string, res=%d\n",res);
+      if ( res==0 )
+	{
+	  //printf("...Error: %s\n", schemeThread->errorBuffer);
+	  if ( SCHEME_DEBUG )
+	    printf("...done calling eval node %d\n", nodeid);
+	  schemeThread->reportChickenError();
+	}
       else {
 	//printf("returned: %s\n", schemeThread->evalBuffer);
 	if ( SCHEME_DEBUG )
@@ -192,7 +189,6 @@ SchemeThread::SchemeThread(String name, ConsoleWindow *win)
 
 SchemeThread::~SchemeThread()
 {
-  printf("deleting SchemeThread\n");
   delete evalBuffer;
   delete errorBuffer;
   CHICKEN_delete_gc_root(inputClosureGCRoot);
@@ -201,10 +197,11 @@ SchemeThread::~SchemeThread()
 
 void postGCHook(int m, long ms)
 {
-  if (m == 1)
-    printf("\nMAJOR GC\n\n");
-  else
-    printf("minor GC\n");
+  if (SCHEME_DEBUG)
+    if (m == 1)
+      printf("\nMAJOR GC\n\n");
+    else
+      printf("minor GC\n");
 }
 
 

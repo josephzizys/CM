@@ -130,125 +130,10 @@ class ConsoleWindow  : public DocumentWindow,
   public SliderListener
 {
 public:
-  /*    enums() defined in grace.lisp */
-  /*    (enums 1 "ConsoleCommand" "GraceEditorNew" "GracePlotterNew"
-         "GraceOpenFile" "GraceOpenRecentFile" "GraceClearRecentFiles"
-	 "GracePreferences" "GraceQuit"
-	 "EditCopy" "EditSelectAll"
-	 "ViewClearText" "ViewFontSize"  "ViewThemes" "ViewOpacity"
-	 "PortsMidiOutOpen" "PortsMidiOutTest" "PortsMidiOutHush"
-	 "PortsMidiOutAllNotesOff"
-	 "PortsMidiOutTuning" "PortsMidiOutDrumTrack"
-	 "PortsMidiOutPitchBend" 
-	 "PortsMidiOutInstruments"
-
-	 "PortsMidiSeqCaptureMidiOut"
-	 "PortsMidiSeqCaptureMidiIn"
-	 "PortsMidiSeqCaptureScore"
-         "PortsMidiSeqResetRecordingStart"
-         "PortsMidiSeqClear"
-         "PortsMidiSeqPlay"
-         "PortsMidiSeqPlotter"
-         "PortsMidiSeqPrintInfo"
-         "PortsMidiSeqCopyToTrack"
-         "PortsMidiSeqRenameTrack"
-         "PortsMidiSeqRestoreTrack"
-         "PortsMidiSeqMixTrack"
-         "PortsMidiSeqReplaceTrack"
-         "PortsMidiSeqDeleteTrack"
-         "PortsMidiSeqImport"
-         "PortsMidiSeqExport"
-         "PortsMidiSeqSave"
-         "PortsMidiSeqSaveAs"
-
-	 "PortsMidiInOpen" "PortsMidiInTest" "PortsMidiInHook"
-	 "PortsMidiInRecord" "PortsMidiInConfigure"
-	 "PortsCsoundOpen" "PortsCsoundClose"
-	 "PortsCsoundWrite" "PortsCsoundAbortWrite"
-	 "PortsCsoundPlay" "PortsCsoundImport"
-	 "PortsCsoundExport" "PortsCsoundPrint" "PortsCsoundDisplay"
-	 "PortsCsoundClear"
-	 "PortsCsoundScoreMode" "PortsCsoundRecordMode"
-	 "PortsCsoundTraceMode"
-	 "PortsAudioSetup"
-	 "LispConnect" 
-	 "LispLoadSystem" "LispLoadRecentSystem"
-	 "LispClearRecentSystems"
-	 "LispLoadFile" "LispLoadRecentFile" "LispCompileFile" 
-	 "LispClearRecentLoaded" "LispConfigure")  */
-
-  enum ConsoleCommand {
-    cmdGraceEditorNew = 32896,
-    cmdGracePlotterNew = 33152,
-    cmdGraceOpenFile = 33408,
-    cmdGraceOpenRecentFile = 33664,
-    cmdGraceClearRecentFiles = 33920,
-    cmdGracePreferences = 34176,
-    cmdGraceQuit = 34432,
-    cmdEditCopy = 34688,
-    cmdEditSelectAll = 34944,
-    cmdViewClearText = 35200,
-    cmdViewFontSize = 35456,
-    cmdViewThemes = 35712,
-    cmdViewOpacity = 35968,
-    cmdPortsMidiOutOpen = 36224,
-    cmdPortsMidiOutTest = 36480,
-    cmdPortsMidiOutHush = 36736,
-    cmdPortsMidiOutAllNotesOff = 36992,
-    cmdPortsMidiOutTuning = 37248,
-    cmdPortsMidiOutDrumTrack = 37504,
-    cmdPortsMidiOutPitchBend = 37760,
-    cmdPortsMidiOutInstruments = 38016,
-    cmdPortsMidiSeqCaptureMidiOut = 38272,
-    cmdPortsMidiSeqCaptureMidiIn = 38528,
-    cmdPortsMidiSeqCaptureScore = 38784,
-    cmdPortsMidiSeqResetRecordingStart = 39040,
-    cmdPortsMidiSeqClear = 39296,
-    cmdPortsMidiSeqPlay = 39552,
-    cmdPortsMidiSeqPlotter = 39808,
-    cmdPortsMidiSeqPrintInfo = 40064,
-    cmdPortsMidiSeqCopyToTrack = 40320,
-    cmdPortsMidiSeqRenameTrack = 40576,
-    cmdPortsMidiSeqRestoreTrack = 40832,
-    cmdPortsMidiSeqMixTrack = 41088,
-    cmdPortsMidiSeqReplaceTrack = 41344,
-    cmdPortsMidiSeqDeleteTrack = 41600,
-    cmdPortsMidiSeqImport = 41856,
-    cmdPortsMidiSeqExport = 42112,
-    cmdPortsMidiSeqSave = 42368,
-    cmdPortsMidiSeqSaveAs = 42624,
-    cmdPortsMidiInOpen = 42880,
-    cmdPortsMidiInTest = 43136,
-    cmdPortsMidiInHook = 43392,
-    cmdPortsMidiInRecord = 43648,
-    cmdPortsMidiInConfigure = 43904,
-    cmdPortsCsoundOpen = 44160,
-    cmdPortsCsoundClose = 44416,
-    cmdPortsCsoundWrite = 44672,
-    cmdPortsCsoundAbortWrite = 44928,
-    cmdPortsCsoundPlay = 45184,
-    cmdPortsCsoundImport = 45440,
-    cmdPortsCsoundExport = 45696,
-    cmdPortsCsoundPrint = 45952,
-    cmdPortsCsoundDisplay = 46208,
-    cmdPortsCsoundClear = 46464,
-    cmdPortsCsoundScoreMode = 46720,
-    cmdPortsCsoundRecordMode = 46976,
-    cmdPortsCsoundTraceMode = 47232,
-    cmdPortsAudioSetup = 47488,
-    cmdLispConnect = 47744,
-    cmdLispLoadSystem = 48000,
-    cmdLispLoadRecentSystem = 48256,
-    cmdLispClearRecentSystems = 48512,
-    cmdLispLoadFile = 48768,
-    cmdLispLoadRecentFile = 49024,
-    cmdLispCompileFile = 49280,
-    cmdLispClearRecentLoaded = 49536,
-    cmdLispConfigure = 49792
-};
 
 #ifdef SCHEME
   enum {GRACEMENU, EDITMENU, VIEWMENU, PORTSMENU, WINDOWSMENU, HELPMENU};
+  const PopupMenu getPortsMenu();
 #else
   enum {GRACEMENU, EDITMENU, VIEWMENU, LISPMENU, WINDOWSMENU, HELPMENU};
 #endif
@@ -257,8 +142,6 @@ public:
   ConsoleTheme theme;
   SplashComponent * splash;
   MenuBarComponent * menubar;
-
- 
 
 #ifndef SCHEME
   LispConnection * lisp;
@@ -296,10 +179,7 @@ public:
   void showSplash();
   void hideSplash();
   bool isSplashVisible() ;
-
   void showAudioMidiWindow();
-  void showConfigureLispWindow();
-
   double currentTransparency;
   //TransparencySliderListener * sliderListener;  
   void sliderValueChanged(Slider * slider);

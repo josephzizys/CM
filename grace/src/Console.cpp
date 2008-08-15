@@ -8,6 +8,7 @@
 // $Revision$
 // $Date$ 
 
+#include "Enumerations.h"
 #include "Console.h"
 #include "Plotter.h"
 #include "Buffer.h"
@@ -24,8 +25,11 @@
 #include "Csound.h"
 #endif
 
+#include <iostream>
 
-TransparencySlider::TransparencySlider(DocumentWindow* _window) : Slider(String::empty) {
+TransparencySlider::TransparencySlider(DocumentWindow* _window) 
+  : Slider(String::empty) 
+{
   window = _window;
   setRange(10, 100, 1);
   setSliderStyle(Slider::LinearHorizontal);
@@ -451,34 +455,34 @@ bool ConsoleWindow::isSplashVisible() {
 const StringArray ConsoleWindow::getMenuBarNames () {
 #ifdef SCHEME
   const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"),
-    T("Ports"), T("Windows"), T("Help"),
+    T("Ports"), T("Window"), T("Help"),
   0 };
 #else
   const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"),
-    T("Lisp"), T("Windows"), 
+    T("Lisp"), T("Window"), 
   T("Help"), 0 };
 #endif
   return StringArray((const tchar**) menuNames);
 }
 
-/*
- moved to midi.cpp
- const StringArray ConsoleWindow::getTuningItems () {
- const tchar* const items [] = { 
- "Semitone (100 cents)", "Quartertone (50 cents)",
- "6th tone (33.3 cents)", "8th tone (25 cents)",
- "10th tone (20 cents)", "12th tone (16.6 cents)", 
- "14th tone (14.3 cents)", "16th tone (12.5 cents)", 
- "18th tone (11.1 cents)", "20th tone (10 cents)",
- "22nd tone (9 cents)", "24th tone (8.2 cents)", 
- "26th tone (7.7 cents)", "28th tone (7.1 cents)",
- "30th tone (6.6 cents)", "32nd tone (6.25 cents)", 0 };
- return StringArray((const tchar**) items);
- }
- */
 
-const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
-                                                const String &name)
+#ifdef SCHEME
+const PopupMenu ConsoleWindow::getPortsMenu ()
+{ 
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  PopupMenu portsmenu;
+
+  portsmenu.addSubMenu( T("Midi Out"), app->midiOutPort->getMidiOutMenu());
+  portsmenu.addSubMenu(T("Midi In"), app->midiInPort->getMidiInMenu());
+  portsmenu.addSubMenu( T("Midi Seq"), app->midiOutPort->getMidiSeqMenu());
+#ifdef PORTCSOUND
+  portsmenu.addSubMenu(T("Csound"), app->getCsoundPort()->getCsoundMenu());
+#endif
+  return portsmenu;
+}
+#endif
+
+const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
 {
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   //  GracePreferences* p=GracePreferences::getInstance();
@@ -489,640 +493,216 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx,
   PopupMenu sub1, sub2, sub3, sub4, sub5, sub6, sub7;
   PopupMenu midiSeqMenu;
   int val;
-  switch (idx) {
+  switch (idx) 
+    {
+
     case GRACEMENU :
-      sub1.addItem( cmdGraceEditorNew + 3, T("Sal"), true); 
-      sub1.addItem( cmdGraceEditorNew + 2, T("Lisp"), true);
-      sub1.addItem( cmdGraceEditorNew + 1, T("Text"), true);
+      // encode buffer syntax as id data
+      sub1.addItem(CommandIDs::toID(CommandIDs::NewEditor,
+				    TextIDs::Sal),
+		   T("Sal Editor"), 
+		   true); 
+      sub1.addItem(CommandIDs::toID(CommandIDs::NewEditor,
+				    TextIDs::Lisp),
+		   T("Lisp Editor"),
+		   true);
+      sub1.addItem(CommandIDs::toID(CommandIDs::NewEditor,
+				    TextIDs::Text),
+		   T("Text Editor"),
+		   true);
+      sub1.addSeparator();
+      sub1.addItem(CommandIDs::toID(CommandIDs::NewPlotter,
+					 PlotIDs::XYPlot),
+		 T("XY Plot"),
+		 true);
+      sub1.addItem(CommandIDs::toID(CommandIDs::NewPlotter,
+				    PlotIDs::MidiPlot),
+		   T("Midi Plot"),
+		   true);
+    
       menu.addSubMenu( T("New"), sub1, true);    
-      menu.addItem( cmdGraceOpenFile, T("Open..."), true);
-      if ( p->areRecentlyOpenedFiles() ) {
-        p->addRecentlyOpenedItems(&sub3, cmdGraceOpenRecentFile);
-        sub3.addSeparator();
-        sub3.addItem( cmdGraceClearRecentFiles, T("Clear"), true);
-        menu.addSubMenu( T("Open Recent"), sub3, true);
-      }
+      menu.addItem( CommandIDs::FileOpen,
+		    T("Open..."),
+		    true);
+      if ( p->areRecentlyOpenedFiles() ) 
+	{
+	  p->addRecentlyOpenedItems(&sub3, CommandIDs::FileOpenRecent);
+	  sub3.addSeparator();
+	  sub3.addItem( CommandIDs::FileClearRecent, 
+			T("Clear"), 
+			true);
+	  menu.addSubMenu( T("Open Recent"), 
+			   sub3,
+			   true);
+	}
       menu.addSeparator();
-      menu.addItem( cmdGracePreferences, T("Preferences..."), false);
+      menu.addItem(CommandIDs::AppPreferences,
+		   T("Preferences..."),
+		   false);
       menu.addSeparator();
-      menu.addItem( cmdGraceQuit, T("Quit Grace"), true);
+      menu.addItem(CommandIDs::AppQuit, 
+		   T("Quit Grace"),
+		   true);
       break;
-      case EDITMENU :
-      menu.addItem( cmdEditCopy, T("Copy"), true);    
-      menu.addItem( cmdEditSelectAll, T("Select All"), true);
+      
+    case EDITMENU :
+      menu.addItem(CommandIDs::EditCopy, 
+		   T("Copy"),
+		   true);    
+      menu.addItem(CommandIDs::EditSelectAll,
+		   T("Select All"),
+		   true);
+      menu.addSeparator();
+      menu.addItem(CommandIDs::EditClear,
+		   T("Clear Console"), 
+		   true);
       break;
-      case VIEWMENU :
+      
+    case VIEWMENU :
       for (int i = 0;i<16;i++) {
-        sub2.addItem(cmdViewFontSize+i,
+        sub2.addItem(CommandIDs::ViewFontSize+i,
                      String( fontSizeList[i] ),
                      true, 
-                     (getFontSize() == fontSizeList[i])
-                     );
+                     (getFontSize() == fontSizeList[i]));
       }
       menu.addSubMenu(T("Font Size"), sub2, true);
-      for (int i=0;i<console->numThemes(); i++)
-        sub1.addItem( cmdViewThemes + i,
-                     console->getThemeName(i),
-                     true, console->isCurrentTheme(i));
-      sub1.addSeparator();
-      sub1.addItem( cmdViewThemes + console->numThemes(), 
-                   T("Roll Your Own..."), 
-                   false);
-      menu.addSubMenu( T("Themes"), sub1, true);
-    {
+      for (int i=0; i<console->numThemes(); i++)
+        sub1.addItem(CommandIDs::ViewSelectTheme + i,
+		     console->getThemeName(i),
+		     true,
+		     console->isCurrentTheme(i));
+      menu.addSubMenu(T("Themes"), sub1, true);
       SliderMenuComponent *sliderComp = new SliderMenuComponent(this);
       sliderComp->slider->setValue(getOpacity(), false);
       sliderComp->slider->addListener(this);
-      menu.addCustomItem( cmdViewOpacity,  sliderComp);
-    }
+      menu.addCustomItem(CommandIDs::ViewOpacity,
+			 sliderComp);
       menu.addSeparator();
-      menu.addItem( cmdViewClearText, T("Clear Console"), true);
       break;
-      
+
 #ifdef SCHEME
-      case PORTSMENU :
-    {
-      // MIDI OUT MENU
-      StringArray devs= MidiOutput::getDevices();
-      int ndevs=devs.size();
-      // warning! this activity test has to make sure no processes are
-      // running either!
+     case PORTSMENU :
+       menu=getPortsMenu();
+       break;
+#endif      
 
-      bool midioutbusy=app->midiOutPort->isOutputQueueActive();
-      bool midioutidle=(!midioutbusy);
-
-      if ( ndevs == 0)
-        sub1.addItem(cmdPortsMidiOutOpen, T("(no devices)"), false);
-      else
-        for (int i=0;i<ndevs;i++)
-          sub1.addItem(cmdPortsMidiOutOpen + i, devs[i],
-                       ( ! midioutbusy ),
-                       app->midiOutPort->isOpen(i));
-      sub1.addSeparator();
-      sub1.addItem(cmdPortsMidiOutTest, T("Test Output"), midioutidle);
-      sub1.addItem(cmdPortsMidiOutHush, T("Hush"), midioutbusy);
-
-      sub1.addSeparator();
-
-      int t= app->midiOutPort->getTuning();
-      for (int i=1;i<=16;i++)
-        sub5.addItem(cmdPortsMidiOutTuning+i, 
-                     app->midiOutPort->getTuningName(i),
-                     midioutidle, (i==t));
-      sub5.addSeparator();
-      sub5.addItem(cmdPortsMidiOutDrumTrack, T("Avoid Drum Track"),
-                   (t>1), app->midiOutPort->avoidDrumTrack());
-      t=app->midiOutPort->getPitchBendWidth();
-      for (int b=1;b<13; b++)
-        sub6.addItem(cmdPortsMidiOutPitchBend+b, 
-                     String(b), true, (b==t));
-      sub5.addSubMenu( T("Pitch Bend Width") , sub6);      
-      sub1.addSubMenu( T("Microtuning") , sub5);
-      sub1.addItem(cmdPortsMidiOutInstruments, T("Instruments...."),
-                   midioutidle);
-      menu.addSubMenu( T("Midi Out") , sub1);
-
-      //
-      // Midi In Menu 
-      //
-
-      devs= MidiInput::getDevices();
-      
-      if (devs.size() == 0)
-        sub2.addItem(cmdPortsMidiInOpen, T("(no devices)"), false);
-      else
-        for (int i=0;i<devs.size();i++)
-          sub2.addItem(cmdPortsMidiInOpen + i, devs[i],
-                       // cant choose port if anything active
-                       ( ! app->midiInPort->isActive(i) ) ,
-                       app->midiInPort->isOpen(i) );
-      sub2.addSeparator();
-      sub2.addItem(cmdPortsMidiInTest, T("Test Input"),
-                   // sensitive if port is open, no device activity or
-                   // is same activity
-                   ( app->midiInPort->isOpen() &&
-                    (!app->midiInPort->isActive() ||
-                     app->midiInPort->isActive(MidiInPort::TESTING) )),
-                   app->midiInPort->isActive(MidiInPort::TESTING));
-      
-      sub2.addItem(cmdPortsMidiInRecord, T("Record Input"), 
-                   // sensitive if port is open, no device activity or
-                   // is same activity
-                   ( app->midiInPort->isOpen() &&
-                    (!app->midiInPort->isActive() ||
-                     app->midiInPort->isActive(MidiInPort::RECORDING) )),
-                   app->midiInPort->isActive(MidiInPort::RECORDING) );
-      //sub2.addItem(cmdMidiInConfigure, T("Midi Receive Settings"), true );
-      //sub2.addItem(cmdPortsMidiInHook, T("Clear Input Hook"), app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) );
-      sub2.addSeparator();
-      sub2.addItem(cmdPortsMidiInConfigure, T("Configure..."));
-      menu.addSubMenu(T("Midi In"), sub2);
-
-      //
-      // Midi Seq Menu.
-      //
-
-      // For sanity's sake most items are disabled if the MidiOut port
-      // is currently active or capturing is active.  
-
-      int cmode=app->midiOutPort->getCaptureMode();
-
-      // saveable means that no more messages can get added during
-      // this command and we have some data captured.
-      bool saveable=((cmode==MidiOutPort::CaptureModeOff) &&
-		     app->midiOutPort->isSequenceData());
-      midiSeqMenu.addItem(cmdPortsMidiSeqCaptureMidiOut,
-			  T("Record Midi Out"),
-			  midioutidle,
-			  (cmode==MidiOutPort::CaptureModeMidiOut));
-      midiSeqMenu.addItem(cmdPortsMidiSeqCaptureScore, 
-			  T("Score Capture"),
-			  midioutidle,
-			  (cmode==MidiOutPort::CaptureModeScore));
-      midiSeqMenu.addSeparator();
-      midiSeqMenu.addItem(cmdPortsMidiSeqResetRecordingStart, 
-			  T("Reset Recording"), 
-			  (midioutidle &&
-			   (cmode==MidiOutPort::CaptureModeMidiOut)));
-      midiSeqMenu.addItem(cmdPortsMidiSeqClear, 
-			  T("Clear"), 
-			  saveable);
-      midiSeqMenu.addSeparator();
-      // do not allow playing if recording since those messages would
-      // be added into the sequence again!
-      midiSeqMenu.addItem(cmdPortsMidiSeqPrintInfo, 
-			  T("Print Info"), 
-			  saveable);
-      midiSeqMenu.addItem(cmdPortsMidiSeqPlay, 
-			  T("Play"), 
-			  (midioutidle && saveable));
-      midiSeqMenu.addItem(cmdPortsMidiSeqPlotter, 
-			  T("Copy to Plotter"), 
-			  (false && saveable));
-      midiSeqMenu.addItem(cmdPortsMidiSeqCopyToTrack, 
-			  T("Copy to Track"), 
-			  saveable);
-      midiSeqMenu.addSeparator();
-      // Tracks submenu
-      {
-	PopupMenu midiSeqTracksMenu;
-	int numtracks=app->midiOutPort->getNumTracks();
-	for (int i=0; i<numtracks; i++)
-	  {
-	    PopupMenu trackmenu;
-	    String title=app->midiOutPort->getTrackName(i);
-	    trackmenu.addItem(cmdPortsMidiSeqRenameTrack+i,
-			      T("Rename..."),
-			      true);
-	    trackmenu.addItem(cmdPortsMidiSeqRestoreTrack+i,
-			      T("Set Seq"),
-			      true);
-	    trackmenu.addItem(cmdPortsMidiSeqMixTrack+i,
-			      T("Mix into Seq..."),
-			      app->midiOutPort->isSequenceData());
-	    trackmenu.addSeparator();
-	    trackmenu.addItem(cmdPortsMidiSeqReplaceTrack+i,
-			      T("Replace by Seq"),
-			      app->midiOutPort->isSequenceData());
-	    trackmenu.addItem(cmdPortsMidiSeqDeleteTrack+i,
-			      T("Delete"),
-			      true);
-	    midiSeqTracksMenu.addSubMenu(title, trackmenu);
-	  }
-	if (numtracks>0)
-	  midiSeqTracksMenu.addSeparator();	
-	midiSeqTracksMenu.addItem(cmdPortsMidiSeqImport, 
-				  T("Import..."), 
-				  true);
-	midiSeqMenu.addSubMenu( T("Tracks"), midiSeqTracksMenu);
-      }
-      midiSeqMenu.addSeparator();
-      midiSeqMenu.addItem(cmdPortsMidiSeqExport, 
-			  T("Export..."), 
-			  saveable);
-      midiSeqMenu.addItem(cmdPortsMidiSeqSave, 
-			  T("Save"),
-			  saveable);
-      midiSeqMenu.addItem(cmdPortsMidiSeqSaveAs, 
-			  T("Save As..."),
-			  saveable);
-
-      /*midiSeqMenu.addItem(cmdPortsMidiSeqImport, 
-	T("Import..."), 
-	true); */
-      menu.addSubMenu( T("Midi Seq"), midiSeqMenu);
-      
-      // PORTCSOUND
-#ifdef PORTCSOUND
-      {
-        bool score = (! app->getCsoundPort()->isScoreEmpty());
-        bool isopen = app->getCsoundPort()->isOpen();
-        menu.addSeparator();
-        if ( isopen )
-          sub3.addItem(cmdPortsCsoundClose, T("Close"));
-        else
-          sub3.addItem(cmdPortsCsoundOpen, T("Open..."));
-        sub3.addSeparator();
-        sub3.addItem(cmdPortsCsoundRecordMode, 
-                     T("Record Output to Score"), isopen,
-                     app->getCsoundPort()->isRecordMode());
-        sub3.addItem(cmdPortsCsoundScoreMode, T("Route Output to Score"),
-                     true, app->getCsoundPort()->isScoreMode());
-        sub3.addSeparator();
-        sub7.addItem(cmdPortsCsoundPlay, T("Play"), (score && isopen));
-        if ( app->getCsoundPort()->isWriting() )
-          sub7.addItem(cmdPortsCsoundAbortWrite, T("Abort Write"));
-        else
-          sub7.addItem(cmdPortsCsoundWrite, T("Write Audio..."), score);
-        sub7.addSeparator();
-        sub7.addItem(cmdPortsCsoundPrint, T("Print"), score);
-        sub7.addItem(cmdPortsCsoundExport, T("Export..."), score);
-        sub7.addItem(cmdPortsCsoundDisplay, T("Plotter..."), false);
-        sub7.addSeparator();
-        sub7.addItem(cmdPortsCsoundClear, T("Clear"), score);
-        sub3.addSubMenu( T("Score"), sub7, true);    
-        sub3.addSeparator();
-        sub3.addItem(cmdPortsCsoundTraceMode, T("Trace Output"), true,
-                     app->getCsoundPort()->isTraceMode());
-      }
-      menu.addSubMenu(T("Csound"), sub3);
-#endif
-      // END PORTCSOUND
-      menu.addSeparator();
-      sub4.addItem( cmdGracePlotterNew + XYPlot, T("XY"));
-      sub4.addItem( cmdGracePlotterNew + MidiPlot, T("Midi"));
-      menu.addSubMenu( T("Plotter"), sub4, true);    
-      menu.addSeparator();
-      //      menu.addItem(0, T("Osc Setup..."), false);    
-      //menu.addSeparator();
-      menu.addItem(cmdPortsAudioSetup, T("Audio Setup..."), false);
-    }
-      break;
-#endif
-      
 #ifndef SCHEME
-      case LISPMENU :
-    {
-      bool running=lisp->isLispRunning();
-      if ( running )
-        menu.addItem( cmdLispConnect, T("Quit Lisp")); 
-      else 
-        menu.addItem( cmdLispConnect, T("Start Lisp"), 
-                     lisp->isLispStartable()); 
-      menu.addSeparator();
-      // Load system
-      for (int i=0; i<p->numASDFs(); i++) {
-        ASDF* a=p->getASDF(i);
-        sub1.addItem( cmdLispLoadRecentSystem + i,
-                     a->getASDFName(), true,
-                     lisp->isLoaded(a));
-      }
-      sub1.addSeparator();
-      sub1.addItem( cmdLispLoadSystem, T("Load..."), 
-                   true);
-      if ( p->numASDFs() > 2 )
-        sub1.addItem( cmdLispClearRecentSystems, T("Clear"),
-                     running);
-      menu.addSubMenu(T("ASDF Systems"), sub1, running);
-      menu.addItem( cmdLispLoadFile, T("Load File..."), running);
-      
-      if ( p->areRecentlyLoadedFiles() ) {
-        p->addRecentlyLoadedItems(&sub2, cmdLispLoadRecentFile);
-        sub2.addSeparator();
-        sub2.addItem( cmdLispClearRecentLoaded, T("Clear"), running);
-        menu.addSubMenu(T("Load Recent"), sub2, running);
-      }
-      menu.addItem( cmdLispCompileFile, T("Compile File..."), running);
-      menu.addSeparator();
-      menu.addItem( cmdLispConfigure, T("Configure Lisp..."), true); 
-    }
-      break;
+    case LISPMENU :
+      menu=lisp->getLispMenu();
+    break;
 #endif
-      case WINDOWSMENU :
-      addCommonWindowItems(&menu, winConsole);
+
+    case WINDOWSMENU :
+      menu=app->getWindowMenu();
       break;
-      case HELPMENU :
-      addCommonHelpItems(&menu, winConsole);
+      
+    case HELPMENU :
+      menu=app->getHelpMenu();
       break;
-  }
+    }
   return menu;
 }
 
 void ConsoleWindow::menuItemSelected (int id, int idx) 
 {
-  // lower seven bits encode command information
-  int arg = id & 0x0000007F;
-  int cmd = id & 0xFFFFFF80;
+  int cmd = CommandIDs::getCommand(id);
+  int arg = CommandIDs::getCommandData(id);
+  int type=CommandIDs::getCommandType(id);
+
   GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
   ApplicationCommandManager * cm = app->commandManager;
-  //  GracePreferences* p=GracePreferences::getInstance();
   GracePreferences* p=app->getPreferences();
-  File f;
-  //printf("menubar: raw=%d command=%d data=%d\n", id, cmd, arg);
-  switch (cmd)
-    {
-      
-    case cmdGracePlotterNew :
-      new PlotterWindow( (PlotType)arg);
-      break;
-      
-    case cmdGraceEditorNew :
-      new EditorWindow(arg);
-      break;
-      
-    case cmdGraceOpenFile :
-      {
-	FileChooser choose
-	  (T("Open File"), 
-	   File::getSpecialLocation(File::userHomeDirectory),
-	   String::empty, true);
-	if ( choose.browseForFileToOpen() ) {
-	  String f=choose.getResult().getFullPathName();
-	  new EditorWindow(0, TextBuffer::load, f);
-	}
-      }
-      break;
-      
-    case cmdGraceOpenRecentFile :
-      {
-	f=p->getRecentlyOpenedFile(arg);
-	
-	new EditorWindow(0, TextBuffer::load, f.getFullPathName());
-      }
-      break;
-      
-    case cmdGraceClearRecentFiles :
-      p->clearRecentlyOpenedFiles();
-      break;
-      
-    case cmdGraceQuit :
-      app->graceQuit(true);
-      break;
-      
-    case cmdViewClearText :
-      consoleClear();
-      break;
-      
-    case cmdViewFontSize :
-      setFontSize(fontSizeList[arg]);
-      break;
-      
+
+  //std::cout << "CommandID: " << "type=" << type << " number=" << CommandIDs::getCommandNumber(id) << " data=" << arg << "\n";
+
+  if (type==CommandIDs::Window)
+    app->performWindowCommand(id);
+  else if (type==CommandIDs::Help)
+    app->performHelpCommand(id);
 #ifdef SCHEME
-      
-    case cmdPortsMidiOutOpen:
-      app->getMidiOutPort()->open(arg);
-      break;
-      
-    case cmdPortsMidiOutTest:
-      app->getMidiOutPort()->testMidiOutput();
-      break;
-      
-    case cmdPortsMidiOutHush :
-      app->schemeProcess->stop();
-      app->midiOutPort->clear();
-      break;
-      
-    case cmdPortsMidiOutTuning :
-      app->midiOutPort->setTuning(arg, true);
-      break;
-      
-      
-      
-    case cmdPortsMidiOutPitchBend :
-      app->midiOutPort->setPitchBendWidth(arg);
-      break;
-      
-    case cmdPortsMidiOutDrumTrack :
-      app->midiOutPort->
-	setAvoidDrumTrack(! app->midiOutPort->avoidDrumTrack());
-      break;
-      
-    case cmdPortsMidiOutInstruments :
-      app->midiOutPort->showInstrumentsWindow();
-      break;
-      
-
-      // Midi In Port
-      
-    case cmdPortsMidiInOpen :
-      app->midiInPort->open(arg);
-      break;
-      
-    case cmdPortsMidiInTest :
-      if ( app->midiInPort->isActive(MidiInPort::TESTING) )
-        app->midiInPort->stopTestInput();
-      else 
-        app->midiInPort->startTestInput();
-      break;
-      
-    case cmdPortsMidiInRecord :
-      if ( app->midiInPort->isActive(MidiInPort::RECORDING) )
-        app->midiInPort->stopRecordInput();
-      else 
-        app->midiInPort->startRecordInput();
-      break;
-      
-    case cmdPortsMidiInConfigure:
-      app->midiInPort->showMidiInDialog();
-      break;
-      
-    case cmdPortsMidiInHook :
-      if ( app->midiInPort->isActive(MidiInPort::SCHEMEHOOK) )
-        app->midiInPort->stopSchemeInput();
-      break;
-      
-      // Midi Seq Port
-      
-    case cmdPortsMidiSeqCaptureMidiOut :
-      if (app->midiOutPort->isCaptureMode(MidiOutPort::CaptureModeMidiOut))
-	app->midiOutPort->setCaptureMode(MidiOutPort::CaptureModeOff);
-      else
-	app->midiOutPort->setCaptureMode(MidiOutPort::CaptureModeMidiOut);
-      break;
-      
-    case cmdPortsMidiSeqCaptureScore :
-      if (app->midiOutPort->isCaptureMode(MidiOutPort::CaptureModeScore))
-	app->midiOutPort->setCaptureMode(MidiOutPort::CaptureModeOff);
-      else
-	app->midiOutPort->setCaptureMode(MidiOutPort::CaptureModeScore);
-      break;
-      
-    case cmdPortsMidiSeqClear :
-      app->midiOutPort->clearSequence();
-      break;
-      
-    case cmdPortsMidiSeqResetRecordingStart :
-      app->midiOutPort->resetRecordingStart();
-      break;
-      
-    case cmdPortsMidiSeqCopyToTrack :
-      app->midiOutPort->copySequenceToTrack(-1);
-      break;
-
-    case cmdPortsMidiSeqReplaceTrack :
-      app->midiOutPort->copySequenceToTrack(arg);
-      break;
-      
-    case cmdPortsMidiSeqPlay :
-      app->midiOutPort->playSequence();
-      break;
-      
-    case cmdPortsMidiSeqPlotter :
-      app->midiOutPort->plotSequence();
-      break;
-      
-    case cmdPortsMidiSeqPrintInfo :
-      app->midiOutPort->printSequence();
-      break;
-      
-    case cmdPortsMidiSeqRenameTrack :
-      app->midiOutPort->renameTrack( arg);
-      break;
-      
-    case cmdPortsMidiSeqDeleteTrack :
-      app->midiOutPort->deleteTrack( arg);
-      break;
-      
-    case cmdPortsMidiSeqRestoreTrack :
-      app->midiOutPort->restoreTrack( arg);
-      break;
-
-    case cmdPortsMidiSeqMixTrack :
-      app->midiOutPort->mixTrack( arg);
-      break;
-      
-    case cmdPortsMidiSeqSave :
-      app->midiOutPort->saveSequence();
-      break;                 
-      
-    case cmdPortsMidiSeqSaveAs :
-      app->midiOutPort->saveSequence(true);
-      break;                 
-      
-    case cmdPortsMidiSeqExport :
-      app->midiOutPort->exportSequence();
-      break;                 
-      
-    case cmdPortsMidiSeqImport :
-      app->midiOutPort->importTracks();
-      break;                 
-
-      //
-      // Csound Messages
-      //
-
-    case cmdPortsCsoundOpen :
-      app->getCsoundPort()->open(true);
-      break;
-      
-    case cmdPortsCsoundWrite :
-      app->getCsoundPort()->open(false);
-      break;
-      
-    case cmdPortsCsoundClose :
-      app->getCsoundPort()->close(true);
-      break;
-      
-    case cmdPortsCsoundAbortWrite :
-      app->getCsoundPort()->close(false);
-      break;
-      
-    case cmdPortsCsoundPlay :
-      app->getCsoundPort()->playScore();
-      break;
-      
-    case cmdPortsCsoundExport :
-      app->getCsoundPort()->exportScore();
-      break;
-      
-    case cmdPortsCsoundDisplay :
-      app->getCsoundPort()->displayScore();
-      break;
-      
-    case cmdPortsCsoundPrint :
-      app->getCsoundPort()->printScore();
-      break;
-      
-    case cmdPortsCsoundClear :
-      app->getCsoundPort()->clearScore();
-      break;
-      
-    case cmdPortsCsoundScoreMode :
-      app->getCsoundPort()->
-	setScoreMode( (! app->getCsoundPort()->isScoreMode()) );
-      break;
-      
-    case cmdPortsCsoundRecordMode :
-      app->getCsoundPort()->
-	setRecordMode( (! app->getCsoundPort()->isRecordMode()) );
-      break;
-      
-    case cmdPortsCsoundTraceMode :
-      app->getCsoundPort()->
-	setTraceMode( (! app->getCsoundPort()->isTraceMode()) );
-      break;
-      
+  else if (type == CommandIDs::MidiOut)
+      app->getMidiOutPort()->performMidiOutCommand(id);
+  else if (type == CommandIDs::MidiIn)
+      app->getMidiInPort()->performMidiInCommand(id);
+  else if (type == CommandIDs::MidiSeq)  
+      app->getMidiOutPort()->performMidiSeqCommand(id);
+#ifdef PORTCSOUND
+  else if (type == CommandIDs::Csound)  
+      app->getCsoundPort()->performCsoundCommand(id);
 #endif
-      
-    case cmdPortsAudioSetup: 
-      //    showAudioMidiWindow();
-      break;
-    case cmdViewThemes :
-      console->setTheme( arg);
-      break;
-      
+#endif
 #ifndef SCHEME
-    case cmdLispConnect :
-      if (lisp->isLispRunning())
-        lisp->stopLisp();
-      else 
-        lisp->startLisp();
-      break;
-    case cmdLispConfigure :
-      showConfigureLispWindow();
-      break;
-    case cmdLispLoadSystem :
-      lisp->chooseAndLoadASDF();
-      break;
-    case cmdLispLoadRecentSystem :
-      lisp->loadASDF(p->getASDF(arg));
-      break;
-    case cmdLispClearRecentSystems :
-      p->clearLispSystems();
-      break;
-    case cmdLispLoadFile :
-      lisp->chooseAndLoadFile();
-      break;
-    case cmdLispCompileFile :
-      lisp->chooseAndCompileFile();
-      break;
-    case cmdLispLoadRecentFile :
-      lisp->loadFile(p->getRecentlyLoadedFile(arg));
-      break;
-    case cmdLispClearRecentLoaded :
-      p->clearRecentlyLoadedFiles();
-      break;
+  else if (type == CommandIDs::CommonLisp)  
+    lisp->performLispCommand(id);
 #endif
-      
-    default :
-      // help menu=index 5 
-      if (idx==WINDOWSMENU)
-        commonWindowItemSelected(cmd,arg);
-      else if (idx==HELPMENU)
-        commonHelpItemSelected(cmd,arg);
-      break;
-    }
-}
+  else  // otherwise the command belongs to the Console window
+    switch (cmd)
+      {
 
-void ConsoleWindow::showConfigureLispWindow () {
-#ifndef SCHEME
-  DialogWindow::showModalDialog (T("Configure Lisp"),
-                                 
-                                 new ConfigureLispView(lisp),
-                                 this,
-                                 Colour(0xffe5e5e5),
-                                 true);
-#endif
+      case CommandIDs::NewPlotter :
+	new PlotterWindow((PlotID)arg);
+	break;
+
+      case CommandIDs::NewEditor :
+	new EditorWindow((TextID)arg);
+	break;
+	
+      case CommandIDs::FileOpen :
+	{
+	  FileChooser choose
+	    (T("Open File"), 
+	     File::getSpecialLocation(File::userHomeDirectory),
+	     String::empty, true);
+	  if ( choose.browseForFileToOpen() ) 
+	    {
+	      String f=choose.getResult().getFullPathName();
+	      new EditorWindow(0, EditFlags::Load, f);
+	    }
+	}
+	break;
+	
+      case CommandIDs::FileOpenRecent :
+	{
+	  File f=p->getRecentlyOpenedFile(arg);
+	  new EditorWindow(0, EditFlags::Load, f.getFullPathName());
+	}
+	break;
+	
+      case CommandIDs::FileClearRecent :
+	p->clearRecentlyOpenedFiles();
+	break;
+	
+      case CommandIDs::AppQuit :
+	app->graceQuit(true);
+	break;
+
+      case CommandIDs::EditCopy :
+	consoleCopy();
+	break;
+	
+      case CommandIDs::EditSelectAll :
+	consoleSelectAll();
+	break;
+	
+      case CommandIDs::EditClear :
+	consoleClear();
+	break;
+	
+      case CommandIDs::ViewFontSize :
+	setFontSize(fontSizeList[arg]);
+	break;
+	
+      case CommandIDs::AudioSetup: 
+	//    showAudioMidiWindow();
+	break;
+	
+      case CommandIDs::ViewSelectTheme :
+	console->setTheme( arg);
+	break;
+	
+      default :
+	break;
+      }
 }
 
 void ConsoleWindow::showAudioMidiWindow () {

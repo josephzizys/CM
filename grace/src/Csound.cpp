@@ -5,6 +5,7 @@
  * this agreement is available at http://www.cliki.net/LLGPL             *
  *************************************************************************/
 
+#include "Enumerations.h"
 #include "Csound.h"
 #include "Grace.h"
 
@@ -376,6 +377,125 @@ void CsoundPort::close(bool port) {
   }
 }
 
+const PopupMenu CsoundPort::getCsoundMenu()
+{
+  PopupMenu csoundmenu, csoundscoremenu;
+  bool score = (! isScoreEmpty());
+  bool isopen = isOpen();
+  
+  if (isopen)
+    csoundmenu.addItem(CommandIDs::CsoundClose,
+		       T("Close"));
+  else
+    csoundmenu.addItem(CommandIDs::CsoundOpen, 
+		       T("Open..."));
+  csoundmenu.addSeparator();
+  csoundmenu.addItem(CommandIDs::CsoundRecordMode, 
+		     T("Record Output to Score"),
+		     isopen,
+		     isRecordMode());
+  csoundmenu.addItem(CommandIDs::CsoundScoreMode, 
+		     T("Route Output to Score"),
+		     true,
+		     isScoreMode());
+  csoundmenu.addSeparator();
+  csoundscoremenu.addItem(CommandIDs::CsoundPlay, 
+			  T("Play"),
+			  (score && isopen));
+  if (isWriting())
+    csoundscoremenu.addItem(CommandIDs::CsoundAbortWrite,
+			    T("Abort Write"));
+  else
+    csoundscoremenu.addItem(CommandIDs::CsoundWrite,
+			    T("Write Audio..."),
+			    score);
+  csoundscoremenu.addSeparator();
+  csoundscoremenu.addItem(CommandIDs::CsoundPrint,
+			  T("Print"), 
+			  score);
+  csoundscoremenu.addItem(CommandIDs::CsoundExport,
+			  T("Export..."), 
+			  score);
+  csoundscoremenu.addItem(CommandIDs::CsoundDisplay, 
+			  T("Plotter..."), 
+			  false);
+  csoundscoremenu.addSeparator();
+  csoundscoremenu.addItem(CommandIDs::CsoundClear,
+			  T("Clear"), 
+			  score);
+  csoundmenu.addSubMenu( T("Score"),
+			 csoundscoremenu,
+			 true);    
+  csoundmenu.addSeparator();
+  csoundmenu.addItem(CommandIDs::CsoundTraceMode, 
+		     T("Trace Output"), 
+		     true,
+		     isTraceMode());
+  return csoundmenu;
+}
+
+void CsoundPort::performCsoundCommand(CommandID id)
+{
+  // lower eight bits of id encode command information
+  CommandID cmd = CommandIDs::getCommand(id);
+  int arg = CommandIDs::getCommandData(id);  
+
+  switch (cmd)
+    {
+
+    case CommandIDs::CsoundOpen :
+      open(true);
+      break;
+      
+    case CommandIDs::CsoundWrite :
+      open(false);
+      break;
+      
+    case CommandIDs::CsoundClose :
+      close(true);
+      break;
+      
+    case CommandIDs::CsoundAbortWrite :
+      close(false);
+      break;
+      
+    case CommandIDs::CsoundPlay :
+      playScore();
+      break;
+      
+    case CommandIDs::CsoundExport :
+      exportScore();
+      break;
+      
+    case CommandIDs::CsoundDisplay :
+      displayScore();
+      break;
+      
+    case CommandIDs::CsoundPrint :
+      printScore();
+      break;
+      
+    case CommandIDs::CsoundClear :
+      clearScore();
+      break;
+      
+    case CommandIDs::CsoundScoreMode :
+      setScoreMode( (! isScoreMode()) );
+      break;
+      
+    case CommandIDs::CsoundRecordMode :
+	setRecordMode( (! isRecordMode()) );
+      break;
+      
+    case CommandIDs::CsoundTraceMode :
+	setTraceMode( (! isTraceMode()) );
+      break;
+      
+    default:
+      break;
+    }
+}
+
 //
 // Score Events
 //
@@ -422,20 +542,20 @@ String CsoundScoreEv::pfieldsToText(String delim) {
 String CsoundScoreEv::toText(int fmat) {
   String text = String::empty;
   switch (fmat) {
-  case CsoundPort::formatCsound :
+  case ExportIDs::CsoundScore :
     text << String(&type,1) << T(" ") << pfieldsToText( T(" ") );
     break;
-  case CsoundPort::formatSalData :
+  case ExportIDs::SalData :
     text << T("{") << pfieldsToText( T(" ") ) << T("}");
     break;
-  case CsoundPort::formatLispData :
+  case ExportIDs::LispData :
     text << T("(") << pfieldsToText( T(" ") ) << T(")");
     break;
-  case CsoundPort::formatSalSend :
+  case ExportIDs::SalSend :
     text << T("send \"cs:") << String(&type,1) + T("\", ") 
 	 << pfieldsToText( T(", "));
     break;
-  case CsoundPort::formatLispSend :
+  case ExportIDs::LispSend :
     text << T("(send \"cs:") << String(&type,1) + T("\" ") 
 	 << pfieldsToText( T(" ") ) << T(")");
     break;
@@ -455,12 +575,12 @@ void CsoundPort::sendScoreEvent(CsoundScoreEv* ev, bool del) {
   if ( isScoreMode() ) {
     addScoreEvent(ev);
     if ( isTraceMode() )
-      console->postConsoleTextMessage( (ev->toText(formatCsound) + T("\n")) );
+      console->postConsoleTextMessage( (ev->toText(ExportIDs::CsoundScore) + T("\n")) );
   }
   else if ( isOpen() ) {
     // if port is open and we are not in score mode then send event to
     // csound and delete the event if del flag is true
-    String msg = ev->toText(formatCsound);
+    String msg = ev->toText(ExportIDs::CsoundScore);
     lockCsound();
 #ifdef PORTCSOUND
     csoundInputMessage(port_connection->csound, msg.toUTF8() );
@@ -485,7 +605,7 @@ void CsoundPort::sendScoreEvent(CsoundScoreEv* ev, bool del) {
   else {
     // if no score or port open then delete the event
     if ( isTraceMode() )
-      console->postConsoleTextMessage( (ev->toText(formatCsound) + T("\n")) );
+      console->postConsoleTextMessage( (ev->toText(ExportIDs::CsoundScore) + T("\n")) );
     delete ev;
   }
 }
@@ -522,7 +642,7 @@ void CsoundPort::playScore(double start, double end, double shift) {
       score[i]->pars[1] = (pn<0.0) ? 0.0 : pn;
       lockCsound();
       csoundInputMessage(port_connection->csound,
-			 score[i]->toText(formatCsound).toUTF8() );
+			 score[i]->toText(ExportIDs::CsoundScore).toUTF8() );
       unlockCsound();
       score[i]->pars[1] = p1;
     }
@@ -535,7 +655,7 @@ void CsoundPort::writeScore(CSOUND* csound) {
   sortScore();
   int i;
   for (i=0; i<numScoreEvents(); i++ ) {
-    csoundInputMessage(csound, score[i]->toText(formatCsound).toUTF8() );
+    csoundInputMessage(csound, score[i]->toText(ExportIDs::CsoundScore).toUTF8() );
   }
   // add 'e' statement at end time of the last note in the score
   float end=score[i-1]->pars[1]+score[i-1]->pars[2];
@@ -560,7 +680,7 @@ void CsoundPort::printScore(double start, double end) {
   for ( ; i<score.size(); i++) {
     if ( (end > 0.0) && (score[i]->pars[1] > end) )
       break;
-    console->postConsoleTextMessage( (score[i]->toText(formatCsound) + T("\n")) );
+    console->postConsoleTextMessage( (score[i]->toText(ExportIDs::CsoundScore) + T("\n")) );
   }
   console->postConsoleTextMessage( T("e\n") );  
 }
@@ -581,19 +701,19 @@ void CsoundPort::exportScore() {
   int i=0;
   String text, indent, after;
   switch (format) {
-  case CsoundPort::formatCsound :
+  case ExportIDs::CsoundScore :
     text=T("s\n"); indent=String::empty; after=T("e\n");
     break;
-  case CsoundPort::formatLispData :
+  case ExportIDs::LispData :
     text=T("(define csound-score\n  '(\n"); indent=T("    "); after=T("  ))\n");
     break;
-  case CsoundPort::formatSalData :
+  case ExportIDs::SalData :
     text=T("define variable csound-score = \n  {\n"); indent=T("   "); after=T("  }\n");
     break;
-  case CsoundPort::formatLispSend :
+  case ExportIDs::LispSend :
     text=T("(begin\n"); indent=T("  "); after=T("  )\n");
     break;
-  case CsoundPort::formatSalSend :
+  case ExportIDs::SalSend :
     text=T("begin\n"); indent=T("  "); after=T("end\n");
     break;
   }
@@ -819,11 +939,11 @@ ExportCsoundDialog::ExportCsoundDialog ()
   formatmenu->setEditableText (false);
   formatmenu->setJustificationType (Justification::centredLeft);
   formatmenu->setTextWhenNothingSelected (String::empty);
-  formatmenu->addItem (T("Csound score"), CsoundPort::formatCsound);
-  formatmenu->addItem (T("SAL data"), CsoundPort::formatSalData);
-  formatmenu->addItem (T("Lisp data"), CsoundPort::formatLispData);
-  formatmenu->addItem (T("SAL sends"), CsoundPort::formatSalSend);
-  formatmenu->addItem (T("Lisp sends"), CsoundPort::formatLispSend);
+  formatmenu->addItem (T("Csound score"), ExportIDs::CsoundScore);
+  formatmenu->addItem (T("SAL data"), ExportIDs::SalData);
+  formatmenu->addItem (T("Lisp data"), ExportIDs::LispData);
+  formatmenu->addItem (T("SAL sends"), ExportIDs::SalSend);
+  formatmenu->addItem (T("Lisp sends"), ExportIDs::LispSend);
 
   formatmenu->setSelectedId(1,false);
   formatmenu->addListener (this);

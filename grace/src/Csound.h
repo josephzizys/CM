@@ -113,8 +113,7 @@ class CsoundPort {
   void save();
   void revert();
   bool open(bool port ) ;
-  void close(bool port
-);
+  void close(bool port);
   bool isOpen() ;
   void setOpen(bool b) ;
   bool isClosed() ;
@@ -148,6 +147,10 @@ class CsoundPort {
   void sortScore();
   int numScoreEvents();
   bool isScoreEmpty();
+
+  const PopupMenu getCsoundMenu();
+  void performCsoundCommand(CommandID id);
+
 };
 
 class OpenCsoundDialog : public Component,

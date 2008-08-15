@@ -22,7 +22,28 @@
 class GraceApp : public JUCEApplication
 {
   LookAndFeel shinyLookAndFeel;
+
+  class HelpDoc
+  {
+  public:
+    CommandID type;
+    String name;
+    String path;
+    HelpDoc(CommandID _type, String _name, String _path)
+      {
+	type=_type;
+	name=_name;
+	path=_path;
+      }
+    ~HelpDoc()
+      {
+      }
+  };
+  OwnedArray<HelpDoc> helpdocs;
+  void initHelp();
+
 public:
+
   ConsoleWindow* console;
   //    FontList* fontList;
   ApplicationCommandManager *commandManager ;
@@ -53,6 +74,12 @@ public:
   String getResourceDirectoryPathName() {return resourceDirectory.getFullPathName();}
   GracePreferences* prefs;
   GracePreferences* getPreferences() {return prefs;}
+
+
+  const PopupMenu getWindowMenu();
+  void performWindowCommand(CommandID id);
+  const PopupMenu getHelpMenu();
+  void performHelpCommand(CommandID id);
 };
 
 #endif

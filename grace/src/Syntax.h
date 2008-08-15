@@ -13,15 +13,7 @@
 #include <map>
 using namespace std;
 #include "Syntab.h"
-
-// Syntax IDs, one for each syntax. 
-
-enum syntaxID {
-  syntaxNone = 0,
-  syntaxText,
-  syntaxLisp,
-  syntaxSal
-  };
+#include "Enumerations.h"
 
 // Hilite IDs, one for each hilite. currently allow 8
 // Emacs Hilite colors:
@@ -32,19 +24,6 @@ enum syntaxID {
 //   class: font-lock-type-case ForestGreen #228b22
 //   command: font-lock-function-name-face blue1 #0000ff
 //   constants: font-lock-constant-face CadetBlue #5f9ea0 
-
-#define MAXHILITE 8
-
-enum hiliteID {
-  hiliteNone = 0,
-  hiliteString,
-  hiliteComment,
-  hilite4,
-  hilite5,
-  hilite6,
-  hilite7,
-  hilite8
-};
 
 // SynTok holds info about distinguished tokens for each syntax
 
@@ -69,7 +48,7 @@ class SynTok {
   int getType() {return type;}
   int getTypeData() {return (type & 0xff);}
   void setType(int t) {type=t;}
-  hiliteID getHilite() {return (hiliteID)data1;}
+  HiliteID getHilite() {return (HiliteID)data1;}
   int getStart() {return data1;}
   int getIndent() {return data2;}
   int getLiteralClass() {return data3;}
@@ -82,7 +61,7 @@ class Syntax
 {
  public:
   SynTab syntab;
-  Colour hilites[MAXHILITE];
+  Colour hilites[HiliteIDs::NUMHILITES];
   SynTokMap tokens;
   int type;
   int numtoks;
@@ -94,11 +73,11 @@ class Syntax
   int getType() {return type;}
   virtual bool isTopLevel(String line) =0;
   virtual int getIndent (const String text, int bot, int top, int beg) =0;
-  virtual hiliteID getHilite (const String text, int start, int end) =0;
+  virtual HiliteID getHilite (const String text, int start, int end) =0;
   virtual void evalText(String text, bool isRegion=false, bool expand=false) =0;
   SynTok * getSynTok (String n) ;
   bool isWhiteBetween (const String txt, int lb, int ub);
-  Colour getHiliteColour(hiliteID id) {return hilites[id];}
+  Colour getHiliteColour(HiliteID id) {return hilites[id];}
 
 };
 
@@ -114,7 +93,7 @@ class TextSyntax : public Syntax
 
   bool isTopLevel(String line) ;
   int getIndent (const String text, int bot, int top, int beg) ;
-  hiliteID getHilite (const String text, int start, int end) ;
+  HiliteID getHilite (const String text, int start, int end) ;
   void evalText(String text, bool isRegion=false, bool expand=false) {}
   juce_DeclareSingleton (TextSyntax, true)
 };
@@ -128,11 +107,11 @@ class LispSyntax : public Syntax
  public:
   LispSyntax();
   ~LispSyntax() ;
-  void addLispTok(const String n, int t, hiliteID h, int i) ;
+  void addLispTok(const String n, int t, HiliteID h, int i) ;
 
   bool isTopLevel(String line) ;
   int getIndent (const String text, int bot, int top, int beg) ;
-  hiliteID getHilite (const String text, int start, int end) ;
+  HiliteID getHilite (const String text, int start, int end) ;
   void evalText(String text, bool isRegion=false, bool expand=false) ;
   juce_DeclareSingleton (LispSyntax, true)
 };
@@ -339,7 +318,7 @@ class SalSyntax : public Syntax
 
   SalSyntax();
   ~SalSyntax() ;
-  void addSalTok (const String n, int t, hiliteID c) ;
+  void addSalTok (const String n, int t, HiliteID c) ;
 
   // Type predicates
 
@@ -403,7 +382,7 @@ class SalSyntax : public Syntax
   int getIndent (const String text, int bot, int top, int beg) ;
   int isSalStatement(const String str);
   int backwardSal(const String text, int bot, int top, int *poz, int *sal);
-  hiliteID getHilite (const String text, int start, int end) ;
+  HiliteID getHilite (const String text, int start, int end) ;
   void evalText(String text, bool isRegion=false, bool expand=false) ;
   void loadFile(String path) ;
 

@@ -196,40 +196,38 @@ const String TextFile::loadFileAsString()
   return outstr;
 }
 
-
-
-struct {
+struct filetypemapping {
   // global filetype->syntax mapping. new mappings can be added via
   // addSyntaxFileType
   String name;
-  syntaxID type;
-} syntaxFileTypes [32] =  {{T(".lisp"), syntaxLisp},
-			   {T(".lsp"), syntaxLisp},
-			   {T(".cl"), syntaxLisp},
-			   {T(".scm"), syntaxLisp},
-			   {T(".cm"), syntaxLisp},
-			   {T(".clm"), syntaxLisp},
-			   {T(".cmn"), syntaxLisp},
-			   {T(".ins"), syntaxLisp},
-			   {T(".fms"), syntaxLisp},
-			   {T(".asd"), syntaxLisp},
-			   {T(".sal"), syntaxSal},
-			   {T(".text"), syntaxText},
-			   {T(".txt"), syntaxText},
-			   {T(""), syntaxNone}  }; 
+  TextID type;
+} syntaxFileTypes [32] =  {{T(".lisp"), TextIDs::Lisp},
+			   {T(".lsp"), TextIDs::Lisp},
+			   {T(".cl"), TextIDs::Lisp},
+			   {T(".scm"), TextIDs::Lisp},
+			   {T(".cm"), TextIDs::Lisp},
+			   {T(".clm"), TextIDs::Lisp},
+			   {T(".cmn"), TextIDs::Lisp},
+			   {T(".ins"), TextIDs::Lisp},
+			   {T(".fms"), TextIDs::Lisp},
+			   {T(".asd"), TextIDs::Lisp},
+			   {T(".sal"), TextIDs::Sal},
+			   {T(".text"), TextIDs::Text},
+			   {T(".txt"), TextIDs::Text},
+			   {T(""), TextIDs::Empty}  }; 
 
-syntaxID getSyntaxFromFileType(String filename) {
+TextID getSyntaxFromFileType(String filename) {
   String ext = filename.fromLastOccurrenceOf(T("."), true, false);
-  if ( ext == String::empty ) return syntaxText;
+  if ( ext == String::empty ) return TextIDs::Text;
   for (int i=0; i<32; i++)
     if ( syntaxFileTypes[i].name == String::empty )
-      return syntaxText;
+      return TextIDs::Text;
     else if ( ext == syntaxFileTypes[i].name ) 
       return syntaxFileTypes[i].type;
-  return syntaxText; 
+  return TextIDs::Text; 
 }
 
-bool addSyntaxFileType(String name, syntaxID synt) {
+bool addSyntaxFileType(String name, TextID synt) {
   int i;
   for (i=0; i<32; i++)
     if ( syntaxFileTypes[i].name == T("") )
@@ -239,57 +237,65 @@ bool addSyntaxFileType(String name, syntaxID synt) {
   syntaxFileTypes[i].type=synt;
   if (i<31) {
     syntaxFileTypes[i].name=T("");
-    syntaxFileTypes[i].type=syntaxNone;
+    syntaxFileTypes[i].type=TextIDs::Empty;
   }
   return true;
 }
 
 EditorWindow::EditorWindow (int synt, int flags, String filename,
 			    String title, String text)
-  : DocumentWindow (String::empty , Colours::white, 
-		    DocumentWindow::allButtons, true ) {
+  : DocumentWindow (String::empty, 
+		    Colours::white, 
+		    DocumentWindow::allButtons, 
+		    true)
+{
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   GracePreferences* prefs=app->getPreferences();
-
-  if (filename==String::empty) {
-    if (title==String::empty) {
-      filename=T("untitled");
-      if (synt==syntaxSal)
-	filename += T(".sal");
-      else if (synt==syntaxLisp)
-	filename += T(".lisp");
-      else {
-	filename += T(".text");
-	synt=syntaxText;
-      }
-      editfile=TextFile(T("~/") + filename);
-      title=filename;
+  
+  if (filename==String::empty)
+    {
+      if (title==String::empty)
+	{
+	  filename=T("untitled");
+	  if (synt==TextIDs::Sal)
+	    filename += T(".sal");
+	  else if (synt==TextIDs::Lisp)
+	    filename += T(".lisp");
+	  else {
+	    filename += T(".text");
+	    synt=TextIDs::Text;
+	  }
+	  editfile=TextFile(T("~/") + filename);
+	  title=filename;
+	}
+      else 
+	{      // have title
+	  editfile=TextFile::nonexistent;
+	}
     }
-    else {      // have title
-      editfile=TextFile::nonexistent;
+  else
+    {
+      editfile=TextFile(filename);
+      if (title == String::empty)
+	title=editfile.getFileName();
     }
-  }
-  else {
-    editfile=TextFile(filename);
-    if (title == String::empty)
-      title=editfile.getFileName();
-  }
-
+  
   setName(title);
-
-  switch (synt) {
-  case syntaxSal :
-  case syntaxLisp :
-  case syntaxText :
-    break;
-  default:
-    synt=getSyntaxFromFileType( editfile.getFileExtension());
-    break;
-  }
-
-  editor = new EditorComponent((syntaxID)synt, flags) ;
+  
+  switch (synt)
+    {
+    case TextIDs::Sal :
+    case TextIDs::Lisp :
+    case TextIDs::Text :
+      break;
+    default:
+      synt=getSyntaxFromFileType( editfile.getFileExtension());
+      break;
+    }
+  
+  editor = new EditorComponent((TextID)synt, flags) ;
   setContentComponent(editor);
-
+  
   TextBuffer* buffer=editor->buffer;
   Font font= Font(Font::getDefaultMonospacedFontName(),
 		  prefs->getEditorFontSize(),
@@ -307,23 +313,24 @@ EditorWindow::EditorWindow (int synt, int flags, String filename,
   setMenuBar(this);
   setApplicationCommandManagerToWatch( commandManager );
   commandManager->registerAllCommandsForTarget(buffer);
-
+  
   // BUG: If setNativeTitleBars is TRUE then closing the window crashes the app
-    setUsingNativeTitleBar(prefs->isNativeTitleBars());
+  setUsingNativeTitleBar(prefs->isNativeTitleBars());
   //setUsingNativeTitleBar(false);
   
   // dont show window until very last
   setVisible(true);
   if ( text != String::empty )
     buffer->setText( text );    
-  else if ( buffer->testFlag(TextBuffer::load) &&
-	    editfile.existsAsFile() ) {
-    buffer->setText( editfile.loadFileAsString() );
-    prefs->addRecentlyOpenedFile(editfile);
-  }
+  else if ( buffer->testFlag(EditFlags::Load) &&
+	    editfile.existsAsFile() )
+    {
+      buffer->setText( editfile.loadFileAsString() );
+      prefs->addRecentlyOpenedFile(editfile);
+    }
   if ( !buffer->isEmpty() && buffer->isHiliting() )
     buffer->colorizeAll();  // could this be done in a thread?
-  if ( buffer->testFlag(TextBuffer::readonly) )
+  if ( buffer->testFlag(EditFlags::ReadOnly) )
     buffer->setReadOnly(true);
 }
 
@@ -349,174 +356,185 @@ void EditorWindow::closeButtonPressed () {
   }
 }
 
-const StringArray EditorWindow::getMenuBarNames() {
-  const tchar* const textbar [] = { T("File"), T("Edit"),  T("View"), 
-				    T("Options"), T("Text"), T("Windows"), T("Help"), 0};
-  const tchar* const lispbar [] = { T("File"), T("Edit"),  T("View"), 
-				    T("Options"), T("Lisp"), T("Windows"), T("Help"), 0};
-  const tchar* const salbar [] = { T("File"), T("Edit"),  T("View"), 
-				    T("Options"), T("SAL"), T("Windows"), T("Help"), 0};
-  if ( getTextBuffer()->isLispSyntax() )
-    return StringArray((const tchar**)lispbar);
-  else if ( getTextBuffer()->isSalSyntax() )
-    return StringArray((const tchar**)salbar);    
-  else
-    return StringArray((const tchar**)textbar);    
+const StringArray EditorWindow::getMenuBarNames()
+{
+  const tchar* const textbar [] = 
+    {T("File"), T("Edit"), T("View"), T("Windows"), T("Help"), 0};
+  const tchar* const codebar [] =
+    {T("File"), T("Edit"), T("View"), T("Eval"),
+#ifdef SCHEME  
+     T("Ports"),
+#else
+     T("Lisp"),
+#endif
+     T("Windows"), T("Help"), 0};
+
+  if ( getTextBuffer()->isTextSyntax() )
+    return StringArray((const tchar**)textbar);
+  else 
+    return StringArray((const tchar**)codebar);
 }
 
-const PopupMenu EditorWindow::getLispMenu () {
+const PopupMenu EditorWindow::getEvalMenu () {
   PopupMenu menu;
-  menu.addCommandItem( commandManager, TextBuffer::cmdLispEval);
-  menu.addCommandItem( commandManager, TextBuffer::cmdLispExpand);
+  menu.addCommandItem(commandManager, CommandIDs::EvalExecute);
+  menu.addCommandItem(commandManager, CommandIDs::EvalExpand);
   menu.addSeparator();
-  menu.addCommandItem( commandManager, TextBuffer::cmdLispLoadFile);
+  menu.addCommandItem(commandManager, CommandIDs::EvalLoadFile);
 #ifndef SCHEME
-  menu.addCommandItem( commandManager, TextBuffer::cmdLispCompileFile);
+  menu.addCommandItem(commandManager, CommandIDs::EvalCompileFile);
 #endif
   menu.addSeparator();
-  menu.addCommandItem( commandManager, TextBuffer::cmdLispShowDirectory);
-  menu.addCommandItem( commandManager, TextBuffer::cmdLispSetDirectory);  
-  //#ifndef SCHEME
-  //  if (getTextBuffer()->isLispSyntax() ) {
-  //    menu.addSeparator();
-  //menu.addCommandItem( commandManager, TextBuffer::cmdLispSetPackage);
-  //}
-  //#endif
+  menu.addCommandItem(commandManager, CommandIDs::EvalShowDirectory);
+  menu.addCommandItem(commandManager, CommandIDs::EvalSetDirectory);  
   menu.addSeparator();
-  menu.addCommandItem( commandManager, TextBuffer::cmdLispSymbolHelp);
+  menu.addCommandItem(commandManager, CommandIDs::EvalSymbolHelp);
   return menu;
 }
 
-const PopupMenu EditorWindow::getHelpMenu () {
-  PopupMenu menu, sub1;
-  //  if (getTextBuffer()->isSalSyntax()) {
-  //    menu.addCommandItem( commandManager, TextBuffer::cmdSymbolHelp);
-  //    menu.addSeparator();
-  //  }
-  addCommonHelpItems(&menu, winEditor);
-  return menu;
-}
-
-const PopupMenu EditorWindow::getMenuForIndex ( int menuIndex,
-					       const String& menuName) {
+const PopupMenu EditorWindow::getMenuForIndex(int meuindex,
+					      const String& menuname)
+{
   PopupMenu menu, sub1, sub2;
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   GracePreferences* p=GracePreferences::getInstance();
 
-  if (menuIndex == 0) {
-    // File menu
-    sub1.addCommandItem( commandManager, TextBuffer::cmdFileNewSal );
-    sub1.addCommandItem( commandManager, TextBuffer::cmdFileNewLisp );
-    sub1.addCommandItem( commandManager, TextBuffer::cmdFileNewText );
-    menu.addSubMenu(T("New"), sub1, true);
-    menu.addCommandItem( commandManager, TextBuffer::cmdFileOpen);
-    if ( p->areRecentlyOpenedFiles() ) {
-      p->addRecentlyOpenedItems(&sub2,TextBuffer::cmdFileOpenRecent);
-      sub2.addSeparator();
-      sub2.addItem(TextBuffer::cmdFileClearRecent, T("Clear"));
-      menu.addSubMenu(T("Open Recent"), sub2);
+  if (menuname==T("File")) 
+    {
+      sub1.addCommandItem(commandManager, 
+			  CommandIDs::NewEditor + TextIDs::Sal);
+      sub1.addCommandItem(commandManager, 
+			  CommandIDs::NewEditor + TextIDs::Lisp);
+      sub1.addCommandItem(commandManager, 
+			  CommandIDs::NewEditor + TextIDs::Text);
+      menu.addSubMenu(T("New"), sub1, true);
+      menu.addCommandItem(commandManager, CommandIDs::FileOpen);
+      if ( p->areRecentlyOpenedFiles() )
+	{
+	  p->addRecentlyOpenedItems(&sub2,CommandIDs::FileOpenRecent);
+	  sub2.addSeparator();
+	  sub2.addItem(CommandIDs::FileClearRecent, T("Clear"));
+	  menu.addSubMenu(T("Open Recent"), sub2);
+	}
+      menu.addSeparator();
+      menu.addCommandItem(commandManager, CommandIDs::FileSave);
+      menu.addCommandItem(commandManager, CommandIDs::FileSaveAs);
+      menu.addCommandItem(commandManager, CommandIDs::FileRevert);
+      menu.addSeparator();
+      menu.addCommandItem(commandManager, CommandIDs::FileClose);
     }
-    menu.addSeparator();
-    menu.addCommandItem( commandManager, TextBuffer::cmdFileSave);
-    menu.addCommandItem( commandManager, TextBuffer::cmdFileSaveAs);
-    menu.addCommandItem( commandManager, TextBuffer::cmdFileRevert);
-    menu.addSeparator();
-    menu.addCommandItem( commandManager, TextBuffer::cmdFileClose);
-  }
-  else if (menuIndex == 1) {
-    // Edit menu
-    menu.addCommandItem( commandManager, TextBuffer::cmdEditUndo);
-    menu.addCommandItem( commandManager, TextBuffer::cmdEditRedo);
-    menu.addSeparator();
-    menu.addCommandItem( commandManager, TextBuffer::cmdEditCopy);
-    menu.addCommandItem( commandManager, TextBuffer::cmdEditCut);
-    menu.addCommandItem( commandManager, TextBuffer::cmdEditPaste);
-    menu.addCommandItem( commandManager, TextBuffer::cmdEditSelectAll);
-    menu.addSeparator();
-    menu.addCommandItem( commandManager, TextBuffer::cmdEditImport);
-  }
-  else if (menuIndex == 2) {
-    // View menu
-    for (int i = 0;i<16;i++)
-      sub1.addItem(TextBuffer::cmdViewFontSize+i,
-		   String( fontSizeList[i] ),
-		   true, 
-		   (getTextBuffer()->getFontSize() == fontSizeList[i])
+  else if (menuname==T("Edit"))
+    {
+      menu.addCommandItem(commandManager, CommandIDs::EditUndo);
+      menu.addCommandItem(commandManager, CommandIDs::EditRedo);
+      menu.addSeparator();
+      menu.addCommandItem(commandManager, CommandIDs::EditCopy);
+      menu.addCommandItem(commandManager, CommandIDs::EditCut);
+      menu.addCommandItem(commandManager, CommandIDs::EditPaste);
+      menu.addCommandItem(commandManager, CommandIDs::EditSelectAll);
+      menu.addSeparator();
+      menu.addItem(CommandIDs::EditEmacsMode, T("Emacs Mode"), 
+		   true, p->isEmacsMode() );    }
+  else if (menuname==T("View")) 
+    {
+      for (int i = 0; i<16; i++)
+	sub1.addItem(CommandIDs::ViewFontSize+i,
+		     String( fontSizeList[i] ),
+		     true, 
+		     (getTextBuffer()->getFontSize() == fontSizeList[i])
+		     );
+      menu.addSubMenu(T("Font Size"), sub1, true);
+      menu.addSeparator();
+      menu.addItem(CommandIDs::EditHilite,
+		   T("Highlighting"), 
+		   !getTextBuffer()->isTextSyntax(),
+		   getTextBuffer()->isHiliting()
 		   );
-    menu.addSubMenu(T("Font Size"), sub1, true);
-    menu.addSeparator();
-    menu.addSubMenu(T("Themes"), sub2, false);
-  }
-  else if (menuIndex == 3) {
-    // Options menu
-    menu.addItem(TextBuffer::cmdOptionsHiliting,
-		 T("Highlighting"), 
-		 !getTextBuffer()->isTextSyntax(),
-		 getTextBuffer()->isHiliting()
-		 );
-    menu.addItem(TextBuffer::cmdOptionsParens,
-		 T("Parens Matching"),
-		 !getTextBuffer()->isTextSyntax(),
-		 getTextBuffer()->isParensMatching()
-		 );
-    menu.addSeparator();
-    menu.addItem(TextBuffer::cmdOptionsEmacsMode, T("Emacs Mode"), 
-		 true, p->isEmacsMode() );
-  }
-  else if (menuIndex == 4) {
-    menu=getLispMenu();
-  }
-  else if (menuIndex == 5) 
-    addCommonWindowItems(&menu, winEditor);
-  else if (menuIndex == 6)
-    addCommonHelpItems(&menu, winEditor);
+      menu.addItem(CommandIDs::EditParens,
+		   T("Parens Matching"),
+		   !getTextBuffer()->isTextSyntax(),
+		   getTextBuffer()->isParensMatching()
+		   );    
+    }
+  else if (menuname == T("Eval"))
+    menu=getEvalMenu();
+#ifdef SCHEME
+  else if (menuname == T("Ports"))
+    menu=((GraceApp *)GraceApp::getInstance())->
+      getConsole()->getPortsMenu();
+#endif
+  else if (menuname == T("Windows"))
+    menu=app->getWindowMenu();
+  else if (menuname == T("Help"))
+    menu=app->getHelpMenu();
   return menu;
 }
 
-void EditorWindow::menuItemSelected (int id, int idx) {
-  int arg = id & 0x0000007F;
-  int cmd = id & 0xFFFFFF80;
-  GracePreferences* p=GracePreferences::getInstance();
-  switch (cmd) {
-  case TextBuffer::cmdFileOpenRecent :
-    {
-      File f=p->getRecentlyOpenedFile(arg);
-      new EditorWindow(0, TextBuffer::load, f.getFullPathName());
-    }
-    break;
+void EditorWindow::menuItemSelected (int id, int idx)
+{
+  CommandID cmd = CommandIDs::getCommand(id);
+  int data = CommandIDs::getCommandData(id);  
+  int type = CommandIDs::getCommandType(id);  
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  GracePreferences* prefs=GracePreferences::getInstance();
 
-  case TextBuffer::cmdFileClearRecent :
-    p->clearRecentlyOpenedFiles();
-    break;
-
-  case TextBuffer::cmdViewFontSize :
-    getTextBuffer()->setFontSize(fontSizeList[arg]);
-    getTextBuffer()->colorizeAll();
-    break;
-  case TextBuffer::cmdOptionsHiliting :
-    getTextBuffer()->toggleHiliting();      
-    break;
-  case TextBuffer::cmdOptionsParens :
-    getTextBuffer()->toggleParensMatching();
-    break;
-  case TextBuffer::cmdOptionsEmacsMode :
-    {
-      bool b=p->isEmacsMode();
-      p->setEmacsMode( !b );
-      // FIX. emacs mode is now a preferecnce and should affect ALL
-      // open edit windows
-      //      getTextBuffer()->toggleEmacsMode();
-    }
-    break;
-  default:
-    if (idx == 5)
-      commonWindowItemSelected(cmd, arg);      
-    if (idx == 6)
-      commonHelpItemSelected(cmd, arg);
-    break;
-  }
+  if (type == CommandIDs::Window)
+    app->performWindowCommand(id);
+  else if (type == CommandIDs::Help)
+    app->performHelpCommand(id);
+#ifdef SCHEME
+  else if (type == CommandIDs::MidiOut)
+      app->getMidiOutPort()->performMidiOutCommand(id);
+  else if (type == CommandIDs::MidiIn)
+      app->getMidiInPort()->performMidiInCommand(id);
+  else if (type == CommandIDs::MidiSeq)  
+      app->getMidiOutPort()->performMidiSeqCommand(id);
+#ifdef PORTCSOUND
+  else if (type == CommandIDs::Csound)  
+      app->getCsoundPort()->performCsoundCommand(id);
+#endif 
+#else
+  else if (type == CommandIDs::CommonLisp)
+    app->getConsole()->lisp->performLispCommand(id);
+#endif
+  else
+    switch (cmd)
+      {
+      case CommandIDs::FileOpenRecent :
+	{
+	  File f=prefs->getRecentlyOpenedFile(data);
+	  new EditorWindow(0, EditFlags::Load, f.getFullPathName());
+	}
+	break;
+	
+      case CommandIDs::FileClearRecent :
+	prefs->clearRecentlyOpenedFiles();
+	break;
+	
+      case CommandIDs::ViewFontSize :
+	getTextBuffer()->setFontSize(fontSizeList[data]);
+	getTextBuffer()->colorizeAll();
+	break;
+	
+      case CommandIDs::EditHilite :
+	getTextBuffer()->toggleHiliting();      
+	break;
+	
+      case CommandIDs::EditParens :
+	getTextBuffer()->toggleParensMatching();
+	break;
+	
+      case CommandIDs::EditEmacsMode :
+	prefs->setEmacsMode(!prefs->isEmacsMode());
+	break;
+	
+      default:
+	break;
+	
+      }
 }
 
-void EditorWindow::newFile(syntaxID mode) {
+void EditorWindow::newFile(TextID mode) {
   new EditorWindow(mode) ;
 }
 
@@ -530,7 +548,7 @@ void EditorWindow::openFile() {
   FileChooser choose (T("Open File"), dir, String::empty, true);
   if ( choose.browseForFileToOpen() ) {
     TextFile f = (TextFile)choose.getResult();
-    new EditorWindow(0, TextBuffer::load, f.getFullPathName());
+    new EditorWindow(0, EditFlags::Load, f.getFullPathName());
   }
 }
 
@@ -566,7 +584,7 @@ bool EditorWindow::saveFileAs(File defaultfile) {
     f.replaceWithText( buff->getText() );
     editfile=TextFile(f);
     buff->setChanged(false);
-    buff->setFlagOff(TextBuffer::nosave);
+    buff->setFlagOff(EditFlags::NoSave);
     setName( editfile.getFileName() );
     return true;
   }

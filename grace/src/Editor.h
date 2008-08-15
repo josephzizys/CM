@@ -61,7 +61,7 @@ class EditorComponent : public Component {
   void resized () { buffer->setSize(getWidth(), getHeight()); }
  public:
   TextBuffer* buffer;
-  EditorComponent (syntaxID mode, int flags) {
+  EditorComponent (TextID mode, int flags) {
     buffer = new TextBuffer(mode, flags);
     buffer->setTopLeftPosition(0,0);
     addChildComponent( buffer, -1);
@@ -83,7 +83,7 @@ class EditorWindow : public DocumentWindow, public MenuBarModel {
 
   void openFile();
   void closeFile();
-  void newFile(syntaxID syn);
+  void newFile(TextID syn);
   bool saveFile();
   bool saveFileAs(File defaultfile=File::nonexistent);
   bool revertFile();
@@ -96,9 +96,8 @@ class EditorWindow : public DocumentWindow, public MenuBarModel {
 				   const String& menuName);
   void menuItemSelected ( int menuItemID, 
 			 int topLevelMenuIndex);
-  const PopupMenu getSalMenu();
-  const PopupMenu getLispMenu();
-  const PopupMenu getHelpMenu();
+
+  const PopupMenu getEvalMenu();
 
   void loadFile();
   void compileFile();

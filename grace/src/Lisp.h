@@ -142,6 +142,10 @@ class LispConnection : public LispProcessConnection, public Timer {
   void postValues (const MemoryBlock &message);
   void handleBinaryData (const MemoryBlock &message);
   void handleMessage (const Message& message);
+
+  const PopupMenu getLispMenu();
+  void performLispCommand(CommandID id);
+  void showConfigureLispWindow();
 };
 
 class ConfigureLispView  : public Component,

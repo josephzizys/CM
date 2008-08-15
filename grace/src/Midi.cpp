@@ -8,6 +8,7 @@
 // $Revision: 1495 $
 // $Date: 2007-11-25 19:01:22 -0600 (Sun, 25 Nov 2007) $ 
 
+#include "Enumerations.h"
 #include "Midi.h"
 #include "Grace.h"
 #include "Toolbox.h"
@@ -273,6 +274,357 @@ bool MidiOutPort::isOpen(int id) {
 }
 
 ///
+/// Menu Management
+///
+
+const PopupMenu MidiOutPort::getMidiOutMenu()
+{
+  StringArray devs= MidiOutput::getDevices();
+  int ndevs=devs.size();
+  // warning! this activity test has to make sure no processes are
+  // running either!
+  bool midioutbusy=isOutputQueueActive();
+  bool midioutidle=(!midioutbusy);
+  PopupMenu midioutmenu, tuningmenu, bendwidthmenu;
+  
+  if (ndevs == 0)
+    midioutmenu.addItem(CommandIDs::MidiOutOpen,
+			T("(no devices)"),
+			false);
+  else
+    for (int i=0; i<ndevs; i++)
+      midioutmenu.addItem(CommandIDs::MidiOutOpen + i,
+			  devs[i],
+			  ( ! midioutbusy ),
+			  isOpen(i));
+  midioutmenu.addSeparator();
+  midioutmenu.addItem(CommandIDs::MidiOutTest, 
+		      T("Test Output"),
+		      midioutidle);
+  midioutmenu.addItem(CommandIDs::MidiOutHush,
+		      T("Hush"),
+		      midioutbusy);
+  midioutmenu.addSeparator();
+  int val=getTuning();
+  for (int i=1; i<=16; i++)
+    tuningmenu.addItem(CommandIDs::MidiOutTuning+i, 
+		       getTuningName(i),
+		       midioutidle,
+		       (i==val));
+  tuningmenu.addSeparator();
+  tuningmenu.addItem(CommandIDs::MidiOutDrumTrack,
+		     T("Avoid Drum Track"),
+		     (val>1),
+		     avoidDrumTrack());
+  val=getPitchBendWidth();
+  for (int b=1; b<13; b++)
+    bendwidthmenu.addItem(CommandIDs::MidiOutPitchBend+b, 
+			  String(b),
+			  true, 
+			  (b==val));
+  tuningmenu.addSubMenu( T("Pitch Bend Width"), bendwidthmenu);      
+  midioutmenu.addSubMenu( T("Microtuning"), tuningmenu);
+  midioutmenu.addItem(CommandIDs::MidiOutInstruments,
+		      T("Instruments...."),
+		      midioutidle);
+  return midioutmenu;
+}
+
+void MidiOutPort::performMidiOutCommand(CommandID id)
+{
+  // lower eight bits of id encode command information
+  CommandID cmd = CommandIDs::getCommand(id);
+  int arg = CommandIDs::getCommandData(id);  
+
+  switch (cmd)
+    {
+    case CommandIDs::MidiOutOpen:
+      open(arg);
+      break;
+      
+    case CommandIDs::MidiOutTest:
+      testMidiOutput();
+      break;
+      
+    case CommandIDs::MidiOutHush :
+      ((GraceApp*)JUCEApplication::getInstance())->schemeProcess->stop();
+      clear();
+      break;
+      
+    case CommandIDs::MidiOutTuning :
+      setTuning(arg, true);
+      break;
+      
+    case CommandIDs::MidiOutPitchBend :
+      setPitchBendWidth(arg);
+      break;
+      
+    case CommandIDs::MidiOutDrumTrack :
+      setAvoidDrumTrack(! avoidDrumTrack());
+      break;
+      
+    case CommandIDs::MidiOutInstruments :
+      showInstrumentsWindow();
+      break;
+    default:
+      break;
+    }
+}
+
+const PopupMenu MidiOutPort::getMidiSeqMenu()
+{
+  // Midi Seq Menu. For sanity's sake most items are disabled if the
+  // MidiOut port is currently active or capturing is active.
+  
+  bool midioutbusy=isOutputQueueActive();
+  bool midioutidle=(!midioutbusy);
+  int cmode=getCaptureMode();
+  // saveable means that no more messages can get added during
+  // this command and we have some data captured.
+  bool saveable=((cmode==MidiOutPort::CaptureModeOff) &&
+		 isSequenceData());
+  PopupMenu midiseqmenu;
+  
+  midiseqmenu.addItem(CommandIDs::MidiSeqCaptureMidiOut,
+		      T("Record Midi Out"),
+		      midioutidle,
+		      (cmode==MidiOutPort::CaptureModeMidiOut));
+  midiseqmenu.addItem(CommandIDs::MidiSeqCaptureScore, 
+		      T("Score Capture"),
+		      midioutidle,
+		      (cmode==MidiOutPort::CaptureModeScore));
+  midiseqmenu.addSeparator();
+  midiseqmenu.addItem(CommandIDs::MidiSeqResetRecordingStart, 
+		      T("Reset Recording"), 
+		      (midioutidle &&
+		       (cmode==MidiOutPort::CaptureModeMidiOut)));
+  midiseqmenu.addItem(CommandIDs::MidiSeqClear, 
+		      T("Clear"), 
+		      saveable);
+  midiseqmenu.addSeparator();
+  // do not allow playing if recording since those messages would
+  // be added into the sequence again!
+  midiseqmenu.addItem(CommandIDs::MidiSeqPrintInfo, 
+		      T("Print Info"), 
+		      saveable);
+  midiseqmenu.addItem(CommandIDs::MidiSeqPlay, 
+		      T("Play"), 
+		      (midioutidle && saveable));
+  midiseqmenu.addItem(CommandIDs::MidiSeqPlotter, 
+		      T("Copy to Plotter"), 
+		      (false && saveable));
+  midiseqmenu.addItem(CommandIDs::MidiSeqCopyToTrack, 
+		      T("Copy to Track"), 
+		      saveable);
+  midiseqmenu.addSeparator();
+  // Tracks submenu
+  {
+    PopupMenu miditracksmenu;
+    int numtracks=getNumTracks();
+    for (int i=0; i<numtracks; i++)
+      {
+	PopupMenu trackmenu;
+	String title=getTrackName(i);
+	trackmenu.addItem(CommandIDs::MidiSeqRenameTrack+i,
+			  T("Rename..."),
+			  true);
+	trackmenu.addItem(CommandIDs::MidiSeqRestoreTrack+i,
+			  T("Set Seq"),
+			  true);
+	trackmenu.addItem(CommandIDs::MidiSeqMixTrack+i,
+			  T("Mix into Seq..."),
+			  isSequenceData());
+	trackmenu.addSeparator();
+	trackmenu.addItem(CommandIDs::MidiSeqReplaceTrack+i,
+			  T("Replace by Seq"),
+			  isSequenceData());
+	trackmenu.addItem(CommandIDs::MidiSeqDeleteTrack+i,
+			  T("Delete"),
+			  true);
+	miditracksmenu.addSubMenu(title, trackmenu);
+      }
+    if (numtracks>0)
+      miditracksmenu.addSeparator();	
+    miditracksmenu.addItem(CommandIDs::MidiSeqImport, 
+			   T("Import..."), 
+			   true);
+    midiseqmenu.addSubMenu( T("Tracks"), miditracksmenu);
+  }
+  midiseqmenu.addSeparator();
+  midiseqmenu.addItem(CommandIDs::MidiSeqExport, 
+		      T("Export..."), 
+		      saveable);
+  midiseqmenu.addItem(CommandIDs::MidiSeqSave, 
+		      T("Save"),
+		      saveable);
+  midiseqmenu.addItem(CommandIDs::MidiSeqSaveAs, 
+		      T("Save As..."),
+		      saveable);
+  return midiseqmenu;
+}
+
+void MidiOutPort::performMidiSeqCommand(CommandID id)
+{
+  // lower eight bits of id encode command information
+  CommandID cmd = CommandIDs::getCommand(id);
+  int arg = CommandIDs::getCommandData(id);  
+
+  switch (cmd)
+    {
+    case CommandIDs::MidiSeqCaptureMidiOut :
+      if (isCaptureMode(CaptureModeMidiOut))
+	setCaptureMode(CaptureModeOff);
+      else
+	setCaptureMode(CaptureModeMidiOut);
+      break;
+      
+    case CommandIDs::MidiSeqCaptureScore :
+      if (isCaptureMode(CaptureModeScore))
+	setCaptureMode(CaptureModeOff);
+      else
+	setCaptureMode(CaptureModeScore);
+      break;
+      
+    case CommandIDs::MidiSeqClear :
+      clearSequence();
+      break;
+      
+    case CommandIDs::MidiSeqResetRecordingStart :
+      resetRecordingStart();
+      break;
+      
+    case CommandIDs::MidiSeqCopyToTrack :
+      copySequenceToTrack(-1);
+      break;
+      
+    case CommandIDs::MidiSeqReplaceTrack :
+      copySequenceToTrack(arg);
+      break;
+      
+    case CommandIDs::MidiSeqPlay :
+      playSequence();
+      break;
+      
+    case CommandIDs::MidiSeqPlotter :
+      plotSequence();
+      break;
+      
+    case CommandIDs::MidiSeqPrintInfo :
+      printSequence();
+      break;
+      
+    case CommandIDs::MidiSeqRenameTrack :
+      renameTrack( arg);
+      break;
+      
+    case CommandIDs::MidiSeqDeleteTrack :
+      deleteTrack( arg);
+      break;
+      
+    case CommandIDs::MidiSeqRestoreTrack :
+      restoreTrack( arg);
+      break;
+
+    case CommandIDs::MidiSeqMixTrack :
+      mixTrack( arg);
+      break;
+      
+    case CommandIDs::MidiSeqSave :
+      saveSequence();
+      break;                 
+      
+    case CommandIDs::MidiSeqSaveAs :
+      saveSequence(true);
+      break;                 
+      
+    case CommandIDs::MidiSeqExport :
+      exportSequence();
+      break;                 
+      
+    case CommandIDs::MidiSeqImport :
+      importTracks();
+      break;                 
+
+    default:
+      break;
+    }
+}
+
+
+const PopupMenu MidiInPort::getMidiInMenu()
+{
+  StringArray devs= MidiInput::getDevices();
+  PopupMenu midiinmenu;
+  
+  if (devs.size() == 0)
+    midiinmenu.addItem(CommandIDs::MidiInOpen,
+		       T("(no devices)"),
+		       false);
+  else
+    for (int i=0; i<devs.size(); i++)
+      // cant choose port if anything active
+      midiinmenu.addItem(CommandIDs::MidiInOpen + i,
+			 devs[i],
+			 (! isActive(i)),
+			 isOpen(i) );
+  midiinmenu.addSeparator();
+  // sensitive if port is open, no device activity or is same activity
+  midiinmenu.addItem(CommandIDs::MidiInTest,
+		     T("Test Input"),
+		     ( isOpen() &&  (! isActive() || isActive(TESTING))),
+		     isActive(TESTING));
+  
+  // sensitive if port is open, no device activity or is same activity
+  midiinmenu.addItem(CommandIDs::MidiInRecord,
+		     T("Record Input"), 
+		     ( isOpen() && (! isActive() || isActive(RECORDING))),
+		     isActive(RECORDING));
+  midiinmenu.addSeparator();
+  midiinmenu.addItem(CommandIDs::MidiInConfigure, T("Configure..."));
+  return midiinmenu;
+}
+
+void MidiInPort::performMidiInCommand(CommandID id)
+{
+  // lower eight bits of id encode command information
+  CommandID cmd = CommandIDs::getCommand(id);
+  int arg = CommandIDs::getCommandData(id);  
+  
+  switch (cmd)
+    {
+    case CommandIDs::MidiInOpen :
+      open(arg);
+      break;
+      
+    case CommandIDs::MidiInTest :
+      if (isActive(MidiInPort::TESTING))
+        stopTestInput();
+      else 
+        startTestInput();
+      break;
+      
+    case CommandIDs::MidiInRecord :
+      if (isActive(RECORDING))
+        stopRecordInput();
+      else 
+        startRecordInput();
+      break;
+      
+    case CommandIDs::MidiInConfigure:
+      showMidiInDialog();
+      break;
+      
+    case CommandIDs::MidiInHook :
+      if ( isActive(SCHEMEHOOK) )
+        stopSchemeInput();
+      break;
+
+    default:
+      break;
+    }
+}
+
+///
 /// Sequence capturing
 ///
 
@@ -525,7 +877,6 @@ void MidiOutPort::importTracks()
       count++;
     }
 }
-
 
 //
 // output queue 
@@ -1884,10 +2235,6 @@ class MidiFileExportComponent  : public Component,
                                  public ButtonListener
 {
 public:
-  static const int FormatSalData=1;
-  static const int FormatSalSend=2;
-  static const int FormatLispData=3;
-  static const int FormatLispSend=4;
   
   MidiFileExportComponent ();
   ~MidiFileExportComponent();
@@ -2134,11 +2481,11 @@ MidiFileExportComponent::MidiFileExportComponent ()
   dataformatmenu->setJustificationType (Justification::centredLeft);
   dataformatmenu->setTextWhenNothingSelected (String::empty);
   dataformatmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
-  dataformatmenu->addItem (T("SAL Data"), FormatSalData);
-  dataformatmenu->addItem (T("Lisp Data"), FormatLispData);
-  dataformatmenu->addItem (T("SAL Sends"), FormatSalSend);
-  dataformatmenu->addItem (T("Lisp Sends"), FormatLispSend);
-  dataformatmenu->setSelectedId(FormatSalData);
+  dataformatmenu->addItem (T("SAL Data"), ExportIDs::SalData);
+  dataformatmenu->addItem (T("Lisp Data"), ExportIDs::LispData);
+  dataformatmenu->addItem (T("SAL Sends"), ExportIDs::SalSend);
+  dataformatmenu->addItem (T("Lisp Sends"), ExportIDs::LispSend);
+  dataformatmenu->setSelectedId(ExportIDs::SalData);
   dataformatmenu->addListener (this);
   setSize (320, 380);
 }
@@ -2253,7 +2600,7 @@ void MidiOutPort::exportSequence()
   bool sending=false;
   switch (format) 
     {
-    case MidiFileExportComponent::FormatSalData :
+    case ExportIDs::SalData :
       prefix=T("define variable export-%s = \n  {\n");
       indent=T("   "); 
       spacer=T(" ");
@@ -2261,7 +2608,7 @@ void MidiOutPort::exportSequence()
       closer=T("}\n");
       ending=T("  }\n");
       break;
-    case MidiFileExportComponent::FormatLispData :
+    case ExportIDs::LispData :
       prefix=T("(define midi-%s\n  '(\n");
       indent=T("    "); 
       spacer=T(" ");
@@ -2269,7 +2616,7 @@ void MidiOutPort::exportSequence()
       closer=T(")\n");
       ending=T("  ))\n");
       break;
-    case MidiFileExportComponent::FormatLispSend :
+    case ExportIDs::LispSend :
       prefix=T("(begin\n");
       indent=T("  ");
       opener=T("(send ");
@@ -2278,7 +2625,7 @@ void MidiOutPort::exportSequence()
       ending=T("  )\n");
       sending=true;
       break;
-    case MidiFileExportComponent::FormatSalSend :
+    case ExportIDs::SalSend :
       prefix=T("begin\n"); 
       indent=T("  "); 
       spacer=T(", ");
@@ -2291,7 +2638,7 @@ void MidiOutPort::exportSequence()
   StringArray outstrs;
   if (!sending)
     {
-      bool sal=(format==MidiFileExportComponent::FormatSalData);
+      bool sal=(format==ExportIDs::SalData);
       outstrs.add(((sal) ? T("define variable export-notes = \n  {\n")
 		   : T ("(define export-notes\n  '(\n")));
       outstrs.add(((sal) ? T("define variable export-progs = \n  {\n")
@@ -2413,7 +2760,11 @@ void MidiOutPort::exportSequence()
 	outstrs.set(index,outstrs[index]+line);
     }
 
-  if (!sending)
+  if (sending)
+    {
+      outstr = prefix + outstr + ending;
+    }
+  else
     {
       for (int i=0; i< 6; i++)
 	if (count[i]>0)
@@ -2425,17 +2776,11 @@ void MidiOutPort::exportSequence()
   else if (dialog->clipboardbutton->getToggleState())
     SystemClipboard::copyTextToClipboard(outstr);
   else if (dialog->neweditorbutton->getToggleState() )
-    {
-      int synt;
-      if ((format==MidiFileExportComponent::FormatSalData) ||
-	  (format==MidiFileExportComponent::FormatSalSend))
-	synt=syntaxSal;
-      else
-	synt=syntaxLisp;
-      new EditorWindow(synt, TextBuffer::needsave, 
-		       String::empty, T("Untitled"), outstr);
-    }
-
+      new EditorWindow(ExportIDs::getTextID(format),
+		       EditFlags::NeedSave, 
+		       String::empty, 
+		       T("Untitled"), 
+		       outstr);
   delete dialog;
 }
 

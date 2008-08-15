@@ -13,20 +13,12 @@
 #define __PLOTTER__
 #include "juce.h"
 #include "Layer.h"
+#include "Enumerations.h"
 
 class PlotView;         // defined in Plotter.cpp
 class BackView;
 class PlotViewport;
 class FocusView;
-
-enum PlotType {
-  XYPlot = 1,
-  XYZPlot,
-  MidiPlot,
-  VKeyPlot,
-  FomusPlot,
-  SpearPlot,
-  CLMPlot};
 
 ///
 /// Axis View
@@ -126,38 +118,6 @@ class Plotter  : public Component,
   enum BGStyle {bgSolid = 1, bgGrid, bgTiled };
   enum Orientation {horizontal = 1, vertical };
 
-  // ENUMS define in grace.lisp
-
-  enum PlotterCommand {
-    cmdPlotterNew = 98176,
-    cmdPlotterOpen = 98432,
-    cmdPlotterSave = 98688,
-    cmdPlotterSaveAs = 98944,
-    cmdPlotterImport = 99200,
-    cmdPlotterExport = 99456,
-    cmdEditUndo = 99712,
-    cmdEditRedo = 99968,
-    cmdEditCut = 100224,
-    cmdEditCopy = 100480,
-    cmdEditPaste = 100736,
-    cmdEditSelectAll = 100992,
-    cmdEditClear = 101248,
-    cmdEditFind = 101504,
-    cmdLayerAdd = 101760,
-    cmdLayerDelete = 102016,
-    cmdLayerSelect = 102272,
-    cmdViewStyle = 102528,
-    cmdViewVertical = 102784,
-    cmdViewBgStyle = 103040,
-    cmdViewBgColor = 103296,
-    cmdViewBgPlotting = 103552,
-    cmdViewBgMousing = 103808,
-    cmdViewMouseGuide = 104064,
-    cmdComposeDistributions = 104320,
-    cmdComposeGenerate = 104576,
-    cmdAnalyzeHistogram = 104832,
-    cmdAnalyzeDeviation = 105088};
-
   Axis* shared;
   AxisView * haxview;
   AxisView * vaxview;
@@ -174,15 +134,15 @@ class Plotter  : public Component,
   double zoom;
   double ppp;  // point size (pixels per point)
   int flags;
-  PlotType plottype;
+  PlotID plottype;
 
-  Plotter (PlotType pt) ;
+  Plotter (PlotID pt) ;
   ~Plotter () ;
   double getZoom() {return zoom;}
   void setZoom(double z) {zoom=z;}
   double getPointSize(){return ppp;}
   void setPointSize(double siz){ppp=siz;}
-  PlotType getPlotType() {return plottype;}
+  PlotID getPlotType() {return plottype;}
 
   Axis* getSharedAxis() {return shared;}
 
@@ -207,7 +167,7 @@ class Plotter  : public Component,
   void setFocusLayer(Layer* l);
   void setFocusVerticalField(int i);
   void addLayer(Layer* l);
-  Layer* newLayer(PlotType pt);
+  Layer* newLayer(PlotID pt);
   void removeLayer(Layer* l);
 
   void resized () ;
@@ -242,7 +202,7 @@ class PlotterWindow : public DocumentWindow,
 public:
   Plotter * plotter;
   MenuBarComponent * menubar;
-  PlotterWindow (PlotType pt) ;
+  PlotterWindow (PlotID pt) ;
   ~PlotterWindow () ;
   const StringArray getMenuBarNames ();
   const PopupMenu getMenuForIndex (int idx, 

@@ -12,6 +12,7 @@
 //#include <iostream>
 #include <limits>
 #include "Resources.h"
+#include "Grace.h"
 
 using namespace std;
 
@@ -949,7 +950,7 @@ void FocusView::labelTextChanged(Label * label) {
 
 PointClipboard pointClipboard;
 
-Plotter::Plotter (PlotType pt) 
+Plotter::Plotter (PlotID pt) 
   : ppp (8.0),
     zoom (1.0),
     flags (0)
@@ -972,11 +973,11 @@ Plotter::Plotter (PlotType pt)
 
   Axis::AxisType xtyp, ytyp;
   switch (pt) {
-  case MidiPlot :
+  case PlotIDs::MidiPlot :
     xtyp=Axis::seconds;
     ytyp=Axis::keynum;
     break;
-  case XYPlot :
+  case PlotIDs::XYPlot :
   default :
     xtyp=ytyp=Axis::normalized;
   }
@@ -1156,7 +1157,7 @@ void Plotter::setFocusLayer(Layer * l) {
   focusview->setFocusLayer(l);
 }
 
-Layer* Plotter::newLayer(PlotType pt) {
+Layer* Plotter::newLayer(PlotID pt) {
   String nam = T("Layer") + String(layers.size()+1);
   // lets use GnuPlot's default colors:
   static Colour cols[8] = { Colours::red, Colours::green, Colours::blue, 
@@ -1165,7 +1166,7 @@ Layer* Plotter::newLayer(PlotType pt) {
   Colour col = cols[layers.size() % 8];
   Layer * layer;
 
-  if (pt==MidiPlot)
+  if (pt==PlotIDs::MidiPlot)
     layer = new MidiLayer(nam,col);
   else 
     layer = new XYLayer(nam,col);
@@ -1337,247 +1338,239 @@ public:
 //class AddPointsAction : public UndoableAction {}
 //class RemovePointsAction : public UndoableAction {}
 
-
-
 /***********************************************************************
  * PlotterWindow: top level window for plotting
  **********************************************************************/
 
-const StringArray PlotterWindow::getMenuBarNames () {
-  const tchar* 
-    const menuNames[] = { T("Plotter"), T("Edit"), T("Layer"), T("View"), 
-			  // T("Compose"),T("Analyze"),
-			  T("Windows"), T("Help"), 0 };
+const StringArray PlotterWindow::getMenuBarNames ()
+{
+  const tchar* const menuNames[] =
+    { T("Plotter"), T("Edit"), T("Layer"), T("View"), T("Windows"),
+      T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
 
-const PopupMenu PlotterWindow::getMenuForIndex (int idx, 
-						const String &name) {
+const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name) 
+{
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3;
   int val;
-  PlotType type=plotter->getPlotType();
-  switch (idx) {
-  case 0 :
-    // File Menu
-    sub1.addItem( Plotter::cmdPlotterNew + XYPlot, T("XY"));
-    sub1.addItem( Plotter::cmdPlotterNew + MidiPlot, T("Midi"));
-    sub1.addItem( Plotter::cmdPlotterNew + VKeyPlot, T("Fomus"), false);
-    sub1.addItem( Plotter::cmdPlotterNew + FomusPlot, T("Vkey"), false);
-    sub1.addItem( Plotter::cmdPlotterNew + SpearPlot, T("Spear"), false);
-    sub1.addItem( Plotter::cmdPlotterNew + CLMPlot, T("CLM"), false);
-    menu.addSubMenu(T("New"), sub1, true);    
-    menu.addItem( Plotter::cmdPlotterOpen, T("Open..."), false);
-    menu.addItem( Plotter::cmdPlotterSave, T("Save"), false);
-    menu.addItem( Plotter::cmdPlotterImport, T("Import..."), false);
-    menu.addItem( Plotter::cmdPlotterExport, T("Export..."), true);
-    break;
-  case 1 :
-    // Edit Menu
-    menu.addItem( Plotter::cmdEditUndo, T("Undo"),
-		  plotter->actions.canUndo());
-    menu.addItem( Plotter::cmdEditUndo, T("Redo"),
-		  plotter->actions.canRedo());
-    menu.addSeparator();
-    menu.addItem( Plotter::cmdEditCut, T("Cut"));
-    menu.addItem( Plotter::cmdEditCopy, T("Copy"));
-    menu.addItem( Plotter::cmdEditPaste, T("Paste"),
-		  !pointClipboard.isEmpty());
-    menu.addSeparator();
-    menu.addItem( Plotter::cmdEditSelectAll, T("Select All"));
-    menu.addItem( Plotter::cmdEditClear, T("Clear Selection"));
-    menu.addSeparator();
-    menu.addItem( Plotter::cmdEditFind, T("Find..."), false);
-    break;
-  case 2 :
-    // Layer Menu
-    if (type == MidiPlot) {
-      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Midi"));
-      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Program Change"),
-		    false);
-      sub1.addItem( Plotter::cmdLayerAdd + MidiPlot, T("Controller"), 
-		    false);
-      menu.addSubMenu(T("Add"), sub1, true);          
-    }
-    else menu.addItem( Plotter::cmdLayerAdd + type, T("New"));
-    menu.addItem(Plotter::cmdLayerDelete, T("Delete"),
-		 (plotter->numLayers() > 1));
-    menu.addSeparator(); 
-    // append existing layers to end of menu in plotting color :)
-    for (int i=0; i<plotter->numLayers(); i++) {
-      Layer * layer=plotter->getLayer(i);
-      menu.addColouredItem( Plotter::cmdLayerSelect + layer->getLayerID(),
-			    layer->getLayerName(),
-			    layer->getLayerColor(),
-			    true,
-			    plotter->isFocusLayer(layer));
-	}
-    break;
-  case 3 :
+  PlotID type=plotter->getPlotType();
+  switch (idx) 
     {
-      Layer * layer=plotter->getFocusLayer();
-      // add these with focus colored items to make it clear that the
-      // styling change only affects the focus plot
-      menu.addColouredItem( Plotter::cmdViewStyle + Layer::line, T("Line"),
-			    layer->getLayerColor(),
-			    true, (val==Layer::line));
-      menu.addColouredItem( Plotter::cmdViewStyle + Layer::point, T("Point"),
-			    layer->getLayerColor(),
-			    true, (val==Layer::point));
-      menu.addColouredItem( Plotter::cmdViewStyle + Layer::lineandpoint,
-			    T("Line and Point"),
-			    layer->getLayerColor(),
-			    true, (val==Layer::lineandpoint));
-      menu.addColouredItem( Plotter::cmdViewStyle + Layer::hbox, 
-			    T("Horizontal Box"),
-			    layer->getLayerColor(),
-			    (type > XYPlot), (val==Layer::hbox));
-      menu.addColouredItem( Plotter::cmdViewStyle + Layer::vline, 
-			    T("Vertical Line"),
-			    layer->getLayerColor(),
-			    true, (val==Layer::vline));
-      menu.addColouredItem( Plotter::cmdViewStyle + Layer::vlineandpoint, 
-			    T("Vertical Line and Point"),
-			    layer->getLayerColor(),
-			    true, (val==Layer::vlineandpoint));
-      menu.addColouredItem( Plotter::cmdViewStyle + Layer::vbar, 
-			    T("Vertical Bar"),
-			    layer->getLayerColor(),
-			    false, (val==Layer::vbar));
+    case 0 :
+      // File Menu
+      sub1.addItem(CommandIDs::NewPlotter + PlotIDs::XYPlot,
+		   T("XY"));
+      sub1.addItem(CommandIDs::NewPlotter + PlotIDs::MidiPlot,
+		   T("Midi"));
+      menu.addSubMenu(T("New"), sub1, true);    
+      menu.addItem(CommandIDs::FileExport, T("Export..."),
+		   true);
+      break;
+    case 1 :
+      // Edit Menu
+      menu.addItem(CommandIDs::EditUndo, T("Undo"),
+		   plotter->actions.canUndo());
+      menu.addItem(CommandIDs::EditUndo, T("Redo"),
+		   plotter->actions.canRedo());
+      menu.addSeparator();
+      menu.addItem(CommandIDs::EditCut,
+		   T("Cut"));
+      menu.addItem(CommandIDs::EditCopy,
+		   T("Copy"));
+      menu.addItem(CommandIDs::EditPaste,
+		   T("Paste"),
+		   !pointClipboard.isEmpty());
+      menu.addSeparator();
+      menu.addItem(CommandIDs::EditSelectAll, 
+		   T("Select All"));
+      menu.addItem(CommandIDs::EditClear,
+		   T("Clear Selection"));
+      break;
+    case 2 :
+      // Layer Menu
+      if (type == PlotIDs::MidiPlot)
+	{
+	  sub1.addItem(CommandIDs::PlotterLayerAdd + PlotIDs::MidiPlot, 
+		       T("Midi"));
+	  menu.addSubMenu(T("Add"), sub1, true);          
+	}
+      else menu.addItem( CommandIDs::PlotterLayerAdd + type, T("New"));
+      menu.addItem(CommandIDs::PlotterLayerDelete, T("Delete"),
+		   (plotter->numLayers() > 1));
       menu.addSeparator(); 
-      // 0'th field is hardwired to x axis.
-      for (int i=1; i<layer->getLayerArity(); i++)
-	sub2.addItem( Plotter::cmdViewVertical + i,
-		      layer->getFieldName(i),
-		      true,
-		      (layer->getYField()==i));
-      menu.addSubMenu(T("Vertical Display"), sub2, true);
-    }
-    menu.addSeparator();
-    val=plotter->getBackViewStyle();
-    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgGrid, T("Grid"),
-		  true, (val==Plotter::bgGrid));
-    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgTiled, T("Tiled"),
-		  true, (val==Plotter::bgTiled));
-    sub1.addItem( Plotter::cmdViewBgStyle + Plotter::bgSolid, T("Solid"),
-		  true, (val==Plotter::bgSolid));
-    sub1.addSeparator();
-    sub1.addItem( Plotter::cmdViewBgColor, T("Colors..."), false);
-    sub1.addSeparator();
-    sub1.addItem( Plotter::cmdViewBgPlotting, T("Show All Layers"), true, 
-		  plotter->isBackViewPlotting() );
-    sub1.addItem( Plotter::cmdViewBgMousing, T("Back Layer Mousing"), 
-		  false, false);
-    menu.addSubMenu(T("Background"), sub1, true);    
-    menu.addSeparator();
-    menu.addItem( Plotter::cmdViewMouseGuide, T("Mouse Guide"), false);
-    break;
-    /*  case 4 :
-    menu.addItem( Plotter::cmdComposeDistributions, T("Distributions..."),
-		  false);
-    menu.addItem( Plotter::cmdComposeGenerate, T("Generate..."), 
-		  false);
+      // append existing layers to end of menu in plotting color :)
+      for (int i=0; i<plotter->numLayers(); i++)
+	{
+	  Layer * layer=plotter->getLayer(i);
+	  menu.addColouredItem(CommandIDs::PlotterLayerSelect + layer->getLayerID(),
+			       layer->getLayerName(),
+			       layer->getLayerColor(),
+			       true,
+			       plotter->isFocusLayer(layer));
+	}
+      break;
+    case 3 :
+      {
+	Layer * layer=plotter->getFocusLayer();
+	// add these with focus colored items to make it clear that the
+	// styling change only affects the focus plot
+	menu.addColouredItem(CommandIDs::PlotterStyle + Layer::line, 
+			     T("Line"),
+			     layer->getLayerColor(),
+			     true,
+			     (val==Layer::line));
+	menu.addColouredItem(CommandIDs::PlotterStyle + Layer::point,
+			     T("Point"),
+			     layer->getLayerColor(),
+			     true,
+			     (val==Layer::point));
+	menu.addColouredItem(CommandIDs::PlotterStyle + Layer::lineandpoint,
+			     T("Line and Point"),
+			     layer->getLayerColor(),
+			     true,
+			     (val==Layer::lineandpoint));
+	menu.addColouredItem(CommandIDs::PlotterStyle + Layer::hbox, 
+			     T("Horizontal Box"),
+			     layer->getLayerColor(),
+			     (type > PlotIDs::XYPlot), 
+			     (val==Layer::hbox));
+	menu.addColouredItem(CommandIDs::PlotterStyle + Layer::vline, 
+			     T("Vertical Line"),
+			     layer->getLayerColor(),
+			     true, (val==Layer::vline));
+	menu.addColouredItem(CommandIDs::PlotterStyle + Layer::vlineandpoint, 
+			     T("Vertical Line and Point"),
+			     layer->getLayerColor(),
+			     true, 
+			     (val==Layer::vlineandpoint));
+	menu.addColouredItem(CommandIDs::PlotterStyle + Layer::vbar, 
+			     T("Vertical Bar"),
+			     layer->getLayerColor(),
+			     false,
+			     (val==Layer::vbar));
+	menu.addSeparator(); 
+	// 0'th field is hardwired to x axis.
+	for (int i=1; i<layer->getLayerArity(); i++)
+	  sub2.addItem(CommandIDs::PlotterVertical + i,
+		       layer->getFieldName(i),
+		       true,
+		       (layer->getYField()==i));
+	menu.addSubMenu(T("Vertical Display"), sub2, true);
+      }
+      menu.addSeparator();
+      val=plotter->getBackViewStyle();
+      sub1.addItem(CommandIDs::PlotterBgStyle + Plotter::bgGrid,
+		    T("Grid"),
+		    true, 
+		    (val==Plotter::bgGrid));
+      sub1.addItem(CommandIDs::PlotterBgStyle + Plotter::bgTiled,
+		    T("Tiled"),
+		    true, 
+		    (val==Plotter::bgTiled));
+      sub1.addItem(CommandIDs::PlotterBgStyle + Plotter::bgSolid,
+		    T("Solid"),
+		    true, 
+		    (val==Plotter::bgSolid));
+      sub1.addSeparator();
+      sub1.addItem(CommandIDs::PlotterBgColor,
+		    T("Colors..."), 
+		    false);
+      sub1.addSeparator();
+      sub1.addItem(CommandIDs::PlotterBgPlotting,
+		    T("Show All Layers"), 
+		    true, 
+		    plotter->isBackViewPlotting() );
+      menu.addSubMenu(T("Background"), sub1, true);    
+      menu.addSeparator();
+      break;
+      
+    case 4 :
+    menu=app->getWindowMenu();
     break;
   case 5 :
-    menu.addItem( Plotter::cmdAnalyzeHistogram, T("Histogram..."), false);
-    menu.addItem( Plotter::cmdAnalyzeDeviation, T("Deviation..."), false);
-    break;
-    */
-  case 4 :
-    addCommonWindowItems(&menu, winPlotter);
-    break;
-  case 5 :
-    addCommonHelpItems(&menu, winPlotter);
+    menu=app->getHelpMenu();
     break;
   }
   return menu;
 }
 
-void PlotterWindow::menuItemSelected (int id, 
-				      int idx) {
-  // commandIDs reserve lower 8 bits for command-specific information
-  // lower seven bits may encode command information
-  int arg = id & 0x0000007F;
-  int cmd = id & 0xFFFFFF80;
-  bool tog;
-  switch (cmd) {
-  case Plotter::cmdPlotterNew :
-    new PlotterWindow( (PlotType)arg);
-    break;
-  case Plotter::cmdPlotterOpen :
-  case Plotter::cmdPlotterSave :
-  case Plotter::cmdPlotterSaveAs :
-  case Plotter::cmdPlotterImport :
-    break;
-  case Plotter::cmdPlotterExport :
-    showExportPointsDialog();
-    break;
-  case Plotter::cmdEditUndo :
-    plotter->actions.undo();
-    break;
-  case Plotter::cmdEditRedo :
-    plotter->actions.redo();
-    break;
-  case Plotter::cmdEditCut :
-  case Plotter::cmdEditCopy :
-  case Plotter::cmdEditPaste :
-    break;
-  case Plotter::cmdEditSelectAll :
-    printf("menu selectall\n");
-    plotter->selectAll();
-    plotter->redrawPlotView();
-    break;
-  case Plotter::cmdEditClear :
-    plotter->deselectAll();
-    plotter->redrawPlotView();
-    break;
-  case Plotter::cmdEditFind :
-    break;
-  case Plotter::cmdLayerAdd :
-    plotter->newLayer( (PlotType)arg);
-    // redraw back view to include old
-    plotter->redrawBackView();
-    break;
-  case Plotter::cmdLayerDelete :
-    plotter->actions.perform
-      (new DeleteLayerAction(plotter,
-			     plotter->getFocusLayer()),
-       T("Delete Layer"));
-    break;
-  case Plotter::cmdLayerSelect :
-    plotter->setFocusLayer(plotter->findLayer(arg));
-    plotter->redrawBackView();
-    plotter->redrawPlotView();
-    break;
-  case Plotter::cmdViewStyle :
-    plotter->getFocusLayer()->setLayerStyle(arg);
-    plotter->redrawPlotView();
-    break;
-  case Plotter::cmdViewVertical :
-    plotter->setFocusVerticalField(arg);
-    break;
-  case Plotter::cmdViewBgStyle :
-    plotter->setBackViewStyle( (Plotter::BGStyle)arg);
-    plotter->redrawBackView();
-    break;
-  case Plotter::cmdViewBgColor :
-    break;
-  case Plotter::cmdViewBgPlotting :
-    plotter->setBackViewPlotting( ! plotter->isBackViewPlotting()); 
-    plotter->redrawBackView();
-    break;
-  case Plotter::cmdViewBgMousing :
-  case Plotter::cmdViewMouseGuide :
-  default :
-    if (idx==4)
-      commonWindowItemSelected(cmd,arg);
-    else if (idx==5)
-      commonHelpItemSelected(cmd,arg);
-    break;
-  }
+void PlotterWindow::menuItemSelected (int id, int idx)
+{
+  GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
+  CommandID cmd = CommandIDs::getCommand(id);
+  int data = CommandIDs::getCommandData(id);  
+  int type = CommandIDs::getCommandType(id);  
+
+  if (type==CommandIDs::Window)
+    app->performWindowCommand(id);
+  else if (type==CommandIDs::Help)
+    app->performHelpCommand(id);
+  else
+    switch (cmd)
+      {
+      case CommandIDs::NewPlotter :
+	new PlotterWindow((PlotID)data);
+	break;
+      case CommandIDs::FileExport :
+	showExportPointsDialog();
+	break;
+      case CommandIDs::EditUndo :
+	plotter->actions.undo();
+	break;
+      case CommandIDs::EditRedo :
+	plotter->actions.redo();
+	break;
+      case CommandIDs::EditSelectAll :
+	plotter->selectAll();
+	plotter->redrawPlotView();
+	break;
+      case CommandIDs::EditClear :
+	plotter->deselectAll();
+	plotter->redrawPlotView();
+	break;
+
+      case CommandIDs::PlotterLayerAdd :
+	plotter->newLayer((PlotID)data);
+	// redraw back view to include old
+	plotter->redrawBackView();
+	break;
+      case CommandIDs::PlotterLayerDelete :
+	plotter->actions.perform
+	  (new DeleteLayerAction(plotter,
+				 plotter->getFocusLayer()),
+	   T("Delete Layer"));
+	break;
+      case CommandIDs::PlotterLayerSelect :
+	plotter->setFocusLayer(plotter->findLayer(data));
+	plotter->redrawBackView();
+	plotter->redrawPlotView();
+	break;
+      case CommandIDs::CommandIDs::PlotterStyle :
+	plotter->getFocusLayer()->setLayerStyle(data);
+	plotter->redrawPlotView();
+	break;
+      case CommandIDs::PlotterVertical :
+	plotter->setFocusVerticalField(data);
+	break;
+      case CommandIDs::PlotterBgStyle :
+	plotter->setBackViewStyle( (Plotter::BGStyle)data);
+	plotter->redrawBackView();
+	break;
+      case CommandIDs::PlotterBgColor :
+	break;
+      case CommandIDs::PlotterBgPlotting :
+	plotter->setBackViewPlotting( ! plotter->isBackViewPlotting()); 
+	plotter->redrawBackView();
+	break;
+      default :
+	break;
+      }
 }
 
-PlotterWindow::PlotterWindow (PlotType pt)
+PlotterWindow::PlotterWindow (PlotID pt)
   : DocumentWindow (String::empty , Colours::silver, 
 		    DocumentWindow::allButtons, true ) {
   String title;
@@ -1590,12 +1583,12 @@ PlotterWindow::PlotterWindow (PlotType pt)
   setUsingNativeTitleBar(p->isNativeTitleBars());
 
   switch (pt) {
-  case MidiPlot :
+  case PlotIDs::MidiPlot :
     title = T("MIDI Plotter");
     break;
-  case XYPlot :
+  case PlotIDs::XYPlot :
   default:
-    title = T("Plotter");    
+    title = T("XY Plotter");    
   }
   setName(title);
   setContentComponent(plotter);
@@ -1678,10 +1671,11 @@ ExportPointsDialog::ExportPointsDialog (Plotter* p)
   formatmenu->setItemEnabled(5, false);
 
   // default export for XY is envelope else objects
-  if (plotter->getPlotType()==XYPlot) {
-    formatmenu->setSelectedId(1);
-    formatmenu->setItemEnabled(3, false); 
-  }
+  if (plotter->getPlotType()==PlotIDs::XYPlot)
+    {
+      formatmenu->setSelectedId(1);
+      formatmenu->setItemEnabled(3, false); 
+    }
   else 
     formatmenu->setSelectedId(3);
 

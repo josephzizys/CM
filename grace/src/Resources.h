@@ -15,36 +15,6 @@
 
 enum GraceWindowType {winConsole=1, winEditor, winPlotter};
 
-// ENUMS defined in grace.lisp
-/*
-
-;; Items shared across different menubars. [Resource.h]
-(enums 4 "SharedCommand" "WindowSelect" "WindowNative" 
-       "WindowConsole" 
-       "HelpWindow"
-       "HelpCMDictionary"
-       "HelpExamples"
-       "HelpSalTutorial"
-       "HelpURL"
-       "HelpAboutGrace")
-*/
-
-enum SharedCommand {
-  cmdWindowSelect = 130816,
-  cmdWindowNative = 131072,
-  cmdWindowConsole = 131328,
-  cmdHelpWindow = 131584,
-  cmdHelpCMDictionary = 131840,
-  cmdHelpHomePages = 132096,
-  cmdHelpExamples = 132352,
-  cmdHelpSalTutorial = 132608,
-  cmdHelpURL = 132864,
-  cmdHelpAboutGrace = 133120};
-
-void addCommonWindowItems(PopupMenu* menu, GraceWindowType w);
-void addCommonHelpItems(PopupMenu* menu, GraceWindowType w);
-void commonWindowItemSelected(int cmd, int arg);
-void commonHelpItemSelected(int cmd, int arg);
 
 int getHostOS();
 bool isHostWindows();

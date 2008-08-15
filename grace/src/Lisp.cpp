@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
+#include "Enumerations.h"
 
 #if LINUX || MACOSX
 #include <unistd.h>
@@ -1053,3 +1054,118 @@ void LispConnection::handleMessage (const Message& message) {
     break;
   }
 }
+
+//
+// Lisp Menu Management
+//
+
+const PopupMenu LispConnection::getLispMenu()
+{
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  GracePreferences* pref=app->getPreferences();
+  bool running=isLispRunning();
+  PopupMenu lispmenu, asdfmenu, filemenu;
+
+  if (running)
+    lispmenu.addItem(CommandIDs::CommonLispConnect,
+		     T("Quit Lisp")); 
+  else 
+    lispmenu.addItem(CommandIDs::CommonLispConnect,
+		     T("Start Lisp"), 
+		     isLispStartable()); 
+  lispmenu.addSeparator();
+  // Load system
+  for (int i=0; i<pref->numASDFs(); i++) 
+    {
+      ASDF* a=pref->getASDF(i);
+      asdfmenu.addItem(CommandIDs::CommonLispLoadRecentSystem + i,
+		       a->getASDFName(),
+		       true,
+		       isLoaded(a));
+    }
+  asdfmenu.addSeparator();
+  asdfmenu.addItem(CommandIDs::CommonLispLoadSystem,
+		   T("Load..."), 
+		   true);
+  if (pref->numASDFs() > 2)
+    asdfmenu.addItem(CommandIDs::CommonLispClearRecentSystems, 
+		     T("Clear"),
+		     running);
+  lispmenu.addSubMenu(T("ASDF Systems"), asdfmenu, running);
+  lispmenu.addItem(CommandIDs::CommonLispLoadFile,
+		   T("Load File..."),
+		   running);
+  if (pref->areRecentlyLoadedFiles())
+    {
+      pref->addRecentlyLoadedItems(&filemenu,
+				   CommandIDs::CommonLispLoadRecentFile);
+      filemenu.addSeparator();
+      filemenu.addItem(CommandIDs::CommonLispClearRecentLoaded,
+		       T("Clear"),
+		       running);
+      lispmenu.addSubMenu(T("Load Recent"), filemenu, running);
+    }
+  lispmenu.addItem(CommandIDs::CommonLispCompileFile,
+		   T("Compile File..."), 
+		   running);
+  lispmenu.addSeparator();
+  lispmenu.addItem(CommandIDs::CommonLispConfigure,
+		   T("Configure Lisp..."),
+		   true); 
+  return lispmenu;
+}
+
+void LispConnection::performLispCommand(CommandID id)
+{
+  // lower eight bits of id encode command information
+  CommandID cmd = CommandIDs::getCommand(id);
+  int arg = CommandIDs::getCommandData(id); 
+  GraceApp * app = (GraceApp*)JUCEApplication::getInstance();
+  GracePreferences* p=app->getPreferences();
+
+  switch (cmd)
+    {
+    case CommandIDs::CommonLispConnect :
+      if (isLispRunning())
+        stopLisp();
+      else 
+        startLisp();
+      break;
+    case CommandIDs::CommonLispConfigure :
+      showConfigureLispWindow();
+      break;
+    case CommandIDs::CommonLispLoadSystem :
+      chooseAndLoadASDF();
+      break;
+    case CommandIDs::CommonLispLoadRecentSystem :
+      loadASDF(p->getASDF(arg));
+      break;
+    case CommandIDs::CommonLispClearRecentSystems :
+      p->clearLispSystems();
+      break;
+    case CommandIDs::CommonLispLoadFile :
+      chooseAndLoadFile();
+      break;
+    case CommandIDs::CommonLispCompileFile :
+      chooseAndCompileFile();
+      break;
+    case CommandIDs::CommonLispLoadRecentFile :
+      loadFile(p->getRecentlyLoadedFile(arg));
+      break;
+    case CommandIDs::CommonLispClearRecentLoaded :
+      p->clearRecentlyLoadedFiles();
+      break;
+    default:
+      break;
+    }
+}
+
+void LispConnection::showConfigureLispWindow()
+{
+  DialogWindow::showModalDialog(T("Configure Lisp"),
+				new ConfigureLispView(this),
+				NULL,
+				Colour(0xffe5e5e5),
+				true);
+}
+

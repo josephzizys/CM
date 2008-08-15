@@ -20,7 +20,7 @@
 
 #define BUFMAX 0xFFFFFFF
 
-TextBuffer::TextBuffer (syntaxID id, int flg) 
+TextBuffer::TextBuffer (TextID id, int flg) 
   : TextEditor(String::empty) {
   GracePreferences* p=GracePreferences::getInstance();
   flags=flg;
@@ -32,25 +32,25 @@ TextBuffer::TextBuffer (syntaxID id, int flg)
   setPoint(0);
   initSyntax(id);
   setPopupMenuEnabled(false);
-  //  if (p->isEmacsMode())
-  //      setFlagOn(emacsmode);
-  //      setFlagOff(emacsmode);
+  //  if (p->isEditFlags::EmacsMode())
+  //      setFlagOn(EditFlags::EmacsMode);
+  //      setFlagOff(EditFlags::EmacsMode);
 }
 
-void TextBuffer::initSyntax (syntaxID id) {
+void TextBuffer::initSyntax (TextID id) {
   // initialize buffers' syntax table for the appropriate editing mode
-  syntaxId=id;
+  textid=id;
   switch (id) {
-  case syntaxSal :
+  case TextIDs::Sal :
     syntax=SalSyntax::getInstance();
     break;
-  case syntaxLisp :
+  case TextIDs::Lisp :
     syntax=LispSyntax::getInstance();
     break;
-  case syntaxText :
+  case TextIDs::Text :
   default : 
-    syntaxId=syntaxText;
-    setFlagOn(hiliteoff);
+    textid=TextIDs::Text;
+    setFlagOn(EditFlags::HiliteOff);
     syntax= TextSyntax::getInstance();
     break;
   }
@@ -68,73 +68,69 @@ ApplicationCommandTarget* TextBuffer::getNextCommandTarget()
 void TextBuffer::getAllCommands (Array <CommandID>& commands)
 {
   const CommandID ids[] = { 
-    cmdFileNewSal,
-    cmdFileNewLisp,
-    cmdFileNewText,
-    cmdFileOpen,
-    cmdFileOpenRecent,
-    cmdFileClearRecent,
-    cmdFileSave,
-    cmdFileSaveAs,
-    cmdFileRevert,
-    cmdFileClose,
-    cmdEditUndo,
-    cmdEditRedo,
-    cmdEditCut,
-    cmdEditCopy,
-    cmdEditPaste,
-    cmdEditSelectAll,
-    cmdEditImport,
-    cmdViewFontList,
-    cmdViewFontSize,
-    cmdViewThemes,
-    cmdOptionsHiliting,
-    cmdOptionsParens,
-    cmdOptionsEmacsMode,
-
-    cmdLispEval,
-    cmdLispExpand,
-    cmdLispLoadFile,
-    cmdLispCompileFile,
-    cmdLispShowDirectory,
-    cmdLispSetDirectory,
-    cmdLispSetPackage,
-    cmdLispSymbolHelp,
-
-    cmdCharForward,
-    cmdCharBackward,
-    cmdWordForward,
-    cmdWordBackward,
-    cmdSexprForward,
-    cmdSexprBackward,
-    cmdLineForward,
-    cmdLineBackward,
-    cmdPageForward,
-    cmdPageBackward,
-    cmdGotoEOL,
-    cmdGotoBOL,
-    cmdGotoEOB,
-    cmdGotoBOB,
-    cmdGotoColumn,
-    cmdGotoLine,
-    cmdBackspace,
-    cmdDelete,
-    cmdKillWord,
-    cmdKillSexpr,
-    cmdKillWhite,
-    cmdKillLine,
-    cmdInsertChar,
-    cmdInsertLine,
-    cmdOpenLine,
-    cmdComplete,
-    cmdIndent,
-    cmdToggleReadWrite};
-  
-  commands.addArray (ids, sizeof (ids) / sizeof (ids [0]));
+    CommandIDs::NewEditor + TextIDs::Sal,
+    CommandIDs::NewEditor + TextIDs::Lisp,
+    CommandIDs::NewEditor + TextIDs::Text,
+    CommandIDs::FileOpen,
+    CommandIDs::FileOpenRecent,
+    CommandIDs::FileClearRecent,
+    CommandIDs::FileSave,
+    CommandIDs::FileSaveAs,
+    CommandIDs::FileRevert,
+    CommandIDs::FileClose,
+    CommandIDs::EditUndo,
+    CommandIDs::EditRedo,
+    CommandIDs::EditCut,
+    CommandIDs::EditCopy,
+    CommandIDs::EditPaste,
+    CommandIDs::EditSelectAll,
+    CommandIDs::ViewFontList,
+    CommandIDs::ViewFontSize,
+    CommandIDs::EditParens,    
+    CommandIDs::EditHilite,
+    CommandIDs::EditEmacsMode,
+    CommandIDs::EvalExecute,
+    CommandIDs::EvalExpand,
+    CommandIDs::EvalLoadFile,
+    CommandIDs::EvalCompileFile,
+    CommandIDs::EvalShowDirectory,
+    CommandIDs::EvalSetDirectory,
+    CommandIDs::EvalSetPackage,
+    CommandIDs::EvalSymbolHelp,
+    CommandIDs::EmacsCharForward,
+    CommandIDs::EmacsCharBackward,
+    CommandIDs::EmacsWordForward,
+    CommandIDs::EmacsWordBackward,
+    CommandIDs::EmacsSexprForward,
+    CommandIDs::EmacsSexprBackward,
+    CommandIDs::EmacsLineForward,
+    CommandIDs::EmacsLineBackward,
+    CommandIDs::EmacsPageForward,
+    CommandIDs::EmacsPageBackward,
+    CommandIDs::EmacsGotoEOL,
+    CommandIDs::EmacsGotoBOL,
+    CommandIDs::EmacsGotoEOB,
+    CommandIDs::EmacsGotoBOB,
+    CommandIDs::EmacsGotoColumn,
+    CommandIDs::EmacsGotoLine,
+    CommandIDs::EmacsBackspace,
+    CommandIDs::EmacsDelete,
+    CommandIDs::EmacsKillWord,
+    CommandIDs::EmacsKillSexpr,
+    CommandIDs::EmacsKillWhite,
+    CommandIDs::EmacsKillLine,
+    CommandIDs::EmacsInsertChar,
+    CommandIDs::EmacsInsertLine,
+    CommandIDs::EmacsOpenLine,
+    CommandIDs::EmacsComplete,
+    CommandIDs::EmacsIndent,
+    CommandIDs::EmacsToggleReadWrite};
+  commands.addArray(ids, sizeof (ids) / sizeof (ids [0]));
 }
 
-void TextBuffer::getCommandInfo (const CommandID commandID, 
-				 ApplicationCommandInfo& result) {
+void TextBuffer::getCommandInfo (const CommandID id, 
+				 ApplicationCommandInfo& result) 
+{
   const String fileCategory (T("File"));
   const String preferencesCategory (T("Preferences"));
   const String navigationCategory (T("Navigation"));
@@ -142,376 +138,397 @@ void TextBuffer::getCommandInfo (const CommandID commandID,
   const String optionsCategory (T("Options"));
   PopupMenu fontsMenu;
   GracePreferences* p=GracePreferences::getInstance();
+  CommandID cmd=CommandIDs::getCommand(id);
+  int type=CommandIDs::getCommandType(id);
+  int data=CommandIDs::getCommandData(id);
 
-  switch (commandID) {
-  case cmdFileNewSal:
-    result.setInfo (T("SAL"), String::empty, fileCategory, 0);
-    result.addDefaultKeypress (T('N'), ModifierKeys::commandModifier);
-    break;
-  case cmdFileNewLisp:
-    result.setInfo (T("Lisp"), String::empty, fileCategory, 0);
-    result.addDefaultKeypress (T('N'), 
-			       ModifierKeys::commandModifier | 
-			       ModifierKeys::shiftModifier);
-    break;
-  case cmdFileNewText:
-    result.setInfo (T("Text"), String::empty, fileCategory, 0);
-    break;
-  case cmdFileOpen:
-    result.setInfo (T("Open..."), String::empty, fileCategory, 0);
-    result.addDefaultKeypress (T('O'), ModifierKeys::commandModifier);
-    break;
-  case cmdFileOpenRecent:
-    result.setInfo (T("Open Recent File"), String::empty, fileCategory, 0);
-    break;
-  case cmdFileClearRecent:
-    result.setInfo (T("Clear Recent Files"), String::empty, fileCategory, 0);
-    break;
-  case cmdFileClose:
-    result.setInfo (T("Close"), String::empty, fileCategory, 0);
-    result.addDefaultKeypress (T('W'), ModifierKeys::commandModifier);
-    break;
-  case cmdFileSave:
-    result.setInfo (T("Save"), String::empty, fileCategory, 0);
-    result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier);
-    result.setActive( isChanged() && !testFlag(nosave) ) ;
-    break;
-  case cmdFileSaveAs:
-    result.setInfo (T("Save As..."), String::empty, fileCategory, 0);
-    result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier | 
-			       ModifierKeys::shiftModifier);
-    break;
-  case cmdFileRevert:
-    result.setInfo (T("Revert"), String::empty, fileCategory, 0);
-    result.addDefaultKeypress (T('R'), ModifierKeys::commandModifier);
-    break;
-  case cmdEditUndo:
-    result.setInfo (T("Undo"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier);
-    break;
-  case cmdEditRedo:
-    result.setInfo (T("Redo"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier | 
-			       ModifierKeys::shiftModifier);
-    break;
-  case cmdEditCut:
-    result.setInfo (T("Cut"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress (T('X'), ModifierKeys::commandModifier);
-    break;
-  case cmdEditCopy:
-    result.setInfo (T("Copy"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress (T('C'), ModifierKeys::commandModifier);
-    break;
-  case cmdEditPaste:
-    result.setInfo (T("Paste"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress (T('V'), ModifierKeys::commandModifier);
-    break;
-  case cmdEditSelectAll:
-    result.setInfo (T("Select All"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress (T('A'), ModifierKeys::commandModifier);
-    break;
-  case cmdEditImport:
-    result.setInfo (T("Import"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress(T('I'), ModifierKeys::commandModifier);
-    break;
-  case cmdOptionsParens:
-    result.setInfo (T("Parens Matching"), String::empty, preferencesCategory, 0);
-    break;
-  case cmdOptionsEmacsMode:
-    result.setInfo (T("Emacs Mode"), String::empty, preferencesCategory, 0);
-    break;
-
-    // LISP and SAL MENU
-
-  case cmdLispEval:
-    result.setInfo (T("Execute"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
+  switch (cmd)
+    {
+    case CommandIDs::NewEditor :
+      if (data==TextIDs::Sal)
+	{
+	  result.setInfo (T("SAL"), String::empty, fileCategory, 0);
+	  result.addDefaultKeypress(T('N'), 
+				    ModifierKeys::commandModifier);
+	}
+      else if (data==TextIDs::Lisp)
+	{
+	  result.setInfo (T("Lisp"), String::empty, fileCategory, 0);
+	  result.addDefaultKeypress (T('N'), 
+				     ModifierKeys::commandModifier | 
+				     ModifierKeys::shiftModifier);
+	}
+      else
+	result.setInfo (T("Text"), String::empty, fileCategory, 0);
+      break;
+    case CommandIDs::FileOpen:
+      result.setInfo (T("Open..."), String::empty, fileCategory, 0);
+      result.addDefaultKeypress (T('O'), ModifierKeys::commandModifier);
+      break;
+    case CommandIDs::FileOpenRecent:
+      result.setInfo (T("Open Recent File"), String::empty, 
+		      fileCategory, 0);
+      break;
+    case CommandIDs::FileClearRecent:
+      result.setInfo (T("Clear Recent Files"), String::empty, 
+		      fileCategory, 0);
+      break;
+    case CommandIDs::FileClose:
+      result.setInfo (T("Close"), String::empty, fileCategory, 0);
+      result.addDefaultKeypress (T('W'), ModifierKeys::commandModifier);
+      break;
+    case CommandIDs::FileSave:
+      result.setInfo (T("Save"), String::empty, fileCategory, 0);
+      result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier);
+      result.setActive( isChanged() && !testFlag(EditFlags::NoSave) ) ;
+      break;
+    case CommandIDs::FileSaveAs:
+      result.setInfo (T("Save As..."), String::empty, fileCategory, 0);
+      result.addDefaultKeypress (T('S'), ModifierKeys::commandModifier | 
+				 ModifierKeys::shiftModifier);
+      break;
+    case CommandIDs::FileRevert:
+      result.setInfo (T("Revert"), String::empty, fileCategory, 0);
+      result.addDefaultKeypress (T('R'), ModifierKeys::commandModifier);
+      break;
+    case CommandIDs::EditUndo:
+      result.setInfo (T("Undo"), String::empty, editingCategory, 0);
+      result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier);
+      break;
+    case CommandIDs::EditRedo:
+      result.setInfo (T("Redo"), String::empty, editingCategory, 0);
+      result.addDefaultKeypress (T('Z'), ModifierKeys::commandModifier | 
+				 ModifierKeys::shiftModifier);
+      break;
+    case CommandIDs::EditCut:
+      result.setInfo (T("Cut"), String::empty, editingCategory, 0);
+      result.addDefaultKeypress (T('X'), ModifierKeys::commandModifier);
+      break;
+    case CommandIDs::EditCopy:
+      result.setInfo (T("Copy"), String::empty, editingCategory, 0);
+      result.addDefaultKeypress (T('C'), ModifierKeys::commandModifier);
+      break;
+    case CommandIDs::EditPaste:
+      result.setInfo (T("Paste"), String::empty, editingCategory, 0);
+      result.addDefaultKeypress (T('V'), ModifierKeys::commandModifier);
+      break;
+    case CommandIDs::EditSelectAll:
+      result.setInfo (T("Select All"), String::empty, editingCategory, 0);
+      result.addDefaultKeypress (T('A'), ModifierKeys::commandModifier);
+      break;
+    case CommandIDs::EditParens:
+      result.setInfo (T("Parens Matching"), String::empty,
+		      preferencesCategory, 0);
+      break;
+    case CommandIDs::EditEmacsMode:
+      result.setInfo (T("Emacs Mode"), String::empty, 
+		      preferencesCategory, 0);
+      break;
+      
+      // LISP and SAL MENU
+      
+    case CommandIDs::EvalExecute:
+      result.setInfo (T("Execute"), String::empty, editingCategory, 0);
+      result.addDefaultKeypress(KeyPress::returnKey,
+				ModifierKeys::commandModifier);
 #ifndef SCHEME
-    result.setActive(getConsole()->lisp->isLispRunning() );
+      result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
-    break;
-
-  case cmdLispExpand:
-    result.setInfo (T("Expand"), String::empty, editingCategory, 0);
+      break;
+      
+    case CommandIDs::EvalExpand:
+      result.setInfo (T("Expand"), String::empty, editingCategory, 0);
 #ifndef SCHEME
-    result.setActive(getConsole()->lisp->isLispRunning() );
+      result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
-    break;
-
-  case cmdLispLoadFile:
-    result.setInfo (T("Load File..."), String::empty, editingCategory, 0);
+      break;
+      
+    case CommandIDs::EvalLoadFile:
+      result.setInfo (T("Load File..."), String::empty, editingCategory, 0);
 #ifndef SCHEME
-    result.setActive(getConsole()->lisp->isLispRunning() );
+      result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
-    break;
-
-  case cmdLispCompileFile:
+      break;
+      
+    case CommandIDs::EvalCompileFile:
 #ifndef SCHEME
-    result.setInfo (T("Compile File..."), String::empty, editingCategory, 0);
-    result.setActive(getConsole()->lisp->isLispRunning() );
+      result.setInfo (T("Compile File..."), String::empty, 
+		      editingCategory, 0);
+      result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
-    break;
-
-  case cmdLispShowDirectory:
-    result.setInfo (T("Current Directory"), String::empty, editingCategory, 0);
+      break;
+      
+    case CommandIDs::EvalShowDirectory:
+      result.setInfo (T("Current Directory"), String::empty, 
+		      editingCategory, 0);
 #ifndef SCHEME
-    result.setActive(getConsole()->lisp->isLispRunning() );
+      result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
-    break;
-
-  case cmdLispSetDirectory:
-    result.setInfo (T("Change Directory..."), String::empty, editingCategory, 0);
+      break;
+      
+    case CommandIDs::EvalSetDirectory:
+      result.setInfo (T("Change Directory..."), String::empty,
+		      editingCategory, 0);
 #ifndef SCHEME
-    result.setActive(getConsole()->lisp->isLispRunning() );
+      result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
-    break;
-
-  case cmdLispSetPackage:
+      break;
+      
+    case CommandIDs::EvalSetPackage:
 #ifndef SCHEME
-    result.setInfo (T("Set Package..."), String::empty, editingCategory, 0);
-    result.setActive(getConsole()->lisp->isLispRunning() );
+      result.setInfo (T("Set Package..."), String::empty,
+		      editingCategory, 0);
+      result.setActive(getConsole()->lisp->isLispRunning() );
 #endif
-    break;
-
-  case cmdLispSymbolHelp:
-    result.setInfo (T("Documentation"), String::empty, editingCategory, 0);
-    result.addDefaultKeypress(T('D'), ModifierKeys::commandModifier);
-    break;
-
-  case cmdLineBackward:
-    result.setInfo (T("Up line"), String::empty, navigationCategory, 0);
-    break;
-  case cmdLineForward:
-    result.setInfo (T("Down line"), String::empty, navigationCategory, 0);
-    break;
-  case cmdCharBackward:
-    result.setInfo (T("Backward char"), String::empty, navigationCategory, 0);
-    break;      
-  case cmdCharForward:
-    result.setInfo (T("Forward char"), String::empty, navigationCategory, 0);
-    break;
-  case cmdWordBackward:
-    result.setInfo (T("Backward word"), String::empty, navigationCategory, 0);
-    break;
-  case cmdWordForward:
-    result.setInfo (T("Forward word"), String::empty, navigationCategory, 0);
-    break;
-  case cmdGotoEOL:
-    result.setInfo (T("End of line"), String::empty, navigationCategory, 0);
-    break;
-  case cmdGotoBOL:
-    result.setInfo (T("Beginning of line"), String::empty, navigationCategory, 0);
-    break;
-  case cmdGotoEOB:
-    result.setInfo (T("End of buffer"), String::empty, navigationCategory, 0);
-    break;
-  case cmdGotoBOB:
-    result.setInfo (T("Beginning of buffer"), String::empty, navigationCategory, 0);
-    break;
-  case cmdPageBackward:
-    result.setInfo (T("Page up"), String::empty, navigationCategory, 0);
-    break;
-  case cmdPageForward:
-    result.setInfo (T("Page down"), String::empty, navigationCategory, 0);
-    break; 
-  case cmdSexprForward:
-    result.setInfo (T("End of sexpr"), String::empty, navigationCategory, 0);
-    break;
-  case cmdSexprBackward:
-    result.setInfo (T("Beginning of sexpr"), String::empty, navigationCategory, 0);
-    break;
-  case cmdDelete:
-    result.setInfo (T("Delete backward"), String::empty, editingCategory, 0);
-    break;
-  case cmdKillSexpr:
-    result.setInfo (T("Delete to end of sexpr"), String::empty, editingCategory, 0);
-    break;
-  case cmdIndent:
-    result.setInfo (T("Indent"), String::empty, editingCategory, 0);
-    break;
-
-  case cmdViewFontList :   
-    result.setInfo (T("Font Lisp"), String::empty, editingCategory, 0);
-    break;
-  case cmdViewFontSize :   
-    result.setInfo (T("Font Size"), String::empty, editingCategory, 0);
-    break;
-  case cmdViewThemes :   
-    result.setInfo (T("Themes"), String::empty, editingCategory, 0);
-    break;
-  case cmdOptionsHiliting :   
-    result.setInfo (T("Toggle Highlighting"), String::empty, editingCategory, 0);
-    break;
-  case cmdGotoColumn :   
-    result.setInfo (T("Goto Column"), String::empty, editingCategory, 0);
-    break;
-  case cmdGotoLine :   
-    result.setInfo (T("Goto Line"), String::empty, editingCategory, 0);
-    break;
-  case cmdBackspace :   
-    result.setInfo (T("Backspace"), String::empty, editingCategory, 0);
-    break;
-  case cmdKillWord :   
-    result.setInfo (T("Kill Word"), String::empty, editingCategory, 0);
-    break;
-  case cmdKillWhite :   
-    result.setInfo (T("Kill Whitespace"), String::empty, editingCategory, 0);
-    break;
-  case cmdKillLine :   
-    result.setInfo (T("Kill Line"), String::empty, editingCategory, 0);
-    break;
-  case cmdInsertChar :   
-    result.setInfo (T("Insert Character"), String::empty, editingCategory, 0);
-    break;
-  case cmdInsertLine :   
-    result.setInfo (T("Insert Line"), String::empty, editingCategory, 0);
-    break;
-  case cmdOpenLine :   
-    result.setInfo (T("Open Line"), String::empty, editingCategory, 0);
-    break;
-  case cmdComplete :   
-    result.setInfo (T("Complete"), String::empty, editingCategory, 0);
-    break;
-  case cmdToggleReadWrite :   
-    result.setInfo (T("Toggle Read/Write"), String::empty, editingCategory, 0);
-    break;
-  default:
-    printf("FIXME: in getCommandInfo (Buffer.cpp) no info for command id %d.\n",
-	   commandID);
-    result.setInfo (T("UNKNOWN"), String::empty, editingCategory, 0);
-    break;
-  }
+      break;
+      
+    case CommandIDs::EvalSymbolHelp:
+      result.setInfo (T("Documentation"), String::empty, 
+		      editingCategory, 0);
+      result.addDefaultKeypress(T('D'), ModifierKeys::commandModifier);
+      break;
+      
+    case CommandIDs::EmacsLineBackward:
+      result.setInfo (T("Up line"), String::empty, navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsLineForward:
+      result.setInfo (T("Down line"), String::empty, 
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsCharBackward:
+      result.setInfo (T("Backward char"), String::empty, 
+		      navigationCategory, 0);
+      break;      
+    case CommandIDs::EmacsCharForward:
+      result.setInfo (T("Forward char"), String::empty, 
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsWordBackward:
+      result.setInfo (T("Backward word"), String::empty, 
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsWordForward:
+      result.setInfo (T("Forward word"), String::empty,
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsGotoEOL:
+      result.setInfo (T("End of line"), String::empty,
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsGotoBOL:
+      result.setInfo (T("Beginning of line"), String::empty,
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsGotoEOB:
+      result.setInfo (T("End of buffer"), String::empty,
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsGotoBOB:
+      result.setInfo (T("Beginning of buffer"), String::empty,
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsPageBackward:
+      result.setInfo (T("Page up"), String::empty, navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsPageForward:
+      result.setInfo (T("Page down"), String::empty, 
+		      navigationCategory, 0);
+      break; 
+    case CommandIDs::EmacsSexprForward:
+      result.setInfo (T("End of sexpr"), String::empty, 
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsSexprBackward:
+      result.setInfo (T("Beginning of sexpr"), String::empty, 
+		      navigationCategory, 0);
+      break;
+    case CommandIDs::EmacsDelete:
+      result.setInfo (T("Delete backward"), String::empty, 
+		      editingCategory, 0);
+      break;
+    case CommandIDs::EmacsKillSexpr:
+      result.setInfo (T("Delete to end of sexpr"), String::empty,
+		      editingCategory, 0);
+      break;
+    case CommandIDs::EmacsIndent:
+      result.setInfo (T("Indent"), String::empty, editingCategory, 0);
+      break;
+      
+    case CommandIDs::ViewFontList :   
+      result.setInfo (T("Font Lisp"), String::empty, editingCategory, 0);
+      break;
+    case CommandIDs::ViewFontSize :   
+      result.setInfo (T("Font Size"), String::empty, editingCategory, 0);
+      break;
+      
+    case CommandIDs::EditHilite :   
+      result.setInfo (T("Toggle Highlighting"), String::empty, 
+		      editingCategory, 0);
+      break;
+    case CommandIDs::EmacsGotoColumn :   
+      result.setInfo (T("Goto Column"), String::empty, editingCategory, 0);
+      break;
+    case CommandIDs::EmacsGotoLine :   
+      result.setInfo (T("Goto Line"), String::empty, editingCategory, 0);
+      break;
+    case CommandIDs::EmacsBackspace :   
+      result.setInfo (T("Backspace"), String::empty, editingCategory, 0);
+      break;
+    case CommandIDs::EmacsKillWord :   
+      result.setInfo (T("Kill Word"), String::empty, editingCategory, 0);
+      break;
+    case CommandIDs::EmacsKillWhite :   
+      result.setInfo (T("Kill Whitespace"), String::empty,
+		      editingCategory, 0);
+      break;
+    case CommandIDs::EmacsKillLine :   
+      result.setInfo (T("Kill Line"), String::empty, editingCategory, 0);
+      break;
+    case CommandIDs::EmacsInsertChar :   
+      result.setInfo (T("Insert Character"), String::empty,
+		      editingCategory, 0);
+      break;
+    case CommandIDs::EmacsInsertLine :   
+      result.setInfo (T("Insert Line"), String::empty, editingCategory, 0);
+      break;
+    case CommandIDs::EmacsOpenLine :   
+      result.setInfo (T("Open Line"), String::empty, editingCategory, 0);
+      break;
+    case CommandIDs::EmacsComplete :   
+      result.setInfo (T("Complete"), String::empty, editingCategory, 0);
+      break;
+    case CommandIDs::EmacsToggleReadWrite :   
+      result.setInfo (T("Toggle Read/Write"), String::empty, 
+		      editingCategory, 0);
+      break;
+    default:
+      printf("ERROR: getCommandInfo (Buffer.cpp) no info for id %d (type=%d, cmd=%d, data=%d)\n", id, type, CommandIDs::getCommandNumber(id), data);
+      result.setInfo (T("UNKNOWN"), String::empty, editingCategory, 0);
+      break;
+    }
 }
 
-bool TextBuffer::perform (const InvocationInfo& info) {
-  switch (info.commandID) {
-  case cmdFileNewSal:
-    ((EditorWindow*)getTopLevelComponent())->newFile(syntaxSal);
-    break;
-  case cmdFileNewLisp:
-    ((EditorWindow*)getTopLevelComponent())->newFile(syntaxLisp);
-    break;
-  case cmdFileNewText:
-    ((EditorWindow*)getTopLevelComponent())->newFile(syntaxText);
-    break;
-  case cmdFileOpen:
-    ((EditorWindow*)getTopLevelComponent())->openFile();
-    break;
-  case cmdFileClose:
-    ((EditorWindow*)getTopLevelComponent())->closeFile();
-    break;
-  case cmdFileSave:
-    ((EditorWindow*)getTopLevelComponent())->saveFile();
-    break;
-  case cmdFileSaveAs:
-    ((EditorWindow*)getTopLevelComponent())->saveFileAs();
-    break;
-  case cmdFileRevert:
-    ((EditorWindow*)getTopLevelComponent())->revertFile();
-    break;  
-  case cmdEditUndo:
-    break;
-  case cmdEditRedo:
-    break;
-  case cmdEditCut:
-    //cut();
-    if (getHighlightedRegionLength()>0) {
+bool TextBuffer::perform (const InvocationInfo& info)
+{
+  CommandID cmd=CommandIDs::getCommand(info.commandID);
+  int data=CommandIDs::getCommandData(info.commandID);
+  switch (cmd)
+    {
+    case CommandIDs::NewEditor :
+      ((EditorWindow*)getTopLevelComponent())->newFile(data);
+      break;
+    case CommandIDs::FileOpen:
+      ((EditorWindow*)getTopLevelComponent())->openFile();
+      break;
+    case CommandIDs::FileClose:
+      ((EditorWindow*)getTopLevelComponent())->closeFile();
+      break;
+    case CommandIDs::FileSave:
+      ((EditorWindow*)getTopLevelComponent())->saveFile();
+      break;
+    case CommandIDs::FileSaveAs:
+      ((EditorWindow*)getTopLevelComponent())->saveFileAs();
+      break;
+    case CommandIDs::FileRevert:
+      ((EditorWindow*)getTopLevelComponent())->revertFile();
+      break;  
+    case CommandIDs::EditUndo:
+      break;
+    case CommandIDs::EditRedo:
+      break;
+    case CommandIDs::EditCut:
+      if (getHighlightedRegionLength()>0)
+	{
+	  copy();
+	  keyPressed(KeyPress(KeyPress::deleteKey));
+	}
+      setChanged(true);
+      break;
+    case CommandIDs::EditCopy:
       copy();
-      keyPressed(KeyPress(KeyPress::deleteKey));
+      break;
+    case CommandIDs::EditPaste:
+      paste();
+      break;
+    case CommandIDs::EditSelectAll:
+      selectAll();
+      break;
+    case CommandIDs::EmacsLineBackward:
+      previousLine();
+      break;
+    case CommandIDs::EmacsLineForward:
+      nextLine();
+      break;
+    case CommandIDs::EmacsCharBackward:
+      backwardChar();
+      break;      
+    case CommandIDs::EmacsCharForward:
+      forwardChar();
+      break;
+    case CommandIDs::EmacsWordBackward:
+      backwardWord();
+      break;
+    case CommandIDs::EmacsWordForward:
+      forwardWord();
+      break;
+    case CommandIDs::EmacsGotoEOL:
+      gotoEOL();
+      break;
+    case CommandIDs::EmacsGotoBOL:
+      gotoBOL();
+      break;
+    case CommandIDs::EmacsGotoEOB:
+      gotoEOB();
+      break;
+    case CommandIDs::EmacsGotoBOB:
+      gotoBOB();
+      break;
+    case CommandIDs::EmacsPageBackward:
+      backwardScreen();
+      break;
+    case CommandIDs::EmacsPageForward:
+      forwardScreen();
+      break; 
+    case CommandIDs::EmacsSexprForward:
+      break;
+    case CommandIDs::EmacsSexprBackward:
+      break;
+    case CommandIDs::EmacsDelete:
+      setChanged(true);
+      break;
+    case CommandIDs::EmacsKillSexpr:
+      setChanged(true);
+      break;
+    case CommandIDs::EmacsIndent:
+      setChanged(true);
+      break;
+    case CommandIDs::EvalExecute:
+      evalText();
+      break;
+    case CommandIDs::EvalExpand:
+      evalText(true);
+      break;
+    case CommandIDs::EvalLoadFile:
+      ((EditorWindow*)getTopLevelComponent())->loadFile();
+      break;
+    case CommandIDs::EvalCompileFile:
+      ((EditorWindow*)getTopLevelComponent())->compileFile();
+      break;
+    case CommandIDs::EvalShowDirectory:
+      ((EditorWindow*)getTopLevelComponent())->showDirectory();
+      break;
+    case CommandIDs::EvalSetDirectory:
+      ((EditorWindow*)getTopLevelComponent())->setDirectory();
+      break;
+    case CommandIDs::EvalSetPackage:
+      ((EditorWindow*)getTopLevelComponent())->setPackage();
+      break;
+    case CommandIDs::EvalSymbolHelp:
+      lookupHelpAtPoint();
+      break;
+     default:
+      return false;
     }
-    setChanged(true);
-    break;
-  case cmdEditCopy:
-    copy();
-    break;
-  case cmdEditPaste:
-    paste();
-    //setChanged(true);
-    //colorizeAfterChange(cmdEditPaste);
-    break;
-  case cmdEditSelectAll:
-    selectAll();
-    break;
-  case cmdEditImport:
-    break;
-  case cmdLineBackward:
-    previousLine();
-    break;
-  case cmdLineForward:
-    nextLine();
-    break;
-  case cmdCharBackward:
-    backwardChar();
-    break;      
-  case cmdCharForward:
-    forwardChar();
-    break;
-  case cmdWordBackward:
-    backwardWord();
-    break;
-  case cmdWordForward:
-    forwardWord();
-    break;
-  case cmdGotoEOL:
-    gotoEOL();
-    break;
-  case cmdGotoBOL:
-    gotoBOL();
-    break;
-  case cmdGotoEOB:
-    gotoEOB();
-    break;
-  case cmdGotoBOB:
-    gotoBOB();
-    break;
-  case cmdPageBackward:
-    backwardScreen();
-    break;
-  case cmdPageForward:
-    forwardScreen();
-    break; 
-  case cmdSexprForward:
-    break;
-  case cmdSexprBackward:
-    break;
-  case cmdDelete:
-    setChanged(true);
-    break;
-  case cmdKillSexpr:
-    setChanged(true);
-    break;
-  case cmdIndent:
-    setChanged(true);
-    break;
-
-  case cmdLispEval:
-    evalText();
-    break;
-  case cmdLispExpand:
-    evalText(true);
-    break;
-  case cmdLispLoadFile:
-    ((EditorWindow*)getTopLevelComponent())->loadFile();
-    break;
-  case cmdLispCompileFile:
-    ((EditorWindow*)getTopLevelComponent())->compileFile();
-    break;
-  case cmdLispShowDirectory:
-    ((EditorWindow*)getTopLevelComponent())->showDirectory();
-    break;
-  case cmdLispSetDirectory:
-    ((EditorWindow*)getTopLevelComponent())->setDirectory();
-    break;
-  case cmdLispSetPackage:
-    ((EditorWindow*)getTopLevelComponent())->setPackage();
-    break;
-  case cmdLispSymbolHelp:
-    lookupHelpAtPoint();
-    break;
-
-  default:
-    return false;
-  }
   return true;
 }
 
@@ -733,7 +750,7 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
   case KeyCommands::Ctrl_D :
     deleteChar(1);
     setChanged(true);
-    colorizeAfterChange(cmdDelete);
+    colorizeAfterChange(CommandIDs::EmacsDelete);
     break;
   case KeyCommands::Ctrl_E :
     gotoEOL();
@@ -744,7 +761,7 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
   case KeyCommands::Ctrl_K :
     killLine();
     setChanged(true);
-    colorizeAfterChange(cmdKillLine);
+    colorizeAfterChange(CommandIDs::EmacsKillLine);
     break;
   case KeyCommands::Ctrl_N :
     nextLine(); 
@@ -752,7 +769,7 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
   case KeyCommands::Ctrl_O :
     openLine();
     setChanged(true);
-    colorizeAfterChange(cmdOpenLine);
+    colorizeAfterChange(CommandIDs::EmacsOpenLine);
     break;
   case KeyCommands::Ctrl_P :
     previousLine();
@@ -775,7 +792,7 @@ void TextBuffer::keyControlAction(const KeyPress& key) {
   case KeyCommands::Ctrl_Y :
     paste();
     //setChanged(true);
-    //colorizeAfterChange(cmdEditPaste);
+    //colorizeAfterChange(CommandIDs::EditPaste);
     break;
   default :
     keyIllegalAction(key);
@@ -854,12 +871,12 @@ void TextBuffer::keyMetaAction(const KeyPress& key) {
   case KeyCommands::Meta_D :
     killWord();
     setChanged(true);
-    colorizeAfterChange(cmdKillWord);
+    colorizeAfterChange(CommandIDs::EmacsKillWord);
     break;
   case KeyCommands::Meta_Sp :
     forwardDeleteChars( T(" \t\n") );
     setChanged(true);
-    colorizeAfterChange(cmdKillWhite);
+    colorizeAfterChange(CommandIDs::EmacsKillWhite);
     break;
   default :
     keyIllegalAction(key);
@@ -884,7 +901,7 @@ void TextBuffer::keyControlMetaAction(const KeyPress& key) {
   case KeyCommands::CtrlMeta_K :
     killSexpr();
     setChanged(true);
-    colorizeAfterChange(cmdKillSexpr);
+    colorizeAfterChange(CommandIDs::EmacsKillSexpr);
     break;
   default:
     keyIllegalAction(key);
@@ -895,7 +912,7 @@ void TextBuffer::keyControlMetaAction(const KeyPress& key) {
 void TextBuffer::keyCommandAction(const KeyPress& key) {
   // Called if keypress is Command Key
   int cmd = getComKeyCommand(key);
-  syntaxID sid = syntaxSal;
+  TextID sid = TextIDs::Sal;
 
   //String text = key.getTextDescription();
   //printf("keypress: T(\"%s\")\n", text.toUTF8());
@@ -916,7 +933,10 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     ((EditorWindow*)getTopLevelComponent())->openFile();
     break;
   case KeyCommands::Com_N :
-    sid=(key.getModifiers().isShiftDown()) ? syntaxLisp : syntaxSal;
+    if (key.getModifiers().isShiftDown())
+      sid=TextIDs::Lisp;
+    else
+      sid=TextIDs::Sal;
     ((EditorWindow*)getTopLevelComponent())->newFile(sid);
     break;
   case KeyCommands::Com_R :
@@ -1026,19 +1046,19 @@ bool TextBuffer::keyPressed (const KeyPress& key) {
     else if (keyCode == KeyPress::returnKey) {
 	TextEditor::keyPressed(key);
 	setChanged(true);
-	colorizeAfterChange(cmdInsertLine);
+	colorizeAfterChange(CommandIDs::EmacsInsertLine);
       }
     //    else if (keyCode == KeyPress::F1Key)
     //      lookupHelpAtPoint();
     else if (keyCode == KeyPress::backspaceKey) {
       TextEditor::keyPressed(key);
       setChanged(true);
-      colorizeAfterChange(cmdBackspace);
+      colorizeAfterChange(CommandIDs::EmacsBackspace);
       }
     else if (keyCode == KeyPress::deleteKey ) {
       TextEditor::keyPressed(key);
       setChanged(true);
-      colorizeAfterChange(cmdDelete);
+      colorizeAfterChange(CommandIDs::EmacsDelete);
     }
     else {
       // inserting normal text but maybe match parens
@@ -1048,11 +1068,11 @@ bool TextBuffer::keyPressed (const KeyPress& key) {
       if ( (c==')') && isParensMatching() ) {
 	matchParens();
       }
-      else if ( (c=='}') && (syntaxId==syntaxSal) && isParensMatching() ) {
+      else if ( (c=='}') && (textid==TextIDs::Sal) && isParensMatching() ) {
 	matchParens();
       }
       else if ((31<c && c<127)) {
-	colorizeAfterChange(cmdInsertChar);
+	colorizeAfterChange(CommandIDs::EmacsInsertChar);
       }
     }
   }
@@ -1508,7 +1528,7 @@ int TextBuffer::evalText(bool macroexpand) {
   else 
     text=backwardTopLevelText();
 
-  if (syntaxId==syntaxLisp && !region) {
+  if (textid==TextIDs::Lisp && !region) {
     // parse out backward sexpr if not region
     int typ, loc, end=text.length();
     typ = scan_sexpr(syntax->syntab, text, end-1, -1, SCAN_CODE, &loc, NULL);
@@ -1673,7 +1693,7 @@ void TextBuffer::syntacticIndent() {
     col=syntax->getIndent( txt, -1, len, pos);
   }
   indentToColumn(col);
-  colorizeAfterChange(cmdIndent); // recolor current line
+  colorizeAfterChange(CommandIDs::EmacsIndent); // recolor current line
 }
 
 ///
@@ -1694,8 +1714,8 @@ void TextBuffer::colorize (int from, int to, bool force) {
   int here = point(), pos = 0, start, end;
   String expr;
   scanresult typ;
-  hiliteID hilite;
-  Colour color, normal=syntax->hilites[hiliteNone];
+  HiliteID hilite;
+  Colour color, normal=syntax->hilites[HiliteIDs::None];
   static KeyPress dkey = KeyPress(KeyPress::deleteKey);
 
   // offset is the starting position of text string in buffer.
@@ -1704,18 +1724,18 @@ void TextBuffer::colorize (int from, int to, bool force) {
   //printf("hiliting %d to %d...\n", from, to);
   while (pos < len) {
     typ=parse_sexpr(syntax->syntab,text,-1,len,1,SCAN_COLOR,&pos,&start,&end);
-    hilite=hiliteNone;
+    hilite=HiliteIDs::None;
     if (typ>0) {
       if (typ==SCAN_TOKEN) {
 	hilite=syntax->getHilite(text, start, end);
       }
       else if (typ==SCAN_COMMENT) {
-	hilite=hiliteComment;
+	hilite=HiliteIDs::Comment;
       }
       else if (typ==SCAN_STRING) {
-	hilite=hiliteString;
+	hilite=HiliteIDs::String;
       }
-      if (hilite>hiliteNone || force) {
+      if (hilite>HiliteIDs::None || force) {
 	// this is REALLY gross!
 	expr=text.substring(start,end);
 	color=syntax->hilites[hilite];
@@ -1751,7 +1771,7 @@ void TextBuffer::colorizeAfterChange(int cmd) {
   int loc=point(), bol=pointBOL(), eol=pointEOL();
   int bot=bol, top=eol;
   switch (cmd) {
-  case cmdEditPaste :  
+  case CommandIDs::EditPaste :  
     // point is after pasted material. colorize from bol before
     // previous point to eol AFTER pasted
     top=eol;
@@ -1760,18 +1780,18 @@ void TextBuffer::colorizeAfterChange(int cmd) {
     bot=pointBOL();
     setPoint(loc);
     break;
-  case cmdOpenLine : // include new line in recolor
+  case CommandIDs::EmacsOpenLine : // include new line in recolor
     if ( moveLine(1) ) {
       top=pointEOL();
       setPoint(loc);
     }
-  case cmdInsertLine : // include previous line in recolor
+  case CommandIDs::EmacsInsertLine : // include previous line in recolor
     if ( moveLine(-1) ) {
       bot=point();
       setPoint(loc);
       }
     break;
-  case cmdIndent :   // colorize current line
+  case CommandIDs::EmacsIndent :   // colorize current line
     bot=bol;
     top=eol;
     break;
@@ -1787,45 +1807,45 @@ void TextBuffer::colorizeAfterChange(int cmd) {
 //
 
 bool TextBuffer::isHiliting() {
-  return !testFlag(hiliteoff);
+  return !testFlag(EditFlags::HiliteOff);
 }
 
 void TextBuffer::toggleHiliting() {
-  if (syntaxId==syntaxText) return;
-  toggleFlag(hiliteoff);
+  if (textid==TextIDs::Text) return;
+  toggleFlag(EditFlags::HiliteOff);
   if ( isHiliting() )
     colorizeAll();
   else {
     String text=getText();
     setText(String::empty);
     setColour(TextEditor::textColourId, 
-	      syntax->hilites[hiliteNone]);
+	      syntax->hilites[HiliteIDs::None]);
     setText(text);
   }
 }
 
 bool TextBuffer::isParensMatching() {
-  return !testFlag(parensoff);
+  return !testFlag(EditFlags::ParensOff);
 }
 
 void TextBuffer::toggleParensMatching () {
-  toggleFlag(parensoff); 
+  toggleFlag(EditFlags::ParensOff); 
   return;
 }
 
 bool TextBuffer::isChanged() {
-  return testFlag(needsave);
+  return testFlag(EditFlags::NeedSave);
 }
 
 void TextBuffer::setChanged(bool b) {
-  if (b) setFlagOn(needsave); 
-  else setFlagOff(needsave); 
+  if (b) setFlagOn(EditFlags::NeedSave); 
+  else setFlagOff(EditFlags::NeedSave); 
   return;
 }
 
 void TextBuffer::toggleReadOnly() {
-  toggleFlag(readonly);
-  setReadOnly(testFlag(readonly));
+  toggleFlag(EditFlags::ReadOnly);
+  setReadOnly(testFlag(EditFlags::ReadOnly));
 }
 
 ///
@@ -1854,7 +1874,7 @@ void TextBuffer::lookupHelpAtPoint() {
   bool region=(getHighlightedRegionLength() > 0);
   String text;
 
-  if (syntaxId==syntaxText) return; // symbol help not avaiable in Text mode
+  if (textid==TextIDs::Text) return; // symbol help not avaiable in Text mode
 
   if ( region )
     text=getHighlightedText();
@@ -1872,14 +1892,14 @@ void TextBuffer::lookupHelpAtPoint() {
   String helppath=String::empty;
   String help=String::empty;
 #ifdef SCHEME
-  if ( syntaxId==syntaxSal )
+  if ( textid==TextIDs::Sal )
     helppath= T("Sal:GraceScheme:Scheme");
-  else if ( syntaxId==syntaxLisp )
+  else if ( textid==TextIDs::Lisp )
     helppath= T("GraceScheme:Scheme");    
 #else
-  if ( syntaxId==syntaxSal )
+  if ( textid==TextIDs::Sal )
     helppath = T("Sal:CommonMusic:CommonLispMusic:CommonLisp");
- else if ( syntaxId==syntaxLisp )
+ else if ( textid==TextIDs::Lisp )
     helppath = T("CommonMusic:CommonLispMusic:CommonLisp");
 #endif
 
@@ -1891,7 +1911,7 @@ void TextBuffer::lookupHelpAtPoint() {
     URL(help).launchInDefaultBrowser();
   }
   else if ( File(help).existsAsFile() ) 
-    new EditorWindow(syntaxNone, (TextBuffer::load | TextBuffer::nosave), 
+    new EditorWindow(TextIDs::Empty, (EditFlags::Load | EditFlags::NoSave), 
 		     File(help).getFullPathName());
 }
 
@@ -1935,8 +1955,8 @@ void TextBuffer::reformatCommentBlock () {
   deleteRegion(beg,end);
   setPoint(beg);
 
-  Colour comment=syntax->hilites[hiliteComment];
-  Colour regular=syntax->hilites[hiliteNone];
+  Colour comment=syntax->hilites[HiliteIDs::Comment];
+  Colour regular=syntax->hilites[HiliteIDs::None];
   setColour(TextEditor::textColourId, comment);
   int len=block.length();
   int col=0;
@@ -1991,7 +2011,7 @@ void TextBuffer::changeCase(int flag) {
     }
   }
   beg=point();
-  colorizeAfterChange(cmdIndent); // recolorize whole line for now..
+  colorizeAfterChange(CommandIDs::EmacsIndent); // recolorize whole line for now..
   setPoint(beg);
 }
 
@@ -2109,6 +2129,6 @@ void TextBuffer::paste() {
     }
     insertTextAtCursor(clip);
     setChanged(true);
-    colorizeAfterChange(cmdEditPaste);
+    colorizeAfterChange(CommandIDs::EditPaste);
   }
 }
