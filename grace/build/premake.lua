@@ -1,13 +1,14 @@
 addoption("release", "optional release number nnn (printed n.n.n)")
 addoption("revision", "optional source revision number")
-addoption("jucedir", "optional location of juce directory")
+addoption("juce", "required location of juce directory")
 addoption("csound", "build with csound support")
+addoption("fomus", "build with fomus support")
 addoption("debug", "build against debug libs")
 
-if (options["jucedir"]) then
-   juce_dir = options["jucedir"]
-else
-   juce_dir = "../../../juce"
+if options["juce"] then
+   juce_dir = options["juce"]
+elseif not options["clean"] then
+   error("Use --juce and provide the location of the JUCE directory")
 end
 
 source_dir = "../../src/"
@@ -17,7 +18,7 @@ gracecl_files = {"Buffer", "Console", "Editor", "Grace",
 		 "Plotter", "Points", "Syntab", "Syntax"}
 
 grace_files = {"Buffer", "ChickenBridge", "Console", 
-	       "Csound",
+	       "Csound", "Fomus",
 	       "Editor", "Grace", 
 	       "Help", "Layer", "Midi", "MidiReceiveComponent", "Resources",
 	       "Plotter", "Points", "Scheme", "Syntab", "Syntax", "Toolbox"
@@ -125,6 +126,10 @@ end
 
 if ( options["csound"] ) then
    table.insert(package.defines, "PORTCSOUND=1")
+end
+
+if ( options["fomus"] ) then
+   table.insert(package.defines, "FOMUS=1")
 end
 
 add_release_options()
