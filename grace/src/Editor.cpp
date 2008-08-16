@@ -493,6 +493,10 @@ void EditorWindow::menuItemSelected (int id, int idx)
   else if (type == CommandIDs::Csound)  
       app->getCsoundPort()->performCsoundCommand(id);
 #endif 
+#ifdef FOMUS
+  else if (type == CommandIDs::Fomus)
+      app->getFomusPort()->performFomusCommand(id);
+#endif 
 #else
   else if (type == CommandIDs::CommonLisp)
     app->getConsole()->lisp->performLispCommand(id);
@@ -500,6 +504,7 @@ void EditorWindow::menuItemSelected (int id, int idx)
   else
     switch (cmd)
       {
+
       case CommandIDs::FileOpenRecent :
 	{
 	  File f=prefs->getRecentlyOpenedFile(data);

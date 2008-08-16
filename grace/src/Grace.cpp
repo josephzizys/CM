@@ -96,6 +96,7 @@ void GraceApp::initialise (const String& commandLine) {
   midiOutPort->startThread();
   midiInPort = new MidiInPort(console);
   csoundPort = new CsoundPort(console);
+  fomusPort = new FomusPort(console);
 #endif
 
 }

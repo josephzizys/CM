@@ -145,9 +145,14 @@ class CommandIDs
 {
  public:
 
-  static const CommandID toID(int cmd, int data=0)
+  static const CommandID toID(int cmd, int data)
   {
     return (cmd + data);
+  }
+
+  static const CommandID toID(int typ, int num, int data)
+  {
+    return ((typ << 16) + (num << 8) + data);
   }
 
   static const CommandID getCommand(CommandID id)

@@ -17,6 +17,7 @@
 #include "Scheme.h"
 #include "Midi.h"
 #include "Csound.h"
+#include "Fomus.h"
 #endif
 
 class GraceApp : public JUCEApplication
@@ -53,9 +54,11 @@ public:
   MidiOutPort* midiOutPort;
   MidiInPort* midiInPort;
   CsoundPort* csoundPort;
+  FomusPort* fomusPort;
   MidiOutPort* getMidiOutPort() {return midiOutPort;}
-  MidiInPort * getMidiInPort(){return midiInPort;}
-  CsoundPort * getCsoundPort(){return csoundPort;}
+  MidiInPort* getMidiInPort() {return midiInPort;}
+  CsoundPort* getCsoundPort() {return csoundPort;}
+  FomusPort* getFomusPort() {return fomusPort;}
 #endif
   File resourceDirectory;
   GraceApp() ;

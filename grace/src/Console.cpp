@@ -478,6 +478,9 @@ const PopupMenu ConsoleWindow::getPortsMenu ()
 #ifdef PORTCSOUND
   portsmenu.addSubMenu(T("Csound"), app->getCsoundPort()->getCsoundMenu());
 #endif
+#ifdef FOMUS
+  portsmenu.addSubMenu(T("Fomus"), app->getFomusPort()->getFomusMenu());
+#endif
   return portsmenu;
 }
 #endif
@@ -629,6 +632,10 @@ void ConsoleWindow::menuItemSelected (int id, int idx)
 #ifdef PORTCSOUND
   else if (type == CommandIDs::Csound)  
       app->getCsoundPort()->performCsoundCommand(id);
+#endif
+#ifdef FOMUS
+  else if (type == CommandIDs::Fomus)
+      app->getFomusPort()->performFomusCommand(id);
 #endif
 #endif
 #ifndef SCHEME
