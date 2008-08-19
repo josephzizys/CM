@@ -414,7 +414,7 @@ const PopupMenu MidiOutPort::getMidiSeqMenu()
 		      T("Copy to Plotter"), 
 		      (false && saveable));
   midiseqmenu.addItem(CommandIDs::MidiSeqCopyToTrack, 
-		      T("Copy to Track"), 
+		      T("Save to Track"), 
 		      saveable);
   midiseqmenu.addSeparator();
   // Tracks submenu
@@ -429,7 +429,7 @@ const PopupMenu MidiOutPort::getMidiSeqMenu()
 			  T("Rename..."),
 			  true);
 	trackmenu.addItem(CommandIDs::MidiSeqRestoreTrack+i,
-			  T("Set Seq"),
+			  T("Set as Seq"),
 			  true);
 	trackmenu.addItem(CommandIDs::MidiSeqMixTrack+i,
 			  T("Mix into Seq..."),

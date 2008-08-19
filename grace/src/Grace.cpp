@@ -34,11 +34,6 @@ void GraceApp::initialise (const String& commandLine) {
   resourceDirectory = File(File::getSpecialLocation(File::currentExecutableFile).getSiblingFile(T("Resources")).getFullPathName());
 #endif
 
-  //  // add resource directory to library path for loading libchicken
-  //#if (defined(MACOSX) && defined(SCHEME))
-  //  setenv("DYLD_LIBRARY_PATH=", resourceDirectory.getFullPathName().toUTF8(), 1);
-  //  //  printf("DYLD_LIBRARY_PATH=%s\n",resourceDirectory.getFullPathName().toUTF8(), 1);
-  //#endif
 
   File pref=PropertiesFile::getDefaultAppSettingsFile(getApplicationName(), T("prefs"), String::empty, false);
   if ( pref.existsAsFile() ) {
@@ -78,7 +73,7 @@ void GraceApp::initialise (const String& commandLine) {
 	    << T("\n");
   printf("%s", graceinfo.toUTF8());
   prefs->print();
-  printf("-----------------------------------------------------------\n");
+  //printf("-----------------------------------------------------------\n");
 
   initHelp();  // create global Help entires
 
@@ -91,7 +86,9 @@ void GraceApp::initialise (const String& commandLine) {
   schemeProcess->setPriority(10);
   schemeProcess->startThread();
   midiOutPort = new MidiOutPort(console);
-  midiOutPort->open(0);
+  // stop autoopening since there may be no devices available,
+  // autoopening should a preference...
+  // midiOutPort->open(0);
   midiOutPort->setPriority(9);
   midiOutPort->startThread();
   midiInPort = new MidiInPort(console);
@@ -122,6 +119,7 @@ void GraceApp::graceQuit (bool ask)
     doit=false;
   if (doit)
     {
+      std::cout << "Bye!";
       JUCEApplication::quit();
     }
 }
@@ -389,20 +387,20 @@ void GraceApp::initHelp()
 			   T("Function Calls"),
 			   T("funcall.sal")));
   helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+3,
-			   T("Working with Lists"),
+			   T("Lists"),
 			   T("lists.sal")));
   helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+4,
-			   T("Making Sound"), 
-			   T("sound.sal")));
-  helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+5,
 			   T("Defining Variables"),
 			   T("variables.sal")));
-  helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+6,
+  helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+5,
 			   T("Defining Functions"),
 			   T("functions.sal")));
-  helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+7,
+  helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+6,
 			   T("Iteration"), 
 			   T("loop.sal")));
+  helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+7,
+			   T("Working with MIDI"), 
+			   T("midi.sal")));
   helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+8, 
 			   T("Musical Processes"), 
 			   T("processes.sal")));

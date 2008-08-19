@@ -80,6 +80,47 @@ void SymbolHelp::openHelpInBrowser(String help) {
   url.launchInDefaultBrowser();
 }
 
+
+
+void SymbolHelp::addSalHelp() {
+  setHelpRoot(T("Sal"), T("file://") +
+	      ((GraceApp *)GraceApp::getInstance())->
+	      getResourceDirectoryPathName() + T("/doc/"));
+
+  salmap.set(T("begin"), T("cm.html#begin"));
+  salmap.set(T("chdir"), T("cm.html#chdir"));
+  salmap.set(T("define"), T("cm.html#define"));
+  salmap.set(T("end"), T("cm.html#begin"));
+  salmap.set(T("exec"), T("cm.html#exec"));
+  salmap.set(T("if"), T("cm.html#if"));
+  salmap.set(T("load"), T("cm.html#load"));
+  salmap.set(T("loop"), T("cm.html#loop"));
+  //  salmap.set(T("open"), T("cm.html#open"));
+  //  salmap.set(T("output"), T("output"));
+  //  salmap.set(T("play"), T("play"));
+  //  salmap.set(T("plot"), T("plot"));
+  salmap.set(T("print"), T("cm.html#print"));
+  salmap.set(T("return"), T("cm.html#return"));
+  salmap.set(T("run"), T("cm.html#run"));
+  salmap.set(T("send"), T("cm.html#send"));
+  salmap.set(T("set"), T("cm.html#set"));
+  salmap.set(T("="), T("cm.html#set"));
+  salmap.set(T("&="), T("cm.html#set"));
+  salmap.set(T("^="), T("cm.html#set"));
+  salmap.set(T("*="), T("cm.html#set"));
+  salmap.set(T("+="), T("cm.html#set"));
+  salmap.set(T(">="), T("cm.html#set"));
+  salmap.set(T("<="), T("cm.html#set"));
+  salmap.set(T("sprout"), T("cm.html#sprout"));
+  //  salmap.set(T("system"), T("system"));
+  salmap.set(T("unless"), T("cm.html#unless"));
+  salmap.set(T("wait"), T("cm.html#run"));
+  salmap.set(T("while"), T("cm.html#loop"));
+  salmap.set(T("until"), T("cm.html#loop"));
+  salmap.set(T("when"), T("cm.html#loop"));
+  salmap.set(T("with"), T("cm.html#loop"));
+}
+/*
 void SymbolHelp::addSalHelp() {
   setHelpRoot( T("Sal"), ((GraceApp *)GraceApp::getInstance())->
 		getResourceDirectoryPathName()+T("/doc/sal/help/"));
@@ -116,7 +157,7 @@ void SymbolHelp::addSalHelp() {
   salmap.set(T("when"), T("when.sal"));
   salmap.set(T("with"), T("with.sal"));
 }
-
+*/
 void SymbolHelp::addGraceSchemeHelp() {
   setHelpRoot( T("GraceScheme"), T("file://") + ((GraceApp *)GraceApp::getInstance())->
 	       getResourceDirectoryPathName() + T("/doc/"));

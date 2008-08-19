@@ -9,7 +9,8 @@
 #include "Scheme.h"
 #include "ChickenBridge.h"
 
-#define SCHEME_DEBUG 1
+#define SCHEME_DEBUG 0
+
 // 1= trace scheme entry/exit points
 // 2= include gc info in trace
 // 3= include node creation/insertion/deletion info in tracce
