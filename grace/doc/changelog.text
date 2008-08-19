@@ -1,3 +1,39 @@
+Grace 1.0.2
+
+      New Csound music port supports realtime audio and scorefile work
+      using Csound5. You must have the Csound5 framework installed on
+      your computer and you must build Grace with the --csound option
+      specified. See doc/install.html for more information
+
+      Contains Common Music 3, a new major version release of the
+      Common Music algorithmic compositoin language. CM3 has been
+      redesigned from the bottom up for use in realtime and
+      interactive contexts.
+
+      New Midi Seq music port for capturing midi sequence data. Use
+      "Midi Seq>Record Midi Out" to record any messsage you send out
+      the Midi Out port or "Midi Seq>Score capture" to route algorithm
+      data directly to the sequence. You can save the current contents
+      of the sequnce to "tracks", write it to midi files or export its
+      message as text data in Editor windows. Use "Tracks>Import Midi"
+      to import from Midi files into into tracks that you can then
+      restore or mix into the sequnce.
+
+      Ports menu is now available in Editor window menubar as well as
+      in the Console window.
+
+      COMMAND-D symbol help lookup of Common Music, SAL and Scheme
+      symbols.
+
+      Midi Port no longer autoselects Device 0 on startup.
+
+      Added new Midi Port tutorial.
+
+      Reworked and checked all tutorials and example files.
+
+      Fixed editor bug that stopped Recent Files submenu from working.
+
+
 GraceCL 1.0.1
 
 	fixed bug that caused GraceCL and Grace to share preferences files

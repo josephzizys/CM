@@ -1,0 +1,128 @@
+;
+;; Working with MIDI
+;
+
+; This tutorial explains how to send data to the MIDI port.  Before
+; you get started you need to select a MIDI output device from the
+; Ports>Midi Out> menu and then test it using Ports>Midi Out>Test
+; Output to make sure you can hear sound.  If no output devices are
+; listed then you need to configure your computer for software
+; synthesis. This is quite easy but we won't cover it here,
+; information about how to configure Mac and Linux can be found in the
+; Appendix of the Ports documentation (avaliable in the Help>Ports
+; menu.)
+
+; Assuming you have a Midi Out device selected and you know that it
+; makes sound, here is how to sound a Middle C (key 60) for .5 second
+; on your selected Midi Out device. Put the cursor at the end of the
+; command line and press COMMAND-Enter to listen to it:
+
+send "mp:midi", 0, .5, 60, .5, 0
+
+;
+;; The 'send' command
+;
+
+; The send command sends data to ports.  The string "mp:note" is
+; called a 'message' -- it tells send where to route your data. Inside
+; the message string the name before the colon says what port to use
+; and the name after the colon specifies the method you want to
+; trigger on that port.  So the message "mp:midi" means you want to
+; send your data to the Midi Port's 'midi' method.
+
+; Following the message comes the comma delimited parameter data you
+; want to send.  The "mp:midi" message allows up to five parameters to
+; be specified.  The first parameter is named 'time', it holds the
+; time stamp of the note, in seconds, where 0 means NOW! The second
+; parameter is 'dur', the duration of the note in seconds. The third
+; value is the 'key' parameter, it holds the MIDI key number of the
+; note. The fourth value is 'amp', usually a value between zero and
+; one where .5 means mezzo-forte. The last parameters is 'chan', the
+; MIDI channel for the note, an integer from 0 to 15 (chan numbers are
+; zero based!)
+
+; Parameters for most messages have default values, which means that
+; if you don't specify a value the the method will use a value it
+; thinks is reasonable.  For example, you can make the exact same
+; sound as the first example on your device by executing this:
+
+send "mp:midi"
+
+; In other words, the default value for 'time' is 0, 'dur' is .5
+; seconds, 'key' is 60, 'amp' is .5 and 'chan' is 0. For example to
+; make the default sound but starting 2 second in the future and
+; lasting for 3 seconds execute this:
+
+send "mp:midi", 2, 3
+
+; If you just want to change just one or two parameters from their
+; defaults consider using keyword names of the parameters. Named
+; parameters can appear in any order:
+
+send "mp:midi", amp: .9, key: 71
+
+; note that in the case of named parameters the comma separate PAIRS,
+; the first item in the pair is the keyword name of the parameter (the
+; word ending with a colon) and the second item is the value you want
+; to pass to it. Of course, parameter values can be expressions, not
+; just values. For example, each time you execute the next example it
+; sends a randomly chosen key between 50 and 80 that lasts either .1,
+; .5 or 2 seconds:
+
+send "mp:midi", key: between(50, 80), dur: pick(.1, .5, 2)
+
+; you can send messages in the future simply providing the appropriate
+; (future time stamp). For example this loop sends 8 messages, all but
+; the first are sent in the future:
+
+loop repeat 8
+  for t from 0 by .25
+  send "mp:midi", t, key: between(40, 90)
+end
+
+; Try executing the expression several times allowing overlap (or not)
+; beween successive gestures!
+
+;
+;; Capturing data in the Midi Seq
+;
+
+; Finally, lets use the little loop to demonstrate how to capture
+; data, and the differences between Recording and Score Capture modes.
+; You use record mode to capture MIDI events in real time, exactly as
+; they sound when they are sent out the Midi Port. When you use Score
+; Capture mode, MIDI data is routed directly to the capture sequence
+; without making any sound, and time stamps in the data are taken to be
+; absolute time positions in the score.
+
+; (1) First, select Ports>Midi Seq>Record Midi Output to place the
+; Midi Port in recoding mode. Now execute this loop three times,
+; allowing overlap (or not) between each execution:
+
+loop repeat 8
+  for t from 0 by .25
+  send "mp:midi", t, key: between(40, 90)
+end
+
+; (2) Now select Ports>Midi Seq>Record Midi Output again to stop
+; recording, and then select Ports>Midi Seq>Play to play the sequence
+; you just recorded. You should hear exactly what you heard when you
+; executed the loop in (1). 
+
+; (3) Next, use Midi Seq>Clear to erase the seq you just recorded, and
+; then select Ports>Midi Seq>Score Capture to put the port in score
+; capturing mode.  Now execute this same loop again 3 times, waiting a
+; second or so between each execution just like the last time:
+ 
+loop repeat 8
+  for t from 0 by .25
+  send "mp:midi", t, key: between(40, 90)
+end
+
+; (4) Now select Ports>Midi Seq>Score Capture again to stop it, and
+; then select Ports>Midi Seq>Play to play the sequence you just
+; captured. Notice that you are hearing 3 notes at a time! This is
+; because time values are absolute, so each time you evaluated the
+; loop it added another note but at the exact same (absolute) time
+; position that it did in the previous execution!
+

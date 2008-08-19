@@ -17,79 +17,87 @@
  visual resources such as MIDI devices, audio libraries, plotting
  windows, score files, etc.  The exact set of ports available in the
  menu is determined when the application is built. </p>
+ 
+<h2 id="port-modes"> Real Time vs Score Capture Modes</h2>
 
-<div class="float">
-  <img src="ports-menu.png" alt="[ports-menu.png]"/>
-</div>
-
-  
-<p> Most ports support both realtime and non-realtime, or score,
-modes. In realtime mode a port is 'open' and it processes data at the
-exact time you <a href="scheme.html#send">send</a> it to the
-port. <!-- (For this reason you typically specify a time stamp of 0 in
-realtime data.) --> In non-realtime mode the port is 'closed' and it
-buffers, or saves, the data you send it. This captured data is
-contained in a <var>score</var> can then be written, displayed,
-exported or cleared. When you send data to a score you are effectively
-working "outside" of time -- you can add score data iteratively,
-in successive passes, and insert data in any time order.
-<!--
-subsequent notes at any time point in
-the score. - Time stamps in score data should be specified as
-absoulute score time units. You can add events to the score in any
-order,
---> 
-(The port automatically sorts score data by time stamps
-before it operates on the score.)  </p>
+<p> Most ports support both real time and score capture (non-real
+time) modes. In the normal real time mode a port is open and it
+processes data at the exact time you <a
+ href="cm.html#send">send</a> send it. In score capture mode the
+port routes data you send it to an internal buffer and does not
+processes it further. Your can then edit, display, play, save, export
+to text or delete this captured data as you see fit. It is important
+to understand that when you work in score capture mode the data you
+send to the port must contain time stamps so that the port can
+add it to the score at the proper time position. Since the port automatically sorts captured data you can add data iteratively, in successive passes, or
+insert it in random order. </p>
 
 <p>A port's menu is sensitive to whether the port currently contains
-score data or not. If the score has data then the port menu will
-contain items that let you operate on the score or clear its data. If
-the port's score is empty then the port menu will contain an Open item
-for starting realtime work.  In summary:</p>
+score data or not. If score data exists then the port menu will
+contain active items that let you operate on the data, for example to save it to a file or delete it.</p>
+
+<p>In summary:</p>
 
 <ul>
 
-  <li>To work with a port in non-realtime (scorefile) mode, send data
-  to the closed port using score based time-stamps in the data.</li>
+  <li>To work with a port in real time make sure its "score capture"
+mode is off. In real time mode the time stamp 0 means 'now' and values
+greater than 0 schedule data that many seconds into the future.
+</li>
 
-  <li>To work with a port in realtime mode use the port's Open menu
-item and send data to the port using a time-stamp of 0.</li>
+  <li>To work with a port in non-real time select Score Capture mode
+  from the port's menu. In score capture mode the time stamps in your data
+  are absolute score time.</li>
+
 </ul>
 
-See <a href="scheme.html#send">Sending Data to Ports</a> for more information about this process.
-
-<h2>Midi Out Port</h2>
-<p>The Midi Out Port connects Grace to external MIDI devices, software applications, and midi files.</p>
-
-<p>See <a href="scheme.html#midi-port">Midi Port Methods</a> for documentation on how to work with the Csound Port in Scheme.</p>
-
-<h4><span class="menuitem">Ports&gt;Midi Out&gt;Open...</span></h4>
-
-<p>Not yet written.</p>
-
-<h4><span class="menuitem">Ports&gt;Midi Out&gt;Write...</span></h4>
-
-<p>Not yet written.</p>
-
-<h4 id="midi-microtuning"><span class="menuitem">Ports&gt;Midi Out&gt;Microtuning</span></h4>
-
-<p>Submenu for tuning the Midi Out port to various microtonal resolutions. To produce microtonal inflection first select one of the resolutions smaller than Semitone and then send floating point key numbers in your MIDI data. A floating point key number <var>kkk.ccc</var> is interpreted as <var>cc</var> cents above MIDI key number <var>kkk</var>. For example 60.55 specifies a sound that is 55 cents above Middle C. </p>
+See <a href="cm.html#send">Sending Data to Ports</a> for more information.
 
 
-<div class="float">
-  <img src="midi-microtuning.png" alt="[midi-microtuing.png]"/>
-</div>
+<h2 id="midi-out">Midi Out Port</h2>
 
-<p> Note that any resolution smaller then Semitone 'claims' channels
-from the maximum available set of 16 untuned channels. For example
-in Quartertone tuning the channels 0-7 are available for use and
-channels 8-15 are reserved by the port. See the Instruments dialog for
-more information.</p> 
+<p>The Midi Out Port connects Grace to external MIDI devices and software applications.</p>
+
+<p>To send output select the appropriate output device listed at the
+top of the <span class="menuitem">Midi Out</span> menu. If no devices
+are listed then you are not using an external MIDI device you will
+have to configure your computer to route MIDI output to a software synth or sequencing program of your choice. See the <a href="#appendix">Appendix</a> for more information.</p>
+
+
+<h4><span class="menuitem">Test Output</span></h4>
+
+<p> Use this menu item to send a random burst of MIDI notes to the
+selected MIDI device. This is an easy way test your sound setup before
+you begin working.</p>
+
+
+<h4><span class="menuitem">Hush</span></h4>
+
+<p>Clears the MIDI output queue of any pending data and stops all algorithms running in the scheduler. This item is only active if the output queue or scheduling queue are busy.</p>
+
+<h4 id="midi-microtuning"><span class="menuitem">Microtuning</span></h4>
+
+<p>Sub menu to tune the Midi Out port to various micro-tonal
+resolutions. To produce micro-tonal sound you need to do two things
+</p>
+
+<ol>
+
+<li>Select the desired resolution from the Microtuning menu</li>
+
+<li>Send floating point key numbers to the port. See the MIDI tutorial for more information about this.</li>
+
+</ol>
+
+
+<p> Resolutions smaller then Semi-tone 'claim' channels from the
+maximum available set of 16 untuned channels. For example in
+Quartertone tuning the channels 0-7 are available for use and channels
+8-15 are reserved by the port. </p>
 
 <div class="float">
 <table width="80%">
-  <tr><th style="text-align: left;">Resolution</th> <th style="text-align: left;">Microtuned Channels</th> <th style="text-align: left;">Untuned channels</th></tr>
+  <tr><th style="text-align: left;">Resolution</th> <th style="text-align: left;">Microtuned Channel #</th> <th style="text-align: left;">Untuned channel #</th></tr>
 
   <tr><td>Semitone</td><td> &mdash;</td> <td>0-15 </td> </tr>
   <tr><td>Quartertone</td><td>0-7</td> <td> &mdash;</td> </tr>
@@ -110,37 +118,57 @@ more information.</p>
 </table>
 </div>
   
-<h4 id="midi-instruments"><span class="menuitem">Ports&gt;Midi Out&gt;Instruments...</span></h4>
+<h5 id="midi-microtuning"><span class="menuitem">Microtuning&gt;Avoid Drum Track</span></h5>
+<p> Disables micotuning from using channel #9 which, depending on your output device, may be hardwired to produce only drum sounds.
+</p>
 
-<p>Displays and assigns instruments for the available channels. The left side of the dialog lists each available channel number, its current tuning and instrument assignment. To select a different instrument, first select the channel, then select the Instrument and press Send.</p>
+<h5 id="midi-microtuning"><span class="menuitem">Microtuning&gt;Pitch Bend Width</span></h5>
+
+<p> Select the number of semitones your device defines as the total pitch bend range. The default value is 2, which is the typical width for most MIDI devices today.
+</p>
+
+<h4 id="midi-instruments"><span class="menuitem">Instruments...</span></h4>
+
+<p>The Instruments Dialog displays and assigns instruments to the
+available channels. The left side of the dialog lists each available
+channel number and its current tuning and instrument assignment. The
+right side of the dialog lists the possible instruments you can select
+from. To select a different instrument, select the channel line, then
+select the Instrument and press Send.</p>
 
 <div class="float">
   <img src="midi-instruments.png" alt="[midi-instruments.png]"/>
 </div>
 
+
+
+
 <h2 id="midi-in-port">Midi In Port</h2>
 
-<p> The Midi In Port receives <a href="scheme.html#midi-message">Midi
-Messages</a> from external MIDI devices and applications. The input
-port allows you to associate a <a href="scheme.html#mp:inhook">Scheme
-input hook</a> (function) to receive messages in real time as they
-arrive at the port. The hook can then operate on this data, for
-example, to trigger an algorithm to run in real time or to send it to
-the Midi Out port or score.  </p>
+<p>The Midi In Port connects Grace to external MIDI devices and
+software applications. The input port allows you to associate an <a
+ href="cm.html#mp:inhook"> input hook</a> (function) to receive <a
+ href="cm.html#midi-message">midi messages</a> asynchronously, as
+soon as they arrive at the port. The hook can then operate on the data
+it receives, for example, by sprouting an algorithm to use the
+information in some manner.
 
-<h4><span class="menuitem">Ports&gt;Midi In&gt;Open...</span></h4>
+<h4><span class="menuitem">Test Input</span></h4>
 
-<p>Not yet written.</p>
+<p> When this item is selected the messages that are received are
+printed in the Console window. Use this item to that test message input is working before you start working.</p>
 
-<h4 id="midi-configure"><span class="menuitem">Ports&gt;Midi In&gt;Configure...</span></h4>
+<h4 id="midi-configure"><span class="menuitem">Configure...</span></h4>
 
-<p> Configures the Midi In port to accept only the specified types of messages and channels.
-These messages will be passed to any MIDI input hook (function) that you assign to the Midi In port. See <a href="scheme.html#mp:inhook">mp:inhook</a> for information about setting Midi input hooks.</p>
-</p>
+<p> The Midi Receive Settings dialog allows you to accept only certain
+types of messages or channels.  Messages will be passed to any
+MIDI input hook (function) that you assign to the Midi In port. See <a
+ href="cm.html#mp:inhook">mp:inhook</a> for information about
+setting Midi input hooks.</p> </p>
 
 <div class="float">
   <img src="midi-configure.png" alt="[midi-configure.png]"/>
-
+</div>
 
 <dl>
   <dt style="font-weight: bold;">Receive Messages</dt>
@@ -149,19 +177,139 @@ These messages will be passed to any MIDI input hook (function) that you assign 
   <dd>Configures the port to accept all types of message or the specific types you select.</dd>
 </dl>
 
+
+
+
+<h2 id="midi-seq-port">Midi Seq Port</h2>
+
+<p>The MIDI Seq port allows you to record, capture and manipulate MIDI data into an internal buffer that can then be edited, played and saved.</p>
+
+<h4><span class="menuitem">Record Midi Output</span></h4>
+
+<p>
+Select this item to record all MIDI events sent out the Midi Out port.
+</p>
+
+<h4><span class="menuitem">Score Capture</span></h4>
+
+<p>
+Select this item capture time stamped MIDI data you send to the Midi Out port.
+
+</p>
+
+<h4><span class="menuitem">Reset Recording</span></h4>
+
+<p>
+Resets recording, the next message you send will restart the recording process. </p>
+
+<h4><span class="menuitem">Clear</span></h4>
+
+<p>
+Clears the capture sequence of any data.
+</p>
+
+
+<h4><span class="menuitem">Print Info</span></h4>
+
+<p>
+Prints status information about the capture sequence to the Console window.
+</p>
+
+<h4><span class="menuitem">Play</span></h4>
+
+<p>
+Plays the current contents of the capture sequence.
+</p>
+
+<h4><span class="menuitem">Copy to Plotter</span></h4>
+
+<p>
+Sends a copy of the sequence to a Plotter window. Not yet implemented.
+</p>
+
+<h4><span class="menuitem">Copy to Tracks</span></h4>
+
+<p>
+Copies the current contents of the capture sequence to the Tracks sub menu.
+</p>
+
+<h4><span class="menuitem">Tracks&gt;</span></h4>
+
+<p>
+Use this sub menu to select, edit and import MIDI tracks. Each item in the sub menu is a track of midi information. Listed tracks can be renamed, deleted, sent to the capture sequence or mixed into the capture sequence.
+</p>
+
+<h4><span class="menuitem">Tracks&gt;Import...</span></h4>
+
+<p>
+The Import Tracks dialog allows you to import track data from midi files into the Tracks menu.
+</p>
+
+
+<h4><span class="menuitem">Save</span></h4>
+
+<p>
+Saves the contents of the capture sequence to a midi file.
+</p>
+
+<h4><span class="menuitem">Save As...</span></h4>
+
+<p>
+Saves the contents of the capture sequence to a different midi file.
+</p>
+
+<h4><span class="menuitem">Export...</span></h4>
+
+<p>
+The Export dialog allows you to export the contents of the capture sequence as Text to the Console Window, the clipboard or a new Editor window. The text format of the exported data can be lists of data or send expressions in either SAL or Lisp format.
+</p>
+
+<div class="float">
+  <img src="midiseq-export.png" alt="[midiseq-export.png]"/>
 </div>
+
+<dl>
+
+  <dt style="font-weight: bold;">Export</dt>
+
+  <dd>Select an optional channel, start time and end time in the capture sequence to export.</dd>
+
+  <dt style="font-weight: bold;">Include</dt>
+  <dd>Select what type(s) of messages you want to export.</dd>
+
+  <dt style="font-weight: bold;">Export To</dt>
+  <dd>Select a destination for the exported text.</dd>
+
+
+  <dt style="font-weight: bold;">Data Format</dt>
+  <dd>Specifies the output format for the exported data. Possible values are:
+    <dl>
+      <dt style="font-weight: bold;">SAL data</dt>
+      <dd>Data is exported as SAL lists, each sublist contains the pfield data of a midi message.</dd>
+      <dt style="font-weight: bold;">Lisp data</dt>
+      <dd>Data is exported as Lisp lists.</dd>
+      <dt style="font-weight: bold;">Sal Sends</dt>
+      <dd>Exports data as a sequence of SAL <a href="cm.html#send">send statements</a> that, if executed, would recreate the score.</dd>
+      <dt style="font-weight: bold;">Lisp Sends</dt>
+      <dd>Exports data as a sequence of Lisp <a href="cm.html#send">send statements</a> that, if executed, would recreate the score.</dd>
+      </dl>
+  </dd>
+</dl>
+
+
+
 
 <h2 id="csound-port">Csound Port</h2>
 
 <p>The Csound port connects Grace to the <a href="http://sourceforge.net/project/showfiles.php?group_id=81968&package_id=120482">CSound5 sound synthesis library</a> for audio generation. Note that the Csound library must be installed on your machine before the Grace application can be started.</p>
 
-<p>See <a href="scheme.html#csound-port">Csound Port Methods</a> for documentation on how to work with the Csound Port in Scheme.</p>
+<p>See <a href="cm.html#csound-port">Csound Port Methods</a> for documentation on how to work with the Csound Port in Scheme.</p>
 
 
 
-<h4 id="csound-open"><span class="menuitem">Ports&gt;Csound&gt;Open...</span></h4>
+<h4 id="csound-open"><span class="menuitem">Open...</span></h4>
 
-<p>Opens the Csound port for realtime audio processing. You can open and close the port multiple times in the same session, optionally reconfiguring it with different audio settings and .orc files each time you open it. The current Csound configuration is saved in the preferences file so that when you restart Grace the port will be initialized your settings from the previous session. </p>
+<p>Opens the Csound port for real time audio processing. You can open and close the port multiple times in the same session, optionally reconfiguring it with different audio settings and .orc files each time you open it. The current Csound configuration is saved in the preferences file so that when you restart Grace the port will be initialized your settings from the previous session. </p>
 
 <div class="float">
   <img src="csound-open.png" alt="[csound-open.png]"/>
@@ -169,18 +317,18 @@ These messages will be passed to any MIDI input hook (function) that you assign 
 
 <dl>
   <dt style="font-weight: bold;">Options</dt>
-  <dd>The realtime audio settings to initialize Csound with. These options are saved in the grace preferences file.
+  <dd>The real time audio settings to initialize Csound with. These options are saved in the grace preferences file.
   <dt style="font-weight: bold;">Orchestra</dt>    
   <dd>An orchestra (.orc) file containing the audio instruments for Csound to use. The file chooser remembers the last ten orchestra files you specify. 
 
 </dl>
 </div>
 
-<h4 id="csound-close"><span class="menuitem">Ports&gt;Csound&gt;Close</span></h4>
+<h4 id="csound-close"><span class="menuitem">Close</span></h4>
 
 <p>Closes the open Csound Port. You can send score data to a closed Csound port.</p>
 
-<h4 id="csound-write"><span class="menuitem">Ports&gt;Csound&gt;Write...</span></h4>
+<h4 id="csound-write"><span class="menuitem">Write...</span></h4>
 
 <p>Writes all the buffered score data to Csound using the specified non-real time audio options and orchestra file. </p>
 
@@ -188,9 +336,9 @@ These messages will be passed to any MIDI input hook (function) that you assign 
   <img src="csound-write.png" alt="[csound-write.png]"/>
 </div>
 
-<h3 id="csound-export"><span class="menuitem">Ports&gt;Csound&gt;Export...</span></h3>
+<h3 id="csound-export"><span class="menuitem">Export...</span></h3>
 
-<p>Exports scorefile data using a specified text format an output destination.</p>
+<p>Exports score data using a specified text format an output destination.</p>
 
 <div class="float">
   <img src="csound-export.png" alt="[csound-export.png]"/>
@@ -210,7 +358,7 @@ These messages will be passed to any MIDI input hook (function) that you assign 
   <dd>Specifies the output format for the exported data. Possible values are:
     <dl>
       <dt style="font-weight: bold;">Csound score</dt>
-      <dd>Data is exported as i and f scorefile statements.</dd>
+      <dd>Data is exported as i and f score statements.</dd>
       <dt style="font-weight: bold;">SAL data</dt>
       <dd>Data is exported for SAL lists, each sublist contains the pfield data of one i or f statement.</dd>
       <dt style="font-weight: bold;">Lisp data</dt>
@@ -228,7 +376,7 @@ These messages will be passed to any MIDI input hook (function) that you assign 
 
 </div>
 
-<h4 id="csound-display"><span class="menuitem">Ports&gt;Csound&gt;Display...</span></h4>
+<h4 id="csound-display"><span class="menuitem">Display...</span></h4>
 
 <p>Sends score data to Plotter for graphical editing. (Not yet available.)</p>
 
@@ -236,7 +384,7 @@ These messages will be passed to any MIDI input hook (function) that you assign 
 
 
 
-<h4 id="csound-open"><span class="menuitem">Ports&gt;Csound&gt;Clear.</span></h4>
+<h4 id="csound-open"><span class="menuitem">Clear</span></h4>
 
 <p>Clears the port of all buffered score data.</p>
 
@@ -244,9 +392,40 @@ These messages will be passed to any MIDI input hook (function) that you assign 
 
 
 
-<h2> Plotter </h2>
+<h2 id="appendix"> Appendix </h2>
 
-<p>Not yet written.</n>
+<h3 id="osx-midi">1. Configuring Real Time MIDI on OSX</h3>
+
+<ul>
+  <li> Start the "Audio Midi Setup" program located in your  Applications/Utilities folder.</li>
+
+  <li> Select the "MIDI Devices" tab at the top of the main
+  window.</li>
+
+  <li> Double-click the "IAC Driver" icon visible in the main
+  panel to open the "IAC Driver Properties" window.</li>
+
+  <li> Click the toggle button marked "Device is online"</li>
+
+  <li> Quit the application.</li>
+</ul>
+
+<!-- h3>Installing a Software Synth on OSX </h3 -->
+
+<ul>
+
+  <li> Download and install the <a
+   href="http://notahat.com/simplesynth">SimpleSynth</a> application,
+  by Pete Yandell.</li>
+
+  <li> Start the SimpleSynth application and select "IAC Driver Bus 1"
+  from its Midi Source menu. </li>
+
+  <li> Start Grace and select the "IAC Driver Bus 1" device listed in the Ports>Midi Out menu.
+</li>
+
+</ul>
+
 
 </div>
 </body>
