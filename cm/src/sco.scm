@@ -319,8 +319,9 @@
                        (push statement head)
                        (set! last #f))
                       (( #\a )
-                       (format #t "; Warning: a_statement not implemented: ~s" 
-                               line)
+                       (format 
+			#t "; Warning: a_statement not implemented: ~s~%" 
+			line)
                        (set! last #f))
                       (( #\t )
                        ;; WAS STRING-FORMS
@@ -330,7 +331,7 @@
                        (set! secs (+ secs 1))
                        (when (> secs 1)
                          (format #t
-                                 "; Warning: Multiple 's' not implemented."))
+                                 "; Warning: Multiple 's' not implemented.~%"))
                        (set! last #f))
                       (( #\e )
                        (set! stop #t)
@@ -340,16 +341,18 @@
                            ))
                    (begin (set! statement line) (set! next #f)
                           ))
-                 (begin
-                  ;; continuation of statement or unknown line
-                  (if statement
-                    (set! statement 
-                          (string-append statement " " line))
-                    (begin
-                     (format #t
-                             "Skipping unimplemented statement:~% ~S" line)
-                     (set! statement #f)))
-                  (set! next #f))))
+                 )
+		(else
+		 ;; continuation of statement or unknown line
+		 (if statement
+		     (set! statement 
+			   (string-append statement " " line))
+		     (begin
+		       (format #t
+			       "Skipping unimplemented statement: ~S~%" line)
+		       (set! statement #f)))
+		 (set! next #f))
+		)
           )
         ;;finally
         (if statement 
@@ -376,7 +379,11 @@
          )
         #f))))
 
-(define (sco-write-and-load . args) args #f)
+; (import-events "/Users/hkt/a1.sco")
+
+(define (sco-write-and-load . args) args 
+  (car (last args))
+  )
 
 ;; (define (write-sco-and-load io file defs head list)
 ;;   ;; save f_statements in file header
