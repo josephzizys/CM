@@ -64,7 +64,8 @@
 			<Add alias="All" targets="Debug;Release;" />
 		</VirtualTargets>
 		<Compiler>
-			<Add option="-DRELEASE=101" />
+			<Add option="-DRELEASE=102" />
+			<Add option="-DREVISION=1646" />
 			<Add option="-DSCHEME=1" />
 			<Add option="-DWINDOWS" />
 			<Add directory="..\..\..\juce\" />
@@ -100,6 +101,9 @@
 		<Unit filename="..\..\src\Editor.h">
 			<Option target="Release" />
 		</Unit>
+		<Unit filename="..\..\src\Enumerations.h" />
+		<Unit filename="..\..\src\Fomus.cpp" />
+		<Unit filename="..\..\src\Fomus.h" />
 		<Unit filename="..\..\src\Grace.cpp">
 			<Option target="Release" />
 		</Unit>

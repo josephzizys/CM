@@ -66,14 +66,14 @@
 			<Add alias="All" targets="Debug;Release;" />
 		</VirtualTargets>
 		<Compiler>
-			<Add option="-DRELEASE=101" />
+			<Add option="-DRELEASE=102" />
+			<Add option="-DREVISION=1646" />
 			<Add option="-DSCHEME=1" />
 			<Add option="-DWINDOWS" />
 			<Add option="-DPORTCSOUND=1" />
 			<Add directory="..\..\..\juce\" />
 			<Add directory="..\..\..\chicken\include" />
 			<Add directory="C:\Program Files\Csound\include" />
-			<Add directory="C:\Program Files\Csound\bin" />
 		</Compiler>
 		<Linker>
 			<Add directory="..\..\..\juce\bin" />
@@ -105,6 +105,9 @@
 		<Unit filename="..\..\src\Editor.h">
 			<Option target="Release" />
 		</Unit>
+		<Unit filename="..\..\src\Enumerations.h" />
+		<Unit filename="..\..\src\Fomus.cpp" />
+		<Unit filename="..\..\src\Fomus.h" />
 		<Unit filename="..\..\src\Grace.cpp">
 			<Option target="Release" />
 		</Unit>

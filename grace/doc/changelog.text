@@ -23,7 +23,7 @@ Grace 1.0.2
       the Console window.
 
       COMMAND-D symbol help lookup of Common Music, SAL and Scheme
-      symbols.
+      symbols (does not work on Windows, see below)
 
       Midi Port no longer autoselects Device 0 on startup.
 
@@ -32,6 +32,12 @@ Grace 1.0.2
       Reworked and checked all tutorials and example files.
 
       Fixed editor bug that stopped Recent Files submenu from working.
+
+  KNOWN ISSUES:
+      Windows:  COMMAND-D documentation lookup doesnt work because
+      launchInDefaultBrowser() doesn't seem to pass the #name portion
+      of the help URL on to the browser.
+
 
 
 GraceCL 1.0.1

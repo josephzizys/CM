@@ -14,7 +14,7 @@
 #include "Toolbox.h"
 #include "Editor.h"
 
-#include <iostream>;
+#include <iostream>
 
 //
 //  Nodes
@@ -2172,7 +2172,7 @@ void MidiFileInfoComponent::buttonClicked (Button* button)
 	    return;
 	}
       midifileinfo->file=fileeditor->getCurrentFile();
-      midifileinfo->tempo=temposlider->getValue();
+      midifileinfo->tempo=(int)temposlider->getValue();
       midifileinfo->keysig=keysigmenu->getSelectedId();
       midifileinfo->insts=tuningbutton->getToggleState();
       midifileinfo->bends=instrumentbutton->getToggleState();
