@@ -1,8 +1,8 @@
 ;
-;; iteration
+;; Iteration
 ;
 
-; here is one way execute a statement 10 times:
+; here is one way execute a statement five times:
 
 begin
   print "a random keynum: ", random(128)
@@ -10,21 +10,24 @@ begin
   print "a random keynum: ", random(128)
   print "a random keynum: ", random(128)
   print "a random keynum: ", random(128)
-  print "a random keynum: ", random(128)
-  print "a random keynum: ", random(128)
-  print "a random keynum: ", random(128)
-  print "a random keynum: ", random(128)
+
+end
+
+; Here is a much easier way of accomplishing the same thing:
+
+loop repeat 5
   print "a random keynum: ", random(128)
 end
 
-; here is a much better way of accomplishing the same thing:
+; Even better, with a loop you can double the amount of work without
+; adding any additional code:
 
 loop repeat 10
   print "a random keynum: ", random(128)
 end
 
-; the 'loop' statement performs iteration: it repeatedly executes an
-; 'action statement' some number of times. the simplest way to tell a
+; The 'loop' statement performs iteration: it repeatedly executes an
+; action statement some number of times. The simplest way to tell a
 ; loop how many times to iterate is to use its 'repeat' clause. the
 ; repeat value can a number or any sexpr that evaluates to a number:
 
@@ -32,13 +35,6 @@ loop repeat random(10)
   print "a random keynum: ", random(128)
 end
   
-;
-;; loop's action can be any SAL statement
-;
-
-loop repeat 4
-  set foo = random(128)
-end
 
 ; loop's 'end' tag makes it an implicit block so you can execute more
 ; than one action statement
@@ -50,25 +46,25 @@ loop repeat 4
   print "----------------------------"
 end
 
-; action clauses are executed each time through the loop. you can
-; associate an single action with the END of the iteration using the
-; 'finally' clause. if given, the finally statement is executed one
-; time only, immediately after the iteration has stopped.
+; the loop's action can be any SAL statement:
 
-loop repeat 10
-  print "a random keynum: ", random(128)
-  finally print "All done!"
+loop with foo = {}
+  repeat 4
+  set foo &= random(128)
+  finally print "my random keys=", foo
 end
 
-; note that a finally clause will execute even if no iteration
-; occurs!:
+; the 'finally' clause lets you associate an single action with the
+; END of the iteration. if given, the finally statement is executed
+; one time only, immediately after the iteration has stopped. note
+; that a finally clause will execute even if no iteration occurs!:
 
 loop repeat 0
   print "a random keynum: ", random(128)
   finally print "All done!"
 end
 
-; use a begin...end block if you want to execute more than one finally
+; Use a begin...end block if you want to execute more than one finally
 ; statement:
 
 loop with var = {}, sum = 0 
@@ -83,18 +79,16 @@ loop with var = {}, sum = 0
 end
 
 ;
-;; stepping statements
+;; Stepping statements
 ; 
 
-; loop allows you to specify any number of 'for' clauses that
-; increment 'stepping variables' each time through the loop.  a
-; stepping variable is a variable that loop automatically increments
-; for you each time through the loop. all the stepping clauses must
-; appear before the action statement. in this example the stepping
+; You can specify any number of 'for' clauses that increment stepping
+; variables each time through the loop.  All stepping clauses must
+; appear before the action statement. In this example the stepping
 ; variable i is set to a new random key number each time through the
 ; loop
 
-;; general stepping:  'for <var> = <sexpr>' ...
+; general stepping:  'for <var> = <sexpr>' ...
 
 loop repeat 10
   for i = random(128)
@@ -102,12 +96,10 @@ loop repeat 10
   finally print "All done!"  
 end
 
-; you can have any number of 'for statements'. in this example we
-; declare the stepping variables key rhy and amp. notice the amp
-; stepping: he 'then' clause causes amp to be randomly chosen on the
-; first iteration and incremented by .05 each time after that. since
-; amplitude is defined 0.0=silence to 1.0=loudest, what would this
-; sound like?
+; You can have any number of 'for statements'. This example uses three
+; stepping variables: key rhy and amp. Notice that the amp's 'then'
+; clause causes it to be randomly chosen only on the FIRST iteration
+; and then incremented by .05 each time after that.
 
 loop repeat 10
   for key = random(128)
@@ -116,10 +108,10 @@ loop repeat 10
   print "key=", key, " rhy=", rhy, " amp=", amp
 end
 
-; the value of one 'for <var> = ...' variable can depend on another. in
-; this example we declare the stepping variable key to hold a random
-; keynum and 'maj' to hold a list representing a major chord built on
-; whatever keynum was chosen
+; The value of one 'for <var> = ...' variable can depend on
+; another. in this example we declare the stepping variable key to
+; hold a random keynum and 'maj' to hold a list representing a major
+; chord built on whatever keynum was chosen
 
 loop repeat 10
   for key = random(128)
@@ -133,7 +125,7 @@ end
 ; begin ... end block for more than one action!
 
 ;
-;; list stepping: 'for <var> in <list>'
+;; List stepping: 'for <var> in <list>'
 ;
 
 ; you can step a variable over a list of elements using the 'in'
@@ -150,18 +142,18 @@ loop for c in {bach beethoven mozart berg webern schoenbeg}
 end
 
 ;
-;; numerical stepping: 'for <var> from <num> to <num> by <num> ...'
+;; Numerical stepping: 'for <var> from <num> to <num> by <num> ...'
 ; 
 
-; numerical stepping clauses automatically increment stepping
+; Numerical stepping clauses automatically increment stepping
 ; variables by counting. both the starting and stopping bounds for the
 ; counting can be provided
 
-; use 'from' to specify the starting value. if 'from' value is not
+; Use 'from' to specify the starting value. if 'from' value is not
 ; provided the variable starts at 0.  the stopping value is specified
 ; using one of: 'to', 'below', 'downto', 'above'.  
 
-; the 'to' and 'downto' boundary stops iteration just after the
+; The 'to' and 'downto' boundary stops iteration just after the
 ; variable reaches the value
 
 loop for x from 1 to 10
@@ -172,26 +164,27 @@ loop for x from 10 downto 1
   print "x=", x
 end
 
-; if you omit the 'from' it defaults to 0
+; If you omit the 'from' it defaults to 0
 
 loop for x to 10
   print "x=", x
 end
   
-; the 'by' clause lets you specify the increment value for the variable
+; The 'by' clause lets you specify the increment value for the variable
 
 loop for x from 0 to 20 by 2
   for y from 100 downto 10 by 10
   print "x=", x, " y=",y
 end
 
-;; you can increment by floating point values too
+; You can increment by floating point values too
 
 loop for x from 2.5 to 8 by .1
   print "x=", x
 end
 
-; the 'below' and 'above' boundaries stop iteration just before the variable reaches the value
+; The 'below' and 'above' boundaries stop iteration just before the
+; variable reaches the value
 
 loop for x below 10
   print "x=", x
@@ -201,7 +194,7 @@ loop for x from 10 above 0
   print "x=", x
 end
 
-; if more than one stepping clause is provided the loop stops after
+; If more than one stepping clause is provided the loop stops after
 ; shortest path is reached
 
 loop for x from 0 to 1000 by 10
@@ -209,7 +202,7 @@ loop for x from 0 to 1000 by 10
   print "x=", x, " y=",y
 end
 
-; you can also specify a numerical iteration without a stepping
+; You can also specify a numerical iteration without a stepping
 ; boundary. but some clause better stop the iteration or it will run
 ; forever!
 
@@ -221,23 +214,24 @@ loop repeat 10
 end
 
 ;
-;; accumulating results
+;; Accumulating results
 ;
 
-; one of the most useful things you can with loop is to accumulate
+; One of the most useful things you can with loop is to accumulate
 ; results in local variables you declare using the 'with' clause. One
 ; important point: be sure to initialize your variables when you
 ; declare them to a starting value appropriate for the
-; accumulation. for example, if you want to collect values into a
+; accumulation. For example, if you want to collect values into a
 ; list, initialize the list to the empty list {} when you declare
-; it. if you want to incrementally sum or scale stepping values then
-; initialize the local variable to 0 or 1 respectively. if you want to
+; it. If you want to incrementally sum or scale stepping values then
+; initialize the local variable to 0 or 1 respectively. If you want to
 ; minimize values, initialize the minimum to a value larger than any
-; minimum value you will iterate. when you maximize initialize
+; minimum value you will iterate and do the opposite when you use
+; maximize.
 
-; collect all the values of a stepping variable into a local
-; variable. the variable is initialized to the empty list when it is
-; declared. the set operator &= appends elements to a list.
+; This example collect all the values of a stepping variable into a
+; local variable. the variable is initialized to the empty list when
+; it is declared. the set operator &= appends elements to a list.
 
 loop with res = {}
   for i from 1 to 10
@@ -245,7 +239,7 @@ loop with res = {}
   finally print "res=", res
 end
 
-; reverse collect all the value of a stepping variable into a list:
+; Reverse collect all the value of a stepping variable into a list:
 
 loop with res = {}
   for i from 1 to 10
@@ -253,8 +247,8 @@ loop with res = {}
   finally print "res=", res
 end
 
-; sum all the values of a stepping variable into a local variable. the
-; local variable is initialized to 0 when it is declared. recall that
+; Sum all the values of a stepping variable into a local variable. The
+; local variable is initialized to 0 when it is declared. Recall that
 ; the set operator += increments a variable by a value.
 
 loop with res = 0
@@ -263,9 +257,9 @@ loop with res = 0
   finally print "res=", res
 end
 
-; multiply all the values of a stepping variable into a local
-; variable. the local variable is initialized to 1 when it is
-; declared. recall that the set operator *= scales a variable by a
+; Multiply all the values of a stepping variable into a local
+; variable. The local variable is initialized to 1 when it is
+; declared. Recall that the set operator *= scales a variable by a
 ; value.
 
 loop with res = 1
@@ -274,8 +268,8 @@ loop with res = 1
   finally print "res=", res
 end
 
-;; this loop both sums and collects random key numbers. it then prints
-;; the results, along with the average value found:
+; This loop both sums and collects random key numbers. It then prints
+; the results, along with the average value found:
 
 loop with sum = 0.0, res = {}
   repeat 10
@@ -284,8 +278,8 @@ loop with sum = 0.0, res = {}
   finally print  "res=", res,  " avr=", sum / length(res)
 end
 
-;; this example minimizes random values.  the variable is initially
-;; set to a value greater than any possible values we will minimize:
+; This example minimizes random values. The variable is initially set
+; to a value greater than any possible values we will minimize:
 
 loop with val = 129 
   repeat 10 
@@ -293,7 +287,7 @@ loop with val = 129
   finally print "minimum random value: ", val
 end
 
-;; do the opposite if you maximize:
+; Do the opposite if you maximize:
 
 loop with val = -1
   repeat 10 
@@ -302,14 +296,14 @@ loop with val = -1
 end
 
 ;
-;; using loop inside functions
+;; Using loop inside functions
 ;
 
-; loop is really useful for designing all sorts of musical
-; functions. the finally clause can be a 'return' statement to return
+; Loop is really useful for designing all sorts of musical
+; functions. The finally clause can be a 'return' statement to return
 ; the loop's result from the function!
 
-; one very common type of function transforms an input list into an
+; One very common type of function transforms an input list into an
 ; output list. The general form of these function is to decalare a new
 ; an empty list, then iterate over each element in the old list and
 ; use set's append operator (&=) to append the transformed element
@@ -339,17 +333,16 @@ define function makechords (mel)
 
 print makechords( {60 62 63 65 67 68 70 72} )
 
-  
 ;
-;; stopping iteration using while and until
+;; Stopping iteration using while and until
 ;
 
-; you can use 'while' or 'until' clauses to halt iteration based on a
+; You can use 'while' or 'until' clauses to halt iteration based on a
 ; test of some condition. while stops iteration as soon as the
 ; condition is false. until stops iteration when the test is true:
 
 
-; iterate random numbers until a '9' is found:
+; Iterate random numbers until a '9' is found:
 
 loop for x = random(10)
   until x = 9 
@@ -357,7 +350,7 @@ loop for x = random(10)
   finally print "all done!"
 end
 
-; collect 10 random keynumbers in pentatonic scale
+; Collect 10 random keynumbers in pentatonic scale:
 
 loop with l = {}
   for x = random(128)
@@ -368,7 +361,7 @@ loop with l = {}
   finally print "random pentatonic tones: ", l
 end
 
-; iterate random numbers until the same value is picked consecutively
+; Iterate random numbers until the same value is picked consecutively:
 
 loop with old = -1
   for new = random(20)
@@ -379,6 +372,4 @@ loop with old = -1
   end
   finally print "all done!"
 end
-
-
 

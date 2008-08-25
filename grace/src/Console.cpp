@@ -296,7 +296,12 @@ void ConsoleWindow::printBanner() {
   GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
   String banner = app->getApplicationName() + T(" ")
   + app->getApplicationVersion()
-  + T("\n(c) 2007 Todd Ingalls, Rick Taube\n");
+  + T("\n(c) 2008 Todd Ingalls, Rick Taube\n");
+
+  banner << T("JUCE ") << JUCE_MAJOR_VERSION << T(".") 
+	 << JUCE_MINOR_VERSION 
+	 << T(", (c) 2008 Julian Storer\n");
+
   printMessage( banner);
   File reso=File(app->getResourceDirectoryPathName());
   if ( ! reso.isDirectory() )

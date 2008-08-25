@@ -5,9 +5,11 @@ addoption("csound", "build with csound support")
 addoption("fomus", "build with fomus support")
 addoption("debug", "build against debug libs")
 
+juce_dir = ""
+
 if options["juce"] then
    juce_dir = options["juce"]
-elseif not options["clean"] then
+elseif (not options["clean"]) and (not options["help"]) then
    error("Use --juce and provide the location of the JUCE directory")
 end
 

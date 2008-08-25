@@ -39,6 +39,7 @@
 		0AF1A9AA0DA7A5EE00E46E22 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F18288D0D5A207700F53B16 /* OpenGL.framework */; };
 		0AF1A9AB0DA7A5EE00E46E22 /* libchicken.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA95C960DA160060042B274 /* libchicken.a */; };
 		0AF1A9B60DA7A77100E46E22 /* CsoundLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AF1A9B50DA7A77100E46E22 /* CsoundLib.framework */; };
+		0AF781EE0E62FD7100D4888E /* Fomus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0AF781ED0E62FD7100D4888E /* Fomus.cpp */; };
 		5F1827550D5A176400F53B16 /* libjuce.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1827540D5A176400F53B16 /* libjuce.a */; };
 		5F1827560D5A176400F53B16 /* libjuce.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F1827540D5A176400F53B16 /* libjuce.a */; };
 		5F1827FE0D5A1B9F00F53B16 /* Help.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827D20D5A1B9E00F53B16 /* Help.cpp */; };
@@ -127,6 +128,9 @@
 		0AF1A9AF0DA7A5EE00E46E22 /* Grace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Grace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0AF1A9B10DA7A5EE00E46E22 /* Info copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info copy.plist"; sourceTree = "<group>"; };
 		0AF1A9B50DA7A77100E46E22 /* CsoundLib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CsoundLib.framework; path = /Library/Frameworks/CsoundLib.framework; sourceTree = "<absolute>"; };
+		0AF781EC0E62FD7100D4888E /* Fomus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Fomus.h; path = ../../src/Fomus.h; sourceTree = SOURCE_ROOT; };
+		0AF781ED0E62FD7100D4888E /* Fomus.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Fomus.cpp; path = ../../src/Fomus.cpp; sourceTree = SOURCE_ROOT; };
+		0AF781EF0E62FD8200D4888E /* Enumerations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Enumerations.h; path = ../../src/Enumerations.h; sourceTree = SOURCE_ROOT; };
 		20286C33FDCF999611CA2CEA /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		5F1827540D5A176400F53B16 /* libjuce.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libjuce.a; path = /usr/local/src/juce/bin/libjuce.a; sourceTree = "<absolute>"; };
 		5F1827D10D5A1B9E00F53B16 /* Layer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Layer.h; path = ../../src/Layer.h; sourceTree = SOURCE_ROOT; };
@@ -303,6 +307,9 @@
 		5F1827CD0D5A1B8C00F53B16 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				0AF781EF0E62FD8200D4888E /* Enumerations.h */,
+				0AF781EC0E62FD7100D4888E /* Fomus.h */,
+				0AF781ED0E62FD7100D4888E /* Fomus.cpp */,
 				0AD15EE30D68835E008CFAD2 /* Csound.h */,
 				0AD15ED50D68833C008CFAD2 /* Csound.cpp */,
 				5F1827D10D5A1B9E00F53B16 /* Layer.h */,
@@ -575,6 +582,7 @@
 				5F1828360D5A1BDB00F53B16 /* Midi.cpp in Sources */,
 				0AD15ED60D68833C008CFAD2 /* Csound.cpp in Sources */,
 				5F97F8060DA9BF0A0019D3F4 /* ChickenBridge.cpp in Sources */,
+				0AF781EE0E62FD7100D4888E /* Fomus.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -658,6 +666,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
+				ARCHS = (
+					i386,
+					ppc,
+				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_OPTIMIZATION_LEVEL = s;
 				LIBRARY_SEARCH_PATHS = (
@@ -667,6 +679,7 @@
 				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
 				SEPARATE_STRIP = YES;
 				USER_HEADER_SEARCH_PATHS = "../../../juce /usr/local/src/juce";
+				VALID_ARCHS = "ppc64 ppc7400 ppc970 i386 x86_64 ppc";
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -678,7 +691,8 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					MACOSX,
 					SCHEME,
-					DEBUG,
+					"REVISION=1642",
+					"RELEASE=102",
 					"_GLIBCXX_DEBUG=1",
 					"_GLIBCXX_DEBUG_PEDANTIC=1",
 				);

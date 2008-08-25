@@ -2,64 +2,60 @@
 ;; Variables
 ; 
 
-; Recall from sexpr.sal that a variable is a symbol that stands for a
-; value. there are actually two types of variables: 'global' variables
-; are variables that you create using the 'define' command; 'local'
-; variables are variables that you declare using 'with...' at the
-; start of coding blocks like 'begin...end', 'loop...end', or
-; 'run...end'.  more about this later...
+; A variable is a symbol that stands for a value. There are actually
+; two types of variables: 'global' variables are variables that you
+; create using the 'define' command; 'local' variables are variables
+; that you declare using a 'with...' statement in code blocks like
+; 'begin...end', 'loop...end', or 'run...end'.  More about local
+; variables in just a bit...
 
 ;
 ;; Defining global variables
 ;
 
-; A global variable is a variable that all the code you are developing
-; can access. For example, if you were working on a twelve-tone
-; composition you might want to create a global variable to hold the
-; main row for the piece. That way all the code you develop could
-; "agree" on the row that they are working with.
+; A global variable is a variable that all code can reference. For
+; example, if you were working on a twelve-tone composition you might
+; want to create a global variable to hold the actual row of the
+; composition. That way all the code you develop could "agree" on the
+; row they are working with simply by referencing the row stored in
+; that global variable.
 
-; Use the 'define variable' command to define global variables. This
-; is what such a row definition might look like:
+; Use the 'define variable' command to define a global variable. This
+; is what a twelve-tone row definition might look like. Put your
+; cursor at the end of the line and press COMMAND-Enter to execute the
+; definition:
 
 define variable row = {0 11 1 10 2 9 3 8 4 7 5 6}
 
-; once you press Enter to execute the define variable command you the
-; variable can be used in command expressions and all programs.
-
-print row, reverse(row)
+print "Prime row: ", row, ", retograde row: ", reverse(row)
 
 ; The 'define variable' command takes the name of the new global
 ; variable, followed by an optional '= <value>' initialization.  If
-; you don't provide an initial value for new global variable it is
-; automatically set to #f (boolean false).  Other facts: the = value
-; can be any SAL sexpr, and you can define more than one variable at a
-; time using the comma to delimit each variable definition. In this
-; example we define two more globals, the first holds a row type we
-; randomly choose from four possible row types (using self-evaluating
-; symbols to represent the prime retrograde inversion and
+; you don't provide an initial value for global variable it is
+; automatically set to #f (boolean false).  Other facts: the value
+; after the = can be any SAL sexpr, and you can define more than one
+; variable at a time using a comma between each variable
+; definition. In this next example we define two globals, the first
+; holds a row type we randomly choose from four possible row types
+; (using a string to represent the prime retrograde inversion and
 ; retrograde-inversion row forms) and the second global to hold a
 ; transposition offset:
 
-define variable row-form = pick( :p, :r, :i, :ri) ,
+define variable row-form = pick( "p", "r", "i", "ri") ,
        row-transp = between(0, 12)
   
 ;
-;; local variables
+;; Local variables
 ;
 
-; It is often the case that variables are needed only for a particular
-; set of statements and that once that calculation is over the
-; variable is no longer needed.  A local variable is a 'temporary'
-; variable that is only defined within a specific block of code. Of
-; course you could use a global variables for this but populating the
-; global name space with all these variables is a bad idea because
-; global definitions are permanent and visible to all your code.
-
-; use the 'with' statement to declare local, temporary variables
-; inside 'begin...end', 'loop' or 'run' blocks. These variables only
-; exist inside the lexical scope of the block.  Here is an example of
-; declaring two local variables, x and y and then using them:
+; Sometimes a variable is needed only for a particular set of
+; statements.  A local variable is a temporary variable that is only
+; defined within a specific block of code.  Use the 'with' statement
+; to declare local, temporary variables inside 'begin...end', 'loop'
+; or 'run' blocks. These variables only exist inside the lexical scope
+; of the block.  Here is an example of two local variables x and
+; y. Place your cursor after the word 'end' and press COMMAND-Enter
+; several times:
 
 begin
   with x = random(12) ,
@@ -67,16 +63,20 @@ begin
   print list(x,y)
 end
 
-; now if you try to evaluate either x or y outside the block an error
-; is signaled because those variables only exist within the lexical
-; scope of the begin...end :
+; Its clear from the print statement that when the block executes the
+; variables x and y have values (or else the print statement wouldn't
+; work!). But notice that if you try to evaluate either x or y OUTSIDE
+; the block an error occurs because those variables don;t exist
+; outside the block in which they were (locally) declared. Executing
+; this next statement will trigger an error message because there is
+; no global variable called x (unless you created one yourself!)
 
 print x
 
-; notice that a variable declared inside an inner block will "shadow"
-; the same variable name declared in an outer block. in this example,
-; both blocks use the same variable name 'x' but the print statements
-; clearly show that they are different variables!
+; Notice that a variable declared inside an inner block will shadow
+; the same variable declared in an outer block. In this example, both
+; blocks declare a variable 'x' but the print statements clearly show
+; that they are different variables!
 
 begin
   with x = 1
@@ -92,19 +92,19 @@ end
 ;; Variable assignment: the 'set' command
 ;
 
-; What if we change our mind and want different values than the ones
-; that we originally defined?  One solution might be to re-execute the
-; define commands with different values. Another way is to ASSIGN the
+; What if want to assign a differnt value to an existing variable?
+; For global variables, on solution might be to re-execute the define
+; commands with a different inital value. Another way is to ASSIGN the
 ; variable a new value using the SET command.
 
 define variable row = {11 10 9 8 7 6 5 4 3 2 1 0},
-       row-form = :p,
+       row-form = "p",
        row-transp = 0
 
 print "row=", row, " row-form=", row-form, " row-transp=", row-transp
 
 set row = {0 1 2 3 4 5 6 7 8 9 10 11},
-    row-form = :r,
+    row-form = "r",
     row-transp = between(6, 12)
 
 print "row=", row, " row-form=", row-form, " row-transp=", row-transp
@@ -113,11 +113,11 @@ print "row=", row, " row-form=", row-form, " row-transp=", row-transp
 ; On first appearance the 'set' command looks very much like the
 ; define variable command, including the ability to operate on more
 ; than one variable at a time. But there are actually several
-; important differences between define and set:
-
-; 1. Set does not CREATE variables, it simply sets existing ones
-; 2. Set supports more operators than just the = assignment operator.
-; The set operations are:
+; important differences between define and set. First, and most
+; importatly, set does not actualy CREATE variables, it simply sets an
+; existing one to a new value. Secondly, the 'set' command supports
+; many more 'assignment operators' than define does. The set operators
+; are:
 
 ;   =       assign a variable a value
 ;   +=      increment a variable by an amount
@@ -128,12 +128,12 @@ print "row=", row, " row-form=", row-form, " row-transp=", row-transp
 ;   <=      minimize a variable 
 ;   >=      maximize a variable 
 
-; here is an example of each set operator in action. In each example
-; the set is placed inside a loop that repeats the set 5 times so that
-; you can se the effect. more about the loop statment in another
-; lesson!
+; Here is an example of each set operator in action. In each example
+; the set is placed inside a loop that repeats the assingment 5 times
+; so that you can se the effect. More about the loop statement in
+; another tutorial!
 
-;; += increments a variable by a value
+; += increments a variable by a value:
 
 begin 
   with var = 0
@@ -141,7 +141,7 @@ begin
   print var
 end
 
-;; *= scales a variable by a value
+; *= scales a variable by a value
 
 begin 
   with var = 1
@@ -149,7 +149,7 @@ begin
   print var
 end
 
-;; &= adds a value to the end of a variable
+; &= adds a value to the end of a variable
 
 begin 
   with var = {}
@@ -157,7 +157,7 @@ begin
   print var
 end
 
-;; ^= appends a list to the end of a variable
+; ^= appends a list to the end of a variable
 
 begin 
   with var = {}
@@ -165,7 +165,7 @@ begin
   print var
 end
 
-;; @= adds a value to the front of a variable
+; @= adds a value to the front of a variable
 
 begin 
   with var = {}
@@ -173,7 +173,7 @@ begin
   print var
 end
 
-;; <= minimizes a value
+; <= minimizes a value
 
 begin 
   with var = 128
@@ -181,7 +181,7 @@ begin
   print var
 end
 
-;; >= maximizes a value
+; >= maximizes a value
 
 begin 
   with var = -1

@@ -4,22 +4,22 @@
 
 ; SAL programs are built out of commands that process symbolic
 ; expressions to accomplish their tasks.  A symbolic expression, or
-; sexpr, is anything that produces a value for a command to use. The
+; 'sexpr', is anything that produces a value for a command to use. The
 ; most common sexprs we will encounter are: numbers, arithmetic
 ; expressions, symbols (variables and function names), booleans,
 ; strings and lists.
 
 ;
-;; Execution and Evalution
+;; Execution and Evaluation
 ;
 
 ; A sexpr becomes a value through a process called evaluation: every
-; time you execute a command by pressing Enter you trigger
-; evaluation. Simple sexprs like numbers are called self-evaluating
-; expressions because they evaluate to the same thing as the original:
-; 100 evaluates to 100. But most sexprs produce values that are not
-; identical to the original, for example the sexpr '1 + 2 * 3'
-; evaluates to 7:
+; time you execute a command by pressing COMMAND-Enter you trigger
+; evaluation. Simple sexprs like numbers are called 'self-evaluating
+; expressions' because they evaluate to themselves: 100 evaluates to
+; 100. Most sexprs are not self-evaluating, that is they produce
+; values that are not identical to themselves: '1 + 2 * 3' evaluates
+; to 7:
 
 print 1 + 2 * 3
 
@@ -37,8 +37,11 @@ print 1 + 2 * 3
 
 ; Integers are whole numbers like 1, 2, 3, -6 and so on. Digits can be
 ; optionally preceded by a + or - sign. Integers are ubiquitous in
-; computer composition where they are typically used to count values,
-; to enumerate possible states, or to specify position.
+; computer composition, they are used as values, as counters, as
+; enumerations of possible states an as index. An index is a special
+; usage, it describes a position (location) where some data is stored
+; in a list or array (vector). Indexes always start from zero, that
+; is, the first element in the data is always index 0.
 
 ;; Musical integers: MIDI key numbers
 
@@ -72,7 +75,7 @@ print 123.456
 ; Common Music extends MIDI's notion of key numbers to include
 ; floating point key numbers as well. A floating point keynum is
 ; interpreted as 'kkk.cc' where kkk is a MIDI keynum and cc is a CENT
-; value above it. Since each semitone has 100 cents, the float keynum
+; value above it. Since each semi tone has 100 cents, the float keynum
 ; 60.5 sounds one quarter tone above Middle C, the value 59.1 would
 ; sound 10 cents above B3 and so on. The smallest cent value humans
 ; can discriminate between is approximately 5 cents so two places is
@@ -86,7 +89,7 @@ print 123.456
 ; as 'normalized numbers' which means that they represent proportion
 ; and so have no scale, or size. This makes perfect sense for thinking
 ; about amplitude because the actual loudness of the sound will depend
-; on enviornmental factors (computer output levels, stereo amplifier
+; on environmental factors (computer output levels, stereo amplifier
 ; levels etc) more than the actual sound source. But you can still
 ; think of the values as absolute if you like: .1 = pppp, .5 = mp .7 =
 ; f and 1.0 = ffff for example.
@@ -100,7 +103,7 @@ print 123.456
 ; the numbers or slash. A ratio is one way to represent a real number,
 ; i.e. a number that lies in between two integers. For example 5/3
 ; lies between the integers 1 and 2. Ratios are very useful for
-; expression exact proportionality, however they are currently just
+; expression exact proportionality, however they are (currently) just
 ; coerced to floats.
 
 print 1/3
@@ -120,7 +123,7 @@ print 15/3
 ;; Arithmetic Expressions
 ;
 
-; Arithmetic expressions in SAL are made up of numbers (or sexpers
+; Arithmetic expressions in SAL are made up of numbers (or sexprs
 ; that evaluate to numbers...) joined together by 'math operators':
 
 ;  +   addition
@@ -160,7 +163,7 @@ print 2*pi+1
 
 print 100-2
 
-; Now fix these last two examples, press COMMAN-Enter to make sure
+; Now fix these last two examples, press COMMAND-Enter to make sure
 ; they work.
 
 ;
@@ -174,7 +177,7 @@ print 100-2
 
 print 10 + 1 
 
-; If an expression contains or restults in any floating point number
+; If an expression contains or results in any floating point number
 ; the entire expression will produce a floating point value:
 
 print 10 * 1/2 
@@ -221,7 +224,7 @@ print "Woo-Woo" ~= "Woo-Woo"
 
 if random(3) = 0 then print "winner!" else print "loser!"
 
-; we will talk much more about 'if' and conditioal evaluation in a
+; we will talk much more about 'if' and conditional evaluation in a
 ; later tutorial!
 
 ;
@@ -248,7 +251,7 @@ print 2pi
 
 ;; Special variable notations
 
-; There is a special notation that you can use in conjuction with a
+; There is a special notation that you can use in conjunction with a
 ; variable that contains a list of data. You can access (get or set)
 ; any ELEMENT in the list using the notation 'xxx[n]', where xxx is the
 ; name of the variable and n is the element's position (zero based) in
@@ -316,7 +319,7 @@ print list
 print :list
 
 ; notice that the symbol :list evaluates to :list.  The colon will
-; turn any symbol into a self-evalutaing symbol.
+; turn any symbol into a self-evaluating symbol.
 
 ;
 ;; Boolean Values: #t and #f
@@ -398,7 +401,7 @@ print ! #f
 print ! ! #t
 
 ; The logical operators can be combined with the arithmetic relations
-; to test a series of expressions. Thses sorts of test expressions are
+; to test a series of expressions. Theses sorts of test expressions are
 ; called 'predicate tests' are most commonly found in th 'if'
 ; command. To see how this works, consider this next example that
 ; mimics rolling two dice. The "snake eyes" message only appears if
@@ -421,7 +424,7 @@ else
 ; A 'conditional expression' is an expression that returns one of two
 ; possible values based on a boolean test expression. If the test
 ; expression is true the true value is returned, otherwise an optional
-; false value is returned. The sytax of the conditional expression is:
+; false value is returned. The syntax of the conditional expression is:
 ; #?(test, true [,false])
 ; (the brackets simply mean that the false value is optional)
 
@@ -438,7 +441,7 @@ print #? (0 > 1, 100, random(30) )
 ; 
 
 ; Strings are text delimited by "".  When the print command prints
-; strings it does not inclucde the surrounding parentheses in the
+; strings it does not include the surrounding parentheses in the
 ; display.
 
 print "Hello, world!"
@@ -476,7 +479,7 @@ print {bach is a great composer}
 print {}
 
 ; When you define a list using brackets, every open bracket MUST be
-; belanced by a corresponding right bracket: this is correct:
+; balanced by a corresponding right bracket: this is correct:
 
 print {1 2 3 {4 5}}
 
@@ -486,7 +489,7 @@ print {1 2 3 {4 5}
 
 ; lists can hold any type of data, including other lists. This
 ; 'recursive' feature (lists inside lists) makes the list an extremely
-; versitile structure: there is practically no limit to complexity of
+; versatile structure: there is practically no limit to complexity of
 ; information that they can represent. What does this list represent?
 
 

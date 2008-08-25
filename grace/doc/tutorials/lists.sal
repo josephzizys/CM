@@ -2,15 +2,28 @@
 ;; Working with lists
 ;
 
-;; A list is a structure that holds elements.  To create a list put
-;; the elements inside { } or create it using the list() function. the
-;; following two commands are equivalent:
+; A list holds data.  To create a list specify its elements inside { }
+; or use the list() function. The following two commands create
+; equivalent lists:
 
 print {60 62 63 65 67}
 
 print list(60, 62, 63, 65, 67)
 
-; lists can hold numbers, symbols, strings etc even other lists
+; use the {} notation when you know the exact contents of the list.
+; use the list() function when some elements need to be calculated
+; (evaluated) before being placed in the list. This example generates
+; a variant three-element list each time its evaluated:
+
+print list(random(100), random(100), random(100))
+
+; empty lists are also possible:
+
+print {}
+
+print list()
+
+; lists can hold numbers, symbols, strings etc., even other lists!:
 
 define variable notes = {c d e f g a b}
 
@@ -20,16 +33,7 @@ define variable chords = {{c e g} {d f a}}
 
 print chords
 
-; use the {} notation when you know the exact contents of the list.
-; use the list function when some elements need to be calculated
-; (evaluated) before being placed in the list. This example generates
-; a variant triad list each time its evaluated:
-
-print note( list( between(60,62), between(63,66), between(67,70) ) )
-
-;
-;; 'length' tells you how many elemnts are in a list:
-;
+; 'length' tells you how many elemnts there are in a list:
 
 print length(notes)
 
@@ -39,78 +43,66 @@ print length(chords)
 
 print length( {} )
 
-;
-;; 'append' concatenates input lists into one list
-;
+; 'append' concatenates input lists into a single list:
 
 print append(notes, notes, notes)
 
-; append expects all its inputs to be proper lists. this is an error:
+; append expects all its inputs to be proper lists. this next example
+; produces an error because the second argument (60) is not a list:
 
-print append(notes, 60, 61, 62, notes)
+print append(notes, 60, notes)
 
 ; this is correct:
 
-print append(notes, {60 61 62}, notes)
+print append(notes, {60}, notes)
 
-
-;
-;; 'list*' adds elements to the front of its last input (a list):
-;
+; 'list*' adds elements onto the FRONT of a list that you specify as
+; the LAST input to the function:
 
 print list*(1,2,3, {a b c})
 
-;
-;; 'first' ... 'tenth' returns the element at that position:
+; 'first' ... 'tenth' returns the element at that position:
 
-print first({a b c d e f g})
+print first(notes)
 
-print third({a b c d e f g})
+print third(chords)
 
-print seventh({a b c d e f g})
+print seventh(notes)
 
 ; you can nest calls to access sublist elements:
 
-print third( second( { {c e g} {d f a} }))
+print third( second(chord))
 
-;
-;; 'elt' returns the element at an integer index (zero based)
-;
+; 'elt' returns the element at the specified index. Note tha the index
+; is ZERO based, that is, the first element is at index 0, the last
+; element in the list is at length()-1 index:
 
-print elt({a b c d e f g }, 0)
+print elt(notes, 0)
 
-print elt({a b c d e f g }, 1)
+print elt(notes, 1)
 
-print elt({a b c d e f g }, random(7))
+print elt(notes, random(7))
 
-;
-;; the 'reverse' function reverses the elements in a list (duh)
-;
+print elt(notes, length(notes) - 1)
 
-print reverse( {1 2 3 4 5} )
+; the 'reverse' function reverses the elements in a list (duh):
+
+print reverse( notes )
 
 define variable palin =  {a     m a n   a   p l a n   p a n a m a} 
 
 print append(palin, reverse(palin))
 
-;
-;;  'butlast' returns all but the last element
-; 
+; 'butlast' returns all but the last element
 
-print butlast( {a b c d e f g} )
+print butlast( notes )
 
 print append(palin, reverse(butlast(palin)))
 
+; 'pick' randomly selects an element from a list:
 
-;
-;; 'pickl' randomly selects an element from a list:
-;
+print pick( notes )
 
-print pickl( {a b c d e f g})
+; 'shuffle' randomly scrambles the elements of a list:
 
-
-;
-;; 'shuffle' randomly scrambles the elements of a list:
-
-print shuffle( {a b c d e f g})
-
+print shuffle(notes)

@@ -374,7 +374,7 @@ void GraceApp::initHelp()
 			   T("Plotter"),
 			   T("plotter.html")));
   helpdocs.add(new HelpDoc(CommandIDs::HelpTopic+4,
-			   T("Common Music"),
+			   T("Common Music Dictionary"),
 			   T("cm.html")));
   // Tutorials
   helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+0, 
@@ -386,6 +386,9 @@ void GraceApp::initHelp()
   helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+2,
 			   T("Function Calls"),
 			   T("funcall.sal")));
+  helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+7,
+			   T("Working with MIDI"), 
+			   T("midi.sal")));
   helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+3,
 			   T("Lists"),
 			   T("lists.sal")));
@@ -398,9 +401,6 @@ void GraceApp::initHelp()
   helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+6,
 			   T("Iteration"), 
 			   T("loop.sal")));
-  helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+7,
-			   T("Working with MIDI"), 
-			   T("midi.sal")));
   helpdocs.add(new HelpDoc(CommandIDs::HelpTutorial+8, 
 			   T("Musical Processes"), 
 			   T("processes.sal")));
@@ -416,7 +416,7 @@ void GraceApp::initHelp()
 			   T("send.sal")));  
   helpdocs.add(new HelpDoc(CommandIDs::HelpExample+3,
 			   T("Sending data to Csound"),
-			   T("harmonizer.sal")));  
+			   T("csound.sal")));  
   helpdocs.add(new HelpDoc(CommandIDs::HelpExample+4,
 			   T("Markov harmonizer a la Messiaen"),
 			   T("harmonizer.sal")));  

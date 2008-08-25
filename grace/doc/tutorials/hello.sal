@@ -13,24 +13,34 @@ print "Hello, world!"
 
 ; To execute the command place your cursor at the end of the command
 ; line and press COMMAND-Enter. On the Mac the COMMAND key is the
-; APPLE key just to the left of the space bar. On Windows and Linux the
-; COMMAND key is the CONTROL key. The resets of executing the command
-; will appear in the Console window
+; APPLE key just to the left of the space bar. On Windows and Linux
+; the COMMAND key is the CONTROL key. Look in the Console window to
+; see the results of executing the command.
 
-; Many expressions involve math. In math expressions the operators
-; MUST be delimited by spaces. You can use parentheses to group and
-; nest terms as you like. If you don't use parentheses then normal
-; operator precedence applies:
+; You can print lots if different things. Many or these expressions
+; will involve math. In SAL math expressions, operators MUST be
+; delimited by spaces. 
 
 print 1 + 2 * 3 
 
+; You can use parentheses to group and nest terms as you like. If you
+; don't use parentheses then normal operator precedence applies:
+
 print (1 + 2) * 3 
 
-; You will make many mistakes as you learn SAL. Most mistakes involve
-; parentheses or undefined terms. When you execute an expression that
-; contains an error you will see an error message printed in the
-; Console window. Sometimes this message is useful, sometimes its not
-; so useful. Such is life.
+; Since we are using the print command a lot, notice that it can take
+; more than one argument and that arguments are separated by
+; commas. This next example prints a message an a new random key
+; number every time you execute it:
+
+print "my random key number: ", random(127)
+
+; You will make lots mistakes as you learn. When you execute an
+; expression that contains an error you will see an error message
+; printed in the Console window. Sometimes this message is useful,
+; sometimes its not so useful. Such is life.  Most mistakes involve
+; parentheses or undefined terms, as demonstrated in these two
+; examples:
 
 print (1 + 2 * 3
 
@@ -38,7 +48,7 @@ print foo
 
 ; Because SAL is a language the commands and expressions you type can
 ; become quite complex and will often span more than one line.  Here
-; is an example of a moderately complex command. To execute it place
+; is an example of a moderately complex command. To execute it, place
 ; your cursor just after the word 'end' and press COMMAND-Enter to see
 ; what it does.
 
@@ -49,9 +59,15 @@ begin
    print "My random chord: ", note( list( root, third, fifth))
 end
 
+;
+;; Accessing help documentation with COMMAND-D
+;
+
 ; The best way to learn how to express yourself in SAL is to study
 ; examples and try to figure out what they do BEFORE you execute
-; them. You can use the COMMAND-D documentation lookup command to
-; learn about the specific commands and functions you encounter as you
-; work through these tutorials.
+; them. You can use COMMAND-D to lookup documentation on new words you
+; encounter as you work through these tutorials. To use COMMAND-D
+; first put your cursor on the word you are interested in and then
+; press COMMAND-D. Try it in the example above on the words: begin
+; between pick note list and print.
 

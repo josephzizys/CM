@@ -3,28 +3,25 @@
 ;
 
 ; Your compositional work will require you to design and implement new
-; functions to accomplish musical tasks.  Up to now we have treated
-; functions as "black boxes": we know how use them (by calling them
-; with input values) but we don't know anything about how they are
-; actually implemented.
+; functions to accomplish musical tasks. We have already learned how
+; to use them (by calling them with input values) but we don't know
+; anything about how they are actually implemented.
 
-; A function works by first receiving input values in its parameters
-; (the "windows" through which it receives values) then executing
-; statements that use those values to calculate a result, and then
-; returning that result back to the caller. (You can think about a
-; function's parameters as local variables inside the function that
-; are automatically initialized to the values you pass to the function
-; each time you call it).  The statement that the function executes is
-; called the 'body' of the function: this is where the work
-; happens. Any SAL statement can be used as the function's body,
-; including the special 'return' statement (it can only appear inside
-; a funcion defintion) that returns a value back to the caller. If the
-; function needs to execute more than one statement use a
-; 'begin...end' statement as the function's body and then sequence as
-; many statements as necessary inside it. THe beging...end can also be
-; used to declare local local variables, if needed.
+; Recall that a function works by receiving arguments (input values)
+; in its parameters, which are special variables in which it receives
+; the data you pass it. The function then executes uses these
+; parmeters its internal code (statements) that calculate a result
+; that it returns back to you as the 'value' of the function call.
+; The statements that the function executes are called the 'body' of
+; the function: this is where the work happens. Any SAL statement can
+; be used as the function's body, including the special 'return'
+; statement that returns a value back to the caller. If the function
+; requires more than one statement use a 'begin...end' statement as
+; the function's body and then sequence as many statements as
+; necessary inside the blocl. A begin...end can also be used to
+; declare local local variables inside the function, if needed.
 
-;; the 'define function' command
+;; The 'define function' command
 
 ; Use the 'define function' command to create a new function. The
 ; command requires three pieces of information: (1) the name of the
@@ -39,97 +36,96 @@
 ; our function calculates and returns is simply mod 12 of the input
 ; keynum.
 
-; Put the cursor at the end of the second line and press Enter to
-; execute the definition:
+; Put the cursor at the end of the second line and press COMMAND-Enter
+; to execute the definition:
 
-define function keynum->pc (knum)
-  return knum % 12
+define function key->pc (k)
+  return k % 12
 
-print keynum->pc(60)
+print key->pc(60)
 
-print keynum->pc(59)
+print key->pc(59)
 
-
-; Although a function's definition consists of only one statement,
-; that statement can be a 'begin...end' block, which means that
-; functions can really execute any number of statements.  Here is a
-; (not very useful) function that executes two print statements when
-; you call it. Note that this function does not have a return
-; statement. If a function does not contain a return statement then it
-; will still execute its statements but it will always return #f
-; (boolean false) back to the caller.
+; Note that although a function's body consists of only one statement,
+; that statement can be a 'begin...end' block, which means that they
+; can execute any number of statements.  Here is a (not very useful)
+; function that executes two print statements when you call it. Note
+; that this function does NOT have a return statement. Functions that
+; do not explicitly return a value return an unspecified value back to
+; the caller.
 
 define function knum-info (knum)
   begin
     print "my key number is ", knum
-    print "my pitch class is ", keynum->pc(knum)
+    print "my pitch class is ", key->pc(knum)
   end
 
 print knum-info( random(128))
 
-; notice that our little function has two print statments but three
+; Notice that our little function has two print statments but three
 ; lines are printed! the third line is the #f (boolean false) returned
-; by the function (because it did not have a return statement) and is
-; printed by the print command that called the function
+; by the function (since it did not have a return statement) -- this
+; third line is the value that the print command itself prints
 
-; this next little function demonstrates how to declare more than one
+; This next little function demonstrates how to declare more than one
 ; parameter. It performs the opposite calculation of the first
-; function: it returns a keynum givein a pc and a keynum offset. The
-; function declares two parameters: pc is the pitch class and koff is
-; the keynum offset.
+; function: it returns a key givein a pc and a octave offset. The
+; function declares two parameters: pc is the pitch class and octace is
+; the keynum offset. 
 
-define function pc->keynum (pc, koff)
-  return pc + koff
+define function pc->key (pc, oct)
+  return pc + (12 * (oct + 1))
 
-print pc->keynum(1, 60)
+; note that the function adds 1 to the octave so that the middle-c
+; octave number 4 produces key number 60...
 
-print pc->keynum(6, 72)
+print pc->key(0, 4)
 
-; It is very common for functions to call other functions to do part
-; of their work.  Our next function definition transposes a pc to a
-; specified octave number. It uses the pc->keynum function we just
-; defined to do the actual work. A the begin...end block is used to
-; define a local variable 'k', the key number transposition offset
-; calculated from the input octave number and passed into pc->keynum
-; to do the work:
+; it is very common for functions to call other functions to do some of the work. here we define
 
-define function pc->oct (pc, oct)
-  begin
-    with k = 12 * (oct + 1)   ; oct->keynum, ie 4->60
-    return pc->keynum(pc, k)
+define function pc->note(pc, oct)
+  begin with k = pc->key(pc, oct)
+    return note(k)
   end
 
-print pc->oct(0, 4)
+print pc->note(0, 4)
 
-print pc->oct(11, 3)
+print pc->note(6, 2)
+
+print pc->note( random(12), between(2,8))
 
 ;
-;; predicate functions and conditional statements
+;; Predicate functions and conditional statements
 ;
 
-; predicate functions are functions that return true or false based on
-; a test of their input argument(s). this sort of function often uses
-; conditional statements to accomplish their tasks.  then 'if then
-; else' statement performs conditional execution: a test sexpr is
-; first evaluated, if the sexpr returns true (that is, not #f) a
-; 'then' statement is executed, otherwise an optional 'else' statement
-; is executed. Here is a predicate function definition that returns
-; true if its input key number is a black key, otherwise it returns
-; false. Notice that the 'true' value that the function returns is the
-; pitch class of the black key rather than boolean true. Since any
-; value that is not #f must be true, this function returns potentially
-; useful information (the pitch class) when the key in question is
-; actually a black key:
+; A 'predicate' is a function that returns true or false based on a
+; test of its argument(s). Preicates often use what are called
+; 'conditional statements' to accomplish their tasks.  The 'if then
+; else' statement is the most flexble conditional: it consists of
+; three parts: a test is first evaluated, if the test is true (not #f)
+; then a 'then' statement is executed, otherwise an optional 'else'
+; statement is executed. Here is the definition of a predicate
+; function that returns true if its input key number is a black key,
+; otherwise it returns false. Notice that the 'true' value that the
+; function returns is the pitch class of the black key rather than
+; boolean true. Since boolean logic says that any value that is not #f
+; must, by definition, be true, the true value can be anything that is
+; not stricly #f!  This is qute handy and allows our function to
+; return useful information (the pitch class) when the key in question
+; is actually a black key:
 
 define function black-key? (knum)
   begin
-    with pc = keynum->pc(knum)
+    with pc = key->pc(knum)
     if member( pc, {1 3 6 9 10}) then
       return pc
     else return #f
   end
 
-print black-key?( random(128))
+begin
+  with k = random(128)
+  print "key: ", k, " is black: ", black-key?(k)
+end
 
 ; Notice that, in the case of our last example, the then and the else
 ; clauses both execute a return statement. these clauses differ only
@@ -143,7 +139,7 @@ print black-key?( random(128))
 
 define function black-key? (knum)
   begin
-    with pc = keynum->pc(knum),
+    with pc = key->pc(knum),
          sw = member( pc, {1 3 6 9 10}) 
     return #?( sw , pc, #f)
   end
