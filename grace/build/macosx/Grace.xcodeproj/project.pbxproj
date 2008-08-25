@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0AA95C970DA160060042B274 /* libchicken.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA95C960DA160060042B274 /* libchicken.a */; };
 		0AD15ED60D68833C008CFAD2 /* Csound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0AD15ED50D68833C008CFAD2 /* Csound.cpp */; };
+		0AD5711B0E635C66004BDDA9 /* Fomus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0AF781ED0E62FD7100D4888E /* Fomus.cpp */; };
 		0AF1A98E0DA7A5EE00E46E22 /* Help.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827D20D5A1B9E00F53B16 /* Help.cpp */; };
 		0AF1A98F0DA7A5EE00E46E22 /* ChickenBridge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827D40D5A1B9E00F53B16 /* ChickenBridge.cpp */; };
 		0AF1A9900DA7A5EE00E46E22 /* Toolbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5F1827DB0D5A1B9F00F53B16 /* Toolbox.cpp */; };
@@ -494,6 +495,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0AD5711B0E635C66004BDDA9 /* Fomus.cpp in Sources */,
 				0AF1A98E0DA7A5EE00E46E22 /* Help.cpp in Sources */,
 				0AF1A98F0DA7A5EE00E46E22 /* ChickenBridge.cpp in Sources */,
 				0AF1A9900DA7A5EE00E46E22 /* Toolbox.cpp in Sources */,
@@ -691,7 +693,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					MACOSX,
 					SCHEME,
-					"REVISION=1642",
+					"REVISION=1646",
 					"RELEASE=102",
 					"_GLIBCXX_DEBUG=1",
 					"_GLIBCXX_DEBUG_PEDANTIC=1",
@@ -736,11 +738,14 @@
 		5FC2E8420DBBAD0A006ABF52 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = i386;
 				COPY_PHASE_STRIP = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					MACOSX,
 					SCHEME,
 					PORTCSOUND,
+					"REVISION=1646",
+					"VERSION=102",
 				);
 				INFOPLIST_FILE = Info.plist;
 				LIBRARY_SEARCH_PATHS = (
