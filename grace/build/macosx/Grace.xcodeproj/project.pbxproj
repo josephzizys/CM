@@ -745,7 +745,7 @@
 					SCHEME,
 					PORTCSOUND,
 					"REVISION=1646",
-					"VERSION=102",
+					"RELEASE=102",
 				);
 				INFOPLIST_FILE = Info.plist;
 				LIBRARY_SEARCH_PATHS = (
