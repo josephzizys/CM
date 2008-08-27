@@ -13,9 +13,9 @@ export CONFIG
 
 all: GraceCL Grace
 
-#Makefile: premake.lua
-#	@echo ==== Regenerating Makefiles ====
-#	@premake --file $^ --verbose --target gnu
+Makefile: premake.lua
+	@echo ==== Regenerating Makefiles ====
+	@premake --file $^ --verbose --target gnu --juce ../../../juce/ --csound
 
 GraceCL:
 	@echo ==== Building GraceCL ====

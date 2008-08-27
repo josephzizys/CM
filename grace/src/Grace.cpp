@@ -327,16 +327,19 @@ void GraceApp::performHelpCommand(CommandID id)
 	    URL(file.getFullPathName()).launchInDefaultBrowser();
 #else
 	{ // LINUX nonsense: launchInDefaultBrowser on Linux does not
-	  // for local files so I have to hardwire a browser. At some
-	  // point this could be a Preference setting...
+	  // work for local files so I have to hardwire a browser. At
+	  // some point this could be a Preference setting...
 	  String u=T("file://") + file.getFullPathName();
 	  File foxy=File(T("/usr/bin/firefox"));
 	  if ( foxy.existsAsFile() ) {
 	    foxy.startAsProcess(u.quoted());
 	  }
 	  else
-	    err=T(">>> Can't open ") + u + T(" on Linux because") +
-	      foxy.getFullPathName() + T(" does not exist.");
+	    {
+	      String err=T(">>> Can't open ") + u + T(" on Linux because") +
+		foxy.getFullPathName() + T(" does not exist.");
+	      getConsole()->printError(err);
+	    }
 	}
 #endif	
 	else

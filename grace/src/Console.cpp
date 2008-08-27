@@ -460,12 +460,10 @@ bool ConsoleWindow::isSplashVisible() {
 const StringArray ConsoleWindow::getMenuBarNames () {
 #ifdef SCHEME
   const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"),
-    T("Ports"), T("Window"), T("Help"),
-  0 };
+    T("Ports"), T("Window"), T("Help"), 0 };
 #else
   const tchar* const menuNames[] = { T("File"), T("Edit"), T("View"),
-    T("Lisp"), T("Window"), 
-  T("Help"), 0 };
+    T("Lisp"), T("Window"), T("Help"), 0 };
 #endif
   return StringArray((const tchar**) menuNames);
 }
@@ -567,6 +565,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
       break;
       
     case VIEWMENU :
+      {
       for (int i = 0;i<16;i++) {
         sub2.addItem(CommandIDs::ViewFontSize+i,
                      String( fontSizeList[i] ),
@@ -586,18 +585,17 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
       menu.addCustomItem(CommandIDs::ViewOpacity,
 			 sliderComp);
       menu.addSeparator();
+      }
       break;
 
 #ifdef SCHEME
-     case PORTSMENU :
-       menu=getPortsMenu();
-       break;
-#endif      
-
-#ifndef SCHEME
+    case PORTSMENU :
+      menu=getPortsMenu();
+      break;
+#else
     case LISPMENU :
       menu=lisp->getLispMenu();
-    break;
+      break;
 #endif
 
     case WINDOWSMENU :
@@ -607,6 +605,10 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
     case HELPMENU :
       menu=app->getHelpMenu();
       break;
+
+    default:
+      break;
+
     }
   return menu;
 }

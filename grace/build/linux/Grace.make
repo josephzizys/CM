@@ -10,12 +10,12 @@ ifeq ($(CONFIG),Release)
   LIBDIR := .
   OBJDIR := build/grace.obj/Release
   OUTDIR := build/Release/Grace/bin
-  CPPFLAGS := -MMD -D "LINUX=1" -D "SCHEME=1" -I "../../../chicken" -I "../../../juce" -I "/usr/local/include"
+  CPPFLAGS := -MMD -D "LINUX=1" -D "SCHEME=1" -D "PORTCSOUND=1" -I "../../../juce/" -I "/usr/local/include" -I "/usr/include"
   CFLAGS += $(CPPFLAGS) $(TARGET_ARCH) -O2
   CXXFLAGS := $(CFLAGS)
-  LDFLAGS += -L$(BINDIR) -L$(LIBDIR) -s -L"../../../chicken" -L"../../../juce/bin" -L"/usr/local/lib" -lchicken -ljuce -lfreetype -lGLU -lGL -lasound
+  LDFLAGS += -L$(BINDIR) -L$(LIBDIR) -s /usr/local/lib/libchicken.a -L"../../../juce//bin" -L"/usr/local/lib" -lcsound -lsndfile -ljuce -lfreetype -lGLU -lGL -lasound
   LDDEPS :=
-  RESFLAGS := -D "LINUX=1" -D "SCHEME=1" -I "../../../chicken" -I "../../../juce" -I "/usr/local/include"
+  RESFLAGS := -D "LINUX=1" -D "SCHEME=1" -D "PORTCSOUND=1" -I "../../../juce/" -I "/usr/local/include" -I "/usr/include"
   TARGET := grace
   BLDCMD = $(CXX) -o $(OUTDIR)/$(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(TARGET_ARCH)
 endif
@@ -25,12 +25,12 @@ ifeq ($(CONFIG),Debug)
   LIBDIR := .
   OBJDIR := build/grace.obj/Debug
   OUTDIR := build/Debug/Grace/bin
-  CPPFLAGS := -MMD -D "LINUX=1" -D "SCHEME=1" -I "../../../chicken" -I "../../../juce" -I "/usr/local/include"
+  CPPFLAGS := -MMD -D "LINUX=1" -D "SCHEME=1" -D "PORTCSOUND=1" -I "../../../juce/" -I "/usr/local/include" -I "/usr/include"
   CFLAGS += $(CPPFLAGS) $(TARGET_ARCH) -g
   CXXFLAGS := $(CFLAGS)
-  LDFLAGS += -L$(BINDIR) -L$(LIBDIR) -L"../../../chicken" -L"../../../juce/bin" -L"/usr/local/lib" -lchicken -ljuce -lfreetype -lGLU -lGL -lasound
+  LDFLAGS += -L$(BINDIR) -L$(LIBDIR) /usr/local/lib/libchickendebug.a -L"../../../juce//bin" -L"/usr/local/lib" -lcsound -lsndfile -ljucedebug -lfreetype -lGLU -lGL -lasound
   LDDEPS :=
-  RESFLAGS := -D "LINUX=1" -D "SCHEME=1" -I "../../../chicken" -I "../../../juce" -I "/usr/local/include"
+  RESFLAGS := -D "LINUX=1" -D "SCHEME=1" -D "PORTCSOUND=1" -I "../../../juce/" -I "/usr/local/include" -I "/usr/include"
   TARGET := grace
   BLDCMD = $(CXX) -o $(OUTDIR)/$(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(TARGET_ARCH)
 endif
@@ -39,6 +39,8 @@ OBJECTS := \
 	$(OBJDIR)/Buffer.o \
 	$(OBJDIR)/ChickenBridge.o \
 	$(OBJDIR)/Console.o \
+	$(OBJDIR)/Csound.o \
+	$(OBJDIR)/Fomus.o \
 	$(OBJDIR)/Editor.o \
 	$(OBJDIR)/Grace.o \
 	$(OBJDIR)/Help.o \
@@ -101,6 +103,14 @@ $(OBJDIR)/ChickenBridge.o: ../../src/ChickenBridge.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 $(OBJDIR)/Console.o: ../../src/Console.cpp
+	-$(CMD_MKOBJDIR)
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+$(OBJDIR)/Csound.o: ../../src/Csound.cpp
+	-$(CMD_MKOBJDIR)
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+$(OBJDIR)/Fomus.o: ../../src/Fomus.cpp
 	-$(CMD_MKOBJDIR)
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 

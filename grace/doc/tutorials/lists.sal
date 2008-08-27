@@ -65,25 +65,25 @@ print list*(1,2,3, {a b c})
 
 print first(notes)
 
-print third(chords)
+print third(notes)
 
 print seventh(notes)
 
 ; you can nest calls to access sublist elements:
 
-print third( second(chord))
+print third( second(chords))
 
-; 'elt' returns the element at the specified index. Note tha the index
-; is ZERO based, that is, the first element is at index 0, the last
-; element in the list is at length()-1 index:
+; 'nth' returns the element at the specified index. Note that the
+; index is ZERO based, that is, the first element is at index 0, the
+; last element in the list is at length()-1 index:
 
-print elt(notes, 0)
+print nth(notes, 0)
 
-print elt(notes, 1)
+print nth(notes, 1)
 
-print elt(notes, random(7))
+print nth(notes, random(7))
 
-print elt(notes, length(notes) - 1)
+print nth(notes, length(notes) - 1)
 
 ; the 'reverse' function reverses the elements in a list (duh):
 
@@ -106,3 +106,4 @@ print pick( notes )
 ; 'shuffle' randomly scrambles the elements of a list:
 
 print shuffle(notes)
+

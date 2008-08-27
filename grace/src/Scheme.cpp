@@ -289,17 +289,17 @@ bool SchemeThread::init() {
     reportChickenError( T(">>> Error: Chicken failed to initialize.\n") );
     return false;
   }
-  CHICKEN_eval_string("(define *grace-std-out* (make-output-port print-message (lambda () #f)))", NULL);
-  res = CHICKEN_eval_string("(current-output-port *grace-std-out*)", NULL);
+  CHICKEN_eval_string((char*)"(define *grace-std-out* (make-output-port print-message (lambda () #f)))", NULL);
+  res = CHICKEN_eval_string((char*)"(current-output-port *grace-std-out*)", NULL);
   if ( res==0 )
     reportChickenError();
-  res = CHICKEN_eval_string("(define *grace-err-out* (make-output-port print-error (lambda () #f)))", NULL);
+  res = CHICKEN_eval_string((char*)"(define *grace-err-out* (make-output-port print-error (lambda () #f)))", NULL);
   if ( res==0 )
     reportChickenError();
-  res = CHICKEN_eval_string("(current-error-port *grace-err-out*)", NULL);
+  res = CHICKEN_eval_string((char*)"(current-error-port *grace-err-out*)", NULL);
   if ( res==0 )
     reportChickenError();
-  res = CHICKEN_eval_string("(cm-logo 30000)", NULL);
+  res = CHICKEN_eval_string((char*)"(cm-logo 30000)", NULL);
   if ( res==0 )
     reportChickenError();
   inputClosureGCRoot = CHICKEN_new_gc_root();

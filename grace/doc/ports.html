@@ -13,20 +13,39 @@
 
 <h1> Ports Menu</h1>
 
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#modes">Real Time vs Score Capture</a></li>
+<li><a href="#midi-out">Midi Out</a></li>
+<li><a href="#midi-in">Midi In</a></li>
+<li><a href="#midi-seq">Midi Seq</a></li>
+<li><a href="#csound">Csound</a></li>
+<li><a href="#appendix">Appendix</a>
+  <ol>
+    <li><a href="#osx-midi">Configuring Midi on OSX</a></li>
+    <li><a href="#linux-midi">Making Midi Connections on Linux</a></li>
+  </ol>
+</li>
+</ul>
+
+
+<h2 id="introduction">Introduction</h2>
+
 <p> The Console Window's Ports menu connects Grace to different audio
  visual resources such as MIDI devices, audio libraries, plotting
  windows, score files, etc.  The exact set of ports available in the
  menu is determined when the application is built. </p>
  
-<h2 id="port-modes"> Real Time vs Score Capture Modes</h2>
+<h2 id="modes"> Real Time vs Score Capture</h2>
 
-<p> Most ports support both real time and score capture (non-real
-time) modes. In the normal real time mode a port is open and it
+<p> Ports support both real time and score capture (non-real
+time) modes. In the normal situation a port is open and it
 processes data at the exact time you <a
- href="cm.html#send">send</a> send it. In score capture mode the
-port routes data you send it to an internal buffer and does not
+ href="cm.html#send">send</a> it. In score capture mode the
+port routes the data you send it to an internal buffer and does not
 processes it further. Your can then edit, display, play, save, export
-to text or delete this captured data as you see fit. It is important
+or delete this captured data as you see fit. It is important
 to understand that when you work in score capture mode the data you
 send to the port must contain time stamps so that the port can
 add it to the score at the proper time position. Since the port automatically sorts captured data you can add data iteratively, in successive passes, or
@@ -54,7 +73,7 @@ greater than 0 schedule data that many seconds into the future.
 See <a href="cm.html#send">Sending Data to Ports</a> for more information.
 
 
-<h2 id="midi-out">Midi Out Port</h2>
+<h2 id="midi-out">Midi Out</h2>
 
 <p>The Midi Out Port connects Grace to external MIDI devices and software applications.</p>
 
@@ -143,7 +162,7 @@ select the Instrument and press Send.</p>
 
 
 
-<h2 id="midi-in-port">Midi In Port</h2>
+<h2 id="midi-in">Midi In</h2>
 
 <p>The Midi In Port connects Grace to external MIDI devices and
 software applications. The input port allows you to associate an <a
@@ -180,7 +199,7 @@ setting Midi input hooks.</p> </p>
 
 
 
-<h2 id="midi-seq-port">Midi Seq Port</h2>
+<h2 id="midi-seq">Midi Seq</h2>
 
 <p>The MIDI Seq port allows you to record, capture and manipulate MIDI data into an internal buffer that can then be edited, played and saved.</p>
 
@@ -299,7 +318,7 @@ The Export dialog allows you to export the contents of the capture sequence as T
 
 
 
-<h2 id="csound-port">Csound Port</h2>
+<h2 id="csound">Csound</h2>
 
 <p>The Csound port connects Grace to the <a href="http://sourceforge.net/project/showfiles.php?group_id=81968&package_id=120482">CSound5 sound synthesis library</a> for audio generation. Note that the Csound library must be installed on your machine before the Grace application can be started.</p>
 
@@ -392,9 +411,11 @@ The Export dialog allows you to export the contents of the capture sequence as T
 
 
 
-<h2 id="appendix"> Appendix </h2>
+<h2 id="appendix">Appendix</h2>
 
-<h3 id="osx-midi">1. Configuring Real Time MIDI on OSX</h3>
+<h3 id="osx-midi">1. Configuring MIDI on OSX</h3>
+
+<p>In order to route MIDI data to OSX applications in addition to external devices you may need to make a one-time configuration change to your MIDI environmant:</p>
 
 <ul>
   <li> Start the "Audio Midi Setup" program located in your  Applications/Utilities folder.</li>
@@ -423,6 +444,31 @@ The Export dialog allows you to export the contents of the capture sequence as T
 
   <li> Start Grace and select the "IAC Driver Bus 1" device listed in the Ports>Midi Out menu.
 </li>
+
+</ul>
+
+
+<h3 id="linux-midi">2. Making MIDI Connections on Linux</h3>
+
+<ul>
+
+<li>Start Grace and select the output device you want to use in
+the <span class="menuitem">Midi Out&gt;</span> menu.</li>
+
+<li>Start <code>qjackctl</code> and click on the Connect button in
+the main window to open the Connections window.</li>
+
+<li>Select the ALSA tab in the Connections window.</li>
+
+<li>Select "Juce MIDI Output" in the Readable Clients pane.</li>
+
+<li>In the Writable Clients pane select the same device that you
+connected to in Grace.</li>
+
+<li>Click on the Connect button to establish the ALSA connection.</li>
+
+<li>Return to Grace and use the <span class="menuitem">Midi Out&gt;Test Output</span> to test that you can make sound.</li>
+
 
 </ul>
 

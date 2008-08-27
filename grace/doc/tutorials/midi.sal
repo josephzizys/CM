@@ -19,22 +19,28 @@
 
 send "mp:midi", 0, .5, 60, .5, 0
 
-; Before looking at this example in detail lets first spice it up a
-; bit by sending a random instrument assignment (called a 'program
-; change' in MIDI-speak) before we send the sound. We'll also use
-; randomness to pick the key number to play and we'll switch to using
-; parameter names (the words that end with ':') so so we only have to
-; specify the things we are interested in. Place your cursor just
+; Before going into this example in detail lets first demo how easy it
+; is to send things with some algorithic processing. in this next
+; example we send random instrument assignments (or 'program changes'
+; in MIDI-speak) each time we send a sound. We'll also use randomness
+; to pick only black keys to play. We'll send parameter names (the
+; words ending with ':') instead of positional values so we only have
+; to specify the things we are interested in. Place your cursor just
 ; after the work 'end' and hit COMMAND-Enter several times to hear
 ; what it does:
 
 begin
-  send "mp:prog", val: random(16),
-  send "mp:midi", key: between(60, 90)  
+  with blackkey = pick(1, 3, 6, 8, 10) + (12 * between(2,9))
+  send "mp:prog", val: random(16)
+  send "mp:midi", key: blackkey
 end
 
+; now set the default instrument back to Grand Piano:
+
+send "mp:prog", val: 0
+
 ;
-;; The 'send' command
+;; About the 'send' command
 ;
 
 ; The  send command  sends data  to  ports.  The  string "mp:midi"  is

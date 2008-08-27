@@ -241,7 +241,7 @@ public:
     okbutton->setBounds (160, 88, 74, 24);
   }
 
-  void TextDialogComponent::buttonClicked (Button* button)
+  void buttonClicked (Button* button)
   {
     if (button == cancelbutton)
       ((DialogWindow *)getTopLevelComponent())->exitModalState(false);

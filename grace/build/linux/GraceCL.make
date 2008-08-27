@@ -10,12 +10,12 @@ ifeq ($(CONFIG),Release)
   LIBDIR := .
   OBJDIR := build/gracecl.obj/Release
   OUTDIR := build/Release/GraceCL/bin
-  CPPFLAGS := -MMD -D "LINUX=1" -I "../../../juce" -I "/usr/local/include"
+  CPPFLAGS := -MMD -D "LINUX=1" -I "../../../juce/" -I "/usr/local/include" -I "/usr/include"
   CFLAGS += $(CPPFLAGS) $(TARGET_ARCH) -O2
   CXXFLAGS := $(CFLAGS)
-  LDFLAGS += -L$(BINDIR) -L$(LIBDIR) -s -L"../../../juce/bin" -L"/usr/local/lib" -L"usr/lib" -ljuce -lfreetype -lGLU -lGL -lasound
+  LDFLAGS += -L$(BINDIR) -L$(LIBDIR) -s -L"../../../juce//bin" -L"/usr/local/lib" -L"/usr/lib" -ljuce -lfreetype -lGLU -lGL -lasound
   LDDEPS :=
-  RESFLAGS := -D "LINUX=1" -I "../../../juce" -I "/usr/local/include"
+  RESFLAGS := -D "LINUX=1" -I "../../../juce/" -I "/usr/local/include" -I "/usr/include"
   TARGET := gracecl
   BLDCMD = $(CXX) -o $(OUTDIR)/$(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(TARGET_ARCH)
 endif
@@ -25,12 +25,12 @@ ifeq ($(CONFIG),Debug)
   LIBDIR := .
   OBJDIR := build/gracecl.obj/Debug
   OUTDIR := build/Debug/GraceCL/bin
-  CPPFLAGS := -MMD -D "LINUX=1" -I "../../../juce" -I "/usr/local/include"
+  CPPFLAGS := -MMD -D "LINUX=1" -I "../../../juce/" -I "/usr/local/include" -I "/usr/include"
   CFLAGS += $(CPPFLAGS) $(TARGET_ARCH) -g
   CXXFLAGS := $(CFLAGS)
-  LDFLAGS += -L$(BINDIR) -L$(LIBDIR) -L"../../../juce/bin" -L"/usr/local/lib" -L"usr/lib" -ljuce -lfreetype -lGLU -lGL -lasound
+  LDFLAGS += -L$(BINDIR) -L$(LIBDIR) -L"../../../juce//bin" -L"/usr/local/lib" -L"/usr/lib" -ljuce -lfreetype -lGLU -lGL -lasound
   LDDEPS :=
-  RESFLAGS := -D "LINUX=1" -I "../../../juce" -I "/usr/local/include"
+  RESFLAGS := -D "LINUX=1" -I "../../../juce/" -I "/usr/local/include" -I "/usr/include"
   TARGET := gracecl
   BLDCMD = $(CXX) -o $(OUTDIR)/$(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(TARGET_ARCH)
 endif

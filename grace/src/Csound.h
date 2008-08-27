@@ -14,6 +14,9 @@
 #include "Console.h"
 #ifdef PORTCSOUND
 
+using ::int32;
+using ::uint32;
+
 #ifdef MACOSX
 #include <CsoundLib/csound.h>
 #endif
