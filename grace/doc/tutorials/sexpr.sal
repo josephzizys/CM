@@ -304,18 +304,6 @@ print list(1, list(2 , list( 3)), 4)
 
 print list
 
-;; Self-evaluating symbols
-
-; Sometimes one really wants to use a symbol for its name, not for its
-; value as a variable or as a function name.  To make a
-; self-evaluating symbol called a 'keyword', simply precede the symbol
-; by a colon. For example:
-
-print :list
-
-; notice that the symbol :list evaluates to :list.  The colon will
-; turn any symbol into a self-evaluating symbol.
-
 ;
 ;; Boolean Values: #t and #f
 ;
@@ -449,9 +437,9 @@ print 1 = 1
 
 print "1 = 1"
 
-print random(pi)
+print random(127)
 
-print "random(pi)"
+print "random(127)"
 
 ;
 ;; Lists
