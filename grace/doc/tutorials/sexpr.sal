@@ -233,19 +233,14 @@ if random(3) = 0 then print "winner!" else print "loser!"
 
 ; Symbols are words that name variables and functions.  When a symbol
 ; appears as a variable in an expression the variable's value replaces
-; the symbol's name when the expression is evaluated.  For example the
-; symbol 'pi' is a predefined variable that holds an approximation of
-; the the number Pi.  This means that you can use the name 'pi' in a
-; math expression rather than having to type the actual number
+; the symbol's name when the expression is evaluated.  For example we
+; can define a symbol 'pi' to hold an approximation of the the number
+; Pi.  This means that you can use the name 'pi' in a math expression
+; rather than having to type the actual number
+
+define variable pi = 3.1415927
 
 print 2 * pi
-
-; you can define your own variables using the 'define variable'
-; command:
-
-define variable 2pi = 2 * pi
-
-print 2pi
 
 ; much more about this later...
 
@@ -532,17 +527,17 @@ print {{60 64 65} {62 66 69} {64 68 71}}
 ; eff4  E double flat in the fourth octave
 ; bf<0  Bf minus 1 quarter tone in the 0th octave.
 
-; The 'note' and 'keynum' functions can be used to convert one form
-; into the other. These functions can handle lists as well as
-; individual notes and key numbers. For example here is another way of
-; defining the list of chords shown in the last example:
+; The 'note' and 'key' functions can be used to convert one form into
+; the other. These functions can handle lists as well as individual
+; notes and key numbers. For example here is another way of defining
+; the list of chords shown in the last example:
 
-print keynum( {{c4 e g} {d4 fs a} {e4 gs b}} )
+print key( {{c4 e g} {d4 fs a} {e4 gs b}} )
 
 ; Note that octave numbers are sticky inside note lists, i.e. they
 ; only have to be written when they change:
 
-print keynum( {c4 d ef f gs g3 a bff c ds5 e fs g} )
+print key( {c4 d ef f gs g3 a bff c ds5 e fs g} )
 
 
 
