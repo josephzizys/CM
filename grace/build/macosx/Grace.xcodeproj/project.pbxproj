@@ -693,7 +693,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					MACOSX,
 					SCHEME,
-					"REVISION=1646",
+					"REVISION=1649",
 					"RELEASE=102",
 					"_GLIBCXX_DEBUG=1",
 					"_GLIBCXX_DEBUG_PEDANTIC=1",
@@ -744,7 +744,7 @@
 					MACOSX,
 					SCHEME,
 					PORTCSOUND,
-					"REVISION=1646",
+					"REVISION=1649",
 					"RELEASE=102",
 				);
 				INFOPLIST_FILE = Info.plist;
