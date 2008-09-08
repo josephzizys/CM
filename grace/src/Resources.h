@@ -149,7 +149,19 @@ class GracePreferences {
   int getSchemeStackSize() ;
   void setSchemeStackSize(int size) ;
 
-  // Lisp Implementations support
+  // Ports Preferences
+  bool getScoreCaptureMode();
+  void setScoreCaptureMode(bool val);
+  String getMidiOutDevice();
+  void setMidiOutDevice(String name);
+  int getMidiOutTuning();
+  void setMidiOutTuning(int div);
+  bool getMidiSeqAutoPlay();
+  void setMidiSeqAutoPlay(bool b);
+  bool getMidiSeqAutoSave();
+  void setMidiSeqAutoSave(bool b);
+
+ // Lisp Implementations support
   XmlElement* getLispImplementations();
   File getAsdfSystemsDirectory () ;
   void setAsdfSystemsDirectory (File dir) ;

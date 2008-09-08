@@ -91,7 +91,7 @@
 	 (if (eof-object? ,x) 
 	     (begin
 	       ;; reached eof on .sal file
-	       (format out "</pre>~%")
+	       ;;(format out "</pre>~%")
 	       (return-from-read #:eof)
 	       ))))
 
@@ -111,7 +111,7 @@
 	 (set! ,bo #f))
      (getchar ,ch ,in)))
 
-(define (salhtmlheader out source-url)
+(define (salhtmlheader out source-url fileicon-url)
   (format out "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"
 \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
 <html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">
@@ -137,8 +137,9 @@ pre.salcode{}
 	  )
   (format out "<p><span style=\"font-size:large;\">Download source: ")
   (format out "<a href=~S>
-<img src=\"fileicon.png\" style=\"border:none;\" alt=\"[fileicon.png]\" /> ~A.~A</a>"
+<img src=~S style=\"border:none;\" alt=\"[fileicon.png]\" /> ~A.~A</a>"
 	  source-url
+	  fileicon-url
 	  (pathname-name source-url)
 	  (pathname-type source-url))
   (format out "</span></p>~%<hr/>"))
@@ -262,19 +263,15 @@ pre.salcode{}
 		 (set! bol #t)
 		 (set! bol #f)))))))  
  
-(define (sal2html file . args)
-  (let ((html #f)
-	(source-url #f)
-	(out #f)
+(define (sal2html file html source-url fileicon-url)
+  (let ((out #f)
 	(sal #f))
-    (cond ((pair? args)
-	   (set! html (cadr args))
-	   (if (pair? (cdr args))
-	       (set! source-url (caddr args))
-	       (set! source-url file)))
-	  (else
-	   (set! html (make-pathname #:type "html" #:defaults file))
-	   (set! source-url file)))
+    (if (not html)
+	(set! html (make-pathname #:type "html" #:defaults file)))
+    (if (not source-url)
+	(set! source-url file))
+    (if (not fileicon-url)
+	(set! fileicon-url "fileicon.png"))
     (with-input-from-file file
       (lambda ()
 	(set! sal (current-input-port))
@@ -284,7 +281,8 @@ pre.salcode{}
 	    (set! out (current-output-port))
 	    (salhtmlheader out (make-pathname #:name (pathname-name file)
 					      #:type (pathname-type file)
-					      #:defaults source-url))
+					      #:defaults source-url)
+			   fileicon-url)
 	    (format out "<pre class=\"salcode\">~%")
 	    (call/cc (stoh-loop sal out) )
 	    (format out "</pre>~%")
@@ -305,7 +303,18 @@ pre.salcode{}
       (if (equal? x "sal")
 	  (let ((p (make-pathname #:directory d #:defaults (car l))))
 	    (format #t "~%~S" p)
-	    (sal2html p))))))
+	    (sal2html p #f #f #f))))))
+
+(let ((d "/Users/hkt/Desktop/paint/"))
+  (do ((l (directory d) (cdr l)))
+      ((null? l) #t)
+    (let ((x (pathname-type (car l)))
+	  )
+      (if (equal? x "sal")
+	  (let ((p (make-pathname #:directory d #:defaults (car l))))
+	    (format #t "~%~S" p )
+	    (sal2html p #f "" "../img/fileicon.png"))))))
+
 |#
 
 

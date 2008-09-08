@@ -9,17 +9,100 @@
 
 #>
 
-void mp_note(double time, double dur, float key, float vel, float chan) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendNote(time, dur, key, vel, chan); 
+void mp_note(double time, double dur, float key, float vel, float chan) 
+{
+  SchemeThread* sch=((GraceApp *)GraceApp::getInstance())->schemeProcess;
+  // dont need a lock becuase we are in the thread
+  if (sch->capturemode)
+  {
+    // if score capture is true AND we are under a process callback then
+    // processtime will be >= 0 else it will be 0
+    time=time+sch->processtime;
+    ((GraceApp *)GraceApp::getInstance())->
+      midiOutPort->sendNote(time, dur, key, vel, chan, true);
+  }
+  else
+   ((GraceApp *)GraceApp::getInstance())->
+      midiOutPort->sendNote(time, dur, key, vel, chan, false);
 }
 
-void mp_data(int type, double time, float chan, float data1, float data2) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendData(type, time, chan, data1, data2) ;
+void mp_data(int type, double time, float chan, float data1, float data2)
+{
+  SchemeThread* sch=((GraceApp *)GraceApp::getInstance())->schemeProcess;
+  if (sch->capturemode)
+  {
+    // if score capture is true AND we are under a process callback then
+    // processtime will be >= 0 else it will be 0
+    time=time+sch->processtime;
+    ((GraceApp *)GraceApp::getInstance())->
+      midiOutPort->sendData(type, time, chan, data1, data2, true) ;
+  }
+  else
+  {
+    ((GraceApp *)GraceApp::getInstance())->
+      midiOutPort->sendData(type, time, chan, data1, data2, false) ;
+  }
 }
 
-void mp_message(MidiMessage *m) {
- ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendMessage(m) ;
+void mp_message(MidiMessage *m) 
+{
+  SchemeThread* sch=((GraceApp *)GraceApp::getInstance())->schemeProcess;
+  if (sch->capturemode)
+  {
+    // if score capture is true AND we are under a process callback then
+    // processtime will be >= 0 else it will be 0
+    m->setTimeStamp(m->getTimeStamp()+sch->processtime);
+    ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendMessage(m, true) ;
+  }
+  else 
+  {
+   ((GraceApp *)GraceApp::getInstance())->midiOutPort->sendMessage(m,false) ;
+  }
 }
+
+void mp_tuning(int div)
+{
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->
+   postConsoleMessage( String::empty, CommandIDs::MidiOutTuning + div, true);
+}
+
+void mp_playseq()
+{
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->
+   postConsoleMessage( String::empty, CommandIDs::MidiSeqPlay, true);
+}
+
+void mp_saveseq()
+{
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->
+   postConsoleMessage( String::empty, CommandIDs::MidiSeqSave, true);
+}
+
+void mp_copyseq()
+{
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->
+   postConsoleMessage( String::empty, CommandIDs::MidiSeqCopyToTrack, true);
+}
+
+void mp_plotseq()
+{
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->
+   postConsoleMessage( String::empty, CommandIDs::MidiSeqPlot, true);
+}
+
+void mp_clearseq()
+{
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->
+   postConsoleMessage( String::empty, CommandIDs::MidiSeqClear, true);
+}
+
+void mp_recordseq(bool b)
+{
+ int val = (b) ? CaptureModes::RecordMidiOut : CaptureModes::Off;
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->
+   postConsoleMessage( String::empty, CommandIDs::MidiSeqRecordMidiOut + val, true);
+}
+
 
 /// MidiMessage accessors
 
@@ -364,6 +447,39 @@ void set_input_hook( C_word proc )
       ( (foreign-lambda void "set_input_hook"  scheme-object ) #f )
       ))
 
+(define (mp:tuning . args)
+  (let ((arg (if (null? args) 1 (car args))))
+    (if (and (integer? arg)
+	     (< 0 arg 17))
+	((foreign-lambda void "mp_tuning" int) arg)
+	(error "not a tuning division 1-16" arg))
+    (values)))
+
+(define (mp:playseq )
+  ((foreign-lambda void "mp_playseq") )
+  (values))
+
+(define (mp:saveseq )
+  ((foreign-lambda void "mp_saveseq") )
+  (values))
+
+(define (mp:copyseq )
+  ((foreign-lambda void "mp_copyseq") )
+  (values))
+
+(define (mp:plotseq )
+  ((foreign-lambda void "mp_plotseq") )
+  (values))
+
+(define (mp:clearseq  )
+  ((foreign-lambda void "mp_clearseq") )
+  (values))
+
+(define (mp:recordseq . args)
+  (let ((rec (if (null? args) #f (car args))))
+    ((foreign-lambda void "mp_recordseq" bool) rec)
+    (values)))
+
 ;; message definitions
 
 (define-send-message mp:note ((#:time 0) (#:dur .5) (#:key 60) (#:amp .5) (#:chan 0)))
@@ -377,6 +493,13 @@ void set_input_hook( C_word proc )
 (define-send-message mp:bend ((#:time 0) (#:val 8192) (#:chan 0)))
 (define-send-message mp:mm ((#:mm #f) ))
 (define-send-message mp:inhook ((#:func #f) ))
+(define-send-message mp:tuning ((#:div 1) ))
+(define-send-message mp:recordseq ((#:rec #f) ))
+(define-send-message mp:playseq ( ))
+(define-send-message mp:saveseq ( ))
+(define-send-message mp:copyseq ( ))
+(define-send-message mp:plotseq ( ))
+(define-send-message mp:clearseq ( ))
 
 ;;; eof
 

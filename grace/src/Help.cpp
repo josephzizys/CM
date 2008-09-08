@@ -177,19 +177,23 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("fifth"), T("cm.html#fifth"));
   graceschememap.set( T("first"), T("cm.html#first"));
   graceschememap.set( T("fit"), T("cm.html#fit"));
+  graceschememap.set( T("float"), T("cm.html#float"));
   graceschememap.set( T("fm-spectrum"), T("cm.html#fm-spectrum"));
   graceschememap.set( T("fourth"), T("cm.html#fourth"));
 
   graceschememap.set( T("hz"), T("cm.html#hz"));
   graceschememap.set( T("hush"), T("cm.html#hush"));
   graceschememap.set( T("int"), T("cm.html#int"));
-  graceschememap.set( T("import-spear-frames"), T("cm.html#import-spear-frames"));
+  graceschememap.set( T("import-spear-frames"), 
+		      T("cm.html#import-spear-frames"));
   graceschememap.set( T("key"), T("cm.html#key"));
   graceschememap.set( T("interp"), T("cm.html#interp"));
   graceschememap.set( T("invert"), T("cm.html#ivert"));
   graceschememap.set( T("last"), T("cm.html#last"));
   graceschememap.set( T("list*"), T("cm.html#list_"));
   graceschememap.set( T("list-set!"), T("cm.html#list-set_"));
+  graceschememap.set( T("log2"), T("cm.html#log2"));
+  graceschememap.set( T("log10"), T("cm.html#log10"));
   graceschememap.set( T("loop"), T("cm.html#loop"));
 
   graceschememap.set( T("make-cycle"), T("cm.html#make-cycle"));
@@ -234,6 +238,9 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("mm:make-on"), T("cm.html#mm:make-on"));
   graceschememap.set( T("mm:make-touch"), T("cm.html#mm:make-touch"));
 
+  graceschememap.set( T("most-positive-fixnum"), T("cm.html#most-positive-fixnum"));
+  graceschememap.set( T("most-negative-fixnum"), T("cm.html#most-negative-fixnum"));
+
   graceschememap.set( T("mp:midi"), T("cm.html#mp:midi"));
   graceschememap.set( T("mp:on"), T("cm.html#mp:on"));
   graceschememap.set( T("mp:off"), T("cm.html#mp:off"));
@@ -251,6 +258,7 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("odds"), T("cm.html#odds"));
   graceschememap.set( T("pause"), T("cm.html#pause"));
   graceschememap.set( T("pc"), T("cm.html#pc"));
+  graceschememap.set( T("pi"), T("cm.html#pi"));
   graceschememap.set( T("pick"), T("cm.html#pick"));
   graceschememap.set( T("plus"), T("cm.html#plus"));
   graceschememap.set( T("quantize"), T("cm.html#quantize"));
@@ -448,7 +456,7 @@ void SymbolHelp::addSchemeHelp() {
   schememap.set( T("null-environment"), T("r5rs-Z-H-9.html#%25_idx_582") );
   schememap.set( T("null?"), T("r5rs-Z-H-9.html#%25_idx_410") );
   schememap.set( T("number->string"), T("r5rs-Z-H-9.html#%25_idx_350") );
-  schememap.set( T("number?"), T("r5rs-Z-H-6.html#%25_idx_52") );
+  schememap.set( T("number?"), T("r5rs-Z-H-9.html#%_idx_240") );
   schememap.set( T("numerator"), T("r5rs-Z-H-9.html#%25_idx_298") );
   schememap.set( T("#o"), T("r5rs-Z-H-9.html#%25_idx_230") );
   schememap.set( T("odd?"), T("r5rs-Z-H-9.html#%25_idx_270") );
@@ -500,7 +508,7 @@ void SymbolHelp::addSchemeHelp() {
   schememap.set( T("string=?"), T("r5rs-Z-H-9.html#%25_idx_502") );
   schememap.set( T("string>=?"), T("r5rs-Z-H-9.html#%25_idx_512") );
   schememap.set( T("string>?"), T("r5rs-Z-H-9.html#%25_idx_508") );
-  schememap.set( T("string?"), T("r5rs-Z-H-6.html#%25_idx_56") );
+  schememap.set( T("string?"), T("r5rs-Z-H-9.html#%_idx_490") );
   schememap.set( T("substring"), T("r5rs-Z-H-9.html#%25_idx_522") );
   schememap.set( T("symbol->string"), T("r5rs-Z-H-9.html#%25_idx_444") );
   schememap.set( T("symbol?"), T("r5rs-Z-H-6.html#%25_idx_50") );

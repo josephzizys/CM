@@ -18,6 +18,8 @@ namespace Toolbox {
   float rescale (float x, float x1, float x2, float y1, float y2, float b=1.0) ;
   int discrete (float x, float x1, float x2, int y1, int y2, float b=1.0);
   int float_to_fixnum(float f) ;
+  double log_ten(double num);
+  double log_two(double num);
 
   float expl(float powr, float y0, float y1, float base);
   float explseg(int i, int len, float sum, float base);

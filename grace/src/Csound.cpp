@@ -8,6 +8,7 @@
 #include "Enumerations.h"
 #include "Csound.h"
 #include "Grace.h"
+#include "Scheme.h"
 
 //
 // Csound Performace Thread
@@ -58,13 +59,11 @@ void CsoundConnection::run () {
   // writing sound file
   if ( isWriter() ) {
     int res=0;
-    printf("BEGIN WRITING\n");
     while ( res == 0 ) {
       if ( threadShouldExit() ) // user abort
 	break;
       res=csoundPerformKsmps(csound);
     }
-    printf("END WRITING\n");
   }
   else  {
     // open for realtime. call performKsmps() until user closes port.
@@ -84,12 +83,15 @@ void CsoundConnection::run () {
   csoundDestroy(csound);
   csound=NULL;
   if ( isWriter() ) {
-    printf("END OF WRITE THREAD\n");
-    port->console->postConsoleTextMessage( T("Csound audio written.\n") );
+    port->console->postConsoleMessage( T("Csound audio written.\n"),
+					   CommandIDs::ConsolePrintText,
+					   true);
     port->setWriting(false);
   }
   else {
-    port->console->postConsoleTextMessage( T("Csound port closed.\n") ); 
+    port->console->postConsoleMessage( T("Csound port closed.\n"),
+					   CommandIDs::ConsolePrintText,
+					   true ); 
     port->setOpen(false);
   }
 #endif
@@ -199,16 +201,6 @@ void CsoundPort::setTraceMode(bool b) {
   tracing=b;
 }
 
-bool CsoundPort::isScoreMode() {
-  return scoremode;
-}
-
-void CsoundPort::setScoreMode(bool b) {
-  scoremode=b;
-  if (b)
-    setRecordMode(false);
-}
-
 bool CsoundPort::isRecordMode() {
   return recordmode;
 }
@@ -216,9 +208,6 @@ bool CsoundPort::isRecordMode() {
 void CsoundPort::setRecordMode(bool b) {
   recordmode=b;
   scorestamp=-1.0;
-  if (b) {
-    setScoreMode(false);
-  }
 }
 
 void CsoundPort::setRecordStart (double st) {
@@ -384,53 +373,52 @@ const PopupMenu CsoundPort::getCsoundMenu()
   bool isopen = isOpen();
   
   if (isopen)
-    csoundmenu.addItem(CommandIDs::CsoundClose,
-		       T("Close"));
+    csoundmenu.addItem(CommandIDs::CsoundClose, T("Close"));
   else
-    csoundmenu.addItem(CommandIDs::CsoundOpen, 
-		       T("Open..."));
+    {
+      if ( ((GraceApp *)GraceApp::getInstance())->
+	   schemeProcess->isScoreCapture() )
+	  csoundmenu.addItem(CommandIDs::CsoundWrite, T("Write..."));
+      else
+	  csoundmenu.addItem(CommandIDs::CsoundOpen, T("Open..."));
+    }
+
   csoundmenu.addSeparator();
   csoundmenu.addItem(CommandIDs::CsoundRecordMode, 
 		     T("Record Output to Score"),
 		     isopen,
 		     isRecordMode());
-  csoundmenu.addItem(CommandIDs::CsoundScoreMode, 
-		     T("Route Output to Score"),
-		     true,
-		     isScoreMode());
   csoundmenu.addSeparator();
   csoundscoremenu.addItem(CommandIDs::CsoundPlay, 
 			  T("Play"),
 			  (score && isopen));
   if (isWriting())
-    csoundscoremenu.addItem(CommandIDs::CsoundAbortWrite,
+    csoundmenu.addItem(CommandIDs::CsoundAbortWrite,
 			    T("Abort Write"));
   else
-    csoundscoremenu.addItem(CommandIDs::CsoundWrite,
+    csoundmenu.addItem(CommandIDs::CsoundWrite,
 			    T("Write Audio..."),
 			    score);
-  csoundscoremenu.addSeparator();
-  csoundscoremenu.addItem(CommandIDs::CsoundPrint,
+  csoundmenu.addSeparator();
+  csoundmenu.addItem(CommandIDs::CsoundPrint,
 			  T("Print"), 
 			  score);
-  csoundscoremenu.addItem(CommandIDs::CsoundExport,
+  csoundmenu.addItem(CommandIDs::CsoundExport,
 			  T("Export..."), 
 			  score);
-  csoundscoremenu.addItem(CommandIDs::CsoundDisplay, 
-			  T("Plotter..."), 
+  csoundmenu.addItem(CommandIDs::CsoundDisplay, 
+			  T("Plot..."), 
 			  false);
-  csoundscoremenu.addSeparator();
-  csoundscoremenu.addItem(CommandIDs::CsoundClear,
+  csoundmenu.addSeparator();
+  csoundmenu.addItem(CommandIDs::CsoundClear,
 			  T("Clear"), 
 			  score);
-  csoundmenu.addSubMenu( T("Score"),
-			 csoundscoremenu,
-			 true);    
-  csoundmenu.addSeparator();
-  csoundmenu.addItem(CommandIDs::CsoundTraceMode, 
-		     T("Trace Output"), 
-		     true,
-		     isTraceMode());
+ 
+  //  csoundmenu.addSeparator();
+  //  csoundmenu.addItem(CommandIDs::CsoundTraceMode, 
+  //		     T("Trace Output"), 
+  //		     true,
+  //		     isTraceMode());
   return csoundmenu;
 }
 
@@ -477,10 +465,6 @@ void CsoundPort::performCsoundCommand(CommandID id)
       
     case CommandIDs::CsoundClear :
       clearScore();
-      break;
-      
-    case CommandIDs::CsoundScoreMode :
-      setScoreMode( (! isScoreMode()) );
       break;
       
     case CommandIDs::CsoundRecordMode :
@@ -569,45 +553,57 @@ String CsoundScoreEv::toText(int fmat) {
 // Score Interface
 //
 
-void CsoundPort::sendScoreEvent(CsoundScoreEv* ev, bool del) {
-  // scoreMode means to add the event to the score rather than send
-  // out the port
-  if ( isScoreMode() ) {
-    addScoreEvent(ev);
-    if ( isTraceMode() )
-      console->postConsoleTextMessage( (ev->toText(ExportIDs::CsoundScore) + T("\n")) );
-  }
-  else if ( isOpen() ) {
-    // if port is open and we are not in score mode then send event to
-    // csound and delete the event if del flag is true
-    String msg = ev->toText(ExportIDs::CsoundScore);
-    lockCsound();
-#ifdef PORTCSOUND
-    csoundInputMessage(port_connection->csound, msg.toUTF8() );
-#endif
-    unlockCsound();
-
-    if ( isRecordMode() ) {
-      if (scorestamp<0.0) {
-	//	scorestamp=Time::highResolutionTicksToSeconds(Time::getHighResolutionTicks());	
-	scorestamp=Time::getMillisecondCounterHiRes()/1000.0;
-      }
-      //      double now=Time::highResolutionTicksToSeconds(Time::getHighResolutionTicks());	
-      double now=Time::getMillisecondCounterHiRes()/1000.0;
-      ev->pars[1]= ev->pars[1] + scorestart + (now-scorestamp);
+void CsoundPort::sendScoreEvent(CsoundScoreEv* ev, bool del, bool toScore)
+{
+  // toScore means to add the event to the score rather than send out
+  // the port
+  if ( toScore )
+    {
       addScoreEvent(ev);
-      del=false;  // don't gc the event we are recording!
+      if ( isTraceMode() )
+	console->postConsoleMessage( (ev->toText(ExportIDs::CsoundScore) +
+				      T("\n")),
+				     CommandIDs::ConsolePrintText,
+				     true );
     }
-    if ( isTraceMode() )
-      console->postConsoleTextMessage( (msg + T("\n")) );
-    if (del) delete ev;
-  }
-  else {
-    // if no score or port open then delete the event
-    if ( isTraceMode() )
-      console->postConsoleTextMessage( (ev->toText(ExportIDs::CsoundScore) + T("\n")) );
-    delete ev;
-  }
+  else if ( isOpen() )
+    {
+      // if port is open and we are not in score mode then send event to
+      // csound and delete the event if del flag is true
+      String msg = ev->toText(ExportIDs::CsoundScore);
+      lockCsound();
+#ifdef PORTCSOUND
+      csoundInputMessage(port_connection->csound, msg.toUTF8() );
+#endif
+      unlockCsound();
+      
+      if ( isRecordMode() )
+	{
+	  if (scorestamp<0.0)
+	    {
+	      scorestamp=Time::getMillisecondCounterHiRes()/1000.0;
+	    }
+	  double now=Time::getMillisecondCounterHiRes()/1000.0;
+	  ev->pars[1]= ev->pars[1] + scorestart + (now-scorestamp);
+	  addScoreEvent(ev);
+	  del=false;  // don't gc the event we are recording!
+	}
+      if ( isTraceMode() )
+	console->postConsoleMessage( (msg + T("\n")),
+				     CommandIDs::ConsolePrintText,
+				     true );
+      if (del) delete ev;
+    }
+  else
+    {
+      // if no score or port open then delete the event
+      if ( isTraceMode() )
+	console->postConsoleMessage( (ev->toText(ExportIDs::CsoundScore) +
+				      T("\n")),
+				     CommandIDs::ConsolePrintText,
+				     true );
+      delete ev;
+    }
 }
 
 void CsoundPort::addScoreEvent(CsoundScoreEv* ev) {
@@ -676,13 +672,20 @@ void CsoundPort::printScore(double start, double end) {
       if (score[i]->pars[1] >= start) 
 	break;
   }
-  console->postConsoleTextMessage( T("s\n") );  
+  console->postConsoleMessage( T("s\n"),
+				   CommandIDs::ConsolePrintText,
+				   true );  
   for ( ; i<score.size(); i++) {
     if ( (end > 0.0) && (score[i]->pars[1] > end) )
       break;
-    console->postConsoleTextMessage( (score[i]->toText(ExportIDs::CsoundScore) + T("\n")) );
+    console->postConsoleMessage((score[i]->toText(ExportIDs::CsoundScore) +
+				     T("\n")),
+				    CommandIDs::ConsolePrintText,
+				    true );
   }
-  console->postConsoleTextMessage( T("e\n") );  
+  console->postConsoleMessage( T("e\n"),
+				   CommandIDs::ConsolePrintText,
+				   true );  
 }
 
 void CsoundPort::exportScore() {

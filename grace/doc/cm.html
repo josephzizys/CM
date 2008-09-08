@@ -138,6 +138,25 @@ Rounds floating point <var>num</var> or list of the same to the nearest integer.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<table class="entry" id="float">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">float</span>
+      (<var class="arg">num</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Coerces <var>num</var> or list of the same to a floating point value.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
 <table class="entry" id="quantize">
   <tr class="entry">
     <td class="formals">
@@ -171,11 +190,18 @@ Quantizes <var>num</var> or list of the same to be a multiple of <var>step</var>
     </td>
     <td class="label">Function</td>
   </tr>
+    <tr class="entry">
+    <td class="formals">
+      <span class="funcname">plus</span>
+      (<var class="arg">list</var>, <var>num</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
   <tr><td class="retval" colspan="2">&rarr; number</td></tr>
 </table>
 <blockquote>
 <p>
-Returns the addition of zero or more <var>nums</var>. If a single <var>list</var> of numbers is given they are summed together.
+Returns the addition of zero or more <var>nums</var>. If a single <var>list</var> of numbers is given they are summed together. Otherwise a list is returned of <var>num</var> added to every element in <var>list</var>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -196,11 +222,17 @@ Returns the addition of zero or more <var>nums</var>. If a single <var>list</var
     </td>
     <td class="label">Function</td>
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
+    <tr class="entry">
+    <td class="formals">
+      <span class="funcname">minus</span>
+      (<var class="arg">list</var>, <var>num</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
 </table>
 <blockquote>
 <p>
-Returns the subtraction of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative subtraction is returned.
+Returns the subtraction of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative subtraction is returned. Otherwise a list is returned of <var>num</var> subtracted from every element in <var>list</var>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -221,11 +253,17 @@ Returns the subtraction of one or more <var>nums</var>. If a single number is gi
     </td>
     <td class="label">Function</td>
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">times</span>
+      (<var class="arg">list</var>, <var class="arg">num</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
 </table>
 <blockquote>
 <p>
-Returns the multiplication of zero or more <var>nums</var>. If a single <var>list</var> of numbers is given they are multiplied together.
+Returns the multiplication of zero or more <var>nums</var>. If a single <var>list</var> of numbers is given they are multiplied together.  Otherwise a list is returned of <var>num</var> multiplied with every element in <var>list</var>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -246,14 +284,113 @@ Returns the multiplication of zero or more <var>nums</var>. If a single <var>lis
     </td>
     <td class="label">Function</td>
   </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">divide</span>
+      (<var class="arg">list</var>, <var class="arg">num</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
   <tr><td class="retval" colspan="2">&rarr; number</td></tr>
 </table>
 <blockquote>
 <p>
-Returns the division of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative division is returned.
+Returns the division of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative division is returned. Otherwise a list is returned of <var>num</var> divided into every element in <var>list</var>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="log10">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">log10</span>
+      (<var class="arg">num</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number </td></tr>
+</table>
+<blockquote>
+<p>
+Returns log <span style="vertical-align: middle; font-size:x-small;">10</span> of <var>num</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="log2">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">log2</span>
+      (<var class="arg">num</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number </td></tr>
+</table>
+<blockquote>
+<p>
+Returns log <span style="vertical-align: middle; font-size:x-small;">2</span> of <var>num</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="pi">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">pi</span>
+    </td>
+    <td class="label">Variable</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; 3.141592653589793</td></tr>
+</table>
+<blockquote>
+<p>
+The value of <var>pi</var> as a double float.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="most-positive-fixnum">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">most-positive-fixnum</span>
+    </td>
+    <td class="label">Variable</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; Implementation dependent value</td></tr>
+</table>
+<blockquote>
+<p>
+The largest positive fixed point integer representable in this Lisp implementation.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="most-negative-fixnum">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">most-negative-fixnum</span>
+    </td>
+    <td class="label">Variable</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; Implementation dependent value</td></tr>
+</table>
+<blockquote>
+<p>
+The largest negative fixed point integer representable in this Lisp implementation.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
 
 <h3 id="lists">Lists</h3>
 
@@ -2744,7 +2881,9 @@ Defines a function that executes in the real-time scheduler. It should return a 
 
 <!-- DEFINITION -->
 <table class="entry" id="wait">
-    <td class="formals"><span class="commandname">wait</span> <var class="arg">time</var>
+  <tr class="entry">
+    <td class="formals"><span class="commandname">wait</span>
+      <var class="arg">time</var>
     </td>
     <td class="label">SAL</td>
   </tr>
@@ -2752,7 +2891,7 @@ Defines a function that executes in the real-time scheduler. It should return a 
     <td class="formals"><span class="funcname">wait</span> (<var class="arg">time</var>)
     </td>
     <td class="label">Function</td>
-  </tr>  <tr class="entry">
+  </tr>  
 
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
@@ -3003,8 +3142,98 @@ Sends a low-level <a href="#midi-message">MIDI message</a> to the midi port.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<table id="mp:tuning" class="entry">
+  <tr class="entry">
+    <td class="formals"><span class="commandname">send</span>
+      <span class="string">"mp:tuning"</span>, <var class="arg">div</var></td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+
+<blockquote>
+<p>
+Sets the tuning resolution of the Midi Out port to <var>div</var> steps per semitone.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<h4>Midi Sequence Messages</h4>
+
+<!-- DEFINITION -->
+<table id="mp:playseq" class="entry">
+  <tr class="entry">
+    <td class="formals"><span class="commandname">send</span>
+      <span class="string">"mp:playseq"</span> </td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+
+<blockquote>
+<p>
+Plays the current contents of the Midi Port's score (midi sequence).
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="mp:saveseq" class="entry">
+  <tr class="entry">
+    <td class="formals"><span class="commandname">send</span>
+      <span class="string">"mp:saveseq"</span> </td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+
+<blockquote>
+<p>
+Saves the current contents of the Midi Port's score to a Midi file.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="mp:copyseq" class="entry">
+  <tr class="entry">
+    <td class="formals"><span class="commandname">send</span>
+      <span class="string">"mp:copyseq"</span> </td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+
+<blockquote>
+<p>
+Copies the current contents of the Midi Port's score to a new track under the <span class="menuitem">Ports&gt;Midi Seq&gt;Tracks&gt;</span> menu.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="mp:clearseq" class="entry">
+  <tr class="entry">
+    <td class="formals"><span class="commandname">send</span>
+      <span class="string">"mp:clearseq"</span> </td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+
+<blockquote>
+<p>
+Deletes the contents of the Midi Port's score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<h4>Midi Input Messages</h4>
+
+<!-- DEFINITION -->
 <table id="mp:inhook" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:inhook"</span> <var class="arg">function</var></td>
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:inhook"</span>, <var class="arg">function</var></td>
     <td class="label">SAL</td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3016,6 +3245,8 @@ Sets <var>function</var> to receive <a href="midimessage">Midi Messages</a> that
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+
 
 <h3 id="csound-port">Csound Port Methods</h3>
 
@@ -3079,20 +3310,6 @@ Clears the port's score buffer of any contents.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="cs:score">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:score"</span>, <var class="arg">status</var></td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-If <var>status</var> is true then the port is placed in "score mode" and subsequent data sent to the port are routed to the score using time stamps in the data as score time. The port does not have to be open to enable score mode. If <var>status</var> is false then score mode is stopped.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
 <table class="entry" id="cs:record">
   <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:record"</span>, <var class="arg">status</var></td>
     <td class="label">SAL</td>
@@ -3101,7 +3318,7 @@ If <var>status</var> is true then the port is placed in "score mode" and subsequ
 </table>
 <blockquote>
 <p>
-If <var>status</var> is true or a score start time for recording then the port is armed in "record mode" and subsequent data sent out the open port in real time are copied to the score using internal time stamps to produce time stamps in the score. If <var>status</var> false then recording is stopped.
+If <var>status</var> is true or a score start time for recording then the port is armed in "record mode" and subsequent data sent out the open port in real time are copied to the score using internal time stamps to produce time stamps in the score. If <var>status</var> false then recording is stopped. This message only has effect if Score Capture is off.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -3123,7 +3340,7 @@ If <var>status</var> is true then data sent to the port is echoed to the termina
 
 <!-- DEFINITION -->
 <table class="entry" id="cs:print">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:print"</span>, <var class="opt">start = </var> <var id="optval"> 0.0</var> , <var class="opt">end = </var> <var id="optval"> #f</var></td>
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:print"</span>, <var class="opt">start = </var> <var class="optval"> 0.0</var> , <var class="opt">end = </var> <var class="optval"> #f</var></td>
     <td class="label">SAL</td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3138,8 +3355,8 @@ Prints score statements between <var>start</var> and <var>end</var> times to the
 
 <!-- DEFINITION -->
 <table class="entry" id="cs:play">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:play"</span>, <var class="opt">start = </var> <var id="optval"> 0.0</var>, <var class="opt">end = </var> <var id="optval"> #f</var>
-, <var class="opt">shift = </var> <var id="optval"> 0</var></td>
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:play"</span>, <var class="opt">start = </var> <var class="optval"> 0.0</var>, <var class="opt">end = </var> <var class="optval"> #f</var>
+, <var class="opt">shift = </var> <var class="optval"> 0</var></td>
     <td class="label">SAL</td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>

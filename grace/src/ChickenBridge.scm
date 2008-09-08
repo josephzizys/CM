@@ -17,6 +17,7 @@
 #include "Scheme.h"
 #include "Syntax.h"
 #include "Midi.h"
+#include "Enumerations.h"
 #include <juce.h>
 
 //
@@ -27,24 +28,23 @@ void print_message(char * st) {
   // attempt at buffering: if string ends with #\Return, send string
   // AND trigger update else send string without triggering update
   String s=String(st);
+
+  //printf("message='%s'\n" , s.toUTF8());
+
   if ( s.endsWithChar('\n') )
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::TEXT, true);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintText, true);
   else
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::TEXT, false);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintText, false);
 }
 
 void print_error(char * st) {
   // attempt at buffering: if string ends with #\Return, send string
   // AND trigger update else send string without triggering update
-
-printf("in print_error\n");
-printf("  str='%s'\n",st);
-
   String s=String(st);
   if ( s.endsWithChar('\n') )
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::ERROR, true);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintError, true);
   else
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::ERROR, false);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintError, false);
 }
 
 //
@@ -78,19 +78,6 @@ void scheduler_hush () {
   ((GraceApp *)GraceApp::getInstance())->midiOutPort->clear();
 }
 
-bool scheduler_is_time_milliseconds () {
-  ((GraceApp *)GraceApp::getInstance())->schemeProcess->isTimeMilliseconds();
-}
- 
-void scheduler_set_time_milliseconds (bool b) {
-  ((GraceApp *)GraceApp::getInstance())->schemeProcess->setTimeMilliseconds(b);
-}
-
-//void print_current_directory() {
-//  String s=File::getCurrentWorkingDirectory().getFullPathName().quoted() + T("\n");
-//  ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::TEXT, true);
-//}
-
 char *get_current_directory() {
   return (char *)File::getCurrentWorkingDirectory().getFullPathName().toUTF8();
 }
@@ -103,7 +90,7 @@ void set_current_directory (char *path) {
   }
   else {
     String s=T(">>> Error: ") + dir.getFullPathName().quoted() + T(" is not a directory.\n");
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleTextMessage(s, ConsoleMessage::ERROR, true);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintError, true);
   }			 
 }
 
@@ -130,23 +117,21 @@ void load_sal_file(char *path) {
 	 mm:val mm:val-set! mm:num mm:num-set!
 
          mp:midi mp:note mp:off mp:on mp:touch mp:ctrl mp:prog 
-	 mp:press mp:bend
-	 mp:mm mp:inhook 
+	 mp:press mp:bend mp:tuning 
+	 mp:playseq mp:saveseq mp:copyseq mp:plotseq mp:clearseq mp:recordseq
+	 mp:mm mp:inhook
 
 	 ;; Csound
-	 cs:score cs:record cs:trace cs:clear cs:print cs:play cs:i cs:f 
+	 cs:record cs:clear cs:print cs:play cs:i cs:f 
 
 	 *messages* send expand-send 
 	 define-process run ;go
-	 current-time-milliseconds current-time-seconds
-	 now time-format
-	 sprout stop hush pause paused? cont
+	 now sprout stop hush pause paused? cont
 	 ;; toolbox
-
+	 most-positive-fixnum most-negative-fixnum pi log10 log2
 	 note key hz pc transpose invert retrograde
 	 scale scale-order scale-order!
-
-	 rescale discrete fit int quantize decimals
+	 rescale discrete fit int float quantize decimals
 	 plus minus times divide
 	 cents->ratio ratio->cents
 	 rhythm->seconds interp
@@ -354,13 +339,6 @@ void load_sal_file(char *path) {
 (define-macro (send mess . data)
   (expand-send mess data #f))
 
-
-;; imlementation specific utilities 
-
-(define-constant most-positive-fixnum #x3fffffff)
-
-(define-constant most-negative-fixnum (- #x3fffffff))
-
 (define (cwd )
   ((foreign-lambda c-string "get_current_directory" )))
 
@@ -424,29 +402,6 @@ void load_sal_file(char *path) {
 (define print-error
   (foreign-lambda void "print_error" c-string))
 
-;;(define-external (run_process (scheme-object closure) (double elapsed)) double
-;;  ( closure  elapsed))
-;;
-;;(define current-time-hi-res
-;;  (foreign-lambda* double ()
-;;     " C_return(Time::getMillisecondCounterHiRes());"))
-
-;; Time
-
-(define current-time-milliseconds
-  (foreign-lambda* double ()
-     " C_return( Time::getMillisecondCounterHiRes());"))
-
-(define current-time-seconds
-  (foreign-lambda* double ()
-     " C_return( (Time::getMillisecondCounterHiRes() / 1000.0) );"))
-  
-(define scheduler-is-time-milliseconds
-  (foreign-safe-lambda bool "scheduler_is_time_milliseconds" )  )
-
-(define scheduler-set-time-milliseconds
-  (foreign-safe-lambda void "scheduler_set_time_milliseconds" bool))
-
 ;; Scheduler API
 
 (define scheduler-sprout
@@ -497,35 +452,28 @@ void load_sal_file(char *path) {
 			id))))
      ;; arrrg! for some reason scheduler-sprout assumes milliseconds
      (cond ((pair? proc)
+	    ;; make sure all are procedures before any are sprouted
+	    (do ((p proc (cdr p)))
+		((null? p) #f)
+	      (if (not (procedure? (car p)))
+		  (error "sprout: list contains a non-procedure" proc)))
 	    (do ((p proc (cdr p)))
 		((null? p) proc)
-	      (scheduler-sprout (car p) (* (nextstart) 1000)
+	      (scheduler-sprout (car p) (nextstart)
 				(nextid))))
+	   ((procedure? proc)
+	    (scheduler-sprout proc (nextstart) (nextid))
+	    proc)
 	   (else
-	    (scheduler-sprout proc (* (nextstart) 1000) (nextid))
-	    proc))
+	    (error "sprout: not a procedure" proc))
+	   )
      ;; if return proc would chicken put it in a History list and so
      ;; never get gc'd?
      (values))))
 
-;;(define now current-time-milliseconds)
-
-(define now current-time-seconds)
-
-(define (time-format . arg)
-  (if (null? arg)
-      (if (scheduler-is-time-milliseconds ) 1000 1.0)
-      (case (car arg)
-	((1.0 1 s)
-	 (set! now current-time-seconds)
-	 (scheduler-set-time-milliseconds #f)
-	 )
-	((1000 m)
-	 (set! now current-time-milliseconds)
-	 (scheduler-set-time-milliseconds #t)
-	 )
-	(else
-	 (error "not a time-format" (car arg))))))
+(define now
+  (foreign-lambda* double ()
+     " C_return( (Time::getMillisecondCounterHiRes() / 1000.0) );"))
 
 (define (pause )
   (scheduler-pause )

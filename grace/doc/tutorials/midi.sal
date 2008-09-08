@@ -19,15 +19,14 @@
 
 send "mp:midi", 0, .5, 60, .5, 0
 
-; Before going into this example in detail lets first demo how easy it
-; is to send things with some algorithic processing. in this next
-; example we send random instrument assignments (or 'program changes'
-; in MIDI-speak) each time we send a sound. We'll also use randomness
-; to pick only black keys to play. We'll send parameter names (the
-; words ending with ':') instead of positional values so we only have
-; to specify the things we are interested in. Place your cursor just
-; after the work 'end' and hit COMMAND-Enter several times to hear
-; what it does:
+; Before going into this example in detail lets spice it up a bit and
+; show a little algorithic processing. in this next example we send
+; random instrument assignments (or program changes in MIDI-speak)
+; each time we send a sound. We ll also use randomness to pick only
+; black keys to play. We ll use parameter names (the words ending with
+; : ) instead of positional values so we only have to specify the
+; values we are interested in. Place your cursor just after the work
+; end and hit COMMAND-Enter several times to hear what it does:
 
 begin
   with blackkey = pick(1, 3, 6, 8, 10) + (12 * between(2,9))
@@ -35,7 +34,10 @@ begin
   send "mp:midi", key: blackkey
 end
 
-; now set the default instrument back to Grand Piano:
+; to learn more about Program Changes (MIDI instrument assignments)
+; see: http://www.midi.org/about-midi/gm/gm1sound.shtml
+
+; now lets set the default instrument back to Grand Piano:
 
 send "mp:prog", val: 0
 
@@ -98,7 +100,7 @@ send "mp:midi", key: between(50, 80), dur: pick(.1, .5, 2)
 ; the first are sent in the future:
 
 loop repeat 8
-  for t from 0 by .25
+  for t from 0 by .125
   send "mp:midi", t, key: between(40, 90)
 end
 
@@ -106,49 +108,103 @@ end
 ; beween successive gestures!
 
 ;
-;; Capturing data in the Midi Seq
+;; Microtonal Output
+; 
+; In order to make microtonal sound using the MIDI port you need to do
+; two things: (1) Set your Midi Out port to a micotonal resolution and
+; (2) Send floating point key numbers.
+
+; You can use the Ports>Midi Out>Microtones> submenu to set your port
+; to a Microtonal resoution your choice (see Help>Ports for more
+; information about this) or use the "mp:tuning" message in a send
+; expression. Th value you send to tuning is the number of divisions
+; per semitones, so 2 puts the port into Quarter tone tuning:
+
+send "mp:tuning", 2
+
+; Once you have "tuned" your port to a microtonal resolution you can
+; generate microtonal output simply by sending floating point key
+; numbers in your data. Recall that Common Music interpets the
+; floating point key number kkk.cc as the frequency that is cc cents
+; above the key number kkk. So 60.5 means one quarter-tone above middle C:
+
+send "mp:midi", key: 60
+
+send "mp:midi", key: 60.5
+
+send "mp:midi", key: 61
+
+; Realize that the floating point key values you send are always
+; quantized to the specific microtonal resolution that you set in your
+; port:
+
+loop for i from 0.0 to 1.0 by .1
+  for j from 0 by .5
+  send "mp:midi", time: j, key: 60 + i
+end
+
+; now divide semitones into 12 parts and try the loop again, since 12
+; quantizes to 8 cent, you hear much better resolution of the 10 cent
+; steps in the data:
+
+send "mp:tuning", 12
+
+loop for i from 0.0 to 1.0 by .1
+  for j from 0 by .5
+  send "mp:midi", time: j, key: 60 + i
+end
+
+; here s a little loop that generates the harmonics series. it
+; converts a fundamenal key into hz, multiplies it by the harmonic,
+; and converts it back into a floating point key number for midi to
+; play!
+
+loop with fund = hz(36)
+  for harm from 1 to 16
+  for time from 0 by .5
+  send "mp:midi", time: time, key: key(fund * harm)
+end
+
+; now let's set the port back to semitone tuning:
+
+send "mp:tuning", 1
+
+;
+;; Capturing data in the Midi Port's score (sequence)
 ;
 
 ; Finally, lets use the little loop to demonstrate how to capture
-; data, and the differences between Recording and Score Capture modes.
-; You use record mode to capture MIDI events in real time, exactly as
-; they sound when they are sent out the Midi Port. When you use Score
-; Capture mode, MIDI data is routed directly to the capture sequence
-; without making any sound, and time stamps in the data are taken to be
-; absolute time positions in the score.
+; data, and the differences between real time and Score Capture modes.
+; In normal, real time mode, data is route directly out the port so
+; you hear it as soon as you send it. In Score Capture mode, MIDI data
+; is routed to the port s internal score buffer (midi sequence)
+; without making any sound. When you work in Score Capture mode, time
+; stamps in the data are absolute time positions in the score.
 
-; (1) First, select Ports>Midi Seq>Record Midi Output to place the
-; Midi Port in recoding mode. Now execute this loop three times,
-; allowing overlap (or not) between each execution:
-
-loop repeat 8
-  for t from 0 by .25
-  send "mp:midi", t, key: between(40, 90)
-end
-
-; (2) Now select Ports>Midi Seq>Record Midi Output again to stop
-; recording, and then select Ports>Midi Seq>Play to play the sequence
-; you just recorded. You should hear exactly what you heard when you
-; executed the loop in (1). 
-
-; (3) Next, use Midi Seq>Clear to erase the seq you just recorded, and
-; then select Ports>Midi Seq>Score Capture to put the port in score
-; capturing mode.  Now execute this same loop again 3 times, waiting a
-; second or so between each execution just like the last time. Note
-; that you do NOT hear any sound because the data you send is being
-; routed directly to the sequence not to the Midi Out port.
+; First, select Ports>Capture Mode to turn on Score capturing. Now
+; execute this loop three times, notice that you dont here anything bcauwe
  
 loop repeat 8
   for t from 0 by .25
   send "mp:midi", t, key: between(40, 90)
 end
 
-; (4) Now select Ports>Midi Seq>Score Capture again to stop capturing,
-; and then use Ports>Midi Seq>Play to play the sequence you just
-; captured. Notice that you are hearing 3 notes at a time! This is
-; because time values in the data are absolute score times, so each
-; time you evaluated the loop it added another note but at the exact
-; same (absolute) time position that it did in the previous execution!
+; now lets play the score data we sent. Notice that you hear the notes
+; every .25 seconds, because the time t was use as absolute score
+; time, each time we executed the loop we added another "layer" of
+; notes in the score.
 
+send "mp:playseq"
+
+; now save the sequence to a file:
+
+send "mp:saveseq"
+
+; now clear the sequence
+
+send "mp:clearseq"
+
+; Use Ports>Score Capture> to turn of score capturing and return to
+; "normal" real time mode.
 
 

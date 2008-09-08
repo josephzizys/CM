@@ -125,8 +125,7 @@ class CsoundPort {
 
   bool isTraceMode();
   void setTraceMode(bool b);
-  bool isScoreMode();
-  void setScoreMode(bool b);
+
   bool isRecordMode() ;
   void setRecordMode(bool b);
   void setRecordStart(double f);
@@ -143,7 +142,7 @@ class CsoundPort {
   void exportScore();
 
   void sendScoreEvent(char type, int len, MYFLT *pars);
-  void sendScoreEvent(CsoundScoreEv* ev, bool del=true);
+  void sendScoreEvent(CsoundScoreEv* ev, bool del, bool toScore);
   void addScoreEvent(char type, int len, MYFLT *pars);
   void addScoreEvent(CsoundScoreEv* ev);
 

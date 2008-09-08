@@ -201,10 +201,18 @@ void GraceApp::anotherInstanceStarted (const String& commandLine) {
 /// App-wide menus common to most windows
 ///
 
-const PopupMenu GraceApp::getWindowMenu()
+const PopupMenu GraceApp::getWindowMenu(bool isConsole)
 {
   PopupMenu windowmenu;
-  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
+  int i=0;
+  if (!isConsole)
+    {
+      windowmenu.addCommandItem(commandManager,
+				CommandIDs::WindowSelectConsole);
+      i=1;
+    }
+
+  for ( ; i<TopLevelWindow::getNumTopLevelWindows(); i++)
     {
       TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(i);
       windowmenu.addItem(CommandIDs::WindowSelect+i, w->getName() );

@@ -214,9 +214,10 @@ class CommandIDs
   static const int Plotter = 17;
   static const int Window = 18;
   static const int Help = 19;
+  static const int Scheduler = 20;
+  static const int Console = 21;
 
   static const CommandID Empty=0;
-
   // Application
   static const CommandID AppQuit = COMID(App, 1);
   static const CommandID AppPreferences = COMID(App, 2);
@@ -292,13 +293,13 @@ class CommandIDs
   static const CommandID MidiInRecord = COMID(MidiIn, 4);
   static const CommandID MidiInConfigure = COMID(MidiIn, 5);
   // MidiSeq Port
-  static const CommandID MidiSeqCaptureMidiOut = COMID(MidiSeq, 1);
-  static const CommandID MidiSeqCaptureMidiIn = COMID(MidiSeq, 2);
+  static const CommandID MidiSeqRecordMidiOut = COMID(MidiSeq, 1);
+  static const CommandID MidiSeqRecordMidiIn = COMID(MidiSeq, 2);
   static const CommandID MidiSeqCaptureScore = COMID(MidiSeq, 3);
   static const CommandID MidiSeqResetRecordingStart = COMID(MidiSeq, 4);
   static const CommandID MidiSeqClear = COMID(MidiSeq, 5);
   static const CommandID MidiSeqPlay = COMID(MidiSeq, 6);
-  static const CommandID MidiSeqPlotter = COMID(MidiSeq, 7);
+  static const CommandID MidiSeqPlot = COMID(MidiSeq, 7);
   static const CommandID MidiSeqPrintInfo = COMID(MidiSeq, 8);
   static const CommandID MidiSeqCopyToTrack = COMID(MidiSeq, 9);
   static const CommandID MidiSeqRenameTrack = COMID(MidiSeq, 10);
@@ -310,6 +311,8 @@ class CommandIDs
   static const CommandID MidiSeqExport = COMID(MidiSeq, 16);
   static const CommandID MidiSeqSave = COMID(MidiSeq, 17);
   static const CommandID MidiSeqSaveAs = COMID(MidiSeq, 18);
+  static const CommandID MidiSeqAutoPlay = COMID(MidiSeq, 19);
+  static const CommandID MidiSeqAutoSave = COMID(MidiSeq, 20);
   // Csound Port
   static const CommandID CsoundOpen = COMID(Csound, 1);
   static const CommandID CsoundClose = COMID(Csound, 2);
@@ -324,8 +327,19 @@ class CommandIDs
   static const CommandID CsoundScoreMode = COMID(Csound, 11);
   static const CommandID CsoundRecordMode = COMID(Csound, 12);
   static const CommandID CsoundTraceMode = COMID(Csound, 13);
+  static const CommandID CsoundAutoWrite = COMID(Csound, 14);
   // Audio Port
   static const CommandID AudioSetup = COMID(Audio, 1);
+  // Scheduler
+  static const CommandID SchedulerScoreMode = COMID(Scheduler, 1);
+  static const CommandID SchedulerStop = COMID(Scheduler, 2);
+  static const CommandID SchedulerPause = COMID(Scheduler, 3);
+  static const CommandID SchedulerScoreComplete = COMID(Scheduler, 4);
+  // Console
+  static const CommandID ConsolePrintText     = COMID(Console, 1);
+  static const CommandID ConsolePrintValues   = COMID(Console, 2);
+  static const CommandID ConsolePrintWarning  = COMID(Console, 3);
+  static const CommandID ConsolePrintError    = COMID(Console, 4);
   // Common Lisp Commands
   static const CommandID CommonLispConnect = COMID(CommonLisp, 1);
   static const CommandID CommonLispLoadSystem = COMID(CommonLisp, 2);
@@ -345,11 +359,9 @@ class CommandIDs
   static const CommandID ViewZoomOut = COMID(View, 11);
   static const CommandID ViewScrollVertical = COMID(View, 12);
   static const CommandID ViewScrollHorizontal = COMID(View, 13);
-
   // Common Window Commands
-  static const CommandID WindowConsole = COMID(Window, 1);
+  static const CommandID WindowSelectConsole = COMID(Window, 1);
   static const CommandID WindowSelect = COMID(Window, 2);
-
   // Lisp Eval
   static const CommandID EvalExecute = COMID(Eval, 1);
   static const CommandID EvalExpand = COMID(Eval, 2);
@@ -375,7 +387,6 @@ class CommandIDs
   static const CommandID PlotterBgMousing = COMID(Plotter, 8);
   static const CommandID PlotterVertical = COMID(Plotter, 9);
   static const CommandID PlotterHorizontal = COMID(Plotter, 10);
-
 };
 
 #undef COMID
@@ -392,7 +403,19 @@ class PlotIDs
   static const PlotID Empty = 0;
   static const PlotID XYPlot = 1;
   static const PlotID MidiPlot = 3;
+};
 
+typedef int CaptureMode;
+
+class CaptureModes
+{
+ public:
+  static const int Off=0;
+  static const int Empty=0;
+  static const int CaptureModeOff=0;
+  static const int RecordMidiOut=1;
+  static const int RecordMidiIn=2;
+  static const int CaptureModeScore=3;
 };
 
 #endif

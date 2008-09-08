@@ -7,7 +7,9 @@
 
 #include "Grace.h"
 #include "Scheme.h"
+#include "Enumerations.h"
 #include "ChickenBridge.h"
+#include <iostream>
 
 #define SCHEME_DEBUG 0
 
@@ -20,31 +22,30 @@
 //
 
 SchemeNode::SchemeNode(double _time, int _type, C_word c, int _id)
-  : time (0.0),start (0.0),type (0), expr (String::empty) , mmess(0xff)
+  : time (0.0), start (0.0), type (0), expr (String::empty) , mmess(0xff)
 {
+  // method for process node
   type = _type;
   id = _id;
-  if(_time == 0.0)
-    time = Time::getMillisecondCounterHiRes();
-  else
-    time = _time + Time::getMillisecondCounterHiRes();
-  start = time;
+  time = _time;
+  start = _time;
   closureGCRoot = CHICKEN_new_gc_root();
   CHICKEN_gc_root_set(closureGCRoot, c);
 }
 
 SchemeNode::SchemeNode(double _time, int _type, String _expr)
-  : time (0.0),start (0.0),type (0), closure(0), id (-1), mmess(0xff)
+  : time (0.0), start (0.0), type (0), closure(0), id (-1), mmess(0xff)
 {
-  //  type = EXPR;
-  type=_type;
+  // method for eval node
+  type=_type; //  type = EXPR;
   expr=_expr;
-  time = 0.0; //will always be ready to call
+  time = 0.0; // will always be ready to call
 }
 
 SchemeNode::SchemeNode(double _time, int _type)
   : start (0.0), closure (0), expr (String::empty), id (-1), mmess(0xff)
 {
+  // method for any type of node
   time = _time;
   type = _type;
 }
@@ -52,126 +53,139 @@ SchemeNode::SchemeNode(double _time, int _type)
 SchemeNode::SchemeNode(double _time, int _type, const MidiMessage &_mess)
   : time(0.0), type(_type), mmess(_mess)
 {
+  // method for midi message callback from MidiIn port
 }
 
 SchemeNode::~SchemeNode()
 {
-  // MOVED THIS TO PROCESS() TO SEE IF THIS CAUSED THE RANDOM CRASHING...
-  //  if(type ==  PROCESS || type == PROCEDURE) {
-  //    CHICKEN_delete_gc_root(closureGCRoot);
-  //  }
 }
 
-bool SchemeNode::process(double curtime) {
+bool SchemeNode::process(double curtime) 
+{
   bool more=false;
 
-  switch (type) {
-  case EXPR :
+  switch (type)
     {
-      C_word res;
-      memset(schemeThread->evalBuffer, 0, 8192);
-      memset(schemeThread->errorBuffer, 0, 8192);
-      if ( SCHEME_DEBUG )
-	printf("\ncalling eval node %d, input '%s'\n", 
-	       nodeid,  (char *)expr.toUTF8()
-	       );
-
-      res = CHICKEN_eval_string_to_string( (char *)expr.toUTF8(),
-					   schemeThread->evalBuffer,
-                                           8192);
-      //printf("\nafter eval-string-to-string, res=%d\n",res);
-      if ( res==0 )
-	{
-	  //printf("...Error: %s\n", schemeThread->errorBuffer);
+    case EXPR :
+      {
+	C_word res;
+	memset(schemeThread->evalBuffer, 0, 8192);
+	memset(schemeThread->errorBuffer, 0, 8192);
+	if ( SCHEME_DEBUG )
+	  printf("\ncalling eval node %d, input '%s'\n", 
+		 nodeid,  (char *)expr.toUTF8()
+		 );
+	
+	res = CHICKEN_eval_string_to_string( (char *)expr.toUTF8(),
+					     schemeThread->evalBuffer,
+					     8192);
+	//printf("\nafter eval-string-to-string, res=%d\n",res);
+	if ( res==0 )
+	  {
+	    //printf("...Error: %s\n", schemeThread->errorBuffer);
+	    if ( SCHEME_DEBUG )
+	      printf("...done calling eval node %d\n", nodeid);
+	    schemeThread->reportChickenError();
+	  }
+	else {
+	  //printf("returned: %s\n", schemeThread->evalBuffer);
 	  if ( SCHEME_DEBUG )
 	    printf("...done calling eval node %d\n", nodeid);
-	  schemeThread->reportChickenError();
+	  String s=String(schemeThread->evalBuffer);
+	  if ( !s.endsWithChar('\n') )
+	    s << T("\n");
+	  schemeThread->console->
+	    postConsoleMessage(s, CommandIDs::ConsolePrintValues,
+				   true);
 	}
-      else {
-	//printf("returned: %s\n", schemeThread->evalBuffer);
-	if ( SCHEME_DEBUG )
-	  printf("...done calling eval node %d\n", nodeid);
-	String s=String(schemeThread->evalBuffer);
-	if ( !s.endsWithChar('\n') )
-	  s << T("\n");
-	schemeThread->console->
-	  postConsoleTextMessage(s, ConsoleMessage::VALUES);
+	expr=String::empty;
       }
-      expr=String::empty;
-    }
-    break;
-  case SAL :
-    {
-      C_word err;
-      int res = CHICKEN_eval_string((char *)expr.toUTF8(), NULL);
-      if ( res==0 )
+      break;
+    case SAL :
+      {
+	C_word err;
+	int res = CHICKEN_eval_string((char *)expr.toUTF8(), NULL);
+	if ( res==0 )
 	schemeThread->reportChickenError();
-    }
-    break;
-  case PROCESS:
-    {
-      if ( SCHEME_DEBUG )
-	printf("\ncalling process node %d...\n", nodeid);
-      double nexttime;
-      closure = CHICKEN_gc_root_ref(closureGCRoot);
-      // Time format is either int milliseconds or float seconds
-      // MILLI
-      if ( 0 ) { //schemeThread->isTimeMilliseconds()
-	elapsed_word = C_fix( (int)(time-start));
-	C_save( elapsed_word );
-
-	nexttime = C_c_double( C_callback(closure, 1));
       }
-      else {
+      break;
+    case PROCESS:
+      {
+	if ( SCHEME_DEBUG )
+	  std::cout << "\ncalling process node " 
+		    << nodeid << " time=" << time << "\n";
+	double thistime;
+	double nexttime;
+	bool capturing=schemeThread->capturemode;
+	closure = CHICKEN_gc_root_ref(closureGCRoot);
 	elapsed_ptr = C_alloc(C_SIZEOF_FLONUM);
-	// MILLI
-	elapsed_word = C_flonum( &elapsed_ptr,
-				 (double)((time - start)/1000.0));
+	// if capturing is true then time is milliseconds else its
+	// milliseconds
+	if (capturing)
+	  {
+	    thistime=time-start;
+	    schemeThread->processtime=time;
+	  }
+	else
+	  {
+	    thistime=(time-start)/1000.0;
+	  }
+	elapsed_word = C_flonum( &elapsed_ptr, thistime );
 	C_save( elapsed_word );
-	nexttime = C_c_double( C_callback(closure, 1)) * 1000.0 ;
+	nexttime = C_c_double( C_callback(closure, 1));
+	if (nexttime < 0)
+	  {
+	    CHICKEN_delete_gc_root(closureGCRoot);
+	    if ( SCHEME_DEBUG )
+	      std::cout << "...killing process node "
+			<< nodeid << "\n";
+	    return false;
+	  }
+	else
+	  {
+	    more=true;
+	    if (capturing)
+	      {
+		time = time + nexttime;
+	      }
+	    else
+	      {
+		time=Time::getMillisecondCounterHiRes() +
+		  (nexttime * 1000.0);
+	      }
+	    if ( SCHEME_DEBUG )
+	      std::cout << "...next run time "
+			<< time << "\n";
+	  }
+	schemeThread->processtime=0.0;
       }
+      break;
+      
+    case INHOOK:
+      {
+	C_word *mmess_ptr;
+	mmess_ptr = C_alloc( sizeof(MidiMessage*) );
+	C_save(C_mpointer(&mmess_ptr , (void*)&mmess));
+	closure = CHICKEN_gc_root_ref(schemeThread->inputClosureGCRoot);
+	C_callback(closure, 1);
+      }
+      break;
+      
+    case PAUSE :
+      //printf ("processing pause node :(\n");
+      break;
+      
+    case STOP :
       if ( SCHEME_DEBUG )
-	printf("...done calling process node %d\n", nodeid);
-
-      //      offset = Time::getMillisecondCounterHiRes() - curtime;
-      if (nexttime < 0) {
-	CHICKEN_delete_gc_root(closureGCRoot);
-        return false;
-      }
-      else {
-        more=true;
-	//        time += nexttime;
-	time = (Time::getMillisecondCounterHiRes() + nexttime) ;
-	//	time += nexttime + offset;
-      }
+	printf("...calling stop node %d\n", nodeid);
+      schemeThread->stopProcesses(id);
+      if ( SCHEME_DEBUG )
+	printf("...done calling stop node %d\n", nodeid);
+      break;
+      
+    default:
+      break;
     }
-    break;
-
-  case INHOOK:
-    {
-      C_word *mmess_ptr;
-      mmess_ptr = C_alloc( sizeof(MidiMessage*) );
-      C_save(C_mpointer(&mmess_ptr , (void*)&mmess));
-      closure = CHICKEN_gc_root_ref(schemeThread->inputClosureGCRoot);
-      C_callback(closure, 1);
-    }
-    break;
-
-  case PAUSE :
-    //printf ("processing pause node :(\n");
-    break;
-
-  case STOP :
-    if ( SCHEME_DEBUG )
-      printf("...calling stop node %d\n", nodeid);
-    schemeThread->stopProcesses(id);
-    if ( SCHEME_DEBUG )
-      printf("...done calling stop node %d\n", nodeid);
-    break;
-
-  default:
-    break;
-  }
   return more;
 }
 
@@ -180,7 +194,11 @@ bool SchemeNode::process(double curtime) {
 //
 
 SchemeThread::SchemeThread(String name, ConsoleWindow *win)
-  : Thread(name), pausing (false), timemsec (false)
+  : Thread(name),
+    pausing (false),
+    capturemode (false),
+    sprouted (false),
+    processtime (0.0)
 {
   console = win;
   evalBuffer = new char[8192];
@@ -204,8 +222,6 @@ void postGCHook(int m, long ms)
     else
       printf("minor GC\n");
 }
-
-
 
 void SchemeThread::setInputHook(C_word hook) {
   if (hook == C_SCHEME_FALSE) {
@@ -233,7 +249,8 @@ void SchemeThread::reportChickenError (String text) {
     if ( ! text.endsWithChar('\n') )
       text << T("\n");
   }
-  console->postConsoleTextMessage(text, ConsoleMessage::ERROR);
+  console->postConsoleMessage(text, CommandIDs::ConsolePrintError,
+				  true);
 }
 
 bool SchemeThread::init() {
@@ -253,6 +270,8 @@ bool SchemeThread::init() {
   GracePreferences* prefs=GracePreferences::getInstance();
   int hsize=prefs->getSchemeHeapSize();
   int ssize=prefs->getSchemeStackSize();
+
+  capturemode=prefs->getScoreCaptureMode();
 
   if ( SCHEME_DEBUG )
     printf("Chicken init: heap=%d stack=%d\n", hsize, ssize);
@@ -282,7 +301,8 @@ bool SchemeThread::init() {
     text = text + T(", version ") + String(buffer).unquoted();
   text += T("\n(c) 2000-2008 Felix L. Winkelmann\n");
   // console->printMessage(text, true);
-  console->postConsoleTextMessage(text);
+  console->postConsoleMessage(text, CommandIDs::ConsolePrintText,
+				  true);
   //console->doAsyncUpdate();
   memset(buffer, 0,8192);
   if (res==0) {
@@ -313,78 +333,107 @@ void SchemeThread::run()
   // start chicken
   if (! init() ) return;
   pausing=false;
-  while ( true ) {
-    if ( threadShouldExit() )
-      break;
-    while ( true ) {
-      schemeNodes.lockArray();
-      node=schemeNodes.getFirst();
-      schemeNodes.unlockArray();
-      if ( node == NULL ) {
+  while ( true ) 
+    {
+      if ( threadShouldExit() )
 	break;
-      }
-      qtime=node->time;
-      utime = Time::getMillisecondCounterHiRes() ;
-      // this should probably test if the difference between qtime and
-      // utime is less that 1ms, if not then it probably shouldn't
-      // sleep (?)
-      if ( qtime > utime ) {
-	wait(1);
-      }
-      else {
-	schemeNodes.lockArray();
-	schemeNodes.remove(0, false);
-	schemeNodes.unlockArray();
-	// NOTE: the node to process has now been popped from the
-	// queue.  i did this while trying to debug the random
-	// crashing. im not sure if this is the right thing to do or
-	// not since this means that flushing the queue, etc will have
-	// no effect on this node. Search for the word POP to see the
-	// places this affects...
-	bool keep=node->process(0.0);
-	if ( keep ) {
-	  if ( SCHEME_DEBUG > 2)
-	    printf("reinserting process node %d...\n", node->nodeid);
+      while ( true ) 
+	{
 	  schemeNodes.lockArray();
-	  schemeNodes.addSorted(comparator,node);
-	  //          schemeNodes.remove(0, false);
+	  node=schemeNodes.getFirst();
 	  schemeNodes.unlockArray();
-	  if ( SCHEME_DEBUG > 2)
-	    printf("...done reinserting process node %d\n", node->nodeid);
-	}
-	else {
-	  int myid=node->nodeid;
-	  int mytyp=node->type;
-	  delete node;
-	  if ( SCHEME_DEBUG > 2) {
-	    if (mytyp==SchemeNode::PROCESS)
-	      printf("deleted process node %d\n", myid);
-	    else
-	      printf("deleted eval node %d\n", myid);
-	    schemeNodes.lockArray();
-	    int mysize=schemeNodes.size();
-	    printf ("Queue size: %d\n", mysize);
-	    if (mysize>0) {
-	    printf ("Remaining nodes: ");
-	    for (int i=0;i<mysize;i++)
-	      printf(" %d",schemeNodes[i]->nodeid);
-	    printf("\n");
+	  if ( node == NULL )
+	    {
+	      break;
 	    }
-	    schemeNodes.unlockArray();
-	  }
-	  //	  schemeNodes.lockArray();
-	  //          schemeNodes.remove(0, true);
-	  //mysize=schemeNodes.size();
-	  //schemeNodes.unlockArray();
-	  //printf("...done removing %d, array size now %d\n", myid, mysize);
+	  // if capturemode is true then qtime will be in seconds else
+	  // milliseconds.
+	  qtime=node->time;
+	  utime = Time::getMillisecondCounterHiRes() ;
+	  // this should probably test if the difference between qtime
+	  // and utime is less that 1ms, if not then it probably
+	  // shouldn't sleep (?)
+	  if ( qtime > utime )
+	    {
+	      // if capturemode is true then qtime will be in seconds
+	      // so this will not happen (which is what we want)
+	      wait(1);
+	    }
+	  else
+	    {
+	      schemeNodes.lockArray();
+	      schemeNodes.remove(0, false);
+	      schemeNodes.unlockArray();
+	      // NOTE: the node to process has now been popped from the
+	      // queue.  i did this while trying to debug the random
+	      // crashing. im not sure if this is the right thing to do or
+	      // not since this means that flushing the queue, etc will have
+	      // no effect on this node. Search for the word POP to see the
+	      // places this affects...
+	      lock.enter();
+	      bool keep=node->process(0.0);
+	      lock.exit();
+	      if ( keep )
+		{
+		  if ( SCHEME_DEBUG > 2)
+		    printf("reinserting process node %d...\n",
+			   node->nodeid);
+		  schemeNodes.lockArray();
+		  schemeNodes.addSorted(comparator,node);
+		  //          schemeNodes.remove(0, false);
+		  schemeNodes.unlockArray();
+		  if ( SCHEME_DEBUG > 2)
+		    printf("...done reinserting process node %d\n",
+			   node->nodeid);
+		}
+	      else
+		{
+		  int myid=node->nodeid;
+		  int mytyp=node->type;
+		  delete node;
+		  if ( SCHEME_DEBUG > 2)
+		    {
+		      if (mytyp==SchemeNode::PROCESS)
+			printf("deleted process node %d\n", myid);
+		      else
+			printf("deleted eval node %d\n", myid);
+		      schemeNodes.lockArray();
+		      int mysize=schemeNodes.size();
+		      printf ("Queue size: %d\n", mysize);
+		      if (mysize>0)
+			{
+			  printf ("Remaining nodes: ");
+			  for (int i=0;i<mysize;i++)
+			    printf(" %d",schemeNodes[i]->nodeid);
+			  printf("\n");
+			}
+		      schemeNodes.unlockArray();
+		    }
+		  //	  schemeNodes.lockArray();
+		  //          schemeNodes.remove(0, true);
+		  //mysize=schemeNodes.size();
+		  //schemeNodes.unlockArray();
+		  //printf("...removed %d, queue now %d\n", myid, mysize);
+		}
+	    }
+	  node=NULL;
 	}
-      }
-      node=NULL;
+      // queue is empty. at this point we could signal autoplay if
+      // sprouted is true
+      if ( 1 )
+	printf("scheduling queue is empty\n");
+      if (sprouted && capturemode)
+	{
+	  // we finished running a sprouted process, send a "score
+	  // complete" message to the console for auto processing
+	  console->postConsoleMessage(String::empty, 
+				      CommandIDs::SchedulerScoreComplete,
+				      true);
+	}
+      sprouted=false;
+      processtime=0.0;
+      wait(-1);
     }
-    if ( SCHEME_DEBUG )
-      printf("scheduling queue is empty\n");
-    wait(-1);
-  }
 }
 
 /*** THIS VERSION WORKS
@@ -424,20 +473,32 @@ void SchemeThread::clear()
   schemeNodes.unlockArray();
 }
 
+// addNode for processes
+
 void SchemeThread::addNode(int type, double _time, C_word c, int _id)
 {
+  // this method add a musical process and it is only called by scheme
+  // code, ie evalling sprout() under an eval node in the process()
+  // method. this means that a lock.enter() is in effect so we dont
+  // need to lock anything to reference capturemode.
   static int nextid=1000;
+  if (!capturemode)
+    {
+      _time = (_time * 1000) + Time::getMillisecondCounterHiRes();
+    }
   SchemeNode *n = new SchemeNode(_time, SchemeNode::PROCESS, c, _id);
   n->nodeid=++nextid;
   if ( SCHEME_DEBUG > 2)
     printf("adding process node %d...\n", n->nodeid);
   n->schemeThread = this;
+  sprouted=true;
   schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, n);
   schemeNodes.unlockArray();
   notify();
   if ( SCHEME_DEBUG > 2)
     printf("...done adding process node %d\n", n->nodeid);
+
 }
 
 void SchemeThread::addNode(int type, double _time, String s) {
@@ -565,5 +626,53 @@ void SchemeThread::stopProcesses(int id) {
   }
   schemeNodes.unlockArray();
 }
+
+
+bool SchemeThread::isScoreCapture()
+{
+  lock.enter();
+  bool val=capturemode;
+  lock.exit();
+  return val;
+}
+
+void SchemeThread::setScoreCapture(bool b)
+{
+  lock.enter();
+  capturemode=b;
+  // (re)set processtime to 0 regardless of scorecapture's current
+  // value.  processtime will only be set under callbacks when
+  // capturemode is true;
+  processtime=0.0;
+  lock.exit();
+}
+
+bool SchemeThread::isQueueEmpty()
+{
+  schemeNodes.lockArray();
+  int size=schemeNodes.size();
+  schemeNodes.unlockArray();
+  //std::cout << "isQueueEmpty: " << (size==0) << "\n";
+  return (size == 0);
+}
+
+void SchemeThread::performSchedulerCommand(CommandID id)
+{
+  GracePreferences* prefs=GracePreferences::getInstance();
+  switch (id)
+    {
+    case CommandIDs::SchedulerScoreMode :
+      lock.enter();
+      capturemode=(!capturemode);
+      lock.exit();
+      prefs->setScoreCaptureMode(capturemode);
+      break;
+    default:
+      break;
+    }
+}
+
+
+
 
 

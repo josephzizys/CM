@@ -73,6 +73,12 @@
 (define (tb:bes-jn a b)
   ( (foreign-lambda double "jn" int double) a b))
 
+(define log10
+  (foreign-lambda double "Toolbox::log_ten" double))
+
+(define log2
+  (foreign-lambda double "Toolbox::log_two" double))
+
 ;;
 ;; API
 ;;
@@ -83,24 +89,6 @@
       (if (null? b)
 	  (tb:rescale x x1 x2 y1 y2 1)
 	  (tb:rescale x x1 x2 y1 y2 (car b)))))
-
-;;(define (discrete x x1 x2 i1 i2 . b)
-;;  (if (null? b)
-;;      (tb:discrete x x1 x2 i1 i2 1)
-;;      (tb:discrete x x1 x2 i1 i2 (car b))))
-
-;(define (discrete x x1 x2 i1 . args)
-;  (if (pair? i1 )
-;      (list-ref i1
-;		(if (null? args)
-;		    (tb:discrete x x1 x2 0 (length i1) 1)
-;		    (if (null? (cdr args))
-;			(tb:discrete x x1 x2 0 (car args) 1)
-;			(tb:discrete x x1 x2 0 (car args)
-;				     (cadr args)))))
-;      (if (null? (cdr args))
-;	  (tb:discrete x x1 x2 i1 (car args) 1)
-;	  (tb:discrete x x1 x2 i1 (car args) (cadr args)))))
 
 (define (discrete x x1 x2 i1 . args)
   ;; formals1: x x1 x2 i1   . i2  exp)
@@ -128,28 +116,66 @@
 	    (tb:discrete x x1 x2 i1 i2 exp)))))
 
 (define (int f)
-  (if (list? f) (map tb:int f)  (tb:int f)))
+  (if (list? f)
+      (map tb:int f)
+      (tb:int f)))
+
+(define (float n)
+  (if (list? n)
+      (map (lambda (x) (* x 1.0)) n)
+      (* n 1.0)))
+
+(define-constant __pi 3.141592653589793)
+(define-constant __most-positive-fixnum #x3fffffff)
+(define-constant __most-negative-fixnum (- #x3fffffff))
+
+(define pi __pi)
+(define most-positive-fixnum __most-positive-fixnum)
+(define most-negative-fixnum __most-negative-fixnum)
+
 
 ;; equivalents for use in SAL
 
 (define (plus . args)
+  ;; (plus ...) (plus '(....)) (plus '(....) n)
   (if (null? args) 
       0
       (if (null? (cdr args))
 	  (if (list? (car args))
 	      (apply + (car args))
 	      (apply + args))
-	  (apply + args))))
+	  (if (pair? (car args))
+	      (map (lambda (x) (+ x (cadr args))) (car args))
+	      (apply + args)))))
+
+(define (times . args)
+  (if (null? args) 
+      1
+      (if (null? (cdr args))
+	  (if (list? (car args))
+	      (apply * (car args))
+	      (apply * args))
+	  (if (pair? (car args))
+	      (map (lambda (x) (* x (cadr args))) (car args))
+	      (apply * args)))))
 
 (define (minus arg . args)
   (if (null? args)
       (if (list? arg)
 	  (apply - arg)
 	  (- arg))
-      (apply - arg args)))
+      (if (list? arg)
+	  (map (lambda (x) (- x (car args))) arg)
+	  (apply - arg args))))
 
-(define times *)
-(define divide /)
+(define (divide arg . args)
+  (if (null? args)
+      (if (list? arg)
+	  (apply / arg)
+	  (/ arg))
+      (if (list? arg)
+	  (map (lambda (x) (/ x (car args))) arg)
+	  (apply / arg args))))
 
 (define (quantize num steps)
   (if (list? num)
@@ -164,11 +190,6 @@
 	(map (lambda (v) (/ (round (* v n)) n)) value)
 	(/ (round (* value n)) n))))
 
-;;(define (decimals num . digits)
-;;  (if (null? digits)
-;;      (tb:decimals num 3)
-;;      (tb:decimals num (car digits))))
-  
 (define (rhythm->seconds beats . args)
   (with-optkeys (args (tempo 60.0) (beat .25))
     (if (list? beats)

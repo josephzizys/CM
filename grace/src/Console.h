@@ -84,7 +84,6 @@ class ConsoleTheme {
 
 class ConsoleMessage {
  public:
-  enum {TEXT, VALUES, WARNING, ERROR};
   int type;
   String text;
   ConsoleMessage(int typ, String txt) {
@@ -186,8 +185,7 @@ public:
   double getOpacity(){return currentTransparency;}
   void setOpacity(double o) {currentTransparency=o;}
 
-  void postConsoleTextMessage(String msg, int typ=ConsoleMessage::TEXT,
-			      bool dotrig=true);
+  void postConsoleMessage(String msg, int typ, bool dotrig);
   void doAsyncUpdate() ;
 
 };

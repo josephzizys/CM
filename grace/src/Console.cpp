@@ -203,30 +203,6 @@ void Console::display(String str, ConsoleTheme::ColorType col) {
   buffer->insertTextAtCursor(str);
 }
 
-void Console::handleAsyncUpdate( ) {
-  // this happens in the main thread
-  for (int i=0; i<messages.size(); i++)
-    switch ( messages[i]->type ) {
-      case ConsoleMessage::TEXT :
-        display( messages[i]->text, ConsoleTheme::outputColor);
-        break;
-      case ConsoleMessage::VALUES :
-        display( messages[i]->text, ConsoleTheme::valueColor);
-        break;
-      case ConsoleMessage::WARNING :
-        display( messages[i]->text, ConsoleTheme::warningColor);
-        break;
-      case ConsoleMessage::ERROR :
-        display( messages[i]->text, ConsoleTheme::errorColor);
-        break;
-      default:
-        break;
-    }
-  messages.lockArray();
-  messages.clear();
-  messages.unlockArray();
-}
-
 //////////////////////////////////////////////////////////////////////
 /// Console window
 //
@@ -484,6 +460,11 @@ const PopupMenu ConsoleWindow::getPortsMenu ()
 #ifdef FOMUS
   portsmenu.addSubMenu(T("Fomus"), app->getFomusPort()->getFomusMenu());
 #endif
+  portsmenu.addSeparator();
+  portsmenu.addItem(CommandIDs::SchedulerScoreMode,
+		    T("Score Capture"), 
+		    app->schemeProcess->isQueueEmpty(),
+		    app->schemeProcess->isScoreCapture());
   return portsmenu;
 }
 #endif
@@ -599,7 +580,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
 #endif
 
     case WINDOWSMENU :
-      menu=app->getWindowMenu();
+      menu=app->getWindowMenu(true);
       break;
       
     case HELPMENU :
@@ -644,8 +625,13 @@ void ConsoleWindow::menuItemSelected (int id, int idx)
   else if (type == CommandIDs::Fomus)
       app->getFomusPort()->performFomusCommand(id);
 #endif
-#endif
-#ifndef SCHEME
+  else if (type== CommandIDs::Scheduler)
+    {
+      //std::cout << "calling performSchedulerCommand\n";
+      app->schemeProcess->performSchedulerCommand(id);
+      // std::cout << "after performSchedulerCommand\n";
+    }
+#else
   else if (type == CommandIDs::CommonLisp)  
     lisp->performLispCommand(id);
 #endif
@@ -736,12 +722,14 @@ void ConsoleWindow::showAudioMidiWindow () {
    */
 }
 
-void ConsoleWindow::doAsyncUpdate() {
+void ConsoleWindow::doAsyncUpdate()
+{
   console->triggerAsyncUpdate();
 }
 
-void ConsoleWindow::postConsoleTextMessage(String msg, int typ, 
-                                           bool trig) {
+void ConsoleWindow::postConsoleMessage(String msg, int typ, bool trig)
+{
+  //std::cout << "postConsoleMessage: message='"<< msg.toUTF8() << "' typ=" << typ << " trig=" << trig << "\n";
   console->messages.lockArray();
   console->messages.add(new ConsoleMessage(typ, msg));
   console->messages.unlockArray();
@@ -749,5 +737,63 @@ void ConsoleWindow::postConsoleTextMessage(String msg, int typ,
     console->triggerAsyncUpdate();
 }
 
+void Console::handleAsyncUpdate()
+{
+  GraceApp* app = (GraceApp*)JUCEApplication::getInstance();
+  // this happens in the main thread
+  //std::cout << "Handling " << messages.size() << " messages\n";
+  for (int i=0; i<messages.size(); i++)
+    {
+      int cid = messages[i]->type;
+      int cmd = CommandIDs::getCommand(cid);
+      int arg = CommandIDs::getCommandData(cid);
+      switch (cmd) 
+	{
 
+	case CommandIDs::ConsolePrintText :
+	  //std::cout << "Printing message text[" << i << "]='" << messages[i]->text.toUTF8()  << "'\n";
+	  display( messages[i]->text, ConsoleTheme::outputColor);
+	  break;
 
+	case CommandIDs::ConsolePrintValues :
+	  display( messages[i]->text, ConsoleTheme::valueColor);
+	  break;
+
+	case CommandIDs::ConsolePrintWarning :
+	  display( messages[i]->text, ConsoleTheme::warningColor);
+	  break;
+
+	case CommandIDs::ConsolePrintError :
+	  display( messages[i]->text, ConsoleTheme::errorColor);
+	  break;
+
+#ifdef SCHEME	
+	case CommandIDs::SchedulerScoreComplete :
+	  // sent by Scheme thread only if Score Capture is on and
+	  // the queue is done running processes.
+	  app->midiOutPort->performAutoScoreActions();
+	  break;
+
+	case CommandIDs::MidiSeqPlay :
+	case CommandIDs::MidiSeqSave :
+	case CommandIDs::MidiSeqPlot :
+	case CommandIDs::MidiSeqClear :
+	case CommandIDs::MidiSeqCopyToTrack :
+	case CommandIDs::MidiSeqRecordMidiOut :
+	  app->midiOutPort->performMidiSeqCommand(cid);
+	  break;
+
+	case CommandIDs::MidiOutTuning :
+	  app->midiOutPort->performMidiOutCommand(cid);
+	  break;
+#endif	  
+
+	default:
+	  std::cout << "ERROR: unhandled async message\n";
+	  break;
+	}
+    }      
+      messages.lockArray();
+      messages.clear();
+      messages.unlockArray();
+}

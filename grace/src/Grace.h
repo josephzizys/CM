@@ -79,7 +79,7 @@ public:
   GracePreferences* getPreferences() {return prefs;}
 
 
-  const PopupMenu getWindowMenu();
+  const PopupMenu getWindowMenu(bool isConsole);
   void performWindowCommand(CommandID id);
   const PopupMenu getHelpMenu();
   void performHelpCommand(CommandID id);

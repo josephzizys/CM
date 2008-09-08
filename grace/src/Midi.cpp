@@ -147,6 +147,7 @@ void MidiNode::process()
       {
 	MidiMessage msg=*message;
 	msg.setTimeStamp(time);
+	msg.setChannel(msg.getChannel()+1);
 	midiOutPort->sendOut(msg);
       }      
       break;
@@ -162,9 +163,10 @@ void MidiNode::process()
 
 void MidiOutPort::sendOut(MidiMessage& msg)
 {
-  // WARNING: SHOULD THIS CHECK DEVICE?
+  // WARNING: this should only be called by process().  SHOULD THIS
+  // CHECK DEVICE?
   device->sendMessageNow(msg);
-  if ( isCaptureMode(CaptureModeMidiOut) )
+  if ( isRecordMode(CaptureModes::RecordMidiOut) )
     {
 
       // if this is the first recorded note cache its time offset so
@@ -177,13 +179,8 @@ void MidiOutPort::sendOut(MidiMessage& msg)
 	  recordTimeOffset=msg.getTimeStamp();
 	  std::cout << "Record time offset=" << recordTimeOffset << "\n";
 	}
-      /** WARNING: TIMESTAMPS ARE MILLISECONDS **/
-      /* captureSequence.addEvent( MidiMessage(msg),
-				-recordTimeOffset 
-				); */
       // convert millisecond timestamps from output queue to seconds
       // before adding messages to the capture sequence
-
       double sec=(msg.getTimeStamp()-recordTimeOffset)/1000.0;
       captureSequence.addEvent( MidiMessage(msg,sec) );
     }
@@ -200,7 +197,7 @@ MidiOutPort::MidiOutPort(ConsoleWindow *win)
     avoiddrumtrack (true),
     pitchbendwidth (2),
     recordTimeOffset (-1.0),
-    capturemode(CaptureModeOff)
+    recordmode(CaptureModes::Off)
 {	
   console=win;
   for(int i=0;i<16;i++)
@@ -222,6 +219,11 @@ MidiOutPort::MidiOutPort(ConsoleWindow *win)
   tuningnames.add(T("6.6 Cent"));
   tuningnames.add(T("6.25 Cent"));
   captureSequence.clear();
+
+  GracePreferences* prefs=GracePreferences::getInstance();
+  String name=prefs->getMidiOutDevice();
+  if (name != String::empty)
+    open(name);
 }
 
 MidiOutPort::~MidiOutPort()
@@ -232,36 +234,50 @@ MidiOutPort::~MidiOutPort()
   tracks.clear();
 }
 
-void MidiOutPort::open(String name) {
+void MidiOutPort::open(String name) 
+{
   StringArray devices = MidiOutput::getDevices ();
   int id=-1;
   for (int i=0;i<devices.size();i++)
-    if (devices[i] == name) {
-      id=i;
-      break;
-    }
+    if (devices[i] == name) 
+      {
+	id=i;
+	break;
+      }
   if ( id == -1 )
-    console->printWarning(T("Warning: Midi output device ") + 
-			  name + T(" does not exist.\n"));
+    console->printError(T(">>> Error: Midi output device \"") + 
+			name + T("\" does not exist.\n"));
   else
     open(id);
 }
 
-void MidiOutPort::open(int id) {
+void MidiOutPort::open(int id)
+{
   // dont do anything if opening same port
-  if ( id == devid ) return;
+  if ( id == devid ) 
+    return;
+
   // delete current port. IS THIS CORRECT?
-  if ( device != NULL ) {
-    delete device;
-    devid=-1;
-  }
+  if ( device != NULL )
+    {
+      delete device;
+      devid=-1;
+    }
   device = MidiOutput::openDevice(id);
   if ( device == NULL )
-    console->printError(T(">>> Error: Failed to open midi device (dev=") + 
-			String(id) + T(").\n"));
+    console->printError(T(">>> Error: Failed to open midi device ") + 
+			String(id) + T(".\n"));
   else
-    devid=id;
-  //printf("Midi out: dev=%d\n", id);
+    {
+      devid=id;
+      // send current tuning automatically if its microtonal
+      if (getTuning()>1)
+	sendTuning();
+      // update Preferences with current port's name;
+      StringArray devices = MidiOutput::getDevices();
+      GracePreferences* prefs=GracePreferences::getInstance();
+      prefs->setMidiOutDevice(devices[id]);
+    }
 }
 
 bool MidiOutPort::isOpen(int id) {
@@ -366,8 +382,10 @@ void MidiOutPort::performMidiOutCommand(CommandID id)
     case CommandIDs::MidiOutInstruments :
       showInstrumentsWindow();
       break;
+
     default:
       break;
+
     }
 }
 
@@ -378,30 +396,50 @@ const PopupMenu MidiOutPort::getMidiSeqMenu()
   
   bool midioutbusy=isOutputQueueActive();
   bool midioutidle=(!midioutbusy);
-  int cmode=getCaptureMode();
+  bool cmode=((GraceApp*)JUCEApplication::getInstance())->
+    schemeProcess->isScoreCapture();
+  // record mode is only active if capture mode is off!
+  bool rmode=(!cmode) && getRecordMode();
   // saveable means that no more messages can get added during
   // this command and we have some data captured.
-  bool saveable=((cmode==MidiOutPort::CaptureModeOff) &&
+  bool saveable=((rmode==CaptureModes::Off) &&
+		 ((GraceApp*)JUCEApplication::getInstance())->
+		 schemeProcess->isQueueEmpty() &&
 		 isSequenceData());
   PopupMenu midiseqmenu;
-  
-  midiseqmenu.addItem(CommandIDs::MidiSeqCaptureMidiOut,
-		      T("Record Midi Out"),
-		      midioutidle,
-		      (cmode==MidiOutPort::CaptureModeMidiOut));
-  midiseqmenu.addItem(CommandIDs::MidiSeqCaptureScore, 
-		      T("Score Capture"),
-		      midioutidle,
-		      (cmode==MidiOutPort::CaptureModeScore));
-  midiseqmenu.addSeparator();
-  midiseqmenu.addItem(CommandIDs::MidiSeqResetRecordingStart, 
-		      T("Reset Recording"), 
-		      (midioutidle &&
-		       (cmode==MidiOutPort::CaptureModeMidiOut)));
-  midiseqmenu.addItem(CommandIDs::MidiSeqClear, 
-		      T("Clear"), 
-		      saveable);
-  midiseqmenu.addSeparator();
+  // menu varies according capture mode. 
+
+  if (cmode)
+    {
+      // if capturing add auto score processing options
+      midiseqmenu.addItem(CommandIDs::MidiSeqAutoPlay,
+			  T("Auto Play"),
+			  true,
+			  isAutoMode(CommandIDs::MidiSeqAutoPlay));
+      midiseqmenu.addItem(CommandIDs::MidiSeqAutoSave,
+			  T("Auto Save"),
+			  true,
+			  isAutoMode(CommandIDs::MidiSeqAutoSave));
+      midiseqmenu.addSeparator();			  
+    }
+    else
+    {
+      int val; 
+      // assign val the OPPOSITE of the current setting
+      if (isRecordMode(CaptureModes::Off))
+	val=CaptureModes::RecordMidiOut;
+      else 
+	val=CaptureModes::Off;
+      midiseqmenu.addItem(CommandIDs::MidiSeqRecordMidiOut + val,
+			  T("Record Midi Out"),
+			  midioutidle,
+			  isRecordMode(CaptureModes::RecordMidiOut));
+      midiseqmenu.addItem(CommandIDs::MidiSeqResetRecordingStart, 
+			  T("Reset Recording"), 
+			  (midioutidle &&
+			   isRecordMode(CaptureModes::RecordMidiOut)));
+      midiseqmenu.addSeparator();
+    }
   // do not allow playing if recording since those messages would
   // be added into the sequence again!
   midiseqmenu.addItem(CommandIDs::MidiSeqPrintInfo, 
@@ -410,11 +448,14 @@ const PopupMenu MidiOutPort::getMidiSeqMenu()
   midiseqmenu.addItem(CommandIDs::MidiSeqPlay, 
 		      T("Play"), 
 		      (midioutidle && saveable));
-  midiseqmenu.addItem(CommandIDs::MidiSeqPlotter, 
+  midiseqmenu.addItem(CommandIDs::MidiSeqPlot, 
 		      T("Copy to Plotter"), 
 		      (false && saveable));
   midiseqmenu.addItem(CommandIDs::MidiSeqCopyToTrack, 
 		      T("Save to Track"), 
+		      saveable);
+  midiseqmenu.addItem(CommandIDs::MidiSeqClear, 
+		      T("Clear"), 
 		      saveable);
   midiseqmenu.addSeparator();
   // Tracks submenu
@@ -471,18 +512,19 @@ void MidiOutPort::performMidiSeqCommand(CommandID id)
 
   switch (cmd)
     {
-    case CommandIDs::MidiSeqCaptureMidiOut :
-      if (isCaptureMode(CaptureModeMidiOut))
-	setCaptureMode(CaptureModeOff);
+    case CommandIDs::MidiSeqAutoPlay :
+    case CommandIDs::MidiSeqAutoSave :
+      if (isAutoMode(cmd))
+	setAutoMode(0);
       else
-	setCaptureMode(CaptureModeMidiOut);
+	setAutoMode(cmd);
       break;
-      
-    case CommandIDs::MidiSeqCaptureScore :
-      if (isCaptureMode(CaptureModeScore))
-	setCaptureMode(CaptureModeOff);
-      else
-	setCaptureMode(CaptureModeScore);
+    case CommandIDs::MidiSeqRecordMidiOut :
+      setRecordMode(arg);
+      //      if (isRecordMode(CaptureModes::RecordMidiOut))
+      //	setRecordMode(CaptureModes::CaptureModeOff);
+      //      else
+      //	setRecordMode(CaptureModes::RecordMidiOut);
       break;
       
     case CommandIDs::MidiSeqClear :
@@ -505,7 +547,7 @@ void MidiOutPort::performMidiSeqCommand(CommandID id)
       playSequence();
       break;
       
-    case CommandIDs::MidiSeqPlotter :
+    case CommandIDs::MidiSeqPlot :
       plotSequence();
       break;
       
@@ -550,6 +592,18 @@ void MidiOutPort::performMidiSeqCommand(CommandID id)
     }
 }
 
+void MidiOutPort::performAutoScoreActions()
+{
+  printSequence();
+  GracePreferences* prefs=GracePreferences::getInstance();
+  if (prefs->getMidiSeqAutoPlay())
+    performMidiSeqCommand( CommandIDs::MidiSeqPlay);
+  else if (prefs->getMidiSeqAutoSave())
+    performMidiSeqCommand( CommandIDs::MidiSeqSave);
+  else
+    {
+    }
+}
 
 const PopupMenu MidiInPort::getMidiInMenu()
 {
@@ -628,34 +682,55 @@ void MidiInPort::performMidiInCommand(CommandID id)
 /// Sequence capturing
 ///
 
-int MidiOutPort::getCaptureMode()
+bool MidiOutPort::isAutoMode(int mode)
 {
-  return capturemode;
+  GracePreferences* prefs=GracePreferences::getInstance();
+  if (mode==CommandIDs::MidiSeqAutoPlay)
+    return prefs->getMidiSeqAutoPlay();
+  else if (mode==CommandIDs::MidiSeqAutoSave)
+    return prefs->getMidiSeqAutoSave();
+  return false;
 }
 
-void MidiOutPort::setCaptureMode(int mode)
+void MidiOutPort::setAutoMode(int mode)
+{
+  GracePreferences* prefs=GracePreferences::getInstance();
+  if (mode==CommandIDs::MidiSeqAutoPlay)
+    prefs->setMidiSeqAutoPlay(true);
+  else if (mode==CommandIDs::MidiSeqAutoSave)
+    prefs->setMidiSeqAutoSave(true);
+  else
+    {
+      prefs->setMidiSeqAutoPlay(false);
+      prefs->setMidiSeqAutoSave(false);
+    }
+}
+
+int MidiOutPort::getRecordMode()
+{
+  return recordmode;
+}
+
+void MidiOutPort::setRecordMode(int mode)
 {
   switch (mode)
     {
-    case CaptureModeMidiOut :
+    case CaptureModes::RecordMidiOut :
       recordTimeOffset=-1;
-      capturemode=mode;
+      recordmode=mode;
       break;
-    case CaptureModeMidiIn :
-      capturemode=mode;
-      break;
-    case CaptureModeScore :
-      capturemode=mode;
+    case CaptureModes::RecordMidiIn :
+      recordmode=mode;
       break;
     default:
-      capturemode=CaptureModeOff;
+      recordmode=CaptureModes::Off;
       break;
     }
 }
 
-bool MidiOutPort::isCaptureMode(int mode)
+bool MidiOutPort::isRecordMode(int mode)
 {
-  return (capturemode==mode);
+  return (recordmode==mode);
 }
 
 bool MidiOutPort::isSequenceEmpty()
@@ -701,7 +776,10 @@ void MidiOutPort::copySequenceToTrack(int index)
 
 void MidiOutPort::playSequence()
 {
+  if (isSequenceEmpty() || (! isOpen()))
+    return;
   captureSequence.updateMatchedPairs();
+  //console->postConsoleMessage(T("Playing sequence...\n"), CommandIDs::ConsolePrintText, true);
   for (int i=0; i< captureSequence.getNumEvents(); i++)
     {
       MidiMessageSequence::MidiEventHolder* h =
@@ -710,30 +788,30 @@ void MidiOutPort::playSequence()
 	{
 	  if (h->noteOffObject != NULL)
 	    {
-	      sendMessage(new MidiMessage(h->message));
-	      sendMessage(new MidiMessage(h->noteOffObject->message));
+	      sendMessage(new MidiMessage(h->message), false);
+	      sendMessage(new MidiMessage(h->noteOffObject->message), false);
 	    }
 	}
       else
-	sendMessage(new MidiMessage(h->message));
+	sendMessage(new MidiMessage(h->message), false);
     }
 }
 
 void MidiOutPort::plotSequence()
 {
-  captureSequence.updateMatchedPairs();
+  //captureSequence.updateMatchedPairs();
 }
 
 void MidiOutPort::printSequence()
 {
   captureSequence.updateMatchedPairs();
-  String text=T("Seq");
+  String text=T("Midi Seq: ");
   int size=captureSequence.getNumEvents();
-  text << T(": ") << String(size) << T(" event");
+  text << String(size) << T(" event");
   if (size!=1)
     text << T("s");
   text << T(", ") << String(captureSequence.getEndTime())
-       << T(" seconds.\n");
+       << T(" seconds\n");
   console->printMessage(text);
 }
 
@@ -974,39 +1052,45 @@ void MidiOutPort::addNode(MidiNode *n) {
 }
 
 void MidiOutPort::sendNote(double wait, double duration, float keynum, 
-			   float amplitude, float channel) 
+			   float amplitude, float channel, bool toseq) 
 {
+  //  std::cout << "channel=" << channel << "\n";
+
   jlimit( (float)0.0, (float)15.0, channel);
+
+  //  std::cout << "after jlimit channel=" << channel << "\n";
+
   // only microtune if current tuning is not semitonal and user's
   // channel is a microtonal channel.
-  if ( (getTuning() > 1) && (channel < microchanblock) ) {
-    // insure user's channel a valid microtonal channel, ie a channel
-    // within the first zone of microtuned channels and then shift to
-    // actual physical channel
-    int chan=(((int)channel) % microchancount) * microdivisions;
-    // calculate integer midi key quantize user's keynum to microtonal
-    // resolution size. this may round up to the next keynum
-    float foo=keynum;
-    // quantize keynumber to tuning resolution. if it rounds up (or
-    // down) to an integer keynum then we dont need to microtune
-    keynum = Toolbox::quantize( keynum, microincrement);
-    int key=(int)keynum;
-    // only microtune if we have a fractional keynum
-    if ( keynum > key ) {
-      // divide the fractional portion of keynum by the resolution size
-      // to see which zone of channels its in
-      int zone=(int)((keynum-key)/microincrement);
-      // shift channel to the appropriate zone and set keynum to integer
-      chan += zone;
-      if ( (chan == 9) && avoiddrumtrack ) {
-	chan--;
+  if ( (getTuning() > 1) && (channel < microchanblock) ) 
+    {
+      // insure user's channel a valid microtonal channel, ie a channel
+      // within the first zone of microtuned channels and then shift to
+      // actual physical channel
+      int chan=(((int)channel) % microchancount) * microdivisions;
+      // calculate integer midi key quantize user's keynum to microtonal
+      // resolution size. this may round up to the next keynum
+      float foo=keynum;
+      // quantize keynumber to tuning resolution. if it rounds up (or
+      // down) to an integer keynum then we dont need to microtune
+      keynum = Toolbox::quantize( keynum, microincrement);
+      int key=(int)keynum;
+      // only microtune if we have a fractional keynum
+      if ( keynum > key ) {
+	// divide the fractional portion of keynum by the resolution size
+	// to see which zone of channels its in
+	int zone=(int)((keynum-key)/microincrement);
+	// shift channel to the appropriate zone and set keynum to integer
+	chan += zone;
+	if ( (chan == 9) && avoiddrumtrack ) {
+	  chan--;
+	}
+	channel=chan;
+	keynum=key;
       }
-      channel=chan;
-      keynum=key;
     }
-  }
   
-  if (isCaptureMode(CaptureModeScore))
+  if (toseq)
     {
       float amp=((amplitude>1.0) ? (amplitude/127) : amplitude);
       captureSequence.
@@ -1029,9 +1113,9 @@ void MidiOutPort::sendNote(double wait, double duration, float keynum,
 }
 
 void MidiOutPort::sendData(int type, double wait, float chan, 
-			   float data1, float data2)
+			   float data1, float data2, bool toseq)
 {
-  if (isCaptureMode(CaptureModeScore))
+  if (toseq)
     {
       int ch=(int)chan;
       int d1=(int)data1;
@@ -1069,9 +1153,9 @@ void MidiOutPort::sendData(int type, double wait, float chan,
     }
 }
 
-void MidiOutPort::sendMessage(MidiMessage *message)
+void MidiOutPort::sendMessage(MidiMessage *message, bool toseq)
 {
-  if (isCaptureMode(CaptureModeScore))
+  if (toseq)
     {
       captureSequence.addEvent(MidiMessage(*message));
       delete message; // hmm is this right?
@@ -1125,7 +1209,7 @@ void MidiOutPort::testMidiOutput () {
     // MILLI
     // float dur = ((( 2 + Random::getSystemRandom().nextInt(6)) ^ 2) * (60.0 / 1000.0));
     float dur = .1 + (Random::getSystemRandom().nextInt(5) * .1);
-    sendNote(time, dur, key, vel, 0.0);
+    sendNote(time, dur, key, vel, 0.0, false);
     // MILLI
     time += ((Random::getSystemRandom().nextInt(5) ^ 2) * (60.0 / 1000.0));
   }
@@ -1367,7 +1451,8 @@ void MidiInPort::printMidiMessageTrace (const MidiMessage &msg) {
     else if ( msg.isActiveSense() )
       info=T("sense time: ") + String(msg.getTimeStamp(), 3);
     //String(msg.getTimeStamp(), 3) +  T(" ") +
-    console->postConsoleTextMessage( info + T("\n"), ConsoleMessage::TEXT, true);
+    console->postConsoleMessage( info + T("\n"), 
+				     CommandIDs::ConsolePrintText, true);
   }
 }
 
@@ -1954,6 +2039,7 @@ private:
   TextEditor* timesigeditor;
   ToggleButton* tuningbutton;
   ToggleButton* instrumentbutton;
+  ToggleButton* clearbutton;
 
   MidiFileInfoComponent (const MidiFileInfoComponent&);
   const MidiFileInfoComponent& operator= (const MidiFileInfoComponent&);
@@ -1985,7 +2071,8 @@ MidiFileInfoComponent::MidiFileInfoComponent (MidiFileInfo* info)
       savebutton (0),
       timesigeditor (0),
       tuningbutton (0),
-      instrumentbutton (0)
+      instrumentbutton (0),
+      clearbutton (0)
 {
   midifileinfo=info;
   File file=midifileinfo->file;
@@ -2009,96 +2096,104 @@ MidiFileInfoComponent::MidiFileInfoComponent (MidiFileInfo* info)
   //    orcfile->setCurrentFile(port->orcfiles.getFile(0), false, false);
   addAndMakeVisible(fileeditor);
 
-    addAndMakeVisible (keysigmenu = new ComboBox (T("keysigmenu")));
-    keysigmenu->setEditableText (false);
-    keysigmenu->setJustificationType (Justification::centredLeft);
-    keysigmenu->setTextWhenNothingSelected (String::empty);
-    keysigmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
-    keysigmenu->addItem (T("7 Flats"), 1);
-    keysigmenu->addItem (T("6 Flats"), 2);
-    keysigmenu->addItem (T("5 Flats"), 3);
-    keysigmenu->addItem (T("4 Flats"), 4);
-    keysigmenu->addItem (T("3 Flats"), 5);
-    keysigmenu->addItem (T("2 Flats"), 6);
-    keysigmenu->addItem (T("1 Flat"), 7);
-    keysigmenu->addItem (T("None"), 8);
-    keysigmenu->addItem (T("1 Sharp"), 9);
-    keysigmenu->addItem (T("2 Sharps"), 10);
-    keysigmenu->addItem (T("3 Sharps"), 11);
-    keysigmenu->addItem (T("4 Sharps"), 12);
-    keysigmenu->addItem (T("5 Sharps"), 13);
-    keysigmenu->addItem (T("6 Sharps"), 14);
-    keysigmenu->addItem (T("7 Sharps"), 15);
-    keysigmenu->setSelectedId(info->keysig);
-    keysigmenu->addListener (this);
-
-    addAndMakeVisible (keysiglabel = new Label (T("keysiglabel"),
-                                                T("Key Signature:")));
-    keysiglabel->setFont (Font (15.0000f, Font::plain));
-    keysiglabel->setJustificationType (Justification::centredLeft);
-    keysiglabel->setEditable (false, false, false);
-    keysiglabel->setColour (TextEditor::textColourId, Colours::black);
-    keysiglabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-
-    addAndMakeVisible (filelabel = new Label (T("filelabel"),
-                                              T("Midifile:")));
-    filelabel->setFont (Font (15.0000f, Font::plain));
-    filelabel->setJustificationType (Justification::centredLeft);
-    filelabel->setEditable (false, false, false);
-    filelabel->setColour (TextEditor::textColourId, Colours::black);
-    filelabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-
-    addAndMakeVisible (temposlider = new Slider (T("temposlider")));
-    temposlider->setRange (40, 208, 2);
-    temposlider->setSliderStyle (Slider::LinearHorizontal);
-    temposlider->setTextBoxStyle (Slider::TextBoxLeft, false, 40, 24);
-    temposlider->setValue(info->tempo);
-    temposlider->addListener (this);
-
-    addAndMakeVisible (timesiglabel = new Label (T("timesiglabel"),
-                                                 T("Time Signature:")));
-    timesiglabel->setFont (Font (15.0000f, Font::plain));
-    timesiglabel->setJustificationType (Justification::centredLeft);
-    timesiglabel->setEditable (false, false, false);
-    timesiglabel->setColour (TextEditor::textColourId, Colours::black);
-    timesiglabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-
-    addAndMakeVisible (tempolabel = new Label (T("tempolabel"),
-                                               T("Tempo:")));
-    tempolabel->setFont (Font (15.0000f, Font::plain));
-    tempolabel->setJustificationType (Justification::centredLeft);
-    tempolabel->setEditable (false, false, false);
-    tempolabel->setColour (TextEditor::textColourId, Colours::black);
-    tempolabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-
-    addAndMakeVisible(timesigeditor = new TextEditor (T("timesigeditor")));
-    timesigeditor->setMultiLine (false);
-    timesigeditor->setReturnKeyStartsNewLine (false);
-    timesigeditor->setReadOnly (false);
-    timesigeditor->setScrollbarsShown (true);
-    timesigeditor->setCaretVisible (true);
-    timesigeditor->setPopupMenuEnabled (true);
-    String text=String(info->tsig1) + T("/") + String(info->tsig2);
-    timesigeditor->setText (text);
-
-    addAndMakeVisible(tuningbutton = new ToggleButton (T("tuningbutton")));
-    tuningbutton->setButtonText (T("Include Current Tuning"));
-    tuningbutton->addButtonListener (this);
-
-    addAndMakeVisible(instrumentbutton =
-		      new ToggleButton (T("instrumentbutton")));
-    instrumentbutton->setButtonText (T("Include Current Instruments"));
-    instrumentbutton->addButtonListener (this);
-
-    addAndMakeVisible (cancelbutton = new TextButton (T("cancelbutton")));
-    cancelbutton->setButtonText (T("Cancel"));
-    cancelbutton->addButtonListener (this);
-
-    addAndMakeVisible (savebutton = new TextButton (T("savebutton")));
-    savebutton->setButtonText (T("Save"));
-    savebutton->addButtonListener (this);
-
-    setSize (600, 200);
+  addAndMakeVisible (keysigmenu = new ComboBox (T("keysigmenu")));
+  keysigmenu->setEditableText (false);
+  keysigmenu->setJustificationType (Justification::centredLeft);
+  keysigmenu->setTextWhenNothingSelected (String::empty);
+  keysigmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
+  keysigmenu->addItem (T("7 Flats"), 1);
+  keysigmenu->addItem (T("6 Flats"), 2);
+  keysigmenu->addItem (T("5 Flats"), 3);
+  keysigmenu->addItem (T("4 Flats"), 4);
+  keysigmenu->addItem (T("3 Flats"), 5);
+  keysigmenu->addItem (T("2 Flats"), 6);
+  keysigmenu->addItem (T("1 Flat"), 7);
+  keysigmenu->addItem (T("None"), 8);
+  keysigmenu->addItem (T("1 Sharp"), 9);
+  keysigmenu->addItem (T("2 Sharps"), 10);
+  keysigmenu->addItem (T("3 Sharps"), 11);
+  keysigmenu->addItem (T("4 Sharps"), 12);
+  keysigmenu->addItem (T("5 Sharps"), 13);
+  keysigmenu->addItem (T("6 Sharps"), 14);
+  keysigmenu->addItem (T("7 Sharps"), 15);
+  keysigmenu->setSelectedId(info->keysig);
+  keysigmenu->addListener (this);
+  
+  addAndMakeVisible (keysiglabel = new Label (T("keysiglabel"),
+					      T("Key Signature:")));
+  keysiglabel->setFont (Font (15.0000f, Font::plain));
+  keysiglabel->setJustificationType (Justification::centredLeft);
+  keysiglabel->setEditable (false, false, false);
+  keysiglabel->setColour (TextEditor::textColourId, Colours::black);
+  keysiglabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (filelabel = new Label (T("filelabel"),
+					    T("Midifile:")));
+  filelabel->setFont (Font (15.0000f, Font::plain));
+  filelabel->setJustificationType (Justification::centredLeft);
+  filelabel->setEditable (false, false, false);
+  filelabel->setColour (TextEditor::textColourId, Colours::black);
+  filelabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (temposlider = new Slider (T("temposlider")));
+  temposlider->setRange (40, 208, 2);
+  temposlider->setSliderStyle (Slider::LinearHorizontal);
+  temposlider->setTextBoxStyle (Slider::TextBoxLeft, false, 40, 24);
+  temposlider->setValue(info->tempo);
+  temposlider->addListener (this);
+  
+  addAndMakeVisible (timesiglabel = new Label (T("timesiglabel"),
+					       T("Time Signature:")));
+  timesiglabel->setFont (Font (15.0000f, Font::plain));
+  timesiglabel->setJustificationType (Justification::centredLeft);
+  timesiglabel->setEditable (false, false, false);
+  timesiglabel->setColour (TextEditor::textColourId, Colours::black);
+  timesiglabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (tempolabel = new Label (T("tempolabel"),
+					     T("Tempo:")));
+  tempolabel->setFont (Font (15.0000f, Font::plain));
+  tempolabel->setJustificationType (Justification::centredLeft);
+  tempolabel->setEditable (false, false, false);
+  tempolabel->setColour (TextEditor::textColourId, Colours::black);
+  tempolabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible(timesigeditor = new TextEditor (T("timesigeditor")));
+  timesigeditor->setMultiLine (false);
+  timesigeditor->setReturnKeyStartsNewLine (false);
+  timesigeditor->setReadOnly (false);
+  timesigeditor->setScrollbarsShown (true);
+  timesigeditor->setCaretVisible (true);
+  timesigeditor->setPopupMenuEnabled (true);
+  String text=String(info->tsig1) + T("/") + String(info->tsig2);
+  timesigeditor->setText (text);
+  
+  addAndMakeVisible(tuningbutton = new ToggleButton (T("tuningbutton")));
+  tuningbutton->setButtonText (T("Include Current Tuning"));
+  tuningbutton->setToggleState(midifileinfo->bends, false);
+  tuningbutton->addButtonListener (this);
+  
+  addAndMakeVisible(instrumentbutton =
+		    new ToggleButton (T("instrumentbutton")));
+  instrumentbutton->setToggleState(midifileinfo->insts, false);
+  instrumentbutton->setButtonText (T("Include Current Instruments"));
+  instrumentbutton->addButtonListener (this);
+  
+  addAndMakeVisible(clearbutton =
+		    new ToggleButton (T("clearbutton")));
+  clearbutton->setButtonText (T("Clear Seq after save"));
+  clearbutton->setToggleState(midifileinfo->clear, false);
+  clearbutton->addButtonListener (this);
+  
+  addAndMakeVisible (cancelbutton = new TextButton (T("cancelbutton")));
+  cancelbutton->setButtonText (T("Cancel"));
+  cancelbutton->addButtonListener (this);
+  
+  addAndMakeVisible (savebutton = new TextButton (T("savebutton")));
+  savebutton->setButtonText (T("Save"));
+  savebutton->addButtonListener (this);
+  
+  setSize (600, 200);
 }
 
 MidiFileInfoComponent::~MidiFileInfoComponent()
@@ -2115,6 +2210,7 @@ MidiFileInfoComponent::~MidiFileInfoComponent()
     deleteAndZero (timesigeditor);
     deleteAndZero (tuningbutton);
     deleteAndZero (instrumentbutton);
+    deleteAndZero (clearbutton);
 }
 
 void MidiFileInfoComponent::paint (Graphics& g)
@@ -2124,13 +2220,17 @@ void MidiFileInfoComponent::paint (Graphics& g)
 
 void MidiFileInfoComponent::resized()
 {
-  fileeditor->setBounds (188, 20, 235, 24);
+  //filelabel->setBounds (128, 20, 56, 24);
+  //fileeditor->setBounds (188, 20, 235, 24);
+  filelabel->setBounds (12, 20, 56, 24);
+  fileeditor->setBounds (76, 20, 295, 24);
+  clearbutton->setBounds (392, 20, 200, 24);  
+
   keysigmenu->setBounds (496, 64, 80, 24);
   keysiglabel->setBounds (392, 64, 96, 24);
-  filelabel->setBounds (128, 20, 56, 24);
+  tempolabel->setBounds (12, 64, 56, 24);
   temposlider->setBounds (76, 64, 120, 24);
   timesiglabel->setBounds (217, 64, 104, 24);
-  tempolabel->setBounds (12, 64, 56, 24);
   cancelbutton->setBounds (200, 144, 88, 24);
   savebutton->setBounds (320, 144, 88, 24);
   timesigeditor->setBounds (329, 64, 40, 24);
@@ -2174,8 +2274,9 @@ void MidiFileInfoComponent::buttonClicked (Button* button)
       midifileinfo->file=fileeditor->getCurrentFile();
       midifileinfo->tempo=(int)temposlider->getValue();
       midifileinfo->keysig=keysigmenu->getSelectedId();
-      midifileinfo->insts=tuningbutton->getToggleState();
-      midifileinfo->bends=instrumentbutton->getToggleState();
+      midifileinfo->bends=tuningbutton->getToggleState();
+      midifileinfo->insts=instrumentbutton->getToggleState();
+      midifileinfo->clear=clearbutton->getToggleState();
       int a,b;
       if (parseTimeSig(timesigeditor->getText(), a, b))
 	{
@@ -2190,6 +2291,7 @@ void MidiOutPort::saveSequence(bool ask)
 {
   if (isSequenceEmpty()) 
     return;
+  sequenceFile.bends=(getTuning()>1) ? true : false;
   if (ask || (sequenceFile.file==File::nonexistent))
     {
       MidiFileInfoComponent* comp=new MidiFileInfoComponent(&sequenceFile);
@@ -2201,8 +2303,9 @@ void MidiOutPort::saveSequence(bool ask)
       if (!flag) return;
     }
   captureSequence.updateMatchedPairs();
-  // BUG: if file already exits this seems to merge data into the old
-  // file instead of overwriting it...
+  if (sequenceFile.file.existsAsFile())
+    sequenceFile.file.deleteFile();
+
   FileOutputStream outputStream(sequenceFile.file);
   MidiFile* midifile = new MidiFile();
   //midifile->setTicksPerQuarterNote(960);
@@ -2211,6 +2314,23 @@ void MidiOutPort::saveSequence(bool ask)
   track0.addEvent( sequenceFile.getTempoMessage(), 0);
   track0.addEvent( sequenceFile.getTimeSigMessage(), 0);
   track0.addEvent( sequenceFile.getKeySigMessage(), 0);
+  // optional tuning
+  Array<int> data;
+  if (sequenceFile.bends)
+    {
+      getTuningValues(data);
+      for (int c=0; c<data.size(); c++)
+	track0.addEvent(MidiMessage((0xe0 | c), (data[c] & 127), 
+				    ((data[c] >> 7) & 127)));
+    }
+  // optional program changes
+  if (sequenceFile.insts)
+    {
+      data.clear();
+      getInstrumentValues(data);
+      for (int c=0; c<data.size(); c++)
+	track0.addEvent(MidiMessage::programChange(c, data[c]));
+    }  
   midifile->addTrack(track0);
   midifile->addTrack(captureSequence);
   // Convert the file's data from seconds to milliseconds to match the
@@ -2221,8 +2341,14 @@ void MidiOutPort::saveSequence(bool ask)
       MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
       h->message.setTimeStamp(h->message.getTimeStamp()*1000.0);
     }
-  midifile->writeTo(outputStream );
-  captureSequence.clear();
+  console->postConsoleMessage((T("Saving ") +
+			       sequenceFile.file.getFullPathName() +
+			       T("\n")),
+			      CommandIDs::ConsolePrintText,
+			      true);
+  // optional clear after save
+  if (midifile->writeTo(outputStream) && sequenceFile.clear)
+    captureSequence.clear();
 }
 
 ///
@@ -2670,7 +2796,7 @@ void MidiOutPort::exportSequence()
       String line=String::empty;
       String time=String::formatted(T("%.03f"),
 				    ((float)ev->message.getTimeStamp()));
-      String chan=String(ev->message.getChannel()-1);
+      String chan=String(ev->message.getChannel());
 
       if (donote && ev->message.isNoteOn())
 	{

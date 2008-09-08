@@ -1,3 +1,70 @@
+Grace 1.1.0
+
+      * New Ports>Score Capture menu item now globally toggles between
+      realtime/port and nonrealtime/score styles of working. If
+      Ports>Score Capture is OFF then sprout runs processes in real
+      time and data you send to a port is sent out the port.
+        
+      * If Ports>Score Capture is ON then Scheduler runs processes
+      faster than realtime, just like CM2, and the data you send is
+      captured in the port's internal score buffer.  Inside a running
+      non-realtime process the timestamp 0 means 'current score time'.
+
+      * The following port configurations are now saved across sessions:
+
+          Current Score Capture setting
+          Current Midi Out device connection
+          Current Microtuning resolution
+          Autoplay and Autosave options for Midi Seq
+
+      * New send messages makes working with the midi port easier to 
+      do from code buffer:
+
+          send "mp:tuning", [div=1]
+          send "mp:playseq" 
+          send "mp:saveseq"
+          send "mp:copyseq"
+          send "mp:clearseq"
+          send "mp:plotseq"    (doesnt work yet...)
+
+      * The current Microtuning assignment is automatically sent to
+        Midi out devices when you open them if the tuning is > 1.
+
+      * Midi Seq menu now has "Auto Play" and "Auto Save" preferences
+      for score capture mode.  If toggeled on, then newly generated
+      sequences are automatically played or saved after the processes
+      have stopped running. This is the equivalent to generating midi
+      files in CM2.
+
+      * Added scheme definitions for: pi, most-positive-fixnum,
+      most-negative-fixnum, log10, log2
+
+      * Function plus, times, minus and divide now support list
+      mapping if their first arg is a list and their second arg is a
+      value, e.g.:
+
+          times(3,4,5)
+          => 60
+          times({3 4 5})
+          => 60
+          times({3 4 5}, 10)
+          => {30 40 50}
+
+      * New COMMAND-K editor command pops bConsole window to the top.
+
+     BUG FIXES:
+
+      * more fixes to tutorials, midi.sal updated with micoro tuning
+        instructions.
+
+      * ~= (sal general equality operator) now works
+
+      * sprouting non-processes no longer crashes the app
+
+      KNOWN PROBLEMS:
+
+      * sending long strings to Scheme crashes the app.
+
 Grace 1.0.2
 
       New Csound music port supports realtime audio and scorefile work

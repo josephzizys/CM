@@ -14,7 +14,8 @@
 #>
 #include "Csound.h"
 
-void cs_send_score_event (int type, int len, C_word lyst) {
+void cs_send_score_event (int type, int len, C_word lyst)
+{
   MYFLT buf[len];
   char typ = (type==2) ? 'f' : 'i';
   String str = String::empty;
@@ -37,18 +38,16 @@ void cs_send_score_event (int type, int len, C_word lyst) {
       pos=i;  // position of string parameter
       str = String(C_c_string(w), C_header_size(w));
       buf[i++] = 0.0; // pad the pars values
-      printf("stringpar=%s\n", str.toUTF8());
+      //printf("stringpar=%s\n", str.toUTF8());
     }								  
     else {
       buf[i++] = 0.0;
     }
   }
+  SchemeThread* sch=((GraceApp *)GraceApp::getInstance())->schemeProcess;
   CsoundScoreEv* ev=new CsoundScoreEv(typ,len,buf,str,pos);
-  ((GraceApp *)GraceApp::getInstance())->getCsoundPort()->sendScoreEvent( ev);
-}
-
-void cs_score_mode(bool b) {
-  ((GraceApp *)GraceApp::getInstance())->getCsoundPort()->setScoreMode(b);
+  ((GraceApp *)GraceApp::getInstance())->
+    getCsoundPort()->sendScoreEvent( ev, true, sch->capturemode);
 }
 
 void cs_record_mode(bool b) {
@@ -77,8 +76,6 @@ void cs_play_score(float start, float end, float shift) {
 
 <#
 
-(define (cs:score val) ((foreign-lambda void "cs_score_mode" bool) val))
-
 (define (cs:record val) 
   (if (boolean? val)
       ((foreign-lambda void "cs_record_mode" bool) val)
@@ -88,7 +85,7 @@ void cs_play_score(float start, float end, float shift) {
 	    ((foreign-lambda void "cs_record_mode" bool) #t))
 	  (error "value not boolean or number > 0" val))))
 
-(define (cs:trace val) ((foreign-lambda void "cs_trace_mode" bool) val))
+;(define (cs:trace val) ((foreign-lambda void "cs_trace_mode" bool) val))
 
 (define (cs:clear) ((foreign-lambda void "cs_clear_score") ))
 

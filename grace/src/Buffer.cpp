@@ -97,6 +97,7 @@ void TextBuffer::getAllCommands (Array <CommandID>& commands)
     CommandIDs::EvalSetDirectory,
     CommandIDs::EvalSetPackage,
     CommandIDs::EvalSymbolHelp,
+    CommandIDs::WindowSelectConsole,    
     CommandIDs::EmacsCharForward,
     CommandIDs::EmacsCharBackward,
     CommandIDs::EmacsWordForward,
@@ -136,6 +137,7 @@ void TextBuffer::getCommandInfo (const CommandID id,
   const String navigationCategory (T("Navigation"));
   const String editingCategory (T("Editing"));
   const String optionsCategory (T("Options"));
+  const String guiCategory (T("GUI"));
   PopupMenu fontsMenu;
   GracePreferences* p=GracePreferences::getInstance();
   CommandID cmd=CommandIDs::getCommand(id);
@@ -286,6 +288,12 @@ void TextBuffer::getCommandInfo (const CommandID id,
       result.setInfo (T("Documentation"), String::empty, 
 		      editingCategory, 0);
       result.addDefaultKeypress(T('D'), ModifierKeys::commandModifier);
+      break;
+      
+    case CommandIDs::WindowSelectConsole:
+      result.setInfo (T("Console Window"), String::empty, 
+		      guiCategory, 0);
+      result.addDefaultKeypress(T('K'), ModifierKeys::commandModifier);
       break;
       
     case CommandIDs::EmacsLineBackward:
@@ -526,7 +534,12 @@ bool TextBuffer::perform (const InvocationInfo& info)
     case CommandIDs::EvalSymbolHelp:
       lookupHelpAtPoint();
       break;
-     default:
+    case CommandIDs::WindowSelectConsole:
+      getConsole()->grabKeyboardFocus();
+      getConsole()->toFront(true);
+      break;
+      
+    default:
       return false;
     }
   return true;
@@ -549,7 +562,7 @@ public:
   enum {CtrlX_C, CtrlX_E, CtrlX_F, CtrlX_H, CtrlX_S, CtrlX_W, CtrlX_Z,
 	MAXCTRLXKEY};
   enum {CtrlMeta_F, CtrlMeta_B, CtrlMeta_K, MAXCTRLMETAKEY};
-  enum {Com_A, Com_C, Com_D, Com_E, Com_N, Com_O, Com_R, Com_S, Com_T, Com_V,
+  enum {Com_A, Com_C, Com_D, Com_E, Com_K, Com_N, Com_O, Com_R, Com_S, Com_T, Com_V,
 	Com_W, Com_X, Com_Ret, Com_ArL, Com_ArR, Com_ArU, Com_ArD, Com_Period,
 	MAXCOMKEY};
 #ifndef WINDOWS
@@ -616,6 +629,7 @@ public:
     comkeys[Com_C]=KeyPress::createFromDescription(T("command + C"));
     comkeys[Com_D]=KeyPress::createFromDescription(T("command + D"));
     comkeys[Com_E]=KeyPress::createFromDescription(T("command + E"));
+    comkeys[Com_K]=KeyPress::createFromDescription(T("command + K"));
     comkeys[Com_N]=KeyPress::createFromDescription(T("command + N"));
     comkeys[Com_O]=KeyPress::createFromDescription(T("command + O"));
     comkeys[Com_R]=KeyPress::createFromDescription(T("command + R"));
@@ -928,6 +942,10 @@ void TextBuffer::keyCommandAction(const KeyPress& key) {
     break;
   case KeyCommands::Com_C :
     copy();
+    break;
+  case KeyCommands::Com_K :
+    getConsole()->grabKeyboardFocus();
+    getConsole()->toFront(true);
     break;
   case KeyCommands::Com_O :
     ((EditorWindow*)getTopLevelComponent())->openFile();

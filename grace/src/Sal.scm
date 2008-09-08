@@ -173,7 +173,7 @@
 	  ((SalOpType? typ)
 	   (cond ((SalType=? typ SalMod) 'modulo)
 		 ((SalType=? typ SalExpt) 'expt)
-		 ((SalType=? typ SalGeneralEqual) 'equal)
+		 ((SalType=? typ SalGeneralEqual) 'equal?)
 		 ((SalType=? typ SalAnd) 'and)
 		 ((SalType=? typ SalOr) 'or)
 		 ((SalType=? typ SalNot) 'not)
@@ -1730,9 +1730,11 @@
 				    file
 				    "\"does not exist\n"))
 	(let ((l (string-length file)))
+	  (print-message (string-append "Loading " file "\n" ))
 	  (if (and (> l 4) (substring=? file ".sal" (- l 4)))
 	      (load-sal-file file)
-	      (load file))))
+	      (load file))
+	  ))
     (values)))
 
 (define (sal:open . args)

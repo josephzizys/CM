@@ -464,7 +464,9 @@ const PopupMenu EditorWindow::getMenuForIndex(int meuindex,
       getConsole()->getPortsMenu();
 #endif
   else if (menuname == T("Windows"))
-    menu=app->getWindowMenu();
+    {
+    menu=app->getWindowMenu(false);
+    }
   else if (menuname == T("Help"))
     menu=app->getHelpMenu();
   return menu;
@@ -497,6 +499,10 @@ void EditorWindow::menuItemSelected (int id, int idx)
   else if (type == CommandIDs::Fomus)
       app->getFomusPort()->performFomusCommand(id);
 #endif 
+  else if (type== CommandIDs::Scheduler)
+    {
+      app->schemeProcess->performSchedulerCommand(id);
+    }
 #else
   else if (type == CommandIDs::CommonLisp)
     app->getConsole()->lisp->performLispCommand(id);

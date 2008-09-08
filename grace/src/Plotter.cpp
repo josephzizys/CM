@@ -1488,7 +1488,7 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
       break;
       
     case 4 :
-    menu=app->getWindowMenu();
+    menu=app->getWindowMenu(true);
     break;
   case 5 :
     menu=app->getHelpMenu();

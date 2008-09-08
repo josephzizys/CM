@@ -21,10 +21,13 @@ class SchemeNode
 {
 public:
   enum {PROCESS, INHOOK, EXPR, SAL, PAUSE, STOP };
-
+  // method for process node
   SchemeNode(double _time, int _type, C_word c, int _id);
+  // method for eval node
   SchemeNode(double _time, int _type, String s);
+  // method for any type
   SchemeNode(double _time, int _type);
+  // method for midi message callback from MidiIn port
   SchemeNode(double _time, int _type, const MidiMessage &_mess);
   ~SchemeNode();
 
@@ -66,7 +69,11 @@ public:
   char *evalBuffer ; 
   char *errorBuffer ; 
   bool pausing;
-  bool timemsec;
+  bool capturemode;
+  bool sprouted;
+  CriticalSection lock;
+  // in capturemode this is timeoffset of processess in seconds else 0.0
+  double processtime;
 
   void *inputClosureGCRoot;
     
@@ -82,13 +89,17 @@ public:
   void run();
   bool init();
   void clear();
-  bool isTimeMilliseconds () { return timemsec; }
-  void setTimeMilliseconds(bool b) { timemsec=b;}
+
   bool isPaused() { return pausing; }
   void setPaused(bool b);
   void stop(int id=-1);
   void stopProcesses(int id) ;
   void setInputHook(C_word hook);
+
+  bool isScoreCapture();
+  void setScoreCapture(bool b);
+  void performSchedulerCommand(CommandID id);
+  bool isQueueEmpty();
 };
 
 #endif

@@ -24,6 +24,22 @@
 #define TANF(a)		(tanf( (a) ))
 #endif
 
+double Toolbox::log_ten(double num)
+{
+  if (num>0.0)
+    return log10(num);
+  else
+    return 0.0;
+}
+
+double Toolbox::log_two(double num)
+{
+  if (num>0.0)
+    return log2(num);
+  else
+    return 0.0;
+}
+
 // mapping, scaling and offsetting
 
 float Toolbox::rescale (float x, float x1, float x2, float y1, float y2, float b) {
@@ -40,11 +56,6 @@ float Toolbox::rescale (float x, float x1, float x2, float y1, float y2, float b
 	return y1 + ( ( (y2 - y1) / (b - 1.0)) * (POWF(b, p) - 1.0));
       }
 }
-
-//int Toolbox::discrete (float x, int y1, int y2) {
-  // return integers from a to b as n goes from 0.0 to 1.0
-//  return (int)round(Toolbox::rescale(x,0.0,1.0,(float)y1, (float)y2));
-//}
 
 int Toolbox::discrete (float x, float x1, float x2, int i1, int i2, float b) {
   // return integers from a to b as n goes from 0.0 to 1.0

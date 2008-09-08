@@ -61,6 +61,7 @@ class MidiFileInfo
   int tsig2;  // timesig denominator
   bool insts;  // Include current Program change assigments
   bool bends;  // Include current Tuning info
+  bool clear;  // clear seq after save
   
  MidiFileInfo() 
    : file (File::nonexistent), keysig (8), tempo (120), tsig1(4), tsig2(4)
@@ -145,9 +146,11 @@ class MidiOutPort : public Thread
   void addNode(MidiNode *n);
   MidiNodeComparator comparator;
 
-  void sendNote(double wait, double dur, float key, float vel, float chan);
-  void sendData(int type, double wait, float chan, float data1, float data2);
-  void sendMessage(MidiMessage *message);
+  void sendNote(double wait, double dur, float key, float vel, float chan,
+		bool toseq);
+  void sendData(int type, double wait, float chan, float data1, float data2,
+		bool toseq);
+  void sendMessage(MidiMessage *message, bool toseq);
 
   /** called by node process to send a message out the device and
       (possibly) record it in the capture sequence **/
@@ -190,42 +193,29 @@ class MidiOutPort : public Thread
 
   
   // Midi Sequence Capturing
-
-  /** sequence capturing can be in exactly one of 4 modes **/
-
-  static const int CaptureModeOff=0;
-  static const int CaptureModeMidiOut=1;
-  static const int CaptureModeMidiIn=2;
-  static const int CaptureModeScore=3;
-
+  CriticalSection lock;
   /** the (current) capturing mode **/
-
-  int capturemode;
-
-  int getCaptureMode();
-  void setCaptureMode(int mode);
-  bool isCaptureMode(int mode);
-    
+  int automode;
+  bool isAutoMode(int mode);
+  void setAutoMode(int mode);
+  void performAutoScoreActions();
+  int recordmode;
+  int getRecordMode();
+  void setRecordMode(int mode);
+  bool isRecordMode(int mode);
   /** the capture sequence. time stamps are seconds **/
-
   MidiMessageSequence captureSequence;
   MidiFileInfo sequenceFile;
-
   /** time offset subtracted from MidiOut events that are recorded to
       the zero based capture sequence. when recoding begins the offset
       is intialized to -1 which causes the first recorded event to
       cache its true time stamp as the offset value. this value is
       then subtracted from the subsequent captured events. **/
-
   double recordTimeOffset;
-
   /** predicates to test the status of the capture sequence **/
-
   bool isSequenceEmpty();
   bool isSequenceData();
-
   /** operations on the capture sequence **/
-
   void resetRecordingStart();
   void clearSequence();
   void playSequence();
@@ -233,27 +223,20 @@ class MidiOutPort : public Thread
   void printSequence();
   void saveSequence(bool ask=false);
   void exportSequence();
-
   /** versions of the capture sequence can be saved to and restored
       from an array of "tracks" **/
-
   OwnedArray<MidiTrack> tracks;
   int getNumTracks();
   String getTrackName(int index);
   void setTrackName(int index, String name);
-
   /** copies the capture seqence to a track. if index is -1 a new
       track is added otherwise the track at index is replaced by the
       capture sequence **/
-
   void copySequenceToTrack(int index=-1);
-
   /** copy contents of track back to sequence. if add is true the
       track is mixed into the current contents otherwise the seqence
       is replaced by track **/
-
   void copyTrackToSequence(int index, bool add=false, double shift=0.0);
-
   void renameTrack(int index);
   void deleteTrack(int index);
   void restoreTrack(int index);

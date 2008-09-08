@@ -216,6 +216,7 @@ void GracePreferences::initPreferences (String cmdline)
   recentlyopened.
     restoreFromString(propfile->getValue(T("RecentlyOpenedFiles")));
   recentlyopened.removeNonExistentFiles();
+
 }
 
 GracePreferences::~GracePreferences() 
@@ -377,6 +378,60 @@ int GracePreferences::getSchemeStackSize() {
 
 void GracePreferences::setSchemeStackSize(int size) {
   propfile->setValue(T("SchemeStackSize"), size);
+}
+
+//
+// Ports
+//
+
+bool GracePreferences::getScoreCaptureMode()
+{
+  return propfile->getBoolValue(T("ScoreCaptureMode"));
+}
+
+void GracePreferences::setScoreCaptureMode(bool val)
+{
+  propfile->setValue(T("ScoreCaptureMode"), val);
+}
+
+String GracePreferences::getMidiOutDevice()
+{
+  return propfile->getValue(T("MidiOutDevice"));
+}
+
+void GracePreferences::setMidiOutDevice(String name)
+{
+  propfile->setValue(T("MidiOutDevice"), name);
+}
+
+int GracePreferences::getMidiOutTuning()
+{
+  return propfile->getIntValue(T("MidiOutTuning"), 1);
+}
+
+void GracePreferences::setMidiOutTuning(int div)
+{
+  propfile->setValue(T("MidiOutTuning"), div);
+}
+
+bool GracePreferences::getMidiSeqAutoSave()
+{
+  return propfile->getBoolValue(T("MidiSeqAutoSave"));
+}
+
+void GracePreferences::setMidiSeqAutoSave(bool b)
+{
+  propfile->setValue(T("MidiSeqAutoSave"), b);
+}
+
+bool GracePreferences::getMidiSeqAutoPlay()
+{
+  return propfile->getBoolValue(T("MidiSeqAutoPlay"));
+}
+
+void GracePreferences::setMidiSeqAutoPlay(bool b)
+{
+  propfile->setValue(T("MidiSeqAutoPlay"), b);
 }
 
 //

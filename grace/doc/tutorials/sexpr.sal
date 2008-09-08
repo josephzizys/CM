@@ -229,9 +229,9 @@ if random(3) = 0 then print "winner!" else print "loser!"
 ; the the number Pi.  This means that you can use the name 'pi' in a
 ; math expression rather than having to type the actual number
 
-define variable pi = 3.1415927
-
 print 2 * pi
+
+define variable 2pi = 2 * pi
 
 ; More about defining variables later...
 
