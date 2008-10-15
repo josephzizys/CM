@@ -63,46 +63,57 @@ void mp_message(MidiMessage *m)
 void mp_tuning(int div)
 {
  ((GraceApp *)GraceApp::getInstance())->getConsole()->
-   postConsoleMessage( String::empty, CommandIDs::MidiOutTuning + div, true);
+   postConsoleMessage( CommandIDs::MidiOutTuning + div, true);
 }
 
 void mp_playseq()
 {
  ((GraceApp *)GraceApp::getInstance())->getConsole()->
-   postConsoleMessage( String::empty, CommandIDs::MidiSeqPlay, true);
+   postConsoleMessage( CommandIDs::MidiSeqPlay, true);
 }
 
 void mp_saveseq()
 {
  ((GraceApp *)GraceApp::getInstance())->getConsole()->
-   postConsoleMessage( String::empty, CommandIDs::MidiSeqSave, true);
+   postConsoleMessage( CommandIDs::MidiSeqSave, true);
 }
 
 void mp_copyseq()
 {
  ((GraceApp *)GraceApp::getInstance())->getConsole()->
-   postConsoleMessage( String::empty, CommandIDs::MidiSeqCopyToTrack, true);
+   postConsoleMessage( CommandIDs::MidiSeqCopyToTrack, true);
 }
 
 void mp_plotseq()
 {
  ((GraceApp *)GraceApp::getInstance())->getConsole()->
-   postConsoleMessage( String::empty, CommandIDs::MidiSeqPlot, true);
+   postConsoleMessage( CommandIDs::MidiSeqPlot, true);
 }
 
 void mp_clearseq()
 {
  ((GraceApp *)GraceApp::getInstance())->getConsole()->
-   postConsoleMessage( String::empty, CommandIDs::MidiSeqClear, true);
+   postConsoleMessage( CommandIDs::MidiSeqClear, true);
 }
 
 void mp_recordseq(bool b)
 {
  int val = (b) ? CaptureModes::RecordMidiOut : CaptureModes::Off;
  ((GraceApp *)GraceApp::getInstance())->getConsole()->
-   postConsoleMessage( String::empty, CommandIDs::MidiSeqRecordMidiOut + val, true);
+   postConsoleMessage( CommandIDs::MidiSeqRecordMidiOut + val, true);
 }
 
+void mp_setchannelmask(int m)
+{
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->
+   postConsoleMessage( CommandIDs::MidiInChannelMask, m, true);
+}
+
+void mp_setmessagemask(int m)
+{
+ ((GraceApp *)GraceApp::getInstance())->getConsole()->
+   postConsoleMessage( CommandIDs::MidiInMessageMask, m, true);
+}
 
 /// MidiMessage accessors
 
@@ -212,13 +223,14 @@ void set_input_hook( C_word proc )
 
 <#
 
-(define-constant mm:off    #x8)
-(define-constant mm:on     #x9)
-(define-constant mm:touch  #xA)
-(define-constant mm:ctrl   #xB)
-(define-constant mm:prog   #xC)
-(define-constant mm:press  #xD)
-(define-constant mm:bend   #xE)
+(define mm:off    #x8)
+(define mm:on     #x9)
+(define mm:touch  #xA)
+(define mm:ctrl   #xB)
+(define mm:prog   #xC)
+(define mm:press  #xD)
+(define mm:bend   #xE)
+
 
 (define (mm:make-on . args)
   (with-optkeys (args (time 0) (key 60) (vel 64) (chan 0))
@@ -447,12 +459,51 @@ void set_input_hook( C_word proc )
       ( (foreign-lambda void "set_input_hook"  scheme-object ) #f )
       ))
 
+(define (mp:inchans . args)
+  (let ((val 0))
+    (cond ((null? args)
+	   (error "missing channel (0 to 15)" ))
+	  ((and (null? (cdr args)) (eq? (car args) #f))
+	   (set! val 0))
+	  ((and (null? (cdr args)) (eq? (car args) #t))
+	   (set! val #xFFFF))
+	  (else
+	   (do ((a args (cdr a)))
+	       ((null? a)
+		#f)
+	     (if (<= 0 (car a) 15)
+		 (set! val (bitwise-ior val (arithmetic-shift 1 (car a))))
+		 (error "not a channel 0 to 15" (car a))))))
+    ( (foreign-lambda void "mp_setchannelmask" int) val)))
+
+
+(define (mp:intypes . args)
+  (let ((val 0))
+    (cond ((null? args)
+	   (error "missing message type (mm:off to mm:bend)" ))
+	  ((and (null? (cdr args)) (eq? (car args) #f))
+	   (set! val 0))
+	  ((and (null? (cdr args)) (eq? (car args) #t))
+	   (set! val #x7F))
+	  (else
+	   (do ((a args (cdr a)))
+	       ((null? a)
+		#f)
+	     (if (<= mm:off (car a) mm:bend)
+		 (set! val (bitwise-ior val (arithmetic-shift 1 (- (car a)
+								   mm:off))))
+		 (error "not a message type mm:off to mm:bend" (car a))))))
+    ( (foreign-lambda void "mp_setmessagemask" int) val))
+  )
+
+
+
 (define (mp:tuning . args)
   (let ((arg (if (null? args) 1 (car args))))
     (if (and (integer? arg)
 	     (< 0 arg 17))
 	((foreign-lambda void "mp_tuning" int) arg)
-	(error "not a tuning division 1-16" arg))
+	(error "not a tuning division 1 to 16" arg))
     (values)))
 
 (define (mp:playseq )
@@ -500,6 +551,9 @@ void set_input_hook( C_word proc )
 (define-send-message mp:copyseq ( ))
 (define-send-message mp:plotseq ( ))
 (define-send-message mp:clearseq ( ))
+
+(define-send-message mp:inchans (&rest))
+(define-send-message mp:intypes (&rest))
 
 ;;; eof
 

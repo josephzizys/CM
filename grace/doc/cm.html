@@ -888,9 +888,14 @@ where <var>gen</var> is the random function to use and
   </tr>  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
 </table>
 <blockquote>
-<p>
-Blah blah.
-</p>
+
+<p> Returns the interpolated y value of <var>x</var> in a series of
+<var>x1 y1 ...</var> coordinate pairs or envelope list of the same.
+If the coodinates are specified as a list then an optional
+</var>base</var> can control the type of interpolation (linear or
+exponential) used. See <a href="#rescale"><code>rescale</code></a> for
+more information.  </p>
+
 </blockquote>
 <!-- END DEFINITION -->
 
@@ -1663,6 +1668,25 @@ Imports <a href="http://www.klingbeil.com/spear/">SPEAR</a> frame data in <var>f
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="export-spear-spectra">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">export-spear-frames</span>
+      (<var class="arg">spectra</var> <var class="arg">file</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Exports on or more spectrum objects in <var>spectra</var> to a file suitable for importing into <a href="http://www.klingbeil.com/spear/">SPEAR</a>. Since spectra do not have partials.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
 
 <!-- DEFINITION -->
 <table class="entry" id="spectrum-copy">
@@ -3158,6 +3182,7 @@ Sets the tuning resolution of the Midi Out port to <var>div</var> steps per semi
 </blockquote>
 <!-- END DEFINITION -->
 
+
 <h4>Midi Sequence Messages</h4>
 
 <!-- DEFINITION -->
@@ -3247,6 +3272,39 @@ Sets <var>function</var> to receive <a href="midimessage">Midi Messages</a> that
 <!-- END DEFINITION -->
 
 
+<!-- DEFINITION -->
+<table id="mp:inchans" class="entry">
+  <tr class="entry">
+    <td class="formals"><span class="commandname">send</span>
+      <span class="string">"mp:inchans"</span>, <var class="arg">chan ...</var></td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+
+<blockquote>
+<p>
+Enables MIDI input on the specifed channels. Channel values are integers between 0 and 15. Specify a single <code>#t</code> value to enable all channels and <code>#f</code> to disable all channels.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="mp:intypes" class="entry">
+  <tr class="entry">
+    <td class="formals"><span class="commandname">send</span>
+      <span class="string">"mp:intypes"</span>, <var class="arg">type ...</var></td>
+    <td class="label">SAL</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+
+<blockquote>
+<p>
+Enables MIDI input for the specifed MIDI message types. Type values are integers between 8 and 15 (<code>mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend</code>). Specify a single <code>#t</code> to enable all message types and <code>#f</code> to disable all channels.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 <h3 id="csound-port">Csound Port Methods</h3>
 

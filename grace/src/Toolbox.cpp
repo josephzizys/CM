@@ -98,7 +98,8 @@ float Toolbox::expl(float powr, float y0, float y1, float base) {
 		  ( pow(base, powr) - 1.0 )));
 }
 
-float Toolbox::explseg( int i, int len, float sum, float powr) {
+float Toolbox::explseg( int i, int len, float sum, float powr)
+{
   if (i >= len) i += -1;
   float x1 = ((float)(i+1)) / ((float)len);
   float x2 = ((float)i) / ((float)len);
@@ -107,9 +108,11 @@ float Toolbox::explseg( int i, int len, float sum, float powr) {
   return ( sum * (f1 - f2) );
 }
 
-float Toolbox::geoseg(int i, int len, float sum, float base) {
+float Toolbox::geoseg(int i, int len, float sum, float base) 
+{
   if (len==0) return 0.0;
-  return sum * ( (1.0 - base) / (1.0 - pow(base, len))) ;
+  float a=sum * ((1.0 - base) / (1.0 - pow(base, len)));
+  return  a * pow(base, i);
 }
 
 #define A00	6.875   // keynum 0

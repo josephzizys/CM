@@ -404,6 +404,40 @@ void GracePreferences::setMidiOutDevice(String name)
   propfile->setValue(T("MidiOutDevice"), name);
 }
 
+// midi in
+
+String GracePreferences::getMidiInDevice()
+{
+  return propfile->getValue(T("MidiInDevice"));
+}
+
+void GracePreferences::setMidiInDevice(String name)
+{
+  propfile->setValue(T("MidiInDevice"), name);
+}
+
+int GracePreferences::getMidiInChannelMask()
+{
+  return propfile->getIntValue(T("MidiInChannelMask"), 
+			       MidiFlags::AllChannelsMask);
+}
+
+void GracePreferences::setMidiInChannelMask(int chans)
+{
+  propfile->setValue(T("MidiInChannelMask"), chans);
+}
+
+int GracePreferences::getMidiInMessageMask()
+{
+  return propfile->getIntValue(T("MidiInMessageMask"),
+			       MidiFlags::AllOpcodesMask);
+}
+
+void GracePreferences::setMidiInMessageMask(int types)
+{
+  propfile->setValue(T("MidiInMessageMask"), types);
+}
+
 int GracePreferences::getMidiOutTuning()
 {
   return propfile->getIntValue(T("MidiOutTuning"), 1);
@@ -432,6 +466,17 @@ bool GracePreferences::getMidiSeqAutoPlay()
 void GracePreferences::setMidiSeqAutoPlay(bool b)
 {
   propfile->setValue(T("MidiSeqAutoPlay"), b);
+}
+
+int GracePreferences::getMidiFileTimeDivision()
+{
+  // -1 is milliseconds, otherwise ticksPerQuarter
+  return propfile->getIntValue(T("MidiFileTimeDivision") , -1);
+}
+
+void GracePreferences::setMidiFileTimeDivision(int fmat)
+{
+  propfile->setValue(T("MidiFileTimeDivision"), fmat);
 }
 
 //

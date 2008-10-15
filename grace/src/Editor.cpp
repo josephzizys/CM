@@ -622,36 +622,46 @@ bool EditorWindow::revertFile() {
     return false;
 }
 
-void EditorWindow::loadFile() {
+void EditorWindow::loadFile() 
+{
   File dir;
   if ( editfile.existsAsFile() )
     dir = editfile.getParentDirectory();
   else
     dir = File::getCurrentWorkingDirectory();
-
+  
   FileChooser choose (T("Load File"), dir, String::empty, true);
-  if ( choose.browseForFileToOpen() ) {
-    File f = choose.getResult();
-    if ( f.hasFileExtension( T(".sal") ) ) {
+  if ( choose.browseForFileToOpen() )
+    {
+      File f = choose.getResult();
+      if ( f.hasFileExtension( T(".sal") ) )
+	{
 #ifdef SCHEME
-      SalSyntax::getInstance()->loadFile( f.getFullPathName() );
+	  SalSyntax::getInstance()->loadFile( f.getFullPathName() );
 #else
-      ((GraceApp *)GraceApp::getInstance())->getConsole()->
-	consoleEval( T("load \"") + f.getFullPathName() + T("\""),
-		     true, false );      
+	  ((GraceApp *)GraceApp::getInstance())->getConsole()->
+	    consoleEval( T("load \"") + f.getFullPathName() + T("\""),
+			 true, false );      
 #endif      
-    }
-    else
-#ifdef SCHEME
-      ((GraceApp *)GraceApp::getInstance())->getConsole()->
-	consoleEval( T("(load ") + f.getFullPathName().quoted() +T(")"), 
-		     false, false );
-#else
-      ((GraceApp *)GraceApp::getInstance())->getConsole()->
-	consoleEval( T("(load \"") + f.getFullPathName() + T("\")"), 
-		     false, false );
+	}
+      else
+	{
+	  String path=f.getFullPathName();
+#ifdef WINDOWS
+	  path=path.replace(String("\\"),String("/"));
 #endif
-  }
+
+#ifdef SCHEME
+	  ((GraceApp *)GraceApp::getInstance())->getConsole()->
+	    consoleEval( T("(load ") + path.quoted() + T(")"), 
+			 false, false );
+#else
+	  ((GraceApp *)GraceApp::getInstance())->getConsole()->
+	    consoleEval( T("(load \"") + path + T("\")"), 
+			 false, false );
+#endif
+	}
+    }
 }
 
 void EditorWindow::compileFile() {

@@ -292,6 +292,8 @@ class CommandIDs
   static const CommandID MidiInHook = COMID(MidiIn, 3);
   static const CommandID MidiInRecord = COMID(MidiIn, 4);
   static const CommandID MidiInConfigure = COMID(MidiIn, 5);
+  static const CommandID MidiInChannelMask = COMID(MidiIn, 6);
+  static const CommandID MidiInMessageMask = COMID(MidiIn, 7);
   // MidiSeq Port
   static const CommandID MidiSeqRecordMidiOut = COMID(MidiSeq, 1);
   static const CommandID MidiSeqRecordMidiIn = COMID(MidiSeq, 2);
@@ -417,6 +419,39 @@ class CaptureModes
   static const int RecordMidiIn=2;
   static const int CaptureModeScore=3;
 };
+
+
+class MidiFlags
+{
+ public:
+  static const int Off=0x8;
+  static const int On=0x9;
+  static const int Touch=0xA;
+  static const int Ctrl=0xB;
+  static const int Prog=0xC;
+  static const int Press=0xD;
+  static const int Bend=0xE;
+  static const int MaxChannelOpcode = Bend;
+  static const int AllChannelsMask = 0xFFFF;
+  static const int AllOpcodesMask = 0x7F;
+
+  static MidiMessage toMessage(int typ, int chan, int key, int amp)
+  {
+    return MidiMessage((((0xF & typ)<<4) | (chan & 0xF)),
+		       (chan & 127),
+		       (amp & 127)
+		       );
+  }
+  static bool isChannelMessage(MidiMessage msg)
+  {
+    int op=((msg.getRawData()[0]) & 0xF0) >> 4;
+    return (op >= Off) && (op <= Bend); 
+  }
+
+};
+
+
+
 
 #endif
 

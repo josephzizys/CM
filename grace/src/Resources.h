@@ -152,14 +152,28 @@ class GracePreferences {
   // Ports Preferences
   bool getScoreCaptureMode();
   void setScoreCaptureMode(bool val);
+
   String getMidiOutDevice();
   void setMidiOutDevice(String name);
+
   int getMidiOutTuning();
   void setMidiOutTuning(int div);
+
+  // midi in port
+  String getMidiInDevice();
+  void setMidiInDevice(String name);
+  int getMidiInChannelMask();
+  void setMidiInChannelMask(int chans);
+  int getMidiInMessageMask();
+  void setMidiInMessageMask(int types);
+
+
   bool getMidiSeqAutoPlay();
   void setMidiSeqAutoPlay(bool b);
   bool getMidiSeqAutoSave();
   void setMidiSeqAutoSave(bool b);
+  int getMidiFileTimeDivision();
+  void setMidiFileTimeDivision(int div);
 
  // Lisp Implementations support
   XmlElement* getLispImplementations();

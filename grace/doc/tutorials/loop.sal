@@ -42,7 +42,7 @@ end
 loop repeat 4
   print "a random keynum: ", random(128)
   print "approximately one beat: ", vary(1, .05)
-  print "a random dead composer: ", pickl({ bach schoenberg berg mozart} )
+  print "a random dead composer: ", pick({ bach schoenberg berg mozart} )
   print "----------------------------"
 end
 
@@ -137,7 +137,7 @@ loop for c in {a b c d e f g }
 end
 
 loop for c in {bach beethoven mozart berg webern schoenbeg}
-  for q = pickl( {great fantastic wonderful} )
+  for q = pick( {great fantastic wonderful} )
   print c, " is a ", q, " composer."
 end
 
@@ -207,7 +207,7 @@ end
 ; forever!
 
 loop repeat 10
-  for x from 0 by 100
+  for x from 0 by 10
   for y from 0
   for e = expt(y, x)
   print "x=", e
@@ -354,7 +354,7 @@ end
 
 loop with l = {}
   for x = random(128)
-  for p = mod(x, 12)
+  for p = modulo(x, 12)
   until length(l) = 10
   when member( p, {1 3 6 8 10} )
   set l &= x

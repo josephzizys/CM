@@ -1,3 +1,35 @@
+Grace 1.1.1
+
+      * New messages for the MidiIn Port:
+
+            send "mp:inchans" ... 
+            send "mp:intypes" ... 
+
+        mp:inchans enables input only on the specified channel(s)
+        mp:intypes enables input only on the specifed type(s) Use #t
+        to enable all channels/types or #f to disable all
+        channels/types. You can also set these graphically using the
+        MidiIn>Configure... dialog.
+
+      * MidiSeq Save and Save As... dialog now allows the time format
+        of the midi file to be specied. Select "ticks per quarter" to
+        save the file in a format suitable for Sibelius or Finale.
+
+      * MidIn's selected input device is now saved as preference
+
+      * MidiIn's Configure... information is now saved as preferece
+
+      * New function 'export-spear-frames' saves specta in a text
+        file suitable for loading into Spear.
+
+      * Fixed bug in 'segs' function that prevented geometric series
+        from working
+	
+      * Fixed Midi Seq channel in for score capture mode.
+
+      * WINDOWS: Fixed Editor bug involving unescaped DOS directory
+        delimiter when loading files via the Load... dialog.
+
 Grace 1.1.0
 
       * New Ports>Score Capture menu item now globally toggles between

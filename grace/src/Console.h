@@ -82,14 +82,30 @@ class ConsoleTheme {
   void setColor(int i, Colour c) {colors[i]=c;}
 };
 
-class ConsoleMessage {
+class ConsoleMessage
+{
  public:
   int type;
   String text;
-  ConsoleMessage(int typ, String txt) {
-    type=typ;
-    text=txt;
-  }
+  int data;
+  ConsoleMessage(int typ)
+    {
+      type=typ;
+      text=String::empty;
+      data=0;
+    }
+  ConsoleMessage(int typ, String txt)
+    {
+      type=typ;
+      text=txt;
+      data=0;
+    }
+  ConsoleMessage(int typ, int dat)
+    {
+      type=typ;
+      data=dat;
+      text=String::empty;
+    }
   ~ConsoleMessage() {}
 };
 
@@ -185,7 +201,10 @@ public:
   double getOpacity(){return currentTransparency;}
   void setOpacity(double o) {currentTransparency=o;}
 
-  void postConsoleMessage(String msg, int typ, bool dotrig);
+  void postConsoleMessage(int typ, bool dotrig);
+  void postConsoleMessage(int typ, String msg, bool dotrig);
+  void postConsoleMessage(int typ, int msg,  bool dotrig);
+
   void doAsyncUpdate() ;
 
 };

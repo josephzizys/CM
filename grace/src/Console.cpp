@@ -727,9 +727,26 @@ void ConsoleWindow::doAsyncUpdate()
   console->triggerAsyncUpdate();
 }
 
-void ConsoleWindow::postConsoleMessage(String msg, int typ, bool trig)
+void ConsoleWindow::postConsoleMessage(int typ, bool trig)
 {
-  //std::cout << "postConsoleMessage: message='"<< msg.toUTF8() << "' typ=" << typ << " trig=" << trig << "\n";
+  console->messages.lockArray();
+  console->messages.add(new ConsoleMessage(typ));
+  console->messages.unlockArray();
+  if ( trig )
+    console->triggerAsyncUpdate();
+}
+
+void ConsoleWindow::postConsoleMessage(int typ, String msg, bool trig)
+{
+  console->messages.lockArray();
+  console->messages.add(new ConsoleMessage(typ, msg));
+  console->messages.unlockArray();
+  if ( trig )
+    console->triggerAsyncUpdate();
+}
+
+void ConsoleWindow::postConsoleMessage(int typ, int msg, bool trig)
+{
   console->messages.lockArray();
   console->messages.add(new ConsoleMessage(typ, msg));
   console->messages.unlockArray();
@@ -785,6 +802,14 @@ void Console::handleAsyncUpdate()
 
 	case CommandIDs::MidiOutTuning :
 	  app->midiOutPort->performMidiOutCommand(cid);
+	  break;
+
+	case CommandIDs::MidiInChannelMask :
+	  app->midiInPort->setChannelMask( messages[i]->data);
+	  break;
+
+	case CommandIDs::MidiInMessageMask :
+	  app->midiInPort->setMessageMask( messages[i]->data);
 	  break;
 #endif	  
 

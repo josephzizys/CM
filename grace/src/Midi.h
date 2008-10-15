@@ -56,6 +56,8 @@ class MidiFileInfo
  public:
   File file;  // output file name
   int keysig; // 1 to 15 (1=7Flats, 8=CMajor, 15=7Sharps
+  bool ismsec;
+  int qticks;
   int tempo;  // beats per minute
   int tsig1;  // timesig numerator
   int tsig2;  // timesig denominator
@@ -64,7 +66,13 @@ class MidiFileInfo
   bool clear;  // clear seq after save
   
  MidiFileInfo() 
-   : file (File::nonexistent), keysig (8), tempo (120), tsig1(4), tsig2(4)
+   : file (File::nonexistent), 
+    keysig (8), 
+    ismsec(true),
+    qticks(1000),
+    tempo (120), 
+    tsig1(4),
+    tsig2(4)
     {
     }      
   
@@ -263,16 +271,8 @@ class MidiInPort : public MidiInputCallback {
   int runmode;
   bool trace;
   
-  int singleChannel;
-  bool allChannels;
-  bool noteOn;
-  bool noteOff;
-  bool controlChange;
-  bool programChange;
-  bool pitchBend;
-  bool aftertouch;
-  bool channelPressure;
-  bool activeSense;
+  int channelMask;
+  int opcodeMask;
 
   //C_word schemehook;
   MidiInPort(ConsoleWindow *win);
@@ -283,6 +283,15 @@ class MidiInPort : public MidiInputCallback {
   bool start(int mode);
   void stop();
   bool isActive(int mode=-1);
+
+  void setChannelMask(int mask);
+  void setMessageMask(int mask);
+  bool isMessageActive(MidiMessage msg);
+  bool isChannelActive(int chan);
+  bool isMessageActive(int opcode);
+  void setChannelActive(int chan, bool val);
+  void setMessageActive(int opcode, bool val);
+
   
   //hook is set in SchemeThread and only passing mask and filt
   // can use these to determine whether an INHOOK node needs to be
@@ -296,23 +305,12 @@ class MidiInPort : public MidiInputCallback {
   void stopTestInput();
   void startRecordInput() ;
   void stopRecordInput() ;
-  bool isChannelActive(int chan);
+
   void isMessageWanted(int m);
   void handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &msg) ;
   void handlePartialSysexMessage (MidiInput *dev, const juce::uint8 *data, 
 				  const int num, const double time);
-  
-  void setNoteOn(bool n);
-  void setNoteOff(bool n);
-  void setControlChange(bool n);
-  void setProgramChange(bool n);
-  void setPitchBend(bool n);
-  void setAftertouch(bool n);
-  void setChannelPressure(bool n);
-  void setSingleChannel(int n);
-  void setAllChannels(bool n);
   void setTrace(bool n);
-  void setActiveSense(bool n);
   void printMidiMessageTrace (const MidiMessage &msg);
   void showMidiInDialog();
 

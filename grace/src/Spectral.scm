@@ -492,3 +492,58 @@
 		  (set-cdr! tail (list spec))
 		  (set! tail (cdr tail))))))))))
 
+(define (export-spear-frames frames file)
+  ;; dump specta in Spear import file format. since spectra do not
+  ;; keep track of partial numbers this is a bit of a kludge (the
+  ;; partial number is simply the position of the frq amp pair in the
+  ;; spectral lists)
+
+  (if (not (pair? frames))
+      (set! frames (list frames)))
+  (let ((partials 0)
+	(numframes (length frames)))
+    ;; find max num partials
+    (do ((tail frames (cdr tail)))
+	((null? tail) #f)
+      (set! partials (max partials (length (spectrum-freqs (car tail))))))
+    (with-output-to-file file
+      (lambda ()
+	(let ((port (current-output-port)))
+	  (format port "par-text-frame-format~%")
+	  (format port "point-type index frequency amplitude~%")
+	  (format port "partials-count ~S~%" partials)
+	  (format port "frame-count ~S~%" numframes)
+	  (format port "frame-data~%")
+	  (do ((tail frames (cdr tail))
+	       (count 0 (+ count 1)))
+	      ((null? tail)
+	       #f)
+	    (format port "~S ~S" (or (spectrum-time (car tail))
+				     (* count 1.0))
+		    (spectrum-size (car tail)))
+	    (do ((freqs (spectrum-freqs (car tail)) (cdr freqs))
+		 (amps (spectrum-amps (car tail)) (cdr amps))
+		 (size (spectrum-size (car tail)) (- size 1)))
+		((<= size 0) #f)
+	      (format port " ~S ~S ~S" (- size 1) (car freqs) (car amps)))
+	    (format port "~%")))))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -83,15 +83,15 @@ void CsoundConnection::run () {
   csoundDestroy(csound);
   csound=NULL;
   if ( isWriter() ) {
-    port->console->postConsoleMessage( T("Csound audio written.\n"),
-					   CommandIDs::ConsolePrintText,
-					   true);
+    port->console->postConsoleMessage(CommandIDs::ConsolePrintText,
+				      T("Csound audio written.\n"),
+				      true);
     port->setWriting(false);
   }
   else {
-    port->console->postConsoleMessage( T("Csound port closed.\n"),
-					   CommandIDs::ConsolePrintText,
-					   true ); 
+    port->console->postConsoleMessage(CommandIDs::ConsolePrintText,
+				      T("Csound port closed.\n"),
+				      true ); 
     port->setOpen(false);
   }
 #endif
@@ -561,10 +561,10 @@ void CsoundPort::sendScoreEvent(CsoundScoreEv* ev, bool del, bool toScore)
     {
       addScoreEvent(ev);
       if ( isTraceMode() )
-	console->postConsoleMessage( (ev->toText(ExportIDs::CsoundScore) +
-				      T("\n")),
-				     CommandIDs::ConsolePrintText,
-				     true );
+	console->
+	  postConsoleMessage(CommandIDs::ConsolePrintText,
+			     (ev->toText(ExportIDs::CsoundScore) + T("\n")),
+			     true );
     }
   else if ( isOpen() )
     {
@@ -589,19 +589,19 @@ void CsoundPort::sendScoreEvent(CsoundScoreEv* ev, bool del, bool toScore)
 	  del=false;  // don't gc the event we are recording!
 	}
       if ( isTraceMode() )
-	console->postConsoleMessage( (msg + T("\n")),
-				     CommandIDs::ConsolePrintText,
-				     true );
+	console->postConsoleMessage(CommandIDs::ConsolePrintText,
+				    (msg + T("\n")),
+				    true );
       if (del) delete ev;
     }
   else
     {
       // if no score or port open then delete the event
       if ( isTraceMode() )
-	console->postConsoleMessage( (ev->toText(ExportIDs::CsoundScore) +
-				      T("\n")),
-				     CommandIDs::ConsolePrintText,
-				     true );
+	console->
+	  postConsoleMessage(CommandIDs::ConsolePrintText,
+			     (ev->toText(ExportIDs::CsoundScore) + T("\n")),
+			     true );
       delete ev;
     }
 }
@@ -672,20 +672,20 @@ void CsoundPort::printScore(double start, double end) {
       if (score[i]->pars[1] >= start) 
 	break;
   }
-  console->postConsoleMessage( T("s\n"),
-				   CommandIDs::ConsolePrintText,
-				   true );  
+  console->postConsoleMessage(CommandIDs::ConsolePrintText,
+			      T("s\n"),
+			      true );  
   for ( ; i<score.size(); i++) {
     if ( (end > 0.0) && (score[i]->pars[1] > end) )
       break;
-    console->postConsoleMessage((score[i]->toText(ExportIDs::CsoundScore) +
-				     T("\n")),
-				    CommandIDs::ConsolePrintText,
-				    true );
+    console->
+      postConsoleMessage(CommandIDs::ConsolePrintText,
+			 (score[i]->toText(ExportIDs::CsoundScore) + T("\n")),
+			 true );
   }
-  console->postConsoleMessage( T("e\n"),
-				   CommandIDs::ConsolePrintText,
-				   true );  
+  console->postConsoleMessage(CommandIDs::ConsolePrintText,
+			      T("e\n"),
+			      true );  
 }
 
 void CsoundPort::exportScore() {

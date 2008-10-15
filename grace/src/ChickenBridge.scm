@@ -32,9 +32,9 @@ void print_message(char * st) {
   //printf("message='%s'\n" , s.toUTF8());
 
   if ( s.endsWithChar('\n') )
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintText, true);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(CommandIDs::ConsolePrintText, s, true);
   else
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintText, false);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(CommandIDs::ConsolePrintText, s, false);
 }
 
 void print_error(char * st) {
@@ -42,9 +42,9 @@ void print_error(char * st) {
   // AND trigger update else send string without triggering update
   String s=String(st);
   if ( s.endsWithChar('\n') )
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintError, true);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(CommandIDs::ConsolePrintError, s, true);
   else
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintError, false);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(CommandIDs::ConsolePrintError, s, false);
 }
 
 //
@@ -90,7 +90,7 @@ void set_current_directory (char *path) {
   }
   else {
     String s=T(">>> Error: ") + dir.getFullPathName().quoted() + T(" is not a directory.\n");
-    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(s, CommandIDs::ConsolePrintError, true);
+    ((GraceApp *)GraceApp::getInstance())->getConsole()->postConsoleMessage(CommandIDs::ConsolePrintError, s, true);
   }			 
 }
 
@@ -119,7 +119,7 @@ void load_sal_file(char *path) {
          mp:midi mp:note mp:off mp:on mp:touch mp:ctrl mp:prog 
 	 mp:press mp:bend mp:tuning 
 	 mp:playseq mp:saveseq mp:copyseq mp:plotseq mp:clearseq mp:recordseq
-	 mp:mm mp:inhook
+	 mp:mm mp:inhook mp:inchans mp:intypes
 
 	 ;; Csound
 	 cs:record cs:clear cs:print cs:play cs:i cs:f 
@@ -140,18 +140,18 @@ void load_sal_file(char *path) {
 	 ran ran-set! ranlow ranhigh ranmiddle rangauss ranexp
 	 ranbeta rangamma rancauchy ranpoisson ranpink ranbrown
 
-	 rm-spectrum fm-spectrum import-spear-frames spectrum-copy
+	 rm-spectrum fm-spectrum spectrum-copy
 	 spectrum-time spectrum-size spectrum-freqs spectrum-amps
 	 spectrum-keys spectrum-pairs
 	 spectrum-minfreq spectrum-maxfreq spectrum-minamp
 	 spectrum-maxamp spectrum-add! spectrum-flip!
-	 spectrum-rescale!
+	 spectrum-rescale! import-spear-frames export-spear-frames 
 
 	 ;; sal
 	 sal sal:print sal:chdir sal:load sal:open sal:output
 	 load-sal-file *sal-trace-input* !=
 	 ;; utilities
-	 loop cwd chdir cm-logo
+	 loop cwd chdir cm-logo shell
 
 	 first second third fourth fifth sixth seventh eighth
 	 ninth tenth last nth butlast rest list* 
@@ -345,6 +345,27 @@ void load_sal_file(char *path) {
 (define (chdir . dir)
   ((foreign-lambda void "set_current_directory" c-string)
    (if (null? dir) "~/" (car dir))))
+
+(define (get-system-output command)
+ (let ((logfilename "/tmp/grace-tempfile"))
+   (system (string-append command " > " logfilename))
+   (let* ((ret "")
+          (eol (list->string (list #\newline)))
+	         (fd (open-input-file logfilename ))
+	         (line (read-line fd)))
+     (do () 
+       ((eof-object? line) #f)
+	      (set! ret (string-append ret line eol))
+	      (set! line (read-line fd)))
+     (close-input-port fd)
+     (system (string-append "rm " logfilename))
+     ret)))
+
+(define (shell cmd)
+  (let ((str (get-system-output cmd)))
+    (if (not (equal? str ""))
+      (print str))
+    (values)))
 
 ;;
 ;; THE API

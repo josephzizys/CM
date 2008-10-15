@@ -49,6 +49,7 @@ public:
     //TextButton* clearHook;
     //TextButton* doneButton;
     //TextButton* cancelButton;
+    OwnedArray<ToggleButton> channels;
     juce_UseDebuggingNewOperator
  private:
     //==============================================================================

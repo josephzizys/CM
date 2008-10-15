@@ -95,8 +95,7 @@ bool SchemeNode::process(double curtime)
 	  if ( !s.endsWithChar('\n') )
 	    s << T("\n");
 	  schemeThread->console->
-	    postConsoleMessage(s, CommandIDs::ConsolePrintValues,
-				   true);
+	    postConsoleMessage(CommandIDs::ConsolePrintValues, s, true);
 	}
 	expr=String::empty;
       }
@@ -249,8 +248,7 @@ void SchemeThread::reportChickenError (String text) {
     if ( ! text.endsWithChar('\n') )
       text << T("\n");
   }
-  console->postConsoleMessage(text, CommandIDs::ConsolePrintError,
-				  true);
+  console->postConsoleMessage(CommandIDs::ConsolePrintError, text, true);
 }
 
 bool SchemeThread::init() {
@@ -301,8 +299,7 @@ bool SchemeThread::init() {
     text = text + T(", version ") + String(buffer).unquoted();
   text += T("\n(c) 2000-2008 Felix L. Winkelmann\n");
   // console->printMessage(text, true);
-  console->postConsoleMessage(text, CommandIDs::ConsolePrintText,
-				  true);
+  console->postConsoleMessage(CommandIDs::ConsolePrintText, text, true);
   //console->doAsyncUpdate();
   memset(buffer, 0,8192);
   if (res==0) {
@@ -426,8 +423,7 @@ void SchemeThread::run()
 	{
 	  // we finished running a sprouted process, send a "score
 	  // complete" message to the console for auto processing
-	  console->postConsoleMessage(String::empty, 
-				      CommandIDs::SchedulerScoreComplete,
+	  console->postConsoleMessage(CommandIDs::SchedulerScoreComplete,
 				      true);
 	}
       sprouted=false;
