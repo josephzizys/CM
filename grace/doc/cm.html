@@ -520,7 +520,7 @@ Return a copy of <var>list</var> with duplicate elements removed.
 </blockquote>
 <!-- END DEFINITION -->
 
-<!-- DEFINITION -->
+<!-- DEFINITION
 <table class="entry" id="list_">
   <tr class="entry">
     <td class="formals">
@@ -536,7 +536,26 @@ Return a copy of <var>list</var> with duplicate elements removed.
 Prepends elements in <var>...</var> onto the front of <var>list</var>.
 </p>
 </blockquote>
+END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="concat">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">concat</span>
+      (<var class="rest">...</var>)
+    </td>
+    <td class="label">Function</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Concatenates its inputs, which can be lists and non-lists, into a single list.
+</p>
+</blockquote>
 <!-- END DEFINITION -->
+
 
 <!-- DEFINITION -->
 <table class="entry" id="make-list">
@@ -1350,9 +1369,13 @@ Initialize the random state generator with the unsigned integer value <var>uint<
 
 <p>
 
-Patterns are objects that generate data in different orderings. They
-can used individually or <var>nested</var> to generate sub-patterns (local orderings)
-within a surrounding pattern.
+Patterns are objects that generate data in different orderings. Data
+can be constants (numbers, symbols, lists, etc), sub-patterns, or
+thunks (functions of zero arguments). Use <a
+ href="#next"><code>next</code></a> to return the next value from a pattern;
+constant data are simply returned from the pattern, sub-patterns produce
+local orderings within the larger pattern and thunks are called to
+produce data.
 
 </p>
 
@@ -1386,7 +1409,7 @@ Returns a pattern that generates its elements in a continual loop.
 <var>Items</var> is the list of data to generate and can include sub-patterns.
 <var>For</var> sets the number of internal reads that will make up the next period, or chunk, of data returned from the pattern. This value can be a number or pattern of numbers and defaults to the length of <var>items</var>.
 <var>Repeat</var> sets an optional limit on the number of periods that the pattern can generate; once this limit has
-been reached the pattern will return an <a href="#eod?">end of data</a> marker instead of elements.
+been reached the pattern will return an <a href="#eod_">end of data</a> marker instead of elements.
 </p>
 </blockquote>
 
@@ -1584,6 +1607,24 @@ can be a pattern or the value returned from the pattern by <a href="#next">next<
 <p>
 Returns true if <var>pattern</var> is at the end of its data.  This condition can only happen if the pattern was created with a <var>repeat</var> value explicitly provided. <var>Pattern</var>
 can be a pattern or the value returned from the pattern by <a href="#next">next</a>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="promise">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">promise</span>
+      (<var class="arg">expr</var>)
+    </td>
+    <td class="label">Macro</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; function</td></tr>
+</table>
+<blockquote>
+<p>
+Turns <var>expr</var> into a function of zero arguments that, when called, returns the value of <var>expr</var>. Use promise to embed expressions in pattern data, when a promise is read by <a href="#next"><code>next</code></a> the value it returns becomes the value of next.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -3689,7 +3730,7 @@ Executes one or more comma-delimited <a href="#expressions"><var>exprs</var></a>
 </blockquote>
 <!-- END DEFINITION -->
 
-<h2 id="sal:expressions">SAL Expressions</h2>
+<h2 id="expressions">SAL Expressions</h2>
 
 <dl>
 

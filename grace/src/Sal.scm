@@ -133,6 +133,16 @@
 (define (add-emit-info name data info)
   (cons (cons name data) info))
 
+(define (rem-emit-info name info)
+  (let* ((head (list #f))
+	 (tail head))
+    (do ((data info (cdr data)))
+	((null? data) (cdr head))
+      (if (not (eq? (caar data) name))
+	  (begin 
+	    (set-cdr! tail (list (car data)))
+	    (set! tail (cdr tail)))))))
+
 (define (set-emit-info! name data info)
   ;; nconc data to end of info. this allows subforms to pass info back
   ;; up to calling forms.
@@ -679,7 +689,10 @@
 		  (if unq? "#$ outside of list." 
 		      "#^ outside of list." )
 		  (parse-unit-position (car subs)))))
-      (let ((expr (emit (second subs) info errf)))
+      ;; emit subform with existing #:list flag removed from info
+      (let ((expr (emit (second subs)
+			(rem-emit-info #:list info)
+			errf)))
 	;; tell superior list that we have an unquote
 	(set-emit-info! #:list #:unquote info)
 	(if unq?

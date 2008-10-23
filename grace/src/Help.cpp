@@ -166,6 +166,7 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("cents->ratio"), T("cm.html#cents-_ratio"));
   graceschememap.set( T("chdir"), T("cm.html#chdir"));
   graceschememap.set( T("cont"), T("cm.html#cont"));
+  graceschememap.set( T("concat"), T("cm.html#concat"));
   graceschememap.set( T("cwd"), T("cm.html#cwd"));
   graceschememap.set( T("decimals"), T("cm.html#decimals"));
   graceschememap.set( T("discrete"), T("cm.html#discrete"));
@@ -190,7 +191,7 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("interp"), T("cm.html#interp"));
   graceschememap.set( T("invert"), T("cm.html#ivert"));
   graceschememap.set( T("last"), T("cm.html#last"));
-  graceschememap.set( T("list*"), T("cm.html#list_"));
+  //  graceschememap.set( T("list*"), T("cm.html#list_"));
   graceschememap.set( T("list-set!"), T("cm.html#list-set_"));
   graceschememap.set( T("log2"), T("cm.html#log2"));
   graceschememap.set( T("log10"), T("cm.html#log10"));
@@ -261,6 +262,7 @@ void SymbolHelp::addGraceSchemeHelp() {
   graceschememap.set( T("pi"), T("cm.html#pi"));
   graceschememap.set( T("pick"), T("cm.html#pick"));
   graceschememap.set( T("plus"), T("cm.html#plus"));
+  graceschememap.set( T("promise"), T("cm.html#promise"));
   graceschememap.set( T("quantize"), T("cm.html#quantize"));
   graceschememap.set( T("ran"), T("cm.html#ran"));
   graceschememap.set( T("ranbeta"), T("cm.html#ranbeta"));

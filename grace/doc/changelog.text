@@ -1,3 +1,15 @@
+Grace 1.1.2
+
+      * New function 'concat' creates a list by concatenating its
+        inputs, which can be lists and non-lists, into a single list.
+
+      * New macro 'promise' delays evaluation of an expression until
+        it is encounterd in pattern data (was pval)
+
+      * Fixed bug with #$ that caused lists to be incorrectly evaluated
+
+      * Depreciated list*, use concat instead.
+
 Grace 1.1.1
 
       * New messages for the MidiIn Port:

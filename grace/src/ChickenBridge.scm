@@ -156,13 +156,13 @@ void load_sal_file(char *path) {
 	 first second third fourth fifth sixth seventh eighth
 	 ninth tenth last nth butlast rest list* 
 	 make-list list-find list-index tail
-	 list-set! reverse! every?
+	 list-set! reverse! every? concat
 
 	 with-optkeys expand-optkeys
 
 	 make-cycle make-line make-palindrome make-heap make-rotation 
 	 make-weighting make-markov make-graph markov-analyze
-	 next eop? eod?
+	 next eop? eod? promise
 	 ))
 
 ;;;  (opt/key) parameter support:
@@ -335,6 +335,8 @@ void load_sal_file(char *path) {
 		     (set-car! tail (car data)))
 		   (set! data (cdr data))))))
       )))
+
+(define-macro (promise expr) `(lambda () ,expr))
 
 (define-macro (send mess . data)
   (expand-send mess data #f))

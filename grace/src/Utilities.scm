@@ -53,6 +53,23 @@
           (cons (car args)
                 (apply list* (cdr args))))))
 
+(define (concat . args)
+  (let* ((head (list #f))
+	 (tail head))
+    (do ((a args (cdr a)))
+	((null? a) 
+	 (cdr head))
+      (cond ((null? (car a))
+	     )
+	    ((pair? (car a))
+	     (do ((t (car a) (cdr t)))
+		 ((null? t) #f)
+	       (set-cdr! tail (list (car t)))
+	       (set! tail (cdr tail))))
+	    (else
+	     (set-cdr! tail (list (car a)))
+	     (set! tail (cdr tail)))))))
+
 (define (list-set! lis pos val)
   (set-car! (list-tail lis pos) val)
   val)
