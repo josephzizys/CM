@@ -1,0 +1,39 @@
+(with-sound (:channels 2)
+  (bow 0 3 400 0.5 :vb 0.15 :fb 0.1 :inharm 0.25)
+  )
+
+(with-sound (:channels 2)
+   (bow 0 2 440 0.5  :fb 0.25)
+  )
+
+(with-sound (:channels 2)
+  (bow 0 4 600 0.8)
+  )
+
+(with-sound (:channels 2)
+  (bow 0 6 147 2 :fb 0.035 :vb 0.1)
+  )
+
+(with-sound (:channels 2)
+  (bow 0 3 1100 0.5 :vb 0.45 :fb 0.9 :inharm 0.3)
+  )
+
+(with-sound (:channels 2)
+  (bow 0 3 1500 0.5 :vb 0.25 :fb 0.9 :inharm 0.3)
+  )
+
+(with-sound (:channels 2)
+  (bow 0 3 1525 0.5 :vb 0.25 :fb 0.9 :inharm 0.3)
+  )
+
+(with-sound (:channels 2 :reverb jc-reverb)
+  (bow 0 1 400 0.5 :reverb 0.0051)
+  )
+
+(with-sound (:channels 2 :reverb jc-reverb)
+  (bow 0 3 366 0.5  :degree 0)
+  (bow 0 3 422 0.5  :degree 90)
+  (bow 4 6 147 2 :fb 0.035 :vb 0.1 :reverb 0.051)
+  )
+
+

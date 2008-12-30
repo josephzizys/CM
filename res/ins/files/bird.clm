@@ -1,0 +1,14 @@
+;; this generates a sound file of all the bird calls
+
+(make-birds )
+
+;; just a few
+
+(with-sound ()
+  (b-orchard-oriole 0)
+  (b-cassins-kingbird 3)
+  (b-chipping-sparrow 6)
+  )
+
+
+	    

@@ -1,0 +1,142 @@
+==========================================================================
+DEPENDENCIES:
+
+    Juce 1.46, available at: 
+    http://sourceforge.net/project/showfiles.php?group_id=137492
+
+    Premake 3.5 or 3.6 or 3.7, available at:
+    http://premake.sourceforge.net/download
+
+==========================================================================
+BUILDING WITH SNDLIB:
+
+    $ cd /path/to/sndlib
+    $ ./configure CC=g++
+    $ make
+
+    $ cd /path/to/cm3
+    $ premake --target gnu --juce /path/to/juce --sndlib /path/to/sndlib
+    $ make
+
+Executables are in bin/:
+
+    bin/cm                      console app    
+    bin/Grace                   gui app
+
+==========================================================================
+BUILDING WITH CHICKEN 3.0.0:
+
+    $ premake --target gnu --juce /path/to/juce --chicken /path/to/chicken-3.0.0
+    $ make
+
+==========================================================================
+CM IN EMACS:
+
+You can use the bin/cm console app as an inferior scheme processs in
+Emacs by adding this snippet to your .emacs file and fixing 'cm-path'
+for your machine.Then start emacs and run CM by doing:
+     M-x: cm
+
+;-----------------------------------------------------------------------
+
+(defvar cm-path "~/Software/cm3/") ; FIX pathname for your machine
+
+(require 'scheme)
+(load (concat cm-path "res/etc/sal.el"))
+(let ((spec '("definstrument" "loop" "process" "run" "send")))
+  (font-lock-add-keywords 'scheme-mode
+    (list (cons (concat "(" (regexp-opt spec t) "\\>") 1))))
+(defun cm (path)
+  "Start CM"
+  (interactive (list (if prefix-arg
+			 (read-string "Command to start CM: " "cm") 
+		       (concat cm-path "bin/cm"))))
+  (run-scheme path))
+
+
+==========================================================================
+SVN ACCESS
+
+svn co http://commonmusic.svn.sourceforge.net/svnroot/commonmusic/trunk cm
+
+==========================================================================
+INTERNAL BUILD STEPS FOR DEVEOPERS:
+
+To build against the juce debug libs:
+
+    $ make CONFIG=Debug
+
+To create the embedded Scheme runtime sources:
+
+    $ juce_bb scm src SchemeSources
+
+To create the embedded instruments:
+
+    $ juce_bb res/ins src/ Instruments
+
+    To ADD instruments do this first:
+      1. Copy the instrument file(s) to res/ins/files.
+      2. Edit res/ins/table.xml and rows for the new files.
+      3. Create the zip archive and generate the resource:
+      $ zip -r files.zip files 
+
+To create the other Resources:
+
+    $ juce_bb res/font src/ Fonts
+    $ juce_bb res/documentation src/ Documentation
+    $ juce_bb res/images src/ Images
+
+To generate FFI files (requires a working 'format'...):
+
+  (load "/Users/hkt/Software/cm/scm/genffi.scm")
+  (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp")
+  (chickenffi "/Users/hkt/Software/cm/scm/chicken-foreign.scm")
+
+To generate ChickenBridge.cpp:
+
+    $ cd scm
+    $ csc -c++ -embedded -t ChickenBridge.scm
+    $ mv ChickenBridge.cpp ../src
+
+==========================================================================
+PORTING:
+
+The implementation file for each Scheme (s7.scm, Chicken.scm)
+defines implementation features that are either not provided or
+unevenly provided in scheme implementations. Here is the list of
+features that must be in effect after that file is loaded:
+
+(define-macro a b)
+(define-for-syntax a b)
+(define-record name . slots)
+(define-constant a b)
+(error str . args)
+(format stream fstring . args)
+(when test . forms)
+(unless test . forms)
+(logand i . ints)
+(logior i . ints)
+(logxor i . ints)
+(lognot i)
+(ash a i)
+(fixnum? n)
+most-positive-fixnum
+most-negative-fixnum
+pi
+(object->string x)
+(string->keyword s)
+(keyword->string k)
+(make-equal-hash-table )
+(hash-ref tab key )
+(hash-set! tab key val)
+(random int)
+(list-set! l i v)
+(format #t "~A~S~%" ...)
+(void) 
+(read-from-string str)
+(sort! lst . pred)
+(sort  lst . pred)
+(interaction-environment)
+(error-protected-process-code timevar waitvar
+			      stopping looping stepping )
+

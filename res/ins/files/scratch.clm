@@ -1,0 +1,4 @@
+(with-sound ()
+  (scratch 0.0 "now.snd" 1.5 '(0.0 .5 .25 1.0))
+  )
+

@@ -1,0 +1,218 @@
+; Functional data in patterns.
+
+; You can embed thunks (functions of zero arguments) inside patterns,
+; when a thunk is encountered it will be called to produce the value
+; to return from the pattern:
+
+define function ran1() return between(48, 60)
+define function ran2() return between(60, 72)
+define function ran3() return between(72, 85)
+
+begin with pat = make-cycle( list(ran1, ran2, ran3) )
+  print "my data=", next(pat, 30)
+end
+
+; Creating patterns that mix functions or subpatterns with constant
+; data can be a cumbersome. for example if you want to create a cyclic
+; pattern whose data included some symbols and a heap subpattern e.g
+; {c b c <heap> d e f} you might do something like:
+
+begin with sub = make-heap({x y z}),
+           pat = make-cycle( concat({a b c}, sub, {d e f}))
+  print next(pat, 20)
+end
+
+; You can use #$ (explicit evaluation) inside {} lists to mix
+; subpatterns and data, for example:
+
+begin with sub = make-heap({x y z}),
+  pat = make-cycle({a b c #$ sub d e f})
+  print next(pat, 20)
+end
+
+; here is another example :
+
+begin with pat =
+  make-cycle( {c4 
+               #$ make-cycle({ef4}, for: make-cycle( {1 2}))
+               #$ make-cycle({b4}, for: make-cycle( {3 2 0}))
+               d4}
+             )
+
+  print next(pat, 40)
+end
+
+; How it works. Without #$ things inside a {} list are contants:
+
+begin with sub = make-heap({x y z}),
+  pat = make-cycle({a b c sub d e f})
+  print next(pat, 20)
+end
+
+; inside {} a #$ evaluates the next thing when the list is created
+; that thing will be replaced by its (evaluated) value. Execute this
+; block a few times to see that the list holds a new random number
+; each time.
+
+begin with lis = {a #$ between(30,90) b} 
+  print "list=", lis
+end
+
+; If you pass that list to pattern and then generate pattern data you
+; will see the same random number appearing:
+
+begin with lis = {a #$ between(30,90) c},
+           pat, dat
+  print "list=", lis
+  set pat = make-cycle(lis)
+  print "pattern=", pat
+  set dat = next(pat, 30)
+  print "pattern data=", dat 
+end
+
+; Embedding expressions in patterns.
+
+; You can also embed EXPRESSIONS inside patterns such that the
+; expression will produce a new value each time next() reads it from
+; the patter. To do this you must DELAY the evaluation of the
+; expression when you create the list of data you pass to the pattern,
+; either by making it the return value of a function of zero arguments
+; or by using the handy 'promise' function:
+
+begin with mylist = { a #$ promise( between(30,90) ) c },
+           mypat = make-cycle( mylist )
+  print "mylist=", mylist
+  print "pattern data=", next(mypat, 30)
+end
+                 
+; probability weights as a function of time. 
+
+; lets use embedded expressions to create a weighting whose
+; probailities change as a function of x. in this example as x goes
+; from 0 to 1 wei goes from 0 to 10 according to env:
+
+begin
+  with len = 50,
+       env = {0 1 1 10},
+       max = len - 1,
+       wei
+  loop for i from 0 below len
+    for x = i / max
+    set wei = interp( x, env)
+    print "weight=", wei
+  end
+end
+
+; to use wei as a probablity weight inside a pattern we can use
+; promise to delay the evaluation of wei and put that in a pattern
+; element. in this pattern the probability of B increases from 0 to 10
+; as x goes from 0 to 1.
+
+begin
+  with len = 50,
+       env = {0 0 1 10},
+       max = len - 1,
+       wei
+  loop with pat = make-weighting( {a {b #$ promise(wei)} c }, for: 1)
+    for i from 0 below len
+    for x = i / max
+    set wei = interp( x, env)
+    print "item=", next(pat)
+  end
+end
+
+; here is a musical rendition of this that pulls the notes CAGE out a
+; a G-dorian backgroud:
+
+define function in-tempo(b,t)
+  return b * (60 / t)
+
+define process cage (num, env, off)
+  run with w = 0,
+      pat1 = make-weighting( {{g3 #$ promise(w)}
+                              {a3 #$ promise(w)}
+                              bf3
+                              {c4 #$ promise(w)}
+                              d4
+                              {e4 #$ promise(w)}
+                              f4
+                              {g4 #$ promise(w)}}
+                            ),
+      pat2 = make-weighting( {1/4
+                              1/2
+                              #$ make-cycle( 1/8, for: 2) }
+                            )
+    for i below num
+    for k = key(next(pat1))
+    for r = in-tempo( next(pat2), 60)
+    set w = interp(i / num, env)
+    send "mp:midi", dur: r * 1.25, key: transpose(k, off)
+    wait r
+  end
+    
+sprout list(cage(100, {0 .5 1 6}, -12),
+            cage(100, {0 .5 1 6}, 0),
+            cage(100, {0 .5 1 6}, 12),
+            cage(100, {0 .5 1 6}, 24))
+
+
+; Change ringing: swapping elements each time through a rotation eg
+; Plain Hunt (for N bells, period = 2N rotations)
+
+; 0 1 2 3 4 5
+;  x   x   x
+; 1 0 3 2 5 4
+;    x   x
+; 1 3 0 5 2 4
+;  x   x   x
+; 3 1 5 0 4 2
+;    x   x 
+; 3 5 1 4 0 2
+;  x   x   x
+; 5 3 4 1 2 0
+;    x   x
+; 5 4 3 2 1 0
+;  x   x   x
+; 4 5 2 3 0 1
+;    x   x
+; 4 2 5 0 3 1
+;  x   x   x
+; 2 4 0 5 1 3
+;    x   x
+; 2 0 4 1 5 3
+;  x   x   x
+; 0 2 1 4 3 5 
+;    x   x
+; 0 1 2 3 4 5
+
+; a rotation pattern generates a set of items and then rotates them
+; according to a rotation "rule" {start [step 1] [width 1] [end]}
+; that describes a swapping iteration.
+
+define variable pat = make-rotation({a b c d})
+
+print next(pat, #t)
+
+define variable pat = make-rotation({a b c d}, rotate: {0 2 })
+
+print next(pat, #t)
+
+
+define process huntscale (keys, reps, rate)
+  run with pat = make-rotation(keys, rotate: make-cycle({{0 2} {1 2}}))
+    repeat reps
+    for k = next(pat)
+    send "mp:midi", key: k
+    wait rate
+  end
+
+sprout huntscale(harmkeys(72, pentaharms), 6 * 2 * 6, .2)
+
+sprout list(  huntscale(harmkeys(60, pentaharms), 80, .2),
+              huntscale(reverse(uharmkeys(84, pentaharms)), 80, .2)
+            )
+
+
+
+
+

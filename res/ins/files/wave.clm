@@ -1,0 +1,50 @@
+;; wave is a sinewave with envelope controls on amp and gliss
+
+(with-sound ()
+  (wave 0 1 440 .1))
+
+(with-sound ()
+  (wave 0 4 (hz 'c4) .5
+        :glissando 1.5
+        :ampenv '(0 0 2 1 99 1 100 0)
+        :glissenv '(0 0 25 0 75 1 100 1)))
+
+;; try a wave process
+
+(define (simpwav n r d lb ub)
+  (process repeat n
+           for k = (between lb ub)
+           for t = (elapsed #t)
+           do
+           (wave t d (hz k) .1)
+           (wait r)))
+
+(sprout (simpwav 10 .2 .1 60 80) "~/wave.wav")
+
+;; additive gong
+
+(define (gong num dur freq amp loc dist rev)
+  (process repeat num
+           for frq = (between freq (* freq 3))
+           do
+           (wave (elapsed #t) dur frq amp
+                 :ampenv '(0 0 1 1 10 .5 40 .2 100 0)
+                 :reverb rev
+                 :location loc
+                 :distance dist)))
+
+(sprout (gong 2 2 440 .1 45 0 0) "~/gong.wav" )
+
+(sprout (gong 8 2 440 .05 45 0 0) "~/gong.wav" )
+
+;; define a process to sprout gong processes
+
+(define (gongalong num rate dur freqenv)
+  (process for i below num
+           do 
+           (sprout (gong (pick 2 3) dur (interp (/ i num) freqenv)
+                         .05 45 0 0))
+           (wait rate)))
+
+(sprout (gongalong 20 .5 2 '(0 440 1 300) ) "~/gongalong.wav")
+

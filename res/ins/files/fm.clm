@@ -1,0 +1,22 @@
+(with-sound ()
+  (fm 0 1 440 .2))
+
+;; adding envelopes to amplitude and FM index value
+
+(with-sound ()
+  (fm 0 4 440 .2 :ampenv '(0 0 25 1 98 1 100 0) 
+      :index 5 :indenv '(0 1 100 0)))
+
+;; a process that plays a list of modulating ratios
+
+(define (mrats freq mrats rate dur ind amp)
+  (process for rat in mrats
+    do (fm (elapsed #t) dur freq amp
+           :cmratio rat :index ind)
+    (wait rate)))
+
+;; plays differnt c/m mratios
+
+(let ((rats (loop for r from 1 to 10 by .5 collect r)))
+  (sprout (mrats 220 rats 2 2 5 .2) "test.wav"))
+

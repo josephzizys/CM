@@ -1,0 +1,5 @@
+(with-sound () 
+  (gran-synth 0 2 100 .0189 .02 .4)
+  )
+
+

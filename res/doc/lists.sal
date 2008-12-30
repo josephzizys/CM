@@ -1,0 +1,109 @@
+;
+;; Working with lists
+;
+
+; A list holds data.  To create a list specify its elements inside { }
+; or use the list() function. The following two commands create
+; equivalent lists:
+
+print {60 62 63 65 67}
+
+print list(60, 62, 63, 65, 67)
+
+; use the {} notation when you know the exact contents of the list.
+; use the list() function when some elements need to be calculated
+; (evaluated) before being placed in the list. This example generates
+; a variant three-element list each time its evaluated:
+
+print list(random(100), random(100), random(100))
+
+; empty lists are also possible:
+
+print {}
+
+print list()
+
+; lists can hold numbers, symbols, strings etc., even other lists!:
+
+define variable notes = {c d e f g a b}
+
+print notes
+
+define variable chords = {{c e g} {d f a}}
+
+print chords
+
+; 'length' tells you how many elemnts there are in a list:
+
+print length(notes)
+
+print length(chords)
+
+; an empty list has zero elements:
+
+print length( {} )
+
+; 'append' concatenates input lists into a single list:
+
+print append(notes, notes, notes)
+
+; append expects all its inputs to be proper lists. this next example
+; produces an error because the second argument (60) is not a list:
+
+print append(notes, 60, notes)
+
+; this is correct:
+
+print append(notes, {60}, notes)
+
+; 'list*' adds elements onto the FRONT of a list that you specify as
+; the LAST input to the function:
+
+print list*(1,2,3, {a b c})
+
+; 'first' ... 'tenth' returns the element at that position:
+
+print first(notes)
+
+print third(notes)
+
+print seventh(notes)
+
+; you can nest calls to access sublist elements:
+
+print third( second(chords))
+
+; 'nth' returns the element at the specified index. Note that the
+; index is ZERO based, that is, the first element is at index 0, the
+; last element in the list is at length()-1 index:
+
+print nth(notes, 0)
+
+print nth(notes, 1)
+
+print nth(notes, random(7))
+
+print nth(notes, length(notes) - 1)
+
+; the 'reverse' function reverses the elements in a list (duh):
+
+print reverse( notes )
+
+define variable palin =  {a     m a n   a   p l a n   p a n a m a} 
+
+print append(palin, reverse(palin))
+
+; 'butlast' returns all but the last element
+
+print butlast( notes )
+
+print append(palin, reverse(butlast(palin)))
+
+; 'pick' randomly selects an element from a list:
+
+print pick( notes )
+
+; 'shuffle' randomly scrambles the elements of a list:
+
+print shuffle(notes)
+

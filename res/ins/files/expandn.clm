@@ -1,0 +1,30 @@
+;;; Examples
+
+;; first make a sound file with the built in wave ins.
+
+(with-sound (:output "pluck.wav")
+  (wave 0 2 220 .05 :ampenv '(0 1 15 .3 30 .1 100 0))
+  (wave .1 2 (* 220 3/2) .05 :ampenv  '(0 1 15 .3 30 .1 100 0))
+  (wave .2 2 (* 220 6/5) .05 :ampenv  '(0 1 15 .3 30 .1 100 0))
+  (wave .3 2 440 .05  :ampenv '(0 1 15 .3 30 .1 100 0))
+  )
+
+;; expand it
+
+(with-sound ()
+  (expandn 0 8 "pluck.wav" .9 :expand 4)
+  )
+
+;; expand and pitch shift
+
+(with-sound ()
+  (expandn 0 8 "pluck.wav" .9 :expand 4 :srate .5)
+  )
+
+(with-sound ()
+  (expandn 0 8 "pluck.wav" .9 :expand 4 :srate 2.0)
+  )
+
+
+
+

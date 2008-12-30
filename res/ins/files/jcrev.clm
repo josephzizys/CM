@@ -1,0 +1,7 @@
+(with-sound (:reverb jc-reverb)
+  (fm-violin 0 .1 440 .1 :reverb-amount .3)
+  )
+
+
+
+

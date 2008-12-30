@@ -1,0 +1,7 @@
+(with-sound (:channels 2 :statistics #t)
+  (fullmix "pistol.snd")
+  (fullmix "oboe.snd" 1 2 0
+    (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
+
+
+
