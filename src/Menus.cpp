@@ -28,7 +28,21 @@ const PopupMenu CommandMenus::getRecentlyOpenedMenu()
   for (int i=0; i<size; i++)
     menu.addCommandItem(comm, CommandIDs::PrefsOpenRecent + i);  
   menu.addSeparator();
-  menu.addCommandItem(comm, CommandIDs::PrefsClearRecent);  
+  menu.addCommandItem(comm, CommandIDs::PrefsClearOpenRecent);  
+  return menu;
+}
+
+const PopupMenu CommandMenus::getRecentlyLoadedMenu()
+{
+  ApplicationCommandManager* comm=CommandManager::getInstance();
+  Preferences* pref=Preferences::getInstance();
+  PopupMenu menu;
+  int size = jlimit(0, CommandMenus::NumPrefsLoadRecent-1,
+		    pref->recentlyLoaded.getNumFiles());
+  for (int i=0; i<size; i++)
+    menu.addCommandItem(comm, CommandIDs::PrefsLoadRecent + i);  
+  menu.addSeparator();
+  menu.addCommandItem(comm, CommandIDs::PrefsClearLoadRecent);  
   return menu;
 }
 
@@ -110,19 +124,13 @@ const PopupMenu CommandMenus::getHelpMenu()
   ApplicationCommandManager* comm=CommandManager::getInstance();
   PopupMenu menu, mans, sals, examps, sites;
   Help* help=Help::getInstance();
+
   // Manuals
   int size=jlimit(0, CommandMenus::NumHelpManual,
 		  help->getHelpSize(CommandIDs::HelpManual));
   for (int i=0; i<size; i++)
     mans.addCommandItem(comm, CommandIDs::HelpManual + i);
   menu.addSubMenu(T("Manuals"), mans);
-
-  // Sal Tutorials
-  size=jlimit(0, CommandMenus::NumHelpTutorial,
-	      help->getHelpSize(CommandIDs::HelpTutorial));
-  for (int i=0; i<size; i++)
-    sals.addCommandItem(comm, CommandIDs::HelpTutorial + i);
-  menu.addSubMenu(T("Tutorials"), sals);
 
   // Examples
   size=jlimit(0, CommandMenus::NumHelpExample,
@@ -131,21 +139,25 @@ const PopupMenu CommandMenus::getHelpMenu()
     examps.addCommandItem(comm, CommandIDs::HelpExample + i);
   examps.addSeparator();
   examps.addCommandItem(comm, CommandIDs::SndLibInsDialog);
-  menu.addSeparator();
-  menu.addCommandItem(comm, CommandIDs::AudioOpenFilePlayer);
-
   menu.addSubMenu(T("Examples"), examps);
-  menu.addSeparator();
-  menu.addCommandItem(comm, CommandIDs::HelpShowDirectory);
-  menu.addSeparator();
+
+  // Sal Tutorials
+  size=jlimit(0, CommandMenus::NumHelpTutorial,
+	      help->getHelpSize(CommandIDs::HelpTutorial));
+  for (int i=0; i<size; i++)
+    sals.addCommandItem(comm, CommandIDs::HelpTutorial + i);
+  menu.addSubMenu(T("Sal Tutorials"), sals);
 
   // Websites
   size=jlimit(0, CommandMenus::NumHelpWebSite,
 	      help->getHelpSize(CommandIDs::HelpWebSite));
   for (int i=0; i<size; i++)
     sites.addCommandItem(comm, CommandIDs::HelpWebSite + i);
-  //menu.addSeparator();
   menu.addSubMenu(T("Web Sites"), sites);
+
+  menu.addSeparator();
+  menu.addCommandItem(comm, CommandIDs::HelpShowDirectory);
+
   return menu;
 }
 
@@ -166,6 +178,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
   PopupMenu menu;
   PopupMenu prefmenu;
   ApplicationCommandManager* manager=Console::getInstance()->manager;
+  // global command manager
+  ApplicationCommandManager* gmanager=CommandManager::getInstance();
   Preferences* pref=Preferences::getInstance();
   if (name==T("File"))
     {
@@ -174,9 +188,14 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
       if (pref->recentlyOpened.getNumFiles()>0)
 	menu.addSubMenu(T("Open Recent"), 
 			CommandMenus::getRecentlyOpenedMenu());
-      //menu.addSeparator();
-      //prefmenu.addCommandItem(manager, CommandIDs::PrefsEditorEmacsMode);
-      //menu.addSubMenu(T("Preferences"), prefmenu);
+      menu.addSeparator();
+      menu.addCommandItem(gmanager,CommandIDs::SchemeLoadFile);
+      if (pref->recentlyLoaded.getNumFiles()>0)
+	menu.addSubMenu(T("Load Recent"), 
+			CommandMenus::getRecentlyLoadedMenu());
+      menu.addSeparator();
+      menu.addCommandItem(gmanager,CommandIDs::PrefsSetInitFile);
+      menu.addCommandItem(gmanager,CommandIDs::PrefsClearInitFile);
       menu.addSeparator();
       menu.addCommandItem(manager, CommandIDs::ConsoleShowDirectory);
       menu.addCommandItem(manager, CommandIDs::ConsoleSetDirectory);  
@@ -230,6 +249,7 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
   PopupMenu menu;
   Preferences* pref=Preferences::getInstance();
   ApplicationCommandManager* manager=buffer->manager;
+  ApplicationCommandManager* gmanager=CommandManager::getInstance();
   if (menuname==T("File")) 
     {
       menu.addCommandItem(manager, CommandIDs::EditorNew);
@@ -237,14 +257,26 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
       if (pref->recentlyOpened.getNumFiles()>0)
 	menu.addSubMenu(T("Open Recent"), 
 			CommandMenus::getRecentlyOpenedMenu());
+
       menu.addSeparator();
       menu.addCommandItem(manager, CommandIDs::EditorSave);
       menu.addCommandItem(manager, CommandIDs::EditorSaveAs);
       menu.addCommandItem(manager, CommandIDs::EditorRevert);
+
+      menu.addSeparator();
+      menu.addCommandItem(gmanager,CommandIDs::SchemeLoadFile);
+      if (pref->recentlyLoaded.getNumFiles()>0)
+	menu.addSubMenu(T("Load Recent"), 
+			CommandMenus::getRecentlyLoadedMenu());
+
+      menu.addSeparator();
+      menu.addCommandItem(gmanager,CommandIDs::PrefsSetInitFile);
+      menu.addCommandItem(gmanager,CommandIDs::PrefsClearInitFile);
+
       menu.addSeparator();
       menu.addCommandItem(manager, CommandIDs::EditorShowDirectory);
       menu.addCommandItem(manager, CommandIDs::EditorSetDirectory);  
-      menu.addCommandItem(manager, CommandIDs::EditorLoadFile);
+
       menu.addSeparator();
       menu.addCommandItem(manager, CommandIDs::EditorPrint);
       menu.addSeparator();

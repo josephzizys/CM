@@ -7,6 +7,15 @@ DEPENDENCIES:
     Premake 3.5 or 3.6 or 3.7, available at:
     http://premake.sourceforge.net/download
 
+    SndLib with S7 Scheme, available at:
+    ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz
+
+    OR:
+
+    Chicken Scheme 3.0.0, available at:
+    http://www.call-with-current-continuation.org/
+
+
 ==========================================================================
 BUILDING WITH SNDLIB:
 

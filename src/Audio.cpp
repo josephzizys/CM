@@ -119,7 +119,7 @@ AudioFilePlayerWindow::AudioFilePlayerWindow (AudioFilePlayer* comp)
   setResizable(false, false); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
-  centreWithSize(450, 10+24+10+24+10+24+10);
+  centreWithSize(450, 10+24+10+24+10+48+10);
   setVisible(true);
 }
 
@@ -140,11 +140,13 @@ void AudioFilePlayerWindow::closeButtonPressed()
   delete this;
 }
 
+
 /*=======================================================================*
                                Audio File Player
  *=======================================================================*/
 
 AudioFilePlayer::AudioFilePlayer ()
+  : waveformComponent (0)
 {
   setName(T("Audio File Player"));
   currentAudioFileSource = 0;
@@ -179,7 +181,7 @@ AudioFilePlayer::AudioFilePlayer ()
   audioSettingsButton->addButtonListener(this);
   ////  addAndMakeVisible (keyboardComponent = new MidiKeyboardComponent (synthSource.keyboardState,
   ////								    MidiKeyboardComponent::horizontalKeyboard));
-  ////  addAndMakeVisible (waveformComponent = new AudioInputWaveformDisplay());
+  addAndMakeVisible (waveformComponent = new AudioInputWaveformDisplay());
 
   // register for start/stop messages from the transport source..
   transportSource.addChangeListener (this);
@@ -219,16 +221,17 @@ AudioFilePlayer::~AudioFilePlayer()
 
 void AudioFilePlayer::resized()
 {
-  fileChooser->setBounds(10, 10, getWidth()-20, 24);
-  playButton->setBounds((getWidth()/2)-100,
-			fileChooser->getBottom()+10,
-			100, 24);
-  stopButton->setBounds(playButton->getRight(), 
-			playButton->getY(),
-			100, 24);
-  audioSettingsButton->setBounds(getRight() - 120 - 10, 
-				 playButton->getBottom()+10,
-				 120, 24);
+  float x=10, y=10;
+  float r=getWidth();
+  float b=getHeight();
+
+  fileChooser->setBounds(x, y, r-20, 24);
+  y=fileChooser->getBottom()+10;
+  playButton->setBounds(x, y, 100, 24);
+  stopButton->setBounds(playButton->getRight(), y, 100, 24);
+  audioSettingsButton->setBounds(r-120-10, y, 120, 24);
+  y=playButton->getBottom()+10;
+  waveformComponent->setBounds(x, y, r-10-10, b-y-10);
   updateButtons();
 }
 
@@ -269,21 +272,30 @@ void AudioFilePlayer::audioDeviceIOCallback (const float** inputChannelData,
 					 int totalNumOutputChannels,
 					 int numSamples)
 {
-  // pass the audio callback on to our player source, and also the waveform display comp
-  audioSourcePlayer.audioDeviceIOCallback (inputChannelData, totalNumInputChannels, outputChannelData, totalNumOutputChannels, numSamples);
-  ////  waveformComponent->audioDeviceIOCallback (inputChannelData, totalNumInputChannels, outputChannelData, totalNumOutputChannels, numSamples);
+  // pass the audio callback on to our player source, and also the
+  // waveform display comp
+  audioSourcePlayer.audioDeviceIOCallback(inputChannelData, 
+					  totalNumInputChannels,
+					  outputChannelData,
+					  totalNumOutputChannels, 
+					  numSamples);
+  waveformComponent->audioDeviceIOCallback(inputChannelData,
+					   totalNumInputChannels,
+					   outputChannelData,
+					   totalNumOutputChannels,
+					   numSamples);
 }
 
 void AudioFilePlayer::audioDeviceAboutToStart (AudioIODevice* device)
 {
-  audioSourcePlayer.audioDeviceAboutToStart (device);
-  ////  waveformComponent->audioDeviceAboutToStart (device);
+  audioSourcePlayer.audioDeviceAboutToStart(device);
+  waveformComponent->audioDeviceAboutToStart(device);
 }
 
 void AudioFilePlayer::audioDeviceStopped()
 {
   audioSourcePlayer.audioDeviceStopped();
-  ////  waveformComponent->audioDeviceStopped();
+  waveformComponent->audioDeviceStopped();
 }
 
 void AudioFilePlayer::updateButtons()

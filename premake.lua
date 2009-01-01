@@ -6,6 +6,8 @@ juce = ""
 juce_debug = ""
 sndlib = ""
 chicken = ""
+chicken_include = ""
+chicken_lib = ""
 
 if not (options["clean"] or options["help"] or options["version"]) then
    if not options["juce"] then
@@ -45,8 +47,22 @@ if not (options["clean"] or options["help"] or options["version"]) then
 	 chicken = chicken .. "/"
       end
       -- sanity check: dont attempt to build if chicken.h is not found
-      if not os.fileexists(chicken .. "chicken.h") then
-	 error("--chicken directory does not contain chicken.h")
+      -- this is made more complex by that fact that on windows
+      -- chicken files are not in a single top-level folder
+      if os.fileexists(chicken .. "chicken.h") then
+	 chicken_include = chicken
+      elseif os.fileexists(chicken .. "include/chicken.h") then
+	 chicken_include = chicken .. "include/"
+      else
+	 error("--chicken directory does not contain chicken.h")	 
+      end
+
+      if os.fileexists(chicken .. "libchicken.a") then
+	 chicken_lib = chicken
+      elseif os.fileexists(chicken .. "lib/libchicken.a") then
+	 chicken_lib = chicken .. "lib/"
+      else
+	 error("--chicken directory does not contain libchicken.a")
       end
    else 
       error("CM requires a Scheme implementation, add either '--sndlib /path/to/sndlib' or '--chicken /path/to/chicken' to your premake options.")
@@ -88,10 +104,6 @@ for i = 1,2 do
       mypackage.kind = "winexe"
       mypackage.objdir = "obj/grace"
       mypackage.defines = {"GRACE=1"}
-      --if options["texteditor-can-colorize"] then
-      --  table.insert(mypackage.defines, "TEXTEDITOR_CAN_COLORIZE")
-      --end
-      --table.insert(mypackage.files, "src/Preferences.cpp")
       table.insert(mypackage.files, "src/Fonts.cpp")
       table.insert(mypackage.files, "src/Help.cpp")
       table.insert(mypackage.files, "src/Commands.cpp")
@@ -122,7 +134,8 @@ for i = 1,2 do
 	 table.insert(mypackage.includepaths, sndlib)
       elseif options["chicken"] then
 	 table.insert(mypackage.defines, "CHICKEN=1")
-	 table.insert(mypackage.includepaths, chicken)
+	 table.insert(mypackage.includepaths, chicken_include)
+	 table.insert(mypackage.libpaths, chicken_lib)
       end
       
       table.insert(mypackage.config["Debug"].defines, "DEBUG=1")
@@ -181,6 +194,10 @@ for i = 1,2 do
 	 table.insert(mypackage.libpaths, "/usr/X11R6/lib/")
 	 mypackage.config["Release"].links = {"juce" .. linux_links}
 	 mypackage.config["Debug"].links = {juce_debug .. linux_links}
+      elseif windows then
+	 table.insert(mypackage.defines, "WINDOWS=1")
+	 mingw_links = {"chicken", "juce", "gdi32", "comdlg32", "shell32", "ole32", "vfw32", "winmm", "wininet", "dsound", "wsock32", "opengl32", "glu32", "uuid", "rpcrt4" }
+	 mypackage.config["Release"].links = mingw_links
       end
    end
    if (i == 1) then

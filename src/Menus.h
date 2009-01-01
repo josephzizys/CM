@@ -15,6 +15,7 @@ class CommandMenus
  public:
 
   static const int NumPrefsOpenRecent = 16;
+  static const int NumPrefsLoadRecent = 16;
   static const int NumMidiOutOpen = 16;
   static const int NumWindowSelect = 8;
   static const int NumMidiOutTuning = 16;
@@ -35,6 +36,7 @@ class CommandMenus
   static const PopupMenu getFontSizeMenu(ApplicationCommandManager* comm,
 					 CommandID rootid);
   static const PopupMenu getRecentlyOpenedMenu();
+  static const PopupMenu getRecentlyLoadedMenu();
 };
 
 

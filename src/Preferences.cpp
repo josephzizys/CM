@@ -45,7 +45,7 @@ void Preferences::flush()
   if (props != 0) 
     {
       props->setValue(T("RecentlyOpenedFiles"), recentlyOpened.toString());
-      props->setValue(T("RecentlyLoadedFiles"), recentlyOpened.toString());
+      props->setValue(T("RecentlyLoadedFiles"), recentlyLoaded.toString());
       props->setValue(T("RecentlyPlayedFiles"), recentlyPlayed.toString());
     }
 }

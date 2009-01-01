@@ -19,7 +19,7 @@ class SysInfo
    *======================================================================*/
 
   static const int CM_VERSION = 323;
-  static const int GRACE_VERSION = 202;
+  static const int GRACE_VERSION = CM_VERSION;
 
   /*======================================================================*
                                 Version Info
@@ -326,7 +326,8 @@ class CommandIDs
   static const int Window = 12;
   static const int Help = 13;
   static const int Scheduler = 14;
-  static const int Prefs = 15;
+  static const int Scheme = 15;
+  static const int Prefs = 16;
 
   static const String getCommandTypeName(CommandID id)
   {
@@ -347,6 +348,7 @@ class CommandIDs
       case Window: return T("Window");
       case Help: return T("Help");
       case Scheduler: return T("Scheduler");
+      case Scheme: return T("Scheme");
       case Prefs: return T("Prefs");
       default: return T("Unkown Type");
       }
@@ -370,10 +372,17 @@ class CommandIDs
   static const CommandID AppQuit = COMID(App, 1);
 
   static const CommandID PrefsOpenRecent = COMID(Prefs, 1);
-  static const CommandID PrefsClearRecent = COMID(Prefs, 2);
+  static const CommandID PrefsClearOpenRecent = COMID(Prefs, 2);
   static const CommandID PrefsEditorEmacsMode = COMID(Prefs, 3);
   static const CommandID PrefsEditorFont = COMID(Prefs, 4);
   static const CommandID PrefsEditorFontSize = COMID(Prefs, 5);
+  static const CommandID PrefsLoadRecent = COMID(Prefs, 6);
+  static const CommandID PrefsClearLoadRecent = COMID(Prefs, 7);
+  static const CommandID PrefsSetInitFile = COMID(Prefs, 8);
+  static const CommandID PrefsClearInitFile = COMID(Prefs, 9);
+
+  static const CommandID SchemeLoadFile = COMID(Scheme, 1);
+
 
   // Console File
   static const CommandID ConsoleNewEditor = COMID(Console, 1);
@@ -381,6 +390,7 @@ class CommandIDs
   static const CommandID ConsoleShowDirectory = COMID(Console, 3);
   static const CommandID ConsoleSetDirectory = COMID(Console, 4);
   static const CommandID ConsoleQuit = COMID(Console, 5);
+
   // Console Edit
   static const CommandID ConsoleFont = COMID(Console, 16);
   static const CommandID ConsoleFontSize = COMID(Console, 17);
@@ -402,9 +412,8 @@ class CommandIDs
   static const CommandID EditorRevert = COMID(Editor, 5);
   static const CommandID EditorShowDirectory = COMID(Editor, 6);
   static const CommandID EditorSetDirectory = COMID(Editor, 7);
-  static const CommandID EditorLoadFile = COMID(Editor, 8);
-  static const CommandID EditorPrint = COMID(Editor, 9);
-  static const CommandID EditorClose = COMID(Editor, 10);
+  static const CommandID EditorPrint = COMID(Editor, 8);
+  static const CommandID EditorClose = COMID(Editor, 9);
 
   static const CommandID EditorUndo = COMID(Editor, 16);
   static const CommandID EditorRedo = COMID(Editor, 17);

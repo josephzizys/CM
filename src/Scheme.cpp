@@ -15,6 +15,9 @@
 #ifdef CHICKEN
 #include "ChickenBridge.h"
 #endif
+#ifdef GRACE
+#include "Preferences.h"
+#endif
 #include <iostream>
 
 #define SCHEME_DEBUG 0
@@ -220,6 +223,57 @@ double Scheme::getScoreTime()
 void Scheme::setInputHook(SCHEMEPROC hook)
 {
 
+}
+
+void Scheme::load(File file, bool addtorecent)
+{
+  //std::cout << "Scheme::load()\n";
+  if (file==File::nonexistent)
+    {
+      FileChooser choose(T("Load"),
+			 File::getCurrentWorkingDirectory());
+      if (choose.browseForFileToOpen())
+	{
+	  file=choose.getResult();
+	}
+      else
+	return;
+    }
+  String text=String::empty;
+  if (file.existsAsFile())
+    {
+      //std::cout << "load file exists\n";
+      if (file.hasFileExtension(T(".sal")))
+	{
+	  text << T("(sal \"")
+	       << T("begin\n")
+	       << file.loadFileAsString().replace(T("\""), T("\\\""))
+	       << T("\nend")
+	       << T("\")");
+	}
+      else
+	{
+	  text << T("(load ")
+	       << file.getFullPathName().quoted()
+	       << T(")");
+	}
+      //std::cout << "load text='" << text.toUTF8() << "'\n";
+      eval(text);
+      if (addtorecent)
+	{
+#ifdef GRACE
+	  Preferences::getInstance()->recentlyLoaded.addFile(file);
+#endif
+	  //std::cout << "added to recently loaded\n";
+	}
+    }
+  else
+    {
+      text << T(">>> Error: load file ")
+	   << file.getFullPathName().quoted()
+	   << T(" does not exist.");
+      Console::getInstance()->printError(text);
+    }
 }
 
 void Scheme::run()

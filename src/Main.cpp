@@ -34,22 +34,25 @@ void Grace::initialise(const juce::String& commandLine)
   // Make user's home folder the working directory on startup
   File::getSpecialLocation(File::userHomeDirectory).
     setAsCurrentWorkingDirectory();
-  if(SysInfo::isWindows())
+  if (SysInfo::isWindows())
     lookandfeel = new WindowsSkin;
-  else if(SysInfo::isMac())
+  else if (SysInfo::isMac())
     lookandfeel = new MacSkin;
-  else if(SysInfo::isLinux())
+  else if (SysInfo::isLinux())
     lookandfeel = new LinuxSkin;
   LookAndFeel::setDefaultLookAndFeel(lookandfeel);
+  // create application command manager
+  CommandManager::getInstance()->registerAllCommandsForTarget(this);
+  new ConsoleWindow();
   Console* con=Console::getInstance();
-  String vers=String::empty;
-  vers << SysInfo::getGraceVersion()
-       << T(" ") << SysInfo::getCopyright(T("Todd Ingalls, Rick Taube"))
-       << T("\n")
-       << SystemStats::getJUCEVersion()
-       << T(" ") << SysInfo::getCopyright(T("Julian Storer")) 
-       << T("\n");
-  con->printOutput(vers);
+  String str=String::empty;
+  str << SysInfo::getGraceVersion()
+      << T(" ") << SysInfo::getCopyright(T("Todd Ingalls, Rick Taube"))
+      << T("\n")
+      << SystemStats::getJUCEVersion()
+      << T(" ") << SysInfo::getCopyright(T("Julian Storer")) 
+      << T("\n");
+  con->printOutput(str);
   Scheme* scm=Scheme::getInstance();
   scm->setPriority(10);
   scm->startThread();
@@ -59,15 +62,14 @@ void Grace::initialise(const juce::String& commandLine)
   mid->startThread();
   // Audio Manager
   AudioManager* aud=AudioManager::getInstance();
-  String err=aud->initialise(2,2,0,true);
-  if (err.isEmpty())
+  str=aud->initialise(2,2,0,true);
+  if (str.isEmpty())
     aud->isAudioReady(true);
   else
-    AlertWindow::showMessageBox (AlertWindow::WarningIcon,
-				 T("Audio Manager"), err);
-  // create application command manager
-  CommandManager::getInstance()->registerAllCommandsForTarget(this);
-  new ConsoleWindow();
+    con->printWarning(T("Warning: Audio Manager: ") + str);
+  str=Preferences::getInstance()->getStringProp("LispInitFile");
+  if (str!=String::empty)
+    scm->load(File(str),false);
 }
 
 void Grace::shutdown()

@@ -109,6 +109,7 @@ public:
 
   void eval(String str);
   void eval(char* str);
+  void load(File file, bool addtorecent=false);
   void midiin(const MidiMessage &mess);
 
   void removeNode(SchemeNode *n, bool deleteObject=true );

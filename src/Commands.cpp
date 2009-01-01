@@ -56,7 +56,28 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::PrefsOpenRecent + 13,
     CommandIDs::PrefsOpenRecent + 14,
     CommandIDs::PrefsOpenRecent + 15,
-    CommandIDs::PrefsClearRecent,
+    CommandIDs::PrefsClearOpenRecent,
+
+    CommandIDs::SchemeLoadFile,
+    CommandIDs::PrefsLoadRecent + 0,
+    CommandIDs::PrefsLoadRecent + 1,
+    CommandIDs::PrefsLoadRecent + 2,
+    CommandIDs::PrefsLoadRecent + 3,
+    CommandIDs::PrefsLoadRecent + 4,
+    CommandIDs::PrefsLoadRecent + 5,
+    CommandIDs::PrefsLoadRecent + 6,
+    CommandIDs::PrefsLoadRecent + 7,
+    CommandIDs::PrefsLoadRecent + 8,
+    CommandIDs::PrefsLoadRecent + 9,
+    CommandIDs::PrefsLoadRecent + 10,
+    CommandIDs::PrefsLoadRecent + 11,
+    CommandIDs::PrefsLoadRecent + 12,
+    CommandIDs::PrefsLoadRecent + 13,
+    CommandIDs::PrefsLoadRecent + 14,
+    CommandIDs::PrefsLoadRecent + 15,
+    CommandIDs::PrefsClearLoadRecent,
+    CommandIDs::PrefsSetInitFile,
+    CommandIDs::PrefsClearInitFile,  
 
     // MidiOut Port
     CommandIDs::MidiOutOpen + 0,
@@ -180,7 +201,8 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::HelpWebSite + 5,
     CommandIDs::HelpWebSite + 6,
     CommandIDs::HelpWebSite + 7,
-    CommandIDs::HelpShowDirectory
+    CommandIDs::HelpShowDirectory,
+
   };
   commands.addArray(ids, sizeof(ids) / sizeof(CommandID));
 }
@@ -216,9 +238,33 @@ void Grace::getCommandInfo(const CommandID id,
 	  info.shortName=f.getFileName();
       }
       break;
-    case CommandIDs::PrefsClearRecent:
+    case CommandIDs::PrefsClearOpenRecent:
       info.shortName=T("Clear Menu");
       break;
+
+    case CommandIDs::SchemeLoadFile:
+      info.shortName=T("Load File...");
+      break;
+    case CommandIDs::PrefsLoadRecent:
+      {
+	File f=pref->recentlyLoaded.getFile(data);
+	if (f==File::nonexistent)
+	  info.shortName=T("<Unknown File>");
+	else
+	  info.shortName=f.getFileName();
+      }
+      break;
+    case CommandIDs::PrefsClearLoadRecent:
+      info.shortName=T("Clear Menu");
+      break;
+    case CommandIDs::PrefsSetInitFile:
+      info.shortName=T("Set Init File...");
+      break;
+    case CommandIDs::PrefsClearInitFile:
+      info.shortName=T("Clear Init File");
+      info.setActive(pref->getStringProp(T("LispInitFile"))!=NULL);
+      break;
+
       /**  MIDI COMMANDS  **/
     case CommandIDs::MidiOutOpen:
       {
@@ -324,14 +370,37 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
 {
   int comm = CommandIDs::getCommand(info.commandID);
   int data = CommandIDs::getCommandData(info.commandID);
+  Preferences* pref=Preferences::getInstance();
   switch (comm)
     {
     case CommandIDs::AppQuit:
       ((ConsoleWindow *)Console::getInstance()->getTopLevelComponent())->
 	closeButtonPressed();
       break;
+    case CommandIDs::SchemeLoadFile:
+      Scheme::getInstance()->load(File::nonexistent,true);
+      break;
+    case CommandIDs::PrefsLoadRecent:
+      Scheme::getInstance()->
+	load(pref->recentlyLoaded.getFile(data), true);
+      break;
+    case CommandIDs::PrefsSetInitFile:
+      {
+	FileChooser choose
+	  (T("Select lisp file to load at startup."),
+	   File::getCurrentWorkingDirectory());
+	if (choose.browseForFileToOpen())
+	  {
+	    String path=choose.getResult().getFullPathName();
+	    pref->setStringProp(T("LispInitFile"), path);
+	  }
+      }
+      break;
+    case CommandIDs::PrefsClearInitFile:
+      pref->setStringProp(T("LispInitFile"), String::empty);
+      break;
       /**  MIDI PORT COMMANDS  **/
-   case CommandIDs::MidiOutOpen:
+    case CommandIDs::MidiOutOpen:
       MidiOutPort::getInstance()->open(data);
       break;
     case CommandIDs::MidiOutTest:
@@ -355,7 +424,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
 	int sr=SrateIDs::toSrate(data);
 	String st=T("(begin (set! *clm-srate* ") + 
 	  String(sr) + T(") (void))");
-	Preferences::getInstance()->setIntProp(T("SndLibSrate"), sr);
+	pref->setIntProp(T("SndLibSrate"), sr);
 	Scheme::getInstance()->eval(st);
       }
       break;
@@ -381,7 +450,6 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::SndLibInsDialog:
       SndLib::getInstance()->openInstrumentBrowser();
       break;
-
 #endif
       /** WINDOW COMMANDS **/
     case CommandIDs::WindowSelect:
@@ -645,7 +713,6 @@ void TextBuffer::getAllCommands(Array<CommandID>& commands)
     CommandIDs::EditorRevert,
     CommandIDs::EditorShowDirectory,
     CommandIDs::EditorSetDirectory,
-    CommandIDs::EditorLoadFile,
     CommandIDs::EditorPrint,
     CommandIDs::EditorClose,
     // Edit menu
@@ -847,9 +914,6 @@ void TextBuffer::getCommandInfo(const CommandID id,
     case CommandIDs::EditorSetDirectory:
       info.shortName=T("Set Working Directory...");
       break;
-    case CommandIDs::EditorLoadFile:
-      info.shortName=T("Load...");
-      break;
     case CommandIDs::EditorPrint:
       info.shortName=T("Print...");
       if (ismac || !emacs)
@@ -1043,9 +1107,6 @@ bool TextBuffer::perform(const ApplicationCommandTarget::InvocationInfo&
       break;
     case CommandIDs::EditorRevert:
       revertFile();
-      break;
-    case CommandIDs::EditorLoadFile:
-      std::cout << "EditorLoadFile\n";
       break;
     case CommandIDs::EditorSetDirectory:
       app->chooseWorkingDirectory();
