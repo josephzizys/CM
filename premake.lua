@@ -193,7 +193,7 @@ for i = 1,2 do
       add(mypackage.links, "freetype")
       add(mypackage.libpaths, "/usr/X11R6/lib/")
    elseif windows then
-   
+      add(mypackage.defines, "WINDOWS=1")   
       -- premake outputs libs defined at the config level BEFORE slibs
       -- defined at the package level. on windows this causes linking
       -- to fail because -ljuce appears after the libs listed below (i
@@ -202,7 +202,6 @@ for i = 1,2 do
       -- to the configs rather than to the package as on linux an
       -- macos. 
       for c in {"Release", "Debug"} do
-         add(mypackage.defines, "WINDOWS=1")
          add(mypackage.config[c].links, "gdi32")
          add(mypackage.config[c].links, "comdlg32")
          add(mypackage.config[c].links, "shell32")
