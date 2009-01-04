@@ -16,6 +16,7 @@
 #include "Main.h"
 #include "Preferences.h"
 #include "Audio.h"
+#include "Csound.h"
 
 #ifdef SNDLIB
 #include "SndLib.h"
@@ -130,6 +131,12 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::SndLibChannels + 2,
     CommandIDs::SndLibAutoPlay,
     CommandIDs::SndLibInsDialog,
+
+    CommandIDs::CsoundPrefWriteAfter,
+    CommandIDs::CsoundPrefPlayAfter,
+    CommandIDs::CsoundExportScore,
+    CommandIDs::CsoundClearScore,
+    CommandIDs::CsoundOpenSettings,
 
     // Window Menu
     CommandIDs::WindowSelect + 0,  // 0==Select Console
@@ -303,17 +310,7 @@ void Grace::getCommandInfo(const CommandID id,
       info.shortName=T("Instruments...");
       info.setActive(false);
       break;
-      /** AUDIO MENU COMMANDS **/
-    case CommandIDs::AudioOpenFilePlayer:
-      info.shortName=T("Play Audio File...");
-      break;
-    case CommandIDs::MidiFilePlayer:
-      info.shortName=T("Play Midi File...");
-      info.setActive(false);
-      break;
-    case CommandIDs::AudioSettings:
-      info.shortName=T("Audio Settings...");
-      break;
+      // SndLib
     case CommandIDs::SndLibSrate:
       info.shortName=SrateIDs::toString(data);
       info.setTicked(SrateIDs::toSrate(data) ==
@@ -329,6 +326,38 @@ void Grace::getCommandInfo(const CommandID id,
       break;
     case CommandIDs::SndLibInsDialog:
       info.shortName=T("Instruments...");
+      break;
+      //
+      // Csound Commands
+      //
+    case CommandIDs::CsoundPrefWriteAfter:
+      info.shortName=T("Write Scorefiles");
+      info.setTicked(Csound::getInstance()->getWriteAfter());
+      break;
+    case CommandIDs::CsoundPrefPlayAfter:
+      info.shortName=T("Play Scorefiles");
+      info.setTicked(Csound::getInstance()->getPlayAfter());
+      break;
+    case CommandIDs::CsoundExportScore:
+      info.shortName=T("Export Score...");
+      info.setActive(!Csound::getInstance()->isScoreEmpty());
+      break;
+    case CommandIDs::CsoundClearScore:
+      info.shortName=T("Clear Score");
+      info.setActive(!Csound::getInstance()->isScoreEmpty());
+      break;
+    case CommandIDs::CsoundOpenSettings:
+      info.shortName=T("Settings...");
+      break;
+    case CommandIDs::AudioOpenFilePlayer:
+      info.shortName=T("Play Audio File...");
+      break;
+    case CommandIDs::MidiFilePlayer:
+      info.shortName=T("Play Midi File...");
+      info.setActive(false);
+      break;
+    case CommandIDs::AudioSettings:
+      info.shortName=T("Audio Settings...");
       break;
       /** WINDOW COMMANDS **/
     case CommandIDs::WindowSelect:
@@ -451,7 +480,29 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       SndLib::getInstance()->openInstrumentBrowser();
       break;
 #endif
-      /** WINDOW COMMANDS **/
+      //
+      // Csound Commands
+      //
+    case CommandIDs::CsoundPrefWriteAfter:
+      Csound::getInstance()->
+	setWriteAfter(!Csound::getInstance()->getWriteAfter());
+      break;
+    case CommandIDs::CsoundPrefPlayAfter:
+      Csound::getInstance()->
+	setPlayAfter(!Csound::getInstance()->getPlayAfter());
+      break;
+    case CommandIDs::CsoundExportScore:
+      Csound::getInstance()->exportScore();
+      break;
+    case CommandIDs::CsoundClearScore:
+      Csound::getInstance()->clearScore();
+      break;
+    case CommandIDs::CsoundOpenSettings:
+      Csound::getInstance()->openSettings();
+      break;
+      //
+      // Window Commands
+      //
     case CommandIDs::WindowSelect:
       {
 	TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(data);

@@ -83,6 +83,7 @@
   mp:press mp:bend mp:tuning 
   mp:playseq mp:saveseq mp:copyseq mp:plotseq mp:clearseq mp:recordseq
   mp:mm mp:inhook mp:inchans mp:intypes
+  cs:i cs:f cs:open-output-file
 
   ;; processes
   

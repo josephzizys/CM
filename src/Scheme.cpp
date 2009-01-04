@@ -9,6 +9,7 @@
 #include "Scheme.h"
 #include "Console.h"
 #include "Midi.h"
+#include "Csound.h"
 #ifdef SNDLIB
 #include "SndLib.h"
 #endif
@@ -388,6 +389,8 @@ void Scheme::run()
 	    SndLib::getInstance()->
 	      performCommand(CommandIDs::SchedulerScoreComplete);
 #endif	  
+	  else if (isScoreMode(ScoreTypes::Csound))
+	    Csound::getInstance()->saveScore();
 	}
       sprouted=false;
       scoretime=0.0;

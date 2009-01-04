@@ -1,22 +1,45 @@
 ==========================================================================
-DEPENDENCIES:
+                               DEPENDENCIES                               
+==========================================================================
 
-    Juce 1.46, available at: 
+Juce 1.46, available at:
+
     http://sourceforge.net/project/showfiles.php?group_id=137492
 
-    Premake 3.5 or 3.6 or 3.7, available at:
+Premake 3.5 or 3.6 or 3.7, available at:
+
     http://premake.sourceforge.net/download
 
-    SndLib with S7 Scheme, available at:
+SndLib with S7 Scheme, available at:
+
     ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz
 
-    OR:
+OR:
 
-    Chicken Scheme 3.0.0, available at:
+Chicken Scheme 3.0.0, available at:
+
     http://www.call-with-current-continuation.org/
 
-
 ==========================================================================
+                                 BUILDING                                 
+==========================================================================
+
+Use premake to create your make files and then make the targets. For
+example this is how I build the system on my mac:
+
+    $ premake --target gnu --juce ../juce-1.46 --sndlib ../sndlib
+    $ make
+
+The --juce, --sndlib and --chicken options all allow their path to be
+either the source directory (eg '--juce ../juce-1.46') or an install
+root (eg '--juce /usr/local').
+
+Executables are left in bin/:
+
+    bin/cm                      console app    
+    bin/Grace                   gui app
+
+
 BUILDING WITH SNDLIB:
 
     $ cd /path/to/sndlib
@@ -27,29 +50,26 @@ BUILDING WITH SNDLIB:
     $ premake --target gnu --juce /path/to/juce --sndlib /path/to/sndlib
     $ make
 
-Executables are in bin/:
 
-    bin/cm                      console app    
-    bin/Grace                   gui app
-
-==========================================================================
-BUILDING WITH CHICKEN 3.0.0:
+BUILDING WITH CHICKEN SCHEME 3.0.0:
 
     $ premake --target gnu --juce /path/to/juce --chicken /path/to/chicken-3.0.0
     $ make
 
-==========================================================================
-CM IN EMACS:
+Carlos Pita reports that you can build with the latest Chicken (3.4.0)
+if you simply regenerate ChickenBridge.cpp. see developer notes below.
 
-You can use the bin/cm console app as an inferior scheme processs in
-Emacs by adding this snippet to your .emacs file and fixing 'cm-path'
-for your machine.Then start emacs and run CM by doing:
-     M-x: cm
+==========================================================================
+                                 CM IN EMACS                             
+==========================================================================
+
+bin/cm is a console app that can be used as an inferior scheme process
+in Emacs. To run cm in Emacs just add this snippet to your .emacs file
+and fix 'cm-path' for your machine. Then restart emacs and start CM by
+doing: M-x: cm
 
 ;-----------------------------------------------------------------------
-
-(defvar cm-path "~/Software/cm3/") ; FIX pathname for your machine
-
+(defvar cm-path "~/Software/cm/") ; FIX pathname for your machine
 (require 'scheme)
 (load (concat cm-path "res/etc/sal.el"))
 (let ((spec '("definstrument" "loop" "process" "run" "send")))
@@ -64,12 +84,14 @@ for your machine.Then start emacs and run CM by doing:
 
 
 ==========================================================================
-SVN ACCESS
+                                SVN ACCESS                                
+==========================================================================
 
 svn co http://commonmusic.svn.sourceforge.net/svnroot/commonmusic/trunk cm
 
 ==========================================================================
-INTERNAL BUILD STEPS FOR DEVEOPERS:
+                                DEVELOPING                                
+==========================================================================
 
 To build against the juce debug libs:
 
@@ -89,10 +111,13 @@ To create the embedded instruments:
       3. Create the zip archive and generate the resource:
       $ zip -r files.zip files 
 
+To create the embedded documetation
+
+    $ juce_bb res/doc src/ Documentation
+
 To create the other Resources:
 
     $ juce_bb res/font src/ Fonts
-    $ juce_bb res/documentation src/ Documentation
     $ juce_bb res/images src/ Images
 
 To generate FFI files (requires a working 'format'...):
@@ -101,19 +126,20 @@ To generate FFI files (requires a working 'format'...):
   (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp")
   (chickenffi "/Users/hkt/Software/cm/scm/chicken-foreign.scm")
 
-To generate ChickenBridge.cpp:
+To regenerate ChickenBridge.cpp:
 
     $ cd scm
     $ csc -c++ -embedded -t ChickenBridge.scm
     $ mv ChickenBridge.cpp ../src
 
 ==========================================================================
-PORTING:
+                                  PORTING                                
+==========================================================================
 
-The implementation file for each Scheme (s7.scm, Chicken.scm)
-defines implementation features that are either not provided or
-unevenly provided in scheme implementations. Here is the list of
-features that must be in effect after that file is loaded:
+The implementation file for each Scheme (s7.scm, Chicken.scm) defines
+implementation features that are either not provided or unevenly
+provided in scheme implementations. Here is the list of features that
+must be in effect after that file is loaded:
 
 (define-macro a b)
 (define-for-syntax a b)

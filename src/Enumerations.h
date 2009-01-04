@@ -182,6 +182,11 @@ class ExportIDs
   static const ExportID CsoundScore = (TextIDs::Csound << SHIFT) + Score;
   static const ExportID XmlData = (TextIDs::XML << SHIFT) + Data ;
 
+  // export destinaions
+  static const int ToFile = 1;
+  static const int ToConsole = 2;
+  static const int ToEditor = 3;
+  static const int ToClipboard= 4;
   static const TextID getTextID(ExportID f)
   {
     return (TextID)((f & UMASK) >> SHIFT);
@@ -514,21 +519,12 @@ class CommandIDs
   static const CommandID MidiSeqSaveAs = COMID(MidiSeq, 19);
   static const CommandID MidiSeqOpenFile = COMID(MidiSeq, 20);
 
-  // Csound Port
-  static const CommandID CsoundOpen = COMID(Csound, 1);
-  static const CommandID CsoundClose = COMID(Csound, 2);
-  static const CommandID CsoundWrite = COMID(Csound, 3);
-  static const CommandID CsoundAbortWrite = COMID(Csound, 4);
-  static const CommandID CsoundPlay = COMID(Csound, 5);
-  static const CommandID CsoundImport = COMID(Csound, 6);
-  static const CommandID CsoundExport = COMID(Csound, 7);
-  static const CommandID CsoundPrint = COMID(Csound, 8);
-  static const CommandID CsoundDisplay = COMID(Csound, 9);
-  static const CommandID CsoundClear = COMID(Csound, 10);
-  static const CommandID CsoundScoreMode = COMID(Csound, 11);
-  static const CommandID CsoundRecordMode = COMID(Csound, 12);
-  static const CommandID CsoundTraceMode = COMID(Csound, 13);
-  static const CommandID CsoundAutoWrite = COMID(Csound, 14);
+  // Csound
+  static const CommandID CsoundPrefWriteAfter = COMID(Csound, 1);
+  static const CommandID CsoundPrefPlayAfter = COMID(Csound, 2);
+  static const CommandID CsoundExportScore = COMID(Csound, 3);
+  static const CommandID CsoundClearScore = COMID(Csound, 4);
+  static const CommandID CsoundOpenSettings = COMID(Csound, 5);
 
   // Audio Menu
   static const CommandID AudioOpenFilePlayer = COMID(Audio, 1);

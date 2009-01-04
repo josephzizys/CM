@@ -40,10 +40,7 @@ Help::Help()
   examples.set(T("Stephen Foster"), T("foster.sal")); 
   examples.set(T("Harmonic Series"), T("harmonics.sal")); 
   examples.set(T("FM Composition"), T("fm.sal"));
-  //#ifdef SNDLIB
-  //  examples.set(T("SndLib (Sal)"), T("sndlib.sal"));
-  //  examples.set(T("SndLib (Scheme)"), T("sndlib.scm"));
-  //#endif
+  examples.set(T("Csound"), T("csound.sal"));
   // SAL tutorials
   tutorials.set(T("Hello World"), T("hello.sal"));
   tutorials.set(T("Expressions"), T("expr.sal"));
@@ -105,6 +102,7 @@ void Help::restoreHelpFiles()
   restoreFile(cm_css, cm_cssSize, T("cm.css"));
   restoreFile(cm_html, cm_htmlSize, T("cm.html"));
   restoreFile(continuum_sal, continuum_salSize, T("continuum.sal"));
+  restoreFile(csound_sal, csound_salSize, T("csound.sal"));
   restoreFile(fm_sal, fm_salSize, T("fm.sal"));
   restoreFile(foster_sal, foster_salSize, T("foster.sal"));
   restoreFile(gestures_sal, gestures_salSize, T("gestures.sal"));
@@ -118,8 +116,6 @@ void Help::restoreHelpFiles()
   restoreFile(patterns1_sal, patterns1_salSize, T("patterns1.sal"));
   restoreFile(patterns2_sal, patterns2_salSize, T("patterns2.sal"));
   restoreFile(reich_sal, reich_salSize, T("reich.sal"));
-  restoreFile(sndlib_scm, sndlib_scmSize, T("sndlib.scm"));
-  restoreFile(sndlib_sal, sndlib_salSize, T("sndlib.sal"));
   restoreFile(define_sal, define_salSize, T("define.sal"));
   restoreFile(expr_sal, expr_salSize, T("expr.sal"));
   restoreFile(funcall_sal, funcall_salSize, T("funcall.sal"));

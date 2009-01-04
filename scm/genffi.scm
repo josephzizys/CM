@@ -105,6 +105,9 @@
     (ffi_mp_plot_seq void "mp_plot_seq")
     (ffi_mp_clear_seq void "mp_clear_seq")
 
+    (ffi_cs_init_score void "cs_init_score" c-string)
+    (ffi_cs_send_score void "cs_send_score" int int double c-string)
+
     (ffi_sal_tokenize c-string "sal_tokenize" c-string )
 
     ))

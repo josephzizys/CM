@@ -9,6 +9,7 @@
 #include "Enumerations.h"
 #include "CmSupport.h"
 #include "Midi.h"
+#include "CSound.h"
 #include "Console.h"
 #include "Syntax.h"
 #include <iostream>
@@ -914,6 +915,18 @@ void set_input_hook( SCHEMEPROC proc )
 void clear_input_hook(  )
 {
   // FIX
+}
+
+void cs_init_score(char* args)
+{
+  //  std::cout << "cm_init_score " << args << "\n";
+  Csound::getInstance()->initScore(String(args));
+}
+
+void cs_send_score(int typ, int num, double time, char* pars)
+{
+  //std::cout << "cs_send_score " << typ << " " << num << " "  << time << " " << pars << "\n";
+  Csound::getInstance()->addToScore(typ,num,time,String(pars));
 }
 
 char* sal_tokenize(char* str)

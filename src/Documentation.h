@@ -5,14 +5,20 @@
 
 namespace Documentation
 {
+    extern const char*  changelog_html;
+    const int           changelog_htmlSize = 2011;
+
     extern const char*  cm_css;
     const int           cm_cssSize = 7086;
 
     extern const char*  cm_html;
-    const int           cm_htmlSize = 147837;
+    const int           cm_htmlSize = 147638;
 
     extern const char*  continuum_sal;
     const int           continuum_salSize = 3137;
+
+    extern const char*  csound_sal;
+    const int           csound_salSize = 1751;
 
     extern const char*  define_sal;
     const int           define_salSize = 11617;
@@ -76,12 +82,6 @@ namespace Documentation
 
     extern const char*  reich_sal;
     const int           reich_salSize = 812;
-
-    extern const char*  sndlib_sal;
-    const int           sndlib_salSize = 997;
-
-    extern const char*  sndlib_scm;
-    const int           sndlib_scmSize = 1150;
 
 };
 

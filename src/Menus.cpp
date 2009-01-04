@@ -85,6 +85,17 @@ const PopupMenu CommandMenus::getAudioMenu()
   sndlib.addCommandItem(comm, CommandIDs::SndLibInsDialog);
   menu.addSubMenu(T("SndLib"),sndlib);
 #endif
+
+  PopupMenu csound;
+  csound.addCommandItem(comm, CommandIDs::CsoundPrefWriteAfter);
+  csound.addCommandItem(comm, CommandIDs::CsoundPrefPlayAfter);
+  csound.addSeparator();
+  csound.addCommandItem(comm, CommandIDs::CsoundExportScore);
+  csound.addCommandItem(comm, CommandIDs::CsoundClearScore);
+  csound.addSeparator();
+  csound.addCommandItem(comm, CommandIDs::CsoundOpenSettings);
+  menu.addSubMenu(T("Csound"), csound);
+
   menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::AudioOpenFilePlayer);
   menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);

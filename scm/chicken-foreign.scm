@@ -78,4 +78,6 @@
 (define ffi_mp_copy_seq (foreign-lambda void "mp_copy_seq"))
 (define ffi_mp_plot_seq (foreign-lambda void "mp_plot_seq"))
 (define ffi_mp_clear_seq (foreign-lambda void "mp_clear_seq"))
+(define ffi_cs_init_score (foreign-lambda void "cs_init_score" c-string))
+(define ffi_cs_send_score (foreign-lambda void "cs_send_score" int int double c-string))
 (define ffi_sal_tokenize (foreign-lambda c-string "sal_tokenize" c-string))

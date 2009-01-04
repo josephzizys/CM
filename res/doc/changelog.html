@@ -4,6 +4,9 @@
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
 <style type="text/css" media="all">
 @import "cm.css";
+<!--
+li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; border-bottom: .75pt dotted #999; }
+-->
 </style>
 <title>Changelog</title>
 </head>
@@ -17,23 +20,39 @@
   
   <ul>
 
-    <li>builds on Windows/Mingw using Chicken 3.0.0</li>
+    <li class="change">Enhancement: new Csound audio target. Does not require libcsound and should work everywhere. See <a href="cm.html#csound">csound documentation</a> and the Help menu's <a href="csound.sal">csound example</a> for more information.</a>
 
-    <li>enhancement: audio player now sports a realtime waveform view (shamelessly stolen from the Juce Demo app...)</li>
+    <li class="change">Enhacement: added <a href="cm.html#sndlib"> SndLib documentation</a>.</li>
+
+    <li class="change">Cleaned up numerous dictionary entries including a new entry for <a href="cm.html#sprout">sprout</a>. Dictionary now validates as xhtml strict.</li>
+
+    <li class="change">system now builds on Windows/Mingw using Chicken 3.0.0. Carlos Pita
+    reports that you can build with the latest Chicken (3.4.0) if you
+    simply regenerate ChickenBridge.cpp. Instructions are in
+    <a href="../../readme.text">readme.text</a>.</li>
+
+    <li class="change">enhancement: Carlos Pita cleaned up the premake.lua script and
+    added support for linking against installed systems. To link
+    against an installed dependancy simply pass the install root as
+    the value of the option eg '--juce /usr/local/' </li>
+
+    <li class="change">enhancement: audio player now sports a realtime waveform view
+    (lifted from the Juce Demo app...)</li>
     
-    <li>enhancement: new "Load..." menu item in Console and
-    Editor loads both .scm and .sal files.</li>
+    <li class="change">enhancement: new "Load..." menu item in Console and
+    Editor works for both .scm and .sal files.</li>
 
-    <li>enhancement: new "Load Recent" menu holds last 8 loaded
+    <li class="change">enhancement: new "Load Recent" menu holds last 8 loaded
     files for fast loading.</li>
 
-    <li>enhancement: new "Set Init File" menu item sets a lisp init
-    file for autoloading at startup.</li>
+    <li class="change">enhancement: new "Set Init File" menu item sets a lisp 
+    file to autoload at startup.</li>
 
-    <li>enhancement: added "Clear Init File" menu item for removing a
+    <li class="change">enhancement: added "Clear Init File" menu item for removing a
     lisp startup file.</li>
 
-    <li>bug fix: removed spurious AudioFile entry from Help menu and
+
+    <li class="change">bug fix: removed spurious AudioFile entry from Help menu and
     tidied up the menu.</li>
 
   </ul>  
@@ -42,6 +61,6 @@
 
 <hr/>
 <address></address>
-<!-- hhmts start --> Last modified: Thu Jan  1 07:14:50 CST 2009 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Sun Jan  4 11:44:31 CST 2009 <!-- hhmts end -->
 </body>
 </html>

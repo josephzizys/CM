@@ -40,10 +40,11 @@ for i = 1,2 do
       "src/Syntax.cpp",
       "src/CmSupport.cpp",
       "src/Console.cpp",
-      "src/Scheme.cpp", 
-      "src/Preferences.cpp", 
-      "src/SchemeSources.cpp", 
-      "src/Midi.cpp", 
+      "src/Scheme.cpp",
+      "src/Preferences.cpp",
+      "src/SchemeSources.cpp",
+      "src/Midi.cpp",
+      "src/Csound.cpp",
       "src/Main.cpp"
    }
    mypackage.config["Debug"].defines = {"DEBUG=1"}

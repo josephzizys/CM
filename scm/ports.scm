@@ -42,6 +42,10 @@
 	     (apply snd:open-output-file str args)
 	     (set! mode *score-type-sndlib*)
 	     )
+	    ((member type '("sco"))
+	     (apply cs:open-output-file str args)
+	     (set! mode *score-type-csound*)
+	     )
 	    (else
 	     (error "don't know how to open" str)))
       ;; this function is being called under sprout: put the
@@ -272,6 +276,118 @@
   (void))
 
 ;;;
+;;; Csound is scorefile only
+;;;
+
+(define (cs:open-output-file path . args)
+  (let ((opts (string-append "\"" path "\"")))
+    (unless (even? (length args))
+      (error "uneven options list" args))
+    (do ((tail args (cddr tail))
+	 (argn #f))
+	((null? tail) 
+	 (ffi_cs_init_score opts)
+	 )
+      (set! argn (cadr tail))
+      (case (car tail)
+	((#:play )
+	 (set! opts (string-append opts " :play " 
+				   (if (cadr tail) "#t" "#f"))))
+	((#:write )
+	 (set! opts (string-append opts " :write "
+				   (if (cadr tail) "#t" "#f"))))
+	((#:options )
+	 (if (not (string? argn))
+	     (error "options not a string" argn))
+	 (set! opts (string-append opts " :options \""
+				   (cadr tail) "\"")))
+	((#:header)
+	 (if (not (string? argn))
+	     (error "header not a string" argn))
+	 (set! opts (string-append opts " :header \""
+				   (cadr tail) "\"")))
+	((#:orchestra)
+	 (if (not (string? argn))
+	     (error "orchestra not a string" argn))
+	 (set! opts (string-append opts " :orchestra \""
+				   (cadr tail) "\"")))
+	(else
+	 (error "unknown Csound option" (car tail)))))))
+
+; (cs:open-output-file "test.sco" #:write #t #:play #f)
+
+;; see Csound.h
+
+(define cs:i_statement 1)
+(define cs:e_statement 2)
+
+(define (cs:send type args)
+  ;; args can 1 or more values, or one list.
+  (let ((inst #f)
+	(time #f)
+	(data ""))
+    (cond ((null? args)
+	   (error "missing pfield data"))
+	  ((and (null? (cdr args))
+		(pair? (car args)))
+	   (set! args (car args))))
+    ;; parse out i value
+    (cond ((integer? (car args))
+	   (set! inst (car args))
+	   (set! args (cdr args)))
+	  (else
+	   (error "pfield 1 not an integer" (car args))))
+    ;; parse out time value
+    (cond ((null? args)
+	   (error "missing pfield 2 (time)"))
+	  ((number? (car args))
+	   (set! time (car args))
+	   (set! args (cdr args)))
+	  (else
+	   (error "pfield 2 not a number" (car args))))
+    ;; convert remaining to string
+    (do ((tail args (cdr tail))
+	 (delm "" " "))
+	((null? tail)
+	 (ffi_cs_send_score (if (eqv? type 'i)
+				cs:i_statement
+				cs:f_statement) 
+			    inst time data))
+      (cond ((number? (car tail))
+	     (set! data (string-append data delm
+				       (number->string (car tail)))))
+	    ((string? (car tail))
+	     (set! data (string-append data delm
+				       (car tail))))
+	    ((symbol? (car tail))
+	     (set! data (string-append data delm
+				       (symbol->string (car tail)))))
+	    (else
+	     (error "pfield not number, string or symbol"
+		    (car tail)))))))
+
+(define (cs:i . args)
+  (cs:send 'i args ))
+
+(define (cs:f . args)
+  (cs:send 'f args))
+
+(define (cs:ev args)
+  (cond ((pair? args)
+	 (let ((type (car args)))
+	   (if (or (eqv? type 'i)
+		   (eqv? type 'f))
+	       (cs:send type args)
+	       (error "not a Csound statement" type))))
+	(else
+	 (error "Pfield data not a list" args))))
+
+; (cs:send 1 '(99 0 1 440 .1))
+; (cs:i 1 0 1 2 3 4)
+; (cs:i 1 10)
+; (cs:i 1 22 1 55)
+
+;;;
 ;;; send macro
 ;;;
 
@@ -447,5 +563,9 @@
 (define-send-message "mp:clearseq" '())
 (define-send-message "mp:inchans" '(#:rest args))
 (define-send-message "mp:intypes" '(#:rest args))
+
+(define-send-message "cs:i" '(#:rest args))
+(define-send-message "cs:f" '(#:rest args))
+(define-send-message "cs:data" '(arg))
 
 

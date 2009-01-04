@@ -123,6 +123,9 @@ void mp_set_message_mask(int m);
 void mp_set_input_hook( SCHEMEPROC proc );
 void mp_clear_input_hook( );
 
+void cs_init_score(char* args);
+void cs_send_score(int typ, int inst, double time, char* pars);
+
 char* sal_tokenize(char* str);
 
 #endif

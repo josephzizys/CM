@@ -36,12 +36,13 @@
     <li><a href="#processes">Processes</a></li>
   </ul>
   </li>
-  <li><a href="#send">Sending Data to Ports</a>
-  <ul>
-    <li><a href="#midi-port">Midi Port</a></li>
-    <li><a href="#csound-port">Csound Port</a></li>
-  </ul>
-</li>
+  
+  <li><a href="#audio">Sending Audio Data</a></li>
+
+  <li><a href="#midi-out">Midi Out</a></li>
+  <li><a href="#midi-in">Midi In</a></li>
+  <li><a href="#csound">Csound</a></li>
+  <li><a href="#sndlib">SndLib</a></li>
 
   <li><a href="#scheduler">The Scheduler</a></li>
   <li><a href="#environment">Environment</a></li>
@@ -839,14 +840,14 @@ note, a <var>rhythmic symbol</var> or a list of the same. A fraction of a whole 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">in-tempo</span>
-      (<var class="arg">beats</var>, <var class="arg">tempo)
+      (<var class="arg">beats</var>, <var class="arg">tempo</var>)
     </td>
     <td class="label">Function</td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; number</td></tr>
 </table>
 <blockquote>
-Scales a  <var>beat</var> value by a metronome <var>tempo</var> value: <var>beats</var>*(60/<var>tempo</var>)
+<p>Scales a  <var>beat</var> value by a metronome <var>tempo</var> value: <var>beats</var>*(60/<var>tempo</var>)
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -958,8 +959,8 @@ where <var>gen</var> is the random function to use and
 
 <p> Returns the interpolated y value of <var>x</var> in a series of
 <var>x1 y1 ...</var> coordinate pairs or envelope list of the same.
-If the coodinates are specified as a list then an optional
-</var>base</var> can control the type of interpolation (linear or
+If the coordinates are specified as a list then an optional
+<var>base</var> can control the type of interpolation (linear or
 exponential) used. See <a href="#rescale"><code>rescale</code></a> for
 more information.  </p>
 
@@ -1185,7 +1186,7 @@ Like <a href="#shuffle"><code>shuffle</code></a> except that <var>list</var> is 
 <blockquote>
 <p>
 
-Returns a random lying between the values of <var>x</var> in the <var>low</var> and <var>high</var> envelopes. If <var>low</var> or <var>high</var> are constant for any <var>x</var> they may be numbers rather thane envelopes. <var>Gen</var> is an optional random function that will be applied to <var>args...</var> to generate the random number between <var>low</var> and <var>high</var>.
+Returns a random lying between the values of <var>x</var> in the <var>low</var> and <var>high</var> envelopes. If <var>low</var> or <var>high</var> are constant for any <var>x</var> they may be numbers rather than envelopes. <var>Gen</var> is an optional random function that will be applied to <var>args...</var> to generate the random number between <var>low</var> and <var>high</var>.
 
 </p>
 </blockquote>
@@ -1512,7 +1513,7 @@ Each item can be an item, sub-pattern, or list:
   <p><code>{<var>item</var> [<var>weight 1</var>] [<var>min 1</var>] [<var>max #f</var>]}</code></p>
 </blockquote>
 <p>
-where <var>item</var> is the thing to generate, <var>weight</var> is its weight in the distribution relative to the other items in the pattern, <var>min</var> is the minimum number of times that <var>item</var> must be directly selelected before another item can be considered, and <var>max</var> is the maximum number of times that <var>item</var> can be directly selected before another item must be selected.
+where <var>item</var> is the thing to generate, <var>weight</var> is its weight in the distribution relative to the other items in the pattern, <var>min</var> is the minimum number of times that <var>item</var> must be directly selected before another item can be considered, and <var>max</var> is the maximum number of times that <var>item</var> can be directly selected before another item must be selected.
 </p>
 </blockquote>
 
@@ -1989,7 +1990,7 @@ suppressed.
 
 If <var>quant</var> is a number between 0.0 and 1.0 then key values
 are quantized to that fractional cent value, e.g. <var>quant</var> .5
-returns key numbers quantized to the nearest quartertone and
+returns key numbers quantized to the nearest quarter-tone and
 <var>quant</var> 1 returns key numbers rounded to the nearest integer.
 
 If <var>unique</var> is true then no duplicate key numbers will be returned.
@@ -2119,7 +2120,7 @@ or as (replacement) values?</li>
 
 </ol>
 
-<p> These three critera produce 8 possible "modes" that identify the
+<p> These three criteria produce 8 possible "modes" that identify the
 following rescaling or filtering operations:</p>
 
 <table cellspacing="5">
@@ -3019,7 +3020,7 @@ Causes the process to wait <var>time</var> seconds before the next iteration. To
 <table class="entry" id="elapsed">
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">elapsed</span> ()
+      <span class="funcname">elapsed</span> ([<var class="opt">scoretime?</var> <var class="optval">#f</var>])
     </td>
     <td class="label">Function</td>
   </tr>
@@ -3027,32 +3028,34 @@ Causes the process to wait <var>time</var> seconds before the next iteration. To
 </table>
 <blockquote>
 <p>
-Returns the elapsed time since the process was first sprouted.
+Returns the amount of time since the process was first sprouted, or the true (absolute) score time if the optional <var>scoretime</var> argument is <cod>#t</code>.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 </blockquote>
 </blockquote>
 
-<h2 id="send">Sending Data To Ports</h2>
+<h2 id="audio">Sending Audio Data</h2>
 
-<p>Every port implements a set of <var>methods</var> that you can send
-data to.  This routing is accomplished using send.</p>
+<p>Every audio target implements a set of <var>methods</var> that you
+can send data to.  This routing is accomplished by using <a
+ href="send">send</a> or by calling the underlying message
+function directly.</p>
 
 <!-- DEFINITION -->
-<table class="entry">
+<table class="entry" id="send">
 
   <tr class="entry">
     <td class="formals">
       <span class="commandname">send</span>
-      <span class="string">"<var class="arg">port</var>:<var class="arg">method</var>"</span>, <var class="rest">args...</var>
+      <span class="string">"<var class="arg">target</var>:<var class="arg">method</var>"</span>, <var class="rest">data...</var>
     </td>
     <td class="label">SAL</td>
   </tr>
   <tr class="entry">
     <td class="formals">
       (<span class="funcname">send</span>
-      <span class="string">"<var class="arg">port</var>:<var class="arg">method</var>"</span> <var class="rest">args...</var>)
+      <span class="string">"<var class="arg">target</var>:<var class="arg">method</var>"</span> <var class="rest">data...</var>)
     </td>
     <td class="label">Scheme Macro</td>
   </tr>
@@ -3061,10 +3064,20 @@ data to.  This routing is accomplished using send.</p>
 <blockquote>
 <p>
 The first argument to <code>send</code> is its <var>message</var>, a
-literal string or symbol in the format <var>port</var><span
+literal string or symbol in the format <var>target</var><span
 style="font-weight: bold;">:</span><var>method</var> that identifies a
-specific port and method to receive the <var>args</var> you pass to it.
+specific audio resource and a method to receive the <var>data</var> you pass to it.
 </p>
+
+<p> Note that each send message is implemented by a Scheme function
+with the same name that can be called directly to achieve the same
+effect. The difference between using a send message and calling the
+underlying message function is (1) for some messages the send macro can
+perform argument testing at eval time rather
+than run time and (2) using send makes it very clear that the code is
+sending audio information. </p>
+
+
 </blockquote>
 <!-- END DEFINITION -->
 
@@ -3092,15 +3105,14 @@ specific port and method to receive the <var>args</var> you pass to it.
 </div>
 -->
 
+<h2 id="midi-out">Midi Out</h2>
 
-<h3 id="midi-port">Midi Port Methods</h3>
-
-<p>Before sending anything to the Midi Port first make sure you have
-an output connection established with the <span
-class="menuitem">Ports&gt;Midi Out&gt;</span> Menu in the Console
-window. You can test that the connection actually works by using the
+<p>Before sending anything to the Midi Out port select use the <span
+class="menuitem">Audio&gt;Midi Out&gt;</span> menu to select an output device. You can test that the connection actually works by using the
 <span class="menuitem">Ports&gt;Midi Out&gt;Test</span> to send a
 random burst of messages to the output device.</p>
+
+<h3>Midi Out Messages</h3>
 
 <!-- DEFINITION -->
 <table id="mp:midi" class="entry">
@@ -3272,80 +3284,17 @@ Sets the tuning resolution of the Midi Out port to <var>div</var> steps per semi
 <!-- END DEFINITION -->
 
 
-<h4>Midi Sequence Messages</h4>
+<h3 id="midi_options">Midi Out File Options</h3>
+
+<p>Midi files can be written but no midifile options are implemented.</p>
+
+
+<h2 id="midi-in">Midi In</h2>
+
+<p><i> Midi In methods have not been re-implemented yet</i></p>
 
 <!-- DEFINITION -->
-<table id="mp:playseq" class="entry">
-  <tr class="entry">
-    <td class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:playseq"</span> </td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-
-<blockquote>
-<p>
-Plays the current contents of the Midi Port's score (midi sequence).
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="mp:saveseq" class="entry">
-  <tr class="entry">
-    <td class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:saveseq"</span> </td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-
-<blockquote>
-<p>
-Saves the current contents of the Midi Port's score to a Midi file.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="mp:copyseq" class="entry">
-  <tr class="entry">
-    <td class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:copyseq"</span> </td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-
-<blockquote>
-<p>
-Copies the current contents of the Midi Port's score to a new track under the <span class="menuitem">Ports&gt;Midi Seq&gt;Tracks&gt;</span> menu.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="mp:clearseq" class="entry">
-  <tr class="entry">
-    <td class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:clearseq"</span> </td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-
-<blockquote>
-<p>
-Deletes the contents of the Midi Port's score.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-
-<h4>Midi Input Messages</h4>
-
-<!-- DEFINITION -->
+<!--
 <table id="mp:inhook" class="entry">
   <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:inhook"</span>, <var class="arg">function</var></td>
     <td class="label">SAL</td>
@@ -3358,10 +3307,11 @@ Deletes the contents of the Midi Port's score.
 Sets <var>function</var> to receive <a href="midimessage">Midi Messages</a> that arrive at the Midi In port. The function is passed a single argument, the Midi Message received. The hook should call <a href="#mm:free"><code>mm:free</code></a> on any message that it does not send to the output port.
 </p>
 </blockquote>
+-->
 <!-- END DEFINITION -->
 
-
 <!-- DEFINITION -->
+<!--
 <table id="mp:inchans" class="entry">
   <tr class="entry">
     <td class="formals"><span class="commandname">send</span>
@@ -3373,12 +3323,14 @@ Sets <var>function</var> to receive <a href="midimessage">Midi Messages</a> that
 
 <blockquote>
 <p>
-Enables MIDI input on the specifed channels. Channel values are integers between 0 and 15. Specify a single <code>#t</code> value to enable all channels and <code>#f</code> to disable all channels.
+Enables MIDI input on the specified channels. Channel values are integers between 0 and 15. Specify a single <code>#t</code> value to enable all channels and <code>#f</code> to disable all channels.
 </p>
 </blockquote>
+-->
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<!-- 
 <table id="mp:intypes" class="entry">
   <tr class="entry">
     <td class="formals"><span class="commandname">send</span>
@@ -3390,25 +3342,74 @@ Enables MIDI input on the specifed channels. Channel values are integers between
 
 <blockquote>
 <p>
-Enables MIDI input for the specifed MIDI message types. Type values are integers between 8 and 15 (<code>mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend</code>). Specify a single <code>#t</code> to enable all message types and <code>#f</code> to disable all channels.
+Enables MIDI input for the specified MIDI message types. Type values are integers between 8 and 15 (<code>mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend</code>). Specify a single <code>#t</code> to enable all message types and <code>#f</code> to disable all channels.
 </p>
 </blockquote>
+-->
 <!-- END DEFINITION -->
 
-<h3 id="csound-port">Csound Port Methods</h3>
 
-<p> The Csound port is avaiable in the Ports menu if Grace has been
-built with Csound support enabled and the Csound5 libraries are
-installed on your machine.  </p>
+<h2 id="sndlib">SndLib</h2>
+
+<p>If CM has been built with SndLib/S7 then SndLib audio instruments
+are available.  Use <span
+class="menuitem">Audio&gt;SndLib&gt;Instruments...</span> to load
+instruments before working with them. </p>
+
+<h3>SndLib Messages</h3>
+
+<p>To send data to a SndLib instrument specify the instrument name as
+a <a href="#send">send</a> message or call the instrument function directly. The following
+calls are all equivalent:</p>
+
+<div class="float">
+  <pre class="code">
+<span class="command">send</span> <span class="string">"wave"</span>, 0, 1, 440, .1
+(wave 0 1 440 .1)
+(send <span class="string">"wave"</span> 0 1 440 .1)
+</pre>
+</div>
+
+<h3 id="sndlib_options">SndLib Audio File Options</h3>
+<p>
+Any CLM <a href="http://ccrma.stanford.edu/software/snd/snd/sndscm.html#withsound">with-sound</a> option can be passed as an argument to <a href="#sprout">sprout</a> when you generate an audio file. The most common options are listed here and are also available in the <span class="menuitem">Audio&gt;SndLib&gt;</span> menu.
+</p>
+
+<dl>
+  <dt><code><span class="keyword">srate:</span></code></dt>
+  <dd>The sampling rate to use.</dd>
+  <dt><code><span class="keyword">channels:</span></code></dt>
+  <dd>The number of audio channels to write.</dd>
+  <dt><code><span class="keyword">play:</span></code></dt>
+  <dd>Play the audio file after writing it.</dd>
+</dl>  
 
 
+<h2 id="csound">Csound</h2>
+
+<p>Csound score files can be written and played in all versions of CM. Use the <span
+class="menuitem">Audio&gt;Csound&gt;Settings...</span> dialog to
+configure the Csound environment, or pass the options directly to the
+scorefile when you generate it with <a href="#sprout">sprout</a>.
+</p>
+
+<h3 id="csound_messages">Csound Messages</h3>
+
+<p> To send data to Csound use the messages listed below or call the
+ underlying message function directly. For example, the following
+ calls are all equivalent:</p>
+
+<div class="float">
+  <pre class="code">
+<span class="command">send</span> <span class="string">"cs:i"</span>, 1, 0, 1, 440, 1000
+(cs:i 1 0 1 440 1000)
+(send <span class="string">"cs:i"</span> 1 0 1 440 1000)
+</pre>
+</div>
 
 <!-- DEFINITION -->
 <table id="cs:i" class="entry">
   <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:i"</span>, <var class="arg">ins</var>, <var class="arg">start</var>, <var class="arg">dur</var> <var class="rest">...</var></td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:i"</span>, <var class="arg">list</var></td>
     <td class="label">SAL</td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3416,7 +3417,7 @@ installed on your machine.  </p>
 
 <blockquote>
 <p>
-Sends instrument data to the Csound port.  The first value should be the instrument's number followed by the rest of its pfield values. For real-time audio the <var>start</var> value (pfield 2) should be 0. The <span class="string">"cs:i"</span> message also accepts a single <var>list</var> of values to be specified, in which case the <var>list</var> should contain the pfield data to send to Csound. The <span class="string">"cs:i"</span> message is also implemented as a Scheme function of the same name that can be called directly. For example, the following Scheme expressions are equivalent:
+Sends instrument data to Csound.  The first value should be the instrument's number followed by the rest of its pfield values.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -3424,9 +3425,6 @@ Sends instrument data to the Csound port.  The first value should be the instrum
 <!-- DEFINITION -->
 <table id="cs:f" class="entry">
   <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:f"</span>, <var class="arg">num</var> <var class="rest">...</var></td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:f"</span>, <var class="arg">list</var></td>
     <td class="label">SAL</td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3441,8 +3439,8 @@ Sends function table data to Csound. Similar to <span class="string">"cs:i"</spa
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="cs:clear" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:clear"</span></td>
+<table id="cs:data" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:data"</span>, <var class="arg">list</var></td>
     <td class="label">SAL</td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -3450,82 +3448,43 @@ Sends function table data to Csound. Similar to <span class="string">"cs:i"</spa
 <blockquote>
 <p>
 
-Clears the port's score buffer of any contents.
+Sends a <var>list</var> of data to Csound. The first element in the list must be the symbol <code>i</code> or <code>f</code>. Similar to <span class="string">"cs:i"</span> and <span class="string">"cs:f"</span> in all other respects.
 
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
-<!-- DEFINITION -->
-<table class="entry" id="cs:record">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:record"</span>, <var class="arg">status</var></td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-If <var>status</var> is true or a score start time for recording then the port is armed in "record mode" and subsequent data sent out the open port in real time are copied to the score using internal time stamps to produce time stamps in the score. If <var>status</var> false then recording is stopped. This message only has effect if Score Capture is off.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
 
-<!-- DEFINITION -->
-<table class="entry" id="cs:trace">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:trace"</span>, <var class="arg">status</var></td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-If <var>status</var> is true then data sent to the port is echoed to the terminal.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
+<h3 id="csound_options">Csound Scorefile Options</h3>
 
+<p> The following scorefile options are available in the <span
+class="menuitem">Audio&gt;Csound&gt;</span> menu and can be passed to
+Csound scores when you generate them using <a
+ href="#sprout">sprout</a> .  </p>
 
-<!-- DEFINITION -->
-<table class="entry" id="cs:print">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:print"</span>, <var class="opt">start = </var> <var class="optval"> 0.0</var> , <var class="opt">end = </var> <var class="optval"> #f</var></td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Prints score statements between <var>start</var> and <var>end</var> times to the console.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
+<dl>
 
+  <dt><code><span class="keyword">play:</span></code></dt>
 
-<!-- DEFINITION -->
-<table class="entry" id="cs:play">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"cs:play"</span>, <var class="opt">start = </var> <var class="optval"> 0.0</var>, <var class="opt">end = </var> <var class="optval"> #f</var>
-, <var class="opt">shift = </var> <var class="optval"> 0</var></td>
-    <td class="label">SAL</td>
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-<blockquote>
-<p>
-Sends score statements between <var>start</var> and <var>end</var> out the open Csound port with start times in playback shifted by <var>shift</var> amount.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
+  <dd>Send the scorefile to Csound after it is written.</dd>
 
+  <dt><code><span class="keyword">orchestra:</span></code></dt>
 
-<p>The file "grace.orc" in the Grace resource directory can be used to
-experiment with the Csound Port. The file contains two sample
-instruments: <code>i1</code> is a karplus-strong pluck sound and
-<code>i2</code> is a sinewave. Both instruments take five identical
-parameters: <var>ins beg dur key amp</var> where <var>ins</var> is the
-instrument number (1 or 2), <var>beg</var> is the begin time of the
-sound in seconds (normally 0 for real-time audio), <var>dur</var> is
-the sound duration in seconds, <var>key</var> is the note's frequency
-specified as a MIDI key number, and <var>amp</var> is the note's
-amplitude (0-10000).  </p>
+  <dd>Use this file as the Csound .orc file when the scorefile is played.</dd>
+
+  <dt><code><span class="keyword">header:</span></code></dt>
+
+  <dd>Include this string as the header of the scorefile.</dd>
+
+  <dt><code><span class="keyword">write:</span></code></dt>
+
+  <dd>Specify #f to put data in an internal score without writing it
+  as a file. This lets you build a score incrementally, over
+  consecutive sprouts, and to export score data to an editor window
+  or the clipboard.</dd>
+
+</dl>  
+
 
 <!--
 <h3 id="plotter-port">Plotter Port Methods</h3>
@@ -3534,31 +3493,73 @@ amplitude (0-10000).  </p>
 
 <h2 id="scheduler">The Scheduler</h2>
 
-<p>The scheduler is a JUCE thread that executes on a 1 millisecond
-tick. There are just a few entry points:</p>
+<!-- p>The scheduler is a JUCE thread that executes on a 1 millisecond
+tick for real time scheduling and as fast as possible for file-based sheduling.</p -->
+
+<p>The main entry point into the scheduler is called <a
+ href="sprout">sprout</a>.  Sprout schedules algorithms to run in real
+time, or faster than real time if a file (string) is specified as an
+argument to the function.
+</p>
 
 <table id="sprout" class="entry">
   <tr class="entry">
-    <td class="formals"> <span class="commandname">sprout</span> <var class="optkey">process</var>, <var class="optkey">ahead</var> <var class="optval"> = 0</var>, <var class="optkey">id</var> <var class="optval"> = #f</var></td>
+    <td class="formals"> <span class="commandname">sprout</span> <var class="arg">process</var>, [<var class="opt">ahead</var> <var class="optval">0</var>], [<var class="opt">id</var> <var class="optval">#f</var>]</td>
     <td class="label">SAL</td>
   </tr>
-   <tr class="entry">
-    <td class="formals"><span class="funcname">sprout</span> (<var class="optkey">process</var> <var class="optkey">ahead</var> <var class="optval"> = 0</var> <var class="optkey">id</var> <var class="optval"> = #f</var>)</td>
-    <td class="label">Function</td>
+
+  <tr class="entry">
+    <td class="formals"> <span class="commandname">sprout</span> <var class="optkey">process</var>, [<var class="opt">ahead</var> <var class="optval">0</var>], <var class="arg">file</var>, <var class="rest">options... </var></td>
+    <td class="label">SAL</td>
   </tr>
+
+
   <tr><td class="retval" colspan="2">&rarr; void</td> </tr>
 </table>
 
 <blockquote>
+
+
+<h5> Real Time</h5>
+
 <p>Adds <a href="#processes"><var>process</var></a> to the scheduler
-starting at <var>ahead</var> time from now. If <var>id</var> is provided it tags the process in the scheduling queue;
-tagged processes can then be selectively removed from the scheduler
-using <a href="#stop"><code>stop</code></a>. The <var>process</var>
-parameter can be a single process or list of processes. If it is a
-list then <var>ahead</var> and <var>id</var> can also be lists and
-their values are paired with each process in left-to-right order. See
-<a href="#processes">Musical Processes</a> for more information.
+starting at <var>ahead</var> time from now. If <var>id</var> is
+provided it tags the process in the scheduling queue; tagged processes
+can then be selectively removed from the scheduler using <a
+ href="#stop"><code>stop</code></a>. The <var>process</var> parameter
+can be a single process or list of processes. If it is a list then
+<var>ahead</var> and <var>id</var> can also be lists and their values
+are paired with each process in left-to-right order. See <a
+ href="#processes">Musical Processes</a> for more information.  </p>
+
+
+<h5> File Output</h5>
+
+<p>Adds <a href="#processes"><var>process</var></a> to the scheduler
+starting at <var>ahead</var> time from now. <var>File</var> is the file to write the data to, and must include a supported file extension. CM currently supports the following file types:
 </p>
+
+<ul>
+  <li><code><span class="string">".mid"</span></code> midi file.</li>
+  <li><code><span class="string">".wav"</span></code> audio file using SndLib.</li>
+  <li><code><span class="string">".aiff"</span></code> audio file using SndLib.</li>
+  <li><code><span class="string">".snd"</span></code> audio file using SndLib.</li>
+  <li><code><span class="string">".sco"</span></code> Csound score file.</li>
+</ul>
+
+<p><var>Options...</var> is zero or more keyword options suitable for the audio target selected by <var>file</var>:</p>
+
+<ul>
+  <li><a href="#midi_options">Midi options</a></li>
+  <li><a href="#sndlib_options">SndLib options</a></li>
+  <li><a href="#csound_options">Csound options</a></li>
+</ul>
+
+<p>Note that when an algorithm sends data to a file it should probably
+use the true score time as the time stamp fror the data, see <a
+ href="#elapsed">elapsed</a> for more information about this.</p>
+
+
 </blockquote>
 
 <table class="entry" id="stop">
