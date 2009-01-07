@@ -78,7 +78,6 @@ void cm_sched_continue();
 void cm_sched_stop(int id);
 void cm_sched_hush();
 bool cm_sched_busy_p();
-void cm_sched_set_inhook(SCHEMEPROC proc);
 bool cm_sched_score_mode_p();
 void cm_sched_set_score_mode(int val);
 double cm_sched_score_time();
@@ -109,7 +108,6 @@ void mp_set_output_file(char* file);
 
 void mp_send_note(double time, double dur, float key, float vel, float chan);
 void mp_send_data(int type, double time, float chan, float data1, float data2);
-void mp_send_message(MidiMessage *m);
 
 void mp_play_seq();
 void mp_save_seq();
@@ -120,8 +118,8 @@ void mp_clear_seq();
 void mp_set_tuning(int div);
 void mp_set_channel_mask(int m);
 void mp_set_message_mask(int m);
-void mp_set_input_hook( SCHEMEPROC proc );
-void mp_clear_input_hook( );
+void mp_set_midi_input_hook(SCHEMEPROC proc);
+void mp_clear_midi_input_hook();
 
 void cs_init_score(char* args);
 void cs_send_score(int typ, int inst, double time, char* pars);

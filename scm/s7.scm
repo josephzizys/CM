@@ -155,7 +155,24 @@
 		     -2)
 		    )))))
 
+(define (error-protected-inhook $hook$ )
+  (lambda ($op$ $ch$ $d1$ $d2$)
+    (catch #t
+	   (lambda () ($hook$ $op$ $ch$ $d1$ $d2$) 0)
+	   (lambda $errarg$
+	     ;; this handler gets called if anything is thrown...
+	     ;; try to ascertain if its an s7 error
+	     (if (and (= (length $errarg$) 2)
+		      (symbol? (car $errarg$))
+		      (pair? (cadr $errarg$))
+		      (string? (car (cadr $errarg$)))
+		      )
+		 (print-error
+		  (apply format #f (cadr $errarg$))))
+	     -1))))
+
 (define throw error)
+
 
 
   

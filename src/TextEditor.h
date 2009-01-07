@@ -82,6 +82,7 @@ class TextBuffer : public TextEditor,
 
   // Edit Menu Support
   void paste();
+  void cut();
   void selectAll();
   // Options Menu Support
   int getFontSize();

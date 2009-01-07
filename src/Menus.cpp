@@ -53,6 +53,10 @@ const PopupMenu CommandMenus::getAudioMenu()
   PopupMenu outmenu;
   PopupMenu inmenu;
   PopupMenu tunings;
+  PopupMenu chfilt;
+  PopupMenu opfilt;
+
+  // Midi Out
   StringArray outdevs = MidiOutput::getDevices();
   int size = jlimit(0,CommandMenus::NumMidiOutOpen-1,
 		    outdevs.size());
@@ -71,7 +75,33 @@ const PopupMenu CommandMenus::getAudioMenu()
   outmenu.addSubMenu(T("Tuning"), tunings);
   outmenu.addCommandItem(comm, CommandIDs::MidiOutInstruments);  
   menu.addSubMenu(T("Midi Out"), outmenu);
- 
+  // Midi In
+  StringArray indevs = MidiInput::getDevices();
+  size = jlimit(0,CommandMenus::NumMidiInOpen-1, indevs.size());
+  if (size>0)
+    for (int i=0; i<size; i++)
+      inmenu.addCommandItem(comm, CommandIDs::MidiInOpen + i);
+  else
+    inmenu.addItem(CommandIDs::MidiInOpen, T("<no devices>"), false);
+  inmenu.addSeparator();
+  // channel filter (0-15, 16==All)
+  chfilt.addCommandItem(comm, CommandIDs::MidiInChannelFilter +
+			NumMidiInChannelFilter);
+  chfilt.addSeparator();
+  for (int i=0; i<NumMidiInChannelFilter; i++)
+    chfilt.addCommandItem(comm, CommandIDs::MidiInChannelFilter+i);
+  inmenu.addSubMenu(T("Receive Channels"), chfilt);
+  // opcode filter (0-6, 7=All)
+  opfilt.addCommandItem(comm, CommandIDs::MidiInOpcodeFilter +
+			NumMidiInOpcodeFilter);
+  opfilt.addSeparator();
+  for (int i=0; i<NumMidiInOpcodeFilter; i++)
+    opfilt.addCommandItem(comm, CommandIDs::MidiInOpcodeFilter+i);
+  inmenu.addSubMenu(T("Receive Messages"), opfilt);
+  inmenu.addSeparator();
+  inmenu.addCommandItem(comm, CommandIDs::MidiInTrace);
+  menu.addSubMenu(T("Midi In"), inmenu);
+
 #ifdef SNDLIB
   PopupMenu sndlib,chans,srate;
   for (int i=0;i<NumSndLibSrate;i++)

@@ -9,25 +9,6 @@
 ;; Loading
 ;;
 
-(include "chicken.scm")
-(include "chicken-foreign.scm")
-(include "utilities.scm")
-(include "loop.scm")
-(include "patterns.scm")
-(include "toolbox.scm")
-(include "spectral.scm")
-(include "sal.scm")
-(include "ports.scm")
-(include "processes.scm")
-
-;; HORRIBLE HACK allows these define-syntax items to be exported for
-;; runtime
-
-(define ash arithmetic-shift)
-(define logand bitwise-and)
-(define lognot bitwise-not)
-(define logxor bitwise-xor)
-(define logior bitwise-ior)
 
 (declare
  (unit cm)
@@ -78,11 +59,12 @@
   sal sal:print sal:chdir sal:load sal:open load-sal-file !=
 
   ;; ports
-  ports send 
+  ports send expand-send
   mp:open mp:midi mp:off mp:on mp:touch mp:ctrl mp:prog 
   mp:press mp:bend mp:tuning 
   mp:playseq mp:saveseq mp:copyseq mp:plotseq mp:clearseq mp:recordseq
-  mp:mm mp:inhook mp:inchans mp:intypes
+  mm:off mm:on mm:touch mm:ctrl mm:prog mm:press mm:bend
+  mp:inhook mp:inchans mp:inops
   cs:i cs:f cs:open-output-file
 
   ;; processes
@@ -90,6 +72,22 @@
   define-process define-send-message process now sprout pause paused? continue stop hush
 
   ))
+
+
+(include "chicken.scm")
+(include "chicken-foreign.scm")
+(include "utilities.scm")
+(include "loop.scm")
+(include "patterns.scm")
+(include "toolbox.scm")
+(include "spectral.scm")
+(include "sal.scm")
+(include "ports.scm")
+(include "processes.scm")
+
+;; HORRIBLE HACK allows these define-syntax items to be exported for
+;; runtime
+
 
 (return-to-host)
 

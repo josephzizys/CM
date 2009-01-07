@@ -966,460 +966,6 @@ void MidiOutPort::testOutput ()
   }
 }
 
-////////////////////////////////////////////////////////////////////////////
-// MIDI Input port
-////////////////////////////////////////////////////////////////////////////
-
-MidiInPort::MidiInPort()
-  : devid (-1),
-    device (NULL),
-    runmode (STOPPED),
-    trace (false),
-    channelMask(0),
-    opcodeMask(0),
-    console (NULL)
-{
-
-  /***  receiveComponent = new MidiReceiveComponent();
-   ***/
-  String name=String::empty;
-#ifdef GRACE
-  Preferences* prefs=Preferences::getInstance();
-  name=prefs->getStringProp(T("MidiInDevice"));
-  /*** channelMask=prefs->getMidiInChannelMask();
-  opcodeMask=prefs->getMidiInMessageMask();
-  ***/
-#endif
-  if (name != String::empty)
-    open(name);
-}
-
-MidiInPort::~MidiInPort() 
-{
-  if (device != NULL) 
-    {
-      if ( isActive() )
-	stop();
-      delete device;
-    }
-}
-
-bool MidiInPort::open(int id)
-{
-  // dont do anything if opening same port
-  if (id==devid)
-    return true;
-  else if (isActive())
-    {
-      Console::getInstance()->
-	printError(T(">>> Error: Midi input device ") +
-		   String(id) + T(" is currently active.\n"));
-      return false;
-    }
-  if (device != NULL)
-    {
-      stop();
-      delete device;
-      devid=-1;
-    }
-  device = MidiInput::openDevice(id, this);
-  if (device == NULL)
-    {
-      Console::getInstance()->
-	printError(T(">>> Error: Failed to open midi input device ")
-		   + String(id) + T(".\n"));
-      return false;
-    }
-  else
-    {
-      devid=id;
-      // update Preferences with current input port's name;
-#ifdef GRACE
-      StringArray devices = MidiInput::getDevices();
-      Preferences* prefs=Preferences::getInstance();
-      prefs->setStringProp(T("MidiInDevice"), devices[id]);
-#endif
-      return true;
-    }
-}
-
-bool MidiInPort::open(String name) 
-{
-  StringArray devices = MidiInput::getDevices ();
-  int id=-1;
-  for (int i=0;i<devices.size();i++)
-    if (devices[i] == name)
-      {
-	id=i;
-	break;
-      }
-  if (id == -1)
-    {
-      Console::getInstance()->
-	printWarning(T("Warning: Midi input device ") + 
-		     name + T(" does not exist.\n"));
-      return false;
-    }
-  else
-    return open(id);
-}
-
-
-int MidiInPort::performCommand(CommandID id, int data, String text)
-{
-  // lower eight bits of id encode command information
-  CommandID cmd = CommandIDs::getCommand(id);
-  int arg = CommandIDs::getCommandData(id);  
-  int res=0;
-
-  switch (cmd)
-    {
-    case CommandIDs::MidiInOpen :
-      open(arg);
-      break;
-    case CommandIDs::MidiInTest :
-      if (isActive(MidiInPort::TESTING))
-        stopTestInput();
-      else 
-        startTestInput();
-      break;
-    case CommandIDs::MidiInRecord :
-      if (isActive(RECORDING))
-        stopRecordInput();
-      else 
-        startRecordInput();
-      break;
-    case CommandIDs::MidiInChannelMask :
-      setChannelMask(data);
-      break;
-    case CommandIDs::MidiInMessageMask :
-      setMessageMask(data);
-      break;
-    case CommandIDs::MidiInConfigure:
-      /*** showMidiInDialog(); ***/
-      break;
-    case CommandIDs::MidiInHook :
-      if ( isActive(SCHEMEHOOK) )
-        stopSchemeInput();
-      break;
-    default:
-      break;
-    }
-}
-
-bool MidiInPort::isMessageActive(MidiMessage msg)
-{
-  // return true is message is allowed as input
-  int data=msg.getRawData()[0];  
-  int type=(data & 0xF0)>>4;  // msg opcode
-  int chan=(data & 0xF);      // msg channel
-  
-  //std::cout << "type=" << type << "data=" << data << "\n";
-
-  if ( isMessageActive(type) )
-    if ( isChannelActive(chan) )
-      return true;
-    else
-      return false;
-  else
-    return false;
-}
-
-// Message and Channel Masking
-
-void MidiInPort::setChannelMask(int mask)
-{
-  channelMask=mask;
-  /*** GracePreferences* prefs=GracePreferences::getInstance();
-  prefs->setMidiInChannelMask(channelMask);
-  ***/
-}
-
-void MidiInPort::setMessageMask(int mask)
-{
-  opcodeMask=mask;
-  /*** GracePreferences* prefs=GracePreferences::getInstance();
-  prefs->setMidiInChannelMask(opcodeMask);
-  ***/
-}
-
-bool MidiInPort::isMessageActive(int opcode)
-{
-  if ((opcode >= MidiFlags::Off) && (opcode<= MidiFlags::Bend))
-    {
-      int mask=1<<(opcode-MidiFlags::Off);
-      //std::cout << "opcode=" << opcode << " shift=" << (opcode-MidiFlags::Off) << " bit=" << mask << " opcodeMask=" << opcodeMask << "\n";
-      return ((opcodeMask & mask) == mask);
-    }
-  else
-    return false;
-}
-
-bool MidiInPort::isChannelActive(int chan)
-{
-  int mask=1<<(chan & 0xF);
-  return ((channelMask & mask) == mask);
-}
-
-void MidiInPort::setChannelActive(int chan, bool active)
-{
-  int mask=1<<(chan & 0xF);
-  if (active)
-    channelMask |= mask;
-  else
-    channelMask &= ~mask;
-  /***
-  GracePreferences* prefs=GracePreferences::getInstance();
-  prefs->setMidiInChannelMask(channelMask);
-  ***/
-}
-
-void MidiInPort::setMessageActive(int op, bool active)
-{
-  // convert opcode into left-shifted mask
-  int mask=1<<op-MidiFlags::Off;
-  if (active)
-    opcodeMask |= mask;
-  else
-    opcodeMask &= ~mask;
-  /***
-  GracePreferences* prefs=GracePreferences::getInstance();
-  prefs->setMidiInMessageMask(opcodeMask);
-  ***/
-}
-
-bool MidiInPort::isOpen(int id)
-{
-  if (device==NULL)
-    return false;
-  else if (id == -1) // asking if ANY device is open
-    return true;
-  else
-    return (id == devid); // asking if specific dev is open
-}
-
-void MidiInPort::close(int id)
-{
-  if (device!=NULL)
-    {
-      delete device;
-      device=NULL;
-      devid=-1;
-    }
-}
-
-bool MidiInPort::start(int mode) {
-  if ( !isOpen() )
-    {
-      /***    console->printError(T(">>> Error: Midi input port is not open.\n"));
-       ***/
-    return false;
-    }
-  else if ( isActive() )
-    {
-      /*** console->printError(T(">>> Error: Midi input port already active.\n"));
-       ***/
-      return true;
-    }
-  // NOW DO WHATEVER SETUP IS NEEDED FOR NEW RUNMODE
-  runmode=mode;
-  // start the device
-  device->start();
-  return true;
-}
-
-void MidiInPort::stop() {
-  if ( !isOpen() )
-    {
-      /*** console->printError(T(">>> Error: Midi input port is not open.\n"));
-       ***/
-      return;
-    }
-  else if ( !isActive() )
-    {
-      /*** console->printError(T(">>> Error: Midi input not active.\n"));
-       ***/
-    return;
-  }
-  // stop the device
-  device->stop();
-  // NOW DO WHATEVER CLEANUP IS NEEDED FOR CURRENT RUNMODE
-  runmode=STOPPED;
-}
-
-bool MidiInPort::isActive(int mode) {
-  if ( runmode==STOPPED )
-    return false;
-  else if ( mode == -1 ) // test if anything is active
-    return true;
-  else
-    return (runmode == mode); // test specific run mode
-}
-
-void MidiInPort::startSchemeInput() {
-  // SET UP THE SCHEME HOOK FOR CALLBACK BEFORE STARTING
-  start(SCHEMEHOOK);
-}
-
-void MidiInPort::stopSchemeInput() {
-  if ( !isActive(SCHEMEHOOK) ) {
-    return;
-  }
-  stop();
-}
-
-void MidiInPort::startTestInput() {
-  if (! start(TESTING) )
-    return;
-  trace=true;
-}
-
-void MidiInPort::stopTestInput() {
-  if ( !isActive(TESTING) ) {
-    return;
-  }
-  stop();
-  trace=false;
-}
-
-void MidiInPort::startRecordInput() {
-  if ( ! start(RECORDING) )
-    return;
-}
-
-void MidiInPort::stopRecordInput() {
-  if ( ! isActive(RECORDING) )
-    return;
-  stop();
-}
-
-void MidiInPort::setTracing(bool t) {
-
-  trace=t;
-}
-
-bool MidiInPort::isTracing() {
-  return trace;
-}
-
-void MidiInPort::handleIncomingMidiMessage(MidiInput *dev,
-					   const MidiMessage &msg) 
-{
-  if (! isMessageActive(msg) )
-    return;
-  
-  // AT THIS POINT CALL RECORDING CODE OR SCHEMEHOOK COE
-  if ( isActive(SCHEMEHOOK) )
-    {
-      Scheme::getInstance()->midiin(msg);
-    }
-
-  if ( isActive(RECORDING) )
-    {
-      
-    }
-  
-  if (trace)
-    {
-      printMidiMessageTrace(msg);
-    }
-}
-
-void MidiInPort::printMidiMessageTrace (const MidiMessage &msg)
-{
-  String info;
-  int chan=msg.getChannel();
-  if ( msg.isNoteOn() )
-    info=T("on chan: ") + String(chan-1) + T(" key: ")
-      + String(msg.getNoteNumber()) + T(" vel: ")
-      + String(msg.getVelocity());
-  else if ( msg.isNoteOff() ) 
-    info=T("off chan: ") + String(chan-1) + T(" key: ")
-      + String(msg.getNoteNumber());
-  else if ( msg.isController() )
-    info=T("ctrl chan: ") + String(chan-1) + T(" ctrl: ") 
-      + MidiMessage::getControllerName(msg.getControllerNumber())
-      + T(" value: ") + String(msg.getControllerValue());  
-  else if ( msg.isProgramChange() )
-    info=T("prog chan: ") + String(chan-1) + T(" prog: ")
-      + MidiMessage::getGMInstrumentName(msg.getProgramChangeNumber());
-  else if ( msg.isPitchWheel())
-    info=T("bend chan: ") + String(chan-1) + T(" val: ")
-      + String(msg.getPitchWheelValue());
-  else if ( msg.isAftertouch() )
-    info=T("touch chan: ") + String(chan-1) + T(" val: ")
-      + String(msg.getAfterTouchValue());
-  else if ( msg.isChannelPressure() )
-    info=T("press chan: ") + String(chan-1) + T(" val: ")
-      + String(msg.getChannelPressureValue());
-  else if ( msg.isActiveSense() )
-    info=T("sense time: ") + String(msg.getTimeStamp(), 3);
-  //String(msg.getTimeStamp(), 3) +  T(" ") +
-
-  /***  console->postAsyncMessage(CommandIDs::ConsolePrintText,
-			      info + T("\n"), 
-			      true);
-  ***/
-}
-
-void MidiInPort::handlePartialSysexMessage (MidiInput *dev,
-					    const juce::uint8 *data, 
-					    const int num, 
-					    const double time) {
-}
-
-void MidiInPort::setTrace(bool n) {
-  trace = n;
-}
-
-/***
-void MidiInPort::showMidiInDialog()
-{
-  if ( opcodeMask == MidiFlags::AllOpcodesMask )
-    {
-      receiveComponent->allMessages->setToggleState(true, true);
-    }
-  else
-    {
-      receiveComponent->allMessages->setToggleState(false, false);
-      receiveComponent->noteOff->
-	setToggleState(isMessageActive(MidiFlags::Off), false);
-      receiveComponent->noteOn->
-	setToggleState(isMessageActive(MidiFlags::On), false);
-      receiveComponent->aftertouch->
-	setToggleState(isMessageActive(MidiFlags::Touch), false);
-      receiveComponent->controlChange->
-	setToggleState(isMessageActive(MidiFlags::Ctrl), false);
-      receiveComponent->programChange->
-	setToggleState(isMessageActive(MidiFlags::Prog), false);
-      receiveComponent->channelPressure->
-	setToggleState(isMessageActive(MidiFlags::Press), false);
-      receiveComponent->pitchBend->
-	setToggleState(isMessageActive(MidiFlags::Bend), false);
-      //receiveComponent->activeSense->setToggleState(activeSense,false);
-    }
-  
-  if (channelMask == MidiFlags::AllChannelsMask)
-    {
-      receiveComponent->allChannels->setToggleState(true, true);
-    }
-  else
-    {
-      for (int c=0; c<16; c++)
-	receiveComponent->channels[c]->
-	  setToggleState(isChannelActive(c), false);
-    }
-  
-
-  DialogWindow::showModalDialog(T("Midi Receive Settings"), 
-				receiveComponent,
-				console, 
-				Colour(0xffe5e5e5),
-				true,
-				false,
-				false);
-}
-***/
 
 
 ///
@@ -1697,218 +1243,290 @@ void MidiOutPort::saveSequence(bool ask)
 
 void MidiOutPort::exportSequence()
 {
-  /***  MidiFileExportComponent* dialog=new MidiFileExportComponent();
-  String title=T("Export Sequence");
-  bool flag = DialogWindow::showModalDialog(title, dialog, NULL,
-					    Colour(0xffe5e5e5),
-					    true, false, false);
-  if (!flag)
-    {
-      delete dialog;
-      return;
-    }
-  captureSequence.updateMatchedPairs();
-  double start=dialog->frombuffer->getText().getDoubleValue();
-  double endtime=dialog->tobuffer->getText().getDoubleValue();
-  bool donote=dialog->notesbutton->getToggleState();
-  bool doctrl=dialog->controlchangebutton->getToggleState();
-  bool doprog=dialog->programchangebutton->getToggleState();
-  bool dobend=dialog->pitchbendbutton->getToggleState();
-  bool dotouch=dialog->aftertouchbutton->getToggleState();
-  bool dopress=dialog->pressurebutton->getToggleState();
-  int chans=dialog->channelmenu->getSelectedId();
-  int format=dialog->dataformatmenu->getSelectedId();
-  int index;
-  int count[6]={0,0,0,0,0,0};
-  String prefix, indent, spacer, ending;
-  String opener, closer;
-  String outstr=String::empty;
-  bool sending=false;
-  switch (format) 
-    {
-    case ExportIDs::SalData :
-      prefix=T("define variable export-%s = \n  {\n");
-      indent=T("   "); 
-      spacer=T(" ");
-      opener=T("{");
-      closer=T("}\n");
-      ending=T("  }\n");
-      break;
-    case ExportIDs::LispData :
-      prefix=T("(define midi-%s\n  '(\n");
-      indent=T("    "); 
-      spacer=T(" ");
-      opener=T("(");
-      closer=T(")\n");
-      ending=T("  ))\n");
-      break;
-    case ExportIDs::LispSend :
-      prefix=T("(begin\n");
-      indent=T("  ");
-      opener=T("(send ");
-      closer=T(")\n");
-      spacer=T(" ");
-      ending=T("  )\n");
-      sending=true;
-      break;
-    case ExportIDs::SalSend :
-      prefix=T("begin\n"); 
-      indent=T("  "); 
-      spacer=T(", ");
-      opener=T("send ");
-      closer=T("\n");
-      ending=T("end\n");
-      sending=true;
-      break;
-    }
-  StringArray outstrs;
-  if (!sending)
-    {
-      bool sal=(format==ExportIDs::SalData);
-      outstrs.add(((sal) ? T("define variable export-notes = \n  {\n")
-		   : T ("(define export-notes\n  '(\n")));
-      outstrs.add(((sal) ? T("define variable export-progs = \n  {\n")
-		   : T ("(define export-progs\n  '(\n")));
-      outstrs.add(((sal) ? T("define variable export-bends = \n  {\n")
-		   : T ("(define export-bends\n  '(\n")));
-      outstrs.add(((sal) ? T("define variable export-ctrls = \n  {\n")
-		   : T ("(define export-ctrls\n  '(\n")));
-      outstrs.add(((sal) ? T("define variable export-touch = \n  {\n")
-		   : T ("(define export-touch\n  '(\n")));
-      outstrs.add(((sal) ? T("define variable export-press = \n  {\n")
-		   : T ("(define export-press\n  '(\n")));
-    }
+}
 
-  for (int i=0; i< captureSequence.getNumEvents(); i++)
-    {
-      MidiMessageSequence::MidiEventHolder*
-	ev=captureSequence.getEventPointer(i);
-      // skip if less than start time
-      if ((start>0) && (ev->message.getTimeStamp()<start))
-	continue;
-      // stop if greater than end time
-      if ((endtime>0) && (ev->message.getTimeStamp()>endtime))
+/*=======================================================================*
+                               Midi In Port
+ *=======================================================================*/
+
+MidiInPort::MidiInPort()
+  : devid (-1),
+    device (NULL),
+    tracing (0),
+    channelMask(0),
+    opcodeMask(0)
+{
+  String name=String::empty;
+#ifdef GRACE
+  Preferences* pref=Preferences::getInstance();
+  name=pref->getStringProp(T("MidiInDevice"));
+  channelMask=pref->getIntProp(T("MidiInChannelMask"), AllChannels);
+  opcodeMask=pref->getIntProp(T("MidiInOpcodeMask"), AllOpcodes);
+#endif
+  if (name != String::empty)
+    open(name);
+}
+
+MidiInPort::~MidiInPort() 
+{
+  close();
+}
+
+bool MidiInPort::open(String name) 
+{
+  StringArray devices = MidiInput::getDevices();
+  int id=-1;
+  for (int i=0;i<devices.size();i++)
+    if (devices[i] == name)
+      {
+	id=i;
 	break;
-      int chan=ev->message.getChannel();
-      // skip if not channel message or not selected channel
-      if ((chan == 0) || ((chans<17) && (chan != chans)))
-	continue;
-      chan--;  // getChannel() is 1 based!
-      String line=String::empty;
-      String time=String::formatted(T("%.03f"),
-				    ((float)ev->message.getTimeStamp()));
-      if (donote && ev->message.isNoteOn())
-	{
-	  double dur;
-	  if (ev->noteOffObject)
-	    dur=(ev->noteOffObject->message.getTimeStamp() -
-		 ev->message.getTimeStamp());
-	  else
-	    dur=.5; // can a missing note off happen??
-	  line << indent 
-	       << opener
-	       << ((sending) ? T("\"mp:note\" ") : T(""))
-	       << time
-	       << spacer << String::formatted(T("%.03f"), (float)dur)
-	       << spacer << String(ev->message.getNoteNumber())
-	       << spacer << String(ev->message.getVelocity())
-	       << spacer << String(chan)
-	       << closer;
-	  index=0;
-	  count[index] += 1;
-	}
-      else if (doprog && ev->message.isProgramChange())
-	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:prog\" ") : T(""))
-	       << time
-	       << spacer << String(ev->message.getProgramChangeNumber())
-	       << spacer << String(chan)
-	       << closer;
-	  index=1;
-	  count[index] += 1;
-	}
-      else if (dobend && ev->message.isPitchWheel())
-	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:bend\" ") : T(""))
-	       << time
-	       << spacer << String(ev->message.getPitchWheelValue())
-	       << spacer << String(chan)
-	       << closer;
-	  index=2;
-	  count[index] += 1;
-	}
-      else if (doctrl && ev->message.isController())
-	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:ctrl\" ") : T(""))
-	       << time
-	       << spacer << String(ev->message.getControllerNumber())
-	       << spacer << String(ev->message.getControllerValue())
-	       << spacer << String(chan)
-	       << closer;
-	  index=3;
-	  count[index] += 1;
-	}
-      else if (dotouch && ev->message.isAftertouch())
-	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:touch\" ") : T(""))
-	       << time
-	       << spacer << String(ev->message.getAfterTouchValue())
-	       << spacer << String(chan)
-	       << closer;
-	  index=4;
-	  count[index] += 1;
-	}
-      else if (dopress && ev->message.isChannelPressure())
-	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:press\" ") : T(""))
-	       << spacer << time
-	       << spacer << String(ev->message.getChannelPressureValue())
-	       << spacer << String(chan)
-	       << closer;
-	  index=5;
-	  count[index] += 1;
-	}
-
-      if (sending)
-	outstr << line;
-      else
-	outstrs.set(index,outstrs[index]+line);
-    }
-
-  if (sending)
+      }
+  if (id == -1)
     {
-      outstr = prefix + outstr + ending;
+      Console::getInstance()->
+	printWarning(T("Warning: Midi input device ") + 
+		     name + T(" does not exist.\n"));
+      return false;
+    }
+  else
+    return open(id);
+}
+
+bool MidiInPort::open(int id)
+{
+  // dont do anything if opening same port
+  if (id==devid)
+    return true;
+  if (device != NULL)
+    close();
+  device = MidiInput::openDevice(id, this);
+  if (device == NULL)
+    {
+      Console::getInstance()->
+	printError(T(">>> Error: Failed to open midi input device ")
+		   + String(id) + T(".\n"));
+      return false;
     }
   else
     {
-      for (int i=0; i< 6; i++)
-	if (count[i]>0)
-	  outstr << outstrs[i] << ending;
+      devid=id;
+      device->start();
+#ifdef GRACE
+      StringArray devices = MidiInput::getDevices();
+      Preferences* pref=Preferences::getInstance();
+      pref->setStringProp(T("MidiInDevice"), devices[id]);
+#endif
+      return true;
     }
+}
 
-  if (dialog->consolebutton->getToggleState())
-    console->printMessage(outstr);
-  else if (dialog->clipboardbutton->getToggleState())
-    SystemClipboard::copyTextToClipboard(outstr);
-  else if (dialog->neweditorbutton->getToggleState() )
-      new EditorWindow(ExportIDs::getTextID(format),
-		       EditFlags::NeedSave, 
-		       String::empty, 
-		       T("Untitled"), 
-		       outstr);
+bool MidiInPort::isOpen(int id)
+{
+  if (device == NULL)
+    return false;
+  else if (id == -1) // asking if ANY output device is open
+    return true;
+  else
+    return (id == devid); // asking if specific dev is open
+}
 
+void MidiInPort::close(int id)
+{
+  if (device!=NULL)
+    {
+      device->stop();
+      delete device;
+      device=NULL;
+      devid=-1;
+    }
+}
 
-  delete dialog;
-  ***/
+//
+/// Channel Masking
+//
+
+int MidiInPort::getChannelMask()
+{
+  return channelMask;
+}
+
+void MidiInPort::setChannelMask(int mask)
+{
+  channelMask=mask;
+#ifdef GRACE
+  Preferences::getInstance()->setIntProp(T("MidiInChannelMask"),
+					 channelMask);
+#endif
+}
+
+//
+/// Channel Testing
+//
+
+bool MidiInPort::isChannelActive(int chan)
+{
+  chan=jlimit(0, 15, chan);
+  int mask=1 << chan;
+  return Flags::test(channelMask, mask);
+}
+
+void MidiInPort::setChannelActive(int chan, bool active)
+{
+  chan=jlimit(0, 15, chan);  
+  int mask=1 << chan;
+  if (active)
+    Flags::setOn(channelMask, mask);
+  else
+    Flags::setOff(channelMask, mask);
+#ifdef GRACE
+  Preferences::getInstance()->setIntProp(T("MidiInChannelMask"),
+					 channelMask);
+#endif
+}
+
+void MidiInPort::toggleChannelActive(int chan)
+{
+  chan=jlimit(0, 15, chan);
+  int mask=1 << chan;
+  Flags::toggle(channelMask, mask);
+#ifdef GRACE
+  Preferences::getInstance()->setIntProp(T("MidiInChannelMask"),
+					 channelMask);
+#endif
+}
+
+//
+/// Opcode Masking
+//
+
+int MidiInPort::getOpcodeMask()
+{
+  return opcodeMask;
+}
+
+void MidiInPort::setOpcodeMask(int mask)
+{
+  opcodeMask=mask;
+#ifdef GRACE
+  Preferences::getInstance()->setIntProp(T("MidiInOpcodeMask"),
+					 opcodeMask);
+#endif
+}
+
+//
+/// Opcode Testing
+//
+
+bool MidiInPort::isOpcodeActive(int val, bool isop)
+{
+  if (isop)
+    val=MidiNode::opcodeToIndex(val);
+  int index=jlimit(0, 6, val);
+  int mask=1 << index;
+  return Flags::test(opcodeMask, mask);
+}
+
+void MidiInPort::toggleOpcodeActive(int index)
+{
+  index=jlimit(0, 6, index);
+  int mask=1 << index;
+  Flags::toggle(opcodeMask, mask);
+#ifdef GRACE
+  Preferences::getInstance()->setIntProp(T("MidiInOpcodeMask"),
+					 opcodeMask);
+#endif
+}
+
+void MidiInPort::setOpcodeActive(int index, bool active)
+{
+  index=jlimit(0, 6, index);
+  int mask=1 << index;
+  if (active)
+    Flags::setOn(opcodeMask, mask);
+  else
+    Flags::setOff(opcodeMask, mask);
+#ifdef GRACE
+  Preferences::getInstance()->setIntProp(T("MidiInOpcodeMask"),
+					 opcodeMask);
+#endif
+}
+
+//
+/// Tracing
+//
+
+bool MidiInPort::isTracing()
+{
+  return tracing;
+}
+
+void MidiInPort::toggleTracing()
+{
+  tracing=!tracing;
+}
+
+void MidiInPort::setTracing(bool trace)
+{
+  tracing=trace;
+}
+
+//
+/// Receiving
+//
+
+bool MidiInPort::isMessageActive(const MidiMessage &msg)
+{
+  int ch=msg.getChannel(); // JUCE: channel messages are >0
+  return ((ch>0) && 
+	  isChannelActive(ch-1) &&
+	  ((msg.isNoteOn() && 
+	    isOpcodeActive(MidiNode::MM_ON, true)) ||
+	   (msg.isNoteOff() && 
+	    isOpcodeActive(MidiNode::MM_OFF, true)) ||
+	   (msg.isController() && 
+	    isOpcodeActive(MidiNode::MM_CTRL, true)) ||
+	   (msg.isProgramChange() && 
+	    isOpcodeActive(MidiNode::MM_PROG, true)) ||
+	   (msg.isPitchWheel() && 
+	    isOpcodeActive(MidiNode::MM_BEND, true)) ||
+	   (msg.isAftertouch() && 
+	    isOpcodeActive(MidiNode::MM_TOUCH, true)) ||
+	   (msg.isChannelPressure() && 
+	    isOpcodeActive(MidiNode::MM_PRESS, true))));
+}
+
+void MidiInPort::handleIncomingMidiMessage(MidiInput *dev,
+					   const MidiMessage &msg) 
+{
+  if (isMessageActive(msg))
+    {
+      //      std::cout << "handleIncomingMidiMessage()\n";
+      Scheme::getInstance()->midiin(msg);
+      if (isTracing())
+	{
+	  int op=(msg.getRawData()[0] & 0xf0)>>4;
+	  // JUCE: channel messages are >0
+	  int ch=msg.getChannel()-1;
+	  int sz=msg.getRawDataSize();
+	  int d1=msg.getRawData()[1] & 0x7f;
+	  int d2=0;
+	  if (sz>2)
+	    d2=msg.getRawData()[2] & 0x7f;
+	  String msg=MidiNode::opcodeToString(op);
+	  msg << T(" ") << String(ch)
+	      << T(" ") << String(d1)
+	      << T(" ") << String(d2)
+	      << T("\n");
+	  Console::getInstance()->printOutput(msg);
+	}
+    }
+}
+
+void MidiInPort::handlePartialSysexMessage(MidiInput *dev,
+					   const juce::uint8 *data, 
+					   const int num, 
+					   const double time)
+{
 }
 

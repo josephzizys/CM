@@ -175,14 +175,15 @@
 
 ;; input port
 
-(define (mp:inhook %hook)
-  (error "not yet implemented")
-  )
+(define (mp:inhook hook)
+  (if (procedure? hook)
+      ( ffi_mp_set_midi_input_hook (error-protected-inhook hook) )
+      ( ffi_mp_clear_midi_input_hook )))
 
 (define (mp:inchans . args)
   (let ((val 0))
     (cond ((null? args)
-	   (error "need a channel 0 to 15" ))
+	   (error "missing a channel 0 to 15" ))
 	  ((and (null? (cdr args)) (eq? (car args) #f))
 	   (set! val 0))
 	  ((and (null? (cdr args)) (eq? (car args) #t))
@@ -196,7 +197,7 @@
 		 (error "not a channel 0 to 15" (car a))))))
     (ffi_mp_set_channel_mask val)))
 
-(define (mp:intypes . args)
+(define (mp:inops . args)
   (let ((val 0))
     (cond ((null? args)
 	   (error "missing message type (mm:off to mm:bend)" ))
@@ -214,9 +215,6 @@
     (ffi_mp_set_message_mask val)
     ))
 
-(define (mp:mm ptr)
-  (error "not yet implemented")
-  )
 
 ;;
 ;; sndlib's open/close in lisp for now.
@@ -562,7 +560,7 @@
 (define-send-message "mp:copyseq" '())
 (define-send-message "mp:clearseq" '())
 (define-send-message "mp:inchans" '(#:rest args))
-(define-send-message "mp:intypes" '(#:rest args))
+(define-send-message "mp:inops" '(#:rest args))
 
 (define-send-message "cs:i" '(#:rest args))
 (define-send-message "cs:f" '(#:rest args))

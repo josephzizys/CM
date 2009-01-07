@@ -76,10 +76,6 @@ void SchemeNode::applyEvalNode()
     }
 }
 
-void SchemeNode::applyInHookNode()
-{
-}
-
 double SchemeNode::applyProcessNode(double elapsed)
 {
   //  std::cout << "before callback, elapsed=" << elapsed << "\n";
@@ -96,6 +92,58 @@ double SchemeNode::applyProcessNode(double elapsed)
   return delta;
 }
 
+void SchemeNode::applyMidiInputHookNode()
+{
+  // called on Midi message nodes if an input hook is set
+  std::cout << "applyMidiInputHookNode()\n";
+  int op=(mmess.getRawData()[0] & 0xf0)>>4;
+  int ch=mmess.getChannel()-1;
+  int d1=mmess.getRawData()[1] & 0x7f;
+  int d2=0;
+  if (mmess.getRawDataSize()>2)
+    d2=mmess.getRawData()[2] & 0x7f;
+  int res=(int)s7_integer(s7_call(s7, 
+				  schemeThread->midiinhook, 
+				  s7_cons(s7,
+					  s7_make_integer(s7, op),
+					  s7_cons(s7,					  
+						  s7_make_integer(s7, ch),
+						  s7_cons(s7,
+							  s7_make_integer(s7, d1),
+							  s7_cons(s7,
+								  s7_make_integer(s7, d2),
+								  s7_NIL(s7)))))));
+  if (res!=0)
+    {
+      schemeThread->clearMidiInputHook();
+      Console::getInstance()->printError(T(" Clearing Midi input hook.\n"));
+    }
+}
+
+bool Scheme::isMidiInputHook()
+{
+  return (midiinhook != NULL);
+}
+
+void Scheme::setMidiInputHook(SCHEMEPROC hook)
+{
+  //std::cout << "sndlib setMidiInputHook\n";
+  clearMidiInputHook();
+  midiinhook=hook;
+  s7_gc_protect(s7, midiinhook);
+}
+
+void Scheme::clearMidiInputHook()
+{
+  // hooks are set, cleared and exectued only in the scheduling thread
+  // so we dont need to lock anything.
+  if (midiinhook != NULL)
+    {
+      //std::cout << "sndlib clearMidiInputHook\n";
+      s7_gc_unprotect(s7,midiinhook);
+      midiinhook=NULL;
+    }
+}
 
 int SndLib::performCommand(int id, int data, String text)
 {
@@ -234,6 +282,8 @@ void loadCode(const char* code, int size)
 
 bool Scheme::init()
 {
+  midiinhook=NULL;
+
   /* initialize the interpreter; s7 is declared in xen.h */
   s7 = s7_init();
   if (!s7) 

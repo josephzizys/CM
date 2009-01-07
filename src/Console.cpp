@@ -374,7 +374,7 @@ void ConsoleWindow::closeButtonPressed ()
       (juce::AlertWindow::QuestionIcon,
        T("Quit"),
        T("Quit Grace? Any unsaved work will be lost."),
-       T("Quit"),
+       T("   Quit   "),
        T("Don't Quit")))
     {
       JUCEApplication::getInstance()->quit();

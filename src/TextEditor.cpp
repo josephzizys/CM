@@ -283,6 +283,19 @@ void TextBuffer::paste()
   setFlag(EditFlags::NeedsSave);
 }
 
+void TextBuffer::cut()
+{
+  if (getHighlightedRegionLength()>0)
+    {
+      copy();
+      keyPressed(KeyPress(KeyPress::deleteKey));
+    }
+  setFlag(EditFlags::NeedsSave);
+}
+
+
+
+
 /*=======================================================================*
                             Options Menu Support
  *=======================================================================*/

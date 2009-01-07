@@ -48,6 +48,36 @@ class MidiNode
   ~MidiNode();
   void process();
   void print();
+
+  static const int indexToOpcode(int index)
+  {
+    return jlimit(0, 7, index)+MM_OFF;
+  }
+    
+  static const int opcodeToIndex(int opcode)
+  {
+    return opcode-MM_OFF;
+  }
+    
+  static const String opcodeToString(int opcode, bool pretty=false)
+  {
+    switch (opcode)
+      {
+      case MM_OFF: return (pretty) ? T("Note Off") : T("off");
+      case MM_ON: return (pretty) ? T("Note On") : T("on");
+      case MM_TOUCH: return (pretty) ? T("After Touch") : T("touch");
+      case MM_CTRL: return (pretty) ? T("Control Change") : T("ctrl");
+      case MM_PROG: return (pretty) ? T("Program Change") : T("prog");
+      case MM_PRESS: return (pretty) ? T("Channel Pressure") : T("press");
+      case MM_BEND: return (pretty) ? T("Pitch Bend") : T("bend");
+      default: return T("<unknown midi opcode>");
+      }
+  }
+  static const String indexToString(int index, bool pretty=false)
+  {
+    return opcodeToString(index+MM_OFF, pretty);
+  }
+  
 };
 
 class MidiNodeComparator
@@ -282,64 +312,43 @@ class MidiOutPort : public Thread //, public AsyncUpdater
 
 class MidiInPort : public MidiInputCallback
 {
- public:
-  ConsoleWindow *console;
+ private:
+  enum {Stopped, Testing, Receiving}; // running mode
   int devid;
   MidiInput *device;
-  
-  MidiReceiveComponent *receiveComponent;
-  
-  enum {STOPPED, TESTING, SCHEMEHOOK, RECORDING}; // running mode
-  int runmode;
-  bool trace;
-  
+  bool tracing;
   int channelMask;
   int opcodeMask;
-  
-
+ public:
+  static const int AllOpcodes = 0x7F;
+  static const int AllChannels = 0xFFFF;
   MidiInPort();
   ~MidiInPort();
   bool open(int id);
   bool open(String name);
   bool isOpen(int id=-1);
   void close(int id=-1);
-  bool start(int mode);
-  void stop();
-  bool isActive(int mode=-1);
 
+  int getChannelMask();
   void setChannelMask(int mask);
-  void setMessageMask(int mask);
-  bool isMessageActive(MidiMessage msg);
   bool isChannelActive(int chan);
-  bool isMessageActive(int opcode);
-  void setChannelActive(int chan, bool val);
-  void setMessageActive(int opcode, bool val);
+  void toggleChannelActive(int chan);
+  void setChannelActive(int chan, bool active);
 
-  
-  //hook is set in SchemeThread and only passing mask and filt
-  // can use these to determine whether an INHOOK node needs to be
-  // created in Scheme Thread
-  void startSchemeInput();
-  void stopSchemeInput() ;
-  
+  int getOpcodeMask();
+  void setOpcodeMask(int mask);
+  bool isOpcodeActive(int code, bool isop=false);
+  void toggleOpcodeActive(int code);
+  void setOpcodeActive(int code, bool active);
+
   bool isTracing();
-  void setTracing(bool t);
-  void startTestInput();
-  void stopTestInput();
-  void startRecordInput() ;
-  void stopRecordInput() ;
+  void setTracing(bool trace);
+  void toggleTracing();
 
-  void isMessageWanted(int m);
+  bool isMessageActive(const MidiMessage& msg);
   void handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &msg) ;
   void handlePartialSysexMessage (MidiInput *dev, const juce::uint8 *data, 
 				  const int num, const double time);
-  void setTrace(bool n);
-  void printMidiMessageTrace (const MidiMessage &msg);
-  void showMidiInDialog();
-
-  const PopupMenu getMidiInMenu();
-  int performCommand(CommandID id, int data=0, String text=String::empty);
-
   juce_DeclareSingleton (MidiInPort, true)
 };
 

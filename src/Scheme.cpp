@@ -148,7 +148,8 @@ bool SchemeNode::applyNode(double curtime)
       break;
 
     case INHOOK:
-      applyInHookNode();
+      if (schemeThread->isMidiInputHook())
+	applyMidiInputHookNode();
       break;
 
     case PAUSE :
@@ -221,10 +222,6 @@ double Scheme::getScoreTime()
   return scoretime;
 }
 
-void Scheme::setInputHook(SCHEMEPROC hook)
-{
-
-}
 
 void Scheme::load(File file, bool addtorecent)
 {
@@ -453,6 +450,8 @@ void Scheme::eval(String s)
 
 void Scheme::midiin(const MidiMessage &msg)
 {
+  if (!isMidiInputHook())
+      return;
   static int nextid=2000;
   SchemeNode *n = new SchemeNode(SchemeNode::INHOOK, 0.0, msg);
   n->nodeid=++nextid;

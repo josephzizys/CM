@@ -118,6 +118,51 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::MidiOutDrumTrack,
     CommandIDs::MidiOutPitchBend,
     CommandIDs::MidiOutInstruments,
+
+    // Midi In Port
+    CommandIDs::MidiInOpen + 0,
+    CommandIDs::MidiInOpen + 1,
+    CommandIDs::MidiInOpen + 2,
+    CommandIDs::MidiInOpen + 3,
+    CommandIDs::MidiInOpen + 4,
+    CommandIDs::MidiInOpen + 5,
+    CommandIDs::MidiInOpen + 6,
+    CommandIDs::MidiInOpen + 7,
+    CommandIDs::MidiInOpen + 8,
+    CommandIDs::MidiInOpen + 9,
+    CommandIDs::MidiInOpen + 10,
+    CommandIDs::MidiInOpen + 11,
+    CommandIDs::MidiInOpen + 12,
+    CommandIDs::MidiInOpen + 13,
+    CommandIDs::MidiInOpen + 14,
+    CommandIDs::MidiInOpen + 15,
+    CommandIDs::MidiInTrace,
+    CommandIDs::MidiInChannelFilter + 0,
+    CommandIDs::MidiInChannelFilter + 1,
+    CommandIDs::MidiInChannelFilter + 2,
+    CommandIDs::MidiInChannelFilter + 3,
+    CommandIDs::MidiInChannelFilter + 4,
+    CommandIDs::MidiInChannelFilter + 5,
+    CommandIDs::MidiInChannelFilter + 6,
+    CommandIDs::MidiInChannelFilter + 7,
+    CommandIDs::MidiInChannelFilter + 8,
+    CommandIDs::MidiInChannelFilter + 9,
+    CommandIDs::MidiInChannelFilter + 10,
+    CommandIDs::MidiInChannelFilter + 11,
+    CommandIDs::MidiInChannelFilter + 12,
+    CommandIDs::MidiInChannelFilter + 13,
+    CommandIDs::MidiInChannelFilter + 14,
+    CommandIDs::MidiInChannelFilter + 15,
+    CommandIDs::MidiInChannelFilter + 16, // All
+    CommandIDs::MidiInOpcodeFilter + 0,
+    CommandIDs::MidiInOpcodeFilter + 1,
+    CommandIDs::MidiInOpcodeFilter + 2,
+    CommandIDs::MidiInOpcodeFilter + 3,
+    CommandIDs::MidiInOpcodeFilter + 4,
+    CommandIDs::MidiInOpcodeFilter + 5,
+    CommandIDs::MidiInOpcodeFilter + 6,
+    CommandIDs::MidiInOpcodeFilter + 7, // All
+
     // Audio
     CommandIDs::AudioOpenFilePlayer,
     CommandIDs::MidiFilePlayer,
@@ -272,7 +317,9 @@ void Grace::getCommandInfo(const CommandID id,
       info.setActive(pref->getStringProp(T("LispInitFile"))!=NULL);
       break;
 
-      /**  MIDI COMMANDS  **/
+      //
+      // Midi Output
+      //
     case CommandIDs::MidiOutOpen:
       {
 	StringArray devices = MidiOutput::getDevices();
@@ -310,7 +357,62 @@ void Grace::getCommandInfo(const CommandID id,
       info.shortName=T("Instruments...");
       info.setActive(false);
       break;
-      // SndLib
+      //
+      // Midi Input
+      //
+    case CommandIDs::MidiInOpen:
+      {
+	StringArray devices = MidiInput::getDevices();
+	if (data<devices.size())
+	  info.shortName=devices[data];
+	else
+	  info.shortName=T("<Unknown MIDI Device>");
+	info.setTicked(MidiInPort::getInstance()->isOpen(data));
+      }
+      break;
+    case CommandIDs::MidiInTrace:
+      info.shortName=T("Trace Input");
+      info.setActive(MidiInPort::getInstance()->isOpen());
+      info.setTicked(MidiInPort::getInstance()->isTracing());
+      break;
+     case CommandIDs::MidiInChannelFilter:
+       {
+	 MidiInPort* p=MidiInPort::getInstance();
+	 if (data==16)
+	   {
+	     info.shortName=T("All");
+	     if (p->getChannelMask()==MidiInPort::AllChannels)
+	       info.setTicked(true);
+	   }
+	 else
+	   {
+	     info.shortName=T("Channel ")+String(data);
+	     if ((p->getChannelMask()!=MidiInPort::AllChannels) &&
+		 p->isChannelActive(data))
+	       info.setTicked(true);
+	   }
+       }
+      break;
+     case CommandIDs::MidiInOpcodeFilter:
+       {
+	 MidiInPort* p=MidiInPort::getInstance();
+	 if (data==7)
+	   {
+	     info.shortName=T("All");
+	     if (p->getOpcodeMask()==MidiInPort::AllOpcodes)
+	       info.setTicked(true);
+	   }
+	 else
+	   {
+	     info.shortName=MidiNode::indexToString(data, true);
+	     if ((p->getOpcodeMask()!=MidiInPort::AllOpcodes) &&
+		 p->isOpcodeActive(data))
+	       info.setTicked(true);
+	   }
+       }
+      break;
+      
+    // SndLib
     case CommandIDs::SndLibSrate:
       info.shortName=SrateIDs::toString(data);
       info.setTicked(SrateIDs::toSrate(data) ==
@@ -428,7 +530,9 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::PrefsClearInitFile:
       pref->setStringProp(T("LispInitFile"), String::empty);
       break;
-      /**  MIDI PORT COMMANDS  **/
+      //
+      // Midi Out Port
+      //
     case CommandIDs::MidiOutOpen:
       MidiOutPort::getInstance()->open(data);
       break;
@@ -438,6 +542,46 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::MidiOutTuning:
       MidiOutPort::getInstance()->setTuning(data);
       break;
+      //
+      // Midi In Port
+      //
+    case CommandIDs::MidiInOpen:
+      MidiInPort::getInstance()->open(data);
+      break;
+    case CommandIDs::MidiInTrace:
+      MidiInPort::getInstance()->toggleTracing();
+      break;
+    case CommandIDs::MidiInChannelFilter:
+      {
+	MidiInPort* p=MidiInPort::getInstance();
+	if (data==16)
+	  if (p->getChannelMask()==MidiInPort::AllChannels)
+	    p->setChannelMask(0);
+	  else
+	    p->setChannelMask(MidiInPort::AllChannels);
+	else
+	  if (p->getChannelMask()==MidiInPort::AllChannels)
+	    p->setChannelMask(1<<data);
+	  else
+	    p->toggleChannelActive(data);
+      }
+      break;
+    case CommandIDs::MidiInOpcodeFilter:
+      {
+	MidiInPort* p=MidiInPort::getInstance();
+	if (data==7)
+	  if (p->getOpcodeMask()==MidiInPort::AllOpcodes)
+	    p->setOpcodeMask(0);
+	  else
+	    p->setOpcodeMask(MidiInPort::AllOpcodes);
+	else
+	  if (p->getOpcodeMask()==MidiInPort::AllOpcodes)
+	    p->setOpcodeMask(1<<data);
+	  else
+	    p->toggleOpcodeActive(data);
+      } 
+      break;
+
       /** AUDIO COMMANDS **/
     case CommandIDs::AudioOpenFilePlayer:
       AudioManager::getInstance()->openAudioFilePlayer();
@@ -1185,7 +1329,6 @@ bool TextBuffer::perform(const ApplicationCommandTarget::InvocationInfo&
       break;
     case CommandIDs::EditorCut:
       cut();
-      setFlag(EditFlags::NeedsSave);
       break;
     case CommandIDs::EditorCopy:
       copy();

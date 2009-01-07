@@ -587,17 +587,6 @@ s7_pointer ffi_sched_score_time (s7_scheme *s7, s7_pointer args)
   return s7_make_real(s7, f0);
 }
 
-s7_pointer ffi_set_inhook (s7_scheme *s7, s7_pointer args)
-{
-  SCHEMEPROC p0;
-  if (!s7_is_procedure(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_set_inhook", 1, s7_car(args), "a SCHEMEPROC"));
-  p0=s7_car(args);
-  args=s7_cdr(args);
-  cm_sched_set_inhook(p0);
-  return s7_UNSPECIFIED(s7);
-}
-
 s7_pointer ffi_user_home_directory (s7_scheme *s7, s7_pointer args)
 {
   char* s0;
@@ -890,6 +879,23 @@ s7_pointer ffi_mp_plot_seq (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_mp_clear_seq (s7_scheme *s7, s7_pointer args)
 {
   mp_clear_seq();
+  return s7_UNSPECIFIED(s7);
+}
+
+s7_pointer ffi_mp_set_midi_input_hook (s7_scheme *s7, s7_pointer args)
+{
+  SCHEMEPROC p0;
+  if (!s7_is_procedure(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_midi_input_hook", 1, s7_car(args), "a SCHEMEPROC"));
+  p0=s7_car(args);
+  args=s7_cdr(args);
+  mp_set_midi_input_hook(p0);
+  return s7_UNSPECIFIED(s7);
+}
+
+s7_pointer ffi_mp_clear_midi_input_hook (s7_scheme *s7, s7_pointer args)
+{
+  mp_clear_midi_input_hook();
   return s7_UNSPECIFIED(s7);
 }
 
@@ -2570,7 +2576,6 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_sched_score_mode_p", ffi_sched_score_mode_p, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sched_set_score_mode", ffi_sched_set_score_mode, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sched_score_time", ffi_sched_score_time, 0, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_set_inhook", ffi_set_inhook, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_user_home_directory", ffi_user_home_directory, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_temp_directory", ffi_temp_directory, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_current_directory", ffi_current_directory, 0, 0, false, "ffi function");
@@ -2598,6 +2603,8 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_mp_copy_seq", ffi_mp_copy_seq, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_plot_seq", ffi_mp_plot_seq, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_clear_seq", ffi_mp_clear_seq, 0, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_mp_set_midi_input_hook", ffi_mp_set_midi_input_hook, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_mp_clear_midi_input_hook", ffi_mp_clear_midi_input_hook, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_cs_init_score", ffi_cs_init_score, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_cs_send_score", ffi_cs_send_score, 4, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_tokenize", ffi_sal_tokenize, 1, 0, false, "ffi function");

@@ -20,9 +20,12 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   
   <ul>
 
-    <li class="change">Enhancement: new Csound audio target. Does not require libcsound and should work everywhere. See <a href="cm.html#csound">csound documentation</a> and the Help menu's <a href="csound.sal">csound example</a> for more information.</a>
+    <li class="change">Enhancement: new Csound audio target. Use <span class="menuitem">Audio&gt;Csound&gt;</span> menu to configure your Csound environment. See <a href="cm.html#csound">csound documentation</a> and the Help menu's <a href="csound.sal">csound example</a> for more information.</li>
 
-    <li class="change">Enhacement: added <a href="cm.html#sndlib"> SndLib documentation</a>.</li>
+    <li class="change">Enhancement: Midi Input port is now activated. Use <span class="menuitem">Audio&gt;Midi In&gt;</span> menu to select devices, customize channel and message filtering, and device testing. See  <a href="cm.html#midi-in">Midi In documentation</a> for more information. </li>
+    
+
+    <li class="change">Enhancement: added <a href="cm.html#sndlib"> SndLib documentation</a>.</li>
 
     <li class="change">Cleaned up numerous dictionary entries including a new entry for <a href="cm.html#sprout">sprout</a>. Dictionary now validates as xhtml strict.</li>
 
@@ -39,18 +42,19 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     <li class="change">enhancement: audio player now sports a realtime waveform view
     (lifted from the Juce Demo app...)</li>
     
-    <li class="change">enhancement: new "Load..." menu item in Console and
+    <li class="change">enhancement: new <span class="menuitem">File&gt;Load...</span> menu item in Console and
     Editor works for both .scm and .sal files.</li>
 
-    <li class="change">enhancement: new "Load Recent" menu holds last 8 loaded
+    <li class="change">enhancement: new <span class="menuitem">File&gt;Load Recent&gt;</span> menu holds last 8 loaded
     files for fast loading.</li>
 
-    <li class="change">enhancement: new "Set Init File" menu item sets a lisp 
+    <li class="change">enhancement: <span class="menuitem">File&gt;Set Init File</span> menu item sets a lisp 
     file to autoload at startup.</li>
 
     <li class="change">enhancement: added "Clear Init File" menu item for removing a
     lisp startup file.</li>
 
+    <li class="change">bug fix: cut command works correctly now.</li>
 
     <li class="change">bug fix: removed spurious AudioFile entry from Help menu and
     tidied up the menu.</li>
@@ -61,6 +65,8 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
 <hr/>
 <address></address>
-<!-- hhmts start --> Last modified: Sun Jan  4 11:44:31 CST 2009 <!-- hhmts end -->
+<p>
+<!-- hhmts start --> Last modified: Wed Jan  7 06:35:38 CST 2009 <!-- hhmts end -->
+</p>
 </body>
 </html>

@@ -1,9 +1,9 @@
-/*************************************************************************
- * Copyright (C) 2008, Rick Taube.                                       *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the Lisp Lesser Gnu Public License. The text of *
- * this agreement is available at http://www.cliki.net/LLGPL             *
- *************************************************************************/
+/*=======================================================================*
+  Copyright (C) 2008 Rick Taube.                                        
+  This program is free software; you can redistribute it and/or modify  
+  it under the terms of the Lisp Lesser Gnu Public License. The text of 
+  this agreement is available at http://www.cliki.net/LLGPL             
+ *=======================================================================*/
 
 #include <iostream>
 #include "juce.h"
@@ -47,11 +47,30 @@ bool Scheme::init()
 	Console::getInstance()->printOutput(str);
     }
   memset(outstr, 0, OUTSTRSIZE);
+  inputClosureGCRoot=CHICKEN_new_gc_root();
+  CHICKEN_gc_root_set(inputClosureGCRoot, C_SCHEME_FALSE);
   return true;
 }
 
 void Scheme::cleanup()
 {
+  CHICKEN_delete_gc_root(inputClosureGCRoot);
+}
+
+bool Scheme::isMidiInputHook()
+{
+  return (CHICKEN_gc_root_ref(inputClosureGCRoot) != C_SCHEME_FALSE);
+}
+
+void Scheme::setMidiInputHook(SCHEMEPROC hook)
+{
+  clearMidiInputHook();
+  CHICKEN_gc_root_set(inputClosureGCRoot, hook);
+}
+
+void Scheme::clearMidiInputHook()
+{
+  CHICKEN_gc_root_set(inputClosureGCRoot, C_SCHEME_FALSE);
 }
 
 //
@@ -105,13 +124,25 @@ void SchemeNode::applyEvalNode()
   memset(schemeThread->evalBuffer, 0, 8192);
 }
 
-void SchemeNode::applyInHookNode()
+void SchemeNode::applyMidiInputHookNode()
 {
-  C_word *mmess_ptr;
-  mmess_ptr = C_alloc( sizeof(MidiMessage*) );
-  C_save(C_mpointer(&mmess_ptr , (void*)&mmess));
-  C_word closure = CHICKEN_gc_root_ref(schemeThread->inputClosureGCRoot);
-  C_callback(closure, 1);
+  int op=(mmess.getRawData()[0] & 0xf0)>>4;
+  int ch=mmess.getChannel()-1;
+  int d1=mmess.getRawData()[1] & 0x7f;
+  int d2=0;
+  if (mmess.getRawDataSize()>2)
+    d2=mmess.getRawData()[2] & 0x7f;
+  C_save(C_fix(op));
+  C_save(C_fix(ch));
+  C_save(C_fix(d1));
+  C_save(C_fix(d2));
+  C_word hook=CHICKEN_gc_root_ref(schemeThread->inputClosureGCRoot);
+  int val=C_unfix(C_callback(hook, 4));
+  if (val<0)
+    {
+      Console::getInstance()->printError(T("Clearing Midi input hook.\n"));
+      schemeThread->clearMidiInputHook();
+    }
 }
 
 double SchemeNode::applyProcessNode(double elapsed)
@@ -126,4 +157,49 @@ double SchemeNode::applyProcessNode(double elapsed)
     CHICKEN_delete_gc_root(closureGCRoot);
   return delta;
 }
+
+
+/*
+void chicken_print_message(char* st)
+{
+  // attempt at buffering: if string ends with #\Return, send string
+  // AND trigger update else send string without triggering update
+  String s=String(st);
+  if ( s.endsWithChar('\n') )
+    Console::getInstance()->printMessage(s, true);
+  else
+    Console::getInstance()->printMessage(s, false);
+}
+
+void chicken_print_error(char* st)
+{
+  // attempt at buffering: if string ends with #\Return, send string
+  // AND trigger update else send string without triggering update
+  String s=String(st);
+  if ( s.endsWithChar('\n') )
+    Console::getInstance()->printError(s, true);
+  else
+    Console::getInstance()->printError(s, false);
+}
+
+CHICKEN_eval_string((char *)"(current-output-port (make-output-port (foreign-lambda void \"chicken_print_message\" c-string) (lambda () #f)))", NULL);
+
+CHICKEN_eval_string((char *)"(current-error-port (make-output-port (foreign-lambda void \"chicken_print_error\" c-string) (lambda () #f)))", NULL);
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

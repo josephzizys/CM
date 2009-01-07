@@ -58,7 +58,7 @@ class SchemeNode
   bool applyNode(double curr);
   void applyEvalNode();
   double applyProcessNode(double now);
-  void applyInHookNode();
+  void applyMidiInputHookNode();
 };
 
 class SchemeNodeComparator
@@ -80,6 +80,13 @@ public:
   Scheme(String name, ConsoleWindow *win);
   ~Scheme();
 
+#ifdef SNDLIB
+  SCHEMEPROC midiinhook;
+#endif
+#ifdef CHICKEN
+  void *inputClosureGCRoot;
+#endif
+
   ConsoleWindow* console;
   char *evalBuffer ; 
   char *errorBuffer ; 
@@ -97,16 +104,21 @@ public:
   double scoretime;
   double getScoreTime();
 
-  void *inputClosureGCRoot;
+
     
   OwnedArray<SchemeNode, CriticalSection> schemeNodes;
   SchemeNodeComparator comparator;  
 
+  // These next methods are defined in the scheme implementation files
+  // (SndLib.cpp and Chicken.cpp)
   bool init();
   void cleanup();
+  bool isMidiInputHook();
+  void setMidiInputHook(SCHEMEPROC hook);
+  void clearMidiInputHook();
+
 
   void sprout(double _time, SCHEMEPROC c=0, int _id=-1);
-
   void eval(String str);
   void eval(char* str);
   void load(File file, bool addtorecent=false);
@@ -122,7 +134,6 @@ public:
   void setPaused(bool b);
   void stop(int id=-1);
   void stopProcesses(int id) ;
-  void setInputHook(SCHEMEPROC hook);
   void performSchedulerCommand(CommandID id);
   bool isQueueEmpty();
 

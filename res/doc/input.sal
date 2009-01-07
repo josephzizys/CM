@@ -1,0 +1,30 @@
+;; fm-hook plays an fm generated chord centered around the key you
+;; play. the harder you play the denser the chord
+
+define function fm-hook( op, ch, ky, vel)
+  if ((op = mm:on) & (vel > 0)) then
+    begin
+      with ind = rescale( vel, 60, 120, 2, 4),
+           spec = fm-spectrum(hz(ky), between(1.0, pi),  ind)
+      loop for k in spectrum-keys(spec, min: ky - 18,
+                                        max: ky + 18)
+        send "mp:midi", 0, .5, k, vel
+      end
+    end
+
+;; use quarter-tone tuning
+
+send "mp:tuning", 2
+
+;; set the hook
+
+send "mp:inhook", fm-hook
+
+;; now play your keyboard ...
+;; clear the hook when you are done
+
+send "mp:inhook", #f
+
+
+
+

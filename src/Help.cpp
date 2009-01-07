@@ -41,6 +41,7 @@ Help::Help()
   examples.set(T("Harmonic Series"), T("harmonics.sal")); 
   examples.set(T("FM Composition"), T("fm.sal"));
   examples.set(T("Csound"), T("csound.sal"));
+  examples.set(T("Input Hooks"), T("input.sal"));
   // SAL tutorials
   tutorials.set(T("Hello World"), T("hello.sal"));
   tutorials.set(T("Expressions"), T("expr.sal"));
@@ -108,6 +109,7 @@ void Help::restoreHelpFiles()
   restoreFile(gestures_sal, gestures_salSize, T("gestures.sal"));
   restoreFile(ghosts_sal, ghosts_salSize, T("ghosts.sal"));
   restoreFile(harmonics_sal, harmonics_salSize, T("harmonics.sal"));
+  restoreFile(input_sal, input_salSize, T("input.sal"));
   restoreFile(interp_sal, interp_salSize, T("interp.sal"));
   restoreFile(jazz_sal, jazz_salSize, T("jazz.sal"));
   restoreFile(mapping_sal, mapping_salSize, T("mapping.sal"));

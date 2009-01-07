@@ -19,6 +19,9 @@ class CommandMenus
   static const int NumMidiOutOpen = 16;
   static const int NumWindowSelect = 8;
   static const int NumMidiOutTuning = 16;
+  static const int NumMidiInOpen = 16;
+  static const int NumMidiInChannelFilter = 16;
+  static const int NumMidiInOpcodeFilter = 7;
   static const int NumHelpManual = 8;
   static const int NumHelpExample = 32;
   static const int NumHelpTutorial = 8;

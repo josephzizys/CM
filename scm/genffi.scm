@@ -72,7 +72,6 @@
     (ffi_sched_score_mode_p    bool   "cm_sched_score_mode_p" )
     (ffi_sched_set_score_mode  void   "cm_sched_set_score_mode" int)
     (ffi_sched_score_time      double "cm_sched_score_time" )
-    (ffi_set_inhook            void   "cm_sched_set_inhook" SCHEMEPROC)
 
     (ffi_user_home_directory c-string "cm_user_home_directory" )
     (ffi_temp_directory c-string "cm_temp_directory" )
@@ -87,15 +86,14 @@
     (ffi_pathname_directory_p bool "cm_pathname_directory_p" c-string)
 
     (ffi_port_info c-string "cm_port_info" )
+
     (ffi_mp_open_output bool "mp_open_output" int )
     (ffi_mp_open_input bool "mp_open_input" int )
     (ffi_mp_close_output void "mp_close_output" int )
     (ffi_mp_close_input void "mp_close_input" int )
     (ffi_mp_set_output_file void "mp_set_output_file" c-string )
-
     (ffi_mp_send_note void "mp_send_note" double double float float float)
     (ffi_mp_send_data void "mp_send_data" int double float float float)
-
     (ffi_mp_set_channel_mask void "mp_set_channel_mask" int)
     (ffi_mp_set_message_mask void "mp_set_message_mask" int)
     (ffi_mp_set_tuning void "mp_set_tuning" int)
@@ -104,6 +102,8 @@
     (ffi_mp_copy_seq void "mp_copy_seq")
     (ffi_mp_plot_seq void "mp_plot_seq")
     (ffi_mp_clear_seq void "mp_clear_seq")
+    (ffi_mp_set_midi_input_hook   void "mp_set_midi_input_hook" SCHEMEPROC)
+    (ffi_mp_clear_midi_input_hook void "mp_clear_midi_input_hook" )
 
     (ffi_cs_init_score void "cs_init_score" c-string)
     (ffi_cs_send_score void "cs_send_score" int int double c-string)

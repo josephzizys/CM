@@ -16,7 +16,7 @@
 ;(define logior bitwise-ior)
 
 (define-for-syntax (ash a b) (arithmetic-shift a b))
-(define-for-syntax (logand . args ) (apply bitwise-and a b))
+(define-for-syntax (logand . args ) (apply bitwise-and args))
 (define-for-syntax (lognot . args) (apply bitwise-not args))
 (define-for-syntax (logxor . args) (apply bitwise-xor args))
 (define-for-syntax (logior . args) (apply bitwise-ior args))
@@ -60,7 +60,7 @@
   (format #f "~S" x))
 
 ;; implementation specific expansion of the code that ensures error
-;; protection under the process callback
+;; protection under process callback and input hooks
 
 (define (error-protected-process-code forms )
   (let ((errvar (gensym "errvar")))
@@ -74,6 +74,25 @@
 	   )
 	 (lambda () ,@ forms ))))
     ))
+
+(define (error-protected-inhook $hook$ )
+  (lambda ($op$ $ch$ $d1$ $d2$)
+    (call-with-current-continuation
+     (lambda (%cont)
+       (with-exception-handler
+	(lambda ($errarg$)
+	  (print-error
+	   (sprintf ">>> Error: ~A~%    Aborting MIDI inhook.~%"
+		    ((condition-property-accessor 'exn 'message) 
+		     $errarg$)
+		    ))
+	  (%cont -1)  ; -1 means error
+	  )
+	(lambda () 
+	  ;; call users hook with the received message
+	  ($hook$ $op$ $ch$ $d1$ $d2$)
+	  0
+	  ))))))
 
 ;; turn off warnings that ratio notation causes because we dont load
 ;; the ratio package. unfortunately this turns off ALL chicken

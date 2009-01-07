@@ -495,11 +495,6 @@ void cm_sched_hush()
   Scheme::getInstance()->stop(-1);
 }
 
-void cm_sched_set_inhook(SCHEMEPROC proc )
-{
-  Scheme::getInstance()->setInputHook(proc);
-}
-
 bool cm_sched_busy_p()
 {
   //return !Scheme::getInstance()->isQueueEmpty();
@@ -728,50 +723,29 @@ void mp_send_data(int type, double time, float chan,
     }
 }
 
-void mp_send_message(MidiMessage *m) 
-{
-  Scheme* scm=Scheme::getInstance();
-  if (scm->scoremode)
-    {
-      // if score capture is true AND we are under a process callback then
-      // scoretime will be >= 0 else it will be 0
-      m->setTimeStamp(m->getTimeStamp()+scm->scoretime);
-      MidiOutPort::getInstance()->sendMessage(m, true) ;
-    }
-  else 
-    {
-      MidiOutPort::getInstance()->sendMessage(m,false) ;
-    }
-}
-
 void mp_set_tuning(int div)
 {
-  //Console::getInstance()->postAsyncMessage(CommandIDs::MidiOutTuning, div, true);
   MidiOutPort::getInstance()->performCommand(CommandIDs::MidiOutTuning,
 					     div);
 }
 
 void mp_play_seq()
 {
-  //Console::getInstance()->postAsyncMessage(CommandIDs::MidiSeqPlay, true);
   MidiOutPort::getInstance()->performCommand(CommandIDs::MidiSeqPlay);
 }
 
 void mp_save_seq()
 {
-  //Console::getInstance()->postAsyncMessage(CommandIDs::MidiSeqSave, true);
   MidiOutPort::getInstance()->performCommand(CommandIDs::MidiSeqSave);
 }
 
 void mp_copy_seq()
 {
-  //Console::getInstance()->postAsyncMessage(CommandIDs::MidiSeqCopyToTrack, true);
   MidiOutPort::getInstance()->performCommand(CommandIDs::MidiSeqCopyToTrack);
 }
 
 void mp_plot_seq()
 {
-  //Console::getInstance()->postAsyncMessage(CommandIDs::MidiSeqPlot, true);
   MidiOutPort::getInstance()->performCommand(CommandIDs::MidiSeqPlot);
 }
 
@@ -783,139 +757,25 @@ void mp_clear_seq()
 
 void mp_set_channel_mask(int mask)
 {
-  //Console::getInstance()->postAsyncMessage(CommandIDs::MidiInChannelMask, mask, true);
-  MidiInPort::getInstance()->performCommand(CommandIDs::MidiInChannelMask,
-					    mask);
+  MidiInPort::getInstance()->setChannelMask(mask);
 }
 
 void mp_set_message_mask(int mask)
 {
-  //Console::getInstance()->postAsyncMessage(CommandIDs::MidiInMessageMask, mask, true);
-  MidiInPort::getInstance()->performCommand(CommandIDs::MidiInMessageMask,
-					    mask);
+  MidiInPort::getInstance()->setOpcodeMask(mask);
 }
 
-/// MidiMessage accessors
-
-MidiMessage *mm_make(int type, double time, int chan, 
-		     int data1, int data2 ) 
+void mp_set_midi_input_hook(SCHEMEPROC proc)
 {
-  MidiMessage *m;
-  chan++; // juce channels are 1 based
-  switch (type) 
-    {
-    case MidiNode::MM_OFF :
-      m=new MidiMessage(MidiMessage::noteOff(chan, data1));
-      break;
-    case MidiNode::MM_ON :
-      m=new MidiMessage(MidiMessage::noteOn(chan, data1, (juce::uint8)data2));
-      break;
-    case MidiNode::MM_TOUCH :
-      m=new MidiMessage(MidiMessage::aftertouchChange(chan, data1, data2));
-      break;
-    case MidiNode::MM_CTRL :
-      m=new MidiMessage(MidiMessage::controllerEvent(chan, data1, data2));
-      break;
-    case MidiNode::MM_PROG :
-      m=new MidiMessage(MidiMessage::programChange(chan, data1));
-      break;
-    case MidiNode::MM_PRESS :
-      m=new MidiMessage(MidiMessage::channelPressureChange(chan, data1));
-      break;
-    case MidiNode::MM_BEND :
-      m=new MidiMessage(MidiMessage::pitchWheel(chan, data1));
-      break;
-    default:
-      return NULL;
-    }
-  return m;
+  Scheme::getInstance()->setMidiInputHook(proc);
 }
 
-MidiMessage *mm_copy(MidiMessage *m)
+void mp_clear_midi_input_hook()
 {
-  return new MidiMessage(*m);
+  Scheme::getInstance()->clearMidiInputHook();
 }
 
-void mm_free(MidiMessage *m)
-{
-  delete m;
-}
-
-bool mm_is_type(MidiMessage *m, int typ)
-{
-  switch (typ) 
-    {
-    case MidiNode::MM_OFF :
-      return m->isNoteOff();
-      break;
-    case MidiNode::MM_ON :
-      return m->isNoteOn();
-      break;
-    case MidiNode::MM_TOUCH :
-      return m->isAftertouch();
-      break;
-    case MidiNode::MM_CTRL :
-      return m->isController();
-      break;
-    case MidiNode::MM_PROG :
-      return m->isProgramChange();
-      break;
-    case MidiNode::MM_PRESS :
-      return m->isChannelPressure();
-      break;
-    case MidiNode::MM_BEND :
-      return m->isPitchWheel();
-      break;
-    default:
-      return false;
-    }
-}
-
-double mm_time(MidiMessage *m)
-{
-  return m->getTimeStamp();
-}
-
-void mm_set_time(MidiMessage *m, double t)
-{
-  m->setTimeStamp(t);
-  return ;		
-}
-
-int mm_chan(MidiMessage *m)
-{
-  // juce channels are 1 based
-  return m->getChannel()-1;
-}
-
-void mm_set_chan(MidiMessage *m, int chan)
-{
-  // juce channels are 1 based
-  m->setChannel(chan+1);
-}
-
-int mm_data(MidiMessage *m, int n )
-{
-  juce::uint8 *data=m->getRawData();
-  return (int)data[n];
-}
-
-void mm_set_data(MidiMessage *m, int n, int v )
-{
-  juce::uint8 *data=m->getRawData();
-  data[n]=(v & 0x7f);
-}
-
-// Input Hook Code
-void set_input_hook( SCHEMEPROC proc )
-{
-  Scheme::getInstance()->setInputHook( proc);
-}
-
-void clear_input_hook(  )
-{
-  // FIX
-}
+// Csound support
 
 void cs_init_score(char* args)
 {
@@ -928,6 +788,8 @@ void cs_send_score(int typ, int num, double time, char* pars)
   //std::cout << "cs_send_score " << typ << " " << num << " "  << time << " " << pars << "\n";
   Csound::getInstance()->addToScore(typ,num,time,String(pars));
 }
+
+// Sal support
 
 char* sal_tokenize(char* str)
 {
