@@ -274,10 +274,17 @@ static void cm_stderr(s7_scheme *sc, char c, s7_pointer port)
 
 void loadCode(const char* code, int size)
 {
+#ifndef WINDOWS
   File f=File::createTempFile("scm");
   f.replaceWithText( String(code,size) );
+  String p=f.getFullPathName();
   s7_load(s7, (char *)f.getFullPathName().toUTF8());
   f.deleteFile();
+#else
+  String in=T("(begin\n");
+  in << String(code) << T(")\n");
+  s7_eval_c_string(s7, in.toUTF8());
+#endif
 }
 
 bool Scheme::init()

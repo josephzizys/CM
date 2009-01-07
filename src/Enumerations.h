@@ -18,7 +18,7 @@ class SysInfo
                                 Versioning
    *======================================================================*/
 
-  static const int CM_VERSION = 323;
+  static const int CM_VERSION = 324;
   static const int GRACE_VERSION = CM_VERSION;
 
   /*======================================================================*
