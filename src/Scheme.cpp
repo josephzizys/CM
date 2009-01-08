@@ -1,9 +1,9 @@
-/*************************************************************************
- * Copyright (C) 2007 Todd Ingalls, Rick Taube.                          *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the Lisp Lesser Gnu Public License. The text of *
- * this agreement is available at http://www.cliki.net/LLGPL             *
- *************************************************************************/
+/*=======================================================================*
+  Copyright (C) 2008 Rick Taube.                                        
+  This program is free software; you can redistribute it and/or modify  
+  it under the terms of the Lisp Lesser Gnu Public License. The text of 
+  this agreement is available at http://www.cliki.net/LLGPL             
+ *=======================================================================*/
 
 #include "Enumerations.h"
 #include "Scheme.h"
@@ -43,30 +43,6 @@ SchemeNode::SchemeNode(int _type, double _time)
   type = _type;
   time = _time;
 }
-
-// method for process node
-/*
-SchemeNode::SchemeNode(int _type, double _time, SCHEMEPROC c, int _id)
-  : time (0.0),
-    start (0.0), 
-    type (0),
-    expr (String::empty),
-    mmess(0xff)
-{
-
-  type = _type;
-  id = _id;
-  time = _time;
-  start = _time;
-#ifdef CHICKEN
-  closureGCRoot = CHICKEN_new_gc_root();
-  CHICKEN_gc_root_set(closureGCRoot, c);
-#endif
-#ifdef SNDLIB
-  SCHEMEPROC schemeproc;
-#endif
-}
-*/
 
 SchemeNode::SchemeNode(int _type, double _time, String _expr)
   : time (0.0),
@@ -175,22 +151,18 @@ Scheme::Scheme()
     pausing (false),
     scoremode (ScoreTypes::Empty),
     sprouted (false),
+    showvoid (false),
+    voidstring (String::empty),
     scoretime (0.0)
+    
 {
   evalBuffer = new char[8192];
   errorBuffer = new char[8192];  
-}
-
-Scheme::Scheme(String name, ConsoleWindow *win)
-  : Thread(name),
-    pausing (false),
-    scoremode (ScoreTypes::Empty),
-    sprouted (false),
-    scoretime (0.0)
-{
-  console = win;
-  evalBuffer = new char[8192];
-  errorBuffer = new char[8192];
+#ifdef GRACE
+  showvoid=Preferences::getInstance()->
+    getBoolProp(T("SchemeShowVoidValues"), true);
+#endif
+  voidstring=T("<ok>\n");
 }
 
 Scheme::~Scheme()
@@ -222,6 +194,29 @@ double Scheme::getScoreTime()
   return scoretime;
 }
 
+/// void value printing
+
+bool Scheme::showVoidValues()
+{
+  return showvoid;
+}
+
+bool Scheme::setShowVoidValues(bool b)
+{
+  showvoid=b;
+  //#ifdef GRACE
+  //  Preferences::getInstance()->
+  //    setBoolProp(T("SchemeShowVoidValues"), showvoid);
+  //#endif
+}
+
+void Scheme::printVoidValue(String input)
+{
+  if (showVoidValues())
+    Console::getInstance()->printValues(voidstring);
+}
+
+// loading
 
 void Scheme::load(File file, bool addtorecent)
 {

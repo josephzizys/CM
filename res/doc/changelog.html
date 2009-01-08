@@ -19,44 +19,46 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   <h2>Version 3.2.4</h2>
   
   <ul>
+    <li class="change">Enhancement: SndLib audio and S7 Scheme running on Windows! Thanks to Michael Gogins, who wrote the SCons script that compiles sndlib.a on MingW.</li>
 
-    <li class="change">Enhancement: new Csound audio target. Use <span class="menuitem">Audio&gt;Csound&gt;</span> menu to configure your Csound environment. See <a href="cm.html#csound">csound documentation</a> and the Help menu's <a href="csound.sal">csound example</a> for more information.</li>
-
-    <li class="change">Enhancement: Midi Input port is now activated. Use <span class="menuitem">Audio&gt;Midi In&gt;</span> menu to select devices, customize channel and message filtering, and device testing. See  <a href="cm.html#midi-in">Midi In documentation</a> for more information. </li>
+    <li class="change">Enhancement: Midi Input port is working. Use <span class="menuitem">Audio&gt;Midi In&gt;</span> menu to select devices, customize channel and message filtering and test input. See  <a href="cm.html#midi-in">Midi In documentation</a> for more information. </li>
     
+    <li class="change">Enhancement: new Csound audio target. Use <span class="menuitem">Audio&gt;Csound&gt;</span> menu to configure your Csound environment. See <a href="cm.html#csound">csound documentation</a> and the Help menu's <a href="csound.sal">csound example</a> for more information.</li>
 
     <li class="change">Enhancement: added <a href="cm.html#sndlib"> SndLib documentation</a>.</li>
 
+    <li class="change">Enhancement: Application Icon for Grace (Mac).</li>
+
     <li class="change">Cleaned up numerous dictionary entries including a new entry for <a href="cm.html#sprout">sprout</a>. Dictionary now validates as xhtml strict.</li>
 
-    <li class="change">system now builds on Windows/Mingw using Chicken 3.0.0. Carlos Pita
+    <li class="change">System now builds on Windows/Mingw with Chicken 3.0.0. Carlos Pita
     reports that you can build with the latest Chicken (3.4.0) if you
     simply regenerate ChickenBridge.cpp. Instructions are in
     <a href="../../readme.text">readme.text</a>.</li>
 
-    <li class="change">enhancement: Carlos Pita cleaned up the premake.lua script and
+    <li class="change">Enhancement: Carlos Pita cleaned up the premake.lua script and
     added support for linking against installed systems. To link
     against an installed dependancy simply pass the install root as
     the value of the option eg '--juce /usr/local/' </li>
 
-    <li class="change">enhancement: audio player now sports a realtime waveform view
+    <li class="change">Enhancement: audio player now sports a realtime waveform view
     (lifted from the Juce Demo app...)</li>
     
-    <li class="change">enhancement: new <span class="menuitem">File&gt;Load...</span> menu item in Console and
+    <li class="change">Enhancement: new <span class="menuitem">File&gt;Load...</span> menu item in Console and
     Editor works for both .scm and .sal files.</li>
 
-    <li class="change">enhancement: new <span class="menuitem">File&gt;Load Recent&gt;</span> menu holds last 8 loaded
+    <li class="change">Enhancement: new <span class="menuitem">File&gt;Load Recent&gt;</span> menu holds last 8 loaded
     files for fast loading.</li>
 
-    <li class="change">enhancement: <span class="menuitem">File&gt;Set Init File</span> menu item sets a lisp 
+    <li class="change">Enhancement: <span class="menuitem">File&gt;Set Init File</span> menu item sets a lisp 
     file to autoload at startup.</li>
 
-    <li class="change">enhancement: added "Clear Init File" menu item for removing a
+    <li class="change">Enhancement: added "Clear Init File" menu item for removing a
     lisp startup file.</li>
 
-    <li class="change">bug fix: cut command works correctly now.</li>
+    <li class="change">Bug fix: cut command works correctly now.</li>
 
-    <li class="change">bug fix: removed spurious AudioFile entry from Help menu and
+    <li class="change">Bug fix: removed spurious AudioFile entry from Help menu and
     tidied up the menu.</li>
 
   </ul>  
@@ -66,7 +68,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 <hr/>
 <address></address>
 <p>
-<!-- hhmts start --> Last modified: Wed Jan  7 06:35:38 CST 2009 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Wed Jan  7 20:59:37 CST 2009 <!-- hhmts end -->
 </p>
 </body>
 </html>

@@ -439,6 +439,8 @@ void Grace::getCommandInfo(const CommandID id,
     case CommandIDs::CsoundPrefPlayAfter:
       info.shortName=T("Play Scorefiles");
       info.setTicked(Csound::getInstance()->getPlayAfter());
+      // can't play unless you first write!
+      info.setActive(Csound::getInstance()->getWriteAfter());
       break;
     case CommandIDs::CsoundExportScore:
       info.shortName=T("Export Score...");
@@ -745,7 +747,7 @@ void Console::getAllCommands(Array<CommandID>& commands)
       CommandIDs::ConsoleTheme + 5,
       CommandIDs::ConsoleTheme + 6,
       CommandIDs::ConsoleTheme + 7,
- 
+      CommandIDs::SchemeShowVoidValues,
       CommandIDs::ConsoleClearConsole
     };
   commands.addArray(ids, sizeof(ids) / sizeof(CommandID));
@@ -801,6 +803,11 @@ void Console::getCommandInfo(const CommandID id,
     case CommandIDs::ConsoleClearConsole:
       info.shortName=T("Clear Console");
       break;
+    case CommandIDs::SchemeShowVoidValues:
+      info.shortName=T("Show Void Values");
+      info.setTicked(Scheme::getInstance()->showVoidValues());
+      break;
+
     default:
       //      std::cout << "Console commands: missing info for " << 
       //	CommandIDs::toString(id, true).toUTF8() << "\n";
@@ -836,6 +843,10 @@ bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
 	setFontSize(fontsize);
 	pref->setIntProp(T("ConsoleFontSize"), fontsize); 
       }
+      break;
+    case CommandIDs::SchemeShowVoidValues:
+      Scheme::getInstance()->
+	setShowVoidValues(!Scheme::getInstance()->showVoidValues());
       break;
     case CommandIDs::ConsoleClearConsole:
       buffer->clear();

@@ -250,6 +250,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
 		      CommandMenus::getFontSizeMenu(manager,
 						    CommandIDs::ConsoleFontSize
 						    ));
+      //      menu.addSeparator();
+      //      menu.addCommandItem(manager, CommandIDs::SchemeShowVoidValues);
       menu.addSeparator();
       menu.addCommandItem(manager, CommandIDs::ConsoleClearConsole);
     }

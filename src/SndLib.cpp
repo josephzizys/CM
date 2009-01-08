@@ -74,6 +74,8 @@ void SchemeNode::applyEvalNode()
       Console::getInstance()->printValues(s7_object_to_c_string(s7, val));
 #endif
     }
+  //  else
+  //    schemeThread->printVoidValue();
 }
 
 double SchemeNode::applyProcessNode(double elapsed)

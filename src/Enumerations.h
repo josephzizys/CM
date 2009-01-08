@@ -387,7 +387,7 @@ class CommandIDs
   static const CommandID PrefsClearInitFile = COMID(Prefs, 9);
 
   static const CommandID SchemeLoadFile = COMID(Scheme, 1);
-
+  static const CommandID SchemeShowVoidValues = COMID(Scheme, 2);
 
   // Console File
   static const CommandID ConsoleNewEditor = COMID(Console, 1);

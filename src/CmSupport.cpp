@@ -9,7 +9,7 @@
 #include "Enumerations.h"
 #include "CmSupport.h"
 #include "Midi.h"
-#include "CSound.h"
+#include "Csound.h"
 #include "Console.h"
 #include "Syntax.h"
 #include <iostream>

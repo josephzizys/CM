@@ -1,3 +1,10 @@
+/*=======================================================================*
+  Copyright (C) 2008 Rick Taube.                                        
+  This program is free software; you can redistribute it and/or modify  
+  it under the terms of the Lisp Lesser Gnu Public License. The text of 
+  this agreement is available at http://www.cliki.net/LLGPL             
+ *=======================================================================*/
+
 #ifndef SCHEME_H
 #define SCHEME_H
 
@@ -77,7 +84,6 @@ class Scheme : public Thread
 {
 public:
   Scheme() ;
-  Scheme(String name, ConsoleWindow *win);
   ~Scheme();
 
 #ifdef SNDLIB
@@ -87,12 +93,16 @@ public:
   void *inputClosureGCRoot;
 #endif
 
-  ConsoleWindow* console;
+  String voidstring;
+  bool showvoid;
+  bool showVoidValues();
+  bool setShowVoidValues(bool b);
+  void printVoidValue(String input=String::empty);
+
   char *evalBuffer ; 
   char *errorBuffer ; 
   //  String prompt;
   bool pausing;
-
   bool sprouted;
   CriticalSection lock;
 
