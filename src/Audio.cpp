@@ -8,6 +8,7 @@
 #include "Audio.h"
 #include <iostream>
 #include "Console.h"
+#include "Transport.h"
 
 /*=======================================================================*
                             Global Audio Manager
@@ -47,7 +48,8 @@ void AudioManager::openAudioFilePlayer(File file, bool play)
     {
       std::cout << "AudioFilePlayer is visible\n";
       AudioFilePlayerWindow* win;
-      win=(AudioFilePlayerWindow *)(audiofileplayer->getTopLevelComponent());
+      win=(AudioFilePlayerWindow*)
+	(audiofileplayer->getTopLevelComponent());
       win->grabKeyboardFocus();
       win->toFront(true);
     }
@@ -62,19 +64,22 @@ void AudioManager::openAudioFilePlayer(File file, bool play)
 	{
 	  AudioFormatManager formatManager;
 	  formatManager.registerBasicFormats();
-	  if (formatManager.findFormatForFileExtension(file.getFileExtension())!=NULL)
+	  if (formatManager.findFormatForFileExtension
+	      (file.getFileExtension())!=NULL)
 	    {
 	      audiofileplayer->setFileToPlay(file, play);
 	    }
 	  else
 	    {
-	      String err=T("Unsupported audio file: ") + file.getFullPathName() + T("\n");
+	      String err=T("Unsupported audio file: ") + 
+		file.getFullPathName() + T("\n");
 	      Console::getInstance()->printWarning(err);
 	    }
 	}
       else
 	{
-	  String err=T("File ") + file.getFullPathName() + T(" does not exist.\n");
+	  String err=T("File ") + file.getFullPathName() +
+	    T(" does not exist.\n");
 	  Console::getInstance()->printWarning(err);
 	}
     }
@@ -106,6 +111,15 @@ void AudioManager::openAudioSettings()
                             Audio File Player Window
  *=======================================================================*/
 
+class GRACETransport : public Transport
+{
+public:
+  AudioFilePlayer* player;
+  virtual void play(double position);
+  virtual void pause(void);
+  virtual void positionChanged(double position, bool isPlaying);
+};
+
 AudioFilePlayerWindow::AudioFilePlayerWindow (AudioFilePlayer* comp)
   : DocumentWindow(T("Audio File Player"), Colour(0xffe5e5e5),
 		   DocumentWindow::allButtons, true),
@@ -119,98 +133,66 @@ AudioFilePlayerWindow::AudioFilePlayerWindow (AudioFilePlayer* comp)
   setResizable(false, false); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
-  centreWithSize(450, 10+24+10+24+10+48+10);
+  centreWithSize(450, 10+24+10+24+10+72+10);
   setVisible(true);
 }
 
 AudioFilePlayerWindow::~AudioFilePlayerWindow()
 {
-  std::cout << "~AudioFilePlayerWindow()\n";
   setContentComponent(0, false); 
   player->setVisible(false);
 }
 
 void AudioFilePlayerWindow::closeButtonPressed()
 {
-  std::cout << "closeButtonPressed()\n";
-  // tell manager no window open
-  //  player->setVisible(false);
-  // only one player for now so remove it before deleteing window!
-  // removeContentComponent(player); 
   delete this;
 }
-
 
 /*=======================================================================*
                                Audio File Player
  *=======================================================================*/
 
 AudioFilePlayer::AudioFilePlayer ()
-  : waveformComponent (0)
+  : waveformComponent (0),
+    fileduration (0.0)
 {
   setName(T("Audio File Player"));
   currentAudioFileSource = 0;
   AudioFormatManager formatManager;
   formatManager.registerBasicFormats();
-
   fileChooser=new FilenameComponent(T("audiofile"),  File::nonexistent,
 				    true, false, false, 
 			    formatManager.getWildcardForAllFormats(),
 				    String::empty, T(""));
   addAndMakeVisible(fileChooser);
   fileChooser->addListener (this);
-  fileChooser->setBrowseButtonText(T("Open..."));
-  playButton=new TextButton(T("Play"), T("Play the current audio file"));
-  addAndMakeVisible (playButton);
-
-  playButton->addButtonListener (this);
-  playButton->setColour (TextButton::buttonColourId, Colours::lightgreen);
-  playButton->setColour (TextButton::buttonOnColourId, Colours::lightgreen);
-  playButton->setConnectedEdges (Button::ConnectedOnRight);
-
-  stopButton=new TextButton(T("Stop"), T("Plays the current audio file"));
-  addAndMakeVisible(stopButton);
-  stopButton->addButtonListener (this);
-  stopButton->setColour (TextButton::buttonColourId, Colours::red);
-  stopButton->setColour (TextButton::buttonOnColourId, Colours::red);
-  stopButton->setConnectedEdges (Button::ConnectedOnLeft);
-
-  audioSettingsButton=new TextButton(T("Audio Settings..."),
+  fileChooser->setBrowseButtonText(T("File..."));
+  audioSettingsButton=new TextButton(T("Settings..."),
 				     T("Configure audio settings"));
   addAndMakeVisible (audioSettingsButton);
   audioSettingsButton->addButtonListener(this);
-  ////  addAndMakeVisible (keyboardComponent = new MidiKeyboardComponent (synthSource.keyboardState,
-  ////								    MidiKeyboardComponent::horizontalKeyboard));
+  transport=new GRACETransport();
+  transport->addAndMakeVisible(this);
+  transport->player=this;
   addAndMakeVisible (waveformComponent = new AudioInputWaveformDisplay());
-
   // register for start/stop messages from the transport source..
   transportSource.addChangeListener (this);
   if (AudioManager::getInstance()->isAudioReady())
     {
-      // add the two audio sources to our mixer..
       mixerSource.addInputSource (&transportSource, false);
-      ////      mixerSource.addInputSource (&synthSource, false);
-      
       // ..and connect the mixer to our source player.
       audioSourcePlayer.setSource (&mixerSource);
-      
       // start the IO device pulling its data from our callback..
       AudioManager::getInstance()->setAudioCallback (this);
-      
-      // and we need to send midi input to our synth for processing
-      ////      audioDeviceManager.addMidiInputCallback (String::empty, &synthSource.midiCollector);
     }
   else
     {
       fileChooser->setEnabled(false);
-      playButton->setEnabled(false);
-      stopButton->setEnabled(false);
     }
 }
 
 AudioFilePlayer::~AudioFilePlayer()
 {
-  //audioDeviceManager.removeMidiInputCallback(&synthSource.midiCollector);
   audioDeviceManager.setAudioCallback (0);
   transportSource.removeChangeListener (this);
   transportSource.setSource (0);
@@ -224,54 +206,103 @@ void AudioFilePlayer::resized()
   float x=10, y=10;
   float r=getWidth();
   float b=getHeight();
-
-  fileChooser->setBounds(x, y, r-20, 24);
-  y=fileChooser->getBottom()+10;
-  playButton->setBounds(x, y, 100, 24);
-  stopButton->setBounds(playButton->getRight(), y, 100, 24);
-  audioSettingsButton->setBounds(r-120-10, y, 120, 24);
-  y=playButton->getBottom()+10;
+  audioSettingsButton->setBounds(r-80-10, y, 80, 24);
+  fileChooser->setBounds(x, y, audioSettingsButton->getX()-10-x, 24);
+  y=audioSettingsButton->getBottom()+10;
+  // center transport in window's width (6 buttons each 44px)
+  transport->setPositions((r/2)-(44*3), y, 44, 24);
+  // transport has two lines
+  y=y+24+24+10;
   waveformComponent->setBounds(x, y, r-10-10, b-y-10);
-  updateButtons();
 }
 
-bool AudioFilePlayer::isPlaying()
+AudioTransportSource& AudioFilePlayer::getTransportSource()
 {
-  return false;
-}
-
-void AudioFilePlayer::startPlaying()
-{
-  playButton->triggerClick();
-}
-
-void AudioFilePlayer::stopPlaying()
-{
-  stopButton->triggerClick();
+  return transportSource;
 }
 
 void AudioFilePlayer::setFileToPlay(File file, bool play)
 {
-  // stop any current source and clear out any existing file (so that
-  // replaying the same file works)
+  // stop any current source
   transportSource.stop();
+  // have to clear out any existing file or chooser doesnt register
+  // change if its adding the same file
   fileChooser->setCurrentFile(File::nonexistent, false, false);
   fileChooser->setCurrentFile(file, true, true);
+  std::cout << "setfiletoplay: file=" << file.getFullPathName().toUTF8()
+	    << " shouldstartplaying=" << play << "\n";
   if (play)
-    {
-      startPlaying();
-      //transportSource.setPosition (0.0);
-      //transportSource.start();
-    }
-  //updateButtons();
+    transport->play(0.0);
 }
 
-void AudioFilePlayer::audioDeviceIOCallback (const float** inputChannelData,
-					 int totalNumInputChannels,
-					 float** outputChannelData,
-					 int totalNumOutputChannels,
-					 int numSamples)
+double AudioFilePlayer::getFileDuration()
 {
+  return fileduration;
+}
+
+TextButton* AudioFilePlayer::getSettings()
+{
+  return audioSettingsButton;
+}
+
+void GRACETransport::play(double position)
+{
+  player->getTransportSource().
+    setPosition(player->getFileDuration()*position);
+  player->getTransportSource().start();
+  player->getSettings()->setEnabled(false);
+}
+
+void GRACETransport::pause(void)
+{
+  player->getTransportSource().stop();
+  player->getSettings()->setEnabled(true);
+}
+
+void GRACETransport::positionChanged(double position, bool isPlaying)
+{
+  //'position' is normalized from 0 to 1.0 
+  if (isPlaying)
+    player->getTransportSource().
+      setPosition(player->getFileDuration()*position);
+}
+
+void AudioFilePlayer::filenameComponentChanged (FilenameComponent*)
+{
+  // this is called when the user changes the file in the chooser
+  File audioFile(fileChooser->getCurrentFile());
+  
+  // stop and unload the previous file source and delete it..
+  transport->pause();
+  transportSource.setSource(0);
+  deleteAndZero(currentAudioFileSource);
+  
+  // get a format manager and init with the basic types (wav and aiff).
+  AudioFormatManager formatManager;
+  formatManager.registerBasicFormats();
+  AudioFormatReader* reader = formatManager.createReaderFor(audioFile);
+  
+  if (reader != 0)
+    {
+      currentFile = audioFile;
+      currentAudioFileSource = new AudioFormatReaderSource (reader, true);
+      // ..and plug it into our transport source
+      transportSource.setSource (currentAudioFileSource,
+				 32768, // buffer this many samples ahead
+				 reader->sampleRate);
+      fileduration=(double)
+	(reader->lengthInSamples/reader->sampleRate) ;
+      std::cout <<"File Duration=" << fileduration << "\n";;
+    }
+}
+
+void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
+					    int totalNumInputChannels,
+					    float** outputChannelData,
+					    int totalNumOutputChannels,
+					    int numSamples)
+{
+
   // pass the audio callback on to our player source, and also the
   // waveform display comp
   audioSourcePlayer.audioDeviceIOCallback(inputChannelData, 
@@ -284,6 +315,21 @@ void AudioFilePlayer::audioDeviceIOCallback (const float** inputChannelData,
 					   outputChannelData,
 					   totalNumOutputChannels,
 					   numSamples);
+  // update transport slider to make it move left to right during
+  // playback. this not as straightforward as is should be because (1)
+  // juce is triggering this callback even if a file is not playing
+  // and (2) sending updates to the slider every time this method is
+  // called will cause the app to crash, at least on mac
+  static int counter=0;
+  if (counter==100) // downsample to avoid juce crash
+    {
+      if (transportSource.isPlaying())
+	transport->setPosition(transportSource.getCurrentPosition() /
+			       getFileDuration());
+      counter=0;
+    }
+  else 
+    counter++;
 }
 
 void AudioFilePlayer::audioDeviceAboutToStart (AudioIODevice* device)
@@ -298,70 +344,14 @@ void AudioFilePlayer::audioDeviceStopped()
   waveformComponent->audioDeviceStopped();
 }
 
-void AudioFilePlayer::updateButtons()
-{
-  playButton->setEnabled(currentAudioFileSource != 0 && ! transportSource.isPlaying());
-  stopButton->setEnabled(transportSource.isPlaying());
-  //  repaint();
-}
-
 void AudioFilePlayer::buttonClicked (Button* button)
 {
-  if (button == playButton)
-    {
-      transportSource.setPosition (0.0);
-      transportSource.start();
-    }
-  else if (button == stopButton)
-    {
-      transportSource.stop();
-    }
-  else if (button == audioSettingsButton)
+  if (button == audioSettingsButton)
     {
       AudioManager::getInstance()->openAudioSettings();
     }
 }
-
-void AudioFilePlayer::filenameComponentChanged (FilenameComponent*)
-{
-  // this is called when the user changes the filename in the file chooser box
-
-  std::cout << "filenameComponentChanged\n";
-  
-  File audioFile (fileChooser->getCurrentFile());
-  
-  // unload the previous file source and delete it..
-  transportSource.stop();
-  transportSource.setSource (0);
-  deleteAndZero (currentAudioFileSource);
-  
-  // create a new file source from the file..
-  
-  // get a format manager and set it up with the basic types (wav and aiff).
-  AudioFormatManager formatManager;
-  formatManager.registerBasicFormats();
-  
-  AudioFormatReader* reader = formatManager.createReaderFor (audioFile);
-  
-  if (reader != 0)
-    {
-      currentFile = audioFile;
-      
-      currentAudioFileSource = new AudioFormatReaderSource (reader, true);
-      
-      // ..and plug it into our transport source
-      transportSource.setSource (currentAudioFileSource,
-				 32768, // tells it to buffer this many samples ahead
-				 reader->sampleRate);
-    }
-  
-  updateButtons();
-}
-
 void AudioFilePlayer::changeListenerCallback (void*)
 {
-  // callback from the transport source to tell us that play has
-  // started or stopped, so update our buttons..
-  updateButtons();
 }
 

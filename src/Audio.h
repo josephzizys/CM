@@ -28,6 +28,8 @@ class AudioManager : public AudioDeviceManager
   juce_DeclareSingleton (AudioManager, true)
 };
 
+class GRACETransport;
+
 class AudioFilePlayer : public Component,
 		    public FilenameComponentListener,
 		    public ButtonListener,
@@ -134,10 +136,9 @@ class AudioFilePlayer : public Component,
     };
   
   FilenameComponent* fileChooser;
-  TextButton* playButton;
-  TextButton* stopButton;
   TextButton* audioSettingsButton;
-  
+  GRACETransport* transport;
+
   ////MidiKeyboardComponent* keyboardComponent;
   AudioInputWaveformDisplay* waveformComponent;
   // this wraps the actual audio device
@@ -155,16 +156,15 @@ class AudioFilePlayer : public Component,
   // this is the actual stream that's going to read from the audio file.
   AudioFormatReaderSource* currentAudioFileSource;
   File currentFile;
-
+  double fileduration;
 public:
   AudioFilePlayer();
   ~AudioFilePlayer();
 
-  bool isPlaying();
-  void startPlaying();
-  void stopPlaying();
+  double getFileDuration();
+  TextButton* getSettings();
   void setFileToPlay(File file, bool play=false);
-
+  AudioTransportSource& getTransportSource();
   void audioDeviceIOCallback (const float** inputChannelData,
 			      int totalNumInputChannels,
 			      float** outputChannelData,
