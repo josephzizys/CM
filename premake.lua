@@ -90,12 +90,21 @@ for i = 1,2 do
       if os.fileexists(juce .. "juce.h") then
          add(mypackage.includepaths, juce)
          add(mypackage.libpaths, juce .. "bin")
+
+	 -- windows nonsense
+         if os.fileexists(juce .. "bin/jucelib_static_Win32.lib") then
+            juce_lib = "jucelib_static_Win32.lib"
+         else
+            juce_lib = "juce"
+         end
          if os.fileexists(juce .. "bin/libjuce_debug.a") then
             juce_debug_lib = "juce_debug"
          elseif os.fileexists(juce .. "bin/libjucedebug.a") then
             juce_debug_lib = "jucedebug"
+         elseif os.fileexists(juce .. "bin/jucelib_static_Win32_debug.lib") then
+            juce_debug_lib = "bin/jucelib_static_Win32_debug.lib"
          else
-            juce_debug_lib = "juce"
+            juce_debug_lib = juce_lib
             print("WARNING: no juce debug lib found for CONFIG=Debug")
          end
       elseif os.fileexists(juce .. "include/juce/juce.h") then
@@ -202,20 +211,25 @@ for i = 1,2 do
       -- that to ensure -ljuce appears BEFORE these libs we add them
       -- to the configs rather than to the package as on linux an
       -- macos. 
-      for c in {"Release", "Debug"} do
-         add(mypackage.config[c].links, "gdi32")
-         add(mypackage.config[c].links, "comdlg32")
-         add(mypackage.config[c].links, "shell32")
-         add(mypackage.config[c].links, "ole32")
-         add(mypackage.config[c].links, "vfw32")
-         add(mypackage.config[c].links, "winmm")
-         add(mypackage.config[c].links, "wininet")
-         add(mypackage.config[c].links, "dsound")
-         add(mypackage.config[c].links, "wsock32")
-         add(mypackage.config[c].links, "opengl32")
-         add(mypackage.config[c].links, "glu32")
-         add(mypackage.config[c].links, "uuid")
-         add(mypackage.config[c].links, "rpcrt4")
+      for j = 1,2 do   
+      if j == 1 then
+        cfg = "Release"
+      else
+        cfg = "Debug"
+      end
+         add(mypackage.config[cfg].links, "gdi32")
+         add(mypackage.config[cfg].links, "comdlg32")
+         add(mypackage.config[cfg].links, "shell32")
+         add(mypackage.config[cfg].links, "ole32")
+         add(mypackage.config[cfg].links, "vfw32")
+         add(mypackage.config[cfg].links, "winmm")
+         add(mypackage.config[cfg].links, "wininet")
+         add(mypackage.config[cfg].links, "dsound")
+         add(mypackage.config[cfg].links, "wsock32")
+         add(mypackage.config[cfg].links, "opengl32")
+         add(mypackage.config[cfg].links, "glu32")
+         add(mypackage.config[cfg].links, "uuid")
+         add(mypackage.config[cfg].links, "rpcrt4")
       end
    end
 end
