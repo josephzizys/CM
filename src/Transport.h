@@ -14,6 +14,38 @@ class Transport
   virtual void pause(void) = 0;
   virtual void positionChanged(double position, bool isPlaying) = 0;
   
+  enum {RewindButton=1, BackButton, PlayFromBeginningButton, PlayPauseButton, 
+	StopButton, ForwardButton, PlayRepeatsButton};
+
+  void pushButton(int buttonId)
+  {
+    switch (buttonId)
+      {
+      case RewindButton :
+	buttonRewind->triggerClick();
+	break;
+      case BackButton :
+	buttonBack->triggerClick();
+	break;
+      case PlayFromBeginningButton :
+	buttonPlayFromBeginning->triggerClick();
+	break;
+      case PlayPauseButton :
+	buttonPlayPause->triggerClick();
+	break;
+      case StopButton :
+	buttonStop->triggerClick();
+	break;
+      case ForwardButton :
+	buttonForward->triggerClick();
+	break;
+      case PlayRepeatsButton :
+	buttonPlayRepeats->triggerClick();
+	break;
+      default:
+	break;
+      }
+  }
   //----------------------------------------//
   //You can ignore the rest of the internals//
   //----------------------------------------//
@@ -133,6 +165,7 @@ class Transport
   }
   
  public:
+  
   void setPositions(int x, int y, int buttonWidth, int height)
   {
     int buttonLeft = x;

@@ -229,10 +229,11 @@ void AudioFilePlayer::setFileToPlay(File file, bool play)
   // change if its adding the same file
   fileChooser->setCurrentFile(File::nonexistent, false, false);
   fileChooser->setCurrentFile(file, true, true);
-  std::cout << "setfiletoplay: file=" << file.getFullPathName().toUTF8()
-	    << " shouldstartplaying=" << play << "\n";
   if (play)
-    transport->play(0.0);
+    {
+      //transport->play(0.0); // THIS DOESNT WORK
+      transport->pushButton(Transport::PlayFromBeginningButton);
+    }
 }
 
 double AudioFilePlayer::getFileDuration()
