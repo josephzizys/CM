@@ -203,33 +203,35 @@ for i = 1,2 do
       add(mypackage.links, "freetype")
       add(mypackage.libpaths, "/usr/X11R6/lib/")
    elseif windows then
-      add(mypackage.defines, "WINDOWS=1")   
-      -- premake outputs libs defined at the config level BEFORE slibs
-      -- defined at the package level. on windows this causes linking
-      -- to fail because -ljuce appears after the libs listed below (i
-      -- dont know why this should be the case but it is). this means
-      -- that to ensure -ljuce appears BEFORE these libs we add them
-      -- to the configs rather than to the package as on linux an
-      -- macos. 
-      for j = 1,2 do   
-      if j == 1 then
-        cfg = "Release"
-      else
-        cfg = "Debug"
-      end
-         add(mypackage.config[cfg].links, "gdi32")
-         add(mypackage.config[cfg].links, "comdlg32")
-         add(mypackage.config[cfg].links, "shell32")
-         add(mypackage.config[cfg].links, "ole32")
-         add(mypackage.config[cfg].links, "vfw32")
-         add(mypackage.config[cfg].links, "winmm")
-         add(mypackage.config[cfg].links, "wininet")
-         add(mypackage.config[cfg].links, "dsound")
-         add(mypackage.config[cfg].links, "wsock32")
-         add(mypackage.config[cfg].links, "opengl32")
-         add(mypackage.config[cfg].links, "glu32")
-         add(mypackage.config[cfg].links, "uuid")
-         add(mypackage.config[cfg].links, "rpcrt4")
+      add(mypackage.defines, "WINDOWS=1")
+      if options["target"] == "gnu" then
+	 -- premake outputs libs defined at the config level BEFORE slibs
+	 -- defined at the package level. on windows this causes linking
+	 -- to fail because -ljuce appears after the libs listed below (i
+	 -- dont know why this should be the case but it is). this means
+	 -- that to ensure -ljuce appears BEFORE these libs we add them
+	 -- to the configs rather than to the package as on linux an
+	 -- macos. 
+	 for j = 1,2 do   
+	    if j == 1 then
+	       cfg = "Release"
+	    else
+	       cfg = "Debug"
+	    end
+	    add(mypackage.config[cfg].links, "gdi32")
+	    add(mypackage.config[cfg].links, "comdlg32")
+	    add(mypackage.config[cfg].links, "shell32")
+	    add(mypackage.config[cfg].links, "ole32")
+	    add(mypackage.config[cfg].links, "vfw32")
+	    add(mypackage.config[cfg].links, "winmm")
+	    add(mypackage.config[cfg].links, "wininet")
+	    add(mypackage.config[cfg].links, "dsound")
+	    add(mypackage.config[cfg].links, "wsock32")
+	    add(mypackage.config[cfg].links, "opengl32")
+	    add(mypackage.config[cfg].links, "glu32")
+	    add(mypackage.config[cfg].links, "uuid")
+	    add(mypackage.config[cfg].links, "rpcrt4")
+	 end
       end
    end
 end
