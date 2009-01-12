@@ -15,6 +15,18 @@
 #include <iostream>
 #include <string>
 
+#ifdef _MSC_VER
+double log2(double n)
+{
+  return log(n)/log(2.0);
+}
+
+int round(double n)
+{
+  return (int)(n+.5);
+}
+#endif
+
 void cm_quit()
 {
   Scheme::getInstance()->signalThreadShouldExit();
@@ -237,7 +249,7 @@ int cm_keynum_to_pc (float kn)
 // Randomness
 //
 
-Random::Random ranstate (1000);
+Random ranstate (1000);
 
 void cm_ranseed(long s)
 {
@@ -472,7 +484,7 @@ void cm_sched_sprout(SCHEMEPROC proc, double time, int id)
 
 bool cm_sched_paused_p()
 {
-  Scheme::getInstance()->isPaused();
+  return Scheme::getInstance()->isPaused();
 }
 
 void cm_sched_pause() 

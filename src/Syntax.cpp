@@ -867,7 +867,9 @@ void SalSyntax::salError(String str, int err, SynTok *tok)
   Console::getInstance()->printError(errstr);
 }
 
-int addToken (String str, int start, int end) {
+int addToken (String str, int start, int end) 
+{
+  return 0
 }
 
 SynTok * SalSyntax::findUnbalanced(OwnedArray<SynTok> &tokenstream, 

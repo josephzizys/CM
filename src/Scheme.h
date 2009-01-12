@@ -96,7 +96,7 @@ public:
   String voidstring;
   bool showvoid;
   bool showVoidValues();
-  bool setShowVoidValues(bool b);
+  void setShowVoidValues(bool b);
   void printVoidValue(String input=String::empty);
 
   char *evalBuffer ; 

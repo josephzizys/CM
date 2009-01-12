@@ -222,7 +222,7 @@ int main(int argc, const char* argv[])
 	{
 	  std::string str="";
 	  getline(std::cin, str);
-	  if (input != "")
+	  if (!input.empty())
 	    input.append("\n");
 	  input.append(str);
 	  more=!isBalanced(input);

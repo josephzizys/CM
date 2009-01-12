@@ -20,7 +20,7 @@ class AudioManager : public AudioDeviceManager
   AudioManager();
   ~AudioManager();
   bool isAudioReady(){return audioready;}
-  bool isAudioReady(bool r){audioready=r;}
+  void isAudioReady(bool r){audioready=r;}
   void openAudioFilePlayer(File file=File::nonexistent, bool play=false);
   //  void initAudioFilePlayer();
   AudioFilePlayer* getAudioFilePlayerComponent() {return audiofileplayer;}

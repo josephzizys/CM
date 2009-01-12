@@ -201,7 +201,7 @@ bool Scheme::showVoidValues()
   return showvoid;
 }
 
-bool Scheme::setShowVoidValues(bool b)
+void Scheme::setShowVoidValues(bool b)
 {
   showvoid=b;
   //#ifdef GRACE

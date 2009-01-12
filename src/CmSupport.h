@@ -28,6 +28,10 @@ void cm_shell(char* str);
 void cm_play(char* str);
 void cm_load_sal_file(char* path);
 
+#ifdef _MSC_VER
+int round(double n);
+#endif
+
 float cm_rescale(float x, float x1, float x2, float y1, float y2, float b1) ;
 int cm_discrete(float x, float x1, float x2, int y1, int y2, float b=1.0);
 int cm_float_to_fixnum(float f) ;
