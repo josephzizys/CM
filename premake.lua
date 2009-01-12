@@ -93,7 +93,7 @@ for i = 1,2 do
 
 	 -- windows nonsense
          if os.fileexists(juce .. "bin/jucelib_static_Win32.lib") then
-            juce_lib = "jucelib_static_Win32.lib"
+            juce_lib = "jucelib_static_Win32"
          else
             juce_lib = "juce"
          end
@@ -102,7 +102,7 @@ for i = 1,2 do
          elseif os.fileexists(juce .. "bin/libjucedebug.a") then
             juce_debug_lib = "jucedebug"
          elseif os.fileexists(juce .. "bin/jucelib_static_Win32_debug.lib") then
-            juce_debug_lib = "bin/jucelib_static_Win32_debug.lib"
+            juce_debug_lib = "jucelib_static_Win32_debug"
          else
             juce_debug_lib = juce_lib
             print("WARNING: no juce debug lib found for CONFIG=Debug")

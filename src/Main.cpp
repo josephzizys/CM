@@ -14,7 +14,7 @@
 #include "Main.h"
 #include "Audio.h"
 
-#include "string.h"
+#include <string>
 #include <iostream>
 
 #ifdef GRACE
