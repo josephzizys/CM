@@ -54,7 +54,11 @@ class Transport
  public:
   //Sets the position of the slider on a scale 0.0 to 1.0
   //(does not trigger positionChanged to be called).
-  void setPosition(double position){sliderPosition->setValue(position,false);}
+  void setPosition(double position)
+  {
+	  const MessageManagerLock mmLock;
+	  sliderPosition->setValue(position,false,false);
+  }
   //Gets the position of the slider on a scale 0.0 to 1.0.
   double getPosition(void){return sliderPosition->getValue();}
  public:
