@@ -36,10 +36,10 @@
 
 juce_ImplementSingleton(SndLib)
 
-#ifdef _MSC_VER
-s7_scheme *s7;
-XEN xen_false, xen_true, xen_nil, xen_undefined;
-#endif
+//#ifdef _MSC_VER
+//s7_scheme *s7;
+//XEN xen_false, xen_true, xen_nil, xen_undefined;
+//#endif
 
 SndLib::SndLib()
 {
@@ -307,7 +307,7 @@ bool Scheme::init()
     return false;
 
   /* initialize the xen stuff (hooks and the xen s7 FFI) */
-  xen_initialize();
+  s7_xen_initialize(s7);
   /* initialize sndlib with all the functions linked into s7 */
   Init_sndlib(); 
 

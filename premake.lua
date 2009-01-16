@@ -133,11 +133,14 @@ for i = 1,2 do
       add(mypackage.files, "src/Instruments.cpp")
       if os.fileexists(sndlib .. "mus-config.h") then
          add(mypackage.includepaths, sndlib)
-         add(mypackage.linkoptions, sndlib .. "sndlib.a")
+--         add(mypackage.linkoptions, sndlib .. "sndlib.a")
+         add(mypackage.libpaths, sndlib )
+         add(mypackage.links, "sndlib" )
+
          sndlib_config = sndlib .. "sndlib-config"
       elseif os.fileexists(sndlib .. "include/mus-config.h") then
          add(mypackage.includepaths, sndlib .. "include")
-         add(mypackage.libpaths, sndlin .. "lib")
+         add(mypackage.libpaths, sndlib .. "lib")
          add(mypackage.links, "sndlib")
          sndlib_config = sndlib .. "bin/sndlib-config"
       else
