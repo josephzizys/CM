@@ -136,7 +136,6 @@ for i = 1,2 do
 --         add(mypackage.linkoptions, sndlib .. "sndlib.a")
          add(mypackage.libpaths, sndlib )
          add(mypackage.links, "sndlib" )
-
          sndlib_config = sndlib .. "sndlib-config"
       elseif os.fileexists(sndlib .. "include/mus-config.h") then
          add(mypackage.includepaths, sndlib .. "include")
