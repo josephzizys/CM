@@ -36,10 +36,10 @@
 
 juce_ImplementSingleton(SndLib)
 
-//#ifdef _MSC_VER
-//s7_scheme *s7;
-//XEN xen_false, xen_true, xen_nil, xen_undefined;
-//#endif
+#ifdef _MSC_VER
+s7_scheme *s7;
+XEN xen_false, xen_true, xen_nil, xen_undefined;
+#endif
 
 SndLib::SndLib()
 {
@@ -548,8 +548,10 @@ String SndLib::getInstrumentCode(String name)
   String text;
   inst = archive.createStreamForEntry(index);
   if(!inst)
-    return String::empty;
-  return inst->readEntireStreamAsString();
+	  return String::empty;
+  text = inst->readEntireStreamAsString();
+  delete inst;
+  return text;
 }
 
 /*=======================================================================*
@@ -650,7 +652,7 @@ void InstrumentTable::buttonClicked (Button* button)
       if (button==loadButton)
 	{
 	  String msg=T("Loading ");
-	  msg << File(path).getFileName().quoted() << T("\n");
+	  msg << path.quoted() << T("\n");
 	  Console::getInstance()->printOutput(msg);
 	  Scheme::getInstance()->eval(code);
 	}
@@ -667,7 +669,7 @@ void InstrumentTable::buttonClicked (Button* button)
       if (code.isEmpty())
 	return;
       new TextEditorWindow(File::nonexistent, code, TextIDs::Lisp,
-			   File(path).getFileName());
+			   path);
     }
 }
 

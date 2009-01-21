@@ -33,7 +33,7 @@ for i = 1,2 do
 
    mypackage = newpackage() -- premake sets 'package' to default package
    mypackage.includepaths = { "src" }
-   mypackage.linkflags = {"static-runtime"}
+   mypackage.buildflags = {"static-runtime", "no-main"}
    mypackage.language = "c++"
    mypackage.files = {
       "src/Scanner.cpp",
@@ -133,10 +133,15 @@ for i = 1,2 do
       add(mypackage.files, "src/Instruments.cpp")
       if os.fileexists(sndlib .. "mus-config.h") then
          add(mypackage.includepaths, sndlib)
---         add(mypackage.linkoptions, sndlib .. "sndlib.a")
          add(mypackage.libpaths, sndlib )
-         add(mypackage.links, "sndlib" )
-         sndlib_config = sndlib .. "sndlib-config"
+	 if options["target"] == "vs2005" then
+	    add(mypackage.config["Debug"].links, "sndlib_debug")
+	    add(mypackage.config["Release"].links, "sndlib")
+	 else
+	    add(mypackage.links, "sndlib" )
+	    sndlib_config = sndlib .. "sndlib-config"
+	 end
+
       elseif os.fileexists(sndlib .. "include/mus-config.h") then
          add(mypackage.includepaths, sndlib .. "include")
          add(mypackage.libpaths, sndlib .. "lib")
