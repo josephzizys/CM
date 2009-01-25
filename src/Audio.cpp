@@ -129,8 +129,8 @@ AudioFilePlayerWindow::AudioFilePlayerWindow (AudioFilePlayer* comp)
   player->setSize(450, 350);
   player->setVisible(true);
   setContentComponent(player);
-  //  setResizable(true, true); 
-  setResizable(false, false); 
+  setResizable(true, true); 
+  //setResizable(false, false); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
   centreWithSize(450, 10+24+10+24+10+72+10);
@@ -252,20 +252,27 @@ void GRACETransport::play(double position)
     setPosition(player->getFileDuration()*position);
   player->getTransportSource().start();
   player->getSettings()->setEnabled(false);
+  player->waveformComponent->audioDeviceAboutToStart(0);
 }
 
 void GRACETransport::pause(void)
 {
   player->getTransportSource().stop();
   player->getSettings()->setEnabled(true);
+  player->waveformComponent->audioDeviceStopped();
 }
 
 void GRACETransport::positionChanged(double position, bool isPlaying)
 {
   //'position' is normalized from 0 to 1.0 
-  if (isPlaying)
-    player->getTransportSource().
+  //if (isPlaying)
+  player->getTransportSource().
       setPosition(player->getFileDuration()*position);
+  if(!player->getTransportSource().isPlaying() && isPlaying)
+  {
+    player->getTransportSource().start();
+    player->getSettings()->setEnabled(false);
+  }
 }
 
 void AudioFilePlayer::filenameComponentChanged (FilenameComponent*)
@@ -322,13 +329,26 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
   // and (2) sending updates to the slider every time this method is
   // called will cause the app to crash, at least on mac
   static int counter=0;
-  if (counter==100) // downsample to avoid juce crash
-    {
-      if (transportSource.isPlaying())
-	transport->setPosition(transportSource.getCurrentPosition() /
-			       getFileDuration());
-      counter=0;
-    }
+  static bool wasStreamFinished = false;
+
+  if(wasStreamFinished && !transportSource.hasStreamFinished())
+  {
+    wasStreamFinished = !wasStreamFinished;
+  }
+  else if(!wasStreamFinished && transportSource.hasStreamFinished())
+  {
+    transport->pushButton(Transport::StopButton);
+    wasStreamFinished = !wasStreamFinished;
+  }
+
+  if (counter==10) // downsample to avoid juce crash
+  {
+    if (transportSource.isPlaying())
+      transport->setPosition(transportSource.getCurrentPosition() /
+      getFileDuration());
+
+    counter=0;
+  }
   else 
     counter++;
 }
