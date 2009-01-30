@@ -39,11 +39,11 @@ class MidiNode
   int type;
   double time;
   MidiMessage *message;
-  Array<float> values;
+  Array<double> values;
   MidiOutPort *midiOutPort;
-  MidiNode(int typ, double wait, float *vals=0, int num_vals=0) ;
-  MidiNode(int typ, double wait, float chan, float data1);
-  MidiNode(int typ, double wait, float chan, float data1, float data2);
+  MidiNode(int typ, double wait, double *vals=0, int num_vals=0) ;
+  MidiNode(int typ, double wait, double chan, double data1);
+  MidiNode(int typ, double wait, double chan, double data1, double data2);
   MidiNode(MidiMessage *msg);
   ~MidiNode();
   void process();
@@ -198,9 +198,9 @@ class MidiOutPort : public Thread //, public AsyncUpdater
   void addNode(MidiNode *n);
   MidiNodeComparator comparator;
 
-  void sendNote(double wait, double dur, float key, float vel, float chan,
+  void sendNote(double wait, double dur, double key, double vel, double chan,
 		bool toseq);
-  void sendData(int type, double wait, float chan, float data1, float data2,
+  void sendData(int type, double wait, double chan, double data1, double data2,
 		bool toseq);
   void sendMessage(MidiMessage *message, bool toseq);
 
@@ -211,9 +211,9 @@ class MidiOutPort : public Thread //, public AsyncUpdater
 
 
   // microtuning support
-  static float channeltunings [16][16] ;
+  static double channeltunings [16][16] ;
   int   microdivisions;  // divisions per semitone: 1-16
-  float microincrement; // size of tuning's division (1.0=semitone)
+  double microincrement; // size of tuning's division (1.0=semitone)
   int   microchancount; // number of addressable channels in tuning
   int   microchanblock; // total number of channels used by tuning
   bool  avoiddrumtrack; // if true then avoid channel 9
@@ -236,12 +236,12 @@ class MidiOutPort : public Thread //, public AsyncUpdater
   // instruments
   int programchanges[16];
   int getInstrument(int chan);
-  void getInstrumentValues(Array<int>& vals);
+  void getInstruments(Array<int>& vals);
   void setInstrument(int chan, int pc, bool send=false);
   bool isInstrumentChannel(int chan);
   void sendInstruments();
   void resetInstruments();
-  void showInstrumentsWindow();
+  void openInstrumentsDialog();
 
   
   // Midi Sequence Capturing

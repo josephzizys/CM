@@ -5,6 +5,9 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
+#include <iostream>
+#include <string>
+#include <math.h>
 #include "juce.h"
 #include "Enumerations.h"
 #include "CmSupport.h"
@@ -12,8 +15,12 @@
 #include "Csound.h"
 #include "Console.h"
 #include "Syntax.h"
-#include <iostream>
-#include <string>
+
+#define POWF(a,b)	(powf( (a) , (b) ))
+#define LOGF(a)		(logf( (a) ))
+#define EXPF(a)		(expf( (a) ))
+#define SQRTF(a)	(sqrtf( (a) ))
+#define TANF(a)		(tanf( (a) ))
 
 #ifdef _MSC_VER
 double log2(double n)
@@ -110,20 +117,14 @@ void cm_load_sal_file(char *path)
   //SalSyntax::getInstance()->loadFile( String(path) );  
 }
 
-#if (defined(PPC) && defined(MACOSX))
-#define POWF(a,b)	(juce::powf( (a) , (b) ))
-#define LOGF(a)		(juce::logf( (a) ))
-#define EXPF(a)		(juce::expf( (a) ))
-#define SQRTF(a)	(juce::sqrtf( (a) ))
-#define TANF(a)		(juce::tanf( (a) ))
-#else
-#include <math.h>
-#define POWF(a,b)	(powf( (a) , (b) ))
-#define LOGF(a)		(logf( (a) ))
-#define EXPF(a)		(expf( (a) ))
-#define SQRTF(a)	(sqrtf( (a) ))
-#define TANF(a)		(tanf( (a) ))
-#endif
+//#if (defined(PPC) && defined(MACOSX))
+//#define POWF(a,b)	(juce::powf( (a) , (b) ))
+//#define LOGF(a)		(juce::logf( (a) ))
+//#define EXPF(a)		(juce::expf( (a) ))
+//#define SQRTF(a)	(juce::sqrtf( (a) ))
+//#define TANF(a)		(juce::tanf( (a) ))
+//#else
+//#endif
 
 double cm_log_ten(double num)
 {
@@ -143,7 +144,7 @@ double cm_log_two(double num)
 
 // mapping, scaling and offsetting
 
-float cm_rescale(float x, float x1, float x2, float y1, float y2, float b)
+double cm_rescale(double x, double x1, double x2, double y1, double y2, double b)
 {
   if (x >= x2) 
     return y2;
@@ -153,51 +154,56 @@ float cm_rescale(float x, float x1, float x2, float y1, float y2, float b)
     return (((( y2 - y1) / (x2 - x1)) * (x - x1)) + y1);
   else
     {
-      float p = (x - x1) / (x2 - x1);
+      double p = (x - x1) / (x2 - x1);
       return y1 + ( ( (y2 - y1) / (b - 1.0)) * (POWF(b, p) - 1.0));
     }
 }
 
-int cm_discrete(float x, float x1, float x2, int i1, int i2, float b)
+int cm_discrete(double x, double x1, double x2, int i1, int i2, double b)
 {
   // return integers from a to b as n goes from 0.0 to 1.0
-  //  return (int)round(cm_rescale(x,x1,x2,(float)i1, (float)i2, b));
-  return (int)floor(cm_rescale(x,x1,x2,(float)i1, (float)i2, b));
+  //  return (int)round(cm_rescale(x,x1,x2,(double)i1, (double)i2, b));
+  return (int)floor(cm_rescale(x,x1,x2,(double)i1, (double)i2, b));
 }
 
-int cm_float_to_fixnum(float f)
+int cm_float_to_fixnum(double f)
 {
   return (int)round(f);
 }
 
-float cm_decimals(float val, int places)
+double cm_decimals(double val, int places)
 {
-  float p10 = (float)(10 ^ places);
+  double p10 = (double)(10 ^ places);
   return round(val*p10) / p10;
 }
 
-float cm_quantize(float val, float step)
+double cm_quantize(double val, double step)
 {
   return floor( (val/step) + .5) * step;
 }
 
-float cm_rhythm_to_seconds(float beats, float tempo, float beat)
+double cm_rhythm_to_seconds(double beats, double tempo, double beat)
 {
-  return (float) ((beats / beat) * (60.0f / tempo)) ;
+  return (double) ((beats / beat) * (60.0f / tempo)) ;
 }
 
-float cm_cents_to_scaler(int cents)
+double cm_cents_to_scaler(int cents)
 {
-  float p = ((float)cents)/1200.0f;
+  double p = ((double)cents)/1200.0f;
   return POWF(2.0f,p);
 }
 
-int cm_scaler_to_cents(float scaler)
+int cm_scaler_to_cents(double scaler)
 {
-  return (int)((LOGF(scaler)/LOGF(2.0)) * 1200);
+  return round((LOGF(scaler)/LOGF(2.0)) * 1200.0);
 }
 
-float cm_expl(float powr, float y0, float y1, float base)
+double cm_scaler_to_steps(double scaler)
+{
+  return cm_scaler_to_cents(scaler)/100.0;
+}
+
+double cm_expl(double powr, double y0, double y1, double base)
 {
   if (powr < 0)
     powr=0.0;
@@ -208,39 +214,39 @@ float cm_expl(float powr, float y0, float y1, float base)
 		  ( pow(base, powr) - 1.0 )));
 }
 
-float cm_explseg( int i, int len, float sum, float powr)
+double cm_explseg( int i, int len, double sum, double powr)
 {
   if (i >= len)
     i += -1;
-  float x1 = ((float)(i+1)) / ((float)len);
-  float x2 = ((float)i) / ((float)len);
-  float f1 = cm_expl( x1, 0.0, 1.0, powr);
-  float f2 = (i <= 0) ? 0.0 : cm_expl( x2, 0.0, 1.0, powr);
+  double x1 = ((double)(i+1)) / ((double)len);
+  double x2 = ((double)i) / ((double)len);
+  double f1 = cm_expl( x1, 0.0, 1.0, powr);
+  double f2 = (i <= 0) ? 0.0 : cm_expl( x2, 0.0, 1.0, powr);
   return ( sum * (f1 - f2) );
 }
 
-float cm_geoseg(int i, int len, float sum, float base) 
+double cm_geoseg(int i, int len, double sum, double base) 
 {
   if (len==0)
     return 0.0;
-  float a=sum * ((1.0 - base) / (1.0 - pow(base, len)));
+  double a=sum * ((1.0 - base) / (1.0 - pow(base, len)));
   return  a * pow(base, i);
 }
 
 #define A00 6.875   // keynum 0
 
-float cm_hertz_to_keynum (float hz)
+double cm_hertz_to_keynum (double hz)
 {
   // subtract 3 shifts to A
   return (((LOGF(hz) - LOGF(A00) ) / LOGF(2)) * 12) - 3;
 }
 
-float cm_keynum_to_hertz(float kn)
+double cm_keynum_to_hertz(double kn)
 {
   return A00 * pow(2, ((kn + 3) / 12));
 }
 
-int cm_keynum_to_pc (float kn)
+int cm_keynum_to_pc (double kn)
 {
   return ((int)kn) % 12;
 }
@@ -256,22 +262,22 @@ void cm_ranseed(long s)
   ranstate.setSeed((int64)s);
 }
 
-float cm_ranfloat(float f)
+double cm_ranfloat(double f)
 {
   if (f == 0.0)
     return 0.0;
   if (f == 1.0)
-    return ranstate.nextFloat();
-  return (ranstate.nextFloat() * f);
+    return ranstate.nextDouble();
+  return (ranstate.nextDouble() * f);
 }
 
-float cm_ranfloat2(float f1, float f2)
+double cm_ranfloat2(double f1, double f2)
 {
   if (f1 == f2)
     return f1;
   if (f1 < f2)
-    return (f1 + (ranstate.nextFloat() * (f2-f1)));
-  return (float) (f1 - (ranstate.nextFloat() * (f1-f2)));
+    return (f1 + (ranstate.nextDouble() * (f2-f1)));
+  return (double) (f1 - (ranstate.nextDouble() * (f1-f2)));
 }
 
 int cm_ranint(int i)
@@ -292,113 +298,113 @@ int cm_ranint2(int i1, int i2)
   return i1 - ranstate.nextInt(i1-i2);
 }
 
-float cm_ranlow()
+double cm_ranlow()
 {
-  return juce::jmin( ranstate.nextFloat(), ranstate.nextFloat());
+  return juce::jmin( ranstate.nextDouble(), ranstate.nextDouble());
 }
 
-float cm_ranhigh()
+double cm_ranhigh()
 {
-  return juce::jmax( ranstate.nextFloat(), ranstate.nextFloat());
+  return juce::jmax( ranstate.nextDouble(), ranstate.nextDouble());
 }
 
-float cm_ranmiddle()
+double cm_ranmiddle()
 {
-  return (ranstate.nextFloat() + ranstate.nextFloat()) / 2.0f;
+  return (ranstate.nextDouble() + ranstate.nextDouble()) / 2.0f;
 }
 
-float cm_ranbeta (float a, float b)
+double cm_ranbeta (double a, double b)
 {
-  float ra=1.0/a, rb=1.0/b, r1, r2, y1, y2, sum;
+  double ra=1.0/a, rb=1.0/b, r1, r2, y1, y2, sum;
   while (true) {
-    r1 = ranstate.nextFloat();
-    r2 = ranstate.nextFloat();
+    r1 = ranstate.nextDouble();
+    r2 = ranstate.nextDouble();
     y1 = POWF(r1,ra);
     y2 = POWF(r2,rb);
     sum=y1+y2;
-    if ( sum <= 1.0) return (float) (y1 / sum);
+    if ( sum <= 1.0) return (double) (y1 / sum);
   }
 }
 
-float cm_ranexp (float lambda)
+double cm_ranexp (double lambda)
 {
-  return (- LOGF(1.0f - ranstate.nextFloat())) / lambda;
+  return (- LOGF(1.0f - ranstate.nextDouble())) / lambda;
 }
 
-float cm_ranexp2 (float lambda)
+double cm_ranexp2 (double lambda)
 {
-  float ee = (2 * EXPF(-1.0));
-  float u, v;
+  double ee = (2 * EXPF(-1.0));
+  double u, v;
   while ( true ) {
-    u = 1.0 - ranstate.nextFloat();
-    v = ee * ranstate.nextFloat();
+    u = 1.0 - ranstate.nextDouble();
+    v = ee * ranstate.nextDouble();
     if ( v <= (ee * u * LOGF(u)) )
       return (v / u) / lambda;
   }
 }
 
-//float cm_gauss() {
-//  float a = ranstate.nextFloat();
-//  float b = ranstate.nextFloat();
-//  return (float)( SQRTF(-2.0 * LOGF(1.0-a)) *
-//		  cosf(juce::float_Pi * 2 * b) );
+//double cm_gauss() {
+//  double a = ranstate.nextDouble();
+//  double b = ranstate.nextDouble();
+//  return (double)( SQRTF(-2.0 * LOGF(1.0-a)) *
+//		  cosf(juce::double_Pi * 2 * b) );
 //}
 
-float cm_rangauss (float sigma, float mu)
+double cm_rangauss (double sigma, double mu)
 {
   // sigma=stand dev, mu=mean
-  float x, y, r2;
+  double x, y, r2;
   do
     {
-      x = -1 + 2 * ranstate.nextFloat();
-      y = -1 + 2 * ranstate.nextFloat();
+      x = -1 + 2 * ranstate.nextDouble();
+      y = -1 + 2 * ranstate.nextDouble();
       r2 = x * x + y * y;
     }
   while (r2 > 1.0 || r2 == 0);
   return (sigma * y * SQRTF(-2.0 * LOGF(r2) / r2))+mu;
 }
 
-float cm_rancauchy()
+double cm_rancauchy()
 {
-  return(TANF(juce::float_Pi*(ranstate.nextFloat() - 0.5f)));
+  return(TANF(juce::double_Pi*(ranstate.nextDouble() - 0.5f)));
 }
 
-int cm_ranpoisson (float lambda)
+int cm_ranpoisson (double lambda)
 {
-  float b = EXPF( - lambda);
+  double b = EXPF( - lambda);
   int n = 0;
-  float p = 1.0;
+  double p = 1.0;
   while (true)
     {
-      p = p * ranstate.nextFloat();
+      p = p * ranstate.nextDouble();
       n++;
       if ( p < b ) return n;
     }
 }
 
-float cm_rangamma (float nu)
+double cm_rangamma (double nu)
 {
-  float r=1.0;
+  double r=1.0;
   int n=(int)round(nu);
   for (int i=0; i<n; i++)
-    r = r * (1 - ranstate.nextFloat());
+    r = r * (1 - ranstate.nextDouble());
   return - LOGF(r);
 }
 
 //// http://home.earthlink.net/~ltrammell/tech/pinkalg.htm
 //// this doesnt seem to work.. too bad as it would keep the load even
 //#define NGEN 3
-//float av[NGEN] = {0.0046306,  0.0059961,  0.0083586};
-//float pv[NGEN] = {0.31878,  0.77686,  0.97785};
+//double av[NGEN] = {0.0046306,  0.0059961,  0.0083586};
+//double pv[NGEN] = {0.31878,  0.77686,  0.97785};
 //
 //// (loop for x in  '(0.0046306  0.0059961  0.0083586) collect (* x 2 (- (random 1.0) .5)))
-//float randreg[NGEN] = {0.0018758787, -0.0027519993, 0.0025562837};
-//float cm_ranpink() {
+//double randreg[NGEN] = {0.0018758787, -0.0027519993, 0.0025562837};
+//double cm_ranpink() {
 //  // Update each generator state per probability schedule
-//  float rv = ranstate.nextFloat();
+//  double rv = ranstate.nextDouble();
 //  for (int i=0; i<NGEN; i++)
 //    if (rv > pv[i])
-//      randreg[i] = av[i] * 2 * (ranstate.nextFloat()-0.5);
+//      randreg[i] = av[i] * 2 * (ranstate.nextDouble()-0.5);
 //  // sum the generators
 //  return randreg[0] + randreg[1] + randreg[2];
 //}
@@ -700,7 +706,7 @@ void mp_set_output_file(char* path)
     performCommand(CommandIDs::MidiSeqSetFile, 0, String(path));
 }
 
-void mp_send_note(double time, double dur, float key, float vel, float chn) 
+void mp_send_note(double time, double dur, double key, double vel, double chn) 
 {
   Scheme* scm=Scheme::getInstance();
   if (scm->scoremode)
@@ -716,8 +722,8 @@ void mp_send_note(double time, double dur, float key, float vel, float chn)
       sendNote(time, dur, key, vel, chn, false);
 }
 
-void mp_send_data(int type, double time, float chan, 
-		  float data1, float data2)
+void mp_send_data(int type, double time, double chan, 
+		  double data1, double  data2)
 {
   Scheme* scm=Scheme::getInstance();
   if (scm->scoremode)

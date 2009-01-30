@@ -23,7 +23,7 @@ juce_ImplementSingleton(MidiInPort)
 //  Nodes
 //
 
-MidiNode::MidiNode(int typ, double wait, float *vals, int num_vals)
+MidiNode::MidiNode(int typ, double wait, double *vals, int num_vals)
   : type (0), time (0.0), message (NULL), midiOutPort (NULL)
 { 
   type=typ;
@@ -32,7 +32,7 @@ MidiNode::MidiNode(int typ, double wait, float *vals, int num_vals)
     values.add(vals[i]);
 }
 
-MidiNode::MidiNode(int typ, double wait, float chan, float data1) 
+MidiNode::MidiNode(int typ, double wait, double chan, double data1) 
   : type (0), time (0.0), message (NULL), midiOutPort (NULL)
 {
   type=typ;
@@ -41,8 +41,8 @@ MidiNode::MidiNode(int typ, double wait, float chan, float data1)
   values.add(data1);
 }
 
-MidiNode::MidiNode(int typ, double wait, float chan, float data1,
-		   float data2) 
+MidiNode::MidiNode(int typ, double wait, double chan, double data1,
+		   double data2) 
   : type (0), time (0.0), message (NULL), midiOutPort (NULL)
 {
   type=typ;
@@ -74,7 +74,8 @@ void MidiNode::process()
       if ( values[DATA2] > 0.0 )
 	{
 	  // handle velocity ranges 0.0-1.0 or 0.0-127.0
-	  float vel=(values[DATA2]>1.0) ? (values[DATA2]/127.0f) : values[DATA2] ;
+	  float vel=(values[DATA2]>1.0) ? 
+	    (values[DATA2]/127.0) : values[DATA2] ;
 	  MidiMessage msg=MidiMessage::noteOn((int)values[DATA0]+1, 
 					      (int)values[DATA1], 
 					      vel);
@@ -794,12 +795,12 @@ void MidiOutPort::addNode(MidiNode *n) {
   notify();
 }
 
-void MidiOutPort::sendNote(double wait, double duration, float keynum, 
-			   float amplitude, float channel, bool toseq) 
+void MidiOutPort::sendNote(double wait, double duration, double keynum, 
+			   double amplitude, double channel, bool toseq) 
 {
   //  std::cout << "channel=" << channel << "\n";
 
-  jlimit( (float)0.0, (float)15.0, channel);
+  jlimit( 0.0, 15.0, channel);
 
   //  std::cout << "after jlimit channel=" << channel << "\n";
 
@@ -813,7 +814,7 @@ void MidiOutPort::sendNote(double wait, double duration, float keynum,
       int chan=(((int)channel) % microchancount) * microdivisions;
       // calculate integer midi key quantize user's keynum to microtonal
       // resolution size. this may round up to the next keynum
-      float foo=keynum;
+      double foo=keynum;
       // quantize keynumber to tuning resolution. if it rounds up (or
       // down) to an integer keynum then we dont need to microtune
       keynum = cm_quantize( keynum, microincrement);
@@ -859,8 +860,8 @@ void MidiOutPort::sendNote(double wait, double duration, float keynum,
     }
 }
 
-void MidiOutPort::sendData(int type, double wait, float chan, 
-			   float data1, float data2, bool toseq)
+void MidiOutPort::sendData(int type, double wait, double chan, 
+			   double data1, double data2, bool toseq)
 {
   if (toseq)
     {
@@ -873,7 +874,7 @@ void MidiOutPort::sendData(int type, double wait, float chan,
 				 wait);
       else if (type==MidiNode::MM_ON)
 	captureSequence.
-	  addEvent(MidiMessage::noteOn(ch+1, d1, data2),
+	  addEvent(MidiMessage::noteOn(ch+1, d1, (float)data2),
 		   wait);
       else if (type==MidiNode::MM_TOUCH)
 	captureSequence.
@@ -915,31 +916,31 @@ void MidiOutPort::sendMessage(MidiMessage *message, bool toseq)
 }
 
 /*
-void MidiOutPort::sendOn(double wait, float key, float vel, float chan) {
+void MidiOutPort::sendOn(double wait, double key, double vel, double chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
   addNode( new MidiNode(MidiNode::MM_ON, wait, chan, key, vel) );
 }
 
-void MidiOutPort::sendOff(double wait, float key, float vel, float chan) {
+void MidiOutPort::sendOff(double wait, double key, double vel, double chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
   addNode( new MidiNode(MidiNode::MM_OFF, wait, chan, key) );
 }
 
-void MidiOutPort::sendProg(double wait, float prog, float chan) {
+void MidiOutPort::sendProg(double wait, double prog, double chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
   addNode( new MidiNode(MidiNode::MM_PROG, wait, chan, prog) );
 }
 
-void MidiOutPort::sendCtrl(double wait, float ctrl, float val, float chan) {
+void MidiOutPort::sendCtrl(double wait, double ctrl, double val, double chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
   addNode( new MidiNode(MidiNode::MM_CTRL, wait, chan, ctrl, val) );
 }
 
-void MidiOutPort::sendBend(double wait, float bend, float chan) {
+void MidiOutPort::sendBend(double wait, double bend, double chan) {
   // dont do anything if there is no open output port!
   if ( device == NULL ) return;
   addNode( new MidiNode(MidiNode::MM_BEND, wait, chan, bend) );
@@ -953,20 +954,15 @@ void MidiOutPort::testOutput ()
   double time = 0;
   for (int x=0; x<12; x++) {
     // vals[0]=keynum, [1]=velocity, [2]=channel
-    float key = x + (12 * (3 + Random::getSystemRandom().nextInt(5) )) ;
-    float vel = 32.0 + Random::getSystemRandom().nextInt(64);
-    // MILLI
-    // float dur = ((( 2 + Random::getSystemRandom().nextInt(6)) ^ 2) * (60.0 / 1000.0));
-    float dur = .1 + (Random::getSystemRandom().nextInt(5) * .1);
+    double key = x + (12 * (3 + Random::getSystemRandom().nextInt(5) )) ;
+    double vel = 32.0 + Random::getSystemRandom().nextInt(64);
+    double dur = .1 + (Random::getSystemRandom().nextInt(5) * .1);
     // add jiggle for microtuning testing...
-    float jig= Random::getSystemRandom().nextFloat();
+    double jig= Random::getSystemRandom().nextDouble();
     sendNote(time, dur, key + jig, vel, 0.0, false);
-    // MILLI
     time += ((Random::getSystemRandom().nextInt(5) ^ 2) * (60.0 / 1000.0));
   }
 }
-
-
 
 ///
 /// Microtuning
@@ -1008,7 +1004,7 @@ void MidiOutPort::testOutput ()
        (format t "}~:[,~%~;};~%~]" (= div 16))))
 */
 
-float MidiOutPort::channeltunings[16][16] =
+double MidiOutPort::channeltunings[16][16] =
 {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
 {0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5},
 {0.0, 0.33333334, 0.6666667, 0.0, 0.33333334, 0.6666667, 0.0, 0.33333334, 0.6666667, 0.0, 0.33333334, 0.6666667, 0.0, 0.33333334, 0.6666667, 0.0},
@@ -1038,7 +1034,7 @@ void MidiOutPort::setTuning(int tune, bool send) {
   jlimit(1,16,tune);
   microdivisions=tune;  // tuning (1-16) = divisions per semitone.
   microincrement=1.0/tune; // size of microdivision as fraction of 1
-  microchancount=(int)(16.0/((float)microdivisions)); // num user addressable microchans
+  microchancount=(int)(16.0/((double)microdivisions)); // num user addressable microchans
   microchanblock=microchancount*microdivisions; // total num chans claimed
   //  printf("Tuning=%d, size=%f, chans=%d, claim=%d\n", microdivisions,
 	 //	 microincrement, microchancount, microchanblock);
@@ -1061,7 +1057,7 @@ int MidiOutPort::getTuningChannels(int t) {
   // return number of addressable channels
   //return microchancount;
   jlimit(1,16,t);
-  return (int)(16.0/((float)t));
+  return (int)(16.0/((double)t));
 }
 
 int MidiOutPort::getTuningChannelsClaimed(int t) {
@@ -1122,26 +1118,35 @@ void MidiOutPort::getTuningValues(Array<int>& vals)
 				     1)));
 }		
 
-void MidiOutPort::getInstrumentValues(Array<int>& vals)
+/*=======================================================================*
+                               Instrument Assignment
+ *=======================================================================*/
+
+int MidiOutPort::getInstrument(int chan) 
+{
+  return programchanges[chan];
+}
+
+
+void MidiOutPort::getInstruments(Array<int>& vals)
 {
   for (int chan=0; chan<16; chan++)
     vals.add(getInstrument(chan));
 }
 
-int MidiOutPort::getInstrument(int chan) {
-  return programchanges[chan];
-}
-
-void MidiOutPort::setInstrument(int chan, int pc, bool send) {
+void MidiOutPort::setInstrument(int chan, int pc, bool send) 
+{
   programchanges[chan]=pc;
 }
 
-void MidiOutPort::resetInstruments() {
+void MidiOutPort::resetInstruments()
+{
   for (int c=0; c<16; c++)
     programchanges[c]=0;
 }
 
-bool MidiOutPort::isInstrumentChannel(int chan) {
+bool MidiOutPort::isInstrumentChannel(int chan)
+{
   // true if physical chan accepts instruments (ie is not a channel
   // claimed by microtuning)
   return (0.0 == channeltunings[getTuning()-1][chan]);
@@ -1149,16 +1154,19 @@ bool MidiOutPort::isInstrumentChannel(int chan) {
 
 void MidiOutPort::sendInstruments() 
 {
-  if (! isOpen() )
-    return;
-  
-  for (int c=0; c<16; c++)
+  if (isOpen())
     {
-      //device->sendMessageNow( MidiMessage::programChange(c+1,programchanges[c]));
-      MidiMessage* m=new MidiMessage((0xc0 | c), programchanges[c]);
-      addNode(new MidiNode(m));
+      for (int c=0; c<16; c++)
+	{
+	  MidiMessage* m=new MidiMessage((0xc0 | c), programchanges[c]);
+	  addNode(new MidiNode(m));
+	}
     }
 }
+
+/*=======================================================================*
+                               Midifile Writing
+ *=======================================================================*/
 
 void MidiOutPort::setOutputFile(String filename)
 {
@@ -1216,7 +1224,7 @@ void MidiOutPort::saveSequence(bool ask)
   if (sequenceFile.insts)
     {
       data.clear();
-      getInstrumentValues(data);
+      getInstruments(data);
       for (int c=0; c<data.size(); c++)
 	track0.addEvent(MidiMessage::programChange(c, data[c]));
     }  
@@ -1530,3 +1538,313 @@ void MidiInPort::handlePartialSysexMessage(MidiInput *dev,
 {
 }
 
+/*=======================================================================*
+                         Instrument Dialog
+ *=======================================================================*/
+
+#ifdef GRACE
+
+class GMAssignmentList : public ListBox,
+			 public ListBoxModel
+{
+public:
+  MidiOutPort *port;
+  int instruments[16];
+  bool changed;
+
+  GMAssignmentList(MidiOutPort *p) 
+    : ListBox( T("Assignment List"), 0),
+      port (0),
+      changed(false)
+  {
+    port=p;
+    setModel(this);
+    for (int c=0;c<16;c++)
+      instruments[c]=port->programchanges[c];
+  }
+
+  ~GMAssignmentList() {}
+
+  bool isChanged() {return changed;}
+
+  bool setChanged(bool b) {changed=b;}
+
+  void setInstrument(int chan, int inst) 
+  {
+    // chan is a physcial channel 0-15
+    instruments[chan]=inst;
+    chan++;
+    // now set all the microtuned channels to the same instrument!
+    while ( (chan<16) && !port->isInstrumentChannel(chan) )
+      {
+	instruments[chan]=inst;
+	chan++;
+      }
+  }
+
+  int rowToChannel(int r)
+  {
+    // return physical channel number of row
+    int t=port->getTuning();
+    if ( r < port->getTuningChannels(t) )
+      return r * port->getTuningDivisions(t);
+    else
+      return port->getTuningChannelsClaimed(t) +
+	(r - port->getTuningChannels(t));
+  }
+
+  int getNumRows()
+  {
+    int num=0;
+    // any channel with a zero tuning value is an assignable channel
+    for (int c=0; c<16; c++)
+      if ( port->isInstrumentChannel(c) )
+	num++;
+    return num;
+  }
+  
+  void paintListBoxItem (int rowNumber, Graphics& g, int width, int height,
+			 bool rowIsSelected)
+  {
+    if (rowIsSelected)
+      g.fillAll(Colours::lightgoldenrodyellow); 
+    g.setColour (Colours::black);
+    g.setFont (height * 0.7f);
+    
+    int tune=port->getTuning(), chan;
+    String chantext, tunetext, insttext;
+    // set chantext to microchannel number or to physcial channel number
+    // if channel is above them
+    if (rowNumber < port->getTuningChannels(tune))
+      {
+	chantext=String(rowNumber);
+	tunetext=port->getTuningName(tune);
+	// actual channel number
+	chan=rowNumber*port->getTuningDivisions(tune);
+      }
+    else 
+      { 
+	// row is above microchannels, show its physical channel number
+	// and semitonal tuning. physical channels start after the last
+	// micochannel used.
+	chan=port->getTuningChannelsClaimed(tune) +
+	  (rowNumber - port->getTuningChannels(tune));
+	chantext=String(chan);
+	tunetext=port->getTuningName(1);
+      }    
+    insttext=MidiMessage::getGMInstrumentName(instruments[chan]);
+    // these positions need to be kept in same position as the labels
+    // in component view
+    g.drawText (chantext, 5, 0, 56, height, Justification::centred,true);
+    g.drawText (tunetext, 70-5, 0, 80, height, Justification::centredLeft,true);
+    g.drawText (insttext, 156, 0, width-156, height, 
+		Justification::centredLeft,true);
+  }
+
+  void revertInstruments()
+  {
+    for (int c=0;c<16;c++)
+      instruments[c]=port->programchanges[c];
+  }
+  
+  void saveInstruments()
+  {
+    for (int c=0;c<16;c++)
+      port->programchanges[c]=instruments[c];
+  }
+};
+
+class GMInstrumentList : public ListBox, 
+			 public ListBoxModel
+{
+public:
+  GMAssignmentList *assignments;
+
+  GMInstrumentList(GMAssignmentList *list)
+    : ListBox( T("GM Instrument List"), 0),
+    assignments (0)
+  {
+    assignments=list;
+    setModel(this);
+  }
+
+  ~GMInstrumentList() {} 
+
+  int getNumRows() {return 128;}
+
+  void paintListBoxItem (int rowNumber, Graphics& g, int width, int height,
+			 bool rowIsSelected)
+  {
+    if (rowIsSelected)
+      g.fillAll(Colours::lightgoldenrodyellow);
+    g.setColour (Colours::black);
+    g.setFont (height * 0.7f);
+    g.drawText (MidiMessage::getGMInstrumentName(rowNumber) ,
+		5, 0, width, height,
+		Justification::centredLeft, true);
+  }
+  void listBoxItemClicked(int row, const MouseEvent &e) ;
+};
+
+//
+// Instrument Dialog View
+//
+
+class InstrumentView : public Component, public ButtonListener
+{
+public:
+  MidiOutPort *port;
+  Label *label1, *label2, *label3, *label4;
+  GMAssignmentList *assignments;
+  GMInstrumentList *instruments;
+  TextButton *button1, *button2;
+
+  InstrumentView(MidiOutPort *p)
+  {
+    port=p;
+    label1=new Label(String::empty, T("Channel"));
+    label2=new Label(String::empty, T("Tuning"));
+    label3=new Label(String::empty, T("Instrument"));
+    label4=new Label(String::empty, T("Instruments"));
+    Font f=label1->getFont();
+    f.setBold(true);
+    label1->setFont(f);
+    label2->setFont(f);
+    label3->setFont(f);
+    label4->setFont(f);
+    addAndMakeVisible(label1 );
+    addAndMakeVisible(label2 );
+    addAndMakeVisible(label3 );
+    addAndMakeVisible(label4 );
+    addAndMakeVisible(assignments=new GMAssignmentList(p));
+    assignments->setColour(ListBox::outlineColourId, Colours::black);
+    assignments->setOutlineThickness(1);
+    addAndMakeVisible(instruments=new GMInstrumentList(assignments));
+    instruments->setColour(ListBox::outlineColourId, Colours::black);
+    instruments->setOutlineThickness(1);
+    //    addAndMakeVisible(button1=new TextButton(T("Revert")) );
+    //    button1->addButtonListener(this);
+    // revert button initially disabled
+    //    button1->setEnabled(false);
+    addAndMakeVisible(button2=new TextButton(T("Send")) );
+    button2->addButtonListener(this);
+    setSize(10 + 320 + 10 + 170 + 10, 450);
+    setVisible(true);
+  }
+
+  ~InstrumentView() 
+  {
+    std::cout << "DELETING INSTRUMENT VIEW\n";
+    port=0;
+    deleteAndZero(label1);
+    deleteAndZero(label2);
+    deleteAndZero(label3);
+    deleteAndZero(label4);
+    deleteAndZero(instruments);
+    deleteAndZero(assignments);
+    //    deleteAndZero(button1);
+    deleteAndZero(button2);
+  }
+
+  void resized() 
+  {
+    int asslistwidth=320;
+    int inslistwidth=170;
+    // 
+    label1->setBounds(10, 10, 56, 24); // Channel
+    label2->setBounds(70, 10, 72, 24); // Tuning
+    label3->setBounds(160, 10, 78, 24); // Instrument
+    label4->setBounds(10+320+10, 8, inslistwidth, 24);
+    // list boxes
+    assignments->setBounds(10, 30, asslistwidth, assignments->getRowHeight()*16);
+    instruments->setBounds(10 + 320 + 10,
+			   30,
+			   inslistwidth,
+			   instruments->getRowHeight()*16);
+    int mid=getWidth()/2;
+    //    button1->setSize(60,24);
+    //    button1->setTopLeftPosition(mid - button1->getWidth() - 16,
+    //				assignments->getBottom() + 24);
+    button2->setSize(100,24);
+    button2->setTopLeftPosition(mid-50, assignments->getBottom() + 20);
+  }
+
+  void buttonClicked (Button *button) ;
+
+};
+
+// these are the mouse down functions
+
+void GMInstrumentList::listBoxItemClicked(int row, const MouseEvent &e) 
+{
+  // row == GM instrument number
+  int inst=row;
+  int arow=assignments->getSelectedRow(); // selected row in assignments list
+  if (arow<0) return;
+  int chan=assignments->rowToChannel(arow);
+  assignments->setInstrument(chan,inst);
+  assignments->repaintRow(arow);
+  // Mark assignment list as changed and enable Revert button
+  assignments->setChanged(true);
+  //  ((InstrumentView *)getParentComponent())->button1->setEnabled(true);
+}
+
+void InstrumentView::buttonClicked (Button *button) 
+{
+  if ( button->getName() == T("Send") ) 
+    {
+      //printf("SENDING!\n");
+      // copy/send program changes, clear changed flag, deselect all
+      // rows in list boxes and disable Revert button
+      assignments->saveInstruments();
+      port->sendInstruments();
+      assignments->setChanged(false);
+      assignments->deselectAllRows();
+      instruments->deselectAllRows();
+      //      button1->setEnabled(false);
+    }
+  else if ( button->getName() == T("Revert") )
+    {
+      // restore Midi Port's program changes, clear changed flag,
+      // deselect all rows in list boxes and disable Revert button
+      assignments->revertInstruments();
+      assignments->setChanged(false);
+      assignments->deselectAllRows();
+      //assignments->updateContent();
+      for (int r=0;r<assignments->getNumRows(); r++)
+	assignments->repaintRow(r);
+      instruments->deselectAllRows();
+      //      button1->setEnabled(false);
+    }
+}
+
+class MidiInstrumentsWindow : public DocumentWindow
+{
+public:
+  void closeButtonPressed() {delete this;}
+  MidiInstrumentsWindow(InstrumentView* comp) :
+    DocumentWindow(String("Instruments"), Colour(0xffe5e5e5),
+		   DocumentWindow::closeButton, true)
+  {
+    centreWithSize(comp->getWidth(),comp->getHeight());
+    setContentComponent(comp);
+    setResizable(false, false); 
+    setUsingNativeTitleBar(true);
+    setDropShadowEnabled(true);
+    setVisible(true);
+  }
+  ~MidiInstrumentsWindow() {}
+};
+
+void MidiOutPort::openInstrumentsDialog ()
+{
+  //  DialogWindow::showModalDialog (T("Instruments"),
+  //				 new InstrumentView(this),
+  //				 0,
+  //				 Colour(0xffe5e5e5),
+  //				 true);
+  new MidiInstrumentsWindow(new InstrumentView(this));
+}
+
+
+#endif

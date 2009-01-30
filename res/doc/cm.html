@@ -989,7 +989,7 @@ more information.  </p>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">ratio-&gt;cents</span>
-      (<var class="arg">num</var>)
+      (<var class="arg">scaler</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -997,13 +997,31 @@ more information.  </p>
 </table>
 <blockquote>
 <p>
-Converts a ratio <var>num</var> or list of the same to the equivalent in cents.
+Converts a frequency ratio <var>scaler</var> or list of the same to the equivalent in cents.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="cents-_scaler">
+<table class="entry" id="ratio-_steps">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">ratio-&gt;steps</span>
+      (<var class="arg">scaler</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; number or list</td></tr>
+</table>
+<blockquote>
+<p>
+Converts a frequency ratio <var>scaler</var> or list of the same to the equivalent in half-steps.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="cents-_ratio">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">cents-&gt;ratio</span>
@@ -1015,7 +1033,7 @@ Converts a ratio <var>num</var> or list of the same to the equivalent in cents.
 </table>
 <blockquote>
 <p>
-Converts a <var>cent</var> value or list of the same to the ratio equivalent.
+Converts a <var>cent</var> value or list of the same to the equivalent frequency scaler.
 </p>
 </blockquote>
 <!-- END DEFINITION -->

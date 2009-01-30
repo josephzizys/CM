@@ -18,44 +18,40 @@
 (define foreign-functions
   '(
     (ffi_quit              void "cm_quit" )
-
     (ffi_print_error       void "cm_print_error" c-string)
     (ffi_print_output      void "cm_print_output" c-string bool)
     (ffi_print_values      void "cm_print_values" c-string)
-
-;    (ffi_version           c-string "cm_version" )
-;    (ffi_logo              c-string "cm_logo" )
     (ffi_shell             void "cm_shell" c-string)
     (ffi_play              void "cm_play" c-string)
-
-    (ffi_rescale           float "cm_rescale"
-			   float float float float float float)
+    (ffi_rescale           double "cm_rescale"
+			   double double double double double double)
     (ffi_descrete          int "cm_discrete"
-			   float float float int int float)
-    (ffi_float_to_fixnum   int "cm_float_to_fixnum"float)
-    (ffi_quantize          float "cm_quantize" float float)
-    (ffi_rhythm_to_seconds float "cm_rhythm_to_seconds" float float float)
-    (ffi_cents_to_scaler   float "cm_cents_to_scaler" int)
-    (ffi_scaler_to_cents   int "cm_scaler_to_cents" float)
-    (ffi_explseg           float "cm_explseg" int int float float)
-    (ffi_geoseg            float "cm_geoseg" int int float float)
-    (ffi_keynum_to_hertz   float "cm_keynum_to_hertz" float)
-    (ffi_keynum_to_pc      int "cm_keynum_to_pc" float)
-    (ffi_hertz_to_keynum   float "cm_hertz_to_keynum"  float)
+			   double double double int int double)
+    (ffi_float_to_fixnum   int "cm_float_to_fixnum" double)
+    (ffi_quantize          double "cm_quantize" double double)
+    (ffi_rhythm_to_seconds double "cm_rhythm_to_seconds" double double double)
+    (ffi_cents_to_scaler   double "cm_cents_to_scaler" int)
+    (ffi_scaler_to_cents   int "cm_scaler_to_cents" double)
+    (ffi_scaler_to_steps   double "cm_scaler_to_steps" double)
+    (ffi_explseg           double "cm_explseg" int int double double)
+    (ffi_geoseg            double "cm_geoseg" int int double double)
+    (ffi_keynum_to_hertz   double "cm_keynum_to_hertz" double)
+    (ffi_keynum_to_pc      int "cm_keynum_to_pc" double)
+    (ffi_hertz_to_keynum   double "cm_hertz_to_keynum"  double)
     (ffi_ranseed           void "cm_ranseed" integer64)
     (ffi_ranint            int "cm_ranint" int)
-    (ffi_ranfloat          float "cm_ranfloat" float)
+    (ffi_ranfloat          double "cm_ranfloat" double)
     (ffi_ranint2           int "cm_ranint2" int int)
-    (ffi_ranfloat2         float "cm_ranfloat2" float float)
-    (ffi_ranlow            float "cm_ranlow")
-    (ffi_ranhigh           float "cm_ranhigh")
-    (ffi_ranmiddle         float "cm_ranmiddle" )
-    (ffi_rangauss          float "cm_rangauss" float float)
-    (ffi_ranexp            float "cm_ranexp" float)
-    (ffi_ranbeta           float "cm_ranbeta" float float)
-    (ffi_rangamma          float "cm_rangamma" float)
-    (ffi_rancauchy         float "cm_rancauchy" )
-    (ffi_ranpoisson        int "cm_ranpoisson" float)
+    (ffi_ranfloat2         double "cm_ranfloat2" double double)
+    (ffi_ranlow            double "cm_ranlow")
+    (ffi_ranhigh           double "cm_ranhigh")
+    (ffi_ranmiddle         double "cm_ranmiddle" )
+    (ffi_rangauss          double "cm_rangauss" double double)
+    (ffi_ranexp            double "cm_ranexp" double)
+    (ffi_ranbeta           double "cm_ranbeta" double double)
+    (ffi_rangamma          double "cm_rangamma" double)
+    (ffi_rancauchy         double "cm_rancauchy" )
+    (ffi_ranpoisson        int "cm_ranpoisson" double)
     (ffi_ranpink           double "cm_ranpink" )
     (ffi_ranbrown          double "cm_ranbrown" )
     (ffi_bes_jn            double "cm_bes_jn" int double) 
@@ -92,8 +88,8 @@
     (ffi_mp_close_output void "mp_close_output" int )
     (ffi_mp_close_input void "mp_close_input" int )
     (ffi_mp_set_output_file void "mp_set_output_file" c-string )
-    (ffi_mp_send_note void "mp_send_note" double double float float float)
-    (ffi_mp_send_data void "mp_send_data" int double float float float)
+    (ffi_mp_send_note void "mp_send_note" double double double double double)
+    (ffi_mp_send_data void "mp_send_data" int double double double double)
     (ffi_mp_set_channel_mask void "mp_set_channel_mask" int)
     (ffi_mp_set_message_mask void "mp_set_message_mask" int)
     (ffi_mp_set_tuning void "mp_set_tuning" int)
@@ -215,7 +211,7 @@
 	      (name->cname (car tail))))
     ;; ffi_is_RECORD
     (format port "~%static s7_pointer ffi_is_~A(s7_scheme *s7, s7_pointer args)~%{
-  return s7_make_boolean(s7, ((s7_is_object(s7_car(args))) &&
+  return make_s7_boolean(s7, ((s7_is_object(s7_car(args))) &&
                               (s7_object_type(s7_car(args)) == ~A)));~%}" cname tag)
     ;; fii_make_RECORD
     (format port "~%static s7_pointer ffi_make_~A(s7_scheme *s7, s7_pointer args)~%{
@@ -285,11 +281,12 @@
 (define s7-value-converters
   '(
     ;;<type> <predicate>   <getter>                           <maker>
-    (float   "s7_is_real"    "s7_number_to_real(s7_car(args))"     "s7_make_real")
+
     (double  "s7_is_real"    "s7_number_to_real(s7_car(args))"     "s7_make_real")
+    (float   "s7_is_real"    "s7_number_to_real(s7_car(args))"     "s7_make_real")
     (int     "s7_is_integer" "s7_integer(s7_car(args))"            "s7_make_integer")
     (integer64  "s7_is_integer" "(int64)s7_integer(s7_car(args))"  "s7_make_integer")
-    (bool    ("s7_is_boolean" 2) "s7_boolean(s7, s7_car(args))"    "s7_make_boolean")
+    (bool    ("s7_is_boolean" 2) "s7_boolean(s7, s7_car(args))"    "make_s7_boolean")
     (c-string  "s7_is_string"  "(char*)s7_string(s7_car(args))"    "strduped_string") ;"s7_make_string"
     (SCHEMEPROC "s7_is_procedure" "s7_car(args)" "")
     (void #f #f #f #f)
@@ -419,7 +416,7 @@
 	  (pad (format #f "~%  "))
 	  (eol (format #f "~%")))
       (if (pair? floats)
-	  (set! func (string-append func pad (paramdecl floats 'float))))
+	  (set! func (string-append func pad (paramdecl floats 'double))))
       (if (pair? ints)
 	  (set! func (string-append func pad (paramdecl ints 'int))))
       (if (pair? ints64)
@@ -511,6 +508,12 @@ s7_pointer strduped_string(s7_scheme* sc, char* str) {
   s7_pointer res=s7_make_string(sc,str);
   free(str);
   return res;
+}
+
+s7_pointer make_s7_boolean(s7_scheme *s7, bool b)
+{
+  // MSVS: incompatibility between c++ bool and sndlib bool
+  return s7_make_boolean(s7, ((b) ? 1 : 0));
 }
 
 ")

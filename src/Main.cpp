@@ -27,6 +27,25 @@
 #include "Skin.h"
 #include "Preferences.h"
 
+const String Grace::getApplicationName(void)
+{
+  return T("Grace");
+}
+
+const String Grace::getApplicationVersion(void)
+{
+  return SysInfo::getVersionString(SysInfo::GRACE_VERSION);
+}
+
+bool Grace::moreThanOneInstanceAllowed(void)
+{
+  return SysInfo::isMac();
+}
+
+void Grace::anotherInstanceStarted(const juce::String& commandLine)
+{
+}
+
 void Grace::initialise(const juce::String& commandLine)
 {
   // Load preference file.
@@ -70,6 +89,11 @@ void Grace::initialise(const juce::String& commandLine)
   str=Preferences::getInstance()->getStringProp("LispInitFile");
   if (str!=String::empty)
     scm->load(File(str),false);
+}
+
+void Grace::systemRequestedQuit()
+{
+  quit();
 }
 
 void Grace::shutdown()

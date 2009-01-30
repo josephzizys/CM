@@ -42,11 +42,9 @@ void AudioManager::openAudioFilePlayer(File file, bool play)
       audiofileplayer=new AudioFilePlayer();
       // set invisible until a window opens on it.
       audiofileplayer->setVisible(false);      
-      std::cout << "AudioFilePlayer inited!\n";
     }
   if (audiofileplayer->isVisible())
     {
-      std::cout << "AudioFilePlayer is visible\n";
       AudioFilePlayerWindow* win;
       win=(AudioFilePlayerWindow*)
 	(audiofileplayer->getTopLevelComponent());
@@ -55,7 +53,6 @@ void AudioManager::openAudioFilePlayer(File file, bool play)
     }
   else
     {
-      std::cout << "Opening new AudioFilePlayer\n";
       new AudioFilePlayerWindow(audiofileplayer);
     }
   if (file!=File::nonexistent)
@@ -300,7 +297,7 @@ void AudioFilePlayer::filenameComponentChanged (FilenameComponent*)
 				 reader->sampleRate);
       fileduration=(double)
 	(reader->lengthInSamples/reader->sampleRate) ;
-      std::cout <<"File Duration=" << fileduration << "\n";;
+      //std::cout <<"File Duration=" << fileduration << "\n";;
     }
 }
 
@@ -341,7 +338,7 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
     wasStreamFinished = !wasStreamFinished;
   }
 
-  if (counter==10) // downsample to avoid juce crash
+  if (counter==100) // downsample to avoid juce crash
   {
     if (transportSource.isPlaying())
       transport->setPosition(transportSource.getCurrentPosition() /

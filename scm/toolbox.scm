@@ -110,15 +110,20 @@
 	     beats)
 	(ffi_rhythm_to_seconds beats tempo beat))))
 
-(define (cents->ratio cents)
-  (if (list? cents)
-      (map ffi_cents_to_scaler cents)
-      (ffi_cents_to_scaler cents)))
-
 (define (ratio->cents num)
   (if (list? num)
       (map ffi_scaler_to_cents num)
       (ffi_scaler_to_cents num)))
+
+(define (ratio->steps num)
+  (if (list? num)
+      (map ffi_scaler_to_steps num)
+      (ffi_scaler_to_steps num)))
+
+(define (cents->ratio cents)
+  (if (list? cents)
+      (map ffi_cents_to_scaler cents)
+      (ffi_cents_to_scaler cents)))
 
 (define (interp1 x coords base)
   (let* ((x1 (if (null? coords)

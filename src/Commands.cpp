@@ -355,7 +355,7 @@ void Grace::getCommandInfo(const CommandID id,
       break;
     case CommandIDs::MidiOutInstruments:
       info.shortName=T("Instruments...");
-      info.setActive(false);
+      info.setActive(MidiOutPort::getInstance()->isOpen());
       break;
       //
       // Midi Input
@@ -544,6 +544,9 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::MidiOutTuning:
       MidiOutPort::getInstance()->setTuning(data);
       break;
+    case CommandIDs::MidiOutInstruments:
+     MidiOutPort::getInstance()->openInstrumentsDialog();
+     break;
       //
       // Midi In Port
       //

@@ -32,42 +32,43 @@ void cm_load_sal_file(char* path);
 int round(double n);
 #endif
 
-float cm_rescale(float x, float x1, float x2, float y1, float y2, float b1) ;
-int cm_discrete(float x, float x1, float x2, int y1, int y2, float b=1.0);
-int cm_float_to_fixnum(float f) ;
+double cm_rescale(double x, double x1, double x2, double y1, double y2, double b1) ;
+int cm_discrete(double x, double x1, double x2, int y1, int y2, double b=1.0);
+int cm_float_to_fixnum(double f) ;
 double cm_log_ten(double num);
 double cm_log_two(double num);
 
-float cm_expl(float powr, float y0, float y1, float base);
-float cm_explseg(int i, int len, float sum, float base);
-float cm_geoseg(int i, int len, float sum, float base);
+double cm_expl(double powr, double y0, double y1, double base);
+double cm_explseg(int i, int len, double sum, double base);
+double cm_geoseg(int i, int len, double sum, double base);
 
-float cm_decimals(float val, int places); //places=3
-float cm_quantize(float val, float step);
+double cm_decimals(double val, int places); //places=3
+double cm_quantize(double val, double step);
 //tempo=60 beat=.25
-float cm_rhythm_to_seconds(float beats, float tempo, float beat);
-float cm_cents_to_scaler(int cents);
-int cm_scaler_to_cents(float scaler);
-float cm_keynum_to_hertz (float kn);
-int cm_keynum_to_pc (float kn);
-float cm_hertz_to_keynum (float hz);
+double cm_rhythm_to_seconds(double beats, double tempo, double beat);
+double cm_cents_to_scaler(int cents);
+int cm_scaler_to_cents(double scaler);
+double cm_scaler_to_steps(double scaler);
+double cm_keynum_to_hertz (double kn);
+int cm_keynum_to_pc (double kn);
+double cm_hertz_to_keynum (double hz);
 
 void cm_ranseed(long s);
 int cm_ranint(int i);
-float cm_ranfloat(float f);
+double cm_ranfloat(double f);
 int cm_ranint2(int i1, int i2);
-float cm_ranfloat2(float f1, float f2);
+double cm_ranfloat2(double f1, double f2);
 
-float cm_ranlow();
-float cm_ranhigh();
-float cm_ranmiddle();
-float cm_ranbeta(float a5, float b); //a=b=.5
-float cm_ranexp(float lambda); //lambda=1
-float cm_ranexp2(float lambda);
-float cm_rangauss(float sigma, float mu); // sigma=1 mu=0
-float cm_rancauchy();
-int cm_ranpoisson(float lambda);
-float cm_rangamma(float k); // k=1
+double cm_ranlow();
+double cm_ranhigh();
+double cm_ranmiddle();
+double cm_ranbeta(double a5, double b); //a=b=.5
+double cm_ranexp(double lambda); //lambda=1
+double cm_ranexp2(double lambda);
+double cm_rangauss(double sigma, double mu); // sigma=1 mu=0
+double cm_rancauchy();
+int cm_ranpoisson(double lambda);
+double cm_rangamma(double k); // k=1
 double cm_ranpink();
 double cm_ranbrown();
 double cm_bes_jn(int a, double b);
@@ -110,8 +111,8 @@ void mp_close_output(int dev);
 void mp_close_input(int dev);
 void mp_set_output_file(char* file);
 
-void mp_send_note(double time, double dur, float key, float vel, float chan);
-void mp_send_data(int type, double time, float chan, float data1, float data2);
+void mp_send_note(double time, double dur, double key, double vel, double chan);
+void mp_send_data(int type, double time, double chan, double data1, double data2);
 
 void mp_play_seq();
 void mp_save_seq();

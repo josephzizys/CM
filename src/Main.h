@@ -19,25 +19,11 @@ public:
   ~Grace() {}
   void initialise (const juce::String& commandLine);
   void shutdown();
-  void systemRequestedQuit(void)
-  {
-    quit();
-  }
-  void anotherInstanceStarted(const juce::String& commandLine)
-  {
-  }
-  const juce::String getApplicationName(void)
-  {
-    return T("Grace");
-  }
-  const juce::String getApplicationVersion(void)
-  {
-    return T("0.1b");
-  }
-  bool moreThanOneInstanceAllowed(void)
-  {
-    return false;
-  }
+  void systemRequestedQuit();
+  void anotherInstanceStarted(const String& commandLine);
+  const String getApplicationName();
+  const String getApplicationVersion();
+  bool moreThanOneInstanceAllowed();
   void showWorkingDirectory();
   void chooseWorkingDirectory();
 

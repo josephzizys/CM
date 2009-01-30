@@ -654,12 +654,12 @@ HiliteID SalSyntax::getHilite (const String text, int start, int end)
 void SalSyntax::eval(String text, bool isRegion, bool expand)
 {
   //  std::cout << "eval: '" << text.toUTF8() << "'\n";
+  if (isRegion)
+    text = T("begin\n") + text + T("\nend");
   String tokens=tokenize(text);
   // if null then error was reported...
   if (tokens == String::empty)
     return ;
-  if (isRegion)
-    text = T("begin\n") + text + T("\nend");
   String exp = (expand) ? T("#t") : T("#f");
   // quotify string chars in input text
   text=text.replace(T("\""),T("\\\""));
@@ -668,6 +668,7 @@ void SalSyntax::eval(String text, bool isRegion, bool expand)
     T(" (quote ") + tokens + T(")") +
     T(" ") + exp +
     T(")");
+  std::cout << text.toUTF8() << "\n";
   Scheme::getInstance()->eval(text);
 }
 
