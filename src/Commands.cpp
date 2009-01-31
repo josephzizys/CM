@@ -118,6 +118,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::MidiOutDrumTrack,
     CommandIDs::MidiOutPitchBend,
     CommandIDs::MidiOutInstruments,
+    CommandIDs::MidiOutFileSettings,
 
     // Midi In Port
     CommandIDs::MidiInOpen + 0,
@@ -357,6 +358,9 @@ void Grace::getCommandInfo(const CommandID id,
       info.shortName=T("Instruments...");
       info.setActive(MidiOutPort::getInstance()->isOpen());
       break;
+    case CommandIDs::MidiOutFileSettings:
+      info.shortName=T("Midifile Settings...");
+      break;
       //
       // Midi Input
       //
@@ -547,9 +551,12 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::MidiOutInstruments:
      MidiOutPort::getInstance()->openInstrumentsDialog();
      break;
-      //
-      // Midi In Port
-      //
+    case CommandIDs::MidiOutFileSettings:
+      MidiOutPort::getInstance()->openFileSettingsDialog();
+      break;
+     //
+     // Midi In Port
+     //
     case CommandIDs::MidiInOpen:
       MidiInPort::getInstance()->open(data);
       break;

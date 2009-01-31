@@ -95,27 +95,24 @@ class MidiNodeComparator
 class MidiFileInfo
 {
  public:
-  File file;  // output file name
-  int keysig; // 1 to 15 (1=7Flats, 8=CMajor, 15=7Sharps
-  bool ismsec;
-  int qticks;
-  int tempo;  // beats per minute
-  int tsig1;  // timesig numerator
-  int tsig2;  // timesig denominator
-  bool insts;  // Include current Program change assigments
-  bool bends;  // Include current Tuning info
-  bool clear;  // clear seq after save
+  File file;    // output file
+  int keysig;   // 1 to 15 (1=7Flats, 8=CMajor, 15=7Sharps
+  bool ismsec;  // if true file data is in milliseconds
+  int qticks;   // ticks per quarter (if ismsec==false)
+  int tempo;    // beats per minute
+  int tsig1;    // timesig numerator
+  int tsig2;    // timesig denominator
+  bool insts;   // include current program change assigments
+  bool bends;   // include current tuning info
+  bool clear;   // clear seq after save
   
  MidiFileInfo() 
    : file (File::nonexistent), 
-    keysig (8), 
-    ismsec(true),
-    qticks(1000),
-    tempo (120), 
-    tsig1(4),
-    tsig2(4)
-      {
-      }      
+    ismsec(false), qticks (480), tempo (60), 
+    //    ismsec(true), qticks(1000), tempo (120), 
+    keysig (8), tsig1 (4), tsig2 (4)
+    {
+    }      
   
   ~MidiFileInfo()
     {
@@ -132,10 +129,10 @@ class MidiFileInfo
     return MidiMessage::timeSignatureMetaEvent(tsig1, tsig2);
   }
   
+  // arrrg JUCE is missing keysig meta message!
   MidiMessage getKeySigMessage()
   {
     int sf=keysig-8;  // sf -7 to 7
-    // juce is missing a keysig constructor...
     juce::uint8 d[8];
     d[0] = 0xff; // is meta event
     d[1] = 89;   // meta event opcode for keysig
@@ -243,7 +240,8 @@ class MidiOutPort : public Thread //, public AsyncUpdater
   void resetInstruments();
   void openInstrumentsDialog();
 
-  
+  // CLEAN THIS UP!!!!!
+
   // Midi Sequence Capturing
   CriticalSection lock;
   /** the (current) capturing mode **/
@@ -275,6 +273,7 @@ class MidiOutPort : public Thread //, public AsyncUpdater
   void plotSequence();
   void printSequence();
   void setOutputFile(String name);
+  void openFileSettingsDialog();
   void saveSequence(bool ask=false);
   void exportSequence();
   /** versions of the capture sequence can be saved to and restored

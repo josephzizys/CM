@@ -489,6 +489,7 @@ class CommandIDs
   static const CommandID MidiOutDrumTrack = COMID(MidiOut, 6);
   static const CommandID MidiOutPitchBend = COMID(MidiOut, 7);
   static const CommandID MidiOutInstruments = COMID(MidiOut, 8);
+  static const CommandID MidiOutFileSettings = COMID(MidiOut, 9);
 
   // MidiIn Port
   static const CommandID MidiInOpen = COMID(MidiIn, 1);

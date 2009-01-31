@@ -1202,7 +1202,7 @@ void MidiOutPort::saveSequence(bool ask)
   MidiFile* midifile = new MidiFile();
 
   if (sequenceFile.ismsec)
-    midifile->setSmpteTimeFormat(25, 40); // equals 1 millisecond resolution
+    midifile->setSmpteTimeFormat(25, 40); // set to 1 msec resolution
   else
     midifile->setTicksPerQuarterNote(sequenceFile.qticks);
 
@@ -1211,7 +1211,7 @@ void MidiOutPort::saveSequence(bool ask)
   track0.addEvent( sequenceFile.getTimeSigMessage(), 0);
   track0.addEvent( sequenceFile.getKeySigMessage(), 0);
 
-  // optional tuning
+  // add optional tuning data to track 0
   Array<int> data;
   if (sequenceFile.bends)
     {
@@ -1220,7 +1220,7 @@ void MidiOutPort::saveSequence(bool ask)
 	track0.addEvent(MidiMessage((0xe0 | c), (data[c] & 127), 
 				    ((data[c] >> 7) & 127)));
     }
-  // optional program changes
+  // add optional program changes to track 0
   if (sequenceFile.insts)
     {
       data.clear();
@@ -1228,22 +1228,39 @@ void MidiOutPort::saveSequence(bool ask)
       for (int c=0; c<data.size(); c++)
 	track0.addEvent(MidiMessage::programChange(c, data[c]));
     }  
+
   midifile->addTrack(track0);
   midifile->addTrack(captureSequence);
-  // Convert the file's data from seconds to milliseconds to match the
-  // smpte time format
+
   const MidiMessageSequence* seq=midifile->getTrack(1);
-  for (int i=0; i<seq->getNumEvents(); i++)
+  if (sequenceFile.ismsec)
     {
-      MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
-      h->message.setTimeStamp(h->message.getTimeStamp()*1000.0);
+      // If writing milliseconds then convert the file's data from
+      // seconds to milliseconds to match our smpte time format
+      for (int i=0; i<seq->getNumEvents(); i++)
+	{
+	  MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
+	  h->message.setTimeStamp(h->message.getTimeStamp()*1000.0);
+	}
     }
+  else
+    {
+      // otherwise convert seconds to division per quarter
+      double divs=(float)sequenceFile.qticks;
+      for (int i=0; i<seq->getNumEvents(); i++)
+	{
+	  MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
+	  h->message.setTimeStamp(h->message.getTimeStamp()*divs);
+	}
+    }
+
   // optional clear after save
   //midifile->writeTo(outputStream) && sequenceFile.clear
   if (midifile->writeTo(outputStream)) 
     {
       Console::getInstance()->
-	printOutput((T("Midifile: ") + sequenceFile.file.getFullPathName() +
+	printOutput((T("Midifile: ") + 
+		     sequenceFile.file.getFullPathName() +
 		     T("\n")));
       captureSequence.clear();
     }
@@ -1607,7 +1624,8 @@ public:
 			 bool rowIsSelected)
   {
     if (rowIsSelected)
-      g.fillAll(Colours::lightgoldenrodyellow); 
+      //g.fillAll(Colours::lightgoldenrodyellow); 
+      g.fillAll(Colour::fromString(T("401111ee")));
     g.setColour (Colours::black);
     g.setFont (height * 0.7f);
     
@@ -1676,7 +1694,9 @@ public:
 			 bool rowIsSelected)
   {
     if (rowIsSelected)
-      g.fillAll(Colours::lightgoldenrodyellow);
+      //      g.fillAll(Colours::lightgoldenrodyellow);
+      g.fillAll(Colour::fromString(T("401111ee")));
+
     g.setColour (Colours::black);
     g.setFont (height * 0.7f);
     g.drawText (MidiMessage::getGMInstrumentName(rowNumber) ,
@@ -1734,7 +1754,6 @@ public:
 
   ~InstrumentView() 
   {
-    std::cout << "DELETING INSTRUMENT VIEW\n";
     port=0;
     deleteAndZero(label1);
     deleteAndZero(label2);
@@ -1756,7 +1775,8 @@ public:
     label3->setBounds(160, 10, 78, 24); // Instrument
     label4->setBounds(10+320+10, 8, inslistwidth, 24);
     // list boxes
-    assignments->setBounds(10, 30, asslistwidth, assignments->getRowHeight()*16);
+    assignments->setBounds(10, 30, asslistwidth, 
+			   assignments->getRowHeight()*16);
     instruments->setBounds(10 + 320 + 10,
 			   30,
 			   inslistwidth,
@@ -1838,13 +1858,412 @@ public:
 
 void MidiOutPort::openInstrumentsDialog ()
 {
-  //  DialogWindow::showModalDialog (T("Instruments"),
-  //				 new InstrumentView(this),
-  //				 0,
-  //				 Colour(0xffe5e5e5),
-  //				 true);
   new MidiInstrumentsWindow(new InstrumentView(this));
 }
 
+/*=======================================================================*
+                         MidiFile Settings Dialog
+ *=======================================================================*/
+
+class MidiFileInfoComponent : public Component,
+			      public FilenameComponentListener,
+			      public ComboBoxListener,
+			      public SliderListener,
+			      public ButtonListener
+{
+public:
+  MidiFileInfoComponent (MidiFileInfo* info, bool saveing=false);
+  ~MidiFileInfoComponent();
+  //  void paint (Graphics& g);
+  void resized();
+  void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
+  void sliderValueChanged (Slider* sliderThatWasMoved);
+  void buttonClicked (Button* buttonThatWasClicked);
+  bool parseTimeSig(int& numer, int& denom);
+  void filenameComponentChanged(FilenameComponent* f) ;
+private:
+  MidiFileInfo* midifileinfo;
+  FilenameComponent* fileeditor;
+  Label* timelabel;
+  ToggleButton* millibutton;
+  ToggleButton* ticksbutton;
+  Slider* ticksslider;
+  ComboBox* keysigmenu;
+  Label* keysiglabel;
+  Label* filelabel;
+  Slider* temposlider;
+  Label* timesiglabel;
+  Label* tempolabel;
+  TextButton* cancelbutton;
+  TextButton* savebutton;
+  TextEditor* timesigeditor;
+  ToggleButton* tuningbutton;
+  ToggleButton* instrumentbutton;
+  ToggleButton* clearbutton;
+  MidiFileInfoComponent (const MidiFileInfoComponent&);
+  const MidiFileInfoComponent& operator= (const MidiFileInfoComponent&);
+};
+
+bool MidiFileInfoComponent::parseTimeSig (int& n, int& d)
+{
+  String str=timesigeditor->getText();
+  int pos=str.indexOfChar('/');
+  if (pos<0) return false;
+  int a = str.substring(0,pos).getIntValue();
+  if (a<1) return false;
+  int b = str.substring(pos+1).getIntValue();
+  if (b<1) return false;
+  n=a;
+  d=b;
+  return true;
+}
+
+MidiFileInfoComponent::MidiFileInfoComponent(MidiFileInfo* info,
+					     bool saveing)
+  : midifileinfo (0),
+    fileeditor (0),
+    timelabel (0),
+    millibutton (0),
+    ticksbutton (0),
+    ticksslider (0),
+    keysigmenu (0),
+    keysiglabel (0),
+    filelabel (0),
+    temposlider (0),
+    timesiglabel (0),
+    tempolabel (0),
+    cancelbutton (0),
+    savebutton (0),  // remains null if dialog is for settings
+    timesigeditor (0),
+    tuningbutton (0),
+    instrumentbutton (0),
+    clearbutton (0)
+{
+  midifileinfo=info;
+  File file=midifileinfo->file;
+  if (file==File::nonexistent)
+    file=File::getSpecialLocation(File::userHomeDirectory).
+      getChildFile(T("test.mid"));
+
+  // if dialog is for saving then add a top line with file info
+  // and a botton line with save and cancel buttons
+  if (saveing)
+    {
+      addAndMakeVisible (filelabel = new Label (T("filelabel"),
+						T("Midifile:")));
+      filelabel->setFont (Font (15.0000f, Font::plain));
+      filelabel->setJustificationType (Justification::centredLeft);
+      filelabel->setEditable (false, false, false);
+      filelabel->setColour (TextEditor::textColourId, Colours::black);
+      filelabel->setColour (TextEditor::backgroundColourId, Colour(0x0));
+      fileeditor = new FilenameComponent(String::empty, 
+					 file,
+					 true, 
+					 false, 
+					 true, 
+					 T("*.mid"),
+					 String::empty,
+					 T("Midi File..."));
+      fileeditor->setCurrentFile(file, false, false);
+      fileeditor->addListener(this);
+      addAndMakeVisible(fileeditor);
+      addAndMakeVisible(clearbutton =
+			new ToggleButton (T("clearbutton")));
+      clearbutton->setButtonText(T("Clear Seq after save"));
+      clearbutton->setToggleState(midifileinfo->clear, false);
+      clearbutton->addButtonListener (this);
+      addAndMakeVisible(cancelbutton = new TextButton(T("cancelbutton")));
+      cancelbutton->setButtonText (T("Cancel"));
+      cancelbutton->addButtonListener (this);
+      addAndMakeVisible (savebutton = new TextButton (T("savebutton")));
+      savebutton->setButtonText(T("Save"));
+      savebutton->addButtonListener(this);
+    }
+  else 
+    savebutton=NULL;
+  
+  // time format row
+  addAndMakeVisible(timelabel = new Label(T(""), T("Time format:")));
+  timelabel->setFont(Font (15.0000f, Font::plain));
+  timelabel->setJustificationType(Justification::centredLeft);
+  timelabel->setEditable(false, false, false);
+  timelabel->setColour(TextEditor::textColourId, Colours::black);
+  timelabel->setColour(TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible(millibutton = new ToggleButton (T("")));
+  millibutton->setButtonText(T("Milliseconds"));
+  millibutton->setRadioGroupId(1);
+  
+  millibutton->addButtonListener(this);
+  
+  addAndMakeVisible(ticksbutton = new ToggleButton (T("")));
+  ticksbutton->setButtonText(T("Ticks per Quarter:"));
+  ticksbutton->setRadioGroupId(1);
+  ticksbutton->addButtonListener(this);
+  
+  addAndMakeVisible(ticksslider = new Slider (T("")));
+  ticksslider->setRange (0, 4000, 2);
+  ticksslider->setSliderStyle (Slider::LinearHorizontal);
+  ticksslider->setTextBoxStyle (Slider::TextBoxLeft, false, 40, 24);
+  ticksslider->setValue(info->qticks);
+  ticksslider->addListener(this);
+  
+  if (info->ismsec)
+    {
+      millibutton->setToggleState(true, false);
+      ticksbutton->setToggleState(false, false);
+      ticksslider->setEnabled(false);
+    }
+  else
+    {
+      millibutton->setToggleState(false, false);
+      ticksbutton->setToggleState(true, false);
+      ticksslider->setEnabled(true);
+    }  
+  
+  addAndMakeVisible (keysigmenu = new ComboBox (T("keysigmenu")));
+  keysigmenu->setEditableText (false);
+  keysigmenu->setJustificationType (Justification::centredLeft);
+  keysigmenu->setTextWhenNothingSelected (String::empty);
+  keysigmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
+  keysigmenu->addItem (T("7 Flats"), 1);
+  keysigmenu->addItem (T("6 Flats"), 2);
+  keysigmenu->addItem (T("5 Flats"), 3);
+  keysigmenu->addItem (T("4 Flats"), 4);
+  keysigmenu->addItem (T("3 Flats"), 5);
+  keysigmenu->addItem (T("2 Flats"), 6);
+  keysigmenu->addItem (T("1 Flat"), 7);
+  keysigmenu->addItem (T("None"), 8);
+  keysigmenu->addItem (T("1 Sharp"), 9);
+  keysigmenu->addItem (T("2 Sharps"), 10);
+  keysigmenu->addItem (T("3 Sharps"), 11);
+  keysigmenu->addItem (T("4 Sharps"), 12);
+  keysigmenu->addItem (T("5 Sharps"), 13);
+  keysigmenu->addItem (T("6 Sharps"), 14);
+  keysigmenu->addItem (T("7 Sharps"), 15);
+  keysigmenu->setSelectedId(info->keysig);
+  keysigmenu->addListener (this);
+  
+  addAndMakeVisible (keysiglabel = new Label (T("keysiglabel"),
+					      T("Key Signature:")));
+  keysiglabel->setFont (Font (15.0000f, Font::plain));
+  keysiglabel->setJustificationType (Justification::centredLeft);
+  keysiglabel->setEditable (false, false, false);
+  keysiglabel->setColour (TextEditor::textColourId, Colours::black);
+  keysiglabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (temposlider = new Slider (T("temposlider")));
+  temposlider->setRange (40, 208, 2);
+  temposlider->setSliderStyle (Slider::LinearHorizontal);
+  temposlider->setTextBoxStyle (Slider::TextBoxLeft, false, 40, 24);
+  temposlider->setValue(info->tempo);
+  temposlider->addListener (this);
+  
+  addAndMakeVisible (timesiglabel = new Label (T("timesiglabel"),
+					       T("Time Signature:")));
+  timesiglabel->setFont (Font (15.0000f, Font::plain));
+  timesiglabel->setJustificationType (Justification::centredLeft);
+  timesiglabel->setEditable (false, false, false);
+  timesiglabel->setColour (TextEditor::textColourId, Colours::black);
+  timesiglabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (tempolabel = new Label (T("tempolabel"),
+					     T("Tempo:")));
+  tempolabel->setFont (Font (15.0000f, Font::plain));
+  tempolabel->setJustificationType (Justification::centredLeft);
+  tempolabel->setEditable (false, false, false);
+  tempolabel->setColour (TextEditor::textColourId, Colours::black);
+  tempolabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible(timesigeditor = new TextEditor (T("timesigeditor")));
+  timesigeditor->setMultiLine (false);
+  timesigeditor->setReturnKeyStartsNewLine (false);
+  timesigeditor->setReadOnly (false);
+  timesigeditor->setScrollbarsShown (true);
+  timesigeditor->setCaretVisible (true);
+  timesigeditor->setPopupMenuEnabled (true);
+  String text=String(info->tsig1) + T("/") + String(info->tsig2);
+  timesigeditor->setText (text);
+
+  addAndMakeVisible(tuningbutton = new ToggleButton (T("tuningbutton")));
+  tuningbutton->setButtonText (T("Include Current Tuning"));
+  tuningbutton->setToggleState(midifileinfo->bends, false);
+  tuningbutton->addButtonListener (this);
+  
+  addAndMakeVisible(instrumentbutton =
+		    new ToggleButton (T("instrumentbutton")));
+  instrumentbutton->setToggleState(midifileinfo->insts, false);
+  instrumentbutton->setButtonText (T("Include Current Instruments"));
+  instrumentbutton->addButtonListener (this);
+  
+  setSize (600, (saveing) ? 200 : 120);
+}
+
+MidiFileInfoComponent::~MidiFileInfoComponent()
+{
+  deleteAndZero(fileeditor);
+  deleteAndZero(millibutton);
+  deleteAndZero(ticksbutton);
+  deleteAndZero(ticksslider);
+  deleteAndZero(keysigmenu);
+  deleteAndZero(keysiglabel);
+  deleteAndZero(filelabel);
+  deleteAndZero(temposlider);
+  deleteAndZero(timesiglabel);
+  deleteAndZero(tempolabel);
+  deleteAndZero(cancelbutton);
+  deleteAndZero(savebutton);
+  deleteAndZero(timesigeditor);
+  deleteAndZero(tuningbutton);
+  deleteAndZero(instrumentbutton);
+  deleteAndZero(clearbutton);
+}
+
+void MidiFileInfoComponent::resized()
+{
+  float y=12;
+  // only active is saving file
+  if (savebutton)
+    {
+
+      filelabel->setBounds(    12, y,  56, 24);
+      fileeditor->setBounds(   76, y, 295, 24);
+      clearbutton->setBounds( 392, y, 200, 24); 
+      y += 36;
+    }
+  timelabel->setBounds(         12, y,  88, 24);
+  millibutton->setBounds(      128, y, 104, 24);
+  ticksbutton->setBounds(      268, y, 136, 24);
+  ticksslider->setBounds(      412, y, 120, 24);
+
+  y += 36;
+  tempolabel->setBounds(        12, y,  56, 24);
+  temposlider->setBounds(       76, y, 120, 24);
+  timesiglabel->setBounds(     217, y, 104, 24);
+  timesigeditor->setBounds(    329, y,  40, 24);
+  keysigmenu->setBounds(       496, y,  80, 24);
+  keysiglabel->setBounds(      392, y,  96, 24);
+
+  y += 36;
+  tuningbutton->setBounds(     120, y, 168, 24);
+  instrumentbutton->setBounds( 328, y, 200, 24);  
+
+  // only active is saving file
+  if (savebutton)
+    {
+      y += 36;
+      cancelbutton->setBounds( 200, 156, 88, 24);
+      savebutton->setBounds(   320, 156, 88, 24);
+    }
+}
+
+void MidiFileInfoComponent::filenameComponentChanged(FilenameComponent* f) 
+{
+  if (f == fileeditor)
+    {
+      midifileinfo->file=fileeditor->getCurrentFile();
+    }
+}
+
+void MidiFileInfoComponent::comboBoxChanged (ComboBox* combobox)
+{
+  if (combobox == keysigmenu)
+    {
+      midifileinfo->keysig=combobox->getSelectedId();
+    }
+}
+
+void MidiFileInfoComponent::sliderValueChanged (Slider* slider)
+{
+  if (slider == ticksslider)
+    {
+      midifileinfo->qticks=(int)slider->getValue();
+    }
+  else if (slider == temposlider)
+    {
+      midifileinfo->tempo=(int)slider->getValue();
+    }
+}
+
+void MidiFileInfoComponent::buttonClicked (Button* button)
+{
+  if (button == cancelbutton)
+    {
+      ((DialogWindow *)getTopLevelComponent())->exitModalState(false);
+    }
+  else if (button == savebutton)
+    {
+      if (fileeditor->getCurrentFile().existsAsFile())
+	{
+	  String msg= T("File ") + 
+	    fileeditor->getCurrentFile().getFullPathName() + 
+	    T(" exists.\nOverwrite?");
+	  if (! AlertWindow::showOkCancelBox(AlertWindow::QuestionIcon, 
+					     T("Save"), msg,
+					     T("Overwrite"),
+					     T("Cancel")))
+	    return;
+	}
+
+
+      ((DialogWindow *)getTopLevelComponent())->exitModalState(true);
+    }
+  else if (button == millibutton)
+    {
+      midifileinfo->ismsec=button->getToggleState();
+      if (button->getToggleState())
+	{
+	  ticksslider->setEnabled(false);
+	}
+      else
+	{
+	  ticksslider->setEnabled(true);
+	}
+    }
+  else if (button == ticksbutton)
+    {
+      midifileinfo->ismsec=!button->getToggleState();
+      if (button->getToggleState())
+	{
+	  ticksslider->setEnabled(true);
+	}
+      else
+	{
+	  midifileinfo->ismsec=true;
+	  ticksslider->setEnabled(true);
+	}
+    }
+  else if (button == tuningbutton)
+    {
+      midifileinfo->bends=button->getToggleState();
+    }
+  else if (button == instrumentbutton)
+    {
+      midifileinfo->insts=button->getToggleState();
+    }
+  else if (button == clearbutton)
+    {
+      midifileinfo->clear=button->getToggleState();
+    }
+}
+
+void MidiOutPort::openFileSettingsDialog ()
+{
+  MidiFileInfoComponent* comp=new MidiFileInfoComponent(&sequenceFile);
+  DialogWindow::showModalDialog(T("Midifile Settings"), 
+				comp,
+				NULL,
+				Colour(0xffe5e5e5),
+				true, 
+				false,
+				false);
+  int numer,denom;
+  if (comp->parseTimeSig(numer, denom))
+    {
+      sequenceFile.tsig1=numer;
+      sequenceFile.tsig2=denom;
+    }
+  delete comp;
+}
 
 #endif

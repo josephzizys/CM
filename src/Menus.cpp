@@ -74,7 +74,10 @@ const PopupMenu CommandMenus::getAudioMenu()
     tunings.addCommandItem(comm, CommandIDs::MidiOutTuning + i);
   outmenu.addSubMenu(T("Tuning"), tunings);
   outmenu.addCommandItem(comm, CommandIDs::MidiOutInstruments);  
+  outmenu.addSeparator();
+  outmenu.addCommandItem(comm, CommandIDs::MidiOutFileSettings);
   menu.addSubMenu(T("Midi Out"), outmenu);
+
   // Midi In
   StringArray indevs = MidiInput::getDevices();
   size = jlimit(0,CommandMenus::NumMidiInOpen-1, indevs.size());
