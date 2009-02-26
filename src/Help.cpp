@@ -52,7 +52,7 @@ Help::Help()
   tutorials.set(T("Definitions"), T("define.sal"));
   tutorials.set(T("Processes"), T("processes.sal"));
   // Websites
-  websites.set(T("Common Music"), T("http://commonmusic.sf.net/doc/cm.html"));
+  websites.set(T("Common Music"), T("http://commonmusic.sourceforge.net/"));
   websites.set(T("JUCE"), T("http://www.rawmaterialsoftware.com/juce"));
   restoreHelpFiles();
 }

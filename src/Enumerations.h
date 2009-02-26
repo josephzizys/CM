@@ -327,12 +327,13 @@ class CommandIDs
   static const int MidiSeq = 8;
   static const int Csound = 9;
   static const int SndLib = 10;
-  static const int Audio = 11;
-  static const int Window = 12;
-  static const int Help = 13;
-  static const int Scheduler = 14;
-  static const int Scheme = 15;
-  static const int Prefs = 16;
+  static const int Fomus = 11;
+  static const int Audio = 12;
+  static const int Window = 13;
+  static const int Help = 14;
+  static const int Scheduler = 15;
+  static const int Scheme = 16;
+  static const int Prefs = 17;
 
   static const String getCommandTypeName(CommandID id)
   {
@@ -348,6 +349,7 @@ class CommandIDs
       case MidiIn: return T("MidiIn");
       case MidiSeq: return T("MidiSeq");
       case Csound: return T("Csound");
+      case Fomus: return T("Fomus");
       case SndLib: return T("SndLib");
       case Audio: return T("Audio");
       case Window: return T("Window");
@@ -526,6 +528,11 @@ class CommandIDs
   static const CommandID CsoundExportScore = COMID(Csound, 3);
   static const CommandID CsoundClearScore = COMID(Csound, 4);
   static const CommandID CsoundOpenSettings = COMID(Csound, 5);
+
+  // Fomus
+  static const CommandID FomusExecute = COMID(Fomus, 1);
+  static const CommandID FomusSettings = COMID(Fomus, 2);
+  static const CommandID FomusDocumentation = COMID(Fomus, 3);
 
   // Audio Menu
   static const CommandID AudioOpenFilePlayer = COMID(Audio, 1);

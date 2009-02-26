@@ -17,6 +17,7 @@
 #include "Preferences.h"
 #include "Audio.h"
 #include "Csound.h"
+#include "Fomus.h"
 
 #ifdef SNDLIB
 #include "SndLib.h"
@@ -183,6 +184,10 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::CsoundExportScore,
     CommandIDs::CsoundClearScore,
     CommandIDs::CsoundOpenSettings,
+
+    CommandIDs::FomusSettings,
+    CommandIDs::FomusDocumentation,
+    CommandIDs::FomusExecute,
 
     // Window Menu
     CommandIDs::WindowSelect + 0,  // 0==Select Console
@@ -457,6 +462,20 @@ void Grace::getCommandInfo(const CommandID id,
     case CommandIDs::CsoundOpenSettings:
       info.shortName=T("Settings...");
       break;
+
+      //
+      // Fomus Commands
+      //
+    case CommandIDs::FomusSettings:
+      info.shortName=T("Settings...");
+      break;
+    case CommandIDs::FomusDocumentation:
+      info.shortName=T("Documentation...");
+      break;
+    case CommandIDs::FomusExecute:
+      info.shortName=T("Execute");
+      break;
+
     case CommandIDs::AudioOpenFilePlayer:
       info.shortName=T("Play Audio File...");
       break;
@@ -657,6 +676,19 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       Csound::getInstance()->openSettings();
       break;
       //
+      // Fomus Commands
+      //
+    case CommandIDs::FomusSettings:
+      Fomus::getInstance()->openSettings();
+      break;
+    case CommandIDs::FomusDocumentation:
+      Fomus::getInstance()->openDocumentation();
+      break;
+    case CommandIDs::FomusExecute:
+      Fomus::getInstance()->execute();
+      break;
+
+      //
       // Window Commands
       //
     case CommandIDs::WindowSelect:
@@ -668,6 +700,9 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       break;
     case CommandIDs::PrefsOpenRecent:
       openFile(Preferences::getInstance()->recentlyOpened.getFile(data));
+      break;
+    case CommandIDs::PrefsClearOpenRecent:
+      Preferences::getInstance()->recentlyOpened.clear();
       break;
     case CommandIDs::HelpManual:
     case CommandIDs::HelpExample:

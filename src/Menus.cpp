@@ -128,7 +128,12 @@ const PopupMenu CommandMenus::getAudioMenu()
   csound.addSeparator();
   csound.addCommandItem(comm, CommandIDs::CsoundOpenSettings);
   menu.addSubMenu(T("Csound"), csound);
-
+  PopupMenu fomus;
+  fomus.addCommandItem(comm, CommandIDs::FomusSettings);
+  fomus.addCommandItem(comm, CommandIDs::FomusDocumentation);
+  fomus.addSeparator();
+  fomus.addCommandItem(comm, CommandIDs::FomusExecute);
+  menu.addSubMenu(T("Fomus"), fomus);
   menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::AudioOpenFilePlayer);
   menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);

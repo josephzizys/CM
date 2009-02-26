@@ -5,9 +5,11 @@ project.configs = {"Release", "Debug"}
 addoption("juce", "Location of JUCE source directory or install prefix")
 addoption("sndlib", "Optional location of SNDLIB source directory or install prefix")
 addoption("chicken", "Optional location of CHICKEN source directory or install prefix")
+addoption("fomus", "Optional location of FOMUS source directory or install prefix")
 
 sndlib = nil
 chicken = nil
+fomus = nil
 
 function insure_slash(path) 
   --insure slash at end of directory so concatenation works
@@ -36,16 +38,17 @@ for i = 1,2 do
    mypackage.buildflags = {"static-runtime", "no-main"}
    mypackage.language = "c++"
    mypackage.files = {
-      "src/Scanner.cpp",
-      "src/Syntax.cpp",
-      "src/CmSupport.cpp",
-      "src/Console.cpp",
-      "src/Scheme.cpp",
-      "src/Preferences.cpp",
-      "src/SchemeSources.cpp",
-      "src/Midi.cpp",
-      "src/Csound.cpp",
-      "src/Main.cpp"
+      "src/Scanner.cpp", "src/Scanner.h",
+      "src/Syntax.cpp", "src/Syntax.h",
+      "src/CmSupport.cpp", "src/CmSupport.h",
+      "src/Console.cpp", "src/Console.h",
+      "src/Scheme.cpp", "src/Scheme.h",
+      "src/Preferences.cpp", "src/Preferences.h",
+      "src/SchemeSources.cpp", "src/SchemeSources.h",
+      "src/Midi.cpp", "src/Midi.h",
+      "src/Csound.cpp", "src/Csound.h",
+      "src/Fomus.cpp", "src/Fomus.h",
+      "src/Main.cpp", "src/Main.h"
    }
    mypackage.config["Debug"].defines = {"DEBUG=1"}
 
@@ -70,14 +73,22 @@ for i = 1,2 do
       mypackage.kind = "winexe"
       mypackage.objdir = "obj/grace"
       add(mypackage.defines, "GRACE=1")
-      add(mypackage.files, "src/Fonts.cpp")
+      add(mypackage.files, "src/Fonts.cpp") 
+      add(mypackage.files, "src/Fonts.h")
       add(mypackage.files, "src/Help.cpp")
+      add(mypackage.files, "src/Help.h")
       add(mypackage.files, "src/Commands.cpp")
+      add(mypackage.files, "src/Commands.h")
       add(mypackage.files, "src/Menus.cpp")
+      add(mypackage.files, "src/Menus.h")
       add(mypackage.files, "src/TextEditor.cpp")
+      add(mypackage.files, "src/TextEditor.h")
       add(mypackage.files, "src/Documentation.cpp")
+      add(mypackage.files, "src/Documentation.h")
       add(mypackage.files, "src/Images.cpp")
+      add(mypackage.files, "src/Images.h")
       add(mypackage.files, "src/Audio.cpp")
+      add(mypackage.files, "src/Audio.h")
    end
 
 ------------------------------------------
@@ -181,7 +192,26 @@ for i = 1,2 do
    else
       error("CM requires a Scheme implementation, add either --sndlib or --chicken to your premake options")
    end
-   
+
+------------------------------------------
+--           Chicken
+------------------------------------------
+
+   if options["fomus"] then
+      fomus = insure_slash(options["fomus"])
+      add(mypackage.defines, "FOMUS=1")
+--      if os.fileexists(fomus .. "fomus.h") then
+--         add(mypackage.includepaths, fomus)
+--         add(mypackage.linkoptions, fomus .. "libfomus.a")
+--      elseif os.fileexists(fomus .. "include/fomus.h") then
+--         add(mypackage.includepaths, fomus .. "include")
+--         add(mypackage.libpaths, fomus .. "lib")
+--         add(mypackage.links, "fomus")
+--      else
+--         error("--fomus must point to either the FOMUS source directory or FOMUS install prefix (eg. /usr or /usr/local)")
+--      end
+   end
+
 ------------------------------------------
 --           OS Specific 
 ------------------------------------------
