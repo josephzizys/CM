@@ -346,6 +346,7 @@ bool Scheme::init()
   loadCode(SchemeSources::spectral_scm, SchemeSources::spectral_scmSize);
   loadCode(SchemeSources::sal_scm, SchemeSources::sal_scmSize);
   loadCode(SchemeSources::ports_scm, SchemeSources::ports_scmSize);
+  loadCode(SchemeSources::fomus_scm, SchemeSources::fomus_scmSize);
   loadCode(SchemeSources::processes_scm, SchemeSources::processes_scmSize);
   loadCode(SchemeSources::sndlibws_scm, SchemeSources::sndlibws_scmSize);
   // need this for some .ins files...

@@ -81,6 +81,8 @@
     (ffi_pathname_writable_p bool "cm_pathname_writable_p" c-string)
     (ffi_pathname_directory_p bool "cm_pathname_directory_p" c-string)
 
+    (ffi_sal_tokenize c-string "sal_tokenize" c-string )
+
     (ffi_port_info c-string "cm_port_info" )
 
     (ffi_mp_open_output bool "mp_open_output" int )
@@ -104,8 +106,19 @@
     (ffi_cs_init_score void "cs_init_score" c-string)
     (ffi_cs_send_score void "cs_send_score" int int double c-string)
 
-    (ffi_sal_tokenize c-string "sal_tokenize" c-string )
-
+    (ffi_fms_init void "fms_init" )
+    (ffi_fms_new void "fms_new" )
+    (ffi_fms_free void "fms_free" )
+    (ffi_fms_clear void "fms_clear" )
+    (ffi_fms_ival void "fms_ival" int int int)
+    (ffi_fms_rval void "fms_rval" int int int int)
+    (ffi_fms_mval void "fms_mval" int int int int int)
+    (ffi_fms_fval void "fms_fval" int int double)
+    (ffi_fms_sval void "fms_sval" int int c-string)
+    (ffi_fms_act void "fms_act" int int)
+    (ffi_fms_load void "fms_load" c-string)
+    (ffi_fms_run void "fms_run" )
+    (ffi_fms_xml void "fms_xml" c-string)
     ))
 
 (define (foreign-lambda-scheme-name decl) 

@@ -12,6 +12,7 @@
 #include "TextEditor.h"
 #include "Commands.h"
 #include "Help.h"
+#include "Fomus.h"
 #include <iostream>
 
 /*=======================================================================*
@@ -128,12 +129,24 @@ const PopupMenu CommandMenus::getAudioMenu()
   csound.addSeparator();
   csound.addCommandItem(comm, CommandIDs::CsoundOpenSettings);
   menu.addSubMenu(T("Csound"), csound);
+
   PopupMenu fomus;
+  size = jlimit(0, CommandMenus::NumFomusScore-1,
+		Fomus::getInstance()->numScores());
+  for (int i=0; i<size; i++)
+    fomus.addCommandItem(comm, CommandIDs::FomusSelectScore + i);
+  fomus.addSeparator();
+  fomus.addCommandItem(comm, CommandIDs::FomusRunScore);
+  fomus.addSeparator();
+  fomus.addCommandItem(comm, CommandIDs::FomusNewScore);
+  fomus.addCommandItem(comm, CommandIDs::FomusRenameScore);
+  fomus.addCommandItem(comm, CommandIDs::FomusDeleteScore);
+  fomus.addCommandItem(comm, CommandIDs::FomusLoadScore);
+  fomus.addSeparator();
   fomus.addCommandItem(comm, CommandIDs::FomusSettings);
   fomus.addCommandItem(comm, CommandIDs::FomusDocumentation);
-  fomus.addSeparator();
-  fomus.addCommandItem(comm, CommandIDs::FomusExecute);
   menu.addSubMenu(T("Fomus"), fomus);
+
   menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::AudioOpenFilePlayer);
   menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);

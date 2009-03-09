@@ -32,6 +32,7 @@ class CommandMenus
   static const int NumTabWidth = 4;
   static const int NumSndLibSrate = 4;
   static const int NumSndLibChannel = 2;
+  static const int NumFomusScore = 8;
 
   static const PopupMenu getWindowMenu();
   static const PopupMenu getHelpMenu();

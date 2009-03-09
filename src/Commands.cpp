@@ -185,9 +185,21 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::CsoundClearScore,
     CommandIDs::CsoundOpenSettings,
 
+    CommandIDs::FomusNewScore,
+    CommandIDs::FomusRenameScore,
+    CommandIDs::FomusDeleteScore,
+    CommandIDs::FomusSelectScore + 0,
+    CommandIDs::FomusSelectScore + 1,
+    CommandIDs::FomusSelectScore + 2,
+    CommandIDs::FomusSelectScore + 3,
+    CommandIDs::FomusSelectScore + 4,
+    CommandIDs::FomusSelectScore + 5,
+    CommandIDs::FomusSelectScore + 6,
+    CommandIDs::FomusSelectScore + 7,
+    CommandIDs::FomusLoadScore,
+    CommandIDs::FomusRunScore,    
     CommandIDs::FomusSettings,
     CommandIDs::FomusDocumentation,
-    CommandIDs::FomusExecute,
 
     // Window Menu
     CommandIDs::WindowSelect + 0,  // 0==Select Console
@@ -462,20 +474,46 @@ void Grace::getCommandInfo(const CommandID id,
     case CommandIDs::CsoundOpenSettings:
       info.shortName=T("Settings...");
       break;
-
       //
       // Fomus Commands
       //
+    case CommandIDs::FomusNewScore:
+      info.shortName=T("New Score");
+      break;
+    case CommandIDs::FomusRenameScore:
+      info.shortName=T("Rename Score...");
+      break;
+    case CommandIDs::FomusDeleteScore:
+      info.shortName=T("Delete Score");      
+      info.setActive(Fomus::getInstance()->numScores()>1);
+      break;
+    case CommandIDs::FomusSelectScore:
+      if (data<Fomus::getInstance()->numScores())
+	{
+	  info.shortName=Fomus::getInstance()->getScoreName(data);
+	  info.setTicked(Fomus::getInstance()->isScoreActive(data));
+	}
+      else
+	{
+	  info.shortName=T("<Undefined Score>");
+	  info.setActive(false);
+	}
+      break;
+    case CommandIDs::FomusLoadScore:
+      info.shortName=T("Load Score...");
+      break;
+    case CommandIDs::FomusRunScore:
+      info.shortName=T("Execute");
+      break;
     case CommandIDs::FomusSettings:
       info.shortName=T("Settings...");
       break;
     case CommandIDs::FomusDocumentation:
       info.shortName=T("Documentation...");
       break;
-    case CommandIDs::FomusExecute:
-      info.shortName=T("Execute");
-      break;
-
+      //
+      // Audio Settings
+      //
     case CommandIDs::AudioOpenFilePlayer:
       info.shortName=T("Play Audio File...");
       break;
@@ -678,14 +716,30 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       //
       // Fomus Commands
       //
+
+    case CommandIDs::FomusSelectScore:
+      Fomus::getInstance()->setScoreActive(data);
+      break;
+    case CommandIDs::FomusNewScore:
+      Fomus::getInstance()->newScore();
+      break;
+    case CommandIDs::FomusRenameScore:
+      Fomus::getInstance()->renameScoreDialog();
+      break;
+    case CommandIDs::FomusDeleteScore:
+      Fomus::getInstance()->deleteScore();
+      break;
+    case CommandIDs::FomusLoadScore:
+      Fomus::getInstance()->loadScoreDialog();
+      break;
+    case CommandIDs::FomusRunScore:
+      Fomus::getInstance()->runScore();
+      break;
     case CommandIDs::FomusSettings:
-      Fomus::getInstance()->openSettings();
+      Fomus::getInstance()->settingsWindow();
       break;
     case CommandIDs::FomusDocumentation:
-      Fomus::getInstance()->openDocumentation();
-      break;
-    case CommandIDs::FomusExecute:
-      Fomus::getInstance()->execute();
+      Fomus::getInstance()->documentationWindow();
       break;
 
       //

@@ -101,6 +101,10 @@ bool cm_pathname_exists_p(char* path);
 bool cm_pathname_writable_p(char* path);
 bool cm_pathname_directory_p(char* path);
 
+// sal support
+
+char* sal_tokenize(char* str);
+
 // midi ports
 
 char* cm_port_info();
@@ -129,6 +133,21 @@ void mp_clear_midi_input_hook();
 void cs_init_score(char* args);
 void cs_send_score(int typ, int inst, double time, char* pars);
 
-char* sal_tokenize(char* str);
+// fomus
+
+void fms_init();
+void fms_new();
+void fms_free();
+void fms_clear();
+void fms_ival(int par, int act, int val);
+void fms_rval(int par, int act, int num, int den);
+void fms_mval(int par, int act, int val, int num, int den);
+void fms_fval(int par, int act, double val);
+void fms_sval(int par, int act, char* val);
+void fms_act(int par, int act);
+void fms_load(char* filename);
+void fms_run();
+void fms_xml(char* str);
 
 #endif
+

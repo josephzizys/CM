@@ -13,6 +13,7 @@
 #include "CmSupport.h"
 #include "Midi.h"
 #include "Csound.h"
+#include "Fomus.h"
 #include "Console.h"
 #include "Syntax.h"
 
@@ -637,6 +638,17 @@ bool cm_pathname_directory_p(char* path)
   return f.isDirectory();
 }
 
+// Sal support
+
+char* sal_tokenize(char* str)
+{
+  String toks=SalSyntax::getInstance()->tokenize(String(str));
+  if (toks.isEmpty())
+    return (char *)NULL;
+  return (char *)strdup(toks.toUTF8());  // return copy
+}
+
+
 /*
  * port information
  */
@@ -807,13 +819,74 @@ void cs_send_score(int typ, int num, double time, char* pars)
   Csound::getInstance()->addToScore(typ,num,time,String(pars));
 }
 
-// Sal support
+//
+// FOMUS Support
+//
 
-char* sal_tokenize(char* str)
+void fms_new()
 {
-  String toks=SalSyntax::getInstance()->tokenize(String(str));
-  if (toks.isEmpty())
-    return (char *)NULL;
-  return (char *)strdup(toks.toUTF8());  // return copy
+  Fomus::getInstance()->newScore();
+}
+
+void fms_free()
+{
+  Fomus::getInstance()->deleteScore();
+}
+
+void fms_clear()
+{
+  Fomus::getInstance()->clearScore();
+}
+
+void fms_init()
+{
+  Fomus::getInstance()->initScore();
+}
+
+void fms_load(char* filename)
+{
+  Fomus::getInstance()->loadScore(String(filename));
+}
+
+void fms_run()
+{
+  Fomus::getInstance()->runScore();
+}
+
+void fms_xml(char* str)
+{
+  //XmlElement xml=XmlElement(String(str));
+  //Fomus::getInstance()->sendXml(xml);
+  Fomus::getInstance()->sendXml(String(str));
+}  
+
+void fms_ival(int par, int act, int val)
+{
+  Fomus::getInstance()->ival(par,act,val);
+}
+
+void fms_rval(int par, int act, int num, int den)
+{
+  Fomus::getInstance()->rval(par,act,num,den);
+}
+
+void fms_mval(int par, int act, int val, int num, int den)
+{
+  Fomus::getInstance()->mval(par,act,val,num,den);
+}
+
+void fms_fval(int par, int act, double val)
+{
+  Fomus::getInstance()->fval(par,act,val);
+}
+
+void fms_sval(int par, int act, char* val)
+{
+  Fomus::getInstance()->sval(par,act,String(val));
+}
+
+void fms_act(int par, int act)
+{
+  Fomus::getInstance()->act(par,act);
 }
 
