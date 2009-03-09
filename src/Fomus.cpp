@@ -136,14 +136,17 @@ void Fomus::act(int par, int act)
 
 void Fomus::sendXml(String xml)
 {
-  Console::getInstance()->printOutput(xml + T("\n"));
+  // Console::getInstance()->printOutput(xml + T("\n"));
+  XmlDocument doc (xml);
+  sendXml(*doc.getDocumentElement());
 }
+
 
 void Fomus::sendXml(XmlElement& xml, int lev)
 {
-  /**
+  ///**
   String trace=String::empty;
-  for (int i=0; i< lev; i++) trace<<T(" ");
+  for (int i=0; i< lev; i++) trace<<T("  ");
 
   // top-level enties <fms:note> , <fms:rest> etc
   if (xml.hasTagName(T("fms:note")))
@@ -197,16 +200,19 @@ void Fomus::sendXml(XmlElement& xml, int lev)
   // sub-elements that are lists
   else if (xml.hasTagName(T("marks")))
     {
+      Console::getInstance()->printOutput(trace+xml.getTagName()+T("\n"));
       forEachXmlChildElement(xml, e)
 	sendXml(*e, lev+1);
     }
   else if (xml.hasTagName(T("voices")))
     {
+      Console::getInstance()->printOutput(trace+xml.getTagName()+T("\n"));
       forEachXmlChildElement(xml, e)
 	sendXml(*e, lev+1);
     }
   else if (xml.hasTagName(T("settings")))
     {
+      Console::getInstance()->printOutput(trace+xml.getTagName()+T("\n"));
       forEachXmlChildElement(xml, e)
 	sendXml(*e, lev+1);
     }
@@ -217,6 +223,11 @@ void Fomus::sendXml(XmlElement& xml, int lev)
       Console::getInstance()->printOutput(trace);
     }
   else if (xml.hasTagName(T("dur")))
+    {
+      trace<<xml.getTagName()<< T("=")<<xml.getAllSubText()<<T("\n");
+      Console::getInstance()->printOutput(trace);
+    }
+  else if (xml.hasTagName(T("part")))
     {
       trace<<xml.getTagName()<< T("=")<<xml.getAllSubText()<<T("\n");
       Console::getInstance()->printOutput(trace);
@@ -241,7 +252,7 @@ void Fomus::sendXml(XmlElement& xml, int lev)
       trace<<xml.getTagName()<< T("=")<<xml.getAllSubText()<<T("\n");
       Console::getInstance()->printOutput(trace);
     }
-  **/
+  //  **/
 }
 
 
