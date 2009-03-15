@@ -838,6 +838,14 @@ void Console::getAllCommands(Array<CommandID>& commands)
       CommandIDs::ConsoleFontSize + 13,
       CommandIDs::ConsoleFontSize + 14,
       CommandIDs::ConsoleFontSize + 15,
+      CommandIDs::ConsoleFontSize + 16,
+      CommandIDs::ConsoleFontSize + 17,
+      CommandIDs::ConsoleFontSize + 18,
+      CommandIDs::ConsoleFontSize + 19,
+      CommandIDs::ConsoleFontSize + 20,
+      CommandIDs::ConsoleFontSize + 21,
+      CommandIDs::ConsoleFontSize + 22,
+      CommandIDs::ConsoleFontSize + 23,
       CommandIDs::ConsoleTheme + 0,
       CommandIDs::ConsoleTheme + 1,
       CommandIDs::ConsoleTheme + 2,
@@ -894,7 +902,7 @@ void Console::getCommandInfo(const CommandID id,
       break;
     case CommandIDs::ConsoleFontSize:
       {
-	int fontsize=data+17;
+	int fontsize=data+9;
 	info.shortName=String(fontsize);
 	info.setTicked(getFontSize()==fontsize);
       }   
@@ -938,7 +946,7 @@ bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
       break;
     case CommandIDs::ConsoleFontSize:
       {
-	int fontsize=17+data;
+	int fontsize=9+data;
 	setFontSize(fontsize);
 	pref->setIntProp(T("ConsoleFontSize"), fontsize); 
       }
@@ -1048,6 +1056,15 @@ void TextBuffer::getAllCommands(Array<CommandID>& commands)
     CommandIDs::EditorFontSize + 13,
     CommandIDs::EditorFontSize + 14,
     CommandIDs::EditorFontSize + 15,
+    CommandIDs::EditorFontSize + 16,
+    CommandIDs::EditorFontSize + 17,
+    CommandIDs::EditorFontSize + 18,
+    CommandIDs::EditorFontSize + 19,
+    CommandIDs::EditorFontSize + 20,
+    CommandIDs::EditorFontSize + 21,
+    CommandIDs::EditorFontSize + 22,
+    CommandIDs::EditorFontSize + 23,
+
     CommandIDs::EditorTabWidth + 0,
     CommandIDs::EditorTabWidth + 1,
     CommandIDs::EditorTabWidth + 2,
@@ -1234,13 +1251,13 @@ void TextBuffer::getCommandInfo(const CommandID id,
       info.shortName=T("Undo");
       if (ismac || !emacs)
 	info.addDefaultKeypress('Z', comk);
-      info.setActive(false); // DISABLED DUE TO HILIGHTING
+      //info.setActive(false); // DISABLED DUE TO HILIGHTING
       break;
     case CommandIDs::EditorRedo:
       info.shortName=T("Redo");
       if (ismac || !emacs)
 	info.addDefaultKeypress('Z', comk | ModifierKeys::shiftModifier);
-      info.setActive(false); // DISABLED DUE TO HILIGHTING
+      //info.setActive(false); // DISABLED DUE TO HILIGHTING
       break;
     case CommandIDs::EditorCut:
       info.shortName=T("Cut");
@@ -1281,7 +1298,7 @@ void TextBuffer::getCommandInfo(const CommandID id,
       break;
     case CommandIDs::EditorFontSize:
       {
-	int fontsize=data+17;
+	int fontsize=data+9;
 	info.shortName=String(fontsize);
 	info.setTicked(getFontSize()==fontsize);
       }
@@ -1450,7 +1467,7 @@ bool TextBuffer::perform(const ApplicationCommandTarget::InvocationInfo&
       selectAll();
       break;
     case CommandIDs::EditorFind:
-      std::cout << "EditorFind\n";
+      TextEditorWindow::openFindAndReplaceDialog();
       break;
       //
       // Options Menu
@@ -1462,7 +1479,7 @@ bool TextBuffer::perform(const ApplicationCommandTarget::InvocationInfo&
       break;
     case CommandIDs::EditorFontSize:
       {
-	int fontsize=17+data;
+	int fontsize=9+data;
 	setFontSize(fontsize);
 	pref->setIntProp(T("EditorFontSize"), fontsize); 
       }

@@ -166,9 +166,15 @@ class TextBuffer : public TextEditor,
   void getCommandInfo(const CommandID id, ApplicationCommandInfo& info);
   bool perform(const ApplicationCommandTarget::InvocationInfo& info);
 
-  // editing
+  void focusGained(Component::FocusChangeType cause);
+  //void focusLost(Component::FocusChangeType cause);
 
-
+  int size () {return getTotalNumChars();}
+  bool replaceAll(String str, String rep);
+  bool replace(String rep);
+  bool replaceAndFind(String str, String rep);
+  bool findPrevious(String str, bool wrap=true);
+  bool findNext(String str, bool wrap=true);
 };
 
 class TextEditorWindow : public DocumentWindow, public MenuBarModel
@@ -187,6 +193,13 @@ class TextEditorWindow : public DocumentWindow, public MenuBarModel
   const PopupMenu getMenuForIndex (int menuIndex, 
 				   const String& menuName);
   void menuItemSelected (int menuItemID, int topLevelMenuIndex);
+
+  // focusing
+  // void focusGained(Component::FocusChangeType cause);
+  //void focusLost(Component::FocusChangeType cause);
+  static TextEditorWindow* getFocusTextEditor();
+  static void openFindAndReplaceDialog();
+
 };
 
 #endif

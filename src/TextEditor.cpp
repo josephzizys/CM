@@ -293,9 +293,6 @@ void TextBuffer::cut()
   setFlag(EditFlags::NeedsSave);
 }
 
-
-
-
 /*=======================================================================*
                             Options Menu Support
  *=======================================================================*/
@@ -310,6 +307,7 @@ void TextBuffer::setFontSize(int size)
   Font font=getFont();
   font.setHeight((float)size);
   applyFontToAllText(font);
+  colorizeAll();
 }
 
 void TextBuffer::setSyntax(int synt)
@@ -566,8 +564,7 @@ void TextBuffer::colorizeAfterChange(CommandID cmd)
   if (testFlag(EditFlags::HiliteOff) ||
       !syntax->highlighting())
     return;
-  int loc=point(), bol=pointBOL(), eol=pointEOL();
-  int bot=bol, top=eol;
+  int loc=0, bot=0, top=0;
   switch (cmd)
     {
     case CommandIDs::EditorBackspace:
@@ -584,11 +581,14 @@ void TextBuffer::colorizeAfterChange(CommandID cmd)
     case CommandIDs::EmacsLowercase:
     case CommandIDs::EmacsCapitalize:
       // colorize current line
-      bot=bol;
-      top=eol;
+      bot=pointBOL();
+      top=pointEOL();
       break;
     case CommandIDs::EditorNewline:
       // include previous line in recolor
+      loc=point();
+      bot=pointBOL();
+      top=pointEOL();
       if (moveLine(-1)) 
 	{
 	  bot=point();
@@ -598,7 +598,8 @@ void TextBuffer::colorizeAfterChange(CommandID cmd)
     case CommandIDs::EditorPaste:  
       // point is after pasted material. colorize from bol before
       // previous point to eol AFTER pasted
-      top=eol;
+      loc=point();
+      top=pointEOL();
       bot=loc-SystemClipboard::getTextFromClipboard().length();
       setPoint(bot);
       bot=pointBOL();
@@ -606,7 +607,10 @@ void TextBuffer::colorizeAfterChange(CommandID cmd)
       break;
     case CommandIDs::EmacsOpenLine:
       // include new line in recolor
-      if ( moveLine(1) )
+      loc=point();
+      bot=pointBOL();
+      top=pointEOL();
+       if ( moveLine(1) )
 	{
 	  top=pointEOL();
 	  setPoint(loc);
@@ -617,9 +621,8 @@ void TextBuffer::colorizeAfterChange(CommandID cmd)
     }
   if (bot!=top) 
     {
-      //      std::cout << "ColorizeAfterChange: " 
-      //		<< CommandIDs::toString(cmd).toUTF8()
-      //		<< "\n";
+      // std::cout << "ColorizeAfterChange: " 
+      //   << CommandIDs::toString(cmd).toUTF8() << "\n";
       colorize(bot, top, true);
     }
 }
@@ -1254,6 +1257,116 @@ int TextBuffer::findCharBackward(char c)
 }
 
 /*=======================================================================*
+                               Find and Replace
+ *=======================================================================*/
+
+bool TextBuffer::replaceAll(String str, String rep)
+{
+  int n=0;
+  while (findNext(str, false))
+    {
+      n++;
+      replace(rep);
+    }
+  return (n>0);
+}
+
+bool TextBuffer::replace(String rep)
+{
+  if (!getHighlightedRegionLength()>0)
+    return false;
+  insertTextAtCursor(rep);
+  setFlag(EditFlags::NeedsSave);
+  return true;
+}
+
+bool TextBuffer::replaceAndFind(String str, String rep)
+{
+  if (replace(rep))
+    return findNext(str);
+  return false;
+}
+
+bool TextBuffer::findPrevious(String str, bool wrap)
+{
+  int pos=getCaretPosition()-getHighlightedRegionLength();
+  int wid=str.length();
+  int tot=size();
+  int got=-1;
+  while (true)
+    {
+      if (pos<=wid) // not enough chars to make a match
+	{
+	  if (wrap)
+	    {
+	      wrap=false;
+	      pos=tot;
+	    }
+	  else
+	    break;
+	}
+      int top=pos-100;
+      if (top<0) top=0;
+      String tmp=getTextSubstring(top, pos);
+      int len=tmp.length();
+      got=tmp.lastIndexOf(str);
+      if (got>-1)
+	{
+	  pos -= (len-got);
+	  break;
+	}
+      // next search position must overlapping current end
+      pos=top+wid;
+    }
+  if (got>-1)
+    {
+      setHighlightedRegion(pos,wid);
+      return true;
+    }
+  return false;
+}
+
+bool TextBuffer::findNext(String str, bool wrap)
+{
+  // start looking at current cursor position (if region exists caret
+  // position is end of region)
+  int pos=getCaretPosition();
+  int wid=str.length();
+  int tot=size();
+  int got=-1;
+  //  bool wrap=true;
+  while (true)
+    {
+      if (pos>tot-wid) // not enough chars to make a match
+	{
+	  if (wrap)
+	    {
+	      wrap=false;
+	      pos=0;
+	    }
+	  else
+	    break;
+	}
+      String tmp=getTextSubstring(pos, pos+100);
+      got=tmp.indexOf(str);
+      if (got>-1)
+	{
+	  pos += got;
+	  break;
+	}
+      int len=tmp.length();
+      // next search position must overlapping current end
+      pos=pos+len-wid+1;
+    }
+  if (got>-1)
+    {
+      setHighlightedRegion(pos,wid);
+      return true;
+    }
+  return false;
+}
+
+/*=======================================================================*
                             Emacs Edit Functions
  *=======================================================================*/
 
@@ -1401,4 +1514,236 @@ void TextBuffer::deleteRegion(int from, int to)
     }
 }
 
+/*=======================================================================*
+                              Focus Changing
+ *=======================================================================*/
+
+void TextBuffer::focusGained(Component::FocusChangeType cause)
+{
+  // When an editor window is selected is becomes the "focus" editor
+  // and it only loses this focus when another editor window is
+  // selected, i.e. the editing focus is maintained even when the
+  // window itself is not the active window
+  TopLevelWindow* w=NULL;
+  // clear any other editing window of the focus
+  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
+    {
+      w=TopLevelWindow::getTopLevelWindow(i);
+      if (w->getComponentPropertyBool(T("FocusEditor"), false))
+	w->setComponentProperty(T("FocusEditor"), false);
+    }
+  // select this one
+  getTopLevelComponent()->setComponentProperty(T("FocusEditor"), true);
+}
+
+// void TextBuffer::focusLost(Component::FocusChangeType cause) {}
+
+TextEditorWindow* TextEditorWindow::getFocusTextEditor()
+{
+  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
+    {
+      TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
+      if ( w->getComponentPropertyBool(T("FocusEditor"), false))
+	{
+	  return (TextEditorWindow*)w;
+	}
+    }
+  return (TextEditorWindow*)NULL;
+}
+
+/*=======================================================================*
+                           Find and Replace Window
+  *=======================================================================*/
+
+class FindAndReplaceDialog  : public Component,
+                              public ButtonListener
+{
+public:
+  FindAndReplaceDialog ();
+  ~FindAndReplaceDialog();
+  void resized();
+  void buttonClicked (Button* buttonThatWasClicked);
+private:
+  Label* label1;
+  TextEditor* textEditor1;
+  Label* label2;
+  TextEditor* textEditor2;
+  TextButton* textButton1;
+  TextButton* textButton2;
+  TextButton* textButton3;
+  TextButton* textButton4;
+  TextButton* textButton5;
+};
+
+FindAndReplaceDialog::FindAndReplaceDialog ()
+    : label1 (0),
+      textEditor1 (0),
+      label2 (0),
+      textEditor2 (0),
+      textButton1 (0),
+      textButton2 (0),
+      textButton3 (0),
+      textButton4 (0),
+      textButton5 (0)
+{
+  addAndMakeVisible (label1 = new Label (String::empty, T("Find:")));
+  label1->setFont (Font (15.0000f, Font::plain));
+  label1->setJustificationType (Justification::centredRight);
+  label1->setEditable (false, false, false);
+  label1->setColour (TextEditor::textColourId, Colours::black);
+  label1->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (textEditor1 = new TextEditor (String::empty));
+  textEditor1->setMultiLine (false);
+  textEditor1->setReturnKeyStartsNewLine (false);
+  textEditor1->setReadOnly (false);
+  textEditor1->setScrollbarsShown (true);
+  textEditor1->setCaretVisible (true);
+  textEditor1->setPopupMenuEnabled (true);
+  textEditor1->setText (String::empty);
+  textEditor1->setWantsKeyboardFocus(true);
+
+  addAndMakeVisible (label2 = new Label (String::empty, T("Replace:")));
+  label2->setFont (Font (15.0000f, Font::plain));
+  label2->setJustificationType (Justification::centredRight);
+  label2->setEditable (false, false, false);
+  label2->setColour (TextEditor::textColourId, Colours::black);
+  label2->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (textEditor2 = new TextEditor (String::empty));
+  textEditor2->setMultiLine (false);
+  textEditor2->setReturnKeyStartsNewLine (false);
+  textEditor2->setReadOnly (false);
+  textEditor2->setScrollbarsShown (true);
+  textEditor2->setCaretVisible (true);
+  textEditor2->setPopupMenuEnabled (true);
+  textEditor2->setText (String::empty);
+  
+  addAndMakeVisible (textButton1 = new TextButton (String::empty));
+  textButton1->setButtonText (T("Replace All"));
+  textButton1->setConnectedEdges (Button::ConnectedOnRight);
+  textButton1->addButtonListener (this);
+  
+  addAndMakeVisible (textButton2 = new TextButton (String::empty));
+  textButton2->setButtonText (T("Replace"));
+  textButton2->setConnectedEdges (Button::ConnectedOnLeft | 
+				  Button::ConnectedOnRight);
+  textButton2->addButtonListener (this);
+  
+  addAndMakeVisible (textButton3 = new TextButton (String::empty));
+  textButton3->setButtonText (T("Replace & Find"));
+  textButton3->setConnectedEdges (Button::ConnectedOnLeft |
+				  Button::ConnectedOnRight);
+  textButton3->addButtonListener (this);
+  
+  addAndMakeVisible (textButton4 = new TextButton (String::empty));
+  textButton4->setButtonText (T("Previous"));
+  textButton4->setConnectedEdges (Button::ConnectedOnLeft |
+				  Button::ConnectedOnRight);
+  textButton4->addButtonListener (this);
+  
+  addAndMakeVisible (textButton5 = new TextButton (String::empty));
+  textButton5->setButtonText (T("Next"));
+  textButton5->setConnectedEdges (Button::ConnectedOnLeft);
+  textButton5->addButtonListener (this);
+  
+  setSize (414, 104);
+}
+
+FindAndReplaceDialog::~FindAndReplaceDialog()
+{
+  deleteAndZero (label1);
+  deleteAndZero (textEditor1);
+  deleteAndZero (label2);
+  deleteAndZero (textEditor2);
+  deleteAndZero (textButton1);
+  deleteAndZero (textButton2);
+  deleteAndZero (textButton3);
+  deleteAndZero (textButton4);
+  deleteAndZero (textButton5);
+}
+
+void FindAndReplaceDialog::resized()
+{
+  label1->setBounds (8, 8, 56, 24);
+  textEditor1->setBounds (72, 8, 336, 24);
+  label2->setBounds (8, 40, 56, 24);
+  textEditor2->setBounds (72, 40, 336, 24);
+  textButton1->setBounds (8, 72, 80, 24);
+  textButton2->setBounds (88, 72, 80, 24);
+  textButton3->setBounds (168, 72, 96, 24);
+  textButton4->setBounds (264, 72, 64, 24);
+  textButton5->setBounds (328, 72, 80, 24);
+}
+
+void FindAndReplaceDialog::buttonClicked (Button* buttonThatWasClicked)
+{
+  TextEditorWindow* win=TextEditorWindow::getFocusTextEditor();
+
+  if (!win)  // no editor open
+    {
+      PlatformUtilities::beep();
+      return;
+    }
+  TextBuffer* buf=win->getTextBuffer();
+  // no find string
+  String str=textEditor1->getText();
+  if (str.isEmpty())
+    {
+      PlatformUtilities::beep();
+      textEditor1->grabKeyboardFocus();
+      return;
+    }
+
+  if (buttonThatWasClicked == textButton1)       // Replace All
+    {
+      if (!buf->replaceAll(str, textEditor2->getText()))
+	PlatformUtilities::beep();
+    }
+  else if (buttonThatWasClicked == textButton2)  // Replace
+    {
+      if (!buf->replace(textEditor2->getText()))
+	PlatformUtilities::beep();
+    }
+  else if (buttonThatWasClicked == textButton3) // Find & Replace
+    {
+      if (!buf->replaceAndFind(str, textEditor2->getText()))
+	PlatformUtilities::beep();	
+    }
+  else if (buttonThatWasClicked == textButton4) // Previous
+    {
+      if (!buf->findPrevious(str))
+	PlatformUtilities::beep();
+    }
+  else if (buttonThatWasClicked == textButton5) // Next
+    {
+      if (!buf->findNext(str))
+	PlatformUtilities::beep();
+    }
+}
+
+void TextEditorWindow::openFindAndReplaceDialog()
+{
+  const String title=T("Find & Replace");
+  for (int i=0; i<getNumTopLevelWindows(); i++)
+    {
+      TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
+      if (w && w->getName() == title)
+	{
+	  w->grabKeyboardFocus();
+	  w->toFront(true);
+	  return;
+	}
+    }
+  FindAndReplaceDialog* d=new FindAndReplaceDialog();
+  DocumentWindow* w=new DocumentWindow(title, Colour(0xffe5e5e5),
+				       DocumentWindow::closeButton);
+  d->setVisible(true);
+  w->setContentComponent(d, true, true);
+  w->centreWithSize(d->getWidth(), d->getHeight());
+  w->setUsingNativeTitleBar(true);
+  w->setDropShadowEnabled(true);
+  w->setVisible(true);
+  d->grabKeyboardFocus();
+}
 

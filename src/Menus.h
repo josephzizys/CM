@@ -27,7 +27,7 @@ class CommandMenus
   static const int NumHelpTutorial = 8;
   static const int NumHelpWebSite = 8;
   static const int NumFont = 2;
-  static const int NumFontSize = 16;
+  static const int NumFontSize = 24;
   static const int NumConsoleTheme = 8;  
   static const int NumTabWidth = 4;
   static const int NumSndLibSrate = 4;
