@@ -154,10 +154,9 @@ class HiliteIDs
 };
 
 /* 
- * ExportIDs enumerate syntaxes for exporting music data to
- * text. Upper nibble holds the export type (a TextID), lower nibble
- * holds the format of the output (ie lists of event data, send
- * expressions)
+ * ExportIDs describe ways to decode data into text. Upper nibble
+ * holds a TextID, lower nibble holds the format of the output
+ * (e.g. lists of data, send expressions, score statements, etc)
  */
 
 typedef int ExportID;
@@ -169,24 +168,12 @@ class ExportIDs
   static const int UMASK=0xf0;
   static const int LMASK=0x0f;
  public:
-  static const int Empty = 0;
+  
+  static ExportID toExportID(TextID textid, int format)
+  {
+    return (ExportID)(((textid & LMASK) << SHIFT) + (format & LMASK));
+  }
 
-  static const int Data = 1;  // event data exported as lists
-  static const int Send = 2;  // event data exported as send exprs
-  static const int Score = 3; // score file format
-
-  static const ExportID SalData = (TextIDs::Sal << SHIFT) + Data;
-  static const ExportID SalSend = (TextIDs::Sal << SHIFT) + Send;
-  static const ExportID LispData = (TextIDs::Lisp << SHIFT) + Data;
-  static const ExportID LispSend = (TextIDs::Lisp << SHIFT) + Send;
-  static const ExportID CsoundScore = (TextIDs::Csound << SHIFT) + Score;
-  static const ExportID XmlData = (TextIDs::XML << SHIFT) + Data ;
-
-  // export destinaions
-  static const int ToFile = 1;
-  static const int ToConsole = 2;
-  static const int ToEditor = 3;
-  static const int ToClipboard= 4;
   static const TextID getTextID(ExportID f)
   {
     return (TextID)((f & UMASK) >> SHIFT);
@@ -196,6 +183,24 @@ class ExportIDs
   {
     return (f & LMASK);
   }
+
+  static const int Empty = 0;
+  static const int Data = 1;  // event data exported as lists
+  static const int Send = 2;  // event data exported as send exprs
+  static const int Score = 3; // score file format
+
+  // export destinaions
+  static const int ToFile = 1;
+  static const int ToConsole = 2;
+  static const int ToEditor = 3;
+  static const int ToClipboard= 4;
+
+  static const ExportID SalData = (TextIDs::Sal << SHIFT) + Data;
+  static const ExportID SalSend = (TextIDs::Sal << SHIFT) + Send;
+  static const ExportID LispData = (TextIDs::Lisp << SHIFT) + Data;
+  static const ExportID LispSend = (TextIDs::Lisp << SHIFT) + Send;
+  static const ExportID CsoundScore = (TextIDs::Csound << SHIFT) + Score;
+  static const ExportID XmlData = (TextIDs::XML << SHIFT) + Data ;
 };
 
 class CaptureModes
@@ -222,6 +227,14 @@ class MidiFlags
   static const int MaxChannelOpcode = Bend;
   static const int AllChannelsMask = 0xFFFF;
   static const int AllOpcodesMask = 0x7F;
+
+  static const int OffMask=1<<(Off-Off);
+  static const int OnMask=1<<(On-Off);
+  static const int TouchMask=1<<(Touch-Off);
+  static const int CtrlMask=1<<(Ctrl-Off);
+  static const int ProgMask=1<<(Prog-Off);
+  static const int PressMask=1<<(Press-Off);
+  static const int BendMask=1<<(Bend-Off);
 };
 
 class ScoreTypes
@@ -499,6 +512,8 @@ class CommandIDs
   static const CommandID MidiInChannelFilter = COMID(MidiIn, 3);
   static const CommandID MidiInOpcodeFilter = COMID(MidiIn, 4);
   static const CommandID MidiInConfigure = COMID(MidiIn, 5);
+  static const CommandID MidiInImportFile = COMID(MidiIn, 6);
+
 
   // MidiSeq Port
   static const CommandID MidiSeqRecordMidiOut = COMID(MidiSeq, 1);

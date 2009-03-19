@@ -274,8 +274,10 @@ class MidiOutPort : public Thread //, public AsyncUpdater
   void printSequence();
   void setOutputFile(String name);
   void openFileSettingsDialog();
+
   void saveSequence(bool ask=false);
-  void exportSequence();
+
+
   /** versions of the capture sequence can be saved to and restored
       from an array of "tracks" **/
   OwnedArray<MidiTrack> tracks;
@@ -348,6 +350,27 @@ class MidiInPort : public MidiInputCallback
   void handleIncomingMidiMessage (MidiInput *dev, const MidiMessage &msg) ;
   void handlePartialSysexMessage (MidiInput *dev, const juce::uint8 *data, 
 				  const int num, const double time);
+
+  // Importing
+  void openImportMidifileDialog();
+  void importMidifile(File pathname,
+		      int track=-1,
+		      double start=0.0,
+		      double endtime=-1.0, 
+		      int chanmask=MidiFlags::AllChannelsMask, 
+		      int opmask=MidiFlags::AllOpcodesMask,
+		      int where=ExportIDs::ToConsole,
+		      int format=ExportIDs::LispData);
+  void exportMidiMessageSequence(MidiMessageSequence* seq,
+				 String name,
+				 double start,
+				 double endtime,
+				 int chanmask,
+				 int opmask,
+				 int where,
+				 int format);
+  bool readMidifile(File pathname, MidiFile& midifile);
+
   juce_DeclareSingleton (MidiInPort, true)
 };
 

@@ -88,22 +88,23 @@ const PopupMenu CommandMenus::getAudioMenu()
   else
     inmenu.addItem(CommandIDs::MidiInOpen, T("<no devices>"), false);
   inmenu.addSeparator();
+  inmenu.addCommandItem(comm, CommandIDs::MidiInTrace);
   // channel filter (0-15, 16==All)
   chfilt.addCommandItem(comm, CommandIDs::MidiInChannelFilter +
 			NumMidiInChannelFilter);
   chfilt.addSeparator();
   for (int i=0; i<NumMidiInChannelFilter; i++)
     chfilt.addCommandItem(comm, CommandIDs::MidiInChannelFilter+i);
-  inmenu.addSubMenu(T("Receive Channels"), chfilt);
+  inmenu.addSubMenu(T("Channel Filter"), chfilt);
   // opcode filter (0-6, 7=All)
   opfilt.addCommandItem(comm, CommandIDs::MidiInOpcodeFilter +
 			NumMidiInOpcodeFilter);
   opfilt.addSeparator();
   for (int i=0; i<NumMidiInOpcodeFilter; i++)
     opfilt.addCommandItem(comm, CommandIDs::MidiInOpcodeFilter+i);
-  inmenu.addSubMenu(T("Receive Messages"), opfilt);
+  inmenu.addSubMenu(T("Message Filter"), opfilt);
   inmenu.addSeparator();
-  inmenu.addCommandItem(comm, CommandIDs::MidiInTrace);
+  inmenu.addCommandItem(comm, CommandIDs::MidiInImportFile);
   menu.addSubMenu(T("Midi In"), inmenu);
 
 #ifdef SNDLIB

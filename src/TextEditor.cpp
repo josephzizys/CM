@@ -1575,6 +1575,31 @@ private:
   TextButton* textButton5;
 };
 
+class FindAndReplaceWindow : public DocumentWindow
+{
+public:
+  void closeButtonPressed() {delete this;}
+  FindAndReplaceWindow(FindAndReplaceDialog* comp) :
+    DocumentWindow(T("Find & Replace"), 
+		   Colour(0xffe5e5e5),
+		   DocumentWindow::closeButton,
+		   true)
+  {
+    comp->setVisible(true);
+    centreWithSize(comp->getWidth(),comp->getHeight());
+    setContentComponent(comp);
+    setResizable(false, false); 
+    setUsingNativeTitleBar(true);
+    setDropShadowEnabled(true);
+    setVisible(true);
+  }
+  ~FindAndReplaceWindow()
+  {
+    // dont have to delete content component
+  }
+};
+
+
 FindAndReplaceDialog::FindAndReplaceDialog ()
     : label1 (0),
       textEditor1 (0),
@@ -1736,14 +1761,13 @@ void TextEditorWindow::openFindAndReplaceDialog()
 	}
     }
   FindAndReplaceDialog* d=new FindAndReplaceDialog();
-  DocumentWindow* w=new DocumentWindow(title, Colour(0xffe5e5e5),
-				       DocumentWindow::closeButton);
-  d->setVisible(true);
-  w->setContentComponent(d, true, true);
-  w->centreWithSize(d->getWidth(), d->getHeight());
-  w->setUsingNativeTitleBar(true);
-  w->setDropShadowEnabled(true);
-  w->setVisible(true);
+  FindAndReplaceWindow* w=new FindAndReplaceWindow(d);
+  //  d->setVisible(true);
+  //  w->setContentComponent(d, true, true);
+  //  w->centreWithSize(d->getWidth(), d->getHeight());
+  //  w->setUsingNativeTitleBar(true);
+  //  w->setDropShadowEnabled(true);
+  //  w->setVisible(true);
   d->grabKeyboardFocus();
 }
 
