@@ -224,9 +224,10 @@ class MidiFlags
   static const int Prog=0xC;
   static const int Press=0xD;
   static const int Bend=0xE;
+  static const int Meta=0xF;
   static const int MaxChannelOpcode = Bend;
   static const int AllChannelsMask = 0xFFFF;
-  static const int AllOpcodesMask = 0x7F;
+  static const int AllOpcodesMask = 0xFF;
 
   static const int OffMask=1<<(Off-Off);
   static const int OnMask=1<<(On-Off);
@@ -235,6 +236,7 @@ class MidiFlags
   static const int ProgMask=1<<(Prog-Off);
   static const int PressMask=1<<(Press-Off);
   static const int BendMask=1<<(Bend-Off);
+  static const int MetaMask=1<<(Meta-Off);
 };
 
 class ScoreTypes

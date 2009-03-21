@@ -20,6 +20,7 @@ juce_ImplementSingleton(MidiOutPort)
 
 juce_ImplementSingleton(MidiInPort)
 
+
 //
 //  Nodes
 //
@@ -1641,7 +1642,13 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
   bool doprog=Flags::test(opmask, MidiFlags::ProgMask);
   bool dobend=Flags::test(opmask, MidiFlags::BendMask);
   bool dopress=Flags::test(opmask, MidiFlags::PressMask);
-  int count[6]={0,0,0,0,0,0};
+
+  bool dometa=Flags::test(opmask, MidiFlags::MetaMask);
+
+  std::cout << opmask << " "<< MidiFlags::MetaMask << "dometas=" << dometa << "\n";
+
+
+  int count[7]={0,0,0,0,0,0,0};
   String prefix, indent, spacer, ending;
   String opener, closer;
   String outstr=String::empty;
@@ -1686,9 +1693,6 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
       break;
     }
 
-  std::cout << "opener='"  << opener.toUTF8()
-	    << "' numEvents="<< seq->getNumEvents() << "\n";
-
   StringArray outstrs;
   if (!sending)
     if (format==ExportIDs::SalData)
@@ -1699,6 +1703,7 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
 	outstrs.add(T("define variable ") + name + T("-ctrls = \n  {\n"));
 	outstrs.add(T("define variable ") + name + T("-touch = \n  {\n"));
 	outstrs.add(T("define variable ") + name + T("-press = \n  {\n"));
+	outstrs.add(T("define variable ") + name + T("-metas = \n  {\n"));
       }
     else
       {
@@ -1708,6 +1713,7 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
 	outstrs.add(T("(define ") + name + T("-ctrls\n  '(\n"));
 	outstrs.add(T("(define ") + name + T("-touch\n  '(\n"));
 	outstrs.add(T("(define ") + name + T("-press\n  '(\n"));
+	outstrs.add(T("(define ") + name + T("-metas\n  '(\n"));
       }
 
   for (int i=0; i< seq->getNumEvents(); i++)
@@ -1721,112 +1727,151 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
       if ((endtime>0) && (ev->message.getTimeStamp()>endtime))
 	break;
       int chan=ev->message.getChannel();
-      // skip if not a channel message or not a selected channel
-      if ((chan == 0) || !Flags::test(chanmask,1<<(chan-1)))
-	{
-	  //std::cout <<"continuing...chanmask=" << chanmask << " bit=" << (1<<chan-1) << "\n";
-	continue;
-	}
-
-      chan--;  // Juce channel values are 1 based!
       String line=String::empty;
       String time=String::formatted(T("%.03f"),
 				    ((float)ev->message.getTimeStamp()));
-      if (donote && ev->message.isNoteOn())
+      // is channel message and wants this channel
+      if (chan>0 && Flags::test(chanmask,1<<(chan-1)))
 	{
-	  double dur;
-	  if (ev->noteOffObject)
-	    dur=(ev->noteOffObject->message.getTimeStamp() -
-		 ev->message.getTimeStamp());
+	  chan--;  // Juce channel values are 1 based!
+	  if (donote && ev->message.isNoteOn())
+	    {
+	      double dur;
+	      if (ev->noteOffObject)
+		dur=(ev->noteOffObject->message.getTimeStamp() -
+		     ev->message.getTimeStamp());
+	      else
+		dur=.5; // can a missing note off happen??
+	      line << indent 
+		   << opener
+		   << ((sending) ? T("\"mp:note\" ") : T(""))
+		   << time
+		   << spacer << String::formatted(T("%.03f"), (float)dur)
+		   << spacer << String(ev->message.getNoteNumber())
+		   << spacer << String(ev->message.getVelocity())
+		   << spacer << String(chan)
+		   << closer;
+	      index=0;
+	      count[index] += 1;
+	    }
+	  else if (doprog && ev->message.isProgramChange())
+	    {
+	      line << indent
+		   << opener
+		   << ((sending) ? T("\"mp:prog\" ") : T(""))
+		   << time
+		   << spacer << String(ev->message.getProgramChangeNumber())
+		   << spacer << String(chan)
+		   << closer;
+	      index=1;
+	      count[index] += 1;
+	    }
+	  else if (dobend && ev->message.isPitchWheel())
+	    {
+	      line << indent
+		   << opener
+		   << ((sending) ? T("\"mp:bend\" ") : T(""))
+		   << time
+		   << spacer << String(ev->message.getPitchWheelValue())
+		   << spacer << String(chan)
+		   << closer;
+	      index=2;
+	      count[index] += 1;
+	    }
+	  else if (doctrl && ev->message.isController())
+	    {
+	      line << indent
+		   << opener
+		   << ((sending) ? T("\"mp:ctrl\" ") : T(""))
+		   << time
+		   << spacer << String(ev->message.getControllerNumber())
+		   << spacer << String(ev->message.getControllerValue())
+		   << spacer << String(chan)
+		   << closer;
+	      index=3;
+	      count[index] += 1;
+	    }
+	  else if (dotouch && ev->message.isAftertouch())
+	    {
+	      line << indent
+		   << opener
+		   << ((sending) ? T("\"mp:touch\" ") : T(""))
+		   << time
+		   << spacer << String(ev->message.getAfterTouchValue())
+		   << spacer << String(chan)
+		   << closer;
+	      index=4;
+	      count[index] += 1;
+	    }
+	  else if (dopress && ev->message.isChannelPressure())
+	    {
+	      line << indent
+		   << opener
+		   << ((sending) ? T("\"mp:press\" ") : T(""))
+		   << spacer << time
+		   << spacer<< String(ev->message.getChannelPressureValue())
+		   << spacer << String(chan)
+		   << closer;
+	      index=5;
+	      count[index] += 1;
+	    }	  
+	  if (sending)
+	    outstr << line;
 	  else
-	    dur=.5; // can a missing note off happen??
-	  line << indent 
-	       << opener
-	       << ((sending) ? T("\"mp:note\" ") : T(""))
-	       << time
-	       << spacer << String::formatted(T("%.03f"), (float)dur)
-	       << spacer << String(ev->message.getNoteNumber())
-	       << spacer << String(ev->message.getVelocity())
-	       << spacer << String(chan)
-	       << closer;
-	  index=0;
-	  count[index] += 1;
-	}
-      else if (doprog && ev->message.isProgramChange())
+	    outstrs.set(index,outstrs[index]+line);
+	} // end channel messages
+      else if (dometa && ev->message.isMetaEvent())
 	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:prog\" ") : T(""))
-	       << time
-	       << spacer << String(ev->message.getProgramChangeNumber())
-	       << spacer << String(chan)
-	       << closer;
-	  index=1;
+	  String name=String::toHexString(ev->message.getMetaEventType());
+	  line << indent << opener;
+	  if (sending) line << T("\"mp:meta\" ") ;
+	  line << time << spacer << T("#x") << name << spacer;
+	  if (ev->message.isTrackMetaEvent() || 
+	      ev->message.isMidiChannelMetaEvent() &&
+	      (ev->message.getMetaEventLength()>0))
+	    {
+	      line << ev->message.getMetaEventData()[0];
+	    }
+	  else if (ev->message.isTextMetaEvent() ||
+		   ev->message.isTrackNameEvent() )
+	    {
+	      line << ev->message.getTextFromTextMetaEvent().quoted();
+	    }
+	  else if (ev->message.isTempoMetaEvent())
+	    {
+	      line << 60.0 / ev->message.getTempoSecondsPerQuarterNote();
+	    }
+	  else if (ev->message.isTimeSignatureMetaEvent())
+	    {
+	      int n,d;
+	      ev->message.getTimeSignatureInfo(n,d);
+	      line << n << spacer << d;
+	    }
+	  else if (ev->message.isKeySignatureMetaEvent())
+	    {
+	      line << ev->message.getKeySignatureNumberOfSharpsOrFlats();
+	    }
+	  else
+	    continue;
+	  line << closer;
+	  index=6;
 	  count[index] += 1;
+	  
+	  if (sending)
+	    outstr << line;
+	  else
+	    outstrs.set(index,outstrs[index]+line);
 	}
-      else if (dobend && ev->message.isPitchWheel())
-	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:bend\" ") : T(""))
-	       << time
-	       << spacer << String(ev->message.getPitchWheelValue())
-	       << spacer << String(chan)
-	       << closer;
-	  index=2;
-	  count[index] += 1;
-	}
-      else if (doctrl && ev->message.isController())
-	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:ctrl\" ") : T(""))
-	       << time
-	       << spacer << String(ev->message.getControllerNumber())
-	       << spacer << String(ev->message.getControllerValue())
-	       << spacer << String(chan)
-	       << closer;
-	  index=3;
-	  count[index] += 1;
-	}
-      else if (dotouch && ev->message.isAftertouch())
-	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:touch\" ") : T(""))
-	       << time
-	       << spacer << String(ev->message.getAfterTouchValue())
-	       << spacer << String(chan)
-	       << closer;
-	  index=4;
-	  count[index] += 1;
-	}
-      else if (dopress && ev->message.isChannelPressure())
-	{
-	  line << indent
-	       << opener
-	       << ((sending) ? T("\"mp:press\" ") : T(""))
-	       << spacer << time
-	       << spacer << String(ev->message.getChannelPressureValue())
-	       << spacer << String(chan)
-	       << closer;
-	  index=5;
-	  count[index] += 1;
-	}
-
-      if (sending)
-	outstr << line;
-      else
-	outstrs.set(index,outstrs[index]+line);
-    }
-
+      
+    }  // end for loop
+  
   if (sending)
     {
       outstr = prefix + outstr + ending;
     }
   else
     {
-      for (int i=0; i< 6; i++)
+      for (int i=0; i< 7; i++)
 	if (count[i]>0)
 	  outstr << outstrs[i] << ending;
     }
@@ -2592,6 +2637,7 @@ public:
   ToggleButton* pitchbendbutton;
   ToggleButton* aftertouchbutton;
   ToggleButton* pressurebutton;
+  ToggleButton* metabutton;
   ComboBox* channelmenu;
   ToggleButton* consolebutton;
   ToggleButton* clipboardbutton;
@@ -2651,6 +2697,7 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi)
       pitchbendbutton (0),
       aftertouchbutton (0),
       pressurebutton (0),
+      metabutton (0),
       channellabel (0),
       channelmenu (0),
       exporttogroup (0),
@@ -2666,9 +2713,6 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi)
 {
   pathname=path;
   midifile=midi;
-  addAndMakeVisible (messagegroup =
-		     new GroupComponent (T("messagegroup"),
-					 T("Include")));
   
   addAndMakeVisible (midifilegroup =
 		     new GroupComponent (T("midifilegroup"),
@@ -2698,88 +2742,14 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi)
   else
     trackmenu->setSelectedId(1 + 1);
 
-  addAndMakeVisible (fromlabel = new Label (T("fromlabel"),
-					    T("Start:")));
-  fromlabel->setFont (Font (15.0000f, Font::plain));
-  fromlabel->setJustificationType (Justification::centredLeft);
-  fromlabel->setEditable (false, false, false);
-  fromlabel->setColour (TextEditor::textColourId, Colours::black);
-  fromlabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (frombuffer = new Label (T("frombuffer"),
-					     String::empty));
-  frombuffer->setFont (Font (15.0000f, Font::plain));
-  frombuffer->setJustificationType (Justification::centredLeft);
-  frombuffer->setEditable (true, true, false);
-  frombuffer->setColour (Label::backgroundColourId, Colours::white);
-  frombuffer->setColour (Label::outlineColourId, Colour (0xb2808080));
-  frombuffer->setColour (TextEditor::textColourId, Colours::black);
-  frombuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  frombuffer->addListener (this);
-  
-  addAndMakeVisible (tolabel = new Label (T("tolabel"),
-					  T("End Time:")));
-  tolabel->setFont (Font (15.0000f, Font::plain));
-  tolabel->setJustificationType (Justification::centredLeft);
-  tolabel->setEditable (false, false, false);
-  tolabel->setColour (TextEditor::textColourId, Colours::black);
-  tolabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (tobuffer = new Label (T("tobuffer"),
-					   String::empty));
-  tobuffer->setFont (Font (15.0000f, Font::plain));
-  tobuffer->setJustificationType (Justification::centredLeft);
-  tobuffer->setEditable (true, true, false);
-  tobuffer->setColour (Label::backgroundColourId, Colours::white);
-  tobuffer->setColour (Label::outlineColourId, Colour (0xb2808080));
-  tobuffer->setColour (TextEditor::textColourId, Colours::black);
-  tobuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  tobuffer->addListener (this);
-  
-  addAndMakeVisible (notesbutton = new ToggleButton (T("notesbutton")));
-  notesbutton->setButtonText (T("Notes"));
-  notesbutton->addButtonListener (this);
-  notesbutton->setToggleState (true, false);
-  
-  addAndMakeVisible (programchangebutton =
-		     new ToggleButton (T("programchangebutton")));
-  programchangebutton->setButtonText (T("Program Changes"));
-  programchangebutton->addButtonListener (this);
-  programchangebutton->setToggleState (true, false);
-  
-  addAndMakeVisible (pitchbendbutton = 
-		     new ToggleButton (T("pitchbendbutton")));
-  pitchbendbutton->setButtonText (T("Pitch Bends"));
-  pitchbendbutton->addButtonListener (this);
-  pitchbendbutton->setToggleState (true, false);
-   
-  addAndMakeVisible (controlchangebutton =
-		     new ToggleButton (T("controlchangebutton")));
-  controlchangebutton->setButtonText (T("Control Changes"));
-  controlchangebutton->addButtonListener (this);
-  controlchangebutton->setToggleState (true, false);
-  
-  addAndMakeVisible (aftertouchbutton =
-		     new ToggleButton (T("aftertouchbutton")));
-  aftertouchbutton->setButtonText (T("Aftertouch"));
-  aftertouchbutton->addButtonListener (this);
-  aftertouchbutton->setToggleState (true, false);
-  
-  addAndMakeVisible (pressurebutton =
-		       new ToggleButton (T("pressurebutton")));
-  pressurebutton->setButtonText (T("Channel Pressure"));
-  pressurebutton->addButtonListener (this);
-  pressurebutton->setToggleState (true, false);
- 
-  addAndMakeVisible (channellabel = new Label (T("channellabel"),
-					       T("Channel:")));
+  addAndMakeVisible(channellabel = new Label(String::empty, T("Channel:")));
   channellabel->setFont (Font (15.0000f, Font::plain));
   channellabel->setJustificationType (Justification::centredLeft);
   channellabel->setEditable (false, false, false);
   channellabel->setColour (TextEditor::textColourId, Colours::black);
   channellabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
   
-  addAndMakeVisible (channelmenu = new ComboBox (T("channelmenu")));
+  addAndMakeVisible(channelmenu = new ComboBox(String::empty));
   channelmenu->setEditableText (false);
   channelmenu->setJustificationType (Justification::centredLeft);
   channelmenu->setTextWhenNothingSelected (String::empty);
@@ -2804,10 +2774,84 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi)
   channelmenu->setSelectedId(MidiFlags::AllChannelsMask);
   channelmenu->addListener (this);
   
-  addAndMakeVisible (exporttogroup = 
-		     new GroupComponent (T("exporttogroup"),
-					 T("Import To")));
+  addAndMakeVisible(fromlabel = new Label(String::empty, T("Start:")));
+  fromlabel->setFont (Font (15.0000f, Font::plain));
+  fromlabel->setJustificationType (Justification::centredLeft);
+  fromlabel->setEditable (false, false, false);
+  fromlabel->setColour (TextEditor::textColourId, Colours::black);
+  fromlabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
   
+  addAndMakeVisible(frombuffer = new Label(String::empty, String::empty));
+  frombuffer->setFont (Font (15.0000f, Font::plain));
+  frombuffer->setJustificationType (Justification::centredLeft);
+  frombuffer->setEditable (true, true, false);
+  frombuffer->setColour (Label::backgroundColourId, Colours::white);
+  frombuffer->setColour (Label::outlineColourId, Colour (0xb2808080));
+  frombuffer->setColour (TextEditor::textColourId, Colours::black);
+  frombuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  frombuffer->addListener (this);
+  
+  addAndMakeVisible(tolabel = new Label(String::empty, T("End Time:")));
+  tolabel->setFont (Font (15.0000f, Font::plain));
+  tolabel->setJustificationType (Justification::centredLeft);
+  tolabel->setEditable (false, false, false);
+  tolabel->setColour (TextEditor::textColourId, Colours::black);
+  tolabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible(tobuffer = new Label(String::empty, String::empty));
+  tobuffer->setFont (Font (15.0000f, Font::plain));
+  tobuffer->setJustificationType (Justification::centredLeft);
+  tobuffer->setEditable (true, true, false);
+  tobuffer->setColour (Label::backgroundColourId, Colours::white);
+  tobuffer->setColour (Label::outlineColourId, Colour (0xb2808080));
+  tobuffer->setColour (TextEditor::textColourId, Colours::black);
+  tobuffer->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  tobuffer->addListener (this);
+  
+  // Include group
+
+  addAndMakeVisible(messagegroup =
+		    new GroupComponent (String::empty, T("Include")));
+
+  addAndMakeVisible(notesbutton = new ToggleButton(String::empty));
+  notesbutton->setButtonText (T("Notes"));
+  notesbutton->addButtonListener (this);
+  notesbutton->setToggleState (true, false);
+  
+  addAndMakeVisible(programchangebutton = new ToggleButton(String::empty));
+  programchangebutton->setButtonText (T("Program Changes"));
+  programchangebutton->addButtonListener (this);
+  programchangebutton->setToggleState (true, false);
+  
+  addAndMakeVisible(pitchbendbutton = new ToggleButton(String::empty));
+  pitchbendbutton->setButtonText (T("Pitch Bends"));
+  pitchbendbutton->addButtonListener (this);
+  pitchbendbutton->setToggleState (true, false);
+   
+  addAndMakeVisible(controlchangebutton = new ToggleButton(String::empty));
+  controlchangebutton->setButtonText (T("Control Changes"));
+  controlchangebutton->addButtonListener (this);
+  controlchangebutton->setToggleState (true, false);
+  
+  addAndMakeVisible(aftertouchbutton = new ToggleButton(String::empty));
+  aftertouchbutton->setButtonText (T("Aftertouch"));
+  aftertouchbutton->addButtonListener (this);
+  aftertouchbutton->setToggleState (true, false);
+  
+  addAndMakeVisible(pressurebutton = new ToggleButton(String::empty));
+  pressurebutton->setButtonText (T("Channel Pressure"));
+  pressurebutton->addButtonListener (this);
+  pressurebutton->setToggleState (true, false);
+
+  addAndMakeVisible(metabutton = new ToggleButton(String::empty));
+  metabutton->setButtonText (T("Meta Messages"));
+  metabutton->addButtonListener (this);
+  metabutton->setToggleState (true, false);
+
+  // Import To group
+
+  addAndMakeVisible (exporttogroup = new GroupComponent (String::empty,
+							 T("Import To")));
   addAndMakeVisible(consolebutton = new ToggleButton(String::empty));
   consolebutton->setButtonText (T("Console"));
   consolebutton->setRadioGroupId (1);
@@ -2848,7 +2892,7 @@ MidiFileImportComponent::MidiFileImportComponent (File path, MidiFile* midi)
   exportbutton->setButtonText (T("Import"));
   exportbutton->addButtonListener (this);
   
-  setSize (320, 380);
+  setSize (320, 412);
 }
 
 MidiFileImportComponent::~MidiFileImportComponent()
@@ -2867,6 +2911,7 @@ MidiFileImportComponent::~MidiFileImportComponent()
   deleteAndZero (pitchbendbutton);
   deleteAndZero (aftertouchbutton);
   deleteAndZero (pressurebutton);
+  deleteAndZero (metabutton);
   deleteAndZero (channellabel);
   deleteAndZero (channelmenu);
   deleteAndZero (exporttogroup);
@@ -2897,25 +2942,26 @@ void MidiFileImportComponent::resized()
   tolabel->setBounds (152, 68, 64, 24);
   tobuffer->setBounds (224, 68, 50, 24);
 
-  messagegroup->setBounds (8, 112, 304, 128);
+  messagegroup->setBounds (8, 112, 304, 160);
   notesbutton->setBounds (16, 136, 136, 24);
-  programchangebutton->setBounds (16, 168, 136, 24);
-  pitchbendbutton->setBounds (16, 200, 136, 24);
   controlchangebutton->setBounds (168, 136, 128, 24);
+  programchangebutton->setBounds (16, 168, 136, 24);
   aftertouchbutton->setBounds (168, 168, 128, 24);
+  pitchbendbutton->setBounds (16, 200, 136, 24);
   pressurebutton->setBounds (168, 200, 128, 24);
+  metabutton->setBounds (160-64, 232, 128, 24);
 
-  exporttogroup->setBounds (8, 248, 304, 88);
-  consolebutton->setBounds (16, 268, 88, 24);
-  clipboardbutton->setBounds (109, 268, 88, 24);
-  neweditorbutton->setBounds (208, 268, 88, 24);
+  exporttogroup->setBounds (8, 280, 304, 88);
+  consolebutton->setBounds (16, 300, 88, 24);
+  clipboardbutton->setBounds (109, 300, 88, 24);
+  neweditorbutton->setBounds (208, 300, 88, 24);
 
   //  dataformatlabel->setBounds (40, 292, 88, 24);
   //dataformatmenu->setBounds (136, 292, 136, 24);
-  dataformatlabel->setBounds (16, 300, 88, 24);
-  dataformatmenu->setBounds (70, 300, 126, 24);
-  salbutton->setBounds (208, 300, 136, 24);
-  exportbutton->setBounds (160-52, 344, 104, 24);
+  dataformatlabel->setBounds (16, 332, 88, 24);
+  dataformatmenu->setBounds (70, 332, 126, 24);
+  salbutton->setBounds (208, 332, 136, 24);
+  exportbutton->setBounds (160-52, 376, 104, 24);
 }
 
 void MidiFileImportComponent::comboBoxChanged (ComboBox* comboBox)
@@ -2953,6 +2999,8 @@ void MidiFileImportComponent::doImport()
     typemask += MidiFlags::PressMask;
   if (pitchbendbutton->getToggleState())
     typemask += MidiFlags::BendMask;
+  if (metabutton->getToggleState())
+    typemask += MidiFlags::MetaMask;
 
   int format=dataformatmenu->getSelectedId();
   if (salbutton->getToggleState())
