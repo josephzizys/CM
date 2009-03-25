@@ -10,6 +10,7 @@
 #include "Console.h"
 #include "TextEditor.h"
 #include "Documentation.h"
+#include "Preferences.h"
 #include <iostream>
 
 juce_ImplementSingleton (Help) ;
@@ -22,9 +23,17 @@ Help::Help()
   addSndLibSymbolHelp();
   addSchemeSymbolHelp();
   // Manuals
-  manuals.set(T("Common Music"), T("cm.html"));
+#ifdef GRACECL
+  manuals.set(T("Grace"), T("http://commonmusic.sf.net/cm/res/doc/grace.html"));
+  manuals.set(T("Common Music"), T("http://commonmusic.sf.net/cm2/doc/dict/index.html"));
+  manuals.set(T("CLM"), T("http://ccrma.stanford.edu/software/snd/snd/clm.html"));
+  manuals.set(T("Common Lisp"), T("http://www.lispworks.com/documentation/HyperSpec/Front/index.htm"));
+#else
+  manuals.set(T("Grace"), T("http://commonmusic.sf.net/cm/res/doc/grace.html"));
+  manuals.set(T("Common Music"), T("http://commonmusic.sf.net/cm/res/doc/cm.html"));
   manuals.set(T("CLM in Snd"), T("http://ccrma.stanford.edu/software/snd/snd/sndclm.html"));
   manuals.set(T("Scheme"), T("http://schemers.org/Documents/Standards/R5RS/HTML/"));
+#endif
   // Examples
   examples.set(T("Reich"), T("reich.sal"));
   examples.set(T("Ghosts"), T("ghosts.sal"));
@@ -54,7 +63,10 @@ Help::Help()
   // Websites
   websites.set(T("Common Music"), T("http://commonmusic.sourceforge.net/"));
   websites.set(T("JUCE"), T("http://www.rawmaterialsoftware.com/juce"));
-  restoreHelpFiles();
+
+  // DONT RESTORE FILE ANYMORE
+  //  restoreHelpFiles();
+
 }
 
 Help::~Help()
@@ -70,63 +82,6 @@ Help::~Help()
   clearSingletonInstance();
 }
 
-
-File Help::getHelpDirectory()
-{
-  //  return File::getSpecialLocation(File::userApplicationDataDirectory).getChildFile(T("grace"));
-  return File::getSpecialLocation(File::tempDirectory);
-}
-
-File Help::getHelpFile(String fil)
-{
-  return getHelpDirectory().getChildFile(fil);
-}
-
-void Help::restoreFile(const char* code, int size, String path)
-{
-  File f=getHelpFile(path);
-  //std::cout << "restoring: " << f.getFullPathName().toUTF8() << "\n";
-  if (! f.replaceWithText( String(code,size) ))
-    {
-      String msg=T("Warning: help file ");
-      msg << f.getFullPathName() 
-	  << T(" could not be written.\n");
-      Console::getInstance()->printWarning(msg);
-      return;
-    }
-}
-
-void Help::restoreHelpFiles()
-{
-  using namespace Documentation;
-  //std::cout << "Help directory: " << getHelpDirectory().getFullPathName().toUTF8() << "\n";
-  restoreFile(cm_css, cm_cssSize, T("cm.css"));
-  restoreFile(cm_html, cm_htmlSize, T("cm.html"));
-  restoreFile(continuum_sal, continuum_salSize, T("continuum.sal"));
-  restoreFile(csound_sal, csound_salSize, T("csound.sal"));
-  restoreFile(fm_sal, fm_salSize, T("fm.sal"));
-  restoreFile(foster_sal, foster_salSize, T("foster.sal"));
-  restoreFile(gestures_sal, gestures_salSize, T("gestures.sal"));
-  restoreFile(ghosts_sal, ghosts_salSize, T("ghosts.sal"));
-  restoreFile(harmonics_sal, harmonics_salSize, T("harmonics.sal"));
-  restoreFile(input_sal, input_salSize, T("input.sal"));
-  restoreFile(interp_sal, interp_salSize, T("interp.sal"));
-  restoreFile(jazz_sal, jazz_salSize, T("jazz.sal"));
-  restoreFile(mapping_sal, mapping_salSize, T("mapping.sal"));
-  restoreFile(markov1_sal, markov1_salSize, T("markov1.sal"));
-  restoreFile(markov2_sal, markov2_salSize, T("markov2.sal"));
-  restoreFile(patterns1_sal, patterns1_salSize, T("patterns1.sal"));
-  restoreFile(patterns2_sal, patterns2_salSize, T("patterns2.sal"));
-  restoreFile(reich_sal, reich_salSize, T("reich.sal"));
-  restoreFile(define_sal, define_salSize, T("define.sal"));
-  restoreFile(expr_sal, expr_salSize, T("expr.sal"));
-  restoreFile(funcall_sal, funcall_salSize, T("funcall.sal"));
-  restoreFile(hello_sal, hello_salSize, T("hello.sal"));
-  restoreFile(lists_sal, lists_salSize, T("lists.sal"));
-  restoreFile(loop_sal, loop_salSize, T("loop.sal"));
-  restoreFile(midiout_sal, midiout_salSize, T("midiout.sal"));
-  restoreFile(processes_sal, processes_salSize, T("processes.sal"));
-}
 
 int Help::getHelpSize(CommandID id)
 {
@@ -165,61 +120,71 @@ String Help::getHelpName(CommandID id)
     }
 }
 
-String Help::getHelpEntry(CommandID id)
+void Help::openHelp(CommandID id)
 {
   int comm=CommandIDs::getCommand(id);
   int data=CommandIDs::getCommandData(id);
-  switch (comm)
-    {
-    case CommandIDs::HelpManual:
-      return helpValue(manuals, data);
-    case CommandIDs::HelpExample:
-      return helpValue(examples, data);
-    case CommandIDs::HelpTutorial:
-      return helpValue(tutorials, data);
-    case CommandIDs::HelpWebSite:
-      return helpValue(websites, data);
-    default:
-      return String::empty;
-    }
-}
 
-void Help::openHelp(CommandID id)
-{
-  String help=getHelpEntry(id);
-  if (!help.isEmpty())
-    openHelp(help);
-}
-
-void Help::openHelp(String str)
-{
-  //std::cout << "openHelp: '" << str.toUTF8() << "'\n";
-  // str is url open in browser
-  if (str.startsWith(T("http:")) ||
-      str.startsWith(T("file:")))
-    openHelpInBrowser(str);
-  // str is (local) .html file or url
-  else if (str.contains(T(".htm")))
-    {
-      int pos=str.lastIndexOfChar('#');
-      String tag=String::empty;
-      if (pos!=-1)
-	{
-	  tag=str.substring(pos);
-	  str=str.substring(0, pos);
-	}
-      // use Help dir if its not absolute pathname
-      if (File::isAbsolutePath(str))
-	str=File(str).getFullPathName();
-      else
-	str=getHelpFile(str).getFullPathName();
-      openHelpInBrowser(T("file://") + str + tag);
-    }
+  if (comm==CommandIDs::HelpManual)
+    openHelpInBrowser(helpValue(manuals, data));
+  else if (comm==CommandIDs::HelpWebSite)
+    openHelpInBrowser( helpValue(websites, data) );
   else
     {
-      if (!File::isAbsolutePath(str))
-	str=getHelpFile(str).getFullPathName();
-      openHelpInEditor(str);
+      using namespace Documentation;
+      String file=String::empty;
+      if (comm==CommandIDs::HelpExample)
+	file=helpValue(examples, data);
+      else 
+	file=helpValue(tutorials, data);
+      if (file==T("continuum.sal"))
+	openHelpInEditor(file, String(continuum_sal, continuum_salSize));
+      else if (file==T("csound.sal"))
+	openHelpInEditor(file, String(csound_sal, csound_salSize));
+      else if (file==T("fm.sal"))
+	openHelpInEditor(file, String(fm_sal, fm_salSize));
+      else if (file==T("foster.sal"))
+	openHelpInEditor(file, String(foster_sal, foster_salSize));
+      else if (file==T("gestures.sal"))
+	openHelpInEditor(file, String(gestures_sal, gestures_salSize));
+      else if (file==T("ghosts.sal"))
+	openHelpInEditor(file, String(ghosts_sal, ghosts_salSize));
+      else if (file==T("harmonics.sal"))
+	openHelpInEditor(file, String(harmonics_sal, harmonics_salSize));
+      else if (file==T("input.sal"))
+	openHelpInEditor(file, String(input_sal, input_salSize));
+      else if (file==T("interp.sal"))
+	openHelpInEditor(file, String(interp_sal, interp_salSize));
+      else if (file==T("jazz.sal"))
+	openHelpInEditor(file, String(jazz_sal, jazz_salSize));
+      else if (file==T("mapping.sal"))
+	openHelpInEditor(file, String(mapping_sal, mapping_salSize));
+      else if (file==T("markov1.sal"))
+	openHelpInEditor(file, String(markov1_sal, markov1_salSize));
+      else if (file==T("markov2.sal"))
+	openHelpInEditor(file, String(markov2_sal, markov2_salSize));
+      else if (file==T("patterns1.sal"))
+	openHelpInEditor(file, String(patterns1_sal, patterns1_salSize));
+      else if (file==T("patterns2.sal"))
+	openHelpInEditor(file, String(patterns2_sal, patterns2_salSize));
+      else if (file==T("reich.sal"))
+	openHelpInEditor(file, String(reich_sal, reich_salSize));
+      else if (file==T("define.sal"))
+	openHelpInEditor(file, String(define_sal, define_salSize));
+      else if (file==T("expr.sal"))
+	openHelpInEditor(file, String(expr_sal, expr_salSize));
+      else if (file==T("funcall.sal"))
+	openHelpInEditor(file, String(funcall_sal, funcall_salSize));
+      else if (file==T("hello.sal"))
+	openHelpInEditor(file, String(hello_sal, hello_salSize));
+      else if (file==T("lists.sal"))
+	openHelpInEditor(file, String(lists_sal, lists_salSize));
+      else if (file==T("loop.sal"))
+	openHelpInEditor(file, String(loop_sal, loop_salSize));
+      else if (file==T("midiout.sal"))
+	openHelpInEditor(file, String(midiout_sal, midiout_salSize));
+      else if (file==T("processes.sal"))
+	openHelpInEditor(file, String(processes_sal, processes_salSize));
     }
 }
 
@@ -244,9 +209,12 @@ void Help::openHelpInBrowser(String url)
     }
 }
 
-void Help::openHelpInEditor(String file)
+void Help::openHelpInEditor(String path, String code)
 {
-  new TextEditorWindow(File(file));
+  int synt=TextIDs::Lisp;
+  if (path.endsWith(T(".sal")))
+    synt=TextIDs::Sal;
+  new TextEditorWindow(File::nonexistent, code, synt, path);
 }
 
 /*=======================================================================*
@@ -287,7 +255,8 @@ void Help::symbolHelp(String symbol, String helppath)
 	return;
       if (x!=String::empty)
 	{
-	  openHelp(roots[h] + x);
+	  //	  openHelp(roots[h] + x);
+	  openHelpInBrowser(roots[h] + x);
 	  return;
 	}
     }
@@ -295,7 +264,7 @@ void Help::symbolHelp(String symbol, String helppath)
 
 void Help::addSalSymbolHelp()
 {
-  roots.set(T("Sal"), String::empty);
+  roots.set(T("Sal"), T("http://commonmusic.sf.net/cm/res/doc/"));
   sal.set(T("begin"), T("cm.html#begin"));
   sal.set(T("chdir"), T("cm.html#chdir"));
   sal.set(T("define"), T("cm.html#define"));
@@ -327,7 +296,7 @@ void Help::addSalSymbolHelp()
 
 void Help::addCommonMusicSymbolHelp() 
 {
-  roots.set(T("CM"), String::empty);
+  roots.set(T("CM"), T("http://commonmusic.sf.net/cm/res/doc/"));
   cm.set(T("between"), T("cm.html#between"));
   cm.set(T("butlast"), T("cm.html#butlast"));
   cm.set(T("cents->ratio"), T("cm.html#cents-_ratio"));

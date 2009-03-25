@@ -10,6 +10,7 @@
 #include "Scheme.h"
 #ifdef GRACE
 #include "Preferences.h"
+#include "CommonLisp.h"
 #endif
 #include <cctype>
 #include <iostream>
@@ -135,6 +136,9 @@ LispSyntax::LispSyntax ()
   addLispTok( T("define"), numtoks++, HiliteIDs::Hilite4, 1);
   addLispTok( T("define-process"), numtoks++, HiliteIDs::Hilite4, 1);
   addLispTok( T("definstrument"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("defun"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("defparameter"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("defvar"), numtoks++, HiliteIDs::Hilite4, 1);
   addLispTok( T("run"), numtoks++, HiliteIDs::Hilite4, 1000);
   addLispTok( T("and"), numtoks++, HiliteIDs::Hilite4, 2);
   addLispTok( T("cond"), numtoks++, HiliteIDs::Hilite4, 2);
@@ -347,7 +351,11 @@ void LispSyntax::eval(String text, bool isRegion, bool expand)
 	text=T("(pp (macroexpand (quote ") + text + T(")))");
       if (isRegion)
 	text= T("(begin ") + text + T(")");
-      Scheme::getInstance()->eval(text);
+#ifdef GRACECL
+	CommonLisp::getInstance()->eval(text);
+#else
+	Scheme::getInstance()->eval(text);
+#endif
     }
 }
 
@@ -656,6 +664,17 @@ void SalSyntax::eval(String text, bool isRegion, bool expand)
   //  std::cout << "eval: '" << text.toUTF8() << "'\n";
   if (isRegion)
     text = T("begin\n") + text + T("\nend");
+#ifdef GRACECL
+  text=T("(cm::sal ") + String("\"") 
+	+ text.replace(T("\""),T("\\\""))
+	+ String("\"");
+  if (isRegion)
+    text << T(" :pattern :statement-sequence");
+  if ( expand )
+    text << T(" :expand t");
+  text << T(")");
+  CommonLisp::getInstance()->eval(text, true);
+#else
   String tokens=tokenize(text);
   // if null then error was reported...
   if (tokens == String::empty)
@@ -668,8 +687,9 @@ void SalSyntax::eval(String text, bool isRegion, bool expand)
     T(" (quote ") + tokens + T(")") +
     T(" ") + exp +
     T(")");
-  std::cout << text.toUTF8() << "\n";
-  Scheme::getInstance()->eval(text);
+  //  std::cout << text.toUTF8() << "\n";
+    Scheme::getInstance()->eval(text);
+#endif
 }
 
 /*

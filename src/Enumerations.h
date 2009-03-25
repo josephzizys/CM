@@ -31,7 +31,7 @@ class SysInfo
   }
   static const String getGraceVersion()
   {
-    return T("Grace ") + getVersionString(GRACE_VERSION);
+    return getVersionString(GRACE_VERSION);
   }
   static const String getCMLogo()
   {
@@ -68,7 +68,7 @@ class SysInfo
                                  OS Info
    *======================================================================*/
 
-  static bool isWindows()
+ static bool isWindows()
   {
 #ifdef JUCE_WIN32
     return true;
@@ -94,6 +94,20 @@ class SysInfo
     return false;
 #endif
   }
+
+  /*======================================================================*
+                                 Target Info
+   *======================================================================*/
+
+  static bool isGraceCL()
+  {
+#ifdef GRACECL
+    return true;
+#else
+    return false;
+#endif
+  }
+
 };
 
 /*
@@ -403,8 +417,11 @@ class CommandIDs
   static const CommandID PrefsSetInitFile = COMID(Prefs, 8);
   static const CommandID PrefsClearInitFile = COMID(Prefs, 9);
 
-  static const CommandID SchemeLoadFile = COMID(Scheme, 1);
-  static const CommandID SchemeShowVoidValues = COMID(Scheme, 2);
+  static const CommandID LispLoadFile = COMID(Scheme, 1);
+  static const CommandID LispCompileFile = COMID(Scheme, 2);
+  static const CommandID LispConfigure = COMID(Scheme, 3);
+  static const CommandID LispStart = COMID(Scheme, 4);
+
 
   // Console File
   static const CommandID ConsoleNewEditor = COMID(Console, 1);

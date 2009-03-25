@@ -2,10 +2,16 @@ project.name = "CM"
 project.bindir = "bin"
 project.configs = {"Release", "Debug"}
 
+amalgamated = true
+
 addoption("juce", "Location of JUCE source directory or install prefix")
 addoption("sndlib", "Optional location of SNDLIB source directory or install prefix")
 addoption("chicken", "Optional location of CHICKEN source directory or install prefix")
 addoption("fomus", "Optional location of FOMUS source directory or install prefix")
+
+if options["juce"] then
+   amalgamated = false
+end
 
 sndlib = nil
 chicken = nil
@@ -25,9 +31,36 @@ end
 
 if not (options["clean"] or options["help"] or options["version"]) then
 
-for i = 1,2 do   
+------------------------------------------
+--           JUCE Amalgamated
+------------------------------------------
+
+if amalgamated then
+   juce_library = newpackage() 
+   juce_library.includepaths = { "src" }
+   juce_library.name = "juce"
+   juce_library.target = "obj/juce/juce"
+   juce_library.language = "c++"
+   juce_library.kind = "lib"
+   juce_library.objdir = "obj/juce"
+   juce_library.buildflags = {"static-runtime"}
+   juce_library.files = {"src/juce.h", "src/juce_amalgamated.cpp", "src/juce_amalgamated.h"}
+   if macosx then
+      juce_library.buildoptions = {"-x objective-c++"}
+      add(juce_library.defines, "MACOSX")
+   elseif linux then
+      add(juce_library.defines, "LINUX")
+      add(juce_library.includepaths, "/usr/include/freetype2")
+   elseif windows then
+      add(juce_library.defines, "WINDOWS")
+   end
+end
+
+
+for i = 1,3 do   
    cm = i == 1
    grace = i == 2
+   gracecl = i == 3
 
 ------------------------------------------
 --           Global
@@ -37,7 +70,14 @@ for i = 1,2 do
    mypackage.includepaths = { "src" }
    mypackage.buildflags = {"static-runtime", "no-main"}
    mypackage.language = "c++"
+
+   if amalgamated then 
+      add(mypackage.libpaths, "obj/juce")
+      add(mypackage.links, "juce")
+   end
+
    mypackage.files = {
+
       "src/Scanner.cpp", "src/Scanner.h",
       "src/Syntax.cpp", "src/Syntax.h",
       "src/CmSupport.cpp", "src/CmSupport.h",
@@ -64,15 +104,24 @@ for i = 1,2 do
    end
 
 ------------------------------------------
---           Grace
+--           Grace and GraceCL
 ------------------------------------------
 
-   if (grace) then
-      mypackage.name = "grace"
-      mypackage.target = "Grace"
-      mypackage.kind = "winexe"
-      mypackage.objdir = "obj/grace"
-      add(mypackage.defines, "GRACE=1")
+   if (grace or gracecl) then
+      if (grace) then
+	 mypackage.name = "grace"
+	 mypackage.target = "Grace"
+	 mypackage.kind = "winexe"
+	 mypackage.objdir = "obj/grace"
+	 add(mypackage.defines, "GRACE=1")
+      else
+	 mypackage.name = "gracecl"
+	 mypackage.target = "GraceCL"
+	 mypackage.kind = "winexe"
+	 mypackage.objdir = "obj/gracecl"
+	 add(mypackage.defines, "GRACE=1")
+	 add(mypackage.defines, "GRACECL=1")
+      end
       add(mypackage.files, "src/Fonts.cpp") 
       add(mypackage.files, "src/Fonts.h")
       add(mypackage.files, "src/Help.cpp")
@@ -89,6 +138,8 @@ for i = 1,2 do
       add(mypackage.files, "src/Images.h")
       add(mypackage.files, "src/Audio.cpp")
       add(mypackage.files, "src/Audio.h")
+      add(mypackage.files, "src/CommonLisp.cpp")
+      add(mypackage.files, "src/CommonLisp.h")
    end
 
 ------------------------------------------
@@ -128,7 +179,8 @@ for i = 1,2 do
       end
       mypackage.config["Release"].links = { juce_lib }
       mypackage.config["Debug"].links = { juce_debug_lib }
-   else
+
+   elseif not amalgamated then
       error("CM requires juce, add --juce to your premake options")
    end
    
@@ -227,6 +279,7 @@ for i = 1,2 do
       add(mypackage.linkoptions, "-framework OpenGL")
       add(mypackage.linkoptions, "-framework AGL")
       add(mypackage.linkoptions, "-framework QuickTime")
+      add(mypackage.linkoptions, "-framework WebKit")
       add(mypackage.linkoptions, "-framework IOKIT")
    elseif linux then
       add(mypackage.defines, "LINUX=1")

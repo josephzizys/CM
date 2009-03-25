@@ -30,23 +30,16 @@ class Help
   void addCommonMusicSymbolHelp();
   void addSndLibSymbolHelp();
   void addSchemeSymbolHelp();
-  void restoreHelpFiles();
-  void restoreFile(const char* code, int size, String file);
 
  public:
   Help ();
   ~Help();
-  File getHelpDirectory();
-  File getHelpFile(String fil);
   int getHelpSize(CommandID id);
   String getHelpName(CommandID id);
-  String getHelpEntry(CommandID id);
-  void symbolHelp(String sym, String helppath) ;
   void openHelp(CommandID id);
-  void openHelp(String entry);
   void openHelpInBrowser(String url);
-  void openHelpInEditor(String file);  
-
+  void openHelpInEditor(String path, String code);  
+  void symbolHelp(String sym, String helppath) ;
   juce_DeclareSingleton (Help, true)
 
 };

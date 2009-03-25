@@ -18,6 +18,7 @@
 #include "Audio.h"
 #include "Csound.h"
 #include "Fomus.h"
+#include "CommonLisp.h"
 
 #ifdef SNDLIB
 #include "SndLib.h"
@@ -42,6 +43,11 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
 
     CommandIDs::AppQuit,
 
+    CommandIDs::LispLoadFile,
+    CommandIDs::LispCompileFile,
+    CommandIDs::LispConfigure,
+    CommandIDs::LispStart,
+
     CommandIDs::PrefsOpenRecent + 0,
     CommandIDs::PrefsOpenRecent + 1,
     CommandIDs::PrefsOpenRecent + 2,
@@ -60,7 +66,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::PrefsOpenRecent + 15,
     CommandIDs::PrefsClearOpenRecent,
 
-    CommandIDs::SchemeLoadFile,
+
     CommandIDs::PrefsLoadRecent + 0,
     CommandIDs::PrefsLoadRecent + 1,
     CommandIDs::PrefsLoadRecent + 2,
@@ -272,14 +278,11 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::HelpWebSite + 5,
     CommandIDs::HelpWebSite + 6,
     CommandIDs::HelpWebSite + 7,
-    CommandIDs::HelpShowDirectory,
-
   };
   commands.addArray(ids, sizeof(ids) / sizeof(CommandID));
 }
 
-void Grace::getCommandInfo(const CommandID id,
-			   ApplicationCommandInfo& info)
+void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
 {
   int comm = CommandIDs::getCommand(id);
   int data = CommandIDs::getCommandData(id);
@@ -312,10 +315,6 @@ void Grace::getCommandInfo(const CommandID id,
     case CommandIDs::PrefsClearOpenRecent:
       info.shortName=T("Clear Menu");
       break;
-
-    case CommandIDs::SchemeLoadFile:
-      info.shortName=T("Load File...");
-      break;
     case CommandIDs::PrefsLoadRecent:
       {
 	File f=pref->recentlyLoaded.getFile(data);
@@ -328,6 +327,32 @@ void Grace::getCommandInfo(const CommandID id,
     case CommandIDs::PrefsClearLoadRecent:
       info.shortName=T("Clear Menu");
       break;
+      //
+      // Lisp Commands
+      //
+    case CommandIDs::LispStart:
+      if (SysInfo::isGraceCL() && 
+	  CommonLisp::getInstance()->isLispRunning())
+	info.shortName=T("Stop Lisp");
+      else 
+	info.shortName=T("Start Lisp");
+      info.setActive(SysInfo::isGraceCL() && 
+		     CommonLisp::getInstance()->isLispStartable());
+      break;
+    case CommandIDs::LispConfigure:
+      info.shortName=T("Configure Lisp...");
+      info.setActive(SysInfo::isGraceCL());
+      break;
+    case CommandIDs::LispLoadFile:
+      info.shortName=T("Load File...");
+      info.setActive(!SysInfo::isGraceCL() || 
+		     CommonLisp::getInstance()->isLispRunning());
+      break;
+    case CommandIDs::LispCompileFile:
+      info.shortName=T("Compile File...");
+      info.setActive(SysInfo::isGraceCL() && 
+		     CommonLisp::getInstance()->isLispRunning());
+      break;
     case CommandIDs::PrefsSetInitFile:
       info.shortName=T("Set Init File...");
       break;
@@ -335,10 +360,11 @@ void Grace::getCommandInfo(const CommandID id,
       info.shortName=T("Clear Init File");
       info.setActive(pref->getStringProp(T("LispInitFile"))!=NULL);
       break;
-
+            
       //
       // Midi Output
       //
+
     case CommandIDs::MidiOutOpen:
       {
 	StringArray devices = MidiOutput::getDevices();
@@ -554,9 +580,6 @@ void Grace::getCommandInfo(const CommandID id,
       else
 	info.shortName=T("<Unknown Help>");
       break;
-    case CommandIDs::HelpShowDirectory:
-      info.shortName=T("Show Help Directory");
-      break;
     default:
       //      std::cout << "Grace commands: missing info for " << 
       //	CommandIDs::toString(id, true).toUTF8() << "\n";
@@ -575,12 +598,29 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       ((ConsoleWindow *)Console::getInstance()->getTopLevelComponent())->
 	closeButtonPressed();
       break;
-    case CommandIDs::SchemeLoadFile:
-      Scheme::getInstance()->load(File::nonexistent,true);
+
+      //
+      // Lisp Commands
+
+    case CommandIDs::LispStart:
+      if (CommonLisp::getInstance()->isLispRunning())
+	CommonLisp::getInstance()->stopLisp();	
+      else
+	CommonLisp::getInstance()->startLisp();
+      break;
+
+    case CommandIDs::LispConfigure:
+      CommonLisp::getInstance()->showConfigureLispWindow();
+      break;
+
+    case CommandIDs::LispLoadFile:
+      if (SysInfo::isGraceCL())
+	CommonLisp::getInstance()->load(File::nonexistent,true);
+      else
+	Scheme::getInstance()->load(File::nonexistent,true);	
       break;
     case CommandIDs::PrefsLoadRecent:
-      Scheme::getInstance()->
-	load(pref->recentlyLoaded.getFile(data), true);
+      Scheme::getInstance()->load(pref->recentlyLoaded.getFile(data), true);
       break;
     case CommandIDs::PrefsSetInitFile:
       {
@@ -772,14 +812,6 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::HelpWebSite:
       Help::getInstance()->openHelp(info.commandID);
       break;
-    case CommandIDs::HelpShowDirectory:
-      {
-	String str=T("Help directory: ");
-	str << Help::getInstance()->getHelpDirectory().getFullPathName()
-	    << T("\n");
-	Console::getInstance()->printOutput(str);
-      }
-      break;
     default:
       return false;
     }
@@ -862,7 +894,6 @@ void Console::getAllCommands(Array<CommandID>& commands)
       CommandIDs::ConsoleTheme + 5,
       CommandIDs::ConsoleTheme + 6,
       CommandIDs::ConsoleTheme + 7,
-      CommandIDs::SchemeShowVoidValues,
       CommandIDs::ConsoleClearConsole
     };
   commands.addArray(ids, sizeof(ids) / sizeof(CommandID));
@@ -918,10 +949,6 @@ void Console::getCommandInfo(const CommandID id,
     case CommandIDs::ConsoleClearConsole:
       info.shortName=T("Clear Console");
       break;
-    case CommandIDs::SchemeShowVoidValues:
-      info.shortName=T("Show Void Values");
-      info.setTicked(Scheme::getInstance()->showVoidValues());
-      break;
 
     default:
       //      std::cout << "Console commands: missing info for " << 
@@ -958,10 +985,6 @@ bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
 	setFontSize(fontsize);
 	pref->setIntProp(T("ConsoleFontSize"), fontsize); 
       }
-      break;
-    case CommandIDs::SchemeShowVoidValues:
-      Scheme::getInstance()->
-	setShowVoidValues(!Scheme::getInstance()->showVoidValues());
       break;
     case CommandIDs::ConsoleClearConsole:
       buffer->clear();

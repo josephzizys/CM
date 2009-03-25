@@ -13,6 +13,8 @@
 #include "Midi.h"
 #include "Main.h"
 #include "Audio.h"
+#include "CommonLisp.h"
+#include "Fomus.h"
 
 #include <string>
 #include <iostream>
@@ -29,7 +31,11 @@
 
 const String Grace::getApplicationName(void)
 {
-  return T("Grace");
+  // asd
+  if (SysInfo::isGraceCL())
+    return T("GraceCL");
+  else
+    return T("Grace");
 }
 
 const String Grace::getApplicationVersion(void)
@@ -65,13 +71,24 @@ void Grace::initialise(const juce::String& commandLine)
   new ConsoleWindow();
   Console* con=Console::getInstance();
   String str=String::empty;
-  str << SysInfo::getGraceVersion()
+  str << getApplicationName() << T(" ") << SysInfo::getGraceVersion()
       << T(" ") << SysInfo::getCopyright(T("Todd Ingalls, Rick Taube"))
       << T("\n")
       << SystemStats::getJUCEVersion()
       << T(" ") << SysInfo::getCopyright(T("Julian Storer")) 
       << T("\n");
   con->printOutput(str);
+  // don't initialize anything if we are GraceCL
+  if (SysInfo::isGraceCL())
+    {
+      const String msg=
+	T("\nWelcome to GraceCL, a version of Grace that supports the Common Lisp branch (CM2) of Common Music. Your Common Lisp environment is not configured yet. Use Configure Lisp... in the Console Window's file menu to specify the full pathname to your Common Lisp program (SBCL or CLisp) and your Common Music source directory. GraceCL requires version 2.12.0 or later from the CM2 branch, available on the web at http://commonmusic.sf.net or via the svn shell command (all one line):\n\nsvn co http://commonmusic.svn.sf.net/svnroot/commonmusic/branches/cm2 cm2\n\nHappy hacking!\n");
+      if (!CommonLisp::getInstance()->isLispStartable())
+	Console::getInstance()->printOutput(msg);
+      else if (CommonLisp::getInstance()->getLispLaunchAtStartup())
+	CommonLisp::getInstance()->startLisp();
+      return;
+    }
   Scheme* scm=Scheme::getInstance();
   scm->setPriority(10);
   scm->startThread();
@@ -106,10 +123,14 @@ void Grace::shutdown()
   delete lookandfeel;
   std::cout << "Deleting Scheme\n";
   Scheme::deleteInstance();
+  std::cout << "Deleting CommonLisp\n";
+  CommonLisp::deleteInstance();
   std::cout << "Deleting MidiOut\n";
   MidiOutPort::deleteInstance();
   std::cout << "Deleting MidiIn\n";
   MidiInPort::deleteInstance();
+  std::cout << "Deleting Fomus\n";
+  Fomus::deleteInstance();
   std::cout << "Deleting AudioManager\n";
   AudioManager::deleteInstance();
   std::cout << "Deleting Console\n";
@@ -119,6 +140,9 @@ void Grace::shutdown()
   std::cout << "Deleting Preferences\n";
   Preferences::deleteInstance();
   std::cout << "Bye!\n";
+  //  std::cout << "Desktop components=" 
+  //	    << Desktop::getInstance().getNumComponents() << "\n";
+  //  std::cout << "name=" << Desktop::getInstance().getComponent(0)->getName().toUTF8() << "\n";
 }
 
 void Grace::showWorkingDirectory() 

@@ -195,15 +195,18 @@ const PopupMenu CommandMenus::getHelpMenu()
     mans.addCommandItem(comm, CommandIDs::HelpManual + i);
   menu.addSubMenu(T("Manuals"), mans);
 
-  // Examples
-  size=jlimit(0, CommandMenus::NumHelpExample,
-	      help->getHelpSize(CommandIDs::HelpExample));
-  for (int i=0; i<size; i++)
-    examps.addCommandItem(comm, CommandIDs::HelpExample + i);
-  examps.addSeparator();
-  examps.addCommandItem(comm, CommandIDs::SndLibInsDialog);
-  menu.addSubMenu(T("Examples"), examps);
-
+  // Examples (CM3)
+  if (!SysInfo::isGraceCL())
+    {
+      size=jlimit(0, CommandMenus::NumHelpExample,
+		  help->getHelpSize(CommandIDs::HelpExample));
+      for (int i=0; i<size; i++)
+	examps.addCommandItem(comm, CommandIDs::HelpExample + i);
+      examps.addSeparator();
+      examps.addCommandItem(comm, CommandIDs::SndLibInsDialog);
+      menu.addSubMenu(T("Examples"), examps);
+    }
+  
   // Sal Tutorials
   size=jlimit(0, CommandMenus::NumHelpTutorial,
 	      help->getHelpSize(CommandIDs::HelpTutorial));
@@ -218,8 +221,8 @@ const PopupMenu CommandMenus::getHelpMenu()
     sites.addCommandItem(comm, CommandIDs::HelpWebSite + i);
   menu.addSubMenu(T("Web Sites"), sites);
 
-  menu.addSeparator();
-  menu.addCommandItem(comm, CommandIDs::HelpShowDirectory);
+  //  menu.addSeparator();
+  //  menu.addCommandItem(comm, CommandIDs::HelpShowDirectory);
 
   return menu;
 }
@@ -231,7 +234,11 @@ const PopupMenu CommandMenus::getHelpMenu()
 const StringArray ConsoleWindow::getMenuBarNames ()
 {
   const tchar* const names[]={
-    T("File"), T("Console"), T("Audio"), T("Window"), T("Help"), 0
+    T("File"), T("Console"),
+#ifndef GRACECL
+    T("Audio"),
+#endif
+    T("Window"), T("Help"), 0
   }; 
   return StringArray((const tchar**) names);
 }
@@ -251,12 +258,19 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
       if (pref->recentlyOpened.getNumFiles()>0)
 	menu.addSubMenu(T("Open Recent"), 
 			CommandMenus::getRecentlyOpenedMenu());
+#ifdef GRACECL
       menu.addSeparator();
-      menu.addCommandItem(gmanager,CommandIDs::SchemeLoadFile);
+      menu.addCommandItem(gmanager, CommandIDs::LispStart);
+      menu.addCommandItem(gmanager, CommandIDs::LispConfigure);
+#endif
+      menu.addSeparator();
+      menu.addCommandItem(gmanager,CommandIDs::LispCompileFile);
+      menu.addCommandItem(gmanager,CommandIDs::LispLoadFile);
       if (pref->recentlyLoaded.getNumFiles()>0)
 	menu.addSubMenu(T("Load Recent"), 
 			CommandMenus::getRecentlyLoadedMenu());
       menu.addSeparator();
+
       menu.addCommandItem(gmanager,CommandIDs::PrefsSetInitFile);
       menu.addCommandItem(gmanager,CommandIDs::PrefsClearInitFile);
       menu.addSeparator();
@@ -304,7 +318,10 @@ const StringArray TextEditorWindow::getMenuBarNames()
 {
   const tchar* const menubar [] = 
     {T("File"), T("Edit"), T("Options"), T("Eval"),
-     T("Audio"), T("Windows"), T("Help"), 0};
+#ifndef GRACECL
+     T("Audio"),
+#endif
+     T("Windows"), T("Help"), 0};
   return StringArray((const tchar**)menubar);
 }
 
@@ -329,7 +346,7 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
       menu.addCommandItem(manager, CommandIDs::EditorRevert);
 
       menu.addSeparator();
-      menu.addCommandItem(gmanager,CommandIDs::SchemeLoadFile);
+      menu.addCommandItem(gmanager,CommandIDs::LispLoadFile);
       if (pref->recentlyLoaded.getNumFiles()>0)
 	menu.addSubMenu(T("Load Recent"), 
 			CommandMenus::getRecentlyLoadedMenu());
