@@ -515,7 +515,7 @@ bool CommonLisp::launchLisp ()
        << String(getPort()) << T(" ")
        << getPollFile(true).getFullPathName().quoted() << T(")'");
 #else
-  args << T(" \"(load ") << String::charToString('\\') 
+  args << eval << T(" \"(load ") << String::charToString('\\') 
        << String::charToString('"') 
        << escapeForDOS(serv.getFullPathName()) 
        << String::charToString('\\') << T("\")\" ")

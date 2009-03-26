@@ -2461,7 +2461,7 @@ MidiFileInfoComponent::~MidiFileInfoComponent()
 
 void MidiFileInfoComponent::resized()
 {
-  float y=12;
+  int y=12;
   // only active is saving file
   if (savebutton)
     {
