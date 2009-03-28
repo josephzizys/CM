@@ -25,7 +25,7 @@ class Preferences
   int getIntProp(String name, int def=0);
   void setIntProp(String name, int val);
 
-  float getDoubleProp(String name, double def=0.0);
+  double getDoubleProp(String name, double def=0.0);
   void setDoubleProp(String name, double val);
 
   String getStringProp(String name, String def=T(""));

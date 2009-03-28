@@ -37,6 +37,7 @@
 juce_ImplementSingleton(SndLib)
 
 #ifdef _MSC_VER
+#define unlink _unlink
 s7_scheme *s7;
 XEN xen_false, xen_true, xen_nil, xen_undefined;
 #endif

@@ -24,6 +24,10 @@
 #define TANF(a)		(tanf( (a) ))
 
 #ifdef _MSC_VER
+
+#define strdup _strdup
+#define jn _jn
+
 double log2(double n)
 {
   return log(n)/log(2.0);

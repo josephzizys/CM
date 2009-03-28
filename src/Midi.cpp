@@ -76,9 +76,8 @@ void MidiNode::process()
       if ( values[DATA2] > 0.0 )
 	{
 	  // handle velocity ranges 0.0-1.0 or 0.0-127.0
-	  float vel=(values[DATA2]>1.0) ? 
-	    (values[DATA2]/127.0) : values[DATA2] ;
-	  MidiMessage msg=MidiMessage::noteOn((int)values[DATA0]+1, 
+    float vel=(float)((values[DATA2]>1.0) ? (values[DATA2]/127.0) : values[DATA2]);
+    MidiMessage msg=MidiMessage::noteOn((int)values[DATA0]+1, 
 					      (int)values[DATA1], 
 					      vel);
 	  msg.setTimeStamp(time);
@@ -838,7 +837,8 @@ void MidiOutPort::sendNote(double wait, double duration, double keynum,
   if (toseq)
     {
       // JUCE channel message constructors are 1-based channels
-      float amp=((amplitude>1.0) ? (amplitude/127) : amplitude);
+      float amp=(float)((amplitude>1.0) ? (amplitude/127) : amplitude);
+
       captureSequence.
 	addEvent(MidiMessage::noteOn((int)channel+1, (int)keynum, amp),
 		 wait);
@@ -1923,7 +1923,7 @@ public:
 
   bool isChanged() {return changed;}
 
-  bool setChanged(bool b) {changed=b;}
+  bool setChanged(bool b) {changed=b; return changed;}
 
   void setInstrument(int chan, int inst) 
   {

@@ -76,7 +76,7 @@ void Preferences::setIntProp(String name, int val)
 
 // String Props
 
-float Preferences::getDoubleProp(String name, double def)
+double Preferences::getDoubleProp(String name, double def)
 {
   return props->getDoubleValue(name, def);
 }

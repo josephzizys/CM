@@ -38,7 +38,7 @@ TextEditorWindow::TextEditorWindow (File file, String text, int synt,
 	  synt=TextIDs::Lisp;
 	else
 	  synt=TextIDs::Text; 
-      size=file.getSize();
+      size=(int)file.getSize();
       text=file.loadFileAsString();
     }
   else
@@ -118,8 +118,8 @@ TextBuffer::TextBuffer(int texttype)
   Preferences* prefs=Preferences::getInstance();
   manager=new ApplicationCommandManager();
   setFont(Font(Font::getDefaultMonospacedFontName(),
-	       prefs->getIntProp(T("EditorFontSize"), 17),
-	       Font::plain));
+	        (float)prefs->getIntProp(T("EditorFontSize"), 17),
+	        Font::plain));
   if (prefs->getBoolProp("EditorEmacsMode", false))
     setFlag(EditFlags::EmacsMode);
   addKeyListener(manager->getKeyMappings());
@@ -1273,7 +1273,7 @@ bool TextBuffer::replaceAll(String str, String rep)
 
 bool TextBuffer::replace(String rep)
 {
-  if (!getHighlightedRegionLength()>0)
+  if (!(getHighlightedRegionLength()>0))
     return false;
   insertTextAtCursor(rep);
   setFlag(EditFlags::NeedsSave);
