@@ -203,6 +203,7 @@ static XEN g_delete_file(XEN name)
 
 XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
 
+/**
 static XEN g_random(XEN val)
 {
   if (XEN_INTEGER_P(val))
@@ -211,7 +212,7 @@ static XEN g_random(XEN val)
 }
 
 XEN_NARGIFY_1(g_random_w, g_random)
-
+**/
 
 /*=======================================================================*
                                CM Support
@@ -323,8 +324,8 @@ bool Scheme::init()
 		       1, 0, 0, H_file_exists_p);
   XEN_DEFINE_PROCEDURE("delete-file", g_delete_file_w,
 		       1, 0, 0, H_delete_file);
-  XEN_DEFINE_PROCEDURE("random", g_random_w, 1, 0, 0,
-		       "(random arg): random number between 0 and arg");
+//  XEN_DEFINE_PROCEDURE("random", g_random_w, 1, 0, 0,
+//		       "(random arg): random number between 0 and arg");
   /* deal with the ubiquitous run macro */
   XEN_EVAL_C_STRING("(define (run-safety) 0)");
   //  XEN_EVAL_C_STRING("(defmacro run (thunk) `(,thunk))");
