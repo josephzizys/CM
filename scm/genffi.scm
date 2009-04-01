@@ -431,7 +431,7 @@
       (if (pair? floats)
 	  (set! func (string-append func pad (paramdecl floats 'double))))
       (if (pair? ints)
-	  (set! func (string-append func pad (paramdecl ints 'int))))
+	  (set! func (string-append func pad (paramdecl ints 's7_Int)))) ;int
       (if (pair? ints64)
 	  (set! func (string-append func pad (paramdecl ints64 'int64))))
       (if (pair? bools)

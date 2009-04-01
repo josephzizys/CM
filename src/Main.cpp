@@ -15,7 +15,8 @@
 #include "Audio.h"
 #include "CommonLisp.h"
 #include "Fomus.h"
-
+#include "Scanner.h"
+#include "Syntax.h"
 #include <string>
 #include <iostream>
 
@@ -175,65 +176,6 @@ START_JUCE_APPLICATION(Grace)
                             CM CONSOLE APPLICATION                       
  *=======================================================================*/
 
-bool isEmpty(std::string& s)
-{
-  const char* c = s.c_str();
-  while (*c)
-    {
-      switch (*c)
-	{
-	case ' ' :
-	case '\n' :
-	case '\t' :
-	  break;
-	default :
-	  return false;
-	}
-      c++;
-    }
-  return true;
-}
-
-bool isBalanced(std::string& s)
-{
-  const char* c = s.c_str();
-  const char* b = c;
-  int par=0, bra=0, squ=0; 
-  bool str=false;
-  while (*c)
-    {
-      if (*c == '\"')
-	{
-	  if ((c==b) || (*(c-1) != '\\'))
-	    str=!str;
-	}
-      if (!str)
-	{
-	  if (*c == '(')
-	    par++;
-	  else if (*c == ')')
-	    par--;
-	  else if (*c == ';')
-	    {
-	      while (*c && *c != '\n')
-		c++;
-	    }
-	  // The rest of these are SAL
-	  else if (*c == '{')
-	    bra++;
-	  else if (*c == '}')
-	    bra--;
-	  else if (*c == '[')
-	    squ++;
-	  else if (*c == ']')
-	    squ--;
-	}
-      c++;
-    }
-  // allow input with too many closed parens to be passed to lisp
-  return ((par<=0) && (bra<=0) && (squ<=0) && (!str));
-}
-
 int main(int argc, const char* argv[])
 {
   initialiseJuce_NonGUI();
@@ -262,27 +204,33 @@ int main(int argc, const char* argv[])
   MidiOutPort* mid=MidiOutPort::getInstance();
   mid->setPriority(9);
   mid->startThread();
-  std::string input="";
   while (scm->isThreadRunning())
     {
       bool more=true;
+      String text=String::empty;
       while (more) 
 	{
-	  std::string str="";
-	  getline(std::cin, str);
-	  if (!input.empty())
-	    input.append("\n");
-	  input.append(str);
-	  more=!isBalanced(input);
-	}
-      //std::cout << "is balanced...evaling '" << input.c_str() << "' ...\n";
-      if (!isEmpty(input))
-	{
-	  if (input.length() == 1 && input[0]=='q')
+	  std::string line="";
+	  getline(std::cin, line);
+	  if (!text.isEmpty())
+	    text << T("\n");
+	  text << String(line.c_str());
+	  int typ, loc;
+	  typ=scan_sexpr(LispSyntax::getInstance()->syntab,
+			 text, 0, text.length(), SCAN_CODE, &loc, NULL);
+	  if (typ==SCAN_LIST || typ==SCAN_TOKEN || typ==SCAN_STRING)
 	    break;
-	  scm->eval(input.c_str());
+	  else if (typ==SCAN_UNLEVEL)
+	    break;  // allow too many parens to be passed to lisp?
 	}
-      input = "";
+
+      if (!text.isEmpty())
+	{
+	  if (text.length() == 1 && text[0]=='q')
+	    break;
+	  scm->eval(text);
+	}
+      text=String::empty;
     }
 
   if (scm->isThreadRunning())

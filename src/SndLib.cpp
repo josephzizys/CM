@@ -13,7 +13,9 @@
 #endif
 #include "mus-config.h" // in SndLib.h
 #include "s7.h"
+#if OLDSNDLIB
 #include "xen.h"
+#endif
 #include "clm.h"
 #include "clm2xen.h"
 
@@ -185,6 +187,7 @@ int SndLib::performCommand(int id, int data, String text)
                     Required definitions for scm/sndlib-ws.scm 
  *=======================================================================*/
 
+#if OLDSNDLIB
 static XEN g_file_exists_p(XEN name)
 {
   #define H_file_exists_p "(file-exists? filename): #t if the file exists"
@@ -202,6 +205,8 @@ static XEN g_delete_file(XEN name)
 }
 
 XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
+
+#endif
 
 /**
 static XEN g_random(XEN val)
@@ -313,6 +318,7 @@ bool Scheme::init()
   /* initialize sndlib with all the functions linked into s7 */
   Init_sndlib(); 
 
+#if OLDSNDLIB
   /* these next lines are for compatibility with Guile (ws.scm has
      Guile-specific junk) */
 
@@ -330,6 +336,8 @@ bool Scheme::init()
   XEN_EVAL_C_STRING("(define (run-safety) 0)");
   //  XEN_EVAL_C_STRING("(defmacro run (thunk) `(,thunk))");
   XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
+#endif
+
 
   /* Install custom port handlers for stdout and stderr */
 

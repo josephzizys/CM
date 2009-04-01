@@ -2,21 +2,15 @@
                                DEPENDENCIES                               
 ==========================================================================
 
-Juce 1.46, available at:
-
-    http://sourceforge.net/project/showfiles.php?group_id=137492
-
-Premake 3.5 or 3.6 or 3.7, available at:
+Premake (3.5, 3.6, 3.7) available at:
 
     http://premake.sourceforge.net/download
 
-SndLib with S7 Scheme, available at:
+Either SndLib with S7 Scheme, available at:
 
     ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz
 
-OR:
-
-Chicken Scheme 3.0.0, available at:
+OR Chicken Scheme 3.0.0, available at:
 
     http://www.call-with-current-continuation.org/
 
@@ -25,50 +19,45 @@ Chicken Scheme 3.0.0, available at:
 ==========================================================================
 
 Use premake to create your make files and then make the targets. For
-example this is how I build the system on my mac:
+example this is how I build the basic system on my mac:
 
-    $ premake --target gnu --juce ../juce-1.46 --sndlib ../sndlib
+    $ premake --target gnu --sndlib ../sndlib
     $ make
 
-The --juce, --sndlib and --chicken options all allow their path to be
-either the source directory (eg '--juce ../juce-1.46') or an install
-root (eg '--juce /usr/local').
+You MUST specify a --target option (either gnu or vs2005) and EITHER a
+--sndlib OR a --chicken installation (directory) that contains the system's header files and static lib for linking.
 
-Executables are left in bin/:
+To use an external JUCE installation rather than the amalgamated
+sources (part of the CM source tree) pass an optinal --juce
+installation directory.  To build with Fomus add your --fomus
+installation directory as well.
+
+The --sndlib --chicken, --juce and --fomus options all allow their
+path to be either the source directory (eg '--juce ../juce-1.46') or
+an install root (eg '--juce /usr/local').
+
+Executables are saved in bin/:
 
     bin/cm                      console app    
     bin/Grace                   gui app
+    bin/GraceCL                 gui app (for cm2/common lisp)
 
-
-BUILDING WITH SNDLIB:
+BUILDING SNDLIB:
 
     $ cd /path/to/sndlib
     $ ./configure CC=g++
     $ make
-
-    $ cd /path/to/cm3
-    $ premake --target gnu --juce /path/to/juce --sndlib /path/to/sndlib
-    $ make
-
-
-BUILDING WITH CHICKEN SCHEME 3.0.0:
-
-    $ premake --target gnu --juce /path/to/juce --chicken /path/to/chicken-3.0.0
-    $ make
-
-Carlos Pita reports that you can build with the latest Chicken (3.4.0)
-if you simply regenerate ChickenBridge.cpp. see developer notes below.
 
 ==========================================================================
                                  CM IN EMACS                             
 ==========================================================================
 
 bin/cm is a console app that can be used as an inferior scheme process
-in Emacs. To run cm in Emacs just add this snippet to your .emacs file
-and fix 'cm-path' for your machine. Then restart emacs and start CM by
-doing: M-x: cm
+in Emacs.  Add this snippet to your .emacs file and fix 'cm-path' for
+your machine. Then restart emacs and start CM by doing: M-x: cm
 
 ;-----------------------------------------------------------------------
+
 (defvar cm-path "~/Software/cm/") ; FIX pathname for your machine
 (require 'scheme)
 (load (concat cm-path "res/etc/sal.el"))

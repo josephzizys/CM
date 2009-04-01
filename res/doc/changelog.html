@@ -20,20 +20,23 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   
   <ul>
 
-     <li class="change">Enhancement: New GraceCL application target provides a stripped-down version of Grace to use with Common Music 2 (version 2.12.0 or higher) and Common Lisp (SBCL or CLisp).  GraceCL does not contain an Audio menu or a real time scheduler.  </li>
+     <li class="change">New feature: A new application GraceCL provides a stripped-down version of the Grace environment for use with the Common Music 2 line (version 2.12.0 or higher) and either SBCL or Clisp Common Lisp.  GraceCL does not contain an Audio menu or a real time scheduler.  </li>
 
-     <li class="change">Enhancement: CM source tree now contains the "amalgamated" JUCE sources, an external JUCE installation is no longer required. <!-- building CM no longer requires an external JUCE installation. --></li>
-     <li class="change">Enhancement: new <span class="menuitem">Audio&gt;MidiIn&gt;Import Midifile...</span> tool imports data from midifiles to Text Editor, the Console window or clipboard.</li>
-    <li class="change">Enhancement:  new Find and Replace tool for Text Editor</li>
-     <li class="change">Enhancement: new <span class="menuitem">Audio&gt;MidiOut&gt;Midifile Settings...</span> dialog for configuring midifile data. The default time format is now ticks per quarter (480) and the default file tempo is now 60 bpm.</li>
-     <li class="change">Enhancement: new <span class="menuitem">Audio&gt;MidiOut&gt;Instruments...</span> dialog for Midi instrument channel assignment.</li>
+     <li class="change">Enhancement: Source tree includes the amalgamated JUCE sources so an external JUCE installation is no longer required to build CM. </li>
+     <li class="change">New feature: Audio&gt;MidiIn&gt;Import Midifile... imports data from MIDI files to an editor window, the Console window or the clipboard.</li>
+    <li class="change">Enhancement:  Find and Replace tool for Text Editor</li>
+     <li class="change">New feature: Audio&gt;MidiOut&gt;Midifile Settings... for configuring midifile data. The default time format is now ticks per quarter (480) and the default file tempo is now 60 bpm.</li>
+     <li class="change">New feature: Audio&gt;MidiOut&gt;Instruments... for Midi instrument channel assignment.</li>
     <li class="change">Enhancement: Audio Player is resizable and has a sleek new transport widget with positional slider. Thanks to Andrew Burnson.</li>
-    <li class="change">Enhancement: new functions <a href="./cm.html#ratio-_cents">ratio-&gt;cents</a>, <a href="./cm.html#ratio-_steps">ratio-&gt;steps</a>, <a href="./cm.html#cents-_ratio">cents-&gt;ratio</a>.</li>
+    <li class="change">New feature: added functions <a href="./cm.html#ratio-_cents">ratio-&gt;cents</a>, <a href="./cm.html#ratio-_steps">ratio-&gt;steps</a>, <a href="./cm.html#cents-_ratio">cents-&gt;ratio</a>.</li>
     <li class="change">Enhancement: Console and Text Editor font sizes now range from 9 to 32.</li>
-    <li class="change">Bugfix: Audio Player's waveform display now works on Windows an Linux.</li>
-    <li class="change">Bugfix: Audio Player's Settings... button is now disabled during audio playback.</li>
-    <li class="change">Bugfix: Evaling regions in SAL buffers now works correctly.</li>
-    <li class="change">Bugfix: COMMAND-A (Select All) in editor now works correctly.</li>
+
+    <li class="change">Bug fix: cm console app now reads input forms that include embedded comments.</li>
+
+    <li class="change">Bug fix: Audio Player's waveform display now works on Windows an Linux.</li>
+    <li class="change">Bug fix: Audio Player's Settings... button is now disabled during audio playback.</li>
+    <li class="change">Bug fix: Evaling regions in SAL buffers now works correctly.</li>
+    <li class="change">Bug fix: COMMAND-A (Select All) in editor now works correctly.</li>
 </ul>
 
 
@@ -90,7 +93,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 <hr/>
 <address></address>
 <p>
-<!-- hhmts start --> Last modified: Wed Mar 25 13:38:57 CDT 2009 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Mon Mar 30 08:01:17 CDT 2009 <!-- hhmts end -->
 </p>
 </body>
 </html>
