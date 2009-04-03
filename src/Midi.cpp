@@ -1169,7 +1169,7 @@ void MidiOutPort::sendInstruments()
 void MidiOutPort::setOutputFile(String filename)
 {
   //  std::cout << "ouputfile=" << filename.toUTF8() << "\n";
-  sequenceFile.file=File(filename);
+  sequenceFile.file=completeFile(filename);
 }
 
 void MidiOutPort::saveSequence(bool ask)
@@ -1224,7 +1224,7 @@ void MidiOutPort::saveSequence(bool ask)
       data.clear();
       getInstruments(data);
       for (int c=0; c<data.size(); c++)
-	track0.addEvent(MidiMessage::programChange(c, data[c]));
+	track0.addEvent(MidiMessage::programChange(c+1, data[c]));
     }  
 
   midifile->addTrack(track0);

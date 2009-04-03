@@ -8,10 +8,6 @@
 #ifndef CMSUPPORT_H
 #define CMSUPPORT_H
 
-#ifndef CM_VERSION
-#define CM_VERSION 321
-#endif
-
 #include "Scheme.h"
 
 void cm_quit();
@@ -109,6 +105,7 @@ char* sal_tokenize(char* str);
 
 char* cm_port_info();
 
+File completeFile(String path);
 bool mp_open_output(int dev);
 bool mp_open_input(int dev);
 void mp_close_output(int dev);

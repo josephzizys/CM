@@ -9,6 +9,7 @@
 #include "Csound.h"
 #include "Console.h"
 #include "Preferences.h"
+#include "CmSupport.h"
 
 /*=======================================================================*
                              Csound Instance
@@ -48,7 +49,7 @@ void Csound::initPrefs()
   String path=pref->getStringProp(T("CsoundApplication"));
   if (!path.isEmpty())
     {
-      File app=File(path);
+      File app=completeFile(path);
       if (!app.existsAsFile())
 	{
 	  String warn=T("Warning: Csound application ");
@@ -256,7 +257,7 @@ void Csound::initScore(String inits)
   array.addTokens(inits, true);
   if (array.size()==0)
     return;
-  setScoreFile(File(array[0].unquoted()));
+  setScoreFile(completeFile(array[0].unquoted()));
   for (int i=1; i<array.size(); i+=2)
     {
       if (array[i]==T(":play"))

@@ -253,7 +253,12 @@ void Console::handleAsyncUpdate()
 #ifdef GRACE
 	case CommandIDs::AudioOpenFilePlayer :
 	  {
-	    File file=File(messages[i]->text);
+      String path=messages[i]->text;
+	    File file;
+      if (File::isAbsolutePath(path))
+          file=File(path);
+      else
+          file = File::getCurrentWorkingDirectory().getChildFile(path).getFullPathName();
 	    AudioManager::getInstance()->openAudioFilePlayer(file,true);
 	  }
 	  break;

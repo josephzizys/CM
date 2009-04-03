@@ -78,7 +78,8 @@ void cm_shell(char* str)
 void cm_play(char* str)
 {
   String path=String(str);
-  File file=File(path);
+  File file=completeFile(path);
+
   if (file.hasFileExtension(T("mid")))
     {
     }
@@ -91,14 +92,7 @@ void cm_play(char* str)
   
 String cm_version()
 {
-  String vers=String("Common Music ");
-  int n=CM_VERSION, a=0, b=0, c=0;
-  a=n / 100;
-  n=n % 100;
-  b=n / 10;
-  c=n % 10;
-  vers << String(a) << T(".") << String(b) << T(".") + String(c);
-  return vers ;
+  return SysInfo::getCMVersion();
 }
 
 String cm_logo ()
@@ -545,6 +539,13 @@ double cm_sched_score_time()
 // file system and pathname support. CONVERT THESE TO STRINGS or MOve to Lisp
 //
 
+File completeFile(String path)
+{
+  if (File::isAbsolutePath(path))
+    return File(path);
+  else
+    return File::getCurrentWorkingDirectory().getChildFile(path).getFullPathName();
+}
 char* cm_user_home_directory()
 {
   File f=File::getSpecialLocation(File::userHomeDirectory);
@@ -577,7 +578,7 @@ char* cm_current_directory()
 
 bool cm_set_current_directory(char *path) 
 {
-  File dir=File(String(path));
+  File dir=completeFile(String(path));
   if (! dir.isDirectory())
     return false;
   dir.setAsCurrentWorkingDirectory();
@@ -587,14 +588,14 @@ bool cm_set_current_directory(char *path)
 char* cm_pathname_name(char* path)
 {
 
-  File f=File(String(path));
+  File f=completeFile(String(path));
   String s=f.getFileNameWithoutExtension();
   return (char *)strdup(s.toUTF8());
 }
 
 char* cm_pathname_type(char* path)
 {
-  File f=File(String(path));
+  File f=completeFile(String(path));
   String s=f.getFileExtension();
   if (s.startsWithChar('.'))
     s=s.substring(1);
@@ -616,7 +617,7 @@ char* cm_pathname_directory(char* path)
 
 char* cm_full_pathname(char* path)
 {
-  File f=File(String(path));
+  File f=completeFile(String(path));
   String s=f.getFullPathName();
 #ifdef WINDOWS
   s=s.replaceCharacter('\\','/');
@@ -626,19 +627,19 @@ char* cm_full_pathname(char* path)
 
 bool cm_pathname_exists_p(char* path)
 {
-  File f=File(String(path));
+  File f=completeFile(String(path));
   return f.exists();
 }
 
 bool cm_pathname_writable_p(char* path)
 {
-  File f=File(String(path));
+  File f=completeFile(String(path));
   return f.hasWriteAccess();
 }
 
 bool cm_pathname_directory_p(char* path)
 {
-  File f=File(String(path));
+  File f=completeFile(String(path));
   return f.isDirectory();
 }
 
