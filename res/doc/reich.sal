@@ -25,6 +25,6 @@ begin
        stop = 20
   sprout list(piano-phase(stop, keys, .167),
               piano-phase(stop, keys, .170)) ,
-         "~/reich.mid"
+         "reich.mid"
 end
 

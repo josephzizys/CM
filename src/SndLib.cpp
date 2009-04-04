@@ -13,9 +13,6 @@
 #endif
 #include "mus-config.h" // in SndLib.h
 #include "s7.h"
-#if OLDSNDLIB
-#include "xen.h"
-#endif
 #include "clm.h"
 #include "clm2xen.h"
 
@@ -184,42 +181,6 @@ int SndLib::performCommand(int id, int data, String text)
 }
 
 /*=======================================================================*
-                    Required definitions for scm/sndlib-ws.scm 
- *=======================================================================*/
-
-#if OLDSNDLIB
-static XEN g_file_exists_p(XEN name)
-{
-  #define H_file_exists_p "(file-exists? filename): #t if the file exists"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
-  return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
-}
-
-XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
-
-static XEN g_delete_file(XEN name)
-{
-  #define H_delete_file "(delete-file filename): deletes the file"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
-  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
-}
-
-XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
-
-#endif
-
-/**
-static XEN g_random(XEN val)
-{
-  if (XEN_INTEGER_P(val))
-    return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));
-  return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));
-}
-
-XEN_NARGIFY_1(g_random_w, g_random)
-**/
-
-/*=======================================================================*
                                CM Support
  *=======================================================================*/
 
@@ -289,19 +250,22 @@ static void cm_stderr(s7_scheme *sc, char c, s7_pointer port)
                           Scheme Runtime Support
  *=======================================================================*/
 
-void loadCode(const char* code, int size)
+void loadCode(String file, const char* code, int size, bool trace)
 {
-#ifndef WINDOWS
-  File f=File::createTempFile("scm");
-  f.replaceWithText( String(code,size) );
-  String p=f.getFullPathName();
-  s7_load(s7, (char *)f.getFullPathName().toUTF8());
-  f.deleteFile();
-#else
-  String in=T("(begin\n");
-  in << String(code) << T(")\n");
-  s7_eval_c_string(s7, in.toUTF8());
-#endif
+  if (trace)
+    Console::getInstance()->printOutput(file + T("\n"));
+  s7_eval_c_string(s7, code);
+  //#ifndef WINDOWS
+  //  File f=File::createTempFile("scm");
+  //  f.replaceWithText( String(code,size) );
+  //  String p=f.getFullPathName();
+  //  s7_load(s7, (char *)f.getFullPathName().toUTF8());
+  //  f.deleteFile();
+  //#else
+  //  String in=T("(begin\n");
+  //  in << String(code) << T(")\n");
+  //  s7_eval_c_string(s7, in.toUTF8());
+  //#endif
 }
 
 bool Scheme::init()
@@ -315,53 +279,44 @@ bool Scheme::init()
 
   /* initialize the xen stuff (hooks and the xen s7 FFI) */
   s7_xen_initialize(s7);
+
   /* initialize sndlib with all the functions linked into s7 */
   Init_sndlib(); 
 
-#if OLDSNDLIB
-  /* these next lines are for compatibility with Guile (ws.scm has
-     Guile-specific junk) */
-
-  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
-  XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
-  XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
-  XEN_EVAL_C_STRING("(define load-from-path load)");
-  XEN_DEFINE_PROCEDURE("file-exists?", g_file_exists_p_w, 
-		       1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_PROCEDURE("delete-file", g_delete_file_w,
-		       1, 0, 0, H_delete_file);
-//  XEN_DEFINE_PROCEDURE("random", g_random_w, 1, 0, 0,
-//		       "(random arg): random number between 0 and arg");
-  /* deal with the ubiquitous run macro */
-  XEN_EVAL_C_STRING("(define (run-safety) 0)");
-  //  XEN_EVAL_C_STRING("(defmacro run (thunk) `(,thunk))");
-  XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
-#endif
-
-
   /* Install custom port handlers for stdout and stderr */
-
-  s7_set_current_output_port(s7, 
-			     s7_open_output_function(s7, cm_stdout));
-  s7_set_current_error_port(s7,
-			    s7_open_output_function(s7, cm_stderr));
+  s7_set_current_output_port(s7, s7_open_output_function(s7, cm_stdout));
+  s7_set_current_error_port(s7, s7_open_output_function(s7, cm_stderr));
 
   // initalize CM 
   cm_init(s7);
-  loadCode(SchemeSources::s7_scm, SchemeSources::s7_scmSize);
-  loadCode(SchemeSources::utilities_scm, SchemeSources::utilities_scmSize);
-  loadCode(SchemeSources::loop_scm, SchemeSources::loop_scmSize);
-  loadCode(SchemeSources::patterns_scm, SchemeSources::patterns_scmSize);
-  loadCode(SchemeSources::toolbox_scm, SchemeSources::toolbox_scmSize);
-  loadCode(SchemeSources::spectral_scm, SchemeSources::spectral_scmSize);
-  loadCode(SchemeSources::sal_scm, SchemeSources::sal_scmSize);
-  loadCode(SchemeSources::ports_scm, SchemeSources::ports_scmSize);
-  loadCode(SchemeSources::fomus_scm, SchemeSources::fomus_scmSize);
-  loadCode(SchemeSources::processes_scm, SchemeSources::processes_scmSize);
-  loadCode(SchemeSources::sndlibws_scm, SchemeSources::sndlibws_scmSize);
+  bool tr=false;
+  loadCode(T("s7.scm"), SchemeSources::s7_scm, 
+	   SchemeSources::s7_scmSize, tr);
+  loadCode(T("utilities.scm"), SchemeSources::utilities_scm,
+	   SchemeSources::utilities_scmSize, tr);
+  loadCode(T("loop.scm"), SchemeSources::loop_scm, 
+	   SchemeSources::loop_scmSize, tr);
+  loadCode(T("patterns.scm"), SchemeSources::patterns_scm,
+	   SchemeSources::patterns_scmSize, tr);
+  loadCode(T("toolbox.scm"), SchemeSources::toolbox_scm,
+	   SchemeSources::toolbox_scmSize, tr);
+  loadCode(T("spectral.scm"), SchemeSources::spectral_scm,
+	   SchemeSources::spectral_scmSize, tr);
+  loadCode(T("sal.scm"), SchemeSources::sal_scm, 
+	   SchemeSources::sal_scmSize, tr);
+  loadCode(T("ports.scm"), SchemeSources::ports_scm, 
+	   SchemeSources::ports_scmSize, tr);
+  loadCode(T("fomus.scm"), SchemeSources::fomus_scm,
+	   SchemeSources::fomus_scmSize, tr);
+  loadCode(T("processes.scm"), SchemeSources::processes_scm, 
+	   SchemeSources::processes_scmSize, tr);
+  loadCode(T("sndlib-ws.scm"), SchemeSources::sndlibws_scm, 
+	   SchemeSources::sndlibws_scmSize, tr);
   // need this for some .ins files...
   XEN_EVAL_C_STRING("(provide 'snd-ws.scm)");
-  loadCode(SchemeSources::env_scm, SchemeSources::env_scmSize);
+  loadCode(T("env.scm"), SchemeSources::env_scm,
+	   SchemeSources::env_scmSize, tr);
+
   s7_define_function(s7, "void", s7_void_value, 0, 0, false, "void value");
 
   String str=String::empty;

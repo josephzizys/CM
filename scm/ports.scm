@@ -561,9 +561,12 @@
 (define-send-message "mp:clearseq" '())
 (define-send-message "mp:inchans" '(#:rest args))
 (define-send-message "mp:inops" '(#:rest args))
-
 (define-send-message "cs:i" '(#:rest args))
 (define-send-message "cs:f" '(#:rest args))
 (define-send-message "cs:data" '(arg))
+; this needs to be here or eval-from-string compains about the last
+; macro
+#f
+
 
 

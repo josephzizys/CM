@@ -75,7 +75,7 @@ namespace Documentation
     const int           markov2_salSize = 9055;
 
     extern const char*  midiout_sal;
-    const int           midiout_salSize = 7044;
+    const int           midiout_salSize = 7040;
 
     extern const char*  patterns1_sal;
     const int           patterns1_salSize = 6583;
@@ -87,7 +87,7 @@ namespace Documentation
     const int           processes_salSize = 6478;
 
     extern const char*  reich_sal;
-    const int           reich_salSize = 812;
+    const int           reich_salSize = 810;
 
 };
 

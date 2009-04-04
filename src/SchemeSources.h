@@ -30,7 +30,7 @@ namespace SchemeSources
     const int           patterns_scmSize = 35603;
 
     extern const char*  ports_scm;
-    const int           ports_scmSize = 15761;
+    const int           ports_scmSize = 15840;
 
     extern const char*  processes_scm;
     const int           processes_scmSize = 7135;

@@ -211,10 +211,8 @@ begin
                )
 end
 
-
-
 ; sprout process to a file.when you do this the scheduler runs file
 ; output faster than real time.
 
-sprout simp( 10, .25, 60, 72), "~/test.mid"
+sprout simp( 10, .25, 60, 72), "test.mid"
 
