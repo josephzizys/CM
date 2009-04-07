@@ -63,7 +63,14 @@ Help::Help()
   // Websites
   websites.set(T("Common Music"), T("http://commonmusic.sourceforge.net/"));
   websites.set(T("JUCE"), T("http://www.rawmaterialsoftware.com/juce"));
-
+#if SNDLIB
+  websites.set(T("SndLib"),
+	       T("http://ccrma.stanford.edu/software/snd/sndlib/"));
+#endif
+#if CHICKEN
+  websites.set(T("Chicken"),
+	       T("http://www.call-with-current-continuation.org/"));
+#endif
   // DONT RESTORE FILE ANYMORE
   //  restoreHelpFiles();
 

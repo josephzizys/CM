@@ -35,7 +35,7 @@ class CommandMenus
   static const int NumFomusScore = 8;
 
   static const PopupMenu getWindowMenu();
-  static const PopupMenu getHelpMenu();
+  static const PopupMenu getHelpMenu(int win, ApplicationCommandManager* com);
   static const PopupMenu getAudioMenu();
   static const PopupMenu getFontSizeMenu(ApplicationCommandManager* comm,
 					 CommandID rootid);

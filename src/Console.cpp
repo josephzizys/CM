@@ -218,7 +218,7 @@ void Console::handleAsyncUpdate()
   Colour color=Colours::black;
   //std::cout << "Handling " << messages.size() << " messages\n";
   messages.lockArray(); // SHOULD THIS BE BEFORE LOOP?
-
+  
   for (int i=0; i<messages.size(); i++)
     {
       int cid = messages[i]->type;
@@ -243,22 +243,27 @@ void Console::handleAsyncUpdate()
 	  {
 	    color=theme->getColor(ConsoleTheme::errorColor);
 	    display(messages[i]->text, color);
+#ifdef GRACE
+	    if (getBeepOnError())
+	      PlatformUtilities::beep();
+#endif
 	  }
 	  break;
 	case CommandIDs::ConsolePrintPrompt :
 	  color=theme->getColor(ConsoleTheme::errorColor);
 	  if (prompt!=String::empty)
-	  display(prompt, color);
+	    display(prompt, color);
 	  break;
 #ifdef GRACE
 	case CommandIDs::AudioOpenFilePlayer :
 	  {
-      String path=messages[i]->text;
+	    String path=messages[i]->text;
 	    File file;
-      if (File::isAbsolutePath(path))
-          file=File(path);
-      else
-          file = File::getCurrentWorkingDirectory().getChildFile(path).getFullPathName();
+	    if (File::isAbsolutePath(path))
+	      file=File(path);
+	    else
+	      file=File::getCurrentWorkingDirectory().
+		getChildFile(path).getFullPathName();
 	    AudioManager::getInstance()->openAudioFilePlayer(file,true);
 	  }
 	  break;
@@ -273,7 +278,7 @@ void Console::handleAsyncUpdate()
 	  break;
 	}
     }      
-
+  
   messages.clear();
   messages.unlockArray();
 }
@@ -302,8 +307,19 @@ void Console::setFont(Font f)
   buffer->setFont(f);
 }
 
+void Console::setBeepOnError(bool b)
+{
+  Preferences::getInstance()->setBoolProp(T("ConsoleBeepOnError"),b);
+}
+
+bool Console::getBeepOnError()
+{
+  return Preferences::getInstance()->
+    getBoolProp(T("ConsoleBeepOnError"), true);
+}
+
 /*=======================================================================*
-                              Console Window
+                                 Console Window
  *=======================================================================*/
 
 ConsoleWindow::ConsoleWindow ()

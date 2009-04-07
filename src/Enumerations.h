@@ -422,7 +422,6 @@ class CommandIDs
   static const CommandID LispConfigure = COMID(Scheme, 3);
   static const CommandID LispStart = COMID(Scheme, 4);
 
-
   // Console File
   static const CommandID ConsoleNewEditor = COMID(Console, 1);
   static const CommandID ConsoleOpen = COMID(Console, 2);
@@ -434,9 +433,13 @@ class CommandIDs
   static const CommandID ConsoleFont = COMID(Console, 16);
   static const CommandID ConsoleFontSize = COMID(Console, 17);
   static const CommandID ConsoleTheme = COMID(Console, 18);
-  static const CommandID ConsoleClearConsole = COMID(Console, 19);
-  static const CommandID ConsoleSelectAll = COMID(Console, 20);
-  static const CommandID ConsoleCopy = COMID(Console, 21);
+
+  static const CommandID ConsoleSelectAll = COMID(Console, 19);
+  static const CommandID ConsoleCopy = COMID(Console, 20);
+  static const CommandID ConsoleClearSelection = COMID(Console, 21);
+  static const CommandID ConsoleBeepOnError = COMID(Console, 22);
+  static const CommandID ConsoleClearConsole = COMID(Console, 23);
+
   // console MESSAGES (async)
   static const CommandID ConsolePrintOutput   = COMID(Console, 128);
   static const CommandID ConsolePrintValues   = COMID(Console, 129);
@@ -479,6 +482,15 @@ class CommandIDs
   static const CommandID EditorUncommentOut = COMID(Editor, 52);
   static const CommandID EditorFormatComments = COMID(Editor, 53);
   static const CommandID EditorSymbolHelp = COMID(Editor, 54);
+
+  static const CommandID EditorAddTrigger = COMID(Editor, 55);
+  static const CommandID EditorRemoveTrigger = COMID(Editor, 56);
+  static const CommandID EditorLoadTrigger = COMID(Editor, 57);
+  static const CommandID EditorSaveTrigger = COMID(Editor, 58);
+  static const CommandID EditorImportTrigger = COMID(Editor, 59);
+  static const CommandID EditorExportTrigger = COMID(Editor, 60);
+  static const CommandID EditorConfigureTrigger = COMID(Editor, 61);
+
   // these are messages for coloration not commands
   static const CommandID EditorDelete = COMID(Editor, 64);
   static const CommandID EditorBackspace = COMID(Editor, 65);
@@ -679,5 +691,63 @@ class SrateIDs
     return String(toSrate(id));
   }
 };
+
+class TriggerIDs
+{
+ public:
+  static const int Empty=0;
+  static const int ButtonTrigger=1;
+  static const int SliderTrigger=2;
+  static const int MidiKeyboardTrigger=3;
+  static const int MidiInTrigger=4;
+  static const int NumTriggers=4;
+  static const String toString(int id)
+  {
+    switch (id)
+      {
+      case ButtonTrigger:
+	return T("button");
+      case SliderTrigger:
+	return T("slider");
+      case MidiKeyboardTrigger:
+	return T("keyboard");
+      case MidiInTrigger:
+	return T("midiin");
+      default:
+	return String::empty;
+      }
+  }
+  static const String toPrettyString(int id)
+  {
+    switch (id)
+      {
+      case ButtonTrigger:
+	return  T("Button");
+      case SliderTrigger:
+	return T("Slider");
+      case MidiKeyboardTrigger:
+	return  T("Keyboard");
+      case MidiInTrigger:
+	return T("Midi In");
+      default:
+	return T("Empty");
+      }  
+  }
+  
+  static int fromString(const String str)
+  {
+    if (str.equalsIgnoreCase(T("button")))
+      return ButtonTrigger;
+    if (str.equalsIgnoreCase(T("slider")))
+      return SliderTrigger;
+    if (str.equalsIgnoreCase(T("keyboard")))
+      return MidiKeyboardTrigger;
+    if (str.removeCharacters(T(" ")).equalsIgnoreCase(T("midiin")))
+      return MidiInTrigger;
+    else
+      return Empty;
+  }
+};
+
 
 #endif

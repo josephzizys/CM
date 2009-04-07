@@ -182,7 +182,8 @@ const PopupMenu CommandMenus::getFontSizeMenu(ApplicationCommandManager*
   return menu;
 }
 
-const PopupMenu CommandMenus::getHelpMenu()
+const PopupMenu CommandMenus::getHelpMenu(int wtype,
+					  ApplicationCommandManager* com2)
 {
   ApplicationCommandManager* comm=CommandManager::getInstance();
   PopupMenu menu, mans, sals, examps, sites;
@@ -193,7 +194,12 @@ const PopupMenu CommandMenus::getHelpMenu()
 		  help->getHelpSize(CommandIDs::HelpManual));
   for (int i=0; i<size; i++)
     mans.addCommandItem(comm, CommandIDs::HelpManual + i);
-  menu.addSubMenu(T("Manuals"), mans);
+  if (wtype==WindowTypes::TextEditor)
+    {
+      mans.addSeparator();
+      mans.addCommandItem(com2, CommandIDs::EditorSymbolHelp);
+    }
+  menu.addSubMenu(T("Documentation"), mans);
 
   // Examples (CM3)
   if (!SysInfo::isGraceCL())
@@ -289,6 +295,12 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
       //      menu.addSeparator();
       //      menu.addCommandItem(manager, CommandIDs::SchemeShowVoidValues);
       menu.addSeparator();
+      menu.addCommandItem(manager, CommandIDs::ConsoleCopy);
+      menu.addCommandItem(manager, CommandIDs::ConsoleSelectAll);
+      menu.addCommandItem(manager, CommandIDs::ConsoleClearSelection);
+      menu.addSeparator();
+      menu.addCommandItem(manager, CommandIDs::ConsoleBeepOnError);
+      menu.addSeparator();
       menu.addCommandItem(manager, CommandIDs::ConsoleClearConsole);
     }
   else if (name==T("Audio"))
@@ -301,7 +313,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
     }
   else if (name==T("Help"))
     {
-      menu=CommandMenus::getHelpMenu();
+      menu=CommandMenus::getHelpMenu(WindowTypes::Console, NULL);
     }
   return menu;
 }
@@ -330,7 +342,7 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
 {
   PopupMenu menu;
   Preferences* pref=Preferences::getInstance();
-  ApplicationCommandManager* manager=buffer->manager;
+  ApplicationCommandManager* manager=getTextBuffer()->manager;
   ApplicationCommandManager* gmanager=CommandManager::getInstance();
   if (menuname==T("File")) 
     {
@@ -373,6 +385,13 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
       menu.addCommandItem(manager, CommandIDs::EditorCopy);
       menu.addCommandItem(manager, CommandIDs::EditorPaste);
       menu.addCommandItem(manager, CommandIDs::EditorSelectAll);
+
+      menu.addSeparator();
+      menu.addCommandItem(manager, CommandIDs::EditorIndent);
+      menu.addCommandItem(manager, CommandIDs::EditorCommentOut);
+      menu.addCommandItem(manager, CommandIDs::EditorUncommentOut);
+      menu.addCommandItem(manager, CommandIDs::EditorFormatComments);
+
       menu.addSeparator();
       menu.addCommandItem(manager, CommandIDs::EditorFind);
     }
@@ -401,13 +420,35 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
     {
       menu.addCommandItem(manager, CommandIDs::EditorExecute);
       menu.addCommandItem(manager, CommandIDs::EditorExpand);
+      // Trigger submenu belongs to the window NOT the buffer.
+      PopupMenu trigs;
+      bool trigp=hasTrigger();
+      for (int i=TriggerIDs::ButtonTrigger; i<=TriggerIDs::NumTriggers; i++)
+	trigs.addItem(CommandIDs::EditorAddTrigger+i,
+		      String("New ") + TriggerIDs::toPrettyString(i),
+		      // HACK disable Keyboard and MidiIn for now.
+		      ((!trigp) && (i<=TriggerIDs::SliderTrigger)));
+      trigs.addItem(CommandIDs::EditorImportTrigger,
+		    T("New from Region (XML)"),
+		    (!trigp) && getTextBuffer()->isRegion()
+		    );
+      //      trigs.addSeparator();
+      //      trigs.addItem(CommandIDs::EditorLoadTrigger,
+      //		    T("Load Trigger..."), !trigp);
+      //      trigs.addItem(CommandIDs::EditorSaveTrigger,
+      //		    T("Save Trigger..."), trigp);
+      trigs.addSeparator();
+      //      trigs.addItem(CommandIDs::EditorRemoveTrigger,
+      //		    T("Remove Trigger"), trigp);
+      //      trigs.addSeparator();
+      trigs.addItem(CommandIDs::EditorExportTrigger,
+		    T("Export to Buffer (XML)"), trigp);
+      //      trigs.addSeparator();
+      //      trigs.addItem(CommandIDs::EditorConfigureTrigger,
+      //		    T("Configure Trigger..."), trigp);
       menu.addSeparator();
-      menu.addCommandItem(manager, CommandIDs::EditorIndent);
-      menu.addCommandItem(manager, CommandIDs::EditorCommentOut);
-      menu.addCommandItem(manager, CommandIDs::EditorUncommentOut);
-      menu.addCommandItem(manager, CommandIDs::EditorFormatComments);
-      menu.addSeparator();
-      menu.addCommandItem(manager, CommandIDs::EditorSymbolHelp);
+      menu.addSubMenu(T("Triggers"), trigs);
+
     }      
   else if (menuname==T("Audio"))
     {
@@ -419,13 +460,42 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
     }
   else if (menuname==T("Help"))
     {
-      menu=CommandMenus::getHelpMenu();
+      menu=CommandMenus::getHelpMenu(WindowTypes::TextEditor,
+				    manager );
     }
   return menu;
 }
 
 void TextEditorWindow::menuItemSelected (int comid, int idex)
 {
+  int comm = CommandIDs::getCommand(comid);
+  int data = CommandIDs::getCommandData(comid);
+  switch (comm)
+    {
+    case CommandIDs::EditorAddTrigger :
+      addTrigger(data);
+      break;
+    case CommandIDs::EditorRemoveTrigger :
+      removeTrigger();
+      break;
+    case CommandIDs::EditorLoadTrigger :
+      loadTrigger();
+      break;
+    case CommandIDs::EditorSaveTrigger :
+      saveTrigger();
+      break;
+    case CommandIDs::EditorImportTrigger :
+      importTrigger();
+      break;
+    case CommandIDs::EditorExportTrigger :
+      exportTrigger();
+      break;
+    case CommandIDs::EditorConfigureTrigger :
+      configureTrigger();
+      break;
+    default:
+      break;
+    }
 }
 
 

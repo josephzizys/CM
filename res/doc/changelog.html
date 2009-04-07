@@ -20,17 +20,64 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   
   <ul>
 
-     <li class="change">New feature: A new application GraceCL provides a stripped-down version of the Grace environment for use with the Common Music 2 line (version 2.12.0 or higher) and either SBCL or Clisp Common Lisp.  GraceCL does not contain an Audio menu or a real time scheduler.  </li>
+     <li class="change">New application: GraceCL provides a
+     stripped-down version of Grace for use with the Common Music 2
+     line (version 2.12.0 or higher) and either SBCL or Clisp Common
+     Lisp. GraceCL is a replacement for Emacs+Slime, it does not
+     contain an Audio menu or a real time scheduler.  </li>
 
-     <li class="change">Enhancement: Source tree includes the amalgamated JUCE sources so an external JUCE installation is no longer required to build CM. </li>
-     <li class="change">New feature: Audio&gt;MidiIn&gt;Import Midifile... imports data from MIDI files to an editor window, the Console window or the clipboard.</li>
-    <li class="change">Enhancement:  Find and Replace tool for Text Editor</li>
-     <li class="change">New feature: Audio&gt;MidiOut&gt;Midifile Settings... for configuring midifile data. The default time format is now ticks per quarter (480) and the default file tempo is now 60 bpm.</li>
-     <li class="change">New feature: Audio&gt;MidiOut&gt;Instruments... for Midi instrument channel assignment.</li>
-    <li class="change">Enhancement: Audio Player is resizable and has a sleek new transport widget with positional slider. Thanks to Andrew Burnson.</li>
-    <li class="change">New feature: added functions <a href="./cm.html#ratio-_cents">ratio-&gt;cents</a>, <a href="./cm.html#ratio-_steps">ratio-&gt;steps</a>, <a href="./cm.html#cents-_ratio">cents-&gt;ratio</a>.</li>
-    <li class="change">Enhancement: Console and Text Editor font sizes now range from 9 to 32.</li>
+     <li class="change">New feature: Editor windows now let you add
+     'trigger components' to them for interactive evaluation. There
+     are four types of triggers: Buttons, Sliders, Keyboards and
+     MidiIn. To add a trigger use the Eval&gt;Triggers submenu. Once a
+     trigger is attached manipulate it to evaluate the buffer or
+     buffer selection.  Any data a trigger generates will be available
+     your buffer code in variables you set up.  Triggers can
+     configured interactively and restored/saved to XML descriptions.
+     </li>
 
+     <li class="change">New feature: Audio&gt;MidiIn&gt;Import
+     Midifile... imports data from MIDI files to an editor window, the
+     Console window or the clipboard.</li>
+
+     <li class="change">Enhancement: Source tree includes the
+     amalgamated JUCE sources so an external JUCE installation is no
+     longer required to build CM. </li>
+
+    <li class="change">Enhancement: New Console menu commands: Beep On
+    Errors, Copy, Select All, Clear Selection.</li>
+
+
+    <li class="change">Enhancement: Find and Replace tool for Text
+    Editor</li>
+
+    <li class="change">New feature: Audio&gt;MidiOut&gt;Midifile
+    Settings... for configuring midifile data. The default time format
+    is now ticks per quarter (480) and the default file tempo is now
+    60 bpm.</li>
+
+    <li class="change">New feature:
+    Audio&gt;MidiOut&gt;Instruments... for Midi instrument channel
+    assignment.</li>
+
+    <li class="change">Enhancement: Audio Player is resizable and has
+    a sleek new transport widget with positional slider. Thanks to
+    Andrew Burnson.</li>
+
+    <li class="change">New feature: added functions <a
+     href="./cm.html#ratio-_cents">ratio-&gt;cents</a>, <a
+     href="./cm.html#ratio-_steps">ratio-&gt;steps</a>, <a
+     href="./cm.html#cents-_ratio">cents-&gt;ratio</a>.</li>
+
+    <li class="change">Enhancement: Console and Text Editor font sizes
+    now range from 9 to 32.</li>
+
+    <li class="change">Enhancement: Websites for SndLib and Chicken now appear in the Help&gt;Websites menu.</li>
+
+
+    <li class="change">Enhancement: Editor menus slightly reorganized: some ititems in the Eval menu have been moved to the Edit meny and lookup symbol documentation (Command-D) is now under Help&gt;Documentation&gt;Lookup Symbol... </li>
+
+    
     <li class="change">Bug fix: cm console app now reads input forms that include embedded comments.</li>
 
     <li class="change">Bug fix: Audio Player's waveform display now works on Windows an Linux.</li>
@@ -93,7 +140,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 <hr/>
 <address></address>
 <p>
-<!-- hhmts start --> Last modified: Mon Mar 30 08:01:17 CDT 2009 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Tue Apr  7 17:17:29 CDT 2009 <!-- hhmts end -->
 </p>
 </body>
 </html>

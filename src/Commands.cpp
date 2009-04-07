@@ -894,6 +894,10 @@ void Console::getAllCommands(Array<CommandID>& commands)
       CommandIDs::ConsoleTheme + 5,
       CommandIDs::ConsoleTheme + 6,
       CommandIDs::ConsoleTheme + 7,
+      CommandIDs::ConsoleSelectAll,
+      CommandIDs::ConsoleCopy,
+      CommandIDs::ConsoleClearSelection,
+      CommandIDs::ConsoleBeepOnError,
       CommandIDs::ConsoleClearConsole
     };
   commands.addArray(ids, sizeof(ids) / sizeof(CommandID));
@@ -946,6 +950,22 @@ void Console::getCommandInfo(const CommandID id,
 	info.setTicked(getFontSize()==fontsize);
       }   
       break;
+
+    case CommandIDs::ConsoleSelectAll:
+      info.shortName=T("Select All");
+      break;
+    case CommandIDs::ConsoleCopy:
+      info.shortName=T("Copy");
+      info.setActive(buffer->getHighlightedRegionLength()>0);
+      break;
+    case CommandIDs::ConsoleClearSelection:
+      info.shortName=T("Clear Selection");
+      info.setActive(buffer->getHighlightedRegionLength()>0);
+      break;
+    case CommandIDs::ConsoleBeepOnError:
+      info.shortName=T("Beep On Error");
+      info.setTicked(getBeepOnError());
+      break;
     case CommandIDs::ConsoleClearConsole:
       info.shortName=T("Clear Console");
       break;
@@ -985,6 +1005,19 @@ bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
 	setFontSize(fontsize);
 	pref->setIntProp(T("ConsoleFontSize"), fontsize); 
       }
+      break;
+    case CommandIDs::ConsoleCopy:
+      buffer->copy();
+      break;
+    case CommandIDs::ConsoleSelectAll:
+      buffer->setHighlightedRegion(0,1000000);
+      break;
+    case CommandIDs::ConsoleBeepOnError:
+      setBeepOnError(!getBeepOnError());
+      break;
+    case CommandIDs::ConsoleClearSelection:
+      buffer->setHighlightedRegion(buffer->getCaretPosition(),0);
+      buffer->setCaretPosition(1000000);
       break;
     case CommandIDs::ConsoleClearConsole:
       buffer->clear();
@@ -1320,6 +1353,24 @@ void TextBuffer::getCommandInfo(const CommandID id,
 	info.addDefaultKeypress('F', comk);
       info.setActive(!isEmpty());
       break;
+    case CommandIDs::EditorIndent:
+      info.shortName=T("Indent");
+      info.addDefaultKeypress('\t', 0);
+      break;
+    case CommandIDs::EditorCommentOut:
+      info.shortName=T("Comment Out Region");
+      info.setActive(getHighlightedRegionLength()>0);
+      break;
+    case CommandIDs::EditorUncommentOut:
+      info.shortName=T("Uncomment Region");
+      info.setActive(getHighlightedRegionLength()>0);
+      break;
+    case CommandIDs::EditorFormatComments:
+      info.shortName=T("Format Comments");
+      info.setActive(getHighlightedRegionLength()>0);
+      break;
+
+
       //
       // Options Menu
       //
@@ -1364,24 +1415,9 @@ void TextBuffer::getCommandInfo(const CommandID id,
       info.shortName=T("Expand");
       info.setActive(false);
       break;
-    case CommandIDs::EditorIndent:
-      info.shortName=T("Indent");
-      info.addDefaultKeypress('\t', 0);
-      break;
-    case CommandIDs::EditorCommentOut:
-      info.shortName=T("Comment Out Region");
-      info.setActive(getHighlightedRegionLength()>0);
-      break;
-    case CommandIDs::EditorUncommentOut:
-      info.shortName=T("Uncomment Region");
-      info.setActive(getHighlightedRegionLength()>0);
-      break;
-    case CommandIDs::EditorFormatComments:
-      info.shortName=T("Format Comments");
-      info.setActive(getHighlightedRegionLength()>0);
-      break;
+      // Help Item
     case CommandIDs::EditorSymbolHelp:
-      info.shortName=T("Symbol Documentation");
+      info.shortName=T("Lookup Symbol");
       // 'H' is not possible on mac, Finder claims it for Hide
       if (ismac || !emacs)
 	info.addDefaultKeypress('D', comk);

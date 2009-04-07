@@ -9,7 +9,7 @@
 #define TEXTEDITOR_H
 
 #include "juce.h"
-#include <iostream>
+#include "Triggers.h"
 
 class Syntax;
 
@@ -46,7 +46,7 @@ class TextBuffer : public TextEditor,
     }
     void textEditorReturnKeyPressed(TextEditor& editor)
     {
-      std::cout << "return pressed\n"; // THIS ISNT CALLED!
+      //std::cout << "return pressed\n"; // THIS ISNT CALLED!
     }
     void textEditorEscapeKeyPressed(TextEditor& editor) {}
     void textEditorFocusLost(TextEditor& editor) {}
@@ -92,6 +92,7 @@ class TextBuffer : public TextEditor,
 
   // Syntax and Highlighting Support
   bool isSyntax(int id) {return (textid==id);}
+  Syntax* getSyntax() { return syntax;}
   void setSyntax(int id) ;
   void syntacticIndent();
   bool indentToColumn(int col);
@@ -117,6 +118,12 @@ class TextBuffer : public TextEditor,
   int pointLineLength();
   int bufferMin();
   int bufferMax();
+
+  // Region Support
+  bool isRegion();
+  String getRegion();
+  void clearRegion();
+  String getLineAtPoint();
 
   // Cursor motion functions
   int gotoBOL();
@@ -179,7 +186,60 @@ class TextBuffer : public TextEditor,
 
 class TextEditorWindow : public DocumentWindow, public MenuBarModel
 {
-  TextBuffer* buffer;
+  //  TextBuffer* buffer;
+
+  class EditorComponent : public Component 
+  {
+    void resized () 
+    {
+      if (trigger)
+	{
+	  trigger->setBounds(0, 0, getWidth(), trigger->getHeight());
+	  buffer->setBounds(0, trigger->getHeight(),
+			    getWidth(), 
+			    getHeight()-trigger->getHeight());
+	}
+      else
+	{
+	  buffer->setBounds(0, 0, getWidth(), getHeight());
+	}
+    }
+  public:
+    TextBuffer* buffer;
+    Trigger* trigger;
+    EditorComponent (TextBuffer* buf)
+      {
+	trigger=NULL;
+	buffer=buf;
+	buffer->setTopLeftPosition(0,0);
+	addChildComponent(buffer, -1);
+      }
+    ~EditorComponent()
+      {
+	if (trigger)
+	  delete trigger;
+	delete buffer;
+      }
+    TextBuffer* getBuffer() {return buffer;}
+    Trigger* getTrigger() {return trigger;}
+    void setBuffer(TextBuffer* comp) {buffer=comp;}
+    void setTrigger(Trigger* comp) 
+    {
+      trigger=comp;
+      addAndMakeVisible(trigger);
+      trigger->setBounds(0, 0, getWidth(), trigger->getHeight());
+      buffer->setBounds(0, trigger->getHeight(),
+			getWidth(), getHeight()-trigger->getHeight());
+      
+    }
+    void removeTrigger()
+    {
+      removeChildComponent(trigger);
+      buffer->setBounds(0,0,getWidth(),getHeight());
+      deleteAndZero(trigger);
+    }  
+  };
+  
  public:
   TextEditorWindow (File file=File::nonexistent, 
 		    String text=String::empty,
@@ -188,7 +248,8 @@ class TextEditorWindow : public DocumentWindow, public MenuBarModel
 		    ) ;
   ~TextEditorWindow () ;
   void closeButtonPressed () ;
-  TextBuffer* getTextBuffer() {return buffer;}
+  TextBuffer* getTextBuffer(); //{return buffer;}
+  void setTextBuffer(TextBuffer* buf);
   const StringArray getMenuBarNames ();
   const PopupMenu getMenuForIndex (int menuIndex, 
 				   const String& menuName);
@@ -200,6 +261,15 @@ class TextEditorWindow : public DocumentWindow, public MenuBarModel
   static TextEditorWindow* getFocusTextEditor();
   static void openFindAndReplaceDialog();
 
+  Trigger* getTrigger();
+  bool hasTrigger();
+  void addTrigger(int typ);
+  void removeTrigger();
+  void loadTrigger();
+  void saveTrigger();
+  void importTrigger();
+  void exportTrigger();
+  void configureTrigger();
 };
 
 #endif

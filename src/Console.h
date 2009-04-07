@@ -105,6 +105,7 @@ class Console :
   void printPrompt(bool trigger=true);
   void setPrompt(String str);
   void setTheme(ConsoleTheme* theme);
+
   void printOutput(String str, bool trigger=true);
   void printOutput(char* str, bool trigger=true);
   void printValues(String str, bool trigger=true); 
@@ -132,6 +133,8 @@ class Console :
   void getAllCommands(Array<CommandID>& commands);
   void getCommandInfo(const CommandID id, ApplicationCommandInfo& info);
   bool perform(const ApplicationCommandTarget::InvocationInfo& info);
+  bool getBeepOnError();
+  void setBeepOnError(bool b);
 #endif
 
   juce_DeclareSingleton (Console, true)

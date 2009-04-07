@@ -48,33 +48,33 @@ TextEditorWindow::TextEditorWindow (File file, String text, int synt,
     }
   if (synt==TextIDs::Empty)
     synt=prefs->getIntProp(T("EditorSyntax"), TextIDs::Lisp);
-  buffer=new TextBuffer(synt);
-  setContentComponent(buffer);
-  setApplicationCommandManagerToWatch(buffer->manager);
+  TextBuffer* buf=new TextBuffer(synt);
+  setTextBuffer(buf);
+  setApplicationCommandManagerToWatch(buf->manager);
   setResizable(true, true); 
   // set buffer to standard 74 column width.  + 10 adds space for
   // scrollers to avoid linewrap when scoller appears :/
-  centreWithSize(buffer->getFont().getStringWidth(T("M"))*74+10, 400); 
+  centreWithSize(buf->getFont().getStringWidth(T("M"))*74+10, 400); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
   setWantsKeyboardFocus(false);  // Buffer has it.
-  buffer->setFile(file);
-  buffer->setText(text);
+  buf->setFile(file);
+  buf->setText(text);
   if (title.isEmpty())
-    buffer->updateWindowTitle();
+    buf->updateWindowTitle();
   else
     setName(title);
 
   // flag may have been set by loading editor.
-  buffer->clearFlag(EditFlags::NeedsSave);
+  buf->clearFlag(EditFlags::NeedsSave);
   // goddam Juce Text coloring!
   if (size>20000)
     {
       Console::getInstance()->printWarning(T("Cowardly refusing to colorize large buffer for ") + getName().quoted() + T(".\n"));
-      buffer->setFlag(EditFlags::HiliteOff);
+      buf->setFlag(EditFlags::HiliteOff);
     }
   setVisible(true);
-  buffer->colorizeAll();
+  buf->colorizeAll();
 }
 
 TextEditorWindow::~TextEditorWindow ()
@@ -83,7 +83,7 @@ TextEditorWindow::~TextEditorWindow ()
 
 void TextEditorWindow::closeButtonPressed ()
 {
-  if (!buffer->testFlag(EditFlags::NeedsSave))
+  if (!getTextBuffer()->testFlag(EditFlags::NeedsSave))
     {
       delete this;
       return;
@@ -97,12 +97,111 @@ void TextEditorWindow::closeButtonPressed ()
 					);
   if (x==0)
     return;
-  if (x==2 || buffer->saveFile())
+  if (x==2 || getTextBuffer()->saveFile())
     delete this;
 }
 
+TextBuffer* TextEditorWindow::getTextBuffer() 
+{
+  //  return buffer;
+  return ((EditorComponent*)getContentComponent())->getBuffer();
+}
+
+void TextEditorWindow::setTextBuffer(TextBuffer* buf)
+{
+  //  setContentComponent(buf);
+  //  buffer=buf;
+  setContentComponent( new EditorComponent(buf) );
+}
+
 /*=======================================================================*
-                             TextBuffer
+                                   Triggers
+ *=======================================================================*/
+
+Trigger* TextEditorWindow::getTrigger()
+{
+  return ((EditorComponent*)getContentComponent())->getTrigger();
+}
+
+bool TextEditorWindow::hasTrigger()
+{
+  return (getTrigger()!=NULL);
+}
+
+void TextEditorWindow::addTrigger(int typ)
+{
+  if (!getTrigger())
+    {
+      Trigger* trig=new Trigger(typ);
+      ((EditorComponent*)getContentComponent())->setTrigger(trig);
+    }
+}
+
+void TextEditorWindow::removeTrigger()
+{
+  if (getTrigger())
+    ((EditorComponent*)getContentComponent())->removeTrigger();
+}
+
+void TextEditorWindow::loadTrigger()
+{
+  std::cout << "loadTrigger!\n";
+}
+
+void TextEditorWindow::saveTrigger()
+{
+  std::cout << "saveTrigger!\n";
+}
+
+void TextEditorWindow::importTrigger()
+{
+  TextBuffer* buf=getTextBuffer();
+  String str=(buf->isRegion()) ? buf->getRegion() : buf->getLineAtPoint();
+  int a=str.indexOf(T("<trigger"));
+  int b=str.lastIndexOf(T("/>"));
+  if (a>=0 && a<b)
+    {
+      XmlDocument doc (str.substring(a,b));
+      XmlElement* xml=doc.getDocumentElement();
+      int type=TriggerIDs::fromString(xml->getStringAttribute(T("type")));
+      if (xml->hasTagName(T("trigger")) && type>TriggerIDs::Empty)
+	{
+	  Trigger* trig=new Trigger(type);
+	  trig->initFromXml(xml);
+	  ((EditorComponent*)getContentComponent())->setTrigger(trig);
+	  // clear the region if successful so that we don't start
+	  // triggering just the left over selection
+	  buf->clearRegion();
+	}
+      else
+	Console::getInstance()->printError(T("Buffer region does not contain a valid '<trigger .../>' XML description.\n"));
+    }
+  else
+    Console::getInstance()->printError(T("Buffer region does not contain a '<trigger .../>' XML description.\n"));
+
+
+}
+
+void TextEditorWindow::exportTrigger()
+{
+  if (hasTrigger())
+    {
+      TextBuffer* buf=getTextBuffer();
+      String str=T("\n; ");
+      str<<getTrigger()->toXml() << T("\n");
+      buf->insertTextAtCursor(str);
+      buf->colorizeAfterChange(CommandIDs::EditorPaste);
+      buf->setFlag(EditFlags::NeedsSave);
+    }
+}
+
+void TextEditorWindow::configureTrigger()
+{
+  std::cout << "configureTrigger!\n";
+}
+
+/*=======================================================================*
+                                TextBuffer
  *=======================================================================*/
 
 TextBuffer::TextBuffer(int texttype)
@@ -912,6 +1011,39 @@ int TextBuffer::bufferMax()
   setCaretPosition(cp1);
   setCaretVisible(true);
   return cp2;
+}
+
+
+/*=======================================================================*
+                            Region Support
+ *=======================================================================*/
+
+bool TextBuffer::isRegion()
+{
+  return (getHighlightedRegionLength() > 0);
+}
+
+String TextBuffer::getRegion()
+{
+  if (isRegion()) 
+    return getHighlightedText();
+  else
+    return String::empty;
+}
+
+String TextBuffer::getLineAtPoint()
+{
+  int b=pointBOL();
+  int e=pointEOL();
+  if (e>b)
+    return getTextSubstring(b,e);
+  else
+    return String::empty;
+}
+
+void TextBuffer::clearRegion()
+{
+  setHighlightedRegion(getCaretPosition(),0);
 }
 
 /*=======================================================================*
