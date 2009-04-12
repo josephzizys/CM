@@ -32,10 +32,11 @@ juce_ImplementSingleton(Scheme)
 //  Nodes
 //
 
-// method for Pause and Stop nodes
+
 SchemeNode::SchemeNode(int _type, double _time)
   : type (0),
     start (0.0),
+    elapsed (0.0),
     expr (String::empty),
     id (-1), 
     mmess (0xff)
@@ -47,6 +48,7 @@ SchemeNode::SchemeNode(int _type, double _time)
 SchemeNode::SchemeNode(int _type, double _time, String _expr)
   : time (0.0),
     start (0.0),
+    elapsed (0.0),
     type (0),
     id (-1),
     mmess(0xff)
@@ -58,7 +60,10 @@ SchemeNode::SchemeNode(int _type, double _time, String _expr)
 }
 
 SchemeNode::SchemeNode(int _type, double _time, const MidiMessage &_mess)
-  : time(0.0), type(_type), mmess(_mess)
+  : time(0.0),
+    elapsed (0.0),
+    type(_type),
+    mmess(_mess)
 {
   // method for midi message callback from MidiIn port
 }
@@ -82,22 +87,22 @@ bool SchemeNode::applyNode(double curtime)
 
     case PROCESS:
       {
-	double elapsed, delta;
+	double runtime, delta;
 	if (schemeThread->isScoreMode())
 	  {
 	    // in score mode the scheduler runs in non-real time and
 	    // node times are in seconds. the node's current time
 	    // becomes the score time under the callback an is used to
 	    // set the timestamps of data sent to ports
-	    elapsed=time-start;
+	    runtime=elapsed;
 	    schemeThread->scoretime=time;
 	  }
 	else
 	  {
-	    elapsed=(time-start)/1000.0;
+	    runtime=(time-start)/1000.0;
 	  }
 
-	delta=applyProcessNode(elapsed);
+	delta=applyProcessNode(runtime);
 	//std::cout << "after callback, delta is " << delta << "\n";
 
 	// a delta value less than 0 means that the process is done
@@ -115,9 +120,21 @@ bool SchemeNode::applyNode(double curtime)
 	    // real time
 	    more=true;
 	    if (schemeThread->isScoreMode())
-	      time = time+delta;
+	      {
+		elapsed += delta;  // elapsed now user's next run time
+		time += delta;
+	      }
 	    else
-	      time=Time::getMillisecondCounterHiRes()+(delta*1000.0);
+	      {
+		elapsed += delta;  // elapsed now user's next run time
+		// calculate delta to next runtime, the difference
+		// between the last time stamp and the (future) one in
+		// elapsed
+
+		delta = elapsed-runtime;
+		if (delta<0.0) delta=0.0;
+		time=Time::getMillisecondCounterHiRes()+(delta*1000.0);
+	      }
 	  }
 	schemeThread->scoretime=0.0;
       }

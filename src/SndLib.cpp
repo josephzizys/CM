@@ -56,6 +56,7 @@ SndLib::~SndLib()
 SchemeNode::SchemeNode(int _type, double _time, SCHEMEPROC c, int _id)
   : time (0.0),
     start (0.0), 
+    elapsed (0.0),
     type (0),
     expr (String::empty),
     mmess(0xff)

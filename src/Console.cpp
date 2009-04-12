@@ -244,7 +244,10 @@ void Console::handleAsyncUpdate()
 	    color=theme->getColor(ConsoleTheme::errorColor);
 	    display(messages[i]->text, color);
 #ifdef GRACE
-	    if (getBeepOnError())
+	    // sigh. s7 error printing is unbuffered so only print if
+	    // we have a crlf in the string
+	    if (getBeepOnError() || messages[i]->text.contains("\n"))
+		
 	      PlatformUtilities::beep();
 #endif
 	  }

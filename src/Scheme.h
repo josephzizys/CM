@@ -48,6 +48,7 @@ class SchemeNode
   int nodeid;
   double time;
   double start;
+  double elapsed;
   String expr;
   const MidiMessage mmess;
 

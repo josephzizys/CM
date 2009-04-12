@@ -55,13 +55,7 @@ void cm_print_output(char* str, bool quote)
 
 void cm_print_error(char* str)
 {
-  // normalize errors so they start with ">>> Error:" and end with
-  // crlf.
-  //  String err=String(str);
-  //  if (!err.startsWith(T(">>> Error:")))
-  //   err=T(">>> KoKoError: ") + err;
-  // if (!err.endsWith(T("\n")))
-  //   err << T("\n");
+  std::cout << "print_error: '" << str << "'\n";
   Console::getInstance()->printError(str);
 }
 

@@ -18,6 +18,7 @@
 static char outstr[OUTSTRSIZE];
 static bool chicken_run = true;
 
+
 bool Scheme::init()
 {
   int res;
@@ -46,6 +47,12 @@ bool Scheme::init()
 	  << SysInfo::getCMLogo() << T("\n" );
 	Console::getInstance()->printOutput(str);
     }
+
+  CHICKEN_eval_string((char*)"(define *grace-std-out* (make-output-port print-output (lambda () #f)))", NULL);
+  CHICKEN_eval_string((char*)"(current-output-port *grace-std-out*)", NULL);
+  CHICKEN_eval_string((char*)"(define *grace-err-out* (make-output-port print-error (lambda () #f)))", NULL);
+  CHICKEN_eval_string((char*)"(current-error-port *grace-err-out*)", NULL);
+
   memset(outstr, 0, OUTSTRSIZE);
   inputClosureGCRoot=CHICKEN_new_gc_root();
   CHICKEN_gc_root_set(inputClosureGCRoot, C_SCHEME_FALSE);
@@ -81,6 +88,7 @@ void Scheme::clearMidiInputHook()
 SchemeNode::SchemeNode(int _type, double _time, SCHEMEPROC c, int _id)
   : time (0.0),
     start (0.0), 
+    elapsed (0.0),
     type (0),
     expr (String::empty),
     mmess(0xff)

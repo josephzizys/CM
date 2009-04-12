@@ -23,6 +23,9 @@
   list-set! 
   make-equal-hash-table make-eq-hash-table hash-set! hash-ref
 
+  ;; ffi
+  ffi_sched_score_mode_p ffi_sched_score_time
+
   ;; utilities
   print-output print-error print-value shell quit
   first second third fourth fifth sixth seventh eighth
