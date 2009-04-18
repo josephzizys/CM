@@ -1,5 +1,9 @@
 ;;;***********************************************************************
 
+;;; (load "/Users/hkt/Software/cm/scm/genffi.scm")
+;;; (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp")
+;;; (chickenffi "/Users/hkt/Software/cm/scm/chicken-foreign.scm")
+
 (define records
   '(
     (period         count length stream default omit reps )
@@ -30,8 +34,8 @@
     (ffi_float_to_fixnum   int "cm_float_to_fixnum" double)
     (ffi_quantize          double "cm_quantize" double double)
     (ffi_rhythm_to_seconds double "cm_rhythm_to_seconds" double double double)
-    (ffi_cents_to_scaler   double "cm_cents_to_scaler" int)
-    (ffi_scaler_to_cents   int "cm_scaler_to_cents" double)
+    (ffi_cents_to_scaler   double "cm_cents_to_scaler" double)
+    (ffi_scaler_to_cents   double "cm_scaler_to_cents" double)
     (ffi_scaler_to_steps   double "cm_scaler_to_steps" double)
     (ffi_explseg           double "cm_explseg" int int double double)
     (ffi_geoseg            double "cm_geoseg" int int double double)

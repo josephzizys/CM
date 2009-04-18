@@ -19,9 +19,13 @@
 #ifdef GRACE
 #include "Preferences.h"
 #endif
+#include "Scanner.h"
+#include "Syntax.h"
 #include <iostream>
+#include <string>
 
 #define SCHEME_DEBUG 0
+
 // 1 = trace scheme entry/exit points
 // 2 = include gc info in trace
 // 3 = include node creation/insertion/deletion info in tracce
@@ -82,7 +86,7 @@ bool SchemeNode::applyNode(double curtime)
     case EVAL :
     case SAL :
       applyEvalNode();
-      Console::getInstance()->printPrompt();
+      //      Console::getInstance()->printPrompt();
       break;
 
     case PROCESS:
@@ -153,6 +157,11 @@ bool SchemeNode::applyNode(double curtime)
       if ( SCHEME_DEBUG ) printf("...called stop node %d\n", nodeid);
       break;
 
+    case QUIT :
+      schemeThread->signalThreadShouldExit();
+      if ( SCHEME_DEBUG ) printf("...called quit node %d\n", nodeid);
+      break;
+
     default:
       break;
     }
@@ -170,8 +179,8 @@ Scheme::Scheme()
     sprouted (false),
     showvoid (false),
     voidstring (String::empty),
-    scoretime (0.0)
-    
+    scoretime (0.0),
+    nextid (0)
 {
   evalBuffer = new char[8192];
   errorBuffer = new char[8192];  
@@ -286,6 +295,36 @@ void Scheme::load(File file, bool addtorecent)
     }
 }
 
+void Scheme::read()
+{
+  bool more=true;
+  bool prompt=true;
+  String text=String::empty;
+
+  while (more && !threadShouldExit()) 
+    {
+      if (prompt)
+	{
+	  Console::getInstance()->printPrompt();
+	  prompt=false;
+	}
+      std::string line="";
+      getline(std::cin, line);
+      if (!text.isEmpty())
+	text << T("\n");
+      text << String(line.c_str());
+      int typ, loc;
+      typ=scan_sexpr(LispSyntax::getInstance()->syntab,
+		     text, 0, text.length(), SCAN_CODE, &loc, NULL);
+      if (typ==SCAN_LIST || typ==SCAN_TOKEN || typ==SCAN_STRING)
+	break;
+      else if (typ==SCAN_UNLEVEL)
+	break;  // allow too many parens to be passed to lisp?
+    }
+  if (!text.isEmpty())
+    eval(text);
+}
+
 void Scheme::run()
 {
   double qtime, utime;
@@ -295,7 +334,7 @@ void Scheme::run()
       return;
 
   pausing=false;
-  Console::getInstance()->printPrompt();
+  //  Console::getInstance()->printPrompt();
 
   while (! threadShouldExit()) // true
     {
@@ -404,8 +443,13 @@ void Scheme::run()
       sprouted=false;
       scoretime=0.0;
       setScoreMode(ScoreTypes::Empty);
+#ifdef GRACE
       wait(-1);
+#else
+      read();
+#endif
     }
+  // leaving killed process....
 }
 
 void Scheme::clear()
@@ -417,6 +461,27 @@ void Scheme::clear()
   schemeNodes.unlockArray();
 }
 
+void Scheme::printQueue(bool verbose)
+{
+  schemeNodes.lockArray();
+  std::cout << "Queue["<< schemeNodes.size() << "]=";
+  for (int i=0; i<schemeNodes.size(); i++)
+    {
+      String z;
+      for (int i=0; i<schemeNodes.size(); i++)
+	{
+	  std::cout << z.toUTF8() << schemeNodes.getUnchecked(i)->nodeid;
+	  if (verbose)
+	    std::cout << "[time=" << schemeNodes.getUnchecked(i)->time
+		      << ", type="<< schemeNodes.getUnchecked(i)->type
+		      << "]";
+	  z=T(", ");
+	}
+      std::cout << "\n";  
+    }
+  schemeNodes.unlockArray();
+}
+
 // addNode for processes
 
 void Scheme::sprout(double _time, SCHEMEPROC c, int _id)
@@ -425,7 +490,7 @@ void Scheme::sprout(double _time, SCHEMEPROC c, int _id)
   // code via sprout() under an eval node.  this means that a
   // lock.enter() is in effect so we dont need to lock anything to
   // reference scoremode.
-  static int nextid=1000;
+  //  static int nextid=1000;
   if (!isScoreMode())
     _time = (_time * 1000) + Time::getMillisecondCounterHiRes();
   else
@@ -449,7 +514,7 @@ void Scheme::eval(char* str)
 
 void Scheme::eval(String s)
 {
-  static int nextid=000;
+  //  static int nextid=000;
   SchemeNode *n = new SchemeNode(SchemeNode::EVAL, 0.0, s);
   n->nodeid=++nextid;
   n->schemeThread = this;
@@ -457,14 +522,28 @@ void Scheme::eval(String s)
   schemeNodes.addSorted(comparator, n);
   schemeNodes.unlockArray();
   notify();
+  schemeNodes.unlockArray();
   if (SCHEME_DEBUG>2) printf("added eval node %d\n", n->nodeid);
+}
+
+void Scheme::quit()
+{
+  //  static int nextid=000;
+  SchemeNode *n = new SchemeNode(SchemeNode::QUIT, 0.0);
+  n->nodeid=++nextid;
+  n->schemeThread = this;
+  schemeNodes.lockArray();
+  schemeNodes.addSorted(comparator, n);
+  schemeNodes.unlockArray();
+  notify();
+  if (SCHEME_DEBUG>2) printf("added quit node %d\n", n->nodeid);
 }
 
 void Scheme::midiin(const MidiMessage &msg)
 {
   if (!isMidiInputHook())
       return;
-  static int nextid=2000;
+  //  static int nextid=2000;
   SchemeNode *n = new SchemeNode(SchemeNode::INHOOK, 0.0, msg);
   n->nodeid=++nextid;
   n->schemeThread = this;
@@ -536,7 +615,7 @@ void Scheme::stop(int id)
 {
   // always add stop nodes to the front of the queue.
   SchemeNode *node = new SchemeNode (SchemeNode::STOP, 0.0);
-  node->nodeid=0;
+  node->nodeid=++nextid;
   node->id=id;
   if ( SCHEME_DEBUG > 2)
     printf("adding stop node %d...\n", node->nodeid);

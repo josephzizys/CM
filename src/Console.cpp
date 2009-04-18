@@ -31,20 +31,16 @@ Console::Console()
 
 Console::~Console() 
 {
-  std::cout << "Deleting messages\n";
   messages.clear();
   // BUFFER ALREADY DELEATED BY WINDOW CLOSE
   if (theme!=NULL)
     {
-      std::cout << "Deleting theme\n";
       delete theme;
     }
   if (manager!=NULL)
     {
-      std::cout << "Deleting manager\n";
       delete manager; 
     }
-  std::cout << "leaving delete console\n";
 }
 
 void Console::setTheme(ConsoleTheme* th)

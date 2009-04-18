@@ -33,7 +33,8 @@ class SchemeNode
     EVAL, 
     SAL, 
     PAUSE,
-    STOP
+    STOP,
+    QUIT
   };
   
   SchemeNode(int _type,double _time);
@@ -74,9 +75,19 @@ class SchemeNodeComparator
 public:
   static int compareElements(SchemeNode* e1, SchemeNode* e2)
   {
-    if( e1->time <= e2->time)
+    //    if( e1->time <= e2->time)
+    //      return -1;
+    //    else 
+    //      return 1;
+
+    if (e1->time < e2->time)
       return -1;
-    else 
+    else if (e2->time < e1->time)
+      return 1;
+    // else both at same time, return node that was added first
+    else if (e1->nodeid<e2->nodeid)
+      return -1;
+    else
       return 1;
   }
 };
@@ -93,7 +104,7 @@ public:
 #ifdef CHICKEN
   void *inputClosureGCRoot;
 #endif
-
+  int nextid;
   String voidstring;
   bool showvoid;
   bool showVoidValues();
@@ -134,6 +145,9 @@ public:
   void eval(char* str);
   void load(File file, bool addtorecent=false);
   void midiin(const MidiMessage &mess);
+  void quit();
+  void printQueue(bool verbose=false);
+  void read();
 
   void removeNode(SchemeNode *n, bool deleteObject=true );
   void reinsertNode(SchemeNode *n, double newtime );

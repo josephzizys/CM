@@ -42,8 +42,8 @@ double cm_decimals(double val, int places); //places=3
 double cm_quantize(double val, double step);
 //tempo=60 beat=.25
 double cm_rhythm_to_seconds(double beats, double tempo, double beat);
-double cm_cents_to_scaler(int cents);
-int cm_scaler_to_cents(double scaler);
+double cm_cents_to_scaler(double cents);
+double cm_scaler_to_cents(double scaler);
 double cm_scaler_to_steps(double scaler);
 double cm_keynum_to_hertz (double kn);
 int cm_keynum_to_pc (double kn);

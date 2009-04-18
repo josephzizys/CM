@@ -24,25 +24,19 @@
 #define TANF(a)		(tanf( (a) ))
 
 #ifdef _MSC_VER
-
 #define strdup _strdup
 #define jn _jn
-
-double log2(double n)
-{
-  return log(n)/log(2.0);
-}
-
-int round(double n)
-{
-  return (int)(n+.5);
-}
+double log2(double n) {return log(n)/log(2.0);}
+int round(double n) {return (int)(n+.5);}
 #endif
 
 void cm_quit()
 {
-  Scheme::getInstance()->signalThreadShouldExit();
-  Scheme::getInstance()->notify();
+#ifdef GRACE
+  Console::getInstance()->printError(T(">>> Error: You cannot quit Grace from inside Lisp. Use Console>File>Quit to quit the application.\n"));
+#else
+  Scheme::getInstance()->quit();
+#endif
 }
 
 void cm_print_output(char* str, bool quote)
@@ -180,15 +174,15 @@ double cm_rhythm_to_seconds(double beats, double tempo, double beat)
   return (double) ((beats / beat) * (60.0f / tempo)) ;
 }
 
-double cm_cents_to_scaler(int cents)
+double cm_cents_to_scaler(double cents)
 {
   double p = ((double)cents)/1200.0f;
   return POWF(2.0f,p);
 }
 
-int cm_scaler_to_cents(double scaler)
+double cm_scaler_to_cents(double scaler)
 {
-  return round((LOGF(scaler)/LOGF(2.0)) * 1200.0);
+  return (LOGF(scaler)/LOGF(2.0)) * 1200.0;
 }
 
 double cm_scaler_to_steps(double scaler)

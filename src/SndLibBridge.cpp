@@ -192,26 +192,24 @@ s7_pointer ffi_rhythm_to_seconds (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_cents_to_scaler (s7_scheme *s7, s7_pointer args)
 {
-  double f0;
-  s7_Int i0;
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_cents_to_scaler", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  double f0, f1;
+  if (!s7_is_real(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_cents_to_scaler", 1, s7_car(args), "a double"));
+  f1=s7_number_to_real(s7_car(args));
   args=s7_cdr(args);
-  f0=cm_cents_to_scaler(i0);
+  f0=cm_cents_to_scaler(f1);
   return s7_make_real(s7, f0);
 }
 
 s7_pointer ffi_scaler_to_cents (s7_scheme *s7, s7_pointer args)
 {
-  double f0;
-  s7_Int i0;
+  double f0, f1;
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_scaler_to_cents", 1, s7_car(args), "a double"));
-  f0=s7_number_to_real(s7_car(args));
+  f1=s7_number_to_real(s7_car(args));
   args=s7_cdr(args);
-  i0=cm_scaler_to_cents(f0);
-  return s7_make_integer(s7, i0);
+  f0=cm_scaler_to_cents(f1);
+  return s7_make_real(s7, f0);
 }
 
 s7_pointer ffi_scaler_to_steps (s7_scheme *s7, s7_pointer args)

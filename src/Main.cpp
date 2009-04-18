@@ -176,22 +176,64 @@ START_JUCE_APPLICATION(Grace)
                             CM CONSOLE APPLICATION                       
  *=======================================================================*/
 
+void cm_cleanup()
+{
+  if (Scheme::getInstance()->isThreadRunning())
+    {
+//    Console::getInstance()->printOutput(T("Killing Scheme thread...\n"));
+      Scheme::getInstance()->stopThread(2000);
+    }
+  if (MidiOutPort::getInstance()->isThreadRunning())
+    {
+//    Console::getInstance()->printOutput(T("Killing Midi thread...\n"));
+      MidiOutPort::getInstance()->stopThread(2000);
+    }
+  Scheme::deleteInstance();
+  Console::deleteInstance();
+  MidiOutPort::deleteInstance();
+  MidiInPort::deleteInstance();
+  shutdownJuce_NonGUI();
+  std::cout << "Bye!\n";
+}
+
 int main(int argc, const char* argv[])
 {
   initialiseJuce_NonGUI();
+  atexit(cm_cleanup);
 
-  // this keep assert from happening, not sure why
-  MessageManager::getInstance(); 
+  // COMMAND ARG PARSING
 
   StringArray args(argv, argc);  // put command line args into array
   args.remove(0);                // pop program name from list of args
-
-  if (args.contains(String("--version")))
+  CommandArgs cmdargs;
+  cmdargs.addCommand(T("--version"), T("print version and exit"));
+  cmdargs.addCommand(T("--help"), T("print help and exit"));
+  cmdargs.addCommand(T("--load"), T("load file"), T("<file>"));
+  cmdargs.addCommand(T("--eval"), T("evaluate expression"), T("<expr>"));
+  cmdargs.addCommand(T("--batch"), T("process options and exit"));
+  String err=cmdargs.init(args);
+  if (!err.isEmpty())
+    {
+      std::cout << err.toUTF8() << "\n"
+		<< "Usage: cm [options]\noptions:\n"
+		<< cmdargs.getHelp().toUTF8() << "\n";
+      return 0;
+    }
+  else if (cmdargs.getCommandArg(T("--version")))
     {
       std::cout << SysInfo::getCMVersion().toUTF8() << "\n";
       return 0;
     }
+  else if (cmdargs.getCommandArg(T("--help")))
+    {
+      std::cout << "Usage: cm [options]\noptions:\n"
+		<< cmdargs.getHelp().toUTF8() << "\n";
+      return 0;
+    }
 
+  // NORMAL STARTUP
+
+  MessageManager::getInstance(); // stops an assert, not sure why
   Console* con=Console::getInstance();
   con->setPrompt(String("\ncm> "));
   String vers=SystemStats::getJUCEVersion();
@@ -204,53 +246,29 @@ int main(int argc, const char* argv[])
   MidiOutPort* mid=MidiOutPort::getInstance();
   mid->setPriority(9);
   mid->startThread();
-  while (scm->isThreadRunning())
-    {
-      bool more=true;
-      String text=String::empty;
-      while (more) 
-	{
-	  std::string line="";
-	  getline(std::cin, line);
-	  if (!text.isEmpty())
-	    text << T("\n");
-	  text << String(line.c_str());
-	  int typ, loc;
-	  typ=scan_sexpr(LispSyntax::getInstance()->syntab,
-			 text, 0, text.length(), SCAN_CODE, &loc, NULL);
-	  if (typ==SCAN_LIST || typ==SCAN_TOKEN || typ==SCAN_STRING)
-	    break;
-	  else if (typ==SCAN_UNLEVEL)
-	    break;  // allow too many parens to be passed to lisp?
-	}
 
-      if (!text.isEmpty())
-	{
-	  if (text.length() == 1 && text[0]=='q')
-	    break;
-	  scm->eval(text);
-	}
-      text=String::empty;
-    }
-
-  if (scm->isThreadRunning())
+  // COMMAND ARG PROCESSING
+  
+  bool batch=false;
+  for (int i=0; i<cmdargs.size(); i++)
     {
-      con->printOutput(String("Killing Scheme thread...\n"));
-      scm->stopThread(2000);
-    }
-  if (mid->isThreadRunning())
-    {
-      con->printOutput(String("Killing MidiOut thread...\n"));
-      mid->stopThread(2000);
+      CommandArg* c=cmdargs.getUnchecked(i);
+      if (c->name==T("--load"))
+	scm->eval(T("(load ") + c->expr.quoted() + T(")"));
+      else if (c->name==T("--eval"))
+	scm->eval(c->expr);
+      else if (c->name==T("--batch"))
+	batch=true;
     }
   
-  Scheme::deleteInstance();
-  Console::deleteInstance();
-  MidiOutPort::deleteInstance();
-  MidiInPort::deleteInstance();
-  shutdownJuce_NonGUI();
-  //delete scm;
-  std::cout << "Bye!\n";
+  if (batch)
+    scm->eval(T("(quit)"));
+  
+  // LOOP TIL SCHEME QUITS
+
+  while (scm->isThreadRunning())
+    ;
+
   return 0;
 }
 

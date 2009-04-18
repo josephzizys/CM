@@ -36,6 +36,8 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
      configured interactively and restored/saved to XML descriptions.
      </li>
 
+     <li class="change">New feature: Command line options are now available for the 'cm' console application. Type 'cm --help' for more information.</li>
+
      <li class="change">New feature: Audio&gt;MidiIn&gt;Import
      Midifile... imports data from MIDI files to an editor window, the
      Console window or the clipboard.</li>
@@ -77,8 +79,12 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
     <li class="change">Enhancement: Editor menus slightly reorganized: some ititems in the Eval menu have been moved to the Edit meny and lookup symbol documentation (Command-D) is now under Help&gt;Documentation&gt;Lookup Symbol... </li>
 
+    <li class="change">Bug fix: The 'cm' console app now quits more gracefully. Use the lisp function (quit) to quit the app (the 'q' command has been removed).</li>
+
+    <li class="change">Bug fix: fixed scheduler bug that did not preserve insertion order for nodes with equal time stamps. This may effect scheduling!</li>
+
     
-    <li class="change">Bug fix: cm console app now reads input forms that include embedded comments.</li>
+    <li class="change">Bug fix: The 'cm' console app now reads input forms that include embedded comments.</li>
 
     <li class="change">Bug fix: Audio Player's waveform display now works on Windows an Linux.</li>
     <li class="change">Bug fix: Audio Player's Settings... button is now disabled during audio playback.</li>
@@ -140,7 +146,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 <hr/>
 <address></address>
 <p>
-<!-- hhmts start --> Last modified: Tue Apr  7 17:17:29 CDT 2009 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Sat Apr 18 15:23:02 CDT 2009 <!-- hhmts end -->
 </p>
 </body>
 </html>
