@@ -351,12 +351,13 @@ bool Scheme::init()
 
   // Print herald
 
-  str=String::empty;
+  /*  str=String::empty;
   str << String("SndLib ")
       << String(SNDLIB_VERSION) << String(".") << String(SNDLIB_REVISION)
       << T(" ") << SysInfo::getCopyright( T("William Schottstaedt")) << T("\n")
       << SysInfo::getCMLogo() << T("\n");
   Console::getInstance()->printOutput(str);
+  */
 
   // clear out backtrace history set it to length 0 since most of the
   // entries will be C calls...
@@ -368,6 +369,14 @@ bool Scheme::init()
 void Scheme::cleanup()
 {
   free(s7);
+}
+
+String Scheme::getLispVersion()
+{
+  String str=T ("SndLib ");
+  str << String(SNDLIB_VERSION) << String(".") << String(SNDLIB_REVISION)
+      << T(" ") << SysInfo::getCopyright( T("William Schottstaedt"));
+  return str;
 }
 
 /*=======================================================================*

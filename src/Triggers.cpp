@@ -31,11 +31,20 @@ Trigger::Trigger (int typ)
       slider->setSliderStyle (Slider::LinearHorizontal);
       slider->setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
       slider->addListener (this);
-      vars.add(T("*slider*"));
+      vars.add(T("*trigger*"));
       vars.add(String(slider->getValue()));
       break;
-      //    case TriggerIDs::MidiKeyboardTrigger :
-      //      break;
+    case TriggerIDs::MidiKeyboardTrigger :
+      triggertype=typ;
+      keyboard = new MidiKeyboardComponent
+	(keyboardState, MidiKeyboardComponent::horizontalKeyboard);
+      addAndMakeVisible(keyboard);
+      keyboard->setOctaveForMiddleC(5);
+      keyboard->setMidiChannel(0);
+      keyboard->setVelocity(.5);
+      vars.add(T("*trigger*"));
+      vars.add(T("60"));
+      break;
       //    case TriggerIDs::MidiInTrigger :
       //      break;
     case TriggerIDs::ButtonTrigger :
@@ -45,7 +54,7 @@ Trigger::Trigger (int typ)
       addAndMakeVisible(button = new TextButton(String::empty));
       button->setButtonText(T("Bang!"));
       button->addButtonListener (this);
-      vars.add(T("*button*"));
+      vars.add(T("*trigger*"));
       vars.add(T("#t"));
       break;
     }    
@@ -74,6 +83,7 @@ Trigger::~Trigger()
   vars.clear();
   deleteAndZero (button);
   deleteAndZero (slider);
+  deleteAndZero (keyboard);
   deleteAndZero (configure);
   deleteAndZero (close);
 }
@@ -184,6 +194,21 @@ void Trigger::sliderValueChanged (Slider* sliderThatWasMoved)
       vars.set(1, String(slider->getValue()) );
       doTrigger();
     }
+}
+
+
+void Trigger::handleNoteOn (MidiKeyboardState* state, int chan,
+			    int key, float vel)
+{
+  std::cout << "Handle note off key=" << key 
+	    << " chan=" << chan << " vel=" << vel << "\n";
+}
+
+void Trigger::handleNoteOff (MidiKeyboardState* state, int chan,
+			    int key)
+{
+  std::cout << "Handle note off key=" << key 
+	    << " chan=" << chan <<  "\n";
 }
 
 void Trigger::buttonClicked (Button* buttonThatWasClicked)

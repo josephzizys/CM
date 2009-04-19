@@ -11,8 +11,9 @@
 #include "juce.h"
 
 class Trigger  : public Component,
-                 public SliderListener,
-                 public ButtonListener
+  public SliderListener,
+  public ButtonListener,
+  public MidiKeyboardStateListener
 {
 public:
   Trigger(int typ);
@@ -24,6 +25,9 @@ public:
   void resized();
   void sliderValueChanged (Slider* sliderThatWasMoved);
   void buttonClicked (Button* buttonThatWasClicked);
+  void handleNoteOn (MidiKeyboardState* state, int chan,
+		     int key, float vel);
+  void handleNoteOff (MidiKeyboardState* state, int chan, int key);
 
   void doTrigger();
   void configureTrigger();
@@ -37,6 +41,9 @@ public:
   Slider* slider;
   TextButton* configure;
   TextButton* close;
+  MidiKeyboardState keyboardState;
+  MidiKeyboardComponent* keyboard;
+
 };
 
 #endif

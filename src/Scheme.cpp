@@ -330,16 +330,21 @@ void Scheme::run()
   double qtime, utime;
   SchemeNode* node;
 
-  if (! init())
+  if (!init())
       return;
+  if (!isQuiet())
+    {
+      String banner=String::empty;
+      banner << SystemStats::getJUCEVersion()
+	     << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n")
+	     << getLispVersion() << T("\n")
+	     << SysInfo::getCMLogo() << T("\n" );
+      Console::getInstance()->printOutput(banner);
+    }
 
   pausing=false;
-  //  Console::getInstance()->printPrompt();
-
-  while (! threadShouldExit()) // true
+  while (! threadShouldExit())
     {
-      //      if ( threadShouldExit() )
-      //	break;
       while ( true ) 
 	{
 	  schemeNodes.lockArray();

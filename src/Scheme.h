@@ -106,6 +106,9 @@ public:
 #endif
   int nextid;
   String voidstring;
+  bool quiet;
+  bool isQuiet(){ return quiet;}
+  void setQuiet(bool q){quiet=q;}
   bool showvoid;
   bool showVoidValues();
   void setShowVoidValues(bool b);
@@ -138,7 +141,7 @@ public:
   bool isMidiInputHook();
   void setMidiInputHook(SCHEMEPROC hook);
   void clearMidiInputHook();
-
+  String getLispVersion();
 
   void sprout(double _time, SCHEMEPROC c=0, int _id=-1);
   void eval(String str);

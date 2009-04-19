@@ -211,6 +211,7 @@ int main(int argc, const char* argv[])
   cmdargs.addCommand(T("--load"), T("load file"), T("<file>"));
   cmdargs.addCommand(T("--eval"), T("evaluate expression"), T("<expr>"));
   cmdargs.addCommand(T("--batch"), T("process options and exit"));
+  cmdargs.addCommand(T("--quiet"), T("don't print startup banner"));
   String err=cmdargs.init(args);
   if (!err.isEmpty())
     {
@@ -236,11 +237,11 @@ int main(int argc, const char* argv[])
   MessageManager::getInstance(); // stops an assert, not sure why
   Console* con=Console::getInstance();
   con->setPrompt(String("\ncm> "));
-  String vers=SystemStats::getJUCEVersion();
-  vers << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n");
-  con->printOutput(vers);
+  //String vers=SystemStats::getJUCEVersion();
+  //vers << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n");
+  //con->printOutput(vers);
   Scheme* scm=Scheme::getInstance();
-
+  scm->setQuiet(cmdargs.getCommandArg(T("--quiet")) != NULL);
   scm->setPriority(10);
   scm->startThread();
   MidiOutPort* mid=MidiOutPort::getInstance();

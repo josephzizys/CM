@@ -37,6 +37,7 @@ bool Scheme::init()
       std::cout << "CHICKEN_run failed.\n";
       return false;
     }
+  /*
   res=CHICKEN_eval_string_to_string((char *)"(chicken-version)",
 				    outstr, OUTSTRSIZE);
   if (res>0)
@@ -47,7 +48,7 @@ bool Scheme::init()
 	  << SysInfo::getCMLogo() << T("\n" );
 	Console::getInstance()->printOutput(str);
     }
-
+  */
   CHICKEN_eval_string((char*)"(define *grace-std-out* (make-output-port print-output (lambda () #f)))", NULL);
   CHICKEN_eval_string((char*)"(current-output-port *grace-std-out*)", NULL);
   CHICKEN_eval_string((char*)"(define *grace-err-out* (make-output-port print-error (lambda () #f)))", NULL);
@@ -62,6 +63,19 @@ bool Scheme::init()
 void Scheme::cleanup()
 {
   CHICKEN_delete_gc_root(inputClosureGCRoot);
+}
+
+String Scheme::getLispVersion()
+{
+  String str = T("Chicken ");
+  int res=CHICKEN_eval_string_to_string((char *)"(chicken-version)",
+					outstr, OUTSTRSIZE);
+  if (res>0)
+    str << String(outstr).unquoted();
+  else
+    str << T("?.?.?");
+  str << T(" ") << SysInfo::getCopyright(T("Felix L. Winkelmann"));
+  return str;
 }
 
 bool Scheme::isMidiInputHook()
