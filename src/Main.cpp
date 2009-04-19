@@ -19,7 +19,7 @@
 #include "Syntax.h"
 #include <string>
 #include <iostream>
-
+ 
 #ifdef GRACE
 
 /*=======================================================================*
@@ -267,7 +267,8 @@ int main(int argc, const char* argv[])
   // LOOP TIL SCHEME QUITS
 
   while (scm->isThreadRunning())
-    ;
+    Thread::sleep(500) ;
+  //    sleep(1) ;
 
   return 0;
 }
