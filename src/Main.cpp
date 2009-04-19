@@ -74,9 +74,6 @@ void Grace::initialise(const juce::String& commandLine)
   String str=String::empty;
   str << getApplicationName() << T(" ") << SysInfo::getGraceVersion()
       << T(" ") << SysInfo::getCopyright(T("Todd Ingalls, Rick Taube"))
-      << T("\n")
-      << SystemStats::getJUCEVersion()
-      << T(" ") << SysInfo::getCopyright(T("Julian Storer")) 
       << T("\n");
   con->printOutput(str);
   // don't initialize anything if we are GraceCL
@@ -267,8 +264,10 @@ int main(int argc, const char* argv[])
   
   // LOOP TIL SCHEME QUITS
 
-  while (scm->isThreadRunning())
-    Thread::sleep(500) ;
+  scm->waitForThreadToExit(-1);
+
+  //  while (scm->isThreadRunning())
+  //    Thread::sleep(500) ;
   //    sleep(1) ;
 
   return 0;
