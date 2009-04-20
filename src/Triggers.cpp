@@ -39,11 +39,13 @@ Trigger::Trigger (int typ)
       keyboard = new MidiKeyboardComponent
 	(keyboardState, MidiKeyboardComponent::horizontalKeyboard);
       addAndMakeVisible(keyboard);
-      keyboard->setOctaveForMiddleC(5);
+      keyboard->setOctaveForMiddleC(4);
       keyboard->setMidiChannel(0);
       keyboard->setVelocity(.5);
+      keyboard->setLowestVisibleKey(36);
       vars.add(T("*trigger*"));
       vars.add(T("60"));
+      keyboardState.addListener(this);
       break;
       //    case TriggerIDs::MidiInTrigger :
       //      break;
@@ -129,6 +131,9 @@ void Trigger::initFromXml(XmlElement* xml)
     }
   else if (triggertype==TriggerIDs::MidiKeyboardTrigger)
     {
+      String str=xml->getStringAttribute(T("variable"));
+      if (!str.isEmpty() && !str.containsAnyOf(T(" \t\r#;,(){}\"\\'`")))
+	vars.set(0,str);
     }
   else if (triggertype==TriggerIDs::MidiInTrigger)
     {
@@ -161,6 +166,8 @@ String Trigger::toXml()
 	  << T("\"");
       break;
     case TriggerIDs::MidiKeyboardTrigger :
+      str << T(" variable=")
+	  << vars[0].quoted();
       break;
     case TriggerIDs::MidiInTrigger :
       break;
@@ -180,8 +187,8 @@ void Trigger::resized()
     slider->setBounds (8, 8, 216, 24);
   else if (button)
     button->setBounds (8, 8, 150, 24);
-  //  close->setBounds(getWidth()-8-24, 8, 24, 24);
-  //  configure->setBounds(getWidth()-8-24-8-24, 8, 24, 24);
+  else if (keyboard)
+    keyboard->setBounds (0, 0, getWidth() - 70, getHeight());
   close->setBounds(getWidth()-8-24+2, 8+2, 20, 20);
   configure->setBounds(getWidth()-8-24-8-24+2, 8+2, 20, 20);
 }
@@ -196,19 +203,17 @@ void Trigger::sliderValueChanged (Slider* sliderThatWasMoved)
     }
 }
 
-
 void Trigger::handleNoteOn (MidiKeyboardState* state, int chan,
 			    int key, float vel)
 {
-  std::cout << "Handle note off key=" << key 
-	    << " chan=" << chan << " vel=" << vel << "\n";
+  vars.set(1, String(key) );
+  doTrigger();
 }
 
 void Trigger::handleNoteOff (MidiKeyboardState* state, int chan,
 			    int key)
 {
-  std::cout << "Handle note off key=" << key 
-	    << " chan=" << chan <<  "\n";
+ 
 }
 
 void Trigger::buttonClicked (Button* buttonThatWasClicked)
@@ -306,7 +311,7 @@ public:
 	b3=trigger->vars[1];
 	height=8+24+8+24+8+24 + 16+24+8;
       }
-    if (trigger->triggertype==TriggerIDs::SliderTrigger)
+    else if (trigger->triggertype==TriggerIDs::SliderTrigger)
       {
 	l1=T("Slider Variable:");
 	b1=trigger->vars[0];
@@ -320,56 +325,71 @@ public:
 	b5=String(trigger->slider->getInterval());
 	height=8+24+8+24+8+24+8+24+8+24 + 16+24+8;
       }
+    else if (trigger->triggertype==TriggerIDs::MidiKeyboardTrigger)
+      {
+	l1=T("Keyboard Variable:");
+	b1=trigger->vars[0];
+	height=8+24 + 16+24+8;
+      }
 
-    addAndMakeVisible (label1 = new Label (String::empty, l1));
-    label1->setFont (Font (15.0000f, Font::plain));
-    label1->setJustificationType (Justification::centredRight);
-    label1->setEditable (false, false, false);
-    label1->setColour (TextEditor::textColourId, Colours::black);
-    label1->setColour (TextEditor::backgroundColourId, Colour (0x0));
-    
-    addAndMakeVisible (buffer1 = new TextEditor (String::empty));
-    buffer1->setMultiLine (false);
-    buffer1->setReturnKeyStartsNewLine (false);
-    buffer1->setReadOnly (false);
-    buffer1->setScrollbarsShown (true);
-    buffer1->setCaretVisible (true);
-    buffer1->setPopupMenuEnabled (true);
-    buffer1->setText (b1);
-    
-    addAndMakeVisible (label2 = new Label (String::empty, l2));
-    label2->setFont (Font (15.0000f, Font::plain));
-    label2->setJustificationType (Justification::centredRight);
-    label2->setEditable (false, false, false);
-    label2->setColour (TextEditor::textColourId, Colours::black);
-    label2->setColour (TextEditor::backgroundColourId, Colour (0x0));
-    
-    addAndMakeVisible (buffer2 = new TextEditor (String::empty));
-    buffer2->setMultiLine (false);
-    buffer2->setReturnKeyStartsNewLine (false);
-    buffer2->setReadOnly (false);
-    buffer2->setScrollbarsShown (true);
-    buffer2->setCaretVisible (true);
-    buffer2->setPopupMenuEnabled (true);
-    buffer2->setText(b2);
-    
-    addAndMakeVisible (label3 = new Label (String::empty, l3));
-    label3->setFont (Font (15.0000f, Font::plain));
-    label3->setJustificationType (Justification::centredRight);
-    label3->setEditable (false, false, false);
-    label3->setColour (TextEditor::textColourId, Colours::black);
-    label3->setColour (TextEditor::backgroundColourId, Colour (0x0));
-    
-    addAndMakeVisible (buffer3 = new TextEditor (String::empty));
-    buffer3->setMultiLine (false);
-    buffer3->setReturnKeyStartsNewLine (false);
-    buffer3->setReadOnly (false);
-    buffer3->setScrollbarsShown (true);
-    buffer3->setCaretVisible (true);
-    buffer3->setPopupMenuEnabled (true);
-    buffer3->setText (b3);
+    if (!l1.isEmpty())
+      {
+	addAndMakeVisible (label1 = new Label (String::empty, l1));
+	label1->setFont (Font (15.0000f, Font::plain));
+	label1->setJustificationType (Justification::centredRight);
+	label1->setEditable (false, false, false);
+	label1->setColour (TextEditor::textColourId, Colours::black);
+	label1->setColour (TextEditor::backgroundColourId, Colour (0x0));
+	
+	addAndMakeVisible (buffer1 = new TextEditor (String::empty));
+	buffer1->setMultiLine (false);
+	buffer1->setReturnKeyStartsNewLine (false);
+	buffer1->setReadOnly (false);
+	buffer1->setScrollbarsShown (true);
+	buffer1->setCaretVisible (true);
+	buffer1->setPopupMenuEnabled (true);
+	buffer1->setText (b1);
+      }
 
-    if (trigger->triggertype==TriggerIDs::SliderTrigger)
+    if (!l2.isEmpty())
+      {
+	addAndMakeVisible (label2 = new Label (String::empty, l2));
+	label2->setFont (Font (15.0000f, Font::plain));
+	label2->setJustificationType (Justification::centredRight);
+	label2->setEditable (false, false, false);
+	label2->setColour (TextEditor::textColourId, Colours::black);
+	label2->setColour (TextEditor::backgroundColourId, Colour (0x0));
+	
+	addAndMakeVisible (buffer2 = new TextEditor (String::empty));
+	buffer2->setMultiLine (false);
+	buffer2->setReturnKeyStartsNewLine (false);
+	buffer2->setReadOnly (false);
+	buffer2->setScrollbarsShown (true);
+	buffer2->setCaretVisible (true);
+	buffer2->setPopupMenuEnabled (true);
+	buffer2->setText(b2);
+      }
+    
+    if (!l3.isEmpty())
+      {
+	addAndMakeVisible (label3 = new Label (String::empty, l3));
+	label3->setFont (Font (15.0000f, Font::plain));
+	label3->setJustificationType (Justification::centredRight);
+	label3->setEditable (false, false, false);
+	label3->setColour (TextEditor::textColourId, Colours::black);
+	label3->setColour (TextEditor::backgroundColourId, Colour (0x0));
+	
+	addAndMakeVisible (buffer3 = new TextEditor (String::empty));
+	buffer3->setMultiLine (false);
+	buffer3->setReturnKeyStartsNewLine (false);
+	buffer3->setReadOnly (false);
+	buffer3->setScrollbarsShown (true);
+	buffer3->setCaretVisible (true);
+	buffer3->setPopupMenuEnabled (true);
+	buffer3->setText (b3);
+      }
+
+    if (!l4.isEmpty())
       {
 	addAndMakeVisible (label4 = new Label (String::empty, l4));
 	label4->setFont (Font (15.0000f, Font::plain));
@@ -386,7 +406,10 @@ public:
 	buffer4->setCaretVisible (true);
 	buffer4->setPopupMenuEnabled (true);
 	buffer4->setText (b4);
-	
+      }	
+
+    if (!l5.isEmpty())
+      {
 	addAndMakeVisible (label5 = new Label (String::empty, l5));
 	label5->setFont (Font (15.0000f, Font::plain));
 	label5->setJustificationType (Justification::centredRight);
@@ -432,12 +455,21 @@ public:
     
   void resized()
   {
-    label1->setBounds (8, 8, 104, 24);
-    buffer1->setBounds (120, 8, getWidth()-120-8, 24);
-    label2->setBounds (8, 40, 104, 24);
-    buffer2->setBounds (120, 40, getWidth()-120-8, 24);
-    label3->setBounds (8, 72, 104, 24);
-    buffer3->setBounds (120, 72, getWidth()-120-8, 24);
+    if (label1)
+      {
+	label1->setBounds (8, 8, 104, 24);
+	buffer1->setBounds (120, 8, getWidth()-120-8, 24);
+      }
+    if (label2)
+      {
+	label2->setBounds (8, 40, 104, 24);
+	buffer2->setBounds (120, 40, getWidth()-120-8, 24);
+      }
+    if (label3)
+      {
+	label3->setBounds (8, 72, 104, 24);
+	buffer3->setBounds (120, 72, getWidth()-120-8, 24);
+      }
     if (label4)
       {
 	label4->setBounds (8, 104, 104, 24);
@@ -473,6 +505,8 @@ public:
 	    << T(" range=\"") << buffer3->getText()
 	    << T(" ") << buffer4->getText()
 	    << T(" ") << buffer5->getText() << T("\"");
+	else if (trigger->triggertype==TriggerIDs::MidiKeyboardTrigger)
+	  s << T(" variable=") << buffer1->getText().quoted();
 	s<<T("/>");
 	XmlDocument doc (s);
 	trigger->initFromXml(doc.getDocumentElement());

@@ -426,8 +426,8 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
       for (int i=TriggerIDs::ButtonTrigger; i<=TriggerIDs::NumTriggers; i++)
 	trigs.addItem(CommandIDs::EditorAddTrigger+i,
 		      String("New ") + TriggerIDs::toPrettyString(i),
-		      // HACK disable Keyboard and MidiIn for now.
-		      ((!trigp) && (i<=TriggerIDs::SliderTrigger)));
+		      // HACK disable MidiIn.
+		      ((!trigp) && (i!=TriggerIDs::MidiInTrigger)));
       trigs.addItem(CommandIDs::EditorImportTrigger,
 		    T("New from Region (XML)"),
 		    (!trigp) && getTextBuffer()->isRegion()
