@@ -14,6 +14,7 @@
 Trigger::Trigger (int typ)
     : button (0),
       slider (0),
+      keyboard (0),
       triggertype (0),
       height (40),
       configure (0),
@@ -247,8 +248,15 @@ void Trigger::doTrigger ()
   if (buf->isSyntax(TextIDs::Lisp))
     {
       code << T("(let ((") << vars[0] << T(" ") << vars[1] << T(")) ")
+#ifdef GRACECL
+	   << T("#+sbcl(declare (sb-ext:muffle-conditions cl:style-warning))")
+#endif
 	   << text
+#ifdef GRACECL
+	   << T("(values))");
+#else
 	   << T("(void))");
+#endif
       LispSyntax::getInstance()->eval(code);
     }
   else

@@ -83,15 +83,17 @@ void CommonLisp::load(File file, bool addtorecent)
 	return;
     }
   String text=String::empty;
+  String path=file.getFullPathName().quoted();
+  if (SysInfo::isWindows())
+    path=escapeForDOS(path);
   if (!file.existsAsFile())
     {
-      text << T(">>> Error loading ")
-	   << file.getFullPathName().quoted()
+      text << T(">>> Error loading ") << path
 	   << T(": file does not exist.\n");
       Console::getInstance()->printError(text);
       return;
     }
-  text << T("(load ") << file.getFullPathName().quoted() << T(")");
+  text << T("(load ") << path << T(")");
   sendLispSexpr(text);
 }
 
@@ -108,16 +110,18 @@ void CommonLisp::compileFile(File file)
 	return;
     }
   String text=String::empty;
+  String path=file.getFullPathName().quoted();
+  if (SysInfo::isWindows())
+    path=escapeForDOS(path);
   if (!file.existsAsFile())
-    text << T(">>> Error compiling ")
-	 << file.getFullPathName().quoted()
+    text << T(">>> Error compiling ") << path
 	 << T(": file does not exist.\n");
   if (!text.isEmpty())
     {
       Console::getInstance()->printError(text);
       return;
     }
-  text << T("(compile-file ") << file.getFullPathName().quoted() << T(")");
+  text << T("(compile-file ") << path << T(")");
   sendLispSexpr(text);
 }
 
