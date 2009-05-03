@@ -16,7 +16,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((>= turn-i turns))
 	 (let ((val (src rd 0.0
 			 (lambda (dir)
@@ -32,7 +32,7 @@
 	       (if (or (and (<= last-val2 last-val) (>= last-val val))
 		       (and (>= last-val2 last-val) (<= last-val val)))
 		   (begin
-		     (set! turn-i (1+ turn-i))
+		     (set! turn-i (+ 1 turn-i))
 		     (if (< turn-i turns)
 			 (begin
 			   (set! turn-sample (seconds->samples (vct-ref turntable turn-i)))

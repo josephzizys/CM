@@ -39,7 +39,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((gls (env glsf)))
 	   (locsig loc i (* (env ampf) 
@@ -58,4 +58,3 @@
   (fm-drum 0 1.5 55 .3 5 #f)
   (fm-drum 2 1.5 66 .3 4 #t))
 |#
-

@@ -1,4 +1,4 @@
-(definstrument (lbj-piano begin-time duration frequency amplitude :key (pfreq frequency)
+(definstrument (lbj-piano begin-time duration frequency amplitude :key pfreq
 			  (degree 45) (reverb-amount 0) (distance 1))
   (let ((piano-spectra (list
 
@@ -419,9 +419,7 @@
 	(list 0 0 (/ attackTime 4) 1.0 attackTime 1.0 100 releaseAmp)))
     
     ;; This thing sounds pretty good down low, below middle c or so.  
-    ;; Unfortunately, there are some tens of partials down there and we're using 
-    ;; exponential envelopes.  You're going to wait for a long long time just to 
-    ;; hear a single low note.  The high notes sound pretty rotten--they just don't
+    ;; The high notes sound pretty rotten--they just don't
     ;; sparkle;  I have a feeling that this is due to the low amplitude of the 
     ;; original data, and the lack of mechanical noise.
     ;;
@@ -432,6 +430,8 @@
     ;; a high freq with a low pfreq, will give you fold over (hmmm...maybe 
     ;; I can get those high notes to sparkle after all).
 
+    (if (not (number? pfreq))
+	(set! pfreq frequency))
     (let* ((partials (normalize-partials (get-piano-partials pfreq)))
 	   (beg (seconds->samples begin-time))
 	   (newdur (+ duration *piano-attack-duration* *piano-release-duration*))
@@ -447,7 +447,7 @@
 			      :scaler  amplitude
 			      :duration env1dur
 			      :base 10000.0))
-	   (releaseamp (list-ref ampfun1 (1- (length ampfun1))))
+	   (releaseamp (list-ref ampfun1 (- (length ampfun1) 1)))
 	   (ampenv2 (make-env :envelope '(0 1 100 0)
 			      :scaler (* amplitude releaseamp)
 			      :duration env1dur
@@ -455,18 +455,18 @@
 	   (sktr 0))
 
       (do ((i 0 (+ i 2))
-	   (j 0 (1+ j)))
+	   (j 0 (+ 1 j)))
 	  ((= i (vct-length partials)))
 	(vct-set! alist j (vct-ref partials (+ i 1)))
 	(vector-set! oscils j (make-oscil :frequency (* (vct-ref partials i) frequency))))
       (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
-	 (set! sktr (1+ sktr))
+	 (set! sktr (+ 1 sktr))
 	 (let ((sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k siz))
 	     (set! sum (+ sum (* (vct-ref alist k)
 				 (oscil (vector-ref oscils k))))))
@@ -474,5 +474,4 @@
 			     (if (> sktr env1samples) 
 				 (env ampenv2) 
 				 (env ampenv1)))))))))))
-
 

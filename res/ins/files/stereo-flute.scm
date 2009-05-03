@@ -54,7 +54,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (set! delay-sig (delay bore out-sig))
 	 (set! emb-sig (delay embouchure current-difference))
@@ -79,6 +79,7 @@ is a physical model of a flute:
 	 (set! previous-dc-blocked-a dc-blocked-a)
 	 (set! previous-tap-sig tap-sig)
 	 (set! previous-dc-blocked-b dc-blocked-b))))))
+
 
 
 

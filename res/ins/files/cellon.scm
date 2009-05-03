@@ -35,7 +35,7 @@
     (ws-interrupt?)
     (run 
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (let* ((vib (+ (* (env pvibenv) (triangle-wave pvib))
 			(* (env rvibenv) (rand-interp rvib))
@@ -43,4 +43,3 @@
 	   (set! fm (one-zero low (* (env betaenv) (oscil fmosc (+ fm vib)))))
 	   (locsig loc i (* (env amplenv) 
 			    (oscil car (+ fm vib))))))))))
-

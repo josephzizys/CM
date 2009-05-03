@@ -1,4 +1,3 @@
-
 (definstrument (gran-synth start-time duration audio-freq grain-dur grain-interval amp)
   (let* ((beg (seconds->samples start-time))
 	 (end (+ beg (seconds->samples duration)))
@@ -7,16 +6,14 @@
 	 (grain-size (inexact->exact (ceiling (* (max grain-dur grain-interval) (mus-srate)))))
 	 (grains (make-wave-train :size grain-size :frequency (/ 1.0 grain-interval)))
 	 (grain (mus-data grains)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i grain-size))
       (vct-set! grain i (* (env grain-env) (oscil carrier))))
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp (wave-train grains))))))))
-	 
+
 ;;; (with-sound () (gran-synth 0 2 100 .0189 .02 .4))
-
-

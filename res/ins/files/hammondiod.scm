@@ -1,5 +1,3 @@
-
-
 (definstrument (hammondoid beg dur freq amp)
   ;; from Perry Cook's BeeThree.cpp
   (let* ((osc0 (make-oscil (* freq 0.999)))
@@ -17,7 +15,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (outa i (+ (* (env ampenv1)
 		       (+ (* g0 (oscil osc0))

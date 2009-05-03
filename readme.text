@@ -98,7 +98,7 @@ To create the embedded instruments:
       1. Copy the instrument file(s) to res/ins/files.
       2. Edit res/ins/table.xml and rows for the new files.
       3. Create the zip archive and generate the resource:
-      $ zip -r files.zip files 
+         $ zip -r files.zip files/*.scm files/*.clm 
 
 To create the embedded documetation
 

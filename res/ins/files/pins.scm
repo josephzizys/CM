@@ -57,7 +57,7 @@
     (if (< (* dur time-scaler) file-duration)
 	(snd-print (format #f "~A is ~1,3F seconds long, but we'll need ~1,3F seconds of data for this note" 
 			   file file-duration (* dur time-scaler))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i max-oscils))
       (vector-set! resynth-oscils i (make-oscil :frequency 0)))
     (set! trigger outhop)
@@ -65,7 +65,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (if splice-attack
 	     (let ((ramp (/ 1.0 attack-size)))
@@ -74,10 +74,10 @@
 	       ;; simply splices the original attack on to the rest of the note.  "attack" is the number
 	       ;; of samples to include bodily.
 	       (outa i (* amp (file->sample fil filptr)))
-	       (set! filptr (1+ filptr))
+	       (set! filptr (+ 1 filptr))
 	       (if (> filptr attack-size)
 		   (let ((mult 1.0))
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k attack-size))
 		       (vct-set! ramped-attack k (* mult (file->sample fil (+ filptr k))))
 		       (set! mult (- mult ramp)))
@@ -87,21 +87,21 @@
 		   (let ((peaks 0))
 		     ;; get next block of data and apply window to it
 		     (set! trigger 0)
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k fftsize-1))
 		       (vct-set! fdr k (* (vct-ref window k) (file->sample fil filptr)))
-		       (set! filptr (1+ filptr)))
+		       (set! filptr (+ 1 filptr)))
 		     (vct-fill! fdi 0.0)
 		     (set! filptr (- filptr (- fftsize-1 hop)))
 		     ;; get the fft 
 		     (mus-fft fdr fdi fftsize-1 1)
 		     ;; change to polar coordinates (ignoring phases)
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k highest-bin-1))	;no need to paw through the upper half (so (<= highest-bin-1 (floor fft-size 2)))
 		       (let ((x (vct-ref fdr k))
 			     (y (vct-ref fdi k)))
 			 (vct-set! fftamps k (* 2 (sqrt (+ (* x x) (* y y)))))))
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k max-oscils))
 		       (vct-set! last-peak-freqs k (vct-ref current-peak-freqs k))
 		       (vct-set! last-peak-amps k (vct-ref current-peak-amps k))
@@ -113,7 +113,7 @@
 		       ;; search for current peaks following Xavier Serra's recommendations in
 		       ;; "A System for Sound Analysis/Transformation/Synthesis 
 		       ;;      Based on a Deterministic Plus Stochastic Decomposition"
-		       (do ((k 0 (1+ k)))
+		       (do ((k 0 (+ 1 k)))
 			   ((= k highest-bin-1))
 			 (set! la ca)
 			 (set! ca ra)
@@ -132,7 +132,7 @@
 				   ;; gotta either flush this peak, or find current lowest and flush him
 				   (let ((minp 0)
 					 (minpeak (vct-ref peak-amps 0)))
-				     (do ((j 1 (1+ j)))
+				     (do ((j 1 (+ 1 j)))
 					 ((= j max-peaks-1))
 				       (if (< (vct-ref peak-amps j) minpeak)
 					   (begin
@@ -145,16 +145,16 @@
 				   (begin
 				     (vct-set! peak-freqs peaks freq)
 				     (vct-set! peak-amps peaks amp)
-				     (set! peaks (1+ peaks))))))))
+				     (set! peaks (+ 1 peaks))))))))
 		     ;; now we have the current peaks -- match them to the previous set and do something interesting with the result
 		     ;; the end results are reflected in the updated values in the rates and sweeps arrays.
 		     ;; search for fits between last and current, set rates/sweeps for those found
 		     ;;   try to go by largest amp first 
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k peaks))
 		       (let ((maxp 0)
 			     (maxpk (vct-ref peak-amps 0)))
-			 (do ((j 1 (1+ j)))
+			 (do ((j 1 (+ 1 j)))
 			     ((= j max-peaks-1))
 			   (if (> (vct-ref peak-amps j) maxpk)
 			       (begin
@@ -166,7 +166,7 @@
 				    (closestamp 10.0)
 				    (current-freq (vct-ref peak-freqs maxp))
 				    (icf (/ 1.0 current-freq)))
-			       (do ((j 0 (1+ j)))
+			       (do ((j 0 (+ 1 j)))
 				   ((= j max-peaks-1))
 				 (if (> (vct-ref last-peak-amps j) 0.0)
 				     (let ((closeness (* icf (abs (- (vct-ref last-peak-freqs j) current-freq)))))
@@ -180,12 +180,12 @@
 				     (vct-set! current-peak-amps closestp (vct-ref peak-amps maxp))
 				     (vct-set! peak-amps maxp 0.0)
 				     (vct-set! current-peak-freqs closestp current-freq)))))))
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k max-peaks-1))
 		       (if (> (vct-ref peak-amps k) 0.0)
 			   ;; find a place for a new oscil and start it up
 			   (let ((new-place -1))
-			     (do ((j 0 (1+ j)))
+			     (do ((j 0 (+ 1 j)))
 				 ((or (not (= new-place -1))
 				      (= j max-oscils)))
 			       (if (and (= (vct-ref last-peak-amps j) 0.0) 
@@ -197,24 +197,24 @@
 			     (vct-set! last-peak-freqs new-place (vct-ref peak-freqs k))
 			     (set! (mus-frequency (vector-ref resynth-oscils new-place)) (* transposition (vct-ref peak-freqs k))))))
 		     (set! cur-oscils 0)
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k max-oscils))
 		       (vct-set! rates k (* ifreq (- (vct-ref current-peak-amps k) (vct-ref last-peak-amps k))))
 		       (if (or (not (= (vct-ref current-peak-amps k) 0.0))
 			       (not (= (vct-ref last-peak-amps k) 0.0)))
 			   (set! cur-oscils k))
 		       (vct-set! sweeps k (* ihifreq transposition (- (vct-ref current-peak-freqs k) (vct-ref last-peak-freqs k)))))
-		     (set! cur-oscils (1+ cur-oscils))
+		     (set! cur-oscils (+ 1 cur-oscils))
 		     ))
 	       ;; run oscils, update envelopes
-	       (set! trigger (1+ trigger))
+	       (set! trigger (+ 1 trigger))
 	       (if (= ramped 0)
 		   (set! sum 0.0)
 		   (begin
 		     (set! sum (vct-ref ramped-attack ramp-ind))
-		     (set! ramp-ind (1+ ramp-ind))
+		     (set! ramp-ind (+ 1 ramp-ind))
 		     (if (= ramp-ind ramped) (set! ramped 0))))
-	       (do ((k 0 (1+ k)))
+	       (do ((k 0 (+ 1 k)))
 		   ((= k cur-oscils))
 		 (if (or (not (= (vct-ref amps k) 0.0))
 			 (not (= (vct-ref rates k) 0.0)))

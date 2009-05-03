@@ -20,7 +20,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i len))
 	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
 	   (set! comb-sum 

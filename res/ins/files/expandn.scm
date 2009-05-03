@@ -1,6 +1,10 @@
 ;;; multi-channel sound file expansion with srate and reverb.
 ;;; michael klingbeil (michael@klingbeil.com)
 ;;;
+;;; $Name:  $
+;;; $Revision: 1.1 $
+;;; $Date: 2005/10/16 22:15:44 $
+;;;
 ;;; clm-4 and scheme 12-May-08 bil
 
 (definstrument (expandn time duration filename amplitude
@@ -171,5 +175,3 @@
 		 ;; if reverb is turned on, output to the reverb streams
 		 (if rev-mx
 		     (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))))))
-
-

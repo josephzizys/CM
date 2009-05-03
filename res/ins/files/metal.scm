@@ -17,7 +17,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (outa i (* g0 (env ampenv0) 
 		    (oscil osc0 
@@ -27,6 +27,3 @@
 					   (oscil osc2))))
 			      (* g3 (env ampenv3) 
 				 (oscil osc3)))))))))))
-
-
-

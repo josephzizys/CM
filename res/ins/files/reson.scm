@@ -17,10 +17,10 @@
 	 (ranvib (make-rand-interp :frequency ranvibfreq
 				   :amplitude (hz->radians (* ranvibpc pitch)))))
     ;; initialize the "formant" generators
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i numformants))
       (set! totalamp (+ totalamp (list-ref (list-ref data i) 2))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i numformants))
       (let* ((frmdat (list-ref data i))
 	     (freq (cadr frmdat))
@@ -48,12 +48,12 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let* ((outsum 0.0)
 		(vib (+ (triangle-wave pervib) (rand-interp ranvib) (env frqf)))
 		(modsig (oscil modulator vib)))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k numformants))
 	     (set! outsum (+ outsum
 			     (* (env (vector-ref ampfs k))
@@ -61,3 +61,4 @@
 				       (+ (* vib (vector-ref c-rats k))
 					  (* (env (vector-ref indfs k)) modsig)))))))
 	   (locsig loc i outsum)))))))
+

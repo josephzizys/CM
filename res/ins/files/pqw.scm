@@ -1,5 +1,6 @@
 ;;; -------- PQW
 
+
 (definstrument (pqw start dur spacing-freq carrier-freq amplitude ampfun indexfun partials
 		    :key (degree 0.0)
 			 (distance 1.0)
@@ -25,7 +26,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let* ((vib (+ (triangle-wave tr) (rand-interp rn)))
 		(ax (* (min 1.0 (env ind-env)) (oscil spacing-cos vib)))
@@ -35,7 +36,7 @@
 			    (- (* (oscil carrier-sin (* vib r)) yfax) 
 			       (* (oscil carrier-cos (* vib r)) fax))))))))))
 
+
 ; (pqw 0 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5))
 ; to see the asymmetric spectrum most clearly, set the index function above to '(0 1 100 1)
-
 

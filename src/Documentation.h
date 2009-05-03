@@ -6,7 +6,7 @@
 namespace Documentation
 {
     extern const char*  changelog_html;
-    const int           changelog_htmlSize = 5364;
+    const int           changelog_htmlSize = 6988;
 
     extern const char*  cm_css;
     const int           cm_cssSize = 7086;

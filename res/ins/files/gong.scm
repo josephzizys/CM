@@ -1,4 +1,3 @@
-
 ;;; -------- FM-GONG
 ;;; Paul Weineke's gong.
 
@@ -37,7 +36,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (locsig loc i (* (env ampfun) 
 			  (oscil carrier (+ (* (env indxfun1) (oscil mod1))

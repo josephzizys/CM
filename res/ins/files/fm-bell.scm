@@ -25,7 +25,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((fmenv (env indf)))
 	   (outa i (* (env ampf)
@@ -38,8 +38,8 @@
 					       fmInd4 
 					       (oscil mod4)))))))))))))
 
-
 ;(define fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .2000 ))
 ;(define abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0 ))
 ;(fm-bell 0.0 1.0 220.0 .5 abell fbell 1.0)
+
 

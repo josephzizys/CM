@@ -10,7 +10,7 @@
   ;; if noise used, ranfreq=frequency of random number generator,
   ;;                noiamp=amplitude thereof,
   ;;                noifun=amplitude envelope on white noise
-  ;; if sum-of-cosines (i.e. a band-limited pulse train),
+  ;; if ncos (i.e. a band-limited pulse train),
   ;;                cosamp=amplitude of pulse train,
   ;;                cosfreq1=top frequency (given freqcosfun) (i.e. pulse frequency)
   ;;                cosfreq0=bottom frequency,
@@ -39,21 +39,19 @@
 		 (make-rand :frequency ranfreq)
 		 #f))
 	 (cn (if (not with-noise)
-		 (make-sum-of-cosines :frequency cosfreq0 :cosines cosnum)
+		 (make-ncos cosfreq0 cosnum)
 		 #f)))
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((input1 (if with-noise
 			   (* (env ampf) (rand rn))
-			   (* (env ampf) (sum-of-cosines cn (env frqf))))))
+			   (* (env ampf) (ncos cn (env frqf))))))
 	   (locsig loc i (+ (two-pole f1 (* input1 g1))
 			    (two-pole f2 (* input1 g2))
 			    (two-pole f3 (* input1 g3))))))))))
 
-
 ;  (resflt 0 1.0 0 0 0 #f .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
 ;  (resflt 0 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 500 .995 .1 1000 .995 .1 2000 .995 .1)
-

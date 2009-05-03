@@ -1,0 +1,15 @@
+(with-sound (:output "test.wav"  :srate 44100) 
+  (calling-all-frogs 0)
+  )
+
+(with-sound (:output "test.wav" :srate 44100) 
+  (calling-all-mammals 0)
+  )
+
+(with-sound (:output "test.wav" :srate 44100 :play #t) 
+  (calling-all-insects 0)
+  )
+
+(with-sound (:output "test.wav" :srate 44100) 
+  (calling-all-birds 0)
+  )

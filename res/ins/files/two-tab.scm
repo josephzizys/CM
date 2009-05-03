@@ -28,7 +28,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((vib (+ (triangle-wave per-vib) 
 		       (rand-interp ran-vib)))
@@ -37,6 +37,8 @@
 			    (+ (* intrp (table-lookup s-1 vib))
 			       (* (- 1.0 intrp) 
 				  (table-lookup s-2 vib)))))))))))
+
+
 
 
 

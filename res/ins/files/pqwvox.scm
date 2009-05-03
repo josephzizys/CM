@@ -1,6 +1,7 @@
 ;;; -------- PQWVOX
 ;;; translation of CLM pqwvox.ins (itself translated from MUS10 of MLB's waveshaping voice instrument (using phase quadrature waveshaping))
 
+
 (definstrument (pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes)
   "(pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes) produces 
 vocal sounds using phase quadrature waveshaping"
@@ -53,7 +54,7 @@ vocal sounds using phase quadrature waveshaping"
 	 (freqf (make-env :envelope freqfun :duration dur :scaler (* freqscl freq) :offset freq))
 	 (per-vib (make-triangle-wave :frequency 6.0 :amplitude (* freq .1)))
 	 (ran-vib (make-rand-interp :frequency 20.0 :amplitude (* freq .05))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i fs))
       (let* ((amp (list-ref formant-amps i))
 	     (fshape (list-ref formant-shapes i))
@@ -69,7 +70,7 @@ vocal sounds using phase quadrature waveshaping"
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (let* ((frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
 		(frqscl (hz->radians (* frq frq-ratio)))
@@ -80,7 +81,7 @@ vocal sounds using phase quadrature waveshaping"
 		(even-freq 0.0)
 		(odd-freq 0.0)
 		(sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k fs))
 	     (let* ((frm (env (vector-ref frmfs k)))
 		    (frm0 (/ frm frq))
@@ -104,6 +105,7 @@ vocal sounds using phase quadrature waveshaping"
 					(* odd-amp (- (* yfax (oscil (vector-ref sin-odds k) odd-freq))
 						      (* fax (oscil (vector-ref cos-odds k) odd-freq)))))))))))
 	   (outa i (* (env ampf) sum))))))))
+
 
 ;;; (pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
 ;;; (a test to see if the cancellation is working -- sounds like a mosquito)

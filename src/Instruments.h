@@ -6,14 +6,24 @@
 namespace Instruments
 {
     extern const char*  files_zip;
-    const int           files_zipSize = 137116;
+    const int           files_zipSize = 303779;
 
     extern const char*  table_xml;
-    const int           table_xmlSize = 8495;
+    const int           table_xmlSize = 9662;
 
   #ifdef FILES
+    extern const char*  animals_clm;
+    const int           animals_clmSize = 317;
+
+  #endif
+  #ifdef FILES
+    extern const char*  animals_scm;
+    const int           animals_scmSize = 493642;
+
+  #endif
+  #ifdef FILES
     extern const char*  anoi_scm;
-    const int           anoi_scmSize = 2684;
+    const int           anoi_scmSize = 2702;
 
   #endif
   #ifdef FILES
@@ -28,7 +38,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  bagpipes_scm;
-    const int           bagpipes_scmSize = 3885;
+    const int           bagpipes_scmSize = 3888;
 
   #endif
   #ifdef FILES
@@ -38,17 +48,22 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  bird_scm;
-    const int           bird_scmSize = 54933;
+    const int           bird_scmSize = 54902;
 
   #endif
   #ifdef FILES
     extern const char*  cellon_scm;
-    const int           cellon_scmSize = 2215;
+    const int           cellon_scmSize = 2214;
 
   #endif
   #ifdef FILES
     extern const char*  dlocsig_scm;
-    const int           dlocsig_scmSize = 104327;
+    const int           dlocsig_scmSize = 104408;
+
+  #endif
+  #ifdef FILES
+    extern const char*  env_scm;
+    const int           env_scmSize = 21308;
 
   #endif
   #ifdef FILES
@@ -58,27 +73,27 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  expandn_scm;
-    const int           expandn_scmSize = 6659;
+    const int           expandn_scmSize = 6729;
 
   #endif
   #ifdef FILES
     extern const char*  expfil_scm;
-    const int           expfil_scmSize = 3835;
+    const int           expfil_scmSize = 3847;
 
   #endif
   #ifdef FILES
     extern const char*  expsnd_scm;
-    const int           expsnd_scmSize = 3779;
+    const int           expsnd_scmSize = 3787;
 
   #endif
   #ifdef FILES
     extern const char*  expsrc_scm;
-    const int           expsrc_scmSize = 1169;
+    const int           expsrc_scmSize = 1168;
 
   #endif
   #ifdef FILES
     extern const char*  fade_scm;
-    const int           fade_scmSize = 6633;
+    const int           fade_scmSize = 6657;
 
   #endif
   #ifdef FILES
@@ -88,7 +103,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  fmbell_scm;
-    const int           fmbell_scmSize = 1677;
+    const int           fmbell_scmSize = 1678;
 
   #endif
   #ifdef FILES
@@ -108,17 +123,17 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  fminsect_scm;
-    const int           fminsect_scmSize = 2072;
+    const int           fminsect_scmSize = 2073;
 
   #endif
   #ifdef FILES
     extern const char*  fmnoise_scm;
-    const int           fmnoise_scmSize = 7756;
+    const int           fmnoise_scmSize = 6657;
 
   #endif
   #ifdef FILES
     extern const char*  fmtrumpet_scm;
-    const int           fmtrumpet_scmSize = 3065;
+    const int           fmtrumpet_scmSize = 3061;
 
   #endif
   #ifdef FILES
@@ -133,12 +148,12 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  fofins_scm;
-    const int           fofins_scmSize = 1241;
+    const int           fofins_scmSize = 1240;
 
   #endif
   #ifdef FILES
     extern const char*  freeverb_scm;
-    const int           freeverb_scmSize = 6391;
+    const int           freeverb_scmSize = 6407;
 
   #endif
   #ifdef FILES
@@ -148,7 +163,12 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  fullmix_scm;
-    const int           fullmix_scmSize = 4108;
+    const int           fullmix_scmSize = 4121;
+
+  #endif
+  #ifdef FILES
+    extern const char*  generators_scm;
+    const int           generators_scmSize = 210403;
 
   #endif
   #ifdef FILES
@@ -168,22 +188,22 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  gransynth_scm;
-    const int           gransynth_scmSize = 798;
+    const int           gransynth_scmSize = 795;
 
   #endif
   #ifdef FILES
     extern const char*  grani_scm;
-    const int           grani_scmSize = 23195;
+    const int           grani_scmSize = 23260;
 
   #endif
   #ifdef FILES
     extern const char*  grapheq_scm;
-    const int           grapheq_scmSize = 3852;
+    const int           grapheq_scmSize = 3854;
 
   #endif
   #ifdef FILES
     extern const char*  hammondiod_scm;
-    const int           hammondiod_scmSize = 778;
+    const int           hammondiod_scmSize = 777;
 
   #endif
   #ifdef FILES
@@ -193,7 +213,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  jcrev_scm;
-    const int           jcrev_scmSize = 2322;
+    const int           jcrev_scmSize = 2324;
 
   #endif
   #ifdef FILES
@@ -208,12 +228,12 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  jlrev_scm;
-    const int           jlrev_scmSize = 1092;
+    const int           jlrev_scmSize = 1093;
 
   #endif
   #ifdef FILES
     extern const char*  lbjpiano_scm;
-    const int           lbjpiano_scmSize = 32009;
+    const int           lbjpiano_scmSize = 31867;
 
   #endif
   #ifdef FILES
@@ -223,32 +243,37 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  maraca_scm;
-    const int           maraca_scmSize = 5357;
+    const int           maraca_scmSize = 5364;
 
   #endif
   #ifdef FILES
     extern const char*  maxf_scm;
-    const int           maxf_scmSize = 11613;
+    const int           maxf_scmSize = 11616;
 
   #endif
   #ifdef FILES
     extern const char*  metal_scm;
-    const int           metal_scmSize = 956;
+    const int           metal_scmSize = 954;
 
   #endif
   #ifdef FILES
     extern const char*  nrev_scm;
-    const int           nrev_scmSize = 2752;
+    const int           nrev_scmSize = 2803;
+
+  #endif
+  #ifdef FILES
+    extern const char*  piano_scm;
+    const int           piano_scmSize = 22820;
 
   #endif
   #ifdef FILES
     extern const char*  pins_scm;
-    const int           pins_scmSize = 9617;
+    const int           pins_scmSize = 9638;
 
   #endif
   #ifdef FILES
     extern const char*  pluck_scm;
-    const int           pluck_scmSize = 2624;
+    const int           pluck_scmSize = 2630;
 
   #endif
   #ifdef FILES
@@ -258,7 +283,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  pqw_scm;
-    const int           pqw_scmSize = 1924;
+    const int           pqw_scmSize = 1926;
 
   #endif
   #ifdef FILES
@@ -268,12 +293,12 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  pqwvox_scm;
-    const int           pqwvox_scmSize = 5458;
+    const int           pqwvox_scmSize = 5463;
 
   #endif
   #ifdef FILES
     extern const char*  pvoc_scm;
-    const int           pvoc_scmSize = 12944;
+    const int           pvoc_scmSize = 12920;
 
   #endif
   #ifdef FILES
@@ -283,17 +308,17 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  resflt_scm;
-    const int           resflt_scmSize = 2410;
+    const int           resflt_scmSize = 2359;
 
   #endif
   #ifdef FILES
     extern const char*  reson_scm;
-    const int           reson_scmSize = 2811;
+    const int           reson_scmSize = 2816;
 
   #endif
   #ifdef FILES
     extern const char*  rhodey_scm;
-    const int           rhodey_scmSize = 838;
+    const int           rhodey_scmSize = 837;
 
   #endif
   #ifdef FILES
@@ -303,12 +328,12 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  scratch_scm;
-    const int           scratch_scmSize = 1661;
+    const int           scratch_scmSize = 1663;
 
   #endif
   #ifdef FILES
     extern const char*  singer_scm;
-    const int           singer_scmSize = 32673;
+    const int           singer_scmSize = 32713;
 
   #endif
   #ifdef FILES
@@ -318,7 +343,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  spectra_scm;
-    const int           spectra_scmSize = 1278;
+    const int           spectra_scmSize = 1275;
 
   #endif
   #ifdef FILES
@@ -328,7 +353,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  stereoflute_scm;
-    const int           stereoflute_scmSize = 3277;
+    const int           stereoflute_scmSize = 3279;
 
   #endif
   #ifdef FILES
@@ -338,7 +363,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  strad_scm;
-    const int           strad_scmSize = 11503;
+    const int           strad_scmSize = 11504;
 
   #endif
   #ifdef FILES
@@ -353,12 +378,12 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  tubebell_scm;
-    const int           tubebell_scmSize = 1081;
+    const int           tubebell_scmSize = 1083;
 
   #endif
   #ifdef FILES
     extern const char*  twotab_scm;
-    const int           twotab_scmSize = 1645;
+    const int           twotab_scmSize = 1648;
 
   #endif
   #ifdef FILES
@@ -368,7 +393,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  v_scm;
-    const int           v_scmSize = 5788;
+    const int           v_scmSize = 5790;
 
   #endif
   #ifdef FILES
@@ -378,7 +403,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  vox_scm;
-    const int           vox_scmSize = 4125;
+    const int           vox_scmSize = 4124;
 
   #endif
   #ifdef FILES
@@ -393,7 +418,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  wurley_scm;
-    const int           wurley_scmSize = 852;
+    const int           wurley_scmSize = 853;
 
   #endif
   #ifdef FILES
@@ -403,7 +428,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  za_scm;
-    const int           za_scmSize = 612;
+    const int           za_scmSize = 616;
 
   #endif
   #ifdef FILES
@@ -413,12 +438,12 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  zc_scm;
-    const int           zc_scmSize = 579;
+    const int           zc_scmSize = 581;
 
   #endif
   #ifdef FILES
     extern const char*  zip_scm;
-    const int           zip_scmSize = 5248;
+    const int           zip_scmSize = 5254;
 
   #endif
   #ifdef FILES
@@ -428,7 +453,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  zn_scm;
-    const int           zn_scmSize = 804;
+    const int           zn_scmSize = 806;
 
   #endif
 };

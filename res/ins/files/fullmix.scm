@@ -13,7 +13,7 @@
 	 (file (if (not srate) 
 		   (make-file->frame in-file)
 		   (let ((vect (make-vector in-chans)))
-		     (do ((i 0 (1+ i)))
+		     (do ((i 0 (+ i 1)))
 			 ((= i in-chans))
 		       (vector-set! vect i (make-readin in-file i inloc)))
 		     vect)))
@@ -23,7 +23,7 @@
 		 (make-scalar-mixer (max in-chans out-chans) 1.0)))
 	 (rev-mx (if (and *reverb* reverb-amount (> reverb-amount 0.0))
 		     (let ((rmx (make-mixer in-chans)))
-		       (do ((i 0 (1+ i)))
+		       (do ((i 0 (+ i 1)))
 			   ((= i in-chans))
 			 (mixer-set! rmx i 0 reverb-amount)) ; 0->assume 1 chan reverb stream, I think
 		       rmx)
@@ -33,10 +33,10 @@
     (if matrix
 	(begin
 	  (if (list? matrix) ; matrix is list of scalers, envelopes (lists), or env gens
-	      (do ((inp 0 (1+ inp)))
+	      (do ((inp 0 (+ 1 inp)))
 		  ((= inp in-chans))
 		(let ((inlist (list-ref matrix inp)))
-		  (do ((outp 0 (1+ outp)))
+		  (do ((outp 0 (+ 1 outp)))
 		      ((= outp out-chans))
 		    (let ((outn (list-ref inlist outp)))
 		      (if outn
@@ -48,14 +48,14 @@
 				    (if (not envs)
 					(begin
 					  (set! envs (make-vector in-chans))
-					  (do ((i 0 (1+ i)))
+					  (do ((i 0 (+ i 1)))
 					      ((= i in-chans))
 					    (vector-set! envs i (make-vector out-chans #f)))))
 				    (if (env? outn)
 					(vector-set! (vector-ref envs inp) outp outn)
 					(vector-set! (vector-ref envs inp) outp (make-env outn :duration dur))))
 				  (snd-warning (format #f "unknown element in matrix: ~A" outn)))))))))
-	      (do ((inp 0 (1+ inp))) ; matrix is a number in this case (a global scaler)
+	      (do ((inp 0 (+ 1 inp))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)
 		    (mixer-set! mx inp inp matrix))))))
@@ -68,23 +68,23 @@
 	(let* ((inframe (make-frame in-chans))
 	       (outframe (make-frame out-chans))
 	       (srcs (make-vector in-chans #f)))
-	  (do ((inp 0 (1+ inp)))
+	  (do ((inp 0 (+ 1 inp)))
 	      ((= inp in-chans))
 	    (vector-set! srcs inp (make-src :srate srate)))
 	  ;; can't use run here yet because 2-dim vect and #f elements
 	  (if envs
 	      (run 
 	       (lambda ()
-		 (do ((i st (1+ i)))
+		 (do ((i st (+ i 1)))
 		     ((= i nd))
-		   (do ((inp 0 (1+ inp)))
+		   (do ((inp 0 (+ 1 inp)))
 		       ((= inp in-chans))
-		     (do ((outp 0 (1+ outp)))
+		     (do ((outp 0 (+ 1 outp)))
 			 ((= outp out-chans))
 		       (if (and (vector-ref envs inp)
 				(env? (vector-ref (vector-ref envs inp) outp)))
 			   (mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp)))))))
-		 (do ((inp 0 (1+ inp)))
+		 (do ((inp 0 (+ 1 inp)))
 		     ((= inp in-chans))
 		   (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
 		 (frame->file *output* i (frame->frame inframe mx outframe))
@@ -92,17 +92,17 @@
 	      ;; no envs
 	      (run 
 	       (lambda ()
-		 (do ((i st (1+ i)))
+		 (do ((i st (+ i 1)))
 		     ((= i nd))
-		   (do ((inp 0 (1+ inp)))
+		   (do ((inp 0 (+ 1 inp)))
 		       ((= inp in-chans))
 		     (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
 		   (frame->file *output* i (frame->frame inframe mx outframe))
 		   (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))))))))
+
 
 #|
   (with-sound (:channels 2 :statistics #t)
     (fullmix "pistol.snd")
     (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
 |#
-

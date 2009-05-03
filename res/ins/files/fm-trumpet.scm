@@ -1,5 +1,4 @@
 ;;; FM TRUMPET ---------------------------------------------------
-
 ;;; Dexter Morrill's FM-trumpet:
 ;;; from CMJ feb 77 p51
 
@@ -69,7 +68,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((frq-change (hz->radians (* (+ 1.0 (rand-interp ran-vib))
 					   (+ 1.0 (* (env per-vib-f) (oscil per-vib)))
@@ -82,8 +81,4 @@
 			       (oscil car2 (* frq-change 
 					      (+ frq2 (* (env mod2-f) 
 							 (oscil mod2 (* modfrq2 frq-change)))))))))))))))
-
-
-
-
 

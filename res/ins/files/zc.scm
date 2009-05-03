@@ -2,12 +2,12 @@
   (let* ((beg (seconds->samples time))
 	 (end (+ beg (seconds->samples dur)))
 	 (s (make-pulse-train :frequency freq))
-	 (d0 (make-comb :size length1 :max-size (1+ (max length1 length2)) :scaler feedback))
+	 (d0 (make-comb :size length1 :max-size (+ 1 (max length1 length2)) :scaler feedback))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (outa i (comb d0 (* amp (pulse-train s)) (env zenv))))))))
 

@@ -1,8 +1,7 @@
 ;;; -------- mlbvoi
 ;;;
-;;; translation from MUS10 of Marc LeBrun's waveshaping voice
-;;; instrument (using FM here) this version translated (and simplified
-;;; slightly) from CLM's mlbvoi.ins
+;;; translation from MUS10 of Marc LeBrun's waveshaping voice instrument (using FM here)
+;;; this version translated (and simplified slightly) from CLM's mlbvoi.ins
 
 (definstrument (vox beg dur freq amp ampfun freqfun freqscl phonemes formant-amps formant-indices :optional (vibscl .1) (deg 0) (pcrev 0))  
   (let ((formants
@@ -58,7 +57,7 @@
 	 (loc (make-locsig deg 1.0 pcrev))
 	 (per-vib (make-triangle-wave :frequency 6 :amplitude (* freq vibscl)))
 	 (ran-vib (make-rand-interp :frequency 20 :amplitude (* freq .5 vibscl))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i fs))
       (let ((amp (list-ref formant-amps i))
 	    (index (list-ref formant-indices i)))
@@ -69,11 +68,11 @@
 	(vector-set! frmfs i (make-env :envelope (vox-fun phonemes i) :duration dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (set! frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
 	 (set! carrier (oscil car-os (hz->radians frq)))
 	 (set! sum 0.0)
-	 (do ((k 0 (1+ k))) ((= k fs))
+	 (do ((k 0 (+ 1 k))) ((= k fs))
 	   (set! frm (env (vector-ref frmfs k)))
 	   (set! frm0 (/ frm frq))
 	   (set! frm-int (inexact->exact (floor frm0)))

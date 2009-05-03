@@ -1,4 +1,5 @@
 ;;; -------- FM_INSECT
+
 (definstrument (fm-insect startime dur frequency amplitude amp-env 
 			  mod-freq mod-skew mod-freq-env mod-index mod-index-env 
 			  fm-index fm-ratio
@@ -18,7 +19,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let* ((garble-in (* (env indf)
 			      (oscil fm1-osc (env modfrqf))))
@@ -40,5 +41,4 @@
     (fm-insect 3.950  1.500   900.627  .12  amp 40 -10.707 locust 300.866 bug_hi  .346  .500)
     (fm-insect 4.300  1.500   900.627  .09  amp 40 -20.707 locust 300.866 bug_hi  .246  .500)))
 |#
-
 

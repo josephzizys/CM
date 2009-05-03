@@ -17,7 +17,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	   (win-freq (/ two-pi foflen))
 	   (wt0 (make-wave-train :size foflen :frequency frq))
 	   (foftab (mus-data wt0)))
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ i 1)))
 	  ((= i foflen))
 	(vct-set! foftab i (* (+ (* a0 (sin (* i frq0)))
 				 (* a1 (sin (* i frq1)))
@@ -26,11 +26,8 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
       (ws-interrupt?)
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i end))
 	   (outa i (* (env ampf) 
 		      (wave-train wt0 (* (env vibf) 
 					 (oscil vibr))))))))))
-
-
-
