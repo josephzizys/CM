@@ -631,6 +631,32 @@ bool cm_pathname_directory_p(char* path)
   return f.isDirectory();
 }
 
+char* cm_directory(char* path, bool recurse)
+{
+  File f=completeFile(String(path));
+  if (f.existsAsFile())
+    {
+      String s=T("(\"") + f.getFullPathName() + T("\")");
+      return (char*)strdup(s.toUTF8());
+    }
+  String s=T("*");
+  if (!f.isDirectory())
+    {
+      s=f.getFileName();
+      f=f.getParentDirectory();
+    }
+  OwnedArray<File> a;
+  int i=(recurse) ? File::findFiles : File::findFilesAndDirectories;
+  int n=f.findChildFiles(a, (i | File::ignoreHiddenFiles), recurse, s);
+  if (n==0)
+    return (char*)NULL;
+  s=T("(");
+  for (int j=0; j<n; j++)
+    s << T(" \"") << a[j]->getFullPathName() << T("\"");
+  s<<T(")");
+  return (char*)strdup(s.toUTF8());
+}
+
 // Sal support
 
 char* sal_tokenize(char* str)

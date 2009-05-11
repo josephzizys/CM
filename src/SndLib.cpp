@@ -42,11 +42,30 @@ XEN xen_false, xen_true, xen_nil, xen_undefined;
 #endif
 
 SndLib::SndLib()
+  : instable (0)
 {
+#ifdef GRACE
+  XmlDocument dataDoc (String((const char*)Instruments::table_xml)); 
+  instable=dataDoc.getDocumentElement();
+  String autos=Preferences::getInstance()->getStringProp(T("SndLibAutoLoad"));  
+  if (autos.isNotEmpty())
+    forEachXmlChildElement (*(instable->getChildByName(T("instruments"))),
+			    e)
+      {
+	if (autos.containsWholeWord(e->getStringAttribute(T("File"))))
+	  {
+	    std::cout << "initing as autoloaded: " 
+		      << e->getStringAttribute(T("File")).toUTF8() << "\n";
+
+	    e->setAttribute(T("AutoLoad"), T("yes"));
+	  }
+      }
+#endif
 }
 
 SndLib::~SndLib()
 {
+  deleteAndZero(instable);
 }
 
 /*=======================================================================*
@@ -315,9 +334,6 @@ bool Scheme::init()
 	   SchemeSources::sndlibws_scmSize, tr);
   // need this for some .ins files...
   XEN_EVAL_C_STRING("(provide 'snd-ws.scm)");
-  loadCode(T("env.scm"), SchemeSources::env_scm,
-	   SchemeSources::env_scmSize, tr);
-
   s7_define_function(s7, "void", s7_void_value, 0, 0, false, "void value");
 
   String str=String::empty;
@@ -343,11 +359,8 @@ bool Scheme::init()
       << ((pref->getBoolProp(T("SndLibAutoPlay"), true))
 	  ? T("#t))") : T("#f))"));
   s7_eval_c_string(s7,str.toUTF8());
-  // autoload user's instruments. right now this is just a hardwired
-  // wave.ins
-  str=SndLib::getInstance()->getInstrumentCode(T("wave.scm"));
-  s7_eval_c_string(s7, str.toUTF8());
-#endif
+  SndLib::getInstance()->autoLoadInstruments();
+ #endif
 
   // Print herald
 
@@ -415,6 +428,7 @@ class InstrumentTable : public Component,
   TextButton* loadButton;
   TextButton* open1Button;
   TextButton* open2Button;
+  TextButton* autoButton;
   int selRow;
   int numRows; 
   static const int AutoloadColumn=5;
@@ -440,27 +454,6 @@ class InstrumentTable : public Component,
       return direction * result;
     }
   };
-
-  class AutoLoad  : public Component,
-    public ButtonListener
-    {
-    private:
-      int row, cid;
-      TextButton* openButton;
-      TextButton* loadButton;
-      ToggleButton* autoButton;
-      InstrumentTable* dialog;
-      AutoLoad (const AutoLoad&);
-      const AutoLoad& operator= (const AutoLoad&);
-    public:
-      AutoLoad (InstrumentTable* dlg);
-      ~AutoLoad();
-      void paint (Graphics& g);
-      void resized();
-      void buttonClicked (Button* buttonThatWasClicked);
-      void setRowAndColumn(const int r, const int c);
-      //juce_UseDebuggingNewOperator
-    };
 
   void loadInstrument(String file);
   void openInstrument(String file);
@@ -503,32 +496,134 @@ void SndLib::openInstrumentBrowser()
   win->setVisible(true);
 }
 
-String SndLib::getInstrumentCode(String name)
+
+
+XmlElement* SndLib::getInstrumentTable(bool all)
 {
-  // create file path in zip file
-  String path=T("files/");
-  path << name;
+  // return instrument table or list of instruments in it
+  return (all) ? instable : instable->getChildByName(T("instruments"));
+}
+
+XmlElement* SndLib::getInstrumentElement(String filename)
+{
+  XmlElement* instab=getInstrumentTable();
+  forEachXmlChildElement (*instab, e)
+    {
+      if (e->getStringAttribute(T("File")) == filename)
+	return e;
+    }
+  return NULL;
+}
+
+//
+// Instrument Loading and AutoLoading
+// 
+
+String SndLib::getInstrumentCode(String filename)
+{
+  // filename can be a single file or list of space delimited files
   // create zip archive from embedded resource
   MemoryInputStream zipstream (Instruments::files_zip,
 			       Instruments::files_zipSize,
 			       false);
+  StringArray filenames;
+  filenames.addTokens(filename, false);
   ZipFile archive(&zipstream, false);
-  // look up file
-  int index = archive.getIndexOfFileName(path);
-  if (index<0)
-    {
-      std::cout << "no index for file, returning\n";
-      return String::empty;
-    }
   InputStream* inst=NULL;
-  String text;
-  inst = archive.createStreamForEntry(index);
-  if(!inst)
-	  return String::empty;
-  text = inst->readEntireStreamAsString();
-  delete inst;
+  String text=String::empty;
+  for (int i=0; i<filenames.size(); i++)
+    {
+      // create file path in zip file
+      String path=T("files/")+filenames[i];
+      int index = archive.getIndexOfFileName(path);
+      if (index<0)
+	continue;
+      inst = archive.createStreamForEntry(index);
+      if (!inst)
+	continue;
+      text << inst->readEntireStreamAsString();
+      delete inst;
+    }
+  inst=NULL;
   return text;
 }
+
+void SndLib::getInstrumentFilesToLoad(XmlElement* ins, StringArray& files)
+{
+  // return files to load for ins, including unloaded dependencies
+  StringArray depends;
+  depends.addTokens(ins->getStringAttribute(T("Depend")), false);
+  for (int i=0; i<depends.size(); i++)
+    {
+      XmlElement* s=getInstrumentElement(depends[i]);
+      if (s && !s->getBoolAttribute(T("Loaded")))
+	{
+	  String f=s->getStringAttribute(T("File"));
+	  if (!files.contains(f) )
+	    files.add(f);
+	}
+    }
+  files.add(ins->getStringAttribute(T("File"))); // always load this one
+}
+
+void SndLib::updateAutoLoaded()
+{
+  XmlElement* tab=getInstrumentTable();
+  String s=String::empty;
+  forEachXmlChildElement (*tab, e)
+    {
+      if (e->getBoolAttribute(T("AutoLoad")))
+	if (s.isEmpty())
+	  s=e->getStringAttribute(T("File"));
+	else
+	  s << T(" ") << e->getStringAttribute(T("File"));
+    }
+  //std::cout << "setting prefs=" << s.toUTF8() << "\n";
+  Preferences::getInstance()->setStringProp(T("SndLibAutoLoad"),s);
+}
+
+void SndLib::autoLoadInstruments()
+{
+  String str=Preferences::getInstance()->getStringProp(T("SndLibAutoLoad"));
+  if (str.isEmpty()) return;
+  // fill array of instruments to autoload
+  StringArray autos;
+  autos.addTokens(str, false);
+  if (autos.size()==0) return;
+  // fill array of all files to load 
+  StringArray loads;
+  for (int i=0; i<autos.size(); i++)
+    {
+      // get xml instrument element
+      XmlElement* ins=SndLib::getInstance()->getInstrumentElement(autos[i]);
+      getInstrumentFilesToLoad(ins, loads);
+    }
+  
+  for (int i=0; i<loads.size(); i++)  
+    {
+      String str=getInstrumentCode(loads[i]);
+      std::cout << "loading: " << loads[i].toUTF8() << "\n";
+      s7_eval_c_string(s7, str.toUTF8());
+      XmlElement* ins=SndLib::getInstance()->getInstrumentElement(loads[i]);
+      ins->setAttribute(T("Loaded"), "yes");
+    }  
+}
+
+void SndLib::loadInstrumentCode(XmlElement* ins)
+{
+  StringArray loads;
+  getInstrumentFilesToLoad(ins, loads);
+  for (int i=0; i<loads.size(); i++)  
+    {
+      String msg=T("Loading ") + loads[i] + T("\n");
+      String str=getInstrumentCode(loads[i]);
+      Console::getInstance()->printOutput(msg);
+      Scheme::getInstance()->eval(str);
+      XmlElement* x=SndLib::getInstance()->getInstrumentElement(loads[i]);
+      x->setAttribute(T("Loaded"), "yes");
+    }  
+}
+
 
 /*=======================================================================*
                               The XML Table Display
@@ -539,6 +634,7 @@ InstrumentTable::InstrumentTable()
     loadButton (0),
     open1Button (0),
     open2Button (0),
+    autoButton (0),
     insData (0),
     selRow(-1)
 {
@@ -587,13 +683,17 @@ InstrumentTable::InstrumentTable()
   open2Button->setButtonText (T("Open Instrument"));
   open2Button->addButtonListener (this);
 
+  addAndMakeVisible (autoButton = new TextButton (String::empty));
+  autoButton->setButtonText (T("Auto Load"));
+  autoButton->addButtonListener (this);
+
   setSize(tablewidth + 60, 16+300+16+24+16);
 }
 
 InstrumentTable::~InstrumentTable()
 {
   deleteAllChildren();
-  delete insData;
+  // delete insData;
 }
 
 void InstrumentTable::resized()
@@ -607,45 +707,47 @@ void InstrumentTable::resized()
   open1Button->setBounds(x-66, y, 132, 24);
   loadButton->setBounds (open1Button->getX()-16-132, y, 132, 24);
   open2Button->setBounds(open1Button->getRight()+16, y, 132, 24);
+  autoButton->setBounds(getWidth()-90-16-24, y, 90, 24);
 }
 
 void InstrumentTable::buttonClicked (Button* button)
 {
-  // no row selected (shouldn't happen)
-  if (selRow == -1)
-    return;
-  const XmlElement* row=dataList->getChildElement(selRow);
+  // no row selected 
+  if (selRow == -1) return;
+  XmlElement* ins=dataList->getChildElement(selRow);
   // this shouldn't happen
-  if (row == NULL)
-    return;
+  if (ins == NULL) return;
   String path, code;
-  if ((button==loadButton) || (button==open2Button))
+  if (button==loadButton)
     {
-      path=row->getStringAttribute(T("File"));
+      SndLib::getInstance()->loadInstrumentCode(ins);
+    } 
+  else if (button==open2Button)
+    {
+      path=ins->getStringAttribute(T("File"));
       code=SndLib::getInstance()->getInstrumentCode(path);
       if (code.isEmpty())
 	return;
-      if (button==loadButton)
-	{
-	  String msg=T("Loading ");
-	  msg << path.quoted() << T("\n");
-	  Console::getInstance()->printOutput(msg);
-	  Scheme::getInstance()->eval(code);
-	}
-      else
-	{
-	  new TextEditorWindow(File::nonexistent, code, TextIDs::Lisp,
-			       File(path).getFileName());
-	}
+      new TextEditorWindow(File::nonexistent, code, TextIDs::Lisp,
+			   File(path).getFileName());
     } 
   else if (button == open1Button)
     {
-      path=row->getStringAttribute(T("Examples"));
+      path=ins->getStringAttribute(T("Examples"));
       code=SndLib::getInstance()->getInstrumentCode(path);
       if (code.isEmpty())
 	return;
       new TextEditorWindow(File::nonexistent, code, TextIDs::Lisp,
 			   path);
+    }
+  else if (button == autoButton)
+    {
+      if (ins->getBoolAttribute(T("AutoLoad")))
+	ins->setAttribute(T("AutoLoad"), T("no"));
+      else 
+	ins->setAttribute(T("AutoLoad"), T("yes"));
+      repaint();
+      SndLib::getInstance()->updateAutoLoaded(); // update preferences
     }
 }
 
@@ -660,9 +762,10 @@ int InstrumentTable::getNumRows()
 
 void InstrumentTable::loadTableData()
 {
-  String text=String((const char*) Instruments::table_xml);
-  XmlDocument dataDoc (text );
-  insData = dataDoc.getDocumentElement();
+  //  String text=String((const char*) Instruments::table_xml);
+  //  XmlDocument dataDoc (text );
+  //  insData = dataDoc.getDocumentElement();
+  insData=SndLib::getInstance()->getInstrumentTable(true);
   dataList = insData->getChildByName(T("instruments"));
   columnList = insData->getChildByName(T("columns"));
   numRows = dataList->getNumChildElements();
@@ -703,7 +806,6 @@ void InstrumentTable::paintRowBackground (Graphics& g,
 					     int rowNumber, 
 					     int width, int height, 
 					     bool rowIsSelected)
-
 {
   if (rowIsSelected)
     g.fillAll (Colours::lightgoldenrodyellow); 
@@ -714,17 +816,21 @@ void InstrumentTable::paintCell (Graphics& g, int rowNumber,
 				    int width, int height,
 				    bool rowIsSelected)
 {
-  g.setColour (Colours::black);
-  g.setFont (font);
   const XmlElement* rowElement = dataList->getChildElement(rowNumber);
+  //g.setColour (Colours::black);
+  if (rowElement->getBoolAttribute(T("Loaded")))
+    g.setColour (Colours::green);
+  else
+    g.setColour (Colours::black);
+  g.setFont (font);
   if (rowElement != 0)
     {
-	const String text 
-	  (rowElement->
-	   getStringAttribute( getAttributeNameForColumnId(columnId)));
-	g.drawText (text, 2, 0, width - 4, height, Justification::centredLeft,
-		    true);
-      }
+      const String text 
+	(rowElement->
+	 getStringAttribute( getAttributeNameForColumnId(columnId)));
+      g.drawText (text, 2, 0, width - 4, height, Justification::centredLeft,
+		  true);
+    }
   g.setColour (Colours::black.withAlpha (0.2f));
   g.fillRect (width - 1, 0, 1, height);
 }
@@ -744,25 +850,11 @@ void InstrumentTable::sortOrderChanged (int newSortColumnId,
 Component* InstrumentTable::refreshComponentForCell
 (int rowNumber, int columnId, bool isRowSelected, Component* comp) 
 {
-  if (columnId == AutoloadColumn) 
-    {
-      AutoLoad* act = (AutoLoad*)comp;
-      // update an existing component else create it
-      if (act == NULL)
-	act = new AutoLoad (this);
-      act->setRowAndColumn(rowNumber, columnId);
-      return act;
-    }
-  else // for any other column, just return 0,lumns directly.
     return NULL;
 }
 
 int InstrumentTable::getColumnAutoSizeWidth (int columnId)
 {
-  // this is the actions column containing a custom compone
-  //    if (columnId == AutoloadColumn)
-  //      return 80;
-
   int widest = 32;
   // find the widest bit of text in this column..
   for (int i = getNumRows(); --i >= 0;)
@@ -797,57 +889,5 @@ void InstrumentTable::returnKeyPressed(int row)
     }
 }
 
-/*=======================================================================*
-                    AutoLoad - custom component for each ins
-		    THIS DOESNT WORK YET...
- *=======================================================================*/
-
-InstrumentTable::AutoLoad::AutoLoad (InstrumentTable* dlg)
-    : 
-      autoButton (0),
-      row(0),
-      cid(0)
-{
-  dialog=dlg;
-  Font font;
-  addAndMakeVisible(autoButton = new ToggleButton (String::empty));
-  autoButton->setButtonText(String::empty);//T("Auto")
-  autoButton->addButtonListener (this);
-  setSize (24, 24);
-}
-
-InstrumentTable::AutoLoad::~AutoLoad()
-{
-  deleteAndZero (autoButton);
-}
-
-void InstrumentTable::AutoLoad::setRowAndColumn (const int r, const int c)
-{
-  // Our demo code will call this when we may need to update our contents
-  row = r;
-  cid = c;
-  //  autoButton->setToggleState(autoButton->getToggleState(),false);
-  autoButton->repaint();
-}
-
-void InstrumentTable::AutoLoad::paint (Graphics& g)
-{
-   g.fillAll(Colours::white);
-  //autoButton->repaint();
-}
-
-void InstrumentTable::AutoLoad::resized()
-{
-  autoButton->setBounds((getWidth()/2)-12, 0, 24, 24);
-}
-
-void InstrumentTable::AutoLoad::buttonClicked (Button* button)
-{
-  if (button == autoButton)
-    {
-      std::cout << "autobutton: row=" << row << " col=" << cid << "\n";
-      //   getParentComponent()->repaint();
-    }
-}
 
 #endif

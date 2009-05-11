@@ -84,6 +84,7 @@
     (ffi_pathname_exists_p bool "cm_pathname_exists_p" c-string)
     (ffi_pathname_writable_p bool "cm_pathname_writable_p" c-string)
     (ffi_pathname_directory_p bool "cm_pathname_directory_p" c-string)
+    (ffi_directory c-string "cm_directory" c-string bool)
 
     (ffi_sal_tokenize c-string "sal_tokenize" c-string )
 

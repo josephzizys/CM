@@ -15,9 +15,17 @@ class SndLib
  public:
   SndLib();
   ~SndLib();
+  XmlElement* instable;
   int performCommand(int type, int data=0, String text=String::empty);
   String getClmDefault(int id);
   String getInstrumentCode(String file);
+  void loadInstrumentCode(XmlElement* ins);  
+  void getInstrumentFilesToLoad(XmlElement* ins, StringArray& ary);
+  XmlElement* getInstrumentTable(bool all=false);
+  XmlElement* getInstrumentElement(String filename);
+  bool isInstrumentLoaded(String filename);
+  void updateAutoLoaded();
+  void autoLoadInstruments();
   void openInstrumentBrowser();
   juce_DeclareSingleton (SndLib, true)
 };

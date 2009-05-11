@@ -6,10 +6,10 @@
 namespace Instruments
 {
     extern const char*  files_zip;
-    const int           files_zipSize = 303779;
+    const int           files_zipSize = 307323;
 
     extern const char*  table_xml;
-    const int           table_xmlSize = 9662;
+    const int           table_xmlSize = 10698;
 
   #ifdef FILES
     extern const char*  animals_clm;
@@ -367,6 +367,16 @@ namespace Instruments
 
   #endif
   #ifdef FILES
+    extern const char*  test_aiff;
+    const int           test_aiffSize = 661702;
+
+  #endif
+  #ifdef FILES
+    extern const char*  test_wav;
+    const int           test_wavSize = 661580;
+
+  #endif
+  #ifdef FILES
     extern const char*  touchtone_clm;
     const int           touchtone_clmSize = 55;
 
@@ -388,12 +398,17 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  v_clm;
-    const int           v_clmSize = 3343;
+    const int           v_clmSize = 3290;
 
   #endif
   #ifdef FILES
     extern const char*  v_scm;
     const int           v_scmSize = 5790;
+
+  #endif
+  #ifdef FILES
+    extern const char*  vkey_scm;
+    const int           vkey_scmSize = 11241;
 
   #endif
   #ifdef FILES

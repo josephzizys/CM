@@ -838,11 +838,16 @@
 (define (temp-directory)
   (ffi_temp_directory))
 
-(define (cwd )
+(define (pwd )
   (ffi_current_directory ))
 
 (define (chdir str)
   (ffi_set_current_directory str))
+
+(define (directory str . rec)
+  (let ((res (ffi_directory str (and (pair? rec) (car rec)))))
+    (if (string=? res "") (list) 
+	(read-from-string res))))
 
 (define (make-pathname . args)
   (with-optkeys (args directory name type defaults)

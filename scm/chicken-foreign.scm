@@ -62,6 +62,7 @@
 (define ffi_pathname_exists_p (foreign-lambda bool "cm_pathname_exists_p" c-string))
 (define ffi_pathname_writable_p (foreign-lambda bool "cm_pathname_writable_p" c-string))
 (define ffi_pathname_directory_p (foreign-lambda bool "cm_pathname_directory_p" c-string))
+(define ffi_directory (foreign-lambda c-string "cm_directory" c-string bool))
 (define ffi_sal_tokenize (foreign-lambda c-string "sal_tokenize" c-string))
 (define ffi_port_info (foreign-lambda c-string "cm_port_info"))
 (define ffi_mp_open_output (foreign-lambda bool "mp_open_output" int))

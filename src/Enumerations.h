@@ -595,6 +595,7 @@ class CommandIDs
   static const CommandID SndLibChannels = COMID(SndLib, 2);
   static const CommandID SndLibAutoPlay = COMID(SndLib, 3);
   static const CommandID SndLibInsDialog = COMID(SndLib, 4);
+  static const CommandID SndLibAutoLoad = COMID(SndLib, 4);
   // Scheduler
   static const CommandID SchedulerStop = COMID(Scheduler, 1);
   static const CommandID SchedulerPause = COMID(Scheduler, 2);
