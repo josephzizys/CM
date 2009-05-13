@@ -528,7 +528,6 @@ void Scheme::eval(String s)
   schemeNodes.addSorted(comparator, n);
   schemeNodes.unlockArray();
   notify();
-  schemeNodes.unlockArray();
   if (SCHEME_DEBUG>2) printf("added eval node %d\n", n->nodeid);
 }
 
