@@ -177,6 +177,10 @@ class ConsoleWindow : public DocumentWindow , public MenuBarModel
 
   Splash* splash; **/
 
+  // David Psenicka
+  // This must be here for FOMUS's documentation to work!
+  TooltipWindow xxx;
+
  public:
   ConsoleWindow () ;
   ~ConsoleWindow () ;

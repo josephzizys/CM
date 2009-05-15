@@ -7,7 +7,7 @@ amalgamated = true
 addoption("juce", "Location of JUCE source directory or install prefix")
 addoption("sndlib", "Optional location of SNDLIB source directory or install prefix")
 addoption("chicken", "Optional location of CHICKEN source directory or install prefix")
-addoption("fomus", "Optional location of FOMUS source directory or install prefix")
+addoption("fomus", "Optional FOMUS install prefix")
 
 if options["juce"] then
    amalgamated = false
@@ -87,9 +87,12 @@ for i = 1,3 do
       "src/SchemeSources.cpp", "src/SchemeSources.h",
       "src/Midi.cpp", "src/Midi.h",
       "src/Csound.cpp", "src/Csound.h",
-      "src/Fomus.cpp", "src/Fomus.h",
       "src/Main.cpp", "src/Main.h"
    }
+   if  options["fomus"] then
+      add(mypackage.files,"src/Fomus.cpp")
+      add(mypackage.files,"src/Fomus.h")
+   end
    mypackage.config["Debug"].defines = {"DEBUG=1"}
 
 ------------------------------------------
@@ -248,22 +251,20 @@ for i = 1,3 do
    end
 
 ------------------------------------------
---           Chicken
+--           FOMUS
 ------------------------------------------
 
    if options["fomus"] then
       fomus = insure_slash(options["fomus"])
-      add(mypackage.defines, "FOMUS=1")
---      if os.fileexists(fomus .. "fomus.h") then
---         add(mypackage.includepaths, fomus)
---         add(mypackage.linkoptions, fomus .. "libfomus.a")
---      elseif os.fileexists(fomus .. "include/fomus.h") then
---         add(mypackage.includepaths, fomus .. "include")
---         add(mypackage.libpaths, fomus .. "lib")
---         add(mypackage.links, "fomus")
---      else
---         error("--fomus must point to either the FOMUS source directory or FOMUS install prefix (eg. /usr or /usr/local)")
---      end
+      add(mypackage.defines, "WITHFOMUS=1")
+      if os.fileexists(fomus .. "include/fomus.h") then
+         add(mypackage.includepaths, fomus .. "include")
+         add(mypackage.libpaths, fomus .. "lib")
+         add(mypackage.links, "fomus")
+      else
+         error("--fomus must point to the FOMUS install prefix (eg. /usr or /usr/local)")
+      end
+
    end
 
 ------------------------------------------

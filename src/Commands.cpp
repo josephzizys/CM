@@ -533,7 +533,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       info.shortName=T("Load Score...");
       break;
     case CommandIDs::FomusRunScore:
-      info.shortName=T("Execute");
+      info.shortName=T("Run FOMUS");
       break;
     case CommandIDs::FomusSettings:
       info.shortName=T("Settings...");

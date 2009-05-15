@@ -14,11 +14,8 @@ namespace SchemeSources
     extern const char*  chickenbridge_scm;
     const int           chickenbridge_scmSize = 2842;
 
-    extern const char*  env_scm;
-    const int           env_scmSize = 21308;
-
     extern const char*  fomus_scm;
-    const int           fomus_scmSize = 4287;
+    const int           fomus_scmSize = 9471;
 
     extern const char*  genffi_scm;
     const int           genffi_scmSize = 21079;

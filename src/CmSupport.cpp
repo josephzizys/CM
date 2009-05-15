@@ -842,6 +842,8 @@ void cs_send_score(int typ, int num, double time, char* pars)
 // FOMUS Support
 //
 
+#ifdef WITHFOMUS // defined(WITHFOMUS) && defined(GRACE)
+
 void fms_new()
 {
   Fomus::getInstance()->newScore();
@@ -874,38 +876,50 @@ void fms_run()
 
 void fms_xml(char* str)
 {
-  //XmlElement xml=XmlElement(String(str));
-  //Fomus::getInstance()->sendXml(xml);
   Fomus::getInstance()->sendXml(String(str));
 }  
 
 void fms_ival(int par, int act, int val)
 {
-  Fomus::getInstance()->ival(par,act,val);
+  Fomus::getInstance()->ival((fomus_param)par,(fomus_action)act,val);
 }
 
 void fms_rval(int par, int act, int num, int den)
 {
-  Fomus::getInstance()->rval(par,act,num,den);
+  Fomus::getInstance()->rval((fomus_param)par,(fomus_action)act,num,den);
 }
 
 void fms_mval(int par, int act, int val, int num, int den)
 {
-  Fomus::getInstance()->mval(par,act,val,num,den);
+  Fomus::getInstance()->mval((fomus_param)par,(fomus_action)act,val,num,den);
 }
 
 void fms_fval(int par, int act, double val)
 {
-  Fomus::getInstance()->fval(par,act,val);
+  Fomus::getInstance()->fval((fomus_param)par,(fomus_action)act,val);
 }
 
 void fms_sval(int par, int act, char* val)
 {
-  Fomus::getInstance()->sval(par,act,String(val));
+  Fomus::getInstance()->sval((fomus_param)par,(fomus_action)act,String(val));
 }
 
 void fms_act(int par, int act)
 {
-  Fomus::getInstance()->act(par,act);
+  Fomus::getInstance()->act((fomus_param)par,(fomus_action)act);
 }
-
+#else
+void fms_new(){}
+void fms_free(){}
+void fms_clear(){}
+void fms_init(){}
+void fms_load(char* filename){}
+void fms_run(){}
+void fms_xml(char* str){}  
+void fms_ival(int par, int act, int val){}
+void fms_rval(int par, int act, int num, int den){}
+void fms_mval(int par, int act, int val, int num, int den){}
+void fms_fval(int par, int act, double val){}
+void fms_sval(int par, int act, char* val){}
+void fms_act(int par, int act){}
+#endif
