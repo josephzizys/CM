@@ -147,5 +147,9 @@ void fms_load(char* filename);
 void fms_run();
 void fms_xml(char* str);
 
+// plotting
+
+void plot_xml(char* str);
+
 #endif
 

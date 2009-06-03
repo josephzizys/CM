@@ -17,8 +17,15 @@
 #include "Preferences.h"
 #include "Audio.h"
 #include "Csound.h"
-#include "Fomus.h"
+#include "Plot.h"
+
 #include "CommonLisp.h"
+
+#ifdef WITHFOMUS
+#include "Fomus.h"
+#include "Plot.h"
+#endif
+
 
 #ifdef SNDLIB
 #include "SndLib.h"
@@ -192,6 +199,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::CsoundClearScore,
     CommandIDs::CsoundOpenSettings,
 
+#ifdef WITHFOMUS
     CommandIDs::FomusNewScore,
     CommandIDs::FomusRenameScore,
     CommandIDs::FomusDeleteScore,
@@ -207,6 +215,10 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::FomusRunScore,    
     CommandIDs::FomusSettings,
     CommandIDs::FomusDocumentation,
+#endif
+
+    CommandIDs::PlotterNew,
+
 
     // Window Menu
     CommandIDs::WindowSelect + 0,  // 0==Select Console
@@ -507,6 +519,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       //
       // Fomus Commands
       //
+#ifdef HAVEFOMUS
     case CommandIDs::FomusNewScore:
       info.shortName=T("New Score");
       break;
@@ -541,6 +554,16 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
     case CommandIDs::FomusDocumentation:
       info.shortName=T("Documentation...");
       break;
+#endif
+
+      //
+      // Plot Settings
+      //
+
+    case CommandIDs::PlotterNew:
+      info.shortName=T("New Plot");
+      break;
+
       //
       // Audio Settings
       //
@@ -761,10 +784,12 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::CsoundOpenSettings:
       Csound::getInstance()->openSettings();
       break;
+
       //
       // Fomus Commands
       //
 
+#ifdef WITHFOMUS
     case CommandIDs::FomusSelectScore:
       Fomus::getInstance()->setScoreActive(data);
       break;
@@ -789,10 +814,20 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::FomusDocumentation:
       Fomus::getInstance()->documentationWindow();
       break;
+#endif
+
+      //
+      // Plotting Commands
+      //
+
+    case CommandIDs::PlotterNew:
+      new PlotterWindow(NULL);
+      break;
 
       //
       // Window Commands
       //
+
     case CommandIDs::WindowSelect:
       {
 	TopLevelWindow* w = TopLevelWindow::getTopLevelWindow(data);

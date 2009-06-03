@@ -145,6 +145,8 @@ for i = 1,3 do
       add(mypackage.files, "src/CommonLisp.h")
       add(mypackage.files, "src/Triggers.cpp")
       add(mypackage.files, "src/Triggers.h")
+      add(mypackage.files, "src/Plot.h")
+      add(mypackage.files, "src/Plot.cpp")
    end
 
 ------------------------------------------

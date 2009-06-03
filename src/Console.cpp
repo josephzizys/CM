@@ -14,6 +14,7 @@
 #include "Commands.h"
 #include "Audio.h"
 #include "Images.h"
+#include "Plot.h"
 #endif
 
 #include <iostream>
@@ -265,6 +266,10 @@ void Console::handleAsyncUpdate()
 		getChildFile(path).getFullPathName();
 	    AudioManager::getInstance()->openAudioFilePlayer(file,true);
 	  }
+	  break;
+
+	case CommandIDs::PlotterNew :
+	  PlotterWindow::openXml(messages[i]->text);
 	  break;
 #endif
 	default:

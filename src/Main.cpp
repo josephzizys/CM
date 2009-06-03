@@ -127,8 +127,10 @@ void Grace::shutdown()
   MidiOutPort::deleteInstance();
   std::cout << "Deleting MidiIn\n";
   MidiInPort::deleteInstance();
+#ifdef FOMUS
   std::cout << "Deleting Fomus\n";
   Fomus::deleteInstance();
+#endif
   std::cout << "Deleting AudioManager\n";
   AudioManager::deleteInstance();
   std::cout << "Deleting Console\n";

@@ -923,3 +923,16 @@ void fms_fval(int par, int act, double val){}
 void fms_sval(int par, int act, char* val){}
 void fms_act(int par, int act){}
 #endif
+
+void plot_xml(char* text)
+{
+  String xml=String(text);
+#ifdef GRACE
+  Console::getInstance()->postAsyncMessage(CommandIDs::PlotterNew,
+					   xml, true);
+#else
+  xml<<T("\n");
+  Console::getInstance()->printOutput(xml);
+#endif
+}
+

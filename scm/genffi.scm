@@ -124,6 +124,8 @@
     (ffi_fms_load void "fms_load" c-string)
     (ffi_fms_run void "fms_run" )
     (ffi_fms_xml void "fms_xml" c-string)
+
+    (ffi_plot_xml void "plot_xml" c-string)
     ))
 
 (define (foreign-lambda-scheme-name decl) 

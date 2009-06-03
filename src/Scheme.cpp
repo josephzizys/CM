@@ -194,8 +194,8 @@ Scheme::Scheme()
 
 Scheme::~Scheme()
 {
-  delete evalBuffer;
-  delete errorBuffer;
+  delete [] evalBuffer;
+  delete [] errorBuffer;
   //  CHICKEN_delete_gc_root(inputClosureGCRoot);
   schemeNodes.clear();
 }

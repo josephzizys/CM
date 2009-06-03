@@ -131,6 +131,7 @@ const PopupMenu CommandMenus::getAudioMenu()
   csound.addCommandItem(comm, CommandIDs::CsoundOpenSettings);
   menu.addSubMenu(T("Csound"), csound);
 
+#ifdef WITHFOMUS
   PopupMenu fomus;
   size = jlimit(0, CommandMenus::NumFomusScore-1,
 		Fomus::getInstance()->numScores());
@@ -147,6 +148,7 @@ const PopupMenu CommandMenus::getAudioMenu()
   fomus.addCommandItem(comm, CommandIDs::FomusSettings);
   fomus.addCommandItem(comm, CommandIDs::FomusDocumentation);
   menu.addSubMenu(T("Fomus"), fomus);
+#endif
 
   menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::AudioOpenFilePlayer);
@@ -264,6 +266,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
       if (pref->recentlyOpened.getNumFiles()>0)
 	menu.addSubMenu(T("Open Recent"), 
 			CommandMenus::getRecentlyOpenedMenu());
+      menu.addSeparator();
+      menu.addCommandItem(gmanager, CommandIDs::PlotterNew);
 #ifdef GRACECL
       menu.addSeparator();
       menu.addCommandItem(gmanager, CommandIDs::LispStart);
@@ -356,8 +360,10 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
       menu.addCommandItem(manager, CommandIDs::EditorSave);
       menu.addCommandItem(manager, CommandIDs::EditorSaveAs);
       menu.addCommandItem(manager, CommandIDs::EditorRevert);
-
       menu.addSeparator();
+      menu.addSeparator();
+      menu.addCommandItem(gmanager, CommandIDs::PlotterNew);
+
       menu.addCommandItem(gmanager,CommandIDs::LispLoadFile);
       if (pref->recentlyLoaded.getNumFiles()>0)
 	menu.addSubMenu(T("Load Recent"), 
