@@ -35,18 +35,6 @@ class LayerPoint
   void subVal(int i, float f) {vals[i]-=f;} 
   void mulVal(int i, float f) {vals[i]*=f;} 
   void divVal(int i, float f) {vals[i]/=f;} 
-  String valToText(int field, int decimals=2,String name=String::empty)
-  {
-    String text;
-    if (decimals==0)
-      text = String( (int)(.5 + getVal(field)) );
-    else 
-      text = String( getVal(field), decimals );
-    if (name == String::empty)
-      return text;
-    else
-      return name + T(" ") + text;
-  }
 };
 
 class Axis
@@ -94,11 +82,14 @@ class Axis
 	break;
       case circle :
 	from=-1.0; to=1.0; by=.25; ticks=4;
+	break;
       case ordinal :
-	from=1; to=1; by=1; ticks=1; decimals=0;
+	from=0; to=1; by=1; ticks=1; decimals=0;
+	break;
       case normalized :
-      default :
 	from=0.0; to=1.0; by=0.25; ticks=5;
+	break;
+      default :
 	break;
       }
   }
@@ -120,19 +111,20 @@ class Axis
     if (range.size()>0)
       {
 	int arg=1;
-	if (range[0]==T("percent"))
+	if (range[0]==T("percent") || range[0]==T("percentage"))
 	  init(percentage);
-	else if (range[0]==T("keynum"))
+	else if (range[0]==T("keynum") || range[0]==T("notes"))
 	  init(keynum);
 	else if (range[0]==T("seconds"))
 	  init(seconds);
 	else if (range[0]==T("hertz")) 
 	  init(hertz);
-	else if (range[0]==T("circle"))
+	else if (range[0]==T("unitcircle"))
 	  init(circle);
 	else if (range[0]==T("ordinal"))
 	  init(ordinal);
-	else if (range[0]==T("unit") || range[0]==T("normalized"))
+	else if (range[0]==T("unit") || range[0]==T("normalized") || 
+		 range[0]==T("normal"))
 	  init(normalized);
 	else if ('0' <= str[0] <= '9') // is number
 	  arg--;
@@ -193,6 +185,15 @@ class Axis
       } 
   }   
     
+  String toString()
+  {
+    String text=toAxisTypeString();
+    text << T(" ") << String(from)
+	 << T(" ") << String(to)
+	 << T(" ") << String(by)
+	 << T(" ") << String(ticks);
+    return text;
+  }
 };
   
 class Layer 
@@ -220,12 +221,12 @@ class Layer
   
   static const int toLayerType(const String s, const int def=unspecified)
   {
-    if (s==T("lineandpoint")) return lineandpoint;
-    if (s==T("line")) return line;
-    if (s==T("point")) return point;
+    if (s==T("lineandpoint") || s==T("envelope")) return lineandpoint;
+    if (s==T("line") || s==T("lines")) return line;
+    if (s==T("point") || s==T("points")) return point;
     if (s==T("hbox")) return hbox;
     if (s==T("vbox")) return vbox;
-    if (s==T("histogram")) return histogram;
+    if (s==T("histogram") || s==T("vlineandpoint")) return histogram;
     if (s==T("impulse") || s==T("impulses") ) return impulse;
     if (s==T("hbar")) return hbar;
     if (s==T("vbar")) return vbar;
@@ -243,11 +244,11 @@ class Layer
       case vbox: return T("vbox");
       case hbar: return T("hbar");
       case vbar: return T("vbar");
-      case histogram: return T("histogram");
+      case histogram: return T("vlineandpoint");
       case impulse: return T("impulse");
 	//case vlineandpoint: return T("vlineandpoint");
       case unspecified:
-      default: return T("vlineandpoint");
+      default: return T("unspecified");
       }
   }    
 
@@ -431,15 +432,25 @@ class Layer
     else 
       return 1;
   }
-  String exportPoint(LayerPoint* p, int fmask, int fmat,
-		     bool sal, int deci=2)
+  String exportPoint(LayerPoint* p, int fmask=0xFF, int deci=2)
   {
-    // point: the point to export
-    // fmask: bit mask, each 1 bit means that field is included
-    // fmat: 1=envelope, 2=point record, 3=object definition
-    String text=String::empty;
-    return text;
+  // p: the point to export
+  // fmask: bit mask, each 1 bit means that field is included
+  String text=String::empty;
+  for (int i=0; i<arity; i++) 
+    if ( fmask & (1 << i) )
+      { // check field mask, add delimiter if not at start.
+	if (text != String::empty)
+	  text <<  T(" ");
+	if (deci==0)
+	  text << String( (int)(.5 + p->getVal(i)) );
+	else 
+	  text << String( p->getVal(i), deci );
+      }
+  return text;
   }
+
+  String toString(int exportid, int decimals, bool asrec, int parammask) ;
 };
 
 class PlotView;         // defined in Plotter.cpp
@@ -563,8 +574,15 @@ class Plotter  : public Component,
   public:
     String name;
     Axis* axis;
-    Field(String n, Axis* a) {name=n; axis=a;}
+    bool shared;
+  Field(String n, Axis* a, bool s=false)
+    {
+      name=n;
+      axis=a;
+      shared=s;
+    }
     ~Field(){axis=NULL;}
+
   };
   
  public:
@@ -590,6 +608,7 @@ class Plotter  : public Component,
   Plotter (int pt) ;
   Plotter (XmlElement* plot) ;
   ~Plotter () ;
+
   double getZoom() {return zoom;}
   void setZoom(double z) {zoom=z;}
   double getPointSize(){return ppp;}
@@ -597,7 +616,8 @@ class Plotter  : public Component,
   PlotID getPlotType() {return plottype;}
 
   Axis* getSharedAxis() {return axes[0];}
-
+  Axis* getAxis(int i) {return axes[i];}
+  int getAxisIndex(Axis* a) {return axes.indexOf(a);}
   //  void setAxisView(Axis* a, Orientation o) ;
   void setHorizontalAxis(Axis* a);
   void setVerticalAxis(Axis* a);
@@ -648,10 +668,16 @@ class Plotter  : public Component,
   void moveSelection();
 
   // Fields
-  int getNumFields() {return fields.size();}
+  int numFields() {return fields.size();}
   Axis* getFieldAxis(int f) {return fields[f]->axis;}
   String getFieldName(int f) {return fields[f]->name;}
+  bool isSharedAxis(int f)
+  {
+    int j=axes.indexOf(fields[f]->axis);
+    return j<f;  // a shared axis is defined earlier than field
+  }
 
+ 
 };
 
 ///
@@ -660,43 +686,25 @@ class Plotter  : public Component,
 
 class PlotterWindow : public DocumentWindow, public MenuBarModel
 {
-
  public:
   Plotter* plotter;
+  File plotfile;
   MenuBarComponent* menubar;
   PlotterWindow (XmlElement* plot);
   ~PlotterWindow ();
   const StringArray getMenuBarNames ();
-  const PopupMenu getMenuForIndex (int idx, 
-				   const String &name);
+  const PopupMenu getMenuForIndex (int idx, const String &name);
   void menuItemSelected (int id, int idx);
   void closeButtonPressed () ;
   void showExportPointsDialog();
   static void openXml(String str);
+  static void openXml(File fil);
+  bool save(bool saveas=false);
+  String toXmlString();
+  File getPlotFile() {return plotfile;}
+  void setPlotFile(File fil) {plotfile=fil;}
+  static PlotterWindow* getPlotWindow(String title) ;
 };
-
-class ExportPointsDialog : public Component, public ButtonListener 
-{
- public:
-  Plotter* plotter;
-  int numfields;
-  bool* include;
-  Label* exportlabel;
-  ComboBox* exportmenu;
-  Label* tolabel;
-  ComboBox* tomenu;
-  TextButton* fieldsbutton;
-  Label* formatlabel;
-  Label* valuelabel;
-  ComboBox* valuemenu;
-  ComboBox* formatmenu;
-  TextButton* exportbutton;
-  ExportPointsDialog(Plotter* plotter);
-  ~ExportPointsDialog();
-  void resized();
-  void buttonClicked (Button* button);
-  void exportPoints();
-};
-
 
 #endif
+

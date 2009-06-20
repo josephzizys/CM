@@ -126,7 +126,7 @@ class TextIDs
   static const TextID Sal=3;
   static const TextID Fomus=4;
   static const TextID Csound=5;
-  static const TextID XML=6;
+  static const TextID Xml=6;
   static const String toString(TextID id)
   {
     switch (id)
@@ -141,8 +141,8 @@ class TextIDs
 	return T("Fomus");
       case Csound:
 	return T("Csound");
-      case XML:
-	return T("XML");
+      case Xml:
+	return T("Xml");
       default:
 	return T("Empty");
       }
@@ -214,7 +214,7 @@ class ExportIDs
   static const ExportID LispData = (TextIDs::Lisp << SHIFT) + Data;
   static const ExportID LispSend = (TextIDs::Lisp << SHIFT) + Send;
   static const ExportID CsoundScore = (TextIDs::Csound << SHIFT) + Score;
-  static const ExportID XmlData = (TextIDs::XML << SHIFT) + Data ;
+  static const ExportID XmlData = (TextIDs::Xml << SHIFT) + Data ;
 };
 
 class CaptureModes
@@ -270,7 +270,18 @@ class WindowTypes
   static const int Empty = 0;
   static const int Console = 1;
   static const int TextEditor = 2;
-  static const int Plotter = 3;
+  static const int PlotWindow = 3;
+  static const bool isWindowType(TopLevelWindow* w, int typ)
+  {
+    if (w!=NULL)
+      return (w->getComponentPropertyInt(T("WindowType"), false) == typ);
+    else 
+      return false;
+  }
+  static const void setWindowType(TopLevelWindow* w, int typ)
+  {
+    w->setComponentProperty(T("WindowType"), typ);
+  }
 };
 
 class Prefs
@@ -618,18 +629,24 @@ class CommandIDs
 
   // Plotter commands
   static const CommandID PlotterNew = COMID(Plotter, 1);
-  static const CommandID PlotterLayerAdd = COMID(Plotter, 2);
-  static const CommandID PlotterLayerDelete = COMID(Plotter, 3);
-  static const CommandID PlotterLayerSelect = COMID(Plotter, 4);
-  static const CommandID PlotterStyle = COMID(Plotter, 5);
-  static const CommandID PlotterBgStyle = COMID(Plotter, 6);
-  static const CommandID PlotterBgColor = COMID(Plotter, 7);
-  static const CommandID PlotterBgPlotting = COMID(Plotter, 8);
-  static const CommandID PlotterBgMousing = COMID(Plotter, 9);
-  static const CommandID PlotterVertical = COMID(Plotter, 10);
-  static const CommandID PlotterHorizontal = COMID(Plotter, 11);
-  static const CommandID PlotterExport = COMID(Plotter, 12);
-  static const CommandID PlotterLoad = COMID(Plotter, 13);
+  static const CommandID PlotterOpen = COMID(Plotter, 2);
+  static const CommandID PlotterSaveAs = COMID(Plotter, 3);
+  static const CommandID PlotterSave = COMID(Plotter, 4);
+  static const CommandID PlotterRename = COMID(Plotter, 5);
+  static const CommandID PlotterExport = COMID(Plotter, 6);
+  static const CommandID PlotterLayerAdd = COMID(Plotter, 7);
+  static const CommandID PlotterLayerDelete = COMID(Plotter, 8);
+  static const CommandID PlotterLayerEdit = COMID(Plotter, 9);
+  static const CommandID PlotterAxisEdit = COMID(Plotter, 10);
+  static const CommandID PlotterLayerRename = COMID(Plotter, 11);
+  static const CommandID PlotterLayerSelect = COMID(Plotter, 12);
+  static const CommandID PlotterStyle = COMID(Plotter, 13);
+  static const CommandID PlotterBgStyle = COMID(Plotter, 14);
+  static const CommandID PlotterBgColor = COMID(Plotter, 15);
+  static const CommandID PlotterBgPlotting = COMID(Plotter, 16);
+  static const CommandID PlotterBgMousing = COMID(Plotter, 17);
+  static const CommandID PlotterVertical = COMID(Plotter, 18);
+  static const CommandID PlotterHorizontal = COMID(Plotter, 19);
 
 };
 

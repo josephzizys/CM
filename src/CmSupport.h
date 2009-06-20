@@ -150,6 +150,7 @@ void fms_xml(char* str);
 // plotting
 
 void plot_xml(char* str);
+char* plot_data(char* window, int layer);
 
 #endif
 

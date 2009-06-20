@@ -12,7 +12,9 @@
 #include "TextEditor.h"
 #include "Commands.h"
 #include "Help.h"
+#ifdef WITHFOMUS
 #include "Fomus.h"
+#endif
 #include <iostream>
 
 /*=======================================================================*

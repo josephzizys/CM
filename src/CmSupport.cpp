@@ -13,9 +13,14 @@
 #include "CmSupport.h"
 #include "Midi.h"
 #include "Csound.h"
-#include "Fomus.h"
 #include "Console.h"
 #include "Syntax.h"
+#ifdef WITHFOMUS
+#include "Fomus.h"
+#endif
+#ifdef GRACE
+#include "Plot.h"
+#endif
 
 #define POWF(a,b)	(powf( (a) , (b) ))
 #define LOGF(a)		(logf( (a) ))
@@ -924,15 +929,56 @@ void fms_sval(int par, int act, char* val){}
 void fms_act(int par, int act){}
 #endif
 
+#ifdef GRACE
 void plot_xml(char* text)
 {
   String xml=String(text);
-#ifdef GRACE
   Console::getInstance()->postAsyncMessage(CommandIDs::PlotterNew,
 					   xml, true);
-#else
-  xml<<T("\n");
-  Console::getInstance()->printOutput(xml);
-#endif
+} 
+
+char* plot_data(char* title, int all)
+{
+  String text=String::empty;
+  PlotterWindow* w=PlotterWindow::getPlotWindow(String(title));
+  if (w!=NULL)
+    {
+      std::cout << "got window\n";
+      int nlayer=w->plotter->numLayers();
+      int nfield=w->plotter->numFields();
+      if ((nlayer>1) && all)
+	{
+	  text<<T("(");
+	  for (int i=0; i<nlayer; i++)
+	    text<<w->plotter->getLayer(i)->toString(TextIDs::Lisp,
+						    2,
+						    (nfield>2),
+						    0xFF);
+	  text<<T(")");
+	}
+      else
+	text=w->plotter->getFocusLayer()->toString(TextIDs::Lisp,
+						   2,
+						   (nfield>2),
+						   0xFF);
+    }
+  else
+    text=T("()");
+  return (char *)strdup(text.toUTF8());  
 }
+
+#else
+
+void plot_xml(char* text)
+{
+  String xml=String(text);
+  Console::getInstance()->printOutput(xml+T("\n"));
+}
+
+char* plot_data(char* text, int layer)
+{
+  return (char *)strdup("()");  
+}
+
+#endif
 

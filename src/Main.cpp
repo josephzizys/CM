@@ -14,9 +14,12 @@
 #include "Main.h"
 #include "Audio.h"
 #include "CommonLisp.h"
-#include "Fomus.h"
 #include "Scanner.h"
 #include "Syntax.h"
+#ifdef WITHFOMUS
+#include "Fomus.h"
+#endif
+
 #include <string>
 #include <iostream>
  
@@ -127,7 +130,7 @@ void Grace::shutdown()
   MidiOutPort::deleteInstance();
   std::cout << "Deleting MidiIn\n";
   MidiInPort::deleteInstance();
-#ifdef FOMUS
+#ifdef WITHFOMUS
   std::cout << "Deleting Fomus\n";
   Fomus::deleteInstance();
 #endif

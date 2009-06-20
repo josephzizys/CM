@@ -98,3 +98,4 @@
 (define ffi_fms_run (foreign-lambda void "fms_run"))
 (define ffi_fms_xml (foreign-lambda void "fms_xml" c-string))
 (define ffi_plot_xml (foreign-lambda void "plot_xml" c-string))
+(define ffi_plot_data (foreign-lambda c-string "plot_data" c-string int))

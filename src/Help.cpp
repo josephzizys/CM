@@ -51,6 +51,7 @@ Help::Help()
   examples.set(T("FM Composition"), T("fm.sal"));
   examples.set(T("Csound"), T("csound.sal"));
   examples.set(T("Input Hooks"), T("input.sal"));
+  examples.set(T("Plotting"), T("plot.scm"));
   // SAL tutorials
   tutorials.set(T("Hello World"), T("hello.sal"));
   tutorials.set(T("Expressions"), T("expr.sal"));
@@ -192,6 +193,8 @@ void Help::openHelp(CommandID id)
 	openHelpInEditor(file, String(midiout_sal, midiout_salSize));
       else if (file==T("processes.sal"))
 	openHelpInEditor(file, String(processes_sal, processes_salSize));
+      else if (file==T("plot.scm"))
+	openHelpInEditor(file, String(plot_scm, plot_scmSize));
     }
 }
 
@@ -394,6 +397,8 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("pc"), T("cm.html#pc"));
   cm.set(T("pi"), T("cm.html#pi"));
   cm.set(T("pick"), T("cm.html#pick"));
+  cm.set(T("plot"), T("cm.html#plot"));
+  cm.set(T("plot-data"), T("cm.html#plot-data"));
   cm.set(T("plus"), T("cm.html#plus"));
   cm.set(T("promise"), T("cm.html#promise"));
   cm.set(T("quantize"), T("cm.html#quantize"));

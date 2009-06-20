@@ -1,3 +1,35 @@
+This is the readme for Common Music 3. 
+
+  1. Applications
+  2. Dependancies
+  3. Building
+  4. CM in Emacs
+  5. SVN Access
+  6. Developing
+  7. Porting
+
+==========================================================================
+                               APPLICATIONS
+==========================================================================
+
+The source tree builds three target applications:
+
+Grace   (Graphical Realtime Algorithmic Composition Environment) 
+
+   A drag-and-drop GUI with embedded scheme interpreter (Sndlib or
+   Chicken Scheme), code editor, data plotting, and realtime audio
+   connections to various services like as MIDI, CLM, Csound, Fomus.
+
+cm 
+
+   A console (non-gui) version of Grace that can run as an 'inferior
+   process' under Emacs (see section 4 below) or in a Terminal window.
+
+GraceCL
+    
+   A non-realtime version of Grace to use with Common Music 2 and
+   either SBCL or CLISP Common Lisp.
+
 ==========================================================================
                                DEPENDENCIES                               
 ==========================================================================

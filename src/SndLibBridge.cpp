@@ -1164,6 +1164,22 @@ s7_pointer ffi_plot_xml (s7_scheme *s7, s7_pointer args)
   return s7_UNSPECIFIED(s7);
 }
 
+s7_pointer ffi_plot_data (s7_scheme *s7, s7_pointer args)
+{
+  s7_Int i0;
+  char* s0; char* s1;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_plot_data", 1, s7_car(args), "a c-string"));
+  s1=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_integer(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_plot_data", 2, s7_car(args), "a int"));
+  i0=s7_integer(s7_car(args));
+  args=s7_cdr(args);
+  s0=plot_data(s1, i0);
+  return strduped_string(s7, s0);
+}
+
 
 
 // record definitions
@@ -2842,4 +2858,5 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_fms_run", ffi_fms_run, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_xml", ffi_fms_xml, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_plot_xml", ffi_plot_xml, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_plot_data", ffi_plot_data, 2, 0, false, "ffi function");
 }

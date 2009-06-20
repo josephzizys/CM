@@ -8,6 +8,7 @@
 #include "Enumerations.h"
 #include "Menus.h"
 #include "Console.h"
+#include "TextEditor.h"
 #include "Plot.h"
 #include <limits>
 //#include <cmath>
@@ -85,6 +86,7 @@ void AxisView::paint (Graphics& g)
   double tsiz=tickSize();
   Colour col1=Colours::darkgrey;
   Colour col2=Colours::lightgrey;
+  Colour tcol=Colours::black;  // text color
   col2=col1;
   Font font=viewport->plotter->font;
   String labl;
@@ -94,6 +96,10 @@ void AxisView::paint (Graphics& g)
   double save;
   double by=axis->getIncrement();
   
+  if (viewport->plotter->numLayers()>1 &&
+      viewport->plotter->isBackViewPlotting())
+    tcol=viewport->plotter->getFocusLayer()->getLayerColor();
+
   g.setFont(font);
   
   if ( isHorizontal() ) 
@@ -126,6 +132,7 @@ void AxisView::paint (Graphics& g)
 	  labl=String(aval,axis->getDecimals());
 	  lwid=font.getStringWidthFloat(labl);
 	  just=(int)(-lwid*(pval/width));  // twiddle label justification
+	  g.setColour(tcol);
 	  g.drawText(labl,(int)(pval+just),0,(int)lwid,(int)lhei, 
 		     Justification::topLeft, false);
 	  // draw minor ticks above each major tick
@@ -172,6 +179,7 @@ void AxisView::paint (Graphics& g)
 	  
 	  // METHOD1: justify vertically, but now the view has to be wider.
 	  just=(int)(lhei*(pval/height));  // twiddle label justification
+	  g.setColour(tcol);
 	  g.drawText(labl,
 		     width-graywidth-4-lwid,
 		     (int)(pval-just),
@@ -806,7 +814,7 @@ void PlotView::mouseUp(const MouseEvent &e)
       if (mousedown.getX() != mousemove.getX() ) 
 	{
 	  focuslayer->sortPoints();
-	  printSelection();
+	  //printSelection();
 	}
       repaintFocusPlot();
     }
@@ -867,7 +875,8 @@ Plotter::Plotter (XmlElement* plot)
 	else if (e->hasTagName(T("points")))
 	  xmlplots.add(e);
     }  
-  std::cout << "xmlaxes=" << xmlaxes.size() << " xmlplots=" << xmlplots.size() << "\n";
+  std::cout << "xmlaxes=" << xmlaxes.size() << " xmlplots="
+	    << xmlplots.size() << "\n";
 
   if (xmlaxes.size()==0) // No axes specified
     {
@@ -893,18 +902,22 @@ Plotter::Plotter (XmlElement* plot)
 						T("Field ") + String(i+1));
 	String r=xmlaxes[i]->getStringAttribute(T("range"), String::empty);
 	Axis* a=NULL;
+	bool s=false;
 	if (r.isNotEmpty())
 	  for (int j=0; j<i && j<fields.size() && a==NULL; j++)
 	    if (fields[j]->name==r)
 	      a=fields[j]->axis;	
 	if (a)
-	  std::cout << "found shared!\n";
+	  {
+	    s=true;
+	    std::cout << "found shared!\n";
+	  }
 	else
 	  {
 	    a=new Axis(xmlaxes[i]);
 	    axes.add(a);	      
 	  }
-	fields.add(new Field(n, a));
+	fields.add(new Field(n, a, s));
       }
   
   font=Font(Font::getDefaultSansSerifFontName(), 10.0, Font::bold);
@@ -1029,7 +1042,7 @@ void Plotter::autosizeAxes()
 	  int siz=1;
 	  for (int j=0; j<layers.size(); j++)
 	    siz=jmax(siz,layers[j]->numPoints());
-	  axes[i]->setMaximum(siz);
+	  axes[i]->setMaximum(siz-1);
 	}
     }
 }
@@ -1179,7 +1192,7 @@ Layer* Plotter::newLayer(XmlElement* points)
   Colour col = cols[layers.size() % 8];
   int sty=Layer::lineandpoint;
   String nam = T("Layer ") + String(layers.size()+1);
-  int num=getNumFields();
+  int num=numFields();
   Layer* layer=NULL;
 
   if (points)
@@ -1191,6 +1204,8 @@ Layer* Plotter::newLayer(XmlElement* points)
 	sty=Layer::toLayerType(s, sty);
       s=points->getStringAttribute(T("color"));
       if (s.isNotEmpty())
+	if (s.containsOnly(T("0123456789aAbBcCdDeEfF")))
+	  col=Colour::fromString(s);	  
 	col=Colours::findColourForName(s, col);
       nam=points->getStringAttribute(T("title"), nam);
       layer=new Layer(num, nam, col, sty);
@@ -1341,6 +1356,7 @@ PlotterWindow::PlotterWindow(XmlElement* plot)
   : DocumentWindow (String::empty , Colours::white, 
 		    DocumentWindow::allButtons, true ) 
 {
+  static int num=0;
   String title=(plot==NULL) ? T("Untitled Plot") :
     plot->getStringAttribute(T("title"), T("Untitled Plot"));
   plotter = new Plotter(plot) ;
@@ -1355,11 +1371,25 @@ PlotterWindow::PlotterWindow(XmlElement* plot)
   centreWithSize (plotter->getWidth(), plotter->getHeight());
   setResizable(true, true); 
   setVisible(true);
+  //WindowTypes::setWindowType(self, WindowTypes::PlotWindow);
+  setComponentProperty(T("WindowType"), WindowTypes::PlotWindow);
 }
 
 PlotterWindow::~PlotterWindow ()
 {
   plotter->~Plotter();
+}
+
+PlotterWindow* PlotterWindow::getPlotWindow(String title)
+{
+  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
+    {
+      TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
+      if (WindowTypes::isWindowType(w, WindowTypes::PlotWindow) &&
+	  w->getName()==title)
+	return (PlotterWindow*)w;
+    }
+  return (PlotterWindow*)NULL;
 }
 
 void PlotterWindow::openXml(String str)
@@ -1380,32 +1410,113 @@ void PlotterWindow::openXml(String str)
     }
 }
 
-void PlotterWindow::closeButtonPressed () 
+void PlotterWindow::openXml(File fil)
 {
-  this->~PlotterWindow();
+  XmlDocument doc (fil);
+  XmlElement* xml = doc.getDocumentElement();
+  if (xml)
+    {
+      PlotterWindow* w=new PlotterWindow::PlotterWindow(xml);
+      w->setPlotFile(fil);
+      delete xml;
+    }
+  else
+    {
+      String err=T(">>> Error ");
+      err << doc.getLastParseError() << T("\n");
+      Console::getInstance()->printError(err);
+    }
+}
+
+bool PlotterWindow::save(bool saveas)
+{
+  File f=getPlotFile();
+  if (saveas || (f==File::nonexistent))
+    {
+      String t=T("Save Plot");
+      if (saveas)
+	t<<T(" As");
+      else
+	f=File::getCurrentWorkingDirectory().
+	  getChildFile(getName() + T(".xml"));
+      FileChooser ch (t, f, "*.xml");
+      if (ch.browseForFileToSave(true))
+	if (f.hasWriteAccess())
+	  setPlotFile(ch.getResult());
+	else
+	  {
+	    Console::getInstance()->
+	      printError(T(">> Error: plot file not writable.\n"));
+	    return false;
+	  }
+      else
+	return false;
+    }
+  String text=toXmlString();
+  f.replaceWithText(text);
+  return true;
+}
+
+void PlotterWindow::closeButtonPressed () //{this->~PlotterWindow();}
+{
+  int x=AlertWindow::showYesNoCancelBox(AlertWindow::QuestionIcon,
+					T("Close"),
+					T("Save changes before closing?"),
+					T("Save"),
+					T("Don't Save"),
+					T("Cancel")
+					);
+  if (x==0)
+    return;
+  if (x==2 || save())
+    delete this;
 }
 
 const StringArray PlotterWindow::getMenuBarNames ()
 {
   const tchar* const menuNames[] =
-    { T("File"), T("Edit"), T("Layer"), T("View"), T("Window"),
+    { T("Plot"), T("Edit"), // T("Layer"), 
+      T("View"), T("Window"),
       T("Help"), 0 };
   return StringArray((const tchar**) menuNames);
 }
 
-const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name) 
+const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
 {
   PopupMenu menu;
   PopupMenu sub1, sub2, sub3;
   int val;
+  int arity=plotter->numFields();
   
-  if (name==T("File"))
+  if (name==T("Plot"))
     {
       // File Menu
-      menu.addItem(CommandIDs::PlotterNew, T("New"));
+      menu.addItem(CommandIDs::PlotterNew, T("New Plot"));
+      menu.addItem(CommandIDs::PlotterOpen, T("Open..."));
+      menu.addSeparator(); 
+      menu.addItem(CommandIDs::PlotterLayerAdd, T("New Layer"));
+      for (int i=0; i<plotter->numLayers(); i++)
+	{
+	  Layer* layer=plotter->getLayer(i);
+	  sub1.addColouredItem(CommandIDs::PlotterLayerSelect +
+			      layer->getLayerID(),
+			      layer->getLayerName(),
+			      layer->getLayerColor(),
+			      true,
+			      plotter->isFocusLayer(layer));
+	}
+      sub1.addSeparator(); 
+      sub1.addItem(CommandIDs::PlotterLayerDelete, T("Delete"),
+		   (plotter->numLayers() > 1));
+      menu.addSubMenu(T("Layers"), sub1);
       menu.addSeparator();
-      menu.addItem(CommandIDs::PlotterLoad, T("Load..."), false);
-      menu.addItem(CommandIDs::PlotterExport, T("Export..."), false);
+      menu.addItem(CommandIDs::PlotterSave, T("Save"));
+      menu.addItem(CommandIDs::PlotterSaveAs, T("Save As..."),
+		   (getPlotFile()!=File::nonexistent));
+      menu.addSeparator();
+      menu.addItem(CommandIDs::PlotterRename, T("Rename..."));
+      menu.addSeparator();
+      menu.addItem(CommandIDs::PlotterExport, T("Export..."));
     }
   else if (name==T("Edit"))
     {
@@ -1425,7 +1536,7 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
 		   T("Select All"));
       menu.addItem(CommandIDs::EditorUnselectAll, T("Clear Selection"));
     }
-  else if (name==T("Layer"))
+  /*  else if (name==T("Layer"))
     {
       menu.addItem(CommandIDs::PlotterLayerAdd, T("New"));
       menu.addItem(CommandIDs::PlotterLayerDelete, T("Delete"),
@@ -1443,46 +1554,40 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
 			       plotter->isFocusLayer(layer));
 	}
     }
+  */
   else if (name==T("View"))
     {
-      Layer * layer=plotter->getFocusLayer();
+      Layer* layer=plotter->getFocusLayer();
       // add these with focus colored items to make it clear that the
       // styling change only affects the focus plot
-      menu.addColouredItem(CommandIDs::PlotterStyle + Layer::line, 
-			   T("Line"),
-			   layer->getLayerColor(),
-			   true,
-			   (val==Layer::line));
-      menu.addColouredItem(CommandIDs::PlotterStyle + Layer::point,
-			   T("Point"),
-			   layer->getLayerColor(),
-			   true,
-			   (val==Layer::point));
-      menu.addColouredItem(CommandIDs::PlotterStyle + Layer::lineandpoint,
-			   T("Envelope"),
-			   layer->getLayerColor(),
-			   true,
-			   (val==Layer::lineandpoint));
-	/*	menu.addColouredItem(CommandIDs::PlotterStyle + Layer::hbox, 
-		T("Horizontal Box"),
-		layer->getLayerColor(),
-		(type > PlotIDs::XYPlot), 
-		(val==Layer::hbox));
-	*/
-      menu.addColouredItem(CommandIDs::PlotterStyle + Layer::impulse, 
-			   T("Impulse"),
-			   layer->getLayerColor(),
-			   true, (val==Layer::impulse));
-      menu.addColouredItem(CommandIDs::PlotterStyle + Layer::histogram, 
-			   T("Histogram"),
-			   layer->getLayerColor(),
-			   true, 
-			   (val==Layer::histogram));
-      menu.addColouredItem(CommandIDs::PlotterStyle + Layer::vbar, 
-			   T("Vertical Bar"),
-			   layer->getLayerColor(),
-			   false,
-			   (val==Layer::vbar));
+      menu.addItem(CommandIDs::PlotterStyle + Layer::line, 
+		   T("Line"), true,
+		   (val==Layer::line));
+      menu.addItem(CommandIDs::PlotterStyle + Layer::point,
+		   T("Point"), true,
+		   (val==Layer::point));
+      menu.addItem(CommandIDs::PlotterStyle + Layer::lineandpoint,
+		   T("Envelope"), true,
+		   (val==Layer::lineandpoint));
+      menu.addItem(CommandIDs::PlotterStyle + Layer::hbox, 
+		   T("Horizontal Box"),
+		   (arity > 2), 
+		   (val==Layer::hbox));
+      menu.addItem(CommandIDs::PlotterStyle + Layer::vbox,
+		   T("Vertical Box"),
+		   (arity > 2), 
+		   (val==Layer::vbox));
+      menu.addItem(CommandIDs::PlotterStyle + Layer::impulse, 
+		   T("Impulse"),
+		   true, (val==Layer::impulse));
+      menu.addItem(CommandIDs::PlotterStyle + Layer::histogram, 
+		   T("Histogram"),
+		   true, 
+		   (val==Layer::histogram));
+      menu.addItem(CommandIDs::PlotterStyle + Layer::vbar, 
+		   T("Vertical Bar"),
+		   false,
+		   (val==Layer::vbar));
       /*	menu.addSeparator(); 
 		// 0'th field is hardwired to x axis.
 		for (int i=1; i<layer->getLayerArity(); i++)
@@ -1521,7 +1626,7 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
   else if (name==T("Window"))
     menu=CommandMenus::getWindowMenu();
   else if (name==T("Help")) 
-    menu=CommandMenus::getHelpMenu(WindowTypes::Plotter, 0);
+    menu=CommandMenus::getHelpMenu(WindowTypes::PlotWindow, 0);
 
   return menu;
 }
@@ -1536,6 +1641,30 @@ void PlotterWindow::menuItemSelected (int id, int idx)
     {
     case CommandIDs::PlotterNew :
       new PlotterWindow((XmlElement*)NULL);
+      break;
+    case CommandIDs::PlotterOpen :
+      {
+	FileChooser ch (T("Open Plot"), getPlotFile(), "*.xml");
+	if (ch.browseForFileToOpen())
+	  PlotterWindow::openXml(ch.getResult());
+      }
+      break;
+    case CommandIDs::PlotterSave :
+      save();
+      break;
+    case CommandIDs::PlotterSaveAs :
+      save(true);
+      break;
+    case CommandIDs::PlotterRename :
+      {
+	AlertWindow w (T("Rename Plot"), String::empty, 
+		       AlertWindow::NoIcon);
+	w.addTextEditor(T("rename"), getName(), String::empty);
+	w.addButton(T("Cancel"), 0, KeyPress(KeyPress::escapeKey, 0, 0));
+	w.addButton(T("Rename"), 1, KeyPress(KeyPress::returnKey, 0, 0));
+	if (w.runModalLoop() != 0) // picked 'ok'
+	  setName(w.getTextEditorContents(T("rename")));
+      }
       break;
     case CommandIDs::PlotterExport :
       showExportPointsDialog();
@@ -1561,6 +1690,8 @@ void PlotterWindow::menuItemSelected (int id, int idx)
     case CommandIDs::PlotterLayerAdd :
       plotter->newLayer(NULL);
       plotter->redrawBackView();
+      plotter->redrawHorizontalAxisView();
+      plotter->redrawVerticalAxisView();
       break;
     case CommandIDs::PlotterLayerDelete :
       plotter->actions.perform
@@ -1572,6 +1703,8 @@ void PlotterWindow::menuItemSelected (int id, int idx)
       plotter->setFocusLayer(plotter->findLayer(data));
       plotter->redrawBackView();
       plotter->redrawPlotView();
+      plotter->redrawHorizontalAxisView();
+      plotter->redrawVerticalAxisView();
       break;
     case CommandIDs::CommandIDs::PlotterStyle :
       plotter->getFocusLayer()->setLayerStyle(data);
@@ -1596,8 +1729,121 @@ void PlotterWindow::menuItemSelected (int id, int idx)
 }
 
 /*=======================================================================*
-                               Export Dialog
+                                  FileIO and Exporting
  *=======================================================================*/
+
+String PlotterWindow::toXmlString()
+{
+  String text=String::empty;
+  text << T("<plot title=") << getName().quoted() << T(">\n") ;
+  // output axis definitions
+  for (int i=0; i<plotter->numFields(); i++)
+    {
+      Axis* a=plotter->getFieldAxis(i);
+      int j=plotter->getAxisIndex(a);
+      text << T("  ")
+	   << T("<axis")
+           << T(" name=") << plotter->getFieldName(i).quoted()
+	   << T(" range=") ;
+      if (j>=0 && j<i) // is a shared axis
+	text << plotter->getFieldName(j).quoted();
+      else
+	text << a->toString().quoted();
+      text << T("/>\n");
+    }
+  for (int i=0; i<plotter->numLayers(); i++)
+      text << T("  ")
+	   << plotter->getLayer(i)->toString(TextIDs::Xml, 2, false, 0xFF)
+	   << T("\n");
+  text<<T("</plot>\n");
+  return text;
+}
+
+String Layer::toString(int exportid, int decimals,
+		       bool asrecords, int parammask) 
+{
+  String text=String::empty;
+  String lpar=String::empty;
+  String rpar=String::empty;
+  String done=String::empty;
+  String spce=T(" ");
+  if (exportid==TextIDs::Lisp)
+    {
+      text=T("(");
+      if (asrecords)
+	{
+	  lpar=T("(");
+	  rpar=T(")");
+	}
+      done=T(")");
+    }
+  else if (exportid==TextIDs::Sal)
+    {
+      text=T("{");
+      if (asrecords)
+	{
+	  lpar=T("{");
+	  rpar=T("}");
+	}
+      done=T("}");
+    }
+  else if (exportid==TextIDs::Xml)
+    {
+      text << T("<points title=")
+	   << getLayerName().quoted()
+	   << T(" style=")
+	   << toLayerTypeString(getLayerStyle()).quoted()
+	   << T(" color=")
+	   << getLayerColor().toString().quoted()
+	   << T(">");
+      lpar=T("<point>");
+      rpar=T("</point>");
+      done=T("</points>");
+      spce=String::empty;
+    }
+  LayerPoint* point;
+  int length=numPoints();
+  for (int i=0; i<length; i++)
+    {
+      point=getPoint(i);
+      if (i>0 && spce!=String::empty) text << spce;
+      text << lpar
+	   << exportPoint(point, parammask, decimals)
+	   << rpar;
+    }
+  // add appropriate close parens...
+  text << done ;
+  std::cout << text.toUTF8() << "\n";
+  return text;
+}
+
+class ExportPointsDialog : 
+  public Component, public ButtonListener, public ComboBoxListener
+{
+ public:
+  Plotter* plotter;
+  int numfields;
+  bool* include;
+  Label* exportlabel;
+  ComboBox* exportmenu;
+  Label* tolabel;
+  ComboBox* tomenu;
+  TextButton* fieldsbutton;
+  Label* formatlabel;
+  Label* valuelabel;
+  Label* destlabel;
+  ComboBox* valuemenu;
+  ComboBox* formatmenu;
+  ComboBox* destmenu;
+  TextButton* exportbutton;
+  ExportPointsDialog(Plotter* plotter);
+  ~ExportPointsDialog();
+  void resized();
+  void buttonClicked (Button* button);
+  void comboBoxChanged (ComboBox* combobox);
+  void exportPoints();
+  void exportPlot();
+};
 
 ExportPointsDialog::ExportPointsDialog (Plotter* p)
     : exportlabel (0),
@@ -1609,12 +1855,14 @@ ExportPointsDialog::ExportPointsDialog (Plotter* p)
       formatmenu (0),
       valuelabel (0),
       valuemenu (0),
+      destlabel (0),
+      destmenu (0),
       exportbutton (0),
       plotter(0),
       include(0)
 {
   plotter=p;
-  numfields=plotter->getFocusLayer()->getLayerArity();
+  numfields=plotter->numFields();
   include=new bool[numfields];
 
   for (int i=0;i<numfields; i++) include[i]=true;
@@ -1625,23 +1873,24 @@ ExportPointsDialog::ExportPointsDialog (Plotter* p)
 
   addAndMakeVisible (exportmenu = new ComboBox (String::empty));
   exportmenu->setEditableText (false);
-  exportmenu->addItem (T("Layer"), 1);
-  exportmenu->addItem (T("Selection"), 2);
+  exportmenu->addItem (T("Points"), 1);
+  exportmenu->addItem (T("Plot"), 2);
   exportmenu->setSelectedId(1);
-  exportmenu->setItemEnabled(2, plotter->getPlotView()->isSelection());
+  exportmenu->addListener(this);
 
-  addAndMakeVisible(tolabel=new Label(String::empty, T("For:")));
+  addAndMakeVisible(tolabel=new Label(String::empty, T("Syntax:")));
   tolabel->setFont (font);
 
   addAndMakeVisible(tomenu = new ComboBox (String::empty));
   tomenu->setEditableText(false);
-  tomenu->addItem(T("SAL"), 1);
-  tomenu->addItem(T("Lisp"), 2);
-  tomenu->setSelectedId(1);
+  tomenu->addItem(T("Lisp"), TextIDs::Lisp);
+  tomenu->addItem(T("SAL"), TextIDs::Sal);
+  tomenu->addItem(T("XML"), TextIDs::Xml);
+  tomenu->setSelectedId(TextIDs::Lisp);
 
   addAndMakeVisible(fieldsbutton = new TextButton (String::empty));
-  fieldsbutton->setButtonText(T("Included Fields..."));
-  fieldsbutton->addButtonListener (this);
+  fieldsbutton->setButtonText(T("Fields..."));
+  fieldsbutton->addButtonListener(this);
 
   addAndMakeVisible(formatlabel = new Label(String::empty, T("Format:")));
   formatlabel->setFont(font);
@@ -1653,14 +1902,21 @@ ExportPointsDialog::ExportPointsDialog (Plotter* p)
   formatmenu->setSelectedId(1);
 
   addAndMakeVisible(valuelabel=new Label(String::empty, 
-					 T("Value format:")));
+					 T("Precision:")));
   addAndMakeVisible(valuemenu = new ComboBox(String::empty));
-  valuemenu->addItem(T("0"), 1);
+  valuemenu->addItem(T("Integer"), 1);
   valuemenu->addItem(T("0.0"), 2);
   valuemenu->addItem(T("0.00"), 3);
   valuemenu->addItem(T("0.000"), 4);
-  valuemenu->addItem(T("0.0000"), 5);
   valuemenu->setSelectedId(3);
+
+  addAndMakeVisible(destlabel=new Label(String::empty, 
+					 T("Destination:")));
+  addAndMakeVisible(destmenu = new ComboBox(String::empty));
+  destmenu->addItem(T("New Edit Window"), 1);
+  destmenu->addItem(T("Current Edit Window"), 2);
+  destmenu->addItem(T("Clipboard"), 3);
+  destmenu->setSelectedId(1);
 
   addAndMakeVisible(exportbutton = new TextButton(String::empty));
   exportbutton->setButtonText(T("Export"));
@@ -1668,7 +1924,8 @@ ExportPointsDialog::ExportPointsDialog (Plotter* p)
   setSize(440, 140);
 }
 
-ExportPointsDialog::~ExportPointsDialog() {
+ExportPointsDialog::~ExportPointsDialog()
+{
   delete[] include;
   deleteAndZero (exportlabel);
   deleteAndZero (formatlabel);
@@ -1680,113 +1937,144 @@ ExportPointsDialog::~ExportPointsDialog() {
   deleteAndZero (valuemenu);
   deleteAndZero (formatmenu);
   deleteAndZero (exportmenu);
+  deleteAndZero (destlabel);
+  deleteAndZero (destmenu);
 }
 
-void ExportPointsDialog::resized() {
+void ExportPointsDialog::resized()
+{
   exportlabel->setBounds (16, 16, 56, 24);
   exportmenu->setBounds (76, 16, 88, 24);
-  tolabel->setBounds (176, 16, 34, 24);
-  tomenu->setBounds (210, 16, 80, 24);
-  fieldsbutton->setBounds (304, 16, 120, 26);
+  tolabel->setBounds (176, 16, 34+16, 24);
+  tomenu->setBounds (210+16, 16, 80, 24);
+  fieldsbutton->setBounds (304+16, 16, 120-16, 26);
   formatlabel->setBounds (16, 56, 56, 24);
   formatmenu->setBounds (77, 56, 150, 24);
-  valuelabel->setBounds (246, 56, 92, 24);
+  valuelabel->setBounds (246+24, 56, 92, 24);
   valuemenu->setBounds (342, 56, 80, 24);
   exportbutton->setBounds (274, 96, 150, 24);
+  destlabel->setBounds (16, 96, 100, 24);
+  destmenu->setBounds (77+24, 96, 150+8, 24);
 }
 
-void ExportPointsDialog::exportPoints() {
-  Layer* layer=plotter->getFocusLayer();
-  PlotView* plotview=plotter->getPlotView();
-  if (layer->numPoints() == 0)
-    return;
+void ExportPointsDialog::exportPlot() 
+{
+  PlotterWindow* p=(PlotterWindow*)plotter->getTopLevelComponent();
+  String text=p->toXmlString();
+  int destination=destmenu->getSelectedId();
+  if (destination==1) // to new edit window
+    new TextEditorWindow(File::nonexistent, text, TextIDs::Xml);
+  else if (destination==2) // to existing edit window
+    {
+      TextEditorWindow* e=TextEditorWindow::getFocusTextEditor();
+      if (e)
+	e->getTextBuffer()->insertTextAtCursor(text);
+      else
+	new TextEditorWindow(File::nonexistent, text, TextIDs::Xml);
+    }
+  else if (destination==3) // to clipboard
+    SystemClipboard::copyTextToClipboard(text);
+}
+
+void ExportPointsDialog::exportPoints() 
+{
   bool layerexport=(exportmenu->getSelectedId()==1);
-  bool salexport=(tomenu->getSelectedId()==1);
+  int exportid=tomenu->getSelectedId();
   int decimals=valuemenu->getSelectedId()-1;
-  int format=formatmenu->getSelectedId();
+  bool asrecords=(formatmenu->getSelectedId()==2);
+  int destination=destmenu->getSelectedId();
   int numparams=0;
   int parammask=0;
-
-  // turn included fields into parameter strings for sal or lisp
+  
+  // turn included fields into bitmask
   for (int i=0; i<numfields; i++) 
-    if ( include[i] ) {
-      parammask += 1<<i;
-      numparams++;
-    }
-  // do nothing if user deselected all fields!
-  if (numparams==0) return;
-
-  String text = (salexport) ? T("define variable exported = ")
-    : T("(defparameter exported ");
-  int indent,column;
-  String spaces;
-
-  if ((format==1) || (format==2)) {
-    // static number exporting
-    text += (salexport) ? T("{") : T("'(");
-    indent=text.length();
-  }
-  else {
-    // exports require eval form
-    String line = (salexport) ? T("  list(") : T("  (list ");
-    text += T("\n") + line;
-    indent=line.length();
-  }
-  spaces=String::repeatedString(T(" "), indent);
-  column=indent;
-
-  LayerPoint* point;
-  int length=(layerexport) ? layer->numPoints() : plotview->numSelected();
-  for (int i=0; i<length; i++) {
-    point=(layerexport) ? layer->getPoint(i) : plotview->getSelected(i);
-    String one=layer->exportPoint(point, parammask, format,
-				  salexport, decimals);
-    int len=one.length();
-    if (format==3) {
-      column=indent;
-      if (i>0) {
-	text += (salexport) ? T(",\n") : T("\n");
-	text += spaces;
+    if ( include[i] )
+      {
+	parammask += 1<<i;
+	numparams++;
       }
-    }
-    else if ((column+len) > 73) {
-	column=indent;
-	text += T("\n") + spaces;
-    }
-    else if (i>0)
-      text += T(" ");
-    text+=one;
-    column+=len;
-  }
-  // add appropriate close parens...
-  if (format==3)
-    text += T("\n") + spaces + ((salexport) ? T(")\n") : T("))\n"));
+  // do nothing if user deselected all fields!
+  if (numparams==0)
+    return;
+  
+  String text=String::empty;
+  if (layerexport)
+    text=plotter->getFocusLayer()->toString(exportid, decimals,
+					    asrecords, parammask);
   else
-    text += (salexport) ? T("}\n") : T("))\n");
-  //  printf("%s\n",text.toUTF8());
-  SystemClipboard::copyTextToClipboard(text);
+    {
+      for (int i=0; i<plotter->numLayers(); i++)
+	text << plotter->getFocusLayer()->toString(exportid, decimals,
+						   asrecords, parammask);
+    }
+  if (destination==1) // to new edit window
+    new TextEditorWindow(File::nonexistent, text, exportid);
+  else if (destination==2) // to existing edit window
+    {
+      TextEditorWindow* w=TextEditorWindow::getFocusTextEditor();
+      if (w)
+	w->getTextBuffer()->insertTextAtCursor(text);
+      else
+	new TextEditorWindow(File::nonexistent, text, exportid);
+    }
+  else if (destination==3) // to clipboard
+    SystemClipboard::copyTextToClipboard(text);
 }
 
-void ExportPointsDialog::buttonClicked (Button* button) {
-  if (button == exportbutton) {
-    PlotterWindow* win=(PlotterWindow*)getTopLevelComponent();
-    exportPoints();
-    win->getCloseButton()->triggerClick();
-  }
-  else if (button == fieldsbutton) {
-    /*    int i;
-    PopupMenu m;
-    for (i=0; i<numfields; i++)
-      m.addItem(i+1, plotter->getFocusLayer()->getFieldName(i),
-		true, include[i]);
-    i=m.showAt(button);
-    if (i != 0) include[i-1]=(!include[i-1]);
-    */
-  }
+void ExportPointsDialog::buttonClicked (Button* button)
+{
+  if (button == exportbutton)
+    {
+      if (tomenu->getSelectedId()==1)
+	exportPoints();
+      else
+	exportPlot();
+
+      DialogWindow* dw=findParentComponentOfClass((DialogWindow*) 0);
+      if (dw != 0)
+	dw->exitModalState(true);
+    }
+  else if (button == fieldsbutton)
+    {
+       int i;
+       PopupMenu m;
+       for (i=0; i<numfields; i++)
+	 m.addItem(i+1, plotter->getFieldName(i),
+		   true, include[i]);
+       i=m.showAt(button);
+       if (i != 0) include[i-1]=(!include[i-1]);
+    }
 }
 
-void PlotterWindow::showExportPointsDialog () {
-  DialogWindow::showModalDialog(T("Export Points to Clipboard"),
+void ExportPointsDialog::comboBoxChanged(ComboBox* cbox)
+{
+  if (cbox==exportmenu)
+    {
+      int id=cbox->getSelectedId();
+      if (id==1) // Layer
+	{
+	  tomenu->setEnabled(true);
+	  fieldsbutton->setEnabled(true);
+	  formatmenu->setEnabled(true);
+	  valuemenu->setEnabled(true);
+	}
+      else // Plot
+	{
+	  tomenu->setEnabled(false);
+	  fieldsbutton->setEnabled(false);
+	  formatmenu->setEnabled(false);
+	  valuemenu->setEnabled(false);
+	}
+    }
+  else
+    {
+    }      
+}
+
+
+void PlotterWindow::showExportPointsDialog ()
+{
+  DialogWindow::showModalDialog(T("Export Plot"),
 				new ExportPointsDialog(plotter),
 				this,
 				Colour(0xffe5e5e5),
