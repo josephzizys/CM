@@ -2953,7 +2953,7 @@ Returns the current time of the scheduler. See also <a href="#elapsed"><code>ela
   <tr class="entry">
     <td class="formals">
       <span class="funcname">plot</span>
-      (<var class="rest">settings...</var> {<var class="arg">pointlist</var> <var class="rest">settings...</var>}* <var class="rest">...</var>)
+      (<var class="rest">settings...</var> {<var class="arg">pointlist</var> <var class="rest">settings...</var>}<var class="rest">...</var>)
     </td>
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -2963,14 +2963,14 @@ Returns the current time of the scheduler. See also <a href="#elapsed"><code>ela
 
 Creates a 2 dimensional plot given zero or more global plot settings
 optionally followed by layers of plotting data with layer-specific
-settings.Each <var>pointlist</var> is a list in one of the following
+settings. Each <var>pointlist</var> is a list in one of the following
 formats:
 
 </p>
 
 <dl>
   <dt><code>(</code> <code>(</code><var>c1</var> <var>c2</var> <var>...</var> <var>cn</var><code>)</code> <var>...</var><code>)</code></dt>
-<dd>A list of lists where each sublist defines the "field" data of a point record.</dd>
+<dd>A list of lists where each sublist defines the data <a href="#fields">fields</a> of a point record.</dd>
 
 <dt><code>(</code><var>x1</var> <var>y1</var> <var>x2</var> <var>y2</var> <var>...</var> <var>xn</var> <var>yn</var><code>)</code></dt>
 <dd>A flat list of <var>x</var> <var>y</var> point data.</dd>
@@ -2979,26 +2979,23 @@ formats:
 <var>vn</var><code>)</code></dt> <dd>A flat list of values to parse in conjunction with the  <a href="#values">values:</a> setting below.</dd>
 </dl>
 
-<h4>Settings</h4>
-
 <p>
-
 A <var>setting</var> is a plotting keyword followed by its value. In
-general, values can be specified as symbols, keywords or
+general, setting values can be specified as symbols, keywords or
 strings. Settings that appear before the first point list are treated
 as <em>global settings</em>, ie they apply to the window and/or to all
-the point lists.  Settings appearing after a point list apply only to
-the layer that contains those points.</p>
+the point lists.  Settings specified after a point list apply only to
+that layer of points.</p>
 
 <p><code class="entry">plot</code> supports following settings:</p>
 
 <dl>
 
   <dt id="title"><span class="keyword"><code>title:</code></span> <var>string</var></dt>
-  <dd>Specifies the window title as global setting or the titile of the point layer if it appears after a point list.</dd>
+  <dd>Specifies the window title or the title of the point layer if it appears after a point list.</dd>
   
   <dt id="xaxis"><span class="keyword"><code>xaxis:</code></span> {<var>type</var> | (<var>type from to by ticks</var>)}</dt>
-  <dd> Specifies the horizontal axis type and (optionally) its characteristics. To specify complete control over display fields and axes see <a href="#fields">fields:</a>
+  <dd> Specifies the horizontal axis type and (optionally) its characteristics. 
     
     <blockquote>
     <table class="float" width="50%">
@@ -3012,12 +3009,19 @@ the layer that contains those points.</p>
       <tr><td><code>circle</code> </td><td> -1 </td><td> 1      </td><td> .25 </td><td> 4 </td></tr>
     </table>
     </blockquote>
+
+    See the <a href="#fields">fields:</a> setting for complete control over record fields and axes.
+    
   </dd>
   
   <dt id="yaxis"><span class="keyword"><code>yaxis:</code></span> {<var>type</var> | (<var>type from to by ticks</var>)}</dt>
-  <dd> Specifies the vertical axis type and (optionally) its characteristics. To specify complete control over display fields and axes see <a href="#fields">fields:</a> </dd>
+  <dd> Specifies the vertical axis type and (optionally) its characteristics.
   
-  <dt id="color"><span class="keyword"><code>color:</code></span> {<var>name</var> | <var>int</var> (rgb)}</dt>
+    See the <a href="#fields">fields:</a> setting for complete control over record fields and axes.
+
+  </dd>
+  
+  <dt id="color"><span class="keyword"><code>color:</code></span> {<var>name</var> | <var>"rgb"</var>}</dt>
   <dd>The color for drawing the specified plot list.</dd>
 
   <dt id="style"><span class="keyword"><code>style:</code></span> {<var>name</var>}</dt>
@@ -3039,14 +3043,13 @@ Provides full control over the interpretation of the data fields in
  point records.  The left to right order of fields corresponds to the
   left-to-right values in the point records. <var>Name</var> is the name of the field in the record and
     <var>axisinfo</var> is its axis information as described in the  <a
-  href="#xaxis">xaxis:</a>  and <a href="#yaxis">yaxis:</a> settings above. To
-  specify that a field share the exact axis of an earier field provide
-  the name of the source field as the axisinfo.</dd>
+  href="#xaxis">xaxis</a>  and <a href="#yaxis">yaxis</a> settings above. To
+  force field to share the axis of a (leftward) field specify the name of that field as the axisinfo.</dd>
 
 
-  <dt id="values"><span class="keyword">values:</span> {<var>int</var> | <code>y</code>}</dt>
+  <dt id="values"><span class="keyword"><code>values:</code></span> {<var>int</var> | <code>y</code>}</dt>
   <dd>Specifies how to parse non-standard point
-  lists, ie flat lists containing only y data or flat lists in which
+  lists, i.e. flat lists containing only y data or flat lists in which
   each series of <var>int</var> values should become a single
   point.</dd>
 
@@ -3062,7 +3065,7 @@ class="arg">all</var> #t]) </td> </tr> <tr><td class="retval"
 colspan="2">&rarr; list</td></tr> </table> <blockquote> <p> Returns
 the point data from the plot window whose <var>title</var> is
 specified. If <var>all</var> is false then only the points in the
-topmost (focus) layer will be returned otherwise layer data will be
+topmost (focus) layer will be returned otherwise all layer data will be
 returned.  </p> </blockquote>
 <!-- END DEFINITION -->
 
