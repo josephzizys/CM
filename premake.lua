@@ -299,7 +299,7 @@ for i = 1,3 do
       add(mypackage.libpaths, "/usr/X11R6/lib/")
    elseif windows then
       add(mypackage.defines, "WINDOWS=1")
-      if options["target"] == "vs2005" then
+      if (options["target"] == "vs2005" or options["target"] == "vs2008" )then
 	 print("adding stuff!")
 	 add(mypackage.config["Debug"].links, "comsuppwd")
 	 add(mypackage.config["Release"].links, "comsuppw")
