@@ -299,7 +299,11 @@ for i = 1,3 do
       add(mypackage.libpaths, "/usr/X11R6/lib/")
    elseif windows then
       add(mypackage.defines, "WINDOWS=1")
-      if options["target"] == "gnu" then
+      if options["target"] == "vs2005" then
+	 print("adding stuff!")
+	 add(mypackage.config["Debug"].links, "comsuppwd")
+	 add(mypackage.config["Release"].links, "comsuppw")
+      elseif options["target"] == "gnu" then
 	 -- premake outputs libs defined at the config level BEFORE slibs
 	 -- defined at the package level. on windows this causes linking
 	 -- to fail because -ljuce appears after the libs listed below (i

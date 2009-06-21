@@ -157,7 +157,7 @@ void AxisView::paint (Graphics& g)
       int top=viewport->getViewPositionY();
       int bottom=height+top;
       int width=getWidth();   // width of axis view
-      float tx,ty;
+//      float tx,ty;
       
       //g.drawVerticalLine(width-1, 0, getHeight());
       g.drawLine(width-1, 0, width-1, getHeight(), 2);
@@ -214,7 +214,7 @@ void AxisView::mouseDown(const MouseEvent &e)
 
 void AxisView::mouseDrag(const MouseEvent &e)
 {
-  double a,b,c;
+  double a,b;
   if (isHorizontal())
     {
       a=e.getDistanceFromDragStartX();
@@ -1399,7 +1399,7 @@ void PlotterWindow::openXml(String str)
   XmlElement* xml = doc.getDocumentElement();
   if (xml)
     {
-      new PlotterWindow::PlotterWindow(xml);
+      new PlotterWindow(xml);
       delete xml;
     }
   else
@@ -1416,7 +1416,7 @@ void PlotterWindow::openXml(File fil)
   XmlElement* xml = doc.getDocumentElement();
   if (xml)
     {
-      PlotterWindow* w=new PlotterWindow::PlotterWindow(xml);
+      PlotterWindow* w=new PlotterWindow(xml);
       w->setPlotFile(fil);
       delete xml;
     }
@@ -1706,7 +1706,7 @@ void PlotterWindow::menuItemSelected (int id, int idx)
       plotter->redrawHorizontalAxisView();
       plotter->redrawVerticalAxisView();
       break;
-    case CommandIDs::CommandIDs::PlotterStyle :
+    case CommandIDs::PlotterStyle :
       plotter->getFocusLayer()->setLayerStyle(data);
       plotter->redrawPlotView();
       break;

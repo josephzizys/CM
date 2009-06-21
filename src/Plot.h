@@ -126,7 +126,7 @@ class Axis
 	else if (range[0]==T("unit") || range[0]==T("normalized") || 
 		 range[0]==T("normal"))
 	  init(normalized);
-	else if ('0' <= str[0] <= '9') // is number
+	else if (('0' <= str[0]) && ( str[0] <= '9')) // is number
 	  arg--;
 	// parse out optional <from> <to> <by> <ticks>
 	int num=range.size()-arg;
@@ -158,7 +158,7 @@ class Axis
   void setIncrement(double v) {by=v;}
   double getIncrements() {return (to-from)/by;}
   int getTicks() {return ticks;}
-  int setTicks(int v) {ticks=v;}
+  void setTicks(int v) {ticks=v;}
   int getDecimals() {return decimals;}
   void setDecimals(int v) {decimals=v;}
   double getRange() {return to-from;}
@@ -310,7 +310,7 @@ class Layer
   void setTransparent(bool b) {transp=b;}  
   int getLayerStyle(){return style;}
   void setLayerStyle(int s){style=s;}
-  bool isDrawStyle(int i) {return (getLayerStyle() & i);}
+  bool isDrawStyle(int i) {return (getLayerStyle() & i) != 0;}
   int numPoints() {return _points.size();}
   LayerPoint* getLayerFieldDefaults(){return _defaults;}
   void setLayerFieldDefaults(LayerPoint* p){_defaults=p;}
