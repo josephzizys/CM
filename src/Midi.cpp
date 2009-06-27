@@ -228,15 +228,16 @@ MidiOutPort::MidiOutPort()
   tuningnames.add(T("6.6 Cent"));
   tuningnames.add(T("6.25 Cent"));
   captureSequence.clear();
-  String name=String::empty;
 #ifdef GRACE
   Preferences* prefs=Preferences::getInstance();
-  name=prefs->getStringProp(T("MidiOutDevice"));
+  String name=prefs->getStringProp(T("MidiOutDevice"));
+  if (name.isNotEmpty())
+    {
+      if (!open(name))
+	prefs->removeProp(T("MidiOutDevice"));
+    }
 #endif
-  if (name != String::empty)
-    open(name);
 }
-
 
 MidiOutPort::~MidiOutPort()
 {
@@ -1275,15 +1276,17 @@ MidiInPort::MidiInPort()
     channelMask(0),
     opcodeMask(0)
 {
-  String name=String::empty;
 #ifdef GRACE
-  Preferences* pref=Preferences::getInstance();
-  name=pref->getStringProp(T("MidiInDevice"));
-  channelMask=pref->getIntProp(T("MidiInChannelMask"), AllChannels);
-  opcodeMask=pref->getIntProp(T("MidiInOpcodeMask"), AllOpcodes);
+  Preferences* prefs=Preferences::getInstance();
+  String name=prefs->getStringProp(T("MidiInDevice"));
+  if (name.isNotEmpty())
+    {
+      if (!open(name))
+	prefs->removeProp(T("MidiInDevice"));
+    }
+  channelMask=prefs->getIntProp(T("MidiInChannelMask"), AllChannels);
+  opcodeMask=prefs->getIntProp(T("MidiInOpcodeMask"), AllOpcodes);
 #endif
-  if (name != String::empty)
-    open(name);
 }
 
 MidiInPort::~MidiInPort() 

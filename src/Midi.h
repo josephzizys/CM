@@ -108,9 +108,13 @@ class MidiFileInfo
   
  MidiFileInfo() 
    : file (File::nonexistent), 
-    ismsec(false), qticks (480), tempo (60), 
-    //    ismsec(true), qticks(1000), tempo (120), 
-    keysig (8), tsig1 (4), tsig2 (4)
+    ismsec(false), 
+    qticks (480),
+    tempo (60), 
+    insts (true),
+    keysig (8), 
+    tsig1 (4),
+    tsig2 (4)
     {
     }      
   

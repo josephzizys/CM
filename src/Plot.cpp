@@ -205,7 +205,6 @@ void AxisView::paint (Graphics& g)
   g.setColour(Colours::black);
 }
 
-
 void AxisView::mouseDown(const MouseEvent &e) 
 {
   viewport->plotter->setBackViewCaching(false);
@@ -248,6 +247,13 @@ void AxisView::mouseUp(const MouseEvent &e)
   //std::cout << "mouseup\n";
   viewport->plotter->setBackViewCaching(true);
 }
+
+void AxisView::mouseDoubleClick(const MouseEvent &e)
+{
+  PlotterWindow* w=(PlotterWindow*)getTopLevelComponent();
+  w->openAxisDialog(isHorizontal());
+}
+
 
 /*=======================================================================*
                     Region and selection, sweeping and editing
@@ -404,6 +410,8 @@ public:
   void mouseDown(const MouseEvent &e) ;
   void mouseDrag(const MouseEvent &e) ;
   void mouseUp(const MouseEvent &e) ;
+  void mouseDoubleClick(const MouseEvent &e) ;
+
   bool keyPressed (const KeyPress& key) ;
 
   void resizeForDrawing();
@@ -836,6 +844,12 @@ void PlotView::mouseUp(const MouseEvent &e)
     }
 }
 
+void PlotView::mouseDoubleClick(const MouseEvent &e)
+{
+  PlotterWindow* pw=(PlotterWindow*)getTopLevelComponent();
+  pw->openLayerDialog();
+}
+
 bool PlotView::keyPressed (const KeyPress& key)
 {
   if ((key.isKeyCode(KeyPress::backspaceKey) ||
@@ -1033,6 +1047,7 @@ void Plotter::autosizeAxes()
 	      axes[i]->setTicks(2);
 	    }
 
+	  axes[i]->type=Axis::generic; // make it a generic axis
 	  std::cout << "autosized axis[" << i
 		    <<"]: min=" << axes[i]->getMinimum() 
 		    << " max=" << axes[i]->getMaximum() << "\n";
@@ -1667,7 +1682,7 @@ void PlotterWindow::menuItemSelected (int id, int idx)
       }
       break;
     case CommandIDs::PlotterExport :
-      showExportPointsDialog();
+      openExportDialog();
       break;
     case CommandIDs::EditorUndo :
       plotter->actions.undo();
@@ -1978,7 +1993,8 @@ void ExportPointsDialog::exportPlot()
 
 void ExportPointsDialog::exportPoints() 
 {
-  bool layerexport=(exportmenu->getSelectedId()==1);
+  std::cout << "export points\n";
+  bool layerexport=true; //(exportmenu->getSelectedId()==1);
   int exportid=tomenu->getSelectedId();
   int decimals=valuemenu->getSelectedId()-1;
   bool asrecords=(formatmenu->getSelectedId()==2);
@@ -2025,7 +2041,7 @@ void ExportPointsDialog::buttonClicked (Button* button)
 {
   if (button == exportbutton)
     {
-      if (tomenu->getSelectedId()==1)
+      if (exportmenu->getSelectedId()==1)
 	exportPoints();
       else
 	exportPlot();
@@ -2072,11 +2088,481 @@ void ExportPointsDialog::comboBoxChanged(ComboBox* cbox)
 }
 
 
-void PlotterWindow::showExportPointsDialog ()
+void PlotterWindow::openExportDialog ()
 {
   DialogWindow::showModalDialog(T("Export Plot"),
 				new ExportPointsDialog(plotter),
 				this,
 				Colour(0xffe5e5e5),
 				true);
+}
+
+/*=======================================================================*
+                              Layer Dialog
+ *=======================================================================*/
+
+class LayerDialog  : public Component,
+                     public ComboBoxListener,
+                     public ButtonListener,
+                     public ChangeListener
+{
+private:
+  Plotter* plotter;
+public:
+  LayerDialog (Plotter* pl);
+  ~LayerDialog();
+  void resized();
+  void comboBoxChanged (ComboBox* comboBoxThatHasChanged);
+  void buttonClicked (Button* buttonThatWasClicked);
+  void changeListenerCallback(void*);
+private:
+  Label* namelabel;
+  TextEditor* namebuffer;
+  Label* stylelabel;
+  ComboBox* stylemenu;
+  TextButton* colorbutton;
+  // (prevent copy constructor and operator= being generated..)
+  LayerDialog (const LayerDialog&);
+  const LayerDialog& operator= (const LayerDialog&);
+};
+
+LayerDialog::LayerDialog (Plotter* pl)
+  : namelabel (0),
+    namebuffer (0),
+    stylelabel (0),
+    stylemenu (0),
+    colorbutton (0),
+    plotter (0)
+{
+  plotter=pl;
+  Layer* layer=plotter->getFocusLayer();
+  addAndMakeVisible (namelabel = new Label (String::empty,
+					    T("Name:")));
+  namelabel->setFont (Font (15.0000f, Font::plain));
+  namelabel->setJustificationType (Justification::centredLeft);
+  namelabel->setEditable (false, false, false);
+  namelabel->setColour (TextEditor::textColourId, Colours::black);
+  namelabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+
+  addAndMakeVisible (namebuffer = new TextEditor (String::empty));
+  namebuffer->setMultiLine (false);
+  namebuffer->setReturnKeyStartsNewLine (false);
+  namebuffer->setReadOnly (false);
+  namebuffer->setScrollbarsShown (true);
+  namebuffer->setCaretVisible (true);
+  namebuffer->setPopupMenuEnabled (true);
+  namebuffer->setText (layer->getLayerName());
+  
+  addAndMakeVisible (stylelabel = new Label (String::empty,
+                                               T("Style:")));
+  stylelabel->setFont (Font (15.0000f, Font::plain));
+  stylelabel->setJustificationType (Justification::centredLeft);
+  stylelabel->setEditable (false, false, false);
+  stylelabel->setColour (TextEditor::textColourId, Colours::black);
+  stylelabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible(stylemenu = new ComboBox (String::empty));
+  stylemenu->setEditableText(false);
+  stylemenu->setJustificationType(Justification::centredLeft);
+  stylemenu->addItem(T("envelope"), Layer::lineandpoint);
+  stylemenu->addItem(T("line"), Layer::line);
+  stylemenu->addItem(T("point"), Layer::point);
+  stylemenu->addItem(T("impulse"), Layer::impulse);
+  stylemenu->addItem(T("histogram"), Layer::histogram);
+  stylemenu->addItem(T("hbox"), Layer::hbox);
+  stylemenu->addItem(T("vbox"), Layer::vbox);
+  if (plotter->numFields()<=2)
+    {
+      stylemenu->setItemEnabled(Layer::hbox, false);
+      stylemenu->setItemEnabled(Layer::vbox, false);
+    } 
+  stylemenu->setSelectedId(layer->getLayerStyle());
+  stylemenu->addListener (this);
+
+  addAndMakeVisible(colorbutton = new TextButton(String::empty));
+  colorbutton->setButtonText(T("Color..."));
+  colorbutton->addButtonListener(this);
+  setSize(476, 76);
+}
+
+LayerDialog::~LayerDialog()
+{
+  deleteAndZero(namelabel);
+  deleteAndZero(namebuffer);
+  deleteAndZero(stylelabel);
+  deleteAndZero(stylemenu);
+  deleteAndZero(colorbutton);
+}
+
+void LayerDialog::resized()
+{
+  namelabel->setBounds(8, 24, 48, 24);
+  namebuffer->setBounds(56, 24, 120, 24);
+  stylelabel->setBounds(184, 24, 48, 24);
+  stylemenu->setBounds(228, 24, 120, 24);
+  colorbutton->setBounds(360, 24, 104, 24);
+}
+
+void LayerDialog::comboBoxChanged (ComboBox* cb)
+{
+  if (cb == stylemenu)
+    {
+      plotter->getFocusLayer()->setLayerStyle(cb->getSelectedId());
+      plotter->redrawPlotView();
+    }
+}
+
+void LayerDialog::buttonClicked (Button* buttonThatWasClicked)
+{
+  if (buttonThatWasClicked == colorbutton)
+    {
+      ColourSelector sel;
+      sel.setCurrentColour(plotter->getFocusLayer()->getLayerColor());
+      sel.setSize(200, 300);
+      sel.addChangeListener(this);
+      DialogWindow::showModalDialog(T("Layer Color"),
+				    &sel, 
+				    this,
+				    Colour(0xffe5e5e5),
+				    false);
+    }
+}
+
+void LayerDialog::changeListenerCallback (void* source)
+{
+  ColourSelector* cs = (ColourSelector*)source;
+  plotter->getFocusLayer()->setLayerColor(cs->getCurrentColour());
+  plotter->redrawPlotView();
+}
+
+void PlotterWindow::openLayerDialog ()
+{
+  DialogWindow::showModalDialog(T("Edit Layer"),
+				new LayerDialog(plotter),
+				this,
+				Colour(0xffe5e5e5),
+				false);
+}
+
+/*=======================================================================*
+                              Axis Dialog
+ *=======================================================================*/
+
+class AxisDialog  : public Component,
+                    public ComboBoxListener,
+                    public TextEditorListener
+{
+private:
+  Plotter* plotter;
+  bool ishorizontal;
+  AxisView* axisview;
+  enum {setfrom=1,setto,setby,setticks,setdecimals};
+  void setAxisValue(int field, double value, bool trig);
+  void updateFields(Axis* ax);
+  void updateAxis();
+  // (prevent copy constructor and operator= being generated..)
+  AxisDialog (const AxisDialog&);
+  const AxisDialog& operator= (const AxisDialog&);
+public:
+  AxisDialog (Plotter* pl, int orient);
+  ~AxisDialog();
+  void resized();
+  void comboBoxChanged(ComboBox* combo);
+  void textEditorReturnKeyPressed(TextEditor& editor);
+  void textEditorTextChanged(TextEditor& editor) {}
+  void textEditorEscapeKeyPressed(TextEditor& editor) {}
+  void textEditorFocusLost(TextEditor& editor) {}
+private:
+  Label* namelabel;
+  Label* fromlabel;
+  Label* tolabel;
+  Label* bylabel;
+  Label* typelabel;
+  ComboBox* typemenu;
+  TextEditor* namebuffer;
+  Label* tickslabel;
+  TextEditor* frombuffer;
+  TextEditor* tobuffer;
+  TextEditor* bybuffer;
+  TextEditor* ticksbuffer;
+  Label* decimalslabel;
+  ComboBox* decimalsmenu;
+};
+
+AxisDialog::AxisDialog (Plotter* pl, int orient)
+    : namelabel (0),
+      fromlabel (0),
+      tolabel (0),
+      bylabel (0),
+      typelabel (0),
+      typemenu (0),
+      namebuffer (0),
+      tickslabel (0),
+      frombuffer (0),
+      tobuffer (0),
+      bybuffer (0),
+      ticksbuffer (0),
+      decimalslabel (0),
+      decimalsmenu (0)
+{
+  plotter=pl;
+  ishorizontal=(orient==Plotter::horizontal) ? true : false;
+  axisview=(ishorizontal) ? plotter->getHorizontalAxisView()
+    : plotter->getHorizontalAxisView();
+  addAndMakeVisible(namelabel = new Label(String::empty, T("Name:")));
+  namelabel->setFont (Font (15.0000f, Font::plain));
+  namelabel->setJustificationType (Justification::centredLeft);
+  namelabel->setEditable (false, false, false);
+  namelabel->setColour (TextEditor::textColourId, Colours::black);
+  namelabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible(namebuffer = new TextEditor(T("namebuf")));
+  namebuffer->setMultiLine (false);
+  namebuffer->setReturnKeyStartsNewLine (false);
+  namebuffer->setReadOnly (false);
+  namebuffer->setScrollbarsShown (true);
+  namebuffer->setCaretVisible (true);
+  namebuffer->setPopupMenuEnabled (true);
+  namebuffer->setText (String::empty);
+  namebuffer->addListener(this);
+
+  addAndMakeVisible(fromlabel = new Label(String::empty, T("From:")));
+  fromlabel->setFont (Font (15.0000f, Font::plain));
+  fromlabel->setJustificationType (Justification::centredLeft);
+  fromlabel->setEditable (false, false, false);
+  fromlabel->setColour (TextEditor::textColourId, Colours::black);
+  fromlabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible(frombuffer = new TextEditor(T("frombuf")));
+  frombuffer->setMultiLine (false);
+  frombuffer->setReturnKeyStartsNewLine (false);
+  frombuffer->setReadOnly (false);
+  frombuffer->setScrollbarsShown (true);
+  frombuffer->setCaretVisible (true);
+  frombuffer->setPopupMenuEnabled (true);
+  frombuffer->setText (String::empty);
+  frombuffer->addListener(this);
+
+  addAndMakeVisible(tolabel = new Label(String::empty, T("To:")));
+  tolabel->setFont (Font (15.0000f, Font::plain));
+  tolabel->setJustificationType (Justification::centredLeft);
+  tolabel->setEditable (false, false, false);
+  tolabel->setColour (TextEditor::textColourId, Colours::black);
+  tolabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible(tobuffer = new TextEditor(T("tobuf")));
+  tobuffer->setMultiLine (false);
+  tobuffer->setReturnKeyStartsNewLine (false);
+  tobuffer->setReadOnly (false);
+  tobuffer->setScrollbarsShown (true);
+  tobuffer->setCaretVisible (true);
+  tobuffer->setPopupMenuEnabled (true);
+  tobuffer->setText (String::empty);
+  tobuffer->addListener(this);
+
+  addAndMakeVisible (bylabel = new Label (String::empty, T("By:")));
+  bylabel->setFont (Font (15.0000f, Font::plain));
+  bylabel->setJustificationType (Justification::centredLeft);
+  bylabel->setEditable (false, false, false);
+  bylabel->setColour (TextEditor::textColourId, Colours::black);
+  bylabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (bybuffer = new TextEditor(T("bybuf")));
+  bybuffer->setMultiLine (false);
+  bybuffer->setReturnKeyStartsNewLine (false);
+  bybuffer->setReadOnly (false);
+  bybuffer->setScrollbarsShown (true);
+  bybuffer->setCaretVisible (true);
+  bybuffer->setPopupMenuEnabled (true);
+  bybuffer->setText (String::empty);
+  bybuffer->addListener(this);
+
+  addAndMakeVisible(typelabel = new Label(String::empty, T("Type:")));
+  typelabel->setFont (Font (15.0000f, Font::plain));
+  typelabel->setJustificationType (Justification::centredLeft);
+  typelabel->setEditable (false, false, false);
+  typelabel->setColour (TextEditor::textColourId, Colours::black);
+  typelabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (typemenu = new ComboBox (String::empty));
+  typemenu->setEditableText (false);
+  typemenu->setJustificationType (Justification::centredLeft);
+  typemenu->addItem (T("unit"), Axis::normalized);
+  typemenu->addItem (T("percent"), Axis::percentage);
+  typemenu->addItem (T("ordinal"), Axis::ordinal);
+  typemenu->addItem (T("seconds"), Axis::seconds);
+  typemenu->addItem (T("note"),  Axis::keynum);
+  typemenu->addItem (T("circle"), Axis::circle);
+  typemenu->addItem (T("generic"), Axis::generic);
+  typemenu->addListener (this);
+
+  addAndMakeVisible(tickslabel = new Label(String::empty, T("Ticks:")));
+  tickslabel->setFont (Font (15.0000f, Font::plain));
+  tickslabel->setJustificationType (Justification::centredLeft);
+  tickslabel->setEditable (false, false, false);
+  tickslabel->setColour (TextEditor::textColourId, Colours::black);
+  tickslabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible(ticksbuffer = new TextEditor(T("ticksbuf")));
+  ticksbuffer->setMultiLine (false);
+  ticksbuffer->setReturnKeyStartsNewLine (false);
+  ticksbuffer->setReadOnly (false);
+  ticksbuffer->setScrollbarsShown (true);
+  ticksbuffer->setCaretVisible (true);
+  ticksbuffer->setPopupMenuEnabled (true);
+  ticksbuffer->setText (String::empty);
+  ticksbuffer->addListener(this);
+  
+  addAndMakeVisible(decimalslabel=new Label(String::empty, ("Decimals:")));
+  decimalslabel->setFont (Font (15.0000f, Font::plain));
+  decimalslabel->setJustificationType (Justification::centredLeft);
+  decimalslabel->setEditable (false, false, false);
+  decimalslabel->setColour (TextEditor::textColourId, Colours::black);
+  decimalslabel->setColour(TextEditor::backgroundColourId, Colour(0x0));
+  
+  addAndMakeVisible (decimalsmenu = new ComboBox (String::empty));
+  decimalsmenu->setEditableText (false);
+  decimalsmenu->setJustificationType (Justification::centredLeft);
+  decimalsmenu->setTextWhenNothingSelected (String::empty);
+  decimalsmenu->setTextWhenNoChoicesAvailable (T("(no choices)"));
+  decimalsmenu->addItem (T("0"), 1);
+  decimalsmenu->addItem (T("1"), 2);
+  decimalsmenu->addItem (T("2"), 3);
+  decimalsmenu->addItem (T("3"), 4);
+  decimalsmenu->addListener (this);
+  updateFields(axisview->getAxis());
+  setSize (476, 78);
+}
+
+AxisDialog::~AxisDialog()
+{
+  deleteAndZero (namelabel);
+  deleteAndZero (fromlabel);
+  deleteAndZero (tolabel);
+  deleteAndZero (bylabel);
+  deleteAndZero (typelabel);
+  deleteAndZero (typemenu);
+  deleteAndZero (namebuffer);
+  deleteAndZero (tickslabel);
+  deleteAndZero (frombuffer);
+  deleteAndZero (tobuffer);
+  deleteAndZero (bybuffer);
+  deleteAndZero (ticksbuffer);
+  deleteAndZero (decimalslabel);
+  deleteAndZero (decimalsmenu);
+}
+
+void AxisDialog::resized()
+{
+  namelabel->setBounds (8, 8, 48, 24);
+  fromlabel->setBounds (8, 40, 48, 24);
+  tolabel->setBounds (136, 40, 32, 24);
+  bylabel->setBounds (248, 40, 24, 24);
+  typelabel->setBounds (184, 8, 48, 24);
+  typemenu->setBounds (232, 8, 96, 24);
+  namebuffer->setBounds (56, 8, 120, 24);
+  tickslabel->setBounds (352, 40, 48, 24);
+  frombuffer->setBounds (56, 40, 56, 24);
+  tobuffer->setBounds (168, 40, 56, 24);
+  bybuffer->setBounds (280, 40, 56, 24);
+  ticksbuffer->setBounds (408, 40, 56, 24);
+  decimalslabel->setBounds (336, 8, 72, 24);
+  decimalsmenu->setBounds (408, 8, 55, 24);
+}
+
+void AxisDialog::updateFields(Axis* ax)
+{
+  namebuffer->setText(String(ax->getName()), false);
+  frombuffer->setText(String(ax->getMinimum()), false);
+  tobuffer->setText(String(ax->getMaximum()), false);
+  bybuffer->setText(String(ax->getIncrement()), false);
+  ticksbuffer->setText(String(ax->getTicks()), false);
+  decimalsmenu->setSelectedId(ax->getDecimals()+1, true);
+  typemenu->setSelectedId(ax->getType(), true);
+}
+
+void AxisDialog::comboBoxChanged (ComboBox* cbox)
+{
+  if (cbox == typemenu)
+    {
+      std::cout << "typemenu \n";
+      Axis a(0);
+      a.init((Axis::AxisType)cbox->getSelectedId());
+      updateFields(&a);
+    }
+  else if (cbox == decimalsmenu)
+    {
+      std::cout << "decimalsmenu \n";
+      axisview->getAxis()->setDecimals(cbox->getSelectedId()-1);
+      axisview->repaint();
+    } 
+}
+
+void AxisDialog::textEditorReturnKeyPressed (TextEditor& editor)
+{
+  double val;
+  Axis* axis=axisview->getAxis();
+  bool redraw=false;
+  if (editor.getName()==T("namebuf"))
+    {
+      axis->setName(editor.getText());
+    }
+  if (editor.getName()==T("frombuf"))
+    {
+      val=editor.getText().getDoubleValue();
+      if (val<axis->getMaximum())
+	{
+	  axis->setMinimum(val);
+	  redraw=true;
+	}
+      else
+	editor.setText(String(axis->getMinimum()), true);
+    }
+  else if (editor.getName()==T("tobuf"))
+    {
+      val=editor.getText().getDoubleValue();
+      if (val>axis->getMinimum())
+	{
+	  axis->setMaximum(val);
+	  redraw=true;
+	}
+      else
+	editor.setText(String(axis->getMaximum()), true);
+    } 
+  else if (editor.getName()==T("bybuf"))
+    {
+      val=editor.getText().getDoubleValue();
+      if (val>0.0)
+	{
+	  axis->setIncrement(val);
+	  redraw=true;
+	}
+      else
+	editor.setText(String(axis->getIncrement()), true);
+    } 
+  else if (editor.getName()==T("ticksbuf"))
+    {
+      int num=editor.getText().getIntValue();
+      if (num>=0)
+	{
+	  axis->setTicks(num);
+	  redraw=true;
+	}
+      else
+	editor.setText(String(axis->getTicks()), true);
+    } 
+  if (redraw)
+    {
+      axisview->repaint();
+      plotter->plotview->resizeForDrawing();
+    }
+}
+
+void PlotterWindow::openAxisDialog (int orient)
+{
+  DialogWindow::showModalDialog(T("Edit Axis"),
+				new AxisDialog(plotter, orient),
+				this,
+				Colour(0xffe5e5e5),
+				false);
 }

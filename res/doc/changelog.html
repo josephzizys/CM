@@ -18,13 +18,17 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   
   <h2>SVN trunk (3.3.0) </h2>
   
-  <ul>
+  <ul> <li class="change">New application: GraceCL is modified version
+     of the Grace environment for use with Common Lisp (SBCL or CLisp)
+     and Common Music 2 releases (version 2.12.0 or higher). GraceCL
+     is intened to be a replacement for running CM2 under Emacs and
+     Slime, as such it does not contain an Audio menu or real time
+     scheduling. To learn how to use GraceCL, start the application
+     and follow the instructions printed in the Console window.</li>
 
-     <li class="change">New application: GraceCL is a
-     version of Grace for Common Lisp (SBCL or CLisp) and CM2, version 2.12.0 or higher. GraceCL is a replacement for Emacs+Slime, it does not
-     contain an Audio menu or a real time scheduler.  </li>
+     <li class="change">New feature: Graphical Plotting windows. Use File&gt;New Plot&gt; or the Scheme function <a href="cm.html#plot">plot</a> to open a new plotting window. See <A href="cm.html#plotting">Plotting</a> for more information.</li>
 
-     <li class="change">New feature: Editor windows now support
+    <li class="change">New feature: Editor windows now support
      'triggers' for interactive evaluation.To add a
      trigger use the Eval&gt;Triggers submenu. Once a trigger is
      attached use it to evaluate the buffer or buffer
@@ -33,11 +37,11 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
      <li class="change">New feature: Command line options are now available for the 'cm' console application. Type 'cm --help' for more information.</li>
 
-     <li class="change">New feature: Audio&gt;MidiIn&gt;Import
+     <li class="change">New feature: Audio&gt;Import
      Midifile... imports data from MIDI files to an editor window, the
      Console window or the clipboard.</li>
 
-    <li class="change">New feature: Audio&gt;MidiOut&gt;Midifile
+    <li class="change">New feature: Audio&gt;Midifile
     Settings... for configuring midifile data. The default time format
     is now ticks per quarter (480) and the default file tempo is now
     60 bpm.</li>
@@ -46,7 +50,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     Audio&gt;MidiOut&gt;Instruments... for Midi instrument channel
     assignment.</li>
 
-    <li class="change">New Feature:  SndLib's Instrument Browser has new AutoLoad button to mark instrument for autoloading at startup.</li>
+    <li class="change">New feature:  SndLib's Instrument Browser has new AutoLoad button to mark instrument for autoloading at startup.</li>
 
     <li class="change">New function:
     <a href="./cm.html#directory">directory</a>
@@ -63,6 +67,10 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     <li class="change">New function:
     <a href="./cm.html#cents-_ratio">cents-&gt;ratio</a>
     </li>
+
+     <li class="change">Enhancement: the current 'working directory' is now saved across sessions as a preference.</li>
+
+     <li class="change">Enhancement: the current instrument assignments are now saved in midifiles by default. Use Audio&gt;Midifile Options...&gt; to toggle the setting.</li>     
 
     <li class="change">Enhancement: Updated Sndlib instruments
     including vkey (vitual sampler), piano.scm and
@@ -97,6 +105,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
     <li class="change">Bug fix: fixed scheduler bug that did not preserve insertion order for nodes with equal time stamps. This may effect scheduling!</li>
 
+    <li class="change">Bug fix: fixed transpose function to transpose note names.</li>
     
     <li class="change">Bug fix: The 'cm' console app now reads input forms that include embedded comments.</li>
 
@@ -160,7 +169,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 <hr/>
 <address></address>
 <p>
-<!-- hhmts start --> Last modified: Mon May 11 09:31:28 CDT 2009 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Sat Jun 27 10:46:43 CDT 2009 <!-- hhmts end -->
 </p>
 </body>
 </html>

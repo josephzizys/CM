@@ -60,9 +60,6 @@ void Grace::initialise(const juce::String& commandLine)
 {
   // Load preference file.
   Preferences::getInstance();
-  // Make user's home folder the working directory on startup
-  File::getSpecialLocation(File::userHomeDirectory).
-    setAsCurrentWorkingDirectory();
   if (SysInfo::isWindows())
     lookandfeel = new WindowsSkin;
   else if (SysInfo::isMac())

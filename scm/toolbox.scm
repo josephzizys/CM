@@ -659,6 +659,9 @@
 		   (map (lambda (z) (modulo (+ z orig) 12)) x)
 		   (transpkeys x orig))
 	       (note (transpkeys (key x) orig)))))
+	((or (symbol? x) (string? x))
+	 (note (+ (key x) y))
+	 )
 	(else
 	 (error "No transposion for" x))))
 

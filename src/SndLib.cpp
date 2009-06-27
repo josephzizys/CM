@@ -54,9 +54,8 @@ SndLib::SndLib()
       {
 	if (autos.containsWholeWord(e->getStringAttribute(T("File"))))
 	  {
-	    std::cout << "initing as autoloaded: " 
-		      << e->getStringAttribute(T("File")).toUTF8() << "\n";
-
+	    //std::cout << "initing as autoloaded: " 
+	    //<< e->getStringAttribute(T("File")).toUTF8() << "\n";
 	    e->setAttribute(T("AutoLoad"), T("yes"));
 	  }
       }
@@ -604,7 +603,7 @@ void SndLib::autoLoadInstruments()
   for (int i=0; i<loads.size(); i++)  
     {
       String str=getInstrumentCode(loads[i]);
-      std::cout << "loading: " << loads[i].toUTF8() << "\n";
+      //      std::cout << "loading: " << loads[i].toUTF8() << "\n";
       s7_eval_c_string(s7, str.toUTF8());
       XmlElement* ins=SndLib::getInstance()->getInstrumentElement(loads[i]);
       ins->setAttribute(T("Loaded"), "yes");

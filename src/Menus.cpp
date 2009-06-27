@@ -77,8 +77,6 @@ const PopupMenu CommandMenus::getAudioMenu()
     tunings.addCommandItem(comm, CommandIDs::MidiOutTuning + i);
   outmenu.addSubMenu(T("Tuning"), tunings);
   outmenu.addCommandItem(comm, CommandIDs::MidiOutInstruments);  
-  outmenu.addSeparator();
-  outmenu.addCommandItem(comm, CommandIDs::MidiOutFileSettings);
   menu.addSubMenu(T("Midi Out"), outmenu);
 
   // Midi In
@@ -105,8 +103,6 @@ const PopupMenu CommandMenus::getAudioMenu()
   for (int i=0; i<NumMidiInOpcodeFilter; i++)
     opfilt.addCommandItem(comm, CommandIDs::MidiInOpcodeFilter+i);
   inmenu.addSubMenu(T("Message Filter"), opfilt);
-  inmenu.addSeparator();
-  inmenu.addCommandItem(comm, CommandIDs::MidiInImportFile);
   menu.addSubMenu(T("Midi In"), inmenu);
 
 #ifdef SNDLIB
@@ -122,7 +118,6 @@ const PopupMenu CommandMenus::getAudioMenu()
   sndlib.addCommandItem(comm, CommandIDs::SndLibInsDialog);
   menu.addSubMenu(T("SndLib"),sndlib);
 #endif
-
   PopupMenu csound;
   csound.addCommandItem(comm, CommandIDs::CsoundPrefWriteAfter);
   csound.addCommandItem(comm, CommandIDs::CsoundPrefPlayAfter);
@@ -132,7 +127,6 @@ const PopupMenu CommandMenus::getAudioMenu()
   csound.addSeparator();
   csound.addCommandItem(comm, CommandIDs::CsoundOpenSettings);
   menu.addSubMenu(T("Csound"), csound);
-
 #ifdef WITHFOMUS
   PopupMenu fomus;
   size = jlimit(0, CommandMenus::NumFomusScore-1,
@@ -151,11 +145,12 @@ const PopupMenu CommandMenus::getAudioMenu()
   fomus.addCommandItem(comm, CommandIDs::FomusDocumentation);
   menu.addSubMenu(T("Fomus"), fomus);
 #endif
-
+  menu.addSeparator();
+  menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);
+  menu.addCommandItem(comm, CommandIDs::MidiOutFileSettings);
+  menu.addCommandItem(comm, CommandIDs::MidiInImportFile);
   menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::AudioOpenFilePlayer);
-  menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);
-  menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::AudioSettings);
   return menu;
 }

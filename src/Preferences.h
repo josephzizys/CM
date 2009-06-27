@@ -31,6 +31,8 @@ class Preferences
   String getStringProp(String name, String def=T(""));
   void setStringProp(String name, String val);
 
+  void removeProp(String name);
+
   XmlElement* getXmlProp(String name, XmlElement* xml=NULL);
   void setXmlProp(String name, XmlElement* val);
 

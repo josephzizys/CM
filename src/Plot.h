@@ -50,7 +50,8 @@ class Axis
     seconds,
     hertz,        // log plotting (not implemented yet)
     circle,
-    ordinal
+    ordinal,
+    generic
   };
   String name;
   AxisType type; 
@@ -87,7 +88,7 @@ class Axis
 	from=0; to=1; by=1; ticks=1; decimals=0;
 	break;
       case normalized :
-	from=0.0; to=1.0; by=0.25; ticks=5;
+ 	from=0.0; to=1.0; by=0.25; ticks=5;
 	break;
       default :
 	break;
@@ -149,7 +150,10 @@ class Axis
 	  }
       }
   }
-  
+  int getType() {return type;}
+  void setType(int n) {type=(AxisType)n;}
+  String getName() {return name;}
+  void setName(String n) {name=n;}
   double getMinimum() {return from;}
   void setMinimum(double v) {from=v;}
   double getMaximum() {return to;}
@@ -180,6 +184,7 @@ class Axis
       case hertz : return T("hertz");
       case circle : return T("circle");
       case ordinal : return T("ordinal");
+      case generic : return T("generic");
       case unspecified :
       default: return T("");
       } 
@@ -536,7 +541,8 @@ class AxisView : public Component
   void mouseDown(const MouseEvent &e) ;
   void mouseDrag(const MouseEvent &e) ;
   void mouseUp(const MouseEvent &e) ;
-  
+  void mouseDoubleClick(const MouseEvent &e) ;
+
 };
 
 ///
@@ -696,7 +702,9 @@ class PlotterWindow : public DocumentWindow, public MenuBarModel
   const PopupMenu getMenuForIndex (int idx, const String &name);
   void menuItemSelected (int id, int idx);
   void closeButtonPressed () ;
-  void showExportPointsDialog();
+  void openExportDialog();
+  void openLayerDialog();
+  void openAxisDialog(int orient);
   static void openXml(String str);
   static void openXml(File fil);
   bool save(bool saveas=false);

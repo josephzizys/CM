@@ -2948,6 +2948,19 @@ Returns the current time of the scheduler. See also <a href="#elapsed"><code>ela
 
 <h2 id="plotting">Plotting</h2>
 
+<p>Plotting windows support graphic display and editing of multi-dimensionl data sets.</p>
+
+<ul>
+  <li>Use File&gt;New Plot</a> or the Scheme API defined below to create a new plot</li>
+  <li>Control-click in plot to add new points</li>
+  <li>Click or click-drag region to select points</li>
+  <li>Press delete key to delete points</li>
+  <li>Double-click on background to edit layer properties</li>
+  <li>Click drag on axis' ruler to zoom axis</li>
+  <li>Double-click on axis' ruler to edit axis properties</li>
+</ul>
+
+
 <!-- DEFINITION< -->
 <table class="entry" id="plot">
   <tr class="entry">
@@ -2961,8 +2974,8 @@ Returns the current time of the scheduler. See also <a href="#elapsed"><code>ela
 <blockquote>
 <p>
 
-Creates a 2 dimensional plot given zero or more global plot settings
-optionally followed by layers of plotting data with layer-specific
+Opens a new plot window given zero or more global plot settings
+ followed by optional layers of plotting data with layer-specific
 settings. Each <var>pointlist</var> is a list in one of the following
 formats:
 

@@ -25,13 +25,19 @@ Preferences::Preferences()
   recentlyPlayed.setMaxNumberOfItems(8);
   recentlyPlayed.restoreFromString(props->getValue(T("RecentlyPlayedFiles")));
   recentlyPlayed.removeNonExistentFiles();
+  String working=props->getValue(T("WorkingDirectory"));
+  if (!working.isEmpty())
+    File(working).setAsCurrentWorkingDirectory();
+  else
+    File::getSpecialLocation(File::userHomeDirectory).
+      setAsCurrentWorkingDirectory();
 }
 
 Preferences::~Preferences()
 {
-    flush();
-    deleteAndZero (props);
-    clearSingletonInstance();
+  flush();
+  deleteAndZero (props);
+  clearSingletonInstance();
 }
 
 PropertiesFile& Preferences::getProps()
@@ -47,6 +53,8 @@ void Preferences::flush()
       props->setValue(T("RecentlyOpenedFiles"), recentlyOpened.toString());
       props->setValue(T("RecentlyLoadedFiles"), recentlyLoaded.toString());
       props->setValue(T("RecentlyPlayedFiles"), recentlyPlayed.toString());
+      props->setValue(T("WorkingDirectory"), 
+		      File::getCurrentWorkingDirectory().getFullPathName());
     }
 }
 
@@ -115,4 +123,7 @@ void Preferences::setXmlProp(String name, XmlElement* val)
   props->setValue(name, val);
 }
 
-
+void Preferences::removeProp(String name)
+{
+  return props->removeValue(name);
+}
