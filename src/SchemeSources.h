@@ -6,7 +6,7 @@
 namespace SchemeSources
 {
     extern const char*  chickenforeign_scm;
-    const int           chickenforeign_scmSize = 7015;
+    const int           chickenforeign_scmSize = 7154;
 
     extern const char*  chicken_scm;
     const int           chicken_scmSize = 3144;
@@ -18,7 +18,7 @@ namespace SchemeSources
     const int           fomus_scmSize = 9471;
 
     extern const char*  genffi_scm;
-    const int           genffi_scmSize = 21178;
+    const int           genffi_scmSize = 21304;
 
     extern const char*  loop_scm;
     const int           loop_scmSize = 39510;
@@ -27,10 +27,10 @@ namespace SchemeSources
     const int           patterns_scmSize = 35603;
 
     extern const char*  plot_scm;
-    const int           plot_scmSize = 7579;
+    const int           plot_scmSize = 9719;
 
     extern const char*  ports_scm;
-    const int           ports_scmSize = 15840;
+    const int           ports_scmSize = 16956;
 
     extern const char*  processes_scm;
     const int           processes_scmSize = 7135;

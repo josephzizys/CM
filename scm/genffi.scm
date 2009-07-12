@@ -100,6 +100,8 @@
     (ffi_mp_set_channel_mask void "mp_set_channel_mask" int)
     (ffi_mp_set_message_mask void "mp_set_message_mask" int)
     (ffi_mp_set_tuning void "mp_set_tuning" int)
+    (ffi_mp_set_instruments void "mp_set_instruments"
+			    int int int int int int int int int int int int int int int int)
     (ffi_mp_play_seq void "mp_play_seq")
     (ffi_mp_save_seq void "mp_save_seq")
     (ffi_mp_copy_seq void "mp_copy_seq")

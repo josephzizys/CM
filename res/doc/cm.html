@@ -410,8 +410,6 @@ The largest negative fixed point integer representable in this Lisp implementati
 </blockquote>
 <!-- END DEFINITION -->
 
-
-
 <h3 id="lists">Lists</h3>
 
 <!-- DEFINITION -->
@@ -556,7 +554,7 @@ Return a copy of <var>list</var> with duplicate elements removed.
 Prepends elements in <var>...</var> onto the front of <var>list</var>.
 </p>
 </blockquote>
-END DEFINITION -->
+<!-- END DEFINITION -->
 
 <!-- DEFINITION -->
 <table class="entry" id="concat">
@@ -623,6 +621,48 @@ Sets the element at <var>pos</var> position in <var>list</var> to <var>val</var>
 </p>
 </blockquote>
 <!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="sort">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">sort</span>
+      (<var class="arg">list</var>  [<var class="opt">comparator</var> <code>&lt</code>])
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a sorted copy of <var>list</var> given a pairwise <var>comparator</var> function of two arguments. The comparator should return true if the value  in its first argument will appear before the value in the second argument in the sorted results, otherwise the comparator should return false. The default comparator is <code>&lt;</code>.  
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="sort!">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">sort!</span>
+      (<var class="arg">list</var>  [<var class="opt">comparator</var> <code>&lt</code>])
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Exactly like <a href="#sort"><code>sort</code></a> except that <var>list</var> is destructively modified to hold the sorted results.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+
+
+
+
 
 <h3 id="mapping">Mapping and Transformation</h3>
 
@@ -2486,6 +2526,22 @@ Send note on data to midi port.
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
+<table id="mp:instruments" class="entry">
+  <tr class="entry">
+    <td class="formals"><span class="commandname">send</span>
+      <span class="string">"mp:instruments"</span>, <var class="arg">pc</var><var class="rest">...</var></td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Sends up to sixteen program changes out the Midi port and updates the port's instrument table. The position of each value specifies the channel it is sent to, ie the first program change is sent to channel 0 and so on. To skip a particular channel provide #f as its program change value.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
 <table id="mp:ctrl" class="entry">
   <tr class="entry">
     <td class="formals"><span class="commandname">send</span> <span class="string">"mp:ctrl"</span>, <var class="optkey">time</var> <var class="optval"> = 0</var>, <var class="optkey">num</var> <var class="optval"> = 0</var>, <var class="optkey">val</var> <var class="optval"> = 0</var>, <var class="optkey">chan</var> <var class="optval"> = 0</var></td>
@@ -2542,31 +2598,12 @@ Sends channel pressure value to midi port.
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
-
 <blockquote>
 <p>
 Sends pitch bend value 0-16383 to midi port.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
-
-<!-- DEFINITION -->
-<table id="mp:tuning" class="entry">
-  <tr class="entry">
-    <td class="formals"><span class="commandname">send</span>
-      <span class="string">"mp:tuning"</span>, <var class="arg">div</var></td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
-
-<blockquote>
-<p>
-Sets the tuning resolution of the Midi Out port to <var>div</var> steps per semitone.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
 
 <h4 id="midi_options">Midi Out File Options</h4>
 

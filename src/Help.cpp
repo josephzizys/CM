@@ -313,6 +313,9 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("chdir"), T("cm.html#chdir"));
   cm.set(T("cont"), T("cm.html#cont"));
   cm.set(T("concat"), T("cm.html#concat"));
+  cm.set(T("cs:i"), T("cm.html#cs:i"));
+  cm.set(T("cs:f"), T("cm.html#cs:f"));
+  cm.set(T("cs:clear"), T("cm.html#cs:clear"));
   cm.set(T("cwd"), T("cm.html#cwd"));
   cm.set(T("decimals"), T("cm.html#decimals"));
   cm.set(T("discrete"), T("cm.html#discrete"));
@@ -421,18 +424,17 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("retrograde"), T("cm.html#retrograde"));
   cm.set(T("rm-spectrum"), T("cm.html#rm-spectrum"));
   cm.set(T("run"), T("cm.html#run"));
-  cm.set(T("cs:i"), T("cm.html#cs:i"));
-  cm.set(T("cs:f"), T("cm.html#cs:f"));
-  cm.set(T("cs:clear"), T("cm.html#cs:clear"));
+
+  cm.set(T("scale"), T("cm.html#scale"));
+  cm.set(T("scale-order"), T("cm.html#scale-order"));
   cm.set(T("second"), T("cm.html#second"));
+  cm.set(T("segs"), T("cm.html#segs"));
   cm.set(T("send"), T("cm.html#send"));
   cm.set(T("seventh"), T("cm.html#seventh"));
   cm.set(T("shuffle"), T("cm.html#shuffle"));  
   cm.set(T("sixth"), T("cm.html#sixth"));  
-  cm.set(T("sprout"), T("cm.html#sprout"));
-  cm.set(T("scale"), T("cm.html#scale"));
-  cm.set(T("scale-order"), T("cm.html#scale-order"));
-  cm.set(T("segs"), T("cm.html#segs"));
+  cm.set(T("sort"), T("cm.html#sort"));
+  cm.set(T("sort!"), T("cm.html#sort!"));
   cm.set(T("spectrum-add!"), T("cm.html#spectrum-add_"));  
   cm.set(T("spectrum-copy"), T("cm.html#spectrum-copy"));
   cm.set(T("spectrum-flip!"), T("cm.html#spectrum-flip_"));  
@@ -446,6 +448,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("spectrum-rescale!"), T("cm.html#spectrum-rescale_"));  
   cm.set(T("spectrum-size"), T("cm.html#spectrum-size"));  
   cm.set(T("spectrum-time"), T("cm.html#spectrum-time"));  
+  cm.set(T("sprout"), T("cm.html#sprout"));
   cm.set(T("stop"), T("cm.html#stop"));
   cm.set(T("times"), T("cm.html#times"));
   cm.set(T("tail"), T("cm.html#tail"));

@@ -182,6 +182,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     // Audio
     CommandIDs::AudioOpenFilePlayer,
     CommandIDs::MidiFilePlayer,
+    CommandIDs::MidiPlotPlayer,
     CommandIDs::AudioSettings,
 
     CommandIDs::SndLibSrate + 0,
@@ -574,6 +575,15 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       info.shortName=T("Play Midi File...");
       info.setActive(false);
       break;
+    case CommandIDs::MidiPlotPlayer:
+      info.shortName=T("Play Plot...");
+      info.setActive(WindowTypes::isWindowType
+		     (TopLevelWindow::getActiveTopLevelWindow(),
+		      WindowTypes::PlotWindow)
+		     && MidiOutPort::getInstance()->isOpen()
+		     );
+      break;
+
     case CommandIDs::AudioSettings:
       info.shortName=T("Audio Settings...");
       break;
@@ -669,6 +679,9 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::MidiOutTest:
       MidiOutPort::getInstance()->testOutput();
       break;
+    case CommandIDs::MidiOutHush:
+      MidiOutPort::getInstance()->clear();
+      break;
     case CommandIDs::MidiOutTuning:
       MidiOutPort::getInstance()->setTuning(data);
       break;
@@ -728,6 +741,14 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       break;
     case CommandIDs::MidiFilePlayer:
       break;
+    case CommandIDs::MidiPlotPlayer:
+      {
+	TopLevelWindow* w=TopLevelWindow::getActiveTopLevelWindow();
+	if (WindowTypes::isWindowType(w,WindowTypes::PlotWindow))
+	  ((PlotterWindow*)w)->openPlayPlotDialog();
+      }
+      break;
+
     case CommandIDs::AudioSettings:
       AudioManager::getInstance()->openAudioSettings();
       break;

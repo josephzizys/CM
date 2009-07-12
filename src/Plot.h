@@ -107,7 +107,7 @@ class Axis
     ticks (5)
   {
     StringArray range;
-    String str=(ax) ? ax->getStringAttribute(T("range")) : String::empty;
+    String str=(ax) ? ax->getStringAttribute(T("axis")) : String::empty;
     range.addTokens(str,false);
     if (range.size()>0)
       {
@@ -285,7 +285,7 @@ class Layer
     : transp(true),
     _x (0),
     _y (1),
-    _z (0),
+    _z (2),
     _defaults (NULL)
     {
       static int layerid=1;
@@ -705,6 +705,8 @@ class PlotterWindow : public DocumentWindow, public MenuBarModel
   void openExportDialog();
   void openLayerDialog();
   void openAxisDialog(int orient);
+  void openPlayPlotDialog();
+
   static void openXml(String str);
   static void openXml(File fil);
   bool save(bool saveas=false);

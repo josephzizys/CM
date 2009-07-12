@@ -1,20 +1,20 @@
-;; create empty plot window, then Control-click in window to add points
+;; Create empty plot window, then Control-click in window to add points
 
 (plot )
 
-;; export window's plot data and store in a variable
+;; Export window's plot data and store in a variable
 
 (define mydata (plot-data "Untitled Plot"))
 
-;; create a titled plot
+;; Create a titled plot
 
 (plot :title "Hi Ho!" '(0 0 .25 1 .75 1 1 0))
 
-;; create a plot with two layers of points
+;; Create a plot with two layers of points
 
 (plot '(0 0 .25 1 .75 1 1 0) '(0 0 1 1))
 
-;; customize axes, add three named layers of points
+;; Customize axes, add three named layers of points
 
 (plot :title "My envelopes"
       :xaxis 'percent 
@@ -24,7 +24,7 @@
       '(0 0 50 1 100 0) :title "updown"
       )
 
-;; pass only Y values to plot 
+;; Pass only Y values to plot 
 
 (plot :title "Random numbers" 
       :yaxis 'unit
@@ -39,18 +39,22 @@
       (loop for i to 100 by 10 collect i collect (random 1.0))
       :style :points)
 
-;; Plot three fields of data, with duration sharing same axis as time.
+;; Piano roll plot of 5-fields of midi data with duration on time axis
 
-(plot :title "Random Notes"
-      :fields '((time seconds) (keynumber notes 60 96) (duration time))
-      :style :hbox
-      (loop repeat 20 
+(plot :title "Midi Notes"
+      :fields '((time seconds) (dur time) (keynum notes 60 96)
+                (amplitude unit) (chan 0 15))
+      :xaxis '(time dur)
+      :yaxis 'keynum
+      :style 'hbox
+      (loop repeat 20 with amp = .7
             for beg = 0 then (+ beg (random 1.0))
             for dur = (pick .1 .2 .3)
             for key = (between 60 96)
-            collect (list beg key dur)))
+            for chan = (random 16)
+            collect (list beg dur key amp chan)))
 
-;; compute layers on the fly
+;; Compute layers on the fly
 
 (plot (loop for x from 0 to 1 by .2
             for y = (random 1.0)
@@ -62,7 +66,7 @@
             for y = (expt 10 (- x))
             collect x collect y))
 
-;; plot a 'mean distribution' and its histogram in the same window
+;; Plot a 'mean distribution' and its histogram in the same window
 
 (let* ((maxh 0)
        (hist (make-list 100 0))
@@ -99,6 +103,75 @@
             collect r collect (sin r))
       :style 'vlineandpoint
       )
+
+
+;; michael klingbeil's stretched harmonics example
+
+(define (arpeggiate-exprhy keynums offset duration rate midpoint-frac
+                           amplow amphi legato bass-legato
+                           bass-cutoff last-legato)
+  (let* ((segn (length keynums))
+         (last (- segn 1))
+         (midpoint (floor (* segn midpoint-frac)))
+         ;; deltas below midpoint follow one curve, above another.
+         (deltas (append (segs midpoint (* midpoint-frac duration) 1 rate)
+                         (segs (- segn midpoint) 
+                               (* (- 1 midpoint-frac) duration)
+			                            1 
+                               (/ 1 rate)))))
+    (loop with time = 0
+          for i from 0
+          for k in keynums
+          for d in deltas
+          for r = (if (< k bass-cutoff)
+                      bass-legato
+                      (if (= i last)
+                          (* last-legato d)
+                          (* legato d)))
+          for a = (between 0.45 0.5)
+          collect (list (+ offset time)
+                        k
+                        r
+                        a)
+       	  do (set! time (+ time d)))))
+
+(define (distort-harmonics fund distort)
+  (loop for h from 1 below (floor (/ 25.0 distort)) 
+        if (odds (* 0.9 distort))
+        collect (key (* fund (expt h distort)))))
+
+(define (arpa-harmonic note dur gap)
+  ;; spawn overlapping arpeggios with mean duration of dur and mean
+  ;; gap between arpeggio starts of gap seconds. each arpeggio is
+  ;; upward with the general direction of arpeggio starting notes
+  ;; moving downward
+  (let ((result (list)))
+    (loop with fund = (hz note) and time = 0
+          for distort from 0.7 below 1.05 by 0.05
+          for notes = (distort-harmonics fund distort)
+          for arpa = (arpeggiate-exprhy notes
+                                        time (* (vary dur 0.1) distort)
+                                        (between 4.0 0.25)
+                                        (between 0.3 0.6)
+                                        0.3  ; amplow
+                                        0.8  ; amphi
+                                        (* dur distort 0.7) ; bass legato
+                                        2.0   ; legato 
+                                        59    ; bass cutoff
+                                        1.0)
+          do
+       	  (set! result (sort! (append result arpa) 
+                     	      (lambda (a b) (< (car a) (car b)))))
+       	  (set! time (+ time (vary gap 0.4))))
+    result))
+
+;; create two layers of notes
+
+(plot :title "Arpa Harmonic"
+      :style :hbox
+      :fields '((start seconds) (keyn note) (dur start) (amp unit))
+      (arpa-harmonic 'g1 7.0 5.0)
+      (arpa-harmonic 'g1 7.0 5.0))
 
 
 

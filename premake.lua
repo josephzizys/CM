@@ -46,7 +46,7 @@ if amalgamated then
    juce_library.buildflags = {"static-runtime"}
    juce_library.files = {"src/juce.h", "src/juce_amalgamated.cpp", "src/juce_amalgamated.h"}
    if macosx then
-      juce_library.buildoptions = {"-x objective-c++"}
+      juce_library.buildoptions = {"-x objective-c++", "-w"}
       add(juce_library.defines, "MACOSX")
    elseif linux then
       add(juce_library.defines, "LINUX")

@@ -123,6 +123,8 @@ void mp_plot_seq();
 void mp_clear_seq();
 
 void mp_set_tuning(int div);
+void mp_set_instruments(int a,int b,int c,int d,int e,int f,int g,int h,
+			int i,int j,int k,int l,int m,int n,int o,int p);
 void mp_set_channel_mask(int m);
 void mp_set_message_mask(int m);
 void mp_set_midi_input_hook(SCHEMEPROC proc);

@@ -783,6 +783,28 @@ void mp_set_tuning(int div)
 					     div);
 }
 
+void mp_set_instruments(int a,int b,int c,int d,int e,int f,int g,int h,
+			int i,int j,int k,int l,int m,int n,int o,int p)
+{
+  if (a>=0) MidiOutPort::getInstance()->setInstrument(0,a);
+  if (b>=0) MidiOutPort::getInstance()->setInstrument(1,b);
+  if (c>=0) MidiOutPort::getInstance()->setInstrument(2,c);
+  if (d>=0) MidiOutPort::getInstance()->setInstrument(3,d);
+  if (e>=0) MidiOutPort::getInstance()->setInstrument(4,e);
+  if (f>=0) MidiOutPort::getInstance()->setInstrument(5,f);
+  if (g>=0) MidiOutPort::getInstance()->setInstrument(6,g);
+  if (h>=0) MidiOutPort::getInstance()->setInstrument(7,h);
+  if (i>=0) MidiOutPort::getInstance()->setInstrument(8,i);
+  if (j>=0) MidiOutPort::getInstance()->setInstrument(9,j);
+  if (k>=0) MidiOutPort::getInstance()->setInstrument(10,k);
+  if (l>=0) MidiOutPort::getInstance()->setInstrument(11,l);
+  if (m>=0) MidiOutPort::getInstance()->setInstrument(12,m);
+  if (n>=0) MidiOutPort::getInstance()->setInstrument(13,n);
+  if (o>=0) MidiOutPort::getInstance()->setInstrument(14,o);
+  if (p>=0) MidiOutPort::getInstance()->setInstrument(15,p);
+  MidiOutPort::getInstance()->sendInstruments();
+}
+
 void mp_play_seq()
 {
   MidiOutPort::getInstance()->performCommand(CommandIDs::MidiSeqPlay);
@@ -943,7 +965,6 @@ char* plot_data(char* title, int all)
   PlotterWindow* w=PlotterWindow::getPlotWindow(String(title));
   if (w!=NULL)
     {
-      std::cout << "got window\n";
       int nlayer=w->plotter->numLayers();
       int nfield=w->plotter->numFields();
       if ((nlayer>1) && all)

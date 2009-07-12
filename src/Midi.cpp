@@ -772,7 +772,7 @@ void MidiOutPort::clear()
   outputNodes.clear();
   // avoid hanging notes
   if ( device != 0 )
-    for ( int i=0; i< 16; i++ )
+    for ( int i=1; i<=16; i++ )
       device->sendMessageNow( MidiMessage::allSoundOff(i) );
   outputNodes.unlockArray();
 }
@@ -1126,6 +1126,10 @@ int MidiOutPort::getInstrument(int chan)
   return programchanges[chan];
 }
 
+void MidiOutPort::setInstrument(int chan, int prog) 
+{
+  programchanges[chan]=prog;
+}
 
 void MidiOutPort::getInstruments(Array<int>& vals)
 {
@@ -1133,9 +1137,23 @@ void MidiOutPort::getInstruments(Array<int>& vals)
     vals.add(getInstrument(chan));
 }
 
-void MidiOutPort::setInstrument(int chan, int pc, bool send) 
+//void MidiOutPort::setInstrument(Array<int>& vals) 
+//{
+//  programchanges[chan]=pc;
+//}
+
+//void MidiOutPort::setInstruments(int chan, int pc, bool send) 
+//{
+//  programchanges[chan]=pc;
+//}
+ 
+void MidiOutPort::setInstruments(Array<int>& vals, bool send) 
 {
-  programchanges[chan]=pc;
+  for (int i=0; i<vals.size(); i++)
+    if (vals[i]>=0 && vals[i]<=127)
+      setInstrument(i,vals[i]);
+  if (send)
+    sendInstruments();
 }
 
 void MidiOutPort::resetInstruments()

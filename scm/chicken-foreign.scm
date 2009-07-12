@@ -75,6 +75,7 @@
 (define ffi_mp_set_channel_mask (foreign-lambda void "mp_set_channel_mask" int))
 (define ffi_mp_set_message_mask (foreign-lambda void "mp_set_message_mask" int))
 (define ffi_mp_set_tuning (foreign-lambda void "mp_set_tuning" int))
+(define ffi_mp_set_instruments (foreign-lambda void "mp_set_instruments" int int int int int int int int int int int int int int int int))
 (define ffi_mp_play_seq (foreign-lambda void "mp_play_seq"))
 (define ffi_mp_save_seq (foreign-lambda void "mp_save_seq"))
 (define ffi_mp_copy_seq (foreign-lambda void "mp_copy_seq"))

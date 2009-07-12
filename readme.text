@@ -118,6 +118,11 @@ To build against the juce debug libs:
 
     $ make CONFIG=Debug
 
+To build universal:
+
+    $ make CONFIG=Release TARGET_ARCH="-arch i386 -arch ppc"
+
+
 To create the embedded Scheme runtime sources:
 
     $ juce_bb scm src SchemeSources

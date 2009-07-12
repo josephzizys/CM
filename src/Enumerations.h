@@ -600,7 +600,8 @@ class CommandIDs
   // Audio Menu
   static const CommandID AudioOpenFilePlayer = COMID(Audio, 1);
   static const CommandID MidiFilePlayer = COMID(Audio, 2);
-  static const CommandID AudioSettings = COMID(Audio, 3);
+  static const CommandID MidiPlotPlayer = COMID(Audio, 3);
+  static const CommandID AudioSettings = COMID(Audio, 4);
 
   // SndLib
   static const CommandID SndLibSrate = COMID(SndLib, 1);
@@ -634,19 +635,20 @@ class CommandIDs
   static const CommandID PlotterSave = COMID(Plotter, 4);
   static const CommandID PlotterRename = COMID(Plotter, 5);
   static const CommandID PlotterExport = COMID(Plotter, 6);
-  static const CommandID PlotterLayerAdd = COMID(Plotter, 7);
-  static const CommandID PlotterLayerDelete = COMID(Plotter, 8);
-  static const CommandID PlotterLayerEdit = COMID(Plotter, 9);
-  static const CommandID PlotterAxisEdit = COMID(Plotter, 10);
-  static const CommandID PlotterLayerRename = COMID(Plotter, 11);
-  static const CommandID PlotterLayerSelect = COMID(Plotter, 12);
-  static const CommandID PlotterStyle = COMID(Plotter, 13);
-  static const CommandID PlotterBgStyle = COMID(Plotter, 14);
-  static const CommandID PlotterBgColor = COMID(Plotter, 15);
-  static const CommandID PlotterBgPlotting = COMID(Plotter, 16);
-  static const CommandID PlotterBgMousing = COMID(Plotter, 17);
-  static const CommandID PlotterVertical = COMID(Plotter, 18);
-  static const CommandID PlotterHorizontal = COMID(Plotter, 19);
+  static const CommandID PlotterClose = COMID(Plotter, 7);
+  static const CommandID PlotterLayerAdd = COMID(Plotter, 8);
+  static const CommandID PlotterLayerDelete = COMID(Plotter, 9);
+  static const CommandID PlotterLayerEdit = COMID(Plotter, 10);
+  static const CommandID PlotterAxisEdit = COMID(Plotter, 11);
+  static const CommandID PlotterLayerRename = COMID(Plotter, 12);
+  static const CommandID PlotterLayerSelect = COMID(Plotter, 13);
+  static const CommandID PlotterStyle = COMID(Plotter, 14);
+  static const CommandID PlotterBgStyle = COMID(Plotter, 15);
+  static const CommandID PlotterBgColor = COMID(Plotter, 16);
+  static const CommandID PlotterBgPlotting = COMID(Plotter, 17);
+  static const CommandID PlotterBgMousing = COMID(Plotter, 18);
+  static const CommandID PlotterVertical = COMID(Plotter, 19);
+  static const CommandID PlotterHorizontal = COMID(Plotter, 20);
 
 };
 

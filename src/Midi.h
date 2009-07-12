@@ -237,8 +237,10 @@ class MidiOutPort : public Thread //, public AsyncUpdater
   // instruments
   int programchanges[16];
   int getInstrument(int chan);
+  void setInstrument(int chan, int prog);
   void getInstruments(Array<int>& vals);
-  void setInstrument(int chan, int pc, bool send=false);
+  void setInstruments(Array<int>& vals, bool send);
+  //  void setInstrument(int chan, int pc, bool send=false);
   bool isInstrumentChannel(int chan);
   void sendInstruments();
   void resetInstruments();

@@ -146,6 +146,7 @@ const PopupMenu CommandMenus::getAudioMenu()
   menu.addSubMenu(T("Fomus"), fomus);
 #endif
   menu.addSeparator();
+  menu.addCommandItem(comm, CommandIDs::MidiPlotPlayer);
   menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);
   menu.addCommandItem(comm, CommandIDs::MidiOutFileSettings);
   menu.addCommandItem(comm, CommandIDs::MidiInImportFile);
