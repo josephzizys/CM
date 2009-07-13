@@ -27,7 +27,7 @@
 
 juce_ImplementSingleton(FomusSyntax) ;
 
-#warning "get rid of debugging output"
+//#warning "get rid of debugging output"
 
 // Notes:
 // Make sure this is in the ConsoleWindow class in Console.h:
@@ -1776,7 +1776,8 @@ void Fomus::loadScoreDialog()
 
 void Fomus::renameScoreDialog() 
 {
-  #warning "todo: file extensions should come from fomus infoapi function"
+  #warning "todo: file extensions should come from a fomus infoapi function"
+  // also fix eval functio below
   WildcardFileFilter wildcardFilter(T("*.fms;*.ly;*.xml"), T("FOMUS Output Files"));
   FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
   FileChooserDialogBox dialogBox(T("Rename Score"), T("Specify an output file path (`filename' setting value)..."),
@@ -1976,9 +1977,17 @@ void FomusSyntax::eval(String text, bool isRegion, bool expand) {
     fomus_free(f);
     return;
   }
+  if (String(fomus_get_sval(f, "filename")).isEmpty()) {
+    WildcardFileFilter wildcardFilter(T("*.fms;*.ly;*.xml"), T("FOMUS Output Files"));
+    FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
+    FileChooserDialogBox dialogBox(T("Run FOMUS"), T("Specify an output file path (`filename' setting value)..."),
+				   browser, false, Colours::white);
+    if (dialogBox.show()) {
+      fomus_sval(f, fomus_par_setting, fomus_act_set, "filename");
+      fomus_sval(f, fomus_par_settingval, fomus_act_set, browser.getCurrentFile().getFullPathName().toUTF8());
+    }
+  }
   fomus_run(f); // fomus destroys instance automatically
 }
 
-
 #endif
-
