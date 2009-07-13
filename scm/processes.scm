@@ -247,8 +247,8 @@
 	    (error "Not an integer id" (car tail)))))
   (void))
 
-(define (hush )
-  (ffi_sched_hush))
+;(define (hush )
+;  (ffi_sched_hush))
 
 (define (busy? )
   (ffi_sched_busy_p))

@@ -331,7 +331,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("fm-spectrum"), T("cm.html#fm-spectrum"));
   cm.set(T("fourth"), T("cm.html#fourth"));
   cm.set(T("hz"), T("cm.html#hz"));
-  cm.set(T("hush"), T("cm.html#hush"));
+  //  cm.set(T("hush"), T("cm.html#hush"));
   cm.set(T("int"), T("cm.html#int"));
   cm.set(T("import-spear-frames"), T("cm.html#import-spear-frames"));
   cm.set(T("key"), T("cm.html#key"));

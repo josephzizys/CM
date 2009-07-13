@@ -33,7 +33,7 @@ namespace SchemeSources
     const int           ports_scmSize = 16956;
 
     extern const char*  processes_scm;
-    const int           processes_scmSize = 7135;
+    const int           processes_scmSize = 7137;
 
     extern const char*  s7_scm;
     const int           s7_scmSize = 5161;

@@ -2904,24 +2904,13 @@ use the true score time as the time stamp fror the data, see <a
 
 <blockquote>
 <p>
-Stops processes currently running in the scheduling queue. If no
-ids are given all the processes are stopped, otherwise only processes
-with the specified ids are removed. Multiple processes can share a
-common id.
+Stops processes currently running in the scheduling queue. If no ids
+are given all the processes are stopped and any pending events in the
+midi output queue are also flushed. Otherwise only processes with the
+specified ids are stopped. Note that multiple processes can share a
+common id, in which cases all the processes with that id are stopped.
 </p>
 </blockquote>
-
-<!-- DEFINITION -->
-<table class="entry" id="hush">
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">hush</span>
-      ()
-    </td>
-    <!-- td class="label">SAL</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
-</table>
 
 <blockquote>
 <p>

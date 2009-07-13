@@ -341,7 +341,7 @@ int MidiOutPort::performCommand(CommandID id, int data, String text)
       break;
 
     case CommandIDs::MidiOutHush :
-      Scheme::getInstance()->stop();
+      //Scheme::getInstance()->stop();
       clear();
       break;
 

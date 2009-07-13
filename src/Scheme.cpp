@@ -654,6 +654,10 @@ void Scheme::stopProcesses(int id) {
 	schemeNodes.remove(i,true);
   }
   schemeNodes.unlockArray();
+  // if stopped all processes also clear any pending messages and send
+  // all notes off
+  if (id<0)
+    MidiOutPort::getInstance()->clear();
 }
 
 bool Scheme::isQueueEmpty()

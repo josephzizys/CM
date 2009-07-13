@@ -684,7 +684,8 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       MidiOutPort::getInstance()->testOutput();
       break;
     case CommandIDs::MidiOutHush:
-      MidiOutPort::getInstance()->clear();
+      Scheme::getInstance()->stop(-1);
+      //      MidiOutPort::getInstance()->clear();
       break;
     case CommandIDs::MidiOutTuning:
       MidiOutPort::getInstance()->setTuning(data);
