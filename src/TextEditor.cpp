@@ -13,6 +13,9 @@
 #include "Syntax.h"
 #include "Help.h"
 #include <iostream>
+#ifdef WITHFOMUS
+#include "Fomus.h"
+#endif
 
 /*=======================================================================*
                              TextEditorWindow
@@ -23,20 +26,24 @@ TextEditorWindow::TextEditorWindow (File file, String text, int synt,
   : DocumentWindow (String::empty, Colours::white, 
 		    DocumentWindow::allButtons, true)
 {
+  isfms = false;
   Preferences* prefs=Preferences::getInstance();
   setMenuBar(this);
   int size=0;
   if (file.existsAsFile())
     {
       String ext=file.getFileExtension();
-      String lsp=T(".lisp.lsp.scm.cm.clm.cmn.ins.fms");
+      String lsp=T(".lisp.lsp.scm.cm.clm.cmn.ins");
       String sal=T(".sal");
+      String fms=T(".fms");
       if (synt==TextIDs::Empty)
 	if (sal.contains(ext))
 	  synt=TextIDs::Sal;
 	else if (lsp.contains(ext))
 	  synt=TextIDs::Lisp;
-	else
+	else if (fms.contains(ext)) {
+	  isfms = true; synt=TextIDs::Fomus;
+	} else
 	  synt=TextIDs::Text; 
       size=(int)file.getSize();
       text=file.loadFileAsString();
@@ -213,6 +220,7 @@ TextBuffer::TextBuffer(int texttype)
 {
   // set syntax right away since commands manager needs this
   // information for adding commands
+  bool isfms = (texttype == TextIDs::Fomus);
   setSyntax(texttype);
   Preferences* prefs=Preferences::getInstance();
   manager=new ApplicationCommandManager();
@@ -420,6 +428,11 @@ void TextBuffer::setSyntax(int synt)
     case TextIDs::Sal:
       syntax=SalSyntax::getInstance();
       break;
+#ifdef WITHFOMUS      
+    case TextIDs::Fomus:
+      syntax=FomusSyntax::getInstance();
+      break;
+#endif      
     default:
       syntax=TextSyntax::getInstance();      
       break;
@@ -541,8 +554,10 @@ void TextBuffer::eval(bool macroexpand)
 
   bool region=(getHighlightedRegionLength() > 0);
   String text;
-  
-  if (region)
+
+  if (isfms)
+    text = getText();
+  else if (region)
     text=getHighlightedText();
   else 
     text=backwardTopLevelText();

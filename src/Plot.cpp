@@ -1653,7 +1653,7 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
       menu.addSeparator();
     }
   else if (name==T("Audio"))
-    menu=CommandMenus::getAudioMenu();
+    menu=CommandMenus::getAudioMenu(false);
   else if (name==T("Window"))
     menu=CommandMenus::getWindowMenu();
   else if (name==T("Help")) 

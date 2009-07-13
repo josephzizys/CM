@@ -13,6 +13,7 @@
 #include <fomus/fomusapi.h>
 #include <iostream>
 #include "Console.h"
+#include "Syntax.h"
 
 void initfomus();
 
@@ -44,7 +45,7 @@ class FomusScore
 enum whichstruct
   {
     wh_none,
-    wh_measattr,
+    wh_measdef,
     wh_part,
     wh_metapart,
     wh_partsref,
@@ -90,8 +91,8 @@ class Fomus
  Fomus () : current(-1) 
     {
       newScore();
-      Console::getInstance()->printOutput("FOMUS " + String(fomus_version()) +
-					  " (c) 2009 David Psenicka\n");
+      //Console::getInstance()->printOutput("FOMUS " + String(fomus_version()) +
+      //" (c) 2009 David Psenicka\n");
     }
   ~Fomus() 
     {
@@ -132,5 +133,21 @@ class Fomus
   
   juce_DeclareSingleton(Fomus, true)
 };
+
+class FomusSyntax : public Syntax
+{
+ public:
+  FomusSyntax();
+  ~FomusSyntax() ;
+
+  bool isTopLevel(String line);
+  int getIndent (const String fomus, int bot, int top, int beg);
+  HiliteID getHilite (const String fomus, int start, int end);
+  void eval(String text, bool isRegion=false, bool expand=false);
+  void stickkeyword(String str, const int hl);
+  juce_DeclareSingleton(FomusSyntax, true)
+};
+
+//void fomusSaveAndRun();
 
 //#endif

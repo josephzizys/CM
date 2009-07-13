@@ -49,7 +49,7 @@ const PopupMenu CommandMenus::getRecentlyLoadedMenu()
   return menu;
 }
 
-const PopupMenu CommandMenus::getAudioMenu()
+const PopupMenu CommandMenus::getAudioMenu(bool isfms)
 {
   ApplicationCommandManager* comm=CommandManager::getInstance();
   PopupMenu menu;
@@ -129,20 +129,24 @@ const PopupMenu CommandMenus::getAudioMenu()
   menu.addSubMenu(T("Csound"), csound);
 #ifdef WITHFOMUS
   PopupMenu fomus;
-  size = jlimit(0, CommandMenus::NumFomusScore-1,
-		Fomus::getInstance()->numScores());
-  for (int i=0; i<size; i++)
-    fomus.addCommandItem(comm, CommandIDs::FomusSelectScore + i);
-  fomus.addSeparator();
-  fomus.addCommandItem(comm, CommandIDs::FomusRunScore);
-  fomus.addSeparator();
-  fomus.addCommandItem(comm, CommandIDs::FomusNewScore);
-  fomus.addCommandItem(comm, CommandIDs::FomusRenameScore);
-  fomus.addCommandItem(comm, CommandIDs::FomusDeleteScore);
-  fomus.addCommandItem(comm, CommandIDs::FomusLoadScore);
-  fomus.addSeparator();
-  fomus.addCommandItem(comm, CommandIDs::FomusSettings);
-  fomus.addCommandItem(comm, CommandIDs::FomusDocumentation);
+  if (isfms) {
+    fomus.addCommandItem(comm, CommandIDs::FomusRunCurr);
+  } else {
+    size = jlimit(0, CommandMenus::NumFomusScore-1,
+		  Fomus::getInstance()->numScores());
+    for (int i=0; i<size; i++)
+      fomus.addCommandItem(comm, CommandIDs::FomusSelectScore + i);
+    fomus.addSeparator();
+    fomus.addCommandItem(comm, CommandIDs::FomusRunScore);
+    fomus.addSeparator();
+    fomus.addCommandItem(comm, CommandIDs::FomusNewScore);
+    fomus.addCommandItem(comm, CommandIDs::FomusRenameScore);
+    fomus.addCommandItem(comm, CommandIDs::FomusDeleteScore);
+    fomus.addCommandItem(comm, CommandIDs::FomusLoadScore);
+    fomus.addSeparator();
+    fomus.addCommandItem(comm, CommandIDs::FomusSettings);
+    fomus.addCommandItem(comm, CommandIDs::FomusDocumentation);
+  }
   menu.addSubMenu(T("Fomus"), fomus);
 #endif
   menu.addSeparator();
@@ -307,7 +311,7 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
     }
   else if (name==T("Audio"))
     {
-      menu=CommandMenus::getAudioMenu();
+      menu=CommandMenus::getAudioMenu(false);
     }
   else if (name==T("Window"))
     {
@@ -456,7 +460,7 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
     }      
   else if (menuname==T("Audio"))
     {
-      menu=CommandMenus::getAudioMenu();
+      menu=CommandMenus::getAudioMenu(isfms);
     }
   else if (menuname==T("Windows"))
     {

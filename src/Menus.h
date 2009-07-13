@@ -36,7 +36,7 @@ class CommandMenus
 
   static const PopupMenu getWindowMenu();
   static const PopupMenu getHelpMenu(int win, ApplicationCommandManager* com);
-  static const PopupMenu getAudioMenu();
+  static const PopupMenu getAudioMenu(bool isfms);
   static const PopupMenu getFontSizeMenu(ApplicationCommandManager* comm,
 					 CommandID rootid);
   static const PopupMenu getRecentlyOpenedMenu();

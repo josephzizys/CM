@@ -216,6 +216,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::FomusRunScore,    
     CommandIDs::FomusSettings,
     CommandIDs::FomusDocumentation,
+    CommandIDs::FomusRunCurr,
 #endif
 
     CommandIDs::PlotterNew,
@@ -520,7 +521,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       //
       // Fomus Commands
       //
-#ifdef HAVEFOMUS
+#ifdef WITHFOMUS
     case CommandIDs::FomusNewScore:
       info.shortName=T("New Score");
       break;
@@ -554,6 +555,9 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       break;
     case CommandIDs::FomusDocumentation:
       info.shortName=T("Documentation...");
+      break;
+    case CommandIDs::FomusRunCurr:
+      info.shortName=T("Run FOMUS");
       break;
 #endif
 
@@ -1630,6 +1634,9 @@ bool TextBuffer::perform(const ApplicationCommandTarget::InvocationInfo&
       // Eval Menu
       //
     case CommandIDs::EditorExecute:
+      eval();
+      break;
+    case CommandIDs::FomusRunCurr:
       eval();
       break;
     case CommandIDs::EditorExpand:

@@ -11,10 +11,21 @@
 #include <fomus/infoapi.h>
 #include <fstream>
 #include <cstdlib>
+#include <vector>
+//#include <assert>
 #include <iostream>
 #include <sstream>
 #include <limits>
 #include "Console.h"
+#include <memory>
+#include <stack>
+#include "Preferences.h"
+#include <cctype>
+#include <fomus/infoextapi.h>
+#include <fomus/modnotes.h>
+//#include "TextEditor.h"
+
+juce_ImplementSingleton(FomusSyntax) ;
 
 #warning "get rid of debugging output"
 
@@ -28,7 +39,7 @@
 
 juce_ImplementSingleton(Fomus);
 
-void spitout(const char* str) 
+inline void spitout(const char* str) 
 {
   Console::getInstance()->printOutput(String(";; ") + str);
 }
@@ -71,8 +82,8 @@ void Fomus::clearScore()
 void Fomus::loadScore(String filename)
 {
   fomus_load(getfomusdata(), (char*)filename.toUTF8());
-  scores.getUnchecked(current)->name 
-    = File(fomus_get_sval(getfomusdata(), "filename")).getFileName();
+  String fn0(File(fomus_get_sval(getfomusdata(), "filename")).getFileName());
+  scores.getUnchecked(current)->name = (fn0.isEmpty() ? "(untitled)" : fn0);
 }
 
 void Fomus::runScore()
@@ -124,7 +135,7 @@ struct xmlerror
   xmlerror(const String& str):str(str) {}
   void printerr() const
   {
-    Console::getInstance()->printOutput("; fomus: " + str + T("\n"));
+    Console::getInstance()->printError(">>> Error: Fomus: " + str + T("\n"));
   }
 };
 
@@ -132,8 +143,9 @@ void Fomus::sendXml(const String& xml)
 {
   try {
     std::cout << '\n' << xml.toUTF8() << std::endl;
-    XmlDocument doc (xml);
-    sendXml(*doc.getDocumentElement(), fomus_par_none, fomus_act_none);
+    XmlDocument doc(xml);
+    std::auto_ptr<XmlElement> docel(doc.getDocumentElement());
+    sendXml(*docel, fomus_par_none, fomus_act_none);
   } catch (const xmlerror& e) {e.printerr();}
 }
 
@@ -241,19 +253,19 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
     if (wh != wh_none && !doeachinlist) {
       excmap exc;
       switch (wh) {
-      case wh_measattr:
-	exc.insert(excmap::value_type("id", sendpair(fomus_par_measattr_id,
+      case wh_measdef:
+	exc.insert(excmap::value_type("id", sendpair(fomus_par_measdef_id,
 						     fomus_act_set, wh_none)));
-	sendXmlSets(xml, fomus_par_measattr_settingval, fomus_act_add, exc, true);
+	sendXmlSets(xml, fomus_par_measdef_settingval, fomus_act_add, exc, true);
 	Fomus::act(par, act);
 	break;
       case wh_part:
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_part_id, 
 						     fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("name", sendpair(fomus_par_part_name, 
-						       fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("abbr", sendpair(fomus_par_part_abbr,
-						       fomus_act_set, wh_none)));
+// 	exc.insert(excmap::value_type("name", sendpair(fomus_par_part_name, 
+// 						       fomus_act_set, wh_none)));
+// 	exc.insert(excmap::value_type("abbr", sendpair(fomus_par_part_abbr,
+// 						       fomus_act_set, wh_none)));
 	exc.insert(excmap::value_type("inst", sendpair(fomus_par_part_inst,
 						       fomus_act_set, wh_inst)));
 	sendXmlSets(xml, fomus_par_part_settingval, fomus_act_add, exc, true);
@@ -279,10 +291,10 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
       case wh_inst:
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_inst_id, 
 						     fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("name", sendpair(fomus_par_inst_name,
-						       fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("abbr", sendpair(fomus_par_inst_abbr,
-						       fomus_act_set, wh_none)));
+// 	exc.insert(excmap::value_type("name", sendpair(fomus_par_inst_name,
+// 						       fomus_act_set, wh_none)));
+// 	exc.insert(excmap::value_type("abbr", sendpair(fomus_par_inst_abbr,
+// 						       fomus_act_set, wh_none)));
 	exc.insert(excmap::value_type("staves", sendpair(fomus_par_inst_staves,
 							 fomus_act_set, wh_staff,
 							 true)));
@@ -300,10 +312,10 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
       case wh_percinst:
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_percinst_id,
 						     fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("name", sendpair(fomus_par_percinst_name,
-						       fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("abbr", sendpair(fomus_par_percinst_abbr,
-						       fomus_act_set, wh_none)));
+// 	exc.insert(excmap::value_type("name", sendpair(fomus_par_percinst_name,
+// 						       fomus_act_set, wh_none)));
+// 	exc.insert(excmap::value_type("abbr", sendpair(fomus_par_percinst_abbr,
+// 						       fomus_act_set, wh_none)));
 	exc.insert(excmap::value_type("imports", sendpair(fomus_par_percinst_imports,
 							  fomus_act_set, wh_import,
 							  true)));
@@ -389,11 +401,11 @@ void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
       sendXmlVal(*mustExist(d->getChildElement(0)), fomus_par_duration, 
 		 fomus_act_set, wh_none);
     sendXmlSets(*mustExist(xml.getChildByName(T("sets"))),
-		fomus_par_measattr_settingval, fomus_act_add, excmap() );
+		fomus_par_measdef_settingval, fomus_act_add, excmap() );
     Fomus::act(fomus_par_meas, fomus_act_add);
-  } else if (xml.hasTagName(T("measattr"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l"))), fomus_par_measattr, 
-	       fomus_act_add, wh_measattr);
+  } else if (xml.hasTagName(T("measdef"))) {
+    sendXmlVal(*mustExist(xml.getChildByName(T("l"))), fomus_par_measdef, 
+	       fomus_act_add, wh_measdef);
   } else if (xml.hasTagName(T("part"))) {
     sendXmlVal(*mustExist(xml.getChildByName(T("l"))), fomus_par_part,
 	       fomus_act_add, wh_part);
@@ -422,84 +434,380 @@ void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
 
 #ifdef GRACE
 
-class FOMUSSettingsEditor:public TextEditor 
-{
-public:
-  int id; // id stored so FOMUSSettings can grab it
-  String name;
+class fomusinfo {
+protected:
+  int num;
   FOMUS fom;
-  bool change;
-  FOMUSSettingsEditor(FOMUS fom, const String &componentName = String::empty,
-		      const tchar passwordCharacter = 0)
- : TextEditor(componentName, passwordCharacter), 
-   fom(fom),
-   change(false) 
-  {
+  String id;
+  String defstr, chstr;
+  bool valid, knvalid, def, kndef;
+public:
+  fomusinfo(int c, FOMUS fom, const String& id, const String& str):num(c), fom(fom), id(id), defstr(str), chstr(str), valid(true), knvalid(true), kndef(false) {}
+  fomusinfo(int c, FOMUS fom, const String& id, const String& defstr, const String& str):num(c), fom(fom), id(id), defstr(defstr), chstr(str),
+											 valid(true), knvalid(true), kndef(false) {}
+  //virtual ~fomusinfo() {validate();}
+  String getid() const {return id;}
+  const String& getchangedstr() const {return chstr;}
+  bool isdef() {
+    if (kndef) return def;
+    kndef = true;
+    return (def = (chstr == defstr));
   }
+  void validate() {
+    if (knvalid) return;
+    valid = valid_aux();
+    knvalid = true;
+    if (!valid) AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+					    T("FOMUS Settings"),
+					    String("Error in ") << what() << " `" << id << "'.");
+  }
+  int getnum() const {return num;}
+  void reset() {
+    chstr = defstr;
+    kndef = def = true;
+    knvalid = false; // maybe the default isn't valid
+  }
+  void change(const String& str) { // call this when focus is lost
+    chstr = str;
+    knvalid = kndef = false;
+  }
+  void dec() {--num;}
+  virtual bool issetting() const {return false;}
+  virtual void remove() const {};
+protected:
+  virtual String what() const = 0;
+  virtual bool valid_aux() = 0;
+};
 
+// settings
+class fomus_set:public fomusinfo {
+  //int idnum;
+  String descdoc, modname, loc, uselevel, typedoc;
+public:
+  fomus_set(int c, FOMUS fom, struct info_setting& set, const String& def):fomusinfo(c, fom, set.name, def, set.valstr), /*id(set.id),*/ descdoc(set.descdoc),
+									   modname(set.modname), loc(settingloc_to_str(set.loc)), typedoc(set.typedoc) {
+    switch (set.uselevel) {
+    case 0: uselevel = "beginner"; break;
+    case 1: uselevel = "intermediate"; break;
+    case 2: uselevel = "advanced"; break;
+    case 3: uselevel = "guru";      
+    }
+  }
+  bool issetting() const {return true;}
+  const String& getdescdoc() const {return descdoc;}
+  const String& getmodname() const {return modname;}
+  const String& getloctext() const {return loc;}
+  const String& getuselevel() const {return uselevel;}
+  const String& gettypedoc() const {return typedoc;}
+private:
+  bool valid_aux() {
+    fomus_parse(fom, (id + " = " + (chstr.isEmpty() ? String("\"\"") : chstr)).toUTF8());
+    return !fomus_err;
+  }
+  String what() const {return T("setting");}
+};
+
+inline String rempar(const char* str0) {
+  String str(str0);
+  if (str.length() >= 2 && (str[0] == '(' || str[0] == '<')) {
+    return str.substring(1, str.length() - 1);
+  } else return str;
+}
+class fomus_other:public fomusinfo {
+public:
+  fomus_other(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomusinfo(c, fom, nam, rempar(obj.valstr)) {}
+private:
+  bool valid_aux();
+  virtual String what0() const = 0;
+};
+bool fomus_other::valid_aux() {
+  remove();
+  fomus_parse(fom, (what0() + ' ' + (chstr.isEmpty() ? String("<>") : (chstr[0] != '(' && chstr[0] != '<' ? (String("<") << chstr << '>') : chstr))).toUTF8());
+  if (fomus_err) return false;
+  struct infoext_objinfo x(infoext_getlastentry(fom));
+  id = module_id(x.obj);
+  return true;
+}
+
+class fomus_part:public fomus_other {
+public:
+  fomus_part(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  String what() const {return T("part");}
+  String what0() const {return T("part");}
+  void remove() const {fomus_sval(fom, fomus_par_part, fomus_act_remove, id.toUTF8());}
+};
+class fomus_measdef:public fomus_other {
+public:
+  fomus_measdef(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  String what() const {return T("measure definition");}  
+  String what0() const {return T("measdef");}
+  void remove() const {fomus_sval(fom, fomus_par_measdef, fomus_act_remove, id.toUTF8());}
+};
+class fomus_inst:public fomus_other {
+public:
+  fomus_inst(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  String what() const {return T("instrument");}  
+  String what0() const {return T("inst");}
+  void remove() const {fomus_sval(fom, fomus_par_inst, fomus_act_remove, id.toUTF8());}
+};
+class fomus_percinst:public fomus_other {
+public:
+  fomus_percinst(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  String what() const {return T("percussion instrument");}  
+  String what0() const {return T("percinst");}
+  void remove() const {fomus_sval(fom, fomus_par_percinst, fomus_act_remove, id.toUTF8());}
+};
+
+// ------------------------------------------------------------------------------------------------------------------------
+
+class fomusinfocont {
+protected:
+  FOMUS fom;
+  int uselevel;
+  std::vector<fomusinfo*> stuff;
+public:
+  fomusinfocont(FOMUS fom, int uselevel):fom(fom), uselevel(uselevel) {}
+  ~fomusinfocont() {
+    for (std::vector<fomusinfo*>::iterator i(stuff.begin()); i != stuff.end(); ++i) {(*i)->validate(); delete *i;}
+  }
+  void clearvect() {
+    for (std::vector<fomusinfo*>::iterator i(stuff.begin()); i != stuff.end(); ++i) {(*i)->validate(); delete *i;}
+    stuff.clear();
+  }
+  void reset() {
+    clearvect();
+    reset_aux();
+  }
+  void init() {reset_aux();}
+  int getn() const {return stuff.size();}
+  fomusinfo* get(int ind) const {return stuff[ind];}
+  int getuselevel() const {return uselevel;}
+  void setuselevel(int lvl) {
+    uselevel = lvl;
+    reset();
+  }
+  virtual bool issetting() const {return false;}
+  virtual fomusinfo* createnew(const String& txt) {};
+  void remove(int num) {
+    stuff[num]->remove();
+    for (std::vector<fomusinfo*>::iterator i(stuff.begin() + num); i != stuff.end(); ++i) (*i)->dec();
+    stuff.erase(stuff.begin() + num);
+  }
+private:
+  virtual void reset_aux() = 0;
+};
+
+class fomusinfocont_sets:public fomusinfocont {
+  std::vector<String> defs;
+public:
+  fomusinfocont_sets(FOMUS fom, int uselevel);
+  bool issetting() const {return true;}
+private:
+  void reset_aux();
+};
+
+fomusinfocont_sets::fomusinfocont_sets(FOMUS fom, int uselevel):fomusinfocont(fom, uselevel) {
+  struct info_setfilter se = {0, 0, 0, module_nomodtype, 0, module_noloc, 3, info_none}; 
+  struct info_setfilterlist fi = {1, &se};
+  info_setlist sets(info_list_settings(0, &fi, 0, 0, -1)); // config defaults
+  int c = 0;
+  defs.resize(sets.n);
+  for (info_setting* s(sets.sets), *se(sets.sets + sets.n); s < se; ++s) {
+    if (s->id < sets.n) defs[s->id] = s->valstr;
+  }
+}
+
+void fomusinfocont_sets::reset_aux() {
+  struct info_setfilter se = {0, 0, 0, module_nomodtype, 0, module_noloc, uselevel, info_none}; 
+  struct info_setfilterlist fi = {1, &se};
+  info_setlist sets(info_list_settings(fom, &fi, 0, 0, -1));
+  int c = 0;
+  for (info_setting* s(sets.sets), *se(sets.sets + sets.n); s < se; ++s) stuff.push_back(new fomus_set(c++, fom, *s, defs[s->id]));
+}
+
+class fomusinfocont_other:public fomusinfocont {
+public:
+  fomusinfocont_other(FOMUS fom):fomusinfocont(fom, 0) {}
+private:
+  void reset_aux();
+  virtual infoext_objinfo_list getem() const = 0;
+  virtual fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) = 0;
+};
+void fomusinfocont_other::reset_aux() {
+  infoext_objinfo_list li(getem());
+  int c = 0;
+  for (infoext_objinfo *i(li.objs), *ie(li.objs + li.n); i < ie; ++i) {
+    const char* nam = module_id(i->obj);
+    if (nam[0] /*&& !String(nam).equalsIgnoreCase("default")*/) stuff.push_back(getnew(c++, fom, *i, nam));
+  }
+}
+
+class fomusinfocont_parts:public fomusinfocont_other {
+public:
+  fomusinfocont_parts(FOMUS fom):fomusinfocont_other(fom) {}
+private:
+  infoext_objinfo_list getem() const {return infoext_list_parts(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_part(c, fom, obj, nam);}
+  fomusinfo* createnew(const String& txt);
+};
+fomusinfo* fomusinfocont_parts::createnew(const String& txt) {
+  fomus_parse(fom, ("part " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  if (fomus_err) {
+    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+				T("FOMUS Settings"),
+				T("Error in part"));
+    return 0;
+  } else {
+    struct infoext_objinfo x(infoext_getlastentry(fom));
+    fomus_part* y;
+    stuff.push_back(y = new fomus_part(stuff.size(), fom, x, module_id(x.obj)));
+    return y;
+  }
+}
+
+class fomusinfocont_measdefs:public fomusinfocont_other {
+public:
+  fomusinfocont_measdefs(FOMUS fom):fomusinfocont_other(fom) {}
+private:
+  infoext_objinfo_list getem() const {return infoext_list_measdefs(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_measdef(c, fom, obj, nam);}
+  fomusinfo* createnew(const String& txt);
+};
+fomusinfo* fomusinfocont_measdefs::createnew(const String& txt) {
+  fomus_parse(fom, ("measdef " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  if (fomus_err) {
+    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+				T("FOMUS Settings"),
+				T("Error in measure definition"));
+    return 0;
+  } else {
+    struct infoext_objinfo x(infoext_getlastentry(fom));
+    fomus_measdef *y;
+    stuff.push_back(y = new fomus_measdef(stuff.size(), fom, x, module_id(x.obj)));
+    return y;
+  }
+}
+
+class fomusinfocont_insts:public fomusinfocont_other {
+public:
+  fomusinfocont_insts(FOMUS fom):fomusinfocont_other(fom) {}
+private:
+  infoext_objinfo_list getem() const {return infoext_list_insts(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_inst(c, fom, obj, nam);}
+  fomusinfo* createnew(const String& txt);
+};
+fomusinfo* fomusinfocont_insts::createnew(const String& txt) {
+  fomus_parse(fom, ("inst " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  if (fomus_err) {
+    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+				T("FOMUS Settings"),
+				T("Error in instrument"));
+    return 0;
+  } else {
+    struct infoext_objinfo x(infoext_getlastentry(fom));
+    fomus_inst *y;
+    stuff.push_back(y = new fomus_inst(stuff.size(), fom, x, module_id(x.obj)));
+    return y;
+  }
+}
+
+class fomusinfocont_percinsts:public fomusinfocont_other {
+public:
+  fomusinfocont_percinsts(FOMUS fom):fomusinfocont_other(fom) {}
+private:
+  infoext_objinfo_list getem() const {return infoext_list_percinsts(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_percinst(c, fom, obj, nam);}
+  fomusinfo* createnew(const String& txt);
+};
+fomusinfo* fomusinfocont_percinsts::createnew(const String& txt) {
+  fomus_parse(fom, ("percinst " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  if (fomus_err) {
+    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+				T("FOMUS Settings"),
+				T("Error in percussion instrument"));
+    return 0;
+  } else {
+    struct infoext_objinfo x(infoext_getlastentry(fom));
+    fomus_percinst *y;
+    stuff.push_back(y = new fomus_percinst(stuff.size(), fom, x, module_id(x.obj)));
+    return y;
+  }
+}
+
+/*=======================================================================*
+  Windows
+ *=======================================================================*/
+
+class FOMUSListBoxModel;
+class FOMUSSettingsListBoxItem;
+class FOMUSSettingsEditor:public TextEditor {
+public:
+  FOMUSListBoxModel& boxmodel;
+  fomusinfo* inf;
+  FOMUSSettingsEditor(fomusinfo* inf, FOMUSListBoxModel& boxmodel, FOMUSSettingsListBoxItem& lb, const String &componentName = String::empty,
+		      const tchar passwordCharacter = 0):TextEditor(componentName, passwordCharacter), inf(inf), boxmodel(boxmodel), lb(lb), dirty(false) {}
   juce_UseDebuggingNewOperator
-
   private:
-
   FOMUSSettingsEditor(const FOMUSSettingsEditor&);
   const FOMUSSettingsEditor& operator= (const FOMUSSettingsEditor&);
-
+  bool dirty;
+  FOMUSSettingsListBoxItem& lb;
   public:
-
-  void docheckandenter()
-  {
-    std::cout << "sending setting to fomus" << std::endl;
-    fomus_parse(fom, (name + " = " + getText()).toUTF8());
-    if (fomus_err)
-      {
-	AlertWindow::showMessageBox(AlertWindow::WarningIcon,
-				    T("FOMUS Settings"),
-				    String("Error in setting `") << name << "'.");
-      }
-    change = false;
-  }
-  void focusLost(FocusChangeType cause) 
-  {
-    if (change) docheckandenter();
+  void focusLost(FocusChangeType cause) {
+    validate();
     TextEditor::focusLost(cause);
   }
+  void validate();
+  void reset() {
+    if (inf) {
+      inf->reset();
+      setText(inf->getchangedstr(), false);
+    } else setText(T("id ..."), false);
+    dirty = false;
+  }
+  void setinfo(fomusinfo* inf0) {
+    inf = inf0;
+    dirty = false;
+  }
+  bool isdef() const {return inf ? (bool)inf->isdef() : getText().isEmpty();}
+  String getchangedstr() {return inf ? inf->getchangedstr() : String();}
+  int getnum() const {return inf ? inf->getnum() : -1;}
+  void setdirty() {dirty = true;}
 };
 
 // SETTINGS LISTBOX ITEM
 
 class FOMUSSettingsListBox;
-class FOMUSSettingsListBoxItem:public /*Group*/Component, 
-			       public ButtonListener,
-			       public TextEditorListener
-{
+class FOMUSSettingsListBoxItem:public Component, public ButtonListener, public TextEditorListener {
+  FOMUSListBoxModel& boxmodel;
 public:
-  FOMUSSettingsListBoxItem (FOMUS fom, int id, struct info_setting& set,
-			    const String& val, bool def);
+  FOMUSSettingsListBoxItem(fomusinfo* inf, FOMUSListBoxModel& boxmodel);
   ~FOMUSSettingsListBoxItem();
 
   void resized();
   void buttonClicked(Button* buttonThatWasClicked);
 
-  void updateset(int id, struct info_setting& set, const String& val, bool def);
+  void updateset(fomusinfo* set);
   
-  void textEditorTextChanged(TextEditor&) {defoff();}
-  void textEditorReturnKeyPressed(TextEditor&) 
-  {
-    defoff();
-    ValueText->docheckandenter();
+  void textEditorTextChanged(TextEditor&) {defoff(); ValueText->setdirty();}
+  void textEditorReturnKeyPressed(TextEditor&) {
+    //defoff();
+    ValueText->validate();
   }
   void textEditorEscapeKeyPressed(TextEditor&) {defon();}
   void textEditorFocusLost(TextEditor&) {}
 
   juce_UseDebuggingNewOperator
 
-  int getid() const {return ValueText->id;}
+  //int getid() const {return ValueText->getid();}
   String getstoretext() const {return ValueText->getText();}
-  bool getstoredef() const {return DefaultButton->getToggleState();}
+  bool getstoredef() const {return DefaultButton ? DefaultButton->getToggleState() : false;}
   
+  void validate() {ValueText->validate();}
+  int getnum() {ValueText->getnum();}
+
+  void setname(const String& str) {NameText->setText(str, false);}
 private:
-  String defval;
-  
   Label* NameLabel;
   Label* NameText;
   Label* ModuleLabel;
@@ -512,89 +820,60 @@ private:
   Label* TypeText;
   Label* ValueLabel;
   ToggleButton* DefaultButton;
+  TextButton* DelButton;
   FOMUSSettingsEditor* ValueText;
 
   FOMUSSettingsListBox* parent;
   
-  FOMUSSettingsListBoxItem (const FOMUSSettingsListBoxItem&);
+  FOMUSSettingsListBoxItem(const FOMUSSettingsListBoxItem&);
   const FOMUSSettingsListBoxItem& operator= (const FOMUSSettingsListBoxItem&);
 
-  void defoff() 
-  {
-    DefaultButton->setToggleState(false, false); 
-    ValueText->change = true;
+  void defoff() {
+    if (DefaultButton) DefaultButton->setToggleState(false, false); 
+    //ValueText->change = true;
   }
 
-  void defon()
-  {
-    ValueText->setText(defval, false);
-    DefaultButton->setToggleState(true, false);
-    ValueText->change = false;
-    std::cout << "resetting setting to default" << std::endl;
-    fomus_ival(ValueText->fom, fomus_par_setting, fomus_act_set, ValueText->id);
-    fomus_act(ValueText->fom, fomus_par_settingval, fomus_act_clear);
+  void defon() {
+    std::cout << "RESETTING TO DEFAULT" << std::endl;
+    ValueText->reset();
+    ValueText->setText(ValueText->getchangedstr(), false);
+    if (DefaultButton) DefaultButton->setToggleState(ValueText->isdef(), false);
   }
 };
 
-void FOMUSSettingsListBoxItem::updateset(int id, struct info_setting& set, 
-					 const String& val, bool def)
-{
-  NameText->setText(set.name, false);
-  NameText->setTooltip(set.descdoc);
-  ModuleText->setText(set.modname, false);
-  const char* loctext;
-  switch (set.loc) {
-  case module_noloc: loctext = "(error)"; break;
-  case module_locglobal: loctext = "global"; break;
-  case module_locpart: loctext = "part"; break;
-  case module_locinst: loctext = "inst"; break;
-  case module_locpercinst: loctext = "percinst"; break;
-  case module_locpartmap: loctext = "partmap"; break;
-  case module_locmeasattr: loctext = "measattr"; break;
-  case module_locimport: loctext = "import"; break;
-  case module_locexport: loctext = "export"; break;
-  case module_locstaff: loctext = "staff"; break;
-  case module_locclef: loctext = "clef"; break;
-  case module_locnote: loctext = "note";
-  }
-  LocationText->setText(loctext, false);
-  const char* usetext;
-  switch (set.uselevel) {
-  case 0: usetext = "beginner"; break;
-  case 1: usetext = "intermediate"; break;
-  case 2: usetext = "advanced"; break;
-  case 3: usetext = "guru";      
-  }
-  UseLevelText->setText(usetext, false);
-  TypeText->setText(set.typedoc, false);
-  ValueText->setText(val, false);
-  ValueText->id = id;
-  ValueText->name = set.name;
-
-  defval = set.valstr;
-  
-  DefaultButton->setToggleState (def, false);
+void FOMUSSettingsListBoxItem::updateset(fomusinfo* set) {
+  ValueText->setinfo(set);
+  if (set) {
+    NameText->setText(set->getid(), false);
+    if (set->issetting()) {
+      NameText->setTooltip(((fomus_set*)set)->getdescdoc());
+      ModuleText->setText(((fomus_set*)set)->getmodname(), false);
+      LocationText->setText(((fomus_set*)set)->getloctext(), false);
+      UseLevelText->setText(((fomus_set*)set)->getuselevel(), false);
+      TypeText->setText(((fomus_set*)set)->gettypedoc(), false);
+    }
+    ValueText->setText(set->getchangedstr(), false);
+    if (DefaultButton) DefaultButton->setToggleState(set->isdef(), false);
+  } else ValueText->setText(T("id ..."));
 }
 
-FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(FOMUS fom, int id, 
-						   struct info_setting& set, 
-						   const String& val, bool def)
-  : Component(T("FOMUS Settings ListBox Item") ),
-   NameLabel (0),
-   NameText (0),
-   ModuleLabel (0),
-   ModuleText (0),
-   LocationLabel (0),
-   LocationText (0),
-   UseLevelLabel (0),
-   UseLevelText (0),
-   TypeLabel (0),
-   TypeText (0),
-   ValueLabel (0),
-   DefaultButton (0),
-   ValueText (0) 
+FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(fomusinfo* inf, FOMUSListBoxModel& boxmodel):Component(T("FOMUS Settings ListBox Item")),
+												boxmodel(boxmodel),
+												NameLabel (0),
+												NameText (0),
+												ModuleLabel (0),
+												ModuleText (0),
+												LocationLabel (0),
+												LocationText (0),
+												UseLevelLabel (0),
+												UseLevelText (0),
+												TypeLabel (0),
+												TypeText (0),
+												ValueLabel (0),
+												DefaultButton (0),
+												ValueText (0) ,
+												DelButton(0)
 {
-  //std::cout << "C" << std::endl;
   addAndMakeVisible (NameLabel = new Label (T("Name Label"),
 					    T("Name:")));
   NameLabel->setFont (Font (13.0000f, Font::plain));
@@ -610,70 +889,81 @@ FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(FOMUS fom, int id,
   NameText->setEditable (false, false, false);
   NameText->setColour (TextEditor::textColourId, Colours::black);
   NameText->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (ModuleLabel = new Label (T("Module Label"),
-					      T("Module:")));
-  ModuleLabel->setFont (Font (13.0000f, Font::plain));
-  ModuleLabel->setJustificationType (Justification::centredLeft);
-  ModuleLabel->setEditable (false, false, false);
-  ModuleLabel->setColour (TextEditor::textColourId, Colours::black);
-  ModuleLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (ModuleText = new Label (T("Module Text"),
+
+  if (inf && inf->issetting()) {
+    addAndMakeVisible (ModuleLabel = new Label (T("Module Label"),
+						T("Module:")));
+    ModuleLabel->setFont (Font (13.0000f, Font::plain));
+    ModuleLabel->setJustificationType (Justification::centredLeft);
+    ModuleLabel->setEditable (false, false, false);
+    ModuleLabel->setColour (TextEditor::textColourId, Colours::black);
+    ModuleLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    
+    addAndMakeVisible (ModuleText = new Label (T("Module Text"),
+					       String::empty));
+    ModuleText->setFont (Font (13.0000f, Font::plain));
+    ModuleText->setJustificationType (Justification::centredLeft);
+    ModuleText->setEditable (false, false, false);
+    ModuleText->setColour (TextEditor::textColourId, Colours::black);
+    ModuleText->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    
+    addAndMakeVisible (LocationLabel = new Label (T("Location Label"),
+						  T("Location:")));
+    LocationLabel->setFont (Font (13.0000f, Font::plain));
+    LocationLabel->setJustificationType (Justification::centredLeft);
+    LocationLabel->setEditable (false, false, false);
+    LocationLabel->setColour (TextEditor::textColourId, Colours::black);
+    LocationLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    
+    addAndMakeVisible (LocationText = new Label (T("Location Text"),
+						 String::empty));
+    LocationText->setFont (Font (13.0000f, Font::plain));
+    LocationText->setJustificationType (Justification::centredLeft);
+    LocationText->setEditable (false, false, false);
+    LocationText->setColour (TextEditor::textColourId, Colours::black);
+    LocationText->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    
+    addAndMakeVisible (UseLevelLabel = new Label (T("UseLevel Label"),
+						  T("Use Level:")));
+    UseLevelLabel->setFont (Font (13.0000f, Font::plain));
+    UseLevelLabel->setJustificationType (Justification::centredLeft);
+    UseLevelLabel->setEditable (false, false, false);
+    UseLevelLabel->setColour (TextEditor::textColourId, Colours::black);
+    UseLevelLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    
+    addAndMakeVisible (UseLevelText = new Label (T("UseLevel Text"),
+						 String::empty));
+    UseLevelText->setFont (Font (13.0000f, Font::plain));
+    UseLevelText->setJustificationType (Justification::centredLeft);
+    UseLevelText->setEditable (false, false, false);
+    UseLevelText->setColour (TextEditor::textColourId, Colours::black);
+    UseLevelText->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    
+    addAndMakeVisible (TypeLabel = new Label (T("Type Label"),
+					      T("Type:")));
+    TypeLabel->setFont (Font (13.0000f, Font::plain));
+    TypeLabel->setJustificationType (Justification::centredLeft);
+    TypeLabel->setEditable (false, false, false);
+    TypeLabel->setColour (TextEditor::textColourId, Colours::black);
+    TypeLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    
+    addAndMakeVisible (TypeText = new Label (T("Type Text"),
 					     String::empty));
-  ModuleText->setFont (Font (13.0000f, Font::plain));
-  ModuleText->setJustificationType (Justification::centredLeft);
-  ModuleText->setEditable (false, false, false);
-  ModuleText->setColour (TextEditor::textColourId, Colours::black);
-  ModuleText->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (LocationLabel = new Label (T("Location Label"),
-						T("Location:")));
-  LocationLabel->setFont (Font (13.0000f, Font::plain));
-  LocationLabel->setJustificationType (Justification::centredLeft);
-  LocationLabel->setEditable (false, false, false);
-  LocationLabel->setColour (TextEditor::textColourId, Colours::black);
-  LocationLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (LocationText = new Label (T("Location Text"),
-					       String::empty));
-  LocationText->setFont (Font (13.0000f, Font::plain));
-  LocationText->setJustificationType (Justification::centredLeft);
-  LocationText->setEditable (false, false, false);
-  LocationText->setColour (TextEditor::textColourId, Colours::black);
-  LocationText->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (UseLevelLabel = new Label (T("UseLevel Label"),
-						T("Use Level:")));
-  UseLevelLabel->setFont (Font (13.0000f, Font::plain));
-  UseLevelLabel->setJustificationType (Justification::centredLeft);
-  UseLevelLabel->setEditable (false, false, false);
-  UseLevelLabel->setColour (TextEditor::textColourId, Colours::black);
-  UseLevelLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (UseLevelText = new Label (T("UseLevel Text"),
-					       String::empty));
-  UseLevelText->setFont (Font (13.0000f, Font::plain));
-  UseLevelText->setJustificationType (Justification::centredLeft);
-  UseLevelText->setEditable (false, false, false);
-  UseLevelText->setColour (TextEditor::textColourId, Colours::black);
-  UseLevelText->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (TypeLabel = new Label (T("Type Label"),
-					    T("Type:")));
-  TypeLabel->setFont (Font (13.0000f, Font::plain));
-  TypeLabel->setJustificationType (Justification::centredLeft);
-  TypeLabel->setEditable (false, false, false);
-  TypeLabel->setColour (TextEditor::textColourId, Colours::black);
-  TypeLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
-  
-  addAndMakeVisible (TypeText = new Label (T("Type Text"),
-					   String::empty));
-  TypeText->setFont (Font (13.0000f, Font::plain));
-  TypeText->setJustificationType (Justification::centredLeft);
-  TypeText->setEditable (false, false, false);
-  TypeText->setColour (TextEditor::textColourId, Colours::black);
-  TypeText->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    TypeText->setFont (Font (13.0000f, Font::plain));
+    TypeText->setJustificationType (Justification::centredLeft);
+    TypeText->setEditable (false, false, false);
+    TypeText->setColour (TextEditor::textColourId, Colours::black);
+    TypeText->setColour (TextEditor::backgroundColourId, Colour (0x0));
+    
+    addAndMakeVisible (DefaultButton = new ToggleButton (T("Default Button")));
+    DefaultButton->setButtonText (T("Default"));
+    DefaultButton->addButtonListener (this);
+    //DefaultButton->setToggleState (true, false);
+  } else {
+    addAndMakeVisible (DelButton = new TextButton (T("Delete Button")));
+    DelButton->setButtonText (T("Remove"));
+    DelButton->addButtonListener (this);    
+  }
   
   addAndMakeVisible (ValueLabel = new Label (T("Value Label"),
 					     T("Value:")));
@@ -683,12 +973,7 @@ FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(FOMUS fom, int id,
   ValueLabel->setColour (TextEditor::textColourId, Colours::black);
   ValueLabel->setColour (TextEditor::backgroundColourId, Colour (0x0));
   
-  addAndMakeVisible (DefaultButton = new ToggleButton (T("Default Button")));
-  DefaultButton->setButtonText (T("Default"));
-  DefaultButton->addButtonListener (this);
-  //DefaultButton->setToggleState (true, false);
-  
-  addAndMakeVisible (ValueText = new FOMUSSettingsEditor(fom, T("Value Text")));
+  addAndMakeVisible (ValueText = new FOMUSSettingsEditor(inf, boxmodel, *this, T("Value Text")));
   ValueText->setMultiLine (true);
   ValueText->setReturnKeyStartsNewLine (false);
   ValueText->setReadOnly (false);
@@ -701,7 +986,7 @@ FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(FOMUS fom, int id,
   
   setSize (640 + 32, 16 + 72);
   
-  updateset(id, set, val, def);
+  updateset(inf);
 }
 
 FOMUSSettingsListBoxItem::~FOMUSSettingsListBoxItem() 
@@ -719,219 +1004,221 @@ FOMUSSettingsListBoxItem::~FOMUSSettingsListBoxItem()
   deleteAndZero (ValueLabel);
   deleteAndZero (DefaultButton);
   deleteAndZero (ValueText);
+  deleteAndZero (DelButton);
 }
 
 void FOMUSSettingsListBoxItem::resized() 
 {
-  NameLabel->setBounds (0, 8 + 0, 48, 16);
-  NameText->setBounds (40, 8 + 0, 184, 16);
-  ModuleLabel->setBounds (232, 8 + 0, 56, 16);
-  ModuleText->setBounds (280, 8 + 0, 83, 16);
-  LocationLabel->setBounds (368, 8 + 0, 56, 16);
-  LocationText->setBounds (424, 8 + 0, 75, 16);
-  UseLevelLabel->setBounds (504, 8 + 0, 56, 16);
-  UseLevelText->setBounds (560, 8 + 0, 75, 16);
-  TypeLabel->setBounds (0, 8 + 16, 40, 16);
-  TypeText->setBounds (40, 8 + 16, getWidth() - 148, 16);
-  ValueLabel->setBounds (0, 8 + 32, 40, 16);
-  DefaultButton->setBounds (getWidth() - 100, 8 + 16, 48, 16);
-  ValueText->setBounds (40, 8 + 32, getWidth() - 80, 40);
+  NameLabel->setBounds (8 + 0, 8 + 0, 48, 16);
+  NameText->setBounds (8 + 40, 8 + 0, 184, 16);
+  if (ModuleLabel) ModuleLabel->setBounds (8 + 232, 8 + 0, 56, 16);
+  if (ModuleText) ModuleText->setBounds (8 + 280, 8 + 0, 83, 16);
+  if (LocationLabel) LocationLabel->setBounds (8 + 368, 8 + 0, 56, 16);
+  if (LocationText) LocationText->setBounds (8 + 424, 8 + 0, 75, 16);
+  if (UseLevelLabel) UseLevelLabel->setBounds (8 + 504, 8 + 0, 56, 16);
+  if (UseLevelText) UseLevelText->setBounds (8 + 560, 8 + 0, 75, 16);
+  if (TypeLabel) TypeLabel->setBounds (8 + 0, 8 + 16, 40, 16);
+  if (TypeText) TypeText->setBounds (8 + 40, 8 + 16, getWidth() - 148, 16);
+  if (DefaultButton) DefaultButton->setBounds (8 + getWidth() - 100, 8 + 16, 48, 16);
+  if (DelButton) {
+    ValueLabel->setBounds (8 + 0, 8 + 32 - 14, 40, 16);
+    ValueText->setBounds (8 + 40, 8 + 32 - 14, getWidth() - 80, 40 + 14);
+    DelButton->setBounds(8 + getWidth() - 90, 8 + 16 - 16, 40, 14);
+  } else {
+    ValueLabel->setBounds (8 + 0, 8 + 32, 40, 16);
+    ValueText->setBounds (8 + 40, 8 + 32, getWidth() - 80, 40);
+  }
 }
 
 // LIST BOX MODEL
 
 class FOMUSSettingsListBox;
-class FOMUSListBoxModel:public ListBoxModel
-{
-  FOMUS fom;
-public:
-  struct setval {
-    String val;
-    bool def;
-    setval(const String& val, bool def):val(val), def(def) {}
-    void store(const String& va, bool de) {val = va; def = de;}
-  };
+class FOMUSListBoxModel:public ListBoxModel {
 private:
-  struct info_setlist sets;
   FOMUSSettingsListBox* textlistener;
-  std::map<int, setval>& vals;
+  fomusinfocont& infos;
+  bool hasnew;
 public:
-  FOMUSListBoxModel(FOMUS fom, int uselvl, FOMUSSettingsListBox* textlistener, std::map<int, setval>& vals):
-    ListBoxModel(), textlistener(textlistener), fom(fom), vals(vals) {
-    getsettings(fom, uselvl);
-  }
-  int getNumRows() {return sets.n;}
+  FOMUSListBoxModel(fomusinfocont& infos, FOMUSSettingsListBox* textlistener):ListBoxModel(), textlistener(textlistener), infos(infos), hasnew(false) {}
+  int getNumRows() {return hasnew ? infos.getn() + 1 : infos.getn();}
   void paintListBoxItem(int rowNumber, Graphics &g, int width, int height, bool rowIsSelected) {}
   Component* refreshComponentForRow(int rowNumber, bool isRowSelected, Component *existingComponentToUpdate);
-  void getsettings(FOMUS fom, int uselvl) {
-    struct info_setfilter se = {0, 0, 0, module_nomodtype, 0, module_noloc, uselvl, info_none}; 
-    struct info_setfilterlist fi = {1, &se};
-    sets = info_list_settings(fom, &fi, 0, 0, -1);
-  }
+  void sethasnew();
+  String createnew(const String& txt, fomusinfo* &inf);
+  void deleteone(int id);
 };
+
+void FOMUSSettingsEditor::validate() {
+  if (inf) {
+    if (dirty) inf->change(getText().toUTF8());
+    inf->validate();
+    lb.setname(inf->getid());
+  } else lb.setname(boxmodel.createnew(getText(), inf));
+  dirty = false;
+}
 
 // SETTINGS LISTBOX
 
-class FOMUSSettingsListBox:public ListBox
-{
+class FOMUSSettingsListBox:public ListBox {
+  fomusinfocont& infos;
 public:
-  FOMUSSettingsListBox (FOMUS fom, int lvl )
-    : ListBox(T("FOMUS ListBox"), 
-	      new FOMUSListBoxModel(fom, lvl, this, vals)),
-      fom(fom) 
-  {
-    setRowHeight(16 + 72);
-  }
+  FOMUSSettingsListBox(fomusinfocont& infos):ListBox(T("FOMUS ListBox"), new FOMUSListBoxModel(infos, this)), infos(infos) {setRowHeight(16 + 72);}
   ~FOMUSSettingsListBox() {delete getModel();}
 
   juce_UseDebuggingNewOperator
 
+  void addnew() {((FOMUSListBoxModel*)getModel())->sethasnew();}
 private:
-  FOMUS fom;
   FOMUSSettingsListBox (const FOMUSSettingsListBox&);
   const FOMUSSettingsListBox& operator= (const FOMUSSettingsListBox&);
-
-  std::map<int, FOMUSListBoxModel::setval> vals;
 };
+
+inline void FOMUSListBoxModel::sethasnew() {
+  hasnew = true;
+  textlistener->updateContent();
+}
+String FOMUSListBoxModel::createnew(const String& txt, fomusinfo* &inf) {
+  inf = infos.createnew(txt);
+  if (inf) { // success!
+    hasnew = false; // inf is now at the end of the list in infos
+    textlistener->updateContent();
+    return inf->getid();
+  }
+  return T("");
+}
+void FOMUSListBoxModel::deleteone(int id) {
+  if (id < 0) {
+    hasnew = false;
+  } else {
+    infos.remove(id);
+  }
+  textlistener->updateContent();
+}
 
 void FOMUSSettingsListBoxItem::buttonClicked(Button* buttonThatWasClicked) {
   if (buttonThatWasClicked == DefaultButton) {
-    if (DefaultButton->getToggleState()) {
-      ValueText->setText(defval, false);
-      defon();
-    }
+    if (DefaultButton->getToggleState()) defon();
+  } else if (buttonThatWasClicked == DelButton) {
+    boxmodel.deleteone(ValueText->getnum());
   }
 }
 
-Component* FOMUSListBoxModel::refreshComponentForRow
-(int rowNumber, bool isRowSelected, Component *existingComponentToUpdate) 
-{
-  if (rowNumber >= sets.n) 
-    {
-      if (existingComponentToUpdate) 
-	{
-	  int id = ((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->getid();
-	  vals.erase(id);
-	  vals.insert(std::map<int, setval>::value_type(id, setval(((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->getstoretext(),
-							       ((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->getstoredef())));
+Component* FOMUSListBoxModel::refreshComponentForRow(int rowNumber, bool isRowSelected, Component *existingComponentToUpdate) {
+  if (hasnew && rowNumber == getNumRows() - 1) {
+    return new FOMUSSettingsListBoxItem(0, *this);
+  }
+  if (rowNumber >= getNumRows()) { // out of range, delete it
+    if (existingComponentToUpdate) {
+      ((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->validate();
       if (((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->hasKeyboardFocus(true)) textlistener->grabKeyboardFocus();
       delete existingComponentToUpdate;
     }
     return 0;
   }
   if (existingComponentToUpdate) {
-    if (((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->getid() != rowNumber) {
-      int id = ((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->getid();
-      vals.erase(id);
-      vals.insert(std::map<int, setval>::value_type(id, setval(((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->getstoretext(),
-							       ((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->getstoredef())));
-      std::map<int, setval>::iterator v(vals.find(rowNumber));
+    if (((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->getnum() != rowNumber) { // switching to different row
+      ((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->validate();
       if (((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->hasKeyboardFocus(true)) textlistener->grabKeyboardFocus();
-      if (v != vals.end()) { // got a stored value user was editing
-	((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->updateset(rowNumber, sets.sets[rowNumber], v->second.val, v->second.def);
-	vals.erase(v);
-      } else {
-	((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->updateset(rowNumber, sets.sets[rowNumber], sets.sets[rowNumber].valstr, /*true*/ sets.sets[rowNumber].where < info_config);
-      }
-    }
+      ((FOMUSSettingsListBoxItem*)existingComponentToUpdate)->updateset(infos.get(rowNumber));
+    } // otherwise it's the same one, reuse it
     return existingComponentToUpdate;
-  } else {
-    std::map<int, setval>::iterator v(vals.find(rowNumber));
-    if (v != vals.end()) { // got a stored value user was editing
-      FOMUSSettingsListBoxItem* r = new FOMUSSettingsListBoxItem(fom, rowNumber, sets.sets[rowNumber],  v->second.val, v->second.def);
-      vals.erase(v);
-      return r;
-    } else {
-      return new FOMUSSettingsListBoxItem(fom, rowNumber, sets.sets[rowNumber], 
-					  sets.sets[rowNumber].valstr, 
-					  sets.sets[rowNumber].where < info_config);
-    }
+  } else { // completely new one
+    return new FOMUSSettingsListBoxItem(infos.get(rowNumber), *this);
   }
 }
 
 // SETTINGS COMPONENT
-class FOMUSSettings:public Component, public ButtonListener
-{
+class FOMUSSettings:public Component, public ButtonListener {
+  fomusinfocont& infos;
 public:
-  FOMUSSettings (FOMUS fom);
-    ~FOMUSSettings();
-    void resized();
-    void buttonClicked (Button* buttonThatWasClicked);
-    juce_UseDebuggingNewOperator
-private:
-  int uselevel;
+  FOMUSSettings (fomusinfocont& infos);
+  ~FOMUSSettings();
+  void resized();
+  void buttonClicked (Button* buttonThatWasClicked);
+  juce_UseDebuggingNewOperator
+  private:
   void switchtouse(int lvl) {
-    if (lvl != uselevel) {
-      uselevel = lvl;
+    if (lvl != infos.getuselevel()) {
       removeChildComponent (component);
-      addAndMakeVisible (component = new FOMUSSettingsListBox (fom, lvl ));
+      delete component;
+      infos.setuselevel(lvl);
+      addAndMakeVisible (component = new FOMUSSettingsListBox(infos));
       component->setBounds (0, 16, getWidth(), getHeight() - 16);
     }
   }
-  FOMUS fom;
   FOMUSSettingsListBox* component;
   ToggleButton* BeginnerButton;
   ToggleButton* IntermediateButton;
   ToggleButton* AdvancedButton;
   ToggleButton* GuruButton;
+  TextButton* AddButton;
   FOMUSSettings (const FOMUSSettings&);
   const FOMUSSettings& operator= (const FOMUSSettings&);
 };
 
-FOMUSSettings::FOMUSSettings(FOMUS fom )
-  : Component(T("FOMUSSettings") ),
-    uselevel(0), fom(fom), 
-    component (0),
-    BeginnerButton (0),
-    IntermediateButton (0),
-    AdvancedButton (0),
-    GuruButton (0)
+FOMUSSettings::FOMUSSettings(fomusinfocont& infos)
+  :Component(T("FOMUSSettings") ),
+   infos(infos), 
+   component (0),
+   BeginnerButton (0),
+   IntermediateButton (0),
+   AdvancedButton (0),
+   GuruButton (0),
+   AddButton (0)
 {
-  addAndMakeVisible (component = new FOMUSSettingsListBox (fom, 0 ));
-  addAndMakeVisible (BeginnerButton = new ToggleButton (T("Beginner Button")));
-  BeginnerButton->setButtonText (T("Beginner"));
-  BeginnerButton->setRadioGroupId (1);
-  BeginnerButton->addButtonListener (this);
-  BeginnerButton->setToggleState (true, false);
-  
-  addAndMakeVisible(IntermediateButton = new ToggleButton (T("Intermediate Button")));
-  IntermediateButton->setButtonText (T("Intermediate"));
-  IntermediateButton->setRadioGroupId (1);
-  IntermediateButton->addButtonListener (this);
-  
-  addAndMakeVisible (AdvancedButton = new ToggleButton (T("Advanced Button")));
-  AdvancedButton->setButtonText (T("Advanced"));
-  AdvancedButton->setRadioGroupId (1);
-  AdvancedButton->addButtonListener (this);
-  
-  addAndMakeVisible (GuruButton = new ToggleButton (T("Guru Button")));
-  GuruButton->setButtonText (T("Guru"));
-  GuruButton->setRadioGroupId (1);
-  GuruButton->addButtonListener (this);
-  
+  addAndMakeVisible (component = new FOMUSSettingsListBox (infos));
+  if (infos.issetting()) {
+    addAndMakeVisible (BeginnerButton = new ToggleButton (T("Beginner Button")));
+    BeginnerButton->setButtonText (T("Beginner"));
+    BeginnerButton->setRadioGroupId (1);
+    BeginnerButton->addButtonListener (this);
+    BeginnerButton->setToggleState (true, false);
+    
+    addAndMakeVisible(IntermediateButton = new ToggleButton (T("Intermediate Button")));
+    IntermediateButton->setButtonText (T("Intermediate"));
+    IntermediateButton->setRadioGroupId (1);
+    IntermediateButton->addButtonListener (this);
+    
+    addAndMakeVisible (AdvancedButton = new ToggleButton (T("Advanced Button")));
+    AdvancedButton->setButtonText (T("Advanced"));
+    AdvancedButton->setRadioGroupId (1);
+    AdvancedButton->addButtonListener (this);
+    
+    addAndMakeVisible (GuruButton = new ToggleButton (T("Guru Button")));
+    GuruButton->setButtonText (T("Guru"));
+    GuruButton->setRadioGroupId (1);
+    GuruButton->addButtonListener (this);
+  } else {
+    addAndMakeVisible (AddButton = new TextButton (T("New Button")));
+    AddButton->setButtonText (T("New"));
+    AddButton->addButtonListener (this);    
+  }
   //setSize (640 + 32, 400);
 }
 
-FOMUSSettings::~FOMUSSettings() 
-{
+FOMUSSettings::~FOMUSSettings() {
   deleteAndZero (component);
   deleteAndZero (BeginnerButton);
   deleteAndZero (IntermediateButton);
   deleteAndZero (AdvancedButton);
   deleteAndZero (GuruButton);
+  deleteAndZero (AddButton);
 }
 
-void FOMUSSettings::resized()
-{
-  component->setBounds (0, 16, getWidth(), getHeight() - 16);
-  BeginnerButton->setBounds (0, 0, 56, 16);
-  IntermediateButton->setBounds (56, 0, 72, 16);
-  AdvancedButton->setBounds (128, 0, 64, 16);
-  GuruButton->setBounds (184, 0, 56, 16);
+void FOMUSSettings::resized() {
+  if (infos.issetting()) {
+    component->setBounds (0, 16, getWidth(), getHeight() - 16);
+    BeginnerButton->setBounds (0, 0, 56, 16);
+    IntermediateButton->setBounds (56, 0, 72, 16);
+    AdvancedButton->setBounds (128, 0, 64, 16);
+    GuruButton->setBounds (184, 0, 56, 16);
+  } else {
+    component->setBounds (0, 0, getWidth(), getHeight() - 18);
+    AddButton->setBounds(8, getHeight() - 16, 40, 14);
+  }
 }
 
-void FOMUSSettings::buttonClicked (Button* buttonThatWasClicked)
-{
+void FOMUSSettings::buttonClicked (Button* buttonThatWasClicked) {
   if (buttonThatWasClicked == BeginnerButton) {
     switchtouse(0);
   } else if (buttonThatWasClicked == IntermediateButton) {
@@ -940,18 +1227,29 @@ void FOMUSSettings::buttonClicked (Button* buttonThatWasClicked)
     switchtouse(2);
   } else if (buttonThatWasClicked == GuruButton) {
     switchtouse(3);
+  } else if (buttonThatWasClicked == AddButton) {
+    component->addnew();
   }
 }
 
-struct FileTabs:public TabbedComponent
-{
-  FileTabs(FOMUS fom ):TabbedComponent(TabbedButtonBar::TabsAtTop)
-  {
-    addTab(T("Settings"), Colours::white, new FOMUSSettings(fom ), true);
-    addTab(T("Parts"), Colours::white, new Component(), true);
-    addTab(T("Measure Attributes"), Colours::white, new Component(), true);
-    addTab(T("Instruments"), Colours::white, new Component(), true);
-    addTab(T("Percussion Instruments"), Colours::white, new Component(), true);
+struct FileTabs:public TabbedComponent {
+  fomusinfocont_sets sets;
+  fomusinfocont_parts parts;
+  fomusinfocont_measdefs measdefs;
+  fomusinfocont_insts insts;
+  fomusinfocont_percinsts percinsts;
+  
+  FileTabs(FOMUS fom ):TabbedComponent(TabbedButtonBar::TabsAtTop), sets(fom, 0), parts(fom), measdefs(fom), insts(fom), percinsts(fom) {
+    sets.init();
+    parts.init();
+    measdefs.init();
+    insts.init();
+    percinsts.init();
+    addTab(T("Settings"), Colours::white, new FOMUSSettings(sets), true);
+    addTab(T("Parts"), Colours::white, new FOMUSSettings(parts), true);
+    addTab(T("Measure Definitions"), Colours::white, new FOMUSSettings(measdefs), true);
+    addTab(T("Instruments"), Colours::white, new FOMUSSettings(insts), true);
+    addTab(T("Percussion Instruments"), Colours::white, new FOMUSSettings(percinsts), true);
 
     setSize (900, 600);
   }
@@ -1037,9 +1335,8 @@ void Fomus::settingsWindow()
   DialogWindow::showModalDialog(T("FOMUS Settings"), f, 0, 
 				Colour(0xffe5e5e5), true, true, true);
   delete f;
-  scores.getUnchecked(current)->name =
-    File(fomus_get_sval(getfomusdata(), "filename")).getFileName();
-
+  String fn0(File(fomus_get_sval(getfomusdata(), "filename")).getFileName());
+  scores.getUnchecked(current)->name = (fn0.isEmpty() ? "(untitled)" : fn0);
 }
 
 
@@ -1262,9 +1559,9 @@ void FOMUSMarksView::doupdate(const String& sch, const int but)
   Font it(13, Font::italic);
   for (struct info_mark* i(lst.marks), *ie(lst.marks + lst.n); i < ie; ++i) {
     lay.appendText("name:", ul); lay.appendText(" ", no); lay.appendText(i->name, bo); lay.appendText("  ", no);
-    lay.appendText("arguments:", ul); lay.appendText(" ", no); lay.appendText("(fix me)", no); lay.appendText("\n", no);
+    lay.appendText("arguments:", ul); lay.appendText(" ", no); lay.appendText(i->argsdoc, no); lay.appendText("\n", no);
     std::ostringstream ou;
-    out_justify(ou, i->doc, 0, false);
+    out_justify(ou, i->descdoc, 0, false);
     lay.appendText(ou.str().c_str(), it); lay.appendText("\n\n", no);
   }
   lay.layout(std::numeric_limits<int>::max() / 2, Justification::topLeft, false);
@@ -1417,7 +1714,7 @@ FOMUSDocTabs::FOMUSDocTabs()
   SearchName->setToggleState (true, false);
   
   addAndMakeVisible (SearchDoc = new ToggleButton (T("Search Doc")));
-  SearchDoc->setButtonText (T("Documentation"));
+  SearchDoc->setButtonText (T("Doc Text"));
   SearchDoc->setRadioGroupId (1);
   SearchDoc->addButtonListener (this);
   
@@ -1479,18 +1776,209 @@ void Fomus::loadScoreDialog()
 
 void Fomus::renameScoreDialog() 
 {
-  #warning "todo: wildcards should come from fomus infoapi function"
+  #warning "todo: file extensions should come from fomus infoapi function"
   WildcardFileFilter wildcardFilter(T("*.fms;*.ly;*.xml"), T("FOMUS Output Files"));
   FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
   FileChooserDialogBox dialogBox(T("Rename Score"), T("Specify an output file path (`filename' setting value)..."),
 				 browser, false, Colours::white);
   if (dialogBox.show()) {
     File fn = browser.getCurrentFile();
-    scores.getUnchecked(current)->name = fn.getFileName();
+    String fn0(fn.getFileName());
+    scores.getUnchecked(current)->name = (fn0.isEmpty() ? "(untitled)" : fn0);
     sval(fomus_par_setting, fomus_act_set, "filename");
     sval(fomus_par_settingval, fomus_act_set, fn.getFullPathName());
   }
 }
+
+// ------------------------------------------------------------------------------------------------------------------------
+// EDITOR
+// ------------------------------------------------------------------------------------------------------------------------
+
+void FomusSyntax::stickkeyword(String str, const int hl) {
+  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
+  str[0] = toupper(str[0]);
+  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
+  for (int i = 1; i < str.length(); ++i) str[i] = toupper(str[i]);
+  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
+}
+
+FomusSyntax::FomusSyntax () // syntab
+  :Syntax(T(" "), // whitechars
+	  T("" /*"qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"*/), // wordchars 
+	  T("~!@#$%^&*-_?/'\"\\[]"), // symbolchars
+	  T(""), // commentchars
+	  T(""), // prefixchars
+	  T("" /*"\"'"*/), // stringchars
+	  T("" /*"(<{["*/), // openchars
+	  T("" /*")>}]"*/), // closechars
+	  T("" /*",.!?;:'`\\"*/), // punctchars
+	  T("" /*"\\"*/)) // escapechars
+{
+  coloring = true;
+  type=TextIDs::Fomus;
+#ifdef GRACE
+  tabwidth=Preferences::getInstance()->getIntProp(T("FomusTabWidth"), 2);
+#else
+  tabwidth=2;
+#endif
+  hilites[HiliteIDs::String]=Colours::darkgreen;
+  hilites[HiliteIDs::Comment]=Colours::darkblue;
+  hilites[HiliteIDs::Hilite4]=Colours::darkgrey; // time, pitch, etc.
+  hilites[HiliteIDs::Hilite5]=Colours::darkorange; // settings
+  hilites[HiliteIDs::Hilite6]=Colours::darkred; // built-in
+  // keywords
+  stickkeyword(T("voice"), HiliteIDs::Hilite4);
+  stickkeyword(T("voi"), HiliteIDs::Hilite4);
+  stickkeyword(T("vo"), HiliteIDs::Hilite4);
+  stickkeyword(T("v"), HiliteIDs::Hilite4);
+  stickkeyword(T("time"), HiliteIDs::Hilite4);
+  stickkeyword(T("tim"), HiliteIDs::Hilite4);
+  stickkeyword(T("ti"), HiliteIDs::Hilite4);
+  stickkeyword(T("t"), HiliteIDs::Hilite4);
+  stickkeyword(T("grace"), HiliteIDs::Hilite4);
+  stickkeyword(T("gra"), HiliteIDs::Hilite4);
+  stickkeyword(T("gr"), HiliteIDs::Hilite4);
+  stickkeyword(T("g"), HiliteIDs::Hilite4);
+  stickkeyword(T("dynamic"), HiliteIDs::Hilite4);
+  stickkeyword(T("dyn"), HiliteIDs::Hilite4);
+  stickkeyword(T("dy"), HiliteIDs::Hilite4);
+  stickkeyword(T("y"), HiliteIDs::Hilite4);
+  stickkeyword(T("duration"), HiliteIDs::Hilite4);
+  stickkeyword(T("dur"), HiliteIDs::Hilite4);
+  stickkeyword(T("du"), HiliteIDs::Hilite4);
+  stickkeyword(T("d"), HiliteIDs::Hilite4);
+  stickkeyword(T("part"), HiliteIDs::Hilite4);
+  stickkeyword(T("par"), HiliteIDs::Hilite4);
+  stickkeyword(T("pa"), HiliteIDs::Hilite4);
+  stickkeyword(T("a"), HiliteIDs::Hilite4);
+  stickkeyword(T("pitch"), HiliteIDs::Hilite4);
+  stickkeyword(T("pit"), HiliteIDs::Hilite4);
+  stickkeyword(T("pi"), HiliteIDs::Hilite4);
+  stickkeyword(T("p"), HiliteIDs::Hilite4);
+  stickkeyword(T("note"), HiliteIDs::Hilite4);
+  stickkeyword(T("mark"), HiliteIDs::Hilite4);
+  stickkeyword(T("rest"), HiliteIDs::Hilite4);
+  stickkeyword(T("measure"), HiliteIDs::Hilite4);
+  stickkeyword(T("meas"), HiliteIDs::Hilite4);
+  // settings
+  info_setfilter fi0 = {0, 0, 0, module_nomodtype, 0, module_noloc, 3, info_none};
+  info_setfilterlist fi = {1, &fi0};
+  info_setlist lst = info_list_settings(0, &fi, 0, 0, 0);
+  for (info_setting* s = lst.sets, *se = lst.sets + lst.n; s < se; ++s) stickkeyword(s->name, HiliteIDs::Hilite5);
+  // built-in
+  stickkeyword(T("template"), HiliteIDs::Hilite6);
+  stickkeyword(T("id"), HiliteIDs::Hilite6);
+  stickkeyword(T("imports"), HiliteIDs::Hilite6);
+  stickkeyword(T("export"), HiliteIDs::Hilite6);
+  stickkeyword(T("parts"), HiliteIDs::Hilite6);
+  stickkeyword(T("partsref"), HiliteIDs::Hilite6);
+  stickkeyword(T("metapart"), HiliteIDs::Hilite6);
+  stickkeyword(T("percinsts"), HiliteIDs::Hilite6);
+  stickkeyword(T("percinst"), HiliteIDs::Hilite6);
+  stickkeyword(T("inst"), HiliteIDs::Hilite6);
+  stickkeyword(T("clefs"), HiliteIDs::Hilite6);
+  stickkeyword(T("staves"), HiliteIDs::Hilite6);
+  stickkeyword(T("staff"), HiliteIDs::Hilite6);
+  stickkeyword(T("measdef"), HiliteIDs::Hilite6);
+}
+
+FomusSyntax::~FomusSyntax()
+{
+  clearSingletonInstance();
+}
+
+bool FomusSyntax::isTopLevel(String line)
+{
+  // true if line is not white in column zero.
+  if ( line == String::empty )
+    return false;
+  else if ( !char_white_p(syntab, line[0]) )
+    return true;
+  else return false;
+}
+
+int FomusSyntax::getIndent (const String text, int i, int top, int beg)
+{
+  std::stack<int> sta;
+  //std::cout << "|" << text.toUTF8() << "| " << bot << " " << top << std::endl;
+  bool lc = false, cc = false, dq = false, sq = false, br = false;
+  int col = 0;
+  for (++i; i < beg; ++i) {
+    char x0 = i >= 1 ? text[i - 1] : 0;
+    char x = text[i];
+    ++col;
+    if (x0 == '/' && x == '/') {lc = true; continue;}
+    if (x == '\n') {lc = false; col = -1; continue;}
+    if (lc) continue;
+    if (x0 == '/' && x == '-') {cc = true; continue;}
+    if (x0 == '-' && x == '/') {cc = false; continue;}
+    if (cc) continue;
+    if (x == '"' && x0 != '\\' && !sq) {dq = !dq; continue;}
+    if (x == '\'' && x0 != '\\' && !dq) {sq = !sq; continue;}
+    if (dq || sq) continue;
+    if (x == '[') {sta.push(col + 1); br = true; continue;}
+    if (x == ']') {if (!sta.empty()) sta.pop(); br = false; continue;}
+    if (br) continue;
+    if (x == '{') {sta.push(sta.empty() ? tabwidth : sta.top() + tabwidth); continue;}
+    if (x == '}') {if (!sta.empty()) sta.pop(); continue;}
+    if (x == '(' || x == '<') {sta.push(col + 1); continue;}
+    if (x == ')' || x == '>') {if (!sta.empty()) sta.pop(); continue;}
+  }
+  return sta.empty() ? 0 : sta.top();
+}
+
+HiliteID FomusSyntax::getHilite (const String text, int start, int end)
+{
+  //std::cout << '|' << text.toUTF8() << '|' << std::endl << '|' << text.substring(start, end).toUTF8() << '|' << std::endl << std::endl;
+  bool lc = false, cc = false, dq = false, sq = false, br = false;
+  for (int i = 0; i <= start; ++i) {
+    char x0 = i >= 1 ? text[i - 1] : 0;
+    char x = text[i];
+    char x1 = i + 1 < end ? text[i + 1] : 0; // assuming start is always a valid string pos
+    if (x == '/' && x1 == '/') {lc = true; continue;}
+    if (x == '\n') {lc = false; continue;}
+    if (lc) continue;
+    if (x0 == '-' && x == '/') {cc = false; continue;}
+    if (x == '/' && x1 == '-') {cc = true; continue;}
+    if (cc) continue;
+    if (x == '"' && x0 != '\\' && !sq) {dq = !dq; continue;}
+    if (x == '\'' && x0 != '\\' && !dq) {sq = !sq; continue;}
+    if (dq || sq) continue;
+    if (x == '[') {br = true; continue;}
+    if (x == ']') {br = false; continue;}
+    if (br) continue;
+  }
+  if (lc || cc) return HiliteIDs::Comment;
+  if (dq || sq) return HiliteIDs::String;
+  if (br) return HiliteIDs::Hilite4;
+  String str(text.substring(start, end));
+  SynTokMap::const_iterator f(tokens.find(str));
+  if (f != tokens.end()) return f->second->data1;
+  return HiliteIDs::None;
+} 
+
+// void fomusSaveAndRun() {
+//   TextEditorWindow* win = TextEditorWindow::getFocusTextEditor();
+//   if (win) {
+//     TextBuffer* buf = win->getTextBuffer();
+//     if (buf->saveFile()) {
+//       FOMUS f = fomus_new();
+//       fomus_load(f, buf->getFile().getFileName().toUTF8());
+//       fomus_run(f);
+//     }
+//   }
+// }
+
+void FomusSyntax::eval(String text, bool isRegion, bool expand) {
+  FOMUS f = fomus_new();
+  fomus_parse(f, text.toUTF8());
+  if (fomus_err) {
+    fomus_free(f);
+    return;
+  }
+  fomus_run(f); // fomus destroys instance automatically
+}
+
 
 #endif
 

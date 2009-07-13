@@ -148,11 +148,11 @@
     (ffi_fms_xml (get-output-string port))
     (void)))
 
-(define (fms:measattr . sets)
+(define (fms:measdef . sets)
   (let ((port (open-output-string)))
-    (display "<measattr>" port)
+    (display "<measdef>" port)
     (fms:writeXml port #f sets)
-    (display "</measattr>" port)
+    (display "</measdef>" port)
     (ffi_fms_xml (get-output-string port))
     (void)))
 
@@ -244,7 +244,7 @@
 
 ;; (fms:part :id "asdf")
 ;; (fms:meas 2.0 2.0)
-;; (fms:note 1.5 1.5 1.5)
+;; (fms:note 1.5 1.5 60)
 
 ;; (fms:note 3 1.5 1.5)
 

@@ -22,6 +22,7 @@ class TextBuffer : public TextEditor,
   Syntax* syntax;
   File file;
   int matchpos;
+  bool isfms;
   class TextBufferListener : public TextEditorListener
   {
     // callback sets change flag
@@ -239,6 +240,9 @@ class TextEditorWindow : public DocumentWindow, public MenuBarModel
       deleteAndZero(trigger);
     }  
   };
+
+ private:
+  bool isfms;
   
  public:
   TextEditorWindow (File file=File::nonexistent, 
