@@ -220,7 +220,7 @@ TextBuffer::TextBuffer(int texttype)
 {
   // set syntax right away since commands manager needs this
   // information for adding commands
-  bool isfms = (texttype == TextIDs::Fomus);
+  isfms = (texttype == TextIDs::Fomus);
   setSyntax(texttype);
   Preferences* prefs=Preferences::getInstance();
   manager=new ApplicationCommandManager();

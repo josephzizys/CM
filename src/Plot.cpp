@@ -2628,8 +2628,9 @@ private:
   Label* chanlabel;
   Slider* chaninc;
   ToggleButton* layerbutton;
-  TextButton* hushbutton;
   TextButton* playbutton;
+  TextButton* hushbutton;
+  FilenameComponent* filebrowser;
   void playPlot();
   void writePlot();
 };
@@ -2655,13 +2656,15 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl, bool wr)
      chaninc (0),
      layerbutton (0),
      playbutton (0),
-     hushbutton (0)
+     hushbutton (0),
+     filebrowser (0)
 {
   plotter=pl;
   write=wr;
   Slider::SliderStyle ss=Slider::LinearHorizontal;
 
-  addAndMakeVisible(xgroup=new GroupComponent(String::empty, T("X Axis")));
+  xgroup=new GroupComponent(String::empty, T("X Axis (seconds)"));
+  addAndMakeVisible(xgroup);
   Axis* axis=plotter->getHorizontalAxisView()->getAxis();
   addAndMakeVisible(startlabel=new Label(String::empty,T("Play Length:")));
   startlabel->setFont (Font (15.0000f, Font::plain));
@@ -2680,7 +2683,7 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl, bool wr)
   startinc->setTextBoxStyle(Slider::TextBoxLeft, false, 80, 20);
   startinc->addListener(this);
   
-  addAndMakeVisible(durlabel=new Label(String::empty, T("Duration:")));
+  addAndMakeVisible(durlabel=new Label(String::empty, T("Note Duration:")));
   durlabel->setFont (Font (15.0000f, Font::plain));
   durlabel->setJustificationType (Justification::centredLeft);
   durlabel->setEditable (false, false, false);
@@ -2703,10 +2706,11 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl, bool wr)
     }  
 
   // Y axis group
-  addAndMakeVisible(ygroup=new GroupComponent(String::empty, T("Y Axis")));
+  ygroup=new GroupComponent(String::empty, T("Y Axis (key numbers)"));
+  addAndMakeVisible(ygroup);
   axis=plotter->getVerticalAxisView()->getAxis();
 
-  addAndMakeVisible(lowkeylabel=new Label(String::empty, T("Low key:")));
+  addAndMakeVisible(lowkeylabel=new Label(String::empty, T("Lowest note:")));
   lowkeylabel->setFont (Font (15.0000f, Font::plain));
   lowkeylabel->setJustificationType (Justification::centredLeft);
   lowkeylabel->setEditable (false, false, false);
@@ -2720,7 +2724,7 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl, bool wr)
   lowkeyinc->setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
   lowkeyinc->addListener (this);
   
-  addAndMakeVisible(highkeylabel=new Label(String::empty, T("High key:")));
+  addAndMakeVisible(highkeylabel=new Label(String::empty, T("Highest note:")));
   highkeylabel->setFont (Font (15.0000f, Font::plain));
   highkeylabel->setJustificationType (Justification::centredLeft);
   highkeylabel->setEditable (false, false, false);
@@ -2772,19 +2776,35 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl, bool wr)
   chaninc->addListener (this);
   
   addAndMakeVisible(layerbutton=new ToggleButton(String::empty));
-  layerbutton->setButtonText (T("Play All Layers"));
+  layerbutton->setButtonText (T("All Layers"));
   layerbutton->setToggleState(true,false);
   layerbutton->addButtonListener (this);
 
   addAndMakeVisible(playbutton=new TextButton(String::empty));
-  playbutton->setButtonText (T("Play"));
-  playbutton->addButtonListener (this);
-  
-  addAndMakeVisible(hushbutton=new TextButton(String::empty));
-  hushbutton->setButtonText (T("Hush"));
-  hushbutton->addButtonListener (this);
+  if (write)
+    {
+      playbutton->setButtonText(T("Write"));
+      playbutton->addButtonListener(this);
+      filebrowser=new FilenameComponent(String::empty,
+					completeFile(getName()+T(".mid")),
+					true,
+					false,
+					true,
+					T("*.mid"),
+					T(".mid"),
+					String::empty);
+      addAndMakeVisible(filebrowser);
+    }
+  else
+    {
+      playbutton->setButtonText (T("Play"));
+      playbutton->addButtonListener(this);
+      addAndMakeVisible(hushbutton=new TextButton(String::empty));
+      hushbutton->setButtonText (T("Hush"));
+      hushbutton->addButtonListener (this);
+    }  
 
-  setSize (550, 280);
+  setSize (550, 280-24);
 }
 
 PlayPlotDialog::~PlayPlotDialog()
@@ -2806,27 +2826,36 @@ PlayPlotDialog::~PlayPlotDialog()
   deleteAndZero (layerbutton);
   deleteAndZero (playbutton);
   deleteAndZero (hushbutton);
+  deleteAndZero (filebrowser);
 }
 
 void PlayPlotDialog::resized()
 {
+  int slwidth=138;
+  int labelwidth=90;
+  int slcol1=120;
+  int slcol2=380;
+
   xgroup->setBounds (16, 8, 520, 64);
-  startlabel->setBounds (32, 32, 82, 24);
-  startinc->setBounds (120, 32, 150, 24);
-  durlabel->setBounds (288, 32, 72, 24);
-  durinc->setBounds (368, 32, 150, 24);
+  startlabel->setBounds (32, 32, labelwidth, 24);
+  startinc->setBounds (slcol1, 32, slwidth, 24);
+  durlabel->setBounds (288, 32, labelwidth, 24); //72
+  durinc->setBounds (380, 32, slwidth, 24); //(368, 32, 150, 24)
   ygroup->setBounds (16, 80, 520, 64);
-  lowkeylabel->setBounds (32, 104, 72, 24);
-  lowkeyinc->setBounds (120, 104, 150, 24);
-  highkeylabel->setBounds (288, 104, 72, 24);
-  highkeyinc->setBounds (368, 104, 150, 24);
-  amplabel->setBounds (32, 160, 80, 24);
-  ampinc->setBounds (120, 160, 150, 24);
-  chanlabel->setBounds (288, 160, 80, 24);
-  chaninc->setBounds (368, 160, 150, 24);
+  lowkeylabel->setBounds (32, 104, labelwidth, 24);
+  lowkeyinc->setBounds (slcol1, 104, slwidth, 24);
+  highkeylabel->setBounds (288, 104, labelwidth, 24);
+  highkeyinc->setBounds (slcol2, 104, slwidth, 24);
+  amplabel->setBounds (32, 160, labelwidth, 24);
+  ampinc->setBounds (slcol1, 160, slwidth, 24);
+  chanlabel->setBounds (288, 160, labelwidth, 24);
+  chaninc->setBounds (slcol2, 160, slwidth, 24);
   layerbutton->setBounds (32, 240, 120, 24);
   playbutton->setBounds (440, 240, 87, 24);
-  hushbutton->setBounds (344, 240, 87, 24);
+  if (hushbutton)
+    hushbutton->setBounds (344, 240, 87, 24);
+  if (filebrowser)
+    filebrowser->setBounds (160, 240, 200, 24);
 }
 
 void PlayPlotDialog::sliderValueChanged (Slider* slider)

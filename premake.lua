@@ -286,6 +286,12 @@ for i = 1,3 do
       add(mypackage.linkoptions, "-framework QuickTime")
       add(mypackage.linkoptions, "-framework WebKit")
       add(mypackage.linkoptions, "-framework IOKIT")
+      if (grace or gracecl) then
+	 mypackage.postbuildcommands = 
+	    {"cp res/etc/Info.plist bin/" .. mypackage.target .. ".app/Contents",
+	     "mkdir -p bin/" .. mypackage.target ..  ".app/Contents/Resources",
+	     "cp res/etc/icons.icns bin/"  .. mypackage.target .. ".app/Contents/Resources"}
+      end
    elseif linux then
       add(mypackage.defines, "LINUX=1")
       add(mypackage.links, "pthread")
@@ -299,10 +305,10 @@ for i = 1,3 do
       add(mypackage.libpaths, "/usr/X11R6/lib/")
    elseif windows then
       add(mypackage.defines, "WINDOWS=1")
-      if (options["target"] == "vs2005" or options["target"] == "vs2008" )then
-	 print("adding stuff!")
+      if (options["target"] == "vs2005" or options["target"] == "vs2008" ) then
 	 add(mypackage.config["Debug"].links, "comsuppwd")
 	 add(mypackage.config["Release"].links, "comsuppw")
+	 table.insert(package.files, matchfiles("res/etc/*.rc"))
       elseif options["target"] == "gnu" then
 	 -- premake outputs libs defined at the config level BEFORE slibs
 	 -- defined at the package level. on windows this causes linking
