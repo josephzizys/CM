@@ -308,7 +308,7 @@ for i = 1,3 do
       if (options["target"] == "vs2005" or options["target"] == "vs2008" ) then
 	 add(mypackage.config["Debug"].links, "comsuppwd")
 	 add(mypackage.config["Release"].links, "comsuppw")
-	 table.insert(package.files, matchfiles("res/etc/*.rc"))
+	 table.insert(mypackage.files, matchfiles("res/etc/*.rc"))
       elseif options["target"] == "gnu" then
 	 -- premake outputs libs defined at the config level BEFORE slibs
 	 -- defined at the package level. on windows this causes linking
