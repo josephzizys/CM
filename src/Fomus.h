@@ -99,6 +99,9 @@ class Fomus
       scores.clear();
     }
 
+  void openScore(String scorename, String scoreargs);
+  void closeScore();
+
   int numScores() {return scores.size();}
   String getScoreName(int i) {return scores[i]->name;}
   bool isScoreActive(int i) {return current==i;}
@@ -112,7 +115,7 @@ class Fomus
   void runScore();
 
   void sendXml(XmlElement& xml, fomus_param par, fomus_action act);
-  void sendXml(const String& xml);
+  void sendXml(const String& xml, double scoretime=0.0);
   void sendXmlEntry(XmlElement& xml);
   void sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act, const excmap& exc = excmap(),  bool islist = false);
   void sendXmlVal(XmlElement& xml, fomus_param par, fomus_action act, whichstruct wh, bool listof = false);

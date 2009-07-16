@@ -113,6 +113,8 @@
     (ffi_cs_init_score void "cs_init_score" c-string)
     (ffi_cs_send_score void "cs_send_score" int int double c-string)
 
+    (ffi_fms_open_score void "fms_open_score" c-string c-string )
+    (ffi_fms_close_score void "fms_close_score" )
     (ffi_fms_init void "fms_init" )
     (ffi_fms_new void "fms_new" )
     (ffi_fms_free void "fms_free" )

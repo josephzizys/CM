@@ -12,11 +12,11 @@ This is the readme for Common Music 3.
                                APPLICATIONS
 ==========================================================================
 
-The source tree builds three target applications:
+The CM source tree builds three different applications:
 
-Grace   (Graphical Realtime Algorithmic Composition Environment) 
+Grace (Graphical Realtime Algorithmic Composition Environment) 
 
-   A drag-and-drop GUI with embedded scheme interpreter (Sndlib or
+   A drag-and-drop GUI with embedded Scheme interpreter (Sndlib or
    Chicken Scheme), code editor, data plotting, and realtime audio
    connections to various services like as MIDI, CLM, Csound, Fomus.
 
@@ -27,24 +27,26 @@ cm
 
 GraceCL
     
-   A non-realtime version of Grace to use with Common Music 2 and
-   either SBCL or CLISP Common Lisp.
+   A version of Grace for use with Common Lisp (either SBCL or CLISP)
+   and the older CM2 branch of Common Music. It is intended as a
+   replacement for working with CLM4/CM2 in Emacs. GraceCL is not
+   realtime and has no Audio menu.
 
 ==========================================================================
                                DEPENDENCIES                               
 ==========================================================================
 
-Premake (3.5, 3.6, 3.7) available at:
+Premake 3.7 available at:
 
-    http://premake.sourceforge.net/download
+  http://premake.sourceforge.net/download
 
-Either SndLib with S7 Scheme, available at:
+SndLib with S7 Scheme, available at:
 
-    ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz
 
 OR Chicken Scheme 3.0.0, available at:
 
-    http://www.call-with-current-continuation.org/
+  http://www.call-with-current-continuation.org/
 
 ==========================================================================
                                  BUILDING                                 
@@ -53,16 +55,17 @@ OR Chicken Scheme 3.0.0, available at:
 Use premake to create your make files and then make the targets. For
 example this is how I build the basic system on my mac:
 
-    $ premake --target gnu --sndlib ../sndlib
-    $ make
+  $ premake --target gnu --sndlib ../sndlib
+  $ make
 
-You MUST specify a --target option (either gnu or vs2005) and EITHER a
---sndlib OR a --chicken installation (directory) that contains the system's header files and static lib for linking.
+You MUST specify a --target option (either gnu or vs2008) and EITHER a
+--sndlib OR a --chicken installation (directory) that contains that
+system's header files and static lib.
 
-To use an external JUCE installation rather than the amalgamated
+To use an external JUCE installation rather than CM's amalgamated JUCE
 sources (part of the CM source tree) pass an optinal --juce
 installation directory.  To build with Fomus add your --fomus
-installation directory as well.
+installation root as well, typically '--fomus /usr/local'
 
 The --sndlib --chicken, --juce and --fomus options all allow their
 path to be either the source directory (eg '--juce ../juce-1.46') or
@@ -70,15 +73,62 @@ an install root (eg '--juce /usr/local').
 
 Executables are saved in bin/:
 
-    bin/cm                      console app    
-    bin/Grace                   gui app
-    bin/GraceCL                 gui app (for cm2/common lisp)
+  bin/cm                      console app    
+  bin/Grace                   gui app
+  bin/GraceCL                 gui app (for cm2/common lisp)
 
-BUILDING SNDLIB:
+EXAMPLE: BUILDING SNDLIB AND CM FROM SOURCES ON OSX AND LINUX
 
-    $ cd /path/to/sndlib
-    $ ./configure CC=g++
-    $ make
+  rm -rf sndlib
+  curl -o sndlib.tar.gz ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz
+  tar -zxf sndlib.tar.gz
+  rm sndlib.tar.gz
+  cd sndlib
+  ./configure CC=g++
+  make
+  cd ..
+  rm -rf cm
+  svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk cm
+  cd cm
+  premake --verbose --target gnu --sndlib  ../sndlib
+  make
+
+EXAMPLE: BUILDING SNDLIB AND CM FROM SOURCES ON WINDOWS
+
+  These instructions assume you already have Microsoft Visual Studio
+  Express C++ 2008 installed on your computer. Its easiest if you
+  create a common folder to hold the source trees for CM and SndLib.
+  I created a C:\Software directory to hold both systems on my
+  machine:
+
+        C:\Software\sndlib 
+        C:\Software\cm 
+
+  1. Download and install the latest version of SndLib: 
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz 
+
+  2. Double-click 'sndlib.vcproj' to open the project in Visual Studio
+  and choose 'Build Solution' from the Build menu (or press F7). This
+  should compile the release version of the sndlib library.
+
+  3. Download and install Premake 3.7, make sure that the executable
+  is on your PATH variable:
+  http://downloads.sourceforge.net/premake/premake-win32-3.7.zip
+
+  4. Download and install the latest Common Music sources from the svn
+  repository. The svn command to do this is:
+  svn co http://commonmusic.svn.sf.net/svnroot/commonmusic/trunk cm
+
+  5. Open a Windows CMD shell (terminal) by selecting Run... from the
+  Start menu and click OK.
+
+  6. In the terminal window, change directories to your CM directory
+  and use premake to create the Visual Studio project files: 
+    $ cd \Software\cm 
+    $ premake --target vs2008 --sndlib ../sndlib
+
+  7. Double click the file 'cm.sln' , select the RELEASE configuration
+  in the pulldown menu and press F7.
 
 ==========================================================================
                                  CM IN EMACS                             
@@ -108,43 +158,45 @@ your machine. Then restart emacs and start CM by doing: M-x: cm
                                 SVN ACCESS                                
 ==========================================================================
 
+To download the svn tip of Common Music type the following command (all
+one line) in your terminal window:
+
 svn co http://commonmusic.svn.sourceforge.net/svnroot/commonmusic/trunk cm
 
 ==========================================================================
                                 DEVELOPING                                
 ==========================================================================
 
-To build against the juce debug libs:
+To build with debugging info turned on:
 
-    $ make CONFIG=Debug
+  make CONFIG=Debug
 
-To build universal:
+To build universal (doesnt work yet...):
 
-    $ make CONFIG=Release TARGET_ARCH="-arch i386 -arch ppc"
-
+  make CONFIG=Release TARGET_ARCH="-arch i386 -arch ppc"
 
 To create the embedded Scheme runtime sources:
 
-    $ juce_bb scm src SchemeSources
+  juce_bb scm src SchemeSources
 
 To create the embedded instruments:
 
-    $ juce_bb res/ins src/ Instruments
+  juce_bb res/ins src/ Instruments
 
-    To ADD instruments do this first:
-      1. Copy the instrument file(s) to res/ins/files.
-      2. Edit res/ins/table.xml and rows for the new files.
-      3. Create the zip archive and generate the resource:
-         $ zip -r files.zip files/*.scm files/*.clm 
+  To ADD instruments do this first:
+  1. Copy the instrument file(s) to res/ins/files.
+  2. Edit res/ins/table.xml and rows for the new files.
+  3. Create the zip archive and generate the resource:
+  $ zip -r files.zip files/*.scm files/*.clm 
 
 To create the embedded documetation
 
-    $ juce_bb res/doc src/ Documentation
+  juce_bb res/doc src/ Documentation
 
 To create the other Resources:
 
-    $ juce_bb res/font src/ Fonts
-    $ juce_bb res/images src/ Images
+  juce_bb res/font src/ Fonts
+  juce_bb res/images src/ Images
 
 To generate FFI files (requires a working 'format'...):
 
@@ -154,9 +206,9 @@ To generate FFI files (requires a working 'format'...):
 
 To regenerate ChickenBridge.cpp:
 
-    $ cd scm
-    $ csc -c++ -embedded -t ChickenBridge.scm
-    $ mv ChickenBridge.cpp ../src
+  cd scm
+  csc -c++ -embedded -t ChickenBridge.scm
+  mv ChickenBridge.cpp ../src
 
 ==========================================================================
                                   PORTING                                

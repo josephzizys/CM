@@ -46,6 +46,11 @@
 	     (apply cs:open-output-file str args)
 	     (set! mode *score-type-csound*)
 	     )
+	    ((or (member type '("ly" "fms" "xml"))
+		 (and (string=? type "") (string=? str "fomus")))
+	     (apply fms:open-score str args)
+	     (set! mode *score-type-fomus*)
+	     )
 	    (else
 	     (error "don't know how to open" str)))
       ;; this function is being called under sprout: put the

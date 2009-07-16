@@ -20,6 +20,17 @@
 ;;    (ffi_fms_run )
 ;;    (ffi_fms_xml  c-string)
 
+(define (fms:open-score scorename . args)
+  ;; bundle up user args and pass to fomus?
+  (do ((tail args (cdr tail))
+       (scoreargs "")
+       (delimiter "" " "))
+      ((null? tail)
+       (ffi_fms_open_score scorename scoreargs))
+    (set! scoreargs (string-append scoreargs delimiter
+				   (format #f "~S" (car tail)))))
+  )
+
 ;; slow, but since we're parsing XML it doesn't matter
 ;; should be accurate w/ any floating point precision
 (define (fms:toFloatHex a)
@@ -99,6 +110,15 @@
 ;; settings lists are just like marks lists. 
 
 (define (fms:entry port time dur part voice grtime marks sets)
+  ;; if we are being called inside a running process then time 0 is
+  ;; relative to the start of the process. in this case we take the
+  ;; note's time value to be an 'ahead' factor that we must increment
+  ;; by the actual current score time. otherwise (i.e. we are not
+  ;; being called under a process but rather sending notes 'by hand'
+  ;; in the repl) we take the time stamp to be the absolute score time
+  ;; for the event.  ffi_sched_score_time returns 0 if not called
+  ;; under a running process
+  (set! time (+ time (ffi_sched_score_time))) 
   (fms:writeXml port "time" time)
   (fms:writeXml port "dur" dur)
   (if part (fms:writeXml port "part" part))

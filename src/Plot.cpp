@@ -2603,7 +2603,7 @@ class PlayPlotDialog : public Component,
 			 public ButtonListener
 {
 public:
-  PlayPlotDialog (Plotter* pl, bool wr=false);
+  PlayPlotDialog (Plotter* pl);
   ~PlayPlotDialog();
   void resized();
   void sliderValueChanged (Slider* sliderThatWasMoved);
@@ -2612,7 +2612,6 @@ public:
 private:
   bool rescalex, rescaley;
   Plotter* plotter;
-  bool write;
   GroupComponent* xgroup;
   Label* startlabel;
   Slider* startinc;
@@ -2630,16 +2629,15 @@ private:
   ToggleButton* layerbutton;
   TextButton* playbutton;
   TextButton* hushbutton;
+  TextButton* writebutton;
   FilenameComponent* filebrowser;
-  void playPlot();
-  void writePlot();
+  void playPlot(bool write);
 };
 
-PlayPlotDialog::PlayPlotDialog (Plotter* pl, bool wr)
+PlayPlotDialog::PlayPlotDialog (Plotter* pl)
   :  plotter (0),
      rescalex(true),
      rescaley(true),
-     write (false),
      xgroup (0),
      startlabel (0),
      startinc (0),
@@ -2657,10 +2655,10 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl, bool wr)
      layerbutton (0),
      playbutton (0),
      hushbutton (0),
-     filebrowser (0)
+     filebrowser (0),
+     writebutton (0)
 {
   plotter=pl;
-  write=wr;
   Slider::SliderStyle ss=Slider::LinearHorizontal;
 
   xgroup=new GroupComponent(String::empty, T("X Axis (seconds)"));
@@ -2781,29 +2779,25 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl, bool wr)
   layerbutton->addButtonListener (this);
 
   addAndMakeVisible(playbutton=new TextButton(String::empty));
-  if (write)
-    {
-      playbutton->setButtonText(T("Write"));
-      playbutton->addButtonListener(this);
-      filebrowser=new FilenameComponent(String::empty,
-					completeFile(getName()+T(".mid")),
-					true,
-					false,
-					true,
-					T("*.mid"),
-					T(".mid"),
-					String::empty);
-      addAndMakeVisible(filebrowser);
-    }
-  else
-    {
-      playbutton->setButtonText (T("Play"));
-      playbutton->addButtonListener(this);
-      addAndMakeVisible(hushbutton=new TextButton(String::empty));
-      hushbutton->setButtonText (T("Hush"));
-      hushbutton->addButtonListener (this);
-    }  
+  playbutton->setButtonText (T("Play"));
+  playbutton->addButtonListener(this);
+  addAndMakeVisible(hushbutton=new TextButton(String::empty));
+  hushbutton->setButtonText (T("Hush"));
+  hushbutton->addButtonListener (this);
 
+  addAndMakeVisible(writebutton=new TextButton(String::empty));
+  writebutton->setButtonText(T("Write"));
+  writebutton->addButtonListener(this);
+  File path=completeFile(plotter->getPlotTitle()+T(".mid"));
+  filebrowser=new FilenameComponent(String::empty,
+				    path,
+				    true,
+				    false,
+				    true,
+				    T("*.mid"),
+				    T(".mid"),
+				    String::empty);
+  addAndMakeVisible(filebrowser);
   setSize (550, 280-24);
 }
 
@@ -2827,6 +2821,7 @@ PlayPlotDialog::~PlayPlotDialog()
   deleteAndZero (playbutton);
   deleteAndZero (hushbutton);
   deleteAndZero (filebrowser);
+  deleteAndZero (writebutton);
 }
 
 void PlayPlotDialog::resized()
@@ -2850,12 +2845,11 @@ void PlayPlotDialog::resized()
   ampinc->setBounds (slcol1, 160, slwidth, 24);
   chanlabel->setBounds (288, 160, labelwidth, 24);
   chaninc->setBounds (slcol2, 160, slwidth, 24);
-  layerbutton->setBounds (32, 240, 120, 24);
-  playbutton->setBounds (440, 240, 87, 24);
-  if (hushbutton)
-    hushbutton->setBounds (344, 240, 87, 24);
-  if (filebrowser)
-    filebrowser->setBounds (160, 240, 200, 24);
+  layerbutton->setBounds (32, 200, 120, 24);
+  playbutton->setBounds (440, 200, 87, 24);
+  hushbutton->setBounds (344, 200, 87, 24);
+  filebrowser->setBounds (32, 240, 396, 24);
+  writebutton->setBounds (440, 240, 87, 24);
 }
 
 void PlayPlotDialog::sliderValueChanged (Slider* slider)
@@ -2884,7 +2878,11 @@ void PlayPlotDialog::buttonClicked (Button* button)
 {
   if (button == playbutton)
     {
-      playPlot();
+      playPlot(false);
+    }
+  else if (button == writebutton)
+    {
+      playPlot(true);
     }
   else if (button == hushbutton)
     {
@@ -2895,7 +2893,7 @@ void PlayPlotDialog::buttonClicked (Button* button)
     }
 }
 
-void PlayPlotDialog::playPlot()
+void PlayPlotDialog::playPlot(bool write)
 {
   double len=startinc->getValue();
   double dur=durinc->getValue();
@@ -2909,6 +2907,9 @@ void PlayPlotDialog::playPlot()
   axis=plotter->getVerticalAxisView()->getAxis();  
   double ymin=axis->getMinimum();
   double ymax=axis->getMaximum();
+
+  if (write)
+    MidiOutPort::getInstance()->clearSequence();
   for (int i=0;i<plotter->numLayers(); i++)
     {
       Layer* l=plotter->getLayer(i);
@@ -2938,10 +2939,12 @@ void PlayPlotDialog::playPlot()
 	    }
 	}
     }
-}
-
-void PlayPlotDialog::writePlot()
-{
+  if (write)
+    {
+      String path=filebrowser->getCurrentFile().getFullPathName();
+      MidiOutPort::getInstance()->setOutputFile(path);
+      MidiOutPort::getInstance()->saveSequence(false);
+    }
 }
 
 class PlayPlotWindow : public DocumentWindow 

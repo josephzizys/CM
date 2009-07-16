@@ -1048,6 +1048,27 @@ s7_pointer ffi_cs_send_score (s7_scheme *s7, s7_pointer args)
   return s7_UNSPECIFIED(s7);
 }
 
+s7_pointer ffi_fms_open_score (s7_scheme *s7, s7_pointer args)
+{
+  char* s0; char* s1;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_fms_open_score", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_fms_open_score", 2, s7_car(args), "a c-string"));
+  s1=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  fms_open_score(s0, s1);
+  return s7_UNSPECIFIED(s7);
+}
+
+s7_pointer ffi_fms_close_score (s7_scheme *s7, s7_pointer args)
+{
+  fms_close_score();
+  return s7_UNSPECIFIED(s7);
+}
+
 s7_pointer ffi_fms_init (s7_scheme *s7, s7_pointer args)
 {
   fms_init();
@@ -2916,6 +2937,8 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_mp_clear_midi_input_hook", ffi_mp_clear_midi_input_hook, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_cs_init_score", ffi_cs_init_score, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_cs_send_score", ffi_cs_send_score, 4, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_fms_open_score", ffi_fms_open_score, 2, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_fms_close_score", ffi_fms_close_score, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_init", ffi_fms_init, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_new", ffi_fms_new, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_free", ffi_fms_free, 0, 0, false, "ffi function");

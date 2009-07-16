@@ -871,6 +871,25 @@ void cs_send_score(int typ, int num, double time, char* pars)
 
 #ifdef WITHFOMUS // defined(WITHFOMUS) && defined(GRACE)
 
+void fms_open_score(char* scorename, char* scoreargs)
+{
+  Fomus::getInstance()->openScore(String(scorename), String(scoreargs));
+}
+
+void fms_close_score()
+{
+  Fomus::getInstance()->closeScore();
+}
+
+void fms_xml(char* str)
+{
+  double now=(Scheme::getInstance()->scoremode) 
+    ? Scheme::getInstance()->scoretime : 0.0;
+  // if score capture is true AND we are under a process callback then
+  // scoretime will be >= 0 else it will be 0
+  Fomus::getInstance()->sendXml(String(str), now);
+}  
+
 void fms_new()
 {
   Fomus::getInstance()->newScore();
@@ -901,10 +920,6 @@ void fms_run()
   Fomus::getInstance()->runScore();
 }
 
-void fms_xml(char* str)
-{
-  Fomus::getInstance()->sendXml(String(str));
-}  
 
 void fms_ival(int par, int act, int val)
 {
@@ -936,6 +951,8 @@ void fms_act(int par, int act)
   Fomus::getInstance()->act((fomus_param)par,(fomus_action)act);
 }
 #else
+void fms_open_score(char* a, char* b){}
+void fms_close_score(){}
 void fms_new(){}
 void fms_free(){}
 void fms_clear(){}

@@ -39,6 +39,48 @@ juce_ImplementSingleton(FomusSyntax) ;
 
 juce_ImplementSingleton(Fomus);
 
+void Fomus::openScore(String scorename, String scoreargs)
+{
+  // called by sprout to open and/or initialize a (possibly) new score
+  // instance for receiving data from processes.  scorename is either
+  // "fomus" or "*.{ly|fms|xml}". if its "fomus" maybe the current
+  // score instance should be used and if its a file name a new score
+  // with that output file and appropriate back end should become
+  // current?  scoreargs is a string containing whatever the user
+  // passed as to sprout arguments to the score
+
+  std::cout << "in openScore with file=" << scorename.toUTF8()
+	    << " args=" << scoreargs.toUTF8() << "\n";
+
+  if (scorename==T("fomus"))
+    {
+    }
+  else if (scorename.endsWith(T(".fms")))
+    {
+    }
+  else if (scorename.endsWith(T(".ly")))
+    {
+    }
+  else if (scorename.endsWith(T(".xml")))
+    {
+    }
+
+  StringArray userargs;
+  userargs.addTokens(scoreargs, false);
+  for (int i=0; i<userargs.size(); i++)
+    {
+      // user's args handling should probably interate by pairs...
+    }
+}
+
+void Fomus::closeScore()
+{
+  std::cout << "closeScore\n";
+
+  // called by the scheduler after all processes outputting to the score have stopped.
+  // presumably this triggers fomus' score parsing and output handling
+}
+
 inline void spitout(const char* str) 
 {
   Console::getInstance()->printOutput(String(";; ") + str);
@@ -54,6 +96,8 @@ void initfomus()
       in = true;
     }
 }
+
+
 
 void Fomus::newScore()
 {
@@ -139,8 +183,14 @@ struct xmlerror
   }
 };
 
-void Fomus::sendXml(const String& xml) 
+void Fomus::sendXml(const String& xml, double scoretime) 
 {
+  // if scoretime > 0 then we are being called under a process and the
+  // user's xml time value needs to be shifted by that value to
+  // determine the true time of the note in the score. if scoretime is
+  // 0 then treat the xml time value as the absolute timestamp in the
+  // score.
+
   try {
     std::cout << '\n' << xml.toUTF8() << std::endl;
     XmlDocument doc(xml);

@@ -13,6 +13,9 @@
 #ifdef SNDLIB
 #include "SndLib.h"
 #endif
+#ifdef WITHFOMUS
+#include "Fomus.h"
+#endif
 #ifdef CHICKEN
 #include "ChickenBridge.h"
 #endif
@@ -442,6 +445,10 @@ void Scheme::run()
 	  else if (isScoreMode(ScoreTypes::SndLib))
 	    SndLib::getInstance()->
 	      performCommand(CommandIDs::SchedulerScoreComplete);
+#endif	  
+#ifdef WITHFOMUS
+	  else if (isScoreMode(ScoreTypes::Fomus))
+	    Fomus::getInstance()->closeScore();
 #endif	  
 	  else if (isScoreMode(ScoreTypes::Csound))
 	    Csound::getInstance()->saveScore();

@@ -135,6 +135,8 @@ void cs_send_score(int typ, int inst, double time, char* pars);
 
 // fomus
 
+void fms_open_score(char* a, char* b);
+void fms_close_score();
 void fms_init();
 void fms_new();
 void fms_free();

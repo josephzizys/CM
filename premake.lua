@@ -288,7 +288,7 @@ for i = 1,3 do
       add(mypackage.linkoptions, "-framework IOKIT")
       if (grace or gracecl) then
 	 mypackage.postbuildcommands = 
-	    {"cp res/etc/Info.plist bin/" .. mypackage.target .. ".app/Contents",
+	    {"cp res/etc/" .. mypackage.target .. ".plist bin/" .. mypackage.target .. ".app/Contents/Info.plist",
 	     "mkdir -p bin/" .. mypackage.target ..  ".app/Contents/Resources",
 	     "cp res/etc/icons.icns bin/"  .. mypackage.target .. ".app/Contents/Resources"}
       end

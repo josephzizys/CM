@@ -682,8 +682,11 @@ class Plotter  : public Component,
     int j=axes.indexOf(fields[f]->axis);
     return j<f;  // a shared axis is defined earlier than field
   }
-
- 
+  String getPlotTitle()
+  {
+    Component* window=getTopLevelComponent(); // plotter window
+    return (window) ? window->getName() : String::empty;
+  } 
 };
 
 ///
@@ -711,6 +714,8 @@ class PlotterWindow : public DocumentWindow, public MenuBarModel
   static void openXml(File fil);
   bool save(bool saveas=false);
   String toXmlString();
+  String getPlotTitle() {return getName();}
+  void setPlotTitle(String titl){setName(titl);}
   File getPlotFile() {return plotfile;}
   void setPlotFile(File fil) {plotfile=fil;}
   static PlotterWindow* getPlotWindow(String title) ;
