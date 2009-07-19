@@ -253,9 +253,9 @@ void AxisView::mouseUp(const MouseEvent &e)
 void AxisView::mouseDoubleClick(const MouseEvent &e)
 {
   PlotterWindow* w=(PlotterWindow*)getTopLevelComponent();
-  w->openAxisDialog(isHorizontal());
+  std::cout << "orientation=" << getOrientation() << "\n";
+  w->openAxisDialog(getOrientation());
 }
-
 
 /*=======================================================================*
                     Region and selection, sweeping and editing
@@ -880,6 +880,7 @@ Plotter::Plotter (XmlElement* plot)
     backview (NULL),
     flags (0)
 {
+  createPlottingComponents();
   OwnedArray<XmlElement> xmlaxes;
   OwnedArray<XmlElement> xmlplots;
   if (plot!=NULL)
@@ -894,8 +895,6 @@ Plotter::Plotter (XmlElement* plot)
         if (e->hasTagName(T("points")))
 	  xmlplots.add(e);
     }  
-  //std::cout << "xmlaxes=" << xmlaxes.size() << " xmlplots=" << xmlplots.size() << "\n";
-
   if (xmlaxes.size()==0) // No axes specified
     {
       axes.add(new Axis(NULL));
@@ -937,55 +936,139 @@ Plotter::Plotter (XmlElement* plot)
 	  }
 	fields.add(new Field(n, a, s));
       }
-  
-  font=Font(Font::getDefaultSansSerifFontName(), 10.0, Font::bold);
+  if (xmlplots.size()>0)
+    for (int i=0; i<xmlplots.size(); i++)
+      newLayer(xmlplots[i]);
+  else
+    newLayer(NULL);
+  autosizeAxes();
+  xmlaxes.clear(false);
+  xmlplots.clear(false);
+  setPlottingAxes(0,1);
+}
+
+Plotter::Plotter(MidiFile& midifile)
+  : ppp (8.0),
+    zoom (1.0),
+    haxview (NULL),
+    vaxview (NULL),
+    viewport (NULL),
+    plotview (NULL),
+    backview (NULL),
+    flags (0)
+{
+  createPlottingComponents();
+  // juce time format is postive for beats and negative for SMTPE
+  int format=midifile.getTimeFormat();
+  double scaler=1.0; // scale smpte to seconds
+  if (format>0)
+    midifile.convertTimestampTicksToSeconds();    
+  else  // juce smpte frames per second is negative upper byte
+    scaler=(0xFF-((format & 0xFF00) >> 8)+1) * (format & 0xFF);
+  // start importing at track 1 in level 1 file (?)
+  int numtracks=midifile.getNumTracks();
+  int track=((numtracks==1) ? 0 : 1);
+  int count=0;
+  double maxend=0.0;
+  double maxkey=-1.0;
+  double minkey=128.0;
+  OwnedArray<Layer>midilayers;
+  int arity=5;
+  for ( ; track<numtracks; track++)
+    {
+      MidiMessageSequence* seq=(MidiMessageSequence*)midifile.getTrack(track);
+      seq->updateMatchedPairs();
+      Layer* lay=new Layer(arity, T("Track ") + String(track),
+			   Layer::defaultColor(count), Layer::hbox);
+      lay->setXField(0);
+      lay->setYField(2);
+      lay->setZField(1);
+      for (int i=0; i<seq->getNumEvents(); i++)
+	{
+	  MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
+	  if (h->message.isNoteOn())
+	    {
+	      double t=h->message.getTimeStamp()/scaler;
+	      double d=.5;
+	      if (h->noteOffObject!=NULL)
+		d=(h->noteOffObject->message.getTimeStamp()/scaler)-t;
+	      double k=h->message.getNoteNumber();
+	      double a=(double)(h->message.getFloatVelocity());
+	      double c=h->message.getChannel()-1;
+	      //std::cout << "event=" << t << " " << d << " " << k << " " << a << " " << c << " " << "\n";
+	      LayerPoint* p=new LayerPoint(arity);
+	      p->setVal(0,t);
+	      p->setVal(1,d);
+	      p->setVal(2,k);
+	      p->setVal(3,a);
+	      p->setVal(4,c);
+	      lay->_points.add(p);  // add same order as seq
+	      if (k<minkey) minkey=k;
+	      if (k>maxkey) maxkey=k;
+	      t+=d;
+	      if (t>maxend) maxend=t;
+	    }
+	}
+      if (lay->numPoints()==0)
+	delete lay;
+      else
+	{
+	  midilayers.add(lay);
+	  count++;
+	}
+    }
+  axes.add(new Axis(Axis::seconds));
+  axes.add(new Axis(Axis::keynum));
+  axes.add(new Axis(Axis::normalized));
+  axes.add(new Axis(Axis::generic, 0, 15, 1, 1, 0));
+  if (maxend>0.0) axes[0]->setMaximum(maxend);
+  fields.add(new Field(T("Time"), axes[0]));
+  fields.add(new Field(T("Duration"), axes[0]));
+  fields.add(new Field(T("Keynum"), axes[1]));
+  fields.add(new Field(T("Amplitude"), axes[2]));      
+  fields.add(new Field(T("Channel"), axes[3]));
+  for (int i=0;i<midilayers.size();i++)
+    addLayer(midilayers[i]);
+  midilayers.clear(false);
+  setPlottingAxes(0,1);
+}
+
+void Plotter::createPlottingComponents()
+{
+ font=Font(Font::getDefaultSansSerifFontName(), 10.0, Font::bold);
   plotview=new PlotView (this);
   backview=new BackView(this);
   // plot view is child of backview so that it is in front
   backview->addChildComponent(plotview);
   plotview->setTopLeftPosition(0,0);
   plotview->setWantsKeyboardFocus(true);
-
   viewport=new PlotViewport (this);
-  
-  haxview=new AxisView(viewport, horizontal);
-  vaxview=new AxisView(viewport, vertical);
-  setHorizontalAxis(axes[0]);
-  setVerticalAxis(axes[1]);
-
-  if (xmlplots.size()>0)
-    {
-      for (int i=0; i<xmlplots.size(); i++)
-	newLayer(xmlplots[i]);
-    }
-  else
-    newLayer(NULL);
-
-  autosizeAxes();
-  
-  xmlaxes.clear(false);
-  xmlplots.clear(false);
-
-  addChildComponent(haxview);  
-  addChildComponent(vaxview);  
-  plotview->resizeForDrawing();  // calc plots width/height
-
   // add the backview to the viewport. the plotview is a child of the
   // backview and so it will scroll with it
   viewport->setViewedComponent(backview);
   viewport->setScrollBarsShown (true, true);
-  addChildComponent(viewport);
-
-  // scroll to origin of axis
-  //this doenst work >:(
-  //viewport->getVerticalScrollBar()->scrollToBottom();
   viewport->setViewPositionProportionately(0.0,1.0);
+  addChildComponent(viewport);
+  haxview=new AxisView(viewport, horizontal);
+  vaxview=new AxisView(viewport, vertical);
+  addChildComponent(haxview);  
+  addChildComponent(vaxview);  
   viewport->setVisible(true);
   backview->setVisible(true);
   plotview->setVisible(true);
   haxview->setVisible(true);
   vaxview->setVisible(true);
 }
+
+void Plotter::setPlottingAxes(int xax, int yax)
+{
+  setHorizontalAxis(axes[xax]);
+  setVerticalAxis(axes[yax]);
+  plotview->resizeForDrawing();  // calc plots width/height
+}
+
+
+
 
 Plotter::~Plotter()
 {
@@ -1201,11 +1284,7 @@ void Layer::addXmlPoints(XmlElement* points)
 
 Layer* Plotter::newLayer(XmlElement* points)
 {
-  static Colour cols[8] = {Colours::red, Colours::green, 
-			   Colours::blue, Colours::magenta,
-			   Colours::cyan, Colours::sienna,
-			   Colours::orange, Colours::coral};
-  Colour col = cols[layers.size() % 8];
+  Colour col = Layer::defaultColor(layers.size());
   int sty=Layer::lineandpoint;
   String nam = T("Layer ") + String(layers.size()+1);
   int num=numFields();
@@ -1380,28 +1459,39 @@ PlotterWindow::PlotterWindow(XmlElement* plot)
   : DocumentWindow (String::empty , Colours::white, 
 		    DocumentWindow::allButtons, true ) 
 {
-  static int num=0;
   String title=(plot==NULL) ? T("Untitled Plot") :
     plot->getStringAttribute(T("title"), T("Untitled Plot"));
+  setName(title);
   plotter = new Plotter(plot) ;
+  init();
+}
+
+PlotterWindow::PlotterWindow(String title, MidiFile& midifile)
+  : DocumentWindow (title, Colours::white, 
+		    DocumentWindow::allButtons, true ) 
+{
+  setName(title);
+  plotter=new Plotter(midifile);
+  init();
+}
+
+PlotterWindow::~PlotterWindow ()
+{
+  plotter->~Plotter();
+}
+
+void PlotterWindow::init()
+{
   menubar = new MenuBarComponent(this);
   setMenuBar(this);
   setUsingNativeTitleBar(true);    
-  setName(title);
-  //plotter->setSize(600,600);
   plotter->setSize(500, 500);
   plotter->setVisible(true);
   setContentComponent(plotter,true,true);
   centreWithSize (plotter->getWidth(), plotter->getHeight());
   setResizable(true, true); 
   setVisible(true);
-  //WindowTypes::setWindowType(self, WindowTypes::PlotWindow);
   setComponentProperty(T("WindowType"), WindowTypes::PlotWindow);
-}
-
-PlotterWindow::~PlotterWindow ()
-{
-  plotter->~Plotter();
 }
 
 PlotterWindow* PlotterWindow::getPlotWindow(String title)
@@ -1438,25 +1528,51 @@ void PlotterWindow::openXml(String str)
     }
 }
 
-void PlotterWindow::openXml(File fil)
+void PlotterWindow::browseForFileToOpen(int type)
 {
-  XmlDocument doc (fil);
-  XmlElement* xml = doc.getDocumentElement();
-  if (xml && xml->getChildByName(T("fields")) &&
-      xml->getChildByName(T("layers")))
+  if (type==CommandIDs::PlotterOpenMidiFile)
     {
-      PlotterWindow* w=new PlotterWindow(xml);
-      w->setPlotFile(fil);
-      delete xml;
-    }
-  else
-    {
-      String err=T(">>> Error ");
-      if (!xml)
-	err << doc.getLastParseError() << T("\n");
+      FileChooser ch (T("Open Midi Plot"),
+		      File::getCurrentWorkingDirectory(),
+		      T("*.mid"));
+      if (!ch.browseForFileToOpen()) return;
+      String title=ch.getResult().getFileNameWithoutExtension();
+      FileInputStream* input=ch.getResult().createInputStream();
+      MidiFile midifile;
+      if (midifile.readFrom(*input))
+	new PlotterWindow(title, midifile);
       else
-	err << T("not valid xml plot data\n");
-      Console::getInstance()->printError(err);
+	{
+	  String err=T(">>> Error: ");
+	  err << ch.getResult().getFullPathName() 
+	      << T(" is not a valid midi file.");
+	  Console::getInstance()->printError(err);
+	}
+    }
+  else if (type==CommandIDs::PlotterOpen)
+    {
+      FileChooser ch (T("Open Plot"), 
+		      File::getCurrentWorkingDirectory(),
+		      T("*.xml"));
+      if (!ch.browseForFileToOpen()) return;
+      XmlDocument doc (ch.getResult());
+      XmlElement* xml = doc.getDocumentElement();
+      if (xml && xml->getChildByName(T("fields")) &&
+	  xml->getChildByName(T("layers")))
+	{
+	  PlotterWindow* w=new PlotterWindow(xml);
+	  w->setPlotFile(ch.getResult());
+	  delete xml;
+	}
+      else
+	{
+	  String err=T(">>> Error ");
+	  if (!xml)
+	    err << doc.getLastParseError() << T("\n");
+	  else
+	    err << T("not valid xml plot data\n");
+	  Console::getInstance()->printError(err);
+	}
     }
 }
 
@@ -1523,6 +1639,8 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
       // File Menu
       menu.addItem(CommandIDs::PlotterNew, T("New Plot"));
       menu.addItem(CommandIDs::PlotterOpen, T("Open..."));
+      menu.addItem(CommandIDs::PlotterOpenMidiFile, T("Open Midi Plot..."));
+      menu.addSeparator(); 
       menu.addItem(CommandIDs::PlotterLayerAdd, T("New Layer"));
       for (int i=0; i<plotter->numLayers(); i++)
 	{
@@ -1673,11 +1791,8 @@ void PlotterWindow::menuItemSelected (int id, int idx)
       new PlotterWindow((XmlElement*)NULL);
       break;
     case CommandIDs::PlotterOpen :
-      {
-	FileChooser ch (T("Open Plot"), getPlotFile(), "*.xml");
-	if (ch.browseForFileToOpen())
-	  PlotterWindow::openXml(ch.getResult());
-      }
+    case CommandIDs::PlotterOpenMidiFile :
+      browseForFileToOpen(cmd);
       break;
     case CommandIDs::PlotterSave :
       save();
@@ -1841,7 +1956,7 @@ String Layer::toString(int exportid, int decimals,
       text << T(">");
       lpar=T("<point>");
       rpar=T("</point>");
-      done=T("</points>");
+      done=T("</points>\n");
       spce=String::empty;
     }
   LayerPoint* point;
@@ -2335,7 +2450,7 @@ AxisDialog::AxisDialog (Plotter* pl, int orient)
   plotter=pl;
   ishorizontal=(orient==Plotter::horizontal) ? true : false;
   axisview=(ishorizontal) ? plotter->getHorizontalAxisView()
-    : plotter->getHorizontalAxisView();
+    : plotter->getVerticalAxisView();
   addAndMakeVisible(namelabel = new Label(String::empty, T("Name:")));
   namelabel->setFont (Font (15.0000f, Font::plain));
   namelabel->setJustificationType (Justification::centredLeft);
@@ -2613,11 +2728,14 @@ private:
   bool rescalex, rescaley;
   Plotter* plotter;
   GroupComponent* xgroup;
+  GroupComponent* ygroup;
+  GroupComponent* ogroup;
+  GroupComponent* pgroup;
+  GroupComponent* fgroup;
   Label* startlabel;
   Slider* startinc;
   Label* durlabel;
   Slider* durinc;
-  GroupComponent* ygroup;
   Label* lowkeylabel;
   Slider* lowkeyinc;
   Label* highkeylabel;
@@ -2639,11 +2757,15 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl)
      rescalex(true),
      rescaley(true),
      xgroup (0),
+     ygroup (0),
+     ogroup (0),
+     pgroup (0),
+     fgroup (0),
      startlabel (0),
      startinc (0),
      durlabel (0),
      durinc (0),
-     ygroup (0),
+
      lowkeylabel (0),
      lowkeyinc (0),
      highkeyinc (0),
@@ -2780,9 +2902,11 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl)
 
   addAndMakeVisible(playbutton=new TextButton(String::empty));
   playbutton->setButtonText (T("Play"));
+  playbutton->setEnabled(MidiOutPort::getInstance()->isOpen());
   playbutton->addButtonListener(this);
   addAndMakeVisible(hushbutton=new TextButton(String::empty));
   hushbutton->setButtonText (T("Hush"));
+  hushbutton->setEnabled(MidiOutPort::getInstance()->isOpen());
   hushbutton->addButtonListener (this);
 
   addAndMakeVisible(writebutton=new TextButton(String::empty));
@@ -2798,17 +2922,20 @@ PlayPlotDialog::PlayPlotDialog (Plotter* pl)
 				    T(".mid"),
 				    String::empty);
   addAndMakeVisible(filebrowser);
-  setSize (550, 280-24);
+  setSize (550, 300);
 }
 
 PlayPlotDialog::~PlayPlotDialog()
 {
   deleteAndZero (xgroup);
+  deleteAndZero (ygroup);
+  deleteAndZero (ogroup);
+  deleteAndZero (pgroup);
+  deleteAndZero (fgroup);
   deleteAndZero (startlabel);
   deleteAndZero (startinc);
   deleteAndZero (durlabel);
   deleteAndZero (durinc);
-  deleteAndZero (ygroup);
   deleteAndZero (lowkeylabel);
   deleteAndZero (lowkeyinc);
   deleteAndZero (highkeylabel);
@@ -2846,10 +2973,13 @@ void PlayPlotDialog::resized()
   chanlabel->setBounds (288, 160, labelwidth, 24);
   chaninc->setBounds (slcol2, 160, slwidth, 24);
   layerbutton->setBounds (32, 200, 120, 24);
-  playbutton->setBounds (440, 200, 87, 24);
-  hushbutton->setBounds (344, 200, 87, 24);
   filebrowser->setBounds (32, 240, 396, 24);
   writebutton->setBounds (440, 240, 87, 24);
+
+  playbutton->setBounds (440, 280, 87, 24);
+  hushbutton->setBounds (344, 280, 87, 24);
+
+
 }
 
 void PlayPlotDialog::sliderValueChanged (Slider* slider)

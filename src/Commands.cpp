@@ -220,7 +220,8 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
 #endif
 
     CommandIDs::PlotterNew,
-
+    CommandIDs::PlotterOpen,
+    CommandIDs::PlotterOpenMidiFile,
 
     // Window Menu
     CommandIDs::WindowSelect + 0,  // 0==Select Console
@@ -569,6 +570,14 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       info.shortName=T("New Plot");
       break;
 
+    case CommandIDs::PlotterOpen:
+      info.shortName=T("Open Plot...");
+      break;
+
+    case CommandIDs::PlotterOpenMidiFile:
+      info.shortName=T("Open Midi Plot...");
+      break;
+
       //
       // Audio Settings
       //
@@ -848,6 +857,10 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
 
     case CommandIDs::PlotterNew:
       new PlotterWindow(NULL);
+      break;
+    case CommandIDs::PlotterOpen:
+    case CommandIDs::PlotterOpenMidiFile:
+      PlotterWindow::browseForFileToOpen(comm);
       break;
 
       //

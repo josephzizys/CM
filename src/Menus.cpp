@@ -270,6 +270,8 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
 			CommandMenus::getRecentlyOpenedMenu());
       menu.addSeparator();
       menu.addCommandItem(gmanager, CommandIDs::PlotterNew);
+      menu.addCommandItem(gmanager, CommandIDs::PlotterOpen);
+      menu.addCommandItem(gmanager, CommandIDs::PlotterOpenMidiFile);
 #ifdef GRACECL
       menu.addSeparator();
       menu.addCommandItem(gmanager, CommandIDs::LispStart);

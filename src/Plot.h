@@ -96,7 +96,21 @@ class Axis
   }
   
   ~Axis () {}
-
+  Axis (AxisType t, double f, double e, double b, int x, int d) 
+    : type(t), from(f), to(e), by(b), ticks(x), decimals(d), name(String::empty)
+    {}
+  Axis (AxisType t) 
+    {
+      type=t;
+      init(t);
+    }
+  Axis (AxisType t, double f, double e) 
+    {
+      type=t;
+      init(t);
+      from=f;
+      to=e;
+    }
   Axis (XmlElement* ax) 
     : name (String::empty),
     decimals (2),
@@ -256,6 +270,14 @@ class Layer
       default: return T("unspecified");
       }
   }    
+  static Colour defaultColor(int i)
+  {
+    Colour cols[8] = {Colours::red, Colours::green, 
+		      Colours::blue, Colours::magenta,
+		      Colours::cyan, Colours::sienna,
+		      Colours::orange, Colours::coral};
+    return cols[i % 8];
+  }
 
   /* layer points kept in X sorted order. */
   
@@ -430,7 +452,12 @@ class Layer
   void setXField(int f) {_x=f;}
   void setYField(int f) {_y=f;}
   void setZField(int f) {_z=f;}
-
+  void setFieldAccess(int x, int y, int z=-1)
+  {
+    _x=x;
+    _y=y;
+    if (z>=0) _z=z;
+  }
   static int compareElements(LayerPoint* p1, LayerPoint* p2) {
     if ( p1->vals[0] < p2->vals[0] )
       return -1;
@@ -492,6 +519,7 @@ class AxisView : public Component
 
   bool isVertical();
   bool isHorizontal();
+  int getOrientation(){return orient;}
   double getSpread() {return _spread;}
   void setSpread(double v) {_spread=v; }
   double getOrigin() {return _offset;}
@@ -613,7 +641,10 @@ class Plotter  : public Component,
 
   Plotter (int pt) ;
   Plotter (XmlElement* plot) ;
+  Plotter (MidiFile& midifile);
   ~Plotter () ;
+  void createPlottingComponents();
+  void setPlottingAxes(int xax, int yax);
 
   double getZoom() {return zoom;}
   void setZoom(double z) {zoom=z;}
@@ -700,6 +731,8 @@ class PlotterWindow : public DocumentWindow, public MenuBarModel
   File plotfile;
   MenuBarComponent* menubar;
   PlotterWindow (XmlElement* plot);
+  PlotterWindow (String title, MidiFile& midifile);
+  void init();
   ~PlotterWindow ();
   const StringArray getMenuBarNames ();
   const PopupMenu getMenuForIndex (int idx, const String &name);
@@ -711,7 +744,9 @@ class PlotterWindow : public DocumentWindow, public MenuBarModel
   void openPlayPlotDialog();
 
   static void openXml(String str);
-  static void openXml(File fil);
+  static void browseForFileToOpen(int type);
+  //  static void openXml(File fil);
+  //  static void openMidiFile(File fil);
   bool save(bool saveas=false);
   String toXmlString();
   String getPlotTitle() {return getName();}

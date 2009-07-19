@@ -2974,18 +2974,25 @@ Returns the current time of the scheduler. See also <a href="#elapsed"><code>ela
 
 <h2 id="plotting">Plotting</h2>
 
-<p>Plotting windows support graphic display and editing of multi-dimensionl data sets.</p>
+<p>Plotting windows support graphic display, editing and audio playback of
+multi-dimensional data sets. To create a new plot, to open an existing
+plot file (.xml) or a Midi file use the plotting commands in the
+Console's <span class="menuitem">File</span> menu.</p>
 
+<p>For any plotting window:</p>
 <ul>
-  <li>Use File&gt;New Plot</a> or the Scheme API defined below to create a new plot</li>
-  <li>Control-click in plot to add new points</li>
-  <li>Click or click-drag region to select points</li>
-  <li>Press delete key to delete points</li>
-  <li>Double-click on background to edit layer properties</li>
-  <li>Click drag on axis' ruler to zoom axis</li>
-  <li>Double-click on axis' ruler to edit axis properties</li>
+  <li>To add new points: Control-click</li>
+  <li>To select points: Click on point or click-drag region</li>
+  <li>To delete points: Delete key</li>
+  <li>To edit layer properties: Double-click background</li>
+  <li>To zoom axis: Click drag on axis ruler</li>
+  <li>To edit axis properties: Double-click on axis ruler.</li>
+  <li>To play a plot: Select <span class="menuitem">Audio&gt;Play Plot...</span> in the Plot window's menubar</li>
+
 </ul>
 
+<p>The following functions are provided for working with plots in code. Use <span class="menuitem">Help&gt;Examples&gt;Plotting</span> to open various examples of coding plots in an Editor window.
+</p>
 
 <!-- DEFINITION< -->
 <table class="entry" id="plot">
@@ -3000,10 +3007,9 @@ Returns the current time of the scheduler. See also <a href="#elapsed"><code>ela
 <blockquote>
 <p>
 
-Opens a new plot window given zero or more global plot settings
- followed by optional layers of plotting data with layer-specific
-settings. Each <var>pointlist</var> is a list in one of the following
-formats:
+Creates a new plot given zero or more global plot settings followed by
+ optional layers of plotting data with layer-specific settings. Each
+ <var>pointlist</var> is a list in one of the following formats:
 
 </p>
 
