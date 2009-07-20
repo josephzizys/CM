@@ -6,7 +6,7 @@
 namespace Instruments
 {
     extern const char*  files_zip;
-    const int           files_zipSize = 307323;
+    const int           files_zipSize = 309674;
 
     extern const char*  table_xml;
     const int           table_xmlSize = 10698;
@@ -63,7 +63,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  env_scm;
-    const int           env_scmSize = 21308;
+    const int           env_scmSize = 21269;
 
   #endif
   #ifdef FILES
@@ -168,7 +168,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  generators_scm;
-    const int           generators_scmSize = 210403;
+    const int           generators_scmSize = 223326;
 
   #endif
   #ifdef FILES
@@ -193,7 +193,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  grani_scm;
-    const int           grani_scmSize = 23260;
+    const int           grani_scmSize = 23326;
 
   #endif
   #ifdef FILES
@@ -263,7 +263,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  piano_scm;
-    const int           piano_scmSize = 22820;
+    const int           piano_scmSize = 23020;
 
   #endif
   #ifdef FILES
@@ -364,16 +364,6 @@ namespace Instruments
   #ifdef FILES
     extern const char*  strad_scm;
     const int           strad_scmSize = 11504;
-
-  #endif
-  #ifdef FILES
-    extern const char*  test_aiff;
-    const int           test_aiffSize = 661702;
-
-  #endif
-  #ifdef FILES
-    extern const char*  test_wav;
-    const int           test_wavSize = 661580;
 
   #endif
   #ifdef FILES

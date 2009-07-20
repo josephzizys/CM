@@ -881,7 +881,7 @@ Plotter::Plotter (XmlElement* plot)
     flags (0)
 {
   createPlottingComponents();
-  OwnedArray<XmlElement> xmlaxes;
+  OwnedArray<XmlElement> xmlfields;
   OwnedArray<XmlElement> xmlplots;
   if (plot!=NULL)
     {
@@ -889,51 +889,44 @@ Plotter::Plotter (XmlElement* plot)
       XmlElement* sub=plot->getChildByName(T("fields"));
       forEachXmlChildElement(*sub, e)
 	if (e->hasTagName(T("field")))
-	  xmlaxes.add(e);
+	  xmlfields.add(e);
       sub=plot->getChildByName(T("layers"));
       forEachXmlChildElement(*sub, e)
         if (e->hasTagName(T("points")))
 	  xmlplots.add(e);
     }  
-  if (xmlaxes.size()==0) // No axes specified
+  if (xmlfields.size()==0) // No axes specified
     {
-      axes.add(new Axis(NULL));
-      fields.add(new Field(T("Field 1"), axes[0]));
-      axes.add(new Axis(NULL));
-      fields.add(new Field(T("Field 2"), axes[1]));
+      fields.add(new Field(T("Field 1"), new Axis(NULL)));
+      fields.add(new Field(T("Field 2"), new Axis(NULL)));
     }
-  else if (xmlaxes.size()==1) // Just Y axis specified
+  else if (xmlfields.size()==1) // Just Y axis specified
     {
-      axes.add(new Axis(NULL));
-      axes[0]->init(Axis::ordinal);
-      fields.add(new Field(T("Field 1"), axes[0]));
-      axes.add(new Axis(xmlaxes[0]));
-      fields.add(new Field(xmlaxes[0]->getStringAttribute(T("name"),
-							  T("Field 2")),
-			   axes[1]));
+      fields.add(new Field(T("Field 1"), new Axis(Axis::ordinal)));
+      String yname=xmlfields[0]->
+	getStringAttribute(T("name"), T("Field 2"));
+      fields.add(new Field(yname,new Axis(xmlfields[0])));
     }
   else
-    for (int i=0; i<xmlaxes.size(); i++)
+    for (int i=0; i<xmlfields.size(); i++)
       {
-	String n=xmlaxes[i]->getStringAttribute(T("name"), 
-						T("Field ") + String(i+1));
-	String r=xmlaxes[i]->getStringAttribute(T("axis"), String::empty);
+	String n=xmlfields[i]->
+	  getStringAttribute(T("name"), T("Field ")+String(i+1));
+	String r=xmlfields[i]->
+	  getStringAttribute(T("axis"), String::empty);
 	Axis* a=NULL;
-	bool s=false;
+	int s=-1;
 	if (r.isNotEmpty())
 	  for (int j=0; j<i && j<fields.size() && a==NULL; j++)
 	    if (fields[j]->name==r)
-	      a=fields[j]->axis;	
+	      {
+		a=fields[j]->axis;	
+		s=j;
+	      }
 	if (a)
-	  {
-	    s=true;
-	    //std::cout << "found shared!\n";
-	  }
+	  std::cout << "found shared axis, orig=" << s << "\n";
 	else
-	  {
-	    a=new Axis(xmlaxes[i]);
-	    axes.add(a);	      
-	  }
+	    a=new Axis(xmlfields[i]);
 	fields.add(new Field(n, a, s));
       }
   if (xmlplots.size()>0)
@@ -942,9 +935,9 @@ Plotter::Plotter (XmlElement* plot)
   else
     newLayer(NULL);
   autosizeAxes();
-  xmlaxes.clear(false);
+  xmlfields.clear(false);
   xmlplots.clear(false);
-  setPlottingAxes(0,1);
+  plotview->resizeForDrawing();  // calc plots width/height
 }
 
 Plotter::Plotter(MidiFile& midifile)
@@ -980,9 +973,10 @@ Plotter::Plotter(MidiFile& midifile)
       seq->updateMatchedPairs();
       Layer* lay=new Layer(arity, T("Track ") + String(track),
 			   Layer::defaultColor(count), Layer::hbox);
-      lay->setXField(0);
-      lay->setYField(2);
-      lay->setZField(1);
+      //lay->setXField(0);
+      //lay->setYField(2);
+      //lay->setZField(1);
+      lay->setFieldAccess(0,2,1);
       for (int i=0; i<seq->getNumEvents(); i++)
 	{
 	  MidiMessageSequence::MidiEventHolder* h=seq->getEventPointer(i);
@@ -1017,20 +1011,17 @@ Plotter::Plotter(MidiFile& midifile)
 	  count++;
 	}
     }
-  axes.add(new Axis(Axis::seconds));
-  axes.add(new Axis(Axis::keynum));
-  axes.add(new Axis(Axis::normalized));
-  axes.add(new Axis(Axis::generic, 0, 15, 1, 1, 0));
-  if (maxend>0.0) axes[0]->setMaximum(maxend);
-  fields.add(new Field(T("Time"), axes[0]));
-  fields.add(new Field(T("Duration"), axes[0]));
-  fields.add(new Field(T("Keynum"), axes[1]));
-  fields.add(new Field(T("Amplitude"), axes[2]));      
-  fields.add(new Field(T("Channel"), axes[3]));
+  Axis* a=new Axis(Axis::seconds);
+  if (maxend>0.0) a->setMaximum(maxend);
+  fields.add(new Field(T("Time"), a));
+  fields.add(new Field(T("Duration"), a, 0));
+  fields.add(new Field(T("Keynum"), new Axis(Axis::keynum)));
+  fields.add(new Field(T("Amplitude"), new Axis(Axis::normalized)));      
+  fields.add(new Field(T("Channel"), new Axis(Axis::generic,0,15,1,1,0)));
   for (int i=0;i<midilayers.size();i++)
     addLayer(midilayers[i]);
   midilayers.clear(false);
-  setPlottingAxes(0,1);
+  plotview->resizeForDrawing();  // calc plots width/height
 }
 
 void Plotter::createPlottingComponents()
@@ -1060,15 +1051,12 @@ void Plotter::createPlottingComponents()
   vaxview->setVisible(true);
 }
 
-void Plotter::setPlottingAxes(int xax, int yax)
+void Plotter::setPlottingFields(int xax, int yax)
 {
-  setHorizontalAxis(axes[xax]);
-  setVerticalAxis(axes[yax]);
+  setHorizontalAxis(fields[xax]->axis);
+  setVerticalAxis(fields[yax]->axis);
   plotview->resizeForDrawing();  // calc plots width/height
 }
-
-
-
 
 Plotter::~Plotter()
 {
@@ -1081,15 +1069,16 @@ Plotter::~Plotter()
   //actions.clear();
   layers.clear();
   fields.clear();
-  axes.clear();
 }
 
 void Plotter::autosizeAxes()
 {
   // look for unspecified axes to autosize
-  for (int i=0;i<axes.size();i++)
+  for (int i=0;i<fields.size();i++)
     {
-      if (axes[i]->type==Axis::unspecified)
+      if (fields[i]->isSharedAxis()) continue; // skip if shared
+      Axis* ax=fields[i]->axis;
+      if (ax->type==Axis::unspecified)
 	{
 	  double lo=0.0, hi=1.0;
 	  for (int j=0; j<layers.size(); j++)
@@ -1110,38 +1099,38 @@ void Plotter::autosizeAxes()
 		    hi=jmax(hi,f);
 		  }
 	    }
-	    axes[i]->setMinimum(lo);
+	    ax->setMinimum(lo);
 
 	  if (hi<=1.0)
 	    {
-	      axes[i]->setMaximum(1.0);
+	      ax->setMaximum(1.0);
 	    }
 	  else if (hi<=10.0)
 	    {
-	      axes[i]->setMaximum(ceil(hi));
-	      axes[i]->setIncrement(1.0);
+	      ax->setMaximum(ceil(hi));
+	      ax->setIncrement(1.0);
 	    }
 	  else if (hi<=100.0)
 	    {
-	      axes[i]->setMaximum(ceil(hi));
-	      axes[i]->setIncrement(10.0);
-	      axes[i]->setTicks(2);
+	      ax->setMaximum(ceil(hi));
+	      ax->setIncrement(10.0);
+	      ax->setTicks(2);
 	    }
 	  else if (hi<=1000)
 	    {
-	      axes[i]->setMaximum(ceil(hi));
-	      axes[i]->setIncrement(10.0);
-	      axes[i]->setTicks(2);
+	      ax->setMaximum(ceil(hi));
+	      ax->setIncrement(10.0);
+	      ax->setTicks(2);
 	    }
-	  axes[i]->type=Axis::generic; // make it a generic axis
-	  //std::cout << "autosized axis[" << i <<"]: min=" << axes[i]->getMinimum() << " max=" << axes[i]->getMaximum() << "\n";
+	  ax->type=Axis::generic; // make it a generic axis
+	  //std::cout << "autosized axis[" << i <<"]: min=" << ax->getMinimum() << " max=" << ax->getMaximum() << "\n";
 	}
-      else if (axes[i]->type==Axis::ordinal)
+      else if (ax->type==Axis::ordinal)
 	{
 	  int siz=1;
 	  for (int j=0; j<layers.size(); j++)
 	    siz=jmax(siz,layers[j]->numPoints());
-	  axes[i]->setMaximum(siz-1);
+	  ax->setMaximum(siz-1);
 	}
     }
 }
@@ -1255,8 +1244,23 @@ void Plotter::setFocusLayer(Layer * layr)
 {
   plotview->deselectAll();
   plotview->focuslayer=layr;
+  Axis* oldx=getHorizontalAxisView()->getAxis();
+  Axis* oldy=getVerticalAxisView()->getAxis();
+  Axis* newx=getFieldAxis(layr->getXField());
+  Axis* newy=getFieldAxis(layr->getYField());
+  if ((oldx!=newx)||(oldy!=newy))
+    {
+      std::cout << "setting new axes, "
+		<< " _x=" << layr->getXField()
+		<< " _y=" << layr->getYField()
+		<< " _z=" << layr->getZField()
+		<< "\n";
+      setHorizontalAxis(newx);
+      setVerticalAxis(newy);
+      // doesnt work here...
+      //      plotview->resizeForDrawing();  // calc plots width/height
+    }
 }
-
 
 void Layer::addXmlPoints(XmlElement* points)
 {
@@ -1889,13 +1893,12 @@ String PlotterWindow::toXmlString()
   for (int i=0; i<plotter->numFields(); i++)
     {
       Axis* a=plotter->getFieldAxis(i);
-      int j=plotter->getAxisIndex(a);
       text << T("    ")
 	   << T("<field")
            << T(" name=") << plotter->getFieldName(i).quoted()
 	   << T(" axis=") ;
-      if (j>=0 && j<i) // is a shared axis
-	text << plotter->getFieldName(j).quoted();
+      if (plotter->isSharedField(i))
+	text << plotter->getSharedFieldName(i).quoted();
       else
 	text << a->toString().quoted();
       text << T("/>\n");

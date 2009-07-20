@@ -14,11 +14,13 @@
 ;;;
 ;;; defgenerator
 
-(if (provided? 'snd-guile)
-    (define (symbol->value sym)
+
+(define (symbol->value-1 sym)
+  (if (provided? 'snd-guile)
       (if (defined? 'module-ref)
 	  (module-ref (current-module) sym) ; symbol-binding is deprecated
-	  (symbol-binding #f sym))))
+	  (symbol-binding #f sym))
+      (symbol->value sym)))
 
 ;;; this is provided directly in s7
 
@@ -87,7 +89,7 @@
 					(and (= (length struct-name) 5)
 					     (equal? (list-ref struct-name 3) :methods)
 					     (list-ref struct-name 4))))
-			       '()))
+			       (list)))
 
 	 (method-exists? (lambda (method)
 			   (and (not (null? original-methods))
@@ -130,9 +132,12 @@
 						    field-names)))
 				  (and fld (string-append "-" fld)))))
 
-	 (methods `(append (if ,(not (null? original-methods))  ; using append to splice out unwanted entries
+	 ;; using append to splice out unwanted entries
+	 (methods `(append (if (provided? 'snd-s7)
 			       ,original-methods
-			       (list))
+			       (if ,(not (null? original-methods))  
+				   ,original-methods
+				   (list)))
 			   
 			   (if ,phase-field-name
 			       (list 
@@ -192,8 +197,8 @@
 									       (if first-time " " ", ")
 									       field
 									       (if (string=? field "frequency")
-										   (radians->hz ((symbol->value (string->symbol (string-append ,sname "-" field))) g))
-										   ((symbol->value (string->symbol (string-append ,sname "-" field))) g)))))
+										   (radians->hz ((symbol->value-1 (string->symbol (string-append ,sname "-" field))) g))
+										   ((symbol->value-1 (string->symbol (string-append ,sname "-" field))) g)))))
 					     (set! first-time #f))
 					   (list ,@field-names))
 					  desc))))
@@ -203,7 +208,8 @@
 			       (list
 				(list 'mus-run
 				      (lambda (g arg1 arg2)
-					(,(string->symbol sname) g arg1)))))
+					(,(string->symbol sname) g arg1)))) ; this assumes the run-time function takes two args
+			       (list))
 			   
 			   (if ,(not (method-exists? 'mus-reset))
 			       (list 
@@ -212,11 +218,11 @@
 					(for-each
 					 (lambda (name type orig)
 					   (if (or (not (string=? type "clm"))
-						   (not ((symbol->value (string->symbol (string-append ,sname "-" name))) g)))
+						   (not ((symbol->value-1 (string->symbol (string-append ,sname "-" name))) g)))
 					       (if (provided? 'snd-s7)
 						   (set! ((string->symbol (string-append ,sname "-" name)) g) orig)
-						   (set! ((symbol->value (string->symbol (string-append ,sname "-" name))) g) orig))
-					       (mus-reset ((symbol->value (string->symbol (string-append ,sname "-" name))) g))))
+						   (set! ((symbol->value-1 (string->symbol (string-append ,sname "-" name))) g) orig))
+					       (mus-reset ((symbol->value-1 (string->symbol (string-append ,sname "-" name))) g))))
 					 (list ,@field-names)
 					 (list ,@(map symbol->string field-types))
 					 (list ,@(map (lambda (n)
@@ -241,13 +247,11 @@
     `(begin
        (define ,(string->symbol (string-append sname "?"))
 	 (lambda (obj)
-	   "clm struct type check"
 	   (and (list? obj)
 		(eq? (car obj) ',(string->symbol sname)))))
 
        (define ,(string->symbol (string-append sname "-methods"))
 	 (lambda ()
-	   "clm struct local method list accessor"
 	   ,methods))
 
        (def-optkey-fun (,(string->symbol (string-append "make-" sname))
@@ -358,7 +362,7 @@
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (ns lo n))
 	    (yhi (ns hi n)))
-	(if (< (abs (- ylo yhi)) 1e-100)
+	(if (< (abs (- ylo yhi)) nearly-zero) ; was e-100 but that hangs if not using doubles
 	    (ns mid n)
 	    (if (> ylo yhi)
 		(find-mid-max n lo mid)
@@ -368,7 +372,7 @@
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (nodds lo n))
 	    (yhi (nodds hi n)))
-	(if (< (abs (- ylo yhi)) 1e-100)
+	(if (< (abs (- ylo yhi)) nearly-zero)
 	    (nodds mid n)
 	    (if (> ylo yhi)
 		(find-nodds-mid-max n lo mid)
@@ -5593,7 +5597,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (moving-max gen y)
   "(make-moving-max (n 128) returns a moving-max generator.\n\
-  (moving-max gen input) returns the maxamp in a moving window over the last n inputs."
+  (moving-max gen input) returns the maxamp over the last n inputs."
   (declare (gen moving-max) (y float))
   (let* ((absy (abs y))
 	 (dly (moving-max-gen gen))
@@ -5828,12 +5832,12 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g ind)
 				 (vct-ref (polyoid-tn g) ind))
 			       (lambda (g ind val)
-				 (vct-set! (poltoid-tn g) ind val)))
+				 (vct-set! (polyoid-tn g) ind val)))
 			 (list 'mus-ycoeff
 			       (lambda (g ind)
 				 (vct-ref (polyoid-un g) ind))
 			       (lambda (g ind val)
-				 (vct-set! (poltoid-un g) ind val)))))
+				 (vct-set! (polyoid-un g) ind val)))))
 
   (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type vct) (angle 0.0)
   (tn #f :type vct) (un #f :type vct))
@@ -5847,6 +5851,27 @@ index 10 (so 10/2 is the bes-jn arg):
 
     (set! (polyoid-angle gen) (+ (polyoid-angle gen) fm (polyoid-frequency gen)))
     result))
+
+
+(define (polyoid-env gen fm amps phases)
+  (declare (gen polyoid) (fm float) (amps clm-vector) (phases clm-vector))
+  ;; amps and phases are the envelopes, one for each harmonic, setting the sample-wise amp and phase
+  (let* ((tn (polyoid-tn gen))
+	 (un (polyoid-un gen))
+	 (original-data (polyoid-partial-amps-and-phases gen))
+	 (data-len (vct-length original-data))
+	 (amps-len (vector-length amps)))
+    (do ((i 0 (+ i 3))
+	 (j 0 (+ j 1)))
+	((or (= j amps-len)
+	     (= i data-len)))
+      (let* ((hn (inexact->exact (vct-ref original-data i)))
+	     (amp (env (vector-ref amps j)))
+	     (phase (env (vector-ref phases j))))
+	(vct-set! tn hn (* amp (sin phase)))
+	(vct-set! un hn (* amp (cos phase)))))
+    (polyoid gen fm)))
+
 
 
 #|
@@ -5930,6 +5955,55 @@ index 10 (so 10/2 is the bes-jn arg):
   (channel-distance snd 0 snd 1)))
 
 ;;; 0 diff up to 4096 so far (unopt and opt) -- 1.0e-12 at 4096, opt is more than 20 times as fast
+
+
+(with-sound (:clipped #f :channels 2 :statistics #t)
+  (let* ((samps 44100)
+	 (gen1 (make-polyoid 100.0 (vct 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
+	 (gen2 (make-polyoid 100.0 (vct 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
+	 (amps1 (vector (make-env '(0 0 1 1 2 0) :end samps :scaler 0.5)
+		       (make-env '(0 1 1 0 2 1) :end samps :scaler 0.25)
+		       (make-env '(0 1 1 0) :end samps :scaler 0.25)))
+	 (phases1 (vector (make-env '(0 0 1 1) :end samps :scaler (/ pi 2))
+			 (make-env '(0 0 1 1) :end samps :scaler (/ pi 2))
+			 (make-env '(0 1 1 0) :end samps :scaler (/ pi 2))))
+	 (amps2 (vector (make-env '(0 0 1 1 2 0) :end samps :scaler 0.5)
+		       (make-env '(0 1 1 0 2 1) :end samps :scaler 0.25)
+		       (make-env '(0 1 1 0) :end samps :scaler 0.25)))
+	 (phases2 (vector (make-env '(0 0 1 0) :end samps)
+			 (make-env '(0 0 1 0) :end samps)
+			 (make-env '(0 0 1 0) :end samps))))
+    (run
+     (lambda ()
+       (do ((i 0 (+ i 1)))
+	   ((= i samps))
+	 (outa i (polyoid-env gen1 0.0 amps1 phases1))
+	 (outb i (polyoid-env gen2 0.0 amps2 phases2)))))))
+
+
+(with-sound (:clipped #f :channels 2 :channels 3 :statistics #t)
+  (let* ((samps 44100)
+	 (gen1 (make-polyoid 100.0 (vct 1 1 0 2 1 0 3 1 0)))
+	 (gen2 (make-polyoid 100.0 (vct 1 1 0 2 1 0 3 1 0)))
+	 (gen3 (make-polyoid 100.0 (vct 1 1 (/ pi 2) 2 1 (/ pi 2) 3 1 (/ pi 2))))
+	 (amps1 (vector (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps)))
+	 (amps2 (vector (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps)))
+	 (amps3 (vector (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps)))
+	 (phases1 (vector (make-env '(0 0 1 0) :end samps) (make-env '(0 0 1 0) :end samps) (make-env '(0 0 1 0) :end samps)))
+	 (phases2 (vector (make-env '(0 0 .1 0 .9 1 1 1) :end samps :scaler (/ pi 2))
+			  (make-env '(0 0 .1 0 .9 1 1 1) :end samps :scaler (/ pi 2))
+			  (make-env '(0 0 .1 0 .9 1 1 1) :end samps :scaler (/ pi 2))))
+	 (phases3 (vector (make-env '(0 1 1 1) :end samps :scaler (/ pi 2)) 
+			  (make-env '(0 1 1 1) :end samps :scaler (/ pi 2)) 
+			  (make-env '(0 1 1 1) :end samps :scaler (/ pi 2)))))
+    (run
+     (lambda ()
+       (do ((i 0 (+ i 1)))
+	   ((= i samps))
+	 (outa i (* .1 (polyoid-env gen1 0.0 amps1 phases1)))
+	 (outb i (* .1 (polyoid-env gen2 0.0 amps2 phases2)))
+	 (outc i (* .1 (polyoid-env gen3 0.0 amps3 phases3))))))))
+
 |#
 
 
@@ -5953,7 +6027,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		    (case choice
 		      ((all)   (vct-set! amps j i))
 		      ((odd)   (vct-set! amps j (- (* 2 i) 1)))
-		      ((prime) (vct-set! amps j (vector-ref some-primes (- i 1)))) ; defined below up to 1024th or so
+		      ((prime) (vct-set! amps j (vector-ref some-primes (- i 1)))) ; defined below up to 1024th or so -- probably should use low-primes.scm
 		      ((even)  (vct-set! amps j (max 1 (* 2 (- i 1))))))
 		    
 		    (vct-set! amps (+ j 1) (/ 1.0 n))
@@ -6007,7 +6081,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				(do ((i 1 (+ i 1))
 				     (j 0 (+ j 3)))
 				    ((> i n))
-				  (vct-set! amps (+ j 1) (/ 0.999 norm)) ; I'm truncating when saving the peak
+				  (vct-set! amps (+ j 1) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
 				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (- i 1))))))))))
 			      
 		  amps)))
@@ -6257,6 +6331,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (tanhsin
 	       :make-wrapper (lambda (g)
 			       (set! (tanhsin-osc g) (make-oscil (tanhsin-frequency g) (tanhsin-initial-phase g)))
+			       (set! (tanhsin-frequency g) (hz->radians (tanhsin-frequency g))) ; so that mus-frequency works at least read side
 			       g))
   (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
   (osc #f :type clm))
@@ -6270,10 +6345,93 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (oscil (tanhsin-osc gen) fm))))
 
 
+
+;;; ---------------- moving-fft ----------------
+
+(defgenerator (moving-fft
+	       :make-wrapper (lambda (g)
+			       (let ((n (moving-fft-n g)))
+				 (set! (moving-fft-rl g) (make-vct n))
+				 (set! (moving-fft-im g) (make-vct n))
+				 (set! (moving-fft-data g) (make-vct n))
+				 (set! (moving-fft-window g) (make-fft-window hamming-window n))
+				 (vct-scale! (moving-fft-window g) (/ 2.0 (* 0.54 n)))
+				 (set! (moving-fft-outctr g) (+ n 1)) ; first time fill flag
+				 g))
+	       :methods (list
+			 (list 'mus-data
+			       (lambda (g) (moving-fft-data g)))
+			 (list 'mus-xcoeffs
+			       (lambda (g) (moving-fft-rl g)))
+			 (list 'mus-ycoeffs
+			       (lambda (g) (moving-fft-im g)))
+			 (list 'mus-run
+			       (lambda (g arg1 arg2) (moving-fft g)))))
+  (input #f :type clm) (n 512 :type int) (hop 128 :type int) (outctr 0 :type int)
+  (rl #f :type vct) (im #f :type vct) (data #f :type vct) 
+  (window #f :type vct))
+
+
+(define (moving-fft gen)
+
+  "(make-moving-fft reader (size 512) (hop 128)) returns a moving-fft generator. \n\
+ (moving-fft gen) produces an FFT (polar form) of 'size' samples every 'hop' samples, \n\
+taking input from the readin generator 'reader'.  The magnitudes are available as mus-xcoeffs, \n\
+the phases as mus-ycoeffs, and the current input data as mus-data."
+
+  (declare (gen moving-fft))
+  (let* ((n (moving-fft-n gen))
+	 (n2 (/ n 2))
+	 (rl (moving-fft-rl gen))
+	 (im (moving-fft-im gen))
+	 (data (moving-fft-data gen))
+	 (hop (moving-fft-hop gen))
+	 (outctr (moving-fft-outctr gen))
+	 (new-data #f))
+    (if (>= outctr hop)
+	(let* ((fft-window (moving-fft-window gen)))
+	  (if (> outctr n) ; must be first time through -- fill data array
+	      (begin
+		(do ((i 0 (+ i 1)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-fft-input gen)))))
+	      (begin
+		(do ((i 0 (+ i 1))
+		     (j hop (+ 1 j)))
+		    ((= j n))
+		  (vct-set! data i (vct-ref data j)))
+		(do ((i (- n hop) (+ i 1)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-fft-input gen))))))
+	  (set! outctr 0)
+	  (set! new-data #t)
+	  (clear-array im)
+	  (do ((i 0 (+ i 1)))
+	      ((= i n))
+	    (vct-set! rl i (* (vct-ref fft-window i) (vct-ref data i))))
+	  (mus-fft rl im n 1)
+	  (rectangular->polar rl im)))
+    (set! (moving-fft-outctr gen) (+ outctr 1))
+    new-data))
+
+    
+#|
+(let* ((snd (new-sound))
+       (rd (make-readin "oboe.snd"))
+       (ft (make-moving-fft rd))
+       (data (make-vct 256)))
+  (set! (lisp-graph?) #t)
+  (do ((i 0 (+ i 1)))
+      ((= i 10000))
+    (moving-fft ft)
+    (vct-subseq (mus-xcoeffs ft) 0 255 data)
+    (graph data "fft" 0.0 11025.0 0.0 0.1 0 0 #t))
+  (close-sound snd))
+|#
+
+
+
 ;;; ---------------- moving spectrum ----------------
-;;;
-;;; this is the first half of the phase-vocoder (modulo ignoring "interp!=hop" business)
-;;;   I will probably move this into C eventually
 
 (defgenerator (moving-spectrum
 	       :make-wrapper (lambda (g)
@@ -6407,6 +6565,205 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 
+;;; ---------------- moving scentroid ----------------
+
+(defgenerator (moving-scentroid
+	       :make-wrapper (lambda (g)
+			       (let ((n (moving-scentroid-size g)))
+				 (set! (moving-scentroid-rl g) (make-vct n))
+				 (set! (moving-scentroid-im g) (make-vct n))
+				 (set! (moving-scentroid-dly g) (make-delay n))
+				 (set! (moving-scentroid-rms g) (make-moving-rms n))
+				 (set! (moving-scentroid-hop g) (inexact->exact (floor (/ (mus-srate) (moving-scentroid-rfreq g)))))
+				 (set! (moving-scentroid-binwidth g) (/ (mus-srate) n))
+				 g)))
+  (dbfloor -40.0) (rfreq 100.0) 
+  (size 4096 :type int) (hop 1024 :type int) (outctr 0 :type int)
+  (curval 0.0) (binwidth 1.0)
+  (rl #f :type vct) (im #f :type vct) 
+  (dly #f :type clm) (rms #f :type clm))
+
+(define* (moving-scentroid gen :optional (x 0.0))
+  (declare (gen moving-scentroid) (x float))
+  (let ((outctr (moving-scentroid-outctr gen)))
+    (let ((rms (moving-rms (moving-scentroid-rms gen) x)))
+      (if (>= (moving-scentroid-outctr gen) (moving-scentroid-hop gen))
+	  (begin
+	    (set! outctr 0)	    
+	    (if (< (linear->db rms) (moving-scentroid-dbfloor gen))
+		(set! (moving-scentroid-curval gen) 0.0)
+		(let* ((rl (moving-scentroid-rl gen))
+		       (im (moving-scentroid-im gen))
+		       (data (mus-data (moving-scentroid-dly gen)))
+		       (n (moving-scentroid-size gen))
+		       (fft2 (/ n 2))
+		       (numsum 0.0)
+		       (densum 0.0))
+		  (clear-array im)
+		  (vct-subseq data 0 (- n 1) rl)
+		  (mus-fft rl im n 1)          ; we can use the delay line contents un-reordered because phases are ignored here
+		  (rectangular->magnitudes rl im)
+		  (do ((k 0 (+ 1 k)))
+		      ((= k fft2))
+		   (set! numsum (+ numsum (* k (vct-ref rl k))))
+		   (set! densum (+ densum (vct-ref rl k))))
+		  (set! (moving-scentroid-curval gen) (/ (* (moving-scentroid-binwidth gen) numsum) densum)))))))
+    (delay (moving-scentroid-dly gen) x)       ; our "sliding window" on the input data
+    (set! (moving-scentroid-outctr gen) (+ outctr 1))
+    (moving-scentroid-curval gen)))
+
+#|
+(let* ((snd (open-sound "oboe.snd"))
+       (cur-srate (srate snd))
+       (old-srate (mus-srate)))
+  (set! (mus-srate) cur-srate)
+
+  (let ((scn (make-moving-scentroid -40.0 100.0 128))
+	(vals (scentroid "oboe.snd" 0.0 1.1 -40.0 100.0 128))
+	(k 0))
+
+    (let ((data (channel->vct 0 22050 snd 0)))
+      (close-sound snd)
+      (do ((i 0 (+ i 1)))
+	  ((= i (moving-scentroid-size scn)))
+	(moving-scentroid scn (vct-ref data i)))
+      (set! (moving-scentroid-outctr scn) (moving-scentroid-hop scn))
+
+      (do ((i (moving-scentroid-size scn) (+ i 1))
+	   (j 0 (+ j 1)))
+	  ((= i 22050))
+	(let ((val (moving-scentroid scn (vct-ref data i))))
+	  (if (= (modulo j (moving-scentroid-hop scn)) 0)
+	      (begin
+		(format #t "[~A ~A]~%" val (vct-ref vals k))
+		(set! k (+ k 1)))))))
+    (set! (mus-srate) old-srate)))
+|#
+
+
+
+;;; ---------------- moving-autocorrelation ----------------
+
+(defgenerator (moving-autocorrelation
+	       :make-wrapper (lambda (g)
+			       (let ((n (moving-autocorrelation-n g)))
+				 (set! (moving-autocorrelation-rl g) (make-vct n))
+				 (set! (moving-autocorrelation-im g) (make-vct n))
+				 (set! (moving-autocorrelation-data g) (make-vct n))
+				 (set! (moving-autocorrelation-outctr g) (+ n 1)) ; first time fill flag
+				 g))
+	       :methods (list
+			 (list 'mus-run
+			       (lambda (g arg1 arg2) (moving-autocorrelation g)))
+			 (list 'mus-data
+			       (lambda (g) (moving-autocorrelation-rl g)))))
+  (input #f :type clm) (n 512 :type int) (hop 128 :type int) (outctr 0 :type int)
+  (rl #f :type vct) (im #f :type vct) (data #f :type vct))
+
+
+(define (moving-autocorrelation gen)
+
+  "(make-moving-autocorrelation reader (size 512) (hop 128)) returns a moving-autocorrelation generator. \n\
+ (moving-autocorrelation gen) produces the autocorrelation of 'size' samples every 'hop' samples, \n\
+taking input from the readin generator 'reader'.  The output data is available via mus-data."
+
+  (declare (gen moving-autocorrelation))
+  (let* ((n (moving-autocorrelation-n gen))
+	 (n2 (/ n 2))
+	 (rl (moving-autocorrelation-rl gen))
+	 (im (moving-autocorrelation-im gen))
+	 (data (moving-autocorrelation-data gen))
+	 (hop (moving-autocorrelation-hop gen))
+	 (outctr (moving-autocorrelation-outctr gen))
+	 (new-data #f))
+    (if (>= outctr hop)
+	(begin
+	  (if (> outctr n) ; must be first time through -- fill data array
+	      (begin
+		(do ((i 0 (+ i 1)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-autocorrelation-input gen)))))
+	      (begin
+		(do ((i 0 (+ i 1))
+		     (j hop (+ 1 j)))
+		    ((= j n))
+		  (vct-set! data i (vct-ref data j)))
+		(do ((i (- n hop) (+ i 1)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-autocorrelation-input gen))))))
+	  (set! outctr 0)
+	  (set! new-data #t)
+	  (clear-array im)
+	  (vct-subseq data 0 (- n 1) rl)
+	  (autocorrelate rl)))
+    (set! (moving-autocorrelation-outctr gen) (+ outctr 1))
+    new-data))
+
+
+
+;;; ---------------- moving-pitch ----------------
+
+(defgenerator (moving-pitch
+	       :make-wrapper (lambda (g)
+			       (set! (moving-pitch-ac g) (make-moving-autocorrelation
+							  (moving-pitch-input g)
+							  (moving-pitch-n g)
+							  (moving-pitch-hop g)))
+			       g)
+	       :methods (list
+			 (list 'mus-run
+			       (lambda (g arg1 arg2) (moving-pitch g)))))
+
+  (input #f :type clm) (n 512 :type int) (hop 128 :type int)
+  (ac #f :type clm) (val 0.0))
+
+
+(define (moving-pitch gen)
+  (declare (gen moving-pitch))
+  (if (moving-autocorrelation (moving-pitch-ac gen))
+      (let* ((data (mus-data (moving-pitch-ac gen)))
+	     (peak 0.0)
+	     (peak-loc 0)
+	     (len (vct-length data)))
+	(do ((i 8 (+ i 1))) ; assume we're not in the top few octaves
+	    ((= i len))
+	  (let ((apk (abs (vct-ref data i))))
+	    (if (> apk peak)
+		(begin
+		  (set! peak apk)
+		  (set! peak-loc i)))))
+	(if (or (= peak 0.0)
+		(= peak-loc 0))
+	    (set! (moving-pitch-val gen) 0.0)
+	    (let* ((la (vct-ref data (- peak-loc 1)))
+		   (ra (vct-ref data (+ peak-loc 1)))
+		   (logla (log (/ (max la .0000001) peak) 10))
+		   (logra (log (/ (max ra .0000001) peak) 10)))
+	      (set! (moving-pitch-val gen)
+		    (/ (mus-srate)
+		       (+ peak-loc (/ (* 0.5 (- logla logra))
+				      (+ logla logra)))))))))
+  (moving-pitch-val gen))
+
+#|
+(let* ((rd (make-readin "oboe.snd"))
+       (cur-srate (mus-sound-srate "oboe.snd"))
+       (old-srate (mus-srate)))
+  (set! (mus-srate) cur-srate)
+  (let* ((scn (make-moving-pitch rd))
+	 (last-pitch 0.0)
+	 (pitch 0.0))
+    (do ((i 0 (+ i 1)))
+	((= i 22050))
+      (set! last-pitch pitch)
+      (set! pitch (moving-pitch scn))
+      (if (not (= last-pitch pitch))
+	  (format #t "~A: ~A~%" (exact->inexact (/ i cur-srate)) pitch))))
+  (set! (mus-srate) old-srate))
+|#
+
+
+
 #|
 (define (abel k)
   ;; sum i from 1 to k (-1)^(i + 1) * (sin i) / i
@@ -6500,7 +6857,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
 		round-interp sinc-train pink-noise green-noise brown-noise green-noise-interp
 		moving-max moving-sum moving-rms moving-length weighted-moving-average exponentially-weighted-moving-average 
-		tanhsin
+		tanhsin moving-fft moving-scentroid moving-autocorrelation moving-pitch
 		))
      (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
 	   make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
@@ -6511,8 +6868,9 @@ index 10 (so 10/2 is the bes-jn arg):
 	   make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
 	   make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
 	   make-moving-max make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
-	   make-tanhsin
+	   make-tanhsin make-moving-fft make-moving-scentroid make-moving-autocorrelation make-moving-pitch
 	   )))
+
 
 
 ;;; --------------------------------------------------------------------------------

@@ -355,7 +355,7 @@
 	 (srate-ratio (/ in-file-sr (mus-srate)))
 	 ;; sample rate converter for input samples
 	 (rd (make-readin :file file :channel (min input-channel (- in-file-channels 1))))
-	 (in-file-reader (make-src :input (lambda (dir) readin(rd)) :srate 1.0))
+	 (in-file-reader (make-src :input rd :srate 1.0))
 	 ;; sample rate conversion envelope
 	 (sr-env (make-env :envelope (if srate-linear
 					 (envelope-or-number srate)
@@ -638,6 +638,5 @@
 	       ;; reset position of input file reader
 	       (set! (mus-location rd) in-start))))))))
 
-;; (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1)
-;; 	    (let ((file "oboe.snd"))
-;; 	      (grani 0 2 5 file :grain-envelope (raised-cosine))))
+;; (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))
+;; (with-sound (:channels 2) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))

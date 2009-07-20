@@ -608,15 +608,18 @@ class Plotter  : public Component,
   public:
     String name;
     Axis* axis;
-    bool shared;
-  Field(String n, Axis* a, bool s=false)
-    {
-      name=n;
-      axis=a;
-      shared=s;
-    }
-    ~Field(){axis=NULL;}
-
+    int shared;
+    bool isSharedAxis() {return (shared>=0);}
+    Field(String n, Axis* a, int s=-1)
+      {
+	name=n;
+	axis=a;
+	shared=s;
+      }
+    ~Field()
+      {
+	if (!isSharedAxis()) delete axis;
+      }
   };
   
  public:
@@ -644,7 +647,7 @@ class Plotter  : public Component,
   Plotter (MidiFile& midifile);
   ~Plotter () ;
   void createPlottingComponents();
-  void setPlottingAxes(int xax, int yax);
+  void setPlottingFields(int xax, int yax);
 
   double getZoom() {return zoom;}
   void setZoom(double z) {zoom=z;}
@@ -652,9 +655,6 @@ class Plotter  : public Component,
   void setPointSize(double siz){ppp=siz;}
   PlotID getPlotType() {return plottype;}
 
-  Axis* getSharedAxis() {return axes[0];}
-  Axis* getAxis(int i) {return axes[i];}
-  int getAxisIndex(Axis* a) {return axes.indexOf(a);}
   //  void setAxisView(Axis* a, Orientation o) ;
   void setHorizontalAxis(Axis* a);
   void setVerticalAxis(Axis* a);
@@ -706,13 +706,16 @@ class Plotter  : public Component,
 
   // Fields
   int numFields() {return fields.size();}
-  Axis* getFieldAxis(int f) {return fields[f]->axis;}
   String getFieldName(int f) {return fields[f]->name;}
-  bool isSharedAxis(int f)
+  Axis* getFieldAxis(int f) {return fields[f]->axis;}
+  bool isSharedField(int f) {return fields[f]->isSharedAxis();}
+  String getSharedFieldName(int f) 
   {
-    int j=axes.indexOf(fields[f]->axis);
-    return j<f;  // a shared axis is defined earlier than field
+    if (fields[f]->isSharedAxis())
+      return fields[fields[f]->shared]->name;
+    else return String::empty;
   }
+
   String getPlotTitle()
   {
     Component* window=getTopLevelComponent(); // plotter window
