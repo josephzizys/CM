@@ -49,36 +49,40 @@ void Fomus::openScore(String scorename, String scoreargs)
   // current?  scoreargs is a string containing whatever the user
   // passed as to sprout arguments to the score
 
-  std::cout << "in openScore with file=" << scorename.toUTF8()
-	    << " args=" << scoreargs.toUTF8() << "\n";
-
-  if (scorename==T("fomus"))
-    {
-    }
-  else if (scorename.endsWith(T(".fms")))
-    {
-    }
-  else if (scorename.endsWith(T(".ly")))
-    {
-    }
-  else if (scorename.endsWith(T(".xml")))
-    {
-    }
-
+  if (scorename!=T("fomus")) { // if default score, do nothing
+    // find score w/ filename, make current
+    // if none, create new one
+//     for (int i = 0; i < scores.size(); ++i) {
+//       if (scores.getUnchecked(current)->name == scorename) {
+// 	current = i;
+// 	goto GOTIT;
+//       }
+//     }
+//     newScore(scorename);
+    selectScore(scorename);
+  }
+ GOTIT:
+  scores.getUnchecked(current)->runwhendone = false;
   StringArray userargs;
   userargs.addTokens(scoreargs, false);
-  for (int i=0; i<userargs.size(); i++)
+  for (int i=0; i<userargs.size(); ++i)
     {
-      // user's args handling should probably interate by pairs...
+      std::cout << userargs[i].toUTF8() << std::endl;
+      if (userargs[i] == ":run" && (i >= userargs.size() - 1 || userargs[i + 1] != "#f")) {
+	scores.getUnchecked(current)->runwhendone = true;
+      } else if (userargs[i] == ":clear" && (i >= userargs.size() - 1 || userargs[i + 1] != "#f")) {
+	clearScore();
+      }
     }
 }
 
 void Fomus::closeScore()
 {
-  std::cout << "closeScore\n";
-
   // called by the scheduler after all processes outputting to the score have stopped.
   // presumably this triggers fomus' score parsing and output handling
+  if (scores.getUnchecked(current)->runwhendone) {
+    runScore();
+  }
 }
 
 inline void spitout(const char* str) 
@@ -99,18 +103,34 @@ void initfomus()
 
 
 
-void Fomus::newScore()
+void Fomus::newScore(const String& nam)
 {
-  FomusScore* score= new FomusScore(); 
-  score->name=T("(untitled)");
+  FomusScore* score = new FomusScore();
+  //File fn(nam);
+  score->name = (nam.isEmpty() ? String("(untitled)") : File(nam).getFileName());
   scores.add(score);
   current=scores.size()-1;
+  sval(fomus_par_setting, fomus_act_set, "filename");
+  sval(fomus_par_settingval, fomus_act_set, nam);
+}
+
+void Fomus::selectScore(const String& nam)
+{
+  File fn(nam);
+  //String fn0(fn.getFullPathName());
+  for (int i = 0; i < scores.size(); ++i) {
+    if (File(fomus_get_sval(scores.getUnchecked(current)->getfom(), "filename"))/*.getFullPathName()*/ == fn) { // find an exact match
+      current = i;
+      return;
+    }
+  }
+  newScore(nam);
 }
 
 void Fomus::deleteScore()
 {
   // insist on at least one score
-  if (scores.size()>0)
+  if (scores.size()>1)
     {
       FomusScore* fms=scores.getUnchecked(current);
       scores.removeObject(fms, false);
@@ -120,7 +140,7 @@ void Fomus::deleteScore()
 
 void Fomus::clearScore()
 {
-  fomus_clear(getfomusdata());
+  fomus_act(getfomusdata(), fomus_par_events, fomus_act_clear);
 }
 
 void Fomus::loadScore(String filename)
@@ -138,7 +158,6 @@ void Fomus::runScore()
       renameScoreDialog();
 #endif
     }
-  std::cout << "RUNNING" << std::endl;
   fomus_run(fomus_copy(getfomusdata()));
 }
 
@@ -173,6 +192,19 @@ void Fomus::act(fomus_param par, fomus_action act)
   fomus_act(getfomusdata(), par, act);
 }
 
+String getwildcards() {
+  String r;
+  info_extslist f(info_list_exts());
+  bool fi = true;
+  String mid("mid");
+  for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) {
+    if (*i == mid) continue; // skip midi files
+    if (fi) fi = false; else r += ';';
+    r += String("*.") + *i;
+  }
+  return r;
+}
+
 struct xmlerror
 {
   String str;
@@ -180,6 +212,22 @@ struct xmlerror
   void printerr() const
   {
     Console::getInstance()->printError(">>> Error: Fomus: " + str + T("\n"));
+  }
+};
+
+struct scoped_timeshift {
+  bool isreg;
+  Fomus& score;
+  scoped_timeshift(double sh, Fomus& score):isreg(sh != 0), score(score) {
+    if (isreg) {
+      score.fval(fomus_par_region_time, fomus_act_inc, sh);
+      score.ival(fomus_par_region, fomus_act_start, 0);
+    }
+  }
+  ~scoped_timeshift() {
+    if (isreg) {
+      score.ival(fomus_par_region, fomus_act_end, 0);
+    }
   }
 };
 
@@ -192,17 +240,18 @@ void Fomus::sendXml(const String& xml, double scoretime)
   // score.
 
   try {
-    std::cout << '\n' << xml.toUTF8() << std::endl;
+    std::cout << xml.toUTF8() << std::endl;
     XmlDocument doc(xml);
     std::auto_ptr<XmlElement> docel(doc.getDocumentElement());
+    scoped_timeshift xxx(scoretime, *this);
     sendXml(*docel, fomus_par_none, fomus_act_none);
   } catch (const xmlerror& e) {e.printerr();}
 }
 
-inline XmlElement* mustExist(XmlElement* x)
+inline XmlElement* mustExist(XmlElement* x, const char* what)
 {
   if (x) return x;
-  throw xmlerror("XML parse error");
+  throw xmlerror(String("expected ") + what);
 }
 
 // can be a struct, list, etc..
@@ -220,19 +269,24 @@ void Fomus::sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act,
 	//XmlElement* d = e; //;xml.getChildByName(T("s"));
 	if (e->hasTagName(T("s"))) {
 	  key = e->getAllSubText();
-	  if (!key.isEmpty() && key[0] == ':') {
-	    key = key.substring(1);
-	  } else throw xmlerror("expected keyword");
+	  if (!key.isEmpty()) {
+	    if (key[0] == ':') {
+	      key = key.substring(1);
+	    } else if (key[key.length() - 1] == ':') {
+	      key = key.substring(0, key.length() - 1);
+	    }
+	  }
 	} else {
-	  throw xmlerror("expected keyword");
+	  throw xmlerror("expected string id");
 	}
       } else {
 	excmap::const_iterator i(exc.find(key));
 	if (i == exc.end()) {
 	  sval(fomus_par_setting, fomus_act_set, key); // setting
-	  sendXmlVal(*e, i->second.par, i->second.act, i->second.wh);
+	  sendXmlVal(*e, par, act, wh_none);
 	} else { // a "special" slot
-	  sendXmlVal(*e, i->second.par, i->second.act, i->second.wh, true);
+	  if (i->second.act != fomus_act_none)
+	    sendXmlVal(*e, i->second.par, i->second.act, i->second.wh, true);
 	  // special slot--parse XML expecting nested structs
 	}
       }
@@ -240,59 +294,61 @@ void Fomus::sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act,
       //}
     }
     if (!wh) throw xmlerror("missing argument");
-  } else throw xmlerror("expected list of keyword/argument pairs");
+  } else throw xmlerror("expected list of string id/argument pairs");
 }
 
 void Fomus::sendXmlEntry(XmlElement& xml) 
 {
-  sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("time")))->getChildElement(0)), fomus_par_time, fomus_act_set, wh_none); // mandatory in scheme functions
-  sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("dur")))->getChildElement(0)), fomus_par_duration, fomus_act_set, wh_none);
+  sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("time")), "time value")->getChildElement(0), "time value"), fomus_par_time, fomus_act_set, wh_none); // mandatory in scheme functions
+  sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("dur")), "duration value")->getChildElement(0), "duration value"), fomus_par_duration, fomus_act_set, wh_none);
   XmlElement* d;
-  d = xml.getChildByName(T("part")); if (d) sendXmlVal(*mustExist(d->getChildElement(0)), fomus_par_part, fomus_act_set, wh_none); //else sval(fomus_par_part, fomus_act_set, lprt);
+  d = xml.getChildByName(T("part")); if (d) sendXmlVal(*mustExist(d->getChildElement(0), "part id"), fomus_par_part, fomus_act_set, wh_none); //else sval(fomus_par_part, fomus_act_set, lprt);
   d = xml.getChildByName(T("voice")); if (d) {
-    sendXmlVal(*mustExist(d->getChildElement(0)), fomus_par_voice, fomus_act_set, wh_none);
+    sendXmlVal(*mustExist(d->getChildElement(0), "voice number or list"), fomus_par_voice, fomus_act_set, wh_none);
   } else ival(fomus_par_voice, fomus_act_set, 1);
-  d = xml.getChildByName(T("grtime")); if (d) sendXmlVal(*mustExist(d->getChildElement(0)), fomus_par_gracetime, fomus_act_set, wh_none);
+  d = xml.getChildByName(T("grtime")); if (d) sendXmlVal(*mustExist(d->getChildElement(0), "grace time value"), fomus_par_gracetime, fomus_act_set, wh_none);
   d = xml.getChildByName(T("marks")); if (d) {
     XmlElement* l0 = d->getChildByName(T("l"));
     if (!l0) throw xmlerror("expected list of marks");
-    forEachXmlChildElement(*l0, e) {
-      XmlElement* l = l0->getChildByName(T("l"));
-      if (!l) {
-	XmlElement* s = l0->getChildByName(T("s"));
-	if (!s) throw xmlerror("expected mark id or list");
-	sendXmlVal(*s, fomus_par_mark, fomus_act_set, wh_none);
-      } else {
+    //std::cout << '|' << l0->createDocument().toUTF8() << '|' << std::endl;
+    forEachXmlChildElement(*l0, l) {
+      //std::cout << '|' << e->createDocument().toUTF8() << '|' << std::endl;
+      //XmlElement* l = e->getChildByName(T("l"));
+      if (l->hasTagName(T("s"))) {
+	//XmlElement* s = e->getChildByName(T("s"));
+	//if (!s) throw xmlerror("expected mark id or list");
+	sendXmlVal(*l, fomus_par_markid, fomus_act_set, wh_none);
+      } else if (l->hasTagName(T("l"))) {
 	XmlElement* n = l->getChildElement(0);
 	if (!n) throw xmlerror("expected mark id");
-	sendXmlVal(*n, fomus_par_mark, fomus_act_set, wh_none);
-	n = xml.getChildElement(1);
+	sendXmlVal(*n, fomus_par_markid, fomus_act_set, wh_none);
+	n = l->getChildElement(1);
 	if (n) {
 	  sendXmlVal(*n, fomus_par_markval, fomus_act_add, wh_none);
-	  n = xml.getChildElement(2);
+	  n = l->getChildElement(2);
 	  if (n) {
 	    sendXmlVal(*n, fomus_par_markval, fomus_act_add, wh_none);
-	    if (xml.getChildElement(3)) throw xmlerror("too many mark arguments");
+	    if (l->getChildElement(3)) throw xmlerror("too many mark arguments");
 	  }
 	}
-      }
-      act(fomus_par_marklist, fomus_act_add);
+      } else throw xmlerror("expected mark id or list");
+      act(fomus_par_mark, fomus_act_add);
     }
   }
-  d = xml.getChildByName(T("sets")); if (d) sendXmlSets(*d, fomus_par_note_settingval, fomus_act_add);
+  d = xml.getChildByName(T("sets")); if (d) sendXmlSets(*d, fomus_par_note_settingval, fomus_act_set);
 }
 
 // numbers, strings, lists, etc..
 
 void Fomus::sendXmlVal(XmlElement& xml, fomus_param par, 
 		       fomus_action act, whichstruct wh,
-		       bool doeachinlist ) 
+		       bool doeachinlist) 
 { // if tag, force that tag
   if (xml.hasTagName(T("i"))) {
     ival(par, act, atol(xml.getAllSubText()));
   } else if (xml.hasTagName(T("r"))) {
-    rval(par, act, atol(mustExist(xml.getChildByName(T("n")))->getAllSubText()),
-	 atol(mustExist(xml.getChildByName(T("d")))->getAllSubText()));
+    rval(par, act, atol(mustExist(xml.getChildByName(T("n")), "numerator")->getAllSubText()),
+	 atol(mustExist(xml.getChildByName(T("d")), "denominator")->getAllSubText()));
   } else if (xml.hasTagName(T("f"))) {
     fval(par, act, atof(xml.getAllSubText()));
   } else if (xml.hasTagName(T("s"))) {
@@ -306,7 +362,7 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
       case wh_measdef:
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_measdef_id,
 						     fomus_act_set, wh_none)));
-	sendXmlSets(xml, fomus_par_measdef_settingval, fomus_act_add, exc, true);
+	sendXmlSets(xml, fomus_par_measdef_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
       case wh_part:
@@ -318,7 +374,7 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 // 						       fomus_act_set, wh_none)));
 	exc.insert(excmap::value_type("inst", sendpair(fomus_par_part_inst,
 						       fomus_act_set, wh_inst)));
-	sendXmlSets(xml, fomus_par_part_settingval, fomus_act_add, exc, true);
+	sendXmlSets(xml, fomus_par_part_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
       case wh_metapart:
@@ -327,7 +383,7 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 	exc.insert(excmap::value_type("parts", sendpair(fomus_par_metapart_partmaps,
 							fomus_act_set, wh_part,
 							true)));
-	sendXmlSets(xml, fomus_par_metapart_settingval, fomus_act_add, exc, true);
+	sendXmlSets(xml, fomus_par_metapart_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
       case wh_partsref:
@@ -356,7 +412,9 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 	exc.insert(excmap::value_type("percinsts", sendpair(fomus_par_inst_percinsts,
 							    fomus_act_set,
 							    wh_percinst, true)));
-	sendXmlSets(xml, fomus_par_inst_settingval, fomus_act_add, exc, true);
+	exc.insert(excmap::value_type("template", sendpair(fomus_par_inst_template,
+							   fomus_act_set, wh_none)));
+	sendXmlSets(xml, fomus_par_inst_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
       case wh_percinst:
@@ -371,26 +429,28 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 							  true)));
 	exc.insert(excmap::value_type("export", sendpair(fomus_par_percinst_export,
 							 fomus_act_set, wh_export)));
-	sendXmlSets(xml, fomus_par_percinst_settingval, fomus_act_add, exc, true);
+	exc.insert(excmap::value_type("template", sendpair(fomus_par_percinst_template,
+							   fomus_act_set, wh_none)));
+	sendXmlSets(xml, fomus_par_percinst_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
       case wh_clef:
-	sendXmlSets(xml, fomus_par_clef_settingval, fomus_act_add, exc, true);
+	sendXmlSets(xml, fomus_par_clef_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
       case wh_staff:
 	exc.insert(excmap::value_type("clefs", sendpair(fomus_par_staff_clefs, 
 							fomus_act_set, wh_clef,
 							true))); // _add? check this!
-	sendXmlSets(xml, fomus_par_staff_settingval, fomus_act_add, exc,  true);
+	sendXmlSets(xml, fomus_par_staff_settingval, fomus_act_set, exc,  true);
 	Fomus::act(par, act);
 	break;
       case wh_import:
-	sendXmlSets(xml, fomus_par_import_settingval, fomus_act_add, exc, true);
+	sendXmlSets(xml, fomus_par_import_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
       case wh_export:
-	sendXmlSets(xml, fomus_par_export_settingval, fomus_act_add, exc, true);
+	sendXmlSets(xml, fomus_par_export_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
       } 
       //} else goto JUSTALIST;
@@ -414,7 +474,10 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
       }
     }
   } else if (xml.hasTagName(T("b"))) {
-    ival(par, act, atol(xml.getAllSubText()));
+    String v(xml.getAllSubText());
+    if (v == "f" || v == "F" || v == "#f" || v == "false" || v == "nil" || v == "NIL") ival(par, act, 0);
+    else if (v == "t" || v == "T" || v == "#t" || v == "true") ival(par, act, 1);
+    else throw xmlerror("expected boolean value");
   } else {
     std::cout << (char*)xml.getTagName().toUTF8() << std::endl;
     throw xmlerror("XML parse error");
@@ -425,12 +488,12 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 
 void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
 {
-  std::cout << std::endl;
+  //std::cout << std::endl;
   if (xml.hasTagName(T("note"))) {
-    sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("note")))->getChildElement(0)), fomus_par_pitch, fomus_act_set, wh_none);
+    sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("pitch")), "pitch value")->getChildElement(0), "pitch value"), fomus_par_pitch, fomus_act_set, wh_none);
     XmlElement* d = xml.getChildByName(T("dyn"));
     if (d) 
-      sendXmlVal(*mustExist(d->getChildElement(0)), fomus_par_dynlevel,
+      sendXmlVal(*mustExist(d->getChildElement(0), "dynamic value"), fomus_par_dynlevel,
 		 fomus_act_set, wh_none);
     else
       ival(fomus_par_dynlevel, fomus_act_set, 0);
@@ -443,39 +506,43 @@ void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
     sendXmlEntry(xml);
     Fomus::act(fomus_par_markevent, fomus_act_add);
   } else if (xml.hasTagName(T("meas"))) {
-    sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("time")))->getChildElement(0)
-			  ), 
+    sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("time")), "time value")->getChildElement(0), "time value"), 
 	       fomus_par_time, fomus_act_set, wh_none);
     XmlElement* d = xml.getChildByName(T("dur"));
-    if (d)
-      sendXmlVal(*mustExist(d->getChildElement(0)), fomus_par_duration, 
-		 fomus_act_set, wh_none);
-    sendXmlSets(*mustExist(xml.getChildByName(T("sets"))),
-		fomus_par_measdef_settingval, fomus_act_add, excmap() );
+    if (d) sendXmlVal(*mustExist(d->getChildElement(0), "duration value"), fomus_par_duration, fomus_act_set, wh_none);
+    d = xml.getChildByName(T("sets")); if (d) {
+      d = mustExist(d->getChildByName(T("l")), "settings list");
+      if (d->getChildElement(0)) {
+	sendXmlVal(*d, fomus_par_meas_measdef, fomus_act_set, wh_measdef);
+	//Fomus::act(fomus_par_meas_measdef, fomus_act_set);
+      }
+    }
+    d = xml.getChildByName(T("measdef"));
+    if (d) sendXmlVal(*mustExist(d->getChildElement(0), "measure definition id"), fomus_par_meas_measdef, fomus_act_set, wh_none);
     Fomus::act(fomus_par_meas, fomus_act_add);
   } else if (xml.hasTagName(T("measdef"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l"))), fomus_par_measdef, 
+    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "measure definition"), fomus_par_measdef, 
 	       fomus_act_add, wh_measdef);
   } else if (xml.hasTagName(T("part"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l"))), fomus_par_part,
+    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "part definition"), fomus_par_part,
 	       fomus_act_add, wh_part);
   } else if (xml.hasTagName(T("metapart"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l"))), fomus_par_metapart,
+    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "metapart definition"), fomus_par_metapart,
 	       fomus_act_add, wh_metapart);
   } else if (xml.hasTagName(T("partsref"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l"))), fomus_par_partsref, 
+    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "parts reference definition"), fomus_par_partsref, 
 	       fomus_act_add, wh_partsref);
   } else if (xml.hasTagName(T("inst"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l"))), fomus_par_inst,
+    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "instrument definition"), fomus_par_inst,
 	       fomus_act_add, wh_inst);
   } else if (xml.hasTagName(T("percinst"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l"))), fomus_par_percinst,
+    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "percussion instrument definition"), fomus_par_percinst,
 	       fomus_act_add, wh_percinst);
   } else if (xml.hasTagName(T("setting"))) {
-    sendXmlSets(*mustExist(xml.getChildByName(T("sets"))), fomus_par_settingval, 
-		(mustExist(xml.getChildByName(T("app")))
+    sendXmlSets(*mustExist(xml.getChildByName(T("sets")), "settings list"), fomus_par_settingval, 
+		(mustExist(xml.getChildByName(T("app")), "boolean value")
 		 ? fomus_act_append : fomus_act_set));
-  }
+  } else throw xmlerror("XML parse error");
 }
 
 /*=======================================================================*
@@ -1826,9 +1893,7 @@ void Fomus::loadScoreDialog()
 
 void Fomus::renameScoreDialog() 
 {
-  #warning "todo: file extensions should come from a fomus infoapi function"
-  // also fix eval functio below
-  WildcardFileFilter wildcardFilter(T("*.fms;*.ly;*.xml"), T("FOMUS Output Files"));
+  WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
   FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
   FileChooserDialogBox dialogBox(T("Rename Score"), T("Specify an output file path (`filename' setting value)..."),
 				 browser, false, Colours::white);
@@ -1873,64 +1938,74 @@ FomusSyntax::FomusSyntax () // syntab
   tabwidth=2;
 #endif
   hilites[HiliteIDs::String]=Colours::darkgreen;
-  hilites[HiliteIDs::Comment]=Colours::darkblue;
-  hilites[HiliteIDs::Hilite4]=Colours::darkgrey; // time, pitch, etc.
-  hilites[HiliteIDs::Hilite5]=Colours::darkorange; // settings
-  hilites[HiliteIDs::Hilite6]=Colours::darkred; // built-in
+  hilites[HiliteIDs::Comment]=Colours::darkcyan;
+  hilites[HiliteIDs::Hilite4]=Colours::darkorange; // settings
+  hilites[HiliteIDs::Hilite5]=Colours::darkred; // built-in
+  
+  hilites[HiliteIDs::Hilite6]=Colours::darkblue;
+  hilites[HiliteIDs::Hilite7]=Colours::darkgreen; 
+  hilites[HiliteIDs::Hilite8]=Colours::darkmagenta;
+//   hilites[HiliteIDs::Hilite9]=Colours::darkseagreen; // dyn
+//   hilites[HiliteIDs::Hilite10]=Colours::darkkhaki; // duration
+//   hilites[HiliteIDs::Hilite11]=Colours::darkmagenta; // part
+//   hilites[HiliteIDs::Hilite12]=Colours::darkolivegreen; // pitch
+//   hilites[HiliteIDs::Hilite13]=Colours::darkgrey; // note/mark/rest
+//   hilites[HiliteIDs::Hilite14]=Colours::black; // meas
+//   hilites[HiliteIDs::Hilite15]=Colours::darkslateblue; // meas
   // keywords
-  stickkeyword(T("voice"), HiliteIDs::Hilite4);
-  stickkeyword(T("voi"), HiliteIDs::Hilite4);
-  stickkeyword(T("vo"), HiliteIDs::Hilite4);
-  stickkeyword(T("v"), HiliteIDs::Hilite4);
-  stickkeyword(T("time"), HiliteIDs::Hilite4);
-  stickkeyword(T("tim"), HiliteIDs::Hilite4);
-  stickkeyword(T("ti"), HiliteIDs::Hilite4);
-  stickkeyword(T("t"), HiliteIDs::Hilite4);
-  stickkeyword(T("grace"), HiliteIDs::Hilite4);
-  stickkeyword(T("gra"), HiliteIDs::Hilite4);
-  stickkeyword(T("gr"), HiliteIDs::Hilite4);
-  stickkeyword(T("g"), HiliteIDs::Hilite4);
-  stickkeyword(T("dynamic"), HiliteIDs::Hilite4);
-  stickkeyword(T("dyn"), HiliteIDs::Hilite4);
-  stickkeyword(T("dy"), HiliteIDs::Hilite4);
-  stickkeyword(T("y"), HiliteIDs::Hilite4);
-  stickkeyword(T("duration"), HiliteIDs::Hilite4);
-  stickkeyword(T("dur"), HiliteIDs::Hilite4);
-  stickkeyword(T("du"), HiliteIDs::Hilite4);
-  stickkeyword(T("d"), HiliteIDs::Hilite4);
-  stickkeyword(T("part"), HiliteIDs::Hilite4);
-  stickkeyword(T("par"), HiliteIDs::Hilite4);
-  stickkeyword(T("pa"), HiliteIDs::Hilite4);
-  stickkeyword(T("a"), HiliteIDs::Hilite4);
-  stickkeyword(T("pitch"), HiliteIDs::Hilite4);
-  stickkeyword(T("pit"), HiliteIDs::Hilite4);
-  stickkeyword(T("pi"), HiliteIDs::Hilite4);
-  stickkeyword(T("p"), HiliteIDs::Hilite4);
-  stickkeyword(T("note"), HiliteIDs::Hilite4);
-  stickkeyword(T("mark"), HiliteIDs::Hilite4);
-  stickkeyword(T("rest"), HiliteIDs::Hilite4);
-  stickkeyword(T("measure"), HiliteIDs::Hilite4);
-  stickkeyword(T("meas"), HiliteIDs::Hilite4);
+  stickkeyword(T("voice"), HiliteIDs::Hilite7);
+  stickkeyword(T("voi"), HiliteIDs::Hilite7);
+  stickkeyword(T("vo"), HiliteIDs::Hilite7);
+  stickkeyword(T("v"), HiliteIDs::Hilite7);
+  stickkeyword(T("time"), HiliteIDs::Hilite6);
+  stickkeyword(T("tim"), HiliteIDs::Hilite6);
+  stickkeyword(T("ti"), HiliteIDs::Hilite6);
+  stickkeyword(T("t"), HiliteIDs::Hilite6);
+  stickkeyword(T("grace"), HiliteIDs::Hilite6);
+  stickkeyword(T("gra"), HiliteIDs::Hilite6);
+  stickkeyword(T("gr"), HiliteIDs::Hilite6);
+  stickkeyword(T("g"), HiliteIDs::Hilite6);
+  stickkeyword(T("dynamic"), HiliteIDs::Hilite7);
+  stickkeyword(T("dyn"), HiliteIDs::Hilite7);
+  stickkeyword(T("dy"), HiliteIDs::Hilite7);
+  stickkeyword(T("y"), HiliteIDs::Hilite7);
+  stickkeyword(T("duration"), HiliteIDs::Hilite6);
+  stickkeyword(T("dur"), HiliteIDs::Hilite6);
+  stickkeyword(T("du"), HiliteIDs::Hilite6);
+  stickkeyword(T("d"), HiliteIDs::Hilite6);
+  stickkeyword(T("part"), HiliteIDs::Hilite5);
+  stickkeyword(T("par"), HiliteIDs::Hilite5);
+  stickkeyword(T("pa"), HiliteIDs::Hilite5);
+  stickkeyword(T("a"), HiliteIDs::Hilite5);
+  stickkeyword(T("pitch"), HiliteIDs::Hilite7);
+  stickkeyword(T("pit"), HiliteIDs::Hilite7);
+  stickkeyword(T("pi"), HiliteIDs::Hilite7);
+  stickkeyword(T("p"), HiliteIDs::Hilite7);
+  stickkeyword(T("note"), HiliteIDs::Hilite5);
+  stickkeyword(T("mark"), HiliteIDs::Hilite5);
+  stickkeyword(T("rest"), HiliteIDs::Hilite5);
+  stickkeyword(T("measure"), HiliteIDs::Hilite5);
+  stickkeyword(T("meas"), HiliteIDs::Hilite5);
   // settings
   info_setfilter fi0 = {0, 0, 0, module_nomodtype, 0, module_noloc, 3, info_none};
   info_setfilterlist fi = {1, &fi0};
   info_setlist lst = info_list_settings(0, &fi, 0, 0, 0);
-  for (info_setting* s = lst.sets, *se = lst.sets + lst.n; s < se; ++s) stickkeyword(s->name, HiliteIDs::Hilite5);
+  for (info_setting* s = lst.sets, *se = lst.sets + lst.n; s < se; ++s) stickkeyword(s->name, HiliteIDs::Hilite4);
   // built-in
-  stickkeyword(T("template"), HiliteIDs::Hilite6);
-  stickkeyword(T("id"), HiliteIDs::Hilite6);
-  stickkeyword(T("imports"), HiliteIDs::Hilite6);
-  stickkeyword(T("export"), HiliteIDs::Hilite6);
-  stickkeyword(T("parts"), HiliteIDs::Hilite6);
-  stickkeyword(T("partsref"), HiliteIDs::Hilite6);
-  stickkeyword(T("metapart"), HiliteIDs::Hilite6);
-  stickkeyword(T("percinsts"), HiliteIDs::Hilite6);
-  stickkeyword(T("percinst"), HiliteIDs::Hilite6);
-  stickkeyword(T("inst"), HiliteIDs::Hilite6);
-  stickkeyword(T("clefs"), HiliteIDs::Hilite6);
-  stickkeyword(T("staves"), HiliteIDs::Hilite6);
-  stickkeyword(T("staff"), HiliteIDs::Hilite6);
-  stickkeyword(T("measdef"), HiliteIDs::Hilite6);
+  stickkeyword(T("template"), HiliteIDs::Hilite5);
+  stickkeyword(T("id"), HiliteIDs::Hilite5);
+  stickkeyword(T("imports"), HiliteIDs::Hilite5);
+  stickkeyword(T("export"), HiliteIDs::Hilite5);
+  stickkeyword(T("parts"), HiliteIDs::Hilite5);
+  stickkeyword(T("partsref"), HiliteIDs::Hilite5);
+  stickkeyword(T("metapart"), HiliteIDs::Hilite5);
+  stickkeyword(T("percinsts"), HiliteIDs::Hilite5);
+  stickkeyword(T("percinst"), HiliteIDs::Hilite5);
+  stickkeyword(T("inst"), HiliteIDs::Hilite5);
+  stickkeyword(T("clefs"), HiliteIDs::Hilite5);
+  stickkeyword(T("staves"), HiliteIDs::Hilite5);
+  stickkeyword(T("staff"), HiliteIDs::Hilite5);
+  stickkeyword(T("measdef"), HiliteIDs::Hilite5);
 }
 
 FomusSyntax::~FomusSyntax()
@@ -2001,7 +2076,7 @@ HiliteID FomusSyntax::getHilite (const String text, int start, int end)
   }
   if (lc || cc) return HiliteIDs::Comment;
   if (dq || sq) return HiliteIDs::String;
-  if (br) return HiliteIDs::Hilite4;
+  if (br) return HiliteIDs::Hilite4; // mark
   String str(text.substring(start, end));
   SynTokMap::const_iterator f(tokens.find(str));
   if (f != tokens.end()) return f->second->data1;
@@ -2028,7 +2103,7 @@ void FomusSyntax::eval(String text, bool isRegion, bool expand) {
     return;
   }
   if (String(fomus_get_sval(f, "filename")).isEmpty()) {
-    WildcardFileFilter wildcardFilter(T("*.fms;*.ly;*.xml"), T("FOMUS Output Files"));
+    WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
     FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
     FileChooserDialogBox dialogBox(T("Run FOMUS"), T("Specify an output file path (`filename' setting value)..."),
 				   browser, false, Colours::white);

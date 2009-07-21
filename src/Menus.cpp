@@ -140,9 +140,10 @@ const PopupMenu CommandMenus::getAudioMenu(bool isfms)
     fomus.addCommandItem(comm, CommandIDs::FomusRunScore);
     fomus.addSeparator();
     fomus.addCommandItem(comm, CommandIDs::FomusNewScore);
-    fomus.addCommandItem(comm, CommandIDs::FomusRenameScore);
-    fomus.addCommandItem(comm, CommandIDs::FomusDeleteScore);
     fomus.addCommandItem(comm, CommandIDs::FomusLoadScore);
+    fomus.addCommandItem(comm, CommandIDs::FomusRenameScore);
+    fomus.addCommandItem(comm, CommandIDs::FomusClearScore);
+    fomus.addCommandItem(comm, CommandIDs::FomusDeleteScore);
     fomus.addSeparator();
     fomus.addCommandItem(comm, CommandIDs::FomusSettings);
     fomus.addCommandItem(comm, CommandIDs::FomusDocumentation);

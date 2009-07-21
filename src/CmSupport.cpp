@@ -17,6 +17,7 @@
 #include "Syntax.h"
 #ifdef WITHFOMUS
 #include "Fomus.h"
+#include "fomus/infoapi.h"
 #endif
 #ifdef GRACE
 #include "Plot.h"
@@ -890,9 +891,14 @@ void fms_xml(char* str)
   Fomus::getInstance()->sendXml(String(str), now);
 }  
 
-void fms_new()
+void fms_new(const char* name)
 {
-  Fomus::getInstance()->newScore();
+  Fomus::getInstance()->newScore(name);
+}
+
+void fms_select(const char* name)
+{
+  Fomus::getInstance()->selectScore(name);
 }
 
 void fms_free()
@@ -905,10 +911,10 @@ void fms_clear()
   Fomus::getInstance()->clearScore();
 }
 
-void fms_init()
-{
-  Fomus::getInstance()->initScore();
-}
+// void fms_init()
+// {
+//   Fomus::getInstance()->initScore();
+// }
 
 void fms_load(char* filename)
 {
@@ -921,51 +927,63 @@ void fms_run()
 }
 
 
-void fms_ival(int par, int act, int val)
-{
-  Fomus::getInstance()->ival((fomus_param)par,(fomus_action)act,val);
-}
+// void fms_ival(int par, int act, long val)
+// {
+//   Fomus::getInstance()->ival((fomus_param)par,(fomus_action)act,val);
+// }
 
-void fms_rval(int par, int act, int num, int den)
-{
-  Fomus::getInstance()->rval((fomus_param)par,(fomus_action)act,num,den);
-}
+// void fms_rval(int par, int act, long num, long den)
+// {
+//   Fomus::getInstance()->rval((fomus_param)par,(fomus_action)act,num,den);
+// }
 
-void fms_mval(int par, int act, int val, int num, int den)
-{
-  Fomus::getInstance()->mval((fomus_param)par,(fomus_action)act,val,num,den);
-}
+// void fms_mval(int par, int act, long val, long num, long den)
+// {
+//   Fomus::getInstance()->mval((fomus_param)par,(fomus_action)act,val,num,den);
+// }
 
-void fms_fval(int par, int act, double val)
-{
-  Fomus::getInstance()->fval((fomus_param)par,(fomus_action)act,val);
-}
+// void fms_fval(int par, int act, double val)
+// {
+//   Fomus::getInstance()->fval((fomus_param)par,(fomus_action)act,val);
+// }
 
-void fms_sval(int par, int act, char* val)
-{
-  Fomus::getInstance()->sval((fomus_param)par,(fomus_action)act,String(val));
-}
+// void fms_sval(int par, int act, char* val)
+// {
+//   Fomus::getInstance()->sval((fomus_param)par,(fomus_action)act,String(val));
+// }
 
-void fms_act(int par, int act)
-{
-  Fomus::getInstance()->act((fomus_param)par,(fomus_action)act);
+// void fms_act(int par, int act)
+// {
+//   Fomus::getInstance()->act((fomus_param)par,(fomus_action)act);
+// }
+int fms_isfiletype(const char* ext) {
+  String x(ext);
+  if (!x.isEmpty() && x[0] == '.') x = x.substring(1);
+  info_extslist f(info_list_exts());
+  String mid("mid");
+  for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) {
+    if (*i == mid) continue;
+    if (x == *i) return 1;
+  }
+  return 0;
 }
 #else
 void fms_open_score(char* a, char* b){}
 void fms_close_score(){}
-void fms_new(){}
+void fms_new(const char* name){}
+void fms_select(const char* name) {}
 void fms_free(){}
 void fms_clear(){}
-void fms_init(){}
+//void fms_init(){}
 void fms_load(char* filename){}
 void fms_run(){}
 void fms_xml(char* str){}  
-void fms_ival(int par, int act, int val){}
-void fms_rval(int par, int act, int num, int den){}
-void fms_mval(int par, int act, int val, int num, int den){}
-void fms_fval(int par, int act, double val){}
-void fms_sval(int par, int act, char* val){}
-void fms_act(int par, int act){}
+// void fms_ival(int par, int act, int val){}
+// void fms_rval(int par, int act, int num, int den){}
+// void fms_mval(int par, int act, int val, int num, int den){}
+// void fms_fval(int par, int act, double val){}
+// void fms_sval(int par, int act, char* val){}
+// void fms_act(int par, int act){}
 #endif
 
 #ifdef GRACE

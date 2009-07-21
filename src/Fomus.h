@@ -22,13 +22,14 @@ class FomusScore
  private:
   FOMUS fom;
  public:
-  String name, filename;
+  String name; //, filename; used?
+  bool runwhendone;
 
   FomusScore()
     {
       initfomus();
       fom = fomus_new();
-      std::cout << fom << std::endl;
+      //std::cout << fom << std::endl;
     }
   
   ~FomusScore()
@@ -108,7 +109,8 @@ class Fomus
   void setScoreActive(int i) {current=i;}
 
   void initScore() {}
-  void newScore();
+  void newScore(const String& nam = "");
+  void selectScore(const String& nam);
   void deleteScore();
   void clearScore();
   void loadScore(String filename);

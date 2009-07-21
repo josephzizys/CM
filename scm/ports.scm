@@ -46,7 +46,7 @@
 	     (apply cs:open-output-file str args)
 	     (set! mode *score-type-csound*)
 	     )
-	    ((or (member type '("ly" "fms" "xml"))
+	    ((or (/= (ffi_fms_isfiletype type) 0) ;;(member type '("ly" "fms" "xml"))
 		 (and (string=? type "") (string=? str "fomus")))
 	     (apply fms:open-score str args)
 	     (set! mode *score-type-fomus*)

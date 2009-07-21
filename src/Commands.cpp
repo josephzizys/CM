@@ -204,6 +204,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::FomusNewScore,
     CommandIDs::FomusRenameScore,
     CommandIDs::FomusDeleteScore,
+    CommandIDs::FomusClearScore,
     CommandIDs::FomusSelectScore + 0,
     CommandIDs::FomusSelectScore + 1,
     CommandIDs::FomusSelectScore + 2,
@@ -533,6 +534,9 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       info.shortName=T("Delete Score");      
       info.setActive(Fomus::getInstance()->numScores()>1);
       break;
+    case CommandIDs::FomusClearScore:
+      info.shortName=T("Clear Score");      
+      break;      
     case CommandIDs::FomusSelectScore:
       if (data<Fomus::getInstance()->numScores())
 	{
@@ -836,6 +840,9 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       break;
     case CommandIDs::FomusDeleteScore:
       Fomus::getInstance()->deleteScore();
+      break;
+    case CommandIDs::FomusClearScore:
+      Fomus::getInstance()->clearScore();
       break;
     case CommandIDs::FomusLoadScore:
       Fomus::getInstance()->loadScoreDialog();
