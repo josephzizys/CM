@@ -117,7 +117,7 @@
     (ffi_fms_close_score void "fms_close_score" )
     ;;(ffi_fms_init void "fms_init" ) ; users shouldn't be allowed to do this
     (ffi_fms_new void "fms_new" c-string)
-    (ffi_fms_new void "fms_select" c-string)
+    (ffi_fms_select void "fms_select" c-string)
     (ffi_fms_free void "fms_free" )
     (ffi_fms_clear void "fms_clear" )
     ;;(ffi_fms_ival void "fms_ival" int int long) ; these are useless now

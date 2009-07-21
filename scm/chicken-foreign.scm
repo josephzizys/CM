@@ -87,17 +87,10 @@
 (define ffi_cs_send_score (foreign-lambda void "cs_send_score" int int double c-string))
 (define ffi_fms_open_score (foreign-lambda void "fms_open_score" c-string c-string))
 (define ffi_fms_close_score (foreign-lambda void "fms_close_score"))
-;;(define ffi_fms_init (foreign-lambda void "fms_init")) ; users shouldn't be allowed to do this
 (define ffi_fms_new (foreign-lambda void "fms_new" c-string))
 (define ffi_fms_select (foreign-lambda void "fms_select" c-string))
 (define ffi_fms_free (foreign-lambda void "fms_free"))
 (define ffi_fms_clear (foreign-lambda void "fms_clear"))
-;;(define ffi_fms_ival (foreign-lambda void "fms_ival" int int long)) ; these are useless now
-;;(define ffi_fms_rval (foreign-lambda void "fms_rval" int int long long))
-;;(define ffi_fms_mval (foreign-lambda void "fms_mval" int int long long long))
-;;(define ffi_fms_fval (foreign-lambda void "fms_fval" int int double))
-;;(define ffi_fms_sval (foreign-lambda void "fms_sval" int int c-string))
-;;(define ffi_fms_act (foreign-lambda void "fms_act" int int))
 (define ffi_fms_load (foreign-lambda void "fms_load" c-string))
 (define ffi_fms_run (foreign-lambda void "fms_run"))
 (define ffi_fms_xml (foreign-lambda void "fms_xml" c-string))

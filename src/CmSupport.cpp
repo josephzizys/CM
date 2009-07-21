@@ -956,15 +956,17 @@ void fms_run()
 // {
 //   Fomus::getInstance()->act((fomus_param)par,(fomus_action)act);
 // }
-int fms_isfiletype(const char* ext) {
+int fms_isfiletype(const char* ext) 
+{
   String x(ext);
   if (!x.isEmpty() && x[0] == '.') x = x.substring(1);
   info_extslist f(info_list_exts());
   String mid("mid");
-  for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) {
-    if (*i == mid) continue;
-    if (x == *i) return 1;
-  }
+  for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) 
+    {
+      if (*i == mid) continue;
+      if (x == *i) return 1;
+    }
   return 0;
 }
 #else
