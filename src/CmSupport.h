@@ -137,6 +137,7 @@ void cs_send_score(int typ, int inst, double time, char* pars);
 
 void fms_open_score(char* a, char* b);
 void fms_close_score();
+void fms_save(const char* name);
 /* void fms_init(); */
 int fms_isfiletype(const char* ext);
 void fms_new(const char* name);

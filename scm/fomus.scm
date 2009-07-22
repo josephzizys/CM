@@ -223,15 +223,14 @@
 		  (ffi_fms_xml (get-output-string port))
 		  (void))))
 
-(define (fms:setting id value . appnd)
-  (with-optkeys (args (sets '()))
-		(let ((port (open-output-string)))
-		  (display "<set>" port)
-		  (fms:writeXml port "sets" (list id value))
-		  (if (pair? appnd) (fms:writeXml port "app" (car appnd)))
-		  (display "</set>" port)
-		  (ffi_fms_xml (get-output-string port))
-		  (void))))
+(define (fms:setting sets . appnd)
+  (let ((port (open-output-string)))
+    (display "<set>" port)
+    (fms:writeXml port #f sets)
+    (if (and (pair? appnd) (car appnd)) (display "<app/>" port))
+    (display "</set>" port)
+    (ffi_fms_xml (get-output-string port))
+    (void)))
 
 ;;
 ;; score messages
@@ -244,12 +243,23 @@
 (define (fms:newscore filename)
   (ffi_fms_new filename)
   (void))
+
 (define (fms:selectscore filename)
   (ffi_fms_select filename)
   (void))
 
 (define (fms:clearscore)
   (ffi_fms_clear)
+  (void))
+
+;; *** implement
+(define (fms:run)
+  (ffi_fms_run)
+  (void))
+
+;; *** implement
+(define (fms:savescore filename)
+  (ffi_fms_save filename)
   (void))
 
 (define (fms:deletescore)

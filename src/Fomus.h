@@ -92,8 +92,8 @@ class Fomus
  Fomus () : current(-1) 
     {
       newScore();
-      //Console::getInstance()->printOutput("FOMUS " + String(fomus_version()) +
-      //" (c) 2009 David Psenicka\n");
+      Console::getInstance()->printOutput("FOMUS " + String(fomus_version()) +
+					  " (c) 2009 David Psenicka\n");
     }
   ~Fomus() 
     {
@@ -102,6 +102,7 @@ class Fomus
 
   void openScore(String scorename, String scoreargs);
   void closeScore();
+  void saveScore(const String& fn);
 
   int numScores() {return scores.size();}
   String getScoreName(int i) {return scores[i]->name;}

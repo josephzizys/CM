@@ -882,6 +882,11 @@ void fms_close_score()
   Fomus::getInstance()->closeScore();
 }
 
+void fms_save(const char* name)
+{
+  Fomus::getInstance()->saveScore(name);
+}
+
 void fms_xml(char* str)
 {
   double now=(Scheme::getInstance()->scoremode) 
@@ -980,6 +985,7 @@ void fms_clear(){}
 //void fms_init(){}
 void fms_load(char* filename){}
 void fms_run(){}
+void fms_save(const char* name) {}
 void fms_xml(char* str){}  
 // void fms_ival(int par, int act, int val){}
 // void fms_rval(int par, int act, int num, int den){}

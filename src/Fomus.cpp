@@ -39,6 +39,19 @@ juce_ImplementSingleton(FomusSyntax) ;
 
 juce_ImplementSingleton(Fomus);
 
+String getwildcards() {
+  String r;
+  info_extslist f(info_list_exts());
+  bool fi = true;
+  String mid("mid");
+  for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) {
+    if (*i == mid) continue; // skip midi files
+    if (fi) fi = false; else r += ';';
+    r += String("*.") + *i;
+  }
+  return r;
+}
+
 void Fomus::openScore(String scorename, String scoreargs)
 {
   // called by sprout to open and/or initialize a (possibly) new score
@@ -85,6 +98,23 @@ void Fomus::closeScore()
   }
 }
 
+void Fomus::saveScore(const String& fn) {
+#ifdef GRACE
+  if (fn.isEmpty()) {
+    WildcardFileFilter wildcardFilter("*.fms", T("FOMUS Output File"));
+    FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
+    FileChooserDialogBox dialogBox(T("Save Score"), T("Specify an output `.fms' file path..."),
+				   browser, false, Colours::white);
+    if (dialogBox.show()) {
+      fomus_save(fomus_copy(getfomusdata()), browser.getCurrentFile().getFullPathName().toUTF8());
+    }
+  } else
+#endif
+    {
+      fomus_save(fomus_copy(getfomusdata()), fn.toUTF8());
+    }
+}
+
 inline void spitout(const char* str) 
 {
   Console::getInstance()->printOutput(String(";; ") + str);
@@ -101,17 +131,34 @@ void initfomus()
     }
 }
 
-
-
 void Fomus::newScore(const String& nam)
 {
   FomusScore* score = new FomusScore();
   //File fn(nam);
-  score->name = (nam.isEmpty() ? String("(untitled)") : File(nam).getFileName());
-  scores.add(score);
-  current=scores.size()-1;
-  sval(fomus_par_setting, fomus_act_set, "filename");
-  sval(fomus_par_settingval, fomus_act_set, nam);
+#ifdef GRACE
+  if (nam.isEmpty() && scores.size() > 0) {
+    WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
+    FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
+    FileChooserDialogBox dialogBox(T("New Score"), T("Specify an output file path (`filename' setting value)..."),
+				   browser, false, Colours::white);
+    if (dialogBox.show()) {
+      File fn = browser.getCurrentFile();
+      String fn0(fn.getFileName());
+      score->name = (fn0.isEmpty() ? "(untitled)" : fn0);
+      scores.add(score);
+      current=scores.size()-1;
+      sval(fomus_par_setting, fomus_act_set, "filename");
+      sval(fomus_par_settingval, fomus_act_set, fn.getFullPathName());
+    }
+  } else
+#endif
+    {
+      score->name = (nam.isEmpty() ? String("(untitled)") : File(nam).getFileName());
+      scores.add(score);
+      current=scores.size()-1;
+      sval(fomus_par_setting, fomus_act_set, "filename");
+      sval(fomus_par_settingval, fomus_act_set, nam);
+    }
 }
 
 void Fomus::selectScore(const String& nam)
@@ -119,7 +166,7 @@ void Fomus::selectScore(const String& nam)
   File fn(nam);
   //String fn0(fn.getFullPathName());
   for (int i = 0; i < scores.size(); ++i) {
-    if (File(fomus_get_sval(scores.getUnchecked(current)->getfom(), "filename"))/*.getFullPathName()*/ == fn) { // find an exact match
+    if (File(fomus_get_sval(scores.getUnchecked(i)->getfom(), "filename"))/*.getFullPathName()*/ == fn) { // find an exact match
       current = i;
       return;
     }
@@ -152,12 +199,12 @@ void Fomus::loadScore(String filename)
 
 void Fomus::runScore()
 {
+#ifdef GRACE
   if (String(fomus_get_sval(getfomusdata(), "filename")).isEmpty())
     {
-#ifdef GRACE
       renameScoreDialog();
-#endif
     }
+#endif
   fomus_run(fomus_copy(getfomusdata()));
 }
 
@@ -190,19 +237,6 @@ void Fomus::sval(fomus_param par, fomus_action act, const String& val)
 void Fomus::act(fomus_param par, fomus_action act) 
 {
   fomus_act(getfomusdata(), par, act);
-}
-
-String getwildcards() {
-  String r;
-  info_extslist f(info_list_exts());
-  bool fi = true;
-  String mid("mid");
-  for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) {
-    if (*i == mid) continue; // skip midi files
-    if (fi) fi = false; else r += ';';
-    r += String("*.") + *i;
-  }
-  return r;
 }
 
 struct xmlerror
@@ -352,7 +386,7 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
   } else if (xml.hasTagName(T("f"))) {
     fval(par, act, atof(xml.getAllSubText()));
   } else if (xml.hasTagName(T("s"))) {
-    #warning "switch (wh) ..."
+    //#warning "switch (wh) ..."
     sval(par, act, xml.getAllSubText());
   } else if (xml.hasTagName(T("l"))) {
 
@@ -386,14 +420,14 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 	sendXmlSets(xml, fomus_par_metapart_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
-      case wh_partsref:
-	exc.insert(excmap::value_type("id", sendpair(fomus_par_partsref_id,
-						     fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("parts", sendpair(fomus_par_partsref_parts,
-							fomus_act_set, wh_part, 
-							true)));
-	Fomus::act(par, act);
-	break;
+//       case wh_partsref:
+// 	exc.insert(excmap::value_type("id", sendpair(fomus_par_partsref_id,
+// 						     fomus_act_set, wh_none)));
+// 	exc.insert(excmap::value_type("parts", sendpair(fomus_par_partsref_parts,
+// 							fomus_act_set, wh_part, 
+// 							true)));
+// 	Fomus::act(par, act);
+// 	break;
       case wh_inst:
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_inst_id, 
 						     fomus_act_set, wh_none)));
@@ -529,19 +563,19 @@ void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
   } else if (xml.hasTagName(T("metapart"))) {
     sendXmlVal(*mustExist(xml.getChildByName(T("l")), "metapart definition"), fomus_par_metapart,
 	       fomus_act_add, wh_metapart);
-  } else if (xml.hasTagName(T("partsref"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "parts reference definition"), fomus_par_partsref, 
-	       fomus_act_add, wh_partsref);
+//   } else if (xml.hasTagName(T("partsref"))) {
+//     sendXmlVal(*mustExist(xml.getChildByName(T("l")), "parts reference definition"), fomus_par_partsref, 
+// 	       fomus_act_add, wh_partsref);
   } else if (xml.hasTagName(T("inst"))) {
     sendXmlVal(*mustExist(xml.getChildByName(T("l")), "instrument definition"), fomus_par_inst,
 	       fomus_act_add, wh_inst);
   } else if (xml.hasTagName(T("percinst"))) {
     sendXmlVal(*mustExist(xml.getChildByName(T("l")), "percussion instrument definition"), fomus_par_percinst,
 	       fomus_act_add, wh_percinst);
-  } else if (xml.hasTagName(T("setting"))) {
-    sendXmlSets(*mustExist(xml.getChildByName(T("sets")), "settings list"), fomus_par_settingval, 
-		(mustExist(xml.getChildByName(T("app")), "boolean value")
-		 ? fomus_act_append : fomus_act_set));
+  } else if (xml.hasTagName(T("set"))) {
+    XmlElement* d = xml.getChildByName(T("app"));
+    sendXmlSets(*mustExist(xml.getChildByName(T("l")), "settings list"), fomus_par_settingval, 
+		(d ? fomus_act_append : fomus_act_set), excmap(), true);
   } else throw xmlerror("XML parse error");
 }
 
@@ -638,7 +672,7 @@ private:
   virtual String what0() const = 0;
 };
 bool fomus_other::valid_aux() {
-  remove();
+  //remove();
   fomus_parse(fom, (what0() + ' ' + (chstr.isEmpty() ? String("<>") : (chstr[0] != '(' && chstr[0] != '<' ? (String("<") << chstr << '>') : chstr))).toUTF8());
   if (fomus_err) return false;
   struct infoext_objinfo x(infoext_getlastentry(fom));
@@ -652,6 +686,13 @@ public:
   String what() const {return T("part");}
   String what0() const {return T("part");}
   void remove() const {fomus_sval(fom, fomus_par_part, fomus_act_remove, id.toUTF8());}
+};
+class fomus_metapart:public fomus_other {
+public:
+  fomus_metapart(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam):fomus_other(c, fom, obj, nam) {}
+  String what() const {return T("metapart");}
+  String what0() const {return T("metapart");}
+  void remove() const {fomus_sval(fom, fomus_par_metapart, fomus_act_remove, id.toUTF8());}
 };
 class fomus_measdef:public fomus_other {
 public:
@@ -778,6 +819,29 @@ fomusinfo* fomusinfocont_parts::createnew(const String& txt) {
     struct infoext_objinfo x(infoext_getlastentry(fom));
     fomus_part* y;
     stuff.push_back(y = new fomus_part(stuff.size(), fom, x, module_id(x.obj)));
+    return y;
+  }
+}
+
+class fomusinfocont_metaparts:public fomusinfocont_other {
+public:
+  fomusinfocont_metaparts(FOMUS fom):fomusinfocont_other(fom) {}
+private:
+  infoext_objinfo_list getem() const {return infoext_list_metaparts(fom);}
+  fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_metapart(c, fom, obj, nam);}
+  fomusinfo* createnew(const String& txt);
+};
+fomusinfo* fomusinfocont_metaparts::createnew(const String& txt) {
+  fomus_parse(fom, ("metapart " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  if (fomus_err) {
+    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+				T("FOMUS Settings"),
+				T("Error in metapart"));
+    return 0;
+  } else {
+    struct infoext_objinfo x(infoext_getlastentry(fom));
+    fomus_metapart* y;
+    stuff.push_back(y = new fomus_metapart(stuff.size(), fom, x, module_id(x.obj)));
     return y;
   }
 }
@@ -1269,6 +1333,7 @@ public:
   ToggleButton* AdvancedButton;
   ToggleButton* GuruButton;
   TextButton* AddButton;
+  TextButton* RefreshButton;
   FOMUSSettings (const FOMUSSettings&);
   const FOMUSSettings& operator= (const FOMUSSettings&);
 };
@@ -1281,7 +1346,8 @@ FOMUSSettings::FOMUSSettings(fomusinfocont& infos)
    IntermediateButton (0),
    AdvancedButton (0),
    GuruButton (0),
-   AddButton (0)
+   AddButton (0),
+   RefreshButton (0)
 {
   addAndMakeVisible (component = new FOMUSSettingsListBox (infos));
   if (infos.issetting()) {
@@ -1309,6 +1375,9 @@ FOMUSSettings::FOMUSSettings(fomusinfocont& infos)
     addAndMakeVisible (AddButton = new TextButton (T("New Button")));
     AddButton->setButtonText (T("New"));
     AddButton->addButtonListener (this);    
+    addAndMakeVisible (RefreshButton = new TextButton (T("Refresh Button")));
+    RefreshButton->setButtonText (T("Refresh"));
+    RefreshButton->addButtonListener (this);    
   }
   //setSize (640 + 32, 400);
 }
@@ -1320,6 +1389,7 @@ FOMUSSettings::~FOMUSSettings() {
   deleteAndZero (AdvancedButton);
   deleteAndZero (GuruButton);
   deleteAndZero (AddButton);
+  deleteAndZero (RefreshButton);
 }
 
 void FOMUSSettings::resized() {
@@ -1332,6 +1402,7 @@ void FOMUSSettings::resized() {
   } else {
     component->setBounds (0, 0, getWidth(), getHeight() - 18);
     AddButton->setBounds(8, getHeight() - 16, 40, 14);
+    RefreshButton->setBounds(60, getHeight() - 16, 40, 14);
   }
 }
 
@@ -1346,25 +1417,33 @@ void FOMUSSettings::buttonClicked (Button* buttonThatWasClicked) {
     switchtouse(3);
   } else if (buttonThatWasClicked == AddButton) {
     component->addnew();
+  } else if (buttonThatWasClicked == RefreshButton) {
+    deleteAndZero(component);
+    infos.reset();
+    addAndMakeVisible (component = new FOMUSSettingsListBox (infos));
+    component->setBounds (0, 0, getWidth(), getHeight() - 18);
   }
 }
 
 struct FileTabs:public TabbedComponent {
   fomusinfocont_sets sets;
   fomusinfocont_parts parts;
-  fomusinfocont_measdefs measdefs;
+  fomusinfocont_metaparts metaparts;
+  //fomusinfocont_measdefs measdefs;
   fomusinfocont_insts insts;
   fomusinfocont_percinsts percinsts;
   
-  FileTabs(FOMUS fom ):TabbedComponent(TabbedButtonBar::TabsAtTop), sets(fom, 0), parts(fom), measdefs(fom), insts(fom), percinsts(fom) {
+  FileTabs(FOMUS fom ):TabbedComponent(TabbedButtonBar::TabsAtTop), sets(fom, 0), parts(fom), metaparts(fom), /*measdefs(fom),*/ insts(fom), percinsts(fom) {
     sets.init();
     parts.init();
-    measdefs.init();
+    metaparts.init();
+    //measdefs.init();
     insts.init();
     percinsts.init();
     addTab(T("Settings"), Colours::white, new FOMUSSettings(sets), true);
     addTab(T("Parts"), Colours::white, new FOMUSSettings(parts), true);
-    addTab(T("Measure Definitions"), Colours::white, new FOMUSSettings(measdefs), true);
+    addTab(T("Metaparts"), Colours::white, new FOMUSSettings(metaparts), true);
+    //addTab(T("Measure Definitions"), Colours::white, new FOMUSSettings(measdefs), true);
     addTab(T("Instruments"), Colours::white, new FOMUSSettings(insts), true);
     addTab(T("Percussion Instruments"), Colours::white, new FOMUSSettings(percinsts), true);
 
@@ -1997,7 +2076,7 @@ FomusSyntax::FomusSyntax () // syntab
   stickkeyword(T("imports"), HiliteIDs::Hilite5);
   stickkeyword(T("export"), HiliteIDs::Hilite5);
   stickkeyword(T("parts"), HiliteIDs::Hilite5);
-  stickkeyword(T("partsref"), HiliteIDs::Hilite5);
+  //stickkeyword(T("partsref"), HiliteIDs::Hilite5);
   stickkeyword(T("metapart"), HiliteIDs::Hilite5);
   stickkeyword(T("percinsts"), HiliteIDs::Hilite5);
   stickkeyword(T("percinst"), HiliteIDs::Hilite5);

@@ -598,6 +598,7 @@ class CommandIDs
   static const CommandID FomusDocumentation = COMID(Fomus, 8);
   static const CommandID FomusRunCurr = COMID(Fomus, 9);
   static const CommandID FomusClearScore = COMID(Fomus, 10);
+  static const CommandID FomusSaveScore = COMID(Fomus, 11);
 
   // Audio Menu
   static const CommandID AudioOpenFilePlayer = COMID(Audio, 1);
