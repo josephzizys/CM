@@ -874,7 +874,7 @@ void cs_send_score(int typ, int num, double time, char* pars)
 
 void fms_open_score(char* scorename, char* scoreargs)
 {
-  Fomus::getInstance()->openScore(String(scorename), String(scoreargs));
+  Fomus::getInstance()->openScore(String(scorename), String(scoreargs), true);
 }
 
 void fms_close_score()
@@ -884,7 +884,7 @@ void fms_close_score()
 
 void fms_save(const char* name)
 {
-  Fomus::getInstance()->saveScore(name);
+  Fomus::getInstance()->saveScore(name, true);
 }
 
 void fms_xml(char* str)
@@ -898,12 +898,12 @@ void fms_xml(char* str)
 
 void fms_new(const char* name)
 {
-  Fomus::getInstance()->newScore(name);
+  Fomus::getInstance()->newScore(name, true);
 }
 
 void fms_select(const char* name)
 {
-  Fomus::getInstance()->selectScore(name);
+  Fomus::getInstance()->selectScore(name, true);
 }
 
 void fms_free()
@@ -928,7 +928,7 @@ void fms_load(char* filename)
 
 void fms_run()
 {
-  Fomus::getInstance()->runScore();
+  Fomus::getInstance()->runScore(true);
 }
 
 

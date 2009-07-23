@@ -837,7 +837,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       Fomus::getInstance()->setScoreActive(data);
       break;
     case CommandIDs::FomusNewScore:
-      Fomus::getInstance()->newScore();
+      Fomus::getInstance()->newScore(T(""), false);
       break;
     case CommandIDs::FomusRenameScore:
       Fomus::getInstance()->renameScoreDialog();
@@ -849,13 +849,13 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       Fomus::getInstance()->clearScore();
       break;
     case CommandIDs::FomusSaveScore:
-      Fomus::getInstance()->saveScore(T(""));
+      Fomus::getInstance()->saveScore(T(""), false);
       break;
     case CommandIDs::FomusLoadScore:
       Fomus::getInstance()->loadScoreDialog();
       break;
     case CommandIDs::FomusRunScore:
-      Fomus::getInstance()->runScore();
+      Fomus::getInstance()->runScore(false);
       break;
     case CommandIDs::FomusSettings:
       Fomus::getInstance()->settingsWindow();

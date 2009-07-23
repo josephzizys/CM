@@ -91,7 +91,7 @@ class Fomus
 
  Fomus () : current(-1) 
     {
-      newScore();
+      newScore(T(""), false);
       Console::getInstance()->printOutput("FOMUS " + String(fomus_version()) +
 					  " (c) 2009 David Psenicka\n");
     }
@@ -100,9 +100,9 @@ class Fomus
       scores.clear();
     }
 
-  void openScore(String scorename, String scoreargs);
+  void openScore(String scorename, String scoreargs, const bool fromscm);
   void closeScore();
-  void saveScore(const String& fn);
+  void saveScore(const String& fn, const bool fromscm);
 
   int numScores() {return scores.size();}
   String getScoreName(int i) {return scores[i]->name;}
@@ -110,12 +110,12 @@ class Fomus
   void setScoreActive(int i) {current=i;}
 
   void initScore() {}
-  void newScore(const String& nam = "");
-  void selectScore(const String& nam);
+  void newScore(const String& nam, const bool fromscm);
+  void selectScore(const String& nam, const bool fromscm);
   void deleteScore();
   void clearScore();
   void loadScore(String filename);
-  void runScore();
+  void runScore(const bool fromscm);
 
   void sendXml(XmlElement& xml, fomus_param par, fomus_action act);
   void sendXml(const String& xml, double scoretime=0.0);
