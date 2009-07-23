@@ -321,6 +321,27 @@
       (shuffle! (append (car args) (list)))
       (shuffle! (append args (list)))))
 
+(define (drunk n width . args)
+  (with-optkeys (args (low most-negative-fixnum) 
+		   (high most-positive-fixnum) (mode :reflect))
+    (let ((amt (between (- width) (+ width 1))))
+      (set! n (+ n amt))
+      (unless (<= low n high)
+	(cond 
+	  ((or (eq? mode ':reflect ) (eql? mode -1))
+	   (set! n (fit n low high)))
+	  ((or (eq? mode ':stop ) (eql? mode 0))
+	   (set! n #f))
+	  ((or (eq? mode ':limit ) (eql? mode 1))
+	   (set! n (max low (min n high))))
+	  ((or (eq? mode ':reset ) (eql? mode 2))
+	   (set! n (+ low (/ (- high low) 2))))
+	  ((or (eq? mode ':jump ) (eql? mode 3))
+	   (set! n (between low high)))
+	  (else 
+	   (err "not a valid mode for drunk" mode))))
+      n)))
+
 ;; randomness
 ;; non-uniform distibutions
 
@@ -367,9 +388,7 @@
 (define ranbrown ffi_ranbrown)
 
 (define ranpink ffi_ranpink)
-
-
-
+  
 ;*************************************************************************
 
 (define *notes* (make-equal-hash-table))

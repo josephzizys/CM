@@ -58,7 +58,7 @@
 	))
 
 (define (%alloc-pattern)
-  ;; flags data length datum period value state repeat returning counting traversing next mapr cache
+  ;; flags data length datum period value state limit returning counting traversing next mapr cache
   (make-pattern 0 (list) #f +nad+ #f +nad+ +nad+ most-positive-fixnum #f #:periods #:depth-first
 		#f #f #f))
 
@@ -341,11 +341,11 @@
 
 (define (make-cycle data . args)
   (unless (pair? data) (set! data (list data)))
-  (with-optkeys (args for repeat)
+  (with-optkeys (args for limit)
     (let ((obj (%alloc-pattern))
 	  (flags 0)
 	  (len (length data)))
-      (initialize-pattern obj (cons data data) for repeat
+      (initialize-pattern obj (cons data data) for limit
 			  flags len len next-in-cycle
 			  (lambda (fn obj) 
 			    (for-each fn (car (pattern-data obj)))))
@@ -365,7 +365,7 @@
 ; (next aaa #t)
 ; (define aaa (make-cycle (list 1 2 3) for: (make-cycle (list 3 2 1))))
 ; (next aaa #t)
-; (define aaa (make-cycle (list 1 2 3) #:repeat 2))
+; (define aaa (make-cycle (list 1 2 3) #:limit 2))
 ; (next aaa #t)
 ; (define aaa (make-cycle (list (make-cycle (list 'a 'b) ) (make-cycle (list 1 2) ))))
 ; (next aaa #t)
@@ -387,11 +387,11 @@
 
 (define (make-palindrome data . args)
   (unless (pair? data) (set! data (list data)))
-  (with-optkeys (args for repeat elide)
+  (with-optkeys (args for limit elide)
     (let ((obj (%alloc-pattern))
 	  (flags 0)
 	  (len (length data)))
-      (initialize-pattern obj data for repeat
+      (initialize-pattern obj data for limit
 			  flags len (* len 2) next-in-palindrome
 			  (lambda (fn obj)
 			    (for-each fn (pattern-data obj))))
@@ -459,11 +459,11 @@
 
 (define (make-line data . args)
   (unless (pair? data) (set! data (list data)))
-  (with-optkeys (args for repeat)
+  (with-optkeys (args for limit)
     (let ((obj (%alloc-pattern))
 	  (flags 0)
 	  (len (length data)))
-      (initialize-pattern obj data for repeat flags
+      (initialize-pattern obj data for limit flags
 			  len len next-in-line
 			  (lambda (fn obj)
 			    (for-each fn (pattern-data obj))))
@@ -497,11 +497,11 @@
   (if (pair? data)
       (set! data (append data (list)))
       (set! data (list data)))
-  (with-optkeys (args for repeat)
+  (with-optkeys (args for limit)
     (let ((obj (%alloc-pattern))
 	  (flags 0)
 	  (len (length data)))
-      (initialize-pattern obj (list data) for repeat
+      (initialize-pattern obj (list data) for limit
 			  flags len len next-in-heap
 			  (lambda (fn obj)
 			    (for-each fn (car (pattern-data obj)))))
@@ -541,14 +541,14 @@
   (if (pair? data)
       (set! data (append data (list)))
       (set! data (list data)))
-  (with-optkeys (args for repeat (rotate 0))
+  (with-optkeys (args for limit (rotate 0))
     (let ((obj (%alloc-pattern))
 	  (flags 0)
 	  (len (length data)))
       ;; cdr of data initialized now so that rotations only happen
       ;; after the first cycle.
       ;; (initialize-pattern obj data args flags len dper getr mapr allow)
-      (initialize-pattern obj (cons data data) for repeat
+      (initialize-pattern obj (cons data data) for limit
 			  flags len len next-in-rotation
 			  (lambda (fn obj) 
 			    (for-each fn (car (pattern-data obj)))))
@@ -646,8 +646,8 @@
     ;; pool is ((&rest choices) . last-choice) no initial last
     ;; choice. a first choice for the stream could be implemented as a
     ;; last with min=1
-    (with-optkeys (args for repeat)
-      (initialize-pattern obj (list pool) for repeat
+    (with-optkeys (args for limit)
+      (initialize-pattern obj (list pool) for limit
 			  flags len dper next-in-weighting
 			  (lambda (fn obj)
 			    (for-each (lambda (i)
@@ -813,11 +813,11 @@
   (if (not (pair? data))
       (error "Not a list of Markov transitions" data)
       (set! data (canonicalize-markov-data data)))
-  (with-optkeys (args for repeat past)
+  (with-optkeys (args for limit past)
     (let* ((obj (%alloc-pattern))
 	   (len (length data))
 	   (flags 0))
-      (initialize-pattern obj data for repeat
+      (initialize-pattern obj data for limit
 			  flags len len next-in-markov
 			  (lambda (fn obj)
 			    (for-each fn (pattern-data obj))))
@@ -895,71 +895,6 @@
 ;;; (define aaa (make-markov '((a -> b c d) (b -> a) (c -> d) (d -> (a 3) b c))))
 ;;; (next aaa 30)
 
-;;;
-;;; Graph
-;;;
-
-(define-record graph-node datum to id)
-
-(define (pgraph-node obj port)
-  (list 'graph-node
-	(graph-node-datum obj) (graph-node-to obj)
-	(graph-node-id obj)))
-
-(define (make-graph data . args)
-  (if (not (pair? data))
-      (error "Not graph data" data)
-      (set! data (canonicalize-graph-data data)))
-  (with-optkeys (args for repeat)
-    (let* ((obj (%alloc-pattern))
-	   (len (length data))
-	   (flags 0))
-      (initialize-pattern obj (cons #f data ) for repeat
-			  flags len len next-in-graph
-			  (lambda (fn obj)
-			    (for-each (lambda (n) (graph-node-datum n))
-				      (cdr (pattern-data obj)))))
-      obj)))
-
-(define (canonicalize-graph-data data)
-  (let ((pos 1))
-    (define (parse-graph-item extern)
-      (unless (pair? extern) 
-	(error "Graph node not a list" extern))
-      (apply (lambda (item . args)
-	       (with-optkeys (args to id)
-		 (unless id (set! id pos))
-		 (set! pos (+ pos 1))
-		 (make-graph-node item to id)))
-	     extern))
-    (map parse-graph-item data)))
-
-;; (canonicalize-graph-data '((a to: 2) (b id: 2 to: a)))
-
-(define (next-in-graph obj)
-  (let* ((graph (pattern-data obj))
-         (nodes (cdr graph))
-         (this (car graph)))
-    (if (not this)
-	(begin
-	  (set-car! graph (car nodes))
-	  (graph-node-datum (car nodes)))
-	;; read the to: link and search for next node
-	(let ((link (next-1 (graph-node-to this)))
-	      (next #f))
-	  (do ((tail nodes (cdr tail)))
-	      ((or next (null? tail))
-	       (if (not next)
-		   (error "No graph node for id" link)
-		   (set-car! graph next))
-	       (graph-node-datum next))
-	    (if (eqv? link (graph-node-id (car tail)))
-		(set! next (car tail))))))))
-
-;;; (define aaa (make-graph '((a to: b) (b to: a))))
-;;; (next aaa)
-;;; (define aaa (make-graph `((a to: b) (b to: c) (c ,(make-weightings '(a b c))))))
-;;; (next aaa)
 
 (define (markov-analyze seq . args) 
   (let* ((morder #f) ; markov order
@@ -1126,4 +1061,115 @@
 ; (define aaa '(c4 c4 d4 c4 f4 e4 c4 c4 d4 c4 g4 f4 c4 c4 c5 a4 f4 e4 d4 bf4 bf4 a4 f4 g4 f4))
 ; (markov-analyze aaa 1)
 
+;;;
+;;; Graph
+;;;
+
+(define-record graph-node datum to id)
+
+(define (pgraph-node obj port)
+  (list 'graph-node
+	(graph-node-datum obj) (graph-node-to obj)
+	(graph-node-id obj)))
+
+(define (make-graph data . args)
+  (if (not (pair? data))
+      (error "Not graph data" data)
+      (set! data (canonicalize-graph-data data)))
+  (with-optkeys (args for limit)
+    (let* ((obj (%alloc-pattern))
+	   (len (length data))
+	   (flags 0))
+      (initialize-pattern obj (cons #f data ) for limit
+			  flags len len next-in-graph
+			  (lambda (fn obj)
+			    (for-each (lambda (n) (graph-node-datum n))
+				      (cdr (pattern-data obj)))))
+      obj)))
+
+(define (canonicalize-graph-data data)
+  (let ((pos 1))
+    (define (parse-graph-item extern)
+      (unless (pair? extern) 
+	(error "Graph node not a list" extern))
+      (apply (lambda (item . args)
+	       (with-optkeys (args to id)
+		 (unless id (set! id pos))
+		 (set! pos (+ pos 1))
+		 (make-graph-node item to id)))
+	     extern))
+    (map parse-graph-item data)))
+
+;; (canonicalize-graph-data '((a to: 2) (b id: 2 to: a)))
+
+(define (next-in-graph obj)
+  (let* ((graph (pattern-data obj))
+         (nodes (cdr graph))
+         (this (car graph)))
+    (if (not this)
+	(begin
+	  (set-car! graph (car nodes))
+	  (graph-node-datum (car nodes)))
+	;; read the to: link and search for next node
+	(let ((link (next-1 (graph-node-to this)))
+	      (next #f))
+	  (do ((tail nodes (cdr tail)))
+	      ((or next (null? tail))
+	       (if (not next)
+		   (error "No graph node for id" link)
+		   (set-car! graph next))
+	       (graph-node-datum next))
+	    (if (eqv? link (graph-node-id (car tail)))
+		(set! next (car tail))))))))
+
+;;; (define aaa (make-graph '((a to: b) (b to: a))))
+;;; (next aaa)
+;;; (define aaa (make-graph `((a to: b) (b to: c) (c ,(make-weightings '(a b c))))))
+;;; (next aaa)
+
+
+;;;
+;;; Repeater
+;;;
+
+(define (make-repeater pat . args)
+  (with-optkeys (args for repeat limit)
+    (let ((obj (%alloc-pattern))
+	  (flags 0)
+	  )
+      (initialize-pattern obj (list) for stop
+			  flags
+			  0
+			  1
+			  next-in-repeater
+			  (lambda (fn obj)
+			    (for-each fn (pattern-data obj))))
+      ;; pattern cache holds palin structure
+      (pattern-cache-set! obj (list pat repeat))
+      obj)))
+
+(define (next-in-repeater obj)
+  (let ((data (pattern-data obj)))
+    (if (null? data)
+	(let* ((per (pattern-period obj))
+	       (res (next (car (pattern-cache obj)) #t))
+	       (len (length res))
+	       (for (period-length per))
+	       (rep (cadr (pattern-cache obj))))
+	  (if rep
+	      (begin
+		(set! for (next rep))
+		(period-length-set! per len)
+		(period-count-set! per len))
+	      (period-count-set! per (* len for)))
+	  (let ((sav res)
+		(don (- for 1)))
+	    (do ((i 0 (+ i 1)))
+		((not (< i don)) #f)
+	      (set! res (append res sav))))
+	  (pattern-data-set! obj (cdr res))
+	  (car res))
+	(begin
+	  (pattern-data-set! obj (cdr data))
+	  (car data)))))
 

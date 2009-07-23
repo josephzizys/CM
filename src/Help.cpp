@@ -320,6 +320,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("decimals"), T("cm.html#decimals"));
   cm.set(T("discrete"), T("cm.html#discrete"));
   cm.set(T("divide"), T("cm.html#divide"));
+  cm.set(T("drunk"), T("cm.html#drunk"));
   cm.set(T("eighth"), T("cm.html#eighth"));
   cm.set(T("eod?"), T("cm.html#eod_"));
   cm.set(T("eop?"), T("cm.html#eop_"));
@@ -349,6 +350,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("make-list"), T("cm.html#make-list"));
   cm.set(T("make-markov"), T("cm.html#make-markov"));
   cm.set(T("make-palindrome"), T("cm.html#make-palindrome"));
+  cm.set(T("make-repeater"), T("cm.html#make-repeater"));
   cm.set(T("make-rotation"), T("cm.html#make-rotation"));
   cm.set(T("make-spectrum"), T("cm.html#make-spectrum"));
   cm.set(T("make-weighting"), T("cm.html#make-weighting"));
@@ -434,7 +436,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("shuffle"), T("cm.html#shuffle"));  
   cm.set(T("sixth"), T("cm.html#sixth"));  
   cm.set(T("sort"), T("cm.html#sort"));
-  cm.set(T("sort!"), T("cm.html#sort!"));
+  cm.set(T("sort!"), T("cm.html#sort_"));
   cm.set(T("spectrum-add!"), T("cm.html#spectrum-add_"));  
   cm.set(T("spectrum-copy"), T("cm.html#spectrum-copy"));
   cm.set(T("spectrum-flip!"), T("cm.html#spectrum-flip_"));  
