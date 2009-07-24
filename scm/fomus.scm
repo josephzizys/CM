@@ -21,15 +21,82 @@
 ;;    (ffi_fms_xml  c-string)
 
 (define (fms:open-score scorename . args)
-  ;; bundle up user args and pass to fomus?
-  (do ((tail args (cdr tail))
+  (define (part->xml part)
+    ;; FIXME part is a list, return its xml string encoding
+    "<part> </part>"
+    )
+  (define (metapart->xml meta)
+    ;; FIXME meta is a list, return its xml string encoding
+    "<metapart> </metapart>"
+    )
+  (define (inst->xml inst)
+    ;; FIXME inst is a list, return its xml string encoding
+    "<inst> </inst>" 
+    )
+  (define (percinst->xml perc)
+    ;; FIXME perc is a list, return its xml string encoding
+    "<percinst> </percinst>"
+    )
+  (define (meas->xml meas)
+    ;; FIXME meas is a list, return its xml string encoding
+    "<meas> </meas>"
+    )
+  (define (sets->xml sets)
+    ;; FIXME sets is a list, return its xml string encoding
+    "<sets> </sets>"
+    )
+  (define (argl->xml argn argl func)
+    ;; argn is arg name, argl is a list of lists, each sublist is a
+    ;; part etc
+    (if (not (pair? argl))
+	(error (format #f "~A not a list" argn) argl))
+    (do ((tail argl (cdr tail))
+	 (xml "" )
+	 (delim "" " "))
+	((null? tail) xml)
+      (if (not (pair? (car tail)))
+	  (error "not a list" (car tail)))
+      (set! xml (string-append xml delim (func (car tail))))))
+
+  (do ((tail args)
+       (save args)
+       (argstr #f)
        (scoreargs "")
        (delimiter "" " "))
       ((null? tail)
-       (ffi_fms_open_score scorename scoreargs))
-    (set! scoreargs (string-append scoreargs delimiter
-				   (format #f "~S" (car tail)))))
-  )
+       ;(list scorename scoreargs)
+       (ffi_fms_open_score scorename scoreargs)
+       )
+    (cond ((eq? (car tail) #:parts)
+	   (if (null? (cdr tail)) (error "Missing parts" args))
+	   (set! argstr (argl->xml #:parts (cadr tail) part->xml))
+	   (set! tail (cddr tail)))
+	  ((eq? (car tail) #:metaparts)
+	   (if (null? (cdr tail)) (error "Missing metaparts" args))
+	   (set! argstr (argl->xml #:metaparts (cadr tail) metapart->xml))
+	   (set! tail (cddr tail)))
+	  ((eq? (car tail) #:insts)
+	   (if (null? (cdr tail)) (error "Missing insts" args))
+	   (set! argstr (argl->xml #:insts (cadr tail) inst->xml))
+	   (set! tail (cddr tail)))
+	  ((eq? (car tail) #:percinsts)
+	   (if (null? (cdr tail)) (error "Missing percinsts" args))
+	   (set! argstr (argl->xml #:percinsts (cadr tail) percinst->xml))
+	   (set! tail (cddr tail)))
+	  ((eq? (car tail) #:meass)
+	   (if (null? (cdr tail)) (error "Missing meass" args))
+	   (set! argstr (argl->xml #:meass (cadr tail) meas->xml))
+	   (set! tail (cddr tail)))
+	  ((eq? (car tail) #:sets)
+	   (if (null? (cdr tail)) (error "Missing sets" args))
+	   (set! argstr (argl->xml #:sets (cadr tail) sets->xml))
+	   (set! tail (cddr tail)))
+	  (else
+	   (set! argstr (format #f "~S" (car tail)))
+	   (set! tail (cdr tail)))
+	  )
+    (set! scoreargs (string-append scoreargs delimiter argstr))
+  ))
 
 ;; slow, but since we're parsing XML it doesn't matter
 ;; should be accurate w/ any floating point precision
