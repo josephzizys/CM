@@ -653,7 +653,9 @@ class CommandIDs
   static const CommandID PlotterBgMousing = COMID(Plotter, 19);
   static const CommandID PlotterVertical = COMID(Plotter, 20);
   static const CommandID PlotterHorizontal = COMID(Plotter, 21);
-
+  static const CommandID PlotterEditPoints = COMID(Plotter, 22);
+  static const CommandID PlotterShiftPoints = COMID(Plotter, 23);
+  static const CommandID PlotterRescalePoints = COMID(Plotter, 24);
 };
 
 #undef COMID

@@ -56,7 +56,25 @@ String getwildcards() {
   return r;
 }
 
-void Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
+struct scopedxml {
+  XmlDocument doc;
+  std::auto_ptr<XmlElement> prs;
+  scopedxml(const String& str):doc(str), prs(doc.getDocumentElement()) {}
+  bool isvalid() const {return prs.get();}
+  XmlElement* getel() {return prs.get();}
+};
+
+struct xmlerror
+{
+  String str;
+  xmlerror(const String& str):str(str) {}
+  void printerr() const
+  {
+    Console::getInstance()->printError(">>> Error: Fomus: " + str + T("\n"));
+  }
+};
+
+bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
 {
   // called by sprout to open and/or initialize a (possibly) new score
   // instance for receiving data from processes.  scorename is either
@@ -66,21 +84,54 @@ void Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
   // current?  scoreargs is a string containing whatever the user
   // passed as to sprout arguments to the score
 
-  if (scorename != T("fomus")) { // if default score, do nothing
-    selectScore(scorename, fromscm);
-  }
   scores.getUnchecked(current)->runwhendone = false;
   StringArray userargs;
-  userargs.addTokens(scoreargs, false);
+  userargs.addTokens(scoreargs, true);
+  bool clrsc = false;
+  bool newsc = false;
+  bool xmlerr = false;
+  OwnedArray<scopedxml> els;
   for (int i=0; i<userargs.size(); ++i)
     {
       std::cout << userargs[i].toUTF8() << std::endl;
-      if (userargs[i] == ":run" && (i >= userargs.size() - 1 || userargs[i + 1] != "#f")) {
-	scores.getUnchecked(current)->runwhendone = true;
-      } else if (userargs[i] == ":clear" && (i >= userargs.size() - 1 || userargs[i + 1] != "#f")) {
-	clearScore();
+      bool istr = true, eatnext = false;
+      if (i >= userargs.size() - 1) {
+	if (userargs[i + 1] == "#f") {
+	  istr = false;
+	  eatnext = true;
+	} else if (userargs[i + 1] == "#t") eatnext = true;
       }
+      if (userargs[i] == ":run" && istr) {
+	scores.getUnchecked(current)->runwhendone = true;
+      } else if (userargs[i] == ":clear" && istr) {
+	clrsc = true; //clearScore();
+      } else if (userargs[i] == ":new" && istr) {
+	newsc = true;
+      } else if (userargs[i] == ":err" && istr) {
+	xmlerr = true;
+      } else { // try to parse XML
+	std::cout << "Trying to parse |" << userargs[i].toUTF8() << "|" << std::endl;
+	scopedxml* x;
+	els.add(x = new scopedxml(userargs[i]));
+	if (!x) xmlerr = true;
+      }
+      if (eatnext) ++i;
     }
+  if (xmlerr) {
+    //Console::getInstance()->printError((char*)">>> Error: Fomus: bad score arguments\n");
+    return true;
+  }
+  if (scorename != T("fomus")) { // if default score, do nothing
+    if (newsc) newScore(scorename, fromscm); else selectScore(scorename, fromscm); // anything else = filename
+  }
+  for (int i = 0; i < els.size(); ++i) {
+    if (els[i]->getel()) {
+      try {
+	sendXml(*(els[i]->getel()), fomus_par_none, fomus_act_none);
+      } catch (const xmlerror& e) {e.printerr();}
+    } 
+  }
+  return false;
 }
 
 void Fomus::closeScore()
@@ -96,7 +147,7 @@ void Fomus::saveScore(const String& fn, const bool fromscm) {
 #ifdef GRACE
   if (fn.isEmpty()) {
     if (fromscm) {
-      Console::getInstance()->printError(T(">>> Error: Fomus: no output filename specified"));
+      Console::getInstance()->printError((char*)">>> Error: Fomus: no output filename specified\n");
       return;
     }
     WildcardFileFilter wildcardFilter("*.fms", T("FOMUS Output File"));
@@ -243,16 +294,6 @@ void Fomus::act(fomus_param par, fomus_action act)
   fomus_act(getfomusdata(), par, act);
 }
 
-struct xmlerror
-{
-  String str;
-  xmlerror(const String& str):str(str) {}
-  void printerr() const
-  {
-    Console::getInstance()->printError(">>> Error: Fomus: " + str + T("\n"));
-  }
-};
-
 struct scoped_timeshift {
   bool isreg;
   Fomus& score;
@@ -295,7 +336,7 @@ inline XmlElement* mustExist(XmlElement* x, const char* what)
 // can be a struct, list, etc..
 
 void Fomus::sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act, 
-			const excmap& exc, bool islist) 
+			const excmap& exc, bool islist) // if islist = false, look for a "l" tag
 {
   XmlElement* l = islist ? &xml : xml.getChildByName(T("l"));
   if (l->hasTagName(T("l"))) {
@@ -324,7 +365,7 @@ void Fomus::sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act,
 	  sendXmlVal(*e, par, act, wh_none);
 	} else { // a "special" slot
 	  if (i->second.act != fomus_act_none)
-	    sendXmlVal(*e, i->second.par, i->second.act, i->second.wh, true);
+	    sendXmlVal(*e, i->second.par, i->second.act, i->second.wh, i->second.inlist);
 	  // special slot--parse XML expecting nested structs
 	}
       }
@@ -335,7 +376,7 @@ void Fomus::sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act,
   } else throw xmlerror("expected list of string id/argument pairs");
 }
 
-void Fomus::sendXmlEntry(XmlElement& xml) 
+void Fomus::sendXmlEntry(XmlElement& xml) // notes, rests and marks
 {
   sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("time")), "time value")->getChildElement(0), "time value"), fomus_par_time, fomus_act_set, wh_none); // mandatory in scheme functions
   sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("dur")), "duration value")->getChildElement(0), "duration value"), fomus_par_duration, fomus_act_set, wh_none);
@@ -377,9 +418,8 @@ void Fomus::sendXmlEntry(XmlElement& xml)
 }
 
 // numbers, strings, lists, etc..
-
 void Fomus::sendXmlVal(XmlElement& xml, fomus_param par, 
-		       fomus_action act, whichstruct wh,
+		       fomus_action act, whichstruct wh, // wh = what object are we expecting based on context
 		       bool doeachinlist) 
 { // if tag, force that tag
   if (xml.hasTagName(T("i"))) {
@@ -393,7 +433,6 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
     //#warning "switch (wh) ..."
     sval(par, act, xml.getAllSubText());
   } else if (xml.hasTagName(T("l"))) {
-
     if (wh != wh_none && !doeachinlist) {
       excmap exc;
       switch (wh) {
@@ -406,10 +445,6 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
       case wh_part:
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_part_id, 
 						     fomus_act_set, wh_none)));
-// 	exc.insert(excmap::value_type("name", sendpair(fomus_par_part_name, 
-// 						       fomus_act_set, wh_none)));
-// 	exc.insert(excmap::value_type("abbr", sendpair(fomus_par_part_abbr,
-// 						       fomus_act_set, wh_none)));
 	exc.insert(excmap::value_type("inst", sendpair(fomus_par_part_inst,
 						       fomus_act_set, wh_inst)));
 	sendXmlSets(xml, fomus_par_part_settingval, fomus_act_set, exc, true);
@@ -419,31 +454,19 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_metapart_id,
 						     fomus_act_set, wh_none)));
 	exc.insert(excmap::value_type("parts", sendpair(fomus_par_metapart_partmaps,
-							fomus_act_set, wh_part,
+							fomus_act_add, wh_part,
 							true)));
 	sendXmlSets(xml, fomus_par_metapart_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
-//       case wh_partsref:
-// 	exc.insert(excmap::value_type("id", sendpair(fomus_par_partsref_id,
-// 						     fomus_act_set, wh_none)));
-// 	exc.insert(excmap::value_type("parts", sendpair(fomus_par_partsref_parts,
-// 							fomus_act_set, wh_part, 
-// 							true)));
-// 	Fomus::act(par, act);
-// 	break;
       case wh_inst:
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_inst_id, 
 						     fomus_act_set, wh_none)));
-// 	exc.insert(excmap::value_type("name", sendpair(fomus_par_inst_name,
-// 						       fomus_act_set, wh_none)));
-// 	exc.insert(excmap::value_type("abbr", sendpair(fomus_par_inst_abbr,
-// 						       fomus_act_set, wh_none)));
 	exc.insert(excmap::value_type("staves", sendpair(fomus_par_inst_staves,
-							 fomus_act_set, wh_staff,
+							 fomus_act_add, wh_staff,
 							 true)));
 	exc.insert(excmap::value_type("imports", sendpair(fomus_par_inst_imports,
-							  fomus_act_set, wh_import,
+							  fomus_act_add, wh_import,
 							  true)));
 	exc.insert(excmap::value_type("export", sendpair(fomus_par_inst_export,
 							 fomus_act_set, wh_export)));
@@ -458,12 +481,8 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
       case wh_percinst:
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_percinst_id,
 						     fomus_act_set, wh_none)));
-// 	exc.insert(excmap::value_type("name", sendpair(fomus_par_percinst_name,
-// 						       fomus_act_set, wh_none)));
-// 	exc.insert(excmap::value_type("abbr", sendpair(fomus_par_percinst_abbr,
-// 						       fomus_act_set, wh_none)));
 	exc.insert(excmap::value_type("imports", sendpair(fomus_par_percinst_imports,
-							  fomus_act_set, wh_import,
+							  fomus_act_add, wh_import,
 							  true)));
 	exc.insert(excmap::value_type("export", sendpair(fomus_par_percinst_export,
 							 fomus_act_set, wh_export)));
@@ -478,7 +497,7 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 	break;
       case wh_staff:
 	exc.insert(excmap::value_type("clefs", sendpair(fomus_par_staff_clefs, 
-							fomus_act_set, wh_clef,
+							fomus_act_add, wh_clef,
 							true))); // _add? check this!
 	sendXmlSets(xml, fomus_par_staff_settingval, fomus_act_set, exc,  true);
 	Fomus::act(par, act);
@@ -523,7 +542,6 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 }
 
 // Top level stuff
-
 void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
 {
   //std::cout << std::endl;

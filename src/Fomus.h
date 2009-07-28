@@ -100,7 +100,7 @@ class Fomus
       scores.clear();
     }
 
-  void openScore(String scorename, String scoreargs, const bool fromscm);
+  bool openScore(String scorename, String scoreargs, const bool fromscm);
   void closeScore();
   void saveScore(const String& fn, const bool fromscm);
 

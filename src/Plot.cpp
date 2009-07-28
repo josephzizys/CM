@@ -253,7 +253,6 @@ void AxisView::mouseUp(const MouseEvent &e)
 void AxisView::mouseDoubleClick(const MouseEvent &e)
 {
   PlotterWindow* w=(PlotterWindow*)getTopLevelComponent();
-  std::cout << "orientation=" << getOrientation() << "\n";
   w->openAxisDialog(getOrientation());
 }
 
@@ -440,16 +439,22 @@ public:
   bool isSelected(LayerPoint* p) {return selection.isSelected(p);}
   bool isSelected(int h) {return isSelected(focuslayer->getPoint(h));}
 
-  void selectAll ()
+  void selectAll (bool redraw=true)
   {
     int i;
     selection.deselectAll();
     for (i=0; i<focuslayer->numPoints(); i++)
       selection.addToSelection(focuslayer->getPoint(i));
+    if (redraw) repaintFocusPlot();
   }
 
-  void deselectAll() {
-    selection.deselectAll();
+  void deselectAll(bool redraw=true)
+  {
+    if (isSelection()) 
+      {
+	selection.deselectAll();
+	if (redraw) repaintFocusPlot();
+      }
   }
 
   void removeSelection(LayerPoint* p) {selection.deselect(p);}
@@ -475,18 +480,12 @@ public:
     return focuslayer->getPointIndex(selection.getSelectedItem(i));
   }
 
-  void moveSelection(float val, Plotter::Orientation orient);
-  void moveSelection(float x, float y);
+  void dragSelection(float x, float y);
+  void shiftSelection(int orient, float delta);
+  void rescaleSelection (int orient, float newlow, float newhigh);
 
-  void shiftSelection(float val, Plotter::Orientation orient);
-  void shiftSelection(float x, float y);
-
-  void scaleSelection (float val, Plotter::Orientation orient);
-  void rescaleSelection (float val, Plotter::Orientation orient);
-  void reorderSelection (float val, Plotter::Orientation orient);
-
+  void getSelectionRange(int orient, float& low, float& high);
   float getSelectionMin(Plotter::Orientation orient);
-  float getSelectionMax(Plotter::Orientation orient);
 
   bool isInside(float x, float y, float left, float top,
 		float right, float bottom);
@@ -506,7 +505,8 @@ void PlotView::setSelection(LayerPoint* p) {
   selection.selectOnly(p);
 }
 
-float PlotView::getSelectionMin(Plotter::Orientation orient) {
+float PlotView::getSelectionMin(Plotter::Orientation orient)
+{
   std::numeric_limits<float> info;
   float (Layer::*getter) (LayerPoint* p) ;
   float lim=info.max();
@@ -521,11 +521,87 @@ float PlotView::getSelectionMin(Plotter::Orientation orient) {
   }
   return lim;
 }
-  
-void PlotView::shiftSelection(float dx, float dy) {
+
+void PlotView::getSelectionRange(int orient, float& low, float& high)
+{
+  std::numeric_limits<float> info;
+  low=info.max();
+  high=info.min();
+  float x;
+  if (orient==Plotter::horizontal)
+    for (int i=0; i<numSelected(); i++) 
+      {
+	x=focuslayer->getPointX(getSelected(i)) ;
+	low=jmin(low, x);
+	high=jmax(high, x);
+      }
+  else  
+    for (int i=0; i<numSelected(); i++) 
+      {
+	x=focuslayer->getPointY(getSelected(i)) ;
+	low=jmin(low, x);
+	high=jmax(high, x);
+      }
+}
+   
+void PlotView::dragSelection(float dx, float dy) 
+{
   int n=numSelected();
   for (int i=0; i<n; i++)
     focuslayer->incPoint( getSelected(i), dx, dy);
+}
+
+void PlotView::shiftSelection(int orient, float delta) 
+{
+  if (delta==0.0) return;
+  int n=numSelected();
+  LayerPoint* p;
+  if (orient==Plotter::vertical)
+    for (int i=0; i<n; i++)
+      {
+	p=getSelected(i);
+	focuslayer->incPointY(p, delta);
+      }
+  else
+    {
+      for (int i=0; i<n; i++)
+      {
+	p=getSelected(i);
+	focuslayer->incPointX(p, delta);
+      }
+      focuslayer->sortPoints();
+    }
+  repaintFocusPlot();
+}
+
+void PlotView::rescaleSelection (int orient, float newmin, float newmax)
+{
+  LayerPoint* p;
+  float oldmin, oldmax;
+  double v;
+  getSelectionRange(orient, oldmin, oldmax);
+  if ((oldmin==newmin) && (oldmax==newmax))
+    return;
+  if (orient==Plotter::vertical)
+    for (int i=0; i<numSelected(); i++)
+      {
+	p=getSelected(i);
+	v=cm_rescale(focuslayer->getPointY(p), oldmin, oldmax,
+		     newmin, newmax, 1);
+	focuslayer->setPointY(p,(float)v);
+      }
+    else 
+    {
+      for (int i=0; i<numSelected(); i++)
+	{
+	  p=getSelected(i);
+	  v=cm_rescale(focuslayer->getPointX(p), oldmin, oldmax,
+		       newmin, newmax, 1);
+	  focuslayer->setPointX(p,(float)v);
+	}
+      focuslayer->sortPoints();
+    }      
+  repaintFocusPlot();
 }
 
 // drawing and mouse
@@ -634,7 +710,6 @@ void drawGrid(Graphics& g, AxisView* haxview, AxisView* vaxview,
   double bottom=vaxview->getOrigin();
   double top=bottom-vaxview->extent();
   double v,p,t,d;
-  //std::cout << "drawgrid "<<left<<" "<<top<<" "<<bottom<<" "<<right<<"\n";
   p=haxview->getOrigin();
   d=haxview->incrementSize();
   t=haxview->tickSize();
@@ -770,7 +845,6 @@ void PlotView::mouseDown (const MouseEvent &e)
 	  if (!e.mods.isShiftDown())
 	    {
 	      deselectAll();
-	      repaintFocusPlot();
 	    }
 	}
       addChildComponent (&region);
@@ -807,7 +881,7 @@ void PlotView::mouseDrag(const MouseEvent &e) {
     float dy=vaxview->toValue(e.y) - vaxview->toValue(mousemove.getY()) ;
     //    for (int i=0; i<numSelected(); i++)
     //      focuslayer->incPoint( getSelected(i), dx, dy);
-    shiftSelection(dx, dy);
+    dragSelection(dx, dy);
     repaintFocusPlot();
     mousemove.setXY(e.x,e.y);
   } 
@@ -848,8 +922,11 @@ void PlotView::mouseUp(const MouseEvent &e)
 
 void PlotView::mouseDoubleClick(const MouseEvent &e)
 {
-  PlotterWindow* pw=(PlotterWindow*)getTopLevelComponent();
-  pw->openLayerDialog();
+  PlotterWindow* w=(PlotterWindow*)getTopLevelComponent();
+  if (isSelection()) 
+    w->openEditPointsDialog();
+  else
+    w->openLayerDialog();
 }
 
 bool PlotView::keyPressed (const KeyPress& key)
@@ -861,6 +938,13 @@ bool PlotView::keyPressed (const KeyPress& key)
 	  isSelection())
 	deleteSelection();
     }
+  else if (key.isKeyCode('a') && 
+	   key.getModifiers().isCommandDown())
+    {
+      selectAll();
+    }
+
+
   return true;
 }
 
@@ -924,9 +1008,9 @@ Plotter::Plotter (XmlElement* plot)
 		s=j;
 	      }
 	if (a)
-	  std::cout << "found shared axis, orig=" << s << "\n";
+	  ;
 	else
-	    a=new Axis(xmlfields[i]);
+	  a=new Axis(xmlfields[i]);
 	fields.add(new Field(n, a, s));
       }
   if (xmlplots.size()>0)
@@ -989,7 +1073,6 @@ Plotter::Plotter(MidiFile& midifile)
 	      double k=h->message.getNoteNumber();
 	      double a=(double)(h->message.getFloatVelocity());
 	      double c=h->message.getChannel()-1;
-	      //std::cout << "event=" << t << " " << d << " " << k << " " << a << " " << c << " " << "\n";
 	      LayerPoint* p=new LayerPoint(arity);
 	      p->setVal(0,t);
 	      p->setVal(1,d);
@@ -1242,7 +1325,7 @@ bool Plotter::isFocusLayer(Layer * l)
 
 void Plotter::setFocusLayer(Layer * layr)
 {
-  plotview->deselectAll();
+  plotview->deselectAll(false);
   plotview->focuslayer=layr;
   Axis* oldx=getHorizontalAxisView()->getAxis();
   Axis* oldy=getVerticalAxisView()->getAxis();
@@ -1250,11 +1333,6 @@ void Plotter::setFocusLayer(Layer * layr)
   Axis* newy=getFieldAxis(layr->getYField());
   if ((oldx!=newx)||(oldy!=newy))
     {
-      std::cout << "setting new axes, "
-		<< " _x=" << layr->getXField()
-		<< " _y=" << layr->getYField()
-		<< " _z=" << layr->getZField()
-		<< "\n";
       setHorizontalAxis(newx);
       setVerticalAxis(newy);
       // doesnt work here...
@@ -1366,6 +1444,11 @@ void Plotter::deselectAll()
 bool Plotter::isSelection() 
 {
   return getPlotView()->isSelection();
+}
+
+int Plotter::numSelected() 
+{
+  return getPlotView()->numSelected();
 }
 
 void Plotter::deleteSelection(bool cut) 
@@ -1671,41 +1754,30 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
     }
   else if (name==T("Edit"))
     {
+      int sel=plotter->numSelected();
       // Edit Menu
       menu.addItem(CommandIDs::EditorUndo, T("Undo"),
 		   plotter->actions.canUndo());
       menu.addItem(CommandIDs::EditorUndo, T("Redo"),
 		   plotter->actions.canRedo());
       menu.addSeparator();
-      menu.addItem(CommandIDs::EditorCut, T("Cut"),
-		   plotter->isSelection() );
-      menu.addItem(CommandIDs::EditorCopy, T("Copy"));
+      menu.addItem(CommandIDs::EditorCut, T("Cut"), (sel>0));
+      menu.addItem(CommandIDs::EditorCopy, T("Copy"), (sel>0));
       menu.addItem(CommandIDs::EditorPaste, T("Paste"),
 		   !pointClipboard.isEmpty());
       menu.addSeparator();
-      menu.addItem(CommandIDs::EditorSelectAll, 
-		   T("Select All"));
-      menu.addItem(CommandIDs::EditorUnselectAll, T("Clear Selection"));
-    }
-  /*  else if (name==T("Layer"))
-    {
-      menu.addItem(CommandIDs::PlotterLayerAdd, T("New"));
-      menu.addItem(CommandIDs::PlotterLayerDelete, T("Delete"),
-		   (plotter->numLayers() > 1));
+      menu.addItem(CommandIDs::EditorSelectAll, T("Select All"));
+      menu.addItem(CommandIDs::EditorUnselectAll, T("Clear Selection"),
+		   (sel>0));
       menu.addSeparator(); 
-      // append existing layers to end of menu in plotting color :)
-      for (int i=0; i<plotter->numLayers(); i++)
-	{
-	  Layer * layer=plotter->getLayer(i);
-	  menu.addColouredItem(CommandIDs::PlotterLayerSelect +
-			       layer->getLayerID(),
-			       layer->getLayerName(),
-			       layer->getLayerColor(),
-			       true,
-			       plotter->isFocusLayer(layer));
-	}
+      menu.addItem(CommandIDs::PlotterEditPoints, T("Edit Points"),
+		   (sel>0));
+      menu.addItem(CommandIDs::PlotterShiftPoints, T("Shift Points"),
+		   (sel>0));
+      menu.addItem(CommandIDs::PlotterRescalePoints, T("Rescale Points"),
+		   (sel>1));
     }
-  */
+
   else if (name==T("View"))
     {
       Layer* layer=plotter->getFocusLayer();
@@ -1832,13 +1904,19 @@ void PlotterWindow::menuItemSelected (int id, int idx)
       break;
     case CommandIDs::EditorSelectAll :
       plotter->selectAll();
-      plotter->redrawPlotView();
       break;
     case CommandIDs::EditorUnselectAll :
       plotter->deselectAll();
-      plotter->redrawPlotView();
       break;
-      
+    case CommandIDs::PlotterEditPoints :
+      openEditPointsDialog();
+      break;
+   case CommandIDs::PlotterShiftPoints :
+      openRescalePointsDialog(cmd);
+      break;
+   case CommandIDs::PlotterRescalePoints :
+      openRescalePointsDialog(cmd);
+      break;    
     case CommandIDs::PlotterLayerAdd :
       plotter->newLayer(NULL);
       plotter->redrawBackView();
@@ -1881,7 +1959,7 @@ void PlotterWindow::menuItemSelected (int id, int idx)
 }
 
 /*=======================================================================*
-                                  FileIO and Exporting
+                              FileIO and Exporting
  *=======================================================================*/
 
 String PlotterWindow::toXmlString()
@@ -1974,7 +2052,7 @@ String Layer::toString(int exportid, int decimals,
     }
   // add appropriate close parens...
   text << done ;
-  std::cout << text.toUTF8() << "\n";
+  //std::cout << text.toUTF8() << "\n";
   return text;
 }
 
@@ -2139,7 +2217,6 @@ void ExportPointsDialog::exportPlot()
 
 void ExportPointsDialog::exportPoints() 
 {
-  std::cout << "export points\n";
   bool layerexport=true; //(exportmenu->getSelectedId()==1);
   int exportid=tomenu->getSelectedId();
   int decimals=valuemenu->getSelectedId()-1;
@@ -2630,14 +2707,12 @@ void AxisDialog::comboBoxChanged (ComboBox* cbox)
 {
   if (cbox == typemenu)
     {
-      std::cout << "typemenu \n";
       Axis a(0);
       a.init((Axis::AxisType)cbox->getSelectedId());
       updateFields(&a);
     }
   else if (cbox == decimalsmenu)
     {
-      std::cout << "decimalsmenu \n";
       axisview->getAxis()->setDecimals(cbox->getSelectedId()-1);
       axisview->repaint();
     } 
@@ -3113,3 +3188,324 @@ void PlotterWindow::openPlayPlotDialog ()
 				false);
   */
 }
+
+/*=======================================================================*
+                              Edit Point Dialog
+ *=======================================================================*/
+
+class EditPointsDialog : public Component, 
+			public LabelListener
+{
+private:
+  Plotter* plotter;
+  OwnedArray<Label> labels;
+  OwnedArray<Label> editors;
+  enum{labelwidth=80, editorwidth=120, lineheight=24, margin=8};
+  int getFieldIndex(String name)
+  {
+    for (int i=0; i<editors.size(); i++)
+      if (editors[i]->getName()==name) return i;
+    return -1;
+  }
+public:
+  EditPointsDialog (Plotter* plotr);
+  ~EditPointsDialog()
+  {
+    editors.clear();
+    labels.clear();
+  }
+  void resized();
+  void labelTextChanged(Label *label);
+};
+
+EditPointsDialog::EditPointsDialog(Plotter* plotr)
+{
+  plotter=plotr;
+  StringArray fields;
+  plotter->getFieldNames(fields);
+  LayerPoint* p=(plotter->getPlotView()->numSelected()==1)
+    ? plotter->getPlotView()->getSelected(0) : NULL ;
+  for (int i=0; i<fields.size(); i++)
+    {
+      labels.add(new Label(String::empty, fields[i]));
+      editors.add(new Label(fields[i], 
+			    ((p) ? String(p->getVal(i)) : String::empty)));
+      labels[i]->setFont(Font(15.0000f, Font::plain));
+      editors[i]->setFont(Font(15.0000f, Font::plain));
+      editors[i]->setEditable(true, false, true);
+      editors[i]->setColour(Label::outlineColourId, Colours::black);
+      editors[i]->addListener(this);
+      addAndMakeVisible(labels[i]);
+      addAndMakeVisible(editors[i]);
+    }	 
+  int w=margin+labelwidth+margin+editorwidth+margin;
+  int h=(fields.size()*lineheight)+((fields.size()+1)*margin);
+  setVisible(true);
+  setSize(w, h);
+}
+
+void EditPointsDialog::resized()
+{
+  int x1=margin, x2=margin+labelwidth+margin;
+  int y=margin;
+  for(int i=0; i<labels.size(); i++)
+    {
+      labels[i]->setBounds(x1, y, labelwidth, lineheight);
+      editors[i]->setBounds(x2, y, editorwidth, lineheight);
+      y += lineheight + margin;
+    }
+}
+
+void EditPointsDialog::labelTextChanged (Label *label)
+{
+  int index=getFieldIndex(label->getName());
+  //std::cout << "text changed for " << label->getName().toUTF8()
+  //	    << " field=" << index << "\n";
+  if (index<0) return;
+  String text=label->getText().trim();
+  if ((index>=0) && text.isNotEmpty() &&
+      text.containsOnly(T("0123456789.-"))) 
+    {
+      double value=text.getDoubleValue();
+      // FIXME: undo/redo
+      for (int i=0;i<plotter->plotview->numSelected(); i++)
+	plotter->plotview->getSelected(i)->setVal(index,value);
+      if (plotter->getFocusLayer()->isVisibleField(index))
+	plotter->plotview->repaintFocusPlot();
+    }
+}
+
+void PlotterWindow::openEditPointsDialog ()
+{
+  DialogWindow::showModalDialog(T("Edit Points"), 
+				new EditPointsDialog(plotter),
+				this,
+				Colour(0xffe5e5e5),
+				false);
+}
+
+
+/*=======================================================================*
+                              Rescale Points Dialog
+ *=======================================================================*/
+
+class RescalePointsDialog : public Component,
+                           public ButtonListener,
+			   public TextEditorListener
+{
+public:
+  Plotter* plotter;
+  int command;
+  GroupComponent* axisgroup;
+  ToggleButton* xbutton;
+  ToggleButton* ybutton;
+  Label* label1;
+  TextEditor* editor1;
+  Label* label2;
+  TextEditor* editor2;
+  static bool __yactive;
+  bool isVertical(){return __yactive;}
+  bool isHorizontal(){return !isVertical();}
+
+  RescalePointsDialog (Plotter* pltr, int cmd);
+  ~RescalePointsDialog();
+  void resized();
+  void buttonClicked (Button* buttonThatWasClicked);
+  void textEditorReturnKeyPressed(TextEditor& editor);
+  void textEditorTextChanged(TextEditor& editor) {}
+  void textEditorEscapeKeyPressed(TextEditor& editor) {}
+  void textEditorFocusLost(TextEditor& editor) {}
+};
+
+bool RescalePointsDialog::__yactive=true;
+
+RescalePointsDialog::RescalePointsDialog (Plotter* pltr, int cmd)
+  : plotter (0),
+    command (0),
+    axisgroup (0),
+    xbutton (0),
+    ybutton (0),
+    label1 (0),
+    editor1 (0),
+    label2 (0),
+    editor2 (0)
+{
+  plotter=pltr;
+  command=cmd;
+  addAndMakeVisible(axisgroup=new GroupComponent(String::empty,T("Axis")));
+  
+  addAndMakeVisible (xbutton = new ToggleButton (String::empty));
+  xbutton->setButtonText (T("Horizontal"));
+  xbutton->setRadioGroupId (1);
+  xbutton->addButtonListener (this);
+
+  addAndMakeVisible (ybutton = new ToggleButton (String::empty));
+  ybutton->setButtonText (T("Vertical"));
+  ybutton->setRadioGroupId (1);
+  ybutton->addButtonListener (this);
+
+  if (command==CommandIDs::PlotterShiftPoints)
+    label1=new Label(String::empty, T("Amount to shift:"));
+  else
+    label1=new Label(String::empty, T("New Minimum:"));
+  addAndMakeVisible(label1);
+  label1->setFont(Font (15.0000f, Font::plain));
+  label1->setJustificationType(Justification::centredLeft);
+  label1->setEditable(false, false, false);
+  label1->setColour(TextEditor::textColourId, Colours::black);
+  label1->setColour(TextEditor::backgroundColourId, Colour(0x0));
+  
+  addAndMakeVisible (editor1 = new TextEditor (String::empty));
+  editor1->setMultiLine (false);
+  editor1->setReturnKeyStartsNewLine (false);
+  editor1->setReadOnly (false);
+  editor1->setScrollbarsShown (true);
+  editor1->setCaretVisible (true);
+  editor1->setPopupMenuEnabled (true);
+  editor1->setText(String::empty);
+  editor1->addListener(this);
+
+  if (command==CommandIDs::PlotterRescalePoints)
+    {
+      addAndMakeVisible(label2=new Label(String::empty,
+					 T("New maximum:")));
+      label2->setFont(Font(15.0000f, Font::plain));
+      label2->setJustificationType(Justification::centredLeft);
+      label2->setEditable(false, false, false);
+      label2->setColour(TextEditor::textColourId, Colours::black);
+      label2->setColour(TextEditor::backgroundColourId, Colour (0x0));
+      
+      addAndMakeVisible(editor2=new TextEditor(String::empty));
+      editor2->setMultiLine(false);
+      editor2->setReturnKeyStartsNewLine(false);
+      editor2->setReadOnly(false);
+      editor2->setScrollbarsShown(true);
+      editor2->setCaretVisible(true);
+      editor2->setPopupMenuEnabled(true);
+      editor2->setText(String::empty);
+      editor2->addListener(this);
+    }
+  if (isVertical())
+    ybutton->setToggleState(true, true);
+  else
+    xbutton->setToggleState(true, true);
+  if (command==CommandIDs::PlotterRescalePoints)
+    setSize (272, 128);
+  else
+    setSize (272, 128-32);
+}
+
+RescalePointsDialog::~RescalePointsDialog()
+{
+  deleteAndZero (axisgroup);
+  deleteAndZero (xbutton);
+  deleteAndZero (ybutton);
+  deleteAndZero (label1);
+  deleteAndZero (editor1);
+  deleteAndZero (label2);
+  deleteAndZero (editor2);
+}
+
+void RescalePointsDialog::resized()
+{
+  axisgroup->setBounds (8, 8, 256, 48);
+  xbutton->setBounds (24, 24, 96, 24);
+  ybutton->setBounds (152, 24, 96, 24);
+  label1->setBounds (16, 64, 112, 24);
+  editor1->setBounds (136, 64, 120, 24);
+  if (command==CommandIDs::PlotterRescalePoints)
+    {
+      label2->setBounds (16, 96, 112, 24);
+      editor2->setBounds (136, 96, 120, 24);
+    }
+}
+
+void RescalePointsDialog::buttonClicked (Button* button)
+{
+  Plotter::Orientation orient;
+  if (button == xbutton)
+    {
+      __yactive=false;
+      orient=Plotter::horizontal;
+    }
+  else if (button == ybutton)
+    {
+      __yactive=true;
+      orient=Plotter::vertical;
+    }
+  if (command==CommandIDs::PlotterRescalePoints)
+    {
+      float low,high;
+      plotter->plotview->getSelectionRange(orient,low,high);
+      editor1->setText(String(low));
+      editor2->setText(String(high));
+    }
+  else if (command==CommandIDs::PlotterShiftPoints)
+    {
+      editor1->setText(T("0.0"));
+    }
+}
+
+static bool isNumberText(String num)
+{
+  int dots=0;
+  int sign=0;
+  int digi=0;
+  int size=num.length();
+  for (int i=0; i<size; i++)
+    {
+      if (num[i]==T('-')) 
+	if (i==0) sign=1;
+	else return false; // bad sign
+      else if (num[i]==T('.'))
+	if (dots==0) dots++;
+	else return false; // too many dots
+      else if (num[i]<T('0') || num[i]>T('9')) 
+	return false;
+      else digi++;
+    }
+  return digi>0;
+}
+
+void RescalePointsDialog::textEditorReturnKeyPressed (TextEditor& editor)
+{
+  String str=editor1->getText().trim();
+  float num1, num2;
+  if (!isNumberText(str))
+    return;
+  num1=str.getFloatValue();
+  if (command==CommandIDs::PlotterShiftPoints)
+    {
+      if (isVertical())
+	plotter->plotview->shiftSelection(Plotter::vertical, num1);
+      else
+	plotter->plotview->shiftSelection(Plotter::horizontal, num1);
+    }
+  else if (command==CommandIDs::PlotterRescalePoints)
+    {
+      str=editor2->getText().trim();
+      if (!isNumberText(str))
+	return;
+      num2=str.getFloatValue();
+      if (isVertical())
+	plotter->plotview->rescaleSelection(Plotter::vertical, 
+					    num1, num2);
+      else
+	plotter->plotview->rescaleSelection(Plotter::horizontal, 
+					    num1, num2);
+    }   
+}
+
+void PlotterWindow::openRescalePointsDialog (int cmd)
+{
+  String title=String::empty;
+  if (cmd==CommandIDs::PlotterRescalePoints)
+    title=T("Rescale Points");
+  else if (cmd==CommandIDs::PlotterShiftPoints)
+    title=T("Shift Points");
+  RescalePointsDialog* dialog=new RescalePointsDialog(plotter, cmd);
+  DialogWindow::showModalDialog(title, dialog, this,
+				Colour(0xffe5e5e5), false);
+  delete dialog;
+}
+

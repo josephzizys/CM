@@ -1050,6 +1050,7 @@ s7_pointer ffi_cs_send_score (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_fms_open_score (s7_scheme *s7, s7_pointer args)
 {
+  s7_Int i0;
   char* s0; char* s1;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_fms_open_score", 1, s7_car(args), "a c-string"));
@@ -1059,8 +1060,8 @@ s7_pointer ffi_fms_open_score (s7_scheme *s7, s7_pointer args)
     return(s7_wrong_type_arg_error(s7, "ffi_fms_open_score", 2, s7_car(args), "a c-string"));
   s1=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
-  fms_open_score(s0, s1);
-  return s7_UNSPECIFIED(s7);
+  i0=fms_open_score(s0, s1);
+  return s7_make_integer(s7, i0);
 }
 
 s7_pointer ffi_fms_close_score (s7_scheme *s7, s7_pointer args)

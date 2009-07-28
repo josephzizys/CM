@@ -452,6 +452,10 @@ class Layer
   void setXField(int f) {_x=f;}
   void setYField(int f) {_y=f;}
   void setZField(int f) {_z=f;}
+  bool isVisibleField(int f)
+  {
+    return (f==_x||f==_y||(f==_z&&style==hbox));
+  }
   void setFieldAccess(int x, int y, int z=-1)
   {
     _x=x;
@@ -699,7 +703,7 @@ class Plotter  : public Component,
   void selectAll();
   void deleteSelection(bool cut=false);
   bool isSelection();
-   
+  int numSelected();
   void deselectAll();
   void clearSelection();
   void moveSelection();
@@ -707,6 +711,11 @@ class Plotter  : public Component,
   // Fields
   int numFields() {return fields.size();}
   String getFieldName(int f) {return fields[f]->name;}
+  void getFieldNames(StringArray& ary)
+  {
+    for(int i=0;i<numFields();i++)
+      ary.add(getFieldName(i));
+  }
   Axis* getFieldAxis(int f) {return fields[f]->axis;}
   bool isSharedField(int f) {return fields[f]->isSharedAxis();}
   String getSharedFieldName(int f) 
@@ -745,6 +754,8 @@ class PlotterWindow : public DocumentWindow, public MenuBarModel
   void openLayerDialog();
   void openAxisDialog(int orient);
   void openPlayPlotDialog();
+  void openEditPointsDialog();
+  void openRescalePointsDialog(int cmd);
 
   static void openXml(String str);
   static void browseForFileToOpen(int type);

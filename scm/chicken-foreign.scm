@@ -85,7 +85,7 @@
 (define ffi_mp_clear_midi_input_hook (foreign-lambda void "mp_clear_midi_input_hook"))
 (define ffi_cs_init_score (foreign-lambda void "cs_init_score" c-string))
 (define ffi_cs_send_score (foreign-lambda void "cs_send_score" int int double c-string))
-(define ffi_fms_open_score (foreign-lambda void "fms_open_score" c-string c-string))
+(define ffi_fms_open_score (foreign-lambda int "fms_open_score" c-string c-string))
 (define ffi_fms_close_score (foreign-lambda void "fms_close_score"))
 (define ffi_fms_new (foreign-lambda void "fms_new" c-string))
 (define ffi_fms_select (foreign-lambda void "fms_select" c-string))

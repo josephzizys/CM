@@ -872,7 +872,7 @@ void cs_send_score(int typ, int num, double time, char* pars)
 
 #ifdef WITHFOMUS // defined(WITHFOMUS) && defined(GRACE)
 
-void fms_open_score(char* scorename, char* scoreargs)
+int fms_open_score(char* scorename, char* scoreargs)
 {
   Fomus::getInstance()->openScore(String(scorename), String(scoreargs), true);
 }
