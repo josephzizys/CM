@@ -319,7 +319,7 @@ void Fomus::sendXml(const String& xml, double scoretime)
   // score.
 
   try {
-    std::cout << xml.toUTF8() << std::endl;
+    //std::cout << xml.toUTF8() << std::endl;
     XmlDocument doc(xml);
     std::auto_ptr<XmlElement> docel(doc.getDocumentElement());
     scoped_timeshift xxx(scoretime, *this);
@@ -536,7 +536,7 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
     else if (v == "t" || v == "T" || v == "#t" || v == "true") ival(par, act, 1);
     else throw xmlerror("expected boolean value");
   } else {
-    std::cout << (char*)xml.getTagName().toUTF8() << std::endl;
+    //std::cout << (char*)xml.getTagName().toUTF8() << std::endl;
     throw xmlerror("XML parse error");
   }
 }
@@ -1037,7 +1037,7 @@ private:
   }
 
   void defon() {
-    std::cout << "RESETTING TO DEFAULT" << std::endl;
+    //std::cout << "RESETTING TO DEFAULT" << std::endl;
     ValueText->reset();
     ValueText->setText(ValueText->getchangedstr(), false);
     if (DefaultButton) DefaultButton->setToggleState(ValueText->isdef(), false);

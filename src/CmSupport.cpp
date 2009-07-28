@@ -966,10 +966,10 @@ int fms_isfiletype(const char* ext)
   String x(ext);
   if (!x.isEmpty() && x[0] == '.') x = x.substring(1);
   info_extslist f(info_list_exts());
-  String mid("mid");
+  String mid("mid"), midi("midi");
   for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) 
     {
-      if (*i == mid) continue;
+      if (*i == mid || *i == midi) continue;
       if (x == *i) return 1;
     }
   return 0;
