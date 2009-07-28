@@ -3347,7 +3347,7 @@ RescalePointsDialog::RescalePointsDialog (Plotter* pltr, int cmd)
   if (command==CommandIDs::PlotterShiftPoints)
     label1=new Label(String::empty, T("Amount to shift:"));
   else
-    label1=new Label(String::empty, T("New Minimum:"));
+    label1=new Label(String::empty, T("New minimum:"));
   addAndMakeVisible(label1);
   label1->setFont(Font (15.0000f, Font::plain));
   label1->setJustificationType(Justification::centredLeft);

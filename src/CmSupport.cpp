@@ -976,7 +976,7 @@ int fms_isfiletype(const char* ext)
 }
 #else
 int fms_isfiletype(const char* ext) {return 0;}
-void fms_open_score(char* a, char* b){}
+int fms_open_score(char* a, char* b){return 0;}
 void fms_close_score(){}
 void fms_new(const char* name){}
 void fms_select(const char* name) {}
