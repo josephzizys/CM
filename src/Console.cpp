@@ -268,9 +268,12 @@ void Console::handleAsyncUpdate()
 	  }
 	  break;
 
-	case CommandIDs::PlotterNew :
-	  PlotterWindow::openXml(messages[i]->text);
-	  break;
+	  //	case CommandIDs::PlotterNew :
+	  //	  PlotterWindow::openXml(messages[i]->text);
+	  //	  break;
+	  //	case CommandIDs::PlotterAddXmlPoints :
+	  //	  PlotterWindow::openXml(messages[i]->text);
+	  //	  break;
 #endif
 	default:
 	  {

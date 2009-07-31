@@ -11,6 +11,7 @@
 #include "TextEditor.h"
 #include "Plot.h"
 #include "Midi.h"
+#include "Scheme.h"
 #include <limits>
 #include "CmSupport.h"
 //#include <cmath>
@@ -140,7 +141,8 @@ void AxisView::paint (Graphics& g)
 	  // draw minor ticks above each major tick
 	  g.setColour(col2);
 	  for (int i=1;i<numTicks();i++)
-	    g.drawVerticalLine((int)(pval+(tsiz*i)), height-minortick, height);
+	    g.drawVerticalLine((int)(pval+(tsiz*i)), height-minortick,
+			       height);
 	  pval+=isiz;
 	  aval+=by;
 	}
@@ -191,7 +193,8 @@ void AxisView::paint (Graphics& g)
 		     false);	  
 	  g.setColour(col2);
 	  for (int i=1;i<numTicks();i++)
-	    g.drawHorizontalLine((int)(pval-(tsiz*i)), width-minortick, width);
+	    g.drawHorizontalLine((int)(pval-(tsiz*i)), width-minortick,
+				 width);
 	  pval-=isiz;
 	  aval+=by;
 	}
@@ -777,16 +780,28 @@ void PlotView::mouseDown (const MouseEvent &e)
   
   // Control-Click: add point make selection
   // Control-Shift-Click: add point add selection.
+  // Control-Option-Click: call plot hook
   if (e.mods.isCtrlDown())
-    {
-      int i = focuslayer->addPoint(haxview->toValue(mxp),
-				   vaxview->toValue(myp));
-      if (e.mods.isShiftDown())
-	addSelection(i);
-      else setSelection(i);
-      repaintFocusPlot();
-      return;
-    }
+    if (e.mods.isAltDown())
+      {
+	String str=T("(call-plot-hook");
+	str << T(" ") << plotter->getPlotTitle().quoted()
+	    << T(" ") << haxview->toValue(mxp)
+	    << T(" ") << vaxview->toValue(myp) 
+	    << T(")") ; 
+	Scheme::getInstance()->eval(str);
+	return;
+      }
+    else
+      {
+	int i = focuslayer->addPoint(haxview->toValue(mxp),
+				     vaxview->toValue(myp));
+	if (e.mods.isShiftDown())
+	  addSelection(i);
+	else setSelection(i);
+	repaintFocusPlot();
+	return;
+      }
   
   double half=plotter->getPointSize()/2;
   int h=-1;
@@ -1053,7 +1068,8 @@ Plotter::Plotter(MidiFile& midifile)
   int arity=5;
   for ( ; track<numtracks; track++)
     {
-      MidiMessageSequence* seq=(MidiMessageSequence*)midifile.getTrack(track);
+      MidiMessageSequence* seq=
+	(MidiMessageSequence*)midifile.getTrack(track);
       seq->updateMatchedPairs();
       Layer* lay=new Layer(arity, T("Track ") + String(track),
 			   Layer::defaultColor(count), Layer::hbox);
@@ -1217,7 +1233,8 @@ void Plotter::autosizeAxes()
 	}
     }
 }
-  
+
+ 
 ///
 /// Component View Accessing 
 ///
@@ -1538,13 +1555,15 @@ public:
 //class AddPointsAction : public UndoableAction {}
 //class RemovePointsAction : public UndoableAction {}
 
+
 /*=======================================================================*
                    PlotterWindow: top level window for plotting
  *=======================================================================*/
 
 PlotterWindow::PlotterWindow(XmlElement* plot)
-  : DocumentWindow (String::empty , Colours::white, 
-		    DocumentWindow::allButtons, true ) 
+  : DocumentWindow (String::empty, Colours::white, 
+		    DocumentWindow::allButtons, true),
+    listener(this)
 {
   String title=(plot==NULL) ? T("Untitled Plot") :
     plot->getStringAttribute(T("title"), T("Untitled Plot"));
@@ -1555,7 +1574,8 @@ PlotterWindow::PlotterWindow(XmlElement* plot)
 
 PlotterWindow::PlotterWindow(String title, MidiFile& midifile)
   : DocumentWindow (title, Colours::white, 
-		    DocumentWindow::allButtons, true ) 
+		    DocumentWindow::allButtons, true),
+    listener(this)
 {
   setName(title);
   plotter=new Plotter(midifile);
@@ -1593,10 +1613,10 @@ PlotterWindow* PlotterWindow::getPlotWindow(String title)
   return (PlotterWindow*)NULL;
 }
 
-void PlotterWindow::openXml(String str)
+void PlotterWindow::openWindowFromXml(void* ptr) //(String str)
 {
   //std::cout << str.toUTF8() << "\n";
-  XmlDocument doc (str);
+  XmlDocument doc (String((char *)ptr));
   XmlElement* xml = doc.getDocumentElement();
   if (xml && xml->getChildByName(T("fields")) &&
       xml->getChildByName(T("layers")))
@@ -1610,7 +1630,10 @@ void PlotterWindow::openXml(String str)
       if (!xml)
 	err << doc.getLastParseError() << T("\n");
       else
-	err << T("not valid xml plot data\n");
+	{
+	  err << T("invalid xml plot data\n");
+	  delete xml;
+	}
       Console::getInstance()->printError(err);
     }
 }
@@ -1726,7 +1749,7 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
       // File Menu
       menu.addItem(CommandIDs::PlotterNew, T("New Plot"));
       menu.addItem(CommandIDs::PlotterOpen, T("Open..."));
-      menu.addItem(CommandIDs::PlotterOpenMidiFile, T("Open Midi Plot..."));
+      menu.addItem(CommandIDs::PlotterOpenMidiFile,T("Plot Midi File..."));
       menu.addSeparator(); 
       menu.addItem(CommandIDs::PlotterLayerAdd, T("New Layer"));
       for (int i=0; i<plotter->numLayers(); i++)
@@ -1956,6 +1979,48 @@ void PlotterWindow::menuItemSelected (int id, int idx)
     default :
       break;
     }
+}
+
+void PlotterWindow::PlotterWindowListener::handleMessage(const Message &m)
+{
+
+  switch (m.intParameter1)
+    {
+    case CommandIDs::PlotterAddXmlPoints:
+      if (m.pointerParameter!=NULL)
+	{
+	  char* str=(char*)m.pointerParameter;
+	  String txt (str);//String((char*)m.pointerParameter)
+	  XmlDocument doc (txt);
+	  XmlElement* xml=doc.getDocumentElement();
+	  std::cout << "Got a PlotterAddXmlPoints message,"
+		    << " str=" << str << "\n";
+	  if (xml)
+	    std::cout << "XML=" << xml->createDocument(String::empty, true, false, T("UTF-8")).toUTF8() << "\n";
+	  if (xml && xml->hasTagName(T("points")))
+	    {
+	      window->plotter->getFocusLayer()->addXmlPoints(xml);
+	      window->plotter->repaint();
+	      delete xml;
+	    }
+	  else
+	    {
+	      String err=T(">>> Error ");
+	      if (!xml)
+		err << doc.getLastParseError() << T("\n");
+	      else
+		{
+		  err << T("invalid xml plot data\n");
+		  delete xml;
+		}
+	      Console::getInstance()->printError(err);
+	    }
+	  delete str;
+	}
+      break;
+    default:
+      break;
+    } 
 }
 
 /*=======================================================================*

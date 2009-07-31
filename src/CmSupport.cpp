@@ -998,15 +998,38 @@ void fms_xml(char* str){}
 #ifdef GRACE
 void plot_xml(char* text)
 {
-  String xml=String(text);
-  Console::getInstance()->postAsyncMessage(CommandIDs::PlotterNew,
-					   xml, true);
+  // open new window in message thread. we dont copy Lisp string
+  // because this function is blocked until callback returns so string
+  // is still valid.
+  MessageManager::getInstance()->
+    callFunctionOnMessageThread((MessageCallbackFunction*)
+				&PlotterWindow::openWindowFromXml,
+				(void*)text);
+} 
+
+void plot_add_xml_points(char* title, char* points)
+{
+  String wtitle (title);
+  PlotterWindow* w=PlotterWindow::getPlotWindow(wtitle);
+  if (w)
+    {
+      // copy string to avoid Lisp gc'ing before message is processed
+      // listener explicitly deletes it
+      w->listener.postMessage(new Message(CommandIDs::PlotterAddXmlPoints,
+					  0,
+					  0,
+					  (void*)strdup(points)));
+    }
+  else
+    Console::getInstance()->
+      printError(T(">> Error: no plot named ")+wtitle.quoted()+T(".\n"));
 } 
 
 char* plot_data(char* title, int all)
 {
   String text=String::empty;
-  PlotterWindow* w=PlotterWindow::getPlotWindow(String(title));
+  String wtitle (title);
+  PlotterWindow* w=PlotterWindow::getPlotWindow(wtitle);
   if (w!=NULL)
     {
       int nlayer=w->plotter->numLayers();
@@ -1028,22 +1051,20 @@ char* plot_data(char* title, int all)
 						   0xFF);
     }
   else
-    text=T("()");
+    {
+      text=T("()");
+      Console::getInstance()->
+	printError(T(">> Error: no plot named ")+wtitle.quoted()+T(".\n"));
+    }
   return (char *)strdup(text.toUTF8());  
 }
 
 #else
 
-void plot_xml(char* text)
-{
-  String xml=String(text);
-  Console::getInstance()->printOutput(xml+T("\n"));
-}
-
-char* plot_data(char* text, int layer)
-{
-  return (char *)strdup("()");  
-}
+void plot_xml(char* text){}
+void plot_add_xml_points(char* title, char* points){}
+char* plot_data(char* text, int layer) {return (char *)NULL;}
+//  return (char *)strdup("()");  
 
 #endif
 

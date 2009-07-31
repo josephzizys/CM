@@ -1,20 +1,30 @@
+;
 ;; Create empty plot window, then Control-click in window to add points
+;
 
 (plot )
 
-;; Export window's plot data and store in a variable
+; Export window's plot data and store in a variable
 
 (define mydata (plot-data "Untitled Plot"))
 
+mydata
+
+;
 ;; Create a titled plot
+;
 
 (plot :title "Hi Ho!" '(0 0 .25 1 .75 1 1 0))
 
+;
 ;; Create a plot with two layers of points
+;
 
 (plot '(0 0 .25 1 .75 1 1 0) '(0 0 1 1))
 
+;
 ;; Customize axes, add three named layers of points
+;
 
 (plot :title "My envelopes"
       :xaxis 'percent 
@@ -24,13 +34,9 @@
       '(0 0 50 1 100 0) :title "updown"
       )
 
-;; Pass only Y values to plot 
-
-(plot :title "Random numbers" 
-      :yaxis 'unit
-      :style :histogram
-      :values :y
-      (loop repeat 20 collect (random 1.0)))
+;
+;; a two layered plot, each layer with its own style 
+;
 
 (plot :title "Hidy Ho!"
       :xaxis :percent 
@@ -39,13 +45,16 @@
       (loop for i to 100 by 10 collect i collect (random 1.0))
       :style :points)
 
-;; Piano roll plot of 5-fields of midi data with duration on time axis
+;
+;; Piano roll plot of 5-field note data with duration on time axis
+;; and a constrained keynum axis
+;
 
-(plot :title "Midi Notes"
-      :fields '((time seconds) (dur time) (keynum notes 60 96)
+(plot :title "My Notes"
+      :fields '((time seconds) (dur time) (pitch keynum 60 96)
                 (amplitude unit) (chan 0 15))
       :xaxis '(time dur)
-      :yaxis 'keynum
+      :yaxis 'pitch
       :style 'hbox
       (loop repeat 20 with amp = .7
             for beg = 0 then (+ beg (random 1.0))
@@ -54,7 +63,9 @@
             for chan = (random 16)
             collect (list beg dur key amp chan)))
 
-;; Compute layers on the fly
+;
+;; Compute some layers on the fly
+;
 
 (plot (loop for x from 0 to 1 by .2
             for y = (random 1.0)
@@ -66,7 +77,9 @@
             for y = (expt 10 (- x))
             collect x collect y))
 
+;
 ;; Plot a 'mean distribution' and its histogram in the same window
+;
 
 (let* ((maxh 0)
        (hist (make-list 100 0))
@@ -90,7 +103,9 @@
         bars :style 'impulse
   ))
 
-;; plot a sampled sine wave
+;
+;; plot a pretty picture of a "sampled sine wave"
+;
 
 (plot :x-axis (list 0 (* 2 pi) (/ pi 2) 2)
       :y-axis '(-1 1 .5)
@@ -104,8 +119,9 @@
       :style 'vlineandpoint
       )
 
-
+;
 ;; michael klingbeil's stretched harmonics example
+;
 
 (define (arpeggiate-exprhy keynums offset duration rate midpoint-frac
                            amplow amphi legato bass-legato
@@ -165,13 +181,45 @@
        	  (set! time (+ time (vary gap 0.4))))
     result))
 
-;; create two layers of notes
+; now create two layers of harmonically generated notes
 
 (plot :title "Arpa Harmonic"
       :style :hbox
       :fields '((start seconds) (keyn note) (dur start) (amp unit))
       (arpa-harmonic 'g1 7.0 5.0)
       (arpa-harmonic 'g1 7.0 5.0))
+
+;
+;; plot hooks. first open a new window to plot keynum points
+;
+
+(plot :title "FM Chords" :style 'points 
+      :xaxis '(seconds 0 10) :yaxis 'keynum)
+
+; next define a hook that will return fm "chords" whenever we perform
+; Control-Option-Mouseclick in our window. X will get the mouse down
+; horizontal value, y gets its vertical value. rat and ind values are
+; extra fm ratio and index values we will associate with the hook.
+
+(define (fmkeys x y rat ind)
+  (let ((spec (fm-spectrum (hz y) 
+                           (between 1.0 rat)
+                           (vary ind .9)
+                           )))
+    (loop for k in (spectrum-keys spec :unique #t :min 20 :max 120)
+          collect (list x k))))
+
+; set the hook for the "FM Chords" plot window. hook will be called with
+; X Y pi and 3 whenever we press Control-Option-Mouseclick.
+
+(plot-hook "FM Chords" fmkeys pi 3)
+
+; after adding some points use #f to clear the hook
+
+(plot-hook "FM Chords" #f)
+
+
+
 
 
 

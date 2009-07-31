@@ -1166,6 +1166,21 @@ s7_pointer ffi_plot_xml (s7_scheme *s7, s7_pointer args)
   return s7_UNSPECIFIED(s7);
 }
 
+s7_pointer ffi_plot_add_xml_points (s7_scheme *s7, s7_pointer args)
+{
+  char* s0; char* s1;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_plot_add_xml_points", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_plot_add_xml_points", 2, s7_car(args), "a c-string"));
+  s1=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  plot_add_xml_points(s0, s1);
+  return s7_UNSPECIFIED(s7);
+}
+
 s7_pointer ffi_plot_data (s7_scheme *s7, s7_pointer args)
 {
   s7_Int i0;
@@ -2859,5 +2874,6 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_fms_save", ffi_fms_save, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_isfiletype", ffi_fms_isfiletype, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_plot_xml", ffi_plot_xml, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_plot_add_xml_points", ffi_plot_add_xml_points, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_plot_data", ffi_plot_data, 2, 0, false, "ffi function");
 }

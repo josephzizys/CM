@@ -603,8 +603,7 @@ class PointClipboard
   void add(LayerPoint* p) {points.add(p);}
 };
 
-class Plotter  : public Component, 
-  public ScrollBarListener   // for callback from scrollbars
+class Plotter  : public Component, public ScrollBarListener 
 {
  private:
   class Field
@@ -730,15 +729,30 @@ class Plotter  : public Component,
     Component* window=getTopLevelComponent(); // plotter window
     return (window) ? window->getName() : String::empty;
   } 
+
+  //  void handleMessage (const Message &message);
 };
 
 ///
 /// Plotter Window
 ///
 
-class PlotterWindow : public DocumentWindow, public MenuBarModel
+class PlotterWindow : public DocumentWindow,
+
+  public MenuBarModel
 {
+
  public:
+
+  class PlotterWindowListener : public MessageListener
+  {
+  public:
+    void handleMessage (const Message &message);//{std::cout << "message!\n";}
+    PlotterWindow* window;
+  PlotterWindowListener(PlotterWindow* w) : window(w) {}
+  };
+  PlotterWindowListener listener;
+
   Plotter* plotter;
   File plotfile;
   MenuBarComponent* menubar;
@@ -756,11 +770,12 @@ class PlotterWindow : public DocumentWindow, public MenuBarModel
   void openPlayPlotDialog();
   void openEditPointsDialog();
   void openRescalePointsDialog(int cmd);
-
-  static void openXml(String str);
+  //  static void openXml(String str);
+  static void openWindowFromXml(void* str);
   static void browseForFileToOpen(int type);
   //  static void openXml(File fil);
   //  static void openMidiFile(File fil);
+  void addXmlPoints(String xml);
   bool save(bool saveas=false);
   String toXmlString();
   String getPlotTitle() {return getName();}

@@ -126,6 +126,7 @@
     (ffi_fms_isfiletype int "fms_isfiletype" c-string)
 
     (ffi_plot_xml void "plot_xml" c-string)
+    (ffi_plot_add_xml_points void "plot_add_xml_points" c-string c-string)
     (ffi_plot_data c-string "plot_data" c-string int)
     ))
 

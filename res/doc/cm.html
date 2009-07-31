@@ -3039,13 +3039,14 @@ Returns the current time of the scheduler. See also <a href="#elapsed"><code>ela
 
 <h2 id="plotting">Plotting</h2>
 
-<p>Grace's plotting windows support graphic display, editing and audio
+<p>Plot Windows support graphic display, editing and audio
 playback of multi-dimensional data sets. Commands to create new plots, open existing plots (.xml) or plot Midi files are in
 the Console's <span class="menuitem">File</span> menu. The functions defined below provided a simple API for working with plots in code. See <span class="menuitem">Help&gt;Examples&gt;Plotting</span> for various examples of coding plots.</p>
 
 <p>For any plotting window:</p>
 <ul>
   <li>To add new points: Control-click</li>
+  <li>To call a <a href="#plot-hook">plot hook</a> that adds new points: Control-Option-click</li>
   <li>To select points: Click on point or click-drag region</li>
   <li>To delete points: Delete key</li>
   <li>To edit layer properties: Double-click background</li>
@@ -3077,8 +3078,8 @@ Creates a new plot given zero or more global plot settings followed by
 </p>
 
 <dl>
-  <dt><code>(</code> <code>(</code><var>c1</var> <var>c2</var> <var>...</var> <var>cn</var><code>)</code> <var>...</var><code>)</code></dt>
-<dd>A list of lists where each sublist defines the data <a href="#fields">fields</a> of a point record.</dd>
+  <dt id="point_record"><code>(</code> <code>(</code><var>v1</var> <var>v2</var> <var>...</var> <var>vn</var><code>)</code> <var>...</var><code>)</code></dt>
+<dd>Each sublist defines a <var>point record</var> containing a value for every <a href="#fields">field</a> of plotted data.</dd>
 
 <dt><code>(</code><var>x1</var> <var>y1</var> <var>x2</var> <var>y2</var> <var>...</var> <var>xn</var> <var>yn</var><code>)</code></dt>
 <dd>A flat list of <var>x</var> <var>y</var> point data.</dd>
@@ -3154,13 +3155,14 @@ Provides full control over the interpretation of the data fields in
   href="#xaxis">xaxis</a>  and <a href="#yaxis">yaxis</a> settings above. To
   force field to share the axis of a (leftward) field specify the name of that field as the axisinfo.</dd>
 
-
+<!--
   <dt id="values"><span class="keyword"><code>values:</code></span> {<var>int</var> | <code>y</code>}</dt>
   <dd>Specifies how to parse non-standard point
   lists, i.e. flat lists containing only y data or flat lists in which
   each series of <var>int</var> values should become a single
   point.</dd>
-
+-->
+  
 </dl>
 
 </blockquote>
@@ -3176,6 +3178,16 @@ specified. If <var>all</var> is false then only the points in the
 topmost (focus) layer will be returned otherwise all layer data will be
 returned.  </p> </blockquote>
 <!-- END DEFINITION -->
+
+<!-- DEFINITION --> <table class="entry" id="plot-hook"> <tr
+class="entry"> <td class="formals"> <span
+class="funcname">plot-hook</span> (<var class="arg">title</var> <var
+class="arg">function</var> <var class="rest">userdata...</var>)</td> </tr> <tr><td class="retval"
+colspan="2">&rarr; list</td></tr> </table> <blockquote> <p>Associates <var>function</var> with Control-Option-Mouseclicking inside the plot window with <var>title</var>. When a Control-Option-Mouseclick occurs, <var>function</var> will be be called automatically and passed the X and Y values of the mouse click along with any additional <var>userdata...</var> values the user provided. The  <var>function</var> (hook) should return a list of fully specified <a href="#point_record">point records</a> to add to the window, or an empty list if no points should be added.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
 
 
 <h2 id="sal">SAL</h2>

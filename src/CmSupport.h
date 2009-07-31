@@ -157,6 +157,7 @@ void fms_xml(char* str);
 // plotting
 
 void plot_xml(char* str);
+void plot_add_xml_points(char* title, char* points);
 char* plot_data(char* window, int layer);
 
 #endif

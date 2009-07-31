@@ -97,4 +97,5 @@
 (define ffi_fms_save (foreign-lambda void "fms_save" c-string))
 (define ffi_fms_isfiletype (foreign-lambda int "fms_isfiletype" c-string))
 (define ffi_plot_xml (foreign-lambda void "plot_xml" c-string))
+(define ffi_plot_add_xml_points (foreign-lambda void "plot_add_xml_points" c-string c-string))
 (define ffi_plot_data (foreign-lambda c-string "plot_data" c-string int))

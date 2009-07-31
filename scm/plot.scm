@@ -77,6 +77,13 @@
 	 (if (null? (cdr tail)) (error "missing debug value")
 	     (set! debug (cadr tail)))
 	 (set! tail (cdr tail)))
+	((#:points)
+	 (if (null? (cdr tail)) (error "missing points value"))
+	 (if (not (pair? (cadr tail)))
+	     (error "not a points list" (cadr tail)))
+	 (set! plots (cons (list (cadr tail) style #f #f) plots))
+	 (set! global #f)
+	 (set! tail (cdr tail)))
 	(else
 	 (if (pair? (car tail))
 	     (let ((pdata (car tail)))
@@ -114,11 +121,15 @@
 		 (set! access (list)))))
       (format port "</fields>")
       (format port "<layers>")
-      (unless (null? plots)
+      (cond 
+       ((null? plots)
+	(points->xml port (list (list) style #f #f) fmat access)
+	)
+       (else
 	(unless fmat (set! fmat (guess-data-format (caar plots))))
 	(do ((tail plots (cdr tail)))
 	    ((null? tail) #f)
-	  (points->xml port (car tail) fmat access)))
+	  (points->xml port (car tail) fmat access))))
       (format port "</layers>")
       (format port "</plot>")
       (cond ((not debug)
@@ -189,8 +200,8 @@
 	      (delim " axis=\"" " "))
 	     ((null? tail)
 	      (format port "\"/>") )
-	   (display delim port)
-	   (display (tostring (car tail)) port)))
+	   (format port delim )
+	   (format port (tostring (car tail)) )))
 	(axisinfo
 	 (format port "<field name=\"~a\" axis=\"~a\"/>"
 		 (tostring name)
@@ -239,11 +250,13 @@
     (if (not (null? access))
 	(do ((tail access (cdr tail))
 	     (delim " access=\"" " " ))
-	    ((null? tail) (display "\""  port))
-	  (display delim port)
-	  (display (car tail) port)))
+	    ((null? tail) (format port "\"" ))
+	  (format port delim )
+	  (format port "~a" (car tail) )))
     (format port ">")
-    (cond ((pair? (car data))
+    (cond ((null? data) ; an empty layer
+	   )
+	  ((pair? (car data))
 	   ;; each sublist is a point record (single line )
 	   (do ((tail data (cdr tail)))
 	       ((null? tail) #f)
@@ -311,3 +324,72 @@
       (read-from-string str))
     ))
   
+;;
+;; Plot hooks. a plot hook is a function of (at least) two args, it is
+;; passed the mousedown X and Y and any additional user args. it
+;; should return list of point records or ().
+;;
+
+(define *plot-hooks* (make-equal-hash-table))
+
+(define (plot-hook title func . args)
+  ;; associate a plot hook with a window title
+  (unless (string? title) 
+    (error "Not a title string" title))
+  (unless (or (not func) (procedure? func))
+    (error "Not a function or #f" func))
+  (if func (hash-set! *plot-hooks* title (cons func args))
+      (hash-set! *plot-hooks* title #f))
+  func)
+
+(define (call-plot-hook title x y)
+  ;; call user's hook registered under title, send generated points back
+  ;; the plot.
+  (define (point? x)
+    (and (pair? x) 
+	 (not (null? (cdr x)))
+	 (every? (lambda (x)
+		   (and (number? x)
+			(or (integer? x) (inexact? x))))
+		 x)))
+  (let* ((hook (or (hash-ref *plot-hooks* title)
+		   (error (format #f "No hook registered for plot ~S"
+				  title))))
+	 ;; call user function, pass x and y and any user args
+	 (data (apply (car hook) x y (cdr hook)))
+	 (port #f))
+    (cond ((null? data) #f)
+	  ((point? data)
+	   (set! data (list data)))
+	  ((and (pair? data) (every? point? data)) #f)
+	  ((not data) 
+	   (set! data '()))
+	  (else
+	   (error "Not a list of point records" data)))
+    (if (null? data) 
+	(void)
+	(let ((port (open-output-string)))
+	  (format port "<points>")
+	  (do ((tail data (cdr tail)))
+	      ((null? tail) #f )
+	    (format port "<point>")
+	    (do ((e (car tail) (cdr e))
+		 (d "" " "))
+		((null? e) #f)
+	      (format port d)
+	      (format port "~s" (car e)))
+	    (format port "</point>"))
+	  (format port "</points>")
+	  (ffi_plot_add_xml_points title (get-output-string port))
+	  (void)))))
+  
+; (define (foo x y) (list (list x y) (list (+ x 1) (+ y 1))))
+; (plot-hook "Untitled" foo)
+; (call-plot-hook "Untitled" 0 0)
+; (define (bar x y r i)
+;   (let ((spec (fm-spectrum (hz y) r i)))
+;     (loop for k in (spectrum-keys spec :unique #t)
+; 	  collect (list x k))))
+; (plot-hook "Untitled" bar pi 4)    
+
+
