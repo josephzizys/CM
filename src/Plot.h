@@ -773,8 +773,8 @@ class PlotterWindow : public DocumentWindow,
   //  static void openXml(String str);
   static void openWindowFromXml(void* str);
   static void browseForFileToOpen(int type);
-  //  static void openXml(File fil);
-  //  static void openMidiFile(File fil);
+  static void openXmlFile(File file);
+  static void openMidiFile(File file);
   void addXmlPoints(String xml);
   bool save(bool saveas=false);
   String toXmlString();

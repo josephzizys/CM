@@ -54,6 +54,18 @@ bool Grace::moreThanOneInstanceAllowed(void)
 
 void Grace::anotherInstanceStarted(const juce::String& commandLine)
 {
+  StringArray droppedfiles;
+  // tokenize input with whitespace inside quoted file names preserved
+  droppedfiles.addTokens(commandLine, true);
+  int size=droppedfiles.size();
+  if (size>0)
+    {
+      // strip explicit quotes from file names
+      for (int i=0;i<size;i++)
+	droppedfiles.set(i, droppedfiles[i].unquoted());
+      if (Console::getInstance()->isInterestedInFileDrag(droppedfiles))
+	Console::getInstance()->filesDropped(droppedfiles,0,0);
+    }
 }
 
 void Grace::initialise(const juce::String& commandLine)

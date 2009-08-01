@@ -17,23 +17,20 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   <h1>Changelog</h1>
   
   <h2>SVN trunk (3.3.0) </h2>
-  
-  <ul> <li class="change">New application: GraceCL is modified version
-     of the Grace environment for use with Common Lisp (SBCL or CLisp)
-     and Common Music 2 releases (version 2.12.0 or higher). GraceCL
-     is intened to be a replacement for running CM2 under Emacs and
-     Slime, as such it does not contain an Audio menu or real time
-     scheduling. To learn how to use GraceCL, start the application
-     and follow the instructions printed in the Console window.</li>
 
-     <li class="change">New feature: Graphical Plotting windows. Use File&gt;New Plot&gt; or the Scheme function <a href="cm.html#plot">plot</a> to open a new plotting window. See <A href="cm.html#plotting">Plotting</a> for more information.</li>
+ <ul>  
+     <li class="change">New feature: Plotting windows support the display, editing and sonification of user defined data sets. See <A href="cm.html#plotting">Plotting</a> for more information.</li>
 
-    <li class="change">New feature: Editor windows now support
-     'triggers' for interactive evaluation.To add a
-     trigger use the Eval&gt;Triggers submenu. Once a trigger is
-     attached use it to evaluate the buffer or buffer
-     selection. Triggers can be configured
-     interactively and restored/saved to XML descriptions.  </li>
+    <li class="change">New feature: Editor window 'triggers' for
+      interactive evaluation.To add a trigger to a buffer use the
+      Eval&gt;Triggers submenu. Once a trigger is attached use it to
+      evaluate the buffer or buffer selection. Triggers can be
+      configured interactively and restored/saved to XML descriptions.
+      </li>
+
+    <li class="change">New feature: application icons designed by Tobias Kunze for Mac and Windows</li>
+
+    <li class="change">New feature: Drag and Drop supported file types on Console window and Application Icon.  Source files are opened in the editor, Midi files are opened in the plotter.</li>
 
      <li class="change">New feature: Command line options are now available for the 'cm' console application. Type 'cm --help' for more information.</li>
 
@@ -61,7 +58,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     </li>
 
     <li class="change">New function:
-    <a href="./cm.html#rest?">rest?</a>. 
+    <a href="./cm.html#rest_">rest?</a>. 
     </li>
    
     <li class="change">New function:
@@ -134,6 +131,16 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     <li class="change">Bug fix: Audio Player's Settings... button is now disabled during audio playback.</li>
     <li class="change">Bug fix: Evaling regions in SAL buffers now works correctly.</li>
     <li class="change">Bug fix: COMMAND-A (Select All) in editor now works correctly.</li>
+
+      <li class="change">New application target: GraceCL is modified version
+     of the Grace environment for use with Common Lisp (SBCL or CLisp)
+     and Common Music 2 releases (version 2.12.0 or higher). GraceCL
+     is intened to be a replacement for running CM2 under Emacs and
+     Slime, as such it does not contain an Audio menu or real time
+     scheduling. To learn how to use GraceCL, start the application
+     and follow the instructions printed in the Console window.</li>
+
+
 </ul>
 
 
@@ -148,8 +155,6 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     <li class="change">Enhancement: new Csound audio target. Use <span class="menuitem">Audio&gt;Csound&gt;</span> menu to configure your Csound environment. See <a href="cm.html#csound">csound documentation</a> and the Help menu's <a href="csound.sal">csound example</a> for more information.</li>
 
     <li class="change">Enhancement: added <a href="cm.html#sndlib"> SndLib documentation</a>.</li>
-
-    <li class="change">Enhancement: Application Icon for Grace (Mac).</li>
 
     <li class="change">Cleaned up numerous dictionary entries including a new entry for <a href="cm.html#sprout">sprout</a>. Dictionary now validates as xhtml strict.</li>
 
@@ -190,7 +195,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 <hr/>
 <address></address>
 <p>
-<!-- hhmts start --> Last modified: Tue Jul 28 09:23:26 CDT 2009 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Sat Aug  1 09:17:47 CDT 2009 <!-- hhmts end -->
 </p>
 </body>
 </html>

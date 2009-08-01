@@ -4,6 +4,96 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>scm</string>
+				<string>lisp</string>
+				<string>ins</string>
+				<string>clm</string>
+			</array>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>TEXT</string>
+				<string>utxt</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>icons.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Lisp source file</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>sal</string>
+			</array>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>TEXT</string>
+				<string>utxt</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>icons.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>SAL source file</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>fms</string>
+			</array>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>TEXT</string>
+				<string>utxt</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>icons.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>FOMUS source file</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>xml</string>
+			</array>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>TEXT</string>
+				<string>utxt</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>icons.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>XML source file</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>mid</string>
+			</array>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>Midi</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>icons.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>MIDI file</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>Grace</string>
 	<key>CFBundleIconFile</key>

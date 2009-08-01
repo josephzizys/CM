@@ -874,7 +874,7 @@ void cs_send_score(int typ, int num, double time, char* pars)
 
 int fms_open_score(char* scorename, char* scoreargs)
 {
-  Fomus::getInstance()->openScore(String(scorename), String(scoreargs), true);
+  return Fomus::getInstance()->openScore(String(scorename), String(scoreargs), true);
 }
 
 void fms_close_score()

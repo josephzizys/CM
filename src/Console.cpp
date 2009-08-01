@@ -15,19 +15,21 @@
 #include "Audio.h"
 #include "Images.h"
 #include "Plot.h"
+#include "TextEditor.h"
 #endif
 
 #include <iostream>
 
 juce_ImplementSingleton(Console)
 
-Console::Console()
-  : prompt (String::empty),
-    theme (NULL),
-    buffer (NULL),
-    manager (NULL)
+Console::Console() : 
+  prompt (String::empty),
+  theme (NULL),
+  buffer (NULL),
+  manager (NULL)
 {
   // GUI initialization code is done by window
+  supportedfiletypes=String(T(".scm.lisp.sal.ins.clm.fms.xml.mid"));
 }
 
 Console::~Console() 
@@ -42,6 +44,22 @@ Console::~Console()
     {
       delete manager; 
     }
+}
+
+String Console::getSupportedFileTypes()
+{
+  return supportedfiletypes;
+}
+
+bool Console::isSupportedFileType(File file)
+{
+  return supportedfiletypes.contains(file.getFileExtension());
+}
+
+bool Console::isSupportedFileType(String path)
+{
+  int dot=path.lastIndexOf(T("."));
+  return (dot<0) ? false : supportedfiletypes.contains(path.substring(dot));
 }
 
 void Console::setTheme(ConsoleTheme* th)
@@ -323,6 +341,32 @@ bool Console::getBeepOnError()
 {
   return Preferences::getInstance()->
     getBoolProp(T("ConsoleBeepOnError"), true);
+}
+
+bool Console::isInterestedInFileDrag(const StringArray &files)
+{
+  // return true if all the files are allowed
+  for (int i=0; i<files.size(); i++)
+    if (!isSupportedFileType(files[i]))
+      return false;
+  return true;
+}
+
+void Console::filesDropped(const StringArray &files, int x, int y)
+{
+  for (int i=0; i<files.size(); i++)
+    {
+      File file (files[i]);
+      // this check probably not needed
+      if (!isSupportedFileType(file)) continue; 
+      String type=file.getFileExtension();
+      if (type==T(".xml"))
+	PlotterWindow::openXmlFile(file);
+      else if (type==T(".mid"))
+	PlotterWindow::openMidiFile(file);
+      else
+	new TextEditorWindow(file);
+    }
 }
 
 /*=======================================================================*

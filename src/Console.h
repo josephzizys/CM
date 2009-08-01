@@ -50,7 +50,9 @@ class ConsoleTheme
 
 class Console :
 #ifdef GRACE
-    public Component, public ApplicationCommandTarget ,
+  public Component, 
+  public FileDragAndDropTarget,
+  public ApplicationCommandTarget ,
 #endif
     public AsyncUpdater
 {
@@ -121,6 +123,11 @@ class Console :
   void postAsyncMessage(int typ, int msg,  bool trigger);
   void handleAsyncUpdate() ;
 
+  String supportedfiletypes;
+  String getSupportedFileTypes();
+  bool isSupportedFileType(String path);
+  bool isSupportedFileType(File file);
+
 #ifdef GRACE
   Font getFont();
   void setFont(Font font);
@@ -135,10 +142,10 @@ class Console :
   bool perform(const ApplicationCommandTarget::InvocationInfo& info);
   bool getBeepOnError();
   void setBeepOnError(bool b);
+  bool isInterestedInFileDrag (const StringArray &files);
+  void filesDropped (const StringArray &files, int x, int y);
 #endif
-
   juce_DeclareSingleton (Console, true)
-
 };
 
 #ifdef GRACE

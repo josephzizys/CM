@@ -89,41 +89,45 @@ bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
   userargs.addTokens(scoreargs, true);
   bool clrsc = false;
   bool newsc = false;
-  bool xmlerr = false;
+  bool dorun = false;
+  //bool xmlerr = false;
   OwnedArray<scopedxml> els;
   for (int i=0; i<userargs.size(); ++i)
     {
       std::cout << userargs[i].toUTF8() << std::endl;
       bool istr = true, eatnext = false;
-      if (i >= userargs.size() - 1) {
-	if (userargs[i + 1] == "#f") {
+      if (i + 1 < userargs.size()) {
+	if (userargs[i + 1] == "#f" || userargs[i + 1] == "#F" || userargs[i + 1] == "nil" || userargs[i + 1] == "NIL") {
 	  istr = false;
 	  eatnext = true;
-	} else if (userargs[i + 1] == "#t") eatnext = true;
+	} else if (userargs[i + 1] == "#t" || userargs[i + 1] == "#T" || userargs[i + 1] == "t" || userargs[i + 1] == "T") {
+	  eatnext = true;
+	}
       }
-      if (userargs[i] == ":run" && istr) {
-	scores.getUnchecked(current)->runwhendone = true;
-      } else if (userargs[i] == ":clear" && istr) {
+      if ((userargs[i] == ":run" || userargs[i] == "run:" || userargs[i] == "run" ||
+	   userargs[i] == ":RUN" || userargs[i] == "RUN:" || userargs[i] == "RUN") && istr) {
+	dorun = true;
+      } else if ((userargs[i] == ":clear" || userargs[i] == "clear:" || userargs[i] == "clear" ||
+		  userargs[i] == ":CLEAR" || userargs[i] == "CLEAR:" || userargs[i] == "CLEAR") && istr) {
 	clrsc = true; //clearScore();
-      } else if (userargs[i] == ":new" && istr) {
+      } else if ((userargs[i] == ":new" || userargs[i] == "new:" || userargs[i] == "new" ||
+		  userargs[i] == ":NEW" || userargs[i] == "NEW:" || userargs[i] == "NEW") && istr) {
 	newsc = true;
       } else if (userargs[i] == ":err" && istr) {
-	xmlerr = true;
+	return true;
       } else { // try to parse XML
 	std::cout << "Trying to parse |" << userargs[i].toUTF8() << "|" << std::endl;
 	scopedxml* x;
 	els.add(x = new scopedxml(userargs[i]));
-	if (!x) xmlerr = true;
+	if (!x) return true;
       }
       if (eatnext) ++i;
     }
-  if (xmlerr) {
-    //Console::getInstance()->printError((char*)">>> Error: Fomus: bad score arguments\n");
-    return true;
-  }
   if (scorename != T("fomus")) { // if default score, do nothing
     if (newsc) newScore(scorename, fromscm); else selectScore(scorename, fromscm); // anything else = filename
   }
+  if (clrsc) clearScore();
+  scores.getUnchecked(current)->runwhendone = dorun;
   for (int i = 0; i < els.size(); ++i) {
     if (els[i]->getel()) {
       try {

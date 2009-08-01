@@ -659,11 +659,6 @@ Exactly like <a href="#sort"><code>sort</code></a> except that <var>list</var> i
 <!-- END DEFINITION -->
 
 
-
-
-
-
-
 <h3 id="mapping">Mapping and Transformation</h3>
 
 <!-- DEFINITION -->
@@ -746,6 +741,24 @@ Returns the hertz value of <var>nkl</var>, which can be a note, key or list of t
 <blockquote>
 <p>
 Returns pitch class (0-11) of <var>nkl</var>, which can be a note, key or list of the same.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="rest_">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">rest?</span>
+      (<var class="arg">x</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; bool</td></tr>
+</table>
+<blockquote>
+<p>
+Returns true if <var>x</var> is a 'musical rest' marker (<code>r</code> or the key number -1).
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -3039,15 +3052,16 @@ Returns the current time of the scheduler. See also <a href="#elapsed"><code>ela
 
 <h2 id="plotting">Plotting</h2>
 
-<p>Plot Windows support graphic display, editing and audio
+<p>Plot windows support the graphic display, editing and audio
 playback of multi-dimensional data sets. Commands to create new plots, open existing plots (.xml) or plot Midi files are in
-the Console's <span class="menuitem">File</span> menu. The functions defined below provided a simple API for working with plots in code. See <span class="menuitem">Help&gt;Examples&gt;Plotting</span> for various examples of coding plots.</p>
+the Console's <span class="menuitem">File</span> menu. See <a href="plot.scm"><span class="menuitem">Help&gt;Examples&gt;Plotting</span></a> for various examples of plot coding.</p>
 
 <p>For any plotting window:</p>
 <ul>
-  <li>To add new points: Control-click</li>
-  <li>To call a <a href="#plot-hook">plot hook</a> that adds new points: Control-Option-click</li>
+  <li>To add new points: Control-Mouseclick</li>
+  <li>To call a <a href="#plot-hook">plot hook</a>: Control-Option-Mouseclick</li>
   <li>To select points: Click on point or click-drag region</li>
+  <li>To add or remove from selection: Shift-Click on point</li>
   <li>To delete points: Delete key</li>
   <li>To edit layer properties: Double-click background</li>
   <li>To zoom axis: Click drag on axis ruler</li>
@@ -3056,6 +3070,7 @@ the Console's <span class="menuitem">File</span> menu. The functions defined bel
 </ul>
 
 <p>
+The functions defined below provided an API for working with plots in Scheme or SAL buffers.
 </p>
 
 <!-- DEFINITION< -->
@@ -3084,8 +3099,11 @@ Creates a new plot given zero or more global plot settings followed by
 <dt><code>(</code><var>x1</var> <var>y1</var> <var>x2</var> <var>y2</var> <var>...</var> <var>xn</var> <var>yn</var><code>)</code></dt>
 <dd>A flat list of <var>x</var> <var>y</var> point data.</dd>
 
+<!--
 <dt><code>(</code><var>v1</var> <var>v2</var> <var>...</var>
 <var>vn</var><code>)</code></dt> <dd>A flat list of values to parse in conjunction with the  <a href="#values">values:</a> setting below.</dd>
+-->
+
 </dl>
 
 <p>
@@ -3183,7 +3201,7 @@ returned.  </p> </blockquote>
 class="entry"> <td class="formals"> <span
 class="funcname">plot-hook</span> (<var class="arg">title</var> <var
 class="arg">function</var> <var class="rest">userdata...</var>)</td> </tr> <tr><td class="retval"
-colspan="2">&rarr; list</td></tr> </table> <blockquote> <p>Associates <var>function</var> with Control-Option-Mouseclicking inside the plot window with <var>title</var>. When a Control-Option-Mouseclick occurs, <var>function</var> will be be called automatically and passed the X and Y values of the mouse click along with any additional <var>userdata...</var> values the user provided. The  <var>function</var> (hook) should return a list of fully specified <a href="#point_record">point records</a> to add to the window, or an empty list if no points should be added.
+colspan="2">&rarr; list</td></tr> </table> <blockquote> <p>Associates <var>function</var> with Control-Option-Mouseclick inside the plot window named <var>title</var>. When a Control-Option-Mouseclick occurs, <var>function</var> will be be called automatically and passed the X and Y values of the mouse click along with any additional values specified in  <var>userdata</var>. The  <var>function</var> (hook) should return a list of fully specified <a href="#point_record">point records</a> to add to the window, or an empty list if no points should be added.
 </p>
 </blockquote>
 <!-- END DEFINITION -->

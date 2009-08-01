@@ -1642,49 +1642,65 @@ void PlotterWindow::browseForFileToOpen(int type)
 {
   if (type==CommandIDs::PlotterOpenMidiFile)
     {
-      FileChooser ch (T("Open Midi Plot"),
+      FileChooser ch (T("Plot Midi File"),
 		      File::getCurrentWorkingDirectory(),
 		      T("*.mid"));
-      if (!ch.browseForFileToOpen()) return;
-      String title=ch.getResult().getFileNameWithoutExtension();
-      FileInputStream* input=ch.getResult().createInputStream();
-      MidiFile midifile;
-      if (midifile.readFrom(*input))
-	new PlotterWindow(title, midifile);
-      else
-	{
-	  String err=T(">>> Error: ");
-	  err << ch.getResult().getFullPathName() 
-	      << T(" is not a valid midi file.");
-	  Console::getInstance()->printError(err);
-	}
+      if (ch.browseForFileToOpen())
+	openMidiFile(ch.getResult());
     }
   else if (type==CommandIDs::PlotterOpen)
     {
       FileChooser ch (T("Open Plot"), 
 		      File::getCurrentWorkingDirectory(),
 		      T("*.xml"));
-      if (!ch.browseForFileToOpen()) return;
-      XmlDocument doc (ch.getResult());
-      XmlElement* xml = doc.getDocumentElement();
-      if (xml && xml->getChildByName(T("fields")) &&
-	  xml->getChildByName(T("layers")))
-	{
-	  PlotterWindow* w=new PlotterWindow(xml);
-	  w->setPlotFile(ch.getResult());
-	  delete xml;
-	}
-      else
-	{
-	  String err=T(">>> Error ");
-	  if (!xml)
-	    err << doc.getLastParseError() << T("\n");
-	  else
-	    err << T("not valid xml plot data\n");
-	  Console::getInstance()->printError(err);
-	}
+      if (ch.browseForFileToOpen())
+	openXmlFile(ch.getResult());
     }
 }
+
+void PlotterWindow::openXmlFile(File file)
+{
+  XmlDocument doc (file);
+  XmlElement* xml = doc.getDocumentElement();
+  if (xml && xml->getChildByName(T("fields")) &&
+      xml->getChildByName(T("layers")))
+    {
+      PlotterWindow* w=new PlotterWindow(xml);
+      w->setPlotFile(file);
+      delete xml;
+    }
+  else
+    {
+      String err=T(">>> Error: ");
+      if (!xml)
+	err << doc.getLastParseError() << T("\n");
+      else
+	{
+	err << file.getFullPathName() 
+	    << T(" is not a valid plot (xml) file.\n");
+	delete xml;
+	}
+      Console::getInstance()->printError(err);
+    }
+}
+
+void PlotterWindow::openMidiFile(File file)
+{
+  String title=file.getFileNameWithoutExtension();
+  FileInputStream* input=file.createInputStream();
+  MidiFile midifile;
+  if (midifile.readFrom(*input))
+    new PlotterWindow(title, midifile);
+  else
+    {
+      String err=T(">>> Error: ");
+      err << file.getFullPathName() 
+	  << T(" is not a valid midi file.");
+      Console::getInstance()->printError(err);
+    }
+}
+
+
 
 bool PlotterWindow::save(bool saveas)
 {
