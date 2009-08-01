@@ -1820,6 +1820,7 @@ const PopupMenu PlotterWindow::getMenuForIndex(int idx, const String &name)
   else if (name==T("View"))
     {
       Layer* layer=plotter->getFocusLayer();
+      val=layer->getLayerStyle();
       // add these with focus colored items to make it clear that the
       // styling change only affects the focus plot
       menu.addItem(CommandIDs::PlotterStyle + Layer::line, 
@@ -2135,6 +2136,34 @@ String Layer::toString(int exportid, int decimals,
   text << done ;
   //std::cout << text.toUTF8() << "\n";
   return text;
+}
+
+/*=======================================================================*
+
+                             Plotting Dialogs
+
+ *=======================================================================*/
+
+
+static bool isNumberText(String num)
+{
+  int dots=0;
+  int sign=0;
+  int digi=0;
+  int size=num.length();
+  for (int i=0; i<size; i++)
+    {
+      if (num[i]==T('-')) 
+	if (i==0) sign=1;
+	else return false; // bad sign
+      else if (num[i]==T('.'))
+	if (dots==0) dots++;
+	else return false; // too many dots
+      else if (num[i]<T('0') || num[i]>T('9')) 
+	return false;
+      else digi++;
+    }
+  return digi>0;
 }
 
 class ExportPointsDialog : 
@@ -2581,15 +2610,16 @@ private:
   Label* tolabel;
   Label* bylabel;
   Label* typelabel;
+  Label* decimalslabel;
+  Label* tickslabel;
   ComboBox* typemenu;
   TextEditor* namebuffer;
-  Label* tickslabel;
   TextEditor* frombuffer;
   TextEditor* tobuffer;
   TextEditor* bybuffer;
   TextEditor* ticksbuffer;
-  Label* decimalslabel;
   ComboBox* decimalsmenu;
+  bool axistypechanged;
 };
 
 AxisDialog::AxisDialog (Plotter* pl, int orient)
@@ -2606,7 +2636,8 @@ AxisDialog::AxisDialog (Plotter* pl, int orient)
       bybuffer (0),
       ticksbuffer (0),
       decimalslabel (0),
-      decimalsmenu (0)
+      decimalsmenu (0),
+      axistypechanged (false)
 {
   plotter=pl;
   ishorizontal=(orient==Plotter::horizontal) ? true : false;
@@ -2791,6 +2822,7 @@ void AxisDialog::comboBoxChanged (ComboBox* cbox)
       Axis a(0);
       a.init((Axis::AxisType)cbox->getSelectedId());
       updateFields(&a);
+      axistypechanged=true;
     }
   else if (cbox == decimalsmenu)
     {
@@ -2804,11 +2836,30 @@ void AxisDialog::textEditorReturnKeyPressed (TextEditor& editor)
   double val;
   Axis* axis=axisview->getAxis();
   bool redraw=false;
-  if (editor.getName()==T("namebuf"))
+
+  // pressing return in any box after the axis type has been reset by
+  // the user sends all fields!
+  if (axistypechanged)
+    {
+      String text=namebuffer->getText();
+      axis->setName(text);
+      if (isNumberText(text=frombuffer->getText()))
+	axis->setMinimum(text.getDoubleValue());
+      if (isNumberText(text=tobuffer->getText()))
+	axis->setMaximum(text.getDoubleValue());
+      if (isNumberText(text=bybuffer->getText()))
+	axis->setIncrement(text.getDoubleValue());
+      if (isNumberText(text=ticksbuffer->getText()))
+	axis->setTicks(text.getIntValue());
+      axis->setDecimals(decimalsmenu->getSelectedId()-1);
+      redraw=true;
+      axistypechanged=false;
+    }
+  else if (editor.getName()==T("namebuf"))
     {
       axis->setName(editor.getText());
     }
-  if (editor.getName()==T("frombuf"))
+  else if (editor.getName()==T("frombuf"))
     {
       val=editor.getText().getDoubleValue();
       if (val<axis->getMaximum())
@@ -3527,26 +3578,7 @@ void RescalePointsDialog::buttonClicked (Button* button)
     }
 }
 
-static bool isNumberText(String num)
-{
-  int dots=0;
-  int sign=0;
-  int digi=0;
-  int size=num.length();
-  for (int i=0; i<size; i++)
-    {
-      if (num[i]==T('-')) 
-	if (i==0) sign=1;
-	else return false; // bad sign
-      else if (num[i]==T('.'))
-	if (dots==0) dots++;
-	else return false; // too many dots
-      else if (num[i]<T('0') || num[i]>T('9')) 
-	return false;
-      else digi++;
-    }
-  return digi>0;
-}
+
 
 void RescalePointsDialog::textEditorReturnKeyPressed (TextEditor& editor)
 {
