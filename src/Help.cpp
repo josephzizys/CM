@@ -105,10 +105,10 @@ void Help::restoreHelpFiles()
 	Console::getInstance()->printWarning(T("Couldn't create document directory ") + cmdocdir.getFullPathName() + T("\n"));
 	return;
       }
-  if (!htm.existsAsFile())
+  if (true) //!htm.existsAsFile()
     if (!htm.replaceWithText(String(cm_html, cm_htmlSize)))
       Console::getInstance()->printWarning(T("Couldn't save ") + htm.getFullPathName() + T("\n"));
-  if (!css.existsAsFile())
+  if (true) //!css.existsAsFile()
     if (!css.replaceWithText(String(cm_css, cm_cssSize)))
       Console::getInstance()->printWarning(T("Couldn't save ") + css.getFullPathName() + T("\n"));
 }

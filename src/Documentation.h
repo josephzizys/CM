@@ -12,7 +12,7 @@ namespace Documentation
     const int           cm_cssSize = 7086;
 
     extern const char*  cm_html;
-    const int           cm_htmlSize = 148333;
+    const int           cm_htmlSize = 159473;
 
     extern const char*  continuum_sal;
     const int           continuum_salSize = 3137;
