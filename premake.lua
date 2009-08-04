@@ -204,7 +204,7 @@ for i = 1,3 do
       if os.fileexists(sndlib .. "mus-config.h") then
          add(mypackage.includepaths, sndlib)
          add(mypackage.libpaths, sndlib )
-	 if options["target"] == "vs2005" then
+	 if (options["target"] == "vs2005" or options["target"] == "vs2008") then
 	    add(mypackage.config["Debug"].links, "sndlib_debug")
 	    add(mypackage.config["Release"].links, "sndlib")
 	 else

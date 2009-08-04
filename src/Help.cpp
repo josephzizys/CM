@@ -386,6 +386,25 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("fit"), T("cm.html#fit"));
   cm.set(T("float"), T("cm.html#float"));
   cm.set(T("fm-spectrum"), T("cm.html#fm-spectrum"));
+
+  cm.set(T("fms:note"), T("cm.html#fms:note"));
+  cm.set(T("fms:rest"), T("cm.html#fms:rest"));
+  cm.set(T("fms:mark"), T("cm.html#fms:mark"));
+  cm.set(T("fms:meas"), T("cm.html#fms:meas"));
+  cm.set(T("fms:part"), T("cm.html#fms:part"));
+  cm.set(T("fms:inst"), T("cm.html#fms:inst"));
+  cm.set(T("fms:percinst"), T("cm.html#fms:percinst"));
+  cm.set(T("fms:metapart"), T("cm.html#fms:metapart"));
+  cm.set(T("fms:setting"), T("cm.html#fms:setting"));
+  cm.set(T("fms:measdef"), T("cm.html#fms:measdef"));
+  cm.set(T("fms:new-score"), T("cm.html#fms:new-score"));
+  cm.set(T("fms:load-score"), T("cm.html#fms:load-score"));
+  cm.set(T("fms:select-score"), T("cm.html#fms:select-score"));
+  cm.set(T("fms:run-score"), T("cm.html#fms:run-score"));
+  cm.set(T("fms:save-score"), T("cm.html#fms:save-score"));
+  cm.set(T("fms:clear-score"), T("cm.html#fms:clear-score"));
+  cm.set(T("fms:delete-score"), T("cm.html#fms:delete-score"));
+
   cm.set(T("fourth"), T("cm.html#fourth"));
   cm.set(T("hz"), T("cm.html#hz"));
   //  cm.set(T("hush"), T("cm.html#hush"));

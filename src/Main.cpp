@@ -260,7 +260,7 @@ int main(int argc, const char* argv[])
   // NORMAL STARTUP
 
   MessageManager::getInstance(); // stops an assert, not sure why
-  Console* con=Console::getInstance();
+  Console* con = Console::globalInstance = new Console;
   con->setPrompt(String("\ncm> "));
   //String vers=SystemStats::getJUCEVersion();
   //vers << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n");

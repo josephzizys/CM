@@ -367,9 +367,10 @@ void Console::filesDropped(const StringArray &files, int x, int y)
  *=======================================================================*/
 
 ConsoleWindow::ConsoleWindow ()
-  : DocumentWindow ( T("Console") , Colours::white,
+  : DocumentWindow ( String::empty , Colours::white,
 		     DocumentWindow::allButtons, true )
 {
+  setName(SysInfo::getApplicationName());
   Preferences* prefs=Preferences::getInstance();
   setMenuBar(this);
   Console* cons=Console::getInstance();

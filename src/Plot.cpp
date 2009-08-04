@@ -3291,15 +3291,17 @@ void PlayPlotDialog::playPlot(bool write)
 class PlayPlotWindow : public DocumentWindow 
 {
 public:
-  PlayPlotWindow(String title, PlayPlotDialog* comp)
-    : DocumentWindow(title, Colour(0xffe5e5e5),
-		     DocumentWindow::allButtons, true)
+  PlayPlotWindow(PlotterWindow* win)
+    : DocumentWindow(String::empty, Colour(0xffe5e5e5),
+		     DocumentWindow::closeButton, true)
   {
+    PlayPlotDialog* comp=new PlayPlotDialog(win->plotter);
+    setName(T("Play ")+win->getName());
     setContentComponent(comp,true,true);
     setUsingNativeTitleBar(true);
     setDropShadowEnabled(true);
     setVisible(true);
-    centreAroundComponent(0, getWidth(), getHeight());
+    centreAroundComponent(win->plotter, getWidth(), getHeight());
   }
   ~PlayPlotWindow()
   {
@@ -3312,7 +3314,7 @@ public:
 
 void PlotterWindow::openPlayPlotDialog ()
 {
-  new PlayPlotWindow(T("Play ")+getName(), new PlayPlotDialog(plotter));
+  new PlayPlotWindow(this);
   /*
   DialogWindow::showModalDialog(T("Play ")+getName(),
 				new PlayPlotDialog(plotter),
