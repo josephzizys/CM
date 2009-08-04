@@ -33,6 +33,8 @@
 #include "Skin.h"
 #include "Preferences.h"
 
+extern Console* globalConsole;
+
 const String Grace::getApplicationName(void)
 {
   // asd
@@ -70,8 +72,6 @@ void Grace::anotherInstanceStarted(const juce::String& commandLine)
 
 void Grace::initialise(const juce::String& commandLine)
 {
-  // Load preference file.
-  Preferences::getInstance();
   if (SysInfo::isWindows())
     lookandfeel = new WindowsSkin;
   else if (SysInfo::isMac())
@@ -79,10 +79,15 @@ void Grace::initialise(const juce::String& commandLine)
   else if (SysInfo::isLinux())
     lookandfeel = new LinuxSkin;
   LookAndFeel::setDefaultLookAndFeel(lookandfeel);
+  // Console must exist before any components attempt to write to it!
+  Console* con = Console::globalInstance = new Console;
+  // Load preference file.
+  Preferences::getInstance();
   // create application command manager
   CommandManager::getInstance()->registerAllCommandsForTarget(this);
+  // create the console window (console may have output in it already)
   new ConsoleWindow();
-  Console* con=Console::getInstance();
+
   String str=String::empty;
   str << getApplicationName() << T(" ") << SysInfo::getGraceVersion()
       << T(" ") << SysInfo::getCopyright(T("Todd Ingalls, Rick Taube"))
@@ -129,8 +134,17 @@ void Grace::shutdown()
      windows. */
 
   std::cout << "Quitting Grace...\n";
+  ConsoleWindow* cw=(ConsoleWindow *)Console::getInstance()->getParentComponent();
+  for (int i=0; i<Desktop::getInstance().getNumComponents(); i++)
+    {
+      Component* c=Desktop::getInstance().getComponent(i);
+      if (c!=cw) // handle console window later
+	{
+	  c->removeFromDesktop();
+	  // delete c;
+	}
+    }
   Preferences::getInstance()->getProps().saveIfNeeded();
-  delete lookandfeel;
   std::cout << "Deleting Scheme\n";
   Scheme::deleteInstance();
   std::cout << "Deleting CommonLisp\n";
@@ -145,16 +159,16 @@ void Grace::shutdown()
 #endif
   std::cout << "Deleting AudioManager\n";
   AudioManager::deleteInstance();
-  std::cout << "Deleting Console\n";
-  Console::deleteInstance();
+  std::cout << "Deleting Console Window\n";
+  // now delete the console window (console instance is automatically
+  // deleted by window because its the content componenet)
+  delete cw;
   std::cout << "Deleting CommandManager\n";
   CommandManager::deleteInstance();
   std::cout << "Deleting Preferences\n";
   Preferences::deleteInstance();
+  delete lookandfeel;
   std::cout << "Bye!\n";
-  //  std::cout << "Desktop components=" 
-  //	    << Desktop::getInstance().getNumComponents() << "\n";
-  //  std::cout << "name=" << Desktop::getInstance().getComponent(0)->getName().toUTF8() << "\n";
 }
 
 void Grace::showWorkingDirectory() 
@@ -200,7 +214,7 @@ void cm_cleanup()
       MidiOutPort::getInstance()->stopThread(2000);
     }
   Scheme::deleteInstance();
-  Console::deleteInstance();
+  delete Console::getInstance();
   MidiOutPort::deleteInstance();
   MidiInPort::deleteInstance();
   shutdownJuce_NonGUI();

@@ -286,6 +286,14 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::HelpTutorial + 5,
     CommandIDs::HelpTutorial + 6,
     CommandIDs::HelpTutorial + 7,
+    CommandIDs::HelpTutorial + 8,
+    CommandIDs::HelpTutorial + 9,
+    CommandIDs::HelpTutorial + 10,
+    CommandIDs::HelpTutorial + 11,
+    CommandIDs::HelpTutorial + 12,
+    CommandIDs::HelpTutorial + 13,
+    CommandIDs::HelpTutorial + 14,
+    CommandIDs::HelpTutorial + 15,
 
     CommandIDs::HelpWebSite + 0,
     CommandIDs::HelpWebSite + 1,
@@ -1501,7 +1509,7 @@ void TextBuffer::getCommandInfo(const CommandID id,
       break;
     case CommandIDs::EditorExpand:
       info.shortName=T("Expand");
-      info.setActive(false);
+      info.setActive(isSyntax(TextIDs::Sal));
       break;
       // Help Item
     case CommandIDs::EditorSymbolHelp:
@@ -1664,11 +1672,11 @@ bool TextBuffer::perform(const ApplicationCommandTarget::InvocationInfo&
     case CommandIDs::EditorExecute:
       eval();
       break;
-    case CommandIDs::FomusRunCurr:
-      eval();
-      break;
     case CommandIDs::EditorExpand:
       eval(true);
+      break;
+    case CommandIDs::FomusRunCurr:
+      eval();
       break;
     case CommandIDs::EditorIndent:
       syntacticIndent();

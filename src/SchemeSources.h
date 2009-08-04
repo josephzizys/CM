@@ -15,7 +15,7 @@ namespace SchemeSources
     const int           chickenbridge_scmSize = 2842;
 
     extern const char*  fomus_scm;
-    const int           fomus_scmSize = 11977;
+    const int           fomus_scmSize = 11824;
 
     extern const char*  genffi_scm;
     const int           genffi_scmSize = 21317;
@@ -39,7 +39,7 @@ namespace SchemeSources
     const int           s7_scmSize = 5161;
 
     extern const char*  sal_scm;
-    const int           sal_scmSize = 59389;
+    const int           sal_scmSize = 60258;
 
     extern const char*  sndlibws_scm;
     const int           sndlibws_scmSize = 24752;

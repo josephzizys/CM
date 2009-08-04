@@ -24,7 +24,7 @@ class CommandMenus
   static const int NumMidiInOpcodeFilter = 7;
   static const int NumHelpManual = 8;
   static const int NumHelpExample = 32;
-  static const int NumHelpTutorial = 8;
+  static const int NumHelpTutorial = 16;
   static const int NumHelpWebSite = 8;
   static const int NumFont = 2;
   static const int NumFontSize = 24;

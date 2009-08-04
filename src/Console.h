@@ -12,6 +12,7 @@
 #include "Messages.h"
 #include <iostream>
 
+
 class ConsoleTheme
 {
   static const int NUMCOLORS=9;
@@ -100,6 +101,13 @@ class Console :
  Console();
   ~Console();
 
+  static Console* globalInstance;
+
+  static Console* getInstance(void)
+    {
+      return globalInstance;
+    }
+
   TextEditor* buffer;  // ONLY USED IN GRACE
   ApplicationCommandManager* manager;
 
@@ -145,7 +153,6 @@ class Console :
   bool isInterestedInFileDrag (const StringArray &files);
   void filesDropped (const StringArray &files, int x, int y);
 #endif
-  juce_DeclareSingleton (Console, true)
 };
 
 #ifdef GRACE
@@ -190,7 +197,7 @@ class ConsoleWindow : public DocumentWindow , public MenuBarModel
 
  public:
   ConsoleWindow () ;
-  ~ConsoleWindow () ;
+  virtual ~ConsoleWindow () ;
   void closeButtonPressed () ;
   const StringArray getMenuBarNames ();
   const PopupMenu getMenuForIndex (int idx, const String &name);

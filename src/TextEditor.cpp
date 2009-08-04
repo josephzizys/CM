@@ -86,6 +86,7 @@ TextEditorWindow::TextEditorWindow (File file, String text, int synt,
 
 TextEditorWindow::~TextEditorWindow ()
 {
+  setMenuBar(0);
 }
 
 void TextEditorWindow::closeButtonPressed ()

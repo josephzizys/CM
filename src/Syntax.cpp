@@ -403,6 +403,7 @@ SalSyntax::SalSyntax ()
   addSalTok( T("output"), SalOutput, HiliteIDs::Hilite5);
   addSalTok( T("play"), SalPlay, HiliteIDs::Hilite5);
   addSalTok( T("plot"), SalPlot, HiliteIDs::Hilite5);
+  addSalTok( T("plothook"), SalPlotHook, HiliteIDs::Hilite5);
   addSalTok( T("print"), SalPrint, HiliteIDs::Hilite5);
   addSalTok( T("return"), SalReturn, HiliteIDs::Hilite5);
   addSalTok( T("run"), SalRun, HiliteIDs::Hilite5);

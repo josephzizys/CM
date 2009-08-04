@@ -86,6 +86,7 @@ bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
 
   scores.getUnchecked(current)->runwhendone = false;
   StringArray userargs;
+  std::cout << '|' << scoreargs.toUTF8() << '|' << std::endl;
   userargs.addTokens(scoreargs, true);
   bool clrsc = false;
   bool newsc = false;
@@ -154,12 +155,13 @@ void Fomus::saveScore(const String& fn, const bool fromscm) {
       Console::getInstance()->printError((char*)">>> Error: Fomus: no output filename specified\n");
       return;
     }
-    WildcardFileFilter wildcardFilter("*.fms", T("FOMUS Output File"));
-    FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
-    FileChooserDialogBox dialogBox(T("Save Score"), T("Specify an output `.fms' file path..."),
-				   browser, false, Colours::white);
-    if (dialogBox.show()) {
-      fomus_save(fomus_copy(getfomusdata()), browser.getCurrentFile().getFullPathName().toUTF8());
+    //WildcardFileFilter wildcardFilter("*.fms", T("FOMUS Output File"));
+    //FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
+    //FileChooserDialogBox dialogBox(T("Save Score"), T("Specify an output `.fms' file path..."),
+    //browser, false, Colours::white);
+    FileChooser choose(T("Save Score"), File::getCurrentWorkingDirectory(), "*.fms");
+    if (choose.browseForFileToSave(true)) {
+      fomus_save(fomus_copy(getfomusdata()), choose.getResult().getFullPathName().toUTF8());
     }
   } else
 #endif
@@ -198,12 +200,13 @@ void Fomus::newScore(const String& nam, const bool fromscm)
   FomusScore* score = new FomusScore();
 #ifdef GRACE
   if (!fromscm && nam.isEmpty() && scores.size() > 0) {
-    WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
-    FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
-    FileChooserDialogBox dialogBox(T("New Score"), T("Specify an output file path (`filename' setting value)..."),
-				   browser, false, Colours::white);
-    if (dialogBox.show()) {
-      File fn(browser.getCurrentFile());
+    //WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
+    //FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
+    //FileChooserDialogBox dialogBox(T("New Score"), T("Specify an output file path (`filename' setting value)..."),
+    //browser, false, Colours::white);
+    FileChooser choose(T("New Score"), File::getCurrentWorkingDirectory(), getwildcards());    
+    if (choose.browseForFileToSave(true)) {
+      File fn(choose.getResult());
       String fn0(fn.getFileName());
       score->name = (fn0.isEmpty() ? "(untitled)" : fn0);
       scores.add(score);
@@ -226,7 +229,8 @@ void Fomus::selectScore(const String& nam, const bool fromscm)
 {
   File fn(completeFile(nam));
   for (int i = 0; i < scores.size(); ++i) {
-    if (completeFile(fomus_get_sval(scores.getUnchecked(i)->getfom(), "filename"))/*.getFullPathName()*/ == fn) { // find an exact match
+    String fn2(fomus_get_sval(scores.getUnchecked(i)->getfom(), "filename"));
+    if (!fn2.isEmpty() && completeFile(fn2) == fn) { // find an exact match
       current = i;
       return;
     }
@@ -253,8 +257,8 @@ void Fomus::clearScore()
 void Fomus::loadScore(String filename)
 {
   fomus_load(getfomusdata(), (char*)filename.toUTF8());
-  String fn0(completeFile(fomus_get_sval(getfomusdata(), "filename")).getFileName());
-  scores.getUnchecked(current)->name = (fn0.isEmpty() ? "(untitled)" : fn0);
+  String fn(fomus_get_sval(getfomusdata(), "filename"));
+  scores.getUnchecked(current)->name = (fn.isEmpty() ? String("(untitled)") : completeFile(fn).getFileName());
 }
 
 void Fomus::runScore(const bool fromscm)
@@ -1557,8 +1561,8 @@ void Fomus::settingsWindow()
   DialogWindow::showModalDialog(T("FOMUS Settings"), f, 0, 
 				Colour(0xffe5e5e5), true, true, true);
   delete f;
-  String fn0(completeFile(fomus_get_sval(getfomusdata(), "filename")).getFileName());
-  scores.getUnchecked(current)->name = (fn0.isEmpty() ? "(untitled)" : fn0);
+  String fn(fomus_get_sval(getfomusdata(), "filename"));
+  scores.getUnchecked(current)->name = (fn.isEmpty() ? "(untitled)" : completeFile(fn).getFileName());
 }
 
 
@@ -1985,25 +1989,27 @@ void Fomus::documentationWindow()
 
 void Fomus::loadScoreDialog() 
 {
-  WildcardFileFilter wildcardFilter(T("*.fms"), T("FOMUS Input Files"));
-  FileBrowserComponent browser(FileBrowserComponent::loadFileMode, 
-			       File::nonexistent, &wildcardFilter, 0);
-  FileChooserDialogBox dialogBox(T("Load Score"),
-				 T("Specify path to `.fms' input file..."),
-				 browser, false, Colours::white);
-  if (dialogBox.show()) {
-    loadScore(browser.getCurrentFile().getFullPathName());
+  //WildcardFileFilter wildcardFilter(T("*.fms"), T("FOMUS Input Files"));
+  //FileBrowserComponent browser(FileBrowserComponent::loadFileMode, 
+  //File::nonexistent, &wildcardFilter, 0);
+  //FileChooserDialogBox dialogBox(T("Load Score"),
+  //T("Specify path to `.fms' input file..."),
+  //browser, false, Colours::white);
+  FileChooser choose(T("Load Score"), File::getCurrentWorkingDirectory(), "*.fms");  
+  if (choose.browseForFileToOpen()) {
+    loadScore(choose.getResult().getFullPathName());
   }
 }
 
 void Fomus::renameScoreDialog() 
 {
-  WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
-  FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
-  FileChooserDialogBox dialogBox(T("Rename Score"), T("Specify an output file path (`filename' setting value)..."),
-				 browser, false, Colours::white);
-  if (dialogBox.show()) {
-    File fn(browser.getCurrentFile());
+  //WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
+  //FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
+  //FileChooserDialogBox dialogBox(T("Rename Score"), T("Specify an output file path (`filename' setting value)..."),
+  //browser, false, Colours::white);
+  FileChooser choose(T("Rename Score"), File::getCurrentWorkingDirectory(), getwildcards());
+  if (choose.browseForFileToSave(true)) {
+    File fn(choose.getResult());
     String fn0(fn.getFileName());
     scores.getUnchecked(current)->name = (fn0.isEmpty() ? "(untitled)" : fn0);
     sval(fomus_par_setting, fomus_act_set, "filename");
@@ -2047,8 +2053,8 @@ FomusSyntax::FomusSyntax () // syntab
   hilites[HiliteIDs::Hilite4]=Colours::darkorange; // settings
   hilites[HiliteIDs::Hilite5]=Colours::darkred; // built-in
   
-  hilites[HiliteIDs::Hilite6]=Colours::darkblue;
-  hilites[HiliteIDs::Hilite7]=Colours::darkgreen; 
+  hilites[HiliteIDs::Hilite6]=Colours::darkgreen;
+  hilites[HiliteIDs::Hilite7]=Colours::darkblue; 
   hilites[HiliteIDs::Hilite8]=Colours::darkmagenta;
 //   hilites[HiliteIDs::Hilite9]=Colours::darkseagreen; // dyn
 //   hilites[HiliteIDs::Hilite10]=Colours::darkkhaki; // duration

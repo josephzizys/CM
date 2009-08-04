@@ -12,6 +12,8 @@
 
 class Help
 {
+  File cmdocdir;
+  File cminsdir;
   StringPairArray roots;
   StringPairArray sal;
   StringPairArray cm;
@@ -30,6 +32,7 @@ class Help
   void addCommonMusicSymbolHelp();
   void addSndLibSymbolHelp();
   void addSchemeSymbolHelp();
+  void restoreHelpFiles();
 
  public:
   Help ();

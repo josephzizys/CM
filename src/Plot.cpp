@@ -1584,7 +1584,8 @@ PlotterWindow::PlotterWindow(String title, MidiFile& midifile)
 
 PlotterWindow::~PlotterWindow ()
 {
-  plotter->~Plotter();
+  delete menubar;
+  setMenuBar(0);
 }
 
 void PlotterWindow::init()

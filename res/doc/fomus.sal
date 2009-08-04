@@ -1,0 +1,301 @@
+;
+;; ----- FOMUS Tutorial
+;
+
+;; This is a basic introduction to using FOMUS with Grace.  For more
+;; information on FOMUS's features, consult FOMUS's HTML
+;; documentation.
+
+;
+;; ----- Initializing a Score
+;
+
+;; When working with FOMUS in Grace, there is always at least one
+;; "score object" in memory and only one that is currently active.  In
+;; the main menu select `Audio' and then `FOMUS'.  At the top of the
+;; FOMUS sub-menu you'll see a list of filenames representing all of
+;; the score objects currently in memory (if you've just started Grace
+;; there should only be one score object named "(untitled)").  The
+;; filenames are actually the output files that will be created when
+;; the score objects are processed with FOMUS's notation engine.  At
+;; least one of them should be checked.  This is the score that is
+;; currently selected and ready to receive data.
+
+;; To change the current output file, select `Rename Score' in the
+;; FOMUS sub-menu and change the name (to "/tmp/out.xml" or
+;; "/tmp/out.ly" for example).  The ".xml" and ".ly" extensions set
+;; the output format to either a MusicXML or LilyPond file
+;; respectively.  These are the two output file formats that FOMUS
+;; currently supports.
+
+;
+;; ----- Instruments and Parts
+;
+
+;; Before sending note data, you should define one or more parts.
+;; Although a default part (named "default") is always already defined
+;; for you, it is usually better to define your own.  Evaluate the
+;; following line to create a part that uses FOMUS's built-in piano
+;; instrument:
+
+send "fms:part", id: "mypart", inst: "piano"
+
+;; Evaluating this sends a part definition to FOMUS.  `id:' and
+;; `inst:' are the FOMUS "settings" that define the part.  All objects
+;; in FOMUS (including parts, instruments, staves, clefs, the score
+;; itself and even individual notes) contain settings that alter how
+;; they are processed and notated.  In this case, you are indicating
+;; that you want to refer to this part as "mypart" and that it should
+;; be based on the built-in "piano" instrument.  There are over
+;; hundred of settings, which can't all be described here.  To find
+;; information on them, click on `Documentation' in the FOMUS
+;; sub-menu.  Also look at the examples section in the FOMUS
+;; documentation to see which settings are the most useful
+
+;; When you set the part's instrument to "piano", FOMUS knows it
+;; should notate this part using a grand staff with optional octave
+;; signs above and below the treble and bass clefs.  It also expects
+;; notes to overlap (i.e., form chords) and knows information useful
+;; for importing and exporting data to and from other file formats.
+;; All of this information comes from settings that are defined in the
+;; built-in "piano" instrument object that is loaded automatically
+;; when FOMUS starts.  Part "mypart" thus inherits all the settings
+;; that are defined in that instrument.  Also, any object that is
+;; contained inside this part (e.g., a measure or note event) inherits
+;; these settings unless the settings are overridden with new
+;; definitions.
+
+;; If FOMUS's default instrument library isn't enough or you want to
+;; alter the settings of an existing instrument, you can define your
+;; own instrument using a similar syntax:
+
+send "fms:inst", id: "mycello", template: "cello", maxp: "c8"
+
+;; This defines your own cello instrument using the existing FOMUS
+;; "cello" instrument as a template and changing the `maxp' setting to
+;; "c8".  Look up "maxp" in the online documentation to see what this
+;; is for (you'll have to click on "Intermediate" or "Advanced" to get
+;; to it).  Changing this would be useful, for example, if you wanted
+;; to notate high-pitched harmonics and not get "out of range"
+;; messages from FOMUS's range checker, or if you just don't like the
+;; predefined note range in FOMUS's built-in instrument.  (You could
+;; also just set the "maxp" setting inside the part instead of
+;; defining a whole new instrument.)
+
+;; Now define another part based on your new instrument:
+
+send "fms:part", id: "myotherpart", inst: "mycello"
+
+;; Other FOMUS objects that you'll probably use much less often are
+;; "metaparts" and "measure definitions".  Metaparts allow you to
+;; treat several parts as one single part and don't actually appear in
+;; the score (the parts they contain do).  A string quartet can be
+;; treated this way, for example.  Measure definitions are more useful
+;; in FOMUS input files where they allow you to avoid redundantly
+;; typing in the same list of settings every time a measure is
+;; specified.
+
+;; Now let's change a simple global settings by entering the following
+;; lines.  Global settings are effectively default settings for the
+;; entire score.  Another way to think of this is that all objects are
+;; contained within the score (the "global" object) and thus inherit
+;; all of its settings.
+
+send "fms:setting", verbose: 2
+send "fms:setting", accs-double-accs: #f
+
+;; The `verbose' setting causes FOMUS to print extra information about
+;; what it is doing while it is processing.  A value of 2 means
+;; maximum verbosity.  Setting `accs-double-accs' to false indicates
+;; that you don't want double sharps or flats anywhere in the score.
+
+;; Parts and instruments (and many other objects) don't have to be
+;; defined separately.  They can be embedded in a single `send'
+;; command.  Define one more part by evaluating the following:
+
+send "fms:part", id: "yourpart", inst: {:template "tuba"}
+
+;; Since the instrument settings are now inside a list, you must use
+;; `:template' instead of `template:'.  IDs are not required when
+;; defining objects directly inside of other objects.
+
+;; Click on `Settings' in the FOMUS sub-menu to review your parts and
+;; instruments.  Parts and settings are displayed here in FOMUS's own
+;; native syntax--look at FOMUS input file examples in the FOMUS HTML
+;; documentation to see how to interpret these.  You can edit any of
+;; the objects directly here or add new ones.  When you are done,
+;; enter the following to save everything you've entered in so far to
+;; a FOMUS input file:
+
+send "fms:save-score", "/tmp/save.fms"
+
+;; The filename should have an `.fms' extension so that FOMUS
+;; recognizes what type of file it is.  You can now reload this
+;; information later by entering:
+
+send "fms:load-score", "/tmp/save.fms"
+
+;; All of your instruments and parts will then be restored.  Any note
+;; event data you have entered are also saved when you call this
+;; function, so you can use the `save-score' function to store your
+;; progress or create snapshots of different scores.
+
+;
+;; ----- Generating Scores
+;
+
+;; There are two basic ways to work with Fomus. The first method is to
+;; create a score interactively, by evaluating 'send' statements to
+;; incrementally build up a score. The second way to work with Fomus
+;; is by defining musical processes to generate the entire contents of
+;; a score when they are sprouted.
+
+;; Before continuing, create a fresh new score object by entering:
+
+send "fms:new-score", "/tmp/out2.ly"
+
+;; The new score object should appear selected with a check mark in
+;; the FOMUS sub-menu now.  A similar command "selectscore" selects an
+;; already existing score object based on the output filename (or
+;; creates a new score object if that filename doesn't already exist):
+
+send "fms:select-score", "/tmp/out.ly"
+
+;; Assuming that you've selected an old score that you don't want to
+  work with anymore, get rid of it by entering:
+
+send "fms:delete-score"
+
+;; Double check and make sure that "out2.ly" is the currently selected
+;; one now (use `select-score').
+
+;
+;; ----- Interactive Score Creation
+;
+
+;; In this section we'll build up a score by executing individual
+;; send statements.  In this first example you'll create a part and
+;; add a single note to it.
+
+send "fms:part", id: "Viola", inst: "viola"
+
+send "fms:note", 0, dur: 4, pitch: "c4"
+
+;; This sends a note with time offset 0, a duration of 4 and pitch C4
+;; to the current FOMUS score.  All time values (time and duration)
+;; are FOMUS `beat' values.  By default, one beat equals a quarter
+;; note, so a duration of 4 should produce a whole note.
+
+;; Now save your progress.
+
+send "fms:save-score", "/tmp/save.fms"
+
+;; View the saved scorefile by selecting `Open' from the `File' menu.
+;; See FOMUS's HTML documentation for a description of its file
+;; format.
+
+;; Generate the score by entering:
+
+send "fms:run"
+
+;; You should get a `.ly' output file at the location you specified in
+;; `select-score' above.  If LilyPond is installed and FOMUS is
+;; configured properly the file should be automatically processed and
+;; displayed as a `.pdf' file (see the `lily-exe-path' and
+;; `lily-view-exe-path' settings).
+
+;; Let's say you want your piece to be notated in 3/4 meter rather
+;; than the default 4/4.  You can send a measure definition to FOMUS
+;; by entering this:
+
+send "fms:meas", 0, dur: 3
+
+;; This specifies that you want a measure downbeat to occur at time 0
+;; and that the measure should have a duration of 3.  Although you
+;; haven't explicitly specified a time signature of 3/4, a measure
+;; with a duration of 3 is interpretted as a 3/4 measure by default.
+;; Measures only need to be sent when a metrical change occurs or at
+;; the beginning of a new section in the score.  They can also be sent
+;; when you are sure you want a downbeat at a specific location.
+;; FOMUS takes the measures you've defined and repeats them
+;; automatically, adjusting as necessary to eliminate overlaps with
+;; other measures.
+
+;; Now view the change:
+
+send "fms:run"
+
+;
+;; ----- Score Creation using Processes
+;
+
+;; In this section we'll use SAL processes to generate note events.
+;; Note events are then sent whenever `sprout' is called.
+
+;; Create a new score object:
+
+send "fms:new-score", "/tmp/out3.ly"
+
+;; Define a piano part and an oboe part by entering:
+
+send "fms:part", id: "pno", inst: "piano"
+send "fms:part", id: "ob", inst: "oboe"
+
+;; Since you've defined two parts now, change the following global
+;; setting so that FOMUS knows how to arrange them.  (FOMUS has two
+;; built-in layouts, "orchestra" and "small-ensemble".)
+
+send "fms:setting", layout: "small-ensemble"
+
+;; Although the new score object should already be empty, you can
+;; clear any note events by entering:
+
+send "fms:clear-score"
+
+;; Now define a SAL process that disperses random pitches:
+
+define process blastit(part, low, high)
+ run repeat 24
+   send "fms:note", part: part, dur: 1/2, pitch: between(low, high)
+   wait 1/2
+ end
+
+;; Then sprout two instances of this process.
+
+sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "fomus"
+
+;; Specifying "fomus" sends all data to the currently selected score
+;; object.  To see the output, enter:
+
+send "fms:run"
+
+;; You can save yourself a few steps by including some more options
+;; after "fomus""
+
+sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "fomus", clear: #t, run: #t
+
+;; `clear: #t' tells FOMUS to clear the score first and `run: #t'
+;; executes the `run' command after all processes have finished
+;; executing.
+
+;; Sprout also accepts a filename as the first argument.  However,
+;; since this creates a new score object, you must also give sprout
+;; several more parameters redefining the "pno" and "ob" parts.  You
+;; must also reset the `layout' global setting.
+
+sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "/tmp/blasted.ly", 
+       settings: {:layout "small-ensemble"},
+       parts: {{:id "pno" :inst "piano"} 
+               {:id "ob" :inst "oboe"}},
+        clear: #t, run: #t
+
+;; "/tmp/blasted.ly" selects the "blasted.ly" score object before
+;; sending note data.  Remember that when specifying settings inside
+;; list structures the setting names are actually keywords and not
+;; function argument names (i.e., `:id' as opposed to `id:').
+
+;; Congratulations on completing the FOMUS tutorial.  You can find
+;; more information and examples in the FOMUS docs.  If FOMUS crashes
+;; or produces incorrect output, please post a bug report at
+;; http://fomus.sourceforge.net/.
+

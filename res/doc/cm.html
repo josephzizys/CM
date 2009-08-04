@@ -36,6 +36,7 @@
   <li><a href="#midi-in">Midi In</a></li>
   <li><a href="#csound">Csound</a></li>
   <li><a href="#sndlib">SndLib</a></li>
+  <li><a href="#fomus">Fomus</a></li>
 </ul>
 </li>
 
@@ -2790,6 +2791,359 @@ Any CLM <a href="http://ccrma.stanford.edu/software/snd/snd/sndscm.html#withsoun
   <dt><code><span class="keyword">play:</span></code></dt>
   <dd>Play the audio file after writing it.</dd>
 </dl>  
+
+<!--  BEGIN FOMUS -->
+
+<h3 id="fomus">Fomus</h3>
+
+<p><a href="http://fomus.sourceforge.net">Fomus</a> generates musical scores for Lilipond, Sibelius and Finale
+from score input specified by the user. Use the <span
+class="menuitem">Audio&gt;Fomus&gt;</span> menu to configure your
+Fomus environment and manage its score output.  
+
+To send data to Fomus use the messages listed below or call the
+ underlying message functions directly. For example, the following
+ calls are all equivalent:</p>
+
+<div class="float">
+  <pre class="code">
+<span class="command">send</span> <span class="string">"fms:note"</span>, 0, 1, 60
+(send <span class="string">"fms:note"</span> 0 1 60)
+(fms:note 0 1 60)
+</pre>
+</div>
+
+<h4 id="fomus_events">Fomus Events</h4>
+
+<!-- DEFINITION -->
+<table id="fms:note" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:note"</span>,
+    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <var class="arg">dur</var>,
+    <var class="arg">pitch</var>,
+    <var class="optkey">part</var> <var class="optval">= #f</var>,
+    <var class="optkey">voice</var> <var class="optval">= 1</var>,
+    <var class="optkey">dyn</var> <var class="optval">= 0</var>,
+    <var class="optkey">grtime</var> <var class="optval">= #f</var>,
+    <var class="optkey">marks</var> <var class="optval">= {...}</var>,
+    <var class="optkey">sets</var> <var class="optval">= {...}</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Send a note event to the currently selected score at <var>time</var>.
+Parameters <var>dur</var> and <var>pitch</var> are required. The optional parameters <var>marks</var>
+and <var>sets</var> are lists of <a href="#marks">marks</a> and <a href="#settings">settings</a>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:rest" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:rest"</span>,
+    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <var class="arg">dur</var>,
+    <var class="optkey">part</var> <var class="optval">= #f</var>,
+    <var class="optkey">voice</var> <var class="optval">= 1</var>,
+    <var class="optkey">grtime</var> <var class="optval">= #f</var>,
+    <var class="optkey">marks</var> <var class="optval">= {...}</var>,
+    <var class="optkey">sets</var> <var class="optval">= {...}</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Send a rest event to the currently selected score at <var>time</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:mark" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:mark"</span>,
+    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <var class="arg">dur</var>,
+    <var class="optkey">part</var> <var class="optval">= #f</var>,
+    <var class="optkey">voice</var> <var class="optval">= 1</var>,
+    <var class="optkey">grtime</var> <var class="optval">= #f</var>,
+    <var class="optkey">marks</var> <var class="optval">= {...}</var>,
+    <var class="optkey">sets</var> <var class="optval">= {...}</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Send a mark event to the currently selected score at <var>time</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:meas" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:meas"</span>,
+    <var class="optkey">time</var> <var class="optval">= 0</var>,
+    <var class="arg">dur</var>,
+    <var class="optkey">sets</var> <var class="optval">= {...}</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Send a measure to the currently selected to score at <var>time</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<h4 id="fomus_objects">Fomus Objects</h4>
+
+<!-- DEFINITION -->
+<table id="fms:part" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:part"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {...}</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new part to use in the currently selected score.  A part with
+id <code>default</code> exists (with instrument <code>default</code>) if no other parts are
+defined.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:inst" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:inst"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {...}</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new instrument to use in the currently selected score.  An
+instrument with id <code>default</code> and a grand staff exists if no other
+instruments are defined.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:percinst" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:percinst"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {...}</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new percussion instrument to use in the currently selected
+score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:metapart" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:metapart"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {...}</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new metapart to use in the currently selected score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:setting" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:setting"</span>,
+    <var class="arg">setting value</var> <var class="rest">...</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote><p>
+Change the value of one or more global settings in the currently
+selected score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:measdef" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:measdef"</span>,
+    <var class="optkey">sets</var> <var class="optval">= {...}</var>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a new measure definition to use in the currently selected
+score.  Measdefs are more useful in .fms files than in processes.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<h4 id="fomus_commands">Fomus Commands</h4>
+
+<!-- DEFINITION -->
+<table id="fms:new-score" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:new-score"</span>,
+    <var class="arg">filename</var> 
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Create a brand new empty score with output <var>filename</var>.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:load-score" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:load-score"</span>,
+    <var class="arg">filename</var> 
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Load a .fms file into a new score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:select-score" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:select-score"</span>,
+    <var class="arg">filename</var> 
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Select the first score with output <var>filename</var>.  A new empty
+score is created if one with that name does not already exist.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:run-score" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:run-score"</span>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Run Fomus on the currently selected score.  If an output filename has
+not been specified, this produces an error.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:save-score" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:save-score"</span>,
+    <var class="arg">filename</var> 
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Save the score to a .fms file, Fomus's native file format.  The file
+can be edited and/or reloaded with the <a href="#fms:load-score">load-score</a> command.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:clear-score" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:clear-score"</span>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Clears note events and measures (but not part or instrument
+definitions) from the currently selected score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="fms:delete-score" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span>
+    <span class="string">"fms:delete-score"</span>
+  </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Delete the currently selected Fomus score.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!--  END FOMUS -->
+
+
+
+
 
 
 <h3 id="csound">Csound</h3>

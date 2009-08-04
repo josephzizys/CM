@@ -33,6 +33,20 @@ class SysInfo
   {
     return getVersionString(GRACE_VERSION);
   }
+
+  static const String getApplicationName()
+  {
+#ifdef CM
+    return String(T("cm"));
+#else
+#ifdef GRACECL
+    return String(T("GraceCL"));
+#else
+    return String(T("Grace"));
+#endif
+#endif
+  }
+
   static const String getCMLogo()
   {
     String crlf=String("\n");

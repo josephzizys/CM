@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-juce_ImplementSingleton(Console)
+Console* Console::globalInstance = 0;
 
 Console::Console() : 
   prompt (String::empty),
@@ -35,15 +35,8 @@ Console::Console() :
 Console::~Console() 
 {
   messages.clear();
-  // BUFFER ALREADY DELEATED BY WINDOW CLOSE
-  if (theme!=NULL)
-    {
-      delete theme;
-    }
-  if (manager!=NULL)
-    {
-      delete manager; 
-    }
+  deleteAndZero(theme);
+  deleteAndZero(manager); 
 }
 
 String Console::getSupportedFileTypes()
@@ -436,12 +429,13 @@ ConsoleWindow::ConsoleWindow ()
 
 ConsoleWindow::~ConsoleWindow ()
 {
+  setMenuBar(0);
   getContentComponent()->deleteAllChildren();
-  //  setContentComponent(NULL);
 }
 
 void ConsoleWindow::closeButtonPressed ()
 {
+  
   if (juce::AlertWindow::showOkCancelBox
       (juce::AlertWindow::QuestionIcon,
        T("Quit"),

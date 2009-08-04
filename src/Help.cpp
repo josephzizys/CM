@@ -16,7 +16,13 @@
 juce_ImplementSingleton (Help) ;
 
 Help::Help()
+  : cminsdir (File::nonexistent),
+    cmdocdir (File::nonexistent)
 {
+  // include version info in Grace directory
+  cmdocdir=File::getSpecialLocation(File::userApplicationDataDirectory).
+    getChildFile(SysInfo::getApplicationName()+T("/")+SysInfo::getGraceVersion()+T("/doc/"));
+  //std::cout << cmdocdir.getFullPathName().toUTF8() << "\n";
   // Symbol help
   addSalSymbolHelp();
   addCommonMusicSymbolHelp();
@@ -29,9 +35,9 @@ Help::Help()
   manuals.set(T("CLM"), T("http://ccrma.stanford.edu/software/snd/snd/clm.html"));
   manuals.set(T("Common Lisp"), T("http://www.lispworks.com/documentation/HyperSpec/Front/index.htm"));
 #else
-  manuals.set(T("Grace"), T("http://commonmusic.sf.net/cm/res/doc/grace.html"));
-  manuals.set(T("Common Music"), T("http://commonmusic.sf.net/cm/res/doc/cm.html"));
-  manuals.set(T("CLM in Snd"), T("http://ccrma.stanford.edu/software/snd/snd/sndclm.html"));
+  manuals.set(T("Common Music"),T("file://")+cmdocdir.getChildFile("cm.html").getFullPathName());
+  manuals.set(T("SAL"),T("file://")+cmdocdir.getChildFile("cm.html").getFullPathName()+T("#sal"));
+  manuals.set(T("SndLib"), T("http://ccrma.stanford.edu/software/snd/snd/sndclm.html"));
   manuals.set(T("Scheme"), T("http://schemers.org/Documents/Standards/R5RS/HTML/"));
 #endif
   // Examples
@@ -61,20 +67,18 @@ Help::Help()
   tutorials.set(T("Loop"), T("loop.sal"));
   tutorials.set(T("Definitions"), T("define.sal"));
   tutorials.set(T("Processes"), T("processes.sal"));
+  tutorials.set(T("Fomus"), T("fomus.sal"));
   // Websites
   websites.set(T("Common Music"), T("http://commonmusic.sourceforge.net/"));
   websites.set(T("JUCE"), T("http://www.rawmaterialsoftware.com/juce"));
 #if SNDLIB
-  websites.set(T("SndLib"),
-	       T("http://ccrma.stanford.edu/software/snd/sndlib/"));
+  websites.set(T("SndLib") ,T("http://ccrma.stanford.edu/software/snd/sndlib/"));
 #endif
 #if CHICKEN
-  websites.set(T("Chicken"),
-	       T("http://www.call-with-current-continuation.org/"));
+  websites.set(T("Chicken"), T("http://www.call-with-current-continuation.org/"));
 #endif
   // DONT RESTORE FILE ANYMORE
-  //  restoreHelpFiles();
-
+  restoreHelpFiles();
 }
 
 Help::~Help()
@@ -90,7 +94,25 @@ Help::~Help()
   clearSingletonInstance();
 }
 
-
+void Help::restoreHelpFiles()
+{
+  using namespace Documentation;
+  File htm=cmdocdir.getChildFile(T("cm.html"));
+  File css=cmdocdir.getChildFile(T("cm.css"));
+  if (!cmdocdir.isDirectory())
+    if (!cmdocdir.createDirectory())
+      {
+	Console::getInstance()->printWarning(T("Couldn't create document directory ") + cmdocdir.getFullPathName() + T("\n"));
+	return;
+      }
+  if (!htm.existsAsFile())
+    if (!htm.replaceWithText(String(cm_html, cm_htmlSize)))
+      Console::getInstance()->printWarning(T("Couldn't save ") + htm.getFullPathName() + T("\n"));
+  if (!css.existsAsFile())
+    if (!css.replaceWithText(String(cm_css, cm_cssSize)))
+      Console::getInstance()->printWarning(T("Couldn't save ") + css.getFullPathName() + T("\n"));
+}
+  
 int Help::getHelpSize(CommandID id)
 {
   int comm=CommandIDs::getCommand(id);
@@ -181,6 +203,8 @@ void Help::openHelp(CommandID id)
 	openHelpInEditor(file, String(define_sal, define_salSize));
       else if (file==T("expr.sal"))
 	openHelpInEditor(file, String(expr_sal, expr_salSize));
+      else if (file==T("fomus.sal"))
+	openHelpInEditor(file, String(fomus_sal, fomus_salSize));
       else if (file==T("funcall.sal"))
 	openHelpInEditor(file, String(funcall_sal, funcall_salSize));
       else if (file==T("hello.sal"))
@@ -200,18 +224,50 @@ void Help::openHelp(CommandID id)
 
 void Help::openHelpInBrowser(String url)
 {
-  //std::cout << "openHelpInBrowser: '" << url.toUTF8() << "'\n";
-  // Linux launchInDefaultBrowser does not work on local files
-  if (SysInfo::isLinux() && url.startsWith(T("file:")))
+  std::cout << "openurl=" << url.toUTF8() << "\n";
+
+
+  if (url.startsWith(T("file:")))
     { 
-      File fox=File(T("/usr/bin/firefox"));
-      if (fox.existsAsFile())
-	fox.startAsProcess(url.quoted());
+      //#ifdef LINUX
+      //      File fox=File(T("/usr/bin/firefox"));
+      //      if (fox.existsAsFile())
+      //	fox.startAsProcess(url.quoted());
+      //      else
+      //	{
+      //	  String msg=T(">> Error: Can't open local html help file because /usr/bin/firefox does not exist.");
+      //	  Console::getInstance()->printWarning(msg);
+      //	}
+      //#else
+#ifdef WINDOWS
+      // Chrome lives in a weird place in the application data directory.
+      String chromePath = File::getSpecialLocation(File::userDesktopDirectory).getFullPathName();
+      // Trim out "Desktop" from the path name to get the user directory...
+      chromePath = chromePath.substring(0, chromePath.length() - 8);
+      chromePath << "\\Local Settings\\Application Data\\";
+      chromePath << "Google\\Chrome\\Application\\chrome.exe";
+      //Web browser executables
+      File ie("C:\\Program Files\\Internet Explorer\\iexplore.exe");
+      File firefox("C:\\Program Files\\Mozilla Firefox\\firefox.exe");
+      File chrome(chromePath);
+      //Try each web browser until something works (priority: Firefox, Chrome, IE).
+      if (firefox.exists())
+	firefox.startAsProcess(url.quoted());
+      else if (chrome.exists())
+	chrome.startAsProcess(url.quoted());
+      else if (ie.exists())
+	ie.startAsProcess(url.quoted());
       else
 	{
-	  String msg=T("Help: /usr/bin/firefox does not exist.");
+	  String msg=T("Can't open local html help file because none of these browsers exist:\n");
+	  msg << T("\n  ") << firefox.getFullPathName()
+	      << T("\n  ") << chrome.getFullPathName()
+	      << T("\n  ") << ie.getFullPathName() << T("\n");
 	  Console::getInstance()->printWarning(msg);
 	}
+#else
+      URL(url).launchInDefaultBrowser();
+#endif
     }
   else
     {
@@ -274,7 +330,7 @@ void Help::symbolHelp(String symbol, String helppath)
 
 void Help::addSalSymbolHelp()
 {
-  roots.set(T("Sal"), T("http://commonmusic.sf.net/cm/res/doc/"));
+  roots.set(T("Sal"), T("file://")+cmdocdir.getFullPathName()+T("/"));
   sal.set(T("begin"), T("cm.html#begin"));
   sal.set(T("chdir"), T("cm.html#chdir"));
   sal.set(T("define"), T("cm.html#define"));
@@ -306,7 +362,7 @@ void Help::addSalSymbolHelp()
 
 void Help::addCommonMusicSymbolHelp() 
 {
-  roots.set(T("CM"), T("http://commonmusic.sf.net/cm/res/doc/"));
+  roots.set(T("CM"), T("file://")+cmdocdir.getFullPathName()+T("/"));
   cm.set(T("between"), T("cm.html#between"));
   cm.set(T("butlast"), T("cm.html#butlast"));
   cm.set(T("cents->ratio"), T("cm.html#cents-_ratio"));
@@ -397,6 +453,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("nth"), T("cm.html#nth"));
   cm.set(T("now"), T("cm.html#now"));
   cm.set(T("note"), T("cm.html#note"));
+  cm.set(T("note?"), T("cm.html#note_"));
   cm.set(T("odds"), T("cm.html#odds"));
   cm.set(T("pause"), T("cm.html#pause"));
   cm.set(T("pc"), T("cm.html#pc"));
@@ -404,6 +461,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("pick"), T("cm.html#pick"));
   cm.set(T("plot"), T("cm.html#plot"));
   cm.set(T("plot-data"), T("cm.html#plot-data"));
+  cm.set(T("plot-hook"), T("cm.html#plot-hook"));
   cm.set(T("plus"), T("cm.html#plus"));
   cm.set(T("promise"), T("cm.html#promise"));
   cm.set(T("quantize"), T("cm.html#quantize"));
