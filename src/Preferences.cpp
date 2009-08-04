@@ -29,8 +29,13 @@ Preferences::Preferences()
   if (!working.isEmpty())
     File(working).setAsCurrentWorkingDirectory();
   else
+#ifdef WINDOWS    
+    File::getSpecialLocation(File::userDesktopDirectory).
+      setAsCurrentWorkingDirectory();
+#else
     File::getSpecialLocation(File::userHomeDirectory).
       setAsCurrentWorkingDirectory();
+#endif
 }
 
 Preferences::~Preferences()
