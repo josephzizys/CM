@@ -1234,6 +1234,29 @@ void Plotter::autosizeAxes()
     }
 }
 
+void Plotter::insurePointsVisible()
+{
+  if (getPlotViewport()->isVerticalScrollBarShown())
+    {
+      // center on average of min max of first 8 notes
+      Layer* l=getFocusLayer();
+      double y=.5;
+      if (l->numPoints()>0)
+	{
+	  Axis* a=getVerticalAxis();
+	  double ymin=a->getMaximum();
+	  double ymax=a->getMinimum();
+	  for (int i=0;i<8 && i<l->numPoints(); i++)
+	    {
+	      y=l->getPointY(i);
+	      if (y<ymin) ymin=y;
+	      if (y>ymax) ymax=y;
+	    }
+	  y=(((ymin+ymax)/2)-a->getMinimum())/a->getRange();
+	}
+      getPlotViewport()->setViewPositionProportionately(0.0, y);
+    }
+}
  
 ///
 /// Component View Accessing 
@@ -1248,6 +1271,9 @@ void Plotter::redrawHorizontalAxisView() {haxview->repaint();}
 void Plotter::setVerticalAxis (Axis* a) {vaxview->setAxis(a);}
 void Plotter::redrawVerticalAxisView() {vaxview->repaint();}
 
+Axis* Plotter::getVerticalAxis(){return vaxview->getAxis();}
+Axis* Plotter::getHorizontalAxis(){return haxview->getAxis();}
+ 
 void Plotter::setFocusVerticalField(int i)
 {
   /*  Layer* layer=getFocusLayer();
@@ -1600,6 +1626,7 @@ void PlotterWindow::init()
   setResizable(true, true); 
   setVisible(true);
   setComponentProperty(T("WindowType"), WindowTypes::PlotWindow);
+  plotter->insurePointsVisible();
 }
 
 PlotterWindow* PlotterWindow::getPlotWindow(String title)

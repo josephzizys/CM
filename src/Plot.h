@@ -665,6 +665,8 @@ class Plotter  : public Component, public ScrollBarListener
 
   AxisView* getHorizontalAxisView();
   AxisView* getVerticalAxisView();
+  Axis* getVerticalAxis();
+  Axis* getHorizontalAxis();
   BackView* getBackView();
   PlotView* getPlotView();
   PlotViewport* getPlotViewport();
@@ -706,6 +708,7 @@ class Plotter  : public Component, public ScrollBarListener
   void deselectAll();
   void clearSelection();
   void moveSelection();
+  void insurePointsVisible();
 
   // Fields
   int numFields() {return fields.size();}
