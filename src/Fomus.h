@@ -15,6 +15,8 @@
 #include "Console.h"
 #include "Syntax.h"
 
+extern bool fomuserr;
+
 void initfomus();
 
 class FomusScore

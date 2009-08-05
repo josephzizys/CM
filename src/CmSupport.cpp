@@ -928,6 +928,7 @@ void fms_load(char* filename)
 
 void fms_run()
 {
+  fomuserr = false;
   Fomus::getInstance()->runScore(true);
 }
 

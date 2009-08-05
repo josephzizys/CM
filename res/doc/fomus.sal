@@ -162,7 +162,7 @@ send "fms:new-score", "/tmp/out2.ly"
 send "fms:select-score", "/tmp/out.ly"
 
 ;; Assuming that you've selected an old score that you don't want to
-  work with anymore, get rid of it by entering:
+   work with anymore, get rid of it by entering:
 
 send "fms:delete-score"
 
@@ -255,10 +255,10 @@ send "fms:clear-score"
 ;; Now define a SAL process that disperses random pitches:
 
 define process blastit(part, low, high)
- run repeat 24
-   send "fms:note", part: part, dur: 1/2, pitch: between(low, high)
-   wait 1/2
- end
+  run repeat 24
+    send "fms:note", part: part, dur: 1/2, pitch: between(low, high)
+    wait 1/2
+  end
 
 ;; Then sprout two instances of this process.
 
@@ -284,10 +284,10 @@ sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "fomus", clear: #t, 
 ;; must also reset the `layout' global setting.
 
 sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "/tmp/blasted.ly", 
-       settings: {:layout "small-ensemble"},
-       parts: {{:id "pno" :inst "piano"} 
-               {:id "ob" :inst "oboe"}},
-        clear: #t, run: #t
+  settings: {:layout "small-ensemble"},
+  parts: {{:id "pno" :inst "piano"} 
+          {:id "ob" :inst "oboe"}},
+  clear: #t, run: #t
 
 ;; "/tmp/blasted.ly" selects the "blasted.ly" score object before
 ;; sending note data.  Remember that when specifying settings inside
@@ -298,4 +298,3 @@ sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "/tmp/blasted.ly",
 ;; more information and examples in the FOMUS docs.  If FOMUS crashes
 ;; or produces incorrect output, please post a bug report at
 ;; http://fomus.sourceforge.net/.
-

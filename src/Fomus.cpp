@@ -28,6 +28,8 @@
 
 juce_ImplementSingleton(FomusSyntax) ;
 
+bool fomuserr = false;
+
 //#warning "get rid of debugging output"
 
 // Notes:
@@ -86,16 +88,17 @@ bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
 
   scores.getUnchecked(current)->runwhendone = false;
   StringArray userargs;
-  std::cout << '|' << scoreargs.toUTF8() << '|' << std::endl;
+  //std::cout << '|' << scoreargs.toUTF8() << '|' << std::endl;
   userargs.addTokens(scoreargs, true);
   bool clrsc = false;
   bool newsc = false;
   bool dorun = false;
   //bool xmlerr = false;
   OwnedArray<scopedxml> els;
+  fomuserr = false;
   for (int i=0; i<userargs.size(); ++i)
     {
-      std::cout << userargs[i].toUTF8() << std::endl;
+      //std::cout << userargs[i].toUTF8() << std::endl;
       bool istr = true, eatnext = false;
       if (i + 1 < userargs.size()) {
 	if (userargs[i + 1] == "#f" || userargs[i + 1] == "#F" || userargs[i + 1] == "nil" || userargs[i + 1] == "NIL") {
@@ -117,7 +120,7 @@ bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
       } else if (userargs[i] == ":err" && istr) {
 	return true;
       } else { // try to parse XML
-	std::cout << "Trying to parse |" << userargs[i].toUTF8() << "|" << std::endl;
+	//std::cout << "Trying to parse |" << userargs[i].toUTF8() << "|" << std::endl;
 	scopedxml* x;
 	els.add(x = new scopedxml(userargs[i]));
 	if (!x) return true;
@@ -263,6 +266,10 @@ void Fomus::loadScore(String filename)
 
 void Fomus::runScore(const bool fromscm)
 {
+  if (fomuserr) {
+    Console::getInstance()->printError((char*)">>> Error: Fomus: run canceled due to input errors\n");
+    return;
+  }
 #ifdef GRACE
   if (!fromscm && String(fomus_get_sval(getfomusdata(), "filename")).isEmpty()) {
     renameScoreDialog();
@@ -275,31 +282,37 @@ void Fomus::runScore(const bool fromscm)
 void Fomus::ival(fomus_param par, fomus_action act, fomus_int val)
 {
   fomus_ival(getfomusdata(), par, act, val);
+  if (fomus_err) fomuserr = true;
 }
 
 void Fomus::rval(fomus_param par, fomus_action act, fomus_int num, fomus_int den)
 {
   fomus_rval(getfomusdata(), par, act, num, den);
+  if (fomus_err) fomuserr = true;
 }
 
 void Fomus::mval(fomus_param par, fomus_action act, fomus_int val, fomus_int num, fomus_int den) 
 {
   fomus_mval(getfomusdata(), par, act, val, num, den);
+  if (fomus_err) fomuserr = true;
 }
 
 void Fomus::fval(fomus_param par, fomus_action act, double val)
 {
   fomus_fval(getfomusdata(), par, act, val);
+  if (fomus_err) fomuserr = true;
 }
 
 void Fomus::sval(fomus_param par, fomus_action act, const String& val) 
 {
   fomus_sval(getfomusdata(), par, act, (char*)val.toUTF8());
+  if (fomus_err) fomuserr = true;
 }
 
 void Fomus::act(fomus_param par, fomus_action act) 
 {
   fomus_act(getfomusdata(), par, act);
+  if (fomus_err) fomuserr = true;
 }
 
 struct scoped_timeshift {
@@ -479,7 +492,7 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 	exc.insert(excmap::value_type("export", sendpair(fomus_par_inst_export,
 							 fomus_act_set, wh_export)));
 	exc.insert(excmap::value_type("percinsts", sendpair(fomus_par_inst_percinsts,
-							    fomus_act_set,
+							    fomus_act_add,
 							    wh_percinst, true)));
 	exc.insert(excmap::value_type("template", sendpair(fomus_par_inst_template,
 							   fomus_act_set, wh_none)));
