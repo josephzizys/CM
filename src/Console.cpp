@@ -16,6 +16,7 @@
 #include "Images.h"
 #include "Plot.h"
 #include "TextEditor.h"
+#include "Alerts.h"
 #endif
 
 #include <iostream>
@@ -437,12 +438,17 @@ ConsoleWindow::~ConsoleWindow ()
 void ConsoleWindow::closeButtonPressed ()
 {
   
-  if (juce::AlertWindow::showOkCancelBox
-      (juce::AlertWindow::QuestionIcon,
+  if (Alerts::showOkCancelBox
+      (AlertWindow::QuestionIcon,
        T("Quit"),
        T("Quit Grace? Any unsaved work will be lost."),
-       T("   Quit   "),
-       T("Don't Quit")))
+       T("Quit"),
+#ifdef WINDOWS
+       T("Cancel")
+#else
+       T("Don't Quit")
+#endif
+       ))
     {
       JUCEApplication::getInstance()->quit();
     }

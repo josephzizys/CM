@@ -24,6 +24,7 @@
 #include <fomus/infoextapi.h>
 #include <fomus/modnotes.h>
 #include "CmSupport.h"
+#include "Alerts.h"
 //#include "TextEditor.h"
 
 juce_ImplementSingleton(FomusSyntax) ;
@@ -651,7 +652,7 @@ public:
     if (knvalid) return;
     valid = valid_aux();
     knvalid = true;
-    if (!valid) AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+    if (!valid) Alerts::showMessageBox(AlertWindow::WarningIcon,
 					    T("FOMUS Settings"),
 					    String("Error in ") << what() << " `" << id << "'.");
   }
@@ -854,7 +855,7 @@ private:
 fomusinfo* fomusinfocont_parts::createnew(const String& txt) {
   fomus_parse(fom, ("part " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
   if (fomus_err) {
-    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+    Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in part"));
     return 0;
@@ -877,7 +878,7 @@ private:
 fomusinfo* fomusinfocont_metaparts::createnew(const String& txt) {
   fomus_parse(fom, ("metapart " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
   if (fomus_err) {
-    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+    Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in metapart"));
     return 0;
@@ -900,7 +901,7 @@ private:
 fomusinfo* fomusinfocont_measdefs::createnew(const String& txt) {
   fomus_parse(fom, ("measdef " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
   if (fomus_err) {
-    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+    Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in measure definition"));
     return 0;
@@ -923,7 +924,7 @@ private:
 fomusinfo* fomusinfocont_insts::createnew(const String& txt) {
   fomus_parse(fom, ("inst " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
   if (fomus_err) {
-    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+    Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in instrument"));
     return 0;
@@ -946,7 +947,7 @@ private:
 fomusinfo* fomusinfocont_percinsts::createnew(const String& txt) {
   fomus_parse(fom, ("percinst " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
   if (fomus_err) {
-    AlertWindow::showMessageBox(AlertWindow::WarningIcon,
+    Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
 				T("Error in percussion instrument"));
     return 0;

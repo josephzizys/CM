@@ -13,6 +13,7 @@
 #ifdef GRACE
 #include "Preferences.h"
 #include "TextEditor.h"
+#include "Alerts.h"
 #endif
 #include <iostream>
 
@@ -2559,7 +2560,7 @@ void MidiFileInfoComponent::buttonClicked (Button* button)
 	  String msg= T("File ") + 
 	    fileeditor->getCurrentFile().getFullPathName() + 
 	    T(" exists.\nOverwrite?");
-	  if (! AlertWindow::showOkCancelBox(AlertWindow::QuestionIcon, 
+	  if (! Alerts::showOkCancelBox(AlertWindow::QuestionIcon, 
 					     T("Save"), msg,
 					     T("Overwrite"),
 					     T("Cancel")))

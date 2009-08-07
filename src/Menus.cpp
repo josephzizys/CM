@@ -12,6 +12,7 @@
 #include "TextEditor.h"
 #include "Commands.h"
 #include "Help.h"
+#include "Scheme.h"
 #ifdef WITHFOMUS
 #include "Fomus.h"
 #endif
@@ -432,7 +433,12 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
     {
       menu.addCommandItem(manager, CommandIDs::EditorExecute);
       menu.addCommandItem(manager, CommandIDs::EditorExpand);
-      // Trigger submenu belongs to the window NOT the buffer.
+      PopupMenu proc;
+      proc.addCommandItem(manager, CommandIDs::SchedulerPause);
+      proc.addCommandItem(manager, CommandIDs::SchedulerStop);
+      menu.addSubMenu(T("Scheduler"), proc);
+
+     // Trigger submenu belongs to the window NOT the buffer.
       PopupMenu trigs;
       bool trigp=hasTrigger();
       for (int i=TriggerIDs::ButtonTrigger; i<=TriggerIDs::NumTriggers; i++)

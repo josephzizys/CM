@@ -12,6 +12,7 @@
 #include "Console.h"
 #include "Syntax.h"
 #include "Help.h"
+#include "Alerts.h"
 #include <iostream>
 #ifdef WITHFOMUS
 #include "Fomus.h"
@@ -96,13 +97,19 @@ void TextEditorWindow::closeButtonPressed ()
       delete this;
       return;
     }
-  int x=AlertWindow::showYesNoCancelBox(AlertWindow::QuestionIcon,
+  int x=Alerts::showYesNoCancelBox(AlertWindow::QuestionIcon,
 					T("Close"),
 					T("Save changes before closing?"),
+#ifdef WINDOWS
+					T("Yes"),
+					T("No"),
+					T("Cancel"));
+#else
 					T("Save"),
-					T("Don't Save"),
-					T("Cancel")
-					);
+					T("Just Quit"),
+					T("Cancel"));
+#endif
+
   if (x==0)
     return;
   if (x==2 || getTextBuffer()->saveFile())
@@ -291,11 +298,16 @@ bool TextBuffer::revertFile()
 {
   bool doit=false;
   if (testFlag(EditFlags::NeedsSave) && file.existsAsFile()) 
-    doit=AlertWindow::showOkCancelBox(AlertWindow::QuestionIcon,
+    doit=Alerts::showOkCancelBox(AlertWindow::QuestionIcon,
 				      T("Revert File"),
 				      T("Revert to last saved version?"),
+#ifdef WINDOWS
+				      T("Revert"),
+				      T("Cancel"));
+#else
 				      T("Revert"),
 				      T("Don't Revert"));
+#endif
   if (doit)
     {
       setText(file.loadFileAsString());

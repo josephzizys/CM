@@ -147,6 +147,8 @@ for i = 1,3 do
       add(mypackage.files, "src/Triggers.h")
       add(mypackage.files, "src/Plot.h")
       add(mypackage.files, "src/Plot.cpp")
+      add(mypackage.files, "src/Alerts.h")
+      add(mypackage.files, "src/Alerts.cpp")
    end
 
 ------------------------------------------

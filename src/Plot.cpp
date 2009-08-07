@@ -14,6 +14,7 @@
 #include "Scheme.h"
 #include <limits>
 #include "CmSupport.h"
+#include "Alerts.h"
 //#include <cmath>
 #include <iostream>
 
@@ -1252,7 +1253,7 @@ void Plotter::insurePointsVisible()
 	      if (y<ymin) ymin=y;
 	      if (y>ymax) ymax=y;
 	    }
-	  y=(((ymin+ymax)/2)-a->getMinimum())/a->getRange();
+	  y=1-((((ymin+ymax)/2)-a->getMinimum())/a->getRange());
 	}
       getPlotViewport()->setViewPositionProportionately(0.0, y);
     }
@@ -1728,46 +1729,46 @@ void PlotterWindow::openMidiFile(File file)
     }
 }
 
-
-
 bool PlotterWindow::save(bool saveas)
 {
   File f=getPlotFile();
   if (saveas || (f==File::nonexistent))
     {
-      String t=T("Save Plot");
-      if (saveas)
-	t<<T(" As");
-      else
-	f=File::getCurrentWorkingDirectory().
-	  getChildFile(getName() + T(".xml"));
+      String t=((saveas) ? T("Save Plot As") : T("Save Plot"));
+      if (f==File::nonexistent)
+	f=File::getCurrentWorkingDirectory().getChildFile(getName() + T(".xml"));
       FileChooser ch (t, f, "*.xml");
       if (ch.browseForFileToSave(true))
-	if (f.hasWriteAccess())
-	  setPlotFile(ch.getResult());
-	else
-	  {
-	    Console::getInstance()->
-	      printError(T(">> Error: plot file not writable.\n"));
-	    return false;
-	  }
+	// std::cout << ch.getResult().getFullPathName().getUTF8() << "\n";
+	setPlotFile(ch.getResult());
       else
 	return false;
     }
   String text=toXmlString();
-  f.replaceWithText(text);
+  if (!getPlotFile().replaceWithText(text))
+    {
+      text=T(">> Error: file ")+getPlotFile().getFullPathName() + T(" not writable.\n");
+      Console::getInstance()->printError(text);
+      return false;
+    }
   return true;
 }
 
 void PlotterWindow::closeButtonPressed () //{this->~PlotterWindow();}
 {
-  int x=AlertWindow::showYesNoCancelBox(AlertWindow::QuestionIcon,
+  int x=Alerts::showYesNoCancelBox(AlertWindow::QuestionIcon,
 					T("Close"),
 					T("Save changes before closing?"),
+#ifdef WINDOWS
+					T("Yes"),
+					T("No"),
+				        T("Cancel"));
+#else
 					T("Save"),
 					T("Don't Save"),
-					T("Cancel")
-					);
+					T("Cancel"));
+#endif
+
   if (x==0)
     return;
   if (x==2 || save())

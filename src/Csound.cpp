@@ -10,6 +10,7 @@
 #include "Console.h"
 #include "Preferences.h"
 #include "CmSupport.h"
+#include "Alerts.h"
 
 /*=======================================================================*
                              Csound Instance

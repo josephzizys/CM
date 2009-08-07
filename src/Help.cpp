@@ -58,6 +58,7 @@ Help::Help()
   examples.set(T("Csound"), T("csound.sal"));
   examples.set(T("Input Hooks"), T("input.sal"));
   examples.set(T("Plotting"), T("plot.scm"));
+  examples.set(T("Fomus Examples"), T("fomusexamples.sal"));
   // SAL tutorials
   tutorials.set(T("Hello World"), T("hello.sal"));
   tutorials.set(T("Expressions"), T("expr.sal"));
@@ -205,6 +206,9 @@ void Help::openHelp(CommandID id)
 	openHelpInEditor(file, String(expr_sal, expr_salSize));
       else if (file==T("fomus.sal"))
 	openHelpInEditor(file, String(fomus_sal, fomus_salSize));
+      else if (file==T("fomusexamples.sal"))
+	openHelpInEditor(file, String(fomusexamples_sal, 
+				      fomusexamples_salSize));
       else if (file==T("funcall.sal"))
 	openHelpInEditor(file, String(funcall_sal, funcall_salSize));
       else if (file==T("hello.sal"))

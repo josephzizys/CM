@@ -110,7 +110,7 @@
   ;;(set! time (+ time (ffi_sched_score_time))) 
   (fms:writeXml port "time" time)
   (fms:writeXml port "dur" dur)
-  (if part (fms:writeXml port "part" part))
+  (if part (fms:writeXml port "part" (format #f "~A" part)))
   (if voice (fms:writeXml port "voice" voice))
   (if grtime (fms:writeXml port "grtime" grtime))
   (if marks (fms:writeXml port "marks" marks))

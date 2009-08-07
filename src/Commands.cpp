@@ -1240,6 +1240,8 @@ void TextBuffer::getAllCommands(Array<CommandID>& commands)
     CommandIDs::EditorUncommentOut,
     CommandIDs::EditorFormatComments,
     CommandIDs::EditorSymbolHelp,
+    CommandIDs::SchedulerStop,
+    CommandIDs::SchedulerPause,
     // Emacs commands (no menu)
     CommandIDs::EmacsCharForward,
     CommandIDs::EmacsCharBackward,
@@ -1501,7 +1503,7 @@ void TextBuffer::getCommandInfo(const CommandID id,
       info.setTicked(testFlag(EditFlags::EmacsMode));
       break;
       //
-      // Eval Menu
+      // Eval Menu, including processes
       //
     case CommandIDs::EditorExecute:
       info.shortName=T("Execute");
@@ -1511,6 +1513,16 @@ void TextBuffer::getCommandInfo(const CommandID id,
       info.shortName=T("Expand");
       info.setActive(isSyntax(TextIDs::Sal));
       break;
+    case CommandIDs::SchedulerStop:
+      info.shortName=T("Abort Processes");
+      info.setActive(!Scheme::getInstance()->isQueueEmpty());
+      break;
+    case CommandIDs::SchedulerPause:
+      info.shortName=((Scheme::getInstance()->isPaused()) ? T("Resume Processes") :
+		      T("Pause Processes"));
+      info.setActive(!Scheme::getInstance()->isQueueEmpty());
+      break;
+
       // Help Item
     case CommandIDs::EditorSymbolHelp:
       info.shortName=T("Lookup Symbol");
@@ -1674,6 +1686,12 @@ bool TextBuffer::perform(const ApplicationCommandTarget::InvocationInfo&
       break;
     case CommandIDs::EditorExpand:
       eval(true);
+      break;
+    case CommandIDs::SchedulerStop:
+      Scheme::getInstance()->stop(-1);
+      break;
+    case CommandIDs::SchedulerPause:
+      Scheme::getInstance()->setPaused(!(Scheme::getInstance()->isPaused()));
       break;
     case CommandIDs::FomusRunCurr:
       eval();
