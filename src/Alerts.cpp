@@ -26,6 +26,9 @@
 #ifdef MACOSX
 #include <Carbon/Carbon.h>
 #endif
+#ifdef WINDOWS
+#include <windows.h>
+#endif
 
 #include "Alerts.h"
 
@@ -36,7 +39,7 @@ String button2;
 String button3;
 
 #ifdef JUCE_WIN32
-#include <windows.h>
+
 
 int buttonLayoutType;
 
