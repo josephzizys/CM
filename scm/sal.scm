@@ -1,5 +1,5 @@
 ;;; **********************************************************************
-;;; Copyright (C) 2006 Rick Taube
+;;; Copyright (C) 2008, 2009 Rick Taube
 ;;; This program is free software; you can redistribute it and/or   
 ;;; modify it under the terms of the Lisp Lesser Gnu Public License.
 ;;; See http://www.cliki.net/LLGPL for the text of this agreement.
@@ -61,7 +61,7 @@
 
 (define (get-rule typ . def) 
   (or (hash-ref *rules* typ)
-      (error "not a rule" typ)))
+      (error "~S is not a rule" typ)))
 
 ;
 ;;; patterns
@@ -140,7 +140,7 @@
   ;; nconc data to end of info. this allows subforms to pass info back
   ;; up to calling forms.
   (let ((i (assoc name info)))
-    (if (not i) (error "no info for " name))
+    (if (not i) (error "no info for ~S" name))
     (set-cdr! i data)))
 
 (define (emit x info errf)
@@ -152,7 +152,7 @@
 	((list? x)
 	 (emit-list x info errf))
 	(else
-	 (error "emit: dont know how to emit" x))))
+	 (error "don't know how to emit ~S" x))))
 
 (define (emit-list lis info errf)
   (if (null? lis)
@@ -193,12 +193,12 @@
 	  ((SalType=? typ SalClass)
 	   (string->symbol str))
 	  ((SalType=? typ SalSlotRef )
-	   (error "emit-token-unit: dont know how to emit slotref token "
+	   (error "emit-token-unit: dont know how to emit slotref token ~S"
 		  unit))
 	  ((SalType=? typ SalIdentifier )
 	   (string->symbol str) )
 	  (else
-	   (error "emit-token-unit: dont know how to emit " 
+	   (error "emit-token-unit: dont know how to emit ~S" 
 		  unit)
 	   ))))	
 
@@ -255,7 +255,7 @@
 		     ;; top-level info is syntax to emit
 		     (add-emit-info #:syntax #:scheme info)
 		     errf)
-	       (make-parse-error "Illegal statement: "
+	       (make-parse-error "illegal statement: "
 				 *maxtokpos*))))))))
 
 (define (parser pat tokens force-and level trace errf)
@@ -292,7 +292,7 @@
 				    c)
 			    (values #f #f c))))))
 		 (else
-		  (error "Not a token type or rule type" typ))
+		  (error "~S is not a token type or rule type" typ))
 		 )))
 	((pattern-clause? pat)
 	 (cond ((or (pattern-and? pat) force-and)
@@ -387,11 +387,11 @@
 		(if p (values p s l)
 		    (values #t #f tokens))))
 	       (else
-		(error "Pattern opr not one of and, or, *, +, @"
+		(error "pattern operand ~S not one of and, or, *, +, @"
 		       (pattern-clause pat))))
 	 )
 	(else
-	 (error "Not a pattern value or pattern operator" pat))
+	 (error "~S is not a pattern value or pattern operator" pat))
 	))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2027,7 +2027,8 @@
 			(set! num (+ num 1)))
 		       ((eq? (cadr this) '*)
 			(set! num num))
-		       (else (error "second element not num * or +")))
+		       (else (error "second element ~A not num * or +"
+				    (cadr this)))
 		 (if (not (null? (cddr this)))
 		     (set! data (caddr this))
 		     (set! data 0)))

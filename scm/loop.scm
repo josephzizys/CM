@@ -1,23 +1,9 @@
 ;;; **********************************************************************
-;;; 
-;;; Copyright (C) 2002 Heinrich Taube (taube@uiuc.edu) 
-;;; 
-;;; This program is free software; you can redistribute it and/or
-;;; modify it under the terms of the GNU General Public License
-;;; as published by the Free Software Foundation; either version 2
-;;; of the License, or (at your option) any later version.
-;;; 
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;; 
+;;; Copyright (c) 2008, 2009 Rick Taube.
+;;; This program is free software; you can redistribute it and/or modify
+;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
+;;; this agreement is available at http://www.cliki.net/LLGPL            
 ;;; **********************************************************************
-
-;;; $Name$
-;;; $Revision: 1179 $
-;;; $Date: 2007-01-06 10:21:57 -0600 (Sat, 06 Jan 2007) $
-
 ;;;
 ;;; Implementation of the CLTL2 loop macro. The following 
 ;;; non Rev 5 definitions need to be in effect before the file
@@ -140,23 +126,21 @@
 		(reverse l))
 	     (set! l (cons (car lst) l))
 	     (set! lst (cdr lst))))))
-    (let ((forms (loop-context forms ops)))
-      (newline)
-      (display "LOOP ERROR: ")
+    (let ((forms (loop-context forms ops))
+	  (port (open-output-string)))
       (do ((tail args (cdr tail)))
 	  ((null? tail) #f)
-	(display (car tail)))
-      (newline)
-      (display "clause context: ")
-      (if (null? forms) 
-	(display "()")
-	(do ((tail forms (cdr tail)))
-	    ((null? tail) #f)
-	  (if (eq? tail forms) (display "'"))
-	  (display (car tail))
-	  (display (if (null? (cdr tail)) "'" " "))))
-      (newline)
-      (error "illegal loop syntax"))))
+	(display (car tail) port))
+      (if (not (null? forms) )
+	  (begin
+	    (newline port)
+	    (display "clause context: " port)
+	    (do ((tail forms (cdr tail)))
+		((null? tail) #f)
+	      (if (eq? tail forms) (display "'" port))
+	      (display (car tail) port)
+	      (display (if (null? (cdr tail)) "'" " ") port))))
+      (error (get-output-string port)))))
 
 (define (parse-for forms clauses ops)
   ;; forms is (FOR ...)

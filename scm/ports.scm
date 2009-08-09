@@ -1,5 +1,5 @@
 ;;; **********************************************************************
-;;; Copyright (C) 2008, Rick Taube.
+;;; Copyright (C) 2008, 2009 Rick Taube.
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
@@ -31,9 +31,9 @@
       ;; are in progress or switching to score mode while the
       ;; scheduler is busy running real time processes
       (if (ffi_sched_busy_p)
-	  (error "Scheduler busy, cannot open" str))
+	  (error "Scheduler busy, cannot open ~S" str))
       (if (not (ffi_pathname_writable_p str))
-	  (error "file not writable" str))
+	  (error "file ~S is not writable" str))
       (cond ((string=? type "mid")
 	     (apply mp:open-output-file str args)
 	     (set! mode *score-type-midi*)
@@ -53,7 +53,7 @@
 	     (set! mode *score-type-fomus*)
 	     )
 	    (else
-	     (error "don't know how to open" str)))
+	     (error "don't know how to open ~S" str)))
       ;; this function is being called under sprout: put the
       ;; schedulder in score mode
       (ffi_sched_set_score_mode mode)
@@ -90,7 +90,7 @@
 	   (>= (car dev) 0)
 	   (ffi_mp_open_output (car dev)))
       (car dev)
-      (error "not a midi device number" dev)))
+      (error "~S is not a midi device number" dev)))
 
 (define (mp:open-input . dev)
   (if (and (pair? dev)
@@ -99,7 +99,7 @@
 	   (>= (car dev) 0)
 	   (ffi_mp_open_input (car dev)))
       (car dev)
-      (error "not a midi device number" dev)))
+      (error "~S is not a midi device number" dev)))
 
 (define (mp:close-output . dev)
   (if (and (pair? dev)
@@ -107,7 +107,7 @@
 	   (integer? (car dev)) 
 	   (>= (car dev) 0))
       (ffi_mp_close_output (car dev))
-      (error "not a midi device number" dev)))
+      (error "~S is not a midi device number" dev)))
 
 (define (mp:close-input . dev)
   (if (and (pair? dev)
@@ -115,7 +115,7 @@
 	   (integer? (car dev)) 
 	   (>= (car dev) 0))
       (ffi_mp_close_input (car dev))
-      (error "not a midi device number" dev)))
+      (error "~S is not a midi device number" dev)))
 
 (define (mp:open-output-file path . args)
   (ffi_mp_set_output_file path)
@@ -158,7 +158,7 @@
     (if (and (integer? arg)
 	     (< 0 arg 17))
 	(ffi_mp_set_tuning arg)
-	(error "not a tuning division 1 to 16" arg))))
+	(error "~S is not a tuning division 1 to 16" arg))))
 
 (define (mp:instruments . args)
   (do ((tail args (cdr tail))
@@ -171,7 +171,7 @@
     (if (not (car tail)) (set! prog -1)
 	(if (and (integer? (car tail)) (<= 0 (car tail) 127))
 	    (set! prog (car tail))
-	    (error "not #f or program change 0 to 127" (car tail))))
+	    (error "~S is not a program change 0 to 127 or #f" (car tail))))
     (cond ((= argn 0) (set! a prog))
 	  ((= argn 1) (set! b prog))
 	  ((= argn 2) (set! c prog))
@@ -189,7 +189,7 @@
 	  ((= argn 14) (set! o prog))
 	  ((= argn 15) (set! p prog))
 	  (else
-	   (error "more than 16 program changes" tail))))
+	   (error "more than 16 program changes in ~S" tail))))
   )
 
 (define (mp:playseq)
@@ -221,7 +221,7 @@
 (define (mp:inchans . args)
   (let ((val 0))
     (cond ((null? args)
-	   (error "missing a channel 0 to 15" ))
+	   (error "missing channel 0 to 15 in ~S" args))
 	  ((and (null? (cdr args)) (eq? (car args) #f))
 	   (set! val 0))
 	  ((and (null? (cdr args)) (eq? (car args) #t))
@@ -232,13 +232,13 @@
 		#f)
 	     (if (<= 0 (car a) 15)
 		 (set! val (logior val (ash 1 (car a))))
-		 (error "not a channel 0 to 15" (car a))))))
+		 (error "~S is not a channel 0 to 15" (car a))))))
     (ffi_mp_set_channel_mask val)))
 
 (define (mp:inops . args)
   (let ((val 0))
     (cond ((null? args)
-	   (error "missing message type (mm:off to mm:bend)" ))
+	   (error "missing message type (mm:off to mm:bend) in ~S" args))
 	  ((and (null? (cdr args)) (eq? (car args) #f))
 	   (set! val 0))
 	  ((and (null? (cdr args)) (eq? (car args) #t))
@@ -249,7 +249,8 @@
 		#f)
 	     (if (<= mm:off (car a) mm:bend)
 		 (set! val (logior val (ash 1 (- (car a) mm:off))))
-		 (error "not a message type mm:off to mm:bend" (car a))))))
+		 (error "~S is not a message type mm:off to mm:bend"
+			(car a))))))
     (ffi_mp_set_message_mask val)
     ))
 
@@ -318,7 +319,7 @@
 (define (cs:open-output-file path . args)
   (let ((opts (string-append "\"" path "\"")))
     (unless (even? (length args))
-      (error "uneven options list" args))
+      (error "uneven options list ~S" args))
     (do ((tail args (cddr tail))
 	 (argn #f))
 	((null? tail) 
@@ -334,21 +335,21 @@
 				   (if (cadr tail) "#t" "#f"))))
 	((#:options )
 	 (if (not (string? argn))
-	     (error "options not a string" argn))
+	     (error "options ~S is not a string" argn))
 	 (set! opts (string-append opts " :options \""
 				   (cadr tail) "\"")))
 	((#:header)
 	 (if (not (string? argn))
-	     (error "header not a string" argn))
+	     (error "header ~S is not a string" argn))
 	 (set! opts (string-append opts " :header \""
 				   (cadr tail) "\"")))
 	((#:orchestra)
 	 (if (not (string? argn))
-	     (error "orchestra not a string" argn))
+	     (error "orchestra ~S is not a string" argn))
 	 (set! opts (string-append opts " :orchestra \""
 				   (cadr tail) "\"")))
 	(else
-	 (error "unknown Csound option" (car tail)))))))
+	 (error "unknown Csound option ~S" (car tail)))))))
 
 ; (cs:open-output-file "test.sco" #:write #t #:play #f)
 
@@ -363,7 +364,7 @@
 	(time #f)
 	(data ""))
     (cond ((null? args)
-	   (error "missing pfield data"))
+	   (error "missing pfield data in ~S" args))
 	  ((and (null? (cdr args))
 		(pair? (car args)))
 	   (set! args (car args))))
@@ -372,15 +373,15 @@
 	   (set! inst (car args))
 	   (set! args (cdr args)))
 	  (else
-	   (error "pfield 1 not an integer" (car args))))
+	   (error "pfield 1 value ~S not an integer" (car args))))
     ;; parse out time value
     (cond ((null? args)
-	   (error "missing pfield 2 (time)"))
+	   (error "missing pfield 2 (time) in ~S" args))
 	  ((number? (car args))
 	   (set! time (car args))
 	   (set! args (cdr args)))
 	  (else
-	   (error "pfield 2 not a number" (car args))))
+	   (error "pfield 2 value ~S not a number" (car args))))
     ;; convert remaining to string
     (do ((tail args (cdr tail))
 	 (delm "" " "))
@@ -399,7 +400,7 @@
 	     (set! data (string-append data delm
 				       (symbol->string (car tail)))))
 	    (else
-	     (error "pfield not number, string or symbol"
+	     (error "pfield value ~A not number, string or symbol"
 		    (car tail)))))))
 
 (define (cs:i . args)
@@ -414,9 +415,9 @@
 	   (if (or (eqv? type 'i)
 		   (eqv? type 'f))
 	       (cs:send type args)
-	       (error "not a Csound statement" type))))
+	       (error "~S is not a Csound statement type" type))))
 	(else
-	 (error "Pfield data not a list" args))))
+	 (error "pfield data ~S not a list" args))))
 
 ; (cs:send 1 '(99 0 1 440 .1))
 ; (cs:i 1 0 1 2 3 4)
@@ -459,7 +460,7 @@
 	((symbol? place)
 	 (cons place args))
 	(else
-	 (error "not a send message" place))
+	 (error "~S is not a send message" place))
 	))
 
 ; (define foo (make-message-parser '(a b c )))
@@ -489,7 +490,7 @@
     (cond ((keyword? (car tail))
 	   (if (member (car tail) '(#:opt #:key #:optkey #:rest))
 	       (set! mode (car tail))
-	       (error "not a mode" mode)))
+	       (error "~S is not a valid message argument" mode)))
 	  ((eqv? mode #:key)
 	   (let ((x (if (pair? (car tail))
 			(caar tail) (car tail))))
@@ -507,7 +508,8 @@
 	   ;;(format #t "req is ~S~%" (car tail))
 	   (set! reqs (cons (car tail) reqs)))
 	  (else
-	   (error "shouldnt" mode))
+	   (error "in make-message-parser, ~S shouldn't happen!"
+		  mode))
 	  ))
   (set! reqs (reverse reqs))
   (set! opts (reverse opts))

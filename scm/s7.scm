@@ -1,5 +1,5 @@
 ;;; **********************************************************************
-;;; Copyright (C) 2008, Rick Taube.
+;;; Copyright (C) 2008, 2009 Rick Taube.
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
@@ -8,6 +8,18 @@
 ;; loading this file ensures implementation features that are either
 ;; not provided or unevenly provided in scheme implementations. see
 ;; readme.txt for the list of features.
+
+(define (s7-error-hook tag args)
+  ;; report scheme errors using the same format as C errors.
+  (format (current-error-port) ">>> Error: ")
+  (apply format (current-error-port) args)
+  (format (current-error-port) "~%")
+  ;; return tag to tell C side an error occured
+  'scheme-error)
+
+;; set s7's error hook variable 
+
+(define *error-hook* s7-error-hook)
 
 (define (interaction-environment ) (global-environment))
 
@@ -56,77 +68,77 @@
 ;; adapted for lists as well as vectors from
 ;; http://www.math.grin.edu/~stone/events/scheme-workshop/quicksort.html
 
-(define (sort! seq . opt)
-  (let ((precedes? (if (null? opt) < (car opt)))
-	(getlen #f)
-	(getter #f)
-	(setter #f))
-    (cond ((list? seq)
-	   (set! getlen length)
-	   (set! getter list-ref)
-	   (set! setter (lambda (l i x) 
-			  (set-car! (list-tail l i) x))))
-	  ((vector? seq)
-	   (set! getlen vector-length)
-	   (set! getter vector-ref)
-	   (set! setter vector-set!))
-	  (else
-	   (error "not a list or vector" seq)))
-    (define (swapper seq a b)
-      (let ((x (getter seq a)))
-	(setter seq a (getter seq b))
-	(setter seq b x)))
-    (define (partition! start stop pivot)
-      (define (rightwards current)
-        (if (and (< current stop)
-                 (precedes? (getter seq current)
-                            pivot))
-            (rightwards (+ current 1))
-            current))
-      (define (leftwards current)
-        (if (or (< current start)
-                (precedes? (getter seq current)
-                           pivot))
-            current
-            (leftwards (- current 1))))
-      ;; body of partition!
-      (let loop ((left-pointer (rightwards start))
-                 (right-pointer (leftwards (- stop 1))))
-        (if (< left-pointer right-pointer)
-            (begin
-              (swapper seq left-pointer right-pointer)
-              (loop (rightwards (+ left-pointer 1))
-                    (leftwards (- right-pointer 1))))
-            left-pointer)))
-    ; body of quicksort!
-    (let qs ((start 0)
-             (stop (- (getlen seq) 1)))
-      (if (< start stop)
-          (let* ((pivot (getter seq stop))
-                 (break (partition! start stop pivot)))
-            (swapper seq break stop)
-            (if (<= (- break start)
-                    (- stop break))
-                (begin
-                  (qs start (- break 1))
-                  (qs (+ break 1) stop))
-                (begin
-                  (qs (+ break 1) stop)
-                  (qs start (- break 1)))))))
-    seq))
+;; (define (sort! seq . opt)
+;;   (let ((precedes? (if (null? opt) < (car opt)))
+;; 	(getlen #f)
+;; 	(getter #f)
+;; 	(setter #f))
+;;     (cond ((list? seq)
+;; 	   (set! getlen length)
+;; 	   (set! getter list-ref)
+;; 	   (set! setter (lambda (l i x) 
+;; 			  (set-car! (list-tail l i) x))))
+;; 	  ((vector? seq)
+;; 	   (set! getlen vector-length)
+;; 	   (set! getter vector-ref)
+;; 	   (set! setter vector-set!))
+;; 	  (else
+;; 	   (error "~S is not a list or vector" seq)))
+;;     (define (swapper seq a b)
+;;       (let ((x (getter seq a)))
+;; 	(setter seq a (getter seq b))
+;; 	(setter seq b x)))
+;;     (define (partition! start stop pivot)
+;;       (define (rightwards current)
+;;         (if (and (< current stop)
+;;                  (precedes? (getter seq current)
+;;                             pivot))
+;;             (rightwards (+ current 1))
+;;             current))
+;;       (define (leftwards current)
+;;         (if (or (< current start)
+;;                 (precedes? (getter seq current)
+;;                            pivot))
+;;             current
+;;             (leftwards (- current 1))))
+;;       ;; body of partition!
+;;       (let loop ((left-pointer (rightwards start))
+;;                  (right-pointer (leftwards (- stop 1))))
+;;         (if (< left-pointer right-pointer)
+;;             (begin
+;;               (swapper seq left-pointer right-pointer)
+;;               (loop (rightwards (+ left-pointer 1))
+;;                     (leftwards (- right-pointer 1))))
+;;             left-pointer)))
+;;     ; body of quicksort!
+;;     (let qs ((start 0)
+;;              (stop (- (getlen seq) 1)))
+;;       (if (< start stop)
+;;           (let* ((pivot (getter seq stop))
+;;                  (break (partition! start stop pivot)))
+;;             (swapper seq break stop)
+;;             (if (<= (- break start)
+;;                     (- stop break))
+;;                 (begin
+;;                   (qs start (- break 1))
+;;                   (qs (+ break 1) stop))
+;;                 (begin
+;;                   (qs (+ break 1) stop)
+;;                   (qs start (- break 1)))))))
+;;     seq))
 
-(define (sort seq . opt)
-  (cond ((list? seq)
-	 (set! seq (append seq (list))))
-	((vector? seq)
-	 (let* ((l (vector-length seq))
-		(v (make-vector l)))
-	   (do ((i 0 (+ i 1)))
-	       ((= i l) (set! seq v))
-	     (vector-set! v i (vector-ref seq i)))))
-	(else
-	 (error "not a vector or list" seq)))
-  (sort! seq (if (null? opt) < (car opt))))
+;; (define (sort seq . opt)
+;;   (cond ((list? seq)
+;; 	 (set! seq (append seq (list))))
+;; 	((vector? seq)
+;; 	 (let* ((l (vector-length seq))
+;; 		(v (make-vector l)))
+;; 	   (do ((i 0 (+ i 1)))
+;; 	       ((= i l) (set! seq v))
+;; 	     (vector-set! v i (vector-ref seq i)))))
+;; 	(else
+;; 	 (error "~S is not a list or vector" seq)))
+;;   (sort! seq (if (null? opt) < (car opt))))
 
 ; (sort! (list 8 7 9 5 6 2 3 1 4) <)
 ; (sort! (list 8 7 9 5 6 2 3 1 4) >)

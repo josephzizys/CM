@@ -1,5 +1,5 @@
 ;;; **********************************************************************
-;;; Copyright (c) 2008 Rick Taube.
+;;; Copyright (c) 2008, 2009 Rick Taube.
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
@@ -80,7 +80,7 @@
       ((#:values )     
        (set! flags (logior flags +count-values+)))
       (else
-       (error "Illegal for counting" counting))))
+       (error "illegal counting value ~S" counting))))
   ;; parse traversing option
   (let ((traversing (pattern-traversing obj)))
     (case traversing
@@ -89,7 +89,7 @@
       ((#:breadth-first )
        (set! flags (logior flags +breadth-first+)))
       (else
-       (error "Illegal for traversing" traversing))))
+       (error "illegal traversing value ~S" traversing))))
   ;; if constant data and counting subperiods, switch to counting
   ;; values instead since its the same thing and we can avoid
   ;; resetting subperiods if period length is nevertheless expressed
@@ -748,10 +748,10 @@
 (define (canonicalize-markov-data data)
   (define (parse-markov-spec spec)
     (if (not (pair? spec))
-	(error "Transition is not a list" spec))
+	(error "transition ~S is not a list" spec))
     (let ((rhside (or (member '-> spec)
 		      (member '#:-> spec)
-		      (error "Transition missing right hand side"
+		      (error "no right hand side in transition ~S"
 			     spec)))
 	  (lhside (list))
 	  (range 0) 
@@ -800,7 +800,7 @@
 	    (set! order (length (car p)))
 	    ;;(set! order (max order (length (first p))))
 	    (if (not (= order (length (car p))))
-		(error "Left hand sides have different number of items" 
+		(error "found left hand sides with different number of items in ~S" 
 		       data))
 	    )
 	(set-cdr! lis (list p))
@@ -811,7 +811,7 @@
 
 (define (make-markov data . args)
   (if (not (pair? data))
-      (error "Not a list of Markov transitions" data)
+      (error "~S is not list of markov transitions" data)
       (set! data (canonicalize-markov-data data)))
   (with-optkeys (args for limit past)
     (let* ((obj (%alloc-pattern))
@@ -876,7 +876,7 @@
 	((or (null? tail) (null? past) 
 	     (match-past (car (car tail)) past))
 	 (when (null? tail)
-	   (error "No transition matches past"  past))
+	   (error "no transition matches past ~S"  past))
 	 (set! item (select-output (cadr (car tail))
 				   (cddr (car tail))))
 	 (unless (null? past)
@@ -909,7 +909,7 @@
       (set! morder order)
       (set! result mode))
     (unless (member result '(1 2 3))
-      (error "Not a legal mode" result))
+      (error "~S is not a valid mode value" result))
     (letrec ((add-outcome
 	      (lambda (prev next) 
 		(let ((entry (list-find (lambda (x)
@@ -1074,7 +1074,7 @@
 
 (define (make-graph data . args)
   (if (not (pair? data))
-      (error "Not graph data" data)
+      (error "~S is not a list of graph data" data)
       (set! data (canonicalize-graph-data data)))
   (with-optkeys (args for limit)
     (let* ((obj (%alloc-pattern))
@@ -1091,7 +1091,7 @@
   (let ((pos 1))
     (define (parse-graph-item extern)
       (unless (pair? extern) 
-	(error "Graph node not a list" extern))
+	(error "~S is not a graph node list" extern))
       (apply (lambda (item . args)
 	       (with-optkeys (args to id)
 		 (unless id (set! id pos))
@@ -1116,7 +1116,7 @@
 	  (do ((tail nodes (cdr tail)))
 	      ((or next (null? tail))
 	       (if (not next)
-		   (error "No graph node for id" link)
+		   (error "no graph node for id ~S" link)
 		   (set-car! graph next))
 	       (graph-node-datum next))
 	    (if (eqv? link (graph-node-id (car tail)))

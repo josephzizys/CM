@@ -1,5 +1,5 @@
 ;;; **********************************************************************
-;;; Copyright (c) 2008 Rick Taube.
+;;; Copyright (c) 2008, 2009 Rick Taube.
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
@@ -119,7 +119,7 @@
 	      ((eqv? order 1)
 	       keys)
 	      (else 
-	       (error "mode not -1 0 or 1" mode))))
+	       (error "mode ~S not -1 0 or 1" mode))))
       )))
 
 
@@ -371,15 +371,15 @@
 	(minimum #f)
 	(maximum #f))
     (if (null? args)
-	(error "Need a scaler, envelope or x y values")
+	(error "missing scaler, envelope or x y values")
 	(if (null? (cdr args))
 	    (set! args (if (or (pair? (car args))
 			       (number? (car args)))
 			   (car args)
-			   (error "Not a number or pair"
+			   (error "~S is not a number or pair"
 				  (car args))))))
     (if (not (<= 1 mode 8))
-	(error "Mode not 1-8" mode)
+	(error "mode ~S not 1-8" mode)
 	(set! mode (- mode 1))) ; convert 1-8 to 0-7
     (if (bit-set? mode 2) ; is 4's bit on
 	(set! modified (spectrum-amps spec))
@@ -420,7 +420,7 @@
 			 ((eqv? (car tail) #t) 
 			  (set-car! tail xmax)))
 		   (cond (scaling
-			  (error "Non-numerical y can't be scaler"
+			  (error "non-numerical y value ~S can't be scaler"
 				 (cadr tail)))
 			 ((eqv? (cadr tail) #f) 
 			  (set-car! (cdr tail) ymin))
@@ -447,7 +447,8 @@
   (let ((port (open-input-string str))
 	(rdat (lambda (p)
 		(let ((x (read p)))
-		  (if (eof-object? x) (error "Bad frame data" str))
+		  (if (eof-object? x)
+		      (error "~S is not frame data" str))
 		  x)))
 	(time #f)
 	(size #f)
@@ -479,7 +480,7 @@
 	(let ((rhdr (lambda (p)
 		      (let ((l (read-line p)))
 			(if (eof-object? l)
-			    (error "Not frame data" p))
+			    (error "~S is not frame data" p))
 			l)))
 	      (line #f))
 	  (set! line (rhdr port))

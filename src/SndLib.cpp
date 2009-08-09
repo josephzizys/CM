@@ -92,16 +92,40 @@ void SchemeNode::applyEvalNode()
   s7_pointer val=s7_eval_c_string(s7, (char *)expr.toUTF8());
   if (! s7_is_unspecified(s7, val))
     {
-#ifdef GRACE
       String str=String(s7_object_to_c_string(s7, val));
-      str << T("\n");
-      Console::getInstance()->printValues(str);
-#else
-      Console::getInstance()->printValues(s7_object_to_c_string(s7, val));
+      if (str!=T("scheme-error"))
+	{
+#ifdef GRACE
+	  str << T("\n");
 #endif
+	  Console::getInstance()->printValues(str);
+	}
     }
-  //  else
-  //    schemeThread->printVoidValue();
+#if 0
+  //  optional echoing when there no output in the repl
+  else
+    if (Preferences::getInstance()->getBoolProp(T("SchemeShowVoidValues"), true))
+      {
+	if (expr.substring(0,5)==T("(sal "))
+	  {
+	  }
+	else
+	  {
+	    std::cout << expr.toUTF8() << "\n";
+	    String stop=T(" ()\"\t\n");
+	    String text=expr.trim();
+	    int beg=0;
+	    while (beg<text.length() && stop.containsChar(text[beg])) beg++;
+	    int end=beg+1;
+	    while (end<text.length() && !stop.containsChar(text[end])) end++;
+	    String what=T("<eval ");
+	    what << text.substring(beg,end);
+	    if (end<text.length()) what << T("...");
+	    what<<T(">\n");
+	    Console::getInstance()->printValues(what);
+	  }
+    }
+#endif
 }
 
 double SchemeNode::applyProcessNode(double elapsed)

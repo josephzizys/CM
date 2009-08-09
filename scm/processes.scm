@@ -1,5 +1,5 @@
 ;;; **********************************************************************
-;;; Copyright (C) 2008, Rick Taube.
+;;; Copyright (C) 2008, 2009 Rick Taube.
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
@@ -134,7 +134,7 @@
 
 (define-macro (define-process formals . body)
   (unless (and (pair? formals)(symbol? (car formals)))
-    (error "Illegal process formals" formals))
+    (error "illegal process formals ~S" formals))
   `(define ,formals ,@ body))
 
 
@@ -160,8 +160,8 @@
 	     (do ((tail proc (cdr tail)))
 		 ((null? tail) #t)
 	       (if (not (procedure? (car tail)))
-		   (error "not a process" proc))))
-	(error "not a process" proc)	)
+		   (error "~S is not a process" proc))))
+	(error "~S is not a process" proc)	)
     ;; parse args until file info...
     (do ((tail args (cdr tail))
 	 (argn 0 (+ argn 1)))
@@ -174,7 +174,7 @@
 	    ((= argn 1)
 	     (set! id (car tail)))
 	    (else
-	     (error "illegal arguments" args))))
+	     (error "illegal sprout arguments ~S" args))))
     ;; make sure all starts are valid start times...
     (or (and (number? start) (>= start 0))
 	(and (pair? start)
@@ -182,16 +182,18 @@
 		 ((null? tail) #t)
 	       (if (or (not (number? (car tail)))
 		       (< (car tail) 0))
-		   (error "not a start time" (car tail)))))
-	(error "not a start time" start))
+		   (error "~S is not a process start time for sprout"
+			  (car tail)))))
+	(error "~S is not a process start time for sprout" start))
     ;; make sure all ids are integers
     (or (integer? id)
 	(and (pair? id)
 	     (do ((tail id (cdr tail)))
 		 ((null? tail) #t)
 	       (if (not (integer? (car tail)))
-		   (error "not an id" (car tail)))))
-	(error "not an id" id))
+		   (error "~S is not a process id for sprout"
+			  (car tail)))))
+	(error "~S is not a process id" id))
     ;; open output file or signal error
     (if file (set! file (apply open-file file args)))
     ;; everything ok, do process sprouting!
@@ -244,7 +246,7 @@
 	  ((null? tail) #f)
 	(if (fixnum? (car tail))
 	    (ffi_sched_stop (car tail))
-	    (error "Not an integer id" (car tail)))))
+	    (error "~S is not a process id" (car tail)))))
   (void))
 
 ;(define (hush )

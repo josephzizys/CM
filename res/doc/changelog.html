@@ -16,10 +16,13 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   
   <h1>Changelog</h1>
   
-  <h2>SVN trunk (3.3.0) </h2>
+  <h2>CM 3.3.0</h2>
 
  <ul>  
-     <li class="change">New feature: Plotting windows support the display, editing and sonification of user defined data sets. See <A href="cm.html#plotting">Plotting</a> for more information.</li>
+     <li class="change">New audio target: <a href="http:fomus.sf.net">FOMUS</a>, a music notation package by David Psenicka that transforms symbolic score information into fully notated manuscipts. For more information see the <a href="cm.html#fomus">Fomus documentation</a> and the Fomus examples and tutorials in the Help menu.</li>
+
+
+     <li class="change">New feature: Plot windows support display, editing and sonification of multidimensional data sets. See <A href="cm.html#plotting">Plotting</a> for more information.</li>
 
     <li class="change">New feature: Editor window 'triggers' for
       interactive evaluation.To add a trigger to a buffer use the
@@ -60,7 +63,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     </li>
 
     <li class="change">New function:
-    <a href="./cm.html#rest_">rest?</a>. 
+    <a href="./cm.html#rest_">rest?</a>
     </li>
    
     <li class="change">New function:
@@ -83,7 +86,12 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     <a href="./cm.html#cents-_ratio">cents-&gt;ratio</a>
     </li>
 
-     <li class="change">Enhancement: the current 'working directory' is now saved across sessions as a preference.</li>
+     <li class="change">Enhancement: Grace now uses native Yes/No/Cancel dialogs for Mac and Windows. Thank you Andrew Burnson!</li>
+
+     <li class="change">Enhancement: Error messages in Scheme now look exactly like any other error message (s7 scheme only). Thank you Bill Schottstaedt!</li>
+
+     <li class="change">Enhancement: the current 'working directory' is now saved across sessions
+ as a preference.</li>
 
      <li class="change">Enhancement: the current instrument assignments are now saved in midifiles by default. Use Audio&gt;Midifile Options...&gt; to toggle the setting.</li>     
 
@@ -134,13 +142,14 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     <li class="change">Bug fix: Evaling regions in SAL buffers now works correctly.</li>
     <li class="change">Bug fix: COMMAND-A (Select All) in editor now works correctly.</li>
 
-      <li class="change">New application target: GraceCL is modified version
+      <li class="change">New application target: the GraceCL application is modified version
      of the Grace environment for use with Common Lisp (SBCL or CLisp)
      and Common Music 2 releases (version 2.12.0 or higher). GraceCL
      is intened to be a replacement for running CM2 under Emacs and
      Slime, as such it does not contain an Audio menu or real time
      scheduling. To learn how to use GraceCL, start the application
-     and follow the instructions printed in the Console window.</li>
+     and follow the instructions printed in the Console window. 
+    </li>
 
 
 </ul>
@@ -197,7 +206,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 <hr/>
 <address></address>
 <p>
-<!-- hhmts start --> Last modified: Thu Aug  6 18:34:58 CDT 2009 <!-- hhmts end -->
+<!-- hhmts start --> Last modified: Sat Aug  8 19:13:04 CDT 2009 <!-- hhmts end -->
 </p>
 </body>
 </html>

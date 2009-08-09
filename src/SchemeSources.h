@@ -9,49 +9,52 @@ namespace SchemeSources
     const int           chickenforeign_scmSize = 7147;
 
     extern const char*  chicken_scm;
-    const int           chicken_scmSize = 3144;
+    const int           chicken_scmSize = 2872;
 
     extern const char*  chickenbridge_scm;
     const int           chickenbridge_scmSize = 2842;
 
     extern const char*  fomus_scm;
-    const int           fomus_scmSize = 11824;
+    const int           fomus_scmSize = 11865;
 
     extern const char*  genffi_scm;
     const int           genffi_scmSize = 21317;
 
     extern const char*  loop_scm;
-    const int           loop_scmSize = 39510;
+    const int           loop_scmSize = 39110;
 
     extern const char*  patterns_scm;
-    const int           patterns_scmSize = 36668;
+    const int           patterns_scmSize = 36744;
 
     extern const char*  plot_scm;
-    const int           plot_scmSize = 12161;
+    const int           plot_scmSize = 12392;
 
     extern const char*  ports_scm;
-    const int           ports_scmSize = 17180;
+    const int           ports_scmSize = 17431;
 
     extern const char*  processes_scm;
-    const int           processes_scmSize = 7137;
+    const int           processes_scmSize = 7269;
 
     extern const char*  s7_scm;
-    const int           s7_scmSize = 5161;
+    const int           s7_scmSize = 5745;
 
     extern const char*  sal_scm;
-    const int           sal_scmSize = 60258;
+    const int           sal_scmSize = 60315;
 
     extern const char*  sndlibws_scm;
     const int           sndlibws_scmSize = 24752;
 
     extern const char*  spectral_scm;
-    const int           spectral_scmSize = 17070;
+    const int           spectral_scmSize = 17118;
+
+    extern const char*  tags;
+    const int           tagsSize = 22537;
 
     extern const char*  toolbox_scm;
-    const int           toolbox_scmSize = 24623;
+    const int           toolbox_scmSize = 25263;
 
     extern const char*  utilities_scm;
-    const int           utilities_scmSize = 9554;
+    const int           utilities_scmSize = 9623;
 
 };
 

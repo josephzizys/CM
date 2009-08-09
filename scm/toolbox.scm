@@ -1,3 +1,9 @@
+;;; **********************************************************************
+;;; Copyright (c) 2008, 2009 Rick Taube.
+;;; This program is free software; you can redistribute it and/or modify
+;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
+;;; this agreement is available at http://www.cliki.net/LLGPL            
+;;; **********************************************************************
 
 (define (rescale x x1 x2 y1 y2 . b)
   (if (list? x)
@@ -25,7 +31,8 @@
 	       (set! exp (cadr args)))))
     (if seq
 	(if (list? x)
-	    (map (lambda (z) (list-ref seq (ffi_discrete z x1 x2 0 i2 exp))) x)
+	    (map (lambda (z)
+		   (list-ref seq (ffi_discrete z x1 x2 0 i2 exp))) x)
 	    (list-ref seq (ffi_discrete x x1 x2 0 i2 exp)))
 	(if (list? x) 
 	    (map (lambda (z) (ffi_discrete z x1 x2 i1 i2 exp)) x)
@@ -127,10 +134,10 @@
 
 (define (interp1 x coords base)
   (let* ((x1 (if (null? coords)
-		 (error "not an x y coordinate list" coords)
+		 (error "~S is an empty x y coordinate list" coords)
 		 (car coords)))
 	 (y1 (if (null? (cdr coords))
-		 (err "not an x y coordinate list" coords)
+		 (error "malformed x y coordinate list ~S" coords)
 		 (cadr coords)))
 	 (x2 x1)
 	 (y2 y1)
@@ -142,11 +149,11 @@
       (set! y1 y2 )
       (set! x2 (car tail)) 
       (if (null? (cdr tail))
-	  (error "not an x y coordinate list:" coords)
+	  (error "malformed an x y coordinate list ~S" coords)
 	  (set! y2 (cadr tail))))))
 
 (define (interp x . args)
-  (if (null? args) (error "missing x y coordinates"))
+  (if (null? args) (error "empty x y coordinate list ~S" args))
   (if (pair? (car args))
       (interp1 x (car args) 
 	       (if (null? (cdr args)) 1 (cadr args)))
@@ -191,7 +198,7 @@
 		((eqv? mode 3) ;; LIMIT
 		 b)
 		(else
-		 (error "mode not 1 2 or 3" mode))))))
+		 (error "mode value ~S is not 1 2 or 3" mode))))))
   (if (pair? num)
       (map (lambda (n) (fit1 n lb ub mode)) num)
       (fit1 num lb ub mode)))
@@ -206,7 +213,7 @@
 	    (set! args (car args))
 	    (begin (set! limit (cadr args))
 		   (if (= limit keynum)
-		       (error "limit same as start" limit))
+		       (error "limit ~S same as start" limit))
 		   (set! args (car args)))))
     (do ((i 0 (+ i 1))
          (k keynum)
@@ -231,7 +238,7 @@
 		      (base (if (null? args) 2 (car args)))
 		      (head (list #f))
 		      (tail head))
-		 (if (< base 0) (error "Illegal base" base))
+		 (if (< base 0) (error "~S is not a valid base" base))
 		 (do ((i 0 (+ i 1)))
 		     ((= i num) (cdr head))
 		   (set-cdr! tail
@@ -258,7 +265,7 @@
 		     (set! tail (cdr tail))
 		     (set! rsum (+ rsum n))))))
 	      (else
-	       (error "Not a legal mode" mode))))))
+	       (error "~S is not a valid mode" mode))))))
 
 ;;; randomnesss
 
@@ -291,7 +298,7 @@
   (if (null? mode) (set! mode 0)
       (set! mode (car mode)))
   (if (not (member mode '(0 -1 1)))
-      (error "Not a legal mode" mode))
+      (error "~S is not a valid mode" mode))
   (define (vary1 val vari mode)
     (if (or (<= vari 0) (= val 0))
 	val
@@ -339,7 +346,7 @@
 	  ((or (eq? mode ':jump ) (eql? mode 3))
 	   (set! n (between low high)))
 	  (else 
-	   (err "not a valid mode for drunk" mode))))
+	   (error "~S is not a valid mode" mode))))
       n)))
 
 ;; randomness
@@ -468,8 +475,8 @@
     (if (not entry)
 	(if oct
 	    (or (hash-ref *notes* (string-append str oct))
-		(if err (error "Not a note or key" str) #f))
-	    (and err (error "Not a note or key" str)))
+		(if err (error "~S is not a note or key" str) #f))
+	    (and err (error "~S is not a note or key" str)))
 	entry)))
 
 ;;(define (number->note-entry num err)
@@ -482,7 +489,7 @@
 (define (number->note-entry num err)
   (if (exact? num) 
       (or (hash-ref *notes* num)
-	  (if err (error "Not a note or key" num) #f))
+	  (if err (error "~S is not a note or key" num) #f))
       (let* ((int (inexact->exact (floor num)))
 	     (rem (- num int)))
 	(or (hash-ref *notes*
@@ -492,7 +499,7 @@
 			      ;; S7 doesnt hash floats
 			      (+ int 1000) ;(+ int .5)
 			      (+ int 1))))
-	    (if err (error "Not a note or key" num) #f)))))
+	    (if err (error "~S is not a note or key" num) #f)))))
 
 (define (note-aux freq doct err?)
   ;; if doct (default octave string) we are parsing a note list
@@ -505,7 +512,7 @@
 	((keyword? freq)
 	 (string->note-entry (keyword->string freq) doct err?))	
 	((and err?)
-	 (error "Not a note or key" freq))
+	 (error "~S is not a note or key" freq))
 	(else
 	 #f)))
 
@@ -630,7 +637,7 @@
   (cond ((number? x)
 	 (if (< x 12)
 	     (modulo (- 12 x) 12)
-	     (error "No inversion for" x)))
+	     (error "~S is not a valid inversion" x)))
 	((pair? x)
 	 (let ((invkeys
 		(lambda (keys) 
@@ -650,7 +657,7 @@
 		   (invkeys x))
 	       (note (invkeys (key x))))))
 	(else
-	 (error "No inversion for" x))))
+	 (error "~S is not a valid inversion" x))))
 
 ; (invert '(60 62 64 ))
 ; (invert  7)
@@ -687,7 +694,7 @@
 	 (note (+ (key x) y))
 	 )
 	(else
-	 (error "No transposion for" x))))
+	 (error "~S is not a valid transposion" x))))
 
 ; (transpose 7 7)
 ; (transpose '(0 1 2 3 4 5 6 7 8 9 10 11) 7)
@@ -727,7 +734,7 @@
 			    (> (key a) (key b))))))
       (if (eqv? mode 0)
 	  (shuffle scale)
-	  (error "Not a legal mode" mode)))))
+	  (error "~S is not a valid mode" mode)))))
 
 ;;
 ;; rhythm
@@ -792,7 +799,7 @@
 	  ((list? val)
 	   (map (lambda (x) (rhythm x tempo beat)) val))
 	  (else
-	   (error "not a rhythm" val)))))
+	   (error "~S is not a rhythm" val)))))
 
 (define (rhythm-expr expr tempo beat)
   (let ((ryth (if (symbol? expr) (symbol->string expr) expr))
@@ -812,9 +819,9 @@
              ;  (error "Not a rhythm" ryth))))
              ;  (* (/ (- val) beat) (/ 60 tempo)))
 	      (* -1  (rhythm-expr (substring ryth 1) tempo beat))
-	      (error "Not a rhythm" ryth) )
+	      (error "~S is not a rhythm" ryth) )
 	  (do ((num (or (hash-ref *rhythms* (substring ryth lb ub))
-			(error "not a rhythm" expr)
+			(error "~S is not a rhythm" expr)
 			))
 	       (val #f)
 	       (tok #f)
@@ -831,14 +838,14 @@
 	    (set! ub (next-token-start ryth lb len))
 	    (if (< lb ub)
 		(set! tok (substring ryth lb ub))
-		(error "Not a rhythm" ryth))
+		(error "~S is not a rhythm" ryth))
 	    (cond ((char=? op #\+)
 		   (set! val (or (hash-ref *rhythms* tok)
-				 (error "Not a rhythm" ryth)))
+				 (error "~S is not a rhythm" ryth)))
 		   (set! num (+ num val)))
 		  ((char=? op #\-)
 		   (set! val (or (hash-ref *rhythms* tok)
-				 (error "Not a rhythm" ryth)))
+				 (error "~S is not a rhythm" ryth)))
 		   (set! num (- num val)))
 		  ((char=? op #\*)
 		   (set! val (string->number tok))
@@ -847,7 +854,7 @@
 		   (set! val (string->number tok))
 		   (set! num (/ num val)))
 		  (else
-		   (error "not a rhythm" ryth))))))))
+		   (error "~S is not a rhythm" ryth))))))))
 
 ; (rhythm 'q-x)
 ; (rhythm 'w.*4)
@@ -892,7 +899,7 @@
       (if (not defaults) 
 	  (set! defaults "")
 	  (if (not (string? defaults))
-	      (error "defaults is not a string" defaults)))
+	      (error "~S is not a defaults string" defaults)))
       (set! d (or directory (ffi_pathname_directory defaults)))
       (set! n (or name (ffi_pathname_name defaults)))
       (set! t (or type (ffi_pathname_type defaults)))
@@ -900,49 +907,49 @@
 	  (let ((l (string-length d)))
 	    (if (> l 0)
 		(if (not (char=? (string-ref d (- l 1)) #\/))
-		    (error "directory does not end with a delimiter" 
+		    (error "directory ~S does not end with a delimiter" 
 			   directory)))
 	    (set! p d))
-	  (error "directory is not a string" directory))
+	  (error "directory ~S is not a string" directory))
       (if (string? n)
 	  (set! p (string-append p n))
-	  (error "name is not a string" name))
+	  (error "file name ~S is not a string" name))
       (if (string? t)
 	  (if (not (equal? t ""))
 	      (set! p (string-append p "." t)))
-	  (error "type is not a string" type))
+	  (error "file type ~S is not a string" type))
       p)))
 	  
 (define (pathname-name path)
   (if (string? path)
       (let ((p (ffi_pathname_name path)))
 	(if (string=? p "") #f p))
-      (error "pathname is not a string" path)))
+      (error "pathname ~S is not a string" path)))
 
 (define (pathname-type path)
   (if (string? path)
       (let ((p (ffi_pathname_type path)))
 	(if (string=? p "") #f p))
-      (error "pathname is not a string" path)))
+      (error "pathname ~S is not a string" path)))
 
 (define (pathname-directory path)
   (if (string? path)
       (let ((p (ffi_pathname_directory path)))
 	(if (string=? p "") #f p))
-      (error "pathname is not a string" path)))
+      (error "pathname ~S is not a string" path)))
 
 (define (full-pathname path)
   (if (string? path)
       (ffi_full_pathname path) 
-      (error "pathname is not a string" path)))
+      (error "pathname ~S is not a string" path)))
 
 (define (pathname-exists? path)
   (if (string? path)
       (ffi_pathname_exists_p path)
-      (error "pathname is not a string" path)))
+      (error "pathname ~S is not a string" path)))
 
 (define (pathname-directory? path)
   (if (string? path)
       (ffi_pathname_directory_p path)
-      (error "pathname is not a string" path)))
+      (error "pathname ~S is not a string" path)))
 

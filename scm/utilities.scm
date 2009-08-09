@@ -1,5 +1,5 @@
 ;;; **********************************************************************
-;;; Copyright (C) 2007, 2008 Todd Ingalls, Rick Taube.
+;;; Copyright (c) 2008, 2009 Rick Taube.
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
@@ -97,7 +97,7 @@
 
 (define (make-list n . obj)
   (if (< n 0)
-      (error "Negative length to make-list" n))
+      (error "~S is not a valid length" n))
       (letrec ((l1 (lambda (a b)
 		     (if (= a 0) (list)
 			 (cons b (l1 (- a 1) b)))))
@@ -166,7 +166,7 @@
 	   (set! getter vector-ref)
 	   (set! seqlen vector-length))
 	  (else
-	   (error "not a list, string or vector" seq)))
+	   (error "~S is not a list, string or vector" seq)))
     (do ((i start (+ i 1))
 	 (l (or end (seqlen seq)))
 	 (e #f)
@@ -212,9 +212,9 @@
 	   (key (string->keyword (symbol->string var)))
 	   )
       `(( ,key )
-	(if ,got (error "Redundant keyword" , key))
+	(if ,got (error "~S is a redundant keyword" , key))
 	(set! ,var (if (null? (cdr ,args))
-		       (error "Missing keyword value in" 
+		       (error "missing keyword value in ~S" 
 			      , user)
 		       (cadr ,args)))
 	(set! ,got #t) ; mark that we have a value for this param
@@ -232,16 +232,17 @@
 							(cadr ,pars))))
 		  (set! ,pars (cddr ,pars)))
 		(begin
-		  (when ,mode (error "Positional after keywords" 
+		  (when ,mode (error "found positional argument after keyword in ~S" 
 				     ,user))
 		  (set! ,var (car ,pars))
 		  (set! ,got #t) ; mark that we have a value for this param
 		  (set! ,pars (cdr ,pars)))))
 	  `(else
-	    (when ,mode (error "Positional after keywords" 
+	    (when ,mode (error "found positional argument after keyword in ~S" 
 			       ,user))
 	    (set! ,var (car ,pars))
-	    (when (keyword? ,var) (error "Unknown keyword",  var))
+	    (when (keyword? ,var)
+	      (error "~S is not a valid keyword",  var))
 	    (set! ,got #t) ; mark that we have a value for this param
 	    (set! ,pars (cdr ,pars))))))
   (define (parse-optkey info data mode args user keyc otherkeys?)
@@ -277,7 +278,8 @@
     ;; &allow-other-keys to the remaining args (if they are keyword)
     (if (not otherkeys?)
 	(set! terminal
-	      `(unless (null? ,args) (error "Too many arguments" , user)))
+	      `(unless (null? ,args)
+		 (error "too many arguments in ~S" , user)))
 	(let ((check (gensym "others")))
 	  (set! bindings (cons '(&allow-other-keys (list)) bindings))
 	  (set! terminal
@@ -286,9 +288,10 @@
 		      (set! &allow-other-keys
 			    (append &allow-other-keys ,args)))
 		   (if (not (keyword? (car ,check)))
-		       (error "expected keyword but got" (car ,check))
+		       (error "~S is not a keyword" (car ,check))
 		       (if (null? (cdr ,check))
-			   (error "missing value for" (car ,check))))))))
+			   (error "missing value for ~S"
+				  (car ,check))))))))
     `(let* , bindings ; bind all the optkey variables with default values
        ;; bind status and parsing vars
        (let ,(append (map (lambda (i) (list (car i) #f)) data)

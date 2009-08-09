@@ -1,5 +1,5 @@
 ;;; **********************************************************************
-;;; Copyright (C) 2008, Rick Taube.
+;;; Copyright (C) 2008, 2009 Rick Taube.
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the Lisp Lesser Gnu Public License. The text of
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
@@ -9,23 +9,16 @@
 ;; not provided or unevenly provided in scheme implementations. see
 ;; readme.txt for the list of features.
 
-;(define ash arithmetic-shift)
-;(define logand bitwise-and)
-;(define lognot bitwise-not)
-;(define logxor bitwise-xor)
-;(define logior bitwise-ior)
+;; CLtL error style (error formatstr ...)
+(define chicken-error error)
+(define (error str . args)
+  (chicken-error (apply format #f str args)))
 
 (define-for-syntax (ash a b) (arithmetic-shift a b))
 (define-for-syntax (logand . args ) (apply bitwise-and args))
 (define-for-syntax (lognot . args) (apply bitwise-not args))
 (define-for-syntax (logxor . args) (apply bitwise-xor args))
 (define-for-syntax (logior . args) (apply bitwise-ior args))
-
-;(define-macro (ash a b) `(arithmetic-shift ,a ,b))
-;(define-macro (logand . args ) `(bitwise-and ,@ args))
-;(define-macro (lognot . args) `(bitwise-not ,@ args))
-;(define-macro (logxor . args) `(bitwise-xor ,@ args))
-;(define-macro (logior . args) `(bitwise-ior ,@ args))
 
 (define (logtest a b)
   (not (zero? (logand a b))))
