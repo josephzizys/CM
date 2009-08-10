@@ -29,12 +29,110 @@
 ;; currently supports.
 
 ;
+;; ----- Generating Scores
+;
+
+;; There are two basic ways to work with Fomus. The first method is to
+;; create a score interactively, by evaluating 'send' statements to
+;; incrementally build up a score. The second way is by defining
+;; musical processes to generate the entire contents of a score when
+;; they are sprouted.
+
+;; Before continuing, create a fresh new score object by executing
+;; the following command (put your cursor at the end of the line and
+;; press Command-Enter or select the Eval>Execute menu item):
+
+send "fms:new-score", "out.ly"
+
+;; The new score object should appear selected with a check mark in
+;; the FOMUS sub-menu now.  A similar command "selectscore" selects an
+;; already existing score object based on the output filename (or
+;; creates a new score object if that filename doesn't already exist):
+
+send "fms:select-score", "out.ly"
+
+;; Double check and make sure that "out.ly" is the currently selected
+;; one now.
+
+;
+;; ----- Interactive Score Creation
+;
+
+;; In this section we'll build up a score by executing individual
+;; send statements.  In this first example you'll define a single note.
+
+send "fms:note", 0, dur: 4, pitch: "c4"
+
+;; This sends a note with time offset 0, a duration of 4 and pitch C4
+;; to the current FOMUS score.  All time values (time and duration)
+;; are FOMUS `beat' values.  By default, one beat equals a quarter
+;; note, so a duration of 4 should produce a whole note.
+
+;; Now save your progress.
+
+send "fms:save-score", "save.fms"
+
+;; View the saved scorefile by selecting `Open' from the `File' menu.
+;; See FOMUS's HTML documentation for a description of its file
+;; format.
+
+;; Generate the score by entering:
+
+send "fms:run"
+
+;; You should get a `.ly' output file at the location you specified in
+;; `select-score' above.  If LilyPond is installed and FOMUS is
+;; configured properly the file should be automatically processed and
+;; displayed as a `.pdf' file (see the `lily-exe-path' and
+;; `lily-view-exe-path' settings).
+
+;; Let's say you want your piece to be notated in 3/4 meter rather
+;; than the default 4/4.  You can send a measure definition to FOMUS
+;; by entering this:
+
+send "fms:meas", 0, dur: 3
+
+;; This specifies that you want a measure downbeat to occur at time 0
+;; and that the measure should have a duration of 3.  Although you
+;; haven't explicitly specified a time signature of 3/4, a measure
+;; with a duration of 3 is interpretted as a 3/4 measure by default.
+;; Measures only need to be sent when a metrical change occurs or at
+;; the beginning of a new section in the score.  They can also be sent
+;; when you are sure you want a downbeat at a specific location.
+;; FOMUS takes the measures you've defined and repeats them
+;; automatically, adjusting as necessary to eliminate overlaps with
+;; other measures.
+
+;; Now view the change:
+
+send "fms:run"
+
+;; The pitch you entered has been renoted to fit the meter that you defined.
+;; Now let's one more pitch, this time with an accent:
+
+send "fms:note", 4, dur: 4, pitch: "d4", marks: {{">"}}
+
+;; Run FOMUS's notation engine again.
+
+send "fms:run"
+
+;
 ;; ----- Instruments and Parts
 ;
 
-;; Before sending note data, you should define one or more parts.
+;; You should define one or more parts before sending note data.
 ;; Although a default part (named "default") is always already defined
-;; for you, it is usually better to define your own.  Evaluate the
+;; for you, it is usually better to define your own.  
+
+;; First delete the old score from the last section.
+
+send "fms:delete-score"
+
+;; Now create a fresh new one.
+
+send "fms:new-score", "myscore.ly"
+
+;; Evaluate the
 ;; following line to create a part that uses FOMUS's built-in piano
 ;; instrument:
 
@@ -102,7 +200,7 @@ send "fms:part", id: "myotherpart", inst: "mycello"
 ;; all of its settings.
 
 send "fms:setting", verbose: 2
-send "fms:setting", accs-double-accs: #f
+send "fms:setting", double-accs: #f
 
 ;; The `verbose' setting causes FOMUS to print extra information about
 ;; what it is doing while it is processing.  A value of 2 means
@@ -127,103 +225,18 @@ send "fms:part", id: "yourpart", inst: {:template "tuba"}
 ;; enter the following to save everything you've entered in so far to
 ;; a FOMUS input file:
 
-send "fms:save-score", "/tmp/save.fms"
+send "fms:save-score", "save.fms"
 
 ;; The filename should have an `.fms' extension so that FOMUS
 ;; recognizes what type of file it is.  You can now reload this
 ;; information later by entering:
 
-send "fms:load-score", "/tmp/save.fms"
+send "fms:load-score", "save.fms"
 
 ;; All of your instruments and parts will then be restored.  Any note
 ;; event data you have entered are also saved when you call this
 ;; function, so you can use the `save-score' function to store your
 ;; progress or create snapshots of different scores.
-
-;
-;; ----- Generating Scores
-;
-
-;; There are two basic ways to work with Fomus. The first method is to
-;; create a score interactively, by evaluating 'send' statements to
-;; incrementally build up a score. The second way to work with Fomus
-;; is by defining musical processes to generate the entire contents of
-;; a score when they are sprouted.
-
-;; Before continuing, create a fresh new score object by entering:
-
-send "fms:new-score", "/tmp/out2.ly"
-
-;; The new score object should appear selected with a check mark in
-;; the FOMUS sub-menu now.  A similar command "selectscore" selects an
-;; already existing score object based on the output filename (or
-;; creates a new score object if that filename doesn't already exist):
-
-send "fms:select-score", "/tmp/out.ly"
-
-;; Assuming that you've selected an old score that you don't want to
-   work with anymore, get rid of it by entering:
-
-send "fms:delete-score"
-
-;; Double check and make sure that "out2.ly" is the currently selected
-;; one now (use `select-score').
-
-;
-;; ----- Interactive Score Creation
-;
-
-;; In this section we'll build up a score by executing individual
-;; send statements.  In this first example you'll create a part and
-;; add a single note to it.
-
-send "fms:part", id: "Viola", inst: "viola"
-
-send "fms:note", 0, dur: 4, pitch: "c4"
-
-;; This sends a note with time offset 0, a duration of 4 and pitch C4
-;; to the current FOMUS score.  All time values (time and duration)
-;; are FOMUS `beat' values.  By default, one beat equals a quarter
-;; note, so a duration of 4 should produce a whole note.
-
-;; Now save your progress.
-
-send "fms:save-score", "/tmp/save.fms"
-
-;; View the saved scorefile by selecting `Open' from the `File' menu.
-;; See FOMUS's HTML documentation for a description of its file
-;; format.
-
-;; Generate the score by entering:
-
-send "fms:run"
-
-;; You should get a `.ly' output file at the location you specified in
-;; `select-score' above.  If LilyPond is installed and FOMUS is
-;; configured properly the file should be automatically processed and
-;; displayed as a `.pdf' file (see the `lily-exe-path' and
-;; `lily-view-exe-path' settings).
-
-;; Let's say you want your piece to be notated in 3/4 meter rather
-;; than the default 4/4.  You can send a measure definition to FOMUS
-;; by entering this:
-
-send "fms:meas", 0, dur: 3
-
-;; This specifies that you want a measure downbeat to occur at time 0
-;; and that the measure should have a duration of 3.  Although you
-;; haven't explicitly specified a time signature of 3/4, a measure
-;; with a duration of 3 is interpretted as a 3/4 measure by default.
-;; Measures only need to be sent when a metrical change occurs or at
-;; the beginning of a new section in the score.  They can also be sent
-;; when you are sure you want a downbeat at a specific location.
-;; FOMUS takes the measures you've defined and repeats them
-;; automatically, adjusting as necessary to eliminate overlaps with
-;; other measures.
-
-;; Now view the change:
-
-send "fms:run"
 
 ;
 ;; ----- Score Creation using Processes
@@ -234,7 +247,7 @@ send "fms:run"
 
 ;; Create a new score object:
 
-send "fms:new-score", "/tmp/out3.ly"
+send "fms:new-score", "out3.ly"
 
 ;; Define a piano part and an oboe part by entering:
 

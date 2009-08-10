@@ -272,9 +272,22 @@ void Fomus::runScore(const bool fromscm)
     return;
   }
 #ifdef GRACE
-  if (!fromscm && String(fomus_get_sval(getfomusdata(), "filename")).isEmpty()) {
-    renameScoreDialog();
+  if (String(fomus_get_sval(getfomusdata(), "filename")).isEmpty()) {
+    if (!fromscm) renameScoreDialog();
+    else {
+      String fn0("out.ly");
+      File fn(File::getCurrentWorkingDirectory().getFullPathName() + File::separator + fn0);
+      scores.getUnchecked(current)->name = fn0;
+      sval(fomus_par_setting, fomus_act_set, "filename");
+      sval(fomus_par_settingval, fomus_act_set, fn.getFullPathName());  
+    }
   }
+#else
+  String fn0("out.ly");
+  File fn(File::getCurrentWorkingDirectory().getFullPathName() + File::separator + fn0);
+  scores.getUnchecked(current)->name = fn0;
+  sval(fomus_par_setting, fomus_act_set, "filename");
+  sval(fomus_par_settingval, fomus_act_set, fn.getFullPathName());  
 #endif
   fomus_run(fomus_copy(getfomusdata()));
 }
