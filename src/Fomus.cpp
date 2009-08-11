@@ -289,6 +289,22 @@ void Fomus::runScore(const bool fromscm)
   sval(fomus_par_setting, fomus_act_set, "filename");
   sval(fomus_par_settingval, fomus_act_set, fn.getFullPathName());  
 #endif
+#ifdef GRACE
+  String pa(fomus_get_sval(getfomusdata(), "lily-exe-path"));
+  if (File::isAbsolutePath(pa)) {
+    if (!File(pa).existsAsFile()) {
+      sval(fomus_par_setting, fomus_act_set, "lily-exe-path");
+      sval(fomus_par_settingval, fomus_act_set, "");  
+    }
+  }
+  String pa2(fomus_get_sval(getfomusdata(), "lily-view-exe-path"));
+  if (File::isAbsolutePath(pa2)) {
+    if (!File(pa2).existsAsFile()) {
+      sval(fomus_par_setting, fomus_act_set, "lily-view-exe-path");
+      sval(fomus_par_settingval, fomus_act_set, "");  
+    }
+  }
+#endif  
   fomus_run(fomus_copy(getfomusdata()));
 }
 
