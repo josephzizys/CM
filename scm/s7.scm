@@ -11,22 +11,27 @@
 
 (define (s7-error-hook tag args)
   ;; report scheme errors using the same format as C errors.
-  (format (current-error-port) ">>> Error: ")
-  (apply format (current-error-port) args)
-  (format (current-error-port) "~%")
+  (let ((port (open-output-string)))
+    (format port ">>> Error: ")
+  (apply format port args)
+  (format port "~%")
+  (let ((str (get-output-string port)))
+    (close-output-port port)
+    (ffi_print_error str))
   ;; return tag to tell C side an error occured
-  'scheme-error)
+  'scheme-error))
 
 ;; set s7's error hook variable 
 
-(define *error-hook* s7-error-hook)
+(set! *error-hook* s7-error-hook)
 
 (define (interaction-environment ) (global-environment))
 
 (define-macro (define-record . args) (values)) ; records in s7Foreign
 
-(define-macro (define-for-syntax . args) ; needed for chicken...
-  `(define ,@ args))
+;(define-macro (define-for-syntax . args) ; needed for chicken...
+;  `(define ,@ args))
+(define define-for-syntax define)
 
 (define-macro (unless arg . body) 
   `(if (not ,arg) (begin ,@ body)))

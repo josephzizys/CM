@@ -384,8 +384,8 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
       menu.addCommandItem(manager, CommandIDs::EditorShowDirectory);
       menu.addCommandItem(manager, CommandIDs::EditorSetDirectory);  
 
-      menu.addSeparator();
-      menu.addCommandItem(manager, CommandIDs::EditorPrint);
+      //      menu.addSeparator();
+      //      menu.addCommandItem(manager, CommandIDs::EditorPrint);
       menu.addSeparator();
       menu.addCommandItem(manager, CommandIDs::EditorClose);
     }

@@ -56,7 +56,7 @@ void cm_print_output(char* str, bool quote)
 void cm_print_error(char* str)
 {
   //std::cout << "print_error: '" << str << "'\n";
-  Console::getInstance()->printError(str);
+  Console::getInstance()->printError(String(str));
 }
 
 void cm_print_values(char* str)

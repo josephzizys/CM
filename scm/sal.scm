@@ -1250,7 +1250,7 @@
 	(then #f)
 	(bool #f)
 	(tail #f)
-	(loop #f)
+	(luup #f)
 	(size #f)
 	(mode #f)
 	(goal #f)
@@ -1275,13 +1275,13 @@
 	       (begin
 		 (set! then (emit (cadr then) (list) errf))
 		 (set! bool (gensym "bool"))
-		 (set! loop `(if ,bool
+		 (set! luup `(if ,bool
 				 (begin (set! ,bool #f) 
 					(set! ,user ,expr))
 				 (set! ,user ,then)))
 		 (set! data (list (list bool #t #f #f #f))))
-	       (set! loop `(set! ,user ,expr)))
-	   (set! data (append data (list (list user #f loop #f #f)))))
+	       (set! luup `(set! ,user ,expr)))
+	   (set! data (append data (list (list user #f luup #f #f)))))
 	  ((token-unit-type=? (third args) SalIn)
 	   ;; (for <v> in <expr>)
 	   (set! user (emit (second args) (list) errf))
@@ -1375,17 +1375,17 @@
 	 (run? #f)
 	 ;; forms
 	 (bind (list))
-	 (loop (list))
+	 (luup (list))
 	 (step (list))
 	 (stop (list))
 	 (done (list))
 	 (body (list))
 	 (punt (list))
 	 )
-    ;(print (list #:sal-emit-iteration data))
+    ;;(format #t "sal-emit-iteration: data=~S~%" data)
     ;; tell subforms what type of iteration we are
     (cond ((token-unit-type=? (car data) SalLoop)
-	   (set! info (add-emit-info #:loop #t info)))
+	   (set! info (add-emit-info #:luup #t info)))
 	  (else
 	   (if (not (get-emit-info #:process info))
 	       ( errf (make-parse-error "run statement outside process" 
@@ -1411,7 +1411,7 @@
 	  (set! bind (append bind (list (list (first clause) 
 					      (second clause)))))
 	  (if (third clause)
-	      (set! loop (append loop (list (third clause)))))
+	      (set! luup (append luup (list (third clause)))))
 	  (if (fourth clause)
 	      (set! step (append step (list (fourth clause)))))
 	  (if (fifth clause)
@@ -1469,7 +1469,7 @@
 	    `(let* ,bind
 	       (do () 
 		   (,stop , done)
-		 ,@loop ,@body ,@step))
+		 ,@luup ,@body ,@step))
 	    ;; while/until requires a lambda expr with a call/cc exit
 	    ;; for the while/until and post-exit execution of any
 	    ;; finally clause
@@ -1479,7 +1479,7 @@
 		   (lambda (go )
 		     (do ()
 			 (,stop #f)
-		       ,@loop ,@punt ,@body ,@step)))
+		       ,@luup ,@punt ,@body ,@step)))
 		  ,done
 		  (void)))
 	      )
@@ -1491,7 +1491,7 @@
 			   'collectors (list)
 			   'initially (list)
 			   'end-tests (list stop)
-			   'looping (append loop punt body)
+			   'looping (append luup punt body)
 			   'stepping step
 			   'finally (or done (list))
 			   'returning (list))

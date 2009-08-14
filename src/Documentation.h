@@ -6,13 +6,13 @@
 namespace Documentation
 {
     extern const char*  changelog_html;
-    const int           changelog_htmlSize = 9957;
+    const int           changelog_htmlSize = 10153;
 
     extern const char*  cm_css;
     const int           cm_cssSize = 7086;
 
     extern const char*  cm_html;
-    const int           cm_htmlSize = 159733;
+    const int           cm_htmlSize = 159267;
 
     extern const char*  continuum_sal;
     const int           continuum_salSize = 3137;
@@ -33,7 +33,7 @@ namespace Documentation
     const int           fomus_salSize = 12622;
 
     extern const char*  fomusexamples_sal;
-    const int           fomusexamples_salSize = 7827;
+    const int           fomusexamples_salSize = 7888;
 
     extern const char*  foster_sal;
     const int           foster_salSize = 4852;

@@ -8,7 +8,7 @@ define process examp1 (n, r)
     wait r
   end
 
-sprout examp1(16, 1/2), "fomus", clear: #t, run: #t
+sprout examp1(16, 1/2), "fomus1.ly", clear: #t, run: #t
 
 ;
 ;; Staccato and Accent Marks
@@ -27,7 +27,7 @@ define process examp2 ()
 
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp2(), "fomus", parts: parts, clear: #t, run: #t
+  sprout examp2(), "fomus2.ly", parts: parts, clear: #t, run: #t
 end
 
 ;
@@ -45,7 +45,7 @@ define process examp3 ()
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}},
        sets = {:quartertones #t}
-  sprout examp3(), "fomus", parts: parts, settings: sets, clear: #t, run: #t
+  sprout examp3(), "fomus3.ly", parts: parts, settings: sets, clear: #t, run: #t
 end
 
 ;
@@ -65,7 +65,7 @@ define process examp4 ()
 	
 begin 
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp4(), "fomus", parts: parts, clear: #t, run: #t
+  sprout examp4(), "fomus4.ly", parts: parts, clear: #t, run: #t
 end
 
 ;
@@ -84,7 +84,7 @@ define process examp5 ()
 
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp5(), "fomus", parts: parts, clear: #t, run: #t
+  sprout examp5(), "fomus5.ly", parts: parts, clear: #t, run: #t
 end
 
 ;
@@ -103,7 +103,7 @@ define process examp6 ()
     
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp6(), "fomus", parts: parts, clear: #t, run: #t
+  sprout examp6(), "fomus6.ly", parts: parts, clear: #t, run: #t
 end
 
 ;
@@ -123,7 +123,7 @@ define process examp7 ()
     
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp7(), "fomus", parts: parts, clear: #t, run: #t
+  sprout examp7(), "fomus7.ly", parts: parts, clear: #t, run: #t
 end
 
 ;
@@ -147,7 +147,7 @@ define process examp8-marks ()
 begin
   with parts = {{:name "Flute" :inst "flute" :id "0"} 
                 {:name "Tuba" :inst "tuba" :id "1"}}
-  sprout list(examp8-notes(), examp8-marks()), "fomus", 
+  sprout list(examp8-notes(), examp8-marks()), "fomus8.ly", 
          parts: parts, clear: #t, run: #t
 end
 
@@ -166,7 +166,7 @@ begin
                  :inst {:template "percussion" :percinsts
                         {{:id "wb1" :template "low-woodblock" :perc-note 57}
                          {:id "wb2" :template "high-woodblock" :perc-note 64}}}}}
-  sprout examp9(), "fomus", parts: parts, clear: #t, run: #t
+  sprout examp9(), "fomus9.ly", parts: parts, clear: #t, run: #t
 end
 
 ;
@@ -190,7 +190,7 @@ begin
                           :template "high-woodblock"
                           :perc-note 64
                           :perc-voice 1}}}}}
-  sprout examp10(), "fomus", parts: parts, clear: #t, run: #t
+  sprout examp10(), "fomus10.ly", parts: parts, clear: #t, run: #t
 end
 
 ;
@@ -229,7 +229,7 @@ begin
        sets = {:layout "orchestra"}
   send "fms:meas", time: 0, dur: 3
   sprout examp11-parts({"fl1" "fl2" "cl2" "vln1" "vln2" "vc1" "vc2" "tba"}), 
-                       "fomus", parts: parts, settings: sets, clear: #t, run: #t
+                       "fomus11.ly", parts: parts, settings: sets, clear: #t, run: #t
 end
 
 ;
@@ -262,7 +262,7 @@ begin
        sets = {:layout "small-ensemble"}
   send "fms:meas", time: 0, dur: 3
   sprout examp12-parts({"fl1" "fl2" "cl2" "vln1" "vln2" "vc1" "vc2" "tba"}), 
-                       "fomus", parts: parts, settings: sets, clear: #t, run: #t
+                       "fomus12.ly", parts: parts, settings: sets, clear: #t, run: #t
 end
 
 ;
@@ -279,7 +279,7 @@ define process polygen (len, minp, maxp)
 
 begin
   sprout list(polygen(40, 50, 80),
-              polygen(40, 40, 70)), "fomus", clear: #t, run: #t
+              polygen(40, 40, 70)), "fomus13.ly", clear: #t, run: #t
 end
 
 ;
@@ -307,5 +307,5 @@ begin
     for pn in {"c2" "c3" "c5" "c7" "c11"}
     set procs &= harmonics("c1", 1 / p, p, p * 4, pn)
   end
-  sprout procs, "fomus", parts: parts, settings: sets, clear: #t, run: #t
+  sprout procs, "fomus14.ly", parts: parts, settings: sets, clear: #t, run: #t
 end

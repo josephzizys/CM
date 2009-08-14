@@ -428,7 +428,7 @@
 ;;; send macro
 ;;;
 
-(define-macro (send place . args)
+(define-expansion (send place . args)
   (expand-send place args))
 
 (define *messages* (make-equal-hash-table))

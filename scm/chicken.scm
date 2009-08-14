@@ -9,10 +9,21 @@
 ;; not provided or unevenly provided in scheme implementations. see
 ;; readme.txt for the list of features.
 
-;; CLtL error style (error formatstr ...)
+;; error should use common lisp's format style (error formatstr ...)
+
 (define chicken-error error)
+
 (define (error str . args)
   (chicken-error (apply format #f str args)))
+
+;; in s7 one-time macro expansion is called define-expansion
+
+(define-macro (define-expansion . args ) `(define-macro ,@args))
+
+;(define-macro (define-expansion . args ) `(define-macro ,@args))
+;(define-expansion (foo a b c) `(list ,a ,b, c))
+;(define (bar x y z) (foo x y z))  
+;(bar 3 4 5)
 
 (define-for-syntax (ash a b) (arithmetic-shift a b))
 (define-for-syntax (logand . args ) (apply bitwise-and args))

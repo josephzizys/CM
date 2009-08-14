@@ -5,21 +5,6 @@
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
 ;;; **********************************************************************
 
-;; the following FFI function are defined (see CmSupport.cpp, genffi.scm)
-;;    (ffi_fms_new c-string)
-;;    (ffi_fms_new c-string)
-;;    (ffi_fms_free )
-;;    (ffi_fms_clear )
-;;    (ffi_fms_ival int int long)
-;;    (ffi_fms_rval int int long long)
-;;    (ffi_fms_mval int int long long long)
-;;    (ffi_fms_fval int int double)
-;;    (ffi_fms_sval int int c-string)
-;;    (ffi_fms_act  int int)
-;;    (ffi_fms_load c-string)
-;;    (ffi_fms_run )
-;;    (ffi_fms_xml  c-string)
-
 ;; slow, but since we're parsing XML it doesn't matter
 ;; should be accurate w/ any floating point precision
 (define (fms:toFloatHex a)
@@ -116,7 +101,8 @@
   (if grtime (fms:writeXml port "grtime" grtime))
   (if marks (fms:writeXml port "marks" marks))
   (if sets (fms:writeXml port "sets" sets)) 
-  (get-output-string port))
+  ;;(get-output-string port)
+  )
 
 ;; these functions should get called from cm's `new' 
 (define (fms:note . args) 
@@ -128,6 +114,7 @@
                   (fms:entry port time dur part voice grtime marks (append sets &allow-other-keys))
                   (display "</note>" port)
                   (ffi_fms_xml (get-output-string port))
+		  (close-output-port port)
                   #t)))
 
 (define (fms:rest . args) 
@@ -137,6 +124,7 @@
                   (fms:entry port time dur part voice grtime marks (append sets &allow-other-keys))
                   (display "</rest>" port)
                   (ffi_fms_xml (get-output-string port))
+		  (close-output-port port)
                   #t)))
 
 (define (fms:mark . args) 
@@ -146,6 +134,7 @@
                   (fms:entry port time dur part voice grtime marks (append sets &allow-other-keys))
                   (display "</mark>" port)
                   (ffi_fms_xml (get-output-string port))
+		  (close-output-port port)
                   #t)))
 
 (define (fms:meas-aux args)
@@ -156,7 +145,10 @@
 		  (if dur (fms:writeXml port "dur" dur))
 		  (fms:writeXml port "sets" (append sets &allow-other-keys))
 		  (display "</meas>" port)
-		  (get-output-string port))))
+		  (let ((text (get-output-string port)))
+		    (close-output-port port)
+		    text))))
+
 (define (fms:meas . args)
   (ffi_fms_xml (fms:meas-aux args))
   #t)
@@ -167,7 +159,10 @@
 		  (display "<measdef>" port)
 		  (fms:writeXml port #f (append sets &allow-other-keys))
 		  (display "</measdef>" port)
-		  (get-output-string port))))
+		  (let ((text (get-output-string port)))
+		    (close-output-port port)
+		    text))))
+
 (define (fms:measdef . args)
   (ffi_fms_xml (fms:measdef-aux args))
   #t)
@@ -178,7 +173,10 @@
 		  (display "<part>" port)
 		  (fms:writeXml port #f (append sets &allow-other-keys))
 		  (display "</part>" port)
-		  (get-output-string port))))
+		  (let ((text (get-output-string port)))
+		    (close-output-port port)
+		    text))))
+
 (define (fms:part . args)
   (ffi_fms_xml (fms:part-aux args))
   #t)
@@ -189,7 +187,10 @@
 		  (display "<metapart>" port)
 		  (fms:writeXml port #f (append sets &allow-other-keys))
 		  (display "</metapart>" port)
-		  (get-output-string port))))
+		  (let ((text (get-output-string port)))
+		    (close-output-port port)
+		    text))))
+
 (define (fms:metapart . args)
   (ffi_fms_xml (fms:metapart-aux args))
   #t)
@@ -200,7 +201,10 @@
 		  (display "<inst>" port)
 		  (fms:writeXml port #f (append sets &allow-other-keys))
 		  (display "</inst>" port)
-		  (get-output-string port))))
+		  (let ((text (get-output-string port)))
+		    (close-output-port port)
+		    text))))
+
 (define (fms:inst . args)
   (ffi_fms_xml (fms:inst-aux args))
   #t)
@@ -211,7 +215,10 @@
 		  (display "<percinst>" port)
 		  (fms:writeXml port #f (append sets &allow-other-keys))
 		  (display "</percinst>" port)
-		  (get-output-string port))))
+		  (let ((text (get-output-string port)))
+		    (close-output-port port)
+		    text))))
+
 (define (fms:percinst . args)
   (ffi_fms_xml (fms:percinst-aux args))
   #t)
@@ -222,7 +229,10 @@
     (fms:writeXml port #f sets)
     ;;(if apnd (display "<app/>" port))
     (display "</set>" port)
-    (get-output-string port)))
+    (let ((text (get-output-string port)))
+      (close-output-port port)
+      text)))
+
 (define (fms:setting . sets)
   (ffi_fms_xml (fms:setting-aux sets))
   #t)

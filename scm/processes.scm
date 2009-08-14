@@ -56,6 +56,7 @@
 	(equal? code (car stop)))))
 
 (define (expand-process forms )
+  ;;(format #t "in expand-process~%")
   ;; if called from sal forms contains the already parsed information
   (let* ((parsed (if (vector? forms) 
 		     forms
@@ -129,7 +130,7 @@
 	   ,@(loop-initially parsed)
 	   ,func))))
 
-(define-macro (process . args)
+(define-expansion  (process . args)
   (expand-process args ))
 
 (define-macro (define-process formals . body)

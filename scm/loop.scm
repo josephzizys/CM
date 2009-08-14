@@ -14,8 +14,6 @@
 ;;; (gensym string)
 ;;;
 
-(define-macro (loop . args)
-  (scheme-loop args))
 
 (define-macro (push val sym)
   `(begin (set! ,sym (cons ,val ,sym)) ,sym))
@@ -140,7 +138,10 @@
 	      (if (eq? tail forms) (display "'" port))
 	      (display (car tail) port)
 	      (display (if (null? (cdr tail)) "'" " ") port))))
-      (error (get-output-string port)))))
+      (let ((errstr (get-output-string port)))
+	(close-output-port port)
+	(error errstr))
+      #f)))
 
 (define (parse-for forms clauses ops)
   ;; forms is (FOR ...)
@@ -925,6 +926,7 @@
 ;;;
 
 (define (scheme-loop forms)
+  ;;(format #t "in scheme-loop~%")
   (let ((name (gensym "v"))
         (parsed (parse-iteration 'loop forms *loop-operators*))
         (end-test '())
@@ -987,38 +989,8 @@
           ;; invoke the RETURN continuation with loop value or #f
           ,return)))))
 
-;;;
-;;; these two function are never called in scheme but they are
-;;; translated to the cltl sources.
-;;;
-
-(define-macro (iter . args)
-  (cltl2-loop args))
-
-(define (cltl2-loop forms)
-  (let* ((iter (parse-iteration 'iter forms *loop-operators*))
-         ;; the cadddr of RETURN operator is a function that
-         ;; returns the form for returning from iteration.
-         (retn (apply (cadddr (assoc 'return *loop-operators*))
-                      (list (car (loop-returning iter))))))
-    `(, 'let ,(loop-bindings iter)
-             ,@(loop-initially iter)
-             (block nil
-               (tagbody 
-                 :loop
-                 ,@ (let ((tests (loop-end-tests iter)))
-                      (if tests
-                        (list `(if ,(if (cdr tests)
-                                      (cons 'or tests)
-                                      (car tests))
-                                 (go t))) ; :done
-                        (list)))
-                    ,@(loop-looping iter)
-                    ,@(loop-stepping iter)
-                    (go :loop)
-                    t ; :done
-                    ,@(loop-finally iter)
-                    ,retn)))))
+(define-expansion (loop . args)
+  (scheme-loop args))
 
 ;;;
 ;;; loop tests.

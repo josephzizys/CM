@@ -101,7 +101,8 @@
     
      (let ((port (open-output-string) 
 		 ;;(if debug #t (open-output-string))
-		 ))
+		 )
+	   (text #f))
       (format port "<plot")
       (if title (format port " title=\"~a\"" title))
       (format port ">") ; end <plot>
@@ -137,11 +138,13 @@
 	  (points->xml port (car tail) fmat access))))
       (format port "</layers>")
       (format port "</plot>")
+      (set! text  (get-output-string port))
+      (close-output-port port)
       (cond ((not debug)
-	     (ffi_plot_xml (get-output-string port))
+	     (ffi_plot_xml text)
 	     (void))
 	    (else
-	     (get-output-string port)
+	     text
 	     )))))
 ; (plot )
 ; (plot :x-axis '(0 123) '(0 0 1 1) )
@@ -373,7 +376,8 @@
 	   (error "~S is not a list of point records" data)))
     (if (null? data) 
 	(void)
-	(let ((port (open-output-string)))
+	(let ((port (open-output-string))
+	      (text #f))
 	  (format port "<points>")
 	  (do ((tail data (cdr tail)))
 	      ((null? tail) #f )
@@ -385,7 +389,9 @@
 	      (format port "~s" (car e)))
 	    (format port "</point>"))
 	  (format port "</points>")
-	  (ffi_plot_add_xml_points title (get-output-string port))
+	  (set! text (get-output-string port))
+	  (close-output-port port)
+	  (ffi_plot_add_xml_points title text)
 	  (void)))))
   
 ; (define (foo x y) (list (list x y) (list (+ x 1) (+ y 1))))

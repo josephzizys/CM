@@ -328,7 +328,8 @@ bool Scheme::init()
 
   /* Install custom port handlers for stdout and stderr */
   s7_set_current_output_port(s7, s7_open_output_function(s7, cm_stdout));
-  s7_set_current_error_port(s7, s7_open_output_function(s7, cm_stderr));
+  // this is handled by *error-hook* now
+  //  s7_set_current_error_port(s7, s7_open_output_function(s7, cm_stderr));
 
   // initalize CM 
   cm_init(s7);
@@ -399,8 +400,8 @@ bool Scheme::init()
 
   // clear out backtrace history set it to length 0 since most of the
   // entries will be C calls...
-  s7_eval_c_string(s7,"(clear-backtrace)");
-  s7_eval_c_string(s7,"(backtracing #f)");
+  //  s7_eval_c_string(s7,"(clear-backtrace)");
+  //  s7_eval_c_string(s7,"(backtracing #f)");
   return true;
 }
 

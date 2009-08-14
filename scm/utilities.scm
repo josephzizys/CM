@@ -179,6 +179,131 @@
 	  (begin (set! r (if elements? e i))
 		 (set! f #t))))))
 
+;;; (opt/key) parameter support. Uses define-for-syntax because
+;;; chicken compiler needs the expansion at compile time
+
+;(define-macro (with-optkeys spec . body)
+;  (expand-optkeys (car spec) (cdr spec) body))
+
+(define-expansion (with-optkeys spec . body)
+  ;(expand-optkeys user rawspec body)
+  (
+   (lambda (user rawspec body)
+     ;;(format #t "in expand-optkeys~%")
+     (define (key-parse-clause info mode args user)
+       ;; return a case clause that parses one keyword
+       ;; info for each var: (<got> <var> <val>)
+       (let* ((got (car info))
+	      (var (cadr info))
+	      (key (string->keyword (symbol->string var)))
+	      )
+	 `(( ,key )
+	   (if ,got (error "~S is a redundant keyword" , key))
+	   (set! ,var (if (null? (cdr ,args))
+			  (error "missing keyword value in ~S" 
+				 , user)
+			  (cadr ,args)))
+	   (set! ,got #t) ; mark that we have a value for this param
+	   (set! ,mode #t) ; mark that we are now parsing keywords
+	   (set! ,args (cddr ,args)))))
+     (define (opt-parse-clause info mode pars user otherkeys?)
+       (let ((got (car info))
+	     (var (cadr info)))
+	 (if otherkeys?
+	     `(else ; &allow-other-keys handing
+	       (if (and (keyword? (car ,pars)) (pair? (cdr ,pars)))
+		   (begin
+		     (set! &allow-other-keys (append &allow-other-keys
+						     (list (car ,pars)
+							   (cadr ,pars))))
+		     (set! ,pars (cddr ,pars)))
+		   (begin
+		     (if ,mode (error "found positional argument after keyword in ~S" 
+				      ,user))
+		     (set! ,var (car ,pars))
+		     (set! ,got #t) ; mark that we have a value for this param
+		     (set! ,pars (cdr ,pars)))))
+	     `(else
+	       (if ,mode (error "found positional argument after keyword in ~S" 
+				,user))
+	       (set! ,var (car ,pars))
+	       (if (keyword? ,var)
+		   (error "~S is not a valid keyword",  var))
+	       (set! ,got #t) ; mark that we have a value for this param
+	       (set! ,pars (cdr ,pars))))))
+     (define (parse-optkey info data mode args user keyc otherkeys?)
+       ;; return a complete parsing clause for one optkey variable. keyc
+       ;; holds all the key parsing clauses used by each case statement
+       `(if (not (null? ,args))
+	    (case (car ,args)
+	      ;; generate all keyword clauses
+	      ,@ keyc
+		 , (opt-parse-clause info mode args user otherkeys?))))
+     
+     (let* ((otherkeys? (member '&allow-other-keys rawspec))
+	    (spec (if otherkeys? (reverse (cdr (reverse rawspec))) rawspec))
+	    (data (map (lambda (v)
+			 ;; for each optkey variable v return a list
+			 ;; (<got> <var> <val>) where the <got> variable
+			 ;; indicates that <var> has been set, <var> is
+			 ;; the optkey variable and <val> is its default
+			 ;; value
+			 (if (pair? v)
+			     (cons (gensym (symbol->string (car v))) v)
+			     (list (gensym (symbol->string v)) v #f)))
+		       spec))
+	    (args (gensym "args")) ; holds arg data as its parsed
+	    (mode (gensym "keyp")) ; true if parsing keywords
+	    ;; the case clauses parsing each keyword
+	    (keyc (map (lambda (i) (key-parse-clause i mode args user))
+		       data))
+	    (terminal #f)  ; clause executed at end
+	    (bindings (map cdr data)) ; list of variable bindings for 
+	    )
+       ;; termination clause either looks for dangling values or sets
+       ;; &allow-other-keys to the remaining args (if they are keyword)
+       (if (not otherkeys?)
+	   (set! terminal
+		 `(if (not (null? ,args))
+		      (error "too many arguments in ~S" , user)))
+	   (let ((check (gensym "others")))
+	     (set! bindings (cons '(&allow-other-keys (list)) bindings))
+	     (set! terminal
+		   `(do ((,check ,args (cddr ,check)))
+			((null? ,check)
+			 (set! &allow-other-keys
+			       (append &allow-other-keys ,args)))
+		      (if (not (keyword? (car ,check)))
+			  (error "~S is not a keyword" (car ,check))
+			  (if (null? (cdr ,check))
+			      (error "missing value for ~S"
+				     (car ,check))))))))
+       `(let* , bindings ; bind all the optkey variables with default values
+	  ;; bind status and parsing vars
+	  (let ,(append (map (lambda (i) (list (car i) #f)) data)
+			`((,args ,user)
+			  (,mode #f)))
+	    ;; generate a parsing expression for each optkey variable
+	    ,@ (map (lambda (i)
+		      (parse-optkey i data mode args user keyc otherkeys?))
+		    data)
+	       ;; add terminal check to make sure no dangling args or add
+	       ;; extra keywords to &allow-other-keys
+	       ,terminal
+	       ,@ body))))
+   ;; EXPANSION ARGS
+   (car spec) (cdr spec) body
+   ))
+
+; (pretty-print (expand-optkeys 'args '(a (b 2)) '((list a b))))
+; (pretty-print (expand-optkeys 'args '(a (b 2) &allow-other-keys) '((list a b  &allow-other-key))))
+; (define (test . args) (with-optkeys (args a (b 2)) (list a b)))
+; (define (test2 . args) (with-optkeys (args a (b 2) &allow-other-keys) (list a b &allow-other-keys)))
+; (test 1)
+; (test #:a 1)
+; (test #:a 1 #:zz)
+; (test2 #:a 1 #:zz 222 #:ppop 111)
+
 (define (find x seq . args)
   (with-optkeys (args (key #f) (start 0) (end #f))
     (%mapseq (if key
@@ -198,126 +323,3 @@
 	     #f
 	     start
 	     end)))
-
-;;; (opt/key) parameter support. Uses define-for-syntax because
-;;; chicken compiler needs the expansion at compile time
-
-(define-for-syntax (expand-optkeys user rawspec body)
-
-  (define (key-parse-clause info mode args user)
-    ;; return a case clause that parses one keyword
-    ;; info for each var: (<got> <var> <val>)
-    (let* ((got (car info))
-	   (var (cadr info))
-	   (key (string->keyword (symbol->string var)))
-	   )
-      `(( ,key )
-	(if ,got (error "~S is a redundant keyword" , key))
-	(set! ,var (if (null? (cdr ,args))
-		       (error "missing keyword value in ~S" 
-			      , user)
-		       (cadr ,args)))
-	(set! ,got #t) ; mark that we have a value for this param
-	(set! ,mode #t) ; mark that we are now parsing keywords
-	(set! ,args (cddr ,args)))))
-  (define (opt-parse-clause info mode pars user otherkeys?)
-    (let ((got (car info))
-	  (var (cadr info)))
-      (if otherkeys?
-	  `(else ; &allow-other-keys handing
-	    (if (and (keyword? (car ,pars)) (pair? (cdr ,pars)))
-		(begin
-		  (set! &allow-other-keys (append &allow-other-keys
-						  (list (car ,pars)
-							(cadr ,pars))))
-		  (set! ,pars (cddr ,pars)))
-		(begin
-		  (when ,mode (error "found positional argument after keyword in ~S" 
-				     ,user))
-		  (set! ,var (car ,pars))
-		  (set! ,got #t) ; mark that we have a value for this param
-		  (set! ,pars (cdr ,pars)))))
-	  `(else
-	    (when ,mode (error "found positional argument after keyword in ~S" 
-			       ,user))
-	    (set! ,var (car ,pars))
-	    (when (keyword? ,var)
-	      (error "~S is not a valid keyword",  var))
-	    (set! ,got #t) ; mark that we have a value for this param
-	    (set! ,pars (cdr ,pars))))))
-  (define (parse-optkey info data mode args user keyc otherkeys?)
-    ;; return a complete parsing clause for one optkey variable. keyc
-    ;; holds all the key parsing clauses used by each case statement
-    `(unless (null? ,args)
-       (case (car ,args)
-	 ;; generate all keyword clauses
-	 ,@ keyc
-	    , (opt-parse-clause info mode args user otherkeys?))))
-  
-  (let* ((otherkeys? (member '&allow-other-keys rawspec))
-	 (spec (if otherkeys? (reverse (cdr (reverse rawspec))) rawspec))
-	 (data (map (lambda (v)
-		      ;; for each optkey variable v return a list
-		      ;; (<got> <var> <val>) where the <got> variable
-		      ;; indicates that <var> has been set, <var> is
-		      ;; the optkey variable and <val> is its default
-		      ;; value
-		      (if (pair? v)
-			  (cons (gensym (symbol->string (car v))) v)
-			  (list (gensym (symbol->string v)) v #f)))
-		    spec))
-	 (args (gensym "args")) ; holds arg data as its parsed
-	 (mode (gensym "keyp")) ; true if parsing keywords
-	 ;; the case clauses parsing each keyword
-	 (keyc (map (lambda (i) (key-parse-clause i mode args user))
-		    data))
-	 (terminal #f)  ; clause executed at end
-	 (bindings (map cdr data)) ; list of variable bindings for 
-	 )
-    ;; termination clause either looks for dangling values or sets
-    ;; &allow-other-keys to the remaining args (if they are keyword)
-    (if (not otherkeys?)
-	(set! terminal
-	      `(unless (null? ,args)
-		 (error "too many arguments in ~S" , user)))
-	(let ((check (gensym "others")))
-	  (set! bindings (cons '(&allow-other-keys (list)) bindings))
-	  (set! terminal
-		`(do ((,check ,args (cddr ,check)))
-		     ((null? ,check)
-		      (set! &allow-other-keys
-			    (append &allow-other-keys ,args)))
-		   (if (not (keyword? (car ,check)))
-		       (error "~S is not a keyword" (car ,check))
-		       (if (null? (cdr ,check))
-			   (error "missing value for ~S"
-				  (car ,check))))))))
-    `(let* , bindings ; bind all the optkey variables with default values
-       ;; bind status and parsing vars
-       (let ,(append (map (lambda (i) (list (car i) #f)) data)
-		     `((,args ,user)
-		       (,mode #f)))
-	 ;; generate a parsing expression for each optkey variable
-	 ,@ (map (lambda (i)
-		   (parse-optkey i data mode args user keyc otherkeys?))
-		 data)
-	    ;; add terminal check to make sure no dangling args or add
-	    ;; extra keywords to &allow-other-keys
-	    ,terminal
-	    ,@ body))))
-
-(define-macro (with-optkeys spec . body)
-  (expand-optkeys (car spec) (cdr spec) body))
-
-; (pretty-print (expand-optkeys 'args '(a (b 2)) '((list a b))))
-; (pretty-print (expand-optkeys 'args '(a (b 2) &allow-other-keys) '((list a b  &allow-other-key))))
-; (define (test . args) (with-optkeys (args a (b 2)) (list a b)))
-; (define (test2 . args) (with-optkeys (args a (b 2) &allow-other-keys) (list a b &allow-other-keys)))
-; (test 1)
-; (test #:a 1)
-; (test #:a 1 #:zz)
-; (test2 #:a 1 #:zz 222 #:ppop 111)
-
-
- 
-
