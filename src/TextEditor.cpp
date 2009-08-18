@@ -75,7 +75,7 @@ TextEditorWindow::TextEditorWindow (File file, String text, int synt,
 
   // flag may have been set by loading editor.
   buf->clearFlag(EditFlags::NeedsSave);
-  // goddam Juce Text coloring!
+  // arrrrg give up on large buffers since text coloring in juce editors is so slow
   if (size>20000)
     {
       Console::getInstance()->printWarning(T("Cowardly refusing to colorize large buffer for ") + getName().quoted() + T(".\n"));
@@ -106,7 +106,7 @@ void TextEditorWindow::closeButtonPressed ()
 					T("Cancel"));
 #else
 					T("Save"),
-					T("Just Quit"),
+					T("Just Close"),
 					T("Cancel"));
 #endif
 

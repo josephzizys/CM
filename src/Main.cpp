@@ -90,7 +90,7 @@ void Grace::initialise(const juce::String& commandLine)
 
   String str=String::empty;
   str << getApplicationName() << T(" ") << SysInfo::getGraceVersion()
-      << T(" ") << SysInfo::getCopyright(T("Todd Ingalls, Rick Taube"))
+      << T(" ") << SysInfo::getCopyright(T("Rick Taube"))
       << T("\n");
   con->printOutput(str);
   // don't initialize anything if we are GraceCL

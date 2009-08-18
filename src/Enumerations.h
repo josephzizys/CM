@@ -27,11 +27,17 @@ class SysInfo
 
   static const String getCMVersion()
   {
-    return T("Common Music ") + getVersionString(CM_VERSION);
+    String str= T("Common Music ") + getVersionString(CM_VERSION);
+
+    return str;
   }
   static const String getGraceVersion()
   {
-    return getVersionString(GRACE_VERSION);
+    String str=getVersionString(GRACE_VERSION);
+#ifdef SVNVERSION
+    str << T(" [svn:") << String(SVNVERSION) << T("]");
+#endif
+    return str;
   }
 
   static const String getApplicationName()

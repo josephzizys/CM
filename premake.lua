@@ -8,6 +8,7 @@ addoption("juce", "Location of JUCE source directory or install prefix")
 addoption("sndlib", "Optional location of SNDLIB source directory or install prefix")
 addoption("chicken", "Optional location of CHICKEN source directory or install prefix")
 addoption("fomus", "Optional FOMUS install prefix")
+addoption("svnversion", "Optional SVN version number")
 
 if options["juce"] then
    amalgamated = false
@@ -16,6 +17,7 @@ end
 sndlib = nil
 chicken = nil
 fomus = nil
+svnvers = nil
 
 function insure_slash(path) 
   --insure slash at end of directory so concatenation works
@@ -30,6 +32,16 @@ function add(t, element)
 end
 
 if not (options["clean"] or options["help"] or options["version"]) then
+
+   if (options["svnversion"]) then
+      svnvers = options["svnversion"]
+   elseif (options["target"] == "gnu") then
+      if (fileexists( "/usr/bin/svnversion")) then
+	 svnvers = "SVNVERSION=\\\"`/usr/bin/svnversion`\\\""
+      elseif (fileexists( "/usr/local/bin/svnversion")) then
+	 svnvers = "SVNVERSION=\\\"`/usr/local/bin/svnversion`\\\""
+      end
+   end
 
 ------------------------------------------
 --           JUCE Amalgamated
@@ -269,6 +281,10 @@ for i = 1,3 do
          error("--fomus must point to the FOMUS install prefix (eg. /usr or /usr/local)")
       end
 
+   end
+
+   if (svnvers) then
+      add(mypackage.defines, svnvers)
    end
 
 ------------------------------------------
