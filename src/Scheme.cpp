@@ -342,6 +342,9 @@ void Scheme::run()
       banner << SystemStats::getJUCEVersion()
 	     << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n")
 	     << getLispVersion() << T("\n")
+#ifdef WITHFOMUS
+	     << Fomus::getFomusVersion() << T("\n")
+#endif
 	     << SysInfo::getCMLogo() << T("\n" );
       Console::getInstance()->printOutput(banner);
     }

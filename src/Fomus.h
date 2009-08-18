@@ -94,14 +94,18 @@ class Fomus
  Fomus () : current(-1) 
     {
       newScore(T(""), false);
-      Console::getInstance()->printOutput("FOMUS " + String(fomus_version()) +
-					  " (c) 2009 David Psenicka\n");
     }
   ~Fomus() 
     {
       scores.clear();
     }
-
+  static const String getFomusVersion()
+  {
+    String str=T("FOMUS");
+    str << T(" ") << String(fomus_version())
+	<< T(" ") << SysInfo::getCopyright(T("David Psenicka"));
+    return str;
+  }
   bool openScore(String scorename, String scoreargs, const bool fromscm);
   void closeScore();
   void saveScore(const String& fn, const bool fromscm);
