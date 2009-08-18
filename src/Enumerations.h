@@ -31,12 +31,23 @@ class SysInfo
 
     return str;
   }
+
+  static const String getCMSvnRevision()
+  {
+    String str=String::empty;
+    str << T("[svn:")
+#ifdef SVNVERSION
+	<< String(SVNVERSION)
+#else
+	<< T("none")
+#endif
+	<< T("]");
+    return str;
+  }
+
   static const String getGraceVersion()
   {
     String str=getVersionString(GRACE_VERSION);
-#ifdef SVNVERSION
-    str << T(" [svn:") << String(SVNVERSION) << T("]");
-#endif
     return str;
   }
 

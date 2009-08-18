@@ -89,7 +89,9 @@ void Grace::initialise(const juce::String& commandLine)
   new ConsoleWindow();
 
   String str=String::empty;
-  str << getApplicationName() << T(" ") << SysInfo::getGraceVersion()
+  str << getApplicationName() 
+      << T(" ") << SysInfo::getGraceVersion()
+      << T(" ") << SysInfo::getCMSvnRevision()
       << T(" ") << SysInfo::getCopyright(T("Rick Taube"))
       << T("\n");
   con->printOutput(str);
