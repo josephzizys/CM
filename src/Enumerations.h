@@ -761,16 +761,19 @@ class TriggerIDs
  public:
   static const int Empty=0;
   static const int ButtonTrigger=1;
-  static const int SliderTrigger=2;
-  static const int MidiKeyboardTrigger=3;
-  static const int MidiInTrigger=4;
-  static const int NumTriggers=4;
+  static const int CounterTrigger=2;
+  static const int SliderTrigger=3;
+  static const int MidiKeyboardTrigger=4;
+  static const int MidiInTrigger=5;
+  static const int NumTriggers=5;
   static const String toString(int id)
   {
     switch (id)
       {
       case ButtonTrigger:
 	return T("button");
+      case CounterTrigger:
+	return T("counter");
       case SliderTrigger:
 	return T("slider");
       case MidiKeyboardTrigger:
@@ -787,6 +790,8 @@ class TriggerIDs
       {
       case ButtonTrigger:
 	return  T("Button");
+      case CounterTrigger:
+	return  T("Counter");
       case SliderTrigger:
 	return T("Slider");
       case MidiKeyboardTrigger:
@@ -797,11 +802,12 @@ class TriggerIDs
 	return T("Empty");
       }  
   }
-  
   static int fromString(const String str)
   {
     if (str.equalsIgnoreCase(T("button")))
       return ButtonTrigger;
+    if (str.equalsIgnoreCase(T("counter")))
+      return CounterTrigger;
     if (str.equalsIgnoreCase(T("slider")))
       return SliderTrigger;
     if (str.equalsIgnoreCase(T("keyboard")))
@@ -812,6 +818,5 @@ class TriggerIDs
       return Empty;
   }
 };
-
 
 #endif

@@ -50,15 +50,24 @@ Trigger::Trigger (int typ)
       break;
       //    case TriggerIDs::MidiInTrigger :
       //      break;
+    case TriggerIDs::CounterTrigger :
+      height=40;
+      triggertype=typ;
+      addAndMakeVisible(button = new TextButton(String::empty));
+      vars.add(T("*trigger*"));
+      vars.add(T("1"));
+      button->setButtonText(vars[1]);
+      button->addButtonListener(this);
+      break;
     case TriggerIDs::ButtonTrigger :
     default:
       height=40;
       triggertype=TriggerIDs::ButtonTrigger;
       addAndMakeVisible(button = new TextButton(String::empty));
-      button->setButtonText(T("Bang!"));
-      button->addButtonListener (this);
       vars.add(T("*trigger*"));
-      vars.add(T("#t"));
+      vars.add(T(":bang!"));
+      button->setButtonText(vars[1]);
+      button->addButtonListener(this);
       break;
     }    
     addAndMakeVisible (configure = new TextButton(String::empty));
@@ -98,14 +107,27 @@ void Trigger::initFromXml(XmlElement* xml)
   // those from the xml's properties
   if (triggertype==TriggerIDs::ButtonTrigger)
     {
-      if (xml->hasAttribute(T("label")))
-	button->setButtonText(xml->getStringAttribute(T("label")));
       String str=xml->getStringAttribute(T("variable"));
       if (!str.isEmpty() && !str.containsAnyOf(T(" \t\r#;,(){}\"\\'`")))
 	vars.set(0,str);
       str=xml->getStringAttribute(T("value")).trim();
       if (!str.isEmpty())
-	vars.set(1,str);
+	{
+	  vars.set(1,str);
+	  button->setButtonText(str);
+	}
+    }
+  else if (triggertype==TriggerIDs::CounterTrigger)
+    {
+      String str=xml->getStringAttribute(T("variable"));
+      if (!str.isEmpty() && !str.containsAnyOf(T(" \t\r#;,(){}\"\\'`")))
+	vars.set(0,str);
+      str=xml->getStringAttribute(T("value")).trim();
+      if (!str.isEmpty() && str.containsOnly(T("-0123456789")))
+	{
+	  vars.set(1,str);
+	  button->setButtonText(str);
+	}
     }
   else if (triggertype==TriggerIDs::SliderTrigger)
     {
@@ -148,9 +170,13 @@ String Trigger::toXml()
   switch (triggertype)
     {
     case TriggerIDs::ButtonTrigger :
-      str << T(" label=")
-	  << button->getButtonText().quoted()
-	  << T(" variable=")
+      str << T(" variable=")
+	  << vars[0].quoted()
+	  << T(" value=")
+	  << vars[1].quoted();
+      break;
+    case TriggerIDs::CounterTrigger :
+      str << T(" variable=")
 	  << vars[0].quoted()
 	  << T(" value=")
 	  << vars[1].quoted();
@@ -222,6 +248,12 @@ void Trigger::buttonClicked (Button* buttonThatWasClicked)
   if (buttonThatWasClicked == button)
     {
       doTrigger();
+      if (triggertype==TriggerIDs::CounterTrigger)
+	{
+	  String next=String(vars[1].getIntValue()+1);
+	  vars.set(1, next);
+	  button->setButtonText(next);
+	}      
     }
   else if (buttonThatWasClicked == configure)
     {
@@ -318,6 +350,14 @@ public:
 	l3=T("Button Value:");
 	b3=trigger->vars[1];
 	height=8+24+8+24+8+24 + 16+24+8;
+      }
+    if (trigger->triggertype==TriggerIDs::CounterTrigger)
+      {
+	l1=T("Counter Variable:");
+	b1=trigger->vars[0];
+	l2=T("Counter Value:");
+	b2=trigger->vars[1];
+	height=8+24+8+24 + 16+24+8;
       }
     else if (trigger->triggertype==TriggerIDs::SliderTrigger)
       {
@@ -504,9 +544,12 @@ public:
 	String s=T("<trigger type=");
 	s << TriggerIDs::toString(trigger->triggertype).quoted();
 	if (trigger->triggertype==TriggerIDs::ButtonTrigger)
-	  s << T(" label=") << buffer1->getText().quoted()
+	  s //<< T(" label=") << buffer1->getText().quoted()
 	    << T(" variable=") << buffer2->getText().quoted()
 	    << T(" value=") << buffer3->getText().quoted();
+	if (trigger->triggertype==TriggerIDs::CounterTrigger)
+	  s << T(" variable=") << buffer1->getText().quoted()
+	    << T(" value=") << buffer2->getText().quoted();
 	else if (trigger->triggertype==TriggerIDs::SliderTrigger)
 	  s << T(" variable=") << buffer1->getText().quoted()
 	    << T(" value=") << buffer2->getText().quoted()
