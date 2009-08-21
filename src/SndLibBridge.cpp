@@ -112,32 +112,32 @@ s7_pointer ffi_rescale (s7_scheme *s7, s7_pointer args)
   return s7_make_real(s7, f0);
 }
 
-s7_pointer ffi_descrete (s7_scheme *s7, s7_pointer args)
+s7_pointer ffi_discrete (s7_scheme *s7, s7_pointer args)
 {
   double f0, f1, f2, f3;
   s7_Int i0, i1, i2;
   if (!s7_is_real(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_descrete", 1, s7_car(args), "a double"));
+    return(s7_wrong_type_arg_error(s7, "ffi_discrete", 1, s7_car(args), "a double"));
   f0=s7_number_to_real(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_descrete", 2, s7_car(args), "a double"));
+    return(s7_wrong_type_arg_error(s7, "ffi_discrete", 2, s7_car(args), "a double"));
   f1=s7_number_to_real(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_descrete", 3, s7_car(args), "a double"));
+    return(s7_wrong_type_arg_error(s7, "ffi_discrete", 3, s7_car(args), "a double"));
   f2=s7_number_to_real(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_descrete", 4, s7_car(args), "a int"));
+    return(s7_wrong_type_arg_error(s7, "ffi_discrete", 4, s7_car(args), "a int"));
   i1=s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_descrete", 5, s7_car(args), "a int"));
+    return(s7_wrong_type_arg_error(s7, "ffi_discrete", 5, s7_car(args), "a int"));
   i2=s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_descrete", 6, s7_car(args), "a double"));
+    return(s7_wrong_type_arg_error(s7, "ffi_discrete", 6, s7_car(args), "a double"));
   f3=s7_number_to_real(s7_car(args));
   args=s7_cdr(args);
   i0=cm_discrete(f0, f1, f2, i1, i2, f3);
@@ -2787,7 +2787,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_shell", ffi_shell, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_play", ffi_play, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_rescale", ffi_rescale, 6, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_descrete", ffi_descrete, 6, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_discrete", ffi_discrete, 6, 0, false, "ffi function");
   s7_define_function(s7, "ffi_float_to_fixnum", ffi_float_to_fixnum, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_quantize", ffi_quantize, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_rhythm_to_seconds", ffi_rhythm_to_seconds, 3, 0, false, "ffi function");

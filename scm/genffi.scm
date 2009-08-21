@@ -29,7 +29,7 @@
     (ffi_play              void "cm_play" c-string)
     (ffi_rescale           double "cm_rescale"
 			   double double double double double double)
-    (ffi_descrete          int "cm_discrete"
+    (ffi_discrete          int "cm_discrete"
 			   double double double int int double)
     (ffi_float_to_fixnum   int "cm_float_to_fixnum" double)
     (ffi_quantize          double "cm_quantize" double double)

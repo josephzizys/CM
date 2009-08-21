@@ -10,7 +10,7 @@
 (define ffi_shell (foreign-lambda void "cm_shell" c-string))
 (define ffi_play (foreign-lambda void "cm_play" c-string))
 (define ffi_rescale (foreign-lambda double "cm_rescale" double double double double double double))
-(define ffi_descrete (foreign-lambda int "cm_discrete" double double double int int double))
+(define ffi_discrete (foreign-lambda int "cm_discrete" double double double int int double))
 (define ffi_float_to_fixnum (foreign-lambda int "cm_float_to_fixnum" double))
 (define ffi_quantize (foreign-lambda double "cm_quantize" double double))
 (define ffi_rhythm_to_seconds (foreign-lambda double "cm_rhythm_to_seconds" double double double))
