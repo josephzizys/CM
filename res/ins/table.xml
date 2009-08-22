@@ -33,7 +33,7 @@
     <instrument Name="fm-noise" File="fm-noise.scm" Category="Frequency Modulation" Comment="FM for ocean wave simulations" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="fm-trumpet" File="fm-trumpet.scm" Category="Frequency Modulation" Comment="Dexter Morrill's FM trumpet" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="fm-violin" File="v.scm" Category="Frequency Modulation" Comment="fm violin (William Schottstaedt)" Examples="v.clm" Depend="" AutoLoad="no" />
-    <instrument Name="fm-voice" File="jcvoi.scm" Category="Frequency Modulation" Comment="John Chowning's fm voice" Examples="jcvoi.clm" Depend="" AutoLoad="no" />
+    <instrument Name="fm-voice" File="jcvoi.scm" Category="Frequency Modulation" Comment="John Chowning's fm voice" Examples="jcvoi.clm" Depend="env.scm" AutoLoad="no" />
     <instrument Name="fm" File="fm.scm" Category="Frequency Modulation" Comment="simple fm with envelope controls" Examples="fm.clm" Depend="" AutoLoad="no" />
     <instrument Name="fofins" File="fofins.scm" Category="Waveshaping" Comment="formant synthesis" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="freeverb" File="freeverb.scm" Category="Sound Processing" Comment="reverberation" Examples="" Depend="" AutoLoad="no" />

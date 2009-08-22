@@ -6,10 +6,10 @@
 namespace Instruments
 {
     extern const char*  files_zip;
-    const int           files_zipSize = 310272;
+    const int           files_zipSize = 310485;
 
     extern const char*  table_xml;
-    const int           table_xmlSize = 10698;
+    const int           table_xmlSize = 10705;
 
   #ifdef FILES
     extern const char*  animals_clm;
@@ -63,7 +63,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  env_scm;
-    const int           env_scmSize = 21269;
+    const int           env_scmSize = 20399;
 
   #endif
   #ifdef FILES
@@ -73,7 +73,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  expandn_scm;
-    const int           expandn_scmSize = 6729;
+    const int           expandn_scmSize = 11570;
 
   #endif
   #ifdef FILES
