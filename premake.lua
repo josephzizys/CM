@@ -34,7 +34,7 @@ end
 if not (options["clean"] or options["help"] or options["version"]) then
 
    if (options["svnversion"]) then
-      svnvers = options["svnversion"]
+      svnvers = "SVNVERSION=" .. options["svnversion"]
    elseif (options["target"] == "gnu") then
       if (fileexists( "/usr/bin/svnversion")) then
 	 svnvers = "SVNVERSION=\\\"`/usr/bin/svnversion`\\\""
