@@ -412,8 +412,9 @@ void Scheme::cleanup()
 
 String Scheme::getLispVersion()
 {
-  String str=T ("SndLib ");
-  str << String(SNDLIB_VERSION) << String(".") << String(SNDLIB_REVISION)
+  String str=String::empty;
+  str << T("S7 Scheme") << T(" ") << String(S7_VERSION) << T(" (") << String(S7_DATE)<< T(")")
+    //     << T ("SndLib ") << String(SNDLIB_VERSION) << String(".") << String(SNDLIB_REVISION)
       << T(" ") << SysInfo::getCopyright( T("William Schottstaedt"));
   return str;
 }
