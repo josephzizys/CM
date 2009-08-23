@@ -2,23 +2,23 @@
 ;; Expressions
 ;
 
-; SAL programs are built out of commands and expresions.  An
-; expression, or 'expr', is anything that produces a value for a
-; command to use. The most common types exprs we will encounter are
-; numbers, arithmetic expressions, symbols (variables and function
-; calls), booleans, strings and lists.
+; SAL programs are built out of commands and expressions.  An
+; expression, or expr, is anything that produces a value for a command
+; to use. The most common types exprs you will work with are numbers,
+; arithmetic expressions, booleans, strings, symbols (variables and
+; function names) and lists.
 
 ;
 ;; Execution and Evaluation
 ;
 
-; An expr becomes a value through a process called evaluation: every
-; time you execute a command by pressing COMMAND-Enter you trigger
-; evaluation. Simple exprs like numbers are called 'self-evaluating
-; expressions' because they evaluate to themselves: 100 evaluates to
-; 100. Most exprs are not self-evaluating, that is they produce
-; values that are not identical to themselves: '1 + 2 * 3' evaluates
-; to 7:
+; An expression becomes a value through a process called evaluation:
+; every time you execute a command by pressing COMMAND-Enter you
+; trigger evaluation. Simple expressions like numbers are called
+; 'self-evaluating expressions' because they evaluate to themselves:
+; 100 evaluates to 100. Most exprs are not self-evaluating, that is
+; they produce values that are not identical to themselves: '1 + 2 *
+; 3' evaluates to 7:
 
 print 1 + 2 * 3
 
@@ -78,7 +78,7 @@ print 123.456
 ; 60.5 sounds one quarter tone above Middle C, the value 59.1 would
 ; sound 10 cents above B3 and so on. The smallest cent value humans
 ; can discriminate between is approximately 5 cents so two places is
-; more than enough to represent micotonal adjustments.
+; more than enough to represent microtonal adjustments.
 
 ;; Musical floats: amplitude
 
@@ -101,20 +101,19 @@ print 123.456
 ; numerator and d is the denominator. no spaces are allowed between
 ; the numbers or slash. A ratio is one way to represent a real number,
 ; i.e. a number that lies in between two integers. For example 5/3
-; lies between the integers 1 and 2. Ratios are very useful for
-; expression exact proportionality, however they are (currently) just
-; coerced to floats.
+; lies between the integers 1 and 2. Ratios are useful for expressing
+; exact proportional relations such as 1/3
 
 print 1/3
 
-print 2/7
+print 2/7 * 17/9
 
 ;
 ;; Arithmetic Expressions
 ;
 
-; Arithmetic expressions in SAL are made up of numbers (or exprs that
-; evaluate to numbers...) joined together by math operators:
+; Arithmetic expressions consist of numbers joined together by math
+; operators:
 
 ;  +   addition
 ;  -   subtraction
@@ -123,9 +122,9 @@ print 2/7
 ;  %   modulus (remainder after division)
 ;  ^   exponentiation
 
-; OPERATORS MUST BE DELIMITED FROM THEIR OPERANDS BY SPACES AND/OR
-; PARENTHESES.  In other words, '2 / 4' is division and '2/4' is a
-; ratio; '2 + 4' is addition and '2+4' is an error. Normal math
+; In SAL operators MUST be delimited from operands by spaces
+; and/or parentheses. In other words, '2 / 4' is division and '2/4' is
+; a ratio; '2 + 4' is addition and '2+4' is an error. Normal math
 ; operator precedence rules apply if there are no parentheses:
 
 print 10 ^ 2 + 1
@@ -160,7 +159,7 @@ print 100-2
 ;; Mixed Expressions
 ;
 
-; Since we will work with different types of numbers it is important
+; Since you will work with different types of numbers it is important
 ; to understand how they interact if they are combined in a single
 ; expression. If an expression contains only integer numbers and
 ; produces an results then the entire expression result in an integer:
@@ -170,7 +169,7 @@ print 10 + 1
 ; If an expression contains or results in any floating point number
 ; the entire expression will produce a floating point value:
 
-print 10 * 1/2 
+print 10 * .5 
 
 ; It is sometimes necessary to convert one type of number into
 ; another. We will learn how to do this in the next chapter when we
@@ -188,7 +187,7 @@ print 10 * 1/2
 ;  <   less than
 ;  >=  greater than or equal
 ;  <=  less than or equal
-;  ~=  general equality (i.e. two things "look" the same)
+;  ~=  general equality (true if operands "look" the same)
 
 ; Relations evaluate to true (#t) or #f (false). See the section on
 ; Boolean values for more information about this.
@@ -205,12 +204,19 @@ print 2 > 1
 
 print 2 >= 1
 
+print "Hi" ~= "Hi"
+
+print "Hi" ~= "Ho"
+
+print 1 ~= 1
+
+print 1 ~= 1.0
+
 print {c e g} ~= {c e g}
 
-print "Woo-Woo" ~= "Woo-Woo"
-
-;; relations are most commonly used for testing and expression in
-;; order to do something. the 'if' statement is typical of this:
+;; relations are used to test an expression in order to do something.
+;; for example, the 'if' statement uses relations to determine which
+;; command it will execute
 
 if random(3) = 0 then print "winner!" else print "loser!"
 
@@ -346,11 +352,13 @@ print string?( "Hi Ho!")
 ; The & operator (logical AND) is true only if BOTH its operands are
 ; true:
 
-print #f & #f
+print #t & #t
+
+print #t & #f
 
 print #f & #t
 
-print #t & #f
+print #f & #f
 
 ; of course, operands can be expressions:
 
@@ -359,13 +367,14 @@ print (1 > 0) & ( 1 < 2)
 ; the | operator (logical OR) is true if EITHER of its operands are
 ; true:
 
-print #f | #f
-
-print #f | #t
+print #t | #t
 
 print #t | #f
 
-print #t | #t
+print #f | #t
+
+print #f | #f
+
 
 ; the ! operator (logical NOT) is the boolean opposite of its operand:
 
@@ -388,9 +397,6 @@ if ( random(6) = 1) & (random(6) = 1 ) then
   print "snake eyes!"
 else
   print "loser >:("
-
-; Much more about the 'if' statement when we learn how to define new
-; functions...
 
 ;
 ;; Conditional Expression: #?(test, true, false)
