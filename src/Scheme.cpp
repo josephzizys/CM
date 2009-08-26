@@ -341,11 +341,11 @@ void Scheme::run()
       String banner=String::empty;
       banner << SystemStats::getJUCEVersion()
 	     << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n")
-	     << getLispVersion() << T("\n")
+	     << getLispVersion() << T("\n");
 #ifdef WITHFOMUS
-	     << Fomus::getFomusVersion() << T("\n")
+      if (fomus_exists) banner << Fomus::getFomusVersion() << T("\n");
 #endif
-	     << SysInfo::getCMLogo() << T("\n" );
+      banner << SysInfo::getCMLogo() << T("\n" );
       Console::getInstance()->printOutput(banner);
     }
 

@@ -106,6 +106,10 @@ void Grace::initialise(const juce::String& commandLine)
 	CommonLisp::getInstance()->startLisp();
       return;
     }
+#ifdef WITHFOMUS  
+  // Initialize fomus
+  initfomus();
+#endif  
   Scheme* scm=Scheme::getInstance();
   scm->setPriority(10);
   scm->startThread();

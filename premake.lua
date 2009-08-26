@@ -275,8 +275,8 @@ for i = 1,3 do
       add(mypackage.defines, "WITHFOMUS=1")
       if os.fileexists(fomus .. "include/fomus.h") then
          add(mypackage.includepaths, fomus .. "include")
-         add(mypackage.libpaths, fomus .. "lib")
-         add(mypackage.links, "fomus")
+         --add(mypackage.libpaths, fomus .. "lib")
+         --add(mypackage.links, "fomus")
       else
          error("--fomus must point to the FOMUS install prefix (eg. /usr or /usr/local)")
       end

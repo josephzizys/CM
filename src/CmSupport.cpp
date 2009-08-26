@@ -16,6 +16,7 @@
 #include "Console.h"
 #include "Syntax.h"
 #ifdef WITHFOMUS
+#define FOMUS_TYPESONLY
 #include "Fomus.h"
 #include "fomus/infoapi.h"
 #endif
@@ -874,21 +875,25 @@ void cs_send_score(int typ, int num, double time, char* pars)
 
 int fms_open_score(char* scorename, char* scoreargs)
 {
+  if (!check_fomus_exists()) return 0;
   return Fomus::getInstance()->openScore(String(scorename), String(scoreargs), true);
 }
 
 void fms_close_score()
 {
+  if (!check_fomus_exists()) return;
   Fomus::getInstance()->closeScore();
 }
 
 void fms_save(const char* name)
 {
+  if (!check_fomus_exists()) return;
   Fomus::getInstance()->saveScore(name, true);
 }
 
 void fms_xml(char* str)
 {
+  if (!check_fomus_exists()) return;
   double now=(Scheme::getInstance()->scoremode) 
     ? Scheme::getInstance()->scoretime : 0.0;
   // if score capture is true AND we are under a process callback then
@@ -898,21 +903,25 @@ void fms_xml(char* str)
 
 void fms_new(const char* name)
 {
+  if (!check_fomus_exists()) return;
   Fomus::getInstance()->newScore(name, true);
 }
 
 void fms_select(const char* name)
 {
+  if (!check_fomus_exists()) return;
   Fomus::getInstance()->selectScore(name, true);
 }
 
 void fms_free()
 {
+  if (!check_fomus_exists()) return;
   Fomus::getInstance()->deleteScore();
 }
 
 void fms_clear()
 {
+  if (!check_fomus_exists()) return;
   Fomus::getInstance()->clearScore();
 }
 
@@ -923,58 +932,32 @@ void fms_clear()
 
 void fms_load(char* filename)
 {
+  if (!check_fomus_exists()) return;
   Fomus::getInstance()->loadScore(String(filename));
 }
 
 void fms_run()
 {
+  if (!check_fomus_exists()) return;
   fomuserr = false;
   Fomus::getInstance()->runScore(true);
 }
 
-
-// void fms_ival(int par, int act, long val)
-// {
-//   Fomus::getInstance()->ival((fomus_param)par,(fomus_action)act,val);
-// }
-
-// void fms_rval(int par, int act, long num, long den)
-// {
-//   Fomus::getInstance()->rval((fomus_param)par,(fomus_action)act,num,den);
-// }
-
-// void fms_mval(int par, int act, long val, long num, long den)
-// {
-//   Fomus::getInstance()->mval((fomus_param)par,(fomus_action)act,val,num,den);
-// }
-
-// void fms_fval(int par, int act, double val)
-// {
-//   Fomus::getInstance()->fval((fomus_param)par,(fomus_action)act,val);
-// }
-
-// void fms_sval(int par, int act, char* val)
-// {
-//   Fomus::getInstance()->sval((fomus_param)par,(fomus_action)act,String(val));
-// }
-
-// void fms_act(int par, int act)
-// {
-//   Fomus::getInstance()->act((fomus_param)par,(fomus_action)act);
-// }
 int fms_isfiletype(const char* ext) 
 {
+  if (!check_fomus_exists()) return 0;
   String x(ext);
   if (!x.isEmpty() && x[0] == '.') x = x.substring(1);
-  info_extslist f(info_list_exts());
-  String mid("mid"), midi("midi")/*, smf("smf")*/;
+  info_extslist f(fapi_info_list_exts());
+  String mid("mid"), midi("midi");
   for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) 
     {
-      if (*i == mid || *i == midi /*|| *i == smf*/) continue;
+      if (*i == mid || *i == midi) continue;
       if (x == *i) return 1;
     }
   return 0;
 }
+
 #else
 int fms_isfiletype(const char* ext) {return 0;}
 int fms_open_score(char* a, char* b){return 0;}
@@ -983,17 +966,10 @@ void fms_new(const char* name){}
 void fms_select(const char* name) {}
 void fms_free(){}
 void fms_clear(){}
-//void fms_init(){}
 void fms_load(char* filename){}
 void fms_run(){}
 void fms_save(const char* name) {}
 void fms_xml(char* str){}  
-// void fms_ival(int par, int act, int val){}
-// void fms_rval(int par, int act, int num, int den){}
-// void fms_mval(int par, int act, int val, int num, int den){}
-// void fms_fval(int par, int act, double val){}
-// void fms_sval(int par, int act, char* val){}
-// void fms_act(int par, int act){}
 #endif
 
 #ifdef GRACE

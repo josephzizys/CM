@@ -129,28 +129,30 @@ const PopupMenu CommandMenus::getAudioMenu(bool isfms)
   csound.addCommandItem(comm, CommandIDs::CsoundOpenSettings);
   menu.addSubMenu(T("Csound"), csound);
 #ifdef WITHFOMUS
-  PopupMenu fomus;
-  if (isfms) {
-    fomus.addCommandItem(comm, CommandIDs::FomusRunCurr);
-  } else {
-    size = jlimit(0, CommandMenus::NumFomusScore-1,
-		  Fomus::getInstance()->numScores());
-    for (int i=0; i<size; i++)
-      fomus.addCommandItem(comm, CommandIDs::FomusSelectScore + i);
-    fomus.addSeparator();
-    fomus.addCommandItem(comm, CommandIDs::FomusRunScore);
-    fomus.addSeparator();
-    fomus.addCommandItem(comm, CommandIDs::FomusNewScore);
-    fomus.addCommandItem(comm, CommandIDs::FomusLoadScore);
-    fomus.addCommandItem(comm, CommandIDs::FomusRenameScore);
-    fomus.addCommandItem(comm, CommandIDs::FomusSaveScore);
-    fomus.addCommandItem(comm, CommandIDs::FomusClearScore);
-    fomus.addCommandItem(comm, CommandIDs::FomusDeleteScore);
-    fomus.addSeparator();
-    fomus.addCommandItem(comm, CommandIDs::FomusSettings);
-    fomus.addCommandItem(comm, CommandIDs::FomusDocumentation);
+  if (fomus_exists) {
+    PopupMenu fomus;
+    if (isfms) {
+      fomus.addCommandItem(comm, CommandIDs::FomusRunCurr);
+    } else {
+      size = jlimit(0, CommandMenus::NumFomusScore-1,
+		    Fomus::getInstance()->numScores());
+      for (int i=0; i<size; i++)
+	fomus.addCommandItem(comm, CommandIDs::FomusSelectScore + i);
+      fomus.addSeparator();
+      fomus.addCommandItem(comm, CommandIDs::FomusRunScore);
+      fomus.addSeparator();
+      fomus.addCommandItem(comm, CommandIDs::FomusNewScore);
+      fomus.addCommandItem(comm, CommandIDs::FomusLoadScore);
+      fomus.addCommandItem(comm, CommandIDs::FomusRenameScore);
+      fomus.addCommandItem(comm, CommandIDs::FomusSaveScore);
+      fomus.addCommandItem(comm, CommandIDs::FomusClearScore);
+      fomus.addCommandItem(comm, CommandIDs::FomusDeleteScore);
+      fomus.addSeparator();
+      fomus.addCommandItem(comm, CommandIDs::FomusSettings);
+      fomus.addCommandItem(comm, CommandIDs::FomusDocumentation);
+    }
+    menu.addSubMenu(T("Fomus"), fomus);
   }
-  menu.addSubMenu(T("Fomus"), fomus);
 #endif
   menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::MidiPlotPlayer);

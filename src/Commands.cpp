@@ -541,7 +541,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       break;
     case CommandIDs::FomusDeleteScore:
       info.shortName=T("Delete Score");      
-      info.setActive(Fomus::getInstance()->numScores()>1);
+      if (fomus_exists) info.setActive(Fomus::getInstance()->numScores()>1);
       break;
     case CommandIDs::FomusClearScore:
       info.shortName=T("Clear Score");      
@@ -550,7 +550,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       info.shortName=T("Save Score...");      
       break;      
     case CommandIDs::FomusSelectScore:
-      if (data<Fomus::getInstance()->numScores())
+      if (fomus_exists && data<Fomus::getInstance()->numScores())
 	{
 	  info.shortName=Fomus::getInstance()->getScoreName(data);
 	  info.setTicked(Fomus::getInstance()->isScoreActive(data));

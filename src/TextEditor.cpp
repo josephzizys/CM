@@ -443,7 +443,7 @@ void TextBuffer::setSyntax(int synt)
       break;
 #ifdef WITHFOMUS      
     case TextIDs::Fomus:
-      syntax=FomusSyntax::getInstance();
+      if (fomus_exists) syntax=FomusSyntax::getInstance(); else syntax=TextSyntax::getInstance();
       break;
 #endif      
     default:
