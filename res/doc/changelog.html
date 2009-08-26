@@ -16,18 +16,19 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   
   <h1>Changelog</h1>
   
-  <h2>CM 3.3.0</h2>
+  <h2>CM 3.3.0 [svn: 1769]</h2>
 
  <ul>  
-     <li class="change">New audio target: <a href="http:fomus.sf.net">FOMUS</a>, a music notation package by David Psenicka that transforms symbolic score information into fully notated manuscipts. For more information see the <a href="cm.html#fomus">Fomus documentation</a> and the Fomus examples and tutorials in the Help menu.</li>
+     <li class="change">New audio target: <a href="http://fomus.sf.net">FOMUS</a>, a music notation package by David Psenicka that transforms symbolic score information into fully notated manuscripts. For more information about using Fomus in Common Music see the <a href="cm.html#fomus">Fomus documentation</a> and the examples and tutorials under the <span class="menuitem">Help&gt;</span> menu. Note that to work with Fomus in Common Music you need to <a href="http://sourceforge.net/projects/fomus/files/"> download and install Fomus</a> on your computer. 
+   </li>
 
 
-     <li class="change">New feature: Plot windows support display, editing and sonification of multidimensional data sets. See <A href="cm.html#plotting">Plotting</a> for more information.</li>
+     <li class="change">New feature:  <a href="cm.html#plotting">Plot windows</a>  support display, editing and sonification of multidimensional data sets. See  <span class="menuitem">Help&gt;Examples&gt;Plotting</span> menu for examples of creating plot displays.</li>
 
     <li class="change">New feature: Editor window 'triggers' for
-      interactive evaluation.To add a trigger to a buffer use the
-      Eval&gt;Triggers submenu. Once a trigger is attached use it to
-      evaluate the buffer or buffer selection. Triggers can be
+      interactive evaluation. To add a trigger to a buffer use the
+       <span class="menuitem">Eval&gt;Triggers</span> menu. Once a trigger is attached you can use it to
+      evaluate the buffer or buffer selection interactively. There are currently four types of trigger: button, counter, slider and midi keyboard. Triggers can be
       configured interactively and restored/saved to XML descriptions.
       </li>
 
@@ -37,22 +38,21 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
      <li class="change">New feature: Command line options are now available for the 'cm' console application. Type 'cm --help' for more information.</li>
 
-     <li class="change">New feature: Audio&gt;Import
-     Midifile... imports data from MIDI files to an editor window, the
+     <li class="change">New feature:  <span class="menuitem">Audio&gt;Import
+     Midifile...</span> imports data from MIDI files to Editor windows, the
      Console window or the clipboard.</li>
 
-    <li class="change">New feature: Audio&gt;Midifile
-    Settings... for configuring midifile data. The default time format
-    is now ticks per quarter (480) and the default file tempo is now
-    60 bpm.</li>
+    <li class="change">New feature:  <span class="menuitem">Audio&gt;Midifile
+    Settings...</span> for configuring midifile writing. The default time format
+    is now ticks per quarter (480) and the default file tempo is 60 bpm.</li>
 
     <li class="change">New feature:
-    Audio&gt;MidiOut&gt;Instruments... for Midi instrument channel
+     <span class="menuitem">Audio&gt;MidiOut&gt;Instruments...</span> for Midi instrument channel
     assignment.</li>
 
     <li class="change">New feature:  SndLib's Instrument Browser has new AutoLoad button to mark instrument for autoloading at startup.</li>
 
-    <li class="change">New feature:  Eval menu now has Scheduler submenu with items to stop/pause/resume processes currently exectuting. (These items are only selectable if the scheduler is actually running processes.)</li>
+    <li class="change">New feature: The Editor's <span class="menuitem">Eval&gt;Scheduler&gt;</span> menu now contains items to stop/pause/resume any musical processes that are currently executing. These items are only available if the scheduler is actually running processes.</li>
 
     <li class="change">New function:
     <a href="./cm.html#mp:instruments">mp:instruments</a>
@@ -96,7 +96,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
      <li class="change">Enhancement: the current 'working directory' is now saved across sessions
  as a preference.</li>
 
-     <li class="change">Enhancement: the current instrument assignments are now saved in midifiles by default. Use Audio&gt;Midifile Options...&gt; to toggle the setting.</li>     
+     <li class="change">Enhancement: the current instrument assignments are now saved in midifiles by default. Use  <span class="menuitem">Audio&gt;Midifile Options...</span> to toggle the setting.</li>     
 
     <li class="change">Enhancement: Updated Sndlib instruments
     including vkey (vitual sampler), piano.scm and
@@ -121,10 +121,10 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     <li class="change">Enhancement: Console and Text Editor font sizes
     now range from 9 to 32.</li>
 
-    <li class="change">Enhancement: Websites for SndLib and Chicken now appear in the Help&gt;Websites menu.</li>
+    <li class="change">Enhancement: Websites for SndLib and Chicken now appear in the  <span class="menuitem">Help&gt;Websites</span> menu.</li>
 
 
-    <li class="change">Enhancement: Editor menus slightly reorganized: some ititems in the Eval menu have been moved to the Edit meny and lookup symbol documentation (Command-D) is now under Help&gt;Documentation&gt;Lookup Symbol... </li>
+    <li class="change">Enhancement: Editor menus slightly reorganized: some ititems in the Eval menu have been moved to the Edit menu and lookup symbol documentation (Command-D) is now under  <span class="menuitem">Help&gt;Documentation&gt;Lookup Symbol...</span> </li>
 
     <li class="change">Bug fix: The 'note' function no longer unsets the default octave if a rest is encountered.</li>
 
@@ -209,9 +209,12 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<address></address>
-<p>
-<!-- hhmts start --> Last modified: Wed Aug 12 07:30:38 CDT 2009 <!-- hhmts end -->
-</p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Wed Aug 26 08:34:47 CDT 2009 <!-- hhmts end --> </p>
+</div>
+<div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
+        src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"
+        alt="Valid XHTML 1.0 Strict" height="31" width="88" /></a>
+</div>
 </body>
 </html>
+ 
