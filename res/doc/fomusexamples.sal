@@ -294,18 +294,13 @@ define process harmonics (note, beat, harm1, harm2, pname)
     wait rhythm(beat)
   end
 
-begin
-  with parts = {{:id "c2" :name "Cello" :inst "cello"}
-                {:id "c3" :name "Cello" :inst "cello"}
-                {:id "c5" :name "Cello" :inst "cello"}
-                {:id "c7" :name "Cello" :inst "cello"}
-                {:id "c11" :name "Cello" :inst "cello"}},
-       sets = {:quartertones #t :tuplets 11},
-       procs = {}
-  loop 
-    for p in {2 3 5 7 11}
-    for pn in {"c2" "c3" "c5" "c7" "c11"}
-    set procs &= harmonics("c1", 1 / p, p, p * 4, pn)
-  end
-  sprout procs, "fomus14.ly", parts: parts, settings: sets, clear: #t, run: #t
+loop with procs = {} , parts = {}, 
+          sets = {:quartertones #t :tuplets 11}
+  for ph in {2 3 5 7 11}
+  for pn in {"c2" "c3" "c5" "c7" "c11"}
+  set procs &= harmonics("c1", 1 / ph, ph, ph * 4, pn) ,
+      parts &= concat(:id, pn, {:name "Cello" :inst "cello"})
+  finally
+  sprout procs, "fomus14.ly", parts: parts, settings: sets,
+         clear: #t, run: #t
 end

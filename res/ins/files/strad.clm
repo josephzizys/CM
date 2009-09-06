@@ -26,6 +26,8 @@
   (bow 0 3 1525 0.5 :vb 0.25 :fb 0.9 :inharm 0.3)
   )
 
+;; these require loading jc-reverb
+
 (with-sound (:channels 2 :reverb jc-reverb)
   (bow 0 1 400 0.5 :reverb 0.0051)
   )

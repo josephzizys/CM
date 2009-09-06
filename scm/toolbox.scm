@@ -861,7 +861,7 @@
 ; (rhythm 'foo)
 
 (define (in-tempo n tempo)
-  (* n (/ 60 tempo)))
+  (times n (/ 60.0 tempo)))
 
 ;;
 ;; promise (delay)

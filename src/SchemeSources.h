@@ -36,7 +36,7 @@ namespace SchemeSources
     const int           processes_scmSize = 7312;
 
     extern const char*  s7_scm;
-    const int           s7_scmSize = 5867;
+    const int           s7_scmSize = 6135;
 
     extern const char*  sal_scm;
     const int           sal_scmSize = 60324;
@@ -45,10 +45,10 @@ namespace SchemeSources
     const int           sndlibws_scmSize = 24752;
 
     extern const char*  spectral_scm;
-    const int           spectral_scmSize = 17118;
+    const int           spectral_scmSize = 17512;
 
     extern const char*  toolbox_scm;
-    const int           toolbox_scmSize = 25263;
+    const int           toolbox_scmSize = 25269;
 
     extern const char*  utilities_scm;
     const int           utilities_scmSize = 9922;

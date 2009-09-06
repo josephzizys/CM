@@ -473,6 +473,13 @@
 ; (read-spear-frame "0.000000 13 12 170.647339 0.045844 11 209.358994 0.036739 10 318.045227 0.246056 9 363.138550 0.098190 8 449.606598 0.021067 7 534.593201 0.010766 6 668.234375 0.006407 5 1133.600830 0.019034 4 1230.239136 0.003197 3 1471.668579 0.001610 2 1626.804565 0.002571 1 2431.637695 0.001024 0 3032.626221 0.001559")
 
 (define (import-spear-frames file)
+  ;;  (define (linenoeol line)
+  ;;    (let ((len (string-length line)))
+  ;;      (do ((pos (- len 1) (- pos 1)))
+  ;;	  ((or (< pos 0) (not (char=? (string-ref line pos) #\newline)))
+  ;;	   (if (= (+ pos 1) len) line
+  ;;	       (substring line 0 (+ pos 1))))
+  ;;	)))
   (with-input-from-file file
     (lambda ()
       (let ((port (current-input-port)))
@@ -480,16 +487,17 @@
 	(let ((rhdr (lambda (p)
 		      (let ((l (read-line p)))
 			(if (eof-object? l)
-			    (error "~S is not frame data" p))
-			l)))
+			    (error "Reached EOF in file header." p))
+			l ;(linenoeol l)
+			)))
 	      (line #f))
 	  (set! line (rhdr port))
 	  (if (not (equal? line "par-text-frame-format"))
-	      (error "Not frame data" port))
+	      (error "Expected 'par-text-frame-format' but got '~A'" line))
 	  (set! line (rhdr port))
 	  (if (not (equal? line 
 			   "point-type index frequency amplitude"))
-	      (error "Not frame data" port))
+	      (error "Expected 'point-type index frequency amplitude' but got '~A'." line))
 	  ;; flush remaining header lines
 	  (do ()
 	      ((equal? line "frame-data") #f)
@@ -502,7 +510,7 @@
 	      ((eof-object? line)
 	       (cdr head))
 	    ;; omit empty spectra
-	    (set! spec (read-spear-frame line))
+	    (set! spec (read-spear-frame line)) ;(linenoeol line)
 	    (if spec
 		(begin
 		  (set-cdr! tail (list spec))

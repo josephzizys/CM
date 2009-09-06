@@ -13,6 +13,9 @@
   ;; report scheme errors using the same format as C errors.
   (let ((port (open-output-string)))
     (format port ">>> Error: ")
+    ;; this should not happen but it does.
+    (if (not (pair? args))
+	(set! args (list args)))
   (apply format port args)
   (format port "~%")
   (let ((str (get-output-string port)))
@@ -69,6 +72,11 @@
 
 (define (read-from-string str)
   (call-with-input-string str read))
+
+;; bill sez: "sort! copies lists, but does change vectors (it's really vector-sort!
+;; with list->vector and vector->list if it gets a list argument"
+
+(define sort sort!)
 
 ;; adapted for lists as well as vectors from
 ;; http://www.math.grin.edu/~stone/events/scheme-workshop/quicksort.html

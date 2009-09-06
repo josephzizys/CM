@@ -248,7 +248,7 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  maxf_scm;
-    const int           maxf_scmSize = 11616;
+    const int           maxf_scmSize = 11549;
 
   #endif
   #ifdef FILES
@@ -358,12 +358,12 @@ namespace Instruments
   #endif
   #ifdef FILES
     extern const char*  strad_clm;
-    const int           strad_clmSize = 751;
+    const int           strad_clmSize = 787;
 
   #endif
   #ifdef FILES
     extern const char*  strad_scm;
-    const int           strad_scmSize = 11504;
+    const int           strad_scmSize = 11436;
 
   #endif
   #ifdef FILES

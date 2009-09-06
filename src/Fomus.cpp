@@ -7,6 +7,10 @@
 
 #include "juce.h"
 
+#ifdef JUCE_WIN32
+#include "loadlibrary.h"
+#endif
+
 #include <cstdlib>
 #include <vector>
 #include <sstream>
@@ -66,7 +70,7 @@ String getwildcards() {
   info_extslist f(fapi_info_list_exts());
   bool fi = true;
   String mid("mid");
-  for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) {
+  for (const char **i = f.exts, **ie = (f.exts + f.n); i < ie; ++i) {
     if (*i == mid) continue; // skip midi files
     if (fi) fi = false; else r += ';';
     r += String("*.") + *i;
@@ -78,7 +82,7 @@ struct scopedxml {
   XmlDocument doc;
   std::auto_ptr<XmlElement> prs;
   scopedxml(const String& str):doc(str), prs(doc.getDocumentElement()) {}
-  bool isvalid() const {return prs.get();}
+  bool isvalid() const {return prs.get() != 0;}
   XmlElement* getel() {return prs.get();}
 };
 
@@ -266,6 +270,11 @@ void initfomus() {
 	  if (!ha) return;
 	}
       }
+#elif defined(JUCE_WIN32)
+     //Console::getInstance()->printError((char*)">>> fomus1\n");      
+     void* ha = dlopen();
+	 if (!ha) return;
+     //Console::getInstance()->printError((char*)">>> fomus2\n");   
 #endif
       fapi_fomus_api_version = (fomus_api_version_type)fdlsym(ha, "fomus_api_version");
       fapi_info_infoapi_version = (info_infoapi_version_type)fdlsym(ha, "info_infoapi_version");
@@ -950,7 +959,7 @@ public:
     reset();
   }
   virtual bool issetting() const {return false;}
-  virtual fomusinfo* createnew(const String& txt) {};
+  virtual fomusinfo* createnew(const String& txt) {return 0;}
   void remove(int num) {
     stuff[num]->remove();
     for (std::vector<fomusinfo*>::iterator i(stuff.begin() + num); i != stuff.end(); ++i) (*i)->dec();
@@ -1190,7 +1199,7 @@ public:
   bool getstoredef() const {return DefaultButton ? DefaultButton->getToggleState() : false;}
   
   void validate() {ValueText->validate();}
-  int getnum() {ValueText->getnum();}
+  int getnum() {return ValueText->getnum();}
 
   void setname(const String& str) {NameText->setText(str, false);}
 private:
@@ -1668,6 +1677,7 @@ struct makenstring
 inline std::ostream& operator<<(std::ostream& s, const makenstring x) 
 {
   for (int i = 0; i < x.n; ++i) s << ' ';
+  return s;
 }
 
 void out_justify(std::ostream& f, String s, const int start = 0, bool va = true) {

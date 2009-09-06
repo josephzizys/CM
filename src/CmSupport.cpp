@@ -950,10 +950,10 @@ int fms_isfiletype(const char* ext)
   if (!x.isEmpty() && x[0] == '.') x = x.substring(1);
   info_extslist f(fapi_info_list_exts());
   String mid("mid"), midi("midi");
-  for (const char **i(f.exts), **ie(f.exts + f.n); i < ie; ++i) 
+  for (const char **i = f.exts, **ie = (f.exts + f.n); i < ie; ++i) 
     {
-      if (*i == mid || *i == midi) continue;
-      if (x == *i) return 1;
+      if (mid == String(*i) || midi == String(*i)) continue;
+      if (x == String(*i)) return 1;
     }
   return 0;
 }
