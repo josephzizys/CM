@@ -119,7 +119,7 @@ void Grace::initialise(const juce::String& commandLine)
   mid->startThread();
   // Audio Manager
   AudioManager* aud=AudioManager::getInstance();
-  str=aud->initialise(2,2,0,true);
+  str=aud->initialise(0,2,0,true);
   if (str.isEmpty())
     aud->isAudioReady(true);
   else
