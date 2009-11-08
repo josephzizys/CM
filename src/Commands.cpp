@@ -883,8 +883,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       //
 
     case CommandIDs::PlotterNew:
-      //      new PlotterWindow(NULL);
-      new CellWindow(T("Foo"),T(""),T(""), 4, 8, 25, 1);
+      new PlotterWindow(NULL);
       break;
     case CommandIDs::PlotterOpen:
     case CommandIDs::PlotterOpenMidiFile:
