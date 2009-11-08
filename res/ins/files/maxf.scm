@@ -1,4 +1,4 @@
-;;; maxf.scm -- CLM -> Snd/Guile translation of maxf.ins
+;;; maxf.scm -- CLM -> Snd/Scheme translation of maxf.ins
 
 ;; Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Last: Tue Mar 25 04:32:23 CET 2003
@@ -35,6 +35,7 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-maxf.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+;;; (if (not (provided? 'snd-jcrev.scm)) (load-from-path "jcrev.scm"))
 
 (define *locsig-type* mus-interp-sinusoidal)
 
@@ -112,9 +113,9 @@ the desired phase.
    (numf  9)   9 filters
    (numf 12)  12 filters
    (numf 13)  13 filters"
-  (let* ((beg (inexact->exact (floor (* beg (mus-srate)))))
+  (let* ((beg (floor (* beg (mus-srate))))
 	 (dur (mus-sound-duration file))
-	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+	 (end (+ beg (floor (* dur (mus-srate)))))
 	 (rdA (make-readin :file file :channel 0))
 	 (formfil (make-mvm))
 	 (ampf (make-env :envelope amp-env :scaler amplitude :duration dur))

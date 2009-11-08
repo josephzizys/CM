@@ -17,9 +17,9 @@
 		     (or (and srate (abs srate)) 1.0))))
 	 (samps (seconds->samples dur))
 	 (nd (+ st samps))
-	 (in-chans (mus-sound-chans in-file))
-	 (inloc (inexact->exact (floor (* (or inbeg 0.0) (mus-sound-srate in-file)))))
-	 (out-chans (mus-channels *output*))
+	 (in-chans (channels in-file))
+	 (inloc (floor (* (or inbeg 0.0) (srate in-file))))
+	 (out-chans (channels *output*))
 	 (mx (if matrix
 		 (make-mixer (max in-chans out-chans))
 		 (make-scalar-mixer (max in-chans out-chans) 1.0)))

@@ -18,8 +18,8 @@
 	 (freq (hz->radians frequency))
 	 (s-1 (make-table-lookup :frequency frequency :wave waveform-1))
 	 (s-2 (make-table-lookup :frequency frequency :wave waveform-2))
-	 (amp-env (make-env :envelope amp-envelope :scaler amplitude :duration duration))
-	 (interp-env (make-env :envelope interp-func :duration duration))
+	 (amp-env (make-env amp-envelope :scaler amplitude :duration duration))
+	 (interp-env (make-env interp-func :duration duration))
 	 (loc (make-locsig degree distance reverb-amount))
 	 (per-vib (make-triangle-wave :frequency vibrato-speed
 				      :amplitude (* vibrato-amplitude freq)))

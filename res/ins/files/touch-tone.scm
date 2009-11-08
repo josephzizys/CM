@@ -13,8 +13,8 @@
 		    (if (eq? k '*) 
 			10
 			12)))
-	     (frq1 (make-oscil :frequency (list-ref touch-tab-1 i)))
-	     (frq2 (make-oscil :frequency (list-ref touch-tab-2 i))))
+	     (frq1 (make-oscil (list-ref touch-tab-1 i)))
+	     (frq2 (make-oscil (list-ref touch-tab-2 i))))
 	(ws-interrupt?)
 	(run
 	 (lambda ()

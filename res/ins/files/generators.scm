@@ -1142,7 +1142,7 @@
 |#
 
 (definstrument (lutish beg dur freq amp)
-  (let* ((res1 (max 1 (inexact->exact (round (/ 1000.0 (max 1.0 (min 1000.0 freq)))))))
+  (let* ((res1 (max 1 (round (/ 1000.0 (max 1.0 (min 1000.0 freq))))))
 	 (gen (make-nrcos (* freq res1) :n (max 1 (- res1 2))))
 	 (mod (make-oscil freq))
 	 (start (seconds->samples beg))
@@ -1261,10 +1261,10 @@
 |#
 
 (definstrument (oboish beg dur freq amp aenv)
-  (let* ((res1 (max 1 (inexact->exact (round (/ 1400.0 (max 1.0 (min 1400.0 freq)))))))
+  (let* ((res1 (max 1 (round (/ 1400.0 (max 1.0 (min 1400.0 freq))))))
 	 (gen (make-nrssb (* freq res1) (/ 1 res1) :n res1 :r 0.75))
 	 (mod (make-oscil 5.0))
-	 (res2 (max 1 (inexact->exact (round (/ 2400.0 (max 1.0 (min 2400.0 freq)))))))
+	 (res2 (max 1 (round (/ 2400.0 (max 1.0 (min 2400.0 freq))))))
 	 (gen2 (make-oscil (* freq res2)))
 	 (gen3 (make-oscil freq))
 	 (start (seconds->samples beg))
@@ -1761,7 +1761,7 @@
 (definstrument (stringy beg dur freq amp)
   (let* ((start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
-	 (n (inexact->exact (floor (/ (mus-srate) (* 3 freq)))))
+	 (n (floor (/ (mus-srate) (* 3 freq))))
 	 (r (expt .001 (/ 1 n)))
 	 (carrier (make-rcos freq (* .5 r)))
 	 (clang (make-rkoddssb (* freq 2) (/ 1.618 2) r))
@@ -1852,9 +1852,9 @@
 (definstrument (bump beg dur freq amp f0 f1 f2)
   (let* ((start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
-	 (res0 (inexact->exact (round (/ f0 freq))))
-	 (res1 (inexact->exact (round (/ f1 freq))))
-	 (res2 (inexact->exact (round (/ f2 freq))))
+	 (res0 (round (/ f0 freq)))
+	 (res1 (round (/ f1 freq)))
+	 (res2 (round (/ f2 freq)))
 	 (gen1 (make-rssb (* res0 freq) (/ 1 res0) .4))
 	 (gen2 (make-rssb (* res1 freq) (/ 1 res1) .5))
 	 (gen3 (make-rssb (* res2 freq) (/ 1 res2) .6))
@@ -1893,9 +1893,9 @@
 	   (f2 2390)
 	   ;; "ah" is good: 730 1090 2440
 	   ;; it might be smoother to scale the formant freqs by (sqrt (/ freq 120)) or even (expt (/ freq 120) 0.3)
-	   (res0 (inexact->exact (round (/ f0 freq))))
-	   (res1 (inexact->exact (round (/ f1 freq))))
-	   (res2 (inexact->exact (round (/ f2 freq))))
+	   (res0 (round (/ f0 freq)))
+	   (res1 (round (/ f1 freq)))
+	   (res2 (round (/ f2 freq)))
 	   (gen1 (make-rssb (* res0 freq) (/ 1 res0) .4))
 	   (gen2 (make-rssb (* res1 freq) (/ 1 res1) .5))
 	   (gen3 (make-rssb (* res2 freq) (/ 1 res2) .6))
@@ -1923,9 +1923,9 @@
 	   (f1 (* scl 1190))
 	   (f2 (* scl 2390))
 	   ;; "ah" is good: 730 1090 2440
-	   (res0 (inexact->exact (floor (/ f0 freq))))
-	   (res1 (inexact->exact (floor (/ f1 freq))))
-	   (res2 (inexact->exact (floor (/ f2 freq))))
+	   (res0 (floor (/ f0 freq)))
+	   (res1 (floor (/ f1 freq)))
+	   (res2 (floor (/ f2 freq)))
 	   (gen1 (make-rk!ssb (* res0 freq) (/ 1 res0) 2.4))
 	   (gen2 (make-rssb (* res1 freq) (/ 1 res1) .5))
 	   (gen3 (make-rssb (* res2 freq) (/ 1 res2) .6))
@@ -1953,9 +1953,9 @@
 	   (f1 (* scl 1350))
 	   (f2 (* scl 2440))
 	   ;; "ah" is good: 730 1090 2440
-	   (res0 (inexact->exact (floor (/ f0 freq))))
-	   (res1 (inexact->exact (floor (/ f1 freq))))
-	   (res2 (inexact->exact (floor (/ f2 freq))))
+	   (res0 (floor (/ f0 freq)))
+	   (res1 (floor (/ f1 freq)))
+	   (res2 (floor (/ f2 freq)))
 	   (gen1 (make-rk!ssb (* res0 freq) (/ 1 res0) 2))
 	   (gen2 (make-rk!ssb (* res1 freq) (/ 1 res1) 3))
 	   (gen3 (make-rk!ssb (* res2 freq) (/ 1 res2) 3))
@@ -2082,7 +2082,7 @@
   (let* ((x (radians->hz (+ (safe-rxycos-frequency gen) fm)))
 	 (y (* x (safe-rxycos-ratio gen)))
 	 (r (safe-rxycos-r gen))
-	 (topk (inexact->exact (floor (/ (- (/ (mus-srate) 3) x) y))))
+	 (topk (floor (/ (- (/ (mus-srate) 3) x) y)))
 	 (maxr (expt (safe-rxycos-cutoff gen) 
 		     (/ 1.0 topk))))
     (if (>= r 0.0)
@@ -2891,7 +2891,7 @@
 	   ((= i samps))
 	 (let* ((pitch (env pitch-env))
 		(harmfrq (/ pitch base-freq))
-		(harmonic (inexact->exact (floor harmfrq)))
+		(harmonic (floor harmfrq))
 		(dist (abs (- harmfrq harmonic)))
 		(frq (* base-freq (moving-average slant harmonic))))
 	   (set! (rxyk!cos-r gen) (* (/ 1.0 amp-time)
@@ -3233,7 +3233,7 @@
 (definstrument (glassy beg dur freq amp)
   (let* ((start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
-	 (n (inexact->exact (floor (/ (mus-srate) (* 3 freq)))))
+	 (n (floor (/ (mus-srate) (* 3 freq))))
 	 (r (expt .001 (/ 1 n)))
 	 (clang (make-rkoddssb (* freq 2) (/ 1.618 2) r))
 	 (clangf (make-env (list 0 0 .01 1 .1 1 .2 .4 (max .3 dur) 0) :scaler amp :duration dur))
@@ -3319,13 +3319,13 @@
 
 (do ((i 0 (+ i 1)))
     ((= i 10))
-  (let ((mx (vct-peak (with-sound (:clipped #f :output (make-vct 10000))
-				  (let ((gen (make-krksin 20.0 (* i 0.1))))
-				    (run 
-				     (lambda ()
-				       (do ((i 0 (+ i 1)))
-					   ((= i 10000))
-					 (outa i (krksin gen))))))))))
+  (let ((mx (maxamp (with-sound (:clipped #f :output (make-vct 10000))
+		      (let ((gen (make-krksin 20.0 (* i 0.1))))
+			(run 
+			 (lambda ()
+			   (do ((i 0 (+ i 1)))
+			       ((= i 10000))
+			     (outa i (krksin gen))))))))))
     (snd-display ";~A: ~A" (* 0.1 i) mx)))
 
 ;;; relation between 1/(1-x)^2 and peak amp:
@@ -3649,13 +3649,13 @@
  (lambda (index)
    (for-each
     (lambda (r)
-      (let ((peak (vct-peak (with-sound (:clipped #f :output (make-vct 1000))
-					(let ((gen (make-asymmetric-fm 2000.0 :ratio .1 :r r)))
-					  (run 
-					   (lambda () 
-					     (do ((i 0 (+ i 1)))
-						 ((= i 1000))
-					       (outa i (asymmetric-fm gen index))))))))))
+      (let ((peak (maxamp (with-sound (:clipped #f :output (make-vct 1000))
+			    (let ((gen (make-asymmetric-fm 2000.0 :ratio .1 :r r)))
+			      (run 
+			       (lambda () 
+				 (do ((i 0 (+ i 1)))
+				     ((= i 1000))
+				   (outa i (asymmetric-fm gen index))))))))))
 	(if (> (abs (- peak 1.0)) .1)
 	    (snd-display ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
     (list -10.0 -1.5 -0.5 0.5 1.0 1.5 10.0)))
@@ -3696,7 +3696,7 @@
 (defgenerator (bess
 	       :make-wrapper (lambda (g)
 			       (set! (bess-frequency g) (hz->radians (bess-frequency g)))
-			       (if (>= (bess-n g) (vct-length bessel-peaks)) 
+			       (if (>= (bess-n g) (length bessel-peaks)) 
 				   (set! (bess-norm g) (/ 0.67 (expt (bess-n g) (exact->inexact 1/3))))
 				   ;; this formula comes from V P Krainov, "Selected Mathetical Methods in Theoretical Physics"
 				   (set! (bess-norm g) (vct-ref bessel-peaks (bess-n g))))
@@ -4258,7 +4258,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (do ((i 0 (+ i 1)))
     ((= i 10))
-  (let ((pk (vct-peak 
+  (let ((pk (maxamp 
 	     (with-sound (:output (make-vct 10000))
   	       (let ((gen (make-j0j1cos 100.0 i)))
 		 (run 
@@ -5224,7 +5224,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (multi-expt-env e expts)
   (env-any e (lambda (y)
-	       (let ((b (vct-ref expts (modulo (mus-channels e) (vct-length expts)))))
+	       (let ((b (vct-ref expts (modulo (channels e) (length expts)))))
 		 (/ (- (expt b y) 1.0) (- b 1.0))))))
 
 
@@ -5797,18 +5797,18 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (polyoid
 	       :make-wrapper (lambda (g)
 			       (let* ((lst (polyoid-partial-amps-and-phases g))
-				      (len (vct-length lst))
+				      (len (length lst))
 				      (topk (let ((n 0))
 					      (do ((i 0 (+ i 3)))
 						  ((>= i len))
-						(set! n (max n (inexact->exact (floor (vct-ref lst i))))))
+						(set! n (max n (floor (vct-ref lst i)))))
 					      n))
 				      (sin-amps (make-vct (+ topk 1)))
 				      (cos-amps (make-vct (+ topk 1))))
 				 (do ((j 0 (+ j 3))
 				      (i 0 (+ i 1)))
 				     ((>= j len))
-				   (let ((n (inexact->exact (vct-ref lst j)))
+				   (let ((n (floor (vct-ref lst j)))
 					 (amp (vct-ref lst (+ j 1)))
 					 (phase (vct-ref lst (+ j 2))))
 				     (if (> n 0)                                   ; constant only applies to cos side
@@ -5860,8 +5860,8 @@ index 10 (so 10/2 is the bes-jn arg):
   (let* ((tn (polyoid-tn gen))
 	 (un (polyoid-un gen))
 	 (original-data (polyoid-partial-amps-and-phases gen))
-	 (data-len (vct-length original-data))
-	 (amps-len (vector-length amps)))
+	 (data-len (length original-data))
+	 (amps-len (length amps)))
     (do ((i 0 (+ i 3))
 	 (j 0 (+ j 1)))
 	((or (= j amps-len)
@@ -6044,7 +6044,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 		  (if (eq? phases 'min-peak)
 		      (let ((vector-find-if (lambda (func vect)
-					      (let ((len (vector-length vect))
+					      (let ((len (length vect))
 						    (result #f))
 						(do ((i 0 (+ i 1)))
 						    ((or (= i len)
@@ -6061,7 +6061,7 @@ index 10 (so 10/2 is the bes-jn arg):
 					       (vector? val)
 					       (= (vector-ref val 0) n)
 					       (let* ((a-val (vector-ref val 1))
-						      (a-len (vector-length val))
+						      (a-len (length val))
 						      (a-data (list a-val (vector-ref val 2))))
 						 (do ((k 2 (+ 1 k)))
 						     ((= k a-len))
@@ -6163,7 +6163,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (let* ((samps 44100)
 	 (n 10)
 	 (gen (make-noid 1.0 n 'min-peak))
-	 (gen2 (make-oscil n (vct-ref (polyoid-partial-amps-and-phases gen) (- (vct-length (polyoid-partial-amps-and-phases gen)) 1)))))
+	 (gen2 (make-oscil n (vct-ref (polyoid-partial-amps-and-phases gen) (- (length (polyoid-partial-amps-and-phases gen)) 1)))))
     (do ((i 0 (+ i 1)))
 	((= i samps))
       (outa i (noid gen))
@@ -6225,6 +6225,12 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (outc i (* 0.5 (noid gen3 0.0)))
 	   (outd i (* 0.5 (noid gen4 0.0)))))))))
 
+(with-sound (:clipped #f)
+  (let ((samps 44100)
+	(gen (make-noid 100.0 19 (apply vct (map (lambda (n) (* pi n)) (list 0 1 0 0 1 1 1 1 1 1 0 0 1 1 1 0 1 0 1) )))))
+    (do ((i 0 (+ i 1))) 
+	((= i samps))
+      (outa i (noid gen)))))
 |#
 
 #|
@@ -6253,7 +6259,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 		  (if (eq? phases 'min-peak)
 		      (let ((vector-find-if (lambda (func vect)
-					      (let ((len (vector-length vect))
+					      (let ((len (length vect))
 						    (result #f))
 						(do ((i 0 (+ i 1)))
 						    ((or (= i len)
@@ -6270,7 +6276,7 @@ index 10 (so 10/2 is the bes-jn arg):
 					       (vector? val)
 					       (= (vector-ref val 0) n)
 					       (let* ((a-val (vector-ref val 1))
-						      (a-len (vector-length val))
+						      (a-len (length val))
 						      (a-data (list a-val (vector-ref val 2))))
 						 (do ((k 2 (+ 1 k)))
 						     ((= k a-len))
@@ -6551,7 +6557,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 (with-sound (:channels 2)
   (let* ((gen (make-moving-spectrum (make-readin "oboe.snd")))
 	 (pv (make-phase-vocoder (make-readin "oboe.snd")))
-	 (samps (mus-sound-frames "oboe.snd")))
+	 (samps (frames "oboe.snd")))
     (run
      (lambda ()
        (do ((i 0 (+ i 1)))
@@ -6575,7 +6581,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 				 (set! (moving-scentroid-im g) (make-vct n))
 				 (set! (moving-scentroid-dly g) (make-delay n))
 				 (set! (moving-scentroid-rms g) (make-moving-rms n))
-				 (set! (moving-scentroid-hop g) (inexact->exact (floor (/ (mus-srate) (moving-scentroid-rfreq g)))))
+				 (set! (moving-scentroid-hop g) (floor (/ (mus-srate) (moving-scentroid-rfreq g))))
 				 (set! (moving-scentroid-binwidth g) (/ (mus-srate) n))
 				 g)))
   (dbfloor -40.0) (rfreq 100.0) 
@@ -6725,7 +6731,7 @@ taking input from the readin generator 'reader'.  The output data is available v
       (let* ((data (mus-data (moving-pitch-ac gen)))
 	     (peak 0.0)
 	     (peak-loc 0)
-	     (len (vct-length data)))
+	     (len (length data)))
 	(do ((i 8 (+ i 1))) ; assume we're not in the top few octaves
 	    ((= i len))
 	  (let ((apk (abs (vct-ref data i))))
@@ -6748,7 +6754,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 
 #|
 (let* ((rd (make-readin "oboe.snd"))
-       (cur-srate (mus-sound-srate "oboe.snd"))
+       (cur-srate (srate "oboe.snd"))
        (old-srate (mus-srate)))
   (set! (mus-srate) cur-srate)
   (let* ((scn (make-moving-pitch rd))

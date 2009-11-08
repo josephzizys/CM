@@ -4,11 +4,11 @@
   (let* ((beg (seconds->samples startime))
 	 (end (+ beg (seconds->samples dur)))
 	 (carriers (make-vector numformants))
-	 (modulator (make-oscil :frequency pitch))
+	 (modulator (make-oscil pitch))
 	 (ampfs (make-vector numformants))
 	 (indfs (make-vector numformants))
 	 (c-rats (make-vector numformants))
-	 (frqf (make-env :envelope (stretch-envelope skewfun 25 (* 100 (/ skewat dur)) 75 (- 100 (* 100 (/ skewdc dur))))
+	 (frqf (make-env (stretch-envelope skewfun 25 (* 100 (/ skewat dur)) 75 (- 100 (* 100 (/ skewdc dur))))
 			 :scaler (hz->radians (* pcskew pitch)) :duration dur))
 	 (totalamp 0.0)
 	 (loc (make-locsig degree distance reverb-amount))
@@ -32,19 +32,19 @@
 	     (dev1 (hz->radians (* (list-ref frmdat 6) freq)))
 	     (indxat (* 100 (/ (list-ref frmdat 7) dur)))
 	     (indxdc (- 100 (* 100 (/ (list-ref frmdat 8) dur))))
-	     (harm (inexact->exact (round (/ freq pitch))))
+	     (harm (round (/ freq pitch)))
 	     (rsamp (- 1.0 (abs (- harm (/ freq pitch)))))
 	     (cfq (* pitch harm)))
 	(if (zero? ampat) (set! ampat 25))
 	(if (zero? ampdc) (set! ampdc 75))
 	(if (zero? indxat) (set! indxat 25))
 	(if (zero? indxdc) (set! indxdc 75))
-	(vector-set! indfs i (make-env :envelope (stretch-envelope indxfun 25 indxat 75 indxdc) :duration dur
+	(vector-set! indfs i (make-env (stretch-envelope indxfun 25 indxat 75 indxdc) :duration dur
 				       :scaler (- dev1 dev0) :offset dev0))
-	(vector-set! ampfs i (make-env :envelope (stretch-envelope ampf 25 ampat 75 ampdc) :duration dur
+	(vector-set! ampfs i (make-env (stretch-envelope ampf 25 ampat 75 ampdc) :duration dur
 				       :scaler (* rsamp amp (/ rfamp totalamp))))
 	(vector-set! c-rats i harm)
-	(vector-set! carriers i (make-oscil :frequency cfq))))
+	(vector-set! carriers i (make-oscil cfq))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -61,4 +61,6 @@
 				       (+ (* vib (vector-ref c-rats k))
 					  (* (env (vector-ref indfs k)) modsig)))))))
 	   (locsig loc i outsum)))))))
+
+
 

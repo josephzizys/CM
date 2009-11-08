@@ -18,19 +18,19 @@
 	 (rise '(0 0  15 .3  30 1.0  75 .5  100 0))
 	 (fmup '(0 0  75 1.0  98 1.0  100 0))
 	 (fmdwn '(0 0  2 1.0  100 0))
-	 (ampfun (make-env :envelope (stretch-envelope expf atpt atdur)
+	 (ampfun (make-env (stretch-envelope expf atpt atdur)
 			   :scaler amplitude :duration duration))
-	 (indxfun1 (make-env :envelope fmup :duration duration
+	 (indxfun1 (make-env fmup :duration duration
 			     :scaler (- indx11 indx01) :offset indx01))
-	 (indxfun2 (make-env :envelope fmdwn :duration duration
+	 (indxfun2 (make-env fmdwn :duration duration
 			     :scaler (- indx12 indx02) :offset indx02))
-	 (indxfun3 (make-env :envelope rise :duration duration
+	 (indxfun3 (make-env rise :duration duration
 			     :scaler (- indx13 indx03) :offset indx03))
 	 (loc (make-locsig degree distance reverb-amount))
-	 (carrier (make-oscil :frequency frequency))
-	 (mod1 (make-oscil :frequency mfq1))
-	 (mod2 (make-oscil :frequency mfq2))
-	 (mod3 (make-oscil :frequency mfq3))
+	 (carrier (make-oscil frequency))
+	 (mod1 (make-oscil mfq1))
+	 (mod2 (make-oscil mfq2))
+	 (mod3 (make-oscil mfq3))
 	 (beg (seconds->samples start-time))
 	 (end (+ beg (seconds->samples duration))))
     (ws-interrupt?)

@@ -29,12 +29,12 @@
 	 (with-noise (= driver 1))
 	 (loc (make-locsig degree distance reverb-amount))
 	 (frqf (if (not with-noise)
-		   (make-env :envelope freqcosfun  :duration dur
+		   (make-env freqcosfun  :duration dur
 			      :scaler (hz->radians (- cosfreq1 cosfreq0)))
 		   #f))
 	 (ampf (if with-noise
-		   (make-env :envelope noifun :scaler noiamp :duration dur)
-		   (make-env :envelope ampcosfun :scaler cosamp :duration dur)))
+		   (make-env noifun :scaler noiamp :duration dur)
+		   (make-env ampcosfun :scaler cosamp :duration dur)))
 	 (rn (if with-noise
 		 (make-rand :frequency ranfreq)
 		 #f))

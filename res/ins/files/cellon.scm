@@ -9,10 +9,10 @@
 	 (nd (+ st (seconds->samples dur)))
 	 (pit1 (if (zero? pitch1) pitch0 pitch1))
 	 (loc (make-locsig deg dis pcrev))
-	 (car (make-oscil :frequency pitch0))
+	 (car (make-oscil pitch0))
 	 (low (make-one-zero .5 -.5))
 	 (fm 0.0)
-	 (fmosc (make-oscil :frequency pitch0))
+	 (fmosc (make-oscil pitch0))
 	 (pvib (make-triangle-wave :frequency pvibfreq :amplitude 1.0))
 	 (rvib (make-rand-interp :frequency rvibfreq :amplitude 1.0))
 	 (ampap (if (> ampat 0.0) (* 100 (/ ampat dur)) 25))
@@ -23,14 +23,14 @@
 	 (betdp (if (> betadc 0.0) (* 100 (- 1.0 (/ betadc dur))) 75))
 	 (pvbap (if (> pvibat 0.0) (* 100 (/ pvibat dur)) 25))
 	 (pvbdp (if (> pvibdc 0.0) (* 100 (- 1.0 (/ pvibdc dur))) 75))
-	 (pvibenv (make-env :envelope (stretch-envelope (or pvibfun '(0 1 100 1)) 25 pvbap 75 pvbdp) :duration dur
+	 (pvibenv (make-env (stretch-envelope (or pvibfun '(0 1 100 1)) 25 pvbap 75 pvbdp) :duration dur
 			     :scaler (hz->radians (* pvibpc pitch0))))
-	 (rvibenv (make-env :envelope (or rvibfun '(0 1 100 1)) :duration dur
+	 (rvibenv (make-env (or rvibfun '(0 1 100 1)) :duration dur
 			     :scaler (hz->radians (* rvibpc pitch0))))
-	 (glisenv (make-env :envelope (stretch-envelope (or glissfun '(0 0 100 0)) 25 glsap 75 glsdp) :duration dur
+	 (glisenv (make-env (stretch-envelope (or glissfun '(0 0 100 0)) 25 glsap 75 glsdp) :duration dur
 			     :scaler (hz->radians (- pit1 pitch0))))
-	 (amplenv (make-env :envelope (stretch-envelope ampfun 25 ampap 75 ampdp) :scaler amp :duration dur))
-	 (betaenv (make-env :envelope (stretch-envelope betafun 25 betap 75 betdp) :duration dur
+	 (amplenv (make-env (stretch-envelope ampfun 25 ampap 75 ampdp) :scaler amp :duration dur))
+	 (betaenv (make-env (stretch-envelope betafun 25 betap 75 betdp) :duration dur
 			     :scaler (- beta1 beta0) :offset beta0)))
     (ws-interrupt?)
     (run 

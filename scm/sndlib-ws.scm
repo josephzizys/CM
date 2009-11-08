@@ -2,6 +2,8 @@
 
 (provide 'sndlib-ws.scm)
 
+(use-modules (ice-9 optargs) (ice-9 format))
+
 (define *clm-srate* 44100)
 (define *clm-file-name* "test.snd")
 (define *clm-channels* 1)
@@ -22,7 +24,7 @@
 (define *clm-notehook* #f)
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
-(define *clm-safety* (run-safety)); slightly different from CL/CLM but has similar effect
+(define *clm-safety* 0)
 (define *clm-delete-reverb* #f)   ; should with-sound clean up reverb stream
 (define *clm-threads* 4)
 (define *clm-output-safety* 0)    ; if 1, assume output buffers will not need to be flushed except at the very end
@@ -577,9 +579,10 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; -------- def-clm-struct --------
 
-(if (not (defined? 'add-clm-type)) (define (add-clm-type . args) #f)) ; these are in run
-(if (not (defined? 'add-clm-field)) (define (add-clm-field . args) #f))
-(if (not (defined? 'snd-error)) (define snd-error display))
+(define (snd-error-1 .args)
+  (if (defined? 'snd-error)
+      (apply snd-error args)
+      (apply display args)))
 
 ;;;  :(def-clm-struct (osc :make-wrapper (lambda (gen) (set! (osc-freq gen) (hz->radians (osc-freq gen))) gen)) freq phase)
 ;;;  #<unspecified>
@@ -589,8 +592,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;  (osc 0.125378749798983 0.0)
 
 ;;; besides setting up the list accessors, the make function, and the type predicate, this
-;;;   calls add-clm-type to make sure run knows about the struct and, on each field,
-;;;   add-clm-field to tell run the type of each list element (only actually needed if
+;;;   calls add-clm-field to tell run the type of each list element (only actually needed if
 ;;;   there are different types in use)
 ;;;
 ;;; see defgenerator in generators.scm for an extension that adds various methods such as mus-describe
@@ -618,7 +620,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 			   fields))
 	 (field-types (map (lambda (n)
 			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
-				 (snd-error (format #f ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n)))
+				 (snd-error-1 (format #f ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n)))
 			     (if (and (list? n)
 				      (= (length n) 4)
 				      (eq? (list-ref n 2) :type))
@@ -677,7 +679,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	      field-names field-types))))
 
 
-(if (not (defined? 'ws-interrupt?)) (define (ws-interrupt? . args) #f))
+(define (ws-interrupt? . args) #f)
 
 
 
@@ -780,3 +782,24 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	  ,@body)
 	,@args)))
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; generics from Snd that are used in some instruments
+;;;   these replacements assume Snd types are not present
+
+(define file-name mus-expand-filename)
+
+(define srate mus-sound-srate)
+
+(define (channels obj)
+  (if (string? obj)
+      (mus-sound-chans obj)
+      (mus-channels obj)))
+
+;;; I think length is handled by s7 for all types
+
+(define (frames obj)
+  (if (string? obj)
+      (mus-sound-frames obj)
+      (length obj)))

@@ -37,8 +37,8 @@
 	 (freqs (make-vct max-oscils))
 	 (sweeps (make-vct max-oscils))
 	 (lowest-magnitude .001)
-	 (hop (inexact->exact (floor (/ fftsize-1 4))))
-	 (outhop (inexact->exact (floor (* time-scaler hop))))
+	 (hop (floor (/ fftsize-1 4)))
+	 (outhop (floor (* time-scaler hop)))
 	 (ifreq (/ 1.0 outhop))
 	 (ihifreq (hz->radians ifreq))
 	 (fftscale (/ 1.0 (* fftsize-1 .42323))) ;integrate Blackman-Harris window = .42323*window width and shift by fftsize-1
@@ -54,12 +54,10 @@
 	 (attack-size (or attack 1))
 	 (ramp-ind 0)
 	 (ramped-attack (make-vct attack-size)))
-    (if (< (* dur time-scaler) file-duration)
-	(snd-print (format #f "~A is ~1,3F seconds long, but we'll need ~1,3F seconds of data for this note" 
-			   file file-duration (* dur time-scaler))))
+
     (do ((i 0 (+ i 1)))
 	((= i max-oscils))
-      (vector-set! resynth-oscils i (make-oscil :frequency 0)))
+      (vector-set! resynth-oscils i (make-oscil 0)))
     (set! trigger outhop)
     (vct-scale! window fftscale)
     (ws-interrupt?)
@@ -125,7 +123,7 @@
 			     (let* ((logla (/ (log la) log10))
 				    (logca (/ (log ca) log10)) 
 				    (logra (/ (log ra) log10))
-				    (offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra)))
+				    (offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra))) ; isn't logca always 0?
 				    (amp (expt 10.0 (- logca (* .25 (- logla logra) offset))))
 				    (freq (* fft-mag (+ k offset -1))))
 			       (if (= peaks max-peaks-1)
@@ -216,11 +214,8 @@
 		     (if (= ramp-ind ramped) (set! ramped 0))))
 	       (do ((k 0 (+ 1 k)))
 		   ((= k cur-oscils))
-		 (if (or (not (= (vct-ref amps k) 0.0))
-			 (not (= (vct-ref rates k) 0.0)))
-		     (begin
-		       (set! sum (+ sum (* (vct-ref amps k) (oscil (vector-ref resynth-oscils k) (vct-ref freqs k)))))
-		       (vct-set! amps k (+ (vct-ref amps k) (vct-ref rates k)))
-		       (vct-set! freqs k (+ (vct-ref freqs k) (vct-ref sweeps k))))))
+		 (set! sum (+ sum (* (vct-ref amps k) (oscil (vector-ref resynth-oscils k) (vct-ref freqs k)))))
+		 (vct-set! amps k (+ (vct-ref amps k) (vct-ref rates k)))
+		 (vct-set! freqs k (+ (vct-ref freqs k) (vct-ref sweeps k))))
 	       (outa i (* amp sum)))))))))
 

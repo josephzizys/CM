@@ -50,7 +50,7 @@ const PopupMenu CommandMenus::getRecentlyLoadedMenu()
   return menu;
 }
 
-const PopupMenu CommandMenus::getAudioMenu(bool isfms)
+const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
 {
   ApplicationCommandManager* comm=CommandManager::getInstance();
   PopupMenu menu;

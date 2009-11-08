@@ -11,7 +11,7 @@
 	 (waveform (partials->wave partials))
 	 (freq (hz->radians frequency))
 	 (s (make-table-lookup :frequency frequency :wave waveform))
-	 (amp-env (make-env :envelope amp-envelope :scaler amplitude :duration duration))
+	 (amp-env (make-env amp-envelope :scaler amplitude :duration duration))
 	 (per-vib (make-triangle-wave :frequency vibrato-speed
 				      :amplitude (* vibrato-amplitude freq)))
 	 (loc (make-locsig degree distance reverb-amount))

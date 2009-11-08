@@ -6,9 +6,8 @@
 	 (comb2 (make-comb 0.733 10007))
 	 (comb3 (make-comb 0.715 10799))
 	 (comb4 (make-comb 0.697 11597))
-	 (chns (mus-channels *output*))
 	 (outdel1 (make-delay (seconds->samples .013)))
-	 (outdel2 (if (> chns 1) (make-delay (seconds->samples .011)) #f))
+	 (outdel2 (make-delay (seconds->samples .011)))
 	 (comb-sum 0.0)
 	 (comb-sum-1 0.0)
 	 (comb-sum-2 0.0)
@@ -16,7 +15,7 @@
 	 (delA 0.0)
 	 (delB 0.0)
 	 (decay-dur (* decay (mus-srate)))
-	 (len (+ decay-dur (mus-length *reverb*))))
+	 (len (floor (+ decay-dur (length *reverb*)))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -29,4 +28,5 @@
 		    (comb comb3 allpass-sum)
 		    (comb comb4 allpass-sum)))
 	   (outa i (delay outdel1 comb-sum))
-	   (if (> chns 1) (outb i (delay outdel2 comb-sum)))))))))
+	   (outb i (delay outdel2 comb-sum))))))))
+

@@ -35,14 +35,14 @@
   (let* ((beg (seconds->samples startime))
 	 (end (+ beg (seconds->samples dur)))
 	 (loc (make-locsig degree distance reverb-amount))
-	 (per-vib-f (make-env :envelope (stretch-envelope '(0 1  25 .1  75 0  100 0)
+	 (per-vib-f (make-env (stretch-envelope '(0 1  25 .1  75 0  100 0)
 							  25 (min (* 100 (/ vibatt dur)) 45)
 							  75 (max (* 100 (- 1.0 (/ vibdec dur))) 55))
 			      :scaler vibamp :duration dur))
 	 (ran-vib (make-rand-interp :frequency rvibfrq :amplitude rvibamp))
-	 (per-vib (make-oscil :frequency vibfrq))
+	 (per-vib (make-oscil vibfrq))
 	 (dec-01 (max 75 (* 100 (- 1.0 (/ .01 dur)))))
-	 (frq-f (make-env :envelope (stretch-envelope '(0 0  25 1  75 1  100 0)
+	 (frq-f (make-env (stretch-envelope '(0 0  25 1  75 1  100 0)
 						      25 (min 25 (* 100 (/ frqatt dur)))
 						      75 dec-01)
 			  :scaler frqskw :duration dur))
@@ -51,19 +51,19 @@
 	 (ampattpt2 (min 25 (* 100 (/ ampatt2 dur))))
 	 (ampdecpt2 (max 75 (* 100 (- 1.0 (/ ampdec2 dur)))))
 	 
-	 (mod1-f (make-env :envelope (stretch-envelope indenv1 25 ampattpt1 75 dec-01)
+	 (mod1-f (make-env (stretch-envelope indenv1 25 ampattpt1 75 dec-01)
 			   :scaler (* modfrq1 (- modind12 modind11)) :duration dur))
-	 (mod1 (make-oscil :frequency 0.0))
-	 (car1 (make-oscil :frequency 0.0))
+	 (mod1 (make-oscil 0.0))
+	 (car1 (make-oscil 0.0))
 	 ;; set frequency to zero here because it is handled multiplicatively below
-	 (car1-f (make-env :envelope (stretch-envelope ampenv1 25 ampattpt1 75 ampdecpt1)
+	 (car1-f (make-env (stretch-envelope ampenv1 25 ampattpt1 75 ampdecpt1)
 			   :scaler amp1 :duration dur))
 	 
-	 (mod2-f (make-env :envelope (stretch-envelope indenv2 25 ampattpt2 75 dec-01)
+	 (mod2-f (make-env (stretch-envelope indenv2 25 ampattpt2 75 dec-01)
 			   :scaler (* modfrq2 (- modind22 modind21)) :duration dur))
-	 (mod2 (make-oscil :frequency 0.0))
-	 (car2 (make-oscil :frequency 0.0))
-	 (car2-f (make-env :envelope (stretch-envelope ampenv2 25 ampattpt2 75 ampdecpt2)
+	 (mod2 (make-oscil 0.0))
+	 (car2 (make-oscil 0.0))
+	 (car2-f (make-env (stretch-envelope ampenv2 25 ampattpt2 75 ampdecpt2)
 			   :scaler amp2 :duration dur)))
     (ws-interrupt?)
     (run
@@ -81,4 +81,5 @@
 			       (oscil car2 (* frq-change 
 					      (+ frq2 (* (env mod2-f) 
 							 (oscil mod2 (* modfrq2 frq-change)))))))))))))))
+
 

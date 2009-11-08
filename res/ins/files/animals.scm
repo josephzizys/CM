@@ -295,7 +295,7 @@
 	 (hi (list-ref ax 1))
 	 (lo-pix (list-ref ax 10))
 	 (hi-pix (list-ref ax 12))
-	 (samps-per-pixel (max 1 (inexact->exact (round (/ (- hi lo) (- hi-pix lo-pix))))))
+	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
 	 (change (if right 
                     (- (min (+ hi samps-per-pixel) (frames s c)) hi)
                     (- (max 0 (- lo samps-per-pixel)) lo))))
@@ -311,7 +311,7 @@
 	 (hi (list-ref ax 1))
 	 (lo-pix (list-ref ax 10))
 	 (hi-pix (list-ref ax 12))
-	 (samps-per-pixel (* 8 (max 1 (inexact->exact (round (/ (- hi lo) (- hi-pix lo-pix)))))))
+	 (samps-per-pixel (* 8 (max 1 (round (/ (- hi lo) (- hi-pix lo-pix))))))
 	 (change (if right 
                     (- (min (+ hi samps-per-pixel) (frames s c)) hi)
                     (- (max 0 (- lo samps-per-pixel)) lo))))
@@ -327,7 +327,7 @@
 	 (hi (list-ref ax 1))
 	 (lo-pix (list-ref ax 10))
 	 (hi-pix (list-ref ax 12))
-	 (samps-per-pixel (max 1 (inexact->exact (round (/ (- hi lo) (- hi-pix lo-pix))))))
+	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
 	 (len (frames s c)))
     (if in
 	(if (> (- hi-pix lo-pix) samps-per-pixel)
@@ -350,7 +350,7 @@
 	    (let ((last-page-state (map (lambda (snd) 
 					  (let ((data (list snd (file-name snd))))
 					    (do ((i 0 (+ i 1)))
-						((= i (chans snd)) data)
+						((= i (channels snd)) data)
 					      (set! data (append data (list (cons i (axis-info snd i))))))))
 					(sounds))))
 	      (bind-key "Page_Up" 0

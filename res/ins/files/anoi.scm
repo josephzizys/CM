@@ -3,7 +3,7 @@
   ;; obviously aimed at intermittent signal in background noise
   ;; this is based on Perry Cook's Scrubber.m
   (let* ((r (or rr (* 2.0 pi)))
-	 (freq-inc (inexact->exact (floor (/ fftsize 2))))
+	 (freq-inc (floor (/ fftsize 2)))
 	 (fdi (make-vct fftsize))
 	 (fdr (make-vct fftsize))
 	 (spectr (make-vct freq-inc 1.0))

@@ -42,10 +42,10 @@ nil doesnt print anything, which will speed up a bit the process.
   (let* ((st (seconds->samples beg))
 	 (durata (if (= 0 dur) (mus-sound-duration file) dur))
 	 (nd (+ st (seconds->samples durata)))
-	 (or-start (inexact->exact (round (* or-beg (mus-sound-srate file)))))
+	 (or-start (round (* or-beg (srate file))))
 	 (RdA (make-readin :file file :start or-start))
 	 (half-list (/ (length gain-freq-list) 2))
-	 (ampenv (make-env :envelope amp-env :scaler amp :duration durata :base amp-base))
+	 (ampenv (make-env amp-env :scaler amp :duration durata :base amp-base))
 	 (gain-list (let ((lst '())
 			  (len (length gain-freq-list)))
 		      (do ((i (- len 2) (- i 2)))
@@ -72,7 +72,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	    (fval (list-ref freq-list k)))
 	(if (list? gval)
 	  (begin
-	    (vector-set! env-size k (make-env :envelope gval
+	    (vector-set! env-size k (make-env gval
 					      :scaler filt-gain-scale
 					      :duration durata :base filt-gain-base))
 	    (vector-set! frm-size k (make-formant fval a1)))

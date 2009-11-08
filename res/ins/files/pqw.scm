@@ -1,6 +1,5 @@
 ;;; -------- PQW
 
-
 (definstrument (pqw start dur spacing-freq carrier-freq amplitude ampfun indexfun partials
 		    :key (degree 0.0)
 			 (distance 1.0)
@@ -9,14 +8,14 @@
   ;; The basic idea here is a variant of sin x sin y - cos x cos y = cos (x + y)
 
   (let* ((normalized-partials (normalize-partials partials))
-	 (spacing-cos (make-oscil :frequency spacing-freq :initial-phase (/ pi 2.0)))
-	 (spacing-sin (make-oscil :frequency spacing-freq))
-	 (carrier-cos (make-oscil :frequency carrier-freq :initial-phase (/ pi 2.0)))
-	 (carrier-sin (make-oscil :frequency carrier-freq))
+	 (spacing-cos (make-oscil spacing-freq :initial-phase (/ pi 2.0)))
+	 (spacing-sin (make-oscil spacing-freq))
+	 (carrier-cos (make-oscil carrier-freq :initial-phase (/ pi 2.0)))
+	 (carrier-sin (make-oscil carrier-freq))
 	 (sin-coeffs (partials->polynomial normalized-partials mus-chebyshev-second-kind))
 	 (cos-coeffs (partials->polynomial normalized-partials mus-chebyshev-first-kind))
-	 (amp-env (make-env :envelope ampfun :scaler amplitude :duration dur))
-	 (ind-env (make-env :envelope indexfun :duration dur))
+	 (amp-env (make-env ampfun :scaler amplitude :duration dur))
+	 (ind-env (make-env indexfun :duration dur))
 	 (loc (make-locsig degree distance reverb-amount))
 	 (r (/ carrier-freq spacing-freq))
 	 (tr (make-triangle-wave :frequency 5 :amplitude (hz->radians (* .005 spacing-freq))))

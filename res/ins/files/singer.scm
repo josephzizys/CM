@@ -19,6 +19,8 @@
 (provide 'snd-singer.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
+(use-modules (ice-9 optargs) (ice-9 format))
+
 (definstrument (singer beg amp data)
   ;; data is a list of lists very similar to the sequence of synthesize calls in Perry's original implementation.
   ;;    Each imbedded list has the form: dur shape glot pitch glotamp noiseamps vibramt.
@@ -73,11 +75,11 @@
 			  ((= i len))
 			(vct-set! v i (exact->inexact (list-ref (list-ref data i) 5))))
 		      v))
-	 (frq-env (make-env :envelope pfun :duration dur))
-	 (vib-env (make-env :envelope vfun :duration dur))
-	 (vib-osc (make-oscil :frequency 6.0))
-	 (glot-env (make-env :envelope gfun :duration dur))
-	 (noise-env (make-env :envelope nfun :duration dur))
+	 (frq-env (make-env pfun :duration dur))
+	 (vib-env (make-env vfun :duration dur))
+	 (vib-osc (make-oscil 6.0))
+	 (glot-env (make-env gfun :duration dur))
+	 (noise-env (make-env nfun :duration dur))
 	 (ran-vib (make-rand-interp :frequency 10 :amplitude .02))
 
 	 (tractlength 9)		;length of vocal tract
@@ -195,7 +197,7 @@
 	   (first-tract 1)
 	   (offset -1)
 	   (bg (seconds->samples beg))
-	   (nd (inexact->exact (vct-ref change-times (- (vct-length change-times) 1))))
+	   (nd (inexact->exact (vct-ref change-times (- (length change-times) 1))))
 	   (next-offset bg)
 	   (last-sfd -1)
 	   (last-gfd -1))
@@ -250,6 +252,7 @@
 		     (let ((new-gfd (+ last-gfd 2)))
 		       (set! last-gfd new-gfd)))
 		 (set! next-offset (inexact->exact (vct-ref change-times (+ offset 1))))))
+
 	   (if (not (= new-tract 0))
 	       (begin
 		 (do ((j last-sfd (+ 1 j))
@@ -459,7 +462,7 @@
 		     (set! nose-last-plus-refl (- nose-reftemp minussamp)))
 		   (begin
 		     (if (not (= velum-pos 0.0))
-			 (set! time-nose-closed 0) 
+			 (set! time-nose-closed 0)
 			 (set! time-nose-closed (+ time-nose-closed)))
 		     ;; nasal tick
 		     (let* ((nose-t1 0.0)
@@ -523,8 +526,9 @@
 	   ))))))
 
 #|
-(singer 0 .1 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01)))
+(with-sound () (singer 0 .1 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
 
+(with-sound ()
 (singer 0 .1 (list (list .05 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 		   (list .15 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 		   (list .05 kkk.shp test.glt 523.0 0.0 0.0 .01) 
@@ -539,7 +543,7 @@
 		   (list .15 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 		   (list .05 mmm.shp test.glt 523.0 0.8 0.0 .01) 
 		   (list .15 mmm.shp test.glt 523.0 0.8 0.0 .01) 			      
-		   (list .10 mmm.shp test.glt 523.0 0.0 0.0 .01) ))
+		   (list .10 mmm.shp test.glt 523.0 0.0 0.0 .01) )))
 |#
 
 (define test.glt (list 10 .65 .65))

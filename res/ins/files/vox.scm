@@ -35,7 +35,7 @@
 
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
-	 (car-os (make-oscil :frequency 0))
+	 (car-os (make-oscil 0))
 	 (fs (length formant-amps))
 	 (evens (make-vector fs))
 	 (odds (make-vector fs))
@@ -61,11 +61,11 @@
 	((= i fs))
       (let ((amp (list-ref formant-amps i))
 	    (index (list-ref formant-indices i)))
-	(vector-set! evens i (make-oscil :frequency 0))
-	(vector-set! odds i (make-oscil :frequency 0))
+	(vector-set! evens i (make-oscil 0))
+	(vector-set! odds i (make-oscil 0))
 	(vct-set! amps i amp)
 	(vct-set! indices i index)
-	(vector-set! frmfs i (make-env :envelope (vox-fun phonemes i) :duration dur))))
+	(vector-set! frmfs i (make-env (vox-fun phonemes i) :duration dur))))
     (run
      (lambda ()
        (do ((i start (+ i 1))) ((= i end))
@@ -75,7 +75,7 @@
 	 (do ((k 0 (+ 1 k))) ((= k fs))
 	   (set! frm (env (vector-ref frmfs k)))
 	   (set! frm0 (/ frm frq))
-	   (set! frm-int (inexact->exact (floor frm0)))
+	   (set! frm-int (floor frm0))
 	   (if (even? frm-int)
 	       (begin
 		 (set! even-freq (hz->radians (* frm-int frq)))

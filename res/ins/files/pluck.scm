@@ -13,7 +13,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 
   (define (getOptimumC S o p)
     (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
-	   (tmpInt (inexact->exact (floor (- p pa))))
+	   (tmpInt (floor (- p pa)))
 	   (pc (- p pa tmpInt)))
       (if (< pc .1)
 	  (do ()
@@ -68,4 +68,5 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	   (set! ctr (+ ctr 1))
 	   (if (>= ctr dlen) (set! ctr 0))
 	   (outa i (* amp val))))))))
+
 

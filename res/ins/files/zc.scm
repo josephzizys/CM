@@ -3,7 +3,7 @@
 	 (end (+ beg (seconds->samples dur)))
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-comb :size length1 :max-size (+ 1 (max length1 length2)) :scaler feedback))
-	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
+	 (zenv (make-env '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
     (ws-interrupt?)
     (run
      (lambda ()

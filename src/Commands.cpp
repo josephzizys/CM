@@ -19,6 +19,8 @@
 #include "Csound.h"
 #include "Plot.h"
 
+#include "Cells.h"
+
 #include "CommonLisp.h"
 
 #ifdef WITHFOMUS
@@ -878,7 +880,8 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       //
 
     case CommandIDs::PlotterNew:
-      new PlotterWindow(NULL);
+      //      new PlotterWindow(NULL);
+      new CellWindow(T("Foo"),T(""),T(""), 4, 8, 25, 1);
       break;
     case CommandIDs::PlotterOpen:
     case CommandIDs::PlotterOpenMidiFile:

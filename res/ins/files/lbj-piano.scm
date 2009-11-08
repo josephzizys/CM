@@ -410,7 +410,7 @@
 	(*db-drop-per-second* -10.0))
 
     (define (get-piano-partials freq)
-      (let ((pitch (inexact->exact (round (* 12 (/ (log (/ freq 32.703)) (log 2)))))))
+      (let ((pitch (round (* 12 (/ (log (/ freq 32.703)) (log 2))))))
 	(list-ref piano-spectra pitch)))
 
     (define (make-piano-ampfun dur)
@@ -438,17 +438,17 @@
 	   (end (+ beg (seconds->samples newdur)))
 	   (env1dur (- newdur *piano-release-duration*))
 	   (env1samples (seconds->samples env1dur))
-	   (siz (inexact->exact (floor (/ (vct-length partials) 2))))
+	   (siz (floor (/ (length partials) 2)))
 	   (oscils (make-vector siz))
 	   (alist (make-vct siz))
 	   (locs (make-locsig degree distance reverb-amount))
 	   (ampfun1 (make-piano-ampfun env1dur))
-	   (ampenv1 (make-env :envelope ampfun1
+	   (ampenv1 (make-env ampfun1
 			      :scaler  amplitude
 			      :duration env1dur
 			      :base 10000.0))
 	   (releaseamp (list-ref ampfun1 (- (length ampfun1) 1)))
-	   (ampenv2 (make-env :envelope '(0 1 100 0)
+	   (ampenv2 (make-env '(0 1 100 0)
 			      :scaler (* amplitude releaseamp)
 			      :duration env1dur
 			      :base 1.0))
@@ -456,9 +456,9 @@
 
       (do ((i 0 (+ i 2))
 	   (j 0 (+ 1 j)))
-	  ((= i (vct-length partials)))
+	  ((= i (length partials)))
 	(vct-set! alist j (vct-ref partials (+ i 1)))
-	(vector-set! oscils j (make-oscil :frequency (* (vct-ref partials i) frequency))))
+	(vector-set! oscils j (make-oscil (* (vct-ref partials i) frequency))))
       (ws-interrupt?)
     (run
      (lambda ()
@@ -474,4 +474,5 @@
 			     (if (> sktr env1samples) 
 				 (env ampenv2) 
 				 (env ampenv1)))))))))))
+
 

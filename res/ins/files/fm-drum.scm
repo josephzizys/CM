@@ -9,10 +9,10 @@
 	 (casrat (if high 8.525 3.515))
 	 (fmrat (if high 3.414 1.414))
 	 (glsfun '(0 0  25 0  75 1  100 1))
-	 (glsf (make-env :envelope glsfun :scaler (if high (hz->radians 66) 0.0) :duration duration))
+	 (glsf (make-env glsfun :scaler (if high (hz->radians 66) 0.0) :duration duration))
 	 (ampfun '(0 0  3 .05  5 .2  7 .8  8 .95  10 1.0  12 .95  20 .3  30 .1  100 0))
 	 (atdrpt (* 100 (/ (if high .01 .015) duration)))
-	 (ampf (make-env :envelope (stretch-envelope ampfun 
+	 (ampf (make-env (stretch-envelope ampfun 
 					   10 atdrpt 
 					   15 (max (+ atdrpt 1) 
 						   (- 100 (* 100 (/ (- duration .2) duration)))))
@@ -24,18 +24,18 @@
 		    90 .033  95 .0141 100 0))
 	 (indxpt (- 100 (* 100 (/ (- duration .1) duration))))
 	 (divindxf (stretch-envelope indxfun 50 atdrpt 65 indxpt))
-	 (indxf (make-env :envelope divindxf :scaler (min (hz->radians (* index fmrat frequency)) pi) :duration duration))
-	 (mindxf (make-env :envelope divindxf :scaler (min (hz->radians (* index casrat frequency)) pi) :duration duration))
-	 (devf (make-env :envelope (stretch-envelope ampfun 
+	 (indxf (make-env divindxf :scaler (min (hz->radians (* index fmrat frequency)) pi) :duration duration))
+	 (mindxf (make-env divindxf :scaler (min (hz->radians (* index casrat frequency)) pi) :duration duration))
+	 (devf (make-env (stretch-envelope ampfun 
 					   10 atdrpt 
 					   90 (max (+ atdrpt 1) 
 						   (- 100 (* 100 (/ (- duration .05) duration)))))
 			 :scaler (min pi (hz->radians 7000)) :duration duration))
 	 (loc (make-locsig degree distance reverb-amount))
 	 (rn (make-rand :frequency 7000 :amplitude 1.0))
-	 (carrier (make-oscil :frequency frequency))
-	 (fmosc (make-oscil :frequency (* frequency fmrat)))
-	 (cascade (make-oscil :frequency (* frequency casrat))))
+	 (carrier (make-oscil frequency))
+	 (fmosc (make-oscil (* frequency fmrat)))
+	 (cascade (make-oscil (* frequency casrat))))
     (ws-interrupt?)
     (run
      (lambda ()

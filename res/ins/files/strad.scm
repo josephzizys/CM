@@ -11,6 +11,8 @@
 (use-modules (ice-9 optargs))
 (provide 'snd-strad.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+;;; (if (not (provided? 'snd-jcrev.scm)) (load-from-path "jcrev.scm"))
+
 
 (definstrument (bow beg dur frq amplitude :key
 		    (bufsize 2205)
@@ -94,10 +96,10 @@
 	 (del_left (* len (- 1 bp)))
 	 (del_leftt (* lent (- 1 bp)))
 	 (del_rightt (* lent bp))
-	 (samp_rperiod (inexact->exact (floor del_right)))
-	 (samp_lperiod  (inexact->exact (floor del_left)))
-	 (samp_lperiodt (inexact->exact (floor del_leftt)))
-	 (samp_rperiodt (inexact->exact (floor del_rightt))))
+	 (samp_rperiod (floor del_right))
+	 (samp_lperiod  (floor del_left))
+	 (samp_lperiodt (floor del_leftt))
+	 (samp_rperiodt (floor del_rightt)))
 
     (define (bowfilt inharmon)
       (set! ynb (- (- (+ (* b0b vib) (* b1b xm1b) (* b2b xm2b)) (* a1b ym1b)) (* a2b ym2b)))

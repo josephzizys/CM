@@ -1,5 +1,14 @@
 ;;; NREV (the most popular Samson box reverb)
 
+(use-modules (ice-9 optargs))
+
+(provide 'snd-nrev.scm)
+
+(if (and (not (provided? 'snd-ws.scm)) 
+	 (not (provided? 'sndlib-ws.scm)))
+    (load-from-path "ws.scm"))
+
+
 (definstrument (nrev :key (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))
   ;; reverb-factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
   ;; lp-coeff controls the strength of the low pass filter inserted in the feedback loop
@@ -25,7 +34,7 @@
 	(if (even? val) (set! val (+ 1 val)))
 	(list-set! dly-len i (next-prime val))))
 
-    (let* ((len (+ (mus-srate) (mus-length *reverb*)))
+    (let* ((len (+ (mus-srate) (frames *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (list-ref dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (list-ref dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (list-ref dly-len 2)))
@@ -33,8 +42,8 @@
 	   (comb5 (make-comb (* .753 reverb-factor) (list-ref dly-len 4)))
 	   (comb6 (make-comb (* .733 reverb-factor) (list-ref dly-len 5)))
 	   (low (make-one-pole lp-coeff (- lp-coeff 1.0)))
-	   (chan2 (> (mus-channels *output*) 1))
-	   (chan4 (= (mus-channels *output*) 4))
+	   (chan2 (> (channels *output*) 1))
+	   (chan4 (= (channels *output*) 4))
 	   (allpass1 (make-all-pass -0.700 0.700 (list-ref dly-len 6)))
 	   (allpass2 (make-all-pass -0.700 0.700 (list-ref dly-len 7)))
 	   (allpass3 (make-all-pass -0.700 0.700 (list-ref dly-len 8)))
@@ -64,4 +73,5 @@
 	     (if chan2 (outb i (all-pass allpass6 outrev)))
 	     (if chan4 (outc i (all-pass allpass7 outrev)))
 	     (if chan4 (outd i (all-pass allpass8 outrev))))))))))
+
 

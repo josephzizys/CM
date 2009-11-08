@@ -1,4 +1,4 @@
-;;; freeverb.scm -- CLM -> Snd/Guile translation of freeverb.ins
+;;; freeverb.scm -- CLM -> Snd/Scheme translation of freeverb.ins
 
 ;; Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Last: Thu Apr 24 01:32:15 CEST 2003
@@ -54,16 +54,16 @@
 		   (stereo-spread 23)
 		   (verbose #f))
   (let* ((startime 0.0)
-	 (dur (+ 1.0 (mus-sound-duration (mus-file-name *reverb*))))
+	 (dur (+ 1.0 (mus-sound-duration (file-name *reverb*))))
 	 (beg (seconds->samples startime))
 	 (end (cadr (times->samples startime dur)))
-	 (out-chans (mus-channels *output*))
+	 (out-chans (channels *output*))
 	 (out-mix (if (mixer? output-mixer) output-mixer
 		      (make-mixer out-chans 0.0)))
 	 (out-buf (make-frame out-chans 0.0))
 	 (out-gain output-gain)
 	 (f-out (make-frame out-chans 0.0))
-	 (in-chans (mus-channels *reverb*))
+	 (in-chans (channels *reverb*))
 	 (f-in (make-frame in-chans 0.0))
 	 (predelays (make-vector in-chans))
 	 (local-gain (if (= out-chans 1)
@@ -106,18 +106,18 @@
 	((= c in-chans))
       (vector-set! predelays
 		   c
-		   (make-delay :size (inexact->exact (round (* *clm-srate*
-							       (if (vector? predelay)
-								   (vector-ref predelay c)
-								   (if (list? predelay)
-								       (list-ref predelay c)
-								       predelay))))))))
+		   (make-delay :size (round (* *clm-srate*
+					       (if (vector? predelay)
+						   (vector-ref predelay c)
+						   (if (list? predelay)
+						       (list-ref predelay c)
+						       predelay)))))))
     (do ((c 0 (+ 1 c)))
 	((= c out-chans))
       (do ((i 0 (+ 1 i)))
 	  ((= i numcombs))
 	(let* ((tuning (list-ref combtuning i))
-	       (len (inexact->exact (floor (* srate-scale tuning))))
+	       (len (floor (* srate-scale tuning)))
 	       (dmp (* scale-damping
 		       (if (vector? damping)
 			   (vector-ref damping i)
@@ -125,7 +125,7 @@
 			       (list-ref damping i)
 			       damping)))))
 	  (if (odd? c)
-	      (set! len (+ len (inexact->exact (floor (* srate-scale stereo-spread))))))
+	      (set! len (+ len (floor (* srate-scale stereo-spread)))))
 	  (vector-set! fcombs (+ (* c numcombs) i)
 		       (make-filtered-comb :size len 
 					   :scaler room-decay-val 
@@ -135,7 +135,7 @@
       (do ((i 0 (+ 1 i)))
 	  ((= i numallpasses))
 	(let* ((tuning (list-ref allpasstuning i))
-	       (len (inexact->exact (floor (* srate-scale tuning)))))
+	       (len (floor (* srate-scale tuning))))
 	  (if (odd? c)
 	      (set! len (+ len (floor (inexact->exact (* srate-scale stereo-spread))))))
 	  (vector-set! allpasses (+ (* c numallpasses) i)
