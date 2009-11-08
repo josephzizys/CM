@@ -39,7 +39,7 @@ namespace SchemeSources
     const int           s7_scmSize = 6135;
 
     extern const char*  sal_scm;
-    const int           sal_scmSize = 60324;
+    const int           sal_scmSize = 60901;
 
     extern const char*  sndlibws_scm;
     const int           sndlibws_scmSize = 25029;

@@ -1401,13 +1401,18 @@
     ;; map over the stepping clauses adding iteration forms
     (do ((tail (second data) (cdr tail)))
 	((null? tail) #f)
-      ;; each stepping clause contains a list of 5-element lists:
+      ;; eah stepping clause contains a list of 5-element lists:
       ;; ( (<var> <bind> <loop> <step> <stop>) ...)
       (do ((clauses (parse-unit-parsed (car tail)) (cdr clauses)))
 	  ((null? clauses) #f)
 	(let ((clause (first clauses)))
-	  ;; add stepping vars to binding list
-	  ;;(print (list #:clause-> clause))
+	  ;; add stepping vars to binding list BUGFIX: check to make
+	  ;; sure that the variable isn't duplicated
+	  (if (assoc (first clause) bind)
+	      ( errf (make-parse-error 
+		      (string-append "found duplicated variable '" 
+				     (symbol->string (car clause)) "'")
+		      (parse-unit-position unit))))
 	  (set! bind (append bind (list (list (first clause) 
 					      (second clause)))))
 	  (if (third clause)
@@ -1787,10 +1792,21 @@
 	(let ()
 	  (print-output (string-append "Loading " file "\n" ))
 	  (if (equal? "sal" (pathname-type file))
-	      (load-sal-file file)
+	      (load-sal-file (full-pathname file))
 	      (load (full-pathname file)))
 	  ))
     (values)))
+
+(define (load-sal-file file)
+  (with-input-from-file file
+    (lambda ()
+      (let ((port (current-input-port))
+	    (text "begin\n"))
+	(do ((line (read-line port #t) (read-line port #t)))
+	    ((eof-object? line)
+	     (set! text (string-append text "\nend"))
+	     (sal text) )
+	  (set! text (string-append text line)))))))
 
 (define (sal:open . args)
   (print-error ">>> Error: open command not implemented.\n"))

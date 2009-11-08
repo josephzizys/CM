@@ -627,7 +627,10 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
 	  info.shortName=
 	    TopLevelWindow::getTopLevelWindow(data)->getName();
 	else
-	  info.shortName=T("<Unknown Window>");
+	  {
+	    info.shortName=T("<Unknown Window>");
+	    info.setActive(false);
+	  }
 	info.addDefaultKeypress(digit, comk);
       }
       break;
