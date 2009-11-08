@@ -18,7 +18,7 @@ class SysInfo
                                 Versioning
    *======================================================================*/
 
-  static const int CM_VERSION = 330;
+  static const int CM_VERSION = 331;
   static const int GRACE_VERSION = CM_VERSION;
 
   /*======================================================================*
@@ -302,6 +302,7 @@ class WindowTypes
   static const int Console = 1;
   static const int TextEditor = 2;
   static const int PlotWindow = 3;
+  static const int CellWindow = 4;
   static const bool isWindowType(TopLevelWindow* w, int typ)
   {
     if (w!=NULL)
