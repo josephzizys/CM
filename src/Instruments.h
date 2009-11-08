@@ -5,14 +5,8 @@
 
 namespace Instruments
 {
-    extern const char*  bird_scm;
-    const int           bird_scmSize = 54891;
-
-    extern const char*  env_scm;
-    const int           env_scmSize = 20252;
-
     extern const char*  files_zip;
-    const int           files_zipSize = 375564;
+    const int           files_zipSize = 368767;
 
     extern const char*  table_xml;
     const int           table_xmlSize = 10705;
@@ -70,11 +64,6 @@ namespace Instruments
   #ifdef FILES
     extern const char*  env_scm;
     const int           env_scmSize = 20399;
-
-  #endif
-  #ifdef FILES
-    extern const char*  exact;
-    const int           exactSize = 6580;
 
   #endif
   #ifdef FILES
@@ -345,11 +334,6 @@ namespace Instruments
   #ifdef FILES
     extern const char*  singer_scm;
     const int           singer_scmSize = 32736;
-
-  #endif
-  #ifdef FILES
-    extern const char*  sndlibws_scm;
-    const int           sndlibws_scmSize = 25029;
 
   #endif
   #ifdef FILES
