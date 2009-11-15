@@ -7,17 +7,28 @@
 
 #include "Enumerations.h"
 #include "Cells.h"
+#include "Console.h"
 #include <iostream>
 
-CellView::CellView(int rows, int cols, int cellsize, int bordersize)
-  : cellRows(rows),
-    cellColumns(cols),
+CellView::CellView(String statesandcolors, int rows, int cols, int cellsize, int bordersize, Colour bgcolor, int gens)
+  : cellRows (rows),
+    cellColumns (cols),
     cellBorderSize (bordersize),
-    cellSize (cellsize)
+    cellSize (cellsize),
+    maxGenerations (gens),
+    generation (0),
+    noState (-99),
+    backgroundColor (bgcolor)
 { 
+  setStatesAndColors(statesandcolors);
   setVisible(true);
+  // determine a "noState" value by finding an integer that is not in
+  // the state array
+  while (states.contains(noState)) noState--;
+  // fill the data array with noState
+  for (int i=0; i<(rows*cols); i++)
+    data.add(noState);
 }
-
 void CellView::resized()
 {
 }
@@ -26,6 +37,7 @@ CellView::~CellView()
 {
   colors.clear();
   states.clear();
+  data.clear();
 }
 
 int CellView::XY(int x, int y)
@@ -54,80 +66,173 @@ int CellView::XY_ADD(int xy1, int xy2)
 
 void CellView::paint (Graphics& g)
 {
-  g.fillAll(Colours::azure);
-  //  g.setColour (linecolor);
-  //  g.drawRect (0, 0, getWidth(), getHeight(), linewidth);
-  int x=0, y=0;
-  int s=0;
+  g.setColour(backgroundColor);
+  g.fillAll();
+
+  data.lockArray();
+  int  x, y, i=0, s=data.size();
+  y=cellBorderSize;
   for (int r=0; r<cellRows; r++)
     {
-      x=0;
+      x=cellBorderSize;
       for (int c=0; c<cellColumns; c++)      
 	{
-	  g.setColour(colors[s % colors.size()]);
+	  if (i<s)
+	    {
+	      int q=data.getUnchecked(i);
+	      if (q==noState)
+		break;
+	      else
+		{
+		  int j=states.indexOf(q);
+		  if (j<0)
+		    g.setColour(Colours::black);
+		  else
+		    g.setColour(colors.getUnchecked(j));
+		}
+	    }
+	  else
+	    break;
 	  g.fillRect(x, y, cellSize, cellSize);
 	  x += (cellSize+cellBorderSize);
-	  s++;
+	  i++;
 	}
       y += (cellSize+cellBorderSize);
-
     }
+  data.unlockArray();
 }
 
-CellWindow::CellWindow (String title, String states, String colors, int rows, int cols, int cellsize=8, int bordersize=1)
+void CellView::setStatesAndColors(String statesandcolors)
+{
+  // parse state and color pairs and fill arrays
+  states.clear();
+  colors.clear();
+  StringArray pairs;
+  pairs.addTokens(statesandcolors, false);
+  for (int i=0; i<pairs.size()-1; i+=2)
+    {
+      int state=pairs[i].getIntValue();
+      Colour color=Colours::findColourForName( pairs[i+1], Colours::black);
+      states.add(state);
+      colors.add(color);
+    }
+  //std::cout << "CellView colormap: " << states.size() << "\n";
+  //for (int i=0; i<states.size(); i++)
+  //  std::cout <<  "  [" << i << "] " << states[i] << " -> " << colors[i].toString().toUTF8() << "\n";
+}
+
+StateWindow::StateWindow (String title, String statesandcolors, int rows, int cols, int cellsize, int bordersize, Colour bgcolor)
   : DocumentWindow (title, Colours::white, DocumentWindow::allButtons, true),
     listener(this)
 {
-  CellView* cv=new CellView(rows,cols,cellsize,bordersize);
-  cv->colors.add(Colours::red);
-  cv->colors.add(Colours::green);
-  cv->colors.add(Colours::blue);
+  CellView* cv=new CellView(statesandcolors, rows, cols, cellsize, bordersize, bgcolor, 1);
   setResizable(true, true); 
   setContentComponent(cv);
-  int size=cellsize + bordersize;
-  int width=size*cols;
-  int height=size*rows;
-  std::cout << "width=" << width << " height=" << height << "\n";
-  //  cv->setSize(width,height);
+  int width=(cellsize*cols) + (bordersize*(cols+1)) ;
+  int height=(cellsize*rows) + (bordersize*(rows+1)) ;
+  //std::cout << "width=" << width << " height=" << height << "\n";
   setContentComponentSize(width,height);
+  setUsingNativeTitleBar(true);
+  setDropShadowEnabled(true);
   centreWithSize(getWidth(), getHeight());
-  //setComponentProperty(T("WindowType"), WindowTypes::PlotWindow);
+  setComponentProperty(T("WindowType"), WindowTypes::StateWindow);
   setVisible(true);
 }
 
-void CellWindow::initCellWindow(String title, String states, String colors, int rows, int cols, int cellsize, int bordersize)
+StateWindow::~StateWindow ()
 {
 }
 
-CellWindow::~CellWindow ()
-{
-}
-
-void CellWindow::closeButtonPressed()
+void StateWindow::closeButtonPressed()
 {
   delete this;
 }
 
-CellWindow* CellWindow::findCellWindow(String title)
+CellView* StateWindow::getCellView() 
 {
-  return 0;
+  return (CellView*)getContentComponent();
 }
 
-CellWindow::CellWindowListener::CellWindowListener(CellWindow* win) 
+StateWindow* StateWindow::findStateWindow(String title)
+{
+  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
+    {
+      TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
+      if (WindowTypes::isWindowType(w, WindowTypes::StateWindow) &&
+	  w->getName()==title)
+	return (StateWindow*)w;
+    }
+  return (StateWindow*)NULL;
+}
+
+StateWindow::StateWindowListener::StateWindowListener(StateWindow* win) 
   : window (win)
 {
 }
 
-CellWindow::CellWindowListener::~CellWindowListener()
+StateWindow::StateWindowListener::~StateWindowListener()
 {
 }
 
-void CellWindow::CellWindowListener::handleMessage(const Message &m)
+void StateWindow::openWindowFromXml(void* ptr)
 {
+  XmlElement* xml = (XmlElement *)ptr;  
+  if (ptr==NULL) return;
+  String title=xml->getStringAttribute(T("title"));
+  String colormap=xml->getStringAttribute(T("colormap"));
+  int rows=xml->getIntAttribute(T("rows"), 1);
+  int columns=xml->getIntAttribute(T("columns"), 1);
+  int cellsize=xml->getIntAttribute(T("cellsize"), 50);
+  int cellbordersize=xml->getIntAttribute(T("cellbordersize"), 1);
+  String bgcolor=xml->getStringAttribute(T("backgroundcolor"), T("white"));
+  new StateWindow(title, colormap, rows, columns, cellsize, cellbordersize, Colours::findColourForName(bgcolor, Colours::white));
+}
+
+void StateWindow::StateWindowListener::handleMessage(const Message &m)
+{
+  CellView* cv=window->getCellView();
+  if (!cv) return;
   switch (m.intParameter1)
     {
+
+    case CommandIDs::StateWindowSetCell:
+      {
+	//std::cout << "StateWindowSetCell state=" << m.intParameter2 << " row=" << m.intParameter3 << " col=" << (int)m.pointerParameter << "\n";
+	cv->data.lockArray();
+	int val=m.intParameter2;
+	int row=m.intParameter3;
+	int col=(int)m.pointerParameter;
+	int len=cv->data.size();
+        row=row % cv->cellRows;
+        col=col % cv->cellColumns;
+        cv->data.setUnchecked((row*cv->cellColumns) + col, val);
+        cv->data.unlockArray();
+	cv->repaint();
+	break;
+      }
+
+    case CommandIDs::StateWindowSetCells:
+      {
+	//std::cout << "StateWindowSetCells: length=" << m.intParameter2 << " row=" << m.intParameter3  << "\n";
+	int  size=m.intParameter2;
+	int* ints=(int *)m.pointerParameter;
+	cv->data.lockArray();
+	int len=cv->data.size();
+        int row=m.intParameter3 % cv->cellRows;
+        int ind=row*cv->cellColumns;
+	for (int i=0; i<size; i++)
+	  {
+	    cv->data.setUnchecked((ind + i) % len, ints[i]);
+	    //std::cout << "  data[" << (i % len) << "]: " << cv->data.getUnchecked(i % len) << "\n";
+	  }
+	cv->data.unlockArray();
+	cv->repaint();
+	delete [] ints;
+	break;
+      }
+
     default:
-      std::cout << "Cell Window message!\n";
+      break;
     }
 }
 

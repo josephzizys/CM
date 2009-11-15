@@ -17,37 +17,49 @@ class CellView : public Component
   int cellColumns;
   int cellSize;
   int cellBorderSize;
+  Colour backgroundColor;
+  int maxGenerations;
+  int generation;
+  int noState;
+  Array<int, CriticalSection> data;
   Array<int> states;
   Array<Colour> colors;
-  CellView(int rows, int cols, int cellsize, int bordersize);
+  CellView(String statesandcolors, int rows, int cols, int cellsize, int bordersize, Colour bgcolor, int gens);
   ~CellView();
+
   void resized();
   void paint(Graphics& g);
-  void drawCell(int row, int col, int state);
+
+  void drawStates(int numstates, int* states);
+  void setStatesAndColors(String statesandcolors);
+  void setRowsAndColumns(int rows, int cols);
+  void setCellSize(int size, int bordersize=1);
+
   static int XY(int x, int y=0);
   static int XY_X(int xy);
   static int XY_Y(int xy);
   static int XY_ADD(int xy1, int xy2);
 };
 
-class CellWindow : public DocumentWindow 
+class StateWindow : public DocumentWindow 
 {
  public:
-  class CellWindowListener : public MessageListener
+  class StateWindowListener : public MessageListener
   {
-    CellWindow* window;
+    StateWindow* window;
   public:
-    CellWindowListener(CellWindow* w);
-    ~CellWindowListener();
+    StateWindowListener(StateWindow* w);
+    ~StateWindowListener();
     void handleMessage (const Message &message);  
   };
-  CellWindowListener listener;
-  CellWindow (String title, String states, String colors, int rows, int cols, int cellsize, int bordersize) ;
-  ~CellWindow () ;
-  void initCellWindow(String title, String states, String colors, int rows, int cols, int cellsize, int bordersize);
+  StateWindowListener listener;
+  StateWindow (String title, String statesandcolors, int rows, int cols, int cellsize=50, int bordersize=1, Colour bgcolor=Colours::white) ;
+  ~StateWindow () ;
   void closeButtonPressed();
-  static CellWindow* findCellWindow(String title);
-
+  static StateWindow* findStateWindow(String title);
+  //static void openWindowFromXml(char* xml);
+  static void openWindowFromXml(void* xml);
+  CellView* getCellView();
 };
 
 #endif

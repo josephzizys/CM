@@ -356,6 +356,8 @@ bool Scheme::init()
 	   SchemeSources::processes_scmSize, tr);
   loadCode(T("plot.scm"), SchemeSources::plot_scm, 
 	   SchemeSources::plot_scmSize, tr);
+  loadCode(T("automata.scm"), SchemeSources::automata_scm, 
+	   SchemeSources::automata_scmSize, tr);
   loadCode(T("sndlib-ws.scm"), SchemeSources::sndlibws_scm, 
 	   SchemeSources::sndlibws_scmSize, tr);
   // need this for some .ins files...

@@ -1,8 +1,6 @@
 ;;;***********************************************************************
 
-;;; (load "/Users/hkt/Software/cm/scm/genffi.scm")
-;;; (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp")
-;;; (chickenffi "/Users/hkt/Software/cm/scm/chicken-foreign.scm")
+;;; (begin (load "/Users/hkt/Software/cm/scm/genffi.scm") (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp") (chickenffi "/Users/hkt/Software/cm/scm/chicken-foreign.scm") (exit))
 
 (define records
   '(
@@ -25,6 +23,7 @@
     (ffi_print_error       void "cm_print_error" c-string)
     (ffi_print_output      void "cm_print_output" c-string bool)
     (ffi_print_values      void "cm_print_values" c-string)
+    (ffi_print_stdout      void "cm_print_stdout" c-string)
     (ffi_shell             void "cm_shell" c-string)
     (ffi_play              void "cm_play" c-string)
     (ffi_rescale           double "cm_rescale"
@@ -128,6 +127,9 @@
     (ffi_plot_xml void "plot_xml" c-string)
     (ffi_plot_add_xml_points void "plot_add_xml_points" c-string c-string)
     (ffi_plot_data c-string "plot_data" c-string int)
+
+    (ffi_sw_open_from_xml bool "sw_open_from_xml" c-string)
+    (ffi_sw_draw void "sw_draw" c-string SCHEMEOBJECT int int)
     ))
 
 (define (foreign-lambda-scheme-name decl) 
@@ -182,7 +184,8 @@
   (let ((args (append (cdr func) (list))))
     (do ((tail args (cdr tail)))
 	((null? tail) #f)
-      (cond ((equal? (car tail) 'SCHEMEPROC)
+      (cond ((or (equal? (car tail) 'SCHEMEPROC)
+		 (equal? (car tail) 'SCHEMEOBJECT))
 	     (set-car! tail 'scheme-object))))
     (format port "~%~S"
 	    `(define ,(car func) (foreign-lambda ,@ args)))))
@@ -311,6 +314,7 @@
     (bool    ("s7_is_boolean" 2) "s7_boolean(s7, s7_car(args))"    "make_s7_boolean")
     (c-string  "s7_is_string"  "(char*)s7_string(s7_car(args))"    "strduped_string") ;"s7_make_string"
     (SCHEMEPROC "s7_is_procedure" "s7_car(args)" "")
+    (SCHEMEOBJECT "" "s7_car(args)" "")
     (void #f #f #f #f)
     )
   )
@@ -341,6 +345,7 @@
 	(floats (list))
 	(strings (list))
 	(procs (list))
+	(objs (list))
 	(ints (list))
 	(ints64 (list))
 	(bools (list))
@@ -376,10 +381,12 @@
 	    ((eq? (car args) 'c-string) 
 	     (set! strings (addvar "s" strings))
 	     (set! params (cons (car strings) params)))
-	    ((eq? (car args) 'SCHEMEPROC) 
+	    ((eq? (car args) 'SCHEMEPROC)
 	     (set! procs (addvar "p" procs))
 	     (set! params (cons (car procs) params)))
-
+	    ((eq? (car args) 'SCHEMEOBJECT)
+	     (set! objs (addvar "o" objs))
+	     (set! params (cons (car objs) params)))
 	    (else (error "Unsupported type" (car args)))
 	    ))
     (set! floats (reverse floats))
@@ -388,6 +395,7 @@
     (set! bools (reverse bools))
     (set! strings (reverse strings))
     (set! procs (reverse procs))
+    (set! objs (reverse objs))
     (set! params (reverse params))
     (if (not (eq? returntype 'void))
 	(begin (set! return (car params))
@@ -458,6 +466,9 @@
 	  )
       (if (pair? procs)
 	  (set! func (string-append func pad (paramdecl procs 'SCHEMEPROC))))
+
+      (if (pair? objs)
+	  (set! func (string-append func pad (paramdecl objs 'SCHEMEOBJECT))))
 
       (do ((tail params (cdr tail))
 	   (args (foreign-lambda-param-types fundecl) (cdr args))

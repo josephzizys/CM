@@ -302,7 +302,7 @@ class WindowTypes
   static const int Console = 1;
   static const int TextEditor = 2;
   static const int PlotWindow = 3;
-  static const int CellWindow = 4;
+  static const int StateWindow = 4;
   static const bool isWindowType(TopLevelWindow* w, int typ)
   {
     if (w!=NULL)
@@ -406,6 +406,7 @@ class CommandIDs
   static const int Scheduler = 15;
   static const int Scheme = 16;
   static const int Prefs = 17;
+  static const int Cells = 18;
 
   static const String getCommandTypeName(CommandID id)
   {
@@ -689,6 +690,12 @@ class CommandIDs
   static const CommandID PlotterShiftPoints = COMID(Plotter, 23);
   static const CommandID PlotterRescalePoints = COMID(Plotter, 24);
   static const CommandID PlotterAddXmlPoints = COMID(Plotter, 25);
+
+  static const CommandID StateWindowSetCells = COMID(Cells, 1);
+  static const CommandID StateWindowSetCell = COMID(Cells, 2);
+  static const CommandID StateWindowSetStatesAndColors = COMID(Cells, 2);
+  static const CommandID StateWindowSetRowsAndColumns= COMID(Cells, 3);
+  static const CommandID StateWindowSetCellSize= COMID(Cells, 4);
 };
 
 #undef COMID

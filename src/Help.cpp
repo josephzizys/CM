@@ -59,6 +59,7 @@ Help::Help()
   examples.set(T("Input Hooks"), T("input.sal"));
   examples.set(T("Plotting"), T("plot.scm"));
   examples.set(T("Fomus Examples"), T("fomusexamples.sal"));
+  examples.set(T("Cellular Automata"), T("automata.scm"));
   // SAL tutorials
   tutorials.set(T("Hello World"), T("hello.sal"));
   tutorials.set(T("Expressions"), T("expr.sal"));
@@ -223,6 +224,8 @@ void Help::openHelp(CommandID id)
 	openHelpInEditor(file, String(processes_sal, processes_salSize));
       else if (file==T("plot.scm"))
 	openHelpInEditor(file, String(plot_scm, plot_scmSize));
+      else if (file==T("automata.scm"))
+	openHelpInEditor(file, String(automata_scm, automata_scmSize));
     }
 }
 

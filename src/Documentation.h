@@ -5,6 +5,9 @@
 
 namespace Documentation
 {
+    extern const char*  automata_scm;
+    const int           automata_scmSize = 8910;
+
     extern const char*  changelog_html;
     const int           changelog_htmlSize = 11093;
 

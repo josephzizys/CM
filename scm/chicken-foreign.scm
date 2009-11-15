@@ -7,6 +7,7 @@
 (define ffi_print_error (foreign-lambda void "cm_print_error" c-string))
 (define ffi_print_output (foreign-lambda void "cm_print_output" c-string bool))
 (define ffi_print_values (foreign-lambda void "cm_print_values" c-string))
+(define ffi_print_stdout (foreign-lambda void "cm_print_stdout" c-string))
 (define ffi_shell (foreign-lambda void "cm_shell" c-string))
 (define ffi_play (foreign-lambda void "cm_play" c-string))
 (define ffi_rescale (foreign-lambda double "cm_rescale" double double double double double double))
@@ -99,3 +100,5 @@
 (define ffi_plot_xml (foreign-lambda void "plot_xml" c-string))
 (define ffi_plot_add_xml_points (foreign-lambda void "plot_add_xml_points" c-string c-string))
 (define ffi_plot_data (foreign-lambda c-string "plot_data" c-string int))
+(define ffi_sw_open_from_xml (foreign-lambda bool "sw_open_from_xml" c-string))
+(define ffi_sw_draw (foreign-lambda void "sw_draw" c-string scheme-object int int))

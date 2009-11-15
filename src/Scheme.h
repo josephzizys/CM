@@ -12,10 +12,12 @@
 #ifdef CHICKEN
 #include "chicken.h"
 #define SCHEMEPROC C_word
+#define SCHEMEOBJECT C_word
 #endif
 #ifdef SNDLIB
 #include "s7.h"
 #define SCHEMEPROC s7_pointer
+#define SCHEMEOBJECT s7_pointer
 #endif
 
 class ConsoleWindow;

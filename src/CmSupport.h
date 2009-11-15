@@ -15,7 +15,7 @@ void cm_quit();
 void cm_print_output(char* str, bool quote=false);
 void cm_print_error(char* str);
 void cm_print_values(char* str);
-
+void cm_print_stdout(char* str);
 
 //void cm_buffering_stdout( char c);
 //void cm_buffering_stderr( char c);
@@ -154,11 +154,18 @@ void fms_load(char* filename);
 void fms_run();
 void fms_xml(char* str);
 
-// plotting
+// Plotting
 
 void plot_xml(char* str);
 void plot_add_xml_points(char* title, char* points);
 char* plot_data(char* window, int layer);
+
+// Cell Window
+
+//void cw_open(char* title, char* statesandcolors, int rows, int cols, int cellsize, int bordersize);
+
+bool sw_open_from_xml(char* xml);
+void sw_draw(char* window, SCHEMEOBJECT arry, int data1, int data2);
 
 #endif
 

@@ -22,6 +22,7 @@
 #endif
 #ifdef GRACE
 #include "Plot.h"
+#include "Cells.h"
 #endif
 
 #define POWF(a,b)	(powf( (a) , (b) ))
@@ -64,6 +65,13 @@ void cm_print_values(char* str)
 {
   Console::getInstance()->printValues(str);
 }
+
+void cm_print_stdout(char* str)
+{
+  std::cout << str;
+}
+
+
 
 void cm_shell(char* str)
 {
@@ -1036,12 +1044,123 @@ char* plot_data(char* title, int all)
   return (char *)strdup(text.toUTF8());  
 }
 
+bool sw_open_from_xml(char* text)
+{
+  String tmp=String(text);
+  XmlDocument doc (tmp);
+  XmlElement* xml=doc.getDocumentElement();
+  bool ok=true;
+  if (xml)
+    {
+      std::cout << "xml=" << xml->createDocument(String::empty, true, false).toUTF8() << "\n";
+      if (xml->hasTagName(T("statewindow")))
+	{
+	  StateWindow* sw=StateWindow::findStateWindow(xml->getStringAttribute(T("title")));
+	  if (sw) 
+	    ok=false;
+	  else
+	    MessageManager::getInstance()->
+	      callFunctionOnMessageThread((MessageCallbackFunction*)
+					  &StateWindow::openWindowFromXml,
+					  (void*)xml
+					  );
+	}
+      delete xml;
+    }
+  else
+    {
+      String err=T(">>> Error: ") + doc.getLastParseError() + T("\n");
+      Console::getInstance()->printError(err);
+      ok=false;
+    }
+  return ok;
+}
+
+void sw_draw(char* title, SCHEMEOBJECT obj, int data1, int data2)
+{
+  // if obj is a list then data1 is its length and data2 is the row
+  // if obj is an integer then data1 is the row and data2 is the column
+  StateWindow* sw=StateWindow::findStateWindow(String(title));
+  if (sw==NULL) return; // no cell window open
+
+  if (s7_is_integer(obj))
+    {
+      int state=(int)s7_integer(obj);
+      // pass column value in the pointer parameter. 
+      sw->listener.postMessage(new Message(CommandIDs::StateWindowSetCell,
+					   state, data1, (void*)data2));
+    }
+  else if (s7_is_pair(obj))
+    {
+      SCHEMEOBJECT p,x;
+      int i;
+      int* data=new int[data1];
+      //std::cout << "sw_show (list): length=" <<data1<<"\n";
+      for (i=0, p=obj; i<data1; i++, p=s7_cdr(p)) 
+	{
+	  x=s7_car(p);
+	  if (s7_is_integer(x))
+	    data[i]=(int)s7_integer(x);
+	  else
+	    data[i]=0;
+	  //std::cout << "  data["<<i<<"]: "<<data[i]<<"\n";
+	}
+      sw->listener.postMessage(new Message(CommandIDs::StateWindowSetCells,
+					   data1, data2, (void*)data));
+    }
+  /*  else if (s7_is_vector(obj))
+    {
+      s7_pointer *vector_elements=s7_vector_elements(obj);
+      if (s7_vector_rank(obj)==1)
+	{
+	  for (int x = 0; x < s7_vector_length(obj); x++)
+	    std::cout << " x: " << x << ", (1dvec x): " 
+		      << (int)s7_integer(vector_elements[x])
+		      << "\n";	  
+	}
+      else if (s7_vector_rank(obj)==2) 
+	{
+	  s7_Int *offsets, *dimensions;
+	  dimensions = s7_vector_dimensions(obj);
+	  offsets = s7_vector_offsets(obj);
+	  for (int y = 0; y < dimensions[0]; y++)
+	    for (int x = 0; x < dimensions[1]; x++)
+	      std::cout << "y: " << y << ", x: " << x << ", (2dvec y x): " 
+			<< (int)s7_integer(vector_elements[y * offsets[0] + 
+							   x * offsets[1]])
+			<< "\n";
+	}
+      else if (s7_vector_rank(obj)==3)
+	{
+	  s7_Int *offsets, *dimensions;
+	  dimensions = s7_vector_dimensions(obj);
+	  offsets = s7_vector_offsets(obj);
+	  int zind=data1;
+	  int size=dimensions[1] * dimensions[2];
+	  int* data=new int[size];
+	  int i=0;
+	  for (int y = 0; y < dimensions[1]; y++)
+	    for (int x = 0; x < dimensions[2]; x++)
+	      data[i++]=(int)s7_integer(vector_elements[zind * offsets[0] + 
+							y * offsets[1] +
+							x * offsets[2]]);
+	  sw->listener.postMessage(new Message(CommandIDs::StateWindowSetCells,
+					       size,
+					       0,
+					       (void*)data
+					       ));
+	}
+    }  */
+}
+
 #else
 
 void plot_xml(char* text){}
 void plot_add_xml_points(char* title, char* points){}
 char* plot_data(char* text, int layer) {return (char *)NULL;}
-//  return (char *)strdup("()");  
+
+bool sw_open_from_xml(char* s){}
+void sw_draw(char* w, SCHEMEOBJECT obj, int a, int b){}
 
 #endif
 

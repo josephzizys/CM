@@ -28,6 +28,9 @@
 (define (print-values msg )
   (ffi_print_value msg))
 
+(define (print-stdout msg )
+  (ffi_print_stdout msg))
+
 (define (shell str)
   (ffi_shell str))
 
