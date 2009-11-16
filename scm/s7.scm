@@ -11,13 +11,19 @@
 
 (define (s7-error-hook tag args)
   ;; report scheme errors using the same format as C errors.
+  ;;;;(print-stdout (format #f "s7-error-hook: tag=~S args=~S~%" tag args))
   (let ((port (open-output-string)))
     (format port ">>> Error: ")
-    ;; this should not happen but it does.
-    (if (not (pair? args))
-	(set! args (list args)))
-  (apply format port args)
-  (format port "~%")
+    ;; if the error is triggered by s7 then args can be a string,
+    ;; otherwise when cm triggers an error args is always a list of
+    ;; args, if more than one arg then the first is a format string
+    ;; and the others are args for format
+    (if (pair? args)
+        (if (null? (cdr args)) ;; a constant string error message
+            (display (car args) port)
+            (apply format port args)) ;; a format string plus args
+        (display args port))
+    (format port "~%")
   (let ((str (get-output-string port)))
     (close-output-port port)
     (ffi_print_error str))

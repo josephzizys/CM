@@ -27,7 +27,7 @@ namespace SchemeSources
     const int           loop_scmSize = 38024;
 
     extern const char*  patterns_scm;
-    const int           patterns_scmSize = 36744;
+    const int           patterns_scmSize = 36953;
 
     extern const char*  plot_scm;
     const int           plot_scmSize = 12506;
@@ -39,7 +39,7 @@ namespace SchemeSources
     const int           processes_scmSize = 7312;
 
     extern const char*  s7_scm;
-    const int           s7_scmSize = 6135;
+    const int           s7_scmSize = 6555;
 
     extern const char*  sal_scm;
     const int           sal_scmSize = 60901;
