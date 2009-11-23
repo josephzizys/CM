@@ -21,11 +21,6 @@ class Help
   StringPairArray clm;
   StringPairArray scheme;
   
-  StringPairArray manuals;
-  StringPairArray examples;
-  StringPairArray tutorials;
-  StringPairArray websites;
-
   String helpKey(StringPairArray& a, int i) {return a.getAllKeys()[i];}
   String helpValue(StringPairArray& a, int i) {return a.getAllValues()[i];}
 
@@ -38,8 +33,6 @@ class Help
  public:
   Help ();
   ~Help();
-  int getHelpSize(CommandID id);
-  String getHelpName(CommandID id);
   void openHelp(CommandID id);
   void openHelpInBrowser(String url);
   void openHelpInEditor(String path, String code);  
