@@ -360,6 +360,8 @@ bool Scheme::init()
 	   SchemeSources::automata_scmSize, tr);
   loadCode(T("sndlib-ws.scm"), SchemeSources::sndlibws_scm, 
 	   SchemeSources::sndlibws_scmSize, tr);
+  loadCode(T("osc.scm"), SchemeSources::osc_scm, 
+	   SchemeSources::osc_scmSize, tr);
   // need this for some .ins files...
   XEN_EVAL_C_STRING("(provide 'snd-ws.scm)");
   s7_define_function(s7, "void", s7_void_value, 0, 0, false, "void value");

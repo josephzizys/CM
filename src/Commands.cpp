@@ -28,6 +28,9 @@
 #include "Plot.h"
 #endif
 
+#ifdef LIBLO
+#include "Osc.h"
+#endif
 
 #ifdef SNDLIB
 #include "SndLib.h"
@@ -221,6 +224,14 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::FomusSettings,
     CommandIDs::FomusDocumentation,
     CommandIDs::FomusRunCurr,
+#endif
+
+#ifdef LIBLO
+    CommandIDs::OscOpen,
+    CommandIDs::OscTraceInput,
+    CommandIDs::OscTraceOutput,
+    CommandIDs::OscShowStatus,
+    CommandIDs::OscClearHook,
 #endif
 
     CommandIDs::PlotterNew,
@@ -580,6 +591,38 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       break;
 #endif
 
+      // OSC
+
+#ifdef LIBLO
+    case CommandIDs::OscOpen:
+      if (OscPort::getInstance()->isOpen)
+        info.shortName=T("Close Connection");
+      else
+        info.shortName=T("Open Connection...");
+      break;
+    case CommandIDs::OscTraceInput:
+      info.shortName=T("Trace Input");
+      info.setTicked(OscPort::getInstance()->traceInput);
+      //if (!OscPort::getInstance()->isOpen)
+      //  info.setActive(false);
+      break;
+    case CommandIDs::OscTraceOutput:
+      info.shortName=T("Trace Output");
+      info.setTicked(OscPort::getInstance()->traceOutput);
+      //if (!OscPort::getInstance()->isOpen)
+      //  info.setActive(false);
+      break;
+    case CommandIDs::OscShowStatus:
+      info.shortName=T("Show Status");
+      break;
+    case CommandIDs::OscClearHook:
+      info.shortName=T("Clear Hook");
+      if (!OscPort::getInstance()->isHookActive)
+        info.setActive(false);
+      break;
+
+#endif
+
       //
       // Plot Settings
       //
@@ -876,6 +919,38 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::FomusDocumentation:
       Fomus::getInstance()->documentationWindow();
       break;
+#endif
+
+      //
+      // OSC Commands
+      //
+
+#ifdef LIBLO
+
+    case CommandIDs::OscOpen:
+      if (OscPort::getInstance()->isOpen)
+        OscPort::getInstance()->close();
+      else
+        OscPort::getInstance()->openDialog();
+      break;
+
+    case CommandIDs::OscTraceInput:
+      OscPort::getInstance()->traceInput = !OscPort::getInstance()->traceInput;
+      break;
+
+    case CommandIDs::OscTraceOutput:
+      OscPort::getInstance()->traceOutput = !OscPort::getInstance()->traceOutput;
+      break;
+
+    case CommandIDs::OscShowStatus:
+      OscPort::getInstance()->showStatus();
+      break;
+
+    case CommandIDs::OscClearHook:
+      if (OscPort::getInstance()->isHookActive)
+        Scheme::getInstance()->eval(T("(osc:hook #f)"));
+      break;
+
 #endif
 
       //

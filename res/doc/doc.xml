@@ -1,0 +1,67 @@
+<documentation>
+
+  <menu name="Manuals">
+    <file name="Common Music" file="cm.html"/>
+    <file name="SndLib" file="http://ccrma.stanford.edu/software/snd/snd/sndclm.html"/>
+    <file name="Scheme" file="http://schemers.org/Documents/Standards/R5RS/HTML/"/>
+  </menu>
+
+  <menu name="SAL Tutorials">
+    <file name="Hello World" file="hello.sal" />
+    <file name="Expressions" file="expr.sal"/>
+    <file name="Function Calls" file="funcall.sal"/>
+    <file name="Midi Output" file="midiout.sal"/>
+    <file name="Lists" file="lists.sal"/>
+    <file name="Loop" file="loop.sal"/>
+    <file name="Definitions" file="define.sal"/>
+    <file name="Processes" file="processes.sal"/>
+    <file name="Fomus" file="fomus.sal"/>
+  </menu>
+
+  <menu name="Scheme Tutorials">
+    <file name="Hello World" file="hello.scm" />
+    <file name="Expressions" file="expr.scm"/>
+    <file name="Function Calls" file="funcall.scm"/>
+    <file name="Midi Output" file="midiout.scm"/>
+    <file name="Lists" file="lists.scm"/>
+    <file name="Loop" file="loop.scm"/>
+    <file name="Definitions" file="define.scm"/>
+    <file name="Processes" file="processes.scm"/>
+    <file name="Fomus" file="fomus.scm"/>
+  </menu>
+
+  <menu name="SAL Examples">
+    <file name="Reich" file="reich.sal"/>
+    <file name="Ghosts" file="ghosts.sal"/>
+    <file name="Gestures" file="gestures.sal"/>
+    <file name="Continuum (Ligeti)" file="continuum.sal"/>
+    <file name="Mapping" file="mapping.sal"/>
+    <file name="Interpolation" file="interp.sal"/>
+    <file name="Patterns (1)" file="patterns1.sal"/>	       
+    <file name="Patterns (2)" file="patterns2.sal"/>
+    <file name="Jazz Improvisor" file="jazz.sal"/>
+    <file name="Markov (1)" file="markov1.sal"/>     
+    <file name="Markov (2)" file="markov2.sal"/>
+    <file name="Stephen Foster" file="foster.sal"/>
+    <file name="Harmonic Series" file="harmonics.sal"/>
+    <file name="FM Composition" file="fm.sal"/>
+    <file name="Csound" file="csound.sal"/>
+    <file name="Input Hooks" file="input.sal"/>
+    <file name="Plotting" file="plot.scm"/>
+    <file name="Fomus Examples" file="fomusexamples.sal"/>
+    <file name="OSC" file="osc.sal"/>
+  </menu>
+  
+  <menu name="Scheme Examples">
+    <file name="Cellular Automata" file="automata.scm"/>;
+    <file name="Plotting" file="plot.scm"/>
+    <file name="OSC" file="osc.scm"/>
+  </menu>
+
+  <menu name="Web Sites">
+    <file name="Common Music" file="http://commonmusic.sourceforge.net/"/>
+    <file name="JUCE" file="http://www.rawmaterialsoftware.com/juce"/>
+    <file name="SndLib" file="http://ccrma.stanford.edu/software/snd/sndlib/"/>
+  </menu>
+
+</documentation>

@@ -106,6 +106,21 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
   inmenu.addSubMenu(T("Message Filter"), opfilt);
   menu.addSubMenu(T("Midi In"), inmenu);
 
+#ifdef LIBLO
+  {
+    PopupMenu osc;
+    osc.addCommandItem(comm, CommandIDs::OscOpen);
+    osc.addSeparator();
+    osc.addCommandItem(comm, CommandIDs::OscShowStatus);
+    osc.addSeparator();
+    osc.addCommandItem(comm, CommandIDs::OscClearHook);
+    //    osc.addSeparator();
+    osc.addCommandItem(comm, CommandIDs::OscTraceInput);
+    // osc.addCommandItem(comm, CommandIDs::OscTraceOutput);
+    menu.addSubMenu(T("OSC"), osc);
+  }
+#endif
+
 #ifdef SNDLIB
   PopupMenu sndlib,chans,srate;
   for (int i=0;i<NumSndLibSrate;i++)
@@ -154,7 +169,8 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
     menu.addSubMenu(T("Fomus"), fomus);
   }
 #endif
-  menu.addSeparator();
+
+menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::MidiPlotPlayer);
   menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);
   menu.addCommandItem(comm, CommandIDs::MidiOutFileSettings);

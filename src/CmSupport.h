@@ -167,5 +167,12 @@ char* plot_data(char* window, int layer);
 bool sw_open_from_xml(char* xml);
 void sw_draw(char* window, SCHEMEOBJECT arry, int data1, int data2);
 
+// OSC (if --liblo was specified)
+
+int osc_open(char* port, char* targ);
+bool osc_open_p();
+int osc_close();
+int osc_send(char* path, SCHEMEOBJECT list, SCHEMEOBJECT s7false);
+void osc_set_hook(bool b);
 #endif
 

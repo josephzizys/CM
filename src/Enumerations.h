@@ -407,6 +407,7 @@ class CommandIDs
   static const int Scheme = 16;
   static const int Prefs = 17;
   static const int Cells = 18;
+  static const int Osc = 19;
 
   static const String getCommandTypeName(CommandID id)
   {
@@ -661,8 +662,15 @@ class CommandIDs
   static const CommandID HelpManual = COMID(Help, 2);
   static const CommandID HelpExample = COMID(Help, 3);
   static const CommandID HelpTutorial = COMID(Help, 4);
-  static const CommandID HelpWebSite = COMID(Help, 5);
-  static const CommandID HelpShowDirectory = COMID(Help, 6);
+
+  static const CommandID HelpSalTutorial = COMID(Help, 5);
+  static const CommandID HelpSchemeTutorial = COMID(Help, 6);
+
+  static const CommandID HelpSalExample = COMID(Help, 7);
+  static const CommandID HelpSchemeExample = COMID(Help, 8);
+
+  static const CommandID HelpWebSite = COMID(Help, 9);
+  static const CommandID HelpShowDirectory = COMID(Help, 10);
 
   // Plotter commands
   static const CommandID PlotterNew = COMID(Plotter, 1);
@@ -696,6 +704,16 @@ class CommandIDs
   static const CommandID StateWindowSetStatesAndColors = COMID(Cells, 2);
   static const CommandID StateWindowSetRowsAndColumns= COMID(Cells, 3);
   static const CommandID StateWindowSetCellSize= COMID(Cells, 4);
+
+  // Osc commands
+
+  static const CommandID OscOpen = COMID(Osc, 1);
+  static const CommandID OscTraceInput = COMID(Osc, 2);
+  static const CommandID OscTraceOutput = COMID(Osc, 3);
+  static const CommandID OscShowStatus = COMID(Osc, 4);
+  static const CommandID OscSetHook = COMID(Osc, 5);
+  static const CommandID OscClearHook = COMID(Osc, 6);
+
 };
 
 #undef COMID

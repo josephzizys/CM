@@ -130,6 +130,12 @@
 
     (ffi_sw_open_from_xml bool "sw_open_from_xml" c-string)
     (ffi_sw_draw void "sw_draw" c-string SCHEMEOBJECT int int)
+
+    (ffi_osc_open int "osc_open" c-string c-string)
+    (ffi_osc_open_p bool "osc_open_p" )
+    (ffi_osc_close int "osc_close" )
+    (ffi_osc_send int "osc_send" c-string SCHEMEOBJECT SCHEMEOBJECT )
+    (ffi_osc_set_hook void "osc_set_hook" bool)
     ))
 
 (define (foreign-lambda-scheme-name decl) 
@@ -311,7 +317,7 @@
     (float   "s7_is_real"    "s7_number_to_real(s7_car(args))"     "s7_make_real")
     (int     "s7_is_integer" "s7_integer(s7_car(args))"            "s7_make_integer")
     (integer64  "s7_is_integer" "(int64)s7_integer(s7_car(args))"  "s7_make_integer")
-    (bool    ("s7_is_boolean" 2) "s7_boolean(s7, s7_car(args))"    "make_s7_boolean")
+    (bool    "s7_is_boolean" "s7_boolean(s7, s7_car(args))"    "make_s7_boolean")
     (c-string  "s7_is_string"  "(char*)s7_string(s7_car(args))"    "strduped_string") ;"s7_make_string"
     (SCHEMEPROC "s7_is_procedure" "s7_car(args)" "")
     (SCHEMEOBJECT "" "s7_car(args)" "")

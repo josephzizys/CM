@@ -420,7 +420,30 @@ tr.entry {
     background: #e6e6ff
 }
 
+tr.salentry {
+    border-bottom: 2px solid white;
+    background: #ffffcc;
+}
+
+tr.scmentry {
+    border-bottom: 2px solid white;
+    background: #ccffcc;
+}
+
+
 td.formals {
+    font-family: monaco, monospace;
+    font-size: normal;
+}
+
+td.salformals {
+    background: #ffffcc;
+    font-family: monaco, monospace;
+    font-size: normal;
+}
+
+td.scmformals {
+    background: #ccffcc;
     font-family: monaco, monospace;
     font-size: normal;
 }

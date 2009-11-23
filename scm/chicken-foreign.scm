@@ -102,3 +102,8 @@
 (define ffi_plot_data (foreign-lambda c-string "plot_data" c-string int))
 (define ffi_sw_open_from_xml (foreign-lambda bool "sw_open_from_xml" c-string))
 (define ffi_sw_draw (foreign-lambda void "sw_draw" c-string scheme-object int int))
+(define ffi_osc_open (foreign-lambda int "osc_open" c-string c-string))
+(define ffi_osc_open_p (foreign-lambda bool "osc_open_p"))
+(define ffi_osc_close (foreign-lambda int "osc_close"))
+(define ffi_osc_send (foreign-lambda int "osc_send" c-string scheme-object scheme-object))
+(define ffi_osc_set_hook (foreign-lambda void "osc_set_hook" bool))

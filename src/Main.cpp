@@ -16,6 +16,9 @@
 #include "CommonLisp.h"
 #include "Scanner.h"
 #include "Syntax.h"
+#ifdef LIBLO
+#include "Osc.h"
+#endif
 #ifdef WITHFOMUS
 #include "Fomus.h"
 #endif
@@ -159,6 +162,9 @@ void Grace::shutdown()
   MidiOutPort::deleteInstance();
   std::cout << "Deleting MidiIn\n";
   MidiInPort::deleteInstance();
+#ifdef LIBLO
+  OscPort::deleteInstance();
+#endif
 #ifdef WITHFOMUS
   std::cout << "Deleting Fomus\n";
   Fomus::deleteInstance();

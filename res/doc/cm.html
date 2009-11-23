@@ -23,6 +23,7 @@
     <li><a href="#randomness">Randomness</a></li>
     <li><a href="#patterns">Patterns</a></li>
     <li><a href="#spectral">Spectral Composition</a></li>
+    <li><a href="#automata">Cellular Automata</a></li>
     <li><a href="#files">File System</a></li>
   </ul>
   </li>
@@ -34,6 +35,7 @@
   
   <li><a href="#midi-out">Midi Out</a></li>
   <li><a href="#midi-in">Midi In</a></li>
+  <li><a href="#osc">OSC (Open Sound Control)</a></li>
   <li><a href="#csound">Csound</a></li>
   <li><a href="#sndlib">SndLib</a></li>
   <li><a href="#fomus">Fomus</a></li>
@@ -2303,6 +2305,49 @@ following rescaling or filtering operations:</p>
 </blockquote>
 <!-- END DEFINITION -->
 
+<h3 id="automata">Cellular Automata</h3>
+
+<!-- DEFINITION -->
+<table class="entry" id="make-automata">
+  <tr class="salentry">
+    <td class="formals">
+      <span class="funcname">make-automata</span> (<var class="arg">cells</var>, <var class="arg">transfunc</var>, [<var class="optkey">title</var> = #f], [colormap = {}]  )
+    </td>
+    <!-- td class="label">SAL</td -->
+  </tr>
+
+  <tr><td class="retval" colspan="2">&rarr; automata</td></tr>
+</table>
+<blockquote>
+<p>
+Creates a cellular automata holding the specified initial <var>cellstates</var> and using the specified transition function <var>transfunc</var>  to produce all subsequent states for each cell in the automata.
+For 2D automata <var>cellstates</var> is a list of lists where each sublist defines a row of inital states. The transition function implements the automata's state transition. It is called automatically and passed two arguments: the automata and the index of the current cell. The function then returns the next state of the cell at index. Inside the transition function you can use the function <a href="#cell-state"><code>cell-state</code></a> to access the current state of any cell.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table class="entry" id="cell-state">
+  <tr class="salentry">
+    <td class="formals">
+      <span class="funcname">cell-state</span> (<var class="arg">automata</var>, <var class="arg">index</var>, [<var class="optkey">neighber</var> = 0] )
+    </td>
+  </tr>
+
+  <tr><td class="retval" colspan="2">&rarr; integer</td></tr>
+</table>
+<blockquote>
+<p>
+Returns the current integer state the <var>automata</var> cell at <var>index</var>. To access neighboring cell values a <var>neighbor</var> increment to <var>index</var> ( positive or negative) can be optionally provide. Cell addresses are always accessed mod the size of the cell array so you do not have to perform bounds checking when you specify a neighbor increment. For 2D automata each <var>index</var> and <var>neighbor</var> is a two dimensional <code>xy</code> point. You specify 2D points and 2D increments  using the '(xy x y)' function, ie '(cell-state index (xy -1 -1))'  would access the value of the north-west neighbor of the current cell in a 2D automata.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+
+
+
 
 <h3 id="files">File System</h3>
 
@@ -2739,6 +2784,129 @@ Enables MIDI input only for the specified MIDI opcodes. Opcodes are integers bet
 <!-- END DEFINITION -->
 
 
+
+<h3 id="osc">OSC (Open Sound Control)</h3>
+
+<p>
+The OSC port provides input and output communication with other processes and programs via the <a href="http://opensoundcontrol.org/">Open Sound Control</a> protocol. To send or receive OSC messages first open an OSC connection using <span class="menuitem">Audio&gt;OSC&gt;Open Connection</span>, sending the <span class="string">"osc:open"</span> message to the port or calling the underlying osc function in your code. For example, the following calls are all equivalent:</p>
+
+<div class="float">
+  <pre class="code">
+<span class="command">send</span> <span class="string">"osc:open"</span>, 7779, 7770
+  
+(send <span class="string">"osc:open"</span>  7779 7770)
+
+(osc:open 7779 7770)
+</pre>
+</div>
+
+<p> See the <span class="menuitem">Help&gt;Examples&gt;OSC</span> menu for <a href="osc.sal">examples of using OSC</a>.
+
+<!-- DEFINITION -->
+<table id="osc:open" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:open"</span> <var class="arg">serverport</var>, <var class="arg">targetport</var></td>
+  </tr>
+  <!-- tr class="scmentry"> <td class="formals">(<span class="funcname">osc:open</span> <var class="arg">serverport</var> <var class="arg">targetport</var>)</td>
+  </tr -->
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Opens an OSC connection with <var>serverport</var> as the CM application's input port and <var>targetport</var> as its output port. If the target is not on the local machine then <var>targetport</var> can be a string "<var>host</var>:<var>port</var>", where <var>host</var> is the host's network name or IP address and <var>port</var> is the port to route data to on that machine.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="osc:close" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:close"</span></td>
+  </tr>
+  <!-- tr class="scmentry"> <td class="formals">(<span class="funcname">osc:close</span>)</td>  </tr -->
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Closes an open OSC connection.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="osc:message" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:message"</span>, <var class="arg">path</var>, <var class="rest">data...</var></td>
+  </tr>
+  <!-- tr class="scmentry"> <td class="formals">(<span class="funcname">osc:message</span> <var class="arg">path</var>  <var class="rest">data...</var>)</td> </tr -->
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Sends an OSC message consisting of an OSC <var>path</var> (string) and followed by zero or more optionally tagged <var>data</var> values. The basic Scheme data types (integer, float, string, symbol, character, boolean true, boolean false) map directly to their OSC equivalents and do not need tagging.  To distinguish between different OSC types (e.g. 32 bit OSC integers vs 64 bit integers), precede the Scheme value by the appropriate OSC data tag as shown in the following table.  Note that scheme lists representing OSC blobs or OSC four-byte midi messages must be tagged as such, and the special OSC tags <code>:T :F :N :I</code> do not tag Scheme values but are themselves data.
+</p>
+
+<div class="float">
+  <table width="50%">
+    <tr><th class="lcol">Data Tag</th> <th class="lcol">Osc Type</th>  </tr>
+    <tr> <td> <code>:i<code> </td> <td>32 bit integer</td> </tr>
+    <tr> <td> <code>:h<code> </td> <td>64 bit integer</td> </tr>
+    <tr> <td> <code>:f<code> </td> <td>32 bit float</td> </tr>
+    <tr> <td> <code>:d<code> </td> <td>64 bit float (double)</td> </tr>
+    <tr> <td> <code>:c<code> </td> <td>character</td> </tr>
+    <tr> <td> <code>:s<code> </td> <td>string</td> </tr>
+    <tr> <td> <code>:S<code> </td> <td>symbol</td> </tr>
+    <tr> <td> <code>:b<code> </td> <td>blob</td> </tr>
+    <tr> <td> <code>:m<code> </td> <td>midi</td> </tr>
+    <tr> <td> <code>:T<code> </td> <td>OSC true</td> </tr>
+    <tr> <td> <code>:F<code> </td> <td>OSC false</td> </tr>
+    <tr> <td> <code>:N<code> </td> <td>OSC nil</td> </tr>
+    <tr> <td> <code>:I<code> </td> <td>OSC infinitude</td> </tr>
+  </table>
+</div>
+
+<!-- h4>Examples</h4>
+
+<div class="float">
+  <pre class="code">
+<span class="command">send</span> <span class="string">"osc:open"</span>, 7710, 57120
+<span class="command">send</span> <span class="string">"osc:message"</span>, <span class="string">"/mymessage"</span>, 1, 2.3, #t, <span class="string">"hello, world!"</span>
+<span class="command">send</span> <span class="string">"osc:message"</span>, <span class="string">"/mymidi"</span>, <span class="constant">:m</span>, {0 60 60 0}
+<span class="command">send</span> <span class="string">"osc:close"</span>
+</pre>
+</div>
+
+<div class="float">
+  <pre class="code">
+(osc:open 7710 57120)
+(osc:message <span class="string">"/mymessage"</span> 1 2.3 #t, <span class="string">"hello, world!"</span>)
+(osc:message <span class="string">"/mymidi"</span> <span class="constant">:m</span> '(0 60 60 0))
+(osc:close)
+</pre>
+</div -->
+
+</blockquote>
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="osc:hook" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:hook"</span>  <var class="arg">function</var>  </td>
+  </tr>
+  <!-- tr class="scmentry"> <td class="formals">(<span class="funcname">osc:hook</span>  <var class="arg">function</var> )</td>
+  </tr -->
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Sets <var>function</var> to receive all incoming OSC messages that arrive at the server's input port. The hook <var>function</var> must accept a single argument, a Lisp list holding the OSC message data that just arrived. To clear an existing input hook specify <code>#f</code> as the hook value.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+<!--  END OSC -->
+
+
+
+
+
+
 <h3 id="sndlib">SndLib</h3>
 
 <p>If CM has been built with SndLib/S7 then SndLib audio instruments
@@ -3122,6 +3290,7 @@ Delete the currently selected Fomus score.
 <!--  END FOMUS -->
 
 
+<!--  BEGIN OSC -->
 
 
 

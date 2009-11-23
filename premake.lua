@@ -8,6 +8,7 @@ addoption("juce", "Location of JUCE source directory or install prefix")
 addoption("sndlib", "Optional location of SNDLIB source directory or install prefix")
 addoption("chicken", "Optional location of CHICKEN source directory or install prefix")
 addoption("fomus", "Optional FOMUS install prefix")
+addoption("liblo", "Optional LIBLO install prefix")
 addoption("svnversion", "Optional SVN version number")
 
 if options["juce"] then
@@ -17,6 +18,7 @@ end
 sndlib = nil
 chicken = nil
 fomus = nil
+liblo = nil
 svnvers = nil
 
 function insure_slash(path) 
@@ -124,12 +126,20 @@ for i = 1,3 do
       "src/SchemeSources.cpp", "src/SchemeSources.h",
       "src/Midi.cpp", "src/Midi.h",
       "src/Csound.cpp", "src/Csound.h",
-      "src/Main.cpp", "src/Main.h"
+      "src/Main.cpp", "src/Main.h",
+      "src/Resources.cpp", "src/Resources.h",
    }
+
+   if options["liblo"] then
+      add(mypackage.files,"src/Osc.cpp")
+      add(mypackage.files,"src/Osc.h")
+   end
+
    if  options["fomus"] then
       add(mypackage.files,"src/Fomus.cpp")
       add(mypackage.files,"src/Fomus.h")
    end
+
    mypackage.config["Debug"].defines = {"DEBUG=1"}
 
 ------------------------------------------
@@ -307,7 +317,26 @@ for i = 1,3 do
       else
          error("--fomus must point to the FOMUS install prefix (eg. /usr or /usr/local)")
       end
+   end
 
+-----------------------------------------
+--           LIBLO
+------------------------------------------
+
+   if options["liblo"] then
+      liblo = insure_slash(options["liblo"])
+      if os.fileexists(liblo .. "include/lo/lo.h") then
+         add(mypackage.includepaths, liblo .. "include")
+         add(mypackage.defines, "LIBLO")
+     else
+         error("--liblo: can't find " .. liblo .. "include/lo/lo.h")
+      end
+      if os.fileexists(liblo .. "lib/liblo.a") then
+         add(mypackage.libpaths, liblo .. "lib")
+         add(mypackage.links, "lo")
+      else
+         error("--liblo: can't find " .. liblo .. "lib/liblo.a")         
+      end
    end
 
    if (svnvers) then

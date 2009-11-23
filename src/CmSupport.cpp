@@ -15,14 +15,20 @@
 #include "Csound.h"
 #include "Console.h"
 #include "Syntax.h"
+
 #ifdef WITHFOMUS
 #define FOMUS_TYPESONLY
 #include "Fomus.h"
 #include "fomus/infoapi.h"
 #endif
+
 #ifdef GRACE
 #include "Plot.h"
 #include "Cells.h"
+#endif
+
+#ifdef LIBLO
+#include "Osc.h"
 #endif
 
 #define POWF(a,b)	(powf( (a) , (b) ))
@@ -1164,3 +1170,194 @@ void sw_draw(char* w, SCHEMEOBJECT obj, int a, int b){}
 
 #endif
 
+#ifdef LIBLO
+
+int osc_open(char* port, char* targ)
+{
+  return OscPort::getInstance()->open(String(port), String(targ));
+}
+
+bool osc_open_p()
+{
+  return OscPort::getInstance()->isOpen;
+}
+
+int osc_close()
+{
+  return OscPort::getInstance()->close();
+}
+
+void osc_set_hook(bool hook)
+{
+  OscPort::getInstance()->isHookActive=hook;
+}
+
+int osc_send(char* path, SCHEMEOBJECT list, SCHEMEOBJECT s7false)
+{
+  Array<int>ints;
+  Array<double>flos;
+  StringArray strs;
+  
+  SCHEMEOBJECT p;
+  int len=0;
+  String types=String::empty;
+  for (p=list; s7_is_pair(p); p=s7_cdr(p))
+    {
+      SCHEMEOBJECT x=s7_car(p);
+      char t=0;
+      if (s7_is_keyword(x))
+        {
+          String s (s7_symbol_name(x));
+          if (s.length()==2 && String("ifsbhtdScmTFNI").containsChar(s[1]))
+            {
+              types << s[1];
+              if (String("TFNI").containsChar(s[1]))
+                continue;
+              p=s7_cdr(p);
+              if (s7_is_pair(p))
+                x=s7_car(p);
+              else
+                return -3;
+              t=s[1];
+            }
+          else
+            return -2;
+        }
+      if (s7_is_integer(x))
+        {
+          s7_Int i=s7_integer(x);
+          switch (t)
+            {
+            case 0 :
+              types << T("i");
+            case 'i' :
+            case 'h' :
+              ints.add(i);
+              break;
+            case 't' :
+              flos.add((double)i);
+              break;
+            default:
+              return -5;
+            }
+        }
+      else if (s7_is_real(x))
+        {
+          s7_Double d = s7_real(x);
+          switch (t)
+            {
+            case 0 :
+              types << T("f");
+            case 'd' :
+            case 't' :
+            case 'f' :
+              flos.add((double)d);
+              break;
+            default:
+              return -5;
+            }            }
+      else if (s7_is_string(x))
+        {
+          const char* s=s7_string(x);
+          switch (t)
+            {
+            case 0 :
+              types << T("s");
+            case 's' :
+            case 'S' :
+              strs.add(String(s));
+              break;
+            default:
+              return -5;
+            }
+        }
+      else if (s7_is_symbol(x))
+        {
+          const char* s=s7_symbol_name(x);
+          switch (t)
+            {
+            case 0 :
+              types << T("S");
+            case 'S' :
+            case 's' :
+              strs.add(String(s));
+              break;
+            default:
+              return -5;
+            }           
+        }
+      else if (s7_is_character(x))
+        {
+          char c=s7_character(x);
+          switch (t)
+            {
+            case 0 :
+              types << T("c");
+            case 'c' :
+              strs.add(String(c));
+              break;
+            default:
+              return -5;
+            }
+        }
+      else if (s7_is_boolean(x))
+        {
+          if (t!=0) return -5;
+          if (x==s7false)
+            types<<T("F");
+          else
+            types<<T("T");
+        }          
+      else if (s7_is_pair(x))
+        {
+          if (t=='m')
+            {
+              int j=0;
+              SCHEMEOBJECT m;
+              for (m=x; s7_is_pair(m); m=s7_cdr(m), j++)
+                if (s7_is_integer(s7_car(m)))
+                  {
+                    juce::uint32 x=(juce::uint32)s7_integer(s7_car(m));
+                    ints.add(x & 0xff);
+                  }
+                else 
+                  return -5;
+              if (j!=4)
+                return -5;
+            }
+          else if (t=='b')
+            {
+              // blobs are stored: [size data...]
+              int i=ints.size();
+              int j=0;
+              ints.add(j);
+              SCHEMEOBJECT m;
+              for (m=x; s7_is_pair(m); m=s7_cdr(m), j++)
+                if (s7_is_integer(s7_car(m)))
+                  {
+                    juce::uint32 x=(juce::uint32)s7_integer(s7_car(m));
+                    ints.add(x & 0xff);
+                  }
+                else 
+                  return -5;
+              ints.setUnchecked(i,j);
+            }
+          else
+            return -5;
+        }
+      else
+        {
+          //std::cout << "osc_send: aborting on unknown message value\n";
+          return -5;
+        }
+    }
+  return OscPort::getInstance()->sendMessage(path,types,ints,flos,strs,-1);
+}
+
+#else
+int osc_open(char* port, char* targ){return -1;}
+bool osc_open_p(){return false;}
+int osc_close(){return -1;}
+int osc_send(char* path, SCHEMEOBJECT alist){return -1;}
+void osc_set_hook(bool hook){}
+#endif
