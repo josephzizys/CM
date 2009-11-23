@@ -247,6 +247,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::WindowSelect + 5,
     CommandIDs::WindowSelect + 6,
     CommandIDs::WindowSelect + 7,
+
     // Help Menu
     CommandIDs::HelpSymbolLookup,
     CommandIDs::HelpManual + 0,
@@ -258,55 +259,106 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::HelpManual + 6,
     CommandIDs::HelpManual + 7,
 
-    CommandIDs::HelpExample + 0,
-    CommandIDs::HelpExample + 1,
-    CommandIDs::HelpExample + 2,
-    CommandIDs::HelpExample + 3,
-    CommandIDs::HelpExample + 4,
-    CommandIDs::HelpExample + 5,
-    CommandIDs::HelpExample + 6,
-    CommandIDs::HelpExample + 7,
-    CommandIDs::HelpExample + 8,
-    CommandIDs::HelpExample + 9,
-    CommandIDs::HelpExample + 10,
-    CommandIDs::HelpExample + 11,
-    CommandIDs::HelpExample + 12,
-    CommandIDs::HelpExample + 13,
-    CommandIDs::HelpExample + 14,
-    CommandIDs::HelpExample + 15,
-    CommandIDs::HelpExample + 16,
-    CommandIDs::HelpExample + 17,
-    CommandIDs::HelpExample + 18,
-    CommandIDs::HelpExample + 19,
-    CommandIDs::HelpExample + 20,
-    CommandIDs::HelpExample + 21,
-    CommandIDs::HelpExample + 22,
-    CommandIDs::HelpExample + 23,
-    CommandIDs::HelpExample + 24,
-    CommandIDs::HelpExample + 25,
-    CommandIDs::HelpExample + 26,
-    CommandIDs::HelpExample + 27,
-    CommandIDs::HelpExample + 28,
-    CommandIDs::HelpExample + 29,
-    CommandIDs::HelpExample + 30,
-    CommandIDs::HelpExample + 31,
+    CommandIDs::HelpSalExample + 0,
+    CommandIDs::HelpSalExample + 1,
+    CommandIDs::HelpSalExample + 2,
+    CommandIDs::HelpSalExample + 3,
+    CommandIDs::HelpSalExample + 4,
+    CommandIDs::HelpSalExample + 5,
+    CommandIDs::HelpSalExample + 6,
+    CommandIDs::HelpSalExample + 7,
+    CommandIDs::HelpSalExample + 8,
+    CommandIDs::HelpSalExample + 9,
+    CommandIDs::HelpSalExample + 10,
+    CommandIDs::HelpSalExample + 11,
+    CommandIDs::HelpSalExample + 12,
+    CommandIDs::HelpSalExample + 13,
+    CommandIDs::HelpSalExample + 14,
+    CommandIDs::HelpSalExample + 15,
+    CommandIDs::HelpSalExample + 16,
+    CommandIDs::HelpSalExample + 17,
+    CommandIDs::HelpSalExample + 18,
+    CommandIDs::HelpSalExample + 19,
+    CommandIDs::HelpSalExample + 20,
+    CommandIDs::HelpSalExample + 21,
+    CommandIDs::HelpSalExample + 22,
+    CommandIDs::HelpSalExample + 23,
+    CommandIDs::HelpSalExample + 24,
+    CommandIDs::HelpSalExample + 25,
+    CommandIDs::HelpSalExample + 26,
+    CommandIDs::HelpSalExample + 27,
+    CommandIDs::HelpSalExample + 28,
+    CommandIDs::HelpSalExample + 29,
+    CommandIDs::HelpSalExample + 30,
+    CommandIDs::HelpSalExample + 31,
 
-    CommandIDs::HelpTutorial + 0,
-    CommandIDs::HelpTutorial + 1,
-    CommandIDs::HelpTutorial + 2,
-    CommandIDs::HelpTutorial + 3,
-    CommandIDs::HelpTutorial + 4,
-    CommandIDs::HelpTutorial + 5,
-    CommandIDs::HelpTutorial + 6,
-    CommandIDs::HelpTutorial + 7,
-    CommandIDs::HelpTutorial + 8,
-    CommandIDs::HelpTutorial + 9,
-    CommandIDs::HelpTutorial + 10,
-    CommandIDs::HelpTutorial + 11,
-    CommandIDs::HelpTutorial + 12,
-    CommandIDs::HelpTutorial + 13,
-    CommandIDs::HelpTutorial + 14,
-    CommandIDs::HelpTutorial + 15,
+    CommandIDs::HelpSchemeExample + 0,
+    CommandIDs::HelpSchemeExample + 1,
+    CommandIDs::HelpSchemeExample + 2,
+    CommandIDs::HelpSchemeExample + 3,
+    CommandIDs::HelpSchemeExample + 4,
+    CommandIDs::HelpSchemeExample + 5,
+    CommandIDs::HelpSchemeExample + 6,
+    CommandIDs::HelpSchemeExample + 7,
+    CommandIDs::HelpSchemeExample + 8,
+    CommandIDs::HelpSchemeExample + 9,
+    CommandIDs::HelpSchemeExample + 10,
+    CommandIDs::HelpSchemeExample + 11,
+    CommandIDs::HelpSchemeExample + 12,
+    CommandIDs::HelpSchemeExample + 13,
+    CommandIDs::HelpSchemeExample + 14,
+    CommandIDs::HelpSchemeExample + 15,
+    CommandIDs::HelpSchemeExample + 16,
+    CommandIDs::HelpSchemeExample + 17,
+    CommandIDs::HelpSchemeExample + 18,
+    CommandIDs::HelpSchemeExample + 19,
+    CommandIDs::HelpSchemeExample + 20,
+    CommandIDs::HelpSchemeExample + 21,
+    CommandIDs::HelpSchemeExample + 22,
+    CommandIDs::HelpSchemeExample + 23,
+    CommandIDs::HelpSchemeExample + 24,
+    CommandIDs::HelpSchemeExample + 25,
+    CommandIDs::HelpSchemeExample + 26,
+    CommandIDs::HelpSchemeExample + 27,
+    CommandIDs::HelpSchemeExample + 28,
+    CommandIDs::HelpSchemeExample + 29,
+    CommandIDs::HelpSchemeExample + 30,
+    CommandIDs::HelpSchemeExample + 31,
+
+    CommandIDs::HelpSalTutorial + 0,
+    CommandIDs::HelpSalTutorial + 1,
+    CommandIDs::HelpSalTutorial + 2,
+    CommandIDs::HelpSalTutorial + 3,
+    CommandIDs::HelpSalTutorial + 4,
+    CommandIDs::HelpSalTutorial + 5,
+    CommandIDs::HelpSalTutorial + 6,
+    CommandIDs::HelpSalTutorial + 7,
+    CommandIDs::HelpSalTutorial + 8,
+    CommandIDs::HelpSalTutorial + 9,
+    CommandIDs::HelpSalTutorial + 10,
+    CommandIDs::HelpSalTutorial + 11,
+    CommandIDs::HelpSalTutorial + 12,
+    CommandIDs::HelpSalTutorial + 13,
+    CommandIDs::HelpSalTutorial + 14,
+    CommandIDs::HelpSalTutorial + 15,
+
+    CommandIDs::HelpSchemeTutorial + 0,
+    CommandIDs::HelpSchemeTutorial + 1,
+    CommandIDs::HelpSchemeTutorial + 2,
+    CommandIDs::HelpSchemeTutorial + 3,
+    CommandIDs::HelpSchemeTutorial + 4,
+    CommandIDs::HelpSchemeTutorial + 5,
+    CommandIDs::HelpSchemeTutorial + 6,
+    CommandIDs::HelpSchemeTutorial + 7,
+    CommandIDs::HelpSchemeTutorial + 8,
+    CommandIDs::HelpSchemeTutorial + 9,
+    CommandIDs::HelpSchemeTutorial + 10,
+    CommandIDs::HelpSchemeTutorial + 11,
+    CommandIDs::HelpSchemeTutorial + 12,
+    CommandIDs::HelpSchemeTutorial + 13,
+    CommandIDs::HelpSchemeTutorial + 14,
+    CommandIDs::HelpSchemeTutorial + 15,
+
 
     CommandIDs::HelpWebSite + 0,
     CommandIDs::HelpWebSite + 1,
@@ -677,19 +729,32 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
 	info.addDefaultKeypress(digit, comk);
       }
       break;
+
       /** HELP COMMANDS **/
+
     case CommandIDs::HelpSymbolLookup:
       info.shortName=T("Symbol Help");
       break;
     case CommandIDs::HelpManual:
-    case CommandIDs::HelpExample:
-    case CommandIDs::HelpTutorial:
-    case CommandIDs::HelpWebSite:
-      if (data<Help::getInstance()->getHelpSize(id))
-	info.shortName=Help::getInstance()->getHelpName(id);
-      else
-	info.shortName=T("<Unknown Help>");
+      info.shortName=T("Help Manual ")+String(data);
       break;
+    case CommandIDs::HelpWebSite:
+      info.shortName=T("Web Site ")+String(data);
+      break;
+
+    case CommandIDs::HelpSalExample:
+      info.shortName=T("Sal Example ")+String(data);
+      break;
+    case CommandIDs::HelpSchemeExample:
+       info.shortName=T("Scheme Example ")+String(data);
+      break;
+   case CommandIDs::HelpSalTutorial:
+      info.shortName=T("Sal Tutorial ")+String(data);
+      break;
+    case CommandIDs::HelpSchemeTutorial:
+      info.shortName=T("Scheme Tutorial ")+String(data);
+      break;
+
     default:
       //      std::cout << "Grace commands: missing info for " << 
       //	CommandIDs::toString(id, true).toUTF8() << "\n";
@@ -983,8 +1048,10 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       Preferences::getInstance()->recentlyOpened.clear();
       break;
     case CommandIDs::HelpManual:
-    case CommandIDs::HelpExample:
-    case CommandIDs::HelpTutorial:
+    case CommandIDs::HelpSalExample:
+    case CommandIDs::HelpSchemeExample:
+    case CommandIDs::HelpSalTutorial:
+    case CommandIDs::HelpSchemeTutorial:
     case CommandIDs::HelpWebSite:
       Help::getInstance()->openHelp(info.commandID);
       break;

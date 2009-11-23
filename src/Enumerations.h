@@ -660,17 +660,12 @@ class CommandIDs
   // Help Menu
   static const CommandID HelpSymbolLookup = COMID(Help, 1);
   static const CommandID HelpManual = COMID(Help, 2);
-  static const CommandID HelpExample = COMID(Help, 3);
-  static const CommandID HelpTutorial = COMID(Help, 4);
-
-  static const CommandID HelpSalTutorial = COMID(Help, 5);
-  static const CommandID HelpSchemeTutorial = COMID(Help, 6);
-
-  static const CommandID HelpSalExample = COMID(Help, 7);
-  static const CommandID HelpSchemeExample = COMID(Help, 8);
-
-  static const CommandID HelpWebSite = COMID(Help, 9);
-  static const CommandID HelpShowDirectory = COMID(Help, 10);
+  static const CommandID HelpSalTutorial = COMID(Help, 3);
+  static const CommandID HelpSchemeTutorial = COMID(Help, 4);
+  static const CommandID HelpSalExample = COMID(Help, 5);
+  static const CommandID HelpSchemeExample = COMID(Help, 6);
+  static const CommandID HelpWebSite = COMID(Help, 7);
+  static const CommandID HelpShowDirectory = COMID(Help, 8);
 
   // Plotter commands
   static const CommandID PlotterNew = COMID(Plotter, 1);

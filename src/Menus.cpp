@@ -211,45 +211,38 @@ const PopupMenu CommandMenus::getHelpMenu(int wtype,
 					  ApplicationCommandManager* com2)
 {
   ApplicationCommandManager* comm=CommandManager::getInstance();
-  PopupMenu menu, mans, sals, examps, sites;
+  PopupMenu menu, mans, saltuts, scmtuts, salexamps, scmexamps, sites;
   Help* help=Help::getInstance();
 
   // Manuals
-  int size=jlimit(0, CommandMenus::NumHelpManual,
-		  help->getHelpSize(CommandIDs::HelpManual));
-  for (int i=0; i<size; i++)
-    mans.addCommandItem(comm, CommandIDs::HelpManual + i);
+  help->addHelpMenuItems(mans, T("Manuals"), CommandIDs::HelpManual, 8, comm);
   if (wtype==WindowTypes::TextEditor)
     {
       mans.addSeparator();
       mans.addCommandItem(com2, CommandIDs::EditorSymbolHelp);
     }
-  menu.addSubMenu(T("Documentation"), mans);
 
-  // Examples (CM3)
+  menu.addSubMenu(T("Manuals"), mans);
   if (!SysInfo::isGraceCL())
     {
-      size=jlimit(0, CommandMenus::NumHelpExample,
-		  help->getHelpSize(CommandIDs::HelpExample));
-      for (int i=0; i<size; i++)
-	examps.addCommandItem(comm, CommandIDs::HelpExample + i);
-      examps.addSeparator();
-      examps.addCommandItem(comm, CommandIDs::SndLibInsDialog);
-      menu.addSubMenu(T("Examples"), examps);
-    }
-  
-  // Sal Tutorials
-  size=jlimit(0, CommandMenus::NumHelpTutorial,
-	      help->getHelpSize(CommandIDs::HelpTutorial));
-  for (int i=0; i<size; i++)
-    sals.addCommandItem(comm, CommandIDs::HelpTutorial + i);
-  menu.addSubMenu(T("Sal Tutorials"), sals);
+      help->addHelpMenuItems(salexamps, T("Sal Examples"), CommandIDs::HelpSalExample, 32, comm);
+      help->addHelpMenuItems(scmexamps, T("Scheme Examples"), CommandIDs::HelpSchemeExample, 32, comm);
+      scmexamps.addSeparator();
+      scmexamps.addCommandItem(comm, CommandIDs::SndLibInsDialog);
 
-  // Websites
-  size=jlimit(0, CommandMenus::NumHelpWebSite,
-	      help->getHelpSize(CommandIDs::HelpWebSite));
-  for (int i=0; i<size; i++)
-    sites.addCommandItem(comm, CommandIDs::HelpWebSite + i);
+      help->addHelpMenuItems(saltuts, T("Sal Tutorials"), CommandIDs::HelpSalTutorial, 16, comm);
+      help->addHelpMenuItems(scmtuts, T("Scheme Tutorials"), CommandIDs::HelpSchemeTutorial, 16, comm);
+
+      menu.addSeparator();
+      menu.addSubMenu(T("Sal Tutorials"), saltuts);
+      menu.addSubMenu(T("Sal Examples"), salexamps);
+      menu.addSeparator();
+      menu.addSubMenu(T("Scheme Tutorials"), scmtuts);
+      menu.addSubMenu(T("Scheme Examples"), scmexamps);
+    }
+
+  help->addHelpMenuItems(sites, T("Web Sites"), CommandIDs::HelpWebSite, 8, comm);
+  menu.addSeparator();
   menu.addSubMenu(T("Web Sites"), sites);
 
   //  menu.addSeparator();
