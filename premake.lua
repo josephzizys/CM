@@ -331,7 +331,7 @@ for i = 1,3 do
      else
          error("--liblo: can't find " .. liblo .. "include/lo/lo.h")
       end
-      if os.fileexists(liblo .. "lib/liblo.a") then
+      if os.fileexists(liblo .. "lib/liblo.la") then
          add(mypackage.libpaths, liblo .. "lib")
          add(mypackage.links, "lo")
       else
