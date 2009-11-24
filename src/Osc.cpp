@@ -163,7 +163,7 @@ bool OscPort::isValidHost(String text)
       else
         return false;
     }
-  else if (text.containsOnly(T("AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz")))
+  else if (text.containsOnly(T("0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz.-")))
     return true;
   else
     return false;
