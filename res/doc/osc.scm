@@ -2,33 +2,21 @@
 ;; Sending and Receiving OSC messages.
 ;
 
-; Note: these examples were tested using liblo's example programs
-; 'example_server' and 'example_client' located in
-; liblo/examples/. Both of these demo apps are hardwired to use port
-; 7770. To run the examples with some other OSC app specify the
-; appropiate target port when you open the OSC connection.
+; To open an OSC connection specify input and output ports to
+; "osc:open".  You can specify a target machine using a string
+; "HOST:PORT" as the output connection, where HOST is a name or
+; internet number, e.g. "localhost:7770" or "128.174.102.16:7770"
 
-;
-;; Opening connections and sending messages
-;
-
-; To open an OSC connection you specify CM's input port and the target
-; output port to send data to. You can optionally provide a target
-; host by passing a string "hostip:port" as the target, for example
-; "localhost:57120" or "128.174.102.16:57110"
-
-; Let's open a connection for liblo's examples/example_server app
+; This example opens a connection for liblo's example_server app,
 ; which listens for messages on port 7770. We tell CM to listen for
 ; incoming messages on port 7779:
 
 (osc:open 7779 7770)
 
-; [Start up liblo/examples/client_server...]
+; Once a connection is established use "osc:message" to send messages
+; to the running target app:
 
-; Now that your OSC app is running and listening on your target port
-; you can send messages to it using "osc:message" :
-
-; Send just a path
+; Send just a path:
 
 (osc:message "/Hello World!")
 

@@ -375,6 +375,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("log2"), T("cm.html#log2"));
   cm.set(T("log10"), T("cm.html#log10"));
   cm.set(T("loop"), T("cm.html#loop"));
+  cm.set(T("make-automata"), T("cm.html#make-automata"));
   cm.set(T("make-cycle"), T("cm.html#make-cycle"));
   cm.set(T("make-graph"), T("cm.html#make-graph"));
   cm.set(T("make-heap"), T("cm.html#make-heap"));
@@ -431,6 +432,11 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("note"), T("cm.html#note"));
   cm.set(T("note?"), T("cm.html#note_"));
   cm.set(T("odds"), T("cm.html#odds"));
+  cm.set(T("osc:close"), T("cm.html#osc:close"));
+  cm.set(T("osc:hook"), T("cm.html#osc:hook"));
+  cm.set(T("osc:message"), T("cm.html#osc:message"));
+  cm.set(T("osc:open"), T("cm.html#osc:open"));
+
   cm.set(T("pause"), T("cm.html#pause"));
   cm.set(T("pc"), T("cm.html#pc"));
   cm.set(T("pi"), T("cm.html#pi"));
@@ -485,6 +491,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("spectrum-size"), T("cm.html#spectrum-size"));  
   cm.set(T("spectrum-time"), T("cm.html#spectrum-time"));  
   cm.set(T("sprout"), T("cm.html#sprout"));
+  cm.set(T("state"), T("cm.html#state"));
   cm.set(T("stop"), T("cm.html#stop"));
   cm.set(T("times"), T("cm.html#times"));
   cm.set(T("tail"), T("cm.html#tail"));
@@ -495,6 +502,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("unique"), T("cm.html#unique"));
   cm.set(T("vary"), T("cm.html#vary"));
   cm.set(T("wait"), T("cm.html#wait"));
+  cm.set(T("xy"), T("cm.html#xy"));
 }
 
 void Help::addSchemeSymbolHelp() 

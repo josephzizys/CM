@@ -174,7 +174,7 @@ void OscPort::showStatus()
   String text=String::empty; 
   if (isOpen)
     {
-      text << T("OSC: server=") 
+      text << T("OSC open: server=") 
            << getServerPort()
            << T(", target=")
            << getTargetHost()
@@ -184,7 +184,7 @@ void OscPort::showStatus()
     }
   else
     {
-      text << T("OSC: closed\n");
+      text << T("OSC closed.\n");
     }
   Console::getInstance()->printOutput(text);
 }

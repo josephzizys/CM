@@ -2309,9 +2309,17 @@ following rescaling or filtering operations:</p>
 
 <!-- DEFINITION -->
 <table class="entry" id="make-automata">
-  <tr class="salentry">
+  <tr class="entry">
     <td class="formals">
-      <span class="funcname">make-automata</span> (<var class="arg">cells</var>, <var class="arg">transfunc</var>, [<var class="optkey">title</var> = #f], [colormap = {}]  )
+      <span class="funcname">make-automata</span> (<var class="arg">cells</var>, <var class="arg">transfunc</var>,
+      [<var class="optkey">title</var> = #f],
+      [<var class="optkey">colormap</var> = {}],
+      [<var class="optkey">backgroundcolor</var> = <span class="string">"white"</span>],
+      [<var class="optkey">cellsize</var> = 50],
+      [<var class="optkey">cellbordersize</var> = 1],
+      [<var class="optkey">rows</var> = 1]
+
+      )
     </td>
     <!-- td class="label">SAL</td -->
   </tr>
@@ -2320,8 +2328,36 @@ following rescaling or filtering operations:</p>
 </table>
 <blockquote>
 <p>
-Creates a cellular automata holding the specified initial <var>cellstates</var> and using the specified transition function <var>transfunc</var>  to produce all subsequent states for each cell in the automata.
-For 2D automata <var>cellstates</var> is a list of lists where each sublist defines a row of inital states. The transition function implements the automata's state transition. It is called automatically and passed two arguments: the automata and the index of the current cell. The function then returns the next state of the cell at index. Inside the transition function you can use the function <a href="#cell-state"><code>cell-state</code></a> to access the current state of any cell.
+Creates a cellular automata holding the specified initial integer <var>cellstates</var> and a transition function <var>transfunc</var>  that will produce all subsequent states for each cell in the automata.
+For 2D automata <var>cellstates</var> is a list of lists where each sublist defines a row of initial states.</p>
+
+<p>
+The transition function <var>transfunc</var> is called automatically and passed two arguments, the automata and the index of the current cell, and must return the next state of the cell at index. Inside the transition function you can use the function <a href="#cell-state"><code>cell-state</code></a> to access the current state of any cell in the automata. </p>
+
+<p>To associate a graphical window with an automata provide the optional <var>window</var> and <var>colormap</var> arguments, where <var>window</var> is the title (string) of the new window and <var>colormap</var> is a list of state and color pairs: (<var>state1 color1 state2 color2 ... stateN colorN</var>). Note that an error is signaled if <var>window</var> is already open, and that the color map must contain all possible states of the automata along with their colors in the window. Colors are symbols or strings, the list of all colors is available in the globals <code>*colors*</code> variable. The <var>backgroundcolor</var> argument is a string or symbol naming the background color for the window. The <var>cellsize</var> argument is the size in pixels of each cell in the state window display. The <var>cellbordersize</var> argument is the size in pixels of space between each cell in the state window. The <var>rows</var> argument applies to 1-dimensional automata only, and specifies the number of successive generations to display in the window, where each generation is shown as a cell "row".
+</p>
+
+<p>Once an automata has been created use <a href="#state"><code>state</code></a> to read successive states from it.</p>
+
+<p> See the <span class="menuitem">Help&gt;Examples&gt;Cellular Automata</span> menu for <a href="automata.scm">examples of using cellular automata</a>.</p>
+
+
+</blockquote>
+
+<!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table class="entry" id="state">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">state</span> (<var class="arg">automata</var>,  [<var class="optkey">all</var> = #f])
+    </td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; integer or list</td></tr>
+</table>
+<blockquote>
+<p>
+Return the next integer state from <var>automata</var> or a list of all the states in the current generation if <var>all</var> is true.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -2329,9 +2365,9 @@ For 2D automata <var>cellstates</var> is a list of lists where each sublist defi
 
 <!-- DEFINITION -->
 <table class="entry" id="cell-state">
-  <tr class="salentry">
+  <tr class="entry">
     <td class="formals">
-      <span class="funcname">cell-state</span> (<var class="arg">automata</var>, <var class="arg">index</var>, [<var class="optkey">neighber</var> = 0] )
+      <span class="funcname">cell-state</span> (<var class="arg">automata</var>, <var class="arg">index</var>, [<var class="optkey">neighbor</var> = 0] )
     </td>
   </tr>
 
@@ -2339,14 +2375,27 @@ For 2D automata <var>cellstates</var> is a list of lists where each sublist defi
 </table>
 <blockquote>
 <p>
-Returns the current integer state the <var>automata</var> cell at <var>index</var>. To access neighboring cell values a <var>neighbor</var> increment to <var>index</var> ( positive or negative) can be optionally provide. Cell addresses are always accessed mod the size of the cell array so you do not have to perform bounds checking when you specify a neighbor increment. For 2D automata each <var>index</var> and <var>neighbor</var> is a two dimensional <code>xy</code> point. You specify 2D points and 2D increments  using the '(xy x y)' function, ie '(cell-state index (xy -1 -1))'  would access the value of the north-west neighbor of the current cell in a 2D automata.
+Returns the current integer state of the <var>automata</var> cell at <var>index</var>. If neighboring cells to <var>index</var> must be accessed provide a positive or negative <var>neighbor</var> increment to <var>index</var> . Cell addresses are always accessed mod the size of the cell array so you do not have to perform bounds checking when you specify a neighbor increment. For 2D automata each <var>index</var> and <var>neighbor</var> is a two dimensional <code>xy</code> point. You specify 2D points and 2D increments using the <a href="#xy"><code>xy</code></a> function, i.e. <code>(cell-state index (xy -1 -1))</code> would access the value of the north-west neighbor of the  cell at index in a 2D automata.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="xy">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">xy</span> (<var class="arg">x</var>, <var class="arg">y</var>)
+    </td>
+  </tr>
 
-
-
+  <tr><td class="retval" colspan="2">&rarr; integer</td></tr>
+</table>
+<blockquote>
+<p>
+Encodes <var>x</var> and <var>y</var> values -+2768 as a single point (integer) value.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 
 <h3 id="files">File System</h3>
@@ -2784,11 +2833,10 @@ Enables MIDI input only for the specified MIDI opcodes. Opcodes are integers bet
 <!-- END DEFINITION -->
 
 
-
 <h3 id="osc">OSC (Open Sound Control)</h3>
 
 <p>
-The OSC port provides input and output communication with other processes and programs via the <a href="http://opensoundcontrol.org/">Open Sound Control</a> protocol. To send or receive OSC messages first open an OSC connection using <span class="menuitem">Audio&gt;OSC&gt;Open Connection</span>, sending the <span class="string">"osc:open"</span> message to the port or calling the underlying osc function in your code. For example, the following calls are all equivalent:</p>
+The OSC port provides input and output communication with other processes via the <a href="http://opensoundcontrol.org/">Open Sound Control</a> protocol. To send and receive OSC messages first open an OSC connection via <span class="menuitem">Audio&gt;OSC&gt;Open Connection...</span> or by sending the <span class="string">"osc:open"</span> message to the port from code. For example, the following calls are all equivalent:</p>
 
 <div class="float">
   <pre class="code">
@@ -2800,7 +2848,7 @@ The OSC port provides input and output communication with other processes and pr
 </pre>
 </div>
 
-<p> See the <span class="menuitem">Help&gt;Examples&gt;OSC</span> menu for <a href="osc.sal">examples of using OSC</a>.
+<p> See the <span class="menuitem">Help&gt;Examples&gt;OSC</span> menu for <a href="osc.sal">examples of using OSC</a>.</p>
 
 <!-- DEFINITION -->
 <table id="osc:open" class="entry">
@@ -2846,19 +2894,19 @@ Sends an OSC message consisting of an OSC <var>path</var> (string) and followed 
 <div class="float">
   <table width="50%">
     <tr><th class="lcol">Data Tag</th> <th class="lcol">Osc Type</th>  </tr>
-    <tr> <td> <code>:i<code> </td> <td>32 bit integer</td> </tr>
-    <tr> <td> <code>:h<code> </td> <td>64 bit integer</td> </tr>
-    <tr> <td> <code>:f<code> </td> <td>32 bit float</td> </tr>
-    <tr> <td> <code>:d<code> </td> <td>64 bit float (double)</td> </tr>
-    <tr> <td> <code>:c<code> </td> <td>character</td> </tr>
-    <tr> <td> <code>:s<code> </td> <td>string</td> </tr>
-    <tr> <td> <code>:S<code> </td> <td>symbol</td> </tr>
-    <tr> <td> <code>:b<code> </td> <td>blob</td> </tr>
-    <tr> <td> <code>:m<code> </td> <td>midi</td> </tr>
-    <tr> <td> <code>:T<code> </td> <td>OSC true</td> </tr>
-    <tr> <td> <code>:F<code> </td> <td>OSC false</td> </tr>
-    <tr> <td> <code>:N<code> </td> <td>OSC nil</td> </tr>
-    <tr> <td> <code>:I<code> </td> <td>OSC infinitude</td> </tr>
+    <tr> <td> <code>:i</code> </td> <td>32 bit integer</td> </tr>
+    <tr> <td> <code>:h</code> </td> <td>64 bit integer</td> </tr>
+    <tr> <td> <code>:f</code> </td> <td>32 bit float</td> </tr>
+    <tr> <td> <code>:d</code> </td> <td>64 bit float (double)</td> </tr>
+    <tr> <td> <code>:c</code> </td> <td>character</td> </tr>
+    <tr> <td> <code>:s</code> </td> <td>string</td> </tr>
+    <tr> <td> <code>:S</code> </td> <td>symbol</td> </tr>
+    <tr> <td> <code>:b</code> </td> <td>blob</td> </tr>
+    <tr> <td> <code>:m</code> </td> <td>midi</td> </tr>
+    <tr> <td> <code>:T</code> </td> <td>OSC true</td> </tr>
+    <tr> <td> <code>:F</code> </td> <td>OSC false</td> </tr>
+    <tr> <td> <code>:N</code> </td> <td>OSC nil</td> </tr>
+    <tr> <td> <code>:I</code> </td> <td>OSC infinitude</td> </tr>
   </table>
 </div>
 
@@ -2956,7 +3004,9 @@ To send data to Fomus in Scheme or SAL code use the messages listed below or cal
 <div class="float">
   <pre class="code">
 <span class="command">send</span> <span class="string">"fms:note"</span>, 0, 1, 60
+
 (send <span class="string">"fms:note"</span> 0 1 60)
+
 (fms:note 0 1 60)
 </pre>
 </div>
