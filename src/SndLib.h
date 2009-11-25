@@ -27,6 +27,7 @@ class SndLib
   void updateAutoLoaded();
   void autoLoadInstruments();
   void openInstrumentBrowser();
+  void restoreInstruments(String directory=String::empty);
   juce_DeclareSingleton (SndLib, true)
 };
 

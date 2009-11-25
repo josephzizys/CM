@@ -198,6 +198,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::SndLibChannels + 2,
     CommandIDs::SndLibAutoPlay,
     CommandIDs::SndLibInsDialog,
+    CommandIDs::SndLibInsRestore,
 
     CommandIDs::CsoundPrefWriteAfter,
     CommandIDs::CsoundPrefPlayAfter,
@@ -359,7 +360,6 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::HelpSchemeTutorial + 14,
     CommandIDs::HelpSchemeTutorial + 15,
 
-
     CommandIDs::HelpWebSite + 0,
     CommandIDs::HelpWebSite + 1,
     CommandIDs::HelpWebSite + 2,
@@ -368,6 +368,12 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::HelpWebSite + 5,
     CommandIDs::HelpWebSite + 6,
     CommandIDs::HelpWebSite + 7,
+
+    CommandIDs::HelpSalTutorialsRestore,  
+    CommandIDs::HelpSchemeTutorialsRestore,
+    CommandIDs::HelpSalExamplesRestore,
+    CommandIDs::HelpSchemeExamplesRestore
+
   };
   commands.addArray(ids, sizeof(ids) / sizeof(CommandID));
 }
@@ -489,7 +495,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       info.shortName=T("Pitch Bend Size");
       break;
     case CommandIDs::MidiOutInstruments:
-      info.shortName=T("Instruments...");
+      info.shortName=T("MIDI Instruments...");
       info.setActive(MidiOutPort::getInstance()->isOpen());
       break;
     case CommandIDs::MidiOutFileSettings:
@@ -568,7 +574,11 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       info.setTicked(pref->getBoolProp(T("SndLibAutoPlay"), true));
       break;
     case CommandIDs::SndLibInsDialog:
-      info.shortName=T("Instruments...");
+      info.shortName=T("Open Instrument Browser...");
+      break;
+    case CommandIDs::SndLibInsRestore:
+      //info.shortName=T("Restore To Directory...");
+      info.shortName=T("Save All Instruments...");
       break;
       //
       // Csound Commands
@@ -748,11 +758,20 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
     case CommandIDs::HelpSchemeExample:
        info.shortName=T("Scheme Example ")+String(data);
       break;
-   case CommandIDs::HelpSalTutorial:
+    case CommandIDs::HelpSalTutorial:
       info.shortName=T("Sal Tutorial ")+String(data);
       break;
     case CommandIDs::HelpSchemeTutorial:
       info.shortName=T("Scheme Tutorial ")+String(data);
+      break;
+
+    case CommandIDs::HelpSalTutorialsRestore:
+    case CommandIDs::HelpSchemeTutorialsRestore:
+      info.shortName=T("Save All Tutorials...");
+      break;
+    case CommandIDs::HelpSalExamplesRestore:
+    case CommandIDs::HelpSchemeExamplesRestore:
+      info.shortName=T("Save All Examples...");
       break;
 
     default:
@@ -895,7 +914,9 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::AudioSettings:
       AudioManager::getInstance()->openAudioSettings();
       break;
+
 #ifdef SNDLIB
+
     case CommandIDs::SndLibSrate:
       {
 	int sr=SrateIDs::toSrate(data);
@@ -905,6 +926,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
 	Scheme::getInstance()->eval(st);
       }
       break;
+
     case CommandIDs::SndLibChannels:
       {
 	int ch=data;
@@ -914,6 +936,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
 	Scheme::getInstance()->eval(st);
       }
       break;
+
     case CommandIDs::SndLibAutoPlay:
       {
 	bool ap=!Preferences::getInstance()->
@@ -924,10 +947,17 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
 	Scheme::getInstance()->eval(st);
       }
       break;
+
     case CommandIDs::SndLibInsDialog:
       SndLib::getInstance()->openInstrumentBrowser();
       break;
+
+    case CommandIDs::SndLibInsRestore:
+      SndLib::getInstance()->restoreInstruments();
+      break;
+
 #endif
+
       //
       // Csound Commands
       //
@@ -1054,6 +1084,12 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
     case CommandIDs::HelpSchemeTutorial:
     case CommandIDs::HelpWebSite:
       Help::getInstance()->openHelp(info.commandID);
+      break;
+    case CommandIDs::HelpSalTutorialsRestore:
+    case CommandIDs::HelpSchemeTutorialsRestore:
+    case CommandIDs::HelpSalExamplesRestore:
+    case CommandIDs::HelpSchemeExamplesRestore:
+      Help::getInstance()->restoreToDirectory(comm);
       break;
     default:
       return false;

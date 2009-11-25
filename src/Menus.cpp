@@ -132,6 +132,7 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
   sndlib.addCommandItem(comm, CommandIDs::SndLibAutoPlay);
   sndlib.addSeparator();
   sndlib.addCommandItem(comm, CommandIDs::SndLibInsDialog);
+  sndlib.addCommandItem(comm, CommandIDs::SndLibInsRestore);
   menu.addSubMenu(T("SndLib"),sndlib);
 #endif
   PopupMenu csound;
@@ -226,12 +227,20 @@ const PopupMenu CommandMenus::getHelpMenu(int wtype,
   if (!SysInfo::isGraceCL())
     {
       help->addHelpMenuItems(salexamps, T("Sal Examples"), CommandIDs::HelpSalExample, 32, comm);
+      salexamps.addSeparator();
+      salexamps.addCommandItem(comm, CommandIDs::HelpSalExamplesRestore);
+
       help->addHelpMenuItems(scmexamps, T("Scheme Examples"), CommandIDs::HelpSchemeExample, 32, comm);
       scmexamps.addSeparator();
-      scmexamps.addCommandItem(comm, CommandIDs::SndLibInsDialog);
+      scmexamps.addCommandItem(comm, CommandIDs::HelpSchemeExamplesRestore);
 
       help->addHelpMenuItems(saltuts, T("Sal Tutorials"), CommandIDs::HelpSalTutorial, 16, comm);
+      saltuts.addSeparator();
+      saltuts.addCommandItem(comm, CommandIDs::HelpSalTutorialsRestore);
+
       help->addHelpMenuItems(scmtuts, T("Scheme Tutorials"), CommandIDs::HelpSchemeTutorial, 16, comm);
+      scmtuts.addSeparator();
+      scmtuts.addCommandItem(comm, CommandIDs::HelpSchemeTutorialsRestore);
 
       menu.addSeparator();
       menu.addSubMenu(T("Sal Tutorials"), saltuts);

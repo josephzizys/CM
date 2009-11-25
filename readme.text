@@ -167,36 +167,50 @@ svn co http://commonmusic.svn.sourceforge.net/svnroot/commonmusic/trunk cm
                                 DEVELOPING                                
 ==========================================================================
 
+The following shell commands assume you are in the toplevel cm directory
+
 To build with debugging info turned on:
 
-  make CONFIG=Debug
-
-To build universal (doesnt work yet...):
-
-  make CONFIG=Release TARGET_ARCH="-arch i386 -arch ppc"
+    make CONFIG=Debug
 
 To create the embedded Scheme runtime sources:
 
-  juce_bb scm src SchemeSources
+    juce_bb scm src SchemeSources
 
-To create the embedded instruments:
+To create the embedded SndLib instruments:
 
-  juce_bb res/ins src/ Instruments
+(
+    cd res/
+    mkdir tmp
+    cd ins
+    cp ins.xml ../tmp
+    zip ins.zip *.scm *.clm
+    mv ins.zip ../tmp/
+    cd ..
+    /usr/local/bin/juce_bb tmp/ ../src/ Instruments
+    rm -r tmp
+)
 
-  To ADD instruments do this first:
-  1. Copy the instrument file(s) to res/ins/files.
-  2. Edit res/ins/table.xml and rows for the new files.
-  3. Create the zip archive and generate the resource:
-  $ zip -r files.zip files/*.scm files/*.clm 
+To create the embedded documetation:
 
-To create the embedded documetation
-
-  juce_bb res/doc src/ Documentation
+(
+    cd res/
+    mkdir tmp
+    cd doc
+    cp doc.xml ../tmp
+    zip doc.zip *.html *.css *.scm *.sal
+    mv doc.zip ../tmp/
+    cd ..
+    /usr/local/bin/juce_bb tmp/ ../src/ Resources
+    rm -r tmp
+)
 
 To create the other Resources:
 
-  juce_bb res/font src/ Fonts
-  juce_bb res/images src/ Images
+(
+    juce_bb res/font src/ Fonts
+    juce_bb res/images src/ Images
+)
 
 To generate FFI files (requires a working 'format'...):
 
@@ -206,9 +220,11 @@ To generate FFI files (requires a working 'format'...):
 
 To regenerate ChickenBridge.cpp:
 
-  cd scm
-  csc -c++ -embedded -t ChickenBridge.scm
-  mv ChickenBridge.cpp ../src
+(
+    cd scm
+    csc -c++ -embedded -t ChickenBridge.scm
+    mv ChickenBridge.cpp ../src
+)
 
 ==========================================================================
                                   PORTING                                

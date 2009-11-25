@@ -45,7 +45,7 @@ SndLib::SndLib()
   : instable (0)
 {
 #ifdef GRACE
-  XmlDocument dataDoc (String((const char*)Instruments::table_xml)); 
+  XmlDocument dataDoc (String((const char*)Instruments::ins_xml)); 
   instable=dataDoc.getDocumentElement();
   String autos=Preferences::getInstance()->getStringProp(T("SndLibAutoLoad"));  
   if (autos.isNotEmpty())
@@ -423,6 +423,25 @@ String Scheme::getLispVersion()
   return str;
 }
 
+void SndLib::restoreInstruments(String dir)
+{
+#ifdef GRACE
+  FileChooser chooser (T("Choose Directory For Instruments"),
+                       File::getSpecialLocation(File::userHomeDirectory));
+  if (!chooser.browseForDirectory() )
+    return;
+  File directory (chooser.getResult());  
+  MemoryInputStream zipstream (Instruments::ins_zip,
+			       Instruments::ins_zipSize,
+			       false);
+  ZipFile archive(&zipstream, false);
+  archive.uncompressTo(directory, true);
+  Console::getInstance()->printOutput(T("Instruments saved in ") +
+                                      directory.getFullPathName() + 
+                                      T(".\n"));
+#endif
+}
+
 /*=======================================================================*
                                Instrument Browser
  *=======================================================================*/
@@ -554,8 +573,8 @@ String SndLib::getInstrumentCode(String filename)
 {
   // filename can be a single file or list of space delimited files
   // create zip archive from embedded resource
-  MemoryInputStream zipstream (Instruments::files_zip,
-			       Instruments::files_zipSize,
+  MemoryInputStream zipstream (Instruments::ins_zip,
+			       Instruments::ins_zipSize,
 			       false);
   StringArray filenames;
   filenames.addTokens(filename, false);
@@ -565,7 +584,7 @@ String SndLib::getInstrumentCode(String filename)
   for (int i=0; i<filenames.size(); i++)
     {
       // create file path in zip file
-      String path=T("files/")+filenames[i];
+      String path=filenames[i];
       int index = archive.getIndexOfFileName(path);
       if (index<0)
 	continue;

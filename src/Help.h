@@ -37,7 +37,7 @@ class Help
   void openHelpInBrowser(String url);
   void openHelpInEditor(String path, String code);  
   void symbolHelp(String sym, String helppath) ;
-
+  void restoreToDirectory(CommandID id);
   String getHelpFileText(String filename);
   XmlElement* getXmlMenu(String title);
   XmlElement* getXmlMenuItem(String title, int index);

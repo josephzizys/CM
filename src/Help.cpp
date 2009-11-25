@@ -240,6 +240,47 @@ void Help::openHelpInEditor(String path, String code)
   new TextEditorWindow(File::nonexistent, code, synt, path);
 }
 
+void Help::restoreToDirectory(CommandID command)
+{
+  String title=T("Choose Directory for ");
+  String name;
+  switch (command)
+    {
+    case CommandIDs::HelpSalTutorialsRestore:
+      name=T("Sal Tutorials");
+      title << T("Tutorials");
+      break;
+    case CommandIDs::HelpSchemeTutorialsRestore:
+      name=T("Scheme Tutorials");
+      title << T("Tutorials");
+      break;
+    case CommandIDs::HelpSalExamplesRestore:
+      name=T("Sal Examples");
+      title << T("Examples");
+      break;
+    case CommandIDs::HelpSchemeExamplesRestore:
+      name=T("Scheme Examples");
+      title << T("Examples");
+      break;
+    default:
+      return;
+    }
+
+  XmlElement* menu=getXmlMenu(name);
+  if (!menu) return;
+  FileChooser chooser (title, File::getSpecialLocation (File::userHomeDirectory));
+  if (!chooser.browseForDirectory() )
+    return;
+  File directory (chooser.getResult());
+  forEachXmlChildElement(*menu, item)
+    {
+      String file=item->getStringAttribute(T("file"));
+      String text=getHelpFileText(file);
+      directory.getChildFile(file).replaceWithText(text);
+    }
+  Console::getInstance()->printOutput(name + T(" saved in ") + directory.getFullPathName() + T(".\n"));
+}
+
 /*=======================================================================*
                                Symbol Help
  *=======================================================================*/

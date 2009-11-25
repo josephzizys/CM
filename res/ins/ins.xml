@@ -23,7 +23,7 @@
     <instrument Name="dissolve-fade" File="fade.scm" Category="Sound Processing" Comment="dissolving fade in the frequency domain" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="drone" File="bagpipes.scm" Category="Waveshaping" Comment="Peter Commons' bagpipe drone (bag.clm)" Examples="bagpipes.clm" Depend="" AutoLoad="no" />
     <instrument Name="env" File="env.scm" Category="Support" Comment="various envelope generators" Examples="" Depend="" AutoLoad="no" />
-    <instrument Name="expandn" File="expandn.scm" Category="Granular Synthesis" Comment="granular synthesis (Michael Klingbeil)" Examples="expandn.clm" Depend="" AutoLoad="no" />
+    <instrument Name="expandn" File="expandn.scm" Category="Granular Synthesis" Comment="granular synthesis (Michael Klingbeil)" Examples="expandn.clm" Depend="env.scm" AutoLoad="no" />
     <instrument Name="expfil" File="expfil.scm" Category="Granular Synthesis" Comment="granulate two files interleaved" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="expsnd" File="expsnd.scm" Category="Granular Synthesis" Comment="granulate with envelopes on various fields" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="expsrc" File="expsrc.scm" Category="Granular Synthesis" Comment="granulate and src to mimic phase vocoder tricks" Examples="" Depend="" AutoLoad="no" />

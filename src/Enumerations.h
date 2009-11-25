@@ -645,7 +645,8 @@ class CommandIDs
   static const CommandID SndLibChannels = COMID(SndLib, 2);
   static const CommandID SndLibAutoPlay = COMID(SndLib, 3);
   static const CommandID SndLibInsDialog = COMID(SndLib, 4);
-  static const CommandID SndLibAutoLoad = COMID(SndLib, 4);
+  static const CommandID SndLibAutoLoad = COMID(SndLib, 5);
+  static const CommandID SndLibInsRestore = COMID(SndLib, 6);
 
   // Scheduler
   static const CommandID SchedulerStop = COMID(Scheduler, 1);
@@ -666,6 +667,11 @@ class CommandIDs
   static const CommandID HelpSchemeExample = COMID(Help, 6);
   static const CommandID HelpWebSite = COMID(Help, 7);
   static const CommandID HelpShowDirectory = COMID(Help, 8);
+
+  static const CommandID HelpSalTutorialsRestore = COMID(Help, 9);  
+  static const CommandID HelpSchemeTutorialsRestore = COMID(Help, 10);  
+  static const CommandID HelpSalExamplesRestore = COMID(Help, 11);  
+  static const CommandID HelpSchemeExamplesRestore = COMID(Help, 12);  
 
   // Plotter commands
   static const CommandID PlotterNew = COMID(Plotter, 1);
