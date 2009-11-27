@@ -121,23 +121,23 @@ bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
       //std::cout << userargs[i].toUTF8() << std::endl;
       bool istr = true, eatnext = false;
       if (i + 1 < userargs.size()) {
-	if (userargs[i + 1] == "#f" || userargs[i + 1] == "#F" || userargs[i + 1] == "nil" || userargs[i + 1] == "NIL") {
+	if (userargs[i + 1] == T("#f") || userargs[i + 1] == T("#F") || userargs[i + 1] == T("nil") || userargs[i + 1] == T("NIL")) {
 	  istr = false;
 	  eatnext = true;
-	} else if (userargs[i + 1] == "#t" || userargs[i + 1] == "#T" || userargs[i + 1] == "t" || userargs[i + 1] == "T") {
+	} else if (userargs[i + 1] == T("#t") || userargs[i + 1] == T("#T") || userargs[i + 1] == T("t") || userargs[i + 1] == T("T")) {
 	  eatnext = true;
 	}
       }
-      if ((userargs[i] == ":run" || userargs[i] == "run:" || userargs[i] == "run" ||
-	   userargs[i] == ":RUN" || userargs[i] == "RUN:" || userargs[i] == "RUN") && istr) {
+      if ((userargs[i] == T(":run") || userargs[i] == T("run:") || userargs[i] == T("run") ||
+	   userargs[i] == T(":RUN") || userargs[i] == T("RUN:") || userargs[i] == T("RUN")) && istr) {
 	dorun = true;
-      } else if ((userargs[i] == ":clear" || userargs[i] == "clear:" || userargs[i] == "clear" ||
-		  userargs[i] == ":CLEAR" || userargs[i] == "CLEAR:" || userargs[i] == "CLEAR") && istr) {
+      } else if ((userargs[i] == T(":clear") || userargs[i] == T("clear:") || userargs[i] == T("clear") ||
+		  userargs[i] == T(":CLEAR") || userargs[i] == T("CLEAR:") || userargs[i] == T("CLEAR")) && istr) {
 	clrsc = true; //clearScore();
-      } else if ((userargs[i] == ":new" || userargs[i] == "new:" || userargs[i] == "new" ||
-		  userargs[i] == ":NEW" || userargs[i] == "NEW:" || userargs[i] == "NEW") && istr) {
+      } else if ((userargs[i] == T(":new") || userargs[i] == T("new:") || userargs[i] == T("new") ||
+		  userargs[i] == T(":NEW") || userargs[i] == T("NEW:") || userargs[i] == T("NEW")) && istr) {
 	newsc = true;
-      } else if (userargs[i] == ":err" && istr) {
+      } else if (userargs[i] == T(":err") && istr) {
 	return true;
       } else { // try to parse XML
 	//std::cout << "Trying to parse |" << userargs[i].toUTF8() << "|" << std::endl;
@@ -609,6 +609,55 @@ void Fomus::sendXmlEntry(XmlElement& xml) // notes, rests and marks
   d = xml.getChildByName(T("sets")); if (d) sendXmlSets(*d, fomus_par_note_settingval, fomus_act_set);
 }
 
+#if defined(JUCE_WIN32)
+struct badhex {};
+
+double atohf(const char* str) {
+  uint64 sto = 0; // juce should define uint64
+  bool pa = false, pa0 = false;
+  bool neg = false;
+  for (const char *x = str; x != 0; ++x) {
+    switch (*x) {
+    case '-':
+      if (pa0 || pa || neg) throw badhex();
+      neg = true;
+      break;
+    case 'x':
+    case 'X':
+      if (!pa0 || pa) throw badhex();
+      pa = true;
+      break;
+    case 'p':
+    case 'P': {
+      int d = atoi(x + 1);
+      double ret = sto;
+      if (d >= 0) {
+	for (int i = 0; i < d; ++i) ret *= 2;
+      } else {
+	for (int i = 0; i > d; --i) ret /= 2;
+      }
+      return neg ? -ret : ret;
+    }
+    case '0':
+      if (!pa0) {
+	pa0 = true;
+	break;
+      }
+    default:
+      if (!pa) throw badhex();
+      sto *= 16;
+      if (*x >= '0' && *x <= '9') {
+	sto += (*x - '0');
+      } else if (*x >= 'a' && *x <= 'f') {
+	sto += (*x - 'a' + 10);
+      } else if (*x >= 'A' && *x <= 'F') {
+	sto += (*x - 'A' + 10);
+      } else throw badhex();
+    }
+  }
+}
+#endif
+
 // numbers, strings, lists, etc..
 void Fomus::sendXmlVal(XmlElement& xml, fomus_param par, 
 		       fomus_action act, whichstruct wh, // wh = what object are we expecting based on context
@@ -620,7 +669,11 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
     rval(par, act, atol(mustExist(xml.getChildByName(T("n")), "numerator")->getAllSubText()),
 	 atol(mustExist(xml.getChildByName(T("d")), "denominator")->getAllSubText()));
   } else if (xml.hasTagName(T("f"))) {
+#if defined(JUCE_WIN32)
+    fval(par, act, atohf(xml.getAllSubText()));
+#else
     fval(par, act, atof(xml.getAllSubText()));
+#endif    
   } else if (xml.hasTagName(T("s"))) {
     //#warning "switch (wh) ..."
     sval(par, act, xml.getAllSubText());
@@ -724,8 +777,8 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
     }
   } else if (xml.hasTagName(T("b"))) {
     String v(xml.getAllSubText());
-    if (v == "f" || v == "F" || v == "#f" || v == "false" || v == "nil" || v == "NIL") ival(par, act, 0);
-    else if (v == "t" || v == "T" || v == "#t" || v == "true") ival(par, act, 1);
+    if (v == T("f") || v == T("F") || v == T("#f") || v == T("false") || v == T("nil") || v == T("NIL")) ival(par, act, 0);
+    else if (v == T("t") || v == T("T") || v == T("#t") || v == T("true")) ival(par, act, 1);
     else throw xmlerror("expected boolean value");
   } else {
     //std::cout << (char*)xml.getTagName().toUTF8() << std::endl;
@@ -887,7 +940,7 @@ private:
 };
 bool fomus_other::valid_aux() {
   //remove();
-  fapi_fomus_parse(fom, (what0() + ' ' + (chstr.isEmpty() ? String("<>") : (chstr[0] != '(' && chstr[0] != '<' ? (String("<") << chstr << '>') : chstr))).toUTF8());
+  fapi_fomus_parse(fom, (what0() + String(" ") + (chstr.isEmpty() ? String("<>") : (chstr[0] != '(' && chstr[0] != '<' ? (String("<") << chstr << String(">")) : chstr))).toUTF8());
   if (*fapi_fomus_err) return false;
   struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
   id = fapi_module_id(x.obj);
