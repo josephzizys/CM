@@ -1358,6 +1358,6 @@ int osc_send(char* path, SCHEMEOBJECT list, SCHEMEOBJECT s7false)
 int osc_open(char* port, char* targ){return -1;}
 bool osc_open_p(){return false;}
 int osc_close(){return -1;}
-int osc_send(char* path, SCHEMEOBJECT alist){return -1;}
+int osc_send(char* path, SCHEMEOBJECT alist, SCHEMEOBJECT scmfalse){return -1;}
 void osc_set_hook(bool hook){}
 #endif
