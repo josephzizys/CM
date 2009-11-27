@@ -358,6 +358,8 @@ for i = 1,3 do
       add(mypackage.linkoptions, "-framework OpenGL")
       add(mypackage.linkoptions, "-framework AGL")
       add(mypackage.linkoptions, "-framework QuickTime")
+      add(mypackage.linkoptions, "-framework QTKit")
+      add(mypackage.linkoptions, "-framework DiscRecording")
       add(mypackage.linkoptions, "-framework WebKit")
       add(mypackage.linkoptions, "-framework IOKIT")
       if (grace or gracecl) then

@@ -87,7 +87,11 @@ class Transport
     pathRewind.addRectangle(-1.8f,0,0.3f,2.0f);
     pathRewind.addTriangle(0,0,0,2.0f,-1.2f,1.0f);
     imageRewind.setPath(pathRewind);
+#if ( JUCE_MINOR_VERSION < 50 )
     imageRewind.setSolidFill(Colours::white);
+#else
+    imageRewind.setFillColour(Colours::white);
+#endif
     b->setImages(&imageRewind);
   }
   
@@ -98,8 +102,13 @@ class Transport
     pathBack.addTriangle(0,0,0,2.0f,-1.2f,1.0f);
     pathBack.addTriangle(1.2f,0,1.2f,2.0f,0,1.0f);
     imageBack.setPath(pathBack);
+#if ( JUCE_MINOR_VERSION < 50 )
     imageBack.setSolidFill(Colours::white);
-      b->setImages(&imageBack);
+#else
+    imageBack.setFillColour(Colours::white);
+#endif
+
+    b->setImages(&imageBack);
   }
   
   void drawPlayFromBeginning(DrawableButton* b)
@@ -109,7 +118,12 @@ class Transport
     pathPlayFromBeginning.addTriangle(0,0,0,2.0f,1.2f,1.0f);
     pathPlayFromBeginning.addRectangle(-0.6f,0,0.3f,2.0f);
     imagePlayFromBeginning.setPath(pathPlayFromBeginning);
+#if ( JUCE_MINOR_VERSION < 50 )
     imagePlayFromBeginning.setSolidFill(Colours::white);
+#else
+    imagePlayFromBeginning.setFillColour(Colours::white);
+#endif
+
     b->setImages(&imagePlayFromBeginning);
   }
   
@@ -119,7 +133,12 @@ class Transport
     Path pathPlay;
     pathPlay.addTriangle(0,0,0,2.0f,1.2f,1.0f);
     imagePlay.setPath(pathPlay);
+#if ( JUCE_MINOR_VERSION < 50 )
     imagePlay.setSolidFill(Colours::white);
+#else
+    imagePlay.setFillColour(Colours::white);
+#endif
+
     b->setImages(&imagePlay);
   }
   
@@ -130,7 +149,11 @@ class Transport
     pathPause.addRectangle(0,0,0.3f,1.0f);
     pathPause.addRectangle(0.6f,0,0.3f,1.0f);
     imagePause.setPath(pathPause);
+#if ( JUCE_MINOR_VERSION < 50 )
     imagePause.setSolidFill(Colours::white);
+#else
+    imagePause.setFillColour(Colours::white);
+#endif
     b->setImages(&imagePause);
   }
   
@@ -140,7 +163,11 @@ class Transport
     Path pathStop;
     pathStop.addRectangle(0,0,1.0f,1.0f);
     imageStop.setPath(pathStop);
+#if ( JUCE_MINOR_VERSION < 50 )
     imageStop.setSolidFill(Colours::white);
+#else
+    imageStop.setFillColour(Colours::white);
+#endif
     b->setImages(&imageStop);
   }
   
@@ -151,7 +178,11 @@ class Transport
     pathForward.addTriangle(0,0,0,2.0f,1.2f,1.0f);
     pathForward.addTriangle(-1.2f,0,-1.2f,2.0f,0,1.0f);
     imageForward.setPath(pathForward);
+#if ( JUCE_MINOR_VERSION < 50 )
     imageForward.setSolidFill(Colours::white);
+#else
+    imageForward.setFillColour(Colours::white);
+#endif
     b->setImages(&imageForward);
   }
   
@@ -164,7 +195,11 @@ class Transport
     pathPlayRepeats.addEllipse(-0.4f,0.25f,0.2f,0.2f);
     pathPlayRepeats.addEllipse(-0.4f,0.75f,0.2f,0.2f);
     imagePlayRepeats.setPath(pathPlayRepeats);
+#if ( JUCE_MINOR_VERSION < 50 )
     imagePlayRepeats.setSolidFill(Colours::white);
+#else
+    imagePlayRepeats.setFillColour(Colours::white);
+#endif
     b->setImages(&imagePlayRepeats);
   }
   

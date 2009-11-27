@@ -316,7 +316,11 @@ bool CLProcessThread::readNextMessageInt()
   
   juce::uint32 messageHeader[2];
   const int bytes = (socket != 0) 
+#if (JUCE_MINOR_VERSION<50)
     ? socket->read (messageHeader, sizeof (messageHeader))
+#else
+    ? socket->read (messageHeader, sizeof (messageHeader), false)
+#endif
     : pipe->read (messageHeader, sizeof (messageHeader));
   
   if (bytes == sizeof (messageHeader) )
@@ -336,7 +340,11 @@ bool CLProcessThread::readNextMessageInt()
 	      const int numThisTime = jmin (bytesInMessage, 65536);
 	      const int bytesIn = (socket != 0) 
 		? socket->read(((char*)messageData.getData())+bytesRead, 
+#if (JUCE_MINOR_VERSION<50)
 			       numThisTime)
+#else
+			       numThisTime, false)
+#endif
 		: pipe->read(((char*) messageData.getData())+bytesRead,
 			     numThisTime);
 	      

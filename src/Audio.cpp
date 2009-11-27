@@ -85,8 +85,13 @@ void AudioManager::openAudioFilePlayer(File file, bool play)
 void AudioManager::openAudioSettings()
 {
   // Open an AudioDeviceSelectorComponent
-  AudioDeviceSelectorComponent comp
-    (*AudioManager::getInstance(), 0, 0, 2, 2, true, false);
+
+#if (JUCE_MINOR_VERSION<50)
+  AudioDeviceSelectorComponent comp (*AudioManager::getInstance(), 0, 0, 2, 2, true, false);
+#else
+  AudioDeviceSelectorComponent comp (*AudioManager::getInstance(), 0, 2, 0, 2, false, false, true, false);
+#endif
+
   // ...and show it in a DialogWindow...
   comp.setSize(400, 200);
   int b=0, r=0;
@@ -180,7 +185,11 @@ AudioFilePlayer::AudioFilePlayer ()
       // ..and connect the mixer to our source player.
       audioSourcePlayer.setSource (&mixerSource);
       // start the IO device pulling its data from our callback..
+#if (JUCE_MINOR_VERSION<50)
       AudioManager::getInstance()->setAudioCallback (this);
+#else
+      AudioManager::getInstance()->addAudioCallback (this);
+#endif
     }
   else
     {
@@ -190,7 +199,11 @@ AudioFilePlayer::AudioFilePlayer ()
 
 AudioFilePlayer::~AudioFilePlayer()
 {
+#if (JUCE_MINOR_VERSION<50)
   audioDeviceManager.setAudioCallback (0);
+#else
+  audioDeviceManager.removeAudioCallback (this);
+#endif
   transportSource.removeChangeListener (this);
   transportSource.setSource (0);
   deleteAndZero (currentAudioFileSource);

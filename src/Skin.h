@@ -16,16 +16,24 @@ class WindowsSkin : public juce::LookAndFeel
 public:
   juce::Font fontMenuBar;
 
-  WindowsSkin() : fontMenuBar(juce::Font(20,0))
+  WindowsSkin() : fontMenuBar(juce::Font(16,0))
   {
     //Create the default font.
     MemoryInputStream
       defaultFontTypefaceStream(Fonts::vera_typeface, 
 				Fonts::vera_typefaceSize, 
 				false);
+#if (JUCE_MINOR_VERSION<50)
     Typeface defaultTypeface(defaultFontTypefaceStream);
     fontMenuBar = juce::Font(defaultTypeface);
     fontMenuBar.setHeight(15);
+#else
+    // DOESNT WORK
+    //    CustomTypeface defaultTypeface(defaultFontTypefaceStream);
+    //    Typeface::Ptr RefTypeface = juce::ReferenceCountedObjectPtr<juce::Typeface>(&defaultTypeface);
+    //    fontMenuBar = juce::Font( RefTypeface);
+    //    fontMenuBar.setHeight(15);
+#endif
   }
 
   virtual ~WindowsSkin(){}
