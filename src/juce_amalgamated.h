@@ -2,29 +2,23 @@
   ==============================================================================
 
    This file is part of the JUCE library - "Jules' Utility Class Extensions"
-   Copyright 2004-7 by Raw Material Software ltd.
+   Copyright 2004-9 by Raw Material Software Ltd.
 
   ------------------------------------------------------------------------------
 
-   JUCE can be redistributed and/or modified under the terms of the
-   GNU General Public License, as published by the Free Software Foundation;
-   either version 2 of the License, or (at your option) any later version.
+   JUCE can be redistributed and/or modified under the terms of the GNU General
+   Public License (Version 2), as published by the Free Software Foundation.
+   A copy of the license is included in the JUCE distribution, or can be found
+   online at www.gnu.org/licenses.
 
-   JUCE is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with JUCE; if not, visit www.gnu.org/licenses or write to the
-   Free Software Foundation, Inc., 59 Temple Place, Suite 330,
-   Boston, MA 02111-1307 USA
+   JUCE is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+   A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
   ------------------------------------------------------------------------------
 
-   If you'd like to release a closed-source product which uses JUCE, commercial
-   licenses are also available: visit www.rawmaterialsoftware.com/juce for
-   more information.
+   To release a closed-source product which uses JUCE, commercial licenses are
+   available: visit www.rawmaterialsoftware.com/juce for more information.
 
   ==============================================================================
 */
@@ -66,7 +60,7 @@
     See also SystemStats::getJUCEVersion() for a string version.
 */
 #define JUCE_MAJOR_VERSION      1
-#define JUCE_MINOR_VERSION      46
+#define JUCE_MINOR_VERSION      50
 
 /** Current Juce version number.
 
@@ -77,6 +71,144 @@
     See also SystemStats::getJUCEVersion() for a string version.
 */
 #define JUCE_VERSION            ((JUCE_MAJOR_VERSION << 16) + (JUCE_MINOR_VERSION << 8))
+
+/********* Start of inlined file: juce_TargetPlatform.h *********/
+#ifndef __JUCE_TARGETPLATFORM_JUCEHEADER__
+#define __JUCE_TARGETPLATFORM_JUCEHEADER__
+
+/*  This file figures out which platform is being built, and defines some macros
+    that the rest of the code can use for OS-specific compilation.
+
+    Macros that will be set here are:
+
+    - One of JUCE_WINDOWS, JUCE_MAC or JUCE_LINUX.
+    - Either JUCE_32BIT or JUCE_64BIT, depending on the architecture.
+    - Either JUCE_LITTLE_ENDIAN or JUCE_BIG_ENDIAN.
+    - Either JUCE_INTEL or JUCE_PPC
+    - Either JUCE_GCC or JUCE_MSVC
+*/
+
+#if (defined (_WIN32) || defined (_WIN64))
+  #define       JUCE_WIN32 1
+  #define       JUCE_WINDOWS 1
+#elif defined (LINUX) || defined (__linux__)
+  #define     JUCE_LINUX 1
+#elif defined(__APPLE_CPP__) || defined(__APPLE_CC__)
+  #include <CoreFoundation/CoreFoundation.h> // (needed to find out what platform we're using)
+
+  #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
+    #define     JUCE_IPHONE 1
+  #else
+    #define     JUCE_MAC 1
+  #endif
+#else
+  #error "Unknown platform!"
+#endif
+
+#if JUCE_WINDOWS
+  #ifdef _MSC_VER
+    #ifdef _WIN64
+      #define JUCE_64BIT 1
+    #else
+      #define JUCE_32BIT 1
+    #endif
+  #endif
+
+  #ifdef _DEBUG
+    #define JUCE_DEBUG 1
+  #endif
+
+  /** If defined, this indicates that the processor is little-endian. */
+  #define JUCE_LITTLE_ENDIAN 1
+
+  #define JUCE_INTEL 1
+#endif
+
+#if JUCE_MAC
+
+  #ifndef NDEBUG
+    #define JUCE_DEBUG 1
+  #endif
+
+  #ifdef __LITTLE_ENDIAN__
+    #define JUCE_LITTLE_ENDIAN 1
+  #else
+    #define JUCE_BIG_ENDIAN 1
+  #endif
+
+  #if defined (__ppc__) || defined (__ppc64__)
+    #define JUCE_PPC 1
+  #else
+    #define JUCE_INTEL 1
+  #endif
+
+  #ifdef __LP64__
+    #define JUCE_64BIT 1
+  #else
+    #define JUCE_32BIT 1
+  #endif
+
+  #if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_4
+    #error "Building for OSX 10.3 is no longer supported!"
+  #endif
+
+  #ifndef MAC_OS_X_VERSION_10_5
+    #error "To build with 10.4 compatibility, use a 10.5 or 10.6 SDK and set the deployment target to 10.4"
+  #endif
+
+#endif
+
+#if JUCE_IPHONE
+
+  #ifndef NDEBUG
+    #define JUCE_DEBUG 1
+  #endif
+
+  #ifdef __LITTLE_ENDIAN__
+    #define JUCE_LITTLE_ENDIAN 1
+  #else
+    #define JUCE_BIG_ENDIAN 1
+  #endif
+#endif
+
+#if JUCE_LINUX
+
+  #ifdef _DEBUG
+    #define JUCE_DEBUG 1
+  #endif
+
+  // Allow override for big-endian Linux platforms
+  #ifndef JUCE_BIG_ENDIAN
+    #define JUCE_LITTLE_ENDIAN 1
+  #endif
+
+  #if defined (__LP64__) || defined (_LP64)
+    #define JUCE_64BIT 1
+  #else
+    #define JUCE_32BIT 1
+  #endif
+
+  #define JUCE_INTEL 1
+#endif
+
+// Compiler type macros.
+
+#ifdef __GNUC__
+  #define JUCE_GCC 1
+#elif defined (_MSC_VER)
+  #define JUCE_MSVC 1
+
+  #if _MSC_VER >= 1400
+    #define JUCE_USE_INTRINSICS 1
+  #endif
+#else
+  #error unknown compiler
+#endif
+
+#endif   // __JUCE_TARGETPLATFORM_JUCEHEADER__
+/********* End of inlined file: juce_TargetPlatform.h *********/
+
+  // (sets up the various JUCE_WINDOWS, JUCE_MAC, etc flags)
 
 /********* Start of inlined file: juce_Config.h *********/
 #ifndef __JUCE_CONFIG_JUCEHEADER__
@@ -121,13 +253,31 @@
     (This only affects a Win32 build)
 */
 #ifndef JUCE_ASIO
-  //#define JUCE_ASIO 1
+  #define JUCE_ASIO 1
+#endif
+
+/** Comment out this macro to disable the Windows WASAPI audio device type.
+*/
+#ifndef JUCE_WASAPI
+//  #define JUCE_WASAPI 1
+#endif
+
+/** Comment out this macro to disable the Windows WASAPI audio device type.
+*/
+#ifndef JUCE_DIRECTSOUND
+  #define JUCE_DIRECTSOUND 1
 #endif
 
 /** Comment out this macro to disable building of ALSA device support on Linux.
 */
 #ifndef JUCE_ALSA
   #define JUCE_ALSA 1
+#endif
+
+/** Comment out this macro to disable building of JACK device support on Linux.
+*/
+#ifndef JUCE_JACK
+  #define JUCE_JACK 1
 #endif
 
 /** Comment out this macro if you don't want to enable QuickTime or if you don't
@@ -139,8 +289,8 @@
     On Windows, if you enable this, you'll need to have the QuickTime SDK
     installed, and its header files will need to be on your include path.
 */
-#if ! (defined (JUCE_QUICKTIME) || defined (LINUX) || (defined (_WIN32) && ! defined (_MSC_VER)))
-  //#define JUCE_QUICKTIME 1
+#if ! (defined (JUCE_QUICKTIME) || JUCE_LINUX || JUCE_IPHONE || (JUCE_WINDOWS && ! JUCE_MSVC))
+  #define JUCE_QUICKTIME 1
 #endif
 
 /** Comment out this macro if you don't want to enable OpenGL or if you don't
@@ -148,7 +298,7 @@
     OpenGLComponent class will be unavailable.
 */
 #ifndef JUCE_OPENGL
-  //#define JUCE_OPENGL 1
+  #define JUCE_OPENGL 1
 #endif
 
 /** These flags enable the Ogg-Vorbis and Flac audio formats.
@@ -157,18 +307,31 @@
     avoid bloating your codebase with them.
 */
 #ifndef JUCE_USE_FLAC
-  //#define JUCE_USE_FLAC 1
+  #define JUCE_USE_FLAC 1
 #endif
 
 #ifndef JUCE_USE_OGGVORBIS
-  //#define JUCE_USE_OGGVORBIS 1
+  #define JUCE_USE_OGGVORBIS 1
 #endif
 
-/** This flag lets you enable support for CD-burning. You might want to disable
+/** This flag lets you enable the AudioCDBurner class. You might want to disable
     it to build without the MS SDK under windows.
 */
-#if (! defined (JUCE_USE_CDBURNER)) && ! (defined (_WIN32) && ! defined (_MSC_VER))
-  //#define JUCE_USE_CDBURNER 1
+#if (! defined (JUCE_USE_CDBURNER)) && ! (JUCE_WINDOWS && ! JUCE_MSVC)
+  #define JUCE_USE_CDBURNER 1
+#endif
+
+/** This flag lets you enable support for the AudioCDReader class. You might want to disable
+    it to build without the MS SDK under windows.
+*/
+#ifndef JUCE_USE_CDREADER
+  #define JUCE_USE_CDREADER 1
+#endif
+
+/** Enabling this provides support for cameras, using the CameraDevice class
+*/
+#if JUCE_QUICKTIME && ! defined (JUCE_USE_CAMERA)
+//  #define JUCE_USE_CAMERA 1
 #endif
 
 /** Enabling this macro means that all regions that get repainted will have a coloured
@@ -196,21 +359,61 @@
 /** Enabling this builds support for VST audio plugins.
     @see VSTPluginFormat, AudioPluginFormat, AudioPluginFormatManager, JUCE_PLUGINHOST_AU
 */
-//#define JUCE_PLUGINHOST_VST 1
+#ifndef JUCE_PLUGINHOST_VST
+//  #define JUCE_PLUGINHOST_VST 1
+#endif
 
 /** Enabling this builds support for AudioUnit audio plugins.
     @see AudioUnitPluginFormat, AudioPluginFormat, AudioPluginFormatManager, JUCE_PLUGINHOST_VST
 */
-//#define JUCE_PLUGINHOST_AU 1
+#ifndef JUCE_PLUGINHOST_AU
+//  #define JUCE_PLUGINHOST_AU 1
+#endif
 
-/** Disabling this will avoid linking to any UI code. This is handy for
+/** Enabling this will avoid including any UI code in the build. This is handy for
     writing command-line utilities, e.g. on linux boxes which don't have some
     of the UI libraries installed.
-
-    (On mac and windows, this won't generally make much difference to the build).
 */
-#ifndef JUCE_BUILD_GUI_CLASSES
-  #define JUCE_BUILD_GUI_CLASSES 1
+#ifndef JUCE_ONLY_BUILD_CORE_LIBRARY
+  //#define JUCE_ONLY_BUILD_CORE_LIBRARY  1
+#endif
+
+/** This lets you disable building of the WebBrowserComponent, if it's not required.
+*/
+#ifndef JUCE_WEB_BROWSER
+  #define JUCE_WEB_BROWSER 1
+#endif
+
+/** Setting this allows the build to use old Carbon libraries that will be
+    deprecated in newer versions of OSX. This is handy for some backwards-compatibility
+    reasons.
+*/
+#ifndef JUCE_SUPPORT_CARBON
+  #define JUCE_SUPPORT_CARBON 1
+#endif
+
+/*  These flags let you avoid the direct inclusion of some 3rd-party libs in the
+    codebase - you might need to use this if you're linking to some of these libraries
+    yourself.
+*/
+#ifndef JUCE_INCLUDE_ZLIB_CODE
+  #define JUCE_INCLUDE_ZLIB_CODE        1
+#endif
+
+#ifndef JUCE_INCLUDE_FLAC_CODE
+  #define JUCE_INCLUDE_FLAC_CODE        1
+#endif
+
+#ifndef JUCE_INCLUDE_OGGVORBIS_CODE
+  #define JUCE_INCLUDE_OGGVORBIS_CODE   1
+#endif
+
+#ifndef JUCE_INCLUDE_PNGLIB_CODE
+  #define JUCE_INCLUDE_PNGLIB_CODE      1
+#endif
+
+#ifndef JUCE_INCLUDE_JPEGLIB_CODE
+  #define JUCE_INCLUDE_JPEGLIB_CODE     1
 #endif
 
 /** Enable this to add extra memory-leak info to the new and delete operators.
@@ -218,7 +421,7 @@
     (Currently, this only affects Windows builds in debug mode).
 */
 #ifndef JUCE_CHECK_MEMORY_LEAKS
-  //#define JUCE_CHECK_MEMORY_LEAKS 1
+  #define JUCE_CHECK_MEMORY_LEAKS 1
 #endif
 
 /** Enable this to turn on juce's internal catching of exceptions.
@@ -234,7 +437,18 @@
     internal representation. If it isn't set, it'll use ANSI.
 */
 #ifndef JUCE_STRINGS_ARE_UNICODE
-  #define JUCE_STRINGS_ARE_UNICODE 0
+  #define JUCE_STRINGS_ARE_UNICODE 1
+#endif
+
+// If only building the core classes, we can explicitly turn off some features to avoid including them:
+#if JUCE_ONLY_BUILD_CORE_LIBRARY
+  #define JUCE_QUICKTIME 0
+  #define JUCE_OPENGL 0
+  #define JUCE_USE_CDBURNER 0
+  #define JUCE_USE_CDREADER 0
+  #define JUCE_WEB_BROWSER 0
+  #define JUCE_PLUGINHOST_AU 0
+  #define JUCE_PLUGINHOST_VST 0
 #endif
 
 #endif
@@ -248,113 +462,12 @@
   #define END_JUCE_NAMESPACE
 #endif
 
-// This sets up the JUCE_WIN32, JUCE_MAC, or JUCE_LINUX macros
-
 /********* Start of inlined file: juce_PlatformDefs.h *********/
 #ifndef __JUCE_PLATFORMDEFS_JUCEHEADER__
 #define __JUCE_PLATFORMDEFS_JUCEHEADER__
 
-/*  This file figures out which platform is being built, and defines some macros
-    that the rest of the code can use for OS-specific compilation.
-
-    Macros that will be set here are:
-
-    - One of JUCE_WIN32, JUCE_MAC or JUCE_LINUX.
-    - Either JUCE_32BIT or JUCE_64BIT, depending on the architecture.
-    - Either JUCE_LITTLE_ENDIAN or JUCE_BIG_ENDIAN.
-    - Either JUCE_INTEL or JUCE_PPC
-    - Either JUCE_GCC or JUCE_MSVC
-
-    On the Mac, it also defines MACOS_10_2_OR_EARLIER if the build is targeting OSX10.2,
-    and MACOS_10_3_OR_EARLIER if it is targeting either 10.2 or 10.3
-
-    It also includes a set of macros for debug console output and assertions.
-
+/*  This file defines miscellaneous macros for debugging, assertions, etc.
 */
-
-#if (defined (_WIN32) || defined (_WIN64))
-  #define       JUCE_WIN32 1
-#else
-  #ifdef LINUX
-    #define     JUCE_LINUX 1
-  #else
-    #define     JUCE_MAC 1
-  #endif
-#endif
-
-#if JUCE_WIN32
-  #ifdef _MSC_VER
-    #ifdef _WIN64
-      #define JUCE_64BIT 1
-    #else
-      #define JUCE_32BIT 1
-    #endif
-  #endif
-
-  #ifdef _DEBUG
-    #define JUCE_DEBUG 1
-  #endif
-
-  /** If defined, this indicates that the processor is little-endian. */
-  #define JUCE_LITTLE_ENDIAN 1
-
-  #define JUCE_INTEL 1
-#endif
-
-#if JUCE_MAC
-
-  #include <CoreServices/CoreServices.h>
-
-  #ifndef NDEBUG
-    #define JUCE_DEBUG 1
-  #endif
-
-  #ifdef __LITTLE_ENDIAN__
-    #define JUCE_LITTLE_ENDIAN 1
-  #else
-    #define JUCE_BIG_ENDIAN 1
-  #endif
-
-  #if defined (__ppc__) || defined (__ppc64__)
-    #define JUCE_PPC 1
-  #else
-    #define JUCE_INTEL 1
-  #endif
-
-  #ifdef __LP64__
-    #define JUCE_64BIT 1
-  #else
-    #define JUCE_32BIT 1
-  #endif
-
-  #if (MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_3)
-    #define MACOS_10_2_OR_EARLIER 1
-  #endif
-
-  #if (MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_4)
-    #define MACOS_10_3_OR_EARLIER 1
-  #endif
-#endif
-
-#if JUCE_LINUX
-
-  #ifdef _DEBUG
-    #define JUCE_DEBUG 1
-  #endif
-
-  // Allow override for big-endian Linux platforms
-  #ifndef JUCE_BIG_ENDIAN
-    #define JUCE_LITTLE_ENDIAN 1
-  #endif
-
-  #if defined (__LP64__) || defined (_LP64)
-    #define JUCE_64BIT 1
-  #else
-    #define JUCE_32BIT 1
-  #endif
-
-  #define JUCE_INTEL 1
-#endif
 
 #ifdef JUCE_FORCE_DEBUG
   #undef JUCE_DEBUG
@@ -362,20 +475,6 @@
   #if JUCE_FORCE_DEBUG
     #define JUCE_DEBUG 1
   #endif
-#endif
-
-// Compiler type macros.
-
-#ifdef __GNUC__
-  #define JUCE_GCC 1
-#elif defined (_MSC_VER)
-  #define JUCE_MSVC 1
-
-  #if _MSC_VER >= 1400
-    #define JUCE_USE_INTRINSICS 1
-  #endif
-#else
-  #error unknown compiler
 #endif
 
 /** This macro defines the C calling convention used as the standard for Juce calls. */
@@ -418,7 +517,7 @@
 
   // Assertions..
 
-  #if JUCE_WIN32 || DOXYGEN
+  #if JUCE_WINDOWS || DOXYGEN
 
     #if JUCE_USE_INTRINSICS
       #pragma intrinsic (__debugbreak)
@@ -441,6 +540,8 @@
     #endif
   #elif JUCE_MAC
     #define juce_breakDebugger              Debugger();
+  #elif JUCE_IPHONE
+    #define juce_breakDebugger              kill (0, SIGTRAP);
   #elif JUCE_LINUX
     #define juce_breakDebugger              kill (0, SIGTRAP);
   #endif
@@ -586,16 +687,13 @@
 #include <stdexcept>
 #include <typeinfo>
 #include <cstring>
-
-#if JUCE_MAC || JUCE_LINUX
-  #include <pthread.h>
-#endif
+#include <cstdio>
 
 #if JUCE_USE_INTRINSICS
   #include <intrin.h>
 #endif
 
-#if JUCE_MAC && ! MACOS_10_3_OR_EARLIER
+#if JUCE_MAC
   #include <libkern/OSAtomic.h>
 #endif
 
@@ -619,6 +717,10 @@
   #elif defined (JUCE_DLL)
     #define JUCE_API __declspec (dllimport)
     #pragma warning (disable: 4251)
+  #endif
+#elif defined (__GNUC__) && ((__GNUC__ >= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
+  #ifdef JUCE_DLL_BUILD
+    #define JUCE_API __attribute__ ((visibility("default")))
   #endif
 #endif
 
@@ -674,13 +776,13 @@ extern bool JUCE_API JUCE_CALLTYPE juce_isRunningUnderDebugger() throw();
     extern JUCE_API void juce_DebugFree (void* const block);
 
     /** This should be used instead of calling malloc directly. */
-    #define juce_malloc(numBytes)                 juce::juce_DebugMalloc (numBytes, __FILE__, __LINE__)
+    #define juce_malloc(numBytes)                 JUCE_NAMESPACE::juce_DebugMalloc (numBytes, __FILE__, __LINE__)
     /** This should be used instead of calling calloc directly. */
-    #define juce_calloc(numBytes)                 juce::juce_DebugCalloc (numBytes, __FILE__, __LINE__)
+    #define juce_calloc(numBytes)                 JUCE_NAMESPACE::juce_DebugCalloc (numBytes, __FILE__, __LINE__)
     /** This should be used instead of calling realloc directly. */
-    #define juce_realloc(location, numBytes)      juce::juce_DebugRealloc (location, numBytes, __FILE__, __LINE__)
+    #define juce_realloc(location, numBytes)      JUCE_NAMESPACE::juce_DebugRealloc (location, numBytes, __FILE__, __LINE__)
     /** This should be used instead of calling free directly. */
-    #define juce_free(location)                   juce::juce_DebugFree (location)
+    #define juce_free(location)                   JUCE_NAMESPACE::juce_DebugFree (location)
   #endif
 
   #if ! defined (_AFXDLL)
@@ -706,13 +808,13 @@ extern bool JUCE_API JUCE_CALLTYPE juce_isRunningUnderDebugger() throw();
   extern JUCE_API void juce_Free (void* const block);
 
   /** This should be used instead of calling malloc directly. */
-  #define juce_malloc(numBytes)                 juce::juce_Malloc (numBytes)
+  #define juce_malloc(numBytes)                 JUCE_NAMESPACE::juce_Malloc (numBytes)
   /** This should be used instead of calling calloc directly. */
-  #define juce_calloc(numBytes)                 juce::juce_Calloc (numBytes)
+  #define juce_calloc(numBytes)                 JUCE_NAMESPACE::juce_Calloc (numBytes)
   /** This should be used instead of calling realloc directly. */
-  #define juce_realloc(location, numBytes)      juce::juce_Realloc (location, numBytes)
+  #define juce_realloc(location, numBytes)      JUCE_NAMESPACE::juce_Realloc (location, numBytes)
   /** This should be used instead of calling free directly. */
-  #define juce_free(location)                   juce::juce_Free (location)
+  #define juce_free(location)                   JUCE_NAMESPACE::juce_Free (location)
 
   #define juce_UseDebuggingNewOperator \
     static void* operator new (size_t sz)           { void* const p = juce_malloc ((int) sz); return (p != 0) ? p : ::operator new (sz); } \
@@ -951,7 +1053,7 @@ inline void swapVariables (Type& variable1, Type& variable2) throw()
 
 // Some useful maths functions that aren't always present with all compilers and build settings.
 
-#if JUCE_WIN32 || defined (DOXYGEN)
+#if JUCE_WINDOWS || defined (DOXYGEN)
   /** Using juce_hypot and juce_hypotf is easier than dealing with all the different
       versions of these functions of various platforms and compilers. */
   forcedinline double juce_hypot (double a, double b)           { return _hypot (a, b); }
@@ -959,22 +1061,6 @@ inline void swapVariables (Type& variable1, Type& variable2) throw()
   /** Using juce_hypot and juce_hypotf is easier than dealing with all the different
       versions of these functions of various platforms and compilers. */
   forcedinline float juce_hypotf (float a, float b)             { return (float) _hypot (a, b); }
-#elif MACOS_10_2_OR_EARLIER
-  /** Using juce_hypot and juce_hypotf is easier than dealing with all the different
-      versions of these functions of various platforms and compilers. */
-  forcedinline double juce_hypot (double a, double b)           { return hypot (a, b); }
-
-  /** Using juce_hypot and juce_hypotf is easier than dealing with all the different
-      versions of these functions of various platforms and compilers. */
-  forcedinline float juce_hypotf (float a, float b)             { return (float) hypot (a, b); }
-  forcedinline float sinf (const float a)                       { return (float) sin (a); }
-  forcedinline float cosf (const float a)                       { return (float) cos (a); }
-  forcedinline float tanf (const float a)                       { return (float) tan (a); }
-  forcedinline float atan2f (const float a, const float b)      { return (float) atan2 (a, b); }
-  forcedinline float sqrtf (const float a)                      { return (float) sqrt (a); }
-  forcedinline float logf (const float a)                       { return (float) log (a); }
-  forcedinline float powf (const float a, const float b)        { return (float) pow (a, b); }
-  forcedinline float expf (const float a)                       { return (float) exp (a); }
 #else
   /** Using juce_hypot and juce_hypotf is easier than dealing with all the different
       versions of these functions of various platforms and compilers. */
@@ -1002,22 +1088,9 @@ const float   float_Pi   = 3.14159265358979323846f;
 /** The isfinite() method seems to vary greatly between platforms, so this is a
     platform-independent macro for it.
 */
-#if JUCE_LINUX
+#if JUCE_LINUX || JUCE_MAC || JUCE_IPHONE
   #define juce_isfinite(v)      std::isfinite(v)
-#elif JUCE_MAC
-  #if MACOS_10_2_OR_EARLIER
-    #define juce_isfinite(v)    __isfinite(v)
-  #elif MACOS_10_3_OR_EARLIER
-    #ifdef isfinite
-      #define juce_isfinite(v)    isfinite(v)
-    #else
-      // no idea why the isfinite macro is sometimes impossible to include, so just copy the built-in one..
-      static __inline__ int juce_isfinite (double __x) { return __x == __x && __builtin_fabs (__x) != __builtin_inf(); }
-    #endif
-  #else
-    #define juce_isfinite(v)    std::isfinite(v)
-  #endif
-#elif JUCE_WIN32 && ! defined (isfinite)
+#elif JUCE_WINDOWS && ! defined (isfinite)
   #define juce_isfinite(v)      _finite(v)
 #else
   #define juce_isfinite(v)      isfinite(v)
@@ -1036,12 +1109,20 @@ const float   float_Pi   = 3.14159265358979323846f;
 
 // Endianness conversions..
 
+#if JUCE_IPHONE
+// a gcc compiler error seems to mean that these functions only work properly
+// on the iPhone if they are declared static..
+static forcedinline uint32 swapByteOrder (uint32 n) throw();
+static inline uint16 swapByteOrder (const uint16 n) throw();
+static inline uint64 swapByteOrder (const uint64 value) throw();
+#endif
+
 /** Swaps the byte-order in an integer from little to big-endianness or vice-versa. */
 forcedinline uint32 swapByteOrder (uint32 n) throw()
 {
-#if JUCE_MAC
+#if JUCE_MAC || JUCE_IPHONE
     // Mac version
-    return CFSwapInt32 (n);
+    return OSSwapInt32 (n);
 #elif JUCE_GCC
     // Inpenetrable GCC version..
     asm("bswap %%eax" : "=a"(n) : "a"(n));
@@ -1073,8 +1154,8 @@ inline uint16 swapByteOrder (const uint16 n) throw()
 
 inline uint64 swapByteOrder (const uint64 value) throw()
 {
-#if JUCE_MAC
-    return CFSwapInt64 (value);
+#if JUCE_MAC || JUCE_IPHONE
+    return OSSwapInt64 (value);
 #elif JUCE_USE_INTRINSICS
     return _byteswap_uint64 (value);
 #else
@@ -1494,12 +1575,16 @@ public:
     /** Returns true if the string contains no characters.
 
         Note that there's also an isNotEmpty() method to help write readable code.
+
+        @see containsNonWhitespaceChars()
     */
     inline bool isEmpty() const throw()                     { return text->text[0] == 0; }
 
     /** Returns true if the string contains at least one character.
 
         Note that there's also an isEmpty() method to help write readable code.
+
+        @see containsNonWhitespaceChars()
     */
     inline bool isNotEmpty() const throw()                  { return text->text[0] != 0; }
 
@@ -1659,6 +1744,15 @@ public:
     */
     bool containsOnly (const tchar* const charactersItMightContain) const throw();
 
+    /** Returns true if this string contains any non-whitespace characters.
+
+        This will return false if the string contains only whitespace characters, or
+        if it's empty.
+
+        It is equivalent to calling "myString.trim().isNotEmpty()".
+    */
+    bool containsNonWhitespaceChars() const throw();
+
     /** Returns true if the string matches this simple wildcard expression.
 
         So for example String ("abcdef").matchesWildcard ("*DEF", true) would return true.
@@ -1817,7 +1911,7 @@ public:
         @param startIndex   the index of the start of the substring needed
         @param endIndex     all characters from startIndex up to (but not including)
                             this index are returned
-        @see fromFirstOccurrenceOf, dropLastCharacters, upToFirstOccurrenceOf
+        @see fromFirstOccurrenceOf, dropLastCharacters, getLastCharacters, upToFirstOccurrenceOf
     */
     const String substring (int startIndex,
                             int endIndex) const throw();
@@ -1828,7 +1922,7 @@ public:
                             of the string, an empty string is returned. If it is zero or
                             less, the whole string is returned.
         @returns            the substring from startIndex up to the end of the string
-        @see dropLastCharacters, fromFirstOccurrenceOf, upToFirstOccurrenceOf, fromLastOccurrenceOf
+        @see dropLastCharacters, getLastCharacters, fromFirstOccurrenceOf, upToFirstOccurrenceOf, fromLastOccurrenceOf
     */
     const String substring (const int startIndex) const throw();
 
@@ -1842,6 +1936,15 @@ public:
         @see substring, fromFirstOccurrenceOf, upToFirstOccurrenceOf, fromLastOccurrenceOf, getLastCharacter
     */
     const String dropLastCharacters (const int numberToDrop) const throw();
+
+    /** Returns a number of characters from the end of the string.
+
+        This returns the last numCharacters characters from the end of the string. If the
+        string is shorter than numCharacters, the whole string is returned.
+
+        @see substring, dropLastCharacters, getLastCharacter
+    */
+    const String getLastCharacters (const int numCharacters) const throw();
 
     /** Returns a section of the string starting from a given substring.
 
@@ -1894,6 +1997,7 @@ public:
     /** Returns the start of this string, up to the last occurrence of a substring.
 
         Similar to upToFirstOccurrenceOf(), but this finds the last occurrence rather than the first.
+        If the substring isn't found, this will return an empty string.
 
         @see upToFirstOccurrenceOf, fromFirstOccurrenceOf
     */
@@ -1907,6 +2011,22 @@ public:
     const String trimStart() const throw();
     /** Returns a copy of this string with any whitespace characters removed from the end. */
     const String trimEnd() const throw();
+
+    /** Returns a copy of this string, having removed a specified set of characters from its start.
+        Characters are removed from the start of the string until it finds one that is not in the
+        specified set, and then it stops.
+        @param charactersToTrim     the set of characters to remove. This must not be null.
+        @see trim, trimStart, trimCharactersAtEnd
+    */
+    const String trimCharactersAtStart (const tchar* charactersToTrim) const throw();
+
+    /** Returns a copy of this string, having removed a specified set of characters from its end.
+        Characters are removed from the end of the string until it finds one that is not in the
+        specified set, and then it stops.
+        @param charactersToTrim     the set of characters to remove. This must not be null.
+        @see trim, trimEnd, trimCharactersAtStart
+    */
+    const String trimCharactersAtEnd (const tchar* charactersToTrim) const throw();
 
     /** Returns an upper-case version of this string. */
     const String toUpperCase() const throw();
@@ -2147,14 +2267,14 @@ public:
     explicit String (const double doubleValue,
                      const int numberOfDecimalPlaces = 0) throw();
 
-    /** Parses this string to find its numerical value (up to 32 bits in size).
+    /** Reads the value of the string as a decimal number (up to 32 bits in size).
 
         @returns the value of the string as a 32 bit signed base-10 integer.
         @see getTrailingIntValue, getHexValue32, getHexValue64
     */
     int getIntValue() const throw();
 
-    /** Parses this string to find its numerical value (up to 64 bits in size).
+    /** Reads the value of the string as a decimal number (up to 64 bits in size).
 
         @returns the value of the string as a 64 bit signed base-10 integer.
     */
@@ -2293,8 +2413,13 @@ public:
         @param destBuffer       the place to copy it to; if this is a null pointer,
                                 the method just returns the number of bytes required
                                 (including the terminating null character).
+        @param maxBufferSizeBytes  the size of the destination buffer, in bytes. If the
+                                string won't fit, it'll put in as many as it can while
+                                still allowing for a terminating null char at the end,
+                                and will return the number of bytes that were actually
+                                used. If this value is < 0, no limit is used.
     */
-    int copyToUTF8 (uint8* const destBuffer) const throw();
+    int copyToUTF8 (uint8* const destBuffer, const int maxBufferSizeBytes = 0x7fffffff) const throw();
 
     /** Returns a pointer to a UTF-8 version of this string.
 
@@ -2458,7 +2583,7 @@ BEGIN_JUCE_NAMESPACE
   #pragma warning (disable: 4786) // (old vc6 warning about long class names)
 #endif
 
-#if JUCE_MAC
+#if JUCE_MAC || JUCE_IPHONE
   #pragma align=natural
 #endif
 
@@ -2478,21 +2603,13 @@ BEGIN_JUCE_NAMESPACE
 
 // Atomic increment/decrement operations..
 
-#if JUCE_MAC && ! DOXYGEN
+#if (JUCE_MAC || JUCE_IPHONE) && ! DOXYGEN
 
-  #if ! MACOS_10_3_OR_EARLIER
-
-    forcedinline void atomicIncrement (int& variable) throw()           { OSAtomicIncrement32 ((int32_t*) &variable); }
-    forcedinline int atomicIncrementAndReturn (int& variable) throw()   { return OSAtomicIncrement32 ((int32_t*) &variable); }
-    forcedinline void atomicDecrement (int& variable) throw()           { OSAtomicDecrement32 ((int32_t*) &variable); }
-    forcedinline int atomicDecrementAndReturn (int& variable) throw()   { return OSAtomicDecrement32 ((int32_t*) &variable); }
-  #else
-
-    forcedinline void atomicIncrement (int& variable) throw()           { OTAtomicAdd32 (1, (SInt32*) &variable); }
-    forcedinline int atomicIncrementAndReturn (int& variable) throw()   { return OTAtomicAdd32 (1, (SInt32*) &variable); }
-    forcedinline void atomicDecrement (int& variable) throw()           { OTAtomicAdd32 (-1, (SInt32*) &variable); }
-    forcedinline int atomicDecrementAndReturn (int& variable) throw()   { return OTAtomicAdd32 (-1, (SInt32*) &variable); }
-  #endif
+    #include <libkern/OSAtomic.h>
+    static forcedinline void atomicIncrement (int& variable) throw()           { OSAtomicIncrement32 ((int32_t*) &variable); }
+    static forcedinline int atomicIncrementAndReturn (int& variable) throw()   { return OSAtomicIncrement32 ((int32_t*) &variable); }
+    static forcedinline void atomicDecrement (int& variable) throw()           { OSAtomicDecrement32 ((int32_t*) &variable); }
+    static forcedinline int atomicDecrementAndReturn (int& variable) throw()   { return OSAtomicDecrement32 ((int32_t*) &variable); }
 
 #elif JUCE_GCC
 
@@ -2716,6 +2833,7 @@ protected:
           numAllocated (0),
           granularity (granularity_)
     {
+        jassert (granularity > 0);
     }
 
     /** Destructor. */
@@ -3047,7 +3165,7 @@ public:
     static int compareElements (const ElementType first,
                                 const ElementType second) throw()
     {
-        return first - second;
+        return (first < second) ? -1 : ((first == second) ? 0 : 1);
     }
 };
 
@@ -3073,9 +3191,7 @@ public:
     static int compareElements (const ElementType first,
                                 const ElementType second) throw()
     {
-        return (first < second) ? -1
-                                : ((first == second) ? 0
-                                                     : 1);
+        return (first < second) ? -1 : ((first == second) ? 0 : 1);
     }
 };
 
@@ -3495,12 +3611,14 @@ public:
             if (indexToChange < numUsed)
             {
                 if (deleteOldElement)
+                {
                     toDelete = this->elements [indexToChange];
 
-                if (toDelete == newObject)
-                    toDelete = 0;
-                else
-                    this->elements [indexToChange] = const_cast <ObjectClass*> (newObject);
+                    if (toDelete == newObject)
+                        toDelete = 0;
+                }
+
+                this->elements [indexToChange] = const_cast <ObjectClass*> (newObject);
             }
             else
             {
@@ -4138,6 +4256,8 @@ public:
         @param minutes          minutes 0 to 59
         @param seconds          seconds 0 to 59
         @param milliseconds     milliseconds 0 to 999
+        @param useLocalTime     if true, encode using the current machine's local time; if
+                                false, it will always work in GMT.
     */
     Time (const int year,
           const int month,
@@ -4145,7 +4265,8 @@ public:
           const int hours,
           const int minutes,
           const int seconds = 0,
-          const int milliseconds = 0) throw();
+          const int milliseconds = 0,
+          const bool useLocalTime = true) throw();
 
     /** Destructor. */
     ~Time() throw();
@@ -6299,6 +6420,12 @@ public:
     */
     bool isHidden() const throw();
 
+    /** If this file is a link, this returns the file that it points to.
+
+        If this file isn't actually link, it'll just return itself.
+    */
+    const File getLinkedTarget() const throw();
+
     /** Returns the last modification time of this file.
 
         @returns    the time, or an invalid time if the file doesn't exist.
@@ -6344,6 +6471,14 @@ public:
     */
     bool setCreationTime (const Time& newTime) const throw();
 
+    /** If possible, this will try to create a version string for the given file.
+
+        The OS may be able to look at the file and give a version for it - e.g. with
+        executables, bundles, dlls, etc. If no version is available, this will
+        return an empty string.
+    */
+    const String getVersion() const throw();
+
     /** Creates an empty file if it doesn't already exist.
 
         If the file that this object refers to doesn't exist, this will create a file
@@ -6388,6 +6523,14 @@ public:
         @see deleteFile
     */
     bool deleteRecursively() const throw();
+
+    /** Moves this file or folder to the trash.
+
+        @returns true if the operation succeeded. It could fail if the trash is full, or
+                 if the file is write-protected, so you should check the return value
+                 and act appropriately.
+    */
+    bool moveToTrash() const throw();
 
     /** Moves or renames a file.
 
@@ -6477,6 +6620,11 @@ public:
     */
     int getNumberOfChildFiles (const int whatToLookFor,
                                const String& wildCardPattern = JUCE_T("*")) const throw();
+
+    /** Returns true if this file is a directory that contains one or more subdirectories.
+        @see isDirectory, findChildFiles
+    */
+    bool containsSubDirectories() const throw();
 
     /** Creates a stream to read from this file.
 
@@ -6612,8 +6760,16 @@ public:
     /** Returns the number of bytes free on the drive that this file lives on.
 
         @returns the number of bytes free, or 0 if there's a problem finding this out
+        @see getVolumeTotalSize
     */
     int64 getBytesFreeOnVolume() const throw();
+
+    /** Returns the total size of the drive that contains this file.
+
+        @returns the total number of bytes that the volume can hold
+        @see getBytesFreeOnVolume
+    */
+    int64 getVolumeTotalSize() const throw();
 
     /** Returns true if this file is on a CD or DVD drive. */
     bool isOnCDRomDrive() const throw();
@@ -6688,6 +6844,9 @@ public:
 
             On the mac this will return the unix binary, not the package folder - see
             currentApplicationFile for that.
+
+            See also invokedExecutableFile, which is similar, but if the exe was launched from a
+            file link, invokedExecutableFile will return the name of the link.
         */
         currentExecutableFile,
 
@@ -6700,6 +6859,13 @@ public:
             that's inside it - compare with currentExecutableFile.
         */
         currentApplicationFile,
+
+        /** Returns the file that was invoked to launch this executable.
+            This may differ from currentExecutableFile if the app was started from e.g. a link - this
+            will return the name of the link that was used, whereas currentExecutableFile will return
+            the actual location of the target executable.
+        */
+        invokedExecutableFile,
 
         /** The directory in which applications normally get installed.
 
@@ -6942,7 +7108,361 @@ void JUCE_PUBLIC_FUNCTION  shutdownJuce_NonGUI();
 #ifndef __JUCE_MEMORY_JUCEHEADER__
 
 #endif
+#ifndef __JUCE_PERFORMANCECOUNTER_JUCEHEADER__
+
+/********* Start of inlined file: juce_PerformanceCounter.h *********/
+#ifndef __JUCE_PERFORMANCECOUNTER_JUCEHEADER__
+#define __JUCE_PERFORMANCECOUNTER_JUCEHEADER__
+
+/** A timer for measuring performance of code and dumping the results to a file.
+
+    e.g. @code
+
+        PerformanceCounter pc ("fish", 50, "/temp/myfishlog.txt");
+
+        for (;;)
+        {
+            pc.start();
+
+            doSomethingFishy();
+
+            pc.stop();
+        }
+    @endcode
+
+    In this example, the time of each period between calling start/stop will be
+    measured and averaged over 50 runs, and the results printed to a file
+    every 50 times round the loop.
+*/
+class JUCE_API  PerformanceCounter
+{
+public:
+
+    /** Creates a PerformanceCounter object.
+
+        @param counterName      the name used when printing out the statistics
+        @param runsPerPrintout  the number of start/stop iterations before calling
+                                printStatistics()
+        @param loggingFile      a file to dump the results to - if this is File::nonexistent,
+                                the results are just written to the debugger output
+    */
+    PerformanceCounter (const String& counterName,
+                        int runsPerPrintout = 100,
+                        const File& loggingFile = File::nonexistent);
+
+    /** Destructor. */
+    ~PerformanceCounter();
+
+    /** Starts timing.
+
+        @see stop
+    */
+    void start();
+
+    /** Stops timing and prints out the results.
+
+        The number of iterations before doing a printout of the
+        results is set in the constructor.
+
+        @see start
+    */
+    void stop();
+
+    /** Dumps the current metrics to the debugger output and to a file.
+
+        As well as using Logger::outputDebugString to print the results,
+        this will write then to the file specified in the constructor (if
+        this was valid).
+    */
+    void printStatistics();
+
+    juce_UseDebuggingNewOperator
+
+private:
+
+    String name;
+    int numRuns, runsPerPrint;
+    double totalTime;
+    int64 started;
+    File outputFile;
+};
+
+#endif   // __JUCE_PERFORMANCECOUNTER_JUCEHEADER__
+/********* End of inlined file: juce_PerformanceCounter.h *********/
+
+#endif
 #ifndef __JUCE_PLATFORMDEFS_JUCEHEADER__
+
+#endif
+#ifndef __JUCE_PLATFORMUTILITIES_JUCEHEADER__
+
+/********* Start of inlined file: juce_PlatformUtilities.h *********/
+#ifndef __JUCE_PLATFORMUTILITIES_JUCEHEADER__
+#define __JUCE_PLATFORMUTILITIES_JUCEHEADER__
+
+/**
+    A collection of miscellaneous platform-specific utilities.
+
+*/
+class JUCE_API  PlatformUtilities
+{
+public:
+
+    /** Plays the operating system's default alert 'beep' sound. */
+    static void beep();
+
+    static bool launchEmailWithAttachments (const String& targetEmailAddress,
+                                            const String& emailSubject,
+                                            const String& bodyText,
+                                            const StringArray& filesToAttach);
+
+#if JUCE_MAC || JUCE_IPHONE || DOXYGEN
+
+    /** MAC ONLY - Turns a Core CF String into a juce one. */
+    static const String cfStringToJuceString (CFStringRef cfString);
+
+    /** MAC ONLY - Turns a juce string into a Core CF one. */
+    static CFStringRef juceStringToCFString (const String& s);
+
+    /** MAC ONLY - Turns a file path into an FSRef, returning true if it succeeds. */
+    static bool makeFSRefFromPath (FSRef* destFSRef, const String& path);
+
+    /** MAC ONLY - Turns an FSRef into a juce string path. */
+    static const String makePathFromFSRef (FSRef* file);
+
+    /** MAC ONLY - Converts any decomposed unicode characters in a string into
+        their precomposed equivalents.
+    */
+    static const String convertToPrecomposedUnicode (const String& s);
+
+    /** MAC ONLY - Gets the type of a file from the file's resources. */
+    static OSType getTypeOfFile (const String& filename);
+
+    /** MAC ONLY - Returns true if this file is actually a bundle. */
+    static bool isBundle (const String& filename);
+
+    /** MAC ONLY - Adds an item to the dock */
+    static void addItemToDock (const File& file);
+
+    /** MAC ONLY - Returns the current OS version number.
+        E.g. if it's running on 10.4, this will be 4, 10.5 will return 5, etc.
+    */
+    static int getOSXMinorVersionNumber() throw();
+#endif
+
+#if JUCE_WINDOWS || DOXYGEN
+
+    // Some registry helper functions:
+
+    /** WIN32 ONLY - Returns a string from the registry.
+
+        The path is a string for the entire path of a value in the registry,
+        e.g. "HKEY_CURRENT_USER\Software\foo\bar"
+    */
+    static const String getRegistryValue (const String& regValuePath,
+                                          const String& defaultValue = String::empty);
+
+    /** WIN32 ONLY - Sets a registry value as a string.
+
+        This will take care of creating any groups needed to get to the given
+        registry value.
+    */
+    static void setRegistryValue (const String& regValuePath,
+                                  const String& value);
+
+    /** WIN32 ONLY - Returns true if the given value exists in the registry. */
+    static bool registryValueExists (const String& regValuePath);
+
+    /** WIN32 ONLY - Deletes a registry value. */
+    static void deleteRegistryValue (const String& regValuePath);
+
+    /** WIN32 ONLY - Deletes a registry key (which is registry-talk for 'folder'). */
+    static void deleteRegistryKey (const String& regKeyPath);
+
+    /** WIN32 ONLY - Creates a file association in the registry.
+
+        This lets you set the exe that should be launched by a given file extension.
+        @param fileExtension        the file extension to associate, including the
+                                    initial dot, e.g. ".txt"
+        @param symbolicDescription  a space-free short token to identify the file type
+        @param fullDescription      a human-readable description of the file type
+        @param targetExecutable     the executable that should be launched
+        @param iconResourceNumber   the icon that gets displayed for the file type will be
+                                    found by looking up this resource number in the
+                                    executable. Pass 0 here to not use an icon
+    */
+    static void registerFileAssociation (const String& fileExtension,
+                                         const String& symbolicDescription,
+                                         const String& fullDescription,
+                                         const File& targetExecutable,
+                                         int iconResourceNumber);
+
+    /** WIN32 ONLY - This returns the HINSTANCE of the current module.
+
+        In a normal Juce application this will be set to the module handle
+        of the application executable.
+
+        If you're writing a DLL using Juce and plan to use any Juce messaging or
+        windows, you'll need to make sure you use the setCurrentModuleInstanceHandle()
+        to set the correct module handle in your DllMain() function, because
+        the win32 system relies on the correct instance handle when opening windows.
+    */
+    static void* JUCE_CALLTYPE getCurrentModuleInstanceHandle() throw();
+
+    /** WIN32 ONLY - Sets a new module handle to be used by the library.
+
+        @see getCurrentModuleInstanceHandle()
+    */
+    static void JUCE_CALLTYPE setCurrentModuleInstanceHandle (void* newHandle) throw();
+
+    /** WIN32 ONLY - Gets the command-line params as a string.
+
+        This is needed to avoid unicode problems with the argc type params.
+    */
+    static const String JUCE_CALLTYPE getCurrentCommandLineParams() throw();
+#endif
+
+    /** Clears the floating point unit's flags.
+
+        Only has an effect under win32, currently.
+    */
+    static void fpuReset();
+
+#if JUCE_LINUX || JUCE_WINDOWS
+
+    /** Loads a dynamically-linked library into the process's address space.
+
+        @param pathOrFilename   the platform-dependent name and search path
+        @returns                a handle which can be used by getProcedureEntryPoint(), or
+                                zero if it fails.
+        @see freeDynamicLibrary, getProcedureEntryPoint
+    */
+    static void* loadDynamicLibrary (const String& pathOrFilename);
+
+    /** Frees a dynamically-linked library.
+
+        @param libraryHandle   a handle created by loadDynamicLibrary
+        @see loadDynamicLibrary, getProcedureEntryPoint
+    */
+    static void freeDynamicLibrary (void* libraryHandle);
+
+    /** Finds a procedure call in a dynamically-linked library.
+
+        @param libraryHandle    a library handle returned by loadDynamicLibrary
+        @param procedureName    the name of the procedure call to try to load
+        @returns                a pointer to the function if found, or 0 if it fails
+        @see loadDynamicLibrary
+    */
+    static void* getProcedureEntryPoint (void* libraryHandle,
+                                         const String& procedureName);
+#endif
+
+#if JUCE_LINUX || DOXYGEN
+
+#endif
+};
+
+#if JUCE_MAC || JUCE_IPHONE
+
+/** A handy C++ wrapper that creates and deletes an NSAutoreleasePool object
+    using RAII.
+*/
+class ScopedAutoReleasePool
+{
+public:
+    ScopedAutoReleasePool();
+    ~ScopedAutoReleasePool();
+
+private:
+    void* pool;
+};
+
+#endif
+
+#if JUCE_MAC
+
+/**
+    A wrapper class for picking up events from an Apple IR remote control device.
+
+    To use it, just create a subclass of this class, implementing the buttonPressed()
+    callback, then call start() and stop() to start or stop receiving events.
+*/
+class JUCE_API  AppleRemoteDevice
+{
+public:
+
+    AppleRemoteDevice();
+    virtual ~AppleRemoteDevice();
+
+    /** The set of buttons that may be pressed.
+        @see buttonPressed
+    */
+    enum ButtonType
+    {
+        menuButton = 0,     /**< The menu button (if it's held for a short time). */
+        playButton,         /**< The play button. */
+        plusButton,         /**< The plus or volume-up button. */
+        minusButton,        /**< The minus or volume-down button. */
+        rightButton,        /**< The right button (if it's held for a short time). */
+        leftButton,         /**< The left button (if it's held for a short time). */
+        rightButton_Long,   /**< The right button (if it's held for a long time). */
+        leftButton_Long,    /**< The menu button (if it's held for a long time). */
+        menuButton_Long,    /**< The menu button (if it's held for a long time). */
+        playButtonSleepMode,
+        switched
+    };
+
+    /** Override this method to receive the callback about a button press.
+
+        The callback will happen on the application's message thread.
+
+        Some buttons trigger matching up and down events, in which the isDown parameter
+        will be true and then false. Others only send a single event when the
+        button is pressed.
+    */
+    virtual void buttonPressed (const ButtonType buttonId, const bool isDown) = 0;
+
+    /** Starts the device running and responding to events.
+
+        Returns true if it managed to open the device.
+
+        @param inExclusiveMode  if true, the remote will be grabbed exclusively for this app,
+                                and will not be available to any other part of the system. If
+                                false, it will be shared with other apps.
+        @see stop
+    */
+    bool start (const bool inExclusiveMode) throw();
+
+    /** Stops the device running.
+        @see start
+    */
+    void stop() throw();
+
+    /** Returns true if the device has been started successfully.
+    */
+    bool isActive() const throw();
+
+    /** Returns the ID number of the remote, if it has sent one.
+    */
+    int getRemoteId() const throw()             { return remoteId; }
+
+    juce_UseDebuggingNewOperator
+
+    /** @internal */
+    void handleCallbackInternal();
+
+private:
+    void* device;
+    void* queue;
+    int remoteId;
+
+    bool open (const bool openInExclusiveMode) throw();
+};
+
+#endif
+
+#endif   // __JUCE_PLATFORMUTILITIES_JUCEHEADER__
+/********* End of inlined file: juce_PlatformUtilities.h *********/
 
 #endif
 #ifndef __JUCE_RANDOM_JUCEHEADER__
@@ -6950,6 +7470,313 @@ void JUCE_PUBLIC_FUNCTION  shutdownJuce_NonGUI();
 /********* Start of inlined file: juce_Random.h *********/
 #ifndef __JUCE_RANDOM_JUCEHEADER__
 #define __JUCE_RANDOM_JUCEHEADER__
+
+/********* Start of inlined file: juce_BitArray.h *********/
+#ifndef __JUCE_BITARRAY_JUCEHEADER__
+#define __JUCE_BITARRAY_JUCEHEADER__
+
+class MemoryBlock;
+
+/**
+    An array of on/off bits, also usable to store large binary integers.
+
+    A BitArray acts like an arbitrarily large integer whose bits can be set or
+    cleared, and some basic mathematical operations can be done on the number as
+    a whole.
+*/
+class JUCE_API  BitArray
+{
+public:
+
+    /** Creates an empty BitArray */
+    BitArray() throw();
+
+    /** Creates a BitArray containing an integer value in its low bits.
+
+        The low 32 bits of the array are initialised with this value.
+    */
+    BitArray (const unsigned int value) throw();
+
+    /** Creates a BitArray containing an integer value in its low bits.
+
+        The low 32 bits of the array are initialised with the absolute value
+        passed in, and its sign is set to reflect the sign of the number.
+    */
+    BitArray (const int value) throw();
+
+    /** Creates a BitArray containing an integer value in its low bits.
+
+        The low 64 bits of the array are initialised with the absolute value
+        passed in, and its sign is set to reflect the sign of the number.
+    */
+    BitArray (int64 value) throw();
+
+    /** Creates a copy of another BitArray. */
+    BitArray (const BitArray& other) throw();
+
+    /** Destructor. */
+    ~BitArray() throw();
+
+    /** Copies another BitArray onto this one. */
+    const BitArray& operator= (const BitArray& other) throw();
+
+    /** Two arrays are the same if the same bits are set. */
+    bool operator== (const BitArray& other) const throw();
+    /** Two arrays are the same if the same bits are set. */
+    bool operator!= (const BitArray& other) const throw();
+
+    /** Clears all bits in the BitArray to 0. */
+    void clear() throw();
+
+    /** Clears a particular bit in the array. */
+    void clearBit (const int bitNumber) throw();
+
+    /** Sets a specified bit to 1.
+
+        If the bit number is high, this will grow the array to accomodate it.
+    */
+    void setBit (const int bitNumber) throw();
+
+    /** Sets or clears a specified bit. */
+    void setBit (const int bitNumber,
+                 const bool shouldBeSet) throw();
+
+    /** Sets a range of bits to be either on or off.
+
+        @param startBit     the first bit to change
+        @param numBits      the number of bits to change
+        @param shouldBeSet  whether to turn these bits on or off
+    */
+    void setRange (int startBit,
+                   int numBits,
+                   const bool shouldBeSet) throw();
+
+    /** Inserts a bit an a given position, shifting up any bits above it. */
+    void insertBit (const int bitNumber,
+                    const bool shouldBeSet) throw();
+
+    /** Returns the value of a specified bit in the array.
+
+        If the index is out-of-range, the result will be false.
+    */
+    bool operator[] (const int bit) const throw();
+
+    /** Returns true if no bits are set. */
+    bool isEmpty() const throw();
+
+    /** Returns a range of bits in the array as a new BitArray.
+
+        e.g. getBitRangeAsInt (0, 64) would return the lowest 64 bits.
+        @see getBitRangeAsInt
+    */
+    const BitArray getBitRange (int startBit, int numBits) const throw();
+
+    /** Returns a range of bits in the array as an integer value.
+
+        e.g. getBitRangeAsInt (0, 32) would return the lowest 32 bits.
+
+        Asking for more than 32 bits isn't allowed (obviously) - for that, use
+        getBitRange().
+    */
+    int getBitRangeAsInt (int startBit, int numBits) const throw();
+
+    /** Sets a range of bits in the array based on an integer value.
+
+        Copies the given integer into the array, starting at startBit,
+        and only using up to numBits of the available bits.
+    */
+    void setBitRangeAsInt (int startBit, int numBits,
+                           unsigned int valueToSet) throw();
+
+    /** Performs a bitwise OR with another BitArray.
+
+        The result ends up in this array.
+    */
+    void orWith (const BitArray& other) throw();
+
+    /** Performs a bitwise AND with another BitArray.
+
+        The result ends up in this array.
+    */
+    void andWith (const BitArray& other) throw();
+
+    /** Performs a bitwise XOR with another BitArray.
+
+        The result ends up in this array.
+    */
+    void xorWith (const BitArray& other) throw();
+
+    /** Adds another BitArray's value to this one.
+
+        Treating the two arrays as large positive integers, this
+        adds them up and puts the result in this array.
+    */
+    void add (const BitArray& other) throw();
+
+    /** Subtracts another BitArray's value from this one.
+
+        Treating the two arrays as large positive integers, this
+        subtracts them and puts the result in this array.
+
+        Note that if the result should be negative, this won't be
+        handled correctly.
+    */
+    void subtract (const BitArray& other) throw();
+
+    /** Multiplies another BitArray's value with this one.
+
+        Treating the two arrays as large positive integers, this
+        multiplies them and puts the result in this array.
+    */
+    void multiplyBy (const BitArray& other) throw();
+
+    /** Divides another BitArray's value into this one and also produces a remainder.
+
+        Treating the two arrays as large positive integers, this
+        divides this value by the other, leaving the quotient in this
+        array, and the remainder is copied into the other BitArray passed in.
+    */
+    void divideBy (const BitArray& divisor, BitArray& remainder) throw();
+
+    /** Returns the largest value that will divide both this value and the one
+        passed-in.
+    */
+    const BitArray findGreatestCommonDivisor (BitArray other) const throw();
+
+    /** Performs a modulo operation on this value.
+
+        The result is stored in this value.
+    */
+    void modulo (const BitArray& divisor) throw();
+
+    /** Performs a combined exponent and modulo operation.
+
+        This BitArray's value becomes (this ^ exponent) % modulus.
+    */
+    void exponentModulo (const BitArray& exponent, const BitArray& modulus) throw();
+
+    /** Performs an inverse modulo on the value.
+
+        i.e. the result is (this ^ -1) mod (modulus).
+    */
+    void inverseModulo (const BitArray& modulus) throw();
+
+    /** Shifts a section of bits left or right.
+
+        @param howManyBitsLeft  how far to move the bits (+ve numbers shift it left, -ve numbers shift it right).
+        @param startBit         the first bit to affect - if this is > 0, only bits above that index will be affected.
+    */
+    void shiftBits (int howManyBitsLeft,
+                    int startBit = 0) throw();
+
+    /** Does a signed comparison of two BitArrays.
+
+        Return values are:
+            - 0 if the numbers are the same
+            - < 0 if this number is smaller than the other
+            - > 0 if this number is bigger than the other
+    */
+    int compare (const BitArray& other) const throw();
+
+    /** Compares the magnitudes of two BitArrays, ignoring their signs.
+
+        Return values are:
+            - 0 if the numbers are the same
+            - < 0 if this number is smaller than the other
+            - > 0 if this number is bigger than the other
+    */
+    int compareAbsolute (const BitArray& other) const throw();
+
+    /** Returns true if the value is less than zero.
+
+        @see setNegative, negate
+    */
+    bool isNegative() const throw();
+
+    /** Changes the sign of the number to be positive or negative.
+
+        @see isNegative, negate
+    */
+    void setNegative (const bool shouldBeNegative) throw();
+
+    /** Inverts the sign of the number.
+
+        @see isNegative, setNegative
+    */
+    void negate() throw();
+
+    /** Counts the total number of set bits in the array. */
+    int countNumberOfSetBits() const throw();
+
+    /** Looks for the index of the next set bit after a given starting point.
+
+        searches from startIndex (inclusive) upwards for the first set bit,
+        and returns its index.
+
+        If no set bits are found, it returns -1.
+    */
+    int findNextSetBit (int startIndex = 0) const throw();
+
+    /** Looks for the index of the next clear bit after a given starting point.
+
+        searches from startIndex (inclusive) upwards for the first clear bit,
+        and returns its index.
+    */
+    int findNextClearBit (int startIndex = 0) const throw();
+
+    /** Returns the index of the highest set bit in the array.
+
+        If the array is empty, this will return -1.
+    */
+    int getHighestBit() const throw();
+
+    /** Converts the array to a number string.
+
+        Specify a base such as 2 (binary), 8 (octal), 10 (decimal), 16 (hex).
+
+        If minuimumNumCharacters is greater than 0, the returned string will be
+        padded with leading zeros to reach at least that length.
+    */
+    const String toString (const int base, const int minimumNumCharacters = 1) const throw();
+
+    /** Converts a number string to an array.
+
+        Any non-valid characters will be ignored.
+
+        Specify a base such as 2 (binary), 8 (octal), 10 (decimal), 16 (hex).
+    */
+    void parseString (const String& text,
+                      const int base) throw();
+
+    /** Turns the array into a block of binary data.
+
+        The data is arranged as little-endian, so the first byte of data is the low 8 bits
+        of the array, and so on.
+
+        @see loadFromMemoryBlock
+    */
+    const MemoryBlock toMemoryBlock() const throw();
+
+    /** Copies a block of raw data onto this array.
+
+        The data is arranged as little-endian, so the first byte of data is the low 8 bits
+        of the array, and so on.
+
+        @see toMemoryBlock
+    */
+    void loadFromMemoryBlock (const MemoryBlock& data) throw();
+
+    juce_UseDebuggingNewOperator
+
+private:
+    void ensureSize (const int numVals) throw();
+    unsigned int* values;
+    int numValues, highestBit;
+    bool negative;
+};
+
+#endif   // __JUCE_BITARRAY_JUCEHEADER__
+/********* End of inlined file: juce_BitArray.h *********/
 
 /**
     A simple pseudo-random number generator.
@@ -7005,6 +7832,15 @@ public:
     */
     bool nextBool() throw();
 
+    /** Returns a BitArray containing a random number.
+
+        @returns a random value in the range 0 to (maximumValue - 1).
+    */
+    const BitArray nextLargeNumber (const BitArray& maximumValue) throw();
+
+    /** Sets a range of bits in a BitArray to random values. */
+    void fillBitsRandomly (BitArray& arrayToChange, int startBit, int numBits) throw();
+
     /** To avoid the overhead of having to create a new Random object whenever
         you need a number, this is a shared application-wide object that
         can be used.
@@ -7015,6 +7851,14 @@ public:
 
     /** Resets this Random object to a given seed value. */
     void setSeed (const int64 newSeed) throw();
+
+    /** Reseeds this generator using a value generated from various semi-random system
+        properties like the current time, etc.
+
+        Because this function convolves the time with the last seed value, calling
+        it repeatedly will increase the randomness of the final result.
+    */
+    void setSeedRandomly();
 
     juce_UseDebuggingNewOperator
 
@@ -7452,6 +8296,7 @@ public:
         Win2000     = 0x4105,
         WinXP       = 0x4106,
         WinVista    = 0x4107,
+        Windows7    = 0x4108,
 
         Windows     = 0x4000,   /**< To test whether any version of Windows is running,
                                      you can use the expression ((getOperatingSystemType() & Windows) != 0). */
@@ -7461,7 +8306,7 @@ public:
 
     /** Returns the type of operating system we're running on.
 
-        @returns one of the values from the OSType enum.
+        @returns one of the values from the OperatingSystemType enum.
         @see getOperatingSystemName
     */
     static OperatingSystemType getOperatingSystemType() throw();
@@ -7535,10 +8380,12 @@ public:
 
         @param  addresses   an array into which the MAC addresses should be copied
         @param  maxNum      the number of elements in this array
-        @param littleEndian the endianness of the numbers to return. Note that
-                            the default values of this parameter are different on
-                            Mac/PC to avoid breaking old software that was written
-                            before this parameter was added (when the two systems
+        @param littleEndian the endianness of the numbers to return. If this is true,
+                            the least-significant byte of each number is the first byte
+                            of the mac address. If false, the least significant byte is
+                            the last number. Note that the default values of this parameter
+                            are different on Mac/PC to avoid breaking old software that was
+                            written before this parameter was added (when the two systems
                             defaulted to using different endiannesses). In newer
                             software you probably want to specify an explicit value
                             for this.
@@ -7559,7 +8406,103 @@ public:
 /********* End of inlined file: juce_SystemStats.h *********/
 
 #endif
+#ifndef __JUCE_TARGETPLATFORM_JUCEHEADER__
+
+#endif
 #ifndef __JUCE_TIME_JUCEHEADER__
+
+#endif
+#ifndef __JUCE_UUID_JUCEHEADER__
+
+/********* Start of inlined file: juce_Uuid.h *********/
+#ifndef __JUCE_UUID_JUCEHEADER__
+#define __JUCE_UUID_JUCEHEADER__
+
+/**
+    A universally unique 128-bit identifier.
+
+    This class generates very random unique numbers based on the system time
+    and MAC addresses if any are available. It's extremely unlikely that two identical
+    UUIDs would ever be created by chance.
+
+    The class includes methods for saving the ID as a string or as raw binary data.
+*/
+class JUCE_API  Uuid
+{
+public:
+
+    /** Creates a new unique ID. */
+    Uuid();
+
+    /** Destructor. */
+    ~Uuid() throw();
+
+    /** Creates a copy of another UUID. */
+    Uuid (const Uuid& other);
+
+    /** Copies another UUID. */
+    Uuid& operator= (const Uuid& other);
+
+    /** Returns true if the ID is zero. */
+    bool isNull() const throw();
+
+    /** Compares two UUIDs. */
+    bool operator== (const Uuid& other) const;
+
+    /** Compares two UUIDs. */
+    bool operator!= (const Uuid& other) const;
+
+    /** Returns a stringified version of this UUID.
+
+        A Uuid object can later be reconstructed from this string using operator= or
+        the constructor that takes a string parameter.
+
+        @returns a 32 character hex string.
+    */
+    const String toString() const;
+
+    /** Creates an ID from an encoded string version.
+
+        @see toString
+    */
+    Uuid (const String& uuidString);
+
+    /** Copies from a stringified UUID.
+
+        The string passed in should be one that was created with the toString() method.
+    */
+    Uuid& operator= (const String& uuidString);
+
+    /** Returns a pointer to the internal binary representation of the ID.
+
+        This is an array of 16 bytes. To reconstruct a Uuid from its data, use
+        the constructor or operator= method that takes an array of uint8s.
+    */
+    const uint8* getRawData() const throw()                 { return value.asBytes; }
+
+    /** Creates a UUID from a 16-byte array.
+
+        @see getRawData
+    */
+    Uuid (const uint8* const rawData);
+
+    /** Sets this UUID from 16-bytes of raw data. */
+    Uuid& operator= (const uint8* const rawData);
+
+    juce_UseDebuggingNewOperator
+
+private:
+    union
+    {
+        uint8 asBytes [16];
+        int asInt[4];
+        int64 asInt64[2];
+
+    } value;
+};
+
+#endif   // __JUCE_UUID_JUCEHEADER__
+/********* End of inlined file: juce_Uuid.h *********/
 
 #endif
 #ifndef __JUCE_ARRAY_JUCEHEADER__
@@ -7569,308 +8512,6 @@ public:
 
 #endif
 #ifndef __JUCE_BITARRAY_JUCEHEADER__
-
-/********* Start of inlined file: juce_BitArray.h *********/
-#ifndef __JUCE_BITARRAY_JUCEHEADER__
-#define __JUCE_BITARRAY_JUCEHEADER__
-
-class MemoryBlock;
-
-/**
-    An array of on/off bits, also usable to store large binary integers.
-
-    A BitArray acts like an arbitrarily large integer whose bits can be set or
-    cleared, and some basic mathematical operations can be done on the number as
-    a whole.
-*/
-class JUCE_API  BitArray
-{
-public:
-
-    /** Creates an empty BitArray */
-    BitArray() throw();
-
-    /** Creates a BitArray containing an integer value in its low bits.
-
-        The low 32 bits of the array are initialised with this value.
-    */
-    BitArray (const unsigned int value) throw();
-
-    /** Creates a BitArray containing an integer value in its low bits.
-
-        The low 32 bits of the array are initialised with the absolute value
-        passed in, and its sign is set to reflect the sign of the number.
-    */
-    BitArray (const int value) throw();
-
-    /** Creates a BitArray containing an integer value in its low bits.
-
-        The low 64 bits of the array are initialised with the absolute value
-        passed in, and its sign is set to reflect the sign of the number.
-    */
-    BitArray (int64 value) throw();
-
-    /** Creates a copy of another BitArray. */
-    BitArray (const BitArray& other) throw();
-
-    /** Destructor. */
-    ~BitArray() throw();
-
-    /** Copies another BitArray onto this one. */
-    const BitArray& operator= (const BitArray& other) throw();
-
-    /** Two arrays are the same if the same bits are set. */
-    bool operator== (const BitArray& other) const throw();
-    /** Two arrays are the same if the same bits are set. */
-    bool operator!= (const BitArray& other) const throw();
-
-    /** Clears all bits in the BitArray to 0. */
-    void clear() throw();
-
-    /** Clears a particular bit in the array. */
-    void clearBit (const int bitNumber) throw();
-
-    /** Sets a specified bit to 1.
-
-        If the bit number is high, this will grow the array to accomodate it.
-    */
-    void setBit (const int bitNumber) throw();
-
-    /** Sets or clears a specified bit. */
-    void setBit (const int bitNumber,
-                 const bool shouldBeSet) throw();
-
-    /** Sets a range of bits to be either on or off.
-
-        @param startBit     the first bit to change
-        @param numBits      the number of bits to change
-        @param shouldBeSet  whether to turn these bits on or off
-    */
-    void setRange (int startBit,
-                   int numBits,
-                   const bool shouldBeSet) throw();
-
-    /** Inserts a bit an a given position, shifting up any bits above it. */
-    void insertBit (const int bitNumber,
-                    const bool shouldBeSet) throw();
-
-    /** Returns the value of a specified bit in the array.
-
-        If the index is out-of-range, the result will be false.
-    */
-    bool operator[] (const int bit) const throw();
-
-    /** Returns true if no bits are set. */
-    bool isEmpty() const throw();
-
-    /** Returns a range of bits in the array as an integer value.
-
-        e.g. getBitRangeAsInt (0, 32) would return the lowest 32 bits.
-
-        Asking for more than 32 bits isn't allowed (obviously).
-    */
-    int getBitRangeAsInt (int startBit, int numBits) const throw();
-
-    /** Sets a range of bits in the array based on an integer value.
-
-        Copies the given integer into the array, starting at startBit,
-        and only using up to numBits of the available bits.
-    */
-    void setBitRangeAsInt (int startBit, int numBits,
-                           unsigned int valueToSet) throw();
-
-    /** Performs a bitwise OR with another BitArray.
-
-        The result ends up in this array.
-    */
-    void orWith (const BitArray& other) throw();
-
-    /** Performs a bitwise AND with another BitArray.
-
-        The result ends up in this array.
-    */
-    void andWith (const BitArray& other) throw();
-
-    /** Performs a bitwise XOR with another BitArray.
-
-        The result ends up in this array.
-    */
-    void xorWith (const BitArray& other) throw();
-
-    /** Adds another BitArray's value to this one.
-
-        Treating the two arrays as large positive integers, this
-        adds them up and puts the result in this array.
-    */
-    void add (const BitArray& other) throw();
-
-    /** Subtracts another BitArray's value from this one.
-
-        Treating the two arrays as large positive integers, this
-        subtracts them and puts the result in this array.
-
-        Note that if the result should be negative, this won't be
-        handled correctly.
-    */
-    void subtract (const BitArray& other) throw();
-
-    /** Multiplies another BitArray's value with this one.
-
-        Treating the two arrays as large positive integers, this
-        multiplies them and puts the result in this array.
-    */
-    void multiplyBy (const BitArray& other) throw();
-
-    /** Divides another BitArray's value into this one and also produces a remainder.
-
-        Treating the two arrays as large positive integers, this
-        divides this value by the other, leaving the quotient in this
-        array, and the remainder is copied into the other BitArray passed in.
-    */
-    void divideBy (const BitArray& divisor, BitArray& remainder) throw();
-
-    /** Returns the largest value that will divide both this value and the one
-        passed-in.
-    */
-    const BitArray findGreatestCommonDivisor (BitArray other) const throw();
-
-    /** Performs a modulo operation on this value.
-
-        The result is stored in this value.
-    */
-    void modulo (const BitArray& divisor) throw();
-
-    /** Performs a combined exponent and modulo operation.
-
-        This BitArray's value becomes (this ^ exponent) % modulus.
-    */
-    void exponentModulo (const BitArray& exponent, const BitArray& modulus) throw();
-
-    /** Performs an inverse modulo on the value.
-
-        i.e. the result is (this ^ -1) mod (modulus).
-    */
-    void inverseModulo (const BitArray& modulus) throw();
-
-    /** Shifts a section of bits left or right.
-
-        @param howManyBitsLeft  how far to move the bits (+ve numbers shift it left, -ve numbers shift it right).
-        @param startBit         the first bit to affect - if this is > 0, only bits above that index will be affected.
-    */
-    void shiftBits (int howManyBitsLeft,
-                    int startBit = 0) throw();
-
-    /** Does a signed comparison of two BitArrays.
-
-        Return values are:
-            - 0 if the numbers are the same
-            - < 0 if this number is smaller than the other
-            - > 0 if this number is bigger than the other
-    */
-    int compare (const BitArray& other) const throw();
-
-    /** Compares the magnitudes of two BitArrays, ignoring their signs.
-
-        Return values are:
-            - 0 if the numbers are the same
-            - < 0 if this number is smaller than the other
-            - > 0 if this number is bigger than the other
-    */
-    int compareAbsolute (const BitArray& other) const throw();
-
-    /** Returns true if the value is less than zero.
-
-        @see setNegative, negate
-    */
-    bool isNegative() const throw();
-
-    /** Changes the sign of the number to be positive or negative.
-
-        @see isNegative, negate
-    */
-    void setNegative (const bool shouldBeNegative) throw();
-
-    /** Inverts the sign of the number.
-
-        @see isNegative, setNegative
-    */
-    void negate() throw();
-
-    /** Counts the total number of set bits in the array. */
-    int countNumberOfSetBits() const throw();
-
-    /** Looks for the index of the next set bit after a given starting point.
-
-        searches from startIndex (inclusive) upwards for the first set bit,
-        and returns its index.
-
-        If no set bits are found, it returns -1.
-    */
-    int findNextSetBit (int startIndex = 0) const throw();
-
-    /** Looks for the index of the next clear bit after a given starting point.
-
-        searches from startIndex (inclusive) upwards for the first clear bit,
-        and returns its index.
-    */
-    int findNextClearBit (int startIndex = 0) const throw();
-
-    /** Returns the index of the highest set bit in the array.
-
-        If the array is empty, this will return -1.
-    */
-    int getHighestBit() const throw();
-
-    /** Sets a range of bits to random values. */
-    void fillBitsRandomly (int startBit, int numBits) throw();
-
-    /** Turns this value into a random number less than the given value. */
-    void createRandomNumber (const BitArray& maximumValue) throw();
-
-    /** Converts the array to a number string.
-
-        Specify a base such as 2 (binary), 8 (octal), 10 (decimal), 16 (hex).
-    */
-    const String toString (const int base) const throw();
-
-    /** Converts a number string to an array.
-
-        Any non-valid characters will be ignored.
-
-        Specify a base such as 2 (binary), 8 (octal), 10 (decimal), 16 (hex).
-    */
-    void parseString (const String& text,
-                      const int base) throw();
-
-    /** Turns the array into a block of binary data.
-
-        The data is arranged as little-endian, so the first byte of data is the low 8 bits
-        of the array, and so on.
-
-        @see loadFromMemoryBlock
-    */
-    const MemoryBlock toMemoryBlock() const throw();
-
-    /** Copies a block of raw data onto this array.
-
-        The data is arranged as little-endian, so the first byte of data is the low 8 bits
-        of the array, and so on.
-
-        @see toMemoryBlock
-    */
-    void loadFromMemoryBlock (const MemoryBlock& data) throw();
-
-    juce_UseDebuggingNewOperator
-
-private:
-    void ensureSize (const int numVals) throw();
-    unsigned int* values;
-    int numValues, highestBit;
-    bool negative;
-};
-
-#endif   // __JUCE_BITARRAY_JUCEHEADER__
-/********* End of inlined file: juce_BitArray.h *********/
 
 #endif
 #ifndef __JUCE_ELEMENTCOMPARATOR_JUCEHEADER__
@@ -7987,6 +8628,16 @@ public:
         If the index is out-of-range, no action will be taken.
     */
     void remove (const int index) throw();
+
+    /** Indicates whether to use a case-insensitive search when looking up a key string.
+    */
+    void setIgnoresCase (const bool shouldIgnoreCase) throw();
+
+    /** Returns a descriptive string containing the items.
+
+        This is handy for dumping the contents of an array.
+    */
+    const String getDescription() const;
 
     /** Reduces the amount of storage being used by the array.
 
@@ -8633,12 +9284,16 @@ public:
                                 document
         @param encodingType     the character encoding format string to put into the xml
                                 header
+        @param lineWrapLength   the line length that will be used before items get placed on
+                                a new line. This isn't an absolute maximum length, it just
+                                determines how lists of attributes get broken up
         @see writeToFile
     */
     const String createDocument (const String& dtdToUse,
                                  const bool allOnOneLine = false,
                                  const bool includeXmlHeader = true,
-                                 const tchar* const encodingType = JUCE_T("UTF-8")) const throw();
+                                 const tchar* const encodingType = JUCE_T("UTF-8"),
+                                 const int lineWrapLength = 60) const throw();
 
     /** Writes the element to a file as an XML document.
 
@@ -8652,13 +9307,17 @@ public:
         @param dtdToUse         the DTD to add to the document
         @param encodingType     the character encoding format string to put into the xml
                                 header
+        @param lineWrapLength   the line length that will be used before items get placed on
+                                a new line. This isn't an absolute maximum length, it just
+                                determines how lists of attributes get broken up
         @returns    true if the file is written successfully; false if something goes wrong
                     in the process
         @see createDocument
     */
     bool writeToFile (const File& destinationFile,
                       const String& dtdToUse,
-                      const tchar* const encodingType = JUCE_T("UTF-8")) const throw();
+                      const tchar* const encodingType = JUCE_T("UTF-8"),
+                      const int lineWrapLength = 60) const throw();
 
     /** Returns this element's tag type name.
 
@@ -9109,7 +9768,9 @@ private:
 
     void copyChildrenAndAttributesFrom (const XmlElement& other) throw();
 
-    void writeElementAsText (OutputStream& out, const int indentationLevel) const throw();
+    void writeElementAsText (OutputStream& out,
+                             const int indentationLevel,
+                             const int lineWrapLength) const throw();
 
     XmlElement** getChildElementsAsArray (const int) const throw();
     void reorderChildElements (XmlElement** const, const int) throw();
@@ -9589,10 +10250,10 @@ public:
 
     /** Creates a copy of another array */
     ReferenceCountedArray (const ReferenceCountedArray<ObjectClass, TypeOfCriticalSectionToUse>& other) throw()
-        : ArrayAllocationBase <ObjectClass*> (other.granularity),
-          numUsed (other.numUsed)
+        : ArrayAllocationBase <ObjectClass*> (other.granularity)
     {
         other.lockArray();
+        numUsed = other.numUsed;
         this->setAllocatedSize (numUsed);
         memcpy (this->elements, other.elements, numUsed * sizeof (ObjectClass*));
 
@@ -9674,12 +10335,12 @@ public:
 
         @see getUnchecked
     */
-    inline ObjectClass* operator[] (const int index) const throw()
+    inline const ReferenceCountedObjectPtr<ObjectClass> operator[] (const int index) const throw()
     {
         lock.enter();
-        ObjectClass* const result = (((unsigned int) index) < (unsigned int) numUsed)
-                                        ? this->elements [index]
-                                        : (ObjectClass*) 0;
+        const ReferenceCountedObjectPtr<ObjectClass> result ((((unsigned int) index) < (unsigned int) numUsed)
+                                                                ? this->elements [index]
+                                                                : (ObjectClass*) 0);
         lock.exit();
         return result;
     }
@@ -9689,11 +10350,11 @@ public:
         This is a faster and less safe version of operator[] which doesn't check the index passed in, so
         it can be used when you're sure the index if always going to be legal.
     */
-    inline ObjectClass* getUnchecked (const int index) const throw()
+    inline const ReferenceCountedObjectPtr<ObjectClass> getUnchecked (const int index) const throw()
     {
         lock.enter();
         jassert (((unsigned int) index) < (unsigned int) numUsed);
-        ObjectClass* const result = this->elements [index];
+        const ReferenceCountedObjectPtr<ObjectClass> result (this->elements [index]);
         lock.exit();
         return result;
     }
@@ -9703,11 +10364,11 @@ public:
         This will return a null pointer if the array's empty.
         @see getLast
     */
-    inline ObjectClass* getFirst() const throw()
+    inline const ReferenceCountedObjectPtr<ObjectClass> getFirst() const throw()
     {
         lock.enter();
-        ObjectClass* const result = (numUsed > 0) ? this->elements [0]
-                                                  : (ObjectClass*) 0;
+        const ReferenceCountedObjectPtr<ObjectClass> result ((numUsed > 0) ? this->elements [0]
+                                                                           : (ObjectClass*) 0);
         lock.exit();
 
         return result;
@@ -9718,11 +10379,11 @@ public:
         This will return a null pointer if the array's empty.
         @see getFirst
     */
-    inline ObjectClass* getLast() const throw()
+    inline const ReferenceCountedObjectPtr<ObjectClass> getLast() const throw()
     {
         lock.enter();
-        ObjectClass* const result = (numUsed > 0) ? this->elements [numUsed - 1]
-                                                  : (ObjectClass*) 0;
+        const ReferenceCountedObjectPtr<ObjectClass> result ((numUsed > 0) ? this->elements [numUsed - 1]
+                                                                           : (ObjectClass*) 0);
         lock.exit();
 
         return result;
@@ -9954,6 +10615,26 @@ public:
     {
         lock.enter();
         insert (findInsertIndexInSortedArray (comparator, this->elements, newObject, 0, numUsed), newObject);
+        lock.exit();
+    }
+
+    /** Inserts or replaces an object in the array, assuming it is sorted.
+
+        This is similar to addSorted, but if a matching element already exists, then it will be
+        replaced by the new one, rather than the new one being added as well.
+    */
+    template <class ElementComparator>
+    void addOrReplaceSorted (ElementComparator& comparator,
+                             ObjectClass* newObject) throw()
+    {
+        lock.enter();
+        const int index = findInsertIndexInSortedArray (comparator, this->elements, newObject, 0, numUsed);
+
+        if (index > 0 && comparator.compareElements (newObject, this->elements [index - 1]) == 0)
+            set (index - 1, newObject); // replace an existing object that matches
+        else
+            insert (index, newObject);  // no match, so insert the new one
+
         lock.exit();
     }
 
@@ -11090,23 +11771,26 @@ public:
     {
         jassert (numValuesToRemove >= 0);
 
-        if (numValuesToRemove > 0
+        if (numValuesToRemove >= 0
              && firstValue < values.getLast())
         {
             const bool onAtStart = contains (firstValue - 1);
-            Type lastValue = firstValue + numValuesToRemove;
-
-            if (lastValue < firstValue) // possible if the signed arithmetic wraps around
-                lastValue = values.getLast();
-
+            const Type lastValue = firstValue + jmin (numValuesToRemove, values.getLast() - firstValue);
             const bool onAtEnd = contains (lastValue);
 
             for (int i = values.size(); --i >= 0;)
             {
-                if (values.getUnchecked(i) >= firstValue
-                     && values.getUnchecked(i) <= lastValue)
+                if (values.getUnchecked(i) <= lastValue)
                 {
-                    values.remove (i);
+                    while (values.getUnchecked(i) >= firstValue)
+                    {
+                        values.remove (i);
+
+                        if (--i < 0)
+                            break;
+                    }
+
+                    break;
                 }
             }
 
@@ -11222,13 +11906,218 @@ private:
 /********* End of inlined file: juce_SparseSet.h *********/
 
 #endif
+#ifndef __JUCE_VARIANT_JUCEHEADER__
+
+/********* Start of inlined file: juce_Variant.h *********/
+#ifndef __JUCE_VARIANT_JUCEHEADER__
+#define __JUCE_VARIANT_JUCEHEADER__
+
+class JUCE_API  DynamicObject;
+
+/**
+    A variant class, that can be used to hold a range of primitive values.
+
+    A var object can hold a range of simple primitive values, strings, or
+    a reference-counted pointer to a DynamicObject. The var class is intended
+    to act like the values used in dynamic scripting languages.
+
+    @see DynamicObject
+*/
+class JUCE_API  var
+{
+public:
+
+    typedef const var (DynamicObject::*MethodFunction) (const var* arguments, int numArguments);
+
+    /** Creates a void variant. */
+    var() throw();
+
+    /** Destructor. */
+    ~var();
+
+    var (const var& valueToCopy) throw();
+    var (const int value) throw();
+    var (const bool value) throw();
+    var (const double value) throw();
+    var (const char* const value) throw();
+    var (const juce_wchar* const value) throw();
+    var (const String& value) throw();
+    var (DynamicObject* const object) throw();
+    var (MethodFunction method) throw();
+
+    const var& operator= (const var& valueToCopy) throw();
+    const var& operator= (const int value) throw();
+    const var& operator= (const bool value) throw();
+    const var& operator= (const double value) throw();
+    const var& operator= (const char* const value) throw();
+    const var& operator= (const juce_wchar* const value) throw();
+    const var& operator= (const String& value) throw();
+    const var& operator= (DynamicObject* const object) throw();
+    const var& operator= (MethodFunction method) throw();
+
+    operator int() const throw();
+    operator bool() const throw();
+    operator double() const throw();
+    operator const String() const throw();
+    const String toString() const throw();
+    DynamicObject* getObject() const throw();
+
+    bool isVoid() const throw()         { return type == voidType; }
+    bool isInt() const throw()          { return type == intType; }
+    bool isBool() const throw()         { return type == boolType; }
+    bool isDouble() const throw()       { return type == doubleType; }
+    bool isString() const throw()       { return type == stringType; }
+    bool isObject() const throw()       { return type == objectType; }
+    bool isMethod() const throw()       { return type == methodType; }
+
+    class JUCE_API  identifier
+    {
+    public:
+        identifier (const char* const name) throw();
+        identifier (const String& name) throw();
+        ~identifier() throw();
+
+        bool operator== (const identifier& other) const throw()   { return hashCode == other.hashCode; }
+
+        String name;
+        int hashCode;
+    };
+
+    /** If this variant is an object, this returns one of its properties. */
+    const var operator[] (const identifier& propertyName) const throw();
+
+    /** If this variant is an object, this invokes one of its methods with no arguments. */
+    const var call (const identifier& method) const;
+    /** If this variant is an object, this invokes one of its methods with one argument. */
+    const var call (const identifier& method, const var& arg1) const;
+    /** If this variant is an object, this invokes one of its methods with 2 arguments. */
+    const var call (const identifier& method, const var& arg1, const var& arg2) const;
+    /** If this variant is an object, this invokes one of its methods with 3 arguments. */
+    const var call (const identifier& method, const var& arg1, const var& arg2, const var& arg3);
+    /** If this variant is an object, this invokes one of its methods with 4 arguments. */
+    const var call (const identifier& method, const var& arg1, const var& arg2, const var& arg3, const var& arg4) const;
+    /** If this variant is an object, this invokes one of its methods with 5 arguments. */
+    const var call (const identifier& method, const var& arg1, const var& arg2, const var& arg3, const var& arg4, const var& arg5) const;
+
+    /** If this variant is an object, this invokes one of its methods with a list of arguments. */
+    const var invoke (const identifier& method, const var* arguments, int numArguments) const;
+
+    /** If this variant is a method pointer, this invokes it on a target object. */
+    const var invoke (const var& targetObject, const var* arguments, int numArguments) const;
+
+    juce_UseDebuggingNewOperator
+
+private:
+    enum Type
+    {
+        voidType = 0,
+        intType,
+        boolType,
+        doubleType,
+        stringType,
+        objectType,
+        methodType
+    };
+
+    Type type;
+
+    union
+    {
+        int intValue;
+        bool boolValue;
+        double doubleValue;
+        String* stringValue;
+        DynamicObject* objectValue;
+        MethodFunction methodValue;
+    } value;
+
+    void releaseValue() throw();
+};
+
+/**
+    Represents a dynamically implemented object.
+
+    An instance of this class can be used to store named properties, and
+    by subclassing hasMethod() and invokeMethod(), you can give your object
+    methods.
+
+    This is intended for use as a wrapper for scripting language objects.
+*/
+class JUCE_API  DynamicObject  : public ReferenceCountedObject
+{
+public:
+
+    DynamicObject();
+
+    /** Destructor. */
+    virtual ~DynamicObject();
+
+    /** Returns true if the object has a property with this name.
+        Note that if the property is actually a method, this will return false.
+    */
+    virtual bool hasProperty (const var::identifier& propertyName) const;
+
+    /** Returns a named property.
+
+        This returns a void if no such property exists.
+    */
+    virtual const var getProperty (const var::identifier& propertyName) const;
+
+    /** Sets a named property. */
+    virtual void setProperty (const var::identifier& propertyName, const var& newValue);
+
+    /** Removes a named property. */
+    virtual void removeProperty (const var::identifier& propertyName);
+
+    /** Checks whether this object has the specified method.
+
+        The default implementation of this just checks whether there's a property
+        with this name that's actually a method, but this can be overridden for
+        building objects with dynamic invocation.
+    */
+    virtual bool hasMethod (const var::identifier& methodName) const;
+
+    /** Invokes a named method on this object.
+
+        The default implementation looks up the named property, and if it's a method
+        call, then it invokes it.
+
+        This method is virtual to allow more dynamic invocation to used for objects
+        where the methods may not already be set as properies.
+    */
+    virtual const var invokeMethod (const var::identifier& methodName,
+                                    const var* parameters,
+                                    int numParameters);
+
+    /** Sets up a method.
+
+        This is basically the same as calling setProperty (methodName, (var::MethodFunction) myFunction), but
+        helps to avoid accidentally invoking the wrong type of var constructor. It also makes
+        the code easier to read,
+
+        The compiler will probably force you to use an explicit cast your method to a (var::MethodFunction), e.g.
+        @code
+        setMethod ("doSomething", (var::MethodFunction) &MyClass::doSomething);
+        @endcode
+    */
+    void setMethod (const var::identifier& methodName,
+                    var::MethodFunction methodFunction);
+
+    /** Removes all properties and methods from the object. */
+    void clear();
+
+    juce_UseDebuggingNewOperator
+
+private:
+    Array <int> propertyIds;
+    OwnedArray <var> propertyValues;
+};
+
+#endif   // __JUCE_VARIANT_JUCEHEADER__
+/********* End of inlined file: juce_Variant.h *********/
+
+#endif
 #ifndef __JUCE_VOIDARRAY_JUCEHEADER__
-
-#endif
-#ifndef __JUCE_INPUTSTREAM_JUCEHEADER__
-
-#endif
-#ifndef __JUCE_OUTPUTSTREAM_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_DIRECTORYITERATOR_JUCEHEADER__
@@ -11654,6 +12543,188 @@ private:
 /********* End of inlined file: juce_NamedPipe.h *********/
 
 #endif
+#ifndef __JUCE_ZIPFILE_JUCEHEADER__
+
+/********* Start of inlined file: juce_ZipFile.h *********/
+#ifndef __JUCE_ZIPFILE_JUCEHEADER__
+#define __JUCE_ZIPFILE_JUCEHEADER__
+
+/********* Start of inlined file: juce_InputSource.h *********/
+#ifndef __JUCE_INPUTSOURCE_JUCEHEADER__
+#define __JUCE_INPUTSOURCE_JUCEHEADER__
+
+/**
+    A lightweight object that can create a stream to read some kind of resource.
+
+    This may be used to refer to a file, or some other kind of source, allowing a
+    caller to create an input stream that can read from it when required.
+
+    @see FileInputSource
+*/
+class JUCE_API  InputSource
+{
+public:
+
+    InputSource() throw()       {}
+
+    /** Destructor. */
+    virtual ~InputSource()      {}
+
+    /** Returns a new InputStream to read this item.
+
+        @returns            an inputstream that the caller will delete, or 0 if
+                            the filename isn't found.
+    */
+    virtual InputStream* createInputStream() = 0;
+
+    /** Returns a new InputStream to read an item, relative.
+
+        @param relatedItemPath  the relative pathname of the resource that is required
+        @returns            an inputstream that the caller will delete, or 0 if
+                            the item isn't found.
+    */
+    virtual InputStream* createInputStreamFor (const String& relatedItemPath) = 0;
+
+    /** Returns a hash code that uniquely represents this item.
+    */
+    virtual int64 hashCode() const = 0;
+
+    juce_UseDebuggingNewOperator
+};
+
+#endif   // __JUCE_INPUTSOURCE_JUCEHEADER__
+/********* End of inlined file: juce_InputSource.h *********/
+
+/**
+    Decodes a ZIP file from a stream.
+
+    This can enumerate the items in a ZIP file and can create suitable stream objects
+    to read each one.
+*/
+class JUCE_API  ZipFile
+{
+public:
+
+    /** Creates a ZipFile for a given stream.
+
+        @param inputStream                  the stream to read from
+        @param deleteStreamWhenDestroyed    if set to true, the object passed-in
+                                            will be deleted when this ZipFile object is deleted
+    */
+    ZipFile (InputStream* const inputStream,
+             const bool deleteStreamWhenDestroyed) throw();
+
+    /** Creates a ZipFile based for a file. */
+    ZipFile (const File& file);
+
+    /** Creates a ZipFile for an input source.
+
+        The inputSource object will be owned by the zip file, which will delete
+        it later when not needed.
+    */
+    ZipFile (InputSource* const inputSource);
+
+    /** Destructor. */
+    ~ZipFile() throw();
+
+    /**
+        Contains information about one of the entries in a ZipFile.
+
+        @see ZipFile::getEntry
+    */
+    struct ZipEntry
+    {
+        /** The name of the file, which may also include a partial pathname. */
+        String filename;
+
+        /** The file's original size. */
+        unsigned int uncompressedSize;
+
+        /** The last time the file was modified. */
+        Time fileTime;
+    };
+
+    /** Returns the number of items in the zip file. */
+    int getNumEntries() const throw();
+
+    /** Returns a structure that describes one of the entries in the zip file.
+
+        This may return zero if the index is out of range.
+
+        @see ZipFile::ZipEntry
+    */
+    const ZipEntry* getEntry (const int index) const throw();
+
+    /** Returns the index of the first entry with a given filename.
+
+        This uses a case-sensitive comparison to look for a filename in the
+        list of entries. It might return -1 if no match is found.
+
+        @see ZipFile::ZipEntry
+    */
+    int getIndexOfFileName (const String& fileName) const throw();
+
+    /** Returns a structure that describes one of the entries in the zip file.
+
+        This uses a case-sensitive comparison to look for a filename in the
+        list of entries. It might return 0 if no match is found.
+
+        @see ZipFile::ZipEntry
+    */
+    const ZipEntry* getEntry (const String& fileName) const throw();
+
+    /** Sorts the list of entries, based on the filename.
+    */
+    void sortEntriesByFilename();
+
+    /** Creates a stream that can read from one of the zip file's entries.
+
+        The stream that is returned must be deleted by the caller (and
+        zero might be returned if a stream can't be opened for some reason).
+
+        The stream must not be used after the ZipFile object that created
+        has been deleted.
+    */
+    InputStream* createStreamForEntry (const int index);
+
+    /** Uncompresses all of the files in the zip file.
+
+        This will expand all the entires into a target directory. The relative
+        paths of the entries are used.
+
+        @param targetDirectory      the root folder to uncompress to
+        @param shouldOverwriteFiles whether to overwrite existing files with similarly-named ones
+    */
+    void uncompressTo (const File& targetDirectory,
+                       const bool shouldOverwriteFiles = true);
+
+    juce_UseDebuggingNewOperator
+
+private:
+    VoidArray entries;
+    friend class ZipInputStream;
+    CriticalSection lock;
+    InputStream* inputStream;
+    InputSource* inputSource;
+
+    bool deleteStreamWhenDestroyed;
+    int numEntries, centralRecStart;
+
+#ifdef JUCE_DEBUG
+    int numOpenStreams;
+#endif
+
+    void init();
+    int findEndOfZipEntryTable (InputStream* in);
+
+    ZipFile (const ZipFile&);
+    const ZipFile& operator= (const ZipFile&);
+};
+
+#endif   // __JUCE_ZIPFILE_JUCEHEADER__
+/********* End of inlined file: juce_ZipFile.h *********/
+
+#endif
 #ifndef __JUCE_BLOWFISH_JUCEHEADER__
 
 /********* Start of inlined file: juce_BlowFish.h *********/
@@ -11735,7 +12806,14 @@ public:
     /** Creates a checksum for a block of binary data. */
     MD5 (const char* data, const int numBytes);
 
-    /** Creates a checksum for a string. */
+    /** Creates a checksum for a string.
+
+        Note that this operates on the string as a block of unicode characters, so the
+        result you get will differ from the value you'd get if the string was treated
+        as a block of utf8 or ascii. Bear this in mind if you're comparing the result
+        of this method with a checksum created by a different framework, which may have
+        used a different encoding.
+    */
     MD5 (const String& text);
 
     /** Creates a checksum for the input from a stream.
@@ -11810,9 +12888,15 @@ public:
 
         The certainty parameter specifies how many iterations to use when testing
         for primality. A safe value might be anything over about 20-30.
+
+        The randomSeeds parameter lets you optionally pass it a set of values with
+        which to seed the random number generation, improving the security of the
+        keys generated.
     */
     static const BitArray createProbablePrime (int bitLength,
-                                               int certainty) throw();
+                                               int certainty,
+                                               const int* randomSeeds = 0,
+                                               int numRandomSeeds = 0) throw();
 
     /** Tests a number to see if it's prime.
 
@@ -11872,7 +12956,13 @@ public:
         Call this on the public key object to encode some data, then use the matching
         private key object to decode it.
 
-        Returns false if the operation failed, e.g. if this object isn't a valid key.
+        Returns false if the operation couldn't be completed, e.g. if this key hasn't been
+        initialised correctly.
+
+        NOTE: This method dumbly applies this key to this data. If you encode some data
+        and then try to decode it with a key that doesn't match, this method will still
+        happily do its job and return true, but the result won't be what you were expecting.
+        It's your responsibility to check that the result is what you wanted.
     */
     bool applyToValue (BitArray& value) const throw();
 
@@ -11883,10 +12973,16 @@ public:
 
         The numBits parameter specifies the size of key, e.g. 128, 256, 512 bit. Bigger
         sizes are more secure, but this method will take longer to execute.
+
+        The randomSeeds parameter lets you optionally pass it a set of values with
+        which to seed the random number generation, improving the security of the
+        keys generated.
     */
     static void createKeyPair (RSAKey& publicKey,
                                RSAKey& privateKey,
-                               const int numBits) throw();
+                               const int numBits,
+                               const int* randomSeeds = 0,
+                               const int numRandomSeeds = 0) throw();
 
     juce_UseDebuggingNewOperator
 
@@ -11978,14 +13074,18 @@ public:
     int waitUntilReady (const bool readyForReading,
                         const int timeoutMsecs) const;
 
-    /** Reads bytes from the socket (blocking).
+    /** Reads bytes from the socket.
 
-        Note that this method will block unless you have checked the socket is ready
-        for reading before calling it (see the waitUntilReady() method).
+        If blockUntilSpecifiedAmountHasArrived is true, the method will block until
+        maxBytesToRead bytes have been read, (or until an error occurs). If this
+        flag is false, the method will return as much data as is currently available
+        without blocking.
 
         @returns the number of bytes read, or -1 if there was an error.
+        @see waitUntilReady
     */
-    int read (void* destBuffer, const int maxBytesToRead);
+    int read (void* destBuffer, const int maxBytesToRead,
+              const bool blockUntilSpecifiedAmountHasArrived);
 
     /** Writes bytes to the socket from a buffer.
 
@@ -12002,11 +13102,14 @@ public:
         which will spawn new sockets for each new connection, so that these can
         be handled in parallel by other threads.
 
-        This returns true if it manages to open the socket successfully.
+        @param portNumber       the port number to listen on
+        @param localHostName    the interface address to listen on - pass an empty
+                                string to listen on all addresses
+        @returns    true if it manages to open the socket successfully.
 
         @see waitForNextConnection
     */
-    bool createListener (const int portNumber);
+    bool createListener (const int portNumber, const String& localHostName = String::empty);
 
     /** When in "listener" mode, this waits for a connection and spawns it as a new
         socket.
@@ -12053,9 +13156,13 @@ public:
         make a connection, but will save the destination you've provided. After this, you can
         call read() or write().
 
+        If enableBroadcasting is true, the socket will be allowed to send broadcast messages
+        (may require extra privileges on linux)
+
         To wait for other sockets to connect to this one, call waitForNextConnection().
     */
-    DatagramSocket (const int localPortNumber);
+    DatagramSocket (const int localPortNumber,
+                    const bool enableBroadcasting = false);
 
     /** Destructor. */
     ~DatagramSocket();
@@ -12108,14 +13215,18 @@ public:
     int waitUntilReady (const bool readyForReading,
                         const int timeoutMsecs) const;
 
-    /** Reads bytes from the socket (blocking).
+    /** Reads bytes from the socket.
 
-        Note that this method will block unless you have checked the socket is ready
-        for reading before calling it (see the waitUntilReady() method).
+        If blockUntilSpecifiedAmountHasArrived is true, the method will block until
+        maxBytesToRead bytes have been read, (or until an error occurs). If this
+        flag is false, the method will return as much data as is currently available
+        without blocking.
 
         @returns the number of bytes read, or -1 if there was an error.
+        @see waitUntilReady
     */
-    int read (void* destBuffer, const int maxBytesToRead);
+    int read (void* destBuffer, const int maxBytesToRead,
+              const bool blockUntilSpecifiedAmountHasArrived);
 
     /** Writes bytes to the socket from a buffer.
 
@@ -12139,7 +13250,7 @@ public:
 private:
     String hostName;
     int volatile portNumber, handle;
-    bool connected;
+    bool connected, allowBroadcast;
     void* serverAddress;
 
     DatagramSocket (const String& hostname, const int portNumber, const int handle, const int localPortNumber);
@@ -12193,6 +13304,32 @@ public:
     /** True if it seems to be valid. */
     bool isWellFormed() const;
 
+    /** Returns just the domain part of the URL.
+
+        E.g. for "http://www.xyz.com/foobar", this will return "www.xyz.com".
+    */
+    const String getDomain() const;
+
+    /** Returns the path part of the URL.
+
+        E.g. for "http://www.xyz.com/foo/bar?x=1", this will return "foo/bar".
+    */
+    const String getSubPath() const;
+
+    /** Returns the scheme of the URL.
+
+        E.g. for "http://www.xyz.com/foobar", this will return "http". (It won't
+        include the colon).
+    */
+    const String getScheme() const;
+
+    /** Returns a new version of this URL that uses a different sub-path.
+
+        E.g. if the URL is "http://www.xyz.com/foo?x=1" and you call this with
+        "bar", it'll return "http://www.xyz.com/bar?x=1".
+    */
+    const URL withNewSubPath (const String& newPath) const;
+
     /** Returns a copy of this URL, with a GET parameter added to the end.
 
         Any control characters in the value will be encoded.
@@ -12238,6 +13375,24 @@ public:
     */
     const StringPairArray& getMimeTypesOfUploadFiles() const throw();
 
+    /** Returns a copy of this URL, with a block of data to send as the POST data.
+
+        If you're setting the POST data, be careful not to have any parameters set
+        as well, otherwise it'll all get thrown in together, and might not have the
+        desired effect.
+
+        If the URL already contains some POST data, this will replace it, rather
+        than being appended to it.
+
+        This data will only be used if you specify a post operation when you call
+        createInputStream().
+    */
+    const URL withPOSTData (const String& postData) const;
+
+    /** Returns the data that was set using withPOSTData().
+    */
+    const String getPostData() const throw()                        { return postData; }
+
     /** Tries to launch the system's default browser to open the URL.
 
         Returns true if this seems to have worked.
@@ -12276,11 +13431,15 @@ public:
         @param extraHeaders     if not empty, this string is appended onto the headers that
                                 are used for the request. It must therefore be a valid set of HTML
                                 header directives, separated by newlines.
+        @param connectionTimeOutMs  if 0, this will use whatever default setting the OS chooses. If
+                                a negative number, it will be infinite. Otherwise it specifies a
+                                time in milliseconds.
     */
     InputStream* createInputStream (const bool usePostCommand,
                                     OpenStreamProgressCallback* const progressCallback = 0,
                                     void* const progressCallbackContext = 0,
-                                    const String& extraHeaders = String::empty) const;
+                                    const String& extraHeaders = String::empty,
+                                    const int connectionTimeOutMs = 0) const;
 
     /** Tries to download the entire contents of this URL into a binary data block.
 
@@ -12330,9 +13489,14 @@ public:
 
         This is the opposite of removeEscapeChars().
 
+        If isParameter is true, it means that the string is going to be used
+        as a parameter, so it also encodes '$' and ',' (which would otherwise
+        be legal in a URL.
+
         @see removeEscapeChars
     */
-    static const String addEscapeChars (const String& stringToAddEscapeCharsTo);
+    static const String addEscapeChars (const String& stringToAddEscapeCharsTo,
+                                        const bool isParameter);
 
     /** Replaces any escape character sequences in a string with their original
         character codes.
@@ -12348,7 +13512,7 @@ public:
     juce_UseDebuggingNewOperator
 
 private:
-    String url;
+    String url, postData;
     StringPairArray parameters, filesToUpload, mimeTypes;
 };
 
@@ -12421,52 +13585,6 @@ private:
 /********* Start of inlined file: juce_FileInputSource.h *********/
 #ifndef __JUCE_FILEINPUTSOURCE_JUCEHEADER__
 #define __JUCE_FILEINPUTSOURCE_JUCEHEADER__
-
-/********* Start of inlined file: juce_InputSource.h *********/
-#ifndef __JUCE_INPUTSOURCE_JUCEHEADER__
-#define __JUCE_INPUTSOURCE_JUCEHEADER__
-
-/**
-    A lightweight object that can create a stream to read some kind of resource.
-
-    This may be used to refer to a file, or some other kind of source, allowing a
-    caller to create an input stream that can read from it when required.
-
-    @see FileInputSource
-*/
-class JUCE_API  InputSource
-{
-public:
-
-    InputSource() throw()       {}
-
-    /** Destructor. */
-    virtual ~InputSource()      {}
-
-    /** Returns a new InputStream to read this item.
-
-        @returns            an inputstream that the caller will delete, or 0 if
-                            the filename isn't found.
-    */
-    virtual InputStream* createInputStream() = 0;
-
-    /** Returns a new InputStream to read an item, relative.
-
-        @param relatedItemPath  the relative pathname of the resource that is required
-        @returns            an inputstream that the caller will delete, or 0 if
-                            the item isn't found.
-    */
-    virtual InputStream* createInputStreamFor (const String& relatedItemPath) = 0;
-
-    /** Returns a hash code that uniquely represents this item.
-    */
-    virtual int64 hashCode() const = 0;
-
-    juce_UseDebuggingNewOperator
-};
-
-#endif   // __JUCE_INPUTSOURCE_JUCEHEADER__
-/********* End of inlined file: juce_InputSource.h *********/
 
 /**
     A type of InputSource that represents a normal file.
@@ -12607,7 +13725,7 @@ private:
     const bool deleteSourceWhenDestroyed, noWrap;
     bool isEof;
     int activeBufferSize;
-    int64 originalSourcePos;
+    int64 originalSourcePos, currentPos;
     uint8* buffer;
     void* helper;
 
@@ -12620,6 +13738,9 @@ private:
 
 #endif
 #ifndef __JUCE_INPUTSOURCE_JUCEHEADER__
+
+#endif
+#ifndef __JUCE_INPUTSTREAM_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_MEMORYINPUTSTREAM_JUCEHEADER__
@@ -12739,6 +13860,9 @@ private:
 /********* End of inlined file: juce_MemoryOutputStream.h *********/
 
 #endif
+#ifndef __JUCE_OUTPUTSTREAM_JUCEHEADER__
+
+#endif
 #ifndef __JUCE_SUBREGIONSTREAM_JUCEHEADER__
 
 /********* Start of inlined file: juce_SubregionStream.h *********/
@@ -12804,525 +13928,7 @@ private:
 /********* End of inlined file: juce_SubregionStream.h *********/
 
 #endif
-#ifndef __JUCE_PERFORMANCECOUNTER_JUCEHEADER__
-
-/********* Start of inlined file: juce_PerformanceCounter.h *********/
-#ifndef __JUCE_PERFORMANCECOUNTER_JUCEHEADER__
-#define __JUCE_PERFORMANCECOUNTER_JUCEHEADER__
-
-/** A timer for measuring performance of code and dumping the results to a file.
-
-    e.g. @code
-
-        PerformanceCounter pc ("fish", 50, "/temp/myfishlog.txt");
-
-        for (;;)
-        {
-            pc.start();
-
-            doSomethingFishy();
-
-            pc.stop();
-        }
-    @endcode
-
-    In this example, the time of each period between calling start/stop will be
-    measured and averaged over 50 runs, and the results printed to a file
-    every 50 times round the loop.
-*/
-class JUCE_API  PerformanceCounter
-{
-public:
-
-    /** Creates a PerformanceCounter object.
-
-        @param counterName      the name used when printing out the statistics
-        @param runsPerPrintout  the number of start/stop iterations before calling
-                                printStatistics()
-        @param loggingFile      a file to dump the results to - if this is File::nonexistent,
-                                the results are just written to the debugger output
-    */
-    PerformanceCounter (const String& counterName,
-                        int runsPerPrintout = 100,
-                        const File& loggingFile = File::nonexistent);
-
-    /** Destructor. */
-    ~PerformanceCounter();
-
-    /** Starts timing.
-
-        @see stop
-    */
-    void start();
-
-    /** Stops timing and prints out the results.
-
-        The number of iterations before doing a printout of the
-        results is set in the constructor.
-
-        @see start
-    */
-    void stop();
-
-    /** Dumps the current metrics to the debugger output and to a file.
-
-        As well as using Logger::outputDebugString to print the results,
-        this will write then to the file specified in the constructor (if
-        this was valid).
-    */
-    void printStatistics();
-
-    juce_UseDebuggingNewOperator
-
-private:
-
-    String name;
-    int numRuns, runsPerPrint;
-    double totalTime;
-    int64 started;
-    File outputFile;
-};
-
-#endif   // __JUCE_PERFORMANCECOUNTER_JUCEHEADER__
-/********* End of inlined file: juce_PerformanceCounter.h *********/
-
-#endif
-#ifndef __JUCE_PLATFORMUTILITIES_JUCEHEADER__
-
-/********* Start of inlined file: juce_PlatformUtilities.h *********/
-#ifndef __JUCE_PLATFORMUTILITIES_JUCEHEADER__
-#define __JUCE_PLATFORMUTILITIES_JUCEHEADER__
-
-/**
-    A collection of miscellaneous platform-specific utilities.
-
-*/
-class JUCE_API  PlatformUtilities
-{
-public:
-
-    /** Plays the operating system's default alert 'beep' sound. */
-    static void beep();
-
-    static bool launchEmailWithAttachments (const String& targetEmailAddress,
-                                            const String& emailSubject,
-                                            const String& bodyText,
-                                            const StringArray& filesToAttach);
-
-#if JUCE_MAC || DOXYGEN
-
-    /** MAC ONLY - Turns a String into a pascal string. */
-    static void copyToStr255 (Str255& d, const String& s);
-    /** MAC ONLY - Turns a String into a pascal string. */
-    static void copyToStr63 (Str63& d, const String& s);
-
-    /** MAC ONLY - Turns a Core CF String into a juce one. */
-    static const String cfStringToJuceString (CFStringRef cfString);
-
-    /** MAC ONLY - Turns a juce string into a Core CF one. */
-    static CFStringRef juceStringToCFString (const String& s);
-
-    /** MAC ONLY - Converts a UTF16 string to a Juce String. */
-    static const String convertUTF16ToString (const UniChar* utf16);
-
-    /** MAC ONLY - Turns a file path into an FSSpec, returning true if it succeeds. */
-    static bool makeFSSpecFromPath (FSSpec* destFSSpec, const String& path);
-
-    /** MAC ONLY - Turns a file path into an FSRef, returning true if it succeeds. */
-    static bool makeFSRefFromPath (FSRef* destFSRef, const String& path);
-
-    /** MAC ONLY - Turns an FSRef into a juce string path. */
-    static const String makePathFromFSRef (FSRef* file);
-
-    /** MAC ONLY - Converts any decomposed unicode characters in a string into
-        their precomposed equivalents.
-    */
-    static const String convertToPrecomposedUnicode (const String& s);
-
-    /** MAC ONLY - Gets the type of a file from the file's resources. */
-    static OSType getTypeOfFile (const String& filename);
-
-    /** MAC ONLY - Returns true if this file is actually a bundle. */
-    static bool isBundle (const String& filename);
-
-#endif
-
-#if JUCE_WIN32 || DOXYGEN
-
-    // Some registry helper functions:
-
-    /** WIN32 ONLY - Returns a string from the registry.
-
-        The path is a string for the entire path of a value in the registry,
-        e.g. "HKEY_CURRENT_USER\Software\foo\bar"
-    */
-    static const String getRegistryValue (const String& regValuePath,
-                                          const String& defaultValue = String::empty);
-
-    /** WIN32 ONLY - Sets a registry value as a string.
-
-        This will take care of creating any groups needed to get to the given
-        registry value.
-    */
-    static void setRegistryValue (const String& regValuePath,
-                                  const String& value);
-
-    /** WIN32 ONLY - Returns true if the given value exists in the registry. */
-    static bool registryValueExists (const String& regValuePath);
-
-    /** WIN32 ONLY - Deletes a registry value. */
-    static void deleteRegistryValue (const String& regValuePath);
-
-    /** WIN32 ONLY - Deletes a registry key (which is registry-talk for 'folder'). */
-    static void deleteRegistryKey (const String& regKeyPath);
-
-    /** WIN32 ONLY - This returns the HINSTANCE of the current module.
-
-        In a normal Juce application this will be set to the module handle
-        of the application executable.
-
-        If you're writing a DLL using Juce and plan to use any Juce messaging or
-        windows, you'll need to make sure you use the setCurrentModuleInstanceHandle()
-        to set the correct module handle in your DllMain() function, because
-        the win32 system relies on the correct instance handle when opening windows.
-    */
-    static void* JUCE_CALLTYPE getCurrentModuleInstanceHandle() throw();
-
-    /** WIN32 ONLY - Sets a new module handle to be used by the library.
-
-        @see getCurrentModuleInstanceHandle()
-    */
-    static void JUCE_CALLTYPE setCurrentModuleInstanceHandle (void* newHandle) throw();
-
-#endif
-
-    /** Clears the floating point unit's flags.
-
-        Only has an effect under win32, currently.
-    */
-    static void fpuReset();
-
-#if JUCE_LINUX || DOXYGEN
-
-#endif
-};
-
-#if JUCE_MAC
-
-/**
-    A wrapper class for picking up events from an Apple IR remote control device.
-
-    To use it, just create a subclass of this class, implementing the buttonPressed()
-    callback, then call start() and stop() to start or stop receiving events.
-*/
-class JUCE_API  AppleRemoteDevice
-{
-public:
-
-    AppleRemoteDevice();
-    virtual ~AppleRemoteDevice();
-
-    /** The set of buttons that may be pressed.
-        @see buttonPressed
-    */
-    enum ButtonType
-    {
-        menuButton = 0,     /**< The menu button (if it's held for a short time). */
-        playButton,         /**< The play button. */
-        plusButton,         /**< The plus or volume-up button. */
-        minusButton,        /**< The minus or volume-down button. */
-        rightButton,        /**< The right button (if it's held for a short time). */
-        leftButton,         /**< The left button (if it's held for a short time). */
-        rightButton_Long,   /**< The right button (if it's held for a long time). */
-        leftButton_Long,    /**< The menu button (if it's held for a long time). */
-        menuButton_Long,    /**< The menu button (if it's held for a long time). */
-        playButtonSleepMode,
-        switched
-    };
-
-    /** Override this method to receive the callback about a button press.
-
-        The callback will happen on the application's message thread.
-
-        Some buttons trigger matching up and down events, in which the isDown parameter
-        will be true and then false. Others only send a single event when the
-        button is pressed.
-    */
-    virtual void buttonPressed (const ButtonType buttonId, const bool isDown) = 0;
-
-    /** Starts the device running and responding to events.
-
-        Returns true if it managed to open the device.
-
-        @param inExclusiveMode  if true, the remote will be grabbed exclusively for this app,
-                                and will not be available to any other part of the system. If
-                                false, it will be shared with other apps.
-        @see stop
-    */
-    bool start (const bool inExclusiveMode) throw();
-
-    /** Stops the device running.
-        @see start
-    */
-    void stop() throw();
-
-    /** Returns true if the device has been started successfully.
-    */
-    bool isActive() const throw();
-
-    /** Returns the ID number of the remote, if it has sent one.
-    */
-    int getRemoteId() const throw()             { return remoteId; }
-
-    juce_UseDebuggingNewOperator
-
-    /** @internal */
-    void handleCallbackInternal();
-
-private:
-    void* device;
-    void* queue;
-    int remoteId;
-
-    bool open (const bool openInExclusiveMode) throw();
-};
-
-#endif
-
-#endif   // __JUCE_PLATFORMUTILITIES_JUCEHEADER__
-/********* End of inlined file: juce_PlatformUtilities.h *********/
-
-#endif
-#ifndef __JUCE_UUID_JUCEHEADER__
-
-/********* Start of inlined file: juce_Uuid.h *********/
-#ifndef __JUCE_UUID_JUCEHEADER__
-#define __JUCE_UUID_JUCEHEADER__
-
-/**
-    A universally unique 128-bit identifier.
-
-    This class generates very random unique numbers based on the system time
-    and MAC addresses if any are available. It's extremely unlikely that two identical
-    UUIDs would ever be created by chance.
-
-    The class includes methods for saving the ID as a string or as raw binary data.
-*/
-class JUCE_API  Uuid
-{
-public:
-
-    /** Creates a new unique ID. */
-    Uuid();
-
-    /** Destructor. */
-    ~Uuid() throw();
-
-    /** Creates a copy of another UUID. */
-    Uuid (const Uuid& other);
-
-    /** Copies another UUID. */
-    Uuid& operator= (const Uuid& other);
-
-    /** Returns true if the ID is zero. */
-    bool isNull() const throw();
-
-    /** Compares two UUIDs. */
-    bool operator== (const Uuid& other) const;
-
-    /** Compares two UUIDs. */
-    bool operator!= (const Uuid& other) const;
-
-    /** Returns a stringified version of this UUID.
-
-        A Uuid object can later be reconstructed from this string using operator= or
-        the constructor that takes a string parameter.
-
-        @returns a 32 character hex string.
-    */
-    const String toString() const;
-
-    /** Creates an ID from an encoded string version.
-
-        @see toString
-    */
-    Uuid (const String& uuidString);
-
-    /** Copies from a stringified UUID.
-
-        The string passed in should be one that was created with the toString() method.
-    */
-    Uuid& operator= (const String& uuidString);
-
-    /** Returns a pointer to the internal binary representation of the ID.
-
-        This is an array of 16 bytes. To reconstruct a Uuid from its data, use
-        the constructor or operator= method that takes an array of uint8s.
-    */
-    const uint8* getRawData() const throw()                 { return value.asBytes; }
-
-    /** Creates a UUID from a 16-byte array.
-
-        @see getRawData
-    */
-    Uuid (const uint8* const rawData);
-
-    /** Sets this UUID from 16-bytes of raw data. */
-    Uuid& operator= (const uint8* const rawData);
-
-    juce_UseDebuggingNewOperator
-
-private:
-    union
-    {
-        uint8 asBytes [16];
-        int asInt[4];
-        int64 asInt64[2];
-
-    } value;
-};
-
-#endif   // __JUCE_UUID_JUCEHEADER__
-/********* End of inlined file: juce_Uuid.h *********/
-
-#endif
-#ifndef __JUCE_ZIPFILE_JUCEHEADER__
-
-/********* Start of inlined file: juce_ZipFile.h *********/
-#ifndef __JUCE_ZIPFILE_JUCEHEADER__
-#define __JUCE_ZIPFILE_JUCEHEADER__
-
-/**
-    Decodes a ZIP file from a stream.
-
-    This can enumerate the items in a ZIP file and can create suitable stream objects
-    to read each one.
-*/
-class JUCE_API  ZipFile
-{
-public:
-
-    /** Creates a ZipFile for a given stream.
-
-        @param inputStream                  the stream to read from
-        @param deleteStreamWhenDestroyed    if set to true, the object passed-in
-                                            will be deleted when this ZipFile object is deleted
-    */
-    ZipFile (InputStream* const inputStream,
-             const bool deleteStreamWhenDestroyed) throw();
-
-    /** Creates a ZipFile based for a file. */
-    ZipFile (const File& file);
-
-    /** Creates a ZipFile for an input source.
-
-        The inputSource object will be owned by the zip file, which will delete
-        it later when not needed.
-    */
-    ZipFile (InputSource* const inputSource);
-
-    /** Destructor. */
-    ~ZipFile() throw();
-
-    /**
-        Contains information about one of the entries in a ZipFile.
-
-        @see ZipFile::getEntry
-    */
-    struct ZipEntry
-    {
-        /** The name of the file, which may also include a partial pathname. */
-        String filename;
-
-        /** The file's original size. */
-        unsigned int uncompressedSize;
-
-        /** The last time the file was modified. */
-        Time fileTime;
-    };
-
-    /** Returns the number of items in the zip file. */
-    int getNumEntries() const throw();
-
-    /** Returns a structure that describes one of the entries in the zip file.
-
-        This may return zero if the index is out of range.
-
-        @see ZipFile::ZipEntry
-    */
-    const ZipEntry* getEntry (const int index) const throw();
-
-    /** Returns the index of the first entry with a given filename.
-
-        This uses a case-sensitive comparison to look for a filename in the
-        list of entries. It might return -1 if no match is found.
-
-        @see ZipFile::ZipEntry
-    */
-    int getIndexOfFileName (const String& fileName) const throw();
-
-    /** Returns a structure that describes one of the entries in the zip file.
-
-        This uses a case-sensitive comparison to look for a filename in the
-        list of entries. It might return 0 if no match is found.
-
-        @see ZipFile::ZipEntry
-    */
-    const ZipEntry* getEntry (const String& fileName) const throw();
-
-    /** Sorts the list of entries, based on the filename.
-    */
-    void sortEntriesByFilename();
-
-    /** Creates a stream that can read from one of the zip file's entries.
-
-        The stream that is returned must be deleted by the caller (and
-        zero might be returned if a stream can't be opened for some reason).
-
-        The stream must not be used after the ZipFile object that created
-        has been deleted.
-    */
-    InputStream* createStreamForEntry (const int index);
-
-    /** Uncompresses all of the files in the zip file.
-
-        This will expand all the entires into a target directory. The relative
-        paths of the entries are used.
-
-        @param targetDirectory      the root folder to uncompress to
-        @param shouldOverwriteFiles whether to overwrite existing files with similarly-named ones
-    */
-    void uncompressTo (const File& targetDirectory,
-                       const bool shouldOverwriteFiles = true);
-
-    juce_UseDebuggingNewOperator
-
-private:
-    VoidArray entries;
-    friend class ZipInputStream;
-    CriticalSection lock;
-    InputStream* inputStream;
-    InputSource* inputSource;
-
-    bool deleteStreamWhenDestroyed;
-    int numEntries, centralRecStart;
-
-#ifdef JUCE_DEBUG
-    int numOpenStreams;
-#endif
-
-    void init();
-    int findEndOfZipEntryTable (InputStream* in);
-
-    ZipFile (const ZipFile&);
-    const ZipFile& operator= (const ZipFile&);
-};
-
-#endif   // __JUCE_ZIPFILE_JUCEHEADER__
-/********* End of inlined file: juce_ZipFile.h *********/
-
-#endif
-#ifndef __JUCE_CHARACTERFUNCTIONS_JUCEHEADER__
+#ifndef __JUCE_STRING_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_LOCALISEDSTRINGS_JUCEHEADER__
@@ -13469,6 +14075,11 @@ public:
     */
     const StringArray getCountryCodes() const throw()           { return countryCodes; }
 
+    /** Indicates whether to use a case-insensitive search when looking up a string.
+        This defaults to true.
+    */
+    void setIgnoresCase (const bool shouldIgnoreCase) throw();
+
     juce_UseDebuggingNewOperator
 
 private:
@@ -13483,7 +14094,7 @@ private:
 /********* End of inlined file: juce_LocalisedStrings.h *********/
 
 #endif
-#ifndef __JUCE_STRING_JUCEHEADER__
+#ifndef __JUCE_CHARACTERFUNCTIONS_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_STRINGARRAY_JUCEHEADER__
@@ -13581,6 +14192,15 @@ public:
     */
     void setInputSource (InputSource* const newSource) throw();
 
+    /** Sets a flag to change the treatment of empty text elements.
+
+        If this is true (the default state), then any text elements that contain only
+        whitespace characters will be ingored during parsing. If you need to catch
+        whitespace-only text, then you should set this to false before calling the
+        getDocumentElement() method.
+    */
+    void setEmptyTextElementsIgnored (const bool shouldBeIgnored) throw();
+
     juce_UseDebuggingNewOperator
 
 private:
@@ -13591,7 +14211,7 @@ private:
     bool identifierLookupTable [128];
     String lastError, dtdText;
     StringArray tokenisedDTD;
-    bool needToLoadDTD;
+    bool needToLoadDTD, ignoreEmptyTextElements;
     InputSource* inputSource;
 
     void setLastError (const String& desc, const bool carryOn) throw();
@@ -13742,33 +14362,6 @@ public:
     /** Returns true if this process is being hosted by a debugger.
     */
     static bool JUCE_CALLTYPE isRunningUnderDebugger() throw();
-
-    /** Loads a dynamically-linked library into the process's address space.
-
-        @param pathOrFilename   the platform-dependent name and search path
-        @returns                a handle which can be used by getProcedureEntryPoint(), or
-                                zero if it fails.
-        @see freeDynamicLibrary, getProcedureEntryPoint
-    */
-    static void* loadDynamicLibrary (const String& pathOrFilename);
-
-    /** Frees a dynamically-linked library.
-
-        @param libraryHandle   a handle created by loadDynamicLibrary
-        @see loadDynamicLibrary, getProcedureEntryPoint
-    */
-    static void freeDynamicLibrary (void* libraryHandle);
-
-    /** Finds a procedure call in a dynamically-linked library.
-
-        @param libraryHandle    a library handle returned by loadDynamicLibrary
-        @param procedureName    the name of the procedure call to try to load
-        @returns                a pointer to the function if found, or 0 if it fails
-        @see loadDynamicLibrary
-    */
-    static void* getProcedureEntryPoint (void* libraryHandle,
-                                         const String& procedureName);
-
 };
 
 #endif   // __JUCE_PROCESS_JUCEHEADER__
@@ -13849,6 +14442,257 @@ private:
 #endif   // __JUCE_WAITABLEEVENT_JUCEHEADER__
 /********* End of inlined file: juce_WaitableEvent.h *********/
 
+/********* Start of inlined file: juce_Thread.h *********/
+#ifndef __JUCE_THREAD_JUCEHEADER__
+#define __JUCE_THREAD_JUCEHEADER__
+
+/**
+    Encapsulates a thread.
+
+    Subclasses derive from Thread and implement the run() method, in which they
+    do their business. The thread can then be started with the startThread() method
+    and controlled with various other methods.
+
+    This class also contains some thread-related static methods, such
+    as sleep(), yield(), getCurrentThreadId() etc.
+
+    @see CriticalSection, WaitableEvent, Process, ThreadWithProgressWindow,
+         MessageManagerLock
+*/
+class JUCE_API  Thread
+{
+public:
+
+    /**
+        Creates a thread.
+
+        When first created, the thread is not running. Use the startThread()
+        method to start it.
+    */
+    Thread (const String& threadName);
+
+    /** Destructor.
+
+        Deleting a Thread object that is running will only give the thread a
+        brief opportunity to stop itself cleanly, so it's recommended that you
+        should always call stopThread() with a decent timeout before deleting,
+        to avoid the thread being forcibly killed (which is a Bad Thing).
+    */
+    virtual ~Thread();
+
+    /** Must be implemented to perform the thread's actual code.
+
+        Remember that the thread must regularly check the threadShouldExit()
+        method whilst running, and if this returns true it should return from
+        the run() method as soon as possible to avoid being forcibly killed.
+
+        @see threadShouldExit, startThread
+    */
+    virtual void run() = 0;
+
+    // Thread control functions..
+
+    /** Starts the thread running.
+
+        This will start the thread's run() method.
+        (if it's already started, startThread() won't do anything).
+
+        @see stopThread
+    */
+    void startThread() throw();
+
+    /** Starts the thread with a given priority.
+
+        Launches the thread with a given priority, where 0 = lowest, 10 = highest.
+        If the thread is already running, its priority will be changed.
+
+        @see startThread, setPriority
+    */
+    void startThread (const int priority) throw();
+
+    /** Attempts to stop the thread running.
+
+        This method will cause the threadShouldExit() method to return true
+        and call notify() in case the thread is currently waiting.
+
+        Hopefully the thread will then respond to this by exiting cleanly, and
+        the stopThread method will wait for a given time-period for this to
+        happen.
+
+        If the thread is stuck and fails to respond after the time-out, it gets
+        forcibly killed, which is a very bad thing to happen, as it could still
+        be holding locks, etc. which are needed by other parts of your program.
+
+        @param timeOutMilliseconds  The number of milliseconds to wait for the
+                                    thread to finish before killing it by force. A negative
+                                    value in here will wait forever.
+        @see signalThreadShouldExit, threadShouldExit, waitForThreadToExit, isThreadRunning
+    */
+    void stopThread (const int timeOutMilliseconds) throw();
+
+    /** Returns true if the thread is currently active */
+    bool isThreadRunning() const throw();
+
+    /** Sets a flag to tell the thread it should stop.
+
+        Calling this means that the threadShouldExit() method will then return true.
+        The thread should be regularly checking this to see whether it should exit.
+
+        @see threadShouldExit
+        @see waitForThreadToExit
+    */
+    void signalThreadShouldExit() throw();
+
+    /** Checks whether the thread has been told to stop running.
+
+        Threads need to check this regularly, and if it returns true, they should
+        return from their run() method at the first possible opportunity.
+
+        @see signalThreadShouldExit
+    */
+    inline bool threadShouldExit() const throw()  { return threadShouldExit_; }
+
+    /** Waits for the thread to stop.
+
+        This will waits until isThreadRunning() is false or until a timeout expires.
+
+        @param timeOutMilliseconds  the time to wait, in milliseconds. If this value
+                                    is less than zero, it will wait forever.
+        @returns    true if the thread exits, or false if the timeout expires first.
+    */
+    bool waitForThreadToExit (const int timeOutMilliseconds) const throw();
+
+    /** Changes the thread's priority.
+        May return false if for some reason the priority can't be changed.
+
+        @param priority     the new priority, in the range 0 (lowest) to 10 (highest). A priority
+                            of 5 is normal.
+    */
+    bool setPriority (const int priority) throw();
+
+    /** Changes the priority of the caller thread.
+
+        Similar to setPriority(), but this static method acts on the caller thread.
+        May return false if for some reason the priority can't be changed.
+
+        @see setPriority
+    */
+    static bool setCurrentThreadPriority (const int priority) throw();
+
+    /** Sets the affinity mask for the thread.
+
+        This will only have an effect next time the thread is started - i.e. if the
+        thread is already running when called, it'll have no effect.
+
+        @see setCurrentThreadAffinityMask
+    */
+    void setAffinityMask (const uint32 affinityMask) throw();
+
+    /** Changes the affinity mask for the caller thread.
+
+        This will change the affinity mask for the thread that calls this static method.
+
+        @see setAffinityMask
+    */
+    static void setCurrentThreadAffinityMask (const uint32 affinityMask) throw();
+
+    // this can be called from any thread that needs to pause..
+    static void JUCE_CALLTYPE sleep (int milliseconds) throw();
+
+    /** Yields the calling thread's current time-slot. */
+    static void JUCE_CALLTYPE yield() throw();
+
+    /** Makes the thread wait for a notification.
+
+        This puts the thread to sleep until either the timeout period expires, or
+        another thread calls the notify() method to wake it up.
+
+        @returns    true if the event has been signalled, false if the timeout expires.
+    */
+    bool wait (const int timeOutMilliseconds) const throw();
+
+    /** Wakes up the thread.
+
+        If the thread has called the wait() method, this will wake it up.
+
+        @see wait
+    */
+    void notify() const throw();
+
+    /** A value type used for thread IDs.
+        @see getCurrentThreadId(), getThreadId()
+    */
+    typedef void* ThreadID;
+
+    /** Returns an id that identifies the caller thread.
+
+        To find the ID of a particular thread object, use getThreadId().
+
+        @returns    a unique identifier that identifies the calling thread.
+        @see getThreadId
+    */
+    static ThreadID getCurrentThreadId() throw();
+
+    /** Finds the thread object that is currently running.
+
+        Note that the main UI thread (or other non-Juce threads) don't have a Thread
+        object associated with them, so this will return 0.
+    */
+    static Thread* getCurrentThread() throw();
+
+    /** Returns the ID of this thread.
+
+        That means the ID of this thread object - not of the thread that's calling the method.
+
+        This can change when the thread is started and stopped, and will be invalid if the
+        thread's not actually running.
+
+        @see getCurrentThreadId
+    */
+    ThreadID getThreadId() const throw();
+
+    /** Returns the name of the thread.
+
+        This is the name that gets set in the constructor.
+    */
+    const String getThreadName() const throw()                      { return threadName_; }
+
+    /** Returns the number of currently-running threads.
+
+        @returns  the number of Thread objects known to be currently running.
+        @see stopAllThreads
+    */
+    static int getNumRunningThreads() throw();
+
+    /** Tries to stop all currently-running threads.
+
+        This will attempt to stop all the threads known to be running at the moment.
+    */
+    static void stopAllThreads (const int timeoutInMillisecs) throw();
+
+    juce_UseDebuggingNewOperator
+
+private:
+    const String threadName_;
+    void* volatile threadHandle_;
+    CriticalSection startStopLock;
+    WaitableEvent startSuspensionEvent_, defaultEvent_;
+
+    int threadPriority_;
+    ThreadID threadId_;
+    uint32 affinityMask_;
+    bool volatile threadShouldExit_;
+
+    friend void JUCE_API juce_threadEntryPoint (void*);
+    static void threadEntryPoint (Thread* thread) throw();
+
+    Thread (const Thread&);
+    const Thread& operator= (const Thread&);
+};
+
+#endif   // __JUCE_THREAD_JUCEHEADER__
+/********* End of inlined file: juce_Thread.h *********/
+
 /**
     A critical section that allows multiple simultaneous readers.
 
@@ -13914,6 +14758,15 @@ public:
     */
     void enterWrite() const throw();
 
+    /** Tries to lock this object for writing.
+
+        This is like enterWrite(), but doesn't block - it returns true if it manages
+        to obtain the lock.
+
+        @see enterWrite
+    */
+    bool tryEnterWrite() const throw();
+
     /** Releases the write-lock.
 
         If the caller thread hasn't got the lock, this can have unpredictable results.
@@ -13933,8 +14786,8 @@ private:
     CriticalSection accessLock;
     WaitableEvent waitEvent;
     mutable int numWaitingWriters, numWriters;
-    mutable int writerThreadId;
-    mutable Array <int> readerThreads;
+    mutable Thread::ThreadID writerThreadId;
+    mutable Array <Thread::ThreadID> readerThreads;
 
     ReadWriteLock (const ReadWriteLock&);
     const ReadWriteLock& operator= (const ReadWriteLock&);
@@ -14160,249 +15013,6 @@ private:
 #endif
 #ifndef __JUCE_THREAD_JUCEHEADER__
 
-/********* Start of inlined file: juce_Thread.h *********/
-#ifndef __JUCE_THREAD_JUCEHEADER__
-#define __JUCE_THREAD_JUCEHEADER__
-
-/**
-    Encapsulates a thread.
-
-    Subclasses derive from Thread and implement the run() method, in which they
-    do their business. The thread can then be started with the startThread() method
-    and controlled with various other methods.
-
-    This class also contains some thread-related static methods, such
-    as sleep(), yield(), getCurrentThreadId() etc.
-
-    @see CriticalSection, WaitableEvent, Process, ThreadWithProgressWindow,
-         MessageManagerLock
-*/
-class JUCE_API  Thread
-{
-public:
-
-    /**
-        Creates a thread.
-
-        When first created, the thread is not running. Use the startThread()
-        method to start it.
-    */
-    Thread (const String& threadName);
-
-    /** Destructor.
-
-        Deleting a Thread object that is running will only give the thread a
-        brief opportunity to stop itself cleanly, so it's recommended that you
-        should always call stopThread() with a decent timeout before deleting,
-        to avoid the thread being forcibly killed (which is a Bad Thing).
-    */
-    virtual ~Thread();
-
-    /** Must be implemented to perform the thread's actual code.
-
-        Remember that the thread must regularly check the threadShouldExit()
-        method whilst running, and if this returns true it should return from
-        the run() method as soon as possible to avoid being forcibly killed.
-
-        @see threadShouldExit, startThread
-    */
-    virtual void run() = 0;
-
-    // Thread control functions..
-
-    /** Starts the thread running.
-
-        This will start the thread's run() method.
-        (if it's already started, startThread() won't do anything).
-
-        @see stopThread
-    */
-    void startThread() throw();
-
-    /** Starts the thread with a given priority.
-
-        Launches the thread with a given priority, where 0 = lowest, 10 = highest.
-        If the thread is already running, its priority will be changed.
-
-        @see startThread, setPriority
-    */
-    void startThread (const int priority) throw();
-
-    /** Attempts to stop the thread running.
-
-        This method will cause the threadShouldExit() method to return true
-        and call notify() in case the thread is currently waiting.
-
-        Hopefully the thread will then respond to this by exiting cleanly, and
-        the stopThread method will wait for a given time-period for this to
-        happen.
-
-        If the thread is stuck and fails to respond after the time-out, it gets
-        forcibly killed, which is a very bad thing to happen, as it could still
-        be holding locks, etc. which are needed by other parts of your program.
-
-        @param timeOutMilliseconds  The number of milliseconds to wait for the
-                                    thread to finish before killing it by force. A negative
-                                    value in here will wait forever.
-        @see signalThreadShouldExit, threadShouldExit, waitForThreadToExit, isThreadRunning
-    */
-    void stopThread (const int timeOutMilliseconds) throw();
-
-    /** Returns true if the thread is currently active */
-    bool isThreadRunning() const throw();
-
-    /** Sets a flag to tell the thread it should stop.
-
-        Calling this means that the threadShouldExit() method will then return true.
-        The thread should be regularly checking this to see whether it should exit.
-
-        @see threadShouldExit
-        @see waitForThreadToExit
-    */
-    void signalThreadShouldExit() throw();
-
-    /** Checks whether the thread has been told to stop running.
-
-        Threads need to check this regularly, and if it returns true, they should
-        return from their run() method at the first possible opportunity.
-
-        @see signalThreadShouldExit
-    */
-    inline bool threadShouldExit() const throw()  { return threadShouldExit_; }
-
-    /** Waits for the thread to stop.
-
-        This will waits until isThreadRunning() is false or until a timeout expires.
-
-        @param timeOutMilliseconds  the time to wait, in milliseconds. If this value
-                                    is less than zero, it will wait forever.
-        @returns    true if the thread exits, or false if the timeout expires first.
-    */
-    bool waitForThreadToExit (const int timeOutMilliseconds) const throw();
-
-    /** Changes the thread's priority.
-
-        @param priority     the new priority, in the range 0 (lowest) to 10 (highest). A priority
-                            of 5 is normal.
-    */
-    void setPriority (const int priority) throw();
-
-    /** Changes the priority of the caller thread.
-
-        Similar to setPriority(), but this static method acts on the caller thread.
-
-        @see setPriority
-    */
-    static void setCurrentThreadPriority (const int priority) throw();
-
-    /** Sets the affinity mask for the thread.
-
-        This will only have an effect next time the thread is started - i.e. if the
-        thread is already running when called, it'll have no effect.
-
-        @see setCurrentThreadAffinityMask
-    */
-    void setAffinityMask (const uint32 affinityMask) throw();
-
-    /** Changes the affinity mask for the caller thread.
-
-        This will change the affinity mask for the thread that calls this static method.
-
-        @see setAffinityMask
-    */
-    static void setCurrentThreadAffinityMask (const uint32 affinityMask) throw();
-
-    // this can be called from any thread that needs to pause..
-    static void JUCE_CALLTYPE sleep (int milliseconds) throw();
-
-    /** Yields the calling thread's current time-slot. */
-    static void JUCE_CALLTYPE yield() throw();
-
-    /** Makes the thread wait for a notification.
-
-        This puts the thread to sleep until either the timeout period expires, or
-        another thread calls the notify() method to wake it up.
-
-        @returns    true if the event has been signalled, false if the timeout expires.
-    */
-    bool wait (const int timeOutMilliseconds) const throw();
-
-    /** Wakes up the thread.
-
-        If the thread has called the wait() method, this will wake it up.
-
-        @see wait
-    */
-    void notify() const throw();
-
-    /** Returns an id that identifies the caller thread.
-
-        To find the ID of a particular thread object, use getThreadId().
-
-        @returns    a unique identifier that identifies the calling thread.
-        @see getThreadId
-    */
-    static int getCurrentThreadId() throw();
-
-    /** Finds the thread object that is currently running.
-
-        Note that the main UI thread (or other non-Juce threads) don't have a Thread
-        object associated with them, so this will return 0.
-    */
-    static Thread* getCurrentThread() throw();
-
-    /** Returns the ID of this thread.
-
-        That means the ID of this thread object - not of the thread that's calling the method.
-
-        This can change when the thread is started and stopped, and will be invalid if the
-        thread's not actually running.
-
-        @see getCurrentThreadId
-    */
-    int getThreadId() const throw();
-
-    /** Returns the name of the thread.
-
-        This is the name that gets set in the constructor.
-    */
-    const String getThreadName() const throw()                      { return threadName_; }
-
-    /** Returns the number of currently-running threads.
-
-        @returns  the number of Thread objects known to be currently running.
-        @see stopAllThreads
-    */
-    static int getNumRunningThreads() throw();
-
-    /** Tries to stop all currently-running threads.
-
-        This will attempt to stop all the threads known to be running at the moment.
-    */
-    static void stopAllThreads (const int timeoutInMillisecs) throw();
-
-    juce_UseDebuggingNewOperator
-
-private:
-    const String threadName_;
-    void* volatile threadHandle_;
-    CriticalSection startStopLock;
-    WaitableEvent startSuspensionEvent_, defaultEvent_;
-
-    int threadPriority_, threadId_;
-    uint32 affinityMask_;
-    bool volatile threadShouldExit_;
-
-    friend void JUCE_API juce_threadEntryPoint (void*);
-    static void threadEntryPoint (Thread* thread) throw();
-
-    Thread (const Thread&);
-    const Thread& operator= (const Thread&);
-};
-
-#endif   // __JUCE_THREAD_JUCEHEADER__
-/********* End of inlined file: juce_Thread.h *********/
-
 #endif
 #ifndef __JUCE_THREADPOOL_JUCEHEADER__
 
@@ -14442,12 +15052,12 @@ public:
     /** Returns the name of this job.
         @see setJobName
     */
-    const String getJobName() const;
+    const String getJobName() const throw();
 
     /** Changes the job's name.
         @see getJobName
     */
-    void setJobName (const String& newName);
+    void setJobName (const String& newName) throw();
 
     /** These are the values that can be returned by the runJob() method.
     */
@@ -14496,7 +15106,7 @@ public:
 
         @see shouldExit()
     */
-    void signalJobShouldExit();
+    void signalJobShouldExit() throw();
 
     juce_UseDebuggingNewOperator
 
@@ -14582,11 +15192,16 @@ public:
                                     methods called to try to interrupt them
         @param timeOutMilliseconds  the length of time this method should wait for all the jobs to finish
                                     before giving up and returning false
+        @param deleteInactiveJobs   if true, any jobs that aren't currently running will be deleted. If false,
+                                    they will simply be removed from the pool. Jobs that are already running when
+                                    this method is called can choose whether they should be deleted by
+                                    returning jobHasFinishedAndShouldBeDeleted from their runJob() method.
         @returns    true if all jobs are successfully stopped and removed; false if the timeout period
                     expires while waiting for them to stop
     */
     bool removeAllJobs (const bool interruptRunningJobs,
-                        const int timeOutMilliseconds);
+                        const int timeOutMilliseconds,
+                        const bool deleteInactiveJobs = false);
 
     /** Returns the number of jobs currently running or queued.
     */
@@ -14597,7 +15212,7 @@ public:
         Note that this can be a very volatile list as jobs might be continuously getting shifted
         around in the list, and this method may return 0 if the index is currently out-of-range.
     */
-    ThreadPoolJob* getJob (const int index) const;
+    ThreadPoolJob* getJob (const int index) const throw();
 
     /** Returns true if the given job is currently queued or running.
 
@@ -14624,13 +15239,14 @@ public:
 
         If onlyReturnActiveJobs is true, only the ones currently running are returned.
     */
-    const StringArray getNamesOfAllJobs (const bool onlyReturnActiveJobs) const;
+    const StringArray getNamesOfAllJobs (const bool onlyReturnActiveJobs) const throw();
 
     /** Changes the priority of all the threads.
 
         This will call Thread::setPriority() for each thread in the pool.
+        May return false if for some reason the priority can't be changed.
     */
-    void setThreadPriorities (const int newPriority);
+    bool setThreadPriorities (const int newPriority);
 
     juce_UseDebuggingNewOperator
 
@@ -14642,6 +15258,7 @@ private:
 
     CriticalSection lock;
     uint32 lastJobEndTime;
+    WaitableEvent jobFinishedSignal;
 
     friend class ThreadPoolThread;
     bool runNextJob();
@@ -15806,10 +16423,15 @@ public:
         false, then the key will be passed to other components that might want to use it.
 
         @param originatingComponent     the component that received the key event
+        @param isKeyDown                true if a key is being pressed, false if one is being released
         @see KeyPress, Component::keyStateChanged
     */
-    virtual bool keyStateChanged (Component* originatingComponent);
+    virtual bool keyStateChanged (const bool isKeyDown, Component* originatingComponent);
 
+private:
+    // (dummy method to cause a deliberate compile error - if you hit this, you need to update your
+    // subclass to use the new parameters to keyStateChanged)
+    virtual void keyStateChanged (Component*) {};
 };
 
 #endif   // __JUCE_KEYLISTENER_JUCEHEADER__
@@ -16031,6 +16653,10 @@ public:
     /** Returns true if this transform maps to a singularity - i.e. if it has no inverse. */
     bool isSingularity() const throw();
 
+    /** Returns true if the transform only translates, and doesn't scale or rotate the
+        points. */
+    bool isOnlyTranslation() const throw();
+
     juce_UseDebuggingNewOperator
 
     /* The transform matrix is:
@@ -16107,6 +16733,235 @@ private:
 
 #endif   // __JUCE_POINT_JUCEHEADER__
 /********* End of inlined file: juce_Point.h *********/
+
+/********* Start of inlined file: juce_Rectangle.h *********/
+#ifndef __JUCE_RECTANGLE_JUCEHEADER__
+#define __JUCE_RECTANGLE_JUCEHEADER__
+
+/**
+    A rectangle, specified using integer co-ordinates.
+
+    @see RectangleList, Path, Line, Point
+*/
+class JUCE_API  Rectangle
+{
+public:
+
+    /** Creates a rectangle of zero size.
+
+        The default co-ordinates will be (0, 0, 0, 0).
+    */
+    Rectangle() throw();
+
+    /** Creates a copy of another rectangle. */
+    Rectangle (const Rectangle& other) throw();
+
+    /** Creates a rectangle with a given position and size. */
+    Rectangle (const int x, const int y,
+               const int width, const int height) throw();
+
+    /** Creates a rectangle with a given size, and a position of (0, 0). */
+    Rectangle (const int width, const int height) throw();
+
+    /** Destructor. */
+    ~Rectangle() throw();
+
+    /** Returns the x co-ordinate of the rectangle's left-hand-side. */
+    inline int getX() const throw()                         { return x; }
+
+    /** Returns the y co-ordinate of the rectangle's top edge. */
+    inline int getY() const throw()                         { return y; }
+
+    /** Returns the width of the rectangle. */
+    inline int getWidth() const throw()                     { return w; }
+
+    /** Returns the height of the rectangle. */
+    inline int getHeight() const throw()                    { return h; }
+
+    /** Returns the x co-ordinate of the rectangle's right-hand-side. */
+    inline int getRight() const throw()                     { return x + w; }
+
+    /** Returns the y co-ordinate of the rectangle's bottom edge. */
+    inline int getBottom() const throw()                    { return y + h; }
+
+    /** Returns the x co-ordinate of the rectangle's centre. */
+    inline int getCentreX() const throw()                   { return x + (w >> 1); }
+
+    /** Returns the y co-ordinate of the rectangle's centre. */
+    inline int getCentreY() const throw()                   { return y + (h >> 1); }
+
+    /** Returns true if the rectangle's width and height are both zero or less */
+    bool isEmpty() const throw();
+
+    /** Changes the position of the rectangle's top-left corner (leaving its size unchanged). */
+    void setPosition (const int x, const int y) throw();
+
+    /** Changes the rectangle's size, leaving the position of its top-left corner unchanged. */
+    void setSize (const int w, const int h) throw();
+
+    /** Changes all the rectangle's co-ordinates. */
+    void setBounds (const int newX, const int newY,
+                    const int newWidth, const int newHeight) throw();
+
+    /** Changes the rectangle's width */
+    void setWidth (const int newWidth) throw();
+
+    /** Changes the rectangle's height */
+    void setHeight (const int newHeight) throw();
+
+    /** Moves the x position, adjusting the width so that the right-hand edge remains in the same place.
+        If the x is moved to be on the right of the current right-hand edge, the width will be set to zero.
+    */
+    void setLeft (const int newLeft) throw();
+
+    /** Moves the y position, adjusting the height so that the bottom edge remains in the same place.
+        If the y is moved to be below the current bottom edge, the height will be set to zero.
+    */
+    void setTop (const int newTop) throw();
+
+    /** Adjusts the width so that the right-hand edge of the rectangle has this new value.
+        If the new right is below the current X value, the X will be pushed down to match it.
+        @see getRight
+    */
+    void setRight (const int newRight) throw();
+
+    /** Adjusts the height so that the bottom edge of the rectangle has this new value.
+        If the new bottom is lower than the current Y value, the Y will be pushed down to match it.
+        @see getBottom
+    */
+    void setBottom (const int newBottom) throw();
+
+    /** Moves the rectangle's position by adding amount to its x and y co-ordinates. */
+    void translate (const int deltaX,
+                    const int deltaY) throw();
+
+    /** Returns a rectangle which is the same as this one moved by a given amount. */
+    const Rectangle translated (const int deltaX,
+                                const int deltaY) const throw();
+
+    /** Expands the rectangle by a given amount.
+
+        Effectively, its new size is (x - deltaX, y - deltaY, w + deltaX * 2, h + deltaY * 2).
+        @see expanded, reduce, reduced
+    */
+    void expand (const int deltaX,
+                 const int deltaY) throw();
+
+    /** Returns a rectangle that is larger than this one by a given amount.
+
+        Effectively, the rectangle returned is (x - deltaX, y - deltaY, w + deltaX * 2, h + deltaY * 2).
+        @see expand, reduce, reduced
+    */
+    const Rectangle expanded (const int deltaX,
+                              const int deltaY) const throw();
+
+    /** Shrinks the rectangle by a given amount.
+
+        Effectively, its new size is (x + deltaX, y + deltaY, w - deltaX * 2, h - deltaY * 2).
+        @see reduced, expand, expanded
+    */
+    void reduce (const int deltaX,
+                 const int deltaY) throw();
+
+    /** Returns a rectangle that is smaller than this one by a given amount.
+
+        Effectively, the rectangle returned is (x + deltaX, y + deltaY, w - deltaX * 2, h - deltaY * 2).
+        @see reduce, expand, expanded
+    */
+    const Rectangle reduced (const int deltaX,
+                             const int deltaY) const throw();
+
+    /** Returns true if the two rectangles are identical. */
+    bool operator== (const Rectangle& other) const throw();
+
+    /** Returns true if the two rectangles are not identical. */
+    bool operator!= (const Rectangle& other) const throw();
+
+    /** Returns true if this co-ordinate is inside the rectangle. */
+    bool contains (const int x, const int y) const throw();
+
+    /** Returns true if this other rectangle is completely inside this one. */
+    bool contains (const Rectangle& other) const throw();
+
+    /** Returns true if any part of another rectangle overlaps this one. */
+    bool intersects (const Rectangle& other) const throw();
+
+    /** Returns the region that is the overlap between this and another rectangle.
+
+        If the two rectangles don't overlap, the rectangle returned will be empty.
+    */
+    const Rectangle getIntersection (const Rectangle& other) const throw();
+
+    /** Clips a rectangle so that it lies only within this one.
+
+        This is a non-static version of intersectRectangles().
+
+        Returns false if the two regions didn't overlap.
+    */
+    bool intersectRectangle (int& x, int& y, int& w, int& h) const throw();
+
+    /** Returns the smallest rectangle that contains both this one and the one
+        passed-in.
+    */
+    const Rectangle getUnion (const Rectangle& other) const throw();
+
+    /** If this rectangle merged with another one results in a simple rectangle, this
+        will set this rectangle to the result, and return true.
+
+        Returns false and does nothing to this rectangle if the two rectangles don't overlap,
+        or if they form a complex region.
+    */
+    bool enlargeIfAdjacent (const Rectangle& other) throw();
+
+    /** If after removing another rectangle from this one the result is a simple rectangle,
+        this will set this object's bounds to be the result, and return true.
+
+        Returns false and does nothing to this rectangle if the two rectangles don't overlap,
+        or if removing the other one would form a complex region.
+    */
+    bool reduceIfPartlyContainedIn (const Rectangle& other) throw();
+
+    /** Static utility to intersect two sets of rectangular co-ordinates.
+
+        Returns false if the two regions didn't overlap.
+
+        @see intersectRectangle
+    */
+    static bool intersectRectangles (int& x1, int& y1, int& w1, int& h1,
+                                     int x2, int y2, int w2, int h2) throw();
+
+    /** Creates a string describing this rectangle.
+
+        The string will be of the form "x y width height", e.g. "100 100 400 200".
+
+        Coupled with the fromString() method, this is very handy for things like
+        storing rectangles (particularly component positions) in XML attributes.
+
+        @see fromString
+    */
+    const String toString() const throw();
+
+    /** Parses a string containing a rectangle's details.
+
+        The string should contain 4 integer tokens, in the form "x y width height". They
+        can be comma or whitespace separated.
+
+        This method is intended to go with the toString() method, to form an easy way
+        of saving/loading rectangles as strings.
+
+        @see toString
+    */
+    static const Rectangle fromString (const String& stringVersion);
+
+    juce_UseDebuggingNewOperator
+
+private:
+    friend class RectangleList;
+    int x, y, w, h;
+};
+
+#endif   // __JUCE_RECTANGLE_JUCEHEADER__
+/********* End of inlined file: juce_Rectangle.h *********/
 
 /********* Start of inlined file: juce_Justification.h *********/
 #ifndef __JUCE_JUSTIFICATION_JUCEHEADER__
@@ -16250,6 +17105,176 @@ private:
 #endif   // __JUCE_JUSTIFICATION_JUCEHEADER__
 /********* End of inlined file: juce_Justification.h *********/
 
+/********* Start of inlined file: juce_EdgeTable.h *********/
+#ifndef __JUCE_EDGETABLE_JUCEHEADER__
+#define __JUCE_EDGETABLE_JUCEHEADER__
+
+class Path;
+class Image;
+
+/**
+    A table of horizontal scan-line segments - used for rasterising Paths.
+
+    @see Path, Graphics
+*/
+class JUCE_API  EdgeTable
+{
+public:
+
+    /** Creates an edge table containing a path.
+
+        A table is created with a fixed vertical range, and only sections of the path
+        which lie within this range will be added to the table.
+
+        @param clipLimits               only the region of the path that lies within this area will be added
+        @param pathToAdd                the path to add to the table
+        @param transform                a transform to apply to the path being added
+    */
+    EdgeTable (const Rectangle& clipLimits,
+               const Path& pathToAdd,
+               const AffineTransform& transform) throw();
+
+    /** Creates an edge table containing a rectangle.
+    */
+    EdgeTable (const Rectangle& rectangleToAdd) throw();
+
+    /** Creates a copy of another edge table. */
+    EdgeTable (const EdgeTable& other) throw();
+
+    /** Copies from another edge table. */
+    const EdgeTable& operator= (const EdgeTable& other) throw();
+
+    /** Destructor. */
+    ~EdgeTable() throw();
+
+    /*void clipToRectangle (const Rectangle& r) throw();
+    void excludeRectangle (const Rectangle& r) throw();
+    void clipToEdgeTable (const EdgeTable& other);
+    void clipToImageAlpha (Image& image, int x, int y) throw();*/
+
+    /** Reduces the amount of space the table has allocated.
+
+        This will shrink the table down to use as little memory as possible - useful for
+        read-only tables that get stored and re-used for rendering.
+    */
+    void optimiseTable() throw();
+
+    /** Iterates the lines in the table, for rendering.
+
+        This function will iterate each line in the table, and call a user-defined class
+        to render each pixel or continuous line of pixels that the table contains.
+
+        @param iterationCallback    this templated class must contain the following methods:
+                                        @code
+                                        inline void setEdgeTableYPos (int y);
+                                        inline void handleEdgeTablePixel (int x, int alphaLevel) const;
+                                        inline void handleEdgeTableLine (int x, int width, int alphaLevel) const;
+                                        @endcode
+                                        (these don't necessarily have to be 'const', but it might help it go faster)
+    */
+    template <class EdgeTableIterationCallback>
+    void iterate (EdgeTableIterationCallback& iterationCallback) const throw()
+    {
+        const int* lineStart = table;
+
+        for (int y = 0; y < bounds.getHeight(); ++y)
+        {
+            const int* line = lineStart;
+            lineStart += lineStrideElements;
+            int numPoints = line[0];
+
+            if (--numPoints > 0)
+            {
+                int x = *++line;
+                jassert ((x >> 8) >= bounds.getX() && (x >> 8) < bounds.getRight());
+                int level = *++line;
+                int levelAccumulator = 0;
+
+                iterationCallback.setEdgeTableYPos (y);
+
+                while (--numPoints >= 0)
+                {
+                    int correctedLevel = abs (level);
+                    if (correctedLevel >> 8)
+                        correctedLevel = 0xff;
+
+                    const int endX = *++line;
+                    jassert (endX >= x);
+                    const int endOfRun = (endX >> 8);
+
+                    if (endOfRun == (x >> 8))
+                    {
+                        // small segment within the same pixel, so just save it for the next
+                        // time round..
+                        levelAccumulator += (endX - x) * correctedLevel;
+                    }
+                    else
+                    {
+                        // plot the fist pixel of this segment, including any accumulated
+                        // levels from smaller segments that haven't been drawn yet
+                        levelAccumulator += (0xff - (x & 0xff)) * correctedLevel;
+                        levelAccumulator >>= 8;
+                        x >>= 8;
+
+                        if (levelAccumulator > 0)
+                        {
+                            if (levelAccumulator >> 8)
+                                levelAccumulator = 0xff;
+
+                            iterationCallback.handleEdgeTablePixel (x, levelAccumulator);
+                        }
+
+                        // if there's a segment of solid pixels, do it all in one go..
+                        if (correctedLevel > 0)
+                        {
+                            jassert (endOfRun <= bounds.getRight());
+                            const int numPix = endOfRun - ++x;
+
+                            if (numPix > 0)
+                                iterationCallback.handleEdgeTableLine (x, numPix, correctedLevel);
+                        }
+
+                        // save the bit at the end to be drawn next time round the loop.
+                        levelAccumulator = (endX & 0xff) * correctedLevel;
+                    }
+
+                    level += *++line;
+                    x = endX;
+                }
+
+                if (levelAccumulator > 0)
+                {
+                    levelAccumulator >>= 8;
+                    if (levelAccumulator >> 8)
+                        levelAccumulator = 0xff;
+
+                    x >>= 8;
+                    jassert (x >= bounds.getX() && x < bounds.getRight());
+                    iterationCallback.handleEdgeTablePixel (x, levelAccumulator);
+                }
+            }
+        }
+    }
+
+    juce_UseDebuggingNewOperator
+
+private:
+    // table line format: number of points; point0 x, point0 levelDelta, point1 x, point1 levelDelta, etc
+    int* table;
+    Rectangle bounds;
+    int maxEdgesPerLine, lineStrideElements;
+
+    void addEdgePoint (const int x, const int y, const int winding) throw();
+    void remapTableForNumEdges (const int newNumEdgesPerLine) throw();
+    void clearLineSection (const int y, int minX, int maxX) throw();
+    void intersectWithEdgeTableLine (const int y, const int* otherLine) throw();
+};
+
+#endif   // __JUCE_EDGETABLE_JUCEHEADER__
+/********* End of inlined file: juce_EdgeTable.h *********/
+
+class Image;
+
 /**
     A path is a sequence of lines and curves that may either form a closed shape
     or be open-ended.
@@ -16320,19 +17345,29 @@ public:
 
         The path's winding rule is taken into account by this method.
 
+        The tolerence parameter is passed to the PathFlatteningIterator that
+        is used to trace the path - for more info about it, see the notes for
+        the PathFlatteningIterator constructor.
+
         @see closeSubPath, setUsingNonZeroWinding
     */
     bool contains (const float x,
-                   const float y) const throw();
+                   const float y,
+                   const float tolerence = 10.0f) const throw();
 
     /** Checks whether a line crosses the path.
 
         This will return positive if the line crosses any of the paths constituent
         lines or curves. It doesn't take into account whether the line is inside
         or outside the path, or whether the path is open or closed.
+
+        The tolerence parameter is passed to the PathFlatteningIterator that
+        is used to trace the path - for more info about it, see the notes for
+        the PathFlatteningIterator constructor.
     */
     bool intersectsLine (const float x1, const float y1,
-                         const float x2, const float y2) throw();
+                         const float x2, const float y2,
+                         const float tolerence = 10.0f) throw();
 
     /** Removes all lines and curves, resetting the path completely. */
     void clear() throw();
@@ -16807,6 +17842,21 @@ public:
     */
     void restoreFromString (const String& stringVersion);
 
+    /** Creates a single-channel bitmap containing a mask of this path.
+
+        The smallest bitmap that contains the path will be created, and on return, the
+        imagePosition rectangle indicates the position of the newly created image, relative
+        to the path's origin.
+
+        Only the intersection of the path's bounds with the specified clipRegion rectangle
+        will be rendered.
+
+        If the path is empty or doesn't intersect the clip region, this may return 0.
+    */
+    Image* createMaskBitmap (const AffineTransform& transform,
+                             const Rectangle& clipRegion,
+                             Rectangle& imagePosition) const throw();
+
     juce_UseDebuggingNewOperator
 
 private:
@@ -16827,259 +17877,196 @@ private:
 /********* End of inlined file: juce_Path.h *********/
 
 class Font;
-class Typeface;
+class CustomTypefaceGlyphInfo;
 
-/**
-    Stores information about the shape and kerning of one of the glyphs in a Typeface.
+/** A typeface represents a size-independent font.
 
-    @see Typeface, PositionedGlyph, GlyphArrangement
-*/
-class JUCE_API  TypefaceGlyphInfo
-{
-public:
+    This base class is abstract, but calling createSystemTypefaceFor() will return
+    a platform-specific subclass that can be used.
 
-    /** Returns the path that describes the glyph's outline.
+    The CustomTypeface subclass allow you to build your own typeface, and to
+    load and save it in the Juce typeface format.
 
-        This is normalised to a height of 1.0, and its origin is the
-        left-hand edge of the glyph's baseline.
-    */
-    const Path& getPath() const throw()             { return path; }
+    Normally you should never need to deal directly with Typeface objects - the Font
+    class does everything you typically need for rendering text.
 
-    /** Returns the unicode character that this glyph represents. */
-    juce_wchar getCharacter() const throw()         { return character; }
-
-    bool isWhitespace() const throw()               { return CharacterFunctions::isWhitespace (character); }
-
-    /** Returns the distance to leave between this and a following character.
-
-        The value returned is expressed as a proportion of the font's height.
-    */
-    float getHorizontalSpacing (const juce_wchar subsequentCharacter) const throw();
-
-    /** Returns the typeface that this glyph belongs to. */
-    Typeface* getTypeface() const throw()           { return typeface; }
-
-private:
-
-    friend class Typeface;
-
-    struct KerningPair
-    {
-        juce_wchar character2;
-        float kerningAmount;
-    };
-
-    const juce_wchar character;
-    const Path path;
-    float width;
-    MemoryBlock kerningPairs;
-    Typeface* const typeface;
-
-    TypefaceGlyphInfo (const juce_wchar character,
-                       const Path& shape,
-                       const float horizontalSeparation,
-                       Typeface* const typeface) throw();
-    ~TypefaceGlyphInfo() throw();
-
-    KerningPair& getKerningPair (const int index) const throw();
-    int getNumKerningPairs() const throw();
-
-    void addKerningPair (const juce_wchar subsequentCharacter,
-                         const float extraKerningAmount) throw();
-
-    const TypefaceGlyphInfo& operator= (const TypefaceGlyphInfo&);
-};
-
-/**
-    Represents a size-independent system font.
-
-    A Font object represents a particular Typeface along with a specific size,
-    style, kerning, scale, etc, wheras the Typeface is just a generalised description
-    of the shapes of the glyphs and their properties.
-
+    @see CustomTypeface, Font
 */
 class JUCE_API  Typeface  : public ReferenceCountedObject
 {
 public:
 
-    /** Tries to load a named system font and to initialise all the glyphs
-        appropriately from it.
+    /** A handy typedef for a pointer to a typeface. */
+    typedef ReferenceCountedObjectPtr <Typeface> Ptr;
 
-        @param faceName     the name of the typeface, e.g. "Times"
-        @param bold         whether to try to find a bold version of the font (may not always be available)
-        @param italic       whether to try to find an italicised version of the font (may not always be available)
+    /** Returns the name of the typeface.
+        @see Font::getTypefaceName
     */
-    Typeface (const String& faceName,
-              const bool bold,
-              const bool italic);
+    const String getName() const throw()       { return name; }
 
-    /** Creates a copy of another typeface */
-    Typeface (const Typeface& other);
+    /** Creates a new system typeface. */
+    static const Ptr createSystemTypefaceFor (const Font& font);
 
     /** Destructor. */
-    ~Typeface();
+    virtual ~Typeface();
 
-    /** Copies another typeface over this one. */
-    const Typeface& operator= (const Typeface& other) throw();
-
-    /** Returns a unique ID for the typeface.
-
-        This is based on the name and style, so can be used to compare two Typeface objects.
+    /** Returns the ascent of the font, as a proportion of its height.
+        The height is considered to always be normalised as 1.0, so this will be a
+        value less that 1.0, indicating the proportion of the font that lies above
+        its baseline.
     */
-    int hashCode() const throw()                    { return hash; }
+    virtual float getAscent() const = 0;
 
-    /** Returns the name of the typeface, e.g. "Times", "Verdana", etc */
-    const String& getName() const throw()           { return typefaceName; }
-
-    /** Returns the font's ascent as a proportion of its height. */
-    float getAscent() const throw()                 { return ascent; }
-
-    /** Returns true if the font is flagged as being bold. */
-    bool isBold() const throw()                     { return bold; }
-
-    /** Returns true if the typeface's 'italic' flag is set. */
-    bool isItalic() const throw()                   { return italic; }
-
-    /** Finds the Path that describes the outline shape of a character.
-
-        The height of the path is normalised to 1.0 (i.e. a distance of 1.0 is the
-        height of the font).
-
-        This may return 0 if the typeface has no characters, but if the character
-        that is asked for is not found, it will first try to return a default
-        character instead.
+    /** Returns the descent of the font, as a proportion of its height.
+        The height is considered to always be normalised as 1.0, so this will be a
+        value less that 1.0, indicating the proportion of the font that lies below
+        its baseline.
     */
-    const Path* getOutlineForGlyph (const juce_wchar character) throw();
+    virtual float getDescent() const = 0;
 
-    /** Tries to find the information describing a glyph for this character.
+    /** Measures the width of a line of text.
 
-        If there isn't a glyph specifically for the character it will return
-        a default glyph instead; if the typeface is empty, it may return a null
-        pointer.
+        The distance returned is based on the font having an normalised height of 1.0.
+
+        You should never need to call this directly! Use Font::getStringWidth() instead!
     */
-    const TypefaceGlyphInfo* getGlyph (const juce_wchar character) throw();
+    virtual float getStringWidth (const String& text) = 0;
 
-    /** Deletes all the glyphs and kerning data fom the typeface. */
-    void clear() throw();
+    /** Converts a line of text into its glyph numbers and their positions.
 
-    /** Adds a glyph to the typeface.
+        The distances returned are based on the font having an normalised height of 1.0.
 
-        This is typically only called by the platform-specific code that generates
-        the typeface from a system font.
+        You should never need to call this directly! Use Font::getGlyphPositions() instead!
     */
-    void addGlyph (const juce_wchar character,
-                   const Path& path,
-                   const float horizontalSpacing) throw();
+    virtual void getGlyphPositions (const String& text, Array <int>& glyphs, Array<float>& xOffsets) = 0;
 
-    /** Adds a kerning distance to the typeface.
+    /** Returns the outline for a glyph.
 
-        The extra amount passed in is expressed as a proportion of the font's
-        height, normalised to 1.0.
-
-        This is typically only called by the platform-specific code that generates
-        the typeface from a system font.
+        The path returned will be normalised to a font height of 1.0.
     */
-    void addKerningPair (const juce_wchar firstChar,
-                         const juce_wchar secondChar,
-                         const float extraAmount) throw();
-
-    /** Sets the typeface's name.
-
-        This is typically only called by the platform-specific code that generates
-        the typeface from a system font. Calling this method won't actually affect
-        the underlying font being used.
-    */
-    void setName (const String& name) throw();
-
-    /** Sets the font's ascent value, as a proportion of the font height.
-
-        This is typically only called by the platform-specific code that generates
-        the typeface from a system font.
-    */
-    void setAscent (const float newAscent) throw();
-
-    /** Sets the typeface's 'bold' flag.
-
-        This is typically only called by the platform-specific code that generates
-        the typeface from a system font.
-    */
-    void setBold (const bool shouldBeBold) throw();
-
-    /** Sets the typeface's 'italic' flag.
-
-        This is typically only called by the platform-specific code that generates
-        the typeface from a system font.
-    */
-    void setItalic (const bool shouldBeItalic) throw();
-
-    /** Changes the character index to use as the default character.
-
-        This is the character that gets returned for characters which don't have a
-        glyph set for them.
-    */
-    void setDefaultCharacter (const juce_wchar newDefaultCharacter) throw();
-
-    /** Creates a typeface from data created using Typeface::serialise().
-
-        This will attempt to load a compressed typeface that was created using
-        the Typeface::serialise() method. This is handy if you want to store
-        a typeface in your application as a binary blob, and use it without
-        having to actually install it on the computer.
-
-        @see Typeface::serialise()
-    */
-    Typeface (InputStream& serialisedTypefaceStream);
-
-    /** Writes the typeface to a stream (using a proprietary format).
-
-        This lets you save a typeface and reload it using the
-        Typeface::Typeface (InputStream&) constructor. The data's saved in
-        a compressed format.
-
-        @see Typeface::Typeface (InputStream&)
-    */
-    void serialise (OutputStream& outputStream);
-
-    /** A handy typedef to make it easy to use ref counted pointers to this class. */
-    typedef ReferenceCountedObjectPtr <Typeface> Ptr;
+    virtual bool getOutlineForGlyph (int glyphNumber, Path& path) = 0;
 
     juce_UseDebuggingNewOperator
 
+protected:
+    String name;
+
+    Typeface (const String& name) throw();
+
 private:
-    VoidArray glyphs;
+    Typeface (const Typeface&);
+    const Typeface& operator= (const Typeface&);
+};
+
+/** A typeface that can be populated with custom glyphs.
+
+    You can create a CustomTypeface if you need one that contains your own glyphs,
+    or if you need to load a typeface from a Juce-formatted binary stream.
+
+    If you want to create a copy of a native face, you can use addGlyphsFromOtherTypeface()
+    to copy glyphs into this face.
+
+    @see Typeface, Font
+*/
+class JUCE_API  CustomTypeface  : public Typeface
+{
+public:
+
+    /** Creates a new, empty typeface. */
+    CustomTypeface();
+
+    /** Loads a typeface from a previously saved stream.
+        The stream must have been created by writeToStream().
+        @see writeToStream
+    */
+    CustomTypeface (InputStream& serialisedTypefaceStream);
+
+    /** Destructor. */
+    ~CustomTypeface();
+
+    /** Resets this typeface, deleting all its glyphs and settings. */
+    void clear();
+
+    /** Sets the vital statistics for the typeface.
+        @param name     the typeface's name
+        @param ascent   the ascent - this is normalised to a height of 1.0 and this is
+                        the value that will be returned by Typeface::getAscent(). The
+                        descent is assumed to be (1.0 - ascent)
+        @param isBold   should be true if the typeface is bold
+        @param isItalic should be true if the typeface is italic
+        @param defaultCharacter     the character to be used as a replacement if there's
+                        no glyph available for the character that's being drawn
+    */
+    void setCharacteristics (const String& name, const float ascent,
+                             const bool isBold, const bool isItalic,
+                             const juce_wchar defaultCharacter) throw();
+
+    /** Adds a glyph to the typeface.
+
+        The path that is passed in is normalised so that the font height is 1.0, and its
+        origin is the anchor point of the character on its baseline.
+
+        The width is the nominal width of the character, and any extra kerning values that
+        are specified will be added to this width.
+    */
+    void addGlyph (const juce_wchar character, const Path& path, const float width) throw();
+
+    /** Specifies an extra kerning amount to be used between a pair of characters.
+        The amount will be added to the nominal width of the first character when laying out a string.
+    */
+    void addKerningPair (const juce_wchar char1, const juce_wchar char2, const float extraAmount) throw();
+
+    /** Adds a range of glyphs from another typeface.
+        This will attempt to pull in the paths and kerning information from another typeface and
+        add it to this one.
+    */
+    void addGlyphsFromOtherTypeface (Typeface& typefaceToCopy, juce_wchar characterStartIndex, int numCharacters) throw();
+
+    /** Saves this typeface as a Juce-formatted font file.
+        A CustomTypeface can be created to reload the data that is written - see the CustomTypeface
+        constructor.
+    */
+    bool writeToStream (OutputStream& outputStream);
+
+    // The following methods implement the basic Typeface behaviour.
+    float getAscent() const;
+    float getDescent() const;
+    float getStringWidth (const String& text);
+    void getGlyphPositions (const String& text, Array <int>& glyphs, Array<float>& xOffsets);
+    bool getOutlineForGlyph (int glyphNumber, Path& path);
+    int getGlyphForCharacter (juce_wchar character);
+
+    juce_UseDebuggingNewOperator
+
+protected:
+    juce_wchar defaultCharacter;
+    float ascent;
+    bool isBold, isItalic;
+
+    /** If a subclass overrides this, it can load glyphs into the font on-demand.
+        When methods such as getGlyphPositions() or getOutlineForGlyph() are asked for a
+        particular character and there's no corresponding glyph, they'll call this
+        method so that a subclass can try to add that glyph, returning true if it
+        manages to do so.
+    */
+    virtual bool loadGlyphIfPossible (const juce_wchar characterNeeded);
+
+private:
+
+    OwnedArray <CustomTypefaceGlyphInfo> glyphs;
     short lookupTable [128];
 
-    String typefaceName;
-    int hash;
-    float ascent; // as a proportion of the height
-    bool bold, italic, isFullyPopulated;
-    juce_wchar defaultCharacter; // the char to use if a matching glyph can't be found.
+    CustomTypeface (const CustomTypeface&);
+    const CustomTypeface& operator= (const CustomTypeface&);
 
-    Typeface() throw();
-    void addGlyphCopy (const TypefaceGlyphInfo* const glyphInfoToCopy) throw();
-
-    friend class Font;
-    friend class TypefaceCache;
-    friend class FontGlyphAlphaMap;
-
-    static const Ptr getTypefaceFor (const Font& font) throw();
-
-    // this is a platform-dependent method that will look for the given typeface
-    // and set up its kerning tables, etc. accordingly.
-    // If addAllGlyphsToFont is true, it should also add all the glyphs in the font
-    // to the typeface immediately, rather than having to add them later on-demand.
-    void initialiseTypefaceCharacteristics (const String& fontName,
-                                            bool bold, bool italic,
-                                            bool addAllGlyphsToFont) throw();
-
-    // platform-specific routine to look up and add a glyph to this typeface
-    bool findAndAddSystemGlyph (juce_wchar character) throw();
-
-    void updateHashCode() throw();
+    CustomTypefaceGlyphInfo* findGlyph (const juce_wchar character, const bool loadIfNeeded) throw();
+    CustomTypefaceGlyphInfo* findGlyphSubstituting (const juce_wchar character) throw();
 };
 
 #endif   // __JUCE_TYPEFACE_JUCEHEADER__
 /********* End of inlined file: juce_Typeface.h *********/
+
+class LowLevelGraphicsContext;
 
 /**
     Represents a particular font, including its size, style, etc.
@@ -17111,7 +18098,7 @@ public:
         @param styleFlags   the style to use - this can be a combination of the
                             Font::bold, Font::italic and Font::underlined, or
                             just Font::plain for the normal style.
-        @see FontStyleFlags, getDefaultSansSerifFontName, setDefaultSansSerifFontName
+        @see FontStyleFlags, getDefaultSansSerifFontName
     */
     Font (const float fontHeight,
           const int styleFlags = plain) throw();
@@ -17123,7 +18110,7 @@ public:
         @param styleFlags   the style to use - this can be a combination of the
                             Font::bold, Font::italic and Font::underlined, or
                             just Font::plain for the normal style.
-        @see FontStyleFlags, getDefaultSansSerifFontName, setDefaultSansSerifFontName
+        @see FontStyleFlags, getDefaultSansSerifFontName
     */
     Font (const String& typefaceName,
           const float fontHeight,
@@ -17132,12 +18119,8 @@ public:
     /** Creates a copy of another Font object. */
     Font (const Font& other) throw();
 
-    /** Creates a font based on a typeface.
-
-        The font object stores its own internal copy of the typeface, so you can safely
-        delete the one passed in after calling this.
-    */
-    Font (const Typeface& typeface) throw();
+    /** Creates a font for a typeface. */
+    Font (const Typeface::Ptr& typeface) throw();
 
     /** Creates a basic sans-serif font at a default height.
 
@@ -17160,6 +18143,12 @@ public:
 
         e.g. "Arial", "Courier", etc.
 
+        This may also be set to Font::getDefaultSansSerifFontName(), Font::getDefaultSerifFontName(),
+        or Font::getDefaultMonospacedFontName(), which are not actual platform-specific font names,
+        but are generic names that are used to represent the various default fonts.
+        If you need to know the exact typeface name being used, you can call
+        Font::getTypeface()->getTypefaceName(), which will give you the platform-specific name.
+
         If a suitable font isn't found on the machine, it'll just use a default instead.
     */
     void setTypefaceName (const String& faceName) throw();
@@ -17167,39 +18156,51 @@ public:
     /** Returns the name of the typeface family that this font uses.
 
         e.g. "Arial", "Courier", etc.
+
+        This may also be set to Font::getDefaultSansSerifFontName(), Font::getDefaultSerifFontName(),
+        or Font::getDefaultMonospacedFontName(), which are not actual platform-specific font names,
+        but are generic names that are used to represent the various default fonts.
+
+        If you need to know the exact typeface name being used, you can call
+        Font::getTypeface()->getTypefaceName(), which will give you the platform-specific name.
     */
-    const String& getTypefaceName() const throw()               { return typefaceName; }
+    const String& getTypefaceName() const throw()               { return font->typefaceName; }
 
-    /** Returns a platform-specific font family that is recommended for sans-serif fonts.
+    /** Returns a typeface name that represents the default sans-serif font.
 
-        This is the typeface that will be used when a font is created without
-        specifying another name.
+        This is also the typeface that will be used when a font is created without
+        specifying any typeface details.
 
-        @see setTypefaceName, getDefaultSerifFontName, getDefaultMonospacedFontName,
-             setDefaultSansSerifFontName
+        Note that this method just returns a generic placeholder string that means "the default
+        sans-serif font" - it's not the actual name of this font. To get the actual name, use
+        getPlatformDefaultFontNames() or LookAndFeel::getTypefaceForFont().
+
+        @see setTypefaceName, getDefaultSerifFontName, getDefaultMonospacedFontName
     */
     static const String getDefaultSansSerifFontName() throw();
 
-    /** Returns a platform-specific font family that is recommended for serif fonts.
+    /** Returns a typeface name that represents the default sans-serif font.
+
+        Note that this method just returns a generic placeholder string that means "the default
+        serif font" - it's not the actual name of this font. To get the actual name, use
+        getPlatformDefaultFontNames() or LookAndFeel::getTypefaceForFont().
 
         @see setTypefaceName, getDefaultSansSerifFontName, getDefaultMonospacedFontName
     */
     static const String getDefaultSerifFontName() throw();
 
-    /** Returns a platform-specific font family that is recommended for monospaced fonts.
+    /** Returns a typeface name that represents the default sans-serif font.
+
+        Note that this method just returns a generic placeholder string that means "the default
+        monospaced font" - it's not the actual name of this font. To get the actual name, use
+        getPlatformDefaultFontNames() or LookAndFeel::getTypefaceForFont().
 
         @see setTypefaceName, getDefaultSansSerifFontName, getDefaultSerifFontName
     */
     static const String getDefaultMonospacedFontName() throw();
 
-    /** Changes the default sans-serif typeface family name.
-
-        This changes the value that is returned by getDefaultSansSerifFontName(), so
-        changing this will change the default system font used.
-
-        @see getDefaultSansSerifFontName
-    */
-    static void setDefaultSansSerifFontName (const String& name) throw();
+    /** Returns the typeface names of the default fonts on the current platform. */
+    static void getPlatformDefaultFontNames (String& defaultSans, String& defaultSerif, String& defaultFixed) throw();
 
     /** Returns the total height of this font.
 
@@ -17208,7 +18209,7 @@ public:
 
         @see setHeight, setHeightWithoutChangingWidth, getAscent
     */
-    float getHeight() const throw()                             { return height; }
+    float getHeight() const throw()                             { return font->height; }
 
     /** Changes the font's height.
 
@@ -17245,7 +18246,7 @@ public:
 
         @see FontStyleFlags
     */
-    int getStyleFlags() const throw()                           { return styleFlags; }
+    int getStyleFlags() const throw()                           { return font->styleFlags; }
 
     /** Changes the font's style.
 
@@ -17284,7 +18285,7 @@ public:
 
         @see setHorizontalScale
     */
-    float getHorizontalScale() const throw()                { return horizontalScale; }
+    float getHorizontalScale() const throw()                { return font->horizontalScale; }
 
     /** Changes the font's kerning.
 
@@ -17303,21 +18304,13 @@ public:
         A value of zero is normal spacing, positive values will spread the letters
         out more, and negative values make them closer together.
     */
-    float getExtraKerningFactor() const throw()             { return kerning; }
+    float getExtraKerningFactor() const throw()             { return font->kerning; }
 
     /** Changes all the font's characteristics with one call. */
-    void setSizeAndStyle (const float newHeight,
+    void setSizeAndStyle (float newHeight,
                           const int newStyleFlags,
                           const float newHorizontalScale,
                           const float newKerningAmount) throw();
-
-    /** Resets this font's characteristics.
-
-        This is basically like saying "myFont = Font();", because it resets the
-        typeface, size, style, etc to a default state. Not very useful to most
-        people, its raison d'etre is to help the Graphics class be more efficient.
-    */
-    void resetToDefaultState() throw();
 
     /** Returns the total width of a string as it would be drawn using this font.
 
@@ -17330,6 +18323,30 @@ public:
         @see getStringWidth
     */
     float getStringWidthFloat (const String& text) const throw();
+
+    /** Returns the series of glyph numbers and their x offsets needed to represent a string.
+
+        An extra x offset is added at the end of the run, to indicate where the right hand
+        edge of the last character is.
+    */
+    void getGlyphPositions (const String& text, Array <int>& glyphs, Array <float>& xOffsets) const throw();
+
+    /** Renders a glyph in a context without using methods other than the context's glyph-rendering
+        methods.
+
+        For smaller fonts, this uses an internal cache of glyph images to speed things up, and renders
+        them using the context's image blending methods. For larger fonts, it gets the glyph's path
+        from the typeface and renders it as a shape.
+
+        This method is primarily called by graphics contexts as a way of drawing a glyph if they can't do
+        it by native means.
+    */
+    void renderGlyphIndirectly (LowLevelGraphicsContext& g, int glyphNumber, float x, float y);
+
+    /** Renders a transformed glyph using path-filling techniques rather than calling a context's
+        actual glyph-rendering methods.
+    */
+    void renderGlyphIndirectly (LowLevelGraphicsContext& g, int glyphNumber, const AffineTransform& transform);
 
     /** Returns the typeface used by this font.
 
@@ -17373,222 +18390,26 @@ private:
     friend class FontGlyphAlphaMap;
     friend class TypefaceCache;
 
-    String typefaceName;
-    float height, horizontalScale, kerning;
-    mutable float ascent;
-    int styleFlags;
-    mutable Typeface::Ptr typeface;
+    class SharedFontInternal  : public ReferenceCountedObject
+    {
+    public:
+        SharedFontInternal (const String& typefaceName, const float height, const float horizontalScale,
+                            const float kerning, const float ascent, const int styleFlags,
+                            Typeface* const typeface) throw();
+        SharedFontInternal (const SharedFontInternal& other) throw();
 
-    // platform-specific calls
-    static void getDefaultFontNames (String& defaultSans, String& defaultSerif, String& defaultFixed) throw();
+        String typefaceName;
+        float height, horizontalScale, kerning, ascent;
+        int styleFlags;
+        Typeface::Ptr typeface;
+    };
 
-    friend void JUCE_PUBLIC_FUNCTION initialiseJuce_GUI();
-    static void initialiseDefaultFontNames() throw();
+    ReferenceCountedObjectPtr <SharedFontInternal> font;
+    void dupeInternalIfShared() throw();
 };
 
 #endif   // __JUCE_FONT_JUCEHEADER__
 /********* End of inlined file: juce_Font.h *********/
-
-/********* Start of inlined file: juce_Rectangle.h *********/
-#ifndef __JUCE_RECTANGLE_JUCEHEADER__
-#define __JUCE_RECTANGLE_JUCEHEADER__
-
-/**
-    A rectangle, specified using integer co-ordinates.
-
-    @see RectangleList, Path, Line, Point
-*/
-class JUCE_API  Rectangle
-{
-public:
-
-    /** Creates a rectangle of zero size.
-
-        The default co-ordinates will be (0, 0, 0, 0).
-    */
-    Rectangle() throw();
-
-    /** Creates a copy of another rectangle. */
-    Rectangle (const Rectangle& other) throw();
-
-    /** Creates a rectangle with a given position and size. */
-    Rectangle (const int x, const int y,
-               const int width, const int height) throw();
-
-    /** Creates a rectangle with a given size, and a position of (0, 0). */
-    Rectangle (const int width, const int height) throw();
-
-    /** Destructor. */
-    ~Rectangle() throw();
-
-    /** Returns the x co-ordinate of the rectangle's left-hand-side. */
-    inline int getX() const throw()                         { return x; }
-
-    /** Returns the y co-ordinate of the rectangle's top edge. */
-    inline int getY() const throw()                         { return y; }
-
-    /** Returns the width of the rectangle. */
-    inline int getWidth() const throw()                     { return w; }
-
-    /** Returns the height of the rectangle. */
-    inline int getHeight() const throw()                    { return h; }
-
-    /** Returns the x co-ordinate of the rectangle's right-hand-side. */
-    inline int getRight() const throw()                     { return x + w; }
-
-    /** Returns the y co-ordinate of the rectangle's bottom edge. */
-    inline int getBottom() const throw()                    { return y + h; }
-
-    /** Returns the x co-ordinate of the rectangle's centre. */
-    inline int getCentreX() const throw()                   { return x + (w >> 1); }
-
-    /** Returns the y co-ordinate of the rectangle's centre. */
-    inline int getCentreY() const throw()                   { return y + (h >> 1); }
-
-    /** Returns true if the rectangle's width and height are both zero or less */
-    bool isEmpty() const throw();
-
-    /** Changes the position of the rectangle's top-left corner (leaving its size unchanged). */
-    void setPosition (const int x, const int y) throw();
-
-    /** Changes the rectangle's size, leaving the position of its top-left corner unchanged. */
-    void setSize (const int w, const int h) throw();
-
-    /** Changes all the rectangle's co-ordinates. */
-    void setBounds (const int newX, const int newY,
-                    const int newWidth, const int newHeight) throw();
-
-    /** Moves the rectangle's position by adding amount to its x and y co-ordinates. */
-    void translate (const int deltaX,
-                    const int deltaY) throw();
-
-    /** Returns a rectangle which is the same as this one moved by a given amount. */
-    const Rectangle translated (const int deltaX,
-                                const int deltaY) const throw();
-
-    /** Expands the rectangle by a given amount.
-
-        Effectively, its new size is (x - deltaX, y - deltaY, w + deltaX * 2, h + deltaY * 2).
-        @see expanded, reduce, reduced
-    */
-    void expand (const int deltaX,
-                 const int deltaY) throw();
-
-    /** Returns a rectangle that is larger than this one by a given amount.
-
-        Effectively, the rectangle returned is (x - deltaX, y - deltaY, w + deltaX * 2, h + deltaY * 2).
-        @see expand, reduce, reduced
-    */
-    const Rectangle expanded (const int deltaX,
-                              const int deltaY) const throw();
-
-    /** Shrinks the rectangle by a given amount.
-
-        Effectively, its new size is (x + deltaX, y + deltaY, w - deltaX * 2, h - deltaY * 2).
-        @see reduced, expand, expanded
-    */
-    void reduce (const int deltaX,
-                 const int deltaY) throw();
-
-    /** Returns a rectangle that is smaller than this one by a given amount.
-
-        Effectively, the rectangle returned is (x + deltaX, y + deltaY, w - deltaX * 2, h - deltaY * 2).
-        @see reduce, expand, expanded
-    */
-    const Rectangle reduced (const int deltaX,
-                             const int deltaY) const throw();
-
-    /** Returns true if the two rectangles are identical. */
-    bool operator== (const Rectangle& other) const throw();
-
-    /** Returns true if the two rectangles are not identical. */
-    bool operator!= (const Rectangle& other) const throw();
-
-    /** Returns true if this co-ordinate is inside the rectangle. */
-    bool contains (const int x, const int y) const throw();
-
-    /** Returns true if this other rectangle is completely inside this one. */
-    bool contains (const Rectangle& other) const throw();
-
-    /** Returns true if any part of another rectangle overlaps this one. */
-    bool intersects (const Rectangle& other) const throw();
-
-    /** Returns the region that is the overlap between this and another rectangle.
-
-        If the two rectangles don't overlap, the rectangle returned will be empty.
-    */
-    const Rectangle getIntersection (const Rectangle& other) const throw();
-
-    /** Clips a rectangle so that it lies only within this one.
-
-        This is a non-static version of intersectRectangles().
-
-        Returns false if the two regions didn't overlap.
-    */
-    bool intersectRectangle (int& x, int& y, int& w, int& h) const throw();
-
-    /** Returns the smallest rectangle that contains both this one and the one
-        passed-in.
-    */
-    const Rectangle getUnion (const Rectangle& other) const throw();
-
-    /** If this rectangle merged with another one results in a simple rectangle, this
-        will set this rectangle to the result, and return true.
-
-        Returns false and does nothing to this rectangle if the two rectangles don't overlap,
-        or if they form a complex region.
-    */
-    bool enlargeIfAdjacent (const Rectangle& other) throw();
-
-    /** If after removing another rectangle from this one the result is a simple rectangle,
-        this will set this object's bounds to be the result, and return true.
-
-        Returns false and does nothing to this rectangle if the two rectangles don't overlap,
-        or if removing the other one would form a complex region.
-    */
-    bool reduceIfPartlyContainedIn (const Rectangle& other) throw();
-
-    /** Static utility to intersect two sets of rectangular co-ordinates.
-
-        Returns false if the two regions didn't overlap.
-
-        @see intersectRectangle
-    */
-    static bool intersectRectangles (int& x1, int& y1, int& w1, int& h1,
-                                     int x2, int y2, int w2, int h2) throw();
-
-    /** Creates a string describing this rectangle.
-
-        The string will be of the form "x y width height", e.g. "100 100 400 200".
-
-        Coupled with the fromString() method, this is very handy for things like
-        storing rectangles (particularly component positions) in XML attributes.
-
-        @see fromString
-    */
-    const String toString() const throw();
-
-    /** Parses a string containing a rectangle's details.
-
-        The string should contain 4 integer tokens, in the form "x y width height". They
-        can be comma or whitespace separated.
-
-        This method is intended to go with the toString() method, to form an easy way
-        of saving/loading rectangles as strings.
-
-        @see toString
-    */
-    static const Rectangle fromString (const String& stringVersion);
-
-    juce_UseDebuggingNewOperator
-
-private:
-    friend class RectangleList;
-    int x, y, w, h;
-};
-
-#endif   // __JUCE_RECTANGLE_JUCEHEADER__
-/********* End of inlined file: juce_Rectangle.h *********/
 
 /********* Start of inlined file: juce_PathStrokeType.h *********/
 #ifndef __JUCE_PATHSTROKETYPE_JUCEHEADER__
@@ -18346,7 +19167,7 @@ public:
     /** Creates a colour from a 32-bit ARGB value.
 
         The format of this number is:
-            ((alpha << 24) | (red << 16) | (green << 16) | blue).
+            ((alpha << 24) | (red << 16) | (green << 8) | blue).
 
         All components in the range 0x00 to 0xff.
         An alpha of 0x00 is completely transparent, alpha of 0xff is opaque.
@@ -18360,11 +19181,22 @@ public:
             const uint8 green,
             const uint8 blue) throw();
 
+    /** Creates an opaque colour using 8-bit red, green and blue values */
+    static const Colour fromRGB (const uint8 red,
+                                 const uint8 green,
+                                 const uint8 blue) throw();
+
     /** Creates a colour using 8-bit red, green, blue and alpha values. */
     Colour (const uint8 red,
             const uint8 green,
             const uint8 blue,
             const uint8 alpha) throw();
+
+    /** Creates a colour using 8-bit red, green, blue and alpha values. */
+    static const Colour fromRGBA (const uint8 red,
+                                  const uint8 green,
+                                  const uint8 blue,
+                                  const uint8 alpha) throw();
 
     /** Creates a colour from 8-bit red, green, and blue values, and a floating-point alpha.
 
@@ -18375,6 +19207,12 @@ public:
             const uint8 green,
             const uint8 blue,
             const float alpha) throw();
+
+    /** Creates a colour using 8-bit red, green, blue and float alpha values. */
+    static const Colour fromRGBAFloat (const uint8 red,
+                                       const uint8 green,
+                                       const uint8 blue,
+                                       const float alpha) throw();
 
     /** Creates a colour using floating point hue, saturation and brightness values, and an 8-bit alpha.
 
@@ -18396,6 +19234,17 @@ public:
             const float saturation,
             const float brightness,
             const float alpha) throw();
+
+    /** Creates a colour using floating point hue, saturation and brightness values, and an 8-bit alpha.
+
+        The floating point values must be between 0.0 and 1.0.
+        An alpha of 0x00 is completely transparent, alpha of 0xff is opaque.
+        Values outside the valid range will be clipped.
+    */
+    static const Colour fromHSV (const float hue,
+                                 const float saturation,
+                                 const float brightness,
+                                 const float alpha) throw();
 
     /** Destructor. */
     ~Colour() throw();
@@ -18497,6 +19346,13 @@ public:
         accordingly.
     */
     const Colour overlaidWith (const Colour& foregroundColour) const throw();
+
+    /** Returns a colour that lies somewhere between this one and another.
+
+        If amountOfOther is zero, the result is 100% this colour, if amountOfOther
+        is 1.0, the result is 100% of the other colour.
+    */
+    const Colour interpolatedWith (const Colour& other, float proportionOfOther) const throw();
 
     /** Returns the colour's hue component.
         The value returned is in the range 0.0 to 1.0
@@ -18686,6 +19542,134 @@ private:
 
 #endif   // __JUCE_COLOURS_JUCEHEADER__
 /********* End of inlined file: juce_Colours.h *********/
+
+/********* Start of inlined file: juce_ColourGradient.h *********/
+#ifndef __JUCE_COLOURGRADIENT_JUCEHEADER__
+#define __JUCE_COLOURGRADIENT_JUCEHEADER__
+
+/**
+    Describes the layout and colours that should be used to paint a colour gradient.
+
+    @see Graphics::setGradientFill
+*/
+class JUCE_API  ColourGradient
+{
+public:
+
+    /** Creates a gradient object.
+
+        (x1, y1) is the location to draw with colour1. Likewise (x2, y2) is where
+        colour2 should be. In between them there's a gradient.
+
+        If isRadial is true, the colours form a circular gradient with (x1, y1) at
+        its centre.
+
+        The alpha transparencies of the colours are used, so note that
+        if you blend from transparent to a solid colour, the RGB of the transparent
+        colour will become visible in parts of the gradient. e.g. blending
+        from Colour::transparentBlack to Colours::white will produce a
+        muddy grey colour midway, but Colour::transparentWhite to Colours::white
+        will be white all the way across.
+
+        @see ColourGradient
+    */
+    ColourGradient (const Colour& colour1,
+                    const float x1,
+                    const float y1,
+                    const Colour& colour2,
+                    const float x2,
+                    const float y2,
+                    const bool isRadial) throw();
+
+    /** Creates an uninitialised gradient.
+
+        If you use this constructor instead of the other one, be sure to set all the
+        object's public member variables before using it!
+    */
+    ColourGradient() throw();
+
+    /** Destructor */
+    ~ColourGradient() throw();
+
+    /** Removes any colours that have been added.
+
+        This will also remove any start and end colours, so the gradient won't work. You'll
+        need to add more colours with addColour().
+    */
+    void clearColours() throw();
+
+    /** Adds a colour at a point along the length of the gradient.
+
+        This allows the gradient to go through a spectrum of colours, instead of just a
+        start and end colour.
+
+        @param proportionAlongGradient      a value between 0 and 1.0, which is the proportion
+                                            of the distance along the line between the two points
+                                            at which the colour should occur.
+        @param colour                       the colour that should be used at this point
+    */
+    void addColour (const double proportionAlongGradient,
+                    const Colour& colour) throw();
+
+    /** Multiplies the alpha value of all the colours by the given scale factor */
+    void multiplyOpacity (const float multiplier) throw();
+
+    /** Returns the number of colour-stops that have been added. */
+    int getNumColours() const throw();
+
+    /** Returns the position along the length of the gradient of the colour with this index.
+
+        The index is from 0 to getNumColours() - 1. The return value will be between 0.0 and 1.0
+    */
+    double getColourPosition (const int index) const throw();
+
+    /** Returns the colour that was added with a given index.
+
+        The index is from 0 to getNumColours() - 1. The return value will be between 0.0 and 1.0
+    */
+    const Colour getColour (const int index) const throw();
+
+    /** Returns the an interpolated colour at any position along the gradient.
+        @param position     the position along the gradient, between 0 and 1
+    */
+    const Colour getColourAtPosition (const float position) const throw();
+
+    /** Creates a set of interpolated premultiplied ARGB values.
+
+        The caller must delete the array that is returned using juce_free().
+    */
+    PixelARGB* createLookupTable (int& numEntries) const throw();
+
+    /** Returns true if all colours are opaque. */
+    bool isOpaque() const throw();
+
+    /** Returns true if all colours are completely transparent. */
+    bool isInvisible() const throw();
+
+    float x1;
+    float y1;
+
+    float x2;
+    float y2;
+
+    /** If true, the gradient should be filled circularly, centred around
+        (x1, y1), with (x2, y2) defining a point on the circumference.
+
+        If false, the gradient is linear between the two points.
+    */
+    bool isRadial;
+
+    /** A transform to apply to the resultant gradient shape */
+    AffineTransform transform;
+
+    juce_UseDebuggingNewOperator
+
+private:
+    Array <uint32> colours;
+};
+
+#endif   // __JUCE_COLOURGRADIENT_JUCEHEADER__
+/********* End of inlined file: juce_ColourGradient.h *********/
 
 /********* Start of inlined file: juce_SolidColourBrush.h *********/
 #ifndef __JUCE_SOLIDCOLOURBRUSH_JUCEHEADER__
@@ -18896,8 +19880,9 @@ public:
         stretchToFit                            = 64,
 
         /** If this flag is set, then the source rectangle will be resized so that it is the
-            minimum size to completely fill the destination rectangle. This means that some
-            of the source rectangle may fall outside the destination.
+            minimum size to completely fill the destination rectangle, without changing its
+            aspect ratio. This means that some of the source rectangle may fall outside
+            the destination.
 
             If this flag is not set, the source will be given the maximum size at which none
             of it falls outside the destination rectangle.
@@ -19007,23 +19992,16 @@ public:
         If a brush is being used when this method is called, the brush will be deselected,
         and any subsequent drawing will be done with a solid colour brush instead.
 
-        @see setOpacity, setBrush, getColour
+        @see setOpacity, setBrush
     */
     void setColour (const Colour& newColour) throw();
 
-    /** Returns the colour that's currently being used.
-
-        This will return the last colour set by setColour(), even if the colour's not
-        currently being used for drawing because a brush has been selected instead.
-
-        @see setColour
-    */
-    const Colour& getCurrentColour() const throw();
-
     /** Changes the opacity to use with the current colour.
 
-        If a solid colour is being used for drawing, this changes its opacity (and this
-        will be reflected by calls to the getColour() method).
+        If a solid colour is being used for drawing, this changes its opacity
+        to this new value (i.e. it doesn't multiply the colour's opacity by this amount).
+
+        If a gradient is being used, this will have no effect on it.
 
         A value of 0.0 is completely transparent, 1.0 is completely opaque.
     */
@@ -19040,6 +20018,19 @@ public:
         @see SolidColourBrush, GradientBrush, ImageBrush, Brush
     */
     void setBrush (const Brush* const newBrush) throw();
+
+    /** Sets the context to use a gradient for its fill pattern.
+    */
+    void setGradientFill (const ColourGradient& gradient) throw();
+
+    /** Sets the context to use a tiled image pattern for filling.
+        Make sure that you don't delete this image while it's still being used by
+        this context!
+    */
+    void setTiledImageFill (Image& imageToUse,
+                            const int anchorX,
+                            const int anchorY,
+                            const float opacity) throw();
 
     /** Changes the font to use for subsequent text-drawing functions.
 
@@ -19059,12 +20050,6 @@ public:
     */
     void setFont (const float newFontHeight,
                   const int fontStyleFlags = Font::plain) throw();
-
-    /** Returns the font that's currently being used for text operations.
-
-        @see setFont
-    */
-    const Font& getCurrentFont() const throw();
 
     /** Draws a one-line text string.
 
@@ -19274,6 +20259,11 @@ public:
         The top-left colour is used for the top- and left-hand edges of the
         bevel; the bottom-right colour is used for the bottom- and right-hand
         edges.
+
+        If useGradient is true, then the bevel fades out to make it look more curved
+        and less angular. If sharpEdgeOnOutside is true, the outside of the bevel is
+        sharp, and it fades towards the centre; if sharpEdgeOnOutside is false, then
+        the centre edges are sharp and it fades towards the outside.
     */
     void drawBevel (const int x,
                     const int y,
@@ -19282,7 +20272,8 @@ public:
                     const int bevelThickness,
                     const Colour& topLeftColour = Colours::white,
                     const Colour& bottomRightColour = Colours::black,
-                    const bool useGradient = true) const throw();
+                    const bool useGradient = true,
+                    const bool sharpEdgeOnOutside = true) const throw();
 
     /** Draws a pixel using the current colour or brush.
     */
@@ -19499,7 +20490,7 @@ public:
                                int sourceClipWidth,
                                int sourceClipHeight,
                                const AffineTransform& transform,
-                               const bool fillAlphaChannelWithCurrentBrush) const throw();
+                               const bool fillAlphaChannelWithCurrentBrush = false) const throw();
 
     /** Draws an image to fit within a designated rectangle.
 
@@ -19528,7 +20519,7 @@ public:
                           const int destWidth,
                           const int destHeight,
                           const RectanglePlacement& placementWithinTarget,
-                          const bool fillAlphaChannelWithCurrentBrush) const throw();
+                          const bool fillAlphaChannelWithCurrentBrush = false) const throw();
 
     /** Returns the position of the bounding box for the current clipping region.
 
@@ -19608,6 +20599,32 @@ public:
     /** @internal */
     LowLevelGraphicsContext* getInternalContext() const throw()     { return context; }
 
+    /*class FillType
+    {
+    public:
+        FillType (const Colour& colour) throw();
+        FillType (const ColourGradient& gradient) throw();
+        FillType (Image* image, int x, int y) throw();
+        FillType (const FillType& other) throw();
+        const FillType& operator= (const FillType& other) throw();
+        ~FillType() throw();
+
+        bool isColour() const throw()       { return gradient == 0 && image == 0; }
+        bool isGradient() const throw()     { return gradient != 0; }
+        bool isTiledImage() const throw()   { return image != 0; }
+
+        void setColour (const Colour& newColour) throw();
+        void setGradient (const ColourGradient& newGradient) throw();
+        void setTiledImage (Image* image, const int imageX, const int imageY) throw();
+
+        Colour colour;
+        ColourGradient* gradient;
+        Image* image;
+        int imageX, imageY;
+
+        juce_UseDebuggingNewOperator
+    };*/
+
 private:
 
     LowLevelGraphicsContext* const context;
@@ -19619,10 +20636,8 @@ private:
         GraphicsState (const GraphicsState&) throw();
         ~GraphicsState() throw();
 
-        Colour colour;
         Brush* brush;
         Font font;
-        ResamplingQuality quality;
     };
 
     GraphicsState* state;
@@ -19995,6 +21010,7 @@ class Graphics;
 #define __JUCE_MESSAGE_JUCEHEADER__
 
 class MessageListener;
+class MessageManager;
 
 /** The base class for objects that can be delivered to a MessageListener.
 
@@ -20136,8 +21152,7 @@ public:
         windowHasTitleBar           = (1 << 3),    /**< Indicates that the window should have a normal OS-specific
                                                         title bar and frame\. if not specified, the window will be
                                                         borderless. */
-        windowIsResizable           = (1 << 4),    /**< Indicates that the window should let mouse clicks pass
-                                                        through it (may not be possible on some platforms). */
+        windowIsResizable           = (1 << 4),    /**< Indicates that the window should have a resizable border. */
         windowHasMinimiseButton     = (1 << 5),    /**< Indicates that if the window has a title bar, it should have a
                                                         minimise button on it. */
         windowHasMaximiseButton     = (1 << 6),    /**< Indicates that if the window has a title bar, it should have a
@@ -20149,6 +21164,9 @@ public:
         windowRepaintedExplictly    = (1 << 9),    /**< Not intended for public use - this tells a window not to
                                                         do its own repainting, but only to repaint when the
                                                         performAnyPendingRepaintsNow() method is called. */
+        windowIgnoresKeyPresses     = (1 << 10),   /**< Tells the window not to catch any keypresses. This can
+                                                        be used for things like plugin windows, to stop them interfering
+                                                        with the host's shortcut keys */
         windowIsSemiTransparent     = (1 << 31)    /**< Not intended for public use - makes a window transparent. */
 
     };
@@ -20315,6 +21333,13 @@ public:
     /** Tries to give the window keyboard focus. */
     virtual void grabFocus() = 0;
 
+    /** Tells the window that text input may be required at the given position.
+
+        This may cause things like a virtual on-screen keyboard to appear, depending
+        on the OS.
+    */
+    virtual void textInputRequired (int x, int y) = 0;
+
     /** Called when the window gains keyboard focus. */
     void handleFocusGain();
     /** Called when the window loses keyboard focus. */
@@ -20333,7 +21358,7 @@ public:
     /** Called whenever a key is pressed or released.
         Returns true if the keystroke was used.
     */
-    bool handleKeyUpOrDown();
+    bool handleKeyUpOrDown (const bool isKeyDown);
 
     /** Called whenever a modifier key is pressed or released. */
     void handleModifierKeysChange();
@@ -20403,6 +21428,8 @@ public:
         @see getNumPeers
     */
     static bool isValidPeer (const ComponentPeer* const peer) throw();
+
+    static void bringModalComponentToFront();
 
     juce_UseDebuggingNewOperator
 
@@ -21842,9 +22869,11 @@ public:
         To find out which keys are up or down at any time, see the KeyPress::isKeyCurrentlyDown()
         method.
 
+        @param isKeyDown    true if a key has been pressed; false if it has been released
+
         @see keyPressed, KeyPress, getCurrentlyFocusedComponent, addKeyListener
     */
-    virtual bool keyStateChanged();
+    virtual bool keyStateChanged (const bool isKeyDown);
 
     /** Called when a modifier key is pressed or released.
 
@@ -22118,12 +23147,23 @@ public:
     */
     bool isCurrentlyModal() const throw();
 
-    /** Returns the component that is currently modal.
+    /** Returns the number of components that are currently in a modal state.
+        @see getCurrentlyModalComponent
+     */
+    static int JUCE_CALLTYPE getNumCurrentlyModalComponents() throw();
 
-        @returns the modal component, or null if no components are modal
-        @see runModalLoop, isCurrentlyModal
+    /** Returns one of the components that are currently modal.
+
+        The index specifies which of the possible modal components to return. The order
+        of the components in this list is the reverse of the order in which they became
+        modal - so the component at index 0 is always the active component, and the others
+        are progressively earlier ones that are themselves now blocked by later ones.
+
+        @returns the modal component, or null if no components are modal (or if the
+                index is out of range)
+        @see getNumCurrentlyModalComponents, runModalLoop, isCurrentlyModal
     */
-    static Component* JUCE_CALLTYPE getCurrentlyModalComponent() throw();
+    static Component* JUCE_CALLTYPE getCurrentlyModalComponent (int index = 0) throw();
 
     /** Checks whether there's a modal component somewhere that's stopping this one
         from receiving messages.
@@ -22422,6 +23462,7 @@ private:
     static void giveAwayFocus();
     void sendEnablementChangeMessage();
     static void* runModalLoopCallback (void*);
+    static void bringModalComponentToFront();
     void subtractObscuredRegions (RectangleList& result,
                                   const int deltaX, const int deltaY,
                                   const Rectangle& clipRect,
@@ -22445,6 +23486,10 @@ private:
     Component (const Component&);
 
     const Component& operator= (const Component&);
+
+    // (dummy method to cause a deliberate compile error - if you hit this, you need to update your
+    // subclass to use the new parameters to keyStateChanged)
+    virtual void keyStateChanged() {};
 
 protected:
     /** @internal */
@@ -23134,12 +24179,9 @@ public:
         and maybe cancel the quit, you'll need to handle this in the systemRequestedQuit()
         method - see that method's help for more info.
 
-        @param  useMaximumForce     if this is true, the process will be forcibly killed
-                                    before leaving the WinMain or main() function, which can
-                                    be useful if threads might have got stuck somehow.
         @see MessageManager, DeletedAtShutdown
     */
-    static void quit (const bool useMaximumForce = false);
+    static void quit();
 
     /** Sets the value that should be returned as the application's exit code when the
         app quits.
@@ -23155,6 +24197,10 @@ public:
         @see setApplicationReturnValue
     */
     int getApplicationReturnValue() const throw()                   { return appReturnValue; }
+
+    /** Returns the application's command line params.
+    */
+    const String getCommandLineParameters() const throw()           { return commandLineParameters; }
 
     // These are used by the START_JUCE_APPLICATION() macro and aren't for public use.
 
@@ -23181,10 +24227,16 @@ public:
 
 private:
 
+    String commandLineParameters;
     int appReturnValue;
     bool stillInitialising;
+    InterProcessLock* appLock;
 
-    static int shutdownAppAndClearUp (const bool useMaximumForce);
+public:
+    /** @internal */
+    bool initialiseApp (String& commandLine);
+    /** @internal */
+    static int shutdownAppAndClearUp();
 };
 
 #endif   // __JUCE_APPLICATION_JUCEHEADER__
@@ -23564,6 +24616,30 @@ public:
     /** Unregisters a listener that was added with addFocusChangeListener(). */
     void removeFocusChangeListener (FocusChangeListener* const listener) throw();
 
+    /** Takes a component and makes it full-screen, removing the taskbar, dock, etc.
+
+        The component must already be on the desktop for this method to work. It will
+        be resized to completely fill the screen and any extraneous taskbars, menu bars,
+        etc will be hidden.
+
+        To exit kiosk mode, just call setKioskModeComponent (0). When this is called,
+        the component that's currently being used will be resized back to the size
+        and position it was in before being put into this mode.
+
+        If allowMenusAndBars is true, things like the menu and dock (on mac) are still
+        allowed to pop up when the mouse moves onto them. If this is false, it'll try
+        to hide as much on-screen paraphenalia as possible.
+    */
+    void setKioskModeComponent (Component* componentToUse,
+                                const bool allowMenusAndBars = true);
+
+    /** Returns the component that is currently being used in kiosk-mode.
+
+        This is the component that was last set by setKioskModeComponent(). If none
+        has been set, this returns 0.
+    */
+    Component* getKioskModeComponent() const             { return kioskModeComponent; }
+
     /** Returns the number of components that are currently active as top-level
         desktop windows.
 
@@ -23615,6 +24691,9 @@ private:
 
     Array <Rectangle> monitorCoordsClipped, monitorCoordsUnclipped;
     int lastMouseX, lastMouseY;
+
+    Component* kioskModeComponent;
+    Rectangle kioskComponentOriginalBounds;
 
     void timerCallback();
     void sendMouseMove();
@@ -24430,39 +25509,6 @@ private:
 /********* End of inlined file: juce_ApplicationProperties.h *********/
 
 #endif
-#ifndef __JUCE_DELETEDATSHUTDOWN_JUCEHEADER__
-
-#endif
-#ifndef __JUCE_PROPERTIESFILE_JUCEHEADER__
-
-#endif
-#ifndef __JUCE_SYSTEMCLIPBOARD_JUCEHEADER__
-
-/********* Start of inlined file: juce_SystemClipboard.h *********/
-#ifndef __JUCE_SYSTEMCLIPBOARD_JUCEHEADER__
-#define __JUCE_SYSTEMCLIPBOARD_JUCEHEADER__
-
-/**
-    Handles reading/writing to the system's clipboard.
-*/
-class JUCE_API  SystemClipboard
-{
-public:
-    /** Copies a string of text onto the clipboard */
-    static void copyTextToClipboard (const String& text) throw();
-
-    /** Gets the current clipboard's contents.
-
-        Obviously this might have come from another app, so could contain
-        anything..
-    */
-    static const String getTextFromClipboard() throw();
-};
-
-#endif   // __JUCE_SYSTEMCLIPBOARD_JUCEHEADER__
-/********* End of inlined file: juce_SystemClipboard.h *********/
-
-#endif
 #ifndef __JUCE_MIDIBUFFER_JUCEHEADER__
 
 /********* Start of inlined file: juce_MidiBuffer.h *********/
@@ -24570,7 +25616,17 @@ public:
 
     /** Returns the timestamp associated with this message.
 
-        The units for the timestamp will be application-specific.
+        The exact meaning of this time and its units will vary, as messages are used in
+        a variety of different contexts.
+
+        If you're getting the message from a midi file, this could be a time in seconds, or
+        a number of ticks - see MidiFile::convertTimestampTicksToSeconds().
+
+        If the message is being used in a MidiBuffer, it might indicate the number of
+        audio samples from the start of the buffer.
+
+        If the message was created by a MidiInput, see MidiInputCallback::handleIncomingMidiMessage()
+        for details of the way that it initialises this value.
 
         @see setTimeStamp, addToTimeStamp
     */
@@ -24578,7 +25634,7 @@ public:
 
     /** Changes the message's associated timestamp.
 
-        The units for the timestamp will be application-specific.
+        The units for the timestamp will be application-specific - see the notes for getTimeStamp().
 
         @see addToTimeStamp, getTimeStamp
     */
@@ -25340,6 +26396,9 @@ public:
     /** Creates an empty MidiBuffer. */
     MidiBuffer() throw();
 
+    /** Creates a MidiBuffer containing a single midi message. */
+    MidiBuffer (const MidiMessage& message) throw();
+
     /** Creates a copy of another MidiBuffer. */
     MidiBuffer (const MidiBuffer& other) throw();
 
@@ -25438,6 +26497,13 @@ public:
         If the buffer's empty, this will just return 0.
     */
     int getLastEventTime() const throw();
+
+    /** Exchanges the contents of this buffer with another one.
+
+        This is a quick operation, because no memory allocating or copying is done, it
+        just swaps the internal state of the two buffers.
+    */
+    void swap (MidiBuffer& other);
 
     /**
         Used to iterate through the events in a MidiBuffer.
@@ -26211,8 +27277,8 @@ public:
     static MidiInput* openDevice (int deviceIndex,
                                   MidiInputCallback* callback);
 
-#if JUCE_LINUX || DOXYGEN
-    /** LINUX ONLY - This will try to create a new midi input device.
+#if JUCE_LINUX || JUCE_MAC || DOXYGEN
+    /** This will try to create a new midi input device (Not available on Windows).
 
         This will attempt to create a new midi input device with the specified name,
         for other apps to connect to.
@@ -26227,16 +27293,16 @@ public:
 #endif
 
     /** Destructor. */
-    ~MidiInput();
+    virtual ~MidiInput();
 
     /** Returns the name of this device.
     */
-    const String getName() const throw()                    { return name; }
+    virtual const String getName() const throw()                    { return name; }
 
     /** Allows you to set a custom name for the device, in case you don't like the name
         it was given when created.
     */
-    void setName (const String& newName) throw()            { name = newName; }
+    virtual void setName (const String& newName) throw()            { name = newName; }
 
     /** Starts the device running.
 
@@ -26246,17 +27312,17 @@ public:
 
         @see stop
     */
-    void start();
+    virtual void start();
 
     /** Stops the device running.
 
         @see start
     */
-    void stop();
+    virtual void stop();
 
     juce_UseDebuggingNewOperator
 
-private:
+protected:
     String name;
     void* internal;
 
@@ -26421,7 +27487,6 @@ public:
 
 class AudioFormatReader;
 class AudioFormatWriter;
-const int maxNumAudioSampleBufferChannels = 32;
 
 /**
     A multi-channel buffer of 32-bit floating point audio samples.
@@ -26493,13 +27558,36 @@ public:
     */
     int getNumSamples() const throw()       { return size; }
 
+    /** Returns a pointer one of the buffer's channels.
+
+        For speed, this doesn't check whether the channel number is out of range,
+        so be careful when using it!
+    */
+    float* getSampleData (const int channelNumber) const throw()
+    {
+        jassert (((unsigned int) channelNumber) < (unsigned int) numChannels);
+        return channels [channelNumber];
+    }
+
     /** Returns a pointer to a sample in one of the buffer's channels.
 
         For speed, this doesn't check whether the channel and sample number
-        are legal, so be careful when using it!
+        are out-of-range, so be careful when using it!
     */
     float* getSampleData (const int channelNumber,
-                          const int sampleOffset = 0) const throw();
+                          const int sampleOffset) const throw()
+    {
+        jassert (((unsigned int) channelNumber) < (unsigned int) numChannels);
+        jassert (((unsigned int) sampleOffset) < (unsigned int) size);
+        return channels [channelNumber] + sampleOffset;
+    }
+
+    /** Returns an array of pointers to the channels in the buffer.
+
+        Don't modify any of the pointers that are returned, and bear in mind that
+        these will become invalid if the buffer is resized.
+    */
+    float** getArrayOfChannels() const throw()          { return channels; }
 
     /** Chages the buffer's size or number of channels.
 
@@ -26688,6 +27776,42 @@ public:
                    const float* source,
                    int numSamples) throw();
 
+    /** Copies samples from an array of floats into one of the channels, applying a gain to it.
+
+        @param destChannel          the channel within this buffer to copy the samples to
+        @param destStartSample      the start sample within this buffer's channel
+        @param source               the source buffer to read from
+        @param numSamples           the number of samples to process
+        @param gain                 the gain to apply
+
+        @see addFrom
+    */
+    void copyFrom (const int destChannel,
+                   const int destStartSample,
+                   const float* source,
+                   int numSamples,
+                   const float gain) throw();
+
+    /** Copies samples from an array of floats into one of the channels, applying a gain ramp.
+
+        @param destChannel          the channel within this buffer to copy the samples to
+        @param destStartSample      the start sample within this buffer's channel
+        @param source               the source buffer to read from
+        @param numSamples           the number of samples to process
+        @param startGain            the gain to apply to the first sample (this is multiplied with
+                                    the source samples before they are copied to this buffer)
+        @param endGain              the gain to apply to the final sample. The gain is linearly
+                                    interpolated between the first and last samples.
+
+        @see addFrom
+    */
+    void copyFromWithRamp (const int destChannel,
+                           const int destStartSample,
+                           const float* source,
+                           int numSamples,
+                           float startGain,
+                           float endGain) throw();
+
     /** Finds the highest and lowest sample values in a given range.
 
         @param channel      the channel to read from
@@ -26750,8 +27874,9 @@ public:
 
 private:
     int numChannels, size, allocatedBytes;
-    float* channels [maxNumAudioSampleBufferChannels + 1];
+    float** channels;
     float* allocatedData;
+    float* preallocatedChannelSpace [32];
 };
 
 #endif   // __JUCE_AUDIOSAMPLEBUFFER_JUCEHEADER__
@@ -26800,6 +27925,13 @@ public:
     */
     void processSamples (float* const samples,
                          const int numSamples) throw();
+
+    /** Processes a single sample, without any locking or checking.
+
+        Use this if you need fast processing of a single value, but be aware that
+        this isn't thread-safe in the way that processSamples() is.
+    */
+    float processSingleSampleRaw (const float sample) throw();
 
     /** Sets the filter up to act as a low-pass filter.
     */
@@ -27321,6 +28453,10 @@ public:
         filter will return an empty buffer, but won't block the audio thread like it would
         do if you use the getCallbackLock() critical section to synchronise access.
 
+        If you're going to use this, your processBlock() method must call isSuspended() and
+        check whether it's suspended or not. If it is, then it should skip doing any real
+        processing, either emitting silence or passing the input through unchanged.
+
         @see getCallbackLock
     */
     void suspendProcessing (const bool shouldBeSuspended);
@@ -27329,6 +28465,13 @@ public:
         @see suspendProcessing
     */
     bool isSuspended() const throw()                                    { return suspended; }
+
+    /** A plugin can override this to be told when it should reset any playing voices.
+
+        The default implementation does nothing, but a host may call this to tell the
+        plugin that it should stop any tails or sounds that have been left running.
+    */
+    virtual void reset();
 
     /** Returns true if the processor is being run in an offline mode for rendering.
 
@@ -27443,6 +28586,15 @@ public:
         By default, this returns true for all parameters.
     */
     virtual bool isParameterAutomatable (int parameterIndex) const;
+
+    /** Should return true if this parameter is a "meta" parameter.
+
+        A meta-parameter is a parameter that changes other params. It is used
+        by some hosts (e.g. AudioUnit hosts).
+
+        By default this returns false.
+    */
+    virtual bool isMetaParameter (int parameterIndex) const;
 
     /** Sends a signal to the host to tell it that the user is about to start changing this
         parameter.
@@ -27671,8 +28823,13 @@ public:
     /** The version. This string doesn't have any particular format. */
     String version;
 
-    /** The binary module file containing the plugin. */
-    File file;
+    /** Either the file containing the plugin module, or some other unique way
+        of identifying it.
+
+        E.g. for an AU, this would be an ID string that the component manager
+        could use to retrieve the plugin. For a VST, it's the file path.
+    */
+    String fileOrIdentifier;
 
     /** The last time the plugin file was changed.
         This is handy when scanning for new or changed plugins.
@@ -27798,7 +28955,7 @@ public:
         subtypes, so in that case, each subtype is returned as a separate object.
     */
     virtual void findAllTypesForFile (OwnedArray <PluginDescription>& results,
-                                      const File& file) = 0;
+                                      const String& fileOrIdentifier) = 0;
 
     /** Tries to recreate a type from a previously generated PluginDescription.
 
@@ -27812,7 +28969,26 @@ public:
         This is for searching for potential files, so it shouldn't actually try to
         load the plugin or do anything time-consuming.
     */
-    virtual bool fileMightContainThisPluginType (const File& file) = 0;
+    virtual bool fileMightContainThisPluginType (const String& fileOrIdentifier) = 0;
+
+    /** Returns a readable version of the name of the plugin that this identifier refers to.
+    */
+    virtual const String getNameOfPluginFromIdentifier (const String& fileOrIdentifier) = 0;
+
+    /** Checks whether this plugin could possibly be loaded.
+
+        It doesn't actually need to load it, just to check whether the file or component
+        still exists.
+    */
+    virtual bool doesPluginStillExist (const PluginDescription& desc) = 0;
+
+    /** Searches a suggested set of directories for any plugins in this format.
+
+        The path might be ignored, e.g. by AUs, which are found by the OS rather
+        than manually.
+    */
+    virtual const StringArray searchPathsForPlugins (const FileSearchPath& directoriesToSearch,
+                                                     const bool recursive) = 0;
 
     /** Returns the typical places to look for this kind of plugin.
 
@@ -27881,6 +29057,12 @@ public:
     */
     AudioPluginInstance* createPluginInstance (const PluginDescription& description,
                                                String& errorMessage) const;
+
+    /** Checks that the file or component for this plugin actually still exists.
+
+        (This won't try to load the plugin)
+    */
+    bool doesPluginStillExist (const PluginDescription& description) const;
 
     juce_UseDebuggingNewOperator
 
@@ -28114,7 +29296,8 @@ public:
     void addSubMenu (const String& subMenuName,
                      const PopupMenu& subMenu,
                      const bool isActive = true,
-                     Image* const iconToUse = 0) throw();
+                     Image* const iconToUse = 0,
+                     const bool isTicked = false) throw();
 
     /** Appends a separator to the menu, to help break it up into sections.
 
@@ -28360,7 +29543,7 @@ public:
 
     /** Looks for a type in the list which comes from this file.
     */
-    PluginDescription* getTypeForFile (const File& file) const throw();
+    PluginDescription* getTypeForFile (const String& fileOrIdentifier) const throw();
 
     /** Looks for a type in the list which matches a plugin type ID.
 
@@ -28387,14 +29570,15 @@ public:
         file (even if it was already known and hasn't been re-scanned) get returned
         in the array.
     */
-    bool scanAndAddFile (const File& possiblePluginFile,
+    bool scanAndAddFile (const String& possiblePluginFileOrIdentifier,
                          const bool dontRescanIfAlreadyInList,
-                         OwnedArray <PluginDescription>& typesFound);
+                         OwnedArray <PluginDescription>& typesFound,
+                         AudioPluginFormat& formatToUse);
 
     /** Returns true if the specified file is already known about and if it
         hasn't been modified since our entry was created.
     */
-    bool isListingUpToDate (const File& possiblePluginFile) const throw();
+    bool isListingUpToDate (const String& possiblePluginFileOrIdentifier) const throw();
 
     /** Scans and adds a bunch of files that might have been dragged-and-dropped.
 
@@ -28487,7 +29671,7 @@ public:
 
         To create a node, call AudioProcessorGraph::addNode().
     */
-    class Node   : public ReferenceCountedObject
+    class JUCE_API  Node   : public ReferenceCountedObject
     {
     public:
         /** Destructor.
@@ -28536,7 +29720,7 @@ public:
 
         To create a connection, use AudioProcessorGraph::addConnection().
     */
-    struct Connection
+    struct JUCE_API  Connection
     {
     public:
 
@@ -28694,7 +29878,7 @@ public:
 
         @see AudioProcessorGraph
     */
-    class AudioGraphIOProcessor     : public AudioPluginInstance
+    class JUCE_API  AudioGraphIOProcessor     : public AudioPluginInstance
     {
     public:
         /** Specifies the mode in which this processor will operate.
@@ -29208,8 +30392,6 @@ private:
 
     int numInputChans, numOutputChans;
     float* channels [128];
-    float* outputChans [128];
-    const float* inputChans [128];
     AudioSampleBuffer tempBuffer;
 
     MidiBuffer incomingMidi;
@@ -29239,6 +30421,61 @@ private:
 
 class EditableProperty;
 
+/********* Start of inlined file: juce_TooltipClient.h *********/
+#ifndef __JUCE_TOOLTIPCLIENT_JUCEHEADER__
+#define __JUCE_TOOLTIPCLIENT_JUCEHEADER__
+
+/**
+    Components that want to use pop-up tooltips should implement this interface.
+
+    A TooltipWindow will wait for the mouse to hover over a component that
+    implements the TooltipClient interface, and when it finds one, it will display
+    the tooltip returned by its getTooltip() method.
+
+    @see TooltipWindow, SettableTooltipClient
+*/
+class JUCE_API  TooltipClient
+{
+public:
+    /** Destructor. */
+    virtual ~TooltipClient()  {}
+
+    /** Returns the string that this object wants to show as its tooltip. */
+    virtual const String getTooltip() = 0;
+};
+
+/**
+    An implementation of TooltipClient that stores the tooltip string and a method
+    for changing it.
+
+    This makes it easy to add a tooltip to a custom component, by simply adding this
+    as a base class and calling setTooltip().
+
+    Many of the Juce widgets already use this as a base class to implement their
+    tooltips.
+
+    @see TooltipClient, TooltipWindow
+*/
+class JUCE_API  SettableTooltipClient   : public TooltipClient
+{
+public:
+
+    /** Destructor. */
+    virtual ~SettableTooltipClient()                                {}
+
+    virtual void setTooltip (const String& newTooltip)              { tooltipString = newTooltip; }
+
+    virtual const String getTooltip()                               { return tooltipString; }
+
+    juce_UseDebuggingNewOperator
+
+protected:
+    String tooltipString;
+};
+
+#endif   // __JUCE_TOOLTIPCLIENT_JUCEHEADER__
+/********* End of inlined file: juce_TooltipClient.h *********/
+
 /**
     A base class for a component that goes in a PropertyPanel and displays one of
     an item's properties.
@@ -29254,7 +30491,8 @@ class EditableProperty;
     @see PropertyPanel, TextPropertyComponent, SliderPropertyComponent,
          ChoicePropertyComponent, ButtonPropertyComponent, BooleanPropertyComponent
 */
-class JUCE_API  PropertyComponent  : public Component
+class JUCE_API  PropertyComponent  : public Component,
+                                     public SettableTooltipClient
 {
 public:
 
@@ -29338,61 +30576,6 @@ protected:
 #ifndef __JUCE_TOOLTIPWINDOW_JUCEHEADER__
 #define __JUCE_TOOLTIPWINDOW_JUCEHEADER__
 
-/********* Start of inlined file: juce_TooltipClient.h *********/
-#ifndef __JUCE_TOOLTIPCLIENT_JUCEHEADER__
-#define __JUCE_TOOLTIPCLIENT_JUCEHEADER__
-
-/**
-    Components that want to use pop-up tooltips should implement this interface.
-
-    A TooltipWindow will wait for the mouse to hover over a component that
-    implements the TooltipClient interface, and when it finds one, it will display
-    the tooltip returned by its getTooltip() method.
-
-    @see TooltipWindow, SettableTooltipClient
-*/
-class JUCE_API  TooltipClient
-{
-public:
-    /** Destructor. */
-    virtual ~TooltipClient()  {}
-
-    /** Returns the string that this object wants to show as its tooltip. */
-    virtual const String getTooltip() = 0;
-};
-
-/**
-    An implementation of TooltipClient that stores the tooltip string and a method
-    for changing it.
-
-    This makes it easy to add a tooltip to a custom component, by simply adding this
-    as a base class and calling setTooltip().
-
-    Many of the Juce widgets already use this as a base class to implement their
-    tooltips.
-
-    @see TooltipClient, TooltipWindow
-*/
-class JUCE_API  SettableTooltipClient   : public TooltipClient
-{
-public:
-
-    /** Destructor. */
-    virtual ~SettableTooltipClient()                                {}
-
-    virtual void setTooltip (const String& newTooltip)              { tooltipString = newTooltip; }
-
-    virtual const String getTooltip()                               { return tooltipString; }
-
-    juce_UseDebuggingNewOperator
-
-protected:
-    String tooltipString;
-};
-
-#endif   // __JUCE_TOOLTIPCLIENT_JUCEHEADER__
-/********* End of inlined file: juce_TooltipClient.h *********/
-
 /**
     A window that displays a pop-up tooltip when the mouse hovers over another component.
 
@@ -29434,6 +30617,11 @@ public:
     /** Destructor. */
     ~TooltipWindow();
 
+    /** Changes the time before the tip appears.
+        This lets you change the value that was set in the constructor.
+    */
+    void setMillisecondsBeforeTipAppears (const int newTimeMs = 700) throw();
+
     /** A set of colour IDs to use to change the colour of various aspects of the tooltip.
 
         These constants can be used either via the Component::setColour(), or LookAndFeel::setColour()
@@ -29452,18 +30640,20 @@ public:
 
 private:
 
-    const int millisecondsBeforeTipAppears;
+    int millisecondsBeforeTipAppears;
     int mouseX, mouseY, mouseClicks;
-    unsigned int lastMouseMoveTime, lastHideTime;
+    unsigned int lastCompChangeTime, lastHideTime;
     Component* lastComponentUnderMouse;
     bool changedCompsSinceShown;
-    String tip;
+    String tipShowing, lastTipUnderMouse;
 
     void paint (Graphics& g);
     void mouseEnter (const MouseEvent& e);
     void timerCallback();
 
-    void showFor (Component* const c);
+    static const String getTipFor (Component* const c);
+    void showFor (Component* const c, const String& tip);
+    void hide();
 
     TooltipWindow (const TooltipWindow&);
     const TooltipWindow& operator= (const TooltipWindow&);
@@ -29663,9 +30853,7 @@ public:
         The button registers itself with its top-level parent component for keypresses.
 
         Note that a different way of linking buttons to keypresses is by using the
-        setKeyPressToTrigger() method to invoke a command - the difference being that
-        setting a shortcut allows the button to be temporarily linked to a keypress
-        only while it's on-screen.
+        setCommandToTrigger() method to invoke a command.
 
         @see clearShortcuts
     */
@@ -29859,7 +31047,7 @@ protected:
     /** @internal */
     bool keyPressed (const KeyPress& key, Component* originatingComponent);
     /** @internal */
-    bool keyStateChanged (Component* originatingComponent);
+    bool keyStateChanged (const bool isKeyDown, Component* originatingComponent);
     /** @internal */
     void paint (Graphics& g);
     /** @internal */
@@ -30457,6 +31645,12 @@ public:
     */
     void setSectionOpen (const int sectionIndex, const bool shouldBeOpen);
 
+    /** Enables or disables one of the sections.
+
+        The index is from 0 up to the number of items returned by getSectionNames().
+    */
+    void setSectionEnabled (const int sectionIndex, const bool shouldBeEnabled);
+
     /** Saves the current state of open/closed sections so it can be restored later.
 
         The caller is responsible for deleting the object that is returned.
@@ -30757,28 +31951,37 @@ public:
                                     range -1.0 to 1.0 or beyond)
                                     If the format is stereo, then destSamples[0] is the left channel
                                     data, and destSamples[1] is the right channel.
-                                    The array passed in should be zero-terminated, and it's ok to
-                                    pass in an array with a different number of channels than
-                                    the number in the stream, so if you pass in an array with only
-                                    one channel and the stream is stereo, the reader will
-                                    put a merged sum of the stereo channels into the single
-                                    destination channel.
-        @param startSample          the offset into the audio stream from which the samples
+                                    The numDestChannels parameter indicates how many pointers this array
+                                    contains, but some of these pointers can be null if you don't want to
+                                    read data for some of the channels
+        @param numDestChannels      the number of array elements in the destChannels array
+        @param startSampleInSource  the position in the audio file or stream at which the samples
                                     should be read, as a number of samples from the start of the
                                     stream. It's ok for this to be beyond the start or end of the
-                                    available data - any samples that can't be read will be padded
-                                    with zeros.
-        @param numSamples           the number of samples to read. If this is greater than the
-                                    number of samples available, the result will be padded with
-                                    zeros
+                                    available data - any samples that are out-of-range will be returned
+                                    as zeros.
+        @param numSamplesToRead     the number of samples to read. If this is greater than the number
+                                    of samples that the file or stream contains. the result will be padded
+                                    with zeros
+        @param fillLeftoverChannelsWithCopies   if true, this indicates that if there's no source data available
+                                    for some of the channels that you pass in, then they should be filled with
+                                    copies of valid source channels.
+                                    E.g. if you're reading a mono file and you pass 2 channels to this method, then
+                                    if fillLeftoverChannelsWithCopies is true, both destination channels will be filled
+                                    with the same data from the file's single channel. If fillLeftoverChannelsWithCopies
+                                    was false, then only the first channel would be filled with the file's contents, and
+                                    the second would be cleared. If there are many channels, e.g. you try to read 4 channels
+                                    from a stereo file, then the last 3 would all end up with copies of the same data.
         @returns                    true if the operation succeeded, false if there was an error. Note
                                     that reading sections of data beyond the extent of the stream isn't an
                                     error - the reader should just return zeros for these regions
         @see readMaxLevels
     */
-    virtual bool read (int** destSamples,
-                       int64 startSample,
-                       int numSamples) = 0;
+    bool read (int** destSamples,
+               int numDestChannels,
+               int64 startSampleInSource,
+               int numSamplesToRead,
+               const bool fillLeftoverChannelsWithCopies);
 
     /** Finds the highest and lowest sample levels from a section of the audio stream.
 
@@ -30857,6 +32060,27 @@ public:
 
     /** The input stream, for use by subclasses. */
     InputStream* input;
+
+    /** Subclasses must implement this method to perform the low-level read operation.
+
+        Callers should use read() instead of calling this directly.
+
+        @param destSamples  the array of destination buffers to fill. Some of these
+                            pointers may be null
+        @param numDestChannels  the number of items in the destSamples array. This
+                            value is guaranteed not to be greater than the number of
+                            channels that this reader object contains
+        @param startOffsetInDestBuffer      the number of samples from the start of the
+                            dest data at which to begin writing
+        @param startSampleInFile    the number of samples into the source data at which
+                            to begin reading. This value is guaranteed to be >= 0.
+        @param numSamples   the number of samples to read
+    */
+    virtual bool readSamples (int** destSamples,
+                              int numDestChannels,
+                              int startOffsetInDestBuffer,
+                              int64 startSampleInFile,
+                              int numSamples) = 0;
 
     juce_UseDebuggingNewOperator
 
@@ -31675,6 +32899,9 @@ private:
 #ifndef __JUCE_AUDIOIODEVICETYPE_JUCEHEADER__
 #define __JUCE_AUDIOIODEVICETYPE_JUCEHEADER__
 
+class AudioDeviceManager;
+class Component;
+
 /**
     Represents a type of audio driver, such as DirectSound, ASIO, CoreAudio, etc.
 
@@ -31691,7 +32918,7 @@ private:
 
         types[i]->scanForDevices();                 // This must be called before getting the list of devices
 
-        String deviceNames (types[i]->getDeviceNames());  // This will now return a list of available devices of this type
+        StringArray deviceNames (types[i]->getDeviceNames());  // This will now return a list of available devices of this type
 
         for (int j = 0; j < deviceNames.size(); ++j)
         {
@@ -31711,19 +32938,6 @@ class JUCE_API  AudioIODeviceType
 {
 public:
 
-    /** Creates a list of available types.
-
-        This will add a set of new AudioIODeviceType objects to the specified list, to
-        represent each available types of device.
-
-        The objects that are created should be managed by the caller (the OwnedArray
-        will delete them when the array is itself deleted).
-
-        When created, the objects are uninitialised, so you should call scanForDevices()
-        on each one before getting its list of devices.
-    */
-    static void createDeviceTypes (OwnedArray <AudioIODeviceType>& list);
-
     /** Returns the name of this type of driver that this object manages.
 
         This will be something like "DirectSound", "ASIO", "CoreAudio", "ALSA", etc.
@@ -31741,34 +32955,46 @@ public:
 
         The scanForDevices() method must have been called to create this list.
 
-        @param preferInputNames     only really used by DirectSound where devices are split up
-                                    into inputs and outputs, this indicates whether to use
-                                    the input or output name to refer to a pair of devices.
+        @param wantInputNames     only really used by DirectSound where devices are split up
+                                  into inputs and outputs, this indicates whether to use
+                                  the input or output name to refer to a pair of devices.
     */
-    virtual const StringArray getDeviceNames (const bool preferInputNames = false) const = 0;
+    virtual const StringArray getDeviceNames (const bool wantInputNames = false) const = 0;
 
     /** Returns the name of the default device.
 
         This will be one of the names from the getDeviceNames() list.
 
-        @param preferInputNames     only really used by DirectSound where devices are split up
-                                    into inputs and outputs, this indicates whether to use
-                                    the input or output name to refer to a pair of devices.
-        @param numInputChannelsNeeded   the number of input channels the user is expecting to need - this
-                                        may be used to help decide which device would be most suitable
-        @param numOutputChannelsNeeded  the number of output channels the user is expecting to need - this
-                                        may be used to help decide which device would be most suitable
+        @param forInput     if true, this means that a default input device should be
+                            returned; if false, it should return the default output
     */
-    virtual const String getDefaultDeviceName (const bool preferInputNames,
-                                               const int numInputChannelsNeeded,
-                                               const int numOutputChannelsNeeded) const = 0;
+    virtual int getDefaultDeviceIndex (const bool forInput) const = 0;
+
+    /** Returns the index of a given device in the list of device names.
+        If asInput is true, it shows the index in the inputs list, otherwise it
+        looks for it in the outputs list.
+    */
+    virtual int getIndexOfDevice (AudioIODevice* device, const bool asInput) const = 0;
+
+    /** Returns true if two different devices can be used for the input and output.
+    */
+    virtual bool hasSeparateInputsAndOutputs() const = 0;
 
     /** Creates one of the devices of this type.
 
         The deviceName must be one of the strings returned by getDeviceNames(), and
         scanForDevices() must have been called before this method is used.
     */
-    virtual AudioIODevice* createDevice (const String& deviceName) = 0;
+    virtual AudioIODevice* createDevice (const String& outputDeviceName,
+                                         const String& inputDeviceName) = 0;
+
+    struct DeviceSetupDetails
+    {
+        AudioDeviceManager* manager;
+        int minNumInputChannels, maxNumInputChannels;
+        int minNumOutputChannels, maxNumOutputChannels;
+        bool useStereoPairs;
+    };
 
     /** Destructor. */
     virtual ~AudioIODeviceType();
@@ -31829,8 +33055,8 @@ public:
     */
     static MidiOutput* openDevice (int deviceIndex);
 
-#if JUCE_LINUX || DOXYGEN
-    /** LINUX ONLY - This will try to create a new midi output device.
+#if JUCE_LINUX || JUCE_MAC || DOXYGEN
+    /** This will try to create a new midi output device (Not available on Windows).
 
         This will attempt to create a new midi output device that other apps can connect
         to and use as their midi input.
@@ -31843,24 +33069,24 @@ public:
 #endif
 
     /** Destructor. */
-    ~MidiOutput();
+    virtual ~MidiOutput();
 
     /** Makes this device output a midi message.
 
         @see MidiMessage
     */
-    void sendMessageNow (const MidiMessage& message);
+    virtual void sendMessageNow (const MidiMessage& message);
 
     /** Sends a midi reset to the device. */
-    void reset();
+    virtual void reset();
 
     /** Returns the current volume setting for this device.  */
-    bool getVolume (float& leftVol,
-                    float& rightVol);
+    virtual bool getVolume (float& leftVol,
+                            float& rightVol);
 
     /** Changes the overall volume for this device.  */
-    void setVolume (float leftVol,
-                    float rightVol);
+    virtual void setVolume (float leftVol,
+                            float rightVol);
 
     /** This lets you supply a block of messages that will be sent out at some point
         in the future.
@@ -31879,29 +33105,29 @@ public:
         samplesPerSecondForBuffer value is needed to convert this sample position to a
         real time.
     */
-    void sendBlockOfMessages (const MidiBuffer& buffer,
-                              const double millisecondCounterToStartAt,
-                              double samplesPerSecondForBuffer) throw();
+    virtual void sendBlockOfMessages (const MidiBuffer& buffer,
+                                      const double millisecondCounterToStartAt,
+                                      double samplesPerSecondForBuffer) throw();
 
     /** Gets rid of any midi messages that had been added by sendBlockOfMessages().
     */
-    void clearAllPendingMessages() throw();
+    virtual void clearAllPendingMessages() throw();
 
     /** Starts up a background thread so that the device can send blocks of data.
 
         Call this to get the device ready, before using sendBlockOfMessages().
     */
-    void startBackgroundThread() throw();
+    virtual void startBackgroundThread() throw();
 
     /** Stops the background thread, and clears any pending midi events.
 
         @see startBackgroundThread
     */
-    void stopBackgroundThread() throw();
+    virtual void stopBackgroundThread() throw();
 
     juce_UseDebuggingNewOperator
 
-private:
+protected:
     void* internal;
 
     struct PendingMessage
@@ -32599,6 +33825,27 @@ l    */
     */
     int getCaretPosition() const throw();
 
+    /** Attempts to scroll the text editor so that the caret ends up at
+        a specified position.
+
+        This won't affect the caret's position within the text, it tries to scroll
+        the entire editor vertically and horizontally so that the caret is sitting
+        at the given position (relative to the top-left of this component).
+
+        Depending on the amount of text available, it might not be possible to
+        scroll far enough for the caret to reach this exact position, but it
+        will go as far as it can in that direction.
+    */
+    void scrollEditorToPositionCaret (const int desiredCaretX,
+                                      const int desiredCaretY) throw();
+
+    /** Get the graphical position of the caret.
+
+        The rectangle returned is relative to the component's top-left corner.
+        @see scrollEditorToPositionCaret
+    */
+    const Rectangle getCaretRectangle() throw();
+
     /** Selects a section of the text.
     */
     void setHighlightedRegion (int startIndex,
@@ -32627,6 +33874,13 @@ l    */
         The co-ordinates are relative to the component's top-left.
     */
     int getTextIndexAt (const int x, const int y) throw();
+
+    /** Counts the number of characters in the text.
+
+        This is quicker than getting the text as a string if you just need to know
+        the length.
+    */
+    int getTotalNumChars() throw();
 
     /** Returns the total width of the text, as it is currently laid-out.
 
@@ -32684,7 +33938,7 @@ l    */
     /** @internal */
     bool keyPressed (const KeyPress& key);
     /** @internal */
-    bool keyStateChanged();
+    bool keyStateChanged (const bool isKeyDown);
     /** @internal */
     void focusGained (FocusChangeType cause);
     /** @internal */
@@ -32748,13 +34002,6 @@ protected:
 
     /** Used internally to dispatch a text-change message. */
     void textChanged() throw();
-
-    /** Counts the number of characters in the text.
-
-        This is quicker than getting the text as a string if you just need to know
-        the length.
-    */
-    int getTotalNumChars() throw();
 
     /** Begins a new transaction in the UndoManager.
     */
@@ -32842,6 +34089,8 @@ private:
                           float& x, float& y,
                           float& lineHeight) const throw();
 
+    void updateCaretPosition() throw();
+
     int indexAtPosition (const float x,
                          const float y) throw();
 
@@ -32894,8 +34143,7 @@ public:
 class JUCE_API  Label  : public Component,
                          public SettableTooltipClient,
                          protected TextEditorListener,
-                         private ComponentListener,
-                         private AsyncUpdater
+                         private ComponentListener
 {
 public:
 
@@ -32969,6 +34217,20 @@ public:
     /** Returns the type of justification, as set in setJustificationType(). */
     const Justification getJustificationType() const throw()                    { return justification; }
 
+    /** Changes the gap that is left between the edge of the component and the text.
+        By default there's a small gap left at the sides of the component to allow for
+        the drawing of the border, but you can change this if necessary.
+    */
+    void setBorderSize (int horizontalBorder, int verticalBorder);
+
+    /** Returns the size of the horizontal gap being left around the text.
+    */
+    int getHorizontalBorderSize() const throw()                                 { return horizontalBorderSize; }
+
+    /** Returns the size of the vertical gap being left around the text.
+    */
+    int getVerticalBorderSize() const throw()                                   { return verticalBorderSize; }
+
     /** Makes this label "stick to" another component.
 
         This will cause the label to follow another component around, staying
@@ -32994,6 +34256,15 @@ public:
         attachToComponent() has been called.
     */
     bool isAttachedOnLeft() const throw()                                       { return leftOfOwnerComp; }
+
+    /** Specifies the minimum amount that the font can be squashed horizantally before it starts
+        using ellipsis.
+
+        @see Graphics::drawFittedText
+    */
+    void setMinimumHorizontalScale (const float newScale);
+
+    float getMinimumHorizontalScale() const throw()                             { return minimumHorizontalScale; }
 
     /** Registers a listener that will be called when the label's text changes. */
     void addListener (LabelListener* const listener) throw();
@@ -33090,8 +34361,6 @@ protected:
     /** @internal */
     void textEditorFocusLost (TextEditor& editor);
     /** @internal */
-    void handleAsyncUpdate();
-    /** @internal */
     void colourChanged();
 
     /** Creates the TextEditor component that will be used when the user has clicked on the label.
@@ -33104,6 +34373,19 @@ protected:
     */
     virtual void textWasEdited();
 
+    /** Called when the text has been altered.
+    */
+    virtual void textWasChanged();
+
+    /** Called when the text editor has just appeared, due to a user click or other
+        focus change.
+    */
+    virtual void editorShown (TextEditor* editorComponent);
+
+    /** Called when the text editor is going to be deleted, after editing has finished.
+    */
+    virtual void editorAboutToBeHidden (TextEditor* editorComponent);
+
 private:
     String text;
     Font font;
@@ -33112,13 +34394,15 @@ private:
     SortedSet <void*> listeners;
     Component* ownerComponent;
     ComponentDeletionWatcher* deletionWatcher;
-
+    int horizontalBorderSize, verticalBorderSize;
+    float minimumHorizontalScale;
     bool editSingleClick : 1;
     bool editDoubleClick : 1;
     bool lossOfFocusDiscardsChanges : 1;
     bool leftOfOwnerComp : 1;
 
     bool updateFromTextEditorContents();
+    void callChangeListeners();
 
     Label (const Label&);
     const Label& operator= (const Label&);
@@ -33437,7 +34721,7 @@ public:
     /** @internal */
     void resized();
     /** @internal */
-    bool keyStateChanged();
+    bool keyStateChanged (const bool isKeyDown);
     /** @internal */
     bool keyPressed (const KeyPress&);
 
@@ -33496,7 +34780,7 @@ private:
     device selection/sample-rate/latency controls.
 
     To use an AudioDeviceManager, create one, and use initialise() to set it up. Then
-    call setAudioCallback() to register your audio callback with it, and use that to process
+    call addAudioCallback() to register your audio callback with it, and use that to process
     your audio data.
 
     The manager also acts as a handy hub for incoming midi messages, allowing a
@@ -33527,6 +34811,63 @@ public:
     /** Destructor. */
     ~AudioDeviceManager();
 
+    /**
+        This structure holds a set of properties describing the current audio setup.
+
+        @see AudioDeviceManager::setAudioDeviceSetup()
+    */
+    struct JUCE_API  AudioDeviceSetup
+    {
+        AudioDeviceSetup();
+        bool operator== (const AudioDeviceSetup& other) const;
+
+        /** The name of the audio device used for output.
+            The name has to be one of the ones listed by the AudioDeviceManager's currently
+            selected device type.
+            This may be the same as the input device.
+        */
+        String outputDeviceName;
+
+        /** The name of the audio device used for input.
+            This may be the same as the output device.
+        */
+        String inputDeviceName;
+
+        /** The current sample rate.
+            This rate is used for both the input and output devices.
+        */
+        double sampleRate;
+
+        /** The buffer size, in samples.
+            This buffer size is used for both the input and output devices.
+        */
+        int bufferSize;
+
+        /** The set of active input channels.
+            The bits that are set in this array indicate the channels of the
+            input device that are active.
+        */
+        BitArray inputChannels;
+
+        /** If this is true, it indicates that the inputChannels array
+            should be ignored, and instead, the device's default channels
+            should be used.
+        */
+        bool useDefaultInputChannels;
+
+        /** The set of active output channels.
+            The bits that are set in this array indicate the channels of the
+            input device that are active.
+        */
+        BitArray outputChannels;
+
+        /** If this is true, it indicates that the outputChannels array
+            should be ignored, and instead, the device's default channels
+            should be used.
+        */
+        bool useDefaultOutputChannels;
+    };
+
     /** Opens a set of audio devices ready for use.
 
         This will attempt to open either a default audio device, or one that was
@@ -33547,6 +34888,10 @@ public:
                                             (assuming that there wasn't one specified in the XML).
                                             The string can actually be a simple wildcard, containing "*"
                                             and "?" characters
+        @param preferredSetupOptions        if this is non-null, the structure will be used as the
+                                            set of preferred settings when opening the device. If you
+                                            use this parameter, the preferredDefaultDeviceName
+                                            field will be ignored
 
         @returns an error message if anything went wrong, or an empty string if it worked ok.
     */
@@ -33554,7 +34899,8 @@ public:
                              const int numOutputChannelsNeeded,
                              const XmlElement* const savedState,
                              const bool selectDefaultDeviceOnFailure,
-                             const String& preferredDefaultDeviceName = String::empty);
+                             const String& preferredDefaultDeviceName = String::empty,
+                             const AudioDeviceSetup* preferredSetupOptions = 0);
 
     /** Returns some XML representing the current state of the manager.
 
@@ -33563,52 +34909,20 @@ public:
     */
     XmlElement* createStateXml() const;
 
-    /** Returns a list of the audio devices that can be used.
+    /** Returns the current device properties that are in use.
 
-        On Windows, this will include both DSound and ASIO devices if they are available. On
-        the Mac, it'll be a list of the CoreAudio devices.
-
-        These names are used by setAudioDevice() when changing devices.
+        @see setAudioDeviceSetup
     */
-    const StringArray getAvailableAudioDeviceNames() const;
+    void getAudioDeviceSetup (AudioDeviceSetup& setup);
 
-    /** Rescans the list of known audio devices, in case it's changed. */
-    void refreshDeviceList() const;
+    /** Changes the current device or its settings.
 
-    /** Sets a flag to indicate that when listing audio device names, it should treat them
-        as inputs rather than outputs.
+        If you want to change a device property, like the current sample rate or
+        block size, you can call getAudioDeviceSetup() to retrieve the current
+        settings, then tweak the appropriate fields in the AudioDeviceSetup structure,
+        and pass it back into this method to apply the new settings.
 
-        This only really applies to DirectSound, where input and output devices are
-        separate. On ASIO and CoreAudio this makes no difference.
-
-        @see getAvailableAudioDeviceNames
-    */
-    void setInputDeviceNamesUsed (const bool useInputNames);
-
-    /** Just adds the list of device names to a combo box.
-
-        The only reason this is in this class is so that it can divide DSound
-        and ASIO devices into labelled sections, which makes it look much neater.
-    */
-    void addDeviceNamesToComboBox (ComboBox& combo) const;
-
-    /** Changes the audio device that should be used.
-
-        If deviceName is empty or not a valid name returned by getAvailableAudioDeviceNames(),
-        it will disable the current device.
-
-        @param deviceName           the name of the device you want to use (or an empty string to
-                                    deselect the current device)
-        @param blockSizeToUse       the samples-per-block you want to use, or 0 to use a default
-                                    value
-        @param sampleRateToUse      the target sample-rate, or 0 to use a default that the device
-                                    is capable of
-        @param inputChans           which of the audio device's input channels to open - pass 0 to
-                                    open as many of the the first ones as are needed for the number
-                                    of input channels that the app has requested
-        @param outputChans          which of the audio device's input channels to open - pass 0 to
-                                    open as many of the the first ones as are needed for the number
-                                    of output channels that the app has requested
+        @param newSetup             the settings that you'd like to use
         @param treatAsChosenDevice  if this is true and if the device opens correctly, these new
                                     settings will be taken as having been explicitly chosen by the
                                     user, and the next time createStateXml() is called, these settings
@@ -33616,15 +34930,36 @@ public:
                                     temporary or default device, and a call to createStateXml() will
                                     return either the last settings that were made with treatAsChosenDevice
                                     as true, or the last XML settings that were passed into initialise().
-
         @returns an error message if anything went wrong, or an empty string if it worked ok.
+
+        @see getAudioDeviceSetup
     */
-    const String setAudioDevice (const String& deviceName,
-                                 int blockSizeToUse,
-                                 double sampleRateToUse,
-                                 const BitArray* inputChans,
-                                 const BitArray* outputChans,
-                                 const bool treatAsChosenDevice);
+    const String setAudioDeviceSetup (const AudioDeviceSetup& newSetup,
+                                      const bool treatAsChosenDevice);
+
+    /** Returns the currently-active audio device. */
+    AudioIODevice* getCurrentAudioDevice() const throw()                { return currentAudioDevice; }
+
+    /** Returns the type of audio device currently in use.
+        @see setCurrentAudioDeviceType
+    */
+    const String getCurrentAudioDeviceType() const throw()              { return currentDeviceType; }
+
+    /** Returns the currently active audio device type object.
+        Don't keep a copy of this pointer - it's owned by the device manager and could
+        change at any time.
+    */
+    AudioIODeviceType* getCurrentDeviceTypeObject() const;
+
+    /** Changes the class of audio device being used.
+
+        This switches between, e.g. ASIO and DirectSound. On the Mac you probably won't ever call
+        this because there's only one type: CoreAudio.
+
+        For a list of types, see getAvailableDeviceTypes().
+    */
+    void setCurrentAudioDeviceType (const String& type,
+                                    const bool treatAsChosenDevice);
 
     /** Closes the currently-open device.
 
@@ -33643,67 +34978,28 @@ public:
     */
     void restartLastAudioDevice();
 
-    /** Returns the name of the currently selected audio device.
-
-        This will be an empty string if none is active.
-    */
-    const String getCurrentAudioDeviceName() const;
-
-    /** Returns the currently-active audio device. */
-    AudioIODevice* getCurrentAudioDevice() const throw()            { return currentAudioDevice; }
-
-    /** Returns the set of audio input channels currently being used.
-
-        To select different channels, use setInputChannels(), or call setAudioDevice() to
-        reopen the device with a different set of channels.
-    */
-    const BitArray getInputChannels() const throw()                 { return inputChannels; }
-
-    /** Changes the active set of input channels.
-
-        @param newEnabledChannels   the set of channels to enable
-        @param treatAsChosenDevice  if this is true and if the device opens correctly, these new
-                                    settings will be taken as having been explicitly chosen by the
-                                    user, and the next time createStateXml() is called, these settings
-                                    will be returned. If it's false, then the device is treated as a
-                                    temporary or default device, and a call to createStateXml() will
-                                    return either the last settings that were made with treatAsChosenDevice
-                                    as true, or the last XML settings that were passed into initialise().
-        @see getInputChannels
-    */
-    void setInputChannels (const BitArray& newEnabledChannels,
-                           const bool treatAsChosenDevice);
-
-    /** Returns the set of audio output channels currently being used.
-
-        To select different channels, use setOutputChannels(), or call setAudioDevice() to
-        reopen the device with a different set of channels.
-    */
-    const BitArray getOutputChannels() const throw()                { return outputChannels; }
-
-    /** Changes the active set of output channels.
-
-        @param newEnabledChannels   the set of channels to enable
-        @param treatAsChosenDevice  if this is true and if the device opens correctly, these new
-                                    settings will be taken as having been explicitly chosen by the
-                                    user, and the next time createStateXml() is called, these settings
-                                    will be returned. If it's false, then the device is treated as a
-                                    temporary or default device, and a call to createStateXml() will
-                                    return either the last settings that were made with treatAsChosenDevice
-                                    as true, or the last XML settings that were passed into initialise().
-        @see getOutputChannels
-    */
-    void setOutputChannels (const BitArray& newEnabledChannels,
-                            const bool treatAsChosenDevice);
-
-    /** Gives the manager an audio callback to use.
+    /** Registers an audio callback to be used.
 
         The manager will redirect callbacks from whatever audio device is currently
-        in use to this callback object.
+        in use to all registered callback objects. If more than one callback is
+        active, they will all be given the same input data, and their outputs will
+        be summed.
 
-        You can pass 0 in here to stop callbacks being made.
+        If necessary, this method will invoke audioDeviceAboutToStart() on the callback
+        object before returning.
+
+        To remove a callback, use removeAudioCallback().
     */
-    void setAudioCallback (AudioIODeviceCallback* newCallback);
+    void addAudioCallback (AudioIODeviceCallback* newCallback);
+
+    /** Deregisters a previously added callback.
+
+        If necessary, this method will invoke audioDeviceStopped() on the callback
+        object before returning.
+
+        @see addAudioCallback
+    */
+    void removeAudioCallback (AudioIODeviceCallback* callback);
 
     /** Returns the average proportion of available CPU being spent inside the audio callbacks.
 
@@ -33753,7 +35049,8 @@ public:
 
     /** Removes a listener that was previously registered with addMidiInputCallback().
     */
-    void removeMidiInputCallback (MidiInputCallback* callback);
+    void removeMidiInputCallback (const String& midiInputDeviceName,
+                                  MidiInputCallback* callback);
 
     /** Sets a midi output device to use as the default.
 
@@ -33784,19 +35081,71 @@ public:
     */
     MidiOutput* getDefaultMidiOutput() const throw()                { return defaultMidiOutput; }
 
+    /** Returns a list of the types of device supported.
+    */
+    const OwnedArray <AudioIODeviceType>& getAvailableDeviceTypes();
+
+    /** Creates a list of available types.
+
+        This will add a set of new AudioIODeviceType objects to the specified list, to
+        represent each available types of device.
+
+        You can override this if your app needs to do something specific, like avoid
+        using DirectSound devices, etc.
+    */
+    virtual void createAudioDeviceTypes (OwnedArray <AudioIODeviceType>& types);
+
+    /** Plays a beep through the current audio device.
+
+        This is here to allow the audio setup UI panels to easily include a "test"
+        button so that the user can check where the audio is coming from.
+    */
+    void playTestSound();
+
+    /** Turns on level-measuring.
+
+        When enabled, the device manager will measure the peak input level
+        across all channels, and you can get this level by calling getCurrentInputLevel().
+
+        This is mainly intended for audio setup UI panels to use to create a mic
+        level display, so that the user can check that they've selected the right
+        device.
+
+        A simple filter is used to make the level decay smoothly, but this is
+        only intended for giving rough feedback, and not for any kind of accurate
+        measurement.
+    */
+    void enableInputLevelMeasurement (const bool enableMeasurement);
+
+    /** Returns the current input level.
+
+        To use this, you must first enable it by calling enableInputLevelMeasurement().
+
+        See enableInputLevelMeasurement() for more info.
+    */
+    double getCurrentInputLevel() const;
+
     juce_UseDebuggingNewOperator
 
 private:
 
     OwnedArray <AudioIODeviceType> availableDeviceTypes;
+    OwnedArray <AudioDeviceSetup> lastDeviceTypeConfigs;
 
+    AudioDeviceSetup currentSetup;
     AudioIODevice* currentAudioDevice;
-    AudioIODeviceCallback* currentCallback;
+    SortedSet <AudioIODeviceCallback*> callbacks;
     int numInputChansNeeded, numOutputChansNeeded;
+    String currentDeviceType;
     BitArray inputChannels, outputChannels;
     XmlElement* lastExplicitSettings;
     mutable bool listNeedsScanning;
     bool useInputNames;
+    int inputLevelMeasurementEnabledCount;
+    double inputLevel;
+    AudioSampleBuffer* testSound;
+    int testSoundPosition;
+    AudioSampleBuffer tempBuffer;
 
     StringArray midiInsFromXml;
     OwnedArray <MidiInput> enabledMidiInputs;
@@ -33828,11 +35177,6 @@ private:
     };
 
     CallbackHandler callbackHandler;
-    String lastRunningDevice;
-    int lastRunningBlockSize;
-    double lastRunningSampleRate;
-    BitArray lastRunningIns, lastRunningOuts;
-
     friend class CallbackHandler;
 
     void audioDeviceIOCallbackInt (const float** inputChannelData,
@@ -33850,6 +35194,14 @@ private:
     void stopDevice();
 
     void updateXml();
+
+    void createDeviceTypesIfNeeded();
+    void scanDevicesIfNeeded();
+    void deleteCurrentDevice();
+    double chooseBestSampleRate (double preferred) const;
+    void insertDefaultDeviceNames (AudioDeviceSetup& setup) const;
+
+    AudioIODeviceType* findType (const String& inputName, const String& outputName);
 
     AudioDeviceManager (const AudioDeviceManager&);
     const AudioDeviceManager& operator= (const AudioDeviceManager&);
@@ -34448,9 +35800,12 @@ public:
     ~AudioUnitPluginFormat();
 
     const String getName() const                { return "AudioUnit"; }
-    void findAllTypesForFile (OwnedArray <PluginDescription>& results, const File& file);
+    void findAllTypesForFile (OwnedArray <PluginDescription>& results, const String& fileOrIdentifier);
     AudioPluginInstance* createInstanceFromDescription (const PluginDescription& desc);
-    bool fileMightContainThisPluginType (const File& file);
+    bool fileMightContainThisPluginType (const String& fileOrIdentifier);
+    const String getNameOfPluginFromIdentifier (const String& fileOrIdentifier);
+    const StringArray searchPathsForPlugins (const FileSearchPath& directoriesToSearch, const bool recursive);
+    bool doesPluginStillExist (const PluginDescription& desc);
     const FileSearchPath getDefaultLocationsToSearch();
 
     juce_UseDebuggingNewOperator
@@ -34487,9 +35842,10 @@ public:
     ~DirectXPluginFormat();
 
     const String getName() const                { return "DirectX"; }
-    void findAllTypesForFile (OwnedArray <PluginDescription>& results, const File& file);
+    void findAllTypesForFile (OwnedArray <PluginDescription>& results, const String& fileOrIdentifier);
     AudioPluginInstance* createInstanceFromDescription (const PluginDescription& desc);
-    bool fileMightContainThisPluginType (const File& file);
+    bool fileMightContainThisPluginType (const String& fileOrIdentifier);
+    const String getNameOfPluginFromIdentifier (const String& fileOrIdentifier)  { return fileOrIdentifier; }
     const FileSearchPath getDefaultLocationsToSearch();
 
     juce_UseDebuggingNewOperator
@@ -34526,9 +35882,10 @@ public:
     ~LADSPAPluginFormat();
 
     const String getName() const                { return "LADSPA"; }
-    void findAllTypesForFile (OwnedArray <PluginDescription>& results, const File& file);
+    void findAllTypesForFile (OwnedArray <PluginDescription>& results, const String& fileOrIdentifier);
     AudioPluginInstance* createInstanceFromDescription (const PluginDescription& desc);
-    bool fileMightContainThisPluginType (const File& file);
+    bool fileMightContainThisPluginType (const String& fileOrIdentifier);
+    const String getNameOfPluginFromIdentifier (const String& fileOrIdentifier)  { return fileOrIdentifier; }
     const FileSearchPath getDefaultLocationsToSearch();
 
     juce_UseDebuggingNewOperator
@@ -34542,6 +35899,169 @@ private:
 
 #endif   // __JUCE_LADSPAPLUGINFORMAT_JUCEHEADER__
 /********* End of inlined file: juce_LADSPAPluginFormat.h *********/
+
+#endif
+#ifndef __JUCE_VSTMIDIEVENTLIST_JUCEHEADER__
+
+/********* Start of inlined file: juce_VSTMidiEventList.h *********/
+#ifdef __aeffect__
+
+#ifndef __JUCE_VSTMIDIEVENTLIST_JUCEHEADER__
+#define __JUCE_VSTMIDIEVENTLIST_JUCEHEADER__
+
+/** Holds a set of VSTMidiEvent objects and makes it easy to add
+    events to the list.
+
+    This is used by both the VST hosting code and the plugin wrapper.
+*/
+class VSTMidiEventList
+{
+public:
+
+    VSTMidiEventList()
+        : events (0), numEventsUsed (0), numEventsAllocated (0)
+    {
+    }
+
+    ~VSTMidiEventList()
+    {
+        freeEvents();
+    }
+
+    void clear()
+    {
+        numEventsUsed = 0;
+
+        if (events != 0)
+            events->numEvents = 0;
+    }
+
+    void addEvent (const void* const midiData, const int numBytes, const int frameOffset)
+    {
+        ensureSize (numEventsUsed + 1);
+
+        VstMidiEvent* const e = (VstMidiEvent*) (events->events [numEventsUsed]);
+        events->numEvents = ++numEventsUsed;
+
+        if (numBytes <= 4)
+        {
+            if (e->type == kVstSysExType)
+            {
+                juce_free (((VstMidiSysexEvent*) e)->sysexDump);
+                e->type = kVstMidiType;
+                e->byteSize = sizeof (VstMidiEvent);
+                e->noteLength = 0;
+                e->noteOffset = 0;
+                e->detune = 0;
+                e->noteOffVelocity = 0;
+            }
+
+            e->deltaFrames = frameOffset;
+            memcpy (e->midiData, midiData, numBytes);
+        }
+        else
+        {
+            VstMidiSysexEvent* const se = (VstMidiSysexEvent*) e;
+
+            if (se->type == kVstSysExType)
+                se->sysexDump = (char*) juce_realloc (se->sysexDump, numBytes);
+            else
+                se->sysexDump = (char*) juce_malloc (numBytes);
+
+            memcpy (se->sysexDump, midiData, numBytes);
+
+            se->type = kVstSysExType;
+            se->byteSize = sizeof (VstMidiSysexEvent);
+            se->deltaFrames = frameOffset;
+            se->flags = 0;
+            se->dumpBytes = numBytes;
+            se->resvd1 = 0;
+            se->resvd2 = 0;
+        }
+    }
+
+    // Handy method to pull the events out of an event buffer supplied by the host
+    // or plugin.
+    static void addEventsToMidiBuffer (const VstEvents* events, MidiBuffer& dest)
+    {
+        for (int i = 0; i < events->numEvents; ++i)
+        {
+            const VstEvent* const e = events->events[i];
+
+            if (e != 0)
+            {
+                if (e->type == kVstMidiType)
+                {
+                    dest.addEvent ((const JUCE_NAMESPACE::uint8*) ((const VstMidiEvent*) e)->midiData,
+                                   4, e->deltaFrames);
+                }
+                else if (e->type == kVstSysExType)
+                {
+                    dest.addEvent ((const JUCE_NAMESPACE::uint8*) ((const VstMidiSysexEvent*) e)->sysexDump,
+                                   (int) ((const VstMidiSysexEvent*) e)->dumpBytes,
+                                   e->deltaFrames);
+                }
+            }
+        }
+    }
+
+    void ensureSize (int numEventsNeeded)
+    {
+        if (numEventsNeeded > numEventsAllocated)
+        {
+            numEventsNeeded = (numEventsNeeded + 32) & ~31;
+
+            const int size = 20 + sizeof (VstEvent*) * numEventsNeeded;
+
+            if (events == 0)
+                events = (VstEvents*) juce_calloc (size);
+            else
+                events = (VstEvents*) juce_realloc (events, size);
+
+            for (int i = numEventsAllocated; i < numEventsNeeded; ++i)
+            {
+                VstMidiEvent* const e = (VstMidiEvent*) juce_calloc (jmax ((int) sizeof (VstMidiEvent),
+                                                                           (int) sizeof (VstMidiSysexEvent)));
+                e->type = kVstMidiType;
+                e->byteSize = sizeof (VstMidiEvent);
+
+                events->events[i] = (VstEvent*) e;
+            }
+
+            numEventsAllocated = numEventsNeeded;
+        }
+    }
+
+    void freeEvents()
+    {
+        if (events != 0)
+        {
+            for (int i = numEventsAllocated; --i >= 0;)
+            {
+                VstMidiEvent* const e = (VstMidiEvent*) (events->events[i]);
+
+                if (e->type == kVstSysExType)
+                    juce_free (((VstMidiSysexEvent*) e)->sysexDump);
+
+                juce_free (e);
+            }
+
+            juce_free (events);
+            events = 0;
+            numEventsUsed = 0;
+            numEventsAllocated = 0;
+        }
+    }
+
+    VstEvents* events;
+
+private:
+    int numEventsUsed, numEventsAllocated;
+};
+
+#endif   // __JUCE_VSTMIDIEVENTLIST_JUCEHEADER__
+#endif   // __JUCE_VSTMIDIEVENTLIST_JUCEHEADER__
+/********* End of inlined file: juce_VSTMidiEventList.h *********/
 
 #endif
 #ifndef __JUCE_VSTPLUGINFORMAT_JUCEHEADER__
@@ -34563,9 +36083,12 @@ public:
     ~VSTPluginFormat();
 
     const String getName() const                { return "VST"; }
-    void findAllTypesForFile (OwnedArray <PluginDescription>& results, const File& file);
+    void findAllTypesForFile (OwnedArray <PluginDescription>& results, const String& fileOrIdentifier);
     AudioPluginInstance* createInstanceFromDescription (const PluginDescription& desc);
-    bool fileMightContainThisPluginType (const File& file);
+    bool fileMightContainThisPluginType (const String& fileOrIdentifier);
+    const String getNameOfPluginFromIdentifier (const String& fileOrIdentifier);
+    const StringArray searchPathsForPlugins (const FileSearchPath& directoriesToSearch, const bool recursive);
+    bool doesPluginStillExist (const PluginDescription& desc);
     const FileSearchPath getDefaultLocationsToSearch();
 
     juce_UseDebuggingNewOperator
@@ -34573,6 +36096,8 @@ public:
 private:
     VSTPluginFormat (const VSTPluginFormat&);
     const VSTPluginFormat& operator= (const VSTPluginFormat&);
+
+    void recursiveFileSearch (StringArray& results, const File& dir, const bool recursive);
 };
 
 #endif
@@ -34652,12 +36177,13 @@ public:
     */
     bool scanNextFile (const bool dontRescanIfAlreadyInList);
 
-    /** Returns the file that will be scanned during the next call to scanNextFile().
+    /** Returns the description of the plugin that will be scanned during the next
+        call to scanNextFile().
 
         This is handy if you want to show the user which file is currently getting
         scanned.
     */
-    const File getNextPluginFileThatWillBeScanned() const throw();
+    const String getNextPluginFileThatWillBeScanned() const throw();
 
     /** Returns the estimated progress, between 0 and 1.
     */
@@ -34673,13 +36199,12 @@ public:
 private:
     KnownPluginList& list;
     AudioPluginFormat& format;
-    OwnedArray <File> filesToScan;
+    StringArray filesOrIdentifiersToScan;
     File deadMansPedalFile;
     StringArray failedFiles;
     int nextIndex;
     float progress;
 
-    void recursiveFileSearch (const File& dir, const bool recursive);
     const StringArray getDeadMansPedalFile() throw();
     void setDeadMansPedalFile (const StringArray& newContents) throw();
 
@@ -35191,7 +36716,7 @@ public:
     /** @internal */
     bool keyPressed (const KeyPress& key);
     /** @internal */
-    bool keyStateChanged();
+    bool keyStateChanged (const bool isKeyDown);
     /** @internal */
     void paint (Graphics& g);
     /** @internal */
@@ -35464,11 +36989,13 @@ public:
         This will take care of any floating-point conversion that's required to convert
         between the two formats. It won't deal with sample-rate conversion, though.
 
+        If numSamplesToRead < 0, it will write the entire length of the reader.
+
         @returns false if it can't read or write properly during the operation
     */
     bool writeFromAudioReader (AudioFormatReader& reader,
                                int64 startSample,
-                               int numSamplesToRead);
+                               int64 numSamplesToRead);
 
     /** Reads some samples from an AudioSource, and writes these to the output.
 
@@ -35703,6 +37230,8 @@ public:
 #ifndef __JUCE_AUDIOCDBURNER_JUCEHEADER__
 #define __JUCE_AUDIOCDBURNER_JUCEHEADER__
 
+#if JUCE_USE_CDBURNER
+
 /**
 */
 class AudioCDBurner
@@ -35773,6 +37302,7 @@ private:
     void* internal;
 };
 
+#endif
 #endif   // __JUCE_AUDIOCDBURNER_JUCEHEADER__
 /********* End of inlined file: juce_AudioCDBurner.h *********/
 
@@ -35782,6 +37312,8 @@ private:
 /********* Start of inlined file: juce_AudioCDReader.h *********/
 #ifndef __JUCE_AUDIOCDREADER_JUCEHEADER__
 #define __JUCE_AUDIOCDREADER_JUCEHEADER__
+
+#if JUCE_USE_CDREADER
 
 #if JUCE_MAC
 
@@ -35823,9 +37355,8 @@ public:
     ~AudioCDReader();
 
     /** Implementation of the AudioFormatReader method. */
-    bool read (int** destSamples,
-               int64 startSampleInFile,
-               int numSamples);
+    bool readSamples (int** destSamples, int numDestChannels, int startOffsetInDestBuffer,
+                      int64 startSampleInFile, int numSamples);
 
     /** Checks whether the CD has been removed from the drive.
     */
@@ -35911,7 +37442,7 @@ public:
     static int compareElements (const File* const, const File* const) throw();
 private:
 
-#elif JUCE_WIN32
+#elif JUCE_WINDOWS
     int numTracks;
     int trackStarts[100];
     bool audioTracks [100];
@@ -35930,6 +37461,7 @@ private:
     const AudioCDReader& operator= (const AudioCDReader&);
 };
 
+#endif
 #endif   // __JUCE_AUDIOCDREADER_JUCEHEADER__
 /********* End of inlined file: juce_AudioCDReader.h *********/
 
@@ -36100,9 +37632,8 @@ public:
     /** Destructor. */
     ~AudioSubsectionReader();
 
-    bool read (int** destSamples,
-               int64 startSample,
-               int numSamples);
+    bool readSamples (int** destSamples, int numDestChannels, int startOffsetInDestBuffer,
+                      int64 startSampleInFile, int numSamples);
 
     void readMaxLevels (int64 startSample,
                         int64 numSamples,
@@ -36161,7 +37692,9 @@ public:
     /** Creates an audio thumbnail.
 
         @param sourceSamplesPerThumbnailSample  when creating a stored, low-res version
-                        of the audio data, this is the scale at which it should be done
+                        of the audio data, this is the scale at which it should be done. (This
+                        number is the number of original samples that will be averaged for each
+                        low-res sample)
         @param formatManagerToUse   the audio format manager that is used to open the file
         @param cacheToUse   an instance of an AudioThumbnailCache - this provides a background
                             thread and storage that is used to by the thumbnail, and the cache
@@ -36206,7 +37739,7 @@ public:
     */
     int getNumChannels() const throw();
 
-    /** Returns the length of the audio file.
+    /** Returns the length of the audio file, in seconds.
     */
     double getTotalLength() const throw();
 
@@ -36222,8 +37755,8 @@ public:
     */
     void drawChannel (Graphics& g,
                       int x, int y, int w, int h,
-                      double startTime,
-                      double endTime,
+                      double startTimeSeconds,
+                      double endTimeSeconds,
                       int channelNum,
                       const float verticalZoomFactor);
 
@@ -36610,6 +38143,13 @@ public:
                                         const StringPairArray& metadataValues,
                                         int qualityOptionIndex);
 
+    /** Utility function to replace the metadata in a wav file with a new set of values.
+
+        If possible, this cheats by overwriting just the metadata region of the file, rather
+        than by copying the whole file again.
+    */
+    bool replaceMetadataInFile (const File& wavFile, const StringPairArray& newMetadata);
+
     juce_UseDebuggingNewOperator
 };
 
@@ -36744,6 +38284,63 @@ private:
 
 #endif
 #ifndef __JUCE_ASYNCUPDATER_JUCEHEADER__
+
+#endif
+#ifndef __JUCE_CALLBACKMESSAGE_JUCEHEADER__
+
+/********* Start of inlined file: juce_CallbackMessage.h *********/
+#ifndef __JUCE_CALLBACKMESSAGE_JUCEHEADER__
+#define __JUCE_CALLBACKMESSAGE_JUCEHEADER__
+
+/**
+    A message that calls a custom function when it gets delivered.
+
+    You can use this class to fire off actions that you want to be performed later
+    on the message thread.
+
+    Unlike other Message objects, these don't get sent to a MessageListener, you
+    just call the post() method to send them, and when they arrive, your
+    messageCallback() method will automatically be invoked.
+
+    @see MessageListener, MessageManager, ActionListener, ChangeListener
+*/
+class JUCE_API  CallbackMessage   : public Message
+{
+public:
+
+    CallbackMessage() throw();
+
+    /** Destructor. */
+    ~CallbackMessage() throw();
+
+    /** Called when the message is delivered.
+
+        You should implement this method and make it do whatever action you want
+        to perform.
+
+        Note that like all other messages, this object will be deleted immediately
+        after this method has been invoked.
+    */
+    virtual void messageCallback() = 0;
+
+    /** Instead of sending this message to a MessageListener, just call this method
+        to post it to the event queue.
+
+        After you've called this, this object will belong to the MessageManager,
+        which will delete it later. So make sure you don't delete the object yourself,
+        call post() more than once, or call post() on a stack-based obect!
+    */
+    void post();
+
+    juce_UseDebuggingNewOperator
+
+private:
+    CallbackMessage (const CallbackMessage&);
+    const CallbackMessage& operator= (const CallbackMessage&);
+};
+
+#endif   // __JUCE_CALLBACKMESSAGE_JUCEHEADER__
+/********* End of inlined file: juce_CallbackMessage.h *********/
 
 #endif
 #ifndef __JUCE_CHANGEBROADCASTER_JUCEHEADER__
@@ -37025,8 +38622,8 @@ private:
 #ifndef __JUCE_MESSAGEMANAGER_JUCEHEADER__
 #define __JUCE_MESSAGEMANAGER_JUCEHEADER__
 
-class Thread;
-class InternalTimerThread;
+class Component;
+class MessageManagerLock;
 
 /** See MessageManager::callFunctionOnMessageThread() for use of this function type
 */
@@ -37036,36 +38633,41 @@ typedef void* (MessageCallbackFunction) (void* userData);
 
     @see Message, MessageListener, MessageManagerLock, JUCEApplication
 */
-class JUCE_API  MessageManager  : private DeletedAtShutdown,
-                                  private Timer
+class JUCE_API  MessageManager
 {
 public:
 
     /** Returns the global instance of the MessageManager. */
     static MessageManager* getInstance() throw();
 
-    /** Synchronously dispatches up to a certain number of messages from the queue.
+    /** Runs the event dispatch loop until a stop message is posted.
 
-        This will return when the queue becomes empty, or when the given number of
-        messages has been sent.
+        This method is only intended to be run by the application's startup routine,
+        as it blocks, and will only return after the stopDispatchLoop() method has been used.
+
+        @see stopDispatchLoop
     */
-    void dispatchPendingMessages (int maxNumberOfMessagesToDispatch = 1000);
+    void runDispatchLoop();
 
-    /** Synchronously sends the next pending message.
+    /** Sends a signal that the dispatch loop should terminate.
 
-        This must only be called by the message-thread.
+        After this is called, the runDispatchLoop() or runDispatchLoopUntil() methods
+        will be interrupted and will return.
 
-        @param returnImmediatelyIfNoMessages    if false, it will block indefinitely until a message
-                                                needs dispatching. If true, then if no messages are
-                                                pending, it will return immediately.
-        @param wasAMessageDispatched            if this is non-zero, it will be set to true or false
-                                                depending on whether a message was actually sent or
-                                                not.
-        @returns    false if the thing that's calling it should stop calling - i.e. if the
-                    app is trying to quit.
+        @see runDispatchLoop
     */
-    bool dispatchNextMessage (const bool returnImmediatelyIfNoMessages = false,
-                              bool* const wasAMessageDispatched = 0);
+    void stopDispatchLoop();
+
+    /** Returns true if the stopDispatchLoop() method has been called.
+    */
+    bool hasStopMessageBeenSent() const throw()         { return quitMessagePosted; }
+
+    /** Synchronously dispatches messages until a given time has elapsed.
+
+        Returns false if a quit message has been posted by a call to stopDispatchLoop(),
+        otherwise returns true.
+    */
+    bool runDispatchLoopUntil (int millisecondsToRunFor);
 
     /** Calls a function using the message-thread.
 
@@ -37096,14 +38698,14 @@ public:
         (Best to ignore this method unless you really know what you're doing..)
         @see getCurrentMessageThread
     */
-    void setCurrentMessageThread (const int threadId) throw();
+    void setCurrentMessageThread (const Thread::ThreadID threadId) throw();
 
     /** Returns the ID of the current message thread, as set by setCurrentMessageThread().
 
         (Best to ignore this method unless you really know what you're doing..)
         @see setCurrentMessageThread
     */
-    int getCurrentMessageThread() const throw()             { return messageThreadId; }
+    Thread::ThreadID getCurrentMessageThread() const throw()             { return messageThreadId; }
 
     /** Returns true if the caller thread has currenltly got the message manager locked.
 
@@ -37134,75 +38736,43 @@ public:
     /** Deregisters a broadcast listener. */
     void deregisterBroadcastListener (ActionListener* listener) throw();
 
-    /** Sets a time-limit for the app to be 'busy' before an hourglass cursor will be shown.
-
-        @param millisecs    how long before the cursor is shown (the default time is 500ms). If the
-                            value is 0 or less, the wait cursor will never be shown (although on the
-                            Mac the system might still decide to show it after a while).
-        @see MouseCursor::showWaitCursor
-    */
-    void setTimeBeforeShowingWaitCursor (const int millisecs) throw();
-
-    /** Returns the time-out before the 'busy' cursor is shown when the app is busy.
-
-        @see setTimeBeforeShowingWaitCursor, MouseCursor::showWaitCursor
-    */
-    int getTimeBeforeShowingWaitCursor() const throw();
-
-    /** Tells the message manager that the system isn't locked-up, even if the message
-        loop isn't active.
-
-        Used internally, this is handy when an OS enters its own modal loop.
-    */
-    static void delayWaitCursor() throw();
-
-    /** Returns true if JUCEApplication::quit() has been called. */
-    bool hasQuitMessageBeenPosted() const throw();
-
     /** @internal */
     void deliverMessage (void*);
     /** @internal */
     void deliverBroadcastMessage (const String&);
     /** @internal */
-    void timerCallback();
+    ~MessageManager() throw();
 
     juce_UseDebuggingNewOperator
 
 private:
     MessageManager() throw();
-    ~MessageManager() throw();
 
     friend class MessageListener;
     friend class ChangeBroadcaster;
     friend class ActionBroadcaster;
+    friend class CallbackMessage;
     static MessageManager* instance;
 
     SortedSet<const MessageListener*> messageListeners;
     ActionListenerList* broadcastListeners;
 
     friend class JUCEApplication;
-    bool quitMessagePosted, quitMessageReceived, useMaximumForceWhenQuitting;
+    bool quitMessagePosted, quitMessageReceived;
+    Thread::ThreadID messageThreadId;
 
-    int messageThreadId;
-    int volatile messageCounter, lastMessageCounter, isInMessageDispatcher;
-    bool volatile needToGetRidOfWaitCursor;
-    int volatile timeBeforeWaitCursor;
-    unsigned int lastActivityCheckOkTime;
+    VoidArray modalComponents;
+    static void* exitModalLoopCallback (void*);
 
-    bool runDispatchLoop();
     void postMessageToQueue (Message* const message);
-    void postQuitMessage (const bool useMaximumForce);
+    void postCallbackMessage (Message* const message);
 
     static void doPlatformSpecificInitialisation();
     static void doPlatformSpecificShutdown();
 
-    friend class InternalTimerThread;
-    static void inactivityCheckCallback() throw();
-    void inactivityCheckCallbackInt() throw();
-
     friend class MessageManagerLock;
-    CriticalSection messageDispatchLock;
-    int currentLockingThreadId;
+    Thread::ThreadID volatile threadWithLock;
+    CriticalSection lockingLock;
 
     MessageManager (const MessageManager&);
     const MessageManager& operator= (const MessageManager&);
@@ -37245,35 +38815,23 @@ public:
 
     /** Tries to acquire a lock on the message manager.
 
-        If this constructor
-        When this constructor returns, the message manager will have finished processing the
-        last message and will not send another message until this MessageManagerLock is
-        deleted.
+        The constructor attempts to gain a lock on the message loop, and the lock will be
+        kept for the lifetime of this object.
 
-        If the current thread already has the lock, nothing will be done, so it's perfectly
-        safe to create these locks recursively.
-    */
-    MessageManagerLock() throw();
-
-    /** Releases the current thread's lock on the message manager.
-
-        Make sure this object is created and deleted by the same thread,
-        otherwise there are no guarantees what will happen!
-    */
-    ~MessageManagerLock() throw();
-
-    /** Tries to acquire a lock on the message manager.
-
-        This does the same thing as the normal constructor, but while it's waiting to get
-        the lock, it checks the specified thread to see if it has been given the
+        Optionally, you can pass a thread object here, and while waiting to obtain the lock,
+        this method will keep checking whether the thread has been given the
         Thread::signalThreadShouldExit() signal. If this happens, then it will return
-        without gaining the lock.
+        without gaining the lock. If you pass a thread, you must check whether the lock was
+        successful by calling lockWasGained(). If this is false, your thread is being told to
+        die, so you should take evasive action.
 
-        To find out whether the lock was successful, call lockWasGained(). If this is
-        false, your thread is being told to die, so you'd better get out of there.
+        If you pass zero for the thread object, it will wait indefinitely for the lock - be
+        careful when doing this, because it's very easy to deadlock if your message thread
+        attempts to call stopThread() on a thread just as that thread attempts to get the
+        message lock.
 
-        If the current thread already has the lock, nothing will be done, so it's perfectly
-        safe to create these locks recursively.
+        If the calling thread already has the lock, nothing will be done, so it's safe and
+        quick to use these locks recursively.
 
         E.g.
         @code
@@ -37285,7 +38843,7 @@ public:
             {
                 MessageManagerLock mml (Thread::getCurrentThread());
 
-                if (! mml.lockWasGained)
+                if (! mml.lockWasGained())
                     return; // another thread is trying to kill us!
 
                 ..do some locked stuff here..
@@ -37296,7 +38854,21 @@ public:
         @endcode
 
     */
-    MessageManagerLock (Thread* const threadToCheckForExitSignal) throw();
+    MessageManagerLock (Thread* const threadToCheckForExitSignal = 0) throw();
+
+    /** This has the same behaviour as the other constructor, but takes a ThreadPoolJob
+        instead of a thread.
+
+        See the MessageManagerLock (Thread*) constructor for details on how this works.
+    */
+    MessageManagerLock (ThreadPoolJob* const jobToCheckForExitSignal) throw();
+
+    /** Releases the current thread's lock on the message manager.
+
+        Make sure this object is created and deleted by the same thread,
+        otherwise there are no guarantees what will happen!
+   */
+    ~MessageManagerLock() throw();
 
     /** Returns true if the lock was successfully acquired.
 
@@ -37305,8 +38877,10 @@ public:
     bool lockWasGained() const throw()                      { return locked; }
 
 private:
-    int lastLockingThreadId;
-    bool locked;
+    bool locked, needsUnlocking;
+    void* sharedEvents;
+
+    void init (Thread* const thread, ThreadPoolJob* const job) throw();
 };
 
 #endif   // __JUCE_MESSAGEMANAGER_JUCEHEADER__
@@ -37427,129 +39001,6 @@ private:
 #ifndef __JUCE_GRADIENTBRUSH_JUCEHEADER__
 #define __JUCE_GRADIENTBRUSH_JUCEHEADER__
 
-/********* Start of inlined file: juce_ColourGradient.h *********/
-#ifndef __JUCE_COLOURGRADIENT_JUCEHEADER__
-#define __JUCE_COLOURGRADIENT_JUCEHEADER__
-
-/**
-    Structure used to define a colour gradient for painting areas.
-
-    @see GradientBrush
-*/
-class JUCE_API  ColourGradient
-{
-public:
-
-    /** Creates a gradient object.
-
-        (x1, y1) is the location to draw with colour1. Likewise (x2, y2) is where
-        colour2 should be. In between them there's a gradient.
-
-        If isRadial is true, the colours form a circular gradient with (x1, y1) at
-        its centre.
-
-        The alpha transparencies of the colours are used, so note that
-        if you blend from transparent to a solid colour, the RGB of the transparent
-        colour will become visible in parts of the gradient. e.g. blending
-        from Colour::transparentBlack to Colours::white will produce a
-        muddy grey colour midway, but Colour::transparentWhite to Colours::white
-        will be white all the way across.
-
-        @see ColourGradient
-    */
-    ColourGradient (const Colour& colour1,
-                    const float x1,
-                    const float y1,
-                    const Colour& colour2,
-                    const float x2,
-                    const float y2,
-                    const bool isRadial) throw();
-
-    /** Creates an uninitialised gradient.
-
-        If you use this constructor instead of the other one, be sure to set all the
-        object's public member variables before using it!
-    */
-    ColourGradient() throw();
-
-    /** Destructor */
-    ~ColourGradient() throw();
-
-    /** Removes any colours that have been added.
-
-        This will also remove any start and end colours, so the gradient won't work. You'll
-        need to add more colours with addColour().
-    */
-    void clearColours() throw();
-
-    /** Adds a colour at a point along the length of the gradient.
-
-        This allows the gradient to go through a spectrum of colours, instead of just a
-        start and end colour.
-
-        @param proportionAlongGradient      a value between 0 and 1.0, which is the proportion
-                                            of the distance along the line between the two points
-                                            at which the colour should occur.
-        @param colour                       the colour that should be used at this point
-    */
-    void addColour (const double proportionAlongGradient,
-                    const Colour& colour) throw();
-
-    /** Multiplies the alpha value of all the colours by the given scale factor */
-    void multiplyOpacity (const float multiplier) throw();
-
-    /** Returns the number of colour-stops that have been added. */
-    int getNumColours() const throw();
-
-    /** Returns the position along the length of the gradient of the colour with this index.
-
-        The index is from 0 to getNumColours() - 1. The return value will be between 0.0 and 1.0
-    */
-    double getColourPosition (const int index) const throw();
-
-    /** Returns the colour that was added with a given index.
-
-        The index is from 0 to getNumColours() - 1. The return value will be between 0.0 and 1.0
-    */
-    const Colour getColour (const int index) const throw();
-
-    /** Creates a set of interpolated premultiplied ARGB values.
-
-        The caller must delete the array that is returned using juce_free().
-    */
-    PixelARGB* createLookupTable (int& numEntries) const throw();
-
-    /** Returns true if all colours are opaque. */
-    bool isOpaque() const throw();
-
-    /** Returns true if all colours are completely transparent. */
-    bool isInvisible() const throw();
-
-    float x1;
-    float y1;
-
-    float x2;
-    float y2;
-
-    /** If true, the gradient should be filled circularly, centred around
-        (x1, y1), with (x2, y2) defining a point on the circumference.
-
-        If false, the gradient is linear between the two points.
-    */
-    bool isRadial;
-
-    /** A transform to apply to the resultant gradient shape */
-    AffineTransform transform;
-
-    juce_UseDebuggingNewOperator
-
-private:
-    Array <uint32> colours;
-};
-
-#endif   // __JUCE_COLOURGRADIENT_JUCEHEADER__
-/********* End of inlined file: juce_ColourGradient.h *********/
-
 /**
     A Brush that fills areas with a colour gradient.
 
@@ -37593,6 +39044,9 @@ public:
 
     /** Destructor. */
     ~GradientBrush() throw();
+
+    /** Returns the current gradient information */
+    const ColourGradient& getGradient() const throw()       { return gradient; }
 
     Brush* createCopy() const throw();
 
@@ -37670,6 +39124,8 @@ public:
 
     /** Creates an in-memory image with a specified size and format.
 
+        To create an image that can use native OS rendering methods, see createNativeImage().
+
         @param format           the number of colour channels in the image
         @param imageWidth       the desired width of the image, in pixels - this value must be
                                 greater than zero (otherwise a width of 1 will be used)
@@ -37692,6 +39148,16 @@ public:
 
     /** Destructor. */
     virtual ~Image();
+
+    /** Tries to create an image that is uses native drawing methods when you render
+        onto it.
+
+        On some platforms this will just return a normal software-based image.
+    */
+    static Image* createNativeImage (const PixelFormat format,
+                                     const int imageWidth,
+                                     const int imageHeight,
+                                     const bool clearImage);
 
     /** Returns the image's width (in pixels). */
     int getWidth() const throw()                    { return imageWidth; }
@@ -37729,6 +39195,10 @@ public:
     virtual Image* createCopy (int newWidth = -1,
                                int newHeight = -1,
                                const Graphics::ResamplingQuality quality = Graphics::mediumResamplingQuality) const;
+
+    /** Returns a new single-channel image which is a copy of the alpha-channel of this image.
+    */
+    virtual Image* createCopyOfAlphaChannel() const;
 
     /** Returns the colour of one of the pixels in the image.
 
@@ -37907,6 +39377,18 @@ public:
     /** Destructor. */
     ~ImageBrush() throw();
 
+    /** Returns the image currently being used. */
+    Image* getImage() const throw()             { return image; }
+
+    /** Returns the current anchor X position. */
+    int getAnchorX() const throw()              { return anchorX; }
+
+    /** Returns the current anchor Y position. */
+    int getAnchorY() const throw()              { return anchorY; }
+
+    /** Returns the current opacity. */
+    float getOpacity() const throw()            { return opacity; }
+
     Brush* createCopy() const throw();
 
     void applyTransform (const AffineTransform& transform) throw();
@@ -37946,308 +39428,19 @@ private:
 #ifndef __JUCE_SOLIDCOLOURBRUSH_JUCEHEADER__
 
 #endif
-#ifndef __JUCE_COLOUR_JUCEHEADER__
+#ifndef __JUCE_PIXELFORMATS_JUCEHEADER__
 
 #endif
-#ifndef __JUCE_COLOURGRADIENT_JUCEHEADER__
+#ifndef __JUCE_COLOUR_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_COLOURS_JUCEHEADER__
 
 #endif
-#ifndef __JUCE_PIXELFORMATS_JUCEHEADER__
+#ifndef __JUCE_COLOURGRADIENT_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_FONT_JUCEHEADER__
-
-#endif
-#ifndef __JUCE_GLYPHARRANGEMENT_JUCEHEADER__
-
-/********* Start of inlined file: juce_GlyphArrangement.h *********/
-#ifndef __JUCE_GLYPHARRANGEMENT_JUCEHEADER__
-#define __JUCE_GLYPHARRANGEMENT_JUCEHEADER__
-
-/**
-    An glyph from a particular font, with a particular size, style,
-    typeface and position.
-
-    @see GlyphArrangement, Font
-*/
-class JUCE_API  PositionedGlyph
-{
-public:
-
-    /** Returns the character the glyph represents. */
-    juce_wchar getCharacter() const throw()     { return glyphInfo->getCharacter(); }
-    /** Checks whether the glyph is actually empty. */
-    bool isWhitespace() const throw()           { return CharacterFunctions::isWhitespace (glyphInfo->getCharacter()); }
-
-    /** Returns the position of the glyph's left-hand edge. */
-    float getLeft() const throw()               { return x; }
-    /** Returns the position of the glyph's right-hand edge. */
-    float getRight() const throw()              { return x + w; }
-    /** Returns the y position of the glyph's baseline. */
-    float getBaselineY() const throw()          { return y; }
-    /** Returns the y position of the top of the glyph. */
-    float getTop() const throw()                { return y - fontAscent; }
-    /** Returns the y position of the bottom of the glyph. */
-    float getBottom() const throw()             { return y + fontHeight - fontAscent; }
-
-    /** Shifts the glyph's position by a relative amount. */
-    void moveBy (const float deltaX,
-                 const float deltaY) throw();
-
-    /** Draws the glyph into a graphics context. */
-    void draw (const Graphics& g) const throw();
-
-    /** Draws the glyph into a graphics context, with an extra transform applied to it. */
-    void draw (const Graphics& g, const AffineTransform& transform) const throw();
-
-    /** Returns the path for this glyph.
-
-        @param path     the glyph's outline will be appended to this path
-    */
-    void createPath (Path& path) const throw();
-
-    /** Checks to see if a point lies within this glyph. */
-    bool hitTest (float x, float y) const throw();
-
-    juce_UseDebuggingNewOperator
-
-private:
-
-    friend class GlyphArrangement;
-    float x, y, w;
-    float fontHeight, fontAscent, fontHorizontalScale;
-    bool isUnderlined;
-    const TypefaceGlyphInfo* glyphInfo;
-
-    PositionedGlyph() throw();
-};
-
-/**
-    A set of glyphs, each with a position.
-
-    You can create a GlyphArrangement, text to it and then draw it onto a
-    graphics context. It's used internally by the text methods in the
-    Graphics class, but can be used directly if more control is needed.
-
-    @see Font, PositionedGlyph
-*/
-class JUCE_API  GlyphArrangement
-{
-public:
-
-    /** Creates an empty arrangement. */
-    GlyphArrangement() throw();
-
-    /** Takes a copy of another arrangement. */
-    GlyphArrangement (const GlyphArrangement& other) throw();
-
-    /** Copies another arrangement onto this one.
-
-        To add another arrangement without clearing this one, use addGlyphArrangement().
-    */
-    const GlyphArrangement& operator= (const GlyphArrangement& other) throw();
-
-    /** Destructor. */
-    ~GlyphArrangement() throw();
-
-    /** Returns the total number of glyphs in the arrangement. */
-    int getNumGlyphs() const throw()                            { return numGlyphs; }
-
-    /** Returns one of the glyphs from the arrangement.
-
-        @param index    the glyph's index, from 0 to (getNumGlyphs() - 1). Be
-                        careful not to pass an out-of-range index here, as it
-                        doesn't do any bounds-checking.
-    */
-    PositionedGlyph& getGlyph (const int index) const throw();
-
-    /** Clears all text from the arrangement and resets it.
-    */
-    void clear() throw();
-
-    /** Appends a line of text to the arrangement.
-
-        This will add the text as a single line, where x is the left-hand edge of the
-        first character, and y is the position for the text's baseline.
-
-        If the text contains new-lines or carriage-returns, this will ignore them - use
-        addJustifiedText() to add multi-line arrangements.
-    */
-    void addLineOfText (const Font& font,
-                        const String& text,
-                        const float x,
-                        const float y) throw();
-
-    /** Adds a line of text, truncating it if it's wider than a specified size.
-
-        This is the same as addLineOfText(), but if the line's width exceeds the value
-        specified in maxWidthPixels, it will be truncated using either ellipsis (i.e. dots: "..."),
-        if useEllipsis is true, or if this is false, it will just drop any subsequent characters.
-    */
-    void addCurtailedLineOfText (const Font& font,
-                                 const String& text,
-                                 float x,
-                                 const float y,
-                                 const float maxWidthPixels,
-                                 const bool useEllipsis) throw();
-
-    /** Adds some multi-line text, breaking lines at word-boundaries if they are too wide.
-
-        This will add text to the arrangement, breaking it into new lines either where there
-        is a new-line or carriage-return character in the text, or where a line's width
-        exceeds the value set in maxLineWidth.
-
-        Each line that is added will be laid out using the flags set in horizontalLayout, so
-        the lines can be left- or right-justified, or centred horizontally in the space
-        between x and (x + maxLineWidth).
-
-        The y co-ordinate is the position of the baseline of the first line of text - subsequent
-        lines will be placed below it, separated by a distance of font.getHeight().
-    */
-    void addJustifiedText (const Font& font,
-                           const String& text,
-                           float x, float y,
-                           const float maxLineWidth,
-                           const Justification& horizontalLayout) throw();
-
-    /** Tries to fit some text withing a given space.
-
-        This does its best to make the given text readable within the specified rectangle,
-        so it useful for labelling things.
-
-        If the text is too big, it'll be squashed horizontally or broken over multiple lines
-        if the maximumLinesToUse value allows this. If the text just won't fit into the space,
-        it'll cram as much as possible in there, and put some ellipsis at the end to show that
-        it's been truncated.
-
-        A Justification parameter lets you specify how the text is laid out within the rectangle,
-        both horizontally and vertically.
-
-        @see Graphics::drawFittedText
-    */
-    void addFittedText (const Font& font,
-                        const String& text,
-                        float x, float y,
-                        float width, float height,
-                        const Justification& layout,
-                        int maximumLinesToUse,
-                        const float minimumHorizontalScale = 0.7f) throw();
-
-    /** Appends another glyph arrangement to this one. */
-    void addGlyphArrangement (const GlyphArrangement& other) throw();
-
-    /** Draws this glyph arrangement to a graphics context.
-
-        This uses cached bitmaps so is much faster than the draw (Graphics&, const AffineTransform&)
-        method, which renders the glyphs as filled vectors.
-    */
-    void draw (const Graphics& g) const throw();
-
-    /** Draws this glyph arrangement to a graphics context.
-
-        This renders the paths as filled vectors, so is far slower than the draw (Graphics&)
-        method for non-transformed arrangements.
-    */
-    void draw (const Graphics& g, const AffineTransform& transform) const throw();
-
-    /** Converts the set of glyphs into a path.
-
-        @param path     the glyphs' outlines will be appended to this path
-    */
-    void createPath (Path& path) const throw();
-
-    /** Looks for a glyph that contains the given co-ordinate.
-
-        @returns the index of the glyph, or -1 if none were found.
-    */
-    int findGlyphIndexAt (float x, float y) const throw();
-
-    /** Finds the smallest rectangle that will enclose a subset of the glyphs.
-
-        @param startIndex               the first glyph to test
-        @param numGlyphs                the number of glyphs to include; if this is < 0, all glyphs after
-                                        startIndex will be included
-        @param left                     on return, the leftmost co-ordinate of the rectangle
-        @param top                      on return, the top co-ordinate of the rectangle
-        @param right                    on return, the rightmost co-ordinate of the rectangle
-        @param bottom                   on return, the bottom co-ordinate of the rectangle
-        @param includeWhitespace        if true, the extent of any whitespace characters will also
-                                        be taken into account
-    */
-    void getBoundingBox (int startIndex,
-                         int numGlyphs,
-                         float& left,
-                         float& top,
-                         float& right,
-                         float& bottom,
-                         const bool includeWhitespace) const throw();
-
-    /** Shifts a set of glyphs by a given amount.
-
-        @param startIndex   the first glyph to transform
-        @param numGlyphs    the number of glyphs to move; if this is < 0, all glyphs after
-                            startIndex will be used
-        @param deltaX       the amount to add to their x-positions
-        @param deltaY       the amount to add to their y-positions
-    */
-    void moveRangeOfGlyphs (int startIndex, int numGlyphs,
-                            const float deltaX,
-                            const float deltaY) throw();
-
-    /** Removes a set of glyphs from the arrangement.
-
-        @param startIndex   the first glyph to remove
-        @param numGlyphs    the number of glyphs to remove; if this is < 0, all glyphs after
-                            startIndex will be deleted
-    */
-    void removeRangeOfGlyphs (int startIndex, int numGlyphs) throw();
-
-    /** Expands or compresses a set of glyphs horizontally.
-
-        @param startIndex               the first glyph to transform
-        @param numGlyphs                the number of glyphs to stretch; if this is < 0, all glyphs after
-                                        startIndex will be used
-        @param horizontalScaleFactor    how much to scale their horizontal width by
-    */
-    void stretchRangeOfGlyphs (int startIndex, int numGlyphs,
-                               const float horizontalScaleFactor) throw();
-
-    /** Justifies a set of glyphs within a given space.
-
-        This moves the glyphs as a block so that the whole thing is located within the
-        given rectangle with the specified layout.
-
-        If the Justification::horizontallyJustified flag is specified, each line will
-        be stretched out to fill the specified width.
-    */
-    void justifyGlyphs (const int startIndex, const int numGlyphs,
-                        const float x,
-                        const float y,
-                        const float width,
-                        const float height,
-                        const Justification& justification) throw();
-
-    juce_UseDebuggingNewOperator
-
-private:
-    int numGlyphs, numAllocated;
-    PositionedGlyph* glyphs;
-
-    void ensureNumGlyphsAllocated (int minGlyphs) throw();
-    void removeLast() throw();
-    void appendEllipsis (const Font& font, const float maxXPixels) throw();
-
-    void incGlyphRefCount (const int index) const throw();
-    void decGlyphRefCount (const int index) const throw();
-
-    void spreadOutLine (const int start, const int numGlyphs, const float targetWidth) throw();
-};
-
-#endif   // __JUCE_GLYPHARRANGEMENT_JUCEHEADER__
-/********* End of inlined file: juce_GlyphArrangement.h *********/
 
 #endif
 #ifndef __JUCE_TEXTLAYOUT_JUCEHEADER__
@@ -38372,283 +39565,291 @@ private:
 #ifndef __JUCE_TYPEFACE_JUCEHEADER__
 
 #endif
-#ifndef __JUCE_EDGETABLE_JUCEHEADER__
+#ifndef __JUCE_GLYPHARRANGEMENT_JUCEHEADER__
 
-/********* Start of inlined file: juce_EdgeTable.h *********/
-#ifndef __JUCE_EDGETABLE_JUCEHEADER__
-#define __JUCE_EDGETABLE_JUCEHEADER__
-
-class Path;
-
-static const int juce_edgeTableDefaultEdgesPerLine = 10;
+/********* Start of inlined file: juce_GlyphArrangement.h *********/
+#ifndef __JUCE_GLYPHARRANGEMENT_JUCEHEADER__
+#define __JUCE_GLYPHARRANGEMENT_JUCEHEADER__
 
 /**
-    A table of horizontal scan-line segments - used for rasterising Paths.
+    A glyph from a particular font, with a particular size, style,
+    typeface and position.
 
-    @see Path, Graphics
+    @see GlyphArrangement, Font
 */
-class JUCE_API  EdgeTable
+class JUCE_API  PositionedGlyph
 {
 public:
 
-    /** Indicates the quality at which the edge table should be generated.
+    /** Returns the character the glyph represents. */
+    juce_wchar getCharacter() const throw()     { return character; }
+    /** Checks whether the glyph is actually empty. */
+    bool isWhitespace() const throw()           { return CharacterFunctions::isWhitespace (character); }
 
-        Higher values will have better quality anti-aliasing, but will take
-        longer to generate the edge table and to render it.
+    /** Returns the position of the glyph's left-hand edge. */
+    float getLeft() const throw()               { return x; }
+    /** Returns the position of the glyph's right-hand edge. */
+    float getRight() const throw()              { return x + w; }
+    /** Returns the y position of the glyph's baseline. */
+    float getBaselineY() const throw()          { return y; }
+    /** Returns the y position of the top of the glyph. */
+    float getTop() const throw()                { return y - font.getAscent(); }
+    /** Returns the y position of the bottom of the glyph. */
+    float getBottom() const throw()             { return y + font.getDescent(); }
+
+    /** Shifts the glyph's position by a relative amount. */
+    void moveBy (const float deltaX,
+                 const float deltaY) throw();
+
+    /** Draws the glyph into a graphics context. */
+    void draw (const Graphics& g) const throw();
+
+    /** Draws the glyph into a graphics context, with an extra transform applied to it. */
+    void draw (const Graphics& g, const AffineTransform& transform) const throw();
+
+    /** Returns the path for this glyph.
+
+        @param path     the glyph's outline will be appended to this path
     */
-    enum OversamplingLevel
-    {
-        Oversampling_none       = 0,    /**< No vertical anti-aliasing at all. */
-        Oversampling_4times     = 2,    /**< Anti-aliased with 4 levels of grey - good enough for normal use. */
-        Oversampling_16times    = 4,    /**< Anti-aliased with 16 levels of grey - very good quality. */
-        Oversampling_32times    = 5,    /**< Anti-aliased with 32 levels of grey - very good quality but slower. */
-        Oversampling_256times   = 8     /**< Anti-aliased with 256 levels of grey - best quality, but too slow for
-                                             normal user-interface use. */
-    };
+    void createPath (Path& path) const throw();
 
-    /** Creates an empty edge table ready to have paths added.
-
-        A table is created with a fixed vertical size, and only sections of paths
-        which lie within their range will be added to the table.
-
-        @param topY                     the lowest y co-ordinate that the table can contain
-        @param height                   the number of horizontal lines it can contain
-        @param verticalOversampling     the amount of oversampling used for anti-aliasing
-        @param expectedEdgesPerLine     used to optimise the table's internal data usage - it's not
-                                        worth changing this except for very special purposes
-    */
-    EdgeTable (const int topY,
-               const int height,
-               const OversamplingLevel verticalOversampling = Oversampling_4times,
-               const int expectedEdgesPerLine = juce_edgeTableDefaultEdgesPerLine) throw();
-
-    /** Creates a copy of another edge table. */
-    EdgeTable (const EdgeTable& other) throw();
-
-    /** Copies from another edge table. */
-    const EdgeTable& operator= (const EdgeTable& other) throw();
-
-    /** Destructor. */
-    ~EdgeTable() throw();
-
-    /** Adds edges to the table for a path.
-
-        This will add horizontal lines to the edge table for any parts of the path
-        which lie within the vertical bounds for which this table was created.
-
-        @param path         the path to add
-        @param transform    an optional transform to apply to the path while it's
-                            being added
-    */
-    void addPath (const Path& path,
-                  const AffineTransform& transform) throw();
-
-    /** Reduces the amount of space the table has allocated.
-
-        This will shrink the table down to use as little memory as possible - useful for
-        read-only tables that get stored and re-used for rendering.
-    */
-    void optimiseTable() throw();
-
-    /** Iterates the lines in the table, for rendering.
-
-        This function will iterate each line in the table, and call a user-defined class
-        to render each pixel or continuous line of pixels that the table contains.
-
-        @param iterationCallback    this templated class must contain the following methods:
-                                        @code
-                                        inline void setEdgeTableYPos (int y);
-                                        inline void handleEdgeTablePixel (int x, int alphaLevel) const;
-                                        inline void handleEdgeTableLine (int x, int width, int alphaLevel) const;
-                                        @endcode
-                                        (these don't necessarily have to be 'const', but it might help it go faster)
-        @param clipLeft             the left-hand edge of the rectangle which should be iterated
-        @param clipTop              the top edge of the rectangle which should be iterated
-        @param clipRight            the right-hand edge of the rectangle which should be iterated
-        @param clipBottom           the bottom edge of the rectangle which should be iterated
-        @param subPixelXOffset      a fraction of 1 pixel by which to shift the table rightwards, in the range 0 to 255
-    */
-    template <class EdgeTableIterationCallback>
-    void iterate (EdgeTableIterationCallback& iterationCallback,
-                  const int clipLeft,
-                  int clipTop,
-                  const int clipRight,
-                  int clipBottom,
-                  const int subPixelXOffset) const
-    {
-        if (clipTop < top)
-            clipTop = top;
-
-        if (clipBottom > top + height)
-            clipBottom = top + height;
-
-        const int* singleLine = table + lineStrideElements
-                                          * ((clipTop - top) << (int) oversampling);
-
-        int mergedLineAllocation = 128;
-        MemoryBlock temp (mergedLineAllocation * (2 * sizeof (int)));
-        int* mergedLine = (int*) temp.getData();
-
-        const int timesOverSampling = 1 << (int) oversampling;
-
-        for (int y = clipTop; y < clipBottom; ++y)
-        {
-            int numMergedPoints = 0;
-
-            // sort all the oversampled lines into a single merged line ready to draw..
-            for (int over = timesOverSampling; --over >= 0;)
-            {
-                const int* l = singleLine;
-                singleLine += lineStrideElements;
-
-                int num = *l;
-                jassert (num >= 0);
-
-                if (num > 0)
-                {
-                    if (numMergedPoints + num >= mergedLineAllocation)
-                    {
-                        mergedLineAllocation = (numMergedPoints + num + 0x100) & ~0xff;
-                        temp.setSize (mergedLineAllocation * (2 * sizeof (int)), false);
-                        mergedLine = (int*) temp.getData();
-                    }
-
-                    while (--num >= 0)
-                    {
-                        const int x = *++l;
-                        const int winding = *++l;
-
-                        int n = numMergedPoints << 1;
-
-                        while (n > 0)
-                        {
-                            const int cx = mergedLine [n - 2];
-
-                            if (cx <= x)
-                                break;
-
-                            mergedLine [n] = cx;
-                            --n;
-                            mergedLine [n + 2] = mergedLine [n];
-                            --n;
-                        }
-
-                        mergedLine [n] = x;
-                        mergedLine [n + 1] = winding;
-
-                        ++numMergedPoints;
-                    }
-                }
-            }
-
-            if (--numMergedPoints > 0)
-            {
-                const int* line = mergedLine;
-                int x = subPixelXOffset + *line;
-                int level = *++line;
-                int levelAccumulator = 0;
-
-                iterationCallback.setEdgeTableYPos (y);
-
-                while (--numMergedPoints >= 0)
-                {
-                    const int endX = subPixelXOffset + *++line;
-                    jassert (endX >= x);
-
-                    const int absLevel = abs (level);
-                    int endOfRun = (endX >> 8);
-
-                    if (endOfRun == (x >> 8))
-                    {
-                        // small segment within the same pixel, so just save it for the next
-                        // time round..
-                        levelAccumulator += (endX - x) * absLevel;
-                    }
-                    else
-                    {
-                        // plot the fist pixel of this segment, including any accumulated
-                        // levels from smaller segments that haven't been drawn yet
-                        levelAccumulator += (0xff - (x & 0xff)) * absLevel;
-
-                        levelAccumulator >>= 8;
-                        if (levelAccumulator > 0xff)
-                            levelAccumulator = 0xff;
-
-                        x >>= 8;
-
-                        if (x >= clipRight)
-                        {
-                            levelAccumulator = 0;
-                            break;
-                        }
-
-                        if (x >= clipLeft && x < clipRight && levelAccumulator > 0)
-                            iterationCallback.handleEdgeTablePixel (x, levelAccumulator);
-
-                        if (++x >= clipRight)
-                        {
-                            levelAccumulator = 0;
-                            break;
-                        }
-
-                        // if there's a segment of solid pixels, do it all in one go..
-                        if (absLevel > 0 && endOfRun > x)
-                        {
-                            if (x < clipLeft)
-                                x = clipLeft;
-
-                            if (endOfRun > clipRight)
-                                endOfRun = clipRight;
-
-                            const int numPix = endOfRun - x;
-
-                            if (numPix > 0)
-                                iterationCallback.handleEdgeTableLine (x, numPix,
-                                                                       jmin (absLevel, 0xff));
-                        }
-
-                        // save the bit at the end to be drawn next time round the loop.
-                        levelAccumulator = (endX & 0xff) * absLevel;
-                    }
-
-                    level += *++line;
-                    x = endX;
-                }
-
-                if (levelAccumulator > 0)
-                {
-                    levelAccumulator >>= 8;
-                    if (levelAccumulator > 0xff)
-                        levelAccumulator = 0xff;
-
-                    x >>= 8;
-                    if (x >= clipLeft && x < clipRight)
-                        iterationCallback.handleEdgeTablePixel (x, levelAccumulator);
-                }
-            }
-        }
-    }
+    /** Checks to see if a point lies within this glyph. */
+    bool hitTest (float x, float y) const throw();
 
     juce_UseDebuggingNewOperator
 
 private:
-    // table line format: number of points; point0 x, point0 levelDelta, point1 x, point1 levelDelta, etc
-    int* table;
-    int top, height, maxEdgesPerLine, lineStrideElements;
-    OversamplingLevel oversampling;
 
-    // this will assume that the y co-ord is within bounds, and will avoid checking
-    // this for speed.
-    void addEdgePoint (const int x, const int y, const int winding) throw();
+    friend class GlyphArrangement;
+    float x, y, w;
+    Font font;
+    juce_wchar character;
+    int glyph;
 
-    void remapTableForNumEdges (const int newNumEdgesPerLine) throw();
+    PositionedGlyph() throw();
 };
 
-#endif   // __JUCE_EDGETABLE_JUCEHEADER__
-/********* End of inlined file: juce_EdgeTable.h *********/
+/**
+    A set of glyphs, each with a position.
+
+    You can create a GlyphArrangement, text to it and then draw it onto a
+    graphics context. It's used internally by the text methods in the
+    Graphics class, but can be used directly if more control is needed.
+
+    @see Font, PositionedGlyph
+*/
+class JUCE_API  GlyphArrangement
+{
+public:
+
+    /** Creates an empty arrangement. */
+    GlyphArrangement() throw();
+
+    /** Takes a copy of another arrangement. */
+    GlyphArrangement (const GlyphArrangement& other) throw();
+
+    /** Copies another arrangement onto this one.
+
+        To add another arrangement without clearing this one, use addGlyphArrangement().
+    */
+    const GlyphArrangement& operator= (const GlyphArrangement& other) throw();
+
+    /** Destructor. */
+    ~GlyphArrangement() throw();
+
+    /** Returns the total number of glyphs in the arrangement. */
+    int getNumGlyphs() const throw()                            { return glyphs.size(); }
+
+    /** Returns one of the glyphs from the arrangement.
+
+        @param index    the glyph's index, from 0 to (getNumGlyphs() - 1). Be
+                        careful not to pass an out-of-range index here, as it
+                        doesn't do any bounds-checking.
+    */
+    PositionedGlyph& getGlyph (const int index) const throw();
+
+    /** Clears all text from the arrangement and resets it.
+    */
+    void clear() throw();
+
+    /** Appends a line of text to the arrangement.
+
+        This will add the text as a single line, where x is the left-hand edge of the
+        first character, and y is the position for the text's baseline.
+
+        If the text contains new-lines or carriage-returns, this will ignore them - use
+        addJustifiedText() to add multi-line arrangements.
+    */
+    void addLineOfText (const Font& font,
+                        const String& text,
+                        const float x,
+                        const float y) throw();
+
+    /** Adds a line of text, truncating it if it's wider than a specified size.
+
+        This is the same as addLineOfText(), but if the line's width exceeds the value
+        specified in maxWidthPixels, it will be truncated using either ellipsis (i.e. dots: "..."),
+        if useEllipsis is true, or if this is false, it will just drop any subsequent characters.
+    */
+    void addCurtailedLineOfText (const Font& font,
+                                 const String& text,
+                                 float x,
+                                 const float y,
+                                 const float maxWidthPixels,
+                                 const bool useEllipsis) throw();
+
+    /** Adds some multi-line text, breaking lines at word-boundaries if they are too wide.
+
+        This will add text to the arrangement, breaking it into new lines either where there
+        is a new-line or carriage-return character in the text, or where a line's width
+        exceeds the value set in maxLineWidth.
+
+        Each line that is added will be laid out using the flags set in horizontalLayout, so
+        the lines can be left- or right-justified, or centred horizontally in the space
+        between x and (x + maxLineWidth).
+
+        The y co-ordinate is the position of the baseline of the first line of text - subsequent
+        lines will be placed below it, separated by a distance of font.getHeight().
+    */
+    void addJustifiedText (const Font& font,
+                           const String& text,
+                           float x, float y,
+                           const float maxLineWidth,
+                           const Justification& horizontalLayout) throw();
+
+    /** Tries to fit some text withing a given space.
+
+        This does its best to make the given text readable within the specified rectangle,
+        so it useful for labelling things.
+
+        If the text is too big, it'll be squashed horizontally or broken over multiple lines
+        if the maximumLinesToUse value allows this. If the text just won't fit into the space,
+        it'll cram as much as possible in there, and put some ellipsis at the end to show that
+        it's been truncated.
+
+        A Justification parameter lets you specify how the text is laid out within the rectangle,
+        both horizontally and vertically.
+
+        @see Graphics::drawFittedText
+    */
+    void addFittedText (const Font& font,
+                        const String& text,
+                        const float x, const float y,
+                        const float width, const float height,
+                        const Justification& layout,
+                        int maximumLinesToUse,
+                        const float minimumHorizontalScale = 0.7f) throw();
+
+    /** Appends another glyph arrangement to this one. */
+    void addGlyphArrangement (const GlyphArrangement& other) throw();
+
+    /** Draws this glyph arrangement to a graphics context.
+
+        This uses cached bitmaps so is much faster than the draw (Graphics&, const AffineTransform&)
+        method, which renders the glyphs as filled vectors.
+    */
+    void draw (const Graphics& g) const throw();
+
+    /** Draws this glyph arrangement to a graphics context.
+
+        This renders the paths as filled vectors, so is far slower than the draw (Graphics&)
+        method for non-transformed arrangements.
+    */
+    void draw (const Graphics& g, const AffineTransform& transform) const throw();
+
+    /** Converts the set of glyphs into a path.
+
+        @param path     the glyphs' outlines will be appended to this path
+    */
+    void createPath (Path& path) const throw();
+
+    /** Looks for a glyph that contains the given co-ordinate.
+
+        @returns the index of the glyph, or -1 if none were found.
+    */
+    int findGlyphIndexAt (float x, float y) const throw();
+
+    /** Finds the smallest rectangle that will enclose a subset of the glyphs.
+
+        @param startIndex               the first glyph to test
+        @param numGlyphs                the number of glyphs to include; if this is < 0, all glyphs after
+                                        startIndex will be included
+        @param left                     on return, the leftmost co-ordinate of the rectangle
+        @param top                      on return, the top co-ordinate of the rectangle
+        @param right                    on return, the rightmost co-ordinate of the rectangle
+        @param bottom                   on return, the bottom co-ordinate of the rectangle
+        @param includeWhitespace        if true, the extent of any whitespace characters will also
+                                        be taken into account
+    */
+    void getBoundingBox (int startIndex,
+                         int numGlyphs,
+                         float& left,
+                         float& top,
+                         float& right,
+                         float& bottom,
+                         const bool includeWhitespace) const throw();
+
+    /** Shifts a set of glyphs by a given amount.
+
+        @param startIndex   the first glyph to transform
+        @param numGlyphs    the number of glyphs to move; if this is < 0, all glyphs after
+                            startIndex will be used
+        @param deltaX       the amount to add to their x-positions
+        @param deltaY       the amount to add to their y-positions
+    */
+    void moveRangeOfGlyphs (int startIndex, int numGlyphs,
+                            const float deltaX,
+                            const float deltaY) throw();
+
+    /** Removes a set of glyphs from the arrangement.
+
+        @param startIndex   the first glyph to remove
+        @param numGlyphs    the number of glyphs to remove; if this is < 0, all glyphs after
+                            startIndex will be deleted
+    */
+    void removeRangeOfGlyphs (int startIndex, int numGlyphs) throw();
+
+    /** Expands or compresses a set of glyphs horizontally.
+
+        @param startIndex               the first glyph to transform
+        @param numGlyphs                the number of glyphs to stretch; if this is < 0, all glyphs after
+                                        startIndex will be used
+        @param horizontalScaleFactor    how much to scale their horizontal width by
+    */
+    void stretchRangeOfGlyphs (int startIndex, int numGlyphs,
+                               const float horizontalScaleFactor) throw();
+
+    /** Justifies a set of glyphs within a given space.
+
+        This moves the glyphs as a block so that the whole thing is located within the
+        given rectangle with the specified layout.
+
+        If the Justification::horizontallyJustified flag is specified, each line will
+        be stretched out to fill the specified width.
+    */
+    void justifyGlyphs (const int startIndex, const int numGlyphs,
+                        const float x,
+                        const float y,
+                        const float width,
+                        const float height,
+                        const Justification& justification) throw();
+
+    juce_UseDebuggingNewOperator
+
+private:
+    OwnedArray <PositionedGlyph> glyphs;
+
+    int insertEllipsis (const Font& font, const float maxXPos, const int startIndex, int endIndex) throw();
+    int fitLineIntoSpace (int start, int numGlyphs, float x, float y, float w, float h, const Font& font,
+                          const Justification& justification, float minimumHorizontalScale) throw();
+    void spreadOutLine (const int start, const int numGlyphs, const float targetWidth) throw();
+};
+
+#endif   // __JUCE_GLYPHARRANGEMENT_JUCEHEADER__
+/********* End of inlined file: juce_GlyphArrangement.h *********/
 
 #endif
-#ifndef __JUCE_GRAPHICS_JUCEHEADER__
+#ifndef __JUCE_EDGETABLE_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_JUSTIFICATION_JUCEHEADER__
@@ -38698,6 +39899,9 @@ public:
     /** Cliping co-ords are relative to the origin. */
     virtual bool reduceClipRegion (const RectangleList& clipRegion) = 0;
 
+    //virtual bool clipToPath (const Path& path) = 0;
+    //virtual bool clipToImageAlpha (Image& image, int imageX, int imageY) = 0;
+
     /** Cliping co-ords are relative to the origin. */
     virtual void excludeClipRegion (int x, int y, int w, int h) = 0;
 
@@ -38708,41 +39912,185 @@ public:
     virtual const Rectangle getClipBounds() const = 0;
     virtual bool isClipEmpty() const = 0;
 
-    virtual void fillRectWithColour (int x, int y, int w, int h, const Colour& colour, const bool replaceExistingContents) = 0;
-    virtual void fillRectWithGradient (int x, int y, int w, int h, const ColourGradient& gradient) = 0;
+    virtual void setColour (const Colour& colour) = 0;
+    virtual void setGradient (const ColourGradient& gradient) = 0;
+    virtual void setOpacity (float opacity) = 0;
+    virtual void setInterpolationQuality (Graphics::ResamplingQuality quality) = 0;
 
-    virtual void fillPathWithColour (const Path& path, const AffineTransform& transform, const Colour& colour, EdgeTable::OversamplingLevel quality) = 0;
-    virtual void fillPathWithGradient (const Path& path, const AffineTransform& transform, const ColourGradient& gradient, EdgeTable::OversamplingLevel quality) = 0;
+    virtual void fillRect (int x, int y, int w, int h, const bool replaceExistingContents) = 0;
+    virtual void fillPath (const Path& path, const AffineTransform& transform) = 0;
+
     virtual void fillPathWithImage (const Path& path, const AffineTransform& transform,
-                                    const Image& image, int imageX, int imageY, float alpha, EdgeTable::OversamplingLevel quality) = 0;
+                                    const Image& image, int imageX, int imageY) = 0;
 
-    virtual void fillAlphaChannelWithColour (const Image& alphaImage, int alphaImageX, int alphaImageY, const Colour& colour) = 0;
-    virtual void fillAlphaChannelWithGradient (const Image& alphaImage, int alphaImageX, int alphaImageY, const ColourGradient& gradient) = 0;
+    virtual void fillAlphaChannel (const Image& alphaImage, int alphaImageX, int alphaImageY) = 0;
     virtual void fillAlphaChannelWithImage (const Image& alphaImage, int alphaImageX, int alphaImageY,
-                                            const Image& fillerImage, int fillerImageX, int fillerImageY, float alpha) = 0;
+                                            const Image& fillerImage, int fillerImageX, int fillerImageY) = 0;
 
     virtual void blendImage (const Image& sourceImage,
-                             int destX, int destY, int destW, int destH, int sourceX, int sourceY,
-                             float alpha) = 0;
-
-    virtual void blendImageRescaling (const Image& sourceImage,
-                                      int destX, int destY, int destW, int destH,
-                                      int sourceX, int sourceY, int sourceW, int sourceH,
-                                      float alpha, const Graphics::ResamplingQuality quality) = 0;
+                             int destX, int destY, int destW, int destH, int sourceX, int sourceY) = 0;
 
     virtual void blendImageWarping (const Image& sourceImage,
                                     int srcClipX, int srcClipY, int srcClipW, int srcClipH,
-                                    const AffineTransform& transform,
-                                    float alpha, const Graphics::ResamplingQuality quality) = 0;
+                                    const AffineTransform& transform) = 0;
 
-    virtual void drawLine (double x1, double y1, double x2, double y2, const Colour& colour) = 0;
+    virtual void drawLine (double x1, double y1, double x2, double y2) = 0;
+    virtual void drawVerticalLine (const int x, double top, double bottom) = 0;
+    virtual void drawHorizontalLine (const int y, double left, double right) = 0;
 
-    virtual void drawVerticalLine (const int x, double top, double bottom, const Colour& col) = 0;
-    virtual void drawHorizontalLine (const int y, double left, double right, const Colour& col) = 0;
+    virtual void setFont (const Font& newFont) = 0;
+    virtual void drawGlyph (int glyphNumber, float x, float y) = 0;
+    virtual void drawGlyph (int glyphNumber, const AffineTransform& transform) = 0;
 };
 
 #endif   // __JUCE_LOWLEVELGRAPHICSCONTEXT_JUCEHEADER__
 /********* End of inlined file: juce_LowLevelGraphicsContext.h *********/
+
+#endif
+#ifndef __JUCE_LOWLEVELGRAPHICSSOFTWARERENDERER_JUCEHEADER__
+
+/********* Start of inlined file: juce_LowLevelGraphicsSoftwareRenderer.h *********/
+#ifndef __JUCE_LOWLEVELGRAPHICSSOFTWARERENDERER_JUCEHEADER__
+#define __JUCE_LOWLEVELGRAPHICSSOFTWARERENDERER_JUCEHEADER__
+
+/**
+    A lowest-common-denominator implementation of LowLevelGraphicsContext that does all
+    its rendering in memory.
+
+    User code is not supposed to create instances of this class directly - do all your
+    rendering via the Graphics class instead.
+*/
+class JUCE_API  LowLevelGraphicsSoftwareRenderer    : public LowLevelGraphicsContext
+{
+public:
+
+    LowLevelGraphicsSoftwareRenderer (Image& imageToRenderOn);
+    ~LowLevelGraphicsSoftwareRenderer();
+
+    bool isVectorDevice() const;
+
+    void setOrigin (int x, int y);
+
+    bool reduceClipRegion (int x, int y, int w, int h);
+    bool reduceClipRegion (const RectangleList& clipRegion);
+    void excludeClipRegion (int x, int y, int w, int h);
+
+    void clipToPath (const Path& path, const AffineTransform& transform);
+    void clipToImage (Image& image, int imageX, int imageY);
+
+    void saveState();
+    void restoreState();
+
+    bool clipRegionIntersects (int x, int y, int w, int h);
+    const Rectangle getClipBounds() const;
+    bool isClipEmpty() const;
+
+    void setColour (const Colour& colour);
+    void setGradient (const ColourGradient& gradient);
+    void setOpacity (float opacity);
+    void setInterpolationQuality (Graphics::ResamplingQuality quality);
+
+    void fillRect (int x, int y, int w, int h, const bool replaceExistingContents);
+    void fillPath (const Path& path, const AffineTransform& transform);
+
+    void fillPathWithImage (const Path& path, const AffineTransform& transform,
+                            const Image& image, int imageX, int imageY);
+
+    void fillAlphaChannel (const Image& alphaImage, int imageX, int imageY);
+    void fillAlphaChannelWithImage (const Image& alphaImage, int alphaImageX, int alphaImageY,
+                                    const Image& fillerImage, int fillerImageX, int fillerImageY);
+
+    void blendImage (const Image& sourceImage, int destX, int destY, int destW, int destH,
+                     int sourceX, int sourceY);
+
+    void blendImageWarping (const Image& sourceImage, int srcClipX, int srcClipY, int srcClipW, int srcClipH,
+                            const AffineTransform& transform);
+
+    void drawLine (double x1, double y1, double x2, double y2);
+
+    void drawVerticalLine (const int x, double top, double bottom);
+    void drawHorizontalLine (const int x, double top, double bottom);
+
+    void setFont (const Font& newFont);
+    void drawGlyph (int glyphNumber, float x, float y);
+    void drawGlyph (int glyphNumber, const AffineTransform& transform);
+
+    RectangleList* getRawClipRegion() throw()                   { return clip; }
+
+    juce_UseDebuggingNewOperator
+
+protected:
+
+    Image& image;
+    RectangleList* clip;
+    int xOffset, yOffset;
+    Font font;
+    Colour colour;
+    ColourGradient* gradient;
+    Graphics::ResamplingQuality interpolationQuality;
+
+    struct SavedState
+    {
+        SavedState (RectangleList* const clip, const int xOffset, const int yOffset,
+                    const Font& font, const Colour& colour, ColourGradient* gradient,
+                    Graphics::ResamplingQuality interpolationQuality);
+        ~SavedState();
+
+        RectangleList* clip;
+        const int xOffset, yOffset;
+        Font font;
+        Colour colour;
+        ColourGradient* gradient;
+        Graphics::ResamplingQuality interpolationQuality;
+
+    private:
+        SavedState (const SavedState&);
+        const SavedState& operator= (const SavedState&);
+    };
+
+    OwnedArray <SavedState> stateStack;
+
+    void drawVertical (const int x, const double top, const double bottom);
+    void drawHorizontal (const int y, const double top, const double bottom);
+
+    bool getPathBounds (int clipX, int clipY, int clipW, int clipH,
+                        const Path& path, const AffineTransform& transform,
+                        int& x, int& y, int& w, int& h) const;
+
+    void clippedFillRectWithColour (const Rectangle& clipRect, int x, int y, int w, int h, const Colour& colour, const bool replaceExistingContents);
+
+    void clippedFillPath (int clipX, int clipY, int clipW, int clipH, const Path& path, const AffineTransform& transform);
+    void clippedFillPathWithImage (int clipX, int clipY, int clipW, int clipH, const Path& path, const AffineTransform& transform,
+                                   const Image& image, int imageX, int imageY, float alpha);
+
+    void clippedFillAlphaChannel (int clipX, int clipY, int clipW, int clipH, const Image& alphaImage, int alphaImageX, int alphaImageY);
+    void clippedFillAlphaChannelWithImage (int clipX, int clipY, int clipW, int clipH, const Image& alphaImage, int alphaImageX, int alphaImageY,
+                                           const Image& fillerImage, int fillerImageX, int fillerImageY, const float opacity);
+
+    void clippedBlendImage (int clipX, int clipY, int clipW, int clipH, const Image& sourceImage,
+                            int destX, int destY, int destW, int destH, int sourceX, int sourceY);
+
+    void clippedBlendImageWarping (int clipX, int clipY, int clipW, int clipH, const Image& sourceImage,
+                                   int srcClipX, int srcClipY, int srcClipW, int srcClipH,
+                                   const AffineTransform& transform);
+
+    void clippedDrawLine (int clipX, int clipY, int clipW, int clipH, double x1, double y1, double x2, double y2);
+
+    void clippedDrawVerticalLine (int clipX, int clipY, int clipW, int clipH, const int x, double top, double bottom);
+    void clippedDrawHorizontalLine (int clipX, int clipY, int clipW, int clipH, const int x, double top, double bottom);
+
+    LowLevelGraphicsSoftwareRenderer (const LowLevelGraphicsSoftwareRenderer& other);
+    const LowLevelGraphicsSoftwareRenderer& operator= (const LowLevelGraphicsSoftwareRenderer&);
+};
+
+#endif   // __JUCE_LOWLEVELGRAPHICSSOFTWARERENDERER_JUCEHEADER__
+/********* End of inlined file: juce_LowLevelGraphicsSoftwareRenderer.h *********/
+
+#endif
+#ifndef __JUCE_RECTANGLEPLACEMENT_JUCEHEADER__
+
+#endif
+#ifndef __JUCE_GRAPHICS_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_LOWLEVELGRAPHICSPOSTSCRIPTRENDERER_JUCEHEADER__
@@ -38781,34 +40129,35 @@ public:
     const Rectangle getClipBounds() const;
     bool isClipEmpty() const;
 
-    void fillRectWithColour (int x, int y, int w, int h, const Colour& colour, const bool replaceExistingContents);
-    void fillRectWithGradient (int x, int y, int w, int h, const ColourGradient& gradient);
+    void setColour (const Colour& colour);
+    void setGradient (const ColourGradient& gradient);
+    void setOpacity (float opacity);
+    void setInterpolationQuality (Graphics::ResamplingQuality quality);
 
-    void fillPathWithColour (const Path& path, const AffineTransform& transform, const Colour& colour, EdgeTable::OversamplingLevel quality);
-    void fillPathWithGradient (const Path& path, const AffineTransform& transform, const ColourGradient& gradient, EdgeTable::OversamplingLevel quality);
+    void fillRect (int x, int y, int w, int h, const bool replaceExistingContents);
+    void fillPath (const Path& path, const AffineTransform& transform);
+
     void fillPathWithImage (const Path& path, const AffineTransform& transform,
-                            const Image& image, int imageX, int imageY, float alpha, EdgeTable::OversamplingLevel quality);
+                            const Image& image, int imageX, int imageY);
 
-    void fillAlphaChannelWithColour (const Image& alphaImage, int imageX, int imageY, const Colour& colour);
-    void fillAlphaChannelWithGradient (const Image& alphaImage, int imageX, int imageY, const ColourGradient& gradient);
+    void fillAlphaChannel (const Image& alphaImage, int imageX, int imageY);
     void fillAlphaChannelWithImage (const Image& alphaImage, int alphaImageX, int alphaImageY,
-                                    const Image& fillerImage, int fillerImageX, int fillerImageY, float alpha);
+                                    const Image& fillerImage, int fillerImageX, int fillerImageY);
 
     void blendImage (const Image& sourceImage, int destX, int destY, int destW, int destH,
-                     int sourceX, int sourceY, float alpha);
-
-    void blendImageRescaling (const Image& sourceImage, int destX, int destY, int destW, int destH,
-                              int sourceX, int sourceY, int sourceW, int sourceH,
-                              float alpha, const Graphics::ResamplingQuality quality);
+                     int sourceX, int sourceY);
 
     void blendImageWarping (const Image& sourceImage, int srcClipX, int srcClipY, int srcClipW, int srcClipH,
-                            const AffineTransform& transform,
-                            float alpha, const Graphics::ResamplingQuality quality);
+                            const AffineTransform& transform);
 
-    void drawLine (double x1, double y1, double x2, double y2, const Colour& colour);
+    void drawLine (double x1, double y1, double x2, double y2);
 
-    void drawVerticalLine (const int x, double top, double bottom, const Colour& col);
-    void drawHorizontalLine (const int x, double top, double bottom, const Colour& col);
+    void drawVerticalLine (const int x, double top, double bottom);
+    void drawHorizontalLine (const int x, double top, double bottom);
+
+    void setFont (const Font& newFont);
+    void drawGlyph (int glyphNumber, float x, float y);
+    void drawGlyph (int glyphNumber, const AffineTransform& transform);
 
     juce_UseDebuggingNewOperator
 
@@ -38818,15 +40167,21 @@ protected:
     RectangleList* clip;
     int totalWidth, totalHeight, xOffset, yOffset;
     bool needToClip;
-    Colour lastColour;
+    Colour lastColour, colour;
+    ColourGradient* gradient;
+    Font font;
 
     struct SavedState
     {
-        SavedState (RectangleList* const clip, const int xOffset, const int yOffset);
+        SavedState (RectangleList* const clip, const int xOffset, const int yOffset,
+                    const Colour& colour, ColourGradient* const gradient, const Font& font);
         ~SavedState();
 
         RectangleList* clip;
         const int xOffset, yOffset;
+        Colour colour;
+        ColourGradient* gradient;
+        Font font;
 
     private:
         SavedState (const SavedState&);
@@ -38848,139 +40203,6 @@ protected:
 
 #endif   // __JUCE_LOWLEVELGRAPHICSPOSTSCRIPTRENDERER_JUCEHEADER__
 /********* End of inlined file: juce_LowLevelGraphicsPostScriptRenderer.h *********/
-
-#endif
-#ifndef __JUCE_LOWLEVELGRAPHICSSOFTWARERENDERER_JUCEHEADER__
-
-/********* Start of inlined file: juce_LowLevelGraphicsSoftwareRenderer.h *********/
-#ifndef __JUCE_LOWLEVELGRAPHICSSOFTWARERENDERER_JUCEHEADER__
-#define __JUCE_LOWLEVELGRAPHICSSOFTWARERENDERER_JUCEHEADER__
-
-/**
-    A lowest-common-denominator implementation of LowLevelGraphicsContext that does all
-    its rendering in memory.
-
-    User code is not supposed to create instances of this class directly - do all your
-    rendering via the Graphics class instead.
-*/
-class JUCE_API  LowLevelGraphicsSoftwareRenderer    : public LowLevelGraphicsContext
-{
-public:
-
-    LowLevelGraphicsSoftwareRenderer (Image& imageToRenderOn);
-    ~LowLevelGraphicsSoftwareRenderer();
-
-    bool isVectorDevice() const;
-
-    void setOrigin (int x, int y);
-
-    bool reduceClipRegion (int x, int y, int w, int h);
-    bool reduceClipRegion (const RectangleList& clipRegion);
-    void excludeClipRegion (int x, int y, int w, int h);
-
-    void saveState();
-    void restoreState();
-
-    bool clipRegionIntersects (int x, int y, int w, int h);
-    const Rectangle getClipBounds() const;
-    bool isClipEmpty() const;
-
-    void fillRectWithColour (int x, int y, int w, int h, const Colour& colour, const bool replaceExistingContents);
-    void fillRectWithGradient (int x, int y, int w, int h, const ColourGradient& gradient);
-
-    void fillPathWithColour (const Path& path, const AffineTransform& transform, const Colour& colour, EdgeTable::OversamplingLevel quality);
-    void fillPathWithGradient (const Path& path, const AffineTransform& transform, const ColourGradient& gradient, EdgeTable::OversamplingLevel quality);
-    void fillPathWithImage (const Path& path, const AffineTransform& transform,
-                            const Image& image, int imageX, int imageY, float alpha, EdgeTable::OversamplingLevel quality);
-
-    void fillAlphaChannelWithColour (const Image& alphaImage, int imageX, int imageY, const Colour& colour);
-    void fillAlphaChannelWithGradient (const Image& alphaImage, int imageX, int imageY, const ColourGradient& gradient);
-    void fillAlphaChannelWithImage (const Image& alphaImage, int alphaImageX, int alphaImageY,
-                                    const Image& fillerImage, int fillerImageX, int fillerImageY, float alpha);
-
-    void blendImage (const Image& sourceImage, int destX, int destY, int destW, int destH,
-                     int sourceX, int sourceY, float alpha);
-
-    void blendImageRescaling (const Image& sourceImage, int destX, int destY, int destW, int destH,
-                              int sourceX, int sourceY, int sourceW, int sourceH,
-                              float alpha, const Graphics::ResamplingQuality quality);
-
-    void blendImageWarping (const Image& sourceImage, int srcClipX, int srcClipY, int srcClipW, int srcClipH,
-                            const AffineTransform& transform,
-                            float alpha, const Graphics::ResamplingQuality quality);
-
-    void drawLine (double x1, double y1, double x2, double y2, const Colour& colour);
-
-    void drawVerticalLine (const int x, double top, double bottom, const Colour& col);
-    void drawHorizontalLine (const int x, double top, double bottom, const Colour& col);
-
-    RectangleList* getRawClipRegion() throw()                   { return clip; }
-
-    juce_UseDebuggingNewOperator
-
-protected:
-
-    Image& image;
-    RectangleList* clip;
-    int xOffset, yOffset;
-
-    struct SavedState
-    {
-        SavedState (RectangleList* const clip, const int xOffset, const int yOffset);
-        ~SavedState();
-
-        RectangleList* clip;
-        const int xOffset, yOffset;
-
-    private:
-        SavedState (const SavedState&);
-        const SavedState& operator= (const SavedState&);
-    };
-
-    OwnedArray <SavedState> stateStack;
-
-    void drawVertical (const int x, const double top, const double bottom, const Colour& col);
-    void drawHorizontal (const int y, const double top, const double bottom, const Colour& col);
-
-    bool getPathBounds (int clipX, int clipY, int clipW, int clipH,
-                        const Path& path, const AffineTransform& transform,
-                        int& x, int& y, int& w, int& h) const;
-
-    void clippedFillRectWithColour (const Rectangle& clipRect, int x, int y, int w, int h, const Colour& colour, const bool replaceExistingContents);
-
-    void clippedFillPathWithColour (int clipX, int clipY, int clipW, int clipH, const Path& path, const AffineTransform& transform, const Colour& colour, EdgeTable::OversamplingLevel quality);
-    void clippedFillPathWithGradient (int clipX, int clipY, int clipW, int clipH, const Path& path, const AffineTransform& transform, const ColourGradient& gradient, EdgeTable::OversamplingLevel quality);
-    void clippedFillPathWithImage (int clipX, int clipY, int clipW, int clipH, const Path& path, const AffineTransform& transform,
-                                   const Image& image, int imageX, int imageY, float alpha, EdgeTable::OversamplingLevel quality);
-
-    void clippedFillAlphaChannelWithColour (int clipX, int clipY, int clipW, int clipH, const Image& alphaImage, int alphaImageX, int alphaImageY, const Colour& colour);
-    void clippedFillAlphaChannelWithGradient (int clipX, int clipY, int clipW, int clipH, const Image& alphaImage, int alphaImageX, int alphaImageY, const ColourGradient& gradient);
-    void clippedFillAlphaChannelWithImage (int clipX, int clipY, int clipW, int clipH, const Image& alphaImage, int alphaImageX, int alphaImageY,
-                                           const Image& fillerImage, int fillerImageX, int fillerImageY, float alpha);
-
-    void clippedBlendImage (int clipX, int clipY, int clipW, int clipH, const Image& sourceImage,
-                            int destX, int destY, int destW, int destH, int sourceX, int sourceY,
-                            float alpha);
-
-    void clippedBlendImageWarping (int clipX, int clipY, int clipW, int clipH, const Image& sourceImage,
-                                   int srcClipX, int srcClipY, int srcClipW, int srcClipH,
-                                   const AffineTransform& transform,
-                                   float alpha, const Graphics::ResamplingQuality quality);
-
-    void clippedDrawLine (int clipX, int clipY, int clipW, int clipH, double x1, double y1, double x2, double y2, const Colour& colour);
-
-    void clippedDrawVerticalLine (int clipX, int clipY, int clipW, int clipH, const int x, double top, double bottom, const Colour& col);
-    void clippedDrawHorizontalLine (int clipX, int clipY, int clipW, int clipH, const int x, double top, double bottom, const Colour& col);
-
-    LowLevelGraphicsSoftwareRenderer (const LowLevelGraphicsSoftwareRenderer& other);
-    const LowLevelGraphicsSoftwareRenderer& operator= (const LowLevelGraphicsSoftwareRenderer&);
-};
-
-#endif   // __JUCE_LOWLEVELGRAPHICSSOFTWARERENDERER_JUCEHEADER__
-/********* End of inlined file: juce_LowLevelGraphicsSoftwareRenderer.h *********/
-
-#endif
-#ifndef __JUCE_RECTANGLEPLACEMENT_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_AFFINETRANSFORM_JUCEHEADER__
@@ -39027,7 +40249,7 @@ public:
     */
     PathFlatteningIterator (const Path& path,
                             const AffineTransform& transform = AffineTransform::identity,
-                            float tolerence = 9.0f) throw();
+                            float tolerence = 6.0f) throw();
 
     /** Destructor. */
     ~PathFlatteningIterator() throw();
@@ -39065,7 +40287,9 @@ public:
     int subPathIndex;
 
     /** Returns true if the current segment is the last in the current sub-path. */
-    bool isLastInSubpath() const throw()                { return stackPos == stackBase; }
+    bool isLastInSubpath() const throw()    { return stackPos == stackBase
+                                                      && (index >= path.numElements
+                                                           || points [index] == Path::moveMarker); }
 
     juce_UseDebuggingNewOperator
 
@@ -39414,6 +40638,135 @@ private:
 #ifndef __JUCE_RECTANGLELIST_JUCEHEADER__
 
 #endif
+#ifndef __JUCE_CAMERADEVICE_JUCEHEADER__
+
+/********* Start of inlined file: juce_CameraDevice.h *********/
+#ifndef __JUCE_CAMERADEVICE_JUCEHEADER__
+#define __JUCE_CAMERADEVICE_JUCEHEADER__
+
+#if JUCE_USE_CAMERA
+
+/**
+    Receives callbacks with images from a CameraDevice.
+
+    @see CameraDevice::addListener
+*/
+class CameraImageListener
+{
+public:
+    CameraImageListener() {}
+    virtual ~CameraImageListener() {}
+
+    /** This method is called when a new image arrives.
+
+        This may be called by any thread, so be careful about thread-safety,
+        and make sure that you process the data as quickly as possible to
+        avoid glitching!
+    */
+    virtual void imageReceived (Image& image) = 0;
+};
+
+/**
+    Controls any camera capture devices that might be available.
+
+    Use getAvailableDevices() to list the devices that are attached to the
+    system, then call openDevice to open one for use. Once you have a CameraDevice
+    object, you can get a viewer component from it, and use its methods to
+    stream to a file or capture still-frames.
+*/
+class JUCE_API  CameraDevice
+{
+public:
+    /** Destructor. */
+    virtual ~CameraDevice();
+
+    /** Returns a list of the available cameras on this machine.
+
+        You can open one of these devices by calling openDevice().
+    */
+    static const StringArray getAvailableDevices();
+
+    /** Opens a camera device.
+
+        The index parameter indicates which of the items returned by getAvailableDevices()
+        to open.
+
+        The size constraints allow the method to choose between different resolutions if
+        the camera supports this. If the resolution cam't be specified (e.g. on the Mac)
+        then these will be ignored.
+    */
+    static CameraDevice* openDevice (int deviceIndex,
+                                     int minWidth = 128, int minHeight = 64,
+                                     int maxWidth = 1024, int maxHeight = 768);
+
+    /** Returns the name of this device */
+    const String getName() const throw()        { return name; }
+
+    /** Creates a component that can be used to display a preview of the
+        video from this camera.
+    */
+    Component* createViewerComponent();
+
+    /** Starts recording video to the specified file.
+
+        You should use getFileExtension() to find out the correct extension to
+        use for your filename.
+
+        If the file exists, it will be deleted before the recording starts.
+
+        This method may not start recording instantly, so if you need to know the
+        exact time at which the file begins, you can call getTimeOfFirstRecordedFrame()
+        after the recording has finished.
+    */
+    void startRecordingToFile (const File& file);
+
+    /** Stops recording, after a call to startRecordingToFile().
+    */
+    void stopRecording();
+
+    /** Returns the file extension that should be used for the files
+        that you pass to startRecordingToFile().
+
+        This may be platform-specific, e.g. ".mov" or ".avi".
+    */
+    static const String getFileExtension();
+
+    /** After calling stopRecording(), this method can be called to return the timestamp
+        of the first frame that was written to the file.
+    */
+    const Time getTimeOfFirstRecordedFrame() const;
+
+    /** Adds a listener to receive images from the camera.
+
+        Be very careful not to delete the listener without first removing it by calling
+        removeListener().
+    */
+    void addListener (CameraImageListener* listenerToAdd);
+
+    /** Removes a listener that was previously added with addListener().
+    */
+    void removeListener (CameraImageListener* listenerToRemove);
+
+    juce_UseDebuggingNewOperator
+
+protected:
+    /** @internal */
+    CameraDevice (const String& name, int index);
+
+private:
+    void* internal;
+    bool isRecording;
+    String name;
+
+    CameraDevice (const CameraDevice&);
+    const CameraDevice& operator= (const CameraDevice&);
+};
+
+#endif
+#endif   // __JUCE_CAMERADEVICE_JUCEHEADER__
+/********* End of inlined file: juce_CameraDevice.h *********/
+
+#endif
 #ifndef __JUCE_IMAGE_JUCEHEADER__
 
 #endif
@@ -39556,109 +40909,6 @@ private:
 /********* End of inlined file: juce_ImageCache.h *********/
 
 #endif
-#ifndef __JUCE_IMAGECONVOLUTIONKERNEL_JUCEHEADER__
-
-/********* Start of inlined file: juce_ImageConvolutionKernel.h *********/
-#ifndef __JUCE_IMAGECONVOLUTIONKERNEL_JUCEHEADER__
-#define __JUCE_IMAGECONVOLUTIONKERNEL_JUCEHEADER__
-
-/**
-    Represents a filter kernel to use in convoluting an image.
-
-    @see Image::applyConvolution
-*/
-class JUCE_API  ImageConvolutionKernel
-{
-public:
-
-    /** Creates an empty convulution kernel.
-
-        @param size     the length of each dimension of the kernel, so e.g. if the size
-                        is 5, it will create a 5x5 kernel
-    */
-    ImageConvolutionKernel (const int size) throw();
-
-    /** Destructor. */
-    ~ImageConvolutionKernel() throw();
-
-    /** Resets all values in the kernel to zero.
-    */
-    void clear() throw();
-
-    /** Sets the value of a specific cell in the kernel.
-
-        The x and y parameters must be in the range 0 < x < getKernelSize().
-
-        @see setOverallSum
-    */
-    void setKernelValue (const int x,
-                         const int y,
-                         const float value) throw();
-
-    /** Rescales all values in the kernel to make the total add up to a fixed value.
-
-        This will multiply all values in the kernel by (desiredTotalSum / currentTotalSum).
-    */
-    void setOverallSum (const float desiredTotalSum) throw();
-
-    /** Multiplies all values in the kernel by a value. */
-    void rescaleAllValues (const float multiplier) throw();
-
-    /** Intialises the kernel for a gaussian blur.
-
-        @param blurRadius   this may be larger or smaller than the kernel's actual
-                            size but this will obviously be wasteful or clip at the
-                            edges. Ideally the kernel should be just larger than
-                            (blurRadius * 2).
-    */
-    void createGaussianBlur (const float blurRadius) throw();
-
-    /** Returns the size of the kernel.
-
-        E.g. if it's a 3x3 kernel, this returns 3.
-    */
-    int getKernelSize() const throw()       { return size; }
-
-    /** Returns a 2-dimensional array of the kernel's values.
-
-        The size of each dimension of the array will be getKernelSize().
-    */
-    float** getValues() const throw()       { return values; }
-
-    /** Applies the kernel to an image.
-
-        @param destImage        the image that will receive the resultant convoluted pixels.
-        @param sourceImage      an optional source image to read from - if this is 0, then the
-                                destination image will be used as the source. If an image is
-                                specified, it must be exactly the same size and type as the destination
-                                image.
-        @param x                the region of the image to apply the filter to
-        @param y                the region of the image to apply the filter to
-        @param width            the region of the image to apply the filter to
-        @param height           the region of the image to apply the filter to
-    */
-    void applyToImage (Image& destImage,
-                       const Image* sourceImage,
-                       int x,
-                       int y,
-                       int width,
-                       int height) const;
-
-    juce_UseDebuggingNewOperator
-
-private:
-    float** values;
-    int size;
-
-    // no reason not to implement these one day..
-    ImageConvolutionKernel (const ImageConvolutionKernel&);
-    const ImageConvolutionKernel& operator= (const ImageConvolutionKernel&);
-};
-
-#endif   // __JUCE_IMAGECONVOLUTIONKERNEL_JUCEHEADER__
-/********* End of inlined file: juce_ImageConvolutionKernel.h *********/
-
-#endif
 #ifndef __JUCE_IMAGEFILEFORMAT_JUCEHEADER__
 
 /********* Start of inlined file: juce_ImageFileFormat.h *********/
@@ -39773,7 +41023,7 @@ public:
 
     @see ImageFileFormat, JPEGImageFormat
 */
-class PNGImageFormat  : public ImageFileFormat
+class JUCE_API  PNGImageFormat  : public ImageFileFormat
 {
 public:
 
@@ -39793,7 +41043,7 @@ public:
 
     @see ImageFileFormat, PNGImageFormat
 */
-class JPEGImageFormat  : public ImageFileFormat
+class JUCE_API  JPEGImageFormat  : public ImageFileFormat
 {
 public:
 
@@ -39821,6 +41071,109 @@ private:
 
 #endif   // __JUCE_IMAGEFILEFORMAT_JUCEHEADER__
 /********* End of inlined file: juce_ImageFileFormat.h *********/
+
+#endif
+#ifndef __JUCE_IMAGECONVOLUTIONKERNEL_JUCEHEADER__
+
+/********* Start of inlined file: juce_ImageConvolutionKernel.h *********/
+#ifndef __JUCE_IMAGECONVOLUTIONKERNEL_JUCEHEADER__
+#define __JUCE_IMAGECONVOLUTIONKERNEL_JUCEHEADER__
+
+/**
+    Represents a filter kernel to use in convoluting an image.
+
+    @see Image::applyConvolution
+*/
+class JUCE_API  ImageConvolutionKernel
+{
+public:
+
+    /** Creates an empty convulution kernel.
+
+        @param size     the length of each dimension of the kernel, so e.g. if the size
+                        is 5, it will create a 5x5 kernel
+    */
+    ImageConvolutionKernel (const int size) throw();
+
+    /** Destructor. */
+    ~ImageConvolutionKernel() throw();
+
+    /** Resets all values in the kernel to zero.
+    */
+    void clear() throw();
+
+    /** Sets the value of a specific cell in the kernel.
+
+        The x and y parameters must be in the range 0 < x < getKernelSize().
+
+        @see setOverallSum
+    */
+    void setKernelValue (const int x,
+                         const int y,
+                         const float value) throw();
+
+    /** Rescales all values in the kernel to make the total add up to a fixed value.
+
+        This will multiply all values in the kernel by (desiredTotalSum / currentTotalSum).
+    */
+    void setOverallSum (const float desiredTotalSum) throw();
+
+    /** Multiplies all values in the kernel by a value. */
+    void rescaleAllValues (const float multiplier) throw();
+
+    /** Intialises the kernel for a gaussian blur.
+
+        @param blurRadius   this may be larger or smaller than the kernel's actual
+                            size but this will obviously be wasteful or clip at the
+                            edges. Ideally the kernel should be just larger than
+                            (blurRadius * 2).
+    */
+    void createGaussianBlur (const float blurRadius) throw();
+
+    /** Returns the size of the kernel.
+
+        E.g. if it's a 3x3 kernel, this returns 3.
+    */
+    int getKernelSize() const throw()       { return size; }
+
+    /** Returns a 2-dimensional array of the kernel's values.
+
+        The size of each dimension of the array will be getKernelSize().
+    */
+    float** getValues() const throw()       { return values; }
+
+    /** Applies the kernel to an image.
+
+        @param destImage        the image that will receive the resultant convoluted pixels.
+        @param sourceImage      an optional source image to read from - if this is 0, then the
+                                destination image will be used as the source. If an image is
+                                specified, it must be exactly the same size and type as the destination
+                                image.
+        @param x                the region of the image to apply the filter to
+        @param y                the region of the image to apply the filter to
+        @param width            the region of the image to apply the filter to
+        @param height           the region of the image to apply the filter to
+    */
+    void applyToImage (Image& destImage,
+                       const Image* sourceImage,
+                       int x,
+                       int y,
+                       int width,
+                       int height) const;
+
+    juce_UseDebuggingNewOperator
+
+private:
+    float** values;
+    int size;
+
+    // no reason not to implement these one day..
+    ImageConvolutionKernel (const ImageConvolutionKernel&);
+    const ImageConvolutionKernel& operator= (const ImageConvolutionKernel&);
+};
+
+#endif   // __JUCE_IMAGECONVOLUTIONKERNEL_JUCEHEADER__
+/********* End of inlined file: juce_ImageConvolutionKernel.h *********/
 
 #endif
 #ifndef __JUCE_DRAWABLE_JUCEHEADER__
@@ -39855,13 +41208,10 @@ public:
     virtual Drawable* createCopy() const = 0;
 
     /** Renders this Drawable object.
-
-        This is the main rendering method you should call to render a Drawable.
-
         @see drawWithin
     */
-    virtual void draw (Graphics& g,
-                       const AffineTransform& transform = AffineTransform::identity) const = 0;
+    void draw (Graphics& g, const float opacity,
+               const AffineTransform& transform = AffineTransform::identity) const;
 
     /** Renders the Drawable at a given offset within the Graphics context.
 
@@ -39874,7 +41224,8 @@ public:
     */
     void drawAt (Graphics& g,
                  const float x,
-                 const float y) const;
+                 const float y,
+                 const float opacity) const;
 
     /** Renders the Drawable within a rectangle, scaling it to fit neatly inside without
         changing its aspect-ratio.
@@ -39889,13 +41240,36 @@ public:
         @param destHeight               size of the target rectangle to fit the image into
         @param placement                defines the alignment and rescaling to use to fit
                                         this object within the target rectangle.
+        @param opacity                  the opacity to use, in the range 0 to 1.0
     */
     void drawWithin (Graphics& g,
                      const int destX,
                      const int destY,
                      const int destWidth,
                      const int destHeight,
-                     const RectanglePlacement& placement) const;
+                     const RectanglePlacement& placement,
+                     const float opacity) const;
+
+    /** Holds the information needed when telling a drawable to render itself.
+        @see Drawable::draw
+    */
+    class RenderingContext
+    {
+    public:
+        RenderingContext (Graphics& g, const AffineTransform& transform, const float opacity) throw();
+
+        Graphics& g;
+        AffineTransform transform;
+        float opacity;
+
+    private:
+        const RenderingContext& operator= (const RenderingContext&);
+    };
+
+    /** Renders this Drawable object.
+        @see draw
+    */
+    virtual void render (const RenderingContext& context) const = 0;
 
     /** Returns the smallest rectangle that can contain this Drawable object.
 
@@ -39948,6 +41322,31 @@ public:
         implementation, but it can return the basic vector objects.
     */
     static Drawable* createFromSVG (const XmlElement& svgDocument);
+
+    /**
+    */
+    static Drawable* readFromBinaryStream (InputStream& input);
+
+    /**
+    */
+    bool writeToBinaryStream (OutputStream& output) const;
+
+    /**
+    */
+    static Drawable* readFromXml (const XmlElement& xml);
+
+    /**
+    */
+    XmlElement* createXml() const;
+
+    /** @internal */
+    virtual bool readBinary (InputStream& input) = 0;
+    /** @internal */
+    virtual bool writeBinary (OutputStream& output) const = 0;
+    /** @internal */
+    virtual bool readXml (const XmlElement& xml) = 0;
+    /** @internal */
+    virtual void writeXml (XmlElement& xml) const = 0;
 
     juce_UseDebuggingNewOperator
 
@@ -40025,9 +41424,11 @@ public:
 
         @param index    the index of the drawable to delete, between 0
                         and (getNumDrawables() - 1).
+        @param deleteDrawable   if this is true, the drawable that is removed will also
+                        be deleted. If false, it'll just be removed.
         @see insertDrawable, getNumDrawables
     */
-    void removeDrawable (const int index);
+    void removeDrawable (const int index, const bool deleteDrawable = true);
 
     /** Returns the number of drawables contained inside this one.
 
@@ -40065,13 +41466,21 @@ public:
     void bringToFront (const int index);
 
     /** @internal */
-    void draw (Graphics& g, const AffineTransform& transform) const;
+    void render (const Drawable::RenderingContext& context) const;
     /** @internal */
     void getBounds (float& x, float& y, float& width, float& height) const;
     /** @internal */
     bool hitTest (float x, float y) const;
     /** @internal */
     Drawable* createCopy() const;
+    /** @internal */
+    bool readBinary (InputStream& input);
+    /** @internal */
+    bool writeBinary (OutputStream& output) const;
+    /** @internal */
+    bool readXml (const XmlElement& xml);
+    /** @internal */
+    void writeXml (XmlElement& xml) const;
 
     juce_UseDebuggingNewOperator
 
@@ -40160,13 +41569,21 @@ public:
     const Colour& getOverlayColour() const throw()              { return overlayColour; }
 
     /** @internal */
-    void draw (Graphics& g, const AffineTransform& transform) const;
+    void render (const Drawable::RenderingContext& context) const;
     /** @internal */
     void getBounds (float& x, float& y, float& width, float& height) const;
     /** @internal */
     bool hitTest (float x, float y) const;
     /** @internal */
     Drawable* createCopy() const;
+    /** @internal */
+    bool readBinary (InputStream& input);
+    /** @internal */
+    bool writeBinary (OutputStream& output) const;
+    /** @internal */
+    bool readXml (const XmlElement& xml);
+    /** @internal */
+    void writeXml (XmlElement& xml) const;
 
     juce_UseDebuggingNewOperator
 
@@ -40208,9 +41625,9 @@ public:
 
     /** Changes the path that will be drawn.
 
-        @see setSolidFill, setOutline
+        @see setFillColour, setStrokeType
     */
-    void setPath (const Path& newPath);
+    void setPath (const Path& newPath) throw();
 
     /** Returns the current path. */
     const Path& getPath() const throw()                         { return path; }
@@ -40221,59 +41638,63 @@ public:
         filled (e.g. if you're just drawing an outline), set this colour to be
         transparent.
 
-        @see setPath, setOutline
+        @see setPath, setOutlineColour, setFillGradient
     */
-    void setSolidFill (const Colour& newColour);
+    void setFillColour (const Colour& newColour) throw();
 
-    /** Sets a custom brush to use to fill the path.
-
-        @see setSolidFill
+    /** Sets a gradient to use to fill the path.
     */
-    void setFillBrush (const Brush& newBrush);
+    void setFillGradient (const ColourGradient& newGradient) throw();
 
-    /** Returns the brush currently being used to fill the shape. */
-    Brush* getCurrentBrush() const throw()                      { return fillBrush; }
+    /** Sets the colour with which the outline will be drawn.
+        @see setStrokeGradient
+    */
+    void setStrokeColour (const Colour& newStrokeColour) throw();
+
+    /** Sets a gradient with with the outline will be drawn.
+        @see setStrokeColour
+    */
+    void setStrokeGradient (const ColourGradient& newStrokeGradient) throw();
 
     /** Changes the properties of the outline that will be drawn around the path.
+        If the stroke has 0 thickness, no stroke will be drawn.
 
-        If the thickness value is 0, no outline will be drawn. If one is drawn, the
-        colour passed-in here will be used for it.
-
-        @see setPath, setSolidFill
+        @see setStrokeThickness, setStrokeColour
     */
-    void setOutline (const float thickness,
-                     const Colour& outlineColour);
+    void setStrokeType (const PathStrokeType& newStrokeType) throw();
 
-    /** Changes the properties of the outline that will be drawn around the path.
-
-        If the stroke type has 0 thickness, no outline will be drawn.
-
-        @see setPath, setSolidFill
+    /** Changes the stroke thickness.
+        This is a shortcut for calling setStrokeType.
     */
-    void setOutline (const PathStrokeType& strokeType,
-                     const Brush& strokeBrush);
+    void setStrokeThickness (const float newThickness) throw();
 
     /** Returns the current outline style. */
-    const PathStrokeType& getOutlineStroke() const throw()      { return strokeType; }
-
-    /** Returns the brush currently being used to draw the outline. */
-    Brush* getOutlineBrush() const throw()                      { return strokeBrush; }
+    const PathStrokeType& getStrokeType() const throw()      { return strokeType; }
 
     /** @internal */
-    void draw (Graphics& g, const AffineTransform& transform) const;
+    void render (const Drawable::RenderingContext& context) const;
     /** @internal */
     void getBounds (float& x, float& y, float& width, float& height) const;
     /** @internal */
     bool hitTest (float x, float y) const;
     /** @internal */
     Drawable* createCopy() const;
+    /** @internal */
+    bool readBinary (InputStream& input);
+    /** @internal */
+    bool writeBinary (OutputStream& output) const;
+    /** @internal */
+    bool readXml (const XmlElement& xml);
+    /** @internal */
+    void writeXml (XmlElement& xml) const;
 
     juce_UseDebuggingNewOperator
 
 private:
     Path path, outline;
-    Brush* fillBrush;
-    Brush* strokeBrush;
+    Colour fillColour, strokeColour;
+    ColourGradient* fillGradient;
+    ColourGradient* strokeGradient;
     PathStrokeType strokeType;
 
     void updateOutline();
@@ -40328,13 +41749,21 @@ public:
     const Colour& getColour() const throw()                 { return colour; }
 
     /** @internal */
-    void draw (Graphics& g, const AffineTransform& transform) const;
+    void render (const Drawable::RenderingContext& context) const;
     /** @internal */
     void getBounds (float& x, float& y, float& width, float& height) const;
     /** @internal */
     bool hitTest (float x, float y) const;
     /** @internal */
     Drawable* createCopy() const;
+    /** @internal */
+    bool readBinary (InputStream& input);
+    /** @internal */
+    bool writeBinary (OutputStream& output) const;
+    /** @internal */
+    bool readXml (const XmlElement& xml);
+    /** @internal */
+    void writeXml (XmlElement& xml) const;
 
     juce_UseDebuggingNewOperator
 
@@ -41317,8 +42746,12 @@ private:
 
     You'll need to make sure the animator object isn't deleted before it finishes
     moving the components.
+
+    The class is a ChangeBroadcaster and sends a notification when any components
+    start or finish being animated.
 */
-class JUCE_API  ComponentAnimator  : private Timer
+class JUCE_API  ComponentAnimator  : public ChangeBroadcaster,
+                                     private Timer
 {
 public:
 
@@ -41388,6 +42821,10 @@ public:
     */
     const Rectangle getComponentDestination (Component* const component);
 
+    /** Returns true if the specified component is currently being animated.
+    */
+    bool isAnimating (Component* component) const;
+
     juce_UseDebuggingNewOperator
 
 private:
@@ -41403,6 +42840,7 @@ private:
 
 class ToolbarItemComponent;
 class ToolbarItemFactory;
+class MissingItemsComponent;
 
 /**
     A toolbar component.
@@ -41661,6 +43099,8 @@ private:
     bool vertical, isEditingActive;
     ToolbarItemStyle toolbarStyle;
     ComponentAnimator animator;
+    friend class MissingItemsComponent;
+    Array <ToolbarItemComponent*> items;
 
     friend class ItemDragAndDropOverlayComponent;
     static const tchar* const toolbarDragDescriptor;
@@ -42013,9 +43453,6 @@ private:
 /********* End of inlined file: juce_ReduceOpacityEffect.h *********/
 
 #endif
-#ifndef __JUCE_KEYBOARDFOCUSTRAVERSER_JUCEHEADER__
-
-#endif
 #ifndef __JUCE_KEYLISTENER_JUCEHEADER__
 
 #endif
@@ -42213,7 +43650,7 @@ public:
     /** @internal */
     bool keyPressed (const KeyPress& key, Component* originatingComponent);
     /** @internal */
-    bool keyStateChanged (Component* originatingComponent);
+    bool keyStateChanged (const bool isKeyDown, Component* originatingComponent);
     /** @internal */
     void globalFocusChanged (Component* focusedComponent);
 
@@ -42370,6 +43807,13 @@ public:
     */
     void treeHasChanged() const throw();
 
+    /** Sends a repaint message to redraw just this item.
+
+        Note that you should only call this if you want to repaint a superficial change. If
+        you're altering the tree's nodes, you should instead call treeHasChanged().
+    */
+    void repaintItem() const;
+
     /** Returns the row number of this item in the tree.
 
         The row number of an item will change according to which items are open.
@@ -42377,6 +43821,12 @@ public:
         @see TreeView::getNumRowsInTree(), TreeView::getItemOnRow()
     */
     int getRowNumberInTree() const throw();
+
+    /** Returns true if all the item's parent nodes are open.
+
+        This is useful to check whether the item might actually be visible or not.
+    */
+    bool areAllParentsOpen() const throw();
 
     /** Changes whether lines are drawn to connect any sub-items to this item.
 
@@ -42449,6 +43899,11 @@ public:
     */
     virtual int getItemHeight() const                               { return 20; }
 
+    /** You can override this method to return false if you don't want to allow the
+        user to select this item.
+    */
+    virtual bool canBeSelected() const                              { return true; }
+
     /** Creates a component that will be used to represent this item.
 
         You don't have to implement this method - if it returns 0 then no component
@@ -42492,6 +43947,14 @@ public:
     */
     virtual void paintItem (Graphics& g, int width, int height);
 
+    /** Draws the item's open/close button.
+
+        If you don't implement this method, the default behaviour is to
+        call LookAndFeel::drawTreeviewPlusMinusBox(), but you can override
+        it for custom effects.
+    */
+    virtual void paintOpenCloseButton (Graphics& g, int width, int height, bool isMouseOver);
+
     /** Called when the user clicks on this item.
 
         If you're using createItemComponent() to create a custom component for the
@@ -42528,6 +43991,11 @@ public:
     */
     virtual void itemSelectionChanged (bool isNowSelected);
 
+    /** The item can return a tool tip string here if it wants to.
+        @see TooltipClient
+    */
+    virtual const String getTooltip();
+
     /** To allow items from your treeview to be dragged-and-dropped, implement this method.
 
         If this returns a non-empty name then when the user drags an item, the treeview will
@@ -42542,6 +44010,21 @@ public:
     */
     virtual const String getDragSourceDescription();
 
+    /** Sets a flag to indicate that the item wants to be allowed
+        to draw all the way across to the left edge of the treeview.
+
+        By default this is false, which means that when the paintItem()
+        method is called, its graphics context is clipped to only allow
+        drawing within the item's rectangle. If this flag is set to true,
+        then the graphics context isn't clipped on its left side, so it
+        can draw all the way across to the left margin. Note that the
+        context will still have its origin in the same place though, so
+        the coordinates of anything to its left will be negative. It's
+        mostly useful if you want to draw a wider bar behind the
+        highlighted item.
+    */
+    void setDrawsInLeftMargin (bool canDrawInLeftMargin) throw();
+
     juce_UseDebuggingNewOperator
 
 private:
@@ -42553,6 +44036,7 @@ private:
     bool selected           : 1;
     bool redrawNeeded       : 1;
     bool drawLinesInside    : 1;
+    bool drawsInLeftMargin  : 1;
     unsigned int openness   : 2;
 
     friend class TreeView;
@@ -42612,7 +44096,8 @@ public:
         The object passed in will not be deleted by the treeview, it's up to the caller
         to delete it when no longer needed. BUT make absolutely sure that you don't delete
         this item until you've removed it from the tree, either by calling setRootItem (0),
-        or by deleting the tree first.
+        or by deleting the tree first. You can also use deleteRootItem() as a quick way
+        to delete it.
     */
     void setRootItem (TreeViewItem* const newRootItem);
 
@@ -42621,6 +44106,12 @@ public:
         This will be the last object passed to setRootItem(), or 0 if none has been set.
     */
     TreeViewItem* getRootItem() const throw()                       { return rootItem; }
+
+    /** This will remove and delete the current root item.
+
+        It's a convenient way of deleting the item and calling setRootItem (0).
+    */
+    void deleteRootItem();
 
     /** Changes whether the tree's root item is shown or not.
 
@@ -42668,6 +44159,18 @@ public:
         @see setMultiSelectEnabled
     */
     bool isMultiSelectEnabled() const throw()                       { return multiSelectEnabled; }
+
+    /** Sets a flag to indicate whether to hide the open/close buttons.
+
+        @see areOpenCloseButtonsVisible
+    */
+    void setOpenCloseButtonsVisible (const bool shouldBeVisible);
+
+    /** Returns whether open/close buttons are shown.
+
+        @see setOpenCloseButtonsVisible
+    */
+    bool areOpenCloseButtonsVisible() const throw()                 { return openCloseButtonsVisible; }
 
     /** Deselects any items that are currently selected. */
     void clearSelectedItems();
@@ -42766,6 +44269,8 @@ public:
     bool keyPressed (const KeyPress& key);
     /** @internal */
     void colourChanged();
+    /** @internal */
+    void enablementChanged();
 
     juce_UseDebuggingNewOperator
 
@@ -42780,10 +44285,12 @@ private:
     bool needsRecalculating : 1;
     bool rootItemVisible : 1;
     bool multiSelectEnabled : 1;
+    bool openCloseButtonsVisible : 1;
 
     void itemsChanged() throw();
     void handleAsyncUpdate();
     void moveSelectedRow (int delta);
+    void updateButtonUnderMouse (const MouseEvent& e);
 
     TreeView (const TreeView&);
     const TreeView& operator= (const TreeView&);
@@ -42898,7 +44405,719 @@ private:
 #ifndef __JUCE_KEYPRESSMAPPINGSET_JUCEHEADER__
 
 #endif
+#ifndef __JUCE_KEYBOARDFOCUSTRAVERSER_JUCEHEADER__
+
+#endif
 #ifndef __JUCE_MODIFIERKEYS_JUCEHEADER__
+
+#endif
+#ifndef __JUCE_CODEEDITORCOMPONENT_JUCEHEADER__
+
+/********* Start of inlined file: juce_CodeEditorComponent.h *********/
+#ifndef __JUCE_CODEEDITORCOMPONENT_JUCEHEADER__
+#define __JUCE_CODEEDITORCOMPONENT_JUCEHEADER__
+
+/********* Start of inlined file: juce_CodeDocument.h *********/
+#ifndef __JUCE_CODEDOCUMENT_JUCEHEADER__
+#define __JUCE_CODEDOCUMENT_JUCEHEADER__
+
+class CodeDocumentLine;
+
+/**
+    A class for storing and manipulating a source code file.
+
+    When using a CodeEditorComponent, it takes one of these as its source object.
+
+    The CodeDocument stores its content as an array of lines, which makes it
+    quick to insert and delete.
+
+    @see CodeEditorComponent
+*/
+class JUCE_API  CodeDocument
+{
+public:
+    /** Creates a new, empty document.
+    */
+    CodeDocument();
+
+    /** Destructor. */
+    ~CodeDocument();
+
+    /** A position in a code document.
+
+        Using this class you can find a position in a code document and quickly get its
+        character position, line, and index. By calling setPositionMaintained (true), the
+        position is automatically updated when text is inserted or deleted in the document,
+        so that it maintains its original place in the text.
+    */
+    class JUCE_API  Position
+    {
+    public:
+        /** Creates an uninitialised postion.
+            Don't attempt to call any methods on this until you've given it an owner document
+            to refer to!
+        */
+        Position() throw();
+
+        /** Creates a position based on a line and index in a document.
+
+            Note that this index is NOT the column number, it's the number of characters from the
+            start of the line. The "column" number isn't quite the same, because if the line
+            contains any tab characters, the relationship of the index to its visual column depends on
+            the number of spaces per tab being used!
+
+            Lines are numbered from zero, and if the line or index are beyond the bounds of the document,
+            they will be adjusted to keep them within its limits.
+        */
+        Position (const CodeDocument* const ownerDocument,
+                  const int line, const int indexInLine) throw();
+
+        /** Creates a position based on a character index in a document.
+            This position is placed at the specified number of characters from the start of the
+            document. The line and column are auto-calculated.
+
+            If the position is beyond the range of the document, it'll be adjusted to keep it
+            inside.
+        */
+        Position (const CodeDocument* const ownerDocument,
+                  const int charactersFromStartOfDocument) throw();
+
+        /** Creates a copy of another position.
+
+            This will copy the position, but the new object will not be set to maintain its position,
+            even if the source object was set to do so.
+        */
+        Position (const Position& other) throw();
+
+        /** Destructor. */
+        ~Position() throw();
+
+        const Position& operator= (const Position& other) throw();
+        bool operator== (const Position& other) const throw();
+        bool operator!= (const Position& other) const throw();
+
+        /** Points this object at a new position within the document.
+
+            If the position is beyond the range of the document, it'll be adjusted to keep it
+            inside.
+            @see getPosition, setLineAndIndex
+        */
+        void setPosition (const int charactersFromStartOfDocument) throw();
+
+        /** Returns the position as the number of characters from the start of the document.
+            @see setPosition, getLineNumber, getIndexInLine
+        */
+        int getPosition() const throw()             { return characterPos; }
+
+        /** Moves the position to a new line and index within the line.
+
+            Note that the index is NOT the column at which the position appears in an editor.
+            If the line contains any tab characters, the relationship of the index to its
+            visual position depends on the number of spaces per tab being used!
+
+            Lines are numbered from zero, and if the line or index are beyond the bounds of the document,
+            they will be adjusted to keep them within its limits.
+        */
+        void setLineAndIndex (const int newLine, const int newIndexInLine) throw();
+
+        /** Returns the line number of this position.
+            The first line in the document is numbered zero, not one!
+        */
+        int getLineNumber() const throw()           { return line; }
+
+        /** Returns the number of characters from the start of the line.
+
+            Note that this value is NOT the column at which the position appears in an editor.
+            If the line contains any tab characters, the relationship of the index to its
+            visual position depends on the number of spaces per tab being used!
+        */
+        int getIndexInLine() const throw()          { return indexInLine; }
+
+        /** Allows the position to be automatically updated when the document changes.
+
+            If this is set to true, the positon will register with its document so that
+            when the document has text inserted or deleted, this position will be automatically
+            moved to keep it at the same position in the text.
+        */
+        void setPositionMaintained (const bool isMaintained) throw();
+
+        /** Moves the position forwards or backwards by the specified number of characters.
+            @see movedBy
+        */
+        void moveBy (int characterDelta) throw();
+
+        /** Returns a position which is the same as this one, moved by the specified number of
+            characters.
+            @see moveBy
+        */
+        const Position movedBy (const int characterDelta) const throw();
+
+        /** Returns a position which is the same as this one, moved up or down by the specified
+            number of lines.
+            @see movedBy
+        */
+        const Position movedByLines (const int deltaLines) const throw();
+
+        /** Returns the character in the document at this position.
+            @see getLineText
+        */
+        const tchar getCharacter() const throw();
+
+        /** Returns the line from the document that this position is within.
+            @see getCharacter, getLineNumber
+        */
+        const String getLineText() const throw();
+
+    private:
+        CodeDocument* owner;
+        int characterPos, line, indexInLine;
+        bool positionMaintained;
+    };
+
+    /** Returns the full text of the document. */
+    const String getAllContent() const throw();
+
+    /** Returns a section of the document's text. */
+    const String getTextBetween (const Position& start, const Position& end) const throw();
+
+    /** Returns a line from the document. */
+    const String getLine (const int lineIndex) const throw();
+
+    /** Returns the number of characters in the document. */
+    int getNumCharacters() const throw();
+
+    /** Returns the number of lines in the document. */
+    int getNumLines() const throw()                     { return lines.size(); }
+
+    /** Returns the number of characters in the longest line of the document. */
+    int getMaximumLineLength() throw();
+
+    /** Deletes a section of the text.
+
+        This operation is undoable.
+    */
+    void deleteSection (const Position& startPosition, const Position& endPosition);
+
+    /** Inserts some text into the document at a given position.
+
+        This operation is undoable.
+    */
+    void insertText (const Position& position, const String& text);
+
+    /** Clears the document and replaces it with some new text.
+
+        This operation is undoable - if you're trying to completely reset the document, you
+        might want to also call clearUndoHistory() and setSavePoint() after using this method.
+    */
+    void replaceAllContent (const String& newContent);
+
+    /** Returns the preferred new-line characters for the document.
+        This will be either "\n", "\r\n", or (rarely) "\r".
+        @see setNewLineCharacters
+    */
+    const String getNewLineCharacters() const throw()           { return newLineChars; }
+
+    /** Sets the new-line characters that the document should use.
+        The string must be either "\n", "\r\n", or (rarely) "\r".
+        @see getNewLineCharacters
+    */
+    void setNewLineCharacters (const String& newLine) throw();
+
+    /** Begins a new undo transaction.
+
+        The document itself will not call this internally, so relies on whatever is using the
+        document to periodically call this to break up the undo sequence into sensible chunks.
+        @see UndoManager::beginNewTransaction
+    */
+    void newTransaction();
+
+    /** Undo the last operation.
+        @see UndoManager::undo
+    */
+    void undo();
+
+    /** Redo the last operation.
+        @see UndoManager::redo
+    */
+    void redo();
+
+    /** Clears the undo history.
+        @see UndoManager::clearUndoHistory
+    */
+    void clearUndoHistory();
+
+    /** Returns the document's UndoManager */
+    UndoManager& getUndoManager() throw()               { return undoManager; }
+
+    /** Makes a note that the document's current state matches the one that is saved.
+
+        After this has been called, hasChangedSinceSavePoint() will return false until
+        the document has been altered, and then it'll start returning true. If the document is
+        altered, but then undone until it gets back to this state, hasChangedSinceSavePoint()
+        will again return false.
+
+        @see hasChangedSinceSavePoint
+    */
+    void setSavePoint() throw();
+
+    /** Returns true if the state of the document differs from the state it was in when
+        setSavePoint() was last called.
+
+        @see setSavePoint
+    */
+    bool hasChangedSinceSavePoint() const throw();
+
+    /** Searches for a word-break. */
+    const Position findWordBreakAfter (const Position& position) const throw();
+
+    /** Searches for a word-break. */
+    const Position findWordBreakBefore (const Position& position) const throw();
+
+    /** An object that receives callbacks from the CodeDocument when its text changes.
+        @see CodeDocument::addListener, CodeDocument::removeListener
+    */
+    class JUCE_API  Listener
+    {
+    public:
+        Listener() {}
+        virtual ~Listener() {}
+
+        /** Called by a CodeDocument when it is altered.
+        */
+        virtual void codeDocumentChanged (const Position& affectedTextStart,
+                                          const Position& affectedTextEnd) = 0;
+    };
+
+    /** Registers a listener object to receive callbacks when the document changes.
+        If the listener is already registered, this method has no effect.
+        @see removeListener
+    */
+    void addListener (Listener* const listener) throw();
+
+    /** Deregisters a listener.
+        @see addListener
+    */
+    void removeListener (Listener* const listener) throw();
+
+    /** Iterates the text in a CodeDocument.
+
+        This class lets you read characters from a CodeDocument. It's designed to be used
+        by a SyntaxAnalyser object.
+
+        @see CodeDocument, SyntaxAnalyser
+    */
+    class Iterator
+    {
+    public:
+        Iterator (CodeDocument* const document) throw();
+        Iterator (const Iterator& other);
+        const Iterator& operator= (const Iterator& other) throw();
+        ~Iterator() throw();
+
+        /** Reads the next character and returns it.
+            @see peekNextChar
+        */
+        juce_wchar nextChar() throw();
+
+        /** Reads the next character without advancing the current position. */
+        juce_wchar peekNextChar() const throw();
+
+        /** Advances the position by one character. */
+        void skip() throw();
+
+        /** Returns the position of the next character as its position within the
+            whole document.
+        */
+        int getPosition() const throw()         { return position; }
+
+        /** Skips over any whitespace characters until the next character is non-whitespace. */
+        void skipWhitespace();
+
+        /** Skips forward until the next character will be the first character on the next line */
+        void skipToEndOfLine();
+
+        /** Returns the line number of the next character. */
+        int getLine() const throw()             { return line; }
+
+        /** Returns true if the iterator has reached the end of the document. */
+        bool isEOF() const throw();
+
+    private:
+        CodeDocument* document;
+        int line, position;
+    };
+
+    juce_UseDebuggingNewOperator
+
+private:
+    friend class CodeDocumentInsertAction;
+    friend class CodeDocumentDeleteAction;
+    friend class Iterator;
+    friend class Position;
+
+    OwnedArray <CodeDocumentLine> lines;
+    Array <Position*> positionsToMaintain;
+    UndoManager undoManager;
+    int currentActionIndex, indexOfSavedState;
+    int maximumLineLength;
+    VoidArray listeners;
+    String newLineChars;
+
+    void sendListenerChangeMessage (const int startLine, const int endLine);
+
+    void insert (const String& text, const int insertPos, const bool undoable);
+    void remove (const int startPos, const int endPos, const bool undoable);
+
+    CodeDocument (const CodeDocument&);
+    const CodeDocument& operator= (const CodeDocument&);
+};
+
+#endif   // __JUCE_CODEDOCUMENT_JUCEHEADER__
+/********* End of inlined file: juce_CodeDocument.h *********/
+
+/********* Start of inlined file: juce_CodeTokeniser.h *********/
+#ifndef __JUCE_CODETOKENISER_JUCEHEADER__
+#define __JUCE_CODETOKENISER_JUCEHEADER__
+
+/**
+    A base class for tokenising code so that the syntax can be displayed in a
+    code editor.
+
+    @see CodeDocument, CodeEditorComponent
+*/
+class JUCE_API  CodeTokeniser
+{
+public:
+    CodeTokeniser()                 {}
+    virtual ~CodeTokeniser()        {}
+
+    /** Reads the next token from the source and returns its token type.
+
+        This must leave the source pointing to the first character in the
+        next token.
+    */
+    virtual int readNextToken (CodeDocument::Iterator& source) = 0;
+
+    /** Returns a list of the names of the token types this analyser uses.
+
+        The index in this list must match the token type numbers that are
+        returned by readNextToken().
+    */
+    virtual const StringArray getTokenTypes() = 0;
+
+    /** Returns a suggested syntax highlighting colour for a specified
+        token type.
+    */
+    virtual const Colour getDefaultColour (const int tokenType) = 0;
+
+    juce_UseDebuggingNewOperator
+};
+
+#endif   // __JUCE_CODETOKENISER_JUCEHEADER__
+/********* End of inlined file: juce_CodeTokeniser.h *********/
+
+class CodeEditorLine;
+
+/**
+    A text editor component designed specifically for source code.
+
+    This is designed to handle syntax highlighting and fast editing of very large
+    files.
+*/
+class JUCE_API  CodeEditorComponent   : public Component,
+                                        public Timer,
+                                        public ScrollBarListener,
+                                        public CodeDocument::Listener,
+                                        public AsyncUpdater
+{
+public:
+
+    /** Creates an editor for a document.
+
+        The tokeniser object is optional - pass 0 to disable syntax highlighting.
+        The object that you pass in is not owned or deleted by the editor - you must
+        make sure that it doesn't get deleted while this component is still using it.
+
+        @see CodeDocument
+    */
+    CodeEditorComponent (CodeDocument& document,
+                         CodeTokeniser* const codeTokeniser);
+
+    /** Destructor. */
+    ~CodeEditorComponent();
+
+    /** Returns the code document that this component is editing. */
+    CodeDocument& getDocument() const throw()           { return document; }
+
+    /** Loads the given content into the document.
+        This will completely reset the CodeDocument object, clear its undo history,
+        and fill it with this text.
+    */
+    void loadContent (const String& newContent);
+
+    /** Returns the standard character width. */
+    float getCharWidth() const throw()                          { return charWidth; }
+
+    /** Returns the height of a line of text, in pixels. */
+    int getLineHeight() const throw()                           { return lineHeight; }
+
+    /** Returns the number of whole lines visible on the screen,
+        This doesn't include a cut-off line that might be visible at the bottom if the
+        component's height isn't an exact multiple of the line-height.
+    */
+    int getNumLinesOnScreen() const throw()                     { return linesOnScreen; }
+
+    /** Returns the number of whole columns visible on the screen.
+        This doesn't include any cut-off columns at the right-hand edge.
+    */
+    int getNumColumnsOnScreen() const throw()                   { return columnsOnScreen; }
+
+    /** Returns the current caret position. */
+    const CodeDocument::Position getCaretPos() const            { return caretPos; }
+
+    /** Moves the caret.
+        If selecting is true, the section of the document between the current
+        caret position and the new one will become selected. If false, any currently
+        selected region will be deselected.
+    */
+    void moveCaretTo (const CodeDocument::Position& newPos, const bool selecting);
+
+    /** Returns the on-screen position of a character in the document.
+        The rectangle returned is relative to this component's top-left origin.
+    */
+    const Rectangle getCharacterBounds (const CodeDocument::Position& pos) const throw();
+
+    /** Finds the character at a given on-screen position.
+        The co-ordinates are relative to this component's top-left origin.
+    */
+    const CodeDocument::Position getPositionAt (int x, int y);
+
+    void cursorLeft (const bool moveInWholeWordSteps, const bool selecting);
+    void cursorRight (const bool moveInWholeWordSteps, const bool selecting);
+    void cursorDown (const bool selecting);
+    void cursorUp (const bool selecting);
+
+    void pageDown (const bool selecting);
+    void pageUp (const bool selecting);
+
+    void scrollDown();
+    void scrollUp();
+    void scrollToLine (int newFirstLineOnScreen);
+    void scrollBy (int deltaLines);
+    void scrollToColumn (int newFirstColumnOnScreen);
+    void scrollToKeepCaretOnScreen();
+
+    void goToStartOfDocument (const bool selecting);
+    void goToStartOfLine (const bool selecting);
+    void goToEndOfDocument (const bool selecting);
+    void goToEndOfLine (const bool selecting);
+
+    void deselectAll();
+    void selectAll();
+
+    void insertTextAtCaret (const String& textToInsert);
+    void insertTabAtCaret();
+    void cut();
+    void copy();
+    void copyThenCut();
+    void paste();
+    void backspace (const bool moveInWholeWordSteps);
+    void deleteForward (const bool moveInWholeWordSteps);
+
+    void undo();
+    void redo();
+
+    /** Changes the current tab settings.
+        This lets you change the tab size and whether pressing the tab key inserts a
+        tab character, or its equivalent number of spaces.
+    */
+    void setTabSize (const int numSpacesPerTab,
+                     const bool insertSpacesInsteadOfTabCharacters) throw();
+
+    /** Returns the current number of spaces per tab.
+        @see setTabSize
+    */
+    int getTabSize() const throw()                      { return spacesPerTab; }
+
+    /** Returns true if the tab key will insert spaces instead of actual tab characters.
+        @see setTabSize
+    */
+    bool areSpacesInsertedForTabs() const               { return useSpacesForTabs; }
+
+    /** Changes the font.
+        Make sure you only use a fixed-width font, or this component will look pretty nasty!
+    */
+    void setFont (const Font& newFont);
+
+    /** Resets the syntax highlighting colours to the default ones provided by the
+        code tokeniser.
+        @see CodeTokeniser::getDefaultColour
+    */
+    void resetToDefaultColours();
+
+    /** Changes one of the syntax highlighting colours.
+        The token type values are dependent on the tokeniser being used - use
+        CodeTokeniser::getTokenTypes() to get a list of the token types.
+        @see getColourForTokenType
+    */
+    void setColourForTokenType (const int tokenType, const Colour& colour);
+
+    /** Returns one of the syntax highlighting colours.
+        The token type values are dependent on the tokeniser being used - use
+        CodeTokeniser::getTokenTypes() to get a list of the token types.
+        @see setColourForTokenType
+    */
+    const Colour getColourForTokenType (const int tokenType) const throw();
+
+    /** A set of colour IDs to use to change the colour of various aspects of the editor.
+
+        These constants can be used either via the Component::setColour(), or LookAndFeel::setColour()
+        methods.
+
+        @see Component::setColour, Component::findColour, LookAndFeel::setColour, LookAndFeel::findColour
+    */
+    enum ColourIds
+    {
+        backgroundColourId          = 0x1004500,  /**< A colour to use to fill the editor's background. */
+        caretColourId               = 0x1004501,  /**< The colour to draw the caret. */
+        highlightColourId           = 0x1004502,  /**< The colour to use for the highlighted background under
+                                                       selected text. */
+        defaultTextColourId         = 0x1004503   /**< The colour to use for text when no syntax colouring is
+                                                       enabled. */
+    };
+
+    /** Changes the size of the scrollbars. */
+    void setScrollbarThickness (const int thickness) throw();
+
+    /** @internal */
+    void resized();
+    /** @internal */
+    void paint (Graphics& g);
+    /** @internal */
+    bool keyPressed (const KeyPress& key);
+    /** @internal */
+    void mouseDown (const MouseEvent& e);
+    /** @internal */
+    void mouseDrag (const MouseEvent& e);
+    /** @internal */
+    void mouseUp (const MouseEvent& e);
+    /** @internal */
+    void mouseDoubleClick (const MouseEvent& e);
+    /** @internal */
+    void mouseWheelMove (const MouseEvent& e, float wheelIncrementX, float wheelIncrementY);
+    /** @internal */
+    void timerCallback();
+    /** @internal */
+    void scrollBarMoved (ScrollBar* scrollBarThatHasMoved, const double newRangeStart);
+    /** @internal */
+    void handleAsyncUpdate();
+    /** @internal */
+    void codeDocumentChanged (const CodeDocument::Position& affectedTextStart,
+                              const CodeDocument::Position& affectedTextEnd);
+
+    juce_UseDebuggingNewOperator
+
+private:
+    CodeDocument& document;
+
+    Font font;
+    int firstLineOnScreen, gutter, spacesPerTab;
+    float charWidth;
+    int lineHeight, linesOnScreen, columnsOnScreen;
+    int scrollbarThickness;
+    bool useSpacesForTabs;
+    double xOffset;
+
+    CodeDocument::Position caretPos;
+    CodeDocument::Position selectionStart, selectionEnd;
+    Component* caret;
+    ScrollBar* verticalScrollBar;
+    ScrollBar* horizontalScrollBar;
+
+    enum DragType
+    {
+        notDragging,
+        draggingSelectionStart,
+        draggingSelectionEnd
+    };
+
+    DragType dragType;
+
+    CodeTokeniser* codeTokeniser;
+    Array <Colour> coloursForTokenCategories;
+
+    OwnedArray <CodeEditorLine> lines;
+    void rebuildLineTokens();
+
+    OwnedArray <CodeDocument::Iterator> cachedIterators;
+    void clearCachedIterators (const int firstLineToBeInvalid) throw();
+    void updateCachedIterators (int maxLineNum);
+    void getIteratorForPosition (int position, CodeDocument::Iterator& result);
+
+    void updateScrollBars();
+    void scrollToLineInternal (int line);
+    void scrollToColumnInternal (double column);
+    void newTransaction();
+
+    int indexToColumn (int line, int index) const throw();
+    int columnToIndex (int line, int column) const throw();
+
+    CodeEditorComponent (const CodeEditorComponent&);
+    const CodeEditorComponent& operator= (const CodeEditorComponent&);
+};
+
+#endif   // __JUCE_CODEEDITORCOMPONENT_JUCEHEADER__
+/********* End of inlined file: juce_CodeEditorComponent.h *********/
+
+#endif
+#ifndef __JUCE_CODEDOCUMENT_JUCEHEADER__
+
+#endif
+#ifndef __JUCE_CPLUSPLUSCODETOKENISER_JUCEHEADER__
+
+/********* Start of inlined file: juce_CPlusPlusCodeTokeniser.h *********/
+#ifndef __JUCE_CPLUSPLUSCODETOKENISER_JUCEHEADER__
+#define __JUCE_CPLUSPLUSCODETOKENISER_JUCEHEADER__
+
+/**
+    A simple lexical analyser for syntax colouring of C++ code.
+
+    @see SyntaxAnalyser, CodeEditorComponent, CodeDocument
+*/
+class JUCE_API  CPlusPlusCodeTokeniser    : public CodeTokeniser
+{
+public:
+
+    CPlusPlusCodeTokeniser();
+    ~CPlusPlusCodeTokeniser();
+
+    enum TokenType
+    {
+        tokenType_error = 0,
+        tokenType_comment,
+        tokenType_builtInKeyword,
+        tokenType_identifier,
+        tokenType_integerLiteral,
+        tokenType_floatLiteral,
+        tokenType_stringLiteral,
+        tokenType_operator,
+        tokenType_bracket,
+        tokenType_punctuation,
+        tokenType_preprocessor
+    };
+
+    int readNextToken (CodeDocument::Iterator& source);
+    const StringArray getTokenTypes();
+    const Colour getDefaultColour (const int tokenType);
+
+    juce_UseDebuggingNewOperator
+};
+
+#endif   // __JUCE_CPLUSPLUSCODETOKENISER_JUCEHEADER__
+/********* End of inlined file: juce_CPlusPlusCodeTokeniser.h *********/
+
+#endif
+#ifndef __JUCE_CODETOKENISER_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_MENUBARCOMPONENT_JUCEHEADER__
@@ -43017,13 +45236,23 @@ public:
 
         You can pass 0 to stop the current model being displayed. Be careful
         not to delete a model while it is being used.
+
+        An optional extra menu can be specified, containing items to add to the top of
+        the apple menu. (Confusingly, the 'apple' menu isn't the one with a picture of
+        an apple, it's the one next to it, with your application's name at the top
+        and the services menu etc on it). When one of these items is selected, the
+        menu bar model will be used to invoke it, and in the menuItemSelected() callback
+        the topLevelMenuIndex parameter will be -1. If you pass in an extraAppleMenuItems
+        object then newMenuBarModel must be non-null.
     */
-    static void setMacMainMenu (MenuBarModel* newMenuBarModel) throw();
+    static void setMacMainMenu (MenuBarModel* newMenuBarModel,
+                                const PopupMenu* extraAppleMenuItems = 0) throw();
 
     /** MAC ONLY - Returns the menu model that is currently being shown as
         the main menu bar.
     */
     static MenuBarModel* getMacMainMenu() throw();
+
 #endif
 
     /** @internal */
@@ -43285,6 +45514,11 @@ public:
                                 const bool isStretchingLeft,
                                 const bool isStretchingBottom,
                                 const bool isStretchingRight);
+
+    /** Performs a check on the current size of a component, and moves or resizes
+        it if it fails the constraints.
+    */
+    void checkComponentBounds (Component* component);
 
     /** Called by setBoundsForComponent() to apply a new constrained size to a
         component.
@@ -44176,6 +46410,7 @@ private:
     double currentValue;
     bool displayPercentage;
     String displayedMessage, currentMessage;
+    uint32 lastCallbackTime;
 
     void timerCallback();
 
@@ -44373,7 +46608,7 @@ public:
                                 key to toggle velocity-sensitive mode
     */
     void setVelocityModeParameters (const double sensitivity = 1.0,
-                                    const int threshold = 1.0,
+                                    const int threshold = 1,
                                     const double offset = 0.0,
                                     const bool userCanPressKeyToSwapMode = true) throw();
 
@@ -44572,18 +46807,22 @@ public:
         want to handle it.
 
         @param newValue                 the new value to set - this will be restricted by the
-                                        minimum and maximum range, and the max value (in a two-value
-                                        slider) or the mid value (in a three-value slider), and
-                                        will be snapped to the nearest interval if one has been set.
+                                        minimum and maximum range, and will be snapped to the nearest
+                                        interval if one has been set.
         @param sendUpdateMessage        if false, a change to the value will not trigger a call to
                                         any SliderListeners or the valueChanged() method
         @param sendMessageSynchronously if true, then a call to the SliderListeners will be made
                                         synchronously; if false, it will be asynchronous
+        @param allowNudgingOfOtherValues  if false, this value will be restricted to being below the
+                                        max value (in a two-value slider) or the mid value (in a three-value
+                                        slider). If false, then if this value goes beyond those values,
+                                        it will push them along with it.
         @see getMinValue, setMaxValue, setValue
     */
     void setMinValue (double newValue,
                       const bool sendUpdateMessage = true,
-                      const bool sendMessageSynchronously = false);
+                      const bool sendMessageSynchronously = false,
+                      const bool allowNudgingOfOtherValues = false);
 
     /** For a slider with two or three thumbs, this returns the higher of its values.
 
@@ -44602,18 +46841,22 @@ public:
         want to handle it.
 
         @param newValue                 the new value to set - this will be restricted by the
-                                        minimum and maximum range, and the max value (in a two-value
-                                        slider) or the mid value (in a three-value slider), and
-                                        will be snapped to the nearest interval if one has been set.
+                                        minimum and maximum range, and will be snapped to the nearest
+                                        interval if one has been set.
         @param sendUpdateMessage        if false, a change to the value will not trigger a call to
                                         any SliderListeners or the valueChanged() method
         @param sendMessageSynchronously if true, then a call to the SliderListeners will be made
                                         synchronously; if false, it will be asynchronous
+        @param allowNudgingOfOtherValues  if false, this value will be restricted to being above the
+                                        min value (in a two-value slider) or the mid value (in a three-value
+                                        slider). If false, then if this value goes beyond those values,
+                                        it will push them along with it.
         @see getMaxValue, setMinValue, setValue
     */
     void setMaxValue (double newValue,
                       const bool sendUpdateMessage = true,
-                      const bool sendMessageSynchronously = false);
+                      const bool sendMessageSynchronously = false,
+                      const bool allowNudgingOfOtherValues = false);
 
     /** Adds a listener to be called when this slider's value changes. */
     void addListener (SliderListener* const listener) throw();
@@ -44691,6 +46934,14 @@ public:
         By default it's enabled.
     */
     void setScrollWheelEnabled (const bool enabled) throw();
+
+    /** Returns a number to indicate which thumb is currently being dragged by the
+        mouse.
+
+        This will return 0 for the main thumb, 1 for the minimum-value thumb, 2 for
+        the maximum-value thumb, or -1 if none is currently down.
+    */
+    int getThumbBeingDragged() const throw()        { return sliderBeingDragged; }
 
     /** Callback to indicate that the user is about to start dragging the slider.
 
@@ -44878,6 +47129,7 @@ private:
     int velocityModeThreshold;
     float rotaryStart, rotaryEnd;
     int numDecimalPlaces, mouseXWhenLastDragged, mouseYWhenLastDragged;
+    int mouseDragStartX, mouseDragStartY;
     int sliderRegionStart, sliderRegionSize;
     int sliderBeingDragged;
     int pixelsForFullDragExtent;
@@ -45084,6 +47336,10 @@ public:
     */
     void moveColumn (const int columnId, int newVisibleIndex);
 
+    /** Returns the width of one of the columns.
+    */
+    int getColumnWidth (const int columnId) const throw();
+
     /** Changes the width of a column.
 
         This will cause an asynchronous callback to the tableColumnsResized() method of any registered listeners.
@@ -45277,6 +47533,9 @@ public:
     /** @internal */
     const MouseCursor getMouseCursor();
 
+    /** Can be overridden for more control over the pop-up menu behaviour. */
+    virtual void showColumnChooserMenu (const int columnIdClicked);
+
     juce_UseDebuggingNewOperator
 
 private:
@@ -45305,7 +47564,6 @@ private:
     void endDrag (const int finalIndex);
     int getResizeDraggerAt (const int mouseX) const throw();
     void updateColumnUnderMouse (int x, int y);
-    void showColumnChooserMenu (const int);
     void resizeColumnsToFit (int firstColumnIndex, int targetTotalWidth);
 
     TableHeaderComponent (const TableHeaderComponent&);
@@ -45429,6 +47687,10 @@ public:
         This is used by TableListBox::autoSizeColumn() and TableListBox::autoSizeAllColumns().
     */
     virtual int getColumnAutoSizeWidth (int columnId);
+
+    /** Returns a tooltip for a particular cell in the table.
+    */
+    virtual const String getCellTooltip (int rowNumber, int columnId);
 
     /** Override this to be informed when rows are selected or deselected.
 
@@ -45605,9 +47867,6 @@ private:
 #ifndef __JUCE_TOOLBAR_JUCEHEADER__
 
 #endif
-#ifndef __JUCE_TOOLBARITEMCOMPONENT_JUCEHEADER__
-
-#endif
 #ifndef __JUCE_TOOLBARITEMFACTORY_JUCEHEADER__
 
 /********* Start of inlined file: juce_ToolbarItemFactory.h *********/
@@ -45746,6 +48005,9 @@ private:
 
 #endif   // __JUCE_TOOLBARITEMPALETTE_JUCEHEADER__
 /********* End of inlined file: juce_ToolbarItemPalette.h *********/
+
+#endif
+#ifndef __JUCE_TOOLBARITEMCOMPONENT_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_TREEVIEW_JUCEHEADER__
@@ -46385,7 +48647,7 @@ public:
 
         To deselect all the tabs, use an index of -1.
     */
-    void setCurrentTabIndex (int newTabIndex);
+    void setCurrentTabIndex (int newTabIndex, const bool sendChangeMessage = true);
 
     /** Returns the name of the currently selected tab.
 
@@ -46398,6 +48660,14 @@ public:
         This could return -1 if none are selected.
     */
     int getCurrentTabIndex() const throw()                              { return currentTabIndex; }
+
+    /** Returns the button for a specific tab.
+
+        The button that is returned may be deleted later by this component, so don't hang
+        on to the pointer that is returned. A null pointer may be returned if the index is
+        out of range.
+    */
+    TabBarButton* getTabButton (const int index) const;
 
     /** Callback method to indicate the selected tab has been changed.
 
@@ -46424,6 +48694,24 @@ public:
         @see addTab, getTabBackgroundColour
     */
     void setTabBackgroundColour (const int tabIndex, const Colour& newColour);
+
+    /** A set of colour IDs to use to change the colour of various aspects of the component.
+
+        These constants can be used either via the Component::setColour(), or LookAndFeel::setColour()
+        methods.
+
+        @see Component::setColour, Component::findColour, LookAndFeel::setColour, LookAndFeel::findColour
+    */
+    enum ColourIds
+    {
+        tabOutlineColourId              = 0x1005812,    /**< The colour to use to draw an outline around the tabs.  */
+        tabTextColourId                 = 0x1005813,    /**< The colour to use to draw the tab names. If this isn't specified,
+                                                             the look and feel will choose an appropriate colour. */
+        frontOutlineColourId            = 0x1005814,    /**< The colour to use to draw an outline around the currently-selected tab.  */
+        frontTextColourId               = 0x1005815,    /**< The colour to use to draw the currently-selected tab name. If
+                                                             this isn't specified, the look and feel will choose an appropriate
+                                                             colour. */
+    };
 
     /** @internal */
     void resized();
@@ -46452,8 +48740,6 @@ private:
     int currentTabIndex;
     Component* behindFrontTab;
     Button* extraTabsButton;
-
-    TabBarButton* getTabButton (const int index) const;
 
     TabbedButtonBar (const TabbedButtonBar&);
     const TabbedButtonBar& operator= (const TabbedButtonBar&);
@@ -46513,14 +48799,14 @@ public:
     */
     int getTabBarDepth() const throw()                          { return tabDepth; }
 
-    /** Specifies an outline that should be drawn around the entire content component.
+    /** Specifies the thickness of an outline that should be drawn around the content component.
 
-        If this thickness is > 0, a line of the specified colour will be drawn around
-        the three sides of the content component which don't touch the tab-bar, and
-        the content component will be inset by this amount.
+        If this thickness is > 0, a line will be drawn around the three sides of the content
+        component which don't touch the tab-bar, and the content component will be inset by this amount.
+
+        To set the colour of the line, use setColour (outlineColourId, ...).
     */
-    void setOutline (const Colour& newOutlineColour,
-                     const int newThickness);
+    void setOutline (const int newThickness);
 
     /** Specifies a gap to leave around the edge of the content component.
 
@@ -46580,7 +48866,7 @@ public:
 
         @see TabbedButtonBar::setCurrentTabIndex
     */
-    void setCurrentTabIndex (const int newTabIndex);
+    void setCurrentTabIndex (const int newTabIndex, const bool sendChangeMessage = true);
 
     /** Returns the index of the currently selected tab.
 
@@ -46618,10 +48904,26 @@ public:
     */
     TabbedButtonBar& getTabbedButtonBar() const throw()             { return *tabs; }
 
+    /** A set of colour IDs to use to change the colour of various aspects of the component.
+
+        These constants can be used either via the Component::setColour(), or LookAndFeel::setColour()
+        methods.
+
+        @see Component::setColour, Component::findColour, LookAndFeel::setColour, LookAndFeel::findColour
+    */
+    enum ColourIds
+    {
+        backgroundColourId          = 0x1005800,    /**< The colour to fill the background behind the tabs. */
+        outlineColourId             = 0x1005801,    /**< The colour to use to draw an outline around the content.
+                                                         (See setOutline)  */
+    };
+
     /** @internal */
     void paint (Graphics& g);
     /** @internal */
     void resized();
+    /** @internal */
+    void lookAndFeelChanged();
 
     juce_UseDebuggingNewOperator
 
@@ -46642,7 +48944,6 @@ private:
     Array <Component*> contentComponents;
     Component* panelComponent;
     int tabDepth;
-    Colour outlineColour;
     int outlineThickness, edgeIndent;
 
     friend class TabCompButtonBar;
@@ -47062,6 +49363,18 @@ public:
 
     /** Creates a ResizableWindow.
 
+        This constructor doesn't specify a background colour, so the LookAndFeel's default
+        background colour will be used.
+
+        @param name                 the name to give the component
+        @param addToDesktop         if true, the window will be automatically added to the
+                                    desktop; if false, you can use it as a child component
+    */
+    ResizableWindow (const String& name,
+                     const bool addToDesktop);
+
+    /** Creates a ResizableWindow.
+
         @param name                 the name to give the component
         @param backgroundColour     the colour to use for filling the window's background.
         @param addToDesktop         if true, the window will be automatically added to the
@@ -47083,9 +49396,11 @@ public:
         As a convenience the window will fill itself with this colour, but you
         can override the paint() method if you need more customised behaviour.
 
+        This method is the same as retrieving the colour for ResizableWindow::backgroundColourId.
+
         @see setBackgroundColour
     */
-    const Colour& getBackgroundColour() const throw()               { return backgroundColour; }
+    const Colour getBackgroundColour() const throw();
 
     /** Changes the colour currently being used for the window's background.
 
@@ -47096,6 +49411,9 @@ public:
         the opacity of the colour passed-in. On window systems which can't support
         semi-transparent windows this might cause problems, (though it's unlikely you'll
         be using this class as a base for a semi-transparent component anyway).
+
+        You can also use the ResizableWindow::backgroundColourId colour id to set
+        this colour.
 
         @see getBackgroundColour
     */
@@ -47248,6 +49566,18 @@ public:
     */
     void setContentComponentSize (int width, int height);
 
+    /** A set of colour IDs to use to change the colour of various aspects of the window.
+
+        These constants can be used either via the Component::setColour(), or LookAndFeel::setColour()
+        methods.
+
+        @see Component::setColour, Component::findColour, LookAndFeel::setColour, LookAndFeel::findColour
+    */
+    enum ColourIds
+    {
+        backgroundColourId          = 0x1005700,  /**< A colour to use to fill the window's background. */
+    };
+
     juce_UseDebuggingNewOperator
 
 protected:
@@ -47310,7 +49640,6 @@ protected:
 private:
     Component* contentComponent;
     bool resizeToFitContent, fullscreen;
-    Colour backgroundColour;
     ComponentDragger dragger;
     Rectangle lastNonFullScreenPos;
     ComponentBoundsConstrainer defaultConstrainer;
@@ -47502,6 +49831,19 @@ public:
     /** Returns the maximise button, (or 0 if there isn't one). */
     Button* getMaximiseButton() const throw();
 
+    /** A set of colour IDs to use to change the colour of various aspects of the window.
+
+        These constants can be used either via the Component::setColour(), or LookAndFeel::setColour()
+        methods.
+
+        @see Component::setColour, Component::findColour, LookAndFeel::setColour, LookAndFeel::findColour
+    */
+    enum ColourIds
+    {
+        textColourId                = 0x1005701,  /**< The colour to draw any text with. It's up to the look
+                                                       and feel class how this is used. */
+    };
+
     /** @internal */
     void paint (Graphics& g);
     /** @internal */
@@ -47522,6 +49864,8 @@ public:
     int getDesktopWindowStyleFlags() const;
     /** @internal */
     void parentHierarchyChanged();
+    /** @internal */
+    const Rectangle getTitleBarArea();
 
     juce_UseDebuggingNewOperator
 
@@ -47543,7 +49887,6 @@ private:
 
     } buttonListener;
 
-    int getBorderSize() const;
     void repaintTitleBar();
 
     DocumentWindow (const DocumentWindow&);
@@ -48354,6 +50697,11 @@ public:
     */
     void setIgnoresHiddenFiles (const bool shouldIgnoreHiddenFiles);
 
+    /** Returns true if hidden files are ignored.
+        @see setIgnoresHiddenFiles
+    */
+    bool ignoresHiddenFiles() const throw()          { return ignoreHiddenFiles; }
+
     /** Contains cached information about one of the files in a DirectoryContentsList.
     */
     struct FileInfo
@@ -48679,7 +51027,8 @@ public:
     /** Destructor. */
     ~FileBrowserComponent();
 
-    /**
+    /** Returns the file that the user has currently chosen.
+        @see getHighlightedFile
     */
     const File getCurrentFile() const throw();
 
@@ -48691,6 +51040,13 @@ public:
         exists. In a "save" mode, a non-existent file would also be valid.
     */
     bool currentFileIsValid() const;
+
+    /** This returns the item in the view that is currently highlighted.
+        This may be different from getCurrentFile(), which returns the value
+        that is shown in the filename box.
+        @see getCurrentFile
+    */
+    const File getHighlightedFile() const throw();
 
     /** Returns the directory whose contents are currently being shown in the listbox. */
     const File getRoot() const;
@@ -48732,7 +51088,6 @@ public:
     void buttonClicked (Button* b);
     /** @internal */
     void comboBoxChanged (ComboBox*);
-
     /** @internal */
     void textEditorTextChanged (TextEditor& editor);
     /** @internal */
@@ -48741,7 +51096,8 @@ public:
     void textEditorEscapeKeyPressed (TextEditor& editor);
     /** @internal */
     void textEditorFocusLost (TextEditor& editor);
-
+    /** @internal */
+    bool keyPressed (const KeyPress& key);
     /** @internal */
     void selectionChanged();
     /** @internal */
@@ -49092,8 +51448,8 @@ private:
 
     @see DirectoryContentsList, FileTreeComponent
 */
-class JUCE_API  FileListComponent  : public DirectoryContentsDisplayComponent,
-                                     public ListBox,
+class JUCE_API  FileListComponent  : public ListBox,
+                                     public DirectoryContentsDisplayComponent,
                                      private ListBoxModel,
                                      private ChangeListener
 {
@@ -49135,10 +51491,188 @@ public:
 private:
     FileListComponent (const FileListComponent&);
     const FileListComponent& operator= (const FileListComponent&);
+
+    File lastDirectory;
 };
 
 #endif   // __JUCE_FILELISTCOMPONENT_JUCEHEADER__
 /********* End of inlined file: juce_FileListComponent.h *********/
+
+#endif
+#ifndef __JUCE_FILEPREVIEWCOMPONENT_JUCEHEADER__
+
+#endif
+#ifndef __JUCE_FILESEARCHPATHLISTCOMPONENT_JUCEHEADER__
+
+/********* Start of inlined file: juce_FileSearchPathListComponent.h *********/
+#ifndef __JUCE_FILESEARCHPATHLISTCOMPONENT_JUCEHEADER__
+#define __JUCE_FILESEARCHPATHLISTCOMPONENT_JUCEHEADER__
+
+/**
+    Shows a set of file paths in a list, allowing them to be added, removed or
+    re-ordered.
+
+    @see FileSearchPath
+*/
+class JUCE_API  FileSearchPathListComponent  : public Component,
+                                               public SettableTooltipClient,
+                                               public FileDragAndDropTarget,
+                                               private ButtonListener,
+                                               private ListBoxModel
+{
+public:
+
+    /** Creates an empty FileSearchPathListComponent.
+
+    */
+    FileSearchPathListComponent();
+
+    /** Destructor. */
+    ~FileSearchPathListComponent();
+
+    /** Returns the path as it is currently shown. */
+    const FileSearchPath& getPath() const throw()                   { return path; }
+
+    /** Changes the current path. */
+    void setPath (const FileSearchPath& newPath);
+
+    /** Sets a file or directory to be the default starting point for the browser to show.
+
+        This is only used if the current file hasn't been set.
+    */
+    void setDefaultBrowseTarget (const File& newDefaultDirectory) throw();
+
+    /** A set of colour IDs to use to change the colour of various aspects of the label.
+
+        These constants can be used either via the Component::setColour(), or LookAndFeel::setColour()
+        methods.
+
+        @see Component::setColour, Component::findColour, LookAndFeel::setColour, LookAndFeel::findColour
+    */
+    enum ColourIds
+    {
+        backgroundColourId      = 0x1004100, /**< The background colour to fill the component with.
+                                                  Make this transparent if you don't want the background to be filled. */
+    };
+
+    /** @internal */
+    int getNumRows();
+    /** @internal */
+    void paintListBoxItem (int rowNumber, Graphics& g, int width, int height, bool rowIsSelected);
+    /** @internal */
+    void deleteKeyPressed (int lastRowSelected);
+    /** @internal */
+    void returnKeyPressed (int lastRowSelected);
+    /** @internal */
+    void listBoxItemDoubleClicked (int row, const MouseEvent&);
+    /** @internal */
+    void selectedRowsChanged (int lastRowSelected);
+    /** @internal */
+    void resized();
+    /** @internal */
+    void paint (Graphics& g);
+    /** @internal */
+    bool isInterestedInFileDrag (const StringArray& files);
+    /** @internal */
+    void filesDropped (const StringArray& files, int, int);
+    /** @internal */
+    void buttonClicked (Button* button);
+
+    juce_UseDebuggingNewOperator
+
+private:
+
+    FileSearchPath path;
+    File defaultBrowseTarget;
+
+    ListBox* listBox;
+    Button* addButton;
+    Button* removeButton;
+    Button* changeButton;
+    Button* upButton;
+    Button* downButton;
+
+    void changed() throw();
+    void updateButtons() throw();
+
+    FileSearchPathListComponent (const FileSearchPathListComponent&);
+    const FileSearchPathListComponent& operator= (const FileSearchPathListComponent&);
+};
+
+#endif   // __JUCE_FILESEARCHPATHLISTCOMPONENT_JUCEHEADER__
+/********* End of inlined file: juce_FileSearchPathListComponent.h *********/
+
+#endif
+#ifndef __JUCE_FILETREECOMPONENT_JUCEHEADER__
+
+/********* Start of inlined file: juce_FileTreeComponent.h *********/
+#ifndef __JUCE_FILETREECOMPONENT_JUCEHEADER__
+#define __JUCE_FILETREECOMPONENT_JUCEHEADER__
+
+/**
+    A component that displays the files in a directory as a treeview.
+
+    This implements the DirectoryContentsDisplayComponent base class so that
+    it can be used in a FileBrowserComponent.
+
+    To attach a listener to it, use its DirectoryContentsDisplayComponent base
+    class and the FileBrowserListener class.
+
+    @see DirectoryContentsList, FileListComponent
+*/
+class JUCE_API  FileTreeComponent  : public TreeView,
+                                     public DirectoryContentsDisplayComponent
+{
+public:
+
+    /** Creates a listbox to show the contents of a specified directory.
+    */
+    FileTreeComponent (DirectoryContentsList& listToShow);
+
+    /** Destructor. */
+    ~FileTreeComponent();
+
+    /** Returns the number of selected files in the tree.
+    */
+    int getNumSelectedFiles() const throw()         { return TreeView::getNumSelectedItems(); }
+
+    /** Returns one of the files that the user has currently selected.
+
+        Returns File::nonexistent if none is selected.
+    */
+    const File getSelectedFile (int index) const throw();
+
+    /** Returns the first of the files that the user has currently selected.
+
+        Returns File::nonexistent if none is selected.
+    */
+    const File getSelectedFile() const;
+
+    /** Scrolls the list to the top. */
+    void scrollToTop();
+
+    /** Setting a name for this allows tree items to be dragged.
+
+        The string that you pass in here will be returned by the getDragSourceDescription()
+        of the items in the tree. For more info, see TreeViewItem::getDragSourceDescription().
+    */
+    void setDragAndDropDescription (const String& description) throw();
+
+    /** Returns the last value that was set by setDragAndDropDescription().
+    */
+    const String& getDragAndDropDescription() const throw()      { return dragAndDropDescription; }
+
+    juce_UseDebuggingNewOperator
+
+private:
+    String dragAndDropDescription;
+
+    FileTreeComponent (const FileTreeComponent&);
+    const FileTreeComponent& operator= (const FileTreeComponent&);
+};
+
+#endif   // __JUCE_FILETREECOMPONENT_JUCEHEADER__
+/********* End of inlined file: juce_FileTreeComponent.h *********/
 
 #endif
 #ifndef __JUCE_FILENAMECOMPONENT_JUCEHEADER__
@@ -49155,7 +51689,7 @@ class FilenameComponent;
     Use FilenameComponent::addListener() and FilenameComponent::removeListener() to
     register one of these objects for event callbacks when the filename is changed.
 
-    @See FilenameComponent
+    @see FilenameComponent
 */
 class JUCE_API  FilenameComponentListener
 {
@@ -49332,182 +51866,6 @@ private:
 /********* End of inlined file: juce_FilenameComponent.h *********/
 
 #endif
-#ifndef __JUCE_FILEPREVIEWCOMPONENT_JUCEHEADER__
-
-#endif
-#ifndef __JUCE_FILESEARCHPATHLISTCOMPONENT_JUCEHEADER__
-
-/********* Start of inlined file: juce_FileSearchPathListComponent.h *********/
-#ifndef __JUCE_FILESEARCHPATHLISTCOMPONENT_JUCEHEADER__
-#define __JUCE_FILESEARCHPATHLISTCOMPONENT_JUCEHEADER__
-
-/**
-    Shows a set of file paths in a list, allowing them to be added, removed or
-    re-ordered.
-
-    @see FileSearchPath
-*/
-class JUCE_API  FileSearchPathListComponent  : public Component,
-                                               public SettableTooltipClient,
-                                               public FileDragAndDropTarget,
-                                               private ButtonListener,
-                                               private ListBoxModel
-{
-public:
-
-    /** Creates an empty FileSearchPathListComponent.
-
-    */
-    FileSearchPathListComponent();
-
-    /** Destructor. */
-    ~FileSearchPathListComponent();
-
-    /** Returns the path as it is currently shown. */
-    const FileSearchPath& getPath() const throw()                   { return path; }
-
-    /** Changes the current path. */
-    void setPath (const FileSearchPath& newPath);
-
-    /** Sets a file or directory to be the default starting point for the browser to show.
-
-        This is only used if the current file hasn't been set.
-    */
-    void setDefaultBrowseTarget (const File& newDefaultDirectory) throw();
-
-    /** A set of colour IDs to use to change the colour of various aspects of the label.
-
-        These constants can be used either via the Component::setColour(), or LookAndFeel::setColour()
-        methods.
-
-        @see Component::setColour, Component::findColour, LookAndFeel::setColour, LookAndFeel::findColour
-    */
-    enum ColourIds
-    {
-        backgroundColourId      = 0x1004100, /**< The background colour to fill the component with.
-                                                  Make this transparent if you don't want the background to be filled. */
-    };
-
-    /** @internal */
-    int getNumRows();
-    /** @internal */
-    void paintListBoxItem (int rowNumber, Graphics& g, int width, int height, bool rowIsSelected);
-    /** @internal */
-    void deleteKeyPressed (int lastRowSelected);
-    /** @internal */
-    void returnKeyPressed (int lastRowSelected);
-    /** @internal */
-    void listBoxItemDoubleClicked (int row, const MouseEvent&);
-    /** @internal */
-    void selectedRowsChanged (int lastRowSelected);
-    /** @internal */
-    void resized();
-    /** @internal */
-    void paint (Graphics& g);
-    /** @internal */
-    bool isInterestedInFileDrag (const StringArray& files);
-    /** @internal */
-    void filesDropped (const StringArray& files, int, int);
-    /** @internal */
-    void buttonClicked (Button* button);
-
-    juce_UseDebuggingNewOperator
-
-private:
-
-    FileSearchPath path;
-    File defaultBrowseTarget;
-
-    ListBox* listBox;
-    Button* addButton;
-    Button* removeButton;
-    Button* changeButton;
-    Button* upButton;
-    Button* downButton;
-
-    void changed() throw();
-    void updateButtons() throw();
-
-    FileSearchPathListComponent (const FileSearchPathListComponent&);
-    const FileSearchPathListComponent& operator= (const FileSearchPathListComponent&);
-};
-
-#endif   // __JUCE_FILESEARCHPATHLISTCOMPONENT_JUCEHEADER__
-/********* End of inlined file: juce_FileSearchPathListComponent.h *********/
-
-#endif
-#ifndef __JUCE_FILETREECOMPONENT_JUCEHEADER__
-
-/********* Start of inlined file: juce_FileTreeComponent.h *********/
-#ifndef __JUCE_FILETREECOMPONENT_JUCEHEADER__
-#define __JUCE_FILETREECOMPONENT_JUCEHEADER__
-
-/**
-    A component that displays the files in a directory as a treeview.
-
-    This implements the DirectoryContentsDisplayComponent base class so that
-    it can be used in a FileBrowserComponent.
-
-    To attach a listener to it, use its DirectoryContentsDisplayComponent base
-    class and the FileBrowserListener class.
-
-    @see DirectoryContentsList, FileListComponent
-*/
-class JUCE_API  FileTreeComponent  : public DirectoryContentsDisplayComponent,
-                                     public TreeView
-{
-public:
-
-    /** Creates a listbox to show the contents of a specified directory.
-    */
-    FileTreeComponent (DirectoryContentsList& listToShow);
-
-    /** Destructor. */
-    ~FileTreeComponent();
-
-    /** Returns the number of selected files in the tree.
-    */
-    int getNumSelectedFiles() const throw()         { return TreeView::getNumSelectedItems(); }
-
-    /** Returns one of the files that the user has currently selected.
-
-        Returns File::nonexistent if none is selected.
-    */
-    const File getSelectedFile (int index) const throw();
-
-    /** Returns the first of the files that the user has currently selected.
-
-        Returns File::nonexistent if none is selected.
-    */
-    const File getSelectedFile() const;
-
-    /** Scrolls the list to the top. */
-    void scrollToTop();
-
-    /** Setting a name for this allows tree items to be dragged.
-
-        The string that you pass in here will be returned by the getDragSourceDescription()
-        of the items in the tree. For more info, see TreeViewItem::getDragSourceDescription().
-    */
-    void setDragAndDropDescription (const String& description) throw();
-
-    /** Returns the last value that was set by setDragAndDropDescription().
-    */
-    const String& getDragAndDropDescription() const throw()      { return dragAndDropDescription; }
-
-    juce_UseDebuggingNewOperator
-
-private:
-    String dragAndDropDescription;
-
-    FileTreeComponent (const FileTreeComponent&);
-    const FileTreeComponent& operator= (const FileTreeComponent&);
-};
-
-#endif   // __JUCE_FILETREECOMPONENT_JUCEHEADER__
-/********* End of inlined file: juce_FileTreeComponent.h *********/
-
-#endif
 #ifndef __JUCE_IMAGEPREVIEWCOMPONENT_JUCEHEADER__
 
 /********* Start of inlined file: juce_ImagePreviewComponent.h *********/
@@ -49646,10 +52004,14 @@ public:
         @param message  a longer, more descriptive message to show underneath the
                         headline
         @param iconType the type of icon to display
+        @param associatedComponent   if this is non-zero, it specifies the component that the
+                        alert window should be associated with. Depending on the look
+                        and feel, this might be used for positioning of the alert window.
     */
     AlertWindow (const String& title,
                  const String& message,
-                 AlertIconType iconType);
+                 AlertIconType iconType,
+                 Component* associatedComponent = 0);
 
     /** Destroys the AlertWindow */
     ~AlertWindow();
@@ -49794,11 +52156,15 @@ public:
                             headline
         @param buttonText   the text to show in the button - if this string is empty, the
                             default string "ok" (or a localised version) will be used.
+        @param associatedComponent   if this is non-zero, it specifies the component that the
+                            alert window should be associated with. Depending on the look
+                            and feel, this might be used for positioning of the alert window.
     */
     static void JUCE_CALLTYPE showMessageBox (AlertIconType iconType,
                                               const String& title,
                                               const String& message,
-                                              const String& buttonText = String::empty);
+                                              const String& buttonText = String::empty,
+                                              Component* associatedComponent = 0);
 
     /** Shows a dialog box with two buttons.
 
@@ -49815,13 +52181,17 @@ public:
         @param button2Text  the text to show in the second button - if this string is
                             empty, the default string "cancel" (or a localised version of it)
                             will be used.
-        @returns true if button 1 was clicked, false if it was button 2
+     @param associatedComponent   if this is non-zero, it specifies the component that the
+                             alert window should be associated with. Depending on the look
+                             and feel, this might be used for positioning of the alert window.
+     @returns true if button 1 was clicked, false if it was button 2
     */
     static bool JUCE_CALLTYPE showOkCancelBox (AlertIconType iconType,
                                                const String& title,
                                                const String& message,
                                                const String& button1Text = String::empty,
-                                               const String& button2Text = String::empty);
+                                               const String& button2Text = String::empty,
+                                               Component* associatedComponent = 0);
 
     /** Shows a dialog box with three buttons.
 
@@ -49839,6 +52209,9 @@ public:
                             "no" will be used (or a localised version of it)
         @param button3Text  the text to show in the first button - if an empty string, then
                             "cancel" will be used (or a localised version of it)
+        @param associatedComponent   if this is non-zero, it specifies the component that the
+                            alert window should be associated with. Depending on the look
+                            and feel, this might be used for positioning of the alert window.
 
         @returns one of the following values:
                  - 0 if the third button was pressed (normally used for 'cancel')
@@ -49850,7 +52223,8 @@ public:
                                                  const String& message,
                                                  const String& button1Text = String::empty,
                                                  const String& button2Text = String::empty,
-                                                 const String& button3Text = String::empty);
+                                                 const String& button3Text = String::empty,
+                                                 Component* associatedComponent = 0);
 
     /** Shows an operating-system native dialog box.
 
@@ -49893,6 +52267,10 @@ protected:
     void buttonClicked (Button* button);
     /** @internal */
     void lookAndFeelChanged();
+    /** @internal */
+    void userTriedToCloseWindow();
+    /** @internal */
+    int getDesktopWindowStyleFlags() const;
 
 private:
     String text;
@@ -49905,6 +52283,7 @@ private:
     VoidArray progressBars, customComps, textBlocks, allComps;
     StringArray textboxNames, comboBoxNames;
     Font font;
+    Component* associatedComponent;
 
     void updateLayout (const bool onlyIncreaseSize);
 
@@ -50275,13 +52654,17 @@ public:
     */
     void setStatusMessage (const String& newStatusMessage);
 
+    /** Returns the AlertWindow that is being used.
+    */
+    AlertWindow* getAlertWindow() const throw()         { return alertWindow; }
+
     juce_UseDebuggingNewOperator
 
 private:
     void timerCallback();
 
     double progress;
-    AlertWindow alertWindow;
+    AlertWindow* alertWindow;
     String message;
     CriticalSection messageLock;
     const int timeOutMsWhenCancelling;
@@ -50306,7 +52689,7 @@ private:
 #ifndef __JUCE_ACTIVEXCONTROLCOMPONENT_JUCEHEADER__
 #define __JUCE_ACTIVEXCONTROLCOMPONENT_JUCEHEADER__
 
-#if JUCE_WIN32 || DOXYGEN
+#if JUCE_WINDOWS || DOXYGEN
 
 /**
     A Windows-specific class that can create and embed an ActiveX control inside
@@ -50415,7 +52798,7 @@ private:
 #ifndef __JUCE_AUDIODEVICESELECTORCOMPONENT_JUCEHEADER__
 #define __JUCE_AUDIODEVICESELECTORCOMPONENT_JUCEHEADER__
 
-class AudioDeviceSelectorComponentListBox;
+class MidiInputSelectorComponentListBox;
 
 /**
     A component containing controls to let the user change the audio settings of
@@ -50445,6 +52828,10 @@ public:
         @param maxAudioOutputChannels   the maximum number of audio output channels that the application needs
         @param showMidiInputOptions     if true, the component will allow the user to select which midi inputs are enabled
         @param showMidiOutputSelector   if true, the component will let the user choose a default midi output device
+        @param showChannelsAsStereoPairs    if true, channels will be treated as pairs; if false, channels will be
+                                        treated as a set of separate mono channels.
+        @param hideAdvancedOptionsWithButton    if true, only the minimum amount of UI components
+                                        are shown, with an "advanced" button that shows the rest of them
     */
     AudioDeviceSelectorComponent (AudioDeviceManager& deviceManager,
                                   const int minAudioInputChannels,
@@ -50452,7 +52839,9 @@ public:
                                   const int minAudioOutputChannels,
                                   const int maxAudioOutputChannels,
                                   const bool showMidiInputOptions,
-                                  const bool showMidiOutputSelector);
+                                  const bool showMidiOutputSelector,
+                                  const bool showChannelsAsStereoPairs,
+                                  const bool hideAdvancedOptionsWithButton);
 
     /** Destructor */
     ~AudioDeviceSelectorComponent();
@@ -50465,24 +52854,22 @@ public:
     void buttonClicked (Button*);
     /** @internal */
     void changeListenerCallback (void*);
+    /** @internal */
+    void childBoundsChanged (Component*);
 
     juce_UseDebuggingNewOperator
 
 private:
     AudioDeviceManager& deviceManager;
-    ComboBox* audioDeviceDropDown;
+    ComboBox* deviceTypeDropDown;
+    Label* deviceTypeDropDownLabel;
+    Component* audioDeviceSettingsComp;
+    String audioDeviceSettingsCompType;
     const int minOutputChannels, maxOutputChannels, minInputChannels, maxInputChannels;
+    const bool showChannelsAsStereoPairs;
+    const bool hideAdvancedOptionsWithButton;
 
-    ComboBox* sampleRateDropDown;
-    AudioDeviceSelectorComponentListBox* inputChansBox;
-    Label* inputsLabel;
-    AudioDeviceSelectorComponentListBox* outputChansBox;
-    Label* outputsLabel;
-    Label* sampleRateLabel;
-    ComboBox* bufferSizeDropDown;
-    Label* bufferSizeLabel;
-    Button* launchUIButton;
-    AudioDeviceSelectorComponentListBox* midiInputsList;
+    MidiInputSelectorComponentListBox* midiInputsList;
     Label* midiInputsLabel;
     ComboBox* midiOutputSelector;
     Label* midiOutputLabel;
@@ -50935,6 +53322,10 @@ public:
     /** Returns the current zoom factor. */
     double getScaleFactor() const throw()                   { return scaleFactor; }
 
+    /** Changes the quality setting used to rescale the graphics.
+    */
+    void setResamplingQuality (Graphics::ResamplingQuality newQuality);
+
     juce_UseDebuggingNewOperator
 
     /** @internal */
@@ -50946,6 +53337,7 @@ private:
     double scaleFactor;
     ComponentPeer* peer;
     bool deleteContent;
+    Graphics::ResamplingQuality quality;
 
     void paint (Graphics& g);
     void mouseDown (const MouseEvent& e);
@@ -51115,6 +53507,12 @@ public:
     */
     int getLowestVisibleKey() const throw()                         { return firstKey; }
 
+    /** Returns the length of the black notes.
+
+        This will be their vertical or horizontal length, depending on the keyboard's orientation.
+    */
+    int getBlackNoteLength() const throw()                          { return blackNoteLength; }
+
     /** If set to true, then scroll buttons will appear at either end of the keyboard
         if there are too many notes to fit them all in the component at once.
     */
@@ -51219,7 +53617,7 @@ public:
     /** @internal */
     void timerCallback();
     /** @internal */
-    bool keyStateChanged();
+    bool keyStateChanged (const bool isKeyDown);
     /** @internal */
     void focusLost (FocusChangeType cause);
     /** @internal */
@@ -51344,6 +53742,74 @@ private:
 /********* End of inlined file: juce_MidiKeyboardComponent.h *********/
 
 #endif
+#ifndef __JUCE_NSVIEWCOMPONENT_JUCEHEADER__
+
+/********* Start of inlined file: juce_NSViewComponent.h *********/
+#ifndef __JUCE_NSVIEWCOMPONENT_JUCEHEADER__
+#define __JUCE_NSVIEWCOMPONENT_JUCEHEADER__
+
+#if ! DOXYGEN
+ class NSViewComponentInternal;
+#endif
+
+#if JUCE_MAC || DOXYGEN
+
+/**
+    A Mac-specific class that can create and embed an NSView inside itself.
+
+    To use it, create one of these, put it in place and make sure it's visible in a
+    window, then use setView() to assign an NSView to it. The view will then be
+    moved and resized to follow the movements of this component.
+
+    Of course, since the view is a native object, it'll obliterate any
+    juce components that may overlap this component, but that's life.
+*/
+class JUCE_API  NSViewComponent   : public Component
+{
+public:
+
+    /** Create an initially-empty container. */
+    NSViewComponent();
+
+    /** Destructor. */
+    ~NSViewComponent();
+
+    /** Assigns an NSView to this peer.
+
+        The view will be retained and released by this component for as long as
+        it is needed. To remove the current view, just call setView (0).
+
+        Note: a void* is used here to avoid including the cocoa headers as
+        part of the juce.h, but the method expects an NSView*.
+    */
+    void setView (void* nsView);
+
+    /** Returns the current NSView.
+
+        Note: a void* is returned here to avoid including the cocoa headers as
+        a requirement of juce.h, so you should just cast the object to an NSView*.
+    */
+    void* getView() const;
+
+    /** @internal */
+    void paint (Graphics& g);
+
+    juce_UseDebuggingNewOperator
+
+private:
+    friend class NSViewComponentInternal;
+    NSViewComponentInternal* info;
+
+    NSViewComponent (const NSViewComponent&);
+    const NSViewComponent& operator= (const NSViewComponent&);
+};
+
+#endif
+
+#endif   // __JUCE_NSVIEWCOMPONENT_JUCEHEADER__
+/********* End of inlined file: juce_NSViewComponent.h *********/
+
+#endif
 #ifndef __JUCE_OPENGLCOMPONENT_JUCEHEADER__
 
 /********* Start of inlined file: juce_OpenGLComponent.h *********/
@@ -51360,8 +53826,9 @@ class OpenGLComponentWatcher;
 
     @see OpenGLComponent::setPixelFormat
 */
-struct OpenGLPixelFormat
+class JUCE_API  OpenGLPixelFormat
 {
+public:
 
     /** Creates an OpenGLPixelFormat.
 
@@ -51406,7 +53873,7 @@ struct OpenGLPixelFormat
 
     An OpenGLComponent will supply its own context for drawing in its window.
 */
-class OpenGLContext
+class JUCE_API  OpenGLContext
 {
 public:
 
@@ -51521,6 +53988,11 @@ public:
     */
     void shareWith (OpenGLContext* contextToShareListsWith);
 
+    /** Returns the context that this component is sharing with.
+        @see shareWith
+    */
+    OpenGLContext* getShareContext() const throw()    { return contextToShareListsWith; }
+
     /** Flips the openGL buffers over. */
     void swapBuffers();
 
@@ -51561,7 +54033,7 @@ public:
 
         @see newOpenGLContextCreated()
     */
-    OpenGLContext* getCurrentContext() const throw();
+    OpenGLContext* getCurrentContext() const throw()            { return context; }
 
     /** Makes this component the current openGL context.
 
@@ -51616,6 +54088,13 @@ public:
 
     /** @internal */
     void paint (Graphics& g);
+
+    /** Returns the native handle of an embedded heavyweight window, if there is one.
+
+        E.g. On windows, this will return the HWND of the sub-window containing
+        the opengl context, on the mac it'll be the NSOpenGLView.
+    */
+    void* getNativeWindowHandle() const;
 
     juce_UseDebuggingNewOperator
 
@@ -51761,31 +54240,194 @@ private:
 /********* End of inlined file: juce_PreferencesPanel.h *********/
 
 #endif
+#ifndef __JUCE_SYSTEMTRAYICONCOMPONENT_JUCEHEADER__
+
+/********* Start of inlined file: juce_SystemTrayIconComponent.h *********/
+#ifndef __JUCE_SYSTEMTRAYICONCOMPONENT_JUCEHEADER__
+#define __JUCE_SYSTEMTRAYICONCOMPONENT_JUCEHEADER__
+
+#if JUCE_WINDOWS || JUCE_LINUX || DOXYGEN
+
+/**
+    On Windows only, this component sits in the taskbar tray as a small icon.
+
+    To use it, just create one of these components, but don't attempt to make it
+    visible, add it to a parent, or put it on the desktop.
+
+    You can then call setIconImage() to create an icon for it in the taskbar.
+
+    To change the icon's tooltip, you can use setIconTooltip().
+
+    To respond to mouse-events, you can override the normal mouseDown(),
+    mouseUp(), mouseDoubleClick() and mouseMove() methods, and although the x, y
+    position will not be valid, you can use this to respond to clicks. Traditionally
+    you'd use a left-click to show your application's window, and a right-click
+    to show a pop-up menu.
+*/
+class JUCE_API  SystemTrayIconComponent  : public Component
+{
+public:
+
+    SystemTrayIconComponent();
+
+    /** Destructor. */
+    ~SystemTrayIconComponent();
+
+    /** Changes the image shown in the taskbar.
+    */
+    void setIconImage (const Image& newImage);
+
+    /** Changes the tooltip that Windows shows above the icon. */
+    void setIconTooltip (const String& tooltip);
+
+#if JUCE_LINUX
+    /** @internal */
+    void paint (Graphics& g);
+#endif
+
+    juce_UseDebuggingNewOperator
+
+private:
+
+    SystemTrayIconComponent (const SystemTrayIconComponent&);
+    const SystemTrayIconComponent& operator= (const SystemTrayIconComponent&);
+};
+
+#endif
+#endif   // __JUCE_SYSTEMTRAYICONCOMPONENT_JUCEHEADER__
+/********* End of inlined file: juce_SystemTrayIconComponent.h *********/
+
+#endif
+#ifndef __JUCE_WEBBROWSERCOMPONENT_JUCEHEADER__
+
+/********* Start of inlined file: juce_WebBrowserComponent.h *********/
+#ifndef __JUCE_WEBBROWSERCOMPONENT_JUCEHEADER__
+#define __JUCE_WEBBROWSERCOMPONENT_JUCEHEADER__
+
+#if JUCE_WEB_BROWSER || DOXYGEN
+
+#if ! DOXYGEN
+ class WebBrowserComponentInternal;
+#endif
+
+/**
+    A component that displays an embedded web browser.
+
+    The browser itself will be platform-dependent. On the Mac, probably Safari, on
+    Windows, probably IE.
+
+*/
+class JUCE_API  WebBrowserComponent      : public Component
+{
+public:
+
+    /** Creates a WebBrowserComponent.
+
+        Once it's created and visible, send the browser to a URL using goToURL().
+
+        @param unloadPageWhenBrowserIsHidden  if this is true, then when the browser
+                            component is taken offscreen, it'll clear the current page
+                            and replace it with a blank page - this can be handy to stop
+                            the browser using resources in the background when it's not
+                            actually being used.
+    */
+    WebBrowserComponent (const bool unloadPageWhenBrowserIsHidden = true);
+
+    /** Destructor. */
+    ~WebBrowserComponent();
+
+    /** Sends the browser to a particular URL.
+
+        @param url      the URL to go to.
+        @param headers  an optional set of parameters to put in the HTTP header. If
+                        you supply this, it should be a set of string in the form
+                        "HeaderKey: HeaderValue"
+        @param postData an optional block of data that will be attached to the HTTP
+                        POST request
+    */
+    void goToURL (const String& url,
+                  const StringArray* headers = 0,
+                  const MemoryBlock* postData = 0);
+
+    /** Stops the current page loading.
+    */
+    void stop();
+
+    /** Sends the browser back one page.
+    */
+    void goBack();
+
+    /** Sends the browser forward one page.
+    */
+    void goForward();
+
+    /** Refreshes the browser.
+    */
+    void refresh();
+
+    /** This callback is called when the browser is about to navigate
+        to a new location.
+
+        You can override this method to perform some action when the user
+        tries to go to a particular URL. To allow the operation to carry on,
+        return true, or return false to stop the navigation happening.
+    */
+    virtual bool pageAboutToLoad (const String& newURL);
+
+    /** @internal */
+    void paint (Graphics& g);
+    /** @internal */
+    void resized();
+    /** @internal */
+    void parentHierarchyChanged();
+    /** @internal */
+    void visibilityChanged();
+
+    juce_UseDebuggingNewOperator
+
+private:
+    WebBrowserComponentInternal* browser;
+    bool blankPageShown, unloadPageWhenBrowserIsHidden;
+    String lastURL;
+    StringArray lastHeaders;
+    MemoryBlock lastPostData;
+
+    void reloadLastURL();
+    void checkWindowAssociation();
+
+    WebBrowserComponent (const WebBrowserComponent&);
+    const WebBrowserComponent& operator= (const WebBrowserComponent&);
+};
+
+#endif
+#endif   // __JUCE_WEBBROWSERCOMPONENT_JUCEHEADER__
+/********* End of inlined file: juce_WebBrowserComponent.h *********/
+
+#endif
 #ifndef __JUCE_QUICKTIMEMOVIECOMPONENT_JUCEHEADER__
 
 /********* Start of inlined file: juce_QuickTimeMovieComponent.h *********/
 #ifndef __JUCE_QUICKTIMEMOVIECOMPONENT_JUCEHEADER__
 #define __JUCE_QUICKTIMEMOVIECOMPONENT_JUCEHEADER__
 
+// (NB: This stuff mustn't go inside the "#if QUICKTIME" block, or it'll break the
+// amalgamated build)
+#if JUCE_WINDOWS
+
+  typedef ActiveXControlComponent QTCompBaseClass;
+#elif JUCE_MAC
+
+  typedef NSViewComponent QTCompBaseClass;
+#endif
+
 // this is used to disable QuickTime, and is defined in juce_Config.h
 #if JUCE_QUICKTIME || DOXYGEN
-
-#if JUCE_WIN32
-
-  typedef ActiveXControlComponent QTWinBaseClass;
-#else
-
-  typedef Component QTWinBaseClass;
-#endif
 
 /**
     A window that can play back a QuickTime movie.
 
 */
-class JUCE_API  QuickTimeMovieComponent     : public QTWinBaseClass
-                                              #if JUCE_MAC
-                                               , private Timer
-                                              #endif
+class JUCE_API  QuickTimeMovieComponent     : public QTCompBaseClass
 {
 public:
 
@@ -51805,7 +54447,7 @@ public:
     */
     static bool isQuickTimeAvailable() throw();
 
-    /** Tries to load a QuickTime movie into the player.
+    /** Tries to load a QuickTime movie from a file into the player.
 
         It's best to call this function once you've added the component to a window,
         (or put it on the desktop as a heavyweight window). Loading a movie when the
@@ -51819,6 +54461,33 @@ public:
     bool loadMovie (const File& movieFile,
                     const bool isControllerVisible);
 
+    /** Tries to load a QuickTime movie from a URL into the player.
+
+        It's best to call this function once you've added the component to a window,
+        (or put it on the desktop as a heavyweight window). Loading a movie when the
+        component isn't visible can cause problems, because QuickTime needs a window
+        handle to do its stuff.
+
+        @param movieURL    the .mov file to open
+        @param isControllerVisible  whether to show a controller bar at the bottom
+        @returns true if the movie opens successfully
+    */
+    bool loadMovie (const URL& movieURL,
+                    const bool isControllerVisible);
+
+    /** Tries to load a QuickTime movie from a stream into the player.
+
+        It's best to call this function once you've added the component to a window,
+        (or put it on the desktop as a heavyweight window). Loading a movie when the
+        component isn't visible can cause problems, because QuickTime needs a window
+        handle to do its stuff.
+
+        @param movieStream    a stream containing a .mov file. The component may try
+                              to read the whole stream before playing, rather than
+                              streaming from it.
+        @param isControllerVisible  whether to show a controller bar at the bottom
+        @returns true if the movie opens successfully
+    */
     bool loadMovie (InputStream* movieStream,
                     const bool isControllerVisible);
 
@@ -51910,40 +54579,25 @@ public:
 
     /** @internal */
     void paint (Graphics& g);
-    /** @internal */
-    void parentHierarchyChanged();
-    /** @internal */
-    void visibilityChanged();
-#if JUCE_MAC
-    /** @internal */
-    void handleMCEvent (void*);
-    /** @internal */
-    void assignMovieToWindow();
-    /** @internal */
-    void timerCallback();
-    /** @internal */
-    void moved();
-    /** @internal */
-    void resized();
-#endif
 
     juce_UseDebuggingNewOperator
 
 private:
     File movieFile;
-    bool movieLoaded, controllerVisible;
+    bool movieLoaded, controllerVisible, looping;
 
-    void* internal;
-
-#if JUCE_MAC
-    void* associatedWindow;
-    Rectangle lastPositionApplied;
-    bool controllerAssignedToWindow, reentrant, looping;
-    void checkWindowAssociation();
-#endif
+#if JUCE_WINDOWS
+    /** @internal */
+    void parentHierarchyChanged();
+    /** @internal */
+    void visibilityChanged();
 
     void createControlIfNeeded();
     bool isControlCreated() const;
+    void* internal;
+#else
+    void* movie;
+#endif
 
     QuickTimeMovieComponent (const QuickTimeMovieComponent&);
     const QuickTimeMovieComponent& operator= (const QuickTimeMovieComponent&);
@@ -51952,165 +54606,6 @@ private:
 #endif
 #endif   // __JUCE_QUICKTIMEMOVIECOMPONENT_JUCEHEADER__
 /********* End of inlined file: juce_QuickTimeMovieComponent.h *********/
-
-#endif
-#ifndef __JUCE_SYSTEMTRAYICONCOMPONENT_JUCEHEADER__
-
-/********* Start of inlined file: juce_SystemTrayIconComponent.h *********/
-#ifndef __JUCE_SYSTEMTRAYICONCOMPONENT_JUCEHEADER__
-#define __JUCE_SYSTEMTRAYICONCOMPONENT_JUCEHEADER__
-
-#if JUCE_WIN32 || JUCE_LINUX
-
-/**
-    On Windows only, this component sits in the taskbar tray as a small icon.
-
-    To use it, just create one of these components, but don't attempt to make it
-    visible, add it to a parent, or put it on the desktop.
-
-    You can then call setIconImage() to create an icon for it in the taskbar.
-
-    To change the icon's tooltip, you can use setIconTooltip().
-
-    To respond to mouse-events, you can override the normal mouseDown(),
-    mouseUp(), mouseDoubleClick() and mouseMove() methods, and although the x, y
-    position will not be valid, you can use this to respond to clicks. Traditionally
-    you'd use a left-click to show your application's window, and a right-click
-    to show a pop-up menu.
-*/
-class JUCE_API  SystemTrayIconComponent  : public Component
-{
-public:
-
-    SystemTrayIconComponent();
-
-    /** Destructor. */
-    ~SystemTrayIconComponent();
-
-    /** Changes the image shown in the taskbar.
-    */
-    void setIconImage (const Image& newImage);
-
-    /** Changes the tooltip that Windows shows above the icon. */
-    void setIconTooltip (const String& tooltip);
-
-#if JUCE_LINUX
-    /** @internal */
-    void paint (Graphics& g);
-#endif
-
-    juce_UseDebuggingNewOperator
-
-private:
-
-    SystemTrayIconComponent (const SystemTrayIconComponent&);
-    const SystemTrayIconComponent& operator= (const SystemTrayIconComponent&);
-};
-
-#endif
-#endif   // __JUCE_SYSTEMTRAYICONCOMPONENT_JUCEHEADER__
-/********* End of inlined file: juce_SystemTrayIconComponent.h *********/
-
-#endif
-#ifndef __JUCE_WEBBROWSERCOMPONENT_JUCEHEADER__
-
-/********* Start of inlined file: juce_WebBrowserComponent.h *********/
-#ifndef __JUCE_WEBBROWSERCOMPONENT_JUCEHEADER__
-#define __JUCE_WEBBROWSERCOMPONENT_JUCEHEADER__
-
-class WebBrowserComponentInternal;
-
-/**
-    A component that displays an embedded web browser.
-
-    The browser itself will be platform-dependent. On the Mac, probably Safari, on
-    Windows, probably IE.
-
-*/
-class WebBrowserComponent      : public Component
-{
-public:
-
-    /** Creates a WebBrowserComponent.
-
-        Once it's created and visible, send the browser to a URL using goToURL().
-    */
-    WebBrowserComponent();
-
-    /** Destructor. */
-    ~WebBrowserComponent();
-
-    /** Sends the browser to a particular URL.
-
-        @param url      the URL to go to.
-        @param headers  an optional set of parameters to put in the HTTP header. If
-                        you supply this, it should be a set of string in the form
-                        "HeaderKey: HeaderValue"
-        @param postData an optional block of data that will be attached to the HTTP
-                        POST request
-    */
-    void goToURL (const String& url,
-                  const StringArray* headers = 0,
-                  const MemoryBlock* postData = 0);
-
-    /** Stops the current page loading.
-    */
-    void stop();
-
-    /** Sends the browser back one page.
-    */
-    void goBack();
-
-    /** Sends the browser forward one page.
-    */
-    void goForward();
-
-    /** This callback is called when the browser is about to navigate
-        to a new location.
-
-        You can override this method to perform some action when the user
-        tries to go to a particular URL. To allow the operation to carry on,
-        return true, or return false to stop the navigation happening.
-    */
-    virtual bool pageAboutToLoad (const String& newURL);
-
-    /** @internal */
-    void paint (Graphics& g);
-    /** @internal */
-    void moved();
-    /** @internal */
-    void resized();
-    /** @internal */
-    void parentHierarchyChanged();
-    /** @internal */
-    void visibilityChanged();
-
-    juce_UseDebuggingNewOperator
-
-private:
-    WebBrowserComponentInternal* browser;
-    bool blankPageShown;
-
-    String lastURL;
-    StringArray lastHeaders;
-    MemoryBlock lastPostData;
-
-#if JUCE_MAC
-    void* associatedWindow;
-    void updateBrowserPosition();
-    void createBrowser();
-    void deleteBrowser();
-#endif
-
-    void reloadLastURL();
-    void checkWindowAssociation();
-
-    WebBrowserComponent (const WebBrowserComponent&);
-    const WebBrowserComponent& operator= (const WebBrowserComponent&);
-};
-
-#endif   // __JUCE_WEBBROWSERCOMPONENT_JUCEHEADER__
-/********* End of inlined file: juce_WebBrowserComponent.h *********/
 
 #endif
 #ifndef __JUCE_LOOKANDFEEL_JUCEHEADER__
@@ -52143,6 +54638,7 @@ class ProgressBar;
 class FileBrowserComponent;
 class DirectoryContentsDisplayComponent;
 class FilePreviewComponent;
+class ImageButton;
 
 /**
     LookAndFeel objects define the appearance of all the JUCE widgets, and subclasses
@@ -52203,12 +54699,29 @@ public:
     */
     void setColour (const int colourId, const Colour& colour) throw();
 
+    /** Returns true if the specified colour ID has been explicitly set using the
+        setColour() method.
+    */
+    bool isColourSpecified (const int colourId) const throw();
+
+    virtual const Typeface::Ptr getTypefaceForFont (const Font& font);
+
+    /** Allows you to change the default sans-serif font.
+
+        If you need to supply your own Typeface object for any of the default fonts, rather
+        than just supplying the name (e.g. if you want to use an embedded font), then
+        you should instead override getTypefaceForFont() to create and return the typeface.
+    */
+    void setDefaultSansSerifTypefaceName (const String& newName);
+
     /** Draws the lozenge-shaped background for a standard button. */
     virtual void drawButtonBackground (Graphics& g,
                                        Button& button,
                                        const Colour& backgroundColour,
                                        bool isMouseOverButton,
                                        bool isButtonDown);
+
+    virtual const Font getFontForTextButton (TextButton& button);
 
     /** Draws the text for a TextButton. */
     virtual void drawButtonText (Graphics& g,
@@ -52232,14 +54745,27 @@ public:
                               const bool isMouseOverButton,
                               const bool isButtonDown);
 
-    /** Draws the contents of a message box.
+    /* AlertWindow handling..
     */
+    virtual AlertWindow* createAlertWindow (const String& title,
+                                            const String& message,
+                                            const String& button1,
+                                            const String& button2,
+                                            const String& button3,
+                                            AlertWindow::AlertIconType iconType,
+                                            int numButtons,
+                                            Component* associatedComponent);
+
     virtual void drawAlertBox (Graphics& g,
                                AlertWindow& alert,
                                const Rectangle& textArea,
                                TextLayout& textLayout);
 
     virtual int getAlertBoxWindowFlags();
+
+    virtual int getAlertWindowButtonHeight();
+
+    virtual const Font getAlertWindowFont();
 
     /** Draws a progress bar.
 
@@ -52252,6 +54778,12 @@ public:
     virtual void drawProgressBar (Graphics& g, ProgressBar& progressBar,
                                   int width, int height,
                                   double progress, const String& textToShow);
+
+    // Draws a small image that spins to indicate that something's happening..
+    // This method should use the current time to animate itself, so just keep
+    // repainting it every so often.
+    virtual void drawSpinningWaitAnimation (Graphics& g, const Colour& colour,
+                                            int x, int y, int w, int h);
 
     /** Draws one of the buttons on a scrollbar.
 
@@ -52317,7 +54849,7 @@ public:
     virtual const Path getCrossShape (const float height);
 
     /** Draws the + or - box in a treeview. */
-    virtual void drawTreeviewPlusMinusBox (Graphics& g, int x, int y, int w, int h, bool isPlus);
+    virtual void drawTreeviewPlusMinusBox (Graphics& g, int x, int y, int w, int h, bool isPlus, bool isMouseOver);
 
     virtual void fillTextEditorBackground (Graphics& g, int width, int height, TextEditor& textEditor);
     virtual void drawTextEditorOutline (Graphics& g, int width, int height, TextEditor& textEditor);
@@ -52413,6 +54945,8 @@ public:
 
     virtual void positionComboBoxText (ComboBox& box, Label& labelToPosition);
 
+    virtual void drawLabel (Graphics& g, Label& label);
+
     virtual void drawLinearSlider (Graphics& g,
                                    int x, int y,
                                    int width, int height,
@@ -52472,6 +55006,10 @@ public:
     virtual void drawResizableFrame (Graphics& g,
                                     int w, int h,
                                     const BorderSize& borders);
+
+    virtual void fillResizableWindowBackground (Graphics& g, int w, int h,
+                                                const BorderSize& border,
+                                                ResizableWindow& window);
 
     virtual void drawResizableWindowBorder (Graphics& g,
                                             int w, int h,
@@ -52567,6 +55105,12 @@ public:
 
     virtual Button* createTabBarExtrasButton();
 
+    virtual void drawImageButton (Graphics& g, Image* image,
+                                  int imageX, int imageY, int imageW, int imageH,
+                                  const Colour& overlayColour,
+                                  float imageOpacity,
+                                  ImageButton& button);
+
     virtual void drawTableHeaderBackground (Graphics& g, TableHeaderComponent& header);
 
     virtual void drawTableHeaderColumn (Graphics& g, const String& columnName, int columnId,
@@ -52595,6 +55139,8 @@ public:
                                              PropertyComponent& component);
 
     virtual const Rectangle getPropertyComponentContentPosition (PropertyComponent& component);
+
+    virtual void drawLevelMeter (Graphics& g, int width, int height, float level);
 
     /**
     */
@@ -52629,13 +55175,11 @@ protected:
     // xxx the following methods are only here to cause a compiler error, because they've been
     // deprecated or their parameters have changed. Hopefully these definitions should cause an
     // error if you try to build a subclass with the old versions.
-
     virtual int drawTickBox (Graphics&, int, int, int, int, bool, const bool, const bool, const bool) { return 0; }
-
     virtual int drawProgressBar (Graphics&, int, int, int, int, float) { return 0; }
     virtual int drawProgressBar (Graphics&, ProgressBar&, int, int, int, int, float) { return 0; }
-
     virtual void getTabButtonBestWidth (int, const String&, int) {}
+    virtual int drawTreeviewPlusMinusBox (Graphics&, int, int, int, int, bool) { return 0; }
 
 private:
     friend void JUCE_PUBLIC_FUNCTION shutdownJuce_GUI();
@@ -52643,6 +55187,9 @@ private:
 
     Array <int> colourIds;
     Array <Colour> colours;
+
+    // default typeface names
+    String defaultSans, defaultSerif, defaultFixed;
 
     void drawShinyButtonShape (Graphics& g,
                                float x, float y, float w, float h, float maxCornerSize,
@@ -52786,6 +55333,9 @@ private:
 
 #endif   // __JUCE_OLDSCHOOLLOOKANDFEEL_JUCEHEADER__
 /********* End of inlined file: juce_OldSchoolLookAndFeel.h *********/
+
+#endif
+#ifndef __JUCE_DELETEDATSHUTDOWN_JUCEHEADER__
 
 #endif
 #ifndef __JUCE_FILEBASEDDOCUMENT_JUCEHEADER__
@@ -53054,6 +55604,9 @@ private:
 /********* End of inlined file: juce_FileBasedDocument.h *********/
 
 #endif
+#ifndef __JUCE_PROPERTIESFILE_JUCEHEADER__
+
+#endif
 #ifndef __JUCE_RECENTLYOPENEDFILESLIST_JUCEHEADER__
 
 /********* Start of inlined file: juce_RecentlyOpenedFilesList.h *********/
@@ -53187,6 +55740,33 @@ private:
 #ifndef __JUCE_SELECTEDITEMSET_JUCEHEADER__
 
 #endif
+#ifndef __JUCE_SYSTEMCLIPBOARD_JUCEHEADER__
+
+/********* Start of inlined file: juce_SystemClipboard.h *********/
+#ifndef __JUCE_SYSTEMCLIPBOARD_JUCEHEADER__
+#define __JUCE_SYSTEMCLIPBOARD_JUCEHEADER__
+
+/**
+    Handles reading/writing to the system's clipboard.
+*/
+class JUCE_API  SystemClipboard
+{
+public:
+    /** Copies a string of text onto the clipboard */
+    static void copyTextToClipboard (const String& text) throw();
+
+    /** Gets the current clipboard's contents.
+
+        Obviously this might have come from another app, so could contain
+        anything..
+    */
+    static const String getTextFromClipboard() throw();
+};
+
+#endif   // __JUCE_SYSTEMCLIPBOARD_JUCEHEADER__
+/********* End of inlined file: juce_SystemClipboard.h *********/
+
+#endif
 #ifndef __JUCE_UNDOABLEACTION_JUCEHEADER__
 
 #endif
@@ -53204,7 +55784,7 @@ private:
   #pragma pack (pop)
 #endif
 
-#if JUCE_MAC
+#if JUCE_MAC || JUCE_IPHONE
   #pragma align=reset
 #endif
 
@@ -53239,7 +55819,7 @@ END_JUCE_NAMESPACE
      files, you may need to use the juce_WithoutMacros.h file - see the comments in that
      file for more information.
   */
-  #if JUCE_WIN32 && ! JUCE_DONT_DEFINE_MACROS
+  #if JUCE_WINDOWS && ! JUCE_DONT_DEFINE_MACROS
     #define Rectangle       JUCE_NAMESPACE::Rectangle
   #endif
 #endif
@@ -53303,6 +55883,7 @@ END_JUCE_NAMESPACE
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "comsupp.lib")
+#pragma comment(lib, "version.lib")
 
 #if JUCE_OPENGL
  #pragma comment(lib, "OpenGL32.Lib")
@@ -53311,6 +55892,10 @@ END_JUCE_NAMESPACE
 
 #if JUCE_QUICKTIME
  #pragma comment (lib, "QTMLClient.lib")
+#endif
+
+#if JUCE_USE_CAMERA
+ #pragma comment (lib, "Strmiids.lib")
 #endif
 /********* End of inlined file: juce_win32_AutoLinkLibraries.h *********/
 
@@ -53335,27 +55920,28 @@ END_JUCE_NAMESPACE
         return JUCE_NAMESPACE::JUCEApplication::main (argc, argv, new AppClass()); \
     }
 
-#elif JUCE_WIN32
+#elif JUCE_WINDOWS
 
   #ifdef _CONSOLE
     #define START_JUCE_APPLICATION(AppClass) \
-        int main (int argc, char* argv[]) \
+        int main (int, char* argv[]) \
         { \
-            return JUCE_NAMESPACE::JUCEApplication::main (argc, argv, new AppClass()); \
+            JUCE_NAMESPACE::String commandLineString (JUCE_NAMESPACE::PlatformUtilities::getCurrentCommandLineParams()); \
+            return JUCE_NAMESPACE::JUCEApplication::main (commandLineString, new AppClass()); \
         }
   #elif ! defined (_AFXDLL)
     #ifdef _WINDOWS_
       #define START_JUCE_APPLICATION(AppClass) \
-          int WINAPI WinMain (HINSTANCE, HINSTANCE, LPSTR commandLine, int) \
+          int WINAPI WinMain (HINSTANCE, HINSTANCE, LPSTR, int) \
           { \
-              JUCE_NAMESPACE::String commandLineString (commandLine); \
+              JUCE_NAMESPACE::String commandLineString (JUCE_NAMESPACE::PlatformUtilities::getCurrentCommandLineParams()); \
               return JUCE_NAMESPACE::JUCEApplication::main (commandLineString, new AppClass()); \
           }
     #else
       #define START_JUCE_APPLICATION(AppClass) \
-          int __stdcall WinMain (int, int, const char* commandLine, int) \
+          int __stdcall WinMain (int, int, const char*, int) \
           { \
-              JUCE_NAMESPACE::String commandLineString (commandLine); \
+              JUCE_NAMESPACE::String commandLineString (JUCE_NAMESPACE::PlatformUtilities::getCurrentCommandLineParams()); \
               return JUCE_NAMESPACE::JUCEApplication::main (commandLineString, new AppClass()); \
           }
     #endif
