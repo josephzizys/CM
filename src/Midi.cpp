@@ -1540,6 +1540,9 @@ bool MidiInPort::isMessageActive(const MidiMessage &msg)
 void MidiInPort::handleIncomingMidiMessage(MidiInput *dev,
 					   const MidiMessage &msg) 
 {
+  //#ifdef JUCE_MAC
+  //  const ScopedAutoReleasePool pool;
+  //#endif
   if (isMessageActive(msg))
     {
       //      std::cout << "handleIncomingMidiMessage()\n";
@@ -1554,12 +1557,12 @@ void MidiInPort::handleIncomingMidiMessage(MidiInput *dev,
 	  int d2=0;
 	  if (sz>2)
 	    d2=msg.getRawData()[2] & 0x7f;
-	  String msg=MidiNode::opcodeToString(op);
-	  msg << T(" ") << String(ch)
-	      << T(" ") << String(d1)
-	      << T(" ") << String(d2)
-	      << T("\n");
-	  Console::getInstance()->printOutput(msg);
+	  String text=MidiNode::opcodeToString(op);
+	  text << T(" ") << String(ch)
+               << T(" ") << String(d1)
+               << T(" ") << String(d2)
+               << T("\n");
+	  Console::getInstance()->printOutput(text);
 	}
     }
 }
