@@ -5,6 +5,9 @@
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
 ;;; **********************************************************************
 
+
+
+
 ;;; uses: with-optkey, first, second, tb:bess-jn, shuffle! reverse!
 
 (define-record spectrum time size freqs amps)
@@ -362,6 +365,24 @@
     (set! flip (cons (* minf (/ maxf (car tail)))
 		     flip))))
 
+(define (spectrum-invert! spec)
+  (do ((minf (spectrum-minfreq spec))
+       ;; reverse the list so that inverted values will still be in
+       ;;  ascending order
+       (tail (reverse! (spectrum-freqs spec)) (cdr tail))
+       )
+      ((null? (cdr tail)) ; skip minf element
+       ;;(spectrum-freqs-set! spec tail)
+       spec)
+    (set-car! tail (* minf (/ minf (car tail))))))
+
+; (define aaa (make-spectrum #f 4 '(100 200 300 400) '(0 0 0 0)))
+; (spectrum-freqs aaa)
+; (spectrum-invert! aaa)
+; (spectrum-freqs aaa)
+; (note (key (loop for i in (hz '(a3 e4 b4 ds5 fs5)) collect (* 100 (/ 100.0 i)))))
+; (note (key (loop for i in (hz '(a3 e4 b4 ds5 fs5)) collect (* 220 (/ 220.0 i)))))
+
 ;; interp key note every
 
 (define (spectrum-rescale! spec mode . args)
@@ -381,13 +402,13 @@
     (if (not (<= 1 mode 8))
 	(error "mode ~S not 1-8" mode)
 	(set! mode (- mode 1))) ; convert 1-8 to 0-7
-    (if (bit-set? mode 2) ; is 4's bit on
+    (if (logtest mode 4) ; is 4's bit on
 	(set! modified (spectrum-amps spec))
 	(set! modified (spectrum-freqs spec)))
-    (if (bit-set? mode 1) ; is 2's bit on?
+    (if (logtest mode 2) ; is 2's bit on?
 	(set! modifier (spectrum-amps spec))
 	(set! modifier (spectrum-freqs spec)))
-    (if (bit-set? mode 0)
+    (if (logtest mode 1)
 	(set! scaling #t)
 	(set! scaling #f))
     (cond ((number? args); value
@@ -402,12 +423,12 @@
 	   (if (not (every? number? args))
 	       ;; replace #f and #t with appropriate min max values
 	       (let ((xmin #f) (xmax #f) (ymin #f) (ymax #f))
-		 (if (bit-set? mode 1) ; env x is amp
+		 (if (logtest mode 1) ; env x is amp
 		     (begin (set! xmin (spectrum-minamp spec))
 			    (set! xmax (spectrum-maxamp spec)))
 		     (begin (set! xmin (spectrum-minfreq spec))
 			    (set! xmax (spectrum-maxfreq spec))))
-		 (if (bit-set? mode 2) ; env y is amp
+		 (if (logtest mode 2) ; env y is amp
 		     (begin (set! ymin (spectrum-minamp spec))
 			    (set! ymax (spectrum-maxamp spec)))
 		     (begin (set! ymin (spectrum-minfreq spec))
@@ -440,8 +461,9 @@
     spec))
 
 ; (define aaa (make-spectrum #f 6 '(100 200 300 400 500 800) '(0 0 0 0 0 0)))
-; aaa
+; (spectrum-freqs aaa)
 ; (spectrum-rescale! aaa 1 100 800 800 100)
+; (spectrum-freqs aaa)
 
 (define (read-spear-frame str)
   (let ((port (open-input-string str))

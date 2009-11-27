@@ -363,6 +363,7 @@ void Help::addCommonMusicSymbolHelp()
   roots.set(T("CM"), T("file://")+cmdocdir.getFullPathName()+T("/"));
   cm.set(T("between"), T("cm.html#between"));
   cm.set(T("butlast"), T("cm.html#butlast"));
+  cm.set(T("cell-state"), T("cm.html#cell-state"));
   cm.set(T("cents->ratio"), T("cm.html#cents-_ratio"));
   cm.set(T("chdir"), T("cm.html#chdir"));
   cm.set(T("cont"), T("cm.html#cont"));
@@ -522,6 +523,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("spectrum-copy"), T("cm.html#spectrum-copy"));
   cm.set(T("spectrum-flip!"), T("cm.html#spectrum-flip_"));  
   cm.set(T("spectrum-freqs"), T("cm.html#spectrum-freqs"));  
+  cm.set(T("spectrum-invert!"), T("cm.html#spectrum-invert_"));  
   cm.set(T("spectrum-keys"), T("cm.html#spectrum-keys"));  
   cm.set(T("spectrum-maxamp"), T("cm.html#spectrum-maxamp"));  
   cm.set(T("spectrum-maxfreq"), T("cm.html#spectrum-maxfreq"));  

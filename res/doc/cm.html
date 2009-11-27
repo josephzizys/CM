@@ -2195,22 +2195,39 @@ Merges <var>spectrum</var> with zero or more additional <var>spectra</var>. If <
     </td>
     <!-- td class="label">Function</td -->
   </tr>
-  <tr><td class="retval" colspan="2">&rarr; </td></tr>
+  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
 </table>
 <blockquote>
 <p>
 
-Inverts frequencies in <var>spectrum</var> while keeping the original min and max frequency boundaries the same.
+Inverts the frequencies in <var>spectrum</var> while preserving the minimum and maximum frequency boundaries.
 
 </p>
 </blockquote>
 <!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-invert_">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-invert!</span>
+      (<var class="arg">spectrum</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
+</table>
+<blockquote>
+<p>
 
+Inverts frequencies in <var>spectrum</var> around the first partial. The resulting spectrum remains in ascending order but the first partial is now the maximum frequency.
 
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="spectrum-rescale_">
+<table class="entry" id="spectrum-invert_">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-rescale!</span>
