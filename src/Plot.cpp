@@ -1126,29 +1126,48 @@ Plotter::Plotter(MidiFile& midifile)
 
 void Plotter::createPlottingComponents()
 {
- font=Font(Font::getDefaultSansSerifFontName(), 10.0, Font::bold);
+  int II=0;
+  font=Font(Font::getDefaultSansSerifFontName(), 10.0, Font::bold);
   plotview=new PlotView (this);
   backview=new BackView(this);
   // plot view is child of backview so that it is in front
+  //std::cout << II++ << "\n"; //0
   backview->addChildComponent(plotview);
+  //std::cout << II++ << "\n";
   plotview->setTopLeftPosition(0,0);
+  //std::cout << II++ << "\n";
   plotview->setWantsKeyboardFocus(true);
+  //std::cout << II++ << "\n";
   viewport=new PlotViewport (this);
+  //std::cout << II++ << "\n";
   // add the backview to the viewport. the plotview is a child of the
   // backview and so it will scroll with it
-  viewport->setViewedComponent(backview);
-  viewport->setScrollBarsShown (true, true);
-  viewport->setViewPositionProportionately(0.0,1.0);
   addChildComponent(viewport);
+  //std::cout << II++ << "\n"; //5
   haxview=new AxisView(viewport, horizontal);
+  //std::cout << II++ << "\n";
   vaxview=new AxisView(viewport, vertical);
+  //std::cout << II++ << "\n";
   addChildComponent(haxview);  
+  //std::cout << II++ << "\n";
   addChildComponent(vaxview);  
+  //std::cout << II++ << "\n";
+  viewport->setViewedComponent(backview);
+  //std::cout << II++ << "\n"; //10
+  viewport->setScrollBarsShown (true, true);
+  // std::cout << II++ << "\n";
+  viewport->setViewPositionProportionately(0.0,1.0);
+  //std::cout << II++ << "\n";
   viewport->setVisible(true);
+  //std::cout << II++ << "\n";
   backview->setVisible(true);
+  //std::cout << II++ << "\n";
   plotview->setVisible(true);
+  //std::cout << II++ << "\n";//15
   haxview->setVisible(true);
+  //std::cout << II++ << "\n";
   vaxview->setVisible(true);
+  ///std::cout << II++ << "\n";
 }
 
 void Plotter::setPlottingFields(int xax, int yax)
