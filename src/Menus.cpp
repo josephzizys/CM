@@ -122,13 +122,17 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
 #endif
 
 #ifdef SNDLIB
-  PopupMenu sndlib,chans,srate;
-  for (int i=0;i<NumSndLibSrate;i++)
+  PopupMenu sndlib,chans,srate, fmats;
+  for (int i=0; i<SrateIDs::NumSrates; i++)
     srate.addCommandItem(comm, CommandIDs::SndLibSrate+i);
   sndlib.addSubMenu(T("Srate"), srate);
-  for (int i=1;i<=NumSndLibChannel;i++) // chans 1 based
+  for (int i=0; i<ChannelIDs::NumChannels; i++) 
     chans.addCommandItem(comm, CommandIDs::SndLibChannels+i);
   sndlib.addSubMenu(T("Channels"), chans);
+  for (int i=0; i<AudioFormatIDs::NumAudioFormats; i++)
+    fmats.addCommandItem(comm, CommandIDs::SndLibAudioFormat+i);
+  sndlib.addSubMenu(T("Audio Formats"), fmats);
+
   sndlib.addCommandItem(comm, CommandIDs::SndLibAutoPlay);
   sndlib.addSeparator();
   sndlib.addCommandItem(comm, CommandIDs::SndLibInsDialog);
@@ -319,6 +323,10 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
     }
   else if (name==T("Console"))
     {
+      PopupMenu themes;
+      for (int i=0; i<Console::getInstance()->numThemes(); i++)
+        themes.addCommandItem(manager, CommandIDs::ConsoleTheme + i);
+      menu.addSubMenu(T("Themes"), themes);
       menu.addSubMenu(T("Font Size"),
 		      CommandMenus::getFontSizeMenu(manager,
 						    CommandIDs::ConsoleFontSize

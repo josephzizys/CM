@@ -194,8 +194,17 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::SndLibSrate + 1,
     CommandIDs::SndLibSrate + 2,
     CommandIDs::SndLibSrate + 3,
+
+    CommandIDs::SndLibChannels + 0,
     CommandIDs::SndLibChannels + 1,
     CommandIDs::SndLibChannels + 2,
+    CommandIDs::SndLibChannels + 3,
+
+    CommandIDs::SndLibAudioFormat + 0,
+    CommandIDs::SndLibAudioFormat + 1,
+    CommandIDs::SndLibAudioFormat + 2,
+    CommandIDs::SndLibAudioFormat + 3,
+
     CommandIDs::SndLibAutoPlay,
     CommandIDs::SndLibInsDialog,
     CommandIDs::SndLibInsRestore,
@@ -467,7 +476,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
 	if (data<devices.size())
 	  info.shortName=devices[data];
 	else
-	  info.shortName=T("<Unknown MIDI Device>");
+	  info.shortName=T("No MIDI Device");
 	info.setTicked(MidiOutPort::getInstance()->isOpen(data));
       }
       break;
@@ -510,7 +519,7 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
 	if (data<devices.size())
 	  info.shortName=devices[data];
 	else
-	  info.shortName=T("<Unknown MIDI Device>");
+	  info.shortName=T("No MIDI Device");
 	info.setTicked(MidiInPort::getInstance()->isOpen(data));
       }
       break;
@@ -560,14 +569,21 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       break;
       
     // SndLib
+
     case CommandIDs::SndLibSrate:
       info.shortName=SrateIDs::toString(data);
-      info.setTicked(SrateIDs::toSrate(data) ==
-		     pref->getIntProp(T("SndLibSrate"), 44100));
+      info.setTicked(SrateIDs::toSrate(data)==SndLib::getInstance()->getSrate());
       break;
     case CommandIDs::SndLibChannels:
-      info.shortName=String(data);
-      info.setTicked(data==pref->getIntProp(T("SndLibChannels"), 1));
+      info.shortName=ChannelIDs::toString(data);
+      info.setTicked(ChannelIDs::toChannels(data)==SndLib::getInstance()->getChannels());
+      break;
+    case CommandIDs::SndLibAudioFormat:
+      {
+        String name=AudioFormatIDs::toString(data);
+        info.shortName=name;
+        info.setTicked(name==SndLib::getInstance()->getAudioFormat());
+      }
       break;
     case CommandIDs::SndLibAutoPlay:
       info.shortName=T("Auto Play");
@@ -915,37 +931,29 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       AudioManager::getInstance()->openAudioSettings();
       break;
 
+      //
+      // Sndlib Commands
+      //
+
 #ifdef SNDLIB
 
     case CommandIDs::SndLibSrate:
-      {
-	int sr=SrateIDs::toSrate(data);
-	String st=T("(begin (set! *clm-srate* ") + 
-	  String(sr) + T(") (void))");
-	pref->setIntProp(T("SndLibSrate"), sr);
-	Scheme::getInstance()->eval(st);
-      }
+      SndLib::getInstance()->setSrate(SrateIDs::toSrate(data));
       break;
 
     case CommandIDs::SndLibChannels:
-      {
-	int ch=data;
-	String st=T("(begin (set! *clm-channels* ") + 
-	  String(ch) + T(") (void))");
-	Preferences::getInstance()->setIntProp(T("SndLibChannels"), ch);
-	Scheme::getInstance()->eval(st);
-      }
+      SndLib::getInstance()->setChannels(ChannelIDs::toChannels(data));
+      break;
+
+    case CommandIDs::SndLibAudioFormat:
+      SndLib::getInstance()->setAudioFormat(AudioFormatIDs::toString(data));
       break;
 
     case CommandIDs::SndLibAutoPlay:
-      {
-	bool ap=!Preferences::getInstance()->
-	  getBoolProp(T("SndLibAutoPlay"));
-	String b=((ap) ? T("#t") : T("#f"));
-	String st=T("(begin (set! *clm-play* ") + b + T(") (void))");
-	Preferences::getInstance()->setIntProp(T("SndLibAutoPlay"), ap);
-	Scheme::getInstance()->eval(st);
-      }
+      if (SndLib::getInstance()->getAutoPlay())
+        SndLib::getInstance()->setAutoPlay(false);
+      else
+        SndLib::getInstance()->setAutoPlay(true);
       break;
 
     case CommandIDs::SndLibInsDialog:
@@ -961,6 +969,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       //
       // Csound Commands
       //
+
     case CommandIDs::CsoundPrefWriteAfter:
       Csound::getInstance()->
 	setWriteAfter(!Csound::getInstance()->getWriteAfter());
@@ -1214,7 +1223,8 @@ void Console::getCommandInfo(const CommandID id,
       info.shortName=T("Set Working Directory...");
       break;
     case CommandIDs::ConsoleTheme:
-      info.shortName=T("<Unknown Theme");
+      info.shortName=Console::getInstance()->getThemeName(data);
+      info.setTicked(Console::getInstance()->isCurrentTheme(data));
       break;
     case CommandIDs::ConsoleFont:
       if (data==0)
@@ -1277,6 +1287,9 @@ bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
       break;
     case CommandIDs::ConsoleShowDirectory:
       app->showWorkingDirectory();
+      break;
+    case CommandIDs::ConsoleTheme:      
+      Console::getInstance()->setTheme(data);
       break;
     case CommandIDs::ConsoleFontSize:
       {

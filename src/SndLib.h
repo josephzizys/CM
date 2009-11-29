@@ -15,6 +15,16 @@ class SndLib
  public:
   SndLib();
   ~SndLib();
+
+  bool getAutoPlay();
+  void setAutoPlay(bool ap);
+  String getAudioFormat();
+  void setAudioFormat(String name);
+  int getSrate();
+  void setSrate(int sr);
+  int getChannels();
+  void setChannels(int ch);
+
   XmlElement* instable;
   int performCommand(int type, int data=0, String text=String::empty);
   String getClmDefault(int id);

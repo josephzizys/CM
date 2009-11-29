@@ -5,6 +5,7 @@
     <item name="Sal" file="cm.html" url="$DOCDIR:/cm.html#sal"/>
     <item name="SndLib" url="http://ccrma.stanford.edu/software/snd/snd/sndclm.html"/>
     <item name="Scheme" url="http://schemers.org/Documents/Standards/R5RS/HTML/"/>
+    <item name="Changelog" url="$DOCDIR:/changelog.html"/>
   </menu>
 
   <menu name="Sal Tutorials">

@@ -643,10 +643,11 @@ class CommandIDs
   // SndLib
   static const CommandID SndLibSrate = COMID(SndLib, 1);
   static const CommandID SndLibChannels = COMID(SndLib, 2);
-  static const CommandID SndLibAutoPlay = COMID(SndLib, 3);
-  static const CommandID SndLibInsDialog = COMID(SndLib, 4);
-  static const CommandID SndLibAutoLoad = COMID(SndLib, 5);
-  static const CommandID SndLibInsRestore = COMID(SndLib, 6);
+  static const CommandID SndLibAudioFormat = COMID(SndLib, 3);
+  static const CommandID SndLibAutoPlay = COMID(SndLib, 4);
+  static const CommandID SndLibInsDialog = COMID(SndLib, 5);
+  static const CommandID SndLibAutoLoad = COMID(SndLib, 6);
+  static const CommandID SndLibInsRestore = COMID(SndLib, 7);
 
   // Scheduler
   static const CommandID SchedulerStop = COMID(Scheduler, 1);
@@ -775,11 +776,55 @@ class SrateIDs
       case 3: return Srate3;
       default: return Srate1;
       }
-  }
-  
+  } 
   static const String toString(int id)
   {
     return String(toSrate(id));
+  }
+};
+
+class ChannelIDs
+{
+ public:
+  static const int NumChannels = 4;
+  static const int Mono = 0;  
+  static const int Stereo = 1;  
+  static const int Quad= 2;  
+  static const int Eight = 3;  
+  static const int toChannels(int id)
+  {
+    switch (id)
+      {
+      case Mono: return 1;
+      case Stereo: return 2;
+      case Quad: return 4;
+      case Eight: return 8;
+      default: return 1;
+      }
+  } 
+  static const String toString(int id)
+  {
+    return String(toChannels(id));
+  }
+};
+
+class AudioFormatIDs
+{
+ public:
+  static const int NumAudioFormats = 3;
+  static const int WAV = 0;
+  static const int AIFF = 1;
+  static const int SND = 2;
+  static const String toString(int id)
+  {
+    switch (id)
+      {
+      case WAV: return String("WAV");
+      case AIFF: return String("AIFF");
+      case SND: return String("SND");
+      default: 
+        return String("No Audio Format");
+      }
   }
 };
 

@@ -67,6 +67,7 @@ SndLib::~SndLib()
   deleteAndZero(instable);
 }
 
+
 /*=======================================================================*
                             Scheduler Support
  *=======================================================================*/
@@ -289,6 +290,7 @@ static void cm_stderr(s7_scheme *sc, char c, s7_pointer port)
   */
 }
 
+
 /*=======================================================================*
                           Scheme Runtime Support
  *=======================================================================*/
@@ -374,38 +376,40 @@ bool Scheme::init()
   // play() function, install the user's preferences for :srate,
   // :channels and :play values and autoload instruments.
 
-  s7_eval_c_string(s7,"(define *clm-header-type* mus-riff)");
-  s7_eval_c_string(s7,"(define *clm-data-format* mus-lshort)");
-  s7_eval_c_string(s7,"(define *clm-file-name* \"test.wav\")");
+  // TODO: this code actually duplicates the menu Commands that do
+  // these things because this function is called before the Scheme
+  // process is actually running.  The fix would be to break this
+  // function into two parts: a startScheme() that does then generic
+  // start up and then an init() that customizes. the latter function
+  // could then call Scheme::getIntance() function.s
 
 #ifdef GRACE
   Preferences* pref=Preferences::getInstance();
-  str << T("(begin (set! *clm-player* play) ")
-      << T("(set! *clm-srate* ")
-      << pref->getIntProp(T("SndLibSrate"), 44100)
-      << T(") (set! *clm-channels* ")
-      << pref->getIntProp(T("SndLibChannels"), 1)
-      << T(") (set! *clm-play* ")
-      << ((pref->getBoolProp(T("SndLibAutoPlay"), true))
-	  ? T("#t))") : T("#f))"));
+  str << T("(begin")
+      << T("  (set! *clm-player* play)")
+      << T("  (set! *clm-srate* ") << pref->getIntProp(T("SndLibSrate"), 44100) << T(")")
+      << T("  (set! *clm-channels* ") << pref->getIntProp(T("SndLibChannels"), 1) << T(")");
+  if (pref->getBoolProp(T("SndLibAutoPlay"), true))
+    str << T("  (set! *clm-play* #t)");
+  else 
+    str << T("  (set! *clm-play* #f)");
+  str << T(")");
   s7_eval_c_string(s7,str.toUTF8());
+
+  String fmat=SndLib::getInstance()->getAudioFormat();
+  if (fmat.equalsIgnoreCase(T("WAV")))
+    s7_eval_c_string(s7,"(begin (set! *clm-header-type* mus-riff) (set! *clm-data-format* mus-lshort) (set! *clm-file-name* \"test.wav\"))");
+  else if (fmat.equalsIgnoreCase(T("AIFF")))
+    s7_eval_c_string(s7,"(begin (set! *clm-header-type* mus-aifc) (set! *clm-data-format* mus-bshort) (set! *clm-file-name* \"test.aif\"))");
+  else if (fmat.equalsIgnoreCase(T("SND")))
+    s7_eval_c_string(s7,"(begin (set! *clm-header-type* mus-next) (set! *clm-data-format* mus-bshort) (set! *clm-file-name* \"test.snd\"))");
   SndLib::getInstance()->autoLoadInstruments();
- #endif
+#else
+  s7_eval_c_string(s7,"(define *clm-header-type* mus-riff)");
+  s7_eval_c_string(s7,"(define *clm-data-format* mus-lshort)");
+  s7_eval_c_string(s7,"(define *clm-file-name* \"test.wav\")");
+#endif
 
-  // Print herald
-
-  /*  str=String::empty;
-  str << String("SndLib ")
-      << String(SNDLIB_VERSION) << String(".") << String(SNDLIB_REVISION)
-      << T(" ") << SysInfo::getCopyright( T("William Schottstaedt")) << T("\n")
-      << SysInfo::getCMLogo() << T("\n");
-  Console::getInstance()->printOutput(str);
-  */
-
-  // clear out backtrace history set it to length 0 since most of the
-  // entries will be C calls...
-  //  s7_eval_c_string(s7,"(clear-backtrace)");
-  //  s7_eval_c_string(s7,"(backtracing #f)");
   return true;
 }
 
@@ -418,7 +422,6 @@ String Scheme::getLispVersion()
 {
   String str=String::empty;
   str << T("S7 Scheme") << T(" ") << String(S7_VERSION) << T(" (") << String(S7_DATE)<< T(")")
-    //     << T ("SndLib ") << String(SNDLIB_VERSION) << String(".") << String(SNDLIB_REVISION)
       << T(" ") << SysInfo::getCopyright( T("William Schottstaedt"));
   return str;
 }
@@ -439,6 +442,101 @@ void SndLib::restoreInstruments(String dir)
   Console::getInstance()->printOutput(T("Instruments saved in ") +
                                       directory.getFullPathName() + 
                                       T(".\n"));
+#endif
+}
+
+bool SndLib::getAutoPlay()
+{
+#ifdef GRACE
+  return Preferences::getInstance()->getBoolProp(T("SndLibAutoPlay"), true);
+#endif
+}
+
+void SndLib::setAutoPlay(bool ap)
+{
+#ifdef GRACE
+  String st=T("(begin (set! *clm-play* ");
+  st << ((ap) ? T("#t") : T("#f"))
+     << T(") (void))");
+  Preferences::getInstance()->setIntProp(T("SndLibAutoPlay"), ap);
+  Scheme::getInstance()->eval(st);
+#endif
+} 
+
+int SndLib::getSrate()
+{
+#ifdef GRACE
+  return Preferences::getInstance()->getIntProp(T("SndLibSrate"), 44100);
+#endif
+}
+
+void SndLib::setSrate(int sr)
+{
+#ifdef GRACE
+  String st=T("(begin (set! *clm-srate* ") + String(sr) + T(") (void))");
+  Preferences::getInstance()->setIntProp(T("SndLibSrate"), sr);
+  Scheme::getInstance()->eval(st);
+#endif
+}
+
+int SndLib::getChannels()
+{
+#ifdef GRACE
+  return Preferences::getInstance()->getIntProp(T("SndLibChannels"), 1);
+#endif
+}
+
+void SndLib::setChannels(int ch)
+{
+#ifdef GRACE
+  String st=T("(begin (set! *clm-channels* ") + String(ch) + T(") (void))");
+  Preferences::getInstance()->setIntProp(T("SndLibChannels"), ch);
+  Scheme::getInstance()->eval(st);
+#endif
+}
+
+String SndLib::getAudioFormat()
+{
+#ifdef GRACE
+  return Preferences::getInstance()->getStringProp(T("SndLibAudioFormat"),
+                                                   T("WAV"));
+#endif
+}
+
+void SndLib::setAudioFormat(String format)
+{
+#ifdef GRACE
+  String head, data, file, code;
+  if (format.equalsIgnoreCase(T("WAV")))
+    {
+      head=T("mus-riff");
+      data=T("mus-lshort");
+      file=T("test.wav");
+    }
+  else if (format.equalsIgnoreCase(T("AIFF")))
+    {
+      head=T("mus-aifc");
+      data=T("mus-bshort");
+      file=T("test.aif");
+    }
+  else if (format.equalsIgnoreCase(T("SND")))
+    {
+      head=T("mus-next");
+      data=T("mus-bshort");
+      file=T("test.snd");
+    }
+  else 
+    return;
+
+  Preferences::getInstance()->setStringProp(T("SndLibAudioFormat"), format);
+
+  code << T("(begin")
+       << T(" (set! *clm-header-type* ") << head << T(")")
+       << T(" (set! *clm-data-format* ") << data << T(")")
+       << T(" (set! *clm-file-name* ") << file.quoted() << T(")")
+       << T("(void))");
+
+  Scheme::getInstance()->eval(code);
 #endif
 }
 

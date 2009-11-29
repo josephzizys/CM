@@ -5,10 +5,63 @@
 ;;; this agreement is available at http://www.cliki.net/LLGPL            
 ;;; **********************************************************************
 
+(define (harmonics h1 h2 . args)
+  (with-optkeys (args (fund 1) invert order keys)
+    ;; calculate overtones from h1 to h2. if fundamental is 1 (the
+    ;; default) then freq ratios are returned.
+    (let* ((freq fund)
+           (head (list #f))
+           (tail head)
+           (undertones #f)
+           (spec '()))
+      (cond ((and (integer? h1) (integer? h2) (< 0 h1 h2))
+             #f)
+            ((and (integer? h2) (integer? h2) (> 0 h1 h2))
+             (set! undertones #t)
+             (set! h1 (abs h1))
+             (set! h2 (abs h2)))
+            (else
+             (error "illegal harmonic values: ~S ~S." h1 h2)
+             ))
+      (set! spec
+            (if invert
+                (do ((h h2 (- h 1))
+                     (f #f))
+                    ((< h h1) (cdr head) )
+                  (if undertones
+                      (set! f (/ freq (/ h2 h )))
+                      (set! f (* freq (/ h2 h))))
+                  (set-cdr! tail (list f))
+                  (set! tail (cdr tail)))
 
+                (do ((h h1 (+ h 1))
+                     (f #f))
+                    ((> h h2) (cdr head) )
+                  (if undertones
+                      (set! f (/ freq (/ h h1)))
+                      (set! f (* freq (/ h h1))))
+                  (set-cdr! tail (list f))
+                  (set! tail (cdr tail)))
+                ))
 
-
-;;; uses: with-optkey, first, second, tb:bess-jn, shuffle! reverse!
+      (case order
+        (( #f ) spec)
+        (( 1 )
+         (if undertones (set! spec (reverse! spec))))
+        (( -1 )
+         (if (not undertones) (set! spec (reverse! spec))))
+        (( 0 ) (set! spec (shuffle spec)))
+        (else
+         (error "harmonics order not 1 0 or -1" order)))
+      (if keys
+          (do ((tail spec (cdr tail)))
+              ((null? tail)
+               spec)
+            (if (= fund 1)
+                (set-car! tail (* (log2 (car tail)) 12))
+                (set-car! tail (ffi_hertz_to_keynum (car tail)))
+            ))
+          spec))))
 
 (define-record spectrum time size freqs amps)
 
@@ -365,23 +418,44 @@
     (set! flip (cons (* minf (/ maxf (car tail)))
 		     flip))))
 
-(define (spectrum-invert! spec)
-  (do ((minf (spectrum-minfreq spec))
+;(define (spectrum-invert! spec)
+;  (do ((minf (spectrum-minfreq spec))
+;       ;; reverse the list so that inverted values will still be in
+;       ;;  ascending order
+;       (tail (reverse! (spectrum-freqs spec)) (cdr tail))
+;       )
+;      ((null? (cdr tail)) ; skip minf element
+;       ;;(spectrum-freqs-set! spec tail)
+;       spec)
+;    (set-car! tail (* minf (/ minf (car tail))))))
+
+(define (spectrum-invert! spec . point)
+  (do ((freq (if (null? point)
+                 (spectrum-minfreq spec)
+                 (car point)))
        ;; reverse the list so that inverted values will still be in
        ;;  ascending order
        (tail (reverse! (spectrum-freqs spec)) (cdr tail))
        )
-      ((null? (cdr tail)) ; skip minf element
-       ;;(spectrum-freqs-set! spec tail)
+      ((null? tail)
        spec)
-    (set-car! tail (* minf (/ minf (car tail))))))
+    (set-car! tail (* freq (/ freq (car tail))))))
 
-; (define aaa (make-spectrum #f 4 '(100 200 300 400) '(0 0 0 0)))
-; (spectrum-freqs aaa)
+; (define aaa (make-spectrum #f 5 (hz '(a3 e4 b4 ds5 fs5)) '(0 0 0 0 0)))
+; (note (key (spectrum-freqs aaa)))
 ; (spectrum-invert! aaa)
-; (spectrum-freqs aaa)
-; (note (key (loop for i in (hz '(a3 e4 b4 ds5 fs5)) collect (* 100 (/ 100.0 i)))))
-; (note (key (loop for i in (hz '(a3 e4 b4 ds5 fs5)) collect (* 220 (/ 220.0 i)))))
+; (reverse (note (key (spectrum-freqs aaa))))
+
+; (define aaa (make-spectrum #f 5 (hz '(a3 e4 b4 ds5 fs5)) '(0 0 0 0 0)))
+; (note (key (spectrum-freqs aaa)))
+; (spectrum-invert! aaa (hz 'e4))
+; (reverse (note (key (spectrum-freqs aaa))))
+
+; (define foo (fm-spectrum (hz 'c4) 1.4983070768767 2.9212598425197 ))
+; (note (spectrum-keys foo))
+; (spectrum-invert! foo)
+; (note (spectrum-keys foo :order -1))
+
 
 ;; interp key note every
 

@@ -351,7 +351,7 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
     wasStreamFinished = !wasStreamFinished;
   }
 
-  if (counter==100) // downsample to avoid juce crash
+  if (counter==10) // downsample to avoid juce crash
   {
     if (transportSource.isPlaying())
       transport->setPosition(transportSource.getCurrentPosition() /

@@ -51,10 +51,10 @@ namespace SchemeSources
     const int           sndlibws_scmSize = 25029;
 
     extern const char*  spectral_scm;
-    const int           spectral_scmSize = 18240;
+    const int           spectral_scmSize = 20749;
 
     extern const char*  toolbox_scm;
-    const int           toolbox_scmSize = 27466;
+    const int           toolbox_scmSize = 27947;
 
     extern const char*  utilities_scm;
     const int           utilities_scmSize = 9977;

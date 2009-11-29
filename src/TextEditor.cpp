@@ -233,7 +233,7 @@ TextBuffer::TextBuffer(int texttype)
   Preferences* prefs=Preferences::getInstance();
   manager=new ApplicationCommandManager();
   setFont(Font(Font::getDefaultMonospacedFontName(),
-	        (float)prefs->getIntProp(T("EditorFontSize"), 17),
+	        (float)prefs->getIntProp(T("EditorFontSize"), 16),
 	        Font::plain));
   if (prefs->getBoolProp("EditorEmacsMode", false))
     setFlag(EditFlags::EmacsMode);

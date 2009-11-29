@@ -325,6 +325,32 @@ Returns the division of one or more <var>nums</var>. If a single number is given
 
 
 <!-- DEFINITION -->
+<table class="entry" id="deltas">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">deltas</span>
+      (<var class="rest">num...</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">deltas</span>
+      (<var class="arg">list</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+Returns a list of the deltas (differences) between adjacent numbers in <var>nums</var>. The number of items returned will therefore be one less than the number of items specified to the function.
+</p>
+</blockquote>
+<!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
 <table class="entry" id="log10">
   <tr class="entry">
     <td class="formals">
@@ -910,9 +936,6 @@ note, a <var>rhythmic symbol</var> or a list of the same. A fraction of a whole 
 </blockquote>
 <!-- END DEFINITION -->
 
-
-
-
 <!-- DEFINITION -->
 <table class="entry" id="rescale">
   <tr class="entry">
@@ -993,8 +1016,6 @@ where <var>gen</var> is the random function to use and
 </p>
 </blockquote>
 <!-- END DEFINITION -->
-
-
 
 <!-- DEFINITION -->
 <table class="entry" id="interp">
@@ -1079,6 +1100,31 @@ Converts a <var>cent</var> value or list of the same to the equivalent frequency
 </blockquote>
 <!-- END DEFINITION -->
 
+
+<!-- DEFINITION -->
+<table class="entry" id="harmonics">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">harmonics</span>
+      (<var class="arg">h1</var>, <var class="arg">h2</var>, [<var class="optkey">fund</var> = 1],
+      [<var class="optkey">invert</var> = #f],
+      [<var class="optkey">order</var> = #f],
+      [<var class="optkey">keys</var> = #f]
+      )
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; list</td></tr>
+</table>
+<blockquote>
+<p>
+
+Returns a series (list) of ratios, hertz values, or key numbers based on ratios from the harmonic series between harmonic numbers <var>h1</var>
+and <var>h2</var> inclusive. If 0 &lt; <var>h1</var> &lt; <var>h2</var> then ratios belong to the overtone series, otherwise if 0 &gt; <var>h1</var> &gt; <var>h2</var> then ratios belong to the "undertone" series. If <var>fund</var> is 1 then the values retured are true ratios, otherwise the series returned is based off of that hertz value. If <var>invert</var> is true then ratios between <var>h1</var> and <var>h2</var> are flipped. If <var>order</var> is false then the overtone series are in increasing order and undertones are in decreasing order. Otherwise, if <var>order</var> is 1 then the list is always ascending, if it is -1 the list always descending, and if it is 0 the list order is randomized. If <var>keys</var> is true then the values returned will be coerced to keynums.
+
+</p>
+</blockquote>
+<!-- END DEFINITION -->
 
 <!-- dl id="decimals">
 <dt class="entry"><span class="term">decimals</span> (<var>x</var> [<var>precision</var> 3])<br/>&rarr; <var>float</var></dt>
@@ -2211,7 +2257,7 @@ Inverts the frequencies in <var>spectrum</var> while preserving the minimum and 
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-invert!</span>
-      (<var class="arg">spectrum</var>)
+      (<var class="arg">spectrum</var>, [<var class="optkey">point</var> = #f])
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -2220,7 +2266,7 @@ Inverts the frequencies in <var>spectrum</var> while preserving the minimum and 
 <blockquote>
 <p>
 
-Inverts frequencies in <var>spectrum</var> around the first partial. The resulting spectrum remains in ascending order but the first partial is now the maximum frequency.
+Inverts frequencies in <var>spectrum</var> around <var>point</var>, or around the first partial if <var>point</var> is false. 
 
 </p>
 </blockquote>
@@ -2345,7 +2391,7 @@ following rescaling or filtering operations:</p>
 </table>
 <blockquote>
 <p>
-Creates a cellular automata holding the specified initial integer <var>cellstates</var> and a transition function <var>transfunc</var>  that will produce all subsequent states for each cell in the automata.
+Creates a cellular automata containing the specified initial integer <var>cellstates</var> and using the transition function <var>transfunc</var> to produce all subsequent states for cells in the automata.
 For 2D automata <var>cellstates</var> is a list of lists where each sublist defines a row of initial states.</p>
 
 <p>

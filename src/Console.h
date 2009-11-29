@@ -93,6 +93,7 @@ class Console :
   };
   
   ConsoleTheme* theme;
+  OwnedArray<ConsoleTheme> themes;
   CriticalSection lock;
   String prompt;
   OwnedArray<AsyncMessage, CriticalSection> messages;
@@ -114,8 +115,7 @@ class Console :
   void display(String str, Colour color);
   void printPrompt(bool trigger=true);
   void setPrompt(String str);
-  void setTheme(ConsoleTheme* theme);
-
+  Colour getConsoleColor(int id);
   void printOutput(String str, bool trigger=true);
   void printOutput(char* str, bool trigger=true);
   void printValues(String str, bool trigger=true); 
@@ -137,6 +137,13 @@ class Console :
   bool isSupportedFileType(File file);
 
 #ifdef GRACE
+
+  void initThemes();
+  int numThemes();
+  void setTheme(String name);
+  void setTheme(int index);
+  String getThemeName(int index);
+  bool isCurrentTheme(int index);
   Font getFont();
   void setFont(Font font);
   int getFontSize();

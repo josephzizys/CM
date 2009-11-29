@@ -353,9 +353,6 @@ span.result {font-weight: bold; color: silver;}
 span.input  {font-weight: bold;}
 span.prompt, span.output  { }
 
-
-
-
 /*
    orchid #da70d6;}
    sienna: #a0522d saddle-brown: #8b4513 rosybrown: #bc8f8f; */
@@ -371,7 +368,7 @@ span.saltyp {color: #228b22;}
 span.salcmd {color: #0000ff;}
 span.salcon {color: #5f9ea0;}
 
-span.menuitem {font-weight: bold; font-variant: small-caps;}
+span.menuitem { font-variant: small-caps;}
 span.graceoutput {color: #ffa07a;} 
 span.graceerror {color: #cd0000;} 
 span.gracewarning {color: #ff8c00;}  

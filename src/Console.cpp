@@ -31,12 +31,16 @@ Console::Console() :
 {
   // GUI initialization code is done by window
   supportedfiletypes=String(T(".scm.lisp.sal.ins.clm.fms.xml.mid"));
+#ifdef GRACE
+  initThemes();
+#endif
 }
 
 Console::~Console() 
 {
   messages.clear();
-  deleteAndZero(theme);
+  //deleteAndZero(theme);
+  themes.clear();
   deleteAndZero(manager); 
 }
 
@@ -56,22 +60,7 @@ bool Console::isSupportedFileType(String path)
   return (dot<0) ? false : supportedfiletypes.contains(path.substring(dot));
 }
 
-void Console::setTheme(ConsoleTheme* th)
-{
-  theme=th;
-  buffer->setColour(TextEditor::backgroundColourId, 
-		    theme->getColor(ConsoleTheme::bgColor) );
-  buffer->setColour( TextEditor::textColourId,
-                    theme->getColor(ConsoleTheme::outputColor));
-  buffer->setColour( TextEditor::highlightColourId,
-                    theme->getColor(ConsoleTheme::hiliteColor));
-  buffer->setColour( TextEditor::highlightedTextColourId,
-                    theme->getColor(ConsoleTheme::hiliteTextColor));
-  buffer->setColour( TextEditor::caretColourId,
-                    theme->getColor(ConsoleTheme::caretColor));
-  buffer->applyFontToAllText(buffer->getFont());
-}
-
+    
 void Console::setPrompt(String str)
 {
   prompt=str;
@@ -82,13 +71,16 @@ void Console::display(String str, Colour color)
 #ifdef GRACE
   buffer->setCaretPosition(0xFFFFFF);
   buffer->setColour(TextEditor::textColourId, color);
-  //std::cout<< "inserting '" << str.toUTF8() << "'\n";
   buffer->insertTextAtCursor(str);
 #else
   std::cout << str.toUTF8() <<  std::flush;
 #endif
 }
 
+Colour Console::getConsoleColor(int id)
+{
+  return (theme) ? theme->getColor(id) : Colours::black;
+}
 
 /* 
  * Console text output methods are thread safe text printers -- call
@@ -237,32 +229,25 @@ void Console::handleAsyncUpdate()
       switch (cmd) 
 	{
 	case CommandIDs::ConsolePrintOutput :
-	  color=theme->getColor(ConsoleTheme::outputColor);
-	  display(messages[i]->text, color);
+	  display(messages[i]->text, getConsoleColor(ConsoleTheme::outputColor));
 	  break;
 	case CommandIDs::ConsolePrintValues :
-	  color=theme->getColor(ConsoleTheme::valuesColor);
-	  display(messages[i]->text, color);
+	  display(messages[i]->text, getConsoleColor(ConsoleTheme::valuesColor));
 	  break;
 	case CommandIDs::ConsolePrintWarning :
-	  color=theme->getColor(ConsoleTheme::warningColor);
-	  display(messages[i]->text, color);
+	  display(messages[i]->text, getConsoleColor(ConsoleTheme::warningColor));
 	  break;
 	case CommandIDs::ConsolePrintError :
-	  {
-	    color=theme->getColor(ConsoleTheme::errorColor);
-	    display(messages[i]->text, color);
+          display(messages[i]->text, getConsoleColor(ConsoleTheme::errorColor));
 #ifdef GRACE
-	    getTopLevelComponent()->toFront(true); // pop window to top
-	    if (getBeepOnError() /* || messages[i]->text.contains("\n") */)
-	      PlatformUtilities::beep();
+          getTopLevelComponent()->toFront(true); 
+          if (getBeepOnError() )
+            PlatformUtilities::beep();
 #endif
-	  }
 	  break;
 	case CommandIDs::ConsolePrintPrompt :
-	  color=theme->getColor(ConsoleTheme::errorColor);
 	  if (prompt!=String::empty)
-	    display(prompt, color);
+	    display(prompt, getConsoleColor(ConsoleTheme::errorColor));
 	  break;
 #ifdef GRACE
 	case CommandIDs::AudioOpenFilePlayer :
@@ -277,20 +262,12 @@ void Console::handleAsyncUpdate()
 	    AudioManager::getInstance()->openAudioFilePlayer(file,true);
 	  }
 	  break;
-
-	  //	case CommandIDs::PlotterNew :
-	  //	  PlotterWindow::openXml(messages[i]->text);
-	  //	  break;
-	  //	case CommandIDs::PlotterAddXmlPoints :
-	  //	  PlotterWindow::openXml(messages[i]->text);
-	  //	  break;
 #endif
 	default:
 	  {
 	    String text=T("Unimplemented message: ");
 	    text << CommandIDs::toString(cmd) << T("\n");
-	    color=theme->getColor(ConsoleTheme::warningColor);
-	    display(text, color);
+	    display(text, getConsoleColor(ConsoleTheme::warningColor));
 	  }
 	  break;
 	}
@@ -301,6 +278,132 @@ void Console::handleAsyncUpdate()
 }
 
 #ifdef GRACE
+
+String Console::getThemeName(int index)
+{
+  if (index<themes.size())
+    return themes.getUnchecked(index)->getName();
+  else
+    return T("No Theme");
+}      
+
+int Console::numThemes()
+{
+  return themes.size();
+}
+
+bool Console::isCurrentTheme(int index)
+{
+  if (index < themes.size())
+    return (theme == themes[index]);
+  else
+    return false;
+}
+
+void Console::setTheme(String name)
+{
+  for (int i=0; i<themes.size(); i++)
+    if (name==themes.getUnchecked(i)->getName())
+      {
+        setTheme(i);
+        break;
+      }
+}
+
+void Console::setTheme(int index)
+{
+  if (index>=themes.size() )
+    return;
+  theme=themes[index];
+  Preferences::getInstance()->setStringProp(T("ConsoleTheme"), theme->getName());
+  buffer->setColour(TextEditor::backgroundColourId, 
+		    theme->getColor(ConsoleTheme::bgColor) );
+  buffer->setColour( TextEditor::textColourId,
+                    theme->getColor(ConsoleTheme::outputColor));
+  buffer->setColour( TextEditor::highlightColourId,
+                    theme->getColor(ConsoleTheme::hiliteColor));
+  buffer->setColour( TextEditor::highlightedTextColourId,
+                    theme->getColor(ConsoleTheme::hiliteTextColor));
+  buffer->setColour( TextEditor::caretColourId,
+                    theme->getColor(ConsoleTheme::caretColor));
+  buffer->applyFontToAllText(buffer->getFont());
+}
+
+void Console::initThemes()
+{
+  Colour errc=Colour(0xffcd0000);
+  Colour warn=Colours::darkorange;
+  Colour vals=Colour(0xff00cd00);
+
+  themes.add(new ConsoleTheme(T("Clarity and Beauty"), 
+                              Colours::black, // background
+                              Colours::white, // input
+                              Colours::lightsalmon, // output
+                              errc, // error
+                              warn, // warning
+                              vals, // values
+                              Colour(0xffbebebe), // highlight
+                              Colours::white, // highlightText
+                              Colours::yellow)); // carat
+ 
+  themes.add(new ConsoleTheme(T("Deep Blue"),
+                              Colour(0xff102e4e), // background
+                              Colour(0xffeeeeee), // input
+                              Colour(0xffdeb887),  // output
+                              errc, // error
+                              warn, // warning
+                              vals, // values
+                              Colour(0xff008b8b), // highlight
+                              Colour(0xffeeeeee), // highlightText
+                              Colour(0xff00ff00)  // carat      
+                              ));
+  
+  themes.add(new ConsoleTheme(T("Gnome"),
+                              Colour(0xff2f4f4f),
+                              Colour(0xfff5deb3),
+                              Colour(0xffffa07a),
+                              errc, // error
+                              warn, // warning
+                              vals, // values
+                              Colour(0xff008b8b),
+                              Colour(0xff00ffff), 
+                              Colour(0xffd3d3d3)
+                              ));
+  themes.add(new ConsoleTheme(T("Snowish"),
+                              Colour(0xffeee9e9), 
+                              Colour(0xff2f4f4f),
+                              Colour(0xff9400d3),
+                              errc, // error
+                              warn, // warning
+                              vals, // values
+                              Colour(0xffeedc82),
+                              Colours::black,
+                              Colour(0xffcd0000)
+                              ));
+  themes.add(new ConsoleTheme(T("Standard Emacs"),
+                              Colours::white,
+                              Colours::black,
+                              Colour(0xffbc8f8f),
+                              errc, // error
+                              warn, // warning
+                              vals, // values
+                              Colour(0xffeedc82),
+                              Colours::black,
+                              Colours::black
+                              ));
+  themes.add(new ConsoleTheme(T("Standard XEmacs"),
+                              Colour(0xffcccccc), 
+                              Colours::black,
+                              Colour(0xff008b00),
+                              errc, // error
+                              warn, // warning
+                              vals, // values
+                              Colour(0xffa6a6a6),
+                              Colours::black,
+                              Colour(0xffcd0000)
+                              ));
+}
+
 
 int Console::getFontSize()
 {
@@ -321,6 +424,7 @@ Font Console::getFont()
 
 void Console::setFont(Font f)
 {
+  std::cout << "in setFont\n";
   buffer->setFont(f);
 }
 
@@ -384,22 +488,20 @@ ConsoleWindow::ConsoleWindow ()
   cons->buffer->setMultiLine(true);
   cons->buffer->setScrollToShowCursor(true);
   cons->buffer->setReadOnly(true);
-  cons->buffer->setCaretVisible(false);    
+  cons->buffer->setCaretVisible(false);
+
   cons->buffer->setFont(Font(Font::getDefaultMonospacedFontName(),
-			     Preferences::getInstance()->
-			     getIntProp(T("ConsoleFontSize"), 17),
+			     Preferences::getInstance()->getIntProp(T("ConsoleFontSize"), 16),
 			     Font::plain));
+  //std::cout << Font::getDefaultMonospacedFontName().toUTF8() << "\n";
+
   cons->buffer->setVisible(true);
   // in Grace the Console is a component, add the buffer to it
   cons->addChildComponent(cons->buffer);
   // add the theme after buffer exists
   // bg, input, output, error, warning, values, hilite, texthilite, cursor
-  cons->setTheme
-    (new ConsoleTheme(T("Clarity and Beauty"), 
-		      Colours::black, Colours::white, Colours::lightsalmon,
-	      Colour(0xffcd0000), Colours::darkorange, Colour(0xff00cd00), 
-	      Colour(0xffbebebe), Colours::white, Colours::yellow));
-
+  cons->setTheme(Preferences::getInstance()->getStringProp(T("ConsoleTheme"),
+                                                           T("Clarity and Beauty")));
   cons->manager=new ApplicationCommandManager();
   cons->addKeyListener(cons->manager->getKeyMappings());
   cons->addKeyListener(CommandManager::getInstance()->getKeyMappings());
@@ -414,17 +516,6 @@ ConsoleWindow::ConsoleWindow ()
   centreWithSize (450, 350);
   setWantsKeyboardFocus(false);  // Console component has it.
   setVisible(true);
-  /**
-  splash=new Splash(ImageCache::getFromMemory(Images::grace_png,
-					      Images::grace_pngSize));
-  splash->setSize(cons->getWidth(), cons->getHeight());
-  cons->addChildComponent(splash);
-  splash->setVisible(true);
-  splash->fadeOutComponent(5000);
-  cons->removeChildComponent(splash);
-  //splash->close(); 
-  //delete splash;
-  **/
 }
 
 ConsoleWindow::~ConsoleWindow ()

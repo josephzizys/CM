@@ -73,18 +73,19 @@ void Help::restoreHelpFiles()
   using namespace Documentation;
   File htm=cmdocdir.getChildFile(T("cm.html"));
   File css=cmdocdir.getChildFile(T("cm.css"));
+  File log=cmdocdir.getChildFile(T("changelog.html"));
   if (!cmdocdir.isDirectory())
     if (!cmdocdir.createDirectory())
       {
-	Console::getInstance()->printWarning(T("Couldn't create document directory ") + cmdocdir.getFullPathName() + T("\n"));
+	Console::getInstance()->printWarning(T("Warning: couldn't restore documents to ") + cmdocdir.getFullPathName() + T("\n"));
 	return;
       }
-  if (true) //!htm.existsAsFile()
-    if (!htm.replaceWithText(getHelpFileText(T("cm.html"))))
-      Console::getInstance()->printWarning(T("Couldn't save ") + htm.getFullPathName() + T("\n"));
-  if (true) //!css.existsAsFile()
-    if (!css.replaceWithText(getHelpFileText(T("cm.css"))))
-      Console::getInstance()->printWarning(T("Couldn't save ") + css.getFullPathName() + T("\n"));
+  if (!htm.replaceWithText(getHelpFileText(T("cm.html"))))
+    Console::getInstance()->printWarning(T("Warning: couldn't restore ") + htm.getFullPathName() + T("\n"));
+  if (!css.replaceWithText(getHelpFileText(T("cm.css"))))
+    Console::getInstance()->printWarning(T("Warning: couldn't restore ") + css.getFullPathName() + T("\n"));
+  if (!log.replaceWithText(getHelpFileText(T("changelog.html"))))
+    Console::getInstance()->printWarning(T("Warning: couldn't restore ") + log.getFullPathName() + T("\n"));
 }
   
 XmlElement* Help::getXmlMenu(String title)

@@ -14,29 +14,38 @@
 class WindowsSkin : public juce::LookAndFeel
 {
 public:
-  juce::Font fontMenuBar;
+  juce::Font* fontMenuBar;
+  CustomTypeface* defaultTypeface;
+  MemoryInputStream* defaultFontTypefaceStream;
 
-  WindowsSkin() : fontMenuBar(juce::Font(16,0))
+ WindowsSkin()
   {
-    //Create the default font.
-    MemoryInputStream
-      defaultFontTypefaceStream(Fonts::vera_typeface, 
-				Fonts::vera_typefaceSize, 
-				false);
-#if (JUCE_MINOR_VERSION<50)
-    Typeface defaultTypeface(defaultFontTypefaceStream);
-    fontMenuBar = juce::Font(defaultTypeface);
-    fontMenuBar.setHeight(15);
-#else
-    // DOESNT WORK
-    //    CustomTypeface defaultTypeface(defaultFontTypefaceStream);
-    //    Typeface::Ptr RefTypeface = juce::ReferenceCountedObjectPtr<juce::Typeface>(&defaultTypeface);
-    //    fontMenuBar = juce::Font( RefTypeface);
-    //    fontMenuBar.setHeight(15);
-#endif
+    fontMenuBar = new juce::Font(16, 0);
+    if(SystemStats::getOperatingSystemType() != SystemStats::MacOSX)
+    {
+      //Create the Bitstream Vera font from the resource.
+      defaultFontTypefaceStream = new MemoryInputStream(Fonts::vera_typeface, 
+                                                        Fonts::vera_typefaceSize, 
+                                                        false);
+      defaultTypeface = new CustomTypeface(*defaultFontTypefaceStream);
+      Typeface::Ptr RefTypeface = juce::ReferenceCountedObjectPtr<juce::Typeface>(defaultTypeface);
+      *fontMenuBar = juce::Font(RefTypeface);
+      fontMenuBar->setHeight(15);
+    }
+    else
+    {
+      fontMenuBar->setTypefaceName(T("Lucida Grande"));
+      fontMenuBar->setHeight(16); 
+    }
   }
 
-  virtual ~WindowsSkin(){}
+  virtual ~WindowsSkin()
+  {
+    delete fontMenuBar;
+    //Can't delete because reference counter is still being held...
+    //delete defaultTypeface;
+    //delete defaultFontTypefaceStream;
+  }
 
   virtual void drawPopupMenuBackground(juce::Graphics &g, int width, int height)
   {
@@ -134,13 +143,21 @@ public:
         revised = revised.replace(String(":"), String::empty);
         if(SystemStats::getOperatingSystemType()==SystemStats::MacOSX)
         {
+          //http://www.macosxhints.com/article.php?story=20071028203517911
+          //http://web.sabi.net/mockups/source/keychars.html
           revised = revised.replace(String("return"), String("_"), true);
+          revised = revised.replace(String("ctrl"), String::charToString(0x2303), true);
           revised = revised.replace(String("command"), String("$"), true);
           revised = revised.replace(String("shift"), String("^"), true);
           revised = revised.replace(String("alt"), String("`"), true);
           revised = revised.replace(String("+"), String::empty);
           revised = revised.replace(String("$^"), String("^$"), true);
           revised = revised.replace(String("$`"), String("`$"), true);
+          revised = revised.replace(String("$"), String::charToString(0x2318), true);
+          revised = revised.replace(String("`"), String::charToString(0x2325), true);
+          revised = revised.replace(String("^"), String::charToString(0x21E7), true);
+          revised = revised.replace(String("_"), String::charToString(0x21B5), true);
+          revised = revised.replace(String("tab"), String::charToString(0x21E5), true);
         }
         else
         {
@@ -152,7 +169,7 @@ public:
 
         int right = width - (rightBorder + 4);
         g.drawText(revised,
-          right - fontMenuBar.getStringWidth(revised),
+          right - fontMenuBar->getStringWidth(revised),
           0,
           right,
           height,
@@ -180,7 +197,7 @@ public:
     int itemIndex, const juce::String &itemText, bool isMouseOverItem, 
     bool isMenuOpen, bool isMouseOverBar, juce::MenuBarComponent &menuBar)
   {
-    g.setFont(fontMenuBar);
+    g.setFont(*fontMenuBar);
     
     if(!(SystemStats::getOperatingSystemType()==SystemStats::MacOSX) && isMouseOverItem)
     {
@@ -222,12 +239,12 @@ public:
   virtual const juce::Font getMenuBarFont(juce::MenuBarComponent &menuBar,
     int itemIndex, const juce::String &itemText)
   {
-    return fontMenuBar;
+    return *fontMenuBar;
   }
 
   virtual const juce::Font getPopupMenuFont(void)
   {
-    return fontMenuBar;
+    return *fontMenuBar;
   }
 
   virtual DropShadower* createDropShadowerForComponent(Component 
