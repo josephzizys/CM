@@ -461,7 +461,10 @@ void Console::filesDropped(const StringArray &files, int x, int y)
       else if (type==T(".mid"))
 	PlotterWindow::openMidiFile(file);
       else
-	new TextEditorWindow(file);
+        {
+          new TextEditorWindow(file);
+          Preferences::getInstance()->recentlyOpened.addFile(file);
+        }
     }
 }
 

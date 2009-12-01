@@ -268,11 +268,9 @@ void Scheme::load(File file, bool addtorecent)
       //std::cout << "load file exists\n";
       if (file.hasFileExtension(T(".sal")))
 	{
-	  text << T("(sal \"")
-	       << T("begin\n")
-	       << file.loadFileAsString().replace(T("\""), T("\\\""))
-	       << T("\nend")
-	       << T("\")");
+	  text << T("(sal:load ")
+	       << file.getFullPathName().quoted()
+	       << T(")");
 	}
       else
 	{

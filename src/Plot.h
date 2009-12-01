@@ -51,6 +51,7 @@ class Axis
     hertz,        // log plotting (not implemented yet)
     circle,
     ordinal,
+    midi,
     generic
   };
   String name;
@@ -60,110 +61,17 @@ class Axis
   double by;      // inc along axis
   int ticks;      // number of ticks per inc to draw
   int decimals;   // num decimals to show in labels
-  
-  void init (AxisType typ) 
-  {
-    // init axis data according to common "templates"
-    name=String::empty;
-    decimals=2;
-    type=typ;
-    switch (typ)
-      {
-      case percentage :
-	from=0.0; to=100.0; by=25.0; ticks=5; decimals=0;
-	break;
-      case keynum :
-	from=0.0; to=127; by=12.0; ticks=12; decimals=0;
-	break;
-      case seconds :
-	from=0.0; to=60.0; by=1.0; ticks=4;
-	break;
-      case hertz :  // log freq
-	from=8.175798; to=16744.035; by=2.0; ticks=6; 
-	break;
-      case circle :
-	from=-1.0; to=1.0; by=.25; ticks=4;
-	break;
-      case ordinal :
-	from=0; to=1; by=1; ticks=1; decimals=0;
-	break;
-      case normalized :
- 	from=0.0; to=1.0; by=0.25; ticks=5;
-	break;
-      default :
-	break;
-      }
-  }
-  
-  ~Axis () {}
+
   Axis (AxisType t, double f, double e, double b, int x, int d) 
     : type(t), from(f), to(e), by(b), ticks(x), decimals(d), name(String::empty)
     {}
-  Axis (AxisType t) 
-    {
-      type=t;
-      init(t);
-    }
-  Axis (AxisType t, double f, double e) 
-    {
-      type=t;
-      init(t);
-      from=f;
-      to=e;
-    }
-  Axis (XmlElement* ax) 
-    : name (String::empty),
-    decimals (2),
-    type (unspecified),
-    from (0),
-    to (1.0),
-    by (.25),
-    ticks (5)
-  {
-    StringArray range;
-    String str=(ax) ? ax->getStringAttribute(T("axis")) : String::empty;
-    range.addTokens(str,false);
-    if (range.size()>0)
-      {
-	int arg=1;
-	if (range[0]==T("percent") || range[0]==T("percentage"))
-	  init(percentage);
-	else if (range[0]==T("keynum") || range[0]==T("notes"))
-	  init(keynum);
-	else if (range[0]==T("seconds"))
-	  init(seconds);
-	else if (range[0]==T("hertz")) 
-	  init(hertz);
-	else if (range[0]==T("unitcircle"))
-	  init(circle);
-	else if (range[0]==T("ordinal"))
-	  init(ordinal);
-	else if (range[0]==T("unit") || range[0]==T("normalized") || 
-		 range[0]==T("normal"))
-	  init(normalized);
-	else if (('0' <= str[0]) && ( str[0] <= '9')) // is number
-	  arg--;
-	// parse out optional <from> <to> <by> <ticks>
-	int num=range.size()-arg;
-	if (num>=2)
-	  {
-	    float f=range[arg].getFloatValue();
-	    float t=range[arg+1].getFloatValue();
-	    float b=by;
-	    float k=ticks;
-	    if (num>=3)
-	      {
-		b=range[arg+2].getFloatValue();
-		if (num==4)
-		  k=range[arg+3].getIntValue();
-	      }
-	    if ((f<t) && (b>0) && (k>-1))
-	      {
-		from=f; to=t; by=b; ticks=k;
-	      }
-	  }
-      }
-  }
+
+  Axis (AxisType t) ;    
+  Axis (AxisType t, double f, double e) ;
+  Axis (XmlElement* ax) ;
+  ~Axis () {}
+
+  void init (AxisType typ) ;
   int getType() {return type;}
   void setType(int n) {type=(AxisType)n;}
   String getName() {return name;}

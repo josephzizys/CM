@@ -19,7 +19,140 @@
 #include <iostream>
 
 /*=======================================================================*
-                             PlotViewport (scrolling)
+                                    Axis
+ *=======================================================================*/
+
+Axis::Axis (AxisType t) 
+{
+  type=t;
+  init(t);
+}
+
+Axis::Axis (AxisType t, double f, double e) 
+{
+  type=t;
+  init(t);
+  from=f;
+  to=e;
+}
+
+Axis::Axis (XmlElement* ax) 
+  : name (String::empty),
+    decimals (2),
+    type (unspecified),
+    from (0),
+    to (1.0),
+    by (.25),
+    ticks (5)
+{
+  StringArray range;
+  String str=(ax) ? ax->getStringAttribute(T("axis")) : String::empty;
+  range.addTokens(str,false);
+  if (range.size()>0)
+    {
+      int arg=1;
+      if (range[0]==T("percent") || range[0]==T("percentage") || range[0]==T("pct"))
+        init(percentage);
+      else if (range[0]==T("keynum") || range[0]==T("notes"))
+        init(keynum);
+      else if (range[0]==T("seconds"))
+        init(seconds);
+      else if (range[0]==T("hertz")) 
+        init(hertz);
+      else if (range[0]==T("unitcircle") || range[0]==T("circle"))
+        init(circle);
+      else if (range[0]==T("ordinal"))
+        init(ordinal);
+      else if (range[0]==T("unit") || range[0]==T("normalized") || 
+               range[0]==T("normal"))
+        init(normalized);
+      else if (range[0]==T("midi"))
+        init(midi);
+      else if (('0' <= str[0]) && ( str[0] <= '9')) // is number
+        arg--;
+      // parse out optional <from> <to> <by> <ticks> these can
+      // appear with or without axis type specifier
+      int num=range.size()-arg;
+      if (num>=2)
+        {
+          float f, t, b, k;
+          if (num==2)
+            {
+              f=range[arg].getFloatValue();
+              t=range[arg+1].getFloatValue();
+              if (type==unspecified)
+                {
+                  b=t-f;
+                  k=5;
+                }
+            }
+          else if (num==3)
+            {
+              f=range[arg].getFloatValue();
+              t=range[arg+1].getFloatValue();
+              b=range[arg+2].getFloatValue();
+              if (type==unspecified)
+                {
+                  k=5;
+                }
+            }
+          else if (num==4)
+            {
+              f=range[arg].getFloatValue();
+              t=range[arg+1].getFloatValue();
+              b=range[arg+2].getFloatValue();
+              k=range[arg+3].getIntValue();
+            }
+          
+          if ((f<t) && (b>0) && (k>-1))
+            {
+              from=f; to=t; by=b; ticks=k;
+              if (type==unspecified)
+                type=generic;
+            }
+        }
+    }
+}
+
+void Axis::init (AxisType typ) 
+{
+  // init axis data according to common "templates"
+  name=String::empty;
+  decimals=2;
+  type=typ;
+  switch (typ)
+    {
+    case percentage :
+      from=0.0; to=100.0; by=25.0; ticks=5; decimals=0;
+      break;
+    case keynum :
+      from=0.0; to=127; by=12.0; ticks=12; decimals=0;
+      break;
+    case seconds :
+      from=0.0; to=60.0; by=1.0; ticks=4;
+      break;
+    case hertz :  // log freq
+      from=8.175798; to=16744.035; by=2.0; ticks=6; 
+      break;
+    case circle :
+      from=-1.0; to=1.0; by=.25; ticks=4;
+      break;
+    case ordinal :
+      from=0; to=1; by=1; ticks=1; decimals=0;
+      break;
+    case normalized :
+      from=0.0; to=1.0; by=0.25; ticks=5;
+      break;
+    case midi :
+      from=0.0; to=127.0; by=16; ticks=2; decimals=0;
+      break;
+    default :
+      break;
+    }
+}
+
+/*=======================================================================*
+                          Plot Viewport (scrolling)
  *=======================================================================*/
 
 class PlotViewport : public Viewport 
@@ -2775,6 +2908,7 @@ AxisDialog::AxisDialog (Plotter* pl, int orient)
   typemenu->addItem (T("seconds"), Axis::seconds);
   typemenu->addItem (T("note"),  Axis::keynum);
   typemenu->addItem (T("circle"), Axis::circle);
+  typemenu->addItem (T("midi"), Axis::midi);
   typemenu->addItem (T("generic"), Axis::generic);
   typemenu->addListener (this);
 

@@ -266,6 +266,7 @@ bool TextBuffer::saveFile()
       {
 	file.replaceWithText(getText());
 	clearFlag(EditFlags::NeedsSave);
+        Preferences::getInstance()->recentlyOpened.addFile(file);
 	return true;
       }
     else
@@ -288,6 +289,7 @@ bool TextBuffer::saveFileAs(File defaultfile)
       file=sav;
       clearFlag(EditFlags::NeedsSave);
       updateWindowTitle();
+      Preferences::getInstance()->recentlyOpened.addFile(sav);
       return true;
     }
   else
