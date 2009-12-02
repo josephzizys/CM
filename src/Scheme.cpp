@@ -265,18 +265,16 @@ void Scheme::load(File file, bool addtorecent)
   String text=String::empty;
   if (file.existsAsFile())
     {
-      //std::cout << "load file exists\n";
+      String path=file.getFullPathName().quoted();
+      if (SysInfo::isWindows())
+	path=path.replace(T("\\"),T("\\\\"));
       if (file.hasFileExtension(T(".sal")))
 	{
-	  text << T("(sal:load ")
-	       << file.getFullPathName().quoted()
-	       << T(")");
+	  text << T("(sal:load ") << path << T(")");
 	}
       else
 	{
-	  text << T("(load ")
-	       << file.getFullPathName().quoted()
-	       << T(")");
+	  text << T("(load ") << path << T(")");
 	}
       //std::cout << "load text='" << text.toUTF8() << "'\n";
       eval(text);

@@ -1165,7 +1165,7 @@ void plot_xml(char* text){}
 void plot_add_xml_points(char* title, char* points){}
 char* plot_data(char* text, int layer) {return (char *)NULL;}
 
-bool sw_open_from_xml(char* s){}
+bool sw_open_from_xml(char* s){return false;}
 void sw_draw(char* w, SCHEMEOBJECT obj, int a, int b){}
 
 #endif

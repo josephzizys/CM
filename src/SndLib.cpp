@@ -450,6 +450,7 @@ bool SndLib::getAutoPlay()
 #ifdef GRACE
   return Preferences::getInstance()->getBoolProp(T("SndLibAutoPlay"), true);
 #endif
+  return false;
 }
 
 void SndLib::setAutoPlay(bool ap)
@@ -468,6 +469,7 @@ int SndLib::getSrate()
 #ifdef GRACE
   return Preferences::getInstance()->getIntProp(T("SndLibSrate"), 44100);
 #endif
+  return 0;
 }
 
 void SndLib::setSrate(int sr)
@@ -484,6 +486,7 @@ int SndLib::getChannels()
 #ifdef GRACE
   return Preferences::getInstance()->getIntProp(T("SndLibChannels"), 1);
 #endif
+  return 0;
 }
 
 void SndLib::setChannels(int ch)
@@ -501,6 +504,7 @@ String SndLib::getAudioFormat()
   return Preferences::getInstance()->getStringProp(T("SndLibAudioFormat"),
                                                    T("WAV"));
 #endif
+  return String::empty;
 }
 
 void SndLib::setAudioFormat(String format)

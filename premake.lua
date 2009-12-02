@@ -328,17 +328,25 @@ for i = 1,3 do
       if os.fileexists(liblo .. "include/lo/lo.h") then
          add(mypackage.includepaths, liblo .. "include")
          add(mypackage.defines, "LIBLO")
-     else
+      else
          error("--liblo: can't find " .. liblo .. "include/lo/lo.h")
       end
-      --if os.fileexists(liblo .. "lib/liblo.la") then
-         add(mypackage.libpaths, liblo .. "lib")
-         add(mypackage.links, "lo")
-      --else
-      --   error("--liblo: can't find " .. liblo .. "lib/liblo.a")         
-      --end
-   end
+      add(mypackage.libpaths, liblo .. "lib")
+      add(mypackage.links, "lo")
+      if windows then
+	 add(mypackage.defines, "WIN32")
+	 add(mypackage.defines, "_CRT_SECURE_NO_DEPRECATE")
+	 add(mypackage.defines, "HAVE_CONFIG_H")
+	 add(mypackage.defines, "LIBLO_LIB")
+	 add(mypackage.links, "lo")
+	 add(mypackage.links, "user32")
+	 add(mypackage.links, "wsock32")
+	 add(mypackage.links, "ws2_32")
+	 add(mypackage.links, "pthreadVC2")
+      end
 
+   end
+   
    if (svnvers) then
       add(mypackage.defines, svnvers)
    end

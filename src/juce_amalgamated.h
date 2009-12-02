@@ -253,7 +253,7 @@
     (This only affects a Win32 build)
 */
 #ifndef JUCE_ASIO
-  #define JUCE_ASIO 1
+//  #define JUCE_ASIO 1
 #endif
 
 /** Comment out this macro to disable the Windows WASAPI audio device type.
@@ -290,7 +290,7 @@
     installed, and its header files will need to be on your include path.
 */
 #if ! (defined (JUCE_QUICKTIME) || JUCE_LINUX || JUCE_IPHONE || (JUCE_WINDOWS && ! JUCE_MSVC))
-  #define JUCE_QUICKTIME 1
+//  #define JUCE_QUICKTIME 1
 #endif
 
 /** Comment out this macro if you don't want to enable OpenGL or if you don't
@@ -298,7 +298,7 @@
     OpenGLComponent class will be unavailable.
 */
 #ifndef JUCE_OPENGL
-  #define JUCE_OPENGL 1
+//  #define JUCE_OPENGL 1
 #endif
 
 /** These flags enable the Ogg-Vorbis and Flac audio formats.
@@ -307,25 +307,25 @@
     avoid bloating your codebase with them.
 */
 #ifndef JUCE_USE_FLAC
-  #define JUCE_USE_FLAC 1
+//  #define JUCE_USE_FLAC 1
 #endif
 
 #ifndef JUCE_USE_OGGVORBIS
-  #define JUCE_USE_OGGVORBIS 1
+//  #define JUCE_USE_OGGVORBIS 1
 #endif
 
 /** This flag lets you enable the AudioCDBurner class. You might want to disable
     it to build without the MS SDK under windows.
 */
 #if (! defined (JUCE_USE_CDBURNER)) && ! (JUCE_WINDOWS && ! JUCE_MSVC)
-  #define JUCE_USE_CDBURNER 1
+//  #define JUCE_USE_CDBURNER 1
 #endif
 
 /** This flag lets you enable support for the AudioCDReader class. You might want to disable
     it to build without the MS SDK under windows.
 */
 #ifndef JUCE_USE_CDREADER
-  #define JUCE_USE_CDREADER 1
+//  #define JUCE_USE_CDREADER 1
 #endif
 
 /** Enabling this provides support for cameras, using the CameraDevice class
