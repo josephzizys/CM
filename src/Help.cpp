@@ -187,45 +187,47 @@ void Help::openHelpInBrowser(String url)
 
   if (url.startsWith(T("file:")))
     { 
-      //#ifdef LINUX
-      //      File fox=File(T("/usr/bin/firefox"));
-      //      if (fox.existsAsFile())
-      //	fox.startAsProcess(url.quoted());
-      //      else
-      //	{
-      //	  String msg=T(">> Error: Can't open local html help file because /usr/bin/firefox does not exist.");
-      //	  Console::getInstance()->printWarning(msg);
-      //	}
-      //#else
-#ifdef WINDOWS
-      // Chrome lives in a weird place in the application data directory.
-      String chromePath = File::getSpecialLocation(File::userDesktopDirectory).getFullPathName();
-      // Trim out "Desktop" from the path name to get the user directory...
-      chromePath = chromePath.substring(0, chromePath.length() - 8);
-      chromePath << "\\Local Settings\\Application Data\\";
-      chromePath << "Google\\Chrome\\Application\\chrome.exe";
-      //Web browser executables
-      File ie("C:\\Program Files\\Internet Explorer\\iexplore.exe");
-      File firefox("C:\\Program Files\\Mozilla Firefox\\firefox.exe");
-      File chrome(chromePath);
-      //Try each web browser until something works (priority: Firefox, Chrome, IE).
-      if (firefox.exists())
-	firefox.startAsProcess(url.quoted());
-      else if (chrome.exists())
-	chrome.startAsProcess(url.quoted());
-      else if (ie.exists())
-	ie.startAsProcess(url.quoted());
-      else
+      if (SysInfo::isLinux())
 	{
-	  String msg=T("Can't open local html help file because none of these browsers exist:\n");
-	  msg << T("\n  ") << firefox.getFullPathName()
-	      << T("\n  ") << chrome.getFullPathName()
-	      << T("\n  ") << ie.getFullPathName() << T("\n");
-	  Console::getInstance()->printWarning(msg);
+	  File fox=File(T("/usr/bin/firefox"));
+	  if (fox.existsAsFile())
+	    fox.startAsProcess(url.quoted());
+	  else
+	    {
+	      String msg=T(">> Error: Can't open local html help file because /usr/bin/firefox does not exist.");
+	      Console::getInstance()->printWarning(msg);
+	    }
 	}
-#else
-      URL(url).launchInDefaultBrowser();
-#endif
+      else if (SysInfo::isWindows())
+	{
+	  // Chrome lives in a weird place in the application data directory.
+	  String chromePath = File::getSpecialLocation(File::userDesktopDirectory).getFullPathName();
+	  // Trim out "Desktop" from the path name to get the user directory...
+	  chromePath = chromePath.substring(0, chromePath.length() - 8);
+	  chromePath << "\\Local Settings\\Application Data\\";
+	  chromePath << "Google\\Chrome\\Application\\chrome.exe";
+	  //Web browser executables
+	  File ie("C:\\Program Files\\Internet Explorer\\iexplore.exe");
+	  File firefox("C:\\Program Files\\Mozilla Firefox\\firefox.exe");
+	  File chrome(chromePath);
+	  //Try each web browser until something works (priority: Firefox, Chrome, IE).
+	  if (firefox.exists())
+	    firefox.startAsProcess(url.quoted());
+	  else if (chrome.exists())
+	    chrome.startAsProcess(url.quoted());
+	  else if (ie.exists())
+	    ie.startAsProcess(url.quoted());
+	  else
+	    {
+	      String msg=T("Can't open local html help file because none of these browsers exist:\n");
+	      msg << T("\n  ") << firefox.getFullPathName()
+		  << T("\n  ") << chrome.getFullPathName()
+		  << T("\n  ") << ie.getFullPathName() << T("\n");
+	      Console::getInstance()->printWarning(msg);
+	    }
+	}
+      else
+	URL(url).launchInDefaultBrowser();
     }
   else
     {
