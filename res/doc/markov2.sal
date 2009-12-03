@@ -19,11 +19,6 @@
 ; TODO: Define a Markov process that generate random rhythms that
 ; express an underlying beat and tempo curve. 
 
-; use this process and tempo curve to play it
-
-define function in-tempo(b, t)
-  return b * (60 / t)
-
 define process play-rhythms (len, rhys, lo, hi)
   run with tcurve = {0 1 .7 .75 1 1},
     pat = make-markov(rhys)

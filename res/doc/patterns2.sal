@@ -124,9 +124,6 @@ end
 ; here is a musical rendition of this that pulls the notes CAGE out a
 ; a G-dorian backgroud:
 
-define function in-tempo(b,t)
-  return b * (60 / t)
-
 define process cage (num, env, off)
   run with w = 0,
       pat1 = make-weighting( {{g3 #$ promise(w)}

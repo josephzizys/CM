@@ -57,7 +57,7 @@ namespace SchemeSources
     const int           toolbox_scmSize = 27947;
 
     extern const char*  utilities_scm;
-    const int           utilities_scmSize = 9977;
+    const int           utilities_scmSize = 9993;
 
 };
 

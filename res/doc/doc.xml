@@ -51,6 +51,7 @@
     <item name="Input Hooks" file="input.sal"/>
     <item name="Plotting" file="plot.scm"/>
     <item name="Fomus Examples" file="fomusexamples.sal"/>
+    <item name="Cellular Automata" file="automata.sal"/>
     <item name="OSC" file="osc.sal"/>
   </menu>
   

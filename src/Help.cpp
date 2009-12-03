@@ -425,7 +425,7 @@ void Help::addCommonMusicSymbolHelp()
   cm.set(T("make-graph"), T("cm.html#make-graph"));
   cm.set(T("make-heap"), T("cm.html#make-heap"));
   cm.set(T("make-line"), T("cm.html#make-line"));
-  cm.set(T("make-list"), T("cm.html#make-list"));
+  //  cm.set(T("make-list"), T("cm.html#make-list"));
   cm.set(T("make-markov"), T("cm.html#make-markov"));
   cm.set(T("make-palindrome"), T("cm.html#make-palindrome"));
   cm.set(T("make-repeater"), T("cm.html#make-repeater"));

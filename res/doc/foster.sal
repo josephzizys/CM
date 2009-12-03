@@ -2,9 +2,6 @@
 ;; Chapter 8 of "Computer Music" by Dodge/Jerse. Sounds best with slow
 ;; strings.
 
-define function in-tempo(beat, tempo)
-  return beat * (60 / tempo)
-
 define process foster (len, octave, chan)
   run with 
     p1 = make-markov({{b3  d4  -> d4}

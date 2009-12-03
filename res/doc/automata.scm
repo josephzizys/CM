@@ -110,6 +110,8 @@
                  :colormap '(0 pink 1 yellow 2 green 3 blue)
                  :cellsize 100))
 
+; eval this multiple times to rotate through cells
+
 (state go-left)
 
 ;;
@@ -134,7 +136,8 @@
 (define go-right
   (make-automata (loop repeat 40 collect (random 3)) 
                  sum-right
-                 :colormap '(0 blue 1 green 2 red)  ;  blue green red
+                 :window "Go Right!"
+                 :colormap '(0 pink 1 aqua 2 magenta) 
                  :cellsize 4
                  :rows 8))
 
@@ -250,7 +253,6 @@
                        collect (loop repeat 8 
                                      collect (random 2)))
                  life
-                 :colormap '(0 red 1 green)
                  :window "my other life"
                  :colormap '(0 aquamarine 1 burlywood)
                  :cellbordersize 1

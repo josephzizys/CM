@@ -90,7 +90,11 @@ class Transport
 #if ( JUCE_MINOR_VERSION < 50 )
     imageRewind.setSolidFill(Colours::white);
 #else
-    imageRewind.setFillColour(Colours::white);
+    {
+      //    imageRewind.setFillColour(Colours::white);
+    FillType ft (Colours::white);
+    imageRewind.setFill(ft);
+    }
 #endif
     b->setImages(&imageRewind);
   }
@@ -105,7 +109,11 @@ class Transport
 #if ( JUCE_MINOR_VERSION < 50 )
     imageBack.setSolidFill(Colours::white);
 #else
-    imageBack.setFillColour(Colours::white);
+    {
+      //    imageBack.setFillColour(Colours::white);
+    FillType ft (Colours::white);
+    imageBack.setFill(ft);
+    }
 #endif
 
     b->setImages(&imageBack);
@@ -121,7 +129,11 @@ class Transport
 #if ( JUCE_MINOR_VERSION < 50 )
     imagePlayFromBeginning.setSolidFill(Colours::white);
 #else
-    imagePlayFromBeginning.setFillColour(Colours::white);
+    {
+    FillType ft (Colours::white);
+    //    imagePlayFromBeginning.setFillColour(Colours::white);
+    imagePlayFromBeginning.setFill(ft);
+    }
 #endif
 
     b->setImages(&imagePlayFromBeginning);
@@ -136,7 +148,11 @@ class Transport
 #if ( JUCE_MINOR_VERSION < 50 )
     imagePlay.setSolidFill(Colours::white);
 #else
-    imagePlay.setFillColour(Colours::white);
+    {
+    FillType ft (Colours::white);
+    //    imagePlay.setFillColour(Colours::white);
+    imagePlay.setFill(ft);
+    }
 #endif
 
     b->setImages(&imagePlay);
@@ -152,7 +168,11 @@ class Transport
 #if ( JUCE_MINOR_VERSION < 50 )
     imagePause.setSolidFill(Colours::white);
 #else
-    imagePause.setFillColour(Colours::white);
+    {
+    FillType ft (Colours::white);
+    //    imagePause.setFillColour(Colours::white);
+    imagePause.setFill(ft);
+    }
 #endif
     b->setImages(&imagePause);
   }
@@ -166,7 +186,11 @@ class Transport
 #if ( JUCE_MINOR_VERSION < 50 )
     imageStop.setSolidFill(Colours::white);
 #else
-    imageStop.setFillColour(Colours::white);
+    {
+    FillType ft (Colours::white);
+    //    imageStop.setFillColour(Colours::white);
+    imageStop.setFill(ft);
+    }
 #endif
     b->setImages(&imageStop);
   }
@@ -181,7 +205,11 @@ class Transport
 #if ( JUCE_MINOR_VERSION < 50 )
     imageForward.setSolidFill(Colours::white);
 #else
-    imageForward.setFillColour(Colours::white);
+    {
+    FillType ft (Colours::white);
+    //    imageForward.setFillColour(Colours::white);
+    imageForward.setFill(ft);
+    }
 #endif
     b->setImages(&imageForward);
   }
@@ -198,7 +226,11 @@ class Transport
 #if ( JUCE_MINOR_VERSION < 50 )
     imagePlayRepeats.setSolidFill(Colours::white);
 #else
-    imagePlayRepeats.setFillColour(Colours::white);
+    {
+    FillType ft (Colours::white);
+    //    imagePlayRepeats.setFillColour(Colours::white);
+    imagePlayRepeats.setFill(ft);
+    }
 #endif
     b->setImages(&imagePlayRepeats);
   }

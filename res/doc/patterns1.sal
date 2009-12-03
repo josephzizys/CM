@@ -224,9 +224,6 @@ define variable pat = makechords()
 
 print next(pat, #t)
 
-define function in-tempo(r,t)
-  return (r * (60 / t))
-
 define process playjazzchords(num, notepat, rhypat, tpo)
   run repeat num
     for rhy = in-tempo( next(rhypat), tpo)

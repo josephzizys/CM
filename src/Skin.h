@@ -81,9 +81,9 @@ public:
 	
         if(SystemStats::getOperatingSystemType()==SystemStats::MacOSX)
         {
-          juce::GradientBrush gb(juce::Colour::Colour(83,112,248), 0, 0, 
+          juce::ColourGradient gb(juce::Colour::Colour(83,112,248), 0, 0, 
             juce::Colour::Colour(30,67,246), 0, (float)height, false);
-          g.setBrush(&gb);
+          g.setGradientFill(gb);
         }
         else
           g.setColour(Colour::Colour(187,183,199));
@@ -211,9 +211,9 @@ public:
     }
     else if((SystemStats::getOperatingSystemType()==SystemStats::MacOSX) && isMenuOpen)
     {
-      juce::GradientBrush gb(juce::Colour::Colour(83,112,248), 0, 0, 
+      juce::ColourGradient gb(juce::Colour::Colour(83,112,248), 0, 0, 
         juce::Colour::Colour(30,67,246), 0, (float)height, false);
-      g.setBrush(&gb);
+      g.setGradientFill(gb);
       g.fillRect(0,0,width,height-2);
       
       g.setColour(juce::Colours::white);
