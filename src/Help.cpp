@@ -187,7 +187,7 @@ void Help::openHelpInBrowser(String url)
 
   if (url.startsWith(T("file:")))
     { 
-      if (SysInfo::isLinux())
+      if (false) //(SysInfo::isLinux())
 	{
 	  File fox=File(T("/usr/bin/firefox"));
 	  if (fox.existsAsFile())
