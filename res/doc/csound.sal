@@ -9,9 +9,9 @@ define process ransco(len, rhy, lb, ub, amp)
     wait rhy
   end
 
-;; write a scorfile
+;; write a score file
 
-sprout ransco(10, .2, 60, 72, 1000), "~/test.sco"
+sprout ransco(10, .2, 60, 72, 1000), "test.sco"
 
 ;; options for csound scorefiles are:
 ;;      play:           if #t call csound after writing file
@@ -26,17 +26,16 @@ sprout ransco(10, .2, 60, 72, 1000), "~/test.sco"
 ;; home directory and use Audio>Csound>Settings... to assign your
 ;; Csound app.
 
-sprout ransco(10, .2, 60, 72, 1000), "~/test.sco", 
-       play: #t, orchestra: "~/simp.orc"
+sprout ransco(10, .2, 60, 72, 1000), "test.sco", 
+       play: #t, orchestra: "simp.orc"
 
 ;; this will generate a score without writing a file. execute it
 ;; several times and use the Audio>Csound>Export... item to export all
 ;; the score data in various formats
 
-sprout ransco(10, .2, 60, 72, 1000), "~/test.sco", write: #f
+sprout ransco(10, .2, 60, 72, 1000), "test.sco", write: #f
 
 ;------------------------------- simp.orc -------------------------------
-
 
 sr      =      	44100 
 ksmps  	=     	10

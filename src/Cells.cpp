@@ -201,7 +201,13 @@ void StateWindow::StateWindowListener::handleMessage(const Message &m)
 	cv->data.lockArray();
 	int val=m.intParameter2;
 	int row=m.intParameter3;
-	int col=(int)m.pointerParameter;
+#if defined JUCE_32BIT 	
+        int col=(int)m.pointerParameter;
+#elif defined JUCE_64BIT 
+        int col=(long int)m.pointerParameter;
+#else
+#error "need JUCE_32BIT or JUCE_32BIT  macro"
+#endif	
 	int len=cv->data.size();
         row=row % cv->cellRows;
         col=col % cv->cellColumns;

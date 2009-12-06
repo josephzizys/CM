@@ -19,7 +19,7 @@
            (wave t d (hz k) .1)
            (wait r)))
 
-(sprout (simpwav 10 .2 .1 60 80) "~/wave.wav")
+(sprout (simpwav 10 .2 .1 60 80) "wave.wav")
 
 ;; additive gong
 
@@ -33,9 +33,9 @@
                  :location loc
                  :distance dist)))
 
-(sprout (gong 2 2 440 .1 45 0 0) "~/gong.wav" )
+(sprout (gong 2 2 440 .1 45 0 0) "gong.wav" )
 
-(sprout (gong 8 2 440 .05 45 0 0) "~/gong.wav" )
+(sprout (gong 8 2 440 .05 45 0 0) "gong.wav" )
 
 ;; define a process to sprout gong processes
 
@@ -46,5 +46,5 @@
                          .05 45 0 0))
            (wait rate)))
 
-(sprout (gongalong 20 .5 2 '(0 440 1 300) ) "~/gongalong.wav")
+(sprout (gongalong 20 .5 2 '(0 440 1 300) ) "gongalong.wav")
 

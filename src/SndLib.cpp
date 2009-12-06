@@ -148,13 +148,16 @@ double SchemeNode::applyProcessNode(double elapsed)
 void SchemeNode::applyMidiInputHookNode()
 {
   // called on Midi message nodes if an input hook is set
-  std::cout << "applyMidiInputHookNode()\n";
+  //std::cout << "applyMidiInputHookNode()\n";
   int op=(mmess.getRawData()[0] & 0xf0)>>4;
   int ch=mmess.getChannel()-1;
   int d1=mmess.getRawData()[1] & 0x7f;
   int d2=0;
   if (mmess.getRawDataSize()>2)
     d2=mmess.getRawData()[2] & 0x7f;
+  // convert MidiOns with zero velocity to MidiOff
+  if ((op==MidiFlags::On) && (d2==0))
+    op=MidiFlags::Off;
   int res=(int)s7_integer(s7_call(s7, 
 				  schemeThread->midiinhook, 
 				  s7_cons(s7,

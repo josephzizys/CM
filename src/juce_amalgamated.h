@@ -265,7 +265,7 @@
 /** Comment out this macro to disable the Windows WASAPI audio device type.
 */
 #ifndef JUCE_DIRECTSOUND
-//  #define JUCE_DIRECTSOUND 1
+  #define JUCE_DIRECTSOUND 1
 #endif
 
 /** Comment out this macro to disable building of ALSA device support on Linux.
