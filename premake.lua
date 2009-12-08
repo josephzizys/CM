@@ -310,6 +310,7 @@ for i = 1,3 do
    if options["fomus"] then
       fomus = insure_slash(options["fomus"])
       add(mypackage.defines, "WITHFOMUS=1")
+      add(mypackage.defines, "FOMUSLIBPATH=\\\"" .. fomus .. "lib\\\"")
       if os.fileexists(fomus .. "include/fomus.h") then
          add(mypackage.includepaths, fomus .. "include")
          --add(mypackage.libpaths, fomus .. "lib")

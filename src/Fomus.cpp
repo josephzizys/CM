@@ -29,7 +29,6 @@
 #define FOMUS_TYPESONLY
 #include <fomus/infoapi.h>
 #include <fomus/infoextapi.h>
-//#include <fomus/modnotes.h>
 
 // juce defines JUCE_LINUX, JUCE_MAC or JUCE_WIN32 already
 #if defined(JUCE_LINUX) || defined(JUCE_MAC)
@@ -39,8 +38,6 @@
 juce_ImplementSingleton(FomusSyntax) ;
 
 bool fomuserr = false;
-
-//#warning "get rid of debugging output"
 
 // Notes:
 // Make sure this is in the ConsoleWindow class in Console.h:
@@ -56,6 +53,9 @@ bool fomuserr = false;
 juce_ImplementSingleton(Fomus);
 
 bool check_fomus_exists() {
+#ifndef GRACE
+  initfomus();
+#endif  
   static bool fomus_printederr = false;
   if (fomus_exists) return true;
   if (!fomus_printederr) {
@@ -108,17 +108,14 @@ bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
 
   scores.getUnchecked(current)->runwhendone = false;
   StringArray userargs;
-  //std::cout << '|' << scoreargs.toUTF8() << '|' << std::endl;
   userargs.addTokens(scoreargs, true);
   bool clrsc = false;
   bool newsc = false;
   bool dorun = false;
-  //bool xmlerr = false;
   OwnedArray<scopedxml> els;
   fomuserr = false;
   for (int i=0; i<userargs.size(); ++i)
     {
-      //std::cout << userargs[i].toUTF8() << std::endl;
       bool istr = true, eatnext = false;
       if (i + 1 < userargs.size()) {
 	if (userargs[i + 1] == T("#f") || userargs[i + 1] == T("#F") || userargs[i + 1] == T("nil") || userargs[i + 1] == T("NIL")) {
@@ -140,7 +137,6 @@ bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
       } else if (userargs[i] == T(":err") && istr) {
 	return true;
       } else { // try to parse XML
-	//std::cout << "Trying to parse |" << userargs[i].toUTF8() << "|" << std::endl;
 	scopedxml* x;
 	els.add(x = new scopedxml(userargs[i]));
 	if (!x) return true;
@@ -150,7 +146,7 @@ bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
   if (scorename != T("fomus")) { // if default score, do nothing
     if (newsc) newScore(scorename, fromscm); else selectScore(scorename, fromscm); // anything else = filename
   }
-  if (clrsc) clearScore();
+  if (clrsc) fapi_fomus_act(getfomusdata(), fomus_par_events, fomus_act_clear);
   scores.getUnchecked(current)->runwhendone = dorun;
   for (int i = 0; i < els.size(); ++i) {
     if (els[i]->getel()) {
@@ -178,10 +174,6 @@ void Fomus::saveScore(const String& fn, const bool fromscm) {
       Console::getInstance()->printError((char*)">>> Error: Fomus: no output filename specified\n");
       return;
     }
-    //WildcardFileFilter wildcardFilter("*.fms", T("FOMUS Output File"));
-    //FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
-    //FileChooserDialogBox dialogBox(T("Save Score"), T("Specify an output `.fms' file path..."),
-    //browser, false, Colours::white);
     FileChooser choose(T("Save Score"), File::getCurrentWorkingDirectory(), "*.fms");
     if (choose.browseForFileToSave(true)) {
       fapi_fomus_save(fapi_fomus_copy(getfomusdata()), choose.getResult().getFullPathName().toUTF8());
@@ -253,28 +245,32 @@ void initfomus() {
     triedit = true;
     try {
 #if defined(JUCE_LINUX)
-      void* ha = dlopen("libfomus.so", RTLD_LAZY | RTLD_GLOBAL);
+      void* ha = dlopen((String(FOMUSLIBPATH) + "/libfomus.so").toUTF8(), RTLD_LAZY | RTLD_GLOBAL);
       if (!ha) {
-	ha = dlopen("/usr/local/lib/libfomus.so", RTLD_LAZY | RTLD_GLOBAL);
+	ha = dlopen("libfomus.so", RTLD_LAZY | RTLD_GLOBAL);
 	if (!ha) {
-	  ha = dlopen("/usr/lib/libfomus.so", RTLD_LAZY | RTLD_GLOBAL);
-	  if (!ha) return;
+	  ha = dlopen("/usr/local/lib/libfomus.so", RTLD_LAZY | RTLD_GLOBAL);
+	  if (!ha) {
+	    ha = dlopen("/usr/lib/libfomus.so", RTLD_LAZY | RTLD_GLOBAL);
+	    if (!ha) return;
+	  }
 	}
       }
 #elif defined(JUCE_MAC)
-      void* ha = dlopen("libfomus.dylib", RTLD_LAZY | RTLD_GLOBAL);
+      void* ha = dlopen((String(FOMUSLIBPATH) + "/libfomus.dylib").toUTF8(), RTLD_LAZY | RTLD_GLOBAL);
       if (!ha) {
-	ha = dlopen("/usr/local/lib/libfomus.dylib", RTLD_LAZY | RTLD_GLOBAL);
+	ha = dlopen("libfomus.dylib", RTLD_LAZY | RTLD_GLOBAL);
 	if (!ha) {
-	  ha = dlopen("/usr/lib/libfomus.dylib", RTLD_LAZY | RTLD_GLOBAL);
-	  if (!ha) return;
+	  ha = dlopen("/usr/local/lib/libfomus.dylib", RTLD_LAZY | RTLD_GLOBAL);
+	  if (!ha) {
+	    ha = dlopen("/usr/lib/libfomus.dylib", RTLD_LAZY | RTLD_GLOBAL);
+	    if (!ha) return;
+	  }
 	}
       }
 #elif defined(JUCE_WIN32)
-     //Console::getInstance()->printError((char*)">>> fomus1\n");      
      void* ha = dlopen();
-	 if (!ha) return;
-     //Console::getInstance()->printError((char*)">>> fomus2\n");   
+     if (!ha) return;
 #endif
       fapi_fomus_api_version = (fomus_api_version_type)fdlsym(ha, "fomus_api_version");
       fapi_info_infoapi_version = (info_infoapi_version_type)fdlsym(ha, "info_infoapi_version");
@@ -424,11 +420,13 @@ void Fomus::runScore(const bool fromscm)
     }
   }
 #else
-  String fn0("out.ly");
-  File fn(File::getCurrentWorkingDirectory().getFullPathName() + File::separator + fn0);
-  scores.getUnchecked(current)->name = fn0;
-  sval(fomus_par_setting, fomus_act_set, "filename");
-  sval(fomus_par_settingval, fomus_act_set, fn.getFullPathName());  
+  if (String(fapi_fomus_get_sval(getfomusdata(), "filename")).isEmpty()) {
+    String fn0("out.ly");
+    File fn(File::getCurrentWorkingDirectory().getFullPathName() + File::separator + fn0);
+    scores.getUnchecked(current)->name = fn0;
+    sval(fomus_par_setting, fomus_act_set, "filename");
+    sval(fomus_par_settingval, fomus_act_set, fn.getFullPathName());
+  }
 #endif
 #ifdef GRACE
   String pa(fapi_fomus_get_sval(getfomusdata(), "lily-exe-path"));
@@ -511,7 +509,6 @@ void Fomus::sendXml(const String& xml, double scoretime)
   // score.
 
   try {
-    //std::cout << xml.toUTF8() << std::endl;
     XmlDocument doc(xml);
     std::auto_ptr<XmlElement> docel(doc.getDocumentElement());
     scoped_timeshift xxx(scoretime, *this);
@@ -535,9 +532,7 @@ void Fomus::sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act,
     bool wh = true;
     String key;
     forEachXmlChildElement(*l, e) {
-      //if (skipfirst) skipfirst = false; else {
       if (wh) {
-	//XmlElement* d = e; //;xml.getChildByName(T("s"));
 	if (e->hasTagName(T("s"))) {
 	  key = e->getAllSubText();
 	  if (!key.isEmpty()) {
@@ -562,7 +557,6 @@ void Fomus::sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act,
 	}
       }
       wh = !wh;
-      //}
     }
     if (!wh) throw xmlerror("missing argument");
   } else throw xmlerror("expected list of string id/argument pairs");
@@ -581,13 +575,8 @@ void Fomus::sendXmlEntry(XmlElement& xml) // notes, rests and marks
   d = xml.getChildByName(T("marks")); if (d) {
     XmlElement* l0 = d->getChildByName(T("l"));
     if (!l0) throw xmlerror("expected list of marks");
-    //std::cout << '|' << l0->createDocument().toUTF8() << '|' << std::endl;
     forEachXmlChildElement(*l0, l) {
-      //std::cout << '|' << e->createDocument().toUTF8() << '|' << std::endl;
-      //XmlElement* l = e->getChildByName(T("l"));
       if (l->hasTagName(T("s"))) {
-	//XmlElement* s = e->getChildByName(T("s"));
-	//if (!s) throw xmlerror("expected mark id or list");
 	sendXmlVal(*l, fomus_par_markid, fomus_act_set, wh_none);
       } else if (l->hasTagName(T("l"))) {
 	XmlElement* n = l->getChildElement(0);
@@ -630,7 +619,7 @@ double atohf(const char* str) {
     case 'p':
     case 'P': {
       int d = atoi(x + 1);
-      double ret = sto;
+      double ret = (double)sto;
       if (d >= 0) {
 	for (int i = 0; i < d; ++i) ret *= 2;
       } else {
@@ -675,7 +664,6 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
     fval(par, act, atof(xml.getAllSubText()));
 #endif    
   } else if (xml.hasTagName(T("s"))) {
-    //#warning "switch (wh) ..."
     sval(par, act, xml.getAllSubText());
   } else if (xml.hasTagName(T("l"))) {
     if (wh != wh_none && !doeachinlist) {
@@ -755,9 +743,7 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 	sendXmlSets(xml, fomus_par_export_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
       } 
-      //} else goto JUSTALIST;
     } else {
-      //JUSTALIST:
       if (doeachinlist) {
 	forEachXmlChildElement(xml, e) sendXmlVal(*e, par, act, wh);
       } else {
@@ -781,7 +767,6 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
     else if (v == T("t") || v == T("T") || v == T("#t") || v == T("true")) ival(par, act, 1);
     else throw xmlerror("expected boolean value");
   } else {
-    //std::cout << (char*)xml.getTagName().toUTF8() << std::endl;
     throw xmlerror("XML parse error");
   }
 }
@@ -789,7 +774,6 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 // Top level stuff
 void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
 {
-  //std::cout << std::endl;
   if (xml.hasTagName(T("note"))) {
     sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("pitch")), "pitch value")->getChildElement(0), "pitch value"), fomus_par_pitch, fomus_act_set, wh_none);
     XmlElement* d = xml.getChildByName(T("dyn"));
@@ -815,11 +799,11 @@ void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
       d = mustExist(d->getChildByName(T("l")), "settings list");
       if (d->getChildElement(0)) {
 	sendXmlVal(*d, fomus_par_meas_measdef, fomus_act_set, wh_measdef);
-	//Fomus::act(fomus_par_meas_measdef, fomus_act_set);
       }
     }
-    d = xml.getChildByName(T("measdef"));
-    if (d) sendXmlVal(*mustExist(d->getChildElement(0), "measure definition id"), fomus_par_meas_measdef, fomus_act_set, wh_none);
+    //d = xml.getChildByName(T("measdef"));
+    //if (d) sendXmlVal(*mustExist(d->getChildElement(0), "measure definition id"), fomus_par_meas_measdef, fomus_act_set, wh_none);
+    //Fomus::act(fomus_par_meas_measdef, fomus_act_set);
     Fomus::act(fomus_par_meas, fomus_act_add);
   } else if (xml.hasTagName(T("measdef"))) {
     sendXmlVal(*mustExist(xml.getChildByName(T("l")), "measure definition"), fomus_par_measdef, 
@@ -830,9 +814,6 @@ void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
   } else if (xml.hasTagName(T("metapart"))) {
     sendXmlVal(*mustExist(xml.getChildByName(T("l")), "metapart definition"), fomus_par_metapart,
 	       fomus_act_add, wh_metapart);
-//   } else if (xml.hasTagName(T("partsref"))) {
-//     sendXmlVal(*mustExist(xml.getChildByName(T("l")), "parts reference definition"), fomus_par_partsref, 
-// 	       fomus_act_add, wh_partsref);
   } else if (xml.hasTagName(T("inst"))) {
     sendXmlVal(*mustExist(xml.getChildByName(T("l")), "instrument definition"), fomus_par_inst,
 	       fomus_act_add, wh_inst);
@@ -863,7 +844,6 @@ public:
   fomusinfo(int c, FOMUS fom, const String& id, const String& str):num(c), fom(fom), id(id), defstr(str), chstr(str), valid(true), knvalid(true), kndef(false) {}
   fomusinfo(int c, FOMUS fom, const String& id, const String& defstr, const String& str):num(c), fom(fom), id(id), defstr(defstr), chstr(str),
 											 valid(true), knvalid(true), kndef(false) {}
-  //virtual ~fomusinfo() {validate();}
   String getid() const {return id;}
   const String& getchangedstr() const {return chstr;}
   bool isdef() {
@@ -899,7 +879,6 @@ protected:
 
 // settings
 class fomus_set:public fomusinfo {
-  //int idnum;
   String descdoc, modname, loc, uselevel, typedoc;
 public:
   fomus_set(int c, FOMUS fom, struct info_setting& set, const String& def):fomusinfo(c, fom, set.name, def, set.valstr), /*id(set.id),*/ descdoc(set.descdoc),
@@ -939,7 +918,6 @@ private:
   virtual String what0() const = 0;
 };
 bool fomus_other::valid_aux() {
-  //remove();
   fapi_fomus_parse(fom, (what0() + String(" ") + (chstr.isEmpty() ? String("<>") : (chstr[0] != '(' && chstr[0] != '<' ? (String("<") << chstr << String(">")) : chstr))).toUTF8());
   if (*fapi_fomus_err) return false;
   struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
@@ -1063,7 +1041,7 @@ void fomusinfocont_other::reset_aux() {
   int c = 0;
   for (infoext_objinfo *i(li.objs), *ie(li.objs + li.n); i < ie; ++i) {
     const char* nam = fapi_module_id(i->obj);
-    if (nam[0] /*&& !String(nam).equalsIgnoreCase("default")*/) stuff.push_back(getnew(c++, fom, *i, nam));
+    if (nam[0]) stuff.push_back(getnew(c++, fom, *i, nam));
   }
 }
 
@@ -1278,11 +1256,9 @@ private:
 
   void defoff() {
     if (DefaultButton) DefaultButton->setToggleState(false, false); 
-    //ValueText->change = true;
   }
 
   void defon() {
-    //std::cout << "RESETTING TO DEFAULT" << std::endl;
     ValueText->reset();
     ValueText->setText(ValueText->getchangedstr(), false);
     if (DefaultButton) DefaultButton->setToggleState(ValueText->isdef(), false);
@@ -1406,7 +1382,6 @@ FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(fomusinfo* inf, FOMUSListBoxM
     addAndMakeVisible (DefaultButton = new ToggleButton (T("Default Button")));
     DefaultButton->setButtonText (T("Default"));
     DefaultButton->addButtonListener (this);
-    //DefaultButton->setToggleState (true, false);
   } else {
     addAndMakeVisible (DelButton = new TextButton (T("Delete Button")));
     DelButton->setButtonText (T("Remove"));
@@ -1428,9 +1403,7 @@ FOMUSSettingsListBoxItem::FOMUSSettingsListBoxItem(fomusinfo* inf, FOMUSListBoxM
   ValueText->setScrollbarsShown (true);
   ValueText->setCaretVisible (true);
   ValueText->setPopupMenuEnabled (true);
-  //ValueText->addListener(textlistener);
   ValueText->addListener(this);
-  //ValueText->setText (set.valstr);
   
   setSize (640 + 32, 16 + 72);
   
@@ -1696,7 +1669,6 @@ struct FileTabs:public TabbedComponent {
   fomusinfocont_sets sets;
   fomusinfocont_parts parts;
   fomusinfocont_metaparts metaparts;
-  //fomusinfocont_measdefs measdefs;
   fomusinfocont_insts insts;
   fomusinfocont_percinsts percinsts;
   
@@ -1704,13 +1676,11 @@ struct FileTabs:public TabbedComponent {
     sets.init();
     parts.init();
     metaparts.init();
-    //measdefs.init();
     insts.init();
     percinsts.init();
     addTab(T("Settings"), Colours::white, new FOMUSSettings(sets), true);
     addTab(T("Parts"), Colours::white, new FOMUSSettings(parts), true);
     addTab(T("Metaparts"), Colours::white, new FOMUSSettings(metaparts), true);
-    //addTab(T("Measure Definitions"), Colours::white, new FOMUSSettings(measdefs), true);
     addTab(T("Instruments"), Colours::white, new FOMUSSettings(insts), true);
     addTab(T("Percussion Instruments"), Colours::white, new FOMUSSettings(percinsts), true);
 
@@ -1734,7 +1704,6 @@ inline std::ostream& operator<<(std::ostream& s, const makenstring x)
 }
 
 void out_justify(std::ostream& f, String s, const int start = 0, bool va = true) {
-  //replace_all(s, "\t", string(8, ' '));
   s.replace(T("\t"), T("        "));
   int i = 0;
   int je = s.length();
@@ -1786,13 +1755,13 @@ public:
 void Fomus::settingsWindow() 
 {  
   /* THIS WOULD BE A NON-MODAL VERSION
-  FileTabs* t=new FileTabs(getfomusdata());
-  t->setVisible(true);
-  FomusDialogWindow* w = new FomusDialogWindow(T("FOMUS Settings"));
-  w->setContentComponent(t, true, true);
-  w->setVisible(true);
-  w->centreWithSize(t->getWidth(),t->getHeight());
-  w->toFront(true); 
+     FileTabs* t=new FileTabs(getfomusdata());
+     t->setVisible(true);
+     FomusDialogWindow* w = new FomusDialogWindow(T("FOMUS Settings"));
+     w->setContentComponent(t, true, true);
+     w->setVisible(true);
+     w->centreWithSize(t->getWidth(),t->getHeight());
+     w->toFront(true); 
   */
 
   FileTabs* f=new FileTabs(getfomusdata());
@@ -1854,7 +1823,6 @@ void FOMUSSetsView::doupdate(const String& sch, const int but) {
   TextLayout& lay = ((FOMUSViewComponent*)(viewport->getViewedComponent()))->lay;
   lay.clear();
   Font no(13);
-  //Font no2(4);
   Font ul(13, Font::underlined);
   Font bo(13, Font::bold);
   Font it(13, Font::italic);
@@ -1923,8 +1891,6 @@ FOMUSSetsView::FOMUSSetsView(TextEditor& textEditor, int& thebut)
   
   addAndMakeVisible (viewport = new Viewport (T("Viewport")));
   viewport->setViewedComponent(new FOMUSViewComponent(T("View Component")));
-  
-  //setSize (600, 400);
 }
 
 FOMUSSetsView::~FOMUSSetsView() 
@@ -2157,9 +2123,9 @@ FOMUSDocTabs::FOMUSDocTabs()
   
   addAndMakeVisible(Tabs = new MyTabbedComponent (*this, TabbedButtonBar::TabsAtTop));
   Tabs->setTabBarDepth (30);
-  Tabs->addTab (T("Settings"), Colours::white, new FOMUSSetsView(/*fom,*/ *textEditor, thebut), true);
-  Tabs->addTab (T("Marks"), Colours::white, new FOMUSMarksView(/*fom*/), true);
-  Tabs->addTab (T("Modules"), Colours::white, new FOMUSModsView(/*fom*/), true);
+  Tabs->addTab (T("Settings"), Colours::white, new FOMUSSetsView(*textEditor, thebut), true);
+  Tabs->addTab (T("Marks"), Colours::white, new FOMUSMarksView(), true);
+  Tabs->addTab (T("Modules"), Colours::white, new FOMUSModsView(), true);
   Tabs->setCurrentTabIndex (0);
   textEditor->addListener(this);
   
@@ -2227,12 +2193,6 @@ void Fomus::documentationWindow()
 
 void Fomus::loadScoreDialog() 
 {
-  //WildcardFileFilter wildcardFilter(T("*.fms"), T("FOMUS Input Files"));
-  //FileBrowserComponent browser(FileBrowserComponent::loadFileMode, 
-  //File::nonexistent, &wildcardFilter, 0);
-  //FileChooserDialogBox dialogBox(T("Load Score"),
-  //T("Specify path to `.fms' input file..."),
-  //browser, false, Colours::white);
   FileChooser choose(T("Load Score"), File::getCurrentWorkingDirectory(), "*.fms");  
   if (choose.browseForFileToOpen()) {
     loadScore(choose.getResult().getFullPathName());
@@ -2241,10 +2201,6 @@ void Fomus::loadScoreDialog()
 
 void Fomus::renameScoreDialog() 
 {
-  //WildcardFileFilter wildcardFilter(getwildcards(), T("FOMUS Output Files"));
-  //FileBrowserComponent browser(FileBrowserComponent::saveFileMode, File::nonexistent, &wildcardFilter, 0);
-  //FileChooserDialogBox dialogBox(T("Rename Score"), T("Specify an output file path (`filename' setting value)..."),
-  //browser, false, Colours::white);
   FileChooser choose(T("Rename Score"), File::getCurrentWorkingDirectory(), getwildcards());
   if (choose.browseForFileToSave(true)) {
     File fn(choose.getResult());
@@ -2273,11 +2229,11 @@ FomusSyntax::FomusSyntax () // syntab
 	  T("~!@#$%^&*-_?/'\"\\[]"), // symbolchars
 	  T(""), // commentchars
 	  T(""), // prefixchars
-	  T("" /*"\"'"*/), // stringchars
-	  T("" /*"(<{["*/), // openchars
-	  T("" /*")>}]"*/), // closechars
-	  T("" /*",.!?;:'`\\"*/), // punctchars
-	  T("" /*"\\"*/)) // escapechars
+	  T(""), // stringchars
+	  T(""), // openchars
+	  T(""), // closechars
+	  T(""), // punctchars
+	  T("")) // escapechars
 {
   coloring = true;
   type=TextIDs::Fomus;
@@ -2294,14 +2250,6 @@ FomusSyntax::FomusSyntax () // syntab
   hilites[HiliteIDs::Hilite6]=Colours::darkgreen;
   hilites[HiliteIDs::Hilite7]=Colours::darkblue; 
   hilites[HiliteIDs::Hilite8]=Colours::darkmagenta;
-//   hilites[HiliteIDs::Hilite9]=Colours::darkseagreen; // dyn
-//   hilites[HiliteIDs::Hilite10]=Colours::darkkhaki; // duration
-//   hilites[HiliteIDs::Hilite11]=Colours::darkmagenta; // part
-//   hilites[HiliteIDs::Hilite12]=Colours::darkolivegreen; // pitch
-//   hilites[HiliteIDs::Hilite13]=Colours::darkgrey; // note/mark/rest
-//   hilites[HiliteIDs::Hilite14]=Colours::black; // meas
-//   hilites[HiliteIDs::Hilite15]=Colours::darkslateblue; // meas
-  // keywords
   stickkeyword(T("voice"), HiliteIDs::Hilite7);
   stickkeyword(T("voi"), HiliteIDs::Hilite7);
   stickkeyword(T("vo"), HiliteIDs::Hilite7);
@@ -2346,7 +2294,6 @@ FomusSyntax::FomusSyntax () // syntab
   stickkeyword(T("imports"), HiliteIDs::Hilite5);
   stickkeyword(T("export"), HiliteIDs::Hilite5);
   stickkeyword(T("parts"), HiliteIDs::Hilite5);
-  //stickkeyword(T("partsref"), HiliteIDs::Hilite5);
   stickkeyword(T("metapart"), HiliteIDs::Hilite5);
   stickkeyword(T("percinsts"), HiliteIDs::Hilite5);
   stickkeyword(T("percinst"), HiliteIDs::Hilite5);
@@ -2375,7 +2322,6 @@ bool FomusSyntax::isTopLevel(String line)
 int FomusSyntax::getIndent (const String text, int i, int top, int beg)
 {
   std::stack<int> sta;
-  //std::cout << "|" << text.toUTF8() << "| " << bot << " " << top << std::endl;
   bool lc = false, cc = false, dq = false, sq = false, br = false;
   int col = 0;
   for (++i; i < beg; ++i) {
@@ -2404,7 +2350,6 @@ int FomusSyntax::getIndent (const String text, int i, int top, int beg)
 
 HiliteID FomusSyntax::getHilite (const String text, int start, int end)
 {
-  //std::cout << '|' << text.toUTF8() << '|' << std::endl << '|' << text.substring(start, end).toUTF8() << '|' << std::endl << std::endl;
   bool lc = false, cc = false, dq = false, sq = false, br = false;
   for (int i = 0; i <= start; ++i) {
     char x0 = i >= 1 ? text[i - 1] : 0;
