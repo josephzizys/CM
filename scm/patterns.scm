@@ -1087,7 +1087,7 @@
       (initialize-pattern obj (cons #f data ) for limit
 			  flags len len next-in-graph
 			  (lambda (fn obj)
-			    (for-each (lambda (n) (graph-node-datum n))
+			    (for-each (lambda (n) ( fn (graph-node-datum n)))
 				      (cdr (pattern-data obj)))))
       obj)))
 
