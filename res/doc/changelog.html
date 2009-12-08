@@ -16,18 +16,16 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   
   <h1>Changelog</h1>
   
-  <h2>CM 3.4.0 [svn: tip]</h2>
+  <h2>CM 3.4.0</h2>
   <ul>
 
-  <li class="change">CM now uses amalgamated sources from JUCE 1.50.</li>
+ <li class="change">New feature: <span class="menuitem">Audio &gt; Osc</span>  lets you send and receive OSC data over the network. See <a href="cm.html#osc">Open Sound Control</a> documentation for more information.</li>
 
-  <li class="change">New feature: <span class="menuitem">Console &gt; Themes</span>  lets you choose between differnent 'skins' for the Console window.</li>
+  <li class="change">New feature: <span class="menuitem">Console &gt; Themes</span> lets you select different color schemes for the Console window.</li>
 
   <li class="change">New feature: <span class="menuitem">Audio &gt; SndLib &gt; Audio Format</span>  lets you specify the default output file audio format.</li>
 
-  <li class="change">New feature: <span class="menuitem">Audio &gt; Osc</span>  lets you send and receive OSC data over the network. See <a href="cm.html#osc">Open Sound Control</a> documentation for more information.</li>
-
-  <li class="change">New feature: <span class="menuitem">Help</span> menu now provides separate submenus for Sal and Scheme examples and tutorials. Scheme versions of the tutorials were created by ugurguney@gmail.com.</li>
+   <li class="change">New feature: <span class="menuitem">Help</span> menu now provides separate submenus for Sal and Scheme examples and tutorials. Scheme versions of the tutorials were created by ugurguney@gmail.com.</li>
 
   <li class="change">New feature: All the bundled examples, tutorials and CLM instruments can be restored to disk using the <span class="menuitem">Save All...</span> menu items in the respective menus.</li>
     
@@ -40,12 +38,15 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
   <li class="change">Enhancement: upgraded the built-in clm instruments to latest sndlib versions.</li>
   <li class="change">Enhancement: In midi input, noteOn messages with 0 velocity are converted to noteOff.</li>
 
+  <li class="change">CM code base moved to JUCE 1.50 (git tip).</li>
+
   <li class="change">Bug fix: fixed a bug in <span class="menuitem">File &gt; Load File...</span> that crashed the app when very large SAL files were loaded.</li>
   <li class="change">Bug fix: markov-analyze no longer crashes the app when printing long messages.</li>
   <li class="change">Bug fix: fixed cm's error-hook to handle string args coming from built-in s7 error signals.</li>
   <li class="change">Bug fix: fixed missing function bug in rescale-spectrum.</li>
   <li class="change">Bug fix: Recently opened files now lists newly created/saved files and files that were opened using drag and drop.</li>
   <li class="change">Bug fix: plot axis specification with values but no type is automatically set to generic.</li>
+  <li class="change">Bug fix: Numerous FOMUS fixes.</li>
   </ul>  
 
   <h2>CM 3.3.0 [svn: 1770]</h2>
@@ -240,7 +241,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Sat Dec  5 10:17:10 CST 2009 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Mon Dec  7 21:18:49 CST 2009 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"
