@@ -48,6 +48,48 @@
         (error "osc:message failed with error code ~D" f)
         (void))))
 
+(define (osc:message path . data)
+  (if (null? data)
+      (if (string? path)
+          (ffi_osc_send_message path data)
+          (if (pair? path)
+              (if (string? (car path))
+                  (ffi_osc_send_message (car path) (cdr path))
+                  (error "not an OSC message: ~S" path))
+              (error "not an OSC message: ~S" path)))
+      (if (string? path)
+          (ffi_osc_send_message path data)
+          (error "not an OSC path: ~S" path))
+      ))
+
+; (osc:message "/hi" 1 2)
+; (osc:message '("/hi" 1 2))
+
+; (osc:bundle 100 '("/hi" 1) '("/ho" 2))
+; (osc:bundle 100 '(("/hi" 1) ("/ho" 2)))
+; (osc:bundle '(100 ("/hi" 1) ("/ho" 2)))
+; (osc:bundle '(100 (("/hi" 1) ("/ho" 2))))
+
+;data ( ("/hi" 1) ("/ho" 2)))
+;data ( (("/hi" 1) ("/ho" 2))))
+;(OSC:BUNDLE 100 (("/hi" 1) ("/ho" 2)))
+
+(define (osc:bundle time . data)
+  (if (null? data)
+      (if (pair? time)
+          (begin (set! data (cdr time))
+                 (set! time (car time)))
+          (error "not an OSC bundle: ~S" time)))
+  (if (number? time)
+      (if (pair? (car data)) ; data must be a message or list of messages
+          (if (pair? (caar data)) ; messages passed as single list
+              (if (null? (cdr data))
+                  (ffi_osc_send_bundle time (car data))
+                  (error "not an OSC bundle: ~S" (car data)))
+              (ffi_osc_send_bundle time data))
+          (error "not an OSC message: ~S" (car data)))
+      (error "not an OSC time tag: ~S" time)))
+
 (define (osc:close)
   (let ((f (ffi_osc_close)))
     (if (< f 0)

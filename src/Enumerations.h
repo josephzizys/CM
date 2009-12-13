@@ -590,7 +590,7 @@ class CommandIDs
   static const CommandID MidiInOpcodeFilter = COMID(MidiIn, 4);
   static const CommandID MidiInConfigure = COMID(MidiIn, 5);
   static const CommandID MidiInImportFile = COMID(MidiIn, 6);
-
+  static const CommandID MidiInThrough = COMID(MidiIn, 7);
 
   // MidiSeq Port
   static const CommandID MidiSeqRecordMidiOut = COMID(MidiSeq, 1);

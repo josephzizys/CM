@@ -29,6 +29,7 @@
 
 #ifdef LIBLO
 #include "Osc.h"
+//#include "lo/lo.h"
 #endif
 
 #define POWF(a,b)	(powf( (a) , (b) ))
@@ -1170,7 +1171,28 @@ void sw_draw(char* w, SCHEMEOBJECT obj, int a, int b){}
 
 #endif
 
+/*=======================================================================*
+                             Open Sound Control
+ *=======================================================================*/
+
 #ifdef LIBLO
+
+void toTimeTag(double ahead, lo_timetag& tag)
+{
+  // add relative CM time to juce time plus OSC time base offset.
+  // offset is from jan1 1900 to jan1 1970, or 25567 days
+  // http://www.timeanddate.com/date/duration.html
+  static const int osc_base = (25567 * 24 * 60 * 60);
+  if (ahead==0.0)
+    tag=LO_TT_IMMEDIATE;
+  else
+    {
+      juce::uint32 sec=(juce::uint32)ahead;
+      juce::uint32 now=(juce::uint32)(Time::currentTimeMillis()/1000);
+      tag.sec=sec+now+osc_base;
+      tag.frac=(juce::uint32)((ahead-sec)*4294967295.0);
+    }
+}
 
 int osc_open(char* port, char* targ)
 {
@@ -1192,53 +1214,89 @@ void osc_set_hook(bool hook)
   OscPort::getInstance()->isHookActive=hook;
 }
 
-int osc_send(char* path, SCHEMEOBJECT list, SCHEMEOBJECT s7false)
+static const int oscerr_incomplete_message = 1;
+static const int oscerr_invalid_type = 2;
+static const int oscerr_invalid_data = 3;
+static const int oscerr_not_message = 4;
+
+lo_message osc_make_message(s7_pointer pair, String& errstr)
 {
-  Array<int>ints;
-  Array<double>flos;
-  StringArray strs;
-  
-  SCHEMEOBJECT p;
-  int len=0;
-  String types=String::empty;
-  for (p=list; s7_is_pair(p); p=s7_cdr(p))
+  // return an Osc message or NULL on error. if the latter, errstr
+  // will hold the error string to report
+  lo_message msg=lo_message_new();
+  s7_pointer p;
+  int errn=0;  // zero is success
+  String errs=String::empty;
+
+  for (p=pair; s7_is_pair(p) && (errn==0); p=s7_cdr(p))
     {
-      SCHEMEOBJECT x=s7_car(p);
-      char t=0;
-      if (s7_is_keyword(x))
+      char t=0;                 // message type
+      s7_pointer x=s7_car(p);   // message data
+      if (s7_is_keyword(x))     // have explicit type tag
         {
           String s (s7_symbol_name(x));
           if (s.length()==2 && String("ifsbhtdScmTFNI").containsChar(s[1]))
             {
-              types << s[1];
-              if (String("TFNI").containsChar(s[1]))
-                continue;
+              // a few OSC tags have no data
+              switch (s[1])
+                {
+                case LO_TRUE:
+                  errn=lo_message_add_true(msg);
+                  continue;
+                case LO_FALSE:
+                  errn=lo_message_add_false(msg);
+                  continue;
+                case LO_NIL:
+                  errn=lo_message_add_nil(msg);
+                  continue;
+                case LO_INFINITUM:
+                  errn=lo_message_add_infinitum(msg);
+                  continue;
+                }
+              // otherwise get the tagged data
               p=s7_cdr(p);
               if (s7_is_pair(p))
                 x=s7_car(p);
               else
-                return -3;
+                {
+                  errn=oscerr_incomplete_message;
+                  break;
+                }
               t=s[1];
             }
           else
-            return -2;
+            {
+              errs=s;
+              errn=oscerr_invalid_type;
+              break;
+            }
         }
+      // at this point we have datum in 'x' and (possibly) a type in
+      // 't'. now add t and x to message, possibly including a default
+      // type if it was not explicity specified by the user
       if (s7_is_integer(x))
         {
           s7_Int i=s7_integer(x);
           switch (t)
             {
-            case 0 :
-              types << T("i");
-            case 'i' :
-            case 'h' :
-              ints.add(i);
+            case 0:
+            case LO_INT32:
+              errn=lo_message_add_int32(msg, i);
               break;
-            case 't' :
-              flos.add((double)i);
+            case LO_INT64:
+              errn=lo_message_add_int64(msg, (int64)i);
+              break;
+            case LO_TIMETAG:
+              {
+                lo_timetag tag;
+                toTimeTag((double)i, tag);
+                errn=lo_message_add_timetag(msg, tag);
+              }
               break;
             default:
-              return -5;
+              errs << t << T(" and ") << String(i);
+              errn=oscerr_invalid_data;
+              break;
             }
         }
       else if (s7_is_real(x))
@@ -1246,29 +1304,51 @@ int osc_send(char* path, SCHEMEOBJECT list, SCHEMEOBJECT s7false)
           s7_Double d = s7_real(x);
           switch (t)
             {
-            case 0 :
-              types << T("f");
-            case 'd' :
-            case 't' :
-            case 'f' :
-              flos.add((double)d);
+            case 0:
+            case LO_FLOAT:
+              errn=lo_message_add_float(msg, (float)d);
+              break;
+            case LO_DOUBLE:
+              errn=lo_message_add_double(msg, (double)d);
+              break;
+            case LO_TIMETAG:
+              {
+                lo_timetag tag;
+                toTimeTag(d,tag);
+                errn=lo_message_add_timetag(msg, tag);
+              }
               break;
             default:
-              return -5;
-            }            }
+              errs << t << T(" and ") << d;
+              errn=oscerr_invalid_data;
+              break;
+            }   
+        }
       else if (s7_is_string(x))
         {
           const char* s=s7_string(x);
+          if (*s=='\0') // empty string
+            {
+              errs=String("\"\"");
+              errn=oscerr_invalid_data;
+              break;
+            }
           switch (t)
             {
-            case 0 :
-              types << T("s");
-            case 's' :
-            case 'S' :
-              strs.add(String(s));
+            case 0:
+            case LO_STRING:
+              errn=lo_message_add_string(msg, s);
               break;
+            case LO_SYMBOL:
+              errn=lo_message_add_symbol(msg, s);
+              break;
+            case LO_CHAR:
+              errn=lo_message_add_char(msg, s[0]);
+              break; 
             default:
-              return -5;
+              errs << t << T(" and ") << String(s);
+              errn=oscerr_invalid_data;
+              break;
             }
         }
       else if (s7_is_symbol(x))
@@ -1277,13 +1357,16 @@ int osc_send(char* path, SCHEMEOBJECT list, SCHEMEOBJECT s7false)
           switch (t)
             {
             case 0 :
-              types << T("S");
             case 'S' :
+              errn=lo_message_add_symbol(msg, s);
+              break;
             case 's' :
-              strs.add(String(s));
+              errn=lo_message_add_string(msg, s);
               break;
             default:
-              return -5;
+              errs << t << T(" and ") << String(s);
+              errn=oscerr_invalid_data;
+              break;
             }           
         }
       else if (s7_is_character(x))
@@ -1292,72 +1375,199 @@ int osc_send(char* path, SCHEMEOBJECT list, SCHEMEOBJECT s7false)
           switch (t)
             {
             case 0 :
-              types << T("c");
-            case 'c' :
-              strs.add(String(c));
+            case LO_CHAR:
+              errn=lo_message_add_char(msg, c);
               break;
             default:
-              return -5;
+              errs << t << T(" and ") << String(c);
+              errn=oscerr_invalid_data;
+              break;
             }
         }
       else if (s7_is_boolean(x))
         {
-          if (t!=0) return -5;
-          if (x==s7false)
-            types<<T("F");
+          if (t!=0) 
+            {
+              errs << t << T(" with #t or #f");
+              errn=oscerr_invalid_data;
+            }
+          else if (x==s7_f(Scheme::getInstance()->scheme))
+            errn=lo_message_add_false(msg);
           else
-            types<<T("T");
+              errn=lo_message_add_true(msg);
         }          
-      else if (s7_is_pair(x))
+      // list is midi or blob, eg :m (a b c d) or :b (...)
+      // EMPTY LIST WILL FAIL
+      else if (s7_is_pair(x)) 
         {
+          s7_scheme *sc=Scheme::getInstance()->scheme;
+          int siz=s7_list_length(sc,x);
           if (t=='m')
             {
+              if (siz!=4)
+                {
+                  errs=T("midi list not 4 bytes");
+                  errn=oscerr_invalid_data;
+                  break;
+                }
               int j=0;
-              SCHEMEOBJECT m;
-              for (m=x; s7_is_pair(m); m=s7_cdr(m), j++)
+              s7_pointer m;
+              juce::uint8 midi[4];
+              for (m=x; s7_is_pair(m) && (errn==0); m=s7_cdr(m), j++)
                 if (s7_is_integer(s7_car(m)))
                   {
-                    juce::uint32 x=(juce::uint32)s7_integer(s7_car(m));
-                    ints.add(x & 0xff);
+                    juce::uint32 y=(juce::uint32)s7_integer(s7_car(m));
+                    midi[j]=(juce::uint8)(y & 0xFF);
                   }
                 else 
-                  return -5;
-              if (j!=4)
-                return -5;
+                  errn=oscerr_invalid_data;
+              if (errn==0)
+                errn=lo_message_add_midi(msg, midi);
+              else
+                errs=T("midi not four bytes");
             }
           else if (t=='b')
             {
-              // blobs are stored: [size data...]
-              int i=ints.size();
+              if (siz<1)
+                {
+                  errs=T("blob list not one or more bytes");
+                  errn=oscerr_invalid_data;
+                  break;
+                }
+              s7_pointer m;
+              juce::uint8 data[siz];
               int j=0;
-              ints.add(j);
-              SCHEMEOBJECT m;
-              for (m=x; s7_is_pair(m); m=s7_cdr(m), j++)
+              // get size and check data.
+              for (m=x; s7_is_pair(m) && (errn==0); m=s7_cdr(m), j++)
                 if (s7_is_integer(s7_car(m)))
                   {
-                    juce::uint32 x=(juce::uint32)s7_integer(s7_car(m));
-                    ints.add(x & 0xff);
+                    juce::uint32 y=(juce::uint32)s7_integer(s7_car(m));
+                    data[j]=(juce::uint8)(y & 0xFF);
                   }
                 else 
-                  return -5;
-              ints.setUnchecked(i,j);
+                  errn=oscerr_invalid_data;
+              if (errn==0)
+                {
+                  lo_blob blob=lo_blob_new(siz, data);
+                  errn=lo_message_add_blob(msg, blob);
+                }
+              else
+                errs=T("blob list not one or more bytes");
             }
           else
-            return -5;
+            {
+              errs=T("list without midi or blob tag");
+              errn=oscerr_invalid_data;
+            }
         }
       else
         {
-          //std::cout << "osc_send: aborting on unknown message value\n";
-          return -5;
+          errs=T("unparsable message data");
+          errn=oscerr_invalid_data;
+          break;
         }
     }
-  return OscPort::getInstance()->sendMessage(path,types,ints,flos,strs,-1);
+
+  switch (errn)
+    {
+    case 0:  // success!
+      return msg;
+    case oscerr_incomplete_message:
+      errstr=T("incomplete OSC message");
+      break;
+    case oscerr_invalid_type:
+      errstr=T("invalid OSC type: ") + errs;
+      break;
+    case oscerr_invalid_data:
+      errstr=T("invalid osc data: ") + errs;              
+      break;
+    default: // liblo error (< 1)
+      errstr=T("lo_message_add failed with ") + String(errn);
+      break;
+    }
+  lo_message_free(msg);
+  return NULL;
+}
+
+void osc_send_message(char* path, SCHEMEOBJECT list)
+{
+  int errn=0;
+  String errs=String::empty;
+  lo_message msg=osc_make_message(list, errs);
+  if (msg)
+    {
+      errn=OscPort::getInstance()->sendMessage(path,msg);
+      if (errn<0)
+        {
+          errs=T("OSC: sendMessage failed with ") + String(errn);
+          Scheme::getInstance()->schemeError(errs);
+        }
+    }
+  else
+    Scheme::getInstance()->schemeError(errs);
+}
+
+void osc_send_bundle(double time, SCHEMEOBJECT list)
+{
+  lo_timetag ttag;
+  lo_bundle bndl;
+  int errn=0;
+  String errs=String::empty;
+
+  toTimeTag(time, ttag);
+  bndl=lo_bundle_new(ttag);
+  // list is a list of messages each should be ("/path" . data)
+  s7_pointer p;
+  for (p=list; s7_is_pair(p) && (errn==0); p=s7_cdr(p))
+    {
+      s7_pointer x=s7_car(p);
+      if (s7_is_pair(x) && s7_is_string(s7_car(x)))
+        {
+          lo_message msg=osc_make_message(s7_cdr(x), errs);
+          if (msg)
+            {
+              char* str=(char*)s7_string(s7_car(x));
+              errn=lo_bundle_add_message(bndl, str, msg);
+              if (errn!=0)
+                errs=T("lo_bundle_add_message failed with ") + String(errn);
+            }
+          else
+            {
+              errn=oscerr_not_message;
+              break;
+            }
+        }
+      else
+        {
+          errs=T("not an OSC message");
+          errn=oscerr_not_message;
+          break;
+        }
+    }
+  
+  if (errn==0)
+    {
+      errn=OscPort::getInstance()->sendBundle(bndl);
+      if (errn<0)
+        {
+          errs=T("OSC: sendBundle failed with ") + String(errn);
+          Scheme::getInstance()->schemeError(errs);
+        }
+    }
+  else
+    {
+      lo_bundle_free_messages(bndl);
+      Scheme::getInstance()->schemeError(errs);
+    }
 }
 
 #else
 int osc_open(char* port, char* targ){return -1;}
-bool osc_open_p(){return false;}
 int osc_close(){return -1;}
-int osc_send(char* path, SCHEMEOBJECT alist, SCHEMEOBJECT scmfalse){return -1;}
+bool osc_open_p(){return false;}
+void osc_send_message(char* path, SCHEMEOBJECT list){}
+void osc_send_bundle(double time, SCHEMEOBJECT list){}
 void osc_set_hook(bool hook){}
 #endif
+
+

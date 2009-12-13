@@ -326,6 +326,7 @@ class MidiInPort : public MidiInputCallback
   bool tracing;
   int channelMask;
   int opcodeMask;
+  bool through;
  public:
   static const int AllOpcodes = 0x7F;
   static const int AllChannels = 0xFFFF;
@@ -341,6 +342,9 @@ class MidiInPort : public MidiInputCallback
   bool isChannelActive(int chan);
   void toggleChannelActive(int chan);
   void setChannelActive(int chan, bool active);
+  
+  bool isThroughActive();
+  void setThroughActive(bool b);
 
   int getOpcodeMask();
   void setOpcodeMask(int mask);

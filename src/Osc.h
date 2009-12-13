@@ -9,6 +9,7 @@
 #define OSC_H
 
 #include "juce.h"
+#include "lo/lo.h"
 
 class OscPort 
 {
@@ -27,6 +28,8 @@ class OscPort
   int open(String inport, String target);
   int close(bool force=false);
   int sendMessage(String path, String types, Array<int> &ints, Array<double> &flos, StringArray &strs, double time=0.0);
+  int sendMessage(String path, lo_message msg);
+  int sendBundle(lo_bundle bndl);
   void handleMessage(const char *path, const char *types, int argc, void **data);
   static bool isValidPort(String p);
   static bool isValidHost(String h);

@@ -132,9 +132,10 @@
     (ffi_sw_draw void "sw_draw" c-string SCHEMEOBJECT int int)
 
     (ffi_osc_open int "osc_open" c-string c-string)
-    (ffi_osc_open_p bool "osc_open_p" )
     (ffi_osc_close int "osc_close" )
-    (ffi_osc_send int "osc_send" c-string SCHEMEOBJECT SCHEMEOBJECT )
+    (ffi_osc_open_p bool "osc_open_p" )
+    (ffi_osc_send_message void "osc_send_message" c-string SCHEMEOBJECT )
+    (ffi_osc_send_bundle void "osc_send_bundle" double SCHEMEOBJECT )
     (ffi_osc_set_hook void "osc_set_hook" bool)
     ))
 

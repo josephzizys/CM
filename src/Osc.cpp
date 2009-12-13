@@ -9,7 +9,7 @@
 #include "Console.h"
 #include "Preferences.h"
 #include "Scheme.h"
-#include "lo/lo.h"
+//#include "lo/lo.h"
 #include <iostream>
 
 juce_ImplementSingleton(OscPort) ;
@@ -101,9 +101,11 @@ int OscPort::open(String in, String out)
   //std::cout << "  open!\n";
 
   // update preferences with current port
+#ifdef GRACE
   Preferences::getInstance()->setIntProp(T("OscServerPort"), getServerPort()); 
   Preferences::getInstance()->setStringProp(T("OscTargetHost"), getTargetHost()); 
   Preferences::getInstance()->setIntProp(T("OscTargetPort"), getTargetPort()); 
+#endif
   showStatus();
   return 0;
 }  
@@ -303,6 +305,21 @@ int OscPort::sendMessage(String path, String types, Array<int> &ints,
     return lo_send(loTarget, path.toUTF8(), NULL);
 }
 
+int OscPort::sendMessage(String path, lo_message msg)
+{
+  return lo_send_message_from(loTarget,
+                              lo_server_thread_get_server(loServer),
+                              path.toUTF8(),
+                              msg);
+}
+
+int OscPort::sendBundle(lo_bundle bndl)
+{
+  return lo_send_bundle_from(loTarget,
+                             lo_server_thread_get_server(loServer),
+                             bndl);
+}
+
 void OscPort::handleMessage(const char *path, const char *types, int argc, void **data)
 {
   lo_arg **argv=(lo_arg **)data;
@@ -399,6 +416,8 @@ void OscPort::handleMessage(const char *path, const char *types, int argc, void 
 /* ==============================================================================
                                      OSC Open Dialog
   =============================================================================*/
+
+#ifdef GRACE
 
 class OscOpenDialog : public Component, 
                       public ButtonListener,
@@ -617,4 +636,6 @@ void OscOpenDialog::buttonClicked (Button* buttonThatWasClicked)
         }
     }
 }
+
+#endif
 

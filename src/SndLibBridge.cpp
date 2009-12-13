@@ -1261,13 +1261,6 @@ s7_pointer ffi_osc_open (s7_scheme *s7, s7_pointer args)
   return s7_make_integer(s7, i0);
 }
 
-s7_pointer ffi_osc_open_p (s7_scheme *s7, s7_pointer args)
-{
-  bool b0;
-  b0=osc_open_p();
-  return make_s7_boolean(s7, b0);
-}
-
 s7_pointer ffi_osc_close (s7_scheme *s7, s7_pointer args)
 {
   s7_Int i0;
@@ -1275,25 +1268,43 @@ s7_pointer ffi_osc_close (s7_scheme *s7, s7_pointer args)
   return s7_make_integer(s7, i0);
 }
 
-s7_pointer ffi_osc_send (s7_scheme *s7, s7_pointer args)
+s7_pointer ffi_osc_open_p (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  bool b0;
+  b0=osc_open_p();
+  return make_s7_boolean(s7, b0);
+}
+
+s7_pointer ffi_osc_send_message (s7_scheme *s7, s7_pointer args)
+{
   char* s0;
-  SCHEMEOBJECT o0, o1;
+  SCHEMEOBJECT o0;
   if (!s7_is_string(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_osc_send", 1, s7_car(args), "a c-string"));
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_send_message", 1, s7_car(args), "a c-string"));
   s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
   if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_osc_send", 2, s7_car(args), "a SCHEMEOBJECT"));
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_send_message", 2, s7_car(args), "a SCHEMEOBJECT"));
   o0=s7_car(args);
   args=s7_cdr(args);
-  if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_osc_send", 3, s7_car(args), "a SCHEMEOBJECT"));
-  o1=s7_car(args);
+  osc_send_message(s0, o0);
+  return s7_UNSPECIFIED(s7);
+}
+
+s7_pointer ffi_osc_send_bundle (s7_scheme *s7, s7_pointer args)
+{
+  double f0;
+  SCHEMEOBJECT o0;
+  if (!s7_is_real(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_send_bundle", 1, s7_car(args), "a double"));
+  f0=s7_number_to_real(s7_car(args));
   args=s7_cdr(args);
-  i0=osc_send(s0, o0, o1);
-  return s7_make_integer(s7, i0);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_send_bundle", 2, s7_car(args), "a SCHEMEOBJECT"));
+  o0=s7_car(args);
+  args=s7_cdr(args);
+  osc_send_bundle(f0, o0);
+  return s7_UNSPECIFIED(s7);
 }
 
 s7_pointer ffi_osc_set_hook (s7_scheme *s7, s7_pointer args)
@@ -2990,8 +3001,9 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_sw_open_from_xml", ffi_sw_open_from_xml, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sw_draw", ffi_sw_draw, 4, 0, false, "ffi function");
   s7_define_function(s7, "ffi_osc_open", ffi_osc_open, 2, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_osc_open_p", ffi_osc_open_p, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_osc_close", ffi_osc_close, 0, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_osc_send", ffi_osc_send, 3, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_osc_open_p", ffi_osc_open_p, 0, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_osc_send_message", ffi_osc_send_message, 2, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_osc_send_bundle", ffi_osc_send_bundle, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_osc_set_hook", ffi_osc_set_hook, 1, 0, false, "ffi function");
 }

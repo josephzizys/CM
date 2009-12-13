@@ -102,6 +102,14 @@ public:
 
 #ifdef SNDLIB
   SCHEMEPROC midiinhook;
+  s7_scheme *scheme;
+  void schemeError(String text)
+  {
+    s7_error(scheme,
+             s7_make_symbol(scheme, "scheme-error"), 
+             s7_make_string(scheme, text.toUTF8())
+             );
+  }
 #endif
 #ifdef CHICKEN
   void *inputClosureGCRoot;

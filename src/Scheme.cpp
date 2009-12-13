@@ -184,7 +184,8 @@ Scheme::Scheme()
     voidstring (String::empty),
     scoretime (0.0),
     nextid (0),
-    quiet (false)
+    quiet (false),
+    scheme (NULL)
 {
   evalBuffer = new char[8192];
   errorBuffer = new char[8192];  

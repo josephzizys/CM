@@ -183,6 +183,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::MidiInOpcodeFilter + 6,
     CommandIDs::MidiInOpcodeFilter + 7, // All
     CommandIDs::MidiInImportFile,
+    CommandIDs::MidiInThrough,
 
     // Audio
     CommandIDs::AudioOpenFilePlayer,
@@ -564,8 +565,16 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
 	   }
        }
       break;
+
     case CommandIDs::MidiInImportFile:
       info.shortName=T("Import Midifile...");
+      break;
+
+    case CommandIDs::MidiInThrough:
+      info.shortName=T("Copy To Output");
+      info.setActive(MidiInPort::getInstance()->isOpen() &&
+                     MidiOutPort::getInstance()->isOpen() );
+      info.setTicked(MidiInPort::getInstance()->isThroughActive());
       break;
       
     // SndLib
@@ -911,6 +920,10 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
 
     case CommandIDs::MidiInImportFile:
       MidiInPort::getInstance()->openImportMidifileDialog();
+      break;
+
+    case CommandIDs::MidiInThrough:
+      MidiInPort::getInstance()->setThroughActive(!MidiInPort::getInstance()->isThroughActive());
       break;
 
       /** AUDIO COMMANDS **/

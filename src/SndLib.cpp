@@ -325,6 +325,8 @@ bool Scheme::init()
   if (!s7) 
     return false;
 
+  scheme=s7;
+
   /* initialize the xen stuff (hooks and the xen s7 FFI) */
   s7_xen_initialize(s7);
 

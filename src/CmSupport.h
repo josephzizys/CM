@@ -170,9 +170,10 @@ void sw_draw(char* window, SCHEMEOBJECT arry, int data1, int data2);
 // OSC (if --liblo was specified)
 
 int osc_open(char* port, char* targ);
-bool osc_open_p();
 int osc_close();
-int osc_send(char* path, SCHEMEOBJECT list, SCHEMEOBJECT s7false);
+bool osc_open_p();
+void osc_send_message(char* path, SCHEMEOBJECT list);
+void osc_send_bundle(double time, SCHEMEOBJECT list);
 void osc_set_hook(bool b);
 #endif
 

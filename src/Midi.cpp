@@ -1293,7 +1293,8 @@ MidiInPort::MidiInPort()
     device (NULL),
     tracing (0),
     channelMask(0),
-    opcodeMask(0)
+    opcodeMask(0),
+    through (false)
 {
 #ifdef GRACE
   Preferences* prefs=Preferences::getInstance();
@@ -1493,6 +1494,16 @@ void MidiInPort::setOpcodeActive(int index, bool active)
 #endif
 }
 
+bool MidiInPort::isThroughActive()
+{
+  return through;
+}
+
+void MidiInPort::setThroughActive(bool b)
+{
+  through=b;
+}
+
 //
 /// Traceing
 //
@@ -1543,6 +1554,8 @@ void MidiInPort::handleIncomingMidiMessage(MidiInput *dev,
   if (isMessageActive(msg))
     {
       Scheme::getInstance()->midiin(msg);
+      if (isThroughActive() && MidiOutPort::getInstance()->device != NULL)
+        MidiOutPort::getInstance()->device->sendMessageNow(msg);
       if (isTracing())
 	{
 	  int op=(msg.getRawData()[0] & 0xf0)>>4;
