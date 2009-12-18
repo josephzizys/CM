@@ -1309,12 +1309,12 @@ s7_pointer ffi_osc_send_bundle (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_osc_set_hook (s7_scheme *s7, s7_pointer args)
 {
-  bool b0;
-  if (!s7_is_boolean(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_osc_set_hook", 1, s7_car(args), "a bool"));
-  b0=s7_boolean(s7, s7_car(args));
+  SCHEMEOBJECT o0;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_set_hook", 1, s7_car(args), "a SCHEMEOBJECT"));
+  o0=s7_car(args);
   args=s7_cdr(args);
-  osc_set_hook(b0);
+  osc_set_hook(o0);
   return s7_UNSPECIFIED(s7);
 }
 

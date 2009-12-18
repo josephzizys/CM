@@ -174,6 +174,6 @@ int osc_close();
 bool osc_open_p();
 void osc_send_message(char* path, SCHEMEOBJECT list);
 void osc_send_bundle(double time, SCHEMEOBJECT list);
-void osc_set_hook(bool b);
+void osc_set_hook(SCHEMEOBJECT proc);
 #endif
 

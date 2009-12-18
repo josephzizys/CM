@@ -16,9 +16,6 @@
 #ifdef WITHFOMUS
 #include "Fomus.h"
 #endif
-#ifdef CHICKEN
-#include "ChickenBridge.h"
-#endif
 #ifdef GRACE
 #include "Preferences.h"
 #endif
@@ -27,148 +24,360 @@
 #include <iostream>
 #include <string>
 
-#define SCHEME_DEBUG 0
-
-// 1 = trace scheme entry/exit points
-// 2 = include gc info in trace
-// 3 = include node creation/insertion/deletion info in tracce
-
 juce_ImplementSingleton(Scheme)
 
 //
-//  Nodes
+// Execution Nodes for Scheme Thread's queue
 //
 
-
-SchemeNode::SchemeNode(int _type, double _time)
-  : type (0),
-    start (0.0),
-    elapsed (0.0),
-    expr (String::empty),
-    id (-1), 
-    mmess (0xff)
+XSchemeNode::XSchemeNode(double qtime)
+  : time (qtime),
+    userid (-1)
 {
-  type = _type;
-  time = _time;
+  static CriticalSection protect;
+  const ScopedLock lock (protect);
+  static int nodecounter=0;
+  nodeid=++nodecounter;
 }
 
-SchemeNode::SchemeNode(int _type, double _time, String _expr)
-  : time (0.0),
-    start (0.0),
-    elapsed (0.0),
-    type (0),
-    id (-1),
-    mmess(0xff)
+// XControlNode
+
+XControlNode::XControlNode(double qtime, int control, int ident)
+: XSchemeNode(qtime),
+  type (control)
 {
-  // method for eval node
-  type=_type; //  type = EVAL;
-  expr=_expr;
-  time = 0.0; // will always be ready to call
+  userid=ident;
 }
 
-SchemeNode::SchemeNode(int _type, double _time, const MidiMessage &_mess)
-  : time(0.0),
-    elapsed (0.0),
-    type(_type),
-    mmess(_mess)
-{
-  // method for midi message callback from MidiIn port
-}
-
-SchemeNode::~SchemeNode()
+XControlNode::~XControlNode()
 {
 }
 
-bool SchemeNode::applyNode(double curtime) 
+bool XControlNode::applyNode(Scheme* schemethread, double curtime)
 {
-  bool more=false;
-
   switch (type)
     {
-
-    case EVAL :
-    case SAL :
-      applyEvalNode();
-      //      Console::getInstance()->printPrompt();
+    case QueueStop:
+      schemethread->stopProcesses(userid);
       break;
-
-    case PROCESS:
-      {
-	double runtime, delta;
-	if (schemeThread->isScoreMode())
-	  {
-	    // in score mode the scheduler runs in non-real time and
-	    // node times are in seconds. the node's current time
-	    // becomes the score time under the callback an is used to
-	    // set the timestamps of data sent to ports
-	    runtime=elapsed;
-	    schemeThread->scoretime=time;
-	  }
-	else
-	  {
-	    runtime=(time-start)/1000.0;
-	  }
-
-	delta=applyProcessNode(runtime);
-	//std::cout << "after callback, delta is " << delta << "\n";
-
-	// a delta value less than 0 means that the process is done
-	// running, where -1 is normal exit, -2 is error exit. in this
-	// case applyProcesss has already gc'd the proc pointer and we
-	// do not reschedule the node
-	if (delta<0.0)
-	  {
-	    more=false;
-	  }
-	else
-	  {
-	    // update the time of the node to the next runttime. the
-	    // values is in milliseconds if scheduler is running in
-	    // real time
-	    more=true;
-	    if (schemeThread->isScoreMode())
-	      {
-		elapsed += delta;  // elapsed now user's next run time
-		time += delta;
-	      }
-	    else
-	      {
-		elapsed += delta;  // elapsed now user's next run time
-		// calculate delta to next runtime, the difference
-		// between the last time stamp and the (future) one in
-		// elapsed
-
-		delta = elapsed-runtime;
-		if (delta<0.0) delta=0.0;
-		time=Time::getMillisecondCounterHiRes()+(delta*1000.0);
-	      }
-	  }
-	schemeThread->scoretime=0.0;
-      }
+    case QueueQuit:
+      schemethread->signalThreadShouldExit();
       break;
-
-    case INHOOK:
-      if (schemeThread->isMidiInputHook())
-	applyMidiInputHookNode();
-      break;
-
-    case PAUSE :
-      break;
-
-    case STOP :
-      schemeThread->stopProcesses(id);
-      if ( SCHEME_DEBUG ) printf("...called stop node %d\n", nodeid);
-      break;
-
-    case QUIT :
-      schemeThread->signalThreadShouldExit();
-      if ( SCHEME_DEBUG ) printf("...called quit node %d\n", nodeid);
-      break;
-
     default:
       break;
     }
+  return false;
+}
+
+// XEvalNode
+
+XEvalNode::XEvalNode(double qtime, String sexpr)
+  : XSchemeNode(qtime),
+    expr (sexpr)
+{
+}
+
+XEvalNode::~XEvalNode()
+{
+}
+
+bool XEvalNode::applyNode(Scheme* schemethread, double curtime) 
+{
+  s7_scheme* sc=schemethread->scheme;
+  s7_pointer val=s7_eval_c_string(sc, (char *)expr.toUTF8());
+  if (val != schemethread->schemeVoid)
+    {
+      String str=String(s7_object_to_c_string(sc, val));
+#ifdef GRACE
+      str << T("\n");
+#endif
+      Console::getInstance()->printValues(str);
+    }
+  return false; 
+}
+
+// XProcessNode
+
+XProcessNode::XProcessNode(double qtime, s7_pointer proc, int qid)
+  : XSchemeNode(qtime),
+    elapsed (0.0)
+{
+  userid = qid;
+  time = qtime;
+  start = qtime;
+  schemeproc=proc;
+}
+
+XProcessNode::~XProcessNode()
+{
+}
+
+/**
+bool XProcessNode::applyNode(Scheme* schemethread, double curtime)
+{
+  bool more=false;
+  double runtime, delta;
+  if (schemethread->isScoreMode())
+    {
+      // in score mode the scheduler runs in non-real time and
+      // node times are in seconds. the node's current time
+      // becomes the score time under the callback an is used to
+      // set the timestamps of data sent to ports
+      runtime=elapsed;
+      schemethread->scoretime=time;
+    }
+  else
+    {
+      runtime=(time-start)/1000.0;
+    }
+  
+  delta=applyProcessNode(schemethread, runtime);
+  //std::cout << "after callback, delta is " << delta << "\n";
+  
+  // a delta value less than 0 means that the process is done
+  // running, where -1 is normal exit, -2 is error exit. in this
+  // case applyProcesss has already gc'd the proc pointer and we
+  // do not reschedule the node
+  if (delta<0.0)
+    {
+      more=false;
+    }
+  else
+    {
+      // update the time of the node to the next runttime. the
+      // values is in milliseconds if scheduler is running in
+      // real time
+      more=true;
+      if (schemethread->isScoreMode())
+        {
+          elapsed += delta;  // elapsed now user's next run time
+          time += delta;
+        }
+      else
+        {
+          elapsed += delta;  // elapsed now user's next run time
+          // calculate delta to next runtime, the difference
+          // between the last time stamp and the (future) one in
+          // elapsed
+          
+          delta = elapsed-runtime;
+          if (delta<0.0) delta=0.0;
+          time=Time::getMillisecondCounterHiRes()+(delta*1000.0);
+        }
+    }
+  schemethread->scoretime=0.0;
   return more;
+}
+**/
+
+bool XProcessNode::applyNode(Scheme* schemethread, double curtime)
+{
+  s7_scheme* sc=schemethread->scheme;
+  bool more=false;
+  double runtime, delta;
+  if (schemethread->isScoreMode())
+    {
+      // in score mode the scheduler runs in non-real time and
+      // node times are in seconds. the node's current time
+      // becomes the score time under the callback an is used to
+      // set the timestamps of data sent to ports
+      runtime=elapsed;
+      schemethread->scoretime=time;
+    }
+  else
+    {
+      runtime=(time-start)/1000.0;
+    }
+  
+  //delta=applyProcessNode(runtime);
+  s7_pointer args = s7_cons(sc,
+                            s7_make_real(sc, runtime),
+                            s7_NIL(sc));
+  int prot = s7_gc_protect(sc, args);
+  delta=s7_number_to_real(s7_call(sc, 
+                                  schemeproc, 
+                                  args
+                                  )
+                          );
+  s7_gc_unprotect_at(sc, prot);
+  //std::cout << "after callback, delta is " << delta << "\n";
+
+  // a delta value less than 0 means that the process is done running,
+  // where -1 is normal exit, -2 is error exit. in this case gc the
+  // proc pointer and do not reschedule the node
+  if (delta<0.0)
+    {
+      s7_gc_unprotect(sc,schemeproc);
+      more=false;
+    }
+  else
+    {
+      // update the time of the node to the next runttime. the
+      // values is in milliseconds if scheduler is running in
+      // real time
+      more=true;
+      if (schemethread->isScoreMode())
+        {
+          elapsed += delta;  // elapsed now user's next run time
+          time += delta;
+        }
+      else
+        {
+          elapsed += delta;  // elapsed now user's next run time
+          // calculate delta to next runtime, the difference
+          // between the last time stamp and the (future) one in
+          // elapsed
+          
+          delta = elapsed-runtime;
+          if (delta<0.0) delta=0.0;
+          time=Time::getMillisecondCounterHiRes()+(delta*1000.0);
+        }
+    }
+  schemethread->scoretime=0.0;
+  return more;
+}
+
+// XMidiNode
+
+XMidiNode::XMidiNode(double qtime, const MidiMessage &mess)
+  : XSchemeNode(qtime),
+    mmess (mess)
+{
+}
+
+XMidiNode::~XMidiNode()
+{
+}
+
+bool XMidiNode::applyNode(Scheme* schemethread, double curtime)
+{
+  if (schemethread->isMidiInputHook())
+    {
+      // called on Midi message nodes if an input hook is set
+      //std::cout << "applyMidiInputHookNode()\n";
+      s7_scheme* sc=schemethread->scheme;
+      int op=(mmess.getRawData()[0] & 0xf0)>>4;
+      int ch=mmess.getChannel()-1;
+      int d1=mmess.getRawData()[1] & 0x7f;
+      int d2=0;
+      if (mmess.getRawDataSize()>2)
+        d2=mmess.getRawData()[2] & 0x7f;
+      // convert MidiOns with zero velocity to MidiOff
+      if ((op==MidiFlags::On) && (d2==0))
+        op=MidiFlags::Off;
+      s7_pointer args=s7_cons(sc,
+                              s7_make_integer(sc, op),
+                              s7_cons(sc,					  
+                                      s7_make_integer(sc, ch),
+                                      s7_cons(sc,
+                                              s7_make_integer(sc, d1),
+                                              s7_cons(sc,
+                                                      s7_make_integer(sc, d2),
+                                                      s7_NIL(sc)))));
+      int prot = s7_gc_protect(sc, args);
+      int res=(int)s7_integer(s7_call(sc, schemethread->midiinhook, args));
+      s7_gc_unprotect_at(sc, prot);
+      if (res!=0)
+        {
+          schemethread->clearMidiInputHook();
+          Console::getInstance()->printError(T(" Clearing Midi input hook.\n"));
+        }
+    }
+  return false;
+}
+
+// XOscNode
+
+XOscNode::XOscNode(double qtime, String oscpath, String osctypes)
+  : XSchemeNode(qtime),
+    path (oscpath),
+    types (osctypes)
+{
+}
+
+XOscNode::~XOscNode()
+{
+  flos.clear();
+}
+
+bool XOscNode::applyNode(Scheme* st, double curtime)
+{
+  //std::cout << "Osc message: "<< path.toUTF8() << " " << types.toUTF8();
+  ////st->lockOscHook();
+  if (st->oscHook != NULL)
+    {
+      //std::cout << "Osc hook!\n";
+      s7_scheme* sc=st->scheme;
+      // the osc message data starts with the string path
+      s7_pointer data = s7_cons(sc, s7_make_string(sc, path.toUTF8()), s7_nil(sc));
+      s7_pointer tail = data;
+      // iterate types adding floats and ints to message data
+      int F=0;
+      int I=0;
+      for (int i=0; i<types.length(); i++)
+        {
+          switch (types[i])
+            {
+            case 'i':  // LO_INT32
+            case 'h':  // LO_INT64
+              //std::cout << "int="<< ints[I] << "\n";
+              s7_set_cdr(tail, s7_cons(sc, s7_make_integer(sc, ints[I++]), s7_nil(sc)));
+              break;
+            case 'f':  // LO_FLOAT32
+            case 'd':  // LO_FLOAT64
+              //std::cout << "flo="<< flos[F] << "\n";
+              s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, flos[F++]), s7_nil(sc)));
+              break;
+            }
+          tail=s7_cdr(tail);
+        }
+      // create the function args
+      s7_pointer args=s7_cons(sc, data, s7_nil(sc));
+      int prot = s7_gc_protect(sc, args);
+      s7_pointer res=s7_call(sc, st->oscHook, args);
+      s7_gc_unprotect_at(sc, prot);
+      if (res != st->schemeTrue)
+        {
+          st->clearOscHook();
+          Console::getInstance()->printError(">>> Cancelled OSC hook.\n");
+        }
+    }
+  ////st->unlockOscHook();
+  return false;
+}
+
+void Scheme::setOscHook(s7_pointer hook)
+{
+  oscLock.enter();
+  oscHook=hook;
+  s7_gc_protect(scheme, oscHook);
+  oscLock.exit();
+}
+
+void Scheme::clearOscHook()
+{
+  oscLock.enter();
+  s7_gc_unprotect(scheme, oscHook);
+  oscHook=NULL;
+  oscLock.exit();
+}
+
+bool Scheme::isOscHook()
+{
+  oscLock.enter();
+  bool hook = (oscHook != NULL);
+  oscLock.exit();
+  return hook;
+}
+
+void Scheme::lockOscHook()
+{
+  oscLock.enter();
+}
+
+void Scheme::unlockOscHook()
+{
+  oscLock.exit();
 }
 
 //
@@ -185,10 +394,17 @@ Scheme::Scheme()
     scoretime (0.0),
     nextid (0),
     quiet (false),
+#ifdef SNDLIB
+    midiinhook (NULL),
+    oscHook (NULL),
+    schemeFalse (NULL),
+    schemeTrue (NULL),
+    schemeNil (NULL),
+    schemeErr (NULL),
+    schemeVoid (NULL),
+#endif
     scheme (NULL)
 {
-  evalBuffer = new char[8192];
-  errorBuffer = new char[8192];  
 #ifdef GRACE
   showvoid=Preferences::getInstance()->
     getBoolProp(T("SchemeShowVoidValues"), true);
@@ -198,9 +414,6 @@ Scheme::Scheme()
 
 Scheme::~Scheme()
 {
-  delete [] evalBuffer;
-  delete [] errorBuffer;
-  //  CHICKEN_delete_gc_root(inputClosureGCRoot);
   schemeNodes.clear();
 }
 
@@ -235,10 +448,6 @@ bool Scheme::showVoidValues()
 void Scheme::setShowVoidValues(bool b)
 {
   showvoid=b;
-  //#ifdef GRACE
-  //  Preferences::getInstance()->
-  //    setBoolProp(T("SchemeShowVoidValues"), showvoid);
-  //#endif
 }
 
 void Scheme::printVoidValue(String input)
@@ -329,7 +538,7 @@ void Scheme::read()
 void Scheme::run()
 {
   double qtime, utime;
-  SchemeNode* node;
+  XSchemeNode* node;
 
   if (!init())
       return;
@@ -383,56 +592,23 @@ void Scheme::run()
 	      // no effect on this node. Search for the word POP to see the
 	      // places this affects...
 	      lock.enter();
-	      bool keep=node->applyNode(0.0);
+	      bool keep=node->applyNode(this, 0.0);
 	      lock.exit();
 	      if ( keep )
 		{
-		  if ( SCHEME_DEBUG > 2)
-		    printf("reinserting process node %d...\n",
-			   node->nodeid);
 		  schemeNodes.lockArray();
 		  schemeNodes.addSorted(comparator,node);
 		  //          schemeNodes.remove(0, false);
 		  schemeNodes.unlockArray();
-		  if ( SCHEME_DEBUG > 2)
-		    printf("...done reinserting process node %d\n",
-			   node->nodeid);
 		}
 	      else
 		{
-		  int myid=node->nodeid;
-		  int mytyp=node->type;
 		  delete node;
-		  if ( SCHEME_DEBUG > 2)
-		    {
-		      if (mytyp==SchemeNode::PROCESS)
-			printf("deleted process node %d\n", myid);
-		      else
-			printf("deleted eval node %d\n", myid);
-		      schemeNodes.lockArray();
-		      int mysize=schemeNodes.size();
-		      printf ("Queue size: %d\n", mysize);
-		      if (mysize>0)
-			{
-			  printf ("Remaining nodes: ");
-			  for (int i=0;i<mysize;i++)
-			    printf(" %d",schemeNodes[i]->nodeid);
-			  printf("\n");
-			}
-		      schemeNodes.unlockArray();
-		    }
-		  //	  schemeNodes.lockArray();
-		  //          schemeNodes.remove(0, true);
-		  //mysize=schemeNodes.size();
-		  //schemeNodes.unlockArray();
-		  //printf("...removed %d, queue now %d\n", myid, mysize);
 		}
 	    }
 	  node=NULL;
 	}
       // queue is now empty. 
-      /*if ( SCHEME_DEBUG>0 ) printf("scheduling queue is empty\n");*/
-
       if (sprouted && isScoreMode())
 	{
 	  // we just finished running a sprouted process in score
@@ -474,50 +650,32 @@ void Scheme::clear()
   schemeNodes.unlockArray();
 }
 
-void Scheme::printQueue(bool verbose)
+void Scheme::addNode(XSchemeNode* node)
 {
   schemeNodes.lockArray();
-  std::cout << "Queue["<< schemeNodes.size() << "]=";
-  for (int i=0; i<schemeNodes.size(); i++)
-    {
-      String z;
-      for (int i=0; i<schemeNodes.size(); i++)
-	{
-	  std::cout << z.toUTF8() << schemeNodes.getUnchecked(i)->nodeid;
-	  if (verbose)
-	    std::cout << "[time=" << schemeNodes.getUnchecked(i)->time
-		      << ", type="<< schemeNodes.getUnchecked(i)->type
-		      << "]";
-	  z=T(", ");
-	}
-      std::cout << "\n";  
-    }
+  schemeNodes.addSorted(comparator, node);
   schemeNodes.unlockArray();
+  notify();
 }
 
 // addNode for processes
 
-void Scheme::sprout(double _time, SCHEMEPROC c, int _id)
+void Scheme::sprout(double _time, SCHEMEPROC proc, int _id)
 {
-  // this method adds a musical process and is only called by scheme
-  // code via sprout() under an eval node.  this means that a
-  // lock.enter() is in effect so we dont need to lock anything to
-  // reference scoremode.
-  //  static int nextid=1000;
+  // this method is only called by scheme code via sprout() under an
+  // eval node.  this means that a lock.enter() is in effect so we
+  // dont need to lock anything to reference scoremode.
   if (!isScoreMode())
     _time = (_time * 1000) + Time::getMillisecondCounterHiRes();
   else
     _time += scoretime; // shift process to current scoretime under callback
 
-  SchemeNode *n = new SchemeNode(SchemeNode::PROCESS, _time, c, _id);
-  n->nodeid=++nextid;
-  n->schemeThread = this;
+  s7_gc_protect(scheme, proc); // don't let gc touch it
   sprouted=true;  // tell scheduler that we have a process running
   schemeNodes.lockArray();
-  schemeNodes.addSorted(comparator, n);
+  schemeNodes.addSorted(comparator, new XProcessNode( _time, proc, _id));
   schemeNodes.unlockArray();
   notify();
-  if (SCHEME_DEBUG>2) printf("added process node %d\n", n->nodeid);
 }
 
 void Scheme::eval(char* str)
@@ -527,143 +685,69 @@ void Scheme::eval(char* str)
 
 void Scheme::eval(String s)
 {
-  //  static int nextid=000;
-  SchemeNode *n = new SchemeNode(SchemeNode::EVAL, 0.0, s);
-  n->nodeid=++nextid;
-  n->schemeThread = this;
   schemeNodes.lockArray();
-  schemeNodes.addSorted(comparator, n);
+  schemeNodes.addSorted(comparator, new XEvalNode(0.0, s));
   schemeNodes.unlockArray();
   notify();
-  if (SCHEME_DEBUG>2) printf("added eval node %d\n", n->nodeid);
 }
 
 void Scheme::quit()
 {
-  //  static int nextid=000;
-  SchemeNode *n = new SchemeNode(SchemeNode::QUIT, 0.0);
-  n->nodeid=++nextid;
-  n->schemeThread = this;
   schemeNodes.lockArray();
-  schemeNodes.addSorted(comparator, n);
+  schemeNodes.addSorted(comparator, new XControlNode(0.0, XControlNode::QueueQuit));
   schemeNodes.unlockArray();
   notify();
-  if (SCHEME_DEBUG>2) printf("added quit node %d\n", n->nodeid);
 }
 
 void Scheme::midiin(const MidiMessage &msg)
 {
   if (!isMidiInputHook())
       return;
-  //  static int nextid=2000;
-  SchemeNode *n = new SchemeNode(SchemeNode::INHOOK, 0.0, msg);
-  n->nodeid=++nextid;
-  n->schemeThread = this;
   schemeNodes.lockArray();
-  schemeNodes.addSorted(comparator, n);
+  schemeNodes.addSorted(comparator, new XMidiNode(0.0, msg));
   schemeNodes.unlockArray();
   notify();
-  if (SCHEME_DEBUG>2) printf("added input hook node %d\n", n->nodeid);
 }
 
-void Scheme::setPaused(bool p) {
-  if (p) {
-    // pause the scheduler.
-    // this cannot really pause the Thread or else evalling wont work.
-    // so we effect a pause by hand inserting a PAUSE node at the
-    // head of the queue with a 1hr future time stamp, which then
-    // keeps any of nodes further down the line from being processed
-    // by the scheduler
-    if (pausing) return;
-    double delta=Time::getMillisecondCounterHiRes();
-    // calc time 1 hr in the future
-    SchemeNode *n = new SchemeNode(SchemeNode::PAUSE,
-				   delta + (1000.0 * 60.0 * 60));
-    // cache start time of pause in node
-    n->start=delta;
-    schemeNodes.lockArray();
-    // NOTE: POP removed the node that got us here so
-    // we add pause node at index 0.
-    // otherwise the eval node that got us here is at queu index 0 so add pause
-    // at index 1 so that it becomes the head of the queue after the
-    // eval node is popped
-    schemeNodes.insert(0,n); // POP
-    schemeNodes.unlockArray();
-    pausing=true;
-    notify();
-  }
-  else {
-    // continue from a pause.
-    // to stop the pause we add the pause delta (time-start) to every
-    // node above the pause and then remove the pause node.
-    if (! pausing) return;
-    int i;
-    schemeNodes.lockArray();
-    // search for the pause node...
-    for (i=0; i<schemeNodes.size(); i++) {
-      //printf("node[%d].type=%d\n", i, schemeNodes[i]->type);
-      if ( schemeNodes[i]->type == SchemeNode::PAUSE )
-	break;
-    }
-    if (i == schemeNodes.size() ) {
-      printf("FAILED TO FIND PAUSE NODE!\n");
-      schemeNodes.unlockArray();
-      return;
-    }
-    // now increment all nodes above the pause node by pause amount
-    double delta=Time::getMillisecondCounterHiRes() - schemeNodes[i]->start;
-    //printf("pause node at=%d, pause dur=%d\n", i, (int)delta);
-    for (int j=i+1; j< schemeNodes.size(); j++) {
-      schemeNodes[j]->start += delta;
-      schemeNodes[j]->time += delta;
-    }
-    schemeNodes.remove(i, true);
-    schemeNodes.unlockArray();
-    pausing=false;
-  }
-}
+void Scheme::setPaused(bool p) {}
 
-void Scheme::stop(int id)
+void Scheme::stop(int ident)
 {
   // always add stop nodes to the front of the queue.
-  SchemeNode *node = new SchemeNode (SchemeNode::STOP, 0.0);
-  node->nodeid=++nextid;
-  node->id=id;
-  if ( SCHEME_DEBUG > 2)
-    printf("adding stop node %d...\n", node->nodeid);
-  node->schemeThread = this;
   schemeNodes.lockArray();
-  schemeNodes.insert(0,node);
+  schemeNodes.insert(0, new XControlNode (0.0, XControlNode::QueueStop, ident));
   schemeNodes.unlockArray();
   notify();
-  if ( SCHEME_DEBUG > 2)
-    printf("...done adding stop node %d\n", node->nodeid);
 }
 
-void Scheme::stopProcesses(int id) {
+void Scheme::stopProcesses(int ident)
+{
   // this is called by a STOP node from process().  stop all processes
   // with id from running. if id=-1 then stop all processes. iterate
   // queue in reverse order so removal index remains valid.  NOTE: POP
   // removed the (STOP) node that got us here so this deletes up to
   // and including index 0. otherwise dont include index 0
   schemeNodes.lockArray();
-  if ( id<0 ) {
-    for (int i=schemeNodes.size()-1; i>=0; i--)
-      if (schemeNodes[i]->type == SchemeNode::PROCESS)
-	schemeNodes.remove(i,true);
-  }
-  else {
-    // else selectively remove all nodes with id process queue in
-    // reverse order so removal index always valid
-    for (int i=schemeNodes.size()-1; i>=0; i--)
-      if ( (schemeNodes[i]->type == SchemeNode::PROCESS) &&
-	   (schemeNodes[i]->id == id) )
-	schemeNodes.remove(i,true);
-  }
+  if (ident<0)
+    {
+      for (int i=schemeNodes.size()-1; i>=0; i--)
+        if (dynamic_cast<XProcessNode*>(schemeNodes[i]) != NULL)
+          schemeNodes.remove(i,true);
+    }
+  else 
+    {
+      // else selectively remove all nodes with id process queue in
+      // reverse order so removal index always valid
+      for (int i=schemeNodes.size()-1; i>=0; i--)
+        if (XProcessNode* n = dynamic_cast<XProcessNode*>(schemeNodes[i]))
+          if (n->userid == ident) 
+            schemeNodes.remove(i, true);
+    }
   schemeNodes.unlockArray();
   // if stopped all processes also clear any pending messages and send
   // all notes off
-  if (id<0)
+  // GET RID OF THIS!
+  if (ident<0)
     MidiOutPort::getInstance()->clear();
 }
 
@@ -675,76 +759,3 @@ bool Scheme::isQueueEmpty()
   return (size == 0);
 }
 
-void Scheme::performSchedulerCommand(CommandID id)
-{
-  /*  GracePreferences* prefs=GracePreferences::getInstance();
-  switch (id)
-    {
-    case CommandIDs::SchedulerScoreMode :
-      lock.enter();
-      scoremode=(!scoremode);
-      lock.exit();
-      prefs->setScoreCaptureMode(scoremode);
-      break;
-    default:
-      break;
-    }
-  */
-}
-
-//
-// Printing support
-//
-
-/*
-void Scheme::printError(char* str)
-{
-  // call this to print error messages
-  int len=strlen(str);
-  if (len>0)
-    {
-      std::cout << str;
-      if (str[len-1] != '\n')
-	std::cout << std::endl;
-    }
-}
-
-void Scheme::printValues(char* str)
-{
-  // call this to print REPL values
-  int len=strlen(str);
-  if (len>0)
-    {
-      std::cout << str;
-      if (str[len-1] != '\n')
-	std::cout << std::endl;
-    }
-}
-
-void Scheme::printOutput(char* str)
-{
-  // call this to print format() and display() output
-  int len=strlen(str);
-  if (len>0)
-    {
-      std::cout << str;
-      if (str[len-1] != '\n')
-	std::cout << std::endl; 
-    }
-}
-
-void Scheme::printPrompt()
-{
-  // call this to print optional prompt
-  //  if (prompt != String::empty)
-  //    std::cout << prompt.toUTF8() << std::flush;
-  Console::getInstance()->printPrompt(prompt);
-}
-
-void Scheme::setPrompt(String str)
-{
-  prompt=str;
-}
-
-
-*/

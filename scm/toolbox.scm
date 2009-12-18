@@ -93,9 +93,11 @@
       (if (list? arg)
 	  (apply / arg)
 	  (/ arg))
-      (if (list? arg)
+      (if (and (list? arg) (number? (car args)))
 	  (map (lambda (x) (/ x (car args))) arg)
-	  (apply / arg args))))
+          (if (and (number? arg) (list? (car args)))
+              (map (lambda (x) (/ arg x)) (car args))
+              (apply / arg args)))))
 
 (define (deltas . args)
   (if (null? args)

@@ -9,11 +9,7 @@
 #define SCHEME_H
 
 #include "juce.h"
-#ifdef CHICKEN
-#include "chicken.h"
-#define SCHEMEPROC C_word
-#define SCHEMEOBJECT C_word
-#endif
+
 #ifdef SNDLIB
 #include "s7.h"
 #define SCHEMEPROC s7_pointer
@@ -23,65 +19,75 @@
 class ConsoleWindow;
 class Scheme;
 
-class SchemeNode 
+class XSchemeNode 
 {
-
  public:
-
-  enum
-  {
-    PROCESS, 
-    INHOOK,
-    EVAL, 
-    SAL, 
-    PAUSE,
-    STOP,
-    QUIT
-  };
-  
-  SchemeNode(int _type,double _time);
-  SchemeNode(int _type, double _time, SCHEMEPROC c, int _id);
-  SchemeNode(int _type, double _time, String s);
-  SchemeNode(int _type, double _time, const MidiMessage &_mess);
-
-  ~SchemeNode();
-
-  int type;
-  int id;
-  int nodeid;
   double time;
-  double start;
-  double elapsed;
-  String expr;
-  const MidiMessage mmess;
-
-#ifdef CHICKEN
-  void *closureGCRoot;
-  C_word *elapsed_ptr;
-  C_word elapsed_word;
-#endif
-#ifdef SNDLIB
-  SCHEMEPROC schemeproc;
-#endif
-  
-  Scheme *schemeThread;
-
-  bool applyNode(double curr);
-  void applyEvalNode();
-  double applyProcessNode(double now);
-  void applyMidiInputHookNode();
+  int nodeid;
+  int userid;  // user's id
+  XSchemeNode(double qtime);
+  virtual ~XSchemeNode(){}
+  virtual bool applyNode(Scheme* scheme, double curtime)=0;
 };
 
-class SchemeNodeComparator
+class XControlNode : public XSchemeNode
 {
-public:
-  static int compareElements(SchemeNode* e1, SchemeNode* e2)
-  {
-    //    if( e1->time <= e2->time)
-    //      return -1;
-    //    else 
-    //      return 1;
+ public:
+  enum {QueueStop=1, QueueQuit};
+  int type;
+  XControlNode(double qtime, int control, int ident=-1);
+  ~XControlNode();
+  bool applyNode(Scheme* scheme, double curtime);
+};
 
+class XEvalNode : public XSchemeNode
+{
+ public:
+  String expr;
+  XEvalNode(double qtime, String sexpr);
+  ~XEvalNode();
+  bool applyNode(Scheme* scheme, double curtime);
+};
+
+class XProcessNode : public XSchemeNode
+{
+ public:
+  double start;
+  double elapsed;
+  SCHEMEPROC schemeproc;
+  //  int id;
+  XProcessNode(double qtime, SCHEMEPROC proc, int qid);
+  ~XProcessNode();
+  bool applyNode(Scheme* schemethread, double curtime);
+  //double applyProcessNode(Scheme* schemethread, double elapsed);
+};
+
+class XMidiNode : public XSchemeNode
+{
+ public:
+  const MidiMessage mmess;
+  XMidiNode(double qtime, const MidiMessage &mess);
+  ~XMidiNode();
+  bool applyNode(Scheme* scheme, double curtime);
+};
+
+class XOscNode : public XSchemeNode
+{
+ public:
+  String path;
+  String types;
+  Array<s7_Int> ints;
+  Array<double> flos;
+  XOscNode(double qtime, String oscpath, String osctypes) ;
+  ~XOscNode() ;
+  bool applyNode(Scheme* scheme, double curtime) ;
+};
+
+class XSchemeNodeComparator
+{
+ public:
+  static int compareElements(XSchemeNode* e1, XSchemeNode* e2)
+  {
     if (e1->time < e2->time)
       return -1;
     else if (e2->time < e1->time)
@@ -94,6 +100,10 @@ public:
   }
 };
 
+//
+// Scheme Thread executes Scheme Nodes in a priority queue.
+//
+
 class Scheme : public Thread
 {
 public:
@@ -101,18 +111,24 @@ public:
   ~Scheme();
 
 #ifdef SNDLIB
-  SCHEMEPROC midiinhook;
+
   s7_scheme *scheme;
+  s7_pointer midiinhook;
+  s7_pointer oscHook;
+  s7_pointer schemeFalse;
+  s7_pointer schemeTrue;
+  s7_pointer schemeNil;  
+  s7_pointer schemeErr; 
+  s7_pointer schemeVoid;
+
   void schemeError(String text)
   {
+    // use this function to signal errors in C code called by Scheme
     s7_error(scheme,
-             s7_make_symbol(scheme, "scheme-error"), 
+             schemeErr, //s7_make_symbol(scheme, "scheme-error"), 
              s7_make_string(scheme, text.toUTF8())
              );
   }
-#endif
-#ifdef CHICKEN
-  void *inputClosureGCRoot;
 #endif
   int nextid;
   String voidstring;
@@ -124,12 +140,17 @@ public:
   void setShowVoidValues(bool b);
   void printVoidValue(String input=String::empty);
 
-  char *evalBuffer ; 
-  char *errorBuffer ; 
-  //  String prompt;
   bool pausing;
   bool sprouted;
   CriticalSection lock;
+
+  // Osc Input Hook
+  CriticalSection oscLock;
+  void setOscHook(s7_pointer hook);
+  void clearOscHook();
+  bool isOscHook();
+  void lockOscHook();
+  void unlockOscHook();
 
   int scoremode;
   void setScoreMode(int mode);
@@ -141,8 +162,8 @@ public:
 
 
     
-  OwnedArray<SchemeNode, CriticalSection> schemeNodes;
-  SchemeNodeComparator comparator;  
+  OwnedArray<XSchemeNode, CriticalSection> schemeNodes;
+  XSchemeNodeComparator comparator;  
 
   // These next methods are defined in the scheme implementation files
   // (SndLib.cpp and Chicken.cpp)
@@ -159,25 +180,16 @@ public:
   void load(File file, bool addtorecent=false);
   void midiin(const MidiMessage &mess);
   void quit();
-  void printQueue(bool verbose=false);
   void read();
-
-  void removeNode(SchemeNode *n, bool deleteObject=true );
-  void reinsertNode(SchemeNode *n, double newtime );
   void run();
-
   void clear();
-
+  void addNode(XSchemeNode* node);
   bool isPaused() { return pausing; }
   void setPaused(bool b);
   void stop(int id=-1);
   void stopProcesses(int id) ;
   void performSchedulerCommand(CommandID id);
   bool isQueueEmpty();
-
-  //  void printError(char* str);
-  //  void printValues(char* str);
-  //  void printOutput(char* str);
 
   juce_DeclareSingleton (Scheme, true)
 

@@ -107,4 +107,4 @@
 (define ffi_osc_open_p (foreign-lambda bool "osc_open_p"))
 (define ffi_osc_send_message (foreign-lambda void "osc_send_message" c-string scheme-object))
 (define ffi_osc_send_bundle (foreign-lambda void "osc_send_bundle" double scheme-object))
-(define ffi_osc_set_hook (foreign-lambda void "osc_set_hook" bool))
+(define ffi_osc_set_hook (foreign-lambda void "osc_set_hook" scheme-object))

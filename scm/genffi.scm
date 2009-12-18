@@ -136,7 +136,7 @@
     (ffi_osc_open_p bool "osc_open_p" )
     (ffi_osc_send_message void "osc_send_message" c-string SCHEMEOBJECT )
     (ffi_osc_send_bundle void "osc_send_bundle" double SCHEMEOBJECT )
-    (ffi_osc_set_hook void "osc_set_hook" bool)
+    (ffi_osc_set_hook void "osc_set_hook" SCHEMEOBJECT)
     ))
 
 (define (foreign-lambda-scheme-name decl) 

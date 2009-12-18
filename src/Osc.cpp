@@ -32,7 +32,6 @@ void loInputHandler(const char *path, const char *types, lo_arg **argv,
                     int argc, void *data, void *user_data)
 {
   ((OscPort *)user_data)->handleMessage(path, types, argc, (void **)argv);
-  //OscPort::getInstance()->handleMessage(path, types, argc, (void **)argv);
 }
 
 /*=======================================================================*
@@ -76,7 +75,8 @@ int OscPort::open(String in, String out)
 
   //std::cout << "open -> sourcePort=" << sourcePort.toUTF8() << ",  targetHost=" << targetHost.toUTF8() << " targetPort=" << targetPort.toUTF8() << "\n";
 
-  loServer=lo_server_thread_new(sourcePort.toUTF8(), (lo_err_handler)loErrorHandler);
+  loServer=lo_server_thread_new(sourcePort.toUTF8(), 
+                                (lo_err_handler)loErrorHandler);
   
   //std::cout << "  adding target host...\n";
   loTarget=lo_address_new(targetHost.toUTF8(),targetPort.toUTF8());
@@ -102,9 +102,12 @@ int OscPort::open(String in, String out)
 
   // update preferences with current port
 #ifdef GRACE
-  Preferences::getInstance()->setIntProp(T("OscServerPort"), getServerPort()); 
-  Preferences::getInstance()->setStringProp(T("OscTargetHost"), getTargetHost()); 
-  Preferences::getInstance()->setIntProp(T("OscTargetPort"), getTargetPort()); 
+  Preferences::getInstance()->setIntProp(T("OscServerPort"),
+                                         getServerPort()); 
+  Preferences::getInstance()->setStringProp(T("OscTargetHost"),
+                                            getTargetHost()); 
+  Preferences::getInstance()->setIntProp(T("OscTargetPort"),
+                                         getTargetPort()); 
 #endif
   showStatus();
   return 0;
@@ -137,7 +140,6 @@ int OscPort::getServerPort()
 
 int OscPort::getTargetPort()
 {
-  //std::cout << "getTargetPort -> " << lo_address_get_port(loTarget) << "\n";
   return (isOpen) ? String(lo_address_get_port(loTarget)).getIntValue() : 0;
 }
 
@@ -176,7 +178,7 @@ void OscPort::showStatus()
   String text=String::empty; 
   if (isOpen)
     {
-      text << T("OSC open: server=") 
+      text << T("OSC open, server=") 
            << getServerPort()
            << T(", target=")
            << getTargetHost()
@@ -186,11 +188,16 @@ void OscPort::showStatus()
     }
   else
     {
-      text << T("OSC closed.\n");
+      text << T("OSC closed\n");
     }
   Console::getInstance()->printOutput(text);
 }
 
+/*=======================================================================*
+                               Sending Osc
+ *=======================================================================*/
+
+/*
 int OscPort::sendMessage(String path, String types, Array<int> &ints,
                          Array<double> &flos,StringArray &strs, double time)
 {
@@ -304,6 +311,7 @@ int OscPort::sendMessage(String path, String types, Array<int> &ints,
   else
     return lo_send(loTarget, path.toUTF8(), NULL);
 }
+*/
 
 int OscPort::sendMessage(String path, lo_message msg)
 {
@@ -320,96 +328,160 @@ int OscPort::sendBundle(lo_bundle bndl)
                              bndl);
 }
 
+/*=======================================================================*
+                               Receiving Osc
+ *=======================================================================*/
+
 void OscPort::handleMessage(const char *path, const char *types, int argc, void **data)
 {
+  Scheme* st=Scheme::getInstance();
+  bool isHook=st->isOscHook();
+  if (! (traceInput || isHook))
+    {
+      //std::cout << "no osc hook\n";
+      return;
+    }
   lo_arg **argv=(lo_arg **)data;
-  String text = String(path).quoted();
-
-  //std::cout << "path: <" << path << ">\n";
-  for (int i=0; i<argc; i++)
+  String text = String(path);
+  bool flag=true;
+  XOscNode* node=new XOscNode(0.0, text, String(types));
+  //std::cout << "handleMessage " << path << " " << types << "\n";
+  for (int i=0; i<argc && flag; i++)
     {     
-      //std::cout << "arg " << i << " '" << types[i] << "':\n";
-      //lo_arg_pp((lo_type)types[i], argv[i]);
-      //std::cout << "\n";
-      
-      text << T(" ");
       char t=types[i];
       switch (t)
         {
         case LO_INT32:
-          text << argv[i]->i32;
-          break;
-        case LO_FLOAT:
-          text << argv[i]->f32;
-          break;
-        case LO_STRING:
-          text << String(&argv[i]->s).quoted();
-          break;
-        case LO_BLOB:
-          {
-            int siz=lo_blob_datasize((lo_blob)argv[i]);
-            char* dat=(char*)lo_blob_dataptr((lo_blob)argv[i]);
-            text << T(":b (");
-            for (int j=0; j<siz; j++)
-              { 
-                if (j>0) text << T(" ");
-                text << (int)dat[j] ;
-              }
-            text << T(")");
-          }
+          node->ints.add((s7_Int)argv[i]->i32);
           break;
         case LO_INT64:
-          text << String(argv[i]->i64);
+          node->ints.add((s7_Int)argv[i]->i64);
           break;
-        case LO_TIMETAG:
-          {
-          }
+        case LO_FLOAT:
+          node->flos.add((double)argv[i]->f32);
           break;
         case LO_DOUBLE:
-          text << argv[i]->f64;
-          break;
-        case LO_SYMBOL:
-          text << String(&argv[i]->s);
-          break;
-        case LO_CHAR:
-          text << T("#\\") << String(argv[i]->c);
-          break;
-        case LO_MIDI:
-          text << T(":m (") << argv[i]->m[0]
-               << T(" ") << argv[i]->m[1]
-               << T(" ") << argv[i]->m[2]
-               << T(" ") << argv[i]->m[3]
-               << T(")");
-          break;
-        case LO_TRUE:
-          text << T("#t");
-          break;
-        case LO_FALSE:
-          text << T("#f");
-          break;
-        case LO_NIL:
-          text << T(":N");
-          break;
-        case LO_INFINITUM:
-          text << T(":I");
-          break;
+          node->flos.add(argv[i]->f64);
         default:
+          flag=false;
           break;
         }
     }
-  //std::cout << "\n";
-
-  if (isHookActive)
+  if (!flag)
     {
-      String lisp=T("(osc:call-hook '("); 
-      lisp<<text<<T("))");
-      Scheme::getInstance()->eval(lisp);
+      String msg=T("OSC: dropped non-numeric message (path ");
+      msg << text.quoted() << T(")\n");
+      Console::getInstance()->printWarning(msg);
+      delete node;
+      return;
     }
 
+  if (isHook)
+    Scheme::getInstance()->addNode(node);
   if (traceInput)
     {
-      text << T("\n");
-      Console::getInstance()->printOutput(text);
+      String msg=text.quoted();
+      for (int i=0; i<argc; i++) 
+        switch (types[i])
+          {
+          case 'i':
+          case 'h':
+            msg << T(" ") << String((juce::int64)node->ints[i]) ;
+            break;
+          case 'f':
+          case 'd':
+            msg << T(" ") << String((double)node->flos[i]) ;
+            break;
+          }
+      msg << T("\n");
+      Console::getInstance()->printOutput(msg);
+    }
+}
+
+void OscPort::handleMessage2(const char *path, const char *types, int argc, void **data)
+{
+  s7_scheme* sc=(s7_scheme*)NULL;
+  s7_pointer hook = NULL;
+  if (hook!=NULL)
+    {
+      lo_arg **argv=(lo_arg **)data;
+      s7_pointer snil = s7_nil(sc);
+      s7_pointer head = s7_cons(sc, s7_make_string(sc, path), snil);
+      s7_pointer tail = head;
+      // iterate types adding data to message list
+      for (int i=0; i<argc; i++)
+        {
+          switch (types[i])
+            {
+            case LO_INT32:
+              s7_set_cdr(tail, s7_cons(sc, s7_make_integer(sc, argv[i]->i32), snil));
+            case LO_INT64:
+              s7_set_cdr(tail, s7_cons(sc, s7_make_integer(sc, argv[i]->i64), snil));
+              break;
+            case LO_FLOAT:
+              s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, argv[i]->f32), snil));
+              break;
+            case LO_DOUBLE:
+              s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, argv[i]->f64), snil));
+              break;
+            case LO_TRUE:
+              s7_set_cdr(tail, s7_cons(sc, s7_t(sc), snil));
+              break;
+            case LO_FALSE:
+              s7_set_cdr(tail, s7_cons(sc,  s7_f(sc), snil));
+              break;
+            case LO_STRING:
+              s7_set_cdr(tail, s7_cons(sc, s7_make_string(sc, (const char*)argv[i]->s), snil));
+              break;
+            case LO_SYMBOL:
+              s7_set_cdr(tail, s7_cons(sc, s7_make_symbol(sc, (const char*)argv[i]->s), snil));
+              break;
+            case LO_CHAR:
+              s7_set_cdr(tail, s7_cons(sc, s7_make_character(sc, argv[i]->c), snil));
+              break;
+            case LO_NIL:
+              s7_set_cdr(tail, s7_cons(sc, s7_make_keyword(sc, "N"), snil));
+              break;
+            case LO_INFINITUM: 
+              s7_set_cdr(tail, s7_cons(sc, s7_make_keyword(sc, "I"), snil));
+              break;
+            case LO_TIMETAG: 
+              {
+                double t=0.0;
+                if (argv[i]->t.sec!=LO_TT_IMMEDIATE.sec ||
+                    argv[i]->t.frac!=LO_TT_IMMEDIATE.frac)
+                  {
+                    lo_timetag now;
+                    lo_timetag_now(&now);
+                    t=lo_timetag_diff(argv[i]->t, now);
+                  }
+                s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, t), snil));
+              }
+              break;
+            case LO_BLOB: 
+              //s7_set_cdr(tail, s7_cons(sc, ???, snil));
+              break;
+            case LO_MIDI: 
+              //s7_set_cdr(tail, s7_cons(sc, ???, snil));
+              break;
+            }
+          tail=s7_cdr(tail);
+        }
+      // create the hook's argslist
+      s7_pointer args=s7_cons(sc, head, s7_nil(sc));
+      // protect newly conse args from GC
+      int prot = s7_gc_protect(sc, args);
+      // call the hook and save the return value
+      s7_pointer res=s7_call(sc, hook, args);
+      // release args
+      s7_gc_unprotect_at(sc, prot);
+      // hook returns #t if no error. otherwise an error occured under
+      // the callback and so we automatically clear the hook
+      if (res != s7_t(sc))
+        {
+          //st->clearOscHook();
+          Console::getInstance()->printError(">>> Cancelled OSC hook.\n");
+        }
     }
 }
 
@@ -518,7 +590,8 @@ OscOpenDialog::OscOpenDialog ()
   targetHostEditor->setScrollbarsShown(true);
   targetHostEditor->setCaretVisible(true);
   targetHostEditor->setPopupMenuEnabled(true);
-  String host=Preferences::getInstance()->getStringProp(T("OscTargetHost"), T("localhost"));
+  String host=Preferences::getInstance()->
+    getStringProp(T("OscTargetHost"), T("localhost"));
   targetHostEditor->setText(host);
   targetHostEditor->setCaretPosition(0);
   
@@ -564,17 +637,17 @@ OscOpenDialog::~OscOpenDialog()
 
 void OscOpenDialog::resized()
 {
-    serverGroup->setBounds (8, 8, 184, 96);
-    targetGroup->setBounds (199, 8, 185, 96);
-    openButton->setBounds (152, 112, 96, 24);
-    serverPortLabel->setBounds (16, 64, 48, 24);
-    targetHostLabel->setBounds (207, 32, 56, 24);
-    targetPortLabel->setBounds (207, 64, 48, 24);
-    serverProtocolLabel->setBounds (16, 32, 64, 24);
-    serverPortEditor->setBounds (88, 64, 88, 24);
-    serverProtocolEditor->setBounds (88, 32, 88, 24);
-    targetHostEditor->setBounds (256, 32, 112, 24);
-    targetPortEditor->setBounds (256, 64, 88, 24);
+  serverGroup->setBounds (8, 8, 184, 96);
+  targetGroup->setBounds (199, 8, 185, 96);
+  openButton->setBounds (152, 112, 96, 24);
+  serverPortLabel->setBounds (16, 64, 48, 24);
+  targetHostLabel->setBounds (207, 32, 56, 24);
+  targetPortLabel->setBounds (207, 64, 48, 24);
+  serverProtocolLabel->setBounds (16, 32, 64, 24);
+  serverPortEditor->setBounds (88, 64, 88, 24);
+  serverProtocolEditor->setBounds (88, 32, 88, 24);
+  targetHostEditor->setBounds (256, 32, 112, 24);
+  targetPortEditor->setBounds (256, 64, 88, 24);
 }
 
 void  OscOpenDialog::textEditorReturnKeyPressed(TextEditor& editor)

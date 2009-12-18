@@ -9,7 +9,7 @@ namespace SchemeSources
     const int           automata_scmSize = 8886;
 
     extern const char*  chickenforeign_scm;
-    const int           chickenforeign_scmSize = 7825;
+    const int           chickenforeign_scmSize = 7834;
 
     extern const char*  chicken_scm;
     const int           chicken_scmSize = 3194;
@@ -21,13 +21,13 @@ namespace SchemeSources
     const int           fomus_scmSize = 11884;
 
     extern const char*  genffi_scm;
-    const int           genffi_scmSize = 22167;
+    const int           genffi_scmSize = 22175;
 
     extern const char*  loop_scm;
     const int           loop_scmSize = 38024;
 
     extern const char*  osc_scm;
-    const int           osc_scmSize = 3854;
+    const int           osc_scmSize = 3784;
 
     extern const char*  patterns_scm;
     const int           patterns_scmSize = 36959;
@@ -42,7 +42,7 @@ namespace SchemeSources
     const int           processes_scmSize = 7312;
 
     extern const char*  s7_scm;
-    const int           s7_scmSize = 6555;
+    const int           s7_scmSize = 6569;
 
     extern const char*  sal_scm;
     const int           sal_scmSize = 60901;
@@ -60,7 +60,7 @@ namespace SchemeSources
     const int           spectral_scmSize = 20749;
 
     extern const char*  toolbox_scm;
-    const int           toolbox_scmSize = 27947;
+    const int           toolbox_scmSize = 28093;
 
     extern const char*  utilities_scm;
     const int           utilities_scmSize = 9993;

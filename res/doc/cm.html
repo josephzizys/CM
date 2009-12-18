@@ -202,7 +202,7 @@ Quantizes <var>num</var> or list of the same to be a multiple of <var>step</var>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">plus</span>
-      (<var class="rest">nums...</var>)
+      (<var class="rest">num...</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -265,7 +265,7 @@ Returns the subtraction of one or more <var>nums</var>. If a single number is gi
   <tr class="entry">
     <td class="formals">
       <span class="funcname">times</span>
-      (<var class="rest">nums...</var>)
+      (<var class="rest">num...</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -306,26 +306,32 @@ Returns the multiplication of zero or more <var>nums</var>. If a single <var>lis
       (<var class="arg">list</var>)
     </td>
     <!-- td class="label">Function</td -->
-  </tr>
-  <tr class="entry">
-    <td class="formals">
-      <span class="funcname">divide</span>
-      (<var class="arg">list</var>, <var class="arg">num</var>)
-    </td>
-    <!-- td class="label">Function</td -->
-  </tr>
-  <tr><td class="retval" colspan="2">&rarr; number</td></tr>
+    <tr class="entry">
+      <td class="formals">
+        <span class="funcname">divide</span>
+        (<var class="arg">list</var>, <var class="arg">num</var>)
+      </td>
+      
+    </tr>
+    <tr class="entry">
+      <td class="formals">
+        <span class="funcname">divide</span>
+        (<var class="arg">num</var>, <var class="arg">list</var>)
+      </td>
+      <!-- td class="label">Function</td -->
+    </tr>
+    <tr><td class="retval" colspan="2">&rarr; number</td></tr>
 </table>
-<blockquote>
-<p>
-Returns the division of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative division is returned. Otherwise a list is returned of <var>num</var> divided into every element in <var>list</var>.
-</p>
-</blockquote>
-<!-- END DEFINITION -->
-
-
-<!-- DEFINITION -->
-<table class="entry" id="deltas">
+  <blockquote>
+  <p>
+  Returns the division of one or more <var>nums</var>. If a single number is given its inverse is returned. If a single <var>list</var> of numbers is given the cumulative division is returned. Otherwise a list is returned of <var>num</var> divided into every element in <var>list</var>.
+  </p>
+  </blockquote>
+  <!-- END DEFINITION -->
+  
+  
+  <!-- DEFINITION -->
+  <table class="entry" id="deltas">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">deltas</span>
@@ -2946,17 +2952,19 @@ Closes an open OSC connection.
 <table id="osc:message" class="entry">
   <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:message"</span>, <var class="arg">path</var>, <var class="rest">data...</var></td>
   </tr>
-  <!-- tr class="scmentry"> <td class="formals">(<span class="funcname">osc:message</span> <var class="arg">path</var>  <var class="rest">data...</var>)</td> </tr -->
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:message"</span>, <var class="arg">list</var></td>
+  </tr>
+
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 <blockquote>
 <p>
-Sends an OSC message consisting of an OSC <var>path</var> (string) and followed by zero or more optionally tagged <var>data</var> values. The basic Scheme data types (integer, float, string, symbol, character, boolean true, boolean false) map directly to their OSC equivalents and do not need tagging.  To distinguish between different OSC types (e.g. 32 bit OSC integers vs 64 bit integers), precede the Scheme value by the appropriate OSC data tag as shown in the following table.  Note that scheme lists representing OSC blobs or OSC four-byte midi messages must be tagged as such, and the special OSC tags <code>:T :F :N :I</code> do not tag Scheme values but are themselves data.
+Sends an OSC message consisting of an OSC <var>path</var> (string) followed by zero or more optionally tagged <var>data</var> values. Message values can be specified as separate arguments or in a single <var>list</var> argument to the function. Scheme values integer, float, string, symbol, character, boolean true, boolean false all map directly to their OSC equivalents and do not need tagging.  To distinguish between different OSC types for a particular scheme value (e.g. 32 bit vs 64 bit integers), precede the Scheme value by the appropriate OSC data tag as shown in the table below.  Lists holding OSC blobs or OSC four-byte midi messages must be tagged as such using <code>:b</code> or <code>:m</code>, respectively. The special OSC tags <code>:T :F :N :I</code> are themselves data, i.e. they not take Scheme values.
 </p>
 
 <div class="float">
   <table width="50%">
-    <tr><th class="lcol">Data Tag</th> <th class="lcol">Osc Type</th>  </tr>
+    <tr><th class="lcol">OSC Tag</th> <th class="lcol">Osc Type</th>  </tr>
     <tr> <td> <code>:i</code> </td> <td>32 bit integer</td> </tr>
     <tr> <td> <code>:h</code> </td> <td>64 bit integer</td> </tr>
     <tr> <td> <code>:f</code> </td> <td>32 bit float</td> </tr>
@@ -2972,29 +2980,25 @@ Sends an OSC message consisting of an OSC <var>path</var> (string) and followed 
     <tr> <td> <code>:I</code> </td> <td>OSC infinitude</td> </tr>
   </table>
 </div>
-
-<!-- h4>Examples</h4>
-
-<div class="float">
-  <pre class="code">
-<span class="command">send</span> <span class="string">"osc:open"</span>, 7710, 57120
-<span class="command">send</span> <span class="string">"osc:message"</span>, <span class="string">"/mymessage"</span>, 1, 2.3, #t, <span class="string">"hello, world!"</span>
-<span class="command">send</span> <span class="string">"osc:message"</span>, <span class="string">"/mymidi"</span>, <span class="constant">:m</span>, {0 60 60 0}
-<span class="command">send</span> <span class="string">"osc:close"</span>
-</pre>
-</div>
-
-<div class="float">
-  <pre class="code">
-(osc:open 7710 57120)
-(osc:message <span class="string">"/mymessage"</span> 1 2.3 #t, <span class="string">"hello, world!"</span>)
-(osc:message <span class="string">"/mymidi"</span> <span class="constant">:m</span> '(0 60 60 0))
-(osc:close)
-</pre>
-</div -->
-
 </blockquote>
 <!-- END DEFINITION -->
+
+<!-- DEFINITION -->
+<table id="osc:message" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:bundle"</span>, <var class="arg">time</var>, <var class="rest">message ...</var></td>
+  </tr>
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:bundle"</span>,  <var class="arg">time</var>, <var class="arg">list</var></td>
+  </tr>
+
+  <tr><td class="retval" colspan="2">&rarr; void</td></tr>
+</table>
+<blockquote>
+<p>
+Sends an OSC bundle consisting of a <var>time</var> tag (number) followed by one or more OSC <var>messages</var> . To send an "immediate" bundle, specify 0 as the time tag. Otherwise the relative time value will be converted to an OSC time value based on January 1 1900. Messages can be specified as separate arguments or in a single <var>list</var> argument to the function.
+</p>
+</blockquote>
+
+
 
 <!-- DEFINITION -->
 <table id="osc:hook" class="entry">

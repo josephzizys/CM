@@ -67,71 +67,11 @@ SndLib::~SndLib()
   deleteAndZero(instable);
 }
 
-
-/*=======================================================================*
-                            Scheduler Support
- *=======================================================================*/
-
-SchemeNode::SchemeNode(int _type, double _time, SCHEMEPROC c, int _id)
-  : time (0.0),
-    start (0.0), 
-    elapsed (0.0),
-    type (0),
-    expr (String::empty),
-    mmess(0xff)
-{
-  type = _type;
-  id = _id;
-  time = _time;
-  start = _time;
-  schemeproc=c;
-  s7_gc_protect(s7, schemeproc);
-}
-
-void SchemeNode::applyEvalNode()
-{
-  s7_pointer val=s7_eval_c_string(s7, (char *)expr.toUTF8());
-  if (! s7_is_unspecified(s7, val))
-    {
-      String str=String(s7_object_to_c_string(s7, val));
-      if (str!=T("scheme-error"))
-	{
-#ifdef GRACE
-	  str << T("\n");
-#endif
-	  Console::getInstance()->printValues(str);
-	}
-    }
-#if 0
-  //  optional echoing when there no output in the repl
-  else
-    if (Preferences::getInstance()->getBoolProp(T("SchemeShowVoidValues"), true))
-      {
-	if (expr.substring(0,5)==T("(sal "))
-	  {
-	  }
-	else
-	  {
-	    std::cout << expr.toUTF8() << "\n";
-	    String stop=T(" ()\"\t\n");
-	    String text=expr.trim();
-	    int beg=0;
-	    while (beg<text.length() && stop.containsChar(text[beg])) beg++;
-	    int end=beg+1;
-	    while (end<text.length() && !stop.containsChar(text[end])) end++;
-	    String what=T("<eval ");
-	    what << text.substring(beg,end);
-	    if (end<text.length()) what << T("...");
-	    what<<T(">\n");
-	    Console::getInstance()->printValues(what);
-	  }
-    }
-#endif
-}
-
-double SchemeNode::applyProcessNode(double elapsed)
+/**
+double XProcessNode::applyProcessNode(Scheme* schemethread, double elapsed)
 {
   //  std::cout << "before callback, elapsed=" << elapsed << "\n";
+  //s7_scheme* sc=schemethread->scheme;
   double delta=s7_number_to_real(s7_call(s7, 
 					 schemeproc, 
 					 s7_cons(s7,
@@ -144,37 +84,10 @@ double SchemeNode::applyProcessNode(double elapsed)
     s7_gc_unprotect(s7,schemeproc);
   return delta;
 }
-
-void SchemeNode::applyMidiInputHookNode()
-{
-  // called on Midi message nodes if an input hook is set
-  //std::cout << "applyMidiInputHookNode()\n";
-  int op=(mmess.getRawData()[0] & 0xf0)>>4;
-  int ch=mmess.getChannel()-1;
-  int d1=mmess.getRawData()[1] & 0x7f;
-  int d2=0;
-  if (mmess.getRawDataSize()>2)
-    d2=mmess.getRawData()[2] & 0x7f;
-  // convert MidiOns with zero velocity to MidiOff
-  if ((op==MidiFlags::On) && (d2==0))
-    op=MidiFlags::Off;
-  int res=(int)s7_integer(s7_call(s7, 
-				  schemeThread->midiinhook, 
-				  s7_cons(s7,
-					  s7_make_integer(s7, op),
-					  s7_cons(s7,					  
-						  s7_make_integer(s7, ch),
-						  s7_cons(s7,
-							  s7_make_integer(s7, d1),
-							  s7_cons(s7,
-								  s7_make_integer(s7, d2),
-								  s7_NIL(s7)))))));
-  if (res!=0)
-    {
-      schemeThread->clearMidiInputHook();
-      Console::getInstance()->printError(T(" Clearing Midi input hook.\n"));
-    }
-}
+**/
+/*=======================================================================*
+                            Scheduler Support
+ *=======================================================================*/
 
 bool Scheme::isMidiInputHook()
 {
@@ -235,7 +148,7 @@ int SndLib::performCommand(int id, int data, String text)
 
 s7_pointer s7_void_value(s7_scheme *sc, s7_pointer args)
 {
-  return s7_UNSPECIFIED(sc);
+  return s7_unspecified(sc);
 }
 
 // custom port handers route stdout and stderr to CM displays
@@ -303,17 +216,6 @@ void loadCode(String file, const char* code, int size, bool trace)
   if (trace)
     Console::getInstance()->printOutput(file + T("\n"));
   s7_eval_c_string(s7, code);
-  //#ifndef WINDOWS
-  //  File f=File::createTempFile("scm");
-  //  f.replaceWithText( String(code,size) );
-  //  String p=f.getFullPathName();
-  //  s7_load(s7, (char *)f.getFullPathName().toUTF8());
-  //  f.deleteFile();
-  //#else
-  //  String in=T("(begin\n");
-  //  in << String(code) << T(")\n");
-  //  s7_eval_c_string(s7, in.toUTF8());
-  //#endif
 }
 
 bool Scheme::init()
@@ -338,6 +240,12 @@ bool Scheme::init()
   // this is handled by *error-hook* now
   //  s7_set_current_error_port(s7, s7_open_output_function(s7, cm_stderr));
 
+  // Cache the common constants
+  schemeErr=s7_unspecified(s7);
+  schemeVoid=s7_unspecified(s7);
+  schemeTrue=s7_t(s7);
+  schemeFalse=s7_f(s7);
+  schemeNil=s7_nil(s7);
   // initalize CM 
   cm_init(s7);
   bool tr=false;

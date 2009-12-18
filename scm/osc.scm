@@ -96,24 +96,12 @@
         (error "osc:close failed with error code ~D" f)
         #t)))
 
-(define *osc-hook* #f)
-
 (define (osc:hook func)
-  (cond ((not func)
-         (set! *osc-hook* #f)
-         (ffi_osc_set_hook #f)
-         )
-        ((procedure? func)
-         (set! *osc-hook* func)
-         (ffi_osc_set_hook #t)
-         )
-        (else
-         (error "osc:hook not a function or #f: ~S" func)))
+  ;; wrap user's hook in a function that returns true. if an error
+  ;; occurs while hook is execting the return value will be (void) not
+  ;; #t and the C callback can clear the hook.
+  (if (procedure? func)
+      (ffi_osc_set_hook (lambda ($osc$) ( func $osc$) #t))
+      (ffi_osc_set_hook func))
   func)
-
-(define (osc:call-hook data)
-  (if *osc-hook* (*osc-hook* data))
-  (void))
-
-
 

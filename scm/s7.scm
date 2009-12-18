@@ -28,7 +28,9 @@
     (close-output-port port)
     (ffi_print_error str))
   ;; return tag to tell C side an error occured
-  'scheme-error))
+  ;;'scheme-error
+  (void)
+  ))
 
 ;; set s7's error hook variable 
 

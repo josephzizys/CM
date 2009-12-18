@@ -1209,9 +1209,24 @@ int osc_close()
   return OscPort::getInstance()->close();
 }
 
-void osc_set_hook(bool hook)
+void osc_set_hook(SCHEMEOBJECT proc)
 {
-  OscPort::getInstance()->isHookActive=hook;
+  if (s7_is_procedure(proc))
+    {
+      if (Scheme::getInstance()->isOscHook())
+        Scheme::getInstance()->clearOscHook();
+      Scheme::getInstance()->setOscHook(proc);
+      OscPort::getInstance()->isHookActive=true;
+    }
+  else if (proc == Scheme::getInstance()->schemeFalse)
+    {
+      Scheme::getInstance()->clearOscHook();
+      OscPort::getInstance()->isHookActive=false;
+    }
+  else
+    {
+      Scheme::getInstance()->schemeError("osc:hook not a procedure or #f.");      
+    }
 }
 
 static const int oscerr_incomplete_message = 1;
@@ -1567,7 +1582,7 @@ int osc_close(){return -1;}
 bool osc_open_p(){return false;}
 void osc_send_message(char* path, SCHEMEOBJECT list){}
 void osc_send_bundle(double time, SCHEMEOBJECT list){}
-void osc_set_hook(bool hook){}
+void osc_set_hook(SCHEMEOBJECT hook){}
 #endif
 
 
