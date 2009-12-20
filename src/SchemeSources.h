@@ -27,7 +27,7 @@ namespace SchemeSources
     const int           loop_scmSize = 38024;
 
     extern const char*  osc_scm;
-    const int           osc_scmSize = 3784;
+    const int           osc_scmSize = 3696;
 
     extern const char*  patterns_scm;
     const int           patterns_scmSize = 36959;
@@ -42,7 +42,7 @@ namespace SchemeSources
     const int           processes_scmSize = 7312;
 
     extern const char*  s7_scm;
-    const int           s7_scmSize = 6569;
+    const int           s7_scmSize = 6610;
 
     extern const char*  sal_scm;
     const int           sal_scmSize = 60901;
@@ -54,7 +54,7 @@ namespace SchemeSources
     const int           sal2_textSize = 2488;
 
     extern const char*  sndlibws_scm;
-    const int           sndlibws_scmSize = 25029;
+    const int           sndlibws_scmSize = 24983;
 
     extern const char*  spectral_scm;
     const int           spectral_scmSize = 20749;

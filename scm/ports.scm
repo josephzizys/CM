@@ -215,8 +215,13 @@
 
 (define (mp:inhook hook)
   (if (procedure? hook)
-      ( ffi_mp_set_midi_input_hook (error-protected-inhook hook) )
-      ( ffi_mp_clear_midi_input_hook )))
+      ( ffi_mp_set_midi_input_hook hook )
+      ( ffi_mp_clear_midi_input_hook ))
+  hook)
+
+(define (mp:hook op hook)
+  ( ffi_mp_hook op hook )
+  hook)
 
 (define (mp:inchans . args)
   (let ((val 0))

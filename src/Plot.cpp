@@ -923,7 +923,7 @@ void PlotView::mouseDown (const MouseEvent &e)
 	    << T(" ") << haxview->toValue(mxp)
 	    << T(" ") << vaxview->toValue(myp) 
 	    << T(")") ; 
-	Scheme::getInstance()->eval(str);
+	SchemeThread::getInstance()->eval(str);
 	return;
       }
     else

@@ -19,7 +19,7 @@ static char outstr[OUTSTRSIZE];
 static bool chicken_run = true;
 
 
-bool Scheme::init()
+bool SchemeThread::init()
 {
   int res;
   int hsize=500000;
@@ -60,12 +60,12 @@ bool Scheme::init()
   return true;
 }
 
-void Scheme::cleanup()
+void SchemeThread::cleanup()
 {
   CHICKEN_delete_gc_root(inputClosureGCRoot);
 }
 
-String Scheme::getLispVersion()
+String SchemeThread::getLispVersion()
 {
   String str = T("Chicken ");
   int res=CHICKEN_eval_string_to_string((char *)"(chicken-version)",
@@ -78,18 +78,18 @@ String Scheme::getLispVersion()
   return str;
 }
 
-bool Scheme::isMidiInputHook()
+bool SchemeThread::isMidiInputHook()
 {
   return (CHICKEN_gc_root_ref(inputClosureGCRoot) != C_SCHEME_FALSE);
 }
 
-void Scheme::setMidiInputHook(SCHEMEPROC hook)
+void SchemeThread::setMidiInputHook(SCHEMEPROC hook)
 {
   clearMidiInputHook();
   CHICKEN_gc_root_set(inputClosureGCRoot, hook);
 }
 
-void Scheme::clearMidiInputHook()
+void SchemeThread::clearMidiInputHook()
 {
   CHICKEN_gc_root_set(inputClosureGCRoot, C_SCHEME_FALSE);
 }

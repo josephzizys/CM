@@ -89,12 +89,12 @@ double XProcessNode::applyProcessNode(Scheme* schemethread, double elapsed)
                             Scheduler Support
  *=======================================================================*/
 
-bool Scheme::isMidiInputHook()
+bool SchemeThread::isMidiInputHook()
 {
   return (midiinhook != NULL);
 }
 
-void Scheme::setMidiInputHook(SCHEMEPROC hook)
+void SchemeThread::setMidiInputHook(SCHEMEPROC hook)
 {
   //std::cout << "sndlib setMidiInputHook\n";
   clearMidiInputHook();
@@ -102,7 +102,7 @@ void Scheme::setMidiInputHook(SCHEMEPROC hook)
   s7_gc_protect(s7, midiinhook);
 }
 
-void Scheme::clearMidiInputHook()
+void SchemeThread::clearMidiInputHook()
 {
   // hooks are set, cleared and exectued only in the scheduling thread
   // so we dont need to lock anything.
@@ -131,7 +131,7 @@ int SndLib::performCommand(int id, int data, String text)
 
       //std::cout << "schedulerScoreComplete!\n";
       //      s7_eval_c_string(s7,"(snd:close-output-file)");
-      Scheme::getInstance()->eval("(snd:close-output-file)");
+      SchemeThread::getInstance()->eval("(snd:close-output-file)");
 
       break;
     default:
@@ -218,7 +218,7 @@ void loadCode(String file, const char* code, int size, bool trace)
   s7_eval_c_string(s7, code);
 }
 
-bool Scheme::init()
+bool SchemeThread::init()
 {
   midiinhook=NULL;
 
@@ -241,16 +241,20 @@ bool Scheme::init()
   //  s7_set_current_error_port(s7, s7_open_output_function(s7, cm_stderr));
 
   // Cache the common constants
-  schemeErr=s7_unspecified(s7);
   schemeVoid=s7_unspecified(s7);
   schemeTrue=s7_t(s7);
   schemeFalse=s7_f(s7);
   schemeNil=s7_nil(s7);
+  schemeError=s7_gensym(s7, "s7-error");
+  s7_define_constant(s7, "+s7-error+", schemeError); // returned by *error-hook*
+  s7_define_function(s7, "void", s7_void_value, 0, 0, false, "void value");
+
   // initalize CM 
   cm_init(s7);
   bool tr=false;
   loadCode(T("s7.scm"), SchemeSources::s7_scm, 
 	   SchemeSources::s7_scmSize, tr);
+  schemeError=s7_name_to_value(s7,"+s7-error+");
   loadCode(T("utilities.scm"), SchemeSources::utilities_scm,
 	   SchemeSources::utilities_scmSize, tr);
   loadCode(T("loop.scm"), SchemeSources::loop_scm, 
@@ -279,8 +283,7 @@ bool Scheme::init()
 	   SchemeSources::osc_scmSize, tr);
   // need this for some .ins files...
   XEN_EVAL_C_STRING("(provide 'snd-ws.scm)");
-  s7_define_function(s7, "void", s7_void_value, 0, 0, false, "void value");
-
+ 
   String str=String::empty;
 
   // Initialize CLM variables. Make WAV the default audio format
@@ -294,7 +297,7 @@ bool Scheme::init()
   // process is actually running.  The fix would be to break this
   // function into two parts: a startScheme() that does then generic
   // start up and then an init() that customizes. the latter function
-  // could then call Scheme::getIntance() function.s
+  // could then call SchemeThread::getIntance() function.s
 
 #ifdef GRACE
   Preferences* pref=Preferences::getInstance();
@@ -326,12 +329,12 @@ bool Scheme::init()
   return true;
 }
 
-void Scheme::cleanup()
+void SchemeThread::cleanup()
 {
   free(s7);
 }
 
-String Scheme::getLispVersion()
+String SchemeThread::getLispVersion()
 {
   String str=String::empty;
   str << T("S7 Scheme") << T(" ") << String(S7_VERSION) << T(" (") << String(S7_DATE)<< T(")")
@@ -373,7 +376,7 @@ void SndLib::setAutoPlay(bool ap)
   st << ((ap) ? T("#t") : T("#f"))
      << T(") (void))");
   Preferences::getInstance()->setIntProp(T("SndLibAutoPlay"), ap);
-  Scheme::getInstance()->eval(st);
+  SchemeThread::getInstance()->eval(st);
 #endif
 } 
 
@@ -390,7 +393,7 @@ void SndLib::setSrate(int sr)
 #ifdef GRACE
   String st=T("(begin (set! *clm-srate* ") + String(sr) + T(") (void))");
   Preferences::getInstance()->setIntProp(T("SndLibSrate"), sr);
-  Scheme::getInstance()->eval(st);
+  SchemeThread::getInstance()->eval(st);
 #endif
 }
 
@@ -407,7 +410,7 @@ void SndLib::setChannels(int ch)
 #ifdef GRACE
   String st=T("(begin (set! *clm-channels* ") + String(ch) + T(") (void))");
   Preferences::getInstance()->setIntProp(T("SndLibChannels"), ch);
-  Scheme::getInstance()->eval(st);
+  SchemeThread::getInstance()->eval(st);
 #endif
 }
 
@@ -453,7 +456,7 @@ void SndLib::setAudioFormat(String format)
        << T(" (set! *clm-file-name* ") << file.quoted() << T(")")
        << T("(void))");
 
-  Scheme::getInstance()->eval(code);
+  SchemeThread::getInstance()->eval(code);
 #endif
 }
 
@@ -683,7 +686,7 @@ void SndLib::loadInstrumentCode(XmlElement* ins)
       String msg=T("Loading ") + loads[i] + T("\n");
       String str=getInstrumentCode(loads[i]);
       Console::getInstance()->printOutput(msg);
-      Scheme::getInstance()->eval(str);
+      SchemeThread::getInstance()->eval(str);
       XmlElement* x=SndLib::getInstance()->getInstrumentElement(loads[i]);
       x->setAttribute(T("Loaded"), "yes");
     }  

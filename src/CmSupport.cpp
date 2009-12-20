@@ -50,7 +50,7 @@ void cm_quit()
 #ifdef GRACE
   Console::getInstance()->printError(T(">>> Error: You cannot quit Grace from inside Lisp. Use Console>File>Quit to quit the application.\n"));
 #else
-  Scheme::getInstance()->quit();
+  SchemeThread::getInstance()->quit();
 #endif
 }
 
@@ -491,7 +491,7 @@ void cm_sched_sprout(SCHEMEPROC proc, double time, int id)
 {
   // if score capture is true AND we are under a process callback then
   // scoretime will be >= 0 else it will be 0
-  Scheme* scm=Scheme::getInstance();
+  SchemeThread* scm=SchemeThread::getInstance();
   // if (scm->scoremode)
   //    time=time+scm->scoretime;
   scm->sprout(time, proc, id);
@@ -499,50 +499,50 @@ void cm_sched_sprout(SCHEMEPROC proc, double time, int id)
 
 bool cm_sched_paused_p()
 {
-  return Scheme::getInstance()->isPaused();
+  return SchemeThread::getInstance()->isPaused();
 }
 
 void cm_sched_pause() 
 {
-  Scheme::getInstance()->setPaused(true);
+  SchemeThread::getInstance()->setPaused(true);
 }
 
 void cm_sched_continue()
 {
-  Scheme::getInstance()->setPaused(false);
+  SchemeThread::getInstance()->setPaused(false);
 }
 
 void cm_sched_stop(int id)
 {
-  Scheme::getInstance()->stop(id);
+  SchemeThread::getInstance()->stop(id);
 }
 
 void cm_sched_hush() 
 {
-  Scheme::getInstance()->stop(-1);
+  SchemeThread::getInstance()->stop(-1);
 }
 
 bool cm_sched_busy_p()
 {
-  //return !Scheme::getInstance()->isQueueEmpty();
-  return Scheme::getInstance()->sprouted;
+  //return !SchemeThread::getInstance()->isQueueEmpty();
+  return SchemeThread::getInstance()->sprouted;
 }
 
 void cm_sched_set_score_mode(int val)
 {
   // this must only be called if scheduler is empty!
-  Scheme::getInstance()->setScoreMode(val);
+  SchemeThread::getInstance()->setScoreMode(val);
 }
 
 bool cm_sched_score_mode_p()
 {
-  return Scheme::getInstance()->isScoreMode();
+  return SchemeThread::getInstance()->isScoreMode();
 }
 
 double cm_sched_score_time()
 {
   // should only be called under score mode
-  return Scheme::getInstance()->getScoreTime();
+  return SchemeThread::getInstance()->getScoreTime();
 }
 
 //
@@ -696,7 +696,7 @@ char* sal_tokenize(char* str)
 
 char* cm_port_info()
 {
-  // return a string that Scheme can (read) to create a list
+  // return a string that SchemeThread can (read) to create a list
   // containing port information
 
   String info="(";
@@ -761,7 +761,7 @@ void mp_set_output_file(char* path)
 
 void mp_send_note(double time, double dur, double key, double vel, double chn) 
 {
-  Scheme* scm=Scheme::getInstance();
+  SchemeThread* scm=SchemeThread::getInstance();
   if (scm->scoremode)
     {
       // if score capture is true AND we are under a process callback then
@@ -778,7 +778,7 @@ void mp_send_note(double time, double dur, double key, double vel, double chn)
 void mp_send_data(int type, double time, double chan, 
 		  double data1, double  data2)
 {
-  Scheme* scm=Scheme::getInstance();
+  SchemeThread* scm=SchemeThread::getInstance();
   if (scm->scoremode)
     {
       // if score capture is true AND we are under a process callback then
@@ -860,12 +860,12 @@ void mp_set_message_mask(int mask)
 
 void mp_set_midi_input_hook(SCHEMEPROC proc)
 {
-  Scheme::getInstance()->setMidiInputHook(proc);
+  SchemeThread::getInstance()->setMidiInputHook(proc);
 }
 
 void mp_clear_midi_input_hook()
 {
-  Scheme::getInstance()->clearMidiInputHook();
+  SchemeThread::getInstance()->clearMidiInputHook();
 }
 
 // Csound support
@@ -909,8 +909,8 @@ void fms_save(const char* name)
 void fms_xml(char* str)
 {
   if (!check_fomus_exists()) return;
-  double now=(Scheme::getInstance()->scoremode) 
-    ? Scheme::getInstance()->scoretime : 0.0;
+  double now=(SchemeThread::getInstance()->scoremode) 
+    ? SchemeThread::getInstance()->scoretime : 0.0;
   // if score capture is true AND we are under a process callback then
   // scoretime will be >= 0 else it will be 0
   Fomus::getInstance()->sendXml(String(str), now);
@@ -1213,19 +1213,23 @@ void osc_set_hook(SCHEMEOBJECT proc)
 {
   if (s7_is_procedure(proc))
     {
-      if (Scheme::getInstance()->isOscHook())
-        Scheme::getInstance()->clearOscHook();
-      Scheme::getInstance()->setOscHook(proc);
+      if (SchemeThread::getInstance()->isOscHook())
+        SchemeThread::getInstance()->clearOscHook();
+      SchemeThread::getInstance()->setOscHook(proc);
       OscPort::getInstance()->isHookActive=true;
+      ////if (OscPort::getInstance()->isHook())
+      ////  OscPort::getInstance()->clearHook();
+      ////OscPort::getInstance()->setHook(proc);
     }
-  else if (proc == Scheme::getInstance()->schemeFalse)
+  else if (proc == SchemeThread::getInstance()->schemeFalse)
     {
-      Scheme::getInstance()->clearOscHook();
+      SchemeThread::getInstance()->clearOscHook();
       OscPort::getInstance()->isHookActive=false;
+      ////OscPort::getInstance()->setHook(proc);
     }
   else
     {
-      Scheme::getInstance()->schemeError("osc:hook not a procedure or #f.");      
+      SchemeThread::getInstance()->signalSchemeError("osc:hook not a procedure or #f.");      
     }
 }
 
@@ -1406,7 +1410,7 @@ lo_message osc_make_message(s7_pointer pair, String& errstr)
               errs << t << T(" with #t or #f");
               errn=oscerr_invalid_data;
             }
-          else if (x==s7_f(Scheme::getInstance()->scheme))
+          else if (x==s7_f(SchemeThread::getInstance()->scheme))
             errn=lo_message_add_false(msg);
           else
               errn=lo_message_add_true(msg);
@@ -1415,7 +1419,7 @@ lo_message osc_make_message(s7_pointer pair, String& errstr)
       // EMPTY LIST WILL FAIL
       else if (s7_is_pair(x)) 
         {
-          s7_scheme *sc=Scheme::getInstance()->scheme;
+          s7_scheme *sc=SchemeThread::getInstance()->scheme;
           int siz=s7_list_length(sc,x);
           if (t=='m')
             {
@@ -1515,11 +1519,11 @@ void osc_send_message(char* path, SCHEMEOBJECT list)
       if (errn<0)
         {
           errs=T("OSC: sendMessage failed with ") + String(errn);
-          Scheme::getInstance()->schemeError(errs);
+          SchemeThread::getInstance()->signalSchemeError(errs);
         }
     }
   else
-    Scheme::getInstance()->schemeError(errs);
+    SchemeThread::getInstance()->signalSchemeError(errs);
 }
 
 void osc_send_bundle(double time, SCHEMEOBJECT list)
@@ -1566,13 +1570,13 @@ void osc_send_bundle(double time, SCHEMEOBJECT list)
       if (errn<0)
         {
           errs=T("OSC: sendBundle failed with ") + String(errn);
-          Scheme::getInstance()->schemeError(errs);
+          SchemeThread::getInstance()->signalSchemeError(errs);
         }
     }
   else
     {
       lo_bundle_free_messages(bndl);
-      Scheme::getInstance()->schemeError(errs);
+      SchemeThread::getInstance()->signalSchemeError(errs);
     }
 }
 

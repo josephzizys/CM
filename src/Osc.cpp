@@ -8,7 +8,7 @@
 #include "Osc.h"
 #include "Console.h"
 #include "Preferences.h"
-#include "Scheme.h"
+//#include "Scheme.h"
 //#include "lo/lo.h"
 #include <iostream>
 
@@ -32,6 +32,7 @@ void loInputHandler(const char *path, const char *types, lo_arg **argv,
                     int argc, void *data, void *user_data)
 {
   ((OscPort *)user_data)->handleMessage(path, types, argc, (void **)argv);
+  ////  ((OscPort *)user_data)->handleMessage2(path, types, argc, (void **)argv);
 }
 
 /*=======================================================================*
@@ -43,6 +44,9 @@ OscPort::OscPort()
   traceInput (false),
   traceOutput (false),
   isHookActive (false),
+  //  handle (NULL), 
+  //  cloned (NULL),
+  //  hook (NULL),
   isOpen (false)
 {
 
@@ -52,6 +56,62 @@ OscPort::~OscPort()
 {
   close(true);
 }  
+
+/***
+
+// s7 cloning doesnt work :(
+
+void OscPort::cloneScheme()
+{
+  // One thing you will need to add is s7_gc_protect of the pointer
+  // returned by s7_make_clone -- I need a handle on the cloned
+  // evaluator so that the GC mark pass can find its local variables.
+
+  std::cout << "cloning scheme...";
+  s7_scheme* orig=SchemeThread::getInstance()->scheme;
+  handle=s7_make_clone(orig);
+  s7_gc_protect(orig, handle);
+  cloned=s7_clone(handle);
+  //std::cout << "cloned=" << (int)cloned << "\n";
+}
+
+void OscPort::lockHook()
+{
+  lock.enter();
+};
+
+void OscPort::unlockHook()
+{
+  lock.exit();
+};
+
+void OscPort::setHook(s7_pointer proc)
+{
+  lockHook();
+  hook=proc;
+  s7_gc_protect(cloned, hook);
+  //s7_gc_protect(SchemeThread::getInstance()->scheme, hook);
+  unlockHook();
+}
+
+void OscPort::clearHook()
+{
+  lockHook();
+  s7_gc_unprotect(cloned, hook);
+  //s7_gc_unprotect(SchemeThread::getInstance()->scheme, hook);
+  hook=NULL;
+  unlockHook();
+}
+
+bool OscPort::isHook()
+{
+  lockHook();
+  bool res=(hook != NULL);
+  unlockHook();
+  return res;
+}
+
+*/
 
 int OscPort::open(String in, String out)
 {
@@ -197,9 +257,7 @@ void OscPort::showStatus()
                                Sending Osc
  *=======================================================================*/
 
-/*
-int OscPort::sendMessage(String path, String types, Array<int> &ints,
-                         Array<double> &flos,StringArray &strs, double time)
+/* int OscPort::sendMessage(String path, String types, Array<int> &ints, Array<double> &flos,StringArray &strs, double time)
 {
   //std::cout << "OscPort::sendMessage: path=" << path.toUTF8() << " types=" << types.toUTF8() << ":\n";
   if (!isOpen) return -1;
@@ -334,7 +392,7 @@ int OscPort::sendBundle(lo_bundle bndl)
 
 void OscPort::handleMessage(const char *path, const char *types, int argc, void **data)
 {
-  Scheme* st=Scheme::getInstance();
+  SchemeThread* st=SchemeThread::getInstance();
   bool isHook=st->isOscHook();
   if (! (traceInput || isHook))
     {
@@ -377,7 +435,7 @@ void OscPort::handleMessage(const char *path, const char *types, int argc, void 
     }
 
   if (isHook)
-    Scheme::getInstance()->addNode(node);
+    SchemeThread::getInstance()->addNode(node);
   if (traceInput)
     {
       String msg=text.quoted();
@@ -398,17 +456,23 @@ void OscPort::handleMessage(const char *path, const char *types, int argc, void 
     }
 }
 
+/*
+//  s7 cloning doesn't work :(
 void OscPort::handleMessage2(const char *path, const char *types, int argc, void **data)
 {
-  s7_scheme* sc=(s7_scheme*)NULL;
-  s7_pointer hook = NULL;
+  lockHook();
+  //  s7_scheme* sc=(s7_scheme*)NULL;
+  //s7_pointer hook = NULL;
+  s7_scheme* sc=cloned;
   if (hook!=NULL)
     {
       lo_arg **argv=(lo_arg **)data;
       s7_pointer snil = s7_nil(sc);
+      // head holds first cons cell of the message data
       s7_pointer head = s7_cons(sc, s7_make_string(sc, path), snil);
+      // tail holds last cons cell of the message data
       s7_pointer tail = head;
-      // iterate types adding data to message list
+      // iterate osc types adding data to message list
       for (int i=0; i<argc; i++)
         {
           switch (types[i])
@@ -467,9 +531,9 @@ void OscPort::handleMessage2(const char *path, const char *types, int argc, void
             }
           tail=s7_cdr(tail);
         }
-      // create the hook's argslist
+      // now create hook's arglist holding the single (list) of data
       s7_pointer args=s7_cons(sc, head, s7_nil(sc));
-      // protect newly conse args from GC
+      // protect newly consed args from GC
       int prot = s7_gc_protect(sc, args);
       // call the hook and save the return value
       s7_pointer res=s7_call(sc, hook, args);
@@ -479,11 +543,13 @@ void OscPort::handleMessage2(const char *path, const char *types, int argc, void
       // the callback and so we automatically clear the hook
       if (res != s7_t(sc))
         {
-          //st->clearOscHook();
+          clearHook();
           Console::getInstance()->printError(">>> Cancelled OSC hook.\n");
         }
     }
+  unlockHook();
 }
+*/
 
 /* ==============================================================================
                                      OSC Open Dialog

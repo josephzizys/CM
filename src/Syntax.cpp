@@ -354,7 +354,7 @@ void LispSyntax::eval(String text, bool isRegion, bool expand)
 #ifdef GRACECL
 	CommonLisp::getInstance()->eval(text);
 #else
-	Scheme::getInstance()->eval(text);
+	SchemeThread::getInstance()->eval(text);
 #endif
     }
 }
@@ -689,7 +689,7 @@ void SalSyntax::eval(String text, bool isRegion, bool expand)
     T(" ") + exp +
     T(")");
   //  std::cout << text.toUTF8() << "\n";
-    Scheme::getInstance()->eval(text);
+    SchemeThread::getInstance()->eval(text);
 #endif
 }
 

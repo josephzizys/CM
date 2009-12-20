@@ -100,8 +100,6 @@
   ;; wrap user's hook in a function that returns true. if an error
   ;; occurs while hook is execting the return value will be (void) not
   ;; #t and the C callback can clear the hook.
-  (if (procedure? func)
-      (ffi_osc_set_hook (lambda ($osc$) ( func $osc$) #t))
-      (ffi_osc_set_hook func))
+  (ffi_osc_set_hook func)
   func)
 

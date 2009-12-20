@@ -836,10 +836,10 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       if (SysInfo::isGraceCL())
 	CommonLisp::getInstance()->load(File::nonexistent,true);
       else
-	Scheme::getInstance()->load(File::nonexistent,true);	
+	SchemeThread::getInstance()->load(File::nonexistent,true);	
       break;
     case CommandIDs::PrefsLoadRecent:
-      Scheme::getInstance()->load(pref->recentlyLoaded.getFile(data), true);
+      SchemeThread::getInstance()->load(pref->recentlyLoaded.getFile(data), true);
       break;
     case CommandIDs::PrefsSetInitFile:
       {
@@ -866,7 +866,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       MidiOutPort::getInstance()->testOutput();
       break;
     case CommandIDs::MidiOutHush:
-      Scheme::getInstance()->stop(-1);
+      SchemeThread::getInstance()->stop(-1);
       //      MidiOutPort::getInstance()->clear();
       break;
     case CommandIDs::MidiOutTuning:
@@ -1065,7 +1065,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
 
     case CommandIDs::OscClearHook:
       if (OscPort::getInstance()->isHookActive)
-        Scheme::getInstance()->eval(T("(osc:hook #f)"));
+        SchemeThread::getInstance()->eval(T("(osc:hook #f)"));
       break;
 
 #endif
@@ -1724,12 +1724,12 @@ void TextBuffer::getCommandInfo(const CommandID id,
       break;
     case CommandIDs::SchedulerStop:
       info.shortName=T("Abort Processes");
-      info.setActive(!Scheme::getInstance()->isQueueEmpty());
+      info.setActive(!SchemeThread::getInstance()->isQueueEmpty());
       break;
     case CommandIDs::SchedulerPause:
-      info.shortName=((Scheme::getInstance()->isPaused()) ? T("Resume Processes") :
+      info.shortName=((SchemeThread::getInstance()->isPaused()) ? T("Resume Processes") :
 		      T("Pause Processes"));
-      info.setActive(!Scheme::getInstance()->isQueueEmpty());
+      info.setActive(!SchemeThread::getInstance()->isQueueEmpty());
       break;
 
       // Help Item
@@ -1897,10 +1897,10 @@ bool TextBuffer::perform(const ApplicationCommandTarget::InvocationInfo&
       eval(true);
       break;
     case CommandIDs::SchedulerStop:
-      Scheme::getInstance()->stop(-1);
+      SchemeThread::getInstance()->stop(-1);
       break;
     case CommandIDs::SchedulerPause:
-      Scheme::getInstance()->setPaused(!(Scheme::getInstance()->isPaused()));
+      SchemeThread::getInstance()->setPaused(!(SchemeThread::getInstance()->isPaused()));
       break;
     case CommandIDs::FomusRunCurr:
       eval();

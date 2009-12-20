@@ -342,7 +342,7 @@ int MidiOutPort::performCommand(CommandID id, int data, String text)
       break;
 
     case CommandIDs::MidiOutHush :
-      //Scheme::getInstance()->stop();
+      //SchemeThread::getInstance()->stop();
       clear();
       break;
 
@@ -1553,7 +1553,7 @@ void MidiInPort::handleIncomingMidiMessage(MidiInput *dev,
 {
   if (isMessageActive(msg))
     {
-      Scheme::getInstance()->midiin(msg);
+      SchemeThread::getInstance()->midiin(msg);
       if (isThroughActive() && MidiOutPort::getInstance()->device != NULL)
         MidiOutPort::getInstance()->device->sendMessageNow(msg);
       if (isTracing())

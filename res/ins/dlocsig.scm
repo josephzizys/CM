@@ -9,7 +9,6 @@
 ;;; address email to: nando@ccrma.stanford.edu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-modules (ice-9 format) (ice-9 optargs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Dynamic multichannel three-dimentional signal locator

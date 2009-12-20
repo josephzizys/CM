@@ -24,7 +24,7 @@
 #include <iostream>
 #include <string>
 
-juce_ImplementSingleton(Scheme)
+juce_ImplementSingleton(SchemeThread)
 
 //
 // Execution Nodes for Scheme Thread's queue
@@ -53,7 +53,7 @@ XControlNode::~XControlNode()
 {
 }
 
-bool XControlNode::applyNode(Scheme* schemethread, double curtime)
+bool XControlNode::applyNode(SchemeThread* schemethread, double curtime)
 {
   switch (type)
     {
@@ -81,11 +81,11 @@ XEvalNode::~XEvalNode()
 {
 }
 
-bool XEvalNode::applyNode(Scheme* schemethread, double curtime) 
+bool XEvalNode::applyNode(SchemeThread* schemethread, double curtime) 
 {
   s7_scheme* sc=schemethread->scheme;
   s7_pointer val=s7_eval_c_string(sc, (char *)expr.toUTF8());
-  if (val != schemethread->schemeVoid)
+  if (val != schemethread->schemeError)
     {
       String str=String(s7_object_to_c_string(sc, val));
 #ifdef GRACE
@@ -113,7 +113,7 @@ XProcessNode::~XProcessNode()
 }
 
 /**
-bool XProcessNode::applyNode(Scheme* schemethread, double curtime)
+bool XProcessNode::applyNode(SchemeThread* schemethread, double curtime)
 {
   bool more=false;
   double runtime, delta;
@@ -170,7 +170,7 @@ bool XProcessNode::applyNode(Scheme* schemethread, double curtime)
 }
 **/
 
-bool XProcessNode::applyNode(Scheme* schemethread, double curtime)
+bool XProcessNode::applyNode(SchemeThread* schemethread, double curtime)
 {
   s7_scheme* sc=schemethread->scheme;
   bool more=false;
@@ -249,7 +249,7 @@ XMidiNode::~XMidiNode()
 {
 }
 
-bool XMidiNode::applyNode(Scheme* schemethread, double curtime)
+bool XMidiNode::applyNode(SchemeThread* schemethread, double curtime)
 {
   if (schemethread->isMidiInputHook())
     {
@@ -300,7 +300,7 @@ XOscNode::~XOscNode()
   flos.clear();
 }
 
-bool XOscNode::applyNode(Scheme* st, double curtime)
+bool XOscNode::applyNode(SchemeThread* st, double curtime)
 {
   //std::cout << "Osc message: "<< path.toUTF8() << " " << types.toUTF8();
   ////st->lockOscHook();
@@ -336,7 +336,7 @@ bool XOscNode::applyNode(Scheme* st, double curtime)
       int prot = s7_gc_protect(sc, args);
       s7_pointer res=s7_call(sc, st->oscHook, args);
       s7_gc_unprotect_at(sc, prot);
-      if (res != st->schemeTrue)
+      if (res == st->schemeError)
         {
           st->clearOscHook();
           Console::getInstance()->printError(">>> Cancelled OSC hook.\n");
@@ -346,7 +346,7 @@ bool XOscNode::applyNode(Scheme* st, double curtime)
   return false;
 }
 
-void Scheme::setOscHook(s7_pointer hook)
+void SchemeThread::setOscHook(s7_pointer hook)
 {
   oscLock.enter();
   oscHook=hook;
@@ -354,7 +354,7 @@ void Scheme::setOscHook(s7_pointer hook)
   oscLock.exit();
 }
 
-void Scheme::clearOscHook()
+void SchemeThread::clearOscHook()
 {
   oscLock.enter();
   s7_gc_unprotect(scheme, oscHook);
@@ -362,7 +362,7 @@ void Scheme::clearOscHook()
   oscLock.exit();
 }
 
-bool Scheme::isOscHook()
+bool SchemeThread::isOscHook()
 {
   oscLock.enter();
   bool hook = (oscHook != NULL);
@@ -370,12 +370,12 @@ bool Scheme::isOscHook()
   return hook;
 }
 
-void Scheme::lockOscHook()
+void SchemeThread::lockOscHook()
 {
   oscLock.enter();
 }
 
-void Scheme::unlockOscHook()
+void SchemeThread::unlockOscHook()
 {
   oscLock.exit();
 }
@@ -384,7 +384,7 @@ void Scheme::unlockOscHook()
 // Scheduler
 //
 
-Scheme::Scheme() 
+SchemeThread::SchemeThread() 
   : Thread( "Scheme Thread"),
     pausing (false),
     scoremode (ScoreTypes::Empty),
@@ -394,15 +394,13 @@ Scheme::Scheme()
     scoretime (0.0),
     nextid (0),
     quiet (false),
-#ifdef SNDLIB
     midiinhook (NULL),
     oscHook (NULL),
     schemeFalse (NULL),
     schemeTrue (NULL),
     schemeNil (NULL),
-    schemeErr (NULL),
+    schemeError (NULL),
     schemeVoid (NULL),
-#endif
     scheme (NULL)
 {
 #ifdef GRACE
@@ -412,45 +410,55 @@ Scheme::Scheme()
   voidstring=T("<ok>\n");
 }
 
-Scheme::~Scheme()
+SchemeThread::~SchemeThread()
 {
   schemeNodes.clear();
 }
 
-void Scheme::setScoreMode(int mode)
+void SchemeThread::signalSchemeError(String text)
+{
+  // use this function to signal errors in C code called by Scheme
+  s7_error(scheme,
+           schemeError, //s7_make_symbol(scheme, "scheme-error"), 
+           s7_make_string(scheme, text.toUTF8())
+           );
+}
+
+
+void SchemeThread::setScoreMode(int mode)
 {
   scoremode=mode;
 }
 
-bool Scheme::isScoreMode()
+bool SchemeThread::isScoreMode()
 {
   // true if any score is in progress
   return (scoremode > ScoreTypes::Empty);
 }
 
-bool Scheme::isScoreMode(int mode)
+bool SchemeThread::isScoreMode(int mode)
 {
   return (scoremode == mode);
 }
 
-double Scheme::getScoreTime()
+double SchemeThread::getScoreTime()
 {
   return scoretime;
 }
 
 /// void value printing
 
-bool Scheme::showVoidValues()
+bool SchemeThread::showVoidValues()
 {
   return showvoid;
 }
 
-void Scheme::setShowVoidValues(bool b)
+void SchemeThread::setShowVoidValues(bool b)
 {
   showvoid=b;
 }
 
-void Scheme::printVoidValue(String input)
+void SchemeThread::printVoidValue(String input)
 {
   if (showVoidValues())
     Console::getInstance()->printValues(voidstring);
@@ -458,9 +466,9 @@ void Scheme::printVoidValue(String input)
 
 // loading
 
-void Scheme::load(File file, bool addtorecent)
+void SchemeThread::load(File file, bool addtorecent)
 {
-  //std::cout << "Scheme::load()\n";
+  //std::cout << "SchemeThread::load()\n";
   if (file==File::nonexistent)
     {
       FileChooser choose(T("Load"),
@@ -505,7 +513,7 @@ void Scheme::load(File file, bool addtorecent)
     }
 }
 
-void Scheme::read()
+void SchemeThread::read()
 {
   bool more=true;
   bool prompt=true;
@@ -535,7 +543,7 @@ void Scheme::read()
     eval(text);
 }
 
-void Scheme::run()
+void SchemeThread::run()
 {
   double qtime, utime;
   XSchemeNode* node;
@@ -641,7 +649,7 @@ void Scheme::run()
   // leaving killed process....
 }
 
-void Scheme::clear()
+void SchemeThread::clear()
 {
   // this should NEVER be called from scheme code (an EVAL node) or
   // else the run() loop will bomb since it assumes index[0] exists
@@ -650,7 +658,7 @@ void Scheme::clear()
   schemeNodes.unlockArray();
 }
 
-void Scheme::addNode(XSchemeNode* node)
+void SchemeThread::addNode(XSchemeNode* node)
 {
   schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, node);
@@ -660,7 +668,7 @@ void Scheme::addNode(XSchemeNode* node)
 
 // addNode for processes
 
-void Scheme::sprout(double _time, SCHEMEPROC proc, int _id)
+void SchemeThread::sprout(double _time, SCHEMEPROC proc, int _id)
 {
   // this method is only called by scheme code via sprout() under an
   // eval node.  this means that a lock.enter() is in effect so we
@@ -678,12 +686,12 @@ void Scheme::sprout(double _time, SCHEMEPROC proc, int _id)
   notify();
 }
 
-void Scheme::eval(char* str)
+void SchemeThread::eval(char* str)
 {
   eval(String(str));
 }
 
-void Scheme::eval(String s)
+void SchemeThread::eval(String s)
 {
   schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, new XEvalNode(0.0, s));
@@ -691,7 +699,7 @@ void Scheme::eval(String s)
   notify();
 }
 
-void Scheme::quit()
+void SchemeThread::quit()
 {
   schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, new XControlNode(0.0, XControlNode::QueueQuit));
@@ -699,7 +707,7 @@ void Scheme::quit()
   notify();
 }
 
-void Scheme::midiin(const MidiMessage &msg)
+void SchemeThread::midiin(const MidiMessage &msg)
 {
   if (!isMidiInputHook())
       return;
@@ -709,9 +717,9 @@ void Scheme::midiin(const MidiMessage &msg)
   notify();
 }
 
-void Scheme::setPaused(bool p) {}
+void SchemeThread::setPaused(bool p) {}
 
-void Scheme::stop(int ident)
+void SchemeThread::stop(int ident)
 {
   // always add stop nodes to the front of the queue.
   schemeNodes.lockArray();
@@ -720,7 +728,7 @@ void Scheme::stop(int ident)
   notify();
 }
 
-void Scheme::stopProcesses(int ident)
+void SchemeThread::stopProcesses(int ident)
 {
   // this is called by a STOP node from process().  stop all processes
   // with id from running. if id=-1 then stop all processes. iterate
@@ -751,7 +759,7 @@ void Scheme::stopProcesses(int ident)
     MidiOutPort::getInstance()->clear();
 }
 
-bool Scheme::isQueueEmpty()
+bool SchemeThread::isQueueEmpty()
 {
   schemeNodes.lockArray();
   int size=schemeNodes.size();

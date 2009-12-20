@@ -9,6 +9,8 @@
 ;; not provided or unevenly provided in scheme implementations. see
 ;; readme.txt for the list of features.
 
+;;(define +s7-error+ (gensym "s7-error"))
+
 (define (s7-error-hook tag args)
   ;; report scheme errors using the same format as C errors.
   ;;;;(print-stdout (format #f "s7-error-hook: tag=~S args=~S~%" tag args))
@@ -27,9 +29,8 @@
   (let ((str (get-output-string port)))
     (close-output-port port)
     (ffi_print_error str))
-  ;; return tag to tell C side an error occured
-  ;;'scheme-error
-  (void)
+  ;; this C constant is returned to tell C an error occured
+  +s7-error+
   ))
 
 ;; set s7's error hook variable 

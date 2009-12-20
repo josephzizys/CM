@@ -17,7 +17,7 @@
 #endif
 
 class ConsoleWindow;
-class Scheme;
+class SchemeThread;
 
 class XSchemeNode 
 {
@@ -27,7 +27,7 @@ class XSchemeNode
   int userid;  // user's id
   XSchemeNode(double qtime);
   virtual ~XSchemeNode(){}
-  virtual bool applyNode(Scheme* scheme, double curtime)=0;
+  virtual bool applyNode(SchemeThread* scheme, double curtime)=0;
 };
 
 class XControlNode : public XSchemeNode
@@ -37,7 +37,7 @@ class XControlNode : public XSchemeNode
   int type;
   XControlNode(double qtime, int control, int ident=-1);
   ~XControlNode();
-  bool applyNode(Scheme* scheme, double curtime);
+  bool applyNode(SchemeThread* scheme, double curtime);
 };
 
 class XEvalNode : public XSchemeNode
@@ -46,7 +46,7 @@ class XEvalNode : public XSchemeNode
   String expr;
   XEvalNode(double qtime, String sexpr);
   ~XEvalNode();
-  bool applyNode(Scheme* scheme, double curtime);
+  bool applyNode(SchemeThread* scheme, double curtime);
 };
 
 class XProcessNode : public XSchemeNode
@@ -58,8 +58,8 @@ class XProcessNode : public XSchemeNode
   //  int id;
   XProcessNode(double qtime, SCHEMEPROC proc, int qid);
   ~XProcessNode();
-  bool applyNode(Scheme* schemethread, double curtime);
-  //double applyProcessNode(Scheme* schemethread, double elapsed);
+  bool applyNode(SchemeThread* schemethread, double curtime);
+  //double applyProcessNode(SchemeThread* schemethread, double elapsed);
 };
 
 class XMidiNode : public XSchemeNode
@@ -68,7 +68,7 @@ class XMidiNode : public XSchemeNode
   const MidiMessage mmess;
   XMidiNode(double qtime, const MidiMessage &mess);
   ~XMidiNode();
-  bool applyNode(Scheme* scheme, double curtime);
+  bool applyNode(SchemeThread* scheme, double curtime);
 };
 
 class XOscNode : public XSchemeNode
@@ -80,7 +80,7 @@ class XOscNode : public XSchemeNode
   Array<double> flos;
   XOscNode(double qtime, String oscpath, String osctypes) ;
   ~XOscNode() ;
-  bool applyNode(Scheme* scheme, double curtime) ;
+  bool applyNode(SchemeThread* scheme, double curtime) ;
 };
 
 class XSchemeNodeComparator
@@ -104,13 +104,11 @@ class XSchemeNodeComparator
 // Scheme Thread executes Scheme Nodes in a priority queue.
 //
 
-class Scheme : public Thread
+class SchemeThread : public Thread
 {
 public:
-  Scheme() ;
-  ~Scheme();
-
-#ifdef SNDLIB
+  SchemeThread() ;
+  ~SchemeThread();
 
   s7_scheme *scheme;
   s7_pointer midiinhook;
@@ -118,18 +116,10 @@ public:
   s7_pointer schemeFalse;
   s7_pointer schemeTrue;
   s7_pointer schemeNil;  
-  s7_pointer schemeErr; 
+  s7_pointer schemeError; 
   s7_pointer schemeVoid;
+  void signalSchemeError(String text);
 
-  void schemeError(String text)
-  {
-    // use this function to signal errors in C code called by Scheme
-    s7_error(scheme,
-             schemeErr, //s7_make_symbol(scheme, "scheme-error"), 
-             s7_make_string(scheme, text.toUTF8())
-             );
-  }
-#endif
   int nextid;
   String voidstring;
   bool quiet;
@@ -191,7 +181,7 @@ public:
   void performSchedulerCommand(CommandID id);
   bool isQueueEmpty();
 
-  juce_DeclareSingleton (Scheme, true)
+  juce_DeclareSingleton (SchemeThread, true)
 
 };
 

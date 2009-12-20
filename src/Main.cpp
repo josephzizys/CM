@@ -113,13 +113,14 @@ void Grace::initialise(const juce::String& commandLine)
   // Initialize fomus
   initfomus();
 #endif  
-  Scheme* scm=Scheme::getInstance();
+  SchemeThread* scm=SchemeThread::getInstance();
   scm->setPriority(10);
   scm->startThread();
   // MidiOut 
   MidiOutPort* mid=MidiOutPort::getInstance();
   mid->setPriority(9);
   mid->startThread();
+
   // Audio Manager
   AudioManager* aud=AudioManager::getInstance();
   str=aud->initialise(0,2,0,true);
@@ -155,7 +156,7 @@ void Grace::shutdown()
     }
   Preferences::getInstance()->getProps().saveIfNeeded();
   std::cout << "Deleting Scheme\n";
-  Scheme::deleteInstance();
+  SchemeThread::deleteInstance();
   std::cout << "Deleting CommonLisp\n";
   CommonLisp::deleteInstance();
   std::cout << "Deleting MidiOut\n";
@@ -215,17 +216,17 @@ START_JUCE_APPLICATION(Grace)
 
 void cm_cleanup()
 {
-  if (Scheme::getInstance()->isThreadRunning())
+  if (SchemeThread::getInstance()->isThreadRunning())
     {
 //    Console::getInstance()->printOutput(T("Killing Scheme thread...\n"));
-      Scheme::getInstance()->stopThread(2000);
+      SchemeThread::getInstance()->stopThread(2000);
     }
   if (MidiOutPort::getInstance()->isThreadRunning())
     {
 //    Console::getInstance()->printOutput(T("Killing Midi thread...\n"));
       MidiOutPort::getInstance()->stopThread(2000);
     }
-  Scheme::deleteInstance();
+  SchemeThread::deleteInstance();
   delete Console::getInstance();
   MidiOutPort::deleteInstance();
   MidiInPort::deleteInstance();
@@ -277,7 +278,7 @@ int main(int argc, const char* argv[])
   //String vers=SystemStats::getJUCEVersion();
   //vers << T(" ") << SysInfo::getCopyright(T("Julian Storer")) << T("\n");
   //con->printOutput(vers);
-  Scheme* scm=Scheme::getInstance();
+  SchemeThread* scm=SchemeThread::getInstance();
   scm->setQuiet(cmdargs.getCommandArg(T("--quiet")) != NULL);
   scm->setPriority(10);
   scm->startThread();
