@@ -902,10 +902,13 @@
 (define (chdir str)
   (ffi_set_current_directory str))
 
+;;(define (directory str . rec)
+;;  (let ((res (ffi_directory str (and (pair? rec) (car rec)))))
+;;    (if (string=? res "") (list) 
+;;	(read-from-string res))))
+
 (define (directory str . rec)
-  (let ((res (ffi_directory str (and (pair? rec) (car rec)))))
-    (if (string=? res "") (list) 
-	(read-from-string res))))
+  (ffi_directory str (and (pair? rec) (car rec))))
 
 (define (make-pathname . args)
   (with-optkeys (args directory name type defaults)
@@ -969,6 +972,9 @@
   (if (string? path)
       (ffi_pathname_directory_p path)
       (error "pathname ~S is not a string" path)))
+
+(define (pathname->key path)
+  (ffi_pathname_to_key path))
 
 (define *colors*
   '("black"

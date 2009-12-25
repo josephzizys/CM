@@ -96,7 +96,8 @@ char* cm_full_pathname(char* path);
 bool cm_pathname_exists_p(char* path);
 bool cm_pathname_writable_p(char* path);
 bool cm_pathname_directory_p(char* path);
-char* cm_directory(char* path, bool recurse=true);
+int cm_pathname_to_key(char* path);
+s7_pointer cm_directory(char* path, bool recurse=true);
 
 // sal support
 

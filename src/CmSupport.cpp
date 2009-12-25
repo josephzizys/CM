@@ -653,30 +653,132 @@ bool cm_pathname_directory_p(char* path)
   return f.isDirectory();
 }
 
-char* cm_directory(char* path, bool recurse)
+s7_pointer cm_directory(char* path, bool recurse)
 {
   File f=completeFile(String(path));
+  s7_scheme* sc=SchemeThread::getInstance()->scheme;
   if (f.existsAsFile())
-    {
-      String s=T("(\"") + f.getFullPathName() + T("\")");
-      return (char*)strdup(s.toUTF8());
-    }
-  String s=T("*");
-  if (!f.isDirectory())
+    return s7_cons(sc, s7_make_string(sc, f.getFullPathName().toUTF8()),
+                   SchemeThread::getInstance()->schemeNil);
+  String s;
+  if (f.isDirectory())
+    s=T("*");
+  else if (f.existsAsFile())
+    return s7_cons(sc, s7_make_string(sc,f.getFullPathName().toUTF8()),
+                   SchemeThread::getInstance()->schemeNil);                     
+  else if (String(path).containsChar('*'))
     {
       s=f.getFileName();
       f=f.getParentDirectory();
     }
+  else
+    return SchemeThread::getInstance()->schemeNil;
+
   OwnedArray<File> a;
   int i=(recurse) ? File::findFiles : File::findFilesAndDirectories;
   int n=f.findChildFiles(a, (i | File::ignoreHiddenFiles), recurse, s);
   if (n==0)
-    return (char*)NULL;
-  s=T("(");
-  for (int j=0; j<n; j++)
-    s << T(" \"") << a[j]->getFullPathName() << T("\"");
-  s<<T(")");
-  return (char*)strdup(s.toUTF8());
+    return SchemeThread::getInstance()->schemeNil;
+  s7_pointer head=s7_cons(sc, s7_make_string(sc, a[0]->getFullPathName().toUTF8()),
+                          SchemeThread::getInstance()->schemeNil);
+  s7_pointer tail=head;
+  for (int j=1; j<n; j++)
+    {
+      String x=a[j]->getFullPathName();
+      s7_set_cdr(tail, s7_cons(sc, s7_make_string(sc, x.toUTF8()),
+                               SchemeThread::getInstance()->schemeNil));
+      tail=s7_cdr(tail);
+    }  
+  return head;
+}
+
+int cm_pathname_to_key(char* path)
+{
+  // parse name for in a case-insensitive note name or key number
+  //  String legal (T("0123456789AaBbCcDdEeFfGg#Ss"));
+  String name=String(path);
+  // ignore file extension if it exists
+  int len=name.lastIndexOfChar('.');
+  if (len<0)
+    len=name.length();
+  String letts=String(T("AaBbCcDdEeFfGg#Ss"));
+  String digis=String(T("0123456789"));
+  int pos;
+  bool let=false;
+  for (pos=len-1; pos>=0; pos--)
+    {
+      if (letts.containsChar(name[pos]))
+        let=true;
+      else if (digis.containsChar(name[pos]))
+        {
+          if (let)
+            break;
+        }
+      else
+        break;
+    }
+  //  for (pos=len-1; pos>=0; pos--)
+  //    if (!legal.containsChar(name[pos]))
+  //      break;
+  pos++;
+  // set name to substring of possible note portion
+  if (pos<len)
+    name=name.substring(pos,len);
+  else
+    return -1;
+  // name can be just a key number
+  if (name.containsOnly(digis))
+    return name.getIntValue();
+  // must have a least a pitch class and an octave
+  if (name.length()<2)
+    return -1;
+  pos=0;
+  int pc=0;
+  // parse out required case-insensitive note name
+  switch (name[pos])
+    {
+    case 'c': case 'C': pc=0;  break;
+    case 'd': case 'D': pc=2;  break;
+    case 'e': case 'E': pc=4;  break;
+    case 'f': case 'F': pc=5;  break;
+    case 'g': case 'G': pc=7;  break;
+    case 'a': case 'A': pc=9;  break;
+    case 'b': case 'B': pc=11; break;
+    default: return -1;
+    }
+  pos++;
+  // parse out optional case-insensitive accidental
+  switch (name[pos])
+    {
+    case '#': case 's': case 'S': pc++; pos++; break;      
+    case 'b': case 'f': case 'F': pc--; pos++; break;
+    }
+  // remainder of name must be octave token
+  name=name.substring(pos,len);
+  if (name==T("00"))
+    return pc;
+  else if (name==T("0"))
+    return pc + 12;
+  else if (name==T("1"))
+    return pc + 24;
+  else if (name==T("2"))
+    return pc + 36;
+  else if (name==T("3"))
+    return pc + 48;
+  else if (name==T("4"))
+    return pc + 60;
+  else if (name==T("5"))
+    return pc + 72;
+  else if (name==T("6"))
+    return pc + 84;
+  else if (name==T("7"))
+    return pc + 96;
+  else if (name==T("8"))
+    return pc + 108;
+  else if (name==T("9") && (pc < 8))
+    return pc + 120;
+  else
+    return -1;
 }
 
 // Sal support
@@ -1179,18 +1281,16 @@ void sw_draw(char* w, SCHEMEOBJECT obj, int a, int b){}
 
 void toTimeTag(double ahead, lo_timetag& tag)
 {
-  // add relative CM time to juce time plus OSC time base offset.
-  // offset is from jan1 1900 to jan1 1970, or 25567 days
-  // http://www.timeanddate.com/date/duration.html
-  static const int osc_base = (25567 * 24 * 60 * 60);
   if (ahead==0.0)
     tag=LO_TT_IMMEDIATE;
   else
     {
-      juce::uint32 sec=(juce::uint32)ahead;
-      juce::uint32 now=(juce::uint32)(Time::currentTimeMillis()/1000);
-      tag.sec=sec+now+osc_base;
-      tag.frac=(juce::uint32)((ahead-sec)*4294967295.0);
+      #define JAN_1970 0x83aa7e80    
+      juce::uint64 millis=(juce::uint64)(Time::currentTimeMillis() + ((juce::int64)(ahead * 1000)));
+      juce::uint64 seconds=millis/1000;
+      juce::uint64 remain=millis-(seconds*1000); // remainder in milliseconds
+      tag.sec = seconds + JAN_1970;
+      tag.frac = remain * 4294967.295;
     }
 }
 

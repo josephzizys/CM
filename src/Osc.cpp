@@ -24,7 +24,8 @@ static lo_address loTarget = 0;
 void loErrorHandler(int num, const char *msg, const char *path)
 {
   String text=T("OSC server error ");
-  text << num << T(" in path ") << String(path) << T(": ") << String(msg) << T("\n");
+  text << num << T(" in path ") << String(path) << T(": ") 
+       << String(msg) << T("\n");
   Console::getInstance()->printError(text);
 }
 
@@ -32,7 +33,7 @@ void loInputHandler(const char *path, const char *types, lo_arg **argv,
                     int argc, void *data, void *user_data)
 {
   ((OscPort *)user_data)->handleMessage(path, types, argc, (void **)argv);
-  ////  ((OscPort *)user_data)->handleMessage2(path, types, argc, (void **)argv);
+  ////((OscPort *)user_data)->handleMessage2(path,types,argc,(void **)argv);
 }
 
 /*=======================================================================*
@@ -43,7 +44,6 @@ OscPort::OscPort()
   :
   traceInput (false),
   traceOutput (false),
-  isHookActive (false),
   //  handle (NULL), 
   //  cloned (NULL),
   //  hook (NULL),
@@ -56,62 +56,6 @@ OscPort::~OscPort()
 {
   close(true);
 }  
-
-/***
-
-// s7 cloning doesnt work :(
-
-void OscPort::cloneScheme()
-{
-  // One thing you will need to add is s7_gc_protect of the pointer
-  // returned by s7_make_clone -- I need a handle on the cloned
-  // evaluator so that the GC mark pass can find its local variables.
-
-  std::cout << "cloning scheme...";
-  s7_scheme* orig=SchemeThread::getInstance()->scheme;
-  handle=s7_make_clone(orig);
-  s7_gc_protect(orig, handle);
-  cloned=s7_clone(handle);
-  //std::cout << "cloned=" << (int)cloned << "\n";
-}
-
-void OscPort::lockHook()
-{
-  lock.enter();
-};
-
-void OscPort::unlockHook()
-{
-  lock.exit();
-};
-
-void OscPort::setHook(s7_pointer proc)
-{
-  lockHook();
-  hook=proc;
-  s7_gc_protect(cloned, hook);
-  //s7_gc_protect(SchemeThread::getInstance()->scheme, hook);
-  unlockHook();
-}
-
-void OscPort::clearHook()
-{
-  lockHook();
-  s7_gc_unprotect(cloned, hook);
-  //s7_gc_unprotect(SchemeThread::getInstance()->scheme, hook);
-  hook=NULL;
-  unlockHook();
-}
-
-bool OscPort::isHook()
-{
-  lockHook();
-  bool res=(hook != NULL);
-  unlockHook();
-  return res;
-}
-
-*/
 
 int OscPort::open(String in, String out)
 {
@@ -205,7 +149,7 @@ int OscPort::getTargetPort()
 
 String OscPort::getTargetHost()
 {
-  return (isOpen) ? String( lo_address_get_hostname(loTarget )) : String::empty;
+  return (isOpen) ? String(lo_address_get_hostname(loTarget)) : String::empty;
 }
 
 bool OscPort::isValidPort(String text)

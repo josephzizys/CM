@@ -729,17 +729,30 @@ s7_pointer ffi_pathname_directory_p (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_directory (s7_scheme *s7, s7_pointer args)
 {
   bool b0;
-  char* s0; char* s1;
+  char* s0;
+  SCHEMEOBJECT o0;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_directory", 1, s7_car(args), "a c-string"));
-  s1=(char*)s7_string(s7_car(args));
+  s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_boolean(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_directory", 2, s7_car(args), "a bool"));
   b0=s7_boolean(s7, s7_car(args));
   args=s7_cdr(args);
-  s0=cm_directory(s1, b0);
-  return strduped_string(s7, s0);
+  o0=cm_directory(s0, b0);
+  return (s7, o0);
+}
+
+s7_pointer ffi_pathname_to_key (s7_scheme *s7, s7_pointer args)
+{
+  s7_Int i0;
+  char* s0;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_pathname_to_key", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  i0=cm_pathname_to_key(s0);
+  return s7_make_integer(s7, i0);
 }
 
 s7_pointer ffi_sal_tokenize (s7_scheme *s7, s7_pointer args)
@@ -2962,6 +2975,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_pathname_writable_p", ffi_pathname_writable_p, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_pathname_directory_p", ffi_pathname_directory_p, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_directory", ffi_directory, 2, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_pathname_to_key", ffi_pathname_to_key, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_tokenize", ffi_sal_tokenize, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_port_info", ffi_port_info, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_open_output", ffi_mp_open_output, 1, 0, false, "ffi function");

@@ -15,26 +15,13 @@
 class OscPort 
 {
  private:
-  //  s7 cloning doesnt work :(
-  //  s7_pointer handle;
-  //  s7_scheme* cloned;
-  //  s7_pointer hook;
   CriticalSection lock;
  public:
   OscPort();
   ~OscPort();
-
-  //  void cloneScheme();
-  //  void setHook(s7_pointer proc);
-  //  void clearHook();
-  //  bool isHook();
-  //  void lockHook();
-  //  void unlockHook();
-
   bool isOpen;
   bool traceInput;
   bool traceOutput;
-  bool isHookActive;
   int getServerPort();
   String getTargetHost();
   int getTargetPort();
@@ -42,11 +29,11 @@ class OscPort
   void showStatus();
   int open(String inport, String target);
   int close(bool force=false);
-  //  int sendMessage(String path, String types, Array<int> &ints, Array<double> &flos, StringArray &strs, double time=0.0);
+
   int sendMessage(String path, lo_message msg);
   int sendBundle(lo_bundle bndl);
   void handleMessage(const char *path, const char *types, int argc, void **data);
-  //  void handleMessage2(const char *path, const char *types, int argc, void **data);
+
   static bool isValidPort(String p);
   static bool isValidHost(String h);
   juce_DeclareSingleton(OscPort, true)
