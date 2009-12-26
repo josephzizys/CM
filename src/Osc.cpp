@@ -364,6 +364,42 @@ void OscPort::handleMessage(const char *path, const char *types, int argc, void 
           break;
         case LO_DOUBLE:
           node->flos.add(argv[i]->f64);
+          break;
+        case LO_TIMETAG:
+          {
+            double t=argv[i]->t.sec + (argv[i]->t.frac/4294967295.0);
+            node->flos.add(t);
+          }
+          break;
+        case LO_STRING:
+          node->strs.add(String(&argv[i]->s));
+          break;
+        case LO_SYMBOL:
+          node->strs.add(String(&argv[i]->S));
+          break;
+        case LO_CHAR:
+          node->ints.add(argv[i]->c);
+          break;
+        case LO_MIDI:
+          {
+            for (int m=0; m<4; m++)
+              node->ints.add(argv[i]->m[m]);
+          }
+          break;
+        case LO_BLOB:
+          {
+            int s=lo_blob_datasize((lo_blob)argv[i]);
+            char* b=(char*)lo_blob_dataptr((lo_blob)argv[i]);
+            node->ints.add(s); // add size then data
+            for (int j=0; j<s; j++)
+              node->ints.add(b[j]);
+          }
+          break;
+        case LO_TRUE:
+        case LO_FALSE:
+        case LO_NIL:
+        case LO_INFINITUM:
+          break;
         default:
           flag=false;
           break;

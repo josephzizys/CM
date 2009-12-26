@@ -297,7 +297,9 @@ XOscNode::XOscNode(double qtime, String oscpath, String osctypes)
 
 XOscNode::~XOscNode()
 {
+  ints.clear();
   flos.clear();
+  strs.clear();
 }
 
 bool XOscNode::applyNode(SchemeThread* st, double curtime)
@@ -309,24 +311,69 @@ bool XOscNode::applyNode(SchemeThread* st, double curtime)
       //std::cout << "Osc hook!\n";
       s7_scheme* sc=st->scheme;
       // the osc message data starts with the string path
-      s7_pointer data = s7_cons(sc, s7_make_string(sc, path.toUTF8()), s7_nil(sc));
+      s7_pointer snil = st->schemeNil;
+      s7_pointer data = s7_cons(sc, s7_make_string(sc, path.toUTF8()), snil);
       s7_pointer tail = data;
+
       // iterate types adding floats and ints to message data
       int F=0;
       int I=0;
+      int S=0;
       for (int i=0; i<types.length(); i++)
         {
           switch (types[i])
             {
             case 'i':  // LO_INT32
             case 'h':  // LO_INT64
-              //std::cout << "int="<< ints[I] << "\n";
-              s7_set_cdr(tail, s7_cons(sc, s7_make_integer(sc, ints[I++]), s7_nil(sc)));
+              s7_set_cdr(tail, s7_cons(sc, s7_make_integer(sc, ints[I++]), snil));
               break;
             case 'f':  // LO_FLOAT32
             case 'd':  // LO_FLOAT64
-              //std::cout << "flo="<< flos[F] << "\n";
-              s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, flos[F++]), s7_nil(sc)));
+            case 't':  // LO_TIMETAG
+              s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, flos[F++]), snil));
+              break;
+            case 's':  // LO_STRING
+              s7_set_cdr(tail, s7_cons(sc, s7_make_string(sc, strs[S++]), snil));
+              break;
+            case 'S':  // LO_SYMBOL
+              s7_set_cdr(tail, s7_cons(sc, s7_make_symbol(sc, strs[S++]), snil));
+              break;
+            case 'T':  // LO_TRUE
+              s7_set_cdr(tail, s7_cons(sc, s7_make_boolean(sc, true), snil));
+              break;
+            case 'F':  // LO_FALSE
+              s7_set_cdr(tail, s7_cons(sc, s7_make_boolean(sc, false), snil));
+              break;
+            case 'N':  // LO_NIL
+              s7_set_cdr(tail, s7_cons(sc, snil, snil));
+              break;
+            case 'I':  // LO_INFINITUM
+              s7_set_cdr(tail, s7_cons(sc, s7_name_to_value(sc, "most-positive-fixnum"), snil));
+              break;
+            case 'c':  // LO_CHAR
+              s7_set_cdr(tail, s7_cons(sc, s7_make_character(sc, ints[I++]), snil));
+              break;
+            case 'm':  // LO_MIDI
+              {
+                s7_pointer m=s7_cons(sc, s7_make_integer(sc, ints[I+0]),
+                                     s7_cons(sc, s7_make_integer(sc, ints[I+1]),
+                                             s7_cons(sc, s7_make_integer(sc, ints[I+2]),
+                                                     s7_cons(sc, s7_make_integer(sc, ints[I+3]), snil))));
+                s7_set_cdr(tail, s7_cons(sc, s7_cons(sc, m, snil), snil));
+                I+=4;
+              }
+              break;
+            case 'b':  // LO_BLOB
+              {
+                int l=ints[I++]; // length of blob
+                s7_pointer m=snil;
+                for (int j=I+l-1; i>=I; j--)
+                    m=s7_cons(sc, s7_make_integer(sc, ints[j]), m);
+                s7_set_cdr(tail, s7_cons(sc, s7_cons(sc, m, snil), snil));
+                I+=l;
+              }
+              break;
+            default:
               break;
             }
           tail=s7_cdr(tail);

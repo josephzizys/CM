@@ -78,6 +78,7 @@ class XOscNode : public XSchemeNode
   String types;
   Array<s7_Int> ints;
   Array<double> flos;
+  StringArray strs;
   XOscNode(double qtime, String oscpath, String osctypes) ;
   ~XOscNode() ;
   bool applyNode(SchemeThread* scheme, double curtime) ;

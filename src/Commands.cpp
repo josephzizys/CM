@@ -242,7 +242,7 @@ void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
     CommandIDs::OscTraceInput,
     CommandIDs::OscTraceOutput,
     CommandIDs::OscShowStatus,
-    CommandIDs::OscClearHook,
+    //    CommandIDs::OscClearHook,
 #endif
 
     CommandIDs::PlotterNew,
@@ -702,11 +702,11 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
     case CommandIDs::OscShowStatus:
       info.shortName=T("Show Status");
       break;
-    case CommandIDs::OscClearHook:
-      info.shortName=T("Clear Hook");
-      if (!OscPort::getInstance()->isHookActive)
-        info.setActive(false);
-      break;
+      //    case CommandIDs::OscClearHook:
+      //      info.shortName=T("Clear Hook");
+      //      if (!OscPort::getInstance()->isHookActive)
+      //        info.setActive(false);
+      //      break;
 
 #endif
 
@@ -1063,10 +1063,10 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       OscPort::getInstance()->showStatus();
       break;
 
-    case CommandIDs::OscClearHook:
-      if (OscPort::getInstance()->isHookActive)
-        SchemeThread::getInstance()->eval(T("(osc:hook #f)"));
-      break;
+      //    case CommandIDs::OscClearHook:
+      //      if (OscPort::getInstance()->isHookActive)
+      //        SchemeThread::getInstance()->eval(T("(osc:hook #f)"));
+      //      break;
 
 #endif
 

@@ -1316,16 +1316,10 @@ void osc_set_hook(SCHEMEOBJECT proc)
       if (SchemeThread::getInstance()->isOscHook())
         SchemeThread::getInstance()->clearOscHook();
       SchemeThread::getInstance()->setOscHook(proc);
-      OscPort::getInstance()->isHookActive=true;
-      ////if (OscPort::getInstance()->isHook())
-      ////  OscPort::getInstance()->clearHook();
-      ////OscPort::getInstance()->setHook(proc);
     }
   else if (proc == SchemeThread::getInstance()->schemeFalse)
     {
       SchemeThread::getInstance()->clearOscHook();
-      OscPort::getInstance()->isHookActive=false;
-      ////OscPort::getInstance()->setHook(proc);
     }
   else
     {
