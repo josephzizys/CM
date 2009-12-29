@@ -2760,7 +2760,7 @@ Send note on data to midi port.
 </table>
 <blockquote>
 <p>
-Sends up to sixteen program changes out the Midi port and updates the port's instrument table. The position of each value specifies the channel it is sent to, ie the first program change is sent to channel 0 and so on. To skip a particular channel provide #f as its program change value.
+Sends up to sixteen program changes out the Midi port and updates the port's instrument table. The position of each value specifies the channel it is sent to, ie the first program change is sent to channel 0 and so on. To skip a particular channel provide #f as its program change value, otherwise specify its program change (integer 0-127) or GM instrument name (string), in which case the first instrument that matches or contains name as a substring will be selected.
 </p>
 </blockquote>
 <!-- END DEFINITION -->
@@ -2838,32 +2838,19 @@ Sends pitch bend value 0-16383 to midi port.
 
 
 <!-- DEFINITION -->
-<table id="mp:inhook" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:inhook"</span>, <var class="arg">function</var></td>
-    <!-- td class="label">SAL</td -->
+<table id="mp:receiver" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:receiver"</span>, [<var class="optarg">opcode</var>], <var class="arg">function</var></td>
+
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
 
 <blockquote>
 <p>
-Sets <var>function</var> to receive midi input data as soon at it arrives at the Midi In port<!--, or clears (removes) the existing hook if <var>function</var> is <code>#f</code> -->. A hook function must accept four values:
+Causes <var>function</var> to receive message value lists <code>(</code><var>channel</var> <var>data1</var> <var>data2 ...</var><code>)</code> from MIDI messages that arrive at the input port. To clear an exiting receiver specify <code>#f</code> as the value of <var>function</var>. To receive just a certain type of messages precede <var>function</var> by the MIDI status byte <var>opcode</var> 8-15 that it should handle.MIDI opcodes are also available as constants: <code>mm:off</code>, <code>mm:on</code>, <code>mm:touch</code>, <code>mm:ctrl</code>, <code>mm:prog</code>, <code>mm:press</code>, <code>mm:bend</code>.  Note that it possible to have several receivers in effect at the same time, each handling a different type of message.
+To set a 'default' receiver specify <var>function</var> without an opcode. A default receiver will receive all messages that are not handled by any opcode receivers. Default message data will include the opcode of the message received: <code>(</code><var>opcode</var> <var>channel</var> ...</var><code>)</code>. 
 </p>
 
-<dl>
-  <dt><var>opcode</var></dt>
-  <dd>The incoming message's MIDI opcode, #x8 to #xE. These opcodes are available as named constants: <code>mm:off</code>, <code>mm:on</code>, <code>mm:touch</code>, <code>mm:ctrl</code>, <code>mm:prog</code>, <code>mm:press</code>, <code>mm:bend</code>.</dd>
-  <dt><var>channel</var></dt>
-  <dd>The message's channel value, 0 to 15.</dd>
-  <dt><var>data1</var></dt>
-  <dd>The message's first data byte value, 0 to 127.</dd>
-  <dt><var>data2</var></dt>
-  <dd>The message's second data byte value, 0 to 127. This will be 0 if the message does not have a second data byte.</dd>
-</dl>
-
-<p>To clear an existing hook specify <code>#f</code> as the value
-of <var>function</var>. (If an error occurs during a hook's execution
-the hook will be cleared automatically.)</p>
 </blockquote>
 <!-- END DEFINITION -->
 
@@ -2984,7 +2971,7 @@ Sends an OSC message consisting of an OSC <var>path</var> (string) followed by z
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table id="osc:message" class="entry">
+<table id="osc:bundle" class="entry">
   <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:bundle"</span>, <var class="arg">time</var>, <var class="rest">message ...</var></td>
   </tr>
   <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:bundle"</span>,  <var class="arg">time</var>, <var class="arg">list</var></td>
@@ -3001,8 +2988,8 @@ Sends an OSC bundle consisting of a <var>time</var> tag (number) followed by one
 
 
 <!-- DEFINITION -->
-<table id="osc:hook" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:hook"</span>  <var class="arg">function</var>  </td>
+<table id="osc:receiver" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:receiver"</span>  <var class="arg">function</var>  </td>
   </tr>
   <!-- tr class="scmentry"> <td class="formals">(<span class="funcname">osc:hook</span>  <var class="arg">function</var> )</td>
   </tr -->

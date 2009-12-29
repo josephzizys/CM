@@ -220,6 +220,7 @@ class MidiOutPort : public Thread //, public AsyncUpdater
   bool  avoiddrumtrack; // if true then avoid channel 9
   int   pitchbendwidth;
   StringArray tuningnames ; // string name for each tuning
+  StringArray instrumentnames ; // string name of each GM instrument
   int getTuning() ;
   void setTuning(int tune, bool send=true) ;
   bool isTuning(int tune);

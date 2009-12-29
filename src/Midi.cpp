@@ -229,6 +229,9 @@ MidiOutPort::MidiOutPort()
   tuningnames.add(T("6.6 Cent"));
   tuningnames.add(T("6.25 Cent"));
   captureSequence.clear();
+  for (int i=0; i<128; i++)
+    instrumentnames.add(MidiMessage::getGMInstrumentName(i));
+
 #ifdef GRACE
   Preferences* prefs=Preferences::getInstance();
   String name=prefs->getStringProp(T("MidiOutDevice"));
@@ -243,6 +246,8 @@ MidiOutPort::MidiOutPort()
 MidiOutPort::~MidiOutPort()
 {
   if ( device != NULL ) delete device;
+  tuningnames.clear();
+  instrumentnames.clear();
   outputNodes.clear();
   captureSequence.clear();
   tracks.clear();

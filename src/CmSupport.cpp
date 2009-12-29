@@ -902,26 +902,31 @@ void mp_set_tuning(int div)
 					     div);
 }
 
-void mp_set_instruments(int a,int b,int c,int d,int e,int f,int g,int h,
-			int i,int j,int k,int l,int m,int n,int o,int p)
+void mp_set_instruments(s7_pointer list)
 {
-  if (a>=0) MidiOutPort::getInstance()->setInstrument(0,a);
-  if (b>=0) MidiOutPort::getInstance()->setInstrument(1,b);
-  if (c>=0) MidiOutPort::getInstance()->setInstrument(2,c);
-  if (d>=0) MidiOutPort::getInstance()->setInstrument(3,d);
-  if (e>=0) MidiOutPort::getInstance()->setInstrument(4,e);
-  if (f>=0) MidiOutPort::getInstance()->setInstrument(5,f);
-  if (g>=0) MidiOutPort::getInstance()->setInstrument(6,g);
-  if (h>=0) MidiOutPort::getInstance()->setInstrument(7,h);
-  if (i>=0) MidiOutPort::getInstance()->setInstrument(8,i);
-  if (j>=0) MidiOutPort::getInstance()->setInstrument(9,j);
-  if (k>=0) MidiOutPort::getInstance()->setInstrument(10,k);
-  if (l>=0) MidiOutPort::getInstance()->setInstrument(11,l);
-  if (m>=0) MidiOutPort::getInstance()->setInstrument(12,m);
-  if (n>=0) MidiOutPort::getInstance()->setInstrument(13,n);
-  if (o>=0) MidiOutPort::getInstance()->setInstrument(14,o);
-  if (p>=0) MidiOutPort::getInstance()->setInstrument(15,p);
-  MidiOutPort::getInstance()->sendInstruments();
+  MidiOutPort* port=MidiOutPort::getInstance();
+  SchemeThread* scm=SchemeThread::getInstance();
+  for (int chan=0; s7_is_pair(list) && chan<16; list=s7_cdr(list), chan++)
+    if (s7_is_integer(s7_car(list)))
+      port->setInstrument(chan, s7_integer(s7_car(list)) & 0x7f);      
+    else if (s7_car(list) == scm->schemeFalse)
+      ;
+    else if (s7_is_string(s7_car(list)) || s7_is_symbol(s7_car(list)))
+      {
+        String name=(s7_is_string(s7_car(list))) ? String(s7_string(s7_car(list))) : String(s7_symbol_name(s7_car(list)));
+        int prog=-1;
+        for (int i=0; i<128 && prog==-1; i++)
+          if (port->instrumentnames[i].containsIgnoreCase(name))
+            prog=i;
+        if (prog==-1)
+          scm->signalSchemeError(T("mp:instruments: not an instrument name: ") + name);
+        else 
+          port->setInstrument(chan, prog);      
+      }
+    else
+      scm->signalSchemeError(T("mp:instruments: not a valid program change: ") + 
+                             String(s7_object_to_c_string(scm->scheme, s7_car(list))));
+  port->sendInstruments();
 }
 
 void mp_play_seq()
@@ -960,14 +965,42 @@ void mp_set_message_mask(int mask)
   MidiInPort::getInstance()->setOpcodeMask(mask);
 }
 
-void mp_set_midi_input_hook(SCHEMEPROC proc)
+//
+/// Midi Hooks
+//
+
+bool mp_set_midi_hook(int op, s7_pointer proc)
 {
-  SchemeThread::getInstance()->setMidiInputHook(proc);
+  SchemeThread* st=SchemeThread::getInstance();
+  if (s7_is_procedure(proc))
+    {
+      st->clearMidiHook(op);
+      st->addMidiHook(op,proc);
+      return true;
+    }  
+  else if (st->clearMidiHook(op))
+    return true;
+  else
+    return false;
 }
 
-void mp_clear_midi_input_hook()
+s7_pointer mp_is_midi_hook(int op)
 {
-  SchemeThread::getInstance()->clearMidiInputHook();
+  // 0=default, nnn=op, -1=any
+  SchemeThread* st=SchemeThread::getInstance();
+  if (op<0) // -1==return a list of all receivers
+    {
+      // cons up result in reverse order  
+      s7_pointer args=st->schemeNil;
+      for (int i=MidiFlags::Bend; i>=MidiFlags::Off; i--)
+        if (st->isMidiHook(i))
+          args=s7_cons(st->scheme, s7_make_integer(st->scheme, i), args);
+      if (st->isMidiHook(0))
+        args=s7_cons(st->scheme, s7_make_integer(st->scheme, 0), args);
+      return args;
+    }
+  else
+    return (st->isMidiHook(op)) ? s7_make_integer(st->scheme, op) : st->schemeFalse;
 }
 
 // Csound support

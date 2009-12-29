@@ -89,31 +89,6 @@ double XProcessNode::applyProcessNode(Scheme* schemethread, double elapsed)
                             Scheduler Support
  *=======================================================================*/
 
-bool SchemeThread::isMidiInputHook()
-{
-  return (midiinhook != NULL);
-}
-
-void SchemeThread::setMidiInputHook(SCHEMEPROC hook)
-{
-  //std::cout << "sndlib setMidiInputHook\n";
-  clearMidiInputHook();
-  midiinhook=hook;
-  s7_gc_protect(s7, midiinhook);
-}
-
-void SchemeThread::clearMidiInputHook()
-{
-  // hooks are set, cleared and exectued only in the scheduling thread
-  // so we dont need to lock anything.
-  if (midiinhook != NULL)
-    {
-      //std::cout << "sndlib clearMidiInputHook\n";
-      s7_gc_unprotect(s7,midiinhook);
-      midiinhook=NULL;
-    }
-}
-
 int SndLib::performCommand(int id, int data, String text)
 {
   // let other components send commands to sndlib. right now its
@@ -220,8 +195,6 @@ void loadCode(String file, const char* code, int size, bool trace)
 
 bool SchemeThread::init()
 {
-  midiinhook=NULL;
-
   /* initialize the interpreter; s7 is declared in xen.h */
   s7 = s7_init();
   if (!s7) 

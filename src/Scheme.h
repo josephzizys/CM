@@ -19,6 +19,7 @@
 class ConsoleWindow;
 class SchemeThread;
 
+
 class XSchemeNode 
 {
  public:
@@ -62,15 +63,6 @@ class XProcessNode : public XSchemeNode
   //double applyProcessNode(SchemeThread* schemethread, double elapsed);
 };
 
-class XMidiNode : public XSchemeNode
-{
- public:
-  const MidiMessage mmess;
-  XMidiNode(double qtime, const MidiMessage &mess);
-  ~XMidiNode();
-  bool applyNode(SchemeThread* scheme, double curtime);
-};
-
 class XOscNode : public XSchemeNode
 {
  public:
@@ -107,12 +99,27 @@ class XSchemeNodeComparator
 
 class SchemeThread : public Thread
 {
-public:
+
+ private:
+
+ public:
+  
+  class MidiHook
+  {
+  public:
+    int op;
+    s7_pointer proc;
+    MidiHook (int oper, s7_pointer func) : op (oper), proc (func) {}
+    ~MidiHook () {}
+  };
+  
+
+
+  
   SchemeThread() ;
   ~SchemeThread();
 
   s7_scheme *scheme;
-  s7_pointer midiinhook;
   s7_pointer oscHook;
   s7_pointer schemeFalse;
   s7_pointer schemeTrue;
@@ -134,6 +141,15 @@ public:
   bool pausing;
   bool sprouted;
   CriticalSection lock;
+
+  // Midi Input Hooks
+  OwnedArray<MidiHook, CriticalSection> midiHooks;
+  void midiin(const MidiMessage &mess);
+  bool isMidiHook(int opr=-1);
+  MidiHook* getMidiHook(int opr, bool strict=false);
+  void removeMidiHook(MidiHook* hook);
+  bool clearMidiHook(int opr);
+  void addMidiHook(int opr, s7_pointer proc);
 
   // Osc Input Hook
   CriticalSection oscLock;
@@ -160,16 +176,13 @@ public:
   // (SndLib.cpp and Chicken.cpp)
   bool init();
   void cleanup();
-  bool isMidiInputHook();
-  void setMidiInputHook(SCHEMEPROC hook);
-  void clearMidiInputHook();
   String getLispVersion();
 
   void sprout(double _time, SCHEMEPROC c=0, int _id=-1);
   void eval(String str);
   void eval(char* str);
   void load(File file, bool addtorecent=false);
-  void midiin(const MidiMessage &mess);
+
   void quit();
   void read();
   void run();

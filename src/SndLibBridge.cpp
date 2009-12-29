@@ -920,72 +920,12 @@ s7_pointer ffi_mp_set_tuning (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_set_instruments (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15;
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  SCHEMEOBJECT o0;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 1, s7_car(args), "a SCHEMEOBJECT"));
+  o0=s7_car(args);
   args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 2, s7_car(args), "a int"));
-  i1=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 3, s7_car(args), "a int"));
-  i2=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 4, s7_car(args), "a int"));
-  i3=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 5, s7_car(args), "a int"));
-  i4=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 6, s7_car(args), "a int"));
-  i5=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 7, s7_car(args), "a int"));
-  i6=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 8, s7_car(args), "a int"));
-  i7=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 9, s7_car(args), "a int"));
-  i8=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 10, s7_car(args), "a int"));
-  i9=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 11, s7_car(args), "a int"));
-  i10=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 12, s7_car(args), "a int"));
-  i11=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 13, s7_car(args), "a int"));
-  i12=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 14, s7_car(args), "a int"));
-  i13=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 15, s7_car(args), "a int"));
-  i14=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  if (!s7_is_integer(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 16, s7_car(args), "a int"));
-  i15=s7_integer(s7_car(args));
-  args=s7_cdr(args);
-  mp_set_instruments(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15);
+  mp_set_instruments(o0);
   return s7_UNSPECIFIED(s7);
 }
 
@@ -1019,21 +959,33 @@ s7_pointer ffi_mp_clear_seq (s7_scheme *s7, s7_pointer args)
   return s7_UNSPECIFIED(s7);
 }
 
-s7_pointer ffi_mp_set_midi_input_hook (s7_scheme *s7, s7_pointer args)
+s7_pointer ffi_mp_set_midi_hook (s7_scheme *s7, s7_pointer args)
 {
-  SCHEMEPROC p0;
-  if (!s7_is_procedure(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_midi_input_hook", 1, s7_car(args), "a SCHEMEPROC"));
-  p0=s7_car(args);
+  s7_Int i0;
+  bool b0;
+  SCHEMEOBJECT o0;
+  if (!s7_is_integer(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_midi_hook", 1, s7_car(args), "a int"));
+  i0=s7_integer(s7_car(args));
   args=s7_cdr(args);
-  mp_set_midi_input_hook(p0);
-  return s7_UNSPECIFIED(s7);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_midi_hook", 2, s7_car(args), "a SCHEMEOBJECT"));
+  o0=s7_car(args);
+  args=s7_cdr(args);
+  b0=mp_set_midi_hook(i0, o0);
+  return make_s7_boolean(s7, b0);
 }
 
-s7_pointer ffi_mp_clear_midi_input_hook (s7_scheme *s7, s7_pointer args)
+s7_pointer ffi_mp_is_midi_hook (s7_scheme *s7, s7_pointer args)
 {
-  mp_clear_midi_input_hook();
-  return s7_UNSPECIFIED(s7);
+  s7_Int i0;
+  SCHEMEOBJECT o0;
+  if (!s7_is_integer(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_is_midi_hook", 1, s7_car(args), "a int"));
+  i0=s7_integer(s7_car(args));
+  args=s7_cdr(args);
+  o0=mp_is_midi_hook(i0);
+  return (s7, o0);
 }
 
 s7_pointer ffi_cs_init_score (s7_scheme *s7, s7_pointer args)
@@ -2988,14 +2940,14 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_mp_set_channel_mask", ffi_mp_set_channel_mask, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_set_message_mask", ffi_mp_set_message_mask, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_set_tuning", ffi_mp_set_tuning, 1, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_mp_set_instruments", ffi_mp_set_instruments, 16, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_mp_set_instruments", ffi_mp_set_instruments, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_play_seq", ffi_mp_play_seq, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_save_seq", ffi_mp_save_seq, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_copy_seq", ffi_mp_copy_seq, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_plot_seq", ffi_mp_plot_seq, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_clear_seq", ffi_mp_clear_seq, 0, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_mp_set_midi_input_hook", ffi_mp_set_midi_input_hook, 1, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_mp_clear_midi_input_hook", ffi_mp_clear_midi_input_hook, 0, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_mp_set_midi_hook", ffi_mp_set_midi_hook, 2, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_mp_is_midi_hook", ffi_mp_is_midi_hook, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_cs_init_score", ffi_cs_init_score, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_cs_send_score", ffi_cs_send_score, 4, 0, false, "ffi function");
   s7_define_function(s7, "ffi_fms_open_score", ffi_fms_open_score, 2, 0, false, "ffi function");

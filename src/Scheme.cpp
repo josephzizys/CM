@@ -112,64 +112,6 @@ XProcessNode::~XProcessNode()
 {
 }
 
-/**
-bool XProcessNode::applyNode(SchemeThread* schemethread, double curtime)
-{
-  bool more=false;
-  double runtime, delta;
-  if (schemethread->isScoreMode())
-    {
-      // in score mode the scheduler runs in non-real time and
-      // node times are in seconds. the node's current time
-      // becomes the score time under the callback an is used to
-      // set the timestamps of data sent to ports
-      runtime=elapsed;
-      schemethread->scoretime=time;
-    }
-  else
-    {
-      runtime=(time-start)/1000.0;
-    }
-  
-  delta=applyProcessNode(schemethread, runtime);
-  //std::cout << "after callback, delta is " << delta << "\n";
-  
-  // a delta value less than 0 means that the process is done
-  // running, where -1 is normal exit, -2 is error exit. in this
-  // case applyProcesss has already gc'd the proc pointer and we
-  // do not reschedule the node
-  if (delta<0.0)
-    {
-      more=false;
-    }
-  else
-    {
-      // update the time of the node to the next runttime. the
-      // values is in milliseconds if scheduler is running in
-      // real time
-      more=true;
-      if (schemethread->isScoreMode())
-        {
-          elapsed += delta;  // elapsed now user's next run time
-          time += delta;
-        }
-      else
-        {
-          elapsed += delta;  // elapsed now user's next run time
-          // calculate delta to next runtime, the difference
-          // between the last time stamp and the (future) one in
-          // elapsed
-          
-          delta = elapsed-runtime;
-          if (delta<0.0) delta=0.0;
-          time=Time::getMillisecondCounterHiRes()+(delta*1000.0);
-        }
-    }
-  schemethread->scoretime=0.0;
-  return more;
-}
-**/
-
 bool XProcessNode::applyNode(SchemeThread* schemethread, double curtime)
 {
   s7_scheme* sc=schemethread->scheme;
@@ -237,52 +179,144 @@ bool XProcessNode::applyNode(SchemeThread* schemethread, double curtime)
   return more;
 }
 
-// XMidiNode
+//
+/// Midi Input Hooks
+//
 
-XMidiNode::XMidiNode(double qtime, const MidiMessage &mess)
-  : XSchemeNode(qtime),
-    mmess (mess)
+class XMidiNode : public XSchemeNode
 {
-}
+public:
+  const MidiMessage mmess;
+  SchemeThread::MidiHook* hook;
+  XMidiNode(double qtime, const MidiMessage &mess, SchemeThread::MidiHook* huk)
+    : XSchemeNode (qtime),
+      mmess (mess),
+      hook (huk)
+  {
+  }
+  ~XMidiNode(){}
+  bool applyNode(SchemeThread* scheme, double curtime);
+};
 
-XMidiNode::~XMidiNode()
+void SchemeThread::midiin(const MidiMessage &msg)
 {
-}
-
-bool XMidiNode::applyNode(SchemeThread* schemethread, double curtime)
-{
-  if (schemethread->isMidiInputHook())
+  int op=(msg.getRawData()[0] & 0xf0)>>4;
+  // change NoteOn with 0 amp to NoteOff
+  if (op==MidiFlags::On && msg.getRawData()[2]==0)
     {
-      // called on Midi message nodes if an input hook is set
-      //std::cout << "applyMidiInputHookNode()\n";
-      s7_scheme* sc=schemethread->scheme;
-      int op=(mmess.getRawData()[0] & 0xf0)>>4;
-      int ch=mmess.getChannel()-1;
-      int d1=mmess.getRawData()[1] & 0x7f;
-      int d2=0;
-      if (mmess.getRawDataSize()>2)
-        d2=mmess.getRawData()[2] & 0x7f;
-      // convert MidiOns with zero velocity to MidiOff
-      if ((op==MidiFlags::On) && (d2==0))
-        op=MidiFlags::Off;
-      s7_pointer args=s7_cons(sc,
-                              s7_make_integer(sc, op),
-                              s7_cons(sc,					  
-                                      s7_make_integer(sc, ch),
-                                      s7_cons(sc,
-                                              s7_make_integer(sc, d1),
-                                              s7_cons(sc,
-                                                      s7_make_integer(sc, d2),
-                                                      s7_NIL(sc)))));
-      int prot = s7_gc_protect(sc, args);
-      int res=(int)s7_integer(s7_call(sc, schemethread->midiinhook, args));
-      s7_gc_unprotect_at(sc, prot);
-      if (res!=0)
-        {
-          schemethread->clearMidiInputHook();
-          Console::getInstance()->printError(T(" Clearing Midi input hook.\n"));
-        }
+      op=MidiFlags::Off;
+      msg.getRawData()[0] = (MidiFlags::Off << 4) | (msg.getRawData()[0] & 0xF);
     }
+  MidiHook* hook=getMidiHook(op);
+  if (hook)
+    {
+      schemeNodes.lockArray();
+      schemeNodes.addSorted(comparator, new XMidiNode(0.0, msg, hook));
+      schemeNodes.unlockArray();
+      notify();
+    }
+}
+
+bool SchemeThread::isMidiHook(int opr)
+{
+  if (opr<0) return (midiHooks.size()>0);
+  return (getMidiHook(opr,true)!=NULL) ;
+}
+
+void SchemeThread::addMidiHook(int op, s7_pointer proc)
+{
+  midiHooks.lockArray();
+  s7_gc_protect(scheme, proc);
+  // the "default hook" is always at end
+  if (op==0)
+    midiHooks.add(new MidiHook(op,proc));
+  else
+    midiHooks.insert(0, new MidiHook(op,proc));
+  midiHooks.unlockArray();
+}
+
+SchemeThread::MidiHook* SchemeThread::getMidiHook(int opr, bool strict)
+{
+  MidiHook* hook=NULL;
+  midiHooks.lockArray();
+  for (int i=0; i<midiHooks.size() && !hook; i++)
+    {
+      MidiHook* h=midiHooks.getUnchecked(i);
+      // hook matches oper if its the same or default hook set
+      if (h->op==opr || (h->op==0 && !strict))
+        hook=h;
+    }
+  midiHooks.unlockArray();
+  return hook;
+}
+
+void SchemeThread::removeMidiHook(MidiHook* hook)
+{
+  // FIX: THIS MUST ALSO REMOVE ANY PENDING XMIDINODE WITH HOOK
+  midiHooks.lockArray();
+  s7_gc_unprotect(scheme, hook->proc);
+  midiHooks.removeObject(hook);
+  midiHooks.unlockArray();
+}
+
+bool SchemeThread::clearMidiHook(int op)
+{
+  // if there is a hook under Op remove it and return true
+  // if op==-1 remove all hooks
+  if (op<0) 
+    {
+      int s=midiHooks.size();
+      for (int i=0;i<s; i++)
+        removeMidiHook(midiHooks.getLast());
+      return (s>0);
+    }
+  else
+    {
+      MidiHook* hook=getMidiHook(op, true);
+      if (hook)
+        {
+          removeMidiHook(hook);
+          return true;
+        }
+      return false;
+    }
+}
+
+bool XMidiNode::applyNode(SchemeThread* st, double curtime)
+{
+  s7_scheme* sc=st->scheme;
+  // called on Midi message nodes if an input hook is set
+  int op=(mmess.getRawData()[0] & 0xf0)>>4;
+  int ch=mmess.getChannel()-1;
+  int d1=mmess.getRawData()[1] & 0x7f;
+  int d2=0;
+  if (mmess.getRawDataSize()>2)
+    d2=mmess.getRawData()[2] & 0x7f;
+  // convert MidiOns with zero velocity to MidiOff
+  if ((op==MidiFlags::On) && (d2==0))
+    op=MidiFlags::Off;
+  // create list of message data
+  s7_pointer args=s7_cons(sc, 
+                          s7_make_integer(sc, ch),
+                          s7_cons(sc,
+                                  s7_make_integer(sc, d1),
+                                  s7_cons(sc,
+                                          s7_make_integer(sc, d2),
+                                          st->schemeNil)));
+  // push status opcode if default hook
+  if (hook->op==0)
+    args=s7_cons(sc, s7_make_integer(sc, op), args);
+
+  // create funargs list holding data
+  args=s7_cons(sc, args, st->schemeNil);
+  int prot = s7_gc_protect(sc, args);
+  s7_pointer res=s7_call(sc, hook->proc, args);
+  s7_gc_unprotect_at(sc, prot);
+  if (res == st->schemeError)
+    {
+      st->removeMidiHook(hook);
+      Console::getInstance()->printError(T(">>> Removed Midi receiver.\n"));
+   }
   return false;
 }
 
@@ -314,7 +348,7 @@ bool XOscNode::applyNode(SchemeThread* st, double curtime)
       s7_pointer snil = st->schemeNil;
       s7_pointer data = s7_cons(sc, s7_make_string(sc, path.toUTF8()), snil);
       s7_pointer tail = data;
-
+      
       // iterate types adding floats and ints to message data
       int F=0;
       int I=0;
@@ -386,7 +420,7 @@ bool XOscNode::applyNode(SchemeThread* st, double curtime)
       if (res == st->schemeError)
         {
           st->clearOscHook();
-          Console::getInstance()->printError(">>> Cancelled OSC hook.\n");
+          Console::getInstance()->printError(T(">>> Removed OSC receiver.\n"));
         }
     }
   ////st->unlockOscHook();
@@ -441,7 +475,6 @@ SchemeThread::SchemeThread()
     scoretime (0.0),
     nextid (0),
     quiet (false),
-    midiinhook (NULL),
     oscHook (NULL),
     schemeFalse (NULL),
     schemeTrue (NULL),
@@ -460,6 +493,7 @@ SchemeThread::SchemeThread()
 SchemeThread::~SchemeThread()
 {
   schemeNodes.clear();
+  midiHooks.clear();
 }
 
 void SchemeThread::signalSchemeError(String text)
@@ -750,16 +784,6 @@ void SchemeThread::quit()
 {
   schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, new XControlNode(0.0, XControlNode::QueueQuit));
-  schemeNodes.unlockArray();
-  notify();
-}
-
-void SchemeThread::midiin(const MidiMessage &msg)
-{
-  if (!isMidiInputHook())
-      return;
-  schemeNodes.lockArray();
-  schemeNodes.addSorted(comparator, new XMidiNode(0.0, msg));
   schemeNodes.unlockArray();
   notify();
 }

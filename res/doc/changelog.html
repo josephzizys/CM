@@ -20,16 +20,25 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
   <ul>
     
-    <li class="change">Enhancement: Osc Port now supports sending OSC bundles. See <a href="cm.html#osc:bundle"><code>osc:bundle</code></a> documentation for more information.</li>
- 
-    <li class="change">Enhancement: osc:message now allows data to be specified as argument values or as a single list of values. See <a href="cm.html#osc:message"><code>osc:message</code></a> documentation for more information.</li>
-
-    <li class="change">Enhancement: divide now allows its first argument to be a numerator ants its second argument to be a list of denominators and returns a list containing the numerator divided by each of the denominators.   See <a href="cm.html#divide"><code>divide</code></a> documentation for more information.</li>
+    <li class="change">Enhancement: Receiving Midi and Osc data has been improved and made more consistent. See <a href="cm.html#osc:receiver"><code>osc:receiver</code></a>, <a href="cm.html#osc:receiver"><code>osc:receiver?</code></a>, <a href="cm.html#mp:receiver"><code>mp:receiver</code></a>, <a href="cm.html#mp:receiver"><code>mp:receiver?</code></a> for more information.</li>
     
+    <li class="change">Enhancement: Osc Port now supports sending OSC bundles. See <a href="cm.html#osc:bundle"><code>osc:bundle</code></a> for more information.</li>
+    
+    <li class="change">Enhancement: <a href="cm.html#osc:message"><code>osc:message</code></a> now allows data to be specified as argument values or as a single list of values.</li>
+    
+    <li class="change">Enhancement: <a href="cm.html#mp:instruments"><code>mp:instruments</code></a> now supports instrument names (strings) as well as program changes. Partial names are also supported: the first instrument that matches or contains the partial name as a substring will be selected.</li>
+    
+    <li class="change">Enhancement: <a href="cm.html#divide"><code>divide</code></a> now allows its second argument to be a list of denominators.</li>
+    
+    <li class="change">Incompatible change: function <code>mp:inhook</code> removed.</li>
+
+    <li class="change">Incompatible change: function <code>osc:hook</code> function removed.</li>
+
   </ul>
 
 
   <h2>CM 3.4.0</h2>
+  
   <ul>
 
  <li class="change">New feature: <span class="menuitem">Audio &gt; Osc</span>  lets you send and receive OSC data over the network. See <a href="cm.html#osc">Open Sound Control</a> documentation for more information.</li>
@@ -255,7 +264,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Sun Dec 13 11:22:01 CST 2009 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Tue Dec 29 10:01:37 CST 2009 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

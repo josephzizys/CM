@@ -101,15 +101,15 @@
     (ffi_mp_set_channel_mask void "mp_set_channel_mask" int)
     (ffi_mp_set_message_mask void "mp_set_message_mask" int)
     (ffi_mp_set_tuning void "mp_set_tuning" int)
-    (ffi_mp_set_instruments void "mp_set_instruments"
-			    int int int int int int int int int int int int int int int int)
+    (ffi_mp_set_instruments void "mp_set_instruments" SCHEMEOBJECT)
     (ffi_mp_play_seq void "mp_play_seq")
     (ffi_mp_save_seq void "mp_save_seq")
     (ffi_mp_copy_seq void "mp_copy_seq")
     (ffi_mp_plot_seq void "mp_plot_seq")
     (ffi_mp_clear_seq void "mp_clear_seq")
-    (ffi_mp_set_midi_input_hook   void "mp_set_midi_input_hook" SCHEMEPROC)
-    (ffi_mp_clear_midi_input_hook void "mp_clear_midi_input_hook" )
+
+    (ffi_mp_set_midi_hook bool "mp_set_midi_hook" int SCHEMEOBJECT)
+    (ffi_mp_is_midi_hook SCHEMEOBJECT "mp_is_midi_hook" int)
 
     (ffi_cs_init_score void "cs_init_score" c-string)
     (ffi_cs_send_score void "cs_send_score" int int double c-string)
