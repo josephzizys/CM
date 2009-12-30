@@ -174,9 +174,11 @@ void sw_draw(char* window, SCHEMEOBJECT arry, int data1, int data2);
 
 int osc_open(char* port, char* targ);
 int osc_close();
-bool osc_open_p();
+bool osc_is_open();
 void osc_send_message(char* path, SCHEMEOBJECT list);
 void osc_send_bundle(double time, SCHEMEOBJECT list);
-void osc_set_hook(SCHEMEOBJECT proc);
+SCHEMEOBJECT osc_set_hook(char* path, SCHEMEOBJECT proc);
+SCHEMEOBJECT osc_is_hook(char* path);
+
 #endif
 

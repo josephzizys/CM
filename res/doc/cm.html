@@ -306,13 +306,15 @@ Returns the multiplication of zero or more <var>nums</var>. If a single <var>lis
       (<var class="arg">list</var>)
     </td>
     <!-- td class="label">Function</td -->
+    </tr>
+
     <tr class="entry">
       <td class="formals">
         <span class="funcname">divide</span>
         (<var class="arg">list</var>, <var class="arg">num</var>)
       </td>
-      
     </tr>
+
     <tr class="entry">
       <td class="formals">
         <span class="funcname">divide</span>
@@ -599,14 +601,12 @@ Concatenates its inputs, which can be lists and non-lists, into a single list.
       <span class="funcname">make-list</span>
       (<var class="arg">length</var> [<var class="opt">fill</var> <var class="optval"> #f</var>])
     </td>
-    <!-- td class="label">Function</td -->
   </tr>
   <tr class="entry">
     <td class="formals">
       <span class="funcname">make-list</span>
       (<var class="arg">length</var> [<var class="opt">function</var>] <var class="rest">args...</var>)
     </td>
-    <!-- td class="label">Function</td -->
   </tr>
 
   <tr><td class="retval" colspan="2">&rarr; list</td></tr>
@@ -1126,7 +1126,7 @@ Converts a <var>cent</var> value or list of the same to the equivalent frequency
 <p>
 
 Returns a series (list) of ratios, hertz values, or key numbers based on ratios from the harmonic series between harmonic numbers <var>h1</var>
-and <var>h2</var> inclusive. If 0 &lt; <var>h1</var> &lt; <var>h2</var> then ratios belong to the overtone series, otherwise if 0 &gt; <var>h1</var> &gt; <var>h2</var> then ratios belong to the "undertone" series. If <var>fund</var> is 1 then the values retured are true ratios, otherwise the series returned is based off of that hertz value. If <var>invert</var> is true then ratios between <var>h1</var> and <var>h2</var> are flipped. If <var>order</var> is false then the overtone series are in increasing order and undertones are in decreasing order. Otherwise, if <var>order</var> is 1 then the list is always ascending, if it is -1 the list always descending, and if it is 0 the list order is randomized. If <var>keys</var> is true then the values returned will be coerced to keynums.
+and <var>h2</var> inclusive. If 0 &lt; <var>h1</var> &lt; <var>h2</var> then ratios belong to the overtone series, otherwise if 0 &gt; <var>h1</var> &gt; <var>h2</var> then ratios belong to the "undertone" series. If <var>fund</var> is 1 then the values returned are true ratios, otherwise the series returned is based off of that hertz value. If <var>invert</var> is true then ratios between <var>h1</var> and <var>h2</var> are flipped. If <var>order</var> is false then the overtone series are in increasing order and undertones are in decreasing order. Otherwise, if <var>order</var> is 1 then the list is always ascending, if it is -1 the list always descending, and if it is 0 the list order is randomized. If <var>keys</var> is true then the values returned will be coerced to keynums.
 
 </p>
 </blockquote>
@@ -2279,7 +2279,7 @@ Inverts frequencies in <var>spectrum</var> around <var>point</var>, or around th
 <!-- END DEFINITION -->
 
 <!-- DEFINITION -->
-<table class="entry" id="spectrum-invert_">
+<table class="entry" id="spectrum-rescale_">
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-rescale!</span>
@@ -2839,7 +2839,7 @@ Sends pitch bend value 0-16383 to midi port.
 
 <!-- DEFINITION -->
 <table id="mp:receiver" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:receiver"</span>, [<var class="optarg">opcode</var>], <var class="arg">function</var></td>
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:receiver"</span>, [<var class="optarg">opcode</var> ,] <var class="arg">function</var></td>
 
   </tr>
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
@@ -2847,12 +2847,33 @@ Sends pitch bend value 0-16383 to midi port.
 
 <blockquote>
 <p>
-Causes <var>function</var> to receive message value lists <code>(</code><var>channel</var> <var>data1</var> <var>data2 ...</var><code>)</code> from MIDI messages that arrive at the input port. To clear an exiting receiver specify <code>#f</code> as the value of <var>function</var>. To receive just a certain type of messages precede <var>function</var> by the MIDI status byte <var>opcode</var> 8-15 that it should handle.MIDI opcodes are also available as constants: <code>mm:off</code>, <code>mm:on</code>, <code>mm:touch</code>, <code>mm:ctrl</code>, <code>mm:prog</code>, <code>mm:press</code>, <code>mm:bend</code>.  Note that it possible to have several receivers in effect at the same time, each handling a different type of message.
-To set a 'default' receiver specify <var>function</var> without an opcode. A default receiver will receive all messages that are not handled by any opcode receivers. Default message data will include the opcode of the message received: <code>(</code><var>opcode</var> <var>channel</var> ...</var><code>)</code>. 
+Causes <var>function</var> to receive incoming MIDI messages. To clear an existing receiver specify <code>#f</code> as the  <var>function</var>. Otherwise <var>function</var> should be a procedure of one argument; this procedure will be called asynchronously and passed a list of message values <code>(</code><var>channel data1 data2 ...</var><code>)</code> for each message that arrives at the MIDI input port.
+To associate the receiver with a specific type of message precede <var>function</var> by the MIDI status byte <var>opcode</var> 8-15 that it should handle.  MIDI opcodes 8-15 are also available as constants: <code>mm:off</code>, <code>mm:on</code>, <code>mm:touch</code>, <code>mm:ctrl</code>, <code>mm:prog</code>, <code>mm:press</code>, <code>mm:bend</code>. 
+If no opcode is given then <var>function</var> becomes the "default" receiver and is called on any message that is not otherwise handled by an opcode receiver.  Message data for a default receiver will include the opcode of the message received: <code>(</code><var>opcode channel data1 data2 ...</var><code>)</code>.  Note that it possible to have several receivers, including a default receiver, in effect at the same time, each handling a different type of message.
+</p>
+
+<p>
+To clear all current receivers call <code>mp:receiver</code> with no arguments. 
 </p>
 
 </blockquote>
 <!-- END DEFINITION -->
+
+
+<!-- DEFINITION -->
+<table id="mp:receiverq" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"mp:receiver?"</span> [, <var class="optarg">opcode</var>]</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; boolean or list</td></tr>
+</table>
+
+<blockquote>
+<p>
+Returns true if a receiver for <var>opcode</var> is currently in effect otherwise false.  If called without any <var>opcode</var> then a list containing the opcodes of all current receivers is returned. The default receiver, if any, is indicated by an opcode of 0.
+</p>
+</blockquote>
+
+
 
 <!-- DEFINITION -->
 <table id="mp:inchans" class="entry">
@@ -2985,27 +3006,43 @@ Sends an OSC bundle consisting of a <var>time</var> tag (number) followed by one
 </p>
 </blockquote>
 
-
-
 <!-- DEFINITION -->
 <table id="osc:receiver" class="entry">
-  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:receiver"</span>  <var class="arg">function</var>  </td>
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:receiver"</span>, [<var class="optarg">path</var> ,] <var class="arg">function</var></td>
+
   </tr>
-  <!-- tr class="scmentry"> <td class="formals">(<span class="funcname">osc:hook</span>  <var class="arg">function</var> )</td>
-  </tr -->
   <tr><td class="retval" colspan="2">&rarr; void</td></tr>
 </table>
+
 <blockquote>
 <p>
-Sets <var>function</var> to receive all incoming OSC messages that arrive at the server's input port. The hook <var>function</var> must accept a single argument, a Lisp list holding the OSC message data that just arrived. To clear an existing input hook specify <code>#f</code> as the hook value.
+Causes <var>function</var> to receive incoming OSC messages. To clear an existing receiver specify <code>#f</code> as the <var>function</var>. Otherwise <var>function</var> should be a procedure of one argument; this procedure will be called asynchronously and passed a list of message values <code>(</code><var>data1 data2 ...</var><code>)</code> for each message that arrives at the OSC input port.
+To associate the receiver with a specific type of message precede <var>function</var> by the OSC <var>path</var> (string) that it should handle. 
+If no path is given then <var>function</var> becomes the "default" receiver and is called on any message that is not otherwise handled by a specific path receiver.  Message data for a default receiver will include the path of the message received: <code>(</code><var>path data1 data2 ...</var><code>)</code>.  Note that it possible to have several receivers, including a default receiver, in effect at the same time, each handling a different type of message.
 </p>
+
+<p>
+To clear all current receivers call <code>osc:receiver</code> with no arguments. 
+</p>
+
 </blockquote>
 <!-- END DEFINITION -->
 
+
+<!-- DEFINITION -->
+<table id="osc:receiverq" class="entry">
+  <tr class="entry"> <td class="formals"><span class="commandname">send</span> <span class="string">"osc:receiver?"</span> [, <var class="optarg">path</var>]</td>
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; boolean or list</td></tr>
+</table>
+
+<blockquote>
+<p>
+Returns true if a receiver for <var>path</var> is currently in effect otherwise false.  If called without any <var>path</var> then a list containing the paths of all current receivers is returned. The default receiver, if any, is indicated by a path of "/".
+</p>
+</blockquote>
+
 <!--  END OSC -->
-
-
-
 
 
 

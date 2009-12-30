@@ -183,20 +183,6 @@ bool XProcessNode::applyNode(SchemeThread* schemethread, double curtime)
 /// Midi Input Hooks
 //
 
-class XMidiNode : public XSchemeNode
-{
-public:
-  const MidiMessage mmess;
-  SchemeThread::MidiHook* hook;
-  XMidiNode(double qtime, const MidiMessage &mess, SchemeThread::MidiHook* huk)
-    : XSchemeNode (qtime),
-      mmess (mess),
-      hook (huk)
-  {
-  }
-  ~XMidiNode(){}
-  bool applyNode(SchemeThread* scheme, double curtime);
-};
 
 void SchemeThread::midiin(const MidiMessage &msg)
 {
@@ -219,7 +205,6 @@ void SchemeThread::midiin(const MidiMessage &msg)
 
 bool SchemeThread::isMidiHook(int opr)
 {
-  if (opr<0) return (midiHooks.size()>0);
   return (getMidiHook(opr,true)!=NULL) ;
 }
 
@@ -235,7 +220,7 @@ void SchemeThread::addMidiHook(int op, s7_pointer proc)
   midiHooks.unlockArray();
 }
 
-SchemeThread::MidiHook* SchemeThread::getMidiHook(int opr, bool strict)
+MidiHook* SchemeThread::getMidiHook(int opr, bool strict)
 {
   MidiHook* hook=NULL;
   midiHooks.lockArray();
@@ -320,7 +305,9 @@ bool XMidiNode::applyNode(SchemeThread* st, double curtime)
   return false;
 }
 
-// XOscNode
+/*=======================================================================*
+                              Osc Receiving
+ *=======================================================================*/
 
 XOscNode::XOscNode(double qtime, String oscpath, String osctypes)
   : XSchemeNode(qtime),
@@ -336,129 +323,174 @@ XOscNode::~XOscNode()
   strs.clear();
 }
 
+bool SchemeThread::isOscHook(String path)
+{
+  return (getOscHook(path,true)!=NULL) ;
+}
+
+void SchemeThread::addOscHook(String path, s7_pointer proc)
+{
+  oscHooks.lockArray();
+  s7_gc_protect(scheme, proc);
+  // the "default hook" is always at end
+  if (path==String::empty)
+    oscHooks.add(new OscHook(path,proc));
+  else
+    oscHooks.insert(0, new OscHook(path,proc));
+  oscHooks.unlockArray();
+}
+
+OscHook* SchemeThread::getOscHook(String path, bool strict)
+{
+  OscHook* hook=NULL;
+  oscHooks.lockArray();
+  for (int i=0; i<oscHooks.size() && !hook; i++)
+    {
+      OscHook* h=oscHooks.getUnchecked(i);
+      // hook matches oper if its the same or default hook set
+      if (h->path==path || (h->path==String::empty && !strict))
+        hook=h;
+    }
+  oscHooks.unlockArray();
+  return hook;
+}
+
+void SchemeThread::removeOscHook(OscHook* hook)
+{
+  // FIX: THIS MUST ALSO REMOVE ANY PENDING XMIDINODE WITH HOOK
+  oscHooks.lockArray();
+  s7_gc_unprotect(scheme, hook->proc);
+  oscHooks.removeObject(hook);
+  oscHooks.unlockArray();
+}
+
+bool SchemeThread::clearOscHook(String path)
+{
+  // if there is a hook under Op remove it and return true
+  // if op==* remove all hooks
+  if (path==T("*")) 
+    {
+      int s=oscHooks.size();
+      for (int i=0;i<s; i++)
+        removeOscHook(oscHooks.getLast());
+      return (s>0);
+    }
+  else
+    {
+      OscHook* hook=getOscHook(path, true);
+      if (hook)
+        {
+          removeOscHook(hook);
+          return true;
+        }
+      return false;
+    }
+}
+
 bool XOscNode::applyNode(SchemeThread* st, double curtime)
 {
   //std::cout << "Osc message: "<< path.toUTF8() << " " << types.toUTF8();
   ////st->lockOscHook();
-  if (st->oscHook != NULL)
+  //std::cout << "Osc hook!\n";
+  s7_scheme* sc=st->scheme;
+  // the osc message data starts with the string path
+  s7_pointer snil = st->schemeNil;
+  s7_pointer data = s7_cons(sc, st->schemeFalse, snil) ; // (#f) placeholder
+  s7_pointer tail = data;
+  
+  // iterate types adding floats and ints to message data
+  int F=0;
+  int I=0;
+  int S=0;
+  for (int i=0; i<types.length(); i++)
     {
-      //std::cout << "Osc hook!\n";
-      s7_scheme* sc=st->scheme;
-      // the osc message data starts with the string path
-      s7_pointer snil = st->schemeNil;
-      s7_pointer data = s7_cons(sc, s7_make_string(sc, path.toUTF8()), snil);
-      s7_pointer tail = data;
-      
-      // iterate types adding floats and ints to message data
-      int F=0;
-      int I=0;
-      int S=0;
-      for (int i=0; i<types.length(); i++)
+      switch (types[i])
         {
-          switch (types[i])
-            {
-            case 'i':  // LO_INT32
-            case 'h':  // LO_INT64
-              s7_set_cdr(tail, s7_cons(sc, s7_make_integer(sc, ints[I++]), snil));
-              break;
-            case 'f':  // LO_FLOAT32
-            case 'd':  // LO_FLOAT64
-            case 't':  // LO_TIMETAG
-              s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, flos[F++]), snil));
-              break;
-            case 's':  // LO_STRING
-              s7_set_cdr(tail, s7_cons(sc, s7_make_string(sc, strs[S++]), snil));
-              break;
-            case 'S':  // LO_SYMBOL
-              s7_set_cdr(tail, s7_cons(sc, s7_make_symbol(sc, strs[S++]), snil));
-              break;
-            case 'T':  // LO_TRUE
-              s7_set_cdr(tail, s7_cons(sc, s7_make_boolean(sc, true), snil));
-              break;
-            case 'F':  // LO_FALSE
-              s7_set_cdr(tail, s7_cons(sc, s7_make_boolean(sc, false), snil));
-              break;
-            case 'N':  // LO_NIL
-              s7_set_cdr(tail, s7_cons(sc, snil, snil));
-              break;
-            case 'I':  // LO_INFINITUM
-              s7_set_cdr(tail, s7_cons(sc, s7_name_to_value(sc, "most-positive-fixnum"), snil));
-              break;
-            case 'c':  // LO_CHAR
-              s7_set_cdr(tail, s7_cons(sc, s7_make_character(sc, ints[I++]), snil));
-              break;
-            case 'm':  // LO_MIDI
-              {
-                s7_pointer m=s7_cons(sc, s7_make_integer(sc, ints[I+0]),
-                                     s7_cons(sc, s7_make_integer(sc, ints[I+1]),
-                                             s7_cons(sc, s7_make_integer(sc, ints[I+2]),
-                                                     s7_cons(sc, s7_make_integer(sc, ints[I+3]), snil))));
-                s7_set_cdr(tail, s7_cons(sc, s7_cons(sc, m, snil), snil));
-                I+=4;
-              }
-              break;
-            case 'b':  // LO_BLOB
-              {
-                int l=ints[I++]; // length of blob
-                s7_pointer m=snil;
-                for (int j=I+l-1; i>=I; j--)
-                    m=s7_cons(sc, s7_make_integer(sc, ints[j]), m);
-                s7_set_cdr(tail, s7_cons(sc, s7_cons(sc, m, snil), snil));
-                I+=l;
-              }
-              break;
-            default:
-              break;
-            }
-          tail=s7_cdr(tail);
+        case 'i':  // LO_INT32
+        case 'h':  // LO_INT64
+          s7_set_cdr(tail, s7_cons(sc, s7_make_integer(sc, ints[I++]), snil));
+          break;
+        case 'f':  // LO_FLOAT32
+        case 'd':  // LO_FLOAT64
+        case 't':  // LO_TIMETAG
+          s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, flos[F++]), snil));
+          break;
+        case 's':  // LO_STRING
+          s7_set_cdr(tail, s7_cons(sc, s7_make_string(sc, strs[S++]), snil));
+          break;
+        case 'S':  // LO_SYMBOL
+          s7_set_cdr(tail, s7_cons(sc, s7_make_symbol(sc, strs[S++]), snil));
+          break;
+        case 'T':  // LO_TRUE
+          s7_set_cdr(tail, s7_cons(sc, s7_make_boolean(sc, true), snil));
+          break;
+        case 'F':  // LO_FALSE
+          s7_set_cdr(tail, s7_cons(sc, s7_make_boolean(sc, false), snil));
+          break;
+        case 'N':  // LO_NIL
+          s7_set_cdr(tail, s7_cons(sc, snil, snil));
+          break;
+        case 'I':  // LO_INFINITUM
+          s7_set_cdr(tail, s7_cons(sc, s7_name_to_value(sc, "most-positive-fixnum"), snil));
+          break;
+        case 'c':  // LO_CHAR
+          s7_set_cdr(tail, s7_cons(sc, s7_make_character(sc, ints[I++]), snil));
+          break;
+        case 'm':  // LO_MIDI
+          {
+            s7_pointer m=s7_cons(sc, s7_make_integer(sc, ints[I+0]),
+                                 s7_cons(sc, s7_make_integer(sc, ints[I+1]),
+                                         s7_cons(sc, s7_make_integer(sc, ints[I+2]),
+                                                 s7_cons(sc, s7_make_integer(sc, ints[I+3]), snil))));
+            s7_set_cdr(tail, s7_cons(sc, s7_cons(sc, m, snil), snil));
+            I+=4;
+          }
+          break;
+        case 'b':  // LO_BLOB
+          {
+            int l=ints[I++]; // length of blob
+            s7_pointer m=snil;
+            for (int j=I+l-1; i>=I; j--)
+              m=s7_cons(sc, s7_make_integer(sc, ints[j]), m);
+            s7_set_cdr(tail, s7_cons(sc, s7_cons(sc, m, snil), snil));
+            I+=l;
+          }
+          break;
+        default:
+          break;
         }
-      // create the function args
-      s7_pointer args=s7_cons(sc, data, s7_nil(sc));
-      int prot = s7_gc_protect(sc, args);
-      s7_pointer res=s7_call(sc, st->oscHook, args);
-      s7_gc_unprotect_at(sc, prot);
-      if (res == st->schemeError)
-        {
-          st->clearOscHook();
-          Console::getInstance()->printError(T(">>> Removed OSC receiver.\n"));
-        }
+      tail=s7_cdr(tail);
     }
-  ////st->unlockOscHook();
+  // data is now (#f x y ...) 
+  int loc;
+  s7_pointer args, res;
+  if (hook->path==String::empty) // is default hook
+    {
+      // default hook includes path as first element
+      // replace placeholder #f with path
+      s7_set_car(data, s7_make_string(sc, path.toUTF8()));
+      args=s7_cons(sc, data, snil);
+      // args now ((x y ...))
+      loc = s7_gc_protect(sc, args);
+      res = s7_call(sc, hook->proc, args);
+    }
+  else
+    {
+      // no path so reuse placeholder's cons cell:
+      s7_set_car(data, s7_cdr(data)); 
+      // data now ((x y ...) x y ...)
+      s7_set_cdr(data, snil); 
+      // data now ((x y ...))
+      loc = s7_gc_protect(sc, data);
+      res=s7_call(sc, hook->proc, data);
+    }
+  s7_gc_unprotect_at(sc, loc);
+  if (res == st->schemeError)
+    {
+      st->removeOscHook(hook);
+      Console::getInstance()->printError(T(">>> Removed OSC receiver.\n"));
+    }
   return false;
-}
-
-void SchemeThread::setOscHook(s7_pointer hook)
-{
-  oscLock.enter();
-  oscHook=hook;
-  s7_gc_protect(scheme, oscHook);
-  oscLock.exit();
-}
-
-void SchemeThread::clearOscHook()
-{
-  oscLock.enter();
-  s7_gc_unprotect(scheme, oscHook);
-  oscHook=NULL;
-  oscLock.exit();
-}
-
-bool SchemeThread::isOscHook()
-{
-  oscLock.enter();
-  bool hook = (oscHook != NULL);
-  oscLock.exit();
-  return hook;
-}
-
-void SchemeThread::lockOscHook()
-{
-  oscLock.enter();
-}
-
-void SchemeThread::unlockOscHook()
-{
-  oscLock.exit();
 }
 
 //
@@ -466,7 +498,7 @@ void SchemeThread::unlockOscHook()
 //
 
 SchemeThread::SchemeThread() 
-  : Thread( "Scheme Thread"),
+  : Thread(T("Scheme Thread")),
     pausing (false),
     scoremode (ScoreTypes::Empty),
     sprouted (false),
@@ -494,6 +526,7 @@ SchemeThread::~SchemeThread()
 {
   schemeNodes.clear();
   midiHooks.clear();
+  oscHooks.clear();
 }
 
 void SchemeThread::signalSchemeError(String text)
@@ -680,10 +713,10 @@ void SchemeThread::run()
 	      // not since this means that flushing the queue, etc will have
 	      // no effect on this node. Search for the word POP to see the
 	      // places this affects...
-	      lock.enter();
+	      //lock.enter();
 	      bool keep=node->applyNode(this, 0.0);
-	      lock.exit();
-	      if ( keep )
+	      //lock.exit();
+	      if (keep)
 		{
 		  schemeNodes.lockArray();
 		  schemeNodes.addSorted(comparator,node);

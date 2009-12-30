@@ -1236,7 +1236,7 @@ s7_pointer ffi_osc_close (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_osc_open_p (s7_scheme *s7, s7_pointer args)
 {
   bool b0;
-  b0=osc_open_p();
+  b0=osc_is_open();
   return make_s7_boolean(s7, b0);
 }
 
@@ -1274,13 +1274,30 @@ s7_pointer ffi_osc_send_bundle (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_osc_set_hook (s7_scheme *s7, s7_pointer args)
 {
-  SCHEMEOBJECT o0;
-  if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_osc_set_hook", 1, s7_car(args), "a SCHEMEOBJECT"));
-  o0=s7_car(args);
+  char* s0;
+  SCHEMEOBJECT o0, o1;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_set_hook", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
-  osc_set_hook(o0);
-  return s7_UNSPECIFIED(s7);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_set_hook", 2, s7_car(args), "a SCHEMEOBJECT"));
+  o1=s7_car(args);
+  args=s7_cdr(args);
+  o0=osc_set_hook(s0, o1);
+  return (s7, o0);
+}
+
+s7_pointer ffi_osc_is_hook (s7_scheme *s7, s7_pointer args)
+{
+  char* s0;
+  SCHEMEOBJECT o0;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_is_hook", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  o0=osc_is_hook(s0);
+  return (s7, o0);
 }
 
 
@@ -2971,5 +2988,6 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_osc_open_p", ffi_osc_open_p, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_osc_send_message", ffi_osc_send_message, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_osc_send_bundle", ffi_osc_send_bundle, 2, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_osc_set_hook", ffi_osc_set_hook, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_osc_set_hook", ffi_osc_set_hook, 2, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_osc_is_hook", ffi_osc_is_hook, 1, 0, false, "ffi function");
 }

@@ -96,10 +96,41 @@
         (error "osc:close failed with error code ~D" f)
         #t)))
 
-(define (osc:hook func)
-  ;; wrap user's hook in a function that returns true. if an error
-  ;; occurs while hook is execting the return value will be (void) not
-  ;; #t and the C callback can clear the hook.
-  (ffi_osc_set_hook func)
-  func)
+(define (osc:receive . args)
+  (if (null? args) ; clear all hooks
+      (ffi_osc_set_hook "*" #f)
+      (let ((arg (car args))
+            (rest (cdr args)))
+        (if (null? rest) ; set/clear default hook
+            (if (not arg) 
+                (ffi_osc_set_hook "" #f) ; clear default hook     
+                (if (and (procedure? arg)
+                         (= (car (procedure-arity arg) ) 1))
+                    (ffi_osc_set_hook "" arg)
+                    (error "osc:receive: receiver not #f or a procedure of one argument: ~S"
+                           arg)))
+            ;; rest is ( proc|#f)
+            (let ((op arg)
+                  (proc (car rest))
+                  (rest (cdr rest)))
+              (if (null? rest)
+                  (if (string? op)
+                      (if (or (not proc) ;; clear/set valid hook
+                              (and (procedure? proc)
+                                   (= (car (procedure-arity proc)) 1)))
+                          (ffi_osc_set_hook op proc)
+                          (error "osc:receive: receiver not #f or a procedure of one argument: ~S"
+                                 proc))
+                      (error "osc:receive: invalid path: ~S" op))
+                  (error "osc:receive: too many arguments: ~S" args)))))))
+
+(define (osc:receive? . args)
+  (if (null? args)
+      (ffi_osc_is_hook "*") ; is any hook set?
+      (if (null? (cdr args))
+          (let ((path (car args)))
+            (if (string? path)
+                (ffi_osc_is_hook path)
+                (error "osc:receive?: invalid path: ~S" op)))
+          (error "osc:receive?: too many arguments: ~S" args))))
 

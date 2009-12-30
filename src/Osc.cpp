@@ -201,120 +201,6 @@ void OscPort::showStatus()
                                Sending Osc
  *=======================================================================*/
 
-/* int OscPort::sendMessage(String path, String types, Array<int> &ints, Array<double> &flos,StringArray &strs, double time)
-{
-  //std::cout << "OscPort::sendMessage: path=" << path.toUTF8() << " types=" << types.toUTF8() << ":\n";
-  if (!isOpen) return -1;
-  int size=types.length();
-
-  if (size>0)
-    {
-      lo_message msg=NULL;
-      int I=0, F=0, S=0;
-      int flag=-1;
-      msg=lo_message_new();
-      for (int i=0; i<types.length(); i++)
-        {
-          char t=types[i];
-          switch (t)
-            {
-            case LO_INT32:
-              // std::cout << "  int32: " << ints[I++] << "\n";
-              flag=lo_message_add_int32(msg, ints[I++]);
-              break;
-            case LO_FLOAT:
-              //std::cout << "  float: " << flos[F++] << "\n";
-              flag=lo_message_add_float(msg, (float)flos[F++]);
-              break;
-            case LO_STRING:
-              //std::cout << "  string: " << strs[S++].toUTF8() << "\n";
-              flag=lo_message_add_string(msg, strs[S++].toUTF8());
-              break;
-            case LO_BLOB:
-              {
-                int siz=ints[I++];
-                char data[siz];
-                //std::cout << "adding blob size=" << siz << "\n";
-                for (int j=0; j<siz; j++)
-                  {
-                    data[j]=(char)ints[I+j];
-                    //std::cout << "  data[" << j << "]: " << data[j] << "\n";
-                  }
-                lo_blob blob=lo_blob_new(siz, data);
-                flag=lo_message_add_blob(msg, blob);
-                I+=siz;
-                //std::cout << "  blob: " << "\n";
-                //flag=lo_message_add_blob(msg, blob);
-              }
-              break;
-            case LO_INT64:
-              //std::cout << "  int64: " << ints[I++] << "\n";
-              flag=lo_message_add_int64(msg, (int64)ints[I++]);
-              break;
-            case LO_TIMETAG:
-              //std::cout << "  timetag: " << flos[F++] << "\n";
-              {
-                double f=flos[F++];
-                lo_timetag tag;
-                tag.sec=(juce::uint32)f;
-                tag.frac=(juce::uint32)((f-tag.sec) * 4294967295.0);
-                flag=lo_message_add_timetag(msg, tag);
-              }
-              break;
-            case LO_DOUBLE:
-              //std::cout << "  double: " << flos[F++] << "\n";
-              flag=lo_message_add_double(msg, (double)flos[F++]);
-              break;
-            case LO_SYMBOL:
-              //std::cout << "  symbol: " << strs[S++].toUTF8() << "\n";
-              flag=lo_message_add_symbol(msg, strs[S++].toUTF8());
-              break;
-            case LO_CHAR:
-              //std::cout << "  char: " << strs[S++].toUTF8() << "\n";
-              flag=lo_message_add_char(msg, strs[S++][0]);
-              break;
-            case LO_MIDI:
-              //std::cout << "  midi: " << ints[I] << ", " << ints[I+1] << ", " << ints[I+2] << ", " << ints[I+3] << "\n";
-              juce::uint8 midi[4];
-              for (int j=0; j<4; j++)
-                midi[j]=(juce::uint8)ints[I+j];
-              flag=lo_message_add_midi(msg, midi);
-              I += 4;
-              break;
-            case LO_TRUE:
-              //std::cout << "  true" << "\n";
-              flag=lo_message_add_true(msg);
-              break;
-            case LO_FALSE:
-              //std::cout << "  false" << "\n";
-              flag=lo_message_add_false(msg);
-              break;
-            case LO_NIL:
-              //std::cout << "  nil" << "\n";
-              flag=lo_message_add_nil(msg);
-              break;
-            case LO_INFINITUM:
-              //std::cout << "  INFINITUM" << "\n";
-              flag=lo_message_add_infinitum(msg);
-              break;
-            default:
-              break;
-            }
-          if (flag<0)
-            {
-              return -1;
-            }
-        }
-      return lo_send_message_from(loTarget,
-                                  lo_server_thread_get_server(loServer),
-                                  path.toUTF8(),
-                                  msg);	 
-    }
-  else
-    return lo_send(loTarget, path.toUTF8(), NULL);
-}
-*/
-
 int OscPort::sendMessage(String path, lo_message msg)
 {
   return lo_send_message_from(loTarget,
@@ -334,202 +220,86 @@ int OscPort::sendBundle(lo_bundle bndl)
                                Receiving Osc
  *=======================================================================*/
 
-void OscPort::handleMessage(const char *path, const char *types, int argc, void **data)
+void OscPort::handleMessage(const char *oscpath, const char *types, int argc, void **data)
 {
   SchemeThread* st=SchemeThread::getInstance();
-  bool isHook=st->isOscHook();
-  if (! (traceInput || isHook))
-    {
-      //std::cout << "no osc hook\n";
-      return;
-    }
-  lo_arg **argv=(lo_arg **)data;
-  String text = String(path);
-  bool flag=true;
-  XOscNode* node=new XOscNode(0.0, text, String(types));
+  String path (oscpath);
+  OscHook* hook=st->getOscHook(path);
   //std::cout << "handleMessage " << path << " " << types << "\n";
-  for (int i=0; i<argc && flag; i++)
-    {     
-      char t=types[i];
-      switch (t)
-        {
-        case LO_INT32:
-          node->ints.add((s7_Int)argv[i]->i32);
-          break;
-        case LO_INT64:
-          node->ints.add((s7_Int)argv[i]->i64);
-          break;
-        case LO_FLOAT:
-          node->flos.add((double)argv[i]->f32);
-          break;
-        case LO_DOUBLE:
-          node->flos.add(argv[i]->f64);
-          break;
-        case LO_TIMETAG:
-          {
-            double t=argv[i]->t.sec + (argv[i]->t.frac/4294967295.0);
-            node->flos.add(t);
-          }
-          break;
-        case LO_STRING:
-          node->strs.add(String(&argv[i]->s));
-          break;
-        case LO_SYMBOL:
-          node->strs.add(String(&argv[i]->S));
-          break;
-        case LO_CHAR:
-          node->ints.add(argv[i]->c);
-          break;
-        case LO_MIDI:
-          {
-            for (int m=0; m<4; m++)
-              node->ints.add(argv[i]->m[m]);
-          }
-          break;
-        case LO_BLOB:
-          {
-            int s=lo_blob_datasize((lo_blob)argv[i]);
-            char* b=(char*)lo_blob_dataptr((lo_blob)argv[i]);
-            node->ints.add(s); // add size then data
-            for (int j=0; j<s; j++)
-              node->ints.add(b[j]);
-          }
-          break;
-        case LO_TRUE:
-        case LO_FALSE:
-        case LO_NIL:
-        case LO_INFINITUM:
-          break;
-        default:
-          flag=false;
-          break;
-        }
-    }
-  if (!flag)
-    {
-      String msg=T("OSC: dropped non-numeric message (path ");
-      msg << text.quoted() << T(")\n");
-      Console::getInstance()->printWarning(msg);
-      delete node;
-      return;
-    }
 
-  if (isHook)
-    SchemeThread::getInstance()->addNode(node);
-  if (traceInput)
-    {
-      String msg=text.quoted();
-      for (int i=0; i<argc; i++) 
-        switch (types[i])
-          {
-          case 'i':
-          case 'h':
-            msg << T(" ") << String((juce::int64)node->ints[i]) ;
-            break;
-          case 'f':
-          case 'd':
-            msg << T(" ") << String((double)node->flos[i]) ;
-            break;
-          }
-      msg << T("\n");
-      Console::getInstance()->printOutput(msg);
-    }
-}
-
-/*
-//  s7 cloning doesn't work :(
-void OscPort::handleMessage2(const char *path, const char *types, int argc, void **data)
-{
-  lockHook();
-  //  s7_scheme* sc=(s7_scheme*)NULL;
-  //s7_pointer hook = NULL;
-  s7_scheme* sc=cloned;
-  if (hook!=NULL)
+  if (hook)
     {
       lo_arg **argv=(lo_arg **)data;
-      s7_pointer snil = s7_nil(sc);
-      // head holds first cons cell of the message data
-      s7_pointer head = s7_cons(sc, s7_make_string(sc, path), snil);
-      // tail holds last cons cell of the message data
-      s7_pointer tail = head;
-      // iterate osc types adding data to message list
+      XOscNode* node=new XOscNode(0.0, path, String(types));
       for (int i=0; i<argc; i++)
-        {
-          switch (types[i])
+        {     
+          char t=types[i];
+          switch (t)
             {
             case LO_INT32:
-              s7_set_cdr(tail, s7_cons(sc, s7_make_integer(sc, argv[i]->i32), snil));
+              node->ints.add((s7_Int)argv[i]->i32);
+              break;
             case LO_INT64:
-              s7_set_cdr(tail, s7_cons(sc, s7_make_integer(sc, argv[i]->i64), snil));
+              node->ints.add((s7_Int)argv[i]->i64);
               break;
             case LO_FLOAT:
-              s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, argv[i]->f32), snil));
+              node->flos.add((double)argv[i]->f32);
               break;
             case LO_DOUBLE:
-              s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, argv[i]->f64), snil));
+              node->flos.add(argv[i]->f64);
               break;
-            case LO_TRUE:
-              s7_set_cdr(tail, s7_cons(sc, s7_t(sc), snil));
-              break;
-            case LO_FALSE:
-              s7_set_cdr(tail, s7_cons(sc,  s7_f(sc), snil));
-              break;
-            case LO_STRING:
-              s7_set_cdr(tail, s7_cons(sc, s7_make_string(sc, (const char*)argv[i]->s), snil));
-              break;
-            case LO_SYMBOL:
-              s7_set_cdr(tail, s7_cons(sc, s7_make_symbol(sc, (const char*)argv[i]->s), snil));
-              break;
-            case LO_CHAR:
-              s7_set_cdr(tail, s7_cons(sc, s7_make_character(sc, argv[i]->c), snil));
-              break;
-            case LO_NIL:
-              s7_set_cdr(tail, s7_cons(sc, s7_make_keyword(sc, "N"), snil));
-              break;
-            case LO_INFINITUM: 
-              s7_set_cdr(tail, s7_cons(sc, s7_make_keyword(sc, "I"), snil));
-              break;
-            case LO_TIMETAG: 
+            case LO_TIMETAG:
               {
-                double t=0.0;
-                if (argv[i]->t.sec!=LO_TT_IMMEDIATE.sec ||
-                    argv[i]->t.frac!=LO_TT_IMMEDIATE.frac)
-                  {
-                    lo_timetag now;
-                    lo_timetag_now(&now);
-                    t=lo_timetag_diff(argv[i]->t, now);
-                  }
-                s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, t), snil));
+                double t=argv[i]->t.sec + (argv[i]->t.frac/4294967295.0);
+                node->flos.add(t);
               }
               break;
-            case LO_BLOB: 
-              //s7_set_cdr(tail, s7_cons(sc, ???, snil));
+            case LO_STRING:
+              node->strs.add(String(&argv[i]->s));
               break;
-            case LO_MIDI: 
-              //s7_set_cdr(tail, s7_cons(sc, ???, snil));
+            case LO_SYMBOL:
+              node->strs.add(String(&argv[i]->S));
               break;
+            case LO_CHAR:
+              node->ints.add(argv[i]->c);
+              break;
+            case LO_MIDI:
+              {
+                for (int m=0; m<4; m++)
+                  node->ints.add(argv[i]->m[m]);
+              }
+              break;
+            case LO_BLOB:
+              {
+                int s=lo_blob_datasize((lo_blob)argv[i]);
+                char* b=(char*)lo_blob_dataptr((lo_blob)argv[i]);
+                node->ints.add(s); // add size then data
+                for (int j=0; j<s; j++)
+                  node->ints.add(b[j]);
+              }
+              break;
+            case LO_TRUE:
+            case LO_FALSE:
+            case LO_NIL:
+            case LO_INFINITUM:
+              break;
+            default:
+              {
+                String msg=T("OSC: dropped unparsable message with path ");
+                msg << path.quoted() << T("\n");
+                Console::getInstance()->printWarning(msg);
+                delete node;
+                return;
+              }
             }
-          tail=s7_cdr(tail);
         }
-      // now create hook's arglist holding the single (list) of data
-      s7_pointer args=s7_cons(sc, head, s7_nil(sc));
-      // protect newly consed args from GC
-      int prot = s7_gc_protect(sc, args);
-      // call the hook and save the return value
-      s7_pointer res=s7_call(sc, hook, args);
-      // release args
-      s7_gc_unprotect_at(sc, prot);
-      // hook returns #t if no error. otherwise an error occured under
-      // the callback and so we automatically clear the hook
-      if (res != s7_t(sc))
-        {
-          clearHook();
-          Console::getInstance()->printError(">>> Cancelled OSC hook.\n");
-        }
+      node->hook=hook;
+      st->addNode(node);
     }
-  unlockHook();
+
+  if (traceInput)
+    Console::getInstance()->printOutput(T("OSC: ") + path +  T(" ...\n"));
 }
-*/
 
 /* ==============================================================================
                                      OSC Open Dialog

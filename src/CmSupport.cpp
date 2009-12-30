@@ -1250,49 +1250,6 @@ void sw_draw(char* title, SCHEMEOBJECT obj, int data1, int data2)
       sw->listener.postMessage(new Message(CommandIDs::StateWindowSetCells,
 					   data1, data2, (void*)data));
     }
-  /*  else if (s7_is_vector(obj))
-    {
-      s7_pointer *vector_elements=s7_vector_elements(obj);
-      if (s7_vector_rank(obj)==1)
-	{
-	  for (int x = 0; x < s7_vector_length(obj); x++)
-	    std::cout << " x: " << x << ", (1dvec x): " 
-		      << (int)s7_integer(vector_elements[x])
-		      << "\n";	  
-	}
-      else if (s7_vector_rank(obj)==2) 
-	{
-	  s7_Int *offsets, *dimensions;
-	  dimensions = s7_vector_dimensions(obj);
-	  offsets = s7_vector_offsets(obj);
-	  for (int y = 0; y < dimensions[0]; y++)
-	    for (int x = 0; x < dimensions[1]; x++)
-	      std::cout << "y: " << y << ", x: " << x << ", (2dvec y x): " 
-			<< (int)s7_integer(vector_elements[y * offsets[0] + 
-							   x * offsets[1]])
-			<< "\n";
-	}
-      else if (s7_vector_rank(obj)==3)
-	{
-	  s7_Int *offsets, *dimensions;
-	  dimensions = s7_vector_dimensions(obj);
-	  offsets = s7_vector_offsets(obj);
-	  int zind=data1;
-	  int size=dimensions[1] * dimensions[2];
-	  int* data=new int[size];
-	  int i=0;
-	  for (int y = 0; y < dimensions[1]; y++)
-	    for (int x = 0; x < dimensions[2]; x++)
-	      data[i++]=(int)s7_integer(vector_elements[zind * offsets[0] + 
-							y * offsets[1] +
-							x * offsets[2]]);
-	  sw->listener.postMessage(new Message(CommandIDs::StateWindowSetCells,
-					       size,
-					       0,
-					       (void*)data
-					       ));
-	}
-    }  */
 }
 
 #else
@@ -1332,32 +1289,52 @@ int osc_open(char* port, char* targ)
   return OscPort::getInstance()->open(String(port), String(targ));
 }
 
-bool osc_open_p()
-{
-  return OscPort::getInstance()->isOpen;
-}
-
 int osc_close()
 {
   return OscPort::getInstance()->close();
 }
 
-void osc_set_hook(SCHEMEOBJECT proc)
+bool osc_is_open()
 {
+  return OscPort::getInstance()->isOpen;
+}
+
+s7_pointer osc_set_hook(char* oscpath, s7_pointer proc)
+{
+  String path(oscpath);
+  SchemeThread* st=SchemeThread::getInstance();
   if (s7_is_procedure(proc))
     {
-      if (SchemeThread::getInstance()->isOscHook())
-        SchemeThread::getInstance()->clearOscHook();
-      SchemeThread::getInstance()->setOscHook(proc);
-    }
-  else if (proc == SchemeThread::getInstance()->schemeFalse)
+      st->clearOscHook(path);
+      st->addOscHook(path,proc);
+      return st->schemeTrue;
+    }  
+  else if (st->clearOscHook(path))
+    return st->schemeTrue;
+  else
+    return st->schemeFalse;
+}
+
+s7_pointer osc_is_hook(char* oscpath)
+{
+  // 0=default, nnn=op, -1=any
+  String path(oscpath);
+  SchemeThread* st=SchemeThread::getInstance();
+  if (path==T("*")) // * == return list of all receivers
     {
-      SchemeThread::getInstance()->clearOscHook();
+      // cons up result in reverse order  
+      s7_pointer args=st->schemeNil;
+      for (int i=st->oscHooks.size()-1; i>=0; i--)
+        {
+          String p = st->oscHooks[i]->path;
+          if (p.isEmpty()) // display default path as "/"
+            p=T("/");
+          args=s7_cons(st->scheme, s7_make_string(st->scheme, p.toUTF8()), args);
+        }
+      return args;
     }
   else
-    {
-      SchemeThread::getInstance()->signalSchemeError("osc:hook not a procedure or #f.");      
-    }
+    return (st->isOscHook(path)) ? st->schemeFalse : st->schemeFalse;
 }
 
 static const int oscerr_incomplete_message = 1;

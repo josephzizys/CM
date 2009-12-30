@@ -16,9 +16,33 @@
 #define SCHEMEOBJECT s7_pointer
 #endif
 
-class ConsoleWindow;
 class SchemeThread;
 
+/*=======================================================================*
+                                Input Hook Classes
+ *=======================================================================*/
+
+class OscHook
+{
+ public:
+  String path;
+  s7_pointer proc;
+  OscHook (String oscpath, s7_pointer func) : path (oscpath), proc (func) {}
+  ~OscHook () {}
+};
+
+class MidiHook
+{
+ public:
+  int op;
+  s7_pointer proc;
+  MidiHook (int oper, s7_pointer func) : op (oper), proc (func) {}
+  ~MidiHook () {}
+};
+
+/*=======================================================================*
+                           Scheme Execution Node Classes
+ *=======================================================================*/
 
 class XSchemeNode 
 {
@@ -60,7 +84,17 @@ class XProcessNode : public XSchemeNode
   XProcessNode(double qtime, SCHEMEPROC proc, int qid);
   ~XProcessNode();
   bool applyNode(SchemeThread* schemethread, double curtime);
-  //double applyProcessNode(SchemeThread* schemethread, double elapsed);
+};
+
+class XMidiNode : public XSchemeNode
+{
+public:
+  const MidiMessage mmess;
+  MidiHook* hook;
+  XMidiNode(double qtime, const MidiMessage &mess, MidiHook* huk)
+    : XSchemeNode (qtime), mmess (mess), hook (huk) {}
+  ~XMidiNode(){}
+  bool applyNode(SchemeThread* scheme, double curtime);
 };
 
 class XOscNode : public XSchemeNode
@@ -68,6 +102,7 @@ class XOscNode : public XSchemeNode
  public:
   String path;
   String types;
+  OscHook* hook;
   Array<s7_Int> ints;
   Array<double> flos;
   StringArray strs;
@@ -93,28 +128,13 @@ class XSchemeNodeComparator
   }
 };
 
-//
-// Scheme Thread executes Scheme Nodes in a priority queue.
-//
+/*=======================================================================*
+                              Scheme Thread Singleton
+ *=======================================================================*/
 
 class SchemeThread : public Thread
 {
-
- private:
-
  public:
-  
-  class MidiHook
-  {
-  public:
-    int op;
-    s7_pointer proc;
-    MidiHook (int oper, s7_pointer func) : op (oper), proc (func) {}
-    ~MidiHook () {}
-  };
-  
-
-
   
   SchemeThread() ;
   ~SchemeThread();
@@ -140,25 +160,26 @@ class SchemeThread : public Thread
 
   bool pausing;
   bool sprouted;
-  CriticalSection lock;
+  //  CriticalSection lock;
 
-  // Midi Input Hooks
+  // Midi Receiving
   OwnedArray<MidiHook, CriticalSection> midiHooks;
   void midiin(const MidiMessage &mess);
-  bool isMidiHook(int opr=-1);
+  bool isMidiHook(int opr);
   MidiHook* getMidiHook(int opr, bool strict=false);
   void removeMidiHook(MidiHook* hook);
   bool clearMidiHook(int opr);
   void addMidiHook(int opr, s7_pointer proc);
 
-  // Osc Input Hook
-  CriticalSection oscLock;
-  void setOscHook(s7_pointer hook);
-  void clearOscHook();
-  bool isOscHook();
-  void lockOscHook();
-  void unlockOscHook();
-
+  // Midi Receiving
+  OwnedArray<OscHook, CriticalSection> oscHooks;
+  bool isOscHook(String path=String::empty);
+  OscHook* getOscHook(String path, bool strict=false);
+  void removeOscHook(OscHook* hook);
+  bool clearOscHook(String path);
+  void addOscHook(String path, s7_pointer proc);
+  void receiveOsc(XOscNode* n);
+ 
   int scoremode;
   void setScoreMode(int mode);
   bool isScoreMode();
@@ -166,8 +187,6 @@ class SchemeThread : public Thread
 
   double scoretime;
   double getScoreTime();
-
-
     
   OwnedArray<XSchemeNode, CriticalSection> schemeNodes;
   XSchemeNodeComparator comparator;  
