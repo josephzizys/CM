@@ -96,6 +96,49 @@ bool XEvalNode::applyNode(SchemeThread* schemethread, double curtime)
   return false; 
 }
 
+XSalNode::XSalNode(double qtime, String input /*, OwnedArray<SynTok>* tokens */)
+  : XSchemeNode(qtime),
+    //    toks (tokens),
+    expr (input)
+
+{
+}
+
+XSalNode::~XSalNode()
+{
+  toks.clear();
+}
+
+bool XSalNode::applyNode(SchemeThread* st, double curtime) 
+{
+  s7_scheme* sc=st->scheme;
+  s7_pointer data=st->schemeNil;
+  // cons up token list in reverse order
+  for (int i=toks.size()-1; i>=0; i--)
+    {
+      /*      s7_pointer tok=s7_cons(sc,
+                             s7_make_integer(sc, toks.getUnchecked(i)->type),
+                             s7_cons(sc,
+                                     s7_make_string(sc, toks.getUnchecked(i)->name.toUTF8()),
+                                     s7_cons(sc,
+                                             s7_make_integer(sc, toks.getUnchecked(i)->data1), 
+                                             st->schemeNil)));
+      data=s7_cons(sc, tok, data);
+      */
+      data=s7_cons(sc, s7_make_c_pointer(sc, toks.getUnchecked(i)), data);
+    }
+  // turn data into arglist: ((toks...) )
+  data = s7_cons(sc, data, st->schemeNil);
+  // first arg to 'sal' is input: ("input" (toks...))
+  data = s7_cons(sc, s7_make_string(sc, expr.toUTF8()), data);
+  int prot = s7_gc_protect(sc, data);
+  s7_pointer retn=s7_call(sc,
+                          s7_name_to_value(sc, "sal"),
+                          data);
+  s7_gc_unprotect_at(sc, prot);
+  return false;
+}
+
 // XProcessNode
 
 XProcessNode::XProcessNode(double qtime, s7_pointer proc, int qid)
@@ -782,7 +825,7 @@ void SchemeThread::addNode(XSchemeNode* node)
 
 // addNode for processes
 
-void SchemeThread::sprout(double _time, SCHEMEPROC proc, int _id)
+void SchemeThread::sprout(double _time, s7_pointer proc, int _id)
 {
   // this method is only called by scheme code via sprout() under an
   // eval node.  this means that a lock.enter() is in effect so we

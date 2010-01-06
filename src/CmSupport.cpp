@@ -487,7 +487,7 @@ double cm_now()
   return Time::getMillisecondCounterHiRes() / 1000.0;
 }
 
-void cm_sched_sprout(SCHEMEPROC proc, double time, int id)
+void cm_sched_sprout(s7_pointer proc, double time, int id)
 {
   // if score capture is true AND we are under a process callback then
   // scoretime will be >= 0 else it will be 0
@@ -694,8 +694,9 @@ s7_pointer cm_directory(char* path, bool recurse)
 
 int cm_pathname_to_key(char* path)
 {
-  // parse name for in a case-insensitive note name or key number
-  //  String legal (T("0123456789AaBbCcDdEeFfGg#Ss"));
+  // parse filename for a note or key number at the end. returns
+  // keynum or -1
+
   String name=String(path);
   // ignore file extension if it exists
   int len=name.lastIndexOfChar('.');
@@ -705,21 +706,20 @@ int cm_pathname_to_key(char* path)
   String digis=String(T("0123456789"));
   int pos;
   bool let=false;
+  // parse backwards as long as constituent is keynum or note name
   for (pos=len-1; pos>=0; pos--)
     {
       if (letts.containsChar(name[pos]))
-        let=true;
+        let=true; // have a note name letter
       else if (digis.containsChar(name[pos]))
-        {
+        { // digit not constituent if note name reached
           if (let)
             break;
         }
       else
         break;
     }
-  //  for (pos=len-1; pos>=0; pos--)
-  //    if (!legal.containsChar(name[pos]))
-  //      break;
+  // pos now at end or start of possible note/keynum
   pos++;
   // set name to substring of possible note portion
   if (pos<len)
@@ -729,7 +729,7 @@ int cm_pathname_to_key(char* path)
   // name can be just a key number
   if (name.containsOnly(digis))
     return name.getIntValue();
-  // must have a least a pitch class and an octave
+  // otherwise a note must have a least a pitch class and octave
   if (name.length()<2)
     return -1;
   pos=0;
@@ -781,16 +781,110 @@ int cm_pathname_to_key(char* path)
     return -1;
 }
 
-// Sal support
+/*=======================================================================*
+                                  SAL Support
+ *=======================================================================*/
 
-char* sal_tokenize(char* str)
+s7_pointer sal_allocate_tokens()
 {
-  String toks=SalSyntax::getInstance()->tokenize(String(str));
-  if (toks.isEmpty())
-    return (char *)NULL;
-  return (char *)strdup(toks.toUTF8());  // return copy
+  s7_scheme* sc=SchemeThread::getInstance()->scheme;
+  OwnedArray<SynTok>* ary=new OwnedArray<SynTok>;
+  return s7_make_c_pointer(sc, ary);
 }
 
+s7_pointer sal_free_tokens(s7_pointer ptr)
+{
+  s7_scheme* sc=SchemeThread::getInstance()->scheme;
+  OwnedArray<SynTok>* ary=(OwnedArray<SynTok>*)s7_c_pointer(ptr);
+  delete ary;
+  return s7_unspecified(sc);
+}
+
+s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr)
+{
+  // fil is the lisp string holding a valid pathname
+  // ptr is the C-pointer to an allocated OwnedArray<SynTok>
+  File file (String(s7_string(fil)));  // read sal file 
+  String text=T("begin\n"); // wrap text in begin...end
+  text << file.loadFileAsString()
+       << T("\nend");
+  s7_scheme* sc=SchemeThread::getInstance()->scheme;
+  OwnedArray<SynTok>* ary=(OwnedArray<SynTok>*)s7_c_pointer(ptr);
+  // convert array to lisp list of C tokens  
+  s7_pointer toks=SchemeThread::getInstance()->schemeNil;
+  if (SalSyntax::getInstance()->tokenize(text, *ary))
+    {
+      for (int i=ary->size()-1; i>=0; i--)
+        toks=s7_cons(sc, s7_make_c_pointer(sc, ary->getUnchecked(i)), toks);
+      // sigh. return input string as first arg
+      toks=s7_cons(sc, s7_make_string(sc, text.toUTF8()), toks);
+    }
+  return toks;
+}
+
+void sal_prin1(s7_scheme* sc, s7_pointer ptr, bool quo, String& str)
+{
+  if (ptr==s7_f(sc))
+    str << T("#f");
+  else if (ptr==s7_nil(sc))
+    str << T("{}");
+  else if (s7_is_pair(ptr))
+    {
+      str << T("{");
+      for (s7_pointer p=ptr; s7_is_pair(p); p=s7_cdr(p))
+        {
+          if (p!=ptr)
+            str<<T(" ");
+          sal_prin1(sc, s7_car(p), true, str);
+        }
+      str << T("}");
+    }
+  else if (ptr==s7_t(sc))
+    str << T("#t");
+  else if (s7_is_number(ptr))
+    str << String(s7_number_to_string(sc, ptr, 10));
+  else if (s7_is_string(ptr))
+    {
+      if (quo)
+        str << String(s7_string(ptr)).quoted();
+      else
+        str << String(s7_string(ptr));
+    }
+  else
+    str << String(s7_object_to_c_string(sc, ptr));
+}
+
+s7_pointer sal_print(s7_pointer args)
+{
+  s7_scheme* sc=SchemeThread::getInstance()->scheme;
+  String text=String::empty;
+  while (s7_is_pair(args))
+    {
+      sal_prin1(sc, s7_car(args), false, text);
+      args=s7_cdr(args);
+    }
+  text << T("\n");
+  Console::getInstance()->printOutput(text);
+  return s7_unspecified(sc);
+}
+
+s7_pointer sal_token_type(s7_pointer ptr)
+{
+  SynTok* tok=(SynTok*)s7_c_pointer(ptr);
+  return s7_make_integer(SchemeThread::getInstance()->scheme, tok->type);
+}
+
+s7_pointer sal_token_string(s7_pointer ptr)
+{
+  SynTok* tok=(SynTok*)s7_c_pointer(ptr);
+  return s7_make_string(SchemeThread::getInstance()->scheme, tok->name.toUTF8());
+}
+
+s7_pointer sal_token_position(s7_pointer ptr)
+{
+  SynTok* tok=(SynTok*)s7_c_pointer(ptr);
+  return s7_make_integer(SchemeThread::getInstance()->scheme, tok->data1);
+}
 
 /*
  * port information
@@ -1218,7 +1312,7 @@ bool sw_open_from_xml(char* text)
   return ok;
 }
 
-void sw_draw(char* title, SCHEMEOBJECT obj, int data1, int data2)
+void sw_draw(char* title, s7_pointer obj, int data1, int data2)
 {
   // if obj is a list then data1 is its length and data2 is the row
   // if obj is an integer then data1 is the row and data2 is the column
@@ -1234,7 +1328,7 @@ void sw_draw(char* title, SCHEMEOBJECT obj, int data1, int data2)
     }
   else if (s7_is_pair(obj))
     {
-      SCHEMEOBJECT p,x;
+      s7_pointer p,x;
       int i;
       int* data=new int[data1];
       //std::cout << "sw_show (list): length=" <<data1<<"\n";
@@ -1259,7 +1353,7 @@ void plot_add_xml_points(char* title, char* points){}
 char* plot_data(char* text, int layer) {return (char *)NULL;}
 
 bool sw_open_from_xml(char* s){return false;}
-void sw_draw(char* w, SCHEMEOBJECT obj, int a, int b){}
+void sw_draw(char* w, s7_pointer obj, int a, int b){}
 
 #endif
 
@@ -1612,7 +1706,7 @@ lo_message osc_make_message(s7_pointer pair, String& errstr)
   return NULL;
 }
 
-void osc_send_message(char* path, SCHEMEOBJECT list)
+void osc_send_message(char* path, s7_pointer list)
 {
   int errn=0;
   String errs=String::empty;
@@ -1630,7 +1724,7 @@ void osc_send_message(char* path, SCHEMEOBJECT list)
     SchemeThread::getInstance()->signalSchemeError(errs);
 }
 
-void osc_send_bundle(double time, SCHEMEOBJECT list)
+void osc_send_bundle(double time, s7_pointer list)
 {
   lo_timetag ttag;
   lo_bundle bndl;
@@ -1685,12 +1779,13 @@ void osc_send_bundle(double time, SCHEMEOBJECT list)
 }
 
 #else
-int osc_open(char* port, char* targ){return -1;}
-int osc_close(){return -1;}
-bool osc_open_p(){return false;}
-void osc_send_message(char* path, SCHEMEOBJECT list){}
-void osc_send_bundle(double time, SCHEMEOBJECT list){}
-void osc_set_hook(SCHEMEOBJECT hook){}
+int osc_open(char* port, char* targ){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
+int osc_close(){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
+bool osc_is_open(){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
+s7_pointer osc_set_hook(char* oscpath, s7_pointer proc){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
+s7_pointer osc_is_hook(char* oscpath){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
+void osc_send_message(char* oscpath, s7_pointer list){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
+void osc_send_bundle(double time, s7_pointer list){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
 #endif
 
 

@@ -12,9 +12,9 @@
 
 #ifdef SNDLIB
 #include "s7.h"
-#define SCHEMEPROC s7_pointer
-#define SCHEMEOBJECT s7_pointer
 #endif
+
+#include "Syntax.h";
 
 class SchemeThread;
 
@@ -74,14 +74,25 @@ class XEvalNode : public XSchemeNode
   bool applyNode(SchemeThread* scheme, double curtime);
 };
 
+class XSalNode : public XSchemeNode
+{
+ public:
+  String expr;
+  //OwnedArray<SynTok>* toks;
+  OwnedArray<SynTok> toks;
+  XSalNode(double qtime, String input /*, OwnedArray<SynTok>* tokens*/);
+  ~XSalNode();
+  bool applyNode(SchemeThread* scheme, double curtime);
+};
+
 class XProcessNode : public XSchemeNode
 {
  public:
   double start;
   double elapsed;
-  SCHEMEPROC schemeproc;
+  s7_pointer schemeproc;
   //  int id;
-  XProcessNode(double qtime, SCHEMEPROC proc, int qid);
+  XProcessNode(double qtime, s7_pointer proc, int qid);
   ~XProcessNode();
   bool applyNode(SchemeThread* schemethread, double curtime);
 };
@@ -197,7 +208,7 @@ class SchemeThread : public Thread
   void cleanup();
   String getLispVersion();
 
-  void sprout(double _time, SCHEMEPROC c=0, int _id=-1);
+  void sprout(double _time, s7_pointer c=0, int _id=-1);
   void eval(String str);
   void eval(char* str);
   void load(File file, bool addtorecent=false);

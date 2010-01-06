@@ -5,8 +5,6 @@ This is the readme for Common Music 3.
   3. Building
   4. CM in Emacs
   5. SVN Access
-  6. Developing
-  7. Porting
 
 ==========================================================================
                                APPLICATIONS
@@ -16,14 +14,14 @@ The CM source tree builds three different applications:
 
 Grace (Graphical Realtime Algorithmic Composition Environment) 
 
-   A drag-and-drop GUI with embedded Scheme interpreter (Sndlib or
-   Chicken Scheme), code editor, data plotting, and realtime audio
-   connections to various services like as MIDI, CLM, Csound, Fomus.
+   A drag-and-drop GUI with embedded Scheme interpreter (Sndlib/S7),
+   code editor, data plotter and realtime audio connections to various
+   packages such as MIDI, OSC, CLM, Csound, Fomus.
 
 cm 
 
-   A console (non-gui) version of Grace that can run as an 'inferior
-   process' under Emacs (see section 4 below) or in a Terminal window.
+   A console version of Grace that you can run in the Terminal or as
+   an 'inferior process' under Emacs (see section 4 below).
 
 GraceCL
     
@@ -44,10 +42,6 @@ SndLib with S7 Scheme, available at:
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz
 
-OR Chicken Scheme 3.0.0, available at:
-
-  http://www.call-with-current-continuation.org/
-
 ==========================================================================
                                  BUILDING                                 
 ==========================================================================
@@ -58,16 +52,15 @@ example this is how I build the basic system on my mac:
   $ premake --target gnu --sndlib ../sndlib
   $ make
 
-You MUST specify a --target option (either gnu or vs2008) and EITHER a
---sndlib OR a --chicken installation (directory) that contains that
-system's header files and static lib.
+You MUST specify a --target option (either gnu or vs2008) and a --sndlib
+installation directory
 
 To use an external JUCE installation rather than CM's amalgamated JUCE
 sources (part of the CM source tree) pass an optinal --juce
 installation directory.  To build with Fomus add your --fomus
 installation root as well, typically '--fomus /usr/local'
 
-The --sndlib --chicken, --juce and --fomus options all allow their
+The --sndlib --juce and --fomus options all allow their
 path to be either the source directory (eg '--juce ../juce-1.46') or
 an install root (eg '--juce /usr/local').
 
@@ -162,110 +155,4 @@ To download the svn tip of Common Music type the following command (all
 one line) in your terminal window:
 
 svn co http://commonmusic.svn.sourceforge.net/svnroot/commonmusic/trunk cm
-
-==========================================================================
-                                DEVELOPING                                
-==========================================================================
-
-The following shell commands assume you are in the toplevel cm directory
-
-To build with debugging info turned on:
-
-    make CONFIG=Debug
-
-To create the embedded Scheme runtime sources:
-
-    juce_bb scm src SchemeSources
-
-To create the embedded SndLib instruments:
-
-(
-    cd res/
-    mkdir tmp
-    cd ins
-    cp ins.xml ../tmp
-    zip ins.zip *.scm *.clm
-    mv ins.zip ../tmp/
-    cd ..
-    /usr/local/bin/juce_bb tmp/ ../src/ Instruments
-    rm -r tmp
-)
-
-To create the embedded documetation:
-
-(
-    cd res/
-    mkdir tmp
-    cd doc
-    cp doc.xml ../tmp
-    zip doc.zip *.html *.css *.scm *.sal
-    mv doc.zip ../tmp/
-    cd ..
-    /usr/local/bin/juce_bb tmp/ ../src/ Resources
-    rm -r tmp
-)
-
-To create the other Resources:
-
-(
-    juce_bb res/font src/ Fonts
-    juce_bb res/images src/ Images
-)
-
-To generate FFI files (requires a working 'format'...):
-
-  (load "/Users/hkt/Software/cm/scm/genffi.scm")
-  (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp")
-  (chickenffi "/Users/hkt/Software/cm/scm/chicken-foreign.scm")
-
-To regenerate ChickenBridge.cpp:
-
-(
-    cd scm
-    csc -c++ -embedded -t ChickenBridge.scm
-    mv ChickenBridge.cpp ../src
-)
-
-==========================================================================
-                                  PORTING                                
-==========================================================================
-
-The implementation file for each Scheme (s7.scm, Chicken.scm) defines
-implementation features that are either not provided or unevenly
-provided in scheme implementations. Here is the list of features that
-must be in effect after that file is loaded:
-
-(define-macro a b)
-(define-for-syntax a b)
-(define-record name . slots)
-(define-constant a b)
-(error str . args)
-(format stream fstring . args)
-(when test . forms)
-(unless test . forms)
-(logand i . ints)
-(logior i . ints)
-(logxor i . ints)
-(lognot i)
-(ash a i)
-(fixnum? n)
-most-positive-fixnum
-most-negative-fixnum
-pi
-(object->string x)
-(string->keyword s)
-(keyword->string k)
-(make-equal-hash-table )
-(hash-ref tab key )
-(hash-set! tab key val)
-(random int)
-(list-set! l i v)
-(format #t "~A~S~%" ...)
-(void) 
-(read-from-string str)
-(sort! lst . pred)
-(sort  lst . pred)
-(interaction-environment)
-(error-protected-process-code timevar waitvar
-			      stopping looping stepping )
 

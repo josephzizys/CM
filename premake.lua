@@ -6,7 +6,6 @@ amalgamated = true
 
 addoption("juce", "Location of JUCE source directory or install prefix")
 addoption("sndlib", "Optional location of SNDLIB source directory or install prefix")
-addoption("chicken", "Optional location of CHICKEN source directory or install prefix")
 addoption("fomus", "Optional FOMUS install prefix")
 addoption("liblo", "Optional LIBLO install prefix")
 addoption("svnversion", "Optional SVN version number")
@@ -16,7 +15,6 @@ if options["juce"] then
 end
 
 sndlib = nil
-chicken = nil
 fomus = nil
 liblo = nil
 svnvers = nil
@@ -280,27 +278,8 @@ for i = 1,3 do
          end
       end
 
-------------------------------------------
---           Chicken
-------------------------------------------
-   
-   elseif options["chicken"] then
-      chicken = insure_slash(options["chicken"])
-      add(mypackage.defines, "CHICKEN=1")
-      add(mypackage.files, "src/Chicken.cpp")
-      add(mypackage.files, "src/ChickenBridge.cpp")
-      if os.fileexists(chicken .. "chicken.h") then
-         add(mypackage.includepaths, chicken)
-         add(mypackage.linkoptions, chicken .. "libchicken.a")
-      elseif os.fileexists(chicken .. "include/chicken.h") then
-         add(mypackage.includepaths, chicken .. "include")
-         add(mypackage.libpaths, chicken .. "lib")
-         add(mypackage.links, "chicken")
-      else
-         error("--chicken must point to either chicken source directory or chicken install prefix (eg. /usr or /usr/local)")
-      end
    else
-      error("CM requires a Scheme implementation, add either --sndlib or --chicken to your premake options")
+      error("you must provide a --sndlib installation")
    end
 
 ------------------------------------------

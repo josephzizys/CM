@@ -72,7 +72,7 @@ double cm_bes_jn(int a, double b);
 // scheduling
 
 double cm_now() ;
-void cm_sched_sprout(SCHEMEPROC proc, double time, int id);
+void cm_sched_sprout(s7_pointer proc, double time, int id);
 bool cm_sched_paused_p();
 void cm_sched_pause();
 void cm_sched_continue();
@@ -101,7 +101,14 @@ s7_pointer cm_directory(char* path, bool recurse=true);
 
 // sal support
 
-char* sal_tokenize(char* str);
+//char* sal_tokenize(char* str);
+s7_pointer sal_print(s7_pointer ptr);
+s7_pointer sal_allocate_tokens();
+s7_pointer sal_free_tokens(s7_pointer ptr);
+s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr);
+s7_pointer sal_token_type(s7_pointer ptr);
+s7_pointer sal_token_string(s7_pointer ptr);
+s7_pointer sal_token_position(s7_pointer ptr);
 
 // midi ports
 
@@ -168,17 +175,17 @@ char* plot_data(char* window, int layer);
 //void cw_open(char* title, char* statesandcolors, int rows, int cols, int cellsize, int bordersize);
 
 bool sw_open_from_xml(char* xml);
-void sw_draw(char* window, SCHEMEOBJECT arry, int data1, int data2);
+void sw_draw(char* window, s7_pointer arry, int data1, int data2);
 
 // OSC (if --liblo was specified)
 
 int osc_open(char* port, char* targ);
 int osc_close();
 bool osc_is_open();
-void osc_send_message(char* path, SCHEMEOBJECT list);
-void osc_send_bundle(double time, SCHEMEOBJECT list);
-SCHEMEOBJECT osc_set_hook(char* path, SCHEMEOBJECT proc);
-SCHEMEOBJECT osc_is_hook(char* path);
+s7_pointer osc_set_hook(char* oscpath, s7_pointer proc);
+s7_pointer osc_is_hook(char* oscpath);
+void osc_send_message(char* oscpath, s7_pointer list);
+void osc_send_bundle(double time, s7_pointer list);
 
 #endif
 

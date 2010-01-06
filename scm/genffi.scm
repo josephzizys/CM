@@ -1,6 +1,6 @@
 ;;;***********************************************************************
 
-;;; (begin (load "/Users/hkt/Software/cm/scm/genffi.scm") (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp") (chickenffi "/Users/hkt/Software/cm/scm/chicken-foreign.scm") (exit))
+;;; (begin (load "/Users/hkt/Software/cm/scm/genffi.scm") (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp")  (exit))
 
 (define records
   '(
@@ -10,7 +10,6 @@
     (palin          pos len inc mode elide)
     (random-item    datum index weight min max count id minmax)
     (graph-node     datum to id)
-    (token type     string position)
     (rule name      type pattern parser emiter)
     (parse-error    string position)
     (parse-unit     type parsed position)
@@ -62,7 +61,7 @@
     (ffi_log_two           double "cm_log_two" double )
 
     (ffi_now                   double "cm_now")
-    (ffi_sched_sprout          void   "cm_sched_sprout" SCHEMEPROC double int)
+    (ffi_sched_sprout          void   "cm_sched_sprout" s7_pointer double int)
     (ffi_sched_paused_p        bool   "cm_sched_paused_p")
     (ffi_sched_pause           void   "cm_sched_pause")
     (ffi_sched_continue        void   "cm_sched_continue")
@@ -84,10 +83,16 @@
     (ffi_pathname_writable_p bool "cm_pathname_writable_p" c-string)
     (ffi_pathname_directory_p bool "cm_pathname_directory_p" c-string)
     ;;(ffi_directory c-string "cm_directory" c-string bool)
-    (ffi_directory SCHEMEOBJECT "cm_directory" c-string bool)
+    (ffi_directory s7_pointer "cm_directory" c-string bool)
     (ffi_pathname_to_key int "cm_pathname_to_key" c-string)
 
-    (ffi_sal_tokenize c-string "sal_tokenize" c-string )
+    (ffi_sal_allocate_tokens s7_pointer "sal_allocate_tokens"  )
+    (ffi_sal_free_tokens s7_pointer "sal_free_tokens" s7_pointer)
+    (ffi_sal_tokenize_file s7_pointer "sal_tokenize_file" s7_pointer s7_pointer)
+    (ffi_sal_token_type s7_pointer "sal_token_type" s7_pointer)
+    (ffi_sal_token_string s7_pointer "sal_token_string" s7_pointer)
+    (ffi_sal_token_position s7_pointer "sal_token_position" s7_pointer)
+    (ffi_sal_print s7_pointer "sal_print" s7_pointer)
 
     (ffi_port_info c-string "cm_port_info" )
 
@@ -101,15 +106,15 @@
     (ffi_mp_set_channel_mask void "mp_set_channel_mask" int)
     (ffi_mp_set_message_mask void "mp_set_message_mask" int)
     (ffi_mp_set_tuning void "mp_set_tuning" int)
-    (ffi_mp_set_instruments void "mp_set_instruments" SCHEMEOBJECT)
+    (ffi_mp_set_instruments void "mp_set_instruments" s7_pointer)
     (ffi_mp_play_seq void "mp_play_seq")
     (ffi_mp_save_seq void "mp_save_seq")
     (ffi_mp_copy_seq void "mp_copy_seq")
     (ffi_mp_plot_seq void "mp_plot_seq")
     (ffi_mp_clear_seq void "mp_clear_seq")
 
-    (ffi_mp_set_midi_hook bool "mp_set_midi_hook" int SCHEMEOBJECT)
-    (ffi_mp_is_midi_hook SCHEMEOBJECT "mp_is_midi_hook" int)
+    (ffi_mp_set_midi_hook bool "mp_set_midi_hook" int s7_pointer)
+    (ffi_mp_is_midi_hook s7_pointer "mp_is_midi_hook" int)
 
     (ffi_cs_init_score void "cs_init_score" c-string)
     (ffi_cs_send_score void "cs_send_score" int int double c-string)
@@ -131,15 +136,16 @@
     (ffi_plot_data c-string "plot_data" c-string int)
 
     (ffi_sw_open_from_xml bool "sw_open_from_xml" c-string)
-    (ffi_sw_draw void "sw_draw" c-string SCHEMEOBJECT int int)
+    (ffi_sw_draw void "sw_draw" c-string s7_pointer int int)
 
     (ffi_osc_open int "osc_open" c-string c-string)
     (ffi_osc_close int "osc_close" )
     (ffi_osc_open_p bool "osc_is_open" )
-    (ffi_osc_send_message void "osc_send_message" c-string SCHEMEOBJECT )
-    (ffi_osc_send_bundle void "osc_send_bundle" double SCHEMEOBJECT )
-    (ffi_osc_set_hook SCHEMEOBJECT "osc_set_hook" c-string SCHEMEOBJECT)
-    (ffi_osc_is_hook SCHEMEOBJECT "osc_is_hook" c-string)
+    (ffi_osc_send_message void "osc_send_message" c-string s7_pointer )
+    (ffi_osc_send_bundle void "osc_send_bundle" double s7_pointer )
+    (ffi_osc_set_hook s7_pointer "osc_set_hook" c-string s7_pointer)
+    (ffi_osc_is_hook s7_pointer "osc_is_hook" c-string)
+
     ))
 
 (define (foreign-lambda-scheme-name decl) 
@@ -185,34 +191,6 @@
       (cond ((char=? c #\-) (string-set! cname i #\_))
 	    ((char=? c #\?) (string-set! cname i #\p))
 	    (else (string-set! cname i c))))))
-
-;;
-;;; Chicken FFI 
-;;
-
-(define (ffunc->chicken port func)
-  (let ((args (append (cdr func) (list))))
-    (do ((tail args (cdr tail)))
-	((null? tail) #f)
-      (cond ((or (equal? (car tail) 'SCHEMEPROC)
-		 (equal? (car tail) 'SCHEMEOBJECT))
-	     (set-car! tail 'scheme-object))))
-    (format port "~%~S"
-	    `(define ,(car func) (foreign-lambda ,@ args)))))
-
-(define (record->chicken port rec)
-  (format port "~%~S" (cons 'define-record rec)))
-
-(define (chickenffi file)
-  (with-output-to-file file
-    (lambda ()
-      (let ((port (current-output-port) ))
-	(format port "#>~%#include \"juce.h\"~%#include \"CmSupport.h\"~%<#~%")
-      (do ((specs foreign-functions (cdr specs)))
-	  ((null? specs)
-	   (format port "~%")
-	   )
-	(ffunc->chicken port (car specs)))))))
 
 ;;
 ;;; S7 FFI
@@ -323,8 +301,7 @@
     (integer64  "s7_is_integer" "(int64)s7_integer(s7_car(args))"  "s7_make_integer")
     (bool    "s7_is_boolean" "s7_boolean(s7, s7_car(args))"    "make_s7_boolean")
     (c-string  "s7_is_string"  "(char*)s7_string(s7_car(args))"    "strduped_string") ;"s7_make_string"
-    (SCHEMEPROC "s7_is_procedure" "s7_car(args)" "")
-    (SCHEMEOBJECT "" "s7_car(args)" "")
+    (s7_pointer "" "s7_car(args)" "")
     (void #f #f #f #f)
     )
   )
@@ -354,7 +331,6 @@
 	;;(locals vars)
 	(floats (list))
 	(strings (list))
-	(procs (list))
 	(objs (list))
 	(ints (list))
 	(ints64 (list))
@@ -391,11 +367,9 @@
 	    ((eq? (car args) 'c-string) 
 	     (set! strings (addvar "s" strings))
 	     (set! params (cons (car strings) params)))
-	    ((eq? (car args) 'SCHEMEPROC)
-	     (set! procs (addvar "p" procs))
-	     (set! params (cons (car procs) params)))
-	    ((eq? (car args) 'SCHEMEOBJECT)
-	     (set! objs (addvar "o" objs))
+
+	    ((eq? (car args) 's7_pointer)
+	     (set! objs (addvar "p" objs))
 	     (set! params (cons (car objs) params)))
 	    (else (error "Unsupported type" (car args)))
 	    ))
@@ -404,7 +378,6 @@
     (set! ints64 (reverse ints64))
     (set! bools (reverse bools))
     (set! strings (reverse strings))
-    (set! procs (reverse procs))
     (set! objs (reverse objs))
     (set! params (reverse params))
     (if (not (eq? returntype 'void))
@@ -474,11 +447,9 @@
 	    (set! char*decls (string-append char*decls sep (paramdecl (list (car all)) 'char*)))
 	    (set! sep " " ))
 	  )
-      (if (pair? procs)
-	  (set! func (string-append func pad (paramdecl procs 'SCHEMEPROC))))
 
       (if (pair? objs)
-	  (set! func (string-append func pad (paramdecl objs 'SCHEMEOBJECT))))
+	  (set! func (string-append func pad (paramdecl objs 's7_pointer))))
 
       (do ((tail params (cdr tail))
 	   (args (foreign-lambda-param-types fundecl) (cdr args))
@@ -577,30 +548,11 @@ s7_pointer make_s7_boolean(s7_scheme *s7, bool b)
 	(s7ffi-init port foreign-functions)
 	(format port "~%}~%")
 	)))
-;;  (set! file (string-append (substring file 0 (- (string-length file) 3)) "h"))
-;;  (with-output-to-file file
-;;    (lambda ()
-;;      (let ((port (current-output-port)))
-;;	(format port "#include \"s7.h\"")
-;;	(print-ffi-includes port ffi-includes)
-;;	(format port "~%void cm_init(s7_scheme *s7);")
-;;	(do ((specs foreign-functions (cdr specs)))
-;;	    ((null? specs) #f)
-;;	  (format port "~%s7_pointer ~A(s7_scheme *s7, s7_pointer args);"
-;;		  (foreign-lambda-c-name (car specs))
-;;		  ))
-;;	(do ((specs foreign-functions (cdr specs)))
-;;	    ((null? specs) #f)
-;;	  (format port "~%s7_pointer ~A(s7_scheme *s7, s7_pointer args);"
-;;		  (foreign-lambda-c-name (car specs))
-;;		  ))
-;;	))
-;;    )
+
   )
 
 
 ; (load "/Users/hkt/Software/cm/scm/genffi.scm")
 ; (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp")
-; (chickenffi "/Users/hkt/Software/cm/scm/chicken-foreign.scm")
 
 

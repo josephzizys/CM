@@ -534,9 +534,9 @@ s7_pointer ffi_sched_sprout (s7_scheme *s7, s7_pointer args)
 {
   double f0;
   s7_Int i0;
-  SCHEMEPROC p0;
-  if (!s7_is_procedure(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_sched_sprout", 1, s7_car(args), "a SCHEMEPROC"));
+  s7_pointer p0;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sched_sprout", 1, s7_car(args), "a s7_pointer"));
   p0=s7_car(args);
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
@@ -730,7 +730,7 @@ s7_pointer ffi_directory (s7_scheme *s7, s7_pointer args)
 {
   bool b0;
   char* s0;
-  SCHEMEOBJECT o0;
+  s7_pointer p0;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_directory", 1, s7_car(args), "a c-string"));
   s0=(char*)s7_string(s7_car(args));
@@ -739,8 +739,8 @@ s7_pointer ffi_directory (s7_scheme *s7, s7_pointer args)
     return(s7_wrong_type_arg_error(s7, "ffi_directory", 2, s7_car(args), "a bool"));
   b0=s7_boolean(s7, s7_car(args));
   args=s7_cdr(args);
-  o0=cm_directory(s0, b0);
-  return (s7, o0);
+  p0=cm_directory(s0, b0);
+  return (s7, p0);
 }
 
 s7_pointer ffi_pathname_to_key (s7_scheme *s7, s7_pointer args)
@@ -755,15 +755,81 @@ s7_pointer ffi_pathname_to_key (s7_scheme *s7, s7_pointer args)
   return s7_make_integer(s7, i0);
 }
 
-s7_pointer ffi_sal_tokenize (s7_scheme *s7, s7_pointer args)
+s7_pointer ffi_sal_allocate_tokens (s7_scheme *s7, s7_pointer args)
 {
-  char* s0; char* s1;
-  if (!s7_is_string(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_sal_tokenize", 1, s7_car(args), "a c-string"));
-  s1=(char*)s7_string(s7_car(args));
+  s7_pointer p0;
+  p0=sal_allocate_tokens();
+  return (s7, p0);
+}
+
+s7_pointer ffi_sal_free_tokens (s7_scheme *s7, s7_pointer args)
+{
+  s7_pointer p0, p1;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_free_tokens", 1, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
   args=s7_cdr(args);
-  s0=sal_tokenize(s1);
-  return strduped_string(s7, s0);
+  p0=sal_free_tokens(p1);
+  return (s7, p0);
+}
+
+s7_pointer ffi_sal_tokenize_file (s7_scheme *s7, s7_pointer args)
+{
+  s7_pointer p0, p1, p2;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_tokenize_file", 1, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_tokenize_file", 2, s7_car(args), "a s7_pointer"));
+  p2=s7_car(args);
+  args=s7_cdr(args);
+  p0=sal_tokenize_file(p1, p2);
+  return (s7, p0);
+}
+
+s7_pointer ffi_sal_token_type (s7_scheme *s7, s7_pointer args)
+{
+  s7_pointer p0, p1;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_token_type", 1, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  p0=sal_token_type(p1);
+  return (s7, p0);
+}
+
+s7_pointer ffi_sal_token_string (s7_scheme *s7, s7_pointer args)
+{
+  s7_pointer p0, p1;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_token_string", 1, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  p0=sal_token_string(p1);
+  return (s7, p0);
+}
+
+s7_pointer ffi_sal_token_position (s7_scheme *s7, s7_pointer args)
+{
+  s7_pointer p0, p1;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_token_position", 1, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  p0=sal_token_position(p1);
+  return (s7, p0);
+}
+
+s7_pointer ffi_sal_print (s7_scheme *s7, s7_pointer args)
+{
+  s7_pointer p0, p1;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_print", 1, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  p0=sal_print(p1);
+  return (s7, p0);
 }
 
 s7_pointer ffi_port_info (s7_scheme *s7, s7_pointer args)
@@ -920,12 +986,12 @@ s7_pointer ffi_mp_set_tuning (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_set_instruments (s7_scheme *s7, s7_pointer args)
 {
-  SCHEMEOBJECT o0;
+  s7_pointer p0;
   if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 1, s7_car(args), "a SCHEMEOBJECT"));
-  o0=s7_car(args);
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_instruments", 1, s7_car(args), "a s7_pointer"));
+  p0=s7_car(args);
   args=s7_cdr(args);
-  mp_set_instruments(o0);
+  mp_set_instruments(p0);
   return s7_UNSPECIFIED(s7);
 }
 
@@ -963,29 +1029,29 @@ s7_pointer ffi_mp_set_midi_hook (s7_scheme *s7, s7_pointer args)
 {
   s7_Int i0;
   bool b0;
-  SCHEMEOBJECT o0;
+  s7_pointer p0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_set_midi_hook", 1, s7_car(args), "a int"));
   i0=s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_midi_hook", 2, s7_car(args), "a SCHEMEOBJECT"));
-  o0=s7_car(args);
+    return(s7_wrong_type_arg_error(s7, "ffi_mp_set_midi_hook", 2, s7_car(args), "a s7_pointer"));
+  p0=s7_car(args);
   args=s7_cdr(args);
-  b0=mp_set_midi_hook(i0, o0);
+  b0=mp_set_midi_hook(i0, p0);
   return make_s7_boolean(s7, b0);
 }
 
 s7_pointer ffi_mp_is_midi_hook (s7_scheme *s7, s7_pointer args)
 {
   s7_Int i0;
-  SCHEMEOBJECT o0;
+  s7_pointer p0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_is_midi_hook", 1, s7_car(args), "a int"));
   i0=s7_integer(s7_car(args));
   args=s7_cdr(args);
-  o0=mp_is_midi_hook(i0);
-  return (s7, o0);
+  p0=mp_is_midi_hook(i0);
+  return (s7, p0);
 }
 
 s7_pointer ffi_cs_init_score (s7_scheme *s7, s7_pointer args)
@@ -1189,14 +1255,14 @@ s7_pointer ffi_sw_draw (s7_scheme *s7, s7_pointer args)
 {
   s7_Int i0, i1;
   char* s0;
-  SCHEMEOBJECT o0;
+  s7_pointer p0;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_sw_draw", 1, s7_car(args), "a c-string"));
   s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
   if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_sw_draw", 2, s7_car(args), "a SCHEMEOBJECT"));
-  o0=s7_car(args);
+    return(s7_wrong_type_arg_error(s7, "ffi_sw_draw", 2, s7_car(args), "a s7_pointer"));
+  p0=s7_car(args);
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_sw_draw", 3, s7_car(args), "a int"));
@@ -1206,7 +1272,7 @@ s7_pointer ffi_sw_draw (s7_scheme *s7, s7_pointer args)
     return(s7_wrong_type_arg_error(s7, "ffi_sw_draw", 4, s7_car(args), "a int"));
   i1=s7_integer(s7_car(args));
   args=s7_cdr(args);
-  sw_draw(s0, o0, i0, i1);
+  sw_draw(s0, p0, i0, i1);
   return s7_UNSPECIFIED(s7);
 }
 
@@ -1243,61 +1309,61 @@ s7_pointer ffi_osc_open_p (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_osc_send_message (s7_scheme *s7, s7_pointer args)
 {
   char* s0;
-  SCHEMEOBJECT o0;
+  s7_pointer p0;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_osc_send_message", 1, s7_car(args), "a c-string"));
   s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
   if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_osc_send_message", 2, s7_car(args), "a SCHEMEOBJECT"));
-  o0=s7_car(args);
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_send_message", 2, s7_car(args), "a s7_pointer"));
+  p0=s7_car(args);
   args=s7_cdr(args);
-  osc_send_message(s0, o0);
+  osc_send_message(s0, p0);
   return s7_UNSPECIFIED(s7);
 }
 
 s7_pointer ffi_osc_send_bundle (s7_scheme *s7, s7_pointer args)
 {
   double f0;
-  SCHEMEOBJECT o0;
+  s7_pointer p0;
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_osc_send_bundle", 1, s7_car(args), "a double"));
   f0=s7_number_to_real(s7_car(args));
   args=s7_cdr(args);
   if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_osc_send_bundle", 2, s7_car(args), "a SCHEMEOBJECT"));
-  o0=s7_car(args);
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_send_bundle", 2, s7_car(args), "a s7_pointer"));
+  p0=s7_car(args);
   args=s7_cdr(args);
-  osc_send_bundle(f0, o0);
+  osc_send_bundle(f0, p0);
   return s7_UNSPECIFIED(s7);
 }
 
 s7_pointer ffi_osc_set_hook (s7_scheme *s7, s7_pointer args)
 {
   char* s0;
-  SCHEMEOBJECT o0, o1;
+  s7_pointer p0, p1;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_osc_set_hook", 1, s7_car(args), "a c-string"));
   s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
   if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_osc_set_hook", 2, s7_car(args), "a SCHEMEOBJECT"));
-  o1=s7_car(args);
+    return(s7_wrong_type_arg_error(s7, "ffi_osc_set_hook", 2, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
   args=s7_cdr(args);
-  o0=osc_set_hook(s0, o1);
-  return (s7, o0);
+  p0=osc_set_hook(s0, p1);
+  return (s7, p0);
 }
 
 s7_pointer ffi_osc_is_hook (s7_scheme *s7, s7_pointer args)
 {
   char* s0;
-  SCHEMEOBJECT o0;
+  s7_pointer p0;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_osc_is_hook", 1, s7_car(args), "a c-string"));
   s0=(char*)s7_string(s7_car(args));
   args=s7_cdr(args);
-  o0=osc_is_hook(s0);
-  return (s7, o0);
+  p0=osc_is_hook(s0);
+  return (s7, p0);
 }
 
 
@@ -2232,99 +2298,6 @@ static s7_pointer ffi_set_graph_node_id(s7_scheme *s7, s7_pointer args)
   obj->id=s7_car(args);
   return obj->id;
 }
-static int token_tag = 0;
-typedef struct
-{
-  s7_pointer type;
-  s7_pointer string;
-  s7_pointer position;
-} token;
-static void cm_token_free(void *obj)
-{
-  token *f = (token *)obj;
-  if (f) free(f);
-}
-static bool cm_token_equal(void *obj1, void *obj2)
-{
-  return (obj1 == obj2);
-}
-static void cm_token_mark(void *obj)
-{
-  token *f = (token *)obj;
-  s7_mark_object(f->type);
-  s7_mark_object(f->string);
-  s7_mark_object(f->position);
-}
-static s7_pointer ffi_is_token(s7_scheme *s7, s7_pointer args)
-{
-  return make_s7_boolean(s7, ((s7_is_object(s7_car(args))) &&
-                              (s7_object_type(s7_car(args)) == token_tag)));
-}
-static s7_pointer ffi_make_token(s7_scheme *s7, s7_pointer args)
-{
-  token *obj = (token *)malloc(sizeof(token));
-  obj->type=s7_car(args);
-  args=s7_cdr(args);
-  obj->string=s7_car(args);
-  args=s7_cdr(args);
-  obj->position=s7_car(args);
-  args=s7_cdr(args);
-  return s7_make_object(s7, token_tag, (void *)obj);
-}
-static s7_pointer ffi_get_token_type(s7_scheme *s7, s7_pointer args)
-{
-  token *obj;
-  if (!((s7_is_object(s7_car(args))) && (s7_object_type(s7_car(args)) == token_tag)))
-    return s7_wrong_type_arg_error(s7, "token-type", 1, s7_car(args), "a token");
-  obj = (token *)s7_object_value(s7_car(args));
-  return obj->type;
-}
-static s7_pointer ffi_set_token_type(s7_scheme *s7, s7_pointer args)
-{
-  token *obj;
-  if (!((s7_is_object(s7_car(args))) && (s7_object_type(s7_car(args)) == token_tag)))
-    return s7_wrong_type_arg_error(s7, "token-type-set!", 1, s7_car(args), "a token");
-  obj = (token *)s7_object_value(s7_car(args));
-  args=s7_cdr(args);
-  obj->type=s7_car(args);
-  return obj->type;
-}
-static s7_pointer ffi_get_token_string(s7_scheme *s7, s7_pointer args)
-{
-  token *obj;
-  if (!((s7_is_object(s7_car(args))) && (s7_object_type(s7_car(args)) == token_tag)))
-    return s7_wrong_type_arg_error(s7, "token-string", 1, s7_car(args), "a token");
-  obj = (token *)s7_object_value(s7_car(args));
-  return obj->string;
-}
-static s7_pointer ffi_set_token_string(s7_scheme *s7, s7_pointer args)
-{
-  token *obj;
-  if (!((s7_is_object(s7_car(args))) && (s7_object_type(s7_car(args)) == token_tag)))
-    return s7_wrong_type_arg_error(s7, "token-string-set!", 1, s7_car(args), "a token");
-  obj = (token *)s7_object_value(s7_car(args));
-  args=s7_cdr(args);
-  obj->string=s7_car(args);
-  return obj->string;
-}
-static s7_pointer ffi_get_token_position(s7_scheme *s7, s7_pointer args)
-{
-  token *obj;
-  if (!((s7_is_object(s7_car(args))) && (s7_object_type(s7_car(args)) == token_tag)))
-    return s7_wrong_type_arg_error(s7, "token-position", 1, s7_car(args), "a token");
-  obj = (token *)s7_object_value(s7_car(args));
-  return obj->position;
-}
-static s7_pointer ffi_set_token_position(s7_scheme *s7, s7_pointer args)
-{
-  token *obj;
-  if (!((s7_is_object(s7_car(args))) && (s7_object_type(s7_car(args)) == token_tag)))
-    return s7_wrong_type_arg_error(s7, "token-position-set!", 1, s7_car(args), "a token");
-  obj = (token *)s7_object_value(s7_car(args));
-  args=s7_cdr(args);
-  obj->position=s7_car(args);
-  return obj->position;
-}
 static int rule_tag = 0;
 typedef struct
 {
@@ -2834,15 +2807,6 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "graph-node-to-set!", ffi_set_graph_node_to, 2, 0, false, "set graph-node to slot");
   s7_define_function(s7, "graph-node-id", ffi_get_graph_node_id, 1, 0, false, "get graph-node id slot");
   s7_define_function(s7, "graph-node-id-set!", ffi_set_graph_node_id, 2, 0, false, "set graph-node id slot");
-  token_tag=s7_new_type("<token>", NULL, cm_token_free, cm_token_equal, cm_token_mark, NULL, NULL);
-  s7_define_function(s7, "make-token", ffi_make_token, 3, 0, false, "token constructor");
-  s7_define_function(s7, "token?", ffi_is_token, 1, 0, false, "token predicate");
-  s7_define_function(s7, "token-type", ffi_get_token_type, 1, 0, false, "get token type slot");
-  s7_define_function(s7, "token-type-set!", ffi_set_token_type, 2, 0, false, "set token type slot");
-  s7_define_function(s7, "token-string", ffi_get_token_string, 1, 0, false, "get token string slot");
-  s7_define_function(s7, "token-string-set!", ffi_set_token_string, 2, 0, false, "set token string slot");
-  s7_define_function(s7, "token-position", ffi_get_token_position, 1, 0, false, "get token position slot");
-  s7_define_function(s7, "token-position-set!", ffi_set_token_position, 2, 0, false, "set token position slot");
   rule_tag=s7_new_type("<rule>", NULL, cm_rule_free, cm_rule_equal, cm_rule_mark, NULL, NULL);
   s7_define_function(s7, "make-rule", ffi_make_rule, 5, 0, false, "rule constructor");
   s7_define_function(s7, "rule?", ffi_is_rule, 1, 0, false, "rule predicate");
@@ -2945,7 +2909,13 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_pathname_directory_p", ffi_pathname_directory_p, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_directory", ffi_directory, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_pathname_to_key", ffi_pathname_to_key, 1, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_sal_tokenize", ffi_sal_tokenize, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sal_allocate_tokens", ffi_sal_allocate_tokens, 0, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sal_free_tokens", ffi_sal_free_tokens, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sal_tokenize_file", ffi_sal_tokenize_file, 2, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sal_token_type", ffi_sal_token_type, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sal_token_string", ffi_sal_token_string, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sal_token_position", ffi_sal_token_position, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sal_print", ffi_sal_print, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_port_info", ffi_port_info, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_open_output", ffi_mp_open_output, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_open_input", ffi_mp_open_input, 1, 0, false, "ffi function");
