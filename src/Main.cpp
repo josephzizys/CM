@@ -125,7 +125,7 @@ void Grace::initialise(const juce::String& commandLine)
   AudioManager* aud=AudioManager::getInstance();
   str=aud->initialise(0,2,0,true);
   if (str.isEmpty())
-    aud->isAudioReady(true);
+    aud->configureForUse();
   else
     con->printWarning(T("Warning: Audio Manager: ") + str);
   str=Preferences::getInstance()->getStringProp("LispInitFile");

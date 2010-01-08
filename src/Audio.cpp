@@ -1,5 +1,5 @@
 /*=======================================================================*
-  Copyright (C) 2008 Rick Taube.                                        
+  Copyright (C) 2008-2010 Rick Taube.                                        
   This program is free software; you can redistribute it and/or modify  
   it under the terms of the Lisp Lesser Gnu Public License. The text of 
   this agreement is available at http://www.cliki.net/LLGPL             
@@ -9,6 +9,9 @@
 #include <iostream>
 #include "Console.h"
 #include "Transport.h"
+//#ifdef GRACE
+#include "Preferences.h"
+//#endif
 
 /*=======================================================================*
                             Global Audio Manager
@@ -32,6 +35,21 @@ AudioManager::~AudioManager()
     {
       delete audiofileplayer;
     }
+}
+
+void AudioManager::configureForUse()
+{
+  // this is called AFTER initialize() to configure the device for use
+  AudioDeviceSetup setup;
+  getAudioDeviceSetup(setup);
+  int bufsize=Preferences::getInstance()->getIntProp(T("AudioPlaybackBufferSize"), 512);
+  if (bufsize!=setup.bufferSize)
+    {
+      //std::cout << "device size: " << setup.bufferSize << " setting device size to " <<  bufsize << "\n";
+      setup.bufferSize=bufsize;
+      setAudioDeviceSetup(setup, true);      
+    }
+  isAudioReady(true);
 }
 
 void AudioManager::openAudioFilePlayer(File file, bool play)
@@ -59,9 +77,7 @@ void AudioManager::openAudioFilePlayer(File file, bool play)
     {
       if (file.existsAsFile())
 	{
-	  AudioFormatManager formatManager;
-	  formatManager.registerBasicFormats();
-	  if (formatManager.findFormatForFileExtension
+	  if (audiofileplayer->formatManager.findFormatForFileExtension
 	      (file.getFileExtension())!=NULL)
 	    {
 	      audiofileplayer->setFileToPlay(file, play);
@@ -85,13 +101,7 @@ void AudioManager::openAudioFilePlayer(File file, bool play)
 void AudioManager::openAudioSettings()
 {
   // Open an AudioDeviceSelectorComponent
-
-#if (JUCE_MINOR_VERSION<50)
-  AudioDeviceSelectorComponent comp (*AudioManager::getInstance(), 0, 0, 2, 2, true, false);
-#else
   AudioDeviceSelectorComponent comp (*AudioManager::getInstance(), 0, 2, 0, 2, false, false, true, false);
-#endif
-
   // ...and show it in a DialogWindow...
   comp.setSize(400, 200);
   int b=0, r=0;
@@ -103,24 +113,18 @@ void AudioManager::openAudioSettings()
       if (r < c->getRight())
 	r=c->getRight();
     }
-  //std::cout << "max bottom " << b << " max right " << r << "\n";
   comp.setSize(r+10, b+20);
   DialogWindow::showModalDialog (T("Audio Settings"), &comp, NULL,
 				 Colour(0xffe5e5e5), true);
+  AudioDeviceSetup setup;
+  getAudioDeviceSetup(setup);
+  //std::cout << "setting preferences to " <<  setup.bufferSize << "\n";
+  Preferences::getInstance()->setIntProp(T("AudioPlaybackBufferSize"), setup.bufferSize);
 }
 
 /*=======================================================================*
                             Audio File Player Window
  *=======================================================================*/
-
-class GRACETransport : public Transport
-{
-public:
-  AudioFilePlayer* player;
-  virtual void play(double position);
-  virtual void pause(void);
-  virtual void positionChanged(double position, bool isPlaying);
-};
 
 AudioFilePlayerWindow::AudioFilePlayerWindow (AudioFilePlayer* comp)
   : DocumentWindow(T("Audio File Player"), Colour(0xffe5e5e5),
@@ -128,14 +132,12 @@ AudioFilePlayerWindow::AudioFilePlayerWindow (AudioFilePlayer* comp)
     player (NULL)
 {
   player=comp;
-  player->setSize(450, 350);
   player->setVisible(true);
   setContentComponent(player);
   setResizable(true, true); 
-  //setResizable(false, false); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
-  centreWithSize(450, 10+24+10+24+10+72+10);
+  centreWithSize(450, 200);
   setVisible(true);
 }
 
@@ -151,45 +153,221 @@ void AudioFilePlayerWindow::closeButtonPressed()
 }
 
 /*=======================================================================*
-                               Audio File Player
+                      Waveform View (taken from Juce Demo)
  *=======================================================================*/
 
+class AudioFilePlayer::WaveformComp : public Component, 
+                                      public ChangeListener
+{
+public:
+  WaveformComp()
+    : thumbnailCache (5),
+      thumbnail (512, formatManager, thumbnailCache)
+  {
+    startTime = endTime = 0;
+    formatManager.registerBasicFormats();
+    thumbnail.addChangeListener (this);
+  }
+  ~WaveformComp()
+  {
+    thumbnail.removeChangeListener (this);
+  }
+  void setFile (const File& file)
+  {
+    thumbnail.setSource (new FileInputSource (file));
+    startTime = 0;
+    endTime = thumbnail.getTotalLength();
+  }
+  void setZoomFactor (double amount)
+  {
+    if (thumbnail.getTotalLength() > 0)
+      {
+        double timeDisplayed = jmax (0.001, (thumbnail.getTotalLength() - startTime) * (1.0 - jlimit (0.0, 1.0, amount)));
+        endTime = startTime + timeDisplayed;
+        repaint();
+      }
+  }
+  void mouseWheelMove (const MouseEvent& e, float wheelIncrementX, float wheelIncrementY)
+  {
+    if (thumbnail.getTotalLength() > 0)
+      {
+        double newStart = startTime + (wheelIncrementX + wheelIncrementY) * (endTime - startTime) / 10.0;
+        newStart = jlimit (0.0, thumbnail.getTotalLength() - (endTime - startTime), newStart);
+        endTime = newStart + (endTime - startTime);
+        startTime = newStart;
+        repaint();
+        //std::cout << "startTime="<< startTime<< " endTime="<<endTime<<"\n";
+      }
+  }
+  void mouseDoubleClick(const MouseEvent &e)
+  {
+    // reset display to full waveform, no zoom
+    startTime=0;
+    endTime=thumbnail.getTotalLength();
+    repaint();
+    // a bit gross but we have to reset the zoom slider somehow!
+    AudioFilePlayer* p=(AudioFilePlayer*)getParentComponent();
+    p->zoomSlider->setValue(0.0,false);
+  }
+  void paint (Graphics& g)
+  {
+    g.fillAll (Colours::white);
+    g.setColour (Colours::mediumblue);
+    if (thumbnail.getTotalLength() > 0)
+      {
+        int heightPerChannel = (getHeight() - 4) / thumbnail.getNumChannels();
+        for (int i = 0; i < thumbnail.getNumChannels(); ++i)
+          {
+            thumbnail.drawChannel (g, 2, 2 + heightPerChannel * i,
+                                   getWidth() - 4, heightPerChannel,
+                                   startTime, endTime,
+                                   i, 1.0f);
+          }
+      }
+    else
+      {
+        g.setFont (14.0f);
+        g.drawFittedText ("(No audio file selected)", 0, 0, getWidth(), getHeight(), Justification::centred, 2);
+      }
+  }
+  void changeListenerCallback (void*)
+  {
+    // this method is called by the thumbnail when it has changed, so we should repaint it..
+    repaint();
+  }
+  
+  AudioFormatManager formatManager;
+  AudioThumbnailCache thumbnailCache;
+  AudioThumbnail thumbnail;
+  double startTime, endTime;
+};
+
+/*=======================================================================*
+                              Playback Cursor 
+ *=======================================================================*/
+
+class AudioFilePlayer::PlaybackCursor : public Component
+  // the PlaybackCursor component is transparent and situate in FRONT
+  // of the audio waveform view to isplay the cursor position while
+  // the file is playing. this works pretty well except that the
+  // component has to respond to the mousewheel and doubleClick events
+  // that are actually meant for the waveform view behind it.
+{
+
+public:
+  AudioFilePlayer::WaveformComp* waveform;
+  double position;
+  PlaybackCursor(WaveformComp* thumb) : position (-1.0) 
+  {
+    waveform=thumb;
+  }
+  ~PlaybackCursor(){}
+  void paint (Graphics& g)
+  {
+    if (position>0)
+      {
+        double thisTime=position*waveform->thumbnail.getTotalLength();
+        if (thisTime>=waveform->startTime && thisTime<=waveform->endTime) // portion of wave that is visible
+          {
+            double visibleDuration=waveform->endTime-waveform->startTime ;
+            g.setColour (Colours::grey);
+            g.drawVerticalLine(((thisTime-waveform->startTime)/visibleDuration)*getWidth(), 0, getHeight());
+          }
+      }
+  }
+  void setPosition(double pos)
+  {
+    position=pos;
+    repaint();
+  }  
+  void mouseWheelMove (const MouseEvent& e, float dx, float dy)
+  {
+    waveform->mouseWheelMove(e, dx, dy);
+  }
+  void mouseDoubleClick(const MouseEvent &e)
+  {
+    waveform->mouseDoubleClick(e);
+  } 
+};
+
+/*=======================================================================*
+                             Audio Transport Widget
+ *=======================================================================*/
+
+class AudioFilePlayer::AudioTransport : public Transport
+{
+public:
+  AudioFilePlayer* player;
+  void play(double position)
+  {
+    player->getTransportSource().setPosition(player->getFileDuration()*position);
+    player->getTransportSource().start();
+    player->getSettings()->setEnabled(false);
+  }
+  
+  void pause(void)
+  {
+    player->getTransportSource().stop();
+    player->getSettings()->setEnabled(true);
+  }
+  
+  void positionChanged(double position, bool isPlaying)
+  {
+    //'position' is normalized from 0 to 1.0 
+    //if (isPlaying)
+    double pos=player->getFileDuration()*position;
+    player->getTransportSource().setPosition(player->getFileDuration()*position);
+    player->playbackCursor->setPosition(pos);
+    if(!player->getTransportSource().isPlaying() && isPlaying)
+      {
+        player->getTransportSource().start();
+        player->getSettings()->setEnabled(false);
+      }
+  }
+};
+
 AudioFilePlayer::AudioFilePlayer ()
-  : waveformComponent (0),
-    fileduration (0.0)
+  : 
+  fileChooser (0),
+  audioSettingsButton (0),
+  transport (0),
+  zoomSlider (0),
+  fileduration (0.0)
 {
   setName(T("Audio File Player"));
   currentAudioFileSource = 0;
-  AudioFormatManager formatManager;
+  //AudioFormatManager formatManager;
   formatManager.registerBasicFormats();
   fileChooser=new FilenameComponent(T("audiofile"),  File::nonexistent,
 				    true, false, false, 
-			    formatManager.getWildcardForAllFormats(),
+                                    formatManager.getWildcardForAllFormats(),
 				    String::empty, T(""));
   addAndMakeVisible(fileChooser);
   fileChooser->addListener (this);
   fileChooser->setBrowseButtonText(T("File..."));
-  audioSettingsButton=new TextButton(T("Settings..."),
+  audioSettingsButton=new TextButton(T("Audio Settings..."),
 				     T("Configure audio settings"));
   addAndMakeVisible (audioSettingsButton);
   audioSettingsButton->addButtonListener(this);
-  transport=new GRACETransport();
+  transport=new AudioTransport();
   transport->addAndMakeVisible(this);
   transport->player=this;
-  addAndMakeVisible (waveformComponent = new AudioInputWaveformDisplay());
-  // register for start/stop messages from the transport source..
+
+  addAndMakeVisible (waveform=new WaveformComp());
+  addAndMakeVisible (playbackCursor=new PlaybackCursor(waveform));
+
+  addAndMakeVisible (zoomSlider = new Slider (String::empty));
+  zoomSlider->setRange (0, 1, 0);
+  zoomSlider->setSliderStyle (Slider::LinearHorizontal);
+  zoomSlider->setTextBoxStyle (Slider::NoTextBox, false, 80, 20);
+  zoomSlider->addListener (this);
+  zoomSlider->setSkewFactor (2);
+
   transportSource.addChangeListener (this);
   if (AudioManager::getInstance()->isAudioReady())
     {
-      mixerSource.addInputSource (&transportSource, false);
-      // ..and connect the mixer to our source player.
-      audioSourcePlayer.setSource (&mixerSource);
-      // start the IO device pulling its data from our callback..
-#if (JUCE_MINOR_VERSION<50)
-      AudioManager::getInstance()->setAudioCallback (this);
-#else
+      audioSourcePlayer.setSource (&transportSource);
       AudioManager::getInstance()->addAudioCallback (this);
-#endif
     }
   else
     {
@@ -199,11 +377,7 @@ AudioFilePlayer::AudioFilePlayer ()
 
 AudioFilePlayer::~AudioFilePlayer()
 {
-#if (JUCE_MINOR_VERSION<50)
-  audioDeviceManager.setAudioCallback (0);
-#else
   audioDeviceManager.removeAudioCallback (this);
-#endif
   transportSource.removeChangeListener (this);
   transportSource.setSource (0);
   deleteAndZero (currentAudioFileSource);
@@ -213,17 +387,22 @@ AudioFilePlayer::~AudioFilePlayer()
 
 void AudioFilePlayer::resized()
 {
-  float x=10, y=10;
-  float r=getWidth();
-  float b=getHeight();
-  audioSettingsButton->setBounds(r-80-10, y, 80, 24);
-  fileChooser->setBounds(x, y, audioSettingsButton->getX()-10-x, 24);
-  y=audioSettingsButton->getBottom()+10;
-  // center transport in window's width (6 buttons each 44px)
-  transport->setPositions((r/2)-(44*3), y, 44, 24);
-  // transport has two lines
-  y=y+24+24+10;
-  waveformComponent->setBounds(x, y, r-10-10, b-y-10);
+  float m=8, l=24;
+  float x=m, y=m;
+  float w=getWidth();
+  float h=getHeight();
+  fileChooser->setBounds(x, y, w-(m*2), l);
+  y=y+l+m;
+  // transport has 6 buttons, each 44px centered in window's width
+  transport->setPositions((w/2)-(44*3), y, 44, 24);
+  // transport consists of two lines
+  y=y+l+l+m;
+  // calculate zoom and setting's button from bottom of window
+  audioSettingsButton->setBounds(w-m-124, h-m-l, 124, l);
+  zoomSlider->setBounds(x, h-m-l, 124, l);
+  // waveform takes remainder of space
+  waveform->setBounds(x, y, w-(m*2), (audioSettingsButton->getY()-m)-y);
+  playbackCursor->setBounds(x, y, w-m, (audioSettingsButton->getY()-m)-y);
 }
 
 AudioTransportSource& AudioFilePlayer::getTransportSource()
@@ -241,7 +420,6 @@ void AudioFilePlayer::setFileToPlay(File file, bool play)
   fileChooser->setCurrentFile(file, true, true);
   if (play)
     {
-      //transport->play(0.0); // THIS DOESNT WORK
       transport->pushButton(Transport::PlayFromBeginningButton);
     }
 }
@@ -256,35 +434,6 @@ TextButton* AudioFilePlayer::getSettings()
   return audioSettingsButton;
 }
 
-void GRACETransport::play(double position)
-{
-  player->getTransportSource().
-    setPosition(player->getFileDuration()*position);
-  player->getTransportSource().start();
-  player->getSettings()->setEnabled(false);
-  player->waveformComponent->audioDeviceAboutToStart(0);
-}
-
-void GRACETransport::pause(void)
-{
-  player->getTransportSource().stop();
-  player->getSettings()->setEnabled(true);
-  player->waveformComponent->audioDeviceStopped();
-}
-
-void GRACETransport::positionChanged(double position, bool isPlaying)
-{
-  //'position' is normalized from 0 to 1.0 
-  //if (isPlaying)
-  player->getTransportSource().
-      setPosition(player->getFileDuration()*position);
-  if(!player->getTransportSource().isPlaying() && isPlaying)
-  {
-    player->getTransportSource().start();
-    player->getSettings()->setEnabled(false);
-  }
-}
-
 void AudioFilePlayer::filenameComponentChanged (FilenameComponent*)
 {
   // this is called when the user changes the file in the chooser
@@ -296,12 +445,13 @@ void AudioFilePlayer::filenameComponentChanged (FilenameComponent*)
   deleteAndZero(currentAudioFileSource);
   
   // get a format manager and init with the basic types (wav and aiff).
-  AudioFormatManager formatManager;
-  formatManager.registerBasicFormats();
+  //  AudioFormatManager formatManager;
+  //  formatManager.registerBasicFormats();
   AudioFormatReader* reader = formatManager.createReaderFor(audioFile);
-  
+
   if (reader != 0)
     {
+      waveform->setFile(audioFile);
       currentFile = audioFile;
       currentAudioFileSource = new AudioFormatReaderSource (reader, true);
       // ..and plug it into our transport source
@@ -328,11 +478,7 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
 					  outputChannelData,
 					  totalNumOutputChannels, 
 					  numSamples);
-  waveformComponent->audioDeviceIOCallback(inputChannelData,
-					   totalNumInputChannels,
-					   outputChannelData,
-					   totalNumOutputChannels,
-					   numSamples);
+
   // update transport slider to make it move left to right during
   // playback. this not as straightforward as is should be because (1)
   // juce is triggering this callback even if a file is not playing
@@ -347,16 +493,21 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
   }
   else if(!wasStreamFinished && transportSource.hasStreamFinished())
   {
+    const MessageManagerLock mmLock;
     transport->pushButton(Transport::StopButton);
     wasStreamFinished = !wasStreamFinished;
+    playbackCursor->setPosition(-1);
   }
 
   if (counter==10) // downsample to avoid juce crash
   {
     if (transportSource.isPlaying())
-      transport->setPosition(transportSource.getCurrentPosition() /
-      getFileDuration());
-
+      {
+        const MessageManagerLock mmLock;
+        double pos=transportSource.getCurrentPosition()/getFileDuration();
+        transport->setPosition(pos);
+        playbackCursor->setPosition(pos);
+      }
     counter=0;
   }
   else 
@@ -366,13 +517,13 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
 void AudioFilePlayer::audioDeviceAboutToStart (AudioIODevice* device)
 {
   audioSourcePlayer.audioDeviceAboutToStart(device);
-  waveformComponent->audioDeviceAboutToStart(device);
+  ////waveformComponent->audioDeviceAboutToStart(device);
 }
 
 void AudioFilePlayer::audioDeviceStopped()
 {
   audioSourcePlayer.audioDeviceStopped();
-  waveformComponent->audioDeviceStopped();
+  ////waveformComponent->audioDeviceStopped();
 }
 
 void AudioFilePlayer::buttonClicked (Button* button)
@@ -382,6 +533,15 @@ void AudioFilePlayer::buttonClicked (Button* button)
       AudioManager::getInstance()->openAudioSettings();
     }
 }
+
+void AudioFilePlayer::sliderValueChanged (Slider* slider)
+{
+  if (slider == zoomSlider)
+    {
+      waveform->setZoomFactor(zoomSlider->getValue());
+    }
+}
+
 void AudioFilePlayer::changeListenerCallback (void*)
 {
 }
