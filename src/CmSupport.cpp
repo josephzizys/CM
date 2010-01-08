@@ -1779,11 +1779,11 @@ void osc_send_bundle(double time, s7_pointer list)
 }
 
 #else
-int osc_open(char* port, char* targ){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
-int osc_close(){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
-bool osc_is_open(){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
-s7_pointer osc_set_hook(char* oscpath, s7_pointer proc){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
-s7_pointer osc_is_hook(char* oscpath){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
+int osc_open(char* port, char* targ){SchemeThread::getInstance()->signalSchemeError(T("OSC not available.")); return -1;}
+int osc_close(){SchemeThread::getInstance()->signalSchemeError(T("OSC not available.")); return -1;}
+bool osc_is_open(){SchemeThread::getInstance()->signalSchemeError(T("OSC not available.")); return false;}
+s7_pointer osc_set_hook(char* oscpath, s7_pointer proc){SchemeThread::getInstance()->signalSchemeError(T("OSC not available.")); return 0;}
+s7_pointer osc_is_hook(char* oscpath){SchemeThread::getInstance()->signalSchemeError(T("OSC not available.")); return 0;}
 void osc_send_message(char* oscpath, s7_pointer list){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
 void osc_send_bundle(double time, s7_pointer list){SchemeThread::getInstance()->signalSchemeError(T("OSC not available."));}
 #endif
