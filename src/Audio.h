@@ -45,6 +45,8 @@ class AudioFilePlayer : public Component,
   FilenameComponent* fileChooser;
   TextButton* audioSettingsButton;
   Slider* zoomSlider;
+  Label* minTime;
+  Label* maxTime;
 
   friend class AudioTransport;
   AudioTransport* transport;

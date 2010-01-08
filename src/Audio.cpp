@@ -177,6 +177,7 @@ public:
     thumbnail.setSource (new FileInputSource (file));
     startTime = 0;
     endTime = thumbnail.getTotalLength();
+    updateTimeDisplay();
   }
   void setZoomFactor (double amount)
   {
@@ -185,7 +186,16 @@ public:
         double timeDisplayed = jmax (0.001, (thumbnail.getTotalLength() - startTime) * (1.0 - jlimit (0.0, 1.0, amount)));
         endTime = startTime + timeDisplayed;
         repaint();
+        updateTimeDisplay();
       }
+  }
+  void updateTimeDisplay()
+  {
+    AudioFilePlayer* p=(AudioFilePlayer*)getParentComponent();
+    String text=String::formatted(T("< %07.3f"), startTime);
+    p->minTime->setText(text, false);
+    text=String::formatted(T("%07.3f >"), endTime);
+    p->maxTime->setText(text, false);
   }
   void mouseWheelMove (const MouseEvent& e, float wheelIncrementX, float wheelIncrementY)
   {
@@ -196,6 +206,7 @@ public:
         endTime = newStart + (endTime - startTime);
         startTime = newStart;
         repaint();
+        updateTimeDisplay();
         //std::cout << "startTime="<< startTime<< " endTime="<<endTime<<"\n";
       }
   }
@@ -208,6 +219,7 @@ public:
     // a bit gross but we have to reset the zoom slider somehow!
     AudioFilePlayer* p=(AudioFilePlayer*)getParentComponent();
     p->zoomSlider->setValue(0.0,false);
+    updateTimeDisplay();
   }
   void paint (Graphics& g)
   {
@@ -353,9 +365,18 @@ AudioFilePlayer::AudioFilePlayer ()
   transport->addAndMakeVisible(this);
   transport->player=this;
 
+ // add labels for seconds display
+  Font secsfont (10, Font::plain);
+  addAndMakeVisible (minTime=new Label(T(""), T("< 000.000")));
+  minTime->setFont(secsfont);
+  minTime->setSize(secsfont.getStringWidth(minTime->getText()), secsfont.getHeight());
+  addAndMakeVisible (maxTime=new Label(T(""), T("000.000 >")));
+  maxTime->setFont(secsfont);
+  maxTime->setSize(minTime->getWidth(), minTime->getHeight());
+
   addAndMakeVisible (waveform=new WaveformComp());
   addAndMakeVisible (playbackCursor=new PlaybackCursor(waveform));
-
+ 
   addAndMakeVisible (zoomSlider = new Slider (String::empty));
   zoomSlider->setRange (0, 1, 0);
   zoomSlider->setSliderStyle (Slider::LinearHorizontal);
@@ -403,6 +424,8 @@ void AudioFilePlayer::resized()
   // waveform takes remainder of space
   waveform->setBounds(x, y, w-(m*2), (audioSettingsButton->getY()-m)-y);
   playbackCursor->setBounds(x, y, w-m, (audioSettingsButton->getY()-m)-y);
+  minTime->setTopLeftPosition(waveform->getX(), waveform->getY()-minTime->getHeight());
+  maxTime->setTopRightPosition(w-m, waveform->getY()-maxTime->getHeight());
 }
 
 AudioTransportSource& AudioFilePlayer::getTransportSource()
