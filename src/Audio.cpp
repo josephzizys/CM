@@ -259,11 +259,11 @@ public:
  *=======================================================================*/
 
 class AudioFilePlayer::PlaybackCursor : public Component
-  // the PlaybackCursor component is transparent and situate in FRONT
-  // of the audio waveform view to isplay the cursor position while
-  // the file is playing. this works pretty well except that the
-  // component has to respond to the mousewheel and doubleClick events
-  // that are actually meant for the waveform view behind it.
+  // PlaybackCursor is a transparent component placed in FRONT of the
+  // audio waveform display for drawing the playback cursor while the
+  // file is playing. this works pretty well except that the component
+  // has to have mousewheel and doubleClick methods so that it can
+  // forward these events to the waveform view behind it.
 {
 
 public:

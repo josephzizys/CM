@@ -230,6 +230,7 @@ const PopupMenu CommandMenus::getHelpMenu(int wtype,
   menu.addSubMenu(T("Manuals"), mans);
   if (!SysInfo::isGraceCL())
     {
+      PopupMenu tutorials, examples;
       help->addHelpMenuItems(salexamps, T("Sal Examples"), CommandIDs::HelpSalExample, 32, comm);
       salexamps.addSeparator();
       salexamps.addCommandItem(comm, CommandIDs::HelpSalExamplesRestore);
@@ -246,16 +247,15 @@ const PopupMenu CommandMenus::getHelpMenu(int wtype,
       scmtuts.addSeparator();
       scmtuts.addCommandItem(comm, CommandIDs::HelpSchemeTutorialsRestore);
 
-      menu.addSeparator();
-      menu.addSubMenu(T("Sal Tutorials"), saltuts);
-      menu.addSubMenu(T("Sal Examples"), salexamps);
-      menu.addSeparator();
-      menu.addSubMenu(T("Scheme Tutorials"), scmtuts);
-      menu.addSubMenu(T("Scheme Examples"), scmexamps);
-    }
+      tutorials.addSubMenu(T("Sal"), saltuts);
+      tutorials.addSubMenu(T("Scheme"), scmtuts);
+      menu.addSubMenu(T("Tutorials"), tutorials);
 
+      examples.addSubMenu(T("Sal"), salexamps);
+      examples.addSubMenu(T("Scheme"), scmexamps);
+      menu.addSubMenu(T("Examples"), examples);
+    }
   help->addHelpMenuItems(sites, T("Web Sites"), CommandIDs::HelpWebSite, 8, comm);
-  menu.addSeparator();
   menu.addSubMenu(T("Web Sites"), sites);
 
   //  menu.addSeparator();

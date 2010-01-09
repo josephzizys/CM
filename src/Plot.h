@@ -10,7 +10,7 @@
 
 #include "juce.h"
 
-// LayerPoint: a point with a (variable) number of plottable float fields.
+// LayerPoint: a point with a (variable) number of plottable double fields.
 
 typedef int PlotID;
 
@@ -26,15 +26,15 @@ class PlotIDs
 class LayerPoint
 {
  public:
-  float * vals;
-  LayerPoint(int n) {vals=new float[n];}
+  double * vals;
+  LayerPoint(int n) {vals=new double[n];}
   ~LayerPoint() {delete[] vals;}
-  float getVal(int i) {return vals[i];}
-  void setVal(int i, float f) {vals[i]=f;} 
-  void incVal(int i, float f) {vals[i]+=f;} 
-  void subVal(int i, float f) {vals[i]-=f;} 
-  void mulVal(int i, float f) {vals[i]*=f;} 
-  void divVal(int i, float f) {vals[i]/=f;} 
+  double getVal(int i) {return vals[i];}
+  void setVal(int i, double f) {vals[i]=f;} 
+  void incVal(int i, double f) {vals[i]+=f;} 
+  void subVal(int i, double f) {vals[i]-=f;} 
+  void mulVal(int i, double f) {vals[i]*=f;} 
+  void divVal(int i, double f) {vals[i]/=f;} 
 };
 
 class Axis
@@ -88,7 +88,7 @@ class Axis
   int getDecimals() {return decimals;}
   void setDecimals(int v) {decimals=v;}
   double getRange() {return to-from;}
-  float rescale(float val, Axis* orig){
+  double rescale(double val, Axis* orig){
     return (getMinimum() + 
 	    (getRange() * ((val - orig->getMinimum()) / 
 			   orig->getRange())));
@@ -251,7 +251,7 @@ class Layer
   void setLayerFieldDefaults(LayerPoint* p){_defaults=p;}
   bool isPoints() {return (_points.size()>0);}
   void sortPoints () {_points.sort(*this);}
-  int addPoint(float x, float y) 
+  int addPoint(double x, double y) 
   {
     LayerPoint* p =  new LayerPoint(arity);
     initPoint(p);
@@ -276,62 +276,62 @@ class Layer
 
   int getPointIndex(LayerPoint* p) {return _points.indexOf(p);}
 
-  float getPointX(int i) {return _points[i]->getVal(_x);}
-  float getPointX(LayerPoint* p) {return p->getVal(_x);}
-  float getPointY(int i) {return _points[i]->getVal(_y);}
-  float getPointY(LayerPoint* p) {return p->getVal(_y);}
-  float getPointZ(int i) {return _points[i]->getVal(_z);} 
-  float getPointZ(LayerPoint* p) {return p->getVal(_z);}
+  double getPointX(int i) {return _points[i]->getVal(_x);}
+  double getPointX(LayerPoint* p) {return p->getVal(_x);}
+  double getPointY(int i) {return _points[i]->getVal(_y);}
+  double getPointY(LayerPoint* p) {return p->getVal(_y);}
+  double getPointZ(int i) {return _points[i]->getVal(_z);} 
+  double getPointZ(LayerPoint* p) {return p->getVal(_z);}
 
-  void setPointX(int i, float f) {_points[i]->setVal(_x, f);}
-  void setPointX(LayerPoint* p, float f) {p->setVal(_x, f);}
-  void setPointY(int i, float f) {_points[i]->setVal(_y, f);}
-  void setPointY(LayerPoint* p, float f) {p->setVal(_y, f);}
-  void setPointZ(int i, float f) {_points[i]->setVal(_z, f);}
-  void setPointZ(LayerPoint* p, float f) {p->setVal(_z, f);}
+  void setPointX(int i, double f) {_points[i]->setVal(_x, f);}
+  void setPointX(LayerPoint* p, double f) {p->setVal(_x, f);}
+  void setPointY(int i, double f) {_points[i]->setVal(_y, f);}
+  void setPointY(LayerPoint* p, double f) {p->setVal(_y, f);}
+  void setPointZ(int i, double f) {_points[i]->setVal(_z, f);}
+  void setPointZ(LayerPoint* p, double f) {p->setVal(_z, f);}
 
-  void incPointX(int i, float f) {_points[i]->incVal(_x, f);}
-  void incPointX(LayerPoint* p, float f) {p->incVal(_x, f);}
-  void incPointY(int i, float f) {_points[i]->incVal(_y, f);}
-  void incPointY(LayerPoint* p, float f) {p->incVal(_y, f);}
-  void incPointZ(int i, float f) {_points[i]->incVal(_z, f);}
-  void incPointZ(LayerPoint* p, float f) {p->incVal(_z, f);}
+  void incPointX(int i, double f) {_points[i]->incVal(_x, f);}
+  void incPointX(LayerPoint* p, double f) {p->incVal(_x, f);}
+  void incPointY(int i, double f) {_points[i]->incVal(_y, f);}
+  void incPointY(LayerPoint* p, double f) {p->incVal(_y, f);}
+  void incPointZ(int i, double f) {_points[i]->incVal(_z, f);}
+  void incPointZ(LayerPoint* p, double f) {p->incVal(_z, f);}
 
-  void mulPointX(int i, float f) {_points[i]->mulVal(_x, f);}
-  void mulPointX(LayerPoint* p, float f) {p->mulVal(_x, f);}
-  void mulPointY(int i, float f) {_points[i]->mulVal(_y, f);}
-  void mulPointY(LayerPoint* p, float f) {p->mulVal(_y, f);}
-  void mulPointZ(int i, float f) {_points[i]->mulVal(_z, f);}
-  void mulPointZ(LayerPoint* p, float f) {p->mulVal(_z, f);}
+  void mulPointX(int i, double f) {_points[i]->mulVal(_x, f);}
+  void mulPointX(LayerPoint* p, double f) {p->mulVal(_x, f);}
+  void mulPointY(int i, double f) {_points[i]->mulVal(_y, f);}
+  void mulPointY(LayerPoint* p, double f) {p->mulVal(_y, f);}
+  void mulPointZ(int i, double f) {_points[i]->mulVal(_z, f);}
+  void mulPointZ(LayerPoint* p, double f) {p->mulVal(_z, f);}
 
-  void setPoint(int i, float x, float y) 
+  void setPoint(int i, double x, double y) 
   {
     _points[i]->setVal(_x, x);
     _points[i]->setVal(_y, y);
   }
-  void setPoint(LayerPoint* p, float x, float y)
+  void setPoint(LayerPoint* p, double x, double y)
   {
     p->setVal(_x, x);
     p->setVal(_y, y);
   }
   
-  void incPoint(int i, float x, float y) 
+  void incPoint(int i, double x, double y) 
   {
     _points[i]->incVal(_x, x);
     _points[i]->incVal(_y, y);
   }
-  void incPoint(LayerPoint* p, float x, float y) 
+  void incPoint(LayerPoint* p, double x, double y) 
   {
     p->incVal(_x, x);
     p->incVal(_y, y);
   }
   
-  void mulPoint(int i, float x, float y)
+  void mulPoint(int i, double x, double y)
   {
     _points[i]->mulVal(_x, x);
     _points[i]->mulVal(_y, y);
   }
-  void mulPoint(LayerPoint* p, float x, float y)
+  void mulPoint(LayerPoint* p, double x, double y)
   {
     p->mulVal(_x, x);
     p->mulVal(_y, y);

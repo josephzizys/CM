@@ -75,7 +75,7 @@ Axis::Axis (XmlElement* ax)
       int num=range.size()-arg;
       if (num>=2)
         {
-          float f, t, b, k;
+          double f, t, b, k;
           if (num==2)
             {
               f=range[arg].getFloatValue();
@@ -617,18 +617,18 @@ public:
     return focuslayer->getPointIndex(selection.getSelectedItem(i));
   }
 
-  void dragSelection(float x, float y);
-  void shiftSelection(int orient, float delta);
-  void rescaleSelection (int orient, float newlow, float newhigh);
+  void dragSelection(double x, double y);
+  void shiftSelection(int orient, double delta);
+  void rescaleSelection (int orient, double newlow, double newhigh);
 
-  void getSelectionRange(int orient, float& low, float& high);
-  float getSelectionMin(Plotter::Orientation orient);
+  void getSelectionRange(int orient, double& low, double& high);
+  double getSelectionMin(Plotter::Orientation orient);
 
-  bool isInside(float x, float y, float left, float top,
-		float right, float bottom);
+  bool isInside(double x, double y, double left, double top,
+		double right, double bottom);
 
   // this shuold be a layer method...
-  void selectPointsInside(float left, float top, float right, float bottom) ;
+  void selectPointsInside(double left, double top, double right, double bottom) ;
 
   void printSelection() {
     printf("#<Selection:");
@@ -642,11 +642,11 @@ void PlotView::setSelection(LayerPoint* p) {
   selection.selectOnly(p);
 }
 
-float PlotView::getSelectionMin(Plotter::Orientation orient)
+double PlotView::getSelectionMin(Plotter::Orientation orient)
 {
-  std::numeric_limits<float> info;
-  float (Layer::*getter) (LayerPoint* p) ;
-  float lim=info.max();
+  std::numeric_limits<double> info;
+  double (Layer::*getter) (LayerPoint* p) ;
+  double lim=info.max();
 
   if (orient == Plotter::horizontal)
     getter = &Layer::getPointX;
@@ -659,12 +659,12 @@ float PlotView::getSelectionMin(Plotter::Orientation orient)
   return lim;
 }
 
-void PlotView::getSelectionRange(int orient, float& low, float& high)
+void PlotView::getSelectionRange(int orient, double& low, double& high)
 {
-  std::numeric_limits<float> info;
+  std::numeric_limits<double> info;
   low=info.max();
   high=info.min();
-  float x;
+  double x;
   if (orient==Plotter::horizontal)
     for (int i=0; i<numSelected(); i++) 
       {
@@ -681,14 +681,14 @@ void PlotView::getSelectionRange(int orient, float& low, float& high)
       }
 }
    
-void PlotView::dragSelection(float dx, float dy) 
+void PlotView::dragSelection(double dx, double dy) 
 {
   int n=numSelected();
   for (int i=0; i<n; i++)
     focuslayer->incPoint( getSelected(i), dx, dy);
 }
 
-void PlotView::shiftSelection(int orient, float delta) 
+void PlotView::shiftSelection(int orient, double delta) 
 {
   if (delta==0.0) return;
   int n=numSelected();
@@ -711,10 +711,10 @@ void PlotView::shiftSelection(int orient, float delta)
   repaintFocusPlot();
 }
 
-void PlotView::rescaleSelection (int orient, float newmin, float newmax)
+void PlotView::rescaleSelection (int orient, double newmin, double newmax)
 {
   LayerPoint* p;
-  float oldmin, oldmax;
+  double oldmin, oldmax;
   double v;
   getSelectionRange(orient, oldmin, oldmax);
   if ((oldmin==newmin) && (oldmax==newmax))
@@ -725,7 +725,7 @@ void PlotView::rescaleSelection (int orient, float newmin, float newmax)
 	p=getSelected(i);
 	v=cm_rescale(focuslayer->getPointY(p), oldmin, oldmax,
 		     newmin, newmax, 1);
-	focuslayer->setPointY(p,(float)v);
+	focuslayer->setPointY(p,(double)v);
       }
     else 
     {
@@ -734,7 +734,7 @@ void PlotView::rescaleSelection (int orient, float newmin, float newmax)
 	  p=getSelected(i);
 	  v=cm_rescale(focuslayer->getPointX(p), oldmin, oldmax,
 		       newmin, newmax, 1);
-	  focuslayer->setPointX(p,(float)v);
+	  focuslayer->setPointX(p,(double)v);
 	}
       focuslayer->sortPoints();
     }      
@@ -874,7 +874,7 @@ void drawGrid(Graphics& g, AxisView* haxview, AxisView* vaxview,
   g.setColour(c1);
 }
 
-bool PlotView::isInside(float x, float y, float l, float t, float r, float b) 
+bool PlotView::isInside(double x, double y, double l, double t, double r, double b) 
 {
   if ((l <= x) && (x <= r) && (b <= y) && (y <= t))
     return true;
@@ -882,7 +882,7 @@ bool PlotView::isInside(float x, float y, float l, float t, float r, float b)
     return false;
 }
 
-void PlotView::selectPointsInside(float l, float t, float r, float b)
+void PlotView::selectPointsInside(double l, double t, double r, double b)
 {
   //printf("looking in region: left=%f top=%f, right=%f, bottom=%f\n",x1, y2, x2, y1);
   //deselectAll();
@@ -1026,8 +1026,8 @@ void PlotView::mouseDrag(const MouseEvent &e) {
   AxisView * vaxview=plotter->getVerticalAxisView();
   
   if ( isSelection() ) {
-    float dx=haxview->toValue(e.x) - haxview->toValue(mousemove.getX()) ;
-    float dy=vaxview->toValue(e.y) - vaxview->toValue(mousemove.getY()) ;
+    double dx=haxview->toValue(e.x) - haxview->toValue(mousemove.getX()) ;
+    double dy=vaxview->toValue(e.y) - vaxview->toValue(mousemove.getY()) ;
     //    for (int i=0; i<numSelected(); i++)
     //      focuslayer->incPoint( getSelected(i), dx, dy);
     dragSelection(dx, dy);
@@ -1058,10 +1058,10 @@ void PlotView::mouseUp(const MouseEvent &e)
   else
     {
       // get region extent before closing region!
-      float l = region.minX();
-      float t = region.maxY();
-      float r = region.maxX();
-      float b = region.minY();
+      double l = region.minX();
+      double t = region.maxY();
+      double r = region.maxX();
+      double b = region.minY();
       region.endSweep(e);
       selectPointsInside(l,t,r,b);
       removeChildComponent(&region);
@@ -3751,7 +3751,7 @@ void RescalePointsDialog::buttonClicked (Button* button)
     }
   if (command==CommandIDs::PlotterRescalePoints)
     {
-      float low,high;
+      double low,high;
       plotter->plotview->getSelectionRange(orient,low,high);
       editor1->setText(String(low));
       editor2->setText(String(high));
@@ -3767,7 +3767,7 @@ void RescalePointsDialog::buttonClicked (Button* button)
 void RescalePointsDialog::textEditorReturnKeyPressed (TextEditor& editor)
 {
   String str=editor1->getText().trim();
-  float num1, num2;
+  double num1, num2;
   if (!isNumberText(str))
     return;
   num1=str.getFloatValue();

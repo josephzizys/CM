@@ -196,12 +196,12 @@
 ;;; S7 FFI
 ;;
 
-(define (record->s7 port spec)
+(define (record->s7 port spec tagn)
   (let* ((sname (record-name spec))
 	 (cname (name->cname sname))
 	 (tag (string-append cname "_tag"))
 	 )
-    (format port "~%static int ~A = 0;~%" tag)
+    (format port "~%static int ~A = ~A;~%" tag tagn)
     ;; STRUCT
     (format port "typedef struct~%{")
     (do ((tail (record-slots spec) (cdr tail)))
@@ -288,7 +288,7 @@
 		  sname sslot cname cslot sname sslot)))
       )))
 
-;; (record->s7 #t '(record foo bar baz))
+;; (record->s7 #t '(record foo bar baz) 666)
 ;; (s7record-init #t '(record foo bar baz))
 
 (define s7-value-converters
@@ -297,9 +297,9 @@
 
     (double  "s7_is_real"    "s7_number_to_real(s7_car(args))"     "s7_make_real")
     (float   "s7_is_real"    "s7_number_to_real(s7_car(args))"     "s7_make_real")
-    (int     "s7_is_integer" "s7_integer(s7_car(args))"            "s7_make_integer")
+    (int     "s7_is_integer" "(int)s7_integer(s7_car(args))"       "s7_make_integer")
     (integer64  "s7_is_integer" "(int64)s7_integer(s7_car(args))"  "s7_make_integer")
-    (bool    "s7_is_boolean" "s7_boolean(s7, s7_car(args))"    "make_s7_boolean")
+    (bool    "s7_is_boolean" "s7_boolean(s7, s7_car(args))"        "make_s7_boolean")
     (c-string  "s7_is_string"  "(char*)s7_string(s7_car(args))"    "strduped_string") ;"s7_make_string"
     (s7_pointer "" "s7_car(args)" "")
     (void #f #f #f #f)
@@ -431,7 +431,7 @@
       (if (pair? floats)
 	  (set! func (string-append func pad (paramdecl floats 'double))))
       (if (pair? ints)
-	  (set! func (string-append func pad (paramdecl ints 's7_Int)))) ;int
+	  (set! func (string-append func pad (paramdecl ints 'int)))) ;int s7_Int
       (if (pair? ints64)
 	  (set! func (string-append func pad (paramdecl ints64 'int64))))
       (if (pair? bools)
@@ -538,10 +538,11 @@ s7_pointer make_s7_boolean(s7_scheme *s7, bool b)
 	  (format port (fundecl->s7 (car specs) )))
 	;; record definitions
 	(format port "~%~%// record definitions~%~%")
-	(do ((specs records (cdr specs)))
+	(do ((specs records (cdr specs))
+             (tagn 666 (+ tagn 1)))
 	    ((null? specs)
 	     file)
-	  (record->s7 port (car specs) ))
+	  (record->s7 port (car specs) tagn))
 	(format port "~%~%// cm_init definitions~%~%")
 	(format port "~%void cm_init(s7_scheme *s7)~%{")
 	(s7record-init port records)

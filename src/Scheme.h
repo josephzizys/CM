@@ -14,7 +14,7 @@
 #include "s7.h"
 #endif
 
-#include "Syntax.h";
+#include "Syntax.h"
 
 class SchemeThread;
 

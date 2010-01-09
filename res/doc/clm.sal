@@ -1,0 +1,76 @@
+;; wave is a sinewave with envelope controls on amp and gliss
+;; you can load it via "Audio>SndLib>Open Instrument Browser"
+;; it requires four values: time, duration, frequency amplitude
+;; you can use soundfile to generate a sound file from send
+;; statements inside it:
+
+soundfile "test.wav" ()
+  send "wave", 0, 1, 440, .05
+end
+
+;; wave and soundfile can take optional keyword args:
+
+soundfile "test.wav" (srate: 44100, channels: 2)
+  send "wave", 0, 1, 440, .05
+  send "wave", 0, 4, hz("c4"), .05, glissando: 1.5,
+       ampenv: {0 0 2 1 99 1 100 0},
+       glissenv: {0 0 25 0 75 1 100 1}
+end
+
+;; inside soundfile you can declare local variables and use loops
+;; and sound events to not have to be ordered by start time
+
+soundfile "test.wav" (channels: 2, srate: 44100)
+  with amp = .08
+  send "wave", 0, 1, 440, amp
+  send "wave", 0, 1.5, 220, .5, ampenv: {0 1 1 .2}
+  send "wave", 8, 1.5, 2000, .5, ampenv: {0 1 1 .2}
+  send "wave", 1, 1, 660, amp
+  send "wave", 2, 5, 523, amp
+  send "wave", 0, 1, 880, amp
+  loop repeat 10 for i from 2 by .5
+    send "wave", 3 + i, .5, between(220, 880),
+         rescale(i, 0, 4, amp, amp * .25)
+  end
+end
+
+;; now try out a wave process. its always safest to call
+;; elapsed(#t) to pass the true (absolute) score time to
+;; the clm instrument
+
+define process simpwav(n, r, d, lb, ub)
+  run repeat n
+    for k = between(lb, ub)
+    send "wave", elapsed(#t), d, hz(k), .1
+    wait r
+  end
+
+sprout simpwav(10, .2, .1, 60, 80), "wave.wav"
+
+;; additive gong
+
+define process gong(num, dur, freq, amp, loc, dist, rev)
+ run repeat num
+   for frq = between(freq, freq * 3)
+   send "wave", elapsed(#t), dur, frq, amp,
+        ampenv: {0 0 1 1 10 .5 40 .2 100 0},
+        reverb: rev,
+        location: loc,
+        distance: dist
+  end
+
+sprout gong(2, 2, 440, .1, 45, 0, 0), "gong.wav"
+
+sprout gong(8, 2, 440, .05, 45, 0, 0), "gong.wav", channels: 2
+
+;; define a process to sprout gong processes
+
+define process gongalong(num, rate, dur, freqenv)
+  run for i below num
+    sprout gong(pick(2, 3), dur, interp(i / num, freqenv),
+                .05, 45, 0, 0)
+    wait rate
+  end
+
+sprout gongalong(20, .5, 2, {0 440 1 300}), "gongalong.wav"
+

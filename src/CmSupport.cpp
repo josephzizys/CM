@@ -32,11 +32,11 @@
 //#include "lo/lo.h"
 #endif
 
-#define POWF(a,b)	(powf( (a) , (b) ))
-#define LOGF(a)		(logf( (a) ))
-#define EXPF(a)		(expf( (a) ))
-#define SQRTF(a)	(sqrtf( (a) ))
-#define TANF(a)		(tanf( (a) ))
+//#define POWF(a,b)	(powf( (a) , (b) ))
+//#define LOGF(a)		(logf( (a) ))
+//#define EXPF(a)		(expf( (a) ))
+//#define SQRTF(a)	(sqrtf( (a) ))
+//#define TANF(a)		(tanf( (a) ))
 
 #ifdef _MSC_VER
 #define strdup _strdup
@@ -164,7 +164,7 @@ double cm_rescale(double x, double x1, double x2, double y1, double y2, double b
   else
     {
       double p = (x - x1) / (x2 - x1);
-      return y1 + ( ( (y2 - y1) / (b - 1.0)) * (POWF(b, p) - 1.0));
+      return y1 + ( ( (y2 - y1) / (b - 1.0)) * (pow(b, p) - 1.0)); // POWF
     }
 }
 
@@ -193,18 +193,18 @@ double cm_quantize(double val, double step)
 
 double cm_rhythm_to_seconds(double beats, double tempo, double beat)
 {
-  return (double) ((beats / beat) * (60.0f / tempo)) ;
+  return (double) ((beats / beat) * (60.0 / tempo)) ;
 }
 
 double cm_cents_to_scaler(double cents)
 {
-  double p = ((double)cents)/1200.0f;
-  return POWF(2.0f,p);
+  double p = cents/1200.0;
+  return pow(2.0,p); //POWF
 }
 
 double cm_scaler_to_cents(double scaler)
 {
-  return (LOGF(scaler)/LOGF(2.0)) * 1200.0;
+  return (log(scaler)/log(2.0)) * 1200.0; // LOGF
 }
 
 double cm_scaler_to_steps(double scaler)
@@ -247,7 +247,7 @@ double cm_geoseg(int i, int len, double sum, double base)
 double cm_hertz_to_keynum (double hz)
 {
   // subtract 3 shifts to A
-  return (((LOGF(hz) - LOGF(A00) ) / LOGF(2)) * 12) - 3;
+  return (((log(hz) - log(A00) ) / log(2)) * 12) - 3; // LOGF
 }
 
 double cm_keynum_to_hertz(double kn)
@@ -319,7 +319,7 @@ double cm_ranhigh()
 
 double cm_ranmiddle()
 {
-  return (ranstate.nextDouble() + ranstate.nextDouble()) / 2.0f;
+  return (ranstate.nextDouble() + ranstate.nextDouble()) / 2.0;
 }
 
 double cm_ranbeta (double a, double b)
@@ -328,26 +328,26 @@ double cm_ranbeta (double a, double b)
   while (true) {
     r1 = ranstate.nextDouble();
     r2 = ranstate.nextDouble();
-    y1 = POWF(r1,ra);
-    y2 = POWF(r2,rb);
+    y1 = pow(r1,ra); //POWF
+    y2 = pow(r2,rb); //POWF
     sum=y1+y2;
-    if ( sum <= 1.0) return (double) (y1 / sum);
+    if ( sum <= 1.0) return (y1 / sum);
   }
 }
 
 double cm_ranexp (double lambda)
 {
-  return (- LOGF(1.0f - ranstate.nextDouble())) / lambda;
+  return (- log(1.0 - ranstate.nextDouble())) / lambda; // LOGF
 }
 
 double cm_ranexp2 (double lambda)
 {
-  double ee = (2 * EXPF(-1.0));
+  double ee = (2 * exp(-1.0)); // EXPF
   double u, v;
   while ( true ) {
     u = 1.0 - ranstate.nextDouble();
     v = ee * ranstate.nextDouble();
-    if ( v <= (ee * u * LOGF(u)) )
+    if ( v <= (ee * u * log(u)) ) //LOGF
       return (v / u) / lambda;
   }
 }
@@ -370,17 +370,17 @@ double cm_rangauss (double sigma, double mu)
       r2 = x * x + y * y;
     }
   while (r2 > 1.0 || r2 == 0);
-  return (sigma * y * SQRTF(-2.0 * LOGF(r2) / r2))+mu;
+  return (sigma * y * sqrt(-2.0 * log(r2) / r2))+mu; //SQRTF LOGF
 }
 
 double cm_rancauchy()
 {
-  return(TANF(juce::double_Pi*(ranstate.nextDouble() - 0.5f)));
+  return(tan(juce::double_Pi*(ranstate.nextDouble() - 0.5))); //TANF
 }
 
 int cm_ranpoisson (double lambda)
 {
-  double b = EXPF( - lambda);
+  double b = exp( - lambda); // EXPF
   int n = 0;
   double p = 1.0;
   while (true)
@@ -397,7 +397,7 @@ double cm_rangamma (double nu)
   int n=(int)round(nu);
   for (int i=0; i<n; i++)
     r = r * (1 - ranstate.nextDouble());
-  return - LOGF(r);
+  return - log(r); //LOGF
 }
 
 //// http://home.earthlink.net/~ltrammell/tech/pinkalg.htm
@@ -427,7 +427,7 @@ double one_over_f_aux(int n, double *r, double halfrange)
   double sum=0.0;
   for (int i=0; i<POW2; i++) 
     {
-      double p = POWF(2.0, i);
+      double p = pow(2.0, i); //POWF
       if (! ((n / p) == ((n - 1) / p)))
 	r[i]=( (ranstate.nextDouble() * 2 * halfrange) - halfrange) ;
       sum += r[i];
@@ -466,7 +466,7 @@ double cm_ranbrown()
     {
       double  r = ranstate.nextDouble()*2-1;
       b += r;
-      if (b<-16.0f || b>16.0f) b -= r;
+      if (b<-16.0 || b>16.0) b -= r;
       else break;
     }
   // return interval -1 1.

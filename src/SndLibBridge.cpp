@@ -126,7 +126,7 @@ s7_pointer ffi_rescale (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_discrete (s7_scheme *s7, s7_pointer args)
 {
   double f0, f1, f2, f3;
-  s7_Int i0, i1, i2;
+  int i0, i1, i2;
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_discrete", 1, s7_car(args), "a double"));
   f0=s7_number_to_real(s7_car(args));
@@ -141,11 +141,11 @@ s7_pointer ffi_discrete (s7_scheme *s7, s7_pointer args)
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_discrete", 4, s7_car(args), "a int"));
-  i1=s7_integer(s7_car(args));
+  i1=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_discrete", 5, s7_car(args), "a int"));
-  i2=s7_integer(s7_car(args));
+  i2=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_discrete", 6, s7_car(args), "a double"));
@@ -158,7 +158,7 @@ s7_pointer ffi_discrete (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_float_to_fixnum (s7_scheme *s7, s7_pointer args)
 {
   double f0;
-  s7_Int i0;
+  int i0;
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_float_to_fixnum", 1, s7_car(args), "a double"));
   f0=s7_number_to_real(s7_car(args));
@@ -237,14 +237,14 @@ s7_pointer ffi_scaler_to_steps (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_explseg (s7_scheme *s7, s7_pointer args)
 {
   double f0, f1, f2;
-  s7_Int i0, i1;
+  int i0, i1;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_explseg", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_explseg", 2, s7_car(args), "a int"));
-  i1=s7_integer(s7_car(args));
+  i1=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_explseg", 3, s7_car(args), "a double"));
@@ -261,14 +261,14 @@ s7_pointer ffi_explseg (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_geoseg (s7_scheme *s7, s7_pointer args)
 {
   double f0, f1, f2;
-  s7_Int i0, i1;
+  int i0, i1;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_geoseg", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_geoseg", 2, s7_car(args), "a int"));
-  i1=s7_integer(s7_car(args));
+  i1=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_geoseg", 3, s7_car(args), "a double"));
@@ -296,7 +296,7 @@ s7_pointer ffi_keynum_to_hertz (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_keynum_to_pc (s7_scheme *s7, s7_pointer args)
 {
   double f0;
-  s7_Int i0;
+  int i0;
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_keynum_to_pc", 1, s7_car(args), "a double"));
   f0=s7_number_to_real(s7_car(args));
@@ -329,10 +329,10 @@ s7_pointer ffi_ranseed (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_ranint (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0, i1;
+  int i0, i1;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_ranint", 1, s7_car(args), "a int"));
-  i1=s7_integer(s7_car(args));
+  i1=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   i0=cm_ranint(i1);
   return s7_make_integer(s7, i0);
@@ -351,14 +351,14 @@ s7_pointer ffi_ranfloat (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_ranint2 (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0, i1, i2;
+  int i0, i1, i2;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_ranint2", 1, s7_car(args), "a int"));
-  i1=s7_integer(s7_car(args));
+  i1=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_ranint2", 2, s7_car(args), "a int"));
-  i2=s7_integer(s7_car(args));
+  i2=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   i0=cm_ranint2(i1, i2);
   return s7_make_integer(s7, i0);
@@ -462,7 +462,7 @@ s7_pointer ffi_rancauchy (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_ranpoisson (s7_scheme *s7, s7_pointer args)
 {
   double f0;
-  s7_Int i0;
+  int i0;
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_ranpoisson", 1, s7_car(args), "a double"));
   f0=s7_number_to_real(s7_car(args));
@@ -488,10 +488,10 @@ s7_pointer ffi_ranbrown (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_bes_jn (s7_scheme *s7, s7_pointer args)
 {
   double f0, f1;
-  s7_Int i0;
+  int i0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_bes_jn", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_bes_jn", 2, s7_car(args), "a double"));
@@ -533,7 +533,7 @@ s7_pointer ffi_now (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_sched_sprout (s7_scheme *s7, s7_pointer args)
 {
   double f0;
-  s7_Int i0;
+  int i0;
   s7_pointer p0;
   if (!(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_sched_sprout", 1, s7_car(args), "a s7_pointer"));
@@ -545,7 +545,7 @@ s7_pointer ffi_sched_sprout (s7_scheme *s7, s7_pointer args)
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_sched_sprout", 3, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   cm_sched_sprout(p0, f0, i0);
   return s7_UNSPECIFIED(s7);
@@ -572,10 +572,10 @@ s7_pointer ffi_sched_continue (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_sched_stop (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_sched_stop", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   cm_sched_stop(i0);
   return s7_UNSPECIFIED(s7);
@@ -597,10 +597,10 @@ s7_pointer ffi_sched_score_mode_p (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_sched_set_score_mode (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_sched_set_score_mode", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   cm_sched_set_score_mode(i0);
   return s7_UNSPECIFIED(s7);
@@ -745,7 +745,7 @@ s7_pointer ffi_directory (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_pathname_to_key (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   char* s0;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_pathname_to_key", 1, s7_car(args), "a c-string"));
@@ -841,11 +841,11 @@ s7_pointer ffi_port_info (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_open_output (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   bool b0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_open_output", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   b0=mp_open_output(i0);
   return make_s7_boolean(s7, b0);
@@ -853,11 +853,11 @@ s7_pointer ffi_mp_open_output (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_open_input (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   bool b0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_open_input", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   b0=mp_open_input(i0);
   return make_s7_boolean(s7, b0);
@@ -865,10 +865,10 @@ s7_pointer ffi_mp_open_input (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_close_output (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_close_output", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   mp_close_output(i0);
   return s7_UNSPECIFIED(s7);
@@ -876,10 +876,10 @@ s7_pointer ffi_mp_close_output (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_close_input (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_close_input", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   mp_close_input(i0);
   return s7_UNSPECIFIED(s7);
@@ -926,10 +926,10 @@ s7_pointer ffi_mp_send_note (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_mp_send_data (s7_scheme *s7, s7_pointer args)
 {
   double f0, f1, f2, f3;
-  s7_Int i0;
+  int i0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_send_data", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_send_data", 2, s7_car(args), "a double"));
@@ -953,10 +953,10 @@ s7_pointer ffi_mp_send_data (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_set_channel_mask (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_set_channel_mask", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   mp_set_channel_mask(i0);
   return s7_UNSPECIFIED(s7);
@@ -964,10 +964,10 @@ s7_pointer ffi_mp_set_channel_mask (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_set_message_mask (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_set_message_mask", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   mp_set_message_mask(i0);
   return s7_UNSPECIFIED(s7);
@@ -975,10 +975,10 @@ s7_pointer ffi_mp_set_message_mask (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_set_tuning (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_set_tuning", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   mp_set_tuning(i0);
   return s7_UNSPECIFIED(s7);
@@ -1027,12 +1027,12 @@ s7_pointer ffi_mp_clear_seq (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_set_midi_hook (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   bool b0;
   s7_pointer p0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_set_midi_hook", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_set_midi_hook", 2, s7_car(args), "a s7_pointer"));
@@ -1044,11 +1044,11 @@ s7_pointer ffi_mp_set_midi_hook (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_mp_is_midi_hook (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   s7_pointer p0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_mp_is_midi_hook", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   p0=mp_is_midi_hook(i0);
   return (s7, p0);
@@ -1068,15 +1068,15 @@ s7_pointer ffi_cs_init_score (s7_scheme *s7, s7_pointer args)
 s7_pointer ffi_cs_send_score (s7_scheme *s7, s7_pointer args)
 {
   double f0;
-  s7_Int i0, i1;
+  int i0, i1;
   char* s0;
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_cs_send_score", 1, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_cs_send_score", 2, s7_car(args), "a int"));
-  i1=s7_integer(s7_car(args));
+  i1=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_real(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_cs_send_score", 3, s7_car(args), "a double"));
@@ -1092,7 +1092,7 @@ s7_pointer ffi_cs_send_score (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_fms_open_score (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   char* s0; char* s1;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_fms_open_score", 1, s7_car(args), "a c-string"));
@@ -1187,7 +1187,7 @@ s7_pointer ffi_fms_save (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_fms_isfiletype (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   char* s0;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_fms_isfiletype", 1, s7_car(args), "a c-string"));
@@ -1225,7 +1225,7 @@ s7_pointer ffi_plot_add_xml_points (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_plot_data (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   char* s0; char* s1;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_plot_data", 1, s7_car(args), "a c-string"));
@@ -1233,7 +1233,7 @@ s7_pointer ffi_plot_data (s7_scheme *s7, s7_pointer args)
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_plot_data", 2, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   s0=plot_data(s1, i0);
   return strduped_string(s7, s0);
@@ -1253,7 +1253,7 @@ s7_pointer ffi_sw_open_from_xml (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_sw_draw (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0, i1;
+  int i0, i1;
   char* s0;
   s7_pointer p0;
   if (!s7_is_string(s7_car(args)))
@@ -1266,11 +1266,11 @@ s7_pointer ffi_sw_draw (s7_scheme *s7, s7_pointer args)
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_sw_draw", 3, s7_car(args), "a int"));
-  i0=s7_integer(s7_car(args));
+  i0=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   if (!s7_is_integer(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_sw_draw", 4, s7_car(args), "a int"));
-  i1=s7_integer(s7_car(args));
+  i1=(int)s7_integer(s7_car(args));
   args=s7_cdr(args);
   sw_draw(s0, p0, i0, i1);
   return s7_UNSPECIFIED(s7);
@@ -1278,7 +1278,7 @@ s7_pointer ffi_sw_draw (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_osc_open (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   char* s0; char* s1;
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_osc_open", 1, s7_car(args), "a c-string"));
@@ -1294,7 +1294,7 @@ s7_pointer ffi_osc_open (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_osc_close (s7_scheme *s7, s7_pointer args)
 {
-  s7_Int i0;
+  int i0;
   i0=osc_close();
   return s7_make_integer(s7, i0);
 }
@@ -1371,7 +1371,7 @@ s7_pointer ffi_osc_is_hook (s7_scheme *s7, s7_pointer args)
 // record definitions
 
 
-static int period_tag = 0;
+static int period_tag = 666;
 typedef struct
 {
   s7_pointer count;
@@ -1530,7 +1530,7 @@ static s7_pointer ffi_set_period_reps(s7_scheme *s7, s7_pointer args)
   obj->reps=s7_car(args);
   return obj->reps;
 }
-static int pattern_tag = 0;
+static int pattern_tag = 667;
 typedef struct
 {
   s7_pointer flags;
@@ -1865,7 +1865,7 @@ static s7_pointer ffi_set_pattern_cache(s7_scheme *s7, s7_pointer args)
   obj->cache=s7_car(args);
   return obj->cache;
 }
-static int palin_tag = 0;
+static int palin_tag = 668;
 typedef struct
 {
   s7_pointer pos;
@@ -2002,7 +2002,7 @@ static s7_pointer ffi_set_palin_elide(s7_scheme *s7, s7_pointer args)
   obj->elide=s7_car(args);
   return obj->elide;
 }
-static int random_item_tag = 0;
+static int random_item_tag = 669;
 typedef struct
 {
   s7_pointer datum;
@@ -2205,7 +2205,7 @@ static s7_pointer ffi_set_random_item_minmax(s7_scheme *s7, s7_pointer args)
   obj->minmax=s7_car(args);
   return obj->minmax;
 }
-static int graph_node_tag = 0;
+static int graph_node_tag = 670;
 typedef struct
 {
   s7_pointer datum;
@@ -2298,7 +2298,7 @@ static s7_pointer ffi_set_graph_node_id(s7_scheme *s7, s7_pointer args)
   obj->id=s7_car(args);
   return obj->id;
 }
-static int rule_tag = 0;
+static int rule_tag = 671;
 typedef struct
 {
   s7_pointer name;
@@ -2435,7 +2435,7 @@ static s7_pointer ffi_set_rule_emiter(s7_scheme *s7, s7_pointer args)
   obj->emiter=s7_car(args);
   return obj->emiter;
 }
-static int parse_error_tag = 0;
+static int parse_error_tag = 672;
 typedef struct
 {
   s7_pointer string;
@@ -2506,7 +2506,7 @@ static s7_pointer ffi_set_parse_error_position(s7_scheme *s7, s7_pointer args)
   obj->position=s7_car(args);
   return obj->position;
 }
-static int parse_unit_tag = 0;
+static int parse_unit_tag = 673;
 typedef struct
 {
   s7_pointer type;
@@ -2599,7 +2599,7 @@ static s7_pointer ffi_set_parse_unit_position(s7_scheme *s7, s7_pointer args)
   obj->position=s7_car(args);
   return obj->position;
 }
-static int spectrum_tag = 0;
+static int spectrum_tag = 674;
 typedef struct
 {
   s7_pointer time;

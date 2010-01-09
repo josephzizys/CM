@@ -48,7 +48,7 @@ bool Syntax::isWhiteBetween(const String txt, int lb, int ub) {
   // SKIP_WHITE WHEN ITS FIXED.
   int end=skip_chars(txt, T(" \t"), lb, ub);
   if (end==ub) return true;
-  if (char_comment_p(syntab, txt[end])) return true;
+  if (char_comment_p(syntab, (char)txt[end])) return true;
   return false;
 }
 
@@ -88,7 +88,7 @@ bool TextSyntax::isTopLevel(String line)
   // true if line is empty or white in column zero.
   if ( line == String::empty )
     return true;
-  else if ( char_white_p(syntab, line[0]) )
+  else if ( char_white_p(syntab, (char)line[0]) )
     return true;
   else return false;
 }
@@ -182,7 +182,7 @@ int LispSyntax::getIndent(const String text, int bot, int top, int beg)
   // Tabbed. bot and top are exclusive limits for search. beg is
   // starting position of backwards scan
   int pos=beg;
-  int loc, typ, col, far, sx1, sx2;
+  int loc, typ, sx1, sx2;
   int open, args, arg1, name;
   int standard_indent;
   SynTok * tok;
@@ -752,12 +752,12 @@ bool SalSyntax::tokenize(String str, OwnedArray<SynTok>& tokenstream)
 	  tok=new SynTok(T(","), SalComma, beg );
 	  break;
 	case SCAN_OPEN :
-	  if ( paren_char_p(str[beg]) ) 
+	  if ( paren_char_p( (char)str[beg]) ) 
 	    {
 	      lev[0]++;
 	      tok=new SynTok(T("("), SalLParen, beg);
 	    }
-	  else if ( curly_char_p(str[beg]) )
+	  else if ( curly_char_p( (char)str[beg]) )
 	    {
 	      lev[1]++;
 	      tok=new SynTok(T("{"), SalLCurly, beg);
@@ -768,12 +768,12 @@ bool SalSyntax::tokenize(String str, OwnedArray<SynTok>& tokenstream)
 	  }
 	  break;
 	case SCAN_CLOSE :
-	  if ( paren_char_p(str[beg]) )
+	  if ( paren_char_p( (char)str[beg]) )
 	    {
 	      if ( --lev[0]<0 ) typ=SCAN_UNLEVEL;
 	      tok=new SynTok(T(")"), SalRParen, beg);
 	    }
-	  else if ( curly_char_p(str[beg]) )
+	  else if ( curly_char_p( (char)str[beg]) )
 	    {
 	      if ( --lev[1]<0 ) typ=SCAN_UNLEVEL;
 	      tok=new SynTok(T("}"), SalRCurly, beg);

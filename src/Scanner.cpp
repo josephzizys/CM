@@ -95,6 +95,7 @@ charsyntax syntax_type (char c) {
   unsigned i;
   for (i = 0; i < NUMSYNTYPES; i++)
     if (syntax_names[i] == c) return (charsyntax)(i+1);
+  return (charsyntax)0;
 }
 
 charsyntax char_syntax (SynTab tab, char c) {
@@ -188,8 +189,8 @@ int skip_syntax (SynTab tab, String str, const String syns, int pos, int end) {
     loc = neg; // starting char offset into syns
     while (loc < len) {
       //printf("str[%d]='%c'", pos, str[pos]);
-      if ( char_syntax_p(tab, str[pos],
-			 syntax_type( syns[loc])) )
+      if ( char_syntax_p(tab, (char)str[pos],
+			 syntax_type( (char)syns[loc])) )
 	break;
       else loc++;
       //printf("skip\n");
@@ -238,7 +239,7 @@ int skip_chars (String str, const String chars, int pos, int end) {
 int move_eol (String str, int pos, int end) {
   // move pos to end of line. str[pos] is on #\Newline 
   while (pos != end) {
-    if ( EOL_P(str[pos]) )
+    if ( EOL_P((char)str[pos]) )
       break;
     else pos++;
   }
@@ -249,7 +250,7 @@ int move_bol (String str, int pos, int end) {
   // move pos to start of line. str[pos-1] is #\Newline 
   pos--;
   while (pos > end) {
-    if ( EOL_P(str[pos]) )
+    if ( EOL_P((char)str[pos]) )
       break;
     else pos--;
   }
@@ -270,11 +271,11 @@ int check_backward_comment (SynTab tab, String buf, int pos, int end) {
   // an earlier line in buffer!
   int str = -1, com = -1, old = pos;
   while (pos != end) {
-    if ( EOL_P(buf[pos]) )
+    if ( EOL_P((char)buf[pos]) )
       break;
-    if ( char_comment_p(tab, buf[pos]) )
+    if ( char_comment_p(tab, (char)buf[pos]) )
       com = pos;
-    else if ( char_string_p(tab, buf[pos]) )
+    else if ( char_string_p(tab, (char)buf[pos]) )
       str = pos;
     pos--;
   }
@@ -290,8 +291,8 @@ int skip_white(SynTab tab, String str, int pos, int end, int skcom) {
   // to skip whites
   int dir = GETDIR(pos, end), eol = 0;
   if ( dir == 0 ) return end;
-  while ( (pos != end) && char_white_p(tab,str[pos]) ) {
-    if ( EOL_P(str[pos]) )
+  while ( (pos != end) && char_white_p(tab, (char)str[pos]) ) {
+    if ( EOL_P( (char)str[pos]) )
       eol = 1;
     pos += dir;
   }
@@ -310,7 +311,7 @@ int skip_white(SynTab tab, String str, int pos, int end, int skcom) {
 	  return p+1; //return pos of comment char
       else return pos;
     }
-    else if ( skcom && FDIR_P(dir) && char_comment_p(tab,str[pos]) ) {
+    else if ( skcom && FDIR_P(dir) && char_comment_p(tab, (char)str[pos]) ) {
       return skip_white(tab, str, move_eol(str,pos,end), end, skcom);
     }
     else return pos;
@@ -320,7 +321,7 @@ int search_delim(SynTab tab, String str, int pos, int end, char del) {
   int dir = GETDIR(pos, end);
   if (dir == 0) return end;
   if (del == 0)
-    while ( (pos != end) && char_token_p(tab,str[pos]) )
+    while ( (pos != end) && char_token_p(tab, (char)str[pos]) )
       pos += dir;
   else
     while ( (pos != end) && (str[pos] != del) )
@@ -330,12 +331,12 @@ int search_delim(SynTab tab, String str, int pos, int end, char del) {
   if ( FDIR_P(dir) )
     if ( (pos < end) &&      // didnt reach end
 	 (pos > 0) &&        // 0=start of string
-	 char_escape_p(tab, str[pos-1]) )
+	 char_escape_p(tab, (char)str[pos-1]) )
       return search_delim(tab, str, pos+1, end, del);
     else return pos;
   else
     if ( ((pos - end) > 1) &&  // above first search pos
-	 char_escape_p(tab, str[pos-1])) 
+	 char_escape_p(tab, (char)str[pos-1])) 
       return search_delim(tab, str, pos-2, end, del);
     else return pos;
 }
@@ -343,7 +344,7 @@ int search_delim(SynTab tab, String str, int pos, int end, char del) {
 void substr(char * buf, String str, int beg, int end) {
   int i = 0;
   while (beg < end) {
-    buf[i++]=str[beg++];
+    buf[i++]=(char)str[beg++];
   }
   buf[i]=(char)NULL;
 }
@@ -400,7 +401,7 @@ scanresult scan_sexpr(SynTab tab, String buf, int pos, int end, int mode,
     else {
       // pos is on delim (non-token)
       // handle the various syntax cases.
-      char chr = buf[loc];
+      char chr = (char)buf[loc];
       // STRING START. re-seach for end string char
       if ( char_string_p(tab, chr) ) {
 	loc = search_delim(tab, buf, pos+dir, end, 34); //34='"'

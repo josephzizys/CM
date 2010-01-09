@@ -18,6 +18,7 @@
     <item name="Definitions" file="define.sal"/>
     <item name="Processes" file="processes.sal"/>
     <item name="Fomus" file="fomus.sal"/>
+    <item name="CLM" file="clm.sal"/>
   </menu>
 
   <menu name="Scheme Tutorials">
