@@ -477,7 +477,7 @@ bool XOscNode::applyNode(SchemeThread* st, double curtime)
           s7_set_cdr(tail, s7_cons(sc, s7_name_to_value(sc, "most-positive-fixnum"), snil));
           break;
         case 'c':  // LO_CHAR
-          s7_set_cdr(tail, s7_cons(sc, s7_make_character(sc, ints[I++]), snil));
+          s7_set_cdr(tail, s7_cons(sc, s7_make_character(sc, (char)ints[I++]), snil));
           break;
         case 'm':  // LO_MIDI
           {
@@ -491,7 +491,7 @@ bool XOscNode::applyNode(SchemeThread* st, double curtime)
           break;
         case 'b':  // LO_BLOB
           {
-            int l=ints[I++]; // length of blob
+            int l=(int)ints[I++]; // length of blob
             s7_pointer m=snil;
             for (int j=I+l-1; i>=I; j--)
               m=s7_cons(sc, s7_make_integer(sc, ints[j]), m);

@@ -106,7 +106,7 @@ Axis::Axis (XmlElement* ax)
           
           if ((f<t) && (b>0) && (k>-1))
             {
-              from=f; to=t; by=b; ticks=k;
+              from=f; to=t; by=b; ticks=(int)k;
               if (type==unspecified)
                 type=generic;
             }
@@ -246,7 +246,7 @@ void AxisView::paint (Graphics& g)
       int height=getHeight();   // height of axis view
       
       //g.drawHorizontalLine(height-1,0, getWidth());
-      g.drawLine(0, height-1, getWidth(),height-1,2);
+      g.drawLine(0.0, (float)(height-1), (float)getWidth(), (float)(height-1), 2.0);
       
       // determine first visible label that is >= plot's visible left
       while ( pval<left ) 
@@ -265,7 +265,7 @@ void AxisView::paint (Graphics& g)
       while ( pval<=width )
 	{
 	  g.setColour(col1);
-	  g.drawVerticalLine((int)pval, height-majortick, height);
+	  g.drawVerticalLine((int)pval, (float)(height-majortick), (float)height);
 	  labl=String(aval,axis->getDecimals());
 	  lwid=font.getStringWidthFloat(labl);
 	  just=(int)(-lwid*(pval/width));  // twiddle label justification
@@ -275,8 +275,8 @@ void AxisView::paint (Graphics& g)
 	  // draw minor ticks above each major tick
 	  g.setColour(col2);
 	  for (int i=1;i<numTicks();i++)
-	    g.drawVerticalLine((int)(pval+(tsiz*i)), height-minortick,
-			       height);
+	    g.drawVerticalLine((int)(pval+(tsiz*i)), (float)(height-minortick),
+			       (float)height);
 	  pval+=isiz;
 	  aval+=by;
 	}
@@ -285,7 +285,7 @@ void AxisView::paint (Graphics& g)
       g.setColour(col2);
       while (pval > 0)
 	{
-	  g.drawVerticalLine((int)pval, height-minortick, height);
+	  g.drawVerticalLine((int)pval, (float)(height-minortick), (float)height);
 	  pval-=tsiz;
 	}
     }
@@ -298,7 +298,7 @@ void AxisView::paint (Graphics& g)
 //      float tx,ty;
       
       //g.drawVerticalLine(width-1, 0, getHeight());
-      g.drawLine(width-1, 0, width-1, getHeight(), 2);
+      g.drawLine((float)(width-1), 0.0, (float)(width-1), (float)getHeight(), 2.0);
 
       while (pval>bottom)
 	{
@@ -311,7 +311,7 @@ void AxisView::paint (Graphics& g)
       while (pval>=0) 
 	{
 	  g.setColour(col1);
-	  g.drawHorizontalLine((int)pval, width-majortick, width);
+	  g.drawHorizontalLine((int)pval, (float)(width-majortick), (float)width);
 	  labl=String(aval, axis->getDecimals());
 	  lwid=font.getStringWidthFloat(labl);
 	  
@@ -319,7 +319,7 @@ void AxisView::paint (Graphics& g)
 	  just=(int)(lhei*(pval/height));  // twiddle label justification
 	  g.setColour(tcol);
 	  g.drawText(labl,
-		     width-graywidth-4-lwid,
+		     (int)(width-graywidth-4-lwid),
 		     (int)(pval-just),
 		     (int)lwid,
 		     (int)lhei,
@@ -327,8 +327,8 @@ void AxisView::paint (Graphics& g)
 		     false);	  
 	  g.setColour(col2);
 	  for (int i=1;i<numTicks();i++)
-	    g.drawHorizontalLine((int)(pval-(tsiz*i)), width-minortick,
-				 width);
+	    g.drawHorizontalLine((int)(pval-(tsiz*i)), (float)(width-minortick),
+				 (float)width);
 	  pval-=isiz;
 	  aval+=by;
 	}
@@ -337,7 +337,7 @@ void AxisView::paint (Graphics& g)
       g.setColour(col2);
       while (pval < height) 
 	{
-	  g.drawHorizontalLine((int)pval, width-minortick, width);
+	  g.drawHorizontalLine((int)pval, (float)(width-minortick), (float)width);
 	  pval+=tsiz;
 	}
     }
@@ -647,6 +647,7 @@ double PlotView::getSelectionMin(Plotter::Orientation orient)
   std::numeric_limits<double> info;
   double (Layer::*getter) (LayerPoint* p) ;
   double lim=info.max();
+  info; // keep ms compiler from complaining
 
   if (orient == Plotter::horizontal)
     getter = &Layer::getPointX;
@@ -661,10 +662,12 @@ double PlotView::getSelectionMin(Plotter::Orientation orient)
 
 void PlotView::getSelectionRange(int orient, double& low, double& high)
 {
-  std::numeric_limits<double> info;
+  std::numeric_limits<double> info;  
   low=info.max();
   high=info.min();
   double x;
+  info; // keep ms compiler from complaining
+
   if (orient==Plotter::horizontal)
     for (int i=0; i<numSelected(); i++) 
       {
@@ -763,7 +766,7 @@ void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, AxisView* vaxview,
 	       double ppp, double zoom, bool isFoc, 
 	       SelectedItemSet<LayerPoint*> * sel) 
 {
-  double half=ppp/2;
+  double half=(ppp/2);
   double ax, ay, px, py, lx, ly, ox, oy;
   Colour color, selcolor= Colours::grey;
   int ndraw;
@@ -791,22 +794,22 @@ void drawLayer(Graphics& g, Layer* layer, AxisView* haxview, AxisView* vaxview,
 
     if ( layer->isDrawStyle(Layer::line)  ) {
       if (layer->isDrawStyle(Layer::vertical))
-	g.drawLine( px, oy, px, py); // vertical line from orign
+	g.drawLine( (float)px, (float)oy, (float)px, (float)py); // vertical line from orign
       else if (layer->isDrawStyle(Layer::horizontal) )
-	g.drawLine( ox, py, px, py); // horizontal line from origin
+	g.drawLine( (float)ox, (float)py, (float)px, (float)py); // horizontal line from origin
       else if (i>0)  // normal line between points
-	g.drawLine( lx, ly, px, py);
+	g.drawLine( (float)lx, (float)ly, (float)px, (float)py);
       }
 
     if (layer->isDrawStyle(Layer::point)) {
       // if we are moving selection then draw selected point gray
       if ( isFoc && sel->isSelected(p) ) {
 	g.setColour(selcolor);
-	g.fillEllipse(px-half, py-half, ppp,ppp);
+	g.fillEllipse((float)(px-half), (float)(py-half), (float)ppp, (float)ppp);
 	g.setColour(color);
       }
       else
-	g.fillEllipse(px-half, py-half, ppp,ppp);
+	g.fillEllipse((float)(px-half), (float)(py-half), (float)ppp, (float)ppp);
     } 
     else if (layer->isDrawStyle(Layer::hbox)) {
       // to get pixel width of Z, get absolute axis position of Z,
@@ -846,17 +849,17 @@ void drawGrid(Graphics& g, AxisView* haxview, AxisView* vaxview,
   double right=left+haxview->extent();
   double bottom=vaxview->getOrigin();
   double top=bottom-vaxview->extent();
-  double v,p,t,d;
+  double p,t,d;
   p=haxview->getOrigin();
   d=haxview->incrementSize();
   t=haxview->tickSize();
   while (p <= right) 
     {
       g.setColour(c1);
-      g.drawVerticalLine((int)p, top, bottom);
+      g.drawVerticalLine((int)p, (float)top, (float)bottom);
       g.setColour(c2);
       for (int i=1;i<haxview->numTicks();i++) 
-	g.drawVerticalLine((int)(p+(t*i)), top, bottom);
+	g.drawVerticalLine((int)(p+(t*i)), (float)top, (float)bottom);
       p += d;
     }
   p=vaxview->getOrigin();
@@ -865,10 +868,10 @@ void drawGrid(Graphics& g, AxisView* haxview, AxisView* vaxview,
   while (p >= top)
     {
       g.setColour(c1);
-      g.drawHorizontalLine((int)p, left, right);
+      g.drawHorizontalLine((int)p, (float)left, (float)right);
       g.setColour(c2);
       for (int i=1;i<vaxview->numTicks();i++) 
-	g.drawHorizontalLine((int)(p-(t*i)), left, right);
+	g.drawHorizontalLine((int)(p-(t*i)), (float)left, (float)right);
       p -= d;
     }
   g.setColour(c1);
@@ -909,8 +912,8 @@ void PlotView::mouseDown (const MouseEvent &e)
   AxisView* vaxview=plotter->getVerticalAxisView();
   
   // cache mouse down position  FIX THIS ISNT NEEDED
-  mousedown.setXY(mxp, myp);
-  mousemove.setXY(mxp, myp);
+  mousedown.setXY((float)mxp, (float)myp);
+  mousemove.setXY((float)mxp, (float)myp);
   
   // Control-Click: add point make selection
   // Control-Shift-Click: add point add selection.
@@ -1032,7 +1035,7 @@ void PlotView::mouseDrag(const MouseEvent &e) {
     //      focuslayer->incPoint( getSelected(i), dx, dy);
     dragSelection(dx, dy);
     repaintFocusPlot();
-    mousemove.setXY(e.x,e.y);
+    mousemove.setXY((float)e.x, (float)e.y);
   } 
   else {
     region.toFront(false);
@@ -1591,7 +1594,7 @@ Layer* Plotter::newLayer(XmlElement* points)
 	  else if (i==0) layer->setXField(j);
 	  else if (i==1) layer->setYField(j);
 	  else if (i==2) layer->setZField(j);
-	  else if (i==3) ; // TODO!
+	  //else if (i==3) ; // TODO!
 	}
     }
   else
@@ -1741,9 +1744,9 @@ public:
 
 PlotterWindow::PlotterWindow(XmlElement* plot)
   : DocumentWindow (String::empty, Colours::white, 
-		    DocumentWindow::allButtons, true),
-    listener(this)
+		    DocumentWindow::allButtons, true)
 {
+  listener.window=this;
   String title=(plot==NULL) ? T("Untitled Plot") :
     plot->getStringAttribute(T("title"), T("Untitled Plot"));
   setName(title);
@@ -1753,9 +1756,9 @@ PlotterWindow::PlotterWindow(XmlElement* plot)
 
 PlotterWindow::PlotterWindow(String title, MidiFile& midifile)
   : DocumentWindow (title, Colours::white, 
-		    DocumentWindow::allButtons, true),
-    listener(this)
+		    DocumentWindow::allButtons, true)
 {
+  listener.window=this;
   setName(title);
   plotter=new Plotter(midifile);
   init();
@@ -3420,7 +3423,7 @@ void PlayPlotDialog::playPlot(bool write)
   double len=startinc->getValue();
   double dur=durinc->getValue();
   double amp=ampinc->getValue();
-  int chan=chaninc->getValue();
+  int chan=(int)chaninc->getValue();
   double key1=lowkeyinc->getValue();
   double key2=highkeyinc->getValue();
   Axis* axis=plotter->getHorizontalAxisView()->getAxis();

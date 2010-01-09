@@ -494,7 +494,7 @@ ConsoleWindow::ConsoleWindow ()
   cons->buffer->setCaretVisible(false);
 
   cons->buffer->setFont(Font(Font::getDefaultMonospacedFontName(),
-			     Preferences::getInstance()->getIntProp(T("ConsoleFontSize"), 16),
+			     (float)Preferences::getInstance()->getIntProp(T("ConsoleFontSize"), 16),
 			     Font::plain));
   //std::cout << Font::getDefaultMonospacedFontName().toUTF8() << "\n";
 

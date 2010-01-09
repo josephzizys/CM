@@ -504,7 +504,7 @@ int SalSyntax::backwardSal(const String text, int bot, int top,
 			   int *poz, int *sal)
 {
   int pos=*poz;
-  int typ=SCAN_EMPTY, sx1, sx2, loc, tst, lev=0;
+  int typ=SCAN_EMPTY, sx1, sx2, tst, lev=0;
   *sal=-1;
   while (pos>bot)
     {

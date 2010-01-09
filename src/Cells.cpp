@@ -122,9 +122,10 @@ void CellView::setStatesAndColors(String statesandcolors)
 }
 
 StateWindow::StateWindow (String title, String statesandcolors, int rows, int cols, int cellsize, int bordersize, Colour bgcolor)
-  : DocumentWindow (title, Colours::white, DocumentWindow::allButtons, true),
-    listener(this)
+  : DocumentWindow (title, Colours::white, DocumentWindow::allButtons, true)
+
 {
+  listener.window=this;
   CellView* cv=new CellView(statesandcolors, rows, cols, cellsize, bordersize, bgcolor, 1);
   setResizable(true, true); 
   setContentComponent(cv);
@@ -165,8 +166,8 @@ StateWindow* StateWindow::findStateWindow(String title)
   return (StateWindow*)NULL;
 }
 
-StateWindow::StateWindowListener::StateWindowListener(StateWindow* win) 
-  : window (win)
+StateWindow::StateWindowListener::StateWindowListener() 
+  : window (0)
 {
 }
 

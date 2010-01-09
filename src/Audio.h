@@ -8,7 +8,7 @@ this agreement is available at http://www.cliki.net/LLGPL
 #define AUDIO_H
 
 #include "juce.h"
-#include "iostream";
+#include "iostream"
 
 class AudioFilePlayer;
 

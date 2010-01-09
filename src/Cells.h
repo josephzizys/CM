@@ -46,9 +46,9 @@ class StateWindow : public DocumentWindow
  public:
   class StateWindowListener : public MessageListener
   {
-    StateWindow* window;
   public:
-    StateWindowListener(StateWindow* w);
+    StateWindow* window;
+    StateWindowListener();
     ~StateWindowListener();
     void handleMessage (const Message &message);  
   };

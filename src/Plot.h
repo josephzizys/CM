@@ -660,7 +660,7 @@ class PlotterWindow : public DocumentWindow,
   public:
     void handleMessage (const Message &message);//{std::cout << "message!\n";}
     PlotterWindow* window;
-  PlotterWindowListener(PlotterWindow* w) : window(w) {}
+  PlotterWindowListener() : window(0) {}
   };
   PlotterWindowListener listener;
 

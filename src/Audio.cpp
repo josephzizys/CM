@@ -282,8 +282,11 @@ public:
         if (thisTime>=waveform->startTime && thisTime<=waveform->endTime) // portion of wave that is visible
           {
             double visibleDuration=waveform->endTime-waveform->startTime ;
+            double percentage=(thisTime-waveform->startTime)/visibleDuration;
             g.setColour (Colours::grey);
-            g.drawVerticalLine(((thisTime-waveform->startTime)/visibleDuration)*getWidth(), 0, getHeight());
+            g.drawVerticalLine( ((int)percentage)*getWidth(),
+                0.0, 
+                  (float)getHeight());
           }
       }
   }
@@ -369,7 +372,7 @@ AudioFilePlayer::AudioFilePlayer ()
   Font secsfont (10, Font::plain);
   addAndMakeVisible (minTime=new Label(T(""), T("< 000.000")));
   minTime->setFont(secsfont);
-  minTime->setSize(secsfont.getStringWidth(minTime->getText()), secsfont.getHeight());
+  minTime->setSize((int)secsfont.getStringWidth(minTime->getText()), (int)secsfont.getHeight());
   addAndMakeVisible (maxTime=new Label(T(""), T("000.000 >")));
   maxTime->setFont(secsfont);
   maxTime->setSize(minTime->getWidth(), minTime->getHeight());
@@ -408,10 +411,10 @@ AudioFilePlayer::~AudioFilePlayer()
 
 void AudioFilePlayer::resized()
 {
-  float m=8, l=24;
-  float x=m, y=m;
-  float w=getWidth();
-  float h=getHeight();
+  int m=8, l=24;
+  int x=m, y=m;
+  int w=getWidth();
+  int h=getHeight();
   fileChooser->setBounds(x, y, w-(m*2), l);
   y=y+l+m;
   // transport has 6 buttons, each 44px centered in window's width

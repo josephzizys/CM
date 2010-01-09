@@ -242,12 +242,12 @@ double cm_geoseg(int i, int len, double sum, double base)
   return  a * pow(base, i);
 }
 
-#define A00 6.875   // keynum 0
+static const double A00 = 6.875;   // keynum 0
 
 double cm_hertz_to_keynum (double hz)
 {
   // subtract 3 shifts to A
-  return (((log(hz) - log(A00) ) / log(2)) * 12) - 3; // LOGF
+  return (((log(hz) - log(A00) ) / log(2.0)) * 12.0) - 3; // LOGF
 }
 
 double cm_keynum_to_hertz(double kn)
@@ -266,9 +266,9 @@ int cm_keynum_to_pc (double kn)
 
 Random ranstate (1000);
 
-void cm_ranseed(long s)
+void cm_ranseed(int64 s)
 {
-  ranstate.setSeed((int64)s);
+  ranstate.setSeed(s);
 }
 
 double cm_ranfloat(double f)
@@ -1002,7 +1002,7 @@ void mp_set_instruments(s7_pointer list)
   SchemeThread* scm=SchemeThread::getInstance();
   for (int chan=0; s7_is_pair(list) && chan<16; list=s7_cdr(list), chan++)
     if (s7_is_integer(s7_car(list)))
-      port->setInstrument(chan, s7_integer(s7_car(list)) & 0x7f);      
+      port->setInstrument(chan, (int)s7_integer(s7_car(list)) & 0x7f);      
     else if (s7_car(list) == scm->schemeFalse)
       ;
     else if (s7_is_string(s7_car(list)) || s7_is_symbol(s7_car(list)))
