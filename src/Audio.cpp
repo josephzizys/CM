@@ -284,9 +284,7 @@ public:
             double visibleDuration=waveform->endTime-waveform->startTime ;
             double percentage=(thisTime-waveform->startTime)/visibleDuration;
             g.setColour (Colours::grey);
-            g.drawVerticalLine( ((int)percentage)*getWidth(),
-                0.0, 
-                  (float)getHeight());
+            g.drawVerticalLine( (int)(percentage*((double)getWidth())), 0.0, (float)getHeight());
           }
       }
   }
@@ -525,7 +523,7 @@ void AudioFilePlayer::audioDeviceIOCallback(const float** inputChannelData,
     playbackCursor->setPosition(-1);
   }
 
-  if (counter==10) // downsample to avoid juce crash
+  if (counter==4) // downsample to avoid juce crash
   {
     if (transportSource.isPlaying())
       {
