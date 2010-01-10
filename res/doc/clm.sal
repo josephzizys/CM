@@ -1,3 +1,9 @@
+;; this tutorial introduces working with SNDLIB and CLM instruments in
+;; Grace.
+;; To start things off make sure you have Autoplay selected in the
+;; select Audio>SndLib>
+
+
 ;; wave is a sinewave with envelope controls on amp and gliss
 ;; you can load it via "Audio>SndLib>Open Instrument Browser"
 ;; it requires four values: time, duration, frequency amplitude

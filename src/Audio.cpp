@@ -161,7 +161,7 @@ class AudioFilePlayer::WaveformComp : public Component,
 {
 public:
   WaveformComp()
-    : thumbnailCache (5),
+    : thumbnailCache (0),
       thumbnail (512, formatManager, thumbnailCache)
   {
     startTime = endTime = 0;
@@ -174,6 +174,7 @@ public:
   }
   void setFile (const File& file)
   {
+    thumbnail.setSource (0);
     thumbnail.setSource (new FileInputSource (file));
     startTime = 0;
     endTime = thumbnail.getTotalLength();
