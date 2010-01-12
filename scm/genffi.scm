@@ -25,6 +25,7 @@
     (ffi_print_stdout      void "cm_print_stdout" c-string)
     (ffi_shell             void "cm_shell" c-string)
     (ffi_play              void "cm_play" c-string)
+    (ffi_load              void "cm_load" c-string)
     (ffi_rescale           double "cm_rescale"
 			   double double double double double double)
     (ffi_discrete          int "cm_discrete"

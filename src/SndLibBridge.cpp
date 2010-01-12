@@ -92,6 +92,17 @@ s7_pointer ffi_play (s7_scheme *s7, s7_pointer args)
   return s7_UNSPECIFIED(s7);
 }
 
+s7_pointer ffi_load (s7_scheme *s7, s7_pointer args)
+{
+  char* s0;
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_load", 1, s7_car(args), "a c-string"));
+  s0=(char*)s7_string(s7_car(args));
+  args=s7_cdr(args);
+  cm_load(s0);
+  return s7_UNSPECIFIED(s7);
+}
+
 s7_pointer ffi_rescale (s7_scheme *s7, s7_pointer args)
 {
   double f0, f1, f2, f3, f4, f5, f6;
@@ -2854,6 +2865,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_print_stdout", ffi_print_stdout, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_shell", ffi_shell, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_play", ffi_play, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_load", ffi_load, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_rescale", ffi_rescale, 6, 0, false, "ffi function");
   s7_define_function(s7, "ffi_discrete", ffi_discrete, 6, 0, false, "ffi function");
   s7_define_function(s7, "ffi_float_to_fixnum", ffi_float_to_fixnum, 1, 0, false, "ffi function");

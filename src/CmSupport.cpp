@@ -1,5 +1,5 @@
 /*=======================================================================*
-  Copyright (C) 2008 Rick Taube.                                        
+  Copyright (C) 2008-2010 Rick Taube.                                        
   This program is free software; you can redistribute it and/or modify  
   it under the terms of the Lisp Lesser Gnu Public License. The text of 
   this agreement is available at http://www.cliki.net/LLGPL             
@@ -13,6 +13,7 @@
 #include "CmSupport.h"
 #include "Midi.h"
 #include "Csound.h"
+#include "SndLib.h"
 #include "Console.h"
 #include "Syntax.h"
 
@@ -29,14 +30,7 @@
 
 #ifdef LIBLO
 #include "Osc.h"
-//#include "lo/lo.h"
 #endif
-
-//#define POWF(a,b)	(powf( (a) , (b) ))
-//#define LOGF(a)		(logf( (a) ))
-//#define EXPF(a)		(expf( (a) ))
-//#define SQRTF(a)	(sqrtf( (a) ))
-//#define TANF(a)		(tanf( (a) ))
 
 #ifdef _MSC_VER
 #define strdup _strdup
@@ -78,7 +72,41 @@ void cm_print_stdout(char* str)
   std::cout << str;
 }
 
+void cm_print_markov_table(s7_pointer table, s7_pointer labels, int field, int rowLabelWidth)
+{
+  s7_scheme* sc=SchemeThread::getInstance()->scheme;
+  String sp (" ");
+  String ln;
+  String port ("\n");
+  for (int i=0; i<field; i++) ln<<T("-");
+  for (int i=0; i<rowLabelWidth; i++) port << T("*");
+  for (s7_pointer p=labels; s7_is_pair(p); p=s7_cdr(p))
+    {
+      port << sp;
+      String s=String((char*)s7_object_to_string(sc, s7_car(p)));
+      int n=s.length();
+      // write column pad
+      for (int i=0, m=jmax(field-n, 0); i<m; i++) port << sp; // col separator
+      port << s;
+    }
+  // print each row
+  for (s7_pointer tail=table; s7_is_pair(tail); tail=s7_cdr(tail))
+    {
+      s7_pointer row=s7_car(tail);
+      port << T("\n");
+      String s; // liststring 
+      s7_pointer l=s7_car(tail);
+      if (l==s7_nil(sc))
+        s<<T("");
+      else
+        {
+        }
 
+    }
+}
+
+/*=======================================================================*
+ *=======================================================================*/
 
 void cm_shell(char* str)
 {
@@ -120,20 +148,46 @@ String cm_logo ()
   return logo;
 }
 
-
-void cm_load_sal_file(char *path)
+void cm_load(char *path)
 {
-  //SalSyntax::getInstance()->loadFile( String(path) );  
+  // a wrapper around g_load() that allows embedded instrument files
+  // to be loaded if (1) the file name has no directory component, (2)
+  // *load-path* is null and (3) the file does not exist
+  String name (path);
+  File file=completeFile(name);
+#if WINDOWS
+  String delim ("/\\");
+#else
+  String delim ("/");
+#endif
+  XmlElement* ins=NULL;
+#ifdef GRACE
+  if (
+      // no directory component
+      (! name.containsAnyOf(delim))
+      // file does not exist
+      && (! file.existsAsFile())
+      // no load path set
+      && (s7_load_path(SchemeThread::getInstance()->scheme) == SchemeThread::getInstance()->schemeNil)
+      // is embedded instrument
+      && ((ins=SndLib::getInstance()->getInstrumentElement(name)) != NULL)
+      ) 
+    {
+      String str=SndLib::getInstance()->getInstrumentCode(name);
+      s7_eval_c_string(SchemeThread::getInstance()->scheme, str.toUTF8());
+      ins->setAttribute(T("Loaded"), "yes");
+    }
+  else
+#endif
+    s7_load (SchemeThread::getInstance()->scheme,path);
 }
 
-//#if (defined(PPC) && defined(MACOSX))
-//#define POWF(a,b)	(juce::powf( (a) , (b) ))
-//#define LOGF(a)		(juce::logf( (a) ))
-//#define EXPF(a)		(juce::expf( (a) ))
-//#define SQRTF(a)	(juce::sqrtf( (a) ))
-//#define TANF(a)		(juce::tanf( (a) ))
-//#else
-//#endif
+void cm_edit(char *path)
+{
+}
+
+/*=======================================================================*
+ *=======================================================================*/
 
 double cm_log_ten(double num)
 {

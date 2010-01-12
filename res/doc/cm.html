@@ -1213,7 +1213,7 @@ be returned.
   <tr class="entry">
     <td class="formals">
       <span class="funcname">drunk</span>
-      (<var class="arg">num</var>, <var class="arg">width</var>, <var class="optkey">low</var> <var class="optval"> = #f</var>, <var class="optkey">high</var> <var class="optval"> = #f</var>, <var class="optkey">mode</var> <var class="optval"> = #f</var>)
+      (<var class="arg">num</var>, <var class="arg">width</var>, <var class="optkey">low</var> <var class="optval"> = #f</var>, <var class="optkey">high</var> <var class="optval"> = #f</var>, <var class="optkey">mode</var> <var class="optval"> = #f</var> <var class="optkey">avoid</var> <var class="optval"> = #f</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -1223,7 +1223,7 @@ be returned.
 <p>
 
 Returns a random value constrained to lie
-between <var>num-width</var> and <var>num+width</var>. Calling the function and passing the
+between <var>num - width</var> and <var>num + width</var>. Calling the function and passing the
 previous value of <var>num</var> implements a random walk (see also <a href="#ranbrown">ranbrown</a>). If <var>low</var> and <var>high</var> are provided they specify lower and upper bounds on the value returned. If the value exceeds either limit then the <var>mode</var> determines how the out-of-bounds value is handled. Possible values for <var>mode</var> are:
 
 </p>
@@ -1235,6 +1235,8 @@ previous value of <var>num</var> implements a random walk (see also <a href="#ra
   <li>2 or <span class="keyword">:reset</span>, value is centered between boundaries</li>
   <li>3 or <span class="keyword">:jump</span>, value randomly selected between boundaries</li>
 </ul>
+
+<p>If <var>avoid</var> is a value between -width and width then random value chosen will never be equal to it. </p>
 
 </blockquote>
 <!-- END DEFINITION -->

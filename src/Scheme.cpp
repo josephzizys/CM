@@ -155,35 +155,39 @@ XProcessNode::~XProcessNode()
 {
 }
 
-bool XProcessNode::applyNode(SchemeThread* schemethread, double curtime)
+bool XProcessNode::applyNode(SchemeThread* st, double curtime)
 {
-  s7_scheme* sc=schemethread->scheme;
+  s7_scheme* sc=st->scheme;
   bool more=false;
   double runtime, delta;
-  if (schemethread->isScoreMode())
+  if (st->isScoreMode())
     {
       // in score mode the scheduler runs in non-real time and
       // node times are in seconds. the node's current time
       // becomes the score time under the callback an is used to
       // set the timestamps of data sent to ports
       runtime=elapsed;
-      schemethread->scoretime=time;
+      st->scoretime=time;
     }
   else
     {
       runtime=(time-start)/1000.0;
     }
   
-  //delta=applyProcessNode(runtime);
   s7_pointer args = s7_cons(sc,
                             s7_make_real(sc, runtime),
                             s7_NIL(sc));
   int prot = s7_gc_protect(sc, args);
-  delta=s7_number_to_real(s7_call(sc, 
+  s7_pointer retn=s7_call(sc, schemeproc, args);
+  /*delta=s7_number_to_real(s7_call(sc, 
                                   schemeproc, 
                                   args
                                   )
-                          );
+                                  );*/
+  if (retn==st->schemeError)
+    delta=-2;
+  else
+    delta=s7_number_to_real(retn);
   s7_gc_unprotect_at(sc, prot);
   //std::cout << "after callback, delta is " << delta << "\n";
 
@@ -201,7 +205,7 @@ bool XProcessNode::applyNode(SchemeThread* schemethread, double curtime)
       // values is in milliseconds if scheduler is running in
       // real time
       more=true;
-      if (schemethread->isScoreMode())
+      if (st->isScoreMode())
         {
           elapsed += delta;  // elapsed now user's next run time
           time += delta;
@@ -218,7 +222,7 @@ bool XProcessNode::applyNode(SchemeThread* schemethread, double curtime)
           time=Time::getMillisecondCounterHiRes()+(delta*1000.0);
         }
     }
-  schemethread->scoretime=0.0;
+  st->scoretime=0.0;
   return more;
 }
 

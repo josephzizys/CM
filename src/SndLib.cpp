@@ -25,11 +25,9 @@
 #include "Scheme.h"
 #include "Console.h"
 #include "SndLib.h"
-#ifdef GRACE
 #include "Preferences.h"
 #include "TextEditor.h"
 #include "Instruments.h"
-#endif
 
 // Singleton instance for SndLib...
 
@@ -67,24 +65,6 @@ SndLib::~SndLib()
   deleteAndZero(instable);
 }
 
-/**
-double XProcessNode::applyProcessNode(Scheme* schemethread, double elapsed)
-{
-  //  std::cout << "before callback, elapsed=" << elapsed << "\n";
-  //s7_scheme* sc=schemethread->scheme;
-  double delta=s7_number_to_real(s7_call(s7, 
-					 schemeproc, 
-					 s7_cons(s7,
-						 s7_make_real(s7, elapsed),
-						 s7_NIL(s7))
-					 )
-				 );
-  //std::cout << "after callback, delta is " << delta << "\n";
-  if (delta < 0.0)
-    s7_gc_unprotect(s7,schemeproc);
-  return delta;
-}
-**/
 /*=======================================================================*
                             Scheduler Support
  *=======================================================================*/

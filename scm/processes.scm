@@ -11,8 +11,8 @@
 ;; implemented in the scheme we are running in. in chicken scheme it
 ;; is a call/cc exit, in s7 it is a call to (error )
 
-(define *process-stop* '(throw -1))
-
+;(define *process-stop* '(throw (quote all-done)))
+(define *process-stop* '(return -1))
 (define (run-while-until forms clauses ops)
   (let ((head forms)
         (oper (pop forms))
@@ -56,8 +56,9 @@
 	(equal? code (car stop)))))
 
 (define (expand-process forms )
-  ;;(format #t "in expand-process~%")
-  ;; if called from sal forms contains the already parsed information
+  ;; (format #t "in expand-process~%") 
+  ;; if called by sal forms is the vector already parsed by
+  ;; make-loop-clause
   (let* ((parsed (if (vector? forms) 
 		     forms
 		     (parse-iteration 'process forms *run-operators*)))
@@ -95,32 +96,18 @@
 				       (ffi_sched_score_time)
 				       ,TIME))))
 		    (wait (lambda (x) (set! ,WAIT x))))
-	       ;; the implementation specific expansion that protects
-	       ;; against runtime errors under the callback
-	       ,(error-protected-process-code
-		 (append tests 
-			 (loop-looping parsed)
-			 (loop-stepping parsed)
-			 (list WAIT)))
-
-;	       (catch #t
-;		      (lambda ()
-;			,@ tests
-;			   ,@ (loop-looping parsed)
-;			      ,@ (loop-stepping parsed)
-;				 , WAIT)
-;		      (lambda %%args
-;			;; arrrg this func gets called if anything is
-;			;; thrown, including our -1 to stop the
-;			;; process
-;			(cond ((equal? (car %%args) -1)
-;			       -1)
-;			      (else
-;			       (print-error
-;				(format #f "Error >>> ~S~%" %%args))
-;			       -2)
-;			    )))
-
+               (call-with-exit
+                (lambda (return)
+                  ,@ (append tests (loop-looping parsed)
+                             (loop-stepping parsed))
+                     ,WAIT))
+;	       (catch 'all-done 
+;                      (lambda () 
+;                        ,@ (append tests (loop-looping parsed)
+;                                   (loop-stepping parsed) ;;(list WAIT)
+;                                   ))
+;                      (lambda catchargs (set! , WAIT -1)))
+;               , WAIT
 	       )))
     (if (and (null? (loop-bindings parsed))
 	     (null? (loop-initially parsed)))

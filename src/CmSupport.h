@@ -22,7 +22,8 @@ void cm_print_stdout(char* str);
 
 void cm_shell(char* str);
 void cm_play(char* str);
-void cm_load_sal_file(char* path);
+void cm_load(char* path);
+void cm_edit(char* path);
 
 #ifdef _MSC_VER
 int round(double n);

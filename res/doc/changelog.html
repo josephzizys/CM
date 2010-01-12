@@ -20,6 +20,14 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
   <ul>
     
+    <li class="change"> Enhancement: SAL printing has been greatly improved (speeded up)</li>
+    <li class="change"> Enhancement: SAL tokenizing is now in C with improvement in speed and consing.</li>
+    <li class="change"> New feaure:  SAL command <a href="cm.html#soundfile"><code>soundfile</code></a>  creates a sound file from  enclosed instrument calls.</li>
+
+    <li class="change"> Enhancement: Audio File Player has been improved, now allows zooming and scrolling the waveform display, buffer size is saved as a preference.</li>
+
+    <li class="change"> Enhancement: load will attempt to load files that do not otherwise exist from the embedded instruments. For example  <code>(load "wave.ins")</code> will load the wave instrument from the embedded sources if the file does not exist in the current directory and *load-path* is empty.</li>
+
     <li class="change">Enhancement: Receiving Midi and Osc data has been improved and made more consistent. See <a href="cm.html#osc:receiver"><code>osc:receiver</code></a>, <a href="cm.html#osc:receiver"><code>osc:receiver?</code></a>, <a href="cm.html#mp:receiver"><code>mp:receiver</code></a>, <a href="cm.html#mp:receiver"><code>mp:receiver?</code></a> for more information.</li>
     
     <li class="change">Enhancement: Osc Port now supports sending OSC bundles. See <a href="cm.html#osc:bundle"><code>osc:bundle</code></a> for more information.</li>
@@ -33,6 +41,8 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     <li class="change">Incompatible change: function <code>mp:inhook</code> removed.</li>
 
     <li class="change">Incompatible change: function <code>osc:hook</code> function removed.</li>
+
+    <li class="change">Bug fix: function <code>drunk</code> now accepts numeric modes and an avoid parameter.</li>
 
   </ul>
 
@@ -264,7 +274,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Tue Dec 29 10:01:37 CST 2009 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Mon Jan 11 19:28:23 CST 2010 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

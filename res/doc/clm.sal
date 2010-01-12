@@ -1,7 +1,13 @@
-;; this tutorial introduces working with SNDLIB and CLM instruments in
-;; Grace.
-;; To start things off make sure you have Autoplay selected in the
-;; select Audio>SndLib>
+;; this tutorial introduces working with SndLib and digital audio
+;; instruments.  SndLib is a C/Scheme toolkit for digital audio
+;; geneneration, it lets you to define 'instruemnts' and then call
+;; them to generate audio files.
+
+load "wave.ins"
+
+;; 
+To start things off make sure you have Autoplay selected in
+;; the select Audio>SndLib>
 
 
 ;; wave is a sinewave with envelope controls on amp and gliss
