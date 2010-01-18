@@ -30,8 +30,8 @@
            (wave (elapsed #t) dur frq amp
                  :ampenv '(0 0 1 1 10 .5 40 .2 100 0)
                  :reverb rev
-                 :location loc
-                 :distance dist)))
+                 :loc loc
+                 :dist dist)))
 
 (sprout (gong 2 2 440 .1 45 0 0) "gong.wav" )
 

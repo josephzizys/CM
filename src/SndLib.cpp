@@ -234,6 +234,8 @@ bool SchemeThread::init()
 	   SchemeSources::sndlibws_scmSize, tr);
   loadCode(T("osc.scm"), SchemeSources::osc_scm, 
 	   SchemeSources::osc_scmSize, tr);
+  loadCode(T("sc.scm"), SchemeSources::sc_scm, 
+	   SchemeSources::sc_scmSize, tr);
   // need this for some .ins files...
   XEN_EVAL_C_STRING("(provide 'snd-ws.scm)");
  
@@ -295,10 +297,9 @@ String SchemeThread::getLispVersion()
   return str;
 }
 
-void SndLib::restoreInstruments(String dir)
+void SndLib::restoreInstruments()
 {
-#ifdef GRACE
-  FileChooser chooser (T("Choose Directory For Instruments"),
+  FileChooser chooser (T("Export Instruments"),
                        File::getSpecialLocation(File::userHomeDirectory));
   if (!chooser.browseForDirectory() )
     return;
@@ -308,10 +309,40 @@ void SndLib::restoreInstruments(String dir)
 			       false);
   ZipFile archive(&zipstream, false);
   archive.uncompressTo(directory, true);
-  Console::getInstance()->printOutput(T("Instruments saved in ") +
+  Console::getInstance()->printOutput(T("Instruments exported to ") +
                                       directory.getFullPathName() + 
                                       T(".\n"));
+}
+
+void SndLib::restoreInstrument(XmlElement* ins)
+{
+  FileChooser chooser (T("Export Instrument"),
+                       File::getSpecialLocation(File::userHomeDirectory));
+  if (!chooser.browseForDirectory() )
+    return;
+  File directory (chooser.getResult());  
+  StringArray names;
+  String text=ins->getStringAttribute(T("File"));
+  names.add(text);
+  text=ins->getStringAttribute(T("Depend"));
+  if (text.isNotEmpty())
+    names.addTokens(text, false);
+  text=ins->getStringAttribute(T("Synthdef"));
+  if (text.isNotEmpty())
+    names.add(text);
+  text=ins->getStringAttribute(T("Examples"));
+  if (text.isNotEmpty())
+    names.addTokens(text, false);
+  for (int i=0; i<names.size(); i++)
+    {
+      File file (directory.getChildFile(names[i]));
+#ifdef GRACE
+      text=getInstrumentCode(names[i]);
+      file.replaceWithText(text);
+      Console::getInstance()->printOutput(T("Exported ") + file.getFullPathName() + T("\n"));
+      //std::cout << "Restore: " << file.getFullPathName().toUTF8() << "\n";
 #endif
+    }
 }
 
 bool SndLib::getAutoPlay()
@@ -423,8 +454,7 @@ class InstrumentWindow : public DocumentWindow
 {
 public:
   InstrumentWindow()
-    : DocumentWindow(T("SndLib Instruments"), 
-		     Colour(0xffe5e5e5),
+    : DocumentWindow(T("Instruments"), Colour(0xffe5e5e5),
 		     DocumentWindow::allButtons)
   {
   }
@@ -447,11 +477,12 @@ class InstrumentTable : public Component,
   XmlElement* columnList;
   XmlElement* dataList;
   TextButton* loadButton;
-  TextButton* open1Button;
-  TextButton* open2Button;
+  TextButton* examplesButton;
+  TextButton* openButton;
   TextButton* autoButton;
   int selRow;
   int numRows; 
+  bool exporting;
   static const int AutoloadColumn=5;
   //Column sorting class
   class DemoDataSorter
@@ -459,11 +490,14 @@ class InstrumentTable : public Component,
     const String attributeToSort;
     const int direction;
   public:
-  DemoDataSorter(const String attributeToSort_, bool forwards)
-    : attributeToSort(attributeToSort_), 
-      direction(forwards ? 1 : -1)
-      {
-      }
+    static const int BrowserMode = 1;
+    static const int ExportMode = 2;    
+
+    DemoDataSorter(const String attributeToSort_, bool forwards)
+      : attributeToSort(attributeToSort_), 
+        direction(forwards ? 1 : -1)
+    {
+    }
     int compareElements(XmlElement* first, XmlElement* second) const
     {
       int result = first->getStringAttribute(attributeToSort).
@@ -483,7 +517,7 @@ class InstrumentTable : public Component,
 
  public:
 
-  InstrumentTable();
+  InstrumentTable(bool exporting);
   ~InstrumentTable();
   int getNumRows();
   void selectedRowsChanged(int r);
@@ -503,9 +537,9 @@ class InstrumentTable : public Component,
   static void openInstrumentTable();
 };
 
-void SndLib::openInstrumentBrowser()
+void SndLib::openInstrumentBrowser(bool exporting)
 {
-  InstrumentTable* ins=new InstrumentTable();
+  InstrumentTable* ins=new InstrumentTable(exporting);
   InstrumentWindow* win=new InstrumentWindow();
   ins->setVisible(true);
   win->setUsingNativeTitleBar(true);
@@ -516,8 +550,6 @@ void SndLib::openInstrumentBrowser()
   win->setResizable(true, true); 
   win->setVisible(true);
 }
-
-
 
 XmlElement* SndLib::getInstrumentTable(bool all)
 {
@@ -645,19 +677,19 @@ void SndLib::loadInstrumentCode(XmlElement* ins)
     }  
 }
 
-
 /*=======================================================================*
                               The XML Table Display
  *=======================================================================*/
 
-InstrumentTable::InstrumentTable() 
+InstrumentTable::InstrumentTable(bool xporting) 
   : font (14.0f),
     loadButton (0),
-    open1Button (0),
-    open2Button (0),
+    examplesButton (0),
+    openButton (0),
     autoButton (0),
     insData (0),
-    selRow(-1)
+    selRow(-1),
+    exporting (xporting)
 {
   // Load instrument data from the embedded XML file..
   loadTableData();
@@ -690,49 +722,60 @@ InstrumentTable::InstrumentTable()
   table->getHeader()->setSortColumnId (1, true);
 
   addAndMakeVisible (loadButton = new TextButton (String::empty));
-  loadButton->setEnabled(false);
-  loadButton->setButtonText (T("Load Instrument"));
   loadButton->addButtonListener (this);
-
-  addAndMakeVisible (open1Button = new TextButton (String::empty));
-  open1Button->setEnabled(false);
-  open1Button->setButtonText (T("Open Examples"));
-  open1Button->addButtonListener (this);
-
-  addAndMakeVisible (open2Button = new TextButton (String::empty));
-  open2Button->setEnabled(false);
-  open2Button->setButtonText (T("Open Instrument"));
-  open2Button->addButtonListener (this);
-
-  addAndMakeVisible (autoButton = new TextButton (String::empty));
-  autoButton->setButtonText (T("Auto Load"));
-  autoButton->addButtonListener (this);
-
+  loadButton->setEnabled(false);
+  addAndMakeVisible (openButton = new TextButton (String::empty));
+  openButton->addButtonListener (this);
+  openButton->setEnabled(false);
+  if (!exporting)
+    {
+      loadButton->setButtonText (T("Load Instrument"));
+      openButton->setButtonText (T("Edit Instrument"));
+      addAndMakeVisible (examplesButton = new TextButton (String::empty));
+      examplesButton->setEnabled(false);
+      examplesButton->setButtonText (T("Open Examples"));
+      examplesButton->addButtonListener (this);
+      addAndMakeVisible (autoButton = new TextButton (String::empty));
+      autoButton->setButtonText (T("Auto Load"));
+      autoButton->addButtonListener (this);
+    }
+  else
+    {
+      loadButton->setButtonText (T("Export Instrument"));
+      openButton->setButtonText (T("Export All..."));
+      openButton->setEnabled(true);
+    }
   setSize(tablewidth + 60, 16+300+16+24+16);
 }
 
 InstrumentTable::~InstrumentTable()
 {
   deleteAllChildren();
-  // delete insData;
 }
 
 void InstrumentTable::resized()
 {
-  // position our table with a gap around its edge
-  //500+8+24+8;
   table->setBounds(16, 16, getWidth()-32, getHeight()-16-24-16-16);
   int x=getWidth()/2;
   int y=getBottom()-16-24;
-  // middle button
-  open1Button->setBounds(x-66, y, 132, 24);
-  loadButton->setBounds (open1Button->getX()-16-132, y, 132, 24);
-  open2Button->setBounds(open1Button->getRight()+16, y, 132, 24);
-  autoButton->setBounds(getWidth()-90-16-24, y, 90, 24);
+
+  loadButton->setBounds (64, y, 132, 24);
+  openButton->setBounds(loadButton->getRight()+16, y, 132, 24);
+  if (!exporting)
+    {
+      autoButton->setBounds(getWidth()-16-64-132, y, 132, 24);
+      examplesButton->setBounds(autoButton->getX()-16-132, y, 132, 24);
+    }
 }
 
 void InstrumentTable::buttonClicked (Button* button)
 {
+  // Export All.. always active.
+  if (exporting && (button==openButton))
+    {
+      SndLib::getInstance()->restoreInstruments();
+      return;
+    }
   // no row selected 
   if (selRow == -1) return;
   XmlElement* ins=dataList->getChildElement(selRow);
@@ -741,18 +784,21 @@ void InstrumentTable::buttonClicked (Button* button)
   String path, code;
   if (button==loadButton)
     {
-      SndLib::getInstance()->loadInstrumentCode(ins);
+      if (exporting)
+        SndLib::getInstance()->restoreInstrument(ins);
+      else
+        SndLib::getInstance()->loadInstrumentCode(ins);
     } 
-  else if (button==open2Button)
+  else if (button==openButton)
     {
       path=ins->getStringAttribute(T("File"));
       code=SndLib::getInstance()->getInstrumentCode(path);
       if (code.isEmpty())
-	return;
+        return;
       new TextEditorWindow(File::nonexistent, code, TextIDs::Lisp,
-			   File(path).getFileName());
+                           File(path).getFileName());
     } 
-  else if (button == open1Button)
+  else if (button == examplesButton)
     {
       path=ins->getStringAttribute(T("Examples"));
       code=SndLib::getInstance()->getInstrumentCode(path);
@@ -797,18 +843,20 @@ void InstrumentTable::selectedRowsChanged(int selectedRow)
   selRow=selectedRow;
   bool active=(selRow>-1);
   loadButton->setEnabled(active);
-  open2Button->setEnabled(active);
+  openButton->setEnabled(active);
+  // no example or autoload button if exporting
+  if (exporting) return;
   // example button only active if entry has Example attribute set
   const XmlElement* row=dataList->getChildElement(selRow);
   if (!active || row==NULL)
-    open1Button->setEnabled(false);
+    examplesButton->setEnabled(false);
   else
     {
       String file=row->getStringAttribute(T("Examples"));
       if (file.isEmpty())
-	open1Button->setEnabled(false);
+	examplesButton->setEnabled(false);
       else
-	open1Button->setEnabled(true);
+	examplesButton->setEnabled(true);
     }
 }
 
@@ -823,10 +871,9 @@ const String InstrumentTable::getAttributeNameForColumnId (const int colId)
   return String::empty;
 }
 
-void InstrumentTable::paintRowBackground (Graphics& g, 
-					     int rowNumber, 
-					     int width, int height, 
-					     bool rowIsSelected)
+void InstrumentTable::paintRowBackground (Graphics& g, int rowNumber, 
+                                          int width, int height, 
+                                          bool rowIsSelected)
 {
   if (rowIsSelected)
     g.fillAll (Colours::lightgoldenrodyellow); 
@@ -898,7 +945,8 @@ void InstrumentTable::cellDoubleClicked(int rowNumber, int colId,
   if (selRow>-1)
     {
       loadButton->triggerClick();
-      open1Button->triggerClick();
+      if (!exporting)
+        examplesButton->triggerClick();
     }
 }
 

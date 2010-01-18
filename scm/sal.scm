@@ -1486,7 +1486,8 @@
   (and SalIdentifier
        (or (and SalLParen SalRParen)
 	   (and SalLParen 
-		SalIdentifier (* SalComma SalIdentifier)
+;		SalIdentifier (* SalComma SalIdentifier)
+		SalBindRule (* SalComma SalBindRule)
 		SalRParen))
        SalStatementRule)
   (lambda (args errf)
@@ -1547,14 +1548,13 @@
 		    (mesg #f)
 		    (form #f)
 		    )
-;	       (print (list #:procdata-> name pars body))
-
+               ;; (format #t "~S~%" (list #:procdata-> name pars body))
 	       ;; decl is (funcname {arg}*). if last arg contains
 	       ;; "..." then its an &rest arg: replace last cdr of
 	       ;; decl with arg minus the "..."
 	       (if (not (null? (cdr decl)))
 		   (let* ((tail (list-tail decl (- (length decl) 2)))
-			  (name (symbol->string (cadr tail)))
+			  (name (symbol->string (car (cadr tail))))
 			  (size (string-length name)))
 		     (if (and (> size 3)
 			      (string=? (substring name (- size 3)) 
@@ -1570,12 +1570,12 @@
 			  (set! form
 				`(call-with-current-continuation
 				  (lambda (return) ,form))))
-		      (set! form (list 'define decl form))
+		      (set! form (list 'define* decl form))
 		      (set! mesg "Function: "))
 		     ((token-unit-type=? type SalProcess)
 		      (set! info (add-emit-info #:process #t info))
 		      (set! form (emit body info errf))
-		      (set! form (list 'define decl form))
+		      (set! form (list 'define* decl form))
 		      (set! mesg "Process: ")))
 	       (do ((args (string-append mesg (symbol->string name) " ("))
 		    (tail pars (cdr tail)))
@@ -1583,7 +1583,7 @@
 		    (set! mesg `(print-output
 				 ,(string-append args ")\n"))))
 		 (set! args (string-append args
-					   (symbol->string (car tail))))
+					   (symbol->string (car (car tail)))))
 		 (if (not (null? (cdr tail)))
 		     (set! args (string-append args ", "))))
 	       ;; message printed before definition to help track
@@ -1740,21 +1740,15 @@
 
 (define (sal:chdir path)
   (chdir path)
+  (sal:print "Directory: \"" (pwd) "\"")
   (values))
 
 (define (sal:load file)
-  (let ((f (pathname-exists? file)))
-    (if (not f)
-	(print-error (string-append ">>> Error: file \""
-				    file
-				    "\" does not exist\n"))
-	(let ()
-	  (print-output (string-append "Loading " file "\n" ))
-	  (if (equal? "sal" (pathname-type file))
-	      (load-sal-file (full-pathname file))
-	      (load (full-pathname file)))
-	  ))
-    (values)))
+  (if (equal? "sal" (pathname-type file))
+      (load-sal-file (full-pathname file))
+      (ffi_load file))
+  (print-output (string-append "Loaded " file "\n" ))
+  )
 
 (define (load-sal-file file)
   (let ((toks #f)

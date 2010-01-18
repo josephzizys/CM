@@ -134,9 +134,6 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
   sndlib.addSubMenu(T("Audio Formats"), fmats);
 
   sndlib.addCommandItem(comm, CommandIDs::SndLibAutoPlay);
-  sndlib.addSeparator();
-  sndlib.addCommandItem(comm, CommandIDs::SndLibInsDialog);
-  sndlib.addCommandItem(comm, CommandIDs::SndLibInsRestore);
   menu.addSubMenu(T("SndLib"),sndlib);
 #endif
   PopupMenu csound;
@@ -174,15 +171,17 @@ const juce::PopupMenu CommandMenus::getAudioMenu(bool isfms)
     menu.addSubMenu(T("Fomus"), fomus);
   }
 #endif
-
   menu.addSeparator();
-  menu.addCommandItem(comm, CommandIDs::MidiPlotPlayer);
-  menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);
-  menu.addCommandItem(comm, CommandIDs::MidiOutFileSettings);
-  menu.addCommandItem(comm, CommandIDs::MidiInImportFile);
+  menu.addCommandItem(comm, CommandIDs::SndLibInsDialog);
+  menu.addCommandItem(comm, CommandIDs::SndLibInsRestore);
   menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::AudioOpenFilePlayer);
+  menu.addCommandItem(comm, CommandIDs::MidiPlotPlayer);
+  menu.addCommandItem(comm, CommandIDs::MidiFilePlayer);
+  menu.addCommandItem(comm, CommandIDs::MidiInImportFile);
+  menu.addSeparator();
   menu.addCommandItem(comm, CommandIDs::AudioSettings);
+  menu.addCommandItem(comm, CommandIDs::MidiOutFileSettings);
   return menu;
 }
 

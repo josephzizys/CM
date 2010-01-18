@@ -78,9 +78,10 @@ class XSalNode : public XSchemeNode
 {
  public:
   String expr;
+  bool expand;
   //OwnedArray<SynTok>* toks;
   OwnedArray<SynTok> toks;
-  XSalNode(double qtime, String input /*, OwnedArray<SynTok>* tokens*/);
+  XSalNode(double qtime, String input, bool xpand=false /*, OwnedArray<SynTok>* tokens*/);
   ~XSalNode();
   bool applyNode(SchemeThread* scheme, double curtime);
 };

@@ -18,7 +18,7 @@
     <item name="Definitions" file="define.sal"/>
     <item name="Processes" file="processes.sal"/>
     <item name="Fomus" file="fomus.sal"/>
-    <item name="CLM" file="clm.sal"/>
+    <item name="SndLib" file="sndlib.sal"/>
   </menu>
 
   <menu name="Scheme Tutorials">
@@ -31,6 +31,7 @@
     <item name="Definitions" file="define.scm"/>
     <item name="Processes" file="processes.scm"/>
     <item name="Fomus" file="fomus.scm"/>
+
   </menu>
 
   <menu name="Sal Examples">
@@ -60,6 +61,7 @@
     <item name="Cellular Automata" file="automata.scm"/>
     <item name="Plotting" file="plot.scm"/>
     <item name="OSC" file="osc.scm"/>
+    <item name="SuperCollider" file="sc.scm"/>
   </menu>
 
   <menu name="Web Sites">

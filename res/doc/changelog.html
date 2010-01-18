@@ -22,11 +22,18 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     
     <li class="change"> Enhancement: SAL printing has been greatly improved (speeded up)</li>
     <li class="change"> Enhancement: SAL tokenizing is now in C with improvement in speed and consing.</li>
-    <li class="change"> New feaure:  SAL command <a href="cm.html#soundfile"><code>soundfile</code></a>  creates a sound file from  enclosed instrument calls.</li>
+    <li class="change"> New feaure: SAL command <a href="cm.html#soundfile"><code>soundfile</code></a>  creates a sound file from  enclosed instrument calls.</li>
+    <li class="change"> New feaure: the <code>define function</code> command in SAL now always creates a function with opt/key parameters. To specify an &rest argument add three dots to the parameter's name. This new behavior is implemented using S7's <code>define*</code> primative and should be backward compatible.</li>
 
-    <li class="change"> Enhancement: Audio File Player has been improved, now allows zooming and scrolling the waveform display, buffer size is saved as a preference.</li>
+    <li class="change">Enhancement: Instrument Browser now located at the toplevel Audio menu and can be opened using the keyboard shortcut Command-I.</li>
 
-    <li class="change"> Enhancement: load will attempt to load files that do not otherwise exist from the embedded instruments. For example  <code>(load "wave.ins")</code> will load the wave instrument from the embedded sources if the file does not exist in the current directory and *load-path* is empty.</li>
+    <li class="change">Enhancement: new SuperCollider Scheme example.</li>
+
+    <li class="change">Enhancement: new SAL tutorial for SndLib.</li>
+
+    <li class="change">Enhancement: Audio File Player has been improved, now allows zooming and scrolling the waveform display, buffer size is saved as a preference.</li>
+
+    <li class="change"> Enhancement: load will search for files in the embedded instrument distribution if the filename has no directory component and the file does not otherwise exist in the current working directory.</li>
 
     <li class="change">Enhancement: Receiving Midi and Osc data has been improved and made more consistent. See <a href="cm.html#osc:receiver"><code>osc:receiver</code></a>, <a href="cm.html#osc:receiver"><code>osc:receiver?</code></a>, <a href="cm.html#mp:receiver"><code>mp:receiver</code></a>, <a href="cm.html#mp:receiver"><code>mp:receiver?</code></a> for more information.</li>
     
@@ -34,13 +41,17 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
     
     <li class="change">Enhancement: <a href="cm.html#osc:message"><code>osc:message</code></a> now allows data to be specified as argument values or as a single list of values.</li>
     
+    <li class="change">Enhancement: New function <code>spectrum-rescale!</code> rescales frequencies of a spectrum.</li>
+
     <li class="change">Enhancement: <a href="cm.html#mp:instruments"><code>mp:instruments</code></a> now supports instrument names (strings) as well as program changes. Partial names are also supported: the first instrument that matches or contains the partial name as a substring will be selected.</li>
     
     <li class="change">Enhancement: <a href="cm.html#divide"><code>divide</code></a> now allows its second argument to be a list of denominators.</li>
-    
+
     <li class="change">Incompatible change: function <code>mp:inhook</code> removed.</li>
 
     <li class="change">Incompatible change: function <code>osc:hook</code> function removed.</li>
+
+   <li class="change">Incompatible change: old function <code>spectrum-rescale!</code> has been renamed <code>spectrum-modify!<code>.</li>
 
     <li class="change">Bug fix: function <code>drunk</code> now accepts numeric modes and an avoid parameter.</li>
 
@@ -274,7 +285,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Mon Jan 11 19:28:23 CST 2010 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Sun Jan 17 14:38:41 CST 2010 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

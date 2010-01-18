@@ -456,10 +456,24 @@
 ; (spectrum-invert! foo)
 ; (note (spectrum-keys foo :order -1))
 
+(define* (spectrum-rescale! spec (min #t) (max #t) )
+  (let ((data (spectrum-freqs spec))
+        (newmin min)
+        (newmax max)
+        (oldmin (spectrum-minfreq spec))
+        (oldmax (spectrum-maxfreq spec)))
+    (if (eq? newmin #t) (set! newmin (spectrum-minfreq spec)))
+    (if (eq? newmax #t) (set! newmax (spectrum-maxfreq spec)))
+    (if (< newmin newmax)
+        (do ((tail data (cdr tail)))
+            ((null? tail)
+             spec)
+          (set-car! tail (rescale (car tail) oldmin oldmax newmin newmax)))
+        (error "minimum ~S not less than maximum ~S" newmin newmax))))
 
 ;; interp key note every
 
-(define (spectrum-rescale! spec mode . args)
+(define (spectrum-modify! spec mode . args)
   (let ((scaling #f) 
 	(modifier #f)
 	(modified #f)

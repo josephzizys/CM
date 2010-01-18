@@ -70,6 +70,7 @@
     <instrument Name="vkey" File="vkey.scm" Category="Sound Processing" Comment="virtual sampler" Examples="" Depend="expandn.scm fullmix.scm" AutoLoad="no" />
     <instrument Name="vox" File="vox.scm" Category="Frequency Modulation" Comment="Mark LeBrun's fm voice instrument" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="wave" File="wave.scm" Category="Waveshaping" Comment="sinewave with envelope and gliss" Examples="wave.clm" Depend="" AutoLoad="no" />
+    <instrument Name="sc:wave" File="wavesc.scm" Category="Waveshaping" Comment="Supercollider wave instrument" Examples="" Synthdef="wavesc.rtf" Depend="" AutoLoad="no" />
     <instrument Name="wurley" File="wurley.scm" Category="Frequency Modulation" Comment="Perry Cook's Wurlitzer?" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="za" File="za.scm" Category="Filtering" Comment="interpolating all pass filters" Examples="za.clm" Depend="" AutoLoad="no" />
     <instrument Name="zc" File="zc.scm" Category="Filtering" Comment="interpolating comb filters (phasing)" Examples="zc.clm" Depend="" AutoLoad="no" />

@@ -599,11 +599,12 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       info.setTicked(pref->getBoolProp(T("SndLibAutoPlay"), true));
       break;
     case CommandIDs::SndLibInsDialog:
-      info.shortName=T("Open Instrument Browser...");
+      info.addDefaultKeypress('I', comk);
+      info.shortName=T("Instrument Browser..");
       break;
     case CommandIDs::SndLibInsRestore:
       //info.shortName=T("Restore To Directory...");
-      info.shortName=T("Save All Instruments...");
+      info.shortName=T("Export Instruments...");
       break;
       //
       // Csound Commands
@@ -792,11 +793,11 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
 
     case CommandIDs::HelpSalTutorialsRestore:
     case CommandIDs::HelpSchemeTutorialsRestore:
-      info.shortName=T("Save All Tutorials...");
+      info.shortName=T("Export Tutorials...");
       break;
     case CommandIDs::HelpSalExamplesRestore:
     case CommandIDs::HelpSchemeExamplesRestore:
-      info.shortName=T("Save All Examples...");
+      info.shortName=T("Export Examples...");
       break;
 
     default:
@@ -974,7 +975,8 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       break;
 
     case CommandIDs::SndLibInsRestore:
-      SndLib::getInstance()->restoreInstruments();
+      //SndLib::getInstance()->restoreInstruments();
+      SndLib::getInstance()->openInstrumentBrowser(true);
       break;
 
 #endif

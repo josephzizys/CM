@@ -134,6 +134,7 @@ LispSyntax::LispSyntax ()
   hilites[HiliteIDs::Hilite6]=Colours::cadetblue;
   addLispTok( T("begin"), numtoks++, HiliteIDs::Hilite4, 1000);
   addLispTok( T("define"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("define*"), numtoks++, HiliteIDs::Hilite4, 1);
   addLispTok( T("define-process"), numtoks++, HiliteIDs::Hilite4, 1);
   addLispTok( T("definstrument"), numtoks++, HiliteIDs::Hilite4, 1);
   addLispTok( T("defun"), numtoks++, HiliteIDs::Hilite4, 1);
@@ -672,7 +673,7 @@ void SalSyntax::eval(String text, bool isRegion, bool expand)
   text << T(")");
   CommonLisp::getInstance()->eval(text, true);
 #else
-  XSalNode* node=new XSalNode(0.0, text);
+  XSalNode* node=new XSalNode(0.0, text, expand);
   if (!tokenize(text, node->toks))
     {
       delete node;
@@ -682,42 +683,6 @@ void SalSyntax::eval(String text, bool isRegion, bool expand)
   return;
 #endif
 }
-
-/* OLD VERSION 
-void SalSyntax::eval(String text, bool isRegion, bool expand)
-{
-  //  std::cout << "eval: '" << text.toUTF8() << "'\n";
-  if (isRegion)
-    text = T("begin\n") + text + T("\nend");
-#ifdef GRACECL
-  text=T("(cm::sal ") + String("\"") 
-	+ text.replace(T("\""),T("\\\""))
-	+ String("\"");
-  if (isRegion)
-    text << T(" :pattern :statement-sequence");
-  if ( expand )
-    text << T(" :expand t");
-  text << T(")");
-  CommonLisp::getInstance()->eval(text, true);
-#else
-
-  String tokens=tokenize(text);
-  // if null then error was reported...
-  if (tokens == String::empty)
-    return ;
-  String exp = (expand) ? T("#t") : T("#f");
-  // quotify string chars in input text
-  text=text.replace(T("\""),T("\\\""));
-  // build call to sal function
-  text=T("(sal \"") + text + T("\"") +
-    T(" (quote ") + tokens + T(")") +
-    T(" ") + exp +
-    T(")");
-  //  std::cout << text.toUTF8() << "\n";
-    SchemeThread::getInstance()->eval(text);
-#endif
-}
-*/
 
 /*=======================================================================*
                                   SAL Lexer
@@ -857,159 +822,6 @@ bool SalSyntax::tokenize(String str, OwnedArray<SynTok>& tokenstream)
     }
   return true;
 }
-
-/*
-String SalSyntax::tokenize(String str) 
-{
-  int old=0, len=str.length(), pos=0, beg=0, end=0, lev[]={0,0,0,0};
-  int typ;
-  SynTok *tok;
-  OwnedArray<SynTok> tokenstream;
-  String tokenstring=String::empty;
-
-  while (true) 
-    {
-      old=pos;
-      typ=parse_sexpr(syntab,str,-1,len,1,SCAN_PARSER,&pos,&beg,&end);
-      switch (typ)
-	{
-	case SCAN_EMPTY :
-	  tok=NULL;
-	  break;
-	case SCAN_UNMATCHED:
-	  // this happens if we hit an unterminated string...
-	  // we need to find the starting char
-	  for (beg=old;beg<pos;beg++)
-	    if (str[beg]=='\"') break;
-	  tok=new SynTok(T("\""), SalString, beg);
-	  break;
-	case SCAN_STRING :
-	  tok=new SynTok(str.substring(beg,end), SalString, beg);
-	  break;
-	case SCAN_PUNCT :
-	  tok=new SynTok(T(","), SalComma, beg );
-	  break;
-	case SCAN_OPEN :
-	  if ( paren_char_p(str[beg]) ) 
-	    {
-	      lev[0]++;
-	      tok=new SynTok(T("("), SalLParen, beg);
-	    }
-	  else if ( curly_char_p(str[beg]) )
-	    {
-	      lev[1]++;
-	      tok=new SynTok(T("{"), SalLCurly, beg);
-	    }
-	  else {
-	    lev[2]++;
-	    tok=new SynTok(T("["), SalLBrace, beg);
-	  }
-	  break;
-	case SCAN_CLOSE :
-	  if ( paren_char_p(str[beg]) )
-	    {
-	      if ( --lev[0]<0 ) typ=SCAN_UNLEVEL;
-	      tok=new SynTok(T(")"), SalRParen, beg);
-	    }
-	  else if ( curly_char_p(str[beg]) )
-	    {
-	      if ( --lev[1]<0 ) typ=SCAN_UNLEVEL;
-	      tok=new SynTok(T("}"), SalRCurly, beg);
-	    }
-	  else
-	    {
-	      if ( --lev[2]<0 ) typ=SCAN_UNLEVEL;
-	      tok=new SynTok(T("]"), SalRBrace, beg);
-	    }
-	  break;
-	case SCAN_TOKEN :
-	  tok=new SynTok(String::empty, SalUntyped, beg);
-	  typ=classifyToken(str.substring(beg,end), tok);
-	  // begin ... end block matching
-	  if (isSalType(typ))
-	    if (SalTypeDataBits(typ)==SalBlockClose) 
-	      {
-		if (--lev[3]<0) 
-		  {
-		    typ=SalSyntax::UnmatchedEnd;
-		  }
-		else ;
-		//	  printf("decrement level=%d: %s\n",lev[3],
-		//		 str.substring(beg,end).toUTF8());
-	      }
-	    else if (SalTypeDataBits(typ)==SalBlockOpen)
-	      {
-		lev[3]++;
-		//	  printf("increment level=%d: %s\n",lev[3],
-		//		 str.substring(beg,end).toUTF8());
-	      }
-	  // if (typ==SalUntyped) typ=SalUnknown;
-	  break;
-	default:  
-	  // error code
-	  printf("error code=%d, tok=%s\n", 
-		 typ, str.substring(beg,end).toUTF8());
-	  tok=new SynTok(str.substring(beg,end), SalUntyped, beg);
-	  break;
-	} // end switch(typ)
-      
-      if (tok != NULL) tokenstream.add(tok);
-      
-      // stop if empty or error.
-      if (typ<1)
-	break;
-      
-    }  // end while(true)
-  
-  //  printf("typ=%d, lev[0]=%d,lev[1]=%d\n", typ, lev[0], lev[1]);
-  
-  // if no errors search for any unmatched delimiters
-  if (typ >= 0)
-    {
-      if (lev[0] > 0)
-	{
-	  tok=findUnbalanced(tokenstream, SalLParen, SalRParen, lev[0]);
-	  typ=SCAN_UNMATCHED;
-	}
-      else if (lev[1] > 0)
-	{
-	  tok=findUnbalanced(tokenstream, SalLCurly, SalRCurly, lev[1]);
-	  typ=SCAN_UNMATCHED;
-	}
-      else if (lev[2] > 0)
-	{
-	  tok=findUnbalanced(tokenstream, SalLBrace, SalRBrace, lev[2]);
-	  typ=SCAN_UNMATCHED;
-	}
-      else if (lev[3] > 0)
-	{
-	  tok=findUnbalanced(tokenstream, SalBlockOpen, SalBlockClose,
-			     lev[3]);
-	  typ=SalSyntax::MissingEnd;
-	}
-    }
-  
-  if (typ<0)
-    salError(str, typ, tok);
-  else
-    {
-      tokenstring=T("(");
-      for (int i=0; i<tokenstream.size(); i++)
-	{
-	  if (i>0) tokenstring << T(" ");
-	  // each token is triplet: (<saltype> <string> <position>)
-	  tokenstring << T("(#x")
-		      << String::toHexString( tokenstream[i]->type )
-		      << T(" \"") 
-		      << tokenstream[i]->name.unquoted() << T("\" ") 
-		      << String(tokenstream[i]->data1) << T(")") ;
-	}
-      tokenstring << T(")");    
-    }
-  tokenstream.clear();
-  return tokenstring;
-}
-*/
 
 void SynTok::print(bool lisp) {
   printf("(#x%x \"%s\" %d)", type, name.unquoted().toUTF8(), data1);

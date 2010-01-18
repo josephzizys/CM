@@ -96,11 +96,10 @@ bool XEvalNode::applyNode(SchemeThread* schemethread, double curtime)
   return false; 
 }
 
-XSalNode::XSalNode(double qtime, String input /*, OwnedArray<SynTok>* tokens */)
+XSalNode::XSalNode(double qtime, String input, bool xpand )
   : XSchemeNode(qtime),
-    //    toks (tokens),
+    expand (xpand),
     expr (input)
-
 {
 }
 
@@ -113,24 +112,19 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
 {
   s7_scheme* sc=st->scheme;
   s7_pointer data=st->schemeNil;
-  // cons up token list in reverse order
+  // cons up token list using reverse order of array
   for (int i=toks.size()-1; i>=0; i--)
     {
-      /*      s7_pointer tok=s7_cons(sc,
-                             s7_make_integer(sc, toks.getUnchecked(i)->type),
-                             s7_cons(sc,
-                                     s7_make_string(sc, toks.getUnchecked(i)->name.toUTF8()),
-                                     s7_cons(sc,
-                                             s7_make_integer(sc, toks.getUnchecked(i)->data1), 
-                                             st->schemeNil)));
-      data=s7_cons(sc, tok, data);
-      */
-      data=s7_cons(sc, s7_make_c_pointer(sc, toks.getUnchecked(i)), data);
+     data=s7_cons(sc, s7_make_c_pointer(sc, toks.getUnchecked(i)), data);
     }
-  // turn data into arglist: ((toks...) )
-  data = s7_cons(sc, data, st->schemeNil);
-  // first arg to 'sal' is input: ("input" (toks...))
+  // turn data into arglist, either ( ({tok}*) ) or ( ({tok}*) #t)
+  if (expand)
+    data=s7_cons(sc, data, s7_cons(sc, st->schemeTrue, st->schemeNil));
+  else
+    data=s7_cons(sc, data, st->schemeNil);
+  // add input string as first arg: ("input" ({tok}*) [#t]*)
   data = s7_cons(sc, s7_make_string(sc, expr.toUTF8()), data);
+  // gc protect data cobbled up on the C side
   int prot = s7_gc_protect(sc, data);
   s7_pointer retn=s7_call(sc,
                           s7_name_to_value(sc, "sal"),

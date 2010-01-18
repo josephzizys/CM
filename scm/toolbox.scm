@@ -635,12 +635,12 @@
 (define (pc x)
   ;; returns the pitch class (0-11) of a key, note or list of the same
   (if (number? x)
-      (modulo x 12)
+      (modulo (int x) 12)
       (if (pair? x)
 	  (if (number? (car x))
 	      (map pc x)
 	      (map pc (key x)))
-	  (modulo (key x) 12))))
+	  (pc (key x) ))))
 
 ;; (pc 60)
 ;; (pc 'cs4)
@@ -1116,4 +1116,49 @@
     "wheat"
     "whitesmoke"
     "yellowgreen"))
+
+;;;
+;;; Sound database support for using with vkey and sc:vkey
+;;;
+
+(define (vk-key vk) (car vk))
+(define (vk-file vk) (cadr vk))
+(define (vk-buffer vk) (caddr vk))
+(define (vk-duration vk) (cadddr vk))
+(define (vk-channels vk) (cadddr (cdr vk)))
+(define (vk-amplitude vk) 
+  (let ((amp (cadddr (cddr vk))))
+    (or amp
+        (do ((info (mus-sound-maxamp (vk-file vk)) (cddr info))
+             (maxa 0.0))
+            ((null? info) 
+             (set-car! (cdr (cddddr vk)) maxa)
+             maxa)
+          (set! maxa (max maxa (cadr info)))))))
+
+(define* (sound-db dir (decode pathname->key) (full #t) assoc)
+  ;; create a sound db suitable for vkey or sc:vkey
+  ;; db is a vector of (keynum pathname buffer-number duration)
+  ;; buffer numbers are initially #f
+  (let* ((filenames (if (pair? dir) dir (directory dir)))
+         (len (length filenames))
+         (result (if (> len 0) (make-vector len)
+                     (error "sound-db: no matching files for ~S" dir))))
+    (if (eq? assoc #t) (set! assoc "file"))
+    (let recur ((i 0)
+                (files filenames))
+      (if (null? files)
+          (sort! result (lambda (x y) (< (car x) (car y))))
+          (let ((vk (list (if assoc (format #f "~A~D" assoc (+ i 1))
+                              (decode (car files)))
+                          (car files)           ; pathname
+                          #f                    ; sc buffer(s)
+                          (if full (mus-sound-duration (car files)) #f)
+                          (if full (mus-sound-chans (car files)) #f)
+                          #f)))                 ; maxamp   
+            (vector-set! result i vk )
+            (recur (1+ i) (cdr files)))))
+    (format #t "sound-db: ~S in ~D files, key ~A to ~A~%"
+            dir len (car (result 0)) (car (result (- len 1))))
+    result))
 

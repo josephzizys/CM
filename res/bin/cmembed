@@ -1,0 +1,78 @@
+#!/bin/sh
+
+use="cmembed [scm] [doc] [ins] [ffi]\n       Embeds the specified resources in the CM Source tree.\n       Must be run from the top-level CM directory.\n       Requires /usr/bin/juce_bb\n"
+cwd=`pwd`
+actscm=
+actdoc=
+actins=
+actffi=
+
+for arg in "$@" ; do
+    case $arg in
+        scm) actscm=1 ;;
+        doc) actdoc=1 ;;
+        ins) actins=1 ;;
+        ffi) actffi=1 ;;
+        *) echo "usage:" $use
+           exit 1 ;;
+    esac    
+done
+
+if [[ "$#" == 0 ]] ; then
+    echo "usage:" $use
+    exit 1
+fi
+
+if [ ! -f "$cwd/premake.lua" ] ; then
+    echo "not in toplevel cm directory"
+    exit 1
+fi
+
+if [[ "$actscm" == 1 ]] ; then
+    echo "embedding scheme sources"
+    juce_bb scm src SchemeSources
+fi
+
+if [[ "$actdoc" == 1 ]] ; then
+    echo "embedding documentation..."
+    cd res/
+    mkdir tmp
+    cd doc
+    cp doc.xml ../tmp
+    zip doc.zip *.html *.css *.scm *.sal
+    mv doc.zip ../tmp/
+    cd ..
+    /usr/local/bin/juce_bb tmp/ ../src/ Resources
+    rm -r tmp
+fi
+
+if [[ "$actins" == 1 ]] ; then
+    echo "embedding instruments..."
+    cd res/
+    mkdir tmp
+    cd ins
+    cp ins.xml ../tmp
+    zip ins.zip *.scm *.clm *.rtf *.sc
+    mv ins.zip ../tmp/
+    cd ..
+    /usr/local/bin/juce_bb tmp/ ../src/ Instruments
+    rm -r tmp
+fi
+
+if [[ "$actins" == 1 ]] ; then
+    echo "embedding instruments..."
+    cd res/
+    mkdir tmp
+    cd ins
+    cp ins.xml ../tmp
+    zip ins.zip *.scm *.clm *.rtf
+    mv ins.zip ../tmp/
+    cd ..
+    /usr/local/bin/juce_bb tmp/ ../src/ Instruments
+    rm -r tmp
+fi
+
+if [[ "$actffi" == 1 ]] ; then
+    csi -b -e '(begin (load "/Users/hkt/Software/cm/scm/genffi.scm") (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp") (exit))'
+fi
+

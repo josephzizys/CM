@@ -2285,20 +2285,41 @@ Inverts frequencies in <var>spectrum</var> around <var>point</var>, or around th
   <tr class="entry">
     <td class="formals">
       <span class="funcname">spectrum-rescale!</span>
+      (<var class="arg">spectrum</var>, [<var class="optkey">min</var> = #t], [<var class="optkey">max</var> = #t])
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr><td class="retval" colspan="2">&rarr; spectrum</td></tr>
+</table>
+<blockquote>
+
+<p> Rescales frequencies in <var>spectrum</var> to lie between the new
+<var>min</var> and <var>max</var> values. If <code>#t</code> is
+specified it means that the current min or max value is preserved in the
+rescaling.
+
+</p>
+</blockquote>
+
+<!-- DEFINITION -->
+<table class="entry" id="spectrum-modify_">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">spectrum-modify!</span>
       (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="arg">envelope</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">spectrum-rescale!</span>
+      <span class="funcname">spectrum-modify!</span>
       (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="rest">xy...</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
   <tr class="entry">
     <td class="formals">
-      <span class="funcname">spectrum-rescale!</span>
+      <span class="funcname">spectrum-modify!</span>
       (<var class="arg">spectrum</var>, <var class="arg">mode</var>, <var class="arg">y</var>)
     </td>
     <!-- td class="label">Function</td -->
@@ -2365,11 +2386,11 @@ following rescaling or filtering operations:</p>
 
 <dl>
   <dt>To shift frequencies downward by half:</dt>
-  <dd><code>spectrum-rescale(spectrum, 2, .5)</code></dd>
+  <dd><code>spectrum-modify!(spectrum, 2, .5)</code></dd>
   <dt>To low-pass a spectrum:</dt>
-  <dd><code>spectrum-rescale(spectrum, 5, {100 1 400 .2 1000 .1})</code></dd>
+  <dd><code>spectrum-modify!(spectrum, 5, {100 1 400 .2 1000 .1})</code></dd>
   <dt>To invert the frequencies in a spectrum:</dt>
-  <dd><code>spectrum-rescale(spectrum, 1, #f, #t, #t, #f)</code></dd>
+  <dd><code>spectrum-modify!(spectrum, 1, #f, #t, #t, #f)</code></dd>
 
 </dl>
 

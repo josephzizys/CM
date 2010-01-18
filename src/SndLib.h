@@ -36,8 +36,9 @@ class SndLib
   bool isInstrumentLoaded(String filename);
   void updateAutoLoaded();
   void autoLoadInstruments();
-  void openInstrumentBrowser();
-  void restoreInstruments(String directory=String::empty);
+  void openInstrumentBrowser(bool exporting=false);
+  void restoreInstruments();
+  void restoreInstrument(XmlElement* ins);
   juce_DeclareSingleton (SndLib, true)
 };
 
