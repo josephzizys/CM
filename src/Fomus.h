@@ -140,7 +140,7 @@ enum whichstruct
     wh_measdef,
     wh_part,
     wh_metapart,
-    wh_partsref,
+    wh_partmap,
     wh_inst,
     wh_percinst,
     wh_clef,

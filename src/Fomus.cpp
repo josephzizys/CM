@@ -687,9 +687,19 @@ void Fomus::sendXmlVal(XmlElement& xml, fomus_param par,
 	exc.insert(excmap::value_type("id", sendpair(fomus_par_metapart_id,
 						     fomus_act_set, wh_none)));
 	exc.insert(excmap::value_type("parts", sendpair(fomus_par_metapart_partmaps,
-							fomus_act_add, wh_part,
+							fomus_act_add, wh_partmap,
 							true)));
 	sendXmlSets(xml, fomus_par_metapart_settingval, fomus_act_set, exc, true);
+	Fomus::act(par, act);
+	break;
+      case wh_partmap:
+	exc.insert(excmap::value_type("part", sendpair(fomus_par_partmap_part,
+						       fomus_act_set, wh_part,
+						       true)));
+	exc.insert(excmap::value_type("metapart", sendpair(fomus_par_partmap_metapart,
+							   fomus_act_set, wh_metapart,
+							   true)));
+	sendXmlSets(xml, fomus_par_partmap_settingval, fomus_act_set, exc, true);
 	Fomus::act(par, act);
 	break;
       case wh_inst:
