@@ -157,6 +157,7 @@ LispSyntax::LispSyntax ()
   addLispTok( T("unless"), numtoks++, HiliteIDs::Hilite4, 1);
   addLispTok( T("when"), numtoks++, HiliteIDs::Hilite4, 1);
   addLispTok( T("with-sound"), numtoks++, HiliteIDs::Hilite4, 1);
+  addLispTok( T("with-fomus"), numtoks++, HiliteIDs::Hilite4, 1);
 }
 
 LispSyntax::~LispSyntax()
@@ -397,6 +398,7 @@ SalSyntax::SalSyntax ()
   addSalTok( T("else"), SalElse, HiliteIDs::Hilite5);
   addSalTok( T("end"), SalEnd, HiliteIDs::Hilite5);
   addSalTok( T("exec"), SalExec, HiliteIDs::Hilite5);
+  addSalTok( T("fomusfile"), SalFomusFile, HiliteIDs::Hilite5);
   addSalTok( T("if"), SalIf, HiliteIDs::Hilite5);
   addSalTok( T("load"), SalLoad, HiliteIDs::Hilite5);
   addSalTok( T("loop"), SalLoop, HiliteIDs::Hilite5);
