@@ -275,21 +275,17 @@ define process blastit(part, low, high)
 
 ;; Then sprout two instances of this process.
 
-sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "fomus"
-
-;; Specifying "fomus" sends all data to the currently selected score
-;; object.  To see the output, enter:
-
-send "fms:run"
-
-;; You can save yourself a few steps by including some more options
-;; after "fomus""
-
 sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "fomus", clear: #t, run: #t
 
 ;; `clear: #t' tells FOMUS to clear the score first and `run: #t'
 ;; executes the `run' command after all processes have finished
-;; executing.
+;; executing.  Both `clear' and `run' are #t by default, so it's
+;; not actually necessary to specify them here.
+
+;; If you specify `run: #t' in the sprout command, you can run FOMUS
+;; afterwards by executing:
+
+send "fms:run"
 
 ;; Sprout also accepts a filename as the first argument.  However,
 ;; since this creates a new score object, you must also give sprout
@@ -297,10 +293,9 @@ sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "fomus", clear: #t, 
 ;; must also reset the `layout' global setting.
 
 sprout list(blastit("ob", 65, 80), blastit("pno", 40, 80)), "/tmp/blasted.ly", 
-  settings: {:layout "small-ensemble"},
+  sets: {:layout "small-ensemble"},
   parts: {{:id "pno" :inst "piano"} 
-          {:id "ob" :inst "oboe"}},
-  clear: #t, run: #t
+          {:id "ob" :inst "oboe"}}
 
 ;; "/tmp/blasted.ly" selects the "blasted.ly" score object before
 ;; sending note data.  Remember that when specifying settings inside

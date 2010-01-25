@@ -120,7 +120,7 @@
     (ffi_cs_init_score void "cs_init_score" c-string)
     (ffi_cs_send_score void "cs_send_score" int int double c-string)
 
-    (ffi_fms_open_score int "fms_open_score" c-string c-string )
+    (ffi_fms_open_score void "fms_open_score" bool)
     (ffi_fms_close_score void "fms_close_score" )
     (ffi_fms_new void "fms_new" c-string)
     (ffi_fms_select void "fms_select" c-string)
@@ -128,9 +128,15 @@
     (ffi_fms_clear void "fms_clear" )
     (ffi_fms_load void "fms_load" c-string)
     (ffi_fms_run void "fms_run" )
-    (ffi_fms_xml void "fms_xml" c-string)
     (ffi_fms_save void "fms_save" c-string)
     (ffi_fms_isfiletype int "fms_isfiletype" c-string)
+    
+    (ffi_fms_ival void "fms_ival" int int long)
+    (ffi_fms_rval void "fms_rval" int int long long)
+    (ffi_fms_fval void "fms_fval" int int double)
+    (ffi_fms_sval void "fms_sval" int int c-string)
+    (ffi_fms_act void "fms_act" int int)
+    (ffi_fms_err void "fms_err" )
 
     (ffi_plot_xml void "plot_xml" c-string)
     (ffi_plot_add_xml_points void "plot_add_xml_points" c-string c-string)
@@ -299,6 +305,7 @@
     (double  "s7_is_real"    "s7_number_to_real(s7_car(args))"     "s7_make_real")
     (float   "s7_is_real"    "s7_number_to_real(s7_car(args))"     "s7_make_real")
     (int     "s7_is_integer" "(int)s7_integer(s7_car(args))"       "s7_make_integer")
+    (long    "s7_is_integer" "(long)s7_integer(s7_car(args))"      "s7_make_integer")
     (integer64  "s7_is_integer" "(int64)s7_integer(s7_car(args))"  "s7_make_integer")
     (bool    "s7_is_boolean" "s7_boolean(s7, s7_car(args))"        "make_s7_boolean")
     (c-string  "s7_is_string"  "(char*)s7_string(s7_car(args))"    "strduped_string") ;"s7_make_string"
@@ -334,6 +341,7 @@
 	(strings (list))
 	(objs (list))
 	(ints (list))
+	(longs (list))
 	(ints64 (list))
 	(bools (list))
 	(return #f)
@@ -359,6 +367,9 @@
 	    ((eq? (car args) 'int)
 	     (set! ints (addvar "i" ints))
 	     (set! params (cons (car ints) params)))	    
+	    ((eq? (car args) 'long)
+	     (set! longs (addvar "l" longs))
+	     (set! params (cons (car longs) params)))	    
 	    ((eq? (car args) 'integer64)
 	     (set! ints64 (addvar "il" ints64))
 	     (set! params (cons (car ints64) params)))
@@ -376,6 +387,7 @@
 	    ))
     (set! floats (reverse floats))
     (set! ints (reverse ints))
+    (set! longs (reverse longs))
     (set! ints64 (reverse ints64))
     (set! bools (reverse bools))
     (set! strings (reverse strings))
@@ -433,6 +445,8 @@
 	  (set! func (string-append func pad (paramdecl floats 'double))))
       (if (pair? ints)
 	  (set! func (string-append func pad (paramdecl ints 'int)))) ;int s7_Int
+      (if (pair? longs)
+	  (set! func (string-append func pad (paramdecl longs 'long)))) ;int s7_Int
       (if (pair? ints64)
 	  (set! func (string-append func pad (paramdecl ints64 'int64))))
       (if (pair? bools)

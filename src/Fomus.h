@@ -5,13 +5,7 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
-//#ifndef FOMUS_H
-//#define FOMUS_H
-
 #include <juce.h>
-
-#include <map>
-#include <iostream>
 
 #include "Console.h"
 #include "Syntax.h"
@@ -119,7 +113,6 @@ class FomusScore
       initfomus();
       if (!check_fomus_exists()) {fom = 0; return;}
       fom = fapi_fomus_new();
-      //std::cout << fom << std::endl;
     }
   
   ~FomusScore()
@@ -134,51 +127,19 @@ class FomusScore
   }
 };
 
-enum whichstruct
-  {
-    wh_none,
-    wh_measdef,
-    wh_part,
-    wh_metapart,
-    wh_partmap,
-    wh_inst,
-    wh_percinst,
-    wh_clef,
-    wh_staff,
-    wh_import,
-    wh_export,
-    wh_voices
-  };
-
-struct sendpair
-{
-  fomus_param par;
-  fomus_action act;
-  whichstruct wh;
-  bool inlist;
-  sendpair(fomus_param par, fomus_action act, whichstruct wh,
-	   bool inlist = false)
-  : par(par),
-    act(act),
-    wh(wh),
-    inlist(inlist)
-  {}
-};
-
-typedef std::map<String, sendpair> excmap;
-
 class Fomus
 {
  private:
   OwnedArray<FomusScore> scores;  
   int current;
+
+
+ public:
+
   FOMUS getfomusdata() const
   {
     return scores.getUnchecked(current)->getfom();
   }
-
-
- public:
 
  Fomus () : current(-1) 
     {
@@ -212,18 +173,13 @@ class Fomus
   void loadScore(String filename);
   void runScore(const bool fromscm);
 
-  void sendXml(XmlElement& xml, fomus_param par, fomus_action act);
-  void sendXml(const String& xml, double scoretime=0.0);
-  void sendXmlEntry(XmlElement& xml);
-  void sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act, const excmap& exc = excmap(),  bool islist = false);
-  void sendXmlVal(XmlElement& xml, fomus_param par, fomus_action act, whichstruct wh, bool listof = false);
-  
-  void ival(fomus_param par, fomus_action act, fomus_int val);
-  void rval(fomus_param par, fomus_action act, fomus_int num, fomus_int den);
-/*   void mval(fomus_param par, fomus_action act, fomus_int val, fomus_int num, fomus_int den); */
-  void fval(fomus_param par, fomus_action act, double val);
-  void sval(fomus_param par, fomus_action act, const String& val);
-  void act(fomus_param par, fomus_action act);
+  void ival(int par, int act, fomus_int val);
+  void rval(int par, int act, fomus_int num, fomus_int den);
+  void fval(int par, int act, double val);
+  void sval(int par, int act, const String& val);
+  void act(int par, int act);
+
+  void setrunwhendone(bool x) {scores.getUnchecked(current)->runwhendone = x;}
   
 #ifdef GRACE
   void settingsWindow();
@@ -249,6 +205,3 @@ class FomusSyntax : public Syntax
   juce_DeclareSingleton(FomusSyntax, true)
 };
 
-//void fomusSaveAndRun();
-
-//#endif

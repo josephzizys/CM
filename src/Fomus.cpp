@@ -5,6 +5,12 @@
   this agreement is available at http://www.cliki.net/LLGPL             
  *=======================================================================*/
 
+// OLD SVN REVISION OF THIS FILE = 1823
+
+// NOTES:
+// Make sure this line is in the ConsoleWindow class in Console.h:
+// TooltipWindow xxx;
+
 #include "juce.h"
 
 #ifdef JUCE_WIN32
@@ -15,7 +21,7 @@
 #include <vector>
 #include <sstream>
 #include <limits>
-#include <memory>
+//#include <memory>
 #include <stack>
 #include <cctype>
 
@@ -35,22 +41,17 @@
 #include <dlfcn.h>
 #endif
 
-juce_ImplementSingleton(FomusSyntax) ;
-
-bool fomuserr = false;
-
-// Notes:
-// Make sure this is in the ConsoleWindow class in Console.h:
-// TooltipWindow xxx;
-
-// some default output file for people who hate dialogue boxes
-#define DEFAULT_OUT "out.ly"
-
 /*=======================================================================*
                              Fomus Instance
  *=======================================================================*/
 
+juce_ImplementSingleton(FomusSyntax) ;
 juce_ImplementSingleton(Fomus);
+
+bool fomuserr = false;
+
+// some default output file for people who hate dialogue boxes
+#define DEFAULT_OUT "out.ly"
 
 bool check_fomus_exists() {
 #ifndef GRACE
@@ -76,86 +77,6 @@ String getwildcards() {
     r += String("*.") + *i;
   }
   return r;
-}
-
-struct scopedxml {
-  XmlDocument doc;
-  std::auto_ptr<XmlElement> prs;
-  scopedxml(const String& str):doc(str), prs(doc.getDocumentElement()) {}
-  bool isvalid() const {return prs.get() != 0;}
-  XmlElement* getel() {return prs.get();}
-};
-
-struct xmlerror
-{
-  String str;
-  xmlerror(const String& str):str(str) {}
-  void printerr() const
-  {
-    Console::getInstance()->printError(">>> Error: Fomus: " + str + T("\n"));
-  }
-};
-
-bool Fomus::openScore(String scorename, String scoreargs, const bool fromscm)
-{
-  // called by sprout to open and/or initialize a (possibly) new score
-  // instance for receiving data from processes.  scorename is either
-  // "fomus" or "*.{ly|fms|xml}". if its "fomus" maybe the current
-  // score instance should be used and if its a file name a new score
-  // with that output file and appropriate back end should become
-  // current?  scoreargs is a string containing whatever the user
-  // passed as to sprout arguments to the score
-
-  scores.getUnchecked(current)->runwhendone = false;
-  StringArray userargs;
-  userargs.addTokens(scoreargs, true);
-  bool clrsc = false;
-  bool newsc = false;
-  bool dorun = false;
-  OwnedArray<scopedxml> els;
-  fomuserr = false;
-  for (int i=0; i<userargs.size(); ++i)
-    {
-      bool istr = true, eatnext = false;
-      if (i + 1 < userargs.size()) {
-	if (userargs[i + 1] == T("#f") || userargs[i + 1] == T("#F") || userargs[i + 1] == T("nil") || userargs[i + 1] == T("NIL")) {
-	  istr = false;
-	  eatnext = true;
-	} else if (userargs[i + 1] == T("#t") || userargs[i + 1] == T("#T") || userargs[i + 1] == T("t") || userargs[i + 1] == T("T")) {
-	  eatnext = true;
-	}
-      }
-      if ((userargs[i] == T(":run") || userargs[i] == T("run:") || userargs[i] == T("run") ||
-	   userargs[i] == T(":RUN") || userargs[i] == T("RUN:") || userargs[i] == T("RUN")) && istr) {
-	dorun = true;
-      } else if ((userargs[i] == T(":clear") || userargs[i] == T("clear:") || userargs[i] == T("clear") ||
-		  userargs[i] == T(":CLEAR") || userargs[i] == T("CLEAR:") || userargs[i] == T("CLEAR")) && istr) {
-	clrsc = true; //clearScore();
-      } else if ((userargs[i] == T(":new") || userargs[i] == T("new:") || userargs[i] == T("new") ||
-		  userargs[i] == T(":NEW") || userargs[i] == T("NEW:") || userargs[i] == T("NEW")) && istr) {
-	newsc = true;
-      } else if (userargs[i] == T(":err") && istr) {
-	return true;
-      } else { // try to parse XML
-	scopedxml* x;
-	els.add(x = new scopedxml(userargs[i]));
-	if (!x) return true;
-      }
-      if (eatnext) ++i;
-    }
-  if (scorename != T("fomus")) { // if default score, do nothing
-    if (newsc) newScore(scorename, fromscm); else selectScore(scorename, fromscm); // anything else = filename
-  }
-  if (clrsc) fapi_fomus_act(getfomusdata(), fomus_par_events, fomus_act_clear);
-  scores.getUnchecked(current)->runwhendone = dorun;
-  for (int i = 0; i < els.size(); ++i) {
-    if (els[i]->getel()) {
-      try {
-	sendXml(*(els[i]->getel()), fomus_par_none, fomus_act_none);
-      } catch (const xmlerror& e) {e.printerr();}
-    } 
-  }
-  return false;
 }
 
 void Fomus::closeScore()
@@ -447,395 +368,88 @@ void Fomus::runScore(const bool fromscm)
   fapi_fomus_run(fapi_fomus_copy(getfomusdata()));
 }
 
+struct scoped_timeshift {
+  bool issh;
+  Fomus& score;
+  scoped_timeshift(Fomus& score);
+  ~scoped_timeshift();
+};
 
-void Fomus::ival(fomus_param par, fomus_action act, fomus_int val)
+scoped_timeshift::scoped_timeshift(Fomus& score):issh(SchemeThread::getInstance()->scoremode), score(score) {
+  if (issh) {
+    fapi_fomus_fval(score.getfomusdata(), fomus_par_region_time, fomus_act_inc, SchemeThread::getInstance()->scoretime);
+    fapi_fomus_ival(score.getfomusdata(), fomus_par_region, fomus_act_start, 0);
+  }
+}
+
+scoped_timeshift::~scoped_timeshift() {
+  if (issh) {
+    fapi_fomus_ival(score.getfomusdata(), fomus_par_region, fomus_act_end, 0);
+  }
+}
+
+// inline void processtime(Fomus& score) {
+//   if (SchemeThread::getInstance()->scoremode) fapi_fomus_fval(score.getfomusdata(), fomus_par_time, fomus_act_set, SchemeThread::getInstance()->scoretime);
+// }
+
+void Fomus::ival(int par, int act, fomus_int val)
 {
+  scoped_timeshift xxx(*this);
   fapi_fomus_ival(getfomusdata(), par, act, val);
   if (*fapi_fomus_err) fomuserr = true;
 }
 
-void Fomus::rval(fomus_param par, fomus_action act, fomus_int num, fomus_int den)
+void Fomus::rval(int par, int act, fomus_int num, fomus_int den)
 {
+  scoped_timeshift xxx(*this);
   fapi_fomus_rval(getfomusdata(), par, act, num, den);
   if (*fapi_fomus_err) fomuserr = true;
 }
 
-// void Fomus::mval(fomus_param par, fomus_action act, fomus_int val, fomus_int num, fomus_int den) 
-// {
-//   fomus_mval(getfomusdata(), par, act, val, num, den);
-//   if (*fomus_err) fomuserr = true;
-// }
-
-void Fomus::fval(fomus_param par, fomus_action act, double val)
+void Fomus::fval(int par, int act, double val)
 {
+  scoped_timeshift xxx(*this);
   fapi_fomus_fval(getfomusdata(), par, act, val);
   if (*fapi_fomus_err) fomuserr = true;
 }
 
-void Fomus::sval(fomus_param par, fomus_action act, const String& val) 
+void Fomus::sval(int par, int act, const String& val) 
 {
+  scoped_timeshift xxx(*this);
   fapi_fomus_sval(getfomusdata(), par, act, (char*)val.toUTF8());
   if (*fapi_fomus_err) fomuserr = true;
 }
 
-void Fomus::act(fomus_param par, fomus_action act) 
+void Fomus::act(int par, int act) 
 {
+  scoped_timeshift xxx(*this);
+  // switch (par) {
+  // case fomus_par_noteevent:
+  // case fomus_par_restevent:
+  // case fomus_par_markevent:
+  // case fomus_par_meas:
+  //   if (act == fomus_act_add && SchemeThread::getInstance()->scoremode)
+  //     fapi_fomus_fval(getfomusdata(), fomus_par_time, fomus_act_set, SchemeThread::getInstance()->scoretime);
+  // }
   fapi_fomus_act(getfomusdata(), par, act);
   if (*fapi_fomus_err) fomuserr = true;
 }
 
-struct scoped_timeshift {
-  bool isreg;
-  Fomus& score;
-  scoped_timeshift(double sh, Fomus& score):isreg(sh != 0), score(score) {
-    if (isreg) {
-      score.fval(fomus_par_region_time, fomus_act_inc, sh);
-      score.ival(fomus_par_region, fomus_act_start, 0);
-    }
-  }
-  ~scoped_timeshift() {
-    if (isreg) {
-      score.ival(fomus_par_region, fomus_act_end, 0);
-    }
-  }
-};
+// SAVE ME!
+// called by sprout to open and/or initialize a (possibly) new score
+// instance for receiving data from processes.  scorename is either
+// "fomus" or "*.{ly|fms|xml}". if its "fomus" maybe the current
+// score instance should be used and if its a file name a new score
+// with that output file and appropriate back end should become
+// current?  scoreargs is a string containing whatever the user
+// passed as to sprout arguments to the score
 
-void Fomus::sendXml(const String& xml, double scoretime) 
-{
-  // if scoretime > 0 then we are being called under a process and the
-  // user's xml time value needs to be shifted by that value to
-  // determine the true time of the note in the score. if scoretime is
-  // 0 then treat the xml time value as the absolute timestamp in the
-  // score.
-
-  try {
-    XmlDocument doc(xml);
-    std::auto_ptr<XmlElement> docel(doc.getDocumentElement());
-    scoped_timeshift xxx(scoretime, *this);
-    sendXml(*docel, fomus_par_none, fomus_act_none);
-  } catch (const xmlerror& e) {e.printerr();}
-}
-
-inline XmlElement* mustExist(XmlElement* x, const char* what)
-{
-  if (x) return x;
-  throw xmlerror(String("expected ") + what);
-}
-
-// can be a struct, list, etc..
-
-void Fomus::sendXmlSets(XmlElement& xml, fomus_param par, fomus_action act, 
-			const excmap& exc, bool islist) // if islist = false, look for a "l" tag
-{
-  XmlElement* l = islist ? &xml : xml.getChildByName(T("l"));
-  if (l->hasTagName(T("l"))) {
-    bool wh = true;
-    String key;
-    forEachXmlChildElement(*l, e) {
-      if (wh) {
-	if (e->hasTagName(T("s"))) {
-	  key = e->getAllSubText();
-	  if (!key.isEmpty()) {
-	    if (key[0] == ':') {
-	      key = key.substring(1);
-	    } else if (key[key.length() - 1] == ':') {
-	      key = key.substring(0, key.length() - 1);
-	    }
-	  }
-	} else {
-	  throw xmlerror("expected string id");
-	}
-      } else {
-	excmap::const_iterator i(exc.find(key));
-	if (i == exc.end()) {
-	  sval(fomus_par_setting, fomus_act_set, key); // setting
-	  sendXmlVal(*e, par, act, wh_none);
-	} else { // a "special" slot
-	  if (i->second.act != fomus_act_none)
-	    sendXmlVal(*e, i->second.par, i->second.act, i->second.wh, i->second.inlist);
-	  // special slot--parse XML expecting nested structs
-	}
-      }
-      wh = !wh;
-    }
-    if (!wh) throw xmlerror("missing argument");
-  } else throw xmlerror("expected list of string id/argument pairs");
-}
-
-void Fomus::sendXmlEntry(XmlElement& xml) // notes, rests and marks
-{
-  sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("time")), "time value")->getChildElement(0), "time value"), fomus_par_time, fomus_act_set, wh_none); // mandatory in scheme functions
-  sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("dur")), "duration value")->getChildElement(0), "duration value"), fomus_par_duration, fomus_act_set, wh_none);
-  XmlElement* d;
-  d = xml.getChildByName(T("part")); if (d) sendXmlVal(*mustExist(d->getChildElement(0), "part id"), fomus_par_part, fomus_act_set, wh_none); //else sval(fomus_par_part, fomus_act_set, lprt);
-  d = xml.getChildByName(T("voice")); if (d) {
-    sendXmlVal(*mustExist(d->getChildElement(0), "voice number or list"), fomus_par_voice, fomus_act_set, wh_none);
-  } else ival(fomus_par_voice, fomus_act_set, 1);
-  d = xml.getChildByName(T("grtime")); if (d) sendXmlVal(*mustExist(d->getChildElement(0), "grace time value"), fomus_par_gracetime, fomus_act_set, wh_none);
-  d = xml.getChildByName(T("marks")); if (d) {
-    XmlElement* l0 = d->getChildByName(T("l"));
-    if (!l0) throw xmlerror("expected list of marks");
-    forEachXmlChildElement(*l0, l) {
-      if (l->hasTagName(T("s"))) {
-	sendXmlVal(*l, fomus_par_markid, fomus_act_set, wh_none);
-      } else if (l->hasTagName(T("l"))) {
-	XmlElement* n = l->getChildElement(0);
-	if (!n) throw xmlerror("expected mark id");
-	sendXmlVal(*n, fomus_par_markid, fomus_act_set, wh_none);
-	n = l->getChildElement(1);
-	if (n) {
-	  sendXmlVal(*n, fomus_par_markval, fomus_act_add, wh_none);
-	  n = l->getChildElement(2);
-	  if (n) {
-	    sendXmlVal(*n, fomus_par_markval, fomus_act_add, wh_none);
-	    if (l->getChildElement(3)) throw xmlerror("too many mark arguments");
-	  }
-	}
-      } else throw xmlerror("expected mark id or list");
-      act(fomus_par_mark, fomus_act_add);
-    }
-  }
-  d = xml.getChildByName(T("sets")); if (d) sendXmlSets(*d, fomus_par_note_settingval, fomus_act_set);
-}
-
-#if defined(JUCE_WIN32)
-struct badhex {};
-
-double atohf(const char* str) {
-  uint64 sto = 0; // juce should define uint64
-  bool pa = false, pa0 = false;
-  bool neg = false;
-  for (const char *x = str; x != 0; ++x) {
-    switch (*x) {
-    case '-':
-      if (pa0 || pa || neg) throw badhex();
-      neg = true;
-      break;
-    case 'x':
-    case 'X':
-      if (!pa0 || pa) throw badhex();
-      pa = true;
-      break;
-    case 'p':
-    case 'P': {
-      int d = atoi(x + 1);
-      double ret = (double)sto;
-      if (d >= 0) {
-	for (int i = 0; i < d; ++i) ret *= 2;
-      } else {
-	for (int i = 0; i > d; --i) ret /= 2;
-      }
-      return neg ? -ret : ret;
-    }
-    case '0':
-      if (!pa0) {
-	pa0 = true;
-	break;
-      }
-    default:
-      if (!pa) throw badhex();
-      sto *= 16;
-      if (*x >= '0' && *x <= '9') {
-	sto += (*x - '0');
-      } else if (*x >= 'a' && *x <= 'f') {
-	sto += (*x - 'a' + 10);
-      } else if (*x >= 'A' && *x <= 'F') {
-	sto += (*x - 'A' + 10);
-      } else throw badhex();
-    }
-  }
-}
-#endif
-
-// numbers, strings, lists, etc..
-void Fomus::sendXmlVal(XmlElement& xml, fomus_param par, 
-		       fomus_action act, whichstruct wh, // wh = what object are we expecting based on context
-		       bool doeachinlist) 
-{ // if tag, force that tag
-  if (xml.hasTagName(T("i"))) {
-    ival(par, act, atol(xml.getAllSubText()));
-  } else if (xml.hasTagName(T("r"))) {
-    rval(par, act, atol(mustExist(xml.getChildByName(T("n")), "numerator")->getAllSubText()),
-	 atol(mustExist(xml.getChildByName(T("d")), "denominator")->getAllSubText()));
-  } else if (xml.hasTagName(T("f"))) {
-#if defined(JUCE_WIN32)
-    fval(par, act, atohf(xml.getAllSubText()));
-#else
-    fval(par, act, atof(xml.getAllSubText()));
-#endif    
-  } else if (xml.hasTagName(T("s"))) {
-    sval(par, act, xml.getAllSubText());
-  } else if (xml.hasTagName(T("l"))) {
-    if (wh != wh_none && !doeachinlist) {
-      excmap exc;
-      switch (wh) {
-      case wh_measdef:
-	exc.insert(excmap::value_type("id", sendpair(fomus_par_measdef_id,
-						     fomus_act_set, wh_none)));
-	sendXmlSets(xml, fomus_par_measdef_settingval, fomus_act_set, exc, true);
-	Fomus::act(par, act);
-	break;
-      case wh_part:
-	exc.insert(excmap::value_type("id", sendpair(fomus_par_part_id, 
-						     fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("inst", sendpair(fomus_par_part_inst,
-						       fomus_act_set, wh_inst)));
-	sendXmlSets(xml, fomus_par_part_settingval, fomus_act_set, exc, true);
-	Fomus::act(par, act);
-	break;
-      case wh_metapart:
-	exc.insert(excmap::value_type("id", sendpair(fomus_par_metapart_id,
-						     fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("parts", sendpair(fomus_par_metapart_partmaps,
-							fomus_act_add, wh_partmap,
-							true)));
-	sendXmlSets(xml, fomus_par_metapart_settingval, fomus_act_set, exc, true);
-	Fomus::act(par, act);
-	break;
-      case wh_partmap:
-	exc.insert(excmap::value_type("part", sendpair(fomus_par_partmap_part,
-						       fomus_act_set, wh_part,
-						       true)));
-	exc.insert(excmap::value_type("metapart", sendpair(fomus_par_partmap_metapart,
-							   fomus_act_set, wh_metapart,
-							   true)));
-	sendXmlSets(xml, fomus_par_partmap_settingval, fomus_act_set, exc, true);
-	Fomus::act(par, act);
-	break;
-      case wh_inst:
-	exc.insert(excmap::value_type("id", sendpair(fomus_par_inst_id, 
-						     fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("staves", sendpair(fomus_par_inst_staves,
-							 fomus_act_add, wh_staff,
-							 true)));
-	exc.insert(excmap::value_type("imports", sendpair(fomus_par_inst_imports,
-							  fomus_act_add, wh_import,
-							  true)));
-	exc.insert(excmap::value_type("export", sendpair(fomus_par_inst_export,
-							 fomus_act_set, wh_export)));
-	exc.insert(excmap::value_type("percinsts", sendpair(fomus_par_inst_percinsts,
-							    fomus_act_add,
-							    wh_percinst, true)));
-	exc.insert(excmap::value_type("template", sendpair(fomus_par_inst_template,
-							   fomus_act_set, wh_none)));
-	sendXmlSets(xml, fomus_par_inst_settingval, fomus_act_set, exc, true);
-	Fomus::act(par, act);
-	break;
-      case wh_percinst:
-	exc.insert(excmap::value_type("id", sendpair(fomus_par_percinst_id,
-						     fomus_act_set, wh_none)));
-	exc.insert(excmap::value_type("imports", sendpair(fomus_par_percinst_imports,
-							  fomus_act_add, wh_import,
-							  true)));
-	exc.insert(excmap::value_type("export", sendpair(fomus_par_percinst_export,
-							 fomus_act_set, wh_export)));
-	exc.insert(excmap::value_type("template", sendpair(fomus_par_percinst_template,
-							   fomus_act_set, wh_none)));
-	sendXmlSets(xml, fomus_par_percinst_settingval, fomus_act_set, exc, true);
-	Fomus::act(par, act);
-	break;
-      case wh_clef:
-	sendXmlSets(xml, fomus_par_clef_settingval, fomus_act_set, exc, true);
-	Fomus::act(par, act);
-	break;
-      case wh_staff:
-	exc.insert(excmap::value_type("clefs", sendpair(fomus_par_staff_clefs, 
-							fomus_act_add, wh_clef,
-							true))); // _add? check this!
-	sendXmlSets(xml, fomus_par_staff_settingval, fomus_act_set, exc,  true);
-	Fomus::act(par, act);
-	break;
-      case wh_import:
-	sendXmlSets(xml, fomus_par_import_settingval, fomus_act_set, exc, true);
-	Fomus::act(par, act);
-	break;
-      case wh_export:
-	sendXmlSets(xml, fomus_par_export_settingval, fomus_act_set, exc, true);
-	Fomus::act(par, act);
-      } 
-    } else {
-      if (doeachinlist) {
-	forEachXmlChildElement(xml, e) sendXmlVal(*e, par, act, wh);
-      } else {
-	if (wh == wh_voices) {
-	  // expecting list of voices
-	  Fomus::act(fomus_par_voice, fomus_act_clear);
-	  forEachXmlChildElement(xml, e) sendXmlVal(*e, fomus_par_voice, 
-						    fomus_act_add, wh_none);
-	} else {
-	  Fomus::act(fomus_par_list, fomus_act_start);
-	  forEachXmlChildElement(xml, e) sendXmlVal(*e, fomus_par_list, 
-						    fomus_act_add, wh_none);
-	  Fomus::act(fomus_par_list, fomus_act_end);
-	  Fomus::act(par, act);
-	}
-      }
-    }
-  } else if (xml.hasTagName(T("b"))) {
-    String v(xml.getAllSubText());
-    if (v == T("f") || v == T("F") || v == T("#f") || v == T("false") || v == T("nil") || v == T("NIL")) ival(par, act, 0);
-    else if (v == T("t") || v == T("T") || v == T("#t") || v == T("true")) ival(par, act, 1);
-    else throw xmlerror("expected boolean value");
-  } else {
-    throw xmlerror("XML parse error");
-  }
-}
-
-// Top level stuff
-void Fomus::sendXml(XmlElement& xml, fomus_param par, fomus_action act)
-{
-  if (xml.hasTagName(T("note"))) {
-    sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("pitch")), "pitch value")->getChildElement(0), "pitch value"), fomus_par_pitch, fomus_act_set, wh_none);
-    XmlElement* d = xml.getChildByName(T("dyn"));
-    if (d) 
-      sendXmlVal(*mustExist(d->getChildElement(0), "dynamic value"), fomus_par_dynlevel,
-		 fomus_act_set, wh_none);
-    else
-      ival(fomus_par_dynlevel, fomus_act_set, 0);
-    sendXmlEntry(xml);
-    Fomus::act(fomus_par_noteevent, fomus_act_add);
-  } else if (xml.hasTagName(T("rest"))) {
-    sendXmlEntry(xml);
-    Fomus::act(fomus_par_restevent, fomus_act_add);
-  } else if (xml.hasTagName(T("mark"))) {
-    sendXmlEntry(xml);
-    Fomus::act(fomus_par_markevent, fomus_act_add);
-  } else if (xml.hasTagName(T("meas"))) {
-    sendXmlVal(*mustExist(mustExist(xml.getChildByName(T("time")), "time value")->getChildElement(0), "time value"), 
-	       fomus_par_time, fomus_act_set, wh_none);
-    XmlElement* d = xml.getChildByName(T("dur"));
-    if (d) sendXmlVal(*mustExist(d->getChildElement(0), "duration value"), fomus_par_duration, fomus_act_set, wh_none);
-    d = xml.getChildByName(T("sets")); if (d) {
-      d = mustExist(d->getChildByName(T("l")), "settings list");
-      if (d->getChildElement(0)) {
-	sendXmlVal(*d, fomus_par_meas_measdef, fomus_act_set, wh_measdef);
-      }
-    }
-    //d = xml.getChildByName(T("measdef"));
-    //if (d) sendXmlVal(*mustExist(d->getChildElement(0), "measure definition id"), fomus_par_meas_measdef, fomus_act_set, wh_none);
-    //Fomus::act(fomus_par_meas_measdef, fomus_act_set);
-    Fomus::act(fomus_par_meas, fomus_act_add);
-  } else if (xml.hasTagName(T("measdef"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "measure definition"), fomus_par_measdef, 
-	       fomus_act_add, wh_measdef);
-  } else if (xml.hasTagName(T("part"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "part definition"), fomus_par_part,
-	       fomus_act_add, wh_part);
-  } else if (xml.hasTagName(T("metapart"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "metapart definition"), fomus_par_metapart,
-	       fomus_act_add, wh_metapart);
-  } else if (xml.hasTagName(T("inst"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "instrument definition"), fomus_par_inst,
-	       fomus_act_add, wh_inst);
-  } else if (xml.hasTagName(T("percinst"))) {
-    sendXmlVal(*mustExist(xml.getChildByName(T("l")), "percussion instrument definition"), fomus_par_percinst,
-	       fomus_act_add, wh_percinst);
-  } else if (xml.hasTagName(T("set"))) {
-    XmlElement* d = xml.getChildByName(T("app"));
-    sendXmlSets(*mustExist(xml.getChildByName(T("l")), "settings list"), fomus_par_settingval, 
-		(d ? fomus_act_append : fomus_act_set), excmap(), true);
-  } else throw xmlerror("XML parse error");
-}
+// SAVE ME!
+// if scoretime > 0 then we are being called under a process and the
+// user's xml time value needs to be shifted by that value to
+// determine the true time of the note in the score. if scoretime is
+// 0 then treat the xml time value as the absolute timestamp in the
+// score.
 
 /*=======================================================================*
   Remainder of file is Grace GUI code, not part of the console CM app

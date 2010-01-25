@@ -146,7 +146,7 @@ void cs_send_score(int typ, int inst, double time, char* pars);
 
 // fomus
 
-int fms_open_score(char* a, char* b);
+void fms_open_score(bool);
 void fms_close_score();
 void fms_save(const char* name);
 /* void fms_init(); */
@@ -155,15 +155,14 @@ void fms_new(const char* name);
 void fms_select(const char* name);
 void fms_free();
 void fms_clear();
-/* void fms_ival(int par, int act, int val); */
-/* void fms_rval(int par, int act, int num, int den); */
-/* void fms_mval(int par, int act, int val, int num, int den); */
-/* void fms_fval(int par, int act, double val); */
-/* void fms_sval(int par, int act, char* val); */
-/* void fms_act(int par, int act); */
+void fms_ival(int par, int act, long val);
+void fms_rval(int par, int act, long num, long den);
+void fms_fval(int par, int act, double val);
+void fms_sval(int par, int act, const char* val);
+void fms_act(int par, int act);
 void fms_load(char* filename);
 void fms_run();
-void fms_xml(char* str);
+void fms_err();
 
 // Plotting
 
