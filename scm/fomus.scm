@@ -421,7 +421,7 @@
 
 (define (fms:open-score filename . args)
   (unless (string? filename) (error "expected a string for filename argument"))
-  (with-optkeys (args (percinsts '()) (insts '()) (parts '()) (metaparts '()) (measdefs '()) (sets '()) (clear #t) new (run #t) &allow-other-keys)
+  (with-optkeys (args (percinsts '()) (insts '()) (parts '()) (metaparts '()) (measdefs '()) (sets '()) (clear #t) (new #t) (run #t) &allow-other-keys)
 		(unless (list? percinsts) (error "expected a list for percinsts argument"))
 		(unless (list? insts) (error "expected a list for insts argument"))
 		(unless (list? parts) (error "expected a list for parts argument"))
