@@ -296,7 +296,7 @@
 	  (fms:send fomus_par_note_settingval fomus_act_set (cadr e)))))
 
 (define (fms:note . args)
-  (with-optkeys (args (time 0) (dur 1) (pitch 60) part (voice 1) (dyn 0.5) grace (marks '()) (sets '()) &allow-other-keys)
+  (with-optkeys (args (time 0) dur pitch part (voice 1) (dyn 0.5) grace (marks '()) (sets '()) &allow-other-keys)
 		(unless (number? time) (ffi_fms_err) (error "expected a number for time argument"))
 		(unless (number? dur) (ffi_fms_err) (error "expected a number for dur argument"))
 		(unless (or (number? pitch) (string? pitch) (symbol? pitch)) (ffi_fms_err) (error "expected a number or string for pitch argument"))
@@ -313,7 +313,7 @@
   #t)
 
 (define (fms:rest . args)
-  (with-optkeys (args (time 0) (dur 1) part (voice 1) grace (marks '()) (sets '()) &allow-other-keys)
+  (with-optkeys (args (time 0) dur part (voice 1) grace (marks '()) (sets '()) &allow-other-keys)
 		(unless (number? time) (ffi_fms_err) (error "expected a number for time argument"))
 		(unless (number? dur) (ffi_fms_err) (error "expected a number for dur argument"))
 		(unless (or (string? part) (symbol? part) (eq? part #f)) (ffi_fms_err) (error "expected a string or symbol for part argument"))
@@ -326,7 +326,7 @@
   #t)
 
 (define (fms:mark . args)
-  (with-optkeys (args (time 0) (dur 1) part (voice 1) grace (marks '()) (sets '()) &allow-other-keys)
+  (with-optkeys (args (time 0) dur part (voice 1) grace (marks '()) (sets '()) &allow-other-keys)
 		(unless (number? time) (ffi_fms_err) (error "expected a number for time argument"))
 		(unless (number? dur) (ffi_fms_err) (error "expected a number for dur argument"))
 		(unless (or (string? part) (symbol? part) (eq? part #f)) (ffi_fms_err) (error "expected a string or symbol for part argument"))
@@ -339,7 +339,7 @@
   #t)
 
 (define (fms:meas . args)
-  (with-optkeys (args (time 0) (dur 1) (sets '()) &allow-other-keys)
+  (with-optkeys (args (time 0) dur (sets '()) &allow-other-keys)
 		(unless (number? time) (ffi_fms_err) (error "expected a number for time argument"))
 		(unless (number? dur) (ffi_fms_err) (error "expected a number for dur argument"))
 		(unless (list? sets) (ffi_fms_err) (error "expected a list for sets argument"))
