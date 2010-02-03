@@ -89,5 +89,24 @@
            (error "sc:alloc-buffers: invalid input ~S" (car tail)))
           )))
 
+;; load sound files into SuperCollider buffers
+(define (load-sc-buffers buffer-start-index db)
+  (let recur ((i 0))
+    (if (= i (vector-length db))
+      #t
+      (let ((bufnum (+ i buffer-start-index)))
+        (osc:message "/b_allocRead" bufnum (cadr (vector-ref db i)))
+        (set-car! (cddr (vector-ref db i)) bufnum)
+        (recur (1+ i))))))
+
+;; load a single channel of sound files into mono SuperCollider buffers
+(define (load-sc-buffers-mono buffer-start-index db)
+  (let recur ((i 0))
+    (if (= i (vector-length db))
+      #t
+      (let ((bufnum (+ i buffer-start-index)))
+        (osc:message "/b_allocReadChannel" bufnum (cadr (vector-ref db i)) 0 0 0)
+        (set-car! (cddr (vector-ref db i)) bufnum)
+        (recur (1+ i))))))
 
 

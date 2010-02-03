@@ -7,8 +7,41 @@
 ;; documentation.
 
 ;
-;; ----- Initializing a Score
+;; ----- Generating Scores
 ;
+
+;; 'fomusfile' provides a simple way to create fomus scores. Inside
+;; fomusfile you add a series of commands that create the score for
+;; you. these commans be processed one after the other and when the
+;; last one is reached fomusfile will automatically creat the notated
+;; score for you:
+
+fomusfile "test.ly" (measdur: 2)
+  with lb = 30, ub = 73, time = 0
+  ;; add a part
+  send "fms:part", id: "p", inst: "piano"
+  ;; add some notes
+  loop for i below 24
+    for d = pick(1/2, 1, 2)
+    send "fms:note", time, dur: d, pitch: pick(lb, ub), part: "p"
+    set time += d
+  end
+end
+
+;
+;; ----- Interactive Score Creation
+;
+
+;; you can also control fomus interactively, by evaluating individual
+;; 'send' statements to incrementally build up a score. The second way
+;; is by defining musical processes to generate the entire contents of
+;; a score when they are sprouted.
+
+;; Before continuing, create a fresh new score object by executing
+;; the following command (put your cursor at the end of the line and
+;; press Command-Enter or select the Eval>Execute menu item):
+
+send "fms:new-score", "out.ly"
 
 ;; When working with FOMUS in Grace, there is always at least one
 ;; "score object" in memory and only one that is currently active.  In
@@ -21,29 +54,6 @@
 ;; least one of them should be checked.  This is the score that is
 ;; currently selected and ready to receive data.
 
-;; To change the current output file, select `Rename Score' in the
-;; FOMUS sub-menu and change the name (to "/tmp/out.xml" or
-;; "/tmp/out.ly" for example).  The ".xml" and ".ly" extensions set
-;; the output format to either a MusicXML or LilyPond file
-;; respectively.  These are the two output file formats that FOMUS
-;; currently supports.
-
-;
-;; ----- Generating Scores
-;
-
-;; There are two basic ways to work with Fomus. The first method is to
-;; create a score interactively, by evaluating 'send' statements to
-;; incrementally build up a score. The second way is by defining
-;; musical processes to generate the entire contents of a score when
-;; they are sprouted.
-
-;; Before continuing, create a fresh new score object by executing
-;; the following command (put your cursor at the end of the line and
-;; press Command-Enter or select the Eval>Execute menu item):
-
-send "fms:new-score", "out.ly"
-
 ;; The new score object should appear selected with a check mark in
 ;; the FOMUS sub-menu now.  A similar command "selectscore" selects an
 ;; already existing score object based on the output filename (or
@@ -54,9 +64,8 @@ send "fms:select-score", "out.ly"
 ;; Double check and make sure that "out.ly" is the currently selected
 ;; one now.
 
-;
-;; ----- Interactive Score Creation
-;
+
+
 
 ;; In this section we'll build up a score by executing individual
 ;; send statements.  In this first example you'll define a single note.

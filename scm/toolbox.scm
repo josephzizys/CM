@@ -1117,27 +1117,30 @@
     "whitesmoke"
     "yellowgreen"))
 
-;;;
-;;; Sound database support for using with vkey and sc:vkey
-;;;
+;
+;; Sound database support for using with vkey and sc:vkey
+;
 
-(define (vk-key vk) (car vk))
-(define (vk-file vk) (cadr vk))
-(define (vk-buffer vk) (caddr vk))
-(define (vk-duration vk) (cadddr vk))
-(define (vk-channels vk) (cadddr (cdr vk)))
-(define (vk-amplitude vk) 
-  (let ((amp (cadddr (cddr vk))))
+; sound descriptors are entries in a sound db 
+
+(define (sd-key sd) (car sd))
+(define (sd-file sd) (cadr sd))
+(define (sd-buffer sd) (caddr sd))
+(define (sd-duration sd) (cadddr sd))
+(define (sd-channels sd) (cadddr (cdr sd)))
+(define (sd-amplitude sd)
+  ;; amp calc delayed until user accesses the value
+  (let ((amp (cadddr (cddr sd))))
     (or amp
-        (do ((info (mus-sound-maxamp (vk-file vk)) (cddr info))
+        (do ((info (mus-sound-maxamp (sd-file sd)) (cddr info))
              (maxa 0.0))
             ((null? info) 
-             (set-car! (cdr (cddddr vk)) maxa)
+             (set-car! (cdr (cddddr sd)) maxa)
              maxa)
           (set! maxa (max maxa (cadr info)))))))
 
 (define* (sound-db dir (decode pathname->key) (full #t) assoc)
-  ;; create a sound db suitable for vkey or sc:vkey
+  ;; create a sound db suitable for sdey or sc:vkey
   ;; db is a vector of (keynum pathname buffer-number duration)
   ;; buffer numbers are initially #f
   (let* ((filenames (if (pair? dir) dir (directory dir)))
@@ -1149,16 +1152,52 @@
                 (files filenames))
       (if (null? files)
           (sort! result (lambda (x y) (< (car x) (car y))))
-          (let ((vk (list (if assoc (format #f "~A~D" assoc (+ i 1))
+          ;; sound descriptor
+          (let ((sd (list (if assoc (format #f "~A~D" assoc (+ i 1))
                               (decode (car files)))
                           (car files)           ; pathname
                           #f                    ; sc buffer(s)
                           (if full (mus-sound-duration (car files)) #f)
                           (if full (mus-sound-chans (car files)) #f)
                           #f)))                 ; maxamp   
-            (vector-set! result i vk )
+            (vector-set! result i sd )
             (recur (1+ i) (cdr files)))))
     (format #t "sound-db: ~S in ~D files, key ~A to ~A~%"
             dir len (car (result 0)) (car (result (- len 1))))
     result))
+
+(define* (find-sound obj db (test equal?) (key (lambda (x) x)))
+  (if (number? obj)
+      (vector-ref db (closest-index obj db :key sd-key))
+      (call-with-exit
+       (lambda (ret)
+         (map (lambda (x) (if ( test ( key x) keynum) (ret x))) db)
+         (error "no sound db file found for ~S" keynum)))))
+
+; (find-sound 61.6 harpsamps)
+
+(define* (closest-index item vec (test <) (key (lambda (x) x)))
+  ;; finds the closest index in a vector using a binary search. used
+  ;; by vkey to determine closest sound db entry to a given keynumber.
+  (let search ((start 0)
+               (stop (- (vector-length vec) 1)))
+    (if (< stop start)
+        ;; end of binary search - not found
+        ;; determine which items is closest
+        (cond
+         ((< stop 0) start)
+         ((>= start (vector-length vec)) stop)
+         (else
+          (let ((stopdist (abs (- (key (vector-ref vec stop)) item)))
+                (startdist (abs (- (key (vector-ref vec start)) item))))
+            (if (< stopdist startdist)
+                stop start))))
+        ;; continue binary search
+        (let* ((midpoint (quotient (+ start stop) 2))
+               (mid-value (key (vector-ref vec midpoint))))
+          (cond ((test item mid-value)
+                 (search start (- midpoint 1)))
+                ((test mid-value item)
+                 (search (+ midpoint 1) stop))
+                (else midpoint))))))
 
