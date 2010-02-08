@@ -341,7 +341,7 @@
 (define (fms:meas . args)
   (with-optkeys (args (time 0) dur (sets '()) &allow-other-keys)
 		(unless (number? time) (ffi_fms_err) (error "expected a number for time argument"))
-		(unless (number? dur) (ffi_fms_err) (error "expected a number for dur argument"))
+		;;(unless (number? dur) (ffi_fms_err) (error "expected a number for dur argument"))
 		(unless (list? sets) (ffi_fms_err) (error "expected a list for sets argument"))
 		(when time (fms:send fomus_par_time fomus_act_set time))
 		(when dur (fms:send fomus_par_duration fomus_act_set dur))
