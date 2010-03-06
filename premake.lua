@@ -180,6 +180,8 @@ for i = 1,3 do
       add(mypackage.files, "src/Menus.h")
       add(mypackage.files, "src/TextEditor.cpp")
       add(mypackage.files, "src/TextEditor.h")
+      add(mypackage.files, "src/CodeEditor.cpp")
+      add(mypackage.files, "src/CodeEditor.h")
       add(mypackage.files, "src/Documentation.cpp")
       add(mypackage.files, "src/Documentation.h")
       add(mypackage.files, "src/Images.cpp")
