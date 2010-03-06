@@ -1,11 +1,10 @@
 ;; A simple fm instrument with envelopes
 
 (definstrument (fm time duration frequency amplitude
-                        :key (ampenv '(0 0 25 1 75 1 100 0))
-                        (cmratio 1) (index 1) (indenv '(0 1 100 1))
-                        (degree 0) (distance 0) (reverb 0))
+                   (ampenv '(0 0 25 1 75 1 100 0))
+                   (cmratio 1) (index 1) (indenv '(0 1 100 1))
+                   (degree 0) (distance 0) (reverb 0))
   "fm (time duration frequency amplitude
-            :key 
             (ampenv '(0 0 10 1 90 1 100 0))
             (cmratio 1)
             (index 1)
@@ -22,7 +21,7 @@
          (ampf (make-env ampenv :scaler amplitude 
                          :duration duration))
          (devf (make-env indenv :duration duration
-                         :scaler (in-hz (* frequency cmratio index))))
+                         :scaler (hz->radians (* frequency cmratio index))))
          (loc (make-locsig :degree degree :distance distance 
                            :reverb reverb)))
     (run

@@ -15,33 +15,32 @@
 	(set! (mus-increment rd) (- src-ratio)))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((>= turn-i turns))
-	 (let ((val (src rd 0.0
-			 (lambda (dir)
-			   (let ((inval (file->sample f cur-sample)))
-			     (set! cur-sample (+ cur-sample dir))
-			     inval)))))
-	   (if (= turning 0)
-	       (if (and forwards (>= cur-sample turn-sample)) ;; we past turn point going forwards
-		   (set! turning 1)
-		   (if (and (not forwards) (<= cur-sample turn-sample)) ;; we past turn point going backwards
-		       (set! turning -1)))
-	       ;; wait for an inflection...
-	       (if (or (and (<= last-val2 last-val) (>= last-val val))
-		       (and (>= last-val2 last-val) (<= last-val val)))
-		   (begin
-		     (set! turn-i (+ 1 turn-i))
-		     (if (< turn-i turns)
-			 (begin
-			   (set! turn-sample (seconds->samples (vct-ref turntable turn-i)))
-			   (set! forwards (not forwards))
-			   (set! (mus-increment rd) (- (mus-increment rd)))))
-		     (set! turning 0))))
-	   (set! last-val2 last-val)
-	   (set! last-val val)
-	   (outa i val)))))))
+     (do ((i beg (+ i 1)))
+	 ((>= turn-i turns))
+       (let ((val (src rd 0.0
+		       (lambda (dir)
+			 (let ((inval (file->sample f cur-sample)))
+			   (set! cur-sample (+ cur-sample dir))
+			   inval)))))
+	 (if (= turning 0)
+	     (if (and forwards (>= cur-sample turn-sample)) ;; we past turn point going forwards
+		 (set! turning 1)
+		 (if (and (not forwards) (<= cur-sample turn-sample)) ;; we past turn point going backwards
+		     (set! turning -1)))
+	     ;; wait for an inflection...
+	     (if (or (and (<= last-val2 last-val) (>= last-val val))
+		     (and (>= last-val2 last-val) (<= last-val val)))
+		 (begin
+		   (set! turn-i (+ 1 turn-i))
+		   (if (< turn-i turns)
+		       (begin
+			 (set! turn-sample (seconds->samples (vct-ref turntable turn-i)))
+			 (set! forwards (not forwards))
+			 (set! (mus-increment rd) (- (mus-increment rd)))))
+		   (set! turning 0))))
+	 (set! last-val2 last-val)
+	 (set! last-val val)
+	 (outa i val))))))
 
 ;;; (with-sound () (scratch 0.0 "now.snd" 1.5 '(0.0 .5 .25 1.0)))
 

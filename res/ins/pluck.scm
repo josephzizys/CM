@@ -5,7 +5,7 @@
 ;;;  CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
 ;;;  translated from CLM's pluck.ins
 
-(definstrument (pluck start dur freq amp :optional (weighting .5) (lossfact .9))
+(definstrument (pluck start dur freq amp (weighting .5) (lossfact .9))
   "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. 
 'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. 
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
@@ -58,15 +58,14 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
       (vct-set! tab i (- 1.0 (random 2.0))))
     (ws-interrupt?)
     (run 
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (let ((val (vct-ref tab ctr)))	;current output value
-	   (vct-set! tab ctr (* (- 1.0 c) 
-				(one-zero feedb 
-					  (one-zero allp val))))
-	   (set! ctr (+ ctr 1))
-	   (if (>= ctr dlen) (set! ctr 0))
-	   (outa i (* amp val))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (let ((val (vct-ref tab ctr)))	;current output value
+	 (vct-set! tab ctr (* (- 1.0 c) 
+			      (one-zero feedb 
+					(one-zero allp val))))
+	 (set! ctr (+ ctr 1))
+	 (if (>= ctr dlen) (set! ctr 0))
+	 (outa i (* amp val)))))))
 
 

@@ -38,11 +38,10 @@
 	 (cascade (make-oscil (* frequency casrat))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (let ((gls (env glsf)))
-	   (locsig loc i (* (env ampf) 
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (let ((gls (env glsf)))
+	 (locsig loc i (* (env ampf) 
 			  (oscil carrier 
 				 (+ gls 
 				    (* (env indxf)
@@ -51,7 +50,7 @@
 						 (* (env mindxf) 
 						    (oscil cascade 
 							   (+ (* gls casrat)
-							      (* (env devf) (rand rn))))))))))))))))))
+							      (* (env devf) (rand rn)))))))))))))))))
 
 #|
 (with-sound ()

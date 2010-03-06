@@ -3,7 +3,7 @@
 (definstrument (fm-insect startime dur frequency amplitude amp-env 
 			  mod-freq mod-skew mod-freq-env mod-index mod-index-env 
 			  fm-index fm-ratio
-			  :key (degree 0.0)
+			  (degree 0.0)
 		     	       (distance 1.0)
 		               (reverb-amount 0.005))
   (let* ((beg (seconds->samples startime))
@@ -18,14 +18,13 @@
 	 (fm2-amp (hz->radians (* fm-index fm-ratio frequency))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (let* ((garble-in (* (env indf)
-			      (oscil fm1-osc (env modfrqf))))
-		(garble-out (* fm2-amp (oscil fm2-osc garble-in))))
-	   (locsig loc i (* (env ampf) 
-			    (oscil carrier (+ garble-out garble-in))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (let* ((garble-in (* (env indf)
+			    (oscil fm1-osc (env modfrqf))))
+	      (garble-out (* fm2-amp (oscil fm2-osc garble-in))))
+	 (locsig loc i (* (env ampf) 
+			  (oscil carrier (+ garble-out garble-in)))))))))
 
 #|
 (with-sound (:srate 22050) 

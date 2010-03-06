@@ -1,4 +1,4 @@
-(definstrument (jl-reverb :optional (decay 3.0))
+(definstrument (jl-reverb (decay 3.0))
   (let* ((allpass1 (make-all-pass -0.700 0.700 2111))
 	 (allpass2 (make-all-pass -0.700 0.700  673))
 	 (allpass3 (make-all-pass -0.700 0.700  223))
@@ -18,15 +18,15 @@
 	 (len (floor (+ decay-dur (length *reverb*)))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i 0 (+ i 1)))
-	   ((= i len))
-	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
-	   (set! comb-sum 
-		 (+ (comb comb1 allpass-sum)
-		    (comb comb2 allpass-sum)
-		    (comb comb3 allpass-sum)
-		    (comb comb4 allpass-sum)))
-	   (outa i (delay outdel1 comb-sum))
-	   (outb i (delay outdel2 comb-sum))))))))
+     (do ((i 0 (+ i 1)))
+	 ((= i len))
+       (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
+	 (set! comb-sum 
+	       (+ (comb comb1 allpass-sum)
+		  (comb comb2 allpass-sum)
+		  (comb comb3 allpass-sum)
+		  (comb comb4 allpass-sum)))
+	 (outa i (delay outdel1 comb-sum))
+	 (outb i (delay outdel2 comb-sum)))))))
+
 

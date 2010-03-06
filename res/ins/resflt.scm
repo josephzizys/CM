@@ -2,7 +2,7 @@
 	       ranfreq noiamp noifun cosamp cosfreq1 cosfreq0 cosnum
 	       ampcosfun freqcosfun 
 	       frq1 r1 g1 frq2 r2 g2 frq3 r3 g3
-	       :key (degree 0.0)
+	       (degree 0.0)
 		    (distance 1.0)
 		    (reverb-amount 0.005))
   ;; driver=0 -- use sum of cosines to drive the filter,
@@ -43,15 +43,14 @@
 		 #f)))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (let ((input1 (if with-noise
-			   (* (env ampf) (rand rn))
-			   (* (env ampf) (ncos cn (env frqf))))))
-	   (locsig loc i (+ (two-pole f1 (* input1 g1))
-			    (two-pole f2 (* input1 g2))
-			    (two-pole f3 (* input1 g3))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (let ((input1 (if with-noise
+			 (* (env ampf) (rand rn))
+			 (* (env ampf) (ncos cn (env frqf))))))
+	 (locsig loc i (+ (two-pole f1 (* input1 g1))
+			  (two-pole f2 (* input1 g2))
+			  (two-pole f3 (* input1 g3)))))))))
 
 ;  (resflt 0 1.0 0 0 0 #f .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
 ;  (resflt 0 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 500 .995 .1 1000 .995 .1 2000 .995 .1)

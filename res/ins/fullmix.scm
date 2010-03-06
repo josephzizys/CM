@@ -1,11 +1,6 @@
 (provide 'snd-fullmix.scm)
 
-(if (and (not (provided? 'snd-ws.scm)) 
-	 (not (provided? 'sndlib-ws.scm)))
-    (load-from-path "ws.scm"))
-
-
-(definstrument (fullmix in-file :optional beg outdur inbeg matrix srate reverb-amount)
+(definstrument (fullmix in-file beg outdur inbeg matrix srate reverb-amount)
   ;; "matrix" can be a simple amplitude or a list of lists
   ;;     each inner list represents one input channel's amps into one output channel
   ;;     each element of the list can be a number, a list (turned into an env) or an env
@@ -16,7 +11,7 @@
 	 (samps (seconds->samples dur))
 	 (nd (+ st samps))
 	 (in-chans (channels in-file))
-	 (inloc (floor (* (or inbeg 0.0) (srate in-file))))
+	 (inloc (floor (* (or inbeg 0.0) (mus-sound-srate in-file))))
 	 (out-chans (channels *output*))
 	 (mx (if matrix
 		 (make-mixer (max in-chans out-chans))
@@ -91,26 +86,24 @@
 		  (outframe (make-frame out-chans)))
 	      (if envs
 		  (run 
-		   (lambda ()
-		     (declare (envs clm-vector))
-		     (do ((i st (+ i 1)))
-			 ((= i nd))
-		       (do ((outp 0 (+ 1 outp)))
-			   ((= outp out-chans))
-			 (if (env? (vector-ref envs outp))
-			     (mixer-set! mx 0 outp (env (vector-ref envs outp)))))
-		       (let ((inframe (src sr)))
-			 (frame->file *output* i (sample->frame mx inframe outframe))
-			 (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))))
+		   (declare (envs clm-vector))
+		   (do ((i st (+ i 1)))
+		       ((= i nd))
+		     (do ((outp 0 (+ 1 outp)))
+			 ((= outp out-chans))
+		       (if (env? (vector-ref envs outp))
+			   (mixer-set! mx 0 outp (env (vector-ref envs outp)))))
+		     (let ((inframe (src sr)))
+		       (frame->file *output* i (sample->frame mx inframe outframe))
+		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe))))))
 		  
 		  ;; no envs
 		  (run 
-		   (lambda ()
-		     (do ((i st (+ i 1)))
-			 ((= i nd))
-		       (let ((inframe (src sr)))
-			 (frame->file *output* i (sample->frame mx inframe outframe))
-			 (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))))))
+		   (do ((i st (+ i 1)))
+		       ((= i nd))
+		     (let ((inframe (src sr)))
+		       (frame->file *output* i (sample->frame mx inframe outframe))
+		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe))))))))
 	    
 	    ;; more than 1 chan input
 	    (let* ((inframe (make-frame in-chans))
@@ -122,33 +115,31 @@
 	      
 	      (if envs 
 		  (run
-		   (lambda ()
-		     (declare (envs clm-vector))
-		     (do ((i st (+ i 1)))
-			 ((= i nd))
-		       (do ((inp 0 (+ 1 inp))
-			    (off 0 (+ off out-chans)))
-			   ((= inp in-chans))
-			 (do ((outp 0 (+ 1 outp)))
-			     ((= outp out-chans))
-			   (if (env? (vector-ref envs (+ off outp)))
-			       (mixer-set! mx inp outp (env (vector-ref envs (+ off outp)))))))
-		       (do ((inp 0 (+ 1 inp)))
-			   ((= inp in-chans))
-			 (frame-set! inframe inp (src (vector-ref srcs inp))))
-		       (frame->file *output* i (frame->frame inframe mx outframe))
-		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))
+		   (declare (envs clm-vector))
+		   (do ((i st (+ i 1)))
+		       ((= i nd))
+		     (do ((inp 0 (+ 1 inp))
+			  (off 0 (+ off out-chans)))
+			 ((= inp in-chans))
+		       (do ((outp 0 (+ 1 outp)))
+			   ((= outp out-chans))
+			 (if (env? (vector-ref envs (+ off outp)))
+			     (mixer-set! mx inp outp (env (vector-ref envs (+ off outp)))))))
+		     (do ((inp 0 (+ 1 inp)))
+			 ((= inp in-chans))
+		       (frame-set! inframe inp (src (vector-ref srcs inp))))
+		     (frame->file *output* i (frame->frame inframe mx outframe))
+		     (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))
 		  
 		  ;; no envs
 		  (run 
-		   (lambda ()
-		     (do ((i st (+ i 1)))
-			 ((= i nd))
-		       (do ((inp 0 (+ 1 inp)))
-			   ((= inp in-chans))
-			 (frame-set! inframe inp (src (vector-ref srcs inp))))
-		       (frame->file *output* i (frame->frame inframe mx outframe))
-		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))))))
+		   (do ((i st (+ i 1)))
+		       ((= i nd))
+		     (do ((inp 0 (+ 1 inp)))
+			 ((= inp in-chans))
+		       (frame-set! inframe inp (src (vector-ref srcs inp))))
+		     (frame->file *output* i (frame->frame inframe mx outframe))
+		     (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))))))))
   
 #|
 (with-sound (:channels 2 :statistics #t)

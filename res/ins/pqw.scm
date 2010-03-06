@@ -1,7 +1,7 @@
 ;;; -------- PQW
 
 (definstrument (pqw start dur spacing-freq carrier-freq amplitude ampfun indexfun partials
-		    :key (degree 0.0)
+		    (degree 0.0)
 			 (distance 1.0)
 			 (reverb-amount 0.005))
   ;; phase-quadrature waveshaping used to create asymmetric (i.e. single side-band) spectra.
@@ -24,16 +24,15 @@
 	 (end (+ beg (seconds->samples dur))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (let* ((vib (+ (triangle-wave tr) (rand-interp rn)))
-		(ax (* (min 1.0 (env ind-env)) (oscil spacing-cos vib)))
-		(fax (polynomial cos-coeffs ax))
-		(yfax (* (oscil spacing-sin vib) (polynomial sin-coeffs ax))))
-	   (locsig loc i (* (env amp-env)
-			    (- (* (oscil carrier-sin (* vib r)) yfax) 
-			       (* (oscil carrier-cos (* vib r)) fax))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (let* ((vib (+ (triangle-wave tr) (rand-interp rn)))
+	      (ax (* (min 1.0 (env ind-env)) (oscil spacing-cos vib)))
+	      (fax (polynomial cos-coeffs ax))
+	      (yfax (* (oscil spacing-sin vib) (polynomial sin-coeffs ax))))
+	 (locsig loc i (* (env amp-env)
+			  (- (* (oscil carrier-sin (* vib r)) yfax) 
+			     (* (oscil carrier-cos (* vib r)) fax)))))))))
 
 
 ; (pqw 0 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5))

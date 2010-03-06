@@ -12,10 +12,9 @@
 	 (loc (make-locsig deg dis amtrev)))
     (ws-interrupt?)
     (run 
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (locsig loc i (* (env amp-env) (table-lookup s (+ (rand ran-vib))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (locsig loc i (* (env amp-env) (table-lookup s (+ (rand ran-vib)))))))))
 
 (definstrument (canter beg dur pitch amp-1 deg dis pcrev ampfun ranfun skewfun
 		       skewpc ranpc ranfreq indexfun atdr dcdr
@@ -64,18 +63,17 @@
 	 (loc (make-locsig deg dis pcrev)))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i start (+ i 1)))
-	   ((= i end))
-	 (let* ((frqval (+ (env tskwfun) (* (env tranfun) (rand ranvib))))
-		(modval (oscil modgen frqval))
-		(ampval (env tampfun))
-		(indval (env tidxfun)))
-	   (locsig loc i 
-		   (+ (* lamp1 ampval (oscil gen1 (* (+ (* (+ dev01 (* indval dev11)) modval) frqval) harm1)))
-		      (* lamp2 ampval (oscil gen2 (* (+ (* (+ dev02 (* indval dev12)) modval) frqval) harm2)))
-		      (* lamp3 ampval (oscil gen3 (* (+ (* (+ dev03 (* indval dev13)) modval) frqval) harm3)))
-		      (* lamp4 ampval (oscil gen4 (* (+ (* (+ dev04 (* indval dev14)) modval) frqval) harm4)))))))))))
+     (do ((i start (+ i 1)))
+	 ((= i end))
+       (let* ((frqval (+ (env tskwfun) (* (env tranfun) (rand ranvib))))
+	      (modval (oscil modgen frqval))
+	      (ampval (env tampfun))
+	      (indval (env tidxfun)))
+	 (locsig loc i 
+		 (+ (* lamp1 ampval (oscil gen1 (* (+ (* (+ dev01 (* indval dev11)) modval) frqval) harm1)))
+		    (* lamp2 ampval (oscil gen2 (* (+ (* (+ dev02 (* indval dev12)) modval) frqval) harm2)))
+		    (* lamp3 ampval (oscil gen3 (* (+ (* (+ dev03 (* indval dev13)) modval) frqval) harm3)))
+		    (* lamp4 ampval (oscil gen4 (* (+ (* (+ dev04 (* indval dev14)) modval) frqval) harm4))))))))))
 
 
 

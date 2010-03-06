@@ -1,13 +1,7 @@
 ;;; NREV (the most popular Samson box reverb)
 
-(provide 'snd-nrev.scm)
 
-(if (and (not (provided? 'snd-ws.scm)) 
-	 (not (provided? 'sndlib-ws.scm)))
-    (load-from-path "ws.scm"))
-
-
-(definstrument (nrev :key (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))
+(definstrument (nrev (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))
   ;; reverb-factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
   ;; lp-coeff controls the strength of the low pass filter inserted in the feedback loop
   ;; output-scale can be used to boost the reverb output
@@ -28,11 +22,11 @@
 	 (dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
     (do ((i 0 (+ i 1)))
 	((= i 15))
-      (let ((val (inexact->exact (floor (* srscale (list-ref dly-len i))))))
+      (let ((val (floor (* srscale (list-ref dly-len i)))))
 	(if (even? val) (set! val (+ 1 val)))
 	(list-set! dly-len i (next-prime val))))
 
-    (let* ((len (+ (mus-srate) (frames *reverb*)))
+    (let* ((len (+ (mus-srate) (length *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (list-ref dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (list-ref dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (list-ref dly-len 2)))
@@ -52,24 +46,24 @@
 	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 14)) #f)))
       (ws-interrupt?)
       (run
-       (lambda ()
-	 (do ((i 0 (+ i 1)))
-	     ((= i len))
-	   (let* ((rev (* volume (ina i *reverb*)))
-		  (outrev (all-pass allpass4
-				    (one-pole low
-					      (all-pass allpass3
-							(all-pass allpass2
-								  (all-pass allpass1
-									    (+ (comb comb1 rev)
-									       (comb comb2 rev)
-									       (comb comb3 rev)
-									       (comb comb4 rev)
-									       (comb comb5 rev)
-									       (comb comb6 rev)))))))))
-	     (outa i (all-pass allpass5 outrev))
-	     (if chan2 (outb i (all-pass allpass6 outrev)))
-	     (if chan4 (outc i (all-pass allpass7 outrev)))
-	     (if chan4 (outd i (all-pass allpass8 outrev))))))))))
+       (do ((i 0 (+ i 1)))
+	   ((= i len))
+	 (let* ((rev (* volume (ina i *reverb*)))
+		(outrev (all-pass allpass4
+				  (one-pole low
+					    (all-pass allpass3
+						      (all-pass allpass2
+								(all-pass allpass1
+									  (+ (comb comb1 rev)
+									     (comb comb2 rev)
+									     (comb comb3 rev)
+									     (comb comb4 rev)
+									     (comb comb5 rev)
+									     (comb comb6 rev)))))))))
+	   (outa i (all-pass allpass5 outrev))
+	   (if chan2 (outb i (all-pass allpass6 outrev)))
+	   (if chan4 (outc i (all-pass allpass7 outrev)))
+	   (if chan4 (outd i (all-pass allpass8 outrev)))))))))
+
 
 

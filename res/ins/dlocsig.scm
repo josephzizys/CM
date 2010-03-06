@@ -9,7 +9,6 @@
 ;;; address email to: nando@ccrma.stanford.edu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Dynamic multichannel three-dimentional signal locator
 ;;; (wow that sound good! :-)
@@ -82,8 +81,8 @@
 (provide 'snd-dlocsig.scm)
 
 
-(define* (envelope-interp x env :optional base)   ;env is list of x y breakpoint pairs, interpolate at x returning y
-  "(envelope-interp x env :optional (base 1.0)) -> value of env at x; base controls connecting segment 
+(define* (envelope-interp x env base)   ;env is list of x y breakpoint pairs, interpolate at x returning y
+  "(envelope-interp x env (base 1.0)) -> value of env at x; base controls connecting segment 
 type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   (cond ((null? env) 0.0)		;no data -- return 0.0
 	((or (<= x (car env))	        ;we're sitting on x val (or if < we blew it)
@@ -161,7 +160,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Speaker Configuration
 
-(define* (make-group :key (id 0) (size 0) vertices speakers matrix)
+(define* (make-group (id 0) (size 0) vertices speakers matrix)
   (list 'group id size vertices speakers matrix))
 
 (define group-id (make-procedure-with-setter (lambda (a) (list-ref a 1)) (lambda (a b) (list-set! a 1 b))))
@@ -171,7 +170,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define group-matrix (make-procedure-with-setter (lambda (a) (list-ref a 5)) (lambda (a b) (list-set! a 5 b))))
 
 
-(define* (make-speaker-config :key number dimension coords groups delays omap)
+(define* (make-speaker-config number dimension coords groups delays omap)
   (list 'speaker-config number dimension coords groups delays omap))
 
 (define speaker-config-number (make-procedure-with-setter (lambda (a) (list-ref a 1)) (lambda (a b) (list-set! a 1 b))))
@@ -210,7 +209,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   "(fourth lst) returns the 4th element of 'lst'"
   (if (>= (length a) 4) (list-ref a 3) #f))
 
-(define* (last a :optional n) 
+(define* (last a n) 
   "(last lst) returns the last 'n' elements of 'lst' as a list"
   (if (null? a)
       #f
@@ -226,7 +225,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   "(listp lst) is #t is 'lst' is a non-null list"
   (and (list? a) (not (null? a))))
 
-(define (make-list n val)
+(define (make-list-1 n val)
   (let ((lst '()))
     (do ((i 0 (+ i 1)))
 	((= i n))
@@ -234,11 +233,11 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     lst))
 
 
-(def-optkey-fun (arrange-speakers (speakers '())
-				  (groups '())
-				  (delays '())
-				  (distances '())
-				  (channel-map '()))
+(define* (arrange-speakers (speakers '())
+			   (groups '())
+			   (delays '())
+			   (distances '())
+			   (channel-map '()))
   ;; sanity checking of configuration
 
   (define (has-duplicates? lst)
@@ -533,8 +532,8 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Set a particular speaker configuration
 
-(define* (set-speaker-configuration config :key (configs dlocsig-speaker-configs))
-  "(set-speaker-configuration config :key (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"
+(define* (set-speaker-configuration config (configs dlocsig-speaker-configs))
+  "(set-speaker-configuration config (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"
   (let ((lst (if (< (speaker-config-dimension config) 3)
 		 (car configs)
 	       (cadr configs)))
@@ -544,8 +543,8 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Get the speaker configuration for a given number of output channels
 
-(define* (get-speaker-configuration channels :key (3d dlocsig-3d) (configs dlocsig-speaker-configs))
-  "(get-speaker-configuration channels :key (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"
+(define* (get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs))
+  "(get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"
   (let* ((config (if 3d (list-ref (cadr configs) channels) (list-ref (car configs) channels))))
     (if (null? config)
 	(snd-error (format #f "no speaker configuration exists for ~A ~A output channel~A~%" 
@@ -699,7 +698,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define bezier-error     (make-procedure-with-setter (lambda (p) (list-ref p 20)) (lambda (p val) (list-set! p 20 val))))
 (define bezier-curvature (make-procedure-with-setter (lambda (p) (list-ref p 21)) (lambda (p val) (list-set! p 21 val))))
 
-(def-optkey-fun (make-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f))
+(define* (make-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f))
   (list 'bezier-path '() '() '() '() '() '() '() '() '() path 3d polar '() '() '() '() '() '() '() error curvature))
 
 
@@ -708,7 +707,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define initial-direction (make-procedure-with-setter (lambda (p) (list-ref p 22)) (lambda (p val) (list-set! p 22 val))))
 (define final-direction   (make-procedure-with-setter (lambda (p) (list-ref p 23)) (lambda (p val) (list-set! p 23 val))))
 
-(def-optkey-fun (make-open-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f) 
+(define* (make-open-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f) 
 				       (initial-direction '(0.0 0.0 0.0)) (final-direction '(0.0 0.0 0.0)))
   (list 'open-bezier-path '() '() '() '() '() '() '() '() '() path 3d polar '() '() '() '() '() '() '() error curvature initial-direction final-direction))
 
@@ -718,15 +717,15 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 ;;; Generic defining function (for open, closed, polar and cartesian paths)
 ;;;
 
-(def-optkey-fun (make-path path
-			   (3d path-3d)
-			   polar
-			   closed
-			   curvature
-			   (error 0.01)
-			   ;; only for open paths
-			   initial-direction
-			   final-direction)
+(define* (make-path path
+		    (3d path-3d)
+		    polar
+		    closed
+		    curvature
+		    (error 0.01)
+		    ;; only for open paths
+		    initial-direction
+		    final-direction)
   ;; some sanity checks
   (if (null? path)
       (snd-error "Can't define a path with no points in it"))
@@ -770,14 +769,14 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Some convenient abbreviations
 
-(def-optkey-fun (make-polar-path path
-				 (3d path-3d)
-				 closed
-				 curvature
-				 (error 0.01)
-				 ;; only for open paths
-				 initial-direction
-				 final-direction)
+(define* (make-polar-path path
+			  (3d path-3d)
+			  closed
+			  curvature
+			  (error 0.01)
+			  ;; only for open paths
+			  initial-direction
+			  final-direction)
   (if closed
       (make-path :path path
 		 :3d 3d
@@ -794,11 +793,11 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	       :initial-direction initial-direction
 	       :final-direction final-direction)))
 
-(def-optkey-fun (make-closed-path path
-				  (3d path-3d)
-				  polar
-				  curvature
-				  (error 0.01))
+(define* (make-closed-path path
+			   (3d path-3d)
+			   polar
+			   curvature
+			   (error 0.01))
   (make-path :path path
 	     :3d 3d
 	     :polar polar
@@ -863,7 +862,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	    (set! px (cons (list-ref points i) px))
 	    (set! py (cons (list-ref points (+ i 1)) py))
 	    (set! pz (cons (list-ref points (+ i 2)) pz)))
-	  (list (reverse px) (reverse py) (reverse pz) (make-list (length px) #f)))
+	  (list (reverse px) (reverse py) (reverse pz) (make-list-1 (length px) #f)))
 
       ;; it's a two dimensional list
       ;; '(x0 y0 x1 y1 ... xn yn)
@@ -875,7 +874,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	    ((>= i len))
 	  (set! px (cons (list-ref points i) px))
 	  (set! py (cons (list-ref points (+ i 1)) py)))
-	(list (reverse px) (reverse py) (make-list (length px) 0.0) (make-list (length px) #f))))))
+	(list (reverse px) (reverse py) (make-list-1 (length px) 0.0) (make-list-1 (length px) #f))))))
 
 ;;; Parse a set of 2d or 3d polar points into the separate coordinates
 
@@ -935,7 +934,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	      (set! x (cons (* dxy (imag-part avec)) x))
 	     (set! y (cons (* dxy (real-part avec)) y))
 	     (set! z (cons (* d (imag-part evec)) z))))
-	  (list (reverse x) (reverse y) (reverse z) (make-list (length x) #f)))
+	  (list (reverse x) (reverse y) (reverse z) (make-list-1 (length x) #f)))
 
       ;; decode a two dimensional list
       ;;   '(d0 a0 d1 a1 ... dn an)
@@ -952,7 +951,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		 (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
 	    (set! x (cons (* d (imag-part avec)) x))
 	    (set! y (cons (* d (real-part avec)) y))))
-	(list (reverse x) (reverse y) (make-list (length x) 0.0) (make-list (length x) #f))))))
+	(list (reverse x) (reverse y) (make-list-1 (length x) 0.0) (make-list-1 (length x) #f))))))
 
 
 (define (xparse-path xpath)
@@ -1363,11 +1362,11 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define literal-polar  (make-procedure-with-setter (lambda (p) (list-ref p 12)) (lambda (p val) (list-set! p 12 val))))
 
 ;;; Generic literal path creation function
-(def-optkey-fun (make-literal-path (points '()) (3d path-3d) polar)
+(define* (make-literal-path (points '()) (3d path-3d) polar)
   (list 'literal-path '() '() '() '() '() '() '() '() '() points 3d polar))
 
 ;;; Specific polar literal path creation function
-(def-optkey-fun (make-literal-polar-path (points '()) (3d path-3d))
+(define* (make-literal-polar-path (points '()) (3d path-3d))
   (make-literal-path points 3d #t))
 
 
@@ -1383,13 +1382,13 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define spiral-height      (make-procedure-with-setter (lambda (p) (list-ref p 18)) (lambda (p val) (list-set! p 18 val))))
 (define spiral-velocity    (make-procedure-with-setter (lambda (p) (list-ref p 19)) (lambda (p val) (list-set! p 19 val))))
 
-(def-optkey-fun (make-spiral-path (start-angle 0.0)
-				  total-angle
-				  step-angle
-				  (turns '())
-				  (distance '(0 10 1 10))
-				  (height '(0 0 1 0))
-				  (velocity '(0 1 1 1)))
+(define* (make-spiral-path (start-angle 0.0)
+			   total-angle
+			   step-angle
+			   (turns '())
+			   (distance '(0 10 1 10))
+			   (height '(0 0 1 0))
+			   (velocity '(0 1 1 1)))
   (if (and total-angle (not (null? turns)))
       (snd-error (format #f "can't specify total-angle [~A] and turns [~A] at the same time for the spiral path" total-angle turns)))
   
@@ -1502,7 +1501,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		  (set! xrz (append xrz (list zi-bz) zs))
 		  
 		  ;; accumulate intermediate unknown velocities as nils
-		  (set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
+		  (set! xrv (append xrv (list vi-bz) (make-list-1 (length xs) #f)))
 		  (if (= i (- len 1))
 		      (begin
 			;; add the last point
@@ -1776,7 +1775,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Transform a path (scaling + translation + rotation)
 
-(define* (transform-path path :key
+(define* (transform-path path
 			 scaling
 			 translation
 			 rotation
@@ -1939,7 +1938,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Mirror a path around an axis
 
-(define* (mirror-path path :key (axis 'y) (around 0))
+(define* (mirror-path path (axis 'y) (around 0))
   (if (not-transformed path)
       (transform-path path))
   (if (equal axis 'y)
@@ -2009,22 +2008,22 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Create a new dlocsig structure
 
-(def-optkey-fun (make-dlocsig start-time
-			      duration
-			      (path dlocsig-path)
-			      (scaler dlocsig-scaler)
-			      (direct-power dlocsig-direct-power)
-			      (inside-direct-power dlocsig-inside-direct-power)
-			      (reverb-power dlocsig-reverb-power)
-			      (inside-reverb-power dlocsig-inside-reverb-power)
-			      (reverb-amount dlocsig-reverb-amount)
-			      (initial-delay dlocsig-initial-delay)
-			      (unity-gain-dist dlocsig-unity-gain-distance)
-			      (inside-radius dlocsig-inside-radius)
-			      (minimum-segment-length dlocsig-minimum-segment-length)
-			      (render-using dlocsig-render-using)
-			      out-channels
-			      rev-channels)
+(define* (make-dlocsig start-time
+		       duration
+		       (path dlocsig-path)
+		       (scaler dlocsig-scaler)
+		       (direct-power dlocsig-direct-power)
+		       (inside-direct-power dlocsig-inside-direct-power)
+		       (reverb-power dlocsig-reverb-power)
+		       (inside-reverb-power dlocsig-inside-reverb-power)
+		       (reverb-amount dlocsig-reverb-amount)
+		       (initial-delay dlocsig-initial-delay)
+		       (unity-gain-dist dlocsig-unity-gain-distance)
+		       (inside-radius dlocsig-inside-radius)
+		       (minimum-segment-length dlocsig-minimum-segment-length)
+		       (render-using dlocsig-render-using)
+		       out-channels
+		       rev-channels)
 
   (if (null? start-time)
       (snd-error "a start time is required in make-dlocsig"))
@@ -2208,7 +2207,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
     ;; find the speaker group that contains a point
     (define (find-group x y z)
-      (call-with-current-continuation
+      (call-with-exit
        (lambda (return)
 	 (for-each
 	  (lambda (group)
@@ -2235,7 +2234,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
     (define (position val lst)
       (define (position-1 val lst pos)
-	(call-with-current-continuation
+	(call-with-exit
 	 (lambda (return)
 	   (if (null? lst)
 	       #f
@@ -2731,7 +2730,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 
     ;; structure that defines the unit generator
-    (define* (make-dlocs :key                    ; order of fields must match make-move-sound expectations
+    (define* (make-dlocs                    ; order of fields must match make-move-sound expectations
 			 (start 0)               ; absolute sample number at which samples first reach the listener
 			 (end 0)                 ; absolute sample number of end of input samples
 			 (out-channels 0)        ; number of output channels in soundfile
@@ -2877,7 +2876,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (define* (sinewave start-time duration freq amp 
-		   :key (amp-env '(0 1 1 1))
+		   (amp-env '(0 1 1 1))
 		   (path (make-path :path '(-10 10 0 5 10 10))))
   (let* ((vals (make-dlocsig :start-time start-time
 			     :duration duration
@@ -2888,10 +2887,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     (let* ((osc (make-oscil :frequency freq))
 	   (aenv (make-env :envelope amp-env :scaler amp :duration duration)))
       (run
-       (lambda ()
-	 (do ((i beg (+ 1 i)))
-	     ((= i end))
-	   (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
+       (do ((i beg (+ 1 i)))
+	   ((= i end))
+	 (dlocsig dloc i (* (env aenv) (oscil osc))))))))
 
 (with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 

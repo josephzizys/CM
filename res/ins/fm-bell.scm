@@ -1,7 +1,7 @@
 ;;; -------- FM-BELL
 
-(definstrument (fm-bell startime dur frequency amplitude :optional amp-env index-env index)
-  "(fm-bell startime dur frequency amplitude :optional amp-env index-env index) mixes in one fm bell note"
+(definstrument (fm-bell startime dur frequency amplitude amp-env index-env index)
+  "(fm-bell startime dur frequency amplitude amp-env index-env index) mixes in one fm bell note"
   (let* ((beg (seconds->samples startime))
 	 (len (seconds->samples dur))
 	 (end (+ beg len))
@@ -24,19 +24,18 @@
 			 amplitude dur)))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (let ((fmenv (env indf)))
-	   (outa i (* (env ampf)
-		      (+ (oscil car1 (* fmenv fmInd1 (oscil mod1)))
-			 (* .15 (oscil car2 (* fmenv 
-					       (+ (* fmInd2 (oscil mod2))
-						  (* fmInd3 
-						     (oscil mod3))))))
-			 (* .15 (oscil car3 (* fmenv 
-					       fmInd4 
-					       (oscil mod4)))))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (let ((fmenv (env indf)))
+	 (outa i (* (env ampf)
+		    (+ (oscil car1 (* fmenv fmInd1 (oscil mod1)))
+		       (* .15 (oscil car2 (* fmenv 
+					     (+ (* fmInd2 (oscil mod2))
+						(* fmInd3 
+						   (oscil mod3))))))
+		       (* .15 (oscil car3 (* fmenv 
+					     fmInd4 
+					     (oscil mod4))))))))))))
 
 ;(define fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .2000 ))
 ;(define abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0 ))

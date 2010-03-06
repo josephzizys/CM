@@ -11,9 +11,8 @@
       (vct-set! grain i (* (env grain-env) (oscil carrier))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (outa i (* amp (wave-train grains))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (outa i (* amp (wave-train grains)))))))
 
 ;;; (with-sound () (gran-synth 0 2 100 .0189 .02 .4))

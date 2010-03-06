@@ -16,15 +16,14 @@
 	 (nd (+ st (seconds->samples dur))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i st (+ i 1)))
-	   ((= i nd))
-	 (outa i (* g0 (env ampenv0) 
-		    (oscil osc0 
-			   (+ (* g1 (env ampenv1) 
-				 (oscil osc1 
-					(* g2 (env ampenv2) 
-					   (oscil osc2))))
-			      (* g3 (env ampenv3) 
-				 (oscil osc3)))))))))))
+     (do ((i st (+ i 1)))
+	 ((= i nd))
+       (outa i (* g0 (env ampenv0) 
+		  (oscil osc0 
+			 (+ (* g1 (env ampenv1) 
+			       (oscil osc1 
+				      (* g2 (env ampenv2) 
+					 (oscil osc2))))
+			    (* g3 (env ampenv3) 
+			       (oscil osc3))))))))))
 

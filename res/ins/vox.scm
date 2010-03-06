@@ -3,7 +3,7 @@
 ;;; translation from MUS10 of Marc LeBrun's waveshaping voice instrument (using FM here)
 ;;; this version translated (and simplified slightly) from CLM's mlbvoi.ins
 
-(definstrument (vox beg dur freq amp ampfun freqfun freqscl phonemes formant-amps formant-indices :optional (vibscl .1) (deg 0) (pcrev 0))  
+(definstrument (vox beg dur freq amp ampfun freqfun freqscl phonemes formant-amps formant-indices (vibscl .1) (deg 0) (pcrev 0))  
   (let ((formants
 	 '((I 390 1990 2550)  (E 530 1840 2480)  (AE 660 1720 2410)
 	   (UH 520 1190 2390) (A 730 1090 2440)  (OW 570 840 2410)
@@ -67,33 +67,32 @@
 	(vct-set! indices i index)
 	(vector-set! frmfs i (make-env (vox-fun phonemes i) :duration dur))))
     (run
-     (lambda ()
-       (do ((i start (+ i 1))) ((= i end))
-	 (set! frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
-	 (set! carrier (oscil car-os (hz->radians frq)))
-	 (set! sum 0.0)
-	 (do ((k 0 (+ 1 k))) ((= k fs))
-	   (set! frm (env (vector-ref frmfs k)))
-	   (set! frm0 (/ frm frq))
-	   (set! frm-int (floor frm0))
-	   (if (even? frm-int)
-	       (begin
-		 (set! even-freq (hz->radians (* frm-int frq)))
-		 (set! odd-freq (hz->radians (* (+ frm-int 1) frq)))
-		 (set! odd-amp (- frm0 frm-int))
-		 (set! even-amp (- 1.0 odd-amp)))
-	       (begin
-		 (set! odd-freq (hz->radians (* frm-int frq)))
-		 (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
-		 (set! even-amp (- frm0 frm-int))
-		 (set! odd-amp (- 1.0 even-amp))))
-	   (set! sum (+ sum 
-			(* (vct-ref amps k) 
-			   (+ (* even-amp (oscil (vector-ref evens k) 
-						 (+ even-freq (* (vct-ref indices k) carrier))))
-			      (* odd-amp (oscil (vector-ref odds k) 
-						(+ odd-freq (* (vct-ref indices k) carrier)))))))))
-	 (locsig loc i (* (env ampf) sum))))))))
+     (do ((i start (+ i 1))) ((= i end))
+       (set! frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
+       (set! carrier (oscil car-os (hz->radians frq)))
+       (set! sum 0.0)
+       (do ((k 0 (+ 1 k))) ((= k fs))
+	 (set! frm (env (vector-ref frmfs k)))
+	 (set! frm0 (/ frm frq))
+	 (set! frm-int (floor frm0))
+	 (if (even? frm-int)
+	     (begin
+	       (set! even-freq (hz->radians (* frm-int frq)))
+	       (set! odd-freq (hz->radians (* (+ frm-int 1) frq)))
+	       (set! odd-amp (- frm0 frm-int))
+	       (set! even-amp (- 1.0 odd-amp)))
+	     (begin
+	       (set! odd-freq (hz->radians (* frm-int frq)))
+	       (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
+	       (set! even-amp (- frm0 frm-int))
+	       (set! odd-amp (- 1.0 even-amp))))
+	 (set! sum (+ sum 
+		      (* (vct-ref amps k) 
+			 (+ (* even-amp (oscil (vector-ref evens k) 
+					       (+ even-freq (* (vct-ref indices k) carrier))))
+			    (* odd-amp (oscil (vector-ref odds k) 
+					      (+ odd-freq (* (vct-ref indices k) carrier)))))))))
+       (locsig loc i (* (env ampf) sum)))))))
 
 ;;; (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1)
 ;;; (vox 0 2 300 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) '(.8 .15 .05) '(.05 .0125 .025) .02 .1)

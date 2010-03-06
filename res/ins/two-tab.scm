@@ -2,7 +2,7 @@
 ;;; wavetable-based synthesis techniques).
 
 (definstrument (two-tab start-time duration frequency amplitude
-		        :optional (partial-1 '(1.0 1.0 2.0 0.5))
+		        (partial-1 '(1.0 1.0 2.0 0.5))
 			          (partial-2 '(1.0 0.0 3.0 1.0))
 			          (amp-envelope '(0 0 50 1 100 0))
 			          (interp-func '(0 1 100 0))
@@ -27,16 +27,15 @@
 				    :amplitude (* vibrato-amplitude freq))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (let ((vib (+ (triangle-wave per-vib) 
-		       (rand-interp ran-vib)))
-	       (intrp (env interp-env)))
-	   (locsig loc i (* (env amp-env) 
-			    (+ (* intrp (table-lookup s-1 vib))
-			       (* (- 1.0 intrp) 
-				  (table-lookup s-2 vib)))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (let ((vib (+ (triangle-wave per-vib) 
+		     (rand-interp ran-vib)))
+	     (intrp (env interp-env)))
+	 (locsig loc i (* (env amp-env) 
+			  (+ (* intrp (table-lookup s-1 vib))
+			     (* (- 1.0 intrp) 
+				(table-lookup s-2 vib))))))))))
 
 
 

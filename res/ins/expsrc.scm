@@ -1,4 +1,4 @@
-(define* (clm-expsrc beg dur input-file exp-ratio src-ratio amp :optional rev start-in-file)
+(define* (clm-expsrc beg dur input-file exp-ratio src-ratio amp rev start-in-file)
   (let* ((st (seconds->samples beg))
 	 (stf (floor (* (or start-in-file 0) (srate input-file))))
 	 (fdA (make-readin input-file :channel 0 :start stf))
@@ -12,11 +12,9 @@
 	 (rev-amp (if revit (if two-chans (* rev .5) rev) 0.0))
 	 (nd (+ st (seconds->samples dur))))
     (run
-     (lambda ()
-       (do ((i st (+ i 1))) ((= i nd))
-	 (let ((valA               (* amp (src srcA 0.0 (lambda (dir) (granulate exA (lambda (dir) (readin fdA)))))))
-	       (valB (if two-chans (* amp (src srcB 0.0 (lambda (dir) (granulate exB (lambda (dir) (readin fdB)))))) 0.0)))
+     (do ((i st (+ i 1))) ((= i nd))
+       (let ((valA               (* amp (src srcA 0.0 (lambda (dir) (granulate exA (lambda (dir) (readin fdA)))))))
+	     (valB (if two-chans (* amp (src srcB 0.0 (lambda (dir) (granulate exB (lambda (dir) (readin fdB)))))) 0.0)))
 	 (out-any i valA 0)
 	 (if two-chans (out-any i valB 1))
-	 (if revit (out-any i (* rev-amp (+ valA valB)) 0 *reverb*))))))))
-
+	 (if revit (out-any i (* rev-amp (+ valA valB)) 0 *reverb*)))))))

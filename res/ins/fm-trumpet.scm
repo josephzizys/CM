@@ -3,7 +3,7 @@
 ;;; from CMJ feb 77 p51
 
 (definstrument (fm-trumpet startime dur
-			   :key (frq1 250.0)
+			   (frq1 250.0)
 			   (frq2 1500.0)
 			   (amp1 0.5)
 			   (amp2 0.1)
@@ -67,19 +67,18 @@
 			   :scaler amp2 :duration dur)))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (let ((frq-change (hz->radians (* (+ 1.0 (rand-interp ran-vib))
-					   (+ 1.0 (* (env per-vib-f) (oscil per-vib)))
-					   (+ 1.0 (env frq-f))))))
-	   (locsig loc i (+ (* (env car1-f) 
-			       (oscil car1 (* frq-change 
-					      (+ frq1 (* (env mod1-f) 
-							 (oscil mod1 (* modfrq1 frq-change)))))))
-			    (* (env car2-f) 
-			       (oscil car2 (* frq-change 
-					      (+ frq2 (* (env mod2-f) 
-							 (oscil mod2 (* modfrq2 frq-change)))))))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (let ((frq-change (hz->radians (* (+ 1.0 (rand-interp ran-vib))
+					 (+ 1.0 (* (env per-vib-f) (oscil per-vib)))
+					 (+ 1.0 (env frq-f))))))
+	 (locsig loc i (+ (* (env car1-f) 
+			     (oscil car1 (* frq-change 
+					    (+ frq1 (* (env mod1-f) 
+						       (oscil mod1 (* modfrq1 frq-change)))))))
+			  (* (env car2-f) 
+			     (oscil car2 (* frq-change 
+					    (+ frq2 (* (env mod2-f) 
+						       (oscil mod2 (* modfrq2 frq-change))))))))))))))
 
 

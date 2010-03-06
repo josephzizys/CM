@@ -18,6 +18,7 @@
     <instrument Name="bow" File="strad.scm" Category="Physical Modeling" Comment="Juan Reyes bowed string physical model" Examples="strad.clm" Depend="" AutoLoad="no" />
     <instrument Name="canter" File="bagpipes.scm" Category="Frequency Modulation" Comment="canter portion of Peter Commons' bagpipe (bag.clm)" Examples="bagpipes.clm" Depend="" AutoLoad="no" />
     <instrument Name="cellon" File="cellon.scm" Category="Frequency Modulation" Comment="feedback fm (Stanislaw Krupowiecz)" Examples="" Depend="" AutoLoad="no" />
+    <instrument Name="cnvrev" File="cnvrev.scm" Category="Sound Processing" Comment="Convolution of file with impulse" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="cross-fade" File="fade.scm" Category="Sound Processing" Comment="cross fade in the frequency domain" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="dlocsig" File="delocsig.scm" Category="Sound Processing" Comment="quad sound movement (Fernando Lopez-Lezcano)" Examples="" Depend="env.scm" AutoLoad="no" />
     <instrument Name="dissolve-fade" File="fade.scm" Category="Sound Processing" Comment="dissolving fade in the frequency domain" Examples="" Depend="" AutoLoad="no" />
@@ -64,6 +65,7 @@
     <instrument Name="singer" File="singer.scm" Category="Physical Modeling" Comment="spectral modelling" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="spectra" File="spectra.scm" Category="Waveshaping" Comment="wavetable output" Examples="spectra.clm" Depend="" AutoLoad="no" />
     <instrument Name="stereo-flute" File="stereo-flute.scm" Category="Physical Modeling" Comment="flute sound (Nicky Hind)" Examples="stereo-flute.clm" Depend="" AutoLoad="no" />  
+    <instrument Name="stochastic" File="stochastic.scm" Category="Granular Synthesis" Comment="flute sound ()" Examples="" Depend="" AutoLoad="no" />  
     <instrument Name="touch-tone" File="touch-tone.scm" Category="Waveshaping" Comment="implement touch tone telephone sounds" Examples="touch-tone.clm" Depend="" AutoLoad="no" />
     <instrument Name="tubebell" File="tubebell.scm" Category="Frequency Modulation" Comment="Perry Cook's tubular bell" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="two-tab" File="two-tab.scm" Category="Waveshaping" Comment="interpolate between stored waveforms" Examples="" Depend="" AutoLoad="no" />

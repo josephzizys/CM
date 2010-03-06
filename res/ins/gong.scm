@@ -2,7 +2,7 @@
 ;;; Paul Weineke's gong.
 
 (definstrument (gong start-time duration frequency amplitude
-		     :key (degree 0.0) (distance 1.0) (reverb-amount 0.005))
+		     (degree 0.0) (distance 1.0) (reverb-amount 0.005))
   (let* ((mfq1 (* frequency 1.16))
 	 (mfq2 (* frequency 3.14))
 	 (mfq3 (* frequency 1.005))
@@ -35,13 +35,12 @@
 	 (end (+ beg (seconds->samples duration))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (locsig loc i (* (env ampfun) 
-			  (oscil carrier (+ (* (env indxfun1) (oscil mod1))
-					    (* (env indxfun2) (oscil mod2))
-					    (* (env indxfun3) (oscil mod3)))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (locsig loc i (* (env ampfun) 
+			(oscil carrier (+ (* (env indxfun1) (oscil mod1))
+					  (* (env indxfun2) (oscil mod2))
+					  (* (env indxfun3) (oscil mod3))))))))))
 
 ;;; (with-sound () (gong 0 3 261.61 .6))
 

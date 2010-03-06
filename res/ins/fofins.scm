@@ -1,7 +1,7 @@
 ;;; -------- FOF example
 
-(definstrument (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ae '(0 0 25 1 75 1 100 0)) ve)
-  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ampenv '(0 0 25 1 75 1 100 0)) vibenv) produces FOF 
+(definstrument (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 (ae '(0 0 25 1 75 1 100 0)) ve)
+  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 (ampenv '(0 0 25 1 75 1 100 0)) vibenv) produces FOF 
 synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (let* ((two-pi (* 2 pi))
 	   (start (seconds->samples beg))
@@ -25,9 +25,8 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 			      .5 (- 1.0 (cos (* i win-freq))))))
       (ws-interrupt?)
       (run
-       (lambda ()
-	 (do ((i start (+ i 1)))
-	     ((= i end))
-	   (outa i (* (env ampf) 
-		      (wave-train wt0 (* (env vibf) 
-					 (oscil vibr))))))))))
+       (do ((i start (+ i 1)))
+	   ((= i end))
+	 (outa i (* (env ampf) 
+		    (wave-train wt0 (* (env vibf) 
+				       (oscil vibr)))))))))

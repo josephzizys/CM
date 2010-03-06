@@ -1,5 +1,5 @@
 (definstrument (spectra start-time duration frequency amplitude
-		         :optional (partials '(1 1 2 0.5))
+		         (partials '(1 1 2 0.5))
 			           (amp-envelope '(0 0 50 1 100 0))
 			           (vibrato-amplitude 0.005)
 			           (vibrato-speed 5.0)
@@ -19,12 +19,11 @@
 				    :amplitude (* vibrato-amplitude freq))))
     (ws-interrupt?)
     (run 
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (locsig loc i (* (env amp-env) 
-			  (table-lookup s (+ (triangle-wave per-vib)
-					     (rand-interp ran-vib))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (locsig loc i (* (env amp-env) 
+			(table-lookup s (+ (triangle-wave per-vib)
+					   (rand-interp ran-vib)))))))))
 
 ;    (with-sound ()
 ;      (spectra 0 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) 

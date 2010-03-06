@@ -1,4 +1,4 @@
-(definstrument (lbj-piano begin-time duration frequency amplitude :key pfreq
+(definstrument (lbj-piano begin-time duration frequency amplitude pfreq
 			  (degree 45) (reverb-amount 0) (distance 1))
   (let ((piano-spectra (list
 
@@ -461,18 +461,18 @@
 	(vector-set! oscils j (make-oscil (* (vct-ref partials i) frequency))))
       (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (set! sktr (+ 1 sktr))
-	 (let ((sum 0.0))
-	   (do ((k 0 (+ 1 k)))
-	       ((= k siz))
-	     (set! sum (+ sum (* (vct-ref alist k)
-				 (oscil (vector-ref oscils k))))))
-	   (locsig locs i (* sum
-			     (if (> sktr env1samples) 
-				 (env ampenv2) 
-				 (env ampenv1)))))))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (set! sktr (+ 1 sktr))
+       (let ((sum 0.0))
+	 (do ((k 0 (+ 1 k)))
+	     ((= k siz))
+	   (set! sum (+ sum (* (vct-ref alist k)
+			       (oscil (vector-ref oscils k))))))
+	 (locsig locs i (* sum
+			   (if (> sktr env1samples) 
+			       (env ampenv2) 
+			       (env ampenv1))))))))))
+
 
 

@@ -1,7 +1,7 @@
 ;;; -------- STEREO-FLUTE
 
 (definstrument (stereo-flute start dur freq flow 
-			     :key
+			    
 			     (flow-envelope '(0  1 100 1))
 			     (decay 0.01) 		; additional time for instrument to decay
 			     (noise 0.0356) 
@@ -14,7 +14,7 @@
 			     (vib-rate 5) (vib-amount 0.03)
 			     (ran-rate 5) (ran-amount 0.03))
   "(stereo-flute dur freq flow 
-     :key (flow-envelope '(0  1 100 1)) (decay 0.01)
+     (flow-envelope '(0  1 100 1)) (decay 0.01)
 	   (noise 0.0356) (embouchure-size 0.5) (fbk-scl1 0.5)
 	   (fbk-scl2 0.55) (offset-pos 0.764264) (out-scl 1.0)
 	   (a0 0.7) (b1 -0.3) (vib-rate 5) (vib-amount 0.03)
@@ -52,31 +52,31 @@ is a physical model of a flute:
 	 (reflection-lowpass-filter (make-one-pole a0 b1)))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (set! delay-sig (delay bore out-sig))
-	 (set! emb-sig (delay embouchure current-difference))
-	 (set! current-flow (+ (* vib-amount (oscil periodic-vibrato)) 
-			       (* ran-amount (rand-interp random-vibrato)) 
-			       (env flowf)))
-	 (set! current-difference 
-	       (+  (+ current-flow (* noise (* current-flow (rand breath))))
-		   (* fbk-scl1 delay-sig)))
-	 (set! current-excitation (- emb-sig (* emb-sig emb-sig emb-sig)))
-	 (set! out-sig (one-pole reflection-lowpass-filter 
-				 (+ current-excitation (* fbk-scl2 delay-sig))))
-	 (set! tap-sig (tap bore offset))
-	 ;; NB the DC blocker is not in the cicuit. It is applied to the out-sig 
-	 ;; but the result is not fed back into the system.
-	 (set! dc-blocked-a (+ (- out-sig previous-out-sig) (* 0.995 previous-dc-blocked-a)))
-	 (set! dc-blocked-b (+ (- tap-sig previous-tap-sig) (* 0.995 previous-dc-blocked-b)))
-	 (outa i (* out-scl dc-blocked-a))
-	 (outb i (* out-scl dc-blocked-b))
-	 (set! previous-out-sig out-sig)
-	 (set! previous-dc-blocked-a dc-blocked-a)
-	 (set! previous-tap-sig tap-sig)
-	 (set! previous-dc-blocked-b dc-blocked-b))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (set! delay-sig (delay bore out-sig))
+       (set! emb-sig (delay embouchure current-difference))
+       (set! current-flow (+ (* vib-amount (oscil periodic-vibrato)) 
+			     (* ran-amount (rand-interp random-vibrato)) 
+			     (env flowf)))
+       (set! current-difference 
+	     (+  (+ current-flow (* noise (* current-flow (rand breath))))
+		 (* fbk-scl1 delay-sig)))
+       (set! current-excitation (- emb-sig (* emb-sig emb-sig emb-sig)))
+       (set! out-sig (one-pole reflection-lowpass-filter 
+			       (+ current-excitation (* fbk-scl2 delay-sig))))
+       (set! tap-sig (tap bore offset))
+       ;; NB the DC blocker is not in the cicuit. It is applied to the out-sig 
+       ;; but the result is not fed back into the system.
+       (set! dc-blocked-a (+ (- out-sig previous-out-sig) (* 0.995 previous-dc-blocked-a)))
+       (set! dc-blocked-b (+ (- tap-sig previous-tap-sig) (* 0.995 previous-dc-blocked-b)))
+       (outa i (* out-scl dc-blocked-a))
+       (outb i (* out-scl dc-blocked-b))
+       (set! previous-out-sig out-sig)
+       (set! previous-dc-blocked-a dc-blocked-a)
+       (set! previous-tap-sig tap-sig)
+       (set! previous-dc-blocked-b dc-blocked-b)))))
+
 
 
 

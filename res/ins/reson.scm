@@ -47,20 +47,20 @@
 	(vector-set! carriers i (make-oscil cfq))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (let* ((outsum 0.0)
-		(vib (+ (triangle-wave pervib) (rand-interp ranvib) (env frqf)))
-		(modsig (oscil modulator vib)))
-	   (do ((k 0 (+ 1 k)))
-	       ((= k numformants))
-	     (set! outsum (+ outsum
-			     (* (env (vector-ref ampfs k))
-				(oscil (vector-ref carriers k) 
-				       (+ (* vib (vector-ref c-rats k))
-					  (* (env (vector-ref indfs k)) modsig)))))))
-	   (locsig loc i outsum)))))))
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (let* ((outsum 0.0)
+	      (vib (+ (triangle-wave pervib) (rand-interp ranvib) (env frqf)))
+	      (modsig (oscil modulator vib)))
+	 (do ((k 0 (+ 1 k)))
+	     ((= k numformants))
+	   (set! outsum (+ outsum
+			   (* (env (vector-ref ampfs k))
+			      (oscil (vector-ref carriers k) 
+				     (+ (* vib (vector-ref c-rats k))
+					(* (env (vector-ref indfs k)) modsig)))))))
+	 (locsig loc i outsum))))))
+
 
 
 

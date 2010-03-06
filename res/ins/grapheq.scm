@@ -32,7 +32,7 @@ envelopes if we are in case 2, gains are envelopes.
 nil doesnt print anything, which will speed up a bit the process.
 |#
 
-(definstrument (graphEq file :key (beg 0) (dur 0) (or-beg 0) (amp 1) (amp-env '(0 1 .8 1 1 0)) (amp-base 1) 
+(definstrument (graphEq file (beg 0) (dur 0) (or-beg 0) (amp 1) (amp-env '(0 1 .8 1 1 0)) (amp-base 1) 
 	(offset-gain 0)  
 	(gain-freq-list '((0 1 1 0) 440 (0 0 1 1) 660))      
 	(filt-gain-scale 1)                   
@@ -83,22 +83,22 @@ nil doesnt print anything, which will speed up a bit the process.
 				  (+ offset-gain gval)))))))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i st (+ i 1)))
-	   ((= i nd))
-	 (if stats 
-	     (begin
-	       (set! samp (+ 1 samp))
-	       (if (= samp (mus-srate))
-		   (begin
-		     (snd-print (format #f "~% ~F" (/ i (mus-srate))))
-		     (set! samp 0)))))
-	 (let ((outval 0.0)
-	       (inval (readin RdA)))
-	   (do ((k 0 (+ 1 k)))
-	       ((= k half-list))
-	     (if if-list-in-gain
-		 (vct-set! gains k (* (env (vector-ref env-size k)) (- 1.0 a1))))
-	     (set! outval (+ outval (* (vct-ref gains k)
-				       (formant (vector-ref frm-size k) inval)))))
-	   (outa i (* (env ampenv) outval))))))))
+     (do ((i st (+ i 1)))
+	 ((= i nd))
+       (if stats 
+	   (begin
+	     (set! samp (+ 1 samp))
+	     (if (= samp (mus-srate))
+		 (begin
+		   (snd-print (format #f "~% ~F" (/ i (mus-srate))))
+		   (set! samp 0)))))
+       (let ((outval 0.0)
+	     (inval (readin RdA)))
+	 (do ((k 0 (+ 1 k)))
+	     ((= k half-list))
+	   (if if-list-in-gain
+	       (vct-set! gains k (* (env (vector-ref env-size k)) (- 1.0 a1))))
+	   (set! outval (+ outval (* (vct-ref gains k)
+				     (formant (vector-ref frm-size k) inval)))))
+	 (outa i (* (env ampenv) outval)))))))
+

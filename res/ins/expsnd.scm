@@ -1,4 +1,4 @@
-(definstrument (exp-snd file beg dur amp :optional (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv)
+(definstrument (exp-snd file beg dur amp (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv)
   ;; granulate with envelopes on the expansion amount, segment envelope shape,
   ;; segment length, hop length, and input file resampling rate
   (let* ((st (seconds->samples beg))
@@ -52,34 +52,33 @@
 	    (>= (max-envelope rampdata) 0.5))
 	(snd-warning (format #f "ramp argument to expsnd must always be between 0.0 and 0.5: ~A" ramp))
 	(run
-	 (lambda ()
-	   (do ((i st (+ i 1)))
-	       ((= i nd))
-	     ; (if (c-g?) (set! i (- nd 1)))
-	     (let* ((expa (env expenv)) ;current expansion amount
-		    (segl (env lenenv)) ;current segment length
-		    (resa (env srenv)) ;current resampling increment
-		    (rmpl (env rampenv)) ;current ramp length (0 to .5)
-		    (hp (env hopenv)) ;current hop size
-		    ;; now we set the granulate generator internal state to reflect all these envelopes
-		    (sl (seconds->samples segl))
-		    (rl (floor (* rmpl sl))))
-	       (set! vol (env ampe))
-	       (set! (mus-length exA) sl)
-	       (set! (mus-ramp exA) rl)
-	       (set! (mus-frequency exA) hp)
-	       (set! (mus-increment exA) expa)
-	       (set! next-samp (+ next-samp resa))
-	       (if (> next-samp (+ 1 ex-samp))
-		   (let ((samps (floor (- next-samp ex-samp))))
-		     (do ((k 0 (+ 1 k)))
-			 ((= k samps))
-		       (set! valA0 valA1)
-		       (set! valA1 (* vol (granulate exA)))
-		       (set! ex-samp (+ 1 ex-samp)))))
-	       (if (= next-samp ex-samp)
-		   (outa i valA0)
-		   (outa i (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0))))))))))))
+	 (do ((i st (+ i 1)))
+	     ((= i nd))
+					; (if (c-g?) (set! i (- nd 1)))
+	   (let* ((expa (env expenv)) ;current expansion amount
+		  (segl (env lenenv)) ;current segment length
+		  (resa (env srenv)) ;current resampling increment
+		  (rmpl (env rampenv)) ;current ramp length (0 to .5)
+		  (hp (env hopenv)) ;current hop size
+		  ;; now we set the granulate generator internal state to reflect all these envelopes
+		  (sl (seconds->samples segl))
+		  (rl (floor (* rmpl sl))))
+	     (set! vol (env ampe))
+	     (set! (mus-length exA) sl)
+	     (set! (mus-ramp exA) rl)
+	     (set! (mus-frequency exA) hp)
+	     (set! (mus-increment exA) expa)
+	     (set! next-samp (+ next-samp resa))
+	     (if (> next-samp (+ 1 ex-samp))
+		 (let ((samps (floor (- next-samp ex-samp))))
+		   (do ((k 0 (+ 1 k)))
+		       ((= k samps))
+		     (set! valA0 valA1)
+		     (set! valA1 (* vol (granulate exA)))
+		     (set! ex-samp (+ 1 ex-samp)))))
+	     (if (= next-samp ex-samp)
+		 (outa i valA0)
+		 (outa i (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0)))))))))))
 
 ;;; (with-sound () (exp-snd "fyow.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05))
 ;;; (with-sound () (exp-snd "oboe.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2))
