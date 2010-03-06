@@ -329,15 +329,33 @@
       (map (lambda (v) (vary1 v vari mode)) val)
       (vary1 val vari mode)))
 
+;(define (shuffle! l)
+;  (let ((s (length l)))
+;    (do ((i 0 (+ i 1))
+;	 (j (ffi_ranint s) (ffi_ranint s))
+;	 (v #f))
+;	((= i s) l)
+;      (set! v (list-ref l i))
+;      (set-car! (list-tail l i)
+;		(list-ref l j))
+;      (set-car! (list-tail l j) v))))
+; michael: I just happened to do some reading on random shuffling and noted that I think the CM shuffling algorithm is slightly biased. Take a look at this page:
+;
+;http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#Implementation_errors
+;
+;The second paragraph explains the problem. I tested the statistics with the old version and for permutations of the list '(1 2 3) there is indeed a bias.
+
 (define (shuffle! l)
   (let ((s (length l)))
-    (do ((i 0 (+ i 1))
-	 (j (ffi_ranint s) (ffi_ranint s))
-	 (v #f))
-	((= i s) l)
+    (do ((i s)
+      	 (j #f)
+      	 (v #f))
+    	((= i 1) l)
+      (set! j (ffi_ranint i))
+      (set! i (- i 1))
       (set! v (list-ref l i))
       (set-car! (list-tail l i)
-		(list-ref l j))
+                (list-ref l j))
       (set-car! (list-tail l j) v))))
 
 (define (shuffle . args)

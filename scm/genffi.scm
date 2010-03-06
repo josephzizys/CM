@@ -89,7 +89,8 @@
 
     (ffi_sal_allocate_tokens s7_pointer "sal_allocate_tokens"  )
     (ffi_sal_free_tokens s7_pointer "sal_free_tokens" s7_pointer)
-    (ffi_sal_tokenize_file s7_pointer "sal_tokenize_file" s7_pointer s7_pointer)
+    (ffi_sal_tokenize_file s7_pointer "sal_tokenize_file" s7_pointer s7_pointer s7_pointer)
+    (ffi_sal_tokenize_string s7_pointer "sal_tokenize_string" s7_pointer s7_pointer s7_pointer)
     (ffi_sal_token_type s7_pointer "sal_token_type" s7_pointer)
     (ffi_sal_token_string s7_pointer "sal_token_string" s7_pointer)
     (ffi_sal_token_position s7_pointer "sal_token_position" s7_pointer)
