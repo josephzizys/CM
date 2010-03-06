@@ -786,7 +786,7 @@ s7_pointer ffi_sal_free_tokens (s7_scheme *s7, s7_pointer args)
 
 s7_pointer ffi_sal_tokenize_file (s7_scheme *s7, s7_pointer args)
 {
-  s7_pointer p0, p1, p2;
+  s7_pointer p0, p1, p2, p3;
   if (!(s7_car(args)))
     return(s7_wrong_type_arg_error(s7, "ffi_sal_tokenize_file", 1, s7_car(args), "a s7_pointer"));
   p1=s7_car(args);
@@ -795,7 +795,30 @@ s7_pointer ffi_sal_tokenize_file (s7_scheme *s7, s7_pointer args)
     return(s7_wrong_type_arg_error(s7, "ffi_sal_tokenize_file", 2, s7_car(args), "a s7_pointer"));
   p2=s7_car(args);
   args=s7_cdr(args);
-  p0=sal_tokenize_file(p1, p2);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_tokenize_file", 3, s7_car(args), "a s7_pointer"));
+  p3=s7_car(args);
+  args=s7_cdr(args);
+  p0=sal_tokenize_file(p1, p2, p3);
+  return (s7, p0);
+}
+
+s7_pointer ffi_sal_tokenize_string (s7_scheme *s7, s7_pointer args)
+{
+  s7_pointer p0, p1, p2, p3;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_tokenize_string", 1, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_tokenize_string", 2, s7_car(args), "a s7_pointer"));
+  p2=s7_car(args);
+  args=s7_cdr(args);
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_sal_tokenize_string", 3, s7_car(args), "a s7_pointer"));
+  p3=s7_car(args);
+  args=s7_cdr(args);
+  p0=sal_tokenize_string(p1, p2, p3);
   return (s7, p0);
 }
 
@@ -3012,7 +3035,8 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_pathname_to_key", ffi_pathname_to_key, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_allocate_tokens", ffi_sal_allocate_tokens, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_free_tokens", ffi_sal_free_tokens, 1, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_sal_tokenize_file", ffi_sal_tokenize_file, 2, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sal_tokenize_file", ffi_sal_tokenize_file, 3, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_sal_tokenize_string", ffi_sal_tokenize_string, 3, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_token_type", ffi_sal_token_type, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_token_string", ffi_sal_token_string, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_token_position", ffi_sal_token_position, 1, 0, false, "ffi function");

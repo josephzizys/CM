@@ -202,6 +202,10 @@ class FomusSyntax : public Syntax
   HiliteID getHilite (const String fomus, int start, int end);
   void eval(String text, bool isRegion=false, bool expand=false);
   void stickkeyword(String str, const int hl);
+  const StringArray getTokenTypes () ;
+  const Colour getDefaultColour (const int tokenType);
+  int readNextToken (CodeDocument::Iterator &source);
+
   juce_DeclareSingleton(FomusSyntax, true)
 };
 

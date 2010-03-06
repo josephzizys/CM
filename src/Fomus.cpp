@@ -1839,6 +1839,25 @@ void Fomus::renameScoreDialog()
 // EDITOR
 // ------------------------------------------------------------------------------------------------------------------------
 
+const StringArray FomusSyntax::getTokenTypes () 
+{
+  // FIXME FOR NEW CODE EDITOR
+  const char* const tt [] = {"Text"}; 
+  return StringArray((const char**)tt);
+}
+const Colour FomusSyntax::getDefaultColour (const int tokenType)
+{
+  // FIXME FOR NEW CODE EDITOR
+  return Colours::black;
+}
+
+int FomusSyntax::readNextToken (CodeDocument::Iterator &source)
+{
+  // FIXME FOR NEW CODE EDITOR
+  source.skipWhitespace();
+  return 0;
+}
+
 void FomusSyntax::stickkeyword(String str, const int hl) {
   tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
   str[0] = toupper(str[0]);

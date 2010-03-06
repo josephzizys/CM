@@ -18,29 +18,45 @@
 juce_ImplementSingleton(TextSyntax) ;
 juce_ImplementSingleton(LispSyntax) ;
 juce_ImplementSingleton(SalSyntax) ;
+juce_ImplementSingleton(Sal2Syntax) ;
 
 Syntax::Syntax (String a, String b, String c, String d, String e, 
 		String f, String g, String h, String i, String j) 
   : numtoks (0),
+    maxtoklen (0),
     coloring (false),
     type (TextIDs::Empty),
     tabwidth (0)
 {
-
   init_syntab(syntab, a, b, c, d, e, f, g, h, i, j);
   for (int i=0; i<HiliteIDs::NUMHILITES; i++)
     hilites[i]=Colours::black;
 }
 
-Syntax::~Syntax() {
+
+
+Syntax::~Syntax()
+{
 }
 
-SynTok * Syntax::getSynTok (String n) {
+void Syntax::addSynTok (const String n, int t, HiliteID h, int i) 
+{
+  numtoks++;
+  int l=n.length();
+  if (l>maxtoklen) maxtoklen=l;
+  tokens[n] = new SynTok(n, t, h, i);
+}
+
+SynTok* Syntax::getSynTok (String n) 
+{
   SynTokMap::iterator iter = tokens.find(n);
   if ( iter == tokens.end() )
-    return (SynTok *) NULL;
+    return NULL;
   return iter->second;
 }
+
+
+
 
 bool Syntax::isWhiteBetween(const String txt, int lb, int ub) {
   // return true if just white space between lb and ub
@@ -81,6 +97,23 @@ TextSyntax::TextSyntax ()
 TextSyntax::~TextSyntax()
 {
   clearSingletonInstance();
+}
+
+const StringArray TextSyntax::getTokenTypes () 
+{
+  const char* const tt [] = {"Text"};
+  return StringArray((const char**)tt);
+}
+
+const Colour TextSyntax::getDefaultColour (const int tokenType)
+{
+  return Colours::black;
+}
+
+int TextSyntax::readNextToken (CodeDocument::Iterator &source)
+{
+  source.skipWhitespace(); 
+  return 0;
 }
 
 bool TextSyntax::isTopLevel(String line)
@@ -132,32 +165,32 @@ LispSyntax::LispSyntax ()
   hilites[HiliteIDs::Hilite4]=Colour(0xa0, 0x20, 0xf0); //Colours::purple;
   hilites[HiliteIDs::Hilite5]=Colours::orchid;
   hilites[HiliteIDs::Hilite6]=Colours::cadetblue;
-  addLispTok( T("begin"), numtoks++, HiliteIDs::Hilite4, 1000);
-  addLispTok( T("define"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("define*"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("define-process"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("definstrument"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("defun"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("defparameter"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("defvar"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("run"), numtoks++, HiliteIDs::Hilite4, 1000);
-  addLispTok( T("and"), numtoks++, HiliteIDs::Hilite4, 2);
-  addLispTok( T("cond"), numtoks++, HiliteIDs::Hilite4, 2);
-  addLispTok( T("do"), numtoks++, HiliteIDs::Hilite4, 2);
-  addLispTok( T("if"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("lambda"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("let"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("let*"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("letrec"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("loop"), numtoks++, HiliteIDs::Hilite4, 1000);
-  addLispTok( T("or"), numtoks++, HiliteIDs::Hilite4, 2);
-  addLispTok( T("process"), numtoks++, HiliteIDs::Hilite4, 1000);
-  addLispTok( T("run"), numtoks++, HiliteIDs::Hilite4, 1000);
-  addLispTok( T("send"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("unless"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("when"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("with-sound"), numtoks++, HiliteIDs::Hilite4, 1);
-  addLispTok( T("with-fomus"), numtoks++, HiliteIDs::Hilite4, 1);
+  addSynTok(T("begin"), numtoks, HiliteIDs::Hilite4, 1000);
+  addSynTok(T("define"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("define*"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("define-process"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("definstrument"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("defun"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("defparameter"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("defvar"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("run"), numtoks, HiliteIDs::Hilite4, 1000);
+  addSynTok(T("and"), numtoks, HiliteIDs::Hilite4, 2);
+  addSynTok(T("cond"), numtoks, HiliteIDs::Hilite4, 2);
+  addSynTok(T("do"), numtoks, HiliteIDs::Hilite4, 2);
+  addSynTok(T("if"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("lambda"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("let"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("let*"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("letrec"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("loop"), numtoks, HiliteIDs::Hilite4, 1000);
+  addSynTok(T("or"), numtoks, HiliteIDs::Hilite4, 2);
+  addSynTok(T("process"), numtoks, HiliteIDs::Hilite4, 1000);
+  addSynTok(T("run"), numtoks, HiliteIDs::Hilite4, 1000);
+  addSynTok(T("send"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("unless"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("when"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("with-sound"), numtoks, HiliteIDs::Hilite4, 1);
+  addSynTok(T("with-fomus"), numtoks, HiliteIDs::Hilite4, 1);
 }
 
 LispSyntax::~LispSyntax()
@@ -165,8 +198,109 @@ LispSyntax::~LispSyntax()
   clearSingletonInstance();
 }
 
-void LispSyntax::addLispTok (const String n, int t, HiliteID h, int i) {
-  tokens[n] = new SynTok(n, t, h, i);
+const StringArray LispSyntax::getTokenTypes ()
+{
+  const char* const names [] = {"Error", "Comment", "String", 
+                                "Parentheses", "Punctuation", "ReadMacro"
+                                "Special1", "Special2",
+                                "Keyword1", "Keyword2", "Token"};
+  return StringArray((const char**)names);
+}
+
+const Colour LispSyntax::getDefaultColour (const int tokenType)
+{
+  switch (tokenType)
+    {
+    case TokenError: return Colours::red;
+    case TokenComment: return Colours::firebrick;
+    case TokenString: return Colours::rosybrown;
+    case TokenParentheses: return Colours::black;
+    case TokenPunctuation: return Colours::black;
+    case TokenReadMacro: return Colours::cadetblue;
+    case TokenSpecial1: return Colour(0x8b, 0x00, 0x8b);
+    case TokenKeyword1: return Colours::orchid;
+    case TokenConstituent: return Colours::black;
+    default: return Colours::black;
+    }
+}
+
+// Dark magenta: #8b008b
+// Purple:  #7f007f
+
+int LispSyntax::readNextToken(CodeDocument::Iterator &source)
+{
+  int typ=TokenError;
+  source.skipWhitespace();
+  tchar chr=source.peekNextChar();
+  switch (chr)
+    {
+    case 0:
+      source.skip();
+      break;
+    case ';':
+      source.skipToEndOfLine();
+      typ=TokenComment;
+      break;
+    case '"':
+      {
+        juce_wchar c, q=source.nextChar(); // pop quote char
+        for (c=source.nextChar(); (c!=q && c!=0); c=source.nextChar())
+          if (c=='\\') source.skip(); // advance over \x
+        typ=TokenString;
+      }
+      break;
+    case '#':
+      source.skip(); // pop sharp sign
+      source.skip(); // pop macro char
+      typ=TokenReadMacro;
+      break;
+    case ',':
+    case '\'':
+    case '`':
+      source.skip();
+      typ=TokenPunctuation;
+      break;
+    case '(':
+    case ')':
+    case '{':
+    case '}':
+    case '[':
+    case ']':
+      source.skip();
+      typ=TokenParentheses;
+      break;
+    default:
+      {
+        int i=0;
+        // check for special syntax words
+        String check;
+        juce_wchar c, k=0;
+        // read until a non-constituent char is found adding
+        // consituent chars to check as long as they fit
+        for (c=source.nextChar(); c!=0; k=c, c=source.nextChar() )
+          if (char_token_p(syntab, c))//(CharacterFunctions::indexOfCharFast(breakchars,c) == -1)
+            {
+              if (i<maxtoklen)
+                check << c; //check[i]=c;
+              i++;
+            }
+          else
+            break;
+        // i is now one beyond last constituent character
+        if (chr==':') // first char was lisp keyword 
+          typ=TokenKeyword1;
+        else if (i<=maxtoklen) // check for special word
+          {
+            if (getSynTok(check))
+              typ=TokenSpecial1;
+            else
+              typ=TokenConstituent;              
+          }
+        else
+          typ=TokenConstituent;              
+      }
+    }
+  return typ;
 }
 
 bool LispSyntax::isTopLevel(String line) {
@@ -365,7 +499,7 @@ void LispSyntax::eval(String text, bool isRegion, bool expand)
                                Sal Syntax
  *=======================================================================*/
 
-SalSyntax::SalSyntax () 
+SalSyntax::SalSyntax (bool fill) 
   : Syntax( T(""), T(""), T("~!@$%^&*-_=+|:<.>/?"),
 	    T(";"), T("#"), T("\""), T("([{"), T(")]})"),
 	    T(","), T("\\"))
@@ -391,86 +525,192 @@ SalSyntax::SalSyntax ()
   hilites[HiliteIDs::Hilite6]=Colours::forestgreen;
   hilites[HiliteIDs::Hilite7]=Colours::orchid;
   hilites[HiliteIDs::Hilite8]=Colours::cadetblue;
-
-  addSalTok( T("begin"), SalBegin, HiliteIDs::Hilite5);
-  addSalTok( T("chdir"), SalChdir, HiliteIDs::Hilite5);
-  addSalTok( T("define"), SalDefine, HiliteIDs::Hilite5);
-  addSalTok( T("else"), SalElse, HiliteIDs::Hilite5);
-  addSalTok( T("end"), SalEnd, HiliteIDs::Hilite5);
-  addSalTok( T("exec"), SalExec, HiliteIDs::Hilite5);
-  addSalTok( T("fomusfile"), SalFomusFile, HiliteIDs::Hilite5);
-  addSalTok( T("if"), SalIf, HiliteIDs::Hilite5);
-  addSalTok( T("load"), SalLoad, HiliteIDs::Hilite5);
-  addSalTok( T("loop"), SalLoop, HiliteIDs::Hilite5);
-  addSalTok( T("plot"), SalPlot, HiliteIDs::Hilite5);
-  addSalTok( T("print"), SalPrint, HiliteIDs::Hilite5);
-  addSalTok( T("return"), SalReturn, HiliteIDs::Hilite5);
-  addSalTok( T("run"), SalRun, HiliteIDs::Hilite5);
-  addSalTok( T("send"), SalSend, HiliteIDs::Hilite5);
-  addSalTok( T("set"), SalSet, HiliteIDs::Hilite5);
-  addSalTok( T("soundfile"), SalSoundFile, HiliteIDs::Hilite5);
-  addSalTok( T("sprout"), SalSprout, HiliteIDs::Hilite5);
-  addSalTok( T("then"), SalThen, HiliteIDs::Hilite5);
-  addSalTok( T("unless"), SalUnless, HiliteIDs::Hilite5);
-  addSalTok( T("until"), SalUntil, HiliteIDs::Hilite5);
-  addSalTok( T("wait"), SalWait, HiliteIDs::Hilite5);
-  addSalTok( T("when"), SalWhen, HiliteIDs::Hilite5);
-  addSalTok( T("while"), SalWhile, HiliteIDs::Hilite5);
-  addSalTok( T("with"), SalWith, HiliteIDs::Hilite5);
-  addSalTok( T("process"), SalProcess, HiliteIDs::Hilite6);
-  addSalTok( T("function"), SalFunction, HiliteIDs::Hilite6);
-  addSalTok( T("variable"), SalVariable, HiliteIDs::Hilite6);
+  if (fill)
+    {
+      addSynTok( T("begin"), SalBegin, HiliteIDs::Hilite5);
+      addSynTok( T("chdir"), SalChdir, HiliteIDs::Hilite5);
+      addSynTok( T("define"), SalDefine, HiliteIDs::Hilite5);
+      addSynTok( T("else"), SalElse, HiliteIDs::Hilite5);
+      addSynTok( T("end"), SalEnd, HiliteIDs::Hilite5);
+      addSynTok( T("exec"), SalExec, HiliteIDs::Hilite5);
+      addSynTok( T("fomusfile"), SalFomusFile, HiliteIDs::Hilite5);
+      addSynTok( T("if"), SalIf, HiliteIDs::Hilite5);
+      addSynTok( T("load"), SalLoad, HiliteIDs::Hilite5);
+      addSynTok( T("loop"), SalLoop, HiliteIDs::Hilite5);
+      addSynTok( T("plot"), SalPlot, HiliteIDs::Hilite5);
+      addSynTok( T("print"), SalPrint, HiliteIDs::Hilite5);
+      addSynTok( T("return"), SalReturn, HiliteIDs::Hilite5);
+      addSynTok( T("run"), SalRun, HiliteIDs::Hilite5);
+      addSynTok( T("send"), SalSend, HiliteIDs::Hilite5);
+      addSynTok( T("set"), SalSet, HiliteIDs::Hilite5);
+      addSynTok( T("soundfile"), SalSoundFile, HiliteIDs::Hilite5);
+      addSynTok( T("sprout"), SalSprout, HiliteIDs::Hilite5);
+      addSynTok( T("then"), SalThen, HiliteIDs::Hilite5);
+      addSynTok( T("unless"), SalUnless, HiliteIDs::Hilite5);
+      addSynTok( T("until"), SalUntil, HiliteIDs::Hilite5);
+      addSynTok( T("wait"), SalWait, HiliteIDs::Hilite5);
+      addSynTok( T("when"), SalWhen, HiliteIDs::Hilite5);
+      addSynTok( T("while"), SalWhile, HiliteIDs::Hilite5);
+      addSynTok( T("with"), SalWith, HiliteIDs::Hilite5);
+      addSynTok( T("process"), SalProcess, HiliteIDs::Hilite6);
+      addSynTok( T("function"), SalFunction, HiliteIDs::Hilite6);
+      addSynTok( T("variable"), SalVariable, HiliteIDs::Hilite6);
  
-  addSalTok( T("above"), SalAbove, HiliteIDs::Hilite5);
-  addSalTok( T("below"), SalBelow, HiliteIDs::Hilite5);
-  addSalTok( T("by"), SalBy, HiliteIDs::Hilite5);
-  addSalTok( T("downto"), SalDownto, HiliteIDs::Hilite5);
-  addSalTok( T("finally"), SalFinally, HiliteIDs::Hilite5);
-  addSalTok( T("for"), SalFor, HiliteIDs::Hilite5);
-  addSalTok( T("from"), SalFrom, HiliteIDs::Hilite5);
-  addSalTok( T("in"), SalIn, HiliteIDs::Hilite5);
-  addSalTok( T("over"), SalOver, HiliteIDs::Hilite5);
-  addSalTok( T("repeat"), SalRepeat, HiliteIDs::Hilite5);
-  addSalTok( T("to"), SalTo, HiliteIDs::Hilite5);
+      addSynTok( T("above"), SalAbove, HiliteIDs::Hilite5);
+      addSynTok( T("below"), SalBelow, HiliteIDs::Hilite5);
+      addSynTok( T("by"), SalBy, HiliteIDs::Hilite5);
+      addSynTok( T("downto"), SalDownto, HiliteIDs::Hilite5);
+      addSynTok( T("finally"), SalFinally, HiliteIDs::Hilite5);
+      addSynTok( T("for"), SalFor, HiliteIDs::Hilite5);
+      addSynTok( T("from"), SalFrom, HiliteIDs::Hilite5);
+      addSynTok( T("in"), SalIn, HiliteIDs::Hilite5);
+      addSynTok( T("over"), SalOver, HiliteIDs::Hilite5);
+      addSynTok( T("repeat"), SalRepeat, HiliteIDs::Hilite5);
+      addSynTok( T("to"), SalTo, HiliteIDs::Hilite5);
 
-  //  Operators, data field is op weight
-  addSalTok( T("|"), SalOr, HiliteIDs::None);
-  addSalTok( T("&"), SalAnd, HiliteIDs::None);
-  addSalTok( T("!"), SalNot, HiliteIDs::None);
-  addSalTok( T("="), SalEqual, HiliteIDs::None); // relation and op
-  addSalTok( T("!="), SalNotEqual, HiliteIDs::None);  
-  addSalTok( T("<"), SalLess, HiliteIDs::None);
-  addSalTok( T(">"), SalGreater, HiliteIDs::None);
-  addSalTok( T("<="), SalLessEqual, HiliteIDs::None); // relation and op
-  addSalTok( T(">="), SalGreaterEqual, HiliteIDs::None); // relation and op
-  addSalTok( T("~="), SalGeneralEqual, HiliteIDs::None);  
-  addSalTok( T("+"), SalPlus, HiliteIDs::None);
-  addSalTok( T("-"), SalMinus, HiliteIDs::None);
-  addSalTok( T("%"), SalMod, HiliteIDs::None);
-  addSalTok( T("*"), SalTimes, HiliteIDs::None);  
-  addSalTok( T("/"), SalDivide, HiliteIDs::None);
-  addSalTok( T("^"), SalExpt, HiliteIDs::None);
-  // assignment (also: = <= >=)
-  addSalTok( T("+="), SalInc, HiliteIDs::None);
-  addSalTok( T("*="), SalMul, HiliteIDs::None);
-  addSalTok( T("&="), SalCol, HiliteIDs::None);
-  addSalTok( T("@="), SalPre, HiliteIDs::None);  
-  addSalTok( T("^="), SalApp, HiliteIDs::None);
-  // hash tokens
-  addSalTok( T("#t"), SalTrue, HiliteIDs::Hilite8);
-  addSalTok( T("#f"), SalFalse, HiliteIDs::Hilite8);
-  addSalTok( T("#?"), SalQMark, HiliteIDs::Hilite8);
-  addSalTok( T("#$"), SalUnquote, HiliteIDs::Hilite8);
-  addSalTok( T("#^"), SalSplice, HiliteIDs::Hilite8);
+      //  Operators, data field is op weight
+      addSynTok( T("|"), SalOr, HiliteIDs::None);
+      addSynTok( T("&"), SalAnd, HiliteIDs::None);
+      addSynTok( T("!"), SalNot, HiliteIDs::None);
+      addSynTok( T("="), SalEqual, HiliteIDs::None); // relation and op
+      addSynTok( T("!="), SalNotEqual, HiliteIDs::None);  
+      addSynTok( T("<"), SalLess, HiliteIDs::None);
+      addSynTok( T(">"), SalGreater, HiliteIDs::None);
+      addSynTok( T("<="), SalLessEqual, HiliteIDs::None); // relation and op
+      addSynTok( T(">="), SalGreaterEqual, HiliteIDs::None); // relation and op
+      addSynTok( T("~="), SalGeneralEqual, HiliteIDs::None);  
+      addSynTok( T("+"), SalPlus, HiliteIDs::None);
+      addSynTok( T("-"), SalMinus, HiliteIDs::None);
+      addSynTok( T("%"), SalMod, HiliteIDs::None);
+      addSynTok( T("*"), SalTimes, HiliteIDs::None);  
+      addSynTok( T("/"), SalDivide, HiliteIDs::None);
+      addSynTok( T("^"), SalExpt, HiliteIDs::None);
+      // assignment (also: = <= >=)
+      addSynTok( T("+="), SalInc, HiliteIDs::None);
+      addSynTok( T("*="), SalMul, HiliteIDs::None);
+      addSynTok( T("&="), SalCol, HiliteIDs::None);
+      addSynTok( T("@="), SalPre, HiliteIDs::None);  
+      addSynTok( T("^="), SalApp, HiliteIDs::None);
+      // hash tokens
+      addSynTok( T("#t"), SalTrue, HiliteIDs::Hilite8);
+      addSynTok( T("#f"), SalFalse, HiliteIDs::Hilite8);
+      addSynTok( T("#?"), SalQMark, HiliteIDs::Hilite8);
+      addSynTok( T("#$"), SalUnquote, HiliteIDs::Hilite8);
+      addSynTok( T("#^"), SalSplice, HiliteIDs::Hilite8);
+    }
 }
 
-SalSyntax::~SalSyntax() {
+SalSyntax::~SalSyntax()
+{
   clearSingletonInstance();
 }
 
-void SalSyntax::addSalTok (const String n, int t, HiliteID c) {
-  numtoks++;
-  tokens[n] = new SynTok(n, t, c);
+const StringArray SalSyntax::getTokenTypes ()
+{
+  const char* const names [] = {"Error", "Comment", "String", 
+                                "Parentheses", "Punctuation", "ReadMacro"
+                                "Special1", "Special2",
+                                "Keyword1", "Keyword2", "Token"};
+  return StringArray((const char**)names);
+}
+
+const Colour SalSyntax::getDefaultColour (const int tokenType)
+{
+  switch (tokenType)
+    {
+    case TokenError: return Colours::red;
+    case TokenComment: return Colours::firebrick;
+    case TokenString: return Colours::rosybrown;
+    case TokenParentheses: return Colours::black;
+    case TokenPunctuation: return Colours::black;
+    case TokenReadMacro: return Colours::cadetblue;
+    case TokenSpecial1: return Colour(0x8b, 0x00, 0x8b);
+    case TokenSpecial2: return Colour(0x8b, 0x00, 0x8b);
+    case TokenKeyword1: return Colours::orchid;
+    case TokenKeyword2: return Colours::orchid;
+    case TokenConstituent: return Colours::black;
+    default: return Colours::black;
+    }
+}
+
+int SalSyntax::readNextToken(CodeDocument::Iterator &source)
+{
+  int typ=TokenError;
+  source.skipWhitespace();
+  tchar chr=source.peekNextChar();
+  switch (chr)
+    {
+    case 0:
+      source.skip();
+      break;
+    case ';':
+      source.skipToEndOfLine();
+      typ=TokenComment;
+      break;
+    case '"':
+      {
+        juce_wchar c, q=source.nextChar(); // pop quote char
+        for (c=source.nextChar(); (c!=q && c!=0); c=source.nextChar())
+          if (c=='\\') source.skip(); // advance over \x
+        typ=TokenString;
+      }
+      break;
+    case '#':
+      source.skip(); // pop sharp sign
+      source.skip(); // pop macro char
+      typ=TokenReadMacro;
+      break;
+    case ',':
+      source.skip();
+      typ=TokenPunctuation;
+      break;
+    case '(':
+    case ')':
+    case '{':
+    case '}':
+    case '[':
+    case ']':
+      source.skip();
+      typ=TokenParentheses;
+      break;
+    case '\'':
+      source.skip();
+      typ=TokenError;
+    default:
+      {
+        int i=0;
+        // check for special syntax words
+        String check;
+        juce_wchar c, k=0;
+        // read until a non-constituent char is found adding
+        // consituent chars to check as long as they fit
+        for (c=source.nextChar(); c!=0; k=c, c=source.nextChar() )
+          if (char_token_p(syntab, c))
+            {
+              if (i<maxtoklen)
+                check << c; //check[i]=c;
+              i++;
+            }
+          else
+            break;
+        // i is now one beyond last constituent character
+        if (chr==':') // first char was lisp keyword 
+          typ=TokenKeyword1;
+        if (k==':') // last char was lisp keyword 
+          typ=TokenKeyword2;
+        else if (i<=maxtoklen) // check for special word
+          {
+            SynTok* tok=getSynTok(check);
+            if (tok && isSalLiteralType(tok->getType()))
+              typ=TokenSpecial2;
+            else
+              typ=TokenConstituent;              
+          }
+        else
+          typ=TokenConstituent;              
+      }
+    }
+  return typ;
 }
 
 bool SalSyntax::isTopLevel(String line) {
@@ -825,7 +1065,8 @@ bool SalSyntax::tokenize(String str, OwnedArray<SynTok>& tokenstream)
   return true;
 }
 
-void SynTok::print(bool lisp) {
+void SynTok::print(bool lisp)
+{
   printf("(#x%x \"%s\" %d)", type, name.unquoted().toUTF8(), data1);
 }
 
@@ -902,7 +1143,8 @@ SynTok * SalSyntax::findUnbalanced(OwnedArray<SynTok> &tokenstream,
   return NULL;
 }
 
-int SalSyntax::classifyToken(String str, SynTok *tok) {
+int SalSyntax::classifyToken(String str, SynTok *tok) 
+{
   // attempt to classify the token string by calling the various
   // predicates and returning the first predicate type>0 or type<0
   // (error) 
@@ -1041,4 +1283,188 @@ int SalSyntax::isIdentifierToken(String str, SynTok *tok) {
   return typ;
 }
 
+/*=======================================================================*
+                               Sal2 Syntax
+ *=======================================================================*/
 
+Sal2Syntax::Sal2Syntax () 
+  : Syntax( T(""), T(""), T("~!@$%^&*-_=+|:<.>/?"),
+	    T(";"), T("#"), T("\""), T("([{"), T(")]})"),
+	    T(","), T("\\"))
+{
+  type=TextIDs::Sal2;
+
+  // reserved
+  addSynTok(T("begin"), SalSyntax::SalBegin, HiliteIDs::Hilite4);
+  addSynTok(T("end"), SalSyntax::SalEnd, HiliteIDs::Hilite4);
+  addSynTok(T("function"), SalSyntax::Sal2Function, HiliteIDs::Hilite4);
+  addSynTok(T("if"), SalSyntax::Sal2If, HiliteIDs::Hilite4);
+  addSynTok(T("loop"), SalSyntax::SalLoop, HiliteIDs::Hilite4);
+  addSynTok(T("outfile"), SalSyntax::Sal2OutFile, HiliteIDs::Hilite4);
+  ////addSynTok(T("return"), SalSyntax::SalReturn, HiliteIDs::Hilite4);
+  addSynTok(T("run"), SalSyntax::SalRun, HiliteIDs::Hilite4);
+  ////addSynTok(T("send"), SalSyntax::SalSet, HiliteIDs::Hilite4);
+  addSynTok(T("set"), SalSyntax::SalSet, HiliteIDs::Hilite4);
+  addSynTok(T("variable"), SalSyntax::Sal2Variable, HiliteIDs::Hilite4);
+  // loop/run/if clausals
+  addSynTok(T("above"), SalSyntax::SalAbove, HiliteIDs::Hilite4);
+  addSynTok(T("below"), SalSyntax::SalBelow, HiliteIDs::Hilite4);
+  addSynTok(T("by"), SalSyntax::SalBy, HiliteIDs::Hilite4);
+  addSynTok(T("downto"), SalSyntax::SalDownto, HiliteIDs::Hilite4);
+  addSynTok(T("else"), SalSyntax::SalElse, HiliteIDs::Hilite4);
+  addSynTok(T("finally"), SalSyntax::SalFinally, HiliteIDs::Hilite4);
+  addSynTok(T("for"), SalSyntax::SalFor, HiliteIDs::Hilite4);
+  addSynTok(T("from"), SalSyntax::SalFrom, HiliteIDs::Hilite4);
+  addSynTok(T("in"), SalSyntax::SalIn, HiliteIDs::Hilite4);
+  addSynTok(T("over"), SalSyntax::SalOver, HiliteIDs::Hilite4);
+  addSynTok(T("repeat"), SalSyntax::SalRepeat, HiliteIDs::Hilite4);
+  addSynTok(T("then"), SalSyntax::SalThen, HiliteIDs::Hilite4);
+  addSynTok(T("to"), SalSyntax::SalTo, HiliteIDs::Hilite4);
+  addSynTok(T("unless"), SalSyntax::SalUnless, HiliteIDs::Hilite4);
+  addSynTok(T("until"), SalSyntax::SalUntil, HiliteIDs::Hilite4);
+  addSynTok(T("wait"), SalSyntax::SalWait, HiliteIDs::Hilite4);
+  addSynTok(T("when"), SalSyntax::SalWhen, HiliteIDs::Hilite4);
+  addSynTok(T("while"), SalSyntax::SalWhile, HiliteIDs::Hilite4);
+  addSynTok(T("with"), SalSyntax::SalWith, HiliteIDs::Hilite4);
+  //  Operators, data field is op weight
+  addSynTok(T("|"), SalSyntax::SalOr, HiliteIDs::None);
+  addSynTok(T("&"), SalSyntax::SalAnd, HiliteIDs::None);
+  addSynTok(T("!"), SalSyntax::SalNot, HiliteIDs::None);
+  addSynTok(T("="), SalSyntax::SalEqual, HiliteIDs::None); // relation and op
+  addSynTok(T("!="), SalSyntax::SalNotEqual, HiliteIDs::None);  
+  addSynTok(T("<"), SalSyntax::SalLess, HiliteIDs::None);
+  addSynTok(T(">"), SalSyntax::SalGreater, HiliteIDs::None);
+  addSynTok(T("<="), SalSyntax::SalLessEqual, HiliteIDs::None); // relation and op
+  addSynTok(T(">="), SalSyntax::SalGreaterEqual, HiliteIDs::None); // relation and op
+  addSynTok(T("~="), SalSyntax::SalGeneralEqual, HiliteIDs::None);  
+  addSynTok(T("+"), SalSyntax::SalPlus, HiliteIDs::None);
+  addSynTok(T("-"), SalSyntax::SalMinus, HiliteIDs::None);
+  addSynTok(T("%"), SalSyntax::SalMod, HiliteIDs::None);
+  addSynTok(T("*"), SalSyntax::SalTimes, HiliteIDs::None);  
+  addSynTok(T("/"), SalSyntax::SalDivide, HiliteIDs::None);
+  addSynTok(T("^"), SalSyntax::SalExpt, HiliteIDs::None);
+  // assignment (also: = <= >=)
+  addSynTok(T("+="), SalSyntax::SalInc, HiliteIDs::None);
+  addSynTok(T("*="), SalSyntax::SalMul, HiliteIDs::None);
+  addSynTok(T("&="), SalSyntax::SalCol, HiliteIDs::None);
+  addSynTok(T("@="), SalSyntax::SalPre, HiliteIDs::None);  
+  addSynTok(T("^="), SalSyntax::SalApp, HiliteIDs::None);
+  // hash tokens
+  addSynTok(T("#t"), SalSyntax::SalTrue, HiliteIDs::Hilite8);
+  addSynTok(T("#f"), SalSyntax::SalFalse, HiliteIDs::Hilite8);
+  addSynTok(T("#?"), SalSyntax::SalQMark, HiliteIDs::Hilite8);
+  addSynTok(T("#$"), SalSyntax::SalUnquote, HiliteIDs::Hilite8);
+  addSynTok(T("#^"), SalSyntax::SalSplice, HiliteIDs::Hilite8);
+}
+
+Sal2Syntax::~Sal2Syntax () 
+{
+  clearSingletonInstance();
+}
+
+const StringArray Sal2Syntax::getTokenTypes ()
+{
+  const char* const names [] = {"Error", "Comment", "String", 
+                                "Parentheses", "Punctuation", "Sharp Sign"
+                                "Literal", "Keyword1", "Keyword2", "Token"};
+  return StringArray((const char**)names);
+}
+
+const Colour Sal2Syntax::getDefaultColour (const int tokenType)
+{
+  switch (tokenType)
+    {
+    case tt_error: return Colours::red;
+    case tt_comment: return Colours::firebrick;
+    case tt_string: return Colours::rosybrown;
+    case tt_parentheses: return Colours::black;
+    case tt_punctuation: return Colours::black;
+    case tt_sharpsign: return Colours::cadetblue;
+    case tt_literal: return Colour(0x8b, 0x00, 0x8b);
+    case tt_keyword1: return Colours::orchid; // lisp style
+    case tt_keyword2: return Colours::orchid; // sal style
+    case tt_token: return Colours::black;
+    default: return Colours::black;
+    }
+}
+
+int Sal2Syntax::readNextToken(CodeDocument::Iterator &source)
+{
+  int typ=tt_error;
+  source.skipWhitespace();
+  tchar chr=source.peekNextChar();
+  switch (chr)
+    {
+    case 0:
+      source.skip();
+      break;
+    case ';':
+      source.skipToEndOfLine();
+      typ=tt_comment;
+      break;
+    case '"':
+      {
+        juce_wchar c, q=source.nextChar(); // pop quote char
+        for (c=source.nextChar(); (c!=q && c!=0); c=source.nextChar())
+          if (c=='\\') source.skip(); // advance over \x
+        typ=tt_string;
+      }
+      break;
+    case '#':
+      source.skip(); // pop sharp sign
+      source.skip(); // pop macro char FIXME: MAYBE!
+      typ=tt_sharpsign;
+      break;
+    case ',':
+      source.skip();
+      typ=tt_punctuation;
+      break;
+    case '(':
+    case ')':
+    case '{':
+    case '}':
+    case '[':
+    case ']':
+      source.skip();
+      typ=tt_parentheses;
+      break;
+    case '\'':
+      source.skip();
+      typ=tt_error;
+    default:
+      {
+        int i=0;
+        // check for special syntax words
+        String check=String::empty;
+        juce_wchar c, k=0;
+        // read until a non-constituent char is found adding
+        // consituent chars to check as long as position is not
+        // greater than the longest literal to check
+        for (c=source.nextChar(); c!=0; k=c, c=source.nextChar() )
+          if (char_token_p(syntab, c))
+            {
+              if (i<maxtoklen)
+                check << c; //check[i]=c;
+              i++;
+            }
+          else
+            break;
+        // i is now one beyond last constituent character
+        if (chr==T(':')) // lisp style (first char)
+          typ=tt_keyword1;
+        if (k==T(':')) // sal style (last char)
+          typ=tt_keyword2;
+        else if (i<=maxtoklen)
+          {
+            SynTok* tok=getSynTok(check);
+            if (tok && SalSyntax::isSalLiteralType(tok->getType()))
+              typ=tt_literal;
+            else
+              typ=tt_token;              
+          }
+        else
+          typ=tt_token;              
+      }
+    }
+  return typ;
+}

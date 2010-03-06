@@ -12,7 +12,7 @@ namespace SchemeSources
     const int           fomus_scmSize = 21594;
 
     extern const char*  genffi_scm;
-    const int           genffi_scmSize = 21439;
+    const int           genffi_scmSize = 21546;
 
     extern const char*  loop_scm;
     const int           loop_scmSize = 38024;
@@ -36,19 +36,22 @@ namespace SchemeSources
     const int           s7_scmSize = 3090;
 
     extern const char*  sal_scm;
-    const int           sal_scmSize = 60763;
+    const int           sal_scmSize = 62804;
+
+    extern const char*  sal2_scm;
+    const int           sal2_scmSize = 7333;
 
     extern const char*  sc_scm;
     const int           sc_scmSize = 4658;
 
     extern const char*  sndlibws_scm;
-    const int           sndlibws_scmSize = 24983;
+    const int           sndlibws_scmSize = 22410;
 
     extern const char*  spectral_scm;
     const int           spectral_scmSize = 21344;
 
     extern const char*  toolbox_scm;
-    const int           toolbox_scmSize = 31914;
+    const int           toolbox_scmSize = 32620;
 
     extern const char*  utilities_scm;
     const int           utilities_scmSize = 15263;

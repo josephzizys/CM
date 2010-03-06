@@ -18,7 +18,7 @@ class SysInfo
                                 Versioning
    *======================================================================*/
 
-  static const int CM_VERSION = 350;
+  static const int CM_VERSION = 360;
   static const int GRACE_VERSION = CM_VERSION;
 
   /*======================================================================*
@@ -155,9 +155,21 @@ class TextIDs
   static const TextID Text=1;
   static const TextID Lisp=2;
   static const TextID Sal=3;
-  static const TextID Fomus=4;
-  static const TextID Csound=5;
-  static const TextID Xml=6;
+  static const TextID Sal2=4;
+  static const TextID Fomus=5;
+  static const TextID Csound=6;
+  static const TextID Xml=7;
+  static int fromString(const String id)
+  {
+    if (id.equalsIgnoreCase(T("text"))) return Text;
+    if (id.equalsIgnoreCase(T("lisp"))) return Lisp;
+    if (id.equalsIgnoreCase(T("sal"))) return Sal;
+    if (id.equalsIgnoreCase(T("sal2"))) return Sal2;
+    if (id.equalsIgnoreCase(T("fomus"))) return Fomus;
+    if (id.equalsIgnoreCase(T("csound"))) return Csound;
+    if (id.equalsIgnoreCase(T("xml"))) return Xml;
+    return Empty;
+  }
   static const String toString(TextID id)
   {
     switch (id)
@@ -168,6 +180,8 @@ class TextIDs
 	return T("Lisp");
       case Sal:
 	return T("Sal");
+      case Sal2:
+	return T("Sal2");
       case Fomus:
 	return T("Fomus");
       case Csound:
@@ -520,6 +534,9 @@ class CommandIDs
   static const CommandID EditorParensMatching = COMID(Editor, 36);
   static const CommandID EditorHighlighting = COMID(Editor, 37);
   static const CommandID EditorEmacsMode = COMID(Editor, 38);
+  static const CommandID EditorReadCustom = COMID(Editor, 39);
+  static const CommandID EditorSaveCustom = COMID(Editor, 40);
+  static const CommandID EditorTheme = COMID(Editor, 41);
 
   static const CommandID EditorExecute = COMID(Editor, 48);
   static const CommandID EditorExpand = COMID(Editor, 49);

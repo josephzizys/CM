@@ -44748,6 +44748,13 @@ public:
     /** Finds the character at a given on-screen position.
         The co-ordinates are relative to this component's top-left origin.
     */
+
+    const String getHighlightedText(); // HKT
+    int getHighlightedRegionLength(); // HKT
+    const CodeDocument::Position getHighlightedRegionStart(); // HKT
+    const CodeDocument::Position getHighlightedRegionEnd(); // HKT
+    const Font getFont (); // HKT
+
     const CodeDocument::Position getPositionAt (int x, int y);
 
     void cursorLeft (const bool moveInWholeWordSteps, const bool selecting);
@@ -44806,6 +44813,7 @@ public:
         Make sure you only use a fixed-width font, or this component will look pretty nasty!
     */
     void setFont (const Font& newFont);
+
 
     /** Resets the syntax highlighting colours to the default ones provided by the
         code tokeniser.

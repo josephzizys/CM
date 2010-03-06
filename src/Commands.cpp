@@ -18,6 +18,7 @@
 #include "Audio.h"
 #include "Csound.h"
 #include "Plot.h"
+#include "CodeEditor.h"
 
 #include "Cells.h"
 
@@ -44,7 +45,8 @@
 
 ApplicationCommandTarget* Grace::getNextCommandTarget()
 {
-  return 0;
+  //return 0;
+  return Grace::getInstance();
 }
 
 void Grace::getAllCommands(juce::Array<juce::CommandID>& commands)
@@ -1077,7 +1079,8 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       //
 
     case CommandIDs::PlotterNew:
-      new PlotterWindow(NULL);
+      //      new PlotterWindow(NULL);
+      openFile(File::nonexistent);
       break;
     case CommandIDs::PlotterOpen:
     case CommandIDs::PlotterOpenMidiFile:
@@ -1096,7 +1099,7 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       }
       break;
     case CommandIDs::PrefsOpenRecent:
-      openFile(Preferences::getInstance()->recentlyOpened.getFile(data));
+      CodeEditorWindow::openFile(Preferences::getInstance()->recentlyOpened.getFile(data));
       break;
     case CommandIDs::PrefsClearOpenRecent:
       Preferences::getInstance()->recentlyOpened.clear();
@@ -1292,10 +1295,12 @@ bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
   switch (comm)
     {
     case CommandIDs::ConsoleNewEditor:
-      new TextEditorWindow();
+      //new TextEditorWindow();
+      CodeEditorWindow::newFile();
       break;
     case CommandIDs::ConsoleOpen:
-      app->openFile(File::nonexistent);
+      //app->openFile(File::nonexistent);
+      CodeEditorWindow::openFile();
       break;
     case CommandIDs::ConsoleSetDirectory:
       app->chooseWorkingDirectory();
@@ -1411,6 +1416,7 @@ void TextBuffer::getAllCommands(Array<CommandID>& commands)
     CommandIDs::EditorSyntax + TextIDs::Text,
     CommandIDs::EditorSyntax + TextIDs::Lisp,
     CommandIDs::EditorSyntax + TextIDs::Sal,
+    CommandIDs::EditorSyntax + TextIDs::Sal2,
     CommandIDs::EditorFontSize + 0,
     CommandIDs::EditorFontSize + 1,
     CommandIDs::EditorFontSize + 2,
@@ -2030,6 +2036,7 @@ juce_ImplementSingleton(CommandManager)
 
 CommandManager::CommandManager()
 {
+  setFirstCommandTarget(Grace::getInstance());
 }
 
 CommandManager::~CommandManager()

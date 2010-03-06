@@ -440,6 +440,7 @@ const PopupMenu TextEditorWindow::getMenuForIndex(int index,
       PopupMenu synt, tabs;
       synt.addCommandItem(manager,CommandIDs::EditorSyntax+TextIDs::Text);
       synt.addCommandItem(manager,CommandIDs::EditorSyntax+TextIDs::Sal);
+      synt.addCommandItem(manager,CommandIDs::EditorSyntax+TextIDs::Sal2);
       synt.addCommandItem(manager,CommandIDs::EditorSyntax+TextIDs::Lisp);
       menu.addSubMenu(T("Syntax"), synt);
       menu.addSeparator();

@@ -855,7 +855,32 @@ s7_pointer sal_free_tokens(s7_pointer ptr)
   return s7_unspecified(sc);
 }
 
-s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr)
+s7_pointer sal_tokenize_string(s7_pointer str, s7_pointer ptr,  s7_pointer sal2)
+{
+  // str is the lisp string 
+  String text (s7_string(str));
+  // ptr is a C-pointer to an  OwnedArray<SynTok>
+  s7_scheme* sc=SchemeThread::getInstance()->scheme;
+  OwnedArray<SynTok>* ary=(OwnedArray<SynTok>*)s7_c_pointer(ptr);
+  // convert array to lisp list of C tokens  
+  s7_pointer toks=SchemeThread::getInstance()->schemeNil;
+  bool ok;
+  if (s7_boolean(sc, sal2))
+    {
+    ok=Sal2Syntax::getInstance()->tokenize(text, *ary);
+    }
+  else
+    ok=SalSyntax::getInstance()->tokenize(text, *ary);
+  if (ok)
+    {
+      for (int i=ary->size()-1; i>=0; i--)
+        toks=s7_cons(sc, s7_make_c_pointer(sc, ary->getUnchecked(i)), toks);
+    }
+ 
+  return toks;
+}
+
+s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr, s7_pointer sal2)
 {
   // fil is the lisp string holding a valid pathname
   // ptr is the C-pointer to an allocated OwnedArray<SynTok>
@@ -867,7 +892,12 @@ s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr)
   OwnedArray<SynTok>* ary=(OwnedArray<SynTok>*)s7_c_pointer(ptr);
   // convert array to lisp list of C tokens  
   s7_pointer toks=SchemeThread::getInstance()->schemeNil;
-  if (SalSyntax::getInstance()->tokenize(text, *ary))
+  bool ok;
+  if (s7_boolean(sc, sal2))
+    ok=Sal2Syntax::getInstance()->tokenize(text, *ary);
+  else
+    ok=SalSyntax::getInstance()->tokenize(text, *ary);
+  if (ok)
     {
       for (int i=ary->size()-1; i>=0; i--)
         toks=s7_cons(sc, s7_make_c_pointer(sc, ary->getUnchecked(i)), toks);

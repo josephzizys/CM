@@ -36,10 +36,13 @@ TextEditorWindow::TextEditorWindow (File file, String text, int synt,
       String ext=file.getFileExtension();
       String lsp=T(".lisp.lsp.scm.cm.clm.cmn.ins");
       String sal=T(".sal");
+      String sal2=T(".sal2");
       String fms=T(".fms");
       if (synt==TextIDs::Empty)
 	if (sal.contains(ext))
 	  synt=TextIDs::Sal;
+	else if (sal2.contains(ext))
+	  synt=TextIDs::Sal2;
 	else if (lsp.contains(ext))
 	  synt=TextIDs::Lisp;
 	else if (fms.contains(ext)) {
@@ -358,6 +361,8 @@ void TextBuffer::loadFile()
   File load=choose.getResult();
   if (load.hasFileExtension(T(".sal")))
     SalSyntax::getInstance()->eval(load.loadFileAsString());
+  if (load.hasFileExtension(T(".sal2")))
+    Sal2Syntax::getInstance()->eval(load.loadFileAsString());
   else
     LispSyntax::getInstance()->eval(T("(load ") +
 				    load.getFullPathName().quoted() +
@@ -443,6 +448,9 @@ void TextBuffer::setSyntax(int synt)
     case TextIDs::Sal:
       syntax=SalSyntax::getInstance();
       break;
+    case TextIDs::Sal2:
+      syntax=Sal2Syntax::getInstance();
+      break;
 #ifdef WITHFOMUS      
     case TextIDs::Fomus:
       if (fomus_exists) syntax=FomusSyntax::getInstance(); else syntax=TextSyntax::getInstance();
@@ -478,7 +486,7 @@ bool TextBuffer::keyPressed (const KeyPress& key)
   else if (key.getKeyCode()==KeyPress::backspaceKey)
     com=CommandIDs::EditorBackspace;
   else if (!testFlag(EditFlags::MatchingOff) &&
-	   (chr==')' || ((textid==TextIDs::Sal) && chr=='}')))
+	   (chr==')' || ((textid==TextIDs::Sal) && chr=='}') || ((textid==TextIDs::Sal2) && chr=='}')))
     matchParens();
   colorizeAfterChange(com);
   setFlag(EditFlags::NeedsSave);
@@ -925,6 +933,9 @@ void TextBuffer::lookupHelpAtPoint()
     case TextIDs::Sal:
       helppath=T("Sal:CM");
       break;
+    case TextIDs::Sal2:
+      helppath=T("Sal:CM");
+      break;
     case TextIDs::Lisp:
       helppath=T("CM");
       break;
@@ -1230,7 +1241,7 @@ void TextBuffer::backwardWord()
 
 void TextBuffer::forwardExpr()
 {
-  if (isSyntax(TextIDs::Sal) )
+  if (isSyntax(TextIDs::Sal) || isSyntax(TextIDs::Sal2))
     {
       String text = forwardTopLevelText();
       int typ, loc, pos=point(), end=text.length();
@@ -1281,7 +1292,7 @@ void TextBuffer::forwardExpr()
 
 void TextBuffer::backwardExpr()
 {
-  if (isSyntax(TextIDs::Sal) )
+  if (isSyntax(TextIDs::Sal) || isSyntax(TextIDs::Sal2) )
     {
       String text = backwardTopLevelText();
       int typ, loc, pos=point(), end=text.length();
