@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<style type="text/css" media="all">
+@import "cm.css";
+</style>
+<title>The Code Editor</title>
+</head>
+<body>
+<div id="content">
+
+<h1>The Code Editor</h1>
+
+<p>The code editor's behavior depends on the <var>syntax</var>, or
+type, of code being edited. When a file is opened the file's extension
+is normally used to determine the syntax for editing its
+contents. There are currently five supported syntaxes: </p>
+
+<table>
+  <tr> <th>Syntax</th>  <th>File Types</th></tr>
+  <tr> <td>Lisp</td>  <td> .lisp .lsp .cl .scm .cm .clm .ins .cmn .fms .asd</td></tr>
+  <tr> <td>SAL2</td>  <td>.sal2</td></tr>
+  <tr> <td>SAL</td>   <td>.sal</td></tr>
+  <tr> <td>Fomus</td> <td>.fms</td></tr>
+  <tr> <td>Text</td>  <td> .text .txt  .*</td> </tr>
+</table>
+
+
+<p>If the first line of the file is a special <var>customize comment</var> then
+the editor will read that as well to configure the window
+exactly the way the user want. </p>
+
+
+<h2>Command Key Shortcuts</h2>
+
+<ul>
+<li>On Linux and Windows the Command key is the Control key.</li>
+<li>On OS X the Command key is the Apple key just to the left of the Spacebar.
+</ul>
+
+<p>On Linux and Windows the command key shortcuts are disabled if
+Emacs Mode is turned on because Emacs uses the Command key as its
+Control key.  On OS X the Command key is active even when Emacs Mode
+is turned on.  </p>
+
+<table class="float" width="75%">
+<tr><td><span class="emacscmd">COMMAND-N</span></td><td>New file</td></tr>
+<tr><td><span class="emacscmd">COMMAND-O</span></td><td>open file</td></tr>
+<tr><td><span class="emacscmd">COMMAND-S</span></td><td>save</td></tr>
+<tr><td><span class="emacscmd">COMMAND-SHIFT-S</span></td><td>save as</td></tr>
+<tr><td><span class="emacscmd">COMMAND-W</span></td><td>close window</td></tr>
+<tr><td><span class="emacscmd">COMMAND-Z</span></td><td>undo</td></tr>
+<tr><td><span class="emacscmd">COMMAND-SHIFT-Z</span></td><td>redo</td></tr>
+<tr><td><span class="emacscmd">COMMAND-X</span></td><td>cut</td></tr>
+<tr><td><span class="emacscmd">COMMAND-C</span></td><td>copy</td></tr>
+<tr><td><span class="emacscmd">COMMAND-V</span></td><td>paste</td></tr>
+<tr><td><span class="emacscmd">COMMAND-A</span></td><td>select all</td></tr>
+<tr><td><span class="emacscmd">COMMAND-ENTER</span></td><td>execute SAL or Lisp code</td></tr>
+<tr><td><span class="emacscmd">COMMAND-D</span></td><td>documentation lookup</td></tr>
+<tr><td><span class="emacscmd">COMMAND-&larr;</span></td><td>beginning of line</td></tr>
+<tr><td><span class="emacscmd">COMMAND-&rarr;</span></td><td>end of line</td></tr>
+<tr><td><span class="emacscmd">COMMAND-&uarr;</span></td><td>beginning of buffer</td></tr>
+<tr><td><span class="emacscmd">COMMAND-&darr;</span></td><td>end of buffer</td></tr>
+</table>
+
+<h2>Emacs Lite Commands</h3>
+
+</p>If <span class="menuitem">Edit&gt;Emacs Mode</span> is turned
+on the code editor supports the Emacs commands listed below. Note that on Windows and Linux the default setting for Emacs mode is off because the Emacs' Control key is the same as Windows' command key </p>
+
+<p>Emacs commands are keystroke combinations involving the CONTROL
+and/or META keys combined with one (or more) additional keys.  In the
+documentation that follows pressing CONTROL or META is shortened to C-
+and M- respectively. For example, C-f means to hold down the Control
+key and type the f key and C-M-f means to hold down both the Control
+and Meta keys while typing the f key. Note: on OS X the Meta key is
+the Option key just right of the control key. On Linux and Windows the
+Meta key is the Alt key just to the left of the Spacebar.  </p>
+
+<h3>Cursor Motion</h3>
+<table class="float" width="75%">
+<tr><td><span class="emacscmd">C-f</span></td><td>forward character</td></tr>
+<tr><td><span class="emacscmd">C-b</span></td><td>backward character</td></tr>
+<tr><td><span class="emacscmd">M-f</span></td><td>forward word</td></tr>
+<tr><td><span class="emacscmd">M-b</span></td><td>backward word</td></tr>
+<tr><td><span class="emacscmd">C-M-f</span></td><td>forward expression</td></tr>
+<tr><td><span class="emacscmd">C-M-b</span></td><td>backward expression</td></tr>
+</table>
+
+<h3>Line Motion</h3>
+<table class="float" width="75%">
+<tr><td><span class="emacscmd">C-a</span></td><td>beginning of line</td></tr>
+<tr><td><span class="emacscmd">C-e</span></td><td>end of line</td></tr>
+<tr><td><span class="emacscmd">C-n</span></td><td>next line</td></tr>
+<tr><td><span class="emacscmd">C-p</span></td><td>previous line</td></tr>
+</table>
+
+<h3>Scrolling</h3>
+<table class="float" width="75%">
+<tr><td><span class="emacscmd">C-v</span></td><td>forward screen</td></tr>
+<tr><td><span class="emacscmd">M-v</span></td><td>backward screen</td></tr>
+<tr><td><span class="emacscmd">M-&gt;</span></td><td>beginning of file</td></tr>
+<tr><td><span class="emacscmd">M-&lt;</span></td><td>end of file</td></tr>
+</table>
+
+<h3>Editing</h3>
+<table class="float" width="75%" >
+<tr><td><span class="emacscmd">C-d</span></td><td>delete character</td></tr>
+<tr><td><span class="emacscmd">M-d</span></td><td>delete word</td></tr>
+<tr><td><span class="emacscmd">C-M-d</span></td><td>delete expression</td></tr>
+<tr><td><span class="emacscmd">C-k</span></td><td>kill to end of line</td></tr>
+<tr><td><span class="emacscmd">C-y</span></td><td>yank kills back</td></tr>
+<tr><td><span class="emacscmd">C-o</span></td><td>open new line</td></tr>
+<tr><td><span class="emacscmd">C-o</span></td><td>open new line</td></tr>
+<tr><td><span class="emacscmd">M-l</span></td><td>lower case word</td></tr>
+<tr><td><span class="emacscmd">M-u</span></td><td>upper case word</td></tr>
+<tr><td><span class="emacscmd">M-c</span></td><td>capitalize word</td></tr>
+</table>
+
+<h3>File Commands</h3>
+<table class="float" width="75%" >
+<tr><td><span class="emacscmd">C-x C-f</span></td><td>open file</td></tr>
+<tr><td><span class="emacscmd">C-x C-s</span></td><td>save file</td></tr>
+<tr><td><span class="emacscmd">C-x C-w</span></td><td>save file to new name</td></tr>
+<tr><td><span class="emacscmd">C-x C-r</span></td><td >reload file</td></tr>
+<tr><td><span class="emacscmd">C-x C-c</span></td><td>close window</td></tr>
+</table>
+
+<h3>Syntax Specific Commands</h3>
+<table class="float" width="75%" >
+<tr><td><span class="emacscmd">C-x C-e</span></td><td>lisp eval last sexpr</td></tr>
+<tr><td><span class="emacscmd">Tab</span></td><td>indent line</td></tr>
+<tr><td><span class="emacscmd">M-q</span></td><td>reformat comment block</td></tr>
+</table>
+
+</div>
+</body>
+</html>
