@@ -53,7 +53,8 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   KeyPress prevkey;
   int fontsize;
   int tabwidth;
-  int columnwidth;
+  int columns;
+  int lines;
   bool emacsmode;
   bool parensmatching;
   bool changed;
@@ -64,8 +65,13 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   void setFontSize(int size);
   int getTabWidth();
   void setTabWidth(int siz);
-  int getColumnWidth();
-  void setColumnWidth(int cols);
+
+  int getColumns();
+  void setColumns(int num, bool redisplay=true);
+
+  int getLines();
+  void setLines(int num, bool redisplay=true);
+
   bool isChanged();
   void isChanged(bool changed);
   bool isParensMatching();
@@ -139,7 +145,6 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
 
 class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   public ApplicationCommandTarget
-
 {
   ApplicationCommandManager commands;
   class EditorComponent : public Component 
@@ -182,6 +187,7 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
 
 
   void setWindowTitle(String title=String::empty);
+  void resizeForColumnsAndLines();
   CodeBuffer* getCodeBuffer();
 
   bool isCustomComment();

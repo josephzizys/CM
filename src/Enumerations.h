@@ -192,6 +192,25 @@ class TextIDs
 	return T("Empty");
       }
   }
+  static int fromFileType(const String ext)
+  {
+    if (String(T(".lisp.lsp.scm.cm.clm.cmn.ins")).contains(ext))
+      return Lisp;
+    else if (String(T(".sal2")).contains(ext)) 
+      return Sal2;
+    else if (String(T(".sal")).contains(ext)) 
+      return Sal;
+    else if (String(T(".fms")).contains(ext)) 
+      return Fomus;
+    else if (String(T(".sco")).contains(ext))
+      return Csound;
+    else if (String(T(".xml")).contains(ext))
+      return Xml;
+    else if (String(T(".text.txt")).contains(ext))
+      return Text;
+    return Empty;
+  }
+
 };
 
 /** HiliteIDs enumerate logical categories for syntax highlighting **/
@@ -537,6 +556,9 @@ class CommandIDs
   static const CommandID EditorReadCustom = COMID(Editor, 39);
   static const CommandID EditorSaveCustom = COMID(Editor, 40);
   static const CommandID EditorTheme = COMID(Editor, 41);
+  static const CommandID EditorDefaultFontSize = COMID(Editor, 42);
+  static const CommandID EditorDefaultSyntax = COMID(Editor, 43);
+  static const CommandID EditorDefaultTheme = COMID(Editor, 44);
 
   static const CommandID EditorExecute = COMID(Editor, 48);
   static const CommandID EditorExpand = COMID(Editor, 49);

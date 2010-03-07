@@ -26,20 +26,12 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
                    DocumentWindow::allButtons, true)
 {
   setMenuBar(this);
-
   if (file.existsAsFile())
     {
-      String ext=file.getFileExtension();
-      String lsp=T(".lisp.lsp.scm.cm.clm.cmn.ins");
-      String sal=T(".sal");
-      String sal2=T(".sal2");
-      String fms=T(".fms");
       if (synt==TextIDs::Empty)
-	if (sal.contains(ext)) synt=TextIDs::Sal;
-	else if (sal2.contains(ext)) synt=TextIDs::Sal2;
-	else if (lsp.contains(ext)) synt=TextIDs::Lisp;
-	else if (fms.contains(ext)) synt=TextIDs::Fomus;
-        else synt=TextIDs::Text; 
+        synt=TextIDs::fromFileType(file.getFileExtension());
+      if (synt<TextIDs::Text || synt>TextIDs::Fomus)
+        synt=TextIDs::Text;
       text=file.loadFileAsString();
     }
   else
@@ -56,9 +48,10 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   // parse optional first-line buffer customizations comment.  if no
   // comment then customs will be null
   XmlElement* customs=getCustomizations();
-  // customization syntax overrides any other
+  // since the buffer syntax is fixed per buffer the window has to
+  // handle this customization
   if (customs && customs->hasAttribute(T("syntax:")))
-    synt=TextIDs::fromString(customs->getStringAttribute(T("syntax:")));
+    synt=customs->getIntAttribute(T("syntax:"));
   Syntax* syntax;
   switch (synt)
     {
@@ -68,21 +61,22 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
     default: syntax=TextSyntax::getInstance(); break;
     }
+  // create the code buffer and add it to a content component. the
+  // buffer is not the content component so the window can contain
+  // other components besides the editor, eg a mode line, toolbar etc.
   CodeBuffer* buffer=new CodeBuffer(document, syntax, &commands, customs);
   setContentComponent(new EditorComponent(buffer));
 
   commands.registerAllCommandsForTarget(this);
   setApplicationCommandManagerToWatch(&commands);
   commands.setFirstCommandTarget(this);
-  setWantsKeyboardFocus(false);
-
+  setWantsKeyboardFocus(false); // buffer wants focus
   setWindowTitle(title);
   setResizable(true, true); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
-  //std::cout << "setting window width to" << buffer->getWidth()+28 << "\n";
-  centreWithSize(jmin(800, buffer->getWidth()+0), //28
-                 jmin(800, buffer->getHeight()+0)
+  centreWithSize(jmin(800, buffer->getWidth()), 
+                 jmin(800, buffer->getHeight()) // add in menubar height??
                  );
   if (customs) delete customs;
   setVisible(true);
@@ -160,10 +154,10 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
       CommandIDs::EditorFontSize + 28,
       CommandIDs::EditorFontSize + 30,
       CommandIDs::EditorFontSize + 32,
-      CommandIDs::EditorTabWidth + 2,
-      CommandIDs::EditorTabWidth + 4,
-      CommandIDs::EditorTabWidth + 6,
-      CommandIDs::EditorTabWidth + 8,
+      //      CommandIDs::EditorTabWidth + 2,
+      //      CommandIDs::EditorTabWidth + 4,
+      //      CommandIDs::EditorTabWidth + 6,
+      //      CommandIDs::EditorTabWidth + 8,
       CommandIDs::EditorTheme + 0,
       CommandIDs::EditorTheme + 1,
       CommandIDs::EditorTheme + 2,
@@ -174,6 +168,10 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
       CommandIDs::EditorTheme + 7,
       CommandIDs::EditorParensMatching,
       CommandIDs::EditorEmacsMode,
+      CommandIDs::EditorDefaultFontSize,
+      CommandIDs::EditorDefaultSyntax,
+      CommandIDs::EditorDefaultTheme,
+
       CommandIDs::EditorReadCustom,
       CommandIDs::EditorSaveCustom,
       CommandIDs::EditorExecute,      // Eval menu
@@ -295,19 +293,26 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.shortName=String(data);
       info.setTicked(getCodeBuffer()->getFontSize()==data);
       break;
-    case CommandIDs::EditorTabWidth:
-      info.shortName=String(data);
-      info.setTicked(getCodeBuffer()->getTabWidth()==data);
-      break;
     case CommandIDs::EditorTheme:
-      info.shortName=T("Editor Theme ") + String(data);
+      info.shortName=T("Editor Theme") + String(data);
+      break;
+    case CommandIDs::EditorDefaultFontSize:
+      info.shortName=T("Make Default Font Size");
+      info.setActive(data!=Preferences::getInstance()->getIntProp(T("EditorFontSize")));
+      break;
+    case CommandIDs::EditorDefaultSyntax:
+      info.shortName=T("Make Default Syntax");
+      info.setActive(data!=Preferences::getInstance()->getIntProp(T("EditorSyntax")));      
+      break;
+    case CommandIDs::EditorDefaultTheme:
+      info.shortName=T("Make Default Theme");
       break;
     case CommandIDs::EditorSaveCustom:
-      info.shortName=T("Save Customizations");
+      info.shortName=T("Update Customizations");
       break;
     case CommandIDs::EditorReadCustom:
       {
-        info.shortName=T("Read Customizations");
+        info.shortName=T("Apply Customizations");
         info.setActive(isCustomComment());
       }
       break;
@@ -404,12 +409,19 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       break;
     case CommandIDs::EditorFontSize:
       getCodeBuffer()->setFontSize(data);
-      break;
-    case CommandIDs::EditorTabWidth:
-      getCodeBuffer()->setTabWidth(data);
+      resizeForColumnsAndLines();
       break;
     case CommandIDs::EditorTheme:
       std::cout << "EditorTheme\n";
+      break;
+    case CommandIDs::EditorDefaultSyntax:
+      Preferences::getInstance()->setIntProp(T("EditorSyntax"), getCodeBuffer()->getTextType());
+      break;
+    case CommandIDs::EditorDefaultFontSize:
+      Preferences::getInstance()->setIntProp(T("EditorFontSize"), getCodeBuffer()->getFontSize());
+      break;
+    case CommandIDs::EditorDefaultTheme:
+      std::cout << "EditorDefaultTheme\n";
       break;
     case CommandIDs::EditorReadCustom:
       applyCustomComment();
@@ -489,20 +501,22 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
       sub.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Lisp);
       sub.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal);
       sub.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal2);
+      sub.addSeparator();
+      sub.addCommandItem(&commands, CommandIDs::EditorDefaultSyntax);
       menu.addSubMenu(T("Syntax"), sub);
       menu.addSeparator();
       sub.clear();
       for (int i=0; i<8; i++)
         sub.addCommandItem(&commands, CommandIDs::EditorTheme+i);
+      sub.addSeparator();
+      sub.addCommandItem(&commands, CommandIDs::EditorDefaultTheme);
       menu.addSubMenu(T("Theme"), sub);
       sub.clear();
       for (int i=8; i<=32; i+=2)
         sub.addCommandItem(&commands, CommandIDs::EditorFontSize+i);
+      sub.addSeparator();
+      sub.addCommandItem(&commands, CommandIDs::EditorDefaultFontSize);
       menu.addSubMenu(T("Font Size"), sub);
-      sub.clear();
-      for (int i=2; i<=8; i+=2)
-        sub.addCommandItem(&commands, CommandIDs::EditorTabWidth+i);
-      menu.addSubMenu(T("Tab Width"), sub);
       menu.addSeparator();
       menu.addCommandItem(&commands, CommandIDs::EditorSaveCustom);
       menu.addCommandItem(&commands, CommandIDs::EditorReadCustom);
@@ -540,6 +554,12 @@ void CodeEditorWindow::menuItemSelected (int id, int index)
 // 
 //
 //
+
+void CodeEditorWindow::resizeForColumnsAndLines()
+{
+  setSize(jmin(800, getCodeBuffer()->getWidth()), //28
+          jmin(800, getCodeBuffer()->getHeight()) );
+}
 
 void CodeEditorWindow::setWindowTitle(String title)
 {
@@ -600,49 +620,6 @@ void CodeEditorWindow::saveFile(bool saveas)
                                 T("Error saving ") + sourcefile.getFullPathName() + T(". File not saved."));
 }
 
-/*
-void CodeEditorWindow::saveFile()
-{
-  if (getCodeBuffer()->isChanged())
-    if (sourcefile.existsAsFile())
-      {
-	if (sourcefile.replaceWithText(document.getAllContent()))
-          {
-            document.setSavePoint();
-            getCodeBuffer()->isChanged(false);
-            Preferences::getInstance()->recentlyOpened.addFile(sourcefile);
-          }
-        else
-          AlertWindow::showMessageBox(AlertWindow::WarningIcon, T("Save File"), 
-                                      T("Error saving ") + sourcefile.getFullPathName() + T(". File not saved."));
-      }
-    else
-      saveFileAs();
-}
-
-void CodeEditorWindow::saveFileAs()
-{
-  bool exists=sourcefile.existsAsFile();
-  File saveto ( (exists) ? sourcefile.getParentDirectory() : File::getCurrentWorkingDirectory());
-  FileChooser choose (T("Save File"), saveto, T("*.*"), true);
-  if (choose.browseForFileToSave(true))
-    {
-      sourcefile=choose.getResult();
-      if (sourcefile.replaceWithText(document.getAllContent()))
-        {
-          document.setSavePoint();
-          getCodeBuffer()->isChanged(false);
-          if (exists) document.clearUndoHistory(); // SHOULD I DO THIS?
-          setWindowTitle();
-          Preferences::getInstance()->recentlyOpened.addFile(sourcefile);
-        }
-      else
-        AlertWindow::showMessageBox(AlertWindow::WarningIcon, T("Save File"), 
-                                    T("Error saving ") + sourcefile.getFullPathName() + T(". File not saved."));
-    }
-}
-*/
-
 bool CodeEditorWindow::isCustomComment ()
 {
   // true if first line in document is a comment line starting with -*-
@@ -661,16 +638,8 @@ bool CodeEditorWindow::isCustomComment ()
 
 XmlElement* CodeEditorWindow::getCustomizations ()
 {
-  //;; -*- syntax: lisp, theme: "clarity and beauty", -*-
-  /*  String line=document.getLine(0);
-  if (line.isEmpty()) return 0;
-  int len=line.length();
-  int pos=0;
-  while (pos<len && line[pos]==T(';')) pos++;
-  while (pos<len && CharacterFunctions::isWhitespace(line[pos])) pos++;
-  if (pos==len || line.substring(pos,pos+3)!=T("-*-")) return 0;
-  line=line.substring(pos+3).trim();
-  */
+  // parse customization comment into xml, return null if there is
+  // none. make sure you delete the xlm element after you use it!
   if (!isCustomComment()) return 0;
   String line=document.getLine(0).fromFirstOccurrenceOf(T("-*-"), false, false).trimStart();
   StringArray tokens;
@@ -678,37 +647,37 @@ XmlElement* CodeEditorWindow::getCustomizations ()
   tokens.removeEmptyStrings();
   //for (int i=0; i<tokens.size(); i++) std::cout << "tokens["<<i<<"]='" << tokens[i].toUTF8() << "'\n";
   XmlElement* xml=new XmlElement(T("customizations"));
+  // customization comment is case insensitive
   for (int i=0; i<tokens.size()-1; i+=2)
     {
-      if (tokens[i]==T("syntax:") )
+      if (tokens[i].equalsIgnoreCase(T("syntax:") ))
         {
-          if (tokens[i+1].equalsIgnoreCase(T("text")))
-            xml->setAttribute(tokens[i], tokens[i+1].toLowerCase());
-          else if (tokens[i+1].equalsIgnoreCase(T("lisp")))
-            xml->setAttribute(tokens[i], tokens[i+1].toLowerCase());
-          else if (tokens[i+1].equalsIgnoreCase(T("sal")))
-            xml->setAttribute(tokens[i], tokens[i+1].toLowerCase());
-          else if (tokens[i+1].equalsIgnoreCase(T("sal2")))
-            xml->setAttribute(tokens[i], tokens[i+1].toLowerCase());
-          else if (tokens[i+1].equalsIgnoreCase(T("fomus")))
-            xml->setAttribute(tokens[i], tokens[i+1].toLowerCase());
+          int n=TextIDs::fromString(tokens[i+1]);
+          if (TextIDs::Text<=n && n<=TextIDs::Fomus)
+            xml->setAttribute(T("syntax:"), n);
         }
-      /*      else if (tokens[i]==T("tab-width:") )
-        {
-          int n=tokens[i+1].getIntValue();
-          if (1<=n && n<=16)
-            xml->setAttribute(tokens[i], n);
-            } */
-      else if (tokens[i]==T("font-size:") )
+      else if (tokens[i].equalsIgnoreCase(T("font-size:") ))
         {
           float n=tokens[i+1].getFloatValue();
           if (8.0<=n && n<=80.0)
-            xml->setAttribute(tokens[i], floor(n));
+            xml->setAttribute(T("font-size:") , floor(n));
         }
-      else if (tokens[i]==T("theme:"))
+      else if (tokens[i].equalsIgnoreCase(T("theme:")))
         {
           if (tokens[i+1].isQuotedString())
-            xml->setAttribute(tokens[i], tokens[i+1].unquoted());
+            xml->setAttribute(T("theme:"), tokens[i+1].unquoted());
+        }
+      else if (tokens[i].equalsIgnoreCase(T("columns:")))
+        {
+          int n=tokens[i+1].getIntValue();
+          if (18<=n && n<144)
+            xml->setAttribute(T("columns:"), n);
+        }
+      else if (tokens[i].equalsIgnoreCase(T("lines:")))
+        {
+          int n=tokens[i+1].getIntValue();
+          if (10<=n && n<=120)
+            xml->setAttribute(T("lines:"), n);
         }
     }
   if (xml->getNumAttributes()==0) 
@@ -721,38 +690,51 @@ XmlElement* CodeEditorWindow::getCustomizations ()
 
 void CodeEditorWindow::applyCustomComment()
 {
- XmlElement* xml=getCustomizations();
-  if (xml)
+  XmlElement* xml=getCustomizations();
+  if (!xml) return;
+  
+  CodeBuffer* buff=getCodeBuffer();
+  std::cout << "Customizations:\n";
+  for (int i=0; i<xml->getNumAttributes(); i++)
     {
-      std::cout << "Customizations:\n";
-      for (int i=0; i<xml->getNumAttributes(); i++)
-        std::cout << "  " << xml->getAttributeName(i).toUTF8() << " " 
-                  << xml->getAttributeValue(i).toUTF8() << "\n";
-      delete xml;
+      String name=xml->getAttributeName(i);
+      //std::cout << "  " << name.toUTF8() << " " << xml->getAttributeValue(i).toUTF8() << "\n";
+      if (name==T("syntax:"))
+        ;
+      else if (name==T("theme:"))
+        ;
+      else if (name==T("font-size:"))
+        buff->setFontSize(xml->getIntAttribute(name));
+      else if (name==T("columns:"))
+        buff->setColumns(xml->getIntAttribute(name));
+      else if (name==T("lines:"))
+        buff->setLines(xml->getIntAttribute(name));
     }
+  delete xml;
 }
 
 void CodeEditorWindow::writeCustomComment()
 {
-  //;; -*- syntax: lisp; theme: "clarity and beauty"; -*-
-  String custom (T(";;; -*- "));
+  //;; -*- syntax: lisp; theme: "clarity and beauty" -*-
+  String custom (T(";;; -*-"));
   CodeBuffer* buffer=getCodeBuffer();
-  custom << "syntax: " << TextIDs::toString(getCodeBuffer()->getTextType());
-  custom << ", font-size: " << buffer->getFontSize(); 
-  custom << ", theme: \"standard emacs\"" ; //<< getTheme.get
-  if (buffer->getTabWidth()!=2)
-    custom << ", tab-width: " << buffer->getTabWidth();
-  if (buffer->getColumnWidth()!=74)
-    custom << ", column-width: " << buffer->getColumnWidth();
+  custom << " syntax: " << TextIDs::toString(getCodeBuffer()->getTextType()) << T(";");
+  custom << " font-size: " << buffer->getFontSize() << T(";"); 
+  custom << " theme: \"Vanilla\"" ; //<< getTheme.get
+  custom << " columns: " << buffer->getColumns() << T(";");
+  custom << " lines: " << buffer->getLines() << T(";");
   custom << " -*-\n";
-  CodeDocument::Position a(&document,0);
-  if (isCustomComment())
+  CodeDocument::Position a (&document,0);
+  if (isCustomComment())  // delete existing comment line including eol
     {
-      // delete first line including eol
       CodeDocument::Position e (&document, 0, INT_MAX);
       document.deleteSection(a,e);
     }
-  document.insertText(a,custom);
+  buffer->goToStartOfDocument(false);
+  //document.insertText(a,custom);
+  buffer->insertTextAtCaret(custom);
+  // hightlight the comment (??)
+  buffer->goToStartOfDocument(true);
 }
 
 /*=======================================================================*
@@ -764,7 +746,8 @@ CodeBuffer::CodeBuffer(CodeDocument& doc, Syntax* tokenizer, ApplicationCommandM
   document (doc),
   fontsize (16),
   tabwidth (2),
-  columnwidth (74),
+  columns (72),
+  lines (30),
   parensmatching(true),
   changed (false),
   CodeEditorComponent(doc, tokenizer)
@@ -773,16 +756,19 @@ CodeBuffer::CodeBuffer(CodeDocument& doc, Syntax* tokenizer, ApplicationCommandM
   manager=commands;
   fontsize=Preferences::getInstance()->getIntProp(T("EditorFontSize"), 16);
   emacsmode=Preferences::getInstance()->getBoolProp(T("EditorEmacsMode"), SysInfo::isMac());
-  if (customs)
+  String themename=Preferences::getInstance()->getStringProp(T("EditorTheme"), T("vanilla"));
+  if (customs) // file has customizations
     {
       fontsize=customs->getDoubleAttribute(T("font-size:"), fontsize);
-      tabwidth=customs->getIntAttribute(T("tab-width:"), tabwidth);
+      columns=customs->getIntAttribute(T("columns:"), columns);
+      lines=customs->getIntAttribute(T("lines:"), lines);
+      themename=customs->getStringAttribute(T("theme:"), themename);
     }
   Font mono (Font::getDefaultMonospacedFontName(), (float)fontsize, Font::plain);
   setFont(mono);
   setTabSize(tabwidth, true);
-  //  setSize(getCharWidth() * columnwidth, getLineHeight() * 20);
-  setSize(getCharWidth() * columnwidth, getLineHeight() * 30);
+  // 16 is for the scollbars, not sure why i need the extra 4....
+  setSize((getCharWidth() * columns)+16+4, (getLineHeight() * lines)+16+4);
   setWantsKeyboardFocus(true);
   setVisible(true);
 }
@@ -797,6 +783,7 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
   const int meta = ModifierKeys::altModifier;
   const int both = (ModifierKeys::ctrlModifier | ModifierKeys::altModifier);
   const bool emacs=isEmacsMode();
+
   //std::cout << "CodeBuffer::keyPressed key=" << key.getTextDescription().toUTF8() << "\n";
 
   if (key == KeyPress(T('\t')))
@@ -874,7 +861,12 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
       // global command manager
       prevkey=KeyPress(key);
       if (CodeEditorComponent::keyPressed(key)) // search component's keypress
-        return true;
+        {
+          //std::cout << "returning true from CodeEditorComponent";
+          isChanged(true); // if handled give up and 
+          //(KeyPress::leftKey)(KeyPress::rightKey) (KeyPress::upKey) (KeyPress::downKey) (KeyPress::pageDownKey) (KeyPress::pageUpKey) (KeyPress::homeKey) (KeyPress::endKey)
+          return true;
+        }
       //std::cout << "searching window manager for keypress=" << key.getTextDescription().toUTF8() << "\n";
       CommandID id=manager->getKeyMappings()->findCommandForKeyPress(key);
       //std::cout << "command id=" << id << "\n";
@@ -894,6 +886,8 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
           //std::cout << "done invoking !\n";
           return true;
         }
+      std::cout << "no handler for keypress, changed=true";
+      isChanged(true); // unhandled so adding chars to the buffer
       return false;     
     }
   prevkey=KeyPress(key);
@@ -976,17 +970,36 @@ void CodeBuffer::isParensMatching(bool match)
   parensmatching=match;
 }
 
-int CodeBuffer::getColumnWidth()
+int CodeBuffer::getColumns()
 {
-  return columnwidth;
+  return columns;
 }
 
-void CodeBuffer::setColumnWidth(int cols)
+void CodeBuffer::setColumns(int cols, bool redisplay)
 {
-  columnwidth=cols;
-  Font mono (Font::getDefaultMonospacedFontName(), (float)fontsize, Font::plain);
-  setSize(getCharWidth() * columnwidth, getLineHeight() * 20);
+  columns=jmax(cols, 1);
+  if (redisplay)
+    {
+      Font mono (Font::getDefaultMonospacedFontName(), (float)fontsize, Font::plain);
+      setSize(getCharWidth() * getColumns(), getLineHeight() * getLines() );
+      // RESIZE WINDOW
+      ((CodeEditorWindow*)getTopLevelComponent())->resizeForColumnsAndLines();
+    }
 }
+
+int CodeBuffer::getLines()
+{
+  return lines;
+}
+
+void CodeBuffer::setLines(int num, bool redisplay)
+{
+  lines=jmax(num,1);
+  if (redisplay)
+    {
+      ((CodeEditorWindow*)getTopLevelComponent())->resizeForColumnsAndLines();
+    }
+}  
 
 bool CodeBuffer::isEmacsMode()
 {
