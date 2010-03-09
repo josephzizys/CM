@@ -210,13 +210,97 @@ class TextIDs
       return Text;
     return Empty;
   }
-
 };
 
+class ColorThemeIDs
+{
+ public:
+  static const int Empty=0;
+  static const int Name=1;
+  static const int Background=2;
+  static const int Cursor=3;
+  static const int Region=4;
+  static const int RegionText=5;
+  static const int Error=6;
+  static const int Warning=7;
+  static const int Output=8;
+  static const int Comment=9;
+  static const int Stryng=10;
+  static const int Text1=11;
+  static const int Text2=12;
+  static const int Text3=13;
+  static const int Text4=14;
+  static const int Text5=15;
+  static const int Text6=16;
+  static const int Text7=17;
+  static const int Text8=18;
+  static const int Text9=19;
+  static const int Text10=20;
+  static const int Text11=21;
+  static const int Text12=22;
+  
+  static const String toString(int id)
+  {
+    switch (id)
+      {
+      case Name: return String(T("name"));
+      case Background: return String(T("background"));
+      case Cursor: return String(T("cursor"));
+      case Region: return String(T("region"));
+      case RegionText: return String(T("regiontext"));
+      case Error: return String(T("error"));
+      case Warning: return String(T("warning"));
+      case Output: return String(T("output"));
+      case Comment: return String(T("comment"));
+      case Stryng: return String(T("string"));
+      case Text1: return String(T("text1"));
+      case Text2: return String(T("text2"));
+      case Text3: return String(T("text3"));
+      case Text4: return String(T("text4"));
+      case Text5: return String(T("text5"));
+      case Text6: return String(T("text6"));
+      case Text7: return String(T("text7"));
+      case Text8: return String(T("text8"));
+      case Text9: return String(T("text9"));
+      case Text10: return String(T("text10"));
+      case Text11: return String(T("text11"));
+      case Text12: return String(T("text12"));
+      default: return String(T("empty"));
+      }
+  }
+
+  static const int fromString(const String s)
+  {
+    if (s.equalsIgnoreCase(T("name"))) return Name;
+    if (s.equalsIgnoreCase(T("background"))) return Background;
+    if (s.equalsIgnoreCase(T("cursor"))) return Cursor;
+    if (s.equalsIgnoreCase(T("region"))) return Region;
+    if (s.equalsIgnoreCase(T("regiontext"))) return RegionText;
+    if (s.equalsIgnoreCase(T("error"))) return Error;
+    if (s.equalsIgnoreCase(T("warning"))) return Warning;
+    if (s.equalsIgnoreCase(T("output"))) return Output;
+    if (s.equalsIgnoreCase(T("comment"))) return Comment;
+    if (s.equalsIgnoreCase(T("string"))) return Stryng;
+    if (s.equalsIgnoreCase(T("text1"))) return Text1;
+    if (s.equalsIgnoreCase(T("text2"))) return Text2;
+    if (s.equalsIgnoreCase(T("text3"))) return Text3;
+    if (s.equalsIgnoreCase(T("text4"))) return Text4;
+    if (s.equalsIgnoreCase(T("text5"))) return Text5;
+    if (s.equalsIgnoreCase(T("text6"))) return Text6;
+    if (s.equalsIgnoreCase(T("text7"))) return Text7;
+    if (s.equalsIgnoreCase(T("text8"))) return Text8;
+    if (s.equalsIgnoreCase(T("text9"))) return Text9;
+    if (s.equalsIgnoreCase(T("text10"))) return Text10;
+    if (s.equalsIgnoreCase(T("text11"))) return Text11;
+    if (s.equalsIgnoreCase(T("text12"))) return Text12;
+    return Empty;
+  }
+};
+  
 /** HiliteIDs enumerate logical categories for syntax highlighting **/
-
+  
 typedef int HiliteID;
-
+  
 class HiliteIDs
 {
  public:

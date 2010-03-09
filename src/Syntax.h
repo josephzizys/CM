@@ -40,8 +40,11 @@ class SynTok
   String getName() {return name;}
   void setName(String n){name=n;}
   int getType() {return type;}
-  int getTypeData() {return (type & 0xff);}
   void setType(int t) {type=t;}
+  int getTypeData() {return (type & 0xff);}
+  int getData1(){return data1;}
+  int getData2(){return data2;}
+  int getData3(){return data3;}
   HiliteID getHilite() {return (HiliteID)data1;}
   int getStart() {return data1;}
   int getIndent() {return data2;}
@@ -87,7 +90,7 @@ class Syntax : public CodeTokeniser
   virtual int getIndent (const String text, int bot, int top, int beg) =0;
   virtual HiliteID getHilite (const String text, int start, int end) =0;
   virtual void eval(String text, bool isRegion=false, bool expand=false) =0;
-  void addSynTok (const String n, int t, HiliteID h, int i=0) ;
+  void addSynTok (const String n, int t, int a=0, int b=0, int c=0) ;
   SynTok* getSynTok (String n) ;
   bool isWhiteBetween (const String txt, int lb, int ub);
   Colour getHiliteColour(HiliteID id) {return hilites[id];}

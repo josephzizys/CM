@@ -134,7 +134,9 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   void indent();
   int indentLisp();
   int indentSal2();
-  int columnOfLastIndented(Array<int>& ary);
+  int lastIndented(Array<int>& ary, bool index);
+  bool isCommaTerminatedLine(int line);
+
 
   // testing
   void test(bool forward);

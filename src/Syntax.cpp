@@ -33,18 +33,16 @@ Syntax::Syntax (String a, String b, String c, String d, String e,
     hilites[i]=Colours::black;
 }
 
-
-
 Syntax::~Syntax()
 {
 }
 
-void Syntax::addSynTok (const String n, int t, HiliteID h, int i) 
+void Syntax::addSynTok (const String n, int t, int a, int b, int c) 
 {
   numtoks++;
   int l=n.length();
   if (l>maxtoklen) maxtoklen=l;
-  tokens[n] = new SynTok(n, t, h, i);
+  tokens[n] = new SynTok(n, t, a, b, c);
 }
 
 SynTok* Syntax::getSynTok (String n) 
@@ -1293,68 +1291,67 @@ Sal2Syntax::Sal2Syntax ()
 	    T(","), T("\\"))
 {
   type=TextIDs::Sal2;
-
-  // reserved
-  addSynTok(T("begin"), SalSyntax::SalBegin, HiliteIDs::Hilite4);
-  addSynTok(T("end"), SalSyntax::SalEnd, HiliteIDs::Hilite4);
-  addSynTok(T("function"), SalSyntax::Sal2Function, HiliteIDs::Hilite4);
-  addSynTok(T("if"), SalSyntax::Sal2If, HiliteIDs::Hilite4);
-  addSynTok(T("loop"), SalSyntax::SalLoop, HiliteIDs::Hilite4);
-  addSynTok(T("outfile"), SalSyntax::Sal2OutFile, HiliteIDs::Hilite4);
+  //        NAME       TYPE              BLOCKINDENT?  NUMDISTINGUISHED
+  addSynTok(T("begin"), SalSyntax::SalBegin,        1, 0); // #b01 = +body indent
+  addSynTok(T("end"), SalSyntax::SalEnd,            2, 0); // #b10 = -self indent
+  addSynTok(T("function"), SalSyntax::Sal2Function, 1, 2);
+  addSynTok(T("if"), SalSyntax::Sal2If,             1, 2);
+  addSynTok(T("loop"), SalSyntax::SalLoop,          1, 0);
+  addSynTok(T("outfile"), SalSyntax::Sal2OutFile,   1, 2);
   ////addSynTok(T("return"), SalSyntax::SalReturn, HiliteIDs::Hilite4);
-  addSynTok(T("run"), SalSyntax::SalRun, HiliteIDs::Hilite4);
+  addSynTok(T("run"), SalSyntax::SalRun,            1, 0);
   ////addSynTok(T("send"), SalSyntax::SalSet, HiliteIDs::Hilite4);
-  addSynTok(T("set"), SalSyntax::SalSet, HiliteIDs::Hilite4);
-  addSynTok(T("variable"), SalSyntax::Sal2Variable, HiliteIDs::Hilite4);
+  addSynTok(T("set"), SalSyntax::SalSet);
+  addSynTok(T("variable"), SalSyntax::Sal2Variable);
   // loop/run/if clausals
-  addSynTok(T("above"), SalSyntax::SalAbove, HiliteIDs::Hilite4);
-  addSynTok(T("below"), SalSyntax::SalBelow, HiliteIDs::Hilite4);
-  addSynTok(T("by"), SalSyntax::SalBy, HiliteIDs::Hilite4);
-  addSynTok(T("downto"), SalSyntax::SalDownto, HiliteIDs::Hilite4);
-  addSynTok(T("else"), SalSyntax::SalElse, HiliteIDs::Hilite4);
-  addSynTok(T("finally"), SalSyntax::SalFinally, HiliteIDs::Hilite4);
-  addSynTok(T("for"), SalSyntax::SalFor, HiliteIDs::Hilite4);
-  addSynTok(T("from"), SalSyntax::SalFrom, HiliteIDs::Hilite4);
-  addSynTok(T("in"), SalSyntax::SalIn, HiliteIDs::Hilite4);
-  addSynTok(T("over"), SalSyntax::SalOver, HiliteIDs::Hilite4);
-  addSynTok(T("repeat"), SalSyntax::SalRepeat, HiliteIDs::Hilite4);
-  addSynTok(T("then"), SalSyntax::SalThen, HiliteIDs::Hilite4);
-  addSynTok(T("to"), SalSyntax::SalTo, HiliteIDs::Hilite4);
-  addSynTok(T("unless"), SalSyntax::SalUnless, HiliteIDs::Hilite4);
-  addSynTok(T("until"), SalSyntax::SalUntil, HiliteIDs::Hilite4);
-  addSynTok(T("wait"), SalSyntax::SalWait, HiliteIDs::Hilite4);
-  addSynTok(T("when"), SalSyntax::SalWhen, HiliteIDs::Hilite4);
-  addSynTok(T("while"), SalSyntax::SalWhile, HiliteIDs::Hilite4);
-  addSynTok(T("with"), SalSyntax::SalWith, HiliteIDs::Hilite4);
+  addSynTok(T("above"), SalSyntax::SalAbove);
+  addSynTok(T("below"), SalSyntax::SalBelow);
+  addSynTok(T("by"), SalSyntax::SalBy);
+  addSynTok(T("downto"), SalSyntax::SalDownto);
+  addSynTok(T("else"), SalSyntax::SalElse,          3, 0); // #b11= -self +body
+  addSynTok(T("finally"), SalSyntax::SalFinally);
+  addSynTok(T("for"), SalSyntax::SalFor);
+  addSynTok(T("from"), SalSyntax::SalFrom);
+  addSynTok(T("in"), SalSyntax::SalIn);
+  addSynTok(T("over"), SalSyntax::SalOver);
+  addSynTok(T("repeat"), SalSyntax::SalRepeat);
+  addSynTok(T("then"), SalSyntax::SalThen);
+  addSynTok(T("to"), SalSyntax::SalTo);
+  addSynTok(T("unless"), SalSyntax::SalUnless);
+  addSynTok(T("until"), SalSyntax::SalUntil);
+  addSynTok(T("wait"), SalSyntax::SalWait);
+  addSynTok(T("when"), SalSyntax::SalWhen);
+  addSynTok(T("while"), SalSyntax::SalWhile);
+  addSynTok(T("with"), SalSyntax::SalWith);
   //  Operators, data field is op weight
-  addSynTok(T("|"), SalSyntax::SalOr, HiliteIDs::None);
-  addSynTok(T("&"), SalSyntax::SalAnd, HiliteIDs::None);
-  addSynTok(T("!"), SalSyntax::SalNot, HiliteIDs::None);
-  addSynTok(T("="), SalSyntax::SalEqual, HiliteIDs::None); // relation and op
-  addSynTok(T("!="), SalSyntax::SalNotEqual, HiliteIDs::None);  
-  addSynTok(T("<"), SalSyntax::SalLess, HiliteIDs::None);
-  addSynTok(T(">"), SalSyntax::SalGreater, HiliteIDs::None);
-  addSynTok(T("<="), SalSyntax::SalLessEqual, HiliteIDs::None); // relation and op
-  addSynTok(T(">="), SalSyntax::SalGreaterEqual, HiliteIDs::None); // relation and op
-  addSynTok(T("~="), SalSyntax::SalGeneralEqual, HiliteIDs::None);  
-  addSynTok(T("+"), SalSyntax::SalPlus, HiliteIDs::None);
-  addSynTok(T("-"), SalSyntax::SalMinus, HiliteIDs::None);
-  addSynTok(T("%"), SalSyntax::SalMod, HiliteIDs::None);
-  addSynTok(T("*"), SalSyntax::SalTimes, HiliteIDs::None);  
-  addSynTok(T("/"), SalSyntax::SalDivide, HiliteIDs::None);
-  addSynTok(T("^"), SalSyntax::SalExpt, HiliteIDs::None);
+  addSynTok(T("|"), SalSyntax::SalOr);
+  addSynTok(T("&"), SalSyntax::SalAnd);
+  addSynTok(T("!"), SalSyntax::SalNot);
+  addSynTok(T("="), SalSyntax::SalEqual);
+  addSynTok(T("!="), SalSyntax::SalNotEqual);  
+  addSynTok(T("<"), SalSyntax::SalLess);
+  addSynTok(T(">"), SalSyntax::SalGreater);
+  addSynTok(T("<="), SalSyntax::SalLessEqual);
+  addSynTok(T(">="), SalSyntax::SalGreaterEqual);
+  addSynTok(T("~="), SalSyntax::SalGeneralEqual);  
+  addSynTok(T("+"), SalSyntax::SalPlus);
+  addSynTok(T("-"), SalSyntax::SalMinus);
+  addSynTok(T("%"), SalSyntax::SalMod);
+  addSynTok(T("*"), SalSyntax::SalTimes);  
+  addSynTok(T("/"), SalSyntax::SalDivide);
+  addSynTok(T("^"), SalSyntax::SalExpt);
   // assignment (also: = <= >=)
-  addSynTok(T("+="), SalSyntax::SalInc, HiliteIDs::None);
-  addSynTok(T("*="), SalSyntax::SalMul, HiliteIDs::None);
-  addSynTok(T("&="), SalSyntax::SalCol, HiliteIDs::None);
-  addSynTok(T("@="), SalSyntax::SalPre, HiliteIDs::None);  
-  addSynTok(T("^="), SalSyntax::SalApp, HiliteIDs::None);
+  addSynTok(T("+="), SalSyntax::SalInc);
+  addSynTok(T("*="), SalSyntax::SalMul);
+  addSynTok(T("&="), SalSyntax::SalCol);
+  addSynTok(T("@="), SalSyntax::SalPre);  
+  addSynTok(T("^="), SalSyntax::SalApp);
   // hash tokens
-  addSynTok(T("#t"), SalSyntax::SalTrue, HiliteIDs::Hilite8);
-  addSynTok(T("#f"), SalSyntax::SalFalse, HiliteIDs::Hilite8);
-  addSynTok(T("#?"), SalSyntax::SalQMark, HiliteIDs::Hilite8);
-  addSynTok(T("#$"), SalSyntax::SalUnquote, HiliteIDs::Hilite8);
-  addSynTok(T("#^"), SalSyntax::SalSplice, HiliteIDs::Hilite8);
+  addSynTok(T("#t"), SalSyntax::SalTrue);
+  addSynTok(T("#f"), SalSyntax::SalFalse);
+  addSynTok(T("#?"), SalSyntax::SalQMark);
+  addSynTok(T("#$"), SalSyntax::SalUnquote);
+  addSynTok(T("#^"), SalSyntax::SalSplice);
 }
 
 Sal2Syntax::~Sal2Syntax () 

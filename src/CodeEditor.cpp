@@ -1078,13 +1078,15 @@ bool CodeBuffer::lookingAt(const CodeDocument::Position pos, const String text, 
   if (forward)
     {
       CodeDocument::Position end=getEOB();
-      for (int i=0; i<len && at!=end; i++)
+      int i;
+      for (i=0; i<len && at!=end; i++)
         if ((at==end) || at.getCharacter() != text[i])
           return false;
         else
           at.moveBy(1);
       if (delimited)
-        return ((at==end) || !char_token_p(syntax->syntab, at.getCharacter()));
+        //return ((at==end) || !char_token_p(syntax->syntab, at.getCharacter()));
+        return ((i==len) || !char_token_p(syntax->syntab, at.getCharacter()));
       return true;
     }
   else
@@ -1555,11 +1557,8 @@ void CodeBuffer::indent()
   int col=0;
 
   if (getTextType()==TextIDs::Sal2)
-    {
-      col=indentSal2();
-      return;
-    }
-  if (getTextType()==TextIDs::Lisp)
+    col=indentSal2();
+  else if (getTextType()==TextIDs::Lisp)
     col=indentLisp();
 
   int old=0;
@@ -1586,7 +1585,7 @@ void CodeBuffer::indent()
       insertTextAtCaret(pad);
       isChanged(true);
     }
-  while (bol!=getEOL() && bol.getCharacter()==T(' '))
+  while (bol!=getEOL() && (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t')))
     bol.moveBy(1);
   moveCaretTo(bol, false);
 }
@@ -1699,8 +1698,8 @@ int CodeBuffer::indentLisp()
           //**  CodeDocument::Position sub (&document, substarts.getLast());
           //**//std::cout << "indent to last expr, indent column=" << sub.getIndexInLine() << "\n";
           //** return sub.getIndexInLine();
-          substarts.remove(0); // 
-          int x=columnOfLastIndented(substarts);
+          substarts.remove(0);  
+          int x=lastIndented(substarts, false);
           //std::cout << "returning indent col=" << x << "\n";
           return x;
         }
@@ -1719,7 +1718,7 @@ int CodeBuffer::indentLisp()
           //**//std::cout << "normal token (args), indent column=" << sub.getIndexInLine() << "\n";
           //return sub.getIndexInLine();
           substarts.remove(0);
-          int x=columnOfLastIndented(substarts);
+          int x=lastIndented(substarts, false);
           //std::cout << "returning indent col=" << x << "\n";
           return x;
         }
@@ -1728,22 +1727,23 @@ int CodeBuffer::indentLisp()
 
 int CodeBuffer::indentSal2()
 {
-  CodeDocument::Position bol (getBOL());
-  CodeDocument::Position pos (bol);  
   Array<int> subtypes;
   Array<int> substarts;
+  SynTok* cmdtoken=0;
+  CodeDocument::Position pos (getBOL());
   int line=pos.getLineNumber();
   int scan=0;
-  bool back=false;
+  int col=0;
 
-  // if no lines above point indent 0 else move cursor to end of
-  // previous line and scan backwards until either unlevel OR a
-  // balanced expression in column 0. record types and starting
-  // positions of subexpressions traversed
-
+  // if no lines above point indent 0
   if (line==0) return 0;
-  // move position to EOL of previous line
-  pos.setLineAndIndex(line-1, INT_MAX);
+  // move to EOL of line above cursor
+  line--;
+  pos.setLineAndIndex(line, INT_MAX);
+
+  // scan backwards until either unlevel OR a command or a balanced
+  // expr in column 0. record types and starting positions of
+  // subexpressions traversed
   while (true)
     {
       scan=scanCode(pos, false, ScanFlags::MoveExpressions);
@@ -1763,79 +1763,191 @@ int CodeBuffer::indentSal2()
                   // command, 'end' or 'else' then break
                   int type=tok->getType();
                   subtypes.set(0,type);
-                  if (SalSyntax::isSalCommandType(type) || type==SalSyntax::SalEnd || type==SalSyntax::SalElse)
-                    break;
+                  if (SalSyntax::isSalCommandType(type) )
+                    {
+                      cmdtoken=tok;
+                      break;
+                    }
                 }
+              else if (pos.getIndexInLine()==0)
+                break;
             }
-          if (pos.getIndexInLine()==0)
+          else if (pos.getIndexInLine()==0)
             break;
           pos.moveBy(-1); 
         }
       else
         break;
     }
-  if (scan==0)
+
+  if (scan<0) // scan stopped on unlevel parens
     {
-      //std::cout << "empty: indent column=0\n" ;
-      return 0;
-    }
-  else if (scan<0)
-    {
-      std::cout << "unlevel: position="<<pos.getPosition()<<", (column="<<pos.getIndexInLine()<<")\n";
-      // use indentation of subexp or pos
-      if (subtypes.size()>0)
-        return columnOfLastIndented(substarts);
+      if (substarts.size()>0) // use last subexpr indentation
+        {
+          col=lastIndented(substarts, false);
+          std::cout << "UNLEVEL indent (last expr), column=" << col << "\n";
+          return col;
+        }
       else
-        return pos.movedBy(1).getIndexInLine();
+        {
+          col=pos.movedBy(1).getIndexInLine();
+          std::cout << "UNLEVEL indent (no exprs), column=" << col << "\n";
+          return col;
+        }
     }
-  else
+  else if (subtypes.size()==0) // no expressions encountered (only white space)
     {
-      std::cout << "expression: position="<<pos.getPosition()<<", (column="
-                <<pos.getIndexInLine()<<") type="<<subtypes[0] << "\n";
-
-
-      // see if we are looking at an 'end' or an 'else' on cursor
-      // line. if so we will adjust indent -2
-      while (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t')) 
-        bol.moveBy(1);
-      if (lookingAt(bol, T("end"), true, true) || lookingAt(bol, T("else"), true, true))
-        back=true;
-      if (back)
-        std::cout << "cursor is looking at end or else\n";
+      std::cout << "EMPTY indent, column=0\n" ;
       return 0;
+    }  
+
+  // at this point we have at least one subexpr and may have stopped
+  // on a sal type
+
+  if (!SalSyntax::isSalType(subtypes[0]))     // stopped on a non-sal expression
+    {
+      col=lastIndented(substarts, false);
+      std::cout << "SEXPR indent, column=" << col << "\n";
     }
+  else // types[0] is sal entity, hopefully a command
+    {
+      if (cmdtoken)  // we stopped on a command
+        {
+          int cmdline=pos.getLineNumber(); // num of line with cmd
+          // last is INDEX of last indented or command we stopped on
+          int last=lastIndented(substarts, true);
+          // IF the VERY last line ends with comma then indent 1 past
+          // command name or a subexpr 'with' (if found)
+          if (isCommaTerminatedLine(line))
+            {
+              for (last=subtypes[subtypes.size()-1]; last>=0; last--)
+                if (subtypes[last]==SalSyntax::SalWith)
+                  break;
+              if (last<0) // reached command
+                col=pos.getIndexInLine()+cmdtoken->getName().length()+1;
+              else // indent relative to 'with'
+                {
+                  CodeDocument::Position p (&document, substarts[last]);
+                  col=p.getIndexInLine()+4+1;
+                }
+              std::cout << "COMMA indent, column=" << col << "\n";
+            }
+          // ELSE (the very last line does NOT end with comma) if
+          // line-1 is >= cmdline and DOES end with comma then we are
+          // done with comma indenting so intent to body or pos
+          else if ((cmdline<=line-1) && isCommaTerminatedLine(line-1))
+            {
+              if (cmdtoken->getData1()>0)
+                {
+                  col=pos.getIndexInLine()+2;
+                  std::cout << "BODY indent (after comma stop), column=" << col << "\n";
+                }
+              else
+                {
+                  col=pos.getIndexInLine();
+                  std::cout << "RESET indent (after comma stop), column=" << col << "\n";
+                }
+            }
+          // ELSE if the last indented is 'else' then body indent
+          // based on position of 'else'
+          else if (subtypes[last]==SalSyntax::SalElse)
+            {
+              CodeDocument::Position p (&document, substarts[last]);
+              col=p.getIndexInLine()+2;
+              std::cout << "ELSE indent, column=" << col << "\n";
+            }          
+          // else if the command is a body indent, indent to the last
+          // expression or to 2 past the first (command) expr
+          else if (cmdtoken->getData1()>0)
+            {
+              if (last==0) // the command, no subexprs on own line
+                {
+                  col=pos.getIndexInLine()+2;
+                  std::cout << "BODY indent, column=" << col << "\n";
+                }
+              // else indent to the last expression
+              else
+                {
+                  CodeDocument::Position p (&document, substarts[last]);
+                  col=p.getIndexInLine();
+                  std::cout << "LAST indent (body), column=" << col << "\n";
+                }
+            }
+          // else indent to the last expression
+          else
+            {
+              CodeDocument::Position p (&document, substarts[last]);
+              col=p.getIndexInLine();
+              std::cout << "LAST indent, column=" << col << "\n";
+            }
+        }
+      else
+        {
+          col=lastIndented(substarts, false);
+          std::cout << "non-standard sal indent, column=" << col << "\n";
+        }
+    }
+
+  // if we are looking at an 'end' or an 'else' in the cursor line
+  // then adjust -2
+
+  CodeDocument::Position bol (getBOL());
+  CodeDocument::Position eol (getEOL(bol)); 
+  while (bol!=eol && (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t'))) 
+    bol.moveBy(1);
+  if (lookingAt(bol, T("end"), true, true) || lookingAt(bol, T("else"), true, true))
+    {
+      col-=2;
+      std::cout << "cursor is looking at end or else\n";
+    }
+  return jmax(col,0);
 }
 
-int CodeBuffer::columnOfLastIndented(Array<int>& starts)
+bool CodeBuffer::isCommaTerminatedLine(int line)
 {
-  // starts is an array of the starting positions of all the backward
-  // sub expressions. return the column of the latest starting postion
-  // that is also the first position in its line, otherwise return the
-  // position of the first expr.  we use the last expression because
-  // if the user "hand indentents" a line then we want to respect that
-  // postion as the indentation column for subsequent lines
-  int size=starts.size();
-  if (size==0) return -1; // -1 for error
-  else if (size==1)
+  // quick and dirty test for line ending with comma. doesnt check for
+  // () or "" nesting etc
+  CodeDocument::Position b (&document, line, 0);
+  CodeDocument::Position e (&document, line, INT_MAX);
+  bool x=false;
+  while (b != e)
     {
-      // if only one expr use it
-      CodeDocument::Position a (&document, starts[0]);
-      return a.getIndexInLine();
+      const tchar c=b.getCharacter();
+      if (c==T(',')) x=true;
+      else if (char_comment_p(syntax->syntab, c)) break;
+      else if (char_white_p(syntax->syntab, c)) ;
+      else x=false;
+      b.moveBy(1);
     }
-  else
-    { // get column latest expr that starts a line
+  return x;
+}  
+
+int CodeBuffer::lastIndented(Array<int>& starts, bool index)
+{
+  // search array of expr starting positions and return the indent
+  // column (or array index) of the latest postion that is first in
+  // its line, or position of first expr if there isn't one
+  int size=starts.size();
+  if (size==0) return -1; // -1 for error either way
+  else if (size==1) // if only one expr use it
+    {
+      CodeDocument::Position a (&document, starts[0]);
+      return (index) ? 0 : a.getIndexInLine();
+    }
+  else // find latest expr that starts a line
+    {
       int i=0;
       for (i=starts.size()-1; i>0; i--)
         {
           CodeDocument::Position a (&document, starts[i-1]);
           CodeDocument::Position b (&document, starts[i]);
-          // if the i-1 expr is on an earlier line then this expr is
-          // the latest expr that starts a line
+          // if the i-1 expr is on an earlier line then THIS expr
+          // starts a line
           if (a.getLineNumber() < b.getLineNumber())
             break;
         }
       CodeDocument::Position a (&document, starts[i]);
-      return a.getIndexInLine();
+      return (index) ? i : a.getIndexInLine();
     }
 }
 
