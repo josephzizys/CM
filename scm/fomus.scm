@@ -339,7 +339,7 @@
   #t)
 
 (define (fms:meas . args)
-  (with-optkeys (args (time 0) dur (sets '()) &allow-other-keys)
+  (with-optkeys (args (time 0) (dur 0) (sets '()) &allow-other-keys)
 		(unless (number? time) (ffi_fms_err) (error "expected a number for time argument"))
 		;;(unless (number? dur) (ffi_fms_err) (error "expected a number for dur argument"))
 		(unless (list? sets) (ffi_fms_err) (error "expected a list for sets argument"))

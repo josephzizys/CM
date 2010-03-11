@@ -1331,7 +1331,7 @@ void out_justify(std::ostream& f, String s, const int start = 0, bool va = true)
   s.replace(T("\t"), T("        "));
   int i = 0;
   int je = s.length();
-  const String exc("\"'`{[(");
+  const String exc("\"'`{}[]():;,.!?_");
   for (int j = (FILE_WIDTH - 1) - start; j < je; j += (FILE_WIDTH - 1) - start) {
     int js = i;
     while (js < j && s[js] != '\n') ++js;
