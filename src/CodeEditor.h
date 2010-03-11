@@ -11,6 +11,7 @@
 #include "juce.h"
 
 class Syntax;
+class SynTok;
 
 /*=======================================================================*/
 
@@ -136,7 +137,8 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   int indentSal2();
   int lastIndented(Array<int>& ary, bool index);
   bool isCommaTerminatedLine(int line);
-
+  bool tokenizeSal(const CodeDocument::Position start, const CodeDocument::Position end,
+                   OwnedArray<SynTok>& tokens);
 
   // testing
   void test(bool forward);

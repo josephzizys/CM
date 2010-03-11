@@ -371,7 +371,8 @@ class SalSyntax : public Syntax
   static const bool isSalStatementType(int i) {return (SAL_STATEMENT_BEG < i) && (i < SAL_STATEMENT_END);}
   static const bool isSalCommandType(int i) {return (SAL_COMMAND_BEG < i) && (i < SAL_COMMAND_END);}
   static const bool isSalConstituentType(int i) {return (SAL_CONSTITUENT_BEG < i) && (i < SAL_CONSTITUENT_END);}
-  static const bool isSalClausalType(int i) {return (SAL_CLAUSAL_BEG < i) && (i < SAL_CLAUSAL_END);}
+  //  static const bool isSalClausalType(int i) {return (SAL_CLAUSAL_BEG < i) && (i < SAL_CLAUSAL_END);}
+  static const bool isSalClausalType(int i) {return (SAL_CONSTITUENT_BEG < i) && (i < SAL_CLAUSAL_END);}
   static const bool isSalRuleType(int i) {return (SAL_RULE_BEG < i) && (i < SAL_RULE_END);}
   static const bool isSalTypeEqual( int a, int b) {return ((a >> 8) == (b >> 8));}
   static const int SalTypeDataBits(int t) {return (t & 0xff);}

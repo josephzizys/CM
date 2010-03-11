@@ -31,7 +31,7 @@
     <instrument Name="fm-bell" File="fm-bell.scm" Category="Frequency Modulation" Comment="fm bell (Michael McNabb)" Examples="fm-bell.clm" Depend="" AutoLoad="no" />
     <instrument Name="fm-drum" File="fm-drum.scm" Category="Frequency Modulation" Comment="cascade FM drum (Jan Mattox)" Examples="fm-drum.clm" Depend="" AutoLoad="no" />
     <instrument Name="fm-insect" File="fm-insect.scm" Category="Frequency Modulation" Comment="FM for insect simulations" Examples="fm-insect.clm" Depend="" AutoLoad="no" />
-    <instrument Name="fm-noise" File="fm-noise.scm" Category="Frequency Modulation" Comment="FM for ocean wave simulations" Examples="" Depend="" AutoLoad="no" />
+    <instrument Name="fm-noise" File="fm-noise.scm" Category="Frequency Modulation" Comment="FM for ocean wave simulations" Examples="" Depend="env.scm" AutoLoad="no" />
     <instrument Name="fm-trumpet" File="fm-trumpet.scm" Category="Frequency Modulation" Comment="Dexter Morrill's FM trumpet" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="fm-violin" File="v.scm" Category="Frequency Modulation" Comment="fm violin (William Schottstaedt)" Examples="v.clm" Depend="" AutoLoad="no" />
     <instrument Name="fm-voice" File="jcvoi.scm" Category="Frequency Modulation" Comment="John Chowning's fm voice" Examples="jcvoi.clm" Depend="env.scm" AutoLoad="no" />
@@ -40,7 +40,7 @@
     <instrument Name="freeverb" File="freeverb.scm" Category="Sound Processing" Comment="reverberation" Examples="" Depend="" AutoLoad="no" />
     <instrument Name="fullmix" File="fullmix.scm" Category="Sound Processing" Comment="mixer" Examples="fullmix.clm" Depend="" AutoLoad="no" />
     <instrument Name="generator" File="generators.scm" Category="Support" Comment="various generators" Examples="" Depend="" AutoLoad="no" />
-    <instrument Name="gong" File="gong.scm" Category="Frequency Modulation" Comment="Paul Weineke's FM gong" Examples="gong.clm" Depend="" AutoLoad="no" />
+    <instrument Name="gong" File="gong.scm" Category="Frequency Modulation" Comment="Paul Weineke's FM gong" Examples="gong.clm" Depend="env.scm" AutoLoad="no" />
     <instrument Name="gran-synth" File="gran-synth.scm" Category="Granular Synthesis" Comment="grains using wave-train gen" Examples="gran-synth.clm" Depend="" AutoLoad="no" />
     <instrument Name="grani" File="grani.scm" Category="Granular Synthesis" Comment="granular synthesis (Fernando Lopez-Lezcano)" Examples="" Depend="env.scm" AutoLoad="no" />
     <instrument Name="grapheq" File="grapheq.scm" Category="Filtering" Comment="graphic equalizer (Marco Trevisani)" Examples="" Depend="" AutoLoad="no" />

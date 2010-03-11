@@ -1,3 +1,20 @@
+;;; multi-channel sound file expansion with srate and reverb.
+;;; michael klingbeil (michael@klingbeil.com)
+;;;
+;;; $Name:  $
+;;; $Revision: 1.1 $
+;;; $Date: 2005/10/16 22:15:44 $
+;;;
+;;; clm-4 and scheme May-08 bil
+;;; split out cases to optimize May-09 bil
+
+(provide 'snd-expandn.scm)
+
+(if (and (not (provided? 'snd-ws.scm)) 
+	 (not (provided? 'sndlib-ws.scm)))
+    (load "ws.scm"))
+
+
 (definstrument (expandn time duration filename amplitude
 			(expand 1.0)
 			(matrix #f)
@@ -118,7 +135,7 @@
 				      (sl (floor (* segl (mus-srate))))
 				      (rl (floor (* rmpl sl))))
 				 (set! update-ctr 0)
-				 (set! (mus-length ingen) sl)
+				 (set! (length ingen) sl)
 				 (set! (mus-ramp ingen) rl)
 				 (set! (mus-frequency ingen) hp)
 				 (set! (mus-increment ingen) expa)))))
@@ -150,7 +167,7 @@
 		     ;; if reverb is turned on, output to the reverb streams
 		     (if rev-mx
 			 (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))
-	  
+	      
 	      (if (= in-chans 2)
 		  (let ((sample-0-0 0.0)
 			(sample-1-0 0.0)
@@ -176,11 +193,11 @@
 					  (sl (floor (* segl (mus-srate))))
 					  (rl (floor (* rmpl sl))))
 				     (set! update-ctr 0)
-				     (set! (mus-length ingen0) sl)
+				     (set! (length ingen0) sl)
 				     (set! (mus-ramp ingen0) rl)
 				     (set! (mus-frequency ingen0) hp)
 				     (set! (mus-increment ingen0) expa)
-				     (set! (mus-length ingen1) sl)
+				     (set! (length ingen1) sl)
 				     (set! (mus-ramp ingen1) rl)
 				     (set! (mus-frequency ingen1) hp)
 				     (set! (mus-increment ingen1) expa)))))
@@ -220,7 +237,7 @@
 			 ;; if reverb is turned on, output to the reverb streams
 			 (if rev-mx
 			     (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))
-		  
+
 		  (let ((samples-0 (make-vct in-chans))
 			(samples-1 (make-vct in-chans)))
 		    ;; more than 2 chans in input file
@@ -246,7 +263,7 @@
 				     (do ((ix 0 (+ 1 ix)))
 					 ((= ix in-chans))
 				       (let ((gen (vector-ref ex-array ix)))
-					 (set! (mus-length gen) sl)
+					 (set! (length gen) sl)
 					 (set! (mus-ramp gen) rl)
 					 (set! (mus-frequency gen) hp)
 					 (set! (mus-increment gen) expa)))))))
@@ -290,3 +307,5 @@
 			 ;; if reverb is turned on, output to the reverb streams
 			 (if rev-mx
 			     (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))))))))
+
+;;; (with-sound () (expandn 0 1 "oboe.snd" 1 :expand 4))

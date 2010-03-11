@@ -161,6 +161,18 @@ static void cm_stderr(s7_scheme *sc, char c, s7_pointer port)
   */
 }
 
+void mus_error_to_grace(int type, char *msg)
+{
+  /* Some errors are raised in the CLM C code that does not assume
+     there's an extension language around, so you have to catch such
+     errors via mus_error_set_handler, then call s7_error (or
+     whatever) at that point. */
+  s7_error(s7, 
+           s7_make_symbol(s7, "mus-error"), 
+           s7_cons(s7,
+                   s7_make_string(s7, msg),
+                   s7_nil(s7)));
+}
 
 /*=======================================================================*
                           Scheme Runtime Support
@@ -187,6 +199,9 @@ bool SchemeThread::init()
 
   /* initialize sndlib with all the functions linked into s7 */
   Init_sndlib(); 
+
+  /* install hander to route lowlevel sndlib C errors up to Grace */
+  mus_error_set_handler(mus_error_to_grace);
 
   /* Install custom port handlers for stdout and stderr */
   s7_set_current_output_port(s7, s7_open_output_function(s7, cm_stdout));

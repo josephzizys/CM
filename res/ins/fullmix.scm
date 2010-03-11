@@ -1,5 +1,10 @@
 (provide 'snd-fullmix.scm)
 
+(if (and (not (provided? 'snd-ws.scm)) 
+	 (not (provided? 'sndlib-ws.scm)))
+    (load "ws.scm"))
+
+
 (definstrument (fullmix in-file beg outdur inbeg matrix srate reverb-amount)
   ;; "matrix" can be a simple amplitude or a list of lists
   ;;     each inner list represents one input channel's amps into one output channel
@@ -29,7 +34,7 @@
 		   (let ((vect (make-vector in-chans #f)))
 		     (do ((i 0 (+ i 1)))
 			 ((= i in-chans))
-		       (vector-set! vect i (make-readin in-file i inloc)))
+		       (vector-set! vect i (make-readin in-file i inloc :direction (if (negative? srate) -1 1))))
 		     vect)))
 	 (envs #f))
 
@@ -82,7 +87,7 @@
 	;; -------- with src
 	;; unroll the loops if 1 chan input
 	(if (= in-chans 1)
-	    (let ((sr (make-src :input (vector-ref file 0) :srate srate))
+	    (let ((sr (make-src :input (vector-ref file 0) :srate (abs srate)))
 		  (outframe (make-frame out-chans)))
 	      (if envs
 		  (run 
@@ -111,7 +116,7 @@
 		   (srcs (make-vector in-chans #f)))
 	      (do ((inp 0 (+ 1 inp)))
 		  ((= inp in-chans))
-		(vector-set! srcs inp (make-src :input (vector-ref file inp) :srate srate)))
+		(vector-set! srcs inp (make-src :input (vector-ref file inp) :srate (abs srate))))
 	      
 	      (if envs 
 		  (run
@@ -140,7 +145,7 @@
 		       (frame-set! inframe inp (src (vector-ref srcs inp))))
 		     (frame->file *output* i (frame->frame inframe mx outframe))
 		     (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))))))))
-  
+
 #|
 (with-sound (:channels 2 :statistics #t)
   (fullmix "pistol.snd")
@@ -163,6 +168,8 @@
 
 (with-sound (:channels 2 :statistics #t)
   (fullmix "2.snd" 0 2 0 (list (list .1 .2) (list .3 .4)) 2.0))
+
+(with-sound () (fullmix "pistol.snd" 0 2 2 #f -1.0))
 
 (with-sound (:channels 2)
   (let ((e0->0 (make-env '(0 0 1 1) :duration 2))

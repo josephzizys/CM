@@ -886,7 +886,7 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
           //std::cout << "done invoking !\n";
           return true;
         }
-      std::cout << "no handler for keypress, changed=true";
+      std::cout << "no handler for keypress, setting buffer changed=true\n";
       isChanged(true); // unhandled so adding chars to the buffer
       return false;     
     }
@@ -1070,40 +1070,52 @@ bool CodeBuffer::isEOL()
 
 bool CodeBuffer::lookingAt(const CodeDocument::Position pos, const String text, const bool forward, const bool delimited)
 {
-  // return true if buffer contents matches text starting a pos, which
-  // must be ON the first char to check. if delimited is true then the
-  // text must match as a delimited word.
+  // return true if buffer contents matches text starting at pos,
+  // which must be ON the first char to check. if delimited is true
+  // then the text must match as a delimited word.
   CodeDocument::Position at (pos);
   int len=text.length();
   if (forward)
     {
       CodeDocument::Position end=getEOB();
-      int i;
-      for (i=0; i<len && at!=end; i++)
-        if ((at==end) || at.getCharacter() != text[i])
+      int i=0;
+
+      for ( ; i<len && at!=end; i++)
+        {
+          String str=T("comparing ");
+          str << at.getCharacter() << T("&") << text[i] << T("\n");
+          std::cout << str.toUTF8();
+        if (at.getCharacter() != text[i])
           return false;
         else
           at.moveBy(1);
-      if (delimited)
-        //return ((at==end) || !char_token_p(syntax->syntab, at.getCharacter()));
-        return ((i==len) || !char_token_p(syntax->syntab, at.getCharacter()));
-      return true;
+        }
+      std::cout << "done, i==len: " << (i==len) << " at==end: "  << (at==end) << "\n";
+      if (i==len)
+        return (delimited) ? ((at==end) || !char_token_p(syntax->syntab, at.getCharacter())) : true;
+      return false;
+
     }
   else
     {
-      int end=len-1;
-      int loc=pos.getPosition();
-      if (end>loc) // not enough backward chars to match
-        return false;   
-      for ( ; end>=0; end--)
-        if (at.getCharacter() != text[end])
+      CodeDocument::Position end=getBOB();
+      bool b=false;
+      int i=len-1;
+      for ( ; i>=0; i--)
+        if (at.getCharacter() != text[i])
           return false;
-        else
-          at.moveBy(-1);
-      if (!delimited) 
-        return true;
-      loc-=len;
-      return ((loc<0) ? true : (!char_token_p(syntax->syntab, at.getCharacter())));
+        // at this point we've matched at position i
+        else if (at==end)
+          {
+            i--;    // still increment i
+            b=true; // note we matched at bob
+            break;
+          }
+        else at.moveBy(-1);
+
+      if (i<0 )
+        return (delimited) ? (b || !char_token_p(syntax->syntab, at.getCharacter())) : true;
+      return false;
     }
 }
 
@@ -1319,9 +1331,20 @@ void CodeBuffer::posInfo(const CodeDocument::Position p)
 
 void CodeBuffer::test(bool forward)
 {
-  CodeEditorWindow* win=(CodeEditorWindow *)getTopLevelComponent();
-  std::cout << "buf=" << getWidth() << " " << getHeight() << "\n"
-            << "win=" << win->getWidth() << " " <<  win->getHeight() << "\n";
+  CodeDocument::Position bol (getBOL());
+  CodeDocument::Position eol (getEOL(bol)); 
+  //  while (bol!=eol && (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t'))) 
+  //    bol.moveBy(1);
+  if (forward)
+    if (lookingAt(getCaretPos(), T("end"), true, true) )
+      std::cout << "forward looking at end\n";
+    else
+      std::cout << "NOT looking at end (forward)\n";
+  else
+    if (lookingAt(getCaretPos().movedBy(-1), T("end"), false, true) )
+      std::cout << "backward looking at end\n";
+    else
+      std::cout << "NOT looking at end (backward)\n";
 }
 
 /*=======================================================================*
@@ -1330,26 +1353,87 @@ void CodeBuffer::test(bool forward)
 
 void CodeBuffer::eval(bool expandonly)
 {
-  CodeDocument::Position from (getCaretPos());
-  CodeDocument::Position to (getCaretPos());
   int type=getTextType();
   int regn=getHighlightedRegionLength();
   int scan=SCAN_EMPTY;
-  if (regn>0)
+  Array<int> epos; // positions of backward exprs
+  CodeDocument::Position bot (getCaretPos());
+  CodeDocument::Position top (getCaretPos());
+  int end=0;  // lowest position possible
+
+  if (regn>0) // if region use its bounds
     {
-      from=getHighlightedRegionStart();
-      to=from.movedBy(regn);
-      scan=1; // is never empty
+      bot=getHighlightedRegionStart();
+      top=bot.movedBy(regn);
+      end=bot.getPosition();
     }
-  else if (type==TextIDs::Lisp)
-    scan=backwardLispExpr(from, to);
-  else if (type==TextIDs::Sal2)
+
+  while (true)
     {
-      scan=backwardSal2Expr(from, to);
+      if (type==TextIDs::Lisp)
+        scan=backwardLispExpr(bot, top);
+      else if (type==TextIDs::Sal2)
+        scan=backwardSal2Expr(bot, top);
+
+      std::cout << "after backwardExpr, scan=" << scan << ", bot="
+                << bot.getPosition() << ", top=" << top.getPosition() << "\n";
+      
+      // break on error or nothing new to add
+      if (scan<=0) 
+        {
+          std::cout << "breaking scan<0\n";
+          break;
+        }
+      // break if past lower bounds
+      if (bot.getPosition()<end)
+        {
+          std::cout << "breaking pos<end\n";
+          break;
+        }
+      // push current expr bounds onto array
+      epos.insert(0, top.getPosition());
+      epos.insert(0, bot.getPosition());
+      // break if we are evalling just one backward expr
+      if (regn==0) 
+        {
+          std::cout << "breaking (regn=false)\n";
+          break; 
+        }
+      // break if we added last possible expr
+      if (bot.getPosition()==end)
+        {
+          std::cout << "breaking pos=end\n";
+          break;
+        }
+      // move top to bot (ie 1 above next start)
+      top=CodeDocument::Position(bot);
     }
-  if (scan>SCAN_EMPTY)
+
+  //std::cout << "after loop, epos.size()=" << epos.size() << "\n";
+  if (scan<0)
     {
-      String code=document.getTextBetween(from, to);
+      String text;
+      if (scan==SCAN_UNLEVEL)
+        {
+          text=T("Unbalanced delimiter, line ");
+          text << bot.getLineNumber() << T(": ") 
+               << bot.getLineText() << T("\n");
+        }
+      else if (scan=SCAN_UNMATCHED)
+        {
+          text=T("Unmatched delimiter, line ");
+          // line is most recent upper bounds
+          text << top.getLineNumber() << T(": ") 
+               << top.getLineText() << T("\n");
+        }
+      //      PlatformUtilities::beep();
+      Console::getInstance()->printError(text, true);
+    }
+  else if (epos.size()>0) // got expr(s)
+    {
+      bot.setPosition(epos.getFirst());
+      top.setPosition(epos.getLast());
+      String code=document.getTextBetween(bot, top);
       if (expandonly && (type==TextIDs::Lisp))
         code=T("(macroexpand ") + code + T(")");
       if (regn)
@@ -1357,17 +1441,20 @@ void CodeBuffer::eval(bool expandonly)
           code=T("(begin ") + code + T(")");
         else
           code=T("begin ") + code + T(" end");
-      if (type==TextIDs::Lisp)
-        SchemeThread::getInstance()->eval(code);
+      //if (type==TextIDs::Lisp)
+      //  SchemeThread::getInstance()->eval(code);
       std::cout << "eval='" << code.toUTF8() << "'\n";
     }
   else
-    PlatformUtilities::beep();
+    {
+      std::cout << "empty!\n";
+    }
 }
 
 int CodeBuffer::backwardLispExpr(CodeDocument::Position& from, CodeDocument::Position& to)
 {
-  CodeDocument::Position pos (getCaretPos());
+  ////  CodeDocument::Position pos (getCaretPos());
+  CodeDocument::Position pos (to);
   // moving backwards the cursor is always one char past scan start
   pos.moveBy(-1);
   // skip trailing comments and whitespace
@@ -1385,6 +1472,7 @@ int CodeBuffer::backwardLispExpr(CodeDocument::Position& from, CodeDocument::Pos
 int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Position& to)
 {
   CodeDocument::Position pos (getCaretPos());
+  //CodeDocument::Position pos (to);
   CodeDocument::Position bob=getBOB();
   int scan=0, last=0, here=-1, level=0;
   #define SCAN_CURLY (SCAN_PUNCT+1)
@@ -1437,6 +1525,7 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
       }
   else   
     // else parse expr back, possibly to a command (set or variable)
+    // but stopping before any clausal
     while (true)
       {
         // pos is on last consitute char of backwards expr (or at bol)
@@ -1445,15 +1534,19 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
         scan=scanCode(pos, false, ScanFlags::MoveExpressions);
         // quit if scan error or only white space
         if (scan<=0)
-          break;
+          {
+            //std::cout << "breaking with scan <= 0: " << scan;
+            break;
+          }
         String code=document.getTextBetween(pos,end);
         //std::cout << "Code ("<<pos.getPosition()<<","<<end.getPosition()<<"): '" << code.toUTF8() << "'\n";
         if (scan==SCAN_TOKEN)
           {
             if (SynTok* tok=syntax->getSynTok(code))
               {
-                // token is a literal. stop if first thing encountered
-                if (last==0)
+                // token is a literal. stop if its the first thing
+                // encountered or if its a clausal
+                if (last==0 || SalSyntax::isSalClausalType(tok->getType()))
                   {
                     //std::cout<<"literal breaking with last==0"<<code.toUTF8()<<"\n";
                     break;
@@ -1466,7 +1559,7 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
                     here=pos.getPosition();
                     break;
                   }
-                // otherwise its a clausal or op so keep going...
+                // otherwise (its a op or comma? ) keep going...
                 here=pos.getPosition();
               }
             else 
@@ -1531,18 +1624,22 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
       }
   //std::cout << "_______________\n";
 
+  //std::cout << "after loop, here=" << here << "\n";
+
   // stopped without lower bound means no expr encountered
   if (here<0) 
     {
       scan=SCAN_EMPTY;
       here=pos.getPosition();
     }
-  //std::cout << "setting from position\n";
+
   from.setPosition(here);
-  //std::cout << "setting to position\n";
+  //std::cout << "setting from position="<< here << "\n";
   to.setPosition(top.getPosition());
-  //std::cout << "returning\n";
-  return scan;
+  //std::cout << "setting to position=" << top.getPosition() << "\n";
+
+  //std::cout << "returning: "  << ((here>-1) ? 1 : scan) << "\n";
+  return (here>-1) ? 1 : scan;
 }
 
 /*=======================================================================*
@@ -1706,7 +1803,7 @@ int CodeBuffer::indentLisp()
     }
   else // token not special, indent to last expr or to pos+1 if none
     {
-      std::cout << "no special nargs=" << nargs << "\n";
+      //std::cout << "no special nargs=" << nargs << "\n";
       if (nargs==0)
         {
           ////std::cout << "normal token with no args, indent column=" << pos.movedBy(1).getIndexInLine() << "\n";
@@ -1952,6 +2049,15 @@ int CodeBuffer::lastIndented(Array<int>& starts, bool index)
 }
 
 /*=======================================================================*
+                              Tokenizing Functions
+ *=======================================================================*/
+
+bool CodeBuffer::tokenizeSal(const CodeDocument::Position start, const CodeDocument::Position end,
+                             OwnedArray<SynTok>& tokens) 
+{
+}
+
+/*=======================================================================*
                               Scanning Functions
  *=======================================================================*/
 
@@ -2047,6 +2153,10 @@ int CodeBuffer::scanCode(CodeDocument::Position& pos, bool forward, int mode)
   CodeDocument::Position end = (forward) ? getEOB() : getBOB();
   bool atfirst=false;
   #define ISLEVEL(a,b,c,d) (((a)==0)&&((b)==0)&&((c)==0)&&((d)==0))
+
+  String s;
+  s<<pos.getCharacter();
+  std::cout << "before scan, pos=" << pos.getPosition() << ", char=" << s.toUTF8() << "\n";
 
   while (true)
     {
@@ -2201,6 +2311,8 @@ int CodeBuffer::scanCode(CodeDocument::Position& pos, bool forward, int mode)
 
   //std::cout << "pos="<<pos.getPosition()<< ",typ="<<typ<<",isfirst="<<atfirst<<"\n";
   // move pos back to the first char if backward scan
+  std::cout << "after scan, par=" << par << "\n";
+
   if (typ<0) 
     ;
   else if (ISLEVEL(par,cur,sqr,ang))
