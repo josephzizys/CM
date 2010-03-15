@@ -913,7 +913,7 @@ void SalSyntax::eval(String text, bool isRegion, bool expand)
   text << T(")");
   CommonLisp::getInstance()->eval(text, true);
 #else
-  XSalNode* node=new XSalNode(0.0, text, expand);
+  XSalNode* node=new XSalNode(0.0, text, TextIDs::Sal, expand);
   if (!tokenize(text, node->toks))
     {
       delete node;
@@ -1287,7 +1287,7 @@ int SalSyntax::isIdentifierToken(String str, SynTok *tok) {
 
 Sal2Syntax::Sal2Syntax () 
   : Syntax( T(""), T(""), T("~!@$%^&*-_=+|:<.>/?"),
-	    T(";"), T("#"), T("\""), T("([{"), T(")]})"),
+	    T(";"), T("#"), T("\""), T("([{"), T("}])"),
 	    T(","), T("\\"))
 {
   type=TextIDs::Sal2;

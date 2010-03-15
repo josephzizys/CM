@@ -41,6 +41,13 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
       file=File::nonexistent;
     }
   sourcefile=file;
+
+  ////std::cout << "checking for cr:";
+  ////for (int i=0; i< text.length(); i++)
+  ////  if (text[i]==T('\r'))
+  ////    std::cout << " " << i ;
+  ////std::cout << " done!\n ";
+
   document.setNewLineCharacters(T("\n"));
   document.replaceAllContent(text);
   document.setSavePoint();
@@ -66,7 +73,9 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   // other components besides the editor, eg a mode line, toolbar etc.
   CodeBuffer* buffer=new CodeBuffer(document, syntax, &commands, customs);
   setContentComponent(new EditorComponent(buffer));
-
+  // add (current) customizations to new empty buffers (???)
+  //if (text.isEmpty())
+  //  writeCustomComment(false);
   commands.registerAllCommandsForTarget(this);
   setApplicationCommandManagerToWatch(&commands);
   commands.setFirstCommandTarget(this);
@@ -120,12 +129,47 @@ void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
     {
       CommandIDs::EditorNew,         // File menu
       CommandIDs::EditorOpen,
+      CommandIDs::PrefsOpenRecent + 0,
+      CommandIDs::PrefsOpenRecent + 1,
+      CommandIDs::PrefsOpenRecent + 2,
+      CommandIDs::PrefsOpenRecent + 3,
+      CommandIDs::PrefsOpenRecent + 4,
+      CommandIDs::PrefsOpenRecent + 5,
+      CommandIDs::PrefsOpenRecent + 6,
+      CommandIDs::PrefsOpenRecent + 7,
+      CommandIDs::PrefsOpenRecent + 8,
+      CommandIDs::PrefsOpenRecent + 9,
+      CommandIDs::PrefsOpenRecent + 10,
+      CommandIDs::PrefsOpenRecent + 11,
+      CommandIDs::PrefsOpenRecent + 12,
+      CommandIDs::PrefsOpenRecent + 13,
+      CommandIDs::PrefsOpenRecent + 14,
+      CommandIDs::PrefsOpenRecent + 15,
+      CommandIDs::PrefsClearOpenRecent,
       CommandIDs::EditorSave,
       CommandIDs::EditorSaveAs,
+      CommandIDs::LispLoadFile,
+      CommandIDs::PrefsLoadRecent + 0,
+      CommandIDs::PrefsLoadRecent + 1,
+      CommandIDs::PrefsLoadRecent + 2,
+      CommandIDs::PrefsLoadRecent + 3,
+      CommandIDs::PrefsLoadRecent + 4,
+      CommandIDs::PrefsLoadRecent + 5,
+      CommandIDs::PrefsLoadRecent + 6,
+      CommandIDs::PrefsLoadRecent + 7,
+      CommandIDs::PrefsLoadRecent + 8,
+      CommandIDs::PrefsLoadRecent + 9,
+      CommandIDs::PrefsLoadRecent + 10,
+      CommandIDs::PrefsLoadRecent + 11,
+      CommandIDs::PrefsLoadRecent + 12,
+      CommandIDs::PrefsLoadRecent + 13,
+      CommandIDs::PrefsLoadRecent + 14,
+      CommandIDs::PrefsLoadRecent + 15,
+      CommandIDs::PrefsClearLoadRecent,      
       CommandIDs::EditorShowDirectory,
       CommandIDs::EditorSetDirectory,
-
       CommandIDs::EditorClose,      
+      CommandIDs::AppQuit,
 
       CommandIDs::EditorUndo,        // Edit menu
       CommandIDs::EditorRedo,
@@ -206,6 +250,18 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       if (commandkeyactive)
 	info.addDefaultKeypress(T('O'), ModifierKeys::commandModifier);
       break;
+    case CommandIDs::PrefsOpenRecent:
+      {
+	File f=Preferences::getInstance()->recentlyOpened.getFile(data);
+	if (f==File::nonexistent)
+	  info.shortName=T("<Unknown File>");
+	else
+	  info.shortName=f.getFileName();
+      }
+      break;
+    case CommandIDs::PrefsClearOpenRecent:
+      info.shortName=T("Clear Menu");
+      break;
     case CommandIDs::EditorSave:
       info.shortName=T("Save...");
       if (commandkeyactive)
@@ -216,6 +272,21 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.shortName=T("Save As...");
       if (commandkeyactive)
 	info.addDefaultKeypress(T('S'), ModifierKeys::commandModifier | ModifierKeys::shiftModifier);
+      break;
+    case CommandIDs::LispLoadFile:
+      info.shortName=T("Load...");
+      break;
+    case CommandIDs::PrefsLoadRecent:
+      {
+	File f=Preferences::getInstance()->recentlyLoaded.getFile(data);
+	if (f==File::nonexistent)
+	  info.shortName=T("<Unknown File>");
+	else
+	  info.shortName=f.getFileName();
+      }
+      break;
+    case CommandIDs::PrefsClearLoadRecent:
+      info.shortName=T("Clear Menu");
       break;
     case CommandIDs::EditorShowDirectory:
       info.shortName=T("Show Working Directory");
@@ -228,6 +299,11 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       if (commandkeyactive)
 	info.addDefaultKeypress(T('W'), ModifierKeys::commandModifier);
       break;
+    case CommandIDs::AppQuit:
+      info.shortName=T("Quit Grace");
+      info.addDefaultKeypress('Q', ModifierKeys::commandModifier);
+      break;
+
       // EDIT MENU
    case CommandIDs::EditorUndo:
       info.shortName=T("Undo");
@@ -363,21 +439,34 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
     case CommandIDs::EditorOpen:
       openFile();
       break;
+    case CommandIDs::PrefsOpenRecent:
+      CodeEditorWindow::openFile(Preferences::getInstance()->recentlyOpened.getFile(data));
+      break;
     case CommandIDs::EditorSave:
       saveFile(false);
       break;
     case CommandIDs::EditorSaveAs:
       saveFile(true);
       break;
+    case CommandIDs::EditorShowDirectory:
+      ((Grace *)JUCEApplication::getInstance())->showWorkingDirectory();
+      break;
     case CommandIDs::EditorSetDirectory:
       ((Grace *)JUCEApplication::getInstance())->chooseWorkingDirectory();
       break;
-    case CommandIDs::EditorShowDirectory:
-      ((Grace *)JUCEApplication::getInstance())->showWorkingDirectory();
+    case CommandIDs::LispLoadFile:
+      SchemeThread::getInstance()->load(File::nonexistent,true);	
+      break;
+    case CommandIDs::PrefsLoadRecent:
+      SchemeThread::getInstance()->load(Preferences::getInstance()->recentlyLoaded.getFile(data), true);
       break;
     case CommandIDs::EditorClose:
       closeButtonPressed();
       break;
+    case CommandIDs::AppQuit:
+      ((ConsoleWindow *)Console::getInstance()->getTopLevelComponent())->closeButtonPressed();
+      break;
+      // EDIT MENU
     case CommandIDs::EditorUndo:
       getCodeBuffer()->undo();
       getCodeBuffer()->isChanged(true);
@@ -427,7 +516,7 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       applyCustomComment();
       break;
     case CommandIDs::EditorSaveCustom:
-      writeCustomComment();
+      writeCustomComment(true);
       break;
     case CommandIDs::EditorParensMatching:
       getCodeBuffer()->isParensMatching(!getCodeBuffer()->isParensMatching()); // toggle parens matching
@@ -467,16 +556,34 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
   CodeBuffer* buff=getCodeBuffer();
   if (name==T("File")) 
     {
+      int num;
+      PopupMenu sub;
       menu.addCommandItem(&commands, CommandIDs::EditorNew);
       menu.addCommandItem(&commands, CommandIDs::EditorOpen);
+      num=jmin(16, Preferences::getInstance()->recentlyOpened.getNumFiles());
+      for (int i=0; i<num; i++) 
+        sub.addCommandItem(&commands, CommandIDs::PrefsOpenRecent + i);  
+      sub.addSeparator();
+      sub.addCommandItem(&commands, CommandIDs::PrefsClearOpenRecent);  
+      menu.addSubMenu(T("Open Recent"), sub);
       menu.addSeparator();
       menu.addCommandItem(&commands, CommandIDs::EditorSave);
       menu.addCommandItem(&commands, CommandIDs::EditorSaveAs);
+      menu.addSeparator();
+      menu.addCommandItem(&commands, CommandIDs::LispLoadFile);
+      sub.clear();
+      num=jmin(16, Preferences::getInstance()->recentlyLoaded.getNumFiles());
+      for (int i=0; i<num; i++) 
+        sub.addCommandItem(&commands, CommandIDs::PrefsLoadRecent + i);  
+      sub.addSeparator();
+      sub.addCommandItem(&commands, CommandIDs::PrefsClearLoadRecent);
+      menu.addSubMenu(T("Load Recent"), sub);
       menu.addSeparator();
       menu.addCommandItem(&commands, CommandIDs::EditorShowDirectory);
       menu.addCommandItem(&commands, CommandIDs::EditorSetDirectory);
       menu.addSeparator();
       menu.addCommandItem(&commands, CommandIDs::EditorClose);
+      menu.addCommandItem(&commands, CommandIDs::AppQuit);
     }
   else if (name==T("Edit")) 
     {
@@ -694,7 +801,7 @@ void CodeEditorWindow::applyCustomComment()
   if (!xml) return;
   
   CodeBuffer* buff=getCodeBuffer();
-  std::cout << "Customizations:\n";
+  //std::cout << "Customizations:\n";
   for (int i=0; i<xml->getNumAttributes(); i++)
     {
       String name=xml->getAttributeName(i);
@@ -713,28 +820,58 @@ void CodeEditorWindow::applyCustomComment()
   delete xml;
 }
 
-void CodeEditorWindow::writeCustomComment()
+void CodeEditorWindow::writeCustomComment(bool select)
 {
   //;; -*- syntax: lisp; theme: "clarity and beauty" -*-
   String custom (T(";;; -*-"));
   CodeBuffer* buffer=getCodeBuffer();
   custom << " syntax: " << TextIDs::toString(getCodeBuffer()->getTextType()) << T(";");
   custom << " font-size: " << buffer->getFontSize() << T(";"); 
-  custom << " theme: \"Vanilla\"" ; //<< getTheme.get
-  custom << " columns: " << buffer->getColumns() << T(";");
-  custom << " lines: " << buffer->getLines() << T(";");
-  custom << " -*-\n";
+  custom << " theme: \"Basic\"" ; //<< getTheme.get
+  int n=buffer->getColumns();
+  if (n!=72) custom << " columns: " << n << T(";");
+  n=buffer->getLines();
+  if (n!=30) custom << " lines: " << n << T(";");
+  custom << " -*-" << document.getNewLineCharacters();
   CodeDocument::Position a (&document,0);
   if (isCustomComment())  // delete existing comment line including eol
     {
-      CodeDocument::Position e (&document, 0, INT_MAX);
+      CodeDocument::Position e (&document, 1, 0); //0, INT_MAX);
       document.deleteSection(a,e);
     }
   buffer->goToStartOfDocument(false);
-  //document.insertText(a,custom);
+
+  //std::cout << "after delete, looking at (" << buffer->getCaretPos().getPosition() << "): '" << document.getTextBetween(buffer->getCaretPos(), buffer->getCaretPos().movedBy(1)).toUTF8() << "'\n";
+
+  if (buffer->isEOB())
+    custom << document.getNewLineCharacters();
+  if ( !CharacterFunctions::isWhitespace( a.getCharacter())) //.movedByLines(1)
+    custom << document.getNewLineCharacters();
   buffer->insertTextAtCaret(custom);
+  a.setLineAndIndex(1,0);
+  buffer->moveCaretTo(a, false);
+  //document.insertText(a,custom);
+  /*
+
+  if (buffer->isEOB() ||
+      !CharacterFunctions::isWhitespace(buffer->getCaretPos().getCharacter())
+      )
+    {
+      // add newline to empty buffer
+      if (buffer->isEOB())
+        buffer->insertTextAtCaret(document.getNewLineCharacters());
+      std::cout << "inserting text at eob or non white\n";
+      buffer->insertTextAtCaret(document.getNewLineCharacters());
+    }
+  */
+
+  // unless the nextline is empty add an additional line
+  //  std::cout << "looking at (" << buffer->getCaretPos().getPosition() << "): '" << document.getTextBetween(buffer->getCaretPos(), buffer->getCaretPos().movedBy(1)).toUTF8() << "'\n";
+
   // hightlight the comment (??)
-  buffer->goToStartOfDocument(true);
+
+  //  if (select)
+  //    buffer->goToStartOfDocument(true);
 }
 
 /*=======================================================================*
@@ -1079,18 +1216,17 @@ bool CodeBuffer::lookingAt(const CodeDocument::Position pos, const String text, 
     {
       CodeDocument::Position end=getEOB();
       int i=0;
-
       for ( ; i<len && at!=end; i++)
         {
-          String str=T("comparing ");
-          str << at.getCharacter() << T("&") << text[i] << T("\n");
-          std::cout << str.toUTF8();
+          //String str=T("comparing ");
+          //str << at.getCharacter() << T("&") << text[i] << T("\n");
+          //std::cout << str.toUTF8();
         if (at.getCharacter() != text[i])
           return false;
         else
           at.moveBy(1);
         }
-      std::cout << "done, i==len: " << (i==len) << " at==end: "  << (at==end) << "\n";
+      //std::cout << "done, i==len: " << (i==len) << " at==end: "  << (at==end) << "\n";
       if (i==len)
         return (delimited) ? ((at==end) || !char_token_p(syntax->syntab, at.getCharacter())) : true;
       return false;
@@ -1323,10 +1459,11 @@ void CodeBuffer::openLine()
 
 void CodeBuffer::posInfo(const CodeDocument::Position p)
 {
-  char c[2];
-  c[0]=(char)p.getCharacter();
-  c[1]=0;
-  std::cout << "pos=" << p.getPosition() << " (" << p.getLineNumber() << "," << p.getIndexInLine() << "), char='" << c << ", bol="<< isBOL() << ", eol=" << isEOL()   << ", bob="<< isBOB() << ", eob=" << isEOB() << "\n";
+  String s;
+  s << p.getCharacter();
+  std::cout << "curs=" << p.getPosition() << " (" << p.getLineNumber() << "," << p.getIndexInLine() << "), char='" << s.toUTF8() << "'\n"
+            << "line='" << p.getLineText().toUTF8() << "'\n"
+            << ", bol?="<< isBOL() << ", eol?=" << isEOL() << ", bob?="<< isBOB() << ", eob?=" << isEOB() << "\n";
 }
 
 void CodeBuffer::test(bool forward)
@@ -1367,27 +1504,33 @@ void CodeBuffer::eval(bool expandonly)
       top=bot.movedBy(regn);
       end=bot.getPosition();
     }
-
-  while (true)
+  // process region backwards recording the starting and ending
+  // positions of expressions
+  //// int n=0;
+  while (true /*&& (n<100) */)
     {
+      ////std::cout << n++ << " before backwardExpr, bot=" << bot.getPosition() << ", top=" << top.getPosition() << "\n";
+
       if (type==TextIDs::Lisp)
         scan=backwardLispExpr(bot, top);
       else if (type==TextIDs::Sal2)
         scan=backwardSal2Expr(bot, top);
 
-      std::cout << "after backwardExpr, scan=" << scan << ", bot="
-                << bot.getPosition() << ", top=" << top.getPosition() << "\n";
+      ////std::cout << "after backwardExpr, scan=" << scan << ", bot="
+      ////      << bot.getPosition() << ", top=" << top.getPosition() 
+      ////      << "expr='" << document.getTextBetween(bot, top).toUTF8() << "'"
+      ////      << "\n";
       
       // break on error or nothing new to add
       if (scan<=0) 
         {
-          std::cout << "breaking scan<0\n";
+          //std::cout << "breaking scan<0\n";
           break;
         }
       // break if past lower bounds
       if (bot.getPosition()<end)
         {
-          std::cout << "breaking pos<end\n";
+          //std::cout << "breaking pos<end\n";
           break;
         }
       // push current expr bounds onto array
@@ -1396,13 +1539,13 @@ void CodeBuffer::eval(bool expandonly)
       // break if we are evalling just one backward expr
       if (regn==0) 
         {
-          std::cout << "breaking (regn=false)\n";
+          //std::cout << "breaking (regn=false)\n";
           break; 
         }
       // break if we added last possible expr
       if (bot.getPosition()==end)
         {
-          std::cout << "breaking pos=end\n";
+          //std::cout << "breaking pos=end\n";
           break;
         }
       // move top to bot (ie 1 above next start)
@@ -1415,15 +1558,15 @@ void CodeBuffer::eval(bool expandonly)
       String text;
       if (scan==SCAN_UNLEVEL)
         {
-          text=T("Unbalanced delimiter, line ");
-          text << bot.getLineNumber() << T(": ") 
+          text=T(">> Error: unbalanced delimiter, line ");
+          text << bot.getLineNumber() << T(":\n") 
                << bot.getLineText() << T("\n");
         }
       else if (scan=SCAN_UNMATCHED)
         {
-          text=T("Unmatched delimiter, line ");
+          text=T(">>> Error: unmatched delimiter, line ");
           // line is most recent upper bounds
-          text << top.getLineNumber() << T(": ") 
+          text << top.getLineNumber() << T(":\n") 
                << top.getLineText() << T("\n");
         }
       //      PlatformUtilities::beep();
@@ -1433,23 +1576,201 @@ void CodeBuffer::eval(bool expandonly)
     {
       bot.setPosition(epos.getFirst());
       top.setPosition(epos.getLast());
-      String code=document.getTextBetween(bot, top);
-      if (expandonly && (type==TextIDs::Lisp))
-        code=T("(macroexpand ") + code + T(")");
-      if (regn)
-        if (type==TextIDs::Lisp)
-          code=T("(begin ") + code + T(")");
-        else
-          code=T("begin ") + code + T(" end");
-      //if (type==TextIDs::Lisp)
-      //  SchemeThread::getInstance()->eval(code);
-      std::cout << "eval='" << code.toUTF8() << "'\n";
+      if (type==TextIDs::Lisp)
+        evalLisp(bot,top,expandonly,regn);
+      else if (type==TextIDs::Sal2)
+        evalSal2(bot,top,expandonly,regn);
     }
   else
     {
-      std::cout << "empty!\n";
+      //std::cout << "empty!\n";
     }
 }
+
+void CodeBuffer::evalLisp(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region)
+{
+  String code=document.getTextBetween(start, end);
+  std::cout << "eval='" << code.toUTF8() << "'\n";
+  if (expand)
+    code=T("(macroexpand ") + code + T(")");
+  if (region)
+    code=T("(begin ") + code + T(")");
+  SchemeThread::getInstance()->eval(code);
+}
+
+void CodeBuffer::evalSal2(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region)
+{
+  // this function is called after expr scanning has already occured
+  // so we know that we have balanced expressions. forward scan sal
+  // tokens and call sal on result. if region is true then surround
+  // the add 'begin' and 'end' to the string and token array adjust
+  // string positions accordingly
+ 
+  //String code=document.getTextBetween(start, end);
+  //std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
+  //          << ", end=" << end.getPosition() << "\n";
+  OwnedArray<SynTok> tokens;
+  CodeDocument::Position pos (start);
+  int beg=pos.getPosition();  // offset of string
+  int ins=(region) ? 6 : 0;   // inset length of "begin "
+  int lev=0;
+  int scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments, end.getPosition());
+  while (pos!=end)
+    {
+      CodeDocument::Position far(pos);
+      scan=scanCode(far, true, ScanFlags::MoveTokens, end.getPosition());
+      if (scan<=0) break;
+      int loc=pos.getPosition()-beg + ins;
+      if (scan==SCAN_OPEN)
+        {
+          tchar c=pos.getCharacter();
+          if (c==T('('))
+            tokens.add(new SynTok(T("("), SalSyntax::SalLParen, loc));
+          else if (c==T('{'))
+            tokens.add(new SynTok(T("{"), SalSyntax::SalLCurly, loc));
+          else if (c==T('['))
+            tokens.add(new SynTok(T("["), SalSyntax::SalLBrace, loc));
+        }
+      else if (scan==SCAN_CLOSE)
+        {
+          tchar c=pos.getCharacter();
+          if (c==T(')'))
+            tokens.add(new SynTok(T(")"), SalSyntax::SalRParen, loc));
+          else if (c==T('}'))
+            tokens.add(new SynTok(T("}"), SalSyntax::SalRCurly, loc));
+          else if (c==T(']'))
+            tokens.add(new SynTok(T("]"), SalSyntax::SalRBrace, loc));
+        }
+      else if (scan==SCAN_PUNCT)
+        tokens.add(new SynTok(T(","), SalSyntax::SalComma, loc));
+      else if (scan==SCAN_STRING)
+        {
+          tokens.add(new SynTok(document.getTextBetween(pos,far).unquoted(), SalSyntax::SalComma, loc));
+        }
+      else if (scan==SCAN_TOKEN)
+        {
+          String s=document.getTextBetween(pos,far);
+          if (SynTok* t=Sal2Syntax::getInstance()->getSynTok(s))
+            {
+              int x=t->getType();
+              tokens.add(new SynTok(s, x, loc));
+              if (SalSyntax::isSalBlockOpen(x)) lev++;
+              else if (SalSyntax::isSalBlockClose(x)) lev--;
+            }
+          else if (int t=isNumberToken(s))
+            {
+              int typs[] = {SalSyntax::SalInteger, SalSyntax::SalFloat, SalSyntax::SalRatio};
+              tokens.add(new SynTok(s, typs[t-1], loc));
+            }
+          else // is still a valid token!
+            {
+              if (s.getLastCharacter()==T(':'))
+                tokens.add(new SynTok(s.dropLastCharacters(1), SalSyntax::SalKeyparam, loc));
+              else if (s[0]==T(':'))
+                tokens.add(new SynTok(s.substring(1), SalSyntax::SalKeyword, loc));
+              else
+                tokens.add(new SynTok(s, SalSyntax::SalIdentifier, loc));
+            }
+        }
+      pos=far;
+      scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments, end.getPosition());
+    }
+
+  if (scan<0)
+    {
+      String text=T(">>> Error: scanning problem in line: ");
+      text << pos.getLineNumber() << T("\n")
+           << pos.getLineText() << T("\n");
+      Console::getInstance()->printError(text);
+    }
+  else if (lev<0) // to many close
+    {
+      Console::getInstance()->printError(">>> Error: extraneous end");
+    }
+  else if (lev>0)
+    {
+      Console::getInstance()->printError(">>> Error: missing end");
+    }
+  else
+    {
+      String code;
+      if (region)
+        {
+          // if we are evalling a region we need to add begin and end
+          // tokens to the token array and also add their names to the
+          // text string so that token positions are corrent when
+          // reporting errors
+          code << T("begin ") << document.getTextBetween(start, end) << T(" end");
+          tokens.insert(0, new SynTok(T("begin"), SalSyntax::SalBegin, 0));
+          tokens.add(new SynTok(T("end"), SalSyntax::SalEnd, 
+                                end.getPosition()-start.getPosition()+ins));
+        }
+      else
+        code=document.getTextBetween(start, end);
+      XSalNode* node=new XSalNode(0.0, code, getTextType(), expand);
+      // swapping moves tokens from the local array to the evalnode's
+      // array AND clears the local array in a single
+      // operation. swapping must be done or the tokens will be
+      // deleted when the local array goes out of scope!
+      node->toks.swapWithArray(tokens);
+      ////std::cout << "after swap, node->toks.size()=" << node->toks.size()
+      ////          << " tokens.size()=" << tokens.size()
+      ////          << "\n";
+      ////std::cout << "tokens=";
+      ////for (int i=0; i<node->toks.size(); i++)
+      ////  std::cout << " " << node->toks[i]->toString().toUTF8();
+      ////std::cout << "\n";
+      SchemeThread::getInstance()->addNode(node);
+    }
+}
+
+int CodeBuffer::isNumberToken(const String str) 
+{
+  // returns 0==nan, 1==int, 2==float, 3==ratio
+  int len=str.length();
+  int typ=0, dot=0, div=0, dig=0;
+  for (int pos=0; pos<len; pos++) 
+    switch ( str[pos] )
+      {
+      case T('-') :
+      case T('+') :
+        if (pos>0) return 0; // not in leading position
+        break;
+      case T('.') :
+        if (dot>0) return 0; // too many dots
+        if (div>0) return 0; // in ratio
+        dot++;
+        break;
+      case T('/') :
+        if (div>0) return 0; // too many divs
+        if (dig==0) return 0; // no digit yet
+        if (dot>0) return 0;  // float already
+        if (pos==len-1) return 0; // at end
+        div++;
+        break;
+      case T('0') :
+      case T('1') :
+      case T('2') :
+      case T('3') :
+      case T('4') :
+      case T('5') :
+      case T('6') :
+      case T('7') :
+      case T('8') :
+      case T('9') :
+        dig++;
+        break;
+      default:
+        return 0;
+      }
+  if (div) return 3;
+  if (dot) return 2; 
+  return 1;
+}
+
+/*=======================================================================*
+                            Backward Expression Gathering
+ *=======================================================================*/
 
 int CodeBuffer::backwardLispExpr(CodeDocument::Position& from, CodeDocument::Position& to)
 {
@@ -1471,8 +1792,8 @@ int CodeBuffer::backwardLispExpr(CodeDocument::Position& from, CodeDocument::Pos
 
 int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Position& to)
 {
-  CodeDocument::Position pos (getCaretPos());
-  //CodeDocument::Position pos (to);
+  //CodeDocument::Position pos (getCaretPos());
+  CodeDocument::Position pos (to);
   CodeDocument::Position bob=getBOB();
   int scan=0, last=0, here=-1, level=0;
   #define SCAN_CURLY (SCAN_PUNCT+1)
@@ -1535,7 +1856,7 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
         // quit if scan error or only white space
         if (scan<=0)
           {
-            //std::cout << "breaking with scan <= 0: " << scan;
+            //std::cout << "breaking with scan <= 0: " << scan << "\n";;
             break;
           }
         String code=document.getTextBetween(pos,end);
@@ -1624,20 +1945,23 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
       }
   //std::cout << "_______________\n";
 
-  //std::cout << "after loop, here=" << here << "\n";
-
+  if (scan<0) 
+    {
+      //std::cout << "returning: " << scan << "\n";
+      return scan;
+    }
+  //std::cout << "after loop, here=" << here << "scan=" << scan << "\n";
+  from.setPosition(here);
+  //std::cout << "setting from position="<< here << "\n";
+  to.setPosition(top.getPosition());
+  //std::cout << "setting to position=" << top.getPosition() << "\n";
+  
   // stopped without lower bound means no expr encountered
   if (here<0) 
     {
       scan=SCAN_EMPTY;
       here=pos.getPosition();
     }
-
-  from.setPosition(here);
-  //std::cout << "setting from position="<< here << "\n";
-  to.setPosition(top.getPosition());
-  //std::cout << "setting to position=" << top.getPosition() << "\n";
-
   //std::cout << "returning: "  << ((here>-1) ? 1 : scan) << "\n";
   return (here>-1) ? 1 : scan;
 }
@@ -1882,19 +2206,19 @@ int CodeBuffer::indentSal2()
       if (substarts.size()>0) // use last subexpr indentation
         {
           col=lastIndented(substarts, false);
-          std::cout << "UNLEVEL indent (last expr), column=" << col << "\n";
+          //std::cout << "UNLEVEL indent (last expr), column=" << col << "\n";
           return col;
         }
       else
         {
           col=pos.movedBy(1).getIndexInLine();
-          std::cout << "UNLEVEL indent (no exprs), column=" << col << "\n";
+          //std::cout << "UNLEVEL indent (no exprs), column=" << col << "\n";
           return col;
         }
     }
   else if (subtypes.size()==0) // no expressions encountered (only white space)
     {
-      std::cout << "EMPTY indent, column=0\n" ;
+      //std::cout << "EMPTY indent, column=0\n" ;
       return 0;
     }  
 
@@ -1904,7 +2228,7 @@ int CodeBuffer::indentSal2()
   if (!SalSyntax::isSalType(subtypes[0]))     // stopped on a non-sal expression
     {
       col=lastIndented(substarts, false);
-      std::cout << "SEXPR indent, column=" << col << "\n";
+      //std::cout << "SEXPR indent, column=" << col << "\n";
     }
   else // types[0] is sal entity, hopefully a command
     {
@@ -1927,7 +2251,7 @@ int CodeBuffer::indentSal2()
                   CodeDocument::Position p (&document, substarts[last]);
                   col=p.getIndexInLine()+4+1;
                 }
-              std::cout << "COMMA indent, column=" << col << "\n";
+              //std::cout << "COMMA indent, column=" << col << "\n";
             }
           // ELSE (the very last line does NOT end with comma) if
           // line-1 is >= cmdline and DOES end with comma then we are
@@ -1937,12 +2261,12 @@ int CodeBuffer::indentSal2()
               if (cmdtoken->getData1()>0)
                 {
                   col=pos.getIndexInLine()+2;
-                  std::cout << "BODY indent (after comma stop), column=" << col << "\n";
+                  //std::cout << "BODY indent (after comma stop), column=" << col << "\n";
                 }
               else
                 {
                   col=pos.getIndexInLine();
-                  std::cout << "RESET indent (after comma stop), column=" << col << "\n";
+                  //std::cout << "RESET indent (after comma stop), column=" << col << "\n";
                 }
             }
           // ELSE if the last indented is 'else' then body indent
@@ -1951,7 +2275,7 @@ int CodeBuffer::indentSal2()
             {
               CodeDocument::Position p (&document, substarts[last]);
               col=p.getIndexInLine()+2;
-              std::cout << "ELSE indent, column=" << col << "\n";
+              //std::cout << "ELSE indent, column=" << col << "\n";
             }          
           // else if the command is a body indent, indent to the last
           // expression or to 2 past the first (command) expr
@@ -1960,14 +2284,14 @@ int CodeBuffer::indentSal2()
               if (last==0) // the command, no subexprs on own line
                 {
                   col=pos.getIndexInLine()+2;
-                  std::cout << "BODY indent, column=" << col << "\n";
+                  //std::cout << "BODY indent, column=" << col << "\n";
                 }
               // else indent to the last expression
               else
                 {
                   CodeDocument::Position p (&document, substarts[last]);
                   col=p.getIndexInLine();
-                  std::cout << "LAST indent (body), column=" << col << "\n";
+                  //std::cout << "LAST indent (body), column=" << col << "\n";
                 }
             }
           // else indent to the last expression
@@ -1975,13 +2299,13 @@ int CodeBuffer::indentSal2()
             {
               CodeDocument::Position p (&document, substarts[last]);
               col=p.getIndexInLine();
-              std::cout << "LAST indent, column=" << col << "\n";
+              //std::cout << "LAST indent, column=" << col << "\n";
             }
         }
       else
         {
           col=lastIndented(substarts, false);
-          std::cout << "non-standard sal indent, column=" << col << "\n";
+          //std::cout << "non-standard sal indent, column=" << col << "\n";
         }
     }
 
@@ -1995,7 +2319,7 @@ int CodeBuffer::indentSal2()
   if (lookingAt(bol, T("end"), true, true) || lookingAt(bol, T("else"), true, true))
     {
       col-=2;
-      std::cout << "cursor is looking at end or else\n";
+      //std::cout << "cursor is looking at end or else\n";
     }
   return jmax(col,0);
 }
@@ -2046,15 +2370,6 @@ int CodeBuffer::lastIndented(Array<int>& starts, bool index)
       CodeDocument::Position a (&document, starts[i]);
       return (index) ? i : a.getIndexInLine();
     }
-}
-
-/*=======================================================================*
-                              Tokenizing Functions
- *=======================================================================*/
-
-bool CodeBuffer::tokenizeSal(const CodeDocument::Position start, const CodeDocument::Position end,
-                             OwnedArray<SynTok>& tokens) 
-{
 }
 
 /*=======================================================================*
@@ -2145,18 +2460,20 @@ bool CodeBuffer::scanPrefix(CodeDocument::Position& pos, const int dir, const Co
   return prefix;
 }
 
-int CodeBuffer::scanCode(CodeDocument::Position& pos, bool forward, int mode)
+int CodeBuffer::scanCode(CodeDocument::Position& pos, bool forward, int mode, int limit)
 {
   int typ = SCAN_EMPTY;
   int dir=(forward) ? 1 : -1;
   int par=0, sqr=0, cur=0, ang=0;
-  CodeDocument::Position end = (forward) ? getEOB() : getBOB();
+  //  CodeDocument::Position end = (forward) ? getEOB() : getBOB();
+  CodeDocument::Position end (&document,0);
   bool atfirst=false;
   #define ISLEVEL(a,b,c,d) (((a)==0)&&((b)==0)&&((c)==0)&&((d)==0))
 
-  String s;
-  s<<pos.getCharacter();
-  std::cout << "before scan, pos=" << pos.getPosition() << ", char=" << s.toUTF8() << "\n";
+  if (limit==-1)
+    end=(forward) ? getEOB() : getBOB();
+  else
+    end.setPosition(limit);
 
   while (true)
     {
@@ -2223,8 +2540,9 @@ int CodeBuffer::scanCode(CodeDocument::Position& pos, bool forward, int mode)
           pos.moveBy(dir); // advance position one beyond first "
           if (scanCharacter(T('\"'), pos, dir, end))
             {
-              // found end of string advance pos one past that char
-              pos.moveBy(dir);
+              // now on end of string advance pos one past that char
+              // 
+              if (/*!forward &&*/ (pos!=end))  pos.moveBy(dir);
               if (ISLEVEL(par,cur,sqr,ang)) 
                 {
                   typ = SCAN_STRING;
@@ -2310,8 +2628,8 @@ int CodeBuffer::scanCode(CodeDocument::Position& pos, bool forward, int mode)
     } // end while
 
   //std::cout << "pos="<<pos.getPosition()<< ",typ="<<typ<<",isfirst="<<atfirst<<"\n";
+  //std::cout << "after scan, par=" << par << "\n";
   // move pos back to the first char if backward scan
-  std::cout << "after scan, par=" << par << "\n";
 
   if (typ<0) 
     ;

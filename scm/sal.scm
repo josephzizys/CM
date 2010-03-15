@@ -1782,14 +1782,11 @@
 		     args (parse-unit-position (first args))))
   (lambda (unit info errf)
     (cons 'begin (emit (parse-unit-parsed unit) info errf))))
-
-;;;
-;;; Sal Runtime Support
-;;;
     
-(define* (sal str tokens (expand #f) (rule SalStatementRule))
+(define (sal str tokens expand )
   (if (pair? tokens)
-      (let ((scm (parse rule tokens #f 0 #f #f)))
+      (let* ((rule SalStatementRule)
+             (scm (parse rule tokens #f 0 #f #f)))
         (cond ((parse-error? scm)
                (print-sal-error str scm #f)
                (void))
@@ -1799,6 +1796,207 @@
               (else
                (eval scm (interaction-environment)))))
       (void)))
+
+;;=========================================================================
+;;
+;; Sal2
+;;
+;; begin ... end
+;; if (<expr>)  ... [else ...] end
+;; function <name> (...) ... end
+;; loop ... end
+;; outfile {string} (...) ... end
+;; run ... end
+;; set ...
+;; variable ...
+;;=========================================================================
+
+(defrule Sal2VariableStatementRule
+  (and Sal2Variable SalBindRule (* SalComma SalBindRule))
+  (lambda (args errf)
+    ;; args: (<variable> (...))
+    (format #t "~S~%" (list #:variable-> args))
+    (make-parse-unit Sal2VariableStatementRule
+                     (remove-token-type (cons (second args)
+                                              (third args))
+                                        SalComma)
+                     #f))
+  (lambda (unit info errf)
+    (let* ((head (list 'begin))
+	   (tail head))
+      (do ((data (parse-unit-parsed unit) (cdr data))
+           (bind #f)
+           (var #f))
+          ((null? data)
+           (set-cdr! tail (list var))
+           head)
+        (set! bind (emit (car data) info errf))
+        (set! var (car bind))
+        (set-cdr! tail (list (cons 'define bind)))
+        (set! tail (cdr tail)))))
+  )
+
+(defrule Sal2BeginStatementRule
+  (and SalBegin (@ SalBindingsRule) (+ Sal2StatementRule) SalEnd)
+  (lambda (args errf)
+    ;; args: (BEGIN [(<bindings>)] (...) END)
+    ;;(format #t "~S~%" (list #:block-> args))
+    (let ((vars (second args))
+	  (body (third args)))
+      (if vars (set! vars (first vars)))
+      (make-parse-unit Sal2BeginStatementRule
+		       (cons vars body)
+		       #f)))
+  (lambda (unit info errf)
+    ;; ( <bindings> . <statements>)
+    (let* ((bloc (parse-unit-parsed unit))
+           (vars (car bloc)))
+      (cond ((not vars)
+             `(begin ,@ (emit (cdr bloc) info errf)))
+            (else
+             `(let* ,(emit vars info errf)
+                ,@ (emit (cdr bloc)
+                         (add-emit-info :let #t info)
+                         errf)
+                   )))))
+  )
+
+(defrule Sal2IfStatementRule 
+  (and Sal2If SalLParen SalSexprRule SalRParen
+       (+ Sal2StatementRule)
+       (@ SalElse (+ Sal2StatementRule))
+       SalEnd)
+  (lambda (args errf)
+    ;; ARGS: <IF> <(> (<expr>...) <)> 
+    ;;(format #t "~S~%" (list :if-> args))
+    (let ((test (third args))
+          (then (fifth args))
+          ( else (sixth args)))
+      (if else (set! else (cadr else)))
+      (make-parse-unit Sal2IfStatementRule
+                       (list test then else) #f)))
+  (lambda (unit info errf)
+    (let* ((data (parse-unit-parsed unit))
+           (test (emit (first data) info errf))
+           (then (emit (second data) info errf))
+           ( else (and (third data)
+                       (emit (third data) info errf))))
+      (if (null? (cdr then))
+          (set! then (car then))
+          (set! then (cons 'begin then)))
+      (if else
+          (if (null? (cdr else))
+              (set! else (car else))
+              (set! else (cons 'begin else))))
+      (list 'if test then else)))
+  )
+
+(defrule Sal2FunctionStatementRule
+  (and Sal2Function
+       SalIdentifier
+       SalLParen 
+       (@ SalBindRule (* SalComma SalBindRule))
+       SalRParen
+       (@ SalBindingsRule)
+       (+ Sal2StatementRule)
+       SalEnd
+       )
+  (lambda (args errf)
+    ;; FUNCTION <name> <(> #f <)> #f (<statement>*) END
+    ;;(format #t "~S~%" (list #:function-> args))
+    (let ((name (second args))
+	  (pars (or (fourth args) (list)))
+          (vars (sixth args))
+	  (body (seventh args)))
+      (if (pair? pars)
+	  (set! pars (cons (first pars)
+			   (remove-token-type (second pars) SalComma))))
+      ;; vars = #f | (<bindings>)
+      (if vars (set! vars (car vars)))
+      (make-parse-unit Sal2FunctionStatementRule
+                       (list name pars vars body)
+                       #f)) )
+    (lambda (unit info errf)
+      (let* ((data (parse-unit-parsed unit))
+             (name (emit (first data) info errf))
+             (pars (emit (second data) info errf))
+             (vars (third data))
+             (body (emit (fourth data) info errf)))
+        (if vars
+            (set! body `((let* , (emit vars info errf) ,@ body))))
+        `(define* ,(cons name pars) ,@body)))
+  )
+
+(defrule Sal2LoopStatementRule
+  (and (or SalLoop SalRun)
+       (@ SalBindingsRule)
+       (* SalSteppingRule )
+       (* SalTerminationRule)
+       (+ Sal2StatementRule)
+       (@ SalFinally Sal2StatementRule)
+       SalEnd)
+  (lambda (args errf)
+    (let ((type (first args))
+	  (vars (second args))
+	  (step (third args))
+	  (stop (fourth args))
+	  (body (fifth args))
+	  (done (sixth args)))
+      ;; #f or (<bindings)
+      (if vars (set! vars (car vars)))
+      (if done (set! done (cadr done)))
+      (make-parse-unit Sal2LoopStatementRule
+		       (list type vars step stop body done)
+		       (parse-unit-position type))))
+  (lambda (unit info errf)
+    (sal-emit-iteration unit info errf ))
+  )
+
+(defrule Sal2StatementRule
+  (or Sal2BeginStatementRule
+      Sal2IfStatementRule
+      Sal2VariableStatementRule
+      Sal2FunctionStatementRule
+      Sal2LoopStatementRule
+      SalAssignmentRule
+      SalSexprRule
+      )
+  #f
+  #f)
+
+(define (sal2 str tokens expand)
+  (let ((arry #f)
+        (code #f))
+    ;; if this function is called in scheme or from emacs then
+    ;; tokenzing has not already taken place
+    (if (not (pair? tokens))
+        (begin (set! arry (ffi_sal_allocate_tokens))
+               (set! tokens (ffi_sal_tokenize_string str arry #t))
+               ))
+    (cond ((or (null? tokens) (not tokens)) 
+           ;; either tokenizing failed (and an error has already been
+           ;; reported) or the input was empty. in either case return
+           ;; +s7-error+ so that the C side doesnt attempt to print
+           ;; any values on return.
+           (if arry (ffi_sal_free_tokens arry))
+           +s7-error+)
+          (else
+           ;; call sal parser to generate scheme code
+           (set! code (parse Sal2StatementRule tokens #f 0 #f #f))
+           ;; no matter what gc the tokenarry
+           (if arry (ffi_sal_free_tokens arry))
+           (cond ((parse-error? code)
+                  (print-sal-error str code #f) ; signal error
+                  +s7-error+)
+                 (expand 
+                  code)
+                 (else
+                  (eval code (interaction-environment))))
+           ))))
+
+;;;
+;;; Sal Runtime Support
+;;;
 
 (define (print-sal-error str err err?)
   (let* ((len (string-length str))
@@ -1835,8 +2033,6 @@
                  (values))
           (error msg)))))
       
-(define *print-decimals* #t)
-
 (define (sal:print . args)
   (ffi_sal_print args))
 

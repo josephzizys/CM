@@ -125,11 +125,11 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   bool scanToken(CodeDocument::Position& pos, const int dir, const CodeDocument::Position end);
   bool scanPrefix(CodeDocument::Position& pos, const int dir, const CodeDocument::Position end);
   bool scanCharacter(tchar chr, CodeDocument::Position& pos, const int dir, const CodeDocument::Position end);
-  int scanCode(CodeDocument::Position& pos, bool forward, int mode);
+  int scanCode(CodeDocument::Position& pos, bool forward, int mode, int limit=-1);
 
   void eval(bool expandonly);
-  void evalLisp(bool expandonly);
-  void evalSal2(bool expandonly);
+  void evalLisp(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
+  void evalSal2(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
   int backwardLispExpr(CodeDocument::Position& from, CodeDocument::Position& to);
   int backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Position& to);
   void indent();
@@ -139,6 +139,7 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   bool isCommaTerminatedLine(int line);
   bool tokenizeSal(const CodeDocument::Position start, const CodeDocument::Position end,
                    OwnedArray<SynTok>& tokens);
+  int isNumberToken(const String str);
 
   // testing
   void test(bool forward);
@@ -196,7 +197,7 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
 
   bool isCustomComment();
   XmlElement* getCustomizations();
-  void writeCustomComment();
+  void writeCustomComment(bool select);
   void applyCustomComment();
 
   //  void saveFile();

@@ -96,9 +96,10 @@ bool XEvalNode::applyNode(SchemeThread* schemethread, double curtime)
   return false; 
 }
 
-XSalNode::XSalNode(double qtime, String input, bool xpand )
+XSalNode::XSalNode(double qtime, String input, int id, bool xpand )
   : XSchemeNode(qtime),
     expand (xpand),
+    vers(id),
     expr (input)
 {
 }
@@ -117,18 +118,33 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
     {
      data=s7_cons(sc, s7_make_c_pointer(sc, toks.getUnchecked(i)), data);
     }
-  // turn data into arglist, either ( ({tok}*) ) or ( ({tok}*) #t)
-  if (expand)
-    data=s7_cons(sc, data, s7_cons(sc, st->schemeTrue, st->schemeNil));
-  else
-    data=s7_cons(sc, data, st->schemeNil);
-  // add input string as first arg: ("input" ({tok}*) [#t]*)
-  data = s7_cons(sc, s7_make_string(sc, expr.toUTF8()), data);
+  // turn data into arglist ("input" ({tok}*) [#t|#f]*)
+  data=s7_cons(sc, 
+               s7_make_string(sc, expr.toUTF8()),
+               s7_cons(sc, 
+                       data,
+                       s7_cons(sc, 
+                               s7_make_boolean(sc, expand),
+                               st->schemeNil))
+               );
   // gc protect data cobbled up on the C side
   int prot = s7_gc_protect(sc, data);
-  s7_pointer retn=s7_call(sc,
-                          s7_name_to_value(sc, "sal"),
-                          data);
+  s7_pointer retn;
+  if (vers==TextIDs::Sal)
+    {
+      // sal only side effects so we never process return values
+      retn=s7_call(sc, s7_name_to_value(sc, "sal"), data);
+    }
+  else
+    {
+      retn=s7_call(sc, s7_name_to_value(sc, "sal2"), data);
+      if (retn != st->schemeError)
+        {
+          String str=String(s7_object_to_c_string(sc, retn));
+          str << T("\n");
+          Console::getInstance()->printValues(str);
+        }
+    }
   s7_gc_unprotect_at(sc, prot);
   return false;
 }

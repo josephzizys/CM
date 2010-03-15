@@ -50,6 +50,12 @@ class SynTok
   int getIndent() {return data2;}
   int getLiteralClass() {return data3;}
   void print(bool lisp=true) ;
+  const String toString()
+  {
+    String str=T("#<");
+    str<<getName() << T(" 0x") << String::toHexString(getType()) << T(">");
+    return str;
+  }
 };
 
 typedef std::map <String, SynTok*> SynTokMap;
