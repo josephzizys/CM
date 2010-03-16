@@ -197,6 +197,10 @@ class SchemeThread : public Thread
   void setScoreMode(int mode);
   bool isScoreMode();
   bool isScoreMode(int mode);
+  
+  bool saleval;
+  bool isSalEval();
+  void isSalEval(bool sal);
 
   double scoretime;
   double getScoreTime();

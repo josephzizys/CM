@@ -130,6 +130,7 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
   // gc protect data cobbled up on the C side
   int prot = s7_gc_protect(sc, data);
   s7_pointer retn;
+  st->isSalEval(true);
   if (vers==TextIDs::Sal)
     {
       // sal only side effects so we never process return values
@@ -146,6 +147,7 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
         }
     }
   s7_gc_unprotect_at(sc, prot);
+  st->isSalEval(false);
   return false;
 }
 
@@ -560,6 +562,7 @@ SchemeThread::SchemeThread()
     scoremode (ScoreTypes::Empty),
     sprouted (false),
     showvoid (false),
+    saleval (false),
     voidstring (String::empty),
     scoretime (0.0),
     nextid (0),
@@ -595,7 +598,6 @@ void SchemeThread::signalSchemeError(String text)
            );
 }
 
-
 void SchemeThread::setScoreMode(int mode)
 {
   scoremode=mode;
@@ -615,6 +617,18 @@ bool SchemeThread::isScoreMode(int mode)
 double SchemeThread::getScoreTime()
 {
   return scoretime;
+}
+
+/// SalEval
+
+bool SchemeThread::isSalEval()
+{
+  return saleval;
+}
+
+void SchemeThread::isSalEval(bool sal)
+{
+  saleval=sal;
 }
 
 /// void value printing

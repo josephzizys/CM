@@ -1323,6 +1323,7 @@ Sal2Syntax::Sal2Syntax ()
   addSynTok(T("when"), SalSyntax::SalWhen);
   addSynTok(T("while"), SalSyntax::SalWhile);
   addSynTok(T("with"), SalSyntax::SalWith);
+  addSynTok(T("&optkey"), SalSyntax::SalOptKey);
   //  Operators, data field is op weight
   addSynTok(T("|"), SalSyntax::SalOr);
   addSynTok(T("&"), SalSyntax::SalAnd);
