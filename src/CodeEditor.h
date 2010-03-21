@@ -166,6 +166,8 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   public ApplicationCommandTarget
 {
   ApplicationCommandManager commands;
+
+  // window's content component
   class EditorComponent : public Component 
   {
     void resized () 
@@ -175,13 +177,12 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
     }
   public:
     CodeBuffer* buffer;
-    EditorComponent (CodeBuffer* buf)
+    EditorComponent ()
+      : buffer (NULL)
       {
-        setCodeBuffer(buf);
       }
     ~EditorComponent()
       {
-	//delete buffer;
         deleteAllChildren();
       }
     CodeBuffer* getCodeBuffer() 

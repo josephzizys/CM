@@ -74,7 +74,13 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   // buffer is not the content component so the window can contain
   // other components besides the editor, eg a mode line, toolbar etc.
   CodeBuffer* buffer=new CodeBuffer(document, syntax, &commands, customs);
-  setContentComponent(new EditorComponent(buffer));
+  EditorComponent* edcomp=new EditorComponent();
+  setContentComponent(edcomp);
+  // now set window and content component's size to buffer's optimum
+  // size before adding the buffer (so buffer doesnt get resized)
+  centreWithSize(jmin(800, buffer->getWidth()), 
+                 jmin(800, buffer->getHeight()));
+  edcomp->setCodeBuffer(buffer);
   // add (current) customizations to new empty buffers (???)
   if (text.isEmpty())
     writeCustomComment(false);
@@ -86,9 +92,6 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   setResizable(true, true); 
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
-  centreWithSize(jmin(800, buffer->getWidth()), 
-                 jmin(800, buffer->getHeight()) // add in menubar height??
-                 );
   if (customs) delete customs;
   setVisible(true);
 }
