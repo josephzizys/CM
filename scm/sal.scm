@@ -467,106 +467,108 @@
   (define Sal2Function #x4410)
   (define Sal2Process #x4510)
   (define Sal2If #x4610)
-  (define Sal2OutFile #x4710)
-  (define SAL_COMMAND_END #x4800)
-  (define SAL_CONSTITUENT_BEG #x4800)
-  (define SalElse #x4900)
-  (define SalEnd #x4a11)
-  (define SalReturn #x4b00)
-  (define SalThen #x4c00)
-  (define SalUnless #x4d00)
-  (define SalUntil #x4e00)
-  (define SalWait #x4f00)
-  (define SalWhen #x5000)
-  (define SalWhile #x5100)
-  (define SalWith #x5200)
-  (define SalOptKey #x5300)
-  (define SAL_CONSTITUENT_END #x5400)
-  (define SAL_STATEMENT_END #x5400)
-  (define SAL_CLAUSAL_BEG #x5400)
-  (define SalAbove #x5500)
-  (define SalBelow #x5600)
-  (define SalBy #x5700)
-  (define SalDownto #x5800)
-  (define SalFinally #x5900)
-  (define SalFor #x5a00)
-  (define SalFrom #x5b00)
-  (define SalIn #x5c00)
-  (define SalOver #x5d00)
-  (define SalRepeat #x5e00)
-  (define SalTo #x5f00)
-  (define SAL_CLAUSAL_END #x6000)
-  (define SAL_LITERAL_END #x6000)
-  (define SAL_DEFINE_BEG #x6000)
-  (define SalFunction #x6100)
-  (define SalProcess #x6200)
-  (define SalVariable #x6300)
-  (define SAL_DEFINE_END #x6400)
-  (define SAL_IDENTIFIER_BEG #x6400)
-  (define SalIdentifier #x6500)
-  (define SalSlotRef #x6600)
-  (define SAL_IDENTIFIER_END #x6700)
-  (define SAL_TOKEN_END #x6700)
-  (define SAL_RULE_BEG #x6700)
-  (define SalNumberRule #x6800)
-  (define SalBoolRule #x6900)
-  (define SalAtomRule #x6a00)
-  (define SalListRule #x6b00)
-  (define SalEltRule #x6c00)
-  (define SalArefRule #x6d00)
-  (define SalIfExprRule #x6e00)
-  (define SalUnquoteRule #x6f00)
-  (define SalFuncallRule #x7000)
-  (define SalFunargsRule #x7100)
-  (define SalPargsRule #x7200)
-  (define SalKargsRule #x7300)
-  (define SalOpRule #x7400)
-  (define SalMexprRule #x7500)
-  (define SalTermRule #x7600)
-  (define SalSexprRule #x7700)
-  (define SalBindingsRule #x7800)
-  (define SalBindRule #x7900)
-  (define SalAssignmentRule #x7a00)
-  (define SalAssignRule #x7b00)
-  (define SalAssignerRule #x7c00)
-  (define SalSetRule #x7d00)
-  (define SalFunctionReturnRule #x7e00)
-  (define SalProcessWaitRule #x7f00)
-  (define SalBlockRule #x8000)
-  (define SalConditionalRule #x8100)
-  (define SalLoopStatementRule #x8200)
-  (define SalRunStatementRule #x8300)
-  (define SalSteppingRule #x8400)
-  (define SalTerminationRule #x8500)
-  (define SalPrintStatementRule #x8600)
-  (define SalExecStatementRule #x8700)
-  (define SalSendStatementRule #x8800)
-  (define SalSoundFileStatementRule #x8900)
-  (define SalFomusFileStatementRule #x8a00)
-  (define SalSproutStatementRule #x8b00)
-  (define SalLoadStatementRule #x8c00)
-  (define SalChdirStatementRule #x8d00)
-  (define SalPlotStatementRule #x8e00)
-  (define SalDefineStatementRule #x8f00)
-  (define SalStatementRule #x9000)
-  (define SalStatementSequenceRule #x9100)
-  (define SalDeclarationRule #x9200)
-  (define SalVarDeclRule #x9300)
-  (define SalFunDeclRule #x9400)
-  (define SalProcDeclRule #x9500)
-  (define SalProcessBodyRule #x9600)
-  (define Sal2FormalsRule #x9700)
-  (define Sal2BeginStatementRule #x9800)
-  (define Sal2IfStatementRule #x9900)
-  (define Sal2FunctionStatementRule #x9a00)
-  (define Sal2VariableStatementRule #x9b00)
-  (define Sal2WithStatementRule #x9c00)
-  (define Sal2LoopStatementRule #x9d00)
-  (define Sal2ProcessStatementRule #x9e00)
-  (define Sal2OutFileStatementRule #x9f00)
-  (define Sal2StatementRule #xa000)
-  (define SAL_RULE_END #xa100)
-  (define SAL_TYPE_END #xa100)
+  (define Sal2Wait #x4700)
+  (define Sal2OutFile #x4810)
+  (define SAL_COMMAND_END #x4900)
+  (define SAL_CONSTITUENT_BEG #x4900)
+  (define SalElse #x4a00)
+  (define SalEnd #x4b11)
+  (define SalReturn #x4c00)
+  (define SalThen #x4d00)
+  (define SalUnless #x4e00)
+  (define SalUntil #x4f00)
+  (define SalWait #x5000)
+  (define SalWhen #x5100)
+  (define SalWhile #x5200)
+  (define SalWith #x5300)
+  (define SalOptKey #x5400)
+  (define SAL_CONSTITUENT_END #x5500)
+  (define SAL_STATEMENT_END #x5500)
+  (define SAL_CLAUSAL_BEG #x5500)
+  (define SalAbove #x5600)
+  (define SalBelow #x5700)
+  (define SalBy #x5800)
+  (define SalDownto #x5900)
+  (define SalFinally #x5a00)
+  (define SalFor #x5b00)
+  (define SalFrom #x5c00)
+  (define SalIn #x5d00)
+  (define SalOver #x5e00)
+  (define SalRepeat #x5f00)
+  (define SalTo #x6000)
+  (define SAL_CLAUSAL_END #x6100)
+  (define SAL_LITERAL_END #x6100)
+  (define SAL_DEFINE_BEG #x6100)
+  (define SalFunction #x6200)
+  (define SalProcess #x6300)
+  (define SalVariable #x6400)
+  (define SAL_DEFINE_END #x6500)
+  (define SAL_IDENTIFIER_BEG #x6500)
+  (define SalIdentifier #x6600)
+  (define SalSlotRef #x6700)
+  (define SAL_IDENTIFIER_END #x6800)
+  (define SAL_TOKEN_END #x6800)
+  (define SAL_RULE_BEG #x6800)
+  (define SalNumberRule #x6900)
+  (define SalBoolRule #x6a00)
+  (define SalAtomRule #x6b00)
+  (define SalListRule #x6c00)
+  (define SalEltRule #x6d00)
+  (define SalArefRule #x6e00)
+  (define SalIfExprRule #x6f00)
+  (define SalUnquoteRule #x7000)
+  (define SalFuncallRule #x7100)
+  (define SalFunargsRule #x7200)
+  (define SalPargsRule #x7300)
+  (define SalKargsRule #x7400)
+  (define SalOpRule #x7500)
+  (define SalMexprRule #x7600)
+  (define SalTermRule #x7700)
+  (define SalSexprRule #x7800)
+  (define SalBindingsRule #x7900)
+  (define SalBindRule #x7a00)
+  (define SalAssignmentRule #x7b00)
+  (define SalAssignRule #x7c00)
+  (define SalAssignerRule #x7d00)
+  (define SalSetRule #x7e00)
+  (define SalFunctionReturnRule #x7f00)
+  (define SalProcessWaitRule #x8000)
+  (define SalBlockRule #x8100)
+  (define SalConditionalRule #x8200)
+  (define SalLoopStatementRule #x8300)
+  (define SalRunStatementRule #x8400)
+  (define SalSteppingRule #x8500)
+  (define SalTerminationRule #x8600)
+  (define SalPrintStatementRule #x8700)
+  (define SalExecStatementRule #x8800)
+  (define SalSendStatementRule #x8900)
+  (define SalSoundFileStatementRule #x8a00)
+  (define SalFomusFileStatementRule #x8b00)
+  (define SalSproutStatementRule #x8c00)
+  (define SalLoadStatementRule #x8d00)
+  (define SalChdirStatementRule #x8e00)
+  (define SalPlotStatementRule #x8f00)
+  (define SalDefineStatementRule #x9000)
+  (define SalStatementRule #x9100)
+  (define SalStatementSequenceRule #x9200)
+  (define SalDeclarationRule #x9300)
+  (define SalVarDeclRule #x9400)
+  (define SalFunDeclRule #x9500)
+  (define SalProcDeclRule #x9600)
+  (define SalProcessBodyRule #x9700)
+  (define Sal2FormalsRule #x9800)
+  (define Sal2BeginStatementRule #x9900)
+  (define Sal2IfStatementRule #x9a00)
+  (define Sal2FunctionStatementRule #x9b00)
+  (define Sal2VariableStatementRule #x9c00)
+  (define Sal2WithStatementRule #x9d00)
+  (define Sal2LoopStatementRule #x9e00)
+  (define Sal2ProcessStatementRule #x9f00)
+  (define Sal2ProcessWaitRule #xa000)
+  (define Sal2OutFileStatementRule #xa100)
+  (define Sal2StatementRule #xa200)
+  (define SAL_RULE_END #xa300)
+  (define SAL_TYPE_END #xa300)
   )
 
 ;;; The parser attempts to match rule patterns against (typed) tokens
@@ -1394,7 +1396,7 @@
 	   (set! info (add-emit-info #:luup #t info)))
 	  (else
 	   (if (not (get-emit-info #:process info))
-	       ( errf (make-parse-error "run statement outside process" 
+	       ( errf (make-parse-error "process statement outside process" 
 					(parse-unit-position
 					 (car data))) ))
 	   (set! info (add-emit-info #:run #t info))
@@ -1818,7 +1820,7 @@
   (and Sal2Variable SalBindRule (* SalComma SalBindRule))
   (lambda (args errf)
     ;; args: (<variable> (...))
-    (format #t "~S~%" (list #:variable-> args))
+    ;;(format #t "~S~%" (list #:variable-> args))
     (make-parse-unit Sal2VariableStatementRule
                      (remove-token-type (cons (second args)
                                               (third args))
@@ -1894,114 +1896,6 @@
       (list 'if test then else)))
   )
 
-(defrule Sal2FormalsRule
-;  (and SalLParen
-;       (* SalIdentifier (* SalComma SalIdentifier))
-;       (* SalOptKey SalBindRule (* SalComma SalBindRule))
-;       SalRParen)
-
-  (or (and SalLParen SalRParen)
-      (and SalLParen SalOptKey SalBindRule (* SalComma SalBindRule) SalRParen)
-      (and SalLParen SalIdentifier (* SalComma SalIdentifier) 
-           SalOptKey SalBindRule (* SalComma SalBindRule) SalRParen)
-      (and SalLParen SalIdentifier (* SalComma SalIdentifier) SalRParen)
-      )
-
-  (lambda (args errf)
-      (format #t "~S~%" (list :formals-> args))
-      (let ((pars (list)) )
-        (format #t "~%")
-        ;; there are always at LEAST two args. if second is ")"
-        ;; then we have no pars
-        (cond ((token-unit-type=? (second args) SalRParen)
-               (set! pars (list))
-               )
-              ((token-unit-type=? (second args) SalOptKey) ; all optkey params
-               ;; args: ( <(> <&optkey> <bind> ({<,> <bind>*) <)> )
-               (set! pars (cons (third args)
-                                (remove-token-type (fourth args) SalComma)))
-               ;; pars is three element list (<optkey> () (opts...))
-               (set! pars (list (second args) pars (list)))
-               )
-              ((token-unit-type=? (fourth args) SalOptKey) ; mixed args
-               ;; have mix of required and optkey
-               (let ((reqs (cons (second args)
-                                 (remove-token-type (third args) SalComma)))
-                     (opts (cons (fifth args)
-                                 (remove-token-type (sixth args) SalComma))))
-                 ;; pars is three element list (<optkey> (reqs..) (opts...))
-                 (set! pars (list (fourth args) reqs opts))
-                 ) )
-              (else
-               ;; have only required
-               ;; args: ( <(> <symbol> ({<,> <symbol>*) <)> )
-               (set! pars (cons (second args)
-                                (remove-token-type (third args) SalComma)))
-               ))
-        (make-parse-unit Sal2FormalsRule pars #f)
-        ))
-    #f
-  )
-
-(defrule Sal2FunctionStatementRule
-  (and Sal2Function
-       SalIdentifier
-       Sal2FormalsRule
-;;;;       SalLParen 
-;;;;       (@ SalBindRule (* SalComma SalBindRule))
-;;;;       SalRParen
-       (@ SalBindingsRule)
-       (+ Sal2StatementRule)
-       SalEnd
-       )
-  (lambda (args errf)
-    ;; <FUNCTION> <name> <formals> #f (<statement>*) END
-    ;;(format #t "~S~%" (list #:function-> args))
-    (let ((name (second args))
-;;;;          (pars (or (fourth args) (list)))
-;;;;          (vars (sixth args))
-;;;;          (body (seventh args))
-	  (pars (third args))
-          (vars (fourth args))
-	  (body (fifth args))
-          )
-      ;; vars = #f | (<bindings>)
-      (if vars (set! vars (car vars)))
-      (make-parse-unit Sal2FunctionStatementRule
-                       (list name pars vars body)
-                       #f)) )
-  (lambda (unit info errf)
-    (let* ((data (parse-unit-parsed unit))
-           (name (emit (first data) info errf))
-           (pars (parse-unit-parsed (second data))) ; pars is list of formals (units)
-           (vars (third data))
-           (body (emit (fourth data) info errf)))
-      (if vars
-          (set! body `((let* , (emit vars info errf) ,@ body))))
-      ;; if no args or all required args used 'define'
-      (if (or (null? pars)
-              (not (token-unit-type=? (car pars) SalOptKey)))
-          `(define ,(cons name (emit pars info errf)) ,@body)
-          (let ((reqs (emit (second pars) info errf))
-                (opts (emit (third pars) info errf)))
-            ;; if all are optkey just use define*
-            (if (null? reqs)
-                (begin
-                  (format #t "all optkey: ~S ~S~%" opts body)
-              ;    `(define ,(cons name opts) ,@ body)
-                  123
-                  )
-                ;; else use define and with-optkeys
-                (let ((required reqs)
-                      (restarg (gensym "restarg"))
-                      (optkeys opts))
-                  (format #t "mixed optkey: ~S%" opts)
-
-                  `(define (,name ,@ required . , restarg)
-                     (with-optkeys (,restarg ,@ optkeys)
-                       ,@ body))
-                  )))))))
-                         
 (defrule Sal2LoopStatementRule
   (and SalLoop
        (@ SalBindingsRule)
@@ -2027,29 +1921,164 @@
     (sal-emit-iteration unit info errf ))
   )
 
+(defrule Sal2FormalsRule
+  (or (and SalLParen SalRParen)
+      (and SalLParen SalOptKey SalBindRule (* SalComma SalBindRule) SalRParen)
+      (and SalLParen SalIdentifier (* SalComma SalIdentifier) 
+           SalOptKey SalBindRule (* SalComma SalBindRule) SalRParen)
+      (and SalLParen SalIdentifier (* SalComma SalIdentifier) SalRParen)
+      )
+
+  (lambda (args errf)
+    ;;(format #t "~S~%" (list :formals-> args))
+    (let ((pars (list)) )
+      ;; there are always at LEAST two args. if second is <)>
+      ;; then we have no lambda args
+      (cond ((token-unit-type=? (second args) SalRParen)
+             (set! pars (list)) )
+            ((token-unit-type=? (second args) SalOptKey) ; all optkey params
+             (set! pars (cons (third args)
+                              (remove-token-type (fourth args) SalComma)))
+             ;; pars is two element list ( () (opts...))
+             (set! pars (list (list) (emit pars (list) errf)))) 
+            ((token-unit-type=? (fourth args) SalOptKey) ; mixed args
+             ;; mix of required and optkey
+             (let ((reqs (cons (second args)
+                               (remove-token-type (third args) SalComma)))
+                   (opts (cons (fifth args)
+                               (remove-token-type (sixth args) SalComma))))
+               ;; pars is a two element list ((reqs..) (opts...))
+               (set! pars (list (emit reqs (list) errf)
+                                (emit opts (list) errf)))
+               ))
+            (else ; only required args
+             (let ((reqs (cons (second args)
+                               (remove-token-type (third args) SalComma))))
+               ;; pars is list of symbols
+               (set! pars (emit reqs (list) errf))
+               )))
+      ;; the formals unit holds the emitted lambda bindings
+      (make-parse-unit Sal2FormalsRule pars #f)
+      ))
+  #f
+  )
+
+(defrule Sal2FunctionStatementRule
+  (and Sal2Function
+       SalIdentifier
+       Sal2FormalsRule
+       (@ SalBindingsRule)
+       (+ Sal2StatementRule)
+       SalEnd
+       )
+  (lambda (args errf)
+    ;; <FUNCTION> <name> <formals> #f (<statement>*) END
+    ;;(format #t "~S~%" (list #:function-> args))
+    (let ((name (second args))
+	  (pars (third args))
+          (vars (fourth args))
+	  (body (fifth args))
+          )
+      ;; vars = #f | (<bindings>)
+      (if vars (set! vars (car vars)))
+      (make-parse-unit Sal2FunctionStatementRule
+                       (list name pars vars body)
+                       #f)) )
+  (lambda (unit info errf)
+    (let* ((data (parse-unit-parsed unit))
+           (name (emit (first data) info errf))
+           (pars (parse-unit-parsed (second data))) ; pars is list of formals (units)
+           (vars (third data))
+           (body (emit (fourth data) info errf)))
+      (if vars
+          (set! body `((let* , (emit vars info errf) ,@body))))
+      (emit-function name pars body)
+      ;; use define if no args or all are required
+      #|(if (or (null? pars)
+              (symbol? (car pars)))
+          `(define ,(cons name pars) ,@body)
+          (let ((reqs (first pars))
+                (opts (second pars)))
+            ;; use define* if all are optkey
+            (if (null? reqs)
+                `(define* ,(cons name opts) ,@body)
+                ;; else (a mixture) use define and with-optkeys
+                (let ((restarg (gensym "restarg")))
+                  ;;`(define (,name ,@required . , restarg) (with-optkeys (,restarg ,@optkeys) ,@body))
+                  `(define (,name ,@reqs . , restarg)
+                     ,(append (list 'with-optkeys (cons restarg opts)) body))
+                  ))))|#
+      )))
+
+(define (emit-function name formals body)
+  ;; formals is either (), (a b c) or ((required...) (optkey...))
+  ;; wrap the appropriate function around body given the formals
+  (if (or (null? formals) (symbol? (car formals)))
+      ;; use define if no args or all required args
+      `(define ,(cons name formals) ,@body)
+      (let ((reqs (first formals))
+            (opts (second formals)))
+        ;; use define* if all optkey args
+        (if (null? reqs)
+            `(define* ,(cons name opts) ,@body)
+            ;; else required AND optkey, use define and with-optkeys
+            (let ((restarg (gensym "restarg")))
+              ;; this breaks...
+              ;;`(define (,name ,@required . , restarg) (with-optkeys (,restarg ,@optkeys) ,@body))
+              `(define (,name ,@reqs . , restarg)
+                 ,(append (list 'with-optkeys (cons restarg opts)) body))
+              )))))
+
+(defrule Sal2ProcessWaitRule (and Sal2Wait SalSexprRule)
+  (simple-unit-parser Sal2ProcessWaitRule)
+  (lambda (unit info errf)
+    (let ((data (parse-unit-parsed unit)))
+      (if (not (get-emit-info #:run info))
+	  ( errf (make-parse-error "wait statement outside process block"
+				   (parse-unit-position
+				    (car data)))))
+      (emit data info errf))))
+
 (defrule Sal2ProcessStatementRule
-  (and SalLoop
+  (and Sal2Process
+       SalIdentifier
+       Sal2FormalsRule 
        (@ SalBindingsRule)
        (* SalSteppingRule )
        (* SalTerminationRule)
-       (+ Sal2StatementRule)
+       (+ Sal2StatementRule)  
+       ;;(+ (or SalProcessWaitRule Sal2StatementRule)) 
        (@ SalFinally Sal2StatementRule)
        SalEnd)
   (lambda (args errf)
     (let ((type (first args))
-	  (vars (second args))
-	  (step (third args))
-	  (stop (fourth args))
-	  (body (fifth args))
-	  (done (sixth args)))
-      ;; #f or (<bindings)
+          (name (second args))
+          (pars (third args))
+	  (vars (fourth args))
+	  (step (fifth args))
+	  (stop (sixth args))
+	  (body (seventh args))
+	  (done (eighth args)))
+      ;; #f or (<bindings>)
       (if vars (set! vars (car vars)))
       (if done (set! done (cadr done)))
-      (make-parse-unit Sal2LoopStatementRule
-		       (list type vars step stop body done)
+      (make-parse-unit Sal2ProcessStatementRule
+		       (list type name pars vars step stop body done)
 		       (parse-unit-position type))))
   (lambda (unit info errf)
-    (sal-emit-iteration unit info errf ))
+    ;; remove name and formals from unit, emit loop body and wrap in
+    ;; function.
+    (let* ((data (parse-unit-parsed unit))
+           (type (first data))
+           (name (emit (second data) info errf))
+           (pars (parse-unit-parsed (third data)))
+           (body #f))
+      ;; pop name and pars from (run...) expansion
+      (parse-unit-parsed-set! unit (cons type (cdddr data)))
+      (set! info (add-emit-info #:process #t info))
+      (set! body (sal-emit-iteration unit info errf ))
+      (emit-function name pars (list body))
+    ))
   )
 
 (defrule Sal2StatementRule
@@ -2058,7 +2087,9 @@
       Sal2VariableStatementRule
       Sal2FunctionStatementRule
       Sal2LoopStatementRule
+      Sal2ProcessStatementRule
       SalAssignmentRule
+      Sal2ProcessWaitRule    ;; but only allowed inside process
       SalSexprRule
       )
   #f
@@ -2089,7 +2120,9 @@
                   (print-sal-error str code #f) ; signal error
                   +s7-error+)
                  (expand 
-                  code)
+                  (ffi_print_output code)
+                  +s7-error+ ;; signal no value printing
+                  )
                  (else
                   (eval code (interaction-environment))))
            ))))
@@ -2134,7 +2167,7 @@
           (error msg)))))
       
 (define (sal:print . args)
-  (ffi_sal_print args))
+  (ffi_cm_print args))
 
 (define (sal:chdir path)
   (chdir path)
@@ -2252,6 +2285,7 @@
     (Sal2Function + 16)
     (Sal2Process + 16)
     (Sal2If + 16)
+    Sal2Wait
     (Sal2OutFile + 16)
 
     SAL_COMMAND_END
@@ -2356,6 +2390,7 @@
     Sal2WithStatementRule
     Sal2LoopStatementRule
     Sal2ProcessStatementRule
+    Sal2ProcessWaitRule
     Sal2OutFileStatementRule
     Sal2StatementRule
 

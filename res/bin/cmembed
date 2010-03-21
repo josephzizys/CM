@@ -73,6 +73,6 @@ if [[ "$actins" == 1 ]] ; then
 fi
 
 if [[ "$actffi" == 1 ]] ; then
-    csi -b -e '(begin (load "/Users/hkt/Software/cm/scm/genffi.scm") (s7ffi "/Users/hkt/Software/cm/src/SndLibBridge.cpp") (exit))'
+    csi -b -e '(begin (load "scm/genffi.scm") (s7ffi "src/SndLibBridge.cpp") (exit))'
 fi
 

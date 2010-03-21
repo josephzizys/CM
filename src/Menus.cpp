@@ -246,11 +246,13 @@ const PopupMenu CommandMenus::getHelpMenu(int wtype,
       scmtuts.addSeparator();
       scmtuts.addCommandItem(comm, CommandIDs::HelpSchemeTutorialsRestore);
 
-      tutorials.addSubMenu(T("Sal"), saltuts);
+      tutorials.addSubMenu(T("Sal"), saltuts, false);  // TEMP  disable sal1
+      tutorials.addCommandItem(comm, CommandIDs::HelpSalTutorial + 10, T("Sal 2.0 Quick Tour"));  // TEMP add sal2
+
       tutorials.addSubMenu(T("Scheme"), scmtuts);
       menu.addSubMenu(T("Tutorials"), tutorials);
 
-      examples.addSubMenu(T("Sal"), salexamps);
+      examples.addSubMenu(T("Sal"), salexamps, false); // TEMP disable sal1
       examples.addSubMenu(T("Scheme"), scmexamps);
       menu.addSubMenu(T("Examples"), examples);
     }

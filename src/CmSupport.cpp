@@ -105,6 +105,57 @@ void cm_print_markov_table(s7_pointer table, s7_pointer labels, int field, int r
     }
 }
 
+void cm_prin1(s7_scheme* sc, s7_pointer ptr, bool sal, bool quo, String& str)
+{
+  if (ptr==s7_f(sc))
+    {
+      str << T("#f");
+    }
+  else if (ptr==s7_nil(sc))
+    {
+      if (sal) str << T("{}"); else str << T("()");
+    }
+  else if (s7_is_pair(ptr))
+    {
+      if (sal) str << T("{"); else str << T("(");
+      for (s7_pointer p=ptr; s7_is_pair(p); p=s7_cdr(p))
+        {
+          if (p!=ptr)
+            str<<T(" ");
+          cm_prin1(sc, s7_car(p), sal, true, str);
+        }
+      if (sal) str << T("}"); else str << T(")");
+    }
+  else if (ptr==s7_t(sc))
+    str << T("#t");
+  else if (s7_is_number(ptr))
+    str << String(s7_number_to_string(sc, ptr, 10));
+  else if (s7_is_string(ptr))
+    {
+      if (quo)
+        str << String(s7_string(ptr)).quoted();
+      else
+        str << String(s7_string(ptr));
+    }
+  else
+    str << String(s7_object_to_c_string(sc, ptr));
+}
+
+s7_pointer cm_print(s7_pointer args)
+{
+  bool sal=SchemeThread::getInstance()->isSalEval();  // true if we are under a salEval
+  s7_scheme* sc=SchemeThread::getInstance()->scheme;
+  String text=String::empty;
+  while (s7_is_pair(args))
+    {
+      cm_prin1(sc, s7_car(args), sal, false, text);
+      args=s7_cdr(args);
+    }
+  text << T("\n");
+  Console::getInstance()->printOutput(text);
+  return s7_unspecified(sc);
+}
+
 /*=======================================================================*
  *=======================================================================*/
 
@@ -907,51 +958,7 @@ s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr, s7_pointer sal2)
   return toks;
 }
 
-void sal_prin1(s7_scheme* sc, s7_pointer ptr, bool quo, String& str)
-{
-  if (ptr==s7_f(sc))
-    str << T("#f");
-  else if (ptr==s7_nil(sc))
-    str << T("{}");
-  else if (s7_is_pair(ptr))
-    {
-      str << T("{");
-      for (s7_pointer p=ptr; s7_is_pair(p); p=s7_cdr(p))
-        {
-          if (p!=ptr)
-            str<<T(" ");
-          sal_prin1(sc, s7_car(p), true, str);
-        }
-      str << T("}");
-    }
-  else if (ptr==s7_t(sc))
-    str << T("#t");
-  else if (s7_is_number(ptr))
-    str << String(s7_number_to_string(sc, ptr, 10));
-  else if (s7_is_string(ptr))
-    {
-      if (quo)
-        str << String(s7_string(ptr)).quoted();
-      else
-        str << String(s7_string(ptr));
-    }
-  else
-    str << String(s7_object_to_c_string(sc, ptr));
-}
 
-s7_pointer sal_print(s7_pointer args)
-{
-  s7_scheme* sc=SchemeThread::getInstance()->scheme;
-  String text=String::empty;
-  while (s7_is_pair(args))
-    {
-      sal_prin1(sc, s7_car(args), false, text);
-      args=s7_cdr(args);
-    }
-  text << T("\n");
-  Console::getInstance()->printOutput(text);
-  return s7_unspecified(sc);
-}
 
 s7_pointer sal_token_type(s7_pointer ptr)
 {

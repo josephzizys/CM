@@ -22,7 +22,20 @@ class ScanFlags
   static const int MoveExpressions=1;
   static const int MoveTokens=2;
   static const int MoveWhiteAndComments=3;
-
+  enum
+  {
+    SCAN_MISMATCH = -3,   // Shouldn't happen
+    SCAN_UNMATCHED,
+    SCAN_UNLEVEL,
+    SCAN_EMPTY,    // must be zero
+    SCAN_TOKEN,
+    SCAN_STRING,
+    SCAN_LIST,
+    SCAN_COMMENT,
+    SCAN_OPEN,
+    SCAN_CLOSE,
+    SCAN_PUNCT
+  };
   static const String scanResultToString(int res)
   {
     switch (res)
@@ -62,6 +75,7 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   bool keyPressed (const KeyPress& key);
   void mouseDoubleClick (const MouseEvent &e);
   int getTextType();
+  bool isTextType(int type);
   int getFontSize();
   void setFontSize(int size);
   int getTabWidth();
@@ -156,23 +170,37 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   {
     void resized () 
     {
-      buffer->setBounds(0, 0, getWidth(), getHeight());
+      if (buffer)
+        buffer->setBounds(0, 0, getWidth(), getHeight());
     }
   public:
     CodeBuffer* buffer;
     EditorComponent (CodeBuffer* buf)
       {
-	buffer=buf;
-	buffer->setTopLeftPosition(0,0);
-	addChildComponent(buffer, -1);
+        setCodeBuffer(buf);
       }
     ~EditorComponent()
       {
 	//delete buffer;
         deleteAllChildren();
       }
-    CodeBuffer* getCodeBuffer() {return buffer;}
-
+    CodeBuffer* getCodeBuffer() 
+    {
+      return buffer;
+    }
+    void setCodeBuffer(CodeBuffer* buf) 
+    {
+      buffer=buf;
+      buffer->setTopLeftPosition(0,0);
+      addChildComponent(buffer, -1);
+    }
+    void deleteCodeBuffer()
+    {
+      CodeBuffer* buf=buffer;
+      buffer=0;
+      removeChildComponent(buf);
+      delete buf;
+    }
   };
 
  public:
@@ -190,7 +218,6 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   const PopupMenu getMenuForIndex(int menuIndex, const String& menuName);
   void menuItemSelected (int menuItemID, int topLevelMenuIndex);
 
-
   void setWindowTitle(String title=String::empty);
   void resizeForColumnsAndLines();
   CodeBuffer* getCodeBuffer();
@@ -199,7 +226,7 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   XmlElement* getCustomizations();
   void writeCustomComment(bool select);
   void applyCustomComment();
-
+  void switchBufferSyntax(int newtype);
   //  void saveFile();
   void saveFile(bool saveas);
   void saveFileAs();

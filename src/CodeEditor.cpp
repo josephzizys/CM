@@ -38,6 +38,8 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     {
       if (synt==TextIDs::Empty)
         synt=Preferences::getInstance()->getIntProp(T("EditorSyntax"), TextIDs::Lisp);
+      if (synt==TextIDs::Sal)
+        synt=TextIDs::Sal2;
       file=File::nonexistent;
     }
   sourcefile=file;
@@ -74,8 +76,8 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   CodeBuffer* buffer=new CodeBuffer(document, syntax, &commands, customs);
   setContentComponent(new EditorComponent(buffer));
   // add (current) customizations to new empty buffers (???)
-  //if (text.isEmpty())
-  //  writeCustomComment(false);
+  if (text.isEmpty())
+    writeCustomComment(false);
   commands.registerAllCommandsForTarget(this);
   setApplicationCommandManagerToWatch(&commands);
   commands.setFirstCommandTarget(this);
@@ -93,6 +95,10 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
 
 CodeEditorWindow::~CodeEditorWindow ()
 {
+  // deleteing an zeroing the buffer first seems to take care of the
+  // asserts in juce_amalgamated.
+  EditorComponent* comp=(EditorComponent*)getContentComponent();
+  comp->deleteCodeBuffer();
   commands.setFirstCommandTarget(0);
   setMenuBar(0);
 }
@@ -362,8 +368,8 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       // OPTIONS MENU
     case CommandIDs::EditorSyntax:
       info.shortName=TextIDs::toString(data);
-      info.setTicked(getCodeBuffer()->getTextType()==data);
-      info.setActive(false);
+      info.setTicked(getCodeBuffer()->isTextType(data));
+      //      info.setActive(false);
       break;
     case CommandIDs::EditorFontSize:
       info.shortName=String(data);
@@ -494,7 +500,7 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       break;
       // OPTIONS MENU
     case CommandIDs::EditorSyntax:
-      std::cout << "EditorSyntax\n";
+      switchBufferSyntax(data);
       break;
     case CommandIDs::EditorFontSize:
       getCodeBuffer()->setFontSize(data);
@@ -658,9 +664,36 @@ void CodeEditorWindow::menuItemSelected (int id, int index)
 {
 }
 
-// 
-//
-//
+void CodeEditorWindow::switchBufferSyntax(int newtype)
+{
+  if (getCodeBuffer()->isTextType(newtype))
+    return;
+  // remove and delete current buffer.
+  EditorComponent* comp=(EditorComponent*)getContentComponent();
+  std::cout << "deleting old buffer...\n";
+  comp->deleteCodeBuffer();
+  // add new buffer
+  Syntax* syntax=0;
+  switch (newtype)
+    {
+    case TextIDs::Text: syntax=TextSyntax::getInstance(); break;
+    case TextIDs::Lisp: syntax=LispSyntax::getInstance(); break;
+    case TextIDs::Sal: syntax=SalSyntax::getInstance(); break;
+    case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
+    default: syntax=TextSyntax::getInstance(); break;
+    }
+  std::cout << "setting new buffer...\n";
+  CodeBuffer* buffer=new CodeBuffer(document, syntax, &commands, NULL);
+  comp->setCodeBuffer(buffer);
+  std::cout << "new texttype=" << TextIDs::toString( getCodeBuffer()->getTextType()).toUTF8() << "\n";
+  if (isCustomComment())
+    {
+      std::cout << "updating comment...\n";
+      writeCustomComment(false);
+    }
+  setWindowTitle();
+  std::cout << "done!\n";
+}
 
 void CodeEditorWindow::resizeForColumnsAndLines()
 {
@@ -1073,6 +1106,11 @@ void CodeBuffer::isChanged(bool ch)
 int CodeBuffer::getTextType()
 {
   return syntax->getType();
+}
+
+bool CodeBuffer::isTextType(int type)
+{
+  return (getTextType()==type);
 }
 
 int CodeBuffer::getFontSize()
@@ -1645,7 +1683,7 @@ void CodeBuffer::evalSal2(const CodeDocument::Position start, const CodeDocument
         tokens.add(new SynTok(T(","), SalSyntax::SalComma, loc));
       else if (scan==SCAN_STRING)
         {
-          tokens.add(new SynTok(document.getTextBetween(pos,far).unquoted(), SalSyntax::SalComma, loc));
+          tokens.add(new SynTok(document.getTextBetween(pos,far).unquoted(), SalSyntax::SalString, loc));
         }
       else if (scan==SCAN_TOKEN)
         {
@@ -1863,7 +1901,8 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
         //std::cout << "Code ("<<pos.getPosition()<<","<<end.getPosition()<<"): '" << code.toUTF8() << "'\n";
         if (scan==SCAN_TOKEN)
           {
-            if (SynTok* tok=syntax->getSynTok(code))
+            SynTok* tok=syntax->getSynTok(code);
+            if (tok && !SalIDs::isSalBoolType(tok->getType()))  // booleans are values...
               {
                 // token is a literal. stop if its the first thing
                 // encountered or if its a clausal
@@ -1892,10 +1931,10 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
                   here=pos.getPosition();
                 // otherwise if its a constant then stop (because last
                 // is an expr)
-                else if (code.containsOnly(T("0123456789+-.")) ||
+                else if (code.containsOnly(T("0123456789+-./")) ||
                          code.startsWith(T("#")) ||
                          code.startsWith(T(":")) ||
-                         code.endsWith(T(":")))
+                         code.endsWith(T(":")) )
                   {
                     //std::cout<<"breaking with constant="<<code.toUTF8()<<"\n";
                     break;
@@ -1977,9 +2016,9 @@ void CodeBuffer::indent()
   String all=pos.getLineText();
   int col=0;
 
-  if (getTextType()==TextIDs::Sal2)
+  if (isTextType(TextIDs::Sal2))
     col=indentSal2();
-  else if (getTextType()==TextIDs::Lisp)
+  else if (isTextType(TextIDs::Lisp))
     col=indentLisp();
 
   int old=0;

@@ -1,0 +1,281 @@
+;;; -*- syntax: Sal2; font-size: 18; theme: "Simple" -*-
+
+;
+;;  Sal 2.0 Quick Tour
+;
+
+; Sal2 provides infix expressions, a minimalist set of control
+; statements ('if', 'begin', 'loop', 'set') and three definition forms
+; ('variable', 'function' and 'process').
+
+; Sal2 differs from its earlier version by:
+;
+;  o Expressions and statements return values, these values are
+;    printed to the Console window in a manner similar to Scheme.
+;  o There are no "commands" like 'print' 'sprout' and 'send'. In Sal2
+;    you simply call functions, e.g. print() sprout() and send().
+
+; To evaluate a Sal2 expression put your cursor at the end of the line
+; and press Command-Return (or C-x C-e if you have the Emacs Mode
+; option turned on in your Editor.) The result of the evaluation will
+; appear in the Console window. Try out these expressions:
+
+123
+
+#t
+
+55 + 33
+
+44 = 33
+
+#f ~= (44 = 33)
+
+5 + 5 + 3
+
+440 * 2 ^ -1/12
+
+{this is a list}
+
+; Function calls look like 'name(...)', where ... are arguments
+; separated by comma, e.g.:
+
+list(1, 2, 3 + 4)
+
+; you can use the print function to print things to the Console
+; window:
+
+print("Hello, world!")
+
+; function calls can be nested:
+
+print("my random keynum = ", random(127))
+
+; if an expression spans more than a single line put your cursor at
+; the end of the last line and press Command-Return:
+
+concat({Life is very},
+       pick({long short happy sad})
+      )
+
+; Keyword argument names looks like 'foo:'. Scheme keyword symbols
+; (e.g. ':foo') are legal symbols in Sal2 but they are values, not
+; keyword argument names:
+
+send("mp:midi", key: between(60, 90), amp: .8)
+
+pick( :moe, :larry, :curly)
+
+; In Sal2 there is no 'send' command and the send() macro is
+; optional. For example, to send a sound to your open midi port you
+; can just call the midi port method directly:
+
+mp:midi(key: between(60, 90), amp: .8)
+
+;
+;; Control Statements
+;
+
+; Sal2 provides a handful of control statements: 'if' 'begin' 'set'
+; and 'loop'. All but 'set' terminate with an 'end' tag.  To evaluate
+; statements that include an 'end', put your cursor just after the
+; 'end' and press Command-Return.
+
+; The 'if (<test>) ... [else ...] end' statement performs conditional
+; evaluation.  note that the () delimits the predicate test and MUST
+; be provided. Put your cursor after the 'end' and press
+; Command-Return
+
+if (#t)
+  list(1,2,3)
+end
+
+if (odds(.5))
+  list(1,2,3)
+end
+
+; more than a single "then" and "else" expression is allowed, the last
+; one provides the value returned by the entire if
+
+if (#t)
+  print("true clause!")
+  list(1,2,3)
+end
+
+; the optional else clause holds expressions that will be evaluated if
+; the predicate test returns false
+
+if ( odds(.4) )
+  print("winner!")
+  list(1,2,3)
+else
+  print("loser!")
+  list(4,5,6)
+end
+
+; the 'begin...end' statement sequences expressions, the last
+; expression is returned as the value of the entire begin.  to
+; evaluate a 'begin...end' put your cursor just after the 'end' and
+; press Command-Return:
+
+begin
+  print("in begin!")
+  list(1,2,3)
+end
+
+; use the 'with' clause to declare local variables inside a begin
+
+begin 
+  with a = 4,
+       b = a + random(12)
+  print("in begin, a=", a, " b=", b)
+  list(a, b)
+end
+
+; the 'set' statement lets you (re)assign values to existing variables
+
+begin 
+  with a = 5
+  set a = random(100)
+  a
+end
+
+; set has a number of different assignment operators and it can assign
+; more than a single variable at a time.
+
+begin 
+  with a = 0, b = 1, c = 2, d = 3, e = 4, 
+       f = {x y}, g = {x y}, h = {a b c}
+  set a = -1, b += 5, c *= 10, d >= 20, e <= 20, 
+      f &= -99, g @= -99, h ^= g
+  list(a,b,c,d,e,f,g,h)
+end
+
+; the 'loop ... end' statement defines an iteration. it is very similar to
+; Common Lisp's loop macro
+
+loop repeat 10
+  print(random(100))
+end
+
+loop for i below 10
+  print(i)
+end
+
+loop repeat 5
+  for x = random(200)
+  print(x, " squared is ", x ^ 2)
+end
+
+; the 'finally' clause can be used to return a value
+
+loop with l = {}
+  for i from 1 to 10
+  set l &= i
+  finally l
+end
+
+loop with l  = {}
+  repeat 10
+  for x = 0 then drunk(x, 3)
+  for y from 100 by 10
+  set l &= x, l &= y
+  finally l
+end
+
+;
+;; Definitions
+;
+
+; Sal2 provides three definitional forms: 'variable', 'function' and
+; 'process'
+
+; the 'variable' statement defines variables that are "global" in the
+; environment in which they are defined
+
+variable bar = 33
+
+list(bar, bar * bar)
+
+; more than one variable can be define at a time, the value of the
+; last variable will be returned as the statement value
+
+variable bar = -99, baz = {1 2 3}
+
+list(bar,baz)
+
+; the 'function' statement defines a function. the last value in the
+; body of the function is returned as its value
+
+function foo ()
+  list(1,2,3)
+end
+
+foo()
+
+function foo (a, b)
+  list(a, b )
+end
+
+foo(100,200)
+
+; use 'with' to declare local variables inside a function
+
+function foo (a, b)
+  with c = list(a, b), d = 88
+  list(a,b,c, d)
+end
+
+foo(100,200)
+
+; optkey parameters are declared like this:
+
+function foo (&optkey d, e = 4)
+  list(d,e)
+end
+
+foo()
+
+foo(2,3)
+
+foo(1)
+
+foo(e: 99, d: -99)
+
+; you can have mixtures of required and optkeys
+
+function foo (a, b &optkey d, e = 4)
+  list(a,b, d, e)
+end
+
+foo(1,2, e: 88)
+
+; the 'process' statement defines an "iterative function" that blends
+; features from functions and loops into a single entity:
+
+process simp (num, rate)
+  repeat num
+  for k  = between(40, 90)
+  mp:midi(key: k)
+  wait rate
+end
+
+sprout( simp(20, .2) )
+
+; the canonical reich example.
+
+process piano-phase (endtime, keys, rate)
+  with pat = make-cycle(keys)
+  while elapsed() < endtime
+  mp:midi(key: next(pat), dur: rate)
+  wait rate
+end
+
+; this plays the example in real time out your midi port
+
+begin
+  with keys = key({e4 fs4 b4 cs5 d5 fs4 e4 cs5 b4 fs4 d5 cs5}),
+       stop = 20
+  sprout( list(piano-phase(stop, keys, .167),
+               piano-phase(stop, keys, .170)))
+end
+

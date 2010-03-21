@@ -21,6 +21,7 @@
 #endif
 #include "Scanner.h"
 #include "Syntax.h"
+//#include "CmSupport.h"
 #include <iostream>
 #include <string>
 
@@ -141,8 +142,12 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
       retn=s7_call(sc, s7_name_to_value(sc, "sal2"), data);
       if (retn != st->schemeError)
         {
+          //cm_print(retn);
           String str=String(s7_object_to_c_string(sc, retn));
           str << T("\n");
+          for (int i=0; i<str.length(); i++)
+            if (str[i]==T('(')) str[i]=T('{');
+            else if (str[i]==T(')')) str[i]=T('}');
           Console::getInstance()->printValues(str);
         }
     }

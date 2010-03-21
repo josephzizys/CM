@@ -70,6 +70,17 @@ s7_pointer ffi_print_stdout (s7_scheme *s7, s7_pointer args)
   return s7_UNSPECIFIED(s7);
 }
 
+s7_pointer ffi_cm_print (s7_scheme *s7, s7_pointer args)
+{
+  s7_pointer p0, p1;
+  if (!(s7_car(args)))
+    return(s7_wrong_type_arg_error(s7, "ffi_cm_print", 1, s7_car(args), "a s7_pointer"));
+  p1=s7_car(args);
+  args=s7_cdr(args);
+  p0=cm_print(p1);
+  return (s7, p0);
+}
+
 s7_pointer ffi_shell (s7_scheme *s7, s7_pointer args)
 {
   char* s0;
@@ -852,17 +863,6 @@ s7_pointer ffi_sal_token_position (s7_scheme *s7, s7_pointer args)
   p1=s7_car(args);
   args=s7_cdr(args);
   p0=sal_token_position(p1);
-  return (s7, p0);
-}
-
-s7_pointer ffi_sal_print (s7_scheme *s7, s7_pointer args)
-{
-  s7_pointer p0, p1;
-  if (!(s7_car(args)))
-    return(s7_wrong_type_arg_error(s7, "ffi_sal_print", 1, s7_car(args), "a s7_pointer"));
-  p1=s7_car(args);
-  args=s7_cdr(args);
-  p0=sal_print(p1);
   return (s7, p0);
 }
 
@@ -2975,6 +2975,7 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_print_output", ffi_print_output, 2, 0, false, "ffi function");
   s7_define_function(s7, "ffi_print_values", ffi_print_values, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_print_stdout", ffi_print_stdout, 1, 0, false, "ffi function");
+  s7_define_function(s7, "ffi_cm_print", ffi_cm_print, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_shell", ffi_shell, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_play", ffi_play, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_load", ffi_load, 1, 0, false, "ffi function");
@@ -3040,7 +3041,6 @@ void cm_init(s7_scheme *s7)
   s7_define_function(s7, "ffi_sal_token_type", ffi_sal_token_type, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_token_string", ffi_sal_token_string, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_sal_token_position", ffi_sal_token_position, 1, 0, false, "ffi function");
-  s7_define_function(s7, "ffi_sal_print", ffi_sal_print, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_port_info", ffi_port_info, 0, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_open_output", ffi_mp_open_output, 1, 0, false, "ffi function");
   s7_define_function(s7, "ffi_mp_open_input", ffi_mp_open_input, 1, 0, false, "ffi function");

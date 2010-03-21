@@ -19,6 +19,7 @@
     <item name="Processes" file="processes.sal"/>
     <item name="Fomus" file="fomus.sal"/>
     <item name="SndLib" file="sndlib.sal"/>
+    <item name="Sal 2.0 Quick Tour" file="quicktour.sal"/>
   </menu>
 
   <menu name="Scheme Tutorials">

@@ -23,6 +23,8 @@
     (ffi_print_output      void "cm_print_output" c-string bool)
     (ffi_print_values      void "cm_print_values" c-string)
     (ffi_print_stdout      void "cm_print_stdout" c-string)
+    (ffi_cm_print          s7_pointer "cm_print" s7_pointer)
+
     (ffi_shell             void "cm_shell" c-string)
     (ffi_play              void "cm_play" c-string)
     (ffi_load              void "cm_load" c-string)
@@ -94,7 +96,6 @@
     (ffi_sal_token_type s7_pointer "sal_token_type" s7_pointer)
     (ffi_sal_token_string s7_pointer "sal_token_string" s7_pointer)
     (ffi_sal_token_position s7_pointer "sal_token_position" s7_pointer)
-    (ffi_sal_print s7_pointer "sal_print" s7_pointer)
 
     (ffi_port_info c-string "cm_port_info" )
 

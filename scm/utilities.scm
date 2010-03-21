@@ -31,6 +31,11 @@
 (define (print-stdout msg )
   (ffi_print_stdout msg))
 
+(define (print . args)
+  (ffi_cm_print args)
+  +s7-error+ ;; signal no value printing
+  )
+
 (define (shell str)
   (ffi_shell str))
 

@@ -99,8 +99,10 @@ TextSyntax::~TextSyntax()
 
 const StringArray TextSyntax::getTokenTypes () 
 {
-  const char* const tt [] = {"Text"};
-  return StringArray((const char**)tt);
+  //  const char* const tt [] = {"Text",0};
+  StringArray tt;
+  tt.add(T("TextToken"));
+  return tt;
 }
 
 const Colour TextSyntax::getDefaultColour (const int tokenType)
@@ -110,8 +112,12 @@ const Colour TextSyntax::getDefaultColour (const int tokenType)
 
 int TextSyntax::readNextToken (CodeDocument::Iterator &source)
 {
-  source.skipWhitespace(); 
-  return 0;
+  //  std::cout << "readNextToken, pos=" << source.getPosition() << "\n";
+  source.skipToEndOfLine(); 
+  //source.skipWhitespace(); 
+  // now move until whitespace
+  //  tchar chr=source.peekNextChar();
+  return 1;
 }
 
 bool TextSyntax::isTopLevel(String line)
@@ -1293,8 +1299,9 @@ Sal2Syntax::Sal2Syntax ()
   type=TextIDs::Sal2;
   //        NAME       TYPE              BLOCKINDENT?  NUMDISTINGUISHED
   addSynTok(T("begin"), SalSyntax::SalBegin,        1, 0); // #b01 = +body indent
-  addSynTok(T("end"), SalSyntax::SalEnd,            2, 0); // #b10 = -self indent
+  addSynTok(T("end"), SalSyntax::SalEnd,            2, 0); // #b10 = -body indent
   addSynTok(T("function"), SalSyntax::Sal2Function, 1, 2);
+  addSynTok(T("process"), SalSyntax::Sal2Process,   1, 2);
   addSynTok(T("if"), SalSyntax::Sal2If,             1, 2);
   addSynTok(T("loop"), SalSyntax::SalLoop,          1, 0);
   addSynTok(T("outfile"), SalSyntax::Sal2OutFile,   1, 2);
@@ -1303,12 +1310,13 @@ Sal2Syntax::Sal2Syntax ()
   ////addSynTok(T("send"), SalSyntax::SalSet, HiliteIDs::Hilite4);
   addSynTok(T("set"), SalSyntax::SalSet);
   addSynTok(T("variable"), SalSyntax::Sal2Variable);
+  addSynTok(T("wait"), SalSyntax::Sal2Wait);
   // loop/run/if clausals
   addSynTok(T("above"), SalSyntax::SalAbove);
   addSynTok(T("below"), SalSyntax::SalBelow);
   addSynTok(T("by"), SalSyntax::SalBy);
   addSynTok(T("downto"), SalSyntax::SalDownto);
-  addSynTok(T("else"), SalSyntax::SalElse,          3, 0); // #b11= -self +body
+  addSynTok(T("else"), SalSyntax::SalElse,          3, 0); // #b11= -this +next
   addSynTok(T("finally"), SalSyntax::SalFinally);
   addSynTok(T("for"), SalSyntax::SalFor);
   addSynTok(T("from"), SalSyntax::SalFrom);
@@ -1319,7 +1327,7 @@ Sal2Syntax::Sal2Syntax ()
   addSynTok(T("to"), SalSyntax::SalTo);
   addSynTok(T("unless"), SalSyntax::SalUnless);
   addSynTok(T("until"), SalSyntax::SalUntil);
-  addSynTok(T("wait"), SalSyntax::SalWait);
+  //  addSynTok(T("wait"), SalSyntax::SalWait);
   addSynTok(T("when"), SalSyntax::SalWhen);
   addSynTok(T("while"), SalSyntax::SalWhile);
   addSynTok(T("with"), SalSyntax::SalWith);

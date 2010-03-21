@@ -16,6 +16,7 @@ void cm_print_output(char* str, bool quote=false);
 void cm_print_error(char* str);
 void cm_print_values(char* str);
 void cm_print_stdout(char* str);
+s7_pointer cm_print(s7_pointer ptr);
 
 //void cm_buffering_stdout( char c);
 //void cm_buffering_stderr( char c);
@@ -103,7 +104,6 @@ s7_pointer cm_directory(char* path, bool recurse=true);
 // sal support
 
 //char* sal_tokenize(char* str);
-s7_pointer sal_print(s7_pointer ptr);
 s7_pointer sal_allocate_tokens();
 s7_pointer sal_free_tokens(s7_pointer ptr);
 s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr, s7_pointer sal2);

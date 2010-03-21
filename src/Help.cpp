@@ -8,7 +8,8 @@
 #include "Enumerations.h"
 #include "Help.h"
 #include "Console.h"
-#include "TextEditor.h"
+//#include "TextEditor.h"
+#include "CodeEditor.h"
 #include "Documentation.h"
 #include "Preferences.h"
 #include "Resources.h"
@@ -237,10 +238,11 @@ void Help::openHelpInBrowser(String url)
 
 void Help::openHelpInEditor(String path, String code)
 {
-  int synt=TextIDs::Lisp;
-  if (path.endsWith(T(".sal")))
-    synt=TextIDs::Sal;
-  new TextEditorWindow(File::nonexistent, code, synt, path);
+  //  int synt=TextIDs::Lisp;
+  //  if (path.endsWith(T(".sal")))
+  //    synt=TextIDs::Sal;
+  //  new TextEditorWindow(File::nonexistent, code, synt, path);
+  new CodeEditorWindow(File::nonexistent, code, 0, path);
 }
 
 void Help::restoreToDirectory(CommandID command)
