@@ -99,10 +99,9 @@ TextSyntax::~TextSyntax()
 
 const StringArray TextSyntax::getTokenTypes () 
 {
-  //  const char* const tt [] = {"Text",0};
-  StringArray tt;
-  tt.add(T("TextToken"));
-  return tt;
+  StringArray names;
+  names.add(T("TextToken"));
+  return names;
 }
 
 const Colour TextSyntax::getDefaultColour (const int tokenType)
@@ -204,11 +203,24 @@ LispSyntax::~LispSyntax()
 
 const StringArray LispSyntax::getTokenTypes ()
 {
-  const char* const names [] = {"Error", "Comment", "String", 
-                                "Parentheses", "Punctuation", "ReadMacro"
-                                "Special1", "Special2",
-                                "Keyword1", "Keyword2", "Token"};
-  return StringArray((const char**)names);
+  //  const char* const names [] = {"Error", "Comment", "String", 
+  //                                "Parentheses", "Punctuation", "ReadMacro"
+  //                                "Special1", "Special2",
+  //                                "Keyword1", "Keyword2", "Token"};
+  //  return StringArray((const char**)names);
+  StringArray names;
+  names.add(T("Error"));
+  names.add(T("Comment"));
+  names.add(T("String"));
+  names.add(T("Parentheses"));
+  names.add(T("Punctuation"));
+  names.add(T("ReadMacro"));
+  names.add(T("Special1"));
+  names.add(T("Special2"));
+  names.add(T("Keyword1"));
+  names.add(T("Keyword2"));
+  names.add(T("Token"));
+  return names;
 }
 
 const Colour LispSyntax::getDefaultColour (const int tokenType)
@@ -611,11 +623,24 @@ SalSyntax::~SalSyntax()
 
 const StringArray SalSyntax::getTokenTypes ()
 {
-  const char* const names [] = {"Error", "Comment", "String", 
-                                "Parentheses", "Punctuation", "ReadMacro"
-                                "Special1", "Special2",
-                                "Keyword1", "Keyword2", "Token"};
-  return StringArray((const char**)names);
+  //  const char* const names [] = {"Error", "Comment", "String", 
+  //                                "Parentheses", "Punctuation", "ReadMacro"
+  //                                "Special1", "Special2",
+  //                                "Keyword1", "Keyword2", "Token"};
+  //  return StringArray((const char**)names);
+  StringArray names;
+  names.add(T("Error"));
+  names.add(T("Comment"));
+  names.add(T("String"));
+  names.add(T("Parentheses"));
+  names.add(T("Punctuation"));
+  names.add(T("ReadMacro"));
+  names.add(T("Special1"));
+  names.add(T("Special2"));
+  names.add(T("Keyword1"));
+  names.add(T("Keyword2"));
+  names.add(T("Token"));
+  return names;
 }
 
 const Colour SalSyntax::getDefaultColour (const int tokenType)
@@ -1370,10 +1395,22 @@ Sal2Syntax::~Sal2Syntax ()
 
 const StringArray Sal2Syntax::getTokenTypes ()
 {
-  const char* const names [] = {"Error", "Comment", "String", 
-                                "Parentheses", "Punctuation", "Sharp Sign"
-                                "Literal", "Keyword1", "Keyword2", "Token"};
-  return StringArray((const char**)names);
+  //  const char* const names [] = {"Error", "Comment", "String", 
+  //                                "Parentheses", "Punctuation", "Sharp Sign"
+  //                                "Literal", "Keyword1", "Keyword2", "Token"};
+  //  return StringArray((const char**)names);
+  StringArray names;
+  names.add(T("Error"));
+  names.add(T("Comment"));
+  names.add(T("String"));
+  names.add(T("Parentheses"));
+  names.add(T("Punctuation"));
+  names.add(T("Sharp Sign"));
+  names.add(T("Literal"));
+  names.add(T("Keyword1"));
+  names.add(T("Keyword2"));
+  names.add(T("Token"));
+  return names;
 }
 
 const Colour Sal2Syntax::getDefaultColour (const int tokenType)
