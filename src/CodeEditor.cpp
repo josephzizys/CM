@@ -427,7 +427,7 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
         int type=getCodeBuffer()->getTextType();
         info.shortName=T("Expand");
 	if (commandkeyactive)
-          info.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier || ModifierKeys::shiftModifier);
+          info.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier | ModifierKeys::shiftModifier);
         info.setActive(type==TextIDs::Lisp || type==TextIDs::Sal2);
       }
       break;
@@ -938,28 +938,6 @@ void CodeEditorWindow::writeCustomComment(bool select)
   buffer->insertTextAtCaret(custom);
   a.setLineAndIndex(1,0);
   buffer->moveCaretTo(a, false);
-  //document.insertText(a,custom);
-  /*
-
-  if (buffer->isEOB() ||
-      !CharacterFunctions::isWhitespace(buffer->getCaretPos().getCharacter())
-      )
-    {
-      // add newline to empty buffer
-      if (buffer->isEOB())
-        buffer->insertTextAtCaret(document.getNewLineCharacters());
-      std::cout << "inserting text at eob or non white\n";
-      buffer->insertTextAtCaret(document.getNewLineCharacters());
-    }
-  */
-
-  // unless the nextline is empty add an additional line
-  //  std::cout << "looking at (" << buffer->getCaretPos().getPosition() << "): '" << document.getTextBetween(buffer->getCaretPos(), buffer->getCaretPos().movedBy(1)).toUTF8() << "'\n";
-
-  // hightlight the comment (??)
-
-  //  if (select)
-  //    buffer->goToStartOfDocument(true);
 }
 
 /*=======================================================================*
@@ -1009,7 +987,7 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
   const int both = (ModifierKeys::ctrlModifier | ModifierKeys::altModifier);
   const bool emacs=isEmacsMode();
 
-  std::cout << "CodeBuffer::keyPressed key=" << key.getTextDescription().toUTF8() << "\n";
+  //std::cout << "CodeBuffer::keyPressed key=" << key.getTextDescription().toUTF8() << "\n";
 
   if (key == KeyPress(T('\t')))
     indent();
