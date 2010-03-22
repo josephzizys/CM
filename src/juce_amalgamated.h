@@ -421,7 +421,7 @@
     (Currently, this only affects Windows builds in debug mode).
 */
 #ifndef JUCE_CHECK_MEMORY_LEAKS
-  #define JUCE_CHECK_MEMORY_LEAKS 1
+//  #define JUCE_CHECK_MEMORY_LEAKS 1
 #endif
 
 /** Enable this to turn on juce's internal catching of exceptions.
