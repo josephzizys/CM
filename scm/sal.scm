@@ -2120,7 +2120,7 @@
                   (print-sal-error str code #f) ; signal error
                   +s7-error+)
                  (expand 
-                  (ffi_print_output code)
+                  (ffi_print_output code #f)
                   +s7-error+ ;; signal no value printing
                   )
                  (else

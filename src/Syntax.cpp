@@ -293,15 +293,26 @@ int LispSyntax::readNextToken(CodeDocument::Iterator &source)
         juce_wchar c, k=0;
         // read until a non-constituent char is found adding
         // consituent chars to check as long as they fit
-        for (c=source.nextChar(); c!=0; k=c, c=source.nextChar() )
-          if (char_token_p(syntab, c))//(CharacterFunctions::indexOfCharFast(breakchars,c) == -1)
-            {
-              if (i<maxtoklen)
-                check << c; //check[i]=c;
-              i++;
-            }
-          else
-            break;
+        //for (c=source.nextChar(); c!=0; k=c, c=source.nextChar() )
+        //   if (char_token_p(syntab, c))//(CharacterFunctions::indexOfCharFast(breakchars,c) == -1)
+        //    {
+        //      if (i<maxtoklen)
+        //        check << c; //check[i]=c;
+        //      i++;
+        //    }
+        //  else
+        //    break;
+
+        do
+          {
+            c=source.nextChar();
+            if (i<maxtoklen) // only gather maxtokenlen chars
+              check<<c;
+            i++;
+            k=c;
+          } 
+        while (char_token_p(syntab, source.peekNextChar()));
+
         // i is now one beyond last constituent character
         if (chr==':') // first char was lisp keyword 
           typ=TokenKeyword1;
@@ -707,31 +718,37 @@ int SalSyntax::readNextToken(CodeDocument::Iterator &source)
       typ=TokenError;
     default:
       {
+        int p=source.getPosition();
         int i=0;
         // check for special syntax words
         String check;
         juce_wchar c, k=0;
         // read until a non-constituent char is found adding
         // consituent chars to check as long as they fit
-        for (c=source.nextChar(); c!=0; k=c, c=source.nextChar() )
-          if (char_token_p(syntab, c))
-            {
-              if (i<maxtoklen)
-                check << c; //check[i]=c;
-              i++;
-            }
-          else
-            break;
+
+        do
+          {
+            c=source.nextChar();
+            if (i<maxtoklen) // only gather maxtokenlen chars
+              check<<c;
+            i++;
+            k=c;
+          } 
+        while (char_token_p(syntab, source.peekNextChar()));
+
         // i is now one beyond last constituent character
         if (chr==':') // first char was lisp keyword 
           typ=TokenKeyword1;
-        if (k==':') // last char was lisp keyword 
+        else if (k==':') // sal keyword 
           typ=TokenKeyword2;
         else if (i<=maxtoklen) // check for special word
           {
             SynTok* tok=getSynTok(check);
-            if (tok && isSalLiteralType(tok->getType()))
-              typ=TokenSpecial2;
+            if (tok && SalSyntax::isSalLiteralType(tok->getType()))
+              {
+                //std::cout << "linestart=" << beg << "literal=" << check.toUTF8() << "\n";
+                typ=TokenSpecial2;
+              }
             else
               typ=TokenConstituent;              
           }
@@ -1436,6 +1453,9 @@ int Sal2Syntax::readNextToken(CodeDocument::Iterator &source)
   int typ=tt_error;
   source.skipWhitespace();
   tchar chr=source.peekNextChar();
+  //String foobar;
+  //foobar<<chr;
+  //std::cout << "looking at=" << foobar.toUTF8() << "\n";
   switch (chr)
     {
     case 0:
@@ -1474,28 +1494,45 @@ int Sal2Syntax::readNextToken(CodeDocument::Iterator &source)
     case '\'':
       source.skip();
       typ=tt_error;
+      break;
     default:
       {
+        // at this point char is a token char. read until next
+        // position is a non-token char, adding consituent chars to
+        // check as long as position is not greater than the longest
+        // literal to check
+
         int i=0;
-        // check for special syntax words
         String check=String::empty;
         juce_wchar c, k=0;
-        // read until a non-constituent char is found adding
-        // consituent chars to check as long as position is not
-        // greater than the longest literal to check
-        for (c=source.nextChar(); c!=0; k=c, c=source.nextChar() )
-          if (char_token_p(syntab, c))
-            {
-              if (i<maxtoklen)
-                check << c; //check[i]=c;
-              i++;
-            }
-          else
-            break;
+
+        /*while (true)
+          {
+            c=source.nextChar();
+            check<<c;
+            i++;
+            k=c;
+            if (!char_token_p(syntab, source.peekNextChar()))
+              break;
+              }*/
+        do
+          {
+            c=source.nextChar();
+            if (i<maxtoklen) // only gather maxtokenlen chars
+              check<<c;
+            i++;
+            k=c;
+          } 
+        while (char_token_p(syntab, source.peekNextChar()));
+        
+        //String peek;
+        //peek<<source.peekNextChar();
+        //std::cout << "check=" << check.toUTF8() << ", i=" << i << ", peek='" << peek.toUTF8() << "'\n";
+
         // i is now one beyond last constituent character
         if (chr==T(':')) // lisp style (first char)
           typ=tt_keyword1;
-        if (k==T(':')) // sal style (last char)
+        else if (k==T(':')) // sal style (last char)
           typ=tt_keyword2;
         else if (i<=maxtoklen)
           {
