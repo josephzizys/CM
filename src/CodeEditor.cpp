@@ -247,9 +247,9 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
   info.setActive(true);
   info.setTicked(false);
   // On Windows and Linux the Command key == Emacs Control key so
-  // Command shortcuts are only added if emacs mode is false
+  // default Command shortcuts are only added if emacs mode is false
   CodeBuffer* buff=getCodeBuffer();
-  bool commandkeyactive=true; // (SysInfo::isMac() || !buff->isEmacsMode());
+  bool commandkeyactive=SysInfo::isMac(); // (SysInfo::isMac() || !buff->isEmacsMode());
   switch (comm)
     {
       // FILE MENU
@@ -316,7 +316,6 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.shortName=T("Quit Grace");
       info.addDefaultKeypress(T('Q'), ModifierKeys::commandModifier);
       break;
-
       // EDIT MENU
    case CommandIDs::EditorUndo:
       info.shortName=T("Undo");
@@ -409,6 +408,7 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.shortName=T("Parentheses Matching");
       info.setTicked(getCodeBuffer()->isParensMatching());
       break;
+      // EVAL MENU
     case CommandIDs::EditorEmacsMode:
       info.shortName=T("Emacs Mode");
       info.setTicked(getCodeBuffer()->isEmacsMode());
@@ -426,6 +426,8 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       {
         int type=getCodeBuffer()->getTextType();
         info.shortName=T("Expand");
+	if (commandkeyactive)
+          info.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier || ModifierKeys::shiftModifier);
         info.setActive(type==TextIDs::Lisp || type==TextIDs::Sal2);
       }
       break;
@@ -543,8 +545,12 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       getCodeBuffer()->isParensMatching(!getCodeBuffer()->isParensMatching());
       break;
     case CommandIDs::EditorEmacsMode:
-      getCodeBuffer()->isEmacsMode(!getCodeBuffer()->isEmacsMode()); 
-      Preferences::getInstance()->setBoolProp(T("EditorEmacsMode"), getCodeBuffer()->isEmacsMode());
+      {
+	CodeBuffer* buff=getCodeBuffer();
+	buff->isEmacsMode(!buff->isEmacsMode()); 
+	Preferences::getInstance()->setBoolProp(T("EditorEmacsMode"), buff->isEmacsMode());
+	updateKeyPressesForEditMode();
+      }
       break;
       // EVAL MENU
     case CommandIDs::EditorExecute:
@@ -686,23 +692,15 @@ void CodeEditorWindow::updateKeyPressesForEditMode()
   if (SysInfo::isMac())
     return;
   KeyPressMappingSet* keymap=commands.getKeyMappings();
+  keymap->clearAllKeyPresses();
+
   if (getCodeBuffer()->isEmacsMode())
     {
       std::cout << "installing keypresses for emacs\n";
-      // remove all keypresses that conflict with Emacs Control- commands
-      keymap->removeKeyPress(CommandIDs::EditorNew);
-      keymap->removeKeyPress(CommandIDs::EditorOpen);
-      keymap->removeKeyPress(CommandIDs::EditorSave);
-      keymap->removeKeyPress(CommandIDs::EditorSaveAs);
-      //keymap->removeKeyPress(CommandIDs::EditorClose);
-      //keymap->removeKeyPress(CommandIDs::AppQuit);
-      //keymap->removeKeyPress(CommandIDs::EditorUndo);
-      //keymap->removeKeyPress(CommandIDs::EditorRedo);
-      keymap->removeKeyPress(CommandIDs::EditorCut);
-      keymap->removeKeyPress(CommandIDs::EditorCopy);
-      keymap->removeKeyPress(CommandIDs::EditorPaste);
-      keymap->removeKeyPress(CommandIDs::EditorSelectAll);
-      keymap->removeKeyPress(CommandIDs::EditorFind);
+      keymap->addKeyPress(CommandIDs::EditorClose, KeyPress(T('W'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::AppQuit, KeyPress(T('Q'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorExecute, KeyPress::createFromDescription(T("ctrl + return")));
+      keymap->addKeyPress(CommandIDs::EditorExpand, KeyPress::createFromDescription(T("ctrl + shift + return")));
     }
   else
     {
@@ -720,6 +718,8 @@ void CodeEditorWindow::updateKeyPressesForEditMode()
       keymap->addKeyPress(CommandIDs::EditorPaste, KeyPress(T('V'), ModifierKeys::commandModifier, 0));
       keymap->addKeyPress(CommandIDs::EditorSelectAll, KeyPress(T('A'), ModifierKeys::commandModifier, 0));
       keymap->addKeyPress(CommandIDs::EditorFind, KeyPress(T('F'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorExecute, KeyPress::createFromDescription(T("ctrl + return")));
+      keymap->addKeyPress(CommandIDs::EditorExpand, KeyPress::createFromDescription(T("ctrl + shift + return")));
       //keymap->addKeyPress(CommandIDs::,KeyPress);
     }
 }
@@ -1009,7 +1009,7 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
   const int both = (ModifierKeys::ctrlModifier | ModifierKeys::altModifier);
   const bool emacs=isEmacsMode();
 
-  //std::cout << "CodeBuffer::keyPressed key=" << key.getTextDescription().toUTF8() << "\n";
+  std::cout << "CodeBuffer::keyPressed key=" << key.getTextDescription().toUTF8() << "\n";
 
   if (key == KeyPress(T('\t')))
     indent();
@@ -1778,11 +1778,11 @@ void CodeBuffer::evalSal2(const CodeDocument::Position start, const CodeDocument
     }
   else if (lev<0) // to many close
     {
-      Console::getInstance()->printError(">>> Error: extraneous end");
+      Console::getInstance()->printError(T(">>> Error: extraneous end"));
     }
   else if (lev>0)
     {
-      Console::getInstance()->printError(">>> Error: missing end");
+      Console::getInstance()->printError(T(">>> Error: missing end"));
     }
   else
     {
