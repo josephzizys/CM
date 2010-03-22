@@ -228,6 +228,10 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   void writeCustomComment(bool select);
   void applyCustomComment();
   void switchBufferSyntax(int newtype);
+  void updateKeyPressesForEditMode();
+  void isEmacsMode(bool mode);
+  bool isEmacsMode();
+
   //  void saveFile();
   void saveFile(bool saveas);
   void saveFileAs();

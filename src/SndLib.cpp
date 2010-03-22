@@ -26,7 +26,8 @@
 #include "Console.h"
 #include "SndLib.h"
 #include "Preferences.h"
-#include "TextEditor.h"
+//#include "TextEditor.h"
+#include "CodeEditor.h"
 #include "Instruments.h"
 
 // Singleton instance for SndLib...
@@ -810,8 +811,8 @@ void InstrumentTable::buttonClicked (Button* button)
       code=SndLib::getInstance()->getInstrumentCode(path);
       if (code.isEmpty())
         return;
-      new TextEditorWindow(File::nonexistent, code, TextIDs::Lisp,
-                           File(path).getFileName());
+      //new TextEditorWindow(File::nonexistent, code, TextIDs::Lisp, File(path).getFileName());
+      CodeEditorWindow::newFile(File(path).getFileName(), TextIDs::Lisp, code);
     } 
   else if (button == examplesButton)
     {
@@ -819,8 +820,8 @@ void InstrumentTable::buttonClicked (Button* button)
       code=SndLib::getInstance()->getInstrumentCode(path);
       if (code.isEmpty())
 	return;
-      new TextEditorWindow(File::nonexistent, code, TextIDs::Lisp,
-			   path);
+      //new TextEditorWindow(File::nonexistent, code, TextIDs::Lisp,  path);
+      CodeEditorWindow::newFile(path, TextIDs::Lisp, code);
     }
   else if (button == autoButton)
     {

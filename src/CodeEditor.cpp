@@ -81,12 +81,16 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   centreWithSize(jmin(800, buffer->getWidth()), 
                  jmin(800, buffer->getHeight()));
   edcomp->setCodeBuffer(buffer);
+
+
+
   // add (current) customizations to new empty buffers (???)
   if (text.isEmpty())
     writeCustomComment(false);
   commands.registerAllCommandsForTarget(this);
   setApplicationCommandManagerToWatch(&commands);
   commands.setFirstCommandTarget(this);
+  updateKeyPressesForEditMode();
   setWantsKeyboardFocus(false); // buffer wants focus
   setWindowTitle(title);
   setResizable(true, true); 
@@ -245,7 +249,7 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
   // On Windows and Linux the Command key == Emacs Control key so
   // Command shortcuts are only added if emacs mode is false
   CodeBuffer* buff=getCodeBuffer();
-  bool commandkeyactive=(SysInfo::isMac() || !buff->isEmacsMode());
+  bool commandkeyactive=true; // (SysInfo::isMac() || !buff->isEmacsMode());
   switch (comm)
     {
       // FILE MENU
@@ -310,7 +314,7 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       break;
     case CommandIDs::AppQuit:
       info.shortName=T("Quit Grace");
-      info.addDefaultKeypress('Q', ModifierKeys::commandModifier);
+      info.addDefaultKeypress(T('Q'), ModifierKeys::commandModifier);
       break;
 
       // EDIT MENU
@@ -410,12 +414,20 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.setTicked(getCodeBuffer()->isEmacsMode());
       break;
     case CommandIDs::EditorExecute:
-      info.shortName=T("Execute");
-      if (commandkeyactive)
-	info.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
+      {
+        int type=getCodeBuffer()->getTextType();
+        info.shortName=T("Execute");
+        if (commandkeyactive)
+          info.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
+        info.setActive(type==TextIDs::Lisp || type==TextIDs::Sal2);
+      }
       break;
     case CommandIDs::EditorExpand:
-      info.shortName=T("Expand");
+      {
+        int type=getCodeBuffer()->getTextType();
+        info.shortName=T("Expand");
+        info.setActive(type==TextIDs::Lisp || type==TextIDs::Sal2);
+      }
       break;
     case CommandIDs::SchedulerStop:
       info.shortName=T("Abort Processes");
@@ -528,10 +540,11 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       writeCustomComment(true);
       break;
     case CommandIDs::EditorParensMatching:
-      getCodeBuffer()->isParensMatching(!getCodeBuffer()->isParensMatching()); // toggle parens matching
+      getCodeBuffer()->isParensMatching(!getCodeBuffer()->isParensMatching());
       break;
     case CommandIDs::EditorEmacsMode:
-      getCodeBuffer()->isEmacsMode(!getCodeBuffer()->isEmacsMode()); // toggle emacs mode
+      getCodeBuffer()->isEmacsMode(!getCodeBuffer()->isEmacsMode()); 
+      Preferences::getInstance()->setBoolProp(T("EditorEmacsMode"), getCodeBuffer()->isEmacsMode());
       break;
       // EVAL MENU
     case CommandIDs::EditorExecute:
@@ -667,13 +680,56 @@ void CodeEditorWindow::menuItemSelected (int id, int index)
 {
 }
 
+void CodeEditorWindow::updateKeyPressesForEditMode()
+{
+  // mac command keypresses do not conflict with control keypresses
+  if (SysInfo::isMac())
+    return;
+  KeyPressMappingSet* keymap=commands.getKeyMappings();
+  if (getCodeBuffer()->isEmacsMode())
+    {
+      std::cout << "installing keypresses for emacs\n";
+      // remove all keypresses that conflict with Emacs Control- commands
+      keymap->removeKeyPress(CommandIDs::EditorNew);
+      keymap->removeKeyPress(CommandIDs::EditorOpen);
+      keymap->removeKeyPress(CommandIDs::EditorSave);
+      keymap->removeKeyPress(CommandIDs::EditorSaveAs);
+      //keymap->removeKeyPress(CommandIDs::EditorClose);
+      //keymap->removeKeyPress(CommandIDs::AppQuit);
+      //keymap->removeKeyPress(CommandIDs::EditorUndo);
+      //keymap->removeKeyPress(CommandIDs::EditorRedo);
+      keymap->removeKeyPress(CommandIDs::EditorCut);
+      keymap->removeKeyPress(CommandIDs::EditorCopy);
+      keymap->removeKeyPress(CommandIDs::EditorPaste);
+      keymap->removeKeyPress(CommandIDs::EditorSelectAll);
+      keymap->removeKeyPress(CommandIDs::EditorFind);
+    }
+  else
+    {
+      std::cout << "installing standard keypresses\n";
+      keymap->addKeyPress(CommandIDs::EditorNew, KeyPress(T('N'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorOpen, KeyPress(T('O'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorSave, KeyPress(T('S'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorSaveAs, KeyPress(T('S'), ModifierKeys::commandModifier | ModifierKeys::shiftModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorClose, KeyPress(T('W'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::AppQuit, KeyPress(T('Q'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorUndo, KeyPress(T('Z'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorRedo, KeyPress(T('Z'), ModifierKeys::commandModifier | ModifierKeys::shiftModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorCut, KeyPress(T('X'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorCopy, KeyPress(T('C'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorPaste, KeyPress(T('V'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorSelectAll, KeyPress(T('A'), ModifierKeys::commandModifier, 0));
+      keymap->addKeyPress(CommandIDs::EditorFind, KeyPress(T('F'), ModifierKeys::commandModifier, 0));
+      //keymap->addKeyPress(CommandIDs::,KeyPress);
+    }
+}
+
 void CodeEditorWindow::switchBufferSyntax(int newtype)
 {
   if (getCodeBuffer()->isTextType(newtype))
     return;
   // remove and delete current buffer.
   EditorComponent* comp=(EditorComponent*)getContentComponent();
-  std::cout << "deleting old buffer...\n";
   comp->deleteCodeBuffer();
   // add new buffer
   Syntax* syntax=0;
@@ -685,17 +741,13 @@ void CodeEditorWindow::switchBufferSyntax(int newtype)
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
     default: syntax=TextSyntax::getInstance(); break;
     }
-  std::cout << "setting new buffer...\n";
   CodeBuffer* buffer=new CodeBuffer(document, syntax, &commands, NULL);
   comp->setCodeBuffer(buffer);
-  std::cout << "new texttype=" << TextIDs::toString( getCodeBuffer()->getTextType()).toUTF8() << "\n";
   if (isCustomComment())
     {
-      std::cout << "updating comment...\n";
       writeCustomComment(false);
     }
   setWindowTitle();
-  std::cout << "done!\n";
 }
 
 void CodeEditorWindow::resizeForColumnsAndLines()

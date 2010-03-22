@@ -15,7 +15,8 @@
 #include "Audio.h"
 #include "Images.h"
 #include "Plot.h"
-#include "TextEditor.h"
+//#include "TextEditor.h"
+#include "CodeEditor.h"
 #include "Alerts.h"
 #endif
 
@@ -462,7 +463,8 @@ void Console::filesDropped(const StringArray &files, int x, int y)
 	PlotterWindow::openMidiFile(file);
       else
         {
-          new TextEditorWindow(file);
+          //          new TextEditorWindow(file);
+          CodeEditorWindow::openFile(file);
           Preferences::getInstance()->recentlyOpened.addFile(file);
         }
     }
