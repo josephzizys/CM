@@ -1,3 +1,5 @@
+;;; -*- syntax: Sal2; font-size: 18; theme: "Basic" -*-
+
 ;; Examples of 1D and 2D Cellular Automata
 
 ;; To create an automata call '(make-automata states rule ...)'  and
@@ -46,15 +48,15 @@
 ;;    generations you want to display in the window. each generation
 ;;    is shown as a "row" in the display. the default is 1
 
-define function add-neighbors (auto, index) 
-  begin with left = cell-state(auto, index, -1),
+function add-neighbors (auto, index) 
+  with left = cell-state(auto, index, -1),
         right = cell-state(auto, index, 1)
-    return modulo(left + right, 3)
-  end
+  modulo(left + right, 3)
+end
 
-define variable foo = make-automata({0 1 0 1 0}, add-neighbors)
+variable foo = make-automata({0 1 0 1 0}, add-neighbors)
 
-print state(foo, #t)
+state(foo, #t)
 
 ;; add a state window to display states as they are
 ;; read. both the 'window' and 'colormap' arguments are required for
@@ -63,57 +65,56 @@ print state(foo, #t)
 ;; colors are color names (symbols or strings). the complete list of
 ;; colors are in the variable *colors*
 
-define variable foo = make-automata({1 0 2 2 0 2 1 2},
-                                    add-neighbors,
-                                    window: "my state window",
-                                    colormap: {0 red 1 green 2 blue},
-                                    backgroundcolor: "azure")
+variable foo = make-automata({1 0 2 2 0 2 1 2},
+                             add-neighbors,
+                             window: "my state window",
+                             colormap: {0 red 1 green 2 blue},
+                             backgroundcolor: "azure")
 
-print state(foo, #t)
+state(foo, #t)
 
 ;; display and sonify an eight-state automata in real time
 
-define function 8states (auto, index)
-  begin with left = cell-state(auto, index, -1),
-        here = cell-state(auto, index),
-        right = cell-state(auto, index, 1)
-    return logand(left, 4) + 
-           logand(here, 2) + 
-           logand(right, 1)
-  end
+function 8states (auto, index)
+  with left = cell-state(auto, index, -1),
+       here = cell-state(auto, index),
+       right = cell-state(auto, index, 1)
+  logand(left, 4) + logand(here, 2) + logand(right, 1)
+end
   
-define process play-8notes(len, auto, keys)
-  run for i below len
-    for s = state(auto)
-    for k = nth(keys, s)
-    for r = rescale( s, 0, 7, .150, .400)
-    send "mp:midi", 0, r * 1.9, k 
-    wait r
-  end
+process play-8notes(len, auto, keys)
+  for i below len
+  for s = state(auto)
+  for k = nth(keys, s)
+  for r = rescale( s, 0, 7, .150, .400)
+  send( "mp:midi", 0, r * 1.9, k )
+  wait r
+end
 
 begin with len = 64 * 2,
-      keys = key({c4 fs4 af4 b4 d5 ef5 e5 g5}),
-      colors = {0 pink 1 purple 2 yellow 3 red 
-                4 green 5 brown 6 blue 7 orange},
-      auto = make-automata({0 1 2 3 4 5 6 7}, 
-                           8states,
-                           window: "my 8 states" ,
-                           colormap: colors)
-  sprout play-8notes(len, auto, keys)
+           keys = key({c4 fs4 af4 b4 d5 ef5 e5 g5}),
+           colors = {0 pink 1 purple 2 yellow 3 red 
+                     4 green 5 brown 6 blue 7 orange},
+           auto = make-automata({0 1 2 3 4 5 6 7}, 
+                                8states,
+                                window: "my 8 states" ,
+                                colormap: colors)
+  sprout(play-8notes(len, auto, keys))
 end
 
 ;;;
 ;;;  A "left shift" automata; next state is from i+1
 ;;;
 
-define function left-shift(auto, index)
-  return cell-state(auto, index, 1)
+function left-shift(auto, index)
+  cell-state(auto, index, 1)
+end
 
-define variable go-left =
+variable go-left =
   make-automata({0 1 2 3}, left-shift,
                 window: "my left shift",
                 colormap: {0 pink 1 yellow 2 green 3 blue},
-                 cellsize: 100)
+                cellsize: 100)
 
 ; eval this multiple times to rotate through cells
 
@@ -123,23 +124,23 @@ print state(go-left)
 ;; right sum mod 3
 ;;
 
-define function sum-right(auto, index)
+function sum-right(auto, index)
   ;; add cell to rightward cell's value mod 3
-  begin with here = cell-state( auto, index),
-        right = cell-state( auto, index, 1)
-    return modulo(here + right, 3)
-  end
+  with here = cell-state( auto, index),
+       right = cell-state( auto, index, 1)
+  modulo(here + right, 3)
+end
 
-define variable go-right =
+variable go-right =
   make-automata({1 0 0 2}, 
                 sum-right,
                 window: "my right sum",
                 colormap: {0 blue 1 green 2 red},
                 cellsize: 100)
 
-print state( go-right, #t)
+state( go-right, #t)
 
-define variable go-right =
+variable go-right =
   make-automata({2 2 1 0 1 1 0 1 1 2 0 0 0 1 1 0 1 0 1 2
                  1 2 1 0 1 1 1 2 2 2 0 1 2 2 2 1 0 2 0 1},
                  sum-right,
@@ -157,27 +158,26 @@ print state( go-right, #t)
 
 ;; lookup vector for new state
 
-define variable hglass-states =
+variable hglass-states =
   list->vector({0 1 1 1 0 0 0 0   0 0 0 1 0 0 0 0   
         `       0 0 0 0 0 1 0 0   0 1 0 0 0 1 1 1})
 
-define function hglass(auto, index)
+function hglass(auto, index)
   ;; ior east, west, south and north to compute new state
-  begin
-    with here = cell-state(auto, index),
-         east = cell-state(auto, index, xy(1, 0)),
-         west = cell-state(auto, index, xy(-1, 0)),
-         south  = cell-state(auto, index, xy(0, 1)),
-         north  = cell-state(auto, index, xy(0, -1))
-    return vector-ref(hglass-states,
-                      logior(ash(east, 4),
-                             ash(west, 3),
-                             ash(south, 2),
-                             ash(north, 1),
-                             here))
-  end
+  with here = cell-state(auto, index),
+       east = cell-state(auto, index, xy(1, 0)),
+       west = cell-state(auto, index, xy(-1, 0)),
+       south  = cell-state(auto, index, xy(0, 1)),
+       north  = cell-state(auto, index, xy(0, -1))
+  vector-ref(hglass-states,
+             logior(ash(east, 4),
+                    ash(west, 3),
+                    ash(south, 2),
+                    ash(north, 1),
+                    here))
+end
     
-define variable my-hglass =
+variable my-hglass =
   ;; random first generation
   make-automata({{1 0 0 0 0 1 0 0} 
                  {1 0 1 1 0 0 1 1} 
@@ -187,17 +187,17 @@ define variable my-hglass =
                  {0 0 0 1 0 0 1 1}
                  {1 1 1 0 0 1 0 1}
                  {1 1 0 1 1 1 1 1}},
-                hglass,
-              		window: "my hglass automata",
-              		colormap: {0 pink 1 lavender})
+                 hglass,
+                 window: "my hglass automata",
+                 colormap: {0 pink 1 lavender})
 
-print state(my-hglass, #t)
+state(my-hglass, #t)
 
 ;;;
 ;;; pretty square
 ;;;
 
-define variable hglass-square =
+variable hglass-square =
   make-automata({{0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0}
        	         {0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0}
        	         {0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0}
@@ -219,31 +219,31 @@ define variable hglass-square =
                 colormap: '{0 pink 1 lavender},
                 backgroundcolor: "yellow")
 
-print state(hglass-square, #t)
+state(hglass-square, #t)
 
 ;;;
 ;;; Conway's game of Life.
 ;;;
 
-define function life(auto, index)
-  begin
-    with ul = cell-state(auto, index, xy(-1, -1)),
-         um = cell-state(auto, index, xy(0, -1)),
-         ur = cell-state(auto, index, xy(1, -1)), 
-         ml = cell-state(auto, index, xy(-1, 0)),
-         me = cell-state(auto, index),
-         mr = cell-state(auto, index, xy(1, 0)),
-         ll = cell-state(auto, index, xy(-1, 1)),
-         lm = cell-state(auto, index, xy(0, 1)),
-         lr = cell-state(auto, index, xy(1, 1)),
-         sum =  (ul + um + ur + ml + mr + ll + lm + lr)
-    if (me = 0) then ; dead cell
-      if ( sum = 3) then return 1 else return 0
-    else
-      if ((2 = sum) | ( 3 = sum)) then return 1 else return 0
+function life(auto, index)
+  with ul = cell-state(auto, index, xy(-1, -1)),
+       um = cell-state(auto, index, xy(0, -1)),
+       ur = cell-state(auto, index, xy(1, -1)), 
+       ml = cell-state(auto, index, xy(-1, 0)),
+       me = cell-state(auto, index),
+       mr = cell-state(auto, index, xy(1, 0)),
+       ll = cell-state(auto, index, xy(-1, 1)),
+       lm = cell-state(auto, index, xy(0, 1)),
+       lr = cell-state(auto, index, xy(1, 1)),
+       sum =  (ul + um + ur + ml + mr + ll + lm + lr)
+  if (me = 0) ; dead cell
+    if ( sum = 3)  1 else  0 end
+  else
+    if ((2 = sum) | ( 3 = sum)) 1 else 0 end
   end
+end
 
-define variable game-of-life = 
+variable game-of-life = 
   make-automata({{0 0 0 0 0 0 0 0}
                  {0 0 0 1 1 0 1 0}
                  {0 0 1 0 1 0 1 0}
@@ -258,9 +258,9 @@ define variable game-of-life =
                  cellsize: 40 ,
                  cellbordersize: 1)
 
-print state(game-of-life, #t)
+state(game-of-life, #t)
 
-define variable other-life = 
+variable other-life = 
   make-automata({{1 0 0 1 0 0 1 1}
                  {1 0 1 1 0 1 0 1}
                  {0 1 1 1 1 0 0 1}
@@ -275,4 +275,4 @@ define variable other-life =
                 cellbordersize: 1,
                 cellsize: 16)
   
-print state(other-life, #t)
+state(other-life, #t)

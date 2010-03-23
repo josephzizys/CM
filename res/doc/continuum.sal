@@ -1,25 +1,26 @@
+;;; -*- syntax: Sal2; font-size: 18; theme: "Basic" -*-
+
 ;; a la maniere de 'continuum' (ligeti)
 
-define process continuum (tmp, low-keys, high-keys, rhy-pat)
-  run 
-    for low in low-keys
-    for high in high-keys
-    for dur = next (rhy-pat)
-    sprout register(tmp, dur, low, high, .4)
-    wait dur
-  end
+process continuum (tmp, low-keys, high-keys, rhy-pat)
+  for low in low-keys
+  for high in high-keys
+  for dur = next (rhy-pat)
+  sprout(register(tmp, dur, low, high, .4))
+  wait dur
+end
 
-define process register (rhy, dur, low, high, amp)
-  run with key-pat = make-heap( scale(high - low + 1, low, 1))
-    for key = next(key-pat)
-    until elapsed() >= dur
-    send "mp:midi", key: key, dur: rhy, amp: amp
-    wait rhy
-  end
+process register (rhy, dur, low, high, amp)
+  with key-pat = make-heap( scale(high - low + 1, low, 1))
+  for key = next(key-pat)
+  until elapsed() >= dur
+  send( "mp:midi", key: key, dur: rhy, amp: amp)
+  wait rhy
+end
 
-send "mp:prog", chan: 0, val: 6
+send( "mp:prog", chan: 0, val: 6)
 
-sprout continuum(.075,
+sprout(continuum(.075,
                  {60 59 58 57 56 55 54 53 52
                   53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68
                   69 70 71 72 73 74 75 76 77 78
@@ -29,94 +30,5 @@ sprout continuum(.075,
                   71 72 73 74 76 79 83 86 88 89
                   89 89 89 89 89 89 89 89 89 89},
                  make-weighting({.5 1 1.5 2 2.5})
-                 )
+                 ))
 
-;; realtime-version
-;; globals for ambitus-frame
-
-define variable low = 60, high = 62
-
-;; main loop
-
-define process rt-continuum (l,h,rhy,max-stay-tme)
-  begin
-    set low = l, high = h
-    run with lw = l, hg = high, 
-      ; how long there is no change of low or high?
-      tme = 0
-      for key = between (low, high + 1)
-      ; semitone-motion between low and high
-      then fit  (key + pick (1,-1), low, high)
-      send "mp:midi", key: key, dur: rhy
-      ; change of low or high => tme = 0
-      if not(lw = low & hg = high) 
-      then set tme = 0, lw = low, hg = high
-      wait rhy
-      set tme += rhy
-      ; no change for 'max-stay-tme' seconds => process ends
-      ; with rit.
-      if tme >= max-stay-tme 
-      then 
-        begin 
-          exec stop ()
-          loop with r = rhy, tme = 0 
-            repeat 30
-            send "mp:midi", time: tme, key: key, dur: r
-            set key = fit (key + pick  (1,-1), low, high, 2)
-            set r = r * 1.1, tme += r
-          end          
-        end
-    end
-  end
-
-;; widen the frame:
-define function widen () 
-  begin
-    if odds (.5) then set high += 1 else set low += -1
-    print low, " ", high
-  end
-
-; narrow the frame:
-define function narrow () 
-  begin
-    if high - low <= 1 then exec error ()
-    else 
-      if odds (.5) then set low += 1 else set high += -1
-      print low, " ", high
-  end
-
-; waits 3" for changes, if none then it retards and stops
-
-sprout rt-continuum (60,63,.075,3) 
-
-exec widen ()
-
-exec narrow ()
-
-; a hook for changing low or high via midikeyboard
-define function set-frame (m)
-  begin with k
-  if mm:on?(m) 
-  then 
-    begin set k = mm:key(m)
-      if k < low then set low = k
-      else
-        if k > high then set high = k
-        else
-          if k > (high - low) / 2 + low  then set high = k 
-          else set low = k
-          if low = high then set high += 1
-          print low, " ", high
-        end
-  end
-
-; set hook
-send "mp:inhook", set-frame
-
-; wait for changes in at least 20''
-sprout rt-continuum (60,63,.075,10)
-
-; play a MIDI keyboard
-
-; clear hook
-send "mp:inhook", #f

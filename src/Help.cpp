@@ -183,9 +183,6 @@ void Help::openHelpInBrowser(String url)
     {
       url=url.replaceSection(0, 8, T("file://")+cmdocdir.getFullPathName());
     }
-  
-  std::cout << "openurl=" << url.toUTF8() << "\n";
-
   if (url.startsWith(T("file:")))
     { 
       if (false) //(SysInfo::isLinux())
@@ -238,11 +235,8 @@ void Help::openHelpInBrowser(String url)
 
 void Help::openHelpInEditor(String path, String code)
 {
-  //  int synt=TextIDs::Lisp;
-  //  if (path.endsWith(T(".sal")))
-  //    synt=TextIDs::Sal;
-  //  new TextEditorWindow(File::nonexistent, code, synt, path);
-  new CodeEditorWindow(File::nonexistent, code, 0, path);
+  int ttyp=TextIDs::fromString(path.fromLastOccurrenceOf(T("."), true, true));
+  new CodeEditorWindow(File::nonexistent, code, ttyp, path);
 }
 
 void Help::restoreToDirectory(CommandID command)

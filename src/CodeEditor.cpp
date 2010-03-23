@@ -22,8 +22,7 @@
  *=======================================================================*/
 
 CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String title)
-  : DocumentWindow(String::empty, Colours::white, 
-                   DocumentWindow::allButtons, true)
+  : DocumentWindow(String::empty, Colours::white, DocumentWindow::allButtons, true)
 {
   setMenuBar(this);
   if (file.existsAsFile())
@@ -38,18 +37,9 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     {
       if (synt==TextIDs::Empty)
         synt=Preferences::getInstance()->getIntProp(T("EditorSyntax"), TextIDs::Lisp);
-      if (synt==TextIDs::Sal)
-        synt=TextIDs::Sal2;
       file=File::nonexistent;
     }
   sourcefile=file;
-
-  ////std::cout << "checking for cr:";
-  ////for (int i=0; i< text.length(); i++)
-  ////  if (text[i]==T('\r'))
-  ////    std::cout << " " << i ;
-  ////std::cout << " done!\n ";
-
   document.setNewLineCharacters(T("\n"));
   document.replaceAllContent(text);
   document.setSavePoint();
@@ -60,7 +50,7 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   // since the buffer syntax is fixed per buffer the window has to
   // handle this customization
   if (customs && customs->hasAttribute(T("syntax:")))
-    synt=customs->getIntAttribute(T("syntax:"));
+    synt=customs->getIntAttribute(T("syntax:")); 
   Syntax* syntax;
   switch (synt)
     {
@@ -70,6 +60,9 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
     default: syntax=TextSyntax::getInstance(); break;
     }
+
+  //std::cout << "syntax synt=" << syntax->getType() << "\n";
+
   // create the code buffer and add it to a content component. the
   // buffer is not the content component so the window can contain
   // other components besides the editor, eg a mode line, toolbar etc.
@@ -414,22 +407,16 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.setTicked(getCodeBuffer()->isEmacsMode());
       break;
     case CommandIDs::EditorExecute:
-      {
-        int type=getCodeBuffer()->getTextType();
-        info.shortName=T("Execute");
-        if (commandkeyactive)
-          info.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
-        info.setActive(type==TextIDs::Lisp || type==TextIDs::Sal2);
-      }
+      info.shortName=T("Execute");
+      if (commandkeyactive)
+        info.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier);
+      info.setActive(TextIDs::canExecute(getCodeBuffer()->getTextType()));
       break;
     case CommandIDs::EditorExpand:
-      {
-        int type=getCodeBuffer()->getTextType();
-        info.shortName=T("Expand");
-	if (commandkeyactive)
-          info.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier | ModifierKeys::shiftModifier);
-        info.setActive(type==TextIDs::Lisp || type==TextIDs::Sal2);
-      }
+      info.shortName=T("Expand");
+      if (commandkeyactive)
+        info.addDefaultKeypress(KeyPress::returnKey, ModifierKeys::commandModifier | ModifierKeys::shiftModifier);
+      info.setActive(TextIDs::canExpand(getCodeBuffer()->getTextType()));
       break;
     case CommandIDs::SchedulerStop:
       info.shortName=T("Abort Processes");
@@ -762,13 +749,12 @@ void CodeEditorWindow::setWindowTitle(String title)
     {
       if (sourcefile==File::nonexistent)
         {
-          int id=getCodeBuffer()->getTextType();
           title=T("Untitled");
-          title << T(" (") << TextIDs::toString(id) << T(")");
         }
       else
         title = sourcefile.getFileName();
     }
+  title << T(" (") << TextIDs::toString(getCodeBuffer()->getTextType()) << T(")");
   setName(title);
 }
 
@@ -1584,9 +1570,10 @@ void CodeBuffer::eval(bool expandonly)
 
       if (type==TextIDs::Lisp)
         scan=backwardLispExpr(bot, top);
+      else if (type==TextIDs::Sal)
+        scan=backwardSal1Expr(bot, top);
       else if (type==TextIDs::Sal2)
         scan=backwardSal2Expr(bot, top);
-
       ////std::cout << "after backwardExpr, scan=" << scan << ", bot="
       ////      << bot.getPosition() << ", top=" << top.getPosition() 
       ////      << "expr='" << document.getTextBetween(bot, top).toUTF8() << "'"
@@ -1651,6 +1638,8 @@ void CodeBuffer::eval(bool expandonly)
         evalLisp(bot,top,expandonly,regn);
       else if (type==TextIDs::Sal2)
         evalSal2(bot,top,expandonly,regn);
+      else if (type==TextIDs::Sal)
+        evalSal1(bot,top,expandonly,regn);
     }
   else
     {
@@ -1837,6 +1826,11 @@ int CodeBuffer::isNumberToken(const String str)
   if (div) return 3;
   if (dot) return 2; 
   return 1;
+}
+
+void CodeBuffer::evalSal1(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region)
+{
+  std::cout << "sal1='"<< document.getTextBetween(start,end).toUTF8() << "'\n";
 }
 
 /*=======================================================================*
@@ -2036,6 +2030,39 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
     }
   //std::cout << "returning: "  << ((here>-1) ? 1 : scan) << "\n";
   return (here>-1) ? 1 : scan;
+}
+
+int CodeBuffer::backwardSal1Expr(CodeDocument::Position& from, CodeDocument::Position& to)
+{
+  // in sal1 backwards expression finds the nearest command literal
+  // that start in 0th column position of a line
+
+  // moving backwards the cursor is always one char past scan start
+  to.moveBy(-1);
+  // skip trailing comments and whitespace
+  scanCode(to, false, ScanFlags::MoveWhiteAndComments);
+  // to is now ON ending char of expr (or at eob if only white) so set
+  // end to one beyond ending char of expr
+  to.moveBy(1);
+  int line=to.getLineNumber();
+  while (line>=0)
+    {
+      from.setLineAndIndex(line, 0);
+      CodeDocument::Position t (from);
+      if (scanToken(t, 1, getEOL(from)))
+        {
+          if (SynTok* tok=syntax->getSynTok(document.getTextBetween(from, t)))
+            {
+              if (SalSyntax::isSalCommandType(tok->getType()))
+                {
+                  std::cout << "command=" << tok->getName().toUTF8() << "\n";
+                  return 1;
+                }
+            }
+        }
+      line-=1;
+    }
+  return 0;
 }
 
 /*=======================================================================*

@@ -378,6 +378,7 @@ class SalSyntax : public Syntax
   static const bool isSalRelationType(int i) {return (SAL_RELATION_BEG < i) && (i < SAL_RELATION_END);}
   static const bool isSalAssignmentType(int i) {return (SAL_ASSIGNMENT_BEG < i) && (i < SAL_ASSIGNMENT_END);}
   static const bool isSalLiteralType(int i) {return (SAL_LITERAL_BEG < i) && (i < SAL_LITERAL_END);}
+  static const bool isSalDefineType(int i) {return (SAL_DEFINE_BEG < i) && (i < SAL_DEFINE_END);}
   static const bool isSalStatementType(int i) {return (SAL_STATEMENT_BEG < i) && (i < SAL_STATEMENT_END);}
   static const bool isSalCommandType(int i) {return (SAL_COMMAND_BEG < i) && (i < SAL_COMMAND_END);}
   static const bool isSalConstituentType(int i) {return (SAL_CONSTITUENT_BEG < i) && (i < SAL_CONSTITUENT_END);}

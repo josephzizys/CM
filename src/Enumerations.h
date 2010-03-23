@@ -159,7 +159,7 @@ class TextIDs
   static const TextID Fomus=5;
   static const TextID Csound=6;
   static const TextID Xml=7;
-  static int fromString(const String id)
+  static const int fromString(const String id)
   {
     if (id.equalsIgnoreCase(T("text"))) return Text;
     if (id.equalsIgnoreCase(T("lisp"))) return Lisp;
@@ -170,7 +170,7 @@ class TextIDs
     if (id.equalsIgnoreCase(T("xml"))) return Xml;
     return Empty;
   }
-  static const String toString(TextID id)
+  static const String toString(const int id)
   {
     switch (id)
       {
@@ -192,23 +192,33 @@ class TextIDs
 	return T("Empty");
       }
   }
-  static int fromFileType(const String ext)
+  static const int fromFileType(const String ext)
   {
     if (String(T(".lisp.lsp.scm.cm.clm.cmn.ins")).contains(ext))
       return Lisp;
-    else if (String(T(".sal2")).contains(ext)) 
+    else if (ext.equalsIgnoreCase(T(".sal2")))
       return Sal2;
-    else if (String(T(".sal")).contains(ext)) 
+    else if (ext.equalsIgnoreCase(T(".sal"))) 
       return Sal;
-    else if (String(T(".fms")).contains(ext)) 
+    else if (ext.equalsIgnoreCase(T(".fms"))) 
       return Fomus;
-    else if (String(T(".sco")).contains(ext))
+    else if (ext.equalsIgnoreCase(T(".sco")))
       return Csound;
-    else if (String(T(".xml")).contains(ext))
+    else if (ext.equalsIgnoreCase(T(".xml")))
       return Xml;
     else if (String(T(".text.txt")).contains(ext))
       return Text;
     return Empty;
+  }
+
+  static const bool canExecute(const int ttyp)
+  {
+    return ((ttyp==Lisp) || (ttyp==Sal2) ||(ttyp==Sal));
+  }
+
+  static const bool canExpand(const int ttyp)
+  {
+    return ((ttyp==Lisp) || (ttyp==Sal2) ||(ttyp==Sal));
   }
 };
 
@@ -267,6 +277,14 @@ class ColorThemeIDs
       case Text12: return String(T("text12"));
       default: return String(T("empty"));
       }
+  }
+
+  static const StringArray getColorNames()
+  {
+    StringArray names;
+    for (int i=Background; i<=Text12; i++)
+      names.add(toString(i));
+    return names;
   }
 
   static const int fromString(const String s)
@@ -1220,6 +1238,7 @@ class SalIDs
   static const bool isSalRelationType(int i) {return (SAL_RELATION_BEG < i) && (i < SAL_RELATION_END);}
   static const bool isSalAssignmentType(int i) {return (SAL_ASSIGNMENT_BEG < i) && (i < SAL_ASSIGNMENT_END);}
   static const bool isSalLiteralType(int i) {return (SAL_LITERAL_BEG < i) && (i < SAL_LITERAL_END);}
+  static const bool isSalDefineType(int i) {return (SAL_DEFINE_BEG < i) && (i < SAL_DEFINE_END);}
   static const bool isSalStatementType(int i) {return (SAL_STATEMENT_BEG < i) && (i < SAL_STATEMENT_END);}
   static const bool isSalCommandType(int i) {return (SAL_COMMAND_BEG < i) && (i < SAL_COMMAND_END);}
   static const bool isSalConstituentType(int i) {return (SAL_CONSTITUENT_BEG < i) && (i < SAL_CONSTITUENT_END);}

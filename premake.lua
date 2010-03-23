@@ -9,6 +9,7 @@ addoption("sndlib", "Optional location of SNDLIB source directory or install pre
 addoption("fomus", "Optional FOMUS install prefix")
 addoption("liblo", "Optional LIBLO install prefix")
 addoption("svnversion", "Optional SVN version number")
+addoption("gracecl", "Optional build gracecl appliation")
 
 if options["juce"] then
    amalgamated = false
@@ -93,8 +94,12 @@ if amalgamated then
    end
 end
 
+numtargets=2
+if options["gracecl"] then
+   numtargets = 3
+end
 
-for i = 1,3 do   
+for i = 1,numtargets do   
    cm = i == 1
    grace = i == 2
    gracecl = i == 3
