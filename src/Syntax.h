@@ -100,6 +100,9 @@ class Syntax : public CodeTokeniser
   SynTok* getSynTok (String n) ;
   bool isWhiteBetween (const String txt, int lb, int ub);
   Colour getHiliteColour(HiliteID id) {return hilites[id];}
+  const StringArray getTokenTypes ();
+  const Colour getDefaultColour (const int tokenType);
+  int readNextToken (CodeDocument::Iterator &source);
 
 };
 
@@ -117,9 +120,6 @@ class TextSyntax : public Syntax
   int getIndent (const String text, int bot, int top, int beg) ;
   HiliteID getHilite (const String text, int start, int end) ;
   void eval(String text, bool isRegion=false, bool expand=false) {}
-  const StringArray getTokenTypes ();
-  const Colour getDefaultColour (const int tokenType);
-  int readNextToken (CodeDocument::Iterator &source);
 
   juce_DeclareSingleton (TextSyntax, true)
 };
@@ -140,7 +140,6 @@ class LispSyntax : public Syntax
   HiliteID getHilite (const String text, int start, int end) ;
   void eval(String text, bool isRegion=false, bool expand=false) ;
 
-  const StringArray getTokenTypes ();
   const Colour getDefaultColour (const int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 
@@ -390,7 +389,6 @@ class SalSyntax : public Syntax
   static const bool isSalBlockOpen(int t) {return SalTypeDataBits(t)==SalBlockOpen;}
   static const bool isSalBlockClose(int t) {return SalTypeDataBits(t)==SalBlockClose;}
 
-  const StringArray getTokenTypes ();
   const Colour getDefaultColour (const int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 
@@ -437,7 +435,7 @@ class Sal2Syntax : public Syntax
  public:
   Sal2Syntax();
   ~Sal2Syntax();
-  const StringArray getTokenTypes ();
+
   const Colour getDefaultColour (const int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 

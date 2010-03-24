@@ -1662,9 +1662,9 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
   // then surround the add 'begin' and 'end' to the string and token
   // array adjust string positions accordingly
  
-  //String code=document.getTextBetween(start, end);
-  //std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
-  //          << ", end=" << end.getPosition() << "\n";
+  String code=document.getTextBetween(start, end);
+  std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
+            << ", end=" << end.getPosition() << "\n";
   OwnedArray<SynTok> tokens;
   CodeDocument::Position pos (start);
   int beg=pos.getPosition();  // offset of string
@@ -1701,12 +1701,12 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
           tchar c=pos.getCharacter();
           if (c==T(')'))
             {
-              if (--par > 0) break;
+              if (--par < 0) break;
               tokens.add(new SynTok(T(")"), SalSyntax::SalRParen, loc));
             }
           else if (c==T('}'))
             {
-              if (--cur > 0) break;
+              if (--cur < 0) break;
               tokens.add(new SynTok(T("}"), SalSyntax::SalRCurly, loc));
             }
           else if (c==T(']'))
@@ -1753,6 +1753,12 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
       pos=far;
       scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments, end.getPosition());
     }
+
+  //  std::cout << "tokens=";
+  //  for (int i=0; i<tokens.size(); i++)
+  //    std::cout << " " << tokens[i]->toString().toUTF8();
+  //  std::cout << "\n";
+
   String text;
   if (scan<0)
     {
