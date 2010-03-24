@@ -143,11 +143,10 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
 
   void eval(bool expandonly);
   void evalLisp(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
-  void evalSal2(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
-  void evalSal1(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
+  void evalSal(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
   int backwardLispExpr(CodeDocument::Position& from, CodeDocument::Position& to);
-  int backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Position& to);
   int backwardSal1Expr(CodeDocument::Position& from, CodeDocument::Position& to);
+  int backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Position& to);
   void indent();
   int indentLisp();
   int indentSal2();

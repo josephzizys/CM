@@ -38,15 +38,17 @@ class MidiNode
 
   int type;
   double time;
+  double duration;
   MidiMessage *message;
   Array<double> values;
   MidiOutPort *midiOutPort;
   MidiNode(int typ, double wait, double *vals=0, int num_vals=0) ;
   MidiNode(int typ, double wait, double chan, double data1);
   MidiNode(int typ, double wait, double chan, double data1, double data2);
+  MidiNode(int typ, double wait, double chan, double data1, double data2, double dur);
   MidiNode(MidiMessage *msg);
   ~MidiNode();
-  void process();
+  bool process();
   void print();
 
   static const int indexToOpcode(int index)

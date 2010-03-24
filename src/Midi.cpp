@@ -36,7 +36,7 @@ MidiNode::MidiNode(int typ, double wait, double *vals, int num_vals)
 }
 
 MidiNode::MidiNode(int typ, double wait, double chan, double data1) 
-  : type (0), time (0.0), message (NULL), midiOutPort (NULL)
+  : type (0), time (0.0), duration (0.0), message (NULL), midiOutPort (NULL)
 {
   type=typ;
   time=wait;
@@ -46,7 +46,7 @@ MidiNode::MidiNode(int typ, double wait, double chan, double data1)
 
 MidiNode::MidiNode(int typ, double wait, double chan, double data1,
 		   double data2) 
-  : type (0), time (0.0), message (NULL), midiOutPort (NULL)
+  : type (0), time (0.0), duration (0.0), message (NULL), midiOutPort (NULL)
 {
   type=typ;
   time=wait;
@@ -55,8 +55,20 @@ MidiNode::MidiNode(int typ, double wait, double chan, double data1,
   values.add(data2);
 }
 
+MidiNode::MidiNode(int typ, double wait, double chan, double data1,
+		   double data2, double dur) 
+  : type (0), time (0.0), duration (0.0), message (NULL), midiOutPort (NULL)
+{
+  type=typ;
+  time=wait;
+  duration=dur;
+  values.add(chan);
+  values.add(data1);
+  values.add(data2);
+}
+
 MidiNode::MidiNode(MidiMessage *msg)
-  : type (0), time (0.0), message (NULL), midiOutPort (NULL)
+  : type (0), time (0.0), duration (0.0), message (NULL), midiOutPort (NULL)
 {
   type=MM_MESSAGE;
   time=msg->getTimeStamp();
@@ -67,9 +79,9 @@ MidiNode::~MidiNode() {
   values.clear();
 }
 
-
-void MidiNode::process()
+bool MidiNode::process()
 {
+  bool flag=false;
   switch (type)
     {
       
@@ -77,12 +89,19 @@ void MidiNode::process()
       if ( values[DATA2] > 0.0 )
 	{
 	  // handle velocity ranges 0.0-1.0 or 0.0-127.0
-    float vel=(float)((values[DATA2]>1.0) ? (values[DATA2]/127.0) : values[DATA2]);
-    MidiMessage msg=MidiMessage::noteOn((int)values[DATA0]+1, 
+          float vel=(float)((values[DATA2]>1.0) ? (values[DATA2]/127.0) : values[DATA2]);
+          MidiMessage msg=MidiMessage::noteOn((int)values[DATA0]+1, 
 					      (int)values[DATA1], 
 					      vel);
 	  msg.setTimeStamp(time);
 	  midiOutPort->sendOut(msg);
+          if (duration>0.0)
+            {
+              type=MM_OFF;
+              time += (duration*1000.0);
+              duration=0.0;
+              flag=true;  // signal to reschedule this node as a note off
+            }
 	}
       else 
 	{
@@ -161,6 +180,7 @@ void MidiNode::process()
     default:
       break;
     }
+  return flag;
 }
 
 //
@@ -726,13 +746,18 @@ void MidiOutPort::run() {
       // this should probably test if the difference between qtime and
       // utime is less that 1ms, if not then it probably shouldn't
       // sleep (?)
-      if ( qtime > utime ) {
+      if ( (qtime-utime) >= 1.5 ) { //( qtime > utime )
 	outputNodes.unlockArray();
 	wait(1);
       }
       else {
-      node->process();
-      outputNodes.remove(0, true);
+        if (node->process())
+          {
+            outputNodes.remove(0,false);
+            outputNodes.addSorted(comparator, node); // reinsert at new time
+          }
+        else
+          outputNodes.remove(0, true);
       outputNodes.unlockArray();      
       }
     }
@@ -859,9 +884,9 @@ void MidiOutPort::sendNote(double wait, double duration, double keynum,
   else if ( device != NULL )
     {
       addNode( new MidiNode(MidiNode::MM_ON, wait, channel, 
-			    keynum, amplitude) );
-      addNode( new MidiNode(MidiNode::MM_OFF, wait+duration, channel,
-			    keynum) );
+			    keynum, amplitude, duration) );
+      //addNode( new MidiNode(MidiNode::MM_OFF, wait+duration, channel,
+      //			    keynum) );
     }
 }
 

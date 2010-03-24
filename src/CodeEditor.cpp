@@ -1636,10 +1636,8 @@ void CodeBuffer::eval(bool expandonly)
       top.setPosition(epos.getLast());
       if (type==TextIDs::Lisp)
         evalLisp(bot,top,expandonly,regn);
-      else if (type==TextIDs::Sal2)
-        evalSal2(bot,top,expandonly,regn);
-      else if (type==TextIDs::Sal)
-        evalSal1(bot,top,expandonly,regn);
+      else if (type==TextIDs::Sal2 || type==TextIDs::Sal)
+        evalSal(bot,top,expandonly,regn);
     }
   else
     {
@@ -1650,7 +1648,7 @@ void CodeBuffer::eval(bool expandonly)
 void CodeBuffer::evalLisp(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region)
 {
   String code=document.getTextBetween(start, end);
-  std::cout << "eval='" << code.toUTF8() << "'\n";
+  //std::cout << "eval='" << code.toUTF8() << "'\n";
   if (expand)
     code=T("(macroexpand ") + code + T(")");
   if (region)
@@ -1658,13 +1656,11 @@ void CodeBuffer::evalLisp(const CodeDocument::Position start, const CodeDocument
   SchemeThread::getInstance()->eval(code);
 }
 
-void CodeBuffer::evalSal2(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region)
+void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region)
 {
-  // this function is called after expr scanning has already occured
-  // so we know that we have balanced expressions. forward scan sal
-  // tokens and call sal on result. if region is true then surround
-  // the add 'begin' and 'end' to the string and token array adjust
-  // string positions accordingly
+  // forward scan sal tokens and call sal on result. if region is true
+  // then surround the add 'begin' and 'end' to the string and token
+  // array adjust string positions accordingly
  
   //String code=document.getTextBetween(start, end);
   //std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
@@ -1673,7 +1669,7 @@ void CodeBuffer::evalSal2(const CodeDocument::Position start, const CodeDocument
   CodeDocument::Position pos (start);
   int beg=pos.getPosition();  // offset of string
   int ins=(region) ? 6 : 0;   // inset length of "begin "
-  int lev=0;
+  int lev=0, par=0, cur=0, squ=0;
   int scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments, end.getPosition());
   while (pos!=end)
     {
@@ -1685,21 +1681,39 @@ void CodeBuffer::evalSal2(const CodeDocument::Position start, const CodeDocument
         {
           tchar c=pos.getCharacter();
           if (c==T('('))
-            tokens.add(new SynTok(T("("), SalSyntax::SalLParen, loc));
+            {
+              par++;
+              tokens.add(new SynTok(T("("), SalSyntax::SalLParen, loc));
+            }
           else if (c==T('{'))
-            tokens.add(new SynTok(T("{"), SalSyntax::SalLCurly, loc));
+            {
+              cur++;
+              tokens.add(new SynTok(T("{"), SalSyntax::SalLCurly, loc));
+            }
           else if (c==T('['))
-            tokens.add(new SynTok(T("["), SalSyntax::SalLBrace, loc));
+            {
+              squ++;
+              tokens.add(new SynTok(T("["), SalSyntax::SalLBrace, loc));
+            }
         }
       else if (scan==SCAN_CLOSE)
         {
           tchar c=pos.getCharacter();
           if (c==T(')'))
-            tokens.add(new SynTok(T(")"), SalSyntax::SalRParen, loc));
+            {
+              if (--par > 0) break;
+              tokens.add(new SynTok(T(")"), SalSyntax::SalRParen, loc));
+            }
           else if (c==T('}'))
-            tokens.add(new SynTok(T("}"), SalSyntax::SalRCurly, loc));
+            {
+              if (--cur > 0) break;
+              tokens.add(new SynTok(T("}"), SalSyntax::SalRCurly, loc));
+            }
           else if (c==T(']'))
-            tokens.add(new SynTok(T("]"), SalSyntax::SalRBrace, loc));
+            {
+              if (--squ < 0) break;
+              tokens.add(new SynTok(T("]"), SalSyntax::SalRBrace, loc));
+            }
         }
       else if (scan==SCAN_PUNCT)
         tokens.add(new SynTok(T(","), SalSyntax::SalComma, loc));
@@ -1710,12 +1724,16 @@ void CodeBuffer::evalSal2(const CodeDocument::Position start, const CodeDocument
       else if (scan==SCAN_TOKEN)
         {
           String s=document.getTextBetween(pos,far);
-          if (SynTok* t=Sal2Syntax::getInstance()->getSynTok(s))
+          if (SynTok* t=syntax->getSynTok(s))
             {
               int x=t->getType();
               tokens.add(new SynTok(s, x, loc));
-              if (SalSyntax::isSalBlockOpen(x)) lev++;
-              else if (SalSyntax::isSalBlockClose(x)) lev--;
+              if (SalSyntax::isSalBlockOpen(x))
+                lev++;
+              else if (SalSyntax::isSalBlockClose(x))
+                {
+                  if (--lev < 0) break;
+                }
             }
           else if (int t=isNumberToken(s))
             {
@@ -1735,51 +1753,92 @@ void CodeBuffer::evalSal2(const CodeDocument::Position start, const CodeDocument
       pos=far;
       scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments, end.getPosition());
     }
-
+  String text;
   if (scan<0)
     {
-      String text=T(">>> Error: scanning problem in line: ");
+      text << T(">>> Error: illegal token, line: ")
+           << pos.getLineNumber() << T("\n")
+           << pos.getLineText() << T("\n");
+      Console::getInstance()->printError(text);
+    }
+  else if (lev!=0 || par!=0 || cur!=0 || squ!=0)
+    {
+      SynTok* tok=NULL;
+      if (lev<0) // too many ends
+        text << T(">>> Error: extraneous 'end', line: ");
+      else if (par<0)
+        text << T(">>> Error: extraneous ')', line: ");
+      else if (cur<0)
+        text << T(">>> Error: extraneous '}', line: ");
+      else if (squ<0)
+        text << T(">>> Error: extraneous ']', line: ");
+      else if (lev>0)
+        {
+          text << T(">>> Error: missing 'end'");
+          for (int i=tokens.size()-1, n=0; i>-1; i--)
+            {
+              int x=SalSyntax::SalTypeDataBits(tokens[i]->getType());
+              if (x==SalSyntax::SalBlockOpen)
+                if (n==lev) {tok=tokens[i]; break;} else n--;
+              else if (x==SalSyntax::SalBlockClose) n++;
+            }
+          if (tok) text << " for " << tok->getName();
+          text << T(", line: ");
+        }
+      else if (par>0)
+        {
+          text << T(">>> Error: missing ')', line: ");
+          for (int i=tokens.size()-1, n=0; i>-1; i--)
+            if (tokens[i]->getType()==SalSyntax::SalLParen) 
+              if (n==par) {tok=tokens[i]; break;} else n--;
+            else if (tokens[i]->getType()==SalSyntax::SalRParen) n++;
+        }
+      else if (cur>0)
+        {
+          text << T(">>> Error: missing '}', line: ");
+          for (int i=tokens.size()-1, n=0; i>-1; i--)
+            if (tokens[i]->getType()==SalSyntax::SalLCurly) 
+              if (n==cur) {tok=tokens[i]; break;} else n--;
+            else if (tokens[i]->getType()==SalSyntax::SalRCurly) n++;
+        }
+      else if (squ>0)
+        {
+          text << T(">>> Error: missing ']', line: ");
+          for (int i=tokens.size()-1, n=0; i>-1; i--)
+            if (tokens[i]->getType()==SalSyntax::SalLBrace) 
+              if (n==cur) {tok=tokens[i]; break;} else n--;
+            else if (tokens[i]->getType()==SalSyntax::SalRBrace) n++;
+       }
+      if (tok) pos.setPosition(beg+tok->getData1()-ins);
       text << pos.getLineNumber() << T("\n")
            << pos.getLineText() << T("\n");
       Console::getInstance()->printError(text);
     }
-  else if (lev<0) // to many close
-    {
-      Console::getInstance()->printError(T(">>> Error: extraneous end"));
-    }
-  else if (lev>0)
-    {
-      Console::getInstance()->printError(T(">>> Error: missing end"));
-    }
   else
     {
-      String code;
       if (region)
         {
           // if we are evalling a region we need to add begin and end
           // tokens to the token array and also add their names to the
           // text string so that token positions are corrent when
           // reporting errors
-          code << T("begin ") << document.getTextBetween(start, end) << T(" end");
+          text << T("begin ") << document.getTextBetween(start, end) << T(" end");
           tokens.insert(0, new SynTok(T("begin"), SalSyntax::SalBegin, 0));
           tokens.add(new SynTok(T("end"), SalSyntax::SalEnd, 
                                 end.getPosition()-start.getPosition()+ins));
         }
       else
-        code=document.getTextBetween(start, end);
-      XSalNode* node=new XSalNode(0.0, code, getTextType(), expand);
+        text=document.getTextBetween(start, end);
+      XSalNode* node=new XSalNode(0.0, text, getTextType(), expand);
       // swapping moves tokens from the local array to the evalnode's
       // array AND clears the local array in a single
       // operation. swapping must be done or the tokens will be
       // deleted when the local array goes out of scope!
       node->toks.swapWithArray(tokens);
-      ////std::cout << "after swap, node->toks.size()=" << node->toks.size()
-      ////          << " tokens.size()=" << tokens.size()
-      ////          << "\n";
-      ////std::cout << "tokens=";
-      ////for (int i=0; i<node->toks.size(); i++)
-      ////  std::cout << " " << node->toks[i]->toString().toUTF8();
-      ////std::cout << "\n";
+      //std::cout << "tokens=";
+      //for (int i=0; i<node->toks.size(); i++)
+      //  std::cout << " " << node->toks[i]->toString().toUTF8();
+      //std::cout << "\n";
       SchemeThread::getInstance()->addNode(node);
     }
 }
@@ -1826,11 +1885,6 @@ int CodeBuffer::isNumberToken(const String str)
   if (div) return 3;
   if (dot) return 2; 
   return 1;
-}
-
-void CodeBuffer::evalSal1(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region)
-{
-  std::cout << "sal1='"<< document.getTextBetween(start,end).toUTF8() << "'\n";
 }
 
 /*=======================================================================*
@@ -2034,9 +2088,8 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
 
 int CodeBuffer::backwardSal1Expr(CodeDocument::Position& from, CodeDocument::Position& to)
 {
-  // in sal1 backwards expression finds the nearest command literal
+  // in sal1 backward expression finds the nearest command literal
   // that start in 0th column position of a line
-
   // moving backwards the cursor is always one char past scan start
   to.moveBy(-1);
   // skip trailing comments and whitespace
@@ -2055,7 +2108,7 @@ int CodeBuffer::backwardSal1Expr(CodeDocument::Position& from, CodeDocument::Pos
             {
               if (SalSyntax::isSalCommandType(tok->getType()))
                 {
-                  std::cout << "command=" << tok->getName().toUTF8() << "\n";
+                  //std::cout << "command=" << tok->getName().toUTF8() << "\n";
                   return 1;
                 }
             }
@@ -2076,7 +2129,7 @@ void CodeBuffer::indent()
   String all=pos.getLineText();
   int col=0;
 
-  if (isTextType(TextIDs::Sal2))
+  if (isTextType(TextIDs::Sal2) || isTextType(TextIDs::Sal))
     col=indentSal2();
   else if (isTextType(TextIDs::Lisp))
     col=indentLisp();

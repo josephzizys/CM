@@ -130,6 +130,14 @@
                    amp))
            (or srate 1)
            reverb))|#
+
+  (when (pair? bend)
+    (let ((env (append bend (list))))
+      (do ((tail env (cddr tail)))
+	  ((null? tail)
+	   (set! srate env))
+	;; scale y bends by srate
+	(set-car! (cdr tail) (* (cadr tail) srate)))))
   (fullmix file start duration (or filebeg 0.0)
            (if degree
                (degree->matrix degree in-chans out-chans amp amp-env)

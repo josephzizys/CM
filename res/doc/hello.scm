@@ -1,19 +1,16 @@
-; A SCM program consists of comments, commands and expressions.
-; Comments start with a semi-colon last until the end of the line. You
-; are reading a comment block. A command is something that you
-; execute to accomplish a task. To execute a command place
-; your cursor at the end
-; of the command line and press COMMAND-Enter. (On the Mac the COMMAND
-; key is the APPLE key, on Windows and Linux it's the CONTROL key.)
-; Look in the Console window to see the results of executing the
-; command.
+;;; -*- syntax: Lisp; font-size: 16; theme: "Emacs" -*-
 
-"Hello, world!"
+; A Lisp program consists of comments and expressions.  Comments start
+; with a semi-colon and last until the end of the line. You are
+; reading a block of comments.  An expression is something you execute
+; to produce a result. To execute an expression place your cursor at
+; the end of the line and press Command-enter. (On Windows and Linux
+; the Control key is the Command key.)  Look in the Console window to
+; see the result.
 
-(display "Hello, world!\n")
+123
 
-; Expressions are things that get evaluated when you execute a
-; command.  Many expressions involve math:
+; Operators MUST be delimited by spaces in math expressions:
 
 (+ 1 (* 2 3))
 
@@ -21,13 +18,14 @@
 
 (* (+ 1 2) 3)
 
-; ...
+; Function calls look like this:
 
-(begin (display "my key number: ") (between 60 90))
+(print "Hello, world!")
 
-; You can read help about commands and functions by placing your
-; cursor on the word you want to look up and pressing COMMAND-D. Try
-; this on the symbols 'display' and 'between' in the previous example.
+; You can nest function calls and function arguments are separated by
+; commas. Execute this command several times to see what it does:
+
+(print "My key number: " (between 60 90))
 
 ; Errors: when you execute somethin that contains a mistake you will
 ; see an error message printed in the Console window. Sometimes this
@@ -37,16 +35,16 @@
 
 (+ 1 (* 2 3)))
 
-(display foo)
+(print foo)
 
-; Commands and expressions can become quite complex and often span
-; more than one line.  Here is an example of a moderately complex
-; command. To execute it, place your cursor just after the last ')'
-; and press COMMAND-Enter to see what it does.
+; Expressions can become quite complex and often span more than one
+; line.  Here is an example of a moderately complex expression. To
+; execute it, place your cursor just after the last ')' and press
+; COMMAND-Enter to see what it does.
 
 (let* ((root (between 60 90))
        (third (+ root (pick 3 4)))
        (fifth (+ root 7)))
-  (display "My random chord: ")
-  (display (note (list root third fifth)))
-  (newline))
+  (print "My random chord: " (note (list root third fifth))))
+
+

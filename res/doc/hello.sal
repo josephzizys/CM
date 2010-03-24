@@ -1,12 +1,12 @@
-;;; -*- syntax: Sal2; font-size: 18; theme: "Emacs" -*-
+;;; -*- syntax: Sal2; font-size: 16; theme: "Emacs" -*-
 
 ; A SAL program consists of comments and expressions.  Comments start
-; with a semicolon last until the end of the line. You are reading a
-; block of comments.  An expression is something you execute to
-; produce a result. To execute an expression place your cursor at the
-; end of its line and press Command-enter. (On Windows and Linux the
-; Control key is the Command key.)  Look in the Console window to see
-; the result.
+; with a semi-colon and last until the end of the line. You are
+; reading a block of comments.  An expression is something you execute
+; to produce a result. To execute an expression place your cursor at
+; the end of the line and press Command-enter. (On Windows and Linux
+; the Control key is the Command key.)  Look in the Console window to
+; see the result.
 
 123
 
@@ -23,9 +23,8 @@
 
 print("Hello, world!")
 
-
-; Function arguments are separated by commas. Execute this command
-; several times to see what it does:
+; You can nest function calls and function arguments are separated by
+; commas. Execute this command several times to see what it does:
 
 print("My key number: ", between(60, 90))
 
@@ -44,7 +43,7 @@ print (1 + 2 * 3
 foo
 
 ; Expressions can become quite complex and may span more than one
-; line.  Here is an example of a moderately complex command. To
+; line.  Here is an example of a moderately complex expression. To
 ; execute it, place your cursor just after the word 'end' and press
 ; Command-enter to see what it does.
 

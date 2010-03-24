@@ -235,7 +235,7 @@ void Help::openHelpInBrowser(String url)
 
 void Help::openHelpInEditor(String path, String code)
 {
-  int ttyp=TextIDs::fromString(path.fromLastOccurrenceOf(T("."), true, true));
+  int ttyp=TextIDs::fromFileType(path.fromLastOccurrenceOf(T("."), true, true));
   new CodeEditorWindow(File::nonexistent, code, ttyp, path);
 }
 
