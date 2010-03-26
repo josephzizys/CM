@@ -79,7 +79,7 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   if (text.isEmpty())
     writeCustomComment(false);
   commands.registerAllCommandsForTarget(this);
-  setApplicationCommandManagerToWatch(&commands);
+  //setApplicationCommandManagerToWatch(&commands);
   commands.setFirstCommandTarget(this);
   updateKeyPressesForEditMode();
   setWantsKeyboardFocus(false); // buffer wants focus
