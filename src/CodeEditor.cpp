@@ -41,7 +41,7 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     }
   sourcefile=file;
   document.setNewLineCharacters(T("\n"));
-  document.replaceAllContent(text);
+  document.replaceAllContent(String(text));
   document.setSavePoint();
   document.clearUndoHistory();
   // parse optional first-line buffer customizations comment.  if no
@@ -75,8 +75,6 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
                  jmin(800, buffer->getHeight()));
   edcomp->setCodeBuffer(buffer);
 
-
-
   // add (current) customizations to new empty buffers (???)
   if (text.isEmpty())
     writeCustomComment(false);
@@ -97,10 +95,10 @@ CodeEditorWindow::~CodeEditorWindow ()
 {
   // deleteing an zeroing the buffer first seems to take care of the
   // asserts in juce_amalgamated.
-  EditorComponent* comp=(EditorComponent*)getContentComponent();
-  comp->deleteCodeBuffer();
   commands.setFirstCommandTarget(0);
   setMenuBar(0);
+  EditorComponent* comp=(EditorComponent*)getContentComponent();
+  comp->deleteCodeBuffer();
 }
 
 void CodeEditorWindow::closeButtonPressed ()
@@ -127,7 +125,6 @@ ApplicationCommandTarget* CodeEditorWindow::getNextCommandTarget()
 {
   return Console::getInstance();
 }
-
 
 void CodeEditorWindow::getAllCommands(Array<CommandID>& commands)
 {
@@ -618,27 +615,25 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
     }
   else if (name==T("Options")) 
     {
-      PopupMenu sub;
-      sub.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Text);
-      sub.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Lisp);
-      sub.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal);
-      sub.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal2);
-      sub.addSeparator();
-      sub.addCommandItem(&commands, CommandIDs::EditorDefaultSyntax);
-      menu.addSubMenu(T("Syntax"), sub);
+      PopupMenu sub1, sub2, sub3;
+      sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Text);
+      sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Lisp);
+      sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal);
+      sub1.addCommandItem(&commands, CommandIDs::EditorSyntax+TextIDs::Sal2);
+      sub1.addSeparator();
+      sub1.addCommandItem(&commands, CommandIDs::EditorDefaultSyntax);
+      menu.addSubMenu(T("Syntax"), sub1);
       menu.addSeparator();
-      sub.clear();
       for (int i=0; i<8; i++)
-        sub.addCommandItem(&commands, CommandIDs::EditorTheme+i);
-      sub.addSeparator();
-      sub.addCommandItem(&commands, CommandIDs::EditorDefaultTheme);
-      menu.addSubMenu(T("Theme"), sub);
-      sub.clear();
+        sub2.addCommandItem(&commands, CommandIDs::EditorTheme+i);
+      sub2.addSeparator();
+      sub2.addCommandItem(&commands, CommandIDs::EditorDefaultTheme);
+      menu.addSubMenu(T("Theme"), sub2);
       for (int i=8; i<=32; i+=2)
-        sub.addCommandItem(&commands, CommandIDs::EditorFontSize+i);
-      sub.addSeparator();
-      sub.addCommandItem(&commands, CommandIDs::EditorDefaultFontSize);
-      menu.addSubMenu(T("Font Size"), sub);
+        sub3.addCommandItem(&commands, CommandIDs::EditorFontSize+i);
+      sub3.addSeparator();
+      sub3.addCommandItem(&commands, CommandIDs::EditorDefaultFontSize);
+      menu.addSubMenu(T("Font Size"), sub3);
       menu.addSeparator();
       menu.addCommandItem(&commands, CommandIDs::EditorSaveCustom);
       menu.addCommandItem(&commands, CommandIDs::EditorReadCustom);
@@ -715,8 +710,9 @@ void CodeEditorWindow::switchBufferSyntax(int newtype)
 {
   if (getCodeBuffer()->isTextType(newtype))
     return;
-  // remove and delete current buffer.
+  XmlElement* customs=getCustomizations();  // buffer customizations or null
   EditorComponent* comp=(EditorComponent*)getContentComponent();
+  // remove and delete current buffer.
   comp->deleteCodeBuffer();
   // add new buffer
   Syntax* syntax=0;
@@ -728,11 +724,16 @@ void CodeEditorWindow::switchBufferSyntax(int newtype)
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
     default: syntax=TextSyntax::getInstance(); break;
     }
-  CodeBuffer* buffer=new CodeBuffer(document, syntax, &commands, NULL);
+  // pass in any existing customizations, the buffer does NOT look at
+  // the syntax anymore
+  CodeBuffer* buffer=new CodeBuffer(document, syntax, &commands, customs);
+  // maintain current size of window.
+  buffer->setSize(comp->getWidth(), comp->getHeight());
   comp->setCodeBuffer(buffer);
-  if (isCustomComment())
+  if (customs)
     {
-      writeCustomComment(false);
+      writeCustomComment(false); // update comment with new syntax
+      delete customs;
     }
   setWindowTitle();
 }
@@ -819,6 +820,7 @@ bool CodeEditorWindow::isCustomComment ()
 
 XmlElement* CodeEditorWindow::getCustomizations ()
 {
+  return NULL;
   // parse customization comment into xml, return null if there is
   // none. make sure you delete the xlm element after you use it!
   if (!isCustomComment()) return 0;

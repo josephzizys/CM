@@ -225,31 +225,26 @@ class TextIDs
 class ColorThemeIDs
 {
  public:
-  static const int Empty=0;
-  static const int Name=1;
-  static const int Background=2;
-  static const int Cursor=3;
-  static const int Region=4;
-  static const int RegionText=5;
-  static const int Error=6;
-  static const int Warning=7;
-  static const int Output=8;
-  static const int Comment=9;
-  static const int Stryng=10;
-  static const int Text1=11;
-  static const int Text2=12;
-  static const int Text3=13;
-  static const int Text4=14;
-  static const int Text5=15;
-  static const int Text6=16;
-  static const int Text7=17;
-  static const int Text8=18;
-  static const int Text9=19;
-  static const int Text10=20;
-  static const int Text11=21;
-  static const int Text12=22;
+  static const int Empty=-1;
+  static const int Plaintext=0;
+  static const int Keyword1=1;
+  static const int Keyword2=2;
+  static const int Keyword3=3;
+  static const int Literal1=4;
+  static const int Literal2=5;
+  static const int Literal3=6;
+  static const int Comment=7;
+  static const int Stryng=8;
+  static const int Error=9;
+  static const int Warning=10;
+  static const int Output=11;
+  static const int Values=12;
+  static const int Cursor=13;
+  static const int Region=14;
+  static const int Background=15;
+  static const int Name=16;
   
-  static const String toString(int id)
+  static const juce::String toString(int id)
   {
     switch (id)
       {
@@ -257,34 +252,21 @@ class ColorThemeIDs
       case Background: return String(T("background"));
       case Cursor: return String(T("cursor"));
       case Region: return String(T("region"));
-      case RegionText: return String(T("regiontext"));
+      case Values: return String(T("values"));
       case Error: return String(T("error"));
       case Warning: return String(T("warning"));
       case Output: return String(T("output"));
       case Comment: return String(T("comment"));
       case Stryng: return String(T("string"));
-      case Text1: return String(T("text1"));
-      case Text2: return String(T("text2"));
-      case Text3: return String(T("text3"));
-      case Text4: return String(T("text4"));
-      case Text5: return String(T("text5"));
-      case Text6: return String(T("text6"));
-      case Text7: return String(T("text7"));
-      case Text8: return String(T("text8"));
-      case Text9: return String(T("text9"));
-      case Text10: return String(T("text10"));
-      case Text11: return String(T("text11"));
-      case Text12: return String(T("text12"));
-      default: return String(T("empty"));
+      case Plaintext: return String(T("plaintext"));
+      case Keyword1: return String(T("keyword1"));  // scheme sharp #foo
+      case Keyword2: return String(T("keyword2"));  // scheme keyword :foo
+      case Keyword3: return String(T("keyword3"));  // sal keyword foo
+      case Literal1: return String(T("literal1"));  // special form/reserved
+      case Literal2: return String(T("literal2"));  // sal classname
+      case Literal3: return String(T("literal3"));  // sal command
+      case Empty: return String(T("Empty"));   
       }
-  }
-
-  static const StringArray getColorNames()
-  {
-    StringArray names;
-    for (int i=Background; i<=Text12; i++)
-      names.add(toString(i));
-    return names;
   }
 
   static const int fromString(const String s)
@@ -293,26 +275,72 @@ class ColorThemeIDs
     if (s.equalsIgnoreCase(T("background"))) return Background;
     if (s.equalsIgnoreCase(T("cursor"))) return Cursor;
     if (s.equalsIgnoreCase(T("region"))) return Region;
-    if (s.equalsIgnoreCase(T("regiontext"))) return RegionText;
+    if (s.equalsIgnoreCase(T("values"))) return Values;
     if (s.equalsIgnoreCase(T("error"))) return Error;
     if (s.equalsIgnoreCase(T("warning"))) return Warning;
     if (s.equalsIgnoreCase(T("output"))) return Output;
     if (s.equalsIgnoreCase(T("comment"))) return Comment;
     if (s.equalsIgnoreCase(T("string"))) return Stryng;
-    if (s.equalsIgnoreCase(T("text1"))) return Text1;
-    if (s.equalsIgnoreCase(T("text2"))) return Text2;
-    if (s.equalsIgnoreCase(T("text3"))) return Text3;
-    if (s.equalsIgnoreCase(T("text4"))) return Text4;
-    if (s.equalsIgnoreCase(T("text5"))) return Text5;
-    if (s.equalsIgnoreCase(T("text6"))) return Text6;
-    if (s.equalsIgnoreCase(T("text7"))) return Text7;
-    if (s.equalsIgnoreCase(T("text8"))) return Text8;
-    if (s.equalsIgnoreCase(T("text9"))) return Text9;
-    if (s.equalsIgnoreCase(T("text10"))) return Text10;
-    if (s.equalsIgnoreCase(T("text11"))) return Text11;
-    if (s.equalsIgnoreCase(T("text12"))) return Text12;
+    if (s.equalsIgnoreCase(T("plaintext"))) return Plaintext;
+    if (s.equalsIgnoreCase(T("keyword1"))) return Keyword1;
+    if (s.equalsIgnoreCase(T("keyword2"))) return Keyword2;
+    if (s.equalsIgnoreCase(T("keyword3"))) return Keyword3;
+    if (s.equalsIgnoreCase(T("literal1"))) return Literal1;
+    if (s.equalsIgnoreCase(T("literal2"))) return Literal2;
+    if (s.equalsIgnoreCase(T("literal3"))) return Literal3;
     return Empty;
   }
+
+  static const String toHtmlColorString(const Colour color)
+  {
+    switch (color.getARGB())  // hacked for standard grace colors
+      {
+      case 0xff000000 : return String(T("black"));
+      case 0xffffffff : return String(T("white"));
+      case 0xff808080 : return String(T("grey"));
+      case 0xff0000ff : return String(T("blue"));
+      case 0xff008000 : return String(T("green"));
+      case 0xffff0000 : return String(T("red"));
+      case 0xffffff00 : return String(T("yellow"));
+      case 0xff228b22 : return String(T("forestgreen"));
+      case 0xffb22222 : return String(T("firebrick"));
+      case 0xffff8c00 : return String(T("darkorange"));
+      case 0xffffa07a : return String(T("lightsalmon"));
+      case 0xff5f9ea0 : return String(T("cadetblue"));
+      case 0xffbc8f8f : return String(T("rosybrown"));
+      case 0xffda70d6 : return String(T("orchid"));
+      default: break;
+      }
+    String h=T("#");
+    int i;
+    if ((i=color.getRed())<16) h<< T("0");
+    h << String::toHexString(i);
+    if ((i=color.getGreen())<16) h<< T("0");
+    h << String::toHexString(i);
+    if ((i=color.getBlue())<16) h<< T("0");
+    h << String::toHexString(i);
+    return h;
+  }
+
+  static const Colour fromHtmlColorString(String html, const Colour defc=Colours::black)
+  {
+    if (html.isQuotedString())
+      html=html.unquoted();
+    if (html.isEmpty())
+      return defc;
+    if (html[0]==T('#') )
+      {
+        String num=html.substring(1);
+        if ((num.length()==6) && num.containsOnly(T("0123456789abcdefABCDEF")))
+          {
+            uint32 coln=0xff000000+num.getHexValue32();
+            return Colour(coln);
+          }
+        else return defc;
+      }
+    else return Colours::findColourForName(html, defc);
+  }
+
 };
   
 /** HiliteIDs enumerate logical categories for syntax highlighting **/
@@ -1228,6 +1256,19 @@ class SalIDs
     SAL_RULE_END = 0xa300,
     SAL_TYPE_END = 0xa300
   };
+
+  // sal tokenizer values
+  static const int TokenError = 0;
+  static const int TokenPlaintext = 1;
+  static const int TokenComment = 2;
+  static const int TokenString = 3;
+  static const int TokenSharpSign = 4;
+  static const int TokenLispKeyword = 5;
+  static const int TokenSalKeyword = 6;
+  static const int TokenSalReserved = 7;
+  static const int TokenSalClassname = 8;
+  static const int TokenSalCommand = 9;
+
   static const bool isSalType(int i) {return (0x100 <= i) && (i < SAL_TYPE_END);}
   static const bool isSalTokenType(int i) {return (SAL_TOKEN_BEG < i) && (i < SAL_TOKEN_END);}
   static const bool isSalDelimType(int i) {return (SAL_DELIM_BEG < i) && (i < SAL_DELIM_END);}

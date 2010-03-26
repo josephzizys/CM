@@ -39,21 +39,6 @@ Syntax::~Syntax()
 
 // default methods for Syntax subclasses
 
-const StringArray Syntax::getTokenTypes ()
-{
-  return ColorThemeIDs::getColorNames();
-}
-
-const Colour Syntax::getDefaultColour (const int tokenType)
-{
-  return Colours::black;
-}
-
-int Syntax::readNextToken (CodeDocument::Iterator &source)
-{
-  source.skipToEndOfLine(); 
-  return ColorThemeIDs::Text1;
-}
 
 void Syntax::addSynTok (const String n, int t, int a, int b, int c) 
 {
@@ -110,6 +95,25 @@ TextSyntax::TextSyntax ()
 TextSyntax::~TextSyntax()
 {
   clearSingletonInstance();
+}
+
+const StringArray TextSyntax::getTokenTypes ()
+{
+  StringArray names;
+  names.add(T("TokenError"));
+  names.add(T("TokenPlaintext"));
+  return names;
+}
+
+const Colour TextSyntax::getDefaultColour (const int tokenType)
+{
+  return Colours::black;
+}
+
+int TextSyntax::readNextToken (CodeDocument::Iterator &source)
+{
+  source.skipToEndOfLine(); 
+  return TokenPlaintext;
 }
 
 bool TextSyntax::isTopLevel(String line)
@@ -194,25 +198,41 @@ LispSyntax::~LispSyntax()
   clearSingletonInstance();
 }
 
+const StringArray LispSyntax::getTokenTypes ()
+{
+  //return ColorThemeIDs::getTokenColorNames();
+  StringArray names;
+  names.add(T("TokenError"));
+  names.add(T("TokenPlaintext"));
+  names.add(T("TokenComment"));
+  names.add(T("TokenString"));
+  names.add(T("TokenSharpSign"));
+  names.add(T("TokenLispKeyword"));
+  names.add(T("TokenLispSpecialForm"));
+  return names;
+}
+
 const Colour LispSyntax::getDefaultColour (const int tokenType)
 {
+  ////  return Colours::black;
   switch (tokenType)
     {
-    case ColorThemeIDs::Error: return Colours::red;
-    case ColorThemeIDs::Comment: return Colours::firebrick;
-    case ColorThemeIDs::Stryng: return Colours::rosybrown;
-    case ColorThemeIDs::Text1: return Colours::black;
-    case ColorThemeIDs::Text2: return Colours::cadetblue; // Sharp Sign
-    case ColorThemeIDs::Text3: return Colours::orchid;    // Lisp Keyword
-    case ColorThemeIDs::Text6: return Colour(0x95, 0x00, 0x83);  // Special Form/Reserved
-      //case TokenSpecial1: return Colour(0x8b, 0x00, 0x8b);
+    case TokenError: return Colours::red;
+    case TokenComment: return Colours::firebrick;
+    case TokenString: return Colours::rosybrown;
+    case TokenPlaintext: return Colours::black;
+    case TokenSharpSign: return Colours::cadetblue; // Sharp Sign
+    case TokenLispKeyword: return Colour(0x8a, 0x2f, 0x8f); //Colours::orchid;Lisp KeywordColour(0x8a, 0x2f, 0x8f)
+    case TokenLispSpecialForm: return Colour(0x95, 0x00, 0x83);  // Special Form/Reserved
     default: return Colours::black;
     }
 }
 
 int LispSyntax::readNextToken(CodeDocument::Iterator &source)
 {
-  int typ=ColorThemeIDs::Error;
+  ////  source.skipToEndOfLine(); 
+  ////  return TokenPlaintext;
+  int typ=TokenError;
   source.skipWhitespace();
   tchar chr=source.peekNextChar();
   switch (chr)
@@ -222,27 +242,27 @@ int LispSyntax::readNextToken(CodeDocument::Iterator &source)
       break;
     case T(';'):
       source.skipToEndOfLine();
-      typ=ColorThemeIDs::Comment;
+      typ=TokenComment;
       break;
     case T('"'):
       {
         juce_wchar c, q=source.nextChar(); // pop quote char
         for (c=source.nextChar(); (c!=q && c!=0); c=source.nextChar())
           if (c==T('\\')) source.skip(); // advance over \x
-        typ=ColorThemeIDs::Stryng;
+        typ=TokenString;
       }
       break;
     case T('#'):
       source.skip(); // pop sharp sign
-      if (char_word_p(syntab, source.peekNextChar())) // #x #b #t #f etc
+      if (char_token_p(syntab, source.peekNextChar())) // #x #? #t #f etc
         source.skip(); // pop macro char
-      typ=ColorThemeIDs::Text2;
+      typ=TokenSharpSign;
       break;
     case T(','):
     case T('\''):
     case T('`'):
       source.skip();
-      typ=ColorThemeIDs::Text1;
+      typ=TokenPlaintext;
       break;
     case T('('):
     case T(')'):
@@ -251,7 +271,7 @@ int LispSyntax::readNextToken(CodeDocument::Iterator &source)
     case T('['):
     case T(']'):
       source.skip();
-      typ=typ=ColorThemeIDs::Text1;
+      typ=typ=TokenPlaintext;
       break;
     default:
       {
@@ -269,16 +289,16 @@ int LispSyntax::readNextToken(CodeDocument::Iterator &source)
           } while (char_token_p(syntab, source.peekNextChar()));
         // i is now one beyond last constituent character
         if (chr==':') // first char was lisp keyword 
-          typ=ColorThemeIDs::Text3;
+          typ=TokenLispKeyword;
         else if (i<=maxtoklen) // check for special word
           {
             if (getSynTok(check))
-              typ=ColorThemeIDs::Text6;
+              typ=TokenLispSpecialForm;
             else
-              typ=ColorThemeIDs::Text1;              
+              typ=TokenPlaintext;              
           }
         else
-          typ=ColorThemeIDs::Text1;              
+          typ=TokenPlaintext;              
       }
     }
   return typ;
@@ -586,28 +606,47 @@ SalSyntax::~SalSyntax()
   clearSingletonInstance();
 }
 
+const StringArray SalSyntax::getTokenTypes ()
+{
+  //return ColorThemeIDs::getTokenColorNames();
+  StringArray names;
+  names.add(T("TokenError"));
+  names.add(T("TokenPlaintext"));
+  names.add(T("TokenComment"));
+  names.add(T("TokenString"));
+  names.add(T("TokenSharpSign"));
+  names.add(T("TokenLispKeyword"));
+  names.add(T("TokenSalKeyword"));
+  names.add(T("TokenSalReserved"));
+  names.add(T("TokenSalClassname"));
+  names.add(T("TokenSalCommand"));
+  return names;
+}
+
 const Colour SalSyntax::getDefaultColour (const int tokenType)
 {
+  ////  return Colours::black;
   switch (tokenType)
     {
-    case ColorThemeIDs::Error: return Colours::red;
-    case ColorThemeIDs::Comment: return Colours::firebrick;
-    case ColorThemeIDs::Stryng: return Colours::rosybrown;
-    case ColorThemeIDs::Text1: return Colours::black;
-    case ColorThemeIDs::Text2: return Colours::cadetblue; // Sharp Sign
-    case ColorThemeIDs::Text3: return Colours::cadetblue; // Lisp Keyword
-    case ColorThemeIDs::Text4: return Colours::orchid; // Sal Keyword
-    case ColorThemeIDs::Text5: return Colours::forestgreen; // Class names
-    case ColorThemeIDs::Text6: return Colour(0x95, 0x00, 0x83); //  Special Form/Reserved
-      //case ColorThemeIDs::Text6: return Colour(0xa0, 0x20, 0xf0); // Special Form/Reserved
-    case ColorThemeIDs::Text7: return Colours::blue; // Commands
+    case SalIDs::TokenError: return Colours::red;
+    case SalIDs::TokenPlaintext: return Colours::black;
+    case SalIDs::TokenComment: return Colours::firebrick;
+    case SalIDs::TokenString: return Colours::rosybrown;
+    case SalIDs::TokenSharpSign: return Colours::cadetblue; 
+    case SalIDs::TokenLispKeyword: return Colour(0x8a, 0x2f, 0x8f); // Lisp Keyword Colours::cadetblue
+    case SalIDs::TokenSalKeyword: return Colours::orchid; 
+    case SalIDs::TokenSalReserved: return Colour(0x95, 0x00, 0x83);
+    case SalIDs::TokenSalClassname: return Colours::forestgreen;
+    case SalIDs::TokenSalCommand: return Colours::blue; 
     default: return Colours::black;
     }
 }
 
 int SalSyntax::readNextToken(CodeDocument::Iterator &source)
 {
-  int typ=ColorThemeIDs::Error;
+  ////  source.skipToEndOfLine(); 
+  ////  return SalIDs::TokenPlaintext;
+  int typ=SalIDs::TokenError;
   //source.skipWhitespace();
   tchar chr=0;
   while (source.peekNextChar() && char_white_p(syntab, source.peekNextChar()))
@@ -621,24 +660,25 @@ int SalSyntax::readNextToken(CodeDocument::Iterator &source)
       break;
     case T(';'):
       source.skipToEndOfLine();
-      typ=ColorThemeIDs::Comment;
+      typ=SalIDs::TokenComment;
       break;
     case T('"'):
       {
         juce_wchar c, q=source.nextChar(); // pop quote char
         for (c=source.nextChar(); (c!=q && c!=0); c=source.nextChar())
           if (c==T('\\')) source.skip(); // advance over \x
-        typ=ColorThemeIDs::Stryng;
+        typ=SalIDs::TokenString;
       }
       break;
     case T('#'):
       source.skip(); // pop sharp sign
-      source.skip(); // pop macro char
-      typ=ColorThemeIDs::Text2;
+      if (char_token_p(syntab, source.peekNextChar())) // #x #? #t #f etc
+        source.skip(); // pop macro char
+      typ=SalIDs::TokenSharpSign;
       break;
     case T(','):
       source.skip();
-      typ=ColorThemeIDs::Text1;
+      typ=SalIDs::TokenPlaintext;
       break;
     case T('('):
     case T(')'):
@@ -647,11 +687,11 @@ int SalSyntax::readNextToken(CodeDocument::Iterator &source)
     case T('['):
     case T(']'):
       source.skip();
-      typ=ColorThemeIDs::Text1;
+      typ=SalIDs::TokenPlaintext;
       break;
     case T('\''):
       source.skip();
-      typ=ColorThemeIDs::Error;
+      typ=SalIDs::TokenError;
       break;
     default:
       {
@@ -674,9 +714,9 @@ int SalSyntax::readNextToken(CodeDocument::Iterator &source)
 
         // i is now one beyond last constituent character
         if (chr==T(':')) // first char was lisp keyword 
-          typ=ColorThemeIDs::Text3;
+          typ=SalIDs::TokenLispKeyword;
         else if (k==T(':')) // sal keyword 
-          typ=ColorThemeIDs::Text4;
+          typ=SalIDs::TokenSalKeyword;
         else if (i<=maxtoklen) // check for special word
           {
             SynTok* tok=getSynTok(check);
@@ -685,19 +725,21 @@ int SalSyntax::readNextToken(CodeDocument::Iterator &source)
                 int ttyp=tok->getType();
                 //std::cout << "linestart=" << newline << "literal=" << check.toUTF8() << "\n";
                 if (newline && (SalSyntax::isSalCommandType(ttyp) || ttyp==SalSyntax::SalEnd))
-                  typ=ColorThemeIDs::Text7;                    
-                else if (SalSyntax::isSalDefineType(ttyp))
-                  typ=ColorThemeIDs::Text5;
+                  {
+                    typ=SalIDs::TokenSalCommand;                    
+                  }
+                else if (SalSyntax::isSalDefineType(ttyp)) // classname
+                  typ=SalIDs::TokenSalClassname;
                 else if (SalSyntax::isSalLiteralType(ttyp))
-                  typ=ColorThemeIDs::Text6;
+                  typ=SalIDs::TokenSalReserved;
                 else
-                  typ=ColorThemeIDs::Text1;
+                  typ=SalIDs::TokenPlaintext;
               }
             else
-              typ=ColorThemeIDs::Text1;
+              typ=SalIDs::TokenPlaintext;
           }
         else
-          typ=ColorThemeIDs::Text1;
+          typ=SalIDs::TokenPlaintext;
       }
     }
   return typ;
@@ -1354,25 +1396,43 @@ Sal2Syntax::~Sal2Syntax ()
   clearSingletonInstance();
 }
 
+const StringArray Sal2Syntax::getTokenTypes ()
+{
+  //return ColorThemeIDs::getTokenColorNames();
+  StringArray names;
+  names.add(T("TokenError"));
+  names.add(T("TokenPlaintext"));
+  names.add(T("TokenComment"));
+  names.add(T("TokenString"));
+  names.add(T("TokenSharpSign"));
+  names.add(T("TokenLispKeyword"));
+  names.add(T("TokenSalKeyword"));
+  names.add(T("TokenSalReserved"));
+  return names;
+}
+
 const Colour Sal2Syntax::getDefaultColour (const int tokenType)
 {
+  ////  return Colours::black;
   switch (tokenType)
     {
-    case ColorThemeIDs::Error: return Colours::red;
-    case ColorThemeIDs::Comment: return Colours::firebrick;
-    case ColorThemeIDs::Stryng: return Colours::rosybrown;
-    case ColorThemeIDs::Text1: return Colours::black;
-    case ColorThemeIDs::Text2: return Colours::cadetblue; // Sharp Sign
-    case ColorThemeIDs::Text3: return Colours::cadetblue; // Lisp Keyword
-    case ColorThemeIDs::Text4: return Colours::orchid; // Sal Keyword
-    case ColorThemeIDs::Text6: return Colour(0x95, 0x00, 0x83); //  Special Form/Reserved
+    case SalIDs::TokenError: return Colours::red;
+    case SalIDs::TokenPlaintext: return Colours::black;
+    case SalIDs::TokenComment: return Colours::firebrick;
+    case SalIDs::TokenString: return Colours::rosybrown;
+    case SalIDs::TokenSharpSign: return Colours::cadetblue; 
+    case SalIDs::TokenLispKeyword: return Colour(0x8a, 0x2f, 0x8f); // Lisp Keyword Colours::cadetblue
+    case SalIDs::TokenSalKeyword: return Colours::orchid; 
+    case SalIDs::TokenSalReserved: return Colour(0x95, 0x00, 0x83);
     default: return Colours::black;
     }
 }
 
 int Sal2Syntax::readNextToken(CodeDocument::Iterator &source)
 {
-  int typ=ColorThemeIDs::Error;
+  ////  source.skipToEndOfLine(); 
+  ////  return SalIDs::TokenPlaintext;
+  int typ=SalIDs::TokenError;
   source.skipWhitespace();
   tchar chr=source.peekNextChar();
   switch (chr)
@@ -1382,24 +1442,25 @@ int Sal2Syntax::readNextToken(CodeDocument::Iterator &source)
       break;
     case T(';'):
       source.skipToEndOfLine();
-      typ=ColorThemeIDs::Comment;
+      typ=SalIDs::TokenComment;
       break;
     case T('"'):
       {
         juce_wchar c, q=source.nextChar(); // pop quote char
         for (c=source.nextChar(); (c!=q && c!=0); c=source.nextChar())
           if (c==T('\\')) source.skip(); // advance over \x
-        typ=ColorThemeIDs::Stryng;
+        typ=SalIDs::TokenString;
       }
       break;
     case T('#'):
       source.skip(); // pop sharp sign
-      source.skip(); // pop macro char FIXME: MAYBE!
-      typ=ColorThemeIDs::Text2;
+      if (char_token_p(syntab, source.peekNextChar())) // #x #? #t #f etc
+        source.skip(); // pop macro char
+      typ=SalIDs::TokenSharpSign;
       break;
     case T(','):
       source.skip();
-      typ=ColorThemeIDs::Text1;
+      typ=SalIDs::TokenPlaintext;
       break;
     case T('('):
     case T(')'):
@@ -1408,11 +1469,11 @@ int Sal2Syntax::readNextToken(CodeDocument::Iterator &source)
     case T('['):
     case T(']'):
       source.skip();
-      typ=ColorThemeIDs::Text1;
+      typ=SalIDs::TokenPlaintext;
       break;
     case T('\''):
       source.skip();
-      typ=ColorThemeIDs::Error;
+      typ=SalIDs::TokenError;
       break;
     default:
       {
@@ -1434,19 +1495,19 @@ int Sal2Syntax::readNextToken(CodeDocument::Iterator &source)
         while (char_token_p(syntab, source.peekNextChar()));
         // i is now one beyond last constituent character
         if (chr==T(':')) // lisp style (first char)
-          typ=ColorThemeIDs::Text3;
+          typ=SalIDs::TokenLispKeyword;
         else if (k==T(':')) // sal style (last char)
-          typ=ColorThemeIDs::Text4;
+          typ=SalIDs::TokenSalKeyword;
         else if (i<=maxtoklen)
           {
             SynTok* tok=getSynTok(check);
             if (tok && SalSyntax::isSalLiteralType(tok->getType()))
-              typ=ColorThemeIDs::Text6;
+              typ=SalIDs::TokenSalReserved;
             else
-              typ=ColorThemeIDs::Text1;              
+              typ=SalIDs::TokenPlaintext;              
           }
         else
-          typ=ColorThemeIDs::Text1;              
+          typ=SalIDs::TokenPlaintext;              
       }
     }
   return typ;

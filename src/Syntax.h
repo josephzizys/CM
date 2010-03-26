@@ -100,10 +100,6 @@ class Syntax : public CodeTokeniser
   SynTok* getSynTok (String n) ;
   bool isWhiteBetween (const String txt, int lb, int ub);
   Colour getHiliteColour(HiliteID id) {return hilites[id];}
-  const StringArray getTokenTypes ();
-  const Colour getDefaultColour (const int tokenType);
-  int readNextToken (CodeDocument::Iterator &source);
-
 };
 
 /*=======================================================================*
@@ -116,10 +112,17 @@ class TextSyntax : public Syntax
   TextSyntax();
   ~TextSyntax() ;
 
+  static const int TokenError = 0;
+  static const int TokenPlaintext = 1;
+
   bool isTopLevel(String line) ;
   int getIndent (const String text, int bot, int top, int beg) ;
   HiliteID getHilite (const String text, int start, int end) ;
   void eval(String text, bool isRegion=false, bool expand=false) {}
+
+  const StringArray getTokenTypes ();
+  const Colour getDefaultColour (const int tokenType);
+  int readNextToken (CodeDocument::Iterator &source);
 
   juce_DeclareSingleton (TextSyntax, true)
 };
@@ -135,11 +138,20 @@ class LispSyntax : public Syntax
   ~LispSyntax() ;
   //void addLispTok(const String n, int t, HiliteID h, int i) ;
 
+  static const int TokenError = 0;
+  static const int TokenPlaintext = 1;
+  static const int TokenComment = 2;
+  static const int TokenString = 3;
+  static const int TokenSharpSign = 4;
+  static const int TokenLispKeyword = 5;
+  static const int TokenLispSpecialForm = 6;
+
   bool isTopLevel(String line) ;
   int getIndent (const String text, int bot, int top, int beg) ;
   HiliteID getHilite (const String text, int start, int end) ;
   void eval(String text, bool isRegion=false, bool expand=false) ;
 
+  const StringArray getTokenTypes ();
   const Colour getDefaultColour (const int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 
@@ -153,6 +165,8 @@ class LispSyntax : public Syntax
 class SalSyntax : public Syntax
 {
  public:
+
+
 
   enum SalErrors
   {
@@ -389,6 +403,7 @@ class SalSyntax : public Syntax
   static const bool isSalBlockOpen(int t) {return SalTypeDataBits(t)==SalBlockOpen;}
   static const bool isSalBlockClose(int t) {return SalTypeDataBits(t)==SalBlockClose;}
 
+  const StringArray getTokenTypes ();
   const Colour getDefaultColour (const int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 
@@ -436,6 +451,7 @@ class Sal2Syntax : public Syntax
   Sal2Syntax();
   ~Sal2Syntax();
 
+  const StringArray getTokenTypes ();
   const Colour getDefaultColour (const int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 

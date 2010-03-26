@@ -185,7 +185,8 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
       }
     ~EditorComponent()
       {
-        deleteAllChildren();
+        //deleteAllChildren();
+        //deleteCodeBuffer();
       }
     CodeBuffer* getCodeBuffer() 
     {

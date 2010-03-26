@@ -330,6 +330,42 @@ void Console::setTheme(int index)
   buffer->applyFontToAllText(buffer->getFont());
 }
 
+/*void printheme(ConsoleTheme* th)
+{
+  String str=T("<colortheme");
+  str << " name=" << th->getName().quoted() 
+      << T("\n           ")
+      << " plaintext=" << ColorThemeIDs::toHtmlColorString(th->getColor(ConsoleTheme::inputColor)).quoted()
+      << T(" comment=\"firebrick\"")
+      << T(" string=\"rosybrown\"")
+      << T("\n           ")
+      << T(" keyword1=\"cadetblue\"")   // sharpsign
+      << T(" keyword2=\"#8a2f8f\"")     // lisp keywords
+      << T(" keyword3=\"orchid\"")      // sal keywords
+      << T("\n           ")
+      << T(" literal1=\"#950083\"")     // reserved/special
+      << T(" literal2=\"forestgreen\"") // sal1 classnames
+      << T(" literal3=\"blue\"")        // sal1 commands
+      << T("\n           ")
+      << " values=" << ColorThemeIDs::toHtmlColorString(th->getColor(ConsoleTheme::valuesColor)).quoted()
+      << " output=" << ColorThemeIDs::toHtmlColorString(th->getColor(ConsoleTheme::outputColor)).quoted()
+      << " warning=" << ColorThemeIDs::toHtmlColorString(th->getColor(ConsoleTheme::warningColor)).quoted()
+      << T("\n           ")
+      << " error=" << ColorThemeIDs::toHtmlColorString(th->getColor(ConsoleTheme::errorColor)).quoted()
+      << " cursor=" << ColorThemeIDs::toHtmlColorString(th->getColor(ConsoleTheme::caretColor)).quoted()
+      << " background=" << ColorThemeIDs::toHtmlColorString(th->getColor(ConsoleTheme::bgColor)).quoted()
+      << T("/>");
+  std::cout<<str.toUTF8()<<"\n";
+
+  for (int i=ConsoleTheme::bgColor; i<=ConsoleTheme::caretColor; i++)
+    {
+      Colour c1=th->getColor(i);
+      String st=ColorThemeIDs::toHtmlColorString(c1);
+      Colour c2=ColorThemeIDs::fromHtmlColorString(st);
+      if (c1!=c2) std::cout << th->getName().toUTF8() << "(" << i << ") failed! orig=" << c1.toString().toUTF8() << ", html="<< st.toUTF8() << ", back=" << c2.toString().toUTF8() << "\n" ;
+    }
+}
+*/
 void Console::initThemes()
 {
   Colour errc=Colour(0xffcd0000);
@@ -403,6 +439,8 @@ void Console::initThemes()
                               Colours::black,
                               Colour(0xffcd0000)
                               ));
+
+  //for (int i=0; i<themes.size(); i++) { printheme(themes[i]); }
 }
 
 
