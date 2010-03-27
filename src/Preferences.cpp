@@ -7,11 +7,54 @@
 
 #include "Enumerations.h"
 #include "Preferences.h"
-
+#include <iostream>;
 juce_ImplementSingleton (Preferences);
 
+// comment= old: firebrick  new: #ce001a
+// string=  old: rosybrown  new: #a11153
+
+static tchar colorthemedata [] = T("<colorthemes>\
+<colortheme name=\"Clarity and Beauty\"\
+            plaintext=\"#aac5e0\" comment=\"#ce001a\" string=\"rosybrown\"\
+            keyword1=\"cadetblue\" keyword2=\"#8a2f8f\" keyword3=\"orchid\"\
+            literal1=\"#00ffff\" literal2=\"forestgreen\" literal3=\"blue\"\
+            values=\"#00cd00\" output=\"lightsalmon\" warning=\"darkorange\"\
+            error=\"#cd0000\" cursor=\"yellow\" background=\"black\"/>\
+<colortheme name=\"Deep Blue\"\
+            plaintext=\"#eeeeee\" comment=\"#ce001a\" string=\"rosybrown\"\
+            keyword1=\"cadetblue\" keyword2=\"#8a2f8f\" keyword3=\"orchid\"\
+            literal1=\"#950083\" literal2=\"forestgreen\" literal3=\"blue\"\
+            values=\"#00cd00\" output=\"#deb887\" warning=\"darkorange\"\
+            error=\"#cd0000\" cursor=\"#00ff00\" background=\"#102e4e\"/>\
+<colortheme name=\"Gnome\"\
+            plaintext=\"#f5deb3\" comment=\"#ce001a\" string=\"rosybrown\"\
+            keyword1=\"cadetblue\" keyword2=\"#8a2f8f\" keyword3=\"orchid\"\
+            literal1=\"#950083\" literal2=\"forestgreen\" literal3=\"blue\"\
+            values=\"#00cd00\" output=\"lightsalmon\" warning=\"darkorange\"\
+            error=\"#cd0000\" cursor=\"#d3d3d3\" background=\"#2f4f4f\"/>\
+<colortheme name=\"Snowish\"\
+            plaintext=\"#2f4f4f\" comment=\"#ce001a\" string=\"rosybrown\"\
+            keyword1=\"cadetblue\" keyword2=\"#8a2f8f\" keyword3=\"orchid\"\
+            literal1=\"#950083\" literal2=\"forestgreen\" literal3=\"blue\"\
+            values=\"#00cd00\" output=\"#9400d3\" warning=\"darkorange\"\
+            error=\"#cd0000\" cursor=\"#cd0000\" background=\"#eee9e9\"/>\
+<colortheme name=\"Emacs\"\
+            plaintext=\"black\" comment=\"#ce001a\" string=\"rosybrown\"\
+            keyword1=\"cadetblue\" keyword2=\"#8a2f8f\" keyword3=\"orchid\"\
+            literal1=\"#950083\" literal2=\"forestgreen\" literal3=\"blue\"\
+            values=\"#00cd00\" output=\"rosybrown\" warning=\"darkorange\"\
+            error=\"#cd0000\" cursor=\"black\" background=\"white\"/>\
+<colortheme name=\"XEmacs\"\
+            plaintext=\"black\" comment=\"#ce001a\" string=\"rosybrown\"\
+            keyword1=\"cadetblue\" keyword2=\"#8a2f8f\" keyword3=\"orchid\"\
+            literal1=\"#950083\" literal2=\"forestgreen\" literal3=\"blue\"\
+            values=\"#00cd00\" output=\"#008b00\" warning=\"darkorange\"\
+            error=\"#cd0000\" cursor=\"#cd0000\" background=\"#cccccc\"/>\
+</colorthemes>");
+
 Preferences::Preferences()
-    : props (0)
+  : colorThemes(0),
+    props (0)
 {
   props=PropertiesFile::createDefaultAppPropertiesFile
     (JUCEApplication::getInstance()->getApplicationName(),
@@ -36,11 +79,46 @@ Preferences::Preferences()
     File::getSpecialLocation(File::userHomeDirectory).
       setAsCurrentWorkingDirectory();
 #endif
+    String str=String(colorthemedata);
+    XmlDocument xmldoc (str);
+    colorThemes=xmldoc.getDocumentElement();
+    if (colorThemes==0)
+      {
+        std::cout << "WARNING: failed to load ColorThemes!\n";
+        std::cout << xmldoc.getLastParseError().toUTF8() << "\n";
+      }
+    std::cout << "numthemes=" << numColorThemes() << "\n";
+    for (int i=0; i<numColorThemes(); i++)
+      std::cout << ColorThemeIDs::getColorThemeName(getColorTheme(i)).toUTF8() << "\n";   
+}
+
+int Preferences::numColorThemes()
+{
+  if (colorThemes) return colorThemes->getNumChildElements();
+  return 0;
+}
+
+XmlElement* Preferences::getColorTheme(int i)
+{
+  if (colorThemes) return colorThemes->getChildElement(i);
+  return 0;
+}
+
+XmlElement* Preferences::getColorTheme(const String name)
+{
+  for (int i=0; i<numColorThemes(); i++)
+    {
+      XmlElement* e=getColorTheme(i);
+      if (name.equalsIgnoreCase(ColorThemeIDs::getColorThemeName(e)))
+        return e;
+    }
+  return 0;
 }
 
 Preferences::~Preferences()
 {
   flush();
+  deleteAndZero (colorThemes);
   deleteAndZero (props);
   clearSingletonInstance();
 }

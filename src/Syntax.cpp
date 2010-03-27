@@ -31,6 +31,8 @@ Syntax::Syntax (String a, String b, String c, String d, String e,
   init_syntab(syntab, a, b, c, d, e, f, g, h, i, j);
   for (int i=0; i<HiliteIDs::NUMHILITES; i++)
     hilites[i]=Colours::black;
+  for (int i=0; i<ColorThemeIDs::MAXTOKENCOLORS; i++)
+    colors[i]=Colours::black;
 }
 
 Syntax::~Syntax()
@@ -98,10 +100,15 @@ TextSyntax::~TextSyntax()
 }
 
 const StringArray TextSyntax::getTokenTypes ()
-{
+{ 
+  // juce's CodeEditorComponent uses this array to name the
+  // Tokenizer's tokenTypes, where each array index is a tokenType and
+  // the string at that postion is its name. we use this array to map
+  // tokenTypes to ColorTheme attribute names in the Xml ColorTheme.
   StringArray names;
-  names.add(T("TokenError"));
-  names.add(T("TokenPlaintext"));
+  // ColorSchemeAttribute        TokenType
+  names.add(T("error"));      // TokenError
+  names.add(T("plaintext"));  // TokenPlaintext
   return names;
 }
 
@@ -200,15 +207,19 @@ LispSyntax::~LispSyntax()
 
 const StringArray LispSyntax::getTokenTypes ()
 {
-  //return ColorThemeIDs::getTokenColorNames();
+  // juce's CodeEditorComponent uses this array to name the
+  // Tokenizer's tokenTypes, where each array index is a tokenType and
+  // the string at that postion is its name. we use this array to map
+  // tokenTypes to ColorTheme attribute names in the Xml ColorTheme.
   StringArray names;
-  names.add(T("TokenError"));
-  names.add(T("TokenPlaintext"));
-  names.add(T("TokenComment"));
-  names.add(T("TokenString"));
-  names.add(T("TokenSharpSign"));
-  names.add(T("TokenLispKeyword"));
-  names.add(T("TokenLispSpecialForm"));
+  // ColorSchemeAttribute        TokenType
+  names.add(T("error"));      // TokenError
+  names.add(T("plaintext"));  // TokenPlaintext
+  names.add(T("comment"));    // TokenComment
+  names.add(T("string"));     // TokenString
+  names.add(T("keyword1"));   // TokenSharpsign
+  names.add(T("keyword2"));   // TokenLispKeyword
+  names.add(T("literal1"));   // TokenLispSpecialForm
   return names;
 }
 
@@ -218,10 +229,10 @@ const Colour LispSyntax::getDefaultColour (const int tokenType)
   switch (tokenType)
     {
     case TokenError: return Colours::red;
-    case TokenComment: return Colours::firebrick;
-    case TokenString: return Colours::rosybrown;
+    case TokenComment: return Colour(0xce, 0x00, 0x1a); //Colours::firebrick;
+    case TokenString: return Colour(0xa1, 0x11, 0x53); //Colours::rosybrown;
     case TokenPlaintext: return Colours::black;
-    case TokenSharpSign: return Colours::cadetblue; // Sharp Sign
+    case TokenSharpsign: return Colours::cadetblue; // Sharp Sign
     case TokenLispKeyword: return Colour(0x8a, 0x2f, 0x8f); //Colours::orchid;Lisp KeywordColour(0x8a, 0x2f, 0x8f)
     case TokenLispSpecialForm: return Colour(0x95, 0x00, 0x83);  // Special Form/Reserved
     default: return Colours::black;
@@ -256,7 +267,7 @@ int LispSyntax::readNextToken(CodeDocument::Iterator &source)
       source.skip(); // pop sharp sign
       if (char_token_p(syntab, source.peekNextChar())) // #x #? #t #f etc
         source.skip(); // pop macro char
-      typ=TokenSharpSign;
+      typ=TokenSharpsign;
       break;
     case T(','):
     case T('\''):
@@ -608,18 +619,22 @@ SalSyntax::~SalSyntax()
 
 const StringArray SalSyntax::getTokenTypes ()
 {
-  //return ColorThemeIDs::getTokenColorNames();
+  // juce's CodeEditorComponent uses this array to name the
+  // Tokenizer's tokenTypes, where each array index is a tokenType and
+  // the string at that postion is its name. we use this array to map
+  // tokenTypes to ColorTheme attribute names in the Xml ColorTheme.
   StringArray names;
-  names.add(T("TokenError"));
-  names.add(T("TokenPlaintext"));
-  names.add(T("TokenComment"));
-  names.add(T("TokenString"));
-  names.add(T("TokenSharpSign"));
-  names.add(T("TokenLispKeyword"));
-  names.add(T("TokenSalKeyword"));
-  names.add(T("TokenSalReserved"));
-  names.add(T("TokenSalClassname"));
-  names.add(T("TokenSalCommand"));
+  // ColorSchemeAttribute        TokenType
+  names.add(T("error"));      // TokenError
+  names.add(T("plaintext"));  // TokenPlaintext
+  names.add(T("comment"));    // TokenComment
+  names.add(T("string"));     // TokenString
+  names.add(T("keyword1"));   // TokenSharpsign
+  names.add(T("keyword2"));   // TokenLispKeyword
+  names.add(T("keyword3"));   // TokenSalKeyword
+  names.add(T("literal1"));   // TokenSalReserved
+  names.add(T("literal2"));   // TokenSalClassname
+  names.add(T("literal3"));   // TokenSalCommand
   return names;
 }
 
@@ -630,8 +645,8 @@ const Colour SalSyntax::getDefaultColour (const int tokenType)
     {
     case SalIDs::TokenError: return Colours::red;
     case SalIDs::TokenPlaintext: return Colours::black;
-    case SalIDs::TokenComment: return Colours::firebrick;
-    case SalIDs::TokenString: return Colours::rosybrown;
+    case SalIDs::TokenComment: return Colour(0xce, 0x00, 0x1a); //Colours::firebrick;
+    case SalIDs::TokenString: return Colour(0xa1, 0x11, 0x53); //Colours::rosybrown;
     case SalIDs::TokenSharpSign: return Colours::cadetblue; 
     case SalIDs::TokenLispKeyword: return Colour(0x8a, 0x2f, 0x8f); // Lisp Keyword Colours::cadetblue
     case SalIDs::TokenSalKeyword: return Colours::orchid; 
@@ -1398,16 +1413,20 @@ Sal2Syntax::~Sal2Syntax ()
 
 const StringArray Sal2Syntax::getTokenTypes ()
 {
-  //return ColorThemeIDs::getTokenColorNames();
+  // juce's CodeEditorComponent uses this array to name the
+  // Tokenizer's tokenTypes, where each array index is a tokenType and
+  // the string at that postion is its name. we use this array to map
+  // tokenTypes to ColorTheme attribute names in the Xml ColorTheme.
   StringArray names;
-  names.add(T("TokenError"));
-  names.add(T("TokenPlaintext"));
-  names.add(T("TokenComment"));
-  names.add(T("TokenString"));
-  names.add(T("TokenSharpSign"));
-  names.add(T("TokenLispKeyword"));
-  names.add(T("TokenSalKeyword"));
-  names.add(T("TokenSalReserved"));
+  // ColorSchemeAttribute        TokenType
+  names.add(T("error"));      // TokenError
+  names.add(T("plaintext"));  // TokenPlaintext
+  names.add(T("comment"));    // TokenComment
+  names.add(T("string"));     // TokenString
+  names.add(T("keyword1"));   // TokenSharpsign
+  names.add(T("keyword2"));   // TokenLispKeyword
+  names.add(T("keyword3"));   // TokenSalKeyword
+  names.add(T("literal1"));   // TokenSalReserved
   return names;
 }
 
@@ -1418,8 +1437,8 @@ const Colour Sal2Syntax::getDefaultColour (const int tokenType)
     {
     case SalIDs::TokenError: return Colours::red;
     case SalIDs::TokenPlaintext: return Colours::black;
-    case SalIDs::TokenComment: return Colours::firebrick;
-    case SalIDs::TokenString: return Colours::rosybrown;
+    case SalIDs::TokenComment: return Colour(0xce, 0x00, 0x1a); //Colours::firebrick;
+    case SalIDs::TokenString: return Colour(0xa1, 0x11, 0x53); //Colours::rosybrown;
     case SalIDs::TokenSharpSign: return Colours::cadetblue; 
     case SalIDs::TokenLispKeyword: return Colour(0x8a, 0x2f, 0x8f); // Lisp Keyword Colours::cadetblue
     case SalIDs::TokenSalKeyword: return Colours::orchid; 

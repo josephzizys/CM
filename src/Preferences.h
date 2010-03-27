@@ -41,6 +41,10 @@ class Preferences
   RecentlyOpenedFilesList recentlyOpened;
   RecentlyOpenedFilesList recentlyLoaded;
   RecentlyOpenedFilesList recentlyPlayed;
+  XmlElement* colorThemes;
+  int numColorThemes();
+  XmlElement* getColorTheme(int index);
+  XmlElement* getColorTheme(const String name);
   juce_DeclareSingleton (Preferences, false);
 };
 

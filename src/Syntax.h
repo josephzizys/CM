@@ -63,22 +63,9 @@ typedef std::map <String, SynTok*> SynTokMap;
 class Syntax : public CodeTokeniser
 {
  public:
-  enum TokenTypes
-  {
-    TokenError,
-    TokenComment,
-    TokenString,
-    TokenParentheses,
-    TokenPunctuation,
-    TokenReadMacro,
-    TokenSpecial1,
-    TokenSpecial2,
-    TokenKeyword1,
-    TokenKeyword2,
-    TokenConstituent
-  };
   SynTab syntab;
   Colour hilites[HiliteIDs::NUMHILITES];
+  Colour colors[ColorThemeIDs::MAXTOKENCOLORS];
   SynTokMap tokens;
   int type;
   bool coloring;
@@ -92,6 +79,7 @@ class Syntax : public CodeTokeniser
   int getTabWidth(){return tabwidth;}
   void setTabWidth(int n);
   bool highlighting() {return coloring;}
+
   virtual bool isTopLevel(String line) =0;
   virtual int getIndent (const String text, int bot, int top, int beg) =0;
   virtual HiliteID getHilite (const String text, int start, int end) =0;
@@ -136,13 +124,12 @@ class LispSyntax : public Syntax
  public:
   LispSyntax();
   ~LispSyntax() ;
-  //void addLispTok(const String n, int t, HiliteID h, int i) ;
-
+  // juce syntax tokens start at 0 or the defaults dont work
   static const int TokenError = 0;
   static const int TokenPlaintext = 1;
   static const int TokenComment = 2;
   static const int TokenString = 3;
-  static const int TokenSharpSign = 4;
+  static const int TokenSharpsign = 4;
   static const int TokenLispKeyword = 5;
   static const int TokenLispSpecialForm = 6;
 

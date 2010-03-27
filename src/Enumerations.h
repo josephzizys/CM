@@ -236,6 +236,7 @@ class ColorThemeIDs
   static const int Comment=7;
   static const int Stryng=8;
   static const int Error=9;
+  static const int MAXTOKENCOLORS=10; // from Plaintext to Error
   static const int Warning=10;
   static const int Output=11;
   static const int Values=12;
@@ -339,6 +340,16 @@ class ColorThemeIDs
         else return defc;
       }
     else return Colours::findColourForName(html, defc);
+  }
+
+  static const String getColorThemeName (XmlElement* theme)
+  {
+    return theme->getStringAttribute(T("name"));
+  }
+
+  static const Colour getColorThemeColor (XmlElement* theme, const int id, const Colour defc=Colours::black)
+  {
+    return fromHtmlColorString(theme->getStringAttribute(toString(id)),defc);
   }
 
 };

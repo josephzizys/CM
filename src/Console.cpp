@@ -330,7 +330,7 @@ void Console::setTheme(int index)
   buffer->applyFontToAllText(buffer->getFont());
 }
 
-/*void printheme(ConsoleTheme* th)
+void printheme(ConsoleTheme* th)
 {
   String str=T("<colortheme");
   str << " name=" << th->getName().quoted() 
@@ -365,7 +365,7 @@ void Console::setTheme(int index)
       if (c1!=c2) std::cout << th->getName().toUTF8() << "(" << i << ") failed! orig=" << c1.toString().toUTF8() << ", html="<< st.toUTF8() << ", back=" << c2.toString().toUTF8() << "\n" ;
     }
 }
-*/
+
 void Console::initThemes()
 {
   Colour errc=Colour(0xffcd0000);
@@ -417,7 +417,7 @@ void Console::initThemes()
                               Colours::black,
                               Colour(0xffcd0000)
                               ));
-  themes.add(new ConsoleTheme(T("Standard Emacs"),
+  themes.add(new ConsoleTheme(T("Emacs"),
                               Colours::white,
                               Colours::black,
                               Colour(0xffbc8f8f),
@@ -428,7 +428,7 @@ void Console::initThemes()
                               Colours::black,
                               Colours::black
                               ));
-  themes.add(new ConsoleTheme(T("Standard XEmacs"),
+  themes.add(new ConsoleTheme(T("XEmacs"),
                               Colour(0xffcccccc), 
                               Colours::black,
                               Colour(0xff008b00),

@@ -72,6 +72,7 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   bool emacsmode;
   bool parensmatching;
   bool changed;
+  XmlElement* colortheme;
   bool keyPressed (const KeyPress& key);
   void mouseDoubleClick (const MouseEvent &e);
   int getTextType();
@@ -80,12 +81,12 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   void setFontSize(int size);
   int getTabWidth();
   void setTabWidth(int siz);
-
   int getColumns();
   void setColumns(int num, bool redisplay=true);
-
   int getLines();
   void setLines(int num, bool redisplay=true);
+  void setColorTheme(XmlElement* theme);
+  XmlElement* getColorTheme();
 
   bool isChanged();
   void isChanged(bool changed);
@@ -210,7 +211,6 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
  public:
   CodeDocument document;
   File sourcefile;
-
   CodeEditorWindow(File file, String text=String::empty, int synt=0, String title=String::empty) ;
   ~CodeEditorWindow () ;
   void closeButtonPressed () ;

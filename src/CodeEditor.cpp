@@ -25,6 +25,7 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   : DocumentWindow(String::empty, Colours::white, DocumentWindow::allButtons, true)
 {
   setMenuBar(this);
+  Preferences* prefs=Preferences::getInstance();
   if (file.existsAsFile())
     {
       if (synt==TextIDs::Empty)
@@ -36,7 +37,7 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   else
     {
       if (synt==TextIDs::Empty)
-        synt=Preferences::getInstance()->getIntProp(T("EditorSyntax"), TextIDs::Lisp);
+        synt=prefs->getIntProp(T("EditorSyntax"), TextIDs::Lisp);
       file=File::nonexistent;
     }
   sourcefile=file;
@@ -44,11 +45,12 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   document.replaceAllContent(String(text));
   document.setSavePoint();
   document.clearUndoHistory();
-  // parse optional first-line buffer customizations comment.  if no
-  // comment then customs will be null
+  // parse optional first-line buffer customizations comment. we have
+  // to parse customizations before the buffer is created since the
+  // comment may declare a specific buffer syntax and this cannot be
+  // altered after the buffer is created. if no comment then customs
+  // will be null.
   XmlElement* customs=getCustomizations();
-  // since the buffer syntax is fixed per buffer the window has to
-  // handle this customization
   if (customs && customs->hasAttribute(T("syntax:")))
     synt=customs->getIntAttribute(T("syntax:")); 
   Syntax* syntax;
@@ -60,29 +62,28 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
     case TextIDs::Sal2: syntax=Sal2Syntax::getInstance(); break;
     default: syntax=TextSyntax::getInstance(); break;
     }
-
-  //std::cout << "syntax synt=" << syntax->getType() << "\n";
-
-  // create the code buffer and add it to a content component. the
+  // create the code buffer and add it to the content component (the
   // buffer is not the content component so the window can contain
-  // other components besides the editor, eg a mode line, toolbar etc.
+  // other components eg a mode line, toolbar, etc)
   CodeBuffer* buffer=new CodeBuffer(document, syntax, &commands, customs);
   EditorComponent* edcomp=new EditorComponent();
   setContentComponent(edcomp);
   // now set window and content component's size to buffer's optimum
-  // size before adding the buffer (so buffer doesnt get resized)
+  // size before adding the buffer (so buffer doesnt get resized by
+  // the window sizing)
   centreWithSize(jmin(800, buffer->getWidth()), 
                  jmin(800, buffer->getHeight()));
+  // now add the buffer to the content component
   edcomp->setCodeBuffer(buffer);
-
-  // add (current) customizations to new empty buffers (???)
+  // add customization comment to new empty buffers (???)
   if (text.isEmpty())
     writeCustomComment(false);
   commands.registerAllCommandsForTarget(this);
-  //setApplicationCommandManagerToWatch(&commands);
+  // ARRRG DONT DO THIS OR GRACE WILL CRASH WHEN THE WINDOW IS CLOSED
+  //setApplicationCommandManagerToWatch(&commands)
   commands.setFirstCommandTarget(this);
   updateKeyPressesForEditMode();
-  setWantsKeyboardFocus(false); // buffer wants focus
+  setWantsKeyboardFocus(false); // let buffer have focus
   setWindowTitle(title);
   setResizable(true, true); 
   setUsingNativeTitleBar(true);
@@ -372,7 +373,19 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.setTicked(getCodeBuffer()->getFontSize()==data);
       break;
     case CommandIDs::EditorTheme:
-      info.shortName=T("Editor Theme") + String(data);
+      {
+        XmlElement* theme=Preferences::getInstance()->getColorTheme(data);
+        if (theme)
+          {
+            info.shortName=ColorThemeIDs::getColorThemeName(theme);
+            info.setTicked(getCodeBuffer()->getColorTheme()==theme);
+          }
+        else
+          {
+            info.shortName=T("<no color theme>");
+            info.setActive(false);
+          }
+      }
       break;
     case CommandIDs::EditorDefaultFontSize:
       info.shortName=T("Make Default Font Size");
@@ -383,16 +396,19 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.setActive(data!=Preferences::getInstance()->getIntProp(T("EditorSyntax")));      
       break;
     case CommandIDs::EditorDefaultTheme:
-      info.shortName=T("Make Default Theme");
+      {
+        XmlElement* theme=getCodeBuffer()->getColorTheme();
+        info.shortName=T("Make Default Theme");
+        info.setActive(theme!=0 && ColorThemeIDs::getColorThemeName(theme) !=
+                       Preferences::getInstance()->getStringProp(T("EditorTheme")));
+      }
       break;
     case CommandIDs::EditorSaveCustom:
-      info.shortName=T("Update Customizations");
+      info.shortName=T("Save Customizations");
       break;
     case CommandIDs::EditorReadCustom:
-      {
-        info.shortName=T("Apply Customizations");
-        info.setActive(isCustomComment());
-      }
+      info.shortName=T("Read Customizations");
+      info.setActive(isCustomComment());
       break;
     case CommandIDs::EditorParensMatching:
       info.shortName=T("Parentheses Matching");
@@ -508,7 +524,11 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       resizeForColumnsAndLines();
       break;
     case CommandIDs::EditorTheme:
-      std::cout << "EditorTheme\n";
+      if (XmlElement* theme=Preferences::getInstance()->getColorTheme(data))
+        {
+          if (getCodeBuffer()->getColorTheme()!=theme)
+            getCodeBuffer()->setColorTheme(theme);
+        }
       break;
     case CommandIDs::EditorDefaultSyntax:
       Preferences::getInstance()->setIntProp(T("EditorSyntax"), getCodeBuffer()->getTextType());
@@ -517,7 +537,7 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       Preferences::getInstance()->setIntProp(T("EditorFontSize"), getCodeBuffer()->getFontSize());
       break;
     case CommandIDs::EditorDefaultTheme:
-      std::cout << "EditorDefaultTheme\n";
+      Preferences::getInstance()->setStringProp(T("EditorTheme"), getCodeBuffer()->getColorTheme()->getStringAttribute(T("name")));
       break;
     case CommandIDs::EditorReadCustom:
       applyCustomComment();
@@ -624,7 +644,7 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
       sub1.addCommandItem(&commands, CommandIDs::EditorDefaultSyntax);
       menu.addSubMenu(T("Syntax"), sub1);
       menu.addSeparator();
-      for (int i=0; i<8; i++)
+      for (int i=0; i<jmin(8,Preferences::getInstance()->numColorThemes()); i++)
         sub2.addCommandItem(&commands, CommandIDs::EditorTheme+i);
       sub2.addSeparator();
       sub2.addCommandItem(&commands, CommandIDs::EditorDefaultTheme);
@@ -847,8 +867,11 @@ XmlElement* CodeEditorWindow::getCustomizations ()
         }
       else if (tokens[i].equalsIgnoreCase(T("theme:")))
         {
-          if (tokens[i+1].isQuotedString())
-            xml->setAttribute(T("theme:"), tokens[i+1].unquoted());
+          String s=tokens[i+1];
+          if (s.isQuotedString())
+            s=s.unquoted();
+          if (Preferences::getInstance()->getColorTheme(s))
+            xml->setAttribute(T("theme:"), s);
         }
       else if (tokens[i].equalsIgnoreCase(T("columns:")))
         {
@@ -885,7 +908,7 @@ void CodeEditorWindow::applyCustomComment()
       if (name==T("syntax:"))
         ;
       else if (name==T("theme:"))
-        ;
+        buff->setColorTheme(Preferences::getInstance()->getColorTheme(xml->getIntAttribute(name)));
       else if (name==T("font-size:"))
         buff->setFontSize(xml->getIntAttribute(name));
       else if (name==T("columns:"))
@@ -933,31 +956,36 @@ void CodeEditorWindow::writeCustomComment(bool select)
  *=======================================================================*/
 
 CodeBuffer::CodeBuffer(CodeDocument& doc, Syntax* tokenizer, ApplicationCommandManager* commands, XmlElement* customs)
-  : 
-  document (doc),
-  fontsize (16),
-  tabwidth (2),
-  columns (72),
-  lines (30),
-  parensmatching(true),
-  changed (false),
-  CodeEditorComponent(doc, tokenizer)
+  : document (doc),
+    fontsize (16),
+    tabwidth (2),
+    columns (72),
+    lines (30),
+    parensmatching(true),
+    changed (false),
+    colortheme (NULL),
+    CodeEditorComponent(doc, tokenizer)
 {
+  Preferences* prefs=Preferences::getInstance();
   syntax=tokenizer;
   manager=commands;
-  fontsize=Preferences::getInstance()->getIntProp(T("EditorFontSize"), 16);
-  emacsmode=Preferences::getInstance()->getBoolProp(T("EditorEmacsMode"), SysInfo::isMac());
-  String themename=Preferences::getInstance()->getStringProp(T("EditorTheme"), T("vanilla"));
+  fontsize=prefs->getIntProp(T("EditorFontSize"), 16);
+  emacsmode=prefs->getBoolProp(T("EditorEmacsMode"), SysInfo::isMac());
+  colortheme=prefs->getColorTheme(prefs->getStringProp(T("EditorTheme"), T("Emacs")));
   if (customs) // file has customizations
     {
       fontsize=customs->getDoubleAttribute(T("font-size:"), fontsize);
       columns=customs->getIntAttribute(T("columns:"), columns);
       lines=customs->getIntAttribute(T("lines:"), lines);
-      themename=customs->getStringAttribute(T("theme:"), themename);
+      if (customs->hasAttribute(T("theme:")))
+        colortheme=prefs->getColorTheme(customs->getStringAttribute(T("theme:")));
     }
   Font mono (Font::getDefaultMonospacedFontName(), (float)fontsize, Font::plain);
   setFont(mono);
   setTabSize(tabwidth, true);
+  std::cout << "beforecolortheme\n";
+  setColorTheme(colortheme);
+  std::cout << "ok!\n";
   // 16 is for the scollbars, not sure why i need the extra 4....
   setSize((getCharWidth() * columns)+16+4, (getLineHeight() * lines)+16+4);
   setWantsKeyboardFocus(true);
@@ -1113,6 +1141,46 @@ void CodeBuffer::mouseDoubleClick (const MouseEvent &e)
       break;
     }
 }  	
+
+XmlElement* CodeBuffer::getColorTheme()
+{
+  return colortheme;
+}
+
+void CodeBuffer::setColorTheme(XmlElement* theme)
+{
+  colortheme=theme;
+  // CodeEditorComponent::backgroundColourId,    0xffffffff,
+  // CodeEditorComponent::caretColourId,         0xff000000,
+  // CodeEditorComponent::highlightColourId,     0x401111ee,
+  // CodeEditorComponent::defaultTextColourId,   0xff000000,
+  setColour(CodeEditorComponent::backgroundColourId,
+            ColorThemeIDs::fromHtmlColorString(theme->getStringAttribute(T("background")),
+                                               LookAndFeel::getDefaultLookAndFeel().
+                                               findColour(CodeEditorComponent::backgroundColourId)));
+  setColour(CodeEditorComponent::caretColourId,
+            ColorThemeIDs::fromHtmlColorString(theme->getStringAttribute(T("cursor")),
+                                               LookAndFeel::getDefaultLookAndFeel().
+                                               findColour(CodeEditorComponent::caretColourId)));
+  setColour(CodeEditorComponent::highlightColourId,
+            ColorThemeIDs::fromHtmlColorString(theme->getStringAttribute(T("region")),
+                                               LookAndFeel::getDefaultLookAndFeel().
+                                               findColour(CodeEditorComponent::highlightColourId)));
+  // fetch the color attribute names that the syntax uses. each index
+  // in the array is a syntax token type, each array string is its
+  // ColorTheme color (xml attribute name)
+  const StringArray attrs=syntax->getTokenTypes(); 
+  // set the color for each syntax tokentype
+  for (int toktyp=0; toktyp<attrs.size(); toktyp++)
+    if (ColorThemeIDs::fromString(attrs[toktyp])==ColorThemeIDs::Empty)
+      std::cout << "ERROR: syntax token type " << toktyp << " (" << attrs[toktyp].toUTF8() << ") is not a ColorThemeID!\n";
+    else
+      {
+        const Colour color=ColorThemeIDs::fromHtmlColorString(theme->getStringAttribute(attrs[toktyp]));
+        setColourForTokenType(toktyp, color);
+      }
+  //repaint();
+}
 
 bool CodeBuffer::isChanged()
 {

@@ -1839,12 +1839,18 @@ void Fomus::renameScoreDialog()
 // EDITOR
 // ------------------------------------------------------------------------------------------------------------------------
 
+void FomusSyntax::setColorTheme(XmlElement* theme)
+{
+  //  colors[TokenPlaintext]=ColorThemeIDs::getColorThemeColor(theme, ColorThemeIDs::Plaintext);
+}
+
 const StringArray FomusSyntax::getTokenTypes () 
 {
   // FIXME FOR NEW CODE EDITOR
-  const char* const tt [] = {"Text"}; 
-  return StringArray((const char**)tt);
+  const tchar* const tt [] = {T("Text")}; 
+  return StringArray((const tchar**)tt);
 }
+
 const Colour FomusSyntax::getDefaultColour (const int tokenType)
 {
   // FIXME FOR NEW CODE EDITOR
