@@ -1065,6 +1065,8 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
     moveExprBackward();  
   else if (emacs && key == KeyPress(T('f'), both, 0))
     moveExprForward();
+  else if (emacs && key == KeyPress(T('k'), both, 0))
+    killExprForward();
   // TESTING commands  
   else if (emacs && key == KeyPress(T('='), ModifierKeys::ctrlModifier, 0))
     posInfo(getCaretPos());
@@ -1383,84 +1385,92 @@ bool CodeBuffer::lookingAt(const CodeDocument::Position pos, const String text, 
                          Emacs Cursor Motion Functions
  *=======================================================================*/
 
-CodeDocument::Position CodeBuffer::gotoBOB()
+CodeDocument::Position CodeBuffer::gotoBOB(bool sel)
 {
-  goToStartOfDocument(false);
+  goToStartOfDocument(sel);
   return getCaretPos();
 }
 
-CodeDocument::Position CodeBuffer::gotoEOB()
+CodeDocument::Position CodeBuffer::gotoEOB(bool sel)
 {
-  goToEndOfDocument(false);
+  goToEndOfDocument(sel);
   return getCaretPos();
 }
 
-CodeDocument::Position CodeBuffer::gotoBOL()
+CodeDocument::Position CodeBuffer::gotoBOL(bool sel)
 {
   //goToStartOfLine(false); // this stops at whitespace
   CodeDocument::Position here=getCaretPos();
   CodeDocument::Position there (&document, here.getLineNumber(), 0);
-  moveCaretTo(there, false);
+  moveCaretTo(there, sel);
   return getCaretPos();
 }
 
-CodeDocument::Position CodeBuffer::gotoEOL()
+CodeDocument::Position CodeBuffer::gotoEOL(bool sel)
 {
-  goToEndOfLine(false);
+  goToEndOfLine(sel);
   return getCaretPos();
 }
 
-void CodeBuffer::moveCharForward()
+void CodeBuffer::moveCharForward(bool sel)
 {
-  cursorRight(false,false);
+  cursorRight(false, sel);
 }
 
-void CodeBuffer::moveCharBackward()
+void CodeBuffer::moveCharBackward(bool sel)
 {
-  cursorLeft(false,false);
+  cursorLeft(false, sel);
 }
 
-void CodeBuffer::moveWordForward()
+void CodeBuffer::moveWordForward(bool sel)
 {
-  cursorRight(true,false);
+  //cursorRight(true,false); 
+  CodeDocument::Position pos(getCaretPos());
+  int loc=pos.getPosition();
+  int eob=getEOB().getPosition();
+  // skip over non word, non token characters
+  while (loc<eob && !(char_word_p(syntax->syntab, pos.getCharacter()) ||
+                      char_symbol_p(syntax->syntab, pos.getCharacter())))
+    pos.setPosition(++loc);
+  // skip over word or token characters
+  while (loc<eob && (char_word_p(syntax->syntab, pos.getCharacter()) ||
+                     char_symbol_p(syntax->syntab, pos.getCharacter())))
+    pos.setPosition(++loc);
+  moveCaretTo(pos, sel);
 }
 
-void CodeBuffer::moveWordBackward()
+void CodeBuffer::moveWordBackward(bool sel)
 {
-  cursorLeft(true,false);
+  //cursorLeft(true,false);
+  CodeDocument::Position pos(getCaretPos());
+  int loc=pos.getPosition();
+  int bob=-1;
+  // in backwards scanning cursor is always 1 past starting position
+  pos.setPosition(--loc); 
+  // skip over non word, non token characters
+  while (loc>bob && !(char_word_p(syntax->syntab, pos.getCharacter()) ||
+                      char_symbol_p(syntax->syntab, pos.getCharacter())))
+    pos.setPosition(--loc);
+  // skip over word or token characters
+  while (loc>bob && (char_word_p(syntax->syntab, pos.getCharacter()) ||
+                     char_symbol_p(syntax->syntab, pos.getCharacter())))
+    pos.setPosition(--loc);
+  // loc is is now 1 BELOW position.
+  pos.setPosition(loc+1);
+  moveCaretTo(pos, sel);
 }
 
-void CodeBuffer::moveLineForward()
-{
-  cursorDown(false);
-}
-
-void CodeBuffer::moveLineBackward()
-{
-  cursorUp(false);
-}
-
-void CodeBuffer::movePageForward()
-{
-  pageDown(false);
-}
-
-void CodeBuffer::movePageBackward()
-{
-  pageUp(false);
-}
-
-void CodeBuffer::moveExprForward()
+void CodeBuffer::moveExprForward(bool sel)
 {
   CodeDocument::Position pos (getCaretPos());
   int scan=scanCode(pos, true, ScanFlags::MoveExpressions);
   if (scan<0)
     PlatformUtilities::beep();
   else
-    moveCaretTo(pos, false);
+    moveCaretTo(pos, sel);
 }
 
-void CodeBuffer::moveExprBackward()
+void CodeBuffer::moveExprBackward(bool sel)
 {
   CodeDocument::Position pos (getCaretPos());
   // if moving backwards the cursor is one char beyond start of scan
@@ -1469,7 +1479,27 @@ void CodeBuffer::moveExprBackward()
   if (scan<0)
     PlatformUtilities::beep();
   else
-    moveCaretTo(pos, false);
+    moveCaretTo(pos, sel);
+}
+
+void CodeBuffer::moveLineForward(bool sel)
+{
+  cursorDown(sel);
+}
+
+void CodeBuffer::moveLineBackward(bool sel)
+{
+  cursorUp(sel);
+}
+
+void CodeBuffer::movePageForward(bool sel)
+{
+  pageDown(sel);
+}
+
+void CodeBuffer::movePageBackward(bool sel)
+{
+  pageUp(sel);
 }
 
 /*=======================================================================*
@@ -1490,19 +1520,39 @@ void CodeBuffer::killCharBackward()
 
 void CodeBuffer::killWordForward()
 {
-  deleteForward(true);
-  isChanged(true);
+  //deleteForward(true);
+  if (getCaretPos()!=getEOB())
+    {
+      moveWordForward(true);
+      cut();
+      isChanged(true);
+    }
 }
 
 void CodeBuffer::killWordBackward()
 {
-  backspace(true);
-  isChanged(true);
+  //backspace(true);
+  if (getCaretPos()!=getBOB())
+    {
+      moveWordBackward(true);
+      cut();
+      isChanged(true);
+    }
 }
 
 void CodeBuffer::killExprForward()
 {
-  std::cout << "killExprForward\n";
+  CodeDocument::Position here (getCaretPos());
+  if (here!=getEOB())
+    {
+      moveExprForward(true);
+      // scanning could fail so test if we moved
+      if (here!=getCaretPos())
+        {
+          cut();
+          isChanged(true);
+        }
+    }
 }
 
 void CodeBuffer::killExprBackward()
