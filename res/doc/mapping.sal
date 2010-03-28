@@ -1,3 +1,5 @@
+;;; -*- syntax: Sal2;  -*-
+
 ;
 ;; Mapping
 ;
@@ -8,7 +10,7 @@
 
 loop repeat 10
   for cent = random(100)
-  print cent, " cents is ", cent / 100.0, " Dollars"
+  print(cent, " cents is ", cent / 100.0, " Dollars")
 end
 
 ; We can use the 'rescale' function to accomplish mapping in a general
@@ -18,7 +20,7 @@ end
 loop repeat 10
   for cent = random(100)
   for dollar = rescale(cent, 0, 100, 0.0, 1.0)
-  print cent, " cents is ", dollar, " Dollars."
+  print(cent, " cents is ", dollar, " Dollars.")
 end
 
 ; Mapping is a central concept in algorithmic composition, it is the
@@ -32,41 +34,40 @@ begin
        key = rescale(cent, 0, 100, 60.0, 84.0),
        amp = rescale(cent, 0, 100, .2, .8),
        dur = rescale(cent, 0, 100, 1.0, .5)
-  print cent, " cents -> key=", key, ", amp=" , amp, " dur=", dur
+  print(cent, " cents -> key=", key, ", amp=" , amp, " dur=", dur)
 end
 
 ; lets listen to it!
 
-define process cents()
-  run repeat 20
-    for cent = random(100)
-    for key = rescale(cent, 0, 100, 60.0, 84.0)
-    for amp = rescale(cent, 0, 100, .2, .8)
-    for dur = rescale(cent, 0, 100, 1.0, .5)
-    send "mp:midi", key: key, dur: dur, amp: amp
-    wait dur
-  end
+process cents()
+  repeat 20
+  for cent = random(100)
+  for key = rescale(cent, 0, 100, 60.0, 84.0)
+  for amp = rescale(cent, 0, 100, .2, .8)
+  for dur = rescale(cent, 0, 100, 1.0, .5)
+  send("mp:midi", key: key, dur: dur, amp: amp)
+  wait dur
+end
 
-sprout cents()
+sprout( cents())
 
 ; here is a slightly generalized version, it takes a several input
 ; arguments to control the mapping.
 
-define process cents2(len, lokey, hikey)
-  run repeat len
-    for cent = random(100)
-    for key = rescale(cent, 0, 100, lokey, hikey)
-    for amp = rescale(cent, 0, 100, .2, .8)
-    for dur = rescale(cent, 0, 100, 1.0, .5)
-    send "mp:midi", key: key, dur: dur, amp: amp
-    wait dur
-  end
+process cents2(len, lokey, hikey)
+  repeat len
+  for cent = random(100)
+  for key = rescale(cent, 0, 100, lokey, hikey)
+  for amp = rescale(cent, 0, 100, .2, .8)
+  for dur = rescale(cent, 0, 100, 1.0, .5)
+  send("mp:midi", key: key, dur: dur, amp: amp)
+  wait dur
+end
 
-sprout cents2(10, 40, 67)
+sprout(cents2(10, 40, 67))
 
-sprout list( cents2(20, 40, 67),
-             cents2(20, 90, 70)) ,
-       {0 2}
+sprout(list(cents2(20, 40, 67), cents2(20, 90, 70)) ,
+       {0 2})
 
 ;
 ;; Sinful composition
@@ -81,7 +82,7 @@ sprout list( cents2(20, 40, 67),
 
 loop for deg from 0 to 360 by 45
   for rad = rescale(deg, 0, 360, 0, 2 * pi)
-  print deg, " degrees = ", rad, " radians."
+  print(deg, " degrees = ", rad, " radians.")
 end
 
 ; Now forget about degrees, lets just move 2pi radians in 8 steps from
@@ -90,7 +91,7 @@ end
 loop for x from 0 to 1 by 1/8
   for rad = rescale(x, 0, 1, 0, 2 * pi)
   for amp = sin(rad)
-  print "x=", x, " radians=", rad, " sin=", amp
+  print("x=", x, " radians=", rad, " sin=", amp)
 end
 
 ; so as x goes from 0 to 1, radians goes from 0 to 2pi and sin returns
@@ -117,7 +118,7 @@ loop for x from 0 to 1 by 1/8
   for rad = rescale(x, 0, 1, 0, 2 * pi)
   for amp = sin(rad)
   for key = rescale(amp, -1, 1, 60, 84)
-  print "x=", x, " radians=", rad, " keynum=", key
+  print("x=", x, " radians=", rad, " keynum=", key)
 end
 
 ; So we've mapped x from 0:1 to a sine wave shape of key numbers
@@ -148,26 +149,26 @@ end
 
 ; lets implement the 100 event test process:
 
-define process sine1 ()
-  run for i below 100
-    for r = 2 * pi * (i / 100)
-    for a = sin(r)
-    send "mp:midi", key: rescale(a, -1, 1, 21, 21 + 88)
-    wait .1
-  end
+process sine1 ()
+  for i below 100
+  for r = 2 * pi * (i / 100)
+  for a = sin(r)
+  send("mp:midi", key: rescale(a, -1, 1, 21, 21 + 88))
+  wait .1
+end
 
-sprout sine1()
+sprout(sine1())
 
-; Question: This example can be generalized! Copy/paste the definition
+; TODO: This example can be generalized! Copy/paste the definition
 ; to create a new process called sine2 that accept four arguments:
 ; reps, rate, low and high. The process should run for reps
 ; iterations, output keynums between low and high, and wait rate
 ; seconds between iterations. For example here are two calls to the
 ; function you will create:
 
-sprout sine2(100, .1, 0, 127)
+sprout(sine2(100, .1, 0, 127))
 
-sprout sine2(100, .1, 30, 90)
+sprout(sine2(100, .1, 30, 90))
 
 ; How can we make the process generate more than one cycle of the wave
 ; as i goes from 0 to num?  Perhaps we can see if we compare formula
@@ -185,45 +186,45 @@ sprout sine2(100, .1, 30, 90)
 ; 'num' parameter use that parameter as a "frequency" for radian
 ; calculation. 
 
-define process sine3 (len, cycs, low, hi, rhy, dur, amp)
-  run with 2pi = 2 * pi
-    for i below len
-    for a = sin ( (2pi * cycs * (i / len)) )
-    send "mp:midi", key: rescale(a ,-1, 1, low, hi),
-         amp: amp, dur: dur
-    wait rhy
-  end
+process sine3 (len, cycs, low, hi, rhy, dur, amp)
+  with 2pi = 2 * pi
+  for i below len
+  for a = sin ( (2pi * cycs * (i / len)) )
+  send("mp:midi", key: rescale(a ,-1, 1, low, hi),
+       amp: amp, dur: dur)
+  wait rhy
+end
 
 ;; we test it out by specify 4 cycles in 100 notes:
 
-sprout sine3(100, 4, 20, 100, .1, .1, .6)
+sprout(sine3(100, 4, 20, 100, .1, .1, .6))
 
 ; lastly, we can "dirty up" the deterministic motion of sin by adding a
 ; random component to its values:
 
-define process sine4 (len, cycs, low, hi, ran, rhy, dur, amp)
-  run with 2pi = 2 * pi
-    for i below len
-    for a = sin ( (2pi * cycs * (i / len)) )
-    for r = between(- ran, ran)
-    send "mp:midi", key: rescale( a + r ,-1 - ran, 1 + ran, low, hi),
-         amp: amp, dur: dur
-    wait rhy
-  end
+process sine4 (len, cycs, low, hi, ran, rhy, dur, amp)
+  with 2pi = 2 * pi
+  for i below len
+  for a = sin ( (2pi * cycs * (i / len)) )
+  for r = between(- ran, ran)
+  send("mp:midi", key: rescale( a + r ,-1 - ran, 1 + ran, low, hi),
+       amp: amp, dur: dur)
+  wait rhy
+end
 
-sprout sine4(100, 4, 20, 100, .2, .1, .1, .6)
+sprout(sine4(100, 4, 20, 100, .2, .1, .1, .6))
 
 ; and lastly, here is a process that uses sin to generate
 ; "oscillating" rhythmic patterns, ie moving faster and slower around
 ; a central rhythmic value.
 
-define process sinrhy (num, cycs, fast, slow, lb, ub)
-  run for x to num
-    for s = sin( 2 * pi * cycs * (x / num))
-    for k = between(lb, ub)
-    send "mp:midi", key: k, dur: .1
-    wait rescale( s, -1, 1, slow, fast)
-  end
+process sinrhy (num, cycs, fast, slow, lb, ub)
+  for x to num
+  for s = sin( 2 * pi * cycs * (x / num))
+  for k = between(lb, ub)
+  send("mp:midi", key: k, dur: .1)
+  wait rescale( s, -1, 1, slow, fast)
+end
 
 sprout sinrhy(40, 3, .05, .6, 60, 80)
 
@@ -233,23 +234,23 @@ sprout sinrhy(40, 3, .05, .6, 60, 80)
 loop repeat 20
   for x = ran(1.0)
   for d = discrete(x, 0.0, 1.0, 48, 90)
-  print "x=", x, " d=", d
+  print("x=", x, " d=", d)
 end
 
 ;; you can also map onto lists of doscrete values
 
-define process sine5 (len, cycs, scal, rhy, dur, amp)
-  run with 2pi = 2 * pi
-    for i below len
-    for a = sin ( (2pi * cycs * (i / len)) )
-    send "mp:midi", key: discrete(a ,-1, 1, scal),
-         amp: amp, dur: dur
-    wait rhy
-  end
+process sine5 (len, cycs, scal, rhy, dur, amp)
+  with 2pi = 2 * pi
+  for i below len
+  for a = sin ( (2pi * cycs * (i / len)) )
+  send("mp:midi", key: discrete(a ,-1, 1, scal),
+       amp: amp, dur: dur)
+  wait rhy
+end
 
 begin
   with scal = scale(50, 20, 1, 2)
-  sprout sine5(100, 4, scal, .1, .1, .6)
+  sprout(sine5(100, 4, scal, .1, .1, .6))
 end
 
 ;; now try you own experiments!
@@ -273,13 +274,13 @@ end
 ; between points.
 
 loop for i below 10
-  print rescale(i, 0, 9, 100, 1000, 8)
+  print(rescale(i, 0, 9, 100, 1000, 8))
 end
 
 loop for i from 0 to 10
   for t from 0 by .2
-  send "mp:midi", t, key: rescale(i,0,10,40,90)
-  send "mp:midi", t, key: rescale(i,0,10,40,90, 1/8)
+  send("mp:midi", t, key: rescale(i,0,10,40,90))
+  send("mp:midi", t, key: rescale(i,0,10,40,90, 1/8))
 end
 
 ; segs( num, quant, mode, num) 
@@ -290,33 +291,31 @@ end
 ; returned are in increasing order, if base is less than 1 then values
 ; are in decreasing order:
 
-print segs(4, 20, 1)
+segs(4, 20, 1)
 
-print segs(4, 20, 1, 8)
+segs(4, 20, 1, 8)
 
-print segs(4, 20, 1, 1/2)
+segs(4, 20, 1, 1/2)
 
 ; if mode is 3 then segs returns num random values that sum to quant:
 
-print segs(5, 10, 3)
+segs(5, 10, 3)
 
 ; The next example defines a process called ballfall whose tempo and
 ; key numbers are controlled by a list of exponential values produced
 ; by segs.
 
-define process ballfall (drops, sum, curve, keyn, amp)
-  begin
-    with all = segs( drops, sum, 1, curve)
-    run with max = first(all),
-        low = hz(keyn)
-      for d in all
-      for e = 2 ^ ran( d / max) 
-      for k = key(low * e)
-      for a = rescale( d, 0, max, .1, amp)
-      send "mp:midi", dur: d, key: k, amp: a
-      wait d
-    end
-  end
+process ballfall (drops, sum, curve, keyn, amp)
+  with all = segs( drops, sum, 1, curve),
+       max = first(all),
+       low = hz(keyn)
+  for d in all
+  for e = 2 ^ ran( d / max) 
+  for k = key(low * e)
+  for a = rescale( d, 0, max, .1, amp)
+  send("mp:midi", dur: d, key: k, amp: a)
+  wait d
+end
 
 ; Drops are the number of times the ball bounces and end is the time
 ; it takes to decay. Curve controls the steepness of the power
@@ -335,7 +334,6 @@ define process ballfall (drops, sum, curve, keyn, amp)
 ; within an octave and k is set to the key number of that Hertz
 ; frequency.
 
-sprout ballfall(40, 10, 1/256, 60, .8)
+sprout(ballfall(40, 10, 1/256, 60, .8))
 
-sprout ballfall( 100, 15, 1/150, 40, .8)
-
+sprout(ballfall( 100, 15, 1/150, 40, .8))

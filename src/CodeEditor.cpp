@@ -525,10 +525,8 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
       break;
     case CommandIDs::EditorTheme:
       if (XmlElement* theme=Preferences::getInstance()->getColorTheme(data))
-        {
-          if (getCodeBuffer()->getColorTheme()!=theme)
-            getCodeBuffer()->setColorTheme(theme);
-        }
+        if (getCodeBuffer()->getColorTheme()!=theme)
+          getCodeBuffer()->setColorTheme(theme);
       break;
     case CommandIDs::EditorDefaultSyntax:
       Preferences::getInstance()->setIntProp(T("EditorSyntax"), getCodeBuffer()->getTextType());
@@ -698,7 +696,6 @@ void CodeEditorWindow::updateKeyPressesForEditMode()
 
   if (getCodeBuffer()->isEmacsMode())
     {
-      std::cout << "installing keypresses for emacs\n";
       keymap->addKeyPress(CommandIDs::EditorClose, KeyPress(T('W'), ModifierKeys::commandModifier, 0));
       keymap->addKeyPress(CommandIDs::AppQuit, KeyPress(T('Q'), ModifierKeys::commandModifier, 0));
       keymap->addKeyPress(CommandIDs::EditorExecute, KeyPress::createFromDescription(T("ctrl + return")));
@@ -706,7 +703,6 @@ void CodeEditorWindow::updateKeyPressesForEditMode()
     }
   else
     {
-      std::cout << "installing standard keypresses\n";
       keymap->addKeyPress(CommandIDs::EditorNew, KeyPress(T('N'), ModifierKeys::commandModifier, 0));
       keymap->addKeyPress(CommandIDs::EditorOpen, KeyPress(T('O'), ModifierKeys::commandModifier, 0));
       keymap->addKeyPress(CommandIDs::EditorSave, KeyPress(T('S'), ModifierKeys::commandModifier, 0));
@@ -732,6 +728,7 @@ void CodeEditorWindow::switchBufferSyntax(int newtype)
     return;
   XmlElement* customs=getCustomizations();  // buffer customizations or null
   EditorComponent* comp=(EditorComponent*)getContentComponent();
+
   // remove and delete current buffer.
   comp->deleteCodeBuffer();
   // add new buffer
@@ -827,6 +824,8 @@ bool CodeEditorWindow::isCustomComment ()
   // true if first line in document is a comment line starting with -*-
   // example:  ;; -*- syntax: lisp, theme: "clarity and beauty", -*-
   String line=document.getLine(0);
+  //std::cout << "isCustomComment(), first line='" << line.toUTF8() << "'\n";
+
   if (line.isEmpty()) return false;
   int len=line.length();
   int pos=0;
@@ -840,7 +839,6 @@ bool CodeEditorWindow::isCustomComment ()
 
 XmlElement* CodeEditorWindow::getCustomizations ()
 {
-  return NULL;
   // parse customization comment into xml, return null if there is
   // none. make sure you delete the xlm element after you use it!
   if (!isCustomComment()) return 0;
@@ -926,7 +924,7 @@ void CodeEditorWindow::writeCustomComment(bool select)
   CodeBuffer* buffer=getCodeBuffer();
   custom << " syntax: " << TextIDs::toString(getCodeBuffer()->getTextType()) << T(";");
   custom << " font-size: " << buffer->getFontSize() << T(";"); 
-  custom << " theme: \"Basic\"" ; //<< getTheme.get
+  custom << " theme: " << buffer->getColorTheme()->getStringAttribute(T("name")).quoted() << T(";");
   int n=buffer->getColumns();
   if (n!=72) custom << " columns: " << n << T(";");
   n=buffer->getLines();
@@ -983,9 +981,7 @@ CodeBuffer::CodeBuffer(CodeDocument& doc, Syntax* tokenizer, ApplicationCommandM
   Font mono (Font::getDefaultMonospacedFontName(), (float)fontsize, Font::plain);
   setFont(mono);
   setTabSize(tabwidth, true);
-  std::cout << "beforecolortheme\n";
   setColorTheme(colortheme);
-  std::cout << "ok!\n";
   // 16 is for the scollbars, not sure why i need the extra 4....
   setSize((getCharWidth() * columns)+16+4, (getLineHeight() * lines)+16+4);
   setWantsKeyboardFocus(true);
@@ -1036,6 +1032,9 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
     openLine();
   else if (emacs && key == KeyPress(T('p'), ctrl, 0))
     moveLineBackward();
+  else if (emacs && key == KeyPress(T('s'), ctrl, 0)
+           && (prevkey==KeyPress(T('x'), ctrl, 0)))
+    ((CodeEditorWindow *)getTopLevelComponent())->saveFile(false);
   else if (emacs && key == KeyPress(T('v'), ctrl, 0))
     movePageForward();
   else if (emacs && key == KeyPress(T('y'), ctrl, 0))
@@ -1161,7 +1160,8 @@ void CodeBuffer::setColorTheme(XmlElement* theme)
   setColour(CodeEditorComponent::caretColourId,
             ColorThemeIDs::fromHtmlColorString(theme->getStringAttribute(T("cursor")),
                                                LookAndFeel::getDefaultLookAndFeel().
-                                               findColour(CodeEditorComponent::caretColourId)));
+                                               findColour(CodeEditorComponent::caretColourId))
+            );
   setColour(CodeEditorComponent::highlightColourId,
             ColorThemeIDs::fromHtmlColorString(theme->getStringAttribute(T("region")),
                                                LookAndFeel::getDefaultLookAndFeel().
@@ -1172,14 +1172,11 @@ void CodeBuffer::setColorTheme(XmlElement* theme)
   const StringArray attrs=syntax->getTokenTypes(); 
   // set the color for each syntax tokentype
   for (int toktyp=0; toktyp<attrs.size(); toktyp++)
-    if (ColorThemeIDs::fromString(attrs[toktyp])==ColorThemeIDs::Empty)
-      std::cout << "ERROR: syntax token type " << toktyp << " (" << attrs[toktyp].toUTF8() << ") is not a ColorThemeID!\n";
-    else
+    if (ColorThemeIDs::fromString(attrs[toktyp])!=ColorThemeIDs::Empty)
       {
         const Colour color=ColorThemeIDs::fromHtmlColorString(theme->getStringAttribute(attrs[toktyp]));
         setColourForTokenType(toktyp, color);
       }
-  //repaint();
 }
 
 bool CodeBuffer::isChanged()
@@ -1595,20 +1592,6 @@ void CodeBuffer::posInfo(const CodeDocument::Position p)
 
 void CodeBuffer::test(bool forward)
 {
-  CodeDocument::Position bol (getBOL());
-  CodeDocument::Position eol (getEOL(bol)); 
-  //  while (bol!=eol && (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t'))) 
-  //    bol.moveBy(1);
-  if (forward)
-    if (lookingAt(getCaretPos(), T("end"), true, true) )
-      std::cout << "forward looking at end\n";
-    else
-      std::cout << "NOT looking at end (forward)\n";
-  else
-    if (lookingAt(getCaretPos().movedBy(-1), T("end"), false, true) )
-      std::cout << "backward looking at end\n";
-    else
-      std::cout << "NOT looking at end (backward)\n";
 }
 
 /*=======================================================================*
@@ -1733,8 +1716,8 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
   // array adjust string positions accordingly
  
   String code=document.getTextBetween(start, end);
-  std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
-            << ", end=" << end.getPosition() << "\n";
+  //  std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
+  //            << ", end=" << end.getPosition() << "\n";
   OwnedArray<SynTok> tokens;
   CodeDocument::Position pos (start);
   int beg=pos.getPosition();  // offset of string
@@ -2881,169 +2864,3 @@ int CodeBuffer::scanCode(CodeDocument::Position& pos, bool forward, int mode, in
   return typ;
 }
 
-/*****
-
-void CodeBuffer::test(bool forward)
-{
-  std::cout << "buffer width=" << getWidth() << "\n"
-           << "window width=" << ((CodeEditorWindow*)getTopLevelComponent())->getWidth() << "\n";
-  return;
-  ((CodeEditorWindow*)getTopLevelComponent())->updateFromCustomizations();
-  return;
-
-  CodeDocument::Position start (getCaretPos());  
-  CodeDocument::Position end (start);
-  int res = backwardSal2Expr(start, end);
-  if (res>0 )
-    {
-      String code=document.getTextBetween(start,end);
-      std::cout << "Code ("<< start.getPosition() << "," << end.getPosition() << ")\n     '" << code.toUTF8() << "'\n";
-    }
-}
-
-void CodeBuffer::backwardSalBlock(const CodeDocument::Position top)
-{
-  // top is 1 past an "end" tag. scan backward till balancing block open
-  CodeDocument::Position bob=getBOB();
-  CodeDocument::Position pos (top);
-  int lev=0;
-  int scan=0;
-  while (true)
-    {
-      // moving backwards: cursor is always 1 past start of scan
-      pos.moveBy(-1);
-      // skip over comments and white
-      scanCode(pos, false, ScanFlags::MoveWhiteAndComments);
-      // now on last constituent char for scan (or at bob). set the
-      // exclusive upper bound of expr to 1 above that
-      CodeDocument::Position to (pos.movedBy(1)); 
-      scan=scanCode(pos, false, ScanFlags::MoveExpressions);
-      // quit if error or only white space
-      if (scan<=0)
-        break;
-      String code=document.getTextBetween(pos,to);
-      //std::cout << "Code ("<<from.getPosition()<<","<<to.getPosition()<<"): '" << code.toUTF8() << "'\n";
-      if (scan==SCAN_TOKEN)
-        {
-          if (SynTok* tok=syntax->getSynTok(code))
-            {
-              // token is a literal (e.g. statement, op)
-              int typ=tok->getType();
-              if (SalSyntax::isSalBlockClose(typ))
-                lev++; 
-              else if (SalSyntax::isSalBlockOpen(typ))
-                lev--; 
-              // stop on a blockopen with no pending end. this doenst
-              // mean the statement is actually balanced since the
-              // word could be a blockopen that was reached without a
-              // balancing end (in which case the level is negative)
-              if (lev<=0)
-                break;
-            }
-        }
-      if (pos==bob) break;
-    }
-  if (scan<0)
-    std::cout << "scan error: " << scan << "\n";
-  else if (scan==0)
-    std::cout << "scan empty\n";
-  else if (lev>0)
-    std::cout << "missing block open for end" << "\n";
-  else if (lev<0)
-    std::cout << "block open without an end" << "\n";
-  else
-    {
-      String expr=document.getTextBetween(pos,top);
-      std::cout << "Expr: '" << expr.toUTF8() << "'\n";
-    }
-  std::cout << "Done.\n";
-}
-
-
-
-void CodeBuffer::LOOKINGATtestScan(bool forward)
-{
-  bool delim=true;
-  String match = SystemClipboard::getTextFromClipboard().trim();
-  if (match.isEmpty()) return;
-  if (match.containsOnly(T("[]{}()"))) delim=false;
-  if (lookingAt(getCaretPos(), match, forward, delim))
-    std::cout << "buffer matches '" << match.toUTF8() << "'\n";
-  else
-    std::cout << "buffer does not match '" << match.toUTF8() << "'\n";
-}
-
-void CodeBuffer::TOKENtestScan(bool forward)
-{
-  CodeDocument::Position pos = getBOB();
-  CodeDocument::Position end = getEOB();
-  int dir = (forward) ? 1 : -1;
-  int scan=0;
-  while (pos!=end)
-    {
-      scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments);
-      if (scan<0)
-        {
-          std::cout << "scan: error (" << scan << ") while scanning comments and white, pos=" << pos.getPosition() << "\n";
-          break;
-        }
-      CodeDocument::Position far(pos);
-      scan=scanCode(far, true, ScanFlags::MoveTokens);
-      if (scan<0)
-        {
-          std::cout << "scan: error (" << scan << ") while scanning comments and white, pos=" << far.getPosition() << "\n";
-          break;
-        }
-      else if (scan>0)
-        {
-          String tok=document.getTextBetween(pos,far);
-          std::cout << "token='" << tok.toUTF8() << "'\n";
-        }
-      pos=far;
-    }
-}
-
-
-void CodeBuffer::ORIGINALtestScan(bool forward)
-{
-  CodeDocument::Position from (getCaretPos());
-
-  CodeDocument::Position end = (forward) ? getEOB() : getBOB();
-  int dir = (forward) ? 1 : -1;
-  int scan=0;
-
-  if (from==end)
-     {
-       std::cout << "nothing to do\n";
-        return;
-     }
-  // if backward the cursor is one after the start of the expression
-  if (!forward) from.moveBy(-1);
-
-  // advance past whitespace and comments
-
-  //skipCommentsAndWhite(from,dir,end); 
-  scanCode(from, forward, ScanFlags::MoveWhiteAndComments);
-  std::cout << "after skipCommentsAndWhite\n";
-
-  CodeDocument::Position to (from);  
-
-  if (forward)
-    {
-      scan=scanCode(to, forward, 0);
-      std::cout << "--------------------\nscan=" << ScanFlags::scanResultToString(scan).toUpperCase().toUTF8() << "\n";
-      std::cout << "start=" << from.getPosition() << ", end=" << to.getPosition() << "\n";
-      if (scan>0)
-        std::cout << "text='" << document.getTextBetween(from,to).toUTF8() << "'\n";
-    }
-  else
-    {
-      scan=scanCode(to, forward, 0);
-      from.moveBy(1);
-      std::cout << "--------------------\nscan=" << ScanFlags::scanResultToString(scan).toUpperCase().toUTF8() << "\n";
-      std::cout << "start=" << to.getPosition() << ", end=" << from.getPosition() << "\n";
-      if (scan>0)
-        std::cout << "text='" << document.getTextBetween(to,from).toUTF8() << "'\n";
-    }
-}
-*****/

@@ -1,4 +1,4 @@
-;;; -*- syntax: Sal2; font-size: 18; theme: "Basic" -*-
+;;; -*- syntax: Sal2;  -*-
 
 ;; a la maniere de 'continuum' (ligeti)
 
@@ -18,7 +18,9 @@ process register (rhy, dur, low, high, amp)
   wait rhy
 end
 
-send( "mp:prog", chan: 0, val: 6)
+;; set channel 0 to harpsichord 
+
+send("mp:instruments", 6)
 
 sprout(continuum(.075,
                  {60 59 58 57 56 55 54 53 52
@@ -31,4 +33,3 @@ sprout(continuum(.075,
                   89 89 89 89 89 89 89 89 89 89},
                  make-weighting({.5 1 1.5 2 2.5})
                  ))
-

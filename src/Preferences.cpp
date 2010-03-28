@@ -87,9 +87,6 @@ Preferences::Preferences()
         std::cout << "WARNING: failed to load ColorThemes!\n";
         std::cout << xmldoc.getLastParseError().toUTF8() << "\n";
       }
-    std::cout << "numthemes=" << numColorThemes() << "\n";
-    for (int i=0; i<numColorThemes(); i++)
-      std::cout << ColorThemeIDs::getColorThemeName(getColorTheme(i)).toUTF8() << "\n";   
 }
 
 int Preferences::numColorThemes()

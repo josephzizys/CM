@@ -1,118 +1,126 @@
+;;; -*- syntax: Sal2; -*-
+
 ;; building gestures from motives
 
 ;; motive1: three notes a whole step and minor seventh apart in any
 ;; order
 
-define process motive1(octave, range, chan)
-
-  run with pitches = make-heap({6 4 14}),
-           amps = make-heap({.75 .5 .5}),
-           offset = ran(range)
-    repeat 3
-    send "mp:midi", key: next(pitches) + (octave * 12) + offset, 
-         amp: next(amps), chan: chan, dur: .1
-    wait .2
-  end
+process motive1(octave, range, chan)
+  with pitches = make-heap({6 4 14}),
+       amps = make-heap({.75 .5 .5}),
+       offset = ran(range)
+  repeat 3
+  send("mp:midi", key: next(pitches) + (octave * 12) + offset, 
+       amp: next(amps), chan: chan, dur: .1)
+  wait .2
+end
 
 ;; listen to motive1 several times
 
-sprout motive1(5,0,0)
+sprout( motive1(5,0,0))
 
-;; try motive1 within a range
+;; try motive1 in a range several times 
 
-sprout motive1(5,4,0)
+sprout(motive1(5,4,0))
 
 ;; motive2: a repeated note with one accented
 
-define process motive2(octave, range, chan)
-  run with amps = make-heap({.75 .5 .5}),
-           rhys = make-heap({.2 .2 .4}),
-           offset = ran(range)
-    repeat 3
-    send "mp:midi", key: 0 + (octave * 12) + offset, 
-         amp: next(amps), chan: chan, dur: .1
-    wait next(rhys)
-  end
+process motive2(octave, range, chan)
+  with amps = make-heap({.75 .5 .5}),
+       rhys = make-heap({.2 .2 .4}),
+       offset = ran(range)
+  repeat 3
+  send( "mp:midi", key: 0 + (octave * 12) + offset, 
+       amp: next(amps), chan: chan, dur: .1)
+  wait next(rhys)
+end
 
 ;; listen to motive2 several times
 
-sprout motive2(5,0,1)
+sprout( motive2(5,0,1))
 
 ;; try motive2 within a range
 
-sprout motive2(5,5,1)
+sprout( motive2(5,5,1))
 
 ;; make a gesture that chooses between motives two seconds apart
 
-define process gesture1(times, o, chan)
-  run repeat times
-    if( odds( o ) ) then
-      sprout motive1(5, 0, chan)
-    else
-      sprout motive2(6, 0, chan)
-    wait 2
+process gesture1(times, o, chan)
+  repeat times
+  if (odds(o))
+    sprout(motive1(5, 0, chan))
+  else
+    sprout(motive2(6, 0, chan))
   end
+  wait 2
+end
 
 ;; try it, each sprout creates 10
 
-sprout gesture1(10, .5, 0)
+sprout( gesture1(10, .5, 0))
 
 ;; the same but allow transpositions
 
-define process gesture2(times, o, range, chan)
-  run repeat times
-    if( odds( o ) ) then
-      sprout motive1(5,range, chan)
-    else
-      sprout motive2(6,range, chan)
-    wait 2
+process gesture2(times, o, range, chan)
+  repeat times
+  if (odds(o))
+    sprout(motive1(5,range, chan))
+  else
+    sprout(motive2(6,range, chan))
   end
+  wait 2
+end
 
-sprout gesture2(10, .5, 5, 0)
+sprout( gesture2(10, .5, 5, 0))
 
 ;; quantizing time function
 
-define function step(n, maxn, s, e, quant)
+function step(n, maxn, s, e, quant)
   ;; over maxn steps move from s to e by quan step size 
-  return quantize( interp( n / maxn, 0, s, .5, e), quant)
-
-loop for i below 10
-  print step(i, 10, 2, 4, .25)
+  quantize( interp( n / maxn, 0, s, .5, e), quant)
 end
 
-define process gesture3(times, o, range, chan, hiwait, lowwait)
-  run for i from 0 to times
-    if( odds( o ) ) then
-      sprout motive1(5, range, chan)
-    else
-      sprout motive2(5, range, chan)
-    wait step(i, times, 2, .2, .2)
+loop for i below 10
+  print(step(i, 10, 2, 4, .25))
+end
+
+process gesture3(times, o, range, chan, hiwait, lowwait)
+  for i from 0 to times
+  if (odds(o))
+    sprout(motive1(5, range, chan))
+  else
+    sprout(motive2(5, range, chan))
   end
+  wait step(i, times, 2, .2, .2)
+end
 
 ;; gesture3 makes smaller amounts of time between motives
 
-sprout gesture3(20, .5, 5, 0, 3, .2)
+sprout( gesture3(20, .5, 5, 0, 3, .2))
 
-define process gesture4(times, lowoctave, highoctave, range, 
+process gesture4(times, lowoctave, highoctave, range, 
                         chan, hiwait, lowwait)
-  run for i from 0 to times
-    if( odds( step(i, times, 1.0, 0.0, .01) ) ) then
-      sprout motive1(between(lowoctave, highoctave), range, chan)
-    else
-      sprout motive2(between(lowoctave, highoctave), range, chan)
-    wait step(i, times, hiwait, lowwait, .2)
+  for i from 0 to times
+  if (odds( step(i, times, 1.0, 0.0, .01))) 
+    sprout(motive1(between(lowoctave, highoctave), range, chan))
+  else
+    sprout(motive2(between(lowoctave, highoctave), range, chan))
   end
+  wait step(i, times, hiwait, lowwait, .2)
+end
 
-sprout gesture4(30, 2, 7, 11, 0, 1.6,.2)
+sprout( gesture4(30, 2, 7, 11, 0, 1.6,.2))
 
 begin
-  send "mp:prog", val: 0,  chan: 0
-  send "mp:prog", val: 12, chan: 1
-  send "mp:prog", val: 46, chan: 2
-  sprout gesture4(60, 2, 7, 11, 0, 1.0, .2)
-  sprout gesture4(40, 5, 7, 11, 1, 1.6, .2)
-  sprout gesture4(34, 3, 6, 11,  2, 2.0, .2)
+  send("mp:instruments",  0, 12, 46)
+  sprout(gesture4(60, 2, 7, 11, 0, 1.0, .2))
+  sprout(gesture4(40, 5, 7, 11, 1, 1.6, .2))
+  sprout(gesture4(34, 3, 6, 11,  2, 2.0, .2))
 end
+
+;; reset channels back to piano
+
+send("mp:instruments",  0, 0, 0)
 
 
 
