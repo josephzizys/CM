@@ -198,7 +198,8 @@
             (if (not arg) 
                 (ffi_mp_set_midi_hook 0 #f) ; clear default hook               
                 (if (and (procedure? arg)
-                         (= (car (procedure-arity arg) ) 1))
+                         (let ((ar (procedure-arity arg))) 
+                           (or (= (car ar ) 1)(= (cadr ar ) 1))))
                     (ffi_mp_set_midi_hook 0 arg)
                     (error "mp:receive: argument not #f or a procedure of one argument: ~S"
                            arg)))
@@ -210,7 +211,8 @@
                   (if (and (integer? op) (or (<= mm:off op mm:bend) (= op 0)))
                       (if (or (not proc) ;; clear/set valid hook
                               (and (procedure? proc)
-                                   (= (car (procedure-arity proc)) 1)))
+                                   (let ((ar (procedure-arity proc))) 
+                                     (or (= (car ar ) 1)(= (cadr ar ) 1)))))
                           (ffi_mp_set_midi_hook op proc)
                           (error "mp:receive: receiver not #f or a procedure of one argument: ~S"
                                  proc))
