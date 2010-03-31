@@ -8,7 +8,7 @@
 #include "Enumerations.h"
 #include "Menus.h"
 #include "Console.h"
-#include "TextEditor.h"
+#include "CodeEditor.h"
 #include "Plot.h"
 #include "Midi.h"
 #include "Scheme.h"
@@ -2496,14 +2496,14 @@ void ExportPointsDialog::exportPlot()
   String text=p->toXmlString();
   int destination=destmenu->getSelectedId();
   if (destination==1) // to new edit window
-    new TextEditorWindow(File::nonexistent, text, TextIDs::Xml);
+    new CodeEditorWindow(File::nonexistent, text, TextIDs::Text);
   else if (destination==2) // to existing edit window
     {
-      TextEditorWindow* e=TextEditorWindow::getFocusTextEditor();
+      CodeEditorWindow* e=CodeEditorWindow::getFocusCodeEditor();
       if (e)
-	e->getTextBuffer()->insertTextAtCursor(text);
+	e->getCodeBuffer()->insertTextAtCaret(text);
       else
-	new TextEditorWindow(File::nonexistent, text, TextIDs::Xml);
+	new CodeEditorWindow(File::nonexistent, text, TextIDs::Text);
     }
   else if (destination==3) // to clipboard
     SystemClipboard::copyTextToClipboard(text);
@@ -2541,14 +2541,14 @@ void ExportPointsDialog::exportPoints()
 						   asrecords, parammask);
     }
   if (destination==1) // to new edit window
-    new TextEditorWindow(File::nonexistent, text, exportid);
+    new CodeEditorWindow(File::nonexistent, text, exportid);
   else if (destination==2) // to existing edit window
     {
-      TextEditorWindow* w=TextEditorWindow::getFocusTextEditor();
+      CodeEditorWindow* w=CodeEditorWindow::getFocusCodeEditor();
       if (w)
-	w->getTextBuffer()->insertTextAtCursor(text);
+	w->getCodeBuffer()->insertTextAtCaret(text);
       else
-	new TextEditorWindow(File::nonexistent, text, exportid);
+	new CodeEditorWindow(File::nonexistent, text, exportid);
     }
   else if (destination==3) // to clipboard
     SystemClipboard::copyTextToClipboard(text);

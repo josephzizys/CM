@@ -474,7 +474,7 @@ class WindowTypes
  public: 
   static const int Empty = 0;
   static const int Console = 1;
-  static const int TextEditor = 2;
+  static const int CodeEditor = 2;
   static const int PlotWindow = 3;
   static const int StateWindow = 4;
   static const bool isWindowType(TopLevelWindow* w, int typ)
@@ -1164,8 +1164,8 @@ class SalIDs
     Sal2Function = 0x4410,
     Sal2Process = 0x4510,
     Sal2If = 0x4610,
-    Sal2Wait = 0x4700,
-    Sal2OutFile = 0x4810,
+    Sal2File = 0x4710,
+    Sal2Wait = 0x4800,
     SAL_COMMAND_END = 0x4900,
     SAL_CONSTITUENT_BEG = 0x4900,
     SalElse = 0x4a00,
@@ -1262,7 +1262,7 @@ class SalIDs
     Sal2LoopStatementRule = 0x9e00,
     Sal2ProcessStatementRule = 0x9f00,
     Sal2ProcessWaitRule = 0xa000,
-    Sal2OutFileStatementRule = 0xa100,
+    Sal2FileStatementRule = 0xa100,
     Sal2StatementRule = 0xa200,
     SAL_RULE_END = 0xa300,
     SAL_TYPE_END = 0xa300

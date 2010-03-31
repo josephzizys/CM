@@ -62,8 +62,13 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   Syntax* syntax;
   ApplicationCommandManager* manager;
   CodeDocument& document;
+
   CodeBuffer(CodeDocument& _document, Syntax* _tokenizer, ApplicationCommandManager* commands, XmlElement* custom);
   ~CodeBuffer() ;
+  bool keyPressed (const KeyPress& key);
+  void mouseDoubleClick (const MouseEvent &e);
+  void focusGained(Component::FocusChangeType cause);
+
   KeyPress prevkey;
   int fontsize;
   int tabwidth;
@@ -73,8 +78,6 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   bool parensmatching;
   bool changed;
   XmlElement* colortheme;
-  bool keyPressed (const KeyPress& key);
-  void mouseDoubleClick (const MouseEvent &e);
   int getTextType();
   bool isTextType(int type);
   int getFontSize();
@@ -240,6 +243,9 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   void saveFileAs();
   static void openFile(File file=File::nonexistent);
   static void newFile(String title=String::empty, int synt=TextIDs::Empty, String content=String::empty);
+  static CodeEditorWindow* getFocusCodeEditor();
+  static void openFindAndReplaceDialog();
+
 };
 
 #endif

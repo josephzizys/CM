@@ -1,15 +1,17 @@
+;;; -*- syntax: Sal2;  -*-
+
 ; Functional data in patterns.
 
 ; You can embed thunks (functions of zero arguments) inside patterns,
 ; when a thunk is encountered it will be called to produce the value
 ; to return from the pattern:
 
-define function ran1() return between(48, 60)
-define function ran2() return between(60, 72)
-define function ran3() return between(72, 85)
+function ran1() between(48, 60) end
+function ran2() between(60, 72) end
+function ran3() between(72, 85) end
 
 begin with pat = make-cycle( list(ran1, ran2, ran3) )
-  print "my data=", next(pat, 30)
+  next(pat, 30)
 end
 
 ; Creating patterns that mix functions or subpatterns with constant
@@ -18,8 +20,8 @@ end
 ; {c b c <heap> d e f} you might do something like:
 
 begin with sub = make-heap({x y z}),
-           pat = make-cycle( concat({a b c}, sub, {d e f}))
-  print next(pat, 20)
+           pat = make-cycle(concat({a b c}, sub, {d e f}))
+  next(pat, 20)
 end
 
 ; You can use #$ (explicit evaluation) inside {} lists to mix
@@ -27,7 +29,7 @@ end
 
 begin with sub = make-heap({x y z}),
   pat = make-cycle({a b c #$ sub d e f})
-  print next(pat, 20)
+  next(pat, 20)
 end
 
 ; here is another example :
@@ -39,35 +41,34 @@ begin with pat =
                d4}
              )
 
-  print next(pat, 40)
+  next(pat, 40)
 end
 
 ; How it works. Without #$ things inside a {} list are contants:
 
 begin with sub = make-heap({x y z}),
   pat = make-cycle({a b c sub d e f})
-  print next(pat, 20)
+  next(pat, 20)
 end
 
-; inside {} a #$ evaluates the next thing when the list is created
-; that thing will be replaced by its (evaluated) value. Execute this
-; block a few times to see that the list holds a new random number
-; each time.
+; inside {} a #$ evaluates the next thing when the list is created.
+; thus, that thing will be replaced by its (evaluated) value. 
+; Execute this block a few times to see that the second
+; element can change each time
 
-begin with lis = {a #$ between(30,90) b} 
-  print "list=", lis
+begin with lis = {a #$ random(128) b} 
+  lis
 end
 
 ; If you pass that list to pattern and then generate pattern data you
-; will see the same random number appearing:
+; will see that random number reappearing in the pattern:
 
-begin with lis = {a #$ between(30,90) c},
+begin with lis = {a #$ random(128) c},
            pat, dat
-  print "list=", lis
+  print("pattern list=", lis)
   set pat = make-cycle(lis)
-  print "pattern=", pat
   set dat = next(pat, 30)
-  print "pattern data=", dat 
+  print("pattern data=", dat )
 end
 
 ; Embedding expressions in patterns.
@@ -81,8 +82,8 @@ end
 
 begin with mylist = { a #$ promise( between(30,90) ) c },
            mypat = make-cycle( mylist )
-  print "mylist=", mylist
-  print "pattern data=", next(mypat, 30)
+  print("mylist=", mylist)
+  print("pattern data=", next(mypat, 30))
 end
                  
 ; probability weights as a function of time. 
@@ -99,7 +100,7 @@ begin
   loop for i from 0 below len
     for x = i / max
     set wei = interp( x, env)
-    print "weight=", wei
+    print("weight=", wei)
   end
 end
 
@@ -117,40 +118,40 @@ begin
     for i from 0 below len
     for x = i / max
     set wei = interp( x, env)
-    print "item=", next(pat)
+    print("item=", next(pat))
   end
 end
 
 ; here is a musical rendition of this that pulls the notes CAGE out a
 ; a G-dorian backgroud:
 
-define process cage (num, env, off)
-  run with w = 0,
-      pat1 = make-weighting( {{g3 #$ promise(w)}
-                              {a3 #$ promise(w)}
-                              bf3
-                              {c4 #$ promise(w)}
-                              d4
-                              {e4 #$ promise(w)}
-                              f4
-                              {g4 #$ promise(w)}}
-                            ),
-      pat2 = make-weighting( {1/4
-                              1/2
-                              #$ make-cycle( 1/8, for: 2) }
-                            )
-    for i below num
-    for k = key(next(pat1))
-    for r = in-tempo( next(pat2), 60)
-    set w = interp(i / num, env)
-    send "mp:midi", dur: r * 1.25, key: transpose(k, off)
-    wait r
-  end
-    
-sprout list(cage(100, {0 .5 1 6}, -12),
+process cage (num, env, off)
+  with w = 0,
+       pat1 = make-weighting( {{g3 #$ promise(w)}
+                               {a3 #$ promise(w)}
+                               bf3
+                               {c4 #$ promise(w)}
+                               d4
+                               {e4 #$ promise(w)}
+                               f4
+                               {g4 #$ promise(w)}}
+                              ),
+       pat2 = make-weighting( {1/4
+                               1/2
+                               #$ make-cycle( 1/8, for: 2) }
+                              )
+  for i below num
+  for k = key(next(pat1))
+  for r = in-tempo( next(pat2), 60)
+  set w = interp(i / num, env)
+  send("mp:midi", dur: r * 1.25, key: transpose(k, off))
+  wait r
+end
+     
+sprout(list(cage(100, {0 .5 1 6}, -12),
             cage(100, {0 .5 1 6}, 0),
             cage(100, {0 .5 1 6}, 12),
-            cage(100, {0 .5 1 6}, 24))
+            cage(100, {0 .5 1 6}, 24)))
 
 ; The Graph pattern. A graph is a network of nodes, each node contains
 ; a 'value' (the item to return from the pattern), a 'link' to the
@@ -162,58 +163,58 @@ sprout list(cage(100, {0 .5 1 6}, -12),
 ; always followed by node 2, the second node by node 3, and node 3
 ; returns to node 1:
 
-define variable pat = make-graph( {{A 2} {B 3} {C 1} })
+variable pat = make-graph( {{A 2} {B 3} {C 1} })
 
-print next(pat, 12)
+next(pat, 12)
 
 ; an 'alberti bass' figure uing the triad C E G
 
-define variable pat = make-graph( { {C 3} 
-                                    {E 3}
-                                    {G #$ make-cycle({2 1}) }
-                                    })
+variable pat = make-graph( { {c 3} 
+                             {e 3}
+                             {g #$ make-cycle({2 1}) }
+                            })
 
-print next(pat, 24)
+next(pat, 24)
 
 ; a randomizing alberti figure:
 
-define variable pat = make-graph( { {C 3} 
-                                    {E 3}
-                                    {G #$ make-weighting({2 1}) }
-                                    })
+variable pat = make-graph( { {c 3} 
+                             {e 3}
+                             {g #$ make-weighting({2 1}) }
+                            })
 
-print next(pat, 24)
+next(pat, 24)
 
 ; extending the alberit idea to a graph of subpatters:
 
-define variable pat = make-graph( { {#$ make-cycle({C E G}) 3} 
-                                    {#$ make-cycle({F A C}) 3} 
-                                    {#$ make-cycle({G B D}) #$ make-weighting({2 1}) }
-                                    } )
+variable pat = make-graph( { {#$ make-cycle({c e g}) 3} 
+                             {#$ make-cycle({f a c}) 3} 
+                             {#$ make-cycle({g b d}) #$ make-weighting({2 1}) }
+                           } )
 
-print next(pat, 48)
+next(pat, 48)
 
 ; first order markov chant as a graph
 
-define variable pat =
-  make-graph(list(list("c4",  make-weighting({2 5}) ),
+variable pat = make-graph(list(list("c4",  make-weighting({2 5}) ),
                   list("d4",  make-weighting({1 3}) ),
                   list("ef4", make-weighting({2 4}) ),
                   list("f4",  make-weighting({3 5}) ),
                   list( make-heap({"g4" "a4" "bf4" "c5"}), make-cycle( {1 2 3 4}))
                   ))
 
-print next(pat, 80)
+next(pat, 80)
 
 ; play it 
 
-define process play-pat (reps, pat, rate)
-  run repeat reps 
-    for n = next(pat)
-    unless rest?(n)
-    send "mp:midi", key: key(n), dur: rate * 1.5
-    wait rate
+process play-pat (reps, pat, rate)
+  repeat reps 
+  for n = next(pat)
+  if (not( rest?(n)))
+    send("mp:midi", key: key(n), dur: rate * 1.5)
   end
+  wait rate
+end
 
 ; play chant in 6 8 or 12 note phrases separated by a rest
 
@@ -229,67 +230,6 @@ begin
                                          ),
                               "r")
                          )
-  sprout play-pat( 80, pat1, .2) 
+  sprout(play-pat( 80, pat1, .2) )
 end
-
-
-; Change ringing: swapping elements each time through a rotation eg
-; Plain Hunt (for N bells, period = 2N rotations)
-
-; 0 1 2 3 4 5
-;  x   x   x
-; 1 0 3 2 5 4
-;    x   x
-; 1 3 0 5 2 4
-;  x   x   x
-; 3 1 5 0 4 2
-;    x   x 
-; 3 5 1 4 0 2
-;  x   x   x
-; 5 3 4 1 2 0
-;    x   x
-; 5 4 3 2 1 0
-;  x   x   x
-; 4 5 2 3 0 1
-;    x   x
-; 4 2 5 0 3 1
-;  x   x   x
-; 2 4 0 5 1 3
-;    x   x
-; 2 0 4 1 5 3
-;  x   x   x
-; 0 2 1 4 3 5 
-;    x   x
-; 0 1 2 3 4 5
-
-; a rotation pattern generates a set of items and then rotates them
-; according to a rotation "rule" {start [step 1] [width 1] [end]}
-; that describes a swapping iteration.
-
-define variable pat = make-rotation({a b c d})
-
-print next(pat, #t)
-
-define variable pat = make-rotation({a b c d}, rotate: {0 2 })
-
-print next(pat, #t)
-
-
-define process huntscale (keys, reps, rate)
-  run with pat = make-rotation(keys, rotate: make-cycle({{0 2} {1 2}}))
-    repeat reps
-    for k = next(pat)
-    send "mp:midi", key: k
-    wait rate
-  end
-
-sprout huntscale(harmkeys(72, pentaharms), 6 * 2 * 6, .2)
-
-sprout list(  huntscale(harmkeys(60, pentaharms), 80, .2),
-              huntscale(reverse(uharmkeys(84, pentaharms)), 80, .2)
-            )
-
-
-
-
 

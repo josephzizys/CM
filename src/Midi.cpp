@@ -12,7 +12,7 @@
 #include "Midi.h"
 #ifdef GRACE
 #include "Preferences.h"
-#include "TextEditor.h"
+#include "CodeEditor.h"
 #include "Alerts.h"
 #endif
 #include <iostream>
@@ -1949,7 +1949,7 @@ void MidiInPort::exportMidiMessageSequence(MidiMessageSequence* seq,
     SystemClipboard::copyTextToClipboard(outstr);
 #ifdef GRACE
   else if (where==ExportIDs::ToEditor)
-    new TextEditorWindow(File::nonexistent,
+    new CodeEditorWindow(File::nonexistent,
 			 outstr,
 			 ExportIDs::getTextID(format),
 			 T("Untitled") );

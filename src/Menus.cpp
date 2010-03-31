@@ -9,7 +9,6 @@
 #include "Preferences.h"
 #include "Menus.h"
 #include "Console.h"
-#include "TextEditor.h"
 #include "Commands.h"
 #include "Help.h"
 #include "Scheme.h"
@@ -219,14 +218,14 @@ const PopupMenu CommandMenus::getHelpMenu(int wtype,
   Help* help=Help::getInstance();
 
   // Manuals
-  help->addHelpMenuItems(mans, T("Manuals"), CommandIDs::HelpManual, 8, comm);
-  if (wtype==WindowTypes::TextEditor)
-    {
-      mans.addSeparator();
-      mans.addCommandItem(com2, CommandIDs::EditorSymbolHelp);
-    }
+  help->addHelpMenuItems(mans, T("Reference"), CommandIDs::HelpManual, 8, comm);
+  //  if (wtype==WindowTypes::CodeEditor)
+  //    {
+  //      mans.addSeparator();
+  //      mans.addCommandItem(com2, CommandIDs::EditorSymbolHelp);
+  //    }
 
-  menu.addSubMenu(T("Manuals"), mans);
+  menu.addSubMenu(T("Reference"), mans);
   if (!SysInfo::isGraceCL())
     {
       PopupMenu tutorials, examples;
@@ -360,189 +359,3 @@ const PopupMenu ConsoleWindow::getMenuForIndex (int idx, const String &name)
 void ConsoleWindow::menuItemSelected (int comid, int index)
 {
 }
-
-/*=======================================================================*
-                             Text Editor Menus
- *=======================================================================*/
-
-const StringArray TextEditorWindow::getMenuBarNames()
-{
-  const tchar* const menubar [] = 
-    {T("File"), T("Edit"), T("Options"), T("Eval"),
-#ifndef GRACECL
-     T("Audio"),
-#endif
-     T("Windows"), T("Help"), 0};
-  return StringArray((const tchar**)menubar);
-}
-
-const PopupMenu TextEditorWindow::getMenuForIndex(int index, 
-						  const String& menuname)
-{
-  PopupMenu menu;
-  Preferences* pref=Preferences::getInstance();
-  ApplicationCommandManager* manager=getTextBuffer()->manager;
-  ApplicationCommandManager* gmanager=CommandManager::getInstance();
-  if (menuname==T("File")) 
-    {
-      menu.addCommandItem(manager, CommandIDs::EditorNew);
-      menu.addCommandItem(manager, CommandIDs::EditorOpen);
-      if (pref->recentlyOpened.getNumFiles()>0)
-	menu.addSubMenu(T("Open Recent"), 
-			CommandMenus::getRecentlyOpenedMenu());
-
-      menu.addSeparator();
-      menu.addCommandItem(manager, CommandIDs::EditorSave);
-      menu.addCommandItem(manager, CommandIDs::EditorSaveAs);
-      menu.addCommandItem(manager, CommandIDs::EditorRevert);
-      menu.addSeparator();
-      menu.addSeparator();
-      menu.addCommandItem(gmanager, CommandIDs::PlotterNew);
-
-      menu.addCommandItem(gmanager,CommandIDs::LispLoadFile);
-      if (pref->recentlyLoaded.getNumFiles()>0)
-	menu.addSubMenu(T("Load Recent"), 
-			CommandMenus::getRecentlyLoadedMenu());
-
-      menu.addSeparator();
-      menu.addCommandItem(gmanager,CommandIDs::PrefsSetInitFile);
-      menu.addCommandItem(gmanager,CommandIDs::PrefsClearInitFile);
-
-      menu.addSeparator();
-      menu.addCommandItem(manager, CommandIDs::EditorShowDirectory);
-      menu.addCommandItem(manager, CommandIDs::EditorSetDirectory);  
-
-      //      menu.addSeparator();
-      //      menu.addCommandItem(manager, CommandIDs::EditorPrint);
-      menu.addSeparator();
-      menu.addCommandItem(manager, CommandIDs::EditorClose);
-    }
-  else if (menuname==T("Edit"))
-    {
-      menu.addCommandItem(manager, CommandIDs::EditorUndo);
-      menu.addCommandItem(manager, CommandIDs::EditorRedo);
-      menu.addSeparator();
-      menu.addCommandItem(manager, CommandIDs::EditorCut);
-      menu.addCommandItem(manager, CommandIDs::EditorCopy);
-      menu.addCommandItem(manager, CommandIDs::EditorPaste);
-      menu.addCommandItem(manager, CommandIDs::EditorSelectAll);
-
-      menu.addSeparator();
-      menu.addCommandItem(manager, CommandIDs::EditorIndent);
-      menu.addCommandItem(manager, CommandIDs::EditorCommentOut);
-      menu.addCommandItem(manager, CommandIDs::EditorUncommentOut);
-      menu.addCommandItem(manager, CommandIDs::EditorFormatComments);
-
-      menu.addSeparator();
-      menu.addCommandItem(manager, CommandIDs::EditorFind);
-    }
-  else if (menuname==T("Options")) 
-    {
-      PopupMenu synt, tabs;
-      synt.addCommandItem(manager,CommandIDs::EditorSyntax+TextIDs::Text);
-      synt.addCommandItem(manager,CommandIDs::EditorSyntax+TextIDs::Sal);
-      synt.addCommandItem(manager,CommandIDs::EditorSyntax+TextIDs::Sal2);
-      synt.addCommandItem(manager,CommandIDs::EditorSyntax+TextIDs::Lisp);
-      menu.addSubMenu(T("Syntax"), synt);
-      menu.addSeparator();
-      menu.addSubMenu(T("Font Size"),
-		      CommandMenus::getFontSizeMenu(manager,
-						    CommandIDs::EditorFontSize
-						    ));
-      for (int i=0; i<CommandMenus::NumTabWidth; i++)
-	tabs.addCommandItem(manager,CommandIDs::EditorTabWidth+i);
-      menu.addSubMenu(T("Tab Width"), tabs);
-      menu.addSeparator();
-      menu.addCommandItem(manager,CommandIDs::EditorParensMatching);
-      menu.addCommandItem(manager,CommandIDs::EditorHighlighting);
-      menu.addCommandItem(manager,CommandIDs::EditorEmacsMode);
-      
-    }
-  else if (menuname==T("Eval"))
-    {
-      menu.addCommandItem(manager, CommandIDs::EditorExecute);
-      menu.addCommandItem(manager, CommandIDs::EditorExpand);
-      PopupMenu proc;
-      proc.addCommandItem(manager, CommandIDs::SchedulerPause);
-      proc.addCommandItem(manager, CommandIDs::SchedulerStop);
-      menu.addSubMenu(T("Scheduler"), proc);
-
-     // Trigger submenu belongs to the window NOT the buffer.
-      PopupMenu trigs;
-      bool trigp=hasTrigger();
-      for (int i=TriggerIDs::ButtonTrigger; i<=TriggerIDs::NumTriggers; i++)
-	trigs.addItem(CommandIDs::EditorAddTrigger+i,
-		      String("New ") + TriggerIDs::toPrettyString(i),
-		      // HACK disable MidiIn.
-		      ((!trigp) && (i!=TriggerIDs::MidiInTrigger)));
-      trigs.addItem(CommandIDs::EditorImportTrigger,
-		    T("New from Region (XML)"),
-		    (!trigp) && getTextBuffer()->isRegion()
-		    );
-      //      trigs.addSeparator();
-      //      trigs.addItem(CommandIDs::EditorLoadTrigger,
-      //		    T("Load Trigger..."), !trigp);
-      //      trigs.addItem(CommandIDs::EditorSaveTrigger,
-      //		    T("Save Trigger..."), trigp);
-      trigs.addSeparator();
-      //      trigs.addItem(CommandIDs::EditorRemoveTrigger,
-      //		    T("Remove Trigger"), trigp);
-      //      trigs.addSeparator();
-      trigs.addItem(CommandIDs::EditorExportTrigger,
-		    T("Export to Buffer (XML)"), trigp);
-      //      trigs.addSeparator();
-      //      trigs.addItem(CommandIDs::EditorConfigureTrigger,
-      //		    T("Configure Trigger..."), trigp);
-      menu.addSeparator();
-      menu.addSubMenu(T("Triggers"), trigs);
-
-    }      
-  else if (menuname==T("Audio"))
-    {
-      menu=CommandMenus::getAudioMenu(isfms);
-    }
-  else if (menuname==T("Windows"))
-    {
-      menu=CommandMenus::getWindowMenu();
-    }
-  else if (menuname==T("Help"))
-    {
-      menu=CommandMenus::getHelpMenu(WindowTypes::TextEditor,
-				    manager );
-    }
-  return menu;
-}
-
-void TextEditorWindow::menuItemSelected (int comid, int idex)
-{
-  int comm = CommandIDs::getCommand(comid);
-  int data = CommandIDs::getCommandData(comid);
-  switch (comm)
-    {
-    case CommandIDs::EditorAddTrigger :
-      addTrigger(data);
-      break;
-    case CommandIDs::EditorRemoveTrigger :
-      removeTrigger();
-      break;
-    case CommandIDs::EditorLoadTrigger :
-      loadTrigger();
-      break;
-    case CommandIDs::EditorSaveTrigger :
-      saveTrigger();
-      break;
-    case CommandIDs::EditorImportTrigger :
-      importTrigger();
-      break;
-    case CommandIDs::EditorExportTrigger :
-      exportTrigger();
-      break;
-    case CommandIDs::EditorConfigureTrigger :
-      configureTrigger();
-      break;
-    default:
-      break;
-    }
-}
-
-

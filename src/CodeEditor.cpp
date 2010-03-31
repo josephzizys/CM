@@ -89,6 +89,7 @@ CodeEditorWindow::CodeEditorWindow (File file, String text, int synt, String tit
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
   if (customs) delete customs;
+  WindowTypes::setWindowType(this, WindowTypes::CodeEditor);
   setVisible(true);
 }
 
@@ -115,11 +116,6 @@ void CodeEditorWindow::closeButtonPressed ()
       if (v==1) saveFile(false);
     }
   delete this;
-}
-
-CodeBuffer* CodeEditorWindow::getCodeBuffer()
-{
-  return ((EditorComponent*)getContentComponent())->getCodeBuffer();
 }
 
 ApplicationCommandTarget* CodeEditorWindow::getNextCommandTarget()
@@ -677,13 +673,22 @@ const PopupMenu CodeEditorWindow::getMenuForIndex(int index, const String& name)
     }
   else if (name==T("Help")) 
     {
-      menu=CommandMenus::getHelpMenu(WindowTypes::TextEditor, gmanager);
+      menu=CommandMenus::getHelpMenu(WindowTypes::CodeEditor, gmanager);
     }
   return menu;
 }
 
 void CodeEditorWindow::menuItemSelected (int id, int index)
 {
+}
+
+//
+///  Implementation
+//
+
+CodeBuffer* CodeEditorWindow::getCodeBuffer()
+{
+  return ((EditorComponent*)getContentComponent())->getCodeBuffer();
 }
 
 void CodeEditorWindow::updateKeyPressesForEditMode()
@@ -949,6 +954,17 @@ void CodeEditorWindow::writeCustomComment(bool select)
   buffer->moveCaretTo(a, false);
 }
 
+CodeEditorWindow* CodeEditorWindow::getFocusCodeEditor()
+{
+  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
+    {
+      TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
+      if ( w->getComponentPropertyBool(T("FocusEditor"), false))
+        return (CodeEditorWindow*)w;
+    }
+  return (CodeEditorWindow*)NULL;
+}
+
 /*=======================================================================*
                                    CodeBuffer
  *=======================================================================*/
@@ -1142,6 +1158,28 @@ void CodeBuffer::mouseDoubleClick (const MouseEvent &e)
       break;
     }
 }  	
+
+void CodeBuffer::focusGained(Component::FocusChangeType cause)
+{
+  // When a code buffer is selected is becomes the "focus" and only
+  // loses focus when a different code buffer is selected, i.e. the
+  // editing focus is maintained even when the window itself is not
+  // the active window
+  TopLevelWindow* w=NULL;
+  // clear any other editing window of the focus
+  for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
+    {
+      w=TopLevelWindow::getTopLevelWindow(i);
+      if (w->getComponentPropertyBool(T("FocusEditor"), false))
+	w->setComponentProperty(T("FocusEditor"), false);
+    }
+  // select this one
+  getTopLevelComponent()->setComponentProperty(T("FocusEditor"), true);
+}
+
+//
+// Implemenation
+//
 
 XmlElement* CodeBuffer::getColorTheme()
 {
@@ -1766,8 +1804,8 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
   // array adjust string positions accordingly
  
   String code=document.getTextBetween(start, end);
-  //  std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
-  //            << ", end=" << end.getPosition() << "\n";
+    std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
+              << ", end=" << end.getPosition() << "\n";
   OwnedArray<SynTok> tokens;
   CodeDocument::Position pos (start);
   int beg=pos.getPosition();  // offset of string
@@ -1786,17 +1824,17 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
           if (c==T('('))
             {
               par++;
-              tokens.add(new SynTok(T("("), SalSyntax::SalLParen, loc));
+              tokens.add(new SynTok(T("("), SalIDs::SalLParen, loc));
             }
           else if (c==T('{'))
             {
               cur++;
-              tokens.add(new SynTok(T("{"), SalSyntax::SalLCurly, loc));
+              tokens.add(new SynTok(T("{"), SalIDs::SalLCurly, loc));
             }
           else if (c==T('['))
             {
               squ++;
-              tokens.add(new SynTok(T("["), SalSyntax::SalLBrace, loc));
+              tokens.add(new SynTok(T("["), SalIDs::SalLBrace, loc));
             }
         }
       else if (scan==SCAN_CLOSE)
@@ -1805,24 +1843,24 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
           if (c==T(')'))
             {
               if (--par < 0) break;
-              tokens.add(new SynTok(T(")"), SalSyntax::SalRParen, loc));
+              tokens.add(new SynTok(T(")"), SalIDs::SalRParen, loc));
             }
           else if (c==T('}'))
             {
               if (--cur < 0) break;
-              tokens.add(new SynTok(T("}"), SalSyntax::SalRCurly, loc));
+              tokens.add(new SynTok(T("}"), SalIDs::SalRCurly, loc));
             }
           else if (c==T(']'))
             {
               if (--squ < 0) break;
-              tokens.add(new SynTok(T("]"), SalSyntax::SalRBrace, loc));
+              tokens.add(new SynTok(T("]"), SalIDs::SalRBrace, loc));
             }
         }
       else if (scan==SCAN_PUNCT)
-        tokens.add(new SynTok(T(","), SalSyntax::SalComma, loc));
+        tokens.add(new SynTok(T(","), SalIDs::SalComma, loc));
       else if (scan==SCAN_STRING)
         {
-          tokens.add(new SynTok(document.getTextBetween(pos,far).unquoted(), SalSyntax::SalString, loc));
+          tokens.add(new SynTok(document.getTextBetween(pos,far).unquoted(), SalIDs::SalString, loc));
         }
       else if (scan==SCAN_TOKEN)
         {
@@ -1831,36 +1869,36 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
             {
               int x=t->getType();
               tokens.add(new SynTok(s, x, loc));
-              if (SalSyntax::isSalBlockOpen(x))
+              if (SalIDs::isSalBlockOpen(x))
                 lev++;
-              else if (SalSyntax::isSalBlockClose(x))
+              else if (SalIDs::isSalBlockClose(x))
                 {
                   if (--lev < 0) break;
                 }
             }
           else if (int t=isNumberToken(s))
             {
-              int typs[] = {SalSyntax::SalInteger, SalSyntax::SalFloat, SalSyntax::SalRatio};
+              int typs[] = {SalIDs::SalInteger, SalIDs::SalFloat, SalIDs::SalRatio};
               tokens.add(new SynTok(s, typs[t-1], loc));
             }
           else // is still a valid token!
             {
               if (s.getLastCharacter()==T(':'))
-                tokens.add(new SynTok(s.dropLastCharacters(1), SalSyntax::SalKeyparam, loc));
+                tokens.add(new SynTok(s.dropLastCharacters(1), SalIDs::SalKeyparam, loc));
               else if (s[0]==T(':'))
-                tokens.add(new SynTok(s.substring(1), SalSyntax::SalKeyword, loc));
+                tokens.add(new SynTok(s.substring(1), SalIDs::SalKeyword, loc));
               else
-                tokens.add(new SynTok(s, SalSyntax::SalIdentifier, loc));
+                tokens.add(new SynTok(s, SalIDs::SalIdentifier, loc));
             }
         }
       pos=far;
       scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments, end.getPosition());
     }
 
-  //  std::cout << "tokens=";
-  //  for (int i=0; i<tokens.size(); i++)
-  //    std::cout << " " << tokens[i]->toString().toUTF8();
-  //  std::cout << "\n";
+    std::cout << "tokens=";
+    for (int i=0; i<tokens.size(); i++)
+      std::cout << " " << tokens[i]->toString().toUTF8();
+    std::cout << "\n";
 
   String text;
   if (scan<0)
@@ -1886,10 +1924,10 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
           text << T(">>> Error: missing 'end'");
           for (int i=tokens.size()-1, n=0; i>-1; i--)
             {
-              int x=SalSyntax::SalTypeDataBits(tokens[i]->getType());
-              if (x==SalSyntax::SalBlockOpen)
+              int x=SalIDs::SalTypeDataBits(tokens[i]->getType());
+              if (x==SalIDs::SalBlockOpen)
                 if (n==lev) {tok=tokens[i]; break;} else n--;
-              else if (x==SalSyntax::SalBlockClose) n++;
+              else if (x==SalIDs::SalBlockClose) n++;
             }
           if (tok) text << " for " << tok->getName();
           text << T(", line: ");
@@ -1898,25 +1936,25 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
         {
           text << T(">>> Error: missing ')', line: ");
           for (int i=tokens.size()-1, n=0; i>-1; i--)
-            if (tokens[i]->getType()==SalSyntax::SalLParen) 
+            if (tokens[i]->getType()==SalIDs::SalLParen) 
               if (n==par) {tok=tokens[i]; break;} else n--;
-            else if (tokens[i]->getType()==SalSyntax::SalRParen) n++;
+            else if (tokens[i]->getType()==SalIDs::SalRParen) n++;
         }
       else if (cur>0)
         {
           text << T(">>> Error: missing '}', line: ");
           for (int i=tokens.size()-1, n=0; i>-1; i--)
-            if (tokens[i]->getType()==SalSyntax::SalLCurly) 
+            if (tokens[i]->getType()==SalIDs::SalLCurly) 
               if (n==cur) {tok=tokens[i]; break;} else n--;
-            else if (tokens[i]->getType()==SalSyntax::SalRCurly) n++;
+            else if (tokens[i]->getType()==SalIDs::SalRCurly) n++;
         }
       else if (squ>0)
         {
           text << T(">>> Error: missing ']', line: ");
           for (int i=tokens.size()-1, n=0; i>-1; i--)
-            if (tokens[i]->getType()==SalSyntax::SalLBrace) 
+            if (tokens[i]->getType()==SalIDs::SalLBrace) 
               if (n==cur) {tok=tokens[i]; break;} else n--;
-            else if (tokens[i]->getType()==SalSyntax::SalRBrace) n++;
+            else if (tokens[i]->getType()==SalIDs::SalRBrace) n++;
        }
       if (tok) pos.setPosition(beg+tok->getData1()-ins);
       text << pos.getLineNumber() << T("\n")
@@ -1932,8 +1970,8 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
           // text string so that token positions are corrent when
           // reporting errors
           text << T("begin ") << document.getTextBetween(start, end) << T(" end");
-          tokens.insert(0, new SynTok(T("begin"), SalSyntax::SalBegin, 0));
-          tokens.add(new SynTok(T("end"), SalSyntax::SalEnd, 
+          tokens.insert(0, new SynTok(T("begin"), SalIDs::SalBegin, 0));
+          tokens.add(new SynTok(T("end"), SalIDs::SalEnd, 
                                 end.getPosition()-start.getPosition()+ins));
         }
       else
@@ -2053,9 +2091,9 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
               {
                 // token is a literal (e.g. statement, op)
                 int typ=tok->getType();
-                if (SalSyntax::isSalBlockClose(typ))
+                if (SalIDs::isSalBlockClose(typ))
                   level++; 
-                else if (SalSyntax::isSalBlockOpen(typ))
+                else if (SalIDs::isSalBlockOpen(typ))
                   level--; 
                 // stop on a blockopen word with no pending end. this
                 // doesn't mean the statement is actually balanced
@@ -2096,14 +2134,14 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
               {
                 // token is a literal. stop if its the first thing
                 // encountered or if its a clausal
-                if (last==0 || SalSyntax::isSalClausalType(tok->getType()))
+                if (last==0 || SalIDs::isSalClausalType(tok->getType()))
                   {
                     //std::cout<<"literal breaking with last==0"<<code.toUTF8()<<"\n";
                     break;
                   }
                 scan=tok->getType();
                 // if its a command then include and stop
-                if (SalSyntax::isSalCommandType(scan))
+                if (SalIDs::isSalCommandType(scan))
                   {
                     //std::cout << "stopping on command '"<<code.toUTF8()<<"'\n";
                     here=pos.getPosition();
@@ -2117,7 +2155,7 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
                 // token is a variable or constant.  if its the first
                 // expr or if the last was a literal then include it
                 // and keep going
-                if ((last==0) || SalSyntax::isSalType(last))
+                if ((last==0) || SalIDs::isSalType(last))
                   here=pos.getPosition();
                 // otherwise if its a constant then stop (because last
                 // is an expr)
@@ -2144,16 +2182,16 @@ int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Pos
         else if (scan==SCAN_PUNCT)
           {
             // its a comma, stop if last not an expression
-            if (last==0 || SalSyntax::isSalType(last))
+            if (last==0 || SalIDs::isSalType(last))
               {
                 //std::cout << "breaking on SCAN_PUNCT=\n";
                 break;
               }
-            scan=SalSyntax::SalComma;
+            scan=SalIDs::SalComma;
           }
         // otherwise its a {[( or string expression. stop unless this
         // expr its the first or the previous thing was not an expr
-        else if (last==0 || SalSyntax::isSalType(last))
+        else if (last==0 || SalIDs::isSalType(last))
           {
             if (pos.getCharacter()==T('{'))
               scan=SCAN_CURLY;
@@ -2215,7 +2253,7 @@ int CodeBuffer::backwardSal1Expr(CodeDocument::Position& from, CodeDocument::Pos
         {
           if (SynTok* tok=syntax->getSynTok(document.getTextBetween(from, t)))
             {
-              if (SalSyntax::isSalCommandType(tok->getType()))
+              if (SalIDs::isSalCommandType(tok->getType()))
                 {
                   //std::cout << "command=" << tok->getName().toUTF8() << "\n";
                   return 1;
@@ -2445,7 +2483,7 @@ int CodeBuffer::indentSal2()
                   // command, 'end' or 'else' then break
                   int type=tok->getType();
                   subtypes.set(0,type);
-                  if (SalSyntax::isSalCommandType(type) )
+                  if (SalIDs::isSalCommandType(type) )
                     {
                       cmdtoken=tok;
                       break;
@@ -2486,7 +2524,7 @@ int CodeBuffer::indentSal2()
   // at this point we have at least one subexpr and may have stopped
   // on a sal type
 
-  if (!SalSyntax::isSalType(subtypes[0]))     // stopped on a non-sal expression
+  if (!SalIDs::isSalType(subtypes[0]))     // stopped on a non-sal expression
     {
       col=lastIndented(substarts, false);
       //std::cout << "SEXPR indent, column=" << col << "\n";
@@ -2503,7 +2541,7 @@ int CodeBuffer::indentSal2()
           if (isCommaTerminatedLine(line))
             {
               for (last=subtypes[subtypes.size()-1]; last>=0; last--)
-                if (subtypes[last]==SalSyntax::SalWith)
+                if (subtypes[last]==SalIDs::SalWith)
                   break;
               if (last<0) // reached command
                 col=pos.getIndexInLine()+cmdtoken->getName().length()+1;
@@ -2532,7 +2570,7 @@ int CodeBuffer::indentSal2()
             }
           // ELSE if the last indented is 'else' then body indent
           // based on position of 'else'
-          else if (subtypes[last]==SalSyntax::SalElse)
+          else if (subtypes[last]==SalIDs::SalElse)
             {
               CodeDocument::Position p (&document, substarts[last]);
               col=p.getIndexInLine()+2;

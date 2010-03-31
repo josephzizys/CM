@@ -467,8 +467,8 @@
   (define Sal2Function #x4410)
   (define Sal2Process #x4510)
   (define Sal2If #x4610)
-  (define Sal2Wait #x4700)
-  (define Sal2OutFile #x4810)
+  (define Sal2File #x4710)
+  (define Sal2Wait #x4800)
   (define SAL_COMMAND_END #x4900)
   (define SAL_CONSTITUENT_BEG #x4900)
   (define SalElse #x4a00)
@@ -565,7 +565,7 @@
   (define Sal2LoopStatementRule #x9e00)
   (define Sal2ProcessStatementRule #x9f00)
   (define Sal2ProcessWaitRule #xa000)
-  (define Sal2OutFileStatementRule #xa100)
+  (define Sal2FileStatementRule #xa100)
   (define Sal2StatementRule #xa200)
   (define SAL_RULE_END #xa300)
   (define SAL_TYPE_END #xa300)
@@ -1810,7 +1810,7 @@
 ;; if (<expr>)  ... [else ...] end
 ;; function <name> (...) ... end
 ;; loop ... end
-;; outfile {string} (...) ... end
+;; file {string} (...) ... end
 ;; run ... end
 ;; set ...
 ;; variable ...
@@ -2081,6 +2081,50 @@
     ))
   )
 
+
+(defrule Sal2FileStatementRule
+  (and Sal2File 
+       (or SalString SalIdentifier)
+       (or (and SalLParen SalRParen)
+           (and SalLParen SalKeyparam SalSexprRule
+                (* SalComma SalKeyparam SalSexprRule) SalRParen))
+       (@ SalBindingsRule) 
+       (* Sal2StatementRule)
+       SalEnd)
+  (lambda (args errf)
+    ;;(format #t "~S~%" (list #:file-> args))
+    (let ((file (second args) )
+          (opts (third args)  )
+          (vars (fourth args) )
+          (body (fifth args)))
+      ;; opts: ( <(> <)> )
+      ;; opts: ( <(> <key> <expr> ( {<,> <key> <expr>}* ) <)> )
+      (if (null? (cddr opts)) ; empty opts: ( <(> <)> )
+          (set! opts (list))
+          (set! opts (cons (second opts) 
+                           (cons (third opts)
+                                 (remove-token-type (fourth opts)
+                                                    SalComma)))))
+      (if vars (set! vars (first vars)))
+      (make-parse-unit Sal2FileStatementRule
+                       (list file opts vars body)
+                     #f)))
+  (lambda (unit info errf)
+    (let* ((args (parse-unit-parsed unit))
+           (file (emit (first args) info errf))
+           (opts (emit (second args) info errf))
+           (vars (if (third args) (emit (parse-unit-parsed vars) info errf) (list)))
+           (body (emit (fourth args) info errf))
+           (oofd (genysm "oofd")) ; data returned by open-output-file
+           )
+      (set! vars (append vars (list (list oofd #f))))
+      `(let* ,(emit (parse-unit-parsed vars) info errf)
+         (set! oofd, (open-output-file ,file ,@opts))
+         ,@body
+         (close-output-file ,file ,oofd))
+      ))
+)
+
 (defrule Sal2StatementRule
   (or Sal2BeginStatementRule
       Sal2IfStatementRule
@@ -2088,6 +2132,7 @@
       Sal2FunctionStatementRule
       Sal2LoopStatementRule
       Sal2ProcessStatementRule
+      Sal2FileStatementRule
       SalAssignmentRule
       Sal2ProcessWaitRule    ;; but only allowed inside process
       SalSexprRule
@@ -2120,7 +2165,7 @@
                   (print-sal-error str code #f) ; signal error
                   +s7-error+)
                  (expand 
-                  (ffi_print_output code #f)
+                  (ffi_cm_print code )
                   +s7-error+ ;; signal no value printing
                   )
                  (else
@@ -2285,8 +2330,8 @@
     (Sal2Function + 16)
     (Sal2Process + 16)
     (Sal2If + 16)
+    (Sal2File + 16)
     Sal2Wait
-    (Sal2OutFile + 16)
 
     SAL_COMMAND_END
     (SAL_CONSTITUENT_BEG *)
@@ -2391,7 +2436,7 @@
     Sal2LoopStatementRule
     Sal2ProcessStatementRule
     Sal2ProcessWaitRule
-    Sal2OutFileStatementRule
+    Sal2FileStatementRule
     Sal2StatementRule
 
     SAL_RULE_END

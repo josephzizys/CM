@@ -915,13 +915,15 @@ s7_pointer sal_tokenize_string(s7_pointer str, s7_pointer ptr,  s7_pointer sal2)
   OwnedArray<SynTok>* ary=(OwnedArray<SynTok>*)s7_c_pointer(ptr);
   // convert array to lisp list of C tokens  
   s7_pointer toks=SchemeThread::getInstance()->schemeNil;
-  bool ok;
+  bool ok=false;
+  /**
   if (s7_boolean(sc, sal2))
     {
     ok=Sal2Syntax::getInstance()->tokenize(text, *ary);
     }
   else
     ok=SalSyntax::getInstance()->tokenize(text, *ary);
+  **/
   if (ok)
     {
       for (int i=ary->size()-1; i>=0; i--)
@@ -943,11 +945,13 @@ s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr, s7_pointer sal2)
   OwnedArray<SynTok>* ary=(OwnedArray<SynTok>*)s7_c_pointer(ptr);
   // convert array to lisp list of C tokens  
   s7_pointer toks=SchemeThread::getInstance()->schemeNil;
-  bool ok;
+  bool ok=false;
+  /**
   if (s7_boolean(sc, sal2))
     ok=Sal2Syntax::getInstance()->tokenize(text, *ary);
   else
     ok=SalSyntax::getInstance()->tokenize(text, *ary);
+  **/
   if (ok)
     {
       for (int i=ary->size()-1; i>=0; i--)
@@ -957,8 +961,6 @@ s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr, s7_pointer sal2)
     }
   return toks;
 }
-
-
 
 s7_pointer sal_token_type(s7_pointer ptr)
 {
