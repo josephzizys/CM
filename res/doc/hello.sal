@@ -1,4 +1,4 @@
-;;; -*- syntax: Sal2; font-size: 16; theme: "Emacs" -*-
+;;; -*- syntax: Sal2;  -*-
 
 ; A SAL program consists of comments and expressions.  Comments start
 ; with a semi-colon and last until the end of the line. You are

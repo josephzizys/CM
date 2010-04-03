@@ -5,26 +5,53 @@
 <style type="text/css" media="all">
 @import "cm.css";
 </style>
-<title>The Code Editor</title>
+<title>The Editor</title>
 </head>
 <body>
 <div id="content">
 
-<h1>The Code Editor</h1>
+<h1>The Editor</h1>
 
-<p>The code editor's behavior depends on the <var>syntax</var>, or
-type, of code being edited. When a file is opened the file's extension
-is normally used to determine the syntax for editing its
-contents. There are currently five supported syntaxes: </p>
+<p>
 
+Grace contains a powerful code (text) editor to assist you in the
+development of programs and musical algorithms. The exact behavior of
+the editor depends on the current <var>syntax</var>, or type, of text
+being edited. The editor supports five different syntaxes, these are
+automatically selected by the type of file that you open: </p>
+
+<div class="float">
 <table>
-  <tr> <th>Syntax</th>  <th>File Types</th></tr>
-  <tr> <td>Lisp</td>  <td> .lisp .lsp .cl .scm .cm .clm .ins .cmn .fms .asd</td></tr>
+  <tr> <th class="lcol" style="width:25%;">Syntax</th>  <th class="lcol">File Types</th></tr>
+  <tr> <td>Lisp</td>  <td> .lisp .lsp .cl .scm .cm .clm .ins</td></tr>
   <tr> <td>SAL2</td>  <td>.sal2</td></tr>
   <tr> <td>SAL</td>   <td>.sal</td></tr>
   <tr> <td>Fomus</td> <td>.fms</td></tr>
   <tr> <td>Text</td>  <td> .text .txt  .*</td> </tr>
 </table>
+</div>
+
+<p>Each syntax has its own unique rules for syntax highlighting (code coloring), line indentation (Tab key) and execution (Command-Return).</p>
+
+<h2>Customizing the Display</h2>
+
+<p>Use the Options menu to customize the visual aspects of the Editor. Most customization settings can be saved in the application's preference file, and in <var>customization comments</var> that you can save in the file.  When reopen a file, the Editor looks for customization comments and restores the window to the saved configuration. Customizations include the following settings:
+</p>
+
+<ul>
+<li>Syntax</li>
+<li>Color Theme</li>
+<li>Font Size</li>
+<li>Lines and Columns</li>
+<li>Emacs Mode</li>
+<li>Parens Matching</li>
+</ul>
+
+
+
+
+
+
 
 
 <p>If the first line of the file is a special <var>customize comment</var> then

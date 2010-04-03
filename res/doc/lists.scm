@@ -27,13 +27,11 @@
 
 (define notes '(c d e f g a b))
 
-(display notes)
-(newline)
+notes
 
 (define chords '((c e g) (d f a)))
 
-(display chords)
-(newline)
+chords
 
 ; 'length' tells you how many elemnts there are in a list:
 
@@ -58,10 +56,10 @@
 
 (append notes '(60) notes)
 
-; 'list*' adds elements onto the FRONT of a list that you specify as
-; the LAST input to the function:
+; 'concat' will concatenate lists and non-lists together
+; to form one large list
 
-(list* 1 2 3 '(a b c)) ; >>> Error: list*: unbound variable
+(concat -99 '(a b c) 60 70 '() '(x y z))
 
 ; 'first' ... 'tenth' returns the element at that position:
 

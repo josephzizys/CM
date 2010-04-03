@@ -1,9 +1,11 @@
+;;; -*- syntax: Sal2; -*-
+
 ;; Second-order Markov process. The transition table is taken from
 ;; Chapter 8 of "Computer Music" by Dodge/Jerse. Sounds best with slow
 ;; strings.
 
-define process foster (len, octave, chan)
-  run with 
+process foster (len, octave, chan)
+  with 
     p1 = make-markov({{b3  d4  -> d4}
                       {cs4 d4  -> {d4 .3125} {e4 .3125} {a4 .3125}}
                       {d4  d4  -> {cs4 .125} {d4 .125} {e4 .5625} 
@@ -70,38 +72,38 @@ define process foster (len, octave, chan)
     ;; p2 is rhythmic pattern that randomly selects between several
     ;; rhythmic motives that are characterisitic of Foster's style
 
-    p2 = make-weighting({{ #$ make-cycle({2 2})     .375}
-                         { #$ make-cycle({1 1 1 1}) .125}
-                         { #$ make-cycle({2 1 1})   .125}
-                         { #$ make-cycle({1 1 2})   .125}
-                         { #$ make-cycle( {1 2 1})  .25}
-                         { 4                        .125}})
+  p2 = make-weighting({{ #$ make-cycle({2 2})     .375}
+                       { #$ make-cycle({1 1 1 1}) .125}
+                       { #$ make-cycle({2 1 1})   .125}
+                       { #$ make-cycle({1 1 2})   .125}
+                       { #$ make-cycle( {1 2 1})  .25}
+                       { 4                        .125}})
 
     ;; the process simply reads data from the 2 markov patterns and
     ;; transposes the data according to the octave offset passed into
     ;; the function.
 
-    repeat len
-    for k = key( next(p1) )
-    for d = in-tempo( next(p2), 200)
-    send "mp:midi", key:  k + octave, chan: chan, 
-         dur: d * 1.25, amp: .5
-    wait d
-  end
+  repeat len
+  for k = key( next(p1) )
+  for d = in-tempo( next(p2), 200)
+  send( "mp:midi", key:  k + octave, chan: chan, 
+         dur: d * 1.25, amp: .5)
+  wait d
+end
 
 ; Sample call that generates 4 parallel foster processes in different
 ; octaves. Select "Slow Strings" on the four channels to get a pretty
 ; good Copeland sound....
 
-define variable string-ensemble = 49
+variable string-ensemble = 49
 
-send "mp:prog", val: string-ensemble 
+send( "mp:prog", val: string-ensemble )
 
-sprout list(foster(90, -12,  0),
+sprout( list(foster(90, -12,  0),
             foster(90, 0 ,   0),
             foster(90, 12,   0),
             foster(90, 24,   0)
-            )
+            ))
 
 
 

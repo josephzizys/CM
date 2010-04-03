@@ -1,3 +1,5 @@
+;;; -*- syntax: Sal2;  -*-
+
 ;
 ;; Defining Variables
 ; 
@@ -20,14 +22,14 @@
 ; code you develop could access that row by referencing global
 ; variable its stored int
 
-; Use the 'define variable' command to define global variables. Here
+; Use the 'variable' command to define global variables. Here
 ; is the definition of a global variable that holds a twelve-tone
 ; row. Put your cursor at the end of the line and press COMMAND-Enter
 ; to execute the definition:
 
-define variable row = {0 11 1 10 2 9 3 8 4 7 5 6}
+variable row = {0 11 1 10 2 9 3 8 4 7 5 6}
 
-print "Prime row: ", row, ", retograde row: ", reverse(row)
+print( "Prime row: ", row, ", retograde row: ", reverse(row))
 
 ; The 'define variable' command takes the name of the new global
 ; variable, followed by an optional '= <value>' initialization.  If
@@ -41,8 +43,8 @@ print "Prime row: ", row, ", retograde row: ", reverse(row)
 ; retrograde-inversion row forms) and the second global to hold a
 ; transposition offset:
 
-define variable row-form = pick( "p", "r", "i", "ri") ,
-       row-transp = between(0, 12)
+variable row-form = pick( "p", "r", "i", "ri") ,
+         row-transp = between(0, 12)
   
 ;
 ;; Local variables
@@ -60,7 +62,7 @@ define variable row-form = pick( "p", "r", "i", "ri") ,
 begin
   with x = random(12) ,
        y = x + 12
-  print list(x,y)
+  list(x,y)
 end
 
 ; Its clear from the print statement that when the block executes the
@@ -71,7 +73,7 @@ end
 ; this next statement will trigger an error message because there is
 ; no global variable called x (unless you created one yourself!)
 
-print x
+x
 
 ; Notice that a variable declared inside an inner block will shadow
 ; the same variable declared in an outer block. In this example, both
@@ -80,12 +82,12 @@ print x
 
 begin
   with x = 1
-  print "outer block, x=", x
+  print("outer block, x=", x)
   begin
     with x = 2
-    print "inner block, x=", x
+    print( "inner block, x=", x)
   end
-  print "outer block, x=", x
+  print( "outer block, x=", x)
 end
 
 ;
@@ -97,17 +99,17 @@ end
 ; commands with a different inital value. Another way is to ASSIGN the
 ; variable a new value using the SET command.
 
-define variable row = {11 10 9 8 7 6 5 4 3 2 1 0},
-       row-form = "p",
-       row-transp = 0
+variable row = {11 10 9 8 7 6 5 4 3 2 1 0},
+         row-form = "p",
+         row-transp = 0
 
-print "row=", row, " row-form=", row-form, " row-transp=", row-transp
+print( "row=", row, " row-form=", row-form, " row-transp=", row-transp)
 
 set row = {0 1 2 3 4 5 6 7 8 9 10 11},
     row-form = "r",
     row-transp = between(6, 12)
 
-print "row=", row, " row-form=", row-form, " row-transp=", row-transp
+print( "row=", row, " row-form=", row-form, " row-transp=", row-transp)
 
 
 ; On first appearance the 'set' command looks very much like the
@@ -138,7 +140,7 @@ print "row=", row, " row-form=", row-form, " row-transp=", row-transp
 begin 
   with var = 0
   loop repeat 5 set var += 1 end
-  print var
+  var
 end
 
 ; *= scales a variable by a value
@@ -146,7 +148,7 @@ end
 begin 
   with var = 1
   loop repeat 5 set var *= 10 end
-  print var
+  var
 end
 
 ; &= adds a value to the end of a variable
@@ -154,7 +156,7 @@ end
 begin 
   with var = {}
   loop repeat 5 set var &= random(128) end
-  print var
+  var
 end
 
 ; ^= appends a list to the end of a variable
@@ -162,7 +164,7 @@ end
 begin 
   with var = {}
   loop repeat 5 set var ^= list(1, 2, random(128)) end
-  print var
+  var
 end
 
 ; @= adds a value to the front of a variable
@@ -170,7 +172,7 @@ end
 begin 
   with var = {}
   loop repeat 5 set var @= random(128) end
-  print var
+  var
 end
 
 ; <= minimizes a value
@@ -178,7 +180,7 @@ end
 begin 
   with var = 128
   loop repeat 5 set var <= random(128) end
-  print var
+  var
 end
 
 ; >= maximizes a value
@@ -186,7 +188,7 @@ end
 begin 
   with var = -1
   loop repeat 5 set var <= random(128) end
-  print var
+  var
 end
 
 ;
@@ -212,51 +214,35 @@ end
 ; necessary inside the blocl. A begin...end can also be used to
 ; declare local local variables inside the function, if needed.
 
-;; The 'define function' command
+;; The 'function' command
 
-; Use the 'define function' command to create a new function. The
+; Use the 'function' command to create a new function. The
 ; command requires three pieces of information: (1) the name of the
 ; new function, (2) what input parameters it will take (if any) and
-; (3) the SAL statement the function will execute when it is
+; (3) the body of the function that it will execute when it is
 ; called. Here is a first example of a function definition. The
 ; function is called 'knum->pc' because it converts an input keynum
-; 0-127 into a pitch class 0-11. The function declares one input
-; parameter (knum) and the statement the function executes is the
-; special 'return' statement that can appear inside a function
-; definition to return a value back to the caller. The pitch class that
-; our function calculates and returns is simply mod 12 of the input
-; keynum.
+; 0-127 into a pitch class 0-11 using the modulus operator '%'.
+; The function declares one input parameter (knum). In the body 
+; of the function you can execute any number of
+; statements and the last statement will be returned as the value of
+; the function. In our example below there is only one statment and
+; so its value will be returned when we call the function.
 
-; Put the cursor at the end of the second line and press COMMAND-Enter
+; Put the cursor after the end and press COMMAND-Enter
 ; to execute the definition:
 
-define function key->pc (k)
-  return k % 12
+function key->pc (k)
+  k % 12
+end
 
-print key->pc(60)
+; once the function is defined you can call it:
 
-print key->pc(59)
+key->pc(60)
 
-; Note that although a function's body consists of only one statement,
-; that statement can be a 'begin...end' block, which means that they
-; can execute any number of statements.  Here is a (not very useful)
-; function that executes two print statements when you call it. Note
-; that this function does NOT have a return statement. Functions that
-; do not explicitly return a value return an unspecified value back to
-; the caller.
+key->pc(61)
 
-define function knum-info (knum)
-  begin
-    print "my key number is ", knum
-    print "my pitch class is ", key->pc(knum)
-  end
-
-print knum-info( random(128))
-
-; Notice that our little function has two print statments but three
-; lines are printed! the third line is the #f (boolean false) returned
-; by the function (since it did not have a return statement) -- this
-; third line is the value that the print command itself prints
+key->pc(59)
 
 ; This next little function demonstrates how to declare more than one
 ; parameter. It performs the opposite calculation of the first
@@ -264,26 +250,27 @@ print knum-info( random(128))
 ; function declares two parameters: pc is the pitch class and octace is
 ; the keynum offset. 
 
-define function pc->key (pc, oct)
-  return pc + (12 * (oct + 1))
+function pc->key (pc, oct)
+  pc + (12 * (oct + 1))
+end
 
 ; note that the function adds 1 to the octave so that the middle-c
 ; octave number 4 produces key number 60...
 
 print pc->key(0, 4)
 
-; it is very common for functions to call other functions to do some of the work. here we define
+; functions can use the with statement to decalre local variables.
 
-define function pc->note(pc, oct)
-  begin with k = pc->key(pc, oct)
-    return note(k)
-  end
+function pc->note(pc, oct)
+  with k = pc->key(pc, oct)
+  note(k)
+end
 
-print pc->note(0, 4)
+pc->note(0, 4)
 
-print pc->note(6, 2)
+pc->note(6, 2)
 
-print pc->note( random(12), between(2,8))
+pc->note( random(12), between(2,8))
 
 ;
 ;; Predicate functions and conditional statements
@@ -305,17 +292,18 @@ print pc->note( random(12), between(2,8))
 ; return useful information (the pitch class) when the key in question
 ; is actually a black key:
 
-define function black-key? (knum)
-  begin
-    with pc = key->pc(knum)
-    if member( pc, {1 3 6 9 10}) then
-      return pc
-    else return #f
+function black-key? (knum)
+  with pc = key->pc(knum)
+  if ( member( pc, {1 3 6 9 10}))
+    pc
+  else
+    #f
   end
+end
 
 begin
   with k = random(128)
-  print "key: ", k, " is black: ", black-key?(k)
+  print( "key: ", k, " is black: ", black-key?(k))
 end
 
 ; Notice that, in the case of our last example, the then and the else
@@ -328,10 +316,14 @@ end
 ; the else value is used. Here is another, perhaps clearer, way to
 ; write the function:
 
-define function black-key? (knum)
-  begin
-    with pc = key->pc(knum),
-         sw = member( pc, {1 3 6 9 10}) 
-    return #?( sw , pc, #f)
-  end
+function black-key? (knum)
+  with pc = key->pc(knum),
+       sw = member( pc, {1 3 6 9 10}) 
+  #?( sw , pc, #f)
+end
+
+begin
+  with k = random(128)
+  print( "key: ", k, " is black: ", black-key?(k))
+end
 

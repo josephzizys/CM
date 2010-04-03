@@ -2,11 +2,10 @@
 ;; Expressions
 ;
 
-; SCM programs are built out of commands and expressions.  An
-; expression, or expr, is anything that produces a value for a command
-; to use. The most common types exprs you will work with are numbers,
-; arithmetic expressions, booleans, strings, symbols (variables and
-; function names) and lists.
+; Scheme programs are built out of expressions.  An expression, or
+; expr, is anything that produces a value. The most common types exprs
+; you will work with are numbers, arithmetic expressions, booleans,
+; strings, symbols (variables and function names) and lists.
 
 ;
 ;; Execution and Evaluation
@@ -104,7 +103,7 @@
 ; lies between the integers 1 and 2. Ratios are useful for expressing
 ; exact proportional relations such as 1/3
 
-(format "~S" 1/3)
+1/3
 
 (* 2/7 17/9)
 
@@ -219,6 +218,7 @@
 ; math expression rather than having to type the actual number
 
 (* 2 pi)
+
 (define 2pi (* 2 pi))
 
 ; More about defining variables later...
@@ -234,11 +234,7 @@
 
 (nth var 6)
 
-(begin (display "my random scale degree=")
-       (display (list-ref var (random 7)))
-       (newline))
-
-(begin (display var) (newline))
+(print "my random scale degree=" (list-ref var (random 7)))
 
 ;
 ;; Symbols as command and function names
@@ -279,7 +275,7 @@
 ; as a variable. Be careful not to define a global variable with the
 ; same name as a function or that function's definition will be lost!
 
-(display list)
+(print list)
 
 ;
 ;; Boolean Values: #t and #f
@@ -288,9 +284,9 @@
 ; A boolean value denotes truth or falsity. In SCM #t means true and
 ; #f means false:
 
-(display #t)
+(print #t)
 
-(display #f)
+(print #f)
 
 ; A 'boolean expression' is an expression that returns either true or
 ; false. For example all arithmetic relations are boolean expressions:
@@ -330,6 +326,7 @@
 
 ; The and operator (logical AND) is true only if BOTH its operands are
 ; true:
+
 (and #t #t)
 
 (and #t #f)
@@ -490,14 +487,25 @@
 ; eff4  E double flat in the fourth octave
 ; bf<0  Bf minus 1 quarter tone in the 0th octave.
 
-; The 'note' and 'key' functions can be used to convert one form into
-; the other. These functions can handle lists as well as individual
+; The 'note' and 'key' and 'hz' functions  convert one form into
+; another. These functions can handle lists as well as individual
 ; notes and key numbers. For example here is another way of defining
-; the list of chords shown in the last example:
+; the list of chords shown in the last example but in 
+; terms of keynumbers
 
 (key '((c4 e g) (d4 fs a) (e4 gs b)))
+
+(note 69)
+
+(note (key 440))
 
 ; Note that octave numbers are sticky inside note lists, i.e. they
 ; only have to be written when they change:
 
 (key '(c4 d ef f gs g3 a bf c ds5 e fs g))
+
+(hz '(c4 d ef f gs g3 a bf c ds5 e fs g))
+
+
+
+

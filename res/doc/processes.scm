@@ -2,10 +2,11 @@
 ;; Musical Processes
 ;
 
-; A 'process' is a definition of a musical algorithm that generates
-; results each time it is sprouted.  Here is a simple first
-; example. Place the cursor after the last ')' and press
-; COMMAND-Enter to define the process:
+; A 'process' is an iterative function (a combination of a function
+; and a loop) that runs in a scheduler to generate a unique timeline
+; of events.  Here is a simple first example. Place the cursor after
+; the word of the expression and press COMMAND-Enter to define the
+; process:
 
 (define (simple)
   (process repeat 20 do

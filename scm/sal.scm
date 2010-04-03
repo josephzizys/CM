@@ -2165,7 +2165,7 @@
                   (print-sal-error str code #f) ; signal error
                   +s7-error+)
                  (expand 
-                  (ffi_cm_print code )
+                  (ffi_print_values (format #f "~S" code ))
                   +s7-error+ ;; signal no value printing
                   )
                  (else

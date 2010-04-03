@@ -44754,6 +44754,7 @@ public:
     const CodeDocument::Position getHighlightedRegionStart(); // HKT
     const CodeDocument::Position getHighlightedRegionEnd(); // HKT
     const Font getFont (); // HKT
+    void setHighlightedRegion(const CodeDocument::Position pos, const int len); // HKT
 
     const CodeDocument::Position getPositionAt (int x, int y);
 

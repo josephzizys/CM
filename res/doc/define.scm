@@ -27,9 +27,8 @@
 
 (define row '(0 11 1 10 2 9 3 8 4 7 5 6))
 
-(begin (display "Prime row: ") (display row)
-       (display ", retrograde row: ")
-       (display (reverse row)) (newline))
+(print "Prime row: "  row ", retrograde row: " 
+       (reverse row))
 
 ; The 'define' command takes the name of the new global
 ; variable, followed by an initialization value.  If
@@ -57,8 +56,7 @@
 
 (let* ((x (random 12))
        (y (+ x 12)))
-  (display (list x 2))
-  (newline))
+  (list x 2))
 
 ; Its clear from the display statement that when the block
 ; executes the variables x and y have values (or else the display
@@ -69,7 +67,7 @@
 ; this next statement will trigger an error message because there is
 ; no global variable called x (unless you created one yourself!)
 
-(display x)
+x
 
 ; Notice that a variable declared inside an inner block will shadow
 ; the same variable declared in an outer block. In this example, both
@@ -77,10 +75,10 @@
 ; that they are different variables!
 
 (let ((x 1))
-  (display "outer block, x=") (display x) (newline)
+  (print "outer block, x=" x)
   (let ((x 2))
-    (display "inner block, x=") (display x) (newline))
-  (display "outer block, x=") (display x) (newline))
+    (print "inner block, x=" x))
+  (print "outer block, x=" x))
   
 ;
 ;; Variable assignment: the 'set' command
@@ -95,17 +93,17 @@
 (define row-form "p")
 (define row-transp 0 )
 
-(begin (display "row=") (display row)
-       (display " row-form=") (display row-form)
-       (display " row-transp=") (display row-transp) (newline))
+(print "row=" row
+       " row-form=" row-form
+       " row-transp=" row-transp)
 
 (set! row '(0 1 2 3 4 5 6 7 8 9 10 11))
 (set! row-form "r")
 (set! row-transp (between 6 12))
 
-(begin (display "row=") (display row)
-       (display " row-form=") (display row-form)
-       (display " row-transp=") (display row-transp) (newline))
+(print "row=" row
+       " row-form=" row-form
+       " row-transp=" row-transp)
 
 ; On first appearance the 'set!' command looks very much like the
 ; define command. But there are actually several
@@ -123,54 +121,40 @@
 ; increment a variable by a value:
 
 (let ((var 0))
-  (loop repeat 5 do
-        (set! var (+ var 1))
-        (display var) (newline)))
+  (loop repeat 5 do (set! var (+ var 1)))
+  var)
 
 ; scale a variable by a value
 
 (let ((var 1))
-  (loop repeat 5 do
-        (set! var (* var 10))
-        (display var) (newline)))
-
-; append adds a list to the end of a list
-
-(let ((var '(9999)))
-  (loop repeat 5 do
-        (set! var (append var (list (random 128))))
-        (display var) (newline)))
+  (loop repeat 5 do (set! var (* var 10)))
+  var)
 
 ; concat appends anything to the end of anything
 
 (let ((var '()))
   (loop repeat 5 do
-        (set! var (concat var (list 1 2 (random 128))))
-        (display var) (newline)))
+        (set! var (concat var (list 1 2 (random 128)))))
+  var)
 
-; append can be used to add a value to the front of a list
+; concat can also be used to add a value to the front of a list
 
 (let ((var '(9999)))
   (loop repeat 5 do
-        (set! var (append (list (random 128)) var))
-        (display var) (newline)))
+        (set! var (concat (random 128) var)))
+  var)
 
-
-; minimizes a value
+; minimize a value
 
 (let ((var 128))
-  (loop repeat 5 do
-        (let ((rnd (random 128)))
-          (set! var (if (<= rnd var) rnd var)))
-        (display var) (newline)))
+  (loop repeat 5 do (set! var (min (random 128) var)))
+  var)
 
-; maximizes a value
+; maximize a value
 
-(let ((var -1))
-  (loop repeat 5 do
-        (let ((rnd (random 128)))
-          (set! var (if (>= rnd var) rnd var)))
-        (display var) (newline)))
+(let ((var 0))
+  (loop repeat 5 do (set! var (max (random 128) var)))
+  var)
 
 ;
 ;; Defining Functions
@@ -225,16 +209,9 @@
 ; can execute any number of statements.  Here is a (not very useful)
 ; function that executes two print statements when you call it.
 
-define function knum-info (knum)
-  begin
-    print "my key number is ", knum
-    print "my pitch class is ", key->pc(knum)
-  end
-
 (define (knum-info knum)
-  (begin (display "my key number is ") (display knum)
-         (display ", my pitch class is ") (display (key->pc knum))
-         (newline)))
+  (print "my key number is " knum
+         ", my pitch class is " (key->pc knum)))
                                                    
 (knum-info (random 128))
 
@@ -246,9 +223,6 @@ define function knum-info (knum)
 ; function declares two parameters: pc is the pitch class and octace is
 ; the keynum offset. 
 
-define function pc->key (pc, oct)
-  return pc + (12 * (oct + 1))
-
 (define (pc->key pc oct)
   (+ pc (* 12 (+ oct 1))))
 
@@ -258,11 +232,6 @@ define function pc->key (pc, oct)
 (pc->key 0 4)
 
 ; it is very common for functions to call other functions to do some of the work. here we define
-
-define function pc->note(pc, oct)
-  begin with k = pc->key(pc, oct)
-    return note(k)
-  end
 
 (define (pc->note pc oct)
   (let ((k (pc->key pc oct)))
@@ -301,6 +270,4 @@ define function pc->note(pc, oct)
 (black-key? 1)
 
 (let ((k (random 128)))
-  (display "key: ") (display k)
-  (display " is black: ") (display (black-key? k)) (newline))
-
+  (print "key: " k ", black?: " (black-key? k)))

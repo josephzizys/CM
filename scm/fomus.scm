@@ -248,6 +248,7 @@
 	 (sendstr (vector-ref val 5) fomus_par_percinst_settingval)
 	 (ffi_fms_act par act))
 	((partmap)
+	 (ffi_fms_act fomus_par_partmap fomus_act_start)
 	 (when (vector-ref val 1) (fms:send fomus_par_partmap_part fomus_act_set (vector-ref val 1)))
 	 (when (vector-ref val 2) (fms:send fomus_par_partmap_metapart fomus_act_set (vector-ref val 2)))
 	 (sendstr (vector-ref val 3) fomus_par_partmap_settingval)
@@ -326,7 +327,7 @@
   #t)
 
 (define (fms:mark . args)
-  (with-optkeys (args (time 0) dur part (voice 1) grace (marks '()) (sets '()) &allow-other-keys)
+  (with-optkeys (args (time 0) (dur 0) part (voice 1) grace (marks '()) (sets '()) &allow-other-keys)
 		(unless (number? time) (ffi_fms_err) (error "expected a number for time argument"))
 		(unless (number? dur) (ffi_fms_err) (error "expected a number for dur argument"))
 		(unless (or (string? part) (symbol? part) (eq? part #f)) (ffi_fms_err) (error "expected a string or symbol for part argument"))

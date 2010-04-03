@@ -1,3 +1,5 @@
+;;; -*- syntax: Sal2;  -*-
+
 ;
 ; Markov analysis
 ;
@@ -76,69 +78,68 @@
 
 ; First, define a little process to play the tune pattern. 
 
-define process playtune (reps, pat, rate)
-  run repeat reps
-    for n = next(pat)
-    send "mp:midi", key: key(n), dur: rate * 1.5
-    wait rate
-  end
+process playtune (reps, pat, rate)
+  repeat reps
+  for n = next(pat)
+  send( "mp:midi", key: key(n), dur: rate * 1.5)
+  wait rate
+end
 
 ; Next define the tune. You can use notes or keynums, it doesnt matter
 ; for the analysis. im writing it in keynums so you dont cheat!
 
-define variable 
-  tune = note({60 60 62 60 65 64 60 60 62 60 67 65 60 60 72
-               69 65 64 62 70 70 69 65 67 65})
+variable tune = note({60 60 62 60 65 64 60 60 62 60 67 65 60 60 72
+                      69 65 64 62 70 70 69 65 67 65})
 
 ; now look AND LISTEN to sucessive orders of analysis:
 
 ; Display and listed to zero-order analysis results
 
-print markov-analyze(tune, order: 0, mode: 1)
+markov-analyze(tune, order: 0, mode: 1)
 
-sprout playtune(60,
+sprout( playtune(60,
                 markov-analyze(tune, order: 0, mode: 2),
-                .2)
+                .2))
 
 ; First order results:
 
-print markov-analyze(tune, order: 1, mode: 1)
+markov-analyze(tune, order: 1, mode: 1)
 
-sprout playtune(60,
+sprout( playtune(60,
                 markov-analyze(tune, order: 1, mode: 2),
-                .2)
+                .2))
 
 ; Second order analysis:
 
-print markov-analyze(tune, order: 2, mode: 1)
+markov-analyze(tune, order: 2, mode: 1)
 
-sprout playtune(60,
+sprout( playtune(60,
                 markov-analyze(tune, order: 2, mode: 2),
-                .2)
+                .2))
 
 ; Third order results:
 
-print markov-analyze(tune, order: 3, mode: 1)
+markov-analyze(tune, order: 3, mode: 1)
 
-sprout playtune(60,
+sprout( playtune(60,
                 markov-analyze(tune, order: 3, mode: 2),
-                .2)
+                .2))
 
 ; ...continue increasing the order until YOU can Name...That....Tune!
 
 ; Third order results:
 
-print markov-analyze(tune, order: 4, mode: 1)
+markov-analyze(tune, order: 4, mode: 1)
 
-sprout playtune(60,
+sprout( playtune(60,
                 markov-analyze(tune, order: 4, mode: 2),
-                .2)
+                .2))
 
 ; Fifth Order (completely determined...)
 
-print markov-analyze(tune, order: 5, mode: 1)
+markov-analyze(tune, order: 5, mode: 1)
 
-sprout playtune(60,
+sprout( playtune(60,
                 markov-analyze(tune, order: 5, mode: 2),
-                .2)
+                .2))
 

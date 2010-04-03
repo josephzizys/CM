@@ -15,14 +15,38 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 <div id="content">
   
   <h1>Changelog</h1>
-  
+
+  <h2>CM 3.6.0</h2>
+  <ul>
+    <li class="change">Enhancement: Grace's Editor has been completely reimplemented using JUCE's new CodeDocuement, CodeTokenizer and CodeEditorComponent classes. This major new addition to Grace required a complete rewrite of all the low-level string lexing and parsing routines as well. New feaures in the editor include:
+    <ul>
+      <li>Extremely fast syntax highlighting, no colorizing limit on size of buffer.</li>
+      <li>Very large files load quickly.</li>
+      <li>New Color Themes can be applied on a per buffer basis.</li>
+      <li>New Customization Comments let you to save the buffer's current syntax, theme, font-size, lines and columns with the file, these customizations will be applied automatically to the buffer when the file is reeditied.</li>
+      <li>Cleaner menu layout, submenus include item to save current setting as preference.</li>
+    </ul>
+  </li>
+
+<li class="change">Enhancement: SAL 2.0 is available as an algorithmic language. Sal 2 is a minimalist version of SAL, It provides a easy-to-learn, infix substitute for Scheme.
+</li>
+
+<li class="change">Enhancment: All Sal tutorials and examples converted to Sal2 syntax.</li>
+<li class="change">Enhancment: CM documentation now reflects Sal2 syntax.</li>
+
+</ul>
+
   <h2>CM 3.5.2</h2>
-    <li class="change">Enhancement <code>fullmix</code> takes negative srates and srate envelopes.
-    <li class="change">Bug fix: improvements to MIDI output timing result in fewer clipped repeated notes in the case that duration exactly equals rate.</li>
+<ul>
+    <li class="change">Sndlib Enhancement: <code>fullmix</code> takes negative srates and srate envelopes.
+    <li class="change">Sndlib Enhancement: <code>scaled-to:</code> now works in <code>with-sound</code>.
+    <li class="change">Bug fix:  <code>expandn</code> now runs many times faster.</li>
+    <li class="change">Enhancement: improvements to MIDI output timing result in fewer clipped repeated notes in the case of duration == rhythm.</li>
     <li class="change">Bug fix: Several Fomus bugs fixed. </li>
     <li class="change">Bug fix: added clm_error_handler for reporting low level C errors in CLM.</li>
     <li class="change">Bug fix: Fixed several instrument dependencies in instrument browser.</li>
     <li class="change">Bug fix: Updated S7 runtime (tarball of March 9).</li>
+</ul>
 
   <h2>CM 3.5.1</h2>
   <ul>
@@ -305,7 +329,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Wed Mar 24 09:36:04 CDT 2010 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Sat Apr  3 09:44:20 CDT 2010 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

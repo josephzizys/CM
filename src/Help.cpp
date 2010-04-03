@@ -128,7 +128,7 @@ void Help::openHelp(CommandID id)
   XmlElement* help=NULL;
   if (comm==CommandIDs::HelpManual)
     {
-      if (help=getXmlMenuItem(T("Manuals"), data))
+      if (help=getXmlMenuItem(T("Reference"), data))
         {
           String url=help->getStringAttribute(T("url"));
           openHelpInBrowser(url);

@@ -1,3 +1,5 @@
+;;; -*- syntax: Sal2; -*-
+
 ;
 ;; Function calls
 ;
@@ -11,7 +13,7 @@
 ; function and passes it the value '128'. The value returned by the
 ; random function is then printed:
 
-print random(128)
+random(128)
 
 ; The values you pass to a function are called 'input arguments'.
 ; Function arguments are specified just after the name of the function
@@ -21,21 +23,20 @@ print random(128)
 ; the list function with zero arguments. note that in the case of zero
 ; arguments the surrounding argument list () must still be provided!
 
-print list()
+list()
 
 ; now call the list function with one argument:
 
-print list(1)
+list(1)
 
 ; calling the list function with two args:
 
-print list(1,2)
+list(1,2)
 
-; Note that spaces before or after commas and parentheses are ignored
+; Spaces before or after commas and parentheses are ignored
 ; and arguemnts can be expressions:
 
-print list ( 1, 2, 3, 
-             4 + 5 ,    6,7 )
+list ( 1, 2, 3, 4 + 5 , 6,7 )
 
 ; Because commas delimit individual input arguments, each argument can
 ; involve 'nested' expressions and function calls. Embedded
@@ -44,22 +45,22 @@ print list ( 1, 2, 3,
 ; nested function call. the nested function call has 2 arguments (100
 ; and 200):
 
-print list( 1, 2 + 3, between(100,200) )
+list( 1, 2 + 3, between(100,200) )
 
 ; In this example the outer-most function call has two arguments, each
 ; is a nested function call. Each of the nested function calls have
 ; three arguments.
 
-print list( list(1,2,3) , list(100,200, 300) )
+list( list(1,2,3) , list(100,200, 300) )
 
 ; Note that nesting can occur to any level. Hint: you can double-click
 ; parenthesis to see exactly the scope of arguments they surround:
 
-print list( list( list( list(1,2,3), 4), 5), 6)
+list( list( list( list(1,2,3), 4), 5), 6)
 
 ; things can get pretty hairy if you want them too!
 
-print list( 1, 2 + 3, sin(pi / 1 + random(2.0)), list(4,5,6))
+list( 1, 2 + 3, sin(pi / 1 + random(2.0)), list(4,5,6))
 
 ;
 ;; Function parameters
@@ -83,15 +84,15 @@ print list( 1, 2 + 3, sin(pi / 1 + random(2.0)), list(4,5,6))
 ; function is called.  For example, the predicate function 'odd?'  is
 ; defined to take a single required parameter:
 
-print odd?(1)
+odd?(1)
 
 ; This means that it is an error to pass this function more or less
 ; than one argument when you call it. both of these examples are
 ; errors:
 
-print odd?()
+odd?()
 
-print odd?(1,2,3)
+odd?(1,2,3)
 
 ; Optional parameters
 
@@ -114,19 +115,19 @@ print odd?(1,2,3)
 ; is true half the time, and 1 is always true. Execute each command
 ; several times to see the boolean value the function produces:
 
-print odds(0)
+odds(0)
 
-print odds(.5)
+odds(.5)
 
-print odds(1)
+odds(1)
 
 ; But 'odds' also has two optional parameters that you can pass values
 ; to. If specified these values will become the actual true and false
 ; values that the function returns:
 
-print odds(.5, "winner!")
+odds(.5, "winner!")
 
-print odds(.5, "Heads", "Tails")
+odds(.5, "Heads", "Tails")
 
 ;
 ;; Named parameters
@@ -147,7 +148,6 @@ print odds(.5, "Heads", "Tails")
 ; really care about.  All the (unspecified) optional parameters will
 ; receive their default values as determined by the programmer.
 
-print odds(.3, false: "fooey!")
+odds(.3, false: "fooey!")
 
-print odds(.3, false: "fooey!", true: 99)
-
+odds(.3, false: "fooey!", true: 99)

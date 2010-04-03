@@ -1,182 +1,177 @@
-; ;
-; ;; Simple process example
-; ;
+;;; -*- syntax: Sal2; -*-
 
-define process examp1 (n, r)
-  run repeat n
-    send "fms:note", dur: r, pitch: between(48, 73)
-    wait r
-  end
+;
+;; Simple process example
+;
 
-sprout examp1(16, 1/2), "fomus1.ly"
+process examp1 (n, r)
+  repeat n
+  send( "fms:note", dur: r, pitch: between(48, 73))
+  wait r
+end
 
-; ;
-; ;; Staccato and Accent Marks
-; ;
+sprout( examp1(16, 1/2), "fomus1.ly")
 
-define process examp2 ()
-  run 
-    with marks = {#f {"."} {">"}}
-    repeat 21
-    send "fms:note",
- 	 dur: #?(elapsed() < 10, 1/2, 1),
-  	 pitch: between(48, 73),
-         marks: marks[random(3)]
-    wait 1/2
-  end
+;
+;; Staccato and Accent Marks
+;
+
+process examp2 ()
+  with marks = {#f {"."} {">"}}
+  repeat 21
+  send( "fms:note", dur: #?(elapsed() < 10, 1/2, 1),
+      	 pitch: between(48, 73), marks: marks[random(3)])
+  wait 1/2
+end
   
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp2(), "fomus2.ly", parts: parts
+  sprout( examp2(), "fomus2.ly", parts: parts)
 end
 
-; ;
-; ;; Quartertones
-; ;
+;
+;; Quartertones
+;
 
-define process examp3 ()
-  run repeat 21
-    send "fms:note",
+process examp3 ()
+  repeat 21
+  send( "fms:note",
          dur: #?(elapsed() < 10, 1/2, 1),
-         pitch: 70 + (random(4) / 2)
-    wait 1/2
-  end
+         pitch: 70 + (random(4) / 2))
+  wait 1/2
+end
   
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}},
        sets = {:quartertones #t}
-  sprout examp3(), "fomus3.ly", parts: parts, sets: sets
+  sprout( examp3(), "fomus3.ly", parts: parts, sets: sets)
 end
 
-; ;
-; ;; Polyphony with Slurs
-; ;
+;
+;; Polyphony with Slurs
+;
 
-define process examp4 ()
-  run for v from 1 to 2
-    loop for off from 0 to 10 by 1/2
-      send "fms:note", time: off,
-  	   dur: #?(off < 10, 1/2 , 1),
-  	   pitch: #?(v = 2, between(35, 60), between(60, 85)),
-  	   voice: v, marks: odds(.333, {"(.."})
-    end
+process examp4 ()
+  for v from 1 to 2
+  loop for off from 0 to 10 by 1/2
+    send( "fms:note", time: off,
+      	   dur: #?(off < 10, 1/2 , 1),
+      	   pitch: #?(v = 2, between(35, 60), between(60, 85)),
+      	   voice: v, marks: odds(.333, {"(.."}))
   end
+end
        
 begin 
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp4(), "fomus4.ly", parts: parts
+  sprout( examp4(), "fomus4.ly", parts: parts)
 end
 
-; ;
-; ;; Piano Chords
-; ;
+;
+;; Piano Chords
+;
 
-define process examp5 ()
-  run repeat 3
-    loop for off from 0 to 10 by 1/2
-      send "fms:note", time: off,
-           dur: #?(off < 10, 1/2, 1),
-  	   pitch: between(48, 73),
-           voice: {1 2}
-    end
+process examp5 ()
+  repeat 3
+  loop for off from 0 to 10 by 1/2
+    send("fms:note", time: off,
+         dur: #?(off < 10, 1/2, 1),
+     	   pitch: between(48, 73),
+         voice: {1 2})
   end
+end
        
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp5(), "fomus5.ly", parts: parts
+  sprout( examp5(), "fomus5.ly", parts: parts)
 end
 
-; ;
-; ;; Quantizing/Chords
-; ;
+;
+;; Quantizing/Chords
+;
 
-define process examp6 ()
-  run
-    repeat 10
-    for tim = random(30.0)
-    for dur = 1 + random(3.0)
-    send "fms:note", time: tim,
-         dur: dur,
-         pitch: between(60, 85)
-  end
+process examp6 ()
+  repeat 10
+  for tim = random(30.0)
+  for dur = 1 + random(3.0)
+  send("fms:note", time: tim,
+       dur: dur, pitch: between(60, 85))
+end
        
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp6(), "fomus6.ly", parts: parts
+  sprout( examp6(), "fomus6.ly", parts: parts)
 end
 
-; ;
-; ;; Quantizing/Voices
-; ;
+;
+;; Quantizing/Voices
+;
 
-define process examp7 ()
-  run
-    repeat 10
-    for tim = random(30.0)
-    for dur = 1 + random(3.0)
-    send "fms:note", time: tim,
-         dur: dur,
-         pitch: between(60, 85),
-         voice: {1 2 3}
-  end
+process examp7 ()
+  repeat 10
+  for tim = random(30.0)
+  for dur = 1 + random(3.0)
+  send("fms:note", time: tim,
+       dur: dur,
+       pitch: between(60, 85),
+       voice: {1 2 3})
+end
        
 begin
   with parts = {{:id "apart" :name "Piano" :inst "piano"}}
-  sprout examp7(), "fomus7.ly", parts: parts
+  sprout( examp7(), "fomus7.ly", parts: parts)
 end
 
-; ;
-; ;; Mark Objects
-; ;
+;
+;; Mark Objects
+;
 
-define process examp8-notes ()
-  run
-    for o from 0 to 20 by 1/2
-    send "fms:note", time: o, dur: 1/2, pitch: 72, part: "0"
-    send "fms:note", time: o, dur: 1/2, pitch: 48, part: "1"
-  end
+process examp8-notes ()
+  for o from 0 to 20 by 1/2
+  send( "fms:note", time: o, dur: 1/2, pitch: 72, part: "0")
+  send( "fms:note", time: o, dur: 1/2, pitch: 48, part: "1")
+end
   
-define process examp8-marks ()
-  run repeat 8
-    send "fms:mark", part: odds(.5, "0", "1"),
-	 time: random(20.0),
-	 marks: {"^"}
-  end
+process examp8-marks ()
+  repeat 8
+  send( "fms:mark", part: odds(.5, "0", "1"),
+      	 time: random(20.0),
+      	 marks: {"^"})
+end
        
 begin
   with parts = {{:name "Flute" :inst "flute" :id "0"} 
                 {:name "Tuba" :inst "tuba" :id "1"}}
-  sprout list(examp8-notes(), examp8-marks()), "fomus8.ly", 
-         parts: parts
+  sprout(list(examp8-notes(), examp8-marks()), "fomus8.ly", 
+         parts: parts)
 end
 
-; ;
-; ;; Percussion 1
-; ;
+;
+;; Percussion 1
+;
 
-define process examp9 ()
-  run for o from 0 to 20 by 1/2 
-    send "fms:note", time: o, dur: 1/2,
-         pitch: odds(.5, "wb1", "wb2")
-  end
+process examp9 ()
+  for o from 0 to 20 by 1/2 
+  send( "fms:note", time: o, dur: 1/2,
+        pitch: odds(.5, "wb1", "wb2"))
+end
        
 begin
   with parts = {{:id "perc" :name "Percussion"
                  :inst {:template "percussion" :percinsts
                         {{:id "wb1" :template "low-woodblock" :perc-note 57}
                          {:id "wb2" :template "high-woodblock" :perc-note 64}}}}}
-  sprout examp9(), "fomus9.ly", parts: parts
+  sprout( examp9(), "fomus9.ly", parts: parts)
 end
 
-; ;
-; ;; Percussion 2
-; ;
+;
+;; Percussion 2
+;
 
-define process examp10 ()
-  run for o from 0 to 20 by 1/2 
-    send "fms:note", time: o, dur: 1/2,
-         pitch: odds(.5, "wb1", "wb2")
-  end
+process examp10 ()
+  for o from 0 to 20 by 1/2 
+  send("fms:note", time: o, dur: 1/2,
+       pitch: odds(.5, "wb1", "wb2"))
+end
        
 begin
   with parts = {{:id "perc" :name "Percussion"
@@ -189,26 +184,24 @@ begin
                           :template "high-woodblock"
                           :perc-note 64
                           :perc-voice 1}}}}}
-  sprout examp10(), "fomus10.ly", parts: parts
+  sprout( examp10(), "fomus10.ly", parts: parts)
 end
 
-; ;
-; ;; (Budget) Orchestra Score
-; ;
+;
+;; (Budget) Orchestra Score
+;
 
-define process examp11-notes (p)
-  run
-    for n in {60 62 64}
-    for o from 0
-    send "fms:note", part: p, dur: 1, pitch: n
-    wait 1
-  end
+process examp11-notes (p)
+  for n in {60 62 64}
+  for o from 0
+  send( "fms:note", part: p, dur: 1, pitch: n)
+  wait 1
+end
   
-define process examp11-parts (ps)
-  run 
-    for p in ps
-    sprout examp11-notes(p)
-  end
+process examp11-parts (ps)
+  for p in ps
+  sprout( examp11-notes(p))
+end
   
 begin
   with parts = {{:id "fl1" :name "Flute 1" :inst "flute"}
@@ -220,28 +213,26 @@ begin
 	        {:id "vc2" :name "Cello 2" :inst "cello"}
                 {:id "tba" :name "Tuba" :inst "tuba"}},
        sets = {:layout "orchestra"}
-  send "fms:meas", time: 0, dur: 3
-  sprout examp11-parts({"fl1" "fl2" "cl2" "vln1" "vln2" "vc1" "vc2" "tba"}), 
-         "fomus11.ly", parts: parts, sets: sets
+  send( "fms:meas", time: 0, dur: 3)
+  sprout( examp11-parts({"fl1" "fl2" "cl2" "vln1" "vln2" "vc1" "vc2" "tba"}), 
+         "fomus11.ly", parts: parts, sets: sets)
 end
 
-; ;
-; ;; Small Ensemble Score
-; ;
+;
+;; Small Ensemble Score
+;
 
-define process examp12-notes (p)
-  run
-    for n in {60 62 64}
-    for o from 0
-    send "fms:note", part: p, dur: 1, pitch: n
-    wait 1
-  end
+process examp12-notes (p)
+  for n in {60 62 64}
+  for o from 0
+  send( "fms:note", part: p, dur: 1, pitch: n)
+  wait 1
+end
  
-define process examp12-parts (ps)
-  run 
-    for p in ps
-    sprout examp12-notes(p)
-  end
+process examp12-parts (ps)
+  for p in ps
+  sprout( examp12-notes(p))
+end
 
 begin
   with parts = {{:id "fl1" :name "Flute 1" :inst "flute"}
@@ -253,39 +244,37 @@ begin
 	        {:id "vc2" :name "Cello 2" :inst "cello"}
                 {:id "tba" :name "Tuba" :inst "tuba"}},
        sets = {:layout "small-ensemble"}
-  send "fms:meas", time: 0, dur: 3
-  sprout examp12-parts({"fl1" "fl2" "cl2" "vln1" "vln2" "vc1" "vc2" "tba"}), 
-         "fomus12.ly", parts: parts, sets: sets
+  send( "fms:meas", time: 0, dur: 3)
+  sprout( examp12-parts({"fl1" "fl2" "cl2" "vln1" "vln2" "vc1" "vc2" "tba"}), 
+         "fomus12.ly", parts: parts, sets: sets)
 end
 
-; ;
-; ;; 2 Part Polyphony
-; ;
+;
+;; 2 Part Polyphony
+;
 
-define process polygen (len, minp, maxp)
-  run repeat len
-    send "fms:note", voice: {1 2},
-         pitch: between(minp, maxp),
-         dur: 1/4
-    wait 1/4
-  end
+process polygen (len, minp, maxp)
+  repeat len
+  send("fms:note", voice: {1 2},
+       pitch: between(minp, maxp), dur: 1/4)
+  wait 1/4
+end
 
 begin
-  sprout list(polygen(40, 50, 80),
-              polygen(40, 40, 70)), "fomus13.ly"
+  sprout( list(polygen(40, 50, 80),
+              polygen(40, 40, 70)), "fomus13.ly")
 end
 
-; ;
-; ;; Generate Prime Harmonics Gesture
-; ;
+;
+;; Generate Prime Harmonics Gesture
+;
 
-define process harmonics (note, beat, harm1, harm2, pname)
-  run
-    for harm from harm1 to harm2
-    for knum = key(hz(note) * harm)
-    send "fms:note", dur: rhythm(beat), pitch: knum, part: pname
-    wait rhythm(beat)
-  end
+process harmonics (note, beat, harm1, harm2, pname)
+  for harm from harm1 to harm2
+  for knum = key(hz(note) * harm)
+  send( "fms:note", dur: rhythm(beat), pitch: knum, part: pname)
+  wait rhythm(beat)
+end
 
 loop with procs = {} , parts = {}, 
      sets = {:quartertones #t :tuplets 11}
@@ -294,5 +283,5 @@ loop with procs = {} , parts = {},
   set procs &= harmonics("c1", 1 / ph, ph, ph * 4, pn) ,
       parts &= concat(:id, pn, {:name "Cello" :inst "cello"})
   finally
-  sprout procs, "fomus14.ly", parts: parts, sets: sets
+  sprout( procs, "fomus14.ly", parts: parts, sets: sets)
 end

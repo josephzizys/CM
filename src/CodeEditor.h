@@ -56,7 +56,7 @@ class ScanFlags
   }
 };
 
-class CodeBuffer : public CodeEditorComponent //,   public Timer
+class CodeBuffer : public CodeEditorComponent //, public Timer
 {
  public:
   Syntax* syntax;
@@ -70,13 +70,14 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   void focusGained(Component::FocusChangeType cause);
 
   KeyPress prevkey;
+  int matchpos;
   int fontsize;
   int tabwidth;
   int columns;
   int lines;
   bool emacsmode;
-  bool parensmatching;
   bool changed;
+  bool parensmatching;
   XmlElement* colortheme;
   int getTextType();
   bool isTextType(int type);
@@ -93,11 +94,16 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
 
   bool isChanged();
   void isChanged(bool changed);
-  bool isParensMatching();
-  void isParensMatching(bool match);
   bool isEmacsMode();
   void isEmacsMode(bool mode);
-  void timerCallback(){}
+
+  bool isParensMatching();
+  void isParensMatching(bool matching);
+  bool isParensMatchingActive();
+  void matchParens();
+  void startParensMatching(const CodeDocument::Position pos1, const CodeDocument::Position pos2);
+  void stopParensMatching();
+  void timerCallback();
 
   // cursor postion functions
   CodeDocument::Position getBOB();
@@ -137,7 +143,14 @@ class CodeBuffer : public CodeEditorComponent //,   public Timer
   void killRegion();
   void changeCase(int change);
   void openLine();
+  // Find/Replace
+  bool replaceAll(String str, String rep);
+  bool replace(String rep);
+  bool replaceAndFind(String str, String rep);
+  bool findPrevious(String str, bool wrap=true);
+  bool findNext(String str, bool wrap=true);
 
+  // Scanning
   bool scanEOL(CodeDocument::Position& pos);
   bool scanBOL(CodeDocument::Position& pos);
   bool scanToken(CodeDocument::Position& pos, const int dir, const CodeDocument::Position end);
@@ -238,9 +251,9 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   void isEmacsMode(bool mode);
   bool isEmacsMode();
 
-  //  void saveFile();
   void saveFile(bool saveas);
   void saveFileAs();
+  // static methods
   static void openFile(File file=File::nonexistent);
   static void newFile(String title=String::empty, int synt=TextIDs::Empty, String content=String::empty);
   static CodeEditorWindow* getFocusCodeEditor();

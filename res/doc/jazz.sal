@@ -1,4 +1,5 @@
-;;; **********************************************************************
+;;; -*- syntax: Sal2; -*-
+
 ; This tutorial presents an implementation of an Automatic Jazz
 ; program. The code is derived from a program originally written by
 ; Erik Flister at CCRMA, Stanford University, as a project for his
@@ -7,19 +8,15 @@
 ; instruments. Flister's improviser generates music for a jazz trio
 ; consisting of a piano, acoustic bass and percussion. Our first step
 ; will be to specify the appropriate MIDI program changes to establish
-; the Jazz Combo instruments on channels 1,2 and 10 of the
-; synthesizer, or 0, 1 and 9 in zero-based counting.
+; the Jazz Combo instruments on channels 0,1 and 9 (drum track)
 
 ; Channel  0: Acoustic Piano
 ; Channel  1: Acoustic Bass (plucked)
 ; Channel  9: Percussion
 
-send "mp:open", 0
-
 begin
   with piano = 0, bass = 32
-  send "mp:prog", val: piano, chan: 0
-  send "mp:prog", val: bass, chan: 1
+  send("mp:instruments", piano, bass)
 end
 
 ; We dont have to specify a program change for the percussion part
@@ -46,9 +43,9 @@ end
 
 ; dorian with decorated octave
 
-define variable jazz-scale = {0 2 3 5 7 9 10 12 14},
-       jazz-changes = key({bf3 ef4 bf3 bf ef4 ef bf3 bf f4 ef bf3 bf}),
-       jazz-tempo = 120
+variable jazz-scale = {0 2 3 5 7 9 10 12 14},
+         jazz-changes = key({bf3 ef4 bf3 bf ef4 ef bf3 bf f4 ef bf3 bf}),
+         jazz-tempo = 120
 
 ;
 ;; The Percussion Parts
@@ -65,20 +62,20 @@ define variable jazz-scale = {0 2 3 5 7 9 10 12 14},
 ; rest values ("rest") on the first and third beats. Each sound lasts
 ; for the duration one triplet eighth note ie 1/3 of a beat
 
-define process jazz-high-hat (tmpo, ampl)
+process jazz-high-hat (tmpo, ampl)
   ;; generate a 4/4 measure of high-hat:
   ;;   rest hihat rest hihat
-  run with rhy = in-tempo(1, tmpo),
-      dur = in-tempo( 1/3, tmpo),
-      amp = .5,
-      pat = make-cycle( {"rest" 42 "rest" 42})
-    repeat 4
-    for x = next(pat)
-    if number?(x) then
-      send "mp:midi", key: x, chan: 9, dur: dur,
-                  amp: amp * ampl
-    wait rhy
+  with rhy = in-tempo(1, tmpo),
+       dur = in-tempo( 1/3, tmpo),
+       amp = .5,
+       pat = make-cycle( {"rest" 42 "rest" 42})
+  repeat 4
+  for x = next(pat)
+  if (number?(x))
+    send( "mp:midi", key: x, chan: 9, dur: dur, amp: amp * ampl)
   end
+  wait rhy
+end
 
 ; Listen to eight measures of the High Hat. Since the process
 ; generates only one measure, we collect eight "versions" of the
@@ -89,7 +86,7 @@ begin with procs = {}
   loop repeat 8
     set procs &= jazz-high-hat(120, 1)
   end
-  sprout procs, {0 2 4 6 8 10 12 14}
+  sprout(procs, {0 2 4 6 8 10 12 14})
 end
 
 ;
@@ -100,21 +97,22 @@ end
 ; the bass drum or resting one quarter of the time. One tenth of the
 ; time the process produces a very loud tone.
 
-define process jazz-drums (tmpo, ampl)
-  run with elec-snare = 40, bass-drum = 35,
-    knums = make-weighting( list( {"rest" :weight .25},
-                                 elec-snare,
-                                 bass-drum)),
-    rhys = make-cycle( {2/3 1/3}) ,
-    amps = make-weighting( {.7  {.95 :weight .1}})
-    repeat 8
-    for k = next(knums)
-    for a = next(amps)
-    for r = in-tempo( next(rhys), tmpo)
-    if number?( k) then
-      send "mp:midi", key: k, chan: 9, dur: r, amp: a * ampl
-    wait r
+process jazz-drums (tmpo, ampl)
+  with elec-snare = 40, bass-drum = 35,
+       knums = make-weighting( list( {"rest" :weight .25},
+                                     elec-snare,
+                                     bass-drum)),
+       rhys = make-cycle( {2/3 1/3}) ,
+       amps = make-weighting( {.7  {.95 :weight .1}})
+  repeat 8
+  for k = next(knums)
+  for a = next(amps)
+  for r = in-tempo( next(rhys), tmpo)
+  if (number?( k))
+    send("mp:midi", key: k, chan: 9, dur: r, amp: a * ampl)
   end
+  wait r
+end
 
 ; Now listen to eight measures of the drum and hi hat together.
 
@@ -123,7 +121,7 @@ begin
   loop repeat 9
     set procs ^= list( jazz-high-hat(120, .99), jazz-drums(120, .99))
   end
-  sprout procs, {0 2 4 6 8 10 12 14}
+  sprout( procs, {0 2 4 6 8 10 12 14})
 end
 
 ;
@@ -143,36 +141,34 @@ end
 
 ; The random elements marked x are created by this helper function.
 
-define function or12r (wt)
+function or12r (wt)
+  ;; play ride cymbal 1,2 or rest
   ;; wt is the weight of resting relative to playing.
   ;; return random pattern that slightly prefers playing a ride 1
   ;; pattern over a ride 2 pattern
-  begin
-    ;; play ride cymbal 1,2 or rest
-    with ridecymb1 = 51, ridecymb2 = 59,
-    restitem = list("rest", wt), 
-    ride1 = make-weighting(list(ridecymb1, restitem), 1),
-    ride2 = make-weighting(list(ridecymb2, restitem), 1)
-    return make-weighting( list( list(ride1, 1.5), ride2), 2)
-  end
+  with ridecymb1 = 51, ridecymb2 = 59,
+       restitem = list("rest", wt), 
+       ride1 = make-weighting(list(ridecymb1, restitem), 1),
+       ride2 = make-weighting(list(ridecymb2, restitem), 1)
+  make-weighting( list( list(ride1, 1.5), ride2), 2)
+end
 
-define process jazz-cymbals (tmpo, ampl)
-  run with rhy = in-tempo( 1/3, tmpo),
-    ridecymb1 = 51, ridecymb2 = 59,
-    amps = make-cycle( {.6 .5 .9 .7 .5 1 .6 .5 .9 .7 .5 1}),
-    knums = make-cycle(
-                       ;; triplet patterns
-                       list( ridecymb1, "rest", or12r( 5),
-                             ridecymb1, "rest" , ridecymb1 ,
-                             ridecymb1, or12r(7), or12r(7),
-                             ridecymb1, or12r(3), ridecymb1))
-    repeat 12
-    for k = next(knums)
-    for a = next(amps)
-    if number?(k) then
-    send "mp:midi", key: k, chan: 9, dur: rhy, amp: a * ampl
-    wait rhy
+process jazz-cymbals (tmpo, ampl)
+  with rhy = in-tempo( 1/3, tmpo),
+       ridecymb1 = 51, ridecymb2 = 59,
+       amps = make-cycle( {.6 .5 .9 .7 .5 1 .6 .5 .9 .7 .5 1}),
+       knums = make-cycle( list( ridecymb1, "rest", or12r( 5),
+                                 ridecymb1, "rest" , ridecymb1 ,
+                                 ridecymb1, or12r(7), or12r(7),
+                                 ridecymb1, or12r(3), ridecymb1))
+  repeat 12
+  for k = next(knums)
+  for a = next(amps)
+  if (number?(k))
+    send( "mp:midi", key: k, chan: 9, dur: rhy, amp: a * ampl)
   end
+  wait rhy
+end
 
 ; Now listen to all three of the percussion parts together.
 
@@ -183,8 +179,8 @@ begin
                        jazz-drums( 120, 1),
                        jazz-cymbals( 120, 1))
   end
-  sprout procs, {0  0  0  2  2  2  4  4  4 6 6 6 8 8 8
-                10 10 10 12 12 12 14 14 14}
+  sprout( procs, {0  0  0  2  2  2  4  4  4 6 6 6 8 8 8
+                10 10 10 12 12 12 14 14 14})
 end
 
 ;
@@ -196,39 +192,29 @@ end
 ; piano randomly choose between playing triplet eighths or straight
 ; eights for a given measure.
 
-define process jazz-piano (scale, on, tmpo, ampl)
+process jazz-piano (scale, on, tmpo, ampl)
   ;; generate a measure of jazz harmony.
   ;; measure contains either 8 or 12 notes.
-  begin
-    with reps = odds(.65, 8, 12),
-         rhys, amps, knms
-    if (reps = 8) then
-      set rhys = make-cycle( {2/3 1/3})
-    else
-      set rhys = make-cycle( {1/3})
-      
-    if (reps = 8) then
-      set amps = make-weighting(list(make-cycle( {.5 .7}),
-                                     make-cycle( {.5 .8})))
-    else
-      set amps = make-weighting(list(make-cycle({.5 .4 .7}),
-                                     make-cycle({.6 .5 .8})))
-    set knms = make-weighting( list( list(make-heap(scale, make-weighting({1 2 3 4})),
-                                          make-weighting({1.15 1.65})),
-                                    "rest")
-                              )
-    run repeat reps
-      for r = in-tempo( next(rhys), tmpo)
-      for a = next(amps)
-      for l = next(knms, #t)
-      loop for k in l
-        if number?(k) then
-          send "mp:midi", key: transpose(k, on), dur: r, amp: a * ampl,
-               chan: 0
-        end
-      wait r
+  with reps = odds(.65, 8, 12),
+       rhys = #? ((reps = 8), make-cycle( {2/3 1/3}), make-cycle( {1/3})) ,
+       amps = #? ((reps = 8), make-weighting(list(make-cycle({.5 .4 .7}),
+                                                  make-cycle({.6 .5 .8}))),
+                              make-weighting(list(make-cycle({.5 .4 .7}),
+                                                  make-cycle({.6 .5 .8})))),
+       knms = make-weighting( list( list(make-heap(scale, make-weighting({1 2 3 4})),
+                                        make-weighting({1.15 1.65})),
+                                  "rest"))
+  repeat reps
+  for r = in-tempo( next(rhys), tmpo)
+  for a = next(amps)
+  for l = next(knms, #t)
+  loop for k in l
+    if (number?(k))
+      send( "mp:midi", key: transpose(k, on), dur: r, amp: a * ampl, chan: 0)
     end
   end
+  wait r
+end
 
 ; Each measure of the jazz-piano part will contain either 8 or 12
 ; notes determined by the odds function, which in this process chooses
@@ -248,7 +234,7 @@ begin
   loop repeat 4
     set procs &= jazz-piano( jazz-scale, key("bf3"), 120, 1)
   end
-  sprout procs, {0 2 4 6}
+  sprout( procs, {0 2 4 6})
 end
 
 ;
@@ -266,36 +252,37 @@ end
 ; two sets is possible. On all but the first triplet a rest is also
 ; possible.
 
-define function getset (scale, ints)
+function getset (scale, ints)
   ; return the notes in scale at the positions in ints.
   ; used to partition scale into tonic and decoration
   loop with l = {}
     for i in ints set l &= scale[i]
-    finally return l
+    finally l
   end
+end
 
-define function rancyc (data, prob)
+function rancyc (data, prob)
   ; create an element for a random pattern, elements datum
   ; is a cyclic pattern. element has :weight prob
-  return list( make-cycle( data), prob)
+  list( make-cycle( data), prob)
+end
 
-define process jazz-bass (scale, on, tmpo, ampl)
-  begin
-    with rhy = in-tempo(1/3, tmpo),
-    tonics = make-weighting( getset( scale, {0 2 4 6 7})),
-    colors = make-weighting( getset( scale, {1 3 5 6 8})),
-    amps = make-cycle( {.5 .4 1.0 .9 .4 .9 .5 .4 1.0 .9 .5 .9}),
-    durs = make-cycle( {2/3 1/3 1/3}) ,
-    ;; beat map. t is tonic, c is color, r is rest
-    bmap = make-cycle(
-                      list(
-                           ;; 5 possible patterns for triplets 1-4
-                           make-weighting(list(rancyc( {:t r r :c}, 1.0),
-                                               rancyc( {:t r r r}, .25),
-                                               rancyc( {:t r :t :c}, .22),
-                                               rancyc( {:t :c :t :c}, .065),
-                                               rancyc( {:t :c :t r}, .014)),
-                                          1),
+process jazz-bass (scale, on, tmpo, ampl)
+  with k, rhy = in-tempo(1/3, tmpo),
+       tonics = make-weighting( getset( scale, {0 2 4 6 7})),
+       colors = make-weighting( getset( scale, {1 3 5 6 8})),
+       amps = make-cycle( {.5 .4 1.0 .9 .4 .9 .5 .4 1.0 .9 .5 .9}),
+       durs = make-cycle( {2/3 1/3 1/3}) ,
+       ;; beat map. t is tonic, c is color, r is rest
+       bmap = make-cycle(
+                         list(
+                              ;; 5 possible patterns for triplets 1-4
+                              make-weighting(list(rancyc( {:t r r :c}, 1.0),
+                                                  rancyc( {:t r r r}, .25),
+                                                  rancyc( {:t r :t :c}, .22),
+                                                  rancyc( {:t :c :t :c}, .065),
+                                                  rancyc( {:t :c :t r}, .014)),
+                                                1),
                            ;; 5 possible patterns for 5-7
                            make-weighting(list(rancyc( {r r :t}, 1.0),
                                                rancyc( {r r r}, .25),
@@ -315,25 +302,31 @@ define process jazz-bass (scale, on, tmpo, ampl)
                            ;; two possible values for 12
                            make-weighting({{r 1} {:c .25}}, 1))
                       )
-    run with k repeat 12
-      for x = next(bmap)
-      for d = in-tempo( next(durs), tmpo)
-      for a = next(amps)
-      
-      if equal?(x, :t) then set k = next(tonics)
-      else if equal?( x, :c) then set k = next(colors)
-      else set k = x
-      if number?(k) then
-      send "mp:midi", key: transpose( k, on), chan: 1, dur: d, amp: a * ampl
-      wait rhy
+  repeat 12
+  for x = next(bmap)
+  for d = in-tempo( next(durs), tmpo)
+  for a = next(amps)
+  if (equal?(x, :t))
+    set k = next(tonics)
+  else 
+    if (equal?( x, :c))
+      set k = next(colors)
+    else 
+      set k = x
     end
   end
+  if (number?(k))
+    send( "mp:midi", key: transpose( k, on), chan: 1, dur: d, amp: a * ampl)
+  end
+  wait rhy
+end
+
 
 begin with procs = {}
   loop repeat 8
     set procs &= jazz-bass( jazz-scale, key("bf2"), 120, 1)
   end
-  sprout procs, {0 2 4 6 8 10 12 14}
+  sprout(procs, {0 2 4 6 8 10 12 14})
 end
 
 ;
@@ -344,22 +337,20 @@ end
 ; sound itself but rather sprouts other processes to make sound, each
 ; sprouted process generates one measure of a particular part.
 
-define process jazz-combo (measures, changes, tempo, scale)
-  run 
-    with roots = make-cycle(changes),
-         ampl = 1
-
-    for meas below measures
-    for root = next(roots)
-    if (0 =  meas % 12) then
-      set ampl = between( .5, 1)
-    sprout jazz-piano( scale, root, tempo, ampl)
-    sprout jazz-cymbals( tempo, ampl)
-    sprout jazz-high-hat( tempo, ampl)
-    sprout jazz-drums( tempo, ampl)
-    sprout jazz-bass( scale, transpose( root, -12), tempo, ampl)
-    wait in-tempo( 4, tempo)
+process jazz-combo (measures, changes, tempo, scale)
+  with roots = make-cycle(changes),
+       ampl = 1
+  for meas below measures
+  for root = next(roots)
+  if (0 =  meas % 12)
+    set ampl = between( .5, 1)
   end
+  sprout( jazz-piano( scale, root, tempo, ampl))
+  sprout( jazz-cymbals( tempo, ampl))
+  sprout( jazz-high-hat( tempo, ampl))
+  sprout( jazz-drums( tempo, ampl))
+  sprout( jazz-bass( scale, transpose( root, -12), tempo, ampl))
+  wait in-tempo( 4, tempo)
+end
 
-sprout jazz-combo( 48, jazz-changes, jazz-tempo, jazz-scale)
-
+sprout( jazz-combo( 48, jazz-changes, jazz-tempo, jazz-scale))

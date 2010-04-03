@@ -1,17 +1,19 @@
+;;; -*- syntax: Sal2;  -*-
+
 ;; process that sends csound data
 
-define process ransco(len, rhy, lb, ub, amp)
-  run with dur = rhy * 2
-    repeat len
-    for t = elapsed(#t) ; get true score time
-    for k = lb then between(lb,ub)
-    send "cs:i", 1, t , dur, k, amp
-    wait rhy
-  end
+process ransco(len, rhy, lb, ub, amp)
+  with dur = rhy * 2
+  repeat len
+  for t = elapsed(#t) ; get true score time
+  for k = lb then between(lb,ub)
+  send( "cs:i", 1, t , dur, k, amp)
+  wait rhy
+end
 
 ;; write a score file
 
-sprout ransco(10, .2, 60, 72, 1000), "test.sco"
+sprout( ransco(10, .2, 60, 72, 1000), "test.sco")
 
 ;; options for csound scorefiles are:
 ;;      play:           if #t call csound after writing file
@@ -26,23 +28,25 @@ sprout ransco(10, .2, 60, 72, 1000), "test.sco"
 ;; home directory and use Audio>Csound>Settings... to assign your
 ;; Csound app.
 
-sprout ransco(10, .2, 60, 72, 1000), "test.sco", 
-       play: #t, orchestra: "simp.orc"
+sprout( ransco(10, .2, 60, 72, 1000), "test.sco", 
+       play: #t, orchestra: "simp.orc")
 
 ;; this will generate a score without writing a file. execute it
 ;; several times and use the Audio>Csound>Export... item to export all
 ;; the score data in various formats
 
-sprout ransco(10, .2, 60, 72, 1000), "test.sco", write: #f
+sprout( ransco(10, .2, 60, 72, 1000), "test.sco", write: #f)
+
+; here is the contents of the orc file, copy everything and paste to
+; new file, save that file as simp.orc
 
 ;------------------------------- simp.orc -------------------------------
-
 sr      =      	44100 
 ksmps  	=     	10
 nchnls	=	2
 
-  	instr 	1 	; simple WAVEGUIDE
-kcps = cpsmidinn(p4) ;convert from midi note number to cycles per second
+  	instr 	       ; simple WAVEGUIDE
+kcps = cpsmidinn(p4)   ;convert from midi note number to cycles per second
 icps = cpsmidinn(p4)
 a1 	pluck 	p5, kcps, icps, 0, 1
   	outs a1, a1
@@ -56,3 +60,6 @@ aout oscil kenv*p5, kcps, 1
 outs aout, aout
 
 	endin
+
+
+

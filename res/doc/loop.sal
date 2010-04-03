@@ -1,3 +1,5 @@
+;;; -*- syntax: Sal2; -*-
+
 ;
 ;; Iteration
 ;
@@ -5,24 +7,24 @@
 ; here is one way execute a statement five times:
 
 begin
-  print "a random keynum: ", random(128)
-  print "a random keynum: ", random(128)
-  print "a random keynum: ", random(128)
-  print "a random keynum: ", random(128)
-  print "a random keynum: ", random(128)
+  print("a random keynum: ", random(128))
+  print("a random keynum: ", random(128))
+  print("a random keynum: ", random(128))
+  print("a random keynum: ", random(128))
+  print("a random keynum: ", random(128))
 end
 
 ; Here is a much better way of accomplishing the same thing!
 
 loop repeat 5
-  print "a random keynum: ", random(128)
+  print( "a random keynum: ", random(128))
 end
 
 ; note that with a loop you can double the amount of work done without
 ; adding any additional code:
 
 loop repeat 10
-  print "a random keynum: ", random(128)
+  print( "a random keynum: ", random(128))
 end
 
 ; The 'loop' statement performs iteration: it repeatedly executes an
@@ -31,7 +33,7 @@ end
 ; repeat value can a number or any sexpr that evaluates to a number:
 
 loop repeat random(10) 
-  print "a random keynum: ", random(128)
+  print("a random keynum: ", random(128))
 end
   
 
@@ -39,10 +41,10 @@ end
 ; than one action statement
 
 loop repeat 4
-  print "a random keynum: ", random(128)
-  print "approximately one beat: ", vary(1, .05)
-  print "a random dead composer: ", pick({ bach schoenberg berg mozart} )
-  print "----------------------------"
+  print( "a random keynum: ", random(128))
+  print( "approximately one beat: ", vary(1, .05))
+  print( "a random dead composer: ", pick({ bach schoenberg berg mozart} ))
+  print( "----------------------------")
 end
 
 ; the loop's action can be any SAL statement:
@@ -50,17 +52,33 @@ end
 loop with foo = {}
   repeat 4
   set foo &= random(128)
-  finally print "my random keys=", foo
+  finally print( "my random keys=", foo)
 end
 
-; the 'finally' clause lets you associate an single action with the
+; the 'finally' clause lets you associate an expression with the
 ; END of the iteration. if given, the finally statement is executed
-; one time only, immediately after the iteration has stopped. note
-; that a finally clause will execute even if no iteration occurs!:
+; one time only, immediately after the iteration has stopped, and
+; the value of the expression will be returned as the value of te
+; loop.
+
+loop repeat 10
+  print("a random keynum: ", random(128))
+  finally print( "All done!")
+end
+
+; this loop collects 10 random numbers and returns them
+
+loop with x = {} repeat 10
+  set x &= random(127)
+  finally x
+end
+
+; note that a finally clause will execute even if no
+; iteration occurs!
 
 loop repeat 0
-  print "a random keynum: ", random(128)
-  finally print "All done!"
+  print("a random keynum: ", random(128))
+  finally print( "All done!")
 end
 
 ; Use a begin...end block if you want to execute more than one finally
@@ -72,8 +90,7 @@ loop with var = {}, sum = 0
   finally
   begin
     with avr = sum / 10.0
-    print "keys: ", var, " average: ", avr
-    print "All done!"
+    print("keys: ", var, " average: ", avr)
   end
 end
 
@@ -91,8 +108,8 @@ end
 
 loop repeat 10
   for i = random(128)
-  print "a random major chord: ", i, " ", i + 4, " ", i + 7
-  finally print "All done!"  
+  print("a random major chord: ", i, " ", i + 4, " ", i + 7)
+  finally print( "All done!"  )
 end
 
 ; You can have any number of 'for statements'. This example uses three
@@ -104,7 +121,7 @@ loop repeat 10
   for key = random(128)
   for rhy = pick(1/4, 1/2, 3/4, 1)
   for amp = pick(.1, .3 , .5) then amp + .05
-  print "key=", key, " rhy=", rhy, " amp=", amp
+  print( "key=", key, " rhy=", rhy, " amp=", amp)
 end
 
 ; The value of one 'for <var> = ...' variable can depend on
@@ -115,8 +132,8 @@ end
 loop repeat 10
   for key = random(128)
   for maj = list(key , key + 4, key + 7)
-  print "a random major chord: ", maj
-  finally print "All done!"  
+  print("a random major chord: ", maj)
+  finally( print "All done!"  )
 end
 
 ; TODO: change the preceding loop to include printing random minor,
@@ -132,12 +149,12 @@ end
 ; been accessed
 
 loop for c in {a b c d e f g }
-  print c
+  print( c)
 end
 
 loop for c in {bach beethoven mozart berg webern schoenbeg}
   for q = pick( {great fantastic wonderful} )
-  print c, " is a ", q, " composer."
+  print9 c, " is a ", q, " composer.")
 end
 
 ;
@@ -156,41 +173,41 @@ end
 ; variable reaches the value
 
 loop for x from 1 to 10
-  print "x=", x
+  print( "x=", x)
 end
 
 loop for x from 10 downto 1
-  print "x=", x
+  print( "x=", x)
 end
 
 ; If you omit the 'from' it defaults to 0
 
 loop for x to 10
-  print "x=", x
+  print( "x=", x)
 end
   
 ; The 'by' clause lets you specify the increment value for the variable
 
 loop for x from 0 to 20 by 2
   for y from 100 downto 10 by 10
-  print "x=", x, " y=",y
+  print( "x=", x, " y=",y)
 end
 
 ; You can increment by floating point values too
 
 loop for x from 2.5 to 8 by .1
-  print "x=", x
+  print( "x=", x)
 end
 
 ; The 'below' and 'above' boundaries stop iteration just before the
 ; variable reaches the value
 
 loop for x below 10
-  print "x=", x
+  print( "x=", x)
 end
 
 loop for x from 10 above 0
-  print "x=", x
+  print( "x=", x)
 end
 
 ; If more than one stepping clause is provided the loop stops after
@@ -198,7 +215,7 @@ end
 
 loop for x from 0 to 1000 by 10
   for y to 10 by pi
-  print "x=", x, " y=",y
+  print( "x=", x, " y=",y)
 end
 
 ; You can also specify a numerical iteration without a stepping
@@ -209,7 +226,7 @@ loop repeat 10
   for x from 0 by 10
   for y from 0
   for e = expt(y, x)
-  print "x=", e
+  print( "x=", e)
 end
 
 ;
@@ -235,7 +252,7 @@ end
 loop with res = {}
   for i from 1 to 10
   set res &= i
-  finally print "res=", res
+  finally  res
 end
 
 ; Reverse collect all the value of a stepping variable into a list:
@@ -243,7 +260,7 @@ end
 loop with res = {}
   for i from 1 to 10
   set res @= i
-  finally print "res=", res
+  finally  res
 end
 
 ; Sum all the values of a stepping variable into a local variable. The
@@ -253,7 +270,7 @@ end
 loop with res = 0
   for i from 1 to 10
   set res += i
-  finally print "res=", res
+  finally res
 end
 
 ; Multiply all the values of a stepping variable into a local
@@ -264,7 +281,7 @@ end
 loop with res = 1
   for i from 1 to 10
   set res *= i
-  finally print "res=", res
+  finally  res
 end
 
 ; This loop both sums and collects random key numbers. It then prints
@@ -274,7 +291,7 @@ loop with sum = 0.0, res = {}
   repeat 10
   for j = random(128)
   set sum += j, res &= j
-  finally print  "res=", res,  " avr=", sum / length(res)
+  finally print("res=", res,  " avr=", sum / length(res))
 end
 
 ; This example minimizes random values. The variable is initially set
@@ -283,7 +300,7 @@ end
 loop with val = 129 
   repeat 10 
   set val <= random(128)
-  finally print "minimum random value: ", val
+  finally val
 end
 
 ; Do the opposite if you maximize:
@@ -291,7 +308,7 @@ end
 loop with val = -1
   repeat 10 
   set val >= random(128)
-  finally print "maximum random value: ", val
+  finally val
 end
 
 ;
@@ -310,27 +327,29 @@ end
 
 ; Example: transpose a list of key numbers by a specified interval.
 
-define function list-transp (old, int)
+function list-transp (old, int)
   loop with new = {} 
     for k in old
     set new &= k + int
-    finally return new
+    finally new
   end
+end
 
-print list-transp( {60 61 62 63}, -12)
+list-transp( {60 61 62 63}, -12)
 
 
-define function makechords (mel)
+function makechords (mel)
   loop with res = list()
     for root in mel
     for third = pick(3,4)
     for fifth = pick(6,7,8)
     set res &= list(root, root + third, root + fifth)
-    finally return res
+    finally res
   end
+end
 
 
-print makechords( {60 62 63 65 67 68 70 72} )
+makechords( {60 62 63 65 67 68 70 72} )
 
 ;
 ;; Stopping iteration using while and until
@@ -345,8 +364,8 @@ print makechords( {60 62 63 65 67 68 70 72} )
 
 loop for x = random(10)
   until x = 9 
-  print x
-  finally print "all done!"
+  print( x)
+  finally print( "all done!")
 end
 
 ; Collect 10 random keynumbers in pentatonic scale:
@@ -355,9 +374,10 @@ loop with l = {}
   for x = random(128)
   for p = modulo(x, 12)
   until length(l) = 10
-  when member( p, {1 3 6 8 10} )
-  set l &= x
-  finally print "random pentatonic tones: ", l
+  if (member( p, {1 3 6 8 10} ))
+    set l &= x
+  end
+  finally l
 end
 
 ; Iterate random numbers until the same value is picked consecutively:
@@ -366,9 +386,9 @@ loop with old = -1
   for new = random(20)
   until old = new
   begin
-    print "new=", new, " old=", old
+    print("new=", new, " old=", old)
     set old = new
   end
-  finally print "all done!"
+  finally print( "all done!")
 end
 

@@ -511,6 +511,9 @@ bool CodeEditorWindow::perform(const ApplicationCommandTarget::InvocationInfo& i
     case CommandIDs::EditorIndent:
       getCodeBuffer()->indent();
       break;
+    case CommandIDs::EditorFind:
+      openFindAndReplaceDialog();
+      break;
       // OPTIONS MENU
     case CommandIDs::EditorSyntax:
       switchBufferSyntax(data);
@@ -966,6 +969,237 @@ CodeEditorWindow* CodeEditorWindow::getFocusCodeEditor()
 }
 
 /*=======================================================================*
+                           Find and Replace Window
+ *=======================================================================*/
+
+class FindAndReplaceDialog  : public Component,
+                              public ButtonListener,
+                              public TextEditorListener
+{
+public:
+  FindAndReplaceDialog ();
+  ~FindAndReplaceDialog();
+  void resized();
+  void buttonClicked (Button* buttonThatWasClicked);
+  void textEditorReturnKeyPressed(TextEditor& editor);
+  void textEditorTextChanged(TextEditor& editor){}
+  void textEditorEscapeKeyPressed(TextEditor& editor){}
+  void textEditorFocusLost(TextEditor& editor){}
+private:
+  Label* label1;
+  TextEditor* textEditor1;
+  Label* label2;
+  TextEditor* textEditor2;
+  TextButton* textButton1;
+  TextButton* textButton2;
+  TextButton* textButton3;
+  TextButton* textButton4;
+  TextButton* textButton5;
+};
+
+class FindAndReplaceWindow : public DocumentWindow
+{
+public:
+  void closeButtonPressed() {delete this;}
+  FindAndReplaceWindow(FindAndReplaceDialog* comp) :
+    DocumentWindow(T("Find & Replace"), 
+		   Colour(0xffe5e5e5),
+		   DocumentWindow::closeButton,
+		   true)
+  {
+    comp->setVisible(true);
+    centreWithSize(comp->getWidth(),comp->getHeight());
+    setContentComponent(comp);
+    setResizable(false, false); 
+    setUsingNativeTitleBar(true);
+    setDropShadowEnabled(true);
+    setVisible(true);
+  }
+  ~FindAndReplaceWindow() {}
+};
+
+FindAndReplaceDialog::FindAndReplaceDialog ()
+    : label1 (0),
+      label2 (0),
+      textEditor1 (0),
+      textEditor2 (0),
+      textButton1 (0),
+      textButton2 (0),
+      textButton3 (0),
+      textButton4 (0),
+      textButton5 (0)
+{
+  addAndMakeVisible (label1 = new Label (String::empty, T("Find:")));
+  label1->setFont (Font (15.0000f, Font::plain));
+  label1->setJustificationType (Justification::centredRight);
+  label1->setEditable (false, false, false);
+  label1->setColour (TextEditor::textColourId, Colours::black);
+  label1->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (textEditor1 = new TextEditor (String::empty));
+  textEditor1->setMultiLine (false);
+  textEditor1->setReturnKeyStartsNewLine (false);
+  textEditor1->setReadOnly (false);
+  textEditor1->setScrollbarsShown (true);
+  textEditor1->setCaretVisible (true);
+  textEditor1->setPopupMenuEnabled (true);
+  textEditor1->setText (String::empty);
+  textEditor1->setWantsKeyboardFocus(true);
+  textEditor1->addListener(this);
+
+  addAndMakeVisible (label2 = new Label (String::empty, T("Replace:")));
+  label2->setFont (Font (15.0000f, Font::plain));
+  label2->setJustificationType (Justification::centredRight);
+  label2->setEditable (false, false, false);
+  label2->setColour (TextEditor::textColourId, Colours::black);
+  label2->setColour (TextEditor::backgroundColourId, Colour (0x0));
+  
+  addAndMakeVisible (textEditor2 = new TextEditor (String::empty));
+  textEditor2->setMultiLine (false);
+  textEditor2->setReturnKeyStartsNewLine (false);
+  textEditor2->setReadOnly (false);
+  textEditor2->setScrollbarsShown (true);
+  textEditor2->setCaretVisible (true);
+  textEditor2->setPopupMenuEnabled (true);
+  textEditor2->setText (String::empty);
+  textEditor2->addListener(this);
+  
+  addAndMakeVisible (textButton1 = new TextButton (String::empty));
+  textButton1->setButtonText (T("Replace All"));
+  textButton1->setConnectedEdges (Button::ConnectedOnRight);
+  textButton1->addButtonListener (this);
+  
+  addAndMakeVisible (textButton2 = new TextButton (String::empty));
+  textButton2->setButtonText (T("Replace"));
+  textButton2->setConnectedEdges (Button::ConnectedOnLeft | Button::ConnectedOnRight);
+  textButton2->addButtonListener (this);
+  
+  addAndMakeVisible (textButton3 = new TextButton (String::empty));
+  textButton3->setButtonText (T("Replace & Find"));
+  textButton3->setConnectedEdges (Button::ConnectedOnLeft | Button::ConnectedOnRight);
+  textButton3->addButtonListener (this);
+  
+  addAndMakeVisible (textButton4 = new TextButton (String::empty));
+  textButton4->setButtonText (T("Previous"));
+  textButton4->setConnectedEdges (Button::ConnectedOnLeft | Button::ConnectedOnRight);
+  textButton4->addButtonListener (this);
+  
+  addAndMakeVisible (textButton5 = new TextButton (String::empty));
+  textButton5->setButtonText (T("Next"));
+  textButton5->setConnectedEdges (Button::ConnectedOnLeft);
+  textButton5->addButtonListener (this);
+  
+  setSize (414, 104);
+}
+
+FindAndReplaceDialog::~FindAndReplaceDialog()
+{
+  deleteAndZero (label1);
+  deleteAndZero (textEditor1);
+  deleteAndZero (label2);
+  deleteAndZero (textEditor2);
+  deleteAndZero (textButton1);
+  deleteAndZero (textButton2);
+  deleteAndZero (textButton3);
+  deleteAndZero (textButton4);
+  deleteAndZero (textButton5);
+}
+
+void FindAndReplaceDialog::resized()
+{
+  label1->setBounds (8, 8, 56, 24);
+  textEditor1->setBounds (72, 8, 336, 24);
+  label2->setBounds (8, 40, 56, 24);
+  textEditor2->setBounds (72, 40, 336, 24);
+  textButton1->setBounds (8, 72, 80, 24);
+  textButton2->setBounds (88, 72, 80, 24);
+  textButton3->setBounds (168, 72, 96, 24);
+  textButton4->setBounds (264, 72, 64, 24);
+  textButton5->setBounds (328, 72, 80, 24);
+}
+
+void FindAndReplaceDialog::textEditorReturnKeyPressed (TextEditor& editor)
+{
+  if (&editor == textEditor1)
+    {
+      if (!editor.isEmpty()) 
+        textButton5->triggerClick();
+    }
+  //else if (&editor == textEditor2) {}
+}
+
+void FindAndReplaceDialog::buttonClicked (Button* buttonThatWasClicked)
+{
+  CodeEditorWindow* win=CodeEditorWindow::getFocusCodeEditor();
+
+  if (!win)  // no editor open
+    {
+      PlatformUtilities::beep();
+      return;
+    }
+  CodeBuffer* buf=win->getCodeBuffer();
+  // no find string
+  String str=textEditor1->getText();
+  if (str.isEmpty())
+    {
+      PlatformUtilities::beep();
+      textEditor1->grabKeyboardFocus();
+      return;
+    }
+
+  if (buttonThatWasClicked == textButton1)       // Replace All
+    {
+      if (!buf->replaceAll(str, textEditor2->getText()))
+	PlatformUtilities::beep();
+    }
+  else if (buttonThatWasClicked == textButton2)  // Replace
+    {
+      if (!buf->replace(textEditor2->getText()))
+	PlatformUtilities::beep();
+    }
+  else if (buttonThatWasClicked == textButton3) // Find & Replace
+    {
+      if (!buf->replaceAndFind(str, textEditor2->getText()))
+	PlatformUtilities::beep();	
+    }
+  else if (buttonThatWasClicked == textButton4) // Previous
+    {
+      if (!buf->findPrevious(str))
+	PlatformUtilities::beep();
+    }
+  else if (buttonThatWasClicked == textButton5) // Next
+    {
+      if (!buf->findNext(str))
+	PlatformUtilities::beep();
+    }
+}
+
+void CodeEditorWindow::openFindAndReplaceDialog()
+{
+  const String title=T("Find & Replace");
+  for (int i=0; i<getNumTopLevelWindows(); i++)
+    {
+      TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
+      if (w && w->getName() == title)
+	{
+	  w->grabKeyboardFocus();
+	  w->toFront(true);
+	  return;
+	}
+    }
+  FindAndReplaceDialog* d=new FindAndReplaceDialog();
+  FindAndReplaceWindow* w=new FindAndReplaceWindow(d);
+  //  d->setVisible(true);
+  //  w->setContentComponent(d, true, true);
+  //  w->centreWithSize(d->getWidth(), d->getHeight());
+  //  w->setUsingNativeTitleBar(true);
+  //  w->setDropShadowEnabled(true);
+  //  w->setVisible(true);
+  d->grabKeyboardFocus();
+}
+
+
+/*=======================================================================*
                                    CodeBuffer
  *=======================================================================*/
 
@@ -978,6 +1212,7 @@ CodeBuffer::CodeBuffer(CodeDocument& doc, Syntax* tokenizer, ApplicationCommandM
     parensmatching(true),
     changed (false),
     colortheme (NULL),
+    matchpos (-1),
     CodeEditorComponent(doc, tokenizer)
 {
   Preferences* prefs=Preferences::getInstance();
@@ -1016,6 +1251,8 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
   const bool emacs=isEmacsMode();
 
   //std::cout << "CodeBuffer::keyPressed key=" << key.getTextDescription().toUTF8() << "\n";
+  if (isParensMatchingActive()) 
+    stopParensMatching();
 
   if (key == KeyPress(T('\t')))
     indent();
@@ -1098,6 +1335,9 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
       prevkey=KeyPress(key);
       if (CodeEditorComponent::keyPressed(key)) // search component's keypress
         {
+          juce_wchar chr=key.getTextCharacter();
+          if (isParensMatching() && (chr==')' || chr=='}'))
+            matchParens();
           //std::cout << "returning true from CodeEditorComponent";
           isChanged(true); // if handled give up and 
           //(KeyPress::leftKey)(KeyPress::rightKey) (KeyPress::upKey) (KeyPress::downKey) (KeyPress::pageDownKey) (KeyPress::pageUpKey) (KeyPress::homeKey) (KeyPress::endKey)
@@ -1158,6 +1398,61 @@ void CodeBuffer::mouseDoubleClick (const MouseEvent &e)
       break;
     }
 }  	
+
+void CodeBuffer::matchParens()
+{
+  //std::cout << "matchParens()\n";
+  CodeDocument::Position pos (getCaretPos());
+  pos.moveBy(-1);
+  int b=pos.getPosition();
+  int scan=scanCode(pos, false, ScanFlags::MoveExpressions);
+  if (scan<=SCAN_EMPTY)
+    return;
+  int a=pos.getPosition();
+  if (a<b)
+    startParensMatching(pos,getCaretPos());
+}
+
+bool CodeBuffer::isParensMatching()
+{
+  return parensmatching; 
+}
+
+void CodeBuffer::isParensMatching(bool val)
+{
+  parensmatching=val; 
+}
+
+bool CodeBuffer::isParensMatchingActive()
+{
+  // true if we are matching right now
+  return (matchpos > -1); 
+}
+
+void CodeBuffer::startParensMatching(const CodeDocument::Position pos1, const CodeDocument::Position pos2)
+{
+  moveCaretTo(pos1, false);
+  //setColour(TextEditor::caretColourId, Colours::red);
+  matchpos=pos2.getPosition();
+  startTimer(1000);
+}
+
+void CodeBuffer::timerCallback()
+{
+  stopParensMatching();
+}
+
+void CodeBuffer::stopParensMatching()
+{
+  if (matchpos > -1)
+    {
+      moveCaretTo(CodeDocument::Position(&document, matchpos), false);
+      //setColour(TextEditor::caretColourId, Colours::black);
+      matchpos=-1;
+      if (isTimerRunning())
+	stopTimer();
+    }
+}
 
 void CodeBuffer::focusGained(Component::FocusChangeType cause)
 {
@@ -1259,16 +1554,6 @@ int CodeBuffer::getTabWidth()
 void CodeBuffer::setTabWidth(int siz)
 {
   setTabSize(siz, true);
-}
-
-bool CodeBuffer::isParensMatching()
-{
-  return parensmatching;
-}
-
-void CodeBuffer::isParensMatching(bool match)
-{
-  parensmatching=match;
 }
 
 int CodeBuffer::getColumns()
@@ -1541,6 +1826,116 @@ void CodeBuffer::movePageBackward(bool sel)
 }
 
 /*=======================================================================*
+                            Find And Replace Methods
+ *=======================================================================*/
+
+bool CodeBuffer::findPrevious(String str, bool wrap)
+{
+  CodeDocument::Position pos(getCaretPos());
+  pos.moveBy(-getHighlightedRegionLength());
+  int wid=str.length();
+  int got=-1;
+  while (true)
+    {
+      if (pos.getPosition()<=wid) // not enough chars to make a match
+	{
+	  if (wrap)
+	    {
+	      wrap=false;
+	      pos.setPosition(INT_MAX);
+	    }
+	  else
+	    break;
+	}
+      CodeDocument::Position bot=pos.movedBy(-100);
+      String tmp=document.getTextBetween(bot, pos);
+      int len=tmp.length();
+      got=tmp.lastIndexOf(str);
+      if (got>-1)
+	{
+	  pos.moveBy(-(len-got));
+	  break;
+	}
+      // next search position must overlapping current end
+      pos.setPosition(bot.getPosition()+wid);
+    }
+  if (got>-1)
+    {
+      setHighlightedRegion(pos,wid);
+      return true;
+    }
+  return false;
+}
+
+bool CodeBuffer::findNext(String str, bool wrap)
+{
+  // start looking at current cursor position (if region exists caret
+  // position is end of region)
+  CodeDocument::Position pos (getCaretPos());
+  int eob=getEOB().getPosition();
+  int wid=str.length();
+  int got=-1;
+  while (true)
+    {
+      //std::cout << "Top of loop, pos="<<pos.getPosition() 
+      //          << ", pos+wid=" << pos.getPosition()+wid << ", eob=" << eob << "\n";
+      if (pos.getPosition()+wid>eob) // not enough chars to make a match
+	{
+	  if (wrap)
+	    {
+	      wrap=false;
+	      pos.setPosition(0);
+	    }
+	  else
+	    break;
+	}
+      const String tmp=document.getTextBetween(pos, pos.movedBy(100));
+      got=tmp.indexOf(str);
+      if (got>-1)
+	{
+	  pos.moveBy(got);
+	  break;
+	}
+      int len=tmp.length();
+      // next search position must overlapping current end
+      //std::cout<< "bottom of loop, moving pos by " << len-wid+1 << "\n";
+      pos.moveBy(len-wid+1);
+    }
+  if (got>-1)
+    {
+      setHighlightedRegion(pos,wid);
+      return true;
+    }
+  return false;
+}
+bool CodeBuffer::replaceAll(String str, String rep)
+{
+  int n=0;
+  while (findNext(str, false))
+    {
+      n++;
+      replace(rep);
+    }
+  return (n>0);
+}
+
+bool CodeBuffer::replace(String rep)
+{
+  if (!(getHighlightedRegionLength()>0))
+    return false;
+  insertTextAtCaret(rep);
+  isChanged(true);
+  return true;
+}
+
+bool CodeBuffer::replaceAndFind(String str, String rep)
+{
+  if (replace(rep))
+    return findNext(str);
+  return false;
+}
+
+/*=======================================================================*
                              Emacs Editing Commands
  *=======================================================================*/
 
@@ -1804,8 +2199,8 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
   // array adjust string positions accordingly
  
   String code=document.getTextBetween(start, end);
-    std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
-              << ", end=" << end.getPosition() << "\n";
+  //    std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
+  //              << ", end=" << end.getPosition() << "\n";
   OwnedArray<SynTok> tokens;
   CodeDocument::Position pos (start);
   int beg=pos.getPosition();  // offset of string
@@ -1895,10 +2290,10 @@ void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument:
       scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments, end.getPosition());
     }
 
-    std::cout << "tokens=";
-    for (int i=0; i<tokens.size(); i++)
-      std::cout << " " << tokens[i]->toString().toUTF8();
-    std::cout << "\n";
+  //    std::cout << "tokens=";
+  //    for (int i=0; i<tokens.size(); i++)
+  //      std::cout << " " << tokens[i]->toString().toUTF8();
+  //    std::cout << "\n";
 
   String text;
   if (scan<0)

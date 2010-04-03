@@ -1,3 +1,5 @@
+;;; -*- syntax: Sal2; -*-
+
 ;
 ;; Expressions
 ;
@@ -20,7 +22,7 @@
 ; they produce values that are not identical to themselves: '1 + 2 *
 ; 3' evaluates to 7:
 
-print 1 + 2 * 3
+1 + 2 * 3
 
 ;
 ;; Numbers
@@ -60,7 +62,7 @@ print 1 + 2 * 3
 ; is to the left of the dot and the fractional part (mantissa) is to
 ; the right of the dot:
 
-print 123.456
+123.456
 
 ; It is important to understand that floats can only approximate some
 ; real numbers.  For example .333 only approximates 1/3 to three
@@ -104,9 +106,9 @@ print 123.456
 ; lies between the integers 1 and 2. Ratios are useful for expressing
 ; exact proportional relations such as 1/3
 
-print 1/3
+1/3
 
-print 2/7 * 17/9
+2/7 * 17/9
 
 ;
 ;; Arithmetic Expressions
@@ -127,30 +129,30 @@ print 2/7 * 17/9
 ; a ratio; '2 + 4' is addition and '2+4' is an error. Normal math
 ; operator precedence rules apply if there are no parentheses:
 
-print 10 ^ 2 + 1
+10 ^ 2 + 1
 
-print 1 + 3 * 4
+1 + 3 * 4
 
-print (1 + 3) * 4
+(1 + 3) * 4
 
-print 2 * 3 + 4 * 5
+2 * 3 + 4 * 5
 
-print 2 = 1 + 1
+2 = 1 + 1
 
-print 13 % 12
+13 % 12
 
 ; in this next example the first minus is subtraction, the second
 ; minus is part of a number:
 
-print 2 - -1
+2 - -1
 
 ; this is NOT an arithmetic expression:
 
-print 2*pi+1
+2*pi+1
 
 ; this is NOT subtraction:
 
-print 100-2
+100-2
 
 ; Now fix these last two examples, press COMMAND-Enter to make sure
 ; they work.
@@ -164,12 +166,12 @@ print 100-2
 ; expression. If an expression contains only integer numbers and
 ; produces an results then the entire expression result in an integer:
 
-print 10 + 1 
+10 + 1 
 
 ; If an expression contains or results in any floating point number
 ; the entire expression will produce a floating point value:
 
-print 10 * .5 
+10 * .5 
 
 ; It is sometimes necessary to convert one type of number into
 ; another. We will learn how to do this in the next chapter when we
@@ -192,33 +194,37 @@ print 10 * .5
 ; Relations evaluate to true (#t) or #f (false). See the section on
 ; Boolean values for more information about this.
 
-print 2 = 1 + 1
+2 = 1 + 1
 
-print 2 != 1
+2 != 1
 
-print 2 < 1 + 1
+2 < 1 + 1
 
-print 2 <= 1 + 1
+2 <= 1 + 1
 
-print 2 > 1 
+2 > 1 
 
-print 2 >= 1
+2 >= 1
 
-print "Hi" ~= "Hi"
+"Hi" ~= "Hi"
 
-print "Hi" ~= "Ho"
+"Hi" ~= "Ho"
 
-print 1 ~= 1
+1 ~= 1
 
-print 1 ~= 1.0
+1 ~= 1.0
 
-print {c e g} ~= {c e g}
+{c e g} ~= {c e g}
 
 ;; relations are used to test an expression in order to do something.
 ;; for example, the 'if' statement uses relations to determine which
 ;; command it will execute
 
-if random(3) = 0 then print "winner!" else print "loser!"
+if (random(3) = 0) 
+  "winner!"
+else
+  "loser!"
+end
 
 ; we will talk much more about 'if' and conditional evaluation in a
 ; later tutorial!
@@ -234,9 +240,9 @@ if random(3) = 0 then print "winner!" else print "loser!"
 ; the the number Pi.  This means that you can use the name 'pi' in a
 ; math expression rather than having to type the actual number
 
-print 2 * pi
+2 * pi
 
-define variable 2pi = 2 * pi
+variable 2pi = 2 * pi
 
 ; More about defining variables later...
 
@@ -248,17 +254,17 @@ define variable 2pi = 2 * pi
 ; name of the variable and n is the element's position (zero based) in
 ; the list. for example:
 
-define variable var = {a b c d e f g}
+variable var = {a b c d e f g}
 
-print var[0]
+var[0]
 
-print var[6]
+var[6]
 
-print "my random scale degree=", var[ random(7) ]
+print("my random scale degree=", var[ random(7) ])
 
 set var[1] = -99
 
-print var
+var
 
 ;
 ;; Symbols as command and function names
@@ -269,7 +275,7 @@ print var
 ; 'random' is the name of a function that returns a random value each
 ; time it is evaluated:
 
-print random(100)
+random(100)
 
 ;
 ;; Function calls
@@ -282,17 +288,17 @@ print random(100)
 ; function. Parenthesis must appear even if there are no inputs to the
 ; function:
 
-print list()
+list()
 
-print list(1)
+list(1)
 
 ; Use commas to separate inputs if there is more than one:
 
-print list(1, 2, 3)
+list(1, 2, 3)
 
 ; Function calls can be nested to any level:
 
-print list(1, list(2 , list( 3)), 4)
+list(1, list(2 , list( 3)), 4)
 
 ; Much more about this later...
 
@@ -300,7 +306,7 @@ print list(1, list(2 , list( 3)), 4)
 ; as a variable. Be careful not to define a global variable with the
 ; same name as a function or that function's definition will be lost!
 
-print list
+list
 
 ;
 ;; Boolean Values: #t and #f
@@ -309,16 +315,16 @@ print list
 ; A boolean value denotes truth or falsity. In SAL #t means true and
 ; #f means false:
 
-print #t
+#t
 
-print #f
+#f
 
 ; A 'boolean expression' is an expression that returns either true or
 ; false. For example all arithmetic relations are boolean expressions:
 
-print 1 = 2
+1 = 2
 
-print 1 < 2
+1 < 2
 
 ; Functions that return boolean values are called 'predicates'. For
 ; example, the functions 'even?' and 'odd?' return true or false based
@@ -326,15 +332,15 @@ print 1 < 2
 ; predicate functions end with '?' to mark them as functions that
 ; return true or false.
 
-print odd?(1)
+odd?(1)
 
-print odd?(2)
+odd?(2)
 
-print even?(1)
+even?(1)
 
-print even?(2)
+even?(2)
 
-print string?( "Hi Ho!")
+string?( "Hi Ho!")
 
 ;
 ;; Logical Expressions
@@ -352,37 +358,37 @@ print string?( "Hi Ho!")
 ; The & operator (logical AND) is true only if BOTH its operands are
 ; true:
 
-print #t & #t
+#t & #t
 
-print #t & #f
+#t & #f
 
-print #f & #t
+#f & #t
 
-print #f & #f
+#f & #f
 
 ; of course, operands can be expressions:
 
-print (1 > 0) & ( 1 < 2)
+(1 > 0) & ( 1 < 2)
 
 ; the | operator (logical OR) is true if EITHER of its operands are
 ; true:
 
-print #t | #t
+#t | #t
 
-print #t | #f
+#t | #f
 
-print #f | #t
+#f | #t
 
-print #f | #f
+#f | #f
 
 
 ; the ! operator (logical NOT) is the boolean opposite of its operand:
 
-print ! #t
+(! #t)
 
-print ! #f
+(! #f)
 
-print ! ! #t
+(! ! #t)
 
 ; The logical operators can be combined with the arithmetic relations
 ; to test a series of expressions. Theses sorts of test expressions are
@@ -393,10 +399,11 @@ print ! ! #t
 ; and press Enter repeatedly.  You may have to execute the statement
 ; many times to get a snake eyes!
 
-if ( random(6) = 1) & (random(6) = 1 ) then
-  print "snake eyes!"
+if ( (random(6) = 1) & (random(6) = 1) ) 
+  "snake eyes!"
 else
-  print "loser >:("
+  "loser >:("
+end
 
 ;
 ;; Conditional Expression: #?(test, true, false)
@@ -411,33 +418,33 @@ else
 
 ; Examples:
 
-print #? ( 0 < 1, 100)
+print( #? ( 0 < 1, 100) )
 
-print #?( 0 > 1, 100)
+print (#?( 0 > 1, 100))
 
-print #? (0 > 1, 100, random(30) )
+print( #? (0 > 1, 100, random(30) ))
 
 ;
 ;; Strings
 ; 
 
-; Strings are text delimited by "".  When the print command prints
+; Strings are text delimited by "".  When the command prints
 ; strings it does not include the surrounding parentheses in the
 ; display.
 
-print "Hello, world!"
+"Hello, world!"
 
 ; Strings are not evaluated, that is, SAL does not look inside strings
 ; to evaluate what they contain. You can see this in the following
 ; examples:
 
-print 1 = 1
+1 = 1
 
-print "1 = 1"
+"1 = 1"
 
-print random(127)
+random(127)
 
-print "random(127)"
+"random(127)"
 
 ;
 ;; Lists
@@ -448,45 +455,45 @@ print "random(127)"
 ; none. Lists are written by delimiting the individual elements that
 ; make up the list within curly brackets {} :
 
-print {1 2 3 4 5}
+{1 2 3 4 5}
 
 ; elements inside {} are NOT EVALUATED so symbols will not be treated
 ; as variables or function names when they are inside lists:
 
-print {bach is a great composer}
+{bach is a great composer}
 
 ; the empty list (a list of no elements) is a special case: 
 
-print {}
+{}
 
 ; When you define a list using brackets, every open bracket MUST be
 ; balanced by a corresponding right bracket: this is correct:
 
-print {1 2 3 {4 5}}
+{1 2 3 {4 5}}
 
 ; this is an error:
 
-print {1 2 3 {4 5}
+{1 2 3 {4 5}
 
 ; lists can hold any type of data, including other lists. This
 ; 'recursive' feature (lists inside lists) makes the list an extremely
 ; versatile structure: there is practically no limit to complexity of
 ; information that they can represent. What does this list represent?
 
-print {{"3-9*"  {0 2 7} {0 1 0 0 2 0} "Quartal Trichord"}
-       {"3-10*" {0 3 6} {0 0 2 0 0 1} "Diminished Chord"}
-       {"F3-11" {0 3 7} {0 0 1 1 1 0} "Minor Chord"}
-       {"3-11B" {0 4 7} {0 0 1 1 1 0} "Major Chord"}}
+{{"3-9*"  {0 2 7} {0 1 0 0 2 0} "Quartal Trichord"}
+ {"3-10*" {0 3 6} {0 0 2 0 0 1} "Diminished Chord"}
+ {"F3-11" {0 3 7} {0 0 1 1 1 0} "Minor Chord"}
+ {"3-11B" {0 4 7} {0 0 1 1 1 0} "Major Chord"}}
 
 ; if you want to evaluate an expression in an otherwise constant list
 ; of data can use the special #$ marker just before the thing you want
 ; to evaluate:
 
-print { 1 2 #$ pick(3, 33, 333, 3333) 4 5}
+{ 1 2 #$ pick(3, 33, 333, 3333) 4 5}
 
 ; you can 'splice in' a LIST of values using #^
 
-print { 1 2 #^ list( ran(), ran(), ran() ) 4 5}
+{ 1 2 #^ list( ran(), ran(), ran() ) 4 5}
 
 ;; Musical lists:  sequences
 
@@ -495,15 +502,15 @@ print { 1 2 #^ list( ran(), ran(), ran() ) 4 5}
 
 ;;  here is a twelve tone row
 
-print {0 8 3 2 11 10 1 7 9 4 6 5}
+{0 8 3 2 11 10 1 7 9 4 6 5}
 
 ;; here is a non-retrogradable rhythm:
 
-print { 1 2 3/4 5/4 3/4 2 1}
+{ 1 2 3/4 5/4 3/4 2 1}
 
 ;; here are three major chords:
 
-print {{60 64 65} {62 66 69} {64 68 71}}
+{{60 64 65} {62 66 69} {64 68 71}}
 
 ;
 ;; Note lists
@@ -522,15 +529,23 @@ print {{60 64 65} {62 66 69} {64 68 71}}
 ; eff4  E double flat in the fourth octave
 ; bf<0  Bf minus 1 quarter tone in the 0th octave.
 
-; The 'note' and 'key' functions can be used to convert one form into
-; the other. These functions can handle lists as well as individual
+; The 'note' and 'key' and 'hz' functions  convert one form into
+; another. These functions can handle lists as well as individual
 ; notes and key numbers. For example here is another way of defining
-; the list of chords shown in the last example:
+; the list of chords shown in the last example but in 
+; terms of keynumbers
 
-print key( {{c4 e g} {d4 fs a} {e4 gs b}} )
+key( {{c4 e g} {d4 fs a} {e4 gs b}} )
+
+note( 69)
+
+note( key(440))
 
 ; Note that octave numbers are sticky inside note lists, i.e. they
 ; only have to be written when they change:
 
-print key( {c4 d ef f gs g3 a bf c ds5 e fs g} )
+key( {c4 d ef f gs g3 a bf c ds5 e fs g} )
+
+hz({c4 d ef f gs g3 a bf c ds5 e fs g} )
+
 

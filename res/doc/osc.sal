@@ -12,35 +12,35 @@
 ; which listens for messages on port 7770. We tell CM to listen for
 ; incoming messages on port 7779:
 
-send "osc:open", 7779, 7770
+send ("osc:open", 7779, 7770)
 
 ; Use "osc:message" to send messages to a running target OSC app.
 
 ; Send just a path
 
-send "osc:message", "/Hello World!"
+send( "osc:message", "/Hello World!")
 
 ; Send some basic OSC data (ints, floats, booleans, strings)
 
-send "osc:message", "/test/basic", 123, 456.789, #t, #f, "Hello world!"
+send( "osc:message", "/test/basic", 123, 456.789, #t, #f, "Hello world!")
 
 ; You can send messages as lists too. Every message list must start
 ; with an OSC path (string):
 
-send "osc:message", {"/test/basic" 123 456.789 #t #f "Hello world!"}
+send( "osc:message", {"/test/basic" 123 456.789 #t #f "Hello world!"})
 
 ; To send midi and blobs you need to tag the data with :b or :m. This
 ; will send an OSC blob message:
 
-send "osc:message", "/test/blob", :b, {0 2 4 6 8}
+send( "osc:message", "/test/blob", :b, {0 2 4 6 8})
 
 ;; Send OSC's 4-byte midi message:
 
-send "osc:message", "/test/midi", :m, {144 60 127 0}
+send( "osc:message", "/test/midi", :m, {144 60 127 0})
 
 ;; Send a NoteOff:
 
-send "osc:message", "/test/midi", :m, {128 60 127 0}
+send( "osc:message", "/test/midi", :m, {128 60 127 0})
 
 ;
 ; OSC Bundles
@@ -51,9 +51,9 @@ send "osc:message", "/test/midi", :m, {128 60 127 0}
 ; The timetag 0 means IMMEDIATE, to send a message in the future send
 ; an ahead factor, eg 3 means 3 seconds in the future:
 
-send "osc:bundle", 0, {"/hi" 123}, {"/ho" 4 5 6}
+send( "osc:bundle", 0, {"/hi" 123}, {"/ho" 4 5 6})
 
-send "osc:bundle", 3, {"/stooges" "moe" "larry" "curley"}, {"/nyuk/nyuk/nyuk" #t}
+send( "osc:bundle", 3, {"/stooges" "moe" "larry" "curley"}, {"/nyuk/nyuk/nyuk" #t})
 
 ;
 ; Closing the OSC Port
@@ -61,13 +61,13 @@ send "osc:bundle", 3, {"/stooges" "moe" "larry" "curley"}, {"/nyuk/nyuk/nyuk" #t
 
 ; This will cause liblo's example_server app to exit cleanly:
 
-send "osc:message", "/quit"
+send( "osc:message", "/quit")
 
 ; Close the OSC connection in CM when you are done!  IMPORTANT: Always
 ; close the target app's connection too, or else liblo will crash if
 ; you later attempt open a different target in the same CM session!
 
-send "osc:close"
+send( "osc:close")
 
 ;
 ; Receiving OSC Messages
@@ -76,31 +76,30 @@ send "osc:close"
 ; Open OSC with CM listening on port 7770, which is the hardwired port
 ; in liblo/examples/example_client. We use 7777 as the output port.
 
-send "osc:open", 7770, 7777
+send( "osc:open", 7770, 7777)
 
 ; Define a hook to receive OSC messages as soon as they arrive at our
 ; input port. The hook function will be passed a single argument, a
 ; Lisp list containing the OSC message data that arrived at the port.
 
-define function myOscHook (msg)
-  print "OSC message -> ", msg
-  
+function myOscHook (msg)
+  print( "OSC message -> ", msg)
+end  
 
 ; Set the hook...
 
-send "osc:hook", myOscHook
+send( "osc:receiver", myOscHook)
 
 ; Now run your liblo/examples/example_client, you will see the
 ; messages appear in CM's console window as they arrive
 
 ; ...when you are done clear the hook
 
-send "osc:hook", #f
+send( "osc:receiver", #f)
 
 ;; ...and close the Osc connection.
 
-send "osc:close"
-
+send( "osc:close")
 
 
 
