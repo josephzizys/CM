@@ -201,36 +201,38 @@ String cm_logo ()
 
 void cm_load(char *path)
 {
-  // a wrapper around g_load() that allows embedded instrument files
-  // to be loaded if (1) the file name has no directory component, (2)
-  // *load-path* is null and (3) the file does not exist
   String name (path);
   File file=completeFile(name);
-#if WINDOWS
-  String delim ("/\\");
-#else
-  String delim ("/");
-#endif
-  XmlElement* ins=NULL;
-#ifdef GRACE
-  if (
-      // no directory component
-      (! name.containsAnyOf(delim))
-      // file does not exist
-      && (! file.existsAsFile())
-      // no load path set
-      && (s7_load_path(SchemeThread::getInstance()->scheme) == SchemeThread::getInstance()->schemeNil)
-      // is embedded instrument
-      && ((ins=SndLib::getInstance()->getInstrumentElement(name)) != NULL)
-      ) 
+  if (file.hasFileExtension(T(".sal")) || file.hasFileExtension(T(".sal2")))
     {
-      String str=SndLib::getInstance()->getInstrumentCode(name);
-      s7_eval_c_string(SchemeThread::getInstance()->scheme, str.toUTF8());
-      ins->setAttribute(T("Loaded"), "yes");
+      sal_load(path);
     }
   else
+    {
+#ifdef GRACE
+      // allow embedded instrument files to be loaded if (1) the file
+      // name has no directory component, (2) *load-path* is null and
+      // (3) the file does not exist
+      XmlElement* ins=NULL;
+      if (
+          // no directory component
+          (! name.containsAnyOf(File::separatorString))
+          // file does not exist
+          && (! file.existsAsFile())
+          // no load path set
+          && (s7_load_path(SchemeThread::getInstance()->scheme) == SchemeThread::getInstance()->schemeNil)
+          // is embedded instrument
+          && ((ins=SndLib::getInstance()->getInstrumentElement(name)) != NULL)
+          ) 
+        {
+          String str=SndLib::getInstance()->getInstrumentCode(name);
+          s7_eval_c_string(SchemeThread::getInstance()->scheme, str.toUTF8());
+          ins->setAttribute(T("Loaded"), "yes");
+        }
+      else
 #endif
-    s7_load (SchemeThread::getInstance()->scheme,path);
+        s7_load (SchemeThread::getInstance()->scheme,path);
+    }
 }
 
 void cm_edit(char *path)
@@ -894,14 +896,14 @@ int cm_pathname_to_key(char* path)
 s7_pointer sal_allocate_tokens()
 {
   s7_scheme* sc=SchemeThread::getInstance()->scheme;
-  OwnedArray<SynTok>* ary=new OwnedArray<SynTok>;
+  OwnedArray<Syntax::SynTok>* ary=new OwnedArray<Syntax::SynTok>;
   return s7_make_c_pointer(sc, ary);
 }
 
 s7_pointer sal_free_tokens(s7_pointer ptr)
 {
   s7_scheme* sc=SchemeThread::getInstance()->scheme;
-  OwnedArray<SynTok>* ary=(OwnedArray<SynTok>*)s7_c_pointer(ptr);
+  OwnedArray<Syntax::SynTok>* ary=(OwnedArray<Syntax::SynTok>*)s7_c_pointer(ptr);
   delete ary;
   return s7_unspecified(sc);
 }
@@ -910,20 +912,20 @@ s7_pointer sal_tokenize_string(s7_pointer str, s7_pointer ptr,  s7_pointer sal2)
 {
   // str is the lisp string 
   String text (s7_string(str));
-  // ptr is a C-pointer to an  OwnedArray<SynTok>
+  // ptr is a C-pointer to an  OwnedArray<Syntax::SynTok>
   s7_scheme* sc=SchemeThread::getInstance()->scheme;
-  OwnedArray<SynTok>* ary=(OwnedArray<SynTok>*)s7_c_pointer(ptr);
+  OwnedArray<Syntax::SynTok>* ary=(OwnedArray<Syntax::SynTok>*)s7_c_pointer(ptr);
   // convert array to lisp list of C tokens  
   s7_pointer toks=SchemeThread::getInstance()->schemeNil;
   bool ok=false;
-  /**
-  if (s7_boolean(sc, sal2))
-    {
-    ok=Sal2Syntax::getInstance()->tokenize(text, *ary);
-    }
-  else
-    ok=SalSyntax::getInstance()->tokenize(text, *ary);
-  **/
+
+  //  //  if (s7_boolean(sc, sal2))
+  //  //    {
+  //  //    ok=Sal2Syntax::getInstance()->tokenize(text, *ary);
+  //  //    }
+  //  //  else
+  //  //    ok=SalSyntax::getInstance()->tokenize(text, *ary);
+
   if (ok)
     {
       for (int i=ary->size()-1; i>=0; i--)
@@ -936,22 +938,22 @@ s7_pointer sal_tokenize_string(s7_pointer str, s7_pointer ptr,  s7_pointer sal2)
 s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr, s7_pointer sal2)
 {
   // fil is the lisp string holding a valid pathname
-  // ptr is the C-pointer to an allocated OwnedArray<SynTok>
+  // ptr is the C-pointer to an allocated OwnedArray<Syntax::SynTok>
   File file (String(s7_string(fil)));  // read sal file 
   String text=T("begin\n"); // wrap text in begin...end
   text << file.loadFileAsString()
        << T("\nend");
   s7_scheme* sc=SchemeThread::getInstance()->scheme;
-  OwnedArray<SynTok>* ary=(OwnedArray<SynTok>*)s7_c_pointer(ptr);
+  OwnedArray<Syntax::SynTok>* ary=(OwnedArray<Syntax::SynTok>*)s7_c_pointer(ptr);
   // convert array to lisp list of C tokens  
   s7_pointer toks=SchemeThread::getInstance()->schemeNil;
   bool ok=false;
-  /**
-  if (s7_boolean(sc, sal2))
-    ok=Sal2Syntax::getInstance()->tokenize(text, *ary);
-  else
-    ok=SalSyntax::getInstance()->tokenize(text, *ary);
-  **/
+
+  //  //  if (s7_boolean(sc, sal2))
+  //  //    ok=Sal2Syntax::getInstance()->tokenize(text, *ary);
+  //  //  else
+  //  //    ok=SalSyntax::getInstance()->tokenize(text, *ary);
+
   if (ok)
     {
       for (int i=ary->size()-1; i>=0; i--)
@@ -962,22 +964,97 @@ s7_pointer sal_tokenize_file(s7_pointer fil, s7_pointer ptr, s7_pointer sal2)
   return toks;
 }
 
+s7_pointer sal_load(char* path)
+{
+  // sal_load is always called under a scheme function and the file
+  // type is guaranteed to be either .sal or .sal2
+  String name (path);
+  File file=completeFile(name);
+  if (! file.existsAsFile())
+    {
+      SchemeThread::getInstance()->signalSchemeError(T("load: file does not exist: ") + file.getFullPathName());
+    }
+  String text=file.loadFileAsString();
+  if (text.isEmpty())
+    {
+      SchemeThread::getInstance()->signalSchemeError(T("load: file is empty: ") + file.getFullPathName());
+      //return SchemeThread::getInstance()->schemeFalse;
+    }
+  int type=TextIDs::fromFileType(file.getFileExtension());
+  if (type==TextIDs::Sal)
+    {
+      // for a .sal file we have to check if custom comment has syntax
+      String firstline=text.upToFirstOccurrenceOf(T("\n"), false, false);
+      if (firstline[0]==T(';') && firstline.contains(T("-*-")))
+        {
+          firstline=firstline.fromFirstOccurrenceOf(T("syntax:"), false, true).trimStart();
+          if (firstline.substring(0,4).equalsIgnoreCase(T("sal2")))
+            type=TextIDs::Sal2;
+        }
+    }
+  sal_eval(text, type);
+  return SchemeThread::getInstance()->schemeVoid;
+}
+
+s7_pointer sal_eval(String text, int type)
+{
+  OwnedArray<Syntax::SynTok> tokens;
+  s7_scheme* sc=SchemeThread::getInstance()->scheme;
+  s7_pointer func;
+  if (type==TextIDs::Sal)
+    {
+      std::cout << "load type=sal\n";
+      if (!SalSyntax::getInstance()->tokenize(text, tokens))
+        {
+          tokens.clear();
+          SchemeThread::getInstance()->signalSchemeError(SalSyntax::getInstance()->getLastParseError());
+        }
+      func=s7_name_to_value(sc, "sal");
+    }
+  else
+    {
+      std::cout << "load type=sal2\n";
+      if (!Sal2Syntax::getInstance()->tokenize(text, tokens))
+        {
+          tokens.clear();
+          SchemeThread::getInstance()->signalSchemeError(Sal2Syntax::getInstance()->getLastParseError());
+        }
+      func=s7_name_to_value(sc, "sal2");
+    }
+  // convert tokens to list
+  s7_pointer toks=SchemeThread::getInstance()->schemeNil;
+  for (int i=tokens.size()-1; i>=0; i--)
+    toks=s7_cons(sc, s7_make_c_pointer(sc, tokens.getUnchecked(i)), toks);
+  // ("string", (tokens...), false, true)
+  s7_pointer args=s7_cons(sc, 
+                          s7_make_string(sc, text.toUTF8()),
+                          s7_cons(sc,
+                                  toks,
+                                  s7_cons(sc,
+                                          SchemeThread::getInstance()->schemeFalse,
+                                          s7_cons(sc,
+                                                  SchemeThread::getInstance()->schemeTrue,
+                                                  SchemeThread::getInstance()->schemeNil))));
+  return s7_call(sc, func, args);
+}
+
+
 s7_pointer sal_token_type(s7_pointer ptr)
 {
-  SynTok* tok=(SynTok*)s7_c_pointer(ptr);
-  return s7_make_integer(SchemeThread::getInstance()->scheme, tok->type);
+  Syntax::SynTok* tok=(Syntax::SynTok*)s7_c_pointer(ptr);
+  return s7_make_integer(SchemeThread::getInstance()->scheme, tok->getType());
 }
 
 s7_pointer sal_token_string(s7_pointer ptr)
 {
-  SynTok* tok=(SynTok*)s7_c_pointer(ptr);
-  return s7_make_string(SchemeThread::getInstance()->scheme, tok->name.toUTF8());
+  Syntax::SynTok* tok=(Syntax::SynTok*)s7_c_pointer(ptr);
+  return s7_make_string(SchemeThread::getInstance()->scheme, tok->getName().toUTF8());
 }
 
 s7_pointer sal_token_position(s7_pointer ptr)
 {
-  SynTok* tok=(SynTok*)s7_c_pointer(ptr);
-  return s7_make_integer(SchemeThread::getInstance()->scheme, tok->data1);
+  Syntax::SynTok* tok=(Syntax::SynTok*)s7_c_pointer(ptr);
+  return s7_make_integer(SchemeThread::getInstance()->scheme, tok->getData1());
 }
 
 /*
@@ -1043,10 +1120,15 @@ void mp_close_input(int dev)
   MidiInPort::getInstance()->close(dev);
 }
 
-void mp_set_output_file(char* path)
+void mp_open_score(char* path, s7_pointer args)
 {
-  MidiOutPort::getInstance()->
-    performCommand(CommandIDs::MidiSeqSetFile, 0, String(path));
+  // args is () or a list of keyword options
+  MidiOutPort::getInstance()->performCommand(CommandIDs::MidiSeqSetFile, 0, String(path));
+}
+
+void mp_close_score()
+{
+  MidiOutPort::getInstance()->performCommand(CommandIDs::SchedulerScoreComplete);
 }
 
 void mp_send_note(double time, double dur, double key, double vel, double chn) 
@@ -1057,12 +1139,11 @@ void mp_send_note(double time, double dur, double key, double vel, double chn)
       // if score capture is true AND we are under a process callback then
       // scoretime will be >= 0 else it will be 0
       time+=scm->scoretime;
-      MidiOutPort::getInstance()->
-	sendNote(time, dur, key, vel, chn, true);
+      MidiOutPort::getInstance()->sendNote(time, dur, key, vel, chn, true);
+      //std::cout << "sending score mode " << time << " " << key << "\n";
     }
   else
-    MidiOutPort::getInstance()->
-      sendNote(time, dur, key, vel, chn, false);
+    MidiOutPort::getInstance()->sendNote(time, dur, key, vel, chn, false);
 }
 
 void mp_send_data(int type, double time, double chan, 
@@ -1193,7 +1274,7 @@ s7_pointer mp_is_midi_hook(int op)
 
 // Csound support
 
-void cs_init_score(char* args)
+void cs_open_score(char* args)
 {
   //  std::cout << "cm_init_score " << args << "\n";
   Csound::getInstance()->initScore(String(args));
@@ -1203,6 +1284,11 @@ void cs_send_score(int typ, int num, double time, char* pars)
 {
   //std::cout << "cs_send_score " << typ << " " << num << " "  << time << " " << pars << "\n";
   Csound::getInstance()->addToScore(typ,num,time,String(pars));
+}
+
+void cs_close_score()
+{
+  Csound::getInstance()->saveScore();
 }
 
 //

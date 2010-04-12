@@ -79,10 +79,11 @@ class XSalNode : public XSchemeNode
  public:
   String expr;
   bool expand;
+  bool multi;
   int vers;
   //OwnedArray<SynTok>* toks;
-  OwnedArray<SynTok> toks;
-  XSalNode(double qtime, String input, int id, bool xpand=false);
+  OwnedArray<Syntax::SynTok> toks;
+  XSalNode(double qtime, String input, int id, bool xpand=false, bool mult=false);
   ~XSalNode();
   bool applyNode(SchemeThread* scheme, double curtime);
 };
@@ -197,6 +198,7 @@ class SchemeThread : public Thread
   void setScoreMode(int mode);
   bool isScoreMode();
   bool isScoreMode(int mode);
+  void closeScore();
   
   bool saleval;
   bool isSalEval();

@@ -24,40 +24,53 @@
 
 (define (open-file str . args)
   ;; open a file or signal an error
-  (let ((type (ffi_pathname_type str)))
-    (let ((mode 0))
-      ;; don't allow files to be opened if the scheuler is
-      ;; currently busy. this stops sprouting files if other files
-      ;; are in progress or switching to score mode while the
-      ;; scheduler is busy running real time processes
-      (if (ffi_sched_busy_p)
-	  (error "Scheduler busy, cannot open ~S" str))
-      (if (not (ffi_pathname_writable_p str))
-	  (error "file ~S is not writable" str))
-      (cond ((string=? type "mid")
-	     (apply mp:open-output-file str args)
-	     (set! mode *score-type-midi*)
-	     )
-	    ((member type '("aiff" "snd" "wav"))
-	     (apply snd:open-output-file str args)
-	     (set! mode *score-type-sndlib*)
-	     )
-	    ((member type '("sco"))
-	     (apply cs:open-output-file str args)
-	     (set! mode *score-type-csound*)
-	     )
-	    ;;(member type '("ly" "fms" "xml"))
-	    ((or (not (= (ffi_fms_isfiletype type) 0))
-		 (and (string=? type "") (string=? str "fomus")))
-	     (apply fms:open-score str args)
-	     (set! mode *score-type-fomus*)
-	     )
-	    (else
-	     (error "don't know how to open ~S" str)))
-      ;; this function is being called under sprout: put the
-      ;; schedulder in score mode
-      (ffi_sched_set_score_mode mode)
-      str)))
+  (let ((type (ffi_pathname_type str))
+        (mode 0))
+    ;; don't allow files to be opened if the scheuler is
+    ;; currently busy. this stops sprouting files if other files
+    ;; are in progress or switching to score mode while the
+    ;; scheduler is busy running real time processes
+    (if (ffi_sched_busy_p)
+        (error "Scheduler busy, cannot open ~S" str))
+    (if (not (ffi_pathname_writable_p str))
+        (error "file ~S is not writable" str))
+    (cond ((string=? type "mid")
+           (apply mp:open-score str args)
+           (set! mode *score-type-midi*)
+           )
+          ((member type '("aiff" "snd" "wav"))
+           (apply snd:open-output-file str args)
+           (set! mode *score-type-sndlib*)
+           )
+          ((member type '("sco"))
+           (apply cs:open-score str args)
+           (set! mode *score-type-csound*)
+           )
+          ((or (not (= (ffi_fms_isfiletype type) 0))
+               (and (string=? type "") (string=? str "fomus")))
+           (apply fms:open-score str args)
+           (set! mode *score-type-fomus*)
+           )
+          (else
+           (error "don't know how to open ~S" str)))
+    ;; this function is being called under sprout: put the
+    ;; schedulder in score mode
+    (ffi_sched_set_score_mode mode)
+    mode))
+
+(define (close-file mode success)
+  (ffi_sched_set_score_mode 0)
+  (cond ((equal? mode *score-type-midi*)
+         (mp:close-score ))
+        ((equal? mode *score-type-sndlib*)
+         (snd:close-output-file))
+        ((equal? mode *score-type-fomus*)
+         (ffi_fms_close_score))
+        ((equal? mode *score-type-csound*)
+         (cs:close-score))
+        (else
+         (error "don't know how to close score type ~S" mode)))
+  )
 
 ;;
 ;; Midi ports
@@ -117,9 +130,25 @@
       (ffi_mp_close_input (car dev))
       (error "~S is not a midi device number" dev)))
 
-(define (mp:open-output-file path . args)
-  (ffi_mp_set_output_file path)
+(define (mp:open-score path . args)
+  (ffi_mp_open_score path args)
   )
+
+(define (mp:close-score )
+  (ffi_mp_close_score )
+  )
+
+(define-macro (with-midi args . body)
+  (if (not (pair? args))
+      (error "with-midi: arguments not a list: ~S" args))
+  `(dynamic-wind 
+       (lambda () 
+         (mp:open-score ,(car args) ,@(cdr args))
+         (ffi_sched_set_score_mode *score-type-midi*))
+       (lambda () ,@body (void))
+       (lambda ()
+         (ffi_sched_set_score_mode 0)
+         (mp:close-score))))
 
 (define (mp:midi . args)
   (with-optkeys (args (time 0) (dur .5) (key 60) (amp .5) (chan 0))
@@ -327,14 +356,14 @@
 ;;; Csound is scorefile only
 ;;;
 
-(define (cs:open-output-file path . args)
+(define (cs:open-score path . args)
   (let ((opts (string-append "\"" path "\"")))
     (unless (even? (length args))
       (error "uneven options list ~S" args))
     (do ((tail args (cddr tail))
 	 (argn #f))
 	((null? tail) 
-	 (ffi_cs_init_score opts)
+	 (ffi_cs_open_score opts)
 	 )
       (set! argn (cadr tail))
       (case (car tail)
@@ -361,6 +390,21 @@
 				   (cadr tail) "\"")))
 	(else
 	 (error "unknown Csound option ~S" (car tail)))))))
+
+(define (cs:close-score )
+  (ffi_cs_close_score))
+
+(define-macro (with-csound args . body)
+  (if (not (pair? args))
+      (error "with-csound: arguments not a list: ~S" args))
+  `(dynamic-wind 
+       (lambda () 
+         (cs:open-score ,(car args) ,@(cdr args))
+         (ffi_sched_set_score_mode *score-type-csound*))
+       (lambda () ,@body (void))
+       (lambda ()
+         (ffi_sched_set_score_mode 0)
+         (cs:close-score )  )))
 
 ; (cs:open-output-file "test.sco" #:write #t #:play #f)
 

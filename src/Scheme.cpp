@@ -19,9 +19,7 @@
 #ifdef GRACE
 #include "Preferences.h"
 #endif
-#include "Scanner.h"
 #include "Syntax.h"
-//#include "CmSupport.h"
 #include <iostream>
 #include <string>
 
@@ -97,9 +95,10 @@ bool XEvalNode::applyNode(SchemeThread* schemethread, double curtime)
   return false; 
 }
 
-XSalNode::XSalNode(double qtime, String input, int id, bool xpand )
+XSalNode::XSalNode(double qtime, String input, int id, bool xpand, bool mult )
   : XSchemeNode(qtime),
     expand (xpand),
+    multi (mult),
     vers(id),
     expr (input)
 {
@@ -126,7 +125,9 @@ bool XSalNode::applyNode(SchemeThread* st, double curtime)
                        data,
                        s7_cons(sc, 
                                s7_make_boolean(sc, expand),
-                               st->schemeNil))
+                               s7_cons(sc, 
+                                       s7_make_boolean(sc, multi),
+                                       st->schemeNil)))
                );
   // gc protect data cobbled up on the C side
   int prot = s7_gc_protect(sc, data);
@@ -676,14 +677,7 @@ void SchemeThread::load(File file, bool addtorecent)
       String path=file.getFullPathName().quoted();
       if (SysInfo::isWindows())
 	path=path.replace(T("\\"),T("\\\\"));
-      if (file.hasFileExtension(T(".sal")))
-	{
-	  text << T("(sal:load ") << path << T(")");
-	}
-      else
-	{
-	  text << T("(load ") << path << T(")");
-	}
+      text << T("(load ") << path << T(")");
       //std::cout << "load text='" << text.toUTF8() << "'\n";
       eval(text);
       if (addtorecent)
@@ -691,7 +685,6 @@ void SchemeThread::load(File file, bool addtorecent)
 #ifdef GRACE
 	  Preferences::getInstance()->recentlyLoaded.addFile(file);
 #endif
-	  //std::cout << "added to recently loaded\n";
 	}
     }
   else
@@ -708,7 +701,8 @@ void SchemeThread::read()
   bool more=true;
   bool prompt=true;
   String text=String::empty;
-
+  CodeDocument doc;
+  CodeDocument::Position pos(&doc,0);
   while (more && !threadShouldExit()) 
     {
       if (prompt)
@@ -722,11 +716,12 @@ void SchemeThread::read()
 	text << T("\n");
       text << String(line.c_str());
       int typ, loc;
-      typ=scan_sexpr(LispSyntax::getInstance()->syntab,
-		     text, 0, text.length(), SCAN_CODE, &loc, NULL);
-      if (typ==SCAN_LIST || typ==SCAN_TOKEN || typ==SCAN_STRING)
+      doc.replaceAllContent(text);
+      pos.setPosition(0);
+      typ=LispSyntax::getInstance()->scanCode(doc, pos, true, ScanIDs::MoveExpressions);
+      if (typ==ScanIDs::SCAN_LIST || typ==ScanIDs::SCAN_TOKEN || typ==ScanIDs::SCAN_STRING)
 	break;
-      else if (typ==SCAN_UNLEVEL)
+      else if (typ==ScanIDs::SCAN_UNLEVEL)
 	break;  // allow too many parens to be passed to lisp?
     }
   if (!text.isEmpty())
@@ -808,28 +803,10 @@ void SchemeThread::run()
 	}
       // queue is now empty. 
       if (sprouted && isScoreMode())
-	{
-	  // we just finished running a sprouted process in score
-	  // mode, send a "score complete" message to the console for
-	  // processing the file output
-	  if (isScoreMode(ScoreTypes::Midi))
-	    MidiOutPort::getInstance()->
-	      performCommand(CommandIDs::SchedulerScoreComplete);
-#ifdef SNDLIB
-	  else if (isScoreMode(ScoreTypes::SndLib))
-	    SndLib::getInstance()->
-	      performCommand(CommandIDs::SchedulerScoreComplete);
-#endif	  
-#ifdef WITHFOMUS
-	  else if (isScoreMode(ScoreTypes::Fomus))
-	    Fomus::getInstance()->closeScore();
-#endif	  
-	  else if (isScoreMode(ScoreTypes::Csound))
-	    Csound::getInstance()->saveScore();
-	}
+	closeScore();
       sprouted=false;
       scoretime=0.0;
-      setScoreMode(ScoreTypes::Empty);
+      //      setScoreMode(ScoreTypes::Empty); only done in closeScore
 #ifdef GRACE
       wait(-1);
 #else
@@ -837,6 +814,27 @@ void SchemeThread::run()
 #endif
     }
   // leaving killed process....
+}
+
+void SchemeThread::closeScore()
+{
+  if (!isScoreMode()) return;
+  // we just finished running a sprouted process in score
+  // mode, send a "score complete" message to the console for
+  // processing the file output
+  if (isScoreMode(ScoreTypes::Midi))
+    MidiOutPort::getInstance()->performCommand(CommandIDs::SchedulerScoreComplete);
+#ifdef SNDLIB
+  else if (isScoreMode(ScoreTypes::SndLib))
+    SndLib::getInstance()->performCommand(CommandIDs::SchedulerScoreComplete);
+#endif	  
+#ifdef WITHFOMUS
+  else if (isScoreMode(ScoreTypes::Fomus))
+    Fomus::getInstance()->closeScore();
+#endif	  
+  else if (isScoreMode(ScoreTypes::Csound))
+    Csound::getInstance()->saveScore();
+  setScoreMode(ScoreTypes::Empty);
 }
 
 void SchemeThread::clear()

@@ -1,325 +1,287 @@
-;;; -*- syntax: Sal2;  -*-
+;;; -*- syntax: Sal2; -*-
 
 ;
-;; ----- FOMUS Tutorial
+;; Simple process example
 ;
 
-;; This is a basic introduction to using FOMUS with Grace.  For more
-;; information on FOMUS's features, consult FOMUS's HTML
-;; documentation.
-
-;
-;; ----- Generating Scores
-;
-
-;; 'file' provides a simple way to create fomus scores. Inside
-;; file you add a series of commands that add content to the score
-;;  these commands will be processed in sequential order and when the
-;; last one is reached the score will be generated automatically
-
-file "test.ly" (measdur: 2)
-  with lb = 30, ub = 73, time = 0
-  ;; add a part
-  send( "fms:part", id: "p", inst: "piano")
-  ;; add some notes
-  loop for i below 24
-    for d = pick(1/2, 1, 2)
-    send( "fms:note", time, dur: d, pitch: pick(lb, ub), part: "p")
-    set time += d
-  end
+process examp1 (n, r)
+  repeat n
+  send( "fms:note", dur: r, pitch: between(48, 73))
+  wait r
 end
 
-;
-;; ----- Interactive Score Creation
-;
-
-;; you can also control fomus interactively, by evaluating individual
-;; 'send' statements to incrementally build up a score. The second way
-;; is by defining musical processes to generate the entire contents of
-;; a score when they are sprouted.
-
-;; Before continuing, create a fresh new score object by executing
-;; the following command (put your cursor at the end of the line and
-;; press Command-Enter or select the Eval>Execute menu item):
-
-send( "fms:new-score", "out.ly")
-
-;; When working with FOMUS in Grace, there is always at least one
-;; "score object" in memory and only one that is currently active.  In
-;; the main menu select `Audio' and then `FOMUS'.  At the top of the
-;; FOMUS sub-menu you'll see a list of filenames representing all of
-;; the score objects currently in memory (if you've just started Grace
-;; there should only be one score object named "(untitled)").  The
-;; filenames are actually the output files that will be created when
-;; the score objects are processed with FOMUS's notation engine.  At
-;; least one of them should be checked.  This is the score that is
-;; currently selected and ready to receive data.
-
-;; The new score object should appear selected with a check mark in
-;; the FOMUS sub-menu now.  A similar command "selectscore" selects an
-;; already existing score object based on the output filename (or
-;; creates a new score object if that filename doesn't already exist):
-
-send( "fms:select-score", "out.ly")
-
-;; Double check and make sure that "out.ly" is the currently selected
-;; one now.
-
-
-
-
-;; In this section we'll build up a score by executing individual
-;; send statements.  In this first example you'll define a single note.
-
-send( "fms:note", 0, dur: 4, pitch: "c4")
-
-;; This sends a note with time offset 0, a duration of 4 and pitch C4
-;; to the current FOMUS score.  All time values (time and duration)
-;; are FOMUS `beat' values.  By default, one beat equals a quarter
-;; note, so a duration of 4 should produce a whole note.
-
-;; Now save your progress.
-
-send( "fms:save-score", "save.fms")
-
-;; View the saved scorefile by selecting `Open' from the `File' menu.
-;; See FOMUS's HTML documentation for a description of its file
-;; format.
-
-;; Generate the score by entering:
-
-send( "fms:run")
-
-;; You should get a `.ly' output file at the location you specified in
-;; `select-score' above.  If LilyPond is installed and FOMUS is
-;; configured properly the file should be automatically processed and
-;; displayed as a `.pdf' file (see the `lily-exe-path' and
-;; `lily-view-exe-path' settings).
-
-;; Let's say you want your piece to be notated in 3/4 meter rather
-;; than the default 4/4.  You can send a measure definition to FOMUS
-;; by entering this:
-
-send( "fms:meas", 0, dur: 3)
-
-;; This specifies that you want a measure downbeat to occur at time 0
-;; and that the measure should have a duration of 3.  Although you
-;; haven't explicitly specified a time signature of 3/4, a measure
-;; with a duration of 3 is interpretted as a 3/4 measure by default.
-;; Measures only need to be sent when a metrical change occurs or at
-;; the beginning of a new section in the score.  They can also be sent
-;; when you are sure you want a downbeat at a specific location.
-;; FOMUS takes the measures you've defined and repeats them
-;; automatically, adjusting as necessary to eliminate overlaps with
-;; other measures.
-
-;; Now view the change:
-
-send( "fms:run")
-
-;; The pitch you entered has been renoted to fit the meter that you defined.
-;; Now let's one more pitch, this time with an accent:
-
-send( "fms:note", 4, dur: 4, pitch: "d4", marks: {{">"}})
-
-;; Run FOMUS's notation engine again.
-
-send("fms:run")
+sprout( examp1(16, 1/2), "fomus1.ly")
 
 ;
-;; ----- Instruments and Parts
+;; Staccato and Accent Marks
 ;
 
-;; You should define one or more parts before sending note data.
-;; Although a default part (named "default") is always already defined
-;; for you, it is usually better to define your own.  
-
-;; First delete the old score from the last section.
-
-send( "fms:delete-score")
-
-;; Now create a fresh new one.
-
-send( "fms:new-score", "myscore.ly")
-
-;; Evaluate the
-;; following line to create a part that uses FOMUS's built-in piano
-;; instrument:
-
-send( "fms:part", id: "mypart", inst: "piano")
-
-;; Evaluating this sends a part definition to FOMUS.  `id:' and
-;; `inst:' are the FOMUS "settings" that define the part.  All objects
-;; in FOMUS (including parts, instruments, staves, clefs, the score
-;; itself and even individual notes) contain settings that alter how
-;; they are processed and notated.  In this case, you are indicating
-;; that you want to refer to this part as "mypart" and that it should
-;; be based on the built-in "piano" instrument.  There are over
-;; hundred of settings, which can't all be described here.  To find
-;; information on them, click on `Documentation' in the FOMUS
-;; sub-menu.  Also look at the examples section in the FOMUS
-;; documentation to see which settings are the most useful
-
-;; When you set the part's instrument to "piano", FOMUS knows it
-;; should notate this part using a grand staff with optional octave
-;; signs above and below the treble and bass clefs.  It also expects
-;; notes to overlap (i.e., form chords) and knows information useful
-;; for importing and exporting data to and from other file formats.
-;; All of this information comes from settings that are defined in the
-;; built-in "piano" instrument object that is loaded automatically
-;; when FOMUS starts.  Part "mypart" thus inherits all the settings
-;; that are defined in that instrument.  Also, any object that is
-;; contained inside this part (e.g., a measure or note event) inherits
-;; these settings unless the settings are overridden with new
-;; definitions.
-
-;; If FOMUS's default instrument library isn't enough or you want to
-;; alter the settings of an existing instrument, you can define your
-;; own instrument using a similar syntax:
-
-send( "fms:inst", id: "mycello", template: "cello", maxp: "c8")
-
-;; This defines your own cello instrument using the existing FOMUS
-;; "cello" instrument as a template and changing the `maxp' setting to
-;; "c8".  Look up "maxp" in the online documentation to see what this
-;; is for (you'll have to click on "Intermediate" or "Advanced" to get
-;; to it).  Changing this would be useful, for example, if you wanted
-;; to notate high-pitched harmonics and not get "out of range"
-;; messages from FOMUS's range checker, or if you just don't like the
-;; predefined note range in FOMUS's built-in instrument.  (You could
-;; also just set the "maxp" setting inside the part instead of
-;; defining a whole new instrument.)
-
-;; Now define another part based on your new instrument:
-
-send( "fms:part", id: "myotherpart", inst: "mycello")
-
-;; Other FOMUS objects that you'll probably use much less often are
-;; "metaparts" and "measure definitions".  Metaparts allow you to
-;; treat several parts as one single part and don't actually appear in
-;; the score (the parts they contain do).  A string quartet can be
-;; treated this way, for example.  Measure definitions are more useful
-;; in FOMUS input files where they allow you to avoid redundantly
-;; typing in the same list of settings every time a measure is
-;; specified.
-
-;; Now let's change a simple global settings by entering the following
-;; lines.  Global settings are effectively default settings for the
-;; entire score.  Another way to think of this is that all objects are
-;; contained within the score (the "global" object) and thus inherit
-;; all of its settings.
-
-send( "fms:setting", verbose: 2)
-
-send( "fms:setting", double-accs: #f)
-
-;; The `verbose' setting causes FOMUS to print extra information about
-;; what it is doing while it is processing.  A value of 2 means
-;; maximum verbosity.  Setting `accs-double-accs' to false indicates
-;; that you don't want double sharps or flats anywhere in the score.
-
-;; Parts and instruments (and many other objects) don't have to be
-;; defined separately.  They can be embedded in a single `send'
-;; command.  Define one more part by evaluating the following:
-
-send( "fms:part", id: "yourpart", inst: {:template "tuba"})
-
-;; Since the instrument settings are now inside a list, you must use
-;; `:template' instead of `template:'.  IDs are not required when
-;; defining objects directly inside of other objects.
-
-;; Click on `Settings' in the FOMUS sub-menu to review your parts and
-;; instruments.  Parts and settings are displayed here in FOMUS's own
-;; native syntax--look at FOMUS input file examples in the FOMUS HTML
-;; documentation to see how to interpret these.  You can edit any of
-;; the objects directly here or add new ones.  When you are done,
-;; enter the following to save everything you've entered in so far to
-;; a FOMUS input file:
-
-send( "fms:save-score", "save.fms")
-
-;; The filename should have an `.fms' extension so that FOMUS
-;; recognizes what type of file it is.  You can now reload this
-;; information later by entering:
-
-send( "fms:load-score", "save.fms")
-
-;; All of your instruments and parts will then be restored.  Any note
-;; event data you have entered are also saved when you call this
-;; function, so you can use the `save-score' function to store your
-;; progress or create snapshots of different scores.
-
-;
-;; ----- Score Creation using Processes
-;
-
-;; In this section we'll use SAL processes to generate note events.
-;; Note events are then sent whenever `sprout' is called.
-
-;; Create a new score object:
-
-send( "fms:new-score", "out3.ly")
-
-;; Define a piano part and an oboe part by entering:
-
-send( "fms:part", id: "pno", inst: "piano")
-
-send( "fms:part", id: "ob", inst: "oboe")
-
-;; Since you've defined two parts now, change the following global
-;; setting so that FOMUS knows how to arrange them.  (FOMUS has two
-;; built-in layouts, "orchestra" and "small-ensemble".)
-
-send( "fms:setting", layout: "small-ensemble")
-
-;; Although the new score object should already be empty, you can
-;; clear any note events by entering:
-
-send( "fms:clear-score")
-
-;; Now define a SAL process that disperses random pitches:
-
-process blastit(part, low, high)
-  repeat 24
-  send( "fms:note", part: part, dur: 1/2, pitch: between(low, high))
+process examp2 ()
+  with marks = {#f {"."} {">"}}
+  repeat 21
+  send( "fms:note", dur: #?(elapsed() < 10, 1/2, 1),
+      	 pitch: between(48, 73), marks: marks[random(3)])
   wait 1/2
 end
+  
+begin
+  with parts = {{:id "apart" :name "Piano" :inst "piano"}}
+  sprout( examp2(), "fomus2.ly", parts: parts)
+end
 
-;; Then sprout two instances of this process.
+;
+;; Quartertones
+;
 
-sprout( list(blastit("ob", 65, 80), 
-             blastit("pno", 40, 80)),
-        "fomus", clear: #t, run: #t)
+process examp3 ()
+  repeat 21
+  send( "fms:note",
+         dur: #?(elapsed() < 10, 1/2, 1),
+         pitch: 70 + (random(4) / 2))
+  wait 1/2
+end
+  
+begin
+  with parts = {{:id "apart" :name "Piano" :inst "piano"}},
+       sets = {:quartertones #t}
+  sprout( examp3(), "fomus3.ly", parts: parts, sets: sets)
+end
 
-;; `clear: #t' tells FOMUS to clear the score first and `run: #t'
-;; executes the `run' command after all processes have finished
-;; executing.  Both `clear' and `run' are #t by default, so it's
-;; not actually necessary to specify them here.
+;
+;; Polyphony with Slurs
+;
 
-;; If you specify `run: #t' in the sprout command, you can run FOMUS
-;; afterwards by executing:
+process examp4 ()
+  for v from 1 to 2
+  loop for off from 0 to 10 by 1/2
+    send( "fms:note", time: off,
+      	   dur: #?(off < 10, 1/2 , 1),
+      	   pitch: #?(v = 2, between(35, 60), between(60, 85)),
+      	   voice: v, marks: odds(.333, {"(.."}))
+  end
+end
+       
+begin 
+  with parts = {{:id "apart" :name "Piano" :inst "piano"}}
+  sprout( examp4(), "fomus4.ly", parts: parts)
+end
 
-send("fms:run")
+;
+;; Piano Chords
+;
 
-;; Sprout also accepts a filename as the first argument.  However,
-;; since this creates a new score object, you must also give sprout
-;; several more parameters redefining the "pno" and "ob" parts.  You
-;; must also reset the `layout' global setting.
+process examp5 ()
+  repeat 3
+  loop for off from 0 to 10 by 1/2
+    send("fms:note", time: off,
+         dur: #?(off < 10, 1/2, 1),
+     	   pitch: between(48, 73),
+         voice: {1 2})
+  end
+end
+       
+begin
+  with parts = {{:id "apart" :name "Piano" :inst "piano"}}
+  sprout( examp5(), "fomus5.ly", parts: parts)
+end
 
-sprout( list(blastit("ob", 65, 80),
-             blastit("pno", 40, 80)), 
-       "/tmp/blasted.ly", 
-        sets: {:layout "small-ensemble"},
-        parts: {{:id "pno" :inst "piano"} 
-                {:id "ob" :inst "oboe"}})
+;
+;; Quantizing/Chords
+;
 
-;; "/tmp/blasted.ly" selects the "blasted.ly" score object before
-;; sending note data.  Remember that when specifying settings inside
-;; list structures the setting names are actually keywords and not
-;; function argument names (i.e., `:id' as opposed to `id:').
+process examp6 ()
+  repeat 10
+  for tim = random(30.0)
+  for dur = 1 + random(3.0)
+  send("fms:note", time: tim,
+       dur: dur, pitch: between(60, 85))
+end
+       
+begin
+  with parts = {{:id "apart" :name "Piano" :inst "piano"}}
+  sprout( examp6(), "fomus6.ly", parts: parts)
+end
 
-;; Congratulations on completing the FOMUS tutorial.  You can find
-;; more information and examples in the FOMUS docs.  If FOMUS crashes
-;; or produces incorrect output, please post a bug report at
-;; http://fomus.sourceforge.net/.
+;
+;; Quantizing/Voices
+;
 
+process examp7 ()
+  repeat 10
+  for tim = random(30.0)
+  for dur = 1 + random(3.0)
+  send("fms:note", time: tim,
+       dur: dur,
+       pitch: between(60, 85),
+       voice: {1 2 3})
+end
+       
+begin
+  with parts = {{:id "apart" :name "Piano" :inst "piano"}}
+  sprout( examp7(), "fomus7.ly", parts: parts)
+end
+
+;
+;; Mark Objects
+;
+
+process examp8-notes ()
+  for o from 0 to 20 by 1/2
+  send( "fms:note", time: o, dur: 1/2, pitch: 72, part: "0")
+  send( "fms:note", time: o, dur: 1/2, pitch: 48, part: "1")
+end
+  
+process examp8-marks ()
+  repeat 8
+  send( "fms:mark", part: odds(.5, "0", "1"),
+      	 time: random(20.0),
+      	 marks: {"^"})
+end
+       
+begin
+  with parts = {{:name "Flute" :inst "flute" :id "0"} 
+                {:name "Tuba" :inst "tuba" :id "1"}}
+  sprout(list(examp8-notes(), examp8-marks()), "fomus8.ly", 
+         parts: parts)
+end
+
+;
+;; Percussion 1
+;
+
+process examp9 ()
+  for o from 0 to 20 by 1/2 
+  send( "fms:note", time: o, dur: 1/2,
+        pitch: odds(.5, "wb1", "wb2"))
+end
+       
+begin
+  with parts = {{:id "perc" :name "Percussion"
+                 :inst {:template "percussion" :percinsts
+                        {{:id "wb1" :template "low-woodblock" :perc-note 57}
+                         {:id "wb2" :template "high-woodblock" :perc-note 64}}}}}
+  sprout( examp9(), "fomus9.ly", parts: parts)
+end
+
+;
+;; Percussion 2
+;
+
+process examp10 ()
+  for o from 0 to 20 by 1/2 
+  send("fms:note", time: o, dur: 1/2,
+       pitch: odds(.5, "wb1", "wb2"))
+end
+       
+begin
+  with parts = {{:id "perc" :name "Percussion"
+                 :inst {:template "percussion" :percinsts
+                        {{:id "wb1" 
+                          :template "low-woodblock" 
+                          :perc-note 57 
+                          :perc-voice 2}
+                         {:id "wb2" 
+                          :template "high-woodblock"
+                          :perc-note 64
+                          :perc-voice 1}}}}}
+  sprout( examp10(), "fomus10.ly", parts: parts)
+end
+
+;
+;; (Budget) Orchestra Score
+;
+
+process examp11-notes (p)
+  for n in {60 62 64}
+  for o from 0
+  send( "fms:note", part: p, dur: 1, pitch: n)
+  wait 1
+end
+  
+process examp11-parts (ps)
+  for p in ps
+  sprout( examp11-notes(p))
+end
+  
+begin
+  with parts = {{:id "fl1" :name "Flute 1" :inst "flute"}
+	        {:id "fl2" :name "Flute 2" :inst "flute"}
+	        {:id "cl2" :name "Clarinet 1" :inst "bflat-clarinet"}
+	        {:id "vln1" :name "Violin 1" :inst "violin"}
+	        {:id "vln2" :name "Violin 2" :inst "violin"}
+	        {:id "vc1" :name "Cello 1" :inst "cello"}
+	        {:id "vc2" :name "Cello 2" :inst "cello"}
+                {:id "tba" :name "Tuba" :inst "tuba"}},
+       sets = {:layout "orchestra"}
+  send( "fms:meas", time: 0, dur: 3)
+  sprout( examp11-parts({"fl1" "fl2" "cl2" "vln1" "vln2" "vc1" "vc2" "tba"}), 
+         "fomus11.ly", parts: parts, sets: sets)
+end
+
+;
+;; Small Ensemble Score
+;
+
+process examp12-notes (p)
+  for n in {60 62 64}
+  for o from 0
+  send( "fms:note", part: p, dur: 1, pitch: n)
+  wait 1
+end
+ 
+process examp12-parts (ps)
+  for p in ps
+  sprout( examp12-notes(p))
+end
+
+begin
+  with parts = {{:id "fl1" :name "Flute 1" :inst "flute"}
+	        {:id "fl2" :name "Flute 2" :inst "flute"}
+	        {:id "cl2" :name "Clarinet 1" :inst "bflat-clarinet"}
+	        {:id "vln1" :name "Violin 1" :inst "violin"}
+	        {:id "vln2" :name "Violin 2" :inst "violin"}
+	        {:id "vc1" :name "Cello 1" :inst "cello"}
+	        {:id "vc2" :name "Cello 2" :inst "cello"}
+                {:id "tba" :name "Tuba" :inst "tuba"}},
+       sets = {:layout "small-ensemble"}
+  send( "fms:meas", time: 0, dur: 3)
+  sprout( examp12-parts({"fl1" "fl2" "cl2" "vln1" "vln2" "vc1" "vc2" "tba"}), 
+         "fomus12.ly", parts: parts, sets: sets)
+end
+
+;
+;; 2 Part Polyphony
+;
+
+process polygen (len, minp, maxp)
+  repeat len
+  send("fms:note", voice: {1 2},
+       pitch: between(minp, maxp), dur: 1/4)
+  wait 1/4
+end
+
+begin
+  sprout( list(polygen(40, 50, 80),
+              polygen(40, 40, 70)), "fomus13.ly")
+end
+
+;
+;; Generate Prime Harmonics Gesture
+;
+
+process play-harmonics (note, beat, harm1, harm2, pname)
+  for harm from harm1 to harm2
+  for knum = key(hz(note) * harm)
+  send( "fms:note", dur: rhythm(beat), pitch: knum, part: pname)
+  wait rhythm(beat)
+end
+
+loop with procs = {} , parts = {}, 
+     sets = {:quartertones #t :tuplets 11}
+  for ph in {2 3 5 7 11}
+  for pn in {"c2" "c3" "c5" "c7" "c11"}
+  set procs &= play-harmonics("c1", 1 / ph, ph, ph * 4, pn) ,
+      parts &= concat(:id, pn, {:name "Cello" :inst "cello"})
+  finally
+  sprout( procs, "fomus14.ly", parts: parts, sets: sets)
+end

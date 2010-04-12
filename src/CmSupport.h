@@ -111,6 +111,8 @@ s7_pointer sal_tokenize_string(s7_pointer fil, s7_pointer ptr, s7_pointer sal2);
 s7_pointer sal_token_type(s7_pointer ptr);
 s7_pointer sal_token_string(s7_pointer ptr);
 s7_pointer sal_token_position(s7_pointer ptr);
+s7_pointer sal_load(char* str);
+s7_pointer sal_eval(String str, int typ);
 
 // midi ports
 
@@ -121,7 +123,9 @@ bool mp_open_output(int dev);
 bool mp_open_input(int dev);
 void mp_close_output(int dev);
 void mp_close_input(int dev);
-void mp_set_output_file(char* file);
+
+void mp_open_score(char* file, s7_pointer args);
+void mp_close_score();
 
 void mp_send_note(double time, double dur, double key, double vel, double chan);
 void mp_send_data(int type, double time, double chan, double data1, double data2);
@@ -142,7 +146,8 @@ s7_pointer mp_is_midi_hook(int op);
 
 // csound
 
-void cs_init_score(char* args);
+void cs_open_score(char* args);
+void cs_close_score();
 void cs_send_score(int typ, int inst, double time, char* pars);
 
 // fomus

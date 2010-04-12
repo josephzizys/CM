@@ -17,8 +17,8 @@
     <item name="Lists" file="lists.sal"/>
     <item name="Loop" file="loop.sal"/>
     <item name="Definitions" file="define.sal"/>
+    <item name="Files" file="files.sal"/>
     <item name="Processes" file="processes.sal"/>
-    <item name="Fomus" file="fomus.sal"/>
     <item name="SndLib" file="sndlib.sal"/>
   </menu>
 
@@ -30,8 +30,8 @@
     <item name="Lists" file="lists.scm"/>
     <item name="Loop" file="loop.scm"/>
     <item name="Definitions" file="define.scm"/>
+    <item name="Files" file="files.scm"/>
     <item name="Processes" file="processes.scm"/>
-    <item name="Fomus" file="fomus.scm"/>
   </menu>
 
   <menu name="Sal Examples">
@@ -52,12 +52,13 @@
     <item name="Csound" file="csound.sal"/>
     <item name="Input Hooks" file="input.sal"/>
     <item name="Plotting" file="plot.scm"/>
-    <item name="Fomus Examples" file="fomusexamples.sal"/>
+    <item name="Fomus" file="fomus.sal"/>
     <item name="Cellular Automata" file="automata.sal"/>
     <item name="OSC" file="osc.sal"/>
   </menu>
   
   <menu name="Scheme Examples">
+    <item name="Fomus" file="fomus.scm"/>
     <item name="Cellular Automata" file="automata.scm"/>
     <item name="Plotting" file="plot.scm"/>
     <item name="OSC" file="osc.scm"/>

@@ -103,7 +103,10 @@
     (ffi_mp_open_input bool "mp_open_input" int )
     (ffi_mp_close_output void "mp_close_output" int )
     (ffi_mp_close_input void "mp_close_input" int )
-    (ffi_mp_set_output_file void "mp_set_output_file" c-string )
+
+    (ffi_mp_open_score void "mp_open_score" c-string s7_pointer)
+    (ffi_mp_close_score void "mp_close_score"  )
+
     (ffi_mp_send_note void "mp_send_note" double double double double double)
     (ffi_mp_send_data void "mp_send_data" int double double double double)
     (ffi_mp_set_channel_mask void "mp_set_channel_mask" int)
@@ -119,7 +122,8 @@
     (ffi_mp_set_midi_hook bool "mp_set_midi_hook" int s7_pointer)
     (ffi_mp_is_midi_hook s7_pointer "mp_is_midi_hook" int)
 
-    (ffi_cs_init_score void "cs_init_score" c-string)
+    (ffi_cs_open_score void "cs_open_score" c-string)
+    (ffi_cs_close_score void "cs_close_score" )
     (ffi_cs_send_score void "cs_send_score" int int double c-string)
 
     (ffi_fms_open_score void "fms_open_score" bool)

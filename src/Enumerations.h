@@ -353,7 +353,7 @@ class ColorThemeIDs
   }
 
 };
-  
+
 /** HiliteIDs enumerate logical categories for syntax highlighting **/
   
 typedef int HiliteID;
@@ -1071,6 +1071,66 @@ class TriggerIDs
   }
 };
 
+class ScanIDs
+{
+ public:
+
+  // Syntax Char Types
+  enum 
+  {
+    SYN_WHITE = 1,
+    SYN_WORD,
+    SYN_SYMBOL,
+    SYN_COMMENT, 
+    SYN_PREFIX,
+    SYN_STRING,
+    SYN_OPEN,
+    SYN_CLOSE,
+    SYN_PUNCT,
+    SYN_ESCAPE
+  };
+
+  // Scan Types
+  static const int Empty=0;
+  static const int MoveExpressions=1;
+  static const int MoveTokens=2;
+  static const int MoveWhiteAndComments=3;
+
+  // Scan Results
+  enum
+  {
+    SCAN_MISMATCH = -3,   // Shouldn't happen
+    SCAN_UNMATCHED,
+    SCAN_UNLEVEL,
+    SCAN_EMPTY,    // must be zero
+    SCAN_TOKEN,
+    SCAN_STRING,
+    SCAN_LIST,
+    SCAN_COMMENT,
+    SCAN_OPEN,
+    SCAN_CLOSE,
+    SCAN_PUNCT
+  };
+  static const String scanResultToString(int res)
+  {
+    switch (res)
+      {
+      case SCAN_MISMATCH: return T("mismatch");
+      case SCAN_UNMATCHED: return T("unmatched");
+      case SCAN_UNLEVEL: return T("unlevel");
+      case SCAN_EMPTY: return T("empty");
+      case SCAN_TOKEN: return T("token");
+      case SCAN_STRING: return T("string");
+      case SCAN_LIST: return T("list");
+      case SCAN_COMMENT: return T("comment");
+      case SCAN_OPEN: return T("open");
+      case SCAN_CLOSE: return T("close");
+      case SCAN_PUNCT: return T("puctuation");
+      default: return T("unknown");
+      }
+  }
+};
+
 class SalIDs
 {
  public:
@@ -1264,8 +1324,9 @@ class SalIDs
     Sal2ProcessWaitRule = 0xa000,
     Sal2FileStatementRule = 0xa100,
     Sal2StatementRule = 0xa200,
-    SAL_RULE_END = 0xa300,
-    SAL_TYPE_END = 0xa300
+    Sal2StatementSequenceRule = 0xa300,
+    SAL_RULE_END = 0xa400,
+    SAL_TYPE_END = 0xa400
   };
 
   // sal tokenizer values
@@ -1297,7 +1358,7 @@ class SalIDs
   static const bool isSalClausalType(int i) {return (SAL_CONSTITUENT_BEG < i) && (i < SAL_CLAUSAL_END);}
   static const bool isSalRuleType(int i) {return (SAL_RULE_BEG < i) && (i < SAL_RULE_END);}
   static const bool isSalTypeEqual( int a, int b) {return ((a >> 8) == (b >> 8));}
-  static const int SalTypeDataBits(int t) {return (t & 0xff);}
+  static const int  SalTypeDataBits(int t) {return (t & 0xff);}
   static const bool isSalBlockOpen(int t) {return SalTypeDataBits(t)==SalBlockOpen;}
   static const bool isSalBlockClose(int t) {return SalTypeDataBits(t)==SalBlockClose;}
 };

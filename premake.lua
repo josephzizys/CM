@@ -120,7 +120,6 @@ for i = 1,numtargets do
 
    mypackage.files = {
 
-      "src/Scanner.cpp", "src/Scanner.h",
       "src/Syntax.cpp", "src/Syntax.h",
       "src/CmSupport.cpp", "src/CmSupport.h",
       "src/Console.cpp", "src/Console.h",

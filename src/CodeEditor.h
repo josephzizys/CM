@@ -15,47 +15,6 @@ class SynTok;
 
 /*=======================================================================*/
 
-class ScanFlags
-{
- public:
-  static const int Empty=0;
-  static const int MoveExpressions=1;
-  static const int MoveTokens=2;
-  static const int MoveWhiteAndComments=3;
-  enum
-  {
-    SCAN_MISMATCH = -3,   // Shouldn't happen
-    SCAN_UNMATCHED,
-    SCAN_UNLEVEL,
-    SCAN_EMPTY,    // must be zero
-    SCAN_TOKEN,
-    SCAN_STRING,
-    SCAN_LIST,
-    SCAN_COMMENT,
-    SCAN_OPEN,
-    SCAN_CLOSE,
-    SCAN_PUNCT
-  };
-  static const String scanResultToString(int res)
-  {
-    switch (res)
-      {
-      case SCAN_MISMATCH: return T("mismatch");
-      case SCAN_UNMATCHED: return T("unmatched");
-      case SCAN_UNLEVEL: return T("unlevel");
-      case SCAN_EMPTY: return T("empty");
-      case SCAN_TOKEN: return T("token");
-      case SCAN_STRING: return T("string");
-      case SCAN_LIST: return T("list");
-      case SCAN_COMMENT: return T("comment");
-      case SCAN_OPEN: return T("open");
-      case SCAN_CLOSE: return T("close");
-      case SCAN_PUNCT: return T("puctuation");
-      default: return T("unknown");
-      }
-  }
-};
-
 class CodeBuffer : public CodeEditorComponent //, public Timer
 {
  public:
@@ -150,26 +109,12 @@ class CodeBuffer : public CodeEditorComponent //, public Timer
   bool findPrevious(String str, bool wrap=true);
   bool findNext(String str, bool wrap=true);
 
-  // Scanning
-  bool scanEOL(CodeDocument::Position& pos);
-  bool scanBOL(CodeDocument::Position& pos);
-  bool scanToken(CodeDocument::Position& pos, const int dir, const CodeDocument::Position end);
-  bool scanPrefix(CodeDocument::Position& pos, const int dir, const CodeDocument::Position end);
-  bool scanCharacter(tchar chr, CodeDocument::Position& pos, const int dir, const CodeDocument::Position end);
-  int scanCode(CodeDocument::Position& pos, bool forward, int mode, int limit=-1);
-
   void eval(bool expandonly);
   void evalLisp(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
   void evalSal(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
-  int backwardLispExpr(CodeDocument::Position& from, CodeDocument::Position& to);
-  int backwardSal1Expr(CodeDocument::Position& from, CodeDocument::Position& to);
-  int backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Position& to);
   void indent();
-  int indentLisp();
-  int indentSal2();
-  int indentSal1();
-  int lastIndented(Array<int>& ary, bool index);
-  bool isCommaTerminatedLine(int line);
+  //  int lastIndented(Array<int>& ary, bool index);
+  //  bool isCommaTerminatedLine(int line);
   bool tokenizeSal(const CodeDocument::Position start, const CodeDocument::Position end,
                    OwnedArray<SynTok>& tokens);
   int isNumberToken(const String str);

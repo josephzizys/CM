@@ -296,7 +296,7 @@ Returns the multiplication of zero or more <var>nums</var>. If a single <var>lis
   <tr class="entry">
     <td class="formals">
       <span class="funcname">divide</span>
-      (<var class="arg">num</var> <var class="rest">...</var>)
+      (<var class="arg">num</var><var class="rest">...</var>)
     </td>
     <!-- td class="label">Function</td -->
   </tr>
@@ -331,7 +331,6 @@ Returns the multiplication of zero or more <var>nums</var>. If a single <var>lis
   </blockquote>
   <!-- END DEFINITION -->
   
-  
   <!-- DEFINITION -->
   <table class="entry" id="deltas">
   <tr class="entry">
@@ -357,7 +356,107 @@ Returns a list of the deltas (differences) between adjacent numbers in <var>nums
 </blockquote>
 <!-- END DEFINITION -->
 
+<!-- DEFINITION -->
+<table class="entry" id="less?">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">less?</span>
+      (<var class="arg">num</var><var class="rest">...</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">less?</span>
+      (<var class="arg">list</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+    </tr>
+    <tr><td class="retval" colspan="2">&rarr; boolean</td></tr>
+</table>
+  <blockquote>
+  <p>
+  Returns true if the numbers in <var>nums...</var> or in a single <var>list</var> of numbers are in monotonically increasing order, otherwise returns false.
+  </p>
+  </blockquote>
+<!-- END DEFINITION -->
+  
+<!-- DEFINITION -->
+<table class="entry" id="greater?">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">greater?</span>
+      (<var class="arg">num</var><var class="rest">...</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">greater?</span>
+      (<var class="arg">list</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+    </tr>
+    <tr><td class="retval" colspan="2">&rarr; boolean</td></tr>
+</table>
+  <blockquote>
+  <p>
+  Returns true if the numbers in <var>nums...</var> or in a single <var>list</var> of numbers are in monotonically decreasing order, otherwise returns false.
+  </p>
+  </blockquote>
+  <!-- END DEFINITION -->
+  
+<!-- DEFINITION -->
+<table class="entry" id="less?">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">less=?</span>
+      (<var class="arg">num</var><var class="rest">...</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">less=?</span>
+      (<var class="arg">list</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+    </tr>
+    <tr><td class="retval" colspan="2">&rarr; boolean</td></tr>
+</table>
+  <blockquote>
+  <p>
+  Returns true if the numbers in <var>nums...</var> or in a single <var>list</var> of numbers are in monotonically nondecreasing order, otherwise returns false.
+  </p>
+  </blockquote>
+  <!-- END DEFINITION -->
+  
 
+<!-- DEFINITION -->
+<table class="entry" id="greater?">
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">greater=?</span>
+      (<var class="arg">num</var><var class="rest">...</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+  </tr>
+  <tr class="entry">
+    <td class="formals">
+      <span class="funcname">greater=?</span>
+      (<var class="arg">list</var>)
+    </td>
+    <!-- td class="label">Function</td -->
+    </tr>
+    <tr><td class="retval" colspan="2">&rarr; boolean</td></tr>
+</table>
+  <blockquote>
+  <p>
+  Returns true if the numbers in <var>nums...</var> or in a single <var>list</var> of numbers are in monotonically nonincreasing order, otherwise returns false.
+  </p>
+  </blockquote>
+<!-- END DEFINITION -->
+  
 <!-- DEFINITION -->
 <table class="entry" id="log10">
   <tr class="entry">

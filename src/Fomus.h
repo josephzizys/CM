@@ -196,17 +196,19 @@ class FomusSyntax : public Syntax
  public:
   FomusSyntax();
   ~FomusSyntax() ;
+  // juce syntax tokens start at 0 or the defaults dont work
+  static const int TokenError = 0;
+  static const int TokenPlaintext = 1;
 
-  bool isTopLevel(String line);
-  int getIndent (const String fomus, int bot, int top, int beg);
-  HiliteID getHilite (const String fomus, int start, int end);
-  void eval(String text, bool isRegion=false, bool expand=false);
-  void stickkeyword(String str, const int hl);
-
-  void setColorTheme(XmlElement* theme);
   const StringArray getTokenTypes () ;
   const Colour getDefaultColour (const int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
+
+  int getIndentation(CodeDocument& document, int line);
+  int backwardExpr(CodeDocument& document, CodeDocument::Position& start, CodeDocument::Position& end);
+  void eval(CodeDocument& document, const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region);
+
+  void stickkeyword(String str, const int hl);
 
   juce_DeclareSingleton(FomusSyntax, true)
 };

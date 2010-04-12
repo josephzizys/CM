@@ -99,6 +99,38 @@
               (map (lambda (x) (/ arg x)) (car args))
               (apply / arg args)))))
 
+(define (less? a . args)
+  (if (pair? a)
+    (if (null? args)
+        (apply < a)
+        (error "less?: too many arguments: ~S" 
+               (cons a args)))
+    (apply < a args)))
+
+(define (greater? a . args)
+  (if (pair? a)
+    (if (null? args) 
+        (apply > a)
+        (error "greater?: too many arguments: ~S" 
+               (cons a args)))
+    (apply > a args)))
+
+(define (less=? a . args)
+  (if (pair? a)
+    (if (null? args) 
+        (apply <= a)
+        (error "less=?: too many arguments: ~S" 
+               (cons a args)))
+    (apply <= a args)))
+
+(define (greater=? a . args)
+  (if (pair? a)
+    (if (null? args)
+        (apply >= a)
+        (error "greater=?: too many arguments: ~S"
+               (cons a args)))
+    (apply >= a args)))
+
 (define (deltas . args)
   (if (null? args)
       (list)

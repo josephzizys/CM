@@ -14,7 +14,6 @@
 #include "Main.h"
 #include "Audio.h"
 #include "CommonLisp.h"
-#include "Scanner.h"
 #include "Syntax.h"
 #ifdef LIBLO
 #include "Osc.h"

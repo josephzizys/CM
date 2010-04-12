@@ -123,6 +123,23 @@ EXAMPLE: BUILDING SNDLIB AND CM FROM SOURCES ON WINDOWS
   7. Double click the file 'cm.sln' , select the RELEASE configuration
   in the pulldown menu and press F7.
 
+Building a static, uninstalled liblo for CM
+
+         $ cd liblo-0.26
+         $ ./configure --enable-static=yes --enable-shared=no
+         $ make
+         $ mkdir lib
+         $ cp src/.libs/liblo.a lib
+         $ mkdir include
+         $ cp -r lo include
+         
+         $ cd ../cm
+         $ premake ... --liblo ../liblo-0.26
+
+libtool: link: ar cru .libs/liblo.a  liblo_la-address.o liblo_la-send.o liblo_la-message.o liblo_la-server.o liblo_la-method.o liblo_la-server_thread.o liblo_la-blob.o liblo_la-bundle.o liblo_la-timetag.o liblo_la-pattern_match.o
+libtool: link: ranlib .libs/liblo.a
+
+
 ==========================================================================
                                  CM IN EMACS                             
 ==========================================================================

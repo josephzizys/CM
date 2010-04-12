@@ -133,7 +133,7 @@ loop repeat 10
   for key = random(128)
   for maj = list(key , key + 4, key + 7)
   print("a random major chord: ", maj)
-  finally( print "All done!"  )
+  finally print("All done!"  )
 end
 
 ; TODO: change the preceding loop to include printing random minor,

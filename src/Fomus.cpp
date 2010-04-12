@@ -1839,66 +1839,13 @@ void Fomus::renameScoreDialog()
 // EDITOR
 // ------------------------------------------------------------------------------------------------------------------------
 
-void FomusSyntax::setColorTheme(XmlElement* theme)
-{
-  //  colors[TokenPlaintext]=ColorThemeIDs::getColorThemeColor(theme, ColorThemeIDs::Plaintext);
-}
-
-const StringArray FomusSyntax::getTokenTypes () 
-{
-  // FIXME FOR NEW CODE EDITOR
-  const tchar* const tt [] = {T("Text")}; 
-  return StringArray((const tchar**)tt);
-}
-
-const Colour FomusSyntax::getDefaultColour (const int tokenType)
-{
-  // FIXME FOR NEW CODE EDITOR
-  return Colours::black;
-}
-
-int FomusSyntax::readNextToken (CodeDocument::Iterator &source)
-{
-  // FIXME FOR NEW CODE EDITOR
-  source.skipWhitespace();
-  return 0;
-}
-
-void FomusSyntax::stickkeyword(String str, const int hl) {
-  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
-  str[0] = toupper(str[0]);
-  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
-  for (int i = 1; i < str.length(); ++i) str[i] = toupper(str[i]);
-  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
-}
-
 FomusSyntax::FomusSyntax () // syntab
-  :Syntax(T(" "), // whitechars
-	  T("" /*"qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"*/), // wordchars 
-	  T("~!@#$%^&*-_?/'\"\\[]"), // symbolchars
-	  T(""), // commentchars
-	  T(""), // prefixchars
-	  T(""), // stringchars
-	  T(""), // openchars
-	  T(""), // closechars
-	  T(""), // punctchars
-	  T("")) // escapechars
+  : Syntax()
 {
-  coloring = true;
   type=TextIDs::Fomus;
-#ifdef GRACE
-  tabwidth=Preferences::getInstance()->getIntProp(T("FomusTabWidth"), 2);
-#else
-  tabwidth=2;
-#endif
-  hilites[HiliteIDs::String]=Colours::darkgreen;
-  hilites[HiliteIDs::Comment]=Colours::darkcyan;
-  hilites[HiliteIDs::Hilite4]=Colours::darkorange; // settings
-  hilites[HiliteIDs::Hilite5]=Colours::darkred; // built-in
-  
-  hilites[HiliteIDs::Hilite6]=Colours::darkgreen;
-  hilites[HiliteIDs::Hilite7]=Colours::darkblue; 
-  hilites[HiliteIDs::Hilite8]=Colours::darkmagenta;
+
+  setCharSyntax(T("~!@#$%^&*-_?/'\"\\[]"), ScanIDs::SYN_SYMBOL);
+
   stickkeyword(T("voice"), HiliteIDs::Hilite7);
   stickkeyword(T("voi"), HiliteIDs::Hilite7);
   stickkeyword(T("vo"), HiliteIDs::Hilite7);
@@ -1958,15 +1905,64 @@ FomusSyntax::~FomusSyntax()
   clearSingletonInstance();
 }
 
-bool FomusSyntax::isTopLevel(String line)
-{
-  // true if line is not white in column zero.
-  if ( line == String::empty )
-    return false;
-  else if ( !char_white_p(syntab, line[0]) )
-    return true;
-  else return false;
+void FomusSyntax::stickkeyword(String str, const int hl) {
+  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
+  str[0] = toupper(str[0]);
+  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
+  for (int i = 1; i < str.length(); ++i) str[i] = toupper(str[i]);
+  tokens.insert(SynTokMap::value_type(str, new SynTok(str, 0, hl)));
 }
+
+const StringArray FomusSyntax::getTokenTypes () 
+{ 
+  // FIXME FOR NEW CODE EDITOR
+
+  // juce's CodeEditorComponent uses this array to name the
+  // Tokenizer's tokenTypes, where each array index is a tokenType and
+  // the string at that postion is its name. we use this array to map
+  // tokenTypes to ColorTheme attribute names in the Xml ColorTheme.
+  // for attributes see ColorThemeIDs class in Enumerations.h
+
+  StringArray names;
+
+  // Color Theme Attribute       Token Type
+  //-------------------------------------------
+  names.add(T("error"));      // TokenError
+  names.add(T("plaintext"));  // TokenPlaintext
+  return names;
+}
+
+const Colour FomusSyntax::getDefaultColour (const int tokenType)
+{
+  // FIXME FOR NEW CODE EDITOR
+  return Colours::black;
+}
+
+int FomusSyntax::readNextToken (CodeDocument::Iterator &source)
+{
+  // FIXME FOR NEW CODE EDITOR
+  source.skipToEndOfLine(); 
+  return TokenPlaintext;
+}
+
+int FomusSyntax::getIndentation(CodeDocument& document, int line)
+{
+  // -1 means no special syntactic indentation (normal tabbing)
+  return -1;
+}
+
+int FomusSyntax::backwardExpr(CodeDocument& document, CodeDocument::Position& start, CodeDocument::Position& end)
+{
+  // 0 means no backward expression parsing
+  return 0;
+}
+void FomusSyntax::eval(CodeDocument& document, const CodeDocument::Position start, const CodeDocument::Position end, 
+                       bool expand, bool region)
+{
+  // no expression evaluation or macro expansion
+}
+
+/*
 
 int FomusSyntax::getIndent (const String text, int i, int top, int beg)
 {
@@ -1989,7 +1985,7 @@ int FomusSyntax::getIndent (const String text, int i, int top, int beg)
     if (x == '[') {sta.push(col + 1); br = true; continue;}
     if (x == ']') {if (!sta.empty()) sta.pop(); br = false; continue;}
     if (br) continue;
-    if (x == '{') {sta.push(sta.empty() ? tabwidth : sta.top() + tabwidth); continue;}
+    if (x == '{') {sta.push(sta.empty() ? 1 : sta.top() + 1); continue;}
     if (x == '}') {if (!sta.empty()) sta.pop(); continue;}
     if (x == '(' || x == '<') {sta.push(col + 1); continue;}
     if (x == ')' || x == '>') {if (!sta.empty()) sta.pop(); continue;}
@@ -2051,4 +2047,5 @@ void FomusSyntax::eval(String text, bool isRegion, bool expand) {
   fapi_fomus_run(f); // fomus destroys instance automatically
 }
 
+*/
 #endif

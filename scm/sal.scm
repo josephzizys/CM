@@ -567,8 +567,9 @@
   (define Sal2ProcessWaitRule #xa000)
   (define Sal2FileStatementRule #xa100)
   (define Sal2StatementRule #xa200)
-  (define SAL_RULE_END #xa300)
-  (define SAL_TYPE_END #xa300)
+  (define Sal2StatementSequenceRule #xa300)
+  (define SAL_RULE_END #xa400)
+  (define SAL_TYPE_END #xa400)
   )
 
 ;;; The parser attempts to match rule patterns against (typed) tokens
@@ -1788,9 +1789,9 @@
   (lambda (unit info errf)
     (cons 'begin (emit (parse-unit-parsed unit) info errf))))
     
-(define (sal str tokens expand )
+(define (sal str tokens expand multi)
   (if (pair? tokens)
-      (let* ((rule SalStatementRule)
+      (let* ((rule (if multi SalStatementSequenceRule SalStatementRule))
              (scm (parse rule tokens #f 0 #f #f)))
         (cond ((parse-error? scm)
                (print-sal-error str scm #f)
@@ -2113,17 +2114,24 @@
     (let* ((args (parse-unit-parsed unit))
            (file (emit (first args) info errf))
            (opts (emit (second args) info errf))
-           (vars (if (third args) (emit (parse-unit-parsed vars) info errf) (list)))
+           (vars (if (third args) (emit (parse-unit-parsed (third args)) info errf) (list)))
            (body (emit (fourth args) info errf))
-           (oofd (genysm "oofd")) ; data returned by open-output-file
+           (data (gensym "data")) ; data returned by open-output-file
+           (flag (gensym "flag")) ; success flag
            )
-      (set! vars (append vars (list (list oofd #f))))
-      `(let* ,(emit (parse-unit-parsed vars) info errf)
-         (set! oofd, (open-output-file ,file ,@opts))
-         ,@body
-         (close-output-file ,file ,oofd))
-      ))
-)
+      `(let ((,data ,0)
+             (,flag #f))
+         (dynamic-wind
+             (lambda ()
+               (set! ,data (open-file ,file ,@opts)))
+             (lambda ()
+               (let* ,vars
+                 ,@body
+                 (set! ,flag #t)
+                 (void)))
+             (lambda () (close-file ,data ,flag))
+           ))))
+  )
 
 (defrule Sal2StatementRule
   (or Sal2BeginStatementRule
@@ -2140,37 +2148,29 @@
   #f
   #f)
 
-(define (sal2 str tokens expand)
-  (let ((arry #f)
-        (code #f))
-    ;; if this function is called in scheme or from emacs then
-    ;; tokenzing has not already taken place
-    (if (not (pair? tokens))
-        (begin (set! arry (ffi_sal_allocate_tokens))
-               (set! tokens (ffi_sal_tokenize_string str arry #t))
-               ))
-    (cond ((or (null? tokens) (not tokens)) 
-           ;; either tokenizing failed (and an error has already been
-           ;; reported) or the input was empty. in either case return
-           ;; +s7-error+ so that the C side doesnt attempt to print
-           ;; any values on return.
-           (if arry (ffi_sal_free_tokens arry))
-           +s7-error+)
-          (else
-           ;; call sal parser to generate scheme code
-           (set! code (parse Sal2StatementRule tokens #f 0 #f #f))
-           ;; no matter what gc the tokenarry
-           (if arry (ffi_sal_free_tokens arry))
-           (cond ((parse-error? code)
-                  (print-sal-error str code #f) ; signal error
-                  +s7-error+)
-                 (expand 
-                  (ffi_print_values (format #f "~S" code ))
-                  +s7-error+ ;; signal no value printing
-                  )
-                 (else
-                  (eval code (interaction-environment))))
-           ))))
+(defrule Sal2StatementSequenceRule (+ Sal2StatementRule)
+  (lambda (args errf)
+    (make-parse-unit Sal2StatementSequenceRule
+		     args (parse-unit-position (first args))))
+  (lambda (unit info errf)
+    (cons 'begin (emit (parse-unit-parsed unit) info errf))))
+
+(define (sal2 str tokens expand multi)
+  (if (pair? tokens)
+      (let ((code #f)
+            (rule (if multi Sal2StatementSequenceRule Sal2StatementRule))
+            )
+        (set! code (parse rule tokens #f 0 #f #f))
+        (cond ((parse-error? code)
+               (print-sal-error str code #f) ; signal error
+               +s7-error+)
+              (expand ;; macroexpanding
+               (ffi_print_values (format #f "~S" code ))
+               +s7-error+ ;; signal no value printing
+               )
+              (else ;; evaluation
+               (eval code (interaction-environment)))))
+      +s7-error+))
 
 ;;;
 ;;; Sal Runtime Support
@@ -2220,22 +2220,75 @@
   (values))
 
 (define (sal:load file)
-  (if (equal? "sal" (pathname-type file))
-      (load-sal-file (full-pathname file))
-      (ffi_load file))
+;;  (if (equal? "sal" (pathname-type file))
+;;      (load-sal-file (full-pathname file))
+;;      (ffi_load file))
+  (ffi_load file)
   (print-output (string-append "Loaded " file "\n" ))
   )
 
-(define (load-sal-file file)
-  (let ((toks #f)
-        (args #f))
-    (dynamic-wind (lambda () #f)
-        (lambda ()
-          (set! toks (ffi_sal_allocate_tokens)) ; alloc C array for tokens
-          (set! args (ffi_sal_tokenize_file file toks #f))
-          (if (pair? args)
-              (sal (car args) (cdr args))))
-        (lambda () (if toks (ffi_sal_free_tokens toks))))))
+;;(define (load-sal-file file)
+;;  (let ((toks #f)
+;;        (args #f))
+;;    (dynamic-wind (lambda () #f)
+;;        (lambda ()
+;;          (set! toks (ffi_sal_allocate_tokens)) ; alloc C array for tokens
+;;          (set! args (ffi_sal_tokenize_file file toks #f))
+;;          (if (pair? args)
+;;              (sal (car args) (cdr args))))
+;;        (lambda () (if toks (ffi_sal_free_tokens toks))))))
+
+(define (sal-enums enum spec c?)
+  (let ((num #f)
+	(nam #f)
+	(lsh #f))
+    (cond ((pair? enum)
+	   (set! nam (car enum))
+	   (set! lsh (cadr enum)))
+	  (else 
+	   (set! nam enum)
+	   (set! lsh 0)))
+    (if c?
+	(format #t "~%  enum ~A {~%    // generated by (sal-enums )~%" nam)
+	(format #t "~%(begin~%  ;; generated by (sal-enums)~%"))
+    (do ((tail spec (cdr tail))
+	 (this #f)
+	 (name #f)
+	 (data #f)
+	 (enum #f))
+	((null? tail)
+	 #f)
+      (set! this (car tail))
+      (if (pair? this)
+	  (begin (set! name (car this))
+		 (cond ((number? (cadr this))
+			(set! num (cadr this)))
+		       ((eq? (cadr this) '+)
+			(set! num (+ num 1)))
+		       ((eq? (cadr this) '*)
+			(set! num num))
+		       (else (error "second element ~A not num * or +"
+				    (cadr this))))
+		 (if (not (null? (cddr this)))
+		     (set! data (caddr this))
+		     (set! data 0)))
+	  (begin
+	    (set! name this)
+	    (set! num (+ num 1))
+	    (set! data 0)))
+      (set! enum (+ (ash num lsh) data))
+      (if (not c?)
+	  (format #t "  (define ~A #x~X)~%" name enum)
+	  (begin 
+	    (format #t "    ~A = 0x~X" name enum)
+	    (if (not (null? (cdr tail))) (format #t ","))
+	    (format #t "~%"))))
+    (if c? (format #t "  };~%")
+	(format #t "  )~%"))
+    )
+  #t
+  )
+
 
 #|
 
@@ -2438,69 +2491,18 @@
     Sal2ProcessWaitRule
     Sal2FileStatementRule
     Sal2StatementRule
+    Sal2StatementSequenceRule
 
     SAL_RULE_END
     (SAL_TYPE_END *)
  )
 )
 
-(define (sal-enums enum spec c?)
-  (let ((num #f)
-	(nam #f)
-	(lsh #f))
-    (cond ((pair? enum)
-	   (set! nam (car enum))
-	   (set! lsh (cadr enum)))
-	  (else 
-	   (set! nam enum)
-	   (set! lsh 0)))
-    (if c?
-	(format #t "~%  enum ~A {~%    // generated by (sal-enums )~%" nam)
-	(format #t "~%(begin~%  ;; generated by (sal-enums)~%"))
-    (do ((tail spec (cdr tail))
-	 (this #f)
-	 (name #f)
-	 (data #f)
-	 (enum #f))
-	((null? tail)
-	 #f)
-      (set! this (car tail))
-      (if (pair? this)
-	  (begin (set! name (car this))
-		 (cond ((number? (cadr this))
-			(set! num (cadr this)))
-		       ((eq? (cadr this) '+)
-			(set! num (+ num 1)))
-		       ((eq? (cadr this) '*)
-			(set! num num))
-		       (else (error "second element ~A not num * or +"
-				    (cadr this))))
-		 (if (not (null? (cddr this)))
-		     (set! data (caddr this))
-		     (set! data 0)))
-	  (begin
-	    (set! name this)
-	    (set! num (+ num 1))
-	    (set! data 0)))
-      (set! enum (+ (ash num lsh) data))
-      (if (not c?)
-	  (format #t "  (define ~A #x~X)~%" name enum)
-	  (begin 
-	    (format #t "    ~A = 0x~X" name enum)
-	    (if (not (null? (cdr tail))) (format #t ","))
-	    (format #t "~%"))))
-    (if c? (format #t "  };~%")
-	(format #t "  )~%"))
-    )
-  #t
-  )
-      
 ;; data bits enum (bits 0-7 are operator weights)
 (sal-enums 'SalTypeData '((SalBlockOpen 16) SalBlockClose) #f)
 (sal-enums 'SalTypeData '((SalBlockOpen 16) SalBlockClose) #t)
 ;; sal parser types
 (sal-enums '(SalTypes 8) SalTypes #f)
 (sal-enums '(SalTypes 8) SalTypes #t)
-
 |#
 

@@ -1405,8 +1405,8 @@ void CodeBuffer::matchParens()
   CodeDocument::Position pos (getCaretPos());
   pos.moveBy(-1);
   int b=pos.getPosition();
-  int scan=scanCode(pos, false, ScanFlags::MoveExpressions);
-  if (scan<=SCAN_EMPTY)
+  int scan=syntax->scanCode(document, pos, false, ScanIDs::MoveExpressions);
+  if (scan<=ScanIDs::SCAN_EMPTY)
     return;
   int a=pos.getPosition();
   if (a<b)
@@ -1526,7 +1526,7 @@ void CodeBuffer::isChanged(bool ch)
 
 int CodeBuffer::getTextType()
 {
-  return syntax->getType();
+  return syntax->getTextType();
 }
 
 bool CodeBuffer::isTextType(int type)
@@ -1654,56 +1654,6 @@ bool CodeBuffer::isEOL()
   return (here.getIndexInLine()==there.getIndexInLine());
 }
 
-bool CodeBuffer::lookingAt(const CodeDocument::Position pos, const String text, const bool forward, const bool delimited)
-{
-  // return true if buffer contents matches text starting at pos,
-  // which must be ON the first char to check. if delimited is true
-  // then the text must match as a delimited word.
-  CodeDocument::Position at (pos);
-  int len=text.length();
-  if (forward)
-    {
-      CodeDocument::Position end=getEOB();
-      int i=0;
-      for ( ; i<len && at!=end; i++)
-        {
-          //String str=T("comparing ");
-          //str << at.getCharacter() << T("&") << text[i] << T("\n");
-          //std::cout << str.toUTF8();
-        if (at.getCharacter() != text[i])
-          return false;
-        else
-          at.moveBy(1);
-        }
-      //std::cout << "done, i==len: " << (i==len) << " at==end: "  << (at==end) << "\n";
-      if (i==len)
-        return (delimited) ? ((at==end) || !char_token_p(syntax->syntab, at.getCharacter())) : true;
-      return false;
-
-    }
-  else
-    {
-      CodeDocument::Position end=getBOB();
-      bool b=false;
-      int i=len-1;
-      for ( ; i>=0; i--)
-        if (at.getCharacter() != text[i])
-          return false;
-        // at this point we've matched at position i
-        else if (at==end)
-          {
-            i--;    // still increment i
-            b=true; // note we matched at bob
-            break;
-          }
-        else at.moveBy(-1);
-
-      if (i<0 )
-        return (delimited) ? (b || !char_token_p(syntax->syntab, at.getCharacter())) : true;
-      return false;
-    }
-}
-
 /*=======================================================================*
                          Emacs Cursor Motion Functions
  *=======================================================================*/
@@ -1752,12 +1702,12 @@ void CodeBuffer::moveWordForward(bool sel)
   int loc=pos.getPosition();
   int eob=getEOB().getPosition();
   // skip over non word, non token characters
-  while (loc<eob && !(char_word_p(syntax->syntab, pos.getCharacter()) ||
-                      char_symbol_p(syntax->syntab, pos.getCharacter())))
+  while (loc<eob && !(syntax->isWordChar(pos.getCharacter()) ||
+                      syntax->isSymbolChar(pos.getCharacter())))
     pos.setPosition(++loc);
   // skip over word or token characters
-  while (loc<eob && (char_word_p(syntax->syntab, pos.getCharacter()) ||
-                     char_symbol_p(syntax->syntab, pos.getCharacter())))
+  while (loc<eob && (syntax->isWordChar(pos.getCharacter()) ||
+                     syntax->isSymbolChar(pos.getCharacter())))
     pos.setPosition(++loc);
   moveCaretTo(pos, sel);
 }
@@ -1771,12 +1721,12 @@ void CodeBuffer::moveWordBackward(bool sel)
   // in backwards scanning cursor is always 1 past starting position
   pos.setPosition(--loc); 
   // skip over non word, non token characters
-  while (loc>bob && !(char_word_p(syntax->syntab, pos.getCharacter()) ||
-                      char_symbol_p(syntax->syntab, pos.getCharacter())))
+  while (loc>bob && !(syntax->isWordChar(pos.getCharacter()) ||
+                      syntax->isSymbolChar(pos.getCharacter())))
     pos.setPosition(--loc);
   // skip over word or token characters
-  while (loc>bob && (char_word_p(syntax->syntab, pos.getCharacter()) ||
-                     char_symbol_p(syntax->syntab, pos.getCharacter())))
+  while (loc>bob && (syntax->isWordChar(pos.getCharacter()) ||
+                     syntax->isSymbolChar(pos.getCharacter())))
     pos.setPosition(--loc);
   // loc is is now 1 BELOW position.
   pos.setPosition(loc+1);
@@ -1786,7 +1736,7 @@ void CodeBuffer::moveWordBackward(bool sel)
 void CodeBuffer::moveExprForward(bool sel)
 {
   CodeDocument::Position pos (getCaretPos());
-  int scan=scanCode(pos, true, ScanFlags::MoveExpressions);
+  int scan=syntax->scanCode(document, pos, true, ScanIDs::MoveExpressions);
   if (scan<0)
     PlatformUtilities::beep();
   else
@@ -1798,7 +1748,7 @@ void CodeBuffer::moveExprBackward(bool sel)
   CodeDocument::Position pos (getCaretPos());
   // if moving backwards the cursor is one char beyond start of scan
   pos.moveBy(-1);
-  int scan=scanCode(pos, false, ScanFlags::MoveExpressions);
+  int scan=syntax->scanCode(document, pos, false, ScanIDs::MoveExpressions);
   if (scan<0)
     PlatformUtilities::beep();
   else
@@ -2083,9 +2033,10 @@ void CodeBuffer::test(bool forward)
 
 void CodeBuffer::eval(bool expandonly)
 {
-  int type=getTextType();
+  if (!TextIDs::canExecute(getTextType()))
+    return;
   int regn=getHighlightedRegionLength();
-  int scan=SCAN_EMPTY;
+  int scan=ScanIDs::SCAN_EMPTY;
   Array<int> epos; // positions of backward exprs
   CodeDocument::Position bot (getCaretPos());
   CodeDocument::Position top (getCaretPos());
@@ -2104,16 +2055,12 @@ void CodeBuffer::eval(bool expandonly)
     {
       ////std::cout << n++ << " before backwardExpr, bot=" << bot.getPosition() << ", top=" << top.getPosition() << "\n";
 
-      if (type==TextIDs::Lisp)
-        scan=backwardLispExpr(bot, top);
-      else if (type==TextIDs::Sal)
-        scan=backwardSal1Expr(bot, top);
-      else if (type==TextIDs::Sal2)
-        scan=backwardSal2Expr(bot, top);
-      ////std::cout << "after backwardExpr, scan=" << scan << ", bot="
-      ////      << bot.getPosition() << ", top=" << top.getPosition() 
-      ////      << "expr='" << document.getTextBetween(bot, top).toUTF8() << "'"
-      ////      << "\n";
+      scan=syntax->backwardExpr(document, bot, top);
+
+      //      std::cout << "after backwardExpr, scan=" << scan << ", bot="
+      //            << bot.getPosition() << ", top=" << top.getPosition() 
+      //            << ", expr='" << document.getTextBetween(bot, top).toUTF8() << "'"
+      //            << "\n";
       
       // break on error or nothing new to add
       if (scan<=0) 
@@ -2150,13 +2097,13 @@ void CodeBuffer::eval(bool expandonly)
   if (scan<0)
     {
       String text;
-      if (scan==SCAN_UNLEVEL)
+      if (scan==ScanIDs::SCAN_UNLEVEL)
         {
           text=T(">> Error: unbalanced delimiter, line ");
           text << bot.getLineNumber() << T(":\n") 
                << bot.getLineText() << T("\n");
         }
-      else if (scan=SCAN_UNMATCHED)
+      else if (scan=ScanIDs::SCAN_UNMATCHED)
         {
           text=T(">>> Error: unmatched delimiter, line ");
           // line is most recent upper bounds
@@ -2170,10 +2117,7 @@ void CodeBuffer::eval(bool expandonly)
     {
       bot.setPosition(epos.getFirst());
       top.setPosition(epos.getLast());
-      if (type==TextIDs::Lisp)
-        evalLisp(bot,top,expandonly,regn);
-      else if (type==TextIDs::Sal2 || type==TextIDs::Sal)
-        evalSal(bot,top,expandonly,regn);
+      syntax->eval(document, bot, top, expandonly, regn);
     }
   else
     {
@@ -2181,500 +2125,18 @@ void CodeBuffer::eval(bool expandonly)
     }
 }
 
-void CodeBuffer::evalLisp(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region)
-{
-  String code=document.getTextBetween(start, end);
-  //std::cout << "eval='" << code.toUTF8() << "'\n";
-  if (expand)
-    code=T("(macroexpand ") + code + T(")");
-  if (region)
-    code=T("(begin ") + code + T(")");
-  SchemeThread::getInstance()->eval(code);
-}
-
-void CodeBuffer::evalSal(const CodeDocument::Position start, const CodeDocument::Position end, bool expand, bool region)
-{
-  // forward scan sal tokens and call sal on result. if region is true
-  // then surround the add 'begin' and 'end' to the string and token
-  // array adjust string positions accordingly
- 
-  String code=document.getTextBetween(start, end);
-  //    std::cout << "expr='" << code.toUTF8() << "', start=" << start.getPosition() 
-  //              << ", end=" << end.getPosition() << "\n";
-  OwnedArray<SynTok> tokens;
-  CodeDocument::Position pos (start);
-  int beg=pos.getPosition();  // offset of string
-  int ins=(region) ? 6 : 0;   // inset length of "begin "
-  int lev=0, par=0, cur=0, squ=0;
-  int scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments, end.getPosition());
-  while (pos!=end)
-    {
-      CodeDocument::Position far(pos);
-      scan=scanCode(far, true, ScanFlags::MoveTokens, end.getPosition());
-      if (scan<=0) break;
-      int loc=pos.getPosition()-beg + ins;
-      if (scan==SCAN_OPEN)
-        {
-          tchar c=pos.getCharacter();
-          if (c==T('('))
-            {
-              par++;
-              tokens.add(new SynTok(T("("), SalIDs::SalLParen, loc));
-            }
-          else if (c==T('{'))
-            {
-              cur++;
-              tokens.add(new SynTok(T("{"), SalIDs::SalLCurly, loc));
-            }
-          else if (c==T('['))
-            {
-              squ++;
-              tokens.add(new SynTok(T("["), SalIDs::SalLBrace, loc));
-            }
-        }
-      else if (scan==SCAN_CLOSE)
-        {
-          tchar c=pos.getCharacter();
-          if (c==T(')'))
-            {
-              if (--par < 0) break;
-              tokens.add(new SynTok(T(")"), SalIDs::SalRParen, loc));
-            }
-          else if (c==T('}'))
-            {
-              if (--cur < 0) break;
-              tokens.add(new SynTok(T("}"), SalIDs::SalRCurly, loc));
-            }
-          else if (c==T(']'))
-            {
-              if (--squ < 0) break;
-              tokens.add(new SynTok(T("]"), SalIDs::SalRBrace, loc));
-            }
-        }
-      else if (scan==SCAN_PUNCT)
-        tokens.add(new SynTok(T(","), SalIDs::SalComma, loc));
-      else if (scan==SCAN_STRING)
-        {
-          tokens.add(new SynTok(document.getTextBetween(pos,far).unquoted(), SalIDs::SalString, loc));
-        }
-      else if (scan==SCAN_TOKEN)
-        {
-          String s=document.getTextBetween(pos,far);
-          if (SynTok* t=syntax->getSynTok(s))
-            {
-              int x=t->getType();
-              tokens.add(new SynTok(s, x, loc));
-              if (SalIDs::isSalBlockOpen(x))
-                lev++;
-              else if (SalIDs::isSalBlockClose(x))
-                {
-                  if (--lev < 0) break;
-                }
-            }
-          else if (int t=isNumberToken(s))
-            {
-              int typs[] = {SalIDs::SalInteger, SalIDs::SalFloat, SalIDs::SalRatio};
-              tokens.add(new SynTok(s, typs[t-1], loc));
-            }
-          else // is still a valid token!
-            {
-              if (s.getLastCharacter()==T(':'))
-                tokens.add(new SynTok(s.dropLastCharacters(1), SalIDs::SalKeyparam, loc));
-              else if (s[0]==T(':'))
-                tokens.add(new SynTok(s.substring(1), SalIDs::SalKeyword, loc));
-              else
-                tokens.add(new SynTok(s, SalIDs::SalIdentifier, loc));
-            }
-        }
-      pos=far;
-      scan=scanCode(pos,true,ScanFlags::MoveWhiteAndComments, end.getPosition());
-    }
-
-  //    std::cout << "tokens=";
-  //    for (int i=0; i<tokens.size(); i++)
-  //      std::cout << " " << tokens[i]->toString().toUTF8();
-  //    std::cout << "\n";
-
-  String text;
-  if (scan<0)
-    {
-      text << T(">>> Error: illegal token, line: ")
-           << pos.getLineNumber() << T("\n")
-           << pos.getLineText() << T("\n");
-      Console::getInstance()->printError(text);
-    }
-  else if (lev!=0 || par!=0 || cur!=0 || squ!=0)
-    {
-      SynTok* tok=NULL;
-      if (lev<0) // too many ends
-        text << T(">>> Error: extraneous 'end', line: ");
-      else if (par<0)
-        text << T(">>> Error: extraneous ')', line: ");
-      else if (cur<0)
-        text << T(">>> Error: extraneous '}', line: ");
-      else if (squ<0)
-        text << T(">>> Error: extraneous ']', line: ");
-      else if (lev>0)
-        {
-          text << T(">>> Error: missing 'end'");
-          for (int i=tokens.size()-1, n=0; i>-1; i--)
-            {
-              int x=SalIDs::SalTypeDataBits(tokens[i]->getType());
-              if (x==SalIDs::SalBlockOpen)
-                if (n==lev) {tok=tokens[i]; break;} else n--;
-              else if (x==SalIDs::SalBlockClose) n++;
-            }
-          if (tok) text << " for " << tok->getName();
-          text << T(", line: ");
-        }
-      else if (par>0)
-        {
-          text << T(">>> Error: missing ')', line: ");
-          for (int i=tokens.size()-1, n=0; i>-1; i--)
-            if (tokens[i]->getType()==SalIDs::SalLParen) 
-              if (n==par) {tok=tokens[i]; break;} else n--;
-            else if (tokens[i]->getType()==SalIDs::SalRParen) n++;
-        }
-      else if (cur>0)
-        {
-          text << T(">>> Error: missing '}', line: ");
-          for (int i=tokens.size()-1, n=0; i>-1; i--)
-            if (tokens[i]->getType()==SalIDs::SalLCurly) 
-              if (n==cur) {tok=tokens[i]; break;} else n--;
-            else if (tokens[i]->getType()==SalIDs::SalRCurly) n++;
-        }
-      else if (squ>0)
-        {
-          text << T(">>> Error: missing ']', line: ");
-          for (int i=tokens.size()-1, n=0; i>-1; i--)
-            if (tokens[i]->getType()==SalIDs::SalLBrace) 
-              if (n==cur) {tok=tokens[i]; break;} else n--;
-            else if (tokens[i]->getType()==SalIDs::SalRBrace) n++;
-       }
-      if (tok) pos.setPosition(beg+tok->getData1()-ins);
-      text << pos.getLineNumber() << T("\n")
-           << pos.getLineText() << T("\n");
-      Console::getInstance()->printError(text);
-    }
-  else
-    {
-      if (region)
-        {
-          // if we are evalling a region we need to add begin and end
-          // tokens to the token array and also add their names to the
-          // text string so that token positions are corrent when
-          // reporting errors
-          text << T("begin ") << document.getTextBetween(start, end) << T(" end");
-          tokens.insert(0, new SynTok(T("begin"), SalIDs::SalBegin, 0));
-          tokens.add(new SynTok(T("end"), SalIDs::SalEnd, 
-                                end.getPosition()-start.getPosition()+ins));
-        }
-      else
-        text=document.getTextBetween(start, end);
-      XSalNode* node=new XSalNode(0.0, text, getTextType(), expand);
-      // swapping moves tokens from the local array to the evalnode's
-      // array AND clears the local array in a single
-      // operation. swapping must be done or the tokens will be
-      // deleted when the local array goes out of scope!
-      node->toks.swapWithArray(tokens);
-      //std::cout << "tokens=";
-      //for (int i=0; i<node->toks.size(); i++)
-      //  std::cout << " " << node->toks[i]->toString().toUTF8();
-      //std::cout << "\n";
-      SchemeThread::getInstance()->addNode(node);
-    }
-}
-
-int CodeBuffer::isNumberToken(const String str) 
-{
-  // returns 0==nan, 1==int, 2==float, 3==ratio
-  int len=str.length();
-  int typ=0, dot=0, div=0, dig=0;
-  for (int pos=0; pos<len; pos++) 
-    switch ( str[pos] )
-      {
-      case T('-') :
-      case T('+') :
-        if (pos>0) return 0; // not in leading position
-        break;
-      case T('.') :
-        if (dot>0) return 0; // too many dots
-        if (div>0) return 0; // in ratio
-        dot++;
-        break;
-      case T('/') :
-        if (div>0) return 0; // too many divs
-        if (dig==0) return 0; // no digit yet
-        if (dot>0) return 0;  // float already
-        if (pos==len-1) return 0; // at end
-        div++;
-        break;
-      case T('0') :
-      case T('1') :
-      case T('2') :
-      case T('3') :
-      case T('4') :
-      case T('5') :
-      case T('6') :
-      case T('7') :
-      case T('8') :
-      case T('9') :
-        dig++;
-        break;
-      default:
-        return 0;
-      }
-  if (div) return 3;
-  if (dot) return 2; 
-  return 1;
-}
-
-/*=======================================================================*
-                            Backward Expression Gathering
- *=======================================================================*/
-
-int CodeBuffer::backwardLispExpr(CodeDocument::Position& from, CodeDocument::Position& to)
-{
-  ////  CodeDocument::Position pos (getCaretPos());
-  CodeDocument::Position pos (to);
-  // moving backwards the cursor is always one char past scan start
-  pos.moveBy(-1);
-  // skip trailing comments and whitespace
-  scanCode(pos, false, ScanFlags::MoveWhiteAndComments);
-  // pos is now ON ending char of expr (or at eob if only white) so
-  // set end to one beyond ending char of expr
-  CodeDocument::Position end (pos.movedBy(1));
-  // scan backwords to start of expr
-  int scan=scanCode(pos, false, ScanFlags::MoveExpressions);
-  from.setPosition(pos.getPosition());
-  to.setPosition(end.getPosition());
-  return scan;
-}
-
-int CodeBuffer::backwardSal2Expr(CodeDocument::Position& from, CodeDocument::Position& to)
-{
-  //CodeDocument::Position pos (getCaretPos());
-  CodeDocument::Position pos (to);
-  CodeDocument::Position bob=getBOB();
-  int scan=0, last=0, here=-1, level=0;
-  #define SCAN_CURLY (SCAN_PUNCT+1)
-  #define SCAN_SQUARE (SCAN_PUNCT+2)
-
-  // cursor always 1 past start of backward scan
-  pos.moveBy(-1);
-  // move backward over white and comments
-  scanCode(pos, false, ScanFlags::MoveWhiteAndComments);
-  // pos now on last constituent char for backward scan (or at
-  // bob). set scan's exclusive upper bound to 1 above pos
-  CodeDocument::Position top (pos.movedBy(1));
-
-  if (lookingAt(pos, T("end"), false, true)) // at block end
-    while (true)
-      {
-        // now on last constituent char for scan (or at bob). set the
-        // exclusive upper bound of expr to 1 above that
-        CodeDocument::Position end (pos.movedBy(1)); 
-        scan=scanCode(pos, false, ScanFlags::MoveExpressions);
-        // quit if error or only white space
-        if (scan<=0)
-          break;
-        String code=document.getTextBetween(pos, end);
-        //std::cout << "Code ("<<from.getPosition()<<","<<to.getPosition()<<"): '" << code.toUTF8() << "'\n";
-        if (scan==SCAN_TOKEN)
-          {
-            if (SynTok* tok=syntax->getSynTok(code))
-              {
-                // token is a literal (e.g. statement, op)
-                int typ=tok->getType();
-                if (SalIDs::isSalBlockClose(typ))
-                  level++; 
-                else if (SalIDs::isSalBlockOpen(typ))
-                  level--; 
-                // stop on a blockopen word with no pending end. this
-                // doesn't mean the statement is actually balanced
-                // since the word could be reached without seeing a
-                // balancing end (in which case level is negative)
-                if (level<=0)
-                  {
-                    here=pos.getPosition();
-                    break;
-                  }
-              }
-          }
-        if (pos==bob) break;
-        pos.moveBy(-1);
-        scanCode(pos, false, ScanFlags::MoveWhiteAndComments);
-      }
-  else   
-    // else parse expr back, possibly to a command (set or variable)
-    // but stopping before any clausal
-    while (true)
-      {
-        // pos is on last consitute char of backwards expr (or at bol)
-        // set exclusive end of current expr and scan backwards
-        CodeDocument::Position end (pos.movedBy(1)); 
-        scan=scanCode(pos, false, ScanFlags::MoveExpressions);
-        // quit if scan error or only white space
-        if (scan<=0)
-          {
-            //std::cout << "breaking with scan <= 0: " << scan << "\n";;
-            break;
-          }
-        String code=document.getTextBetween(pos,end);
-        //std::cout << "Code ("<<pos.getPosition()<<","<<end.getPosition()<<"): '" << code.toUTF8() << "'\n";
-        if (scan==SCAN_TOKEN)
-          {
-            SynTok* tok=syntax->getSynTok(code);
-            if (tok && !SalIDs::isSalBoolType(tok->getType()))  // booleans are values...
-              {
-                // token is a literal. stop if its the first thing
-                // encountered or if its a clausal
-                if (last==0 || SalIDs::isSalClausalType(tok->getType()))
-                  {
-                    //std::cout<<"literal breaking with last==0"<<code.toUTF8()<<"\n";
-                    break;
-                  }
-                scan=tok->getType();
-                // if its a command then include and stop
-                if (SalIDs::isSalCommandType(scan))
-                  {
-                    //std::cout << "stopping on command '"<<code.toUTF8()<<"'\n";
-                    here=pos.getPosition();
-                    break;
-                  }
-                // otherwise (its a op or comma? ) keep going...
-                here=pos.getPosition();
-              }
-            else 
-              {
-                // token is a variable or constant.  if its the first
-                // expr or if the last was a literal then include it
-                // and keep going
-                if ((last==0) || SalIDs::isSalType(last))
-                  here=pos.getPosition();
-                // otherwise if its a constant then stop (because last
-                // is an expr)
-                else if (code.containsOnly(T("0123456789+-./")) ||
-                         code.startsWith(T("#")) ||
-                         code.startsWith(T(":")) ||
-                         code.endsWith(T(":")) )
-                  {
-                    //std::cout<<"breaking with constant="<<code.toUTF8()<<"\n";
-                    break;
-                  }
-                // otherwise its a variable, if last was a () expr its
-                // a function call, if last was a [] its a aref
-                // otherwise stop
-                else if (last==SCAN_LIST || last==SCAN_SQUARE)
-                  here=pos.getPosition();
-                else
-                  {
-                    //std::cout << "token breaking with code='"<<code.toUTF8()<<"'\n";
-                    break;
-                  }
-              }
-          }
-        else if (scan==SCAN_PUNCT)
-          {
-            // its a comma, stop if last not an expression
-            if (last==0 || SalIDs::isSalType(last))
-              {
-                //std::cout << "breaking on SCAN_PUNCT=\n";
-                break;
-              }
-            scan=SalIDs::SalComma;
-          }
-        // otherwise its a {[( or string expression. stop unless this
-        // expr its the first or the previous thing was not an expr
-        else if (last==0 || SalIDs::isSalType(last))
-          {
-            if (pos.getCharacter()==T('{'))
-              scan=SCAN_CURLY;
-            else if (pos.getCharacter()==T('['))
-              scan=SCAN_SQUARE;
-            here=pos.getPosition();
-          }
-        else
-          {
-            //std::cout << "breaking with scan=" << ScanFlags::scanResultToString(scan).toUTF8() << "\n";
-            break;
-          }
-        if (pos==bob) break;
-        // move one below first expr char, skip comments and white
-        last=scan;
-        pos.moveBy(-1);
-        scanCode(pos, false, ScanFlags::MoveWhiteAndComments);
-      }
-  //std::cout << "_______________\n";
-
-  if (scan<0) 
-    {
-      //std::cout << "returning: " << scan << "\n";
-      return scan;
-    }
-  //std::cout << "after loop, here=" << here << "scan=" << scan << "\n";
-  from.setPosition(here);
-  //std::cout << "setting from position="<< here << "\n";
-  to.setPosition(top.getPosition());
-  //std::cout << "setting to position=" << top.getPosition() << "\n";
-  
-  // stopped without lower bound means no expr encountered
-  if (here<0) 
-    {
-      scan=SCAN_EMPTY;
-      here=pos.getPosition();
-    }
-  //std::cout << "returning: "  << ((here>-1) ? 1 : scan) << "\n";
-  return (here>-1) ? 1 : scan;
-}
-
-int CodeBuffer::backwardSal1Expr(CodeDocument::Position& from, CodeDocument::Position& to)
-{
-  // in sal1 backward expression finds the nearest command literal
-  // that start in 0th column position of a line
-  // moving backwards the cursor is always one char past scan start
-  to.moveBy(-1);
-  // skip trailing comments and whitespace
-  scanCode(to, false, ScanFlags::MoveWhiteAndComments);
-  // to is now ON ending char of expr (or at eob if only white) so set
-  // end to one beyond ending char of expr
-  to.moveBy(1);
-  int line=to.getLineNumber();
-  while (line>=0)
-    {
-      from.setLineAndIndex(line, 0);
-      CodeDocument::Position t (from);
-      if (scanToken(t, 1, getEOL(from)))
-        {
-          if (SynTok* tok=syntax->getSynTok(document.getTextBetween(from, t)))
-            {
-              if (SalIDs::isSalCommandType(tok->getType()))
-                {
-                  //std::cout << "command=" << tok->getName().toUTF8() << "\n";
-                  return 1;
-                }
-            }
-        }
-      line-=1;
-    }
-  return 0;
-}
-
-/*=======================================================================*
-                                Syntactic Indentation
- *=======================================================================*/
-
 void CodeBuffer::indent()
 {
   CodeDocument::Position bol=getBOL();
   CodeDocument::Position pos (getCaretPos());
   String all=pos.getLineText();
-  int col=0;
-
-  if (isTextType(TextIDs::Sal2) || isTextType(TextIDs::Sal))
-    col=indentSal2();
-  else if (isTextType(TextIDs::Lisp))
-    col=indentLisp();
+  int col=syntax->getIndentation(document, getCaretPos().getLineNumber());
+  if (col<0)
+    {
+      insertTabAtCaret();
+      isChanged(true);
+      return;
+    }
 
   int old=0;
   while (old<all.length() && (all[old]==T(' ') || all[old]==T('\t')))
@@ -2703,647 +2165,5 @@ void CodeBuffer::indent()
   while (bol!=getEOL() && (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t')))
     bol.moveBy(1);
   moveCaretTo(bol, false);
-}
-
-int CodeBuffer::indentLisp()
-{
-  CodeDocument::Position pos (getCaretPos());
-  Array<int> subtypes;
-  Array<int> substarts;
-  int line=pos.getLineNumber();
-  int scan=0;
-
-  // if no lines above point indent 0 else move cursor to end of
-  // previous line and scan backward until either unlevel OR a
-  // balanced expression in column 0. record types and starting
-  // positions of subexpressions traversed
-
-  if (line==0) return 0;
-  pos.setLineAndIndex(line-1, INT_MAX); // goto eol of previous line
-  while (true)
-    {
-      scan=scanCode(pos, false, ScanFlags::MoveExpressions);
-      if (scan>0)
-        if (pos.getIndexInLine()==0)
-          {
-            break;
-          }
-        else
-          {
-            // prepend since moving backward
-            subtypes.insert(0, scan);
-            substarts.insert(0, pos.getPosition());
-            // arrrgh! the 1st position problem
-            pos.moveBy(-1); 
-          }
-      else
-        {
-          break;
-        }
-    }
-
-  //std::cout << "after loop, scan="<<scan<< ", pos=" << pos.getPosition() << ", col=" << pos.getIndexInLine() << "\n";
-
-  // stopped on a balanced expr in column 0 so indent to whatever
-  // position the very LATEST subexpr is or use column 0
-  if (scan!=SCAN_UNLEVEL)
-    {
-      if (substarts.size()==0)
-        {
-          ////          std::cout << "balanced indent: 0\n";
-          return 0;
-        }
-      CodeDocument::Position sub (&document, substarts.getLast());
-      ////std::cout << "balanced indent: " << sub.getIndexInLine() << "\n";
-      return sub.getIndexInLine();
-    }
-  // otherwise we've stopped on an unbalanced open parens.
-
-  //  std::cout << "unlevel: (" << pos.getPosition() << ") -> '" 
-  //            << document.getTextBetween(pos, pos.movedBy(1)).toUTF8() 
-  //           << "'\nsubexprs:\n";
-  //  for (int i=0; i<subtypes.size(); i++)
-  //    std::cout << "  " << substarts[i] << ": " << ScanFlags::scanResultToString(subtypes[i]).toUTF8() << "\n";
-
-  // if no subexprs indent 1 position beyond open parens
-  if (subtypes.size()==0)
-    {
-      ////std::cout << "nothing forward, indent column=" << pos.getIndexInLine()+1 << "\n";
-      return pos.getIndexInLine()+1;
-    }
-
-  // if first subexpr is NOT a token indent to its column position
-  if (subtypes.getFirst()!=SCAN_TOKEN)
-    {
-      CodeDocument::Position sub (&document, substarts.getFirst());
-      ////std::cout << "not a token, indent column=" << sub.getIndexInLine() << "\n";
-      return sub.getIndexInLine();
-    }
-
-  // first expr after the open parens is a token, get its name and
-  // check for special indentation rules
-  CodeDocument::Position tokbeg (&document, substarts.getFirst());
-  CodeDocument::Position tokend (&document, substarts.getFirst());
-  scanToken(tokend,1,getEOL(tokbeg));
-  String name=document.getTextBetween(tokbeg,tokend);
-  int nargs=substarts.size()-1;    // num subexpr args after token
-
-  //std::cout << "num exprs=" << subtypes.size() << ", numstarts=" << substarts.size() << "\n";
-
-  if (SynTok* syntok=syntax->getSynTok(name)) // is special form
-    {
-      // car of list is a special form. get num distinguished args to
-      // see if we do a body indent
-      int body=syntok->getIndent(); // num distinguished args
- 
-      // if we have no args or exactly body args then do a body indent
-      // otherwise indent to the column of the last subexpr.
-
-      ////std::cout << "special form: '" << name.toUTF8() << "', nargs="<< nargs << ", body=" << body;
-
-      //std::cout << "special nargs=" << nargs << "\n";
-
-      if (nargs==0 || nargs==body)
-        {
-          ////std::cout << "body indent, indent column=" << pos.movedBy(2).getIndexInLine() << "\n";
-          return pos.movedBy(2).getIndexInLine();
-        }
-      else
-        {
-          //**  CodeDocument::Position sub (&document, substarts.getLast());
-          //**//std::cout << "indent to last expr, indent column=" << sub.getIndexInLine() << "\n";
-          //** return sub.getIndexInLine();
-          substarts.remove(0);  
-          int x=lastIndented(substarts, false);
-          //std::cout << "returning indent col=" << x << "\n";
-          return x;
-        }
-    }
-  else // token not special, indent to last expr or to pos+1 if none
-    {
-      //std::cout << "no special nargs=" << nargs << "\n";
-      if (nargs==0)
-        {
-          ////std::cout << "normal token with no args, indent column=" << pos.movedBy(1).getIndexInLine() << "\n";
-          return pos.movedBy(1).getIndexInLine();
-        }
-      else
-        {
-          //** CodeDocument::Position sub (&document, substarts.getLast());
-          //**//std::cout << "normal token (args), indent column=" << sub.getIndexInLine() << "\n";
-          //return sub.getIndexInLine();
-          substarts.remove(0);
-          int x=lastIndented(substarts, false);
-          //std::cout << "returning indent col=" << x << "\n";
-          return x;
-        }
-    }
-}
-
-int CodeBuffer::indentSal2()
-{
-  Array<int> subtypes;
-  Array<int> substarts;
-  SynTok* cmdtoken=0;
-  CodeDocument::Position pos (getBOL());
-  int line=pos.getLineNumber();
-  int scan=0;
-  int col=0;
-
-  // if no lines above point indent 0
-  if (line==0) return 0;
-  // move to EOL of line above cursor
-  line--;
-  pos.setLineAndIndex(line, INT_MAX);
-
-  // scan backwards until either unlevel OR a command or a balanced
-  // expr in column 0. record types and starting positions of
-  // subexpressions traversed
-  while (true)
-    {
-      scan=scanCode(pos, false, ScanFlags::MoveExpressions);
-      if (scan>0)
-        {
-          // prepend expr type since moving backward
-          subtypes.insert(0, scan);
-          substarts.insert(0, pos.getPosition());
-          if (scan==SCAN_TOKEN)
-            {
-              CodeDocument::Position end (pos);
-              scanToken(end, 1, getEOL(pos));
-              String str=document.getTextBetween(pos,end);
-              if (SynTok* tok=syntax->getSynTok(str))
-                {
-                  // update subtype with actual sal type. if type is a
-                  // command, 'end' or 'else' then break
-                  int type=tok->getType();
-                  subtypes.set(0,type);
-                  if (SalIDs::isSalCommandType(type) )
-                    {
-                      cmdtoken=tok;
-                      break;
-                    }
-                }
-              else if (pos.getIndexInLine()==0)
-                break;
-            }
-          else if (pos.getIndexInLine()==0)
-            break;
-          pos.moveBy(-1); 
-        }
-      else
-        break;
-    }
-
-  if (scan<0) // scan stopped on unlevel parens
-    {
-      if (substarts.size()>0) // use last subexpr indentation
-        {
-          col=lastIndented(substarts, false);
-          //std::cout << "UNLEVEL indent (last expr), column=" << col << "\n";
-          return col;
-        }
-      else
-        {
-          col=pos.movedBy(1).getIndexInLine();
-          //std::cout << "UNLEVEL indent (no exprs), column=" << col << "\n";
-          return col;
-        }
-    }
-  else if (subtypes.size()==0) // no expressions encountered (only white space)
-    {
-      //std::cout << "EMPTY indent, column=0\n" ;
-      return 0;
-    }  
-
-  // at this point we have at least one subexpr and may have stopped
-  // on a sal type
-
-  if (!SalIDs::isSalType(subtypes[0]))     // stopped on a non-sal expression
-    {
-      col=lastIndented(substarts, false);
-      //std::cout << "SEXPR indent, column=" << col << "\n";
-    }
-  else // types[0] is sal entity, hopefully a command
-    {
-      if (cmdtoken)  // we stopped on a command
-        {
-          int cmdline=pos.getLineNumber(); // num of line with cmd
-          // last is INDEX of last indented or command we stopped on
-          int last=lastIndented(substarts, true);
-          // IF the VERY last line ends with comma then indent 1 past
-          // command name or a subexpr 'with' (if found)
-          if (isCommaTerminatedLine(line))
-            {
-              for (last=subtypes[subtypes.size()-1]; last>=0; last--)
-                if (subtypes[last]==SalIDs::SalWith)
-                  break;
-              if (last<0) // reached command
-                col=pos.getIndexInLine()+cmdtoken->getName().length()+1;
-              else // indent relative to 'with'
-                {
-                  CodeDocument::Position p (&document, substarts[last]);
-                  col=p.getIndexInLine()+4+1;
-                }
-              //std::cout << "COMMA indent, column=" << col << "\n";
-            }
-          // ELSE (the very last line does NOT end with comma) if
-          // line-1 is >= cmdline and DOES end with comma then we are
-          // done with comma indenting so intent to body or pos
-          else if ((cmdline<=line-1) && isCommaTerminatedLine(line-1))
-            {
-              if (cmdtoken->getData1()>0)
-                {
-                  col=pos.getIndexInLine()+2;
-                  //std::cout << "BODY indent (after comma stop), column=" << col << "\n";
-                }
-              else
-                {
-                  col=pos.getIndexInLine();
-                  //std::cout << "RESET indent (after comma stop), column=" << col << "\n";
-                }
-            }
-          // ELSE if the last indented is 'else' then body indent
-          // based on position of 'else'
-          else if (subtypes[last]==SalIDs::SalElse)
-            {
-              CodeDocument::Position p (&document, substarts[last]);
-              col=p.getIndexInLine()+2;
-              //std::cout << "ELSE indent, column=" << col << "\n";
-            }          
-          // else if the command is a body indent, indent to the last
-          // expression or to 2 past the first (command) expr
-          else if (cmdtoken->getData1()>0)
-            {
-              if (last==0) // the command, no subexprs on own line
-                {
-                  col=pos.getIndexInLine()+2;
-                  //std::cout << "BODY indent, column=" << col << "\n";
-                }
-              // else indent to the last expression
-              else
-                {
-                  CodeDocument::Position p (&document, substarts[last]);
-                  col=p.getIndexInLine();
-                  //std::cout << "LAST indent (body), column=" << col << "\n";
-                }
-            }
-          // else indent to the last expression
-          else
-            {
-              CodeDocument::Position p (&document, substarts[last]);
-              col=p.getIndexInLine();
-              //std::cout << "LAST indent, column=" << col << "\n";
-            }
-        }
-      else
-        {
-          col=lastIndented(substarts, false);
-          //std::cout << "non-standard sal indent, column=" << col << "\n";
-        }
-    }
-
-  // if we are looking at an 'end' or an 'else' in the cursor line
-  // then adjust -2
-
-  CodeDocument::Position bol (getBOL());
-  CodeDocument::Position eol (getEOL(bol)); 
-  while (bol!=eol && (bol.getCharacter()==T(' ') || bol.getCharacter()==T('\t'))) 
-    bol.moveBy(1);
-  if (lookingAt(bol, T("end"), true, true) || lookingAt(bol, T("else"), true, true))
-    {
-      col-=2;
-      //std::cout << "cursor is looking at end or else\n";
-    }
-  return jmax(col,0);
-}
-
-bool CodeBuffer::isCommaTerminatedLine(int line)
-{
-  // quick and dirty test for line ending with comma. doesnt check for
-  // () or "" nesting etc
-  CodeDocument::Position b (&document, line, 0);
-  CodeDocument::Position e (&document, line, INT_MAX);
-  bool x=false;
-  while (b != e)
-    {
-      const tchar c=b.getCharacter();
-      if (c==T(',')) x=true;
-      else if (char_comment_p(syntax->syntab, c)) break;
-      else if (char_white_p(syntax->syntab, c)) ;
-      else x=false;
-      b.moveBy(1);
-    }
-  return x;
-}  
-
-int CodeBuffer::lastIndented(Array<int>& starts, bool index)
-{
-  // search array of expr starting positions and return the indent
-  // column (or array index) of the latest postion that is first in
-  // its line, or position of first expr if there isn't one
-  int size=starts.size();
-  if (size==0) return -1; // -1 for error either way
-  else if (size==1) // if only one expr use it
-    {
-      CodeDocument::Position a (&document, starts[0]);
-      return (index) ? 0 : a.getIndexInLine();
-    }
-  else // find latest expr that starts a line
-    {
-      int i=0;
-      for (i=starts.size()-1; i>0; i--)
-        {
-          CodeDocument::Position a (&document, starts[i-1]);
-          CodeDocument::Position b (&document, starts[i]);
-          // if the i-1 expr is on an earlier line then THIS expr
-          // starts a line
-          if (a.getLineNumber() < b.getLineNumber())
-            break;
-        }
-      CodeDocument::Position a (&document, starts[i]);
-      return (index) ? i : a.getIndexInLine();
-    }
-}
-
-/*=======================================================================*
-                              Scanning Functions
- *=======================================================================*/
-
-bool CodeBuffer::scanEOL(CodeDocument::Position& pos)
-{
-  // move position to end of line, return true if actually moved
-  CodeDocument::Position eol (&document, pos.getLineNumber(), INT_MAX);
-  if (pos==eol)
-    return false;
-  pos.setLineAndIndex(eol.getLineNumber(),eol.getIndexInLine());
-  return true;
-}
-
-bool CodeBuffer::scanBOL(CodeDocument::Position& pos)
-{
-  // move position to beginning of line, return true if actually moved
-  if (pos.getIndexInLine()==0)
-    return false;
-  pos.setLineAndIndex(pos.getLineNumber(),0);
-  return true;
-}
-
-bool CodeBuffer::scanToken(CodeDocument::Position& pos, const int dir, const CodeDocument::Position end)
-{
-  // scan while position is on a token
-  bool token=false;
-  bool atend=false;
-  while (!atend && char_token_p(syntax->syntab, pos.getCharacter()))
-    {
-      token=true;
-      pos.moveBy(dir);
-      if (pos==end) atend=true;
-    }
-  // pos is now on delim or at End. If not at end then check to see if
-  // the delim is escaped. if it is then continue searching
-  if (atend)
-    return token;
-  if (char_escape_p(syntax->syntab, pos.movedBy(-1).getCharacter()))
-    {
-      pos.moveBy(dir);
-      return scanToken(pos,dir, end);
-    }
-  else
-    return token;
-}
-
-bool CodeBuffer::scanCharacter(tchar chr, CodeDocument::Position& pos, const int dir, const CodeDocument::Position end)
-{
-  // scan for character, if found leave pos on the char's position and
-  // return true otherwise return false
-  bool found=false;
-  bool atend=false;
-  CodeDocument::Position check (pos);
-  while (!atend)
-    {
-      if (check.getCharacter()==chr)
-        {
-          if (check.movedBy(-1).getCharacter()==T('\\'))
-            check.moveBy(dir);
-          else
-            {
-              found=true;
-              atend=true;
-            }
-        }
-      else if (check==end)
-        atend=true;
-      else
-        check.moveBy(dir);
-    }
-  if (found)
-    pos.setLineAndIndex(check.getLineNumber(),check.getIndexInLine());
-  return found;
-}
-
-bool CodeBuffer::scanPrefix(CodeDocument::Position& pos, const int dir, const CodeDocument::Position end)
-{
-  bool prefix=false;
-  while (char_prefix_p(syntax->syntab, pos.getCharacter()))
-    {
-      prefix=true;
-      if (pos==end) break;
-      pos.moveBy(dir);
-    }
-  return prefix;
-}
-
-int CodeBuffer::scanCode(CodeDocument::Position& pos, bool forward, int mode, int limit)
-{
-  int typ = SCAN_EMPTY;
-  int dir=(forward) ? 1 : -1;
-  int par=0, sqr=0, cur=0, ang=0;
-  //  CodeDocument::Position end = (forward) ? getEOB() : getBOB();
-  CodeDocument::Position end (&document,0);
-  bool atfirst=false;
-  #define ISLEVEL(a,b,c,d) (((a)==0)&&((b)==0)&&((c)==0)&&((d)==0))
-
-  if (limit==-1)
-    end=(forward) ? getEOB() : getBOB();
-  else
-    end.setPosition(limit);
-
-  while (true)
-    {
-      if (pos==end)
-        {
-          if (forward) // we've moved past the last char
-            break;
-          else if (!atfirst) // we're checking the first char
-            atfirst=true;
-          else // we've already checked the first char
-            break;
-        }
-      tchar chr=pos.getCharacter();
-      // WHITE SPACE. advance one position
-      if (char_white_p(syntax->syntab, chr))
-        {  
-          pos.moveBy(dir);
-        }
-      // COMMENT CHAR. advance forward eol or backward one char
-      else if (char_comment_p(syntax->syntab, chr))
-        {
-          if (forward)
-            scanEOL(pos);
-          else
-            pos.moveBy(dir);
-        }
-      // MAYBE MOVING BACKWARD IN A COMMENT LINE
-      else if ((!forward) &&
-               scanCharacter(T(';'), // FIXME!
-                             pos, dir, 
-                             CodeDocument::Position(&document, 
-                                                    pos.getLineNumber(),
-                                                    0)))
-        {
-          pos.moveBy(dir); // move one beyond the comment character
-        }
-      // SKIP WHITE/COMMENTS. char now not white or part of comment
-      else if (mode==ScanFlags::MoveWhiteAndComments)
-        {
-          break;
-        }
-      // TOKEN CHAR. scan out token
-      else if (char_token_p(syntax->syntab, chr))
-        {
-          scanToken(pos,dir,end);
-          // pos is now either one beyond token or at BOB and on
-          // the token start. quit scanning if at top level
-          if (ISLEVEL(par,cur,sqr,ang) )
-            {
-              if (!forward) scanPrefix(pos,dir,end); // include any prefix chars
-              typ = SCAN_TOKEN;
-              break;
-            }
-        }
-      // STRING START.  scan for end of string char
-      else if (char_string_p(syntax->syntab, chr))
-        {
-          CodeDocument::Position check=pos.movedBy(dir);
-          if (check==end)
-            {
-              typ=SCAN_MISMATCH;
-              break;
-            }
-          pos.moveBy(dir); // advance position one beyond first "
-          if (scanCharacter(T('\"'), pos, dir, end))
-            {
-              // now on end of string advance pos one past that char
-              // 
-              if (/*!forward &&*/ (pos!=end))  pos.moveBy(dir);
-              if (ISLEVEL(par,cur,sqr,ang)) 
-                {
-                  typ = SCAN_STRING;
-                  break;
-                }
-            }
-          else
-            {
-              // missing end of string char, return error
-              typ=SCAN_UNMATCHED;
-              break;
-            }
-        }
-      // PUNCTUATION. keep going unless toplevel (was token mode)
-      else if (char_punctuation_p(syntax->syntab, chr))
-        {
-          pos.moveBy(dir);
-          if (ISLEVEL(par,cur,sqr,ang)) //(mode==ScanFlags::MoveTokens) 
-            {
-              typ=SCAN_PUNCT;
-              break;
-            }
-        }
-      // PREFIX. keep going
-      else if (char_prefix_p(syntax->syntab, chr) ) 
-        {
-          pos.moveBy(dir);
-        }
-      // OPEN PARENS TOKEN
-      else if ((mode==ScanFlags::MoveTokens) && char_open_p(syntax->syntab, chr) )
-        {
-          pos.moveBy(dir);
-          typ=SCAN_OPEN;
-          break;
-        }
-      // CLOSE PARENS TOKEN
-      else if ((mode==ScanFlags::MoveTokens) && char_close_p(syntax->syntab, chr) )
-        {
-          pos.moveBy(dir);
-          typ=SCAN_CLOSE;
-          break;
-        }
-      // OPEN PARENS EXPRESSION. increment level of paren.
-      else if ((forward && char_open_p(syntax->syntab, chr) ) ||
-               (!forward && char_close_p(syntax->syntab, chr)))
-        {
-          if ( paren_char_p(chr) ) par++;
-          else if ( curly_char_p(chr) ) cur++;
-          else if ( square_char_p(chr) ) sqr++;
-          pos.moveBy(dir);
-        }
-      // CLOSE PARENS EXPRESSION. decrement level, stop if level zero
-      else if ((forward && char_close_p(syntax->syntab, chr)) ||
-               (!forward && char_open_p(syntax->syntab, chr))) 
-        {
-          if (paren_char_p(chr)) 
-            if (par==0) typ = SCAN_UNLEVEL; else par--;
-          else if (curly_char_p(chr)) 
-            if (cur==0) typ = SCAN_UNLEVEL; else cur--;
-          else if (square_char_p(chr)) 
-            if (sqr==0) typ = SCAN_UNLEVEL; else sqr--;
-          if (typ==SCAN_UNLEVEL)
-            {
-              break;
-            }
-          else if (ISLEVEL(par,cur,sqr,ang))
-            {
-              pos.moveBy(dir);
-              if (!forward) scanPrefix(pos,dir,end); // include any prefix chars
-              typ = SCAN_LIST;
-              break;
-            }
-          else
-            {
-              pos.moveBy(dir);
-            }
-        }
-      else
-        {
-          typ=SCAN_MISMATCH;
-          break;
-        } 
-    } // end while
-
-  //std::cout << "pos="<<pos.getPosition()<< ",typ="<<typ<<",isfirst="<<atfirst<<"\n";
-  //std::cout << "after scan, par=" << par << "\n";
-  // move pos back to the first char if backward scan
-
-  if (typ<0) 
-    ;
-  else if (ISLEVEL(par,cur,sqr,ang))
-    {
-      // if we are moving backwards then our position is now either
-      // one BEFORE the start of the expression OR we are on the first
-      // character and that character is part of the expression
-      if //(!forward && !atfirst && typ>0) //pos!=end
-        (!forward &&  typ>0 &&
-         ((pos==end && char_white_p(syntax->syntab, pos.getCharacter())) ||
-          (pos!=end )    )      
-         )
-        {
-          //std::cout << "incrementing pos\n";
-          pos.moveBy(1);
-        }
-    }
-  else
-    typ=SCAN_UNMATCHED;
-  return typ;
 }
 
