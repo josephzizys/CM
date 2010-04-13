@@ -311,14 +311,24 @@ for i = 1,numtargets do
 
    if options["liblo"] then
       liblo = insure_slash(options["liblo"])
+      add(mypackage.defines, "LIBLO")
       if os.fileexists(liblo .. "include/lo/lo.h") then
          add(mypackage.includepaths, liblo .. "include")
-         add(mypackage.defines, "LIBLO")
+         add(mypackage.libpaths, liblo .. "lib")
+         add(mypackage.links, "lo")
       else
-         error("--liblo: can't find " .. liblo .. "include/lo/lo.h")
+         if os.fileexists(liblo .. "lo/lo.h") then
+            add(mypackage.includepaths, liblo )
+            if os.fileexists(liblo .. "src/.libs/liblo.a") then
+               add(mypackage.linkoptions, liblo .. "src/.libs/liblo.a")
+            else
+               error("--liblo: can't find static liblo library " .. liblo .. "src/.libs/liblo.a")
+            end
+         else
+            error("--liblo: can't find include file lo/lo.h")
+         end
       end
-      add(mypackage.libpaths, liblo .. "lib")
-      add(mypackage.links, "lo")
+      
       if windows then
 	 add(mypackage.defines, "WIN32")
 	 add(mypackage.defines, "_CRT_SECURE_NO_DEPRECATE")
