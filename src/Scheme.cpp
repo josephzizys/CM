@@ -261,9 +261,9 @@ void SchemeThread::midiin(const MidiMessage &msg)
   MidiHook* hook=getMidiHook(op);
   if (hook)
     {
-      schemeNodes.lockArray();
+      //schemeNodes.lockArray();
       schemeNodes.addSorted(comparator, new XMidiNode(0.0, msg, hook));
-      schemeNodes.unlockArray();
+      //schemeNodes.unlockArray();
       notify();
     }
 }
@@ -275,20 +275,20 @@ bool SchemeThread::isMidiHook(int opr)
 
 void SchemeThread::addMidiHook(int op, s7_pointer proc)
 {
-  midiHooks.lockArray();
+  //midiHooks.lockArray();
   s7_gc_protect(scheme, proc);
   // the "default hook" is always at end
   if (op==0)
     midiHooks.add(new MidiHook(op,proc));
   else
     midiHooks.insert(0, new MidiHook(op,proc));
-  midiHooks.unlockArray();
+  //midiHooks.unlockArray();
 }
 
 MidiHook* SchemeThread::getMidiHook(int opr, bool strict)
 {
   MidiHook* hook=NULL;
-  midiHooks.lockArray();
+  //midiHooks.lockArray();
   for (int i=0; i<midiHooks.size() && !hook; i++)
     {
       MidiHook* h=midiHooks.getUnchecked(i);
@@ -296,17 +296,17 @@ MidiHook* SchemeThread::getMidiHook(int opr, bool strict)
       if (h->op==opr || (h->op==0 && !strict))
         hook=h;
     }
-  midiHooks.unlockArray();
+  //  midiHooks.unlockArray();
   return hook;
 }
 
 void SchemeThread::removeMidiHook(MidiHook* hook)
 {
   // FIX: THIS MUST ALSO REMOVE ANY PENDING XMIDINODE WITH HOOK
-  midiHooks.lockArray();
+  //  midiHooks.lockArray();
   s7_gc_unprotect(scheme, hook->proc);
   midiHooks.removeObject(hook);
-  midiHooks.unlockArray();
+  //  midiHooks.unlockArray();
 }
 
 bool SchemeThread::clearMidiHook(int op)
@@ -353,8 +353,8 @@ bool XMidiNode::applyNode(SchemeThread* st, double curtime)
                                   s7_cons(sc,
                                           s7_make_integer(sc, d2),
                                           st->schemeNil)));
-  // push status opcode if default hook
-  if (hook->op==0)
+  // ALWAYS PUSH OPCODE // push status opcode if default hook
+  if (true) // (hook->op==0)
     args=s7_cons(sc, s7_make_integer(sc, op), args);
 
   // create funargs list holding data
@@ -395,20 +395,20 @@ bool SchemeThread::isOscHook(String path)
 
 void SchemeThread::addOscHook(String path, s7_pointer proc)
 {
-  oscHooks.lockArray();
+  //oscHooks.lockArray();
   s7_gc_protect(scheme, proc);
   // the "default hook" is always at end
   if (path==String::empty)
     oscHooks.add(new OscHook(path,proc));
   else
     oscHooks.insert(0, new OscHook(path,proc));
-  oscHooks.unlockArray();
+  //  oscHooks.unlockArray();
 }
 
 OscHook* SchemeThread::getOscHook(String path, bool strict)
 {
   OscHook* hook=NULL;
-  oscHooks.lockArray();
+  //  oscHooks.lockArray();
   for (int i=0; i<oscHooks.size() && !hook; i++)
     {
       OscHook* h=oscHooks.getUnchecked(i);
@@ -416,17 +416,17 @@ OscHook* SchemeThread::getOscHook(String path, bool strict)
       if (h->path==path || (h->path==String::empty && !strict))
         hook=h;
     }
-  oscHooks.unlockArray();
+  //  oscHooks.unlockArray();
   return hook;
 }
 
 void SchemeThread::removeOscHook(OscHook* hook)
 {
   // FIX: THIS MUST ALSO REMOVE ANY PENDING XMIDINODE WITH HOOK
-  oscHooks.lockArray();
+  //  oscHooks.lockArray();
   s7_gc_unprotect(scheme, hook->proc);
   oscHooks.removeObject(hook);
-  oscHooks.unlockArray();
+  //  oscHooks.unlockArray();
 }
 
 bool SchemeThread::clearOscHook(String path)
@@ -481,10 +481,10 @@ bool XOscNode::applyNode(SchemeThread* st, double curtime)
           s7_set_cdr(tail, s7_cons(sc, s7_make_real(sc, flos[F++]), snil));
           break;
         case 's':  // LO_STRING
-          s7_set_cdr(tail, s7_cons(sc, s7_make_string(sc, strs[S++]), snil));
+          s7_set_cdr(tail, s7_cons(sc, s7_make_string(sc, strs[S++].toUTF8()), snil));
           break;
         case 'S':  // LO_SYMBOL
-          s7_set_cdr(tail, s7_cons(sc, s7_make_symbol(sc, strs[S++]), snil));
+          s7_set_cdr(tail, s7_cons(sc, s7_make_symbol(sc, strs[S++].toUTF8()), snil));
           break;
         case 'T':  // LO_TRUE
           s7_set_cdr(tail, s7_cons(sc, s7_make_boolean(sc, true), snil));
@@ -541,13 +541,17 @@ bool XOscNode::applyNode(SchemeThread* st, double curtime)
     }
   else
     {
-      // no path so reuse placeholder's cons cell:
-      s7_set_car(data, s7_cdr(data)); 
-      // data now ((x y ...) x y ...)
-      s7_set_cdr(data, snil); 
-      // data now ((x y ...))
-      loc = s7_gc_protect(sc, data);
-      res=s7_call(sc, hook->proc, data);
+      //      // no path so reuse placeholder's cons cell:
+      //      s7_set_car(data, s7_cdr(data)); 
+      //      // data now ((x y ...) x y ...)
+      //      s7_set_cdr(data, snil); 
+      //      // data now ((x y ...))
+      //      loc = s7_gc_protect(sc, data);
+      //      res=s7_call(sc, hook->proc, data);
+      s7_set_car(data, s7_make_string(sc, hook->path.toUTF8()));
+      args=s7_cons(sc, data, snil);
+      loc = s7_gc_protect(sc, args);
+      res = s7_call(sc, hook->proc, args);
     }
   s7_gc_unprotect_at(sc, loc);
   if (res == st->schemeError)
@@ -753,9 +757,9 @@ void SchemeThread::run()
     {
       while ( true ) 
 	{
-	  schemeNodes.lockArray();
+          //	  schemeNodes.lockArray();
 	  node=schemeNodes.getFirst();
-	  schemeNodes.unlockArray();
+          //	  schemeNodes.unlockArray();
 	  if ( node == NULL )
 	    {
 	      break;
@@ -775,9 +779,9 @@ void SchemeThread::run()
 	    }
 	  else
 	    {
-	      schemeNodes.lockArray();
+              //	      schemeNodes.lockArray();
 	      schemeNodes.remove(0, false);
-	      schemeNodes.unlockArray();
+              //	      schemeNodes.unlockArray();
 	      // NOTE: the node to process has now been popped from the
 	      // queue.  i did this while trying to debug the random
 	      // crashing. im not sure if this is the right thing to do or
@@ -789,10 +793,10 @@ void SchemeThread::run()
 	      //lock.exit();
 	      if (keep)
 		{
-		  schemeNodes.lockArray();
+                  //		  schemeNodes.lockArray();
 		  schemeNodes.addSorted(comparator,node);
 		  //          schemeNodes.remove(0, false);
-		  schemeNodes.unlockArray();
+                  //		  schemeNodes.unlockArray();
 		}
 	      else
 		{
@@ -841,16 +845,16 @@ void SchemeThread::clear()
 {
   // this should NEVER be called from scheme code (an EVAL node) or
   // else the run() loop will bomb since it assumes index[0] exists
-  schemeNodes.lockArray();
+  //  schemeNodes.lockArray();
   schemeNodes.clear();
-  schemeNodes.unlockArray();
+  //  schemeNodes.unlockArray();
 }
 
 void SchemeThread::addNode(XSchemeNode* node)
 {
-  schemeNodes.lockArray();
+  //  schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, node);
-  schemeNodes.unlockArray();
+  //  schemeNodes.unlockArray();
   notify();
 }
 
@@ -868,9 +872,9 @@ void SchemeThread::sprout(double _time, s7_pointer proc, int _id)
 
   s7_gc_protect(scheme, proc); // don't let gc touch it
   sprouted=true;  // tell scheduler that we have a process running
-  schemeNodes.lockArray();
+  //  schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, new XProcessNode( _time, proc, _id));
-  schemeNodes.unlockArray();
+  //  schemeNodes.unlockArray();
   notify();
 }
 
@@ -881,17 +885,17 @@ void SchemeThread::eval(char* str)
 
 void SchemeThread::eval(String s)
 {
-  schemeNodes.lockArray();
+  //  schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, new XEvalNode(0.0, s));
-  schemeNodes.unlockArray();
+  //  schemeNodes.unlockArray();
   notify();
 }
 
 void SchemeThread::quit()
 {
-  schemeNodes.lockArray();
+  //  schemeNodes.lockArray();
   schemeNodes.addSorted(comparator, new XControlNode(0.0, XControlNode::QueueQuit));
-  schemeNodes.unlockArray();
+  //  schemeNodes.unlockArray();
   notify();
 }
 
@@ -900,9 +904,9 @@ void SchemeThread::setPaused(bool p) {}
 void SchemeThread::stop(int ident)
 {
   // always add stop nodes to the front of the queue.
-  schemeNodes.lockArray();
+  //  schemeNodes.lockArray();
   schemeNodes.insert(0, new XControlNode (0.0, XControlNode::QueueStop, ident));
-  schemeNodes.unlockArray();
+  //  schemeNodes.unlockArray();
   notify();
 }
 
@@ -913,7 +917,8 @@ void SchemeThread::stopProcesses(int ident)
   // queue in reverse order so removal index remains valid.  NOTE: POP
   // removed the (STOP) node that got us here so this deletes up to
   // and including index 0. otherwise dont include index 0
-  schemeNodes.lockArray();
+
+  //  schemeNodes.lockArray();
   if (ident<0)
     {
       for (int i=schemeNodes.size()-1; i>=0; i--)
@@ -929,7 +934,7 @@ void SchemeThread::stopProcesses(int ident)
           if (n->userid == ident) 
             schemeNodes.remove(i, true);
     }
-  schemeNodes.unlockArray();
+  //  schemeNodes.unlockArray();
   // if stopped all processes also clear any pending messages and send
   // all notes off
   // GET RID OF THIS!
@@ -939,9 +944,9 @@ void SchemeThread::stopProcesses(int ident)
 
 bool SchemeThread::isQueueEmpty()
 {
-  schemeNodes.lockArray();
+  //  schemeNodes.lockArray();
   int size=schemeNodes.size();
-  schemeNodes.unlockArray();
+  //  schemeNodes.unlockArray();
   return (size == 0);
 }
 

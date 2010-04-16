@@ -735,10 +735,10 @@ void MidiOutPort::run() {
     if ( threadShouldExit() )
       break;
     while ( true ) {     
-      outputNodes.lockArray();
+      //      outputNodes.lockArray();
       node=outputNodes.getFirst();
       if ( node == NULL ) {
-	outputNodes.unlockArray();      
+        //	outputNodes.unlockArray();      
 	break;
       }
       qtime=node->time;
@@ -747,7 +747,7 @@ void MidiOutPort::run() {
       // utime is less that 1ms, if not then it probably shouldn't
       // sleep (?)
       if ( (qtime-utime) >= 1.5 ) { //( qtime > utime )
-	outputNodes.unlockArray();
+        //	outputNodes.unlockArray();
 	wait(1);
       }
       else {
@@ -758,7 +758,7 @@ void MidiOutPort::run() {
           }
         else
           outputNodes.remove(0, true);
-      outputNodes.unlockArray();      
+        //      outputNodes.unlockArray();      
       }
     }
     wait(-1);
@@ -791,30 +791,30 @@ void MidiOutPort::run() {
 ***/
 
 bool MidiOutPort::isOutputQueueActive() { 
-  outputNodes.lockArray(); 
+  //  outputNodes.lockArray(); 
   int n=outputNodes.size();
-  outputNodes.unlockArray();
+  //  outputNodes.unlockArray();
   return (n > 0);
 }
 
 void MidiOutPort::clear()
 {
-  outputNodes.lockArray();
+  //  outputNodes.lockArray();
   outputNodes.clear();
   // avoid hanging notes
   if ( device != 0 )
     for ( int i=1; i<=16; i++ )
       device->sendMessageNow( MidiMessage::allSoundOff(i) );
-  outputNodes.unlockArray();
+  //  outputNodes.unlockArray();
 }
 
 void MidiOutPort::addNode(MidiNode *n) {
-  outputNodes.lockArray();
+  //  outputNodes.lockArray();
   n->midiOutPort = this;
   // MILLI
   n->time = (n->time * 1000.0) + Time::getMillisecondCounterHiRes();
   outputNodes.addSorted(comparator, n);
-  outputNodes.unlockArray();
+  //  outputNodes.unlockArray();
   /*  printf("added type=%d, at %f pos=%d of %d\n", 
 	 n->type,
 	 n->time,

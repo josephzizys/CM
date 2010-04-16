@@ -530,7 +530,7 @@ public:
   Plotter * plotter;
   BackView * backview;
   double pad; // pix per inc, pix per point, margin pad
-  Point mousedown, mousemove;
+  Point<float> mousedown, mousemove;
   SelectedItemSet<LayerPoint*> selection;
   Region region;
   Layer * focuslayer; // cached focus layer for fast acesss
@@ -1781,7 +1781,8 @@ void PlotterWindow::init()
   centreWithSize (plotter->getWidth(), plotter->getHeight());
   setResizable(true, true); 
   setVisible(true);
-  setComponentProperty(T("WindowType"), WindowTypes::PlotWindow);
+  //  setComponentProperty(T("WindowType"), WindowTypes::PlotWindow);
+  WindowTypes::setWindowType(this, WindowTypes::PlotWindow);
   plotter->insurePointsVisible();
 }
 

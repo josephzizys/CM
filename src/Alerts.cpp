@@ -193,6 +193,18 @@ int showMacAlertWindow(AlertWindow::AlertIconType at,
                        const String& button2Text,
                        const String& button3Text)
 {
+  if(numberOfButtons == 1)
+    juce::AlertWindow::showMessageBox(at, title, bodyText, button1Text);
+  else if(numberOfButtons == 2)
+    return juce::AlertWindow::showOkCancelBox(at, title, bodyText,
+    button1Text, button2Text) ? 1 : 0;
+  else if(numberOfButtons == 3)
+    return juce::AlertWindow::showYesNoCancelBox(at, title, bodyText,
+      button1Text, button2Text, button3Text);
+  
+  return 0;
+  
+/* //StandardAlert doesn't work in 64-bit applications.
   Str255 _title, _text;
   Str255 _1, _2, _3;
   
@@ -233,15 +245,16 @@ int showMacAlertWindow(AlertWindow::AlertIconType at,
   ar.position = kWindowCenterParentWindow;
   
   SInt16 result;
-  if(at == AlertWindow::InfoIcon || 
-     at == AlertWindow::QuestionIcon)
-    StandardAlert(kAlertNoteAlert, _title, _text, &ar, &result);
-  else if(at == AlertWindow::WarningIcon)
-    StandardAlert(kAlertCautionAlert, _title, _text, &ar, &result);
+  if(at == juce::AlertWindow::InfoIcon || 
+     at == juce::AlertWindow::QuestionIcon)
+    ShowStandardAlert(kAlertNoteAlert, _title, _text, &ar, &result);
+  else if(at == juce::AlertWindow::WarningIcon)
+    ShowStandardAlert(kAlertCautionAlert, _title, _text, &ar, &result);
   else
-    StandardAlert(kAlertPlainAlert, _title, _text, &ar, &result);
+    ShowStandardAlert(kAlertPlainAlert, _title, _text, &ar, &result);
     
-  return (int)result;  
+  return (int)result;
+  */
 }
 
 #endif

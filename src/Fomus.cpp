@@ -72,7 +72,7 @@ String getwildcards() {
   bool fi = true;
   String mid("mid");
   for (const char **i = f.exts, **ie = (f.exts + f.n); i < ie; ++i) {
-    if (*i == mid) continue; // skip midi files
+    if (*i == mid.toUTF8()) continue; // skip midi files
     if (fi) fi = false; else r += ';';
     r += String("*.") + *i;
   }
@@ -480,8 +480,8 @@ public:
     valid = valid_aux();
     knvalid = true;
     if (!valid) Alerts::showMessageBox(AlertWindow::WarningIcon,
-					    T("FOMUS Settings"),
-					    String("Error in ") << what() << " `" << id << "'.");
+                                       T("FOMUS Settings"),
+                                       T("Error in ") + what() + T(" `") + String(id) + T("'."));
   }
   int getnum() const {return num;}
   void reset() {
@@ -542,7 +542,7 @@ private:
   virtual String what0() const = 0;
 };
 bool fomus_other::valid_aux() {
-  fapi_fomus_parse(fom, (what0() + String(" ") + (chstr.isEmpty() ? String("<>") : (chstr[0] != '(' && chstr[0] != '<' ? (String("<") << chstr << String(">")) : chstr))).toUTF8());
+  fapi_fomus_parse(fom, (what0() + String(" ") + (chstr.isEmpty() ? T("<>") : (chstr[0] != '(' && chstr[0] != '<' ? (T("<") + chstr + T(">")) : chstr))).toUTF8());
   if (*fapi_fomus_err) return false;
   struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
   id = fapi_module_id(x.obj);
@@ -678,7 +678,7 @@ private:
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_parts::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("part " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  fapi_fomus_parse(fom, ("part " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -701,7 +701,7 @@ private:
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_metaparts::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("metapart " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  fapi_fomus_parse(fom, ("metapart " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -724,7 +724,7 @@ private:
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_measdefs::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("measdef " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  fapi_fomus_parse(fom, ("measdef " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -747,7 +747,7 @@ private:
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_insts::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("inst " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  fapi_fomus_parse(fom, ("inst " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -770,7 +770,7 @@ private:
   fomusinfo* createnew(const String& txt);
 };
 fomusinfo* fomusinfocont_percinsts::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("percinst " + (txt.isEmpty() ? String("<>") : (txt[0] != '(' && txt[0] != '<' ? (String("<") << txt << '>') : txt))).toUTF8());
+  fapi_fomus_parse(fom, ("percinst " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -1336,22 +1336,22 @@ void out_justify(std::ostream& f, String s, const int start = 0, bool va = true)
     int js = i;
     while (js < j && s[js] != '\n') ++js;
     if (js < j) {
-      f << (const char*)s.substring(i, ++js) << makenstring(start);
+      f << (const char*)s.substring(i, ++js).toUTF8() << makenstring(start);
       i = j = js;
     } else {
       js = j;
       while (j > i && (va ? s[j] == ' ' : !(isalnum(s[j]) || exc.containsChar(s[j])))) --j;
       while (j > i && (va ? s[j - 1] != ' ' : isalnum(s[j - 1]) || exc.containsChar(s[j - 1]))) --j;
       if (j > i) {
-	f << (const char*)s.substring(i, j) << "\n" << makenstring(start);
+	f << (const char*)s.substring(i, j).toUTF8() << "\n" << makenstring(start);
 	i = j;
       } else {
-	f << (const char*)s.substring(i, js) << "\n" << makenstring(start);
+	f << (const char*)s.substring(i, js).toUTF8() << "\n" << makenstring(start);
 	i = j = js;
       }
     }
   }
-  f << (const char*)s.substring(i);
+  f << (const char*)s.substring(i).toUTF8();
 }
 
 

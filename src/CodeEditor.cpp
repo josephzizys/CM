@@ -320,13 +320,13 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       info.shortName=T("Cut");
       if (commandkeyactive)
 	info.addDefaultKeypress(T('X'), ModifierKeys::commandModifier);
-      info.setActive(getCodeBuffer()->getHighlightedRegionLength()>0);
+      info.setActive(getCodeBuffer()->getHighlightedRegion().getLength()>0);
       break;
     case CommandIDs::EditorCopy:
       info.shortName=T("Copy");
       if (commandkeyactive)
 	info.addDefaultKeypress(T('C'), ModifierKeys::commandModifier);
-      info.setActive(getCodeBuffer()->getHighlightedRegionLength()>0);
+      info.setActive(getCodeBuffer()->getHighlightedRegion().getLength()>0);
       break;
     case CommandIDs::EditorPaste:
       info.shortName=T("Paste");
@@ -346,11 +346,11 @@ void CodeEditorWindow::getCommandInfo(const CommandID id, ApplicationCommandInfo
       break;
     case CommandIDs::EditorCommentOut:
       info.shortName=T("Comment Region");
-      info.setActive(getCodeBuffer()->getHighlightedRegionLength()>0);
+      info.setActive(getCodeBuffer()->getHighlightedRegion().getLength()>0);
       break;
     case CommandIDs::EditorUncommentOut:
       info.shortName=T("Uncomment Region");
-      info.setActive(getCodeBuffer()->getHighlightedRegionLength()>0);
+      info.setActive(getCodeBuffer()->getHighlightedRegion().getLength()>0);
       break;
     case CommandIDs::EditorFind:
       info.shortName=T("Find...");
@@ -962,8 +962,9 @@ CodeEditorWindow* CodeEditorWindow::getFocusCodeEditor()
   for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
     {
       TopLevelWindow* w=TopLevelWindow::getTopLevelWindow(i);
-      if ( w->getComponentPropertyBool(T("FocusEditor"), false))
-        return (CodeEditorWindow*)w;
+      NamedValueSet& s=w->getProperties();
+      if (s[ var::identifier(T("FocusEditor")) ]==var(true))
+       return (CodeEditorWindow*)w;
     }
   return (CodeEditorWindow*)NULL;
 }
@@ -1327,6 +1328,23 @@ bool CodeBuffer::keyPressed (const KeyPress& key)
     test(false);
   else if (emacs && key == KeyPress(T('+'), ModifierKeys::ctrlModifier | ModifierKeys::shiftModifier, 0))
     test(true); 
+  // NON emacs additions
+  else if (SysInfo::isMac() && key.isKeyCode(KeyPress::rightKey))
+    {
+      const bool moveInWholeWordSteps = key.getModifiers().isCtrlDown() || key.getModifiers().isAltDown();
+      if (key.getModifiers().isCommandDown())
+        goToEndOfLine(key.getModifiers().isShiftDown());
+      else
+        cursorRight(moveInWholeWordSteps, key.getModifiers().isShiftDown());
+    }
+  else if (SysInfo::isMac() && key.isKeyCode(KeyPress::leftKey))
+    {
+      const bool moveInWholeWordSteps = key.getModifiers().isCtrlDown() || key.getModifiers().isAltDown();
+      if (key.getModifiers().isCommandDown())
+        goToStartOfLine(key.getModifiers().isShiftDown());
+      else
+        cursorLeft(moveInWholeWordSteps, key.getModifiers().isShiftDown());
+    }
   else 
     {
       // else try other keypress handlers in this order: (1) Juce
@@ -1465,11 +1483,17 @@ void CodeBuffer::focusGained(Component::FocusChangeType cause)
   for (int i=0; i<TopLevelWindow::getNumTopLevelWindows(); i++)
     {
       w=TopLevelWindow::getTopLevelWindow(i);
-      if (w->getComponentPropertyBool(T("FocusEditor"), false))
-	w->setComponentProperty(T("FocusEditor"), false);
+      NamedValueSet& s=w->getProperties();
+      if (s.contains(var::identifier(T("FocusEditor"))))
+        s.set(var::identifier(T("FocusEditor")), var(false)) ;
+      // FIXME
+      //if (w->getComponentPropertyBool(T("FocusEditor"), false))
+      //	w->setComponentProperty(T("FocusEditor"), false);
     }
   // select this one
-  getTopLevelComponent()->setComponentProperty(T("FocusEditor"), true);
+  // FIXME
+  //  getTopLevelComponent()->setComponentProperty(T("FocusEditor"), true);
+  getTopLevelComponent()->getProperties().set(var::identifier(T("FocusEditor")), var(true));
 }
 
 //
@@ -1782,7 +1806,7 @@ void CodeBuffer::movePageBackward(bool sel)
 bool CodeBuffer::findPrevious(String str, bool wrap)
 {
   CodeDocument::Position pos(getCaretPos());
-  pos.moveBy(-getHighlightedRegionLength());
+  pos.moveBy(-getHighlightedRegion().getLength());
   int wid=str.length();
   int got=-1;
   while (true)
@@ -1811,7 +1835,8 @@ bool CodeBuffer::findPrevious(String str, bool wrap)
     }
   if (got>-1)
     {
-      setHighlightedRegion(pos,wid);
+      Range<int> r (pos.getPosition(), pos.getPosition()+wid);
+      setHighlightedRegion(r);
       return true;
     }
   return false;
@@ -1853,7 +1878,8 @@ bool CodeBuffer::findNext(String str, bool wrap)
     }
   if (got>-1)
     {
-      setHighlightedRegion(pos,wid);
+      Range<int> r (pos.getPosition(), pos.getPosition()+wid);
+      setHighlightedRegion(r);
       return true;
     }
   return false;
@@ -1871,7 +1897,7 @@ bool CodeBuffer::replaceAll(String str, String rep)
 
 bool CodeBuffer::replace(String rep)
 {
-  if (!(getHighlightedRegionLength()>0))
+  if (!(getHighlightedRegion().getLength()>0))
     return false;
   insertTextAtCaret(rep);
   isChanged(true);
@@ -2035,7 +2061,7 @@ void CodeBuffer::eval(bool expandonly)
 {
   if (!TextIDs::canExecute(getTextType()))
     return;
-  int regn=getHighlightedRegionLength();
+  int regn=getHighlightedRegion().getLength();
   int scan=ScanIDs::SCAN_EMPTY;
   Array<int> epos; // positions of backward exprs
   CodeDocument::Position bot (getCaretPos());
@@ -2044,7 +2070,7 @@ void CodeBuffer::eval(bool expandonly)
 
   if (regn>0) // if region use its bounds
     {
-      bot=getHighlightedRegionStart();
+      bot=CodeDocument::Position(&document, getHighlightedRegion().getStart());
       top=bot.movedBy(regn);
       end=bot.getPosition();
     }

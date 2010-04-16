@@ -69,7 +69,9 @@ void CellView::paint (Graphics& g)
   g.setColour(backgroundColor);
   g.fillAll();
 
-  data.lockArray();
+  //data.lockArray();
+  const ScopedLock lock (data.getLock());
+
   int  x, y, i=0, s=data.size();
   y=cellBorderSize;
   for (int r=0; r<cellRows; r++)
@@ -99,7 +101,7 @@ void CellView::paint (Graphics& g)
 	}
       y += (cellSize+cellBorderSize);
     }
-  data.unlockArray();
+  //data.unlockArray();
 }
 
 void CellView::setStatesAndColors(String statesandcolors)
@@ -136,7 +138,8 @@ StateWindow::StateWindow (String title, String statesandcolors, int rows, int co
   setUsingNativeTitleBar(true);
   setDropShadowEnabled(true);
   centreWithSize(getWidth(), getHeight());
-  setComponentProperty(T("WindowType"), WindowTypes::StateWindow);
+  //  setComponentProperty(T("WindowType"), WindowTypes::StateWindow);
+  WindowTypes::setWindowType(this, WindowTypes::StateWindow);
   setVisible(true);
 }
 
@@ -199,7 +202,7 @@ void StateWindow::StateWindowListener::handleMessage(const Message &m)
     case CommandIDs::StateWindowSetCell:
       {
 	//std::cout << "StateWindowSetCell state=" << m.intParameter2 << " row=" << m.intParameter3 << " col=" << (int)m.pointerParameter << "\n";
-	cv->data.lockArray();
+        //	cv->data.lockArray();
 	int val=m.intParameter2;
 	int row=m.intParameter3;
 #if defined JUCE_32BIT 	
@@ -213,7 +216,7 @@ void StateWindow::StateWindowListener::handleMessage(const Message &m)
         row=row % cv->cellRows;
         col=col % cv->cellColumns;
         cv->data.setUnchecked((row*cv->cellColumns) + col, val);
-        cv->data.unlockArray();
+        //        cv->data.unlockArray();
 	cv->repaint();
 	break;
       }
@@ -223,7 +226,7 @@ void StateWindow::StateWindowListener::handleMessage(const Message &m)
 	//std::cout << "StateWindowSetCells: length=" << m.intParameter2 << " row=" << m.intParameter3  << "\n";
 	int  size=m.intParameter2;
 	int* ints=(int *)m.pointerParameter;
-	cv->data.lockArray();
+        //	cv->data.lockArray();
 	int len=cv->data.size();
         int row=m.intParameter3 % cv->cellRows;
         int ind=row*cv->cellColumns;
@@ -232,7 +235,7 @@ void StateWindow::StateWindowListener::handleMessage(const Message &m)
 	    cv->data.setUnchecked((ind + i) % len, ints[i]);
 	    //std::cout << "  data[" << (i % len) << "]: " << cv->data.getUnchecked(i % len) << "\n";
 	  }
-	cv->data.unlockArray();
+        //	cv->data.unlockArray();
 	cv->repaint();
 	delete [] ints;
 	break;

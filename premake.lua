@@ -58,14 +58,16 @@ if amalgamated then
    juce_library.objdir = "obj/juce"
    juce_library.buildflags = {"static-runtime"}
    juce_library.files = {"src/juce.h", "src/juce_amalgamated.cpp", "src/juce_amalgamated.h"}
+   add(juce_library.defines, "JUCE_OPENGL=0")
    if macosx then
       juce_library.buildoptions = {"-x objective-c++", "-w"}
-      add(juce_library.defines, "MACOSX")
+      --add(juce_library.defines, "MACOSX")
    elseif linux then
-      add(juce_library.defines, "LINUX")
+      --add(juce_library.defines, "LINUX")
       add(juce_library.includepaths, "/usr/include/freetype2")
    elseif windows then
-      add(juce_library.defines, "WINDOWS")
+      --add(juce_library.defines, "WINDOWS")
+      add(juce_library.defines, "JUCE_CHECK_MEMORY_LEAKS=0")
       fh = io.open("src/loadlibrary.h", "w+")
       fh:write("void* dlopen();\n")
       fh:write("void* dlsym(void* ha, const char* name);\n")
@@ -173,6 +175,8 @@ for i = 1,numtargets do
 	 mypackage.objdir = "obj/gracecl"
 	 add(mypackage.defines, "GRACE=1")
 	 add(mypackage.defines, "GRACECL=1")
+      add(mypackage.files, "src/CommonLisp.cpp")
+      add(mypackage.files, "src/CommonLisp.h")
       end
       add(mypackage.files, "src/Fonts.cpp") 
       add(mypackage.files, "src/Fonts.h")
@@ -192,8 +196,6 @@ for i = 1,numtargets do
       add(mypackage.files, "src/Images.h")
       add(mypackage.files, "src/Audio.cpp")
       add(mypackage.files, "src/Audio.h")
-      add(mypackage.files, "src/CommonLisp.cpp")
-      add(mypackage.files, "src/CommonLisp.h")
 --      add(mypackage.files, "src/Triggers.cpp")
 --      add(mypackage.files, "src/Triggers.h")
       add(mypackage.files, "src/Cells.h")

@@ -480,13 +480,15 @@ class WindowTypes
   static const bool isWindowType(TopLevelWindow* w, int typ)
   {
     if (w!=NULL)
-      return (w->getComponentPropertyInt(T("WindowType"), false) == typ);
+      return (w->getProperties()[ var::identifier(T("WindowType")) ]==var(typ));
+    // return (w->getComponentPropertyInt(T("WindowType"), false) == typ);
     else 
       return false;
   }
   static const void setWindowType(TopLevelWindow* w, int typ)
   {
-    w->setComponentProperty(T("WindowType"), typ);
+    // w->setComponentProperty(T("WindowType"), typ);
+    w->getProperties().set(var::identifier(T("WindowType")), var(typ));
   }
 };
 

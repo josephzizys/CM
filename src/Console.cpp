@@ -72,7 +72,7 @@ void Console::display(String str, Colour color)
 #ifdef GRACE
   buffer->setCaretPosition(0xFFFFFF);
   buffer->setColour(TextEditor::textColourId, color);
-  buffer->insertTextAtCursor(str);
+  buffer->insertTextAtCaret(str);
 #else
   std::cout << str.toUTF8() <<  std::flush;
 #endif
@@ -189,27 +189,27 @@ void Console::printPrompt(bool t)
 void Console::postAsyncMessage(int typ, String msg, bool trigger)
 {
   //  std::cout << "Posting console message " << msg.toUTF8() << "\n";
-  messages.lockArray();
+  // messages.lock();
   messages.add(new AsyncMessage(typ, msg));
-  messages.unlockArray();
+  // messages.unlockArray();
   if (trigger)
     triggerAsyncUpdate();
 }
 
 void Console::postAsyncMessage(int typ, bool trigger)
 {
-  messages.lockArray();
+  //  messages.lockArray();
   messages.add(new AsyncMessage(typ));
-  messages.unlockArray();
+  // messages.unlockArray();
   if (trigger)
     triggerAsyncUpdate();
 }
 
 void Console::postAsyncMessage(int typ, int msg, bool trigger)
 {
-  messages.lockArray();
+  // messages.lockArray();
   messages.add(new AsyncMessage(typ, msg));
-  messages.unlockArray();
+  // messages.unlockArray();
   if (trigger)
     triggerAsyncUpdate();
 }
@@ -219,8 +219,8 @@ void Console::handleAsyncUpdate()
   // THIS CALLBACK HAPPENS IN THE MAIN THREAD
   Colour color=Colours::black;
   //std::cout << "Handling " << messages.size() << " messages\n";
-  messages.lockArray(); // SHOULD THIS BE BEFORE LOOP?
-  
+  // messages.lockArray(); // SHOULD THIS BE BEFORE LOOP?
+  const ScopedLock lock (messages.getLock());
   for (int i=0; i<messages.size(); i++)
     {
       int cid = messages[i]->type;
@@ -275,7 +275,7 @@ void Console::handleAsyncUpdate()
     }      
   
   messages.clear();
-  messages.unlockArray();
+  //  messages.unlockArray();
 }
 
 #ifdef GRACE

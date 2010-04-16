@@ -479,11 +479,12 @@ void OscOpenDialog::buttonClicked (Button* buttonThatWasClicked)
       String sp=serverPortEditor->getText().trim();
       String th=targetHostEditor->getText().trim();
       String tp=targetPortEditor->getText().trim();
+      Range<int> rn (0,10000);
       if (! OscPort::isValidPort(sp))
         {
           PlatformUtilities::beep();
           serverPortEditor->grabKeyboardFocus();
-          serverPortEditor->setHighlightedRegion(0,10000);
+          serverPortEditor->setHighlightedRegion(rn);
           ok=false;
         }
       else if (! OscPort::isValidHost(th) )
@@ -493,13 +494,13 @@ void OscOpenDialog::buttonClicked (Button* buttonThatWasClicked)
               th=T("localhost");
               targetHostEditor->setText(th);
               //              targetHostEditor->grabKeyboardFocus();
-              targetHostEditor->setHighlightedRegion(0,10000);
+              targetHostEditor->setHighlightedRegion(rn);
             }
           else
             {
               PlatformUtilities::beep();
               targetHostEditor->grabKeyboardFocus();
-              targetHostEditor->setHighlightedRegion(0,10000);
+              targetHostEditor->setHighlightedRegion(rn);
               ok=false;
             }
         }
@@ -507,7 +508,7 @@ void OscOpenDialog::buttonClicked (Button* buttonThatWasClicked)
         {
           PlatformUtilities::beep();
           targetPortEditor->grabKeyboardFocus();
-          targetPortEditor->setHighlightedRegion(0,10000);
+          targetPortEditor->setHighlightedRegion(rn);
           ok=false;
         }
 

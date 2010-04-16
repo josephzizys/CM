@@ -21,7 +21,9 @@
 
 #include "Cells.h"
 
+#ifdef GRACECL
 #include "CommonLisp.h"
+#endif
 
 #ifdef WITHFOMUS
 #include "Fomus.h"
@@ -438,13 +440,16 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       // Lisp Commands
       //
     case CommandIDs::LispStart:
-      if (SysInfo::isGraceCL() && 
-	  CommonLisp::getInstance()->isLispRunning())
+#ifdef GRACECL
+      if (CommonLisp::getInstance()->isLispRunning())
 	info.shortName=T("Stop Lisp");
       else 
 	info.shortName=T("Start Lisp");
-      info.setActive(SysInfo::isGraceCL() && 
-		     CommonLisp::getInstance()->isLispStartable());
+      info.setActive(CommonLisp::getInstance()->isLispStartable());
+#else
+      info.shortName=T("Start Lisp");
+      info.setActive(false);
+#endif
       break;
     case CommandIDs::LispConfigure:
       info.shortName=T("Configure Lisp...");
@@ -452,20 +457,27 @@ void Grace::getCommandInfo(const CommandID id, ApplicationCommandInfo& info)
       break;
     case CommandIDs::LispLoadFile:
       info.shortName=T("Load File...");
-      info.setActive(!SysInfo::isGraceCL() || 
-		     CommonLisp::getInstance()->isLispRunning());
+#ifdef GRACECL
+      info.setActive(CommonLisp::getInstance()->isLispRunning());
+#else
+      info.setActive(true);
+#endif
       break;
     case CommandIDs::LispCompileFile:
       info.shortName=T("Compile File...");
-      info.setActive(SysInfo::isGraceCL() && 
-		     CommonLisp::getInstance()->isLispRunning());
+#ifdef GRACECL
+      info.setActive(CommonLisp::getInstance()->isLispRunning());
+#else
+      info.setActive(false);
+#endif
       break;
+
     case CommandIDs::PrefsSetInitFile:
       info.shortName=T("Set Init File...");
       break;
     case CommandIDs::PrefsClearInitFile:
       info.shortName=T("Clear Init File");
-      info.setActive(pref->getStringProp(T("LispInitFile"))!=NULL);
+      info.setActive(pref->getStringProp(T("LispInitFile"))!=String::empty);
       break;
             
       //
@@ -824,21 +836,26 @@ bool Grace::perform(const ApplicationCommandTarget::InvocationInfo& info)
       // Lisp Commands
 
     case CommandIDs::LispStart:
+#ifdef GRACECL
       if (CommonLisp::getInstance()->isLispRunning())
 	CommonLisp::getInstance()->stopLisp();	
       else
 	CommonLisp::getInstance()->startLisp();
+#endif
       break;
 
     case CommandIDs::LispConfigure:
+#ifdef GRACECL
       CommonLisp::getInstance()->showConfigureLispWindow();
+#endif
       break;
 
     case CommandIDs::LispLoadFile:
-      if (SysInfo::isGraceCL())
+#ifdef GRACECL
 	CommonLisp::getInstance()->load(File::nonexistent,true);
-      else
+#else
 	SchemeThread::getInstance()->load(File::nonexistent,true);	
+#endif
       break;
     case CommandIDs::PrefsLoadRecent:
       SchemeThread::getInstance()->load(pref->recentlyLoaded.getFile(data), true);
@@ -1237,11 +1254,11 @@ void Console::getCommandInfo(const CommandID id,
       break;
     case CommandIDs::ConsoleCopy:
       info.shortName=T("Copy");
-      info.setActive(buffer->getHighlightedRegionLength()>0);
+      info.setActive(buffer->getHighlightedRegion().getLength()>0);
       break;
     case CommandIDs::ConsoleClearSelection:
       info.shortName=T("Clear Selection");
-      info.setActive(buffer->getHighlightedRegionLength()>0);
+      info.setActive(buffer->getHighlightedRegion().getLength()>0);
       break;
     case CommandIDs::ConsoleBeepOnError:
       info.shortName=T("Beep On Error");
@@ -1295,13 +1312,14 @@ bool Console::perform(const ApplicationCommandTarget::InvocationInfo& info)
       buffer->copy();
       break;
     case CommandIDs::ConsoleSelectAll:
-      buffer->setHighlightedRegion(0,1000000);
+      buffer->setHighlightedRegion(Range<int>(0,1000000));
       break;
     case CommandIDs::ConsoleBeepOnError:
       setBeepOnError(!getBeepOnError());
       break;
     case CommandIDs::ConsoleClearSelection:
-      buffer->setHighlightedRegion(buffer->getCaretPosition(),0);
+      //      buffer->setHighlightedRegion(buffer->getCaretPosition(),0);
+      buffer->setHighlightedRegion(Range<int>::emptyRange(buffer->getCaretPosition()));
       buffer->setCaretPosition(1000000);
       break;
     case CommandIDs::ConsoleClearConsole:

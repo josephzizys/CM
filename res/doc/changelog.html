@@ -18,21 +18,26 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 
   <h2>CM 3.6.0</h2>
   <ul>
-    <li class="change">Enhancement: Grace's Editor has been completely reimplemented using JUCE's new CodeDocuement, CodeTokenizer and CodeEditorComponent classes. This major new addition to Grace required a complete rewrite of all the low-level string lexing and parsing routines as well. New feaures in the editor include:
+
+
+    <li class="change">Enhancement: Grace's Editor has been completely reimplemented using JUCE's new CodeDocuement, CodeTokenizer and CodeEditorComponent classes. This major improvement is a complete rewrite of the editor and its low-level string lexing and parsing routines. New features of the editor include:
     <ul>
-      <li>Extremely fast syntax highlighting, no colorizing limit on size of buffer.</li>
+      <li>Extremely fast syntax highlighting.</li>
       <li>Very large files load quickly.</li>
       <li>New Color Themes can be applied on a per buffer basis.</li>
-      <li>New Customization Comments let you to save the buffer's current syntax, theme, font-size, lines and columns with the file, these customizations will be applied automatically to the buffer when the file is reeditied.</li>
-      <li>Cleaner menu layout, submenus include item to save current setting as preference.</li>
+      <li>New Customization Comments let you to save the buffer's current syntax, theme, font-size, lines and columns with the file, these customizations will be applied automatically when the file is reloaded.</li>
+      <li>Cleaner editor menu layout, submenus have items to save current setting as a global preference.</li>
     </ul>
   </li>
 
-<li class="change">Enhancement: SAL 2.0 is available as an algorithmic language. Sal 2 is a minimalist version of SAL, It provides a easy-to-learn, infix substitute for Scheme.
+<li class="change">Enhancement: SAL 2.0 algorithmic language. SAL is an easy-to-learn, infix substitute for Scheme. See <span class="menuitem">Help &gt; Tutorials &gt; Sal 2.0 Quick Tour</span> for a simple introduction.
 </li>
 
-<li class="change">Enhancment: All Sal tutorials and examples converted to Sal2 syntax.</li>
+<li class="change">Enhancment: Upgraded code base to latest JUCE (1.51.14) and SndLib (1.54).</li>
+<li class="change">Enhancment: All Sal tutorials and examples converted to Sal2.</li>
 <li class="change">Enhancment: CM documentation now reflects Sal2 syntax.</li>
+<li class="change">Enhancment: New Files tutorials for both Sal and Scheme.</li>
+<li class="change">Enhancment: New Fomus examples for Scheme.</li>
 
 </ul>
 
@@ -329,7 +334,7 @@ li.change { display: list-item; list-style: circle; margin: 0em 0em 1ex 0em; bor
 </div> <!-- end content -->
 
 <hr/>
-<div style="float:left;"><p> <!-- hhmts start --> Last modified: Sat Apr  3 09:44:20 CDT 2010 <!-- hhmts end --> </p>
+<div style="float:left;"><p> <!-- hhmts start --> Last modified: Fri Apr 16 08:57:34 CDT 2010 <!-- hhmts end --> </p>
 </div>
 <div style="float:right;"><a href="http://validator.w3.org/check?uri=referer"><img
         src="http://www.w3.org/Icons/valid-xhtml10-blue" style="border:none;"

@@ -782,17 +782,17 @@ s7_pointer cm_directory(char* path, bool recurse)
   else
     return SchemeThread::getInstance()->schemeNil;
 
-  OwnedArray<File> a;
+  Array<File> a;
   int i=(recurse) ? File::findFiles : File::findFilesAndDirectories;
   int n=f.findChildFiles(a, (i | File::ignoreHiddenFiles), recurse, s);
   if (n==0)
     return SchemeThread::getInstance()->schemeNil;
-  s7_pointer head=s7_cons(sc, s7_make_string(sc, a[0]->getFullPathName().toUTF8()),
+  s7_pointer head=s7_cons(sc, s7_make_string(sc, a[0].getFullPathName().toUTF8()),
                           SchemeThread::getInstance()->schemeNil);
   s7_pointer tail=head;
   for (int j=1; j<n; j++)
     {
-      String x=a[j]->getFullPathName();
+      String x=a[j].getFullPathName();
       s7_set_cdr(tail, s7_cons(sc, s7_make_string(sc, x.toUTF8()),
                                SchemeThread::getInstance()->schemeNil));
       tail=s7_cdr(tail);
