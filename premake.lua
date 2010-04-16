@@ -19,6 +19,7 @@ sndlib = nil
 fomus = nil
 liblo = nil
 svnvers = nil
+juce_config = {"JUCE_OPENGL=0", "JUCE_CHECK_MEMORY_LEAKS=0"}
 
 function insure_slash(path) 
   --insure slash at end of directory so concatenation works
@@ -58,16 +59,12 @@ if amalgamated then
    juce_library.objdir = "obj/juce"
    juce_library.buildflags = {"static-runtime"}
    juce_library.files = {"src/juce.h", "src/juce_amalgamated.cpp", "src/juce_amalgamated.h"}
-   add(juce_library.defines, "JUCE_OPENGL=0")
+   juce_library.defines = juce_config
    if macosx then
       juce_library.buildoptions = {"-x objective-c++", "-w"}
-      --add(juce_library.defines, "MACOSX")
    elseif linux then
-      --add(juce_library.defines, "LINUX")
       add(juce_library.includepaths, "/usr/include/freetype2")
    elseif windows then
-      --add(juce_library.defines, "WINDOWS")
-      add(juce_library.defines, "JUCE_CHECK_MEMORY_LEAKS=0")
       fh = io.open("src/loadlibrary.h", "w+")
       fh:write("void* dlopen();\n")
       fh:write("void* dlsym(void* ha, const char* name);\n")
@@ -110,10 +107,12 @@ for i = 1,numtargets do
 --           Global
 ------------------------------------------
 
+
    mypackage = newpackage() -- premake sets 'package' to default package
    mypackage.includepaths = { "src" }
    mypackage.buildflags = {"static-runtime", "no-main"}
    mypackage.language = "c++"
+   add(mypackage.defines, juce_config)
 
    if amalgamated then 
       add(mypackage.libpaths, "obj/juce")
@@ -144,7 +143,7 @@ for i = 1,numtargets do
       add(mypackage.files,"src/Fomus.h")
    end
 
-   mypackage.config["Debug"].defines = {"DEBUG=1"}
+   add( mypackage.config["Debug"].defines, "DEBUG=1")
 
 ------------------------------------------
 --           CM

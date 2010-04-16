@@ -153,7 +153,7 @@ class Console :
   // these are implemented in Command.cpp
   ApplicationCommandTarget* getNextCommandTarget();
   void getAllCommands(Array<CommandID>& commands);
-  void getCommandInfo(const CommandID id, ApplicationCommandInfo& info);
+  void getCommandInfo(CommandID id, ApplicationCommandInfo& info);
   bool perform(const ApplicationCommandTarget::InvocationInfo& info);
   bool getBeepOnError();
   void setBeepOnError(bool b);

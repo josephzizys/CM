@@ -607,7 +607,7 @@ class Plotter  : public Component, public ScrollBarListener
   void sliderValueChanged (Slider *slider) ;
   void sliderDragStarted (Slider *slider) ;
   void sliderDragEnded (Slider *slider) ;
-  void scrollBarMoved (ScrollBar * sb, const double nrs) ;
+  void scrollBarMoved (ScrollBar * sb, double nrs) ;
 
   void selectAll();
   void deleteSelection(bool cut=false);

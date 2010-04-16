@@ -239,7 +239,7 @@ void initfomus() {
       fapi_module_id = (module_id_type)fdlsym(ha, "module_id");
       fapi_modtype_to_str = (modtype_to_str_type)fdlsym(ha, "modtype_to_str");
 #endif      
-    } catch (const dlerr& e) {
+    } catch (const dlerr& e) {e;
       Console::getInstance()->printError((char*)">>> Error: Fomus: error loading libfomus\n");      
       return;
     }
@@ -375,7 +375,7 @@ struct scoped_timeshift {
   ~scoped_timeshift();
 };
 
-scoped_timeshift::scoped_timeshift(Fomus& score):issh(SchemeThread::getInstance()->scoremode), score(score) {
+scoped_timeshift::scoped_timeshift(Fomus& score):issh(SchemeThread::getInstance()->isScoreMode()), score(score) {
   if (issh) {
     fapi_fomus_fval(score.getfomusdata(), fomus_par_region_time, fomus_act_inc, SchemeThread::getInstance()->scoretime);
     fapi_fomus_ival(score.getfomusdata(), fomus_par_region, fomus_act_start, 0);
@@ -606,7 +606,7 @@ public:
     reset_aux();
   }
   void init() {reset_aux();}
-  int getn() const {return stuff.size();}
+  int getn() const {return (int)stuff.size();}
   fomusinfo* get(int ind) const {return stuff[ind];}
   int getuselevel() const {return uselevel;}
   void setuselevel(int lvl) {
@@ -677,8 +677,17 @@ private:
   fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_part(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
-fomusinfo* fomusinfocont_parts::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("part " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
+fomusinfo* fomusinfocont_parts::createnew(const String& txt) 
+{
+  String str(T("part "));
+  if (txt.isEmpty())
+    str << T("<>");
+  else if (txt[0] != '(' && txt[0] != '<' )
+    str << T("<") << txt << T(">");
+  else 
+    str << txt;
+
+  fapi_fomus_parse(fom, str.toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -687,7 +696,7 @@ fomusinfo* fomusinfocont_parts::createnew(const String& txt) {
   } else {
     struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
     fomus_part* y;
-    stuff.push_back(y = new fomus_part(stuff.size(), fom, x, fapi_module_id(x.obj)));
+    stuff.push_back(y = new fomus_part((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
   }
 }
@@ -700,8 +709,16 @@ private:
   fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_metapart(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
-fomusinfo* fomusinfocont_metaparts::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("metapart " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
+fomusinfo* fomusinfocont_metaparts::createnew(const String& txt) 
+{
+  String str (T("metapart "));
+  if (txt.isEmpty())
+    str << T("<>") ;
+  else if (txt[0] != '(' && txt[0] != '<')
+    str << T("<") << txt << T(">");
+  else 
+    str << txt;
+  fapi_fomus_parse(fom, str.toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -710,7 +727,7 @@ fomusinfo* fomusinfocont_metaparts::createnew(const String& txt) {
   } else {
     struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
     fomus_metapart* y;
-    stuff.push_back(y = new fomus_metapart(stuff.size(), fom, x, fapi_module_id(x.obj)));
+    stuff.push_back(y = new fomus_metapart((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
   }
 }
@@ -723,8 +740,16 @@ private:
   fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_measdef(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
-fomusinfo* fomusinfocont_measdefs::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("measdef " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
+fomusinfo* fomusinfocont_measdefs::createnew(const String& txt) 
+{
+  String str (T("measdef "));
+  if (txt.isEmpty())
+    str << T("<>");
+  else if (txt[0] != '(' && txt[0] != '<')
+    str << T("<") << txt << T(">");
+  else 
+    str << txt;
+  fapi_fomus_parse(fom, str.toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -733,7 +758,7 @@ fomusinfo* fomusinfocont_measdefs::createnew(const String& txt) {
   } else {
     struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
     fomus_measdef *y;
-    stuff.push_back(y = new fomus_measdef(stuff.size(), fom, x, fapi_module_id(x.obj)));
+    stuff.push_back(y = new fomus_measdef((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
   }
 }
@@ -746,8 +771,16 @@ private:
   fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_inst(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
-fomusinfo* fomusinfocont_insts::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("inst " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
+fomusinfo* fomusinfocont_insts::createnew(const String& txt) 
+{
+  String str (T("inst "));
+  if (txt.isEmpty())
+    str << T("<>");
+  else if (txt[0] != '(' && txt[0] != '<')
+    str << T("<") << txt << T(">");
+  else
+    str << txt;
+  fapi_fomus_parse(fom, str.toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -756,7 +789,7 @@ fomusinfo* fomusinfocont_insts::createnew(const String& txt) {
   } else {
     struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
     fomus_inst *y;
-    stuff.push_back(y = new fomus_inst(stuff.size(), fom, x, fapi_module_id(x.obj)));
+    stuff.push_back(y = new fomus_inst((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
   }
 }
@@ -769,8 +802,16 @@ private:
   fomusinfo* getnew(int c, FOMUS fom, const infoext_objinfo& obj, const char* nam) {return new fomus_percinst(c, fom, obj, nam);}
   fomusinfo* createnew(const String& txt);
 };
-fomusinfo* fomusinfocont_percinsts::createnew(const String& txt) {
-  fapi_fomus_parse(fom, ("percinst " + (txt.isEmpty() ? T("<>") : (txt[0] != '(' && txt[0] != '<' ? (T("<") + txt + T(">")) : txt))).toUTF8());
+fomusinfo* fomusinfocont_percinsts::createnew(const String& txt) 
+{
+  String str (T("percinst "));
+  if (txt.isEmpty())
+    str << T("<>");
+  else if (txt[0] != '(' && txt[0] != '<')
+    str << T("<") << txt << T(">");
+  else
+    str << txt;
+  fapi_fomus_parse(fom, str.toUTF8());
   if (*fapi_fomus_err) {
     Alerts::showMessageBox(AlertWindow::WarningIcon,
 				T("FOMUS Settings"),
@@ -779,7 +820,7 @@ fomusinfo* fomusinfocont_percinsts::createnew(const String& txt) {
   } else {
     struct infoext_objinfo x(fapi_infoext_getlastentry(fom));
     fomus_percinst *y;
-    stuff.push_back(y = new fomus_percinst(stuff.size(), fom, x, fapi_module_id(x.obj)));
+    stuff.push_back(y = new fomus_percinst((int)stuff.size(), fom, x, fapi_module_id(x.obj)));
     return y;
   }
 }
@@ -1670,8 +1711,7 @@ struct MyTabbedComponent:public TabbedComponent
   FOMUSDocTabs& tt;
   MyTabbedComponent(FOMUSDocTabs& tt, const TabbedButtonBar::Orientation orientation)
  :TabbedComponent(orientation), tt(tt) {}
-  void currentTabChanged(const int newCurrentTabIndex, 
-			 const String &newCurrentTabName);
+  void currentTabChanged(int newCurrentTabIndex, const String &newCurrentTabName);
 };
 
 class FOMUSDocTabs : public Component,
@@ -1932,7 +1972,7 @@ const StringArray FomusSyntax::getTokenTypes ()
   return names;
 }
 
-const Colour FomusSyntax::getDefaultColour (const int tokenType)
+const Colour FomusSyntax::getDefaultColour (int tokenType)
 {
   // FIXME FOR NEW CODE EDITOR
   return Colours::black;

@@ -69,60 +69,71 @@ void Syntax::setCharSyntax (const String chrs, const int syn)
       std::cout << "setCharSyntax: WARNING: index [" << i << "] in \"" << chrs.toUTF8() << "\" is > 127!\n";
 }
 
-bool Syntax::isWhiteChar (const char c)
+bool Syntax::isWhiteChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_WHITE);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_WHITE);
 }
 
-bool Syntax::isWordChar (const char c)
+bool Syntax::isWordChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_WORD);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_WORD);
 }
 
-bool Syntax::isSymbolChar (const char c)
+bool Syntax::isSymbolChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_SYMBOL);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_SYMBOL);
 }
 
-bool Syntax::isTokenChar (const char c)
+bool Syntax::isTokenChar (const tchar c)
 {
-  int s=syntab[(c & 0x7f)];
+  if(c > 127) return false;
+  int s=syntab[c];
   return (s == ScanIDs::SYN_WORD || s == ScanIDs::SYN_SYMBOL || s == ScanIDs::SYN_ESCAPE);
 }
 
-bool Syntax::isCommentChar (const char c)
+bool Syntax::isCommentChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_COMMENT);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_COMMENT);
 }
 
-bool Syntax::isPrefixChar (const char c)
+bool Syntax::isPrefixChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_PREFIX);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_PREFIX);
 }
 
-bool Syntax::isStringChar (const char c)
+bool Syntax::isStringChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_STRING);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_STRING);
 }
 
-bool Syntax::isOpenChar (const char c)
+bool Syntax::isOpenChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_OPEN);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_OPEN);
 }
 
-bool Syntax::isCloseChar (const char c)
+bool Syntax::isCloseChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_CLOSE);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_CLOSE);
 }
 
-bool Syntax::isPunctuationChar (const char c)
+bool Syntax::isPunctuationChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_PUNCT);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_PUNCT);
 }
 
-bool Syntax::isEscapeChar (const char c)
+bool Syntax::isEscapeChar (const tchar c)
 {
-  return (syntab[(c & 0x7f)] == ScanIDs::SYN_ESCAPE);
+  if(c > 127) return false;
+  return (syntab[c] == ScanIDs::SYN_ESCAPE);
 }
 
 /*=======================================================================*
@@ -581,7 +592,7 @@ const StringArray TextSyntax::getTokenTypes ()
   return names;
 }
 
-const Colour TextSyntax::getDefaultColour (const int tokenType)
+const Colour TextSyntax::getDefaultColour (int tokenType)
 {
   return Colours::black;
 }
@@ -679,7 +690,7 @@ const StringArray LispSyntax::getTokenTypes ()
   return names;
 }
 
-const Colour LispSyntax::getDefaultColour (const int tokenType)
+const Colour LispSyntax::getDefaultColour (int tokenType)
 {
   ////  return Colours::black;
   switch (tokenType)
@@ -1063,7 +1074,7 @@ const StringArray SalSyntax::getTokenTypes ()
   return names;
 }
 
-const Colour SalSyntax::getDefaultColour (const int tokenType)
+const Colour SalSyntax::getDefaultColour (int tokenType)
 {
   ////  return Colours::black;
   switch (tokenType)
@@ -1704,7 +1715,7 @@ const StringArray Sal2Syntax::getTokenTypes ()
   return names;
 }
 
-const Colour Sal2Syntax::getDefaultColour (const int tokenType)
+const Colour Sal2Syntax::getDefaultColour (int tokenType)
 {
   ////  return Colours::black;
   switch (tokenType)

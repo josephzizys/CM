@@ -7,7 +7,7 @@
 
 #include "Enumerations.h"
 #include "Preferences.h"
-#include <iostream>;
+#include <iostream>
 juce_ImplementSingleton (Preferences);
 
 // comment= old: firebrick  new: #ce001a

@@ -282,7 +282,7 @@ void Alerts::showMessageBox(AlertWindow::AlertIconType iconType,
     icon = MB_ICONQUESTION; break;
   }
   button1 = takeFirstWord(button1);
-  MessageBoxCustom(0, message, title, buttonLayoutType = MB_OK + icon);
+  MessageBoxCustom(0, message.toUTF8(), title.toUTF8(), buttonLayoutType = MB_OK + icon);
 #endif
 
 #ifdef JUCE_MAC
@@ -317,7 +317,7 @@ bool Alerts::showOkCancelBox(AlertWindow::AlertIconType iconType,
   }
   button1 = takeFirstWord(button1);
   button2 = takeFirstWord(button2);
-  return MessageBoxCustom(0, message, title, 
+  return MessageBoxCustom(0, message.toUTF8(), title.toUTF8(), 
     buttonLayoutType = MB_OKCANCEL + icon) == IDOK;
 #endif
 
@@ -358,7 +358,7 @@ int Alerts::showYesNoCancelBox(AlertWindow::AlertIconType iconType,
   button1 = takeFirstWord(button1);
   button2 = takeFirstWord(button2);
   button3 = takeFirstWord(button3);
-  int value = MessageBoxCustom(0, message, title, 
+  int value = MessageBoxCustom(0, message.toUTF8(), title.toUTF8(), 
     buttonLayoutType = MB_YESNOCANCEL + icon);
   if(value == IDYES)
     return 1;

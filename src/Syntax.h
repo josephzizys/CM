@@ -59,17 +59,17 @@ class Syntax : public CodeTokeniser
   SynTok* getSynTok (String n) ;
 
   void setCharSyntax(const String chrs, const int syn);
-  bool isWhiteChar (const char c) ;
-  bool isWordChar (const char c) ;
-  bool isSymbolChar (const char c) ;
-  bool isTokenChar (const char c) ;
-  bool isCommentChar (const char c) ;
-  bool isPrefixChar (const char c) ;
-  bool isStringChar (const char c) ;
-  bool isOpenChar (const char c) ;
-  bool isCloseChar (const char c) ;
-  bool isPunctuationChar (const char c) ;
-  bool isEscapeChar (const char c) ;
+  bool isWhiteChar (const tchar c) ;
+  bool isWordChar (const tchar c) ;
+  bool isSymbolChar (const tchar c) ;
+  bool isTokenChar (const tchar c) ;
+  bool isCommentChar (const tchar c) ;
+  bool isPrefixChar (const tchar c) ;
+  bool isStringChar (const tchar c) ;
+  bool isOpenChar (const tchar c) ;
+  bool isCloseChar (const tchar c) ;
+  bool isPunctuationChar (const tchar c) ;
+  bool isEscapeChar (const tchar c) ;
   int  isNumberToken(const String str) ;
 
   bool scanToken(CodeDocument::Position& pos, const int dir, const CodeDocument::Position end);
@@ -107,7 +107,7 @@ class TextSyntax : public Syntax
   static const int TokenPlaintext = 1;
 
   const StringArray getTokenTypes ();
-  const Colour getDefaultColour (const int tokenType);
+  const Colour getDefaultColour ( int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 
   int getIndentation(CodeDocument& document, int line);
@@ -136,7 +136,7 @@ class LispSyntax : public Syntax
   static const int TokenLispSpecialForm = 6;
 
   const StringArray getTokenTypes ();
-  const Colour getDefaultColour (const int tokenType);
+  const Colour getDefaultColour ( int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 
   int getIndentation(CodeDocument& document, int line) ;
@@ -160,7 +160,7 @@ class SalSyntax : public Syntax
   ~SalSyntax();
   void init();
   const StringArray getTokenTypes ();
-  const Colour getDefaultColour (const int tokenType);
+  const Colour getDefaultColour ( int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 
   int getIndentation(CodeDocument& document, int line) ;
@@ -188,7 +188,7 @@ class Sal2Syntax : public SalSyntax
   ~Sal2Syntax();
 
   const StringArray getTokenTypes ();
-  const Colour getDefaultColour (const int tokenType);
+  const Colour getDefaultColour ( int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 
   //  String tokenize(String str) {return String::empty;}

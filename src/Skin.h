@@ -55,8 +55,8 @@ public:
   }
 
   virtual void drawPopupMenuItem(juce::Graphics& g, int width, int height,
-    const bool isSeparator, const bool isActive, const bool isHighlighted,
-    const bool isTicked, const bool hasSubMenu, const juce::String& text,
+    bool isSeparator, bool isActive, bool isHighlighted,
+    bool isTicked, bool hasSubMenu, const juce::String& text,
     const juce::String& shortcutKeyText, juce::Image* image, 
     const juce::Colour* const textColourToUse)
   {

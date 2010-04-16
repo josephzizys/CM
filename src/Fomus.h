@@ -201,7 +201,7 @@ class FomusSyntax : public Syntax
   static const int TokenPlaintext = 1;
 
   const StringArray getTokenTypes () ;
-  const Colour getDefaultColour (const int tokenType);
+  const Colour getDefaultColour (int tokenType);
   int readNextToken (CodeDocument::Iterator &source);
 
   int getIndentation(CodeDocument& document, int line);

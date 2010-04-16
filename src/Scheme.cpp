@@ -719,7 +719,7 @@ void SchemeThread::read()
       if (!text.isEmpty())
 	text << T("\n");
       text << String(line.c_str());
-      int typ, loc;
+      int typ;
       doc.replaceAllContent(text);
       pos.setPosition(0);
       typ=LispSyntax::getInstance()->scanCode(doc, pos, true, ScanIDs::MoveExpressions);

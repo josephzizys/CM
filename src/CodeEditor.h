@@ -177,7 +177,7 @@ class CodeEditorWindow : public DocumentWindow, public MenuBarModel,
   void closeButtonPressed () ;
   void getAllCommands(Array<CommandID>& commands);
   ApplicationCommandTarget* getNextCommandTarget();
-  void getCommandInfo(const CommandID id, ApplicationCommandInfo& info);
+  void getCommandInfo(CommandID id, ApplicationCommandInfo& info);
   bool perform(const ApplicationCommandTarget::InvocationInfo& info);
   const StringArray getMenuBarNames ();
   const PopupMenu getMenuForIndex(int menuIndex, const String& menuName);
